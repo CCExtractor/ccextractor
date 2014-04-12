@@ -1,0 +1,794 @@
+0.69
+----
+- A few patches from Christopher Small, including proper support
+  for multiple multicast clients listening on the same port.
+- GUI: Fixed teletext preview.
+- GUI: Added a small indicator of data being received when reading from
+  UDP.
+- GUI: Added UTF-8 support to preview Window (used for teletext).
+- Fixes in Makefile and build script, compilation in linux and OSX failed
+  if another libpng was found in the system.
+- WTV support directly in CCExtractor (no need for wtvccdump any more).
+- Started refactoring and clean-up.
+- Fix: MPEG clock rollover (happens each 26 hours) caused a time
+  discontinuity.
+- Windows GUI: Started work on HDHomeRun support. For now it just looks 
+  for HDHomeRun devices. Lots of other things will arrive in the next
+  versions.
+- Windows GUI: Some code refactoring, since the HDHomeRun support makes
+  the code larger enough to require more than one source file :-)
+
+0.68
+----
+- A couple of shared variables between 608 decoders were causing
+  problems when both fields were processed at the same time with
+  -12, fixed.
+- Added BOM for UTF-8 files.
+- Corrected a few extended characters in the UTF-8 encoding,
+  probably never used in real world captioning but since we got
+  a good test sample file...
+- Color and fonts in PAC commands were ignored, fixed (Helen Buus).
+- Added a new output format, spupng. It consists on one .png file
+  for each subtitle frame and one .xml with all the timing 
+  (Heleen Buus).
+- Some fixes (Chris Small).
+
+0.67
+----
+- Padding bytes were being discarded early in the process in 0.66,
+  which is convenient for debugging, but it messes with timing in
+  .raw, which depends on padding. Fixed.
+- MythTV's branch had a fixed size buffer that could not be enough
+  some times. Made dynamic.
+- Better support for PAT changing mid stream.
+- Removed quotes in Start in .smi (format fix).
+- Added multicast support (Chris Small)
+- Added ability to select IP address to bind in UDP (Chris Small)
+- Fixes in -unixts and -delay for teletext.
+- Added -autodash : When two people are talking, add a dash as
+  needed (this is based on subtitle position). Only in .srt and
+  with -trim. Quite experimental, feedback appreciated.
+- Added -latin1 to select Latin 1 as encoding. Default is now
+  UTF-8 (-utf8 still exists but it's not needed).
+- Added -ru1, which emulates a (non-existing in real life) 1 line
+  roll-up mode. 
+
+
+0.66
+----
+- Fixed bug in auto detection code that triggered a message 
+  about file being auto of sync.
+- Added -investigate_packets
+  The PMT is used to select the most promising elementary stream
+  to get captions from. Sometimes captions are where you least
+  expect it so -datapid allows you to select a elementary stream
+  manually, in case the CC location is not obvious from the PMT
+  contents. To assist looking for the right stream, the parameter
+  "-investigate_packets" will have CCExtractor look inside each
+  stream, looking for CC markers, and report the streams that 
+  are likely to contain CC data even if it can't be determined from
+  their PMT entry.
+- Added -datastreamtype to manually selecting a stream based on
+  its type instead of its PID. Useful if your recording program
+  always hides the caption under the stream stream type. 
+- Added -streamtype so if an elementary stream is selected manually
+  for processing the streamtype can be selected too. This can be 
+  needed if you process for example a stream that is declared as 
+  "private MPEG" in the PMT, so CCExtractor can't tell what it is.
+  Usually you'll want -streamtype 2 (MPEG video) or -streamtype 6
+  (MPEG private data).
+- PMT content listing improved, it now shows the stream type for
+  more types.
+- Fixes in roll-up, cursor was being moved to column 1 if a 
+  RU2, RU3 or RU4 was received even if already in roll-up mode.
+- Added -autoprogram. If a multiprogram TS is processed and 
+  -autoprogram is used CCExtractor will analyze all PMTs and use
+  the first program that has a suitable data stream.
+- Timed transcript (ttxt) now also exports the caption mode 
+  (roll-up, paint-on, etc) next to each line, as it's useful to 
+  detect things like commercials.
+- Content Advisory information from XDS is now decoded if it's
+  transmitted in "US TV parental guidelines" or "MPA". 
+  Other encoding such as Canada's are not supported yet due 
+  to lack of samples.
+- Copy Management information from XDS is now decoded.
+- Added -xds. If present and export format is timed transcript
+  (only), XDS information will be saved to file (same file as the
+  transcript, with XDS being clearly marked). Note that for now
+  all XDS data is exported even if it doesn't change, so the 
+  transcript file will be significantly larger.
+- Added some PaintOn support, at least enough to prevent it 
+  from breaking things when the other modes are used.
+- Removed afd_data() warning. AFD doesn't carry any caption related
+  data. AFD still detected in code in case we want to do something
+  with it later anyway.
+- Ported last changes from Petr Kutalek's telxcc. Current version
+  is 2.4.4.
+- In teletext mode when exporting to transcript (not .srt), an effort
+  is made to detect and merge line duplicates. This is done by using
+  the Levenshtein's distance, which is the number of changes requires
+  to convert one string to another. To simplify things, strings are
+  compared up to the length of the shortest one.
+  There are 3 parameters that can be used to tweak the thresholds:
+      -deblev: Enable debug so the calculated distance for each two
+	   strings is displayed. The output includes both strings, the
+	   calculated distance, the maximum allowed distance, and whether
+	   the strings are ultimately considered equivalent or not, i.e.
+	   the calculated distance is less or equal than the max allowed.
+	  -levdistmincnt value: Minimum distance we always allow 
+	   regardless of the length of the strings. Default 2. This means 
+	   that if the calculated distance is 0, 1 or 2, we consider the 
+	   strings to be equivalent.
+	  -levdistmaxpct value: Maximum distance we allow, as a 
+	   percentage of the shortest string length. Default 10%. For 
+	   example, consider a comparison of one string of 30 characters 
+	   and one of 60 characters. We want to determine whether the 
+	   first 30 characters of the longer string are more or less the 
+	   same as the shortest string, i.e. whether the longest string 
+	   is the shortest one plus new characters and maybe some 
+	   corrections. Since the shortest string is 30 characters and 
+	   the default percentage is 10%, we would allow a distance of 
+	   up to 3 between the first 30 characters.
+- Added -lf : Use UNIX line terminator (LF) instead of Windows (CRLF).	   
+- Added -noautotimeref: Prevent UTC reference from being auto set from
+  the stream data.
+
+0.65
+----
+- Minor GUI changes for teletext
+- Added end timestamps in timed transcripts
+- Added support for SMPTE (patch by John Kemp)
+- Initial support for MPEG2 video tracks inside MP4 files (thanks a
+  lot to GPAC's Jean who assisted in analyzing the sample and 
+  doing the required changes in GPAC).
+- Improved MP4 auto detection
+- Support for PCR if PTS is not available (needed for some teletext
+  samples, and probably useful for everything else).
+- Support for UDP streaming - finally. Use "-udp $port" to have
+  CCExtractor listen for a stream. I've only been able to test it
+  with an European HDHomeRun, but it should work fine with any other
+  tuner.
+- Refactored PMT / PAT processing in transport streams, now allows to
+  display their contents (-parsePAT and -parsePMT) which makes
+  troubleshooting easier.
+  
+0.64
+----
+- Changed Window GUI size (larger).
+- Added Teletext options to GUI.
+- Added -teletext to force teletext mode even if not detected
+- Added -noteletext to disable teletext detection. This can be needed
+  for streams that have both 608 data and teletext packets if you
+  need to process the 608 data (if teletext is detected it will
+  take precedence otherwise).
+- Added -datapid to force a specific elementary stream to be used for
+  data (bypassing detections).
+- Added -ru2 and -ru3 to limit the number of visible lines in roll-up
+  captions (bypassing whatever the broadcast says).
+- Added support for a .hex (hexadecimal) dump of data. 
+- Added support for wtv in Windows. This is done by using a new program
+  (wtvccdump.exe) and a new DirectShow filter (CCExtractorDump.dll) that
+  process the .wtv using DirecShow's filters and export the line 21 data
+  to a .hex file. The GUI calls wtvccdump.exe as needed.
+- Added --nogoptime to force PTS timing even when CCExtractor would
+  use GOP timing otherwise.
+
+0.63
+----
+- Telext support added, by integrating Petr Kutalek's telxcc. Integration is
+  still quite basic (there's equivalent code from both CCExtractor and 
+  telxcc) and some clean up is needed, but it works. Petr has announced that 
+  he's abandoning telxcc so further development will happen directly in 
+  CCExtractor.
+- Some bug fixes, as usual.
+
+0.62
+----
+- Corrected Mac build "script" (needed to add GPAC includes). Thanks to the
+  Mac users that sent this.
+- Hauppauge mode now uses PES timing, needed for files that don't have
+  caption data during all the video (such as in commercial breaks).
+- Added -mp4 and -in:mp4 to force the input to be processed as MP4. 
+- CC608 data embedded in a separate stream (as opposed as in the video
+  stream itself) in MP4 files is now supported (not heavily tested). 
+  This should be rather useful since closed captioned files from iTunes
+  use this format.
+- More CEA-708 work. The debugger is now able to dump the "TV" contents for
+  the first time. Also, a .srt can be generated, however timing is not quite 
+  good yet (still need to figure out why). 
+- Added -svc (or --service) to select the CEA-708 services to be processed.
+  For example, -svc 1,2 will process the primary and secondary language
+  services. Valid values are 1-63, where 1 is the primary language, 2 is
+  the secondary language (this is part of the specification) and 3-63 are
+  provider defined.
+- Rajesh Hingorani sent a fix for the MPEG decoder that fixes garbled output
+  or certain samples (we had none like this in our test collection). Thanks,
+  Rajesh.
+
+0.61
+----
+- Fix: GCC 3.4.4 can now build CCExtractor.
+- Fix: Damaged TS packets (those that come with 'error in transport' bit
+  on) are now skipped.
+- Fix: Part of the changes for MP4 support (CC packets buffering in 
+  particular) broke some stuff for other files, causing at least very 
+  annoying character duplication. We hope we've fixed it without breaking 
+  anything but please report).
+- Some non-interesting cleanup.
+
+0.60
+----
+- Add: MP4 support, using GPAC (a media library). Integration is currently
+  "enough so it works", but needs some more work. There's some duplicate
+  code, the stream must be a file (no streaming), etc.
+- Fix: The Windows version was writing text files with double \r.
+- Fix: Closed captions blocks with no data could cause a crash.
+- Fix: -noru (to generate files without duplicate lines in 
+  roll-up) was broken, with complete lines being missing.
+- Fix: bin format not working as input. 
+
+0.59
+----
+- More AVC/H.264 work. pic_order_cnt_type != 0 will be processed now. 
+- Fix: Roll-up captions with interruptions for Text (with ResumeTextDisplay
+  in the middle of the caption data) were missing complete lines.
+- Added a timed text transcript output format, probably only useful for
+  roll-up captions. Use --timedtranscript or -ttxt. Output is like this:
+
+00:01:25,485 | HOST: LAST NIGHT THE REPUBLICAN
+00:01:29,522 | HOPEFULS INTRODUCE THEMSELVES TO
+00:01:30,623 | PRIMARY VOTERS.
+
+- XDS parser. Not complete (no point in dealing with V-Chip stuff for
+  example), but enough to extract program and station information.
+- Input streams can now come from standard input using - (just an hyphen)
+  as parameter.
+- Added a new output format called 'null' (use -null or -out=null). This
+  format means "Don't produce any file", and is useful to have CCExtractor
+  process the stream (for XDS messages, debugging, etc) without actually
+  generating anything.
+- Updated Windows GUI.
+- Added -quiet => If used, CCExtractor will not write any message.
+- Added -stdout => If used, the captions will be sent to stdout (console)
+  instead of file. Combined with -, CCExtractor can work as a filter in
+  a larger process, receiving the stream from stdin and sending the
+  captions to stdout. 
+- Some code clean up, minor refactoring.
+- Teletext detection (not yet processing).
+
+0.58
+----
+- Implemented new PTS based mode to order the caption information
+  of AVC/H.264 data streams.  The old pic_order_cnt_lsb based method
+  is still available via the -poc or --usepicorder command switches.
+- Removed a couple of those annoying "Impossible!" error messages 
+  that appears when processing some (possibly broken, unsure) files.
+- Added -nots --notypesettings to prevent italics and underline 
+  codes from being displayed.
+- Note to those not liking the paragraph symbol being used for the 
+  music note: Submit a VALID replacement in latin-1.
+- Added preliminary support for multiple program TS files. The 
+  parameter --program-number (or -pn) will let you choose which
+  program number to process. If no number is passed and the TS 
+  file contains more than one, CCExtractor will display a list of
+  found programs and terminate.
+- Added support (basic, because I only received one sample) for some
+  Hauppauge cards that save CC data in their own format. Use the
+  parameter -haup to enable it (CCExtractor will display a notice 
+  if it thinks that it's processing a Hauppauge capture anyway).
+- Fixed bug in roll-up.
+- More AVC work, now TS files from echostar that provided garbled
+  output are processed OK.
+- Updated Windows GUI.
+
+0.57
+----
+- Bugfixes in the Windows version. Some debug code was unintentionally
+  left in the released version. 
+
+0.56
+----
+- H264 support
+- Other minor changes a lot less important
+
+0.55
+----
+- Replace pattern matching code with improved parser for MPEG-2 elementary
+  streams.
+- Fix parsing of ReplayTV 5000 captions.
+- Add ability to decode SCTE 20 encoded captions.
+- Make decoding of TS files more error tolerant.
+- Start implementation of EIA-708 decoding (not active yet).
+- Add -gt / --goptime switch to use GOP timing instead of PTS timing.
+- Start implementation of AVC/H.264 decoding (not active yet).
+- Fixed: The basic problem is that when 24fps movie film gets converted to 30fps NTSC 
+  they repeat every 4th frame. Some pics have 3 fields of CC data with field 3 CC data 
+  belongs to the same channel as field 1. The following pics have the fields reversed 
+  because of the odd number of fields. I used top_field_first to tell when the channels 
+  are reversed. See Table 6-1 of the SCTE 20 [Paul Fernquist]
+
+0.54
+----
+- Add -nosync and -fullbin switches for debugging purposes.
+- Remove -lg (--largegops) switch.
+- Improve syncronization of captions for source files with
+  jumps in their time information or gaps in the caption
+  information.
+- [R. Abarca] Changed Mac script, it now compiles/link 
+  everything from the /src directory. 
+- It's now possible to have CCExtractor add credits 
+  automatically.
+- Added a feature to add start and end messages (for credits).
+  See help screen for details.
+
+0.53
+----
+- Force generated RCWT files to have the same length as source file.
+- Fix documentation for -startat / -endat switches.
+- Make -startat / -endat work with all output formats.
+- Fix sync check for raw/rcwt files.
+- Improve timing of dvr-ms NTSC captions.
+- Add -in=bin switch to read CCExtractor's own binary format.
+- Fix problem with short input files (smaller 1MB).
+- Clean up regular and debug output.
+- Add -out=bin switch to write RCWT data.
+- Remove -bo/--bufferoutput switch and functionality.
+- [Volker] Added new generic binary format (RCWT
+  for Raw Captions With Time). This new format
+  allows one file to contain all the available
+  closed caption data instead of just one stream.
+- Added --no_progress_bar to disable status 
+  information (mostly used when debugging, as the
+  progress information is annoying in the middle
+  of debug logs).
+- The Windows GUI was reported to freeze in some 
+  conditions. Fixed.
+- The Windows GUI is now targeted for .NET 2.0 
+  instead of 3.5. This allows Windows 2000 to run
+  it (there's not .NET 3.5 for Windows 2000), as
+  requested by a couple of key users.
+
+0.51
+----
+- Removed -autopad and -goppad, no longer needed.
+- In preparation to a new binary format we have 
+  renamed the current .bin to .raw. Raw files 
+  have only CC data (with no header, timing, etc).
+- The input file format (when forced) is now
+  specified with 
+    	-in=format
+  such as -in=ts, -in=raw, -in=ps ...
+  The old switches (-ts, -ps, etc) still work.
+  The only exception is -bin which has been removed
+  (reserved for the new binary format). Use
+  -in=raw to process a raw file. 
+- Removed -d, which when produced a raw file used
+  a DVD format. This has been merged into a new
+  output type "dvdraw". So now instead of using
+  -raw -d as before, use -out=dvdraw if you need
+  this.
+- Removed --noff
+- Added gui_mode_reports for frontend communications,
+  see related file.
+- Windows GUI rewritten. Source code now included, 
+  too.
+- [Volker] Dish Network clean-up
+
+0.50
+----
+- [Volker] Fix in DVR-MS NTSC timing
+- [Volker] More clean-up
+- Minor fixes
+
+0.49
+----
+- [Volker] Major MPEG parser rework. Code much
+  cleaner now. 
+- Some stations transmit broken roll-up captions,
+  and for some reason don't send CRs but RUs...
+  Added work-around code to make captions readable.
+- Started work on EIA-708 (DTV). Right now you can
+  add -debug-708 to get a dump of the 708 data. 
+  An actually useful decoder will come soon.
+- Some of the changes MIGHT HAVE BROKEN MythTV's
+  code. I don't use MythTV myself so I rely on
+  other people's samples and reports. If MythTV
+  is broken please let me know.
+- Added new debug options.
+- [Volker] Added support for DVR-MS NTSC files.
+- Other minor bugfixes and changes.
+
+0.46
+----
+- Added support for live streaming, ccextractor
+  can now process files that are being recorded
+  at the same time.
+  
+- [Volker] Added a new DVR-MS loop - this is 
+  completely new, DVR-MS specific code, so we no
+  longer use the generic MPEG code for DVR-MS. 
+  DVR-MS should (or will be eventually at least)
+  be as reliable as TS.
+  Note: For now, it's only ATSC recordings, not
+  NTSC (analog) recordings.
+
+
+0.45
+----
+- Added autodetection of DVR-MS files.
+- Added -asf to force DVR-MS mode.
+- Added some specific support for DVR-MS
+  files. These format used to work
+  correcty in 0.34 (pure luck) but the
+  MPEG code rework broke it. It should
+  work as it used to.
+- Updated Windows GUI to support the
+  new options.
+- Added      -lg --largegops
+  From the help screen:
+  Each Group-of-Picture comes with timing 
+  information. When this info is too separate 
+  (for example because there are a lot of 
+  frames in a GOP) ccextractor may prefer not 
+  to use GOP timing. Use this option is you 
+  need ccextractor to use GOP timing in large
+  GOPs.
+
+0.44
+----
+- Added an option to the GUI to process
+  individual files in batch, i.e. call
+  ccextractor once per file. Use it if you
+  want to process several unrelated files
+  in one go.
+- Added an option to prevent duplicate
+  lines in roll-up captions.
+- Several minor bugfixes.
+- Updated the GUI to add the new options.
+
+0.43
+----
+- Fixed a bug in the read loop (no less)
+  that caused some files to fail when 
+  reading without buffering (which is 
+  the default in the linux build).
+- Several improvements in the GUI, such as
+  saving current options as default.
+
+0.42
+----
+- The option switch "-transcript" has been
+  changed to "--transcript". Also, "-txt"
+  has been added as the short alias.
+- Windows GUI
+- Updated help screen
+
+0.41
+----
+- Default output is now .srt instead of .bin,
+  use -raw if you need the data dump instead of
+  .srt. 
+- Added -trim, which removes blank spaces at 
+  the left and rights of each line in .srt.
+  Note that those spaces are there to help
+  deaf people know if the person talking is
+  at the left or the right of the screen, i.e.
+  there aren't useless. But if they annoy
+  you go ahead...
+
+0.40
+----
+- Fixed a bug in the sanity check function 
+  that caused the Myth branch to abort. 
+- Fixed the OSX build script, it needed a
+  new #define to work.
+
+0.39
+----
+- Added a -transcript. If used, the output will
+  have no time information. Also, if in roll-up
+  mode there will be no repeated lines.
+- Lots of changes in the MPEG parser, most of
+  them submitted by Volker Quetschke. 
+- Fixed a bug in the CC decoder that could cause
+  the first line not to be cleared in roll-up
+  mode. 
+- ccextractor can now follow number sequences in
+  file names, by suffixing the name with +.
+  For example,
+  
+  DVD0001.VOB+ 
+
+  means DVD0001.VOB, DVD0002.VOB, etc. This works
+  for all files, so part001.ts+ does what you
+  could expect.
+- Added -90090 which changes the clock frequency
+  from the MPEG standard 90000 to 90090. It 
+  *could* (remains to be seen) help if there are
+  timing issues. 
+- Better support for Tivo files.
+- By default ccextractor now considers the whole
+  input file list a one large file, instead of
+  several, independent, video files. This has
+  been changed because most programs (for example
+  DVDDecrypt) just cut the files by size. 
+  If you need the old behaviour (because you 
+  actually edited the video files and want to
+  join the subs), use -ve.
+
+
+0.36
+----
+- Fixed bug in SMI, nbsp was missing a ;.
+- Footer for SAMI files was incorrect (<body> and
+  <sami> tags were being opened again instead of
+  being closed).
+- Displayed memory is now written to disk at end
+  of stream even if there is no command requesting
+  so (may prevent losing the last screenful).
+- Important change that could break scripts, but
+  that have been added because old behaviour was
+  annoying to most people: _1 and _2 at the end
+  of the output file names is now added ONLY if
+  -12 is used (ie when there are two output 
+  files to produce). So
+
+  ccextractor -srt sopranos.mpg
+
+  now produces sopranos.srt instead of sopranos_1.srt.
+  If you use -12, i.e.
+
+  ccextractor -srt -12 sopranos.mpg
+
+  You get
+
+  sopranos_1.srt and
+  sopranos_2.srt
+
+  as usual.
+
+
+0.35
+----
+- Added --defaultcolor to the help screen. Code
+  was already in 0.34 but the documentation wasn't
+  updated.
+- Buffer is larger now, since I've found a sample
+  where 256 Kb isn't enough for a PES (go figure).
+- At the end of the process, a ratio between
+  video length and time to process is displayed.
+
+0.34
+----
+- Added some basic letter case and capitalization
+  support. For captions that broadcast in ALL
+  UPPERCASE (most of them), ccextractor can now
+  do the first part of the job.
+
+  --sentencecap or -sc will tell ccextractor to
+  follow the typical capitalization rules, such
+  as capitalize months, days of week, etc.
+
+  So from
+             YOU BETTER RESPECT
+             THIS ROBE, ALAN
+
+  You get
+
+             You better respect
+             this robe, alan.
+
+  --capfile or -caf also enables the case
+  processing part and adds an extra list of
+  words in the specified file, for example:
+
+  --capfile names.txt
+
+  where names.txt is just a plain text file
+  with the proper spelling for some words,
+  such as
+  
+  Alan
+  Tony
+
+  So you get 
+
+             You better respect
+             this robe, Alan.
+
+  Which is the correct spelling. You can
+  have a different spelling file per TV
+  show, or a large file with a lot of
+  words, etc.
+- ccextractor has been reported to 
+  compile and run on Mac with a minor
+  change in the build script, so I've
+  created a mac directory with the
+  modified script. I haven't tested it
+  myself.
+- Windows build comes with a File Version
+  Number (0.0.0.34 in this version) in case
+  you want to check for version info.
+
+0.33
+----
+- Added -scr or --screenfuls, to select the
+  number of screenfuls ccextractor should
+  write before exiting. A screenful is 
+  a change of screen contents caused by
+  a CC command (not new characters). In
+  practice, this means that for .srt each
+  group of lines is a screenful, except when
+  using -dru (which produces a lot of 
+  groups of lines because each new character
+  produces a new group).
+- Completed tables for all encodings.
+- Fixed bug in .srt related to milliseconds
+  in time lines. 
+- Font colors are back for .srt (apparently
+  some programs do support them after all).
+  Use -nofc or --nofontcolor if you don't
+  want these tags.
+
+0.32
+----
+- Added -delay ms, which adds (or substracts)
+  a number of milliseconds to all times in 
+  .srt/.sami files. For example,
+  
+         -delay 400
+
+  causes all subtitles to appear 400 ms later
+  than they would normally do, and
+
+         -delay -400
+
+  causes all substitles to appear 400 ms before
+  they would normally do.
+- Added -startat at -endat which lets you
+  select just a portion of data to be processed,
+  such as from minute 3 to minute 5. Check
+  help screen for exact syntax.
+
+0.31
+----
+- Added -dru (direct rollup), which causes
+  roll-up captions to be written as
+  they would on TV instead of line by line.
+  This makes .srt/.sami files a lot longer,
+  and ugly too (each line is written many
+  times, two characters at time).
+
+0.30
+----
+- Fix in extended char decoding, I wasn't
+  replacing the previous char.
+- When a sequence code was found before
+  having a PTS, reported time was 
+  undefined. 
+
+0.29
+----
+- Minor bugfix.
+
+0.28
+----
+- Fixed a buffering related issue. Short version,
+  the first 2 Mb in non-TS mode were being
+  discarded.
+- .srt no longer has <font> tags. No player
+  seems to process them so my guess is that
+  they are not part of the .srt "standard"
+  even if McPoodle add them.
+
+0.27
+----
+- Modified sanitizing code, it's less aggresive
+  now. Ideally it should mean that characters
+  won't be missed anymore. We'll see.
+
+0.26
+----
+- Added -gp (or -goppad) to make ccextractor use
+  GOP timing. Try it for non TS files where 
+  subs start OK but desync as the video advances.
+
+0.25
+----
+- Format detection is not perfect yet. I've added
+  -nomyth to prevent the MytvTV code path to be
+  called. I've seen apparently correct files that
+  make MythTV's MPEG decoder to choke. So, if it
+  doesn't work correctly automatically: Try 
+  -nomyth and -myth. Hopefully one of the two
+  options will work.
+
+
+0.24
+----
+- Fixed a bug that caused dvr-ms (Windows Media Center)
+  files to be incorrectly processed (letters out of
+  order all the time).
+- Reworked input buffer code, faster now.
+- Completed MythTV's MPEG decoder for Program Streams,
+  which results in better processing of some specific
+  files. 
+- Automatic file format detection for all kind of
+  files and closed caption storage method. No need to
+  tell ccextractor anything about your file (but you
+  still can).
+
+
+0.22
+----
+- Added text mode handling into decoder, which gets rids 
+  of junk when text mode data is present.
+- Added support for certain (possibly non standard
+  compliant) DVDs that add more captions block in a 
+  user data block than they should (such as Red October).
+- Fix in roll-up init code that caused the previous popup
+  captions not to be written to disk.
+- Other Minor bug fixes.
+
+
+0.20
+----
+- Unicode should be decent now.
+- Added support for Hauppauge PVR 250 cards, and (possibly)
+  many others (bttv) with the same closed caption recording 
+  format.
+  This is the result of hacking MythTV's MPEG parser into
+  ccextractor. Integration is not very good (to put it
+  midly) but it seems to work. Depending on the feedback I
+  may continue working on this or just leave it 'as it'
+  (good enough). 
+  If you want to process a file generated by one of these
+  analog cards, use -myth. This is essential as it will
+  make the program take a totally different code path.
+- Added .SAMI generation. I'm sure this can be improved,
+  though. If you have a good CSS for .SAMI files let me
+  know.
+
+0.19
+----
+- Work on Dish Network streams, timing was completely broken. 
+  It's fixed now at least for the samples I have, if it's not
+  completely fixed let me know. Credit for this goes to
+  Jack Ha who sent me a couple of samples and a first 
+  implementation of a semiworking fix.
+- Added support for several input files (see help screen for
+  details).
+- Added Unicode and Latin-1 encoding.
+  
+
+0.17
+----
+- Extraction to .srt is almost complete - works correctly for
+  pop-up and roll-up captions, possibly not yet for paint-on
+  (mostly because I don't have any sample with paint-on captions
+  so I can't test).
+- Minor bug fixes.
+- Automatic TS/non-TS mode detection.
+
+0.14
+----
+- Work on handling special cases related to the MPEG reference
+  clock: Roll over, jumps, etc.
+- Modified padding code a bit: In particular, padding occurs
+  on B-Frames now.
+- Started work on CC data parsing (use -608 to see output).
+- Added built-in input buffering.
+- Major code reorganization.
+- Added a decent progress indicator.
+- Added TS header synchronization (so the input file no longer
+  needs to start with a TS header).
+- Minor bug fixes.
+
+0.07
+----
+- Added MPEG reference clock parsing.
+- Added autopadding in TS. Does miracles with timing.
+- Added video information (as extracted from sequence header).
+- Some code clean-up.
+- FF sanity check enabled by default.
+

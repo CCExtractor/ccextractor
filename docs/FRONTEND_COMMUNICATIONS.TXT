@@ -1,0 +1,120 @@
+Starting with version 0.51, ccextractor has a mode
+that allows frontends and other programs know what
+the current progress is as well as get information
+on interesting events, such as a file being open 
+or video information (resolution, frame rate and
+so on) being found.
+
+The Windows GUI source code is good reference
+implementation.
+
+Usage:
+
+Add --gui_mode_reports 
+
+to the command line as the first parameter (this
+is not essential but because the mode is enabled
+after this option is parsed, if there is any
+event regarding the previous parameters you
+would miss them).
+
+When this option is used, ccextractor reports
+progress and other information to stderr. 
+
+This does not disable stdout (the regular stuff)
+reporting. 
+
+Information it sent to stderr, one line at a time.
+Information lines that are supposed to be parsed
+by programs starts with ###. All other lines, if
+any, must be discarded. stderr is not guaranteed
+to have only information lines - so do check.
+
+After ### the data starts. Tokens are also
+separated by #. The first token specified the 
+data type, and the rest, if any, are parameters.
+
+The following data types are currently defined:
+
+VERSION - Get CCExtractor version
+       Program
+       Version
+
+	Example: ###VERSION#CCExtractor#0.51
+
+PROGRESS - Get processed percentage and current
+           timing
+       Percentage (or -1 for streaming mode)
+       Minutes
+       Seconds
+
+        Example: ###PROGRESS#45#12#34
+                 (for 45%, 12:34)
+
+INPUTFILECLOSED - CCExtractor closed whatever
+           input file it had open (which had
+           been reported before). 
+       No parameters.
+
+INPUTFILEOPEN - A new file was successfully 
+           open for reading.
+       Filename
+
+       Note that the filename CAN contain
+       #, so don't split the line after the
+       first token and treat the remainder
+       as the filename.
+
+        Example: ###INPUTFILEOPEN#/tmp/This is # a file.mpg
+
+MESSAGE - Something interesting happened. 
+       Message text.
+
+       This can be anything from a fatal
+       error message to something merely
+       informative. 
+      
+        Example: ###MESSAGE#Timing broken in this file
+
+VIDEOINFO - New video information found
+	Horizontal resolution
+        Vertical resolution
+        Aspect ratio
+        Framerate
+
+        Example: ###VIDEOINFO#1980#1080#16:9#29.97
+
+SUBTITLE - New subtitle screen
+        Start time
+        End time
+        Line
+
+        Time is empty if it's the same of the previous 
+        line (i.e. they're supposed to appear together).
+
+        Example: ###SUBTITLE#10:23#10:25#This is 1
+                 ###SUBTITLE###This is 2
+
+        Note that time is in MM:SS format. No milliseconds
+        since this is for a preview window. 
+        Text is trimmed and there is no color or font
+        information, to save space.
+
+TSPROGRAMNUMBER - A multiprogram TS was detected, but 
+        no program was manually selected. CCExtractor will
+        send a list of programs so the GUI can show it to
+        the user for selection.
+
+
+	Example: ###TSPROGRAMNUMBER#3
+
+XDSPROGRAMNAME - Program Name as received from XDS is 
+        available. 
+
+        Example:
+
+	###XDSPROGRAMNAME#Star Trek
+
+        You may receive this more than once per stream.
+
+*** TODO : Add the rest of XDS stuff ****

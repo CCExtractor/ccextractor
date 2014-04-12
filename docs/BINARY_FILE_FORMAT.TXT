@@ -1,0 +1,39 @@
+Starting in CCExtractor 0.52, the default binary format changes. The previous one,
+whichwas ported from McPoodle's tools is too simple. It just contains the closed caption
+data, with no timing. It can also contain data from one field, which means one language.
+
+A new format, still simple but enough to transport all data with timing is as follows:
+
+RCWT (Raw Captions With Time), version 0.001
+============================================
+File header (11 bytes), required:
+
+byte(s)   value   description
+0-2       CCCCED  magic number, for Closed Caption CC Extractor Data
+3         CC      Creating program.  Currently Defined:
+                       CC -> CCextractor.
+4-5       0052    Program version number
+6-7       0001    File format version
+8-10      000000  Reserved
+
+Time header, required for every group of data packets
+0-7       <var>   FTS value (Time in ms)
+8-9       <var>   (1-65535) Number of caption data blocks with this time
+                 stamp.  If the number of blocks exceeds 65535 write
+                 another time header for the remaining blocks.
+
+Caption data
+0-2       <var>   Three byte caption data.
+
+Notes:
+
+- Data is in process order, i.e. the 608 or 708 decoders can process it 
+  sequentially. Programs generating files in this format are responsible
+  for sorting the data when needed.
+- FTS is the time, in milliseconds since the beginning of the file, 
+  starting in 0.
+- The closed caption data is always 3 bytes, the first of which is the
+  cc_type and cc_valid fields and the other two are the actual data
+  pairs. Depending on cc_type, they will be EIA-608 or EIA-708 data. 
+
+

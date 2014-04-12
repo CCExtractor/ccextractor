@@ -1,0 +1,31 @@
+The 708 decoder has been a work in progress for a long time, 
+but it's never been finished simply because there's no 
+pressure (all broadcasts come with 608 captions). Anyway it's
+something that we want to complete sooner than later, so each
+new CCExtractor release will at least take care of a couple
+of items in this to-do list.
+
+The people at narlak.com were nice enough to generate a test
+708 stream for CCExtractor, which helped quite a bit with the
+initial stuff.
+
+Current status is that a (poor) .srt file can already be 
+generated, so should a broadcast with 708-only captions appear
+a transcript would be available.
+
+To do:
+- Timing: For each .srt line, it's off by a second or so. 
+- Colors: Currently unsupported.
+- Pen sizes (useless in .srt of course, but the decoder should
+  handle them internally).
+- Roll up captions.
+- SAMI output.
+- Move everything to a 16 bit character set, to support 
+  non-Latin character sets.
+- Someone (from Korea, I think), reported that they have 
+  708-only captions over there, in Korean. While I don't speak
+  Korean I'll be happy to work on it a bit and see if I can make
+  CCExtractor fully support Asian languages. I do need samples
+  though. No samples, no support.
+- A few commands are not yet supported, specifically those related
+  to delay. 

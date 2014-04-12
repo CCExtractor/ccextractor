@@ -1,0 +1,17 @@
+A mailing list is now available from sourceforge:
+
+https://lists.sourceforge.net/lists/listinfo/ccextractor-users
+
+I expect it to be very low traffic (right now there's around 10
+people actively helping with ccextractor in one way or
+another), so almost everything goes here:
+
+- Bug reports
+- Feature requests
+- Announcements
+
+NOT here:
+
+- Samples 
+
+

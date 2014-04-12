@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="isom_read.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="isom_intern.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="box_funcs.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="box_code_base.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="box_code_3gpp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="box_code_apple.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="box_code_isma.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="box_code_meta.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="list.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bitstream.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="track.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sample_descs.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="error.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="avc_ext.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="odf_codec.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="data_map.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="descriptors.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="desc_private.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="odf_command.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="odf_code.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="av_parsers.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="qos.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="slc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stbl_write.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ipmpx_parse.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ipmpx_code.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stbl_read.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="media.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="isom_store.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="isom_write.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="meta.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="os_divers.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hinting.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="movie_fragments.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="url.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tx3g.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gpac_ogg.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="media_odf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="base_encoding.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

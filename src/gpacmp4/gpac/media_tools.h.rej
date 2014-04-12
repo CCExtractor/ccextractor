@@ -1,0 +1,11 @@
+--- src/gpacmp4/gpac/media_tools.h
++++ src/gpacmp4/gpac/media_tools.h
+@@ -374,7 +374,7 @@
+ /*SAF Multiplexer destructor*/
+ void gf_saf_mux_del(GF_SAFMuxer *mux);
+ /*adds a new stream in the SAF multiplex*/
+-GF_Err gf_saf_mux_stream_add(GF_SAFMuxer *mux, u32 stream_id, u32 ts_res, u32 buffersize_db, u8 stream_type, u8 object_type, char *mime_type, char *dsi, u32 dsi_len, char *remote_url);
++GF_Err gf_saf_mux_stream_add(GF_SAFMuxer *mux, u32 stream_id, u32 ts_res, u32 buffersize_db, u8 ccx_stream_type, u8 object_type, char *mime_type, char *dsi, u32 dsi_len, char *remote_url);
+ /*removes a stream from the SAF multiplex*/
+ GF_Err gf_saf_mux_stream_rem(GF_SAFMuxer *mux, u32 stream_id);
+ /*adds an AU to the given stream. !!AU data will be freed by the multiplexer!! 
