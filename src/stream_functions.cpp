@@ -185,6 +185,7 @@ int read_video_pes_header (unsigned char *nextheader, int *headerlength, int sbu
     // ((nextheader[3]&0xf0)==0xe0)
     unsigned peslen=nextheader[4]<<8 | nextheader[5];
     unsigned payloadlength = 0; // Length of packet data bytes
+	static LLONG current_pts_33=0; // Last PTS from the header, without rollover bits
 
     if ( !sbuflen )
     {
@@ -298,14 +299,17 @@ int read_video_pes_header (unsigned char *nextheader, int *headerlength, int sbu
 		unsigned bits_12 = nextheader[12] << 7; // PTS 14-7
 		unsigned bits_13 = nextheader[13] >> 1; // PTS 6-0
 		
-		if (!bits_9 && ((current_pts>>30)&7)==7) // PTS about to rollover
-			rollover_bits++;
-		if (bits_9==7 && ((current_pts>>30)&7)==0) // PTS rollback? Rare and if happens it would mean out of order frames
-			rollover_bits--;
+		if (pts_set) // Otherwise can't check for rollovers yet
+		{
+			if (!bits_9 && ((current_pts_33>>30)&7)==7) // PTS about to rollover
+				rollover_bits++;
+			if ((bits_9>>30)==7 && ((current_pts_33>>30)&7)==0) // PTS rollback? Rare and if happens it would mean out of order frames
+				rollover_bits--;
+		}
 
 
-		current_pts = bits_9 | bits_10 | bits_11 | bits_12 | bits_13;
-		current_pts = (LLONG) rollover_bits<<33 | current_pts;
+		current_pts_33 = bits_9 | bits_10 | bits_11 | bits_12 | bits_13;
+		current_pts = (LLONG) rollover_bits<<33 | current_pts_33;
 
         if (pts_set==0)
             pts_set=1;

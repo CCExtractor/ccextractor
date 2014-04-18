@@ -371,6 +371,11 @@ int get_char_in_utf_8 (unsigned char *buffer, unsigned char c) // Returns number
             *buffer=0xc3;
             *(buffer+1)=0xb1;
             return 2;
+		case 0x7f: // Solid block
+            *buffer=0xe2;
+            *(buffer+1)=0x96;
+			*(buffer+2)=0xa0;
+            return 3;
         default:
             *buffer=c;
             return 1;

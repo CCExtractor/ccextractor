@@ -144,7 +144,7 @@ int switch_to_next_file (LLONG bytesinbuffer)
 		    (void)setsockopt(infd, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on));
 		}
 		servaddr.sin_family = AF_INET;
-		servaddr.sin_addr.s_addr=htonl(IN_MULTICAST(ccx_options.udpaddr) ? htonl(ccx_options.udpaddr) : INADDR_ANY);
+		servaddr.sin_addr.s_addr=htonl(IN_MULTICAST(ccx_options.udpaddr) ?       ccx_options.udpaddr  : INADDR_ANY);		
 		servaddr.sin_port=htons(ccx_options.udpport);
 		if (bind(infd,(struct sockaddr *)&servaddr,sizeof(servaddr)))
 		{
