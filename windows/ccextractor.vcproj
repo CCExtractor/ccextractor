@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ccextractor"
 	ProjectGUID="{0F0063C4-BCBC-4379-A6D5-84A5669C940A}"
 	RootNamespace="ccextractor"
@@ -714,6 +714,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\ts_tables.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\gpacmp4\tx3g.c"
 				>
 			</File>
@@ -727,6 +731,14 @@
 			</File>
 			<File
 				RelativePath="..\src\utility.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\wtv_constants.h"
+				>
+			</File>
+			<File
+				RelativePath="..\src\wtv_functions.cpp"
 				>
 			</File>
 			<File
