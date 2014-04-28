@@ -6,15 +6,11 @@
 #endif
 
 
-void init_write (struct ccx_s_write *wb, int field)
+void init_write (struct ccx_s_write *wb)
 {
 	memset(wb, 0, sizeof(struct ccx_s_write));
     wb->fh=-1;
     wb->filename=NULL;	
-    wb->data608=(struct eia608 *) malloc (sizeof (struct eia608));
-	wb->bytes_processed_608=0; 
-	wb->my_field=field;
-    init_eia608 (wb->data608);
 } 
 
 void writeraw (const unsigned char *data, int length, struct ccx_s_write *wb)
@@ -22,7 +18,7 @@ void writeraw (const unsigned char *data, int length, struct ccx_s_write *wb)
     write (wb->fh,data,length);
 }
 
-void writedata (const unsigned char *data, int length, struct ccx_s_write *wb)
+void writedata(const unsigned char *data, int length, struct s_context_cc608 *context)
 {
     // Don't do anything for empty data
     if (data==NULL)
@@ -30,8 +26,8 @@ void writedata (const unsigned char *data, int length, struct ccx_s_write *wb)
 
     if (ccx_options.write_format==CCX_OF_RAW || ccx_options.write_format==CCX_OF_DVDRAW)
 	{
-		if (wb)
-			writeraw (data,length,wb);
+		if (context->out)
+			writeraw (data,length,context->out);
 	}
     else if (ccx_options.write_format==CCX_OF_SMPTETT || 
              ccx_options.write_format==CCX_OF_SAMI ||
@@ -39,7 +35,7 @@ void writedata (const unsigned char *data, int length, struct ccx_s_write *wb)
              ccx_options.write_format==CCX_OF_TRANSCRIPT ||
              ccx_options.write_format==CCX_OF_SPUPNG ||
 			 ccx_options.write_format==CCX_OF_NULL)
-        process608 (data,length,wb);
+        process608 (data,length,context);
     else
         fatal(EXIT_BUG_BUG, "Should not be reached!");
 }
@@ -114,12 +110,12 @@ void printdata (const unsigned char *data1, int length1,
     {
         if (length1 && ccx_options.extract!=2)
         {
-            writedata (data1,length1,&wbout1);
+			writedata(data1, length1, &context_cc608_field_1);
         }
         if (length2)
 		{
 			if (ccx_options.extract!=1) 
-				writedata (data2,length2,&wbout2);
+				writedata(data2, length2, &context_cc608_field_2);
 			else // User doesn't want field 2 data, but we want XDS.
 				writedata (data2,length2,NULL);
         }

@@ -302,7 +302,7 @@ void fprintf_encoded (FILE *fh, const char *string)
     fwrite (enc_buffer,enc_buffer_used,1,fh);
 }
 
-void write_cc_buffer_to_gui (struct eia608_screen *data, struct ccx_s_write *wb)
+void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *context)
 {
     unsigned h1,m1,s1,ms1;
     unsigned h2,m2,s2,ms2;    
@@ -316,7 +316,7 @@ void write_cc_buffer_to_gui (struct eia608_screen *data, struct ccx_s_write *wb)
 	if (!with_data)
 		return;
 
-    LLONG ms_start= wb->data608->current_visible_start_ms;
+    LLONG ms_start= context->current_visible_start_ms;
 
     ms_start+=subs_delay;
     if (ms_start<0) // Drop screens that because of subs_delay start too early
@@ -350,9 +350,9 @@ void write_cc_buffer_to_gui (struct eia608_screen *data, struct ccx_s_write *wb)
     fflush (stderr);
 }
 
-void try_to_add_end_credits (struct ccx_s_write *wb)
+void try_to_add_end_credits(struct s_context_cc608 *context)
 {
-    if (wb->fh==-1)
+	if (context->out->fh == -1)
         return;
     LLONG window=get_fts()-last_displayed_subs_ms-1;
     if (window<ccx_options.endcreditsforatleast.time_in_ms) // Won't happen, window is too short
@@ -366,13 +366,13 @@ void try_to_add_end_credits (struct ccx_s_write *wb)
     switch (ccx_options.write_format)
     {
         case CCX_OF_SRT:
-            write_stringz_as_srt(ccx_options.end_credits_text,wb,st,end);
+			write_stringz_as_srt(ccx_options.end_credits_text, context, st, end);
             break;
         case CCX_OF_SAMI:
-            write_stringz_as_sami(ccx_options.end_credits_text,wb,st,end);
+			write_stringz_as_sami(ccx_options.end_credits_text, context, st, end);
             break;
 		case CCX_OF_SMPTETT:
-			write_stringz_as_smptett(ccx_options.end_credits_text,wb,st,end);
+			write_stringz_as_smptett(ccx_options.end_credits_text, context, st, end);
 			break ;
         default:
             // Do nothing for the rest
@@ -380,9 +380,9 @@ void try_to_add_end_credits (struct ccx_s_write *wb)
     }    
 }
 
-void try_to_add_start_credits (struct ccx_s_write *wb)
+void try_to_add_start_credits(struct s_context_cc608 *context)
 {
-    LLONG l = wb->data608->current_visible_start_ms+subs_delay;
+	LLONG l = context->current_visible_start_ms + subs_delay;
     // We have a windows from last_displayed_subs_ms to l - we need to see if it fits
 
     if (l<ccx_options.startcreditsnotbefore.time_in_ms) // Too early
@@ -422,13 +422,13 @@ void try_to_add_start_credits (struct ccx_s_write *wb)
     switch (ccx_options.write_format)
     {
         case CCX_OF_SRT:
-            write_stringz_as_srt(ccx_options.start_credits_text,wb,st,end);
+            write_stringz_as_srt(ccx_options.start_credits_text,context,st,end);
             break;
         case CCX_OF_SAMI:
-            write_stringz_as_sami(ccx_options.start_credits_text,wb,st,end);
+			write_stringz_as_sami(ccx_options.start_credits_text, context, st, end);
             break;
         case CCX_OF_SMPTETT:
-            write_stringz_as_smptett(ccx_options.start_credits_text,wb,st,end);
+			write_stringz_as_smptett(ccx_options.start_credits_text, context, st, end);
             break;
         default:
             // Do nothing for the rest

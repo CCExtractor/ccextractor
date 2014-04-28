@@ -135,10 +135,6 @@ struct ccx_s_write
 {
     int fh;
     char *filename;
-    struct eia608 *data608;
-	int my_field; // Used for sanity checks
-	long bytes_processed_608; // To be written ONLY by process_608
-    void* spupng_data;
 };
 
 
@@ -295,9 +291,9 @@ int processmp4 (char *file);
 void params_dump(void);
 
 // output.cpp
-void init_write (struct ccx_s_write *wb, int field);
+void init_write (struct ccx_s_write *wb);
 void writeraw (const unsigned char *data, int length, struct ccx_s_write *wb);
-void writedata (const unsigned char *data, int length, struct ccx_s_write *wb);
+void writedata(const unsigned char *data, int length, struct s_context_cc608 *context);
 void flushbuffer (struct ccx_s_write *wb, int closefile);
 void printdata (const unsigned char *data1, int length1,const unsigned char *data2, int length2);
 void writercwtdata (const unsigned char *data);
@@ -351,11 +347,11 @@ void timestamp_to_srttime(uint64_t timestamp, char *buffer);
 void millis_to_date (uint64_t timestamp, char *buffer) ;
 int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
 
-void init_eia608 (struct eia608 *data);
+void init_context_cc608(struct s_context_cc608 *data, int field);
 unsigned encode_line (unsigned char *buffer, unsigned char *text);
 void buffered_seek (int offset);
-void write_subtitle_file_header (struct ccx_s_write *wb);
-void write_subtitle_file_footer (struct ccx_s_write *wb);
+void write_subtitle_file_header(struct s_context_cc608 *context);
+void write_subtitle_file_footer(struct s_context_cc608 *context);
 extern void build_parity_table(void);
 
 void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) ;
@@ -412,7 +408,7 @@ extern LLONG filebuffer_start; // Position of buffer start relative to file
 extern int filebuffer_pos; // Position of pointer relative to buffer start
 extern int bytesinbuffer; // Number of bytes we actually have on buffer
 
-
+extern struct s_context_cc608 context_cc608_field_1, context_cc608_field_2;
 
 extern const char *desc[256];
 

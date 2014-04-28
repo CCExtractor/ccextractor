@@ -8,8 +8,8 @@ extern unsigned enc_buffer_capacity;
 extern int new_sentence;
 extern const char *color_text[][2];
 
-int write_cc_buffer_as_srt (struct eia608_screen *data, struct ccx_s_write *wb);
-void write_stringz_as_srt (char *string, struct ccx_s_write *wb, LLONG ms_start, LLONG ms_end);
+int write_cc_buffer_as_srt(struct eia608_screen *data, struct s_context_cc608 *context);
+void write_stringz_as_srt(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
 void mstotime (LLONG milli, unsigned *hours, unsigned *minutes,
                unsigned *seconds, unsigned *ms);
 void mstotime (LLONG milli, unsigned *hours, unsigned *minutes,
@@ -17,10 +17,10 @@ void mstotime (LLONG milli, unsigned *hours, unsigned *minutes,
 unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct eia608_screen *data);
 void capitalize (int line_num, struct eia608_screen *data);
 void correct_case (int line_num, struct eia608_screen *data);
-int write_cc_buffer_as_sami (struct eia608_screen *data, struct ccx_s_write *wb);
-void write_stringz_as_sami (char *string, struct ccx_s_write *wb, LLONG ms_start, LLONG ms_end);
-int write_cc_buffer_as_smptett (struct eia608_screen *data, struct ccx_s_write *wb);
-void write_stringz_as_smptett (char *string, struct ccx_s_write *wb, LLONG ms_start, LLONG ms_end);
+int write_cc_buffer_as_sami(struct eia608_screen *data, struct s_context_cc608 *context);
+void write_stringz_as_sami(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
+int write_cc_buffer_as_smptett(struct eia608_screen *data, struct s_context_cc608 *context);
+void write_stringz_as_smptett(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
 unsigned encode_line (unsigned char *buffer, unsigned char *text);
 void correct_case (int line_num, struct eia608_screen *data);
 void capitalize (int line_num, struct eia608_screen *data);
@@ -29,12 +29,12 @@ unsigned get_decoder_line_basic (unsigned char *buffer, int line_num, struct eia
 unsigned get_decoder_line_encoded_for_gui (unsigned char *buffer, int line_num, struct eia608_screen *data);
 unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct eia608_screen *data);
 void delete_all_lines_but_current (struct eia608_screen *data, int row);
-void try_to_add_start_credits (struct ccx_s_write *wb);
-void try_to_add_end_credits (struct ccx_s_write *wb);
-void write_cc_buffer_to_gui (struct eia608_screen *data, struct ccx_s_write *wb);
+void try_to_add_start_credits(struct s_context_cc608 *context);
+void try_to_add_end_credits(struct s_context_cc608 *context);
+void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *context);
 
-void handle_end_of_data (struct ccx_s_write *wb);
-void process608 (const unsigned char *data, int length, struct ccx_s_write *wb);
+void handle_end_of_data(struct s_context_cc608 *context);
+void process608(const unsigned char *data, int length, struct s_context_cc608 *context);
 void get_char_in_latin_1 (unsigned char *buffer, unsigned char c);
 void get_char_in_unicode (unsigned char *buffer, unsigned char c);
 int get_char_in_utf_8 (unsigned char *buffer, unsigned char c);
@@ -43,9 +43,9 @@ unsigned char cctoupper (unsigned char c);
 int general_608_init (void);
 LLONG get_visible_end (void);
 
-void write_spumux_header(struct ccx_s_write* wb);
-void write_spumux_footer(struct ccx_s_write* wb);
-int write_cc_buffer_as_spupng (struct eia608_screen* data, struct ccx_s_write* wb);
+void write_spumux_header(struct s_context_cc608 *context);
+void write_spumux_footer(struct s_context_cc608 *context);
+int write_cc_buffer_as_spupng(struct eia608_screen* data, struct s_context_cc608 *context);
 
 #define CC608_SCREEN_WIDTH  32
 
@@ -99,7 +99,7 @@ struct eia608_screen // A CC buffer
     int empty; // Buffer completely empty?    	
 };
 
-struct eia608
+struct s_context_cc608
 {
     eia608_screen buffer1;
     eia608_screen buffer2;  
@@ -118,6 +118,10 @@ struct eia608
 	LLONG ts_start_of_current_line; /* Time at which the first character for current line was received, =-1 no character received yet */
 	LLONG ts_last_char_received; /* Time at which the last written character was received, =-1 no character received yet */
 	int new_channel; // The new channel after a channel change		
+	int my_field; // Used for sanity checks
+	long bytes_processed_608; // To be written ONLY by process_608
+	void* spupng_data;
+	struct ccx_s_write *out; 
 };
 
 

@@ -22,7 +22,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-void write_stringz_as_smptett (char *string, struct ccx_s_write *wb, LLONG ms_start, LLONG ms_end)
+void write_stringz_as_smptett(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end)
 {
     unsigned h1,m1,s1,ms1;
     unsigned h2,m2,s2,ms2;
@@ -36,7 +36,7 @@ void write_stringz_as_smptett (char *string, struct ccx_s_write *wb, LLONG ms_st
         dbg_print(CCX_DMT_608, "\r%s\n", str);
     }
     enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-    write (wb->fh, enc_buffer,enc_buffer_used);		
+    write (context->out->fh, enc_buffer,enc_buffer_used);		
     int len=strlen (string);
     unsigned char *unescaped= (unsigned char *) malloc (len+1); 
     unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
@@ -70,10 +70,10 @@ void write_stringz_as_smptett (char *string, struct ccx_s_write *wb, LLONG ms_st
             dbg_print(CCX_DMT_608, "\r");
             dbg_print(CCX_DMT_608, "%s\n",subline);
         }
-        write (wb->fh, el, u);        
+		write(context->out->fh, el, u);
         //write (wb->fh, encoded_br, encoded_br_length);
         
-        write (wb->fh, encoded_crlf, encoded_crlf_length);        
+		write(context->out->fh, encoded_crlf, encoded_crlf_length);
         begin+= strlen ((const char *) begin)+1;
     }
 
@@ -83,25 +83,25 @@ void write_stringz_as_smptett (char *string, struct ccx_s_write *wb, LLONG ms_st
         dbg_print(CCX_DMT_608, "\r%s\n", str);
     }
     enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-    write (wb->fh, enc_buffer,enc_buffer_used);
+	write(context->out->fh, enc_buffer, enc_buffer_used);
     sprintf ((char *) str,"<p begin=\"%02u:%02u:%02u,%03u\">\n\n",h2,m2,s2,ms2);
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_608, "\r%s\n", str);
     }
     enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-    write (wb->fh, enc_buffer,enc_buffer_used);
+    write (context->out->fh, enc_buffer,enc_buffer_used);
     sprintf ((char *) str,"</p>\n");
 }
 
 
 
-int write_cc_buffer_as_smptett (struct eia608_screen *data, struct ccx_s_write *wb)
+int write_cc_buffer_as_smptett(struct eia608_screen *data, struct s_context_cc608 *context)
 {
     unsigned h1,m1,s1,ms1;
     unsigned h2,m2,s2,ms2;
     int wrote_something=0;
-    LLONG startms = wb->data608->current_visible_start_ms;
+    LLONG startms = context->current_visible_start_ms;
 
     startms+=subs_delay;
     if (startms<0) // Drop screens that because of subs_delay start too early
@@ -119,7 +119,7 @@ int write_cc_buffer_as_smptett (struct eia608_screen *data, struct ccx_s_write *
         dbg_print(CCX_DMT_608, "\r%s\n", str);
     }
     enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-    write (wb->fh, enc_buffer,enc_buffer_used);
+	write(context->out->fh, enc_buffer, enc_buffer_used);
     for (int i=0;i<15;i++)
     {
         if (data->row_used[i])
@@ -130,10 +130,10 @@ int write_cc_buffer_as_smptett (struct eia608_screen *data, struct ccx_s_write *
                 dbg_print(CCX_DMT_608, "\r");
                 dbg_print(CCX_DMT_608, "%s\n",subline);
             }
-            write (wb->fh, subline, length);            
+			write(context->out->fh, subline, length);
             wrote_something=1;
           
-            write (wb->fh,encoded_crlf, encoded_crlf_length);
+			write(context->out->fh, encoded_crlf, encoded_crlf_length);
         }
     }
     sprintf ((char *) str,"</p>\n");
@@ -142,7 +142,7 @@ int write_cc_buffer_as_smptett (struct eia608_screen *data, struct ccx_s_write *
         dbg_print(CCX_DMT_608, "\r%s\n", str);
     }
     enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-    write (wb->fh, enc_buffer,enc_buffer_used);
+	write(context->out->fh, enc_buffer, enc_buffer_used);
 
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {

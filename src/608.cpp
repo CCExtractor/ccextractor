@@ -119,7 +119,7 @@ void clear_eia608_cc_buffer (struct eia608_screen *data)
     data->empty=1;
 }
 
-void init_eia608 (struct eia608 *data)
+void init_context_cc608(struct s_context_cc608 *data, int field)
 {
     data->cursor_column=0;
     data->cursor_row=0;
@@ -140,18 +140,22 @@ void init_eia608 (struct eia608 *data)
 	data->ts_start_of_current_line=-1;
 	data->ts_last_char_received=-1;
 	data->new_channel=1;
+	data->bytes_processed_608 = 0;
+	data->my_field = field;
+	data->out = NULL;
+
 }
 
-eia608_screen *get_writing_buffer (struct ccx_s_write *wb)
+eia608_screen *get_writing_buffer(struct s_context_cc608 *context)
 {
     eia608_screen *use_buffer=NULL;
-    switch (wb->data608->mode)
+    switch (context->mode)
     {
         case MODE_POPON: // Write on the non-visible buffer
-            if (wb->data608->visible_buffer==1)
-                use_buffer = &wb->data608->buffer2;
+			if (context->visible_buffer == 1)
+				use_buffer = &context->buffer2;
             else
-                use_buffer = &wb->data608->buffer1;
+				use_buffer = &context->buffer1;
             break;
 		case MODE_FAKE_ROLLUP_1: // Write directly to screen
         case MODE_ROLLUP_2: 
@@ -160,10 +164,10 @@ eia608_screen *get_writing_buffer (struct ccx_s_write *wb)
 		case MODE_PAINTON:
 		case MODE_TEXT:
 			// TODO: Fix this. Text uses a different buffer, and contains non-program information.
-            if (wb->data608->visible_buffer==1)
-                use_buffer = &wb->data608->buffer1;
+			if (context->visible_buffer == 1)
+				use_buffer = &context->buffer1;
             else
-                use_buffer = &wb->data608->buffer2;
+				use_buffer = &context->buffer2;
             break;
         default:
             fatal (EXIT_BUG_BUG, "Caption mode has an illegal value at get_writing_buffer(), this is a bug.\n");
@@ -171,57 +175,57 @@ eia608_screen *get_writing_buffer (struct ccx_s_write *wb)
     return use_buffer;
 }
 
-void delete_to_end_of_row (struct ccx_s_write *wb)
+void delete_to_end_of_row(struct s_context_cc608 *context)
 {
-    if (wb->data608->mode!=MODE_TEXT) 
+	if (context->mode != MODE_TEXT)
     {		
-		eia608_screen * use_buffer=get_writing_buffer(wb);
-		for (int i=wb->data608->cursor_column; i<=31 ; i++)
+		eia608_screen * use_buffer = get_writing_buffer(context);
+		for (int i = context->cursor_column; i <= 31; i++)
 		{
 			// TODO: This can change the 'used' situation of a column, so we'd
 			// need to check and correct.
-	        use_buffer->characters[wb->data608->cursor_row][i]=' ';			
-			use_buffer->colors[wb->data608->cursor_row][i]=ccx_options.cc608_default_color;
-			use_buffer->fonts[wb->data608->cursor_row][i]=wb->data608->font;	
+			use_buffer->characters[context->cursor_row][i] = ' ';
+			use_buffer->colors[context->cursor_row][i] = ccx_options.cc608_default_color;
+			use_buffer->fonts[context->cursor_row][i] = context->font;
 		}
 	}
 }
 
-void write_char (const unsigned char c, struct ccx_s_write *wb)
+void write_char(const unsigned char c, struct s_context_cc608 *context)
 {
-    if (wb->data608->mode!=MODE_TEXT) 
+	if (context->mode != MODE_TEXT)
     {		
-        eia608_screen * use_buffer=get_writing_buffer(wb);
+		eia608_screen * use_buffer = get_writing_buffer(context);
         /* printf ("\rWriting char [%c] at %s:%d:%d\n",c,
         use_buffer == &wb->data608->buffer1?"B1":"B2",
         wb->data608->cursor_row,wb->data608->cursor_column); */
-        use_buffer->characters[wb->data608->cursor_row][wb->data608->cursor_column]=c;
-        use_buffer->colors[wb->data608->cursor_row][wb->data608->cursor_column]=wb->data608->color;
-        use_buffer->fonts[wb->data608->cursor_row][wb->data608->cursor_column]=wb->data608->font;	
-        use_buffer->row_used[wb->data608->cursor_row]=1;
+		use_buffer->characters[context->cursor_row][context->cursor_column] = c;
+		use_buffer->colors[context->cursor_row][context->cursor_column] = context->color;
+		use_buffer->fonts[context->cursor_row][context->cursor_column] = context->font;
+		use_buffer->row_used[context->cursor_row] = 1;
 
         if (use_buffer->empty)
         {
-            if (MODE_POPON != wb->data608->mode)
-                wb->data608->current_visible_start_ms = get_visible_start();
+			if (MODE_POPON != context->mode)
+				context->current_visible_start_ms = get_visible_start();
         }
         use_buffer->empty=0;
 
-        if (wb->data608->cursor_column<31)
-            wb->data608->cursor_column++;
-		if (wb->data608->ts_start_of_current_line == -1) 
-			wb->data608->ts_start_of_current_line=get_fts();
-		wb->data608->ts_last_char_received=get_fts();
+		if (context->cursor_column<31)
+			context->cursor_column++;
+		if (context->ts_start_of_current_line == -1)
+			context->ts_start_of_current_line = get_fts();
+		context->ts_last_char_received = get_fts();
     }
 
 }
 
 /* Handle MID-ROW CODES. */
-void handle_text_attr (const unsigned char c1, const unsigned char c2, struct ccx_s_write *wb)
+void handle_text_attr(const unsigned char c1, const unsigned char c2, struct s_context_cc608 *context)
 {
     // Handle channel change
-    wb->data608->channel=wb->data608->new_channel;
-    if (wb->data608->channel!=ccx_options.cc_channel)
+	context->channel = context->new_channel;
+	if (context->channel != ccx_options.cc_channel)
         return;
     dbg_print(CCX_DMT_608, "\r608: text_attr: %02X %02X",c1,c2);
     if ( ((c1!=0x11 && c1!=0x19) ||
@@ -232,20 +236,20 @@ void handle_text_attr (const unsigned char c1, const unsigned char c2, struct cc
     else
     {
         int i = c2-0x20;
-        wb->data608->color=pac2_attribs[i][0];
-        wb->data608->font=pac2_attribs[i][1];
+		context->color = pac2_attribs[i][0];
+		context->font = pac2_attribs[i][1];
         dbg_print(CCX_DMT_608, "  --  Color: %s,  font: %s\n",
-            color_text[wb->data608->color][0],
-            font_text[wb->data608->font]);
+			color_text[context->color][0],
+			font_text[context->font]);
         // Mid-row codes should put a non-transparent space at the current position
         // and advance the cursor
         //so use write_char
-        write_char(0x20, wb);
+		write_char(0x20, context);
     }
 }
 
 
-void write_subtitle_file_footer (struct ccx_s_write *wb)
+void write_subtitle_file_footer(struct s_context_cc608 *context)
 {
     switch (ccx_options.write_format)
     {
@@ -256,7 +260,7 @@ void write_subtitle_file_footer (struct ccx_s_write *wb)
                 dbg_print(CCX_DMT_608, "\r%s\n", str);
             }
             enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-            write (wb->fh, enc_buffer,enc_buffer_used);
+			write(context->out->fh, enc_buffer, enc_buffer_used);
             break;
 		case CCX_OF_SMPTETT:
 			sprintf ((char *) str,"</div></body></tt>\n");
@@ -265,10 +269,10 @@ void write_subtitle_file_footer (struct ccx_s_write *wb)
 				dbg_print(CCX_DMT_608, "\r%s\n", str);
 			}
 			enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-			write (wb->fh, enc_buffer,enc_buffer_used);
+			write (context->out->fh, enc_buffer,enc_buffer_used);
 			break;
         case CCX_OF_SPUPNG:
-            write_spumux_footer(wb);
+            write_spumux_footer(context);
             break;
 		default: // Nothing to do, no footer on this format
             break;
@@ -276,7 +280,7 @@ void write_subtitle_file_footer (struct ccx_s_write *wb)
 }
 
 
-void write_subtitle_file_header (struct ccx_s_write *wb)
+void write_subtitle_file_header(struct s_context_cc608 *context)
 {
     switch (ccx_options.write_format)
     {
@@ -286,19 +290,19 @@ void write_subtitle_file_header (struct ccx_s_write *wb)
             //fprintf_encoded (wb->fh, sami_header);
             REQUEST_BUFFER_CAPACITY(strlen (sami_header)*3);
             enc_buffer_used=encode_line (enc_buffer,(unsigned char *) sami_header);
-            write (wb->fh, enc_buffer,enc_buffer_used);
+            write (context->out->fh, enc_buffer,enc_buffer_used);
             break;
         case CCX_OF_SMPTETT: // This header brought to you by McPoodle's CCASDI  
 			//fprintf_encoded (wb->fh, sami_header);
 			REQUEST_BUFFER_CAPACITY(strlen (smptett_header)*3);
             enc_buffer_used=encode_line (enc_buffer,(unsigned char *) smptett_header);
-            write (wb->fh, enc_buffer,enc_buffer_used);
+			write(context->out->fh, enc_buffer, enc_buffer_used);
             break;
         case CCX_OF_RCWT: // Write header
-            write (wb->fh, rcwt_header, sizeof(rcwt_header));
+			write(context->out->fh, rcwt_header, sizeof(rcwt_header));
             break;
         case CCX_OF_SPUPNG:
-            write_spumux_header(wb);
+			write_spumux_header(context);
             break;
         case CCX_OF_TRANSCRIPT: // No header. Fall thru
         default:
@@ -306,7 +310,7 @@ void write_subtitle_file_header (struct ccx_s_write *wb)
     }
 }
 
-void write_cc_line_as_transcript (struct eia608_screen *data, struct ccx_s_write *wb, int line_number)
+void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc608 *context, int line_number)
 {
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
@@ -326,7 +330,7 @@ void write_cc_line_as_transcript (struct eia608_screen *data, struct ccx_s_write
 		if (timestamps_on_transcript)
 		{
 			const char *mode="???";
-			switch (wb->data608->mode)
+			switch (context->mode)
 			{
 				case MODE_POPON:
 					mode="POP";
@@ -351,7 +355,7 @@ void write_cc_line_as_transcript (struct eia608_screen *data, struct ccx_s_write
 					break;
 			}
 
-			if (wb->data608->ts_start_of_current_line == -1) 
+			if (context->ts_start_of_current_line == -1)
 			{
 				// CFS: Means that the line has characters but we don't have a timestamp for the first one. Since the timestamp
 				// is set for example by the write_char function, it possible that we don't have one in empty lines (unclear)
@@ -361,26 +365,26 @@ void write_cc_line_as_transcript (struct eia608_screen *data, struct ccx_s_write
 			}
 			if (ccx_options.ucla_settings)
 			{
-				mstotime (wb->data608->ts_start_of_current_line+subs_delay,&h1,&m1,&s1,&ms1);
+				mstotime(context->ts_start_of_current_line + subs_delay, &h1, &m1, &s1, &ms1);
 				mstotime (get_fts()+subs_delay,&h2,&m2,&s2,&ms2);				
 
                 // SSC-1182 BEGIN
                 // Changed output format to be more like ZVBI
 
 				char buffer[80];
-                time_t start_time_int = (wb->data608->ts_start_of_current_line+subs_delay)/1000;
-                int start_time_dec = (wb->data608->ts_start_of_current_line+subs_delay)%1000;
+				time_t start_time_int = (context->ts_start_of_current_line + subs_delay) / 1000;
+				int start_time_dec = (context->ts_start_of_current_line + subs_delay) % 1000;
                 struct tm *start_time_struct = gmtime(&start_time_int);
                 strftime(buffer, sizeof(buffer), "%Y%m%d%H%M%S", start_time_struct);
-                fdprintf(wb->fh, "%s.%03d|", buffer, start_time_dec);
+				fdprintf(context->out->fh, "%s.%03d|", buffer, start_time_dec);
 
                 time_t end_time_int = (get_fts()+subs_delay)/1000;
                 int end_time_dec = (get_fts()+subs_delay)%1000;
                 struct tm *end_time_struct = gmtime(&end_time_int);
                 strftime(buffer, sizeof(buffer), "%Y%m%d%H%M%S", end_time_struct);
-                fdprintf(wb->fh, "%s.%03d|", buffer, end_time_dec);
+				fdprintf(context->out->fh, "%s.%03d|", buffer, end_time_dec);
 
-				fdprintf(wb->fh, "CC%d|%s|", wb->my_field==1?wb->data608->channel:wb->data608->channel+2, // Data from field 2 is CC3 or 4
+				fdprintf(context->out->fh, "CC%d|%s|", context->my_field == 1 ? context->channel : context->channel + 2, // Data from field 2 is CC3 or 4
 					mode);
                 // SSC-1182 END
 			}
@@ -388,31 +392,31 @@ void write_cc_line_as_transcript (struct eia608_screen *data, struct ccx_s_write
 			{
 				char buf1[80], buf2[80];
 				char timeline[256];   
-				millis_to_date (wb->data608->ts_start_of_current_line+subs_delay,buf1);
+				millis_to_date(context->ts_start_of_current_line + subs_delay, buf1);
 				millis_to_date (get_fts()+subs_delay, buf2);
 				sprintf (timeline, "%s|%s|%s|",
 					buf1, buf2,mode);
 				enc_buffer_used=encode_line (enc_buffer,(unsigned char *) timeline);
-				write (wb->fh, enc_buffer,enc_buffer_used);
+				write(context->out->fh, enc_buffer, enc_buffer_used);
 			}			
 		}
-        write (wb->fh, subline, length);
-        write (wb->fh, encoded_crlf, encoded_crlf_length);
+		write(context->out->fh, subline, length);
+		write(context->out->fh, encoded_crlf, encoded_crlf_length);
     }
     // fprintf (wb->fh,encoded_crlf);
 }
 
-int write_cc_buffer_as_transcript (struct eia608_screen *data, struct ccx_s_write *wb)
+int write_cc_buffer_as_transcript(struct eia608_screen *data, struct s_context_cc608 *context)
 {
     int wrote_something = 0;
-	wb->data608->ts_start_of_current_line=wb->data608->current_visible_start_ms;
+	context->ts_start_of_current_line = context->current_visible_start_ms;
     dbg_print(CCX_DMT_608, "\n- - - TRANSCRIPT caption - - -\n");        
     
     for (int i=0;i<15;i++)
     {
         if (data->row_used[i])
         {		
-            write_cc_line_as_transcript (data,wb, i);
+            write_cc_line_as_transcript (data,context, i);
         }
         wrote_something=1;
     }
@@ -423,62 +427,62 @@ int write_cc_buffer_as_transcript (struct eia608_screen *data, struct ccx_s_writ
 
 
 
-struct eia608_screen *get_current_visible_buffer (struct ccx_s_write *wb)
+struct eia608_screen *get_current_visible_buffer(struct s_context_cc608 *context)
 {
     struct eia608_screen *data;
-    if (wb->data608->visible_buffer==1)
-        data = &wb->data608->buffer1;
+	if (context->visible_buffer == 1)
+		data = &context->buffer1;
     else
-        data = &wb->data608->buffer2;
+		data = &context->buffer2;
     return data;
 }
 
 
-int write_cc_buffer (struct ccx_s_write *wb)
+int write_cc_buffer(struct s_context_cc608 *context)
 {
     struct eia608_screen *data;
     int wrote_something=0;
     if (ccx_options.screens_to_process!=-1 && 
-		wb->data608->screenfuls_counter>=ccx_options.screens_to_process)
+		context->screenfuls_counter >= ccx_options.screens_to_process)
     {
         // We are done. 
         processed_enough=1;
         return 0;
     }
-    if (wb->data608->visible_buffer==1)
-        data = &wb->data608->buffer1;
+	if (context->visible_buffer == 1)
+		data = &context->buffer1;
     else
-        data = &wb->data608->buffer2;
+		data = &context->buffer2;
 
     if (!data->empty)
     {
-		if (wb->data608->mode==MODE_FAKE_ROLLUP_1 && // Use the actual start of data instead of last buffer change
-			wb->data608->ts_start_of_current_line!=-1)
-			wb->data608->current_visible_start_ms=wb->data608->ts_start_of_current_line;
+		if (context->mode == MODE_FAKE_ROLLUP_1 && // Use the actual start of data instead of last buffer change
+			context->ts_start_of_current_line != -1)
+			context->current_visible_start_ms = context->ts_start_of_current_line;
 
         new_sentence=1;
         switch (ccx_options.write_format)
         {
             case CCX_OF_SRT:
                 if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
-                    try_to_add_start_credits(wb);            
-                wrote_something = write_cc_buffer_as_srt (data, wb);
+					try_to_add_start_credits(context);
+				wrote_something = write_cc_buffer_as_srt(data, context);
                 break;
             case CCX_OF_SAMI:
                 if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
-                    try_to_add_start_credits(wb);
-                wrote_something = write_cc_buffer_as_sami (data,wb);
+					try_to_add_start_credits(context);
+				wrote_something = write_cc_buffer_as_sami(data, context);
                 break;
             case CCX_OF_SMPTETT:
 				if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
-					try_to_add_start_credits(wb);
-				wrote_something = write_cc_buffer_as_smptett (data,wb);
+					try_to_add_start_credits(context);
+				wrote_something = write_cc_buffer_as_smptett(data, context);
                 break;
             case CCX_OF_TRANSCRIPT:
-                wrote_something = write_cc_buffer_as_transcript (data,wb);
+				wrote_something = write_cc_buffer_as_transcript(data, context);
                 break;
             case CCX_OF_SPUPNG:
-                wrote_something = write_cc_buffer_as_spupng (data,wb);
+				wrote_something = write_cc_buffer_as_spupng(data, context);
                 break;
             default: 
                 break;
@@ -487,23 +491,23 @@ int write_cc_buffer (struct ccx_s_write *wb)
             last_displayed_subs_ms=get_fts()+subs_delay; 
 
         if (ccx_options.gui_mode_reports)
-            write_cc_buffer_to_gui (data,wb);
+			write_cc_buffer_to_gui(data, context);
     }
     return wrote_something;
 }
 
 // Check if a rollup would cause a line to go off the visible area
-int check_roll_up (struct ccx_s_write *wb)
+int check_roll_up(struct s_context_cc608 *context)
 {
 	int keep_lines=0;
 	int firstrow=-1, lastrow=-1;
     eia608_screen *use_buffer;
-    if (wb->data608->visible_buffer==1)
-        use_buffer = &wb->data608->buffer1;
+	if (context->visible_buffer == 1)
+		use_buffer = &context->buffer1;
     else
-        use_buffer = &wb->data608->buffer2;
+		use_buffer = &context->buffer2;
 
-	switch (wb->data608->mode)
+	switch (context->mode)
     {
 		case MODE_FAKE_ROLLUP_1:
             keep_lines=1;
@@ -542,22 +546,22 @@ int check_roll_up (struct ccx_s_write *wb)
 	if ((lastrow-firstrow+1)>=keep_lines)
 		return 1; // We have the roll-up area full, so yes
 
-    if ((firstrow-1)<=wb->data608->cursor_row-keep_lines) // Roll up will delete those lines.
+	if ((firstrow - 1) <= context->cursor_row - keep_lines) // Roll up will delete those lines.
 		return 1;    
 	return 0;
 }
 
 // Roll-up: Returns true if a line was rolled over the visible area (it dissapears from screen), false
 // if the rollup didn't delete any line.
-int roll_up(struct ccx_s_write *wb)
+int roll_up(struct s_context_cc608 *context)
 {
     eia608_screen *use_buffer;
-    if (wb->data608->visible_buffer==1)
-        use_buffer = &wb->data608->buffer1;
+	if (context->visible_buffer == 1)
+		use_buffer = &context->buffer1;
     else
-        use_buffer = &wb->data608->buffer2;
+		use_buffer = &context->buffer2;
     int keep_lines;
-    switch (wb->data608->mode)
+	switch (context->mode)
     {
 		case MODE_FAKE_ROLLUP_1:
             keep_lines=1;
@@ -607,7 +611,7 @@ int roll_up(struct ccx_s_write *wb)
             use_buffer->row_used[j]=use_buffer->row_used[j+1];
         }
     }
-    for (int j=0;j<(1+wb->data608->cursor_row-keep_lines);j++)
+	for (int j = 0; j<(1 + context->cursor_row - keep_lines); j++)
     {
         memset(use_buffer->characters[j],' ',CC608_SCREEN_WIDTH);			        
 		memset(use_buffer->colors[j],ccx_options.cc608_default_color,CC608_SCREEN_WIDTH);
@@ -639,49 +643,49 @@ int roll_up(struct ccx_s_write *wb)
 	return (rows_now != rows_orig);
 }
 
-void erase_memory (struct ccx_s_write *wb, int displayed)
+void erase_memory(struct s_context_cc608 *context, int displayed)
 {
     eia608_screen *buf;
     if (displayed)
     {
-        if (wb->data608->visible_buffer==1)
-            buf=&wb->data608->buffer1;
+		if (context->visible_buffer == 1)
+			buf = &context->buffer1;
         else
-            buf=&wb->data608->buffer2;
+			buf = &context->buffer2;
     }
     else
     {
-        if (wb->data608->visible_buffer==1)
-            buf=&wb->data608->buffer2;
+		if (context->visible_buffer == 1)
+			buf = &context->buffer2;
         else
-            buf=&wb->data608->buffer1;
+			buf = &context->buffer1;
     }
     clear_eia608_cc_buffer (buf);
 }
 
-int is_current_row_empty (struct ccx_s_write *wb)
+int is_current_row_empty(struct s_context_cc608 *context)
 {
     eia608_screen *use_buffer;
-    if (wb->data608->visible_buffer==1)
-        use_buffer = &wb->data608->buffer1;
+	if (context->visible_buffer == 1)
+		use_buffer = &context->buffer1;
     else
-        use_buffer = &wb->data608->buffer2;
+		use_buffer = &context->buffer2;
     for (int i=0;i<CC608_SCREEN_WIDTH;i++)
     {
-        if (use_buffer->characters[wb->data608->rollup_base_row][i]!=' ')
+		if (use_buffer->characters[context->rollup_base_row][i] != ' ')
             return 0;
     }
     return 1;
 }
 
 /* Process GLOBAL CODES */
-void handle_command (/*const */ unsigned char c1, const unsigned char c2, struct ccx_s_write *wb)
+void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct s_context_cc608 *context)
 {
 	int changes=0; 
 
     // Handle channel change
-    wb->data608->channel=wb->data608->new_channel;
-    if (wb->data608->channel!=ccx_options.cc_channel)
+	context->channel = context->new_channel;
+	if (context->channel != ccx_options.cc_channel)
         return;
 
     command_code command = COM_UNKNOWN;
@@ -731,34 +735,34 @@ void handle_command (/*const */ unsigned char c1, const unsigned char c2, struct
 		command=COM_ROLLUP3;
 	
 	dbg_print(CCX_DMT_608, "\rCommand begin: %02X %02X (%s)\n",c1,c2,command_type[command]);
-	dbg_print(CCX_DMT_608, "\rCurrent mode: %d  Position: %d,%d  VisBuf: %d\n",wb->data608->mode,
-		wb->data608->cursor_row,wb->data608->cursor_column, wb->data608->visible_buffer);        
+	dbg_print(CCX_DMT_608, "\rCurrent mode: %d  Position: %d,%d  VisBuf: %d\n", context->mode,
+		context->cursor_row, context->cursor_column, context->visible_buffer);
 
     switch (command)
     {
         case COM_BACKSPACE:
-            if (wb->data608->cursor_column>0)
+			if (context->cursor_column>0)
             {
-                wb->data608->cursor_column--;
-                get_writing_buffer(wb)->characters[wb->data608->cursor_row][wb->data608->cursor_column]=' ';
+				context->cursor_column--;
+				get_writing_buffer(context)->characters[context->cursor_row][context->cursor_column] = ' ';
             }
             break;
         case COM_TABOFFSET1:
-            if (wb->data608->cursor_column<31)
-                wb->data608->cursor_column++;
+			if (context->cursor_column<31)
+				context->cursor_column++;
             break;
         case COM_TABOFFSET2:
-            wb->data608->cursor_column+=2;
-            if (wb->data608->cursor_column>31)
-                wb->data608->cursor_column=31;
+			context->cursor_column += 2;
+			if (context->cursor_column>31)
+				context->cursor_column = 31;
             break;
         case COM_TABOFFSET3:
-            wb->data608->cursor_column+=3;
-            if (wb->data608->cursor_column>31)
-                wb->data608->cursor_column=31;
+			context->cursor_column += 3;
+			if (context->cursor_column>31)
+				context->cursor_column = 31;
             break;
         case COM_RESUMECAPTIONLOADING:
-            wb->data608->mode=MODE_POPON;
+			context->mode = MODE_POPON;
 			// TODO: Is this right? 
 			// Needed for 2013-03-23_0100_US_MSNBC_The_Rachel_Maddow_Show.mpg
 			// But I can't find anything in the specs about RCL requiring a
@@ -777,30 +781,30 @@ void handle_command (/*const */ unsigned char c1, const unsigned char c2, struct
 
             break;
         case COM_RESUMETEXTDISPLAY:
-            wb->data608->mode=MODE_TEXT;
+			context->mode = MODE_TEXT;
             break;
 		case COM_FAKE_RULLUP1:
         case COM_ROLLUP2:            
 		case COM_ROLLUP3:
 		case COM_ROLLUP4:
-            if (wb->data608->mode==MODE_POPON || wb->data608->mode==MODE_PAINTON)
+			if (context->mode == MODE_POPON || context->mode == MODE_PAINTON)
             {
 				/* CEA-608 C.10 Style Switching (regulatory) 
 				[...]if pop-up or paint-on captioning is already present in 
 				either memory it shall be erased[...] */
-                if (write_cc_buffer (wb))
-                    wb->data608->screenfuls_counter++;
-                erase_memory (wb, true);			
+				if (write_cc_buffer(context))
+					context->screenfuls_counter++;
+				erase_memory(context, true);
             }
-            erase_memory (wb, false);            
+			erase_memory(context, false);
 
 			// If the reception of data for a row is interrupted by data for the alternate 
 			// data channel or for text mode, the display of caption text will resume from the same
 			// cursor position if a roll-up caption command is received and no PAC is given [...]
-			if (wb->data608->mode==MODE_TEXT)					
+			if (context->mode == MODE_TEXT)
 			{
-				wb->data608->cursor_row=14; // Default if the previous mode wasn't roll up already.
-				wb->data608->cursor_column=0;
+				context->cursor_row = 14; // Default if the previous mode wasn't roll up already.
+				context->cursor_column = 0;
 			}
 			else
 			{
@@ -810,114 +814,114 @@ void handle_command (/*const */ unsigned char c1, const unsigned char c2, struct
 				//base row last received, and the cursor shall be placed atColumn 1.
 				//" This rule is meant to be applied only when no roll-up    caption is 
 				// currently displayed,
-				if (wb->data608->mode!=MODE_FAKE_ROLLUP_1 && 
-					wb->data608->mode!=MODE_ROLLUP_2 && 
-					wb->data608->mode!=MODE_ROLLUP_3 && 
-					wb->data608->mode==MODE_ROLLUP_4)
+				if (context->mode != MODE_FAKE_ROLLUP_1 &&
+					context->mode != MODE_ROLLUP_2 &&
+					context->mode != MODE_ROLLUP_3 &&
+					context->mode == MODE_ROLLUP_4)
 				{
-					wb->data608->cursor_row=wb->data608->rollup_base_row;
-					wb->data608->cursor_column=0;
+					context->cursor_row = context->rollup_base_row;
+					context->cursor_column = 0;
 				}
 			}
 			switch (command)			
 			{
 				case COM_FAKE_RULLUP1:
-					wb->data608->mode=MODE_FAKE_ROLLUP_1;
+					context->mode = MODE_FAKE_ROLLUP_1;
 					break;
 				case COM_ROLLUP2:
-					wb->data608->mode=MODE_ROLLUP_2;
+					context->mode = MODE_ROLLUP_2;
 					break;
 				case COM_ROLLUP3:
-					wb->data608->mode=MODE_ROLLUP_3;
+					context->mode = MODE_ROLLUP_3;
 					break;
 				case COM_ROLLUP4:
-					wb->data608->mode=MODE_ROLLUP_4;
+					context->mode = MODE_ROLLUP_4;
 					break;
 				default: // Impossible, but remove compiler warnings
 					break;
 			}
             break;
         case COM_CARRIAGERETURN:
-			if (wb->data608->mode==MODE_PAINTON) // CR has no effect on painton mode according to zvbis' code
+			if (context->mode == MODE_PAINTON) // CR has no effect on painton mode according to zvbis' code
 				break; 
-			if (wb->data608->mode==MODE_POPON) // CFS: Not sure about this. Is there a valid reason for CR in popup?
+			if (context->mode == MODE_POPON) // CFS: Not sure about this. Is there a valid reason for CR in popup?
 			{
-				wb->data608->cursor_column=0;
-				if (wb->data608->cursor_row<15)
-					wb->data608->cursor_row++;					
+				context->cursor_column = 0;
+				if (context->cursor_row<15)
+					context->cursor_row++;
 				break;
 			}
 			if (ccx_options.write_format==CCX_OF_TRANSCRIPT)
 			{
-                write_cc_line_as_transcript(get_current_visible_buffer (wb), wb, wb->data608->cursor_row);
+				write_cc_line_as_transcript(get_current_visible_buffer(context), context, context->cursor_row);
 			}
 
             // In transcript mode, CR doesn't write the whole screen, to avoid
             // repeated lines.
-			changes=check_roll_up (wb);
+			changes = check_roll_up(context);
 			if (changes)
 			{
 				// Only if the roll up would actually cause a line to disappear we write the buffer
 				if (ccx_options.write_format!=CCX_OF_TRANSCRIPT)
 				{
-					if (write_cc_buffer(wb))
-						wb->data608->screenfuls_counter++;
+					if (write_cc_buffer(context))
+						context->screenfuls_counter++;
 					if (ccx_options.norollup)
-	                    erase_memory (wb,true); // Make sure the lines we just wrote aren't written again
+						erase_memory(context, true); // Make sure the lines we just wrote aren't written again
 				}
 			}
-			roll_up(wb); // The roll must be done anyway of course.
-			wb->data608->ts_start_of_current_line = -1; // Unknown. 
+			roll_up(context); // The roll must be done anyway of course.
+			context->ts_start_of_current_line = -1; // Unknown. 
 			if (changes)
-				wb->data608->current_visible_start_ms=get_visible_start();
-            wb->data608->cursor_column=0;
+				context->current_visible_start_ms = get_visible_start();
+			context->cursor_column = 0;
             break;
         case COM_ERASENONDISPLAYEDMEMORY:
-            erase_memory (wb,false);
+			erase_memory(context, false);
             break;
         case COM_ERASEDISPLAYEDMEMORY:
             // Write it to disk before doing this, and make a note of the new
             // time it became clear.
             if (ccx_options.write_format==CCX_OF_TRANSCRIPT && 
-                (wb->data608->mode==MODE_FAKE_ROLLUP_1 ||
-				wb->data608->mode==MODE_ROLLUP_2 || wb->data608->mode==MODE_ROLLUP_3 ||
-                wb->data608->mode==MODE_ROLLUP_4))
+				(context->mode == MODE_FAKE_ROLLUP_1 ||
+				context->mode == MODE_ROLLUP_2 || context->mode == MODE_ROLLUP_3 ||
+				context->mode == MODE_ROLLUP_4))
             {
                 // In transcript mode we just write the cursor line. The previous lines
                 // should have been written already, so writing everything produces
                 // duplicate lines.				
-                write_cc_line_as_transcript(get_current_visible_buffer (wb), wb, wb->data608->cursor_row);
+				write_cc_line_as_transcript(get_current_visible_buffer(context), context, context->cursor_row);
             }
             else
             {
-                if (write_cc_buffer (wb))
-                    wb->data608->screenfuls_counter++;
+				if (write_cc_buffer(context))
+					context->screenfuls_counter++;
             }
-            erase_memory (wb,true);
-            wb->data608->current_visible_start_ms=get_visible_start();
+			erase_memory(context, true);
+			context->current_visible_start_ms = get_visible_start();
             break;
         case COM_ENDOFCAPTION: // Switch buffers
             // The currently *visible* buffer is leaving, so now we know its ending
             // time. Time to actually write it to file.
-            if (write_cc_buffer (wb))
-                wb->data608->screenfuls_counter++;
-            wb->data608->visible_buffer = (wb->data608->visible_buffer==1) ? 2 : 1;
-            wb->data608->current_visible_start_ms=get_visible_start();
-            wb->data608->cursor_column=0;
-            wb->data608->cursor_row=0;
-            wb->data608->color=ccx_options.cc608_default_color;
-            wb->data608->font=FONT_REGULAR;
-			wb->data608->mode=MODE_POPON;
+			if (write_cc_buffer(context))
+				context->screenfuls_counter++;
+			context->visible_buffer = (context->visible_buffer == 1) ? 2 : 1;
+			context->current_visible_start_ms = get_visible_start();
+			context->cursor_column = 0;
+			context->cursor_row = 0;
+			context->color = ccx_options.cc608_default_color;
+			context->font = FONT_REGULAR;
+			context->mode = MODE_POPON;
             break;
 		case COM_DELETETOENDOFROW:
-			delete_to_end_of_row (wb);
+			delete_to_end_of_row(context);
 			break;
 		case COM_ALARMOFF:
 		case COM_ALARMON:
 			// These two are unused according to Robson's, and we wouldn't be able to do anything useful anyway
 			break;
 		case COM_RESUMEDIRECTCAPTIONING:
-			wb->data608->mode = MODE_PAINTON;
+			context->mode = MODE_PAINTON;
 			//mprint ("\nWarning: Received ResumeDirectCaptioning, this mode is almost impossible.\n");
 			//mprint ("to transcribe to a text file.\n");
 			break;
@@ -925,44 +929,44 @@ void handle_command (/*const */ unsigned char c1, const unsigned char c2, struct
             dbg_print(CCX_DMT_608, "\rNot yet implemented.\n");            
             break;
     }
-	dbg_print(CCX_DMT_608, "\rCurrent mode: %d  Position: %d,%d    VisBuf: %d\n",wb->data608->mode,
-		wb->data608->cursor_row,wb->data608->cursor_column, wb->data608->visible_buffer);        
+	dbg_print(CCX_DMT_608, "\rCurrent mode: %d  Position: %d,%d    VisBuf: %d\n", context->mode,
+		context->cursor_row, context->cursor_column, context->visible_buffer);
 	dbg_print(CCX_DMT_608, "\rCommand end: %02X %02X (%s)\n",c1,c2,command_type[command]);
 
 }
 
-void handle_end_of_data (struct ccx_s_write *wb)
+void handle_end_of_data(struct s_context_cc608 *context)
 {
     // We issue a EraseDisplayedMemory here so if there's any captions pending
     // they get written to file. 
-    handle_command (0x14, 0x2c, wb); // EDM
+    handle_command (0x14, 0x2c, context); // EDM
 }
 
 // CEA-608, Anex F 1.1.1. - Character Set Table / Special Characters
-void handle_double (const unsigned char c1, const unsigned char c2, struct ccx_s_write *wb)
+void handle_double(const unsigned char c1, const unsigned char c2, struct s_context_cc608 *context)
 {
     unsigned char c;
-    if (wb->data608->channel!=ccx_options.cc_channel)
+	if (context->channel != ccx_options.cc_channel)
         return;
     if (c2>=0x30 && c2<=0x3f)
     {
         c=c2 + 0x50; // So if c>=0x80 && c<=0x8f, it comes from here
         dbg_print(CCX_DMT_608, "\rDouble: %02X %02X  -->  %c\n",c1,c2,c);
-        write_char(c,wb);
+		write_char(c, context);
     }
 }
 
 /* Process EXTENDED CHARACTERS */
-unsigned char handle_extended (unsigned char hi, unsigned char lo, struct ccx_s_write *wb)
+unsigned char handle_extended(unsigned char hi, unsigned char lo, struct s_context_cc608 *context)
 {
     // Handle channel change
-    if (wb->data608->new_channel > 2) 
+	if (context->new_channel > 2)
     {
-        wb->data608->new_channel -= 2;
-        dbg_print(CCX_DMT_608, "\nChannel correction, now %d\n", wb->data608->new_channel);
+		context->new_channel -= 2;
+		dbg_print(CCX_DMT_608, "\nChannel correction, now %d\n", context->new_channel);
     }
-    wb->data608->channel=wb->data608->new_channel;
-    if (wb->data608->channel!=ccx_options.cc_channel)
+	context->channel = context->new_channel;
+	if (context->channel != ccx_options.cc_channel)
         return 0;
 
     // For lo values between 0x20-0x3f
@@ -983,25 +987,25 @@ unsigned char handle_extended (unsigned char hi, unsigned char lo, struct ccx_s_
         // This column change is because extended characters replace 
         // the previous character (which is sent for basic decoders
         // to show something similar to the real char)
-        if (wb->data608->cursor_column>0)        
-            wb->data608->cursor_column--;        
+		if (context->cursor_column>0)
+			context->cursor_column--;
 
-        write_char (c,wb);
+		write_char(c, context);
     }
     return 1;
 }
 
 /* Process PREAMBLE ACCESS CODES (PAC) */
-void handle_pac (unsigned char c1, unsigned char c2, struct ccx_s_write *wb)
+void handle_pac(unsigned char c1, unsigned char c2, struct s_context_cc608 *context)
 {
     // Handle channel change
-    if (wb->data608->new_channel > 2) 
+	if (context->new_channel > 2)
     {
-        wb->data608->new_channel -= 2;
-        dbg_print(CCX_DMT_608, "\nChannel correction, now %d\n", wb->data608->new_channel);
+		context->new_channel -= 2;
+		dbg_print(CCX_DMT_608, "\nChannel correction, now %d\n", context->new_channel);
     }
-    wb->data608->channel=wb->data608->new_channel;
-    if (wb->data608->channel!=ccx_options.cc_channel)
+	context->channel = context->new_channel;
+	if (context->channel != ccx_options.cc_channel)
         return;
 
     int row=rowdata[((c1<<1)&14)|((c2>>5)&1)];
@@ -1024,27 +1028,27 @@ void handle_pac (unsigned char c1, unsigned char c2, struct ccx_s_write *wb)
             return;
         }
     }	
-    wb->data608->color=pac2_attribs[c2][0];	
-    wb->data608->font=pac2_attribs[c2][1];
+	context->color = pac2_attribs[c2][0];
+	context->font = pac2_attribs[c2][1];
     int indent=pac2_attribs[c2][2];
     dbg_print(CCX_DMT_608, "  --  Position: %d:%d, color: %s,  font: %s\n",row,
-        indent,color_text[wb->data608->color][0],font_text[wb->data608->font]);
-	if (ccx_options.cc608_default_color==COL_USERDEFINED && (wb->data608->color==COL_WHITE || wb->data608->color==COL_TRANSPARENT))
-		wb->data608->color=COL_USERDEFINED;
-    if (wb->data608->mode!=MODE_TEXT)
+		indent, color_text[context->color][0], font_text[context->font]);
+	if (ccx_options.cc608_default_color == COL_USERDEFINED && (context->color == COL_WHITE || context->color == COL_TRANSPARENT))
+		context->color = COL_USERDEFINED;
+	if (context->mode != MODE_TEXT)
     {
         // According to Robson, row info is discarded in text mode
         // but column is accepted
-        wb->data608->cursor_row=row-1 ; // Since the array is 0 based
+		context->cursor_row = row - 1; // Since the array is 0 based
     }
-    wb->data608->rollup_base_row=row-1;
-    wb->data608->cursor_column=indent;	
-	if (wb->data608->mode==MODE_FAKE_ROLLUP_1 || wb->data608->mode==MODE_ROLLUP_2 || 
-		wb->data608->mode==MODE_ROLLUP_3 || wb->data608->mode==MODE_ROLLUP_4)
+	context->rollup_base_row = row - 1;
+	context->cursor_column = indent;
+	if (context->mode == MODE_FAKE_ROLLUP_1 || context->mode == MODE_ROLLUP_2 ||
+		context->mode == MODE_ROLLUP_3 || context->mode == MODE_ROLLUP_4)
 	{
 		/* In roll-up, delete lines BELOW the PAC. Not sure (CFS) this is correct (possibly we may have to move the
 		   buffer around instead) but it's better than leaving old characters in the buffer */
-			eia608_screen *use_buffer = get_writing_buffer (wb); // &wb->data608->buffer1;
+		eia608_screen *use_buffer = get_writing_buffer(context); // &wb->data608->buffer1;
                 
 		for (int j=row;j<15;j++)
 		{
@@ -1062,43 +1066,43 @@ void handle_pac (unsigned char c1, unsigned char c2, struct ccx_s_write *wb)
 }
 
 
-void handle_single (const unsigned char c1, struct ccx_s_write *wb)
+void handle_single(const unsigned char c1, struct s_context_cc608 *context)
 {	
-    if (c1<0x20 || wb->data608->channel!=ccx_options.cc_channel)
+	if (c1<0x20 || context->channel != ccx_options.cc_channel)
         return; // We don't allow special stuff here
     dbg_print(CCX_DMT_608, "%c",c1);
 
-    write_char (c1,wb);
+    write_char (c1,context);
 }
 
-void erase_both_memories (struct ccx_s_write *wb)
+void erase_both_memories(struct s_context_cc608 *context)
 {
-	erase_memory (wb,false);
+	erase_memory(context, false);
 	// For the visible memory, we write the contents to disk
             // The currently *visible* buffer is leaving, so now we know its ending
             // time. Time to actually write it to file.
-    if (write_cc_buffer (wb))
-		wb->data608->screenfuls_counter++;
-	wb->data608->current_visible_start_ms=get_visible_start();
-    wb->data608->cursor_column=0;
-    wb->data608->cursor_row=0;
-    wb->data608->color=ccx_options.cc608_default_color;
-    wb->data608->font=FONT_REGULAR;
+	if (write_cc_buffer(context))
+		context->screenfuls_counter++;
+	context->current_visible_start_ms = get_visible_start();
+	context->cursor_column = 0;
+	context->cursor_row = 0;
+	context->color = ccx_options.cc608_default_color;
+	context->font = FONT_REGULAR;
 
-	erase_memory (wb,true);
+	erase_memory(context, true);
 }
 
-int check_channel (unsigned char c1, struct ccx_s_write *wb)
+int check_channel(unsigned char c1, struct s_context_cc608 *context)
 {
-	int newchan=wb->data608->channel;
+	int newchan = context->channel;
 	if (c1>=0x10 && c1<=0x17)
 		newchan=1;
 	else if (c1>=0x18 && c1<=0x1e)
 		newchan=2;
-	if (newchan!=wb->data608->channel)	
+	if (newchan != context->channel)
 	{
 		dbg_print(CCX_DMT_608, "\nChannel change, now %d\n", newchan);
-		if (wb->data608->channel!=3) // Don't delete memories if returning from XDS. 
+		if (context->channel != 3) // Don't delete memories if returning from XDS. 
 		{
 			// erase_both_memories (wb); // 47cfr15.119.pdf, page 859, part f
 			// CFS: Removed this because the specs say memories should be deleted if THE USER
@@ -1111,7 +1115,7 @@ int check_channel (unsigned char c1, struct ccx_s_write *wb)
 /* Handle Command, special char or attribute and also check for
 * channel changes.
 * Returns 1 if something was written to screen, 0 otherwise */
-int disCommand (unsigned char hi, unsigned char lo, struct ccx_s_write *wb)
+int disCommand(unsigned char hi, unsigned char lo, struct s_context_cc608 *context)
 {
     int wrote_to_screen=0;
 
@@ -1121,7 +1125,7 @@ int disCommand (unsigned char hi, unsigned char lo, struct ccx_s_write *wb)
     * "PREAMBLE ACCESS CODES", "BACKGROUND COLOR CODES" and
     * SPECIAL/SPECIAL CHARACTERS allow only switching
     * between 1&3 or 2&4. */
-    wb->data608->new_channel = check_channel (hi,wb);
+	context->new_channel = check_channel(hi, context);
     //if (wb->data608->channel!=cc_channel)
     //    continue;
 
@@ -1132,57 +1136,57 @@ int disCommand (unsigned char hi, unsigned char lo, struct ccx_s_write *wb)
     {
         case 0x10:
             if (lo>=0x40 && lo<=0x5f)
-                handle_pac (hi,lo,wb);
+				handle_pac(hi, lo, context);
             break;
         case 0x11:
             if (lo>=0x20 && lo<=0x2f)
-                handle_text_attr (hi,lo,wb);
+				handle_text_attr(hi, lo, context);
             if (lo>=0x30 && lo<=0x3f)
             {
                 wrote_to_screen=1;
-                handle_double (hi,lo,wb);
+				handle_double(hi, lo, context);
             }
             if (lo>=0x40 && lo<=0x7f)
-                handle_pac (hi,lo,wb);
+				handle_pac(hi, lo, context);
             break;
         case 0x12:
         case 0x13:
             if (lo>=0x20 && lo<=0x3f)
             {
-                wrote_to_screen=handle_extended (hi,lo,wb);
+				wrote_to_screen = handle_extended(hi, lo, context);
             }
             if (lo>=0x40 && lo<=0x7f)
-                handle_pac (hi,lo,wb);
+				handle_pac(hi, lo, context);
             break;
         case 0x14:
         case 0x15:
             if (lo>=0x20 && lo<=0x2f)
-                handle_command (hi,lo,wb);
+				handle_command(hi, lo, context);
             if (lo>=0x40 && lo<=0x7f)
-                handle_pac (hi,lo,wb);
+				handle_pac(hi, lo, context);
             break;
         case 0x16:
             if (lo>=0x40 && lo<=0x7f)
-                handle_pac (hi,lo,wb);
+				handle_pac(hi, lo, context);
             break;
         case 0x17:
             if (lo>=0x21 && lo<=0x23)
-                handle_command (hi,lo,wb);
+				handle_command(hi, lo, context);
             if (lo>=0x2e && lo<=0x2f)
-                handle_text_attr (hi,lo,wb);
+				handle_text_attr(hi, lo, context);
             if (lo>=0x40 && lo<=0x7f)
-                handle_pac (hi,lo,wb);
+				handle_pac(hi, lo, context);
             break;
     }
     return wrote_to_screen;
 }
 
 /* If wb is NULL, then only XDS will be processed */
-void process608 (const unsigned char *data, int length, struct ccx_s_write *wb)
+void process608(const unsigned char *data, int length, struct s_context_cc608 *context)
 {
     static int textprinted = 0;	
-	if (wb)
-		wb->bytes_processed_608+=length;
+	if (context)
+		context->bytes_processed_608 += length;
     if (data!=NULL)
     {
         for (int i=0;i<length;i=i+2)
@@ -1197,22 +1201,22 @@ void process608 (const unsigned char *data, int length, struct ccx_s_write *wb)
 			
             // printf ("\r[%02X:%02X]\n",hi,lo);
 
-			if (hi>=0x01 && hi<=0x0E && (wb==NULL || wb->my_field==2)) // XDS can only exist in field 2.
+			if (hi >= 0x01 && hi <= 0x0E && (context == NULL || context->my_field == 2)) // XDS can only exist in field 2.
             {
-                if (wb)
-					wb->data608->channel=3; 
+				if (context)
+					context->channel = 3;
 				if (!in_xds_mode)
 				{
 					ts_start_of_xds=get_fts();
 					in_xds_mode=1;
 				}
             }
-            if (hi==0x0F && in_xds_mode && (wb==NULL || wb->my_field==2)) // End of XDS block
+			if (hi == 0x0F && in_xds_mode && (context == NULL || context->my_field == 2)) // End of XDS block
             {
                 in_xds_mode=0;
 				do_end_of_xds (lo);
-				if (wb) 
-					wb->data608->channel=wb->data608->new_channel; // Switch from channel 3
+				if (context)
+					context->channel = context->new_channel; // Switch from channel 3
                 continue;
             }
             if (hi>=0x10 && hi<=0x1F) // Non-character code or special/extended char
@@ -1226,41 +1230,41 @@ void process608 (const unsigned char *data, int length, struct ccx_s_write *wb)
                     dbg_print(CCX_DMT_608, "\n");
                     textprinted = 0;
                 }
-				if (!wb || wb->my_field==2)
+				if (!context || context->my_field == 2)
 					in_xds_mode=0; // Back to normal (CEA 608-8.6.2)
-				if (!wb) // Not XDS and we don't have a writebuffer, nothing else would have an effect
+				if (!context) // Not XDS and we don't have a writebuffer, nothing else would have an effect
 					continue; 
-				if (wb->data608->last_c1==hi && wb->data608->last_c2==lo)
+				if (context->last_c1 == hi && context->last_c2 == lo)
 				{
 					// Duplicate dual code, discard. Correct to do it only in
 					// non-XDS, XDS codes shall not be repeated.
 					 dbg_print(CCX_DMT_608, "Skipping command %02X,%02X Duplicate\n", hi, lo);
                     // Ignore only the first repetition
-                    wb->data608->last_c1=-1;
-                    wb->data608->last_c2=-1;
+                    context->last_c1=-1;
+					context->last_c2 = -1;
 					continue;
 				}
-				wb->data608->last_c1=hi;
-				wb->data608->last_c2=lo;
-				wrote_to_screen=disCommand (hi,lo,wb);
+				context->last_c1 = hi;
+				context->last_c2 = lo;
+				wrote_to_screen = disCommand(hi, lo, context);
             }
 			else
 			{
-				if (in_xds_mode && (wb==NULL || wb->my_field==2 ))
+				if (in_xds_mode && (context == NULL || context->my_field == 2))
 				{
 					process_xds_bytes (hi,lo);
 					continue;
 				}
-				if (!wb) // No XDS code after this point, and user doesn't want captions.
+				if (!context) // No XDS code after this point, and user doesn't want captions.
 					continue;
 
-				wb->data608->last_c1=-1;
-				wb->data608->last_c2=-1;
+				context->last_c1 = -1;
+				context->last_c2 = -1;
 
 				if (hi>=0x20) // Standard characters (always in pairs)
 				{					
 					// Only print if the channel is active
-					if (wb->data608->channel!=ccx_options.cc_channel)
+					if (context->channel != ccx_options.cc_channel)
 						continue;
 
 					if( textprinted == 0 )
@@ -1269,14 +1273,14 @@ void process608 (const unsigned char *data, int length, struct ccx_s_write *wb)
 						textprinted = 1;
 					}
 					
-					handle_single(hi,wb);
-					handle_single(lo,wb);
+					handle_single(hi, context);
+					handle_single(lo, context);
 					wrote_to_screen=1;
-					wb->data608->last_c1=0;
-					wb->data608->last_c2=0;
+					context->last_c1 = 0;
+					context->last_c2 = 0;
 				}
 
-				if (!textprinted && wb->data608->channel==ccx_options.cc_channel )
+				if (!textprinted && context->channel == ccx_options.cc_channel)
 				{   // Current FTS information after the characters are shown
 					dbg_print(CCX_DMT_608, "Current FTS: %s\n", print_mstime(get_fts()));
 					//printf("  N:%u", unsigned(fts_now) );
@@ -1286,14 +1290,14 @@ void process608 (const unsigned char *data, int length, struct ccx_s_write *wb)
 				}
 
 				if (wrote_to_screen && ccx_options.direct_rollup && // If direct_rollup is enabled and
-					(wb->data608->mode==MODE_FAKE_ROLLUP_1 || // we are in rollup mode, write now.
-					wb->data608->mode==MODE_ROLLUP_2 || 
-					wb->data608->mode==MODE_ROLLUP_3 ||
-					wb->data608->mode==MODE_ROLLUP_4))
+					(context->mode == MODE_FAKE_ROLLUP_1 || // we are in rollup mode, write now.
+					context->mode == MODE_ROLLUP_2 ||
+					context->mode == MODE_ROLLUP_3 ||
+					context->mode == MODE_ROLLUP_4))
 				{
 					// We don't increase screenfuls_counter here.
-					write_cc_buffer (wb);
-					wb->data608->current_visible_start_ms=get_visible_start();
+					write_cc_buffer(context);
+					context->current_visible_start_ms = get_visible_start();
 				}
 			}
 			if (wrote_to_screen && cc_to_stdout)

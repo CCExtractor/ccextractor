@@ -3,7 +3,7 @@
 
 /* The timing here is not PTS based, but output based, i.e. user delay must be accounted for
    if there is any */
-void write_stringz_as_srt (char *string, struct ccx_s_write *wb, LLONG ms_start, LLONG ms_end)
+void write_stringz_as_srt (char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end)
 {
     unsigned h1,m1,s1,ms1;
     unsigned h2,m2,s2,ms2;
@@ -11,17 +11,17 @@ void write_stringz_as_srt (char *string, struct ccx_s_write *wb, LLONG ms_start,
     mstotime (ms_start,&h1,&m1,&s1,&ms1);
     mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
     char timeline[128];   
-    wb->data608->srt_counter++;
-    sprintf (timeline,"%u\r\n",wb->data608->srt_counter);
+    context->srt_counter++;
+	sprintf(timeline, "%u\r\n", context->srt_counter);
     enc_buffer_used=encode_line (enc_buffer,(unsigned char *) timeline);
-    write (wb->fh, enc_buffer,enc_buffer_used);
+	write(context->out->fh, enc_buffer, enc_buffer_used);
     sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u\r\n",
         h1,m1,s1,ms1, h2,m2,s2,ms2);
     enc_buffer_used=encode_line (enc_buffer,(unsigned char *) timeline);
     dbg_print(CCX_DMT_608, "\n- - - SRT caption - - -\n");
     dbg_print(CCX_DMT_608, "%s",timeline);
     
-    write (wb->fh, enc_buffer,enc_buffer_used);
+	write(context->out->fh, enc_buffer, enc_buffer_used);
     int len=strlen (string);
     unsigned char *unescaped= (unsigned char *) malloc (len+1); 
     unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
@@ -55,23 +55,23 @@ void write_stringz_as_srt (char *string, struct ccx_s_write *wb, LLONG ms_start,
             dbg_print(CCX_DMT_608, "\r");
             dbg_print(CCX_DMT_608, "%s\n",subline);
         }
-        write (wb->fh, el, u);
-        write (wb->fh, encoded_crlf, encoded_crlf_length);
+		write(context->out->fh, el, u);
+		write(context->out->fh, encoded_crlf, encoded_crlf_length);
         begin+= strlen ((const char *) begin)+1;
     }
 
     dbg_print(CCX_DMT_608, "- - - - - - - - - - - -\r\n");
    
-    write (wb->fh, encoded_crlf, encoded_crlf_length);
+	write(context->out->fh, encoded_crlf, encoded_crlf_length);
 	free(el);
 }
 
-int write_cc_buffer_as_srt (struct eia608_screen *data, struct ccx_s_write *wb)
+int write_cc_buffer_as_srt(struct eia608_screen *data, struct s_context_cc608 *context)
 {
     unsigned h1,m1,s1,ms1;
     unsigned h2,m2,s2,ms2;
     int wrote_something = 0;
-    LLONG ms_start= wb->data608->current_visible_start_ms;
+	LLONG ms_start = context->current_visible_start_ms;
 
 	int prev_line_start=-1, prev_line_end=-1; // Column in which the previous line started and ended, for autodash
 	int prev_line_center1=-1, prev_line_center2=-1; // Center column of previous line text
@@ -96,18 +96,18 @@ int write_cc_buffer_as_srt (struct eia608_screen *data, struct ccx_s_write *wb)
     mstotime (ms_start,&h1,&m1,&s1,&ms1);
     mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
     char timeline[128];   
-    wb->data608->srt_counter++;
-    sprintf (timeline,"%u\r\n",wb->data608->srt_counter);
+	context->srt_counter++;
+	sprintf(timeline, "%u\r\n", context->srt_counter);
     enc_buffer_used=encode_line (enc_buffer,(unsigned char *) timeline);
-    write (wb->fh, enc_buffer,enc_buffer_used);
+	write(context->out->fh, enc_buffer, enc_buffer_used);
     sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u\r\n",
         h1,m1,s1,ms1, h2,m2,s2,ms2);
     enc_buffer_used=encode_line (enc_buffer,(unsigned char *) timeline);
 
-    dbg_print(CCX_DMT_608, "\n- - - SRT caption ( %d) - - -\n", wb->data608->srt_counter);
+	dbg_print(CCX_DMT_608, "\n- - - SRT caption ( %d) - - -\n", context->srt_counter);
     dbg_print(CCX_DMT_608, "%s",timeline);
 
-    write (wb->fh, enc_buffer,enc_buffer_used);		
+    write (context->out->fh, enc_buffer,enc_buffer_used);		
     for (int i=0;i<15;i++)
     {
         if (data->row_used[i])
@@ -167,7 +167,7 @@ int write_cc_buffer_as_srt (struct eia608_screen *data, struct ccx_s_write *wb)
 					do_dash=0;
 
 				if (do_dash)
-					write (wb->fh, "- ", 2);				
+					write(context->out->fh, "- ", 2);
 				prev_line_start=first;
 				prev_line_end=last;
 				prev_line_center1=center1;
@@ -180,8 +180,8 @@ int write_cc_buffer_as_srt (struct eia608_screen *data, struct ccx_s_write *wb)
                 dbg_print(CCX_DMT_608, "\r");
                 dbg_print(CCX_DMT_608, "%s\n",subline);
             }
-            write (wb->fh, subline, length);
-            write (wb->fh, encoded_crlf, encoded_crlf_length);
+			write(context->out->fh, subline, length);
+			write(context->out->fh, encoded_crlf, encoded_crlf_length);
             wrote_something=1;
             // fprintf (wb->fh,encoded_crlf);
         }
@@ -189,6 +189,6 @@ int write_cc_buffer_as_srt (struct eia608_screen *data, struct ccx_s_write *wb)
     dbg_print(CCX_DMT_608, "- - - - - - - - - - - -\r\n");
     
     // fprintf (wb->fh, encoded_crlf);
-    write (wb->fh, encoded_crlf, encoded_crlf_length);
+    write (context->out->fh, encoded_crlf, encoded_crlf_length);
     return wrote_something;
 }

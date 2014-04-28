@@ -21,38 +21,38 @@
 #define CCPL (ccfont2_width / CCW * ccfont2_height / CCH)
 
 void
-write_spumux_header(struct ccx_s_write *wb)
+write_spumux_header(struct s_context_cc608 *context)
 {
-    if (0 == wb->spupng_data)
-        wb->spupng_data = new SpuPng(wb);
-    ((SpuPng*)wb->spupng_data) -> writeHeader();
+    if (0 == context->spupng_data)
+		context->spupng_data = new SpuPng(context);
+	((SpuPng*)context->spupng_data)->writeHeader();
 }
 
 void
-write_spumux_footer(struct ccx_s_write *wb)
+write_spumux_footer(struct s_context_cc608 *context)
 {
-    if (0 != wb->spupng_data)
+	if (0 != context->spupng_data)
     {
-        ((SpuPng*)wb->spupng_data) -> writeFooter();
-        delete (SpuPng*)wb->spupng_data;
-        wb->spupng_data = 0;
-		wb->fh = -1;
+		((SpuPng*)context->spupng_data)->writeFooter();
+		delete (SpuPng*)context->spupng_data;
+		context->spupng_data = 0;
+		context->out->fh = -1;
     }
 }
 
 int
-write_cc_buffer_as_spupng(struct eia608_screen *data, struct ccx_s_write *wb)
+write_cc_buffer_as_spupng(struct eia608_screen *data, struct s_context_cc608 *context)
 {
-    if (0 != wb->spupng_data)
+	if (0 != context->spupng_data)
     {
-        return ((SpuPng*)wb->spupng_data) -> writeCCBuffer(data, wb);
+		return ((SpuPng*)context->spupng_data)->writeCCBuffer(data, context);
     }
     return 0;
 }
 
 static int initialized = 0;
 
-SpuPng::SpuPng(struct ccx_s_write* wb)
+SpuPng::SpuPng(struct s_context_cc608 *context)
 {
     if (!initialized)
     {
@@ -60,12 +60,12 @@ SpuPng::SpuPng(struct ccx_s_write* wb)
         initFont();
     }
 
-    if ((fpxml = fdopen(wb->fh, "w")) == NULL)
+	if ((fpxml = fdopen(context->out->fh, "w")) == NULL)
     {
-        fatal(EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n", wb->filename, strerror(errno));
+		fatal(EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n", context->out->filename, strerror(errno));
     }
-    dirname = new char [strlen(wb->filename) + 3];
-    strcpy(dirname, wb->filename);
+    dirname = new char [strlen(context->out->filename) + 3];
+	strcpy(dirname, context->out->filename);
     char* p = strrchr(dirname, '.');
     if (0 == p)
         p = dirname + strlen(dirname);
@@ -120,9 +120,9 @@ SpuPng::writeFooter()
 }
 
 int
-SpuPng::writeCCBuffer(struct eia608_screen* data, struct ccx_s_write *wb)
+SpuPng::writeCCBuffer(struct eia608_screen* data, struct s_context_cc608 *context)
 {
-    LLONG ms_start = wb->data608->current_visible_start_ms + subs_delay;
+	LLONG ms_start = context->current_visible_start_ms + subs_delay;
     if (ms_start < 0)
     {
         dbg_print(CCX_DMT_VERBOSE, "Negative start\n");

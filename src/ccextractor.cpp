@@ -89,6 +89,10 @@ int gop_rollover=0;
 /* Detect gaps in caption stream - only used for dvr-ms/NTSC. */
 int CaptionGap=0;
 
+/* 608 contexts - note that this shouldn't be global, they should be 
+per program */
+struct s_context_cc608 context_cc608_field_1, context_cc608_field_2;
+
 /* Parameters */
 void init_options (struct ccx_s_options *options)
 {
@@ -228,8 +232,14 @@ int main(int argc, char *argv[])
 	init_options (&ccx_options);
 
     // Prepare write structures
-    init_write(&wbout1, 1);
-    init_write(&wbout2, 2);
+    init_write(&wbout1);
+    init_write(&wbout2);
+
+	// Prepare 608 context
+	init_context_cc608(&context_cc608_field_1,1);
+	init_context_cc608(&context_cc608_field_2,2);	
+	context_cc608_field_1.out = &wbout1;
+	context_cc608_field_2.out = &wbout2;
 
 	// Init XDS buffers
 	xds_init();
@@ -454,7 +464,7 @@ int main(int argc, char *argv[])
 							writeraw (UTF8_BOM, sizeof (UTF8_BOM), &wbout1);
 						if (ccx_options.encoding==CCX_ENC_UNICODE) // Write BOM				
 							writeraw (LITTLE_ENDIAN_BOM, sizeof (LITTLE_ENDIAN_BOM), &wbout1);
-						write_subtitle_file_header (&wbout1);
+						write_subtitle_file_header(&context_cc608_field_1);
 				}
 			}
 			if (ccx_options.extract == 12) 
@@ -494,7 +504,7 @@ int main(int argc, char *argv[])
 							writeraw (UTF8_BOM, sizeof (UTF8_BOM), &wbout2);
 						if (ccx_options.encoding==CCX_ENC_UNICODE) // Write BOM				
 							writeraw (LITTLE_ENDIAN_BOM, sizeof (LITTLE_ENDIAN_BOM), &wbout2);
-						write_subtitle_file_header (&wbout2);
+						write_subtitle_file_header(&context_cc608_field_2);
 				}
 			}
 		}
@@ -795,12 +805,12 @@ int main(int argc, char *argv[])
     {
         if (ccx_options.write_format==CCX_OF_SPUPNG)
         {
-            handle_end_of_data (&wbout1);
+			handle_end_of_data(&context_cc608_field_1);
         }
         if (ccx_options.write_format==CCX_OF_SMPTETT || ccx_options.write_format==CCX_OF_SAMI || 
 			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT)
         {
-            handle_end_of_data (&wbout1);
+			handle_end_of_data(&context_cc608_field_1);
         }
         else if(ccx_options.write_format==CCX_OF_RCWT)
         {
@@ -808,23 +818,23 @@ int main(int argc, char *argv[])
             writercwtdata (NULL);
         }
         if (ccx_options.end_credits_text!=NULL)
-            try_to_add_end_credits(&wbout1);
-        write_subtitle_file_footer (&wbout1);
+			try_to_add_end_credits(&context_cc608_field_1);
+		write_subtitle_file_footer(&context_cc608_field_1);
     }
     if (wbout2.fh!=-1)
     {
         if (ccx_options.write_format==CCX_OF_SPUPNG)
         {
-            handle_end_of_data (&wbout2);
+			handle_end_of_data(&context_cc608_field_2);
         }
         if (ccx_options.write_format==CCX_OF_SMPTETT || ccx_options.write_format==CCX_OF_SAMI || 
 			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT)
         {
-            handle_end_of_data (&wbout2);
+			handle_end_of_data(&context_cc608_field_2);
         }
         if (ccx_options.end_credits_text!=NULL)
-            try_to_add_end_credits(&wbout2);
-        write_subtitle_file_footer (&wbout2);
+			try_to_add_end_credits(&context_cc608_field_2);
+		write_subtitle_file_footer(&context_cc608_field_2);
     }
 	telxcc_close();
     flushbuffer (&wbout1,true);

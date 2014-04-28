@@ -296,7 +296,7 @@ int processmp4 (char *file)
 				if (sample->dataLength>8 && strncmp (sample->data+4, "cdat", 4)==0)
 				{
 					// dump (256,( unsigned char *) sample->data+8,sample->dataLength-8,0, 1);				
-					process608 ((const unsigned char *) sample->data+8,sample->dataLength-8,&wbout1);
+					process608((const unsigned char *)sample->data + 8, sample->dataLength - 8, &context_cc608_field_1);
 				}
 				int progress = (int) ((k*100) / num_samples);
 				if (last_reported_progress != progress)
