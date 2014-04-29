@@ -1,3 +1,6 @@
 #Ignore CVS
 .CVS
 CVS
+*.o
+linux/ccextractor
+linux/depend

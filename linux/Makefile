@@ -19,7 +19,7 @@ src_OBJS = \
 	encoding.o es_functions.o es_userdata.o file_functions.o \
 	general_loop.o mp4.o myth.o output.o params_dump.o params.o \
 	sequencing.o stream_functions.o telxcc.o timing.o ts_functions.o \
-	utility.o wtv_functions.o xds.o
+	utility.o wtv_functions.o xds.o dvb_subtitle_decoder.o ts_tables.o
 
 gpacmp4_OBJS = \
 	avc_ext.o avilib.o av_parsers.o base_encoding.o bitstream.o \
@@ -42,7 +42,8 @@ src_SRC = \
 	../src/output.cpp ../src/params.cpp ../src/params_dump.cpp \
 	../src/sequencing.cpp ../src/stream_functions.cpp ../src/telxcc.cpp \
 	../src/timing.cpp ../src/ts_functions.cpp ../src/utility.cpp \
-	../src/wtv_functions.cpp ../src/xds.cpp
+	../src/wtv_functions.cpp ../src/xds.cpp ../src/dvb_subtitle_decoder.c \
+	../src/ts_tables.cpp
 
 gpacmp4_SRC = \
 	../src/gpacmp4/avc_ext.c ../src/gpacmp4/avilib.c \

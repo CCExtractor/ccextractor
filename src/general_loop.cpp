@@ -6,6 +6,7 @@
 #endif
 
 #include "708.h" 
+#include "dvb_subtitle_decoder.h"
 
 // IMPORTED TRASH INFO, REMOVE
 extern long num_nal_unit_type_7;
@@ -43,9 +44,9 @@ unsigned char *filebuffer;
 LLONG filebuffer_start; // Position of buffer start relative to file
 int filebuffer_pos; // Position of pointer relative to buffer start
 int bytesinbuffer; // Number of bytes we actually have on buffer
+extern void *cxx_dvb_context;
 
 LLONG process_raw_with_field (void);
-
 
 // Program stream specific data grabber
 LLONG ps_getmoredata(void)
@@ -597,6 +598,12 @@ void general_loop(void)
 			got = process_raw_with_field();
 			if (pts_set)
 				set_fts(); // Try to fix timing from TS data
+		}
+		else if(ccx_bufferdatatype == CCX_DVB_SUBTITLE)
+		{
+			int out_size = 0;
+			dvbsub_decode(cxx_dvb_context,NULL,&out_size,buffer + 2,inbuf);
+			got = inbuf;
 		}
         else if (ccx_bufferdatatype == CCX_PES)
         {

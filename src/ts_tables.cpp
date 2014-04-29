@@ -6,8 +6,10 @@
    */
 
 #include "ccextractor.h"
+#include "dvb_subtitle_decoder.h"
 
 static unsigned pmt_warning_shown=0; // Only display warning once
+void *cxx_dvb_context = NULL;
 
 // PMTs table
 PAT_entry pmt_array[TS_PMT_MAP_SIZE] = { 0 };
@@ -64,6 +66,8 @@ void clear_PMT_array (void)
 int parse_PMT (int pos)
 {
 	int must_flush=0;
+	int ret = 0;
+        unsigned char desc_len = 0;
 
 	if ((ccx_options.ts_forced_cappid || (ccx_options.teletext_mode==CCX_TXT_IN_USE && ccx_options.ts_cappid)) && 
 		cap_stream_type!=CCX_STREAM_TYPE_UNKNOWNSTREAM) // Already know what we need, skip
@@ -190,11 +194,15 @@ int parse_PMT (int pos)
 
     for( unsigned i=0; i < stream_data && (i+4)<payload_length; i+=5)
     {
-        unsigned ccx_stream_type = payload_start[i];
-        unsigned elementary_PID = (((payload_start[i+1] & 0x1F) << 8)
+		unsigned ccx_stream_type = payload_start[i];
+		unsigned elementary_PID = (((payload_start[i+1] & 0x1F) << 8)
                                    | payload_start[i+2]);
-        unsigned ES_info_length = (((payload_start[i+3] & 0x0F) << 8)
+		unsigned ES_info_length = (((payload_start[i+3] & 0x0F) << 8)
                                    | payload_start[i+4]);
+
+		/* There is no information about elementry stream */
+		if(!ES_info_length)
+			continue;
 
 		if (ccx_options.ts_cappid==0 && ccx_stream_type==ccx_options.ts_datastreamtype) // Found a stream with the type the user wants
 		{
@@ -202,8 +210,31 @@ int parse_PMT (int pos)
 			ccx_options.ts_cappid = newcappid = elementary_PID;
 			cap_stream_type=CCX_STREAM_TYPE_UNKNOWNSTREAM;
 		}
+		if(IS_FEASIBLE(ccx_options.codec,ccx_options.nocodec,CCX_CODEC_DVB) && !ccx_options.ts_cappid && ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2)
+		{
+			unsigned char *es_info = payload_start + i + 5;
+			for (desc_len = 0;(payload_start + i + 5 + ES_info_length) - es_info ;es_info += desc_len)
+			{
+				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
+				desc_len = (*es_info++);
+				if(CCX_MPEG_DSC_DVB_SUBTITLE == descriptor_tag)
+				{
+					struct dvb_config cnf;
+					memset((void*)&cnf,0,sizeof(struct dvb_config));
+					ret = parse_dvb_description(&cnf,es_info,desc_len);
+					if(ret < 0)
+						break;
+					cxx_dvb_context = dvbsub_init_decoder(cnf.composition_id[0],cnf.ancillary_id[0]);
+					if (cxx_dvb_context == NULL)
+						break;
+					ccx_options.ts_cappid = newcappid = elementary_PID;
+					cap_stream_type = newcap_stream_type = ccx_stream_type;
+				}
+			}
+		}
 
-		if ((ccx_options.teletext_mode==CCX_TXT_AUTO_NOT_YET_FOUND || 
+
+		if (IS_FEASIBLE(ccx_options.codec,ccx_options.nocodec,CCX_CODEC_TELETEXT) && (ccx_options.teletext_mode==CCX_TXT_AUTO_NOT_YET_FOUND ||
 			(ccx_options.teletext_mode==CCX_TXT_IN_USE && !ccx_options.ts_cappid)) // Want teletext but don't know the PID yet
 			&& ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2) // MPEG-2 Packetized Elementary Stream packets containing private data
 		{
@@ -551,6 +582,10 @@ void process_ccx_mpeg_descriptor (unsigned char *data, unsigned length)
 				dbg_print (CCX_DMT_PMT, "                  Initial page: %02X\n",teletext_page_number);
 			}
 			break;
+		case CCX_MPEG_DSC_DVB_SUBTITLE:
+			dbg_print(CCX_DMT_PMT, "             DVB Subtitle descriptor\n");
+			break;
+
 		default:
 			if (data[0]==CCX_MPEG_DSC_REGISTRATION) // Registration descriptor, could be useful eventually
 				break;			

@@ -123,6 +123,7 @@ enum ccx_mpeg_descriptor
 	CCX_MPEG_DSC_VBI_DATA_DESCRIPTOR = 0x45,
 	CCX_MPEG_DSC_VBI_TELETEXT_DESCRIPTOR = 0x46,
 	CCX_MPEG_DSC_TELETEXT_DESCRIPTOR = 0x56,
+	CCX_MPEG_DSC_DVB_SUBTITLE = 0x59,
 };
 
 enum
@@ -191,7 +192,8 @@ enum ccx_bufferdata_type
     CCX_H264 = 3,
 	CCX_HAUPPAGE = 4,
 	CCX_TELETEXT = 5,
-	CCX_PRIVATE_MPEG2_CC = 6
+	CCX_PRIVATE_MPEG2_CC = 6,
+	CCX_DVB_SUBTITLE = 7,
 };
 
 enum ccx_frame_type
@@ -209,6 +211,32 @@ typedef enum {
 	UNDEF = 0xff
 } bool_t;
 
+enum cxx_code_type
+{
+	CCX_CODEC_ANY,
+	CCX_CODEC_TELETEXT,
+	CCX_CODEC_DVB,
+	CCX_CODEC_NONE,
+};
+
+/*
+ * This  macro to be used when you want to find out whether you
+ * should parse f_sel subtitle codec type or not
+ *
+ * @param u_sel pass the codec selected by user to be searched in
+ *  all elementry stream, we ignore the not to be selected stream
+ *  if we find stream this is selected stream. since setting
+ *  selected stream and not selected to same codec does not
+ *  make ay sense.
+ *
+ * @param u_nsel pass the codec selected by user not to be parsed
+ *               we give false value if f_sel is equal to n_sel
+ *               and vice versa true if ...
+ *
+ * @param f_sel pass the codec name whom you are tesing to be feasible
+ *              to parse.
+ */
+#define IS_FEASIBLE(u_sel,u_nsel,f_sel) ( ( (u_sel) == CCX_CODEC_ANY && (u_nsel) != (f_sel) ) || (u_sel) == (f_sel) )
 #define CCX_TXT_FORBIDDEN				0 // Ignore teletext packets
 #define CCX_TXT_AUTO_NOT_YET_FOUND		1
 #define CCX_TXT_IN_USE					2 // Positive autodetected, or forced, etc

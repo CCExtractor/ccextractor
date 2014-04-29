@@ -17,7 +17,7 @@ static long haup_capbuflen = 0; // Bytes read in haup_capbuf
 unsigned TS_program_number = 0; // Identifier for current program
 unsigned pmtpid = 0; // PID for Program Map Table
 unsigned cap_stream_type=CCX_STREAM_TYPE_UNKNOWNSTREAM; // Stream type for cappid
-
+extern void *cxx_dvb_context;
 
 // Descriptions for ts ccx_stream_type
 const char *desc[256];
@@ -464,6 +464,11 @@ LLONG ts_getmoredata(void)
             ccx_bufferdatatype = CCX_H264;
             tstr = "H.264";
         }
+		else if ( cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cxx_dvb_context )
+		{
+			ccx_bufferdatatype = CCX_DVB_SUBTITLE;
+			tstr = "DVB subtitle";
+		}
 		else if ( cap_stream_type == CCX_STREAM_TYPE_UNKNOWNSTREAM && ccx_options.hauppauge_mode)
 		{
             ccx_bufferdatatype = CCX_HAUPPAGE;
@@ -565,13 +570,6 @@ LLONG ts_getmoredata(void)
 			}
 			haup_capbuflen=0;			
 		}
-
-		if( !((stream_id&0xf0)==0xe0)) // 0xBD = private stream
-        {
-            // ??? Shouldn't happen. Complain and try again.
-            mprint("Not a video PES header!\n");
-            continue;
-        }
 
         dbg_print(CCX_DMT_VERBOSE, "TS payload start video PES id: %d  len: %ld\n",
                stream_id, capbuflen);
