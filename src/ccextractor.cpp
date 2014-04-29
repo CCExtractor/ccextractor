@@ -104,6 +104,11 @@ void init_options (struct ccx_s_options *options)
 	options->direct_rollup=0; // Write roll-up captions directly instead of line by line?
 	options->nofontcolor=0; // 1 = don't put <font color> tags 
 	options->notypesetting=0; // 1 = Don't put <i>, <u>, etc typesetting tags
+
+	/* Select subtitle codec */
+	options->codec = CCX_CODEC_ANY;
+	options->nocodec = CCX_CODEC_NONE;
+
 	/* Credit stuff */
 	options->start_credits_text=NULL;
 	options->end_credits_text=NULL;

@@ -42,6 +42,10 @@ struct ccx_s_options // Options from user parameters
 	int nofontcolor;
 	int notypesetting;
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
+
+	/* subtitle codec type */
+	enum cxx_code_type codec;
+	enum cxx_code_type nocodec;
 	/* Credit stuff */
 	char *start_credits_text;
 	char *end_credits_text;	

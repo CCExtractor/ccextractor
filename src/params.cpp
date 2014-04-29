@@ -560,6 +560,7 @@ void usage (void)
     mprint ("generate a .srt file, with only data from 3:00 to 5:00 in the input file(s)\n");
     mprint ("and then add that (huge) delay, which would make the final file start at\n");
     mprint ("5:00 and end at 7:00.\n\n");
+
     mprint ("Options that affect what segment of the input file(s) to process:\n");
     mprint ("        -startat time: Only write caption information that starts after the\n");
     mprint ("                       given time.\n");
@@ -572,6 +573,24 @@ void usage (void)
     mprint ("                       output formats.  In all formats with timing information\n");
     mprint ("                       the times are unchanged.\n");
     mprint ("-scr --screenfuls num: Write 'num' screenfuls and terminate processing.\n\n");
+
+	mprint ("Options that affect which codec is to be used have to be searched in input\n");
+	mprint ("  If codec type is not selected then first elementry stream suitable for \n"
+		"  subtitle is selected, please consider -teletext -noteletext override this\n"
+		"  option.\n"
+		"      -cocdec dvbsub    select the dvb subtitle from all elementry stream,\n"
+		"                        if stream of dvb subtitle type is not found then \n"
+		"                        nothing is selected and no subtitle is generated\n"
+		"      -nocodec dvbsub   ignore dvb subtitle and follow default behaviour\n"
+		"      -codec teletext   select the teletext subtitle from elementry stream\n"
+		"      -nocodec teletext ignore teletext subtitle\n"
+		"  NOTE: option given in form -foo=bar ,-foo = bar and --foo=bar are invalid\n"
+		"        valid option are only in form -foo bar\n"
+		"        nocodec and codec parameter must not be same if found to be same \n"
+                "        then parameter of nocodec is ignored, this flag should be passed \n"
+		"        once more then one are not supported yet and last parameter would \n"
+		"        taken in consideration\n");
+
     mprint ("Adding start and end credits:\n");
     mprint ("  CCExtractor can _try_ to add a custom message (for credits for example) at\n");
     mprint ("  the start and end of the file, looking for a window where there are no\n");
@@ -817,6 +836,45 @@ void parse_parameters (int argc, char *argv[])
 		{
             set_input_format (argv[i]+4);
             continue;
+		}
+
+		/*user specified subtitle to be selected */
+
+		if(!strcmp (argv[i],"-codec"))
+		{
+			i++;
+			if(!strcmp (argv[i],"teletext"))
+			{
+				ccx_options.codec = CCX_CODEC_TELETEXT;
+			}
+			else if(!strcmp (argv[i],"dvbsub"))
+			{
+				ccx_options.codec = CCX_CODEC_DVB;
+			}
+			else
+			{
+				mprint("Invalid option for codec %s\n",argv[i]);
+			}
+			continue;
+		}
+		/*user specified subtitle to be selected */
+
+		if(!strcmp (argv[i],"-nocodec"))
+		{
+			i++;
+			if(!strcmp (argv[i],"teletext"))
+			{
+				ccx_options.nocodec = CCX_CODEC_TELETEXT;
+			}
+			else if(!strcmp (argv[i],"dvbsub"))
+			{
+				ccx_options.nocodec = CCX_CODEC_DVB;
+			}
+			else
+			{
+				mprint("Invalid option for codec %s\n",argv[i]);
+			}
+			continue;
 		}
         /* Output file formats */        
         if (strcmp (argv[i],"-srt")==0 ||
@@ -1367,11 +1425,13 @@ void parse_parameters (int argc, char *argv[])
 		}
         if (strcmp (argv[i],"-teletext")==0)
 		{
+			ccx_options.codec = CCX_CODEC_TELETEXT;
             ccx_options.teletext_mode=CCX_TXT_IN_USE;
 			continue;
 		}
         if (strcmp (argv[i],"-noteletext")==0)
 		{
+			ccx_options.nocodec = CCX_CODEC_TELETEXT;
             ccx_options.teletext_mode=CCX_TXT_FORBIDDEN;
 			continue;
 		}
