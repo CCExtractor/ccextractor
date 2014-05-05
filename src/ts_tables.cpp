@@ -201,8 +201,8 @@ int parse_PMT (int pos)
                                    | payload_start[i+4]);
 
 		/* There is no information about elementry stream */
-		if(!ES_info_length)
-			continue;
+		/*if(!ES_info_length)
+			continue; */
 
 		if (ccx_options.ts_cappid==0 && ccx_stream_type==ccx_options.ts_datastreamtype) // Found a stream with the type the user wants
 		{

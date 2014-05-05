@@ -22,7 +22,15 @@
 #include <limits.h>
 #include <errno.h>
 /* convert values between host and network byte order(big endian) */
-#include <arpa/inet.h>
+#ifdef _WIN32
+#include <winsock2.h> 
+#else
+#include <arpa/inet.h> 
+#endif
+
+#ifdef _MSC_VER
+#define snprintf(str,size,format,...) _snprintf(str,size-1,format,__VA_ARGS__)
+#endif
 
 
 #include "dvb_subtitle_decoder.h"
@@ -90,7 +98,7 @@ times256(0xFF)
 
 #define cm (crop_tab + MAX_NEG_CROP)
 
-const char *dvb_language[]
+const char *dvb_language[]=
 {
     "und",
     "eng",
@@ -98,13 +106,13 @@ const char *dvb_language[]
     NULL
 };
 
-static inline unsigned int bytestream_get_byte(const uint8_t **b)
+static __inline unsigned int bytestream_get_byte(const uint8_t **b)
 {
     (*b) += 1;
     return ((const uint8_t*)(*b -1))[0];
 }
 
-static inline unsigned int bytestream_get_be16(const uint8_t **b)
+static __inline unsigned int bytestream_get_be16(const uint8_t **b)
 {
     (*b) += 2;
     return RB16(*b -2);
@@ -125,7 +133,7 @@ typedef struct GetBitContext {
  * @param bit_size the size of the buffer in bits
  * @return 0 on success, AVERROR_INVALIDDATA if the buffer_size would overflow.
  */
-static inline int init_get_bits(GetBitContext *s, const uint8_t *buffer,
+static __inline int init_get_bits(GetBitContext *s, const uint8_t *buffer,
                                 int bit_size)
 {
     int buffer_size;
@@ -149,12 +157,12 @@ static inline int init_get_bits(GetBitContext *s, const uint8_t *buffer,
     return ret;
 }
 
-static inline int get_bits_count(const GetBitContext *s)
+static __inline int get_bits_count(const GetBitContext *s)
 {
     return s->index;
 }
 
-static inline unsigned int get_bits(GetBitContext *s, int n)
+static __inline unsigned int get_bits(GetBitContext *s, int n)
 {
     register int tmp;
     unsigned int re_index = s->index;
@@ -172,7 +180,7 @@ static inline unsigned int get_bits(GetBitContext *s, int n)
     s->index = re_index;
     return tmp;
 }
-static inline unsigned int get_bits1(GetBitContext *s)
+static __inline unsigned int get_bits1(GetBitContext *s)
 {
     unsigned int index = s->index;
     uint8_t result     = s->buffer[index >> 3];
@@ -1508,7 +1516,7 @@ static int dvbsub_display_end_segment(void *dvb_ctx, const uint8_t *buf,
  */
 int dvbsub_decode(void *dvb_ctx,
                          void *data, int *data_size,
-                         const unsigned char *buf,int buf_size)
+                         const unsigned char *buf, int buf_size)
 {
     DVBSubContext *ctx = (DVBSubContext *)dvb_ctx;
 //    AVSubtitle *sub = data;
