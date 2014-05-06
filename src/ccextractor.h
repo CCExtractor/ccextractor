@@ -13,7 +13,7 @@
 // compatibility across platforms
 #include "platform.h"
 
-#define VERSION "0.69"
+#define VERSION "0.70a1"
 
 extern int cc_buffer_saved; // Do we have anything in the CC buffer already? 
 extern int ccblocks_in_avc_total; // Total CC blocks found by the AVC code
