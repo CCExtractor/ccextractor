@@ -23,15 +23,14 @@
 #include <errno.h>
 /* convert values between host and network byte order(big endian) */
 #ifdef _WIN32
-#include <winsock2.h> 
+#include <winsock2.h>
 #else
-#include <arpa/inet.h> 
+#include <arpa/inet.h>
 #endif
 
 #ifdef _MSC_VER
 #define snprintf(str,size,format,...) _snprintf(str,size-1,format,__VA_ARGS__)
 #endif
-
 
 #include "dvb_subtitle_decoder.h"
 #define DEBUG
@@ -1559,7 +1558,7 @@ static int dvbsub_display_end_segment(void *dvb_ctx, const uint8_t *buf,
  */
 int dvbsub_decode(void *dvb_ctx,
                          void *data, int *data_size,
-                         const unsigned char *buf, int buf_size)
+                         const unsigned char *buf,int buf_size)
 {
     DVBSubContext *ctx = (DVBSubContext *)dvb_ctx;
 //    AVSubtitle *sub = data;

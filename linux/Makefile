@@ -42,7 +42,7 @@ src_SRC = \
 	../src/output.cpp ../src/params.cpp ../src/params_dump.cpp \
 	../src/sequencing.cpp ../src/stream_functions.cpp ../src/telxcc.cpp \
 	../src/timing.cpp ../src/ts_functions.cpp ../src/utility.cpp \
-	../src/wtv_functions.cpp ../src/xds.cpp ../src/dvb_subtitle_decoder.cpp \
+	../src/wtv_functions.cpp ../src/xds.cpp ../src/dvb_subtitle_decoder.c \
 	../src/ts_tables.cpp
 
 gpacmp4_SRC = \
