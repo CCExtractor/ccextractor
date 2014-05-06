@@ -200,9 +200,6 @@ int parse_PMT (int pos)
 		unsigned ES_info_length = (((payload_start[i+3] & 0x0F) << 8)
                                    | payload_start[i+4]);
 
-		/* There is no information about elementry stream */
-		/*if(!ES_info_length)
-			continue; */
 
 		if (ccx_options.ts_cappid==0 && ccx_stream_type==ccx_options.ts_datastreamtype) // Found a stream with the type the user wants
 		{
@@ -210,7 +207,10 @@ int parse_PMT (int pos)
 			ccx_options.ts_cappid = newcappid = elementary_PID;
 			cap_stream_type=CCX_STREAM_TYPE_UNKNOWNSTREAM;
 		}
-		if(IS_FEASIBLE(ccx_options.codec,ccx_options.nocodec,CCX_CODEC_DVB) && !ccx_options.ts_cappid && ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2)
+		if(IS_FEASIBLE(ccx_options.codec,ccx_options.nocodec,CCX_CODEC_DVB) &&
+			ES_info_length &&
+			!ccx_options.ts_cappid &&
+			ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2)
 		{
 			unsigned char *es_info = payload_start + i + 5;
 			for (desc_len = 0;(payload_start + i + 5 + ES_info_length) - es_info ;es_info += desc_len)
@@ -234,7 +234,8 @@ int parse_PMT (int pos)
 		}
 
 
-		if (IS_FEASIBLE(ccx_options.codec,ccx_options.nocodec,CCX_CODEC_TELETEXT) && (ccx_options.teletext_mode==CCX_TXT_AUTO_NOT_YET_FOUND ||
+		if (IS_FEASIBLE(ccx_options.codec,ccx_options.nocodec,CCX_CODEC_TELETEXT) &&
+			ES_info_length	&& (ccx_options.teletext_mode==CCX_TXT_AUTO_NOT_YET_FOUND ||
 			(ccx_options.teletext_mode==CCX_TXT_IN_USE && !ccx_options.ts_cappid)) // Want teletext but don't know the PID yet
 			&& ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2) // MPEG-2 Packetized Elementary Stream packets containing private data
 		{
@@ -253,7 +254,7 @@ int parse_PMT (int pos)
 					elementary_PID, elementary_PID, program_number, program_number);
 			}
 		}
-		if (ccx_options.teletext_mode==CCX_TXT_FORBIDDEN && 
+		if (ccx_options.teletext_mode==CCX_TXT_FORBIDDEN && ES_info_length  &&
 			ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2) // MPEG-2 Packetized Elementary Stream packets containing private data
 		{
 			unsigned descriptor_tag = payload_start[i + 5];

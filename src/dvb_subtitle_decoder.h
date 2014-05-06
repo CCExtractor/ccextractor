@@ -18,6 +18,10 @@
 
 #define MAX_LANGUAGE_PER_DESC 5
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 struct dvb_config
 {
@@ -59,7 +63,7 @@ int dvbsub_close_decoder(void *dvb_ctx);
  */
 int dvbsub_decode(void *dvb_ctx,
                          void *data, int *data_size,
-                         const unsigned char *buf,int buf_size);
+                        const unsigned char *buf,int buf_size);
 /**
  * @func parse_dvb_description
  *
@@ -71,4 +75,8 @@ int dvbsub_decode(void *dvb_ctx,
  * errno is set is to EINVAL if invalid data is found
  */
 int  parse_dvb_description (struct dvb_config* cfg,unsigned char*data,unsigned int len);
+
+#ifdef __cplusplus
+}
+#endif
 #endif
