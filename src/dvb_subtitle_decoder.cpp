@@ -35,6 +35,12 @@
 
 #include "dvb_subtitle_decoder.h"
 #define DEBUG
+
+#ifdef DEBUG
+#define PNG_DEBUG 3
+#include "png.h"
+#endif
+
 #define DVBSUB_PAGE_SEGMENT     0x10
 #define DVBSUB_REGION_SEGMENT   0x11
 #define DVBSUB_CLUT_SEGMENT     0x12
@@ -205,58 +211,95 @@ static void freep(void *arg)
 #ifdef DEBUG
 static void png_save(const char *filename, uint32_t *bitmap, int w, int h)
 {
-    int x, y, v;
-    FILE *f;
-    char fname[40], fname2[40];
-    char command[1024];
+	FILE *f;
+	char fname[40];
+	png_structp png_ptr;
+	png_infop info_ptr;
+	png_bytep* row_pointer;
+	static png_color palette[10] =
+	{
+		{ 0xff, 0xff, 0xff }, // COL_WHITE = 0,
+		{ 0x00, 0xff, 0x00 }, // COL_GREEN = 1,
+		{ 0x00, 0x00, 0xff }, // COL_BLUE = 2,
+		{ 0x00, 0xff, 0xff }, // COL_CYAN = 3,
+		{ 0xff, 0x00, 0x00 }, // COL_RED = 4,
+		{ 0xff, 0xff, 0x00 }, // COL_YELLOW = 5,
+		{ 0xff, 0x00, 0xff }, // COL_MAGENTA = 6,
+		{ 0xff, 0xff, 0xff }, // COL_USERDEFINED = 7,
+		{ 0x00, 0x00, 0x00 }, // COL_BLACK = 8
+		{ 0x00, 0x00, 0x00 } // COL_TRANSPARENT = 9
+	};
+	static png_byte alpha[10] =
+	{255,255,255,255,255,255,255,255,255,0};
+	int i =0;
+	int j =0;
+	int k =0;
+	unsigned char array[1024] = "";
 
-    snprintf(fname, sizeof(fname), "%s.ppm", filename);
 
-    f = fopen(fname, "w");
-    if (!f) {
-        perror(fname);
-        return;
-    }
-    fprintf(f, "P6\n"
-            "%d %d\n"
-            "%d\n",
-            w, h, 255);
-    for(y = 0; y < h; y++) {
-        for(x = 0; x < w; x++) {
-            v = bitmap[y * w + x];
-            putc((v >> 16) & 0xff, f);
-            putc((v >> 8) & 0xff, f);
-            putc((v >> 0) & 0xff, f);
-        }
-    }
-    fclose(f);
+	snprintf(fname, sizeof(fname), "%s.png", filename);
+	f = fopen(fname, "wb");
+	if (!f)
+	{
+		perror(fname);
+		return;
+	}
 
+	if (!(png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING,NULL, NULL, NULL)))
+	{
+		printf("unable to create png write struct\n");
+	}
 
-    snprintf(fname2, sizeof(fname2), "%s-a.pgm", filename);
+	if (!(info_ptr = png_create_info_struct(png_ptr)))
+	{
+		printf("unable to create png info struct\n");
+		png_destroy_write_struct(&png_ptr, (png_infopp) NULL);
+	}
 
-    f = fopen(fname2, "w");
-    if (!f) {
-        perror(fname2);
-        return;
-    }
-    fprintf(f, "P5\n"
-            "%d %d\n"
-            "%d\n",
-            w, h, 255);
-    for(y = 0; y < h; y++) {
-        for(x = 0; x < w; x++) {
-            v = bitmap[y * w + x];
-            putc((v >> 24) & 0xff, f);
-        }
-    }
-    fclose(f);
+	row_pointer = (png_bytep*)malloc(sizeof(png_bytep) * h);
+	if(!row_pointer)
+	{
+		printf("unable to allocate row_pointer\n");
+		png_destroy_write_struct(&png_ptr, (png_infopp) NULL);
+	}
 
-    snprintf(command, sizeof(command), "pnmtopng -alpha %s %s > %s.png 2> /dev/null", fname2, fname, filename);
-    system(command);
+	png_init_io(png_ptr,f);
 
-//    snprintf(command, sizeof(command), "rm %s %s", fname, fname2);
-//    system(command);
+	png_set_IHDR (png_ptr,info_ptr,w,h,
+				  /* bit_depth */ 8,PNG_COLOR_TYPE_RGB_ALPHA,
+				  PNG_INTERLACE_NONE,
+				  PNG_COMPRESSION_TYPE_DEFAULT,
+				  PNG_FILTER_TYPE_DEFAULT);
+
+	for (i = 0; i < h; i++)
+		row_pointer[i] = (png_byte*)malloc(png_get_rowbytes(png_ptr,info_ptr));
+
+	png_set_tRNS (png_ptr, info_ptr, alpha, sizeof(alpha) / sizeof(alpha[0]), NULL);
+	png_write_info (png_ptr, info_ptr);
+
+	for (i = 0; i < h; i++)
+	{
+		for(j = 0 ; j < png_get_rowbytes(png_ptr,info_ptr) ; j+=4)
+		{
+			k = bitmap[i * w + (j/4)];
+			row_pointer[i][j] = ((k >> 16) & 0xff);
+			row_pointer[i][j+1] = ((k >> 8) & 0xff);
+			row_pointer[i][j+2] = ((k) & 0xff);
+			row_pointer[i][j+3] = (k >> 24) & 0xff;
+		}
+	}
+
+	png_write_image (png_ptr, row_pointer);
+
+	png_write_end (png_ptr, info_ptr);
+
+	for (i = 0; i < h; i++)
+		free(row_pointer[i]);
+	free(row_pointer);
+	png_destroy_write_struct(&png_ptr, (png_infopp) NULL);
+	fclose(f);
 }
+
 #endif
 
 #define RGBA(r,g,b,a) (((unsigned)(a) << 24) | ((r) << 16) | ((g) << 8) | (b))

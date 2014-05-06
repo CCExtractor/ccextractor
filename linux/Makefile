@@ -42,7 +42,7 @@ src_SRC = \
 	../src/output.cpp ../src/params.cpp ../src/params_dump.cpp \
 	../src/sequencing.cpp ../src/stream_functions.cpp ../src/telxcc.cpp \
 	../src/timing.cpp ../src/ts_functions.cpp ../src/utility.cpp \
-	../src/wtv_functions.cpp ../src/xds.cpp ../src/dvb_subtitle_decoder.c \
+	../src/wtv_functions.cpp ../src/xds.cpp ../src/dvb_subtitle_decoder.cpp \
 	../src/ts_tables.cpp
 
 gpacmp4_SRC = \
@@ -68,14 +68,9 @@ gpacmp4_SRC = \
 	../src/gpacmp4/track.c ../src/gpacmp4/tx3g.c \
 	../src/gpacmp4/url.c ../src/gpacmp4/utf.c
 
-libpng_SRC = \
-	../src/libpng/png.c ../src/libpng/pngerror.c ../src/libpng/pngmem.c \
-	../src/libpng/pngset.c ../src/libpng/pngtrans.c ../src/libpng/pngwio.c \
-	../src/libpng/pngwrite.c ../src/libpng/pngwtran.c ../src/libpng/pngwutil.c
+libpng_SRC = $(wildcard ../src/libpng/*.c)
 
-libpng_OBJS = \
-	png.o pngerror.o pngmem.o pngset.o pngtrans.o pngwio.o \
-	pngwrite.o pngwtran.o pngwutil.o
+libpng_OBJS = $(libpng_SRC:.c=.o)
 
 zlib_SRC = \
 	../src/zlib/adler32.c ../src/zlib/crc32.c ../src/zlib/deflate.c \
