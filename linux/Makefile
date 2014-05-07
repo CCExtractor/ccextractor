@@ -1,100 +1,73 @@
-# Comment out the following line if you don't have libpng
+SHELL = /bin/sh
 
-CPPFLAGS += -DGPAC_CONFIG_LINUX -D_FILE_OFFSET_BITS=64 -I../src/gpacmp4 -I../src/libpng/ -I../src/zlib/
-CFLAGS += -g -Wno-write-strings
+CC = gcc
+CXX = g++
 
-CXXFLAGS = $(CFLAGS)
-CC = $(CXX)
+CFLAGS = -O3
+ALL_FLAGS = -Wno-write-strings -DGPAC_CONFIG_LINUX -D_FILE_OFFSET_BITS=64 
+LDFLAGS = -I../src/gpacmp4/ -I../src/libpng -I../src/zlib -lm -zmuldefs
 
-bindir = $(HOME)/bin
-INSTALL = cp -f -p
-INSTALL_PROGRAM = cp -f -p
+TARGET = ccextractor
 
+OBJS_DIR = objs
 VPATH = ../src:../src/gpacmp4:../src/libpng:../src/zlib
 
-src_OBJS = \
-	608_helpers.o 608.o 608_sami.o 608_smptett.o 608_srt.o 608_spupng.o \
-	708_encoding.o 708.o activity.o asf_functions.o avc_functions.o \
-	cc_bitstream.o cc_decoders_common.o ccextractor.o constants.o \
-	encoding.o es_functions.o es_userdata.o file_functions.o \
-	general_loop.o mp4.o myth.o output.o params_dump.o params.o \
-	sequencing.o stream_functions.o telxcc.o timing.o ts_functions.o \
-	utility.o wtv_functions.o xds.o dvb_subtitle_decoder.o ts_tables.o
+SRCS_DIR = ../src
+SRCS = $(wildcard $(SRCS_DIR)/*.cpp)
+OBJS = $(SRCS:$(SRCS_DIR)/%.cpp=$(OBJS_DIR)/%.o)
 
-gpacmp4_OBJS = \
-	avc_ext.o avilib.o av_parsers.o base_encoding.o bitstream.o \
-	box_code_3gpp.o box_code_apple.o box_code_base.o box_code_isma.o \
-	box_code_meta.o box_funcs.o data_map.o desc_private.o descriptors.o \
-	error.o gpac_ogg.o hinting.o ipmpx_code.o ipmpx_parse.o \
-	isom_intern.o isom_read.o isom_store.o isom_write.o list.o \
-	media.o media_odf.o meta.o movie_fragments.o \
-	odf_code.o odf_codec.o odf_command.o os_divers.o qos.o sample_descs.o \
-	slc.o stbl_read.o stbl_write.o track.o tx3g.o url.o utf.o
+SRCS_PNG_DIR = $(SRCS_DIR)/libpng
+SRCS_PNG = $(wildcard $(SRCS_PNG_DIR)/*.c)
+OBJS_PNG = $(SRCS_PNG:$(SRCS_PNG_DIR)/%.c=$(OBJS_DIR)/%.o)
 
-src_SRC = \
-	../src/608.cpp ../src/608_helpers.cpp ../src/608_sami.cpp \
-	../src/608_smptett.cpp ../src/608_spupng.cpp ../src/608_srt.cpp \
-	../src/708.cpp ../src/708_encoding.cpp ../src/activity.cpp \
-	../src/asf_functions.cpp ../src/avc_functions.cpp ../src/cc_bitstream.cpp \
-	../src/cc_decoders_common.cpp ../src/ccextractor.cpp ../src/constants.cpp \
-	../src/encoding.cpp ../src/es_functions.cpp ../src/es_userdata.cpp \
-	../src/file_functions.cpp ../src/general_loop.cpp ../src/myth.cpp \
-	../src/output.cpp ../src/params.cpp ../src/params_dump.cpp \
-	../src/sequencing.cpp ../src/stream_functions.cpp ../src/telxcc.cpp \
-	../src/timing.cpp ../src/ts_functions.cpp ../src/utility.cpp \
-	../src/wtv_functions.cpp ../src/xds.cpp ../src/dvb_subtitle_decoder.cpp \
-	../src/ts_tables.cpp
+SRCS_GPACMP4_DIR = $(SRCS_DIR)/gpacmp4
+SRCS_GPACMP4_C = $(wildcard $(SRCS_GPACMP4_DIR)/*.c)
+SRCS_GPACMP4_CPP = $(wildcard $(SRCS_GPACMP4_DIR)/*.cpp)
+OBJS_GPACMP4 = $(SRCS_GPACMP4_C:$(SRCS_GPACMP4_DIR)/%.c=$(OBJS_DIR)/%.o) \
+			   $(SRCS_GPACMP4_CPP:$(SRCS_GPACMP4_DIR)/%.cpp=$(OBJS_DIR)/%.o)
 
-gpacmp4_SRC = \
-	../src/gpacmp4/avc_ext.c ../src/gpacmp4/avilib.c \
-	../src/gpacmp4/av_parsers.c ../src/gpacmp4/base_encoding.c \
-	../src/gpacmp4/bitstream.c ../src/gpacmp4/box_code_3gpp.c \
-	../src/gpacmp4/box_code_apple.c ../src/gpacmp4/box_code_base.c \
-	../src/gpacmp4/box_code_isma.c ../src/gpacmp4/box_code_meta.c \
-	../src/gpacmp4/box_funcs.c ../src/gpacmp4/data_map.c \
-	../src/gpacmp4/desc_private.c ../src/gpacmp4/descriptors.c \
-	../src/gpacmp4/error.c ../src/gpacmp4/gpac_ogg.c \
-	../src/gpacmp4/hinting.c ../src/gpacmp4/ipmpx_code.c \
-	../src/gpacmp4/ipmpx_parse.c ../src/gpacmp4/isom_intern.c \
-	../src/gpacmp4/isom_read.c ../src/gpacmp4/isom_store.c \
-	../src/gpacmp4/isom_write.c ../src/gpacmp4/list.c \
-	../src/gpacmp4/media.c ../src/gpacmp4/media_odf.c \
-	../src/gpacmp4/meta.c ../src/gpacmp4/movie_fragments.c \
-	../src/gpacmp4/mp4.cpp ../src/gpacmp4/odf_code.c \
-	../src/gpacmp4/odf_codec.c ../src/gpacmp4/odf_command.c \
-	../src/gpacmp4/os_divers.c ../src/gpacmp4/qos.c \
-	../src/gpacmp4/sample_descs.c ../src/gpacmp4/slc.c \
-	../src/gpacmp4/stbl_read.c ../src/gpacmp4/stbl_write.c \
-	../src/gpacmp4/track.c ../src/gpacmp4/tx3g.c \
-	../src/gpacmp4/url.c ../src/gpacmp4/utf.c
+SRCS_ZLIB_DIR = $(SRCS_DIR)/zlib
+SRCS_ZLIB = $(wildcard $(SRCS_ZLIB_DIR)/*.c)
+OBJS_ZLIB = $(SRCS_ZLIB:$(SRCS_ZLIB_DIR)/%.c=$(OBJS_DIR)/%.o)
 
-libpng_SRC = $(wildcard ../src/libpng/*.c)
-
-libpng_OBJS = $(libpng_SRC:.c=.o)
-
-zlib_SRC = \
-	../src/zlib/adler32.c ../src/zlib/crc32.c ../src/zlib/deflate.c \
-	../src/zlib/inffast.c ../src/zlib/inflate.c ../src/zlib/inftrees.c \
-	../src/zlib/trees.c ../src/zlib/zutil.c
-
-zlib_OBJS = \
-	adler32.o crc32.o deflate.o inffast.o inflate.o inftrees.o \
-	trees.o zutil.o
+INSTLALL = cp -f -p
+INSTLALL_PROGRAM = $(INSTLALL)
+DESTDIR = /usr/bin
 
 .PHONY: all
-all: ccextractor
+all: objs_dir $(TARGET) 
+
+.PHONY: objs_dir
+objs_dir: 
+	mkdir -p $(OBJS_DIR)
+
+$(TARGET): $(OBJS) $(OBJS_PNG) $(OBJS_GPACMP4) $(OBJS_ZLIB)
+	$(CXX) $(ALL_FLAGS) $(CFLAGS) $(OBJS) $(OBJS_PNG) $(OBJS_GPACMP4) $(OBJS_ZLIB) $(LDFLAGS) -o $@
+
+$(OBJS_DIR)/%.o: %.c
+	$(CC) -c $(ALL_FLAGS) $(CFLAGS) $< -o $@ -I../src/gpacmp4 
+
+$(OBJS_DIR)/%.o: %.cpp
+	$(CC) -c $(ALL_FLAGS) $(CFLAGS) $< -o $@ -I../src/gpacmp4 
 
 .PHONY: clean
 clean:
-	rm -f *.o ccextractor depend
-
-ccextractor: $(src_OBJS) $(gpacmp4_OBJS) $(libpng_OBJS) $(zlib_OBJS)
+	rm $(TARGET) 2>/dev/null || true
+	rm $(OBJS_PNG) $(OBJS_ZLIB) $(OBJS_GPACMP4) $(OBJS) 2>/dev/null || true
+	rm -rd $(OBJS_DIR) 2>/dev/null || true
+	rm .depend 2>/dev/null || true
 
 .PHONY: install
-install: ccextractor
-	$(INSTALL_PROGRAM) ccextractor $(bindir)
+install: $(TARGET)
+	$(INSTLALL_PROGRAM) $(TARGET) $(DESTDIR)
 
-depend:
-	$(CXX) $(CXXFLAGS) -E -MM $(src_SRC) $(gpacmp4_SRC) $(libpng_SRC) $(zlib_SRC) > depend
+.PHONY: uninstall
+uninstall: 
+	rm -iv $(DESTDIR)/$(TARGET) 
 
-include depend
+.PHONY: depend dep
+depend dep:
+	$(CXX) $(CXXFLAGS) -E -MM $(SRCS) $(SRCS_PNG) $(SRCS_ZLIB) \
+		$(SRCS_GPACMP4_C) $(SRCS_GPACMP4_CPP) > .depend
+
+-include .depend
