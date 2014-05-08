@@ -24,8 +24,9 @@ void
 write_spumux_header(struct s_context_cc608 *context)
 {
     if (0 == context->spupng_data)
-		context->spupng_data = new SpuPng(context);
-	((SpuPng*)context->spupng_data)->writeHeader();
+		context->spupng_data = spunpg_init(context);
+
+	spupng_write_header((struct spupng_t*)context->spupng_data);
 }
 
 void
@@ -33,8 +34,11 @@ write_spumux_footer(struct s_context_cc608 *context)
 {
 	if (0 != context->spupng_data)
     {
-		((SpuPng*)context->spupng_data)->writeFooter();
-		delete (SpuPng*)context->spupng_data;
+        struct spupng_t *sp = (struct spupng_t *) context->spupng_data;
+
+        spupng_write_footer(sp);
+		spunpg_free(sp);
+
 		context->spupng_data = 0;
 		context->out->fh = -1;
     }
@@ -45,45 +49,58 @@ write_cc_buffer_as_spupng(struct eia608_screen *data, struct s_context_cc608 *co
 {
 	if (0 != context->spupng_data)
     {
-		return ((SpuPng*)context->spupng_data)->writeCCBuffer(data, context);
+        struct spupng_t *sp = (struct spupng_t *) context->spupng_data;
+		return spupng_write_ccbuffer(sp, data, context);
     }
     return 0;
 }
 
 static int initialized = 0;
 
-SpuPng::SpuPng(struct s_context_cc608 *context)
+struct spupng_t *spunpg_init(struct s_context_cc608 *context)
 {
+    struct spupng_t *sp = (struct spupng_t *) malloc(sizeof(struct spupng_t));
+    if (NULL == sp)
+        fatal(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
+
     if (!initialized)
     {
         initialized = 1;
-        initFont();
+        spupng_init_font();
     }
 
-	if ((fpxml = fdopen(context->out->fh, "w")) == NULL)
+	if ((sp->fpxml = fdopen(context->out->fh, "w")) == NULL)
     {
-		fatal(EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n", context->out->filename, strerror(errno));
+		fatal(EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n", 
+		        context->out->filename, strerror(errno));
     }
-    dirname = new char [strlen(context->out->filename) + 3];
-	strcpy(dirname, context->out->filename);
-    char* p = strrchr(dirname, '.');
-    if (0 == p)
-        p = dirname + strlen(dirname);
+    sp->dirname = (char *) malloc(
+                            sizeof(char) * (strlen(context->out->filename) + 3));
+    if (NULL == sp)
+        fatal(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
+
+	strcpy(sp->dirname, context->out->filename);
+    char* p = strrchr(sp->dirname, '.');
+    if (NULL == p)
+        p = sp->dirname + strlen(sp->dirname);
     *p = '\0';
-    strcat(dirname, ".d");
-    if (mkdir(dirname, 0777) != 0)
+    strcat(sp->dirname, ".d");
+    if (0 != mkdir(sp->dirname, 0777))
     {
         if (errno != EEXIST)
         {
-            fatal(EXIT_FILE_CREATION_FAILED, "Cannot create %s: %s\n", dirname, strerror(errno));
+            fatal(EXIT_FILE_CREATION_FAILED, "Cannot create %s: %s\n", 
+                    sp->dirname, strerror(errno));
         }
         // If dirname isn't a directory or if we don't have write permission,
-        // the first attempt to create a .png file will fail and we'll exit.
+        // the first attempt to create a .png file will fail and we'll XXxit.
     }
 
     // enough to append /subNNNN.png
-    pngfile = new char [ strlen(dirname) + 13 ];
-    fileIndex = 0;
+    sp->pngfile = (char *) malloc(sizeof(char) * (strlen(sp->dirname) + 13));
+    if (NULL == sp)
+        fatal(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
+    sp->fileIndex = 0;
 
     // For NTSC closed captions and 720x480 DVD subtitle resolution:
     // Each character is 16x26.
@@ -92,35 +109,39 @@ SpuPng::SpuPng(struct s_context_cc608 *context)
     // To center image in 720x480 DVD screen, offset image by 88 and 45
     // Need to keep yOffset even to prevent flicker on interlaced displays
     // Would need to do something different for PAL format and teletext.
-    xOffset = 88;
-    yOffset = 46;
+    sp->xOffset = 88;
+    sp->yOffset = 46;
+
+    return sp;
 }
 
-SpuPng::~SpuPng()
+void 
+spunpg_free(struct spupng_t *sp)
 {
-    delete [] dirname;
-    delete [] pngfile;
+    free(sp->dirname);
+    free(sp->pngfile);
+    free(sp);
 }
 
-
-void
-SpuPng::writeHeader()
+void 
+spupng_write_header(struct spupng_t *sp)
 {
-    fprintf(fpxml, "<subpictures>\n<stream>\n");
+    fprintf(sp->fpxml, "<subpictures>\n<stream>\n");
     if (num_input_files > 0)
-        fprintf(fpxml, "<!-- %s -->\n", inputfile[0]);
+        fprintf(sp->fpxml, "<!-- %s -->\n", inputfile[0]);
 }
 
-void
-SpuPng::writeFooter()
+void 
+spupng_write_footer(struct spupng_t *sp)
 {
-    fprintf(fpxml, "</stream>\n</subpictures>\n");
-    fflush(fpxml);
-    fclose(fpxml);
+    fprintf(sp->fpxml, "</stream>\n</subpictures>\n");
+    fflush(sp->fpxml);
+    fclose(sp->fpxml);
 }
 
 int
-SpuPng::writeCCBuffer(struct eia608_screen* data, struct s_context_cc608 *context)
+spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
+                      struct s_context_cc608 *context)
 {
 	LLONG ms_start = context->current_visible_start_ms + subs_delay;
     if (ms_start < 0)
@@ -145,30 +166,32 @@ SpuPng::writeCCBuffer(struct eia608_screen* data, struct s_context_cc608 *contex
         return 0;
     }
 
-    LLONG ms_end=get_visible_end()+subs_delay;
+    LLONG ms_end = get_visible_end() + subs_delay;
 
-    sprintf(pngfile, "%s/sub%04d.png", dirname, fileIndex++);
-    if ((fppng = fopen(pngfile, "wb")) == NULL)
+    sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex++);
+    if ((sp->fppng = fopen(sp->pngfile, "wb")) == NULL)
     {
-        fatal(EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n", pngfile, strerror(errno));
+        fatal(EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n", 
+                sp->pngfile, strerror(errno));
     }
-    if (!exportPNG(data))
+    if (!spupng_export_png(sp, data))
     {
-        fatal(EXIT_FILE_CREATION_FAILED, "Cannot write %s: %s\n", pngfile, strerror(errno));
+        fatal(EXIT_FILE_CREATION_FAILED, "Cannot write %s: %s\n",
+                sp->pngfile, strerror(errno));
     }
-    fclose(fppng);
+    fclose(sp->fppng);
 
-    fprintf(fpxml, "<spu start=\"%.3f\"", ((double)ms_start) / 1000);
+    fprintf(sp->fpxml, "<spu start=\"%.3f\"", ((double)ms_start) / 1000);
     dbg_print(CCX_DMT_608, "<spu start=\"%.3f\"", ((double)ms_start) / 1000);
-    fprintf(fpxml, " end=\"%.3f\"", ((double)ms_end) / 1000);
+    fprintf(sp->fpxml, " end=\"%.3f\"", ((double)ms_end) / 1000);
     dbg_print(CCX_DMT_608, " end=\"%.3f\"", ((double)ms_end) / 1000);
-    fprintf(fpxml, " image=\"%s\"", pngfile);
-    dbg_print(CCX_DMT_608, " image=\"%s\"", pngfile);
-    fprintf(fpxml, " xoffset=\"%d\"", xOffset);
-    dbg_print(CCX_DMT_608, " xoffset=\"%d\"", xOffset);
-    fprintf(fpxml, " yoffset=\"%d\"", yOffset);
-    dbg_print(CCX_DMT_608, " yoffset=\"%d\"", yOffset);
-    fprintf(fpxml, ">\n<!--\n");
+    fprintf(sp->fpxml, " image=\"%s\"", sp->pngfile);
+    dbg_print(CCX_DMT_608, " image=\"%s\"", sp->pngfile);
+    fprintf(sp->fpxml, " xoffset=\"%d\"", sp->xOffset);
+    dbg_print(CCX_DMT_608, " xoffset=\"%d\"", sp->xOffset);
+    fprintf(sp->fpxml, " yoffset=\"%d\"", sp->yOffset);
+    dbg_print(CCX_DMT_608, " yoffset=\"%d\"", sp->yOffset);
+    fprintf(sp->fpxml, ">\n<!--\n");
     dbg_print(CCX_DMT_608, ">\n<!--\n");
     for (row = 0; row < ROWS; row++)
     {
@@ -194,14 +217,14 @@ SpuPng::writeCCBuffer(struct eia608_screen* data, struct s_context_cc608 *contex
                         break;
                 }
             }
-            fprintf(fpxml, "%s\n", subline);
+            fprintf(sp->fpxml, "%s\n", subline);
             dbg_print(CCX_DMT_608, "%s\n", subline);
         }
     }
-    fprintf(fpxml, "--></spu>\n");
+    fprintf(sp->fpxml, "--></spu>\n");
     dbg_print(CCX_DMT_608, "--></spu>\n");
 
-    fflush(fpxml);
+    fflush(sp->fpxml);
 
     return 1;
 }
@@ -210,8 +233,8 @@ SpuPng::writeCCBuffer(struct eia608_screen* data, struct s_context_cc608 *contex
 // Begin copy from http://zapping.cvs.sourceforge.net/viewvc/zapping/vbi/src/exp-gfx.c?view=markup&pathrev=zvbi-0-2-33
 //
 
-void
-SpuPng::initFont(void)
+void 
+spupng_init_font()
 {
     uint8_t *t, *p;
     int i, j;
@@ -230,7 +253,7 @@ SpuPng::initFont(void)
     free (t);
 #endif
     if (!(t = (uint8_t*)malloc(ccfont2_width * ccfont2_height / 8)))
-        exit(EXIT_FAILURE);
+        fatal(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
 
     for (p = t, i = 0; i < CCH; i++)
         for (j = 0; j < ccfont2_height; p += ccfont2_width / 8, j += CCH)
@@ -480,20 +503,19 @@ static png_byte alpha[10] =
     0
 };
 
-int
-SpuPng::writePNG(struct eia608_screen* data,
-        png_structp png_ptr, png_infop info_ptr,
-        png_bytep image,
-        png_bytep* row_pointer,
-        unsigned int ww,
-        unsigned int wh)
+int 
+spupng_write_png(struct spupng_t *sp, struct eia608_screen* data,
+                 png_structp png_ptr, png_infop info_ptr,
+                 png_bytep image,
+                 png_bytep* row_pointer,
+                 unsigned int ww, unsigned int wh)
 {
     unsigned int i;
 
     if (setjmp(png_jmpbuf(png_ptr)))
             return 0;
 
-    png_init_io (png_ptr, fppng);
+    png_init_io (png_ptr, sp->fppng);
 
     png_set_IHDR (png_ptr,
                   info_ptr,
@@ -522,8 +544,8 @@ SpuPng::writePNG(struct eia608_screen* data,
     return 1;
 }
 
-int
-SpuPng::exportPNG(struct eia608_screen* data)
+int 
+spupng_export_png(struct spupng_t *sp, struct eia608_screen* data)
 {
     png_structp png_ptr;
     png_infop info_ptr;
@@ -575,7 +597,7 @@ SpuPng::exportPNG(struct eia608_screen* data)
         goto unknown_error;
     }
 
-    if (!writePNG (data, png_ptr, info_ptr, image, row_pointer, ww, wh)) {
+    if (!spupng_write_png (sp, data, png_ptr, info_ptr, image, row_pointer, ww, wh)) {
         png_destroy_write_struct (&png_ptr, &info_ptr);
         goto write_error;
     }
