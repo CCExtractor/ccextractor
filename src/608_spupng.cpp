@@ -24,33 +24,33 @@ void
 write_spumux_header(struct s_context_cc608 *context)
 {
     if (0 == context->spupng_data)
-		context->spupng_data = spunpg_init(context);
+        context->spupng_data = spunpg_init(context);
 
-	spupng_write_header((struct spupng_t*)context->spupng_data);
+    spupng_write_header((struct spupng_t*)context->spupng_data);
 }
 
 void
 write_spumux_footer(struct s_context_cc608 *context)
 {
-	if (0 != context->spupng_data)
+    if (0 != context->spupng_data)
     {
         struct spupng_t *sp = (struct spupng_t *) context->spupng_data;
 
         spupng_write_footer(sp);
-		spunpg_free(sp);
+        spunpg_free(sp);
 
-		context->spupng_data = 0;
-		context->out->fh = -1;
+        context->spupng_data = 0;
+        context->out->fh = -1;
     }
 }
 
 int
 write_cc_buffer_as_spupng(struct eia608_screen *data, struct s_context_cc608 *context)
 {
-	if (0 != context->spupng_data)
+    if (0 != context->spupng_data)
     {
         struct spupng_t *sp = (struct spupng_t *) context->spupng_data;
-		return spupng_write_ccbuffer(sp, data, context);
+        return spupng_write_ccbuffer(sp, data, context);
     }
     return 0;
 }
