@@ -126,6 +126,7 @@ enum ccx_mpeg_descriptor
 	CCX_MPEG_DSC_DVB_SUBTITLE = 0x59,
 };
 
+
 enum
 {
 	CCX_MESSAGES_QUIET = 0,
@@ -218,7 +219,20 @@ enum cxx_code_type
 	CCX_CODEC_DVB,
 	CCX_CODEC_NONE,
 };
+/*
+ * This Macro check whether descriptor tag is valid for teletext
+ * codec or not.
+ *
+ * @param desc descriptor tag given for each stream
+ *
+ * @return if descriptor tag is valid then it return 1 otherwise 0
+ *      
+ */
 
+#define IS_VALID_TELETEXT_DESC(desc) ( ((desc) == CCX_MPEG_DSC_VBI_DATA_DESCRIPTOR )|| \
+				( (desc) == CCX_MPEG_DSC_VBI_TELETEXT_DESCRIPTOR ) || \
+				( (desc) == CCX_MPEG_DSC_TELETEXT_DESCRIPTOR ) )
+						
 /*
  * This  macro to be used when you want to find out whether you
  * should parse f_sel subtitle codec type or not
