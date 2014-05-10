@@ -233,15 +233,18 @@ int parse_PMT (int pos)
 			}
 		}
 
-
 		if (IS_FEASIBLE(ccx_options.codec,ccx_options.nocodec,CCX_CODEC_TELETEXT) && (ccx_options.teletext_mode==CCX_TXT_AUTO_NOT_YET_FOUND ||
 			(ccx_options.teletext_mode==CCX_TXT_IN_USE && !ccx_options.ts_cappid)) // Want teletext but don't know the PID yet
+			&& ES_info_length
 			&& ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2) // MPEG-2 Packetized Elementary Stream packets containing private data
 		{
-			// descriptor_tag: 0x45 = VBI_data_descriptor, 0x46 = VBI_teletext_descriptor, 0x56 = teletext_descriptor
-			unsigned descriptor_tag = payload_start[i + 5];
-			if ((descriptor_tag == 0x45) || (descriptor_tag == 0x46) || (descriptor_tag == 0x56))
-			{
+                        unsigned char *es_info = payload_start + i + 5;
+                        for (desc_len = 0;(payload_start + i + 5 + ES_info_length) - es_info ;es_info += desc_len)
+                        {   
+                                enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
+                                desc_len = (*es_info++);
+                                if(!IS_VALID_TELETEXT_DESC(descriptor_tag))
+					continue;
 				telxcc_init();
 				if (!ccx_options.ts_forced_cappid)
 				{
@@ -251,7 +254,8 @@ int parse_PMT (int pos)
 				ccx_options.teletext_mode =CCX_TXT_IN_USE;						
 				mprint ("VBI/teletext stream ID %u (0x%x) for SID %u (0x%x)\n",
 					elementary_PID, elementary_PID, program_number, program_number);
-			}
+                        }   
+
 		}
 		if (ccx_options.teletext_mode==CCX_TXT_FORBIDDEN && 
 			ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2) // MPEG-2 Packetized Elementary Stream packets containing private data

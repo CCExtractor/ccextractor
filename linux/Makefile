@@ -4,8 +4,9 @@ CC = gcc
 CXX = g++
 
 CFLAGS = -O3
+INCLUDE = -I../src/gpacmp4/ -I../src/libpng -I../src/zlib
 ALL_FLAGS = -Wno-write-strings -DGPAC_CONFIG_LINUX -D_FILE_OFFSET_BITS=64 
-LDFLAGS = -I../src/gpacmp4/ -I../src/libpng -I../src/zlib -lm -zmuldefs
+LDFLAGS = -lm -zmuldefs
 
 TARGET = ccextractor
 
@@ -47,10 +48,10 @@ $(TARGET): $(OBJS) $(OBJS_PNG) $(OBJS_GPACMP4) $(OBJS_ZLIB)
 	$(CXX) $(ALL_FLAGS) $(CFLAGS) $(OBJS) $(OBJS_PNG) $(OBJS_GPACMP4) $(OBJS_ZLIB) $(LDFLAGS) -o $@
 
 $(OBJS_DIR)/%.o: %.c
-	$(CC) -c $(ALL_FLAGS) $(CFLAGS) $< -o $@ -I../src/gpacmp4 
+	$(CC) -c $(ALL_FLAGS) $(INCLUDE) $(CFLAGS) $< -o $@  
 
 $(OBJS_DIR)/%.o: %.cpp
-	$(CC) -c $(ALL_FLAGS) $(CFLAGS) $< -o $@ -I../src/gpacmp4 
+	$(CC) -c $(ALL_FLAGS) $(INCLUDE) $(CFLAGS) $< -o $@ -I../src/gpacmp4 
 
 .PHONY: clean
 clean:
