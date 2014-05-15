@@ -84,9 +84,9 @@ struct ccx_s_options // Options from user parameters
 	unsigned ucla_settings; // Enables convenient settings for UCLA's project.
 	char millis_separator;
 	LLONG screens_to_process; // How many screenfuls we want?
-	ccx_encoding_type encoding ;
-	ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
-	ccx_output_date_format date_format;
+	enum ccx_encoding_type encoding ;
+	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
+	enum ccx_output_date_format date_format;
 	char *output_filename;
 	char *out_elementarystream_filename;
 	LLONG debug_mask; // dbg_print will use this mask to print or ignore different types
@@ -103,8 +103,8 @@ struct ccx_s_options // Options from user parameters
 	unsigned udpport; // Non-zero => Listen for UDP packets on this port, no files.
 	int line_terminator_lf; // 0 = CRLF, 1=LF
 	int noautotimeref; // Do NOT set time automatically?
-	ccx_datasource input_source; // Files, stdin or network
-	color_code cc608_default_color;
+	enum ccx_datasource input_source; // Files, stdin or network
+	enum color_code cc608_default_color;
 };
 
 struct ts_payload
@@ -212,6 +212,10 @@ void general_loop(void);
 void processhex (char *filename);
 void rcwt_loop( void );
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 // activity.cpp
 void activity_header (void);
 void activity_progress (int percentaje, int cur_min, int cur_sec);
@@ -228,6 +232,9 @@ void activity_xds_program_identification_number (unsigned minutes, unsigned hour
 void activity_xds_program_description (int line_num, const char *program_desc);
 void activity_report_data_read (void);
 
+#ifdef __cplusplus
+}
+#endif
 extern unsigned long net_activity_gui;
 extern LLONG result;
 extern int end_of_file;
@@ -335,6 +342,10 @@ char *print_mstime( LLONG mstime );
 void print_debug_timing( void );
 int switch_to_next_file (LLONG bytesinbuffer);
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 // utility.cpp
 void fatal(int exit_code, const char *fmt, ...);
 void dvprint(const char *fmt, ...);
@@ -342,7 +353,7 @@ void mprint (const char *fmt, ...);
 void subsprintf (const char *fmt, ...);
 void dbg_print(LLONG mask, const char *fmt, ...);
 void fdprintf (int fd, const char *fmt, ...);
-void init_boundary_time (ccx_boundary_time *bt);
+void init_boundary_time (struct ccx_boundary_time *bt);
 void sleep_secs (int secs);
 void dump (LLONG mask, unsigned char *start, int l, unsigned long abs_start, unsigned clear_high_bit);
 bool_t in_array(uint16_t *array, uint16_t length, uint16_t element) ;
@@ -350,9 +361,8 @@ int hex2int (char high, char low);
 void timestamp_to_srttime(uint64_t timestamp, char *buffer);
 void millis_to_date (uint64_t timestamp, char *buffer) ;
 int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
-
-void init_context_cc608(struct s_context_cc608 *data, int field);
 unsigned encode_line (unsigned char *buffer, unsigned char *text);
+void init_context_cc608(struct s_context_cc608 *data, int field);
 void buffered_seek (int offset);
 void write_subtitle_file_header(struct s_context_cc608 *context);
 void write_subtitle_file_footer(struct s_context_cc608 *context);
@@ -361,7 +371,11 @@ extern void build_parity_table(void);
 void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) ;
 void telxcc_init(void);
 void telxcc_close(void);
-
+void mstotime (LLONG milli, unsigned *hours, unsigned *minutes,
+               unsigned *seconds, unsigned *ms);
+#ifdef __cplusplus
+}
+#endif
 extern struct gop_time_code gop_time, first_gop_time, printed_gop;
 extern int gop_rollover;
 extern LLONG min_pts, sync_pts, current_pts;
@@ -428,7 +442,7 @@ extern int stat_replay4000headers;
 extern int stat_dishheaders;
 extern int stat_hdtv;
 extern int stat_divicom;
-extern ccx_stream_mode_enum stream_mode;
+extern enum ccx_stream_mode_enum stream_mode;
 extern int cc_stats[4];
 extern LLONG inputsize;
 
@@ -452,7 +466,7 @@ extern double current_fps;
 extern unsigned long net_activity_gui;
 extern int end_of_file;
 extern LLONG inbuf;
-extern ccx_bufferdata_type bufferdatatype; // Can be CCX_BUFFERDATA_TYPE_RAW or CCX_BUFFERDATA_TYPE_PES
+extern enum ccx_bufferdata_type bufferdatatype; // Can be CCX_BUFFERDATA_TYPE_RAW or CCX_BUFFERDATA_TYPE_PES
 
 extern unsigned top_field_first;
 
@@ -477,7 +491,7 @@ extern int last_gop_length;
 extern int frames_since_last_gop;
 extern LLONG fts_at_gop_start;
 extern int frames_since_ref_time;
-extern ccx_stream_mode_enum auto_stream;
+extern enum ccx_stream_mode_enum auto_stream;
 extern int num_input_files;
 extern char *basefilename;
 extern int do_cea708; // Process 708 data?
@@ -494,7 +508,7 @@ extern unsigned int encoded_crlf_length;
 extern unsigned char encoded_br[16];
 extern unsigned int encoded_br_length;
 
-extern ccx_frame_type current_picture_coding_type; 
+extern enum ccx_frame_type current_picture_coding_type; 
 extern int current_tref; // Store temporal reference of current frame
 
 extern int cc608_parity_table[256]; // From myth
@@ -503,7 +517,7 @@ extern int cc608_parity_table[256]; // From myth
 extern unsigned cap_stream_type;
 extern struct ts_payload payload;
 extern unsigned char tspacket[188];
-extern PAT_entry pmt_array[TS_PMT_MAP_SIZE];
+extern struct PAT_entry pmt_array[TS_PMT_MAP_SIZE];
 extern uint16_t pmt_array_length;
 extern unsigned pmtpid;
 extern unsigned TS_program_number;
