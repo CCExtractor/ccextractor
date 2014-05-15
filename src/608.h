@@ -10,10 +10,6 @@ extern const char *color_text[][2];
 
 int write_cc_buffer_as_srt(struct eia608_screen *data, struct s_context_cc608 *context);
 void write_stringz_as_srt(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
-void mstotime (LLONG milli, unsigned *hours, unsigned *minutes,
-               unsigned *seconds, unsigned *ms);
-void mstotime (LLONG milli, unsigned *hours, unsigned *minutes,
-               unsigned *seconds, unsigned *ms);
 unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct eia608_screen *data);
 void capitalize (int line_num, struct eia608_screen *data);
 void correct_case (int line_num, struct eia608_screen *data);
@@ -21,13 +17,9 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct s_context_cc608 *
 void write_stringz_as_sami(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
 int write_cc_buffer_as_smptett(struct eia608_screen *data, struct s_context_cc608 *context);
 void write_stringz_as_smptett(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
-unsigned encode_line (unsigned char *buffer, unsigned char *text);
-void correct_case (int line_num, struct eia608_screen *data);
-void capitalize (int line_num, struct eia608_screen *data);
 void find_limit_characters (unsigned char *line, int *first_non_blank, int *last_non_blank);
 unsigned get_decoder_line_basic (unsigned char *buffer, int line_num, struct eia608_screen *data);
 unsigned get_decoder_line_encoded_for_gui (unsigned char *buffer, int line_num, struct eia608_screen *data);
-unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct eia608_screen *data);
 void delete_all_lines_but_current (struct eia608_screen *data, int row);
 void try_to_add_start_credits(struct s_context_cc608 *context);
 void try_to_add_end_credits(struct s_context_cc608 *context);
@@ -101,15 +93,15 @@ struct eia608_screen // A CC buffer
 
 struct s_context_cc608
 {
-    eia608_screen buffer1;
-    eia608_screen buffer2;  
+    struct eia608_screen buffer1;
+    struct eia608_screen buffer2;  
     int cursor_row, cursor_column;
     int visible_buffer;
     int srt_counter; // Number of subs currently written
 	int screenfuls_counter; // Number of meaningful screenfuls written
 	LLONG current_visible_start_ms; // At what time did the current visible buffer became so?
     // unsigned current_visible_start_cc; // At what time did the current visible buffer became so?
-    cc_modes mode;
+    enum cc_modes mode;
     unsigned char last_c1, last_c2;
     int channel; // Currently selected channel
     unsigned char color; // Color we are currently using to write
