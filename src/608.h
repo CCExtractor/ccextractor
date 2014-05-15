@@ -1,19 +1,22 @@
 #ifndef __608_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 extern unsigned char *enc_buffer;
 extern unsigned char str[2048]; 
 extern unsigned enc_buffer_used;
 extern unsigned enc_buffer_capacity;
+#ifdef __cplusplus
+}
+#endif
 
 extern int new_sentence;
 extern const char *color_text[][2];
 
 int write_cc_buffer_as_srt(struct eia608_screen *data, struct s_context_cc608 *context);
 void write_stringz_as_srt(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
-void mstotime (LLONG milli, unsigned *hours, unsigned *minutes,
-               unsigned *seconds, unsigned *ms);
-void mstotime (LLONG milli, unsigned *hours, unsigned *minutes,
-               unsigned *seconds, unsigned *ms);
 unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct eia608_screen *data);
 void capitalize (int line_num, struct eia608_screen *data);
 void correct_case (int line_num, struct eia608_screen *data);
@@ -21,7 +24,6 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct s_context_cc608 *
 void write_stringz_as_sami(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
 int write_cc_buffer_as_smptett(struct eia608_screen *data, struct s_context_cc608 *context);
 void write_stringz_as_smptett(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
-unsigned encode_line (unsigned char *buffer, unsigned char *text);
 void correct_case (int line_num, struct eia608_screen *data);
 void capitalize (int line_num, struct eia608_screen *data);
 void find_limit_characters (unsigned char *line, int *first_non_blank, int *last_non_blank);
@@ -101,15 +103,15 @@ struct eia608_screen // A CC buffer
 
 struct s_context_cc608
 {
-    eia608_screen buffer1;
-    eia608_screen buffer2;  
+    struct eia608_screen buffer1;
+	struct eia608_screen buffer2;
     int cursor_row, cursor_column;
     int visible_buffer;
     int srt_counter; // Number of subs currently written
 	int screenfuls_counter; // Number of meaningful screenfuls written
 	LLONG current_visible_start_ms; // At what time did the current visible buffer became so?
     // unsigned current_visible_start_cc; // At what time did the current visible buffer became so?
-    cc_modes mode;
+	enum cc_modes mode;
     unsigned char last_c1, last_c2;
     int channel; // Currently selected channel
     unsigned char color; // Color we are currently using to write
@@ -152,41 +154,6 @@ enum command_code
 };
 
 
-const unsigned char pac2_attribs[][3]= // Color, font, ident
-{
-    {COL_WHITE,     FONT_REGULAR,               0},  // 0x40 || 0x60 
-    {COL_WHITE,     FONT_UNDERLINED,            0},  // 0x41 || 0x61
-    {COL_GREEN,     FONT_REGULAR,               0},  // 0x42 || 0x62
-    {COL_GREEN,     FONT_UNDERLINED,            0},  // 0x43 || 0x63
-    {COL_BLUE,      FONT_REGULAR,               0},  // 0x44 || 0x64
-    {COL_BLUE,      FONT_UNDERLINED,            0},  // 0x45 || 0x65
-    {COL_CYAN,      FONT_REGULAR,               0},  // 0x46 || 0x66
-    {COL_CYAN,      FONT_UNDERLINED,            0},  // 0x47 || 0x67
-    {COL_RED,       FONT_REGULAR,               0},  // 0x48 || 0x68
-    {COL_RED,       FONT_UNDERLINED,            0},  // 0x49 || 0x69
-    {COL_YELLOW,    FONT_REGULAR,               0},  // 0x4a || 0x6a
-    {COL_YELLOW,    FONT_UNDERLINED,            0},  // 0x4b || 0x6b
-    {COL_MAGENTA,   FONT_REGULAR,               0},  // 0x4c || 0x6c
-    {COL_MAGENTA,   FONT_UNDERLINED,            0},  // 0x4d || 0x6d
-    {COL_WHITE,     FONT_ITALICS,               0},  // 0x4e || 0x6e
-    {COL_WHITE,     FONT_UNDERLINED_ITALICS,    0},  // 0x4f || 0x6f
-    {COL_WHITE,     FONT_REGULAR,               0},  // 0x50 || 0x70
-    {COL_WHITE,     FONT_UNDERLINED,            0},  // 0x51 || 0x71
-    {COL_WHITE,     FONT_REGULAR,               4},  // 0x52 || 0x72
-    {COL_WHITE,     FONT_UNDERLINED,            4},  // 0x53 || 0x73
-    {COL_WHITE,     FONT_REGULAR,               8},  // 0x54 || 0x74
-    {COL_WHITE,     FONT_UNDERLINED,            8},  // 0x55 || 0x75
-    {COL_WHITE,     FONT_REGULAR,               12}, // 0x56 || 0x76
-    {COL_WHITE,     FONT_UNDERLINED,            12}, // 0x57 || 0x77
-    {COL_WHITE,     FONT_REGULAR,               16}, // 0x58 || 0x78
-    {COL_WHITE,     FONT_UNDERLINED,            16}, // 0x59 || 0x79
-    {COL_WHITE,     FONT_REGULAR,               20}, // 0x5a || 0x7a
-    {COL_WHITE,     FONT_UNDERLINED,            20}, // 0x5b || 0x7b
-    {COL_WHITE,     FONT_REGULAR,               24}, // 0x5c || 0x7c
-    {COL_WHITE,     FONT_UNDERLINED,            24}, // 0x5d || 0x7d
-    {COL_WHITE,     FONT_REGULAR,               28}, // 0x5e || 0x7e
-    {COL_WHITE,     FONT_UNDERLINED,            28}  // 0x5f || 0x7f
-};
 
 #define __608_H__
 #endif

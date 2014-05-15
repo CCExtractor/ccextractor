@@ -3,6 +3,8 @@
 static char *text;
 static int text_size=0;
 
+//int temp_debug = 0; // This is a convenience variable used to enable/disable debug on variable conditions. Find references to understand.
+
 void timestamp_to_srttime(uint64_t timestamp, char *buffer) {
 	uint64_t p = timestamp;
 	uint8_t h = (uint8_t) (p / 3600000);
@@ -14,7 +16,7 @@ void timestamp_to_srttime(uint64_t timestamp, char *buffer) {
 #define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
 
 int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len) {
-    unsigned int x, y, lastdiag, olddiag;
+    unsigned int x, y, v, lastdiag, olddiag;
     unsigned int *column=(unsigned *) malloc ((s1len+1)*sizeof (unsigned int));
     for (y = 1; y <= s1len; y++)
         column[y] = y;
@@ -26,7 +28,7 @@ int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, un
             lastdiag = olddiag;
         }
     }
-	int v=column[s1len];
+	v=column[s1len];
     free (column);	
 	return v;
 }
@@ -184,9 +186,10 @@ void mprint (const char *fmt, ...)
 void dbg_print(LLONG mask, const char *fmt, ...)
 {
 	va_list args;
+	LLONG t;
 	if (!ccx_options.messages_target)
 		return;
-	LLONG t=temp_debug ? (ccx_options.debug_mask_on_debug | ccx_options.debug_mask) : ccx_options.debug_mask; // Mask override?
+	t=temp_debug ? (ccx_options.debug_mask_on_debug | ccx_options.debug_mask) : ccx_options.debug_mask; // Mask override?
 
     if(mask & t)
 	{
@@ -257,7 +260,7 @@ void dump (LLONG mask, unsigned char *start, int l, unsigned long abs_start, uns
     }
 }
 
-void init_boundary_time (ccx_boundary_time *bt)
+void init_boundary_time (struct ccx_boundary_time *bt)
 {
     bt->hh=0;
     bt->mm=0;

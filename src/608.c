@@ -11,9 +11,42 @@ unsigned char str[2048]; // Another generic general purpose buffer
 unsigned enc_buffer_used;
 unsigned enc_buffer_capacity;
 
-
-
 LLONG minimum_fts=0; // No screen should start before this FTS
+const unsigned char pac2_attribs[][3] = // Color, font, ident
+{
+	{ COL_WHITE, FONT_REGULAR, 0 },  // 0x40 || 0x60 
+	{ COL_WHITE, FONT_UNDERLINED, 0 },  // 0x41 || 0x61
+	{ COL_GREEN, FONT_REGULAR, 0 },  // 0x42 || 0x62
+	{ COL_GREEN, FONT_UNDERLINED, 0 },  // 0x43 || 0x63
+	{ COL_BLUE, FONT_REGULAR, 0 },  // 0x44 || 0x64
+	{ COL_BLUE, FONT_UNDERLINED, 0 },  // 0x45 || 0x65
+	{ COL_CYAN, FONT_REGULAR, 0 },  // 0x46 || 0x66
+	{ COL_CYAN, FONT_UNDERLINED, 0 },  // 0x47 || 0x67
+	{ COL_RED, FONT_REGULAR, 0 },  // 0x48 || 0x68
+	{ COL_RED, FONT_UNDERLINED, 0 },  // 0x49 || 0x69
+	{ COL_YELLOW, FONT_REGULAR, 0 },  // 0x4a || 0x6a
+	{ COL_YELLOW, FONT_UNDERLINED, 0 },  // 0x4b || 0x6b
+	{ COL_MAGENTA, FONT_REGULAR, 0 },  // 0x4c || 0x6c
+	{ COL_MAGENTA, FONT_UNDERLINED, 0 },  // 0x4d || 0x6d
+	{ COL_WHITE, FONT_ITALICS, 0 },  // 0x4e || 0x6e
+	{ COL_WHITE, FONT_UNDERLINED_ITALICS, 0 },  // 0x4f || 0x6f
+	{ COL_WHITE, FONT_REGULAR, 0 },  // 0x50 || 0x70
+	{ COL_WHITE, FONT_UNDERLINED, 0 },  // 0x51 || 0x71
+	{ COL_WHITE, FONT_REGULAR, 4 },  // 0x52 || 0x72
+	{ COL_WHITE, FONT_UNDERLINED, 4 },  // 0x53 || 0x73
+	{ COL_WHITE, FONT_REGULAR, 8 },  // 0x54 || 0x74
+	{ COL_WHITE, FONT_UNDERLINED, 8 },  // 0x55 || 0x75
+	{ COL_WHITE, FONT_REGULAR, 12 }, // 0x56 || 0x76
+	{ COL_WHITE, FONT_UNDERLINED, 12 }, // 0x57 || 0x77
+	{ COL_WHITE, FONT_REGULAR, 16 }, // 0x58 || 0x78
+	{ COL_WHITE, FONT_UNDERLINED, 16 }, // 0x59 || 0x79
+	{ COL_WHITE, FONT_REGULAR, 20 }, // 0x5a || 0x7a
+	{ COL_WHITE, FONT_UNDERLINED, 20 }, // 0x5b || 0x7b
+	{ COL_WHITE, FONT_REGULAR, 24 }, // 0x5c || 0x7c
+	{ COL_WHITE, FONT_UNDERLINED, 24 }, // 0x5d || 0x7d
+	{ COL_WHITE, FONT_REGULAR, 28 }, // 0x5e || 0x7e
+	{ COL_WHITE, FONT_UNDERLINED, 28 }  // 0x5f || 0x7f
+};
 
 int general_608_init (void)
 {
@@ -146,9 +179,9 @@ void init_context_cc608(struct s_context_cc608 *data, int field)
 
 }
 
-eia608_screen *get_writing_buffer(struct s_context_cc608 *context)
+struct eia608_screen *get_writing_buffer(struct s_context_cc608 *context)
 {
-    eia608_screen *use_buffer=NULL;
+    struct eia608_screen *use_buffer=NULL;
     switch (context->mode)
     {
         case MODE_POPON: // Write on the non-visible buffer
@@ -179,7 +212,7 @@ void delete_to_end_of_row(struct s_context_cc608 *context)
 {
 	if (context->mode != MODE_TEXT)
     {		
-		eia608_screen * use_buffer = get_writing_buffer(context);
+		struct eia608_screen * use_buffer = get_writing_buffer(context);
 		for (int i = context->cursor_column; i <= 31; i++)
 		{
 			// TODO: This can change the 'used' situation of a column, so we'd
@@ -195,7 +228,7 @@ void write_char(const unsigned char c, struct s_context_cc608 *context)
 {
 	if (context->mode != MODE_TEXT)
     {		
-		eia608_screen * use_buffer = get_writing_buffer(context);
+		struct eia608_screen * use_buffer = get_writing_buffer(context);
         /* printf ("\rWriting char [%c] at %s:%d:%d\n",c,
         use_buffer == &wb->data608->buffer1?"B1":"B2",
         wb->data608->cursor_row,wb->data608->cursor_column); */
@@ -501,7 +534,7 @@ int check_roll_up(struct s_context_cc608 *context)
 {
 	int keep_lines=0;
 	int firstrow=-1, lastrow=-1;
-    eia608_screen *use_buffer;
+	struct eia608_screen *use_buffer;
 	if (context->visible_buffer == 1)
 		use_buffer = &context->buffer1;
     else
@@ -555,7 +588,7 @@ int check_roll_up(struct s_context_cc608 *context)
 // if the rollup didn't delete any line.
 int roll_up(struct s_context_cc608 *context)
 {
-    eia608_screen *use_buffer;
+	struct eia608_screen *use_buffer;
 	if (context->visible_buffer == 1)
 		use_buffer = &context->buffer1;
     else
@@ -645,7 +678,7 @@ int roll_up(struct s_context_cc608 *context)
 
 void erase_memory(struct s_context_cc608 *context, int displayed)
 {
-    eia608_screen *buf;
+    struct eia608_screen *buf;
     if (displayed)
     {
 		if (context->visible_buffer == 1)
@@ -665,7 +698,7 @@ void erase_memory(struct s_context_cc608 *context, int displayed)
 
 int is_current_row_empty(struct s_context_cc608 *context)
 {
-    eia608_screen *use_buffer;
+	struct eia608_screen *use_buffer;
 	if (context->visible_buffer == 1)
 		use_buffer = &context->buffer1;
     else
@@ -688,7 +721,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct 
 	if (context->channel != ccx_options.cc_channel)
         return;
 
-    command_code command = COM_UNKNOWN;
+    enum command_code command = COM_UNKNOWN;
     if (c1==0x15)
         c1=0x14;
     if ((c1==0x14 || c1==0x1C) && c2==0x2C)
@@ -1048,7 +1081,7 @@ void handle_pac(unsigned char c1, unsigned char c2, struct s_context_cc608 *cont
 	{
 		/* In roll-up, delete lines BELOW the PAC. Not sure (CFS) this is correct (possibly we may have to move the
 		   buffer around instead) but it's better than leaving old characters in the buffer */
-		eia608_screen *use_buffer = get_writing_buffer(context); // &wb->data608->buffer1;
+		struct eia608_screen *use_buffer = get_writing_buffer(context); // &wb->data608->buffer1;
                 
 		for (int j=row;j<15;j++)
 		{
