@@ -168,8 +168,8 @@ void init_options (struct ccx_s_options *options)
 	options->cc608_default_color=COL_TRANSPARENT;
 }
 
-ccx_stream_mode_enum stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND; // Data parse mode: 0=elementary, 1=transport, 2=program stream, 3=ASF container
-ccx_stream_mode_enum auto_stream = CCX_SM_AUTODETECT;
+enum ccx_stream_mode_enum stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND; // Data parse mode: 0=elementary, 1=transport, 2=program stream, 3=ASF container
+enum ccx_stream_mode_enum auto_stream = CCX_SM_AUTODETECT;
 
 
 int rawmode = 0; // Broadcast or DVD
@@ -232,7 +232,8 @@ int main(int argc, char *argv[])
     char *c;
 
     // Initialize some constants
-    init_ts_constants();
+    init_ts();
+	init_avc();
 
 	init_options (&ccx_options);
 
@@ -689,16 +690,16 @@ int main(int argc, char *argv[])
         mprint("\n");
         dbg_print(CCX_DMT_608, "\nTime stamps after last caption block was written:\n");
         dbg_print(CCX_DMT_608, "Last time stamps:  PTS: %s (%+2dF)        ",
-               print_mstime( LLONG(sync_pts/(MPEG_CLOCK_FREQ/1000)
+               print_mstime( (LLONG) (sync_pts/(MPEG_CLOCK_FREQ/1000)
                                    +frames_since_ref_time*1000.0/current_fps) ),
                frames_since_ref_time);
         dbg_print(CCX_DMT_608, "GOP: %s      \n", print_mstime(gop_time.ms) );
 
         // Blocks since last PTS/GOP time stamp.
         dbg_print(CCX_DMT_608, "Calc. difference:  PTS: %s (%+3lldms incl.)  ",
-            print_mstime( LLONG((sync_pts-min_pts)/(MPEG_CLOCK_FREQ/1000)
+            print_mstime( (LLONG) ((sync_pts-min_pts)/(MPEG_CLOCK_FREQ/1000)
             + fts_offset + frames_since_ref_time*1000.0/current_fps)),
-            fts_offset + LLONG(frames_since_ref_time*1000.0/current_fps) );
+            fts_offset + (LLONG) (frames_since_ref_time*1000.0/current_fps) );
         dbg_print(CCX_DMT_608, "GOP: %s (%+3dms incl.)\n",
             print_mstime((LLONG)(gop_time.ms
             -first_gop_time.ms
@@ -725,7 +726,7 @@ int main(int argc, char *argv[])
                     total_pulldownframes, current_fps);
         if (pts_set >= 1 && min_pts != 0x01FFFFFFFFLL)
         {
-            LLONG postsyncms = LLONG(frames_since_last_gop*1000/current_fps);
+            LLONG postsyncms = (LLONG) (frames_since_last_gop*1000/current_fps);
             mprint ("\nMin PTS:                %s\n",
                     print_mstime( min_pts/(MPEG_CLOCK_FREQ/1000) - fts_offset));
             if (pts_big_change)
@@ -750,7 +751,7 @@ int main(int argc, char *argv[])
                 frames_since_last_gop);
             mprint ("    (%s)\n",
                 print_mstime(gop_time.ms - first_gop_time.ms
-                +LLONG((frames_since_last_gop)*1000/29.97)) );
+                +(LLONG) ((frames_since_last_gop)*1000/29.97)) );
         }
 
         if (false_pict_header)
@@ -781,7 +782,7 @@ int main(int argc, char *argv[])
 
         // Add one frame as fts_max marks the beginning of the last frame,
         // but we need the end.
-        fts_global += fts_max + LLONG(1000.0/current_fps);
+        fts_global += fts_max + (LLONG) (1000.0/current_fps);
 		// CFS: At least in Hauppage mode, cb_field can be responsible for ALL the 
 		// timing (cb_fields having a huge number and fts_now and fts_global being 0 all
 		// the time), so we need to take that into account in fts_global before resetting

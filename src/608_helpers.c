@@ -1,5 +1,7 @@
 #include "ccextractor.h"
 
+//extern unsigned char encoded_crlf[16];
+
 // Encodes a generic string. Note that since we use the encoders for closed caption
 // data, text would have to be encoded as CCs... so using special characters here
 // it's a bad idea. 
@@ -306,6 +308,7 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *
 {
     unsigned h1,m1,s1,ms1;
     unsigned h2,m2,s2,ms2;    
+	LLONG ms_start;
 	int with_data=0;
 
 	for (int i=0;i<15;i++)
@@ -316,7 +319,7 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *
 	if (!with_data)
 		return;
 
-    LLONG ms_start= context->current_visible_start_ms;
+    ms_start= context->current_visible_start_ms;
 
     ms_start+=subs_delay;
     if (ms_start<0) // Drop screens that because of subs_delay start too early
@@ -352,16 +355,17 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *
 
 void try_to_add_end_credits(struct s_context_cc608 *context)
 {
+	LLONG window, length, st, end;
 	if (context->out->fh == -1)
         return;
-    LLONG window=get_fts()-last_displayed_subs_ms-1;
+    window=get_fts()-last_displayed_subs_ms-1;
     if (window<ccx_options.endcreditsforatleast.time_in_ms) // Won't happen, window is too short
         return;
-    LLONG length=ccx_options.endcreditsforatmost.time_in_ms > window ? 
+    length=ccx_options.endcreditsforatmost.time_in_ms > window ? 
         window : ccx_options.endcreditsforatmost.time_in_ms;
 
-    LLONG st=get_fts()-length-1;
-    LLONG end=get_fts();
+    st=get_fts()-length-1;
+    end=get_fts();
 
     switch (ccx_options.write_format)
     {
@@ -382,6 +386,7 @@ void try_to_add_end_credits(struct s_context_cc608 *context)
 
 void try_to_add_start_credits(struct s_context_cc608 *context)
 {
+	LLONG st, end, window, length;
 	LLONG l = context->current_visible_start_ms + subs_delay;
     // We have a windows from last_displayed_subs_ms to l - we need to see if it fits
 
@@ -391,18 +396,18 @@ void try_to_add_start_credits(struct s_context_cc608 *context)
     if (last_displayed_subs_ms+1 > ccx_options.startcreditsnotafter.time_in_ms) // Too late
         return;
 
-    LLONG st = ccx_options.startcreditsnotbefore.time_in_ms>(last_displayed_subs_ms+1) ?
+    st = ccx_options.startcreditsnotbefore.time_in_ms>(last_displayed_subs_ms+1) ?
         ccx_options.startcreditsnotbefore.time_in_ms : (last_displayed_subs_ms+1); // When would credits actually start
 
-    LLONG end = ccx_options.startcreditsnotafter.time_in_ms<(l-1) ?
+    end = ccx_options.startcreditsnotafter.time_in_ms<(l-1) ?
         ccx_options.startcreditsnotafter.time_in_ms : (l-1); 
 
-    LLONG window = end-st; // Allowable time in MS
+    window = end-st; // Allowable time in MS
 
     if (ccx_options.startcreditsforatleast.time_in_ms>window) // Window is too short
         return;
 
-    LLONG length=ccx_options.startcreditsforatmost.time_in_ms > window ? 
+    length=ccx_options.startcreditsforatmost.time_in_ms > window ? 
         window : ccx_options.startcreditsforatmost.time_in_ms;
 
     dbg_print(CCX_DMT_VERBOSE, "Last subs: %lld   Current position: %lld\n",

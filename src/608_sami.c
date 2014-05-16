@@ -69,14 +69,15 @@ void write_stringz_as_sami(char *string, struct s_context_cc608 *context, LLONG 
 
 int write_cc_buffer_as_sami(struct eia608_screen *data, struct s_context_cc608 *context)
 {
+	LLONG startms, endms;
     int wrote_something=0;
-    LLONG startms = context->current_visible_start_ms;
+    startms = context->current_visible_start_ms;
 
     startms+=subs_delay;
     if (startms<0) // Drop screens that because of subs_delay start too early
         return 0; 
 
-    LLONG endms   = get_visible_end()+subs_delay;
+    endms   = get_visible_end()+subs_delay;
     endms--; // To prevent overlapping with next line.
     sprintf ((char *) str,"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",startms);
     if (ccx_options.encoding!=CCX_ENC_UNICODE)

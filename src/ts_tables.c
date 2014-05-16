@@ -12,7 +12,7 @@ static unsigned pmt_warning_shown=0; // Only display warning once
 void *cxx_dvb_context = NULL;
 
 // PMTs table
-PAT_entry pmt_array[TS_PMT_MAP_SIZE] = { 0 };
+struct PAT_entry pmt_array[TS_PMT_MAP_SIZE] = { 0 };
 uint16_t pmt_array_length = 0;
 
 void process_ccx_mpeg_descriptor (unsigned char *data, unsigned length);

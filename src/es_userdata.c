@@ -65,7 +65,7 @@ int user_data(struct bitstream *ustream, int udtype)
         // last GOP.  Only usefull when there are frames before
         // the GOP.
         if (fts_max > 0)
-            fts_now = fts_max + LLONG(1000.0/current_fps);
+            fts_now = fts_max + (LLONG) (1000.0/current_fps);
 
         int rcbcount = 0;
         for (int i=0; i<capcount; i++)

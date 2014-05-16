@@ -48,7 +48,7 @@ void flushbuffer (struct ccx_s_write *wb, int closefile)
 
 void writeDVDraw (const unsigned char *data1, int length1,
                   const unsigned char *data2, int length2,
-				  ccx_s_write *wb)
+				  struct ccx_s_write *wb)
 {
     /* these are only used by DVD raw mode: */
     static int loopcount = 1; /* loop 1: 5 elements, loop 2: 8 elements, 

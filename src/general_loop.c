@@ -19,8 +19,8 @@ extern long num_unexpected_sei_length;
  unsigned current_hor_size = 0;
 unsigned current_vert_size = 0;
 unsigned current_aspect_ratio = 0;
-unsigned current_frame_rate = 4; // Assume standard fps
-double current_fps = framerates_values[current_frame_rate];
+unsigned current_frame_rate = 4; // Assume standard fps, 29.97
+double current_fps = (double) 30000.0 / 1001; /* 29.97 */ // TODO: Get from framerates_values[] instead
 LLONG current_pts = 0;
 unsigned rollover_bits = 0; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
 LLONG result; // Number of bytes read/skipped in last read operation
@@ -32,7 +32,7 @@ LLONG inbuf = 0; // Number of bytes loaded in buffer
 int ccx_bufferdatatype = CCX_PES; // Can be RAW, PES, H264 or Hauppage
 
 int current_tref = 0; // Store temporal reference of current frame
-ccx_frame_type current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
+enum ccx_frame_type current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
 
 // Remember if the last header was valid. Used to suppress too much output
 // and the expected unrecognized first header for TiVo files.
@@ -439,7 +439,7 @@ void raw_loop ()
     set_fts(); // Now set the FTS related variables
     dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
                print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-               unsigned(current_pts));
+               (unsigned) (current_pts));
     dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
 
     do
@@ -459,7 +459,7 @@ void raw_loop ()
 
         dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
                print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-               unsigned(current_pts));
+               (unsigned) (current_pts));
         dbg_print(CCX_DMT_VIDES, "  FTS: %s incl. %d CB\n",
                print_mstime(get_fts()), ccblocks);
       
@@ -652,7 +652,7 @@ void general_loop(void)
 
             dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
                    print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-                   unsigned(current_pts));
+                   (unsigned) (current_pts));
             dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
 
             got = process_raw();
@@ -718,13 +718,16 @@ void general_loop(void)
 // Raw caption with FTS file process
 void rcwt_loop( void )
 {
+	static unsigned char *parsebuf;
+	static long parsebufsize = 1024;
+
     // As BUFSIZE is a macro this is just a reminder
     if (BUFSIZE < (3*0xFFFF + 10))
         fatal (EXIT_BUG_BUG, "BUFSIZE too small for RCWT caption block.\n");
 
     // Generic buffer to hold some data
-    static unsigned char *parsebuf = (unsigned char*)malloc(1024);
-    static long parsebufsize = 1024;
+    parsebuf = (unsigned char*)malloc(1024);
+    
 
     LLONG currfts;
     uint16_t cbcount = 0;
@@ -810,7 +813,7 @@ void rcwt_loop( void )
 
             dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
                    print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-                   unsigned(current_pts));
+                   (unsigned) (current_pts));
             dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
 
             for (int j=0; j<cbcount*3; j=j+3)

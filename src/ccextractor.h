@@ -253,6 +253,7 @@ LLONG wtv_getmoredata( void );
 
 // avc_functions.cpp
 LLONG process_avc (unsigned char *avcbuf, LLONG avcbuflen);
+void init_avc(void);
 
 // es_functions.cpp
 LLONG process_m2v (unsigned char *data, LLONG length);
@@ -319,7 +320,7 @@ int detect_myth( void );
 int read_video_pes_header (unsigned char *header, int *headerlength, int sbuflen);
 
 // ts_functions.cpp
-void init_ts_constants( void );
+void init_ts( void );
 int ts_readpacket(void);
 long ts_readstream(void);
 LLONG ts_getmoredata( void );
@@ -341,7 +342,6 @@ void xds_init();
 LLONG calculate_gop_mstime (struct gop_time_code *g);
 void set_fts(void);
 LLONG get_fts ( void );
-LLONG get_fts_max ( void );
 char *print_mstime( LLONG mstime );
 void print_debug_timing( void );
 int switch_to_next_file (LLONG bytesinbuffer);

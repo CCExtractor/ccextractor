@@ -75,7 +75,7 @@ void detect_stream_type (void)
             }
             // Now check for PS (Needs PACK header)
             for (unsigned i=0;
-                 i < unsigned(startbytes_avail<50000?startbytes_avail-3:49997);
+                 i < (unsigned) (startbytes_avail<50000?startbytes_avail-3:49997);
                  i++)
             {
                 if (startbytes[i]==0x00 && startbytes[i+1]==0x00 && 
@@ -316,7 +316,7 @@ int read_video_pes_header (unsigned char *nextheader, int *headerlength, int sbu
 
         dbg_print(CCX_DMT_VERBOSE, "Set PTS: %s (%u)\n",
                    print_mstime((current_pts)/(MPEG_CLOCK_FREQ/1000)),
-                   unsigned(current_pts) );
+                   (unsigned) (current_pts) );
         /* The user data holding the captions seems to come between GOP and
          * the first frame. The sync PTS (sync_pts) (set at picture 0)
          * corresponds to the first frame of the current GOP. */

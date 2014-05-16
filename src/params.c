@@ -23,7 +23,7 @@ static const char *spell_builtin[]=
     NULL
 }; 
 
-int stringztoms (const char *s, ccx_boundary_time *bt)
+int stringztoms (const char *s, struct ccx_boundary_time *bt)
 {
     unsigned ss=0, mm=0, hh=0;
     int value=-1;

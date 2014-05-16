@@ -2,16 +2,16 @@
 #include "wtv_constants.h"
 
 int check_stream_id(int stream_id, int video_streams, int num_streams);
-int add_skip_chunks(wtv_chunked_buffer *cb, uint32_t offset, uint32_t flag);
-void init_chunked_buffer(wtv_chunked_buffer *cb);
+int add_skip_chunks(struct wtv_chunked_buffer *cb, uint32_t offset, uint32_t flag);
+void init_chunked_buffer(struct wtv_chunked_buffer *cb);
 uint64_t get_meta_chunk_start(uint64_t offset);
 uint64_t time_to_pes_time(uint64_t time);
-void add_chunk(wtv_chunked_buffer *cb, uint64_t value);
+void add_chunk(struct wtv_chunked_buffer *cb, uint64_t value);
 int qsort_cmpint (const void * a, const void * b);
-void get_sized_buffer(wtv_chunked_buffer *cb, uint32_t size);
-void skip_sized_buffer(wtv_chunked_buffer *cb, uint32_t size);
-int read_header(wtv_chunked_buffer *cb);
-LLONG get_data(wtv_chunked_buffer *cb);
+void get_sized_buffer(struct wtv_chunked_buffer *cb, uint32_t size);
+void skip_sized_buffer(struct wtv_chunked_buffer *cb, uint32_t size);
+int read_header(struct wtv_chunked_buffer *cb);
+LLONG get_data(struct wtv_chunked_buffer *cb);
 
 // Helper function for qsort (64bit int sort)
 int qsort_cmpint (const void * a, const void * b)
@@ -32,7 +32,7 @@ int check_stream_id(int stream_id, int video_streams[], int num_streams) {
 }
 
 // Init passes wtv_chunked_buffer struct
-void init_chunked_buffer(wtv_chunked_buffer *cb) {
+void init_chunked_buffer(struct wtv_chunked_buffer *cb) {
     cb->count=0;
     cb->buffer=NULL;
     cb->buffer_size=0;
@@ -54,7 +54,7 @@ uint64_t time_to_pes_time(uint64_t time)
 
 // Read the actual values of the passed lookup offset and add them to
 // the list of chunks to skip as nessasary. Returns false on error.
-int add_skip_chunks(wtv_chunked_buffer *cb, uint32_t offset, uint32_t flag) 
+int add_skip_chunks(struct wtv_chunked_buffer *cb, uint32_t offset, uint32_t flag)
 {
 
     uint64_t start = filebuffer_pos; //Not sure this is the best way to do this    
@@ -79,7 +79,7 @@ int add_skip_chunks(wtv_chunked_buffer *cb, uint32_t offset, uint32_t flag)
     return 1;
 }
 
-void add_chunk(wtv_chunked_buffer *cb, uint64_t value)
+void add_chunk(struct wtv_chunked_buffer *cb, uint64_t value)
 {
     int x;
     for(x=0; x<cb->count; x++)
@@ -91,7 +91,7 @@ void add_chunk(wtv_chunked_buffer *cb, uint64_t value)
 
 // skip_sized_buffer. Same as get_sized_buffer, only without actually copying any data
 // in to the buffer.
-void skip_sized_buffer(wtv_chunked_buffer *cb, uint32_t size) {
+void skip_sized_buffer(struct wtv_chunked_buffer *cb, uint32_t size) {
     if(cb->buffer!=NULL && cb->buffer_size>0) {
         free(cb->buffer);
     }
@@ -113,7 +113,7 @@ void skip_sized_buffer(wtv_chunked_buffer *cb, uint32_t size) {
 // get_sized_buffer will alloc and set a buffer in the passed wtv_chunked_buffer struct
 // it will handle any meta data chunks that need to be skipped in the file
 // Will print error messages and return a null buffer on error.
-void get_sized_buffer(wtv_chunked_buffer *cb, uint32_t size) {
+void get_sized_buffer(struct wtv_chunked_buffer *cb, uint32_t size) {
     if(cb->buffer!=NULL && cb->buffer_size>0) {
         free(cb->buffer);
     }
@@ -155,7 +155,7 @@ void get_sized_buffer(wtv_chunked_buffer *cb, uint32_t size) {
 // the wtv header/root sections and calculate the skip_chunks.
 // If successful, will return with the file positioned 
 // at the start of the data dir
-int read_header(wtv_chunked_buffer *cb) {
+int read_header(struct wtv_chunked_buffer *cb) {
     uint8_t *parsebuf;
     parsebuf = (uint8_t*)malloc(1024);
     buffered_read(parsebuf,0x42);
@@ -292,7 +292,7 @@ int read_header(wtv_chunked_buffer *cb) {
     return 1;
 }
 
-LLONG get_data(wtv_chunked_buffer *cb) {
+LLONG get_data(struct wtv_chunked_buffer *cb) {
     static int video_streams[32];
     static int num_streams=0;
     while(1)
@@ -414,7 +414,7 @@ LLONG get_data(wtv_chunked_buffer *cb) {
 LLONG wtv_getmoredata(void)
 {
     static long parsebufsize = 1024;
-    static wtv_chunked_buffer cb;
+	static struct wtv_chunked_buffer cb;
     if(firstcall)
     {
         init_chunked_buffer(&cb);

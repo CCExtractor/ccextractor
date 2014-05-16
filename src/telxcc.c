@@ -393,6 +393,7 @@ void telxcc_dump_prev_page (void)
 int fuzzy_memcmp (const char *c1, const char *c2, const uint64_t *ucs2_buf1, unsigned ucs2_buf1_len,
 				  const uint64_t *ucs2_buf2, unsigned ucs2_buf2_len)
 {	
+	size_t l;
 	size_t short_len=ucs2_buf1_len<ucs2_buf2_len?ucs2_buf1_len:ucs2_buf2_len;	
 	size_t max=(short_len*ccx_options.levdistmaxpct)/100;
 	unsigned upto=(ucs2_buf1_len<ucs2_buf2_len)?ucs2_buf1_len:ucs2_buf2_len;
@@ -400,7 +401,7 @@ int fuzzy_memcmp (const char *c1, const char *c2, const uint64_t *ucs2_buf1, uns
 		max=ccx_options.levdistmincnt;
 
 	// For the second string, only take the first chars (up to the first string length, that's upto).
-	size_t l = (size_t) levenshtein_dist (ucs2_buf1,ucs2_buf2,ucs2_buf1_len,upto); 
+	l = (size_t) levenshtein_dist (ucs2_buf1,ucs2_buf2,ucs2_buf1_len,upto); 
 	int res=(l>max);
 	dbg_print(CCX_DMT_LEVENSHTEIN, "\rLEV | %s | %s | Max: %d | Calc: %d | Match: %d\n", c1,c2,max,l,!res);
 	return res;	

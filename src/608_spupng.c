@@ -355,7 +355,7 @@ slant:
  * Draw one character (function template - define a static version with
  * constant @a canvas_type, @a font, @a cpl, @a cw, @a ch).
  */
-static inline void
+static void
 draw_char(int canvas_type, uint8_t *canvas, int rowstride,
 	  uint8_t *pen, uint8_t *font, int cpl, int cw, int ch,
 	  int glyph, unsigned int underline)
@@ -402,7 +402,7 @@ draw_char(int canvas_type, uint8_t *canvas, int rowstride,
  * 
  * Draw blank character.
  */
-static inline void
+static void
 draw_blank(int canvas_type, uint8_t *canvas, unsigned int rowstride,
 	   unsigned int color, int cw, int ch)
 {

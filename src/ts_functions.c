@@ -8,7 +8,7 @@ unsigned last_pat_length = 0;
 
 
 static long capbufsize = 20000;
-static unsigned char *capbuf = (unsigned char*)malloc(capbufsize);
+static unsigned char *capbuf = NULL;
 long capbuflen = 0; // Bytes read in capbuf
 static unsigned char *haup_capbuf = NULL;
 static long haup_capbufsize = 0;
@@ -22,8 +22,9 @@ extern void *cxx_dvb_context;
 // Descriptions for ts ccx_stream_type
 const char *desc[256];
 
-void init_ts_constants(void)
+void init_ts(void)
 {
+	// Constants
     desc[CCX_STREAM_TYPE_UNKNOWNSTREAM] = "Unknown";
     desc[CCX_STREAM_TYPE_VIDEO_MPEG1] = "MPEG-1 video";
     desc[CCX_STREAM_TYPE_VIDEO_MPEG2] = "MPEG-2 video";
@@ -45,6 +46,9 @@ void init_ts_constants(void)
 	desc[CCX_STREAM_TYPE_ISO_IEC_13818_6_TYPE_B] = "ISO/IEC 13818-6 type B";
 	desc[CCX_STREAM_TYPE_ISO_IEC_13818_6_TYPE_C] = "ISO/IEC 13818-6 type C";
 	desc[CCX_STREAM_TYPE_ISO_IEC_13818_6_TYPE_D] = "ISO/IEC 13818-6 type D";
+
+	//Buffer
+	capbuf = (unsigned char*)malloc(capbufsize);
 }
 
 
@@ -157,7 +161,7 @@ int ts_readpacket(void)
 
     dbg_print(CCX_DMT_PARSE, "TS pid: %d  PES start: %d  counter: %u  payload length: %u  adapt length: %d\n",
             pid, payload_start_indicator, ccounter, payload_length,
-            int(adaptation_field_length));
+            (int) (adaptation_field_length));
 
     // Catch bad packages with adaptation_field_length > 184 and
     // the unsigned nature of payload_length leading to huge numbers.

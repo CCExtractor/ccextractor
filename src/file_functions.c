@@ -368,10 +368,11 @@ LLONG buffered_read_opt (unsigned char *buffer, unsigned int bytes)
                         }
                         else // Seek
                         {
-                            LLONG op =LSEEK (infd,0,SEEK_CUR); // Get current pos
+							LLONG op, np;
+                            op =LSEEK (infd,0,SEEK_CUR); // Get current pos
                             if (op+bytes<0) // Would mean moving beyond start of file: Not supported
                                 return 0;
-                            LLONG np =LSEEK (infd,bytes,SEEK_CUR); // Pos after moving
+                            np =LSEEK (infd,bytes,SEEK_CUR); // Pos after moving
                             i=(int) (np-op);
                         }
                         if (i==0 && ccx_options.live_stream)
@@ -464,10 +465,11 @@ LLONG buffered_read_opt (unsigned char *buffer, unsigned int bytes)
         //return FSEEK (in,bytes,SEEK_CUR);
         while (bytes!=0 && infd!=-1)
         {
-            LLONG op =LSEEK (infd,0,SEEK_CUR); // Get current pos
+			LLONG op, np;
+            op =LSEEK (infd,0,SEEK_CUR); // Get current pos
             if (op+bytes<0) // Would mean moving beyond start of file: Not supported
                 return 0;
-            LLONG np =LSEEK (infd,bytes,SEEK_CUR); // Pos after moving
+            np =LSEEK (infd,bytes,SEEK_CUR); // Pos after moving
             copied=copied+(np-op);
             bytes=bytes-(unsigned int) copied;
             if (copied==0)

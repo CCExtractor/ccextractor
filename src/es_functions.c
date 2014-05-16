@@ -10,7 +10,7 @@ static unsigned current_progressive_sequence = 2;
 static unsigned current_pulldownfields = 32768;
 
 static int temporal_reference = 0;
-static ccx_frame_type picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
+static enum ccx_frame_type picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
 static unsigned picture_structure = 0;
 unsigned top_field_first = 0; // Needs to be global
 static unsigned repeat_first_field = 0;
@@ -617,7 +617,7 @@ static int gop_header(struct bitstream *esstream)
             mprint("  (old) %s",
                    print_mstime(gop_time.ms));
             mprint("  +  %s (%uF)",
-                   print_mstime(LLONG(frames_since_last_gop
+                   print_mstime((LLONG) (frames_since_last_gop
                                       *1000.0/current_fps)),
                    frames_since_last_gop);
             mprint("  !=  (new) %s\n",
@@ -637,7 +637,7 @@ static int gop_header(struct bitstream *esstream)
             }
             else
             {
-                fts_fc_offset = LLONG((total_frames_count+1)
+                fts_fc_offset = (LLONG) ((total_frames_count+1)
                                       *1000.0/current_fps);
                 // Compensate for those written before
                 first_gop_time.ms -= fts_fc_offset;
@@ -646,7 +646,7 @@ static int gop_header(struct bitstream *esstream)
             dbg_print(CCX_DMT_TIME, "\nFirst GOP time: %02u:%02u:%02u:%03u %+lldms\n",
                     gtc.time_code_hours,
                     gtc.time_code_minutes, gtc.time_code_seconds,
-                    unsigned(1000.0*gtc.time_code_pictures/current_fps),
+                    (unsigned) (1000.0*gtc.time_code_pictures/current_fps),
                     fts_fc_offset);
         }
 
@@ -674,7 +674,7 @@ static int gop_header(struct bitstream *esstream)
             // next GOP.
             // This effect will also lead to captions being one GOP early
             // for DVD captions.
-            fts_at_gop_start = get_fts_max() + LLONG(1000.0/current_fps);
+            fts_at_gop_start = get_fts_max() + (LLONG) (1000.0/current_fps);
         }
 
         if (ccx_options.debug_mask & CCX_DMT_TIME)
@@ -750,10 +750,10 @@ static int read_pic_info(struct bitstream *esstream)
 
     dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u) - tref: %2d - %s  since tref0/GOP: %2u/%2u",
            print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-           unsigned(current_pts), temporal_reference,
+           (unsigned) (current_pts), temporal_reference,
        pict_types[picture_coding_type],
-           unsigned(frames_since_ref_time),
-           unsigned(frames_since_last_gop));
+           (unsigned) (frames_since_ref_time),
+           (unsigned) (frames_since_last_gop));
     dbg_print(CCX_DMT_VIDES, "  t:%d r:%d p:%d", top_field_first,
            repeat_first_field, progressive_frame);
     dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
@@ -847,7 +847,7 @@ static int pic_header(struct bitstream *esstream)
         fatal(EXIT_BUG_BUG, "Impossible!");
 
     temporal_reference = (int) read_bits(esstream,10);
-    picture_coding_type = (ccx_frame_type) read_bits(esstream,3);
+    picture_coding_type = (enum ccx_frame_type) read_bits(esstream,3);
 
     // Discard vbv_delay
     skip_bits(esstream, 16);

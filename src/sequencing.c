@@ -62,7 +62,7 @@ void store_hdcc(unsigned char *cc_data, int cc_count, int sequence_number, LLONG
     // the right time according to the sequence number.
     if (ccx_options.use_gop_as_pts==1)
     {
-        current_fts_now += LLONG(sequence_number*1000.0/current_fps);
+        current_fts_now += (LLONG) (sequence_number*1000.0/current_fps);
     }
 
 	if (cc_count)

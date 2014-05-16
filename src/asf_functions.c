@@ -63,6 +63,7 @@ LLONG asf_getmoredata(void)
     int enough = 0;
     int payload_read = 0;
 
+	static unsigned char *parsebuf = NULL;
     // The fist call to this function (per file) is indicated with
     // firstcall == 1
     // Except for the first call of this function we will reenter
@@ -100,8 +101,8 @@ LLONG asf_getmoredata(void)
     // entry for stream 1. (The streams are numbered starting from 1)
     // FIXME: What happens if we have more than 9 streams with more than
     // 10 entries.
-    const int STREAMNUM = 10;
-    const int PAYEXTNUM = 10;
+	#define STREAMNUM  10
+	#define PAYEXTNUM 10
     static int PayloadExtSize[STREAMNUM][PAYEXTNUM];
     // Remember which entry held the DVRMS_PTS information
     static int PayloadExtPTSEntry[STREAMNUM];
@@ -150,7 +151,7 @@ LLONG asf_getmoredata(void)
 
 
     // Generic buffer to hold some data
-    static unsigned char *parsebuf = (unsigned char*)malloc(1024);
+    parsebuf = (unsigned char*)malloc(1024);
     static long parsebufsize = 1024;
 
     unsigned char *curpos;
@@ -1053,8 +1054,8 @@ LLONG asf_getmoredata(void)
         dbg_print(CCX_DMT_PARSE, "\nWe read the last packet!\n\n");
 
         // Skip the rest of the file
-        dbg_print(CCX_DMT_PARSE, "Skip the rest: %d\n",int(FileSize - HeaderObjectSize - DataObjectSize));
-        buffered_skip(int(FileSize - HeaderObjectSize - DataObjectSize));
+        dbg_print(CCX_DMT_PARSE, "Skip the rest: %d\n",(int) (FileSize - HeaderObjectSize - DataObjectSize));
+        buffered_skip((int) (FileSize - HeaderObjectSize - DataObjectSize));
         past+=result;
         // Don not set end_of_file (although it is true) as this would
         // produce an premature end error.

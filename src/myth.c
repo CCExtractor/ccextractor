@@ -322,11 +322,11 @@ static LLONG get_pts(int c)
 
     if (c < 0)
         c = get_byte();
-    pts = LLONG((c >> 1) & 0x07) << 30;
+    pts = (LLONG) ((c >> 1) & 0x07) << 30;
     val = get_be16();
-    pts |= LLONG (val >> 1) << 15;
+    pts |= (LLONG) (val >> 1) << 15;
     val = get_be16();
-    pts |= LLONG (val >> 1);
+    pts |= (LLONG) (val >> 1);
     return pts;
 }
 
@@ -820,6 +820,7 @@ void myth_loop(void)
 {	
     int rc;
 	int has_vbi=0;	
+	LLONG saved = 0;
     
     av.data=NULL;
     ccx_options.buffer_input = 1;
@@ -831,7 +832,7 @@ void myth_loop(void)
     unsigned char *desp=(unsigned char *) malloc (desp_length);
 	if (!desp)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory.\n");
-    LLONG saved=0;
+    saved=0;
 
     while (!processed_enough && (rc=mpegps_read_packet ())==0)
     {

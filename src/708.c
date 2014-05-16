@@ -945,7 +945,7 @@ void handle_708_DLC_DelayCancel (cc708_service_decoder *decoder)
 // C1 Code Set - Captioning Commands Control Codes
 int handle_708_C1 (cc708_service_decoder *decoder, unsigned char *data, int data_length)
 {
-    S_COMMANDS_C1 com=COMMANDS_C1[data[0]-0x80];
+    struct S_COMMANDS_C1 com=COMMANDS_C1[data[0]-0x80];
     dbg_print(CCX_DMT_708, "%s | C1: [%02X]  [%s] [%s] (%d)\n",
         print_mstime(get_fts()),
         data[0],com.name,com.description, com.length);    

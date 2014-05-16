@@ -16,7 +16,7 @@ static void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_
 
 static unsigned char cc_count;
 // buffer to hold cc data
-static unsigned char *cc_data = (unsigned char*)malloc(1024);
+static unsigned char *cc_data = NULL;
 static long cc_databufsize = 1024;
 int cc_buffer_saved=1; // Was the CC buffer saved after it was last updated?
 
@@ -35,10 +35,15 @@ long num_nal_hrd=0;
 long num_jump_in_frames=0;
 long num_unexpected_sei_length=0;
 
-inline double roundportable(double x) { return floor(x + 0.5); }
+double roundportable(double x) { return floor(x + 0.5); }
 
 int ebsp_to_rbsp(char* rbsp, char* ebsp, int length);
 static  char s_rbsp[1024*1024];
+
+void init_avc(void)
+{
+	cc_data = (unsigned char*)malloc(1024);
+}
 
 void do_NAL (unsigned char *NALstart, LLONG NAL_length)
 {
@@ -775,7 +780,7 @@ void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_ty
     dvprint("pic_parameter_set_id=  %llX\n", tmp);
 
     lastframe_num = frame_num;
-    int maxframe_num = int((1<<log2_max_frame_num) - 1);
+    int maxframe_num = (int) ((1<<log2_max_frame_num) - 1);
 
     // Needs log2_max_frame_num_minus4 + 4 bits
     frame_num=u(&q1,log2_max_frame_num);
@@ -869,7 +874,7 @@ void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_ty
         break;
     }
 
-    int maxrefcnt = int((1<<log2_max_pic_order_cnt_lsb) - 1);
+    int maxrefcnt = (int) ((1<<log2_max_pic_order_cnt_lsb) - 1);
 
     // If we saw a jump set maxidx, lastmaxidx to -1
     LLONG dif = frame_num - lastframe_num;
@@ -1009,7 +1014,7 @@ void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_ty
 
     dbg_print(CCX_DMT_TIME, "PTS: %s (%8u)",
            print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-           unsigned(current_pts));
+           (unsigned) (current_pts));
     dbg_print(CCX_DMT_TIME, "  picordercnt:%3lld tref:%3d idx:%3d refidx:%3d lmaxidx:%3d maxtref:%3d\n",
            pic_order_cnt_lsb, current_tref,
            curridx, currref, lastmaxidx, maxtref);
@@ -1017,10 +1022,10 @@ void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_ty
            print_mstime(get_fts()));
     dbg_print(CCX_DMT_TIME, "  sync_pts:%s (%8u)",
            print_mstime(sync_pts/(MPEG_CLOCK_FREQ/1000)),
-           unsigned(sync_pts));
+           (unsigned) (sync_pts));
     dbg_print(CCX_DMT_TIME, " - %s since GOP: %2u",
            slice_types[slice_type],
-           unsigned(frames_since_last_gop));
+           (unsigned) (frames_since_last_gop));
     dbg_print(CCX_DMT_TIME, "  b:%lld  frame# %lld\n", bottom_field_flag, frame_num);
 
     // sync_pts is (was) set when current_tref was zero
