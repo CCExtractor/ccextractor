@@ -1,5 +1,39 @@
 #ifndef __608_H__
 
+struct eia608_screen // A CC buffer
+{
+	unsigned char characters[15][33];
+	unsigned char colors[15][33];
+	unsigned char fonts[15][33]; // Extra char at the end for a 0
+	int row_used[15]; // Any data in row?
+	int empty; // Buffer completely empty?    	
+};
+
+struct s_context_cc608
+{
+	struct eia608_screen buffer1;
+	struct eia608_screen buffer2;
+	int cursor_row, cursor_column;
+	int visible_buffer;
+	int srt_counter; // Number of subs currently written
+	int screenfuls_counter; // Number of meaningful screenfuls written
+	LLONG current_visible_start_ms; // At what time did the current visible buffer became so?
+	// unsigned current_visible_start_cc; // At what time did the current visible buffer became so?
+	enum cc_modes mode;
+	unsigned char last_c1, last_c2;
+	int channel; // Currently selected channel
+	unsigned char color; // Color we are currently using to write
+	unsigned char font; // Font we are currently using to write
+	int rollup_base_row;
+	LLONG ts_start_of_current_line; /* Time at which the first character for current line was received, =-1 no character received yet */
+	LLONG ts_last_char_received; /* Time at which the last written character was received, =-1 no character received yet */
+	int new_channel; // The new channel after a channel change		
+	int my_field; // Used for sanity checks
+	long bytes_processed_608; // To be written ONLY by process_608
+	void* spupng_data;
+	struct ccx_s_write *out;
+};
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -92,39 +126,7 @@ enum font_bits
 };
 
 
-struct eia608_screen // A CC buffer
-{
-    unsigned char characters[15][33]; 
-    unsigned char colors[15][33];
-    unsigned char fonts[15][33]; // Extra char at the end for a 0
-    int row_used[15]; // Any data in row?
-    int empty; // Buffer completely empty?    	
-};
 
-struct s_context_cc608
-{
-    struct eia608_screen buffer1;
-	struct eia608_screen buffer2;
-    int cursor_row, cursor_column;
-    int visible_buffer;
-    int srt_counter; // Number of subs currently written
-	int screenfuls_counter; // Number of meaningful screenfuls written
-	LLONG current_visible_start_ms; // At what time did the current visible buffer became so?
-    // unsigned current_visible_start_cc; // At what time did the current visible buffer became so?
-	enum cc_modes mode;
-    unsigned char last_c1, last_c2;
-    int channel; // Currently selected channel
-    unsigned char color; // Color we are currently using to write
-    unsigned char font; // Font we are currently using to write
-    int rollup_base_row;
-	LLONG ts_start_of_current_line; /* Time at which the first character for current line was received, =-1 no character received yet */
-	LLONG ts_last_char_received; /* Time at which the last written character was received, =-1 no character received yet */
-	int new_channel; // The new channel after a channel change		
-	int my_field; // Used for sanity checks
-	long bytes_processed_608; // To be written ONLY by process_608
-	void* spupng_data;
-	struct ccx_s_write *out; 
-};
 
 
 
