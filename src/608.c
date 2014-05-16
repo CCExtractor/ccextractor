@@ -10,8 +10,41 @@ unsigned char *enc_buffer=NULL; // Generic general purpose buffer
 unsigned char str[2048]; // Another generic general purpose buffer
 unsigned enc_buffer_used;
 unsigned enc_buffer_capacity;
-
+int startcredits_displayed = 0, end_credits_displayed = 0;
 LLONG minimum_fts=0; // No screen should start before this FTS
+LLONG last_displayed_subs_ms=0; // When did the last subs end?
+int processed_enough; // If 1, we have enough lines, time, etc. 
+int cc_to_stdout=0; // If 1, captions go to stdout instead of file
+LLONG ts_start_of_xds=-1; // Time at which we switched to XDS mode, =-1 hasn't happened yet
+int timestamps_on_transcript=0; /* Write time info on transcripts? */
+// Case arrays
+char **spell_lower=NULL;
+char **spell_correct=NULL;
+int spell_words=0;
+int spell_capacity=0;
+char **inputfile=NULL; // List of files to process
+int num_input_files=0; // How many?
+struct gop_time_code gop_time, first_gop_time, printed_gop;
+int gop_rollover=0;
+// PTS timing related stuff
+LLONG min_pts, max_pts, sync_pts;
+LLONG fts_now; // Time stamp of current file (w/ fts_offset, w/o fts_global)
+LLONG fts_offset; // Time before first sync_pts
+LLONG fts_fc_offset; // Time before first GOP
+LLONG fts_max; // Remember the maximum fts that we saw in current file
+LLONG fts_global=0; // Duration of previous files (-ve mode), see c1global
+int pts_set; //0 = No, 1 = received, 2 = min_pts set
+// Count 608 (per field) and 708 blocks since last set_fts() call
+int cb_field1, cb_field2, cb_708;
+LLONG past; /* Position in file, if in sync same as ftell()  */
+int MPEG_CLOCK_FREQ = 90000; // This "constant" is part of the standard
+unsigned pts_big_change;
+unsigned total_frames_count;
+enum ccx_stream_mode_enum stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND; // Data parse mode: 0=elementary, 1=transport, 2=program stream, 3=ASF container
+LLONG fts_at_gop_start=0;
+int frames_since_ref_time=0;
+enum ccx_frame_type current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
+int current_tref = 0; // Store temporal reference of current frame
 const unsigned char pac2_attribs[][3] = // Color, font, ident
 {
 	{ COL_WHITE, FONT_REGULAR, 0 },  // 0x40 || 0x60 
@@ -141,7 +174,8 @@ const char *color_text[][2]=
 
 void clear_eia608_cc_buffer (struct eia608_screen *data)
 {
-    for (int i=0;i<15;i++)
+	int i;
+    for (i=0;i<15;i++)
     {
         memset(data->characters[i],' ',CC608_SCREEN_WIDTH);
         data->characters[i][CC608_SCREEN_WIDTH]=0;		
@@ -210,10 +244,11 @@ struct eia608_screen *get_writing_buffer(struct s_context_cc608 *context)
 
 void delete_to_end_of_row(struct s_context_cc608 *context)
 {
+	int i;
 	if (context->mode != MODE_TEXT)
     {		
 		struct eia608_screen * use_buffer = get_writing_buffer(context);
-		for (int i = context->cursor_column; i <= 31; i++)
+		for (i = context->cursor_column; i <= 31; i++)
 		{
 			// TODO: This can change the 'used' situation of a column, so we'd
 			// need to check and correct.
@@ -347,12 +382,13 @@ void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc
 {
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
+	int length;
     if (ccx_options.sentence_cap)
     {
         capitalize (line_number,data);
         correct_case(line_number,data);
     }
-    int length = get_decoder_line_basic (subline, line_number, data);
+    length = get_decoder_line_basic (subline, line_number, data);
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_608, "\r");
@@ -398,22 +434,29 @@ void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc
 			}
 			if (ccx_options.ucla_settings)
 			{
+				char buffer[80];
+				time_t start_time_int;
+				int start_time_dec;
+				struct tm *start_time_struct;
+				time_t end_time_int;
+				int end_time_dec;
+				struct tm *end_time_struct;
+
 				mstotime(context->ts_start_of_current_line + subs_delay, &h1, &m1, &s1, &ms1);
 				mstotime (get_fts()+subs_delay,&h2,&m2,&s2,&ms2);				
 
                 // SSC-1182 BEGIN
                 // Changed output format to be more like ZVBI
 
-				char buffer[80];
-				time_t start_time_int = (context->ts_start_of_current_line + subs_delay) / 1000;
-				int start_time_dec = (context->ts_start_of_current_line + subs_delay) % 1000;
-                struct tm *start_time_struct = gmtime(&start_time_int);
+				start_time_int = (context->ts_start_of_current_line + subs_delay) / 1000;
+				start_time_dec = (context->ts_start_of_current_line + subs_delay) % 1000;
+                start_time_struct = gmtime(&start_time_int);
                 strftime(buffer, sizeof(buffer), "%Y%m%d%H%M%S", start_time_struct);
 				fdprintf(context->out->fh, "%s.%03d|", buffer, start_time_dec);
 
-                time_t end_time_int = (get_fts()+subs_delay)/1000;
-                int end_time_dec = (get_fts()+subs_delay)%1000;
-                struct tm *end_time_struct = gmtime(&end_time_int);
+                end_time_int = (get_fts()+subs_delay)/1000;
+                end_time_dec = (get_fts()+subs_delay)%1000;
+                end_time_struct = gmtime(&end_time_int);
                 strftime(buffer, sizeof(buffer), "%Y%m%d%H%M%S", end_time_struct);
 				fdprintf(context->out->fh, "%s.%03d|", buffer, end_time_dec);
 
@@ -442,10 +485,11 @@ void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc
 int write_cc_buffer_as_transcript(struct eia608_screen *data, struct s_context_cc608 *context)
 {
     int wrote_something = 0;
+	int i;
 	context->ts_start_of_current_line = context->current_visible_start_ms;
     dbg_print(CCX_DMT_608, "\n- - - TRANSCRIPT caption - - -\n");        
     
-    for (int i=0;i<15;i++)
+    for (i=0;i<15;i++)
     {
         if (data->row_used[i])
         {		
@@ -534,6 +578,9 @@ int check_roll_up(struct s_context_cc608 *context)
 {
 	int keep_lines=0;
 	int firstrow=-1, lastrow=-1;
+	int i;
+	int rows_orig=0; // Number of rows in use right now
+
 	struct eia608_screen *use_buffer;
 	if (context->visible_buffer == 1)
 		use_buffer = &context->buffer1;
@@ -563,8 +610,7 @@ int check_roll_up(struct s_context_cc608 *context)
     }
 	if (use_buffer->row_used[0]) // If top line is used it will go off the screen no matter what
 		return 1;
-    int rows_orig=0; // Number of rows in use right now
-    for (int i=0;i<15;i++)
+    for (i=0;i<15;i++)
     {
         if (use_buffer->row_used[i])
         {
@@ -589,11 +635,21 @@ int check_roll_up(struct s_context_cc608 *context)
 int roll_up(struct s_context_cc608 *context)
 {
 	struct eia608_screen *use_buffer;
+	int i,j;
+	int keep_lines;
+	int firstrow=-1, lastrow=-1;
+    // Look for the last line used
+    int rows_orig=0; // Number of rows in use right now
+	// Sanity check
+    int rows_now=0;
+
+
+
 	if (context->visible_buffer == 1)
 		use_buffer = &context->buffer1;
     else
 		use_buffer = &context->buffer2;
-    int keep_lines;
+
 	switch (context->mode)
     {
 		case MODE_FAKE_ROLLUP_1:
@@ -615,10 +671,7 @@ int roll_up(struct s_context_cc608 *context)
             keep_lines=0;
             break;
     }
-    int firstrow=-1, lastrow=-1;
-    // Look for the last line used
-    int rows_orig=0; // Number of rows in use right now
-    for (int i=0;i<15;i++)
+    for (i=0;i<15;i++)
     {
         if (use_buffer->row_used[i])
         {
@@ -634,7 +687,7 @@ int roll_up(struct s_context_cc608 *context)
     if (lastrow==-1) // Empty screen, nothing to rollup
         return 0;
 
-    for (int j=lastrow-keep_lines+1;j<lastrow; j++)
+    for (j=lastrow-keep_lines+1;j<lastrow; j++)
     {
         if (j>=0)
         {
@@ -644,7 +697,7 @@ int roll_up(struct s_context_cc608 *context)
             use_buffer->row_used[j]=use_buffer->row_used[j+1];
         }
     }
-	for (int j = 0; j<(1 + context->cursor_row - keep_lines); j++)
+	for (j = 0; j<(1 + context->cursor_row - keep_lines); j++)
     {
         memset(use_buffer->characters[j],' ',CC608_SCREEN_WIDTH);			        
 		memset(use_buffer->colors[j],ccx_options.cc608_default_color,CC608_SCREEN_WIDTH);
@@ -659,9 +712,7 @@ int roll_up(struct s_context_cc608 *context)
     use_buffer->characters[lastrow][CC608_SCREEN_WIDTH]=0;
     use_buffer->row_used[lastrow]=0;
     
-    // Sanity check
-    int rows_now=0;
-    for (int i=0;i<15;i++)
+    for (i=0;i<15;i++)
         if (use_buffer->row_used[i])
             rows_now++;
     if (rows_now>keep_lines)
@@ -699,11 +750,12 @@ void erase_memory(struct s_context_cc608 *context, int displayed)
 int is_current_row_empty(struct s_context_cc608 *context)
 {
 	struct eia608_screen *use_buffer;
+	int i;
 	if (context->visible_buffer == 1)
 		use_buffer = &context->buffer1;
     else
 		use_buffer = &context->buffer2;
-    for (int i=0;i<CC608_SCREEN_WIDTH;i++)
+    for (i=0;i<CC608_SCREEN_WIDTH;i++)
     {
 		if (use_buffer->characters[context->rollup_base_row][i] != ' ')
             return 0;
@@ -714,14 +766,15 @@ int is_current_row_empty(struct s_context_cc608 *context)
 /* Process GLOBAL CODES */
 void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct s_context_cc608 *context)
 {
-	int changes=0; 
+	int changes=0;
+	enum command_code command;
 
     // Handle channel change
 	context->channel = context->new_channel;
 	if (context->channel != ccx_options.cc_channel)
         return;
 
-    enum command_code command = COM_UNKNOWN;
+    command = COM_UNKNOWN;
     if (c1==0x15)
         c1=0x14;
     if ((c1==0x14 || c1==0x1C) && c2==0x2C)
@@ -1002,12 +1055,13 @@ unsigned char handle_extended(unsigned char hi, unsigned char lo, struct s_conte
 	if (context->channel != ccx_options.cc_channel)
         return 0;
 
-    // For lo values between 0x20-0x3f
-    unsigned char c=0;
 
     dbg_print(CCX_DMT_608, "\rExtended: %02X %02X\n",hi,lo);
     if (lo>=0x20 && lo<=0x3f && (hi==0x12 || hi==0x13))
     {
+	// For lo values between 0x20-0x3f
+		unsigned char c=0;
+
         switch (hi)
         {
             case 0x12:
@@ -1031,7 +1085,9 @@ unsigned char handle_extended(unsigned char hi, unsigned char lo, struct s_conte
 /* Process PREAMBLE ACCESS CODES (PAC) */
 void handle_pac(unsigned char c1, unsigned char c2, struct s_context_cc608 *context)
 {
-    // Handle channel change
+	int j,row,indent;
+
+	// Handle channel change
 	if (context->new_channel > 2)
     {
 		context->new_channel -= 2;
@@ -1041,7 +1097,7 @@ void handle_pac(unsigned char c1, unsigned char c2, struct s_context_cc608 *cont
 	if (context->channel != ccx_options.cc_channel)
         return;
 
-    int row=rowdata[((c1<<1)&14)|((c2>>5)&1)];
+    row=rowdata[((c1<<1)&14)|((c2>>5)&1)];
 
     dbg_print(CCX_DMT_608, "\rPAC: %02X %02X",c1,c2);
 
@@ -1063,7 +1119,7 @@ void handle_pac(unsigned char c1, unsigned char c2, struct s_context_cc608 *cont
     }	
 	context->color = pac2_attribs[c2][0];
 	context->font = pac2_attribs[c2][1];
-    int indent=pac2_attribs[c2][2];
+    indent=pac2_attribs[c2][2];
     dbg_print(CCX_DMT_608, "  --  Position: %d:%d, color: %s,  font: %s\n",row,
 		indent, color_text[context->color][0], font_text[context->font]);
 	if (ccx_options.cc608_default_color == COL_USERDEFINED && (context->color == COL_WHITE || context->color == COL_TRANSPARENT))
@@ -1083,7 +1139,7 @@ void handle_pac(unsigned char c1, unsigned char c2, struct s_context_cc608 *cont
 		   buffer around instead) but it's better than leaving old characters in the buffer */
 		struct eia608_screen *use_buffer = get_writing_buffer(context); // &wb->data608->buffer1;
                 
-		for (int j=row;j<15;j++)
+		for (j=row;j<15;j++)
 		{
 			if (use_buffer->row_used[j])
 			{
@@ -1217,12 +1273,13 @@ int disCommand(unsigned char hi, unsigned char lo, struct s_context_cc608 *conte
 /* If wb is NULL, then only XDS will be processed */
 void process608(const unsigned char *data, int length, struct s_context_cc608 *context)
 {
-    static int textprinted = 0;	
+    static int textprinted = 0;
+	int i;
 	if (context)
 		context->bytes_processed_608 += length;
     if (data!=NULL)
     {
-        for (int i=0;i<length;i=i+2)
+        for (i=0;i<length;i=i+2)
         {
             unsigned char hi, lo;
             int wrote_to_screen=0; 

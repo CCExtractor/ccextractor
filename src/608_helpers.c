@@ -45,11 +45,11 @@ void correct_case (int line_num, struct eia608_screen *data)
             // preceded by space, and end of line or followed by
             // space)
             unsigned char prev;
+			unsigned char next;
             if (c==(char *) data->characters[line_num]) // Beginning of line...
                 prev=' '; // ...Pretend we had a blank before
             else
                 prev=*(c-1);             
-            unsigned char next;
             if (c-(char *) data->characters[line_num]+len==CC608_SCREEN_WIDTH) // End of line...
                 next=' '; // ... pretend we have a blank later
             else
@@ -65,8 +65,10 @@ void correct_case (int line_num, struct eia608_screen *data)
 }
 
 void capitalize (int line_num, struct eia608_screen *data)
-{	
-    for (int i=0;i<CC608_SCREEN_WIDTH;i++)
+{
+	int i;
+
+    for (i=0;i<CC608_SCREEN_WIDTH;i++)
     {
         switch (data->characters[line_num][i])
         {
@@ -93,9 +95,10 @@ void capitalize (int line_num, struct eia608_screen *data)
 
 void find_limit_characters (unsigned char *line, int *first_non_blank, int *last_non_blank)
 {
+	int i;
     *last_non_blank=-1;
     *first_non_blank=-1;
-    for (int i=0;i<CC608_SCREEN_WIDTH;i++)
+    for (i=0;i<CC608_SCREEN_WIDTH;i++)
     {
         unsigned char c=line[i];
         if (c!=' ' && c!=0x89)
@@ -113,6 +116,9 @@ unsigned get_decoder_line_basic (unsigned char *buffer, int line_num, struct eia
     int last_non_blank=-1;
     int first_non_blank=-1;
     unsigned char *orig=buffer; // Keep for debugging
+	int i;
+    int bytes=0;
+
 	find_limit_characters (line, &first_non_blank, &last_non_blank);
 	if (!ccx_options.trim_subs)	
 		first_non_blank=0;
@@ -123,8 +129,7 @@ unsigned get_decoder_line_basic (unsigned char *buffer, int line_num, struct eia
         return 0;
     }
 
-    int bytes=0;
-    for (int i=first_non_blank;i<=last_non_blank;i++)
+    for (i=first_non_blank;i<=last_non_blank;i++)
     {
         char c=line[i];
         switch (ccx_options.encoding)
@@ -152,8 +157,9 @@ unsigned get_decoder_line_encoded_for_gui (unsigned char *buffer, int line_num, 
     unsigned char *line = data->characters[line_num];	
     unsigned char *orig=buffer; // Keep for debugging
     int first=0, last=31;
+	int i;
     find_limit_characters(line,&first,&last);
-    for (int i=first;i<=last;i++)
+    for (i=first;i<=last;i++)
     {	
         get_char_in_latin_1 (buffer,line[i]);
         buffer++;
@@ -164,8 +170,9 @@ unsigned get_decoder_line_encoded_for_gui (unsigned char *buffer, int line_num, 
 }
 
 unsigned char *close_tag (unsigned char *buffer, char *tagstack, char tagtype, int *punderlined, int *pitalics, int *pchanged_font)
-{		
-	for (int l=strlen (tagstack)-1; l>=0;l--)
+{
+	int l;
+	for (l=strlen (tagstack)-1; l>=0;l--)
 	{
 		char cur=tagstack[l];
 		switch (cur)
@@ -202,10 +209,15 @@ unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct e
 
     unsigned char *line = data->characters[line_num];	
     unsigned char *orig=buffer; // Keep for debugging
+	int i;
     int first=0, last=31;
+	int is_underlined;
+	int has_ita;
+    int bytes=0;
+
     if (ccx_options.trim_subs)
         find_limit_characters(line,&first,&last);
-    for (int i=first;i<=last;i++)
+    for (i=first;i<=last;i++)
     {	
         // Handle color
         int its_col = data->colors[line_num][i];
@@ -231,7 +243,7 @@ unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct e
             col = its_col;
         }
         // Handle underlined
-        int is_underlined = data->fonts[line_num][i] & FONT_UNDERLINED;
+        is_underlined = data->fonts[line_num][i] & FONT_UNDERLINED;
         if (is_underlined && underlined==0 && !ccx_options.notypesetting) // Open underline
         {
             buffer+=encode_line (buffer, (unsigned char *) "<u>");
@@ -243,7 +255,7 @@ unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct e
 			buffer = close_tag(buffer,tagstack,'U',&underlined,&italics,&changed_font);
         }         
         // Handle italics
-        int has_ita = data->fonts[line_num][i] & FONT_ITALICS;		
+        has_ita = data->fonts[line_num][i] & FONT_ITALICS;		
         if (has_ita && italics==0 && !ccx_options.notypesetting) // Open italics
         {
             buffer+=encode_line (buffer, (unsigned char *) "<i>");
@@ -254,7 +266,6 @@ unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct e
         {
 			buffer = close_tag(buffer,tagstack,'I',&underlined,&italics,&changed_font);            
         }         
-        int bytes=0;
         switch (ccx_options.encoding)
         {
             case CCX_ENC_UTF_8:
@@ -281,7 +292,8 @@ unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct e
 
 void delete_all_lines_but_current (struct eia608_screen *data, int row)
 {
-    for (int i=0;i<15;i++)
+	int i;
+    for (i=0;i<15;i++)
     {
         if (i!=row)
         {
@@ -307,8 +319,12 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *
     unsigned h1,m1,s1,ms1;
     unsigned h2,m2,s2,ms2;    
 	int with_data=0;
+	int i;
+	LLONG ms_start;
+    int time_reported=0;
 
-	for (int i=0;i<15;i++)
+
+	for (i=0;i<15;i++)
     {
         if (data->row_used[i])
 			with_data=1;
@@ -316,14 +332,14 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *
 	if (!with_data)
 		return;
 
-    LLONG ms_start= context->current_visible_start_ms;
+    ms_start= context->current_visible_start_ms;
 
     ms_start+=subs_delay;
     if (ms_start<0) // Drop screens that because of subs_delay start too early
         return;
-    int time_reported=0;    
-    for (int i=0;i<15;i++)
+    for (i=0;i<15;i++)
     {
+		int length;
         if (data->row_used[i])
         {
             fprintf (stderr, "###SUBTITLE#");
@@ -342,7 +358,7 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *
             
             // We don't capitalize here because whatever function that was used
             // before to write to file already took care of it.
-            int length = get_decoder_line_encoded_for_gui (subline, i, data);
+            length = get_decoder_line_encoded_for_gui (subline, i, data);
             fwrite (subline, 1, length, stderr);
             fwrite ("\n",1,1,stderr);
         }
@@ -352,16 +368,21 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *
 
 void try_to_add_end_credits(struct s_context_cc608 *context)
 {
+	LLONG window;
+	LLONG length;
+	LLONG st;
+	LLONG end;
+
 	if (context->out->fh == -1)
         return;
-    LLONG window=get_fts()-last_displayed_subs_ms-1;
+    window=get_fts()-last_displayed_subs_ms-1;
     if (window<ccx_options.endcreditsforatleast.time_in_ms) // Won't happen, window is too short
         return;
-    LLONG length=ccx_options.endcreditsforatmost.time_in_ms > window ? 
+    length=ccx_options.endcreditsforatmost.time_in_ms > window ? 
         window : ccx_options.endcreditsforatmost.time_in_ms;
 
-    LLONG st=get_fts()-length-1;
-    LLONG end=get_fts();
+    st=get_fts()-length-1;
+    end=get_fts();
 
     switch (ccx_options.write_format)
     {
@@ -382,6 +403,10 @@ void try_to_add_end_credits(struct s_context_cc608 *context)
 
 void try_to_add_start_credits(struct s_context_cc608 *context)
 {
+	LLONG st;
+	LLONG end;
+	LLONG window;
+	LLONG length;
 	LLONG l = context->current_visible_start_ms + subs_delay;
     // We have a windows from last_displayed_subs_ms to l - we need to see if it fits
 
@@ -391,18 +416,18 @@ void try_to_add_start_credits(struct s_context_cc608 *context)
     if (last_displayed_subs_ms+1 > ccx_options.startcreditsnotafter.time_in_ms) // Too late
         return;
 
-    LLONG st = ccx_options.startcreditsnotbefore.time_in_ms>(last_displayed_subs_ms+1) ?
+    st = ccx_options.startcreditsnotbefore.time_in_ms>(last_displayed_subs_ms+1) ?
         ccx_options.startcreditsnotbefore.time_in_ms : (last_displayed_subs_ms+1); // When would credits actually start
 
-    LLONG end = ccx_options.startcreditsnotafter.time_in_ms<(l-1) ?
+    end = ccx_options.startcreditsnotafter.time_in_ms<(l-1) ?
         ccx_options.startcreditsnotafter.time_in_ms : (l-1); 
 
-    LLONG window = end-st; // Allowable time in MS
+    window = end-st; // Allowable time in MS
 
     if (ccx_options.startcreditsforatleast.time_in_ms>window) // Window is too short
         return;
 
-    LLONG length=ccx_options.startcreditsforatmost.time_in_ms > window ? 
+    length=ccx_options.startcreditsforatmost.time_in_ms > window ? 
         window : ccx_options.startcreditsforatmost.time_in_ms;
 
     dbg_print(CCX_DMT_VERBOSE, "Last subs: %lld   Current position: %lld\n",

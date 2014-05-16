@@ -264,15 +264,6 @@ int user_data(struct bitstream *ustream, int udtype);
 
 // bitstream.cpp - see bitstream.h
 
-// 608.cpp
-int write_cc_buffer(struct s_context_cc608 *context);
-unsigned char *debug_608toASC (unsigned char *ccdata, int channel);
-
-
-// cc_decoders_common.cpp
-LLONG get_visible_start (void);
-LLONG get_visible_end (void);
-
 // file_functions.cpp
 LLONG getfilesize (int in);
 LLONG gettotalfilessize (void);
@@ -281,6 +272,19 @@ void close_input_file (void);
 int switch_to_next_file (LLONG bytesinbuffer);
 int init_sockets (void);
 void return_to_buffer (unsigned char *buffer, unsigned int bytes);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// 608.cpp
+int write_cc_buffer(struct s_context_cc608 *context);
+unsigned char *debug_608toASC (unsigned char *ccdata, int channel);
+
+// cc_decoders_common.cpp
+LLONG get_visible_start (void);
+LLONG get_visible_end (void);
+
 
 // timing.cpp
 void set_fts(void);
@@ -291,6 +295,10 @@ char *print_mstime2buf( LLONG mstime , char *buf );
 void print_debug_timing( void );
 int gop_accepted(struct gop_time_code* g );
 void calculate_ms_gop_time (struct gop_time_code *g);
+#ifdef __cplusplus
+}
+#endif
+
 
 // sequencing.cpp
 void init_hdcc (void);
@@ -332,11 +340,6 @@ void myth_loop(void);
 // mp4_bridge2bento4.cpp
 void mp4_loop (char *filename);
 
-// xds.cpp
-void process_xds_bytes (const unsigned char hi, int lo);
-void do_end_of_xds (unsigned char expected_checksum);
-void xds_init();
-
 // ccextractor.cpp
 LLONG calculate_gop_mstime (struct gop_time_code *g);
 void set_fts(void);
@@ -350,6 +353,12 @@ int switch_to_next_file (LLONG bytesinbuffer);
 extern "C"
 {
 #endif
+
+// xds.cpp
+void process_xds_bytes (const unsigned char hi, int lo);
+void do_end_of_xds (unsigned char expected_checksum);
+void xds_init();
+
 // utility.cpp
 void fatal(int exit_code, const char *fmt, ...);
 void dvprint(const char *fmt, ...);
@@ -382,27 +391,15 @@ void mstotime(LLONG milli, unsigned *hours, unsigned *minutes,
 }
 #endif
 
-extern struct gop_time_code gop_time, first_gop_time, printed_gop;
-extern int gop_rollover;
-extern LLONG min_pts, sync_pts, current_pts;
 extern unsigned rollover_bits;
 extern uint32_t global_timestamp, min_global_timestamp;
 extern int global_timestamp_inited;
-extern LLONG fts_now; // Time stamp of current file (w/ fts_offset, w/o fts_global)
-extern LLONG fts_offset; // Time before first sync_pts
-extern LLONG fts_fc_offset; // Time before first GOP
-extern LLONG fts_max; // Remember the maximum fts that we saw in current file
-extern LLONG fts_global; // Duration of previous files (-ve mode)
-// Count 608 (per field) and 708 blocks since last set_fts() call
-extern int cb_field1, cb_field2, cb_708;
 extern int saw_caption_block;
 
 
 extern unsigned char *buffer;
-extern LLONG past;
 extern LLONG total_inputsize, total_past; // Only in binary concat mode
 
-extern char **inputfile;
 extern int current_file;
 extern LLONG result; // Number of bytes read/skipped in last read operation
 
@@ -416,16 +413,10 @@ extern unsigned int startbytes_pos;
 extern int startbytes_avail; // Needs to be able to hold -1 result.
 
 extern unsigned char *pesheaderbuf;
-extern int pts_set; //0 = No, 1 = received, 2 = min_pts set
 
-extern int MPEG_CLOCK_FREQ; // This is part of the standard
-
-extern unsigned pts_big_change;
-extern unsigned total_frames_count;
 extern unsigned total_pulldownfields;
 extern unsigned total_pulldownframes;
 
-extern int CaptionGap;
 
 extern unsigned char *filebuffer;
 extern LLONG filebuffer_start; // Position of buffer start relative to file
@@ -448,26 +439,42 @@ extern int stat_replay4000headers;
 extern int stat_dishheaders;
 extern int stat_hdtv;
 extern int stat_divicom;
-extern enum ccx_stream_mode_enum stream_mode;
 extern int cc_stats[4];
 extern LLONG inputsize;
 
-extern LLONG subs_delay; 
-extern int startcredits_displayed, end_credits_displayed;
 extern LLONG last_displayed_subs_ms; 
-extern int processed_enough;
-extern unsigned char usercolor_rgb[8];
+
 
 extern const char *extension;
 extern long FILEBUFFERSIZE; // Uppercase because it used to be a define
 #ifdef __cplusplus
-extern "C"
-{
-	#endif
+extern "C" {
+#endif
+	extern unsigned char usercolor_rgb[8];
+	extern LLONG min_pts, sync_pts, current_pts;
+	extern int pts_set; //0 = No, 1 = received, 2 = min_pts set
+	extern LLONG fts_now; // Time stamp of current file (w/ fts_offset, w/o fts_global)
+	extern LLONG fts_offset; // Time before first sync_pts
+	extern LLONG fts_fc_offset; // Time before first GOP
+	extern LLONG fts_max; // Remember the maximum fts that we saw in current file
+	extern LLONG fts_global; // Duration of previous files (-ve mode)
+	// Count 608 (per field) and 708 blocks since last set_fts() call
+	extern int cb_field1, cb_field2, cb_708;
+	extern LLONG past;
+	extern int MPEG_CLOCK_FREQ; // This is part of the standard
+	extern unsigned pts_big_change;
+	extern int gop_rollover;
+	extern struct gop_time_code gop_time, first_gop_time, printed_gop;
+	extern int processed_enough;
+	extern LLONG subs_delay; 
 	extern struct ccx_s_options ccx_options;
 	extern int temp_debug;
 	extern unsigned long net_activity_gui;
-	#ifdef __cplusplus
+	extern unsigned total_frames_count;	
+	extern int CaptionGap;
+	extern double current_fps;
+	extern char **inputfile;
+#ifdef __cplusplus
 }
 #endif
 
@@ -476,7 +483,7 @@ extern unsigned current_hor_size;
 extern unsigned current_vert_size;
 extern unsigned current_aspect_ratio;
 extern unsigned current_frame_rate;
-extern double current_fps;
+
 
 extern int end_of_file;
 extern LLONG inbuf;
@@ -492,47 +499,51 @@ extern LLONG minimum_fts; // No screen should start before this FTS
 extern int cc_data_count[SORTBUF];
 extern unsigned char cc_data_pkts[SORTBUF][10*31*3+1];
 extern int has_ccdata_buffered;
-extern int current_field;
+
 
 extern int last_reported_progress;
-extern int cc_to_stdout;
 
 extern unsigned hauppauge_warning_shown;
-extern unsigned char *subline;
+
 extern int saw_gop_header;
 extern int max_gop_length;
 extern int last_gop_length;
 extern int frames_since_last_gop;
-extern LLONG fts_at_gop_start;
-extern int frames_since_ref_time;
 extern enum ccx_stream_mode_enum auto_stream;
-extern int num_input_files;
 extern char *basefilename;
 extern int do_cea708; // Process 708 data?
 extern int cea708services[63]; // [] -> 1 for services to be processed
 extern struct ccx_s_write wbout1, wbout2, *wbxdsout;
 
-extern char **spell_lower;
-extern char **spell_correct;
-extern int spell_words;
-extern int spell_capacity;
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+	extern int num_input_files;
+	extern int frames_since_ref_time;
+	extern LLONG fts_at_gop_start;
+	extern int current_field;
+	extern unsigned char *subline;
+	extern int cc_to_stdout;
+	extern char **spell_lower;
+	extern char **spell_correct;
+	extern int spell_words;
+	extern int spell_capacity;
+
 	extern unsigned char encoded_crlf[16]; // We keep it encoded here so we don't have to do it many times
 	extern unsigned int encoded_crlf_length;
 	extern unsigned char encoded_br[16];
 	extern unsigned int encoded_br_length;
+	extern int timestamps_on_transcript;
+	extern enum ccx_stream_mode_enum stream_mode;
+	extern enum ccx_frame_type current_picture_coding_type;
+	extern int current_tref; // Store temporal reference of current frame
+	extern LLONG ts_start_of_xds;
 #ifdef __cplusplus
 }
 #endif
 
-
-extern enum ccx_frame_type current_picture_coding_type; 
-extern int current_tref; // Store temporal reference of current frame
-
+ 
 extern int cc608_parity_table[256]; // From myth
 
 // From ts_functions
@@ -576,8 +587,6 @@ extern long capbuflen;
 extern int PIDs_seen[65536];
 extern struct PMT_entry *PIDs_programs[65536];
 
-extern LLONG ts_start_of_xds; 
-extern int timestamps_on_transcript;
 
 extern unsigned teletext_mode;
 

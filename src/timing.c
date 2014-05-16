@@ -10,14 +10,15 @@
 void set_fts(void)
 {
     int pts_jump = 0;
+    int dif = 0;
+
 
     // ES don't have PTS unless GOP timing is used
     if (!pts_set && stream_mode==CCX_SM_ELEMENTARY_OR_NOT_FOUND)
         return;
 
-    // First check for timeline jump (only when min_pts was
-    // set (implies sync_pts).
-    int dif = 0;
+	// First check for timeline jump (only when min_pts was
+	// set (implies sync_pts).
     if (pts_set == 2)
     {
         dif=(int) (current_pts-sync_pts)/MPEG_CLOCK_FREQ;
@@ -79,7 +80,7 @@ void set_fts(void)
             min_pts=current_pts;
 
             // Avoid next async test
-            sync_pts = LLONG(current_pts
+            sync_pts = (LLONG)(current_pts
                              -current_tref*1000.0/current_fps
                              *(MPEG_CLOCK_FREQ/1000));
 
@@ -97,7 +98,7 @@ void set_fts(void)
             else
             {   // It needs to be "+1" because the current frame is
                 // not yet counted.
-                fts_offset = LLONG((total_frames_count
+                fts_offset = (LLONG)((total_frames_count
                                     -frames_since_ref_time+1)
                                    *1000.0/current_fps);
             }
@@ -116,7 +117,7 @@ void set_fts(void)
             // time of the frames since then.
             fts_offset = fts_offset
                 + (sync_pts-min_pts)/(MPEG_CLOCK_FREQ/1000)
-                + LLONG(frames_since_ref_time*1000/current_fps);
+                + (LLONG)(frames_since_ref_time*1000/current_fps);
             fts_max = fts_offset;
 
             // Start counting again from here
@@ -124,7 +125,7 @@ void set_fts(void)
 
             // Avoid next async test - the gap might have occured on
             // current_tref != 0.
-            sync_pts = LLONG(current_pts
+            sync_pts = (LLONG)(current_pts
                              -current_tref*1000.0/current_fps
                              *(MPEG_CLOCK_FREQ/1000));
             // Set min_pts = sync_pts as this is used for fts_now
@@ -152,7 +153,7 @@ void set_fts(void)
 		if ( pts_set )
 		{
 			// If pts_set is TRUE we have min_pts
-			fts_now = LLONG((current_pts-min_pts)/(MPEG_CLOCK_FREQ/1000)
+			fts_now = (LLONG)((current_pts-min_pts)/(MPEG_CLOCK_FREQ/1000)
 							+ fts_offset);
 		}
 		else
@@ -229,6 +230,8 @@ char *print_mstime( LLONG mstime )
 /* Helper function for to display debug timing info. */
 void print_debug_timing( void )
 {
+	LLONG goplenms;
+	LLONG ptslenms;
     // Avoid wrong "Calc. difference" and "Asynchronous by" numbers
     // for uninitialized min_pts
     LLONG tempmin_pts = (min_pts==0x01FFFFFFFFLL ? sync_pts : min_pts);
@@ -238,9 +241,9 @@ void print_debug_timing( void )
     mprint("GOP: %s      \n", print_mstime(gop_time.ms));
 
     // Length first GOP to last GOP
-    LLONG goplenms = LLONG(gop_time.ms - first_gop_time.ms);
+    goplenms = (LLONG)(gop_time.ms - first_gop_time.ms);
     // Length at last sync point
-    LLONG ptslenms = unsigned((sync_pts-tempmin_pts)/(MPEG_CLOCK_FREQ/1000)
+    ptslenms = (unsigned)((sync_pts-tempmin_pts)/(MPEG_CLOCK_FREQ/1000)
                               + fts_offset);
 
     mprint("Last               FTS: %s",
@@ -250,14 +253,14 @@ void print_debug_timing( void )
 
     // Times are based on last GOP and/or sync time
     mprint("Max FTS diff. to   PTS:       %6lldms              GOP:       %6lldms\n\n",
-           get_fts_max()+LLONG(1000.0/current_fps)-ptslenms,
-           get_fts_max()+LLONG(1000.0/current_fps)-goplenms);
+           get_fts_max()+(LLONG)(1000.0/current_fps)-ptslenms,
+           get_fts_max()+(LLONG)(1000.0/current_fps)-goplenms);
 }
 
 void calculate_ms_gop_time (struct gop_time_code *g)
 {
     int seconds=(g->time_code_hours*3600)+(g->time_code_minutes*60)+g->time_code_seconds;
-    g->ms = LLONG( 1000*(seconds + g->time_code_pictures/current_fps) );
+    g->ms = (LLONG)( 1000*(seconds + g->time_code_pictures/current_fps) );
     if (gop_rollover)
         g->ms += 24*60*60*1000;
 }

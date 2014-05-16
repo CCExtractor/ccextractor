@@ -19,8 +19,13 @@ extern const unsigned char lc3[2];
 extern const unsigned char lc4[2];
 extern const unsigned char lc5[1];
 extern const unsigned char lc6[1];
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern const unsigned char rcwt_header[11];
+#ifdef __cplusplus
+}
+#endif
 
 #define ONEPASS 120 /* Bytes we can always look ahead without going out of limits */
 #define BUFSIZE (2048*1024+ONEPASS) /* 2 Mb plus the safety pass */
