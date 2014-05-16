@@ -636,6 +636,7 @@ void process_page(teletext_page_t *page) {
 
 void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payload_t *packet, uint64_t timestamp) {
 	// variable names conform to ETS 300 706, chapter 7.1.2
+	uint8_t address, m, y, designation_code;
 	uint8_t address = (unham_8_4(packet->address[1]) << 4) | unham_8_4(packet->address[0]);
 	uint8_t m = address & 0x7;
 	if (m == 0) m = 8;
