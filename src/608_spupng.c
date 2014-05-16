@@ -144,6 +144,7 @@ spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
                       struct s_context_cc608 *context)
 {
 	LLONG ms_start = context->current_visible_start_ms + subs_delay;
+	unsigned char* ptr;
     if (ms_start < 0)
     {
         dbg_print(CCX_DMT_VERBOSE, "Negative start\n");
@@ -201,7 +202,7 @@ spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
             // Check for characters that spumux won't parse
             // null chars will be changed to space
             // pairs of dashes will be changed to underscores
-            for (unsigned char* ptr = subline; ptr < subline+len; ptr++)
+            for (ptr = subline; ptr < subline+len; ptr++)
             {
                 switch (*ptr)
                 {

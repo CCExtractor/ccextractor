@@ -84,9 +84,11 @@ void mstotime (LLONG milli, unsigned *hours, unsigned *minutes,
     *hours=(int) milli;
 }
 
-bool_t in_array(uint16_t *array, uint16_t length, uint16_t element) {
+bool_t in_array(uint16_t *array, uint16_t length, uint16_t element)
+{
+	uint16_t i;
 	bool_t r = NO;
-	for (uint16_t i = 0; i < length; i++)
+	for (i = 0; i < length; i++)
 		if (array[i] == element) {
 			r = YES;
 			break;
@@ -235,13 +237,14 @@ void dvprint(const char *fmt, ...)
 void dump (LLONG mask, unsigned char *start, int l, unsigned long abs_start, unsigned clear_high_bit)
 {
 	LLONG t=temp_debug ? (ccx_options.debug_mask_on_debug | ccx_options.debug_mask) : ccx_options.debug_mask; // Mask override?
+	int x,j;
     if(! (mask & t))
 		return;
 
-    for (int x=0; x<l; x=x+16)
+    for (x=0; x<l; x=x+16)
     {
         mprint ("%08ld | ",x+abs_start);
-        for (int j=0; j<16; j++)
+        for (j=0; j<16; j++)
         {
             if (x+j<l)
                 mprint ("%02X ",start[x+j]);
@@ -249,7 +252,7 @@ void dump (LLONG mask, unsigned char *start, int l, unsigned long abs_start, uns
                 mprint ("   ");
         }
         mprint (" | ");
-        for (int j=0; j<16; j++)
+        for (j=0; j<16; j++)
         {
             if (x+j<=l && start[x+j]>=' ')
 				mprint ("%c",start[x+j] & (clear_high_bit?0x7F:0xFF)); // 0x7F < remove high bit, convenient for visual CC inspection

@@ -65,8 +65,10 @@ void correct_case (int line_num, struct eia608_screen *data)
 }
 
 void capitalize (int line_num, struct eia608_screen *data)
-{	
-    for (int i=0;i<CC608_SCREEN_WIDTH;i++)
+{
+	int i;
+
+    for (i=0;i<CC608_SCREEN_WIDTH;i++)
     {
         switch (data->characters[line_num][i])
         {
@@ -93,9 +95,10 @@ void capitalize (int line_num, struct eia608_screen *data)
 
 void find_limit_characters (unsigned char *line, int *first_non_blank, int *last_non_blank)
 {
+	int i;
     *last_non_blank=-1;
     *first_non_blank=-1;
-    for (int i=0;i<CC608_SCREEN_WIDTH;i++)
+    for (i=0;i<CC608_SCREEN_WIDTH;i++)
     {
         unsigned char c=line[i];
         if (c!=' ' && c!=0x89)
@@ -113,6 +116,7 @@ unsigned get_decoder_line_basic (unsigned char *buffer, int line_num, struct eia
     int last_non_blank=-1;
     int first_non_blank=-1;
     unsigned char *orig=buffer; // Keep for debugging
+	int i;
 	find_limit_characters (line, &first_non_blank, &last_non_blank);
 	if (!ccx_options.trim_subs)	
 		first_non_blank=0;
@@ -124,7 +128,7 @@ unsigned get_decoder_line_basic (unsigned char *buffer, int line_num, struct eia
     }
 
     int bytes=0;
-    for (int i=first_non_blank;i<=last_non_blank;i++)
+    for (i=first_non_blank;i<=last_non_blank;i++)
     {
         char c=line[i];
         switch (ccx_options.encoding)
@@ -152,8 +156,9 @@ unsigned get_decoder_line_encoded_for_gui (unsigned char *buffer, int line_num, 
     unsigned char *line = data->characters[line_num];	
     unsigned char *orig=buffer; // Keep for debugging
     int first=0, last=31;
+	int i;
     find_limit_characters(line,&first,&last);
-    for (int i=first;i<=last;i++)
+    for (i=first;i<=last;i++)
     {	
         get_char_in_latin_1 (buffer,line[i]);
         buffer++;
@@ -164,8 +169,9 @@ unsigned get_decoder_line_encoded_for_gui (unsigned char *buffer, int line_num, 
 }
 
 unsigned char *close_tag (unsigned char *buffer, char *tagstack, char tagtype, int *punderlined, int *pitalics, int *pchanged_font)
-{		
-	for (int l=strlen (tagstack)-1; l>=0;l--)
+{
+	int l;
+	for (l=strlen (tagstack)-1; l>=0;l--)
 	{
 		char cur=tagstack[l];
 		switch (cur)
@@ -202,10 +208,11 @@ unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct e
 
     unsigned char *line = data->characters[line_num];	
     unsigned char *orig=buffer; // Keep for debugging
+	int i;
     int first=0, last=31;
     if (ccx_options.trim_subs)
         find_limit_characters(line,&first,&last);
-    for (int i=first;i<=last;i++)
+    for (i=first;i<=last;i++)
     {	
         // Handle color
         int its_col = data->colors[line_num][i];
@@ -281,7 +288,8 @@ unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct e
 
 void delete_all_lines_but_current (struct eia608_screen *data, int row)
 {
-    for (int i=0;i<15;i++)
+	int i;
+    for (i=0;i<15;i++)
     {
         if (i!=row)
         {
@@ -307,8 +315,9 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *
     unsigned h1,m1,s1,ms1;
     unsigned h2,m2,s2,ms2;    
 	int with_data=0;
+	int i;
 
-	for (int i=0;i<15;i++)
+	for (i=0;i<15;i++)
     {
         if (data->row_used[i])
 			with_data=1;
@@ -322,7 +331,7 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *
     if (ms_start<0) // Drop screens that because of subs_delay start too early
         return;
     int time_reported=0;    
-    for (int i=0;i<15;i++)
+    for (i=0;i<15;i++)
     {
         if (data->row_used[i])
         {

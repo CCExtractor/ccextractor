@@ -141,7 +141,8 @@ const char *color_text[][2]=
 
 void clear_eia608_cc_buffer (struct eia608_screen *data)
 {
-    for (int i=0;i<15;i++)
+	int i;
+    for (i=0;i<15;i++)
     {
         memset(data->characters[i],' ',CC608_SCREEN_WIDTH);
         data->characters[i][CC608_SCREEN_WIDTH]=0;		
@@ -210,10 +211,11 @@ struct eia608_screen *get_writing_buffer(struct s_context_cc608 *context)
 
 void delete_to_end_of_row(struct s_context_cc608 *context)
 {
+	int i;
 	if (context->mode != MODE_TEXT)
     {		
 		struct eia608_screen * use_buffer = get_writing_buffer(context);
-		for (int i = context->cursor_column; i <= 31; i++)
+		for (i = context->cursor_column; i <= 31; i++)
 		{
 			// TODO: This can change the 'used' situation of a column, so we'd
 			// need to check and correct.
@@ -442,10 +444,11 @@ void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc
 int write_cc_buffer_as_transcript(struct eia608_screen *data, struct s_context_cc608 *context)
 {
     int wrote_something = 0;
+	int i;
 	context->ts_start_of_current_line = context->current_visible_start_ms;
     dbg_print(CCX_DMT_608, "\n- - - TRANSCRIPT caption - - -\n");        
     
-    for (int i=0;i<15;i++)
+    for (i=0;i<15;i++)
     {
         if (data->row_used[i])
         {		
@@ -534,6 +537,7 @@ int check_roll_up(struct s_context_cc608 *context)
 {
 	int keep_lines=0;
 	int firstrow=-1, lastrow=-1;
+	int i;
 	struct eia608_screen *use_buffer;
 	if (context->visible_buffer == 1)
 		use_buffer = &context->buffer1;
@@ -564,7 +568,7 @@ int check_roll_up(struct s_context_cc608 *context)
 	if (use_buffer->row_used[0]) // If top line is used it will go off the screen no matter what
 		return 1;
     int rows_orig=0; // Number of rows in use right now
-    for (int i=0;i<15;i++)
+    for (i=0;i<15;i++)
     {
         if (use_buffer->row_used[i])
         {
@@ -589,6 +593,7 @@ int check_roll_up(struct s_context_cc608 *context)
 int roll_up(struct s_context_cc608 *context)
 {
 	struct eia608_screen *use_buffer;
+	int i,j;
 	if (context->visible_buffer == 1)
 		use_buffer = &context->buffer1;
     else
@@ -618,7 +623,7 @@ int roll_up(struct s_context_cc608 *context)
     int firstrow=-1, lastrow=-1;
     // Look for the last line used
     int rows_orig=0; // Number of rows in use right now
-    for (int i=0;i<15;i++)
+    for (i=0;i<15;i++)
     {
         if (use_buffer->row_used[i])
         {
@@ -634,7 +639,7 @@ int roll_up(struct s_context_cc608 *context)
     if (lastrow==-1) // Empty screen, nothing to rollup
         return 0;
 
-    for (int j=lastrow-keep_lines+1;j<lastrow; j++)
+    for (j=lastrow-keep_lines+1;j<lastrow; j++)
     {
         if (j>=0)
         {
@@ -644,7 +649,7 @@ int roll_up(struct s_context_cc608 *context)
             use_buffer->row_used[j]=use_buffer->row_used[j+1];
         }
     }
-	for (int j = 0; j<(1 + context->cursor_row - keep_lines); j++)
+	for (j = 0; j<(1 + context->cursor_row - keep_lines); j++)
     {
         memset(use_buffer->characters[j],' ',CC608_SCREEN_WIDTH);			        
 		memset(use_buffer->colors[j],ccx_options.cc608_default_color,CC608_SCREEN_WIDTH);
@@ -661,7 +666,7 @@ int roll_up(struct s_context_cc608 *context)
     
     // Sanity check
     int rows_now=0;
-    for (int i=0;i<15;i++)
+    for (i=0;i<15;i++)
         if (use_buffer->row_used[i])
             rows_now++;
     if (rows_now>keep_lines)
@@ -699,11 +704,12 @@ void erase_memory(struct s_context_cc608 *context, int displayed)
 int is_current_row_empty(struct s_context_cc608 *context)
 {
 	struct eia608_screen *use_buffer;
+	int i;
 	if (context->visible_buffer == 1)
 		use_buffer = &context->buffer1;
     else
 		use_buffer = &context->buffer2;
-    for (int i=0;i<CC608_SCREEN_WIDTH;i++)
+    for (i=0;i<CC608_SCREEN_WIDTH;i++)
     {
 		if (use_buffer->characters[context->rollup_base_row][i] != ' ')
             return 0;
@@ -1031,6 +1037,7 @@ unsigned char handle_extended(unsigned char hi, unsigned char lo, struct s_conte
 /* Process PREAMBLE ACCESS CODES (PAC) */
 void handle_pac(unsigned char c1, unsigned char c2, struct s_context_cc608 *context)
 {
+	int j;
     // Handle channel change
 	if (context->new_channel > 2)
     {
@@ -1083,7 +1090,7 @@ void handle_pac(unsigned char c1, unsigned char c2, struct s_context_cc608 *cont
 		   buffer around instead) but it's better than leaving old characters in the buffer */
 		struct eia608_screen *use_buffer = get_writing_buffer(context); // &wb->data608->buffer1;
                 
-		for (int j=row;j<15;j++)
+		for (j=row;j<15;j++)
 		{
 			if (use_buffer->row_used[j])
 			{
@@ -1217,12 +1224,13 @@ int disCommand(unsigned char hi, unsigned char lo, struct s_context_cc608 *conte
 /* If wb is NULL, then only XDS will be processed */
 void process608(const unsigned char *data, int length, struct s_context_cc608 *context)
 {
-    static int textprinted = 0;	
+    static int textprinted = 0;
+	int i;
 	if (context)
 		context->bytes_processed_608 += length;
     if (data!=NULL)
     {
-        for (int i=0;i<length;i=i+2)
+        for (i=0;i<length;i=i+2)
         {
             unsigned char hi, lo;
             int wrote_to_screen=0; 

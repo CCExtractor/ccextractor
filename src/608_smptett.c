@@ -101,6 +101,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct s_context_cc60
     unsigned h1,m1,s1,ms1;
     unsigned h2,m2,s2,ms2;
     int wrote_something=0;
+	int i;
     LLONG startms = context->current_visible_start_ms;
 
     startms+=subs_delay;
@@ -120,7 +121,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct s_context_cc60
     }
     enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
 	write(context->out->fh, enc_buffer, enc_buffer_used);
-    for (int i=0;i<15;i++)
+    for (i=0;i<15;i++)
     {
         if (data->row_used[i])
         {				

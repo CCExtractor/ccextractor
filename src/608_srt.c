@@ -71,12 +71,13 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct s_context_cc608 *c
     unsigned h1,m1,s1,ms1;
     unsigned h2,m2,s2,ms2;
     int wrote_something = 0;
+	int i,j;
 	LLONG ms_start = context->current_visible_start_ms;
 
 	int prev_line_start=-1, prev_line_end=-1; // Column in which the previous line started and ended, for autodash
 	int prev_line_center1=-1, prev_line_center2=-1; // Center column of previous line text
 	int empty_buf=1;
-    for (int i=0;i<15;i++)
+    for (i=0;i<15;i++)
     {
         if (data->row_used[i])
 		{
@@ -108,7 +109,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct s_context_cc608 *c
     dbg_print(CCX_DMT_608, "%s",timeline);
 
     write (context->out->fh, enc_buffer,enc_buffer_used);		
-    for (int i=0;i<15;i++)
+    for (i=0;i<15;i++)
     {
         if (data->row_used[i])
         {		
@@ -126,7 +127,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct s_context_cc608 *c
 				if (first==-1 || last==-1)  // Probably a bug somewhere though
 					break;
 				// Is there a speaker named, for example: TOM: What are you doing?
-				for (int j=first;j<=last;j++)
+				for (j=first;j<=last;j++)
 				{					
 					if (line[j]==':')
 					{

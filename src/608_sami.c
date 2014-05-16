@@ -71,6 +71,7 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct s_context_cc608 *
 {
     int wrote_something=0;
     LLONG startms = context->current_visible_start_ms;
+	int i;
 
     startms+=subs_delay;
     if (startms<0) // Drop screens that because of subs_delay start too early
@@ -85,7 +86,7 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct s_context_cc608 *
     }
     enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
     write (context->out->fh, enc_buffer,enc_buffer_used);
-    for (int i=0;i<15;i++)
+    for (i=0;i<15;i++)
     {
         if (data->row_used[i])
         {				

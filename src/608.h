@@ -4,50 +4,6 @@
 extern "C"
 {
 #endif
-extern unsigned char *enc_buffer;
-extern unsigned char str[2048]; 
-extern unsigned enc_buffer_used;
-extern unsigned enc_buffer_capacity;
-#ifdef __cplusplus
-}
-#endif
-
-extern int new_sentence;
-extern const char *color_text[][2];
-
-int write_cc_buffer_as_srt(struct eia608_screen *data, struct s_context_cc608 *context);
-void write_stringz_as_srt(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
-unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct eia608_screen *data);
-void capitalize (int line_num, struct eia608_screen *data);
-void correct_case (int line_num, struct eia608_screen *data);
-int write_cc_buffer_as_sami(struct eia608_screen *data, struct s_context_cc608 *context);
-void write_stringz_as_sami(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
-int write_cc_buffer_as_smptett(struct eia608_screen *data, struct s_context_cc608 *context);
-void write_stringz_as_smptett(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
-void correct_case (int line_num, struct eia608_screen *data);
-void capitalize (int line_num, struct eia608_screen *data);
-void find_limit_characters (unsigned char *line, int *first_non_blank, int *last_non_blank);
-unsigned get_decoder_line_basic (unsigned char *buffer, int line_num, struct eia608_screen *data);
-unsigned get_decoder_line_encoded_for_gui (unsigned char *buffer, int line_num, struct eia608_screen *data);
-unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct eia608_screen *data);
-void delete_all_lines_but_current (struct eia608_screen *data, int row);
-void try_to_add_start_credits(struct s_context_cc608 *context);
-void try_to_add_end_credits(struct s_context_cc608 *context);
-void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *context);
-
-void handle_end_of_data(struct s_context_cc608 *context);
-void process608(const unsigned char *data, int length, struct s_context_cc608 *context);
-void get_char_in_latin_1 (unsigned char *buffer, unsigned char c);
-void get_char_in_unicode (unsigned char *buffer, unsigned char c);
-int get_char_in_utf_8 (unsigned char *buffer, unsigned char c);
-unsigned char cctolower (unsigned char c);
-unsigned char cctoupper (unsigned char c);
-int general_608_init (void);
-LLONG get_visible_end (void);
-
-void write_spumux_header(struct s_context_cc608 *context);
-void write_spumux_footer(struct s_context_cc608 *context);
-int write_cc_buffer_as_spupng(struct eia608_screen* data, struct s_context_cc608 *context);
 
 #define CC608_SCREEN_WIDTH  32
 
@@ -153,6 +109,48 @@ enum command_code
 	COM_FAKE_RULLUP1 = 18
 };
 
+
+extern unsigned char *enc_buffer;
+extern unsigned char str[2048]; 
+extern unsigned enc_buffer_used;
+extern unsigned enc_buffer_capacity;
+
+extern int new_sentence;
+extern const char *color_text[][2];
+
+int write_cc_buffer_as_srt(struct eia608_screen *data, struct s_context_cc608 *context);
+void write_stringz_as_srt(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
+int write_cc_buffer_as_sami(struct eia608_screen *data, struct s_context_cc608 *context);
+void write_stringz_as_sami(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
+int write_cc_buffer_as_smptett(struct eia608_screen *data, struct s_context_cc608 *context);
+void write_stringz_as_smptett(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
+void correct_case (int line_num, struct eia608_screen *data);
+void capitalize (int line_num, struct eia608_screen *data);
+void find_limit_characters (unsigned char *line, int *first_non_blank, int *last_non_blank);
+unsigned get_decoder_line_basic (unsigned char *buffer, int line_num, struct eia608_screen *data);
+unsigned get_decoder_line_encoded_for_gui (unsigned char *buffer, int line_num, struct eia608_screen *data);
+unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct eia608_screen *data);
+void delete_all_lines_but_current (struct eia608_screen *data, int row);
+void try_to_add_start_credits(struct s_context_cc608 *context);
+void try_to_add_end_credits(struct s_context_cc608 *context);
+void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *context);
+
+void handle_end_of_data(struct s_context_cc608 *context);
+void process608(const unsigned char *data, int length, struct s_context_cc608 *context);
+void get_char_in_latin_1 (unsigned char *buffer, unsigned char c);
+void get_char_in_unicode (unsigned char *buffer, unsigned char c);
+int get_char_in_utf_8 (unsigned char *buffer, unsigned char c);
+unsigned char cctolower (unsigned char c);
+unsigned char cctoupper (unsigned char c);
+int general_608_init (void);
+LLONG get_visible_end (void);
+
+void write_spumux_header(struct s_context_cc608 *context);
+void write_spumux_footer(struct s_context_cc608 *context);
+int write_cc_buffer_as_spupng(struct eia608_screen* data, struct s_context_cc608 *context);
+#ifdef __cplusplus
+}
+#endif
 
 
 #define __608_H__

@@ -264,15 +264,6 @@ int user_data(struct bitstream *ustream, int udtype);
 
 // bitstream.cpp - see bitstream.h
 
-// 608.cpp
-int write_cc_buffer(struct s_context_cc608 *context);
-unsigned char *debug_608toASC (unsigned char *ccdata, int channel);
-
-
-// cc_decoders_common.cpp
-LLONG get_visible_start (void);
-LLONG get_visible_end (void);
-
 // file_functions.cpp
 LLONG getfilesize (int in);
 LLONG gettotalfilessize (void);
@@ -281,6 +272,19 @@ void close_input_file (void);
 int switch_to_next_file (LLONG bytesinbuffer);
 int init_sockets (void);
 void return_to_buffer (unsigned char *buffer, unsigned int bytes);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// 608.cpp
+int write_cc_buffer(struct s_context_cc608 *context);
+unsigned char *debug_608toASC (unsigned char *ccdata, int channel);
+
+// cc_decoders_common.cpp
+LLONG get_visible_start (void);
+LLONG get_visible_end (void);
+
 
 // timing.cpp
 void set_fts(void);
@@ -291,6 +295,10 @@ char *print_mstime2buf( LLONG mstime , char *buf );
 void print_debug_timing( void );
 int gop_accepted(struct gop_time_code* g );
 void calculate_ms_gop_time (struct gop_time_code *g);
+#ifdef __cplusplus
+}
+#endif
+
 
 // sequencing.cpp
 void init_hdcc (void);
@@ -332,11 +340,6 @@ void myth_loop(void);
 // mp4_bridge2bento4.cpp
 void mp4_loop (char *filename);
 
-// xds.cpp
-void process_xds_bytes (const unsigned char hi, int lo);
-void do_end_of_xds (unsigned char expected_checksum);
-void xds_init();
-
 // ccextractor.cpp
 LLONG calculate_gop_mstime (struct gop_time_code *g);
 void set_fts(void);
@@ -350,6 +353,12 @@ int switch_to_next_file (LLONG bytesinbuffer);
 extern "C"
 {
 #endif
+
+// xds.cpp
+void process_xds_bytes (const unsigned char hi, int lo);
+void do_end_of_xds (unsigned char expected_checksum);
+void xds_init();
+
 // utility.cpp
 void fatal(int exit_code, const char *fmt, ...);
 void dvprint(const char *fmt, ...);
