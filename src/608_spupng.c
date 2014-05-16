@@ -59,6 +59,7 @@ static int initialized = 0;
 
 struct spupng_t *spunpg_init(struct s_context_cc608 *context)
 {
+	char* p;
     struct spupng_t *sp = (struct spupng_t *) malloc(sizeof(struct spupng_t));
     if (NULL == sp)
         fatal(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
@@ -80,7 +81,7 @@ struct spupng_t *spunpg_init(struct s_context_cc608 *context)
         fatal(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
 
 	strcpy(sp->dirname, context->out->filename);
-    char* p = strrchr(sp->dirname, '.');
+    p = strrchr(sp->dirname, '.');
     if (NULL == p)
         p = sp->dirname + strlen(sp->dirname);
     *p = '\0';
@@ -143,6 +144,9 @@ int
 spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
                       struct s_context_cc608 *context)
 {
+    int row;
+    int empty_buf = 1;
+	LLONG ms_end;
 	LLONG ms_start = context->current_visible_start_ms + subs_delay;
 	unsigned char* ptr;
     if (ms_start < 0)
@@ -151,8 +155,6 @@ spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
         return 0;
     }
 
-    int row;
-    int empty_buf = 1;
     for (row = 0; row < 15; row++)
     {
         if (data->row_used[row])
@@ -167,7 +169,7 @@ spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
         return 0;
     }
 
-    LLONG ms_end = get_visible_end() + subs_delay;
+    ms_end = get_visible_end() + subs_delay;
 
     sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex++);
     if ((sp->fppng = fopen(sp->pngfile, "wb")) == NULL)
@@ -356,7 +358,7 @@ slant:
  * Draw one character (function template - define a static version with
  * constant @a canvas_type, @a font, @a cpl, @a cw, @a ch).
  */
-static inline void
+static __inline void
 draw_char(int canvas_type, uint8_t *canvas, int rowstride,
 	  uint8_t *pen, uint8_t *font, int cpl, int cw, int ch,
 	  int glyph, unsigned int underline)
@@ -403,7 +405,7 @@ draw_char(int canvas_type, uint8_t *canvas, int rowstride,
  * 
  * Draw blank character.
  */
-static inline void
+static __inline void
 draw_blank(int canvas_type, uint8_t *canvas, unsigned int rowstride,
 	   unsigned int color, int cw, int ch)
 {
@@ -440,6 +442,7 @@ draw_row(struct eia608_screen* data, int row, uint8_t * canvas, int rowstride)
     uint8_t* cell;
     int first = -1;
     int last = 0;
+	int attr;
 
     pen[0] = COL_BLACK;
 
@@ -451,7 +454,7 @@ draw_row(struct eia608_screen* data, int row, uint8_t * canvas, int rowstride)
             get_char_in_unicode((unsigned char*)&unicode, data->characters[row][column]);
             pen[1] = data->colors[row][column];
 
-            int attr = data->fonts[row][column];
+            attr = data->fonts[row][column];
             draw_char_indexed(cell, rowstride, pen, unicode, (attr & FONT_ITALICS) != 0, (attr & FONT_UNDERLINED) != 0);
             if (first < 0)
             {

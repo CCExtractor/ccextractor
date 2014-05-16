@@ -117,6 +117,7 @@ extern unsigned enc_buffer_capacity;
 
 extern int new_sentence;
 extern const char *color_text[][2];
+extern int startcredits_displayed, end_credits_displayed;
 
 int write_cc_buffer_as_srt(struct eia608_screen *data, struct s_context_cc608 *context);
 void write_stringz_as_srt(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);

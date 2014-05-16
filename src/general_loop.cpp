@@ -31,9 +31,6 @@ const static unsigned char DO_NOTHING[] = {0x80, 0x80};
 LLONG inbuf = 0; // Number of bytes loaded in buffer 
 int ccx_bufferdatatype = CCX_PES; // Can be RAW, PES, H264 or Hauppage
 
-int current_tref = 0; // Store temporal reference of current frame
-ccx_frame_type current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
-
 // Remember if the last header was valid. Used to suppress too much output
 // and the expected unrecognized first header for TiVo files.
 int strangeheader=0;

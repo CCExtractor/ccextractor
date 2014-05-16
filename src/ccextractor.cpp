@@ -14,37 +14,23 @@ struct ccx_s_options ccx_options;
 extern unsigned char *filebuffer;
 extern int bytesinbuffer; // Number of bytes we actually have on buffer
 
-// PTS timing related stuff
-LLONG min_pts, max_pts, sync_pts;
-LLONG fts_now; // Time stamp of current file (w/ fts_offset, w/o fts_global)
-LLONG fts_offset; // Time before first sync_pts
-LLONG fts_fc_offset; // Time before first GOP
-LLONG fts_max; // Remember the maximum fts that we saw in current file
-LLONG fts_global=0; // Duration of previous files (-ve mode), see c1global
-
 // global TS PCR value, moved from telxcc. TODO: Rename, see if how to relates to fts_global
 uint32_t global_timestamp = 0, min_global_timestamp=0;
 int global_timestamp_inited=0;
 
-// Count 608 (per field) and 708 blocks since last set_fts() call
-int cb_field1, cb_field2, cb_708;
 int saw_caption_block;
 
-int pts_set; //0 = No, 1 = received, 2 = min_pts set
 
-unsigned pts_big_change;
 
-int MPEG_CLOCK_FREQ = 90000; // This "constant" is part of the standard
 
 // Stuff common to both loops
 unsigned char *buffer = NULL;
-LLONG past; /* Position in file, if in sync same as ftell()  */
+
 unsigned char *pesheaderbuf = NULL;
 LLONG inputsize;
 LLONG total_inputsize=0, total_past=0; // Only in binary concat mode
 
 int last_reported_progress;
-int processed_enough; // If 1, we have enough lines, time, etc. 
 
  
 // Small buffer to help us with the initial sync
@@ -61,7 +47,7 @@ int stat_replay4000headers;
 int stat_dishheaders;
 int stat_hdtv;
 int stat_divicom;
-unsigned total_frames_count;
+
 unsigned total_pulldownfields;
 unsigned total_pulldownframes;
 int cc_stats[4];
@@ -69,21 +55,16 @@ int false_pict_header;
 int resets_708=0;
 
 /* GOP-based timing */
-struct gop_time_code gop_time, first_gop_time, printed_gop;
 int saw_gop_header=0;
 int frames_since_last_gop=0;
-LLONG fts_at_gop_start=0;
 
 /* Time info for timed-transcript */
-LLONG ts_start_of_xds=-1; // Time at which we switched to XDS mode, =-1 hasn't happened yet
-int timestamps_on_transcript=0; /* Write time info on transcripts? */
 uint64_t utc_refvalue=UINT64_MAX;  /* _UI64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
 
 int max_gop_length=0; // (Maximum) length of a group of pictures
 int last_gop_length=0; // Length of the previous group of pictures
-int frames_since_ref_time=0;
 
-int gop_rollover=0;
+
 // int hex_mode=HEX_NONE; // Are we processing an hex file?
 
 /* Detect gaps in caption stream - only used for dvr-ms/NTSC. */
@@ -168,36 +149,23 @@ void init_options (struct ccx_s_options *options)
 	options->cc608_default_color=COL_TRANSPARENT;
 }
 
-ccx_stream_mode_enum stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND; // Data parse mode: 0=elementary, 1=transport, 2=program stream, 3=ASF container
 ccx_stream_mode_enum auto_stream = CCX_SM_AUTODETECT;
 
 
 int rawmode = 0; // Broadcast or DVD
 // See -d from 
 
-int cc_to_stdout=0; // If 1, captions go to stdout instead of file
-
 
 LLONG subs_delay=0; // ms to delay (or advance) subs
 
-int startcredits_displayed=0, end_credits_displayed=0;
-LLONG last_displayed_subs_ms=0; // When did the last subs end?
 LLONG screens_to_process=-1; // How many screenfuls we want?
 char *basefilename=NULL; // Input filename without the extension
-char **inputfile=NULL; // List of files to process
 
 const char *extension; // Output extension
 int current_file=-1; // If current_file!=1, we are processing *inputfile[current_file]
-
-int num_input_files=0; // How many?
 int do_cea708=0; // Process 708 data?
 int cea708services[63]; // [] -> 1 for services to be processed
 
-// Case arrays
-char **spell_lower=NULL;
-char **spell_correct=NULL;
-int spell_words=0;
-int spell_capacity=0;
 
 
 /* Hauppauge support */
