@@ -1,7 +1,7 @@
 #include "ccextractor.h"
 #include "wtv_constants.h"
 
-int check_stream_id(int stream_id, int video_streams, int num_streams);
+int check_stream_id(int stream_id, int video_streams[], int num_streams);
 int add_skip_chunks(struct wtv_chunked_buffer *cb, uint32_t offset, uint32_t flag);
 void init_chunked_buffer(struct wtv_chunked_buffer *cb);
 uint64_t get_meta_chunk_start(uint64_t offset);

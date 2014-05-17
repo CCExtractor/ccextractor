@@ -637,16 +637,19 @@ void process_page(teletext_page_t *page) {
 void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payload_t *packet, uint64_t timestamp) {
 	// variable names conform to ETS 300 706, chapter 7.1.2
 	uint8_t address, m, y, designation_code;
-	uint8_t address = (unham_8_4(packet->address[1]) << 4) | unham_8_4(packet->address[0]);
-	uint8_t m = address & 0x7;
+	address = (unham_8_4(packet->address[1]) << 4) | unham_8_4(packet->address[0]);
+	m = address & 0x7;
 	if (m == 0) m = 8;
-	uint8_t y = (address >> 3) & 0x1f;
-	uint8_t designation_code = (y > 25) ? unham_8_4(packet->data[0]) : 0x00;
+	y = (address >> 3) & 0x1f;
+	designation_code = (y > 25) ? unham_8_4(packet->data[0]) : 0x00;
 
 	if (y == 0) {
 		// CC map
 		uint8_t i = (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
 		uint8_t flag_subtitle = (unham_8_4(packet->data[5]) & 0x08) >> 3;
+		uint16_t page_number;
+		uint8_t charset;
+		uint8_t c;
 		cc_map[i] |= flag_subtitle << (m - 1);
 
 		if ((flag_subtitle == YES) && (i < 0xff))
@@ -667,8 +670,8 @@ void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payload_t *pa
 		}
 
 	 	// Page number and control bits
-		uint16_t page_number = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
-		uint8_t charset = ((unham_8_4(packet->data[7]) & 0x08) | (unham_8_4(packet->data[7]) & 0x04) | (unham_8_4(packet->data[7]) & 0x02)) >> 1;
+		page_number = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
+		charset = ((unham_8_4(packet->data[7]) & 0x08) | (unham_8_4(packet->data[7]) & 0x04) | (unham_8_4(packet->data[7]) & 0x02)) >> 1;
 		//uint8_t flag_suppress_header = unham_8_4(packet->data[6]) & 0x01;
 		//uint8_t flag_inhibit_display = (unham_8_4(packet->data[6]) & 0x08) >> 3;
 
@@ -710,7 +713,7 @@ void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payload_t *pa
 		receiving_data = YES;
 		primary_charset.g0_x28 = UNDEF;
 
-		uint8_t c = (primary_charset.g0_m29 != UNDEF) ? primary_charset.g0_m29 : charset;
+		c = (primary_charset.g0_m29 != UNDEF) ? primary_charset.g0_m29 : charset;
 		remap_g0_charset(c);
 
 		/*
@@ -740,16 +743,20 @@ void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payload_t *pa
 		for (uint8_t i = 1, j = 0; i < 40; i += 3, j++) triplets[j] = unham_24_18((packet->data[i + 2] << 16) | (packet->data[i + 1] << 8) | packet->data[i]);
 
 		for (uint8_t j = 0; j < 13; j++) {
+			uint8_t data;
+			uint8_t mode;
+			uint8_t address;
+			uint8_t row_address_group;
 			// invalid data (HAM24/18 uncorrectable error detected), skip group
 			if (triplets[j] == 0xffffffff) {
 				dbg_print (CCX_DMT_TELETEXT, "- Unrecoverable data error; UNHAM24/18()=%04x\n", triplets[j]);
 				continue;
 			}
 
-			uint8_t data = (triplets[j] & 0x3f800) >> 11;
-			uint8_t mode = (triplets[j] & 0x7c0) >> 6;
-			uint8_t address = triplets[j] & 0x3f;
-			uint8_t row_address_group = (address >= 40) && (address <= 63);
+			data = (triplets[j] & 0x3f800) >> 11;
+			mode = (triplets[j] & 0x7c0) >> 6;
+			address = triplets[j] & 0x3f;
+			row_address_group = (address >= 40) && (address <= 63);
 
 			// ETS 300 706, chapter 12.3.1, table 27: set active position
 			if ((mode == 0x04) && (row_address_group == YES)) {
@@ -833,13 +840,15 @@ void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payload_t *pa
 		if (states.programme_info_processed == NO) {
 			// ETS 300 706, chapter 9.8.1: Packet 8/30 Format 1
 			if (unham_8_4(packet->data[0]) < 2) {
+				uint32_t t = 0;
+				time_t t0;
 				mprint ("- Programme Identification Data = ");
 				for (uint8_t i = 20; i < 40; i++) {
+					char u[4] = { 0, 0, 0, 0 };
 					uint8_t c = telx_to_ucs2(packet->data[i]);
 					// strip any control codes from PID, eg. TVP station
 					if (c < 0x20) continue;
 
-					char u[4] = { 0, 0, 0, 0 };
 					ucs2_to_utf8(u, c);
 					mprint ( "%s", u);
 				}
@@ -848,7 +857,6 @@ void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payload_t *pa
 				// OMG! ETS 300 706 stores timestamp in 7 bytes in Modified Julian Day in BCD format + HH:MM:SS in BCD format
 				// + timezone as 5-bit count of half-hours from GMT with 1-bit sign
 				// In addition all decimals are incremented by 1 before transmission.
-				uint32_t t = 0;
 				// 1st step: BCD to Modified Julian Day
 				t += (packet->data[10] & 0x0f) * 10000;
 				t += ((packet->data[11] & 0xf0) >> 4) * 1000;
@@ -864,7 +872,7 @@ void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payload_t *pa
 				t +=        ( ((packet->data[15] & 0xf0) >> 4) * 10 + (packet->data[15] & 0x0f) );
 				t -= 40271;
 				// 4th step: conversion to time_t
-				time_t t0 = (time_t)t;
+				t0 = (time_t)t;
 				// ctime output itself is \n-ended
 				mprint ("- Universal Time Co-ordinated = %s", ctime(&t0));
 
@@ -883,12 +891,22 @@ void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payload_t *pa
 }
 
 void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) {
+	uint64_t pes_prefix;
+	uint8_t pes_stream_id;
+	uint16_t pes_packet_length;
+	uint8_t optional_pes_header_included;
+	uint16_t optional_pes_header_length;
+	static uint8_t using_pts = UNDEF;
+	uint32_t t = 0;
+	uint16_t i;
+	static int64_t delta = 0;
+	static uint32_t t0 = 0;
 	tlt_packet_counter++;
 	if (size < 6) return;
 
 	// Packetized Elementary Stream (PES) 32-bit start code
-	uint64_t pes_prefix = (buffer[0] << 16) | (buffer[1] << 8) | buffer[2];
-	uint8_t pes_stream_id = buffer[3];
+	pes_prefix = (buffer[0] << 16) | (buffer[1] << 8) | buffer[2];
+	pes_stream_id = buffer[3];
 
 	// check for PES header
 	if (pes_prefix != 0x000001) return;
@@ -898,7 +916,7 @@ void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) {
 
 	// PES packet length
 	// ETSI EN 301 775 V1.2.1 (2003-05) chapter 4.3: (N x 184) - 6 + 6 B header
-	uint16_t pes_packet_length = 6 + ((buffer[4] << 8) | buffer[5]);
+	pes_packet_length = 6 + ((buffer[4] << 8) | buffer[5]);
 	// Can be zero. If the "PES packet length" is set to zero, the PES packet can be of any length.
 	// A value of zero for the PES packet length can be used only when the PES packet payload is a video elementary stream.
 	if (pes_packet_length == 6) return;
@@ -906,8 +924,8 @@ void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) {
 	// truncate incomplete PES packets
 	if (pes_packet_length > size) pes_packet_length = size;
 
-	uint8_t optional_pes_header_included = NO;
-	uint16_t optional_pes_header_length = 0;
+	optional_pes_header_included = NO;
+	optional_pes_header_length = 0;
 	// optional PES header marker bits (10.. ....)
 	if ((buffer[6] & 0xc0) == 0x80) {
 		optional_pes_header_included = YES;
@@ -915,7 +933,6 @@ void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) {
 	}
 
 	// should we use PTS or PCR?
-	static uint8_t using_pts = UNDEF;
 	if (using_pts == UNDEF) {
 		if ((optional_pes_header_included == YES) && ((buffer[7] & 0x80) > 0)) {
 			using_pts = YES;
@@ -926,7 +943,6 @@ void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) {
 		}
 	}
 
-	uint32_t t = 0;
 	// If there is no PTS available, use global PCR
 	if (using_pts == NO) {
 		t = global_timestamp;
@@ -947,8 +963,6 @@ void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) {
 		t = (uint32_t) (pts / 90);
 	}
 
-	static int64_t delta = 0;
-	static uint32_t t0 = 0;
 	if (states.pts_initialized == NO) {
 		if (utc_refvalue == UINT64_MAX)
 			delta = (uint64_t) (subs_delay - t);
@@ -966,7 +980,7 @@ void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) {
 	t0 = t;
 
 	// skip optional PES header and process each 46-byte teletext packet
-	uint16_t i = 7;
+	i = 7;
 	if (optional_pes_header_included == YES) i += 3 + optional_pes_header_length;
 	while (i <= pes_packet_length - 6) {
 		uint8_t data_unit_id = buffer[i++];
@@ -988,9 +1002,8 @@ void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) {
 }
 
 void analyze_pat(uint8_t *buffer, uint8_t size) {
-	if (size < 7) return;
-
 	pat_t pat = { 0 };
+	if (size < 7) return;
 	pat.pointer_field = buffer[0];
 
 //!
@@ -1026,9 +1039,9 @@ if (pat.pointer_field > 0) {
 }
 
 void analyze_pmt(uint8_t *buffer, uint8_t size) {
+	pmt_t pmt = { 0 };
 	if (size < 7) return;
 
-	pmt_t pmt = { 0 };
 	pmt.pointer_field = buffer[0];
 
 //!
@@ -1047,12 +1060,13 @@ if (pmt.pointer_field > 0) {
 		if (pmt.current_next_indicator == 1) {
 			uint16_t i = 13 + pmt.program_info_length;
 			while ((i < 13 + (pmt.program_info_length + pmt.section_length - 4 - 9)) && (i < size)) {
+				uint8_t descriptor_tag;
 				pmt_program_descriptor_t desc = { 0 };
 				desc.ccx_stream_type = buffer[i];
 				desc.elementary_pid = ((buffer[i + 1] & 0x1f) << 8) | buffer[i + 2];
 				desc.es_info_length = ((buffer[i + 3] & 0x03) << 8) | buffer[i + 4];
 
-				uint8_t descriptor_tag = buffer[i + 5];
+				descriptor_tag = buffer[i + 5];
  				// descriptor_tag: 0x45 = VBI_data_descriptor, 0x46 = VBI_teletext_descriptor, 0x56 = teletext_descriptor
 				if ((desc.ccx_stream_type == 0x06) && ((descriptor_tag == 0x45) || (descriptor_tag == 0x46) || (descriptor_tag == 0x56))) {
 					if (in_array(pmt_ttxt_map, pmt_ttxt_map_count, desc.elementary_pid) == NO) {
@@ -1106,6 +1120,18 @@ void telxcc_close(void)
 }
 
 int main_telxcc (int argc, char *argv[]) {
+	FILE *infile;
+ 
+	// TS packet buffer
+	uint8_t ts_buffer[TS_PACKET_SIZE] = { 0 };
+
+	// 255 means not set yet
+	uint8_t continuity_counter = 255;
+
+	// PES packet buffer
+	uint8_t payload_buffer[PAYLOAD_BUFFER_SIZE] = { 0 };
+	uint16_t payload_counter = 0;
+
 /*
 	// command line params parsing
 	for (uint8_t i = 1; i < argc; i++) {
@@ -1141,7 +1167,7 @@ int main_telxcc (int argc, char *argv[]) {
 	}
 */
 
-	FILE *infile=fopen ("F:\\ConBackup\\Closed captions\\BrokenSamples\\RDVaughan\\uk_dvb_example.mpg","rb");
+	infile=fopen ("F:\\ConBackup\\Closed captions\\BrokenSamples\\RDVaughan\\uk_dvb_example.mpg","rb");
 
 	// full buffering -- disables flushing after CR/FL, we will flush manually whole SRT frames
 	// setvbuf(stdout, (char*)NULL, _IOFBF, 0);
@@ -1150,19 +1176,9 @@ int main_telxcc (int argc, char *argv[]) {
 	if (tlt_config.bom == YES) {
 		if (wbout1.fh!=-1) fdprintf(wbout1.fh, "\xef\xbb\xbf");		
 	}
- 
-	// TS packet buffer
-	uint8_t ts_buffer[TS_PACKET_SIZE] = { 0 };
-
-	// 255 means not set yet
-	uint8_t continuity_counter = 255;
-
-	// PES packet buffer
-	uint8_t payload_buffer[PAYLOAD_BUFFER_SIZE] = { 0 };
-	uint16_t payload_counter = 0;
-
 	// reading input
 	while ((exit_request == NO) && (fread(&ts_buffer, 1, TS_PACKET_SIZE, infile) == TS_PACKET_SIZE)) {
+		uint8_t af_discontinuity = 0;
 		// Transport Stream Header
 		// We do not use buffer to struct loading (e.g. ts_packet_t *header = (ts_packet_t *)buffer;)
 		// -- struct packing is platform dependant and not performing well.
@@ -1177,7 +1193,6 @@ int main_telxcc (int argc, char *argv[]) {
 		header.continuity_counter = ts_buffer[3] & 0x0f;
 		//uint8_t ts_payload_exists = (ts_buffer[3] & 0x10) >> 4;
 
-		uint8_t af_discontinuity = 0;
 		if (header.adaptation_field_exists > 0) {
 			af_discontinuity = (ts_buffer[5] & 0x80) >> 7;
 		}
