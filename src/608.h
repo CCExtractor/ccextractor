@@ -1,5 +1,17 @@
 #ifndef __608_H__
 
+enum cc_modes
+{
+	MODE_POPON = 0,
+	MODE_ROLLUP_2 = 1,
+	MODE_ROLLUP_3 = 2,
+	MODE_ROLLUP_4 = 3,
+	MODE_TEXT = 4,
+	MODE_PAINTON = 5,
+	// Fake modes to emulate stuff
+	MODE_FAKE_ROLLUP_1 = 100
+};
+
 struct eia608_screen // A CC buffer
 {
 	unsigned char characters[15][33];
@@ -90,17 +102,6 @@ int write_cc_buffer_as_spupng(struct eia608_screen* data, struct s_context_cc608
     if (enc_buffer==NULL) { fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, bailing out\n"); } \
 }
 
-enum cc_modes
-{
-    MODE_POPON = 0,
-    MODE_ROLLUP_2 = 1,
-    MODE_ROLLUP_3 = 2,
-    MODE_ROLLUP_4 = 3,
-	MODE_TEXT = 4,
-	MODE_PAINTON = 5,
-	// Fake modes to emulate stuff
-	MODE_FAKE_ROLLUP_1 = 100
-};
 
 enum color_code
 {
