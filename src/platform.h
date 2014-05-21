@@ -66,17 +66,11 @@ extern "C" __int64 __cdecl _ftelli64(FILE *);
 #define LSEEK _lseeki64
 typedef struct _stati64 FSTATSTRUCT;
 #else
-#ifdef __CYGWIN__
-// Cygwin internally maps these functions to 64bit usage, but there are
-// no explicit xxxx64 functions.
+// Linux internally maps these functions to 64bit usage, 
+// if _FILE_OFFSET_BITS macro is set to 64 
 #define FOPEN64 fopen
 #define OPEN open
 #define LSEEK lseek
-#else
-#define FOPEN64 fopen64
-#define OPEN open64
-#define LSEEK lseek64
-#endif
 #define FSEEK fseek
 #define FTELL ftell
 #define FSTAT fstat
