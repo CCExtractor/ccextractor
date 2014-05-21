@@ -1,4 +1,5 @@
 #include "ccextractor.h"
+#include "608_spupng.h"
 
 static const int     rowdata[] = {11,-1,1,2,3,4,12,13,14,15,5,6,7,8,9,10};
 // Relationship between the first PAC byte and the row number
@@ -282,7 +283,7 @@ void handle_text_attr(const unsigned char c1, const unsigned char c2, struct s_c
 }
 
 
-void write_subtitle_file_footer(struct s_context_cc608 *context)
+void write_subtitle_file_footer(struct ccx_s_write *out)
 {
     switch (ccx_options.write_format)
     {
@@ -293,7 +294,7 @@ void write_subtitle_file_footer(struct s_context_cc608 *context)
                 dbg_print(CCX_DMT_608, "\r%s\n", str);
             }
             enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-			write(context->out->fh, enc_buffer, enc_buffer_used);
+			write(out->fh, enc_buffer, enc_buffer_used);
             break;
 		case CCX_OF_SMPTETT:
 			sprintf ((char *) str,"</div></body></tt>\n");
@@ -302,10 +303,10 @@ void write_subtitle_file_footer(struct s_context_cc608 *context)
 				dbg_print(CCX_DMT_608, "\r%s\n", str);
 			}
 			enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-			write (context->out->fh, enc_buffer,enc_buffer_used);
+			write (out->fh, enc_buffer,enc_buffer_used);
 			break;
         case CCX_OF_SPUPNG:
-            write_spumux_footer(context);
+            write_spumux_footer(out);
             break;
 		default: // Nothing to do, no footer on this format
             break;
@@ -313,7 +314,7 @@ void write_subtitle_file_footer(struct s_context_cc608 *context)
 }
 
 
-void write_subtitle_file_header(struct s_context_cc608 *context)
+void write_subtitle_file_header(struct ccx_s_write *out)
 {
     switch (ccx_options.write_format)
     {
@@ -323,19 +324,19 @@ void write_subtitle_file_header(struct s_context_cc608 *context)
             //fprintf_encoded (wb->fh, sami_header);
             REQUEST_BUFFER_CAPACITY(strlen (sami_header)*3);
             enc_buffer_used=encode_line (enc_buffer,(unsigned char *) sami_header);
-            write (context->out->fh, enc_buffer,enc_buffer_used);
+            write (out->fh, enc_buffer,enc_buffer_used);
             break;
         case CCX_OF_SMPTETT: // This header brought to you by McPoodle's CCASDI  
 			//fprintf_encoded (wb->fh, sami_header);
 			REQUEST_BUFFER_CAPACITY(strlen (smptett_header)*3);
             enc_buffer_used=encode_line (enc_buffer,(unsigned char *) smptett_header);
-			write(context->out->fh, enc_buffer, enc_buffer_used);
+			write(out->fh, enc_buffer, enc_buffer_used);
             break;
         case CCX_OF_RCWT: // Write header
-			write(context->out->fh, rcwt_header, sizeof(rcwt_header));
+			write(out->fh, rcwt_header, sizeof(rcwt_header));
             break;
         case CCX_OF_SPUPNG:
-			write_spumux_header(context);
+			write_spumux_header(out);
             break;
         case CCX_OF_TRANSCRIPT: // No header. Fall thru
         default:

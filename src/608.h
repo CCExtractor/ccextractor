@@ -42,7 +42,6 @@ struct s_context_cc608
 	int new_channel; // The new channel after a channel change		
 	int my_field; // Used for sanity checks
 	long bytes_processed_608; // To be written ONLY by process_608
-	void* spupng_data;
 	struct ccx_s_write *out;
 };
 
@@ -90,10 +89,6 @@ unsigned char cctolower (unsigned char c);
 unsigned char cctoupper (unsigned char c);
 int general_608_init (void);
 LLONG get_visible_end (void);
-
-void write_spumux_header(struct s_context_cc608 *context);
-void write_spumux_footer(struct s_context_cc608 *context);
-int write_cc_buffer_as_spupng(struct eia608_screen* data, struct s_context_cc608 *context);
 
 #define CC608_SCREEN_WIDTH  32
 
