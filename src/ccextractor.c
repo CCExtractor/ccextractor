@@ -470,7 +470,7 @@ int main(int argc, char *argv[])
 							writeraw (UTF8_BOM, sizeof (UTF8_BOM), &wbout1);
 						if (ccx_options.encoding==CCX_ENC_UNICODE) // Write BOM				
 							writeraw (LITTLE_ENDIAN_BOM, sizeof (LITTLE_ENDIAN_BOM), &wbout1);
-						write_subtitle_file_header(&context_cc608_field_1);
+						write_subtitle_file_header(context_cc608_field_1.out);
 				}
 			}
 			if (ccx_options.extract == 12) 
@@ -510,7 +510,7 @@ int main(int argc, char *argv[])
 							writeraw (UTF8_BOM, sizeof (UTF8_BOM), &wbout2);
 						if (ccx_options.encoding==CCX_ENC_UNICODE) // Write BOM				
 							writeraw (LITTLE_ENDIAN_BOM, sizeof (LITTLE_ENDIAN_BOM), &wbout2);
-						write_subtitle_file_header(&context_cc608_field_2);
+						write_subtitle_file_header(context_cc608_field_2.out);
 				}
 			}
 		}
@@ -825,7 +825,7 @@ int main(int argc, char *argv[])
         }
         if (ccx_options.end_credits_text!=NULL)
 			try_to_add_end_credits(&context_cc608_field_1);
-		write_subtitle_file_footer(&context_cc608_field_1);
+		write_subtitle_file_footer(context_cc608_field_1.out);
     }
     if (wbout2.fh!=-1)
     {
@@ -840,7 +840,7 @@ int main(int argc, char *argv[])
         }
         if (ccx_options.end_credits_text!=NULL)
 			try_to_add_end_credits(&context_cc608_field_2);
-		write_subtitle_file_footer(&context_cc608_field_2);
+		write_subtitle_file_footer(context_cc608_field_2.out);
     }
 	telxcc_close();
     flushbuffer (&wbout1,true);

@@ -16,6 +16,8 @@ typedef int socklen_t;
 typedef uint32_t in_addr_t;
 #define IN_CLASSD(i)       (((INT32)(i) & 0xf0000000) == 0xe0000000)
 #define IN_MULTICAST(i)    IN_CLASSD(i)
+#include <direct.h>
+#define mkdir(path, mode) _mkdir(path)
 
 #else // _WIN32
 
@@ -27,6 +29,8 @@ typedef uint32_t in_addr_t;
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #endif // _WIN32
 

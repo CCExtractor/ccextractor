@@ -139,6 +139,7 @@ struct ccx_s_write
 {
     int fh;
     char *filename;
+	void* spupng_data;
 };
 
 
@@ -369,8 +370,8 @@ int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, un
 void init_context_cc608(struct s_context_cc608 *data, int field);
 unsigned encode_line (unsigned char *buffer, unsigned char *text);
 void buffered_seek (int offset);
-void write_subtitle_file_header(struct s_context_cc608 *context);
-void write_subtitle_file_footer(struct s_context_cc608 *context);
+void write_subtitle_file_header(struct ccx_s_write *out);
+void write_subtitle_file_footer(struct ccx_s_write *out);
 extern void build_parity_table(void);
 
 void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) ;
