@@ -18,6 +18,7 @@
 
 #define MAX_LANGUAGE_PER_DESC 5
 
+#include "ccextractor.h"
 #ifdef __cplusplus
 extern "C"
 {
@@ -76,6 +77,16 @@ int dvbsub_decode(void *dvb_ctx,
  */
 int  parse_dvb_description (struct dvb_config* cfg,unsigned char*data,unsigned int len);
 
+/*
+ * @func dvbsub_set_write the output structure in dvb
+ * set ccx_s_write structure in dvb_ctx
+ *
+ * @param dvb_ctx context of dvb which was returned by dvbsub_init_decoder
+ *
+ * @param out output context returned by init_write  
+ * 
+ */
+void dvbsub_set_write(void *dvb_ctx,struct ccx_s_write *out);
 #ifdef __cplusplus
 }
 #endif

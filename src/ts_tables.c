@@ -210,13 +210,21 @@ int parse_PMT (int pos)
 			ccx_options.ts_cappid = newcappid = elementary_PID;
 			cap_stream_type=CCX_STREAM_TYPE_UNKNOWNSTREAM;
 		}
-		if(IS_FEASIBLE(ccx_options.codec,ccx_options.nocodec,CCX_CODEC_DVB) && !ccx_options.ts_cappid && ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2)
+		if(IS_FEASIBLE(ccx_options.codec,ccx_options.nocodec,CCX_CODEC_DVB) &&
+				!ccx_options.ts_cappid &&
+				ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 &&
+				ES_info_length  )
 		{
 			unsigned char *es_info = payload_start + i + 5;
 			for (desc_len = 0;(payload_start + i + 5 + ES_info_length) - es_info ;es_info += desc_len)
 			{
 				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
 				desc_len = (*es_info++);
+				if(ccx_options.write_format != CCX_OF_SPUPNG )
+				{
+					mprint ("DVB subtitle only support spupng type as output\n");
+					continue;
+				}
 				if(CCX_MPEG_DSC_DVB_SUBTITLE == descriptor_tag)
 				{
 					struct dvb_config cnf;
@@ -227,6 +235,7 @@ int parse_PMT (int pos)
 					cxx_dvb_context = dvbsub_init_decoder(cnf.composition_id[0],cnf.ancillary_id[0]);
 					if (cxx_dvb_context == NULL)
 						break;
+					dvbsub_set_write(cxx_dvb_context,&wbout1);
 					ccx_options.ts_cappid = newcappid = elementary_PID;
 					cap_stream_type = newcap_stream_type = ccx_stream_type;
 				}

@@ -34,6 +34,7 @@
 
 
 #include "dvb_subtitle_decoder.h"
+#include "spupng_encoder.h"
 #define DEBUG
 
 #ifdef DEBUG
@@ -212,7 +213,6 @@ static void freep(void *arg)
 static void png_save(const char *filename, uint32_t *bitmap, int w, int h)
 {
 	FILE *f;
-	char fname[40];
 	png_structp png_ptr;
 	png_infop info_ptr;
 	png_bytep* row_pointer;
@@ -237,11 +237,10 @@ static void png_save(const char *filename, uint32_t *bitmap, int w, int h)
 	unsigned char array[1024] = "";
 
 
-	snprintf(fname, sizeof(fname), "%s.png", filename);
-	f = fopen(fname, "wb");
+	f = fopen(filename, "wb");
 	if (!f)
 	{
-		perror(fname);
+		perror(filename);
 		return;
 	}
 
@@ -392,6 +391,7 @@ typedef struct DVBSubContext {
 
     DVBSubRegionDisplay *display_list;
     DVBSubDisplayDefinition *display_definition;
+	struct ccx_s_write *out;
 } DVBSubContext;
 
 
@@ -1006,6 +1006,7 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx, DVBSubObjectDisplay *di
             break;
         default:
             printf("Unknown/unsupported pixel block 0x%x\n", *(buf-1));
+            /* no break */
         }
     }
 
@@ -1379,14 +1380,18 @@ static void save_display_set(DVBSubContext *ctx)
     int x_pos, y_pos, width, height;
     int x, y, y_off, x_off;
     uint32_t *pbuf;
-    char filename[32];
+    char *filename;
     static int fileno_index = 0;
-
+	void *sp = ctx->out->spupng_data;
+	long long start = get_visible_start();
     x_pos = -1;
     y_pos = -1;
     width = 0;
     height = 0;
 
+    filename = get_spupng_filename(sp);
+    inc_spupng_fileindex(sp);
+	write_sputag(sp,start,start+ctx->time_out);
     for (display = ctx->display_list; display; display = display->next) {
         region = get_region(ctx, display->region_id);
 
@@ -1455,8 +1460,6 @@ static void save_display_set(DVBSubContext *ctx)
 
         }
 
-        snprintf(filename, sizeof(filename), "dvbs.%d", fileno_index);
-
         png_save(filename, pbuf, width, height);
 
         free(pbuf);
@@ -1517,8 +1520,6 @@ static int dvbsub_display_end_segment(void *dvb_ctx, const uint8_t *buf,
     DVBSubCLUT *clut;
     int i;
 
-
-
     for (display = ctx->display_list; display; display = display->next)
     {
         region = get_region(ctx, display->region_id);
@@ -1542,7 +1543,10 @@ static int dvbsub_display_end_segment(void *dvb_ctx, const uint8_t *buf,
         i++;
     }
 #ifdef DEBUG
-    save_display_set(ctx);
+    if(ctx->object_list)
+    {
+    	save_display_set(ctx);
+    }
 #endif
 
     return 1;
@@ -1550,8 +1554,8 @@ static int dvbsub_display_end_segment(void *dvb_ctx, const uint8_t *buf,
 /**
  * @param dvb_ctx    PreInitialized DVB context using DVB
  * @param data       output subtitle data, to be implemented
- * @param data_size  Output subtitle data  size. pass the pointer to an intiger, NOT to be NULL.
- * @param buf        buffer containg segment data, first sync byte needto 0x0f.
+ * @param data_size  Output subtitle data  size. pass the pointer to an integer, NOT to be NULL.
+ * @param buf        buffer containing segment data, first sync byte need to 0x0f.
  *                   does not include data_identifier and subtitle_stream_id.
  * @param buf_size   size of buf buffer
  *
@@ -1691,4 +1695,18 @@ int  parse_dvb_description (struct dvb_config* cfg,unsigned char*data,unsigned i
     printf("lang %d %s\n",cfg->lang_index[0],dvb_language[cfg->lang_index[0]]);
     printf("comp %hd anci %hd stype %hhd\n",cfg->composition_id[0],cfg->ancillary_id[0],cfg->sub_type[0]);
     return 0;
+}
+/*
+ * @func dvbsub_set_write the output structure in dvb
+ * set ccx_s_write structure in dvb_ctx
+ *
+ * @param dvb_ctx context of dvb which was returned by dvbsub_init_decoder
+ *
+ * @param out output context returned by init_write  
+ * 
+ */
+void dvbsub_set_write(void *dvb_ctx,struct ccx_s_write *out)
+{
+	DVBSubContext *ctx = (DVBSubContext *)dvb_ctx;
+	ctx->out = out;
 }
