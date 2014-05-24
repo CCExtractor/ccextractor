@@ -171,6 +171,40 @@ int detect_myth( void )
 
     return 0;
 }
+int read_pts_pes(unsigned char*header, int len)
+{
+        unsigned int peslen = 0;
+        LLONG bits_9;
+        unsigned int bits_10;
+        unsigned int bits_11;
+        unsigned int bits_12;
+        unsigned int bits_13;
+
+        //function used only to set start time
+        if(pts_set)
+                return -1; 
+        //it might not be pes packet
+        if (!(header[0] == 0 && header[1] == 0 && header[2] == 1)) 
+                return -1; 
+
+
+        peslen = header[4] << 8 | header[5];
+
+        if (header[7] & 0x80)
+        {   
+                bits_9 = ((LLONG) header[9] & 0x0E) << 29; // PTS 32..30 - Must be LLONG to prevent overflow
+                bits_10 = header[10] << 22; // PTS 29..22
+                bits_11 = (header[11] & 0xFE) << 14; // PTS 21..15
+                bits_12 = header[12] << 7; // PTS 14-7
+                bits_13 = header[13] >> 1; // PTS 6-0
+        }   
+        else
+                return -1; 
+        current_pts = bits_9 | bits_10 | bits_11 | bits_12 | bits_13;
+        pts_set = 1;
+
+        return 0;
+}
 
 /* Read and evaluate the current video PES header. The function returns
  * the length of the payload if successful, otherwise -1 is returned

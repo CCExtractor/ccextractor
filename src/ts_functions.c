@@ -366,6 +366,15 @@ long ts_readstream(void)
             haup_capbuflen = haup_newcapbuflen;
 
 		}
+		/*  
+		 * if dvb subtitle is selected then start time taken from first PTS 
+		 * of any stream
+		 */
+		if ( cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cxx_dvb_context && !pts_set)
+		{   
+                          if(read_pts_pes(payload.start,payload.length) == 0)
+                                  set_fts();
+		}   
 
         // Check for PID with captions. Note that in Hauppauge mode we also process the video stream because
 		// we need the timing from its PES header, which isn't included in Hauppauge's packets		
