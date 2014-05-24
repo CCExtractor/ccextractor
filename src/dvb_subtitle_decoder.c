@@ -205,63 +205,47 @@ static __inline unsigned int get_bits1(GetBitContext *s)
 static void freep(void *arg)
 {
     void **ptr = (void **)arg;
-    free(*ptr);
+    if (*ptr)free(*ptr);
     *ptr = NULL;
 
 }
 #ifdef DEBUG
-static void png_save(const char *filename, uint32_t *bitmap, int w, int h)
+static int png_save(const char *filename, uint32_t *bitmap, int w, int h)
 {
-	FILE *f;
-	png_structp png_ptr;
-	png_infop info_ptr;
-	png_bytep* row_pointer;
-	static png_color palette[10] =
-	{
-		{ 0xff, 0xff, 0xff }, // COL_WHITE = 0,
-		{ 0x00, 0xff, 0x00 }, // COL_GREEN = 1,
-		{ 0x00, 0x00, 0xff }, // COL_BLUE = 2,
-		{ 0x00, 0xff, 0xff }, // COL_CYAN = 3,
-		{ 0xff, 0x00, 0x00 }, // COL_RED = 4,
-		{ 0xff, 0xff, 0x00 }, // COL_YELLOW = 5,
-		{ 0xff, 0x00, 0xff }, // COL_MAGENTA = 6,
-		{ 0xff, 0xff, 0xff }, // COL_USERDEFINED = 7,
-		{ 0x00, 0x00, 0x00 }, // COL_BLACK = 8
-		{ 0x00, 0x00, 0x00 } // COL_TRANSPARENT = 9
-	};
-	static png_byte alpha[10] =
-	{255,255,255,255,255,255,255,255,255,0};
-	int i =0;
-	int j =0;
+	FILE *f = NULL;
+	png_structp png_ptr = NULL;
+	png_infop info_ptr = NULL;
+	png_bytep* row_pointer = NULL;
+	int i,j,ret;
 	int k =0;
-	unsigned char array[1024] = "";
-
-
 	f = fopen(filename, "wb");
 	if (!f)
 	{
-		perror(filename);
-		return;
+		mprint("DVB:unable to open %s in write mode \n",filename);
+		ret = -1;
+		goto end;
 	}
 
 	if (!(png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING,NULL, NULL, NULL)))
 	{
-		printf("unable to create png write struct\n");
+		mprint("DVB:unable to create png write struct\n");
+		goto end;
 	}
-
 	if (!(info_ptr = png_create_info_struct(png_ptr)))
 	{
-		printf("unable to create png info struct\n");
-		png_destroy_write_struct(&png_ptr, (png_infopp) NULL);
+		mprint("DVB:unable to create png info struct\n");
+		ret = -1;
+		goto end;
 	}
 
 	row_pointer = (png_bytep*)malloc(sizeof(png_bytep) * h);
 	if(!row_pointer)
 	{
-		printf("unable to allocate row_pointer\n");
-		png_destroy_write_struct(&png_ptr, (png_infopp) NULL);
+		mprint("DVB: unable to allocate row_pointer\n");
+		ret = -1;
+		goto end;
 	}
-
+	memset(row_pointer,0,sizeof(png_bytep) * h);
 	png_init_io(png_ptr,f);
 
 	png_set_IHDR (png_ptr,info_ptr,w,h,
@@ -271,9 +255,18 @@ static void png_save(const char *filename, uint32_t *bitmap, int w, int h)
 				  PNG_FILTER_TYPE_DEFAULT);
 
 	for (i = 0; i < h; i++)
+	{
 		row_pointer[i] = (png_byte*)malloc(png_get_rowbytes(png_ptr,info_ptr));
+		if(row_pointer[i] == NULL)
+			break;
+	}
+	if(i != h)
+	{
+		mprint("DVB: unable to allocate row_pointer internals\n");
+		ret = -1;
+		goto end;
+	}
 
-	png_set_tRNS (png_ptr, info_ptr, alpha, sizeof(alpha) / sizeof(alpha[0]), NULL);
 	png_write_info (png_ptr, info_ptr);
 
 	for (i = 0; i < h; i++)
@@ -291,12 +284,17 @@ static void png_save(const char *filename, uint32_t *bitmap, int w, int h)
 	png_write_image (png_ptr, row_pointer);
 
 	png_write_end (png_ptr, info_ptr);
-
-	for (i = 0; i < h; i++)
-		free(row_pointer[i]);
-	free(row_pointer);
-	png_destroy_write_struct(&png_ptr, (png_infopp) NULL);
-	fclose(f);
+end:
+	if(row_pointer)
+	{
+		for (i = 0; i < h; i++)
+			freep(&row_pointer[i]);
+		freep(&row_pointer);
+	}
+	png_destroy_write_struct(&png_ptr, &info_ptr);
+	if(f)
+		fclose(f);
+	return ret;
 }
 
 #endif
@@ -721,7 +719,7 @@ static int dvbsub_read_2bit_string(uint8_t *destbuf, int dbuf_len,
     }
 
     if (get_bits(&gb, 6))
-        printf("DVBSub error: line overflow\n");
+        mprint("DVBSub error: line overflow\n");
 
     (*srcbuf) += (get_bits_count(&gb) + 7) >> 3;
 
@@ -844,7 +842,7 @@ static int dvbsub_read_4bit_string(uint8_t *destbuf, int dbuf_len,
     }
 
     if (get_bits(&gb, 8))
-        printf("DVBSub error: line overflow\n");
+        mprint("DVBSub error: line overflow\n");
 
     (*srcbuf) += (get_bits_count(&gb) + 7) >> 3;
 
@@ -905,7 +903,7 @@ static int dvbsub_read_8bit_string(uint8_t *destbuf, int dbuf_len,
     }
 
     if (*(*srcbuf)++)
-        printf("DVBSub error: line overflow\n");
+        mprint("DVBSub error: line overflow\n");
 
     return pixels_read;
 }
@@ -942,7 +940,7 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx, DVBSubObjectDisplay *di
 
     while (buf < buf_end) {
         if ((*buf!=0xf0 && x_pos >= region->width) || y_pos >= region->height) {
-            printf("Invalid object location! %d-%d %d-%d %02x\n", x_pos, region->width, y_pos, region->height, *buf);
+            mprint("Invalid object location! %d-%d %d-%d %02x\n", x_pos, region->width, y_pos, region->height, *buf);
             return;
         }
 
@@ -961,7 +959,7 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx, DVBSubObjectDisplay *di
             break;
         case 0x11:
             if (region->depth < 4) {
-                printf("4-bit pixel string in %d-bit region!\n", region->depth);
+                mprint("4-bit pixel string in %d-bit region!\n", region->depth);
                 return;
             }
 
@@ -976,7 +974,7 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx, DVBSubObjectDisplay *di
             break;
         case 0x12:
             if (region->depth < 8) {
-                printf("8-bit pixel string in %d-bit region!\n", region->depth);
+                mprint("8-bit pixel string in %d-bit region!\n", region->depth);
                 return;
             }
 
@@ -1005,7 +1003,7 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx, DVBSubObjectDisplay *di
             y_pos += 2;
             break;
         default:
-            printf("Unknown/unsupported pixel block 0x%x\n", *(buf-1));
+            mprint("Unknown/unsupported pixel block 0x%x\n", *(buf-1));
             /* no break */
         }
     }
@@ -1043,7 +1041,7 @@ static void dvbsub_parse_object_segment(void *dvb_ctx,
         buf += 2;
 
         if (buf + top_field_len + bottom_field_len > buf_end) {
-            printf( "Field data size too large\n");
+            mprint( "Field data size too large\n");
             return;
         }
 
@@ -1064,9 +1062,9 @@ static void dvbsub_parse_object_segment(void *dvb_ctx,
         }
 
     } else if (coding_method == 1) {
-        printf( "FIXME support for sring coding standard\n");
+        mprint( "FIXME support for sring coding standard\n");
     } else {
-        printf( "Unknown object coding %d\n", coding_method);
+        mprint( "Unknown object coding %d\n", coding_method);
     }
 
 }
@@ -1077,23 +1075,12 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx,
     DVBSubContext *ctx = (DVBSubContext*)dvb_ctx;
 
     const uint8_t *buf_end = buf + buf_size;
-    int i, clut_id;
+    int clut_id;
     int version;
     DVBSubCLUT *clut;
     int entry_id, depth , full_range;
     int y, cr, cb, alpha;
     int r, g, b, r_add, g_add, b_add;
-
-    printf("DVB clut packet:\n");
-
-    for (i=0; i < buf_size; i++) {
-        printf("%02x ", buf[i]);
-        if (i % 16 == 15)
-            printf("\n");
-    }
-
-    if (i % 16)
-        printf("\n");
 
     clut_id = *buf++;
     version = ((*buf)>>4)&15;
@@ -1123,7 +1110,7 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx,
         depth = (*buf) & 0xe0;
 
         if (depth == 0) {
-            printf( "Invalid clut depth 0x%x!\n", *buf);
+            mprint( "Invalid clut depth 0x%x!\n", *buf);
             return 0;
         }
 
@@ -1149,9 +1136,8 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx,
         YUV_TO_RGB1_CCIR(cb, cr);
         YUV_TO_RGB2_CCIR(r, g, b, y);
 
-        printf("clut %d := (%d,%d,%d,%d)\n", entry_id, r, g, b, alpha);
         if (!!(depth & 0x80) + !!(depth & 0x40) + !!(depth & 0x20) > 1) {
-            printf("More than one bit level marked: %x\n", depth);
+            mprint("More than one bit level marked: %x\n", depth);
         }
 
         if (depth & 0x80)
@@ -1218,7 +1204,7 @@ static void dvbsub_parse_region_segment(void*dvb_ctx,
 
     region->depth = 1 << (((*buf++) >> 2) & 7);
     if(region->depth<2 || region->depth>8){
-        printf( "region depth %d is invalid\n", region->depth);
+        mprint( "region depth %d is invalid\n", region->depth);
         region->depth= 4;
     }
     region->clut = *buf++;
@@ -1235,12 +1221,8 @@ static void dvbsub_parse_region_segment(void*dvb_ctx,
             region->bgcolor = (((*buf++) >> 2) & 3);
     }
 
-    printf("Region %d, (%dx%d)\n", region_id, region->width, region->height);
-
-    if (fill) {
+    if (fill)
         memset(region->pbuf, region->bgcolor, region->buf_size);
-        printf( "Fill region (%d)\n", region->bgcolor);
-    }
 
     delete_region_display_list(ctx, region);
 
@@ -1314,8 +1296,6 @@ static void dvbsub_parse_page_segment(void *dvb_ctx,
     ctx->time_out = timeout;
     ctx->version = version;
 
-    printf( "Page time out %ds, state %d\n", ctx->time_out, page_state);
-
     if (page_state == 1 || page_state == 2) {
         delete_regions(ctx);
         delete_objects(ctx);
@@ -1356,7 +1336,6 @@ static void dvbsub_parse_page_segment(void *dvb_ctx,
         display->next = ctx->display_list;
         ctx->display_list = display;
 
-        printf( "Region %d, (%d,%d)\n", region_id, display->x_pos, display->y_pos);
     }
 
     while (tmp_display_list) {
@@ -1576,7 +1555,7 @@ int dvbsub_decode(void *dvb_ctx,
 
 
     if (buf_size <= 6 || *buf != 0x0f) {
-        printf( "incomplete or broken packet");
+        mprint( "incomplete or broken packet");
         return -1;
     }
 
@@ -1592,7 +1571,7 @@ int dvbsub_decode(void *dvb_ctx,
         p += 2;
 
         if (p_end - p < segment_length) {
-            printf( "incomplete or broken packet");
+            mprint( "incomplete or broken packet");
             return -1;
         }
 
@@ -1624,7 +1603,7 @@ int dvbsub_decode(void *dvb_ctx,
                 got_segment |= 16;
                 break;
             default:
-                printf( "Subtitling segment type 0x%x, page id %d, length %d\n",
+                mprint( "Subtitling segment type 0x%x, page id %d, length %d\n",
                         segment_type, page_id, segment_length);
                 break;
             }
@@ -1670,12 +1649,12 @@ int  parse_dvb_description (struct dvb_config* cfg,unsigned char*data,unsigned i
 
     if (cfg->n_language > 1)
     {
-        printf("DVB subtitles with multiple languages");
+        mprint("DVB subtitles with multiple languages");
     }
 
     if (cfg->n_language > MAX_LANGUAGE_PER_DESC)
     {
-        printf("not supported more then %d language",MAX_LANGUAGE_PER_DESC);
+        mprint("not supported more then %d language",MAX_LANGUAGE_PER_DESC);
     }
 
     for (i = 0; i < cfg->n_language; i++,data += i*8)
@@ -1692,8 +1671,6 @@ int  parse_dvb_description (struct dvb_config* cfg,unsigned char*data,unsigned i
 
     }
 
-    printf("lang %d %s\n",cfg->lang_index[0],dvb_language[cfg->lang_index[0]]);
-    printf("comp %hd anci %hd stype %hhd\n",cfg->composition_id[0],cfg->ancillary_id[0],cfg->sub_type[0]);
     return 0;
 }
 /*
