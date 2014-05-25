@@ -208,6 +208,126 @@ static void freep(void *arg)
 
 }
 #ifdef DEBUG
+static int png_save1(const char *filename, uint8_t *bitmap, int w, int h,uint32_t *clut)
+{
+	FILE *f = NULL;
+	png_structp png_ptr = NULL;
+        png_infop info_ptr = NULL;
+        png_bytep* row_pointer = NULL;
+        int i, j, ret; 
+        int k = 0;
+	static png_color palette[10] =
+	{
+		{ 0xff, 0xff, 0xff }, // COL_WHITE = 0,
+		{ 0x00, 0xff, 0x00 }, // COL_GREEN = 1,
+		{ 0x00, 0x00, 0xff }, // COL_BLUE = 2,
+		{ 0x00, 0xff, 0xff }, // COL_CYAN = 3,
+		{ 0xff, 0x00, 0x00 }, // COL_RED = 4,
+		{ 0xff, 0xff, 0x00 }, // COL_YELLOW = 5,
+		{ 0xff, 0x00, 0xff }, // COL_MAGENTA = 6,
+		{ 0xff, 0xff, 0xff }, // COL_USERDEFINED = 7,
+		{ 0x00, 0x00, 0x00 }, // COL_BLACK = 8
+		{ 0x00, 0x00, 0x00 } // COL_TRANSPARENT = 9
+	};
+
+	static png_byte alpha[10] =
+	{
+		255,
+		255,
+		255,
+		255,
+		255,
+		255,
+		255,
+		255,
+		255,
+		0   
+	};
+
+	f = fopen(filename, "wb");
+        if (!f) 
+        {    
+                mprint("DVB:unable to open %s in write mode \n", filename);
+                ret = -1;
+                goto end; 
+        }    
+
+        if (!(png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL,
+                        NULL )))
+        {    
+                mprint("DVB:unable to create png write struct\n");
+                goto end; 
+        }    
+        if (!(info_ptr = png_create_info_struct(png_ptr)))
+        {    
+                mprint("DVB:unable to create png info struct\n");
+                ret = -1;
+                goto end; 
+        }    
+
+        row_pointer = (png_bytep*) malloc(sizeof(png_bytep) * h);
+        if (!row_pointer)
+        {    
+                mprint("DVB: unable to allocate row_pointer\n");
+                ret = -1;
+                goto end; 
+        }    
+        memset(row_pointer, 0, sizeof(png_bytep) * h);
+        png_init_io(png_ptr, f);
+
+	png_set_IHDR (png_ptr,
+			info_ptr,
+			w, 
+			h, 
+			/* bit_depth */ 8,
+			PNG_COLOR_TYPE_PALETTE,
+			PNG_INTERLACE_NONE,
+			PNG_COMPRESSION_TYPE_DEFAULT,
+			PNG_FILTER_TYPE_DEFAULT);
+
+	png_set_PLTE (png_ptr, info_ptr, palette, sizeof(palette) / sizeof(palette[0]));
+	png_set_tRNS (png_ptr, info_ptr, alpha, sizeof(alpha) / sizeof(alpha[0]), NULL);
+
+        for (i = 0; i < h; i++) 
+        {
+                row_pointer[i] = (png_byte*) malloc(
+                                png_get_rowbytes(png_ptr, info_ptr));
+                if (row_pointer[i] == NULL )
+                        break;
+        }
+        if (i != h)
+        {
+                mprint("DVB: unable to allocate row_pointer internals\n");
+                ret = -1;
+                goto end;
+        }
+
+        png_write_info(png_ptr, info_ptr);
+
+        for (i = 0; i < h; i++)
+        {
+                for (j = 0; j < png_get_rowbytes(png_ptr, info_ptr); j ++)
+                {
+                        k = bitmap[i * w + (j)];
+                        row_pointer[i][j] = k;//((k >> 16) & 0xff);
+                }
+        }
+
+        png_write_image(png_ptr, row_pointer);
+
+        png_write_end(png_ptr, info_ptr);
+        end:if (row_pointer)
+        {
+                for (i = 0; i < h; i++)
+                        freep(&row_pointer[i]);
+                freep(&row_pointer);
+        }
+        png_destroy_write_struct(&png_ptr, &info_ptr);
+        if (f)
+                fclose(f);
+        return ret;
+
+}
 static int png_save(const char *filename, uint32_t *bitmap, int w, int h)
 {
 	FILE *f = NULL;
@@ -1479,7 +1599,6 @@ static void save_display_set(DVBSubContext *ctx)
 	int x, y, y_off, x_off;
 	uint32_t *pbuf;
 	char *filename;
-	static int fileno_index = 0;
 	void *sp = ctx->out->spupng_data;
 	long long start = get_visible_start();
 	x_pos = -1;
@@ -1571,11 +1690,11 @@ static void save_display_set(DVBSubContext *ctx)
 		}
 
 		png_save(filename, pbuf, width, height);
+		//png_save1(filename, region->pbuf, region->width, region->height,clut->clut16);
 
 		free(pbuf);
 	}
 
-	fileno_index++;
 }
 #endif
 
