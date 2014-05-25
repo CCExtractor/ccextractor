@@ -26,16 +26,15 @@ extern "C"
 
 struct dvb_config
 {
-    unsigned char n_language;
-    unsigned int lang_index[MAX_LANGUAGE_PER_DESC];
-    /* subtitle type */
-    unsigned char sub_type[MAX_LANGUAGE_PER_DESC];
-    /* composition page id */
-    unsigned short composition_id[MAX_LANGUAGE_PER_DESC];
-    /* ancillary_page_id */
-    unsigned short ancillary_id[MAX_LANGUAGE_PER_DESC];
+	unsigned char n_language;
+	unsigned int lang_index[MAX_LANGUAGE_PER_DESC];
+	/* subtitle type */
+	unsigned char sub_type[MAX_LANGUAGE_PER_DESC];
+	/* composition page id */
+	unsigned short composition_id[MAX_LANGUAGE_PER_DESC];
+	/* ancillary_page_id */
+	unsigned short ancillary_id[MAX_LANGUAGE_PER_DESC];
 };
-
 
 /**
  * @param composition_id composition-page_id found in Subtitle descriptors
@@ -48,7 +47,7 @@ struct dvb_config
  * @return DVB context kept as void* for abstraction
  *
  */
-void* dvbsub_init_decoder(int composition_id,int ancillary_id);
+void* dvbsub_init_decoder(int composition_id, int ancillary_id);
 
 int dvbsub_close_decoder(void *dvb_ctx);
 
@@ -62,9 +61,8 @@ int dvbsub_close_decoder(void *dvb_ctx);
  *
  * @return           -1 on error
  */
-int dvbsub_decode(void *dvb_ctx,
-			void *data, int *data_size,
-			const unsigned char *buf,int buf_size);
+int dvbsub_decode(void *dvb_ctx, void *data, int *data_size,
+		const unsigned char *buf, int buf_size);
 /**
  * @func parse_dvb_description
  *
@@ -75,7 +73,8 @@ int dvbsub_decode(void *dvb_ctx,
  * @return return -1 if invalid data found other wise 0 if everything goes well
  * errno is set is to EINVAL if invalid data is found
  */
-int  parse_dvb_description (struct dvb_config* cfg,unsigned char*data,unsigned int len);
+int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
+		unsigned int len);
 
 /*
  * @func dvbsub_set_write the output structure in dvb
@@ -86,7 +85,7 @@ int  parse_dvb_description (struct dvb_config* cfg,unsigned char*data,unsigned i
  * @param out output context returned by init_write  
  * 
  */
-void dvbsub_set_write(void *dvb_ctx,struct ccx_s_write *out);
+void dvbsub_set_write(void *dvb_ctx, struct ccx_s_write *out);
 #ifdef __cplusplus
 }
 #endif
