@@ -205,6 +205,7 @@ spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
 
     int row;
     int empty_buf = 1;
+	char str[256] = "";
     for (row = 0; row < 15; row++)
     {
         if (data->row_used[row])
@@ -233,19 +234,7 @@ spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
                 sp->pngfile, strerror(errno));
     }
     fclose(sp->fppng);
-
-    fprintf(sp->fpxml, "<spu start=\"%.3f\"", ((double)ms_start) / 1000);
-    dbg_print(CCX_DMT_608, "<spu start=\"%.3f\"", ((double)ms_start) / 1000);
-    fprintf(sp->fpxml, " end=\"%.3f\"", ((double)ms_end) / 1000);
-    dbg_print(CCX_DMT_608, " end=\"%.3f\"", ((double)ms_end) / 1000);
-    fprintf(sp->fpxml, " image=\"%s\"", sp->pngfile);
-    dbg_print(CCX_DMT_608, " image=\"%s\"", sp->pngfile);
-    fprintf(sp->fpxml, " xoffset=\"%d\"", sp->xOffset);
-    dbg_print(CCX_DMT_608, " xoffset=\"%d\"", sp->xOffset);
-    fprintf(sp->fpxml, " yoffset=\"%d\"", sp->yOffset);
-    dbg_print(CCX_DMT_608, " yoffset=\"%d\"", sp->yOffset);
-    fprintf(sp->fpxml, ">\n<!--\n");
-    dbg_print(CCX_DMT_608, ">\n<!--\n");
+	write_sputag(sp,ms_start,ms_end);
     for (row = 0; row < ROWS; row++)
     {
         if (data->row_used[row])
@@ -270,15 +259,12 @@ spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
                         break;
                 }
             }
-            fprintf(sp->fpxml, "%s\n", subline);
-            dbg_print(CCX_DMT_608, "%s\n", subline);
+                        strncat(str,(const char*)subline,256);
+                        strncat(str,"\n",256);
         }
     }
-    fprintf(sp->fpxml, "--></spu>\n");
-    dbg_print(CCX_DMT_608, "--></spu>\n");
-
-    fflush(sp->fpxml);
-
+	
+	write_spucomment(sp,str);
     return 1;
 }
 int write_cc_buffer_as_spupng(struct eia608_screen *data,struct s_context_cc608 *context)

@@ -27,4 +27,8 @@ void write_spumux_header(struct ccx_s_write *out);
 void write_spumux_footer(struct ccx_s_write *out);
 void draw_char_indexed(uint8_t * canvas, int rowstride,  uint8_t * pen,
 		     int unicode, int italic, int underline);
+void write_sputag(struct spupng_t *sp,LLONG ms_start,LLONG ms_end);
+void write_spucomment(struct spupng_t *sp,const char *str);
+char* get_spupng_filename(void *ctx);
+void inc_spupng_fileindex(void *ctx);
 #endif

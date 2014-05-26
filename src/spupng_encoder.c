@@ -292,3 +292,38 @@ void draw_char_indexed(uint8_t * canvas, int rowstride,  uint8_t * pen,
               unicode_ccfont2(unicode, italic),
               underline * (3 << 24) /* cell row 24, 25 */);
 }
+
+void write_sputag(struct spupng_t *sp,LLONG ms_start,LLONG ms_end)
+{
+        fprintf(sp->fpxml, "<spu start=\"%.3f\"", ((double)ms_start) / 1000);
+        fprintf(sp->fpxml, " end=\"%.3f\"", ((double)ms_end) / 1000);
+        fprintf(sp->fpxml, " image=\"%s\"", sp->pngfile);
+        fprintf(sp->fpxml, " xoffset=\"%d\"", sp->xOffset);
+        fprintf(sp->fpxml, " yoffset=\"%d\"", sp->yOffset);
+        fprintf(sp->fpxml, ">\n");
+        fprintf(sp->fpxml, "</spu>\n");
+
+}
+void write_spucomment(struct spupng_t *sp,const char *str)
+{
+        fprintf(sp->fpxml, "<!--\n");
+        fprintf(sp->fpxml, "%s\n", str);
+        fprintf(sp->fpxml, "-->\n");
+}
+
+int get_spupng_subtype(void)
+{
+        return (1 << CCX_OF_TYPE_TEXT)|(1<<CCX_OF_TYPE_IMAGE);
+}
+char* get_spupng_filename(void *ctx)
+{
+        struct spupng_t *sp = (struct spupng_t *)ctx;
+        sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex);
+        return sp->pngfile;
+}
+void inc_spupng_fileindex(void *ctx)
+{
+        struct spupng_t *sp = (struct spupng_t *)ctx;
+        sp->fileIndex++;
+}
+

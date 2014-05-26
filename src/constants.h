@@ -256,4 +256,7 @@ enum cxx_code_type
 #define CCX_TXT_IN_USE					2 // Positive autodetected, or forced, etc
 
 
+#define CCX_OF_TYPE_TEXT        1
+#define CCX_OF_TYPE_IMAGE       2
+
 #endif
