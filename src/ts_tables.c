@@ -392,17 +392,10 @@ int parse_PAT (void)
 
 	if (last_pat_payload!=NULL)
 	{
-		mprint ("Notice: PAT changed, clearing all variables.\n");
 		clear_PMT_array();
-		if (ccx_options.teletext_mode==CCX_TXT_IN_USE)
-			ccx_options.teletext_mode=CCX_TXT_AUTO_NOT_YET_FOUND;
-		ccx_options.ts_cappid=0;
-		cap_stream_type=CCX_STREAM_TYPE_UNKNOWNSTREAM;			
 		memset (PIDs_seen,0,sizeof (int) *65536); // Forget all we saw
 		if (!tlt_config.user_page) // If the user didn't select a page...
 			tlt_config.page=0; // ..forget whatever we detected.
-
-		gotpes=1;
 	}
 
 	last_pat_payload=(unsigned char *) realloc (last_pat_payload, payload_length+8); // Extra 8 in case memcpy copies dwords, etc
@@ -536,11 +529,14 @@ int parse_PAT (void)
     {
         TS_program_number = ts_prog_num;
         pmtpid = ts_prog_map_pid;
+
+		if (ccx_options.teletext_mode==CCX_TXT_IN_USE)
+			ccx_options.teletext_mode=CCX_TXT_AUTO_NOT_YET_FOUND;
 		if (!ccx_options.ts_forced_cappid)
 			ccx_options.ts_cappid = 0; // Reset caption stream pid
-        // If we have data flush it
-        if( capbuflen > 0 )        
-            gotpes = 1;
+		cap_stream_type=CCX_STREAM_TYPE_UNKNOWNSTREAM;			
+
+		gotpes = 1;
     }
 	return gotpes;
 }
