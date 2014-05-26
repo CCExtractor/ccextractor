@@ -797,22 +797,6 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct 
             break;
         case COM_RESUMECAPTIONLOADING:
 			context->mode = MODE_POPON;
-			// TODO: Is this right? 
-			// Needed for 2013-03-23_0100_US_MSNBC_The_Rachel_Maddow_Show.mpg
-			// But I can't find anything in the specs about RCL requiring a
-			// visible buffer switch
-            // The currently *visible* buffer is leaving, so now we know its ending
-            // time. Time to actually write it to file.
-			/*
-            if (write_cc_buffer (wb))
-                wb->data608->screenfuls_counter++;
-            wb->data608->visible_buffer = (wb->data608->visible_buffer==1) ? 2 : 1;
-            wb->data608->current_visible_start_ms=get_visible_start();
-            wb->data608->cursor_column=0;
-            wb->data608->cursor_row=0;
-            wb->data608->color=default_color;
-            wb->data608->font=FONT_REGULAR; */
-
             break;
         case COM_RESUMETEXTDISPLAY:
 			context->mode = MODE_TEXT;
@@ -845,8 +829,8 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct 
 				// Cursor position only reset if not already in rollup. 
 				// If no Preamble Address Code  is received, the base row shall default to 
 				// Row 15 or, ifa roll-up caption is currently displayed, to the same 
-				//base row last received, and the cursor shall be placed atColumn 1.
-				//" This rule is meant to be applied only when no roll-up    caption is 
+				//base row last received, and the cursor shall be placed at Column 1.
+				//" This rule is meant to be applied only when no roll-up caption is 
 				// currently displayed,
 				if (context->mode != MODE_FAKE_ROLLUP_1 &&
 					context->mode != MODE_ROLLUP_2 &&
