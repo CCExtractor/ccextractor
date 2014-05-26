@@ -835,7 +835,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct 
 			// If the reception of data for a row is interrupted by data for the alternate 
 			// data channel or for text mode, the display of caption text will resume from the same
 			// cursor position if a roll-up caption command is received and no PAC is given [...]
-			if (context->mode == MODE_TEXT)
+			if (context->mode != MODE_TEXT)
 			{
 				context->cursor_row = 14; // Default if the previous mode wasn't roll up already.
 				context->cursor_column = 0;
