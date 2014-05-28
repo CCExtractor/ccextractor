@@ -816,31 +816,29 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct 
             }
 			erase_memory(context, false);
 
+			// Cursor position only reset if not already in rollup. 
+			// If no Preamble Address Code  is received, the base row shall default to 
+			// Row 15 or, ifa roll-up caption is currently displayed, to the same 
+			//base row last received, and the cursor shall be placed at Column 1.
+			//" This rule is meant to be applied only when no roll-up caption is 
+			// currently displayed,
+			if (context->mode == MODE_FAKE_ROLLUP_1 ||
+				context->mode == MODE_ROLLUP_2 ||
+				context->mode == MODE_ROLLUP_3 ||
+				context->mode == MODE_ROLLUP_4)
+			{
+				context->cursor_row = context->rollup_base_row;
+				context->cursor_column = 0;
+			} 
 			// If the reception of data for a row is interrupted by data for the alternate 
 			// data channel or for text mode, the display of caption text will resume from the same
 			// cursor position if a roll-up caption command is received and no PAC is given [...]
-			if (context->mode != MODE_TEXT)
+			else if (context->mode != MODE_TEXT)
 			{
 				context->cursor_row = 14; // Default if the previous mode wasn't roll up already.
 				context->cursor_column = 0;
 			}
-			else
-			{
-				// Cursor position only reset if not already in rollup. 
-				// If no Preamble Address Code  is received, the base row shall default to 
-				// Row 15 or, ifa roll-up caption is currently displayed, to the same 
-				//base row last received, and the cursor shall be placed at Column 1.
-				//" This rule is meant to be applied only when no roll-up caption is 
-				// currently displayed,
-				if (context->mode != MODE_FAKE_ROLLUP_1 &&
-					context->mode != MODE_ROLLUP_2 &&
-					context->mode != MODE_ROLLUP_3 &&
-					context->mode == MODE_ROLLUP_4)
-				{
-					context->cursor_row = context->rollup_base_row;
-					context->cursor_column = 0;
-				}
-			}
+
 			switch (command)			
 			{
 				case COM_FAKE_RULLUP1:
