@@ -43,6 +43,7 @@ struct s_context_cc608
 	int my_field; // Used for sanity checks
 	long bytes_processed_608; // To be written ONLY by process_608
 	struct ccx_s_write *out;
+	int is_pac_received;
 };
 
 #ifdef __cplusplus
