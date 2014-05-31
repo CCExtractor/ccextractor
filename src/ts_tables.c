@@ -238,6 +238,7 @@ int parse_PMT (int pos)
 					dvbsub_set_write(cxx_dvb_context,&wbout1);
 					ccx_options.ts_cappid = newcappid = elementary_PID;
 					cap_stream_type = newcap_stream_type = ccx_stream_type;
+					max_dif = 10;
 				}
 			}
 		}

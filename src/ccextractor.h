@@ -418,6 +418,7 @@ extern int startbytes_avail; // Needs to be able to hold -1 result.
 
 extern unsigned char *pesheaderbuf;
 extern int pts_set; //0 = No, 1 = received, 2 = min_pts set
+extern unsigned long long max_dif;
 
 extern int MPEG_CLOCK_FREQ; // This is part of the standard
 

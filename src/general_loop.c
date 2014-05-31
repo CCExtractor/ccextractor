@@ -603,6 +603,7 @@ void general_loop(void)
 		{
 			int out_size = 0;
 			dvbsub_decode(cxx_dvb_context,NULL,&out_size,buffer + 2,inbuf);
+			set_fts();
 			got = inbuf;
 		}
         else if (ccx_bufferdatatype == CCX_PES)

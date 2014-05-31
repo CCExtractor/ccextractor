@@ -31,7 +31,7 @@ int cb_field1, cb_field2, cb_708;
 int saw_caption_block;
 
 int pts_set; //0 = No, 1 = received, 2 = min_pts set
-
+unsigned long long  max_dif = 5;
 unsigned pts_big_change;
 
 int MPEG_CLOCK_FREQ = 90000; // This "constant" is part of the standard
