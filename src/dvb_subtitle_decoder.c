@@ -115,7 +115,7 @@ static __inline unsigned int bytestream_get_byte(const uint8_t **b)
 static __inline unsigned int bytestream_get_be16(const uint8_t **b)
 {
 	(*b) += 2;
-	return RB16(*b -2);
+	return RB16(*b - 2);
 }
 typedef struct GetBitContext
 {
@@ -207,127 +207,166 @@ static void freep(void *arg)
 
 }
 #ifdef DEBUG
-static int png_save1(const char *filename, uint8_t *bitmap, int w, int h,uint32_t *clut)
+
+int check_trans_tn_intensity(int p1,int p2,int p3,int p4)
 {
-	FILE *f = NULL;
-	png_structp png_ptr = NULL;
-        png_infop info_ptr = NULL;
-        png_bytep* row_pointer = NULL;
-        int i, j, ret; 
-        int k = 0;
-	static png_color palette[10] =
-	{
-		{ 0xff, 0xff, 0xff }, // COL_WHITE = 0,
-		{ 0x00, 0xff, 0x00 }, // COL_GREEN = 1,
-		{ 0x00, 0x00, 0xff }, // COL_BLUE = 2,
-		{ 0x00, 0xff, 0xff }, // COL_CYAN = 3,
-		{ 0xff, 0x00, 0x00 }, // COL_RED = 4,
-		{ 0xff, 0xff, 0x00 }, // COL_YELLOW = 5,
-		{ 0xff, 0x00, 0xff }, // COL_MAGENTA = 6,
-		{ 0xff, 0xff, 0xff }, // COL_USERDEFINED = 7,
-		{ 0x00, 0x00, 0x00 }, // COL_BLACK = 8
-		{ 0x00, 0x00, 0x00 } // COL_TRANSPARENT = 9
-	};
-
-	static png_byte alpha[10] =
-	{
-		255,
-		255,
-		255,
-		255,
-		255,
-		255,
-		255,
-		255,
-		255,
-		0   
-	};
-
-	f = fopen(filename, "wb");
-        if (!f) 
-        {    
-                mprint("DVB:unable to open %s in write mode \n", filename);
-                ret = -1;
-                goto end; 
-        }    
-
-        if (!(png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL,
-                        NULL )))
-        {    
-                mprint("DVB:unable to create png write struct\n");
-                goto end; 
-        }    
-        if (!(info_ptr = png_create_info_struct(png_ptr)))
-        {    
-                mprint("DVB:unable to create png info struct\n");
-                ret = -1;
-                goto end; 
-        }    
-
-        row_pointer = (png_bytep*) malloc(sizeof(png_bytep) * h);
-        if (!row_pointer)
-        {    
-                mprint("DVB: unable to allocate row_pointer\n");
-                ret = -1;
-                goto end; 
-        }    
-        memset(row_pointer, 0, sizeof(png_bytep) * h);
-        png_init_io(png_ptr, f);
-
-	png_set_IHDR (png_ptr,
-			info_ptr,
-			w, 
-			h, 
-			/* bit_depth */ 8,
-			PNG_COLOR_TYPE_PALETTE,
-			PNG_INTERLACE_NONE,
-			PNG_COMPRESSION_TYPE_DEFAULT,
-			PNG_FILTER_TYPE_DEFAULT);
-
-	png_set_PLTE (png_ptr, info_ptr, palette, sizeof(palette) / sizeof(palette[0]));
-	png_set_tRNS (png_ptr, info_ptr, alpha, sizeof(alpha) / sizeof(alpha[0]), NULL);
-
-        for (i = 0; i < h; i++) 
-        {
-                row_pointer[i] = (png_byte*) malloc(
-                                png_get_rowbytes(png_ptr, info_ptr));
-                if (row_pointer[i] == NULL )
-                        break;
-        }
-        if (i != h)
-        {
-                mprint("DVB: unable to allocate row_pointer internals\n");
-                ret = -1;
-                goto end;
-        }
-
-        png_write_info(png_ptr, info_ptr);
-
-        for (i = 0; i < h; i++)
-        {
-                for (j = 0; j < png_get_rowbytes(png_ptr, info_ptr); j ++)
-                {
-                        k = bitmap[i * w + (j)];
-                        row_pointer[i][j] = k;//((k >> 16) & 0xff);
-                }
-        }
-
-        png_write_image(png_ptr, row_pointer);
-
-        png_write_end(png_ptr, info_ptr);
-        end:if (row_pointer)
-        {
-                for (i = 0; i < h; i++)
-                        freep(&row_pointer[i]);
-                freep(&row_pointer);
-        }
-        png_destroy_write_struct(&png_ptr, &info_ptr);
-        if (f)
-                fclose(f);
-        return ret;
-
+	return p1 < p2 || (p1 == p2 &&  p3 < p4);
 }
-static int png_save(const char *filename, uint32_t *bitmap, int w, int h)
+/**
+ * @param t array stating transparency of image
+ * @param i array stating intensity 
+ * @param lout output array which orederd list hash table 
+ *              this array must be initialized with valid index of array 
+ * @param nb number of element in array
+ */
+void sort_intensity_wise(uint8_t *t, uint8_t *i, uint8_t *lout, int nb)
+{
+	for (int gap = nb / 2; gap > 0; gap = gap / 2)
+	{
+		int p, j, tmp;
+		for (p = gap; p < nb; p++)
+		{
+#define CHECK_TRANSPARENCY ( t[tmp] < t[lout[j - gap]] )
+			/* Transparency have major role in intensity so priority to transperency over Y */
+#define CHECK_INTENSITY (t[tmp] == t[lout[j - gap]]&& i[tmp] < i[lout[j - gap]])
+#define CHECK_TRANS_TN_INTEN (CHECK_TRANSPARENCY || CHECK_INTENSITY)
+			tmp = lout[p];
+			for (j = p; j >= gap && check_trans_tn_intensity(t[tmp],t[lout[j - gap]],i[tmp],i[lout[j - gap]]); j -= gap)
+			{
+				lout[j] = lout[j - gap];
+			}
+			lout[j] = tmp;
+#undef CHECK_TRANSPARENCY
+#undef CHECK_INTENSITY
+#undef CHECK_TRANS_TN_INTEN
+		}
+	}
+}
+
+int mapclut_paletee(png_color *palette, png_byte *alpha, uint32_t *clut,
+		uint8_t depth)
+{
+	for (int i = 0; i < depth; i++)
+	{
+		palette[i].red = ((clut[i] >> 16) & 0xff);
+		palette[i].green = ((clut[i] >> 8) & 0xff);
+		palette[i].blue = (clut[i] & 0xff);
+		alpha[i] = ((clut[i] >> 24) & 0xff);
+	}
+	return 0;
+}
+
+int quantize_map(png_byte *alpha, uint8_t *intensity, png_color *palette,
+		uint8_t *bitmap, int h, int w, int max_color, int nb_color)
+{
+	/*
+	 * occurrence of color in image
+	 */
+	uint32_t *histogram = NULL;
+	/* intensity ordered table */
+	uint8_t *iot = NULL;
+	/* array of color with most occurrence according to histogram
+	 * save index of intensity order table
+	 */
+	uint32_t *mcit = NULL;
+
+	int ret = 0;
+
+	histogram = (uint32_t*) malloc(nb_color * sizeof(uint32_t));
+	if (!histogram)
+	{
+		ret = -1;
+		goto end;
+	}
+
+	iot = (uint8_t*) malloc(nb_color * sizeof(uint8_t));
+	if (!iot)
+	{
+		ret = -1;
+		goto end;
+	}
+
+	mcit = (uint32_t*) malloc(nb_color * sizeof(uint32_t));
+	if (!mcit)
+	{
+		ret = -1;
+		goto end;
+	}
+
+	memset(histogram, 0, nb_color * sizeof(uint32_t));
+	for (int i = 0; i < nb_color; i++)
+	{
+		iot[i] = i;
+	}
+	memset(mcit, 0, nb_color * sizeof(uint32_t));
+
+	/* calculate histogram of image */
+	for (int i = 0; i < h; i++)
+	{
+		for (int j = 0; j < w; j++)
+		{
+			histogram[bitmap[i * w + (j)]]++;
+		}
+	}
+	sort_intensity_wise((uint8_t*) alpha, (uint8_t*) intensity, iot, nb_color);
+
+	/* using selection  sort since need to find only max_color */
+	for (int i = 0; i < max_color; i++)
+	{
+		uint32_t max_val = 0;
+		uint32_t max_ind = 0;
+		int j;
+		for (j = 0; j < nb_color; j++)
+		{
+			if (max_val < histogram[iot[j]])
+			{
+				max_val = histogram[iot[j]];
+				max_ind = j;
+			}
+		}
+		for (j = i; j > 0 && max_ind < mcit[j - 1]; j--)
+		{
+			mcit[j] = mcit[j - 1];
+		}
+		mcit[j] = max_ind;
+		histogram[iot[max_ind]] = 0;
+	}
+
+	for (int i = 0, mxi = 0; i < nb_color; i++)
+	{
+		int step, inc;
+		if (i == mcit[mxi])
+		{
+			mxi = (mxi < max_color) ? mxi + 1 : mxi;
+			continue;
+		}
+		inc = (mxi) ? -1 : 0;
+		step = mcit[mxi + inc] + ((mcit[mxi] - mcit[mxi + inc]) / 3);
+		if (i <= step)
+		{
+			int index = iot[mcit[mxi + inc]];
+			alpha[i] = alpha[index];
+			palette[i].red = palette[index].red;
+			palette[i].blue = palette[index].blue;
+			palette[i].green = palette[index].green;
+		}
+		else
+		{
+			int index = iot[mcit[mxi]];
+			alpha[i] = alpha[index];
+			palette[i].red = palette[index].red;
+			palette[i].blue = palette[index].blue;
+			palette[i].green = palette[index].green;
+		}
+
+	}
+	end: freep(&histogram);
+	freep(&mcit);
+	freep(&iot);
+	return ret;
+}
+static int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
+		uint32_t *clut, uint8_t *luit,uint8_t depth)
 {
 	FILE *f = NULL;
 	png_structp png_ptr = NULL;
@@ -335,6 +374,44 @@ static int png_save(const char *filename, uint32_t *bitmap, int w, int h)
 	png_bytep* row_pointer = NULL;
 	int i, j, ret;
 	int k = 0;
+
+	png_color *palette = NULL;
+	png_byte *alpha = NULL;
+	int nb_color = (1<< depth);
+
+	if(!h)
+		h = 1;
+	if(!w)
+		w = 1;
+
+	palette = (png_color*) malloc(nb_color * sizeof(png_color));
+	if(!palette)
+	{
+		ret = -1;
+		goto end;
+	}
+	alpha = (png_byte*) malloc(nb_color * sizeof(png_byte));
+	if(!alpha)
+	{
+		ret = -1;
+		goto end;
+	}
+
+
+	if(clut)
+		mapclut_paletee(palette, alpha, clut, nb_color);
+	else
+	{
+		/* initialize colors with white */
+		memset(palette,0xff,sizeof(nb_color * sizeof(*palette)));
+
+		/* initialize transparency as complete transparent */
+		memset(alpha,0,sizeof(nb_color * sizeof(*alpha)));
+	}
+
+	if(bitmap)
+		quantize_map(alpha, luit, palette, bitmap, h, w, 3, nb_color);
+
 	f = fopen(filename, "wb");
 	if (!f)
 	{
@@ -343,8 +420,8 @@ static int png_save(const char *filename, uint32_t *bitmap, int w, int h)
 		goto end;
 	}
 
-	if (!(png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL,
-			NULL )))
+	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL,NULL);
+	if (!png_ptr)
 	{
 		mprint("DVB:unable to create png write struct\n");
 		goto end;
@@ -367,14 +444,20 @@ static int png_save(const char *filename, uint32_t *bitmap, int w, int h)
 	png_init_io(png_ptr, f);
 
 	png_set_IHDR(png_ptr, info_ptr, w, h,
-	/* bit_depth */8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
-			PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+	/* bit_depth */8,
+	PNG_COLOR_TYPE_PALETTE,
+	PNG_INTERLACE_NONE,
+	PNG_COMPRESSION_TYPE_DEFAULT,
+	PNG_FILTER_TYPE_DEFAULT);
+
+	png_set_PLTE(png_ptr, info_ptr, palette, nb_color);
+	png_set_tRNS(png_ptr, info_ptr, alpha, nb_color, NULL);
 
 	for (i = 0; i < h; i++)
 	{
 		row_pointer[i] = (png_byte*) malloc(
 				png_get_rowbytes(png_ptr, info_ptr));
-		if (row_pointer[i] == NULL )
+		if (row_pointer[i] == NULL)
 			break;
 	}
 	if (i != h)
@@ -383,18 +466,16 @@ static int png_save(const char *filename, uint32_t *bitmap, int w, int h)
 		ret = -1;
 		goto end;
 	}
-
 	png_write_info(png_ptr, info_ptr);
-
 	for (i = 0; i < h; i++)
 	{
-		for (j = 0; j < png_get_rowbytes(png_ptr, info_ptr); j += 4)
+		for (j = 0; j < png_get_rowbytes(png_ptr, info_ptr); j++)
 		{
-			k = bitmap[i * w + (j / 4)];
-			row_pointer[i][j] = ((k >> 16) & 0xff);
-			row_pointer[i][j + 1] = ((k >> 8) & 0xff);
-			row_pointer[i][j + 2] = ((k) & 0xff);
-			row_pointer[i][j + 3] = (k >> 24) & 0xff;
+			if(bitmap)
+				k = bitmap[i * w + (j)];
+			else
+				k = 0;
+			row_pointer[i][j] = k;
 		}
 	}
 
@@ -411,6 +492,7 @@ static int png_save(const char *filename, uint32_t *bitmap, int w, int h)
 	if (f)
 		fclose(f);
 	return ret;
+
 }
 
 #endif
@@ -425,6 +507,9 @@ typedef struct DVBSubCLUT
 	uint32_t clut4[4];
 	uint32_t clut16[16];
 	uint32_t clut256[256];
+	uint8_t ilut4[4];
+	uint8_t ilut16[16];
+	uint8_t ilut256[256];
 
 	struct DVBSubCLUT *next;
 } DVBSubCLUT;
@@ -513,7 +598,15 @@ typedef struct DVBSubContext
 	DVBSubRegionDisplay *display_list;
 	DVBSubDisplayDefinition *display_definition;
 	struct ccx_s_write *out;
+	long long prev_start;
 } DVBSubContext;
+
+typedef struct DVBOutContext
+{
+	long long start_time;
+	long long end_time;
+
+}DVBOutContext;
 
 static DVBSubObject* get_object(DVBSubContext *ctx, int object_id)
 {
@@ -641,6 +734,109 @@ static void delete_regions(DVBSubContext *ctx)
 		free(region);
 	}
 }
+
+#ifdef DEBUG
+static void save_display_set(DVBSubContext *ctx)
+{
+	DVBSubRegion *region;
+	DVBSubRegionDisplay *display;
+	DVBSubCLUT *clut;
+	int x_pos, y_pos, width, height;
+	int x, y, y_off, x_off;
+	uint8_t *pbuf;
+	char *filename;
+	void *sp = ctx->out->spupng_data;
+	x_pos = -1;
+	y_pos = -1;
+	width = 0;
+	height = 0;
+
+
+	for (display = ctx->display_list; display; display = display->next)
+	{
+		region = get_region(ctx, display->region_id);
+
+		if (x_pos == -1)
+		{
+			x_pos = display->x_pos;
+			y_pos = display->y_pos;
+			width = region->width;
+			height = region->height;
+		}
+		else
+		{
+			if (display->x_pos < x_pos)
+			{
+				width += (x_pos - display->x_pos);
+				x_pos = display->x_pos;
+			}
+
+			if (display->y_pos < y_pos)
+			{
+				height += (y_pos - display->y_pos);
+				y_pos = display->y_pos;
+			}
+
+			if (display->x_pos + region->width > x_pos + width)
+			{
+				width = display->x_pos + region->width - x_pos;
+			}
+
+			if (display->y_pos + region->height > y_pos + height)
+			{
+				height = display->y_pos + region->height - y_pos;
+			}
+		}
+	}
+
+	if (x_pos >= 0)
+	{
+
+		filename = get_spupng_filename(sp);
+		inc_spupng_fileindex(sp);
+
+		pbuf = (uint8_t*) malloc(width * height);
+		memset(pbuf, 0x0, width * height);
+
+		for (display = ctx->display_list; display; display = display->next)
+		{
+			region = get_region(ctx, display->region_id);
+
+			x_off = display->x_pos - x_pos;
+			y_off = display->y_pos - y_pos;
+
+			clut = get_clut(ctx, region->clut);
+
+			if (clut == 0)
+				clut = &default_clut;
+
+			for (y = 0; y < region->height; y++)
+			{
+				for (x = 0; x < region->width; x++)
+				{
+					pbuf[((y + y_off) * width) + x_off + x] =
+							region->pbuf[y * region->width + x];
+				}
+			}
+
+		}
+		save_spupng(filename, pbuf, width, height,
+				clut->clut16, clut->ilut16,region->depth);
+
+		free(pbuf);
+	}
+	else if(!ctx->prev_start)
+	{
+		filename = get_spupng_filename(sp);
+		inc_spupng_fileindex(sp);
+		/* save dummy frame */
+		save_spupng(filename,NULL,1,1,NULL,NULL,0);
+
+	}
+
+}
+#endif
+
 /**
  * @param composition_id composition-page_id found in Subtitle descriptors
  *                       associated with     subtitle stream in the    PMT
@@ -666,12 +862,17 @@ void* dvbsub_init_decoder(int composition_id, int ancillary_id)
 	default_clut.id = -1;
 	default_clut.next = NULL;
 
-	default_clut.clut4[0] = RGBA( 0, 0, 0, 0);
+	default_clut.clut4[0] = RGBA(0, 0, 0, 0);
 	default_clut.clut4[1] = RGBA(255, 255, 255, 255);
-	default_clut.clut4[2] = RGBA( 0, 0, 0, 255);
+	default_clut.clut4[2] = RGBA(0, 0, 0, 255);
 	default_clut.clut4[3] = RGBA(127, 127, 127, 255);
+	default_clut.ilut4[0] = 0;
+	default_clut.ilut4[1] = 255;
+	default_clut.ilut4[2] = 0;
+	default_clut.ilut4[3] = 127;
 
-	default_clut.clut16[0] = RGBA( 0, 0, 0, 0);
+	default_clut.clut16[0] = RGBA(0, 0, 0, 0);
+	default_clut.ilut16[0] = 0;
 	for (i = 1; i < 16; i++)
 	{
 		if (i < 8)
@@ -687,9 +888,11 @@ void* dvbsub_init_decoder(int composition_id, int ancillary_id)
 			b = (i & 4) ? 127 : 0;
 		}
 		default_clut.clut16[i] = RGBA(r, g, b, 255);
+		default_clut.ilut16[i] = 0;
 	}
 
-	default_clut.clut256[0] = RGBA( 0, 0, 0, 0);
+	default_clut.clut256[0] = RGBA(0, 0, 0, 0);
+	default_clut.ilut256[0] = 0;
 	for (i = 1; i < 256; i++)
 	{
 		if (i < 8)
@@ -703,32 +906,33 @@ void* dvbsub_init_decoder(int composition_id, int ancillary_id)
 		{
 			switch (i & 0x88)
 			{
-				case 0x00:
-					r = ((i & 1) ? 85 : 0) + ((i & 0x10) ? 170 : 0);
-					g = ((i & 2) ? 85 : 0) + ((i & 0x20) ? 170 : 0);
-					b = ((i & 4) ? 85 : 0) + ((i & 0x40) ? 170 : 0);
-					a = 255;
-					break;
-				case 0x08:
-					r = ((i & 1) ? 85 : 0) + ((i & 0x10) ? 170 : 0);
-					g = ((i & 2) ? 85 : 0) + ((i & 0x20) ? 170 : 0);
-					b = ((i & 4) ? 85 : 0) + ((i & 0x40) ? 170 : 0);
-					a = 127;
-					break;
-				case 0x80:
-					r = 127 + ((i & 1) ? 43 : 0) + ((i & 0x10) ? 85 : 0);
-					g = 127 + ((i & 2) ? 43 : 0) + ((i & 0x20) ? 85 : 0);
-					b = 127 + ((i & 4) ? 43 : 0) + ((i & 0x40) ? 85 : 0);
-					a = 255;
-					break;
-				case 0x88:
-					r = ((i & 1) ? 43 : 0) + ((i & 0x10) ? 85 : 0);
-					g = ((i & 2) ? 43 : 0) + ((i & 0x20) ? 85 : 0);
-					b = ((i & 4) ? 43 : 0) + ((i & 0x40) ? 85 : 0);
-					a = 255;
-					break;
+			case 0x00:
+				r = ((i & 1) ? 85 : 0) + ((i & 0x10) ? 170 : 0);
+				g = ((i & 2) ? 85 : 0) + ((i & 0x20) ? 170 : 0);
+				b = ((i & 4) ? 85 : 0) + ((i & 0x40) ? 170 : 0);
+				a = 255;
+				break;
+			case 0x08:
+				r = ((i & 1) ? 85 : 0) + ((i & 0x10) ? 170 : 0);
+				g = ((i & 2) ? 85 : 0) + ((i & 0x20) ? 170 : 0);
+				b = ((i & 4) ? 85 : 0) + ((i & 0x40) ? 170 : 0);
+				a = 127;
+				break;
+			case 0x80:
+				r = 127 + ((i & 1) ? 43 : 0) + ((i & 0x10) ? 85 : 0);
+				g = 127 + ((i & 2) ? 43 : 0) + ((i & 0x20) ? 85 : 0);
+				b = 127 + ((i & 4) ? 43 : 0) + ((i & 0x40) ? 85 : 0);
+				a = 255;
+				break;
+			case 0x88:
+				r = ((i & 1) ? 43 : 0) + ((i & 0x10) ? 85 : 0);
+				g = ((i & 2) ? 43 : 0) + ((i & 0x20) ? 85 : 0);
+				b = ((i & 4) ? 43 : 0) + ((i & 0x40) ? 85 : 0);
+				a = 255;
+				break;
 			}
 		}
+		default_clut.ilut256[i] = 0;
 		default_clut.clut256[i] = RGBA(r, g, b, a);
 	}
 
@@ -1150,70 +1354,67 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx,
 
 		switch (*buf++)
 		{
-			case 0x10:
-				if (region->depth == 8)
-					map_table = map2to8;
-				else if (region->depth == 4)
-					map_table = map2to4;
-				else
-					map_table = NULL;
+		case 0x10:
+			if (region->depth == 8)
+				map_table = map2to8;
+			else if (region->depth == 4)
+				map_table = map2to4;
+			else
+				map_table = NULL;
 
-				x_pos = dvbsub_read_2bit_string(pbuf + (y_pos * region->width),
-						region->width, &buf, buf_end - buf, non_mod, map_table,
-						x_pos);
-				break;
-			case 0x11:
-				if (region->depth < 4)
-				{
-					mprint("4-bit pixel string in %d-bit region!\n",
-							region->depth);
-					return;
-				}
+			x_pos = dvbsub_read_2bit_string(pbuf + (y_pos * region->width),
+					region->width, &buf, buf_end - buf, non_mod, map_table,
+					x_pos);
+			break;
+		case 0x11:
+			if (region->depth < 4)
+			{
+				mprint("4-bit pixel string in %d-bit region!\n", region->depth);
+				return;
+			}
 
-				if (region->depth == 8)
-					map_table = map4to8;
-				else
-					map_table = NULL;
+			if (region->depth == 8)
+				map_table = map4to8;
+			else
+				map_table = NULL;
 
-				x_pos = dvbsub_read_4bit_string(pbuf + (y_pos * region->width),
-						region->width, &buf, buf_end - buf, non_mod, map_table,
-						x_pos);
-				break;
-			case 0x12:
-				if (region->depth < 8)
-				{
-					mprint("8-bit pixel string in %d-bit region!\n",
-							region->depth);
-					return;
-				}
+			x_pos = dvbsub_read_4bit_string(pbuf + (y_pos * region->width),
+					region->width, &buf, buf_end - buf, non_mod, map_table,
+					x_pos);
+			break;
+		case 0x12:
+			if (region->depth < 8)
+			{
+				mprint("8-bit pixel string in %d-bit region!\n", region->depth);
+				return;
+			}
 
-				x_pos = dvbsub_read_8bit_string(pbuf + (y_pos * region->width),
-						region->width, &buf, buf_end - buf, non_mod, NULL,
-						x_pos);
-				break;
+			x_pos = dvbsub_read_8bit_string(pbuf + (y_pos * region->width),
+					region->width, &buf, buf_end - buf, non_mod, NULL, x_pos);
+			break;
 
-			case 0x20:
-				map2to4[0] = (*buf) >> 4;
-				map2to4[1] = (*buf++) & 0xf;
-				map2to4[2] = (*buf) >> 4;
-				map2to4[3] = (*buf++) & 0xf;
-				break;
-			case 0x21:
-				for (i = 0; i < 4; i++)
-					map2to8[i] = *buf++;
-				break;
-			case 0x22:
-				for (i = 0; i < 16; i++)
-					map4to8[i] = *buf++;
-				break;
+		case 0x20:
+			map2to4[0] = (*buf) >> 4;
+			map2to4[1] = (*buf++) & 0xf;
+			map2to4[2] = (*buf) >> 4;
+			map2to4[3] = (*buf++) & 0xf;
+			break;
+		case 0x21:
+			for (i = 0; i < 4; i++)
+				map2to8[i] = *buf++;
+			break;
+		case 0x22:
+			for (i = 0; i < 16; i++)
+				map4to8[i] = *buf++;
+			break;
 
-			case 0xf0:
-				x_pos = display->x_pos;
-				y_pos += 2;
-				break;
-			default:
-				mprint("Unknown/unsupported pixel block 0x%x\n", *(buf - 1));
-				/* no break */
+		case 0xf0:
+			x_pos = display->x_pos;
+			y_pos += 2;
+			break;
+		default:
+			mprint("Unknown/unsupported pixel block 0x%x\n", *(buf - 1));
+			/* no break */
 		}
 	}
 
@@ -1366,11 +1567,21 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
 			}
 
 			if (depth & 0x80)
-				clut->clut4[entry_id] = RGBA(r,g,b,255 - alpha);
+			{
+				clut->clut4[entry_id] = RGBA(r, g, b, 255 - alpha);
+				clut->ilut4[entry_id] = y;
+			}
 			else if (depth & 0x40)
-				clut->clut16[entry_id] = RGBA(r,g,b,255 - alpha);
+			{
+				clut->clut16[entry_id] = RGBA(r, g, b, 255 - alpha);
+				clut->ilut16[entry_id] = y;
+
+			}
 			else if (depth & 0x20)
-				clut->clut256[entry_id] = RGBA(r,g,b,255 - alpha);
+			{
+				clut->clut256[entry_id] = RGBA(r, g, b, 255 - alpha);
+				clut->ilut256[entry_id] = y;
+			}
 		}
 	}
 	return 0;
@@ -1501,7 +1712,9 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 		object->display_list = display;
 	}
 }
-
+/*
+ * xxx loose last frame
+ */
 static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 		int buf_size)
 {
@@ -1514,6 +1727,10 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	int page_state;
 	int timeout;
 	int version;
+	long long start = get_visible_start();
+	char *filename;
+	void *sp = ctx->out->spupng_data;
+
 
 	if (buf_size < 1)
 		return;
@@ -1531,11 +1748,29 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	ctx->time_out = timeout;
 	ctx->version = version;
 
+	filename = get_spupng_filename(sp);
+	if(ctx->prev_start == 0)
+	{
+		write_sputag(sp, ctx->prev_start, start);
+		save_display_set(ctx);
+	}
+	else if(ctx->display_list)
+	{
+		write_sputag(sp, ctx->prev_start, start);
+		save_display_set(ctx);
+	}
+
+	ctx->prev_start = start;
+
 	if (page_state == 1 || page_state == 2)
 	{
 		delete_regions(ctx);
 		delete_objects(ctx);
 		delete_cluts(ctx);
+	}
+	else if(page_state == 0)
+	{
+
 	}
 
 	tmp_display_list = ctx->display_list;
@@ -1586,116 +1821,6 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	}
 
 }
-
-#ifdef DEBUG
-static void save_display_set(DVBSubContext *ctx)
-{
-	DVBSubRegion *region;
-	DVBSubRegionDisplay *display;
-	DVBSubCLUT *clut;
-	uint32_t *clut_table;
-	int x_pos, y_pos, width, height;
-	int x, y, y_off, x_off;
-	uint32_t *pbuf;
-	char *filename;
-	void *sp = ctx->out->spupng_data;
-	long long start = get_visible_start();
-	x_pos = -1;
-	y_pos = -1;
-	width = 0;
-	height = 0;
-
-	filename = get_spupng_filename(sp);
-	inc_spupng_fileindex(sp);
-	write_sputag(sp, start, start + ctx->time_out);
-	for (display = ctx->display_list; display; display = display->next)
-	{
-		region = get_region(ctx, display->region_id);
-
-		if (x_pos == -1)
-		{
-			x_pos = display->x_pos;
-			y_pos = display->y_pos;
-			width = region->width;
-			height = region->height;
-		}
-		else
-		{
-			if (display->x_pos < x_pos)
-			{
-				width += (x_pos - display->x_pos);
-				x_pos = display->x_pos;
-			}
-
-			if (display->y_pos < y_pos)
-			{
-				height += (y_pos - display->y_pos);
-				y_pos = display->y_pos;
-			}
-
-			if (display->x_pos + region->width > x_pos + width)
-			{
-				width = display->x_pos + region->width - x_pos;
-			}
-
-			if (display->y_pos + region->height > y_pos + height)
-			{
-				height = display->y_pos + region->height - y_pos;
-			}
-		}
-	}
-
-	if (x_pos >= 0)
-	{
-
-		pbuf = (uint32_t*) malloc(width * height * 4);
-		memset(pbuf, 0x0, width * height * 4);
-
-		for (display = ctx->display_list; display; display = display->next)
-		{
-			region = get_region(ctx, display->region_id);
-
-			x_off = display->x_pos - x_pos;
-			y_off = display->y_pos - y_pos;
-
-			clut = get_clut(ctx, region->clut);
-
-			if (clut == 0)
-				clut = &default_clut;
-
-			switch (region->depth)
-			{
-				case 2:
-					clut_table = clut->clut4;
-					break;
-				case 8:
-					clut_table = clut->clut256;
-					break;
-				case 4:
-				default:
-					clut_table = clut->clut16;
-					break;
-			}
-
-			for (y = 0; y < region->height; y++)
-			{
-				for (x = 0; x < region->width; x++)
-				{
-					pbuf[((y + y_off) * width) + x_off + x] =
-							clut_table[region->pbuf[y * region->width + x]];
-				}
-			}
-
-		}
-
-		png_save(filename, pbuf, width, height);
-		//png_save1(filename, region->pbuf, region->width, region->height,clut->clut16);
-
-		free(pbuf);
-	}
-
-}
-#endif
 
 static void dvbsub_parse_display_definition_segment(void *dvb_ctx,
 		const uint8_t *buf, int buf_size)
@@ -1776,7 +1901,7 @@ static int dvbsub_display_end_segment(void *dvb_ctx, const uint8_t *buf,
 #ifdef DEBUG
 	if (ctx->object_list)
 	{
-		save_display_set(ctx);
+		//save_display_set(ctx);
 	}
 #endif
 
@@ -1796,7 +1921,6 @@ int dvbsub_decode(void *dvb_ctx, void *data, int *data_size,
 		const unsigned char *buf, int buf_size)
 {
 	DVBSubContext *ctx = (DVBSubContext *) dvb_ctx;
-//    AVSubtitle *sub = data;
 	const uint8_t *p, *p_end;
 	int segment_type;
 	int page_id;
@@ -1833,38 +1957,37 @@ int dvbsub_decode(void *dvb_ctx, void *data, int *data_size,
 		{
 			switch (segment_type)
 			{
-				case DVBSUB_PAGE_SEGMENT:
-					dvbsub_parse_page_segment(dvb_ctx, p, segment_length);
-					got_segment |= 1;
-					break;
-				case DVBSUB_REGION_SEGMENT:
-					dvbsub_parse_region_segment(dvb_ctx, p, segment_length);
-					got_segment |= 2;
-					break;
-				case DVBSUB_CLUT_SEGMENT:
-					ret = dvbsub_parse_clut_segment(dvb_ctx, p, segment_length);
-					if (ret < 0)
-						return ret;
-					got_segment |= 4;
-					break;
-				case DVBSUB_OBJECT_SEGMENT:
-					dvbsub_parse_object_segment(dvb_ctx, p, segment_length);
-					got_segment |= 8;
-					break;
-				case DVBSUB_DISPLAYDEFINITION_SEGMENT:
-					dvbsub_parse_display_definition_segment(dvb_ctx, p,
-							segment_length);
-					break;
-				case DVBSUB_DISPLAY_SEGMENT:
-					*data_size = dvbsub_display_end_segment(dvb_ctx, p,
-							segment_length);
-					got_segment |= 16;
-					break;
-				default:
-					mprint(
-							"Subtitling segment type 0x%x, page id %d, length %d\n",
-							segment_type, page_id, segment_length);
-					break;
+			case DVBSUB_PAGE_SEGMENT:
+				dvbsub_parse_page_segment(dvb_ctx, p, segment_length);
+				got_segment |= 1;
+				break;
+			case DVBSUB_REGION_SEGMENT:
+				dvbsub_parse_region_segment(dvb_ctx, p, segment_length);
+				got_segment |= 2;
+				break;
+			case DVBSUB_CLUT_SEGMENT:
+				ret = dvbsub_parse_clut_segment(dvb_ctx, p, segment_length);
+				if (ret < 0)
+					return ret;
+				got_segment |= 4;
+				break;
+			case DVBSUB_OBJECT_SEGMENT:
+				dvbsub_parse_object_segment(dvb_ctx, p, segment_length);
+				got_segment |= 8;
+				break;
+			case DVBSUB_DISPLAYDEFINITION_SEGMENT:
+				dvbsub_parse_display_definition_segment(dvb_ctx, p,
+						segment_length);
+				break;
+			case DVBSUB_DISPLAY_SEGMENT:
+				*data_size = dvbsub_display_end_segment(dvb_ctx, p,
+						segment_length);
+				got_segment |= 16;
+				break;
+			default:
+				mprint("Subtitling segment type 0x%x, page id %d, length %d\n",
+						segment_type, page_id, segment_length);
+				break;
 			}
 		}
 
@@ -1873,7 +1996,10 @@ int dvbsub_decode(void *dvb_ctx, void *data, int *data_size,
 	// Some streams do not send a display segment but if we have all the other
 	// segments then we need no further data.
 	if (got_segment == 15)
+	{
 		*data_size = dvbsub_display_end_segment(dvb_ctx, p, 0);
+
+	}
 
 	return p - buf;
 }
@@ -1920,7 +2046,7 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 	for (i = 0; i < cfg->n_language; i++, data += i * 8)
 	{
 		/* setting language to undefined if not found in language lkup table */
-		for (j = 0, cfg->lang_index[i] = 0; dvb_language[j] != NULL ; j++)
+		for (j = 0, cfg->lang_index[i] = 0; dvb_language[j] != NULL; j++)
 		{
 			if (!strncmp((const char*) (data), dvb_language[j], 3))
 				cfg->lang_index[i] = j;
