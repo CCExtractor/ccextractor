@@ -326,4 +326,10 @@ void inc_spupng_fileindex(void *ctx)
         struct spupng_t *sp = (struct spupng_t *)ctx;
         sp->fileIndex++;
 }
+void set_spupng_offset(void *ctx,int x,int y)
+{
+    struct spupng_t *sp = (struct spupng_t *)ctx;
+    sp->xOffset = x;
+    sp->yOffset = y;
+}
 

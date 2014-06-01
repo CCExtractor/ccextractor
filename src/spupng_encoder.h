@@ -31,4 +31,5 @@ void write_sputag(struct spupng_t *sp,LLONG ms_start,LLONG ms_end);
 void write_spucomment(struct spupng_t *sp,const char *str);
 char* get_spupng_filename(void *ctx);
 void inc_spupng_fileindex(void *ctx);
+void set_spupng_offset(void *ctx,int x,int y);
 #endif

@@ -794,6 +794,7 @@ static void save_display_set(DVBSubContext *ctx)
 
 		filename = get_spupng_filename(sp);
 		inc_spupng_fileindex(sp);
+		set_spupng_offset(sp,y_pos,x_pos);
 
 		pbuf = (uint8_t*) malloc(width * height);
 		memset(pbuf, 0x0, width * height);
@@ -1767,10 +1768,6 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 		delete_regions(ctx);
 		delete_objects(ctx);
 		delete_cluts(ctx);
-	}
-	else if(page_state == 0)
-	{
-
 	}
 
 	tmp_display_list = ctx->display_list;
