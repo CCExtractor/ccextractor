@@ -177,7 +177,7 @@ void init_context_cc608(struct s_context_cc608 *data, int field)
 	data->bytes_processed_608 = 0;
 	data->my_field = field;
 	data->out = NULL;
-	data->is_pac_received = 0;
+	data->have_cursor_position = 0;
 }
 
 struct eia608_screen *get_writing_buffer(struct s_context_cc608 *context)
@@ -819,13 +819,12 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct 
 			// If the reception of data for a row is interrupted by data for the alternate 
 			// data channel or for text mode, the display of caption text will resume from the same
 			// cursor position if a roll-up caption command is received and no PAC is given [...]
-			if (context->mode != MODE_TEXT && context->is_pac_received == 0)
+			if (context->mode != MODE_TEXT && context->have_cursor_position == 0)
 			{
-				// If no Preamble Address Code  is received, the base row shall default to 
-				// Row 15 or, ifa roll-up caption is currently displayed, to the same 
-				//base row last received, and the cursor shall be placed at Column 1.
+				// If no Preamble Address Code  is received, the base row shall default to row 15 
 				context->cursor_row = 14; // Default if the previous mode wasn't roll up already.
 				context->cursor_column = 0;
+				context->have_cursor_position = 1;
 			}
 
 			switch (command)			
@@ -1049,7 +1048,7 @@ void handle_pac(unsigned char c1, unsigned char c2, struct s_context_cc608 *cont
     }
 	context->rollup_base_row = row - 1;
 	context->cursor_column = indent;
-	context->is_pac_received = 1;
+	context->have_cursor_position = 1;
 	if (context->mode == MODE_FAKE_ROLLUP_1 || context->mode == MODE_ROLLUP_2 ||
 		context->mode == MODE_ROLLUP_3 || context->mode == MODE_ROLLUP_4)
 	{
