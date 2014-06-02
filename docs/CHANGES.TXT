@@ -6,6 +6,7 @@ over the summer, and their work is already reaching the mainstream
 version of CCExtractor.
 
 - Added a huge dictionary submitted by Matt Stockard.
+- Added DVB subtitles decoder, spupng in output
 
 0.69
 ----
