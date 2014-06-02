@@ -15,9 +15,7 @@ VPATH = ../src:../src/gpacmp4:../src/libpng:../src/zlib
 
 SRCS_DIR = ../src
 SRCS_C = $(wildcard $(SRCS_DIR)/*.c)
-SRCS_CPP = $(wildcard $(SRCS_DIR)/*.cpp)
-OBJS = $(SRCS_C:$(SRCS_DIR)/%.c=$(OBJS_DIR)/%.o) \
-	   $(SRCS_CPP:$(SRCS_DIR)/%.cpp=$(OBJS_DIR)/%.o)
+OBJS = $(SRCS_C:$(SRCS_DIR)/%.c=$(OBJS_DIR)/%.o)
 
 SRCS_PNG_DIR = $(SRCS_DIR)/libpng
 SRCS_PNG = $(wildcard $(SRCS_PNG_DIR)/*.c)
@@ -70,7 +68,8 @@ uninstall:
 
 .PHONY: depend dep
 depend dep:
-	$(CXX) $(CXXFLAGS) -E -MM $(SRCS_C) $(SRCS_CPP) $(SRCS_PNG) $(SRCS_ZLIB) \
-		$(SRCS_GPACMP4_C) $(SRCS_GPACMP4_CPP) > .depend
+	$(CXX) $(CXXFLAGS) -E -MM $(SRCS_C) $(SRCS_PNG) $(SRCS_ZLIB) \
+		$(SRCS_GPACMP4_C) $(SRCS_GPACMP4_CPP) |\
+		sed 's/^[a-zA-Z_0-9]*.o/$(OBJS_DIR)\/&/' > .depend
 
 -include .depend
