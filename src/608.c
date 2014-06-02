@@ -177,7 +177,7 @@ void init_context_cc608(struct s_context_cc608 *data, int field)
 	data->bytes_processed_608 = 0;
 	data->my_field = field;
 	data->out = NULL;
-
+	data->is_pac_received = 0;
 }
 
 struct eia608_screen *get_writing_buffer(struct s_context_cc608 *context)
@@ -816,25 +816,14 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct 
             }
 			erase_memory(context, false);
 
-			// Cursor position only reset if not already in rollup. 
-			// If no Preamble Address Code  is received, the base row shall default to 
-			// Row 15 or, ifa roll-up caption is currently displayed, to the same 
-			//base row last received, and the cursor shall be placed at Column 1.
-			//" This rule is meant to be applied only when no roll-up caption is 
-			// currently displayed,
-			if (context->mode == MODE_FAKE_ROLLUP_1 ||
-				context->mode == MODE_ROLLUP_2 ||
-				context->mode == MODE_ROLLUP_3 ||
-				context->mode == MODE_ROLLUP_4)
-			{
-				context->cursor_row = context->rollup_base_row;
-				context->cursor_column = 0;
-			} 
 			// If the reception of data for a row is interrupted by data for the alternate 
 			// data channel or for text mode, the display of caption text will resume from the same
 			// cursor position if a roll-up caption command is received and no PAC is given [...]
-			else if (context->mode != MODE_TEXT)
+			if (context->mode != MODE_TEXT && context->is_pac_received == 0)
 			{
+				// If no Preamble Address Code  is received, the base row shall default to 
+				// Row 15 or, ifa roll-up caption is currently displayed, to the same 
+				//base row last received, and the cursor shall be placed at Column 1.
 				context->cursor_row = 14; // Default if the previous mode wasn't roll up already.
 				context->cursor_column = 0;
 			}
@@ -900,7 +889,8 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct 
             // time it became clear.
             if (ccx_options.write_format==CCX_OF_TRANSCRIPT && 
 				(context->mode == MODE_FAKE_ROLLUP_1 ||
-				context->mode == MODE_ROLLUP_2 || context->mode == MODE_ROLLUP_3 ||
+				context->mode == MODE_ROLLUP_2 || 
+				context->mode == MODE_ROLLUP_3 ||
 				context->mode == MODE_ROLLUP_4))
             {
                 // In transcript mode we just write the cursor line. The previous lines
@@ -1059,6 +1049,7 @@ void handle_pac(unsigned char c1, unsigned char c2, struct s_context_cc608 *cont
     }
 	context->rollup_base_row = row - 1;
 	context->cursor_column = indent;
+	context->is_pac_received = 1;
 	if (context->mode == MODE_FAKE_ROLLUP_1 || context->mode == MODE_ROLLUP_2 ||
 		context->mode == MODE_ROLLUP_3 || context->mode == MODE_ROLLUP_4)
 	{
@@ -1209,6 +1200,7 @@ void process608(const unsigned char *data, int length, struct s_context_cc608 *c
         {
             unsigned char hi, lo;
             int wrote_to_screen=0; 
+
             hi = data[i] & 0x7F; // Get rid of parity bit
             lo = data[i+1] & 0x7F; // Get rid of parity bit
 
