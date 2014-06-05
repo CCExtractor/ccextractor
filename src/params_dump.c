@@ -219,53 +219,80 @@ void print_file_report(void)
 			break;
 	}
 
-	printf("CaptionStreamType: ");
-	if(cap_stream_type == CCX_STREAM_TYPE_VIDEO_MPEG2)
-		printf("MPG\n");
-	else if(cap_stream_type == CCX_STREAM_TYPE_VIDEO_H264 )
-		printf("H.264\n");
-	else if (cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && ccx_options.teletext_mode==CCX_TXT_IN_USE)
-		printf("Teletext\n");
-	else if (cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && ccx_options.teletext_mode==CCX_TXT_FORBIDDEN)
-		printf("CC in private MPEG packet\n");
-	else
-		printf("Unknown\n");
-
-	printf("ProgramCount: %d\n", file_report.program_cnt);
-
-	printf("ProgramNumbers: ");
-	for (int i = 0; i < pmt_array_length; i++)
+	printf("StreamMode: ");
+	switch (stream_mode)
 	{
-		if (pmt_array[i].program_number == 0)
-			continue;
+		case CCX_SM_TRANSPORT:
+			printf("transport_stream\n");
 
-		printf("%u ", pmt_array[i].program_number);
+			printf("CaptionStreamType: ");
+			if(cap_stream_type == CCX_STREAM_TYPE_VIDEO_MPEG2)
+				printf("MPG\n");
+			else if(cap_stream_type == CCX_STREAM_TYPE_VIDEO_H264 )
+				printf("H.264\n");
+			else if (cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && ccx_options.teletext_mode==CCX_TXT_IN_USE)
+				printf("Teletext\n");
+			else if (cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && ccx_options.teletext_mode==CCX_TXT_FORBIDDEN)
+				printf("CC in private MPEG packet\n");
+			else
+				printf("Unknown\n");
+
+			printf("ProgramCount: %d\n", file_report.program_cnt);
+
+			printf("ProgramNumbers: ");
+			for (int i = 0; i < pmt_array_length; i++)
+			{
+				if (pmt_array[i].program_number == 0)
+					continue;
+
+				printf("%u ", pmt_array[i].program_number);
+			}
+			printf("\n");
+
+			break;
+		case CCX_SM_PROGRAM:
+			printf("program_stream\n");
+			break;
+		case CCX_SM_ASF:
+			printf("ASF\n");
+			break;
+		case CCX_SM_WTV:
+			printf("WTV\n");
+			break;
+		case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
+			printf("not_found\n");
+			break;
 	}
-	printf("\n");
 
 	printf("Any608: %s\n", Y_N(cc_stats[0] > 0 || cc_stats[1] > 0));
 
-	printf("XDSPresent: %s\n", Y_N(file_report.xds));
+	if (cc_stats[0] > 0 || cc_stats[1] > 0) 
+	{
+		printf("XDSPresent: %s\n", Y_N(file_report.xds));
 
-	printf("CC1: %s\n", Y_N(file_report.cc_channels_608[0]));
-	printf("CC2: %s\n", Y_N(file_report.cc_channels_608[1]));
-	printf("CC3: %s\n", Y_N(file_report.cc_channels_608[2]));
-	printf("CC4: %s\n", Y_N(file_report.cc_channels_608[3]));
+		printf("CC1: %s\n", Y_N(file_report.cc_channels_608[0]));
+		printf("CC2: %s\n", Y_N(file_report.cc_channels_608[1]));
+		printf("CC3: %s\n", Y_N(file_report.cc_channels_608[2]));
+		printf("CC4: %s\n", Y_N(file_report.cc_channels_608[3]));
+	}
 
 	printf("Any708: %s\n", Y_N(cc_stats[2] > 0 || cc_stats[3] > 0));
 
-	printf("Services: ");
-	for (int i = 0; i < 63; i++) 
+	if (cc_stats[2] > 0 || cc_stats[3] > 0) 
 	{
-		if (file_report.services708[i] == 0)
-			continue;
-		printf("%d ", i);
+		printf("Services: ");
+		for (int i = 0; i < 63; i++) 
+		{
+			if (file_report.services708[i] == 0)
+				continue;
+			printf("%d ", i);
+		}
+		printf("\n");
+
+		printf("PrimaryLanguagePresent: %s\n", Y_N(file_report.services708[1]));
+
+		printf("SecondaryLanguagePresent: %s\n", Y_N(file_report.services708[2]));
 	}
-	printf("\n");
-
-	printf("PrimaryLanguagePresent: %s\n", Y_N(file_report.services708[1]));
-
-	printf("SecondaryLanguagePresent: %s\n", Y_N(file_report.services708[2]));
 
     memset(&file_report, 0, sizeof (struct file_report_t));
 

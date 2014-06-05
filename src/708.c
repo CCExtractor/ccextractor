@@ -1146,9 +1146,8 @@ void process_current_packet (void)
 		if (block_length != 0)
 			file_report.services708[service_number] = 1;
 
-		if (service_number>0 && decoders[service_number-1].inited) {
-            process_service_block (&decoders[service_number-1], pos, block_length);
-		}
+		if (service_number>0 && decoders[service_number-1].inited)
+			process_service_block (&decoders[service_number-1], pos, block_length);
         
         pos+=block_length; // Skip data    
     }
