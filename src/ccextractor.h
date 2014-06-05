@@ -42,6 +42,7 @@ struct ccx_s_options // Options from user parameters
 	int nofontcolor;
 	int notypesetting;
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
+	int print_file_reports;
 
 	/* subtitle codec type */
 	enum cxx_code_type codec;
@@ -154,6 +155,16 @@ struct gop_time_code
   int inited;
   LLONG ms;
 };
+
+
+/* Report information */
+struct file_report_t
+{
+	int xds;
+	int program_cnt;
+	int cc_channels_608[4];
+	int services708[63];
+} file_report;
 
 
 
@@ -306,6 +317,7 @@ int processmp4 (char *file);
 
 // params_dump.cpp
 void params_dump(void);
+void print_file_report(void);
 
 // output.cpp
 void init_write (struct ccx_s_write *wb);

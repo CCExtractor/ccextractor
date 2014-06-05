@@ -177,6 +177,9 @@ int switch_to_next_file (LLONG bytesinbuffer)
     /* Close current and make sure things are still sane */
     if (infd!=-1)
     {
+		if (ccx_options.print_file_reports)
+			print_file_report();
+
         close_input_file ();
         if (inputsize>0 && ((past+bytesinbuffer) < inputsize) && !processed_enough)
         {

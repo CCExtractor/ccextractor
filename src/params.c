@@ -272,6 +272,11 @@ void set_output_format (const char *format)
 			ccx_options.date_format=ODF_HHMMSSMS;
 		timestamps_on_transcript=1;	
 	}
+    else if (strcmp (format,"report")==0) {
+        ccx_options.write_format=CCX_OF_NULL;
+		ccx_options.messages_target=0;
+        ccx_options.print_file_reports=1;
+	}
     else if (strcmp (format,"raw")==0)
         ccx_options.write_format=CCX_OF_RAW;
     else if (strcmp (format, "smptett")==0)
@@ -396,11 +401,13 @@ void usage (void)
     mprint ("                      ttxt    -> Timed Transcript (transcription with time\n");
 	mprint ("                                 info)\n");
 	mprint ("                      smptett -> SMPTE Timed Text (W3C TTML) format.\n");
-    mprint ("                      spupng -> Set of .xml and .png files for use with\n");
-    mprint ("                                dvdauthor's spumux.\n");
-    mprint ("                                See \"Notes on spupng output format\"\n");
-
-	mprint ("                      null    -> Don't produce any file output\n\n");
+    mprint ("                      spupng  -> Set of .xml and .png files for use with\n");
+    mprint ("                                 dvdauthor's spumux.\n");
+    mprint ("                                 See \"Notes on spupng output format\"\n");
+	mprint ("                      null    -> Don't produce any file output\n");
+	mprint ("                      report  -> Prints to stdout information about captions");
+	mprint ("                                 in specified input. Don't produce any file");
+	mprint ("                                 output\n\n");
 	mprint ("       Note: Teletext output can only be srt, txt or ttxt for now.\n\n");
      
     mprint ("Options that affect how input files will be processed.\n");

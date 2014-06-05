@@ -251,7 +251,6 @@ void write_char(const unsigned char c, struct s_context_cc608 *context)
 			context->ts_start_of_current_line = get_fts();
 		context->ts_last_char_received = get_fts();
     }
-
 }
 
 /* Handle MID-ROW CODES. */
@@ -1217,6 +1216,14 @@ void process608(const unsigned char *data, int length, struct s_context_cc608 *c
 			
             // printf ("\r[%02X:%02X]\n",hi,lo);
 
+			if (hi>=0x10 && hi<=0x1e) {
+				int ch = (hi<=0x17)? 1 : 2;
+				if (current_field == 2) 
+					ch+=2;
+
+				file_report.cc_channels_608[ch - 1] = 1;
+			}
+
 			if (hi >= 0x01 && hi <= 0x0E && (context == NULL || context->my_field == 2)) // XDS can only exist in field 2.
             {
 				if (context)
@@ -1226,6 +1233,8 @@ void process608(const unsigned char *data, int length, struct s_context_cc608 *c
 					ts_start_of_xds=get_fts();
 					in_xds_mode=1;
 				}
+
+				file_report.xds=1;
             }
 			if (hi == 0x0F && in_xds_mode && (context == NULL || context->my_field == 2)) // End of XDS block
             {

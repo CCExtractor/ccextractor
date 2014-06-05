@@ -452,19 +452,17 @@ int parse_PAT (void)
     unsigned ts_prog_map_pid = 0;
     dbg_print(CCX_DMT_PAT, "\nProgram association section (PAT)\n");
 
-	int temp=0;
+	file_report.program_cnt=0;
 	for( unsigned i=0; i < programm_data; i+=4)
 	{
         unsigned program_number = ((payload_start[i] << 8)
 			| payload_start[i+1]);
 		if( !program_number )
 			continue;
-		temp++;
-		if (temp>=2) // Found 2 programs, we don't need more
-			break;
+		file_report.program_cnt++;
 	}
 
-	is_multiprogram = (temp>1); 
+	is_multiprogram = (file_report.program_cnt>1); 
 
     for( unsigned i=0; i < programm_data; i+=4)
     {
