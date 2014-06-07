@@ -225,18 +225,6 @@ void print_file_report(void)
 		case CCX_SM_TRANSPORT:
 			printf("transport_stream\n");
 
-			printf("CaptionStreamType: ");
-			if(cap_stream_type == CCX_STREAM_TYPE_VIDEO_MPEG2)
-				printf("MPG\n");
-			else if(cap_stream_type == CCX_STREAM_TYPE_VIDEO_H264 )
-				printf("H.264\n");
-			else if (cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && ccx_options.teletext_mode==CCX_TXT_IN_USE)
-				printf("Teletext\n");
-			else if (cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && ccx_options.teletext_mode==CCX_TXT_FORBIDDEN)
-				printf("CC in private MPEG packet\n");
-			else
-				printf("Unknown\n");
-
 			printf("ProgramCount: %d\n", file_report.program_cnt);
 
 			printf("ProgramNumbers: ");
@@ -264,7 +252,59 @@ void print_file_report(void)
 			break;
 	}
 
-	printf("Any608: %s\n", Y_N(cc_stats[0] > 0 || cc_stats[1] > 0));
+	printf("Codec: ");
+	switch (ccx_bufferdatatype)
+	{
+		case CCX_PES:
+			printf("MPG\n");
+
+			printf("Width: %u\n", file_report.width);
+			printf("Height: %u\n", file_report.height);
+			printf("AspectRatio: %s\n", aspect_ratio_types[file_report.aspect_ratio]);
+			printf("FrameRate: %s\n", framerates_types[file_report.frame_rate]);
+
+			break;
+		case CCX_H264:
+			printf("H.264\n");
+			break;
+		case CCX_DVB_SUBTITLE:
+			printf("DVB\n");
+			break;
+		case CCX_HAUPPAGE:
+			printf("Hauppage\n");
+			break;
+		case CCX_TELETEXT:
+			printf("Teletext\n");
+			break;
+		case CCX_PRIVATE_MPEG2_CC:
+            printf("CC in private MPEG packet\n");
+            break;
+		default:
+			printf("Unknown\n");
+			break;
+	}
+
+	printf("Teletext: ");
+	if (ccx_bufferdatatype == CCX_TELETEXT) 
+	{
+		printf("Yes\n");
+
+		printf("PagesWithSubtitles: ");
+		for (int i = 0; i < MAX_TLT_PAGES; i++) 
+		{
+			if (seen_sub_page[i] == 0)
+				continue;
+
+			printf("%d ", i);
+		}
+		printf("\n");
+	} 
+	else
+	{
+		printf("No\n");
+	}
+
+	printf("EIA-608: %s\n", Y_N(cc_stats[0] > 0 || cc_stats[1] > 0));
 
 	if (cc_stats[0] > 0 || cc_stats[1] > 0) 
 	{
@@ -276,7 +316,7 @@ void print_file_report(void)
 		printf("CC4: %s\n", Y_N(file_report.cc_channels_608[3]));
 	}
 
-	printf("Any708: %s\n", Y_N(cc_stats[2] > 0 || cc_stats[3] > 0));
+	printf("CEA-708: %s\n", Y_N(cc_stats[2] > 0 || cc_stats[3] > 0));
 
 	if (cc_stats[2] > 0 || cc_stats[3] > 0) 
 	{

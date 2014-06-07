@@ -121,7 +121,7 @@ static const char* TTXT_COLOURS[8] = {
 
 #define MAX_TLT_PAGES 1000
 
-static short int seen_sub_page[MAX_TLT_PAGES];
+short int seen_sub_page[MAX_TLT_PAGES];
 
 // 1-byte alignment; just to be sure, this struct is being used for explicit type conversion
 // FIXME: remove explicit type conversion from buffer to structs

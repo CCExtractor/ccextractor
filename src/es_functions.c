@@ -398,6 +398,11 @@ static int sequence_header(struct bitstream *esstream)
     unsigned aspect_ratio = (unsigned) read_bits(esstream,4);
     unsigned frame_rate = (unsigned) read_bits(esstream,4);
 
+    file_report.width = hor_size;
+    file_report.height = vert_size;
+    file_report.aspect_ratio = aspect_ratio;
+    file_report.frame_rate = frame_rate;
+
     // Discard some information
     read_bits(esstream, 18+1+10+1);
 
