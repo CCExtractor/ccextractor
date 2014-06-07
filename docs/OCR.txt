@@ -1,0 +1,55 @@
+
+Overview
+========
+OCR (Optical Character Recognisation ) is an technique used to 
+extract text from images. In the World of Subtile, subtitle stored 
+in bitmap format are common and even neccassary. for converting subtile 
+in bitmap format to subtilte in text format ocr is used.
+
+Dependecy
+=========
+Tesseract (OCR library by google)
+Leptonica (image processing library)
+
+How to compile ccextractor  on linux with OCR
+=============================================
+
+Download and Install Leptonnica.
+-------------------------------
+This package is available, you need liblept-devel library.
+
+If Leptonica isn't available for your distribution, or you want to use a newer version
+ than they offer, you can compile your own.
+
+you can download lib leptonica from  http://www.leptonica.com/download.html
+
+Download and Install Tesseract.
+-------------------------------
+Tesseract is available directly from many Linux distributions. The package is generally
+ called 'tesseract' or 'tesseract-ocr' - search your distribution's repositories to
+ find it. Packages are also generally available for language training data (search the
+ repositories,) but if not you will need to download the appropriate training data,
+ unpack it, and copy the .traineddata file into the 'tessdata' directory, probably
+ /usr/share/tesseract-ocr/tessdata or /usr/share/tessdata.
+
+If Tesseract isn't available for your distribution, or you want to use a newer version
+ than they offer, you can compile your own.
+
+If you compile Tesseract then following command in its source code are enough
+./autogen.sh
+./configure
+make
+sudo make install
+sudo ldconfig
+
+ Note: 
+1) CCExtractor is tested with Tesseract 3.02.02 version. 
+
+you can download tesseract from https://drive.google.com/folderview?id=0B7l10Bj_LprhQnpSRkpGMGV2eE0&usp=sharing
+
+
+
+Compile CCextractor passing flags like following
+-------------------------------------------------
+make ENABLE_OCR=yes
+

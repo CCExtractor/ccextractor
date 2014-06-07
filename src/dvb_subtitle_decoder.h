@@ -86,6 +86,7 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
  * 
  */
 void dvbsub_set_write(void *dvb_ctx, struct ccx_s_write *out);
+
 #ifdef __cplusplus
 }
 #endif
