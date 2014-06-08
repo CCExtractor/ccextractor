@@ -158,18 +158,20 @@ struct gop_time_code
 
 
 /* Report information */
+#define SUB_STREAMS_CNT 10
 struct file_report_t
 {
-	int xds;
-	int program_cnt;
-	int cc_channels_608[4];
-	int services708[63];
-    unsigned width;
-    unsigned height;
-    unsigned aspect_ratio;
-    unsigned frame_rate;
+	unsigned program_cnt;
+	unsigned width;
+	unsigned height;
+	unsigned aspect_ratio;
+	unsigned frame_rate;
+	unsigned xds : 1;
+	unsigned cc_channels_608[4];
+	unsigned services708[63];
+	unsigned dvb_sub_pid[SUB_STREAMS_CNT]; 
+	unsigned tlt_sub_pid[SUB_STREAMS_CNT];
 } file_report;
-
 
 
 // Stuff for telcc.cpp

@@ -272,7 +272,8 @@ void set_output_format (const char *format)
 			ccx_options.date_format=ODF_HHMMSSMS;
 		timestamps_on_transcript=1;	
 	}
-    else if (strcmp (format,"report")==0) {
+    else if (strcmp (format,"report")==0) 
+    {
         ccx_options.write_format=CCX_OF_NULL;
 		ccx_options.messages_target=0;
         ccx_options.print_file_reports=1;
@@ -585,7 +586,7 @@ void usage (void)
 	mprint ("  If codec type is not selected then first elementry stream suitable for \n"
 		"  subtitle is selected, please consider -teletext -noteletext override this\n"
 		"  option.\n"
-		"      -cocdec dvbsub    select the dvb subtitle from all elementry stream,\n"
+		"      -codec dvbsub    select the dvb subtitle from all elementry stream,\n"
 		"                        if stream of dvb subtitle type is not found then \n"
 		"                        nothing is selected and no subtitle is generated\n"
 		"      -nocodec dvbsub   ignore dvb subtitle and follow default behaviour\n"

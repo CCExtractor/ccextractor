@@ -237,6 +237,30 @@ void print_file_report(void)
 			}
 			printf("\n");
 
+			for (int i = 0; i < 65536; i++) 
+			{
+				if (PIDs_programs[i] == 0)
+					continue;
+
+				printf("PID: %u, Program: %u, ", i, PIDs_programs[i]->program_number);
+				int j;
+				for (j = 0; j < SUB_STREAMS_CNT; j++) 
+				{
+					if (file_report.dvb_sub_pid[j] == i)
+					{
+						printf("DVB Subtitles\n");
+						break;
+					}
+					if (file_report.tlt_sub_pid[j] == i)
+					{
+						printf("Teletext Subtitles\n");
+						break;
+					}
+				}
+				if (j == SUB_STREAMS_CNT)
+					printf("%s\n", desc[PIDs_programs[i]->printable_stream_type]);
+			}
+
 			break;
 		case CCX_SM_PROGRAM:
 			printf("program_stream\n");
@@ -252,57 +276,57 @@ void print_file_report(void)
 			break;
 	}
 
-	printf("Codec: ");
-	switch (ccx_bufferdatatype)
+	if (ccx_bufferdatatype == CCX_PES)
 	{
-		case CCX_PES:
-			printf("MPG\n");
-
-			printf("Width: %u\n", file_report.width);
-			printf("Height: %u\n", file_report.height);
-			printf("AspectRatio: %s\n", aspect_ratio_types[file_report.aspect_ratio]);
-			printf("FrameRate: %s\n", framerates_types[file_report.frame_rate]);
-
-			break;
-		case CCX_H264:
-			printf("H.264\n");
-			break;
-		case CCX_DVB_SUBTITLE:
-			printf("DVB\n");
-			break;
-		case CCX_HAUPPAGE:
-			printf("Hauppage\n");
-			break;
-		case CCX_TELETEXT:
-			printf("Teletext\n");
-			break;
-		case CCX_PRIVATE_MPEG2_CC:
-            printf("CC in private MPEG packet\n");
-            break;
-		default:
-			printf("Unknown\n");
-			break;
+		printf("Width: %u\n", file_report.width);
+		printf("Height: %u\n", file_report.height);
+		printf("AspectRatio: %s\n", aspect_ratio_types[file_report.aspect_ratio]);
+		printf("FrameRate: %s\n", framerates_types[file_report.frame_rate]);
 	}
+
+	if (file_report.program_cnt > 1)
+		printf("//////// Program #%u: ////////\n", TS_program_number);
+
+	printf("DVB-Subtitles: ");
+	int j;
+	for (j = 0; j < SUB_STREAMS_CNT; j++) 
+	{
+		unsigned pid = file_report.dvb_sub_pid[j];
+		if (pid == 0)
+			continue;
+		if (PIDs_programs[pid]->program_number == TS_program_number)
+		{
+			printf("Yes\n");
+			break;
+		}
+	}
+	if (j == SUB_STREAMS_CNT)
+		printf("No\n");
 
 	printf("Teletext: ");
-	if (ccx_bufferdatatype == CCX_TELETEXT) 
+	for (j = 0; j < SUB_STREAMS_CNT; j++) 
 	{
-		printf("Yes\n");
-
-		printf("PagesWithSubtitles: ");
-		for (int i = 0; i < MAX_TLT_PAGES; i++) 
+		unsigned pid = file_report.tlt_sub_pid[j];
+		if (pid == 0)
+			continue;
+		if (PIDs_programs[pid]->program_number == TS_program_number)
 		{
-			if (seen_sub_page[i] == 0)
-				continue;
+			printf("Yes\n");
 
-			printf("%d ", i);
+			printf("PagesWithSubtitles: ");
+			for (int i = 0; i < MAX_TLT_PAGES; i++) 
+			{
+				if (seen_sub_page[i] == 0)
+					continue;
+
+				printf("%d ", i);
+			}
+			printf("\n");
+			break;
 		}
-		printf("\n");
-	} 
-	else
-	{
-		printf("No\n");
 	}
+	if (j == SUB_STREAMS_CNT)
+		printf("No\n");
 
 	printf("EIA-608: %s\n", Y_N(cc_stats[0] > 0 || cc_stats[1] > 0));
 
@@ -334,7 +358,7 @@ void print_file_report(void)
 		printf("SecondaryLanguagePresent: %s\n", Y_N(file_report.services708[2]));
 	}
 
-    memset(&file_report, 0, sizeof (struct file_report_t));
+	memset(&file_report, 0, sizeof (struct file_report_t));
 
 	#undef Y_N
 }
