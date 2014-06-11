@@ -1,5 +1,6 @@
 #include "png.h"
 #ifdef ENABLE_OCR
+#include "platform.h"
 #include "capi.h"
 #include "allheaders.h"
 
@@ -20,7 +21,9 @@ char* ocr_bitmap(png_color *palette,png_byte *alpha, unsigned char* indata,int w
 	}
 	wpl = pixGetWpl(pix);
 	data = pixGetData(pix);
+#if LEPTONICA_VERSION > 69
 	pixSetSpp(pix, 4);
+#endif
 	for (i = 0; i < h; i++)
 	{
 		ppixel = data + i * wpl; 

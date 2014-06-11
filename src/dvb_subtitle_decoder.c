@@ -423,7 +423,7 @@ static int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
 	png_structp png_ptr = NULL;
 	png_infop info_ptr = NULL;
 	png_bytep* row_pointer = NULL;
-	int i, j, ret;
+	int i, j, ret = 0;
 	int k = 0;
 	if(!h)
 		h = 1;
