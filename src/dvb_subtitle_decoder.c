@@ -33,6 +33,7 @@
 
 #include "dvb_subtitle_decoder.h"
 #include "spupng_encoder.h"
+#include "ocr.h"
 #define DEBUG
 
 #ifdef DEBUG
@@ -255,9 +256,17 @@ int mapclut_paletee(png_color *palette, png_byte *alpha, uint32_t *clut,
 	}
 	return 0;
 }
-
+/*
+ * @param alpha out
+ * @param intensity in 
+ * @param palette out should be already initialized 
+ * @param bitmap in 
+ * @param size in size of bitmap
+ * @param max_color in
+ * @param nb_color in
+ */
 int quantize_map(png_byte *alpha, uint8_t *intensity, png_color *palette,
-		uint8_t *bitmap, int h, int w, int max_color, int nb_color)
+		uint8_t *bitmap, int size, int max_color, int nb_color)
 {
 	/*
 	 * occurrence of color in image
@@ -301,12 +310,9 @@ int quantize_map(png_byte *alpha, uint8_t *intensity, png_color *palette,
 	memset(mcit, 0, nb_color * sizeof(uint32_t));
 
 	/* calculate histogram of image */
-	for (int i = 0; i < h; i++)
+	for (int i = 0; i < size; i++)
 	{
-		for (int j = 0; j < w; j++)
-		{
-			histogram[bitmap[i * w + (j)]]++;
-		}
+		histogram[bitmap[i]]++;
 	}
 	sort_intensity_wise((uint8_t*) alpha, (uint8_t*) intensity, iot, nb_color);
 
@@ -365,52 +371,65 @@ int quantize_map(png_byte *alpha, uint8_t *intensity, png_color *palette,
 	freep(&iot);
 	return ret;
 }
+
+
+static int pre_process_bitmap(png_color **palette, png_byte **alpha, int size,
+		uint32_t *clut, uint8_t *luit, uint8_t *bitmap, uint8_t depth)
+{
+	/*local pointer to palette */
+	png_color *lpalette = NULL;
+	/* local pointer to alpha */
+	png_byte *lalpha = NULL;
+	int nb_color = (1<< depth);
+	int ret = 0;
+
+
+	lpalette = (png_color*) malloc(nb_color * sizeof(png_color));
+	if(!lpalette)
+	{
+		ret = -1;
+		goto end;
+	}
+	lalpha = (png_byte*) malloc(nb_color * sizeof(png_byte));
+	if(!lalpha)
+	{
+		ret = -1;
+		goto end;
+	}
+	if(clut)
+		mapclut_paletee(lpalette, lalpha, clut, nb_color);
+	else
+	{
+		/* initialize colors with white */
+		memset(palette,0xff,sizeof(nb_color * sizeof(*lpalette)));
+
+		/* initialize transparency as complete transparent */
+		memset(lalpha,0,sizeof(nb_color * sizeof(*lalpha)));
+	}
+
+	if(bitmap)
+	{
+		quantize_map(lalpha, luit, lpalette, bitmap, size, 3, nb_color);
+	}
+	*palette = lpalette;
+	*alpha = lalpha;
+end:
+	return ret;
+}
 static int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
-		uint32_t *clut, uint8_t *luit,uint8_t depth)
+		png_color *palette, png_byte *alpha, int nb_color)
 {
 	FILE *f = NULL;
 	png_structp png_ptr = NULL;
 	png_infop info_ptr = NULL;
 	png_bytep* row_pointer = NULL;
-	int i, j, ret;
+	int i, j, ret = 0;
 	int k = 0;
-
-	png_color *palette = NULL;
-	png_byte *alpha = NULL;
-	int nb_color = (1<< depth);
-
 	if(!h)
 		h = 1;
 	if(!w)
 		w = 1;
 
-	palette = (png_color*) malloc(nb_color * sizeof(png_color));
-	if(!palette)
-	{
-		ret = -1;
-		goto end;
-	}
-	alpha = (png_byte*) malloc(nb_color * sizeof(png_byte));
-	if(!alpha)
-	{
-		ret = -1;
-		goto end;
-	}
-
-
-	if(clut)
-		mapclut_paletee(palette, alpha, clut, nb_color);
-	else
-	{
-		/* initialize colors with white */
-		memset(palette,0xff,sizeof(nb_color * sizeof(*palette)));
-
-		/* initialize transparency as complete transparent */
-		memset(alpha,0,sizeof(nb_color * sizeof(*alpha)));
-	}
-
-	if(bitmap)
-		quantize_map(alpha, luit, palette, bitmap, h, w, 3, nb_color);
 
 	f = fopen(filename, "wb");
 	if (!f)
@@ -791,6 +810,11 @@ static void save_display_set(DVBSubContext *ctx)
 
 	if (x_pos >= 0)
 	{
+		png_color *palette = NULL;
+		png_byte *alpha = NULL;
+#ifdef ENABLE_OCR
+		char*str = NULL;
+#endif
 
 		filename = get_spupng_filename(sp);
 		inc_spupng_fileindex(sp);
@@ -821,17 +845,28 @@ static void save_display_set(DVBSubContext *ctx)
 			}
 
 		}
-		save_spupng(filename, pbuf, width, height,
-				clut->clut16, clut->ilut16,region->depth);
+		pre_process_bitmap(&palette,&alpha,width*height,clut->clut16, clut->ilut16,pbuf,region->depth);
+#ifdef ENABLE_OCR
+		str = ocr_bitmap(palette,alpha,pbuf,width,height);
+		if(str)
+		{
+			write_spucomment(sp,str);
+		}
+#endif
+		save_spupng(filename, pbuf, width, height, palette, alpha,(1 << region->depth));
 
 		free(pbuf);
+		freep(&palette);
+		freep(&alpha);
 	}
 	else if(!ctx->prev_start)
 	{
+		png_color palette = {0,0,0};
+		png_byte alpha = 0;
 		filename = get_spupng_filename(sp);
 		inc_spupng_fileindex(sp);
 		/* save dummy frame */
-		save_spupng(filename,NULL,1,1,NULL,NULL,0);
+		save_spupng(filename,NULL,1,1,&palette,&alpha,1);
 
 	}
 

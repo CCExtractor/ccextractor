@@ -35,6 +35,11 @@ INSTLALL = cp -f -p
 INSTLALL_PROGRAM = $(INSTLALL)
 DESTDIR = /usr/bin
 
+ifeq ($(ENABLE_OCR),yes)
+CFLAGS+=-I/usr/local/include/tesseract -I/usr/local/include/leptonica
+CFLAGS+=-DENABLE_OCR
+LDFLAGS+= $(shell pkg-config --libs tesseract)
+endif
 .PHONY: all
 all: objs_dir $(TARGET) 
 
