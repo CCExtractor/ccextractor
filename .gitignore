@@ -4,3 +4,4 @@ CVS
 *.o
 linux/ccextractor
 linux/depend
+windows/debug/*

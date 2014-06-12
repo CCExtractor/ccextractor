@@ -1,0 +1,254 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\608.h" />
+    <ClInclude Include="..\src\608_spupng.h" />
+    <ClInclude Include="..\src\708.h" />
+    <ClInclude Include="..\src\asf_constants.h" />
+    <ClInclude Include="..\src\bitstream.h" />
+    <ClInclude Include="..\src\ccextractor.h" />
+    <ClInclude Include="..\src\constants.h" />
+    <ClInclude Include="..\src\disable_warnings.h" />
+    <ClInclude Include="..\src\dvb_subtitle_decoder.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\avparse.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\base_coding.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\bitstream.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\configuration.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\constants.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\ietf.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\internal\avilib.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\internal\isomedia_dev.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\internal\media_dev.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\internal\odf_dev.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\internal\odf_parse_common.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\internal\ogg.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\isomedia.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\list.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\math.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\media_tools.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\mpeg4_odf.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\network.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\setup.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\sync_layer.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\tools.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\utf.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\version.h" />
+    <ClInclude Include="..\src\gpacmp4\targetver.h" />
+    <ClInclude Include="..\src\hamming.h" />
+    <ClInclude Include="..\src\inttypes.h" />
+    <ClInclude Include="..\src\libpng\png.h" />
+    <ClInclude Include="..\src\libpng\pngconf.h" />
+    <ClInclude Include="..\src\libpng\pngdebug.h" />
+    <ClInclude Include="..\src\libpng\pnginfo.h" />
+    <ClInclude Include="..\src\libpng\pnglibconf.h" />
+    <ClInclude Include="..\src\libpng\pngpriv.h" />
+    <ClInclude Include="..\src\libpng\pngstruct.h" />
+    <ClInclude Include="..\src\platform.h" />
+    <ClInclude Include="..\src\spupng_encoder.h" />
+    <ClInclude Include="..\src\stdint.h" />
+    <ClInclude Include="..\src\stdintmsc.h" />
+    <ClInclude Include="..\src\teletext.h" />
+    <ClInclude Include="..\src\wtv_constants.h" />
+    <ClInclude Include="..\src\zlib\crc32.h" />
+    <ClInclude Include="..\src\zlib\deflate.h" />
+    <ClInclude Include="..\src\zlib\gzguts.h" />
+    <ClInclude Include="..\src\zlib\inffast.h" />
+    <ClInclude Include="..\src\zlib\inffixed.h" />
+    <ClInclude Include="..\src\zlib\inflate.h" />
+    <ClInclude Include="..\src\zlib\inftrees.h" />
+    <ClInclude Include="..\src\zlib\trees.h" />
+    <ClInclude Include="..\src\zlib\zconf.h" />
+    <ClInclude Include="..\src\zlib\zlib.h" />
+    <ClInclude Include="..\src\zlib\zutil.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\608.c" />
+    <ClCompile Include="..\src\608_helpers.c" />
+    <ClCompile Include="..\src\608_sami.c" />
+    <ClCompile Include="..\src\608_smptett.c" />
+    <ClCompile Include="..\src\608_spupng.c" />
+    <ClCompile Include="..\src\608_srt.c" />
+    <ClCompile Include="..\src\708.c" />
+    <ClCompile Include="..\src\708_encoding.c" />
+    <ClCompile Include="..\src\activity.c" />
+    <ClCompile Include="..\src\asf_functions.c" />
+    <ClCompile Include="..\src\avc_functions.c" />
+    <ClCompile Include="..\src\ccextractor.c" />
+    <ClCompile Include="..\src\cc_bitstream.c" />
+    <ClCompile Include="..\src\cc_decoders_common.c" />
+    <ClCompile Include="..\src\constants.c" />
+    <ClCompile Include="..\src\dvb_subtitle_decoder.c" />
+    <ClCompile Include="..\src\encoding.c" />
+    <ClCompile Include="..\src\es_functions.c" />
+    <ClCompile Include="..\src\es_userdata.c" />
+    <ClCompile Include="..\src\file_functions.c" />
+    <ClCompile Include="..\src\general_loop.c" />
+    <ClCompile Include="..\src\gpacmp4\avc_ext.c" />
+    <ClCompile Include="..\src\gpacmp4\avilib.c" />
+    <ClCompile Include="..\src\gpacmp4\av_parsers.c" />
+    <ClCompile Include="..\src\gpacmp4\base_encoding.c" />
+    <ClCompile Include="..\src\gpacmp4\bitstream.c" />
+    <ClCompile Include="..\src\gpacmp4\box_code_3gpp.c" />
+    <ClCompile Include="..\src\gpacmp4\box_code_apple.c" />
+    <ClCompile Include="..\src\gpacmp4\box_code_base.c" />
+    <ClCompile Include="..\src\gpacmp4\box_code_isma.c" />
+    <ClCompile Include="..\src\gpacmp4\box_code_meta.c" />
+    <ClCompile Include="..\src\gpacmp4\box_funcs.c" />
+    <ClCompile Include="..\src\gpacmp4\data_map.c" />
+    <ClCompile Include="..\src\gpacmp4\descriptors.c" />
+    <ClCompile Include="..\src\gpacmp4\desc_private.c" />
+    <ClCompile Include="..\src\gpacmp4\error.c" />
+    <ClCompile Include="..\src\gpacmp4\gpac_ogg.c" />
+    <ClCompile Include="..\src\gpacmp4\hinting.c" />
+    <ClCompile Include="..\src\gpacmp4\ipmpx_code.c" />
+    <ClCompile Include="..\src\gpacmp4\ipmpx_parse.c" />
+    <ClCompile Include="..\src\gpacmp4\isom_intern.c" />
+    <ClCompile Include="..\src\gpacmp4\isom_read.c" />
+    <ClCompile Include="..\src\gpacmp4\isom_store.c" />
+    <ClCompile Include="..\src\gpacmp4\isom_write.c" />
+    <ClCompile Include="..\src\gpacmp4\list.c" />
+    <ClCompile Include="..\src\gpacmp4\media.c" />
+    <ClCompile Include="..\src\gpacmp4\media_odf.c" />
+    <ClCompile Include="..\src\gpacmp4\meta.c" />
+    <ClCompile Include="..\src\gpacmp4\movie_fragments.c" />
+    <ClCompile Include="..\src\gpacmp4\mp4.c" />
+    <ClCompile Include="..\src\gpacmp4\odf_code.c" />
+    <ClCompile Include="..\src\gpacmp4\odf_codec.c" />
+    <ClCompile Include="..\src\gpacmp4\odf_command.c" />
+    <ClCompile Include="..\src\gpacmp4\os_divers.c" />
+    <ClCompile Include="..\src\gpacmp4\qos.c" />
+    <ClCompile Include="..\src\gpacmp4\sample_descs.c" />
+    <ClCompile Include="..\src\gpacmp4\slc.c" />
+    <ClCompile Include="..\src\gpacmp4\stbl_read.c" />
+    <ClCompile Include="..\src\gpacmp4\stbl_write.c" />
+    <ClCompile Include="..\src\gpacmp4\track.c" />
+    <ClCompile Include="..\src\gpacmp4\tx3g.c" />
+    <ClCompile Include="..\src\gpacmp4\url.c" />
+    <ClCompile Include="..\src\gpacmp4\utf.c" />
+    <ClCompile Include="..\src\libpng\png.c" />
+    <ClCompile Include="..\src\libpng\pngerror.c" />
+    <ClCompile Include="..\src\libpng\pngget.c" />
+    <ClCompile Include="..\src\libpng\pngmem.c" />
+    <ClCompile Include="..\src\libpng\pngpread.c" />
+    <ClCompile Include="..\src\libpng\pngread.c" />
+    <ClCompile Include="..\src\libpng\pngrio.c" />
+    <ClCompile Include="..\src\libpng\pngrtran.c" />
+    <ClCompile Include="..\src\libpng\pngrutil.c" />
+    <ClCompile Include="..\src\libpng\pngset.c" />
+    <ClCompile Include="..\src\libpng\pngtrans.c" />
+    <ClCompile Include="..\src\libpng\pngwio.c" />
+    <ClCompile Include="..\src\libpng\pngwrite.c" />
+    <ClCompile Include="..\src\libpng\pngwtran.c" />
+    <ClCompile Include="..\src\libpng\pngwutil.c" />
+    <ClCompile Include="..\src\myth.c" />
+    <ClCompile Include="..\src\output.c" />
+    <ClCompile Include="..\src\params.c" />
+    <ClCompile Include="..\src\params_dump.c" />
+    <ClCompile Include="..\src\sequencing.c" />
+    <ClCompile Include="..\src\spupng_encoder.c" />
+    <ClCompile Include="..\src\stream_functions.c" />
+    <ClCompile Include="..\src\telxcc.c" />
+    <ClCompile Include="..\src\timing.c" />
+    <ClCompile Include="..\src\ts_functions.c" />
+    <ClCompile Include="..\src\ts_tables.c" />
+    <ClCompile Include="..\src\utility.c" />
+    <ClCompile Include="..\src\wtv_functions.c" />
+    <ClCompile Include="..\src\xds.c" />
+    <ClCompile Include="..\src\zlib\adler32.c" />
+    <ClCompile Include="..\src\zlib\crc32.c" />
+    <ClCompile Include="..\src\zlib\deflate.c" />
+    <ClCompile Include="..\src\zlib\inffast.c" />
+    <ClCompile Include="..\src\zlib\inflate.c" />
+    <ClCompile Include="..\src\zlib\inftrees.c" />
+    <ClCompile Include="..\src\zlib\trees.c" />
+    <ClCompile Include="..\src\zlib\zutil.c" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{0F0063C4-BCBC-4379-A6D5-84A5669C940A}</ProjectGuid>
+    <RootNamespace>ccextractor</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>Debug\</OutDir>
+    <IntDir>Debug\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>Release\</OutDir>
+    <IntDir>Release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../src/gpacmp4;../src/libpng;../src/zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>WS2_32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>NotSet</ShowProgress>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../src/gpacmp4;../src/libpng;../src/zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>WS2_32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
