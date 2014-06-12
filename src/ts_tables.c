@@ -170,6 +170,65 @@ int parse_PMT (int pos)
         i += ES_info_length;
 	}
 	dbg_print(CCX_DMT_PMT, "---\n");
+
+    unsigned newcappid = 0;
+    unsigned newcap_stream_type = 0;
+    dbg_print(CCX_DMT_VERBOSE, "\nProgram map section (PMT)\n");
+
+    for (unsigned i=0; i < stream_data && (i+4)<payload_length; i+=5)
+    {
+		unsigned ccx_stream_type = payload_start[i];
+		unsigned elementary_PID = (((payload_start[i+1] & 0x1F) << 8)
+                                   | payload_start[i+2]);
+		unsigned ES_info_length = (((payload_start[i+3] & 0x0F) << 8)
+                                   | payload_start[i+4]);
+
+		if (!ccx_options.print_file_reports || 
+			ccx_stream_type != CCX_STREAM_TYPE_PRIVATE_MPEG2 ||
+			!ES_info_length)
+		{
+			i += ES_info_length;
+			continue;
+		}
+
+		unsigned char *es_info = payload_start + i + 5;
+		for (desc_len = 0;(payload_start + i + 5 + ES_info_length) > es_info; es_info += desc_len)
+		{
+			enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
+			desc_len = (*es_info++);
+
+			if(descriptor_tag == CCX_MPEG_DSC_DVB_SUBTITLE)
+			{
+				int k = 0;
+				for (int j = 0; j < SUB_STREAMS_CNT; j++) {
+					if (file_report.dvb_sub_pid[i] == 0)
+						k = j;
+					if (file_report.dvb_sub_pid[i] == elementary_PID)
+					{
+						k = j;
+						break;
+					}
+				}
+				file_report.dvb_sub_pid[k] = elementary_PID;
+			}
+			if(IS_VALID_TELETEXT_DESC(descriptor_tag))
+			{
+				int k = 0;
+				for (int j = 0; j < SUB_STREAMS_CNT; j++) {
+					if (file_report.tlt_sub_pid[i] == 0)
+						k = j;
+					if (file_report.tlt_sub_pid[i] == elementary_PID)
+					{
+						k = j;
+						break;
+					}
+				}
+				file_report.tlt_sub_pid[k] = elementary_PID;
+			}
+		}
+		i += ES_info_length;
+	}
+
 	if (TS_program_number || !ccx_options.ts_autoprogram)
 	{
 		if( payload.pid != pmtpid) 
@@ -187,10 +246,6 @@ int parse_PMT (int pos)
 			return 0;
 		}
 	}
-
-    unsigned newcappid = 0;
-    unsigned newcap_stream_type = 0;
-    dbg_print(CCX_DMT_VERBOSE, "\nProgram map section (PMT)\n");
 
     for( unsigned i=0; i < stream_data && (i+4)<payload_length; i+=5)
     {
@@ -216,7 +271,7 @@ int parse_PMT (int pos)
 				ES_info_length  )
 		{
 			unsigned char *es_info = payload_start + i + 5;
-			for (desc_len = 0;(payload_start + i + 5 + ES_info_length) - es_info ;es_info += desc_len)
+			for (desc_len = 0;(payload_start + i + 5 + ES_info_length) > es_info ;es_info += desc_len)
 			{
 				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
 				desc_len = (*es_info++);
@@ -248,12 +303,12 @@ int parse_PMT (int pos)
 			&& ES_info_length
 			&& ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2) // MPEG-2 Packetized Elementary Stream packets containing private data
 		{
-                        unsigned char *es_info = payload_start + i + 5;
-                        for (desc_len = 0;(payload_start + i + 5 + ES_info_length) - es_info ;es_info += desc_len)
-                        {   
-                                enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
-                                desc_len = (*es_info++);
-                                if(!IS_VALID_TELETEXT_DESC(descriptor_tag))
+			unsigned char *es_info = payload_start + i + 5;
+			for (desc_len = 0;(payload_start + i + 5 + ES_info_length) - es_info ;es_info += desc_len)
+			{   
+				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
+				desc_len = (*es_info++);
+				if(!IS_VALID_TELETEXT_DESC(descriptor_tag))
 					continue;
 				telxcc_init();
 				if (!ccx_options.ts_forced_cappid)
@@ -263,10 +318,11 @@ int parse_PMT (int pos)
 				}
 				ccx_options.teletext_mode =CCX_TXT_IN_USE;						
 				mprint ("VBI/teletext stream ID %u (0x%x) for SID %u (0x%x)\n",
-					elementary_PID, elementary_PID, program_number, program_number);
-                        }   
+						elementary_PID, elementary_PID, program_number, program_number);
+			}   
 
 		}
+
 		if (ccx_options.teletext_mode==CCX_TXT_FORBIDDEN && 
 			ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2) // MPEG-2 Packetized Elementary Stream packets containing private data
 		{
@@ -452,19 +508,17 @@ int parse_PAT (void)
     unsigned ts_prog_map_pid = 0;
     dbg_print(CCX_DMT_PAT, "\nProgram association section (PAT)\n");
 
-	int temp=0;
+	file_report.program_cnt=0;
 	for( unsigned i=0; i < programm_data; i+=4)
 	{
         unsigned program_number = ((payload_start[i] << 8)
 			| payload_start[i+1]);
 		if( !program_number )
 			continue;
-		temp++;
-		if (temp>=2) // Found 2 programs, we don't need more
-			break;
+		file_report.program_cnt++;
 	}
 
-	is_multiprogram = (temp>1); 
+	is_multiprogram = (file_report.program_cnt>1); 
 
     for( unsigned i=0; i < programm_data; i+=4)
     {

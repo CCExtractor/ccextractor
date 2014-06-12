@@ -42,6 +42,7 @@ struct ccx_s_options // Options from user parameters
 	int nofontcolor;
 	int notypesetting;
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
+	int print_file_reports;
 
 	/* subtitle codec type */
 	enum cxx_code_type codec;
@@ -155,6 +156,22 @@ struct gop_time_code
   LLONG ms;
 };
 
+
+/* Report information */
+#define SUB_STREAMS_CNT 10
+struct file_report_t
+{
+	unsigned program_cnt;
+	unsigned width;
+	unsigned height;
+	unsigned aspect_ratio;
+	unsigned frame_rate;
+	unsigned xds : 1;
+	unsigned cc_channels_608[4];
+	unsigned services708[63];
+	unsigned dvb_sub_pid[SUB_STREAMS_CNT]; 
+	unsigned tlt_sub_pid[SUB_STREAMS_CNT];
+} file_report;
 
 
 // Stuff for telcc.cpp
@@ -306,6 +323,7 @@ int processmp4 (char *file);
 
 // params_dump.cpp
 void params_dump(void);
+void print_file_report(void);
 
 // output.cpp
 void init_write (struct ccx_s_write *wb);
@@ -582,6 +600,9 @@ extern LLONG ts_start_of_xds;
 extern int timestamps_on_transcript;
 
 extern unsigned teletext_mode;
+
+#define MAX_TLT_PAGES 1000
+extern short int seen_sub_page[MAX_TLT_PAGES];
 
 extern uint64_t utc_refvalue; // UTC referential value
 extern struct ccx_s_teletext_config tlt_config;

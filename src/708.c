@@ -1142,8 +1142,12 @@ void process_current_packet (void)
 			pos = current_packet+len; // Move to end
 			break;
 		}
-		if (service_number>0 && decoders[service_number-1].inited)        
-            process_service_block (&decoders[service_number-1], pos, block_length);
+
+		if (block_length != 0)
+			file_report.services708[service_number] = 1;
+
+		if (service_number>0 && decoders[service_number-1].inited)
+			process_service_block (&decoders[service_number-1], pos, block_length);
         
         pos+=block_length; // Skip data    
     }
@@ -1168,7 +1172,7 @@ void do_708 (const unsigned char *data, int datalength)
         1 byte for cc_valid        
         1 byte for cc_type
         2 bytes for the actual data */
-	if (!do_cea708)
+	if (!do_cea708 && !ccx_options.print_file_reports)
         return;
         
     for (int i=0;i<datalength;i+=4)
@@ -1214,7 +1218,7 @@ void do_708 (const unsigned char *data, int datalength)
             default:                
                 fatal (EXIT_BUG_BUG, "708: shouldn't be here - cc_type: %d\n", cc_type);
         }
-    }        
+    }
 }
 
 void init_708(void)
