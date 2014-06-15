@@ -46,17 +46,10 @@ struct s_context_cc608
 	int have_cursor_position;
 };
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 extern unsigned char *enc_buffer;
 extern unsigned char str[2048]; 
 extern unsigned enc_buffer_used;
 extern unsigned enc_buffer_capacity;
-#ifdef __cplusplus
-}
-#endif
 
 extern int new_sentence;
 extern const char *color_text[][2];
