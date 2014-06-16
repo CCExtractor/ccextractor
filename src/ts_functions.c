@@ -292,7 +292,7 @@ long ts_readstream(void)
 		if (is_pmt)
 		{
 			PIDs_seen[payload.pid]=2;
-			if (parse_PMT (j))
+			if (parse_PMT (NULL,0,j))
 				gotpes=1; // Signals that something changed and that we must flush the buffer
 			if (payload.pid==pmtpid && ccx_options.ts_cappid==0 && ccx_options.investigate_packets) // It was our PMT yet we don't have a PID to get data from
 				packet_analysis_mode=1;

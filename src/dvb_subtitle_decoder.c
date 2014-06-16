@@ -20,12 +20,6 @@
 #include <assert.h>
 #include <limits.h>
 #include <errno.h>
-/* convert values between host and network byte order(big endian) */
-#ifdef _WIN32
-#include <winsock2.h>
-#else
-#include <arpa/inet.h>
-#endif
 
 #ifdef _MSC_VER
 #define snprintf(str,size,format,...) _snprintf(str,size-1,format,__VA_ARGS__)
@@ -34,6 +28,7 @@
 #include "dvb_subtitle_decoder.h"
 #include "spupng_encoder.h"
 #include "ocr.h"
+#include "utility.h"
 #define DEBUG
 
 #ifdef DEBUG
@@ -47,11 +42,6 @@
 #define DVBSUB_OBJECT_SEGMENT   0x13
 #define DVBSUB_DISPLAYDEFINITION_SEGMENT 0x14
 #define DVBSUB_DISPLAY_SEGMENT  0x80
-
-#define RL32(x) (*(unsigned int *)(x))
-#define RB32(x) (ntohl(*(unsigned int *)(x)))
-#define RL16(x) (*(unsigned short int*)(x))
-#define RB16(x) (ntohs(*(unsigned short int*)(x)))
 
 #define SCALEBITS 10
 #define ONE_HALF  (1 << (SCALEBITS - 1))
