@@ -251,13 +251,6 @@ long ts_readstream(void)
 				payload.pid);
 			continue;
 		}
-		
-		if (ccx_options.ts_cappid == 0) // We still don't know the PID of the streams with the caption data
-		{
-			if (!payload.pesstart)
-				// Not the first entry. Ignore it, it should not be here.
-				continue;
-		}
 
 		// Check for PAT
 		if( payload.pid == 0) // This is a PAT
@@ -292,8 +285,18 @@ long ts_readstream(void)
 		if (is_pmt)
 		{
 			PIDs_seen[payload.pid]=2;
-			if (parse_PMT (NULL,0,j))
-				gotpes=1; // Signals that something changed and that we must flush the buffer
+			if(payload.pesstart)
+			{
+				int len = *payload.start++;
+				payload.start += len;
+				if(write_section(&payload,payload.start,(tspacket + 188 ) - payload.start,j))
+					gotpes=1; // Signals that something changed and that we must flush the buffer
+			}
+			else
+			{
+				if(write_section(&payload,payload.start,(tspacket + 188 ) - payload.start,j))
+					gotpes=1; // Signals that something changed and that we must flush the buffer
+			}
 			if (payload.pid==pmtpid && ccx_options.ts_cappid==0 && ccx_options.investigate_packets) // It was our PMT yet we don't have a PID to get data from
 				packet_analysis_mode=1;
 

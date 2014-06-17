@@ -116,7 +116,7 @@ struct ts_payload
 	unsigned pid;         // Stream PID
 	int counter;          // continuity counter
 	int transport_error;  // 0 = packet OK, non-zero damaged
-	unsigned char *section_buf;
+	unsigned char section_buf[1024];
 	int section_index;
 	int section_size;
 };
@@ -340,6 +340,7 @@ void init_ts( void );
 int ts_readpacket(void);
 long ts_readstream(void);
 LLONG ts_getmoredata( void );
+int write_section(struct ts_payload *payload, unsigned char*buf, int size, int pos);
 int parse_PMT (unsigned char *buf,int len, int pos);
 int parse_PAT (void);
 
