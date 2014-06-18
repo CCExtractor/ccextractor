@@ -412,8 +412,8 @@ int write_section(struct ts_payload *payload, unsigned char*buf, int size, int p
 
 	if(payload->section_index >= (unsigned)payload->section_size)
 	{
-		parse_PMT(payload->section_buf,payload->section_size,pos);
-		return 1;
+		if(parse_PMT(payload->section_buf,payload->section_size,pos))
+			return 1;
 	}
 	return 0;
 	

@@ -375,8 +375,8 @@ long ts_readstream(void)
 		 */
 		if ( cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cxx_dvb_context && !pts_set)
 		{   
-						  if(read_pts_pes(payload.start,payload.length) == 0)
-								  set_fts();
+			if(read_pts_pes(payload.start,payload.length) == 0)
+				set_fts();
 		}   
 
 		// Check for PID with captions. Note that in Hauppauge mode we also process the video stream because
