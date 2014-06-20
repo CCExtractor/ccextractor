@@ -235,10 +235,6 @@ void rcwt_loop( void );
 #define true 1
 #endif
 
-#ifdef __cplusplus
-extern "C"
-{
-	#endif
 // activity.cpp
 void activity_header (void);
 void activity_progress (int percentaje, int cur_min, int cur_sec);
@@ -254,9 +250,6 @@ void activity_xds_network_call_letters (const char *program_name);
 void activity_xds_program_identification_number (unsigned minutes, unsigned hours, unsigned date, unsigned month);
 void activity_xds_program_description (int line_num, const char *program_desc);
 void activity_report_data_read (void);
-#ifdef __cplusplus
-}
-#endif
 
 extern LLONG result;
 extern int end_of_file;
@@ -365,10 +358,6 @@ char *print_mstime( LLONG mstime );
 void print_debug_timing( void );
 int switch_to_next_file (LLONG bytesinbuffer);
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 // utility.cpp
 void fatal(int exit_code, const char *fmt, ...);
 void dvprint(const char *fmt, ...);
@@ -397,9 +386,6 @@ void telxcc_init(void);
 void telxcc_close(void);
 void mstotime(LLONG milli, unsigned *hours, unsigned *minutes,
 	unsigned *seconds, unsigned *ms);
-#ifdef __cplusplus
-}
-#endif
 
 extern struct gop_time_code gop_time, first_gop_time, printed_gop;
 extern int gop_rollover;
@@ -480,16 +466,9 @@ extern unsigned char usercolor_rgb[8];
 
 extern const char *extension;
 extern long FILEBUFFERSIZE; // Uppercase because it used to be a define
-#ifdef __cplusplus
-extern "C"
-{
-	#endif
-	extern struct ccx_s_options ccx_options;
-	extern int temp_debug;
-	extern unsigned long net_activity_gui;
-	#ifdef __cplusplus
-}
-#endif
+extern struct ccx_s_options ccx_options;
+extern int temp_debug;
+extern unsigned long net_activity_gui;
 
 /* General (ES stream) video information */
 extern unsigned current_hor_size;
@@ -537,17 +516,10 @@ extern char **spell_correct;
 extern int spell_words;
 extern int spell_capacity;
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-	extern unsigned char encoded_crlf[16]; // We keep it encoded here so we don't have to do it many times
-	extern unsigned int encoded_crlf_length;
-	extern unsigned char encoded_br[16];
-	extern unsigned int encoded_br_length;
-#ifdef __cplusplus
-}
-#endif
+extern unsigned char encoded_crlf[16]; // We keep it encoded here so we don't have to do it many times
+extern unsigned int encoded_crlf_length;
+extern unsigned char encoded_br[16];
+extern unsigned int encoded_br_length;
 
 
 extern enum ccx_frame_type current_picture_coding_type; 
