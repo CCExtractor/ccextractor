@@ -1,4 +1,5 @@
 #include "png.h"
+#include "ccextractor.h"
 #ifdef ENABLE_OCR
 #include "platform.h"
 #include "capi.h"

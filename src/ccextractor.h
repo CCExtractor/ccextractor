@@ -330,6 +330,7 @@ void writercwtdata (const unsigned char *data);
 void detect_stream_type (void);
 int detect_myth( void );
 int read_video_pes_header (unsigned char *header, int *headerlength, int sbuflen);
+int read_pts_pes(unsigned char*header, int len);
 
 // ts_functions.cpp
 void init_ts( void );
