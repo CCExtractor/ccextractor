@@ -22,7 +22,7 @@ void detect_stream_type (void)
             startbytes[3]==0x75)
             stream_mode=CCX_SM_ASF; 
     }
-    if(startbytes_avail>=4)
+	if (stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND && startbytes_avail >= 4)
     {
         if(startbytes[0]==0xb7 &&
             startbytes[1]==0xd8 &&
