@@ -28,9 +28,9 @@ extern int ccblocks_in_avc_lost; // CC blocks found by the AVC code lost due to 
 
 struct ccx_boundary_time
 {
-    int hh,mm,ss;
-    LLONG time_in_ms;
-    int set;
+	int hh,mm,ss;
+	LLONG time_in_ms;
+	int set;
 };
 
 struct ccx_s_options // Options from user parameters
@@ -110,11 +110,11 @@ struct ccx_s_options // Options from user parameters
 
 struct ts_payload
 {
-    unsigned char *start; // Payload start
-    unsigned length;      // Payload length
-    unsigned pesstart;    // PES or PSI start
-    unsigned pid;         // Stream PID
-    int counter;          // continuity counter
+	unsigned char *start; // Payload start
+	unsigned length;      // Payload length
+	unsigned pesstart;    // PES or PSI start
+	unsigned pid;         // Stream PID
+	int counter;          // continuity counter
 	int transport_error;  // 0 = packet OK, non-zero damaged
 };
 
@@ -138,22 +138,22 @@ struct PMT_entry
 
 struct ccx_s_write
 {
-    int fh;
-    char *filename;
+	int fh;
+	char *filename;
 	void* spupng_data;
 };
 
 
 struct gop_time_code
 {
-  int drop_frame_flag;
-  int time_code_hours;
-  int time_code_minutes;
-  int marker_bit;
-  int time_code_seconds;
-  int time_code_pictures;
-  int inited;
-  LLONG ms;
+	int drop_frame_flag;
+	int time_code_hours;
+	int time_code_minutes;
+	int marker_bit;
+	int time_code_seconds;
+	int time_code_pictures;
+	int inited;
+	LLONG ms;
 };
 
 
@@ -176,15 +176,15 @@ struct file_report_t
 
 // Stuff for telcc.cpp
 struct ccx_s_teletext_config {
-    uint8_t verbose : 1; // should telxcc be verbose?
-    uint16_t page; // teletext page containing cc we want to filter
-    uint16_t tid; // 13-bit packet ID for teletext stream
-    double offset; // time offset in seconds
-    uint8_t bom : 1; // print UTF-8 BOM characters at the beginning of output
-    uint8_t nonempty : 1; // produce at least one (dummy) frame
-    // uint8_t se_mode : 1; // search engine compatible mode => Uses CCExtractor's write_format
-    // uint64_t utc_refvalue; // UTC referential value => Moved to CCExtractor global, so can be used for 608 too
-    uint16_t user_page; // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
+	uint8_t verbose : 1; // should telxcc be verbose?
+	uint16_t page; // teletext page containing cc we want to filter
+	uint16_t tid; // 13-bit packet ID for teletext stream
+	double offset; // time offset in seconds
+	uint8_t bom : 1; // print UTF-8 BOM characters at the beginning of output
+	uint8_t nonempty : 1; // produce at least one (dummy) frame
+	// uint8_t se_mode : 1; // search engine compatible mode => Uses CCExtractor's write_format
+	// uint64_t utc_refvalue; // UTC referential value => Moved to CCExtractor global, so can be used for 608 too
+	uint16_t user_page; // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
 };
 
 #define buffered_skip(bytes) if (bytes<=bytesinbuffer-filebuffer_pos) { \
