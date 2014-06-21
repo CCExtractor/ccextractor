@@ -7,7 +7,7 @@
 
 #include "ccextractor.h"
 #include "dvb_subtitle_decoder.h"
-
+#include "utility.h"
 static unsigned pmt_warning_shown=0; // Only display warning once
 void *cxx_dvb_context = NULL;
 
@@ -62,70 +62,62 @@ void clear_PMT_array (void)
 		}
 	pmt_array_length=0;	
 }
-
-int parse_PMT (int pos)
+int parse_PMT (unsigned char *buf,int len, int pos)
 {
 	int must_flush=0;
 	int ret = 0;
-        unsigned char desc_len = 0;
+	unsigned char desc_len = 0;
 
 	if ((ccx_options.ts_forced_cappid || (ccx_options.teletext_mode==CCX_TXT_IN_USE && ccx_options.ts_cappid)) && 
 		cap_stream_type!=CCX_STREAM_TYPE_UNKNOWNSTREAM) // Already know what we need, skip
 		return 0; 
 
-	if (!payload.pesstart) // Not the first entry. Ignore it, it should not be here.		
-		return 0;
-
-    unsigned pointer_field = *(payload.start);
-    unsigned char *payload_start = payload.start + pointer_field + 1;
-    unsigned payload_length = tspacket+188-payload_start;
-
 	/* We keep a copy of all PMTs, even if not interesting to us for now */
-	if (pmt_array[pos].last_pmt_payload!=NULL && payload_length == pmt_array[pos].last_pmt_length && 
-		!memcmp (payload_start, pmt_array[pos].last_pmt_payload, payload_length))
+	if (pmt_array[pos].last_pmt_payload!=NULL && len == pmt_array[pos].last_pmt_length &&
+		!memcmp (buf, pmt_array[pos].last_pmt_payload, len))
 	{
 		// dbg_print(CCX_DMT_PMT, "PMT hasn't changed, skipping.\n");
 		return 0;
 	}
 	pmt_array[pos].last_pmt_payload=(unsigned char *) 
-		realloc (pmt_array[pos].last_pmt_payload, payload_length+8); // Extra 8 in case memcpy copies dwords, etc
+	realloc (pmt_array[pos].last_pmt_payload, len+8); // Extra 8 in case memcpy copies dwords, etc
 	if (pmt_array[pos].last_pmt_payload==NULL)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process PMT.\n");
-	memcpy (pmt_array[pos].last_pmt_payload, payload_start, payload_length);
-	pmt_array[pos].last_pmt_length = payload_length;
+	memcpy (pmt_array[pos].last_pmt_payload, buf, len);
+	pmt_array[pos].last_pmt_length = len;
 
    
-    unsigned table_id = payload_start[0];
-    unsigned section_length = (((payload_start[1] & 0x0F) << 8)
-                               | payload_start[2]);
-    unsigned program_number = ((payload_start[3] << 8)
-                               | payload_start[4]);
+    unsigned table_id = buf[0];
+    unsigned section_length = (((buf[1] & 0x0F) << 8)
+                               | buf[2]);
+    unsigned program_number = ((buf[3] << 8)
+                               | buf[4]);
 
-    unsigned version_number = (payload_start[5] & 0x3E) >> 1;
-    unsigned current_next_indicator = payload_start[5] & 0x01;
+    unsigned version_number = (buf[5] & 0x3E) >> 1;
+    unsigned current_next_indicator = buf[5] & 0x01;
     if (!current_next_indicator)
         // This table is not active, no need to evaluate
         return 0;
-    unsigned section_number = payload_start[6];
-    unsigned last_section_number = payload_start[7];
+    unsigned section_number = buf[6];
+    unsigned last_section_number = buf[7];
     if ( last_section_number > 0 )
     {
         mprint("Long PMTs are not supported - skipped.\n");
         return 0;
     }
-    unsigned PCR_PID = (((payload_start[8] & 0x1F) << 8)
-                        | payload_start[9]);
-    unsigned pi_length = (((payload_start[10] & 0x0F) << 8)
-                          | payload_start[11]);
+    unsigned PCR_PID = (((buf[8] & 0x1F) << 8)
+                        | buf[9]);
+    unsigned pi_length = (((buf[10] & 0x0F) << 8)
+                          | buf[11]);
 
-    if( 12 + pi_length >  payload_length )
+    if( 12 + pi_length >  len )
     {
         // If we would support long PMTs, this would be wrong.
         mprint("program_info_length cannot be longer than the payload_length - skipped\n");
         return 0;
     }
-    payload_start += 12 + pi_length;
-    payload_length = tspacket+188-payload_start;
+    buf += 12 + pi_length;
+    len = tspacket+188-buf;
 
     unsigned stream_data = section_length - 9 - pi_length - 4; // prev. bytes and CRC
 
@@ -136,9 +128,9 @@ int parse_PMT (int pos)
     dbg_print(CCX_DMT_PARSE, "  version_number: %u  current_next_indicator: %u\n",
            version_number, current_next_indicator);
     dbg_print(CCX_DMT_PARSE, "  PCR_PID: %u  data length: %u  payload_length: %u\n",
-           PCR_PID, stream_data, payload_length);
+           PCR_PID, stream_data, len);
 
-    if (!pmt_warning_shown && stream_data+4 > payload_length )
+    if (!pmt_warning_shown && stream_data+4 > len )
     {
 		dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Probably parsing incomplete PMT, expected data longer than available payload.\n");
 		pmt_warning_shown=1;
@@ -146,13 +138,13 @@ int parse_PMT (int pos)
 	dbg_print(CCX_DMT_PMT, "\nProgram Map Table for program %u, PMT PID: %u\n",
 		program_number,payload.pid);
 	// Make a note of the program number for all PIDs, so we can report it later
-    for( unsigned i=0; i < stream_data && (i+4)<payload_length; i+=5)
+    for( unsigned i=0; i < stream_data && (i+4)<len; i+=5)
     {
-        unsigned ccx_stream_type = payload_start[i];
-        unsigned elementary_PID = (((payload_start[i+1] & 0x1F) << 8)
-                                   | payload_start[i+2]);
-        unsigned ES_info_length = (((payload_start[i+3] & 0x0F) << 8)
-                                   | payload_start[i+4]);
+        unsigned ccx_stream_type = buf[i];
+        unsigned elementary_PID = (((buf[i+1] & 0x1F) << 8)
+                                   | buf[i+2]);
+        unsigned ES_info_length = (((buf[i+3] & 0x0F) << 8)
+                                   | buf[i+4]);
 		if (PIDs_programs[elementary_PID]==NULL)
 		{
 			PIDs_programs[elementary_PID]=(struct PMT_entry *) malloc (sizeof (struct PMT_entry));
@@ -166,7 +158,7 @@ int parse_PMT (int pos)
 		PIDs_programs[elementary_PID]->printable_stream_type=get_printable_stream_type (ccx_stream_type);
 		dbg_print(CCX_DMT_PMT, "%6u | %3X (%3u) | %s\n",elementary_PID,ccx_stream_type,ccx_stream_type,
 			desc[PIDs_programs[elementary_PID]->printable_stream_type]);
-		process_ccx_mpeg_descriptor (payload_start+i+5,ES_info_length);
+		process_ccx_mpeg_descriptor (buf+i+5,ES_info_length);
         i += ES_info_length;
 	}
 	dbg_print(CCX_DMT_PMT, "---\n");
@@ -175,13 +167,13 @@ int parse_PMT (int pos)
     unsigned newcap_stream_type = 0;
     dbg_print(CCX_DMT_VERBOSE, "\nProgram map section (PMT)\n");
 
-    for (unsigned i=0; i < stream_data && (i+4)<payload_length; i+=5)
+    for (unsigned i=0; i < stream_data && (i+4)<len; i+=5)
     {
-		unsigned ccx_stream_type = payload_start[i];
-		unsigned elementary_PID = (((payload_start[i+1] & 0x1F) << 8)
-                                   | payload_start[i+2]);
-		unsigned ES_info_length = (((payload_start[i+3] & 0x0F) << 8)
-                                   | payload_start[i+4]);
+		unsigned ccx_stream_type = buf[i];
+		unsigned elementary_PID = (((buf[i+1] & 0x1F) << 8)
+                                   | buf[i+2]);
+		unsigned ES_info_length = (((buf[i+3] & 0x0F) << 8)
+                                   | buf[i+4]);
 
 		if (!ccx_options.print_file_reports || 
 			ccx_stream_type != CCX_STREAM_TYPE_PRIVATE_MPEG2 ||
@@ -191,8 +183,8 @@ int parse_PMT (int pos)
 			continue;
 		}
 
-		unsigned char *es_info = payload_start + i + 5;
-		for (desc_len = 0;(payload_start + i + 5 + ES_info_length) > es_info; es_info += desc_len)
+		unsigned char *es_info = buf + i + 5;
+		for (desc_len = 0;(buf + i + 5 + ES_info_length) > es_info; es_info += desc_len)
 		{
 			enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
 			desc_len = (*es_info++);
@@ -247,13 +239,13 @@ int parse_PMT (int pos)
 		}
 	}
 
-    for( unsigned i=0; i < stream_data && (i+4)<payload_length; i+=5)
+    for( unsigned i=0; i < stream_data && (i+4)<len; i+=5)
     {
-		unsigned ccx_stream_type = payload_start[i];
-		unsigned elementary_PID = (((payload_start[i+1] & 0x1F) << 8)
-                                   | payload_start[i+2]);
-		unsigned ES_info_length = (((payload_start[i+3] & 0x0F) << 8)
-                                   | payload_start[i+4]);
+		unsigned ccx_stream_type = buf[i];
+		unsigned elementary_PID = (((buf[i+1] & 0x1F) << 8)
+                                   | buf[i+2]);
+		unsigned ES_info_length = (((buf[i+3] & 0x0F) << 8)
+                                   | buf[i+4]);
 
 		/* There is no information about elementry stream */
 		/*if(!ES_info_length)
@@ -270,8 +262,8 @@ int parse_PMT (int pos)
 				ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 &&
 				ES_info_length  )
 		{
-			unsigned char *es_info = payload_start + i + 5;
-			for (desc_len = 0;(payload_start + i + 5 + ES_info_length) > es_info ;es_info += desc_len)
+			unsigned char *es_info = buf + i + 5;
+			for (desc_len = 0;(buf + i + 5 + ES_info_length) > es_info ;es_info += desc_len)
 			{
 				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
 				desc_len = (*es_info++);
@@ -303,8 +295,8 @@ int parse_PMT (int pos)
 			&& ES_info_length
 			&& ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2) // MPEG-2 Packetized Elementary Stream packets containing private data
 		{
-			unsigned char *es_info = payload_start + i + 5;
-			for (desc_len = 0;(payload_start + i + 5 + ES_info_length) - es_info ;es_info += desc_len)
+			unsigned char *es_info = buf + i + 5;
+			for (desc_len = 0;(buf + i + 5 + ES_info_length) - es_info ;es_info += desc_len)
 			{   
 				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
 				desc_len = (*es_info++);
@@ -326,7 +318,7 @@ int parse_PMT (int pos)
 		if (ccx_options.teletext_mode==CCX_TXT_FORBIDDEN && 
 			ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2) // MPEG-2 Packetized Elementary Stream packets containing private data
 		{
-			unsigned descriptor_tag = payload_start[i + 5];
+			unsigned descriptor_tag = buf[i + 5];
 			if (descriptor_tag == 0x45)
 			{
 				ccx_options.ts_cappid = newcappid = elementary_PID;
@@ -399,6 +391,32 @@ int parse_PMT (int pos)
             must_flush=1;            
     }    
 	return must_flush;
+}
+
+int write_section(struct ts_payload *payload, unsigned char*buf, int size, int pos)
+{
+	if (payload->pesstart)
+	{
+		memcpy(payload->section_buf, buf, size);
+		payload->section_index = size;
+		payload->section_size = -1;
+	}
+	else
+	{
+		memcpy(payload->section_buf + payload->section_index, buf, size);
+		payload->section_index += size;
+
+	}
+	if(payload->section_size == -1 && payload->section_index >= 3)
+		payload->section_size = (RB16(payload->section_buf + 1) & 0xfff) + 3 ;
+
+	if(payload->section_index >= (unsigned)payload->section_size)
+	{
+		if(parse_PMT(payload->section_buf,payload->section_size,pos))
+			return 1;
+	}
+	return 0;
+
 }
 
 /* Program Allocation Table. It contains a list of all programs and the
