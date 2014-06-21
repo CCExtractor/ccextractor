@@ -7,7 +7,7 @@
 
 #include "ccextractor.h"
 #include "dvb_subtitle_decoder.h"
-
+#include "utility.h"
 static unsigned pmt_warning_shown=0; // Only display warning once
 void *cxx_dvb_context = NULL;
 
@@ -62,23 +62,20 @@ void clear_PMT_array (void)
 		}
 	pmt_array_length=0;	
 }
-
-int parse_PMT (int pos)
+int parse_PMT (unsigned char *buf,int len, int pos)
 {
 	int must_flush=0;
 	int ret = 0;
-        unsigned char desc_len = 0;
+	unsigned char desc_len = 0;
 
 	if ((ccx_options.ts_forced_cappid || (ccx_options.teletext_mode==CCX_TXT_IN_USE && ccx_options.ts_cappid)) && 
 		cap_stream_type!=CCX_STREAM_TYPE_UNKNOWNSTREAM) // Already know what we need, skip
 		return 0; 
 
-	if (!payload.pesstart) // Not the first entry. Ignore it, it should not be here.		
-		return 0;
 
-    unsigned pointer_field = *(payload.start);
-    unsigned char *payload_start = payload.start + pointer_field + 1;
-    unsigned payload_length = tspacket+188-payload_start;
+	unsigned pointer_field = *(payload.start);
+	unsigned char *payload_start = payload.start + pointer_field + 1;
+	unsigned payload_length = tspacket+188-payload_start;
 
 	/* We keep a copy of all PMTs, even if not interesting to us for now */
 	if (pmt_array[pos].last_pmt_payload!=NULL && payload_length == pmt_array[pos].last_pmt_length && 
@@ -88,7 +85,7 @@ int parse_PMT (int pos)
 		return 0;
 	}
 	pmt_array[pos].last_pmt_payload=(unsigned char *) 
-		realloc (pmt_array[pos].last_pmt_payload, payload_length+8); // Extra 8 in case memcpy copies dwords, etc
+	realloc (pmt_array[pos].last_pmt_payload, payload_length+8); // Extra 8 in case memcpy copies dwords, etc
 	if (pmt_array[pos].last_pmt_payload==NULL)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process PMT.\n");
 	memcpy (pmt_array[pos].last_pmt_payload, payload_start, payload_length);
@@ -399,6 +396,29 @@ int parse_PMT (int pos)
             must_flush=1;            
     }    
 	return must_flush;
+}
+
+void write_section(struct ts_payload *payload, unsigned char*buf, int size)
+{
+	if (payload->pesstart)
+	{
+		memcpy(payload->section_buf, buf, size);
+		payload->section_index = size;
+		payload->section_size = -1;
+	}
+	else
+	{
+		memcpy(payload->section_buf + payload->section_index, buf, size);
+		payload->section_index += size;
+
+	}
+	if(payload->section_size == -1 && payload->section_index >= 3)
+		payload->section_size = (RB16(payload->section_buf + 1) & 0xfff) + 3 ;
+
+	if(payload->section_index >= (unsigned)payload->section_size)
+		parse_PMT(NULL,0,0);
+	return 0;
+
 }
 
 /* Program Allocation Table. It contains a list of all programs and the
