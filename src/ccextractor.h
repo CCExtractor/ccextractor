@@ -33,6 +33,13 @@ struct ccx_boundary_time
     int set;
 };
 
+struct ccx_transcript_format {
+	char name[20]; // Unique identifier for easy access to a predefined setting
+	int showTimes; // Show times or not
+	int showStartTime, showEndTime; // Show start and/or end time. showTimes must be true for this.
+
+};
+
 struct ccx_s_options // Options from user parameters
 {
 	int extract; // Extract 1st, 2nd or both fields
