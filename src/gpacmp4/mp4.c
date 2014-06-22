@@ -292,12 +292,35 @@ int processmp4 (char *file)
 					pts_set=1;
 				set_fts();
 
+				// Change by Willem
+
 				// Apparently the first 4 bytes are the sample length, and then comes 'cdat', and then the data itself
-				if (sample->dataLength>8 && strncmp (sample->data+4, "cdat", 4)==0)
+				/*if (sample->dataLength>8 && strncmp (sample->data+4, "cdat", 4)==0)
 				{
-					// dump (256,( unsigned char *) sample->data+8,sample->dataLength-8,0, 1);				
+					//dump (256,( unsigned char *) sample->data+8,sample->dataLength-8,0, 1);	
 					process608((const unsigned char *)sample->data + 8, sample->dataLength - 8, &context_cc608_field_1);
+				}*/
+				
+				// Based on https://developer.apple.com/library/prerelease/mac/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html#//apple_ref/doc/uid/TP40000939-CH205-SW87
+				// An atom consists of the Atom size, Atom Type and the data.
+				// First 4 bytes are length in bytes of this atom
+				// byte 5-8 are the atom type. Should be either cdat or cdt2
+				// byte 9-x are actual data.
+				// This means a sample can contain multiple atoms!
+				if (sample->dataLength > 8 && strncmp(sample->data + 4, "cdat", 4) == 0){ // The format of the closed captioning sample data is a sequence of one or more atoms, one of which must be a 'cdat' atom.
+					int atomStart = 0;
+					// process Atom by Atom
+					while (atomStart < sample->dataLength){
+						unsigned int atomLength = (unsigned char)sample->data[atomStart] << 24 | (unsigned char)sample->data[atomStart + 1] << 16 | (unsigned char)sample->data[atomStart + 2] << 8 | (unsigned char)sample->data[atomStart + 3];
+						if (atomLength > 8 && (strncmp(sample->data + atomStart + 4, "cdat", 4) == 0 || strncmp(sample->data + atomStart + 4, "cdt2", 4) == 0)){
+							dump(256, (unsigned char *)sample->data +atomStart+ 8, atomLength - 8, 0, 1);
+							process608((const unsigned char *)sample->data + atomStart + 8, atomLength - 8, &context_cc608_field_1);
+						}
+						atomStart += atomLength;
+					}
 				}
+
+				// End of change
 				int progress = (int) ((k*100) / num_samples);
 				if (last_reported_progress != progress)
 				{
