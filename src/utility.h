@@ -1,9 +1,7 @@
 #ifndef CC_UTILITY_H
 #define CC_UTILITY_H
 
-#ifdef _WIN32
-#include <winsock2.h>
-#else
+#ifndef _WIN32
 #include <arpa/inet.h>
 #endif
 

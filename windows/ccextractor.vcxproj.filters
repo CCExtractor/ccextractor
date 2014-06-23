@@ -192,6 +192,9 @@
     <ClInclude Include="..\src\gpacmp4\gpac\internal\ogg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\utility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gpacmp4\av_parsers.c">

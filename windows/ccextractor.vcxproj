@@ -58,6 +58,7 @@
     <ClInclude Include="..\src\stdint.h" />
     <ClInclude Include="..\src\stdintmsc.h" />
     <ClInclude Include="..\src\teletext.h" />
+    <ClInclude Include="..\src\utility.h" />
     <ClInclude Include="..\src\wtv_constants.h" />
     <ClInclude Include="..\src\zlib\crc32.h" />
     <ClInclude Include="..\src\zlib\deflate.h" />
