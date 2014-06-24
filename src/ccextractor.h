@@ -33,12 +33,16 @@ struct ccx_boundary_time
     int set;
 };
 
-struct ccx_transcript_format {
+typedef struct {
+	// TODO: add more options, and (perhaps) reduce other ccextractor options?
 	char name[20]; // Unique identifier for easy access to a predefined setting
 	int showTimes; // Show times or not
-	int showStartTime, showEndTime; // Show start and/or end time. showTimes must be true for this.
+	int showStartTime, showEndTime; // Show start and/or end time. showTimes must be 1 for this.
+	int relativeTimestamp; // Timestamps relative to start of sample or in UTC?
+	int xds; // Show XDS or not
+	int useColors; // Add colors or no colors
 
-};
+} ccx_transcript_format;
 
 struct ccx_s_options // Options from user parameters
 {
@@ -86,15 +90,18 @@ struct ccx_s_options // Options from user parameters
 	int auto_myth; // Use myth-tv mpeg code? 0=no, 1=yes, 2=auto
 	/* MP4 related stuff */
 	unsigned mp4vidtrack; // Process the video track even if a CC dedicated track exists.
+	/* General settings */
 	int usepicorder; // Force the use of pic_order_cnt_lsb in AVC/H.264 data streams
 	int autodash; // Add dashes (-) before each speaker automatically?
 	unsigned teletext_mode; // 0=Disabled, 1 = Not found, 2=Found
-	unsigned ucla_settings; // Enables convenient settings for UCLA's project.
+	unsigned ucla_settings; // Enables convenient settings for UCLA's project. TODO: replace this with below.
+	ccx_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
 	char millis_separator;
 	LLONG screens_to_process; // How many screenfuls we want?
 	enum ccx_encoding_type encoding;
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 	enum ccx_output_date_format date_format;
+	enum color_code cc608_default_color;
 	char *output_filename;
 	char *out_elementarystream_filename;
 	LLONG debug_mask; // dbg_print will use this mask to print or ignore different types
@@ -112,7 +119,7 @@ struct ccx_s_options // Options from user parameters
 	int line_terminator_lf; // 0 = CRLF, 1=LF
 	int noautotimeref; // Do NOT set time automatically?
 	enum ccx_datasource input_source; // Files, stdin or network
-	enum color_code cc608_default_color;
+	
 };
 
 struct ts_payload

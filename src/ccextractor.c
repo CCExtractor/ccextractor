@@ -11,6 +11,13 @@ void xds_cea608_test();
 
 struct ccx_s_options ccx_options;
 
+#define TRANSCRIPT_PREDEFINED_SETTINGS_COUNT 10
+
+ccx_transcript_format ccx_transcript_predefined_settings[TRANSCRIPT_PREDEFINED_SETTINGS_COUNT] = {
+	{ .name = "General", .showTimes = 1, .showStartTime = 1, .showEndTime = 1, .relativeTimestamp = 1, .xds = 0, .useColors = 1 }, // This one will be used as default.
+	{ .name = "UCLA", .showTimes = 1, .showStartTime = 1, .showEndTime = 1, .relativeTimestamp = 0, .xds = 1, .useColors = 1 } // Predefined one for the UCLA project.
+};
+
 extern unsigned char *filebuffer;
 extern int bytesinbuffer; // Number of bytes we actually have on buffer
 
@@ -140,10 +147,13 @@ void init_options (struct ccx_s_options *options)
 	options->auto_myth = 2; // 2=auto
 	/* MP4 related stuff */
 	options->mp4vidtrack=0; // Process the video track even if a CC dedicated track exists.
+	/* General stuff */
 	options->usepicorder = 0; // Force the use of pic_order_cnt_lsb in AVC/H.264 data streams
 	options->autodash=0; // Add dashes (-) before each speaker automatically?
 	options->teletext_mode=CCX_TXT_AUTO_NOT_YET_FOUND; // 0=Disabled, 1 = Not found, 2=Found
+
 	options->ucla_settings=0; // Enables convenient settings for UCLA's project.	
+	options->transcript_settings = ccx_transcript_predefined_settings[0];
 	options->millis_separator=',';
 	options->screens_to_process=-1; // How many screenfuls we want?
 	options->encoding = CCX_ENC_UTF_8;
