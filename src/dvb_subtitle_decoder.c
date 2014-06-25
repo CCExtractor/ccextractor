@@ -199,41 +199,25 @@ static void freep(void *arg)
 }
 #ifdef DEBUG
 
-int check_trans_tn_intensity(int p1,int p2,int p3,int p4)
+struct transIntensity
 {
-	return p1 < p2 || (p1 == p2 &&  p3 < p4);
-}
-/**
- * @param t array stating transparency of image
- * @param i array stating intensity 
- * @param lout output array which orederd list hash table 
- *              this array must be initialized with valid index of array 
- * @param nb number of element in array
- */
-void sort_intensity_wise(uint8_t *t, uint8_t *i, uint8_t *lout, int nb)
+	uint8_t *t;
+	uint8_t *i;
+};
+int check_trans_tn_intensity(const void *p1, const void *p2, void *arg)
 {
-	for (int gap = nb / 2; gap > 0; gap = gap / 2)
-	{
-		int p, j, tmp;
-		for (p = gap; p < nb; p++)
-		{
-#define CHECK_TRANSPARENCY ( t[tmp] < t[lout[j - gap]] )
-			/* Transparency have major role in intensity so priority to transperency over Y */
-#define CHECK_INTENSITY (t[tmp] == t[lout[j - gap]]&& i[tmp] < i[lout[j - gap]])
-#define CHECK_TRANS_TN_INTEN (CHECK_TRANSPARENCY || CHECK_INTENSITY)
-			tmp = lout[p];
-			for (j = p; j >= gap && check_trans_tn_intensity(t[tmp],t[lout[j - gap]],i[tmp],i[lout[j - gap]]); j -= gap)
-			{
-				lout[j] = lout[j - gap];
-			}
-			lout[j] = tmp;
-#undef CHECK_TRANSPARENCY
-#undef CHECK_INTENSITY
-#undef CHECK_TRANS_TN_INTEN
-		}
-	}
-}
+	struct transIntensity *ti = arg;
+	unsigned char* tmp = (unsigned char*)p1;
+	unsigned char* act = (unsigned char*)p2;
 
+	if (ti->t[*tmp] < ti->t[*act] || (ti->t[*tmp] == ti->t[*act] &&  ti->i[*tmp] < ti->i[*act]))
+		return -1;
+	else if (ti->t[*tmp] == ti->t[*act] &&  ti->i[*tmp] == ti->i[*act])
+		return 0;
+
+
+	return 1;
+}
 int mapclut_paletee(png_color *palette, png_byte *alpha, uint32_t *clut,
 		uint8_t depth)
 {
@@ -268,6 +252,7 @@ int quantize_map(png_byte *alpha, uint8_t *intensity, png_color *palette,
 	 * save index of intensity order table
 	 */
 	uint32_t *mcit = NULL;
+	struct transIntensity ti = { alpha,intensity};
 
 	int ret = 0;
 
@@ -304,7 +289,7 @@ int quantize_map(png_byte *alpha, uint8_t *intensity, png_color *palette,
 	{
 		histogram[bitmap[i]]++;
 	}
-	sort_intensity_wise((uint8_t*) alpha, (uint8_t*) intensity, iot, nb_color);
+	shell_sort((void*)iot, nb_color, sizeof(*iot), check_trans_tn_intensity, (void*)&ti);
 
 	/* using selection  sort since need to find only max_color */
 	for (int i = 0; i < max_color; i++)
@@ -1754,7 +1739,6 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	int timeout;
 	int version;
 	long long start = get_visible_start();
-	char *filename;
 	void *sp = ctx->out->spupng_data;
 
 
@@ -1774,7 +1758,6 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	ctx->time_out = timeout;
 	ctx->version = version;
 
-	filename = get_spupng_filename(sp);
 	if(ctx->prev_start == 0)
 	{
 		write_sputag(sp, ctx->prev_start, start);
