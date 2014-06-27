@@ -35,14 +35,16 @@ struct ccx_boundary_time
 
 typedef struct {
 	// TODO: add more options, and (perhaps) reduce other ccextractor options?
-	char name[20]; // Unique identifier for easy access to a predefined setting
-	int showTimes; // Show times or not
-	int showStartTime, showEndTime; // Show start and/or end time. showTimes must be 1 for this.
+	int showStartTime, showEndTime; // Show start and/or end time.
+	int showCC; // Show which CC channel has been captured.
+	int showMode; // Show which mode if available (E.G.: POP, RU1, ...)	
 	int relativeTimestamp; // Timestamps relative to start of sample or in UTC?
 	int xds; // Show XDS or not
 	int useColors; // Add colors or no colors
 
 } ccx_transcript_format;
+
+extern ccx_transcript_format ccx_default_transcript_settings;
 
 struct ccx_s_options // Options from user parameters
 {
@@ -80,7 +82,6 @@ struct ccx_s_options // Options from user parameters
 	int messages_target; // 0 = nowhere (quiet), 1=stdout, 2=stderr
 	/* Levenshtein's parameters, for string comparison */
 	int levdistmincnt, levdistmaxpct; // Means 2 fails or less is "the same", 10% or less is also "the same"	
-	int export_xds; // Export XDS to transcript?
 	int investigate_packets; // Look for captions in all packets when everything else fails
 	int fullbin; // Disable pruning of padding cc blocks
 	int nosync; // Disable syncing
@@ -611,7 +612,7 @@ extern int PIDs_seen[65536];
 extern struct PMT_entry *PIDs_programs[65536];
 
 extern LLONG ts_start_of_xds; 
-extern int timestamps_on_transcript;
+//extern int timestamps_on_transcript;
 
 extern unsigned teletext_mode;
 

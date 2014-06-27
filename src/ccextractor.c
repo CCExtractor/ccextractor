@@ -11,11 +11,16 @@ void xds_cea608_test();
 
 struct ccx_s_options ccx_options;
 
-#define TRANSCRIPT_PREDEFINED_SETTINGS_COUNT 10
-
-ccx_transcript_format ccx_transcript_predefined_settings[TRANSCRIPT_PREDEFINED_SETTINGS_COUNT] = {
-	{ .name = "General", .showTimes = 1, .showStartTime = 1, .showEndTime = 1, .relativeTimestamp = 1, .xds = 0, .useColors = 1 }, // This one will be used as default.
-	{ .name = "UCLA", .showTimes = 1, .showStartTime = 1, .showEndTime = 1, .relativeTimestamp = 0, .xds = 1, .useColors = 1 } // Predefined one for the UCLA project.
+// These are the default settings for plain transcripts. No times, no CC or caption mode, and no XDS.
+ccx_transcript_format ccx_default_transcript_settings = 
+{ 
+	.showStartTime = 0, 
+	.showEndTime = 0, 
+	.showCC = 0, 
+	.showMode = 0, 
+	.relativeTimestamp = 1, 
+	.xds = 0, 
+	.useColors = 1 
 };
 
 extern unsigned char *filebuffer;
@@ -83,7 +88,6 @@ LLONG fts_at_gop_start=0;
 
 /* Time info for timed-transcript */
 LLONG ts_start_of_xds=-1; // Time at which we switched to XDS mode, =-1 hasn't happened yet
-int timestamps_on_transcript=0; /* Write time info on transcripts? */
 uint64_t utc_refvalue=UINT64_MAX;  /* _UI64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
 
 int max_gop_length=0; // (Maximum) length of a group of pictures
@@ -137,7 +141,6 @@ void init_options (struct ccx_s_options *options)
 	/* Levenshtein's parameters, for string comparison */
 	options->levdistmincnt=2; // Means 2 fails or less is "the same"...
 	options->levdistmaxpct=10; // ...10% or less is also "the same"	
-	options->export_xds=0; // Export XDS to transcript?
 	options->investigate_packets = 0; // Look for captions in all packets when everything else fails
 	options->fullbin=0; // Disable pruning of padding cc blocks
 	options->nosync=0; // Disable syncing
@@ -153,7 +156,8 @@ void init_options (struct ccx_s_options *options)
 	options->teletext_mode=CCX_TXT_AUTO_NOT_YET_FOUND; // 0=Disabled, 1 = Not found, 2=Found
 
 	options->ucla_settings=0; // Enables convenient settings for UCLA's project.	
-	options->transcript_settings = ccx_transcript_predefined_settings[0];
+
+	options->transcript_settings = ccx_default_transcript_settings;
 	options->millis_separator=',';
 	options->screens_to_process=-1; // How many screenfuls we want?
 	options->encoding = CCX_ENC_UTF_8;
@@ -527,7 +531,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (ccx_options.export_xds)
+	if (ccx_options.transcript_settings.xds)
 	{
 		if (ccx_options.write_format==CCX_OF_TRANSCRIPT)
 		{

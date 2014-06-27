@@ -263,14 +263,17 @@ void set_output_format (const char *format)
     else if (strcmp (format,"transcript")==0 || strcmp (format,"txt")==0)
 	{
         ccx_options.write_format=CCX_OF_TRANSCRIPT;
-		timestamps_on_transcript=0;
 	}
     else if (strcmp (format,"timedtranscript")==0 || strcmp (format,"ttxt")==0)
 	{
         ccx_options.write_format=CCX_OF_TRANSCRIPT;
 		if (ccx_options.date_format==ODF_NONE)		
 			ccx_options.date_format=ODF_HHMMSSMS;
-		timestamps_on_transcript=1;	
+		// Sets the right things so that timestamps and the mode are printed.
+		ccx_options.transcript_settings.showStartTime = 1;
+		ccx_options.transcript_settings.showEndTime = 1;
+		ccx_options.transcript_settings.showCC = 0;
+		ccx_options.transcript_settings.showMode = 1;
 	}
     else if (strcmp (format,"report")==0) 
     {
@@ -1227,7 +1230,7 @@ void parse_parameters (int argc, char *argv[])
 		}
         if (strcmp (argv[i],"-xds")==0)
 		{
-			ccx_options.export_xds=1;
+			ccx_options.transcript_settings.xds = 1;
 			continue;
 		}
         if (strcmp (argv[i],"-xdsdebug")==0)
@@ -1388,8 +1391,12 @@ void parse_parameters (int argc, char *argv[])
 		}		
         if (strcmp (argv[i],"-UCLA")==0 || strcmp (argv[i],"-ucla")==0)
 		{
-            ccx_options.ucla_settings = 1;
 			ccx_options.millis_separator='.';
+			ccx_options.transcript_settings.showStartTime = 1;
+			ccx_options.transcript_settings.showEndTime = 1;
+			ccx_options.transcript_settings.showCC = 1;
+			ccx_options.transcript_settings.showMode = 1;
+			ccx_options.transcript_settings.relativeTimestamp = 0;
 			continue;
 		}
         if (strcmp (argv[i],"-lf")==0 || strcmp (argv[i],"-LF")==0)
