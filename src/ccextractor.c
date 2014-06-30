@@ -16,8 +16,8 @@ ccx_transcript_format ccx_default_transcript_settings =
 { 
 	.showStartTime = 0, 
 	.showEndTime = 0, 
-	.showCC = 0, 
-	.showMode = 0, 
+	.showMode = 0,
+	.showCC = 0, 	
 	.relativeTimestamp = 1, 
 	.xds = 0, 
 	.useColors = 1 
@@ -154,8 +154,6 @@ void init_options (struct ccx_s_options *options)
 	options->usepicorder = 0; // Force the use of pic_order_cnt_lsb in AVC/H.264 data streams
 	options->autodash=0; // Add dashes (-) before each speaker automatically?
 	options->teletext_mode=CCX_TXT_AUTO_NOT_YET_FOUND; // 0=Disabled, 1 = Not found, 2=Found
-
-	options->ucla_settings=0; // Enables convenient settings for UCLA's project.	
 
 	options->transcript_settings = ccx_default_transcript_settings;
 	options->millis_separator=',';

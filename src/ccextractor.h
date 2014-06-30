@@ -36,8 +36,8 @@ struct ccx_boundary_time
 typedef struct {
 	// TODO: add more options, and (perhaps) reduce other ccextractor options?
 	int showStartTime, showEndTime; // Show start and/or end time.
-	int showCC; // Show which CC channel has been captured.
 	int showMode; // Show which mode if available (E.G.: POP, RU1, ...)	
+	int showCC; // Show which CC channel has been captured.	
 	int relativeTimestamp; // Timestamps relative to start of sample or in UTC?
 	int xds; // Show XDS or not
 	int useColors; // Add colors or no colors
@@ -95,7 +95,6 @@ struct ccx_s_options // Options from user parameters
 	int usepicorder; // Force the use of pic_order_cnt_lsb in AVC/H.264 data streams
 	int autodash; // Add dashes (-) before each speaker automatically?
 	unsigned teletext_mode; // 0=Disabled, 1 = Not found, 2=Found
-	unsigned ucla_settings; // Enables convenient settings for UCLA's project. TODO: replace this with below.
 	ccx_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
 	char millis_separator;
 	LLONG screens_to_process; // How many screenfuls we want?
