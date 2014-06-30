@@ -608,7 +608,7 @@ int xds_do_current_and_future ()
 					xds_program_name[i-2]=cur_xds_payload[i];
 				xds_program_name[i-2]=0;
 				dbg_print(CCX_DMT_XDS, "\rXDS Program name: %s\n",xds_program_name);
-				xdsprint("program name: %s",xds_program_name);
+				xdsprint("Program name: %s",xds_program_name);
 				if (cur_xds_packet_class==XDS_CLASS_CURRENT && 
 					strcmp (xds_program_name, current_xds_program_name)) // Change of program
 				{
