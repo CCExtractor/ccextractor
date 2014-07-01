@@ -74,6 +74,7 @@ static int process_avc_sample(u32 timescale, GF_AVCConfig* c, GF_ISOSample* s)
 static int process_xdvb_track(const char* basename, GF_ISOFile* f, u32 track)
 {
 	u32 timescale, i, sample_count, last_sdi = 0;
+
 	int status;
 	if((sample_count = gf_isom_get_sample_count(f, track)) < 1){
 		return 0;
@@ -340,7 +341,7 @@ int processmp4 (char *file)
 	f = NULL;
 	mprint ("ok\n");
 
-		if(avc_track_count == 0){
+	if(avc_track_count == 0){
 		mprint("Found no AVC track(s). ", file);
 	}else{
 		mprint("Found %d AVC track(s). ", avc_track_count);
@@ -349,6 +350,10 @@ int processmp4 (char *file)
 		mprint ("Found %d CC track(s).\n", cc_track_count);
 	else
 		mprint ("found no dedicated CC track(s).\n");
+
+	file_report.mp4_cc_track_cnt = cc_track_count;
+	if (ccx_options.print_file_reports)
+		print_file_report();
 
 	return 0;
 }

@@ -125,7 +125,11 @@ int switch_to_next_file (LLONG bytesinbuffer)
 	if (ccx_options.input_source==CCX_DS_STDIN)
 	{
 		if (infd!=-1) // Means we had already processed stdin. So we're done.
+		{
+			if (ccx_options.print_file_reports)
+				print_file_report();
 			return 0;
+		}
 		infd=0;
 		mprint ("\n\r-----------------------------------------------------------------\n");
 		mprint ("\rReading from standard input\n");
@@ -134,7 +138,12 @@ int switch_to_next_file (LLONG bytesinbuffer)
 	if (ccx_options.input_source==CCX_DS_NETWORK)
 	{
 		if (infd!=-1) // Means we have already bound a socket.
+		{
+			if (ccx_options.print_file_reports)
+				print_file_report();
+
 			return 0;
+		}
 		if (init_sockets())
 			return 1;
 		infd=socket(AF_INET,SOCK_DGRAM,0);	    
@@ -179,7 +188,6 @@ int switch_to_next_file (LLONG bytesinbuffer)
     {
 		if (ccx_options.print_file_reports)
 			print_file_report();
-
         close_input_file ();
         if (inputsize>0 && ((past+bytesinbuffer) < inputsize) && !processed_enough)
         {

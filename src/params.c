@@ -274,9 +274,10 @@ void set_output_format (const char *format)
 	}
     else if (strcmp (format,"report")==0) 
     {
-        ccx_options.write_format=CCX_OF_NULL;
+		ccx_options.write_format=CCX_OF_NULL;
 		ccx_options.messages_target=0;
-        ccx_options.print_file_reports=1;
+		ccx_options.print_file_reports=1;
+		ccx_options.ts_autoprogram=1;
 	}
     else if (strcmp (format,"raw")==0)
         ccx_options.write_format=CCX_OF_RAW;
@@ -406,8 +407,8 @@ void usage (void)
     mprint ("                                 dvdauthor's spumux.\n");
     mprint ("                                 See \"Notes on spupng output format\"\n");
 	mprint ("                      null    -> Don't produce any file output\n");
-	mprint ("                      report  -> Prints to stdout information about captions");
-	mprint ("                                 in specified input. Don't produce any file");
+	mprint ("                      report  -> Prints to stdout information about captions\n");
+	mprint ("                                 in specified input. Don't produce any file\n");
 	mprint ("                                 output\n\n");
 	mprint ("       Note: Teletext output can only be srt, txt or ttxt for now.\n\n");
      

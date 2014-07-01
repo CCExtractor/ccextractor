@@ -103,7 +103,8 @@ void detect_stream_type (void)
             stream_mode=CCX_SM_ELEMENTARY_OR_NOT_FOUND;
         }
     }
-	if (stream_mode==CCX_SM_ELEMENTARY_OR_NOT_FOUND && startbytes_avail>=4) // Still not found
+	if ((stream_mode==CCX_SM_ELEMENTARY_OR_NOT_FOUND || ccx_options.print_file_reports) 
+			&& startbytes_avail>=4) // Still not found
 	{
 		// Try for MP4 by looking for box signatures - this should happen very 
 		// early in the file according to specs

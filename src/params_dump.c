@@ -219,15 +219,15 @@ void print_file_report(void)
 			break;
 	}
 
-	printf("StreamMode: ");
+	printf("Stream Mode: ");
 	switch (stream_mode)
 	{
 		case CCX_SM_TRANSPORT:
-			printf("transport_stream\n");
+			printf("Transport Stream\n");
 
-			printf("ProgramCount: %d\n", file_report.program_cnt);
+			printf("Program Count: %d\n", file_report.program_cnt);
 
-			printf("ProgramNumbers: ");
+			printf("Program Numbers: ");
 			for (int i = 0; i < pmt_array_length; i++)
 			{
 				if (pmt_array[i].program_number == 0)
@@ -263,7 +263,7 @@ void print_file_report(void)
 
 			break;
 		case CCX_SM_PROGRAM:
-			printf("program_stream\n");
+			printf("Program Stream\n");
 			break;
 		case CCX_SM_ASF:
 			printf("ASF\n");
@@ -272,22 +272,40 @@ void print_file_report(void)
 			printf("WTV\n");
 			break;
 		case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
-			printf("not_found\n");
+			printf("Not Found\n");
+	  		break;
+		case CCX_SM_MP4:
+			printf("MP4\n");
+			break;
+		case CCX_SM_MCPOODLESRAW:
+			printf("McPoodle's raw\n");
+			break;
+		case CCX_SM_RCWT:
+			printf("BIN\n");
+			break;
+		case CCX_SM_HEX_DUMP:
+			printf("Hex\n");
+			break;
+		default:
 			break;
 	}
 
-	if (ccx_bufferdatatype == CCX_PES)
+	if (ccx_bufferdatatype == CCX_PES && 
+		(stream_mode == CCX_SM_TRANSPORT ||
+		stream_mode == CCX_SM_PROGRAM ||
+		stream_mode == CCX_SM_ASF ||
+		stream_mode == CCX_SM_WTV))
 	{
 		printf("Width: %u\n", file_report.width);
 		printf("Height: %u\n", file_report.height);
-		printf("AspectRatio: %s\n", aspect_ratio_types[file_report.aspect_ratio]);
-		printf("FrameRate: %s\n", framerates_types[file_report.frame_rate]);
+		printf("Aspect Ratio: %s\n", aspect_ratio_types[file_report.aspect_ratio]);
+		printf("Frame Rate: %s\n", framerates_types[file_report.frame_rate]);
 	}
 
 	if (file_report.program_cnt > 1)
 		printf("//////// Program #%u: ////////\n", TS_program_number);
 
-	printf("DVB-Subtitles: ");
+	printf("DVB Subtitles: ");
 	int j;
 	for (j = 0; j < SUB_STREAMS_CNT; j++) 
 	{
@@ -313,7 +331,7 @@ void print_file_report(void)
 		{
 			printf("Yes\n");
 
-			printf("PagesWithSubtitles: ");
+			printf("Pages With Subtitles: ");
 			for (int i = 0; i < MAX_TLT_PAGES; i++) 
 			{
 				if (seen_sub_page[i] == 0)
@@ -332,7 +350,7 @@ void print_file_report(void)
 
 	if (cc_stats[0] > 0 || cc_stats[1] > 0) 
 	{
-		printf("XDSPresent: %s\n", Y_N(file_report.xds));
+		printf("XDS: %s\n", Y_N(file_report.xds));
 
 		printf("CC1: %s\n", Y_N(file_report.cc_channels_608[0]));
 		printf("CC2: %s\n", Y_N(file_report.cc_channels_608[1]));
@@ -353,9 +371,14 @@ void print_file_report(void)
 		}
 		printf("\n");
 
-		printf("PrimaryLanguagePresent: %s\n", Y_N(file_report.services708[1]));
+		printf("Primary Language Present: %s\n", Y_N(file_report.services708[1]));
 
-		printf("SecondaryLanguagePresent: %s\n", Y_N(file_report.services708[2]));
+		printf("Secondary Language Present: %s\n", Y_N(file_report.services708[2]));
+	}
+
+	printf("MPEG-4 Timed Text: %s\n", Y_N(file_report.mp4_cc_track_cnt));
+	if (file_report.mp4_cc_track_cnt) {
+		printf("MPEG-4 Timed Text tracks count: %d\n", file_report.mp4_cc_track_cnt);
 	}
 
 	memset(&file_report, 0, sizeof (struct file_report_t));

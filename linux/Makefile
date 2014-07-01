@@ -3,7 +3,7 @@ SHELL = /bin/sh
 CC = gcc
 CXX = g++
 
-CFLAGS = -g -Wall  -std=gnu99
+CFLAGS = -O3 -std=gnu99
 INCLUDE = -I../src/gpacmp4/ -I../src/libpng -I../src/zlib
 ALL_FLAGS = -Wno-write-strings -DGPAC_CONFIG_LINUX -D_FILE_OFFSET_BITS=64 
 LDFLAGS = -lm -zmuldefs
@@ -40,6 +40,7 @@ CFLAGS+=-I/usr/local/include/tesseract -I/usr/local/include/leptonica
 CFLAGS+=-DENABLE_OCR
 LDFLAGS+= $(shell pkg-config --libs tesseract)
 endif
+
 .PHONY: all
 all: objs_dir $(TARGET) 
 

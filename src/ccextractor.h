@@ -174,6 +174,7 @@ struct file_report_t
 	unsigned services708[63];
 	unsigned dvb_sub_pid[SUB_STREAMS_CNT]; 
 	unsigned tlt_sub_pid[SUB_STREAMS_CNT];
+	unsigned mp4_cc_track_cnt;
 } file_report;
 
 
