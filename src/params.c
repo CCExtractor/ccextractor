@@ -1,4 +1,5 @@
 #include "ccextractor.h"
+#include "utility.h"
 
 static int inputfile_capacity=0; 
 static int spell_builtin_added=0; // so we don't do it twice
@@ -158,7 +159,6 @@ int process_cap_file (char *filename)
     fclose (fi);
     return 0;
 }
-
 int isanumber (char *s)
 {
     while (*s)
@@ -1099,6 +1099,8 @@ void parse_parameters (int argc, char *argv[])
             if (add_built_in_words())
                 fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for word list");
             ccx_options.sentence_cap=1;
+			shell_sort(spell_lower,spell_words,sizeof(*spell_lower),string_cmp2,NULL);
+			shell_sort(spell_correct,spell_words,sizeof(*spell_correct),string_cmp2,NULL);
 			continue;
         }
         if ((strcmp (argv[i],"--capfile")==0 ||
@@ -1112,6 +1114,8 @@ void parse_parameters (int argc, char *argv[])
             ccx_options.sentence_cap=1;
             ccx_options.sentence_cap_file=argv[i+1];
             i++;
+			shell_sort(spell_lower,spell_words,sizeof(*spell_lower),string_cmp2,NULL);
+			shell_sort(spell_correct,spell_words,sizeof(*spell_correct),string_cmp2,NULL);
 			continue;
         }
         if (strcmp (argv[i],"--program-number")==0 ||

@@ -1,5 +1,5 @@
 #include "ccextractor.h"
-
+#include "utility.h"
 //extern unsigned char encoded_crlf[16];
 
 // Encodes a generic string. Note that since we use the encoders for closed caption
@@ -30,40 +30,32 @@ unsigned encode_line (unsigned char *buffer, unsigned char *text)
     return bytes;
 }
 
-#define ISSEPARATOR(c) (c==' ' || c==0x89 || ispunct(c) \
-    || c==0x99) // This is the apostrofe. We get it here in CC encoding, not ASCII
-
-
-void correct_case (int line_num, struct eia608_screen *data)
+void correct_case(int line_num,struct eia608_screen *data)
 {
-    int i=0;
-    while (i<spell_words)
-    {
-        char *c=(char *) data->characters[line_num];
-        size_t len=strlen (spell_correct[i]);
-        while ((c=strstr (c,spell_lower[i]))!=NULL)
-        {
-            // Make sure it's a whole word (start of line or
-            // preceded by space, and end of line or followed by
-            // space)
-            unsigned char prev;
-            if (c==(char *) data->characters[line_num]) // Beginning of line...
-                prev=' '; // ...Pretend we had a blank before
-            else
-                prev=*(c-1);             
-            unsigned char next;
-            if (c-(char *) data->characters[line_num]+len==CC608_SCREEN_WIDTH) // End of line...
-                next=' '; // ... pretend we have a blank later
-            else
-                next=*(c+len);			
-            if ( ISSEPARATOR(prev) && ISSEPARATOR(next))
-            {
-                memcpy (c,spell_correct[i],len);
-            }
-            c++;
-        }
-        i++;
-    }
+	char delim[64] = {
+		' ' ,'\n','\r', 0x89,0x99,
+		'!' , '"', '#', '%' , '&',
+		'\'', '(', ')', ';' , '<',
+		'=' , '>', '?', '[' ,'\\',
+		']' , '*', '+', ',' , '-',
+		'.' , '/', ':', '^' , '_',
+		'{' , '|', '}', '~' ,'\0' };
+
+	char *line = strdup(((char*)data->characters[line_num]));
+	char *oline = (char*)data->characters[line_num];
+	char *c = strtok(line,delim);
+	do
+	{
+		char **index = bsearch(&c,spell_lower,spell_words,sizeof(*spell_lower),string_cmp);
+
+		if(index)
+		{
+			char *correct_c = *(spell_correct + (index - spell_lower));
+			size_t len=strlen (correct_c);
+			memcpy(oline + (c - line),correct_c,len);
+		}
+	} while ( ( c = strtok(NULL,delim) ) != NULL );
+	free(line);
 }
 
 void capitalize (int line_num, struct eia608_screen *data)
