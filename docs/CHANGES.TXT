@@ -9,6 +9,7 @@ version of CCExtractor.
 - Added DVB subtitles decoder, spupng in output
 - Added support for cdt2 media atoms in QT video files. Now multiple atoms in
  a single sample sequence are supported.
+- Added support for a customised transcript format
 
 0.69
 ----
