@@ -693,7 +693,7 @@ void usage (void)
 	mprint("                           - Use colors\n");
 	mprint("                       Examples:\n");
 	mprint("                       0000101 is the default setting for transcripts\n");
-	mprint("                       1101101 is the default for timed transcripts\n");
+	mprint("                       1110101 is the default for timed transcripts\n");
 	mprint("                       1111001 is the default setting for -ucla\n");
 	mprint("                       Make sure you use this parameter after others that might\n");
 	mprint("                       affect these settings (-out, -ucla, -xds, -txt, -ttxt, ...)\n");
