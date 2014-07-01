@@ -789,6 +789,28 @@ int atoi_hex (char *s)
 		return atoi (s);
 	}
 }
+void init_option (struct ccx_s_options *option)
+{
+	if(option->gui_mode_reports)
+	{
+		option->no_progress_bar=1;
+		// Do it as soon as possible, because it something fails we might not have a chance
+		activity_report_version();
+	}
+
+	if(option->sentence_cap)
+	{
+		if(add_built_in_words())
+			fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for word list");
+        if(option->sentence_cap_file && process_cap_file (option->sentence_cap_file))
+            fatal (EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the capitalization file.\n");
+
+		shell_sort(spell_lower,spell_words,sizeof(*spell_lower),string_cmp2,NULL);
+		shell_sort(spell_correct,spell_words,sizeof(*spell_correct),string_cmp2,NULL);
+	}
+	if(option->ts_forced_program != -1)
+		option->ts_forced_program_selected = 1;
+}
 
 void parse_parameters (int argc, char *argv[])
 {
@@ -830,7 +852,7 @@ void parse_parameters (int argc, char *argv[])
             }
 			continue;
         }
-        if (strcmp (argv[i],"-bi")==0 ||
+		if (strcmp (argv[i],"-bi")==0 ||
             strcmp (argv[i],"--bufferinput")==0)
 		{
             ccx_options.buffer_input = 1;
@@ -1083,9 +1105,6 @@ void parse_parameters (int argc, char *argv[])
         if (strcmp (argv[i],"--gui_mode_reports")==0)
         {
             ccx_options.gui_mode_reports=1;
-            ccx_options.no_progress_bar=1;
-            // Do it as soon as possible, because it something fails we might not have a chance
-            activity_report_version(); 
 			continue;
         }
         if (strcmp (argv[i],"--no_progress_bar")==0)
@@ -1096,26 +1115,16 @@ void parse_parameters (int argc, char *argv[])
         if (strcmp (argv[i],"--sentencecap")==0 ||
             strcmp (argv[i],"-sc")==0)
         {
-            if (add_built_in_words())
-                fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for word list");
             ccx_options.sentence_cap=1;
-			shell_sort(spell_lower,spell_words,sizeof(*spell_lower),string_cmp2,NULL);
-			shell_sort(spell_correct,spell_words,sizeof(*spell_correct),string_cmp2,NULL);
 			continue;
         }
         if ((strcmp (argv[i],"--capfile")==0 ||
             strcmp (argv[i],"-caf")==0)
             && i<argc-1)
         {
-            if (add_built_in_words())
-                fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for word list");
-            if (process_cap_file (argv[i+1])!=0)
-                fatal (EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the capitalization file.\n");
             ccx_options.sentence_cap=1;
             ccx_options.sentence_cap_file=argv[i+1];
             i++;
-			shell_sort(spell_lower,spell_words,sizeof(*spell_lower),string_cmp2,NULL);
-			shell_sort(spell_correct,spell_words,sizeof(*spell_correct),string_cmp2,NULL);
 			continue;
         }
         if (strcmp (argv[i],"--program-number")==0 ||

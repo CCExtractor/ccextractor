@@ -233,9 +233,11 @@ struct ccx_s_teletext_config {
 
 extern LLONG buffered_read_opt (unsigned char *buffer, unsigned int bytes);
 
-//params.cpp
+//params.c
 void parse_parameters (int argc, char *argv[]);
 void usage (void);
+int atoi_hex (char *s);
+int stringztoms (const char *s, struct ccx_boundary_time *bt);
 
 // general_loop.cpp
 void position_sanity_check ();

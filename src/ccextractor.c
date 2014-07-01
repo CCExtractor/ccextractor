@@ -4,6 +4,7 @@ License: GPL 2.0
 */
 #include <stdio.h>
 #include "ccextractor.h"
+#include "configuration.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -277,6 +278,7 @@ int main(int argc, char *argv[])
 	int show_myth_banner = 0;
 	
 	memset (&cea708services[0],0,63*sizeof (int));
+	parse_configuration(&ccx_options);
 	parse_parameters (argc,argv);
 
 	if (num_input_files==0 && ccx_options.input_source==CCX_DS_FILE)
