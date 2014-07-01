@@ -5,3 +5,5 @@ CVS
 linux/ccextractor
 linux/depend
 windows/debug/*
+*.sdf
+*.suo

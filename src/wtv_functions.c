@@ -57,8 +57,8 @@ uint64_t time_to_pes_time(uint64_t time)
 int add_skip_chunks(struct wtv_chunked_buffer *cb, uint32_t offset, uint32_t flag)
 {
 
-    uint64_t start = filebuffer_pos; //Not sure this is the best way to do this    
-	buffered_seek((int)((offset*WTV_CHUNK_SIZE)-start));
+	uint64_t start = past;
+	buffered_seek((int)((offset*WTV_CHUNK_SIZE) - start));
     uint64_t seek_back=0-((offset*WTV_CHUNK_SIZE)-start);
 
 	uint32_t value;
@@ -156,6 +156,9 @@ void get_sized_buffer(struct wtv_chunked_buffer *cb, uint32_t size) {
 // If successful, will return with the file positioned 
 // at the start of the data dir
 int read_header(struct wtv_chunked_buffer *cb) {
+	startbytes_avail = (int)buffered_read_opt(startbytes, STARTBYTESLENGTH);
+	return_to_buffer(startbytes, startbytes_avail);
+
     uint8_t *parsebuf;
     parsebuf = (uint8_t*)malloc(1024);
     buffered_read(parsebuf,0x42);

@@ -40,6 +40,7 @@ CFLAGS+=-I/usr/local/include/tesseract -I/usr/local/include/leptonica
 CFLAGS+=-DENABLE_OCR
 LDFLAGS+= $(shell pkg-config --libs tesseract)
 endif
+
 .PHONY: all
 all: objs_dir $(TARGET) 
 

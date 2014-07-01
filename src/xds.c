@@ -151,57 +151,66 @@ void xds_write_transcript_line_prefix (struct ccx_s_write *wb)
 	if (!wb || wb->fh==-1)
 		return;
 
-	if (timestamps_on_transcript)
+	if (ts_start_of_xds == -1) 
 	{
-		const char *mode="XDS";
-		if (ts_start_of_xds == -1) 
-		{
-			// Means we entered XDS mode without making a note of the XDS start time. This is a bug.
-			fatal (EXIT_BUG_BUG, "Bug in timedtranscript (XDS). Please report.");
-			;
-		}
-		if (ccx_options.ucla_settings)
-		{
-			mstotime (ts_start_of_xds+subs_delay,&h1,&m1,&s1,&ms1);
-			mstotime (get_fts()+subs_delay,&h2,&m2,&s2,&ms2);				
+		// Means we entered XDS mode without making a note of the XDS start time. This is a bug.
+		fatal (EXIT_BUG_BUG, "Bug in timedtranscript (XDS). Please report.");
+		;
+	}
 
-            // SSC-1182 BEGIN
-            // Changed output format to be more like ZVBI
-
-			char buffer[80];
-            time_t start_time_int = (ts_start_of_xds+subs_delay)/1000;
-            int start_time_dec = (ts_start_of_xds+subs_delay)%1000;
-            struct tm *start_time_struct = gmtime(&start_time_int);
-            strftime(buffer, sizeof(buffer), "%Y%m%d%H%M%S", start_time_struct);
-            fdprintf(wb->fh, "%s.%03d|", buffer, start_time_dec);
-
-            time_t end_time_int = (get_fts()+subs_delay)/1000;
-            int end_time_dec = (get_fts()+subs_delay)%1000;
-            struct tm *end_time_struct = gmtime(&end_time_int);
-            strftime(buffer, sizeof(buffer), "%Y%m%d%H%M%S", end_time_struct);
-            fdprintf(wb->fh, "%s.%03d|", buffer, end_time_dec);
-            fdprintf(wb->fh, "%s|%s|", mode,XDSclasses_short[cur_xds_packet_class]);
-            // SSC-1182 END
-		}
-		else
-		{
-			if (utc_refvalue==UINT64_MAX)
+	if (ccx_options.transcript_settings.showStartTime){
+		char buffer[80];
+		if (ccx_options.transcript_settings.relativeTimestamp){
+			if (utc_refvalue == UINT64_MAX)
 			{
-				mstotime (ts_start_of_xds+subs_delay,&h1,&m1,&s1,&ms1);
-				mstotime (get_fts()+subs_delay,&h2,&m2,&s2,&ms2);				
-				char timeline[256];   
-				sprintf (timeline, "%02u:%02u:%02u,%03u | %02u:%02u:%02u,%03u | %s | ",
-					h1,m1,s1,ms1,h2,m2,s2,ms2,mode);
-				enc_buffer_used=encode_line (enc_buffer,(unsigned char *) timeline);
-				write (wb->fh, enc_buffer,enc_buffer_used);
+				mstotime(ts_start_of_xds + subs_delay, &h1, &m1, &s1, &ms1);
+				fdprintf(wb->fh, "%02u:%02u:%02u%c%03u|", h1, m1, s1, ccx_options.millis_separator, ms1);
+			}
+			else {
+				fdprintf(wb->fh, "%lld%c%03d|", (ts_start_of_xds + subs_delay) / 1000, ccx_options.millis_separator, (ts_start_of_xds + subs_delay) % 1000);
+			}
+		}
+		else {
+			mstotime(ts_start_of_xds + subs_delay, &h1, &m1, &s1, &ms1);
+			time_t start_time_int = (ts_start_of_xds + subs_delay) / 1000;
+			int start_time_dec = (ts_start_of_xds + subs_delay) % 1000;
+			struct tm *start_time_struct = gmtime(&start_time_int);
+			strftime(buffer, sizeof(buffer), "%Y%m%d%H%M%S", start_time_struct);
+			fdprintf(wb->fh, "%s%c%03d|", buffer,ccx_options.millis_separator,start_time_dec);
+		}
+	}
+
+	if (ccx_options.transcript_settings.showEndTime){
+		char buffer[80];
+		if (ccx_options.transcript_settings.relativeTimestamp){
+			if (utc_refvalue == UINT64_MAX)
+			{
+				mstotime(get_fts() + subs_delay, &h2, &m2, &s2, &ms2);
+				fdprintf(wb->fh, "%02u:%02u:%02u%c%03u|", h2, m2, s2, ccx_options.millis_separator, ms2);
 			}
 			else
 			{
-				fdprintf(wb->fh, "%lld.%03d|", (ts_start_of_xds+subs_delay)/1000,(ts_start_of_xds+subs_delay)%1000 );
-				fdprintf(wb->fh, "%lld.%03d|", (get_fts()+subs_delay)/1000,(get_fts()+subs_delay)%1000 );
+				fdprintf(wb->fh, "%lld%s%03d|", (get_fts() + subs_delay) / 1000, ccx_options.millis_separator, (get_fts() + subs_delay) % 1000);
 			}
-		}		
+		}
+		else {
+			mstotime(get_fts() + subs_delay, &h2, &m2, &s2, &ms2);
+			time_t end_time_int = (get_fts() + subs_delay) / 1000;
+			int end_time_dec = (get_fts() + subs_delay) % 1000;
+			struct tm *end_time_struct = gmtime(&end_time_int);
+			strftime(buffer, sizeof(buffer), "%Y%m%d%H%M%S", end_time_struct);
+			fdprintf(wb->fh, "%s%c%03d|", buffer, ccx_options.millis_separator, end_time_dec);
+		}
 	}
+
+	if (ccx_options.transcript_settings.showMode){
+		const char *mode = "XDS";
+		fdprintf(wb->fh, "%s|", mode);
+	}
+
+	if (ccx_options.transcript_settings.showCC){
+		fdprintf(wb->fh, "%s|", XDSclasses_short[cur_xds_packet_class]);
+	}	
 }
 
 void xdsprint (const char *fmt,...)
@@ -608,7 +617,7 @@ int xds_do_current_and_future ()
 					xds_program_name[i-2]=cur_xds_payload[i];
 				xds_program_name[i-2]=0;
 				dbg_print(CCX_DMT_XDS, "\rXDS Program name: %s\n",xds_program_name);
-				xdsprint("program name: %s",xds_program_name);
+				xdsprint("Program name: %s",xds_program_name);
 				if (cur_xds_packet_class==XDS_CLASS_CURRENT && 
 					strcmp (xds_program_name, current_xds_program_name)) // Change of program
 				{
@@ -637,7 +646,8 @@ int xds_do_current_and_future ()
 				}
 			}
 			if (!(ccx_options.debug_mask & CCX_DMT_XDS) && current_program_type_reported && 
-				ccx_options.export_xds==0)
+				ccx_options.transcript_settings.xds == 0)
+				//ccx_options.export_xds==0)
 				break;
 			memcpy (current_xds_program_type,cur_xds_payload,cur_xds_payload_length);
 			current_xds_program_type[cur_xds_payload_length]=0;

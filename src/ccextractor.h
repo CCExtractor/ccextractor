@@ -28,10 +28,23 @@ extern int ccblocks_in_avc_lost; // CC blocks found by the AVC code lost due to 
 
 struct ccx_boundary_time
 {
-    int hh,mm,ss;
-    LLONG time_in_ms;
-    int set;
+	int hh,mm,ss;
+	LLONG time_in_ms;
+	int set;
 };
+
+typedef struct {
+	// TODO: add more options, and (perhaps) reduce other ccextractor options?
+	int showStartTime, showEndTime; // Show start and/or end time.
+	int showMode; // Show which mode if available (E.G.: POP, RU1, ...)	
+	int showCC; // Show which CC channel has been captured.	
+	int relativeTimestamp; // Timestamps relative to start of sample or in UTC?
+	int xds; // Show XDS or not
+	int useColors; // Add colors or no colors
+
+} ccx_transcript_format;
+
+extern ccx_transcript_format ccx_default_transcript_settings;
 
 struct ccx_s_options // Options from user parameters
 {
@@ -69,7 +82,6 @@ struct ccx_s_options // Options from user parameters
 	int messages_target; // 0 = nowhere (quiet), 1=stdout, 2=stderr
 	/* Levenshtein's parameters, for string comparison */
 	int levdistmincnt, levdistmaxpct; // Means 2 fails or less is "the same", 10% or less is also "the same"	
-	int export_xds; // Export XDS to transcript?
 	int investigate_packets; // Look for captions in all packets when everything else fails
 	int fullbin; // Disable pruning of padding cc blocks
 	int nosync; // Disable syncing
@@ -79,15 +91,17 @@ struct ccx_s_options // Options from user parameters
 	int auto_myth; // Use myth-tv mpeg code? 0=no, 1=yes, 2=auto
 	/* MP4 related stuff */
 	unsigned mp4vidtrack; // Process the video track even if a CC dedicated track exists.
+	/* General settings */
 	int usepicorder; // Force the use of pic_order_cnt_lsb in AVC/H.264 data streams
 	int autodash; // Add dashes (-) before each speaker automatically?
 	unsigned teletext_mode; // 0=Disabled, 1 = Not found, 2=Found
-	unsigned ucla_settings; // Enables convenient settings for UCLA's project.
+	ccx_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
 	char millis_separator;
 	LLONG screens_to_process; // How many screenfuls we want?
 	enum ccx_encoding_type encoding;
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 	enum ccx_output_date_format date_format;
+	enum color_code cc608_default_color;
 	char *output_filename;
 	char *out_elementarystream_filename;
 	LLONG debug_mask; // dbg_print will use this mask to print or ignore different types
@@ -105,17 +119,20 @@ struct ccx_s_options // Options from user parameters
 	int line_terminator_lf; // 0 = CRLF, 1=LF
 	int noautotimeref; // Do NOT set time automatically?
 	enum ccx_datasource input_source; // Files, stdin or network
-	enum color_code cc608_default_color;
+	
 };
 
 struct ts_payload
 {
-    unsigned char *start; // Payload start
-    unsigned length;      // Payload length
-    unsigned pesstart;    // PES or PSI start
-    unsigned pid;         // Stream PID
-    int counter;          // continuity counter
+	unsigned char *start; // Payload start
+	unsigned length;      // Payload length
+	unsigned pesstart;    // PES or PSI start
+	unsigned pid;         // Stream PID
+	int counter;          // continuity counter
 	int transport_error;  // 0 = packet OK, non-zero damaged
+	unsigned char section_buf[1024];
+	int section_index;
+	int section_size;
 };
 
 struct PAT_entry
@@ -138,22 +155,22 @@ struct PMT_entry
 
 struct ccx_s_write
 {
-    int fh;
-    char *filename;
+	int fh;
+	char *filename;
 	void* spupng_data;
 };
 
 
 struct gop_time_code
 {
-  int drop_frame_flag;
-  int time_code_hours;
-  int time_code_minutes;
-  int marker_bit;
-  int time_code_seconds;
-  int time_code_pictures;
-  int inited;
-  LLONG ms;
+	int drop_frame_flag;
+	int time_code_hours;
+	int time_code_minutes;
+	int marker_bit;
+	int time_code_seconds;
+	int time_code_pictures;
+	int inited;
+	LLONG ms;
 };
 
 
@@ -171,20 +188,21 @@ struct file_report_t
 	unsigned services708[63];
 	unsigned dvb_sub_pid[SUB_STREAMS_CNT]; 
 	unsigned tlt_sub_pid[SUB_STREAMS_CNT];
+	unsigned mp4_cc_track_cnt;
 } file_report;
 
 
 // Stuff for telcc.cpp
 struct ccx_s_teletext_config {
-    uint8_t verbose : 1; // should telxcc be verbose?
-    uint16_t page; // teletext page containing cc we want to filter
-    uint16_t tid; // 13-bit packet ID for teletext stream
-    double offset; // time offset in seconds
-    uint8_t bom : 1; // print UTF-8 BOM characters at the beginning of output
-    uint8_t nonempty : 1; // produce at least one (dummy) frame
-    // uint8_t se_mode : 1; // search engine compatible mode => Uses CCExtractor's write_format
-    // uint64_t utc_refvalue; // UTC referential value => Moved to CCExtractor global, so can be used for 608 too
-    uint16_t user_page; // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
+	uint8_t verbose : 1; // should telxcc be verbose?
+	uint16_t page; // teletext page containing cc we want to filter
+	uint16_t tid; // 13-bit packet ID for teletext stream
+	double offset; // time offset in seconds
+	uint8_t bom : 1; // print UTF-8 BOM characters at the beginning of output
+	uint8_t nonempty : 1; // produce at least one (dummy) frame
+	// uint8_t se_mode : 1; // search engine compatible mode => Uses CCExtractor's write_format
+	// uint64_t utc_refvalue; // UTC referential value => Moved to CCExtractor global, so can be used for 608 too
+	uint16_t user_page; // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
 };
 
 #define buffered_skip(bytes) if (bytes<=bytesinbuffer-filebuffer_pos) { \
@@ -235,10 +253,6 @@ void rcwt_loop( void );
 #define true 1
 #endif
 
-#ifdef __cplusplus
-extern "C"
-{
-	#endif
 // activity.cpp
 void activity_header (void);
 void activity_progress (int percentaje, int cur_min, int cur_sec);
@@ -254,9 +268,6 @@ void activity_xds_network_call_letters (const char *program_name);
 void activity_xds_program_identification_number (unsigned minutes, unsigned hours, unsigned date, unsigned month);
 void activity_xds_program_description (int line_num, const char *program_desc);
 void activity_report_data_read (void);
-#ifdef __cplusplus
-}
-#endif
 
 extern LLONG result;
 extern int end_of_file;
@@ -337,13 +348,15 @@ void writercwtdata (const unsigned char *data);
 void detect_stream_type (void);
 int detect_myth( void );
 int read_video_pes_header (unsigned char *header, int *headerlength, int sbuflen);
+int read_pts_pes(unsigned char*header, int len);
 
 // ts_functions.cpp
 void init_ts( void );
 int ts_readpacket(void);
 long ts_readstream(void);
 LLONG ts_getmoredata( void );
-int parse_PMT (int pos);
+int write_section(struct ts_payload *payload, unsigned char*buf, int size, int pos);
+int parse_PMT (unsigned char *buf,int len, int pos);
 int parse_PAT (void);
 
 // myth.cpp
@@ -365,10 +378,6 @@ char *print_mstime( LLONG mstime );
 void print_debug_timing( void );
 int switch_to_next_file (LLONG bytesinbuffer);
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 // utility.cpp
 void fatal(int exit_code, const char *fmt, ...);
 void dvprint(const char *fmt, ...);
@@ -397,9 +406,6 @@ void telxcc_init(void);
 void telxcc_close(void);
 void mstotime(LLONG milli, unsigned *hours, unsigned *minutes,
 	unsigned *seconds, unsigned *ms);
-#ifdef __cplusplus
-}
-#endif
 
 extern struct gop_time_code gop_time, first_gop_time, printed_gop;
 extern int gop_rollover;
@@ -480,16 +486,9 @@ extern unsigned char usercolor_rgb[8];
 
 extern const char *extension;
 extern long FILEBUFFERSIZE; // Uppercase because it used to be a define
-#ifdef __cplusplus
-extern "C"
-{
-	#endif
-	extern struct ccx_s_options ccx_options;
-	extern int temp_debug;
-	extern unsigned long net_activity_gui;
-	#ifdef __cplusplus
-}
-#endif
+extern struct ccx_s_options ccx_options;
+extern int temp_debug;
+extern unsigned long net_activity_gui;
 
 /* General (ES stream) video information */
 extern unsigned current_hor_size;
@@ -537,17 +536,10 @@ extern char **spell_correct;
 extern int spell_words;
 extern int spell_capacity;
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-	extern unsigned char encoded_crlf[16]; // We keep it encoded here so we don't have to do it many times
-	extern unsigned int encoded_crlf_length;
-	extern unsigned char encoded_br[16];
-	extern unsigned int encoded_br_length;
-#ifdef __cplusplus
-}
-#endif
+extern unsigned char encoded_crlf[16]; // We keep it encoded here so we don't have to do it many times
+extern unsigned int encoded_crlf_length;
+extern unsigned char encoded_br[16];
+extern unsigned int encoded_br_length;
 
 
 extern enum ccx_frame_type current_picture_coding_type; 
@@ -597,7 +589,7 @@ extern int PIDs_seen[65536];
 extern struct PMT_entry *PIDs_programs[65536];
 
 extern LLONG ts_start_of_xds; 
-extern int timestamps_on_transcript;
+//extern int timestamps_on_transcript;
 
 extern unsigned teletext_mode;
 
