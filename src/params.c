@@ -263,14 +263,17 @@ void set_output_format (const char *format)
     else if (strcmp (format,"transcript")==0 || strcmp (format,"txt")==0)
 	{
         ccx_options.write_format=CCX_OF_TRANSCRIPT;
-		timestamps_on_transcript=0;
 	}
     else if (strcmp (format,"timedtranscript")==0 || strcmp (format,"ttxt")==0)
 	{
         ccx_options.write_format=CCX_OF_TRANSCRIPT;
 		if (ccx_options.date_format==ODF_NONE)		
 			ccx_options.date_format=ODF_HHMMSSMS;
-		timestamps_on_transcript=1;	
+		// Sets the right things so that timestamps and the mode are printed.
+		ccx_options.transcript_settings.showStartTime = 1;
+		ccx_options.transcript_settings.showEndTime = 1;
+		ccx_options.transcript_settings.showCC = 0;
+		ccx_options.transcript_settings.showMode = 1;
 	}
     else if (strcmp (format,"report")==0) 
     {
@@ -534,14 +537,18 @@ void usage (void)
 	mprint ("            -autodash: Based on position on screen, attempt to determine\n");
 	mprint ("                       the different speakers and a dash (-) when each\n");
 	mprint ("                       of them talks (.srt only, -trim required).");
+
     mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
+
     mprint ("    -bi --bufferinput: Forces input buffering.\n");    
     mprint (" -nobi -nobufferinput: Disables input buffering.\n");    
 	mprint (" -bs --buffersize val: Specify a size for reading, in bytes (suffix with K or\n");
 	mprint ("                       or M for kilobytes and megabytes). Default is 16M.\n");
 	mprint ("\n");
     mprint ("Note: -bo is only used when writing raw files, not .srt or .sami\n\n");
+
     mprint ("Options that affect the built-in closed caption decoder:\n");
+
     mprint ("                 -dru: Direct Roll-Up. When in roll-up mode, write character by\n");
     mprint ("                       character instead of line by line. Note that this\n");
     mprint ("                       produces (much) larger files.\n");
@@ -559,7 +566,9 @@ void usage (void)
 	mprint ("                       of the first character received which is possibly more\n");
 	mprint ("                       accurate.\n");
 	mprint ("\n");
+
     mprint ("Options that affect timing:\n");
+
     mprint ("            -delay ms: For srt/sami, add this number of milliseconds to\n");
     mprint ("                       all times. For example, -delay 400 makes subtitles\n");
     mprint ("                       appear 400ms late. You can also use negative numbers\n");
@@ -571,6 +580,7 @@ void usage (void)
     mprint ("5:00 and end at 7:00.\n\n");
 
     mprint ("Options that affect what segment of the input file(s) to process:\n");
+
     mprint ("        -startat time: Only write caption information that starts after the\n");
     mprint ("                       given time.\n");
     mprint ("                       Time can be seconds, MM:SS or HH:MM:SS.\n");
@@ -584,6 +594,7 @@ void usage (void)
     mprint ("-scr --screenfuls num: Write 'num' screenfuls and terminate processing.\n\n");
 
 	mprint ("Options that affect which codec is to be used have to be searched in input\n");
+
 	mprint ("  If codec type is not selected then first elementry stream suitable for \n"
 		"  subtitle is selected, please consider -teletext -noteletext override this\n"
 		"  option.\n"
@@ -601,6 +612,7 @@ void usage (void)
 		"        taken in consideration\n");
 
     mprint ("Adding start and end credits:\n");
+
     mprint ("  CCExtractor can _try_ to add a custom message (for credits for example) at\n");
     mprint ("  the start and end of the file, looking for a window where there are no\n");
     mprint ("  captions. If there is no such window, then no text will be added.\n");
@@ -625,7 +637,9 @@ void usage (void)
     mprint ("    --endcreditsforatmost time: End credits should be displayed for at most\n");
     mprint ("                                this time (S, or MM:SS). Default: %s\n", DEF_VAL_ENDCREDITSFORATMOST);
     mprint ("\n");
+
     mprint ("Options that affect debug data:\n");
+
     mprint ("               -debug: Show lots of debugging output.\n");
     mprint ("                 -608: Print debug traces from the EIA-608 decoder.\n");
     mprint ("                       If you need to submit a bug report, please send\n");
@@ -649,7 +663,9 @@ void usage (void)
 	mprint ("            -parsePMT: Print Program Map Table dump.\n");    
 	mprint (" -investigate_packets: If no CC packets are detected based on the PMT, try\n");
 	mprint ("                       to find data in all packets by scanning.\n\n");
+
 	mprint ("Teletext related options:\n");
+
 	mprint ("          -tpage page: Use this page for subtitles (if this parameter\n");
 	mprint ("                       is not used, try to autodetect). In Spain the\n");
 	mprint ("                       page is always 888, may vary in other countries.\n");
@@ -662,7 +678,31 @@ void usage (void)
 	mprint ("                       and CEA-608/708 packets (if teletext is processed\n");
 	mprint ("                       then CEA-608/708 processing is disabled).\n");
 	mprint ("\n");
+
+	mprint("Transcript customizing options:\n");
+
+	mprint("    -customtxt format: Use the passed format to customize the (Timed) Transcript\n");
+	mprint("                       output. The format must be like this: 1100100 (7 digits).\n");
+	mprint("                       These indicate whether the next things should be displayed\n");
+	mprint("                       or not in the (timed) transcript. They represent (in order):\n");
+	mprint("                           - Display start time\n");
+	mprint("                           - Display end time\n");
+	mprint("                           - Display caption mode\n");
+	mprint("                           - Display caption channel\n");
+	mprint("                           - Use a relative timestamp ( relative to the sample)\n");
+	mprint("                           - Display XDS info\n");
+	mprint("                           - Use colors\n");
+	mprint("                       Examples:\n");
+	mprint("                       0000101 is the default setting for transcripts\n");
+	mprint("                       1110101 is the default for timed transcripts\n");
+	mprint("                       1111001 is the default setting for -ucla\n");
+	mprint("                       Make sure you use this parameter after others that might\n");
+	mprint("                       affect these settings (-out, -ucla, -xds, -txt, -ttxt, ...)\n");
+
+	mprint("\n");
+
     mprint ("Communication with other programs and console output:\n");
+
     mprint ("   --gui_mode_reports: Report progress and interesting events to stderr\n");
     mprint ("                       in a easy to parse format. This is intended to be\n");
     mprint ("                       used by other programs. See docs directory for.\n");
@@ -1228,7 +1268,7 @@ void parse_parameters (int argc, char *argv[])
 		}
         if (strcmp (argv[i],"-xds")==0)
 		{
-			ccx_options.export_xds=1;
+			ccx_options.transcript_settings.xds = 1;
 			continue;
 		}
         if (strcmp (argv[i],"-xdsdebug")==0)
@@ -1389,8 +1429,12 @@ void parse_parameters (int argc, char *argv[])
 		}		
         if (strcmp (argv[i],"-UCLA")==0 || strcmp (argv[i],"-ucla")==0)
 		{
-            ccx_options.ucla_settings = 1;
 			ccx_options.millis_separator='.';
+			ccx_options.transcript_settings.showStartTime = 1;
+			ccx_options.transcript_settings.showEndTime = 1;
+			ccx_options.transcript_settings.showCC = 1;
+			ccx_options.transcript_settings.showMode = 1;
+			ccx_options.transcript_settings.relativeTimestamp = 0;
 			continue;
 		}
         if (strcmp (argv[i],"-lf")==0 || strcmp (argv[i],"-LF")==0)
@@ -1442,6 +1486,27 @@ void parse_parameters (int argc, char *argv[])
 		{
 			ccx_options.nocodec = CCX_CODEC_TELETEXT;
             ccx_options.teletext_mode=CCX_TXT_FORBIDDEN;
+			continue;
+		}
+		/* Custom transcript */
+		if (strcmp(argv[i], "-customtxt") == 0 && i<argc - 1){
+			char *format = argv[i + 1];
+			if (strlen(format) == 7){	
+				if (ccx_options.date_format == ODF_NONE)
+					ccx_options.date_format = ODF_HHMMSSMS; // Necessary for displaying times, if any would be used.
+				ccx_options.transcript_settings.showStartTime = format[0]-'0';
+				ccx_options.transcript_settings.showEndTime = format[1] - '0';
+				ccx_options.transcript_settings.showMode = format[2] - '0';
+				ccx_options.transcript_settings.showCC = format[3] - '0';
+				ccx_options.transcript_settings.relativeTimestamp = format[4] - '0';
+				ccx_options.transcript_settings.xds = format[5] - '0';
+				ccx_options.transcript_settings.useColors = format[6] - '0';
+				i++;
+			}
+			else {
+				fatal(EXIT_MALFORMED_PARAMETER, "Custom TXT format not OK: %s, expected 7 bits string\n",
+					format);
+			}
 			continue;
 		}
 		/* Network stuff */

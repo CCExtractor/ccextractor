@@ -33,6 +33,19 @@ struct ccx_boundary_time
 	int set;
 };
 
+typedef struct {
+	// TODO: add more options, and (perhaps) reduce other ccextractor options?
+	int showStartTime, showEndTime; // Show start and/or end time.
+	int showMode; // Show which mode if available (E.G.: POP, RU1, ...)	
+	int showCC; // Show which CC channel has been captured.	
+	int relativeTimestamp; // Timestamps relative to start of sample or in UTC?
+	int xds; // Show XDS or not
+	int useColors; // Add colors or no colors
+
+} ccx_transcript_format;
+
+extern ccx_transcript_format ccx_default_transcript_settings;
+
 struct ccx_s_options // Options from user parameters
 {
 	int extract; // Extract 1st, 2nd or both fields
@@ -69,7 +82,6 @@ struct ccx_s_options // Options from user parameters
 	int messages_target; // 0 = nowhere (quiet), 1=stdout, 2=stderr
 	/* Levenshtein's parameters, for string comparison */
 	int levdistmincnt, levdistmaxpct; // Means 2 fails or less is "the same", 10% or less is also "the same"	
-	int export_xds; // Export XDS to transcript?
 	int investigate_packets; // Look for captions in all packets when everything else fails
 	int fullbin; // Disable pruning of padding cc blocks
 	int nosync; // Disable syncing
@@ -79,15 +91,17 @@ struct ccx_s_options // Options from user parameters
 	int auto_myth; // Use myth-tv mpeg code? 0=no, 1=yes, 2=auto
 	/* MP4 related stuff */
 	unsigned mp4vidtrack; // Process the video track even if a CC dedicated track exists.
+	/* General settings */
 	int usepicorder; // Force the use of pic_order_cnt_lsb in AVC/H.264 data streams
 	int autodash; // Add dashes (-) before each speaker automatically?
 	unsigned teletext_mode; // 0=Disabled, 1 = Not found, 2=Found
-	unsigned ucla_settings; // Enables convenient settings for UCLA's project.
+	ccx_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
 	char millis_separator;
 	LLONG screens_to_process; // How many screenfuls we want?
 	enum ccx_encoding_type encoding;
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 	enum ccx_output_date_format date_format;
+	enum color_code cc608_default_color;
 	char *output_filename;
 	char *out_elementarystream_filename;
 	LLONG debug_mask; // dbg_print will use this mask to print or ignore different types
@@ -105,7 +119,7 @@ struct ccx_s_options // Options from user parameters
 	int line_terminator_lf; // 0 = CRLF, 1=LF
 	int noautotimeref; // Do NOT set time automatically?
 	enum ccx_datasource input_source; // Files, stdin or network
-	enum color_code cc608_default_color;
+	
 };
 
 struct ts_payload
@@ -575,7 +589,7 @@ extern int PIDs_seen[65536];
 extern struct PMT_entry *PIDs_programs[65536];
 
 extern LLONG ts_start_of_xds; 
-extern int timestamps_on_transcript;
+//extern int timestamps_on_transcript;
 
 extern unsigned teletext_mode;
 

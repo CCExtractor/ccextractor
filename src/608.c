@@ -360,79 +360,81 @@ void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc
     }
     if (length>0)
     {
-		if (timestamps_on_transcript)
+		if (context->ts_start_of_current_line == -1)
 		{
-			const char *mode="???";
-			switch (context->mode)
-			{
-				case MODE_POPON:
-					mode="POP";
-					break;
-				case MODE_FAKE_ROLLUP_1:
-					mode="RU1";
-					break;
-				case MODE_ROLLUP_2:
-					mode="RU2";
-					break;
-				case MODE_ROLLUP_3:
-					mode="RU3";
-					break;
-				case MODE_ROLLUP_4:
-					mode="RU4";
-					break;
-				case MODE_TEXT:
-					mode="TXT";
-					break;
-				case MODE_PAINTON:
-					mode="PAI";
-					break;
-			}
+			// CFS: Means that the line has characters but we don't have a timestamp for the first one. Since the timestamp
+			// is set for example by the write_char function, it possible that we don't have one in empty lines (unclear)
+			// For now, let's not consider this a bug as before and just return.
+			// fatal (EXIT_BUG_BUG, "Bug in timedtranscript (ts_start_of_current_line==-1). Please report.");
+			return;
+		}
 
-			if (context->ts_start_of_current_line == -1)
-			{
-				// CFS: Means that the line has characters but we don't have a timestamp for the first one. Since the timestamp
-				// is set for example by the write_char function, it possible that we don't have one in empty lines (unclear)
-				// For now, let's not consider this a bug as before and just return.
-				// fatal (EXIT_BUG_BUG, "Bug in timedtranscript (ts_start_of_current_line==-1). Please report.");
-				return;
+		if (ccx_options.transcript_settings.showStartTime){
+			char buf1[80];
+			if (ccx_options.transcript_settings.relativeTimestamp){
+				millis_to_date(context->ts_start_of_current_line + subs_delay, buf1);
+				fdprintf(context->out->fh, "%s|", buf1);
 			}
-			if (ccx_options.ucla_settings)
-			{
+			else {
 				mstotime(context->ts_start_of_current_line + subs_delay, &h1, &m1, &s1, &ms1);
-				mstotime (get_fts()+subs_delay,&h2,&m2,&s2,&ms2);				
-
-                // SSC-1182 BEGIN
-                // Changed output format to be more like ZVBI
-
-				char buffer[80];
 				time_t start_time_int = (context->ts_start_of_current_line + subs_delay) / 1000;
 				int start_time_dec = (context->ts_start_of_current_line + subs_delay) % 1000;
-                struct tm *start_time_struct = gmtime(&start_time_int);
-                strftime(buffer, sizeof(buffer), "%Y%m%d%H%M%S", start_time_struct);
-				fdprintf(context->out->fh, "%s.%03d|", buffer, start_time_dec);
-
-                time_t end_time_int = (get_fts()+subs_delay)/1000;
-                int end_time_dec = (get_fts()+subs_delay)%1000;
-                struct tm *end_time_struct = gmtime(&end_time_int);
-                strftime(buffer, sizeof(buffer), "%Y%m%d%H%M%S", end_time_struct);
-				fdprintf(context->out->fh, "%s.%03d|", buffer, end_time_dec);
-
-				fdprintf(context->out->fh, "CC%d|%s|", context->my_field == 1 ? context->channel : context->channel + 2, // Data from field 2 is CC3 or 4
-					mode);
-                // SSC-1182 END
+				struct tm *start_time_struct = gmtime(&start_time_int);
+				strftime(buf1, sizeof(buf1), "%Y%m%d%H%M%S", start_time_struct);
+				fdprintf(context->out->fh, "%s%c%03d|", buf1,ccx_options.millis_separator,start_time_dec);
 			}
-			else
-			{
-				char buf1[80], buf2[80];
-				char timeline[256];   
-				millis_to_date(context->ts_start_of_current_line + subs_delay, buf1);
-				millis_to_date (get_fts()+subs_delay, buf2);
-				sprintf (timeline, "%s|%s|%s|",
-					buf1, buf2,mode);
-				enc_buffer_used=encode_line (enc_buffer,(unsigned char *) timeline);
-				write(context->out->fh, enc_buffer, enc_buffer_used);
-			}			
 		}
+
+		if (ccx_options.transcript_settings.showEndTime){
+			char buf2[80];
+			if (ccx_options.transcript_settings.relativeTimestamp){
+				millis_to_date(get_fts() + subs_delay, buf2);
+				fdprintf(context->out->fh, "%s|", buf2);
+			}
+			else {
+				mstotime(get_fts() + subs_delay, &h2, &m2, &s2, &ms2);
+				time_t end_time_int = (get_fts() + subs_delay) / 1000;
+				int end_time_dec = (get_fts() + subs_delay) % 1000;
+				struct tm *end_time_struct = gmtime(&end_time_int);
+				strftime(buf2, sizeof(buf2), "%Y%m%d%H%M%S", end_time_struct);
+				fdprintf(context->out->fh, "%s%c%03d|", buf2,ccx_options.millis_separator,end_time_dec);
+			}
+		}
+
+		if (ccx_options.transcript_settings.showCC){
+			fdprintf(context->out->fh, "CC%d|", context->my_field == 1 ? context->channel : context->channel + 2); // Data from field 2 is CC3 or 4
+		}
+
+		if (ccx_options.transcript_settings.showMode){
+			const char *mode = "???";
+			switch (context->mode)
+			{
+			case MODE_POPON:
+				mode = "POP";
+				break;
+			case MODE_FAKE_ROLLUP_1:
+				mode = "RU1";
+				break;
+			case MODE_ROLLUP_2:
+				mode = "RU2";
+				break;
+			case MODE_ROLLUP_3:
+				mode = "RU3";
+				break;
+			case MODE_ROLLUP_4:
+				mode = "RU4";
+				break;
+			case MODE_TEXT:
+				mode = "TXT";
+				break;
+			case MODE_PAINTON:
+				mode = "PAI";
+				break;
+			}
+
+			fdprintf(context->out->fh, "%s|", mode);
+		}
+
 		write(context->out->fh, subline, length);
 		write(context->out->fh, encoded_crlf, encoded_crlf_length);
     }
