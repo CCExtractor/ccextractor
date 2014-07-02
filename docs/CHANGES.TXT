@@ -12,6 +12,22 @@ version of CCExtractor.
 - Changed Makefile.
 - Fixed some bugs.
 - Added feature to print info about file's subtitles and streams.
+- Added options for custom transcript output:
+	new parameter (-customtxt format), where the format must be like this: 1100100 (7 digits).
+	These indicate whether the next things should be displayed  or not in the (timed) transcript:
+		- Display start time
+		- Display end time
+		- Display caption mode
+		- Display caption channel
+		- Use a relative timestamp ( relative to the sample)
+		- Display XDS info
+		- Use colors
+	Examples:
+		0000101 is the default setting for transcripts
+		1110101 is the default for timed transcripts
+		1111001 is the default setting for -ucla
+	Make sure you use this parameter after others that might affect these 
+	settings (-out, -ucla, -xds, -txt, -ttxt, ...)
 
 0.69
 ----
