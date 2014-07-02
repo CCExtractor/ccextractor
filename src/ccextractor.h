@@ -375,7 +375,6 @@ void xds_init();
 // ccextractor.cpp
 LLONG calculate_gop_mstime (struct gop_time_code *g);
 void set_fts(void);
-LLONG get_fts ( void );
 char *print_mstime( LLONG mstime );
 void print_debug_timing( void );
 int switch_to_next_file (LLONG bytesinbuffer);
