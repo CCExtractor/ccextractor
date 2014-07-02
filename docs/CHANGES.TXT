@@ -11,7 +11,7 @@ version of CCExtractor.
  a single sample sequence are supported.
 - Changed Makefile.
 - Fixed some bugs.
-- Added feature to print info about file's subtitles and streams.
+- Added feature to print info about file's subtitles and streams (-out=report).
 - Support Long PMT.
 - Support Configuration file.
 
