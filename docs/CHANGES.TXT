@@ -12,6 +12,8 @@ version of CCExtractor.
 - Changed Makefile.
 - Fixed some bugs.
 - Added feature to print info about file's subtitles and streams.
+- Support Long PMT.
+- Support Configuration file.
 
 0.69
 ----
