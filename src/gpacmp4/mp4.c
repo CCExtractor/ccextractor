@@ -5,8 +5,8 @@
 #include <gpac/isomedia.h>
 #include "../ccextractor.h"
 
-void do_NAL (unsigned char *NALstart, LLONG NAL_length); // From avc_functions.cpp
-void set_fts(void); // From timing.cpp
+void do_NAL (unsigned char *NALstart, LLONG NAL_length); // From avc_functions.c
+void set_fts(void); // From timing.c
 
 static short bswap16(short v)
 {

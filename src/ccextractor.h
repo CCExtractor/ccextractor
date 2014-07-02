@@ -192,7 +192,7 @@ struct file_report_t
 } file_report;
 
 
-// Stuff for telcc.cpp
+// Stuff for telcc.c
 struct ccx_s_teletext_config {
 	uint8_t verbose : 1; // should telxcc be verbose?
 	uint16_t page; // teletext page containing cc we want to filter
@@ -239,7 +239,7 @@ void usage (void);
 int atoi_hex (char *s);
 int stringztoms (const char *s, struct ccx_boundary_time *bt);
 
-// general_loop.cpp
+// general_loop.c
 void position_sanity_check ();
 int init_file_buffer( void );
 LLONG ps_getmoredata( void );
@@ -255,7 +255,7 @@ void rcwt_loop( void );
 #define true 1
 #endif
 
-// activity.cpp
+// activity.c
 void activity_header (void);
 void activity_progress (int percentaje, int cur_min, int cur_sec);
 void activity_report_version (void);
@@ -276,36 +276,36 @@ extern int end_of_file;
 extern LLONG inbuf;
 extern int ccx_bufferdatatype; // Can be RAW or PES
 
-// asf_functions.cpp
+// asf_functions.c
 LLONG asf_getmoredata( void );
 
-// wtv_functions.cpp
+// wtv_functions.c
 LLONG wtv_getmoredata( void );
 
-// avc_functions.cpp
+// avc_functions.c
 LLONG process_avc (unsigned char *avcbuf, LLONG avcbuflen);
 void init_avc(void);
 
-// es_functions.cpp
+// es_functions.c
 LLONG process_m2v (unsigned char *data, LLONG length);
 
 extern unsigned top_field_first;
 
-// es_userdata.cpp
+// es_userdata.c
 int user_data(struct bitstream *ustream, int udtype);
 
-// bitstream.cpp - see bitstream.h
+// bitstream.c - see bitstream.h
 
-// 608.cpp
+// 608.c
 int write_cc_buffer(struct s_context_cc608 *context);
 unsigned char *debug_608toASC (unsigned char *ccdata, int channel);
 
 
-// cc_decoders_common.cpp
+// cc_decoders_common.c
 LLONG get_visible_start (void);
 LLONG get_visible_end (void);
 
-// file_functions.cpp
+// file_functions.c
 LLONG getfilesize (int in);
 LLONG gettotalfilessize (void);
 void prepare_for_new_file (void);
@@ -314,7 +314,7 @@ int switch_to_next_file (LLONG bytesinbuffer);
 int init_sockets (void);
 void return_to_buffer (unsigned char *buffer, unsigned int bytes);
 
-// timing.cpp
+// timing.c
 void set_fts(void);
 LLONG get_fts(void);
 LLONG get_fts_max(void);
@@ -324,21 +324,21 @@ void print_debug_timing( void );
 int gop_accepted(struct gop_time_code* g );
 void calculate_ms_gop_time (struct gop_time_code *g);
 
-// sequencing.cpp
+// sequencing.c
 void init_hdcc (void);
 void store_hdcc(unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts);
 void anchor_hdcc(int seq);
 void process_hdcc (void);
 int do_cb (unsigned char *cc_block);
 
-// mp4.cpp
+// mp4.c
 int processmp4 (char *file);
 
-// params_dump.cpp
+// params_dump.c
 void params_dump(void);
 void print_file_report(void);
 
-// output.cpp
+// output.c
 void init_write (struct ccx_s_write *wb);
 void writeraw (const unsigned char *data, int length, struct ccx_s_write *wb);
 void writedata(const unsigned char *data, int length, struct s_context_cc608 *context);
@@ -346,13 +346,13 @@ void flushbuffer (struct ccx_s_write *wb, int closefile);
 void printdata (const unsigned char *data1, int length1,const unsigned char *data2, int length2);
 void writercwtdata (const unsigned char *data);
 
-// stream_functions.cpp
+// stream_functions.c
 void detect_stream_type (void);
 int detect_myth( void );
 int read_video_pes_header (unsigned char *header, int *headerlength, int sbuflen);
 int read_pts_pes(unsigned char*header, int len);
 
-// ts_functions.cpp
+// ts_functions.c
 void init_ts( void );
 int ts_readpacket(void);
 long ts_readstream(void);
@@ -361,25 +361,25 @@ int write_section(struct ts_payload *payload, unsigned char*buf, int size, int p
 int parse_PMT (unsigned char *buf,int len, int pos);
 int parse_PAT (void);
 
-// myth.cpp
+// myth.c
 void myth_loop(void);
 
-// mp4_bridge2bento4.cpp
+// mp4_bridge2bento4.c
 void mp4_loop (char *filename);
 
-// xds.cpp
+// xds.c
 void process_xds_bytes (const unsigned char hi, int lo);
 void do_end_of_xds (unsigned char expected_checksum);
 void xds_init();
 
-// ccextractor.cpp
+// ccextractor.c
 LLONG calculate_gop_mstime (struct gop_time_code *g);
 void set_fts(void);
 char *print_mstime( LLONG mstime );
 void print_debug_timing( void );
 int switch_to_next_file (LLONG bytesinbuffer);
 
-// utility.cpp
+// utility.c
 void fatal(int exit_code, const char *fmt, ...);
 void dvprint(const char *fmt, ...);
 void mprint (const char *fmt, ...);

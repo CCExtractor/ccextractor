@@ -22,7 +22,7 @@ static int anchor_seq_number = -1;
 // Remember the current field for 608 decoding
 int current_field=1; // 1 = field 1, 2 = field 2, 3 = 708
 
-static int in_xds_mode ; // Stolen from 608.cpp. We need this for debug
+static int in_xds_mode ; // Stolen from 608.c We need this for debug
 
 void init_hdcc (void)
 {
