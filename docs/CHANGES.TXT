@@ -14,6 +14,13 @@ version of CCExtractor.
 - Added feature to print info about file's subtitles and streams (-out=report).
 - Support Long PMT.
 - Support Configuration file.
+	- There is an sample configuration file in doc/ folder with name
+	  ccextractor.cnf.sample
+	- Just now only ccextractor.cnf named files kept beside ccextractor
+	  executable is supported
+	- for details of which options can be set using configuration file,
+	  please look at sample file.
+
 - Added options for custom transcript output:
 	new parameter (-customtxt format), where the format must be like this: 1100100 (7 digits).
 	These indicate whether the next things should be displayed  or not in the (timed) transcript:
