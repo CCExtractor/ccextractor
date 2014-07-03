@@ -2,7 +2,9 @@
 
 void write_stringz_as_sami(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end)
 {
-    sprintf ((char *) str,"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",ms_start);
+    sprintf ((char *) str,
+    		"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",
+    		(unsigned long long)ms_start);
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_608, "\r%s\n", str);
@@ -56,7 +58,9 @@ void write_stringz_as_sami(char *string, struct s_context_cc608 *context, LLONG 
     }
     enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
 	write(context->out->fh, enc_buffer, enc_buffer_used);
-    sprintf ((char *) str,"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n",ms_end);
+    sprintf ((char *) str,
+    		"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n",
+    		(unsigned long long)ms_end);
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_608, "\r%s\n", str);
@@ -79,7 +83,9 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct s_context_cc608 *
 
     endms   = get_visible_end()+subs_delay;
     endms--; // To prevent overlapping with next line.
-    sprintf ((char *) str,"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",startms);
+    sprintf ((char *) str,
+    		"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",
+    		(unsigned long long)startms);
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_608, "\r%s\n", str);
@@ -110,7 +116,9 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct s_context_cc608 *
     }
     enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
 	write(context->out->fh, enc_buffer, enc_buffer_used);
-    sprintf ((char *) str,"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n",endms);
+    sprintf ((char *) str,
+    		"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n",
+    		(unsigned long long)endms);
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_608, "\r%s\n", str);

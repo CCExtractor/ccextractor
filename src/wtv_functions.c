@@ -416,7 +416,6 @@ LLONG get_data(struct wtv_chunked_buffer *cb) {
 
 LLONG wtv_getmoredata(void)
 {
-    static long parsebufsize = 1024;
 	static struct wtv_chunked_buffer cb;
     if(firstcall)
     {

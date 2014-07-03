@@ -206,7 +206,6 @@ slant:
  * @param ch Character height in pixels.
  *
  * Draw blank character.
- */
 static void
 draw_blank(int canvas_type, uint8_t *canvas, unsigned int rowstride,
 	   unsigned int color, int cw, int ch)
@@ -220,6 +219,7 @@ draw_blank(int canvas_type, uint8_t *canvas, unsigned int rowstride,
         canvas += rowstride;
     }
 }
+*/
 
 /**
  * @internal
