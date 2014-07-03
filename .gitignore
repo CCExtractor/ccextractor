@@ -1,9 +1,18 @@
-#Ignore CVS
+####
+# Ignore CVS related files
+
 .CVS
 CVS
+
+####
+# Linux  Ignored binary and build folder
 *.o
 linux/ccextractor
 linux/depend
 windows/debug/*
-*.sdf
+
+####
+# Visual Studio project Ignored files
+
 *.suo
+*.sdf

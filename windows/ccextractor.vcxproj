@@ -17,6 +17,7 @@
     <ClInclude Include="..\src\asf_constants.h" />
     <ClInclude Include="..\src\bitstream.h" />
     <ClInclude Include="..\src\ccextractor.h" />
+    <ClInclude Include="..\src\configuration.h" />
     <ClInclude Include="..\src\constants.h" />
     <ClInclude Include="..\src\disable_warnings.h" />
     <ClInclude Include="..\src\dvb_subtitle_decoder.h" />
@@ -87,6 +88,7 @@
     <ClCompile Include="..\src\ccextractor.c" />
     <ClCompile Include="..\src\cc_bitstream.c" />
     <ClCompile Include="..\src\cc_decoders_common.c" />
+    <ClCompile Include="..\src\configuration.c" />
     <ClCompile Include="..\src\constants.c" />
     <ClCompile Include="..\src\dvb_subtitle_decoder.c" />
     <ClCompile Include="..\src\encoding.c" />

@@ -213,6 +213,9 @@
     <ClInclude Include="..\src\utility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\configuration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gpacmp4\stbl_read.c">
@@ -514,6 +517,9 @@
     </ClCompile>
     <ClCompile Include="..\src\zlib\zutil.c">
       <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\configuration.c">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
