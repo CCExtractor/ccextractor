@@ -120,6 +120,11 @@ static const char *font_text[]=
     "underlined italics"
 };
 
+static const char *cc_modes_text[]=
+{
+    "Pop-Up captions"
+};
+
 const char *color_text[][2]=
 {
     {"white",""},
