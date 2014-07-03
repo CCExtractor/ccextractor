@@ -257,6 +257,7 @@ int processmp4 (char *file)
 			if (avc_track_count && ccx_options.mp4vidtrack)
 				continue;
 
+			/* unsigned num_streams = gf_isom_get_sample_description_count (f,i+1); */
 			unsigned num_samples = gf_isom_get_sample_count (f,i+1);
 			
 			u32 ProcessingStreamDescriptionIndex = 0; // Current track we are processing, 0 = we don't know yet
@@ -281,6 +282,7 @@ int processmp4 (char *file)
 				if (sample==NULL)
 					continue;
 				// mprint ("Data length: %lu\n",sample->dataLength);
+				/* const LLONG timestamp = (LLONG )((sample->DTS + sample->CTS_Offset) * 1000) / timescale; */
 				current_pts=(LLONG )(sample->DTS + sample->CTS_Offset)*MPEG_CLOCK_FREQ/timescale ; // Convert frequency to official one
 				if (pts_set==0)
 					pts_set=1;
