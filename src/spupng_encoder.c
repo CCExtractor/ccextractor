@@ -201,31 +201,6 @@ slant:
  * @param canvas_type sizeof(char, short, int).
  * @param canvas Pointer to image plane where the character is to be drawn.
  * @param rowstride @a canvas <em>byte</em> distance from line to line.
- * @param color Color value of @a canvas_type.
- * @param cw Character width in pixels.
- * @param ch Character height in pixels.
- *
- * Draw blank character.
- */
-static void
-draw_blank(int canvas_type, uint8_t *canvas, unsigned int rowstride,
-	   unsigned int color, int cw, int ch)
-{
-    int x, y;
-
-    for (y = 0; y < ch; y++) {
-        for (x = 0; x < cw; x++)
-            poke(canvas, x, color);
-
-        canvas += rowstride;
-    }
-}
-
-/**
- * @internal
- * @param canvas_type sizeof(char, short, int).
- * @param canvas Pointer to image plane where the character is to be drawn.
- * @param rowstride @a canvas <em>byte</em> distance from line to line.
  * @param pen Pointer to color palette of @a canvas_type (index 0 background
  *   pixels, index 1 foreground pixels).
  * @param font Pointer to font image with width @a cpl x @a cw pixels, height
