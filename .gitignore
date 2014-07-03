@@ -5,5 +5,14 @@ CVS
 linux/ccextractor
 linux/depend
 windows/debug/*
+windows/Debug/*
 *.sdf
 *.suo
+#eclipse related setting
+.cproject
+.project
+.settings/
+#vim editor temp files
+*.swp
+#personal configuration file
+*.cnf
