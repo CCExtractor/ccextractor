@@ -8,7 +8,6 @@ static int current_xds_month=-1;
 static int current_program_type_reported=0; // No.
 static int xds_start_time_shown=0;
 static int xds_program_length_shown=0;
-static int xds_program_type_shown=0;
 static char xds_program_description[8][33];
 
 static char current_xds_network_name[33]; 
@@ -377,18 +376,11 @@ void xds_do_copy_generation_management_system (unsigned c1, unsigned c2)
 	static char rcd[256];
 	int changed=0;	
 	unsigned c1_6=(c1&0x40)>>6;
-	unsigned unused1=(c1&0x20)>>5;
 	unsigned cgms_a_b4=(c1&0x10)>>4;
 	unsigned cgms_a_b3=(c1&0x8)>>3;
 	unsigned aps_b2=(c1&0x4)>>2;
 	unsigned aps_b1=(c1&0x2)>>1;
-	unsigned asb_0=(c1&0x1);
 	unsigned c2_6=(c2&0x40)>>6;
-	unsigned c2_5=(c2&0x20)>>5;
-	unsigned c2_4=(c2&0x10)>>4;
-	unsigned c2_3=(c2&0x8)>>3;
-	unsigned c2_2=(c2&0x4)>>2;
-	unsigned c2_1=(c2&0x2)>>1;
 	unsigned rcd0=(c2&0x1);
 	if (!c1_6 || !c2_6) // These must be high. If not, not following specs
 		return;
@@ -538,13 +530,11 @@ int xds_do_current_and_future ()
 				int hour = cur_xds_payload[3] & 0x1f; // 5 bits
 				int date = cur_xds_payload[4] & 0x1f; // 5 bits
 				int month = cur_xds_payload[5] & 0xf; // 4 bits
-				int changed=0;
 				if (current_xds_min!=min ||
 					current_xds_hour!=hour ||
 					current_xds_date!=date ||
 					current_xds_month!=month)
 				{
-					changed=1;
 					xds_start_time_shown=0;
 					current_xds_min=min;
 					current_xds_hour=hour;
@@ -836,6 +826,8 @@ int xds_do_misc ()
 			if (cur_xds_payload_length<5) // We need 2 data bytes
 				break;
 			int b6 = (cur_xds_payload[2] & 0x40) >>6; // Bit 6 should always be 1
+			if(!b6)
+				dbg_print(CCX_DMT_XDS, "Invalid Time\n");
 			int dst = (cur_xds_payload[2] & 0x20) >>5; // Daylight Saving Time
 			int hour = cur_xds_payload[2] & 0x1f; // 5 bits
 			dbg_print(CCX_DMT_XDS, "Local Time Zone: %02d DST: %d\n",
