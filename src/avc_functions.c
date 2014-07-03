@@ -38,7 +38,6 @@ long num_unexpected_sei_length=0;
 double roundportable(double x) { return floor(x + 0.5); }
 
 int ebsp_to_rbsp(char* rbsp, char* ebsp, int length);
-static  char s_rbsp[1024*1024];
 
 void init_avc(void)
 {
@@ -823,6 +822,9 @@ void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_ty
 	}
     else
     {
+        //TODO Calculate picture order count (POC) according to 8.2.1
+#if 0
+
 		/* CFS: Warning!!: Untested stuff, copied from specs (8.2.1.3) */
 		LLONG FrameNumOffset = 0;
 		if (IdrPicFlag == 1)
@@ -854,8 +856,7 @@ void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_ty
 		//pic_order_cnt_lsb=tempPicOrderCnt; 
 		//pic_order_cnt_lsb=u(&q1,tempPicOrderCnt);
         //fatal(EXIT_BUG_BUG, "AVC: pic_order_cnt_type != 0 not yet supported.");
-        //TODO
-        // Calculate picture order count (POC) according to 8.2.1
+#endif
     }
     // The rest of the data in slice_header() is currently unused.
 

@@ -38,8 +38,6 @@ enum ccx_frame_type current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOW
 // and the expected unrecognized first header for TiVo files.
 int strangeheader=0;
 
-static int non_compliant_DVD = 0; // Found extra captions in DVDs?
-
 unsigned char *filebuffer;
 LLONG filebuffer_start; // Position of buffer start relative to file
 int filebuffer_pos; // Position of pointer relative to buffer start
@@ -273,7 +271,6 @@ void processhex (char *filename)
 {
 	size_t max=(size_t) inputsize+1; // Enough for the whole thing. Hex dumps are small so we can be lazy here
 	char *line=(char *) malloc (max);
-	const char *mpeg_header="00 00 01 b2 43 43 01 f8 "; // Always present
 	FILE *fr = fopen (filename, "rt");  
 	unsigned char *bytes=NULL;
 	unsigned byte_count=0;
@@ -281,7 +278,6 @@ void processhex (char *filename)
 	while(fgets(line, max-1, fr) != NULL)
 	{
 		char *c1, *c2=NULL; // Positions for first and second colons
-		int len; 
 		long timing;		
 		if (line[0]==';') // Skip comments
 			continue;
@@ -291,7 +287,6 @@ void processhex (char *filename)
 			continue;
 		*c1=0;
 		*c2=0;
-		len=atoi (line);
 		timing=atol (c1+2)*(MPEG_CLOCK_FREQ/1000);
 		current_pts=timing;	
 		if (pts_set==0)
@@ -382,10 +377,8 @@ void processhex (char *filename)
 		else
 		{
 			unsigned char magic=bytes[0];
-			unsigned extra_field_flag=magic&1;
 			unsigned caption_count=((magic>>1)&0x1F);
 			unsigned filler=((magic>>6)&1);
-			unsigned pattern=((magic>>7)&1);			
 			int always_ff=1;
 			int current_field=0; 
 			if (filler==0 && caption_count*6==byte_count-1) // Note that we are ignoring the extra field for now...

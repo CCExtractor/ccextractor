@@ -796,8 +796,6 @@ LLONG asf_getmoredata(void)
                 int MediaObjectSize = 0;
                 int PresentationTimems = 0; //Payload ms time stamp
                 int extsize = 0;
-                int32_t dwVersion = 0;
-                int32_t unknown = 0;
                 int64_t rtStart = 0; // dvr-ms 100ns time stamp start
                 int64_t rtEnd = 0; // dvr-ms 100ns time stamp end
 
@@ -827,8 +825,6 @@ LLONG asf_getmoredata(void)
                 }
                 if ( PayloadExtPTSEntry[PayloadStreamNumber] > 0 )
                 {
-                    dwVersion = *((uint32_t*)(reppos+0));
-                    unknown = *((uint32_t*)(reppos+4));
                     rtStart = *((int64_t*)(reppos+8));
                     rtEnd = *((int64_t*)(reppos+16));
                 
