@@ -820,10 +820,44 @@ void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_ty
 	{
 		fatal(EXIT_BUG_BUG, "AVC: pic_order_cnt_type == 1 not yet supported.");
 	}
-    /* else */
-    /* { */
-    /*     //TODO Calculate picture order count (POC) according to 8.2.1 */
-    /* } */
+	#if 0
+    else
+    {
+		/* CFS: Warning!!: Untested stuff, copied from specs (8.2.1.3) */
+		LLONG FrameNumOffset = 0;
+		if (IdrPicFlag == 1)
+			FrameNumOffset=0;
+		else if (lastframe_num > frame_num)
+			FrameNumOffset = lastframe_num + maxframe_num;
+		else
+			FrameNumOffset = lastframe_num;
+		
+		LLONG tempPicOrderCnt=0;
+		if (IdrPicFlag == 1)
+			tempPicOrderCnt=0;
+		else if (nal_ref_idc == 0)
+			tempPicOrderCnt = 2*(FrameNumOffset + frame_num) -1 ;
+		else
+			tempPicOrderCnt = 2*(FrameNumOffset + frame_num);
+
+		LLONG TopFieldOrderCnt = tempPicOrderCnt;
+		LLONG BottomFieldOrderCnt = tempPicOrderCnt;
+
+		if (!field_pic_flag) {
+			TopFieldOrderCnt = tempPicOrderCnt;
+			BottomFieldOrderCnt = tempPicOrderCnt;
+		} else if (bottom_field_flag)
+			BottomFieldOrderCnt = tempPicOrderCnt;
+		else
+			TopFieldOrderCnt = tempPicOrderCnt;
+
+		//pic_order_cnt_lsb=tempPicOrderCnt; 
+		//pic_order_cnt_lsb=u(&q1,tempPicOrderCnt);
+        //fatal(EXIT_BUG_BUG, "AVC: pic_order_cnt_type != 0 not yet supported.");
+        //TODO
+        // Calculate picture order count (POC) according to 8.2.1
+    }
+	#endif
     // The rest of the data in slice_header() is currently unused.
 
     // A reference pic (I or P is always the last displayed picture of a POC

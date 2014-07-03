@@ -279,6 +279,7 @@ void processhex (char *filename)
 	while(fgets(line, max-1, fr) != NULL)
 	{
 		char *c1, *c2=NULL; // Positions for first and second colons
+		/* int len; */
 		long timing;		
 		if (line[0]==';') // Skip comments
 			continue;
@@ -288,6 +289,7 @@ void processhex (char *filename)
 			continue;
 		*c1=0;
 		*c2=0;
+		/* len=atoi (line); */
 		timing=atol (c1+2)*(MPEG_CLOCK_FREQ/1000);
 		current_pts=timing;	
 		if (pts_set==0)
@@ -378,8 +380,10 @@ void processhex (char *filename)
 		else
 		{
 			unsigned char magic=bytes[0];
+			/* unsigned extra_field_flag=magic&1; */
 			unsigned caption_count=((magic>>1)&0x1F);
 			unsigned filler=((magic>>6)&1);
+			/* unsigned pattern=((magic>>7)&1); */		
 			int always_ff=1;
 			int current_field=0; 
 			if (filler==0 && caption_count*6==byte_count-1) // Note that we are ignoring the extra field for now...

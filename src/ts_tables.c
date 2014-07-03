@@ -658,7 +658,7 @@ void process_ccx_mpeg_descriptor (unsigned char *data, unsigned length)
 			{
 				char c1=data[i+2], c2=data[i+3], c3=data[i+4];				
 				unsigned teletext_type=(data[i+5]&0xF8)>>3; // 5 MSB
-				//unsigned magazine_number=data[i+5]&0x7; // 3 LSB
+				// unsigned magazine_number=data[i+5]&0x7; // 3 LSB
 				unsigned teletext_page_number=data[i+6];
 				dbg_print (CCX_DMT_PMT, "                        ISO639: %c%c%c\n",c1>=0x20?c1:' ',
 																   c2>=0x20?c2:' ',

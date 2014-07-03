@@ -36,6 +36,8 @@ struct bitstream
 #define read_i32(bstream) (int32_t)bitstream_get_num(bstream,4,1)
 #define read_i64(bstream) (int64_t)bitstream_get_num(bstream,8,1)
 
+#define skip_u32(bstream) (void)bitstream_get_num(bstream,4,1)
+
 #define next_u8(bstream) (uint8_t)bitstream_get_num(bstream,1,0)
 #define next_u16(bstream) (uint16_t)bitstream_get_num(bstream,2,0)
 #define next_u32(bstream) (uint32_t)bitstream_get_num(bstream,4,0)

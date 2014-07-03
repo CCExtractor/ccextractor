@@ -174,6 +174,7 @@ int detect_myth( void )
 }
 int read_pts_pes(unsigned char*header, int len)
 {
+        /* unsigned int peslen = 0; */
         LLONG bits_9;
         unsigned int bits_10;
         unsigned int bits_11;
@@ -187,6 +188,8 @@ int read_pts_pes(unsigned char*header, int len)
         if (!(header[0] == 0 && header[1] == 0 && header[2] == 1)) 
                 return -1; 
 
+
+        /* peslen = header[4] << 8 | header[5]; */
 
         if (header[7] & 0x80)
         {   
@@ -258,6 +261,7 @@ int read_video_pes_header (unsigned char *nextheader, int *headerlength, int sbu
     }
     *headerlength += (int) nextheader[8];
     int falsepes = 0;
+    /* int pesext = 0; */
 
     // Avoid false positives, check --- not really needed
     if ( (nextheader[7]&0xC0) == 0x80 ) {
@@ -314,6 +318,7 @@ int read_video_pes_header (unsigned char *nextheader, int *headerlength, int sbu
             falsepes = 1;
         }
         hskip += 1;
+        /* pesext = 1; */
     }
 
     if ( !falsepes ) {
