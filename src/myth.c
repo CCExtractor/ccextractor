@@ -286,9 +286,11 @@ static AVPacket av;
 int get_be16()
 {
     unsigned char a,b;
-    buffered_read_byte (&a);
+    unsigned char *a_p = &a; // Just to suppress warnings
+    unsigned char *b_p = &b;
+    buffered_read_byte (a_p);
     past++;
-    buffered_read_byte (&b);
+    buffered_read_byte (b_p);
     past++;
     return (a<<8) | b;
 }
@@ -296,7 +298,8 @@ int get_be16()
 int get_byte ()
 {
 	unsigned char b;
-	buffered_read_byte(&b);  
+    unsigned char *b_p = &b;
+	buffered_read_byte(b_p);  
     if (result==1)
     {
         past++;
@@ -341,8 +344,9 @@ static int find_next_start_code(int *size_ptr,
     while (n > 0) 
     {
         unsigned char cx;
-        buffered_read_byte (&cx);
-        if (result!=1)        
+		unsigned char *cx_p = &cx;
+        buffered_read_byte (cx_p);
+        if (result!=1)
             break;
         past++;
         v = cx;
@@ -401,9 +405,8 @@ static int mpegps_read_pes_header(int *pstart_code,
                                   LLONG *ppts, LLONG *pdts)
 {    
     int len, size, startcode, c, flags, header_len;
-    LLONG pts, dts, last_pos;
+    LLONG pts, dts;
 
-    last_pos = -1;
 redo:
     /* next start code (should be immediately after) */
     header_state = 0xff;

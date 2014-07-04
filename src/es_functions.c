@@ -253,7 +253,7 @@ static int es_video_sequence(struct bitstream *esstream)
         // Sequence_end_code
         if (startcode == 0xB7)
         {
-            read_u32(esstream); // Advance bitstream
+            skip_u32(esstream); // Advance bitstream
             no_bitstream_error = 0;
             break;
         }
@@ -488,7 +488,7 @@ static int sequence_ext(struct bitstream *esstream)
         return 0;
     }
 
-    read_u32(esstream); // Advance
+    skip_u32(esstream); // Advance
 
     // Read extension_start_code_identifier
     unsigned extension_id = (unsigned) read_bits(esstream, 4);
@@ -905,7 +905,7 @@ static int pic_coding_ext(struct bitstream *esstream)
         return 0;
     }
 
-    read_u32(esstream); // Advance
+    skip_u32(esstream); // Advance
 
     // Read extension_start_code_identifier
     unsigned extension_id = (unsigned int) read_bits(esstream, 4);
@@ -996,7 +996,7 @@ static int extension_and_user_data(struct bitstream *esstream, int udtype)
 
         if ( startcode == 0xB2 || startcode == 0xB5 )
         {
-            read_u32(esstream); // Advance bitstream
+            skip_u32(esstream); // Advance bitstream
             unsigned char *dstart = esstream->pos;
 
             // Advanve esstream to the next startcode.  Verify that
@@ -1114,7 +1114,7 @@ static int read_pic_data(struct bitstream *esstream)
 
         if ( startcode >= 0x01 && startcode <= 0xAF )
         {
-            read_u32(esstream); // Advance bitstream
+            skip_u32(esstream); // Advance bitstream
             search_start_code(esstream); // Skip this slice
         }
     }
