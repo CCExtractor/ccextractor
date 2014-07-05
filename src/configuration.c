@@ -125,6 +125,7 @@ static void parse_file(FILE *f,struct ccx_s_options *opt)
 					mprint("invalid configuration file\n");
 			comments = 0;
 			i = 0;
+			str[0] = '\0';
 			continue;
 		}
 		if(comments || c == '#')

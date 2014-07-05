@@ -1,3 +1,10 @@
+#######################################################
+# Version 0.01
+#
+# To enable required option please uncommnent option
+#
+
+
 # The Input Source tag option give ability to user
 # to take imput from file, standurd input or network
 # This tag take number in its input and there meanings
@@ -6,19 +13,20 @@
 # 1 = stdin
 # 2 = network
 
-INPUT_SOURCE=1
+INPUT_SOURCE=0
 
 # The Buffer Input tag
-# This tag take number in its input and there meanings
-# are following
+# This tag take number in its input.
 
-BUFFER_INPUT=0
+#BUFFER_INPUT=0
 
 # The Direct Rollup tag
 # This tag take number in its input and there meanings
 # are following
+# 0 = no
+# 1 = yes
 
-DIRECT_ROLLUP=
+#DIRECT_ROLLUP=
 
 #The No font Color Tag
 # This tag take number in its input and there meanings
@@ -26,7 +34,7 @@ DIRECT_ROLLUP=
 # 0 = no
 # 1 = yes
 
-NOFONT_COLOR=
+#NOFONT_COLOR=
 
 #The No type Setting Tag
 # This tag take number in its input and there meanings
@@ -34,7 +42,7 @@ NOFONT_COLOR=
 # 0 = no
 # 1 = yes
 
-NOTYPE_SETTING=
+#NOTYPE_SETTING=
 
 # The Codec Tag take the preference of codec
 # tag CCX_CODEC_ANY is by default
@@ -44,7 +52,7 @@ NOTYPE_SETTING=
 # 1 = CCX_CODEC_TELETEXT
 # 2 = CCX_CODEC_DVB
 
-CODEC=
+#CODEC=
 
 # The NO Codec Tag do not use codec specified
 # tag CCX_CODEC_NONE is by default
@@ -54,7 +62,7 @@ CODEC=
 # 2 = CCX_CODEC_DVB
 # 3 = CCX_CODEC_NONE
 
-NOCODEC=
+#NOCODEC=
 
 # OUTPUT_FORMAT tag specify format of output
 # by default output format is srt
@@ -70,51 +78,51 @@ NOCODEC=
 # 7 = CCX_OF_SPUPNG
 # 8 = CCX_OF_DVDRAW
 
-OUTPUT_FORMAT=
+#OUTPUT_FORMAT=
 
 # Start credit Text is shown at start
 # this tag take text in input
 # Please note text is limited to one line in configuration
 # file
 
-START_CREDIT_TEXT=
+#START_CREDIT_TEXT=
 
 # Start credit do not start before apecified time in tag
 # this tag only accepts SS, MM:SS or HH:MM:SS
 
-START_CREDIT_NOT_BEFORE=
+#START_CREDIT_NOT_BEFORE=
 
 # Start credits do not start after specified time in tag
 # this tag only accepts SS, MM:SS or HH:MM:SS
 
-START_CREDIT_NOT_AFTER=
+#START_CREDIT_NOT_AFTER=
 
 # Start credits run for at least time specied in tag
 # this tag only accepts SS, MM:SS or HH:MM:SS
 
-START_CREDIT_FOR_ATLEAST=
+#START_CREDIT_FOR_ATLEAST=
 
 # Start credits are displayed for atmost time specified in tag
 # this tag only accepts SS, MM:SS or HH:MM:SS
 
-START_CREDIT_FOR_ATMOST=
+#START_CREDIT_FOR_ATMOST=
 
 # End Credit text are shown at beginning
 # this tag take text in input
 # Please note text is limited to one line in configuration
 # file
 
-END_CREDITS_TEXT=
+#END_CREDITS_TEXT=
 
 # End credits run for at least time specied in tag
 # this tag only accepts SS, MM:SS or HH:MM:SS
 
-END_CREDITS_FOR_ATLEAST
+#END_CREDITS_FOR_ATLEAST
 
 # End credits are displayed for atmost time specified in tag
 # this tag only accepts SS, MM:SS or HH:MM:SS
 
-END_CREDITS_FOR_ATMOST
+#END_CREDITS_FOR_ATMOST
 
 # Is Video edited or splitted by tool
 # By default its 1, ccextractor will process input files in
@@ -125,7 +133,7 @@ END_CREDITS_FOR_ATMOST
 # the original timing.
 # This tag take 0 or 1 in input
 
-VIDEO_EDITED=1
+#VIDEO_EDITED=1
 
 # Use GOP for timing instead of PTS. This only applies
 # to Program or Transport Streams with MPEG2 data and
@@ -139,7 +147,7 @@ VIDEO_EDITED=1
 # -1 = Never use GOP timing (use PTS), even if ccextractor
 #      detects GOP timing is the reasonable choice.
 
-GOP_TIME=0
+#GOP_TIME=0
 
 # Fix padding - some cards (or providers, or whatever)
 # seem to send 0000 as CC padding instead of 8080. If you
@@ -150,7 +158,7 @@ GOP_TIME=0
 # 0 = no
 # 1 = yes
 
-FIX_PADDINDG=0
+#FIX_PADDINDG=0
 
 # If you hate the repeated lines caused by the roll-up
 # emulation, you can have ccextractor write only one
@@ -161,7 +169,7 @@ FIX_PADDINDG=0
 # 0 = no (default)
 # 1 = yes
 
-NO_ROLL_UP=0
+#NO_ROLL_UP=0
 
 # Roll-up captions can consist of 2, 3 or 4 visible
 # lines at any time (the number of lines is part of
@@ -180,7 +188,7 @@ NO_ROLL_UP=0
 # 2
 # 3
 
-FORCED_RU
+#FORCED_RU
 
 # This tag trim line
 # This tag take number in its input and there meaning
@@ -188,7 +196,7 @@ FORCED_RU
 # 0 = no
 # 1 = yes
 
-TRIM=0
+#TRIM=0
 
 #
 # Report progress and interesting events to stderr
@@ -199,7 +207,7 @@ TRIM=0
 # 0 = no
 # 1 = yes
 
-GUI_MODE_REPORTS=0
+#GUI_MODE_REPORTS=0
 
 # Suppress the output of the progress bar
 # This tag take number in its input and there meaning
@@ -207,7 +215,7 @@ GUI_MODE_REPORTS=0
 # 0 = no
 # 1 = yes
 
-NO_PROGRESS_BAR=0
+#NO_PROGRESS_BAR=0
 
 # Sentence capitalization. Use if you hate
 # ALL CAPS in subtitles
@@ -216,7 +224,7 @@ NO_PROGRESS_BAR=0
 # 0 = no
 # 1 = yes
 
-SENTENCE_CAP=0
+#SENTENCE_CAP=0
 
 #this tag take Dictionary file name containing words in each line
 
@@ -228,7 +236,7 @@ SENTENCE_CAP=0
 # -1 = automaticaly selected
 #  X = actual program pid in ts file
 
-PROGRAM_NUMBER=-1
+#PROGRAM_NUMBER=-1
 
 # select automaticaly program from ts file
 # This tag take number in its input and there meaning
@@ -236,7 +244,7 @@ PROGRAM_NUMBER=-1
 # 0 = no
 # 1 = yes
 
-AUTO_PROGRAM=0
+#AUTO_PROGRAM=0
 
 # Stream number(pid) to be selected from file
 # This tag take number in its input and there meaning
@@ -244,7 +252,7 @@ AUTO_PROGRAM=0
 # -1 = automaticaly selected
 #  X = actual stream pid in ts file
 
-STREAM=-1
+#STREAM=-1
 
 #Write number of  screenfuls and terminate processing
 #This tag take number of secreen
@@ -254,12 +262,12 @@ STREAM=-1
 # start extraction from the time specified
 # this tag only accepts SS, MM:SS or HH:MM:SS
 
-START_AT
+#START_AT
 
 # End extraction at the time specified
 # this tag only accepts SS, MM:SS or HH:MM:SS
 
-END_AT
+#END_AT
 
 # If no CC packets are detected based on the PMT, try
 # to find data in all packets by scanning.
@@ -268,13 +276,13 @@ END_AT
 # 0 = no
 # 1 = yes
 
-INVASTIGATE_PACKET=0
+#INVASTIGATE_PACKET=0
 
 # If the video was recorder using a Hauppauge card, it
 # might need special processing. This parameter will
 # force the special treatment.
 
-HAUPPAUGE_MODE=0
+#HAUPPAUGE_MODE=0
 
 # MP4 files the closed caption data can be embedded in
 # the video track or in a dedicated CC track. If a
@@ -286,7 +294,7 @@ HAUPPAUGE_MODE=0
 # 0 = no
 # 1 = yes
 
-MP4_VIDEO_TRACK
+#MP4_VIDEO_TRACK
 
 # File need to be encoding in which format
 # This tag take number in its input and there meaning
@@ -296,7 +304,7 @@ MP4_VIDEO_TRACK
 # 1 = CCX_ENC_LATIN_1
 # 2 = CCX_ENC_UTF_8
 
-ENCODING=2
+#ENCODING=2
 
 # Use the pic_order_cnt_lsb in AVC/H.264 data streams
 # to order the CC information.  The default way is to
@@ -307,7 +315,7 @@ ENCODING=2
 # 0 = no
 # 1 = yes
 
-USE_PIC_ORDER=0
+#USE_PIC_ORDER=0
 
 # The MythTV branch is needed for analog captures where
 # the closed caption data is stored in the VBI, such as
@@ -320,7 +328,7 @@ USE_PIC_ORDER=0
 # 1 = Myth
 # 2 = Auto
 
-AUTO_MYTH=2
+#AUTO_MYTH=2
 
 # Read the captions from the MPEG2 video stream rather
 # than the captions stream in WTV files
@@ -329,7 +337,7 @@ AUTO_MYTH=2
 # 0 = no
 # 1 = yes
 
-WTV_MPEG2=0
+#WTV_MPEG2=0
 
 # This tag take output file name
 
