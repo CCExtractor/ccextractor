@@ -251,9 +251,6 @@
     <ClCompile Include="..\src\activity.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\asf_functions.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\avc_functions.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -519,6 +516,9 @@
       <Filter>Source Files\zlib</Filter>
     </ClCompile>
     <ClCompile Include="..\src\configuration.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\asf_functions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

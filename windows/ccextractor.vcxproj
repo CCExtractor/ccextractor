@@ -83,7 +83,7 @@
     <ClCompile Include="..\src\708.c" />
     <ClCompile Include="..\src\708_encoding.c" />
     <ClCompile Include="..\src\activity.c" />
-    <ClCompile Include="..\src\asf_functions.c" />
+    <ClCompile Include="..\src\asf_functions.cpp" />
     <ClCompile Include="..\src\avc_functions.c" />
     <ClCompile Include="..\src\ccextractor.c" />
     <ClCompile Include="..\src\cc_bitstream.c" />
@@ -223,7 +223,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
-      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <AdditionalDependencies>WS2_32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
