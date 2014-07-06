@@ -50,6 +50,8 @@ char *guidstr(void *val)
     return sbuf;
 }
 
+asf_data asf_data_container;
+
 /* ASF container specific data parser
  * The following function reads an ASF file and returns the included
  * video stream.  The function returns after a complete Media Object
@@ -63,96 +65,35 @@ LLONG asf_getmoredata(void)
     int enough = 0;
     int payload_read = 0;
 
-	static unsigned char *parsebuf = NULL;
     // The fist call to this function (per file) is indicated with
     // firstcall == 1
     // Except for the first call of this function we will reenter
     // the Data Packet loop below.
     int reentry = 1;
 
-    // Variables for
-    // Header Object
-    static int64_t HeaderObjectSize;
-    // File Properties Object
-    static int64_t FileSize = 0;
+    // Variables for Header Object
     int64_t DataPacketsCount = 0;
     int BroadcastFlag = 0;
     int SeekableFlag = 0;
     uint32_t MinPacketSize = 0;
     uint32_t MaxPacketSize = 0;
-    static uint32_t PacketSize = 0; // Infered, see explanation below.
-    // Stream Properties Object
-    static int VideoStreamNumber = 0;
-    static int AudioStreamNumber = 0;
-    static int CaptionStreamNumber = 0;
-    static int CaptionStreamStyle = 0; // 1 = NTSC, 2 = ATSC
-    static int DecodeStreamNumber = 0; // The stream that is chosen to be decoded
-    static int DecodeStreamPTS = 0; // This will be used for the next returned block
-    static int currDecodeStreamPTS = 0; // Time of the data returned by the function
-    static int prevDecodeStreamPTS = 0; // Previous time
-    static int VideoStreamMS = 0; // See ableve, just for video
-    static int currVideoStreamMS = 0;
-    static int prevVideoStreamMS = 0;
-    static int VideoJump = 0; // Remember a jump in the video timeline
-    // Extended Stream Properties  - for DVR-MS presentation timestamp
-    // Store the Payload Extension System Data Size.  First index holds the
-    // stream number and the second index holds the Extension System entry.
-    // I.e. PayloadExtSize[1][2] is the third Payload Extension System
-    // entry for stream 1. (The streams are numbered starting from 1)
-    // FIXME: What happens if we have more than 9 streams with more than
-    // 10 entries.
-	#define STREAMNUM  10
-	#define PAYEXTNUM 10
-    static int PayloadExtSize[STREAMNUM][PAYEXTNUM];
-    // Remember which entry held the DVRMS_PTS information
-    static int PayloadExtPTSEntry[STREAMNUM];
-
-    // Data Object Header
-    static int64_t DataObjectSize;
-    static uint32_t TotalDataPackets;
-    // Remember some values
-    static int VideoClosedCaptioningFlag = 0;
 
     // Data Object Loop
-    static uint32_t datapacketcur = 0; // Current packet number
-    static int64_t dobjectread = 50; // Bytes read in Data Object
     int datapacketlength = 0; // Collect the read header bytes
 
-    // Payload parsing information
-    static int MultiplePayloads = 0; // ASF
+    // Payload parsing information    
     int SequenceType = 0; // ASF
-    int PaddingLType = 0; // ASF
-    static int PacketLType = 0; // ASF
-    static int ReplicatedLType = 0; // ASF
-    static int OffsetMediaLType = 0; // ASF
-    static int MediaNumberLType = 0; // ASF
-    static int StreamNumberLType = 0; // ASF
-    static uint32_t PacketLength = 0;
-    uint32_t Sequence = 0;
-    static uint32_t PaddingLength = 0;
+    int PaddingLType = 0; // ASF    
+    uint32_t Sequence = 0;    
     uint32_t SendTime = 0;
 
     int payloadparsersize = 0; // Infered (PacketLType + SequenceType + PaddingLType + 6);
-    // Single/multiple payloads
-    static int PayloadLType = 0; // ASF - Payload Length Type. <>0 for multiple payloads
-    static uint32_t PayloadLength = 0; // ASF - Payload Length
-    static int NumberOfPayloads = 0; // ASF - Number of payloads.
-    static int payloadcur = 0; // local
-
-    static int PayloadStreamNumber = 0; // ASF
-    static int KeyFrame = 0; // ASF
-
-    static uint32_t PayloadMediaNumber = 0; // ASF
+    
     uint32_t OffsetMediaLength = 0; // ASF
     uint32_t ReplicatedLength = 0; // ASF
 
     // Last media number. Used to determine a new PES, mark uninitialized.
     uint32_t curmedianumber = 0xFFFFFFFF;
-
-
-    // Generic buffer to hold some data
-    parsebuf = (unsigned char*)malloc(1024);
-    static long parsebufsize = 1024;
 
     unsigned char *curpos;
     int64_t getbytes;
@@ -160,25 +101,57 @@ LLONG asf_getmoredata(void)
     // Read Header Object and the Top-level Data Object header only once
     if(firstcall)
     {
-        // Make sure the stream numbers are invalid when a new file begins
-        // so that they are only set when detected.
-        VideoStreamNumber = 0;
-        AudioStreamNumber = 0;
-        CaptionStreamNumber = 0;
-        CaptionStreamStyle = 0;
-        DecodeStreamNumber = 0;
-
+		asf_data_container = (asf_data) {
+			.parsebuf = (unsigned char*)malloc(1024),
+			.parsebufsize = 1024,
+			.FileSize = 0,
+			.PacketSize = 0,
+			.StreamProperties = {
+				// Make sure the stream numbers are invalid when a new file begins
+				// so that they are only set when detected.
+				.VideoStreamNumber = 0,
+				.AudioStreamNumber = 0,
+				.CaptionStreamNumber = 0,
+				.CaptionStreamStyle = 0,
+				.DecodeStreamNumber = 0,
+				.DecodeStreamPTS = 0,
+				.currDecodeStreamPTS = 0,
+				.prevDecodeStreamPTS = 0,
+				.VideoStreamMS = 0,
+				.currVideoStreamMS = 0,
+				.prevVideoStreamMS = 0,
+				.VideoJump = 0
+			},
+			.VideoClosedCaptioningFlag = 0,
+			.PayloadLType = 0,
+			.PayloadLength = 0,
+			.NumberOfPayloads = 0,
+			.payloadcur = 0,
+			.PayloadStreamNumber = 0,
+			.KeyFrame = 0,
+			.PayloadMediaNumber = 0,
+			.datapacketcur = 0,
+			.dobjectread = 50,
+			.MultiplePayloads = 0,
+			.PacketLType = 0,
+			.ReplicatedLType = 0,
+			.OffsetMediaLType = 0,
+			.MediaNumberLType = 0,
+			.StreamNumberLType = 0,
+			.PacketLength = 0,
+			.PaddingLength = 0
+		}; 
         // Initialize the Payload Extension System
         for(int stream=0; stream<STREAMNUM; stream++)
         {
             for(int payext=0; payext<PAYEXTNUM; payext++)
             {
-                PayloadExtSize[stream][payext] = 0;
+				asf_data_container.PayloadExtSize[stream][payext] = 0;
             }
-            PayloadExtPTSEntry[stream] = -1;
+			asf_data_container.PayloadExtPTSEntry[stream] = -1;
         }
 
-        buffered_read(parsebuf,30);
+        buffered_read(asf_data_container.parsebuf,30);
         past+=result;
         if (result!=30)
         {
@@ -188,7 +161,7 @@ LLONG asf_getmoredata(void)
         }
 
         // Expecting ASF header
-        if( !memcmp(parsebuf, ASF_HEADER, 16 ) )
+		if (!memcmp(asf_data_container.parsebuf, ASF_HEADER, 16))
         {
 			dbg_print(CCX_DMT_PARSE, "\nASF header\n");
         }
@@ -196,21 +169,21 @@ LLONG asf_getmoredata(void)
         {
             fatal(EXIT_MISSING_ASF_HEADER, "Missing ASF header. Abort.\n");
         }
-        HeaderObjectSize = *((int64_t*)(parsebuf+16));
-        dbg_print(CCX_DMT_PARSE, "Length: %lld\n", HeaderObjectSize);
+		asf_data_container.HeaderObjectSize = *((int64_t*)(asf_data_container.parsebuf + 16));
+		dbg_print(CCX_DMT_PARSE, "Length: %lld\n", asf_data_container.HeaderObjectSize);
         dbg_print(CCX_DMT_PARSE,"\nNumber of header objects: %ld\n",
-                   (long)*((uint32_t*)(parsebuf+24)));
+			(long)*((uint32_t*)(asf_data_container.parsebuf + 24)));
         
 
-        if ( HeaderObjectSize > parsebufsize) {
-            parsebuf = (unsigned char*)realloc(parsebuf, (size_t) HeaderObjectSize);
-            if (!parsebuf)
+		if (asf_data_container.HeaderObjectSize > asf_data_container.parsebufsize) {
+			asf_data_container.parsebuf = (unsigned char*)realloc(asf_data_container.parsebuf, (size_t)asf_data_container.HeaderObjectSize);
+			if (!asf_data_container.parsebuf)
                 fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
-            parsebufsize = (long) HeaderObjectSize;
+			asf_data_container.parsebufsize = (long)asf_data_container.HeaderObjectSize;
         }
 
-        curpos = parsebuf + 30;
-        getbytes = HeaderObjectSize - 30;
+		curpos = asf_data_container.parsebuf + 30;
+		getbytes = asf_data_container.HeaderObjectSize - 30;
 
         buffered_read(curpos, (int) getbytes);
         past+=result;
@@ -223,7 +196,7 @@ LLONG asf_getmoredata(void)
 
         dbg_print(CCX_DMT_PARSE, "Reading header objects\n");
 
-        while( curpos < parsebuf + HeaderObjectSize )
+		while (curpos < asf_data_container.parsebuf + asf_data_container.HeaderObjectSize)
         {
             int64_t hpobjectsize = *((int64_t*)(curpos+16)); // Local
 
@@ -232,14 +205,14 @@ LLONG asf_getmoredata(void)
                 // Mandatory Object, only one.                
                 dbg_print(CCX_DMT_PARSE, "\nFile Properties Object     (size: %lld)\n", hpobjectsize);
 
-                FileSize = *((int64_t*)(curpos+40));
+				asf_data_container.FileSize = *((int64_t*)(curpos + 40));
                 DataPacketsCount = *((int64_t*)(curpos+56));
                 BroadcastFlag = 0x1 & curpos[88];
                 SeekableFlag = 0x2 & curpos[88];
                 MinPacketSize = *((uint32_t*)(curpos+92));
                 MaxPacketSize = *((uint32_t*)(curpos+96));
                 
-                dbg_print(CCX_DMT_PARSE, "FileSize: %lld   Packet count: %lld\n", FileSize, DataPacketsCount);
+				dbg_print(CCX_DMT_PARSE, "FileSize: %lld   Packet count: %lld\n", asf_data_container.FileSize, DataPacketsCount);
                 dbg_print(CCX_DMT_PARSE, "Broadcast: %d - Seekable: %d\n", BroadcastFlag, SeekableFlag);
                 dbg_print(CCX_DMT_PARSE, "MiDPS: %d   MaDPS: %d\n", MinPacketSize, MaxPacketSize);
                 
@@ -249,16 +222,16 @@ LLONG asf_getmoredata(void)
                 dbg_print(CCX_DMT_PARSE, "\nStream Properties Object     (size: %lld)\n", hpobjectsize);
                 if( !memcmp(curpos+24, ASF_VIDEO_MEDIA, 16 ) )
                 {
-                    VideoStreamNumber = *(curpos+72) & 0x7F;                                       
+					asf_data_container.StreamProperties.VideoStreamNumber = *(curpos + 72) & 0x7F;
                     dbg_print(CCX_DMT_PARSE, "Stream Type: ASF_Video_Media\n");
-                    dbg_print(CCX_DMT_PARSE, "Video Stream Number: %d\n", VideoStreamNumber );
+					dbg_print(CCX_DMT_PARSE, "Video Stream Number: %d\n", asf_data_container.StreamProperties.VideoStreamNumber);
                     
                 }
                 else if( !memcmp(curpos+24, ASF_AUDIO_MEDIA, 16 ) )
                 {
-                    AudioStreamNumber = *(curpos+72) & 0x7F;
+					asf_data_container.StreamProperties.AudioStreamNumber = *(curpos + 72) & 0x7F;
                     dbg_print(CCX_DMT_PARSE, "Stream Type: ASF_Audio_Media\n");
-                    dbg_print(CCX_DMT_PARSE, "Audio Stream Number: %d\n", AudioStreamNumber );                    
+					dbg_print(CCX_DMT_PARSE, "Audio Stream Number: %d\n", asf_data_container.StreamProperties.AudioStreamNumber);
                 }
                 else
                 {
@@ -319,7 +292,7 @@ LLONG asf_getmoredata(void)
                                 extensionsystemdatasize = *((uint16_t*)(estreamproppos+16));
                                 extensionsysteminfolength = *((uint32_t*)(estreamproppos+18));
 
-                                PayloadExtSize[StreamNumber][i] = extensionsystemdatasize;
+								asf_data_container.PayloadExtSize[StreamNumber][i] = extensionsystemdatasize;
 
 								dbg_print(CCX_DMT_PARSE,"%2d. Payload Extension GUID: %s Size %d Info Length %d\n",
 									i,guidstr(estreamproppos+0),
@@ -330,7 +303,7 @@ LLONG asf_getmoredata(void)
                                 if( !memcmp(estreamproppos, DVRMS_PTS, 16 ) )
                                 {
                                     dbg_print(CCX_DMT_PARSE, "Found DVRMS_PTS\n");
-                                    PayloadExtPTSEntry[StreamNumber] = i;
+									asf_data_container.PayloadExtPTSEntry[StreamNumber] = i;
                                 }
 
                                 estreamproppos+=22+extensionsysteminfolength;
@@ -349,13 +322,13 @@ LLONG asf_getmoredata(void)
                                 {
                                     dbg_print(CCX_DMT_PARSE, "Stream Type: ASF_Video_Media (size: %lld)\n",
                                                spobjectsize);
-                                    VideoStreamNumber = StreamNumber;
+									asf_data_container.StreamProperties.VideoStreamNumber = StreamNumber;
                                 }
                                 else if( !memcmp(estreamproppos+24, ASF_AUDIO_MEDIA, 16 ) )
                                 {
                                     dbg_print(CCX_DMT_PARSE, "Stream Type: ASF_Audio_Media (size: %lld)\n",
                                                spobjectsize);
-                                    AudioStreamNumber = StreamNumber;
+									asf_data_container.StreamProperties.AudioStreamNumber = StreamNumber;
                                 }
                                 else if( !memcmp(estreamproppos+24, ASF_BINARY_MEDIA, 16 ) )
                                 {
@@ -370,16 +343,16 @@ LLONG asf_getmoredata(void)
                                     {
                                         dbg_print(CCX_DMT_PARSE, "Binary media: NTSC captions (size: %lld)\n",
                                                    spobjectsize);
-                                        CaptionStreamNumber = StreamNumber;
-                                        CaptionStreamStyle = 1;
+										asf_data_container.StreamProperties.CaptionStreamNumber = StreamNumber;
+										asf_data_container.StreamProperties.CaptionStreamStyle = 1;
 
                                     }
                                     else if( !memcmp(estreamproppos+78, DVRMS_ATSC, 16 ) )
                                     {
                                         dbg_print(CCX_DMT_PARSE, "Binary media: ATSC captions (size: %lld)\n",
                                                    spobjectsize);
-                                        CaptionStreamNumber = StreamNumber;
-                                        CaptionStreamStyle = 2;
+										asf_data_container.StreamProperties.CaptionStreamNumber = StreamNumber;
+										asf_data_container.StreamProperties.CaptionStreamStyle = 2;
                                     }
                                     else
                                     {
@@ -491,9 +464,9 @@ LLONG asf_getmoredata(void)
 		    {
                         // This flag would be really usefull if it would be
                         // reliable - it isn't.
-			VideoClosedCaptioningFlag = *((int32_t*)edescval);
+						asf_data_container.VideoClosedCaptioningFlag = *((int32_t*)edescval);
                         dbg_print(CCX_DMT_PARSE, "Found WM/VideoClosedCaptioning flag: %d\n",
-                                   VideoClosedCaptioningFlag);
+							asf_data_container.VideoClosedCaptioningFlag);
 		    }
 
                     econtentpos+=6+DescriptorNameLength+DescriptorValueLength;
@@ -512,11 +485,11 @@ LLONG asf_getmoredata(void)
 
             curpos += hpobjectsize;
         }
-        if (curpos - parsebuf != HeaderObjectSize)
+		if (curpos - asf_data_container.parsebuf != asf_data_container.HeaderObjectSize)
             fatal(EXIT_NOT_CLASSIFIED, "Parsing problem: read bytes %ld != header length %lld\nAbort!\n",
-                   (long)(curpos - parsebuf), HeaderObjectSize);
+			(long)(curpos - asf_data_container.parsebuf), asf_data_container.HeaderObjectSize);
 
-        if ( VideoStreamNumber == 0)
+		if (asf_data_container.StreamProperties.VideoStreamNumber == 0)
             fatal(EXIT_NOT_CLASSIFIED, "No Video Stream Properties Object found.  Unable to continue ...\n");
 
         // Wouldn't it be nice if  VideoClosedCaptioningFlag  would be usable, unfortunately
@@ -524,44 +497,44 @@ LLONG asf_getmoredata(void)
 
         // Now decide where we are going to expect the captions
         ccx_bufferdatatype = CCX_PES; // Except for NTSC captions
-        if ( CaptionStreamNumber > 0
-             && (CaptionStreamStyle == 1 ||
-                 (CaptionStreamStyle == 2 && !ccx_options.wtvconvertfix)) )
+		if (asf_data_container.StreamProperties.CaptionStreamNumber > 0
+			&& (asf_data_container.StreamProperties.CaptionStreamStyle == 1 ||
+			(asf_data_container.StreamProperties.CaptionStreamStyle == 2 && !ccx_options.wtvconvertfix)))
 		{
 			mprint("\nNote: If you converted a WTV into a DVR-MS and CCEextractor finds no captions,  try passing -wtvconvertfix to work around bug in the conversion process.");
 		}
-        if ( CaptionStreamNumber > 0
-             && (CaptionStreamStyle == 1 ||
-                 (CaptionStreamStyle == 2 && ccx_options.wtvconvertfix)) )
+		if (asf_data_container.StreamProperties.CaptionStreamNumber > 0
+			&& (asf_data_container.StreamProperties.CaptionStreamStyle == 1 ||
+			(asf_data_container.StreamProperties.CaptionStreamStyle == 2 && ccx_options.wtvconvertfix)))
         {
             //if (debug_parse)
-            mprint("\nNTSC captions in stream #%d\n\n", CaptionStreamNumber);
+			mprint("\nNTSC captions in stream #%d\n\n", asf_data_container.StreamProperties.CaptionStreamNumber);
             ccx_bufferdatatype = CCX_RAW;
-            DecodeStreamNumber = CaptionStreamNumber;
+			asf_data_container.StreamProperties.DecodeStreamNumber = asf_data_container.StreamProperties.CaptionStreamNumber;
         }
-        else if ( CaptionStreamNumber > 0 && CaptionStreamStyle == 2 )
+		else if (asf_data_container.StreamProperties.CaptionStreamNumber > 0 && asf_data_container.StreamProperties.CaptionStreamStyle == 2)
         {
             //if (debug_parse)
             mprint("\nATSC captions (probably) in stream #%d - Decode the video stream #%d instead\n\n",
-                   CaptionStreamNumber, VideoStreamNumber);
-            DecodeStreamNumber = VideoStreamNumber;
+				asf_data_container.StreamProperties.CaptionStreamNumber, asf_data_container.StreamProperties.VideoStreamNumber);
+			asf_data_container.StreamProperties.DecodeStreamNumber = asf_data_container.StreamProperties.VideoStreamNumber;
         }
         else
         {
-            DecodeStreamNumber = VideoStreamNumber;
+			asf_data_container.StreamProperties.DecodeStreamNumber = asf_data_container.StreamProperties.VideoStreamNumber;
             //if (debug_parse)
             mprint("\nAssume CC info in video stream #%d (No caption stream found)\n\n",
-                   DecodeStreamNumber);
+				asf_data_container.StreamProperties.DecodeStreamNumber);
         }
 
         // When reading "Payload parsing information" it occured that "Packet Lenght"
         // was not set (Packet Length Type 00) and for "Single Payloads" this means
         // the Payload Data Length cannot be infered.  Use MinPacketSize, MaxPacketSize instead.
         if ((MinPacketSize > 0) && (MinPacketSize == MaxPacketSize))
-            PacketSize = MinPacketSize;
+			asf_data_container.PacketSize = MinPacketSize;
 
         // Now the Data Object, except for the packages
-        buffered_read(parsebuf,50); // No realloc needed.
+		buffered_read(asf_data_container.parsebuf, 50); // No realloc needed.
         past+=result;
         if (result!=50)
         {
@@ -571,7 +544,7 @@ LLONG asf_getmoredata(void)
         }
 
         // Expecting ASF Data object
-        if( !memcmp(parsebuf, ASF_DATA, 16 ) )
+		if (!memcmp(asf_data_container.parsebuf, ASF_DATA, 16))
         {
             dbg_print(CCX_DMT_PARSE, "\nASF Data Object\n");
         }
@@ -580,10 +553,10 @@ LLONG asf_getmoredata(void)
             fatal(EXIT_NOT_CLASSIFIED, "Missing ASF Data Object. Abort.\n");
         }
 
-        DataObjectSize = *((int64_t*)(parsebuf+16));
-        TotalDataPackets = *((uint32_t*)(parsebuf+40));
-        dbg_print(CCX_DMT_PARSE, "Size: %lld\n", DataObjectSize);
-        dbg_print(CCX_DMT_PARSE, "Number of data packets: %ld\n", (long)TotalDataPackets);
+		asf_data_container.DataObjectSize = *((int64_t*)(asf_data_container.parsebuf + 16));
+		asf_data_container.TotalDataPackets = *((uint32_t*)(asf_data_container.parsebuf + 40));
+		dbg_print(CCX_DMT_PARSE, "Size: %lld\n", asf_data_container.DataObjectSize);
+		dbg_print(CCX_DMT_PARSE, "Number of data packets: %ld\n", (long)asf_data_container.TotalDataPackets);
         
 
         reentry = 0; // Make sure we read the Data Packet Headers
@@ -591,7 +564,7 @@ LLONG asf_getmoredata(void)
     firstcall = 0;
 
     // Start loop over Data Packets
-    while ( datapacketcur < TotalDataPackets && !enough)
+	while (asf_data_container.datapacketcur < asf_data_container.TotalDataPackets && !enough)
     {
         // Skip reading the headers the first time when reentering the loop
         if(!reentry)
@@ -600,12 +573,12 @@ LLONG asf_getmoredata(void)
 
             datapacketlength = 0;
 
-			dbg_print(CCX_DMT_PARSE,"\nReading packet %d/%d\n", datapacketcur+1, TotalDataPackets);
+			dbg_print(CCX_DMT_PARSE, "\nReading packet %d/%d\n", asf_data_container.datapacketcur + 1, asf_data_container.TotalDataPackets);
 
             // First packet
-            buffered_read(parsebuf,1); // No realloc needed.
+			buffered_read(asf_data_container.parsebuf, 1); // No realloc needed.
             past+=result;
-            dobjectread+=result;
+			asf_data_container.dobjectread += result;
             if (result!=1)
             {
                 mprint("Premature end of file!\n");
@@ -613,16 +586,16 @@ LLONG asf_getmoredata(void)
                 return payload_read;
             }
             datapacketlength+=1;
-            if (*parsebuf & 0x80)
+			if (*asf_data_container.parsebuf & 0x80)
             {
-                int ecdatalength = *parsebuf & 0x0F; // Small, no realloc needed
-                if ( *parsebuf & 0x60 )
+				int ecdatalength = *asf_data_container.parsebuf & 0x0F; // Small, no realloc needed
+				if (*asf_data_container.parsebuf & 0x60)
                 {
                     fatal(EXIT_NOT_CLASSIFIED, "Error Correction Length Type not 00 - reserved - aborting ...\n");
                 }
-                buffered_read(parsebuf+1,ecdatalength);
+				buffered_read(asf_data_container.parsebuf + 1, ecdatalength);
                 past+=result;
-                dobjectread+=result;
+				asf_data_container.dobjectread += result;
                 if (result!=ecdatalength)
                 {
                     mprint("Premature end of file!\n");
@@ -630,7 +603,7 @@ LLONG asf_getmoredata(void)
                     return payload_read;
                 }
                 datapacketlength+=ecdatalength;
-                if ( parsebuf[1] & 0x0F )
+				if (asf_data_container.parsebuf[1] & 0x0F)
                     fatal(EXIT_NOT_CLASSIFIED, "Error correction present.  Unable to continue ...\n");
             }
             else
@@ -641,9 +614,9 @@ LLONG asf_getmoredata(void)
             }
 
             // Now payload parsing information
-            buffered_read(parsebuf+ecinfo,2-ecinfo); // No realloc needed
+			buffered_read(asf_data_container.parsebuf + ecinfo, 2 - ecinfo); // No realloc needed
             past+=result;
-            dobjectread+=result;
+			asf_data_container.dobjectread += result;
             if (result!=2)
             {
                 mprint("Premature end of file!\n");
@@ -652,34 +625,34 @@ LLONG asf_getmoredata(void)
             }
             datapacketlength+=2;
 
-            MultiplePayloads = *parsebuf & 0x01;
+			asf_data_container.MultiplePayloads = *asf_data_container.parsebuf & 0x01;
 
-            SequenceType = (*parsebuf >> 1) & 0x03;
+			SequenceType = (*asf_data_container.parsebuf >> 1) & 0x03;
             SequenceType = ASF_TypeLength(SequenceType);
 
-            PaddingLType = (*parsebuf >> 3) & 0x03;
+			PaddingLType = (*asf_data_container.parsebuf >> 3) & 0x03;
             PaddingLType = ASF_TypeLength(PaddingLType);
 
-            PacketLType = (*parsebuf >> 5) & 0x03;
-            PacketLType = ASF_TypeLength(PacketLType);
+			asf_data_container.PacketLType = (*asf_data_container.parsebuf >> 5) & 0x03;
+			asf_data_container.PacketLType = ASF_TypeLength(asf_data_container.PacketLType);
 
-            ReplicatedLType = (parsebuf[1]) & 0x03;
-            ReplicatedLType = ASF_TypeLength(ReplicatedLType);
+			asf_data_container.ReplicatedLType = (asf_data_container.parsebuf[1]) & 0x03;
+			asf_data_container.ReplicatedLType = ASF_TypeLength(asf_data_container.ReplicatedLType);
 
-            OffsetMediaLType = (parsebuf[1] >> 2) & 0x03;
-            OffsetMediaLType = ASF_TypeLength(OffsetMediaLType);
+			asf_data_container.OffsetMediaLType = (asf_data_container.parsebuf[1] >> 2) & 0x03;
+			asf_data_container.OffsetMediaLType = ASF_TypeLength(asf_data_container.OffsetMediaLType);
 
-            MediaNumberLType = (parsebuf[1] >> 4) & 0x03;
-            MediaNumberLType = ASF_TypeLength(MediaNumberLType);
+			asf_data_container.MediaNumberLType = (asf_data_container.parsebuf[1] >> 4) & 0x03;
+			asf_data_container.MediaNumberLType = ASF_TypeLength(asf_data_container.MediaNumberLType);
 
-            StreamNumberLType = (parsebuf[1] >> 6) & 0x03;
-            StreamNumberLType = ASF_TypeLength(StreamNumberLType);
+			asf_data_container.StreamNumberLType = (asf_data_container.parsebuf[1] >> 6) & 0x03;
+			asf_data_container.StreamNumberLType = ASF_TypeLength(asf_data_container.StreamNumberLType);
 
-            payloadparsersize = PacketLType + SequenceType + PaddingLType + 6;
+			payloadparsersize = asf_data_container.PacketLType + SequenceType + PaddingLType + 6;
 
-            buffered_read(parsebuf+2, payloadparsersize); // No realloc needed
+			buffered_read(asf_data_container.parsebuf + 2, payloadparsersize); // No realloc needed
             past+=result;
-            dobjectread+=result;
+			asf_data_container.dobjectread += result;
             if (result!=payloadparsersize)
             {
                 mprint("Premature end of file!\n");
@@ -688,36 +661,36 @@ LLONG asf_getmoredata(void)
             }
             datapacketlength+=payloadparsersize;
 
-            PacketLength = asf_readval(parsebuf+2, PacketLType);
-            Sequence = asf_readval(parsebuf+2+PacketLType, SequenceType);
-            PaddingLength = asf_readval(parsebuf+2+PacketLType+SequenceType, PaddingLType);
+			asf_data_container.PacketLength = asf_readval(asf_data_container.parsebuf + 2, asf_data_container.PacketLType);
+			Sequence = asf_readval(asf_data_container.parsebuf + 2 + asf_data_container.PacketLType, SequenceType);
+			asf_data_container.PaddingLength = asf_readval(asf_data_container.parsebuf + 2 + asf_data_container.PacketLType + SequenceType, PaddingLType);
             // Data Packet ms time stamp
-            SendTime =  *((uint32_t*)(parsebuf+2+PacketLType+SequenceType+PaddingLType));
+			SendTime = *((uint32_t*)(asf_data_container.parsebuf + 2 + asf_data_container.PacketLType + SequenceType + PaddingLType));
 
             // If Packet Length is not set use global setting if possible
-            if (PacketLength == 0)
+			if (asf_data_container.PacketLength == 0)
             {
-                PacketLength = PacketSize;
+				asf_data_container.PacketLength = asf_data_container.PacketSize;
                 // For multiple payloads we can get away without a given
                 // Packet Lenght as individual payload length are given
-                if (PacketLength == 0 && MultiplePayloads == 0)
+				if (asf_data_container.PacketLength == 0 && asf_data_container.MultiplePayloads == 0)
                     fatal(EXIT_NOT_CLASSIFIED, "No idea how long the data packet will be. Abort.\n");
             }
 
             dbg_print(CCX_DMT_PARSE, "Lengths - Packet: %d / Sequence %d / Padding %d\n",
-                       PacketLength, Sequence, PaddingLength);
+				asf_data_container.PacketLength, Sequence, asf_data_container.PaddingLength);
 
-            PayloadLType = 0; // Payload Length Type. <>0 for multiple payloads
-            PayloadLength = 0; // Payload Length (for multiple payloads)
-            NumberOfPayloads = 1; // Number of payloads.
+			asf_data_container.PayloadLType = 0; // Payload Length Type. <>0 for multiple payloads
+			asf_data_container.PayloadLength = 0; // Payload Length (for multiple payloads)
+			asf_data_container.NumberOfPayloads = 1; // Number of payloads.
 
-            if (MultiplePayloads != 0)
+			if (asf_data_container.MultiplePayloads != 0)
             {
                 unsigned char plheader[1];
 
                 buffered_read(plheader, 1);
                 past+=result;
-                dobjectread+=result;
+				asf_data_container.dobjectread += result;
                 if (result!=1)
                 {
                     mprint("Premature end of file!\n");
@@ -725,13 +698,13 @@ LLONG asf_getmoredata(void)
                     return payload_read;
                 }
                 datapacketlength+=1;
-                PayloadLType = (*plheader >> 6) & 0x03;
-                PayloadLType = ASF_TypeLength(PayloadLType);
+				asf_data_container.PayloadLType = (*plheader >> 6) & 0x03;
+				asf_data_container.PayloadLType = ASF_TypeLength(asf_data_container.PayloadLType);
 
                 // Number of payloads
-                NumberOfPayloads = *plheader & 0x3F;
+				asf_data_container.NumberOfPayloads = *plheader & 0x3F;
             }
-            payloadcur = 0;
+			asf_data_container.payloadcur = 0;
         }
         else
         {   // Rely on
@@ -742,21 +715,21 @@ LLONG asf_getmoredata(void)
         }
 
         // The following repeats NumberOfPayloads times
-        while( payloadcur < NumberOfPayloads && !enough)
+		while (asf_data_container.payloadcur < asf_data_container.NumberOfPayloads && !enough)
         {
             // Skip reading the Payload headers the first time when reentering the loop
             if (!reentry)
             {
-                if (NumberOfPayloads < 2)
+				if (asf_data_container.NumberOfPayloads < 2)
                     dbg_print(CCX_DMT_PARSE, "\nSingle payload\n");
                 else
-                    dbg_print(CCX_DMT_PARSE, "\nMultiple payloads %d/%d\n", payloadcur+1, NumberOfPayloads);
+					dbg_print(CCX_DMT_PARSE, "\nMultiple payloads %d/%d\n", asf_data_container.payloadcur + 1, asf_data_container.NumberOfPayloads);
 
-                int payloadheadersize = 1+MediaNumberLType+OffsetMediaLType+ReplicatedLType;
+				int payloadheadersize = 1 + asf_data_container.MediaNumberLType + asf_data_container.OffsetMediaLType + asf_data_container.ReplicatedLType;
             
-                buffered_read(parsebuf, payloadheadersize); // No realloc needed
+				buffered_read(asf_data_container.parsebuf, payloadheadersize); // No realloc needed
                 past+=result;
-                dobjectread+=result;
+				asf_data_container.dobjectread += result;
                 if (result!=payloadheadersize)
                 {
                     mprint("Premature end of file!\n");
@@ -765,26 +738,26 @@ LLONG asf_getmoredata(void)
                 }
                 datapacketlength+=payloadheadersize;
             
-                PayloadStreamNumber = *parsebuf & 0x7F;
-                KeyFrame = (*parsebuf & 0x80) && 1;
+				asf_data_container.PayloadStreamNumber = *asf_data_container.parsebuf & 0x7F;
+				asf_data_container.KeyFrame = (*asf_data_container.parsebuf & 0x80) && 1;
 
-                PayloadMediaNumber = asf_readval(parsebuf+1, MediaNumberLType);
-                OffsetMediaLength = asf_readval(parsebuf+1+MediaNumberLType, OffsetMediaLType);
-                ReplicatedLength = asf_readval(parsebuf+1+MediaNumberLType+OffsetMediaLType, ReplicatedLType);
+				asf_data_container.PayloadMediaNumber = asf_readval(asf_data_container.parsebuf + 1, asf_data_container.MediaNumberLType);
+				OffsetMediaLength = asf_readval(asf_data_container.parsebuf + 1 + asf_data_container.MediaNumberLType, asf_data_container.OffsetMediaLType);
+				ReplicatedLength = asf_readval(asf_data_container.parsebuf + 1 + asf_data_container.MediaNumberLType + asf_data_container.OffsetMediaLType, asf_data_container.ReplicatedLType);
 
                 if (ReplicatedLength == 1)
                     fatal(EXIT_NOT_CLASSIFIED, "Cannot handle compressed data...\n");
 
-                if ( (long)ReplicatedLength > parsebufsize)
+				if ((long)ReplicatedLength > asf_data_container.parsebufsize)
                 {
-                    parsebuf = (unsigned char*)realloc(parsebuf, ReplicatedLength);
-                    if (!parsebuf)
+					asf_data_container.parsebuf = (unsigned char*)realloc(asf_data_container.parsebuf, ReplicatedLength);
+					if (!asf_data_container.parsebuf)
                         fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
-                    parsebufsize = ReplicatedLength;
+					asf_data_container.parsebufsize = ReplicatedLength;
                 }
-                buffered_read(parsebuf, (long)ReplicatedLength);
+				buffered_read(asf_data_container.parsebuf, (long)ReplicatedLength);
                 past+=result;
-                dobjectread+=result;
+				asf_data_container.dobjectread += result;
                 if (result!=ReplicatedLength)
                 {
                     mprint("Premature end of file!\n");
@@ -792,7 +765,7 @@ LLONG asf_getmoredata(void)
                     return payload_read;
                 }
                 // Parse Replicated data
-                unsigned char *reppos = parsebuf;
+				unsigned char *reppos = asf_data_container.parsebuf;
                 int MediaObjectSize = 0;
                 int PresentationTimems = 0; //Payload ms time stamp
                 int extsize = 0;
@@ -802,30 +775,30 @@ LLONG asf_getmoredata(void)
                 int64_t rtEnd = 0; // dvr-ms 100ns time stamp end
 
                 // Always at least 8 bytes long, see 7.3.1
-                MediaObjectSize = *((uint16_t*)(parsebuf));
-                PresentationTimems = *((uint16_t*)(parsebuf+4));
+				MediaObjectSize = *((uint16_t*)(asf_data_container.parsebuf));
+				PresentationTimems = *((uint16_t*)(asf_data_container.parsebuf + 4));
                 reppos += 8;
 
                 dbg_print(CCX_DMT_PARSE, "Stream# %d[%d] Media# %d Offset/Size: %d/%d\n",
-                           PayloadStreamNumber, KeyFrame, PayloadMediaNumber,
+					asf_data_container.PayloadStreamNumber, asf_data_container.KeyFrame, asf_data_container.PayloadMediaNumber,
                            OffsetMediaLength, MediaObjectSize);
 
                 // Loop over Payload Extension Systems
-                for(int i=0; i<PayloadExtPTSEntry[PayloadStreamNumber]; i++)
+				for (int i = 0; i<asf_data_container.PayloadExtPTSEntry[asf_data_container.PayloadStreamNumber]; i++)
                 {
-                    if (PayloadExtSize[PayloadStreamNumber][i] == 0xffff)
+					if (asf_data_container.PayloadExtSize[asf_data_container.PayloadStreamNumber][i] == 0xffff)
                     {
                         extsize = *((uint16_t*)(reppos+0));
                         reppos += 2;
                     }
                     else
                     {
-                        extsize = PayloadExtSize[PayloadStreamNumber][i];
+						extsize = asf_data_container.PayloadExtSize[asf_data_container.PayloadStreamNumber][i];
                     }
                     reppos += extsize;
                     //printf("%2d. Ext. System - size: %d\n", i, extsize);
                 }
-                if ( PayloadExtPTSEntry[PayloadStreamNumber] > 0 )
+				if (asf_data_container.PayloadExtPTSEntry[asf_data_container.PayloadStreamNumber] > 0)
                 {
                     // dwVersion = *((uint32_t*)(reppos+0));
                     // unknown = *((uint32_t*)(reppos+4));
@@ -845,7 +818,7 @@ LLONG asf_getmoredata(void)
 
                 // print_mstime uses a static buffer
                 dbg_print(CCX_DMT_PARSE, "Stream #%d PacketTime: %s",
-                       PayloadStreamNumber, print_mstime(SendTime));
+					asf_data_container.PayloadStreamNumber, print_mstime(SendTime));
                 dbg_print(CCX_DMT_PARSE,"   PayloadTime: %s",
                        print_mstime(PresentationTimems));
                 dbg_print(CCX_DMT_PARSE,"   dvr-ms PTS: %s+%lld\n",
@@ -854,80 +827,80 @@ LLONG asf_getmoredata(void)
                 datapacketlength+=ReplicatedLength;
 
                 // Only multiple payload packages have this value
-                if (MultiplePayloads != 0)
+				if (asf_data_container.MultiplePayloads != 0)
                 {
                     unsigned char plheader[4];
 
-                    buffered_read(plheader, PayloadLType);
+					buffered_read(plheader, asf_data_container.PayloadLType);
                     past+=result;
-                    dobjectread+=result;
-                    if (result!=PayloadLType)
+					asf_data_container.dobjectread += result;
+					if (result != asf_data_container.PayloadLType)
                     {
                         mprint("Premature end of file!\n");
                         end_of_file=1;
                         return payload_read;
                     }
-                    PayloadLength = asf_readval(plheader, PayloadLType);
+					asf_data_container.PayloadLength = asf_readval(plheader, asf_data_container.PayloadLType);
                 }
                 else
                 {
-                    PayloadLength = PacketLength - datapacketlength - PaddingLength;
+					asf_data_container.PayloadLength = asf_data_container.PacketLength - datapacketlength - asf_data_container.PaddingLength;
                 }
                 dbg_print(CCX_DMT_PARSE, "Size - Replicated %d + Payload %d = %d\n",
-                           ReplicatedLength, PayloadLength, ReplicatedLength+PayloadLength);
+					ReplicatedLength, asf_data_container.PayloadLength, ReplicatedLength + asf_data_container.PayloadLength);
 
                 // Remember the last video time stamp - only when captions are separate
                 // from video stream.
-                if (PayloadStreamNumber == VideoStreamNumber
-                    && DecodeStreamNumber != VideoStreamNumber
+				if (asf_data_container.PayloadStreamNumber == asf_data_container.StreamProperties.VideoStreamNumber
+					&& asf_data_container.StreamProperties.DecodeStreamNumber != asf_data_container.StreamProperties.VideoStreamNumber
                     && OffsetMediaLength == 0)
                 {
-                    prevVideoStreamMS = currVideoStreamMS;
-                    currVideoStreamMS = VideoStreamMS;
+					asf_data_container.StreamProperties.prevVideoStreamMS = asf_data_container.StreamProperties.currVideoStreamMS;
+					asf_data_container.StreamProperties.currVideoStreamMS = asf_data_container.StreamProperties.VideoStreamMS;
 
                     // Use PresentationTimems (SendTime might also work) when the
                     // dvr-ms time stamp is not present.
-                    if ( PayloadExtPTSEntry[PayloadStreamNumber] > 0 )
+					if (asf_data_container.PayloadExtPTSEntry[asf_data_container.PayloadStreamNumber] > 0)
                     {
                         // When rstart is not set, keep the previous value
                         if (rtStart > 0)
-                            VideoStreamMS = (int) (rtStart/10000);
+							asf_data_container.StreamProperties.VideoStreamMS = (int)(rtStart / 10000);
                     }
                     else
                     {
                         // Add 1ms to avoid 0ms start times getting rejected
-                        VideoStreamMS = PresentationTimems+1;
+						asf_data_container.StreamProperties.VideoStreamMS = PresentationTimems + 1;
                     }
                     // This checks if there is a video time jump in the timeline
                     // between caption information.
-                    if ( abs(currVideoStreamMS - prevVideoStreamMS) > 500 )
+					if (abs(asf_data_container.StreamProperties.currVideoStreamMS - asf_data_container.StreamProperties.prevVideoStreamMS) > 500)
                     {
                         // Found a more than 500ms jump in the video timeline
-                        VideoJump = 1;
+						asf_data_container.StreamProperties.VideoJump = 1;
                         // This is remembered until the next caption block is
                         // found.
                     }
                 }
 
                 // Remember the PTS values
-                if (PayloadStreamNumber == DecodeStreamNumber
+				if (asf_data_container.PayloadStreamNumber == asf_data_container.StreamProperties.DecodeStreamNumber
                     && OffsetMediaLength == 0)
                 {
-                    prevDecodeStreamPTS = currDecodeStreamPTS;
-                    currDecodeStreamPTS = DecodeStreamPTS;
+					asf_data_container.StreamProperties.prevDecodeStreamPTS = asf_data_container.StreamProperties.currDecodeStreamPTS;
+					asf_data_container.StreamProperties.currDecodeStreamPTS = asf_data_container.StreamProperties.DecodeStreamPTS;
 
                     // Use PresentationTimems (SendTime might also work) when the
                     // dvr-ms time stamp is not present.
-                    if ( PayloadExtPTSEntry[PayloadStreamNumber] > 0 )
+					if (asf_data_container.PayloadExtPTSEntry[asf_data_container.PayloadStreamNumber] > 0)
                     {
                         // When rstart is not set, keep the previous value
                         if (rtStart > 0)
-                            DecodeStreamPTS = (int) (rtStart/10000);
+							asf_data_container.StreamProperties.DecodeStreamPTS = (int)(rtStart / 10000);
                     }
                     else
                     {
                         // Add 1ms to avoid 0ms start times getting rejected
-                        DecodeStreamPTS = PresentationTimems+1;
+						asf_data_container.StreamProperties.DecodeStreamPTS = PresentationTimems + 1;
                     }
 
                     // Check the caption stream for jumps in the timeline. This
@@ -935,25 +908,25 @@ LLONG asf_getmoredata(void)
                     // different stream then the video information. (For example
                     // NTSC recordings.) Otherwise a gap in the caption
                     // information would look like a jump in the timeline.
-                    if (DecodeStreamNumber != VideoStreamNumber)
+					if (asf_data_container.StreamProperties.DecodeStreamNumber != asf_data_container.StreamProperties.VideoStreamNumber)
                     {
                         // Check if there is a gap larger than 500ms.
-                        if ( currDecodeStreamPTS - prevDecodeStreamPTS > 500 )
+						if (asf_data_container.StreamProperties.currDecodeStreamPTS - asf_data_container.StreamProperties.prevDecodeStreamPTS > 500)
                         {
                             // Found more than 500ms since the previous caption,
                             // now check the video timeline. If there was a also
                             // a jump this needs synchronizing, otherwise it was
                             // just a gap in the captions.
-                            if ( !VideoJump )
+							if (!asf_data_container.StreamProperties.VideoJump)
                                 CaptionGap = 1;
                             else
                                 CaptionGap = 0;
                         }
-                        VideoJump = 0;
+						asf_data_container.StreamProperties.VideoJump = 0;
                     }
 
                     // Remember, we are reading the previous package.
-                    current_pts = currDecodeStreamPTS*(MPEG_CLOCK_FREQ/1000);
+					current_pts = asf_data_container.StreamProperties.currDecodeStreamPTS*(MPEG_CLOCK_FREQ / 1000);
                     if (pts_set==0)
                         pts_set=1;
                 }
@@ -973,15 +946,15 @@ LLONG asf_getmoredata(void)
             // Video streams need several packages to complete a PES.  Leave
             // the loop when the next package starts a new Media Object.
             if ( curmedianumber != 0xFFFFFFFF  // Is initialized
-                 && PayloadStreamNumber == DecodeStreamNumber
-                 && PayloadMediaNumber != curmedianumber)
+				&& asf_data_container.PayloadStreamNumber == asf_data_container.StreamProperties.DecodeStreamNumber
+				&& asf_data_container.PayloadMediaNumber != curmedianumber)
             {
-                if ( DecodeStreamNumber == CaptionStreamNumber )
+				if (asf_data_container.StreamProperties.DecodeStreamNumber == asf_data_container.StreamProperties.CaptionStreamNumber)
                    dbg_print(CCX_DMT_PARSE, "\nCaption stream object");
                 else
                    dbg_print(CCX_DMT_PARSE, "\nVideo stream object");
                 dbg_print(CCX_DMT_PARSE, " read with PTS: %s\n",
-                     print_mstime(currDecodeStreamPTS));
+					print_mstime(asf_data_container.StreamProperties.currDecodeStreamPTS));
                 
 
                 // Enough for now
@@ -990,72 +963,72 @@ LLONG asf_getmoredata(void)
             }
 
             // Read it!!
-            if ( PayloadStreamNumber == DecodeStreamNumber )
+			if (asf_data_container.PayloadStreamNumber == asf_data_container.StreamProperties.DecodeStreamNumber)
             {
-                curmedianumber = PayloadMediaNumber; // Remember current value
+				curmedianumber = asf_data_container.PayloadMediaNumber; // Remember current value
 
                 // Read the data
-                dbg_print(CCX_DMT_PARSE, "Reading Stream #%d data ...\n", PayloadStreamNumber);
+				dbg_print(CCX_DMT_PARSE, "Reading Stream #%d data ...\n", asf_data_container.PayloadStreamNumber);
 
-                int want = (long) ((BUFSIZE-inbuf)>PayloadLength ?
-                                  PayloadLength : (BUFSIZE-inbuf));
-                if (want < (long)PayloadLength )
+				int want = (long)((BUFSIZE - inbuf)>asf_data_container.PayloadLength ?
+					asf_data_container.PayloadLength : (BUFSIZE - inbuf));
+				if (want < (long)asf_data_container.PayloadLength)
                     fatal(EXIT_BUG_BUG, "Buffer size to small for ASF payload!\nPlease file a bug report!\n");
                 buffered_read (buffer+inbuf,want);
                 payload_read+=(int) result;
                 inbuf+=result;
                 past+=result;
-                if (result!=PayloadLength)
+				if (result != asf_data_container.PayloadLength)
                 {
                     mprint("Premature end of file!\n");
                     end_of_file=1;
                     return payload_read;
                 }
-                dobjectread+=PayloadLength;
+				asf_data_container.dobjectread += asf_data_container.PayloadLength;
             }
             else
             {
                 // Skip non-cc data
-                dbg_print(CCX_DMT_PARSE, "Skipping Stream #%d data ...\n", PayloadStreamNumber);
-                buffered_skip ((int) PayloadLength);
+				dbg_print(CCX_DMT_PARSE, "Skipping Stream #%d data ...\n", asf_data_container.PayloadStreamNumber);
+				buffered_skip((int)asf_data_container.PayloadLength);
                 past+=result;
-                if (result!=PayloadLength)
+				if (result != asf_data_container.PayloadLength)
                 {
                     mprint("Premature end of file!\n");
                     end_of_file=1;
                     return payload_read;
                 }
-                dobjectread+=result;
+				asf_data_container.dobjectread += result;
             }
             
-            payloadcur++;
+			asf_data_container.payloadcur++;
         }
         if (enough)
             break;
 
         // Skip padding bytes
-        dbg_print(CCX_DMT_PARSE, "Skip %d padding\n", PaddingLength);
-        buffered_skip((long)PaddingLength);
+		dbg_print(CCX_DMT_PARSE, "Skip %d padding\n", asf_data_container.PaddingLength);
+		buffered_skip((long)asf_data_container.PaddingLength);
         past+=result;
-        if (result!=PaddingLength)
+		if (result != asf_data_container.PaddingLength)
         {
             mprint("Premature end of file!\n");
             end_of_file=1;
             return payload_read;
         }
-        dobjectread+=result;
+		asf_data_container.dobjectread += result;
 
-        datapacketcur++;
-        dbg_print(CCX_DMT_PARSE, "Bytes read: %lld/%lld\n", dobjectread, DataObjectSize);
+		asf_data_container.datapacketcur++;
+		dbg_print(CCX_DMT_PARSE, "Bytes read: %lld/%lld\n", asf_data_container.dobjectread, asf_data_container.DataObjectSize);
     }
 
-    if ( datapacketcur == TotalDataPackets )
+	if (asf_data_container.datapacketcur == asf_data_container.TotalDataPackets)
     {
         dbg_print(CCX_DMT_PARSE, "\nWe read the last packet!\n\n");
 
         // Skip the rest of the file
-        dbg_print(CCX_DMT_PARSE, "Skip the rest: %d\n",(int) (FileSize - HeaderObjectSize - DataObjectSize));
-        buffered_skip((int) (FileSize - HeaderObjectSize - DataObjectSize));
+		dbg_print(CCX_DMT_PARSE, "Skip the rest: %d\n", (int)(asf_data_container.FileSize - asf_data_container.HeaderObjectSize - asf_data_container.DataObjectSize));
+		buffered_skip((int)(asf_data_container.FileSize - asf_data_container.HeaderObjectSize - asf_data_container.DataObjectSize));
         past+=result;
         // Don not set end_of_file (although it is true) as this would
         // produce an premature end error.
