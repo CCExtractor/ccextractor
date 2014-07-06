@@ -1,6 +1,4 @@
-extern "C" {
 #include "ccextractor.h"
-}
 #include "asf_constants.h"
 
 // Indicate first / subsequent calls to asf_getmoredata()
@@ -65,6 +63,7 @@ LLONG asf_getmoredata(void)
     int enough = 0;
     int payload_read = 0;
 
+	static unsigned char *parsebuf = NULL;
     // The fist call to this function (per file) is indicated with
     // firstcall == 1
     // Except for the first call of this function we will reenter
@@ -152,7 +151,7 @@ LLONG asf_getmoredata(void)
 
 
     // Generic buffer to hold some data
-	static unsigned char *parsebuf = (unsigned char*)malloc(1024);
+    parsebuf = (unsigned char*)malloc(1024);
     static long parsebufsize = 1024;
 
     unsigned char *curpos;
