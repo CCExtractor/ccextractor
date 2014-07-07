@@ -266,6 +266,7 @@ LLONG general_getmoredata(void)
     return bytesread;
 }
 
+#ifdef WTV_DEBUG
 // Hexadecimal dump process
 void processhex (char *filename)
 {
@@ -425,7 +426,7 @@ void processhex (char *filename)
 	}
 	fclose(fr);  
 }
-
+#endif
 // Raw file process
 void raw_loop ()
 {

@@ -37,7 +37,9 @@ void set_fts(void)
             case CCX_SM_MCPOODLESRAW:
             case CCX_SM_RCWT:
 			case CCX_SM_MP4:
+#ifdef WTV_DEBUG
 			case CCX_SM_HEX_DUMP:
+#endif
                 dif = 0;
                 break;
             default:

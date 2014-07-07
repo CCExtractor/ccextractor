@@ -614,9 +614,11 @@ int main(int argc, char *argv[])
 				case CCX_SM_MP4:
 					mprint ("\rFile seems to be a MP4\n");
 					break;
+#ifdef WTV_DEBUG
 				case CCX_SM_HEX_DUMP:
 					mprint ("\rFile seems to be an hexadecimal dump\n");					
 					break;
+#endif
 				case CCX_SM_MYTH:
 				case CCX_SM_AUTODETECT:
 					fatal(EXIT_BUG_BUG, "Cannot be reached!");
@@ -693,10 +695,12 @@ int main(int argc, char *argv[])
 				close_input_file(); // No need to have it open. GPAC will do it for us
 				processmp4 (inputfile[0]);										
 				break;
+#ifdef WTV_DEBUG
 			case CCX_SM_HEX_DUMP:
 				close_input_file(); // processhex will open it in text mode
-				processhex (inputfile[0]);										
+				processhex (inputfile[0]);
 				break;
+#endif
 			case CCX_SM_AUTODETECT:
 				fatal(EXIT_BUG_BUG, "Cannot be reached!");
 				break;
