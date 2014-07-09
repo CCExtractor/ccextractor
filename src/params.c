@@ -1560,6 +1560,20 @@ void parse_parameters (int argc, char *argv[])
 			i++;
 			continue;
 		}		
+
+		if (strcmp (argv[i],"-sendto")==0 && i<argc-1)
+		{
+			ccx_options.send_to_srv = 1;
+			ccx_options.srv_addr = argv[i + 1];
+			continue;
+		}
+		if (strcmp (argv[i],"-port")==0 && i<argc-1)
+		{
+			ccx_options.send_to_srv = 1;
+			ccx_options.srv_port = argv[i + 1];
+			continue;
+		}
+
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "Error: Parameter %s not understood.\n", argv[i]);
         // Unrecognized switches are silently ignored
     }	

@@ -5,6 +5,7 @@ License: GPL 2.0
 #include <stdio.h>
 #include "ccextractor.h"
 #include "configuration.h"
+#include "networking.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -176,6 +177,9 @@ void init_options (struct ccx_s_options *options)
 	/* Networking */
 	options->udpaddr = 0;
 	options->udpport=0; // Non-zero => Listen for UDP packets on this port, no files.
+	options->send_to_srv = 0;
+	options->srv_addr = NULL;
+	options->srv_port = NULL;
 	options->line_terminator_lf=0; // 0 = CRLF
 	options->noautotimeref=0; // Do NOT set time automatically?
 	options->input_source=CCX_DS_FILE; // Files, stdin or network
@@ -415,6 +419,11 @@ int main(int argc, char *argv[])
 		subline==NULL || init_file_buffer() || general_608_init())
 	{
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");		
+	}
+
+	if (ccx_options.send_to_srv)
+	{
+		connect_to_srv(ccx_options.srv_addr, ccx_options.srv_port);
 	}
 
 	if (ccx_options.write_format!=CCX_OF_NULL)
