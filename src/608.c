@@ -250,6 +250,187 @@ void handle_text_attr(const unsigned char c1, const unsigned char c2, struct s_c
 	}
 }
 
+void write_subtitle_file_footer(struct ccx_s_write *out)
+{
+	switch (ccx_options.write_format)
+	{
+		case CCX_OF_SAMI:
+			sprintf ((char *) str,"</BODY></SAMI>\n");
+			if (ccx_options.encoding!=CCX_ENC_UNICODE)
+			{
+				dbg_print(CCX_DMT_608, "\r%s\n", str);
+			}
+			enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
+			write(out->fh, enc_buffer, enc_buffer_used);
+			break;
+		case CCX_OF_SMPTETT:
+			sprintf ((char *) str,"</div></body></tt>\n");
+			if (ccx_options.encoding!=CCX_ENC_UNICODE)
+			{
+				dbg_print(CCX_DMT_608, "\r%s\n", str);
+			}
+			enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
+			write (out->fh, enc_buffer,enc_buffer_used);
+			break;
+		case CCX_OF_SPUPNG:
+			write_spumux_footer(out);
+			break;
+		default: // Nothing to do, no footer on this format
+			break;
+	}
+}
+
+
+void write_subtitle_file_header(struct ccx_s_write *out)
+{
+	switch (ccx_options.write_format)
+	{
+		case CCX_OF_SRT: // Subrip subtitles have no header
+			break;
+		case CCX_OF_SAMI: // This header brought to you by McPoodle's CCASDI
+			//fprintf_encoded (wb->fh, sami_header);
+			REQUEST_BUFFER_CAPACITY(strlen (sami_header)*3);
+			enc_buffer_used=encode_line (enc_buffer,(unsigned char *) sami_header);
+			write (out->fh, enc_buffer,enc_buffer_used);
+			break;
+		case CCX_OF_SMPTETT: // This header brought to you by McPoodle's CCASDI
+			//fprintf_encoded (wb->fh, sami_header);
+			REQUEST_BUFFER_CAPACITY(strlen (smptett_header)*3);
+			enc_buffer_used=encode_line (enc_buffer,(unsigned char *) smptett_header);
+			write(out->fh, enc_buffer, enc_buffer_used);
+			break;
+		case CCX_OF_RCWT: // Write header
+			write(out->fh, rcwt_header, sizeof(rcwt_header));
+			break;
+		case CCX_OF_SPUPNG:
+			write_spumux_header(out);
+			break;
+		case CCX_OF_TRANSCRIPT: // No header. Fall thru
+		default:
+			break;
+	}
+}
+
+void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc608 *context, int line_number)
+{
+	unsigned h1,m1,s1,ms1;
+	unsigned h2,m2,s2,ms2;
+	if (ccx_options.sentence_cap)
+	{
+		capitalize (line_number,data);
+		correct_case(line_number,data);
+	}
+	int length = get_decoder_line_basic (subline, line_number, data);
+	if (ccx_options.encoding!=CCX_ENC_UNICODE)
+	{
+		dbg_print(CCX_DMT_608, "\r");
+		dbg_print(CCX_DMT_608, "%s\n",subline);
+	}
+	if (length>0)
+	{
+		if (context->ts_start_of_current_line == -1)
+		{
+			// CFS: Means that the line has characters but we don't have a timestamp for the first one. Since the timestamp
+			// is set for example by the write_char function, it possible that we don't have one in empty lines (unclear)
+			// For now, let's not consider this a bug as before and just return.
+			// fatal (EXIT_BUG_BUG, "Bug in timedtranscript (ts_start_of_current_line==-1). Please report.");
+			return;
+		}
+
+		if (ccx_options.transcript_settings.showStartTime){
+			char buf1[80];
+			if (ccx_options.transcript_settings.relativeTimestamp){
+				millis_to_date(context->ts_start_of_current_line + subs_delay, buf1);
+				fdprintf(context->out->fh, "%s|", buf1);
+			}
+			else {
+				mstotime(context->ts_start_of_current_line + subs_delay, &h1, &m1, &s1, &ms1);
+				time_t start_time_int = (context->ts_start_of_current_line + subs_delay) / 1000;
+				int start_time_dec = (context->ts_start_of_current_line + subs_delay) % 1000;
+				struct tm *start_time_struct = gmtime(&start_time_int);
+				strftime(buf1, sizeof(buf1), "%Y%m%d%H%M%S", start_time_struct);
+				fdprintf(context->out->fh, "%s%c%03d|", buf1,ccx_options.millis_separator,start_time_dec);
+			}
+		}
+
+		if (ccx_options.transcript_settings.showEndTime){
+			char buf2[80];
+			if (ccx_options.transcript_settings.relativeTimestamp){
+				millis_to_date(get_fts() + subs_delay, buf2);
+				fdprintf(context->out->fh, "%s|", buf2);
+			}
+			else {
+				mstotime(get_fts() + subs_delay, &h2, &m2, &s2, &ms2);
+				time_t end_time_int = (get_fts() + subs_delay) / 1000;
+				int end_time_dec = (get_fts() + subs_delay) % 1000;
+				struct tm *end_time_struct = gmtime(&end_time_int);
+				strftime(buf2, sizeof(buf2), "%Y%m%d%H%M%S", end_time_struct);
+				fdprintf(context->out->fh, "%s%c%03d|", buf2,ccx_options.millis_separator,end_time_dec);
+			}
+		}
+
+		if (ccx_options.transcript_settings.showCC){
+			fdprintf(context->out->fh, "CC%d|", context->my_field == 1 ? context->channel : context->channel + 2); // Data from field 2 is CC3 or 4
+		}
+
+		if (ccx_options.transcript_settings.showMode){
+			const char *mode = "???";
+			switch (context->mode)
+			{
+			case MODE_POPON:
+				mode = "POP";
+				break;
+			case MODE_FAKE_ROLLUP_1:
+				mode = "RU1";
+				break;
+			case MODE_ROLLUP_2:
+				mode = "RU2";
+				break;
+			case MODE_ROLLUP_3:
+				mode = "RU3";
+				break;
+			case MODE_ROLLUP_4:
+				mode = "RU4";
+				break;
+			case MODE_TEXT:
+				mode = "TXT";
+				break;
+			case MODE_PAINTON:
+				mode = "PAI";
+				break;
+			}
+
+			fdprintf(context->out->fh, "%s|", mode);
+		}
+
+		write(context->out->fh, subline, length);
+		write(context->out->fh, encoded_crlf, encoded_crlf_length);
+	}
+	// fprintf (wb->fh,encoded_crlf);
+}
+
+int write_cc_buffer_as_transcript(struct eia608_screen *data, struct s_context_cc608 *context)
+{
+	int wrote_something = 0;
+	context->ts_start_of_current_line = context->current_visible_start_ms;
+	dbg_print(CCX_DMT_608, "\n- - - TRANSCRIPT caption - - -\n");
+
+	for (int i=0;i<15;i++)
+	{
+		if (data->row_used[i])
+		{
+			write_cc_line_as_transcript (data,context, i);
+		}
+		wrote_something=1;
+	}
+	dbg_print(CCX_DMT_608, "- - - - - - - - - - - -\r\n");
+	return wrote_something;
+}
+
+
+
+
+>>>>>>> init
 struct eia608_screen *get_current_visible_buffer(struct s_context_cc608 *context)
 {
 	struct eia608_screen *data;

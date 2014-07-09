@@ -24,6 +24,7 @@ extern int ccblocks_in_avc_lost; // CC blocks found by the AVC code lost due to 
 #include "bitstream.h"
 #include "constants.h"
 #include "cc_decoders_common.h"
+#include "networking.h"
 
 #define TS_PMT_MAP_SIZE 128
 
@@ -117,6 +118,9 @@ struct ccx_s_options // Options from user parameters
 	/* Networking */
 	in_addr_t udpaddr;
 	unsigned udpport; // Non-zero => Listen for UDP packets on this port, no files.
+	unsigned send_to_srv;
+	char *srv_addr;
+	char *srv_port;
 	int line_terminator_lf; // 0 = CRLF, 1=LF
 	int noautotimeref; // Do NOT set time automatically?
 	enum ccx_datasource input_source; // Files, stdin or network
