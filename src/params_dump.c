@@ -56,9 +56,11 @@ void params_dump(void)
 		case CCX_SM_MP4:
 			mprint ("MP4");
 			break;
+#ifdef WTV_DEBUG
 		case CCX_SM_HEX_DUMP:
 			mprint ("Hex");
 			break;
+#endif
         default:
             fatal (EXIT_BUG_BUG, "BUG: Unknown stream mode.\n");
             break;
@@ -283,9 +285,11 @@ void print_file_report(void)
 		case CCX_SM_RCWT:
 			printf("BIN\n");
 			break;
+#ifdef WTV_DEBUG
 		case CCX_SM_HEX_DUMP:
 			printf("Hex\n");
 			break;
+#endif
 		default:
 			break;
 	}
