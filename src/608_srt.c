@@ -71,7 +71,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct s_context_cc608 *c
 	unsigned h2,m2,s2,ms2;
 	LLONG ms_start, ms_end;
 	int wrote_something = 0;
-	ms_start = context->current_visible_start_ms;
+	ms_start = data->start_time;
 
 	int prev_line_start=-1, prev_line_end=-1; // Column in which the previous line started and ended, for autodash
 	int prev_line_center1=-1, prev_line_center2=-1; // Center column of previous line text
@@ -91,7 +91,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct s_context_cc608 *c
 	if (ms_start<0) // Drop screens that because of subs_delay start too early
 		return 0;
 
-	ms_end=get_visible_end()+subs_delay;
+	ms_end = data->end_time;
 
 	mstotime (ms_start,&h1,&m1,&s1,&ms1);
 	mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
