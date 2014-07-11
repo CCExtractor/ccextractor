@@ -514,7 +514,7 @@ int write_cc_buffer(struct s_context_cc608 *context)
 	{
                 sub->data = (struct eia608_screen *) realloc(sub->data,sub->size + sizeof(*data));
 
-                memcpy(sub->data + sub->size, data, sizeof(*data));
+				memcpy((struct eia608_screen *)sub->data + (sub->size/sizeof(*data)), data, sizeof(*data));
                 sub->size += sizeof(*data);
                 wrote_something = 1;
 		if(start_time < end_time)
@@ -523,7 +523,7 @@ int write_cc_buffer(struct s_context_cc608 *context)
 			int nb_data = sub->size/sizeof(*data);
 			for(i = 0; i < nb_data; i++)
 			{
-				data = sub->data + (i * sizeof(*data) );
+				data = (struct eia608_screen *)sub->data + i;
 				data->start_time = start_time + ( ( (end_time - start_time)/nb_data ) * i );
 				data->end_time = start_time + ( ( (end_time - start_time)/nb_data ) * (i + 1) );
 			}
@@ -573,7 +573,7 @@ int write_cc_buffer(struct s_context_cc608 *context)
 
 		if (ccx_options.gui_mode_reports)
 			write_cc_buffer_to_gui(data, context);
-		data = sub->data + sizeof(struct eia608_screen);
+		data = (struct eia608_screen*)sub->data + 1;
 	}
 	return wrote_something;
 }
