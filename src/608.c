@@ -487,9 +487,16 @@ int write_cc_buffer(struct s_context_cc608 *context)
 	{
 		sub =
 		context->sub = malloc(sizeof(struct cc_subtitle));
+		memset(context->sub, 0, sizeof(struct cc_subtitle));
 	}
 	else
 		sub = context->sub;
+	if (!sub)
+	{
+		mprint("No Memory Left");
+		return 0;
+	}
+
 	if (ccx_options.screens_to_process!=-1 &&
 		context->screenfuls_counter >= ccx_options.screens_to_process)
 	{
@@ -512,11 +519,16 @@ int write_cc_buffer(struct s_context_cc608 *context)
 
 	if (!data->empty)
 	{
-                sub->data = (struct eia608_screen *) realloc(sub->data,sub->size + sizeof(*data));
+		sub->data = (struct eia608_screen *) realloc(sub->data,sub->size + sizeof(*data));
+		if (!sub->data)
+		{
+			mprint("No Memory left");
+			return 0;
+		}
 
-				memcpy((struct eia608_screen *)sub->data + (sub->size/sizeof(*data)), data, sizeof(*data));
-                sub->size += sizeof(*data);
-                wrote_something = 1;
+		memcpy(((struct eia608_screen *)sub->data) + (sub->size/sizeof(*data)), data, sizeof(*data));
+		sub->size += sizeof(*data);
+		wrote_something = 1;
 		if(start_time < end_time)
 		{
 			int i = 0;
@@ -539,7 +551,7 @@ int write_cc_buffer(struct s_context_cc608 *context)
 	}
 	for(data = sub->data; sub->size ; sub->size -= sizeof(struct eia608_screen))
 	{
-		if(!data->start_time)
+		if(!data || !data->start_time)
 			break;
 		new_sentence=1;
 		switch (ccx_options.write_format)
@@ -574,7 +586,13 @@ int write_cc_buffer(struct s_context_cc608 *context)
 		if (ccx_options.gui_mode_reports)
 			write_cc_buffer_to_gui(data, context);
 		data = (struct eia608_screen*)sub->data + 1;
+		if (sub->data && !sub->size)
+		{
+			free(sub->data);
+			sub->data = NULL;
+		}
 	}
+
 	return wrote_something;
 }
 
