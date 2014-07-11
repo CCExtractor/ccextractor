@@ -4,6 +4,7 @@
 
 #include <gpac/isomedia.h>
 #include "../ccextractor.h"
+#include "../utility.h"
 
 void do_NAL (unsigned char *NALstart, LLONG NAL_length); // From avc_functions.c
 void set_fts(void); // From timing.c
@@ -30,8 +31,8 @@ static int process_avc_sample(u32 timescale, GF_AVCConfig* c, GF_ISOSample* s)
 	u32 i;
 	s32 signed_cts=(s32) s->CTS_Offset; // Convert from unsigned to signed. GPAC uses u32 but unsigned values are legal.
 	current_pts=(LLONG )(s->DTS + signed_cts)*MPEG_CLOCK_FREQ/timescale ; // Convert frequency to official one
-	
-    if (pts_set==0)
+
+	if (pts_set==0)
 		pts_set=1;
 	set_fts();
 
@@ -59,7 +60,7 @@ static int process_avc_sample(u32 timescale, GF_AVCConfig* c, GF_ISOSample* s)
 		temp_debug=0;
 
 		if (nal_length>0)
-			do_NAL ((unsigned char *) &(s->data[i]) ,nal_length); 
+			do_NAL ((unsigned char *) &(s->data[i]) ,nal_length);
 		i += nal_length;
 	} // outer for
 	assert(i == s->dataLength);
@@ -71,7 +72,8 @@ static int process_xdvb_track(const char* basename, GF_ISOFile* f, u32 track)
 	u32 timescale, i, sample_count;
 
 	int status;
-	if((sample_count = gf_isom_get_sample_count(f, track)) < 1){
+	if((sample_count = gf_isom_get_sample_count(f, track)) < 1)
+	{
 		return 0;
 	}
 
@@ -79,29 +81,30 @@ static int process_xdvb_track(const char* basename, GF_ISOFile* f, u32 track)
 
 	status = 0;
 
-	for(i = 0; i < sample_count; i++){
+	for(i = 0; i < sample_count; i++)
+	{
 		u32 sdi;
 		
 		GF_ISOSample* s = gf_isom_get_sample(f, track, i + 1, &sdi);
-		if (s!=NULL) {
-	
-		s32 signed_cts=(s32) s->CTS_Offset; // Convert from unsigned to signed. GPAC uses u32 but unsigned values are legal.
-		current_pts=(LLONG )(s->DTS + signed_cts)*MPEG_CLOCK_FREQ/timescale ; // Convert frequency to official one
-		if (pts_set==0)
-			pts_set=1;
-		set_fts();
+		if (s!=NULL)
+		{
+			s32 signed_cts=(s32) s->CTS_Offset; // Convert from unsigned to signed. GPAC uses u32 but unsigned values are legal.
+			current_pts=(LLONG )(s->DTS + signed_cts)*MPEG_CLOCK_FREQ/timescale ; // Convert frequency to official one
+			if (pts_set==0)
+				pts_set=1;
+			set_fts();
 
-			process_m2v ((unsigned char *) s->data,s->dataLength);			
+			process_m2v ((unsigned char *) s->data,s->dataLength);
 			gf_isom_sample_del(&s);
 		}
 
-        int progress = (int) ((i*100) / sample_count);
-        if (last_reported_progress != progress)
-        {
-            int cur_sec = (int) (get_fts() / 1000);
-            activity_progress(progress, cur_sec/60, cur_sec%60);                    
-            last_reported_progress = progress;
-        }
+		int progress = (int) ((i*100) / sample_count);
+		if (last_reported_progress != progress)
+		{
+			int cur_sec = (int) (get_fts() / 1000);
+			activity_progress(progress, cur_sec/60, cur_sec%60);
+			last_reported_progress = progress;
+		}
 	}
 	int cur_sec = (int) (get_fts() / 1000);
 	activity_progress(100, cur_sec/60, cur_sec%60);
@@ -115,7 +118,8 @@ static int process_avc_track(const char* basename, GF_ISOFile* f, u32 track)
 	int status;
 	GF_AVCConfig* c = NULL;
 	
-	if((sample_count = gf_isom_get_sample_count(f, track)) < 1){
+	if((sample_count = gf_isom_get_sample_count(f, track)) < 1)
+	{
 		return 0;
 	}
 
@@ -123,19 +127,24 @@ static int process_avc_track(const char* basename, GF_ISOFile* f, u32 track)
 
 	status = 0;
 
-	for(i = 0; i < sample_count; i++){
+	for(i = 0; i < sample_count; i++)
+	{
 		u32 sdi;
 		
 		GF_ISOSample* s = gf_isom_get_sample(f, track, i + 1, &sdi);
 
-		if(s != NULL){
-			if(sdi != last_sdi){
-				if(c != NULL){
+		if(s != NULL)
+		{
+			if(sdi != last_sdi)
+			{
+				if(c != NULL)
+				{
 					gf_odf_avc_cfg_del(c);
 					c = NULL;
 				}
 				
-				if((c = gf_isom_avc_config_get(f, track, sdi)) == NULL){
+				if((c = gf_isom_avc_config_get(f, track, sdi)) == NULL)
+				{
 					gf_isom_sample_del(&s);
 					status = -1;
 					break;
@@ -148,23 +157,25 @@ static int process_avc_track(const char* basename, GF_ISOFile* f, u32 track)
 
 			gf_isom_sample_del(&s);
 
-			if(status != 0){
+			if(status != 0)
+			{
 				break;
 			}
 		}
 
-        int progress = (int) ((i*100) / sample_count);
-        if (last_reported_progress != progress)
-        {
-            int cur_sec = (int) (get_fts() / 1000);
-            activity_progress(progress, cur_sec/60, cur_sec%60);                    
-            last_reported_progress = progress;
-        }
+		int progress = (int) ((i*100) / sample_count);
+		if (last_reported_progress != progress)
+		{
+			int cur_sec = (int) (get_fts() / 1000);
+			activity_progress(progress, cur_sec/60, cur_sec%60);
+			last_reported_progress = progress;
+		}
 	}
 	int cur_sec = (int) (get_fts() / 1000);
 	activity_progress(100, cur_sec/60, cur_sec%60);
 
-	if(c != NULL){
+	if(c != NULL)
+	{
 		gf_odf_avc_cfg_del(c);
 		c = NULL;
 	}
@@ -180,7 +191,7 @@ static int process_avc_track(const char* basename, GF_ISOFile* f, u32 track)
 				if track is AVC track
 					for each sample in track
 						for each NALU in sample
-							send to avc.cpp for processing
+							send to avc.c for processing
 			close(media)
 		}
 
@@ -189,10 +200,14 @@ int processmp4 (char *file)
 {	
 	GF_ISOFile* f;
 	u32 i, j, track_count, avc_track_count, cc_track_count;
-	
-	mprint("opening \'%s\': ", file);
 
-	if((f = gf_isom_open(file, GF_ISOM_OPEN_READ, NULL)) == NULL){
+	mprint("opening \'%s\': ", file);
+#ifdef MP4_DEBUG
+	gf_log_set_tool_level(GF_LOG_CONTAINER,GF_LOG_DEBUG);
+#endif
+
+	if((f = gf_isom_open(file, GF_ISOM_OPEN_READ, NULL)) == NULL)
+	{
 		mprint("failed to open\n");
 		return -2;
 	}
@@ -218,7 +233,8 @@ int processmp4 (char *file)
 			avc_track_count++;
 	}
 
-	for(i = 0; i < track_count; i++){
+	for(i = 0; i < track_count; i++)
+	{
 		const u32 type = gf_isom_get_media_type(f, i + 1);
 		const u32 subtype = gf_isom_get_media_subtype(f, i + 1, 1);
 	
@@ -226,10 +242,12 @@ int processmp4 (char *file)
 		{
 			if (cc_track_count && !ccx_options.mp4vidtrack)
 				continue;
-			if(process_xdvb_track(file, f, i + 1) != 0){
+			if(process_xdvb_track(file, f, i + 1) != 0)
+			{
 				mprint("error\n");
 				return -3;
-			}		}
+			}
+		}
 
 		if( type == GF_ISOM_MEDIA_VISUAL && subtype == GF_ISOM_SUBTYPE_AVC_H264)
 		{			
@@ -240,12 +258,13 @@ int processmp4 (char *file)
 			{
 				for (j=0; j<gf_list_count(cnf->sequenceParameterSets);j++)
 				{
-					GF_AVCConfigSlot* seqcnf=(GF_AVCConfigSlot* )gf_list_get(cnf->sequenceParameterSets,j);					
-					do_NAL ((unsigned char *) seqcnf->data,seqcnf->size);				
+					GF_AVCConfigSlot* seqcnf=(GF_AVCConfigSlot* )gf_list_get(cnf->sequenceParameterSets,j);
+					do_NAL ((unsigned char *) seqcnf->data,seqcnf->size);
 				}
 			}
 
-			if(process_avc_track(file, f, i + 1) != 0){
+			if(process_avc_track(file, f, i + 1) != 0)
+			{
 				mprint("error\n");
 				return -3;
 			}
@@ -257,16 +276,20 @@ int processmp4 (char *file)
 			if (avc_track_count && ccx_options.mp4vidtrack)
 				continue;
 
-			/* unsigned num_streams = gf_isom_get_sample_description_count (f,i+1); */
+#ifdef MP4_DEBUG
+			unsigned num_streams = gf_isom_get_sample_description_count (f,i+1);
+#endif
 			unsigned num_samples = gf_isom_get_sample_count (f,i+1);
 			
 			u32 ProcessingStreamDescriptionIndex = 0; // Current track we are processing, 0 = we don't know yet
 			u32 timescale = gf_isom_get_media_timescale(f,i+1);
-			// u64 duration = gf_isom_get_media_duration(f,i+1);
-			/* mprint ("%u streams\n",num_streams);
+#ifdef MP$DEBUG
+			u64 duration = gf_isom_get_media_duration(f,i+1);
+			mprint ("%u streams\n",num_streams);
 			mprint ("%u sample counts\n",num_samples);
 			mprint ("%u timescale\n",(unsigned) timescale);
-			mprint ("%u duration\n",(unsigned) duration); */
+			mprint ("%u duration\n",(unsigned) duration);
+#endif
 			for (unsigned k = 0; k <num_samples; k++)
 			{
 				u32 StreamDescriptionIndex;				
@@ -281,39 +304,38 @@ int processmp4 (char *file)
 						ProcessingStreamDescriptionIndex=StreamDescriptionIndex;
 				if (sample==NULL)
 					continue;
-				// mprint ("Data length: %lu\n",sample->dataLength);
-				/* const LLONG timestamp = (LLONG )((sample->DTS + sample->CTS_Offset) * 1000) / timescale; */
+#ifdef DEBUG
+				 mprint ("Data length: %lu\n",sample->dataLength);
+				const LLONG timestamp = (LLONG )((sample->DTS + sample->CTS_Offset) * 1000) / timescale;
+#endif
 				current_pts=(LLONG )(sample->DTS + sample->CTS_Offset)*MPEG_CLOCK_FREQ/timescale ; // Convert frequency to official one
 				if (pts_set==0)
 					pts_set=1;
 				set_fts();
 
-				// Change by Willem
-
-				// Apparently the first 4 bytes are the sample length, and then comes 'cdat', and then the data itself
-				/*if (sample->dataLength>8 && strncmp (sample->data+4, "cdat", 4)==0)
+				int atomStart = 0;
+				// process Atom by Atom
+				while (atomStart < sample->dataLength)
 				{
-					//dump (256,( unsigned char *) sample->data+8,sample->dataLength-8,0, 1);	
-					process608((const unsigned char *)sample->data + 8, sample->dataLength - 8, &context_cc608_field_1);
-				}*/
-				
-				// Based on https://developer.apple.com/library/prerelease/mac/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html#//apple_ref/doc/uid/TP40000939-CH205-SW87
-				// An atom consists of the Atom size, Atom Type and the data.
-				// First 4 bytes are length in bytes of this atom
-				// byte 5-8 are the atom type. Should be either cdat or cdt2
-				// byte 9-x are actual data.
-				// This means a sample can contain multiple atoms!
-				if (sample->dataLength > 8 && strncmp(sample->data + 4, "cdat", 4) == 0){ // The format of the closed captioning sample data is a sequence of one or more atoms, one of which must be a 'cdat' atom.
-					int atomStart = 0;
-					// process Atom by Atom
-					while (atomStart < sample->dataLength){
-						unsigned int atomLength = (unsigned char)sample->data[atomStart] << 24 | (unsigned char)sample->data[atomStart + 1] << 16 | (unsigned char)sample->data[atomStart + 2] << 8 | (unsigned char)sample->data[atomStart + 3];
-						if (atomLength > 8 && (strncmp(sample->data + atomStart + 4, "cdat", 4) == 0 || strncmp(sample->data + atomStart + 4, "cdt2", 4) == 0)){
-							dump(256, (unsigned char *)sample->data +atomStart+ 8, atomLength - 8, 0, 1);
-							process608((const unsigned char *)sample->data + atomStart + 8, atomLength - 8, &context_cc608_field_1);
-						}
-						atomStart += atomLength;
+					char *data = sample->data + atomStart;
+					unsigned int atomLength = RB32(data);
+					if(atomLength < 8 || atomLength > sample->dataLength)
+					{
+						mprint ("Invalid atom.\n");
+						break;
 					}
+
+					data += 4;
+					if (!strncmp(data, "cdat", 4) || !strncmp(data, "cdt2", 4))
+					{
+						data += 4;
+#ifdef MP4_DEBUG
+						dump(256, (unsigned char *)data, atomLength - 8, 0, 1);
+#endif
+						process608((unsigned char*)data, atomLength - 8, &context_cc608_field_1);
+					}
+					atomStart += atomLength;
+
 				}
 
 				// End of change
@@ -321,7 +343,7 @@ int processmp4 (char *file)
 				if (last_reported_progress != progress)
 				{
 					int cur_sec = (int) (get_fts() / 1000);
-					activity_progress(progress, cur_sec/60, cur_sec%60);                    
+					activity_progress(progress, cur_sec/60, cur_sec%60);
 					last_reported_progress = progress;
 				}
 			}
@@ -336,9 +358,12 @@ int processmp4 (char *file)
 	f = NULL;
 	mprint ("ok\n");
 
-	if(avc_track_count == 0){
+	if(avc_track_count == 0)
+	{
 		mprint("Found no AVC track(s). ", file);
-	}else{
+	}
+	else
+	{
 		mprint("Found %d AVC track(s). ", avc_track_count);
 	}
 	if (cc_track_count)
