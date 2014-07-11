@@ -196,7 +196,7 @@ int
 spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
                       struct s_context_cc608 *context)
 {
-	LLONG ms_start = context->current_visible_start_ms + subs_delay;
+	LLONG ms_start = data->start_time + subs_delay;
     if (ms_start < 0)
     {
         dbg_print(CCX_DMT_VERBOSE, "Negative start\n");
@@ -220,7 +220,7 @@ spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
         return 0;
     }
 
-    LLONG ms_end = get_visible_end() + subs_delay;
+    LLONG ms_end = data->end_time;
 
     sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex++);
     if ((sp->fppng = fopen(sp->pngfile, "wb")) == NULL)

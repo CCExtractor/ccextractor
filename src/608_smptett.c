@@ -102,13 +102,13 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct s_context_cc60
     unsigned h2,m2,s2,ms2;
 	LLONG endms;
     int wrote_something=0;
-    LLONG startms = context->current_visible_start_ms;
+    LLONG startms = data->start_time;
 
     startms+=subs_delay;
     if (startms<0) // Drop screens that because of subs_delay start too early
         return 0; 
 
-    endms  = get_visible_end()+subs_delay;
+    endms  = data->end_time;
     endms--; // To prevent overlapping with next line.
     mstotime (startms,&h1,&m1,&s1,&ms1);
     mstotime (endms-1,&h2,&m2,&s2,&ms2);

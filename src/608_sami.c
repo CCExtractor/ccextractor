@@ -75,13 +75,13 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct s_context_cc608 *
 {
 	LLONG startms, endms;
     int wrote_something=0;
-    startms = context->current_visible_start_ms;
+    startms = data->start_time;
 
     startms+=subs_delay;
     if (startms<0) // Drop screens that because of subs_delay start too early
         return 0; 
 
-    endms   = get_visible_end()+subs_delay;
+    endms   = data->end_time;
     endms--; // To prevent overlapping with next line.
     sprintf ((char *) str,
     		"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",
