@@ -23,6 +23,7 @@ extern int ccblocks_in_avc_lost; // CC blocks found by the AVC code lost due to 
 #include "708.h"
 #include "bitstream.h"
 #include "constants.h"
+#include "cc_decoders_common.h"
 
 #define TS_PMT_MAP_SIZE 128
 
@@ -245,8 +246,8 @@ int init_file_buffer( void );
 LLONG ps_getmoredata( void );
 LLONG general_getmoredata( void );
 void raw_loop (void);
-LLONG process_raw (void);
-void general_loop(void);
+LLONG process_raw (struct cc_subtitle *sub);
+void general_loop(void *enc_ctx);
 void processhex (char *filename);
 void rcwt_loop( void );
 
@@ -283,21 +284,21 @@ LLONG asf_getmoredata( void );
 LLONG wtv_getmoredata( void );
 
 // avc_functions.c
-LLONG process_avc (unsigned char *avcbuf, LLONG avcbuflen);
+LLONG process_avc (unsigned char *avcbuf, LLONG avcbuflen, struct cc_subtitle *sub);
 void init_avc(void);
 
 // es_functions.c
-LLONG process_m2v (unsigned char *data, LLONG length);
+LLONG process_m2v (unsigned char *data, LLONG length, struct cc_subtitle *sub);
 
 extern unsigned top_field_first;
 
 // es_userdata.c
-int user_data(struct bitstream *ustream, int udtype);
+int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub);
 
 // bitstream.c - see bitstream.h
 
 // 608.c
-int write_cc_buffer(struct s_context_cc608 *context);
+int write_cc_buffer(struct s_context_cc608 *context, struct cc_subtitle *sub);
 unsigned char *debug_608toASC (unsigned char *ccdata, int channel);
 
 
@@ -326,13 +327,12 @@ void calculate_ms_gop_time (struct gop_time_code *g);
 
 // sequencing.c
 void init_hdcc (void);
-void store_hdcc(unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts);
+void store_hdcc(unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts, struct cc_subtitle *sub);
 void anchor_hdcc(int seq);
-void process_hdcc (void);
-int do_cb (unsigned char *cc_block);
-
+void process_hdcc (struct cc_subtitle *sub);
+int do_cb (unsigned char *cc_block, struct cc_subtitle *sub);
 // mp4.c
-int processmp4 (char *file);
+int processmp4 (char *file,void *enc_ctx);
 
 // params_dump.c
 void params_dump(void);
@@ -341,9 +341,9 @@ void print_file_report(void);
 // output.c
 void init_write (struct ccx_s_write *wb);
 void writeraw (const unsigned char *data, int length, struct ccx_s_write *wb);
-void writedata(const unsigned char *data, int length, struct s_context_cc608 *context);
+void writedata(const unsigned char *data, int length, struct s_context_cc608 *context, struct cc_subtitle *sub);
 void flushbuffer (struct ccx_s_write *wb, int closefile);
-void printdata (const unsigned char *data1, int length1,const unsigned char *data2, int length2);
+void printdata (const unsigned char *data1, int length1,const unsigned char *data2, int length2, struct cc_subtitle *sub);
 void writercwtdata (const unsigned char *data);
 
 // stream_functions.c
@@ -398,8 +398,6 @@ int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, un
 void init_context_cc608(struct s_context_cc608 *data, int field);
 unsigned encode_line (unsigned char *buffer, unsigned char *text);
 void buffered_seek (int offset);
-void write_subtitle_file_header(struct ccx_s_write *out);
-void write_subtitle_file_footer(struct ccx_s_write *out);
 extern void build_parity_table(void);
 
 void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) ;

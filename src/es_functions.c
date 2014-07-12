@@ -1,5 +1,4 @@
 #include "ccextractor.h"
-
 // Functions to parse a mpeg-2 data stream, see ISO/IEC 13818-2 6.2
 
 static int no_bitstream_error = 0;
@@ -20,24 +19,24 @@ static unsigned pulldownfields = 0;
 
 static uint8_t search_start_code(struct bitstream *esstream);
 static uint8_t next_start_code(struct bitstream *esstream);
-static int es_video_sequence(struct bitstream *esstream);
+static int es_video_sequence(struct bitstream *esstream, struct cc_subtitle *sub);
 static int read_seq_info(struct bitstream *esstream);
 static int sequence_header(struct bitstream *esstream);
 static int sequence_ext(struct bitstream *esstream);
-static int read_gop_info(struct bitstream *esstream);
-static int gop_header(struct bitstream *esstream);
-static int read_pic_info(struct bitstream *esstream);
+static int read_gop_info(struct bitstream *esstream, struct cc_subtitle *sub);
+static int gop_header(struct bitstream *esstream, struct cc_subtitle *sub);
+static int read_pic_info(struct bitstream *esstream, struct cc_subtitle *sub);
 static int pic_header(struct bitstream *esstream);
 static int pic_coding_ext(struct bitstream *esstream);
-static int read_eau_info(struct bitstream *esstream, int udtype);
-static int extension_and_user_data(struct bitstream *esstream, int udtype);
+static int read_eau_info(struct bitstream *esstream, int udtype , struct cc_subtitle *sub);
+static int extension_and_user_data(struct bitstream *esstream, int udtype, struct cc_subtitle *sub);
 static int read_pic_data(struct bitstream *esstream);
 
 
 /* Process a mpeg-2 data stream with "lenght" bytes in buffer "data".
  * The number of processed bytes is returned.
  * Defined in ISO/IEC 13818-2 6.2 */
-LLONG process_m2v (unsigned char *data, LLONG length)
+LLONG process_m2v (unsigned char *data, LLONG length,struct cc_subtitle *sub)
 {
     if (length<8) // Need to look ahead 8 bytes
         return length;
@@ -48,7 +47,7 @@ LLONG process_m2v (unsigned char *data, LLONG length)
 
     // Process data. The return value is ignored as esstream.pos holds
     // the information how far the parsing progressed.
-    es_video_sequence(&esstream);
+    es_video_sequence(&esstream, sub);
 
     // This returns how many bytes were processed and can therefore
     // be discarded from "buffer". "esstream.pos" points to the next byte
@@ -185,7 +184,7 @@ static uint8_t next_start_code(struct bitstream *esstream)
 // Otherwise.  estream->pos shall point to the position where
 // the next call will continue, i.e. the possible begin of an
 // unfinished video sequence or after the finished sequence.
-static int es_video_sequence(struct bitstream *esstream)
+static int es_video_sequence(struct bitstream *esstream, struct cc_subtitle *sub)
 {
     // Avoid "Skip forward" message on first call and later only
     // once per search.
@@ -272,7 +271,7 @@ static int es_video_sequence(struct bitstream *esstream)
 
         if (!in_pic_data && startcode == 0xB8)
         {
-            if (!read_gop_info(esstream))
+            if (!read_gop_info(esstream,sub))
             {
                 if (esstream->error)
                     no_bitstream_error = 0;
@@ -284,7 +283,7 @@ static int es_video_sequence(struct bitstream *esstream)
 
         if (!in_pic_data && startcode == 0x00)
         {
-            if (!read_pic_info(esstream))
+            if (!read_pic_info(esstream, sub))
             {
                 if (esstream->error)
                     no_bitstream_error = 0;
@@ -300,7 +299,7 @@ static int es_video_sequence(struct bitstream *esstream)
         // This check needs to be before the "in_pic_data" part.
         if ( saw_seqgoppic && (startcode == 0xB2 || startcode == 0xB5))
         {
-            if (!read_eau_info(esstream, saw_seqgoppic-1))
+            if (!read_eau_info(esstream, saw_seqgoppic-1, sub))
             {
                 if (esstream->error)
                     no_bitstream_error = 0;
@@ -527,7 +526,7 @@ static int sequence_ext(struct bitstream *esstream)
 // If a bitstream syntax problem occured the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
-static int read_gop_info(struct bitstream *esstream)
+static int read_gop_info(struct bitstream *esstream, struct cc_subtitle *sub)
 {
     dbg_print(CCX_DMT_VERBOSE, "Read GOP Info\n");
 
@@ -540,7 +539,7 @@ static int read_gop_info(struct bitstream *esstream)
     // after getting more.
     unsigned char *gop_info_start = esstream->pos;
 
-    gop_header(esstream);
+    gop_header(esstream, sub);
     //extension_and_user_data(esstream);
 
     if (esstream->error)
@@ -561,7 +560,7 @@ static int read_gop_info(struct bitstream *esstream)
 // Return TRUE if the data parsing finished, FALSE otherwise.
 // estream->pos is advanced. Data is only processed if esstream->error
 // is FALSE, parsing can set esstream->error to TRUE.
-static int gop_header(struct bitstream *esstream)
+static int gop_header(struct bitstream *esstream, struct cc_subtitle *sub)
 {
     dbg_print(CCX_DMT_VERBOSE, "GOP header\n");
 
@@ -594,7 +593,7 @@ static int gop_header(struct bitstream *esstream)
         // Flush buffered cc blocks before doing the housekeeping
         if (has_ccdata_buffered)
         {
-            process_hdcc();
+            process_hdcc(sub);
         }
 
         // Last GOPs pulldown frames
@@ -698,7 +697,7 @@ static int gop_header(struct bitstream *esstream)
 // If a bitstream syntax problem occured the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
-static int read_pic_info(struct bitstream *esstream)
+static int read_pic_info(struct bitstream *esstream, struct cc_subtitle *sub)
 {
     dbg_print(CCX_DMT_VERBOSE, "Read PIC Info\n");
 
@@ -737,7 +736,7 @@ static int read_pic_info(struct bitstream *esstream)
 			// uses fts_now to re-create the timeline !!!!!
 			if (has_ccdata_buffered)
 			{
-	            process_hdcc();
+				process_hdcc(sub);
 			}
 			anchor_hdcc(temporal_reference);
 //		}
@@ -945,7 +944,7 @@ static int pic_coding_ext(struct bitstream *esstream)
 // If a bitstream syntax problem occured the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
-static int read_eau_info(struct bitstream *esstream, int udtype)
+static int read_eau_info(struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
 {
     dbg_print(CCX_DMT_VERBOSE, "Read Extension and User Info\n");
 
@@ -959,7 +958,7 @@ static int read_eau_info(struct bitstream *esstream, int udtype)
     // user data is not evaluated twice. Should the function run out of
     // data it will make sure that esstream points to where we want to
     // continue after getting more.
-    if( !extension_and_user_data(esstream, udtype) )
+    if( !extension_and_user_data(esstream, udtype, sub) )
     {
         if (esstream->error)
             dbg_print(CCX_DMT_VERBOSE, "\nWarning: Retry while reading Extension and User Data!\n");
@@ -978,7 +977,7 @@ static int read_eau_info(struct bitstream *esstream, int udtype)
 // Return TRUE if the data parsing finished, FALSE otherwise.
 // estream->pos is advanced. Data is only processed if esstream->error
 // is FALSE, parsing can set esstream->error to TRUE.
-static int extension_and_user_data(struct bitstream *esstream, int udtype)
+static int extension_and_user_data(struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
 {
     dbg_print(CCX_DMT_VERBOSE, "Extension and user data(%d)\n", udtype);
 
@@ -1030,7 +1029,7 @@ static int extension_and_user_data(struct bitstream *esstream, int udtype)
             {
                 struct bitstream ustream;
                 init_bitstream(&ustream, dstart, esstream->pos);
-                user_data(&ustream, udtype);
+                user_data(&ustream, udtype, sub);
             }
             else
             {
