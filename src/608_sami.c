@@ -1,7 +1,9 @@
 #include "ccextractor.h"
+#include "cc_encoders_common.h"
 
-void write_stringz_as_sami(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end)
+void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
+	int used;
     sprintf ((char *) str,
     		"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",
     		(unsigned long long)ms_start);
@@ -9,8 +11,9 @@ void write_stringz_as_sami(char *string, struct s_context_cc608 *context, LLONG 
     {
         dbg_print(CCX_DMT_608, "\r%s\n", str);
     }
-    enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-    write (context->out->fh, enc_buffer,enc_buffer_used);		
+
+	used = encode_line(context->buffer,(unsigned char *) str);
+	write (context->out->fh, context->buffer, used);
     int len=strlen (string);
     unsigned char *unescaped= (unsigned char *) malloc (len+1); 
     unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
@@ -56,8 +59,8 @@ void write_stringz_as_sami(char *string, struct s_context_cc608 *context, LLONG 
     {
         dbg_print(CCX_DMT_608, "\r%s\n", str);
     }
-    enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-	write(context->out->fh, enc_buffer, enc_buffer_used);
+	used=encode_line (context->buffer,(unsigned char *) str);
+	write(context->out->fh, context->buffer, used);
     sprintf ((char *) str,
     		"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n",
     		(unsigned long long)ms_end);
@@ -65,14 +68,14 @@ void write_stringz_as_sami(char *string, struct s_context_cc608 *context, LLONG 
     {
         dbg_print(CCX_DMT_608, "\r%s\n", str);
     }
-    enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-	write(context->out->fh, enc_buffer, enc_buffer_used);
+	write(context->out->fh, context->buffer, used);
 }
 
 
 
-int write_cc_buffer_as_sami(struct eia608_screen *data, struct s_context_cc608 *context)
+int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *context)
 {
+	int used;
 	LLONG startms, endms;
     int wrote_something=0;
     startms = data->start_time;
@@ -90,8 +93,8 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct s_context_cc608 *
     {
         dbg_print(CCX_DMT_608, "\r%s\n", str);
     }
-    enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-    write (context->out->fh, enc_buffer,enc_buffer_used);
+	used = encode_line(context->buffer,(unsigned char *) str);
+	write (context->out->fh, context->buffer, used);
     for (int i=0;i<15;i++)
     {
         if (data->row_used[i])
@@ -114,8 +117,8 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct s_context_cc608 *
     {
         dbg_print(CCX_DMT_608, "\r%s\n", str);
     }
-    enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-	write(context->out->fh, enc_buffer, enc_buffer_used);
+	used = encode_line(context->buffer,(unsigned char *) str);
+	write (context->out->fh, context->buffer, used);
     sprintf ((char *) str,
     		"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n",
     		(unsigned long long)endms);
@@ -123,7 +126,7 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct s_context_cc608 *
     {
         dbg_print(CCX_DMT_608, "\r%s\n", str);
     }
-    enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-	write(context->out->fh, enc_buffer, enc_buffer_used);
+	used = encode_line(context->buffer,(unsigned char *) str);
+	write (context->out->fh, context->buffer, used);
     return wrote_something;
 }

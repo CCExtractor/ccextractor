@@ -1,9 +1,11 @@
 #include "ccextractor.h"
+#include "cc_encoders_common.h"
 
 /* The timing here is not PTS based, but output based, i.e. user delay must be accounted for
    if there is any */
-void write_stringz_as_srt (char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end)
+void write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
+	int used;
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
 
@@ -12,15 +14,15 @@ void write_stringz_as_srt (char *string, struct s_context_cc608 *context, LLONG 
 	char timeline[128];
 	context->srt_counter++;
 	sprintf(timeline, "%u\r\n", context->srt_counter);
-	enc_buffer_used=encode_line (enc_buffer,(unsigned char *) timeline);
-	write(context->out->fh, enc_buffer, enc_buffer_used);
+	used = encode_line(context->buffer,(unsigned char *) timeline);
+	write(context->out->fh, context->buffer, used);
 	sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u\r\n",
 			h1,m1,s1,ms1, h2,m2,s2,ms2);
-	enc_buffer_used=encode_line (enc_buffer,(unsigned char *) timeline);
+	used = encode_line(context->buffer,(unsigned char *) timeline);
 	dbg_print(CCX_DMT_608, "\n- - - SRT caption - - -\n");
 	dbg_print(CCX_DMT_608, "%s",timeline);
 
-	write(context->out->fh, enc_buffer, enc_buffer_used);
+	write(context->out->fh, context->buffer, used);
 	int len=strlen (string);
 	unsigned char *unescaped= (unsigned char *) malloc (len+1);
 	unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
@@ -65,8 +67,9 @@ void write_stringz_as_srt (char *string, struct s_context_cc608 *context, LLONG 
 	free(el);
 }
 
-int write_cc_buffer_as_srt(struct eia608_screen *data, struct s_context_cc608 *context)
+int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *context)
 {
+	int used;
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
 	LLONG ms_start, ms_end;
@@ -98,16 +101,16 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct s_context_cc608 *c
 	char timeline[128];
 	context->srt_counter++;
 	sprintf(timeline, "%u\r\n", context->srt_counter);
-	enc_buffer_used=encode_line (enc_buffer,(unsigned char *) timeline);
-	write(context->out->fh, enc_buffer, enc_buffer_used);
+	used = encode_line(context->buffer,(unsigned char *) timeline);
+	write(context->out->fh, context->buffer, used);
 	sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u\r\n",
 			h1,m1,s1,ms1, h2,m2,s2,ms2);
-	enc_buffer_used=encode_line (enc_buffer,(unsigned char *) timeline);
+	used = encode_line(context->buffer,(unsigned char *) timeline);
 
 	dbg_print(CCX_DMT_608, "\n- - - SRT caption ( %d) - - -\n", context->srt_counter);
 	dbg_print(CCX_DMT_608, "%s",timeline);
 
-	write (context->out->fh, enc_buffer,enc_buffer_used);
+	write (context->out->fh, context->buffer, used);
 	for (int i=0;i<15;i++)
 	{
 		if (data->row_used[i])

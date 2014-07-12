@@ -5,6 +5,7 @@ License: GPL 2.0
 #include <stdio.h>
 #include "ccextractor.h"
 #include "configuration.h"
+#include "cc_encoders_common.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -244,6 +245,7 @@ LLONG process_raw_with_field (void);
 int main(int argc, char *argv[])
 {
 	char *c;
+	struct encoder_ctx enc_ctx[2];
 
 	// Initialize some constants
 	init_ts();
@@ -412,7 +414,7 @@ int main(int argc, char *argv[])
 	}
 	if (buffer == NULL || pesheaderbuf==NULL ||
 		wbout1.filename == NULL || wbout2.filename == NULL ||
-		subline==NULL || init_file_buffer() || general_608_init())
+		subline==NULL || init_file_buffer() )
 	{
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");		
 	}
@@ -488,7 +490,8 @@ int main(int argc, char *argv[])
 							writeraw (UTF8_BOM, sizeof (UTF8_BOM), &wbout1);
 						if (ccx_options.encoding==CCX_ENC_UNICODE) // Write BOM				
 							writeraw (LITTLE_ENDIAN_BOM, sizeof (LITTLE_ENDIAN_BOM), &wbout1);
-						write_subtitle_file_header(context_cc608_field_1.out);
+						if( init_encoder(enc_ctx,&wbout1) )
+							fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 				}
 			}
 			if (ccx_options.extract == 12) 
@@ -531,7 +534,8 @@ int main(int argc, char *argv[])
 							writeraw (UTF8_BOM, sizeof (UTF8_BOM), &wbout2);
 						if (ccx_options.encoding==CCX_ENC_UNICODE) // Write BOM				
 							writeraw (LITTLE_ENDIAN_BOM, sizeof (LITTLE_ENDIAN_BOM), &wbout2);
-						write_subtitle_file_header(context_cc608_field_2.out);
+						if( init_encoder(enc_ctx+1,&wbout2) )
+							fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 				}
 			}
 		}
@@ -848,9 +852,7 @@ int main(int argc, char *argv[])
 			// Write last header and data
 			writercwtdata (NULL);
 		}
-		if (ccx_options.end_credits_text!=NULL)
-			try_to_add_end_credits(&context_cc608_field_1);
-		write_subtitle_file_footer(context_cc608_field_1.out);
+		dinit_encoder(enc_ctx);
 	}
 	if (wbout2.fh!=-1)
 	{
@@ -863,9 +865,7 @@ int main(int argc, char *argv[])
 		{
 			handle_end_of_data(&context_cc608_field_2);
 		}
-		if (ccx_options.end_credits_text!=NULL)
-			try_to_add_end_credits(&context_cc608_field_2);
-		write_subtitle_file_footer(context_cc608_field_2.out);
+		dinit_encoder(enc_ctx+1);
 	}
 	telxcc_close();
 	flushbuffer (&wbout1,true);

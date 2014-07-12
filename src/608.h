@@ -21,6 +21,7 @@ struct eia608_screen // A CC buffer
 	int empty; // Buffer completely empty?
 	LLONG start_time;
 	LLONG end_time;
+	enum cc_modes mode;
 };
 
 struct s_context_cc608
@@ -29,7 +30,6 @@ struct s_context_cc608
 	struct eia608_screen buffer2;
 	int cursor_row, cursor_column;
 	int visible_buffer;
-	int srt_counter; // Number of subs currently written
 	int screenfuls_counter; // Number of meaningful screenfuls written
 	LLONG current_visible_start_ms; // At what time did the current visible buffer became so?
 	// unsigned current_visible_start_cc; // At what time did the current visible buffer became so?
@@ -57,15 +57,9 @@ extern unsigned enc_buffer_capacity;
 extern int new_sentence;
 extern const char *color_text[][2];
 
-int write_cc_buffer_as_srt(struct eia608_screen *data, struct s_context_cc608 *context);
-void write_stringz_as_srt(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
 unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct eia608_screen *data);
 void capitalize (int line_num, struct eia608_screen *data);
 void correct_case (int line_num, struct eia608_screen *data);
-int write_cc_buffer_as_sami(struct eia608_screen *data, struct s_context_cc608 *context);
-void write_stringz_as_sami(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
-int write_cc_buffer_as_smptett(struct eia608_screen *data, struct s_context_cc608 *context);
-void write_stringz_as_smptett(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end);
 void correct_case (int line_num, struct eia608_screen *data);
 void capitalize (int line_num, struct eia608_screen *data);
 void find_limit_characters (unsigned char *line, int *first_non_blank, int *last_non_blank);
@@ -73,8 +67,6 @@ unsigned get_decoder_line_basic (unsigned char *buffer, int line_num, struct eia
 unsigned get_decoder_line_encoded_for_gui (unsigned char *buffer, int line_num, struct eia608_screen *data);
 unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct eia608_screen *data);
 void delete_all_lines_but_current (struct eia608_screen *data, int row);
-void try_to_add_start_credits(struct s_context_cc608 *context);
-void try_to_add_end_credits(struct s_context_cc608 *context);
 void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *context);
 
 void get_char_in_latin_1 (unsigned char *buffer, unsigned char c);
@@ -87,11 +79,10 @@ LLONG get_visible_end (void);
 
 #define CC608_SCREEN_WIDTH  32
 
-#define REQUEST_BUFFER_CAPACITY(length) if (length>enc_buffer_capacity) \
-{enc_buffer_capacity=length*2; enc_buffer=(unsigned char*) realloc (enc_buffer, enc_buffer_capacity); \
-    if (enc_buffer==NULL) { fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, bailing out\n"); } \
+#define REQUEST_BUFFER_CAPACITY(ctx,length) if (length>ctx->capacity) \
+{ctx->capacity=length*2; ctx->buffer=(unsigned char*) realloc (ctx->buffer, ctx->capacity); \
+    if (ctx->buffer==NULL) { fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, bailing out\n"); } \
 }
-
 
 enum color_code
 {

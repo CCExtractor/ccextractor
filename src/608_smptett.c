@@ -1,4 +1,5 @@
 #include "ccextractor.h"
+#include "cc_encoders_common.h"
 
 // Produces minimally-compliant SMPTE Timed Text (W3C TTML)
 // format-compatible output 
@@ -22,8 +23,9 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-void write_stringz_as_smptett(char *string, struct s_context_cc608 *context, LLONG ms_start, LLONG ms_end)
+void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
+	int used;
     unsigned h1,m1,s1,ms1;
     unsigned h2,m2,s2,ms2;
 
@@ -35,8 +37,8 @@ void write_stringz_as_smptett(char *string, struct s_context_cc608 *context, LLO
     {
         dbg_print(CCX_DMT_608, "\r%s\n", str);
     }
-    enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-    write (context->out->fh, enc_buffer,enc_buffer_used);		
+	used = encode_line(context->buffer,(unsigned char *) str);
+	write (context->out->fh, context->buffer, used);
     int len=strlen (string);
     unsigned char *unescaped= (unsigned char *) malloc (len+1); 
     unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
@@ -82,22 +84,23 @@ void write_stringz_as_smptett(char *string, struct s_context_cc608 *context, LLO
     {
         dbg_print(CCX_DMT_608, "\r%s\n", str);
     }
-    enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-	write(context->out->fh, enc_buffer, enc_buffer_used);
+	used = encode_line(context->buffer,(unsigned char *) str);
+	write(context->out->fh, context->buffer, used);
     sprintf ((char *) str,"<p begin=\"%02u:%02u:%02u,%03u\">\n\n",h2,m2,s2,ms2);
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_608, "\r%s\n", str);
     }
-    enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-    write (context->out->fh, enc_buffer,enc_buffer_used);
+	used = encode_line(context->buffer,(unsigned char *) str);
+	write (context->out->fh, context->buffer, used);
     sprintf ((char *) str,"</p>\n");
 }
 
 
 
-int write_cc_buffer_as_smptett(struct eia608_screen *data, struct s_context_cc608 *context)
+int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *context)
 {
+	int used;
     unsigned h1,m1,s1,ms1;
     unsigned h2,m2,s2,ms2;
 	LLONG endms;
@@ -119,8 +122,8 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct s_context_cc60
     {
         dbg_print(CCX_DMT_608, "\r%s\n", str);
     }
-    enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-	write(context->out->fh, enc_buffer, enc_buffer_used);
+	used = encode_line(context->buffer,(unsigned char *) str);
+	write (context->out->fh, context->buffer, used);
     for (int i=0;i<15;i++)
     {
         if (data->row_used[i])
@@ -142,14 +145,14 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct s_context_cc60
     {
         dbg_print(CCX_DMT_608, "\r%s\n", str);
     }
-    enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-	write(context->out->fh, enc_buffer, enc_buffer_used);
+	used = encode_line(context->buffer,(unsigned char *) str);
+	write (context->out->fh, context->buffer, used);
 
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_608, "\r%s\n", str);
     }
-    enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
+	used = encode_line(context->buffer,(unsigned char *) str);
     //write (wb->fh, enc_buffer,enc_buffer_used);
 
     return wrote_something;

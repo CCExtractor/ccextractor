@@ -7,12 +7,7 @@ static const int rowdata[] = {11,-1,1,2,3,4,12,13,14,15,5,6,7,8,9,10};
 // Relationship between the first PAC byte and the row number
 int in_xds_mode=0;
 
-#define INITIAL_ENC_BUFFER_CAPACITY	2048
-
-unsigned char *enc_buffer=NULL; // Generic general purpose buffer
 unsigned char str[2048]; // Another generic general purpose buffer
-unsigned enc_buffer_used;
-unsigned enc_buffer_capacity;
 
 LLONG minimum_fts=0; // No screen should start before this FTS
 const unsigned char pac2_attribs[][3] = // Color, font, ident
@@ -50,16 +45,6 @@ const unsigned char pac2_attribs[][3] = // Color, font, ident
 	{ COL_WHITE, FONT_REGULAR, 28 }, // 0x5e || 0x7e
 	{ COL_WHITE, FONT_UNDERLINED, 28 }  // 0x5f || 0x7f
 };
-
-int general_608_init (void)
-{
-	enc_buffer=(unsigned char *) malloc (INITIAL_ENC_BUFFER_CAPACITY);
-	if (enc_buffer==NULL)
-		return -1;
-	enc_buffer_capacity=INITIAL_ENC_BUFFER_CAPACITY;
-	return 0;
-}
-
 // Preencoded strings
 unsigned char encoded_crlf[16];
 unsigned int encoded_crlf_length;
@@ -72,24 +57,6 @@ int new_sentence=1; // Capitalize next letter?
 // Default color
 unsigned char usercolor_rgb[8]="";
 
-
-static const char *sami_header= // TODO: Revise the <!-- comments
-"<SAMI>\n\
-<HEAD>\n\
-<STYLE TYPE=\"text/css\">\n\
-<!--\n\
-P {margin-left: 16pt; margin-right: 16pt; margin-bottom: 16pt; margin-top: 16pt;\n\
-text-align: center; font-size: 18pt; font-family: arial; font-weight: bold; color: #f0f0f0;}\n\
-.UNKNOWNCC {Name:Unknown; lang:en-US; SAMIType:CC;}\n\
--->\n\
-</STYLE>\n\
-</HEAD>\n\n\
-<BODY>\n";
-
-static const char *smptett_header =
-"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\
-<tt xmlns=\"http://www.w3.org/ns/ttml\" xml:lang=\"en\">\n\
-<body>\n<div>\n" ;
 
 static const char *command_type[] =
 {
@@ -168,7 +135,6 @@ void init_context_cc608(struct s_context_cc608 *data, int field)
 	data->mode=MODE_POPON;
 	// data->current_visible_start_cc=0;
 	data->current_visible_start_ms=0;
-	data->srt_counter=0;
 	data->screenfuls_counter=0;
 	data->channel=1;
 	data->color=ccx_options.cc608_default_color;
@@ -281,68 +247,6 @@ void handle_text_attr(const unsigned char c1, const unsigned char c2, struct s_c
 		// and advance the cursor
 		//so use write_char
 		write_char(0x20, context);
-	}
-}
-
-
-void write_subtitle_file_footer(struct ccx_s_write *out)
-{
-	switch (ccx_options.write_format)
-	{
-		case CCX_OF_SAMI:
-			sprintf ((char *) str,"</BODY></SAMI>\n");
-			if (ccx_options.encoding!=CCX_ENC_UNICODE)
-			{
-				dbg_print(CCX_DMT_608, "\r%s\n", str);
-			}
-			enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-			write(out->fh, enc_buffer, enc_buffer_used);
-			break;
-		case CCX_OF_SMPTETT:
-			sprintf ((char *) str,"</div></body></tt>\n");
-			if (ccx_options.encoding!=CCX_ENC_UNICODE)
-			{
-				dbg_print(CCX_DMT_608, "\r%s\n", str);
-			}
-			enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
-			write (out->fh, enc_buffer,enc_buffer_used);
-			break;
-		case CCX_OF_SPUPNG:
-			write_spumux_footer(out);
-			break;
-		default: // Nothing to do, no footer on this format
-			break;
-	}
-}
-
-
-void write_subtitle_file_header(struct ccx_s_write *out)
-{
-	switch (ccx_options.write_format)
-	{
-		case CCX_OF_SRT: // Subrip subtitles have no header
-			break;
-		case CCX_OF_SAMI: // This header brought to you by McPoodle's CCASDI
-			//fprintf_encoded (wb->fh, sami_header);
-			REQUEST_BUFFER_CAPACITY(strlen (sami_header)*3);
-			enc_buffer_used=encode_line (enc_buffer,(unsigned char *) sami_header);
-			write (out->fh, enc_buffer,enc_buffer_used);
-			break;
-		case CCX_OF_SMPTETT: // This header brought to you by McPoodle's CCASDI
-			//fprintf_encoded (wb->fh, sami_header);
-			REQUEST_BUFFER_CAPACITY(strlen (smptett_header)*3);
-			enc_buffer_used=encode_line (enc_buffer,(unsigned char *) smptett_header);
-			write(out->fh, enc_buffer, enc_buffer_used);
-			break;
-		case CCX_OF_RCWT: // Write header
-			write(out->fh, rcwt_header, sizeof(rcwt_header));
-			break;
-		case CCX_OF_SPUPNG:
-			write_spumux_header(out);
-			break;
-		case CCX_OF_TRANSCRIPT: // No header. Fall thru
-		default:
-			break;
 	}
 }
 

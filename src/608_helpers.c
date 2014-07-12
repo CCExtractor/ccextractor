@@ -1,5 +1,6 @@
 #include "ccextractor.h"
 #include "utility.h"
+#include "cc_encoders_common.h"
 //extern unsigned char encoded_crlf[16];
 
 // Encodes a generic string. Note that since we use the encoders for closed caption
@@ -288,12 +289,12 @@ void delete_all_lines_but_current (struct eia608_screen *data, int row)
     }
 }
 
-
-void fprintf_encoded (FILE *fh, const char *string)
+void fprintf_encoded (struct encoder_ctx *ctx,FILE *fh, const char *string)
 {
-    REQUEST_BUFFER_CAPACITY(strlen (string)*3);
-    enc_buffer_used=encode_line (enc_buffer,(unsigned char *) string);
-    fwrite (enc_buffer,enc_buffer_used,1,fh);
+	int used;
+	REQUEST_BUFFER_CAPACITY(ctx,strlen (string)*3);
+	used=encode_line (ctx->buffer,(unsigned char *) string);
+	fwrite (ctx->buffer,used,1,fh);
 }
 
 void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *context)
@@ -343,96 +344,4 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *
         }
     }
     fflush (stderr);
-}
-
-void try_to_add_end_credits(struct s_context_cc608 *context)
-{
-	LLONG window, length, st, end;
-	if (context->out->fh == -1)
-        return;
-    window=get_fts()-last_displayed_subs_ms-1;
-    if (window<ccx_options.endcreditsforatleast.time_in_ms) // Won't happen, window is too short
-        return;
-    length=ccx_options.endcreditsforatmost.time_in_ms > window ? 
-        window : ccx_options.endcreditsforatmost.time_in_ms;
-
-    st=get_fts()-length-1;
-    end=get_fts();
-
-    switch (ccx_options.write_format)
-    {
-        case CCX_OF_SRT:
-			write_stringz_as_srt(ccx_options.end_credits_text, context, st, end);
-            break;
-        case CCX_OF_SAMI:
-			write_stringz_as_sami(ccx_options.end_credits_text, context, st, end);
-            break;
-		case CCX_OF_SMPTETT:
-			write_stringz_as_smptett(ccx_options.end_credits_text, context, st, end);
-			break ;
-        default:
-            // Do nothing for the rest
-            break;
-    }    
-}
-
-void try_to_add_start_credits(struct s_context_cc608 *context)
-{
-	LLONG st, end, window, length;
-	LLONG l = context->current_visible_start_ms + subs_delay;
-    // We have a windows from last_displayed_subs_ms to l - we need to see if it fits
-
-    if (l<ccx_options.startcreditsnotbefore.time_in_ms) // Too early
-        return;
-
-    if (last_displayed_subs_ms+1 > ccx_options.startcreditsnotafter.time_in_ms) // Too late
-        return;
-
-    st = ccx_options.startcreditsnotbefore.time_in_ms>(last_displayed_subs_ms+1) ?
-        ccx_options.startcreditsnotbefore.time_in_ms : (last_displayed_subs_ms+1); // When would credits actually start
-
-    end = ccx_options.startcreditsnotafter.time_in_ms<(l-1) ?
-        ccx_options.startcreditsnotafter.time_in_ms : (l-1); 
-
-    window = end-st; // Allowable time in MS
-
-    if (ccx_options.startcreditsforatleast.time_in_ms>window) // Window is too short
-        return;
-
-    length=ccx_options.startcreditsforatmost.time_in_ms > window ? 
-        window : ccx_options.startcreditsforatmost.time_in_ms;
-
-    dbg_print(CCX_DMT_VERBOSE, "Last subs: %lld   Current position: %lld\n",
-        last_displayed_subs_ms, l); 
-    dbg_print(CCX_DMT_VERBOSE, "Not before: %lld   Not after: %lld\n",
-        ccx_options.startcreditsnotbefore.time_in_ms, 
-		ccx_options.startcreditsnotafter.time_in_ms);
-    dbg_print(CCX_DMT_VERBOSE, "Start of window: %lld   End of window: %lld\n",st,end);
-
-    if (window>length+2) 
-    {
-        // Center in time window
-        LLONG pad=window-length; 
-        st+=(pad/2);
-    }
-    end=st+length;
-    switch (ccx_options.write_format)
-    {
-        case CCX_OF_SRT:
-            write_stringz_as_srt(ccx_options.start_credits_text,context,st,end);
-            break;
-        case CCX_OF_SAMI:
-			write_stringz_as_sami(ccx_options.start_credits_text, context, st, end);
-            break;
-        case CCX_OF_SMPTETT:
-			write_stringz_as_smptett(ccx_options.start_credits_text, context, st, end);
-            break;
-        default:
-            // Do nothing for the rest
-            break;
-    }
-    startcredits_displayed=1;
-    return;
-    
-
 }
