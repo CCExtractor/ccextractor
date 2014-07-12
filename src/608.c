@@ -387,19 +387,6 @@ int write_cc_buffer(struct s_context_cc608 *context, struct cc_subtitle *sub)
 	LLONG start_time;
 	LLONG end_time;
 
-	if(!context->sub)
-	{
-		sub =
-		context->sub = malloc(sizeof(struct cc_subtitle));
-		memset(context->sub, 0, sizeof(struct cc_subtitle));
-	}
-	else
-		sub = context->sub;
-	if (!sub)
-	{
-		mprint("No Memory Left");
-		return 0;
-	}
 
 	if (ccx_options.screens_to_process!=-1 &&
 		context->screenfuls_counter >= ccx_options.screens_to_process)
@@ -452,47 +439,6 @@ int write_cc_buffer(struct s_context_cc608 *context, struct cc_subtitle *sub)
 
 
 	}
-	for(data = sub->data; sub->size ; sub->size -= sizeof(struct eia608_screen))
-	{
-		if(!data || !data->start_time)
-			break;
-		new_sentence=1;
-		switch (ccx_options.write_format)
-		{
-			case CCX_OF_SRT:
-				if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
-					try_to_add_start_credits(context);
-				wrote_something = write_cc_buffer_as_srt(data, context);
-				break;
-			case CCX_OF_SAMI:
-				if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
-					try_to_add_start_credits(context);
-				wrote_something = write_cc_buffer_as_sami(data, context);
-				break;
-			case CCX_OF_SMPTETT:
-				if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
-					try_to_add_start_credits(context);
-				wrote_something = write_cc_buffer_as_smptett(data, context);
-				break;
-			case CCX_OF_TRANSCRIPT:
-				wrote_something = write_cc_buffer_as_transcript(data, context);
-				break;
-			case CCX_OF_SPUPNG:
-				wrote_something = write_cc_buffer_as_spupng(data, context);
-				break;
-			default:
-				break;
-		}
-		if (wrote_something)
-			last_displayed_subs_ms=get_fts()+subs_delay;
-
-		if (ccx_options.gui_mode_reports)
-			write_cc_buffer_to_gui(data, context);
-		data = (struct eia608_screen*)sub->data + 1;
-		if (!sub->size)
-			freep(&sub->data);
-	}
-
 	return wrote_something;
 }
 
