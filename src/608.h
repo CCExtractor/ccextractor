@@ -18,7 +18,9 @@ struct eia608_screen // A CC buffer
 	unsigned char colors[15][33];
 	unsigned char fonts[15][33]; // Extra char at the end for a 0
 	int row_used[15]; // Any data in row?
-	int empty; // Buffer completely empty?    	
+	int empty; // Buffer completely empty?
+	LLONG start_time;
+	LLONG end_time;
 };
 
 struct s_context_cc608
@@ -44,6 +46,7 @@ struct s_context_cc608
 	long bytes_processed_608; // To be written ONLY by process_608
 	struct ccx_s_write *out;
 	int have_cursor_position;
+	struct cc_subtitle *sub;
 };
 
 extern unsigned char *enc_buffer;

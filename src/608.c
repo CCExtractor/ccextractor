@@ -1,5 +1,7 @@
 #include "ccextractor.h"
 #include "608_spupng.h"
+#include "cc_decoders_common.h"
+#include "utility.h"
 
 static const int rowdata[] = {11,-1,1,2,3,4,12,13,14,15,5,6,7,8,9,10};
 // Relationship between the first PAC byte and the row number
@@ -477,7 +479,25 @@ struct eia608_screen *get_current_visible_buffer(struct s_context_cc608 *context
 int write_cc_buffer(struct s_context_cc608 *context)
 {
 	struct eia608_screen *data;
+	struct cc_subtitle *sub = NULL;
 	int wrote_something=0;
+	LLONG start_time;
+	LLONG end_time;
+
+	if(!context->sub)
+	{
+		sub =
+		context->sub = malloc(sizeof(struct cc_subtitle));
+		memset(context->sub, 0, sizeof(struct cc_subtitle));
+	}
+	else
+		sub = context->sub;
+	if (!sub)
+	{
+		mprint("No Memory Left");
+		return 0;
+	}
+
 	if (ccx_options.screens_to_process!=-1 &&
 		context->screenfuls_counter >= ccx_options.screens_to_process)
 	{
@@ -490,12 +510,49 @@ int write_cc_buffer(struct s_context_cc608 *context)
 	else
 		data = &context->buffer2;
 
+	if (context->mode == MODE_FAKE_ROLLUP_1 && // Use the actual start of data instead of last buffer change
+		context->ts_start_of_current_line != -1)
+		context->current_visible_start_ms = context->ts_start_of_current_line;
+
+	start_time = context->current_visible_start_ms;
+	end_time = get_visible_end() + subs_delay;
+
 	if (!data->empty)
 	{
-		if (context->mode == MODE_FAKE_ROLLUP_1 && // Use the actual start of data instead of last buffer change
-			context->ts_start_of_current_line != -1)
-			context->current_visible_start_ms = context->ts_start_of_current_line;
+		sub->data = (struct eia608_screen *) realloc(sub->data,sub->size + sizeof(*data));
+		if (!sub->data)
+		{
+			mprint("No Memory left");
+			return 0;
+		}
 
+		memcpy(((struct eia608_screen *)sub->data) + (sub->size/sizeof(*data)), data, sizeof(*data));
+		sub->size += sizeof(*data);
+		wrote_something = 1;
+		if(start_time < end_time)
+		{
+			int i = 0;
+			int nb_data = sub->size/sizeof(*data);
+			for(i = 0; i < nb_data; i++)
+			{
+				data = (struct eia608_screen *)sub->data + i;
+				data->start_time = start_time + ( ( (end_time - start_time)/nb_data ) * i );
+				data->end_time = start_time + ( ( (end_time - start_time)/nb_data ) * (i + 1) );
+			}
+		}
+		else
+		{
+			data = sub->data;
+			data->start_time = 0;
+			data->end_time = 0;
+		}
+
+
+	}
+	for(data = sub->data; sub->size ; sub->size -= sizeof(struct eia608_screen))
+	{
+		if(!data || !data->start_time)
+			break;
 		new_sentence=1;
 		switch (ccx_options.write_format)
 		{
@@ -528,7 +585,11 @@ int write_cc_buffer(struct s_context_cc608 *context)
 
 		if (ccx_options.gui_mode_reports)
 			write_cc_buffer_to_gui(data, context);
+		data = (struct eia608_screen*)sub->data + 1;
+		if (!sub->size)
+			freep(&sub->data);
 	}
+
 	return wrote_something;
 }
 
