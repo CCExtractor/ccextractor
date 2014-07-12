@@ -37,6 +37,7 @@ version of CCExtractor.
 		1111001 is the default setting for -ucla
 	Make sure you use this parameter after others that might affect these 
 	settings (-out, -ucla, -xds, -txt, -ttxt, ...)
+- Fixed Negative timing Bug
 
 0.69
 ----
