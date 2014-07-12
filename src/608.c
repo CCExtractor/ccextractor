@@ -479,7 +479,6 @@ struct eia608_screen *get_current_visible_buffer(struct s_context_cc608 *context
 int write_cc_buffer(struct s_context_cc608 *context, struct cc_subtitle *sub)
 {
 	struct eia608_screen *data;
-	struct cc_subtitle *sub = NULL;
 	int wrote_something=0;
 	LLONG start_time;
 	LLONG end_time;
