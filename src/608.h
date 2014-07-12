@@ -77,8 +77,6 @@ void try_to_add_start_credits(struct s_context_cc608 *context);
 void try_to_add_end_credits(struct s_context_cc608 *context);
 void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *context);
 
-void handle_end_of_data(struct s_context_cc608 *context);
-void process608(const unsigned char *data, int length, struct s_context_cc608 *context);
 void get_char_in_latin_1 (unsigned char *buffer, unsigned char c);
 void get_char_in_unicode (unsigned char *buffer, unsigned char c);
 int get_char_in_utf_8 (unsigned char *buffer, unsigned char c);
