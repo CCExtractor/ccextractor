@@ -7,7 +7,7 @@
 
 #include "708.h" 
 #include "dvb_subtitle_decoder.h"
-
+#include "cc_encoders_common.h"
 // IMPORTED TRASH INFO, REMOVE
 extern long num_nal_unit_type_7;
 extern long num_vcl_hrd;
@@ -44,7 +44,7 @@ int filebuffer_pos; // Position of pointer relative to buffer start
 int bytesinbuffer; // Number of bytes we actually have on buffer
 extern void *cxx_dvb_context;
 
-LLONG process_raw_with_field (void);
+LLONG process_raw_with_field (struct cc_subtitle *sub);
 
 // Program stream specific data grabber
 LLONG ps_getmoredata(void)
@@ -432,6 +432,7 @@ void raw_loop ()
 {
     LLONG got;
     LLONG processed;
+	struct cc_subtitle dec_sub;
     
     current_pts = 90; // Pick a valid PTS time
     pts_set = 1;
@@ -450,7 +451,7 @@ void raw_loop ()
         if (got == 0) // Shortcircuit if we got nothing to process
             break;
 
-        processed=process_raw();		
+        processed=process_raw(&dec_sub);
 
         int ccblocks = cb_field1;
         current_pts += cb_field1*1001/30*(MPEG_CLOCK_FREQ/1000);
@@ -472,7 +473,7 @@ void raw_loop ()
 
 /* Process inbuf bytes in buffer holding raw caption data (three byte packets, the first being the field).
  * The number of processed bytes is returned. */
-LLONG process_raw_with_field (void)
+LLONG process_raw_with_field ( struct cc_subtitle *sub)
 {
     unsigned char data[3];
     data[0]=0x04; // Field 1
@@ -492,7 +493,7 @@ LLONG process_raw_with_field (void)
 
             // do_cb increases the cb_field1 counter so that get_fts()
             // is correct.
-            do_cb(data);
+            do_cb(data, sub);
         }
     }
     return inbuf;
@@ -501,7 +502,7 @@ LLONG process_raw_with_field (void)
 
 /* Process inbuf bytes in buffer holding raw caption data (two byte packets).
  * The number of processed bytes is returned. */
-LLONG process_raw (void)
+LLONG process_raw (struct cc_subtitle *sub)
 {
     unsigned char data[3];
     data[0]=0x04; // Field 1
@@ -520,22 +521,23 @@ LLONG process_raw (void)
 
             // do_cb increases the cb_field1 counter so that get_fts()
             // is correct.
-            do_cb(data);
+            do_cb(data,sub);
         }
     }
     return inbuf;
 }
 
 
-void general_loop(void)
+void general_loop(void *enc_ctx)
 {
     LLONG overlap=0;    
     LLONG pos = 0; /* Current position in buffer */    
+	struct cc_subtitle dec_sub;
     inbuf = 0; // No data yet
 
     end_of_file = 0;
     current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
-
+	memset(&dec_sub, 0,sizeof(dec_sub));
     while (!end_of_file && !processed_enough) 
     {
         /* Get rid of the bytes we already processed */        
@@ -594,7 +596,7 @@ void general_loop(void)
 
 		if (ccx_options.hauppauge_mode)
 		{
-			got = process_raw_with_field();
+			got = process_raw_with_field(&dec_sub);
 			if (pts_set)
 				set_fts(); // Try to fix timing from TS data
 		}
@@ -607,7 +609,7 @@ void general_loop(void)
 		}
         else if (ccx_bufferdatatype == CCX_PES)
         {
-            got = process_m2v (buffer, inbuf);
+            got = process_m2v (buffer, inbuf,&dec_sub);
         }
 		else if (ccx_bufferdatatype == CCX_TELETEXT)
 		{
@@ -655,11 +657,11 @@ void general_loop(void)
                    (unsigned) (current_pts));
             dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
 
-            got = process_raw();
+            got = process_raw(&dec_sub);
         }
         else if (ccx_bufferdatatype == CCX_H264) // H.264 data from TS file
         {
-            got = process_avc(buffer, inbuf);
+            got = process_avc(buffer, inbuf,&dec_sub);
         }
         else
             fatal(EXIT_BUG_BUG, "Unknown data type!");
@@ -696,11 +698,13 @@ void general_loop(void)
                 }
             }
         }
+		if (dec_sub.size)
+			encode_sub(enc_ctx,&dec_sub);
         position_sanity_check();
     }
     // Flush remaining HD captions
     if (has_ccdata_buffered)
-        process_hdcc();
+        process_hdcc(&dec_sub);
 
     if (total_past!=total_inputsize && ccx_options.binary_concat && !processed_enough)
     {
@@ -720,6 +724,7 @@ void rcwt_loop( void )
 {
 	static unsigned char *parsebuf;
 	static long parsebufsize = 1024;
+	struct cc_subtitle dec_sub;
 
     // As BUFSIZE is a macro this is just a reminder
     if (BUFSIZE < (3*0xFFFF + 10))
@@ -818,7 +823,7 @@ void rcwt_loop( void )
 
             for (int j=0; j<cbcount*3; j=j+3)
             {
-                do_cb(parsebuf+j);
+                do_cb(parsebuf+j, &dec_sub);
             }
         }
     } // end while(1)
