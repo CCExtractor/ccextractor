@@ -36,7 +36,7 @@ void init_hdcc (void)
 }
 
 // Buffer caption blocks for later sorting/flushing.
-void store_hdcc(unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now)
+void store_hdcc(unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now,struct cc_subtitle *sub)
 {
     // Uninitialized?
     if (anchor_seq_number < 0)
@@ -51,7 +51,7 @@ void store_hdcc(unsigned char *cc_data, int cc_count, int sequence_number, LLONG
         // Maybe missing an anchor frame - try to recover
         dbg_print(CCX_DMT_VERBOSE, "Too many B-frames, or missing anchor frame. Trying to recover ..\n");
 
-        process_hdcc();
+        process_hdcc(sub);
         anchor_hdcc( sequence_number);
         seq_index = sequence_number - anchor_seq_number + MAXBFRAMES;
     }
@@ -97,7 +97,7 @@ void anchor_hdcc(int seq)
 }
 
 // Sort/flash caption block buffer
-void process_hdcc (void)
+void process_hdcc (struct cc_subtitle *sub)
 {
     // Remember the current value
     LLONG store_fts_now = fts_now;
@@ -167,7 +167,7 @@ void process_hdcc (void)
                     cc_data_pkts[seq][j+1]=0x7F;
                 }
             }             
-            do_cb(cc_data_pkts[seq]+j);
+            do_cb(cc_data_pkts[seq]+j, sub);
 
         } // for loop over packets
     }
@@ -180,7 +180,7 @@ void process_hdcc (void)
 }
 
 
-int do_cb (unsigned char *cc_block)
+int do_cb (unsigned char *cc_block, struct cc_subtitle *sub)
 {
     unsigned char cc_valid = (*cc_block & 4) >>2;
     unsigned char cc_type = *cc_block & 3;
@@ -237,7 +237,7 @@ int do_cb (unsigned char *cc_block)
             if (timeok)
             {
                 if(ccx_options.write_format!=CCX_OF_RCWT)
-                    printdata (cc_block+1,2,0,0);
+                    printdata (cc_block+1,2,0,0, sub);
                 else
                     writercwtdata(cc_block);
             }
@@ -261,7 +261,7 @@ int do_cb (unsigned char *cc_block)
             if (timeok)
             {
                 if(ccx_options.write_format!=CCX_OF_RCWT)
-                    printdata (0,0,cc_block+1,2);
+                    printdata (0,0,cc_block+1,2, sub);
                 else
                     writercwtdata(cc_block);
             }

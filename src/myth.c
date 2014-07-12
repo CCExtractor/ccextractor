@@ -546,7 +546,7 @@ static int cc608_good_parity(const int *parity_table, unsigned int data)
 }
 
 
-void ProcessVBIDataPacket()
+void ProcessVBIDataPacket(struct cc_subtitle *sub)
 {    
 
     const unsigned char *meat = av.data;
@@ -610,7 +610,7 @@ void ProcessVBIDataPacket()
                         ccdata[0]=0x04; // Field 1
                         ccdata[1]=meat[1];
                         ccdata[2]=meat[2];
-                        do_cb(ccdata);
+                        do_cb(ccdata,sub);
 //                         processed_ccblocks++; // Not sure this is accurate
                     }
                     else
@@ -618,7 +618,7 @@ void ProcessVBIDataPacket()
                         ccdata[0]=0x05; // Field 1
                         ccdata[1]=meat[1];
                         ccdata[2]=meat[2];
-                        do_cb(ccdata);
+                        do_cb(ccdata, sub);
                     }
                 }
                 // utc += 33367;
@@ -824,6 +824,7 @@ void myth_loop(void)
     int rc;
 	int has_vbi=0;	
 	LLONG saved = 0;
+	struct cc_subtitle dec_sub;
     
     av.data=NULL;
     ccx_options.buffer_input = 1;
@@ -848,7 +849,7 @@ void myth_loop(void)
 				has_vbi=1;
 			}			
 			//fts_now=LLONG((processed_ccblocks*1000)/29.97);
-            ProcessVBIDataPacket ();            
+			ProcessVBIDataPacket(&dec_sub);
         }
 		/* This needs a lot more testing */
 		if (av.codec_id==CODEC_ID_MPEG2VIDEO && av.type==CODEC_TYPE_VIDEO )
@@ -868,7 +869,7 @@ void myth_loop(void)
 					pts_set=1;
 			}
             memcpy (desp+saved,av.data,av.size);
-            LLONG used = process_m2v(desp,length);
+            LLONG used = process_m2v(desp, length, &dec_sub);
             memmove (desp,desp+used,(unsigned int) (length-used));
             saved=length-used;
 		} 
