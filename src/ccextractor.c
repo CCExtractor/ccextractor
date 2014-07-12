@@ -685,7 +685,7 @@ int main(int argc, char *argv[])
 				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
 					ccx_options.use_gop_as_pts = 0; 
 				mprint ("\rAnalyzing data in general mode\n");
-				general_loop();
+				general_loop(&enc_ctx);
 				break;
 			case CCX_SM_MCPOODLESRAW:
 				mprint ("\rAnalyzing data in McPoodle raw mode\n");
@@ -703,7 +703,7 @@ int main(int argc, char *argv[])
 			case CCX_SM_MP4:				
 				mprint ("\rAnalyzing data with GPAC (MP4 library)\n");
 				close_input_file(); // No need to have it open. GPAC will do it for us
-				processmp4 (inputfile[0]);										
+				processmp4 (inputfile[0],&enc_ctx);
 				break;
 #ifdef WTV_DEBUG
 			case CCX_SM_HEX_DUMP:
@@ -840,12 +840,12 @@ int main(int argc, char *argv[])
 	{
 		if (ccx_options.write_format==CCX_OF_SPUPNG)
 		{
-			handle_end_of_data(&context_cc608_field_1);
+			//handle_end_of_data(&context_cc608_field_1);
 		}
 		if (ccx_options.write_format==CCX_OF_SMPTETT || ccx_options.write_format==CCX_OF_SAMI || 
 			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT)
 		{
-			handle_end_of_data(&context_cc608_field_1);
+			//handle_end_of_data(&context_cc608_field_1);
 		}
 		else if(ccx_options.write_format==CCX_OF_RCWT)
 		{
@@ -858,12 +858,12 @@ int main(int argc, char *argv[])
 	{
 		if (ccx_options.write_format==CCX_OF_SPUPNG)
 		{
-			handle_end_of_data(&context_cc608_field_2);
+			//handle_end_of_data(&context_cc608_field_2);
 		}
 		if (ccx_options.write_format==CCX_OF_SMPTETT || ccx_options.write_format==CCX_OF_SAMI || 
 			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT)
 		{
-			handle_end_of_data(&context_cc608_field_2);
+			//handle_end_of_data(&context_cc608_field_2);
 		}
 		dinit_encoder(enc_ctx+1);
 	}
