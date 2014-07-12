@@ -511,10 +511,9 @@ int write_cc_buffer(struct s_context_cc608 *context)
 
 	if (context->mode == MODE_FAKE_ROLLUP_1 && // Use the actual start of data instead of last buffer change
 		context->ts_start_of_current_line != -1)
-		start_time = context->ts_start_of_current_line;
-	else
-		start_time = context->current_visible_start_ms;
+		context->current_visible_start_ms = context->ts_start_of_current_line;
 
+	start_time = context->current_visible_start_ms;
 	end_time = get_visible_end() + subs_delay;
 
 	if (!data->empty)
