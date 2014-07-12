@@ -188,15 +188,6 @@ static __inline unsigned int get_bits1(GetBitContext *s)
 
 	return result;
 }
-
-static void freep(void *arg)
-{
-	void **ptr = (void **) arg;
-	if (*ptr)
-		free(*ptr);
-	*ptr = NULL;
-
-}
 #ifdef DEBUG
 
 struct transIntensity

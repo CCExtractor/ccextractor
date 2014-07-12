@@ -1,6 +1,7 @@
 #include "ccextractor.h"
 #include "608_spupng.h"
 #include "cc_decoders_common.h"
+#include "utility.h"
 
 static const int rowdata[] = {11,-1,1,2,3,4,12,13,14,15,5,6,7,8,9,10};
 // Relationship between the first PAC byte and the row number
@@ -585,11 +586,8 @@ int write_cc_buffer(struct s_context_cc608 *context)
 		if (ccx_options.gui_mode_reports)
 			write_cc_buffer_to_gui(data, context);
 		data = (struct eia608_screen*)sub->data + 1;
-		if (sub->data && !sub->size)
-		{
-			free(sub->data);
-			sub->data = NULL;
-		}
+		if (!sub->size)
+			freep(&sub->data);
 	}
 
 	return wrote_something;

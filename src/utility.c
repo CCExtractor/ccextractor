@@ -336,3 +336,12 @@ int string_cmp(const void *p1,const void *p2)
 {
 	return string_cmp2(p1, p2, NULL);
 }
+
+void freep(void *arg)
+{
+	void **ptr = (void **) arg;
+	if (*ptr)
+		free(*ptr);
+	*ptr = NULL;
+
+}
