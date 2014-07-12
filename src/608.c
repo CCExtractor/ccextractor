@@ -476,7 +476,7 @@ struct eia608_screen *get_current_visible_buffer(struct s_context_cc608 *context
 }
 
 
-int write_cc_buffer(struct s_context_cc608 *context)
+int write_cc_buffer(struct s_context_cc608 *context, struct cc_subtitle *sub)
 {
 	struct eia608_screen *data;
 	struct cc_subtitle *sub = NULL;
@@ -776,7 +776,7 @@ int is_current_row_empty(struct s_context_cc608 *context)
 }
 
 /* Process GLOBAL CODES */
-void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct s_context_cc608 *context)
+void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct s_context_cc608 *context, struct cc_subtitle *sub)
 {
 	int changes=0;
 
@@ -873,7 +873,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct 
 				/* CEA-608 C.10 Style Switching (regulatory)
 				[...]if pop-up or paint-on captioning is already present in
 				either memory it shall be erased[...] */
-				if (write_cc_buffer(context))
+				if (write_cc_buffer(context, sub))
 					context->screenfuls_counter++;
 				erase_memory(context, true);
 			}
@@ -931,7 +931,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct 
 				// Only if the roll up would actually cause a line to disappear we write the buffer
 				if (ccx_options.write_format!=CCX_OF_TRANSCRIPT)
 				{
-					if (write_cc_buffer(context))
+					if (write_cc_buffer(context, sub))
 						context->screenfuls_counter++;
 					if (ccx_options.norollup)
 						erase_memory(context, true); // Make sure the lines we just wrote aren't written again
@@ -962,7 +962,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct 
 			}
 			else
 			{
-				if (write_cc_buffer(context))
+				if (write_cc_buffer(context, sub))
 					context->screenfuls_counter++;
 			}
 			erase_memory(context, true);
@@ -971,7 +971,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct 
 		case COM_ENDOFCAPTION: // Switch buffers
 			// The currently *visible* buffer is leaving, so now we know its ending
 			// time. Time to actually write it to file.
-			if (write_cc_buffer(context))
+			if (write_cc_buffer(context, sub))
 				context->screenfuls_counter++;
 			context->visible_buffer = (context->visible_buffer == 1) ? 2 : 1;
 			context->current_visible_start_ms = get_visible_start();
@@ -1003,11 +1003,11 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct 
 
 }
 
-void handle_end_of_data(struct s_context_cc608 *context)
+void handle_end_of_data(struct s_context_cc608 *context, struct cc_subtitle *sub)
 {
 	// We issue a EraseDisplayedMemory here so if there's any captions pending
 	// they get written to file.
-	handle_command (0x14, 0x2c, context); // EDM
+	handle_command (0x14, 0x2c, context, sub); // EDM
 }
 
 // CEA-608, Anex F 1.1.1. - Character Set Table / Special Characters
@@ -1144,13 +1144,13 @@ void handle_single(const unsigned char c1, struct s_context_cc608 *context)
 	write_char (c1,context);
 }
 
-void erase_both_memories(struct s_context_cc608 *context)
+void erase_both_memories(struct s_context_cc608 *context, struct cc_subtitle *sub)
 {
 	erase_memory(context, false);
 	// For the visible memory, we write the contents to disk
 			// The currently *visible* buffer is leaving, so now we know its ending
 			// time. Time to actually write it to file.
-	if (write_cc_buffer(context))
+	if (write_cc_buffer(context, sub))
 		context->screenfuls_counter++;
 	context->current_visible_start_ms = get_visible_start();
 	context->cursor_column = 0;
@@ -1184,7 +1184,7 @@ int check_channel(unsigned char c1, struct s_context_cc608 *context)
 /* Handle Command, special char or attribute and also check for
 * channel changes.
 * Returns 1 if something was written to screen, 0 otherwise */
-int disCommand(unsigned char hi, unsigned char lo, struct s_context_cc608 *context)
+int disCommand(unsigned char hi, unsigned char lo, struct s_context_cc608 *context, struct cc_subtitle *sub)
 {
 	int wrote_to_screen=0;
 
@@ -1230,7 +1230,7 @@ int disCommand(unsigned char hi, unsigned char lo, struct s_context_cc608 *conte
 		case 0x14:
 		case 0x15:
 			if (lo>=0x20 && lo<=0x2f)
-				handle_command(hi, lo, context);
+				handle_command(hi, lo, context, sub);
 			if (lo>=0x40 && lo<=0x7f)
 				handle_pac(hi, lo, context);
 			break;
@@ -1240,7 +1240,7 @@ int disCommand(unsigned char hi, unsigned char lo, struct s_context_cc608 *conte
 			break;
 		case 0x17:
 			if (lo>=0x21 && lo<=0x23)
-				handle_command(hi, lo, context);
+				handle_command(hi, lo, context, sub);
 			if (lo>=0x2e && lo<=0x2f)
 				handle_text_attr(hi, lo, context);
 			if (lo>=0x40 && lo<=0x7f)
@@ -1251,7 +1251,7 @@ int disCommand(unsigned char hi, unsigned char lo, struct s_context_cc608 *conte
 }
 
 /* If wb is NULL, then only XDS will be processed */
-void process608(const unsigned char *data, int length, struct s_context_cc608 *context)
+void process608(const unsigned char *data, int length, struct s_context_cc608 *context, struct cc_subtitle *sub)
 {
 	static int textprinted = 0;
 	if (context)
@@ -1326,7 +1326,7 @@ void process608(const unsigned char *data, int length, struct s_context_cc608 *c
 				}
 				context->last_c1 = hi;
 				context->last_c2 = lo;
-				wrote_to_screen = disCommand(hi, lo, context);
+				wrote_to_screen = disCommand(hi, lo, context, sub);
 			}
 			else
 			{
@@ -1376,7 +1376,7 @@ void process608(const unsigned char *data, int length, struct s_context_cc608 *c
 					context->mode == MODE_ROLLUP_4))
 				{
 					// We don't increase screenfuls_counter here.
-					write_cc_buffer(context);
+					write_cc_buffer(context, sub);
 					context->current_visible_start_ms = get_visible_start();
 				}
 			}
