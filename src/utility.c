@@ -255,7 +255,7 @@ void dump (LLONG mask, unsigned char *start, int l, unsigned long abs_start, uns
         mprint (" | ");
         for (int j=0; j<16; j++)
         {
-            if (x+j<=l && start[x+j]>=' ')
+            if (x+j<l && start[x+j]>=' ')
 				mprint ("%c",start[x+j] & (clear_high_bit?0x7F:0xFF)); // 0x7F < remove high bit, convenient for visual CC inspection
             else
                 mprint (" ");
