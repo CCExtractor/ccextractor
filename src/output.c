@@ -26,7 +26,7 @@ void writedata(const unsigned char *data, int length, struct s_context_cc608 *co
 
     if (ccx_options.write_format==CCX_OF_RAW || ccx_options.write_format==CCX_OF_DVDRAW)
 	{
-		if (context->out)
+		if (context && context->out)
 			writeraw (data,length,context->out);
 	}
     else if (ccx_options.write_format==CCX_OF_SMPTETT || 
