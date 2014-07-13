@@ -22,4 +22,5 @@ void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_s
 
 int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *context);
 void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
+void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *context);
 #endif

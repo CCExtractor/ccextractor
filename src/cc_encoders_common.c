@@ -2,6 +2,7 @@
 #include "cc_decoders_common.h"
 #include "cc_encoders_common.h"
 #include "spupng_encoder.h"
+#include "608_spupng.h"
 #include "utility.h"
 static const char *sami_header= // TODO: Revise the <!-- comments
 "<SAMI>\n\
@@ -343,7 +344,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				wrote_something = write_cc_buffer_as_smptett(data, context);
 				break;
 			case CCX_OF_TRANSCRIPT:
-				wrote_something = write_cc_buffer_as_transcript(context, sub);
+				wrote_something = write_cc_buffer_as_transcript2(context, sub);
 				break;
 			case CCX_OF_SPUPNG:
 				wrote_something = write_cc_buffer_as_spupng(data, context);
@@ -354,8 +355,8 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		if (wrote_something)
 			last_displayed_subs_ms=get_fts()+subs_delay;
 
-		//if (ccx_options.gui_mode_reports)
-		//	write_cc_buffer_to_gui(sub->data, context);
+		if (ccx_options.gui_mode_reports)
+			write_cc_buffer_to_gui(sub->data, context);
 		data = (struct eia608_screen*)sub->data + 1;
 	}
 

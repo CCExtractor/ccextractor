@@ -67,7 +67,6 @@ unsigned get_decoder_line_basic (unsigned char *buffer, int line_num, struct eia
 unsigned get_decoder_line_encoded_for_gui (unsigned char *buffer, int line_num, struct eia608_screen *data);
 unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct eia608_screen *data);
 void delete_all_lines_but_current (struct eia608_screen *data, int row);
-void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *context);
 
 void get_char_in_latin_1 (unsigned char *buffer, unsigned char c);
 void get_char_in_unicode (unsigned char *buffer, unsigned char c);

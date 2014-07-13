@@ -297,7 +297,7 @@ void fprintf_encoded (struct encoder_ctx *ctx,FILE *fh, const char *string)
 	fwrite (ctx->buffer,used,1,fh);
 }
 
-void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *context)
+void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *context)
 {
     unsigned h1,m1,s1,ms1;
     unsigned h2,m2,s2,ms2;    
@@ -312,7 +312,7 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *
 	if (!with_data)
 		return;
 
-    ms_start= context->current_visible_start_ms;
+    ms_start= data->start_time;
 
     ms_start+=subs_delay;
     if (ms_start<0) // Drop screens that because of subs_delay start too early
@@ -325,7 +325,7 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct s_context_cc608 *
             fprintf (stderr, "###SUBTITLE#");
             if (!time_reported)
             {
-                LLONG ms_end = get_fts()+subs_delay;		
+                LLONG ms_end = data->end_time;
                 mstotime (ms_start,&h1,&m1,&s1,&ms1);
                 mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
                 // Note, only MM:SS here as we need to save space in the preview window
