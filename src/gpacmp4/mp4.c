@@ -5,6 +5,7 @@
 #include <gpac/isomedia.h>
 #include "../ccextractor.h"
 #include "../utility.h"
+#include "../cc_encoders_common.h"
 
 void do_NAL (unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub); // From avc_functions.c
 void set_fts(void); // From timing.c
@@ -330,11 +331,23 @@ int processmp4 (char *file,void *enc_ctx)
 					data += 4;
 					if (!strncmp(data, "cdat", 4) || !strncmp(data, "cdt2", 4))
 					{
+						int ret = 0;
+						int len = atomLength - 8;
 						data += 4;
 #ifdef MP4_DEBUG
 						dump(256, (unsigned char *)data, atomLength - 8, 0, 1);
 #endif
-						process608((unsigned char*)data, atomLength - 8, &context_cc608_field_1, &dec_sub);
+						do
+						{
+							ret = process608((unsigned char*)data, len, &context_cc608_field_1, &dec_sub);
+							len -= ret;
+							data += ret;
+							if(dec_sub.got_output)
+							{
+								encode_sub(enc_ctx, &dec_sub);
+								dec_sub.got_output = 0;
+							}
+						} while (len > 0);
 					}
 					atomStart += atomLength;
 

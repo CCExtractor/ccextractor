@@ -6,7 +6,8 @@ struct cc_subtitle
 	void *data;
 	size_t size;
 	enum ccx_encoding_type format;
+	int got_output;
 };
 
-void process608(const unsigned char *data, int length, struct s_context_cc608 *context, struct cc_subtitle *sub);
+int process608(const unsigned char *data, int length, struct s_context_cc608 *context, struct cc_subtitle *sub);
 #endif

@@ -429,6 +429,7 @@ int write_cc_buffer(struct s_context_cc608 *context, struct cc_subtitle *sub)
 				data->start_time = start_time + ( ( (end_time - start_time)/nb_data ) * i );
 				data->end_time = start_time + ( ( (end_time - start_time)/nb_data ) * (i + 1) );
 			}
+			sub->got_output = 1;
 		}
 		else
 		{
@@ -1100,139 +1101,144 @@ int disCommand(unsigned char hi, unsigned char lo, struct s_context_cc608 *conte
 }
 
 /* If wb is NULL, then only XDS will be processed */
-void process608(const unsigned char *data, int length, struct s_context_cc608 *context, struct cc_subtitle *sub)
+int process608(const unsigned char *data, int length, struct s_context_cc608 *context, struct cc_subtitle *sub)
 {
 	static int textprinted = 0;
+	int i;
 	if (context)
 		context->bytes_processed_608 += length;
-	if (data!=NULL)
+	if (!data)
 	{
-		for (int i=0;i<length;i=i+2)
+		return -1;
+	}
+	for (i=0; i < length; i=i+2)
+	{
+		unsigned char hi, lo;
+		int wrote_to_screen=0;
+
+		hi = data[i] & 0x7F; // Get rid of parity bit
+		lo = data[i+1] & 0x7F; // Get rid of parity bit
+
+		if (hi==0 && lo==0) // Just padding
+			continue;
+
+		// printf ("\r[%02X:%02X]\n",hi,lo);
+
+		if (hi>=0x10 && hi<=0x1e) {
+			int ch = (hi<=0x17)? 1 : 2;
+			if (current_field == 2)
+				ch+=2;
+
+			file_report.cc_channels_608[ch - 1] = 1;
+		}
+
+		if (hi >= 0x01 && hi <= 0x0E && (context == NULL || context->my_field == 2)) // XDS can only exist in field 2.
 		{
-			unsigned char hi, lo;
-			int wrote_to_screen=0;
+			if (context)
+				context->channel = 3;
+			if (!in_xds_mode)
+			{
+				ts_start_of_xds=get_fts();
+				in_xds_mode=1;
+			}
 
-			hi = data[i] & 0x7F; // Get rid of parity bit
-			lo = data[i+1] & 0x7F; // Get rid of parity bit
-
-			if (hi==0 && lo==0) // Just padding
+			file_report.xds=1;
+		}
+		if (hi == 0x0F && in_xds_mode && (context == NULL || context->my_field == 2)) // End of XDS block
+		{
+			in_xds_mode=0;
+			do_end_of_xds (lo);
+			if (context)
+				context->channel = context->new_channel; // Switch from channel 3
+			continue;
+		}
+		if (hi>=0x10 && hi<=0x1F) // Non-character code or special/extended char
+			// http://www.geocities.com/mcpoodle43/SCC_TOOLS/DOCS/CC_CODES.HTML
+			// http://www.geocities.com/mcpoodle43/SCC_TOOLS/DOCS/CC_CHARS.HTML
+		{
+			// We were writing characters before, start a new line for
+			// diagnostic output from disCommand()
+			if (textprinted == 1 )
+			{
+				dbg_print(CCX_DMT_608, "\n");
+				textprinted = 0;
+			}
+			if (!context || context->my_field == 2)
+				in_xds_mode=0; // Back to normal (CEA 608-8.6.2)
+			if (!context) // Not XDS and we don't have a writebuffer, nothing else would have an effect
+				continue;
+			if (context->last_c1 == hi && context->last_c2 == lo)
+			{
+				// Duplicate dual code, discard. Correct to do it only in
+				// non-XDS, XDS codes shall not be repeated.
+				dbg_print(CCX_DMT_608, "Skipping command %02X,%02X Duplicate\n", hi, lo);
+				// Ignore only the first repetition
+				context->last_c1=-1;
+				context->last_c2 = -1;
+				continue;
+			}
+			context->last_c1 = hi;
+			context->last_c2 = lo;
+			wrote_to_screen = disCommand(hi, lo, context, sub);
+			if(sub->got_output)
+				break;
+		}
+		else
+		{
+			if (in_xds_mode && (context == NULL || context->my_field == 2))
+			{
+				process_xds_bytes (hi,lo);
+				continue;
+			}
+			if (!context) // No XDS code after this point, and user doesn't want captions.
 				continue;
 
-			// printf ("\r[%02X:%02X]\n",hi,lo);
+			context->last_c1 = -1;
+			context->last_c2 = -1;
 
-			if (hi>=0x10 && hi<=0x1e) {
-				int ch = (hi<=0x17)? 1 : 2;
-				if (current_field == 2)
-					ch+=2;
-
-				file_report.cc_channels_608[ch - 1] = 1;
-			}
-
-			if (hi >= 0x01 && hi <= 0x0E && (context == NULL || context->my_field == 2)) // XDS can only exist in field 2.
+			if (hi>=0x20) // Standard characters (always in pairs)
 			{
-				if (context)
-					context->channel = 3;
-				if (!in_xds_mode)
-				{
-					ts_start_of_xds=get_fts();
-					in_xds_mode=1;
-				}
+				// Only print if the channel is active
+				if (context->channel != ccx_options.cc_channel)
+					continue;
 
-				file_report.xds=1;
-			}
-			if (hi == 0x0F && in_xds_mode && (context == NULL || context->my_field == 2)) // End of XDS block
-			{
-				in_xds_mode=0;
-				do_end_of_xds (lo);
-				if (context)
-					context->channel = context->new_channel; // Switch from channel 3
-				continue;
-			}
-			if (hi>=0x10 && hi<=0x1F) // Non-character code or special/extended char
-				// http://www.geocities.com/mcpoodle43/SCC_TOOLS/DOCS/CC_CODES.HTML
-				// http://www.geocities.com/mcpoodle43/SCC_TOOLS/DOCS/CC_CHARS.HTML
-			{
-				// We were writing characters before, start a new line for
-				// diagnostic output from disCommand()
-				if (textprinted == 1 )
+				if( textprinted == 0 )
 				{
 					dbg_print(CCX_DMT_608, "\n");
-					textprinted = 0;
+					textprinted = 1;
 				}
-				if (!context || context->my_field == 2)
-					in_xds_mode=0; // Back to normal (CEA 608-8.6.2)
-				if (!context) // Not XDS and we don't have a writebuffer, nothing else would have an effect
-					continue;
-				if (context->last_c1 == hi && context->last_c2 == lo)
-				{
-					// Duplicate dual code, discard. Correct to do it only in
-					// non-XDS, XDS codes shall not be repeated.
-					 dbg_print(CCX_DMT_608, "Skipping command %02X,%02X Duplicate\n", hi, lo);
-					// Ignore only the first repetition
-					context->last_c1=-1;
-					context->last_c2 = -1;
-					continue;
-				}
-				context->last_c1 = hi;
-				context->last_c2 = lo;
-				wrote_to_screen = disCommand(hi, lo, context, sub);
+
+				handle_single(hi, context);
+				handle_single(lo, context);
+				wrote_to_screen=1;
+				context->last_c1 = 0;
+				context->last_c2 = 0;
 			}
-			else
-			{
-				if (in_xds_mode && (context == NULL || context->my_field == 2))
-				{
-					process_xds_bytes (hi,lo);
-					continue;
-				}
-				if (!context) // No XDS code after this point, and user doesn't want captions.
-					continue;
 
-				context->last_c1 = -1;
-				context->last_c2 = -1;
+			if (!textprinted && context->channel == ccx_options.cc_channel)
+			{   // Current FTS information after the characters are shown
+				dbg_print(CCX_DMT_608, "Current FTS: %s\n", print_mstime(get_fts()));
+				//printf("  N:%u", unsigned(fts_now) );
+				//printf("  G:%u", unsigned(fts_global) );
+				//printf("  F:%d %d %d %d\n",
+				//	   current_field, cb_field1, cb_field2, cb_708 );
+			}
 
-				if (hi>=0x20) // Standard characters (always in pairs)
-				{
-					// Only print if the channel is active
-					if (context->channel != ccx_options.cc_channel)
-						continue;
-
-					if( textprinted == 0 )
-					{
-						dbg_print(CCX_DMT_608, "\n");
-						textprinted = 1;
-					}
-
-					handle_single(hi, context);
-					handle_single(lo, context);
-					wrote_to_screen=1;
-					context->last_c1 = 0;
-					context->last_c2 = 0;
-				}
-
-				if (!textprinted && context->channel == ccx_options.cc_channel)
-				{   // Current FTS information after the characters are shown
-					dbg_print(CCX_DMT_608, "Current FTS: %s\n", print_mstime(get_fts()));
-					//printf("  N:%u", unsigned(fts_now) );
-					//printf("  G:%u", unsigned(fts_global) );
-					//printf("  F:%d %d %d %d\n",
-					//	   current_field, cb_field1, cb_field2, cb_708 );
-				}
-
-				if (wrote_to_screen && ccx_options.direct_rollup && // If direct_rollup is enabled and
+			if (wrote_to_screen && ccx_options.direct_rollup && // If direct_rollup is enabled and
 					(context->mode == MODE_FAKE_ROLLUP_1 || // we are in rollup mode, write now.
-					context->mode == MODE_ROLLUP_2 ||
-					context->mode == MODE_ROLLUP_3 ||
-					context->mode == MODE_ROLLUP_4))
-				{
-					// We don't increase screenfuls_counter here.
-					write_cc_buffer(context, sub);
-					context->current_visible_start_ms = get_visible_start();
-				}
+					 context->mode == MODE_ROLLUP_2 ||
+					 context->mode == MODE_ROLLUP_3 ||
+					 context->mode == MODE_ROLLUP_4))
+			{
+				// We don't increase screenfuls_counter here.
+				write_cc_buffer(context, sub);
+				context->current_visible_start_ms = get_visible_start();
 			}
-			if (wrote_to_screen && cc_to_stdout)
-				fflush (stdout);
-		} // for
-	}
+		}
+		if (wrote_to_screen && cc_to_stdout)
+			fflush (stdout);
+	} // for
+	return i;
 }
 
 
