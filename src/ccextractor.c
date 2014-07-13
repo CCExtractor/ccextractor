@@ -483,7 +483,8 @@ int main(int argc, char *argv[])
 					case CCX_OF_DVDRAW:
 						break;
 					case CCX_OF_RCWT:
-						write_subtitle_file_header(context_cc608_field_1.out); // RCWT header can't have a BOM before it, or parsing it later will not be possible.
+						if( init_encoder(enc_ctx,&wbout1) )
+							fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 						break;
 					default:
 						if (ccx_options.encoding==CCX_ENC_UTF_8) // Write BOM
@@ -527,7 +528,8 @@ int main(int argc, char *argv[])
 					case CCX_OF_DVDRAW:
 						break;
 					case CCX_OF_RCWT:
-						write_subtitle_file_header(context_cc608_field_2.out); // RCWT header can't have a BOM before it, or parsing it later will not be possible.
+						if( init_encoder(enc_ctx+1,&wbout2) )
+							fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 						break;
 					default:
 						if (ccx_options.encoding==CCX_ENC_UTF_8) // Write BOM
