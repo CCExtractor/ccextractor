@@ -480,6 +480,9 @@ int main(int argc, char *argv[])
 						break;
 					case CCX_OF_DVDRAW:
 						break;
+					case CCX_OF_RCWT:
+						write_subtitle_file_header(context_cc608_field_1.out); // RCWT header can't have a BOM before it, or parsing it later will not be possible.
+						break;
 					default:
 						if (ccx_options.encoding==CCX_ENC_UTF_8) // Write BOM
 							writeraw (UTF8_BOM, sizeof (UTF8_BOM), &wbout1);
@@ -519,6 +522,9 @@ int main(int argc, char *argv[])
 						writeraw (BROADCAST_HEADER,sizeof (BROADCAST_HEADER),&wbout2);
 						break;
 					case CCX_OF_DVDRAW:
+						break;
+					case CCX_OF_RCWT:
+						write_subtitle_file_header(context_cc608_field_2.out); // RCWT header can't have a BOM before it, or parsing it later will not be possible.
 						break;
 					default:
 						if (ccx_options.encoding==CCX_ENC_UTF_8) // Write BOM
