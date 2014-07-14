@@ -841,6 +841,7 @@ void myth_loop(void *enc_ctx)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory.\n");
 	saved=0;
 
+	memset(&dec_sub, 0, sizeof(dec_sub));
 	while (!processed_enough && (rc=mpegps_read_packet ())==0)
 	{
 		position_sanity_check();
@@ -889,7 +890,7 @@ void myth_loop(void *enc_ctx)
 		}
 		else
 		{
-			if (total_inputsize>0 )
+			if (total_inputsize > 0 )
 			{
 				int progress = (int) ((((total_past+past)>>8)*100)/(total_inputsize>>8));
 				if (last_reported_progress != progress)
@@ -901,6 +902,11 @@ void myth_loop(void *enc_ctx)
 					last_reported_progress = progress;
 				}
 			}
+		}
+		if (dec_sub.got_output)
+		{
+			encode_sub(enc_ctx,&dec_sub);
+			dec_sub.got_output = 0;
 		}
 	}
 	if (desp)
