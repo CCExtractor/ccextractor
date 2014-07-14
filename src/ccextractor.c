@@ -691,7 +691,7 @@ int main(int argc, char *argv[])
 				break;
 			case CCX_SM_MCPOODLESRAW:
 				mprint ("\rAnalyzing data in McPoodle raw mode\n");
-				raw_loop();
+				raw_loop(&enc_ctx);
 				break;
 			case CCX_SM_RCWT:
 				mprint ("\rAnalyzing data in CCExtractor's binary format\n");

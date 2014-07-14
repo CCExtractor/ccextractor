@@ -245,7 +245,7 @@ void position_sanity_check ();
 int init_file_buffer( void );
 LLONG ps_getmoredata( void );
 LLONG general_getmoredata( void );
-void raw_loop (void);
+void raw_loop (void *enc_ctx);
 LLONG process_raw (struct cc_subtitle *sub);
 void general_loop(void *enc_ctx);
 void processhex (char *filename);

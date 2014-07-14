@@ -428,7 +428,7 @@ void processhex (char *filename)
 }
 #endif
 // Raw file process
-void raw_loop ()
+void raw_loop (void *enc_ctx)
 {
     LLONG got;
     LLONG processed;
@@ -437,6 +437,7 @@ void raw_loop ()
     current_pts = 90; // Pick a valid PTS time
     pts_set = 1;
     set_fts(); // Now set the FTS related variables
+	memset(&dec_sub, 0, sizeof(dec_sub));
     dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
                print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
                (unsigned) (current_pts));
@@ -452,6 +453,11 @@ void raw_loop ()
             break;
 
         processed=process_raw(&dec_sub);
+		if (dec_sub.got_output)
+		{
+			encode_sub(enc_ctx,&dec_sub);
+			dec_sub.got_output = 0;
+		}
 
         int ccblocks = cb_field1;
         current_pts += cb_field1*1001/30*(MPEG_CLOCK_FREQ/1000);
@@ -698,8 +704,11 @@ void general_loop(void *enc_ctx)
                 }
             }
         }
-		if (dec_sub.size)
+		if (dec_sub.got_output)
+		{
 			encode_sub(enc_ctx,&dec_sub);
+			dec_sub.got_output = 0;
+		}
         position_sanity_check();
     }
     // Flush remaining HD captions
