@@ -491,7 +491,7 @@ int main(int argc, char *argv[])
 						write_subtitle_file_header(context_cc608_field_1.out);
 				}
 			}
-			if (ccx_options.extract == 12) 
+			if (ccx_options.extract == 12 && ccx_options.write_format != CCX_OF_RAW)
 				mprint (" and \n");
 			if (ccx_options.extract!=1)
 			{
@@ -499,6 +499,11 @@ int main(int argc, char *argv[])
 				{
 					wbout1.fh=STDOUT_FILENO;
 					mprint ("Sending captions to stdout.\n");
+				}
+				else if(ccx_options.write_format == CCX_OF_RAW
+					&& ccx_options.extract == 12)
+				{
+					memcpy(&wbout2, &wbout1,sizeof(wbout1));
 				}
 				else
 				{
@@ -515,12 +520,13 @@ int main(int argc, char *argv[])
 					{
 						fatal (EXIT_FILE_CREATION_FAILED, "Failed\n");				
 					}
+					if(ccx_options.write_format == CCX_OF_RAW)
+						writeraw (BROADCAST_HEADER,sizeof (BROADCAST_HEADER),&wbout2);
 				}
+
 				switch (ccx_options.write_format)
 				{
 					case CCX_OF_RAW:
-						writeraw (BROADCAST_HEADER,sizeof (BROADCAST_HEADER),&wbout2);
-						break;
 					case CCX_OF_DVDRAW:
 						break;
 					case CCX_OF_RCWT:

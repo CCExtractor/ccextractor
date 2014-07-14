@@ -364,9 +364,6 @@ int parse_PAT (void);
 // myth.c
 void myth_loop(void);
 
-// mp4_bridge2bento4.c
-void mp4_loop (char *filename);
-
 // xds.c
 void process_xds_bytes (const unsigned char hi, int lo);
 void do_end_of_xds (unsigned char expected_checksum);
