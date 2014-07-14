@@ -622,6 +622,10 @@ int xds_do_current_and_future ()
 				{
 					if (!ccx_options.gui_mode_reports)
 						mprint ("\rXDS Notice: Program is now %s\n", xds_program_name);
+
+					if (ccx_options.send_to_srv)
+						net_set_new_program(xds_program_name);
+
 					strcpy (current_xds_program_name,xds_program_name);
 					activity_xds_program_name (xds_program_name);
 				}

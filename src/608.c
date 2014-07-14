@@ -410,10 +410,7 @@ void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc
 				fdprintf(context->out->fh, "%s%c%03d|", buf2,ccx_options.millis_separator,end_time_dec);
 
 				if (ccx_options.send_to_srv)
-				{
 					net_append_cc("%s%c%03d|", buf2,ccx_options.millis_separator,end_time_dec);
-					net_append_cc("%s%c%03d|", buf2,ccx_options.millis_separator,end_time_dec);
-				}
 			}
 		}
 
@@ -454,7 +451,7 @@ void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc
 			fdprintf(context->out->fh, "%s|", mode);
 
 			if (ccx_options.send_to_srv)
-				net_send_cc("%s|", mode);
+				net_append_cc("%s|", mode);
 		}
 
 		write(context->out->fh, subline, length);
@@ -464,8 +461,10 @@ void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc
 		{
 			net_append_cc_n(subline, length);
 			net_append_cc_n(encoded_crlf, encoded_crlf_length);
+			net_send_cc();
 		}
 	}
+
 	// fprintf (wb->fh,encoded_crlf);
 }
 
