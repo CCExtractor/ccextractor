@@ -1204,7 +1204,7 @@ void do_708 (const unsigned char *data, int datalength)
                 process_current_packet();
                 if (cc_valid)
                 {
-                    if (current_packet_length>253) 
+                    if (current_packet_length>127) 
                     {
                         dbg_print(CCX_DMT_708, "Warning: Legal packet size exceeded, data not added.\n");
                     }
