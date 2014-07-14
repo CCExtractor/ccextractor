@@ -366,6 +366,9 @@ void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc
 				struct tm *end_time_struct = gmtime(&end_time_int);
 				strftime(buf2, sizeof(buf2), "%Y%m%d%H%M%S", end_time_struct);
 				fdprintf(context->out->fh, "%s%c%03d|", buf2,ccx_options.millis_separator,end_time_dec);
+
+				if (ccx_options.send_to_srv)
+					net_append_cc("%s%c%03d|", buf2,ccx_options.millis_separator,end_time_dec);
 			}
 		}
 
@@ -401,11 +404,22 @@ void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc
 			}
 
 			fdprintf(context->out->fh, "%s|", mode);
+
+			if (ccx_options.send_to_srv)
+				net_append_cc("%s|", mode);
 		}
 
 		write(context->out->fh, subline, length);
 		write(context->out->fh, encoded_crlf, encoded_crlf_length);
+
+		if (ccx_options.send_to_srv)
+		{
+			net_append_cc_n(subline, length);
+			net_append_cc_n(encoded_crlf, encoded_crlf_length);
+			net_send_cc();
+		}
 	}
+
 	// fprintf (wb->fh,encoded_crlf);
 }
 
@@ -427,10 +441,6 @@ int write_cc_buffer_as_transcript(struct eia608_screen *data, struct s_context_c
 	return wrote_something;
 }
 
-
-
-
->>>>>>> init
 struct eia608_screen *get_current_visible_buffer(struct s_context_cc608 *context)
 {
 	struct eia608_screen *data;

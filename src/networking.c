@@ -17,6 +17,7 @@
 #define INT_LEN 10
 
 #define PASSW 10
+#define MAX_CONN 16
 #define NEW_PRG 12
 #define CC 11
 #define SERV_ERROR 4
@@ -24,7 +25,7 @@
 #define WRONG_PASSW 2
 #define OK 1
 
-int srv_sd = -1;
+int srv_sd = -1; /* Server socket descriptor */
 
 /*
  * Established connection to speciefied addres.
@@ -63,6 +64,16 @@ ssize_t read_byte(int fd, char *status);
 
 void connect_to_srv(const char *addr, const char *port)
 {
+	if (NULL == addr)
+	{
+		mprint("Server addres is not set\n");
+		fatal(EXIT_FAILURE, "Unable to connect\n");
+	}
+
+	if (NULL == port)
+		port = "2048";
+
+	mprint("\n");
 	mprint("Connecting to %s:%s\n", addr, port);
 
 	if ((srv_sd = tcp_connect(addr, port)) < 0)
@@ -91,13 +102,12 @@ void net_append_cc(const char *fmt, ...)
 	va_list args;
 	va_start(args, fmt);
 
-	vfprintf(stdout, fmt, args);
-
 	int rc = vsnprintf(buf_end, BUF_SIZE - (buf_end - buf), fmt, args);
 	if (rc < 0)
 	{
 		mprint("net_append_cc() error: can\'t append ");
 		mprint(fmt, args);
+		mprint("\n");
 		return;
 	}
 
@@ -109,12 +119,16 @@ void net_append_cc(const char *fmt, ...)
 void net_append_cc_n(const char *data, size_t len)
 {
 	assert(data != NULL);
+	assert(len > 0);
+
+	if (NULL == buf)
+		init_buf();
 
 	size_t nleft = BUF_SIZE - (buf_end - buf);
 	if (nleft < len) 
 	{
 		mprint("net_append_cc_n() warning: buffer overflow, pruning %zd bytes\n",
-				nleft);
+				len - nleft);
 		len = nleft;
 	}
 
@@ -141,26 +155,23 @@ void net_send_cc()
 	char ok;
 	read_byte(srv_sd, &ok);
 
-	switch (ok)
+	if (SERV_ERROR == ok)
 	{
-		case OK:
-			break;
-		case SERV_ERROR:
-			mprint("Error on server side\n"); // lol
-			break;
-		/* case PASSW: */
-		default:
-			break;
+		mprint("Internal server error\n"); 
+		return;
 	}
+
+	sleep(1);
 
 	return;
 }
 
-void net_set_new_program(const char *name, size_t len)
+void net_set_new_program(const char *name)
 {
 	assert(name != NULL);
-	assert(len > 0);
 	assert(srv_sd > 0);
+
+	size_t len = strlen(name) - 1; /* without '\0' */
 
 	if (write_block(srv_sd, NEW_PRG, name, len) < 0)
 	{
@@ -170,11 +181,10 @@ void net_set_new_program(const char *name, size_t len)
 }
 
 /*
-* command | lenght        | data         | \r\n
-* 1 byte  | INT_LEN bytes | lenght bytes | 2 bytes
-*/
-ssize_t
-write_block(int fd, char command, const char *buf, size_t buf_len)
+ * command | lenght        | data         | \r\n
+ * 1 byte  | INT_LEN bytes | lenght bytes | 2 bytes
+ */
+ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 {
 	assert(buf != NULL);
 	assert(buf_len > 0);
@@ -206,8 +216,8 @@ write_block(int fd, char command, const char *buf, size_t buf_len)
 		return -1;
 	else if (rc != 1)
 		return 0;
-
 	nwritten++;
+
 	if ((rc = write_byte(fd, '\n')) < 0)
 		return -1;
 	else if (rc != 1)
@@ -219,6 +229,9 @@ write_block(int fd, char command, const char *buf, size_t buf_len)
 
 int tcp_connect(const char *host, const char *port)
 {
+	assert(host != NULL);
+	assert(port != NULL);
+
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_UNSPEC;
@@ -231,10 +244,10 @@ int tcp_connect(const char *host, const char *port)
 		return -1;
 	}
 
-    struct addrinfo *p;
+	struct addrinfo *p;
 	int sockfd;
 	/* Try each address until we sucessfully connect */
-    for (p = ai; p != NULL; p = p->ai_next) {
+	for (p = ai; p != NULL; p = p->ai_next) {
 		sockfd = socket(p->ai_family, SOCK_STREAM, p->ai_protocol);
 
 		if (-1 == sockfd) {
@@ -253,11 +266,11 @@ int tcp_connect(const char *host, const char *port)
 			mprint("trying next addres ...");
 
 		close(sockfd);
-    }
+	}
 
 	freeaddrinfo(ai);
 
-    if (NULL == p)
+	if (NULL == p)
 		return -1;
 
 	return sockfd;
@@ -282,8 +295,22 @@ int ask_passwd(int sd)
 			{
 				fatal(EXIT_FAILURE, "read() error: %s", strerror(errno));
 			}
+
 			if (OK == ok)
+			{
 				return 1;
+			}
+			else if (MAX_CONN == ok) 
+			{
+				mprint("Too many connections to the server, try later\n");
+				return -1;
+			} 
+			else if (SERV_ERROR == ok)
+			{
+				mprint("Internal server error\n");
+				return -1;
+			}
+
 		} while(ok != PASSW);
 
 		printf("Enter password: ");
@@ -323,7 +350,11 @@ int ask_passwd(int sd)
 			printf("Wrong password\n");
 			fflush(stdout);
 		}
-
+		else if (SERV_ERROR == ok)
+		{
+			mprint("Internal server error\n");
+			return -1;
+		}
 	} while(OK != ok);
 
 	return 1;
