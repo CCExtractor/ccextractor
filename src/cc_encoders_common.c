@@ -330,17 +330,17 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		{
 			case CCX_OF_SRT:
 				if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
-					try_to_add_start_credits(context, 0);
+					try_to_add_start_credits(context, data->start_time);
 				wrote_something = write_cc_buffer_as_srt(data, context);
 				break;
 			case CCX_OF_SAMI:
 				if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
-					try_to_add_start_credits(context, 0);
+					try_to_add_start_credits(context, data->start_time);
 				wrote_something = write_cc_buffer_as_sami(data, context);
 				break;
 			case CCX_OF_SMPTETT:
 				if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
-					try_to_add_start_credits(context, 0);
+					try_to_add_start_credits(context, data->start_time);
 				wrote_something = write_cc_buffer_as_smptett(data, context);
 				break;
 			case CCX_OF_TRANSCRIPT:
