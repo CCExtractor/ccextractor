@@ -406,6 +406,8 @@ int write_cc_buffer(struct s_context_cc608 *context, struct cc_subtitle *sub)
 
 	start_time = context->current_visible_start_ms;
 	end_time = get_visible_end() + subs_delay;
+	data->start_time = 0;
+	data->end_time = 0;
 
 	if (!data->empty)
 	{
@@ -423,19 +425,21 @@ int write_cc_buffer(struct s_context_cc608 *context, struct cc_subtitle *sub)
 		{
 			int i = 0;
 			int nb_data = sub->size/sizeof(*data);
+			data = (struct eia608_screen *)sub->data;
+			for(i = 0; i < sub->size/sizeof(*data); i++)
+			{
+				if(!data->start_time)
+					break;
+				nb_data--;
+				data++;
+			}
 			for(i = 0; i < nb_data; i++)
 			{
-				data = (struct eia608_screen *)sub->data + i;
 				data->start_time = start_time + ( ( (end_time - start_time)/nb_data ) * i );
 				data->end_time = start_time + ( ( (end_time - start_time)/nb_data ) * (i + 1) );
+				data++;
 			}
 			sub->got_output = 1;
-		}
-		else
-		{
-			data = sub->data;
-			data->start_time = 0;
-			data->end_time = 0;
 		}
 
 

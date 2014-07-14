@@ -357,7 +357,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 
 		if (ccx_options.gui_mode_reports)
 			write_cc_buffer_to_gui(sub->data, context);
-		data = (struct eia608_screen*)sub->data + 1;
+		data++;
 	}
 
 	freep(&sub->data);
