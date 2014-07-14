@@ -819,7 +819,7 @@ void build_parity_table (void)
 	cc608_build_parity_table(cc608_parity_table);
 }
 
-void myth_loop(void)
+void myth_loop(void *enc_ctx)
 {	
     int rc;
 	int has_vbi=0;	

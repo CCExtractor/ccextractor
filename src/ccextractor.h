@@ -249,7 +249,7 @@ void raw_loop (void *enc_ctx);
 LLONG process_raw (struct cc_subtitle *sub);
 void general_loop(void *enc_ctx);
 void processhex (char *filename);
-void rcwt_loop( void );
+void rcwt_loop(void *enc_ctx);
 
 #ifndef __cplusplus
 #define false 0
@@ -362,7 +362,7 @@ int parse_PMT (unsigned char *buf,int len, int pos);
 int parse_PAT (void);
 
 // myth.c
-void myth_loop(void);
+void myth_loop(void *enc_ctx);
 
 // mp4_bridge2bento4.c
 void mp4_loop (char *filename);

@@ -695,12 +695,12 @@ int main(int argc, char *argv[])
 				break;
 			case CCX_SM_RCWT:
 				mprint ("\rAnalyzing data in CCExtractor's binary format\n");
-				rcwt_loop();
+				rcwt_loop(&enc_ctx);
 				break;
 			case CCX_SM_MYTH:
 				mprint ("\rAnalyzing data in MythTV mode\n");
 				show_myth_banner = 1;
-				myth_loop();
+				myth_loop(&enc_ctx);
 				break;
 			case CCX_SM_MP4:				
 				mprint ("\rAnalyzing data with GPAC (MP4 library)\n");

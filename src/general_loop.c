@@ -729,12 +729,13 @@ void general_loop(void *enc_ctx)
 }
 
 // Raw caption with FTS file process
-void rcwt_loop( void )
+void rcwt_loop(void *enc_ctx)
 {
 	static unsigned char *parsebuf;
 	static long parsebufsize = 1024;
 	struct cc_subtitle dec_sub;
 
+	memset(&dec_sub, 0,sizeof(dec_sub));
     // As BUFSIZE is a macro this is just a reminder
     if (BUFSIZE < (3*0xFFFF + 10))
         fatal (EXIT_BUG_BUG, "BUFSIZE too small for RCWT caption block.\n");
@@ -835,6 +836,11 @@ void rcwt_loop( void )
                 do_cb(parsebuf+j, &dec_sub);
             }
         }
+		if (dec_sub.got_output)
+		{
+			encode_sub(enc_ctx,&dec_sub);
+			dec_sub.got_output = 0;
+		}
     } // end while(1)
 
     dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
