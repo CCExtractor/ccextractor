@@ -422,8 +422,8 @@ void pr_command(char c)
 		case OK:
 			fprintf(stderr, "OK");
 			break;
-		case UNKNOWN_COMMAND:
-			fprintf(stderr, "UNKNOWN_COMMAND");
+		case WRONG_PASSWORD:
+			fprintf(stderr, "WRONG_PASSWORD");
 			break;
 		case UNKNOWN_COMMAND:
 			fprintf(stderr, "UNKNOWN_COMMAND");
