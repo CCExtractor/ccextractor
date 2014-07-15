@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
@@ -13,6 +14,8 @@
 #include <unistd.h>
 
 #include <sys/ioctl.h>
+
+#define DEBUG_OUT 0
 
 #define INT_LEN 10
 
@@ -61,6 +64,10 @@ ssize_t writen(int fd, const void *vptr, size_t n);
 /* Convinence functions */
 ssize_t write_byte(int fd, char status);
 ssize_t read_byte(int fd, char *status);
+
+#if DEBUG_OUT
+void pr_command(char c);
+#endif
 
 void connect_to_srv(const char *addr, const char *port)
 {
@@ -153,7 +160,14 @@ void net_send_cc()
 	buf_end = buf;
 
 	char ok;
-	read_byte(srv_sd, &ok);
+	if (read_byte(srv_sd, &ok) != 1)
+		return;
+
+#if DEBUG_OUT
+	fprintf(stderr, "[S] ");
+	pr_command(ok);
+	fprintf(stderr, "\n");
+#endif
 
 	if (SERV_ERROR == ok)
 	{
@@ -189,6 +203,10 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 	assert(buf != NULL);
 	assert(buf_len > 0);
 
+#if DEBUG_OUT
+	fprintf(stderr, "[C] ");
+#endif
+
 	int rc;
 	ssize_t nwritten = 0;
 
@@ -198,19 +216,34 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 		return 0;
 	nwritten++;
 
+#if DEBUG_OUT
+	pr_command(command);
+	fprintf(stderr, " ");
+#endif
+
 	char len_str[INT_LEN] = {0};
-	snprintf(len_str, INT_LEN, "%d", buf_len);
+	snprintf(len_str, INT_LEN, "%zd", buf_len);
 	if ((rc = writen(fd, len_str, INT_LEN)) < 0)
 		return -1;
 	else if (rc != INT_LEN)
 		return 0;
 	nwritten += rc;
 
+#if DEBUG_OUT
+	fwrite(len_str, sizeof(char), INT_LEN, stderr);
+	fprintf(stderr, " ");
+#endif
+
 	if ((rc = writen(fd, buf, buf_len)) < 0)
 		return -1;
-	else if (rc != buf_len)
+	else if (rc != (int) buf_len)
 		return 0;
 	nwritten += rc;
+
+#if DEBUG_OUT
+	fwrite(buf, sizeof(char), buf_len - 2, stderr);
+	fprintf(stderr, " ");
+#endif
 
 	if ((rc = write_byte(fd, '\r')) < 0)
 		return -1;
@@ -218,11 +251,19 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 		return 0;
 	nwritten++;
 
+#if DEBUG_OUT
+	fprintf(stderr, "\\r");
+#endif
+
 	if ((rc = write_byte(fd, '\n')) < 0)
 		return -1;
 	else if (rc != 1)
 		return 0;
 	nwritten++;
+
+#if DEBUG_OUT
+	fprintf(stderr, "\\n\n");
+#endif
 
 	return nwritten;
 }
@@ -283,8 +324,6 @@ int ask_passwd(int sd)
 	struct termios old, new;
 	int rc;
 	size_t len = 0;
-	char len_str[INT_LEN] = {0};
-	int i;
 	char *pw = NULL;
 
 	char ok;
@@ -295,6 +334,12 @@ int ask_passwd(int sd)
 			{
 				fatal(EXIT_FAILURE, "read() error: %s", strerror(errno));
 			}
+
+#if DEBUG_OUT
+			fprintf(stderr, "[S] ");
+			pr_command(ok);
+			fprintf(stderr, "\n");
+#endif
 
 			if (OK == ok)
 			{
@@ -345,6 +390,12 @@ int ask_passwd(int sd)
 		if (read_byte(sd, &ok) != 1)
 			return -1;
 
+#if DEBUG_OUT
+		fprintf(stderr, "[S] ");
+		pr_command(ok);
+		fprintf(stderr, "\n");
+#endif
+
 		if (WRONG_PASSW == ok)
 		{
 			printf("Wrong password\n");
@@ -360,10 +411,44 @@ int ask_passwd(int sd)
 	return 1;
 }
 
+#if DEBUG_OUT
+void pr_command(char c)
+{
+	switch(c)
+	{
+		case CC:
+			fprintf(stderr, "CC");
+			break;
+		case OK:
+			fprintf(stderr, "OK");
+			break;
+		case WRONG_PASSW:
+			fprintf(stderr, "WRONG_PASSW");
+			break;
+		case WRONG_COMMAND:
+			fprintf(stderr, "WRONG_COMMAND");
+			break;
+		case SERV_ERROR:
+			fprintf(stderr, "SERV_ERROR");
+			break;
+		case NEW_PRG:
+			fprintf(stderr, "NEW_PRG");
+			break;
+		case MAX_CONN:
+			fprintf(stderr, "MAX_CONN");
+			break;
+		case PASSW:
+			fprintf(stderr, "PASSW");
+			break;
+		default:
+			fprintf(stderr, "UNKNOWN (%d)", (int) c);
+			break;
+	}
+}
+#endif
+
 ssize_t readn(int fd, void *vptr, size_t n)
 {
-	assert(n >= 0);
-
 	size_t nleft;
 	ssize_t nread;
 	char *ptr;
