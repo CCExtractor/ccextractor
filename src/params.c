@@ -258,7 +258,7 @@ void set_output_format (const char *format)
         format++;
 
 	if (ccx_options.send_to_srv &&
-		(strcmp (format, "timedtranscript")!=0 || strcmp(format, "ttxt")!=0))
+		(strcmp (format, "timedtranscript")!=0 && strcmp(format, "ttxt")!=0))
 	{
 		mprint("Output format is changed to ttxt\n");
 		format = "ttxt";
