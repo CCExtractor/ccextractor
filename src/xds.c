@@ -914,7 +914,7 @@ void do_end_of_xds (unsigned char expected_checksum)
 			was_proc=xds_do_private_data();
 			break;
 		case XDS_CLASS_OUT_OF_BAND:
-			dbg_print(CCX_DMT_XDS, "Out-of-bad data, ignored.");
+			dbg_print(CCX_DMT_XDS, "Out-of-band data, ignored.");
 			was_proc = 1;
 			break;
 	}
