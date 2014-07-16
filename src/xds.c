@@ -71,6 +71,7 @@ static const char *XDSProgramTypes[]=
 #define XDS_CLASS_RESERVED	5
 #define XDS_CLASS_PRIVATE	6
 #define XDS_CLASS_END		7
+#define XDS_CLASS_OUT_OF_BAND 0x40 // Not a real class, a marker for packets for out-of-band data.
 
 // Types for the classes current and future
 #define XDS_TYPE_PIN_START_TIME	1
@@ -97,6 +98,7 @@ static const char *XDSProgramTypes[]=
 // Types for miscellaneous packets
 #define XDS_TYPE_TIME_OF_DAY 1	
 #define XDS_TYPE_LOCAL_TIME_ZONE 4
+#define XDS_TYPE_OUT_OF_BAND_CHANNEL_NUMBER 0x40
 
 #define NUM_XDS_BUFFERS 9  // CEA recommends no more than one level of interleaving. Play it safe
 #define NUM_BYTES_PER_PACKET 35 // Class + type (repeated for convenience) + data + zero
@@ -883,7 +885,11 @@ void do_end_of_xds (unsigned char expected_checksum)
 	}
 	
 	int was_proc=0; /* Indicated if the packet was processed. Not processed means "code to do it doesn't exist yet", not an error. */
-	
+	if (cur_xds_packet_type & 0x40) // Bit 6 set
+	{
+		cur_xds_packet_class = XDS_CLASS_OUT_OF_BAND;
+	}
+
 	switch (cur_xds_packet_class)
 	{
 		case XDS_CLASS_FUTURE: // Info on future program
@@ -906,6 +912,10 @@ void do_end_of_xds (unsigned char expected_checksum)
 			// The Private Data Class is for use in any closed system for whatever that 
 			// system wishes. It shall not be defined by this standard now or in the future. 			 
 			was_proc=xds_do_private_data();
+			break;
+		case XDS_CLASS_OUT_OF_BAND:
+			dbg_print(CCX_DMT_XDS, "Out-of-bad data, ignored.");
+			was_proc = 1;
 			break;
 	}
 	

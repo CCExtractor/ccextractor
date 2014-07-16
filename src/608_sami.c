@@ -67,6 +67,8 @@ void write_stringz_as_sami(char *string, struct s_context_cc608 *context, LLONG 
     }
     enc_buffer_used=encode_line (enc_buffer,(unsigned char *) str);
 	write(context->out->fh, enc_buffer, enc_buffer_used);
+	free(el);
+	free(unescaped);
 }
 
 

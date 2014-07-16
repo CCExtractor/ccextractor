@@ -63,6 +63,7 @@ void write_stringz_as_srt (char *string, struct s_context_cc608 *context, LLONG 
 
 	write(context->out->fh, encoded_crlf, encoded_crlf_length);
 	free(el);
+	free(unescaped);
 }
 
 int write_cc_buffer_as_srt(struct eia608_screen *data, struct s_context_cc608 *context)
@@ -189,6 +190,6 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct s_context_cc608 *c
 	dbg_print(CCX_DMT_608, "- - - - - - - - - - - -\r\n");
 
 	// fprintf (wb->fh, encoded_crlf);
-	write (context->out->fh, encoded_crlf, encoded_crlf_length);
+	write (context->out->fh, encoded_crlf, encoded_crlf_length);	
 	return wrote_something;
 }
