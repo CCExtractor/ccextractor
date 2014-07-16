@@ -377,6 +377,9 @@ void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc
 			if (ccx_options.transcript_settings.relativeTimestamp){
 				millis_to_date(context->ts_start_of_current_line + subs_delay, buf1);
 				fdprintf(context->out->fh, "%s|", buf1);
+
+				if (ccx_options.send_to_srv)
+					net_append_cc("%s|", buf1);
 			}
 			else {
 				mstotime(context->ts_start_of_current_line + subs_delay, &h1, &m1, &s1, &ms1);
@@ -385,6 +388,9 @@ void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc
 				struct tm *start_time_struct = gmtime(&start_time_int);
 				strftime(buf1, sizeof(buf1), "%Y%m%d%H%M%S", start_time_struct);
 				fdprintf(context->out->fh, "%s%c%03d|", buf1,ccx_options.millis_separator,start_time_dec);
+
+				if (ccx_options.send_to_srv)
+					net_append_cc("%s%c%03d|", buf1,ccx_options.millis_separator,start_time_dec);
 			}
 		}
 
@@ -393,6 +399,9 @@ void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc
 			if (ccx_options.transcript_settings.relativeTimestamp){
 				millis_to_date(get_fts() + subs_delay, buf2);
 				fdprintf(context->out->fh, "%s|", buf2);
+
+				if (ccx_options.send_to_srv)
+					net_append_cc("%s|", buf2);
 			}
 			else {
 				mstotime(get_fts() + subs_delay, &h2, &m2, &s2, &ms2);
@@ -401,11 +410,17 @@ void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc
 				struct tm *end_time_struct = gmtime(&end_time_int);
 				strftime(buf2, sizeof(buf2), "%Y%m%d%H%M%S", end_time_struct);
 				fdprintf(context->out->fh, "%s%c%03d|", buf2,ccx_options.millis_separator,end_time_dec);
+
+				if (ccx_options.send_to_srv)
+					net_append_cc("%s%c%03d|", buf2,ccx_options.millis_separator,end_time_dec);
 			}
 		}
 
 		if (ccx_options.transcript_settings.showCC){
 			fdprintf(context->out->fh, "CC%d|", context->my_field == 1 ? context->channel : context->channel + 2); // Data from field 2 is CC3 or 4
+
+			if (ccx_options.send_to_srv)
+				net_append_cc("CC%d|", context->my_field == 1 ? context->channel : context->channel + 2); // Data from field 2 is CC3 or 4
 		}
 
 		if (ccx_options.transcript_settings.showMode){
@@ -436,11 +451,22 @@ void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc
 			}
 
 			fdprintf(context->out->fh, "%s|", mode);
+
+			if (ccx_options.send_to_srv)
+				net_append_cc("%s|", mode);
 		}
 
 		write(context->out->fh, subline, length);
 		write(context->out->fh, encoded_crlf, encoded_crlf_length);
+
+		if (ccx_options.send_to_srv)
+		{
+			net_append_cc_n(subline, length);
+			net_append_cc_n(encoded_crlf, encoded_crlf_length);
+			net_send_cc();
+		}
 	}
+
 	// fprintf (wb->fh,encoded_crlf);
 }
 
