@@ -246,6 +246,7 @@ int main(int argc, char *argv[])
 {
 	char *c;
 	struct encoder_ctx enc_ctx[2];
+	struct cc_subtitle dec_sub;
 
 	// Initialize some constants
 	init_ts();
@@ -280,6 +281,7 @@ int main(int argc, char *argv[])
 	int show_myth_banner = 0;
 	
 	memset (&cea708services[0],0,63*sizeof (int));
+	memset (&dec_sub, 0,sizeof(dec_sub));
 	parse_configuration(&ccx_options);
 	parse_parameters (argc,argv);
 
@@ -840,14 +842,16 @@ int main(int argc, char *argv[])
 
 	if (wbout1.fh!=-1)
 	{
-		if (ccx_options.write_format==CCX_OF_SPUPNG)
-		{
-			//handle_end_of_data(&context_cc608_field_1);
-		}
 		if (ccx_options.write_format==CCX_OF_SMPTETT || ccx_options.write_format==CCX_OF_SAMI || 
-			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT)
+			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT
+			|| ccx_options.write_format==CCX_OF_SPUPNG )
 		{
-			//handle_end_of_data(&context_cc608_field_1);
+			handle_end_of_data(&context_cc608_field_1, &dec_sub);
+			if (dec_sub.got_output)
+			{
+				encode_sub(enc_ctx,&dec_sub);
+				dec_sub.got_output = 0;
+			}
 		}
 		else if(ccx_options.write_format==CCX_OF_RCWT)
 		{
@@ -858,14 +862,16 @@ int main(int argc, char *argv[])
 	}
 	if (wbout2.fh!=-1)
 	{
-		if (ccx_options.write_format==CCX_OF_SPUPNG)
-		{
-			//handle_end_of_data(&context_cc608_field_2);
-		}
 		if (ccx_options.write_format==CCX_OF_SMPTETT || ccx_options.write_format==CCX_OF_SAMI || 
-			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT)
+			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT
+			|| ccx_options.write_format==CCX_OF_SPUPNG )
 		{
-			//handle_end_of_data(&context_cc608_field_2);
+			handle_end_of_data(&context_cc608_field_2, &dec_sub);
+			if (dec_sub.got_output)
+			{
+				encode_sub(enc_ctx,&dec_sub);
+				dec_sub.got_output = 0;
+			}
 		}
 		dinit_encoder(enc_ctx+1);
 	}

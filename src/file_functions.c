@@ -1,5 +1,4 @@
 #include "ccextractor.h"
-
 long FILEBUFFERSIZE = 1024*1024*16; // 16 Mbytes no less. Minimize number of real read calls()
 LLONG buffered_read_opt_file (unsigned char *buffer, unsigned int bytes);
 

@@ -12,6 +12,7 @@ For now, integration with ccextractor is a quick hack. It could get better with 
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include "cc_encoders_common.h"
 
 static unsigned int header_state;
 static unsigned char psm_es_type[256];
