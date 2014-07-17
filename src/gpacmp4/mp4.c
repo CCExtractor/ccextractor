@@ -250,6 +250,11 @@ int processmp4 (char *file,void *enc_ctx)
 				mprint("error\n");
 				return -3;
 			}
+			if(dec_sub.got_output)
+			{
+				encode_sub(enc_ctx, &dec_sub);
+				dec_sub.got_output = 0;
+			}
 		}
 
 		if( type == GF_ISOM_MEDIA_VISUAL && subtype == GF_ISOM_SUBTYPE_AVC_H264)
@@ -270,6 +275,11 @@ int processmp4 (char *file,void *enc_ctx)
 			{
 				mprint("error\n");
 				return -3;
+			}
+			if(dec_sub.got_output)
+			{
+				encode_sub(enc_ctx, &dec_sub);
+				dec_sub.got_output = 0;
 			}
 
 			

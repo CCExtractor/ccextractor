@@ -250,125 +250,6 @@ void handle_text_attr(const unsigned char c1, const unsigned char c2, struct s_c
 	}
 }
 
-void write_cc_line_as_transcript(struct eia608_screen *data, struct s_context_cc608 *context, int line_number)
-{
-	unsigned h1,m1,s1,ms1;
-	unsigned h2,m2,s2,ms2;
-	if (ccx_options.sentence_cap)
-	{
-		capitalize (line_number,data);
-		correct_case(line_number,data);
-	}
-	int length = get_decoder_line_basic (subline, line_number, data);
-	if (ccx_options.encoding!=CCX_ENC_UNICODE)
-	{
-		dbg_print(CCX_DMT_608, "\r");
-		dbg_print(CCX_DMT_608, "%s\n",subline);
-	}
-	if (length>0)
-	{
-		if (context->ts_start_of_current_line == -1)
-		{
-			// CFS: Means that the line has characters but we don't have a timestamp for the first one. Since the timestamp
-			// is set for example by the write_char function, it possible that we don't have one in empty lines (unclear)
-			// For now, let's not consider this a bug as before and just return.
-			// fatal (EXIT_BUG_BUG, "Bug in timedtranscript (ts_start_of_current_line==-1). Please report.");
-			return;
-		}
-
-		if (ccx_options.transcript_settings.showStartTime){
-			char buf1[80];
-			if (ccx_options.transcript_settings.relativeTimestamp){
-				millis_to_date(context->ts_start_of_current_line + subs_delay, buf1);
-				fdprintf(context->out->fh, "%s|", buf1);
-			}
-			else {
-				mstotime(context->ts_start_of_current_line + subs_delay, &h1, &m1, &s1, &ms1);
-				time_t start_time_int = (context->ts_start_of_current_line + subs_delay) / 1000;
-				int start_time_dec = (context->ts_start_of_current_line + subs_delay) % 1000;
-				struct tm *start_time_struct = gmtime(&start_time_int);
-				strftime(buf1, sizeof(buf1), "%Y%m%d%H%M%S", start_time_struct);
-				fdprintf(context->out->fh, "%s%c%03d|", buf1,ccx_options.millis_separator,start_time_dec);
-			}
-		}
-
-		if (ccx_options.transcript_settings.showEndTime){
-			char buf2[80];
-			if (ccx_options.transcript_settings.relativeTimestamp){
-				millis_to_date(get_fts() + subs_delay, buf2);
-				fdprintf(context->out->fh, "%s|", buf2);
-			}
-			else {
-				mstotime(get_fts() + subs_delay, &h2, &m2, &s2, &ms2);
-				time_t end_time_int = (get_fts() + subs_delay) / 1000;
-				int end_time_dec = (get_fts() + subs_delay) % 1000;
-				struct tm *end_time_struct = gmtime(&end_time_int);
-				strftime(buf2, sizeof(buf2), "%Y%m%d%H%M%S", end_time_struct);
-				fdprintf(context->out->fh, "%s%c%03d|", buf2,ccx_options.millis_separator,end_time_dec);
-			}
-		}
-
-		if (ccx_options.transcript_settings.showCC){
-			fdprintf(context->out->fh, "CC%d|", context->my_field == 1 ? context->channel : context->channel + 2); // Data from field 2 is CC3 or 4
-		}
-
-		if (ccx_options.transcript_settings.showMode){
-			const char *mode = "???";
-			switch (context->mode)
-			{
-			case MODE_POPON:
-				mode = "POP";
-				break;
-			case MODE_FAKE_ROLLUP_1:
-				mode = "RU1";
-				break;
-			case MODE_ROLLUP_2:
-				mode = "RU2";
-				break;
-			case MODE_ROLLUP_3:
-				mode = "RU3";
-				break;
-			case MODE_ROLLUP_4:
-				mode = "RU4";
-				break;
-			case MODE_TEXT:
-				mode = "TXT";
-				break;
-			case MODE_PAINTON:
-				mode = "PAI";
-				break;
-			}
-
-			fdprintf(context->out->fh, "%s|", mode);
-		}
-
-		write(context->out->fh, subline, length);
-		write(context->out->fh, encoded_crlf, encoded_crlf_length);
-	}
-	// fprintf (wb->fh,encoded_crlf);
-}
-
-int write_cc_buffer_as_transcript(struct eia608_screen *data, struct s_context_cc608 *context)
-{
-	int wrote_something = 0;
-	context->ts_start_of_current_line = context->current_visible_start_ms;
-	dbg_print(CCX_DMT_608, "\n- - - TRANSCRIPT caption - - -\n");
-
-	for (int i=0;i<15;i++)
-	{
-		if (data->row_used[i])
-		{
-			write_cc_line_as_transcript (data,context, i);
-		}
-		wrote_something=1;
-	}
-	dbg_print(CCX_DMT_608, "- - - - - - - - - - - -\r\n");
-	return wrote_something;
-}
-
-
-
-
 struct eia608_screen *get_current_visible_buffer(struct s_context_cc608 *context)
 {
 	struct eia608_screen *data;
@@ -395,10 +276,8 @@ int write_cc_buffer(struct s_context_cc608 *context, struct cc_subtitle *sub)
 		processed_enough=1;
 		return 0;
 	}
-	if (context->visible_buffer == 1)
-		data = &context->buffer1;
-	else
-		data = &context->buffer2;
+	
+	data = get_current_visible_buffer(context);
 
 	if (context->mode == MODE_FAKE_ROLLUP_1 && // Use the actual start of data instead of last buffer change
 		context->ts_start_of_current_line != -1)
@@ -408,6 +287,7 @@ int write_cc_buffer(struct s_context_cc608 *context, struct cc_subtitle *sub)
 	end_time = get_visible_end() + subs_delay;
 	data->start_time = 0;
 	data->end_time = 0;
+	data->mode = context->mode;
 
 	if (!data->empty)
 	{
@@ -445,6 +325,64 @@ int write_cc_buffer(struct s_context_cc608 *context, struct cc_subtitle *sub)
 
 	}
 	return wrote_something;
+}
+int write_cc_line(struct s_context_cc608 *context, struct cc_subtitle *sub)
+{
+	struct eia608_screen *data;
+	LLONG start_time;
+	LLONG end_time;
+	int i = 0;
+	int wrote_something=0;
+	data = get_current_visible_buffer(context);
+	
+	start_time = context->ts_start_of_current_line + subs_delay;
+	end_time = get_visible_end() + subs_delay;
+	data->start_time = 0;
+	data->end_time = 0;
+	data->mode = context->mode;
+
+	if(get_decoder_line_basic (subline, context->cursor_row, data) > 0 )
+	{
+		sub->data = (struct eia608_screen *) realloc(sub->data,sub->size + sizeof(*data));
+		if (!sub->data)
+		{
+			mprint("No Memory left");
+			return 0;
+		}
+		memcpy(((struct eia608_screen *)sub->data) + (sub->size/sizeof(*data)), data, sizeof(*data));
+		data = ((struct eia608_screen *)sub->data) + (sub->size/sizeof(*data));
+		sub->size += sizeof(*data);
+
+		for(i = 0; i < 15; i++)
+		{
+			if(i == context->cursor_row)
+				data->row_used[i] = 1;
+			else
+				data->row_used[i] = 0;
+		}
+		wrote_something = 1;
+		if(start_time < end_time)
+		{
+			int nb_data = sub->size/sizeof(*data);
+			data = (struct eia608_screen *)sub->data;
+			for(i = 0; i < sub->size/sizeof(*data); i++)
+			{
+				if(!data->start_time)
+					break;
+				nb_data--;
+				data++;
+			}
+			for(i = 0; i < nb_data; i++)
+			{
+				data->start_time = start_time + ( ( (end_time - start_time)/nb_data ) * i );
+				data->end_time = start_time + ( ( (end_time - start_time)/nb_data ) * (i + 1) );
+				data++;
+			}
+			sub->got_output = 1;
+		}
+	}
+	return wrote_something;
+	
 }
 
 // Check if a rollup would cause a line to go off the visible area
@@ -774,7 +712,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct 
 			}
 			if (ccx_options.write_format==CCX_OF_TRANSCRIPT)
 			{
-				write_cc_line_as_transcript(get_current_visible_buffer(context), context, context->cursor_row);
+				write_cc_line(context,sub);
 			}
 
 			// In transcript mode, CR doesn't write the whole screen, to avoid
@@ -812,10 +750,12 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct 
 				// In transcript mode we just write the cursor line. The previous lines
 				// should have been written already, so writing everything produces
 				// duplicate lines.
-				write_cc_line_as_transcript(get_current_visible_buffer(context), context, context->cursor_row);
+				write_cc_line(context, sub);
 			}
 			else
 			{
+				if (ccx_options.write_format==CCX_OF_TRANSCRIPT)
+					context->ts_start_of_current_line = context->current_visible_start_ms;
 				if (write_cc_buffer(context, sub))
 					context->screenfuls_counter++;
 			}

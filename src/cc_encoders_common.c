@@ -89,6 +89,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 {
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
+	LLONG start_time = data->start_time;
 	LLONG end_time = data->end_time;
 	if (ccx_options.sentence_cap)
 	{
@@ -115,13 +116,13 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		if (ccx_options.transcript_settings.showStartTime){
 			char buf1[80];
 			if (ccx_options.transcript_settings.relativeTimestamp){
-				millis_to_date(data->start_time + subs_delay, buf1);
+				millis_to_date(start_time + subs_delay, buf1);
 				fdprintf(context->out->fh, "%s|", buf1);
 			}
 			else {
-				mstotime(data->start_time + subs_delay, &h1, &m1, &s1, &ms1);
-				time_t start_time_int = (data->start_time + subs_delay) / 1000;
-				int start_time_dec = (data->start_time + subs_delay) % 1000;
+				mstotime(start_time + subs_delay, &h1, &m1, &s1, &ms1);
+				time_t start_time_int = (start_time + subs_delay) / 1000;
+				int start_time_dec = (start_time + subs_delay) % 1000;
 				struct tm *start_time_struct = gmtime(&start_time_int);
 				strftime(buf1, sizeof(buf1), "%Y%m%d%H%M%S", start_time_struct);
 				fdprintf(context->out->fh, "%s%c%03d|", buf1,ccx_options.millis_separator,start_time_dec);
@@ -182,17 +183,16 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 	// fprintf (wb->fh,encoded_crlf);
 }
 
-int write_cc_buffer_as_transcript2(struct encoder_ctx *context, struct cc_subtitle *sub)
+int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context)
 {
 	int wrote_something = 0;
-	struct eia608_screen *data = (struct eia608_screen *)sub->data;
 	dbg_print(CCX_DMT_608, "\n- - - TRANSCRIPT caption - - -\n");
 
 	for (int i=0;i<15;i++)
 	{
 		if (data->row_used[i])
 		{
-			write_cc_line_as_transcript2 (sub->data, context, i);
+			write_cc_line_as_transcript2 (data, context, i);
 		}
 		wrote_something=1;
 	}
@@ -344,7 +344,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				wrote_something = write_cc_buffer_as_smptett(data, context);
 				break;
 			case CCX_OF_TRANSCRIPT:
-				wrote_something = write_cc_buffer_as_transcript2(context, sub);
+				wrote_something = write_cc_buffer_as_transcript2(data, context);
 				break;
 			case CCX_OF_SPUPNG:
 				wrote_something = write_cc_buffer_as_spupng(data, context);
