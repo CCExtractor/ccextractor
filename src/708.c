@@ -143,6 +143,9 @@ void clearTV (cc708_service_decoder *decoder, int buffer) // Buffer => 1 or 2
 
 void printTVtoSRT (cc708_service_decoder *decoder, int which)
 {
+	if (CCX_OF_NULL == ccx_options.write_format)
+		return;
+
 	/* tvscreen *tv = (which==1)? &decoder->tv1:&decoder->tv2; */
     unsigned h1,m1,s1,ms1;
     unsigned h2,m2,s2,ms2;
