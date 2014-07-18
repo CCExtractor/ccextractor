@@ -146,7 +146,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		}
 
 		if (ccx_options.transcript_settings.showCC){
-//			fdprintf(context->out->fh, "CC%d|", context->my_field == 1 ? context->channel : context->channel + 2); // Data from field 2 is CC3 or 4
+			fdprintf(context->out->fh, "CC%d|", data->my_field == 1 ? data->channel : data->channel + 2); // Data from field 2 is CC3 or 4
 		}
 		if (ccx_options.transcript_settings.showMode){
 			const char *mode = "???";
@@ -320,6 +320,9 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	int wrote_something = 0 ;
 	new_sentence=1;
 	struct eia608_screen *data = NULL;
+
+	if (ccx_options.extract!=1)
+		context++;
 
 	for(data = sub->data; sub->size ; sub->size -= sizeof(struct eia608_screen))
 	{

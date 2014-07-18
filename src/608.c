@@ -288,6 +288,8 @@ int write_cc_buffer(struct s_context_cc608 *context, struct cc_subtitle *sub)
 	data->start_time = 0;
 	data->end_time = 0;
 	data->mode = context->mode;
+	data->channel = context->channel;
+	data->my_field = context->my_field;
 
 	if (!data->empty)
 	{
@@ -333,15 +335,19 @@ int write_cc_line(struct s_context_cc608 *context, struct cc_subtitle *sub)
 	LLONG end_time;
 	int i = 0;
 	int wrote_something=0;
+	int ret = 0;
 	data = get_current_visible_buffer(context);
 	
 	start_time = context->ts_start_of_current_line + subs_delay;
-	end_time = get_visible_end() + subs_delay;
+	end_time = get_fts() + subs_delay;
 	data->start_time = 0;
 	data->end_time = 0;
 	data->mode = context->mode;
+	data->channel = context->channel;
+	data->my_field = context->my_field;
 
-	if(get_decoder_line_basic (subline, context->cursor_row, data) > 0 )
+	ret = get_decoder_line_basic (subline, context->cursor_row, data);
+	if( ret > 0 )
 	{
 		sub->data = (struct eia608_screen *) realloc(sub->data,sub->size + sizeof(*data));
 		if (!sub->data)

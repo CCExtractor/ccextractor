@@ -22,6 +22,8 @@ struct eia608_screen // A CC buffer
 	LLONG start_time;
 	LLONG end_time;
 	enum cc_modes mode;
+	int channel; // Currently selected channel
+	int my_field; // Used for sanity checks
 };
 
 struct s_context_cc608
