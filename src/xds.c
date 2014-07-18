@@ -603,7 +603,7 @@ int xds_do_current_and_future ()
 					xdsprint("Elapsed (SS) :%02d",el_sec);
 				}
 				if (!xds_program_length_shown)
-					printf ("\n");
+					xdsprint("\n");
 				else
 					dbg_print(CCX_DMT_XDS, "\n");
 				xds_program_length_shown=1;
