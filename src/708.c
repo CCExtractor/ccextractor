@@ -267,7 +267,7 @@ void updateScreen (cc708_service_decoder *decoder)
 		if (decoder->windows[i].is_defined && decoder->windows[i].visible && !decoder->windows[i].is_empty)
             wnd[visible++]=&decoder->windows[i];
     }
-    qsort (wnd,visible,sizeof (int),compWindowsPriorities);
+    qsort (wnd,visible,sizeof (e708Window *),compWindowsPriorities);
     dbg_print(CCX_DMT_708, "Visible (and populated) windows in priority order: ");
     for (int i=0;i<visible;i++)
     {
