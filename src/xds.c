@@ -427,9 +427,12 @@ void xds_do_copy_generation_management_system (struct cc_subtitle *sub, unsigned
 
 	}
 
-	xdsprint(sub, copy_permited);
-	xdsprint(sub, aps);
-	xdsprint(sub, rcd);
+	if (ccx_options.transcript_settings.xds)
+	{
+		xdsprint(sub, copy_permited);
+		xdsprint(sub, aps);
+		xdsprint(sub, rcd);
+	}
 	if (changed)				
 	{
 		mprint ("\rXDS: %s\n",copy_permited);
@@ -517,8 +520,11 @@ void xds_do_content_advisory (struct cc_subtitle *sub, unsigned c1, unsigned c2)
 	// Bits a1 and a0 determine the encoding. I'll add parsing as more samples become available
 	if (!a1 && a0) // US TV parental guidelines
 	{		
-		xdsprint(sub, age);
-		xdsprint(sub, content);
+		if (ccx_options.transcript_settings.xds)
+		{
+			xdsprint(sub, age);
+			xdsprint(sub, content);
+		}
 		if (changed)				
 		{
 			mprint ("\rXDS: %s\n  ",age);
@@ -531,7 +537,8 @@ void xds_do_content_advisory (struct cc_subtitle *sub, unsigned c1, unsigned c2)
 			(a0 && a1 && !Da2 && !La3) // Canadian English Language Rating
 	) 
 	{
-		xdsprint(sub, rating);
+		if (ccx_options.transcript_settings.xds)
+			xdsprint(sub, rating);
 		if (changed)				
 			mprint ("\rXDS: %s\n  ",rating);
 		dbg_print(CCX_DMT_XDS, "\rXDS: %s\n",rating);
@@ -579,7 +586,8 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 				dbg_print(CCX_DMT_XDS, "PIN (Start Time): %s  %02d-%02d %02d:%02d\n",
 						(cur_xds_packet_class==XDS_CLASS_CURRENT?"Current":"Future"),
 						date,month,hour,min);
-				xdsprint (sub, "PIN (Start Time): %s  %02d-%02d %02d:%02d\n",
+				if (ccx_options.transcript_settings.xds)
+					xdsprint (sub, "PIN (Start Time): %s  %02d-%02d %02d:%02d\n",
 						(cur_xds_packet_class==XDS_CLASS_CURRENT?"Current":"Future"),
 						date,month,hour,min);
 
@@ -605,7 +613,8 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 				else
 					dbg_print(CCX_DMT_XDS, "\rXDS: Program length (HH:MM): %02d:%02d  ",hour,min);
 
-				xdsprint(sub, "Program length (HH:MM): %02d:%02d  ",hour,min);
+				if (ccx_options.transcript_settings.xds)
+					xdsprint(sub, "Program length (HH:MM): %02d:%02d  ",hour,min);
 
 				if (cur_xds_payload_length>6) // Next two bytes (optional) available
 				{
@@ -615,7 +624,8 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 						mprint ("Elapsed (HH:MM): %02d:%02d",el_hour,el_min);
 					else
 						dbg_print(CCX_DMT_XDS, "Elapsed (HH:MM): %02d:%02d",el_hour,el_min);
-					xdsprint(sub, "Elapsed (HH:MM): %02d:%02d",el_hour,el_min);
+					if (ccx_options.transcript_settings.xds)
+						xdsprint(sub, "Elapsed (HH:MM): %02d:%02d",el_hour,el_min);
 
 				}
 				if (cur_xds_payload_length>8) // Next two bytes (optional) available
@@ -623,7 +633,8 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 					int el_sec=cur_xds_payload[6] & 0x3f; // 6 bits							
 					if (!xds_program_length_shown)
 						dbg_print(CCX_DMT_XDS, ":%02d",el_sec);
-					xdsprint(sub, "Elapsed (SS) :%02d",el_sec);
+					if (ccx_options.transcript_settings.xds)
+						xdsprint(sub, "Elapsed (SS) :%02d",el_sec);
 				}
 				if (!xds_program_length_shown)
 					printf ("\n");
@@ -641,7 +652,8 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 					xds_program_name[i-2]=cur_xds_payload[i];
 				xds_program_name[i-2]=0;
 				dbg_print(CCX_DMT_XDS, "\rXDS Program name: %s\n",xds_program_name);
-				xdsprint(sub, "Program name: %s",xds_program_name);
+				if (ccx_options.transcript_settings.xds)
+					xdsprint(sub, "Program name: %s",xds_program_name);
 				if (cur_xds_packet_class==XDS_CLASS_CURRENT && 
 					strcmp (xds_program_name, current_xds_program_name)) // Change of program
 				{
@@ -753,7 +765,8 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 					{					
 						dbg_print(CCX_DMT_XDS, "\rXDS description line %d: %s\n",line_num,xds_desc);
 					}
-					xdsprint(sub, "XDS description line %d: %s",line_num,xds_desc);
+					if (ccx_options.transcript_settings.xds)
+						xdsprint(sub, "XDS description line %d: %s",line_num,xds_desc);
 					activity_xds_program_description (line_num, xds_desc);
 				}
 				break;
@@ -777,7 +790,8 @@ int xds_do_channel (struct cc_subtitle *sub)
 				xds_network_name[i-2]=cur_xds_payload[i];
 			xds_network_name[i-2]=0;
 			dbg_print(CCX_DMT_XDS, "XDS Network name: %s\n",xds_network_name);
-			xdsprint (sub, "Network: %s",xds_network_name);
+			if (ccx_options.transcript_settings.xds)
+				xdsprint (sub, "Network: %s",xds_network_name);
 			if (strcmp (xds_network_name, current_xds_network_name)) // Change of station
 			{
 				mprint ("XDS Notice: Network is now %s\n", xds_network_name);
@@ -797,7 +811,8 @@ int xds_do_channel (struct cc_subtitle *sub)
 				}
 				xds_call_letters[i-2]=0;				
 				dbg_print(CCX_DMT_XDS, "XDS Network call letters: %s\n",xds_call_letters);
-				xdsprint (sub, "Call Letters: %s",xds_call_letters);
+				if (ccx_options.transcript_settings.xds)
+					xdsprint (sub, "Call Letters: %s",xds_call_letters);
 				if (strcmp (xds_call_letters, current_xds_call_letters)) // Change of station
 				{
 					mprint ("XDS Notice: Network call letters now %s\n", xds_call_letters);
@@ -817,7 +832,7 @@ int xds_do_channel (struct cc_subtitle *sub)
 			unsigned b3=(cur_xds_payload[4])&0x10;
 			unsigned b4=(cur_xds_payload[5])&0x10;
 			unsigned tsid=(b4<<12) | (b3<<8) | (b2<<4) | b1;
-			if (tsid)
+			if (tsid && ccx_options.transcript_settings.xds)
 				xdsprint (sub, "TSID: %u",tsid);
 			break;
 	}
@@ -936,7 +951,8 @@ void do_end_of_xds (struct cc_subtitle *sub, unsigned char expected_checksum)
 		case XDS_CLASS_PRIVATE: // CEA-608:
 			// The Private Data Class is for use in any closed system for whatever that 
 			// system wishes. It shall not be defined by this standard now or in the future. 			 
-			was_proc=xds_do_private_data(sub);
+			if (ccx_options.transcript_settings.xds)
+				was_proc=xds_do_private_data(sub);
 			break;
 	}
 	
