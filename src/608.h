@@ -34,6 +34,7 @@ struct eia608_screen // A CC buffer
 	int my_field; // Used for sanity checks
 	char *xds_str;
 	size_t xds_len;
+	int cur_xds_packet_class;
 };
 
 struct s_context_cc608

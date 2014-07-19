@@ -137,7 +137,8 @@ int write_xds_string(struct cc_subtitle *sub,char *p,size_t len)
 		data->start_time = ts_start_of_xds;
 		data->end_time =  get_fts();
 		data->xds_str = p;
-		data->xds_len = len;	
+		data->xds_len = len;
+		data->cur_xds_packet_class = cur_xds_packet_class;
 		sub->nb_data++;
 		sub->got_output = 1;
 	}
@@ -171,7 +172,7 @@ void xds_write_transcript_line_suffix (struct ccx_s_write *wb)
     write (wb->fh, encoded_crlf, encoded_crlf_length);
 }
 
-void xds_write_transcript_line_prefix (struct ccx_s_write *wb, LLONG start_time, LLONG end_time)
+void xds_write_transcript_line_prefix (struct ccx_s_write *wb, LLONG start_time, LLONG end_time, int cur_xds_packet_class)
 {
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;

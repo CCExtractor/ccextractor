@@ -334,7 +334,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 
 		if(data->format == SFORMAT_XDS)
 		{
-			xds_write_transcript_line_prefix (context->out, data->start_time, data->end_time);
+			xds_write_transcript_line_prefix (context->out, data->start_time, data->end_time,data->cur_xds_packet_class);
 			write (context->out->fh, data->xds_str,data->xds_len);
 			freep (&data->xds_str);
 			xds_write_transcript_line_suffix (context->out);
