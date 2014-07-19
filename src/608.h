@@ -12,8 +12,16 @@ enum cc_modes
 	MODE_FAKE_ROLLUP_1 = 100
 };
 
+enum ccx_eia608_format
+{
+	SFORMAT_CC_SCREEN,
+	SFORMAT_CC_LINE,
+	SFORMAT_XDS
+};
+
 struct eia608_screen // A CC buffer
 {
+	enum ccx_eia608_format format;
 	unsigned char characters[15][33];
 	unsigned char colors[15][33];
 	unsigned char fonts[15][33]; // Extra char at the end for a 0
@@ -24,6 +32,8 @@ struct eia608_screen // A CC buffer
 	enum cc_modes mode;
 	int channel; // Currently selected channel
 	int my_field; // Used for sanity checks
+	char *xds_str;
+	size_t xds_len;
 };
 
 struct s_context_cc608

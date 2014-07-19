@@ -293,22 +293,22 @@ int write_cc_buffer(struct s_context_cc608 *context, struct cc_subtitle *sub)
 
 	if (!data->empty)
 	{
-		sub->data = (struct eia608_screen *) realloc(sub->data,sub->size + sizeof(*data));
+		sub->data = (struct eia608_screen *) realloc(sub->data,( sub->nb_data + 1 ) * sizeof(*data));
 		if (!sub->data)
 		{
 			mprint("No Memory left");
 			return 0;
 		}
 
-		memcpy(((struct eia608_screen *)sub->data) + (sub->size/sizeof(*data)), data, sizeof(*data));
-		sub->size += sizeof(*data);
+		memcpy(((struct eia608_screen *)sub->data) + sub->nb_data, data, sizeof(*data));
+		sub->nb_data++;
 		wrote_something = 1;
 		if(start_time < end_time)
 		{
 			int i = 0;
-			int nb_data = sub->size/sizeof(*data);
+			int nb_data = sub->nb_data;
 			data = (struct eia608_screen *)sub->data;
-			for(i = 0; i < sub->size/sizeof(*data); i++)
+			for(i = 0; i < sub->nb_data; i++)
 			{
 				if(!data->start_time)
 					break;
@@ -349,15 +349,15 @@ int write_cc_line(struct s_context_cc608 *context, struct cc_subtitle *sub)
 	ret = get_decoder_line_basic (subline, context->cursor_row, data);
 	if( ret > 0 )
 	{
-		sub->data = (struct eia608_screen *) realloc(sub->data,sub->size + sizeof(*data));
+		sub->data = (struct eia608_screen *) realloc(sub->data,(sub->nb_data +1) * sizeof(*data));
 		if (!sub->data)
 		{
 			mprint("No Memory left");
 			return 0;
 		}
-		memcpy(((struct eia608_screen *)sub->data) + (sub->size/sizeof(*data)), data, sizeof(*data));
-		data = ((struct eia608_screen *)sub->data) + (sub->size/sizeof(*data));
-		sub->size += sizeof(*data);
+		memcpy(((struct eia608_screen *)sub->data) + sub->nb_data, data, sizeof(*data));
+		data = (struct eia608_screen *)sub->data + sub->nb_data;
+		sub->nb_data++;
 
 		for(i = 0; i < 15; i++)
 		{
@@ -369,9 +369,9 @@ int write_cc_line(struct s_context_cc608 *context, struct cc_subtitle *sub)
 		wrote_something = 1;
 		if(start_time < end_time)
 		{
-			int nb_data = sub->size/sizeof(*data);
+			int nb_data = sub->nb_data;
 			data = (struct eia608_screen *)sub->data;
-			for(i = 0; i < sub->size/sizeof(*data); i++)
+			for(i = 0; i < sub->nb_data; i++)
 			{
 				if(!data->start_time)
 					break;
@@ -1097,7 +1097,7 @@ int process608(const unsigned char *data, int length, struct s_context_cc608 *co
 		if (hi == 0x0F && in_xds_mode && (context == NULL || context->my_field == 2)) // End of XDS block
 		{
 			in_xds_mode=0;
-			do_end_of_xds (lo);
+			do_end_of_xds (sub, lo);
 			if (context)
 				context->channel = context->new_channel; // Switch from channel 3
 			continue;

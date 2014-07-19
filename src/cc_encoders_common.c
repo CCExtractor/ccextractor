@@ -324,11 +324,19 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	if (ccx_options.extract!=1)
 		context++;
 
-	for(data = sub->data; sub->size ; sub->size -= sizeof(struct eia608_screen))
+	for(data = sub->data; sub->nb_data ; sub->nb_data--)
 	{
 		if(!data || !data->start_time)
 			break;
 		new_sentence=1;
+
+		if(data->format == SFORMAT_XDS)
+		{
+			xds_write_transcript_line_prefix (context->out, data->start_time, data->end_time);
+			write (context->out, data->xds_str,data->xds_len);
+			free (data->xds_str);
+			xds_write_transcript_line_suffix (context->out);
+		}
 		switch (ccx_options.write_format)
 		{
 			case CCX_OF_SRT:

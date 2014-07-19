@@ -4,8 +4,7 @@
 struct cc_subtitle
 {
 	void *data;
-	size_t size;
-	enum ccx_encoding_type format;
+	unsigned int nb_data;
 	int got_output;
 };
 

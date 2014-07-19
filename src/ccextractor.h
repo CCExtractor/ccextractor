@@ -369,7 +369,7 @@ void mp4_loop (char *filename);
 
 // xds.c
 void process_xds_bytes (const unsigned char hi, int lo);
-void do_end_of_xds (unsigned char expected_checksum);
+void do_end_of_xds (struct cc_subtitle *sub, unsigned char expected_checksum);
 void xds_init();
 
 // ccextractor.c

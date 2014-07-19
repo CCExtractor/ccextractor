@@ -225,7 +225,6 @@ struct sockaddr_in servaddr, cliaddr;
 
 
 struct ccx_s_write wbout1, wbout2; // Output structures
-struct ccx_s_write *wbxdsout=NULL; // Pointer, so it can share the same output file 
 
 /* File handles */
 FILE *fh_out_elementarystream;
@@ -547,16 +546,11 @@ int main(int argc, char *argv[])
 
 	if (ccx_options.transcript_settings.xds)
 	{
-		if (ccx_options.write_format==CCX_OF_TRANSCRIPT)
+		if (ccx_options.write_format != CCX_OF_TRANSCRIPT)
 		{
-			if (wbout1.fh!=-1)
-				wbxdsout=&wbout1;
-			else
-				if (wbout2.fh!=-1)
-					wbxdsout=&wbout2;
-		}
-		else
+			ccx_options.transcript_settings.xds = 0;
 			mprint ("Warning: -xds ignored, XDS can only be exported to transcripts at this time.\n");
+		}
 	}
 
 	if (ccx_options.teletext_mode == CCX_TXT_IN_USE) // Here, it would mean it was forced by user
