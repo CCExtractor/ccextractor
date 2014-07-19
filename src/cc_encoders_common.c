@@ -4,6 +4,8 @@
 #include "spupng_encoder.h"
 #include "608_spupng.h"
 #include "utility.h"
+#include "xds.h"
+
 static const char *sami_header= // TODO: Revise the <!-- comments
 "<SAMI>\n\
 <HEAD>\n\
@@ -333,7 +335,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		if(data->format == SFORMAT_XDS)
 		{
 			xds_write_transcript_line_prefix (context->out, data->start_time, data->end_time);
-			write (context->out, data->xds_str,data->xds_len);
+			write (context->out->fh, data->xds_str,data->xds_len);
 			free (data->xds_str);
 			xds_write_transcript_line_suffix (context->out);
 		}
