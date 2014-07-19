@@ -132,7 +132,7 @@ int write_xds_string(struct cc_subtitle *sub,char *p,size_t len)
 	else
 	{
 		sub->data = data;
-		data = sub->data + sub->nb_data;
+		data = (struct eia608_screen *)sub->data + sub->nb_data;
 		data->format = SFORMAT_XDS;
 		data->start_time = ts_start_of_xds;
 		data->end_time =  get_fts();
@@ -678,6 +678,7 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 			if (!current_program_type_reported)
 				mprint ("\rXDS Program Type: ");
 
+			*str = '\0';
 			tstr = str;
 			for (int i=2;i<cur_xds_payload_length - 1; i++)
 			{								
@@ -702,7 +703,8 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 					mprint ("] ");						
 				}
 			}
-			xdsprint(sub,"Program type %s",str);
+			if (ccx_options.transcript_settings.xds)
+				xdsprint(sub,"Program type %s",str);
 			if (!current_program_type_reported)
 				mprint ("\n");
 			current_program_type_reported=1;

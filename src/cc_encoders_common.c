@@ -326,7 +326,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	if (ccx_options.extract!=1)
 		context++;
 
-	for(data = sub->data; sub->nb_data ; sub->nb_data--)
+	for(data = sub->data; sub->nb_data ; sub->nb_data--,data++)
 	{
 		if(!data || !data->start_time)
 			break;
@@ -336,8 +336,9 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		{
 			xds_write_transcript_line_prefix (context->out, data->start_time, data->end_time);
 			write (context->out->fh, data->xds_str,data->xds_len);
-			free (data->xds_str);
+			freep (&data->xds_str);
 			xds_write_transcript_line_suffix (context->out);
+			continue;
 		}
 		switch (ccx_options.write_format)
 		{
@@ -370,7 +371,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 
 		if (ccx_options.gui_mode_reports)
 			write_cc_buffer_to_gui(sub->data, context);
-		data++;
 	}
 
 	freep(&sub->data);
