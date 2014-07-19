@@ -328,18 +328,20 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 
 	for(data = sub->data; sub->nb_data ; sub->nb_data--,data++)
 	{
-		if(!data || !data->start_time)
-			break;
 		new_sentence=1;
 
 		if(data->format == SFORMAT_XDS)
 		{
 			xds_write_transcript_line_prefix (context->out, data->start_time, data->end_time,data->cur_xds_packet_class);
-			write (context->out->fh, data->xds_str,data->xds_len);
+			if(data->xds_len > 0)
+				write (context->out->fh, data->xds_str,data->xds_len);
 			freep (&data->xds_str);
 			xds_write_transcript_line_suffix (context->out);
 			continue;
 		}
+
+		if(!data->start_time)
+			break;
 		switch (ccx_options.write_format)
 		{
 			case CCX_OF_SRT:
