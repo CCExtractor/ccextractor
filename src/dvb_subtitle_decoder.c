@@ -21,9 +21,6 @@
 #include <limits.h>
 #include <errno.h>
 
-#ifdef _MSC_VER
-#define snprintf(str,size,format,...) _snprintf(str,size-1,format,__VA_ARGS__)
-#endif
 
 #include "dvb_subtitle_decoder.h"
 #include "spupng_encoder.h"
