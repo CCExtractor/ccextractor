@@ -5,6 +5,7 @@ License: GPL 2.0
 #include <stdio.h>
 #include "ccextractor.h"
 #include "configuration.h"
+#include "cc_encoders_common.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -224,7 +225,6 @@ struct sockaddr_in servaddr, cliaddr;
 
 
 struct ccx_s_write wbout1, wbout2; // Output structures
-struct ccx_s_write *wbxdsout=NULL; // Pointer, so it can share the same output file 
 
 /* File handles */
 FILE *fh_out_elementarystream;
@@ -244,6 +244,8 @@ LLONG process_raw_with_field (void);
 int main(int argc, char *argv[])
 {
 	char *c;
+	struct encoder_ctx enc_ctx[2];
+	struct cc_subtitle dec_sub;
 
 	// Initialize some constants
 	init_ts();
@@ -278,6 +280,7 @@ int main(int argc, char *argv[])
 	int show_myth_banner = 0;
 	
 	memset (&cea708services[0],0,63*sizeof (int));
+	memset (&dec_sub, 0,sizeof(dec_sub));
 	parse_configuration(&ccx_options);
 	parse_parameters (argc,argv);
 
@@ -412,7 +415,7 @@ int main(int argc, char *argv[])
 	}
 	if (buffer == NULL || pesheaderbuf==NULL ||
 		wbout1.filename == NULL || wbout2.filename == NULL ||
-		subline==NULL || init_file_buffer() || general_608_init())
+		subline==NULL || init_file_buffer() )
 	{
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");		
 	}
@@ -481,14 +484,16 @@ int main(int argc, char *argv[])
 					case CCX_OF_DVDRAW:
 						break;
 					case CCX_OF_RCWT:
-						write_subtitle_file_header(context_cc608_field_1.out); // RCWT header can't have a BOM before it, or parsing it later will not be possible.
+						if( init_encoder(enc_ctx,&wbout1) )
+							fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 						break;
 					default:
 						if (ccx_options.encoding==CCX_ENC_UTF_8) // Write BOM
 							writeraw (UTF8_BOM, sizeof (UTF8_BOM), &wbout1);
 						if (ccx_options.encoding==CCX_ENC_UNICODE) // Write BOM				
 							writeraw (LITTLE_ENDIAN_BOM, sizeof (LITTLE_ENDIAN_BOM), &wbout1);
-						write_subtitle_file_header(context_cc608_field_1.out);
+						if( init_encoder(enc_ctx,&wbout1) )
+							fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 				}
 			}
 			if (ccx_options.extract == 12 && ccx_options.write_format != CCX_OF_RAW)
@@ -530,14 +535,16 @@ int main(int argc, char *argv[])
 					case CCX_OF_DVDRAW:
 						break;
 					case CCX_OF_RCWT:
-						write_subtitle_file_header(context_cc608_field_2.out); // RCWT header can't have a BOM before it, or parsing it later will not be possible.
+						if( init_encoder(enc_ctx+1,&wbout2) )
+							fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 						break;
 					default:
 						if (ccx_options.encoding==CCX_ENC_UTF_8) // Write BOM
 							writeraw (UTF8_BOM, sizeof (UTF8_BOM), &wbout2);
 						if (ccx_options.encoding==CCX_ENC_UNICODE) // Write BOM				
 							writeraw (LITTLE_ENDIAN_BOM, sizeof (LITTLE_ENDIAN_BOM), &wbout2);
-						write_subtitle_file_header(context_cc608_field_2.out);
+						if( init_encoder(enc_ctx+1,&wbout2) )
+							fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 				}
 			}
 		}
@@ -545,16 +552,11 @@ int main(int argc, char *argv[])
 
 	if (ccx_options.transcript_settings.xds)
 	{
-		if (ccx_options.write_format==CCX_OF_TRANSCRIPT)
+		if (ccx_options.write_format != CCX_OF_TRANSCRIPT)
 		{
-			if (wbout1.fh!=-1)
-				wbxdsout=&wbout1;
-			else
-				if (wbout2.fh!=-1)
-					wbxdsout=&wbout2;
-		}
-		else
+			ccx_options.transcript_settings.xds = 0;
 			mprint ("Warning: -xds ignored, XDS can only be exported to transcripts at this time.\n");
+		}
 	}
 
 	if (ccx_options.teletext_mode == CCX_TXT_IN_USE) // Here, it would mean it was forced by user
@@ -687,25 +689,25 @@ int main(int argc, char *argv[])
 				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
 					ccx_options.use_gop_as_pts = 0; 
 				mprint ("\rAnalyzing data in general mode\n");
-				general_loop();
+				general_loop(&enc_ctx);
 				break;
 			case CCX_SM_MCPOODLESRAW:
 				mprint ("\rAnalyzing data in McPoodle raw mode\n");
-				raw_loop();
+				raw_loop(&enc_ctx);
 				break;
 			case CCX_SM_RCWT:
 				mprint ("\rAnalyzing data in CCExtractor's binary format\n");
-				rcwt_loop();
+				rcwt_loop(&enc_ctx);
 				break;
 			case CCX_SM_MYTH:
 				mprint ("\rAnalyzing data in MythTV mode\n");
 				show_myth_banner = 1;
-				myth_loop();
+				myth_loop(&enc_ctx);
 				break;
 			case CCX_SM_MP4:				
 				mprint ("\rAnalyzing data with GPAC (MP4 library)\n");
 				close_input_file(); // No need to have it open. GPAC will do it for us
-				processmp4 (inputfile[0]);										
+				processmp4 (inputfile[0],&enc_ctx);
 				break;
 #ifdef WTV_DEBUG
 			case CCX_SM_HEX_DUMP:
@@ -840,38 +842,38 @@ int main(int argc, char *argv[])
 
 	if (wbout1.fh!=-1)
 	{
-		if (ccx_options.write_format==CCX_OF_SPUPNG)
-		{
-			handle_end_of_data(&context_cc608_field_1);
-		}
 		if (ccx_options.write_format==CCX_OF_SMPTETT || ccx_options.write_format==CCX_OF_SAMI || 
-			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT)
+			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT
+			|| ccx_options.write_format==CCX_OF_SPUPNG )
 		{
-			handle_end_of_data(&context_cc608_field_1);
+			handle_end_of_data(&context_cc608_field_1, &dec_sub);
+			if (dec_sub.got_output)
+			{
+				encode_sub(enc_ctx,&dec_sub);
+				dec_sub.got_output = 0;
+			}
 		}
 		else if(ccx_options.write_format==CCX_OF_RCWT)
 		{
 			// Write last header and data
 			writercwtdata (NULL);
 		}
-		if (ccx_options.end_credits_text!=NULL)
-			try_to_add_end_credits(&context_cc608_field_1);
-		write_subtitle_file_footer(context_cc608_field_1.out);
+		dinit_encoder(enc_ctx);
 	}
 	if (wbout2.fh!=-1)
 	{
-		if (ccx_options.write_format==CCX_OF_SPUPNG)
-		{
-			handle_end_of_data(&context_cc608_field_2);
-		}
 		if (ccx_options.write_format==CCX_OF_SMPTETT || ccx_options.write_format==CCX_OF_SAMI || 
-			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT)
+			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT
+			|| ccx_options.write_format==CCX_OF_SPUPNG )
 		{
-			handle_end_of_data(&context_cc608_field_2);
+			handle_end_of_data(&context_cc608_field_2, &dec_sub);
+			if (dec_sub.got_output)
+			{
+				encode_sub(enc_ctx,&dec_sub);
+				dec_sub.got_output = 0;
+			}
 		}
-		if (ccx_options.end_credits_text!=NULL)
-			try_to_add_end_credits(&context_cc608_field_2);
-		write_subtitle_file_footer(context_cc608_field_2.out);
+		dinit_encoder(enc_ctx+1);
 	}
 	telxcc_close();
 	flushbuffer (&wbout1,true);

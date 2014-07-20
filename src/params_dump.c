@@ -173,7 +173,7 @@ void params_dump(void)
             mprint ("Yes, timeout: %d seconds",ccx_options.live_stream);
     }
     mprint ("] [Clock frequency: %d]\n",MPEG_CLOCK_FREQ);
-	mprint ("Teletext page: ");
+	mprint ("Teletext page: [");
 	if (tlt_config.page)
 		mprint ("%d]\n",tlt_config.page);
 	else

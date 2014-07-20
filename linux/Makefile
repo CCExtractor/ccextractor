@@ -1,7 +1,6 @@
 SHELL = /bin/sh
 
 CC = gcc
-CXX = g++
 
 CFLAGS = -O3 -std=gnu99
 INCLUDE = -I../src/gpacmp4/ -I../src/libpng -I../src/zlib
@@ -49,7 +48,7 @@ objs_dir:
 	mkdir -p $(OBJS_DIR)
 
 $(TARGET): $(OBJS) $(OBJS_PNG) $(OBJS_GPACMP4) $(OBJS_ZLIB)
-	$(CXX) $(ALL_FLAGS) $(CFLAGS) $(OBJS) $(OBJS_PNG) $(OBJS_GPACMP4) $(OBJS_ZLIB) $(LDFLAGS) -o $@
+	$(CC) $(ALL_FLAGS) $(CFLAGS) $(OBJS) $(OBJS_PNG) $(OBJS_GPACMP4) $(OBJS_ZLIB) $(LDFLAGS) -o $@
 
 $(OBJS_DIR)/%.o: %.c
 	$(CC) -c $(ALL_FLAGS) $(INCLUDE) $(CFLAGS) $< -o $@  
@@ -74,7 +73,7 @@ uninstall:
 
 .PHONY: depend dep
 depend dep:
-	$(CXX) $(CXXFLAGS) -E -MM $(SRCS_C) $(SRCS_PNG) $(SRCS_ZLIB) \
+	$(CC) $(CFLAGS) -E -MM $(SRCS_C) $(SRCS_PNG) $(SRCS_ZLIB) \
 		$(SRCS_GPACMP4_C) $(SRCS_GPACMP4_CPP) |\
 		sed 's/^[a-zA-Z_0-9]*.o/$(OBJS_DIR)\/&/' > .depend
 

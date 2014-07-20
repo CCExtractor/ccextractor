@@ -18,7 +18,7 @@ void writeraw (const unsigned char *data, int length, struct ccx_s_write *wb)
     write (wb->fh,data,length);
 }
 
-void writedata(const unsigned char *data, int length, struct s_context_cc608 *context)
+void writedata(const unsigned char *data, int length, struct s_context_cc608 *context, struct cc_subtitle *sub)
 {
     // Don't do anything for empty data
     if (data==NULL)
@@ -35,7 +35,7 @@ void writedata(const unsigned char *data, int length, struct s_context_cc608 *co
              ccx_options.write_format==CCX_OF_TRANSCRIPT ||
              ccx_options.write_format==CCX_OF_SPUPNG ||
 			 ccx_options.write_format==CCX_OF_NULL)
-        process608 (data,length,context);
+        process608 (data,length,context, sub);
     else
         fatal(EXIT_BUG_BUG, "Should not be reached!");
 }
@@ -102,7 +102,7 @@ void writeDVDraw (const unsigned char *data1, int length1,
 }
 
 void printdata (const unsigned char *data1, int length1,
-                const unsigned char *data2, int length2)
+                const unsigned char *data2, int length2, struct cc_subtitle *sub)
 {
 	if (ccx_options.write_format==CCX_OF_DVDRAW)
 		writeDVDraw (data1,length1,data2,length2,&wbout1);
@@ -110,14 +110,14 @@ void printdata (const unsigned char *data1, int length1,
     {
         if (length1 && ccx_options.extract!=2)
         {
-			writedata(data1, length1, &context_cc608_field_1);
+			writedata(data1, length1, &context_cc608_field_1, sub);
         }
         if (length2)
 		{
 			if (ccx_options.extract!=1) 
-				writedata(data2, length2, &context_cc608_field_2);
+				writedata(data2, length2, &context_cc608_field_2, sub);
 			else // User doesn't want field 2 data, but we want XDS.
-				writedata (data2,length2,NULL);
+				writedata (data2,length2,NULL, sub);
         }
     }
 }

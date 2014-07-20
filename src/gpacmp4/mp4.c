@@ -5,8 +5,9 @@
 #include <gpac/isomedia.h>
 #include "../ccextractor.h"
 #include "../utility.h"
+#include "../cc_encoders_common.h"
 
-void do_NAL (unsigned char *NALstart, LLONG NAL_length); // From avc_functions.c
+void do_NAL (unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub); // From avc_functions.c
 void set_fts(void); // From timing.c
 
 static short bswap16(short v)
@@ -25,7 +26,7 @@ static struct {
 	unsigned type[32];
 }s_nalu_stats;
 
-static int process_avc_sample(u32 timescale, GF_AVCConfig* c, GF_ISOSample* s)
+static int process_avc_sample(u32 timescale, GF_AVCConfig* c, GF_ISOSample* s, struct cc_subtitle *sub)
 {
 	int status = 0;
 	u32 i;
@@ -60,14 +61,14 @@ static int process_avc_sample(u32 timescale, GF_AVCConfig* c, GF_ISOSample* s)
 		temp_debug=0;
 
 		if (nal_length>0)
-			do_NAL ((unsigned char *) &(s->data[i]) ,nal_length);
+			do_NAL ((unsigned char *) &(s->data[i]) ,nal_length, sub);
 		i += nal_length;
 	} // outer for
 	assert(i == s->dataLength);
 
 	return status;
 }
-static int process_xdvb_track(const char* basename, GF_ISOFile* f, u32 track)
+static int process_xdvb_track(const char* basename, GF_ISOFile* f, u32 track, struct cc_subtitle *sub)
 {
 	u32 timescale, i, sample_count;
 
@@ -94,7 +95,7 @@ static int process_xdvb_track(const char* basename, GF_ISOFile* f, u32 track)
 				pts_set=1;
 			set_fts();
 
-			process_m2v ((unsigned char *) s->data,s->dataLength);
+			process_m2v ((unsigned char *) s->data,s->dataLength, sub);
 			gf_isom_sample_del(&s);
 		}
 
@@ -112,7 +113,7 @@ static int process_xdvb_track(const char* basename, GF_ISOFile* f, u32 track)
 	return status;
 }
 
-static int process_avc_track(const char* basename, GF_ISOFile* f, u32 track)
+static int process_avc_track(const char* basename, GF_ISOFile* f, u32 track, struct cc_subtitle *sub)
 {
 	u32 timescale, i, sample_count, last_sdi = 0;
 	int status;
@@ -153,7 +154,7 @@ static int process_avc_track(const char* basename, GF_ISOFile* f, u32 track)
 				last_sdi = sdi;
 			}
 
-			status = process_avc_sample(timescale, c, s);
+			status = process_avc_sample(timescale, c, s, sub);
 
 			gf_isom_sample_del(&s);
 
@@ -196,11 +197,13 @@ static int process_avc_track(const char* basename, GF_ISOFile* f, u32 track)
 		}
 
 */
-int processmp4 (char *file)
+int processmp4 (char *file,void *enc_ctx)
 {	
 	GF_ISOFile* f;
 	u32 i, j, track_count, avc_track_count, cc_track_count;
+	struct cc_subtitle dec_sub;
 
+	memset(&dec_sub,0,sizeof(dec_sub));
 	mprint("opening \'%s\': ", file);
 #ifdef MP4_DEBUG
 	gf_log_set_tool_level(GF_LOG_CONTAINER,GF_LOG_DEBUG);
@@ -242,10 +245,15 @@ int processmp4 (char *file)
 		{
 			if (cc_track_count && !ccx_options.mp4vidtrack)
 				continue;
-			if(process_xdvb_track(file, f, i + 1) != 0)
+			if(process_xdvb_track(file, f, i + 1, &dec_sub) != 0)
 			{
 				mprint("error\n");
 				return -3;
+			}
+			if(dec_sub.got_output)
+			{
+				encode_sub(enc_ctx, &dec_sub);
+				dec_sub.got_output = 0;
 			}
 		}
 
@@ -259,14 +267,19 @@ int processmp4 (char *file)
 				for (j=0; j<gf_list_count(cnf->sequenceParameterSets);j++)
 				{
 					GF_AVCConfigSlot* seqcnf=(GF_AVCConfigSlot* )gf_list_get(cnf->sequenceParameterSets,j);
-					do_NAL ((unsigned char *) seqcnf->data,seqcnf->size);
+					do_NAL ((unsigned char *) seqcnf->data, seqcnf->size, &dec_sub);
 				}
 			}
 
-			if(process_avc_track(file, f, i + 1) != 0)
+			if(process_avc_track(file, f, i + 1, &dec_sub) != 0)
 			{
 				mprint("error\n");
 				return -3;
+			}
+			if(dec_sub.got_output)
+			{
+				encode_sub(enc_ctx, &dec_sub);
+				dec_sub.got_output = 0;
 			}
 
 			
@@ -328,11 +341,23 @@ int processmp4 (char *file)
 					data += 4;
 					if (!strncmp(data, "cdat", 4) || !strncmp(data, "cdt2", 4))
 					{
+						int ret = 0;
+						int len = atomLength - 8;
 						data += 4;
 #ifdef MP4_DEBUG
 						dump(256, (unsigned char *)data, atomLength - 8, 0, 1);
 #endif
-						process608((unsigned char*)data, atomLength - 8, &context_cc608_field_1);
+						do
+						{
+							ret = process608((unsigned char*)data, len, &context_cc608_field_1, &dec_sub);
+							len -= ret;
+							data += ret;
+							if(dec_sub.got_output)
+							{
+								encode_sub(enc_ctx, &dec_sub);
+								dec_sub.got_output = 0;
+							}
+						} while (len > 0);
 					}
 					atomStart += atomLength;
 

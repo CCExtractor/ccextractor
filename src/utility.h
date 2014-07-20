@@ -5,6 +5,10 @@
 #include <arpa/inet.h>
 #endif
 
+#ifdef _MSC_VER
+#define snprintf(str,size,format,...) _snprintf(str,size-1,format,__VA_ARGS__)
+#endif
+
 #define RL32(x) (*(unsigned int *)(x))
 #define RB32(x) (ntohl(*(unsigned int *)(x)))
 #define RL16(x) (*(unsigned short int*)(x))

@@ -194,7 +194,7 @@ unknown_error:
 
 int
 spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
-                      struct s_context_cc608 *context)
+                      struct encoder_ctx *context)
 {
 	LLONG ms_start = data->start_time + subs_delay;
     if (ms_start < 0)
@@ -267,7 +267,7 @@ spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
 	write_spucomment(sp,str);
     return 1;
 }
-int write_cc_buffer_as_spupng(struct eia608_screen *data,struct s_context_cc608 *context)
+int write_cc_buffer_as_spupng(struct eia608_screen *data,struct encoder_ctx *context)
 {
     if (0 != context->out->spupng_data)
     {

@@ -9,7 +9,7 @@
 // Return TRUE if the data parsing finished, FALSE otherwise.
 // estream->pos is advanced. Data is only processed if ustream->error
 // is FALSE, parsing can set ustream->error to TRUE.
-int user_data(struct bitstream *ustream, int udtype)
+int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
 {
     dbg_print(CCX_DMT_VERBOSE, "user_data(%d)\n", udtype);
 
@@ -92,7 +92,7 @@ int user_data(struct bitstream *ustream, int udtype)
                         data[0]=0x04; // Field 1
                     else
                         data[0]=0x05; // Field 2
-                    do_cb(data);
+                    do_cb(data, sub);
                     rcbcount++;
                 }
                 else
@@ -123,7 +123,7 @@ int user_data(struct bitstream *ustream, int udtype)
                         data[0]=0x04; // Field 1
                     else
                         data[0]=0x05; // Field 2
-                    do_cb(data);
+                    do_cb(data, sub);
                     ecbcount++;
                 }
                 else
@@ -192,7 +192,7 @@ int user_data(struct bitstream *ustream, int udtype)
                 }
             }
             cc_data[cc_count*3]=0xFF;
-            store_hdcc(cc_data, cc_count, current_tref, fts_now);
+            store_hdcc(cc_data, cc_count, current_tref, fts_now, sub);
 
             dbg_print(CCX_DMT_VERBOSE, "Reading SCTE 20 CC blocks - done\n");
         }
@@ -214,12 +214,12 @@ int user_data(struct bitstream *ustream, int udtype)
         data[0]=0x05; // Field 2
         data[1]=read_u8(ustream);
         data[2]=read_u8(ustream);
-        do_cb(data);
+        do_cb(data, sub);
         read_bytes(ustream, 2); // Skip "CC 02" for R4000 or "AA 02" for R5000
         data[0]=0x04; // Field 1
         data[1]=read_u8(ustream);
         data[2]=read_u8(ustream);
-        do_cb(data);
+        do_cb(data, sub);
     }
     // HDTV - see A/53 Part 4 (Video)
     else if ( !memcmp(ud_header,"\x47\x41\x39\x34", 4 ) )
@@ -264,7 +264,7 @@ int user_data(struct bitstream *ustream, int udtype)
                 // Please note we store the current value of the global
                 // fts_now variable (and not get_fts()) as we are going to
                 // re-create the timeline in process_hdcc() (Slightly ugly).
-                store_hdcc(cc_data, cc_count, current_tref, fts_now);
+                store_hdcc(cc_data, cc_count, current_tref, fts_now, sub);
 
                 dbg_print(CCX_DMT_VERBOSE, "Reading HDTV blocks - done\n");
             }
@@ -344,7 +344,7 @@ int user_data(struct bitstream *ustream, int udtype)
 
             dishdata[cc_count*3] = 0xFF; // Set end marker
 
-            store_hdcc(dishdata, cc_count, current_tref, fts_now);
+            store_hdcc(dishdata, cc_count, current_tref, fts_now, sub);
 
             // Ignore 3 (0x0A, followed by two unknown) bytes.
             break;
@@ -369,7 +369,7 @@ int user_data(struct bitstream *ustream, int udtype)
             dbg_print(CCX_DMT_PARSE, "%s", debug_608toASC( dishdata, 0) );
             dbg_print(CCX_DMT_PARSE, "%s:\n", debug_608toASC( dishdata+3, 0) );
           
-            store_hdcc(dishdata, cc_count, current_tref, fts_now);
+            store_hdcc(dishdata, cc_count, current_tref, fts_now, sub);
 
             // Ignore 4 (0x020A, followed by two unknown) bytes.
             break;
@@ -434,7 +434,7 @@ int user_data(struct bitstream *ustream, int udtype)
                 dbg_print(CCX_DMT_PARSE, "%s:\n", debug_608toASC( dishdata+3, 0) );                
             }
 	    
-            store_hdcc(dishdata, cc_count, current_tref, fts_now);
+            store_hdcc(dishdata, cc_count, current_tref, fts_now, sub);
 	    
             // Ignore 3 (0x0A, followed by 2 unknown) bytes.
             break;
@@ -460,7 +460,7 @@ int user_data(struct bitstream *ustream, int udtype)
         data[0]=0x04; // Field 1
         data[1]=read_u8(ustream);
         data[2]=read_u8(ustream);
-        do_cb(data);
+        do_cb(data, sub);
         // This is probably incomplete!
     }
     else
