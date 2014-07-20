@@ -367,10 +367,10 @@ static int pre_process_bitmap(png_color **palette, png_byte **alpha, int size,
 	else
 	{
 		/* initialize colors with white */
-		memset(palette,0xff,sizeof(nb_color * sizeof(*lpalette)));
+		memset(palette,0xff,nb_color * sizeof(*lpalette));
 
 		/* initialize transparency as complete transparent */
-		memset(lalpha,0,sizeof(nb_color * sizeof(*lalpha)));
+		memset(lalpha,0,nb_color * sizeof(*lalpha));
 	}
 
 	if(bitmap)
