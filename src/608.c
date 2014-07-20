@@ -260,7 +260,6 @@ struct eia608_screen *get_current_visible_buffer(struct s_context_cc608 *context
 	return data;
 }
 
-
 int write_cc_buffer(struct s_context_cc608 *context, struct cc_subtitle *sub)
 {
 	struct eia608_screen *data;
@@ -808,7 +807,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, struct 
 void handle_end_of_data(struct s_context_cc608 *context, struct cc_subtitle *sub)
 {
 	// We issue a EraseDisplayedMemory here so if there's any captions pending
-	// they get written to file.
+	// they get written to Subtitle.
 	handle_command (0x14, 0x2c, context, sub); // EDM
 }
 

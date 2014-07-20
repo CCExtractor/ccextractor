@@ -18,22 +18,35 @@ enum ccx_eia608_format
 	SFORMAT_CC_LINE,
 	SFORMAT_XDS
 };
-
+/**
+ * This structure have fields which need to be ignored according to format,
+ * for example if format is SFORMAT_XDS then all fields other then 
+ * xds related (xds_str, xds_len and  cur_xds_packet_class) should be 
+ * ignored and not to be derefrenced.
+ *
+ * TODO use union inside struct for each kind of fields
+ */
 struct eia608_screen // A CC buffer
 {
+	/** format of data inside this structure */
 	enum ccx_eia608_format format;
 	unsigned char characters[15][33];
 	unsigned char colors[15][33];
 	unsigned char fonts[15][33]; // Extra char at the end for a 0
 	int row_used[15]; // Any data in row?
 	int empty; // Buffer completely empty?
+	/** start time of this CC buffer */
 	LLONG start_time;
+	/** end time of this CC buffer */
 	LLONG end_time;
 	enum cc_modes mode;
 	int channel; // Currently selected channel
 	int my_field; // Used for sanity checks
+	/** XDS string */
 	char *xds_str;
+	/** length of XDS string */
 	size_t xds_len;
+	/** Class of XDS string */
 	int cur_xds_packet_class;
 };
 
@@ -45,7 +58,6 @@ struct s_context_cc608
 	int visible_buffer;
 	int screenfuls_counter; // Number of meaningful screenfuls written
 	LLONG current_visible_start_ms; // At what time did the current visible buffer became so?
-	// unsigned current_visible_start_cc; // At what time did the current visible buffer became so?
 	enum cc_modes mode;
 	unsigned char last_c1, last_c2;
 	int channel; // Currently selected channel
@@ -59,7 +71,6 @@ struct s_context_cc608
 	long bytes_processed_608; // To be written ONLY by process_608
 	struct ccx_s_write *out;
 	int have_cursor_position;
-	struct cc_subtitle *sub;
 };
 
 extern unsigned char *enc_buffer;
