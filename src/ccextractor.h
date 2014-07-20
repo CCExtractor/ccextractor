@@ -369,18 +369,10 @@ void process_xds_bytes (const unsigned char hi, int lo);
 void do_end_of_xds (struct cc_subtitle *sub, unsigned char expected_checksum);
 void xds_init();
 
-// ccextractor.c
-LLONG calculate_gop_mstime (struct gop_time_code *g);
-void set_fts(void);
-char *print_mstime( LLONG mstime );
-void print_debug_timing( void );
-int switch_to_next_file (LLONG bytesinbuffer);
-
 // utility.c
 void fatal(int exit_code, const char *fmt, ...);
 void dvprint(const char *fmt, ...);
 void mprint (const char *fmt, ...);
-void subsprintf (const char *fmt, ...);
 void dbg_print(LLONG mask, const char *fmt, ...);
 void fdprintf (int fd, const char *fmt, ...);
 void init_boundary_time (struct ccx_boundary_time *bt);
