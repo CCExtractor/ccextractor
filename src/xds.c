@@ -13,7 +13,7 @@ static char xds_program_description[8][33];
 
 static char current_xds_network_name[33]; 
 static char current_xds_program_name[33]; 
-static char current_xds_call_letters[33];
+static char current_xds_call_letters[7];
 static char current_xds_program_type[33];
 
 static const char *XDSclasses[]=
@@ -804,8 +804,8 @@ int xds_do_channel (struct cc_subtitle *sub)
 		case XDS_TYPE_CALL_LETTERS_AND_CHANNEL:
 			{
 				was_proc=1;
-				char xds_call_letters[33];
-				if (cur_xds_payload_length<7) // We need 4-6 data bytes
+				char xds_call_letters[7];
+				if (cur_xds_payload_length != 7 && cur_xds_payload_length != 9) // We need 4-6 data bytes
 					break;												
 				for (i=2;i<cur_xds_payload_length-1;i++)
 				{
@@ -816,10 +816,10 @@ int xds_do_channel (struct cc_subtitle *sub)
 				dbg_print(CCX_DMT_XDS, "XDS Network call letters: %s\n",xds_call_letters);
 				if (ccx_options.transcript_settings.xds)
 					xdsprint (sub, "Call Letters: %s",xds_call_letters);
-				if (strcmp (xds_call_letters, current_xds_call_letters)) // Change of station
+				if (strncmp (xds_call_letters, current_xds_call_letters, 7)) // Change of station
 				{
 					mprint ("XDS Notice: Network call letters now %s\n", xds_call_letters);
-					strcpy (current_xds_call_letters,xds_call_letters);
+					strncpy (current_xds_call_letters, xds_call_letters, 7);
 					activity_xds_network_call_letters (current_xds_call_letters);
 				}
 			}
