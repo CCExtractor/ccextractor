@@ -111,18 +111,21 @@ static int parse_opts(char *str, struct ccx_s_options *opt)
 static void parse_file(FILE *f,struct ccx_s_options *opt)
 {
 	char *str = (char*)malloc(128);
-	char c = '\0';
+	unsigned char c = '\0';
 	int comments = 0;
 	int i = 0;
 	int ret = 0;
-	while ((c = fgetc(f)) != EOF )
+	*str = '\0';
+	while ((c = (unsigned char)fgetc(f)) != EOF )
 	{
 		if( c == '\n')
 		{
 			if( str[0] != '\0')
+			{
 				ret = parse_opts(str,opt);
 				if(ret < 0)
 					mprint("invalid configuration file\n");
+			}
 			comments = 0;
 			i = 0;
 			str[0] = '\0';
@@ -133,17 +136,17 @@ static void parse_file(FILE *f,struct ccx_s_options *opt)
 			comments = 1;
 			continue;
 		}
-		str[i] = c;
+		str[i] = (char)c;
 		i++;
 	}
 	free(str);
 }
 void parse_configuration(struct ccx_s_options *opt)
 {
-   FILE *f = NULL;
-   if( (f = fopen(CNF_FILE,"r") ) != NULL)
-   {
+	FILE *f = NULL;
+	if( (f = fopen(CNF_FILE,"r") ) != NULL)
+	{
 		parse_file(f,opt);
-   }
-
+	}
+	fclose(f);
 }
