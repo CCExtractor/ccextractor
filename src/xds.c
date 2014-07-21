@@ -13,7 +13,7 @@ static char xds_program_description[8][33];
 
 static char current_xds_network_name[33]; 
 static char current_xds_program_name[33]; 
-static char current_xds_call_letters[7];
+static char current_xds_call_letters[33];
 static char current_xds_program_type[33];
 
 static const char *XDSclasses[]=
@@ -662,7 +662,7 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 				{
 					if (!ccx_options.gui_mode_reports)
 						mprint ("\rXDS Notice: Program is now %s\n", xds_program_name);
-					strcpy (current_xds_program_name,xds_program_name);
+					strncpy (current_xds_program_name,xds_program_name, 33);
 					activity_xds_program_name (xds_program_name);
 				}
 				break;
