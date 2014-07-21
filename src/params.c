@@ -169,7 +169,10 @@ int process_cap_file (char *filename)
 		if (strlen (line)>0)
 		{
 			if (add_word (line))
+			{
+				fclose (fi);
 				return -1;
+			}
 		}
 	}
 	fclose (fi);
