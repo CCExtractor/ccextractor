@@ -158,7 +158,7 @@ static __inline unsigned int get_bits(GetBitContext *s, int n)
 	unsigned int re_cache = 0;
 	unsigned int re_size_plus8 = s->size_in_bits_plus8;
 
-	if (n <= 0 && n > 25)
+	if (n <= 0 || n > 25)
 		return -1;
 	re_cache = RB32( s->buffer + (re_index >> 3 )) << (re_index & 7);
 
@@ -1867,11 +1867,6 @@ static int dvbsub_display_end_segment(void *dvb_ctx, const uint8_t *buf,
 	DVBSubRegionDisplay *display;
 	DVBSubCLUT *clut;
 	int i;
-
-	for (display = ctx->display_list; display; display = display->next)
-	{
-		region = get_region(ctx, display->region_id);
-	}
 
 	i = 0;
 
