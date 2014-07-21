@@ -76,6 +76,10 @@ void write_subtitle_file_header(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			break;
 		case CCX_OF_RCWT: // Write header
 			write(out->fh, rcwt_header, sizeof(rcwt_header));
+
+			if (ccx_options.send_to_srv)
+				net_send_header(rcwt_header, sizeof(rcwt_header));
+
 			break;
 		case CCX_OF_SPUPNG:
 			write_spumux_header(out);

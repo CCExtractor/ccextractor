@@ -257,11 +257,10 @@ void set_output_format (const char *format)
     while (*format=='-')
         format++;
 
-	if (ccx_options.send_to_srv &&
-		(strcmp (format, "timedtranscript")!=0 && strcmp(format, "ttxt")!=0))
+	if (ccx_options.send_to_srv && strcmp(format, "bin")!=0)
 	{
-		mprint("Output format is changed to ttxt\n");
-		format = "ttxt";
+		mprint("Output format is changed to bin\n");
+		format = "bin";
 	}
 
     if (strcmp (format,"srt")==0)
@@ -1574,7 +1573,7 @@ void parse_parameters (int argc, char *argv[])
 			ccx_options.send_to_srv = 1;
 			ccx_options.srv_addr = argv[i + 1];
 
-			set_output_format("ttxt");
+			set_output_format("bin");
 
 			i++;
 			continue;

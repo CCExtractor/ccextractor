@@ -364,44 +364,21 @@ void telxcc_dump_prev_page (void)
 	if (ccx_options.transcript_settings.showStartTime){
 		millis_to_date(prev_show_timestamp, c_temp1); // Note: Delay not added here because it was already accounted for
 		fdprintf(wbout1.fh, "%s|", c_temp1);
-
-		if (ccx_options.send_to_srv)
-			net_append_cc("%s|", c_temp1);
 	}
 	if (ccx_options.transcript_settings.showEndTime)
 	{		
 		millis_to_date (prev_hide_timestamp, c_temp2);
-		fdprintf(wbout1.fh,"%s|",c_temp2);
-
-		if (ccx_options.send_to_srv)
-			net_append_cc("%s|",c_temp2);
+		fdprintf(wbout1.fh,"%s|",c_temp2);					
 	}
 	if (ccx_options.transcript_settings.showMode){
 		fdprintf(wbout1.fh, "TLT|");
-
-		if (ccx_options.send_to_srv)
-			net_append_cc("TLT|");
 	}
 	if (ccx_options.transcript_settings.showCC){
 		fdprintf(wbout1.fh, "%.3u|", bcd_page_to_int(tlt_config.page));
-
-		if (ccx_options.send_to_srv)
-			net_append_cc("%.3u|", bcd_page_to_int(tlt_config.page));
 	}
 
-	fdprintf(wbout1.fh, "%s",page_buffer_prev);
-
-	if (ccx_options.send_to_srv)
-		net_append_cc("%s",page_buffer_prev);
-
+	if (wbout1.fh!=-1) fdprintf(wbout1.fh, "%s",page_buffer_prev);
 	fdprintf(wbout1.fh,"%s",encoded_crlf);
-
-	if (ccx_options.send_to_srv)
-	{
-		net_append_cc("%s",encoded_crlf);
-		net_send_cc();
-	}
-
 	if (page_buffer_prev) free (page_buffer_prev);
 	if (ucs2_buffer_prev) free (ucs2_buffer_prev);
 	// Switch "dump" buffers

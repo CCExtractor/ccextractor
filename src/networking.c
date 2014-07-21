@@ -15,14 +15,13 @@
 
 #include <sys/ioctl.h>
 
-#define DEBUG_OUT 0
+#define DEBUG_OUT 1
 
 /* Protocol constants: */
 #define INT_LEN         10
 #define OK              1
 #define PASSWORD        2
-#define CAPTIONS        3
-#define PROGRAM         4
+#define BIN_HEADER		3
 #define ERROR           51
 #define UNKNOWN_COMMAND 52
 #define WRONG_PASSWORD  53
@@ -80,7 +79,7 @@ void connect_to_srv(const char *addr, const char *port)
 	if (NULL == port)
 		port = "2048";
 
-	mprint("\n");
+	mprint("\n----------------------------------------------------------------------\n");
 	mprint("Connecting to %s:%s\n", addr, port);
 
 	if ((srv_sd = tcp_connect(addr, port)) < 0)
@@ -92,72 +91,21 @@ void connect_to_srv(const char *addr, const char *port)
 	mprint("Connected to %s:%s\n", addr, port);
 }
 
-void init_buf()
-{
-	buf = (char *) malloc(BUF_SIZE);
-	if (NULL == buf)
-		fatal(EXIT_NOT_ENOUGH_MEMORY, "malloc error(): %s", strerror(errno));
-
-	buf_end = buf;
-}
-
-void net_append_cc(const char *fmt, ...)
-{
-	if (NULL == buf)
-		init_buf();
-
-	va_list args;
-	va_start(args, fmt);
-
-	int rc = vsnprintf(buf_end, BUF_SIZE - (buf_end - buf), fmt, args);
-	if (rc < 0)
-	{
-		mprint("net_append_cc() error: can\'t append ");
-		mprint(fmt, args);
-		mprint("\n");
-		return;
-	}
-
-	buf_end += rc;
-
-	va_end(args);
-}
-
-void net_append_cc_n(const char *data, size_t len)
-{
-	assert(data != NULL);
-	assert(len > 0);
-
-	if (NULL == buf)
-		init_buf();
-
-	size_t nleft = BUF_SIZE - (buf_end - buf);
-	if (nleft < len) 
-	{
-		mprint("net_append_cc_n() warning: buffer overflow, pruning %zd bytes\n",
-				len - nleft);
-		len = nleft;
-	}
-
-	memcpy(buf_end, data, len);
-
-	buf_end += len;
-}
-
-void net_send_cc()
+void net_send_header(const char *data, size_t len)
 {
 	assert(srv_sd > 0);
 
-	if (buf_end - buf == 0)
-		return;
+#if DEBUG_OUT
+	fprintf(stderr, "[C] Sending header (len = %zd): \n", len);
+	fprintf(stderr, "File created by %02X version %02X%02X\n", data[3], data[4], data[5]);
+	fprintf(stderr, "File format revision: %02X%02X\n", data[6], data[7]);
+#endif
 
-	if (write_block(srv_sd, CAPTIONS, buf, buf_end - buf) < 0)
+	if (write_block(srv_sd, BIN_HEADER, data, len) < 0)
 	{
-		mprint("Can't send subtitle block\n");
-		return; // XXX: store somewhere
+		printf("Can't send BIN header block\n");
+		return;
 	}
-
-	buf_end = buf;
 
 	char ok;
 	if (read_byte(srv_sd, &ok) != 1)
@@ -171,28 +119,29 @@ void net_send_cc()
 
 	if (ERROR == ok)
 	{
-		mprint("Internal server error\n"); 
+		printf("Internal server error\n"); 
 		return;
 	}
+}
 
-	sleep(1);
+void net_send_cc(const char *data, size_t len)
+{
+	assert(srv_sd > 0);
 
+#if DEBUG_OUT
+	fprintf(stderr, "[C] Sending %zd bytes\n", len);
+#endif
+
+	ssize_t rc;
+	if ((rc = writen(srv_sd, data, len)) < 0)
+		perror("write() error");
+	if (rc != INT_LEN)
+		return;
+
+	nanosleep((struct timespec[]){{0, 300000000}}, NULL);
 	return;
 }
 
-void net_set_new_program(const char *name)
-{
-	assert(name != NULL);
-	assert(srv_sd > 0);
-
-	size_t len = strlen(name) - 1; /* without '\0' */
-
-	if (write_block(srv_sd, PROGRAM, name, len) < 0)
-	{
-		mprint("Can't send new program name to the server\n");
-		return; // XXX: store somewhere
-	}
-}
 
 /*
  * command | lenght        | data         | \r\n
@@ -416,11 +365,11 @@ void pr_command(char c)
 {
 	switch(c)
 	{
-		case CAPTIONS:
-			fprintf(stderr, "CAPTIONS");
-			break;
 		case OK:
 			fprintf(stderr, "OK");
+			break;
+		case BIN_HEADER:
+			fprintf(stderr, "BIN_HEADER");
 			break;
 		case WRONG_PASSWORD:
 			fprintf(stderr, "WRONG_PASSWORD");
@@ -430,9 +379,6 @@ void pr_command(char c)
 			break;
 		case ERROR:
 			fprintf(stderr, "ERROR");
-			break;
-		case PROGRAM:
-			fprintf(stderr, "PROGRAM");
 			break;
 		case CONN_LIMIT:
 			fprintf(stderr, "CONN_LIMIT");
