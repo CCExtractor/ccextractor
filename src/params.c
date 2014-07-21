@@ -74,21 +74,37 @@ int add_word (const char *word)
 {
 	char *new_lower;
 	char *new_correct;
+	char **ptr;
 	if (spell_words==spell_capacity)
 	{
-		// Time to grow
+		// Grow only if memory available otherwise use the words that we have
 		spell_capacity+=50;
-		spell_lower=(char **) realloc (spell_lower,
+		ptr = (char **) realloc (spell_lower,
 				sizeof (char *) *spell_capacity);
-		spell_correct=(char **) realloc (spell_correct,
+		if(ptr == NULL)
+		{
+			spell_capacity -= 50;
+			return -1;
+		}
+		else
+			spell_lower = ptr;
+		ptr = (char **) realloc (spell_correct,
 				sizeof (char *) *spell_capacity);
+		if(ptr == NULL)
+		{
+			spell_capacity -= 50;
+			return -1;
+		}
+		else
+			spell_correct = ptr;
 	}
 	size_t len=strlen (word);
 	new_lower = (char *) malloc (len+1);
 	new_correct = (char *) malloc (len+1);
-	if (spell_lower==NULL || spell_correct==NULL ||
-			new_lower==NULL || new_correct==NULL)
+	if (new_lower == NULL || new_correct == NULL)
 	{
+		freep(&new_lower);
+		freep(&new_correct);
 		return -1;
 	}
 	strcpy (new_correct, word);
@@ -207,7 +223,10 @@ int append_file_to_queue (char *filename)
 		inputfile_capacity+=10;
 		inputfile=(char **) realloc (inputfile,sizeof (char *) * inputfile_capacity);
 		if (inputfile==NULL)
+		{
+			free(c);
 			return -1;
+		}
 	}
 	inputfile[num_input_files]=c;
 	num_input_files++;
@@ -229,10 +248,17 @@ int add_file_sequence (char *filename)
 	m++;
 	// Here: Significant digits go from filename[m] to filename[n]
 	char *num=(char *) malloc (n-m+2);
+	if(!num)
+		return -1;
 	strncpy (num,filename+m, n-m+1);
 	num[n-m+1]=0;
 	int i = atoi (num);
 	char *temp=(char *) malloc (n-m+3); // For overflows
+	if(!temp)
+	{
+		free(num);
+		return -1;
+	}
 	// printf ("Expanding %d to %d, initial value=%d\n",m,n,i);
 	for (;;)
 	{
@@ -241,7 +267,11 @@ int add_file_sequence (char *filename)
 			break;
 		fclose (f);
 		if (append_file_to_queue (filename)) // Memory panic
+		{
+			free(num);
+			free(temp);
 			return -1;
+		}
 		i++;
 		sprintf (temp,"%d",i);
 		if (strlen (temp)>strlen (num)) // From 999 to 1000, etc.
@@ -249,6 +279,8 @@ int add_file_sequence (char *filename)
 		strncpy (filename+m+(strlen (num)-strlen (temp)),temp,strlen (temp));
 		memset (filename+m,'0',strlen (num)-strlen (temp));
 	}
+	free(num);
+	free(temp);
 	return 0;
 }
 
