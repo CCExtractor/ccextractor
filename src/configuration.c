@@ -111,12 +111,12 @@ static int parse_opts(char *str, struct ccx_s_options *opt)
 static void parse_file(FILE *f,struct ccx_s_options *opt)
 {
 	char *str = (char*)malloc(128);
-	unsigned char c = '\0';
+	char c = '\0';
 	int comments = 0;
 	int i = 0;
 	int ret = 0;
 	*str = '\0';
-	while ((c = (unsigned char)fgetc(f)) != EOF )
+	while ((c = (char)fgetc(f)) != EOF )
 	{
 		if( c == '\n')
 		{
@@ -136,7 +136,7 @@ static void parse_file(FILE *f,struct ccx_s_options *opt)
 			comments = 1;
 			continue;
 		}
-		str[i] = (char)c;
+		str[i] = c;
 		i++;
 	}
 	free(str);
