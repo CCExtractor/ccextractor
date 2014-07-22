@@ -147,6 +147,6 @@ void parse_configuration(struct ccx_s_options *opt)
 	if( (f = fopen(CNF_FILE,"r") ) != NULL)
 	{
 		parse_file(f,opt);
+		fclose(f);
 	}
-	fclose(f);
 }
