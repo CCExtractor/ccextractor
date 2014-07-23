@@ -36,7 +36,7 @@ uint32_t asf_readval(void *val, int ltype)
 
 char *guidstr(void *val)
 {
-    static char sbuf[32];
+    static char sbuf[40];
 
     sprintf(sbuf,"%08lX-%04X-%04X-",
             (long)*((uint32_t*)((char*)val+0)),
