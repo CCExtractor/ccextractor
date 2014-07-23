@@ -153,6 +153,9 @@ int switch_to_next_file (LLONG bytesinbuffer)
 		if (init_sockets())
 			return 1;
 		infd=socket(AF_INET,SOCK_DGRAM,0);	    
+		if(infd < 0)
+			fatal (EXIT_BUG_BUG, "socket() failed.");
+
 		if (IN_MULTICAST(ccx_options.udpaddr)) 
 		{
 		    int on = 1;
