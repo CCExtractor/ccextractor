@@ -9,10 +9,17 @@ LLONG buffered_read_opt_file (unsigned char *buffer, unsigned int bytes);
 
 LLONG getfilesize (int in)
 {
-    LLONG current=LSEEK (in, 0, SEEK_CUR);
-    LLONG length = LSEEK (in,0,SEEK_END);    
-    LSEEK (in,current,SEEK_SET);
-    return length;
+	int ret = 0;
+	LLONG current=LSEEK (in, 0, SEEK_CUR);
+	LLONG length = LSEEK (in,0,SEEK_END);
+	if(current < 0 ||length < 0)
+		return -1;
+
+	ret = LSEEK (in,current,SEEK_SET);
+	if (ret < 0)
+		return -1;
+
+	return length;
 }
 
 LLONG gettotalfilessize (void) // -1 if one or more files failed to open
