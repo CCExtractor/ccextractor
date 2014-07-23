@@ -133,6 +133,8 @@ void fdprintf (int fd, const char *fmt, ...)
      char *p, *np;
      va_list ap;
 
+	if( fd < 0)
+		return;
      if ((p = (char *) malloc (size)) == NULL)
         return;
 
