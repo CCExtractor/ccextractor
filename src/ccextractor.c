@@ -236,7 +236,9 @@ struct PMT_entry *PIDs_programs[65536];
 
 int temp_debug=0; // This is a convenience variable used to enable/disable debug on variable conditions. Find references to understand.
 
+#ifdef DEBUG_TELEXCC
 int main_telxcc (int argc, char *argv[]);
+#endif
 LLONG process_raw_with_field (void);
 
 

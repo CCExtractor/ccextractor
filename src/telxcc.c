@@ -1127,6 +1127,7 @@ void telxcc_close(void)
 	}
 }
 
+#ifdef DEBUG_TELXCC
 int main_telxcc (int argc, char *argv[]) {
 	FILE *infile;
  
@@ -1308,4 +1309,4 @@ int main_telxcc (int argc, char *argv[]) {
 
 	return EXIT_SUCCESS;
 }
- 
+#endif
