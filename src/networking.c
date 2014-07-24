@@ -27,7 +27,10 @@
 #define WRONG_PASSWORD  53
 #define CONN_LIMIT      54
 
+#define DFT_PORT "2048" /* Default port for server and client */
+
 int srv_sd = -1; /* Server socket descriptor */
+int cli_sd = -1; /* Client socket descriptor */
 
 /*
  * Established connection to speciefied addres.
@@ -41,6 +44,10 @@ int tcp_connect(const char *addr, const char *port);
  */
 int ask_passwd(int sd);
 
+int tcp_bind(const char *port);
+
+void close_conn();
+
 #define BUF_SIZE 20480
 char *buf;
 char *buf_end;
@@ -48,8 +55,7 @@ void init_buf();
 
 /*
  * Writes data according to protocol to descriptor
- * block format:
- * command | lenght        | data         | \r\n
+ * block format: * command | lenght        | data         | \r\n
  * 1 byte  | INT_LEN bytes | lenght bytes | 2 bytes
  */
 ssize_t write_block(int fd, char command, const char *buf, size_t buf_len);
@@ -77,7 +83,7 @@ void connect_to_srv(const char *addr, const char *port)
 	}
 
 	if (NULL == port)
-		port = "2048";
+		port = DFT_PORT;
 
 	mprint("\n----------------------------------------------------------------------\n");
 	mprint("Connecting to %s:%s\n", addr, port);
@@ -236,6 +242,7 @@ int tcp_connect(const char *host, const char *port)
 
 	struct addrinfo *p;
 	int sockfd;
+
 	/* Try each address until we sucessfully connect */
 	for (p = ai; p != NULL; p = p->ai_next) {
 		sockfd = socket(p->ai_family, SOCK_STREAM, p->ai_protocol);
@@ -243,7 +250,7 @@ int tcp_connect(const char *host, const char *port)
 		if (-1 == sockfd) {
 			mprint("socket() error: %s\n", strerror(errno));
 			if (p->ai_next != NULL)
-				mprint("trying next addres ...");
+				mprint("trying next addres ...\n");
 
 			continue;
 		}
@@ -253,7 +260,7 @@ int tcp_connect(const char *host, const char *port)
 
 		mprint("connect() error: %s\n", strerror(errno));
 		if (p->ai_next != NULL)
-			mprint("trying next addres ...");
+			mprint("trying next addres ...\n");
 
 		close(sockfd);
 	}
@@ -358,6 +365,117 @@ int ask_passwd(int sd)
 	} while(OK != ok);
 
 	return 1;
+}
+
+void start_srv(const char *port)
+{
+	if (NULL == port)
+		port = DFT_PORT;
+
+	mprint("\n----------------------------------------------------------------------\n");
+
+	mprint("Binding to %s\n", port);
+	int listen_sd = tcp_bind(port);
+	if (listen_sd < 0)
+		fatal(EXIT_FAILURE, "Unable to start server\n");
+
+	mprint("Waiting for connections\n");
+
+	struct sockaddr cliaddr;
+	socklen_t clilen = sizeof(struct sockaddr);
+
+	while (1)
+	{
+		if ((cli_sd = accept(listen_sd, &cliaddr, &clilen)) < 0) 
+		{
+			if (EINTR == errno) /* TODO not necessary */
+				continue;
+			else
+				fatal(EXIT_FAILURE, "accept() error: %s\n", strerror(errno));
+		}
+		break;
+	}
+
+	close(listen_sd);
+
+	char host[NI_MAXHOST];
+	char serv[NI_MAXSERV];
+	int rc;
+	if ((rc = getnameinfo(&cliaddr, clilen, 
+					host, sizeof(host), serv, sizeof(serv), 0)) != 0)
+	{
+		mprint("getnameinfo() error: %s\n", gai_strerror(rc));
+	}
+	else
+	{
+		mprint("%s:%s Connceted\n", host, serv);
+	}
+
+	if (write_byte(cli_sd, OK) != 1)
+		close_conn();
+}
+
+int tcp_bind(const char *port)
+{
+	struct addrinfo hints;
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+
+	struct addrinfo *ai;
+	int rc = getaddrinfo(NULL, port, &hints, &ai);
+	if (rc != 0) 
+	{
+		mprint("getaddrinfo() error: %s\n", gai_strerror(rc));
+		return -1;
+	}
+
+	struct addrinfo *p;
+	int sockfd = -1;
+	/* Try each address until we sucessfully bind */
+	for (p = ai; p != NULL; p = p->ai_next) 
+	{
+		sockfd = socket(p->ai_family, SOCK_STREAM, p->ai_protocol);
+
+		if (-1 == sockfd) 
+		{
+			mprint("socket() error: %s\n", strerror(errno));
+			if (p->ai_next != NULL)
+				mprint("trying next addres ...\n");
+
+			continue;
+		}
+
+		if (0 == bind(sockfd, p->ai_addr, p->ai_addrlen))
+			break;
+
+		mprint("bind() error: %s\n", strerror(errno));
+		if (p->ai_next != NULL)
+			mprint("trying next addres ...\n");
+
+		close(sockfd);
+	}
+
+	freeaddrinfo(ai);
+
+	if (NULL == p)
+		return -1;
+
+	if (0 != listen(sockfd, SOMAXCONN))
+	{
+		close(sockfd);
+		perror("listen() error");
+		return -1;
+	}
+
+	return sockfd;
+}
+
+void close_conn()
+{
+	mprint("Connection closed");
+	close(cli_sd);
 }
 
 #if DEBUG_OUT
