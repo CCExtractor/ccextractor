@@ -182,6 +182,20 @@ int switch_to_next_file (LLONG bytesinbuffer)
 		return 1;
 	}
 
+	if (ccx_options.input_source==CCX_DS_TCP)
+	{
+		if (infd != -1)
+		{
+			if (ccx_options.print_file_reports)
+				print_file_report();
+
+			return 0;
+		}
+
+		infd = start_srv(ccx_options.tcpport);
+		return 1;
+	}
+
     /* Close current and make sure things are still sane */
     if (infd!=-1)
     {

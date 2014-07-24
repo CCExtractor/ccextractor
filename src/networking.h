@@ -8,6 +8,6 @@ void connect_to_srv(const char *addr, const char *port);
 void net_send_header(const char *data, size_t len);
 void net_send_cc(const char *data, size_t len);
 
-void start_srv(const char *port);
+int start_srv(const char *port);
 
 #endif /* end of include guard: NETWORKING_H */

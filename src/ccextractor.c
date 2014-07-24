@@ -178,6 +178,7 @@ void init_options (struct ccx_s_options *options)
 	options->udpaddr = 0;
 	options->udpport=0; // Non-zero => Listen for UDP packets on this port, no files.
 	options->send_to_srv = 0;
+	options->tcpport = NULL;
 	options->srv_addr = NULL;
 	options->srv_port = NULL;
 	options->line_terminator_lf=0; // 0 = CRLF
@@ -290,19 +291,23 @@ int main(int argc, char *argv[])
 	if (num_input_files==0 && ccx_options.input_source==CCX_DS_FILE)
 	{
 		usage ();
-		fatal (EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");		
+		fatal (EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");
 	}
 	if (num_input_files>1 && ccx_options.live_stream)
 	{
-		fatal(EXIT_TOO_MANY_INPUT_FILES, "Live stream mode accepts only one input file.\n");		
+		fatal(EXIT_TOO_MANY_INPUT_FILES, "Live stream mode accepts only one input file.\n");
 	}
 	if (num_input_files && ccx_options.input_source==CCX_DS_NETWORK)
 	{
-		fatal(EXIT_TOO_MANY_INPUT_FILES, "UDP mode is not compatible with input files.\n");		
+		fatal(EXIT_TOO_MANY_INPUT_FILES, "UDP mode is not compatible with input files.\n");
 	}
-	if (ccx_options.input_source==CCX_DS_NETWORK)
+	if (ccx_options.input_source==CCX_DS_NETWORK || ccx_options.input_source==CCX_DS_TCP)
 	{
 		ccx_options.buffer_input=1; // Mandatory, because each datagram must be read complete.
+	}
+	if (num_input_files && ccx_options.input_source==CCX_DS_TCP)
+	{
+		fatal(EXIT_TOO_MANY_INPUT_FILES, "TCP mode is not compatible with input files.\n");
 	}
 
 	// teletext page number out of range
@@ -384,6 +389,7 @@ int main(int argc, char *argv[])
 			basefilename = (char *) malloc (strlen (basefilename_for_stdin)+1);
 			break;
 		case CCX_DS_NETWORK:
+		case CCX_DS_TCP:
 			basefilename = (char *) malloc (strlen (basefilename_for_network)+1);
 			break;
 	}		
@@ -398,6 +404,7 @@ int main(int argc, char *argv[])
 			strcpy (basefilename, basefilename_for_stdin);
 			break;
 		case CCX_DS_NETWORK:
+		case CCX_DS_TCP:
 			strcpy (basefilename, basefilename_for_network);
 			break;
 	}		

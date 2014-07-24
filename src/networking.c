@@ -30,7 +30,6 @@
 #define DFT_PORT "2048" /* Default port for server and client */
 
 int srv_sd = -1; /* Server socket descriptor */
-int cli_sd = -1; /* Client socket descriptor */
 
 /*
  * Established connection to speciefied addres.
@@ -45,13 +44,6 @@ int tcp_connect(const char *addr, const char *port);
 int ask_passwd(int sd);
 
 int tcp_bind(const char *port);
-
-void close_conn();
-
-#define BUF_SIZE 20480
-char *buf;
-char *buf_end;
-void init_buf();
 
 /*
  * Writes data according to protocol to descriptor
@@ -367,7 +359,7 @@ int ask_passwd(int sd)
 	return 1;
 }
 
-void start_srv(const char *port)
+int start_srv(const char *port)
 {
 	if (NULL == port)
 		port = DFT_PORT;
@@ -381,12 +373,13 @@ void start_srv(const char *port)
 
 	mprint("Waiting for connections\n");
 
+	int sockfd = -1;
 	struct sockaddr cliaddr;
 	socklen_t clilen = sizeof(struct sockaddr);
 
 	while (1)
 	{
-		if ((cli_sd = accept(listen_sd, &cliaddr, &clilen)) < 0) 
+		if ((sockfd = accept(listen_sd, &cliaddr, &clilen)) < 0)
 		{
 			if (EINTR == errno) /* TODO not necessary */
 				continue;
@@ -401,7 +394,7 @@ void start_srv(const char *port)
 	char host[NI_MAXHOST];
 	char serv[NI_MAXSERV];
 	int rc;
-	if ((rc = getnameinfo(&cliaddr, clilen, 
+	if ((rc = getnameinfo(&cliaddr, clilen,
 					host, sizeof(host), serv, sizeof(serv), 0)) != 0)
 	{
 		mprint("getnameinfo() error: %s\n", gai_strerror(rc));
@@ -411,8 +404,13 @@ void start_srv(const char *port)
 		mprint("%s:%s Connceted\n", host, serv);
 	}
 
-	if (write_byte(cli_sd, OK) != 1)
-		close_conn();
+	if (write_byte(sockfd, OK) != 1)
+	{
+		mprint("Connection closed\n");
+		close(sockfd);
+	}
+
+	return sockfd;
 }
 
 int tcp_bind(const char *port)
@@ -425,7 +423,7 @@ int tcp_bind(const char *port)
 
 	struct addrinfo *ai;
 	int rc = getaddrinfo(NULL, port, &hints, &ai);
-	if (rc != 0) 
+	if (rc != 0)
 	{
 		mprint("getaddrinfo() error: %s\n", gai_strerror(rc));
 		return -1;
@@ -434,11 +432,11 @@ int tcp_bind(const char *port)
 	struct addrinfo *p;
 	int sockfd = -1;
 	/* Try each address until we sucessfully bind */
-	for (p = ai; p != NULL; p = p->ai_next) 
+	for (p = ai; p != NULL; p = p->ai_next)
 	{
 		sockfd = socket(p->ai_family, SOCK_STREAM, p->ai_protocol);
 
-		if (-1 == sockfd) 
+		if (-1 == sockfd)
 		{
 			mprint("socket() error: %s\n", strerror(errno));
 			if (p->ai_next != NULL)
@@ -470,12 +468,6 @@ int tcp_bind(const char *port)
 	}
 
 	return sockfd;
-}
-
-void close_conn()
-{
-	mprint("Connection closed");
-	close(cli_sd);
 }
 
 #if DEBUG_OUT

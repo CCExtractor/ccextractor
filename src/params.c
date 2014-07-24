@@ -1587,6 +1587,15 @@ void parse_parameters (int argc, char *argv[])
 			continue;
 		}
 
+		if (strcmp (argv[i],"-tcp")==0 && i<argc-1)
+		{
+			ccx_options.tcpport = argv[i + 1];
+			ccx_options.input_source = CCX_DS_TCP;
+
+			i++;
+			continue;
+		}
+
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "Error: Parameter %s not understood.\n", argv[i]);
         // Unrecognized switches are silently ignored
     }	

@@ -23,6 +23,9 @@ void params_dump(void)
 				mprint ("Network, %s:%d",inet_ntoa(in), ccx_options.udpport);
 			}
 			break;
+		case CCX_DS_TCP:
+			mprint("Network, TCP port: %s", ccx_options.tcpport);
+			break;
 	}
     mprint ("\n");    
     mprint ("[Extract: %d] ", ccx_options.extract);
@@ -216,6 +219,7 @@ void print_file_report(void)
 		case CCX_DS_STDIN:
 			printf("stdin\n");
 			break;
+		case CCX_DS_TCP:
 		case CCX_DS_NETWORK:
 			printf("network\n");
 			break;
