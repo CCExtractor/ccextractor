@@ -120,6 +120,7 @@ struct ccx_s_options // Options from user parameters
 	unsigned udpport; // Non-zero => Listen for UDP packets on this port, no files.
 	unsigned send_to_srv;
 	char *tcpport;
+	char *tcp_password;
 	char *srv_addr;
 	char *srv_port;
 	int line_terminator_lf; // 0 = CRLF, 1=LF

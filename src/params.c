@@ -1592,6 +1592,16 @@ void parse_parameters (int argc, char *argv[])
 			ccx_options.tcpport = argv[i + 1];
 			ccx_options.input_source = CCX_DS_TCP;
 
+			set_input_format("bin");
+
+			i++;
+			continue;
+		}
+
+		if (strcmp (argv[i],"-tcppassword")==0 && i<argc-1)
+		{
+			ccx_options.tcp_password = argv[i + 1];
+
 			i++;
 			continue;
 		}

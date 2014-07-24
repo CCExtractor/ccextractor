@@ -179,6 +179,7 @@ void init_options (struct ccx_s_options *options)
 	options->udpport=0; // Non-zero => Listen for UDP packets on this port, no files.
 	options->send_to_srv = 0;
 	options->tcpport = NULL;
+	options->tcp_password = NULL;
 	options->srv_addr = NULL;
 	options->srv_port = NULL;
 	options->line_terminator_lf=0; // 0 = CRLF

@@ -192,7 +192,7 @@ int switch_to_next_file (LLONG bytesinbuffer)
 			return 0;
 		}
 
-		infd = start_srv(ccx_options.tcpport);
+		infd = start_srv(ccx_options.tcpport, ccx_options.tcp_password);
 		return 1;
 	}
 
