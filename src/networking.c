@@ -15,7 +15,7 @@
 
 #include <sys/ioctl.h>
 
-#define DEBUG_OUT 1
+#define DEBUG_OUT 0
 
 /* Protocol constants: */
 #define INT_LEN         10
@@ -148,7 +148,7 @@ void net_send_cc(const char *data, size_t len)
 		return;
 	}
 
-	nanosleep((struct timespec[]){{0, 100000000}}, NULL);
+	/* nanosleep((struct timespec[]){{0, 100000000}}, NULL); */
 	return;
 }
 
@@ -441,7 +441,8 @@ int start_srv(const char *port, const char *pwd)
 		if (write_byte(sockfd, OK) != 1)
 			goto close_conn;
 
-		continue;
+		break;
+
 close_conn:
 		mprint("Connection closed\n");
 		close(sockfd);

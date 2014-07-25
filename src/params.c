@@ -374,6 +374,12 @@ void usage (void)
 	mprint ("                              port) instead of reading a file. Host can be a\n");
 	mprint ("                              hostname or IPv4 address. If host is not specified\n");
 	mprint ("                              then listens on the local host.\n\n");
+	mprint ("            -sendto host[:port]: Sends data in BIN format to the server according\n");
+	mprint ("                                 to the CCExtractor's protocol over TCP. For IPv6\n");
+	mprint ("                                 use [addres]:port\n");
+	mprint ("            -tcp port: Reads the input data in BIN format according to CCExtractor's\n");
+	mprint ("                       protocol, listening specified port on the local host\n");
+	mprint ("            -tcppassword password: Sets server password for new connections to tcp server\n");
     mprint ("Options that affect what will be processed:\n");
     mprint ("          -1, -2, -12: Output Field 1 data, Field 2 data, or both\n");
     mprint ("                       (DEFAULT is -1)\n");
@@ -1571,17 +1577,37 @@ void parse_parameters (int argc, char *argv[])
 		if (strcmp (argv[i],"-sendto")==0 && i<argc-1)
 		{
 			ccx_options.send_to_srv = 1;
-			ccx_options.srv_addr = argv[i + 1];
 
 			set_output_format("bin");
 
-			i++;
-			continue;
-		}
-		if (strcmp (argv[i],"-port")==0 && i<argc-1)
-		{
-			ccx_options.send_to_srv = 1;
-			ccx_options.srv_port = argv[i + 1];
+			char *addr = argv[i + 1];
+			if (*addr == '[')
+			{
+				addr++;
+
+				ccx_options.srv_addr = addr;
+
+				char *br = strchr(addr, ']');
+				if (br == NULL)
+					fatal (EXIT_INCOMPATIBLE_PARAMETERS, "Wrong address format, for IPv6 use [address]:port\n");
+				*br = '\0';
+
+				br++; /* Colon */
+				if (*br != '\0')
+					ccx_options.srv_port = br + 1;
+
+				i++;
+				continue;
+			}
+
+			ccx_options.srv_addr = argv[i + 1];
+
+			char *colon = strchr(argv[i + 1], ':');
+			if (colon != NULL)
+			{
+				*colon = '\0';
+				ccx_options.srv_port = colon + 1;
+			}
 
 			i++;
 			continue;
