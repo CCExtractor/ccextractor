@@ -15,13 +15,13 @@
 
 #include <sys/ioctl.h>
 
-#define DEBUG_OUT 0
+#define DEBUG_OUT 1
 
 /* Protocol constants: */
 #define INT_LEN         10
 #define OK              1
 #define PASSWORD        2
-#define BIN_HEADER		3
+#define BIN_MODE        3
 #define ERROR           51
 #define UNKNOWN_COMMAND 52
 #define WRONG_PASSWORD  53
@@ -99,13 +99,15 @@ void net_send_header(const char *data, size_t len)
 	assert(srv_sd > 0);
 
 #if DEBUG_OUT
-	fprintf(stderr, "[C] Sending header (len = %zd): \n", len);
+	fprintf(stderr, "Sending header (len = %zd): \n", len);
 	fprintf(stderr, "File created by %02X version %02X%02X\n", data[3], data[4], data[5]);
 	fprintf(stderr, "File format revision: %02X%02X\n", data[6], data[7]);
 #endif
-
-	if (write_byte(srv_sd, BIN_HEADER) != 1)
+	if (write_block(srv_sd, BIN_MODE, NULL, 0) <= 0)
+	{
+		printf("Can't send BIN header\n");
 		return;
+	}
 
 	char ok;
 	if (read_byte(srv_sd, &ok) != 1)
@@ -158,9 +160,6 @@ void net_send_cc(const char *data, size_t len)
  */
 ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 {
-	assert(buf != NULL);
-	assert(buf_len > 0);
-
 #if DEBUG_OUT
 	fprintf(stderr, "[C] ");
 #endif
@@ -424,16 +423,13 @@ int start_srv(const char *port, const char *pwd)
 			goto close_conn;
 
 		char c;
-		if (read_byte(sockfd, &c) != 1)
-			goto close_conn;
+		size_t len = BUFFER_SIZE;
+		char buf[BUFFER_SIZE];
 
-#if DEBUG_OUT
-		fprintf(stderr, "[C] ");
-		pr_command(c);
-		fprintf(stderr, "\n");
-#endif
-		if (c != BIN_HEADER)
-			goto close_conn;
+		do {
+			if (read_block(sockfd, &c, buf, &len) <= 0)
+				goto close_conn;
+		} while (c != BIN_MODE);
 
 #if DEBUG_OUT
 		fprintf(stderr, "[S] OK\n");
@@ -460,7 +456,7 @@ int check_password(int fd, const char *pwd)
 	char c;
 	int rc;
 	size_t len = BUFFER_SIZE;
-	char buf[BUFFER_SIZE] = {0};
+	char buf[BUFFER_SIZE];
 
 	while(1)
 	{
@@ -584,37 +580,35 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 #endif
 
     size_t len = atoi(len_str);
-	if (len <= 0)
+
+	if (len > 0)
 	{
-		mprint("read_block(): Wrong block size\n");
-		return -1;
-	}
+		size_t ign_bytes = 0;
+		if (len > *buf_len)
+		{
+			ign_bytes = len - *buf_len;
+			mprint("read_block() warning: Buffer overflow, ignoring %d bytes\n",
+					ign_bytes);
+			len = *buf_len;
+		}
 
-	size_t ign_bytes = 0;
-	if (len > *buf_len)
-	{
-		ign_bytes = len - *buf_len;
-		mprint("read_block() warning: Buffer overflow, ignoring %d bytes\n",
-				ign_bytes);
-		len = *buf_len;
-	}
+		if ((rc = readn(fd, buf, len)) < 0)
+			return -1;
+		else if ((size_t) rc != len)
+			return 0;
+		nread += rc;
+		*buf_len = len;
 
-	if ((rc = readn(fd, buf, len)) < 0)
-		return -1;
-	else if ((size_t) rc != len)
-		return 0;
-	nread += rc;
-	*buf_len = len;
-
-	if ((rc = readn(fd, 0, ign_bytes)) < 0)
-		return -1;
-	else if ((size_t) rc != ign_bytes)
-		return 0;
-	nread += rc;
+		if ((rc = readn(fd, 0, ign_bytes)) < 0)
+			return -1;
+		else if ((size_t) rc != ign_bytes)
+			return 0;
+		nread += rc;
 
 #if DEBUG_OUT
-	fwrite(buf, sizeof(char), len, stderr);
+		fwrite(buf, sizeof(char), len, stderr);
 #endif
+	}
 
 	char end[2] = {0};
 	if ((rc = readn(fd, end, sizeof(end))) < 0)
@@ -648,8 +642,8 @@ void pr_command(char c)
 		case OK:
 			fprintf(stderr, "OK");
 			break;
-		case BIN_HEADER:
-			fprintf(stderr, "BIN_HEADER");
+		case BIN_MODE:
+			fprintf(stderr, "BIN_MODE");
 			break;
 		case WRONG_PASSWORD:
 			fprintf(stderr, "WRONG_PASSWORD");
@@ -718,8 +712,7 @@ ssize_t readn(int fd, void *vptr, size_t n)
 
 ssize_t writen(int fd, const void *vptr, size_t n)
 {
-	assert(vptr != NULL);
-	assert(n > 0);
+	assert((n > 0 && vptr != NULL) || (n == 0 && vptr == NULL));
 
 	size_t nleft;
 	ssize_t nwritten;
