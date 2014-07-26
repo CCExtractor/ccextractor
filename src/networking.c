@@ -40,7 +40,7 @@ int ask_passwd(int sd);
 
 int check_password(int fd, const char *pwd);
 
-int tcp_bind(const char *port);
+int tcp_bind(const char *port, int *family);
 
 /*
  * Writes/reads data according to protocol to descriptor
@@ -92,7 +92,7 @@ void net_send_header(const char *data, size_t len)
 	assert(srv_sd > 0);
 
 #if DEBUG_OUT
-	fprintf(stderr, "Sending header (len = %zd): \n", len);
+	fprintf(stderr, "Sending header (len = %u): \n", len);
 	fprintf(stderr, "File created by %02X version %02X%02X\n", data[3], data[4], data[5]);
 	fprintf(stderr, "File format revision: %02X%02X\n", data[6], data[7]);
 #endif
@@ -132,7 +132,7 @@ void net_send_cc(const char *data, size_t len)
 	assert(srv_sd > 0);
 
 #if DEBUG_OUT
-	fprintf(stderr, "[C] Sending %zd bytes\n", len);
+	fprintf(stderr, "[C] Sending %u bytes\n", len);
 #endif
 
 	ssize_t rc;
@@ -144,6 +144,7 @@ void net_send_cc(const char *data, size_t len)
 	}
 
 	/* nanosleep((struct timespec[]){{0, 100000000}}, NULL); */
+	/* Sleep(100); */
 	return;
 }
 
@@ -153,6 +154,7 @@ void net_send_cc(const char *data, size_t len)
  */
 ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 {
+	assert(fd > 0);
 #if DEBUG_OUT
 	fprintf(stderr, "[C] ");
 #endif
@@ -172,7 +174,7 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 #endif
 
 	char len_str[INT_LEN] = {0};
-	snprintf(len_str, INT_LEN, "%zd", buf_len);
+	snprintf(len_str, INT_LEN, "%u", buf_len);
 	if ((rc = writen(fd, len_str, INT_LEN)) < 0)
 		return -1;
 	else if (rc != INT_LEN)
@@ -191,8 +193,11 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 	nwritten += rc;
 
 #if DEBUG_OUT
-	fwrite(buf, sizeof(char), buf_len - 2, stderr);
-	fprintf(stderr, " ");
+	if (buf != NULL)
+	{
+		fwrite(buf, sizeof(char), buf_len - 2, stderr);
+		fprintf(stderr, " ");
+	}
 #endif
 
 	if ((rc = write_byte(fd, '\r')) < 0)
@@ -223,6 +228,16 @@ int tcp_connect(const char *host, const char *port)
 	assert(host != NULL);
 	assert(port != NULL);
 
+#ifdef _WIN32
+	WSADATA wsaData = { 0 };
+	// Initialize Winsock
+	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (iResult != 0) {
+		wprintf(L"WSAStartup failed: %d\n", iResult);
+		return 1;
+	}
+#endif
+
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_UNSPEC;
@@ -243,7 +258,11 @@ int tcp_connect(const char *host, const char *port)
 		sockfd = socket(p->ai_family, SOCK_STREAM, p->ai_protocol);
 
 		if (-1 == sockfd) {
+#if _WIN32
+			wprintf(L"socket() eror: %ld\n", WSAGetLastError());
+#else
 			mprint("socket() error: %s\n", strerror(errno));
+#endif
 			if (p->ai_next != NULL)
 				mprint("trying next addres ...\n");
 
@@ -252,12 +271,19 @@ int tcp_connect(const char *host, const char *port)
 
 		if (connect(sockfd, p->ai_addr, p->ai_addrlen) == 0)
 			break;
-
+#if _WIN32
+		wprintf(L"connect() eror: %ld\n", WSAGetLastError());
+#else
 		mprint("connect() error: %s\n", strerror(errno));
+#endif
 		if (p->ai_next != NULL)
 			mprint("trying next addres ...\n");
 
+#if _WIN32
+		closesocket(sockfd);
+#else
 		close(sockfd);
+#endif
 	}
 
 	freeaddrinfo(ai);
@@ -270,7 +296,7 @@ int tcp_connect(const char *host, const char *port)
 
 int ask_passwd(int sd)
 {
-	assert(srv_sd > 0);
+	assert(sd >= 0);
 
 	int rc;
 	size_t len;
@@ -354,7 +380,8 @@ int start_srv(const char *port, const char *pwd)
 	mprint("\n----------------------------------------------------------------------\n");
 
 	mprint("Binding to %s\n", port);
-	int listen_sd = tcp_bind(port);
+	int fam;
+	int listen_sd = tcp_bind(port, &fam);
 	if (listen_sd < 0)
 		fatal(EXIT_FAILURE, "Unable to start server\n");
 
@@ -364,23 +391,39 @@ int start_srv(const char *port, const char *pwd)
 	mprint("Waiting for connections\n");
 
 	int sockfd = -1;
-	struct sockaddr cliaddr;
-	socklen_t clilen = sizeof(struct sockaddr);
 
 	while (1)
 	{
-		if ((sockfd = accept(listen_sd, &cliaddr, &clilen)) < 0)
+		socklen_t clilen;
+		if (AF_INET == fam)
+			clilen = sizeof(struct sockaddr_in);
+		else
+			clilen = sizeof(struct sockaddr_in6);
+		struct sockaddr *cliaddr = (struct sockaddr *) malloc(clilen);
+		if (NULL == cliaddr)
+			fatal(EXIT_FAILURE, "malloc() error: %s", strerror(errno));
+
+		if ((sockfd = accept(listen_sd, cliaddr, &clilen)) < 0)
 		{
 			if (EINTR == errno) /* TODO not necessary */
+			{
 				continue;
+			}
 			else
+			{
+#if _WIN32
+				wprintf(L"accept() eror: %ld\n", WSAGetLastError());
+				exit(EXIT_FAILURE);
+#else
 				fatal(EXIT_FAILURE, "accept() error: %s\n", strerror(errno));
+#endif
+			}
 		}
 
 		char host[NI_MAXHOST];
 		char serv[NI_MAXSERV];
 		int rc;
-		if ((rc = getnameinfo(&cliaddr, clilen,
+		if ((rc = getnameinfo(cliaddr, clilen,
 						host, sizeof(host), serv, sizeof(serv), 0)) != 0)
 		{
 			mprint("getnameinfo() error: %s\n", gai_strerror(rc));
@@ -389,6 +432,8 @@ int start_srv(const char *port, const char *pwd)
 		{
 			mprint("%s:%s Connceted\n", host, serv);
 		}
+
+		free(cliaddr);
 
 		if (pwd != NULL && (rc = check_password(sockfd, pwd)) <= 0)
 			goto close_conn;
@@ -418,10 +463,18 @@ int start_srv(const char *port, const char *pwd)
 
 close_conn:
 		mprint("Connection closed\n");
+#if _WIN32
+		closesocket(sockfd);
+#else
 		close(sockfd);
+#endif
 	}
 
+#if _WIN32
+	closesocket(listen_sd);
+#else
 	close(listen_sd);
+#endif
 
 	return sockfd;
 }
@@ -466,8 +519,18 @@ int check_password(int fd, const char *pwd)
 	}
 }
 
-int tcp_bind(const char *port)
+int tcp_bind(const char *port, int *family)
 {
+#ifdef _WIN32
+	WSADATA wsaData = { 0 };
+	// Initialize Winsock
+	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (iResult != 0) {
+		wprintf(L"WSAStartup failed: %d\n", iResult);
+		return 1;
+	}
+#endif
+
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_UNSPEC;
@@ -491,32 +554,66 @@ int tcp_bind(const char *port)
 
 		if (-1 == sockfd)
 		{
+#if _WIN32
+			wprintf(L"socket() eror: %ld\n", WSAGetLastError());
+#else
 			mprint("socket() error: %s\n", strerror(errno));
+#endif
+
 			if (p->ai_next != NULL)
 				mprint("trying next addres ...\n");
 
 			continue;
 		}
 
+		if (AF_INET6 == p->ai_family)
+		{
+			int no = 0;
+			if (setsockopt(sockfd, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&no, sizeof(no)) < 0)
+			{
+#if _WIN32
+				wprintf(L"setsockopt() eror: %ld\n", WSAGetLastError());
+#else
+				mprint("setsockopt() error: %s\n", strerror(errno));
+#endif
+
+				if (p->ai_next != NULL)
+					mprint("trying next addres ...\n");
+
+				continue;
+			}
+		}
+
 		if (0 == bind(sockfd, p->ai_addr, p->ai_addrlen))
 			break;
 
+#if _WIN32
+		wprintf(L"bind() eror: %ld\n", WSAGetLastError());
+		closesocket(sockfd);
+#else
 		mprint("bind() error: %s\n", strerror(errno));
+		close(sockfd);
+#endif
 		if (p->ai_next != NULL)
 			mprint("trying next addres ...\n");
-
-		close(sockfd);
 	}
+
+	*family = p->ai_family;
 
 	freeaddrinfo(ai);
 
 	if (NULL == p)
 		return -1;
 
-	if (0 != listen(sockfd, SOMAXCONN))
+	if (listen(sockfd, SOMAXCONN) != 0)
 	{
-		close(sockfd);
+#if _WIN32
+		wprintf(L"listen() eror: %ld\n", WSAGetLastError());
+		closesocket(sockfd);
+#else
 		perror("listen() error");
+		close(sockfd);
+#endif
 		return -1;
 	}
 
@@ -648,6 +745,7 @@ void pr_command(char c)
 
 ssize_t readn(int fd, void *vptr, size_t n)
 {
+	assert(fd > 0);
 	size_t nleft;
 	ssize_t nread;
 	char *ptr;
@@ -658,11 +756,11 @@ ssize_t readn(int fd, void *vptr, size_t n)
 	{
 		if (NULL == vptr) {
 			char c;
-			nread = read(fd, &c, 1);
+			nread = recv(fd, &c, 1, 0);
 		}
 		else
 		{
-			nread = read(fd, ptr, nleft);
+			nread = recv(fd, (void*)ptr, nleft, 0);
 		}
 
 		if (nread < 0)
@@ -673,7 +771,11 @@ ssize_t readn(int fd, void *vptr, size_t n)
 			}
 			else
 			{
-				mprint("read() error: %s\n", strerror(errno));
+#if _WIN32
+				wprintf(L"recv() eror: %ld\n", WSAGetLastError());
+#else
+				mprint("recv() error: %s\n", strerror(errno));
+#endif
 				return -1;
 			}
 		}
@@ -691,6 +793,7 @@ ssize_t readn(int fd, void *vptr, size_t n)
 
 ssize_t writen(int fd, const void *vptr, size_t n)
 {
+	assert(fd > 0);
 	assert((n > 0 && vptr != NULL) || (n == 0 && vptr == NULL));
 
 	size_t nleft;
@@ -701,7 +804,7 @@ ssize_t writen(int fd, const void *vptr, size_t n)
 	nleft = n;
 	while (nleft > 0)
 	{
-		if ((nwritten = write(fd, ptr, nleft)) < 0) 
+		if ((nwritten = send(fd, ptr, nleft, 0)) < 0)
 		{
 			if (errno == EINTR)
 			{
@@ -709,7 +812,11 @@ ssize_t writen(int fd, const void *vptr, size_t n)
 			}
 			else
 			{
-				mprint("write() error: %s\n", strerror(errno));
+#if _WIN32
+				wprintf(L"send() eror: %ld\n", WSAGetLastError());
+#else
+				mprint("send() error: %s\n", strerror(errno));
+#endif
 				return -1;
 			}
 		}
@@ -727,12 +834,15 @@ ssize_t writen(int fd, const void *vptr, size_t n)
 
 ssize_t write_byte(int fd, char ch)
 {
+	assert(fd > 0);
+
 	return writen(fd, &ch, 1);
 }
 
 ssize_t read_byte(int fd, char *ch)
 {
-	assert(ch != 0);
+	assert(fd > 0);
+	assert(ch != NULL);
 
 	return readn(fd, ch, 1);
 }
