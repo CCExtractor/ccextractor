@@ -60,6 +60,8 @@ ssize_t writen(int fd, const void *vptr, size_t n);
 ssize_t write_byte(int fd, char status);
 ssize_t read_byte(int fd, char *status);
 
+void init_sockets (void);
+
 #if DEBUG_OUT
 void pr_command(char c);
 #endif
@@ -75,7 +77,7 @@ void connect_to_srv(const char *addr, const char *port)
 	if (NULL == port)
 		port = DFT_PORT;
 
-	mprint("\n----------------------------------------------------------------------\n");
+	mprint("\n\r----------------------------------------------------------------------\n");
 	mprint("Connecting to %s:%s\n", addr, port);
 
 	if ((srv_sd = tcp_connect(addr, port)) < 0)
@@ -87,7 +89,7 @@ void connect_to_srv(const char *addr, const char *port)
 	mprint("Connected to %s:%s\n", addr, port);
 }
 
-void net_send_header(const char *data, size_t len)
+void net_send_header(const unsigned char *data, size_t len)
 {
 	assert(srv_sd > 0);
 
@@ -119,7 +121,7 @@ void net_send_header(const char *data, size_t len)
 	}
 
 	ssize_t rc;
-	if ((rc = writen(srv_sd, data, len)) != len)
+	if ((rc = writen(srv_sd, data, len)) != (int) len)
 	{
 		if (rc < 0)
 			mprint("write() error: %s", strerror(errno));
@@ -127,7 +129,7 @@ void net_send_header(const char *data, size_t len)
 	}
 }
 
-void net_send_cc(const char *data, size_t len)
+void net_send_cc(const unsigned char *data, size_t len)
 {
 	assert(srv_sd > 0);
 
@@ -136,7 +138,7 @@ void net_send_cc(const char *data, size_t len)
 #endif
 
 	ssize_t rc;
-	if ((rc = writen(srv_sd, data, len)) != len)
+	if ((rc = writen(srv_sd, data, len)) != (int) len)
 	{
 		if (rc < 0)
 			mprint("write() error: %s", strerror(errno));
@@ -174,7 +176,7 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 #endif
 
 	char len_str[INT_LEN] = {0};
-	snprintf(len_str, INT_LEN, "%u", buf_len);
+	snprintf(len_str, INT_LEN, "%zu", buf_len);
 	if ((rc = writen(fd, len_str, INT_LEN)) < 0)
 		return -1;
 	else if (rc != INT_LEN)
@@ -228,15 +230,7 @@ int tcp_connect(const char *host, const char *port)
 	assert(host != NULL);
 	assert(port != NULL);
 
-#ifdef _WIN32
-	WSADATA wsaData = { 0 };
-	// Initialize Winsock
-	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (iResult != 0) {
-		wprintf(L"WSAStartup failed: %d\n", iResult);
-		return 1;
-	}
-#endif
+	init_sockets();
 
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(struct addrinfo));
@@ -298,7 +292,6 @@ int ask_passwd(int sd)
 {
 	assert(sd >= 0);
 
-	int rc;
 	size_t len;
 	char pw[BUFFER_SIZE] = { 0 };
 
@@ -338,7 +331,7 @@ int ask_passwd(int sd)
 		fflush(stdout);
 
 		char *p = pw;
-		while (p - pw < sizeof(pw) && ((*p = fgetc(stdin)) != '\n'))
+		while ((unsigned)(p - pw) < sizeof(pw) && ((*p = fgetc(stdin)) != '\n'))
 			p++;
 		len = p - pw; /* without \n */
 
@@ -372,12 +365,12 @@ int ask_passwd(int sd)
 	return 1;
 }
 
-int start_srv(const char *port, const char *pwd)
+int start_tcp_srv(const char *port, const char *pwd)
 {
 	if (NULL == port)
 		port = DFT_PORT;
 
-	mprint("\n----------------------------------------------------------------------\n");
+	mprint("\n\r----------------------------------------------------------------------\n");
 
 	mprint("Binding to %s\n", port);
 	int fam;
@@ -521,15 +514,7 @@ int check_password(int fd, const char *pwd)
 
 int tcp_bind(const char *port, int *family)
 {
-#ifdef _WIN32
-	WSADATA wsaData = { 0 };
-	// Initialize Winsock
-	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (iResult != 0) {
-		wprintf(L"WSAStartup failed: %d\n", iResult);
-		return 1;
-	}
-#endif
+	init_sockets();
 
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(struct addrinfo));
@@ -845,4 +830,121 @@ ssize_t read_byte(int fd, char *ch)
 	assert(ch != NULL);
 
 	return readn(fd, ch, 1);
+}
+
+int start_upd_srv(const char *addr_str, unsigned port)
+{
+	init_sockets();
+
+	in_addr_t addr;
+	if (addr_str != NULL)
+	{
+		struct hostent *host = gethostbyname(addr_str);
+		if (NULL == host)
+		{
+			fatal(EXIT_MALFORMED_PARAMETER, "Cannot look up udp network address: %s\n",
+					addr_str);
+		}
+		else if (host->h_addrtype != AF_INET)
+		{
+			fatal(EXIT_MALFORMED_PARAMETER, "No support for non-IPv4 network addresses: %s\n",
+					addr_str);
+		}
+
+		addr = ntohl(((struct in_addr *)host->h_addr_list[0])->s_addr);
+	}
+	else
+	{
+		addr = INADDR_ANY;
+	}
+
+	int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (-1 == sockfd) {
+#if _WIN32
+		wprintf(L"socket() eror: %ld\n", WSAGetLastError());
+		exit(EXIT_FAILURE);
+#else
+		mprint("socket() error: %s\n", strerror(errno));
+#endif
+	}
+
+	if (IN_MULTICAST(addr))
+	{
+		int on = 1;
+		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
+		{
+#if _WIN32
+			wprintf(L"setsockopt() error: %ld\n", WSAGetLastError());
+#else
+			mprint("setsockopt() error: %s\n", strerror(errno));
+#endif
+		}
+	}
+
+	struct sockaddr_in servaddr;
+	servaddr.sin_family = AF_INET;
+	servaddr.sin_addr.s_addr = addr;
+	servaddr.sin_port = htons(port);
+	if (IN_MULTICAST(addr))
+		servaddr.sin_addr.s_addr = addr;
+	else
+		servaddr.sin_addr.s_addr = INADDR_ANY;
+
+	if (bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) != 0)
+	{
+#if _WIN32
+		wprintf(L"bind() eror: %ld\n", WSAGetLastError());
+		exit(EXIT_FAILURE);
+#else
+		fatal(EXIT_BUG_BUG, "bind() error: %s\n", strerror(errno));
+#endif
+	}
+
+	if (IN_MULTICAST(addr)) {
+		struct ip_mreq group;
+		group.imr_multiaddr.s_addr = htonl(addr);
+		group.imr_interface.s_addr = htonl(INADDR_ANY);
+		if (setsockopt(infd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&group, sizeof(group)) < 0)
+		{
+#if _WIN32
+			wprintf(L"setsockopt() error: %ld\n", WSAGetLastError());
+#else
+			mprint("setsockopt() error: %s\n", strerror(errno));
+#endif
+			fatal(EXIT_BUG_BUG, "Cannot join multicast group.");
+		}
+	}
+
+	mprint("\n\r----------------------------------------------------------------------\n");
+	if (addr == INADDR_ANY)
+	{
+		mprint("\rReading from UDP socket %u\n", port);
+	}
+	else
+	{
+		struct in_addr in;
+		in.s_addr = htonl(addr);
+		mprint("\rReading from UDP socket %s:%u\n", inet_ntoa(in), port);
+	}
+
+	return sockfd;
+}
+
+void init_sockets (void)
+{
+	static int socket_inited = 0;
+	if (!socket_inited)
+	{
+		// Initialize Winsock
+#ifdef _WIN32
+		WSADATA wsaData = {0};
+		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+		{
+			wprintf(L"WSAStartup failed: %d\n", iResult);
+			exit(EXIT_FAILURE);
+		}
+#endif
+
+		socket_inited = 1;
+	}
 }

@@ -175,7 +175,7 @@ void init_options (struct ccx_s_options *options)
 	options->ts_datastreamtype = -1; // User WANTED stream type (i.e. use the stream that has this type)
 	options->ts_forced_streamtype=CCX_STREAM_TYPE_UNKNOWNSTREAM; // User selected (forced) stream type
 	/* Networking */
-	options->udpaddr = 0;
+	options->udpaddr = NULL;
 	options->udpport=0; // Non-zero => Listen for UDP packets on this port, no files.
 	options->send_to_srv = 0;
 	options->tcpport = NULL;
@@ -223,10 +223,6 @@ int spell_capacity=0;
 /* Hauppauge support */
 unsigned hauppauge_warning_shown=0; // Did we detect a possible Hauppauge capture and told the user already?
 unsigned teletext_warning_shown=0; // Did we detect a possible PAL (with teletext subs) and told the user already?
-
-
-
-struct sockaddr_in servaddr, cliaddr; 
 
 
 struct ccx_s_write wbout1, wbout2; // Output structures

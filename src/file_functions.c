@@ -88,26 +88,6 @@ void close_input_file (void)
     }
 }
 
-int init_sockets (void)
-{
-	static int socket_inited=0;
-	if (!socket_inited)
-	{
-#ifdef _WIN32
-		WSADATA wsaData = {0};
-		// Initialize Winsock
-		iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-		if (iResult != 0) {
-			wprintf(L"WSAStartup failed: %d\n", iResult);
-			return 1;
-		}
-#endif
-		socket_inited=1;	
-	}
-
-	return 0;
-}
-
 /* Close current file and open next one in list -if any- */
 /* bytesinbuffer is the number of bytes read (in some buffer) that haven't been added
 to 'past' yet. We provide this number to switch_to_next_file() so a final sanity check
@@ -143,42 +123,8 @@ int switch_to_next_file (LLONG bytesinbuffer)
 
 			return 0;
 		}
-		if (init_sockets())
-			return 1;
-		infd=socket(AF_INET,SOCK_DGRAM,0);	    
-		if (IN_MULTICAST(ccx_options.udpaddr)) 
-		{
-		    int on = 1;
-		    (void)setsockopt(infd, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on));
-		}
-		servaddr.sin_family = AF_INET;
-		servaddr.sin_addr.s_addr=htonl(IN_MULTICAST(ccx_options.udpaddr) ?       ccx_options.udpaddr  : INADDR_ANY);		
-		servaddr.sin_port=htons(ccx_options.udpport);
-		if (bind(infd,(struct sockaddr *)&servaddr,sizeof(servaddr)))
-		{
-			fatal (EXIT_BUG_BUG, "bind() failed.");
-		}
-		if (IN_MULTICAST(ccx_options.udpaddr)) {
-			struct ip_mreq group;
-			group.imr_multiaddr.s_addr = htonl(ccx_options.udpaddr);
-			group.imr_interface.s_addr = htonl(INADDR_ANY);
-			if (setsockopt(infd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&group, sizeof(group)) < 0)
-			{
-				fatal (EXIT_BUG_BUG, "cannot join multicast group.");
-			}
-		}
 
-		mprint ("\n\r-----------------------------------------------------------------\n");
-		if (ccx_options.udpaddr == INADDR_ANY)
-		{
-			mprint ("\rReading from UDP socket %u\n",ccx_options.udpport);
-		}
-		else 
-		{
-			struct in_addr in;
-			in.s_addr = htonl(ccx_options.udpaddr);
-			mprint ("\rReading from UDP socket %s:%u\n", inet_ntoa(in), ccx_options.udpport);
-		}
+		infd = start_upd_srv(ccx_options.udpaddr, ccx_options.udpport);
 		return 1;
 	}
 
@@ -192,7 +138,7 @@ int switch_to_next_file (LLONG bytesinbuffer)
 			return 0;
 		}
 
-		infd = start_srv(ccx_options.tcpport, ccx_options.tcp_password);
+		infd = start_tcp_srv(ccx_options.tcpport, ccx_options.tcp_password);
 		return 1;
 	}
 
@@ -430,11 +376,8 @@ LLONG buffered_read_opt (unsigned char *buffer, unsigned int bytes)
 				if (ccx_options.input_source==CCX_DS_FILE || ccx_options.input_source==CCX_DS_STDIN)
 					i=read (infd, filebuffer+keep,FILEBUFFERSIZE-keep);
 				else
-				{
-					socklen_t len = sizeof(cliaddr);
-					i = recvfrom(infd,(char *) filebuffer+keep,FILEBUFFERSIZE-keep,0,(struct sockaddr *)&cliaddr,&len);
-				}
-                if( i == -1)
+					i = recvfrom(infd,(char *) filebuffer+keep,FILEBUFFERSIZE-keep,0,NULL,NULL);
+                if (i == -1)
                     fatal (EXIT_READ_ERROR, "Error reading input stream!\n");
                 if (i==0)
                 {

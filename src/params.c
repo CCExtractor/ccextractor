@@ -1548,33 +1548,19 @@ void parse_parameters (int argc, char *argv[])
 		/* Network stuff */
         if (strcmp (argv[i],"-udp")==0 && i<argc-1)
 		{
-			char *colon = strchr(argv[i+1], ':');
+			char *colon = strchr(argv[i + 1], ':');
 			if (colon)
 			{
-				struct hostent *host;
 				*colon = '\0';
-				if (init_sockets())
-					fatal (EXIT_NOT_CLASSIFIED, "Unable to initialize sockets library.\n");
-				host = gethostbyname(argv[i+1]);
-				*colon = ':';
-				if (host == NULL) 
-				{
-					fatal(EXIT_MALFORMED_PARAMETER, "Cannot look up udp network address: %s\n", 
-						  argv[i+1]);
-				} 
-				else if (host->h_addrtype != AF_INET) 
-				{
-				  fatal(EXIT_MALFORMED_PARAMETER, "No support for non-IPv4 network addresses: %s\n", 
-						argv[i+1]);
-				}
-				ccx_options.udpaddr = ntohl(((struct in_addr *)host->h_addr_list[0])->s_addr);
+				ccx_options.udpaddr = argv[i + 1];
 				ccx_options.udpport = atoi_hex(colon + 1);
 			}
 			else
 			{
-				ccx_options.udpaddr = INADDR_ANY;
-				ccx_options.udpport = atoi_hex(argv[i+1]);
+				ccx_options.udpaddr = NULL;
+				ccx_options.udpport = atoi_hex(argv[i + 1]);
 			}
+
 			ccx_options.input_source=CCX_DS_NETWORK;
 			i++;
 			continue;

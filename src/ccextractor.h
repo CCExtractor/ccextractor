@@ -116,7 +116,7 @@ struct ccx_s_options // Options from user parameters
 	int ts_datastreamtype ; // User WANTED stream type (i.e. use the stream that has this type)
 	unsigned ts_forced_streamtype; // User selected (forced) stream type
 	/* Networking */
-	in_addr_t udpaddr;
+	char *udpaddr;
 	unsigned udpport; // Non-zero => Listen for UDP packets on this port, no files.
 	unsigned send_to_srv;
 	char *tcpport;
@@ -318,7 +318,6 @@ LLONG gettotalfilessize (void);
 void prepare_for_new_file (void);
 void close_input_file (void);
 int switch_to_next_file (LLONG bytesinbuffer);
-int init_sockets (void);
 void return_to_buffer (unsigned char *buffer, unsigned int bytes);
 
 // timing.c
@@ -433,8 +432,6 @@ extern char **inputfile;
 extern int current_file;
 extern LLONG result; // Number of bytes read/skipped in last read operation
 
-
-extern struct sockaddr_in servaddr, cliaddr;
 
 extern int strangeheader;
 
