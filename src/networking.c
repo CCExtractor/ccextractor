@@ -938,7 +938,8 @@ void init_sockets (void)
 		// Initialize Winsock
 #ifdef _WIN32
 		WSADATA wsaData = {0};
-		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+		int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+		if (iResult != 0)
 		{
 			wprintf(L"WSAStartup failed: %d\n", iResult);
 			exit(EXIT_FAILURE);
