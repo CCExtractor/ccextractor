@@ -6,6 +6,7 @@
 #ifdef _WIN32
 
 #include <io.h>
+#include <ws2tcpip.h>
 #include <windows.h>
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1
@@ -13,11 +14,14 @@
 #include "inttypes.h"
 #define UINT64_MAX   _UI64_MAX
 typedef int socklen_t;
+typedef int ssize_t;
 typedef uint32_t in_addr_t;
 #define IN_CLASSD(i)       (((INT32)(i) & 0xf0000000) == 0xe0000000)
 #define IN_MULTICAST(i)    IN_CLASSD(i)
 #include <direct.h>
 #define mkdir(path, mode) _mkdir(path)
+#define snprintf(buf, len, fmt, ...) _snprintf(buf, len, fmt, __VA_ARGS__)
+#define sleep(sec) Sleep((sec) * 1000)
 
 #else // _WIN32
 

@@ -307,6 +307,12 @@ void set_output_format (const char *format)
 
 void set_input_format (const char *format)
 {
+	if (ccx_options.input_source == CCX_DS_TCP && strcmp(format, "bin")!=0)
+	{
+		mprint("Intput format is changed to bin\n");
+		format = "bin";
+	}
+
     while (*format=='-')
         format++;
     if (strcmp (format,"es")==0) // Does this actually do anything?

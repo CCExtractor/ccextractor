@@ -55,6 +55,7 @@
     <ClInclude Include="..\src\libpng\pnglibconf.h" />
     <ClInclude Include="..\src\libpng\pngpriv.h" />
     <ClInclude Include="..\src\libpng\pngstruct.h" />
+    <ClInclude Include="..\src\networking.h" />
     <ClInclude Include="..\src\platform.h" />
     <ClInclude Include="..\src\spupng_encoder.h" />
     <ClInclude Include="..\src\stdint.h" />
@@ -156,6 +157,7 @@
     <ClCompile Include="..\src\libpng\pngwtran.c" />
     <ClCompile Include="..\src\libpng\pngwutil.c" />
     <ClCompile Include="..\src\myth.c" />
+    <ClCompile Include="..\src\networking.c" />
     <ClCompile Include="..\src\output.c" />
     <ClCompile Include="..\src\params.c" />
     <ClCompile Include="..\src\params_dump.c" />

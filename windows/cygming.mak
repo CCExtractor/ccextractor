@@ -32,7 +32,8 @@ objects = 608.o \
   sequencing.o \
   stream_functions.o \
   timing.o \
-  ts_functions.o
+  ts_functions.o \
+  networking.o
 
 bentoobjects = bento4/Ap48bdlAtom.o \
   bento4/Ap4AdtsParser.o \

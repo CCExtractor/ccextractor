@@ -8,14 +8,7 @@
 #include <errno.h>
 #include <assert.h>
 
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <termios.h>
-#include <unistd.h>
-
-#include <sys/ioctl.h>
-
-#define DEBUG_OUT 1
+#define DEBUG_OUT 0
 
 /* Protocol constants: */
 #define INT_LEN         10
@@ -29,7 +22,7 @@
 
 #define DFT_PORT "2048" /* Default port for server and client */
 #define WRONG_PASSWORD_DELAY 2 /* Seconds */
-#define BUFFER_SIZE 50 /* for password actually */
+#define BUFFER_SIZE 50
 
 int srv_sd = -1; /* Server socket descriptor */
 
@@ -279,10 +272,9 @@ int ask_passwd(int sd)
 {
 	assert(srv_sd > 0);
 
-	struct termios old, new;
 	int rc;
-	size_t len = 0;
-	char *pw = NULL;
+	size_t len;
+	char pw[BUFFER_SIZE] = { 0 };
 
 	char ok;
 
@@ -319,30 +311,15 @@ int ask_passwd(int sd)
 		printf("Enter password: ");
 		fflush(stdout);
 
-		if (tcgetattr(STDIN_FILENO, &old) != 0)
-		{
-			mprint("tcgetattr() error: %s\n", strerror(errno));
-		}
-
-		new = old;
-		new.c_lflag &= ~ECHO;
-		if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &new) != 0)
-		{
-			mprint("tcgetattr() error: %s\n", strerror(errno));
-		}
-
-		rc = getline(&pw, &len, stdin);
-		rc--; /* -1 for \n */
-
-		if (tcsetattr (STDIN_FILENO, TCSAFLUSH, &old) != 0)
-		{
-			mprint("tcgetattr() error: %s\n", strerror(errno));
-		}
+		char *p = pw;
+		while (p - pw < sizeof(pw) && ((*p = fgetc(stdin)) != '\n'))
+			p++;
+		len = p - pw; /* without \n */
 
 		printf("\n");
 		fflush(stdout);
 
-		if (write_block(sd, PASSWORD, pw, rc) < 0)
+		if (write_block(sd, PASSWORD, pw, len) < 0)
 			return -1;
 
 		if (read_byte(sd, &ok) != 1)
@@ -577,6 +554,7 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 
 #if DEBUG_OUT
 	fwrite(len_str, sizeof(char), INT_LEN, stderr);
+	fprintf(stderr, " ");
 #endif
 
     size_t len = atoi(len_str);
@@ -607,6 +585,7 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 
 #if DEBUG_OUT
 		fwrite(buf, sizeof(char), len, stderr);
+		fprintf(stderr, " ");
 #endif
 	}
 
