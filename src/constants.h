@@ -138,7 +138,8 @@ enum ccx_datasource
 {
 	CCX_DS_FILE=0,
 	CCX_DS_STDIN=1,
-	CCX_DS_NETWORK=2
+	CCX_DS_NETWORK=2,
+	CCX_DS_TCP=3
 };
 
 enum ccx_output_format

@@ -216,6 +216,12 @@
     <ClInclude Include="..\src\configuration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\cc_encoders_common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\networking.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gpacmp4\stbl_read.c">
@@ -519,6 +525,12 @@
       <Filter>Source Files\zlib</Filter>
     </ClCompile>
     <ClCompile Include="..\src\configuration.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\cc_encoders_common.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\networking.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

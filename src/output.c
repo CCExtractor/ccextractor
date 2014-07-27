@@ -180,6 +180,12 @@ void writercwtdata (const unsigned char *data)
         {
             writeraw(cbheader,10,&wbout1);
             writeraw(cbbuffer,3*cbcount, &wbout1);
+
+			if (ccx_options.send_to_srv)
+			{
+				net_send_cc(cbheader, 10);
+				net_send_cc(cbbuffer, 3*cbcount);
+			}
         }
         cbcount = 0;
         cbempty = 0;
@@ -224,6 +230,12 @@ void writercwtdata (const unsigned char *data)
 
         writeraw(cbheader,10,&wbout1);
         writeraw(cbbuffer,3*cbcount, &wbout1);
+
+		if (ccx_options.send_to_srv)
+		{
+			net_send_cc(cbheader, 10);
+			net_send_cc(cbbuffer, 3*cbcount);
+		}
 
         cbcount = 0;
         cbempty = 0;

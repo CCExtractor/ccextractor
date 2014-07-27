@@ -14,14 +14,15 @@ void params_dump(void)
 			mprint ("stdin");
 			break;
 		case CCX_DS_NETWORK:
-		    if (ccx_options.udpaddr == INADDR_ANY)
+		    if (ccx_options.udpaddr == NULL)
 				mprint ("Network, UDP/%u",ccx_options.udpport);
 			else
 			{
-				struct in_addr in;
-				in.s_addr = htonl(ccx_options.udpaddr);
-				mprint ("Network, %s:%d",inet_ntoa(in), ccx_options.udpport);
+				mprint ("Network, %s:%d",ccx_options.udpport, ccx_options.udpport);
 			}
+			break;
+		case CCX_DS_TCP:
+			mprint("Network, TCP/%s", ccx_options.tcpport);
 			break;
 	}
     mprint ("\n");    
@@ -216,6 +217,7 @@ void print_file_report(void)
 		case CCX_DS_STDIN:
 			printf("stdin\n");
 			break;
+		case CCX_DS_TCP:
 		case CCX_DS_NETWORK:
 			printf("network\n");
 			break;
