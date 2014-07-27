@@ -1,3 +1,10 @@
+0.71
+-----------
+- Added feature to receive captions in BIN format according to CCExtractor's own
+  protocol over TCP (-tcp port [-tcppassword password])
+- Added ability to send cations to the server described above or to the
+  online repository (-sendto host[:port])
+
 0.70 - GSOC
 -----------
 This is the first release that is part of Google's Summer of Code.
