@@ -256,6 +256,13 @@ void set_output_format (const char *format)
 {
     while (*format=='-')
         format++;
+
+	if (ccx_options.send_to_srv && strcmp(format, "bin")!=0)
+	{
+		mprint("Output format is changed to bin\n");
+		format = "bin";
+	}
+
     if (strcmp (format,"srt")==0)
         ccx_options.write_format=CCX_OF_SRT;
     else if (strcmp (format,"sami")==0 || strcmp (format,"smi")==0) 
@@ -300,6 +307,12 @@ void set_output_format (const char *format)
 
 void set_input_format (const char *format)
 {
+	if (ccx_options.input_source == CCX_DS_TCP && strcmp(format, "bin")!=0)
+	{
+		mprint("Intput format is changed to bin\n");
+		format = "bin";
+	}
+
     while (*format=='-')
         format++;
     if (strcmp (format,"es")==0) // Does this actually do anything?
@@ -367,6 +380,12 @@ void usage (void)
 	mprint ("                              port) instead of reading a file. Host can be a\n");
 	mprint ("                              hostname or IPv4 address. If host is not specified\n");
 	mprint ("                              then listens on the local host.\n\n");
+	mprint ("            -sendto host[:port]: Sends data in BIN format to the server according\n");
+	mprint ("                                 to the CCExtractor's protocol over TCP. For IPv6\n");
+	mprint ("                                 use [addres]:port\n");
+	mprint ("            -tcp port: Reads the input data in BIN format according to CCExtractor's\n");
+	mprint ("                       protocol, listening specified port on the local host\n");
+	mprint ("            -tcppassword password: Sets server password for new connections to tcp server\n");
     mprint ("Options that affect what will be processed:\n");
     mprint ("          -1, -2, -12: Output Field 1 data, Field 2 data, or both\n");
     mprint ("                       (DEFAULT is -1)\n");
@@ -1529,37 +1548,82 @@ void parse_parameters (int argc, char *argv[])
 		/* Network stuff */
         if (strcmp (argv[i],"-udp")==0 && i<argc-1)
 		{
-			char *colon = strchr(argv[i+1], ':');
+			char *colon = strchr(argv[i + 1], ':');
 			if (colon)
 			{
-				struct hostent *host;
 				*colon = '\0';
-				if (init_sockets())
-					fatal (EXIT_NOT_CLASSIFIED, "Unable to initialize sockets library.\n");
-				host = gethostbyname(argv[i+1]);
-				*colon = ':';
-				if (host == NULL) 
-				{
-					fatal(EXIT_MALFORMED_PARAMETER, "Cannot look up udp network address: %s\n", 
-						  argv[i+1]);
-				} 
-				else if (host->h_addrtype != AF_INET) 
-				{
-				  fatal(EXIT_MALFORMED_PARAMETER, "No support for non-IPv4 network addresses: %s\n", 
-						argv[i+1]);
-				}
-				ccx_options.udpaddr = ntohl(((struct in_addr *)host->h_addr_list[0])->s_addr);
+				ccx_options.udpaddr = argv[i + 1];
 				ccx_options.udpport = atoi_hex(colon + 1);
 			}
 			else
 			{
-				ccx_options.udpaddr = INADDR_ANY;
-				ccx_options.udpport = atoi_hex(argv[i+1]);
+				ccx_options.udpaddr = NULL;
+				ccx_options.udpport = atoi_hex(argv[i + 1]);
 			}
+
 			ccx_options.input_source=CCX_DS_NETWORK;
 			i++;
 			continue;
 		}		
+
+		if (strcmp (argv[i],"-sendto")==0 && i<argc-1)
+		{
+			ccx_options.send_to_srv = 1;
+
+			set_output_format("bin");
+
+			char *addr = argv[i + 1];
+			if (*addr == '[')
+			{
+				addr++;
+
+				ccx_options.srv_addr = addr;
+
+				char *br = strchr(addr, ']');
+				if (br == NULL)
+					fatal (EXIT_INCOMPATIBLE_PARAMETERS, "Wrong address format, for IPv6 use [address]:port\n");
+				*br = '\0';
+
+				br++; /* Colon */
+				if (*br != '\0')
+					ccx_options.srv_port = br + 1;
+
+				i++;
+				continue;
+			}
+
+			ccx_options.srv_addr = argv[i + 1];
+
+			char *colon = strchr(argv[i + 1], ':');
+			if (colon != NULL)
+			{
+				*colon = '\0';
+				ccx_options.srv_port = colon + 1;
+			}
+
+			i++;
+			continue;
+		}
+
+		if (strcmp (argv[i],"-tcp")==0 && i<argc-1)
+		{
+			ccx_options.tcpport = argv[i + 1];
+			ccx_options.input_source = CCX_DS_TCP;
+
+			set_input_format("bin");
+
+			i++;
+			continue;
+		}
+
+		if (strcmp (argv[i],"-tcppassword")==0 && i<argc-1)
+		{
+			ccx_options.tcp_password = argv[i + 1];
+
+			i++;
+			continue;
+		}
+
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "Error: Parameter %s not understood.\n", argv[i]);
         // Unrecognized switches are silently ignored
     }	
