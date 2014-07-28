@@ -408,6 +408,7 @@ void usage (void)
 	mprint ("              -stdout: Write output to stdout (console) instead of file. If\n");
 	mprint ("                       stdout is used, then -o, -o1 and -o2 can't be used. Also\n");
 	mprint ("                       -stdout will redirect all messages to stderr (error).\n\n");
+	mprint ("               -stdin: Reads input from stdin (console) instead of file.\n");
 	mprint ("You can pass as many input files as you need. They will be processed in order.\n");
 	mprint ("If a file name is suffixed by +, ccextractor will try to follow a numerical\n");
 	mprint ("sequence. For example, DVD001.VOB+ means DVD001.VOB, DVD002.VOB and so on\n");
@@ -892,7 +893,7 @@ void parse_parameters (int argc, char *argv[])
 	// Parse parameters
 	for (int i=1; i<argc; i++)
 	{
-		if (strcmp (argv[i], "-")==0)
+		if (strcmp (argv[i], "-")==0 || strcmp(argv[i], "-stdin") == 0)
 		{
 
 			ccx_options.input_source=CCX_DS_STDIN;
