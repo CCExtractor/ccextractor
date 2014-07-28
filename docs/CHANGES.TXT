@@ -6,6 +6,7 @@
   online repository (-sendto host[:port])
 - Added -stdin parameter for reading input stream from standard input
 - Compilation in Cygwin using linux/Makefile
+- Fix for .bin files when not using latin1 charset
 
 0.70 - GSOC
 -----------
