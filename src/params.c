@@ -74,22 +74,43 @@ int add_word (const char *word)
 {
     char *new_lower;
     char *new_correct;
+    char **ptr_lower;
+    char **ptr_correct;
+    int i;
     if (spell_words==spell_capacity)
     {
         // Time to grow
         spell_capacity+=50;
-        spell_lower=(char **) realloc (spell_lower, sizeof (char *) * 
+        ptr_lower=(char **) realloc (spell_lower, sizeof (char *) * 
             spell_capacity);
-        spell_correct=(char **) realloc (spell_correct, sizeof (char *) * 
+        ptr_correct=(char **) realloc (spell_correct, sizeof (char *) * 
             spell_capacity);		
     }
     size_t len=strlen (word);
     new_lower = (char *) malloc (len+1);
     new_correct = (char *) malloc (len+1);
-    if (spell_lower==NULL || spell_correct==NULL ||
+    if (ptr_lower==NULL || ptr_correct==NULL ||
         new_lower==NULL || new_correct==NULL)
-    {        
+    {
+        spell_capacity = 0;
+        for ( i = 0; i < spell_words ; i++)
+        {
+            freep(&spell_lower[spell_words]);
+            freep(&spell_correct[spell_words]);
+        }
+        freep(&spell_lower);
+        freep(&spell_correct);
+        freep(&ptr_lower);
+        freep(&ptr_correct);
+        freep(&new_lower);
+        freep(&new_correct);
+        spell_words = 0;
         return -1;
+    }
+    else
+    {
+        spell_lower = ptr_lower;
+        spell_correct = ptr_correct;
     }
     strcpy (new_correct, word);
     for (size_t i=0; i<len; i++)
@@ -125,6 +146,7 @@ int add_built_in_words()
 
 int process_cap_file (char *filename)
 {
+    int ret = 0;
     FILE *fi = fopen (filename,"rt");
     if (fi==NULL)
     {
@@ -147,17 +169,21 @@ int process_cap_file (char *filename)
         if (strlen (line)>32)
         {
             mprint ("Word in line %d too long, max = 32 characters.\n",num);
-            fclose (fi);
-            return -1;
+            ret = -1;
+            goto end;
         }
         if (strlen (line)>0)
         {
             if (add_word (line))
-                return -1;
+            {
+                ret = -1;
+                goto end;
+            }
         }
     }
+end:
     fclose (fi);
-    return 0;
+    return ret;
 }
 int isanumber (char *s)
 {
@@ -207,7 +233,10 @@ int append_file_to_queue (char *filename)
         inputfile_capacity+=10;
         inputfile=(char **) realloc (inputfile,sizeof (char *) * inputfile_capacity);
         if (inputfile==NULL)
+        {
+            free(c);
             return -1;
+        }
     }
     inputfile[num_input_files]=c;
     num_input_files++;            
@@ -229,10 +258,17 @@ int add_file_sequence (char *filename)
     m++;
     // Here: Significant digits go from filename[m] to filename[n]
     char *num=(char *) malloc (n-m+2);
+    if(!num)
+        return -1;
     strncpy (num,filename+m, n-m+1);
     num[n-m+1]=0;
     int i = atoi (num);
     char *temp=(char *) malloc (n-m+3); // For overflows
+    if(!temp)
+    {
+        free(num);
+        return -1;
+    }
     // printf ("Expanding %d to %d, initial value=%d\n",m,n,i);
     for (;;)
     {
@@ -241,7 +277,11 @@ int add_file_sequence (char *filename)
             break;
         fclose (f);
         if (append_file_to_queue (filename)) // Memory panic
+        {
+            free(num);
+            free(temp);
             return -1;
+        }
         i++;
         sprintf (temp,"%d",i);
         if (strlen (temp)>strlen (num)) // From 999 to 1000, etc.
@@ -249,6 +289,8 @@ int add_file_sequence (char *filename)
         strncpy (filename+m+(strlen (num)-strlen (temp)),temp,strlen (temp));
         memset (filename+m,'0',strlen (num)-strlen (temp));        
     }
+    free(num);
+    free(temp);
     return 0;
 }
 
