@@ -378,7 +378,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		if (ccx_options.gui_mode_reports)
 			write_cc_buffer_to_gui(sub->data, context);
 	}
-
-	freep(&sub->data);
+	if (!sub->nb_data)
+		freep(&sub->data);
 	return wrote_something;
 }
