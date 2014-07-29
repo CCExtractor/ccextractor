@@ -1,4 +1,4 @@
-0.71
+0.71 - GSOC
 -----------
 - Added feature to receive captions in BIN format according to CCExtractor's own
   protocol over TCP (-tcp port [-tcppassword password])

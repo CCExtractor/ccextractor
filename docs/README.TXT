@@ -1,4 +1,4 @@
-ccextractor, 0.63
+ccextractor, 0.71
 -----------------
 Authors: Carlos Fernández (cfsmp3), Volker Quetschke.
 Maintainer: cfsmp3
@@ -7,11 +7,16 @@ Lots of credit goes to other people, though:
 McPoodle (author of the original SCC_RIP), Neuron2, and others (see source
 code).
 
-Home: http://ccextractor.sourceforge.net
+Home: http://www.ccextractor.org
 
 You can subscribe to new releases notifications at freshmeat: 
 
 http://freshmeat.net/projects/ccextractor
+
+Google Summer of Code 2014 students
+- Willem van iseghem
+- Ruslan KuchumoV
+- Anshul Maheshwari
 
 License
 -------
@@ -67,21 +72,18 @@ If there are Spanish subtitles, one of them should work.
 
 McPoodle's page
 ---------------
-http://www.geocities.com/mcpoodle43/SCC_TOOLS/DOCS/SCC_TOOLS.HTML
+http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/SCC_TOOLS.HTML
 
 Essential CC related information and free (with source) tools.
 
 Encoding
 --------
 This version, in both its Linux and Windows builds generates by
-default Latin-1 encoded files. You can use -unicode and -utf8
-if you prefer these encodings (usually it just depends on what
-your specific player likes).
-This has changed from the previous UTF-8 default which vobsub
-can't handle.
+default Unicode files. You can use -latin1 and -utf8 if you prefer 
+these encodings (usually it just depends on what your specific
+player likes).
 
 Future work
 -----------
-- Finish EIA-708 decoder
-- Network support
+- Please check www.ccextractor.org for news and future work.
 
