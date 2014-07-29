@@ -7,6 +7,7 @@
 - Added -stdin parameter for reading input stream from standard input
 - Compilation in Cygwin using linux/Makefile
 - Fix for .bin files when not using latin1 charset
+- Correction of mp4 timing, when one timestamp points timing of two atom
 
 0.70 - GSOC
 -----------
