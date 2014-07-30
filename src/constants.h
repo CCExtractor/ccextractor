@@ -258,8 +258,11 @@ enum cxx_code_type
 #define CCX_TXT_AUTO_NOT_YET_FOUND		1
 #define CCX_TXT_IN_USE					2 // Positive autodetected, or forced, etc
 
-
-#define CCX_OF_TYPE_TEXT        1
-#define CCX_OF_TYPE_IMAGE       2
+enum subtype
+{
+	CC_BITMAP,
+	CC_608,
+	CC_TEXT,
+};
 
 #endif

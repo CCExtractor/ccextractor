@@ -1,5 +1,9 @@
 #include "ccextractor.h"
 #include "cc_encoders_common.h"
+#include "png.h"
+#include "spupng_encoder.h"
+#include "ocr.h"
+#include "utility.h"
 
 /* The timing here is not PTS based, but output based, i.e. user delay must be accounted for
    if there is any */
@@ -68,6 +72,142 @@ void write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_st
 	free(unescaped);
 }
 
+int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
+{
+	struct spupng_t *sp = (struct spupng_t *)context->out->spupng_data;
+	int x_pos, y_pos, width, height, i;
+	int x, y, y_off, x_off, ret;
+	uint8_t *pbuf;
+	char *filename;
+	struct cc_bitmap* rect;
+	png_color *palette = NULL;
+	png_byte *alpha = NULL;
+#ifdef ENABLE_OCR
+	char*str = NULL;
+#endif
+	int used;
+	unsigned h1,m1,s1,ms1;
+	unsigned h2,m2,s2,ms2;
+	LLONG ms_start, ms_end;
+	char timeline[128];
+	int len = 0;
+
+        x_pos = -1;
+        y_pos = -1;
+        width = 0;
+        height = 0;
+
+	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
+	{
+		ms_start = context->prev_start;
+		ms_end = sub->start_time;
+	}
+	else if ( !(sub->flags & SUB_EOD_MARKER))
+	{
+		ms_start = sub->start_time;
+		ms_end = sub->end_time;
+	}
+
+	if(sub->nb_data == 0 )
+		return 0;
+	rect = sub->data;
+	for(i = 0;i < sub->nb_data;i++)
+	{
+		if(x_pos == -1)
+		{
+			x_pos = rect[i].x;
+			y_pos = rect[i].y;
+			width = rect[i].w;
+			height = rect[i].h;
+		}
+		else
+		{
+			if(x_pos > rect[i].x)
+			{
+				width += (x_pos - rect[i].x);
+				x_pos = rect[i].x;
+			}
+
+                        if (rect[i].y < y_pos)
+                        {
+                                height += (y_pos - rect[i].y);
+                                y_pos = rect[i].y;
+                        }
+
+                        if (rect[i].x + rect[i].w > x_pos + width)
+                        {
+                                width = rect[i].x + rect[i].w - x_pos;
+                        }
+
+                        if (rect[i].y + rect[i].h > y_pos + height)
+                        {
+                                height = rect[i].y + rect[i].h - y_pos;
+                        }
+
+		}
+	}
+	if ( sub->flags & SUB_EOD_MARKER )
+		context->prev_start =  sub->start_time;
+	pbuf = (uint8_t*) malloc(width * height);
+	memset(pbuf, 0x0, width * height);
+
+	for(i = 0;i < sub->nb_data;i++)
+	{
+		x_off = rect[i].x - x_pos;
+		y_off = rect[i].y - y_pos;
+		for (y = 0; y < rect[i].h; y++)
+		{
+			for (x = 0; x < rect[i].w; x++)
+				pbuf[((y + y_off) * width) + x_off + x] = rect[i].data[0][y * rect[i].w + x];
+
+		}
+	}
+	palette = (png_color*) malloc(rect[0].nb_colors * sizeof(png_color));
+	if(!palette)
+	{
+		ret = -1;
+		goto end;
+	}
+        alpha = (png_byte*) malloc(rect[0].nb_colors * sizeof(png_byte));
+        if(!alpha)
+        {
+                ret = -1;
+                goto end;
+        }
+	/* TODO do rectangle, wise one color table should not be used for all rectangle */
+        mapclut_paletee(palette, alpha, (uint32_t *)rect[0].data[1],rect[0].nb_colors);
+	quantize_map(alpha, palette, pbuf, width*height, 3, rect[0].nb_colors);
+#ifdef ENABLE_OCR
+	str = ocr_bitmap(palette,alpha,pbuf,width,height);
+	if(str && str[0])
+	{
+		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
+		{
+			mstotime (ms_start,&h1,&m1,&s1,&ms1);
+			mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+			context->srt_counter++;
+			sprintf(timeline, "%u\r\n", context->srt_counter);
+			used = encode_line(context->buffer,(unsigned char *) timeline);
+			write(context->out->fh, context->buffer, used);
+			sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u\r\n",
+				h1,m1,s1,ms1, h2,m2,s2,ms2);
+			used = encode_line(context->buffer,(unsigned char *) timeline);
+			write (context->out->fh, context->buffer, used);
+			len = strlen(str);
+			write (context->out->fh, str, len);
+			write (context->out->fh, encoded_crlf, encoded_crlf_length);
+		}
+	}
+#endif
+
+end:
+	sub->nb_data = 0;
+	freep(&sub->data);
+	freep(&palette);
+	freep(&alpha);
+	return ret;
+
+}
 int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *context)
 {
 	int used;

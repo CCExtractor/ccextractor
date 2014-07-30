@@ -317,10 +317,6 @@ void write_spucomment(struct spupng_t *sp,const char *str)
         fprintf(sp->fpxml, "-->\n");
 }
 
-int get_spupng_subtype(void)
-{
-        return (1 << CCX_OF_TYPE_TEXT)|(1<<CCX_OF_TYPE_IMAGE);
-}
 char* get_spupng_filename(void *ctx)
 {
         struct spupng_t *sp = (struct spupng_t *)ctx;

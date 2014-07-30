@@ -388,12 +388,22 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		switch (ccx_options.write_format)
 		{
 		case CCX_OF_SRT:
+			if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
+				try_to_add_start_credits(context, sub->start_time);
+			wrote_something = write_cc_bitmap_as_srt(sub, context);
 		case CCX_OF_SAMI:
+			if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
+				try_to_add_start_credits(context, sub->start_time);
+			wrote_something = write_cc_bitmap_as_sami(sub, context);
 		case CCX_OF_SMPTETT:
+			if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
+				try_to_add_start_credits(context, sub->start_time);
+			wrote_something = write_cc_bitmap_as_smptett(sub, context);
 		case CCX_OF_TRANSCRIPT:
+//			wrote_something = write_cc_bitmap_as_transcript(sub, context);
 			break;
 		case CCX_OF_SPUPNG:
-			write_cc_bitmap_as_spupng(sub, context);
+			wrote_something = write_cc_bitmap_as_spupng(sub, context);
 			break;
 		default:
 			break;

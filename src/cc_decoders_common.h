@@ -3,12 +3,6 @@
 
 /* flag raised when end of display marker arrives in Dvb Subtitle */
 #define SUB_EOD_MARKER (1 << 0 )
-enum subtype
-{
-	CC_BITMAP,
-	CC_608,
-};
-
 struct cc_bitmap
 {
 	int x;

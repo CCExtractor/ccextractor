@@ -61,4 +61,7 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *context);
 
 int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *context);
+int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context);
+int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context);
+int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *context);
 #endif

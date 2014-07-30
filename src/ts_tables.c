@@ -267,11 +267,13 @@ int parse_PMT (unsigned char *buf,int len, int pos)
 			{
 				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
 				desc_len = (*es_info++);
+#ifndef ENABLE_OCR
 				if(ccx_options.write_format != CCX_OF_SPUPNG )
 				{
-					mprint ("DVB subtitle only support spupng type as output\n");
+					mprint ("Please Compile with ENABLE_OCR flag \n");
 					continue;
 				}
+#endif
 				if(CCX_MPEG_DSC_DVB_SUBTITLE == descriptor_tag)
 				{
 					struct dvb_config cnf;
