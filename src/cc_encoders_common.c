@@ -305,6 +305,8 @@ int init_encoder(struct encoder_ctx *ctx,struct ccx_s_write *out)
 	ctx->capacity=INITIAL_ENC_BUFFER_CAPACITY;
 	ctx->srt_counter = 0;
 	ctx->out = out;
+	/** used in case of SUB_EOD_MARKER */
+	ctx->prev_start = -1;
 	write_subtitle_file_header(ctx,out);
 
 	return 0;
@@ -324,30 +326,31 @@ void dinit_encoder(struct encoder_ctx *ctx)
 int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 {
 	int wrote_something = 0 ;
-	new_sentence=1;
-	struct eia608_screen *data = NULL;
 
 	if (ccx_options.extract!=1)
 		context++;
 
-	for(data = sub->data; sub->nb_data ; sub->nb_data--,data++)
+	if (sub->type == CC_608)
 	{
-		new_sentence=1;
-
-		if(data->format == SFORMAT_XDS)
+		struct eia608_screen *data = NULL;
+		for(data = sub->data; sub->nb_data ; sub->nb_data--,data++)
 		{
-			xds_write_transcript_line_prefix (context->out, data->start_time, data->end_time,data->cur_xds_packet_class);
-			if(data->xds_len > 0)
-				write (context->out->fh, data->xds_str,data->xds_len);
-			freep (&data->xds_str);
-			xds_write_transcript_line_suffix (context->out);
-			continue;
-		}
+			new_sentence=1;
 
-		if(!data->start_time)
-			break;
-		switch (ccx_options.write_format)
-		{
+			if(data->format == SFORMAT_XDS)
+			{
+				xds_write_transcript_line_prefix (context->out, data->start_time, data->end_time,data->cur_xds_packet_class);
+				if(data->xds_len > 0)
+					write (context->out->fh, data->xds_str,data->xds_len);
+				freep (&data->xds_str);
+				xds_write_transcript_line_suffix (context->out);
+				continue;
+			}
+
+			if(!data->start_time)
+				break;
+			switch (ccx_options.write_format)
+			{
 			case CCX_OF_SRT:
 				if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
 					try_to_add_start_credits(context, data->start_time);
@@ -371,14 +374,31 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				break;
 			default:
 				break;
+			}
+			if (wrote_something)
+				last_displayed_subs_ms=get_fts()+subs_delay;
+
+			if (ccx_options.gui_mode_reports)
+				write_cc_buffer_to_gui(sub->data, context);
 		}
-		if (wrote_something)
-			last_displayed_subs_ms=get_fts()+subs_delay;
-
-		if (ccx_options.gui_mode_reports)
-			write_cc_buffer_to_gui(sub->data, context);
+		freep(&sub->data);
 	}
+	if(sub->type == CC_BITMAP)
+	{
+		switch (ccx_options.write_format)
+		{
+		case CCX_OF_SRT:
+		case CCX_OF_SAMI:
+		case CCX_OF_SMPTETT:
+		case CCX_OF_TRANSCRIPT:
+			break;
+		case CCX_OF_SPUPNG:
+			write_cc_bitmap_as_spupng(sub, context);
+			break;
+		default:
+			break;
+		}
 
-	freep(&sub->data);
+	}
 	return wrote_something;
 }

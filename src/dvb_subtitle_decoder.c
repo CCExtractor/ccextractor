@@ -23,15 +23,8 @@
 
 
 #include "dvb_subtitle_decoder.h"
-#include "spupng_encoder.h"
-#include "ocr.h"
 #include "utility.h"
-#define DEBUG
-
-#ifdef DEBUG
-#define PNG_DEBUG 3
-#include "png.h"
-#endif
+#include "cc_decoders_common.h"
 
 #define DVBSUB_PAGE_SEGMENT     0x10
 #define DVBSUB_REGION_SEGMENT   0x11
@@ -185,299 +178,6 @@ static __inline unsigned int get_bits1(GetBitContext *s)
 
 	return result;
 }
-#ifdef DEBUG
-
-struct transIntensity
-{
-	uint8_t *t;
-	uint8_t *i;
-};
-int check_trans_tn_intensity(const void *p1, const void *p2, void *arg)
-{
-	struct transIntensity *ti = arg;
-	unsigned char* tmp = (unsigned char*)p1;
-	unsigned char* act = (unsigned char*)p2;
-
-	if (ti->t[*tmp] < ti->t[*act] || (ti->t[*tmp] == ti->t[*act] &&  ti->i[*tmp] < ti->i[*act]))
-		return -1;
-	else if (ti->t[*tmp] == ti->t[*act] &&  ti->i[*tmp] == ti->i[*act])
-		return 0;
-
-
-	return 1;
-}
-int mapclut_paletee(png_color *palette, png_byte *alpha, uint32_t *clut,
-		uint8_t depth)
-{
-	for (int i = 0; i < depth; i++)
-	{
-		palette[i].red = ((clut[i] >> 16) & 0xff);
-		palette[i].green = ((clut[i] >> 8) & 0xff);
-		palette[i].blue = (clut[i] & 0xff);
-		alpha[i] = ((clut[i] >> 24) & 0xff);
-	}
-	return 0;
-}
-/*
- * @param alpha out
- * @param intensity in 
- * @param palette out should be already initialized 
- * @param bitmap in 
- * @param size in size of bitmap
- * @param max_color in
- * @param nb_color in
- */
-int quantize_map(png_byte *alpha, uint8_t *intensity, png_color *palette,
-		uint8_t *bitmap, int size, int max_color, int nb_color)
-{
-	/*
-	 * occurrence of color in image
-	 */
-	uint32_t *histogram = NULL;
-	/* intensity ordered table */
-	uint8_t *iot = NULL;
-	/* array of color with most occurrence according to histogram
-	 * save index of intensity order table
-	 */
-	uint32_t *mcit = NULL;
-	struct transIntensity ti = { alpha,intensity};
-
-	int ret = 0;
-
-	histogram = (uint32_t*) malloc(nb_color * sizeof(uint32_t));
-	if (!histogram)
-	{
-		ret = -1;
-		goto end;
-	}
-
-	iot = (uint8_t*) malloc(nb_color * sizeof(uint8_t));
-	if (!iot)
-	{
-		ret = -1;
-		goto end;
-	}
-
-	mcit = (uint32_t*) malloc(nb_color * sizeof(uint32_t));
-	if (!mcit)
-	{
-		ret = -1;
-		goto end;
-	}
-
-	memset(histogram, 0, nb_color * sizeof(uint32_t));
-	for (int i = 0; i < nb_color; i++)
-	{
-		iot[i] = i;
-	}
-	memset(mcit, 0, nb_color * sizeof(uint32_t));
-
-	/* calculate histogram of image */
-	for (int i = 0; i < size; i++)
-	{
-		histogram[bitmap[i]]++;
-	}
-	shell_sort((void*)iot, nb_color, sizeof(*iot), check_trans_tn_intensity, (void*)&ti);
-
-	/* using selection  sort since need to find only max_color */
-	for (int i = 0; i < max_color; i++)
-	{
-		uint32_t max_val = 0;
-		uint32_t max_ind = 0;
-		int j;
-		for (j = 0; j < nb_color; j++)
-		{
-			if (max_val < histogram[iot[j]])
-			{
-				max_val = histogram[iot[j]];
-				max_ind = j;
-			}
-		}
-		for (j = i; j > 0 && max_ind < mcit[j - 1]; j--)
-		{
-			mcit[j] = mcit[j - 1];
-		}
-		mcit[j] = max_ind;
-		histogram[iot[max_ind]] = 0;
-	}
-
-	for (int i = 0, mxi = 0; i < nb_color; i++)
-	{
-		int step, inc;
-		if (i == mcit[mxi])
-		{
-			mxi = (mxi < max_color) ? mxi + 1 : mxi;
-			continue;
-		}
-		inc = (mxi) ? -1 : 0;
-		step = mcit[mxi + inc] + ((mcit[mxi] - mcit[mxi + inc]) / 3);
-		if (i <= step)
-		{
-			int index = iot[mcit[mxi + inc]];
-			alpha[i] = alpha[index];
-			palette[i].red = palette[index].red;
-			palette[i].blue = palette[index].blue;
-			palette[i].green = palette[index].green;
-		}
-		else
-		{
-			int index = iot[mcit[mxi]];
-			alpha[i] = alpha[index];
-			palette[i].red = palette[index].red;
-			palette[i].blue = palette[index].blue;
-			palette[i].green = palette[index].green;
-		}
-
-	}
-	end: freep(&histogram);
-	freep(&mcit);
-	freep(&iot);
-	return ret;
-}
-
-
-static int pre_process_bitmap(png_color **palette, png_byte **alpha, int size,
-		uint32_t *clut, uint8_t *luit, uint8_t *bitmap, uint8_t depth)
-{
-	/*local pointer to palette */
-	png_color *lpalette = NULL;
-	/* local pointer to alpha */
-	png_byte *lalpha = NULL;
-	int nb_color = (1<< depth);
-	int ret = 0;
-
-
-	lpalette = (png_color*) malloc(nb_color * sizeof(png_color));
-	if(!lpalette)
-	{
-		ret = -1;
-		goto end;
-	}
-	lalpha = (png_byte*) malloc(nb_color * sizeof(png_byte));
-	if(!lalpha)
-	{
-		ret = -1;
-		goto end;
-	}
-	if(clut)
-		mapclut_paletee(lpalette, lalpha, clut, nb_color);
-	else
-	{
-		/* initialize colors with white */
-		memset(palette,0xff,nb_color * sizeof(*lpalette));
-
-		/* initialize transparency as complete transparent */
-		memset(lalpha,0,nb_color * sizeof(*lalpha));
-	}
-
-	if(bitmap)
-	{
-		quantize_map(lalpha, luit, lpalette, bitmap, size, 3, nb_color);
-	}
-	*palette = lpalette;
-	*alpha = lalpha;
-end:
-	return ret;
-}
-static int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
-		png_color *palette, png_byte *alpha, int nb_color)
-{
-	FILE *f = NULL;
-	png_structp png_ptr = NULL;
-	png_infop info_ptr = NULL;
-	png_bytep* row_pointer = NULL;
-	int i, j, ret = 0;
-	int k = 0;
-	if(!h)
-		h = 1;
-	if(!w)
-		w = 1;
-
-
-	f = fopen(filename, "wb");
-	if (!f)
-	{
-		mprint("DVB:unable to open %s in write mode \n", filename);
-		ret = -1;
-		goto end;
-	}
-
-	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL,NULL);
-	if (!png_ptr)
-	{
-		mprint("DVB:unable to create png write struct\n");
-		goto end;
-	}
-	if (!(info_ptr = png_create_info_struct(png_ptr)))
-	{
-		mprint("DVB:unable to create png info struct\n");
-		ret = -1;
-		goto end;
-	}
-
-	row_pointer = (png_bytep*) malloc(sizeof(png_bytep) * h);
-	if (!row_pointer)
-	{
-		mprint("DVB: unable to allocate row_pointer\n");
-		ret = -1;
-		goto end;
-	}
-	memset(row_pointer, 0, sizeof(png_bytep) * h);
-	png_init_io(png_ptr, f);
-
-	png_set_IHDR(png_ptr, info_ptr, w, h,
-	/* bit_depth */8,
-	PNG_COLOR_TYPE_PALETTE,
-	PNG_INTERLACE_NONE,
-	PNG_COMPRESSION_TYPE_DEFAULT,
-	PNG_FILTER_TYPE_DEFAULT);
-
-	png_set_PLTE(png_ptr, info_ptr, palette, nb_color);
-	png_set_tRNS(png_ptr, info_ptr, alpha, nb_color, NULL);
-
-	for (i = 0; i < h; i++)
-	{
-		row_pointer[i] = (png_byte*) malloc(
-				png_get_rowbytes(png_ptr, info_ptr));
-		if (row_pointer[i] == NULL)
-			break;
-	}
-	if (i != h)
-	{
-		mprint("DVB: unable to allocate row_pointer internals\n");
-		ret = -1;
-		goto end;
-	}
-	png_write_info(png_ptr, info_ptr);
-	for (i = 0; i < h; i++)
-	{
-		for (j = 0; j < png_get_rowbytes(png_ptr, info_ptr); j++)
-		{
-			if(bitmap)
-				k = bitmap[i * w + (j)];
-			else
-				k = 0;
-			row_pointer[i][j] = k;
-		}
-	}
-
-	png_write_image(png_ptr, row_pointer);
-
-	png_write_end(png_ptr, info_ptr);
-	end: if (row_pointer)
-	{
-		for (i = 0; i < h; i++)
-			freep(&row_pointer[i]);
-		freep(&row_pointer);
-	}
-	png_destroy_write_struct(&png_ptr, &info_ptr);
-	if (f)
-		fclose(f);
-	return ret;
-
-}
-
-#endif
 
 #define RGBA(r,g,b,a) (((unsigned)(a) << 24) | ((r) << 16) | ((g) << 8) | (b))
 
@@ -579,16 +279,7 @@ typedef struct DVBSubContext
 
 	DVBSubRegionDisplay *display_list;
 	DVBSubDisplayDefinition *display_definition;
-	struct ccx_s_write *out;
-	long long prev_start;
 } DVBSubContext;
-
-typedef struct DVBOutContext
-{
-	long long start_time;
-	long long end_time;
-
-}DVBOutContext;
 
 static DVBSubObject* get_object(DVBSubContext *ctx, int object_id)
 {
@@ -717,124 +408,6 @@ static void delete_regions(DVBSubContext *ctx)
 	}
 }
 
-#ifdef DEBUG
-static void save_display_set(DVBSubContext *ctx)
-{
-	DVBSubRegion *region;
-	DVBSubRegionDisplay *display;
-	DVBSubCLUT *clut;
-	int x_pos, y_pos, width, height;
-	int x, y, y_off, x_off;
-	uint8_t *pbuf;
-	char *filename;
-	void *sp = ctx->out->spupng_data;
-	x_pos = -1;
-	y_pos = -1;
-	width = 0;
-	height = 0;
-
-
-	for (display = ctx->display_list; display; display = display->next)
-	{
-		region = get_region(ctx, display->region_id);
-
-		if (x_pos == -1)
-		{
-			x_pos = display->x_pos;
-			y_pos = display->y_pos;
-			width = region->width;
-			height = region->height;
-		}
-		else
-		{
-			if (display->x_pos < x_pos)
-			{
-				width += (x_pos - display->x_pos);
-				x_pos = display->x_pos;
-			}
-
-			if (display->y_pos < y_pos)
-			{
-				height += (y_pos - display->y_pos);
-				y_pos = display->y_pos;
-			}
-
-			if (display->x_pos + region->width > x_pos + width)
-			{
-				width = display->x_pos + region->width - x_pos;
-			}
-
-			if (display->y_pos + region->height > y_pos + height)
-			{
-				height = display->y_pos + region->height - y_pos;
-			}
-		}
-	}
-
-	if (x_pos >= 0)
-	{
-		png_color *palette = NULL;
-		png_byte *alpha = NULL;
-#ifdef ENABLE_OCR
-		char*str = NULL;
-#endif
-
-		filename = get_spupng_filename(sp);
-		inc_spupng_fileindex(sp);
-		set_spupng_offset(sp,y_pos,x_pos);
-
-		pbuf = (uint8_t*) malloc(width * height);
-		memset(pbuf, 0x0, width * height);
-
-		for (display = ctx->display_list; display; display = display->next)
-		{
-			region = get_region(ctx, display->region_id);
-
-			x_off = display->x_pos - x_pos;
-			y_off = display->y_pos - y_pos;
-
-			clut = get_clut(ctx, region->clut);
-
-			if (clut == 0)
-				clut = &default_clut;
-
-			for (y = 0; y < region->height; y++)
-			{
-				for (x = 0; x < region->width; x++)
-				{
-					pbuf[((y + y_off) * width) + x_off + x] =
-							region->pbuf[y * region->width + x];
-				}
-			}
-
-		}
-		pre_process_bitmap(&palette,&alpha,width*height,clut->clut16, clut->ilut16,pbuf,region->depth);
-#ifdef ENABLE_OCR
-		str = ocr_bitmap(palette,alpha,pbuf,width,height);
-		if(str)
-		{
-			write_spucomment(sp,str);
-		}
-#endif
-		save_spupng(filename, pbuf, width, height, palette, alpha,(1 << region->depth));
-
-		free(pbuf);
-		freep(&palette);
-		freep(&alpha);
-	}
-	else if(!ctx->prev_start)
-	{
-		png_color palette = {0,0,0};
-		png_byte alpha = 0;
-		filename = get_spupng_filename(sp);
-		inc_spupng_fileindex(sp);
-		/* save dummy frame */
-		save_spupng(filename,NULL,1,1,&palette,&alpha,1);
-
-	}
-
-}
-#endif
 
 /**
  * @param composition_id composition-page_id found in Subtitle descriptors
@@ -1726,9 +1299,6 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	int page_state;
 	int timeout;
 	int version;
-	long long start = get_visible_start();
-	void *sp = ctx->out->spupng_data;
-
 
 	if (buf_size < 1)
 		return;
@@ -1745,19 +1315,6 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 
 	ctx->time_out = timeout;
 	ctx->version = version;
-
-	if(ctx->prev_start == 0)
-	{
-		write_sputag(sp, ctx->prev_start, start);
-		save_display_set(ctx);
-	}
-	else if(ctx->display_list)
-	{
-		write_sputag(sp, ctx->prev_start, start);
-		save_display_set(ctx);
-	}
-
-	ctx->prev_start = start;
 
 	if (page_state == 1 || page_state == 2)
 	{
@@ -1858,18 +1415,44 @@ static void dvbsub_parse_display_definition_segment(void *dvb_ctx,
 	}
 }
 
-static int dvbsub_display_end_segment(void *dvb_ctx, const uint8_t *buf,
-		int buf_size)
+static int write_dvb_sub(void *dvb_ctx, struct cc_subtitle *sub)
 {
 	DVBSubContext *ctx = (DVBSubContext *) dvb_ctx;
-
 	DVBSubRegion *region;
 	DVBSubRegionDisplay *display;
 	DVBSubCLUT *clut;
-	int i;
+        DVBSubDisplayDefinition *display_def = ctx->display_definition;
+        struct cc_bitmap *rect = NULL;
+	uint32_t *clut_table;
+	int offset_x=0, offset_y=0;
 
-	i = 0;
+        sub->type = CC_BITMAP;
+	if (display_def)
+	{
+		offset_x = display_def->x;
+		offset_y = display_def->y;
+	}
 
+	for (display = ctx->display_list; display; display = display->next)
+	{
+		region = get_region(ctx, display->region_id);
+		if (region && region->dirty)
+			sub->nb_data++;
+	}
+	sub->start_time = get_visible_start();
+	sub->end_time = sub->start_time + ( ctx->time_out * 1000 );
+	sub->flags |= SUB_EOD_MARKER;
+	sub->got_output = 1;
+	if( sub->nb_data <= 0 )
+	{
+		return 0;
+	}
+	rect = malloc( sizeof(struct cc_bitmap) * sub->nb_data);
+	if(!rect)
+	{
+		return -1;
+	}
+	sub->data = rect;
 	for (display = ctx->display_list; display; display = display->next)
 	{
 		region = get_region(ctx, display->region_id);
@@ -1879,34 +1462,60 @@ static int dvbsub_display_end_segment(void *dvb_ctx, const uint8_t *buf,
 
 		if (!region->dirty)
 			continue;
+
+		rect->x = display->x_pos + offset_x;
+		rect->y = display->y_pos + offset_y;
+		rect->w = region->width;
+		rect->h = region->height;
+		rect->nb_colors = (1 << region->depth);
+		rect->linesize[0] = region->width;
+
 		clut = get_clut(ctx, region->clut);
 
 		if (!clut)
 			clut = &default_clut;
 
-		i++;
+		switch (region->depth)
+		{
+		case 2:
+			clut_table = clut->clut4;
+		case 8:
+			clut_table = clut->clut256;
+			break;
+		case 4:
+		default:
+			clut_table = clut->clut16;
+			break;
+		}
+
+		rect->data[1] = malloc(1024);
+		memset(rect->data[1], 0, 1024);
+		memcpy(rect->data[1], clut_table, (1 << region->depth) * sizeof(uint32_t));
+
+		rect->data[0] = malloc(region->buf_size);
+		memcpy(rect->data[0], region->pbuf, region->buf_size);
+		rect++;
+
 	}
-#ifdef DEBUG
+#ifdef DeBUG
 	if (ctx->object_list)
 	{
 		//save_display_set(ctx);
 	}
 #endif
 
-	return 1;
+	return 0;
 }
 /**
  * @param dvb_ctx    PreInitialized DVB context using DVB
- * @param data       output subtitle data, to be implemented
- * @param data_size  Output subtitle data  size. pass the pointer to an integer, NOT to be NULL.
  * @param buf        buffer containing segment data, first sync byte need to 0x0f.
  *                   does not include data_identifier and subtitle_stream_id.
  * @param buf_size   size of buf buffer
+ * @param sub        output subtitle data
  *
  * @return           -1 on error
  */
-int dvbsub_decode(void *dvb_ctx, void *data, int *data_size,
-		const unsigned char *buf, int buf_size)
+int dvbsub_decode(void *dvb_ctx, const unsigned char *buf, int buf_size, struct cc_subtitle *sub)
 {
 	DVBSubContext *ctx = (DVBSubContext *) dvb_ctx;
 	const uint8_t *p, *p_end;
@@ -1956,7 +1565,7 @@ int dvbsub_decode(void *dvb_ctx, void *data, int *data_size,
 			case DVBSUB_CLUT_SEGMENT:
 				ret = dvbsub_parse_clut_segment(dvb_ctx, p, segment_length);
 				if (ret < 0)
-					return ret;
+					goto end;
 				got_segment |= 4;
 				break;
 			case DVBSUB_OBJECT_SEGMENT:
@@ -1968,8 +1577,7 @@ int dvbsub_decode(void *dvb_ctx, void *data, int *data_size,
 						segment_length);
 				break;
 			case DVBSUB_DISPLAY_SEGMENT:
-				*data_size = dvbsub_display_end_segment(dvb_ctx, p,
-						segment_length);
+				write_dvb_sub(dvb_ctx,sub);
 				got_segment |= 16;
 				break;
 			default:
@@ -1985,11 +1593,15 @@ int dvbsub_decode(void *dvb_ctx, void *data, int *data_size,
 	// segments then we need no further data.
 	if (got_segment == 15)
 	{
-		*data_size = dvbsub_display_end_segment(dvb_ctx, p, 0);
+		write_dvb_sub(dvb_ctx,sub);
+
 
 	}
+end:
+	if ( ret >= 0 )
+		ret = p - buf;
 
-	return p - buf;
+	return ret;
 }
 /**
  * @func parse_dvb_description
@@ -2046,18 +1658,4 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 	}
 
 	return 0;
-}
-/*
- * @func dvbsub_set_write the output structure in dvb
- * set ccx_s_write structure in dvb_ctx
- *
- * @param dvb_ctx context of dvb which was returned by dvbsub_init_decoder
- *
- * @param out output context returned by init_write  
- * 
- */
-void dvbsub_set_write(void *dvb_ctx, struct ccx_s_write *out)
-{
-	DVBSubContext *ctx = (DVBSubContext *) dvb_ctx;
-	ctx->out = out;
 }

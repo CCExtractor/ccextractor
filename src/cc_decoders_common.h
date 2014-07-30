@@ -1,6 +1,24 @@
 #ifndef _CC_DECODER_COMMON
 #define _CC_DECODER_COMMON
 
+/* flag raised when end of display marker arrives in Dvb Subtitle */
+#define SUB_EOD_MARKER (1 << 0 )
+enum subtype
+{
+	CC_BITMAP,
+	CC_608,
+};
+
+struct cc_bitmap
+{
+	int x;
+	int y;
+	int w;
+	int h;
+	int nb_colors;
+	unsigned char *data[2];
+	int linesize[2];
+};
 /**
  * Raw Subtitle struct used as output of decoder (cc608) 
  * and input for encoder (sami, srt, transcript or smptett etc)
@@ -15,6 +33,13 @@ struct cc_subtitle
 	void *data;
 	/** number of data */
 	unsigned int nb_data;
+	/**  type of subtitle */
+	enum subtype type;
+	/* set only when all the data is to be displayed at same time */
+	LLONG start_time;
+	LLONG end_time;
+	/* flags */
+	int flags;
 	/** flag to tell that decoder has given output */
 	int got_output;
 };
