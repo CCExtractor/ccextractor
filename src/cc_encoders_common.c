@@ -359,7 +359,15 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 						fdprintf(context->out->fh, "%s%c%03d|", buf2,ccx_options.millis_separator,end_time_dec);
 					}
 				}
-				fdprintf(context->out->fh,"DVB|%s\n",token);
+				if (ccx_options.transcript_settings.showCC)
+				{
+					fdprintf(context->out->fh,"%s|",language[sub->lang_index]);
+				}
+				if (ccx_options.transcript_settings.showMode)
+				{
+					fdprintf(context->out->fh,"DVB|");
+				}
+				fdprintf(context->out->fh,"%s\n",token);
 				token = strtok(NULL,"\r\n");
 
 			}

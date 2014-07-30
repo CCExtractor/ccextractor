@@ -85,7 +85,6 @@ const uint8_t crop_tab[256 + 2 * MAX_NEG_CROP] = { times256(0x00), 0x00, 0x01,
 
 #define cm (crop_tab + MAX_NEG_CROP)
 
-const char *dvb_language[] = { "und", "eng", "fin", NULL };
 
 static __inline unsigned int bytestream_get_byte(const uint8_t **b)
 {
@@ -270,7 +269,7 @@ typedef struct DVBSubContext
 {
 	int composition_id;
 	int ancillary_id;
-
+	int lang_index;
 	int version;
 	int time_out;
 	DVBSubRegion *region_list;
@@ -420,14 +419,15 @@ static void delete_regions(DVBSubContext *ctx)
  * @return DVB context kept as void* for abstraction
  *
  */
-void* dvbsub_init_decoder(int composition_id, int ancillary_id)
+void* dvbsub_init_decoder(struct dvb_config* cfg)
 {
 	int i, r, g, b, a = 0;
 	DVBSubContext *ctx = (DVBSubContext*) malloc(sizeof(DVBSubContext));
 	memset(ctx, 0, sizeof(DVBSubContext));
 
-	ctx->composition_id = composition_id;
-	ctx->ancillary_id = ancillary_id;
+	ctx->composition_id = cfg->composition_id[0];
+	ctx->ancillary_id = cfg->ancillary_id[0];
+	ctx->lang_index = cfg->lang_index[0];
 
 	ctx->version = -1;
 
@@ -1427,6 +1427,7 @@ static int write_dvb_sub(void *dvb_ctx, struct cc_subtitle *sub)
 	int offset_x=0, offset_y=0;
 
         sub->type = CC_BITMAP;
+	sub->lang_index = ctx->lang_index;
 	if (display_def)
 	{
 		offset_x = display_def->x;
@@ -1646,9 +1647,9 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 	for (i = 0; i < cfg->n_language; i++, data += i * 8)
 	{
 		/* setting language to undefined if not found in language lkup table */
-		for (j = 0, cfg->lang_index[i] = 0; dvb_language[j] != NULL; j++)
+		for (j = 0, cfg->lang_index[i] = 0; language[j] != NULL; j++)
 		{
-			if (!strncmp((const char*) (data), dvb_language[j], 3))
+			if (!strncmp((const char*) (data), language[j], 3))
 				cfg->lang_index[i] = j;
 		}
 		cfg->sub_type[i] = data[3];

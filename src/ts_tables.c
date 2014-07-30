@@ -281,7 +281,7 @@ int parse_PMT (unsigned char *buf,int len, int pos)
 					ret = parse_dvb_description(&cnf,es_info,desc_len);
 					if(ret < 0)
 						break;
-					cxx_dvb_context = dvbsub_init_decoder(cnf.composition_id[0],cnf.ancillary_id[0]);
+					cxx_dvb_context = dvbsub_init_decoder(&cnf);
 					if (cxx_dvb_context == NULL)
 						break;
 					ccx_options.ts_cappid = newcappid = elementary_PID;

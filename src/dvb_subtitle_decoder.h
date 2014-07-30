@@ -37,17 +37,12 @@ struct dvb_config
 };
 
 /**
- * @param composition_id composition-page_id found in Subtitle descriptors
- *                       associated with 	subtitle stream in the	PMT
- *                       it could be -1 if not found in PMT.
- * @param ancillary_id ancillary-page_id found in Subtitle descriptors
- *                     associated with 	subtitle stream in the	PMT.
- *                       it could be -1 if not found in PMT.
+ * @param cfg Structure containg configuration
  *
  * @return DVB context kept as void* for abstraction
  *
  */
-void* dvbsub_init_decoder(int composition_id, int ancillary_id);
+void* dvbsub_init_decoder(struct dvb_config* cfg);
 
 int dvbsub_close_decoder(void *dvb_ctx);
 

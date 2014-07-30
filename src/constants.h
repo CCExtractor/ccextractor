@@ -264,5 +264,5 @@ enum subtype
 	CC_608,
 	CC_TEXT,
 };
-
+extern const char *language[4];
 #endif

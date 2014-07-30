@@ -34,6 +34,8 @@ struct cc_subtitle
 	LLONG end_time;
 	/* flags */
 	int flags;
+	/* index of language table */
+	int lang_index;
 	/** flag to tell that decoder has given output */
 	int got_output;
 };

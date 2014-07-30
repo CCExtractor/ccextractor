@@ -123,3 +123,11 @@ enum
     DTVCC_PACKET_DATA  = 2,
     DTVCC_PACKET_START = 3,
 };
+
+const char *language[4] =
+{
+	"und",
+	"eng",
+	"fin",
+	NULL
+};
