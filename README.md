@@ -3,19 +3,13 @@ ccextractor
 
 CCExtractor - Carlos' version (mainstream).
 
-0.70 - GSOC
+0.71
 -----------
-This is the first release that is part of Google's Summer of Code.
-Anshul, Ruslan and Willem joined CCExtractor to work on a number of things
-over the summer, and their work is already reaching the mainstream
-version of CCExtractor.
-
-- Added a huge dictionary submitted by Matt Stockard.
-- Added DVB subtitles decoder, spupng in output
-- Added support for cdt2 media atoms in QT video files. Now multiple atoms in
- a single sample sequence are supported.
-- Changed Makefile.
-- Fixed some bugs.
-- Added feature to print info about file's subtitles and streams.
-- Support Long PMT.
-- Support Configuration file.
+- Added feature to receive captions in BIN format according to CCExtractor's own
+  protocol over TCP (-tcp port [-tcppassword password])
+- Added ability to send captions to the server described above or to the
+  online repository (-sendto host[:port])
+- Added -stdin parameter for reading input stream from standard input
+- Compilation in Cygwin using linux/Makefile
+- Code tested with coverity for defect density 0.42
+- Correction of mp4 timing, when one timestamp points timing of two atom
