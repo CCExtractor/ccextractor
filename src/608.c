@@ -284,6 +284,7 @@ int write_cc_buffer(struct s_context_cc608 *context, struct cc_subtitle *sub)
 
 	start_time = context->current_visible_start_ms;
 	end_time = get_visible_end() + subs_delay;
+	sub->type = CC_608;
 	data->format = SFORMAT_CC_SCREEN;
 	data->start_time = 0;
 	data->end_time = 0;
@@ -340,6 +341,7 @@ int write_cc_line(struct s_context_cc608 *context, struct cc_subtitle *sub)
 	
 	start_time = context->ts_start_of_current_line + subs_delay;
 	end_time = get_fts() + subs_delay;
+	sub->type = CC_608;
 	data->format = SFORMAT_CC_LINE; 
 	data->start_time = 0;
 	data->end_time = 0;

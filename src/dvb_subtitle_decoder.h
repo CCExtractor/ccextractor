@@ -37,32 +37,26 @@ struct dvb_config
 };
 
 /**
- * @param composition_id composition-page_id found in Subtitle descriptors
- *                       associated with 	subtitle stream in the	PMT
- *                       it could be -1 if not found in PMT.
- * @param ancillary_id ancillary-page_id found in Subtitle descriptors
- *                     associated with 	subtitle stream in the	PMT.
- *                       it could be -1 if not found in PMT.
+ * @param cfg Structure containg configuration
  *
  * @return DVB context kept as void* for abstraction
  *
  */
-void* dvbsub_init_decoder(int composition_id, int ancillary_id);
+void* dvbsub_init_decoder(struct dvb_config* cfg);
 
 int dvbsub_close_decoder(void *dvb_ctx);
 
 /**
  * @param dvb_ctx    PreInitialized DVB context using DVB
- * @param data       output subtitle data, to be implemented
- * @param data_size  Output subtitle data  size. pass the pointer to an intiger, NOT to be NULL.
- * @param buf        buffer containg segment data, first sync byte needto 0x0f.
+ * @param buf        buffer containing segment data, first sync byte need to 0x0f.
  *                   does not include data_identifier and subtitle_stream_id.
  * @param buf_size   size of buf buffer
+ * @param sub        output subtitle data
  *
  * @return           -1 on error
  */
-int dvbsub_decode(void *dvb_ctx, void *data, int *data_size,
-		const unsigned char *buf, int buf_size);
+int dvbsub_decode(void *dvb_ctx, const unsigned char *buf, int buf_size, struct cc_subtitle *sub);
+
 /**
  * @func parse_dvb_description
  *

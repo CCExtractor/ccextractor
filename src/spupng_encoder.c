@@ -2,6 +2,11 @@
 #include "platform.h"
 #include "spupng_encoder.h"
 #include <assert.h>
+#include "cc_encoders_common.h"
+#include "utility.h"
+#ifdef ENABLE_OCR
+#include "ocr.h"
+#endif
 
 #define CCPL (ccfont2_width / CCW * ccfont2_height / CCH)
 
@@ -70,6 +75,7 @@ struct spupng_t *spunpg_init(struct ccx_s_write *out)
     if (NULL == sp->pngfile)
         fatal(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
     sp->fileIndex = 0;
+    sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex);
 
     // For NTSC closed captions and 720x480 DVD subtitle resolution:
     // Each character is 16x26.
@@ -311,20 +317,16 @@ void write_spucomment(struct spupng_t *sp,const char *str)
         fprintf(sp->fpxml, "-->\n");
 }
 
-int get_spupng_subtype(void)
-{
-        return (1 << CCX_OF_TYPE_TEXT)|(1<<CCX_OF_TYPE_IMAGE);
-}
 char* get_spupng_filename(void *ctx)
 {
         struct spupng_t *sp = (struct spupng_t *)ctx;
-        sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex);
         return sp->pngfile;
 }
 void inc_spupng_fileindex(void *ctx)
 {
         struct spupng_t *sp = (struct spupng_t *)ctx;
         sp->fileIndex++;
+        sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex);
 }
 void set_spupng_offset(void *ctx,int x,int y)
 {
@@ -332,4 +334,372 @@ void set_spupng_offset(void *ctx,int x,int y)
     sp->xOffset = x;
     sp->yOffset = y;
 }
+static int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
+		png_color *palette, png_byte *alpha, int nb_color)
+{
+	FILE *f = NULL;
+	png_structp png_ptr = NULL;
+	png_infop info_ptr = NULL;
+	png_bytep* row_pointer = NULL;
+	int i, j, ret = 0;
+	int k = 0;
+	if(!h)
+		h = 1;
+	if(!w)
+		w = 1;
 
+
+	f = fopen(filename, "wb");
+	if (!f)
+	{
+		mprint("DVB:unable to open %s in write mode \n", filename);
+		ret = -1;
+		goto end;
+	}
+
+	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL,NULL);
+	if (!png_ptr)
+	{
+		mprint("DVB:unable to create png write struct\n");
+		goto end;
+	}
+	if (!(info_ptr = png_create_info_struct(png_ptr)))
+	{
+		mprint("DVB:unable to create png info struct\n");
+		ret = -1;
+		goto end;
+	}
+
+	row_pointer = (png_bytep*) malloc(sizeof(png_bytep) * h);
+	if (!row_pointer)
+	{
+		mprint("DVB: unable to allocate row_pointer\n");
+		ret = -1;
+		goto end;
+	}
+	memset(row_pointer, 0, sizeof(png_bytep) * h);
+	png_init_io(png_ptr, f);
+
+	png_set_IHDR(png_ptr, info_ptr, w, h,
+	/* bit_depth */8,
+	PNG_COLOR_TYPE_PALETTE,
+	PNG_INTERLACE_NONE,
+	PNG_COMPRESSION_TYPE_DEFAULT,
+	PNG_FILTER_TYPE_DEFAULT);
+
+	png_set_PLTE(png_ptr, info_ptr, palette, nb_color);
+	png_set_tRNS(png_ptr, info_ptr, alpha, nb_color, NULL);
+
+	for (i = 0; i < h; i++)
+	{
+		row_pointer[i] = (png_byte*) malloc(
+				png_get_rowbytes(png_ptr, info_ptr));
+		if (row_pointer[i] == NULL)
+			break;
+	}
+	if (i != h)
+	{
+		mprint("DVB: unable to allocate row_pointer internals\n");
+		ret = -1;
+		goto end;
+	}
+	png_write_info(png_ptr, info_ptr);
+	for (i = 0; i < h; i++)
+	{
+		for (j = 0; j < png_get_rowbytes(png_ptr, info_ptr); j++)
+		{
+			if(bitmap)
+				k = bitmap[i * w + (j)];
+			else
+				k = 0;
+			row_pointer[i][j] = k;
+		}
+	}
+
+	png_write_image(png_ptr, row_pointer);
+
+	png_write_end(png_ptr, info_ptr);
+	end: if (row_pointer)
+	{
+		for (i = 0; i < h; i++)
+			freep(&row_pointer[i]);
+		freep(&row_pointer);
+	}
+	png_destroy_write_struct(&png_ptr, &info_ptr);
+	if (f)
+		fclose(f);
+	return ret;
+
+}
+
+int mapclut_paletee(png_color *palette, png_byte *alpha, uint32_t *clut,
+		uint8_t depth)
+{
+	for (int i = 0; i < depth; i++)
+	{
+		palette[i].red = ((clut[i] >> 16) & 0xff);
+		palette[i].green = ((clut[i] >> 8) & 0xff);
+		palette[i].blue = (clut[i] & 0xff);
+		alpha[i] = ((clut[i] >> 24) & 0xff);
+	}
+	return 0;
+}
+
+struct transIntensity
+{
+	uint8_t *t;
+	png_color *palette;
+};
+int check_trans_tn_intensity(const void *p1, const void *p2, void *arg)
+{
+	struct transIntensity *ti = arg;
+	unsigned char* tmp = (unsigned char*)p1;
+	unsigned char* act = (unsigned char*)p2;
+	unsigned char tmp_i;
+	unsigned char act_i;
+	/** TODO verify that RGB follow ITU-R BT.709
+	 *  Below fomula is valid only for 709 standurd
+         *  Y = 0.2126 R + 0.7152 G + 0.0722 B
+         */
+	tmp_i = (0.2126 * ti->palette[*tmp].red) + (0.7152 * ti->palette[*tmp].green) + (0.0722 * ti->palette[*tmp].blue);
+	act_i = (0.2126 * ti->palette[*act].red) + (0.7152 * ti->palette[*act].green) + (0.0722 * ti->palette[*act].blue);;
+
+	if (ti->t[*tmp] < ti->t[*act] || (ti->t[*tmp] == ti->t[*act] &&  tmp_i < act_i))
+		return -1;
+	else if (ti->t[*tmp] == ti->t[*act] &&  tmp_i == act_i)
+		return 0;
+
+
+	return 1;
+}
+/*
+ * @param alpha out
+ * @param intensity in
+ * @param palette out should be already initialized
+ * @param bitmap in
+ * @param size in size of bitmap
+ * @param max_color in
+ * @param nb_color in
+ */
+int quantize_map(png_byte *alpha, png_color *palette,
+		uint8_t *bitmap, int size, int max_color, int nb_color)
+{
+	/*
+	 * occurrence of color in image
+	 */
+	uint32_t *histogram = NULL;
+	/* intensity ordered table */
+	uint8_t *iot = NULL;
+	/* array of color with most occurrence according to histogram
+	 * save index of intensity order table
+	 */
+	uint32_t *mcit = NULL;
+	struct transIntensity ti = { alpha,palette};
+
+	int ret = 0;
+
+	histogram = (uint32_t*) malloc(nb_color * sizeof(uint32_t));
+	if (!histogram)
+	{
+		ret = -1;
+		goto end;
+	}
+
+	iot = (uint8_t*) malloc(nb_color * sizeof(uint8_t));
+	if (!iot)
+	{
+		ret = -1;
+		goto end;
+	}
+
+	mcit = (uint32_t*) malloc(nb_color * sizeof(uint32_t));
+	if (!mcit)
+	{
+		ret = -1;
+		goto end;
+	}
+
+	memset(histogram, 0, nb_color * sizeof(uint32_t));
+	for (int i = 0; i < nb_color; i++)
+	{
+		iot[i] = i;
+	}
+	memset(mcit, 0, nb_color * sizeof(uint32_t));
+
+	/* calculate histogram of image */
+	for (int i = 0; i < size; i++)
+	{
+		histogram[bitmap[i]]++;
+	}
+	shell_sort((void*)iot, nb_color, sizeof(*iot), check_trans_tn_intensity, (void*)&ti);
+
+	/* using selection  sort since need to find only max_color */
+	for (int i = 0; i < max_color; i++)
+	{
+		uint32_t max_val = 0;
+		uint32_t max_ind = 0;
+		int j;
+		for (j = 0; j < nb_color; j++)
+		{
+			if (max_val < histogram[iot[j]])
+			{
+				max_val = histogram[iot[j]];
+				max_ind = j;
+			}
+		}
+		for (j = i; j > 0 && max_ind < mcit[j - 1]; j--)
+		{
+			mcit[j] = mcit[j - 1];
+		}
+		mcit[j] = max_ind;
+		histogram[iot[max_ind]] = 0;
+	}
+
+	for (int i = 0, mxi = 0; i < nb_color; i++)
+	{
+		int step, inc;
+		if (i == mcit[mxi])
+		{
+			mxi = (mxi < max_color) ? mxi + 1 : mxi;
+			continue;
+		}
+		inc = (mxi) ? -1 : 0;
+		step = mcit[mxi + inc] + ((mcit[mxi] - mcit[mxi + inc]) / 3);
+		if (i <= step)
+		{
+			int index = iot[mcit[mxi + inc]];
+			alpha[i] = alpha[index];
+			palette[i].red = palette[index].red;
+			palette[i].blue = palette[index].blue;
+			palette[i].green = palette[index].green;
+		}
+		else
+		{
+			int index = iot[mcit[mxi]];
+			alpha[i] = alpha[index];
+			palette[i].red = palette[index].red;
+			palette[i].blue = palette[index].blue;
+			palette[i].green = palette[index].green;
+		}
+
+	}
+	end: freep(&histogram);
+	freep(&mcit);
+	freep(&iot);
+	return ret;
+}
+
+
+int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *context)
+{
+	struct spupng_t *sp = (struct spupng_t *)context->out->spupng_data;
+	int x_pos, y_pos, width, height, i;
+	int x, y, y_off, x_off, ret;
+	uint8_t *pbuf;
+	char *filename;
+	struct cc_bitmap* rect;
+	png_color *palette = NULL;
+	png_byte *alpha = NULL;
+#ifdef ENABLE_OCR
+	char*str = NULL;
+#endif
+
+        x_pos = -1;
+        y_pos = -1;
+        width = 0;
+        height = 0;
+
+	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
+		write_sputag(sp, context->prev_start, sub->start_time);
+	else if ( !(sub->flags & SUB_EOD_MARKER))
+		write_sputag(sp, sub->start_time, sub->end_time);
+
+	if(sub->nb_data == 0 )
+		return 0;
+	rect = sub->data;
+	for(i = 0;i < sub->nb_data;i++)
+	{
+		if(x_pos == -1)
+		{
+			x_pos = rect[i].x;
+			y_pos = rect[i].y;
+			width = rect[i].w;
+			height = rect[i].h;
+		}
+		else
+		{
+			if(x_pos > rect[i].x)
+			{
+				width += (x_pos - rect[i].x);
+				x_pos = rect[i].x;
+			}
+
+                        if (rect[i].y < y_pos)
+                        {
+                                height += (y_pos - rect[i].y);
+                                y_pos = rect[i].y;
+                        }
+
+                        if (rect[i].x + rect[i].w > x_pos + width)
+                        {
+                                width = rect[i].x + rect[i].w - x_pos;
+                        }
+
+                        if (rect[i].y + rect[i].h > y_pos + height)
+                        {
+                                height = rect[i].y + rect[i].h - y_pos;
+                        }
+
+		}
+	}
+	inc_spupng_fileindex(sp);
+	filename = get_spupng_filename(sp);
+	set_spupng_offset(sp,y_pos,x_pos);
+	if ( sub->flags & SUB_EOD_MARKER )
+		context->prev_start =  sub->start_time;
+	pbuf = (uint8_t*) malloc(width * height);
+	memset(pbuf, 0x0, width * height);
+
+	for(i = 0;i < sub->nb_data;i++)
+	{
+		x_off = rect[i].x - x_pos;
+		y_off = rect[i].y - y_pos;
+		for (y = 0; y < rect[i].h; y++)
+		{
+			for (x = 0; x < rect[i].w; x++)
+				pbuf[((y + y_off) * width) + x_off + x] = rect[i].data[0][y * rect[i].w + x];
+
+		}
+	}
+	palette = (png_color*) malloc(rect[0].nb_colors * sizeof(png_color));
+	if(!palette)
+	{
+		ret = -1;
+		goto end;
+	}
+        alpha = (png_byte*) malloc(rect[0].nb_colors * sizeof(png_byte));
+        if(!alpha)
+        {
+                ret = -1;
+                goto end;
+        }
+	/* TODO do rectangle, wise one color table should not be used for all rectangle */
+        mapclut_paletee(palette, alpha, (uint32_t *)rect[0].data[1],rect[0].nb_colors);
+	quantize_map(alpha, palette, pbuf, width*height, 3, rect[0].nb_colors);
+#ifdef ENABLE_OCR
+	str = ocr_bitmap(palette,alpha,pbuf,width,height);
+	if(str && str[0])
+	{
+		write_spucomment(sp,str);
+	}
+#endif
+	save_spupng(filename,pbuf,width, height, palette, alpha,rect[0].nb_colors);
+
+
+end:
+	sub->nb_data = 0;
+	freep(&sub->data);
+	freep(&palette);
+	freep(&alpha);
+	return ret;
+}

@@ -608,8 +608,7 @@ void general_loop(void *enc_ctx)
 		}
 		else if(ccx_bufferdatatype == CCX_DVB_SUBTITLE)
 		{
-			int out_size = 0;
-			dvbsub_decode(cxx_dvb_context,NULL,&out_size,buffer + 2,inbuf);
+			dvbsub_decode(cxx_dvb_context, buffer + 2, inbuf, &dec_sub);
 			set_fts();
 			got = inbuf;
 		}

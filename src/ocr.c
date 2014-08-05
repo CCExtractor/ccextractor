@@ -44,7 +44,7 @@ char* ocr_bitmap(png_color *palette,png_byte *alpha, unsigned char* indata,int w
 	}
 
 	//text_out = TessBaseAPIProcessPages(api, "/home/anshul/test_videos/dvbsubtest.d/sub0018.png", 0, 0);
-	text_out = TessBaseAPIProcessPage(api, pix, 0, NULL, NULL, 1000);
+	text_out = TessBaseAPIProcessPage(api, pix, 0, NULL, NULL, 0);
 	if(!text_out)
 		printf("\nsomething messy\n");
 	return text_out;

@@ -267,11 +267,13 @@ int parse_PMT (unsigned char *buf,int len, int pos)
 			{
 				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
 				desc_len = (*es_info++);
+#ifndef ENABLE_OCR
 				if(ccx_options.write_format != CCX_OF_SPUPNG )
 				{
-					mprint ("DVB subtitle only support spupng type as output\n");
+					mprint ("Please Compile with ENABLE_OCR flag \n");
 					continue;
 				}
+#endif
 				if(CCX_MPEG_DSC_DVB_SUBTITLE == descriptor_tag)
 				{
 					struct dvb_config cnf;
@@ -279,10 +281,9 @@ int parse_PMT (unsigned char *buf,int len, int pos)
 					ret = parse_dvb_description(&cnf,es_info,desc_len);
 					if(ret < 0)
 						break;
-					cxx_dvb_context = dvbsub_init_decoder(cnf.composition_id[0],cnf.ancillary_id[0]);
+					cxx_dvb_context = dvbsub_init_decoder(&cnf);
 					if (cxx_dvb_context == NULL)
 						break;
-					dvbsub_set_write(cxx_dvb_context,&wbout1);
 					ccx_options.ts_cappid = newcappid = elementary_PID;
 					cap_stream_type = newcap_stream_type = ccx_stream_type;
 					max_dif = 10;
