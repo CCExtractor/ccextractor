@@ -563,151 +563,223 @@ void seq_parameter_set_rbsp (unsigned char *seqbuf, unsigned char *seqend)
 
     dvprint("SEQUENCE PARAMETER SET (bitlen: %lld)\n", q1.bitsleft);
     tmp=u(&q1,8);
-    dvprint("profile_idc=                                   %llX\n", tmp);
+	LLONG profile_idc = tmp;
+    dvprint("profile_idc=                                   % 4lld (%#llX)\n",tmp,tmp);
     tmp=u(&q1,1);
-    dvprint("constraint_set0_flag=                          %llX\n", tmp);
+    dvprint("constraint_set0_flag=                          % 4lld (%#llX)\n",tmp,tmp);
     tmp=u(&q1,1);
-    dvprint("constraint_set1_flag=                          %llX\n", tmp);
+    dvprint("constraint_set1_flag=                          % 4lld (%#llX)\n",tmp,tmp);
     tmp=u(&q1,1);
-    dvprint("constraint_set2_flag=                          %llX\n", tmp);
-    tmp=u(&q1,5);
-    dvprint("reserved=                                      %llX\n", tmp);
+    dvprint("constraint_set2_flag=                          % 4lld (%#llX)\n",tmp,tmp);
+	tmp = u(&q1, 1);
+	dvprint("constraint_set3_flag=                          % 4lld (%#llX)\n",tmp,tmp);
+	tmp = u(&q1, 1);
+	dvprint("constraint_set4_flag=                          % 4lld (%#llX)\n",tmp,tmp);
+	tmp = u(&q1, 1);
+	dvprint("constraint_set5_flag=                          % 4lld (%#llX)\n",tmp,tmp);
+    tmp=u(&q1,2);
+    dvprint("reserved=                                      % 4lld (%#llX)\n",tmp,tmp);
     tmp=u(&q1,8);
-    dvprint("level_idc=                                     %llX\n", tmp);
+    dvprint("level_idc=                                     % 4lld (%#llX)\n",tmp,tmp);
     seq_parameter_set_id = ue(&q1);
-    dvprint("seq_parameter_set_id=                          %llX\n", seq_parameter_set_id);
-    log2_max_frame_num = (int)ue(&q1)+4;
-    dvprint("log2_max_frame_num4=                           %X\n", log2_max_frame_num);
+    dvprint("seq_parameter_set_id=                          % 4lld (%#llX)\n", seq_parameter_set_id,seq_parameter_set_id);
+	if (profile_idc == 100 || profile_idc == 110 || profile_idc == 122 
+		|| profile_idc == 244 || profile_idc == 44 || profile_idc == 83 
+		|| profile_idc == 86 || profile_idc == 118 || profile_idc == 128){
+		LLONG chroma_format_idc = ue(&q1);
+		dvprint("chroma_format_idc=                             % 4lld (%#llX)\n", chroma_format_idc,chroma_format_idc);
+		if (chroma_format_idc == 3){
+			tmp = u(&q1, 1);
+			dvprint("separate_colour_plane_flag=                    % 4lld (%#llX)\n", tmp, tmp);
+		}
+		tmp = ue(&q1);
+		dvprint("bit_depth_luma_minus8=                         % 4lld (%#llX)\n", tmp, tmp);
+		tmp = ue(&q1);
+		dvprint("bit_depth_chroma_minus8=                       % 4lld (%#llX)\n", tmp, tmp);
+		tmp = u(&q1,1);
+		dvprint("qpprime_y_zero_transform_bypass_flag=          % 4lld (%#llX)\n", tmp, tmp);
+		tmp = u(&q1, 1);
+		dvprint("seq_scaling_matrix_present_flag=               % 4lld (%#llX)\n", tmp, tmp);
+		if (tmp == 1){
+			// WVI: untested, just copied from specs.
+			for (int i = 0; i < ((chroma_format_idc != 3) ? 8 : 12); i++){
+				tmp = u(&q1, 1);
+				dvprint("seq_scaling_list_present_flag[%d]=                 % 4lld (%#llX)\n",i,tmp, tmp);
+				if (tmp){
+					// We use a "dummy"/slimmed-down replacement here. Actual/full code can be found in the spec (ISO/IEC 14496-10:2012(E)) chapter 7.3.2.1.1.1 - Scaling list syntax
+					if (i < 6){
+						// Scaling list size 16
+						// TODO: replace with full scaling list implementation?
+						int nextScale = 8;
+						int lastScale = 8;
+						for (int j = 0; j < 16; j++){
+							if (nextScale != 0){
+								int64_t delta_scale = se(&q1);
+								nextScale = (lastScale + delta_scale + 256) % 256;
+							}
+							lastScale = (nextScale == 0) ? lastScale : nextScale;
+						}
+						// END of TODO
+					}
+					else {
+						// Scaling list size 64
+						// TODO: replace with full scaling list implementation?
+						int nextScale = 8;
+						int lastScale = 8;
+						for (int j = 0; j < 64; j++){
+							if (nextScale != 0){
+								int64_t delta_scale = se(&q1);
+								nextScale = (lastScale + delta_scale + 256) % 256;
+							}
+							lastScale = (nextScale == 0) ? lastScale : nextScale;
+						}
+						// END of TODO
+					}
+				}
+			}
+		}
+	}
+    log2_max_frame_num = (int)ue(&q1);
+    dvprint("log2_max_frame_num4_minus4=                    % 4d (%#X)\n", log2_max_frame_num,log2_max_frame_num);
+	log2_max_frame_num += 4; // 4 is added due to the formula.
     pic_order_cnt_type = (int)ue(&q1);
-    dvprint("pic_order_cnt_type=                            %X\n", pic_order_cnt_type);
+    dvprint("pic_order_cnt_type=                            % 4d (%#X)\n", pic_order_cnt_type,pic_order_cnt_type);
     if( pic_order_cnt_type == 0 )
     {
-        log2_max_pic_order_cnt_lsb = (int)ue(&q1)+4;
-        dvprint("log2_max_pic_order_cnt_lsb=                    %X\n", log2_max_pic_order_cnt_lsb);
+        log2_max_pic_order_cnt_lsb = (int)ue(&q1); 
+		dvprint("log2_max_pic_order_cnt_lsb_minus4=             % 4d (%#X)\n", log2_max_pic_order_cnt_lsb,log2_max_pic_order_cnt_lsb);
+		log2_max_pic_order_cnt_lsb += 4; // 4 is added due to formula.
     }
     else if( pic_order_cnt_type == 1 )
     {
 		// CFS: Untested, just copied from specs.
 		tmp= u(&q1,1);
-		dvprint("delta_pic_order_always_zero_flag=              %llX\n", tmp);	
+		dvprint("delta_pic_order_always_zero_flag=              % 4lld (%#llX)\n",tmp,tmp);	
         tmp = se(&q1);
-		dvprint("offset_for_non_ref_pic=                        %llX\n", tmp);	
+		dvprint("offset_for_non_ref_pic=                        % 4lld (%#llX)\n",tmp,tmp);	
         tmp = se(&q1);
-		dvprint("offset_for_top_to_bottom_field                 %llX\n", tmp);	
+		dvprint("offset_for_top_to_bottom_field                 % 4lld (%#llX)\n",tmp,tmp);	
 		LLONG num_ref_frame_in_pic_order_cnt_cycle = ue (&q1);
-		dvprint("num_ref_frame_in_pic_order_cnt_cycle           %llX\n", num_ref_frame_in_pic_order_cnt_cycle);	
+		dvprint("num_ref_frame_in_pic_order_cnt_cycle           % 4lld (%#llX)\n", num_ref_frame_in_pic_order_cnt_cycle,num_ref_frame_in_pic_order_cnt_cycle);	
 		for (int i=0; i<num_ref_frame_in_pic_order_cnt_cycle; i++)
 		{
 			tmp=se(&q1); 
-			dvprint("offset_for_ref_frame [%d / %d] =               %llX\n", i, num_ref_frame_in_pic_order_cnt_cycle, tmp);	
-		}
-		
+			dvprint("offset_for_ref_frame [%d / %d] =               % 4lld (%#llX)\n", i, num_ref_frame_in_pic_order_cnt_cycle, tmp,tmp);	
+		}		
     }
 	else
 	{
-		// CFS: Looks like nothing needs to be parsed for pic_order_cnt_type==2 ?
-		// fatal(EXIT_BUG_BUG, "AVC: pic_order_cnt_type > 1 is not yet supported.");
+		// Nothing needs to be parsed when pic_order_cnt_type == 2
 	}
 
     tmp=ue(&q1);
-    dvprint("num_ref_frames=                                %llX\n", tmp);
-	
+    dvprint("max_num_ref_frames=                            % 4lld (%#llX)\n",tmp,tmp);	
     tmp=u(&q1,1);
-    dvprint("gaps allowed=                                  %llX\n", tmp);
+    dvprint("gaps_in_frame_num_value_allowed_flag=          % 4lld (%#llX)\n",tmp,tmp);
     tmp=ue(&q1);
-    dvprint("pic_width_in_mbs_minus1=                       %llX\n", tmp);
+    dvprint("pic_width_in_mbs_minus1=                       % 4lld (%#llX)\n",tmp,tmp);
     tmp=ue(&q1);
-    dvprint("pic_height_in_map_units_minus1=                %llX\n", tmp);
+    dvprint("pic_height_in_map_units_minus1=                % 4lld (%#llX)\n",tmp,tmp);
     frame_mbs_only_flag = (int)u(&q1,1);
-    dvprint("frame_mbs_only_flag=                           %X\n", frame_mbs_only_flag);
+    dvprint("frame_mbs_only_flag=                           % 4d (%#X)\n", frame_mbs_only_flag,frame_mbs_only_flag);
     if ( !frame_mbs_only_flag )
     {
         tmp=u(&q1,1);
-        dvprint("mb_adaptive_fr_fi_flag=                        %llX\n", tmp);
+        dvprint("mb_adaptive_fr_fi_flag=                        % 4lld (%#llX)\n",tmp,tmp);
     }
     tmp=u(&q1,1);
-    dvprint("direct_8x8_inference_f=                        %llX\n", tmp);
+    dvprint("direct_8x8_inference_f=                        % 4lld (%#llX)\n",tmp,tmp);
     tmp=u(&q1,1);
-    dvprint("frame_cropping_flag=                           %llX\n", tmp);
+    dvprint("frame_cropping_flag=                           % 4lld (%#llX)\n",tmp,tmp);
     if ( tmp )
     {
         tmp=ue(&q1);
-        dvprint("frame_crop_left_offset=                        %llX\n", tmp);
+        dvprint("frame_crop_left_offset=                        % 4lld (%#llX)\n",tmp,tmp);
         tmp=ue(&q1);
-        dvprint("frame_crop_right_offset=                       %llX\n", tmp);
+        dvprint("frame_crop_right_offset=                       % 4lld (%#llX)\n",tmp,tmp);
         tmp=ue(&q1);
-        dvprint("frame_crop_top_offset=                         %llX\n", tmp);
+        dvprint("frame_crop_top_offset=                         % 4lld (%#llX)\n",tmp,tmp);
         tmp=ue(&q1);
-        dvprint("frame_crop_bottom_offset=                      %llX\n", tmp);
+        dvprint("frame_crop_bottom_offset=                      % 4lld (%#llX)\n",tmp,tmp);
     }
     tmp=u(&q1,1);
-    dvprint("vui_parameters_present=                        %llX\n", tmp);
+    dvprint("vui_parameters_present=                        % 4lld (%#llX)\n",tmp,tmp);
     if ( tmp )
     {
         dvprint("\nVUI parameters\n");
         tmp=u(&q1,1);
-        dvprint("aspect_ratio_info_pres=                        %llX\n", tmp);
+        dvprint("aspect_ratio_info_pres=                        % 4lld (%#llX)\n",tmp,tmp);
         if ( tmp )
         {
             tmp=u(&q1,8);
-            dvprint("aspect_ratio_idc=                              %llX\n", tmp);
+            dvprint("aspect_ratio_idc=                              % 4lld (%#llX)\n",tmp,tmp);
             if ( tmp == 255 )
             {
                 tmp=u(&q1,16);
-                dvprint("sar_width=                                     %llX\n", tmp);
+                dvprint("sar_width=                                     % 4lld (%#llX)\n",tmp,tmp);
                 tmp=u(&q1,16);
-                dvprint("sar_height=                                    %llX\n", tmp);
+                dvprint("sar_height=                                    % 4lld (%#llX)\n",tmp,tmp);
             }
         }
         tmp=u(&q1,1);
-        dvprint("overscan_info_pres_flag=                       %llX\n", tmp);
+        dvprint("overscan_info_pres_flag=                       % 4lld (%#llX)\n",tmp,tmp);
         if ( tmp )
         {
             tmp=u(&q1,1);
-            dvprint("overscan_appropriate_flag=                     %llX\n", tmp);
+            dvprint("overscan_appropriate_flag=                     % 4lld (%#llX)\n",tmp,tmp);
         }
         tmp=u(&q1,1);
-        dvprint("video_signal_type_present_flag=                %llX\n", tmp);
+        dvprint("video_signal_type_present_flag=                % 4lld (%#llX)\n",tmp,tmp);
         if ( tmp )
         {
             tmp=u(&q1,3);
-            dvprint("video_format=                                  %llX\n", tmp);
+            dvprint("video_format=                                  % 4lld (%#llX)\n",tmp,tmp);
             tmp=u(&q1,1);
-            dvprint("video_full_range_flag=                         %llX\n", tmp);
+            dvprint("video_full_range_flag=                         % 4lld (%#llX)\n",tmp,tmp);
             tmp=u(&q1,1);
-            dvprint("colour_description_present_flag=               %llX\n", tmp);
+            dvprint("colour_description_present_flag=               % 4lld (%#llX)\n",tmp,tmp);
             if ( tmp )
             {
                 tmp=u(&q1,8);
-                dvprint("colour_primaries=                              %llX\n", tmp);
+                dvprint("colour_primaries=                              % 4lld (%#llX)\n",tmp,tmp);
                 tmp=u(&q1,8);
-                dvprint("transfer_characteristics=                      %llX\n", tmp);
+                dvprint("transfer_characteristics=                      % 4lld (%#llX)\n",tmp,tmp);
                 tmp=u(&q1,8);
-                dvprint("matrix_coefficients=                           %llX\n", tmp);
+                dvprint("matrix_coefficients=                           % 4lld (%#llX)\n",tmp,tmp);
             }
         }
         tmp=u(&q1,1);
-        dvprint("chroma_loc_info_present_flag=                  %llX\n", tmp);
+        dvprint("chroma_loc_info_present_flag=                  % 4lld (%#llX)\n",tmp,tmp);
         if ( tmp )
         {
             tmp=ue(&q1);
-            dvprint("chroma_sample_loc_type_top_field=                  %llX\n", tmp);
+            dvprint("chroma_sample_loc_type_top_field=                  % 4lld (%#llX)\n",tmp,tmp);
             tmp=ue(&q1);
-            dvprint("chroma_sample_loc_type_bottom_field=               %llX\n", tmp);
+            dvprint("chroma_sample_loc_type_bottom_field=               % 4lld (%#llX)\n",tmp,tmp);
         }
         tmp=u(&q1,1);
-        dvprint("timing_info_present_flag=                      %llX\n", tmp);
+        dvprint("timing_info_present_flag=                      % 4lld (%#llX)\n",tmp,tmp);
         if ( tmp )
         {
             tmp=u(&q1,32);
-            dvprint("num_units_in_tick=                             %llX\n", tmp);
+			LLONG num_units_in_tick = tmp;
+            dvprint("num_units_in_tick=                             % 4lld (%#llX)\n",tmp,tmp);
             tmp=u(&q1,32);
-            dvprint("time_scale=                                    %llX\n", tmp);
+			LLONG time_scale = tmp;
+            dvprint("time_scale=                                    % 4lld (%#llX)\n",tmp,tmp);
             tmp=u(&q1,1);
-            dvprint("fixed_frame_rate_flag=                         %llX\n", tmp);
+			int fixed_frame_rate_flag = (int) tmp;
+            dvprint("fixed_frame_rate_flag=                         % 4lld (%#llX)\n",tmp,tmp);
+			// Change: use num_units_in_tick and time_scale to calculate FPS. (ISO/IEC 14496-10:2012(E), page 397 & further)
+			if (fixed_frame_rate_flag){
+				double clock_tick = (double) num_units_in_tick / time_scale;
+				dvprint("clock_tick= %f\n", clock_tick);
+				current_fps = (double)time_scale / (2 * num_units_in_tick); // Based on formula D-2, p. 359 of the ISO/IEC 14496-10:2012(E) spec.
+				mprint("Changed fps using NAL to: %f\n", current_fps);
+			}
         }
         tmp=u(&q1,1);
-        dvprint("nal_hrd_parameters_present_flag=               %llX\n", tmp);
+        dvprint("nal_hrd_parameters_present_flag=               % 4lld (%#llX)\n",tmp,tmp);
         if ( tmp )
         {
 			dvprint ("nal_hrd. Not implemented for now. Hopefully not needed. Skiping rest of NAL\n");            
@@ -728,13 +800,13 @@ void seq_parameter_set_rbsp (unsigned char *seqbuf, unsigned char *seqend)
         if ( tmp || tmp1 )
         {
             tmp=u(&q1,1);
-            dvprint("low_delay_hrd_flag=                                %llX\n", tmp);
+            dvprint("low_delay_hrd_flag=                                % 4lld (%#llX)\n",tmp,tmp);
 			return;
         }
         tmp=u(&q1,1);
-        dvprint("pic_struct_present_flag=                       %llX\n", tmp);
+        dvprint("pic_struct_present_flag=                       % 4lld (%#llX)\n",tmp,tmp);
         tmp=u(&q1,1);
-        dvprint("bitstream_restriction_flag=                    %llX\n", tmp);
+        dvprint("bitstream_restriction_flag=                    % 4lld (%#llX)\n",tmp,tmp);
         // ..
         // The hope was to find the GOP length in max_dec_frame_buffering, but
         // it was not set in the testfile.  Ignore the rest here, it's
@@ -772,11 +844,11 @@ void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_ty
 
     dvprint("\nSLICE HEADER\n");
     tmp=ue(&q1);
-    dvprint("first_mb_in_slice=     %llX\n", tmp);
+    dvprint("first_mb_in_slice=     % 4lld (%#llX)\n",tmp,tmp);
     slice_type=ue(&q1);
     dvprint("slice_type=            %llX\n", slice_type);
     tmp=ue(&q1);
-    dvprint("pic_parameter_set_id=  %llX\n", tmp);
+    dvprint("pic_parameter_set_id=  % 4lld (%#llX)\n",tmp,tmp);
 
     lastframe_num = frame_num;
     int maxframe_num = (int) ((1<<log2_max_frame_num) - 1);
@@ -808,7 +880,7 @@ void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_ty
     if( nal_unit_type == 5 )
     {
 		tmp=ue(&q1);
-		dvprint("idr_pic_id=     %llX\n", tmp);
+		dvprint("idr_pic_id=     % 4lld (%#llX)\n",tmp,tmp);
         //TODO
     }
     if( pic_order_cnt_type == 0 )
