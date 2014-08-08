@@ -1,3 +1,8 @@
+0.72 - GSOC
+-----------
+- Fix for WTV files with incorrect timing
+- Added support for fps change using data from AVC video track in a H264 TS file.
+
 0.71 - GSOC
 -----------
 - Added feature to receive captions in BIN format according to CCExtractor's own

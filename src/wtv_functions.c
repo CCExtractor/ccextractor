@@ -297,6 +297,8 @@ int read_header(struct wtv_chunked_buffer *cb) {
 
 LLONG get_data(struct wtv_chunked_buffer *cb) {
     static int video_streams[32];
+	static int alt_stream; //Stream to use for timestamps if the cc stream has broken timestamps
+	static int use_alt_stream = 0;
     static int num_streams=0;
     while(1)
     {
@@ -368,9 +370,12 @@ LLONG get_data(struct wtv_chunked_buffer *cb) {
                 video_streams[num_streams]=stream_id; // We keep a list of stream ids
                 num_streams++;                        // Even though there should only be 1
             }
+			if (memcmp(stream_type, WTV_STREAM_AUDIO, 16))
+				 alt_stream = stream_id;
             len-=28;
         }
-        if( !memcmp(guid, WTV_TIMING, 16 )  && check_stream_id(stream_id, video_streams, num_streams))
+		if (!memcmp(guid, WTV_TIMING, 16) && ((use_alt_stream < WTV_CC_TIMESTAMP_MAGIC_THRESH && check_stream_id(stream_id, video_streams, num_streams))
+			|| (use_alt_stream == WTV_CC_TIMESTAMP_MAGIC_THRESH && stream_id == alt_stream)))
         {
             // The WTV_TIMING GUID contains a timestamp for the given stream_id
             dbg_print(CCX_DMT_PARSE, "WTV TIMING\n");
@@ -379,12 +384,18 @@ LLONG get_data(struct wtv_chunked_buffer *cb) {
             int64_t time;
             memcpy(&time, cb->buffer+0x8, 8); // Read the timestamp
             dbg_print(CCX_DMT_PARSE, "TIME: %ld\n", time);
-            if(time!=-1) { // Ignore -1 timestamps
+			if (time != -1 && time != WTV_CC_TIMESTAMP_MAGIC) { // Ignore -1 timestamps
                 current_pts = time_to_pes_time(time); // Convert from WTV to PES time 
                 pts_set = 1;
                 frames_since_ref_time = 0;
                 set_fts();  
-            }
+			}
+			else if (time == WTV_CC_TIMESTAMP_MAGIC && stream_id != alt_stream) {
+				use_alt_stream++;
+				mprint("WARNING: %i WTV_CC_TIMESTAMP_MAGIC detected in cc timestamps. \n", use_alt_stream);
+				if (use_alt_stream == WTV_CC_TIMESTAMP_MAGIC_THRESH)
+					mprint("WARNING: WTV_CC_TIMESTAMP_MAGIC_THRESH reached. Switching to alt timestamps!\n");
+			}
             len-=16;
         }
         if( !memcmp(guid, WTV_DATA, 16 )  
