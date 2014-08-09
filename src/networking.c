@@ -188,16 +188,19 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 	fprintf(stderr, " ");
 #endif
 
-	if ((rc = writen(fd, buf, buf_len)) < 0)
-		return -1;
-	else if (rc != (int) buf_len)
-		return 0;
-	nwritten += rc;
+	if (buf_len > 0)
+	{
+		if ((rc = writen(fd, buf, buf_len)) < 0)
+			return -1;
+		else if (rc != (int) buf_len)
+			return 0;
+		nwritten += rc;
+	}
 
 #if DEBUG_OUT
 	if (buf != NULL)
 	{
-		fwrite(buf, sizeof(char), buf_len - 2, stderr);
+		fwrite(buf, sizeof(char), buf_len, stderr);
 		fprintf(stderr, " ");
 	}
 #endif
@@ -334,9 +337,6 @@ int ask_passwd(int sd)
 		while ((unsigned)(p - pw) < sizeof(pw) && ((*p = fgetc(stdin)) != '\n'))
 			p++;
 		len = p - pw; /* without \n */
-
-		printf("\n");
-		fflush(stdout);
 
 		if (write_block(sd, PASSWORD, pw, len) < 0)
 			return -1;
@@ -478,11 +478,12 @@ int check_password(int fd, const char *pwd)
 
 	char c;
 	int rc;
-	size_t len = BUFFER_SIZE;
+	size_t len;
 	char buf[BUFFER_SIZE];
 
 	while(1)
 	{
+		len = BUFFER_SIZE;
 #if DEBUG_OUT
 		fprintf(stderr, "[S] PASSWORD\n");
 #endif
@@ -495,7 +496,7 @@ int check_password(int fd, const char *pwd)
 		if (c != PASSWORD)
 			return -1;
 
-		if (0 != strcmp(pwd, buf))
+		if (strlen(pwd) != len || strncmp(pwd, buf, len) != 0)
 		{
 			sleep(WRONG_PASSWORD_DELAY);
 
