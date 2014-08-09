@@ -18,7 +18,7 @@ void params_dump(void)
 				mprint ("Network, UDP/%u",ccx_options.udpport);
 			else
 			{
-				mprint ("Network, %s:%d",ccx_options.udpport, ccx_options.udpport);
+				mprint ("Network, %s:%d",ccx_options.udpaddr, ccx_options.udpport);
 			}
 			break;
 		case CCX_DS_TCP:

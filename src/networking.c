@@ -883,12 +883,11 @@ int start_upd_srv(const char *addr_str, unsigned port)
 
 	struct sockaddr_in servaddr;
 	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr.s_addr = addr;
 	servaddr.sin_port = htons(port);
 	if (IN_MULTICAST(addr))
-		servaddr.sin_addr.s_addr = addr;
+		servaddr.sin_addr.s_addr = htonl(addr);
 	else
-		servaddr.sin_addr.s_addr = INADDR_ANY;
+		servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	if (bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) != 0)
 	{
@@ -904,7 +903,7 @@ int start_upd_srv(const char *addr_str, unsigned port)
 		struct ip_mreq group;
 		group.imr_multiaddr.s_addr = htonl(addr);
 		group.imr_interface.s_addr = htonl(INADDR_ANY);
-		if (setsockopt(infd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&group, sizeof(group)) < 0)
+		if (setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&group, sizeof(group)) < 0)
 		{
 #if _WIN32
 			wprintf(L"setsockopt() error: %ld\n", WSAGetLastError());
