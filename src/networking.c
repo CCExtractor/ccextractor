@@ -570,21 +570,25 @@ int tcp_bind(const char *port, int *family)
 			}
 		}
 
-		if (0 == bind(sockfd, p->ai_addr, p->ai_addrlen))
-			break;
-
+		if (bind(sockfd, p->ai_addr, p->ai_addrlen) < 0)
+		{
 #if _WIN32
-		wprintf(L"bind() eror: %ld\n", WSAGetLastError());
-		closesocket(sockfd);
+			wprintf(L"bind() eror: %ld\n", WSAGetLastError());
+			closesocket(sockfd);
 #else
-		mprint("bind() error: %s\n", strerror(errno));
-		close(sockfd);
+			mprint("bind() error: %s\n", strerror(errno));
+			close(sockfd);
 #endif
-		if (p->ai_next != NULL)
-			mprint("trying next addres ...\n");
-	}
+			if (p->ai_next != NULL)
+				mprint("trying next addres ...\n");
 
-	*family = p->ai_family;
+			continue;
+		}
+
+		*family = p->ai_family;
+
+		break;
+	}
 
 	freeaddrinfo(ai);
 
