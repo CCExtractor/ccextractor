@@ -1,5 +1,4 @@
 #include "ccextractor.h"
-#include "708.h"
 
 // Defined by the maximum number of B-Frames per anchor frame.
 //#define MAXBFRAMES 50 - from ccextractor.h
@@ -19,8 +18,6 @@ int has_ccdata_buffered = 0;
 // B-Frames belong to this I- or P-frame.
 static int anchor_seq_number = -1;
 
-// Remember the current field for 608 decoding
-int current_field=1; // 1 = field 1, 2 = field 2, 3 = 708
 
 static int in_xds_mode ; // Stolen from 608.c We need this for debug
 
@@ -302,7 +299,7 @@ int do_cb (unsigned char *cc_block, struct cc_subtitle *sub)
             // printf ("Warning: Losing EIA-708 data!\n");
             break;
         default:
-            fatal(EXIT_BUG_BUG, "Cannot be reached!");
+			fatal(CCX_COMMON_EXIT_BUG_BUG, "Cannot be reached!");
         } // switch (cc_type)
     } // cc_valid
     else

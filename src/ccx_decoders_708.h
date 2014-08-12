@@ -1,5 +1,9 @@
 #ifndef _INCLUDE_708_
 #define _INCLUDE_708_
+
+#include <sys/stat.h>
+#include "ccx_common_common.h"
+
 #define MAX_708_PACKET_LENGTH   128
 
 #define I708_MAX_ROWS 15

@@ -33,43 +33,31 @@ void activity_input_file_open (const char *filename)
     }
 }
 
-void activity_xds_program_identification_number (unsigned minutes, unsigned hours, unsigned date, unsigned month)
-{
-    if (ccx_options.gui_mode_reports)
-    {
-		fprintf (stderr, "###XDSPROGRAMIDENTIFICATIONNUMBER#%u#%u#%u#%u\n", minutes,hours,date,month);
-        fflush (stderr); 
-    }
+void activity_library_process(enum ccx_common_logging_gui message_type, ...){
+	if (ccx_options.gui_mode_reports){
+		va_list args;
+		va_start(args, message_type);
+		switch (message_type)
+		{
+		case CCX_COMMON_LOGGING_GUI_XDS_CALL_LETTERS:
+			vfprintf(stderr, "###XDSNETWORKCALLLETTERS#%s\n",args);
+			break;
+		case CCX_COMMON_LOGGING_GUI_XDS_PROGRAM_DESCRIPTION:
+			vfprintf(stderr, "###XDSPROGRAMDESC#%d#%s\n", args);
+			break;
+		case CCX_COMMON_LOGGING_GUI_XDS_PROGRAM_ID_NR:
+			vfprintf(stderr, "###XDSPROGRAMIDENTIFICATIONNUMBER#%u#%u#%u#%u\n", args);
+			break;
+		case CCX_COMMON_LOGGING_GUI_XDS_PROGRAM_NAME:
+			vfprintf(stderr, "###XDSPROGRAMNAME#%s\n", args);
+			break;
+		default:
+			break;
+		}
+		fflush(stderr);
+		va_end(args);
+	}
 }
-
-void activity_xds_network_call_letters (const char *program_name)
-{
-    if (ccx_options.gui_mode_reports)
-    {
-        fprintf (stderr, "###XDSNETWORKCALLLETTERS#%s\n", program_name);
-        fflush (stderr);        
-    }
-}
-
-void activity_xds_program_name (const char *program_name)
-{
-    if (ccx_options.gui_mode_reports)
-    {
-        fprintf (stderr, "###XDSPROGRAMNAME#%s\n", program_name);
-        fflush (stderr);        
-    }
-}
-
-void activity_xds_program_description (int line_num, const char *program_desc)
-{
-    if (ccx_options.gui_mode_reports)
-    {
-		fprintf (stderr, "###XDSPROGRAMDESC#%d#%s\n", line_num, program_desc);
-        fflush (stderr);        
-    }
-}
-
-
 
 void  activity_video_info (int hor_size,int vert_size, 
     const char *aspect_ratio, const char *framerate)

@@ -1,5 +1,5 @@
 #include "ccfont2.xbm" // CC font from libzvbi
-#include "platform.h"
+#include "ccx_common_platform.h"
 #include "spupng_encoder.h"
 #include <assert.h>
 #include "cc_encoders_common.h"

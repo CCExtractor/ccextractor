@@ -31,15 +31,27 @@
     <Filter Include="Header Files\zlib">
       <UniqueIdentifier>{e76a99a9-8a06-4ffb-afa1-f87c057f8448}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\ccx_decoders">
+      <UniqueIdentifier>{5af060a0-c719-4d1b-913f-71c4452fbe10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ccx_common">
+      <UniqueIdentifier>{955fdac2-43c6-4968-8fce-7d40bad9c712}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ccx_encoders">
+      <UniqueIdentifier>{489d2c0b-43e8-4d51-8304-f4e59ee8d253}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ccx_decoders">
+      <UniqueIdentifier>{0e9c939f-a37c-4d06-a611-4c262b620763}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ccx_encoders">
+      <UniqueIdentifier>{720b7c91-968e-4dd8-a8df-6d99f9c9b52d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ccx_common">
+      <UniqueIdentifier>{2b841054-ad06-429d-9b44-fabd29fbeef0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\608.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\608_spupng.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\708.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\asf_constants.h">
@@ -49,9 +61,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ccextractor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\constants.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\disable_warnings.h">
@@ -64,9 +73,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\inttypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\platform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\spupng_encoder.h">
@@ -216,11 +222,44 @@
     <ClInclude Include="..\src\configuration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\cc_encoders_common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\networking.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ccx_decoders_structs.h">
+      <Filter>Header Files\ccx_decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ccx_encoders_structs.h">
+      <Filter>Header Files\ccx_encoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ccx_decoders_608.h">
+      <Filter>Header Files\ccx_decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ccx_decoders_common.h">
+      <Filter>Header Files\ccx_decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ccx_decoders_xds.h">
+      <Filter>Header Files\ccx_decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ccx_encoders_common.h">
+      <Filter>Header Files\ccx_encoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ccx_common_common.h">
+      <Filter>Header Files\ccx_common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ccx_common_structs.h">
+      <Filter>Header Files\ccx_common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ccx_common_platform.h">
+      <Filter>Header Files\ccx_common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ccx_common_constants.h">
+      <Filter>Header Files\ccx_common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ccx_common_timing.h">
+      <Filter>Header Files\ccx_common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ccx_decoders_708.h">
+      <Filter>Header Files\ccx_decoders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -228,9 +267,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gpacmp4\stbl_write.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\608.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\608_helpers.c">
@@ -248,9 +284,6 @@
     <ClCompile Include="..\src\608_srt.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\708.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\708_encoding.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -266,13 +299,7 @@
     <ClCompile Include="..\src\cc_bitstream.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\cc_decoders_common.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ccextractor.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\constants.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\dvb_subtitle_decoder.c">
@@ -317,9 +344,6 @@
     <ClCompile Include="..\src\telxcc.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\timing.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ts_functions.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -330,9 +354,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\wtv_functions.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\xds.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gpacmp4\av_parsers.c">
@@ -527,11 +548,32 @@
     <ClCompile Include="..\src\configuration.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\cc_encoders_common.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\networking.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ccx_decoders_608.c">
+      <Filter>Source Files\ccx_decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ccx_decoders_common.c">
+      <Filter>Source Files\ccx_decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ccx_decoders_xds.c">
+      <Filter>Source Files\ccx_decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ccx_encoders_common.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ccx_common_constants.c">
+      <Filter>Source Files\ccx_common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ccx_common_common.c">
+      <Filter>Source Files\ccx_common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ccx_common_timing.c">
+      <Filter>Source Files\ccx_common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ccx_decoders_708.c">
+      <Filter>Source Files\ccx_decoders</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

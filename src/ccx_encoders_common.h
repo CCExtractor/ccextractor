@@ -1,6 +1,16 @@
 #ifndef _CC_ENCODER_COMMON_H
 #define _CC_ENCODER_COMMON_H
 
+#include "ccx_decoders_structs.h"
+#include "ccx_encoders_structs.h"
+
+#define REQUEST_BUFFER_CAPACITY(ctx,length) if (length>ctx->capacity) \
+{ctx->capacity = length * 2; ctx->buffer = (unsigned char*)realloc(ctx->buffer, ctx->capacity); \
+if (ctx->buffer == NULL) { fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, bailing out\n"); } \
+}
+
+extern ccx_encoders_transcript_format ccx_encoders_default_transcript_settings;
+
 /**
  * Context of encoder, This structure gives single interface 
  * to all encoder 

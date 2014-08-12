@@ -1,4 +1,4 @@
-#include "ccextractor.h"
+#include "ccx_common_constants.h"
 
 // RCWT header (11 bytes):
 //byte(s)   value   description (All values below are hex numbers, not

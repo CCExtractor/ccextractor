@@ -940,7 +940,7 @@ void parse_parameters (int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-dru")==0)
 		{
-			ccx_options.direct_rollup = 1;
+			ccx_options.settings_608.direct_rollup = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-nofc")==0 ||
@@ -1145,22 +1145,22 @@ void parse_parameters (int argc, char *argv[])
 		if (strcmp (argv[i],"-noru")==0 || 
 				strcmp (argv[i],"--norollup")==0)
 		{
-			ccx_options.norollup = 1;
+			ccx_options.settings_608.no_rollup = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-ru1")==0)
 		{
-			ccx_options.forced_ru=1;
+			ccx_options.settings_608.force_rollup = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-ru2")==0)
 		{
-			ccx_options.forced_ru=2;
+			ccx_options.settings_608.force_rollup = 2;
 			continue;
 		}
 		if (strcmp (argv[i],"-ru3")==0)
 		{
-			ccx_options.forced_ru=3;
+			ccx_options.settings_608 .force_rollup = 3;
 			continue;
 		}
 		if (strcmp (argv[i],"-trim")==0)
@@ -1234,7 +1234,7 @@ void parse_parameters (int argc, char *argv[])
 				fatal (EXIT_MALFORMED_PARAMETER, "--defaultcolor expects a 7 character parameter that starts with #\n");
 			}
 			strcpy ((char *) usercolor_rgb,argv[i+1]);
-			ccx_options.cc608_default_color=COL_USERDEFINED;
+			ccx_options.settings_608.default_color = COL_USERDEFINED;
 			i++;
 			continue;
 		}
@@ -1250,8 +1250,8 @@ void parse_parameters (int argc, char *argv[])
 		if ((strcmp (argv[i],"-scr")==0 || 
 					strcmp (argv[i],"--screenfuls")==0) && i<argc-1)
 		{
-			ccx_options.screens_to_process=atoi_hex (argv[i+1]);
-			if (ccx_options.screens_to_process<0)
+			ccx_options.settings_608.screens_to_process = atoi_hex(argv[i + 1]);
+			if (ccx_options.settings_608.screens_to_process<0)
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "--screenfuls only accepts positive integers.\n");
 			}
@@ -1310,7 +1310,7 @@ void parse_parameters (int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-608")==0)
 		{
-			ccx_options.debug_mask |= CCX_DMT_608;
+			ccx_options.debug_mask |= CCX_DMT_DECODER_608;
 			continue;
 		}
 		if (strcmp (argv[i],"-deblev")==0)
@@ -1352,7 +1352,7 @@ void parse_parameters (int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-xdsdebug")==0)
 		{
-			ccx_options.debug_mask |= CCX_DMT_XDS;
+			ccx_options.debug_mask |= CCX_DMT_DECODER_XDS;
 			continue;
 		}
 		if (strcmp (argv[i],"-parsedebug")==0)

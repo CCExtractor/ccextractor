@@ -1,6 +1,11 @@
 #ifndef CCX_CONSTANTS_H
 #define CCX_CONSTANTS_H
 
+#ifndef __cplusplus
+#define false 0
+#define true 1
+#endif
+
 extern const char *framerates_types[16];
 extern const double framerates_values[16];
 
@@ -40,9 +45,9 @@ enum ccx_debug_message_types
 	CCX_DMT_VIDES=2,// Show video stream related information
 	CCX_DMT_TIME=4, // Show GOP and PTS timing information
 	CCX_DMT_VERBOSE=8, // Show lots of debugging output
-	CCX_DMT_608=0x10, // Show CC-608 decoder debug? 
+	CCX_DMT_DECODER_608=0x10, // Show CC-608 decoder debug? 
 	CCX_DMT_708=0x20, // Show CC-708 decoder debug? 
-	CCX_DMT_XDS=0x40, // Show XDS decoder debug?
+	CCX_DMT_DECODER_XDS=0x40, // Show XDS decoder debug?
 	CCX_DMT_CBRAW=0x80, // Caption blocks with FTS timing
 	CCX_DMT_GENERIC_NOTICES=0x100, // Generic, always displayed even if no debug is selected
 	CCX_DMT_TELETEXT=0x200, // Show teletext debug?

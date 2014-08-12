@@ -503,9 +503,9 @@ LLONG ts_getmoredata(void)
 		else
 		{
 			if (ccx_options.ts_forced_cappid)
-				fatal (EXIT_UNSUPPORTED, "Unable to determine stream type of selected PID.");
+				fatal(CCX_COMMON_EXIT_UNSUPPORTED, "Unable to determine stream type of selected PID.");
 			else
-				fatal(EXIT_BUG_BUG, "Not reachable!");
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "Not reachable!");
 		}
 		// We read a video PES
 
@@ -562,7 +562,7 @@ LLONG ts_getmoredata(void)
 				// 12 bytes total length, stream id = 0xbd (Private non-video and non-audio), etc
 					if (2 > BUFSIZE - inbuf) 
 					{
-						fatal(EXIT_BUG_BUG,
+						fatal(CCX_COMMON_EXIT_BUG_BUG,
 							"Remaining buffer (%lld) not enough to hold the 3 Hauppage bytes.\n"
 							"Please send bug report!",
 							BUFSIZE - inbuf);
@@ -614,7 +614,7 @@ LLONG ts_getmoredata(void)
 
 		if (databuflen > BUFSIZE - inbuf)
 		{
-			fatal(EXIT_BUG_BUG,
+			fatal(CCX_COMMON_EXIT_BUG_BUG,
 				  "PES data packet (%ld) larger than remaining buffer (%lld).\n"
 				  "Please send bug report!",
 				   databuflen, BUFSIZE - inbuf);

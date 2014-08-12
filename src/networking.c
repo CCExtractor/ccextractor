@@ -15,6 +15,7 @@
 #define OK              1
 #define PASSWORD        2
 #define BIN_MODE        3
+#pragma warning( suppress : 4005)
 #define ERROR           51
 #define UNKNOWN_COMMAND 52
 #define WRONG_PASSWORD  53
@@ -900,7 +901,7 @@ int start_upd_srv(const char *addr_str, unsigned port)
 		wprintf(L"bind() eror: %ld\n", WSAGetLastError());
 		exit(EXIT_FAILURE);
 #else
-		fatal(EXIT_BUG_BUG, "bind() error: %s\n", strerror(errno));
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "bind() error: %s\n", strerror(errno));
 #endif
 	}
 
@@ -915,7 +916,7 @@ int start_upd_srv(const char *addr_str, unsigned port)
 #else
 			mprint("setsockopt() error: %s\n", strerror(errno));
 #endif
-			fatal(EXIT_BUG_BUG, "Cannot join multicast group.");
+			fatal(CCX_COMMON_EXIT_BUG_BUG, "Cannot join multicast group.");
 		}
 	}
 

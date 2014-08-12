@@ -1,6 +1,6 @@
 #include "ccextractor.h"
 #include "utility.h"
-#include "cc_encoders_common.h"
+#include "ccx_encoders_common.h"
 //extern unsigned char encoded_crlf[16];
 
 // Encodes a generic string. Note that since we use the encoders for closed caption
@@ -61,7 +61,7 @@ void correct_case(int line_num,struct eia608_screen *data)
 
 void capitalize (int line_num, struct eia608_screen *data)
 {	
-    for (int i=0;i<CC608_SCREEN_WIDTH;i++)
+	for (int i = 0; i<CCX_DECODER_608_SCREEN_WIDTH; i++)
     {
         switch (data->characters[line_num][i])
         {
@@ -90,7 +90,7 @@ void find_limit_characters (unsigned char *line, int *first_non_blank, int *last
 {
     *last_non_blank=-1;
     *first_non_blank=-1;
-    for (int i=0;i<CC608_SCREEN_WIDTH;i++)
+	for (int i = 0; i<CCX_DECODER_608_SCREEN_WIDTH; i++)
     {
         unsigned char c=line[i];
         if (c!=' ' && c!=0x89)
@@ -183,7 +183,7 @@ unsigned char *close_tag (unsigned char *buffer, char *tagstack, char tagtype, i
 			return buffer;
 	}
 	if (tagtype!='A') // All
-		fatal (EXIT_BUG_BUG, "Mismatched tags in encoding, this is a bug, please report");
+		fatal (CCX_COMMON_EXIT_BUG_BUG, "Mismatched tags in encoding, this is a bug, please report");
 	return buffer;
 }
 
@@ -268,22 +268,22 @@ unsigned get_decoder_line_encoded (unsigned char *buffer, int line_num, struct e
     }
 	buffer = close_tag(buffer,tagstack,'A',&underlined,&italics,&changed_font);
 	if (underlined || italics || changed_font)
-		fatal (EXIT_BUG_BUG, "Not all tags closed in encoding, this is a bug, please report.\n");
+		fatal (CCX_COMMON_EXIT_BUG_BUG, "Not all tags closed in encoding, this is a bug, please report.\n");
     *buffer=0;
     return (unsigned) (buffer-orig); // Return length
 }
 
 
-void delete_all_lines_but_current (struct eia608_screen *data, int row)
+void delete_all_lines_but_current(ccx_decoder_608_context *context, struct eia608_screen *data, int row)
 {
     for (int i=0;i<15;i++)
     {
         if (i!=row)
         {
-            memset(data->characters[i],' ',CC608_SCREEN_WIDTH);
-            data->characters[i][CC608_SCREEN_WIDTH]=0;		
-            memset (data->colors[i],ccx_options.cc608_default_color,CC608_SCREEN_WIDTH+1); 
-            memset (data->fonts[i],FONT_REGULAR,CC608_SCREEN_WIDTH+1); 
+			memset(data->characters[i], ' ', CCX_DECODER_608_SCREEN_WIDTH);
+			data->characters[i][CCX_DECODER_608_SCREEN_WIDTH] = 0;
+			memset(data->colors[i], context->settings.default_color, CCX_DECODER_608_SCREEN_WIDTH + 1);
+			memset(data->fonts[i], FONT_REGULAR, CCX_DECODER_608_SCREEN_WIDTH + 1);
             data->row_used[i]=0;        
         }
     }

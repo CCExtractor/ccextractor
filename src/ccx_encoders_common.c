@@ -1,11 +1,23 @@
 #include "ccextractor.h"
-#include "cc_decoders_common.h"
-#include "cc_encoders_common.h"
+#include "ccx_decoders_common.h"
+#include "ccx_encoders_common.h"
 #include "spupng_encoder.h"
 #include "608_spupng.h"
 #include "utility.h"
-#include "xds.h"
 #include "ocr.h"
+#include "ccx_decoders_xds.h"
+
+// These are the default settings for plain transcripts. No times, no CC or caption mode, and no XDS.
+ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
+{
+	.showStartTime = 0,
+	.showEndTime = 0,
+	.showMode = 0,
+	.showCC = 0,
+	.relativeTimestamp = 1,
+	.xds = 0,
+	.useColors = 1
+};
 
 static const char *sami_header= // TODO: Revise the <!-- comments
 "<SAMI>\n\
@@ -34,7 +46,7 @@ void write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			sprintf ((char *) str,"</BODY></SAMI>\n");
 			if (ccx_options.encoding!=CCX_ENC_UNICODE)
 			{
-				dbg_print(CCX_DMT_608, "\r%s\n", str);
+				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
 			used=encode_line (ctx->buffer,(unsigned char *) str);
 			write(out->fh, ctx->buffer, used);
@@ -43,7 +55,7 @@ void write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			sprintf ((char *) str,"</div></body></tt>\n");
 			if (ccx_options.encoding!=CCX_ENC_UNICODE)
 			{
-				dbg_print(CCX_DMT_608, "\r%s\n", str);
+				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
 			used=encode_line (ctx->buffer,(unsigned char *) str);
 			write (out->fh, ctx->buffer,used);
@@ -106,8 +118,8 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 	int length = get_decoder_line_basic (subline, line_number, data);
 	if (ccx_options.encoding!=CCX_ENC_UNICODE)
 	{
-		dbg_print(CCX_DMT_608, "\r");
-		dbg_print(CCX_DMT_608, "%s\n",subline);
+		dbg_print(CCX_DMT_DECODER_608, "\r");
+		dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
 	}
 	if (length>0)
 	{
@@ -193,7 +205,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context)
 {
 	int wrote_something = 0;
-	dbg_print(CCX_DMT_608, "\n- - - TRANSCRIPT caption - - -\n");
+	dbg_print(CCX_DMT_DECODER_608, "\n- - - TRANSCRIPT caption - - -\n");
 
 	for (int i=0;i<15;i++)
 	{
@@ -203,7 +215,7 @@ int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ct
 		}
 		wrote_something=1;
 	}
-	dbg_print(CCX_DMT_608, "- - - - - - - - - - - -\r\n");
+	dbg_print(CCX_DMT_DECODER_608, "- - - - - - - - - - - -\r\n");
 	return wrote_something;
 }
 int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context)

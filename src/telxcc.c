@@ -1016,7 +1016,7 @@ void analyze_pat(uint8_t *buffer, uint8_t size) {
 
 //!
 if (pat.pointer_field > 0) {
-	fatal (EXIT_UNSUPPORTED, "! pat.pointer_field > 0 (0x%02x)\n\n", pat.pointer_field);
+	fatal(CCX_COMMON_EXIT_UNSUPPORTED, "! pat.pointer_field > 0 (0x%02x)\n\n", pat.pointer_field);
 }
 
 	pat.table_id = buffer[1];
@@ -1054,7 +1054,7 @@ void analyze_pmt(uint8_t *buffer, uint8_t size) {
 
 //!
 if (pmt.pointer_field > 0) {
-	fatal (EXIT_UNSUPPORTED, "! pmt.pointer_field > 0 (0x%02x)\n\n", pmt.pointer_field);	
+	fatal(CCX_COMMON_EXIT_UNSUPPORTED, "! pmt.pointer_field > 0 (0x%02x)\n\n", pmt.pointer_field);
 }
 
 	pmt.table_id = buffer[1];
@@ -1208,7 +1208,7 @@ int main_telxcc (int argc, char *argv[]) {
 
 		// not TS packet?
 		if (header.sync != 0x47) 
-			fatal (EXIT_UNSUPPORTED, "- Invalid TS packet header\n- telxcc does not work with unaligned TS.\n\n");
+			fatal (CCX_COMMON_EXIT_UNSUPPORTED, "- Invalid TS packet header\n- telxcc does not work with unaligned TS.\n\n");
 
 		// uncorrectable error?
 		if (header.transport_error > 0) {

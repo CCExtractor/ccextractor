@@ -11,15 +11,19 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\608.h" />
+    <ClInclude Include="..\src\ccx_common_common.h" />
+    <ClInclude Include="..\src\ccx_decoders_608.h" />
     <ClInclude Include="..\src\608_spupng.h" />
     <ClInclude Include="..\src\708.h" />
     <ClInclude Include="..\src\asf_constants.h" />
     <ClInclude Include="..\src\bitstream.h" />
     <ClInclude Include="..\src\ccextractor.h" />
-    <ClInclude Include="..\src\cc_encoders_common.h" />
+    <ClInclude Include="..\src\ccx_decoders_structs.h" />
+    <ClInclude Include="..\src\ccx_encoders_structs.h" />
+    <ClInclude Include="..\src\ccx_decoders_common.h" />
+    <ClInclude Include="..\src\ccx_encoders_common.h" />
     <ClInclude Include="..\src\configuration.h" />
-    <ClInclude Include="..\src\constants.h" />
+    <ClInclude Include="..\src\ccx_common_constants.h" />
     <ClInclude Include="..\src\disable_warnings.h" />
     <ClInclude Include="..\src\dvb_subtitle_decoder.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\avparse.h" />
@@ -47,6 +51,7 @@
     <ClInclude Include="..\src\gpacmp4\gpac\version.h" />
     <ClInclude Include="..\src\gpacmp4\targetver.h" />
     <ClInclude Include="..\src\hamming.h" />
+    <ClInclude Include="..\src\ccx_common_structs.h" />
     <ClInclude Include="..\src\inttypes.h" />
     <ClInclude Include="..\src\libpng\png.h" />
     <ClInclude Include="..\src\libpng\pngconf.h" />
@@ -56,13 +61,15 @@
     <ClInclude Include="..\src\libpng\pngpriv.h" />
     <ClInclude Include="..\src\libpng\pngstruct.h" />
     <ClInclude Include="..\src\networking.h" />
-    <ClInclude Include="..\src\platform.h" />
+    <ClInclude Include="..\src\ccx_common_platform.h" />
     <ClInclude Include="..\src\spupng_encoder.h" />
     <ClInclude Include="..\src\stdint.h" />
     <ClInclude Include="..\src\stdintmsc.h" />
     <ClInclude Include="..\src\teletext.h" />
+    <ClInclude Include="..\src\ccx_common_timing.h" />
     <ClInclude Include="..\src\utility.h" />
     <ClInclude Include="..\src\wtv_constants.h" />
+    <ClInclude Include="..\src\ccx_decoders_xds.h" />
     <ClInclude Include="..\src\zlib\crc32.h" />
     <ClInclude Include="..\src\zlib\deflate.h" />
     <ClInclude Include="..\src\zlib\gzguts.h" />
@@ -76,7 +83,8 @@
     <ClInclude Include="..\src\zlib\zutil.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\608.c" />
+    <ClCompile Include="..\src\ccx_common_common.c" />
+    <ClCompile Include="..\src\ccx_decoders_608.c" />
     <ClCompile Include="..\src\608_helpers.c" />
     <ClCompile Include="..\src\608_sami.c" />
     <ClCompile Include="..\src\608_smptett.c" />
@@ -89,10 +97,10 @@
     <ClCompile Include="..\src\avc_functions.c" />
     <ClCompile Include="..\src\ccextractor.c" />
     <ClCompile Include="..\src\cc_bitstream.c" />
-    <ClCompile Include="..\src\cc_decoders_common.c" />
-    <ClCompile Include="..\src\cc_encoders_common.c" />
+    <ClCompile Include="..\src\ccx_decoders_common.c" />
+    <ClCompile Include="..\src\ccx_encoders_common.c" />
     <ClCompile Include="..\src\configuration.c" />
-    <ClCompile Include="..\src\constants.c" />
+    <ClCompile Include="..\src\ccx_common_constants.c" />
     <ClCompile Include="..\src\dvb_subtitle_decoder.c" />
     <ClCompile Include="..\src\encoding.c" />
     <ClCompile Include="..\src\es_functions.c" />
@@ -165,12 +173,12 @@
     <ClCompile Include="..\src\spupng_encoder.c" />
     <ClCompile Include="..\src\stream_functions.c" />
     <ClCompile Include="..\src\telxcc.c" />
-    <ClCompile Include="..\src\timing.c" />
+    <ClCompile Include="..\src\ccx_common_timing.c" />
     <ClCompile Include="..\src\ts_functions.c" />
     <ClCompile Include="..\src\ts_tables.c" />
     <ClCompile Include="..\src\utility.c" />
     <ClCompile Include="..\src\wtv_functions.c" />
-    <ClCompile Include="..\src\xds.c" />
+    <ClCompile Include="..\src\ccx_decoders_xds.c" />
     <ClCompile Include="..\src\zlib\adler32.c" />
     <ClCompile Include="..\src\zlib\crc32.c" />
     <ClCompile Include="..\src\zlib\deflate.c" />

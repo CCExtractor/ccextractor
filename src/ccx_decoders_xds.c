@@ -1,5 +1,12 @@
-#include "ccextractor.h"
-#include "utility.h"
+#include "ccx_decoders_xds.h"
+
+LLONG ts_start_of_xds = -1; // Time at which we switched to XDS mode, =-1 hasn't happened yet
+
+struct ccx_decoders_xds_context_t {
+	ccx_encoders_transcript_format transcriptFormat;
+	LLONG subsDelay;
+	char millisSeparator;
+} ccx_decoders_xds_context;
 
 // Program Identification Number (Start Time) for current program
 static int current_xds_min=-1;
@@ -119,6 +126,28 @@ static unsigned char *cur_xds_payload;
 static int cur_xds_payload_length;
 static int cur_xds_packet_type;
 
+void ccx_decoders_xds_init_library(ccx_encoders_transcript_format *transcriptSettings, LLONG subs_delay, char millis_separator)
+{
+	ccx_decoders_xds_context.transcriptFormat = *transcriptSettings;
+	ccx_decoders_xds_context.subsDelay = subs_delay;
+	ccx_decoders_xds_context.millisSeparator = millis_separator;
+
+	for (int i = 0; i<NUM_XDS_BUFFERS; i++)
+	{
+		xds_buffers[i].in_use = 0;
+		xds_buffers[i].xds_class = -1;
+		xds_buffers[i].xds_type = -1;
+		xds_buffers[i].used_bytes = 0;
+		memset(xds_buffers[i].bytes, 0, NUM_BYTES_PER_PACKET);
+	}
+	for (int i = 0; i<9; i++)
+		memset(xds_program_description, 0, 32);
+
+	memset(current_xds_network_name, 0, 33);
+	memset(current_xds_program_name, 0, 33);
+	memset(current_xds_call_letters, 0, 7);
+	memset(current_xds_program_type, 0, 33);
+}
 
 int write_xds_string(struct cc_subtitle *sub,char *p,size_t len)
 {
@@ -128,7 +157,7 @@ int write_xds_string(struct cc_subtitle *sub,char *p,size_t len)
 	{
 		freep(&sub->data);
 		sub->nb_data = 0;
-		mprint("No Memory left");
+		ccx_common_logging.log_ftn("No Memory left");
 		return -1;
 	}
 	else
@@ -149,24 +178,7 @@ int write_xds_string(struct cc_subtitle *sub,char *p,size_t len)
 	return 0;
 
 }
-void xds_init()
-{
-	for (int i=0;i<NUM_XDS_BUFFERS;i++)
-	{
-		xds_buffers[i].in_use=0;
-		xds_buffers[i].xds_class=-1;
-		xds_buffers[i].xds_type=-1;
-		xds_buffers[i].used_bytes=0;
-		memset (xds_buffers[i].bytes , 0, NUM_BYTES_PER_PACKET);
-	}
-	for (int i=0; i<9; i++)	
-		memset (xds_program_description,0,32); 
-	
-	memset (current_xds_network_name,0,33); 
-	memset (current_xds_program_name,0,33); 
-	memset (current_xds_call_letters,0,7);
-	memset (current_xds_program_type,0,33); 
-}
+
 
 void xds_write_transcript_line_suffix (struct ccx_s_write *wb)
 {
@@ -185,61 +197,60 @@ void xds_write_transcript_line_prefix (struct ccx_s_write *wb, LLONG start_time,
 	if (start_time == -1) 
 	{
 		// Means we entered XDS mode without making a note of the XDS start time. This is a bug.
-		fatal (EXIT_BUG_BUG, "Bug in timedtranscript (XDS). Please report.");
-		;
+		ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "Bug in timedtranscript (XDS). Please report.");
 	}
 
-	if (ccx_options.transcript_settings.showStartTime){
+	if (ccx_decoders_xds_context.transcriptFormat.showStartTime){
 		char buffer[80];
-		if (ccx_options.transcript_settings.relativeTimestamp){
+		if (ccx_decoders_xds_context.transcriptFormat.relativeTimestamp){
 			if (utc_refvalue == UINT64_MAX)
 			{
-				mstotime(start_time + subs_delay, &h1, &m1, &s1, &ms1);
-				fdprintf(wb->fh, "%02u:%02u:%02u%c%03u|", h1, m1, s1, ccx_options.millis_separator, ms1);
+				mstotime(start_time + ccx_decoders_xds_context.subsDelay, &h1, &m1, &s1, &ms1);
+				fdprintf(wb->fh, "%02u:%02u:%02u%c%03u|", h1, m1, s1, ccx_decoders_xds_context.millisSeparator, ms1);
 			}
 			else {
-				fdprintf(wb->fh, "%lld%c%03d|", (start_time + subs_delay) / 1000, ccx_options.millis_separator, (start_time + subs_delay) % 1000);
+				fdprintf(wb->fh, "%lld%c%03d|", (start_time + ccx_decoders_xds_context.subsDelay) / 1000, ccx_decoders_xds_context.millisSeparator, (start_time + ccx_decoders_xds_context.subsDelay) % 1000);
 			}
 		}
 		else {
-			mstotime(start_time + subs_delay, &h1, &m1, &s1, &ms1);
-			time_t start_time_int = (start_time + subs_delay) / 1000;
-			int start_time_dec = (start_time + subs_delay) % 1000;
+			mstotime(start_time + ccx_decoders_xds_context.subsDelay, &h1, &m1, &s1, &ms1);
+			time_t start_time_int = (start_time + ccx_decoders_xds_context.subsDelay) / 1000;
+			int start_time_dec = (start_time + ccx_decoders_xds_context.subsDelay) % 1000;
 			struct tm *start_time_struct = gmtime(&start_time_int);
 			strftime(buffer, sizeof(buffer), "%Y%m%d%H%M%S", start_time_struct);
-			fdprintf(wb->fh, "%s%c%03d|", buffer,ccx_options.millis_separator,start_time_dec);
+			fdprintf(wb->fh, "%s%c%03d|", buffer, ccx_decoders_xds_context.millisSeparator, start_time_dec);
 		}
 	}
 
-	if (ccx_options.transcript_settings.showEndTime){
+	if (ccx_decoders_xds_context.transcriptFormat.showEndTime){
 		char buffer[80];
-		if (ccx_options.transcript_settings.relativeTimestamp){
+		if (ccx_decoders_xds_context.transcriptFormat.relativeTimestamp){
 			if (utc_refvalue == UINT64_MAX)
 			{
-				mstotime(end_time + subs_delay, &h2, &m2, &s2, &ms2);
-				fdprintf(wb->fh, "%02u:%02u:%02u%c%03u|", h2, m2, s2, ccx_options.millis_separator, ms2);
+				mstotime(end_time + ccx_decoders_xds_context.subsDelay, &h2, &m2, &s2, &ms2);
+				fdprintf(wb->fh, "%02u:%02u:%02u%c%03u|", h2, m2, s2, ccx_decoders_xds_context.millisSeparator, ms2);
 			}
 			else
 			{
-				fdprintf(wb->fh, "%lld%s%03d|", (end_time + subs_delay) / 1000, ccx_options.millis_separator, (end_time + subs_delay) % 1000);
+				fdprintf(wb->fh, "%lld%s%03d|", (end_time + ccx_decoders_xds_context.subsDelay) / 1000, ccx_decoders_xds_context.millisSeparator, (end_time + ccx_decoders_xds_context.subsDelay) % 1000);
 			}
 		}
 		else {
-			mstotime(end_time + subs_delay, &h2, &m2, &s2, &ms2);
-			time_t end_time_int = (end_time + subs_delay) / 1000;
-			int end_time_dec = (end_time + subs_delay) % 1000;
+			mstotime(end_time + ccx_decoders_xds_context.subsDelay, &h2, &m2, &s2, &ms2);
+			time_t end_time_int = (end_time + ccx_decoders_xds_context.subsDelay) / 1000;
+			int end_time_dec = (end_time + ccx_decoders_xds_context.subsDelay) % 1000;
 			struct tm *end_time_struct = gmtime(&end_time_int);
 			strftime(buffer, sizeof(buffer), "%Y%m%d%H%M%S", end_time_struct);
-			fdprintf(wb->fh, "%s%c%03d|", buffer, ccx_options.millis_separator, end_time_dec);
+			fdprintf(wb->fh, "%s%c%03d|", buffer, ccx_decoders_xds_context.millisSeparator, end_time_dec);
 		}
 	}
 
-	if (ccx_options.transcript_settings.showMode){
+	if (ccx_decoders_xds_context.transcriptFormat.showMode){
 		const char *mode = "XDS";
 		fdprintf(wb->fh, "%s|", mode);
 	}
 
-	if (ccx_options.transcript_settings.showCC){
+	if (ccx_decoders_xds_context.transcriptFormat.showCC){
 		fdprintf(wb->fh, "%s|", XDSclasses_short[cur_xds_packet_class]);
 	}	
 }
@@ -329,7 +340,7 @@ void process_xds_bytes (const unsigned char hi, int lo)
 	{
 		int xds_class=(hi-1)/2; // Start codes 1 and 2 are "class type" 0, 3-4 are 2, and so on.
 		is_new=hi%2; // Start codes are even
-		dbg_print(CCX_DMT_XDS, "XDS Start: %u.%u  Is new: %d  | Class: %d (%s), Used buffers: %d\n",hi,lo, is_new,xds_class, XDSclasses[xds_class], how_many_used());
+		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "XDS Start: %u.%u  Is new: %d  | Class: %d (%s), Used buffers: %d\n",hi,lo, is_new,xds_class, XDSclasses[xds_class], how_many_used());
 		int first_free_buf=-1;
 		int matching_buf=-1;
 		for (int i=0;i<NUM_XDS_BUFFERS;i++)
@@ -351,7 +362,7 @@ void process_xds_bytes (const unsigned char hi, int lo)
 			*/
 		if (matching_buf==-1 && first_free_buf==-1)
 		{
-			mprint ("Note: All XDS buffers full (bug or suicidal stream). Ignoring this one (%d,%d).\n",xds_class,lo);
+			ccx_common_logging.log_ftn ("Note: All XDS buffers full (bug or suicidal stream). Ignoring this one (%d,%d).\n",xds_class,lo);
 			cur_xds_buffer_idx=-1;
 			return;
 
@@ -376,10 +387,10 @@ void process_xds_bytes (const unsigned char hi, int lo)
 	else
 	{
 		// Informational: 00, or 0x20-0x7F, so 01-0x1f forbidden
-		dbg_print(CCX_DMT_XDS, "XDS: %02X.%02X (%c, %c)\n",hi,lo,hi,lo);
+		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "XDS: %02X.%02X (%c, %c)\n",hi,lo,hi,lo);
 		if ((hi>0 && hi<=0x1f) || (lo>0 && lo<=0x1f))
 		{
-			mprint ("\rNote: Illegal XDS data");
+			ccx_common_logging.log_ftn ("\rNote: Illegal XDS data");
 			return;
 		}
 	}
@@ -431,7 +442,7 @@ void xds_do_copy_generation_management_system (struct cc_subtitle *sub, unsigned
 
 	}
 
-	if (ccx_options.transcript_settings.xds)
+	if (ccx_decoders_xds_context.transcriptFormat.xds)
 	{
 		xdsprint(sub, copy_permited);
 		xdsprint(sub, aps);
@@ -439,13 +450,13 @@ void xds_do_copy_generation_management_system (struct cc_subtitle *sub, unsigned
 	}
 	if (changed)				
 	{
-		mprint ("\rXDS: %s\n",copy_permited);
-		mprint ("\rXDS: %s\n",aps);
-		mprint ("\rXDS: %s\n",rcd);
+		ccx_common_logging.log_ftn ("\rXDS: %s\n",copy_permited);
+		ccx_common_logging.log_ftn ("\rXDS: %s\n",aps);
+		ccx_common_logging.log_ftn ("\rXDS: %s\n",rcd);
 	}
-	dbg_print(CCX_DMT_XDS, "\rXDS: %s\n",copy_permited);
-	dbg_print(CCX_DMT_XDS, "\rXDS: %s\n",aps);
-	dbg_print(CCX_DMT_XDS, "\rXDS: %s\n",rcd);
+	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: %s\n",copy_permited);
+	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: %s\n",aps);
+	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: %s\n",rcd);
 }
 
 void xds_do_content_advisory (struct cc_subtitle *sub, unsigned c1, unsigned c2)
@@ -524,32 +535,32 @@ void xds_do_content_advisory (struct cc_subtitle *sub, unsigned c1, unsigned c2)
 	// Bits a1 and a0 determine the encoding. I'll add parsing as more samples become available
 	if (!a1 && a0) // US TV parental guidelines
 	{		
-		if (ccx_options.transcript_settings.xds)
+		if (ccx_decoders_xds_context.transcriptFormat.xds)
 		{
 			xdsprint(sub, age);
 			xdsprint(sub, content);
 		}
 		if (changed)				
 		{
-			mprint ("\rXDS: %s\n  ",age);
-			mprint ("\rXDS: %s\n  ",content);
+			ccx_common_logging.log_ftn ("\rXDS: %s\n  ",age);
+			ccx_common_logging.log_ftn ("\rXDS: %s\n  ",content);
 		}
-		dbg_print(CCX_DMT_XDS, "\rXDS: %s\n",age);
-		dbg_print(CCX_DMT_XDS, "\rXDS: %s\n",content);
+		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: %s\n",age);
+		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: %s\n",content);
 	}
 	if (!a0 || // MPA
 			(a0 && a1 && !Da2 && !La3) // Canadian English Language Rating
 	) 
 	{
-		if (ccx_options.transcript_settings.xds)
+		if (ccx_decoders_xds_context.transcriptFormat.xds)
 			xdsprint(sub, rating);
 		if (changed)				
-			mprint ("\rXDS: %s\n  ",rating);
-		dbg_print(CCX_DMT_XDS, "\rXDS: %s\n",rating);
+			ccx_common_logging.log_ftn ("\rXDS: %s\n  ",rating);
+		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: %s\n",rating);
 	}
 
 	if (changed && !supported)							
-		mprint ("XDS: Unsupported ContentAdvisory encoding, please submit sample.\n");
+		ccx_common_logging.log_ftn ("XDS: Unsupported ContentAdvisory encoding, please submit sample.\n");
 			
 
 }
@@ -587,20 +598,19 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 					current_xds_month=month;
 				}
 
-				dbg_print(CCX_DMT_XDS, "PIN (Start Time): %s  %02d-%02d %02d:%02d\n",
+				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "PIN (Start Time): %s  %02d-%02d %02d:%02d\n",
 						(cur_xds_packet_class==XDS_CLASS_CURRENT?"Current":"Future"),
 						date,month,hour,min);
-				if (ccx_options.transcript_settings.xds)
+				if (ccx_decoders_xds_context.transcriptFormat.xds)
 					xdsprint (sub, "PIN (Start Time): %s  %02d-%02d %02d:%02d\n",
 						(cur_xds_packet_class==XDS_CLASS_CURRENT?"Current":"Future"),
 						date,month,hour,min);
 
 				if (!xds_start_time_shown && cur_xds_packet_class==XDS_CLASS_CURRENT)
 				{
-					mprint ("\rXDS: Program changed.\n");
-					mprint ("XDS program start time (DD/MM HH:MM) %02d-%02d %02d:%02d\n",date,month,hour,min);
-					activity_xds_program_identification_number (current_xds_min, 
-						current_xds_hour, current_xds_date, current_xds_month);
+					ccx_common_logging.log_ftn("\rXDS: Program changed.\n");
+					ccx_common_logging.log_ftn ("XDS program start time (DD/MM HH:MM) %02d-%02d %02d:%02d\n",date,month,hour,min);
+					ccx_common_logging.gui_ftn(CCX_COMMON_LOGGING_GUI_XDS_PROGRAM_ID_NR, current_xds_min, current_xds_hour, current_xds_date, current_xds_month);
 					xds_start_time_shown=1;
 				}			
 			}
@@ -613,11 +623,11 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 				int min=cur_xds_payload[2] & 0x3f; // 6 bits
 				int hour = cur_xds_payload[3] & 0x1f; // 5 bits
 				if (!xds_program_length_shown)				
-					mprint ("\rXDS: Program length (HH:MM): %02d:%02d  ",hour,min);
+					ccx_common_logging.log_ftn ("\rXDS: Program length (HH:MM): %02d:%02d  ",hour,min);
 				else
-					dbg_print(CCX_DMT_XDS, "\rXDS: Program length (HH:MM): %02d:%02d  ",hour,min);
+					ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: Program length (HH:MM): %02d:%02d  ",hour,min);
 
-				if (ccx_options.transcript_settings.xds)
+				if (ccx_decoders_xds_context.transcriptFormat.xds)
 					xdsprint(sub, "Program length (HH:MM): %02d:%02d  ",hour,min);
 
 				if (cur_xds_payload_length>6) // Next two bytes (optional) available
@@ -625,10 +635,10 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 					int el_min=cur_xds_payload[4] & 0x3f; // 6 bits
 					int el_hour = cur_xds_payload[5] & 0x1f; // 5 bits
 					if (!xds_program_length_shown)
-						mprint ("Elapsed (HH:MM): %02d:%02d",el_hour,el_min);
+						ccx_common_logging.log_ftn ("Elapsed (HH:MM): %02d:%02d",el_hour,el_min);
 					else
-						dbg_print(CCX_DMT_XDS, "Elapsed (HH:MM): %02d:%02d",el_hour,el_min);
-					if (ccx_options.transcript_settings.xds)
+						ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "Elapsed (HH:MM): %02d:%02d",el_hour,el_min);
+					if (ccx_decoders_xds_context.transcriptFormat.xds)
 						xdsprint(sub, "Elapsed (HH:MM): %02d:%02d",el_hour,el_min);
 
 				}
@@ -636,14 +646,14 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 				{
 					int el_sec=cur_xds_payload[6] & 0x3f; // 6 bits							
 					if (!xds_program_length_shown)
-						dbg_print(CCX_DMT_XDS, ":%02d",el_sec);
-					if (ccx_options.transcript_settings.xds)
+						ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, ":%02d",el_sec);
+					if (ccx_decoders_xds_context.transcriptFormat.xds)
 						xdsprint(sub, "Elapsed (SS) :%02d",el_sec);
 				}
 				if (!xds_program_length_shown)
-					mprint("\n");
+					ccx_common_logging.log_ftn("\n");
 				else
-					dbg_print(CCX_DMT_XDS, "\n");
+					ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\n");
 				xds_program_length_shown=1;
 			}
 			break;
@@ -655,16 +665,16 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 				for (i=2;i<cur_xds_payload_length-1;i++)
 					xds_program_name[i-2]=cur_xds_payload[i];
 				xds_program_name[i-2]=0;
-				dbg_print(CCX_DMT_XDS, "\rXDS Program name: %s\n",xds_program_name);
-				if (ccx_options.transcript_settings.xds)
+				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS Program name: %s\n",xds_program_name);
+				if (ccx_decoders_xds_context.transcriptFormat.xds)
 					xdsprint(sub, "Program name: %s",xds_program_name);
 				if (cur_xds_packet_class==XDS_CLASS_CURRENT && 
 					strcmp (xds_program_name, current_xds_program_name)) // Change of program
 				{
-					if (!ccx_options.gui_mode_reports)
-						mprint ("\rXDS Notice: Program is now %s\n", xds_program_name);
+					//if (!ccx_options.gui_mode_reports)
+					ccx_common_logging.log_ftn ("\rXDS Notice: Program is now %s\n", xds_program_name);
 					strncpy (current_xds_program_name,xds_program_name, 33);
-					activity_xds_program_name (xds_program_name);
+					ccx_common_logging.gui_ftn(CCX_COMMON_LOGGING_GUI_XDS_PROGRAM_NAME, xds_program_name);
 				}
 				break;
 			}
@@ -685,14 +695,14 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 					}
 				}
 			}
-			if (!(ccx_options.debug_mask & CCX_DMT_XDS) && current_program_type_reported && 
-				ccx_options.transcript_settings.xds == 0)
-				//ccx_options.export_xds==0)
+			if (!(ccx_common_logging.debug_mask & CCX_DMT_DECODER_XDS) && current_program_type_reported &&
+				ccx_decoders_xds_context.transcriptFormat.xds == 0){
 				break;
+			}
 			memcpy (current_xds_program_type,cur_xds_payload,cur_xds_payload_length);
 			current_xds_program_type[cur_xds_payload_length]=0;
 			if (!current_program_type_reported)
-				mprint ("\rXDS Program Type: ");
+				ccx_common_logging.log_ftn ("\rXDS Program Type: ");
 
 			*str = '\0';
 			tstr = str;
@@ -701,8 +711,8 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 				if (cur_xds_payload[i]==0) // Padding
 					continue;														
 				if (!current_program_type_reported)
-					mprint ("[%02X-", cur_xds_payload[i]);
-				if (ccx_options.transcript_settings.xds)
+					ccx_common_logging.log_ftn ("[%02X-", cur_xds_payload[i]);
+				if (ccx_decoders_xds_context.transcriptFormat.xds)
 				{
 					if (cur_xds_payload[i]>=0x20 && cur_xds_payload[i]<0x7F)
 					{
@@ -713,16 +723,16 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 				if (!current_program_type_reported)
 				{
 					if (cur_xds_payload[i]>=0x20 && cur_xds_payload[i]<0x7F)
-						mprint ("%s",XDSProgramTypes[cur_xds_payload[i]-0x20]); 
+						ccx_common_logging.log_ftn ("%s",XDSProgramTypes[cur_xds_payload[i]-0x20]); 
 					else
-						mprint ("ILLEGAL VALUE");
-					mprint ("] ");						
+						ccx_common_logging.log_ftn ("ILLEGAL VALUE");
+					ccx_common_logging.log_ftn ("] ");						
 				}
 			}
-			if (ccx_options.transcript_settings.xds)
+			if (ccx_decoders_xds_context.transcriptFormat.xds)
 				xdsprint(sub,"Program type %s",str);
 			if (!current_program_type_reported)
-				mprint ("\n");
+				ccx_common_logging.log_ftn ("\n");
 			current_program_type_reported=1;
 			break; 
 		case XDS_TYPE_CONTENT_ADVISORY: 
@@ -762,16 +772,16 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 						changed=1;
 					if (changed)
 					{
-						mprint ("\rXDS description line %d: %s\n",line_num,xds_desc);
+						ccx_common_logging.log_ftn ("\rXDS description line %d: %s\n",line_num,xds_desc);
 						strcpy (xds_program_description[line_num], xds_desc);
 					}
 					else
 					{					
-						dbg_print(CCX_DMT_XDS, "\rXDS description line %d: %s\n",line_num,xds_desc);
+						ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS description line %d: %s\n",line_num,xds_desc);
 					}
-					if (ccx_options.transcript_settings.xds)
+					if (ccx_decoders_xds_context.transcriptFormat.xds)
 						xdsprint(sub, "XDS description line %d: %s",line_num,xds_desc);
-					activity_xds_program_description (line_num, xds_desc);
+					ccx_common_logging.gui_ftn(CCX_COMMON_LOGGING_GUI_XDS_PROGRAM_DESCRIPTION, line_num, xds_desc);
 				}
 				break;
 			}
@@ -793,12 +803,12 @@ int xds_do_channel (struct cc_subtitle *sub)
 			for (i=2;i<cur_xds_payload_length-1;i++)
 				xds_network_name[i-2]=cur_xds_payload[i];
 			xds_network_name[i-2]=0;
-			dbg_print(CCX_DMT_XDS, "XDS Network name: %s\n",xds_network_name);
-			if (ccx_options.transcript_settings.xds)
+			ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "XDS Network name: %s\n",xds_network_name);
+			if (ccx_decoders_xds_context.transcriptFormat.xds)
 				xdsprint (sub, "Network: %s",xds_network_name);
 			if (strcmp (xds_network_name, current_xds_network_name)) // Change of station
 			{
-				mprint ("XDS Notice: Network is now %s\n", xds_network_name);
+				ccx_common_logging.log_ftn ("XDS Notice: Network is now %s\n", xds_network_name);
 				strcpy (current_xds_network_name,xds_network_name);
 			}
 			break;
@@ -814,14 +824,14 @@ int xds_do_channel (struct cc_subtitle *sub)
 						xds_call_letters[i-2]=cur_xds_payload[i];
 				}
 				xds_call_letters[i-2]=0;				
-				dbg_print(CCX_DMT_XDS, "XDS Network call letters: %s\n",xds_call_letters);
-				if (ccx_options.transcript_settings.xds)
+				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "XDS Network call letters: %s\n",xds_call_letters);
+				if (ccx_decoders_xds_context.transcriptFormat.xds)
 					xdsprint (sub, "Call Letters: %s",xds_call_letters);
 				if (strncmp (xds_call_letters, current_xds_call_letters, 7)) // Change of station
 				{
-					mprint ("XDS Notice: Network call letters now %s\n", xds_call_letters);
+					ccx_common_logging.log_ftn ("XDS Notice: Network call letters now %s\n", xds_call_letters);
 					strncpy (current_xds_call_letters, xds_call_letters, 7);
-					activity_xds_network_call_letters (current_xds_call_letters);
+					ccx_common_logging.gui_ftn(CCX_COMMON_LOGGING_GUI_XDS_CALL_LETTERS, current_xds_call_letters);
 				}
 			}
 			break;
@@ -836,7 +846,7 @@ int xds_do_channel (struct cc_subtitle *sub)
 			unsigned b3=(cur_xds_payload[4])&0x10;
 			unsigned b4=(cur_xds_payload[5])&0x10;
 			unsigned tsid=(b4<<12) | (b3<<8) | (b2<<4) | b1;
-			if (tsid && ccx_options.transcript_settings.xds)
+			if (tsid && ccx_decoders_xds_context.transcriptFormat.xds)
 				xdsprint (sub, "TSID: %u",tsid);
 			break;
 	}
@@ -875,7 +885,7 @@ int xds_do_misc ()
 			int reset_seconds = (cur_xds_payload[5] & 0x20); 
 			int day_of_week = cur_xds_payload[6] & 0x7;
 			int year = (cur_xds_payload[7] & 0x3f) + 1990;
-			dbg_print(CCX_DMT_XDS, "Time of day: (YYYY/MM/DD) %04d/%02d/%02d (HH:SS) %02d:%02d DoW: %d  Reset seconds: %d\n",							
+			ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "Time of day: (YYYY/MM/DD) %04d/%02d/%02d (HH:SS) %02d:%02d DoW: %d  Reset seconds: %d\n",							
 					year,month,date,hour,min, day_of_week, reset_seconds);				
 			break;
 		}
@@ -887,7 +897,7 @@ int xds_do_misc ()
 			// int b6 = (cur_xds_payload[2] & 0x40) >>6; // Bit 6 should always be 1
 			int dst = (cur_xds_payload[2] & 0x20) >>5; // Daylight Saving Time
 			int hour = cur_xds_payload[2] & 0x1f; // 5 bits
-			dbg_print(CCX_DMT_XDS, "Local Time Zone: %02d DST: %d\n",
+			ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "Local Time Zone: %02d DST: %d\n",
 					hour, dst);	
 			break;
 		}
@@ -915,19 +925,19 @@ void do_end_of_xds (struct cc_subtitle *sub, unsigned char expected_checksum)
 		cs=cs+cur_xds_payload[i];
 		cs=cs & 0x7f; // Keep 7 bits only
 		int c=cur_xds_payload[i]&0x7F;
-		dbg_print(CCX_DMT_XDS, "%02X - %c cs: %02X\n",
+		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "%02X - %c cs: %02X\n",
 			c,(c>=0x20)?c:'?', cs);
 	}
 	cs=(128-cs) & 0x7F; // Convert to 2's complement & discard high-order bit
 
-	dbg_print(CCX_DMT_XDS, "End of XDS. Class=%d (%s), size=%d  Checksum OK: %d   Used buffers: %d\n",
+	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "End of XDS. Class=%d (%s), size=%d  Checksum OK: %d   Used buffers: %d\n",
 			cur_xds_packet_class,XDSclasses[cur_xds_packet_class],
 			cur_xds_payload_length,
 			cs==expected_checksum, how_many_used());	
 
 	if (cs!=expected_checksum || cur_xds_payload_length<3)
 	{
-		dbg_print(CCX_DMT_XDS, "Expected checksum: %02X  Calculated: %02X\n", expected_checksum, cs);
+		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "Expected checksum: %02X  Calculated: %02X\n", expected_checksum, cs);
 		clear_xds_buffer (cur_xds_buffer_idx); 
 		return; // Bad packets ignored as per specs
 	}
@@ -941,7 +951,7 @@ void do_end_of_xds (struct cc_subtitle *sub, unsigned char expected_checksum)
 	switch (cur_xds_packet_class)
 	{
 		case XDS_CLASS_FUTURE: // Info on future program
-			if (!(ccx_options.debug_mask & CCX_DMT_XDS)) // Don't bother processing something we don't need
+			if (!(ccx_common_logging.debug_mask & CCX_DMT_DECODER_XDS)) // Don't bother processing something we don't need
 			{
 				was_proc=1;
 				break; 
@@ -959,18 +969,18 @@ void do_end_of_xds (struct cc_subtitle *sub, unsigned char expected_checksum)
 		case XDS_CLASS_PRIVATE: // CEA-608:
 			// The Private Data Class is for use in any closed system for whatever that 
 			// system wishes. It shall not be defined by this standard now or in the future. 			 
-			if (ccx_options.transcript_settings.xds)
+			if (ccx_decoders_xds_context.transcriptFormat.xds)
 				was_proc=xds_do_private_data(sub);
 			break;
 		case XDS_CLASS_OUT_OF_BAND:
-			dbg_print(CCX_DMT_XDS, "Out-of-band data, ignored.");
+			ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "Out-of-band data, ignored.");
 			was_proc = 1;
 			break;
 	}
 	
 	if (!was_proc)
 	{
-		mprint ("Note: We found an currently unsupported XDS packet.\n");
+		ccx_common_logging.log_ftn ("Note: We found an currently unsupported XDS packet.\n");
 	}
 	clear_xds_buffer (cur_xds_buffer_idx);
 

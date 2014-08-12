@@ -108,14 +108,14 @@ LLONG process_avc (unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *s
     // At least 5 bytes are needed for a NAL unit
     if(avcbuflen <= 5)
     {
-        fatal(EXIT_BUG_BUG,
+        fatal(CCX_COMMON_EXIT_BUG_BUG,
               "NAL unit need at last 5 bytes ...");
     } 
 
     // Warning there should be only leading zeros, nothing else 
     if( !(bpos[0]==0x00 && bpos[1]==0x00) )
     {
-        fatal(EXIT_BUG_BUG,
+        fatal(CCX_COMMON_EXIT_BUG_BUG,
               "Broken AVC stream - no 0x0000 ...");
     } 
     bpos = bpos+2;
@@ -138,7 +138,7 @@ LLONG process_avc (unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *s
             else if(firstloop && *bpos != 0x00)
             {
                 // Not 0x00 or 0x01
-                fatal(EXIT_BUG_BUG,
+                fatal(CCX_COMMON_EXIT_BUG_BUG,
                       "Broken AVC stream - no 0x00 ...");
             }
             bpos++;
@@ -193,7 +193,7 @@ LLONG process_avc (unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *s
         if(*NALstart & 0x80)
         {
             dump(CCX_DMT_GENERIC_NOTICES, NALstart-4,10, 0, 0);
-            fatal(EXIT_BUG_BUG,
+            fatal(CCX_COMMON_EXIT_BUG_BUG,
                   "Broken AVC stream - forbidden_zero_bit not zero ...");
         }
 
@@ -450,15 +450,15 @@ void user_data_registered_itu_t_t35 (unsigned char *userbuf, unsigned char *user
 
 						/* TODO: I don't think we have user_data_len here
 						if (cc_count*3+3 != user_data_len)
-						fatal(EXIT_BUG_BUG,
+						fatal(CCX_COMMON_EXIT_BUG_BUG,
 							"Syntax problem: user_data_len != cc_count*3+3."); */
 
 						// Enough room for CC captions?
 						if (cc_tmpdata+local_cc_count*3 >= userend)
-							fatal(EXIT_BUG_BUG,
+							fatal(CCX_COMMON_EXIT_BUG_BUG,
 								"Syntax problem: Too many caption blocks.");
 						if (cc_tmpdata[local_cc_count*3]!=0xFF)
-							fatal(EXIT_BUG_BUG,
+							fatal(CCX_COMMON_EXIT_BUG_BUG,
 								"Syntax problem: Final 0xFF marker missing.");
 
 						// Save the data and process once we know the sequence number
@@ -522,15 +522,15 @@ void user_data_registered_itu_t_t35 (unsigned char *userbuf, unsigned char *user
 			cc_tmpdata = tbuf+2;
 
 			if (local_cc_count*3+3 != user_data_len)
-				fatal(EXIT_BUG_BUG,
+				fatal(CCX_COMMON_EXIT_BUG_BUG,
 					  "Syntax problem: user_data_len != cc_count*3+3.");
 
 			// Enough room for CC captions?
 			if (cc_tmpdata+local_cc_count*3 >= userend)
-				fatal(EXIT_BUG_BUG,
+				fatal(CCX_COMMON_EXIT_BUG_BUG,
 					  "Syntax problem: Too many caption blocks.");
 			if (cc_tmpdata[local_cc_count*3]!=0xFF)
-				fatal(EXIT_BUG_BUG,
+				fatal(CCX_COMMON_EXIT_BUG_BUG,
 					  "Syntax problem: Final 0xFF marker missing.");
 
 			// Save the data and process once we know the sequence number
@@ -890,7 +890,7 @@ void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_ty
     }
 	if( pic_order_cnt_type == 1 )
 	{
-		fatal(EXIT_BUG_BUG, "AVC: pic_order_cnt_type == 1 not yet supported.");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "AVC: pic_order_cnt_type == 1 not yet supported.");
 	}
 	#if 0
     else
@@ -925,7 +925,7 @@ void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_ty
 
 		//pic_order_cnt_lsb=tempPicOrderCnt; 
 		//pic_order_cnt_lsb=u(&q1,tempPicOrderCnt);
-        //fatal(EXIT_BUG_BUG, "AVC: pic_order_cnt_type != 0 not yet supported.");
+        //fatal(CCX_COMMON_EXIT_BUG_BUG, "AVC: pic_order_cnt_type != 0 not yet supported.");
         //TODO
         // Calculate picture order count (POC) according to 8.2.1
     }

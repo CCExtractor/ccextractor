@@ -28,7 +28,7 @@ uint32_t asf_readval(void *val, int ltype)
         rval = *((uint32_t*)val);
         break;
     default:
-        fatal (EXIT_BUG_BUG, "Wrong type ...\n");        
+        fatal (CCX_COMMON_EXIT_BUG_BUG, "Wrong type ...\n");        
         break;
     }
     return rval;
@@ -273,7 +273,7 @@ LLONG asf_getmoredata(void)
 								StreamNumber, StreamNameCount, PayloadExtensionSystemCount);
 
                             if ( StreamNumber >= STREAMNUM )
-                                fatal(EXIT_BUG_BUG, "STREAMNUM too small. Send bug report!/n");
+                                fatal(CCX_COMMON_EXIT_BUG_BUG, "STREAMNUM too small. Send bug report!/n");
 
                             for(int i=0; i<StreamNameCount; i++)
                             {
@@ -285,7 +285,7 @@ LLONG asf_getmoredata(void)
                             int extensionsysteminfolength;
 
                             if ( PayloadExtensionSystemCount > PAYEXTNUM )
-                                fatal(EXIT_BUG_BUG, "PAYEXTNUM too small. Send bug report!/n");
+                                fatal(CCX_COMMON_EXIT_BUG_BUG, "PAYEXTNUM too small. Send bug report!/n");
 
                             for(int i=0; i<PayloadExtensionSystemCount; i++)
                             {
@@ -455,7 +455,7 @@ LLONG asf_getmoredata(void)
                         dbg_print(CCX_DMT_PARSE, "%u (WORD)\n",(int)*((uint16_t*)edescval));
                         break;
                     default:
-                        fatal(EXIT_BUG_BUG, "Wrong type ...\n");
+                        fatal(CCX_COMMON_EXIT_BUG_BUG, "Wrong type ...\n");
                         break;
                     }
                     
@@ -918,9 +918,9 @@ LLONG asf_getmoredata(void)
                             // a jump this needs synchronizing, otherwise it was
                             // just a gap in the captions.
 							if (!asf_data_container.StreamProperties.VideoJump)
-                                CaptionGap = 1;
+								ccx_common_timing_settings.disable_sync_check = 1;
                             else
-                                CaptionGap = 0;
+								ccx_common_timing_settings.disable_sync_check = 0;
                         }
 						asf_data_container.StreamProperties.VideoJump = 0;
                     }
@@ -973,7 +973,7 @@ LLONG asf_getmoredata(void)
 				int want = (long)((BUFSIZE - inbuf)>asf_data_container.PayloadLength ?
 					asf_data_container.PayloadLength : (BUFSIZE - inbuf));
 				if (want < (long)asf_data_container.PayloadLength)
-                    fatal(EXIT_BUG_BUG, "Buffer size to small for ASF payload!\nPlease file a bug report!\n");
+                    fatal(CCX_COMMON_EXIT_BUG_BUG, "Buffer size to small for ASF payload!\nPlease file a bug report!\n");
                 buffered_read (buffer+inbuf,want);
                 payload_read+=(int) result;
                 inbuf+=result;

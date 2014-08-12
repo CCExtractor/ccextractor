@@ -1,5 +1,6 @@
+#include "ccx_decoders_708.h"
 #include "ccextractor.h"
-#include <sys/stat.h>
+
 
 /* Portions by Daniel Kristjansson, extracted from MythTV's source */
 
@@ -114,7 +115,7 @@ void cc708_service_reset(cc708_service_decoder *decoder)
 
 void cc708_reset()
 {
-    dbg_print(CCX_DMT_708, ">>> Entry in cc708_reset()\n");
+    ccx_common_logging.debug_ftn(CCX_DMT_708, ">>> Entry in cc708_reset()\n");
     // Clear states of decoders
     cc708_service_reset(&decoders[0]);
     cc708_service_reset(&decoders[1]);
@@ -175,7 +176,7 @@ void printTVtoSRT (cc708_service_decoder *decoder, int which)
 		decoder->fh=open (decoder->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 		if (decoder->fh==-1)
 		{
-			fatal (EXIT_FILE_CREATION_FAILED, "Failed\n");
+			ccx_common_logging.fatal_ftn (EXIT_FILE_CREATION_FAILED, "Failed\n");
 		}
 	}
     mstotime (ms_start,&h1,&m1,&s1,&ms1);
@@ -216,7 +217,7 @@ void printTVtoConsole (cc708_service_decoder *decoder, int which)
 	char tbuf1[15],tbuf2[15];
 	print_mstime2buf (decoder->current_visible_start_ms,tbuf1);
 	print_mstime2buf (get_visible_end(),tbuf2);
-	dbg_print(CCX_DMT_GENERIC_NOTICES, "\r%s --> %s\n", tbuf1,tbuf2);
+	ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "\r%s --> %s\n", tbuf1,tbuf2);
 	for (int i=0;i<75;i++)
 	{
 		int empty=1;
@@ -233,8 +234,8 @@ void printTVtoConsole (cc708_service_decoder *decoder, int which)
 				if (decoder->tv->chars[i][l]!=' ')
 					break;
 			for (int j=f;j<=l;j++)
-				dbg_print(CCX_DMT_GENERIC_NOTICES, "%c", decoder->tv->chars[i][j]);
-			dbg_print(CCX_DMT_GENERIC_NOTICES, "\n");
+				ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "%c", decoder->tv->chars[i][j]);
+			ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "\n");
 		}
 	}
 }
@@ -271,12 +272,12 @@ void updateScreen (cc708_service_decoder *decoder)
             wnd[visible++]=&decoder->windows[i];
     }
     qsort (wnd,visible,sizeof (e708Window *),compWindowsPriorities);
-    dbg_print(CCX_DMT_708, "Visible (and populated) windows in priority order: ");
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "Visible (and populated) windows in priority order: ");
     for (int i=0;i<visible;i++)
     {
-        dbg_print(CCX_DMT_708, "%d (%d) | ",wnd[i]->number, wnd[i]->priority);
+        ccx_common_logging.debug_ftn(CCX_DMT_708, "%d (%d) | ",wnd[i]->number, wnd[i]->priority);
     }
-    dbg_print(CCX_DMT_708, "\n");    
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "\n");    
     for (int i=0;i<visible;i++)
     {
         int top,left;
@@ -323,7 +324,7 @@ void updateScreen (cc708_service_decoder *decoder)
             default: // Shouldn't happen, but skip the window just in case
                 continue;
         }
-        dbg_print(CCX_DMT_708, "For window %d: Anchor point -> %d, size %d:%d, real position %d:%d\n",
+        ccx_common_logging.debug_ftn(CCX_DMT_708, "For window %d: Anchor point -> %d, size %d:%d, real position %d:%d\n",
             wnd[i]->number, wnd[i]->anchor_point, wnd[i]->row_count,wnd[i]->col_count,
             top,left);
         if (top<0)
@@ -334,7 +335,7 @@ void updateScreen (cc708_service_decoder *decoder)
             I708_SCREENGRID_ROWS - top : wnd[i]->row_count;
         int copycols=left + wnd[i]->col_count >= I708_SCREENGRID_COLUMNS ?
             I708_SCREENGRID_COLUMNS - left : wnd[i]->col_count;
-        dbg_print(CCX_DMT_708, "%d*%d will be copied to the TV.\n", copyrows, copycols);
+        ccx_common_logging.debug_ftn(CCX_DMT_708, "%d*%d will be copied to the TV.\n", copyrows, copycols);
         for (int j=0;j<copyrows;j++)
         {
             memcpy (decoder->tv->chars[top+j],wnd[i]->rows[j],copycols);
@@ -362,7 +363,7 @@ int handle_708_C2 (cc708_service_decoder *decoder, unsigned char *data, int data
 int handle_708_C3 (cc708_service_decoder *decoder, unsigned char *data, int data_length)
 {
 	if (data[0]<0x80 || data[0]>0x9F)
-		fatal (EXIT_BUG_BUG, "Entry in handle_708_C3 with an out of range value.");
+		ccx_common_logging.fatal_ftn (CCX_COMMON_EXIT_BUG_BUG, "Entry in handle_708_C3 with an out of range value.");
 	if (data[0]<=0x87) // 80-87...
 		return 5; // ... Five-byte control bytes (4 additional bytes)
 	else if (data[0]<=0x8F) // 88-8F ...
@@ -372,7 +373,7 @@ int handle_708_C3 (cc708_service_decoder *decoder, unsigned char *data, int data
 	// These are variable length commands, that can even span several segments 
 	// (they allow even downloading fonts or graphics). 
 	// TODO: Implemen if a sample ever appears
-	fatal (EXIT_UNSUPPORTED, "This sample contains unsupported 708 data. PLEASE help us improve CCExtractor by submitting it.\n");
+	ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_UNSUPPORTED, "This sample contains unsupported 708 data. PLEASE help us improve CCExtractor by submitting it.\n");
 	return 0; // Unreachable, but otherwise there's compilers warnings
 }
 
@@ -385,7 +386,7 @@ int handle_708_C3 (cc708_service_decoder *decoder, unsigned char *data, int data
 int handle_708_extended_char (cc708_service_decoder *decoder, unsigned char *data, int data_length)
 {	
 	int used;	
-	dbg_print(CCX_DMT_708, "In handle_708_extended_char, first data code: [%c], length: [%u]\n",data[0], data_length);
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "In handle_708_extended_char, first data code: [%c], length: [%u]\n",data[0], data_length);
 	unsigned char c=0x20; // Default to space
 	unsigned char code=data[0];
     if (/* data[i]>=0x00 && */ code<=0x1F) // Comment to silence warning
@@ -447,7 +448,7 @@ int handle_708_C0 (cc708_service_decoder *decoder, unsigned char *data, int data
     const char *name=COMMANDS_C0[data[0]];
     if (name==NULL)
         name="Reserved";
-    dbg_print(CCX_DMT_708, "C0: [%02X]  (%d)   [%s]\n",data[0],data_length, name);
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "C0: [%02X]  (%d)   [%s]\n",data[0],data_length, name);
     int len=-1;
     // These commands have a known length even if they are reserved. 
     if (/* data[0]>=0x00 && */ data[0]<=0xF) // Comment to silence warning
@@ -483,12 +484,12 @@ int handle_708_C0 (cc708_service_decoder *decoder, unsigned char *data, int data
 	}
     if (len==-1)
     {
-        dbg_print(CCX_DMT_708, "In handle_708_C0. Len == -1, this is not possible!");
+        ccx_common_logging.debug_ftn(CCX_DMT_708, "In handle_708_C0. Len == -1, this is not possible!");
         return -1;
     }
     if (len>data_length)
     {
-        dbg_print(CCX_DMT_708, "handle_708_C0, command is %d bytes long but we only have %d\n",len, data_length);
+        ccx_common_logging.debug_ftn(CCX_DMT_708, "handle_708_C0, command is %d bytes long but we only have %d\n",len, data_length);
         return -1;
     }    
     // TODO: Do something useful eventually
@@ -498,7 +499,7 @@ int handle_708_C0 (cc708_service_decoder *decoder, unsigned char *data, int data
 
 void process_character (cc708_service_decoder *decoder, unsigned char internal_char)
 {    
-    dbg_print(CCX_DMT_708, ">>> Process_character: %c [%02X]  - Window: %d %s, Pen: %d:%d\n", internal_char, internal_char,
+    ccx_common_logging.debug_ftn(CCX_DMT_708, ">>> Process_character: %c [%02X]  - Window: %d %s, Pen: %d:%d\n", internal_char, internal_char,
         decoder->current_window,
 		(decoder->windows[decoder->current_window].is_defined?"[OK]":"[undefined]"),
         decoder->current_window!=-1 ? decoder->windows[decoder->current_window].pen_row:-1,
@@ -544,7 +545,7 @@ void process_character (cc708_service_decoder *decoder, unsigned char internal_c
 int handle_708_G0 (cc708_service_decoder *decoder, unsigned char *data, int data_length)
 {
 	// TODO: Substitution of the music note character for the ASCII DEL character
-    dbg_print(CCX_DMT_708, "G0: [%02X]  (%c)\n",data[0],data[0]);
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "G0: [%02X]  (%c)\n",data[0],data[0]);
     unsigned char c=get_internal_from_G0 (data[0]);
     process_character (decoder, c);
     return 1;
@@ -553,7 +554,7 @@ int handle_708_G0 (cc708_service_decoder *decoder, unsigned char *data, int data
 // G1 Code Set - ISO 8859-1 LATIN-1 Character Set
 int handle_708_G1 (cc708_service_decoder *decoder, unsigned char *data, int data_length)
 {
-    dbg_print(CCX_DMT_708, "G1: [%02X]  (%c)\n",data[0],data[0]);
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "G1: [%02X]  (%c)\n",data[0],data[0]);
     unsigned char c=get_internal_from_G1 (data[0]);
     process_character (decoder, c);
     return 1;
@@ -564,7 +565,7 @@ int handle_708_G1 (cc708_service_decoder *decoder, unsigned char *data, int data
   ------------------------------------------------------- */                  
 void handle_708_CWx_SetCurrentWindow (cc708_service_decoder *decoder, int new_window)
 {
-    dbg_print(CCX_DMT_708, "    Entry in handle_708_CWx_SetCurrentWindow, new window: [%d]\n",new_window);
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "    Entry in handle_708_CWx_SetCurrentWindow, new window: [%d]\n",new_window);
     if (decoder->windows[new_window].is_defined)
         decoder->current_window=new_window;
 }
@@ -577,29 +578,29 @@ void clearWindow (cc708_service_decoder *decoder, int window)
 
 void handle_708_CLW_ClearWindows (cc708_service_decoder *decoder, int windows_bitmap)
 {
-    dbg_print(CCX_DMT_708, "    Entry in handle_708_CLW_ClearWindows, windows: ");
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "    Entry in handle_708_CLW_ClearWindows, windows: ");
     if (windows_bitmap==0)
-        dbg_print(CCX_DMT_708, "None\n");
+        ccx_common_logging.debug_ftn(CCX_DMT_708, "None\n");
     else
     {
         for (int i=0; i<8; i++)
         {
             if (windows_bitmap & 1)
             {
-                dbg_print(CCX_DMT_708, "[Window %d] ",i );
+                ccx_common_logging.debug_ftn(CCX_DMT_708, "[Window %d] ",i );
                 clearWindow (decoder, i);                
             }
             windows_bitmap>>=1;
         }
     }
-    dbg_print(CCX_DMT_708, "\n");    
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "\n");    
 }
 
 void handle_708_DSW_DisplayWindows (cc708_service_decoder *decoder, int windows_bitmap)
 {
-    dbg_print(CCX_DMT_708, "    Entry in handle_708_DSW_DisplayWindows, windows: ");    
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "    Entry in handle_708_DSW_DisplayWindows, windows: ");    
     if (windows_bitmap==0)
-        dbg_print(CCX_DMT_708, "None\n");
+        ccx_common_logging.debug_ftn(CCX_DMT_708, "None\n");
     else
     {
         int changes=0;
@@ -607,7 +608,7 @@ void handle_708_DSW_DisplayWindows (cc708_service_decoder *decoder, int windows_
         {
             if (windows_bitmap & 1)
             {
-                dbg_print(CCX_DMT_708, "[Window %d] ",i );
+                ccx_common_logging.debug_ftn(CCX_DMT_708, "[Window %d] ",i );
                 if (!decoder->windows[i].visible)
                 {
                     changes=1;
@@ -616,7 +617,7 @@ void handle_708_DSW_DisplayWindows (cc708_service_decoder *decoder, int windows_
             }
             windows_bitmap>>=1;
         }
-        dbg_print(CCX_DMT_708, "\n");    
+        ccx_common_logging.debug_ftn(CCX_DMT_708, "\n");    
         if (changes)
             updateScreen (decoder);
     }    
@@ -624,9 +625,9 @@ void handle_708_DSW_DisplayWindows (cc708_service_decoder *decoder, int windows_
 
 void handle_708_HDW_HideWindows (cc708_service_decoder *decoder, int windows_bitmap)
 {
-    dbg_print(CCX_DMT_708, "    Entry in handle_708_HDW_HideWindows, windows: ");
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "    Entry in handle_708_HDW_HideWindows, windows: ");
     if (windows_bitmap==0)
-        dbg_print(CCX_DMT_708, "None\n");
+        ccx_common_logging.debug_ftn(CCX_DMT_708, "None\n");
     else
     {
         int changes=0;
@@ -634,7 +635,7 @@ void handle_708_HDW_HideWindows (cc708_service_decoder *decoder, int windows_bit
         {
             if (windows_bitmap & 1)
             {
-                dbg_print(CCX_DMT_708, "[Window %d] ",i );
+                ccx_common_logging.debug_ftn(CCX_DMT_708, "[Window %d] ",i );
 				if (decoder->windows[i].is_defined && decoder->windows[i].visible && !decoder->windows[i].is_empty)
                 {
                     changes=1;
@@ -644,7 +645,7 @@ void handle_708_HDW_HideWindows (cc708_service_decoder *decoder, int windows_bit
             }
             windows_bitmap>>=1;
         }
-		dbg_print(CCX_DMT_708, "\n");
+		ccx_common_logging.debug_ftn(CCX_DMT_708, "\n");
         if (changes)
             updateScreen (decoder);
     }        
@@ -652,23 +653,23 @@ void handle_708_HDW_HideWindows (cc708_service_decoder *decoder, int windows_bit
 
 void handle_708_TGW_ToggleWindows (cc708_service_decoder *decoder, int windows_bitmap)
 {
-    dbg_print(CCX_DMT_708, "    Entry in handle_708_TGW_ToggleWindows, windows: ");
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "    Entry in handle_708_TGW_ToggleWindows, windows: ");
     if (windows_bitmap==0)
-        dbg_print(CCX_DMT_708, "None\n");
+        ccx_common_logging.debug_ftn(CCX_DMT_708, "None\n");
     else
     {
         for (int i=0; i<8; i++)
         {
             if (windows_bitmap & 1)
             {
-                dbg_print(CCX_DMT_708, "[Window %d] ",i );
+                ccx_common_logging.debug_ftn(CCX_DMT_708, "[Window %d] ",i );
                 decoder->windows[i].visible=!decoder->windows[i].visible;                
             }
             windows_bitmap>>=1;
         }
         updateScreen(decoder);
     }
-    dbg_print(CCX_DMT_708, "\n");    
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "\n");    
 }
 
 void clearWindowText (e708Window *window)
@@ -685,14 +686,14 @@ void clearWindowText (e708Window *window)
 
 void handle_708_DFx_DefineWindow (cc708_service_decoder *decoder, int window, unsigned char *data)
 {
-    dbg_print(CCX_DMT_708, "    Entry in handle_708_DFx_DefineWindow, window [%d], attributes: \n", window);
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "    Entry in handle_708_DFx_DefineWindow, window [%d], attributes: \n", window);
     if (decoder->windows[window].is_defined &&
         memcmp (decoder->windows[window].commands, data+1, 6)==0)
     {
         // When a decoder receives a DefineWindow command for an existing window, the
         // command is to be ignored if the command parameters are unchanged from the
         // previous window definition.
-        dbg_print(CCX_DMT_708, "       Repeated window definition, ignored.\n");
+        ccx_common_logging.debug_ftn(CCX_DMT_708, "       Repeated window definition, ignored.\n");
         return;
     }
     decoder->windows[window].number=window;
@@ -708,13 +709,13 @@ void handle_708_DFx_DefineWindow (cc708_service_decoder *decoder, int window, un
     int col_count = data[5] & 0x3f;    
     int pen_style = data[6] & 0x7;
     int win_style = (data[6]>>3) & 0x7;
-    dbg_print(CCX_DMT_708, "                   Priority: [%d]        Column lock: [%3s]      Row lock: [%3s]\n",
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "                   Priority: [%d]        Column lock: [%3s]      Row lock: [%3s]\n",
         priority, col_lock?"Yes": "No", row_lock?"Yes": "No");
-    dbg_print(CCX_DMT_708, "                    Visible: [%3s]  Anchor vertical: [%2d]   Relative pos: [%s]\n",
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "                    Visible: [%3s]  Anchor vertical: [%2d]   Relative pos: [%s]\n",
         visible?"Yes": "No", anchor_vertical, relative_pos?"Yes": "No");
-    dbg_print(CCX_DMT_708, "          Anchor horizontal: [%3d]        Row count: [%2d]+1  Anchor point: [%d]\n",
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "          Anchor horizontal: [%3d]        Row count: [%2d]+1  Anchor point: [%d]\n",
         anchor_horizontal, row_count, anchor_point);
-    dbg_print(CCX_DMT_708, "               Column count: [%2d]1      Pen style: [%d]      Win style: [%d]\n",
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "               Column count: [%2d]1      Pen style: [%d]      Win style: [%d]\n",
         col_count, pen_style, win_style);
     col_count++; // These increments seems to be needed but no documentation
     row_count++; // backs it up
@@ -770,7 +771,7 @@ void handle_708_DFx_DefineWindow (cc708_service_decoder *decoder, int window, un
 
 void handle_708_SWA_SetWindowAttributes (cc708_service_decoder *decoder, unsigned char *data)
 {
-    dbg_print(CCX_DMT_708, "    Entry in handle_708_SWA_SetWindowAttributes, attributes: \n");
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "    Entry in handle_708_SWA_SetWindowAttributes, attributes: \n");
     int fill_color    = (data[1]   ) & 0x3f;
     int fill_opacity  = (data[1]>>6) & 0x03;
     int border_color  = (data[2]   ) & 0x3f;
@@ -783,11 +784,11 @@ void handle_708_SWA_SetWindowAttributes (cc708_service_decoder *decoder, unsigne
     int display_eff   = (data[4]   ) & 0x03;
     int effect_dir    = (data[4]>>2) & 0x03;
     int effect_speed  = (data[4]>>4) & 0x0f;
-    dbg_print(CCX_DMT_708, "       Fill color: [%d]     Fill opacity: [%d]    Border color: [%d]  Border type: [%d]\n",
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "       Fill color: [%d]     Fill opacity: [%d]    Border color: [%d]  Border type: [%d]\n",
         fill_color, fill_opacity, border_color, border_type01);
-    dbg_print(CCX_DMT_708, "          Justify: [%d]       Scroll dir: [%d]       Print dir: [%d]    Word wrap: [%d]\n",
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "          Justify: [%d]       Scroll dir: [%d]       Print dir: [%d]    Word wrap: [%d]\n",
         justify, scroll_dir, print_dir, word_wrap);
-    dbg_print(CCX_DMT_708, "      Border type: [%d]      Display eff: [%d]      Effect dir: [%d] Effect speed: [%d]\n",
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "      Border type: [%d]      Display eff: [%d]      Effect dir: [%d] Effect speed: [%d]\n",
         border_type, display_eff, effect_dir, effect_speed);
     if (decoder->current_window==-1)
     {
@@ -830,16 +831,16 @@ void deleteWindow (cc708_service_decoder *decoder, int window)
 void handle_708_DLW_DeleteWindows (cc708_service_decoder *decoder, int windows_bitmap)
 {
 	int changes=0;
-    dbg_print(CCX_DMT_708, "    Entry in handle_708_DLW_DeleteWindows, windows: ");
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "    Entry in handle_708_DLW_DeleteWindows, windows: ");
     if (windows_bitmap==0)
-        dbg_print(CCX_DMT_708, "None\n");
+        ccx_common_logging.debug_ftn(CCX_DMT_708, "None\n");
     else
     {
 		for (int i=0; i<8; i++)
         {
             if (windows_bitmap & 1)
             {
-                dbg_print(CCX_DMT_708, "[Window %d] ",i );                
+                ccx_common_logging.debug_ftn(CCX_DMT_708, "[Window %d] ",i );                
 				if (decoder->windows[i].is_defined && decoder->windows[i].visible && !decoder->windows[i].is_empty)
 					changes=1;
                 deleteWindow (decoder, i);
@@ -847,7 +848,7 @@ void handle_708_DLW_DeleteWindows (cc708_service_decoder *decoder, int windows_b
             windows_bitmap>>=1;
         }
     }
-    dbg_print(CCX_DMT_708, "\n");    
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "\n");    
     if (changes)
 		updateScreen (decoder);
 
@@ -858,7 +859,7 @@ void handle_708_DLW_DeleteWindows (cc708_service_decoder *decoder, int windows_b
   ------------------------------------------------------- */                  
 void handle_708_SPA_SetPenAttributes (cc708_service_decoder *decoder, unsigned char *data)
 {
-    dbg_print(CCX_DMT_708, "    Entry in handle_708_SPA_SetPenAttributes, attributes: \n");
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "    Entry in handle_708_SPA_SetPenAttributes, attributes: \n");
     int pen_size  = (data[1]   ) & 0x3;
     int offset    = (data[1]>>2) & 0x3;
     int text_tag  = (data[1]>>4) & 0xf;
@@ -866,9 +867,9 @@ void handle_708_SPA_SetPenAttributes (cc708_service_decoder *decoder, unsigned c
     int edge_type = (data[2]>>3) & 0x7;
     int underline = (data[2]>>4) & 0x1;
     int italic    = (data[2]>>5) & 0x1;
-    dbg_print(CCX_DMT_708, "       Pen size: [%d]     Offset: [%d]  Text tag: [%d]   Font tag: [%d]\n",
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "       Pen size: [%d]     Offset: [%d]  Text tag: [%d]   Font tag: [%d]\n",
         pen_size, offset, text_tag, font_tag);
-    dbg_print(CCX_DMT_708, "      Edge type: [%d]  Underline: [%d]    Italic: [%d]\n",
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "      Edge type: [%d]  Underline: [%d]    Italic: [%d]\n",
         edge_type, underline, italic);    
     if (decoder->current_window==-1)
     {
@@ -886,17 +887,17 @@ void handle_708_SPA_SetPenAttributes (cc708_service_decoder *decoder, unsigned c
 
 void handle_708_SPC_SetPenColor (cc708_service_decoder *decoder, unsigned char *data)
 {
-    dbg_print(CCX_DMT_708, "    Entry in handle_708_SPC_SetPenColor, attributes: \n");
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "    Entry in handle_708_SPC_SetPenColor, attributes: \n");
     int fg_color   = (data[1]   ) & 0x3f;
     int fg_opacity = (data[1]>>6) & 0x03;
     int bg_color   = (data[2]   ) & 0x3f;
     int bg_opacity = (data[2]>>6) & 0x03;
     int edge_color = (data[3]>>6) & 0x3f;
-    dbg_print(CCX_DMT_708, "      Foreground color: [%d]     Foreground opacity: [%d]\n",
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "      Foreground color: [%d]     Foreground opacity: [%d]\n",
         fg_color, fg_opacity);
-    dbg_print(CCX_DMT_708, "      Background color: [%d]     Background opacity: [%d]\n",
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "      Background color: [%d]     Background opacity: [%d]\n",
         bg_color, bg_opacity);
-    dbg_print(CCX_DMT_708, "            Edge color: [%d]\n",
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "            Edge color: [%d]\n",
         edge_color);
     if (decoder->current_window==-1)
     {
@@ -914,10 +915,10 @@ void handle_708_SPC_SetPenColor (cc708_service_decoder *decoder, unsigned char *
 
 void handle_708_SPL_SetPenLocation (cc708_service_decoder *decoder, unsigned char *data)
 {
-    dbg_print(CCX_DMT_708, "    Entry in handle_708_SPL_SetPenLocation, attributes: \n");
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "    Entry in handle_708_SPL_SetPenLocation, attributes: \n");
     int row = data[1] & 0x0f;
     int col = data[2] & 0x3f;
-    dbg_print(CCX_DMT_708, "      row: [%d]     Column: [%d]\n",
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "      row: [%d]     Column: [%d]\n",
         row, col);
     if (decoder->current_window==-1)
     {
@@ -934,14 +935,14 @@ void handle_708_SPL_SetPenLocation (cc708_service_decoder *decoder, unsigned cha
   ------------------------------------------------------- */                  
 void handle_708_DLY_Delay (cc708_service_decoder *decoder, int tenths_of_sec)
 {
-    dbg_print(CCX_DMT_708, "    Entry in handle_708_DLY_Delay, delay for [%d] tenths of second.", tenths_of_sec);
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "    Entry in handle_708_DLY_Delay, delay for [%d] tenths of second.", tenths_of_sec);
     // TODO: Probably ask for the current FTS and wait for this time before resuming -
     // not sure it's worth it though
 }
 
 void handle_708_DLC_DelayCancel (cc708_service_decoder *decoder)
 {
-    dbg_print(CCX_DMT_708, "    Entry in handle_708_DLC_DelayCancel.");
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "    Entry in handle_708_DLC_DelayCancel.");
     // TODO: See above
 }
 
@@ -949,12 +950,12 @@ void handle_708_DLC_DelayCancel (cc708_service_decoder *decoder)
 int handle_708_C1 (cc708_service_decoder *decoder, unsigned char *data, int data_length)
 {
     struct S_COMMANDS_C1 com=COMMANDS_C1[data[0]-0x80];
-    dbg_print(CCX_DMT_708, "%s | C1: [%02X]  [%s] [%s] (%d)\n",
+    ccx_common_logging.debug_ftn(CCX_DMT_708, "%s | C1: [%02X]  [%s] [%s] (%d)\n",
         print_mstime(get_fts()),
         data[0],com.name,com.description, com.length);    
     if (com.length>data_length)
     {
-        dbg_print(CCX_DMT_708, "C1: Warning: Not enough bytes for command.\n");
+        ccx_common_logging.debug_ftn(CCX_DMT_708, "C1: Warning: Not enough bytes for command.\n");
         return -1;
     }
     switch (com.code)
@@ -1006,7 +1007,7 @@ int handle_708_C1 (cc708_service_decoder *decoder, unsigned char *data, int data
         case RSV94:
         case RSV95:
         case RSV96:
-            dbg_print(CCX_DMT_708, "Warning, found Reserved codes, ignored.\n");
+            ccx_common_logging.debug_ftn(CCX_DMT_708, "Warning, found Reserved codes, ignored.\n");
             break;
         case SWA:
             handle_708_SWA_SetWindowAttributes (decoder, data);
@@ -1058,7 +1059,7 @@ void process_service_block (cc708_service_decoder *decoder, unsigned char *data,
 				used=handle_708_G1 (decoder,data+i,data_length-i);
 			if (used==-1)
 			{
-				dbg_print(CCX_DMT_708, "There was a problem handling the data. Reseting service decoder\n");
+				ccx_common_logging.debug_ftn(CCX_DMT_708, "There was a problem handling the data. Reseting service decoder\n");
 				// TODO: Not sure if a local reset is going to be helpful here.
 				cc708_service_reset (decoder);
 				return;   
@@ -1093,7 +1094,7 @@ void process_current_packet (void)
 #endif
     if (current_packet_length!=len) // Is this possible?
     {
-        dbg_print(CCX_DMT_708, "Packet length mismatch (%s%d), first two data bytes %02X %02X, current picture:%s\n", 
+        ccx_common_logging.debug_ftn(CCX_DMT_708, "Packet length mismatch (%s%d), first two data bytes %02X %02X, current picture:%s\n", 
         current_packet_length-len>0?"+":"", current_packet_length-len, 
         current_packet[0], current_packet[1], pict_types[current_picture_coding_type]);
         cc708_reset();
@@ -1101,7 +1102,7 @@ void process_current_packet (void)
     }
     if (last_seq!=-1 && (last_seq+1)%4!=seq)
     {
-        dbg_print(CCX_DMT_708, "Unexpected sequence number, it was [%d] but should have been [%d]\n",
+        ccx_common_logging.debug_ftn(CCX_DMT_708, "Unexpected sequence number, it was [%d] but should have been [%d]\n",
             seq,(last_seq+1)%4);
         cc708_reset();
         return;
@@ -1115,7 +1116,7 @@ void process_current_packet (void)
         int service_number=(pos[0] & 0xE0)>>5; // 3 more significant bits
         int block_length = (pos[0] & 0x1F); // 5 less significant bits
 
-		dbg_print (CCX_DMT_708, "Standard header: Service number: [%d] Block length: [%d]\n",service_number,
+		ccx_common_logging.debug_ftn (CCX_DMT_708, "Standard header: Service number: [%d] Block length: [%d]\n",service_number,
             block_length); 
 
         if (service_number==7) // There is an extended header
@@ -1125,7 +1126,7 @@ void process_current_packet (void)
             // printf ("Extended header: Service number: [%d]\n",service_number);
             if (service_number<7) 
             {
-                dbg_print(CCX_DMT_708, "Illegal service number in extended header: [%d]\n",service_number);
+                ccx_common_logging.debug_ftn(CCX_DMT_708, "Illegal service number in extended header: [%d]\n",service_number);
             }
         }            
         /*
@@ -1141,7 +1142,7 @@ void process_current_packet (void)
         pos++; // Move to service data
 		if (service_number==0 && block_length!=0) // Illegal, but specs say what to do...
 		{
-			dbg_print(CCX_DMT_708, "Data received for service 0, skipping rest of packet.");
+			ccx_common_logging.debug_ftn(CCX_DMT_708, "Data received for service 0, skipping rest of packet.");
 			pos = current_packet+len; // Move to end
 			break;
 		}
@@ -1159,13 +1160,13 @@ void process_current_packet (void)
 
     if (pos!=current_packet+len) // For some reason we didn't parse the whole packet
     {
-        dbg_print(CCX_DMT_708, "There was a problem with this packet, reseting\n");
+        ccx_common_logging.debug_ftn(CCX_DMT_708, "There was a problem with this packet, reseting\n");
         cc708_reset();
     }
 
     if (len<128 && *pos) // Null header is mandatory if there is room
     {
-        dbg_print(CCX_DMT_708, "Warning: Null header expected but not found.\n");
+        ccx_common_logging.debug_ftn(CCX_DMT_708, "Warning: Null header expected but not found.\n");
     }    
 }
 
@@ -1186,14 +1187,14 @@ void do_708 (const unsigned char *data, int datalength)
         switch (cc_type)
         {
             case 2:				
-                dbg_print (CCX_DMT_708, "708: DTVCC Channel Packet Data\n");
+                ccx_common_logging.debug_ftn (CCX_DMT_708, "708: DTVCC Channel Packet Data\n");
                 if (cc_valid==0) // This ends the previous packet
                     process_current_packet();
                 else
                 {
                     if (current_packet_length>253) 
                     {
-                        dbg_print(CCX_DMT_708, "Warning: Legal packet size exceeded, data not added.\n");
+                        ccx_common_logging.debug_ftn(CCX_DMT_708, "Warning: Legal packet size exceeded, data not added.\n");
                     }
                     else
                     {
@@ -1203,13 +1204,13 @@ void do_708 (const unsigned char *data, int datalength)
                 }
                 break;
             case 3:                
-                dbg_print (CCX_DMT_708, "708: DTVCC Channel Packet Start\n");
+                ccx_common_logging.debug_ftn (CCX_DMT_708, "708: DTVCC Channel Packet Start\n");
                 process_current_packet();
                 if (cc_valid)
                 {
                     if (current_packet_length>127) 
                     {
-                        dbg_print(CCX_DMT_708, "Warning: Legal packet size exceeded, data not added.\n");
+                        ccx_common_logging.debug_ftn(CCX_DMT_708, "Warning: Legal packet size exceeded, data not added.\n");
                     }
                     else
                     {
@@ -1219,7 +1220,7 @@ void do_708 (const unsigned char *data, int datalength)
                 }
                 break;
             default:                
-                fatal (EXIT_BUG_BUG, "708: shouldn't be here - cc_type: %d\n", cc_type);
+                ccx_common_logging.fatal_ftn (CCX_COMMON_EXIT_BUG_BUG, "708: shouldn't be here - cc_type: %d\n", cc_type);
         }
     }
 }
