@@ -39,6 +39,15 @@ CFLAGS+=-I/usr/local/include/tesseract -I/usr/local/include/leptonica
 CFLAGS+=-DENABLE_OCR
 LDFLAGS+= $(shell pkg-config --libs tesseract)
 endif
+ifeq ($(ENABLE_FFMPEG),yes)
+CFLAGS+=-DENABLE_FFMPEG
+CFLAGS+= $(shell pkg-config --libs libavcodec)
+CFLAGS+= $(shell pkg-config --libs libavformat)
+CFLAGS+= $(shell pkg-config --libs libavutil)
+LDFLAGS+= $(shell pkg-config --libs libavcodec )
+LDFLAGS+= $(shell pkg-config --libs libavformat )
+LDFLAGS+= $(shell pkg-config --libs libavutil )
+endif
 
 .PHONY: all
 all: objs_dir $(TARGET) 
