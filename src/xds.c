@@ -142,6 +142,7 @@ int write_xds_string(struct cc_subtitle *sub,char *p,size_t len)
 		data->xds_len = len;
 		data->cur_xds_packet_class = cur_xds_packet_class;
 		sub->nb_data++;
+		sub->type = CC_608;
 		sub->got_output = 1;
 	}
 
