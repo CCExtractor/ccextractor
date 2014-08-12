@@ -2,6 +2,7 @@
 #define _CC_ENCODER_COMMON_H
 
 #include "ccx_common_structs.h"
+#include "ccx_decoders_structs.h"
 #include "ccx_encoders_structs.h"
 
 #define REQUEST_BUFFER_CAPACITY(ctx,length) if (length>ctx->capacity) \
