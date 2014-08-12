@@ -8,6 +8,7 @@ License: GPL 2.0
 #include "cc_encoders_common.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "ffmpeg_intgr.h"
 
 void xds_cea608_test();
 
@@ -249,6 +250,7 @@ int main(int argc, char *argv[])
 	char *c;
 	struct encoder_ctx enc_ctx[2];
 	struct cc_subtitle dec_sub;
+	void *ffmpeg_ctx = NULL;
 
 	// Initialize some constants
 	init_ts();
@@ -611,6 +613,50 @@ int main(int argc, char *argv[])
 
 	while (switch_to_next_file(0) && !processed_enough)
 	{
+#ifdef ENABLE_FFMPEG
+		ffmpeg_ctx =  init_ffmpeg(inputfile[0]);
+		if(ffmpeg_ctx)
+		{
+			int i =0;
+			buffer = malloc(1024);
+			if(!buffer)
+			{
+				mprint("no memory left\n");
+				break;
+			}
+			do
+			{
+				int ret = 0;
+				char *bptr = buffer;
+				int len = ff_get_ccframe(ffmpeg_ctx, bptr, 1024);
+				if(len == AVERROR(EAGAIN))
+				{
+					continue;
+				}
+				else if(len == 0)
+					continue;
+				else if(len < 0 )
+				{
+					mprint("Some Error \n");
+					break;
+
+				}
+				store_hdcc(bptr,len, i,i++,&dec_sub);
+				if(dec_sub.got_output)
+				{
+					encode_sub(enc_ctx, &dec_sub);
+					dec_sub.got_output = 0;
+				}
+			}while(1);
+
+			free(buffer);
+			continue;
+		}
+		else
+		{
+			mprint ("\rFailed to initialized ffmpeg falling back to legacy\n");
+		}
+#endif
 		prepare_for_new_file();
 
 		if (auto_stream == CCX_SM_AUTODETECT)
