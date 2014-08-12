@@ -14,10 +14,10 @@
     <ClInclude Include="..\src\ccx_common_common.h" />
     <ClInclude Include="..\src\ccx_decoders_608.h" />
     <ClInclude Include="..\src\608_spupng.h" />
-    <ClInclude Include="..\src\708.h" />
     <ClInclude Include="..\src\asf_constants.h" />
     <ClInclude Include="..\src\bitstream.h" />
     <ClInclude Include="..\src\ccextractor.h" />
+    <ClInclude Include="..\src\ccx_decoders_708.h" />
     <ClInclude Include="..\src\ccx_decoders_structs.h" />
     <ClInclude Include="..\src\ccx_encoders_structs.h" />
     <ClInclude Include="..\src\ccx_decoders_common.h" />
@@ -90,12 +90,12 @@
     <ClCompile Include="..\src\608_smptett.c" />
     <ClCompile Include="..\src\608_spupng.c" />
     <ClCompile Include="..\src\608_srt.c" />
-    <ClCompile Include="..\src\708.c" />
     <ClCompile Include="..\src\708_encoding.c" />
     <ClCompile Include="..\src\activity.c" />
     <ClCompile Include="..\src\asf_functions.c" />
     <ClCompile Include="..\src\avc_functions.c" />
     <ClCompile Include="..\src\ccextractor.c" />
+    <ClCompile Include="..\src\ccx_decoders_708.c" />
     <ClCompile Include="..\src\cc_bitstream.c" />
     <ClCompile Include="..\src\ccx_decoders_common.c" />
     <ClCompile Include="..\src\ccx_encoders_common.c" />
