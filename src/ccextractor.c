@@ -180,6 +180,7 @@ void init_options (struct ccx_s_options *options)
 	options->send_to_srv = 0;
 	options->tcpport = NULL;
 	options->tcp_password = NULL;
+	options->tcp_cc_name = NULL;
 	options->srv_addr = NULL;
 	options->srv_port = NULL;
 	options->line_terminator_lf=0; // 0 = CRLF
@@ -431,7 +432,7 @@ int main(int argc, char *argv[])
 
 	if (ccx_options.send_to_srv)
 	{
-		connect_to_srv(ccx_options.srv_addr, ccx_options.srv_port);
+		connect_to_srv(ccx_options.srv_addr, ccx_options.srv_port, ccx_options.tcp_cc_name);
 	}
 
 	if (ccx_options.write_format!=CCX_OF_NULL)
