@@ -1,6 +1,8 @@
 #ifndef CCX_CONSTANTS_H
 #define CCX_CONSTANTS_H
 
+#include "stdio.h"
+
 #ifndef __cplusplus
 #define false 0
 #define true 1

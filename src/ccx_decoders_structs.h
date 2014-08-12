@@ -2,6 +2,19 @@
 
 #include "ccx_common_platform.h"
 
+/* flag raised when end of display marker arrives in Dvb Subtitle */
+#define SUB_EOD_MARKER (1 << 0 )
+struct cc_bitmap
+{
+	int x;
+	int y;
+	int w;
+	int h;
+	int nb_colors;
+	unsigned char *data[2];
+	int linesize[2];
+};
+
 /**
 * Raw Subtitle struct used as output of decoder (cc608)
 * and input for encoder (sami, srt, transcript or smptett etc)
@@ -16,6 +29,15 @@ struct cc_subtitle
 	void *data;
 	/** number of data */
 	unsigned int nb_data;
+	/**  type of subtitle */
+	enum subtype type;
+	/* set only when all the data is to be displayed at same time */
+	LLONG start_time;
+	LLONG end_time;
+	/* flags */
+	int flags;
+	/* index of language table */
+	int lang_index;
 	/** flag to tell that decoder has given output */
 	int got_output;
 };

@@ -2,7 +2,7 @@
 #include "ccx_common_platform.h"
 #include "spupng_encoder.h"
 #include <assert.h>
-#include "cc_encoders_common.h"
+#include "ccx_encoders_common.h"
 #include "utility.h"
 #ifdef ENABLE_OCR
 #include "ocr.h"

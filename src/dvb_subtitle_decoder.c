@@ -24,7 +24,7 @@
 
 #include "dvb_subtitle_decoder.h"
 #include "utility.h"
-#include "cc_decoders_common.h"
+#include "ccx_decoders_common.h"
 
 #define DVBSUB_PAGE_SEGMENT     0x10
 #define DVBSUB_REGION_SEGMENT   0x11
