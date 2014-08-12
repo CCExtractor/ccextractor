@@ -15,4 +15,38 @@ struct ccx_common_logging_t {
 	void(*log_ftn)(const char *fmt, ...); // Used to print things. Replacement of standard printf, to allow more control.
 	void(*gui_ftn)(enum ccx_common_logging_gui message_type, ...); // Used to display things in a gui (if appropriate). Is called with the message_type and appropriate variables (described in enum)
 } ccx_common_logging;
+
+enum subtype
+{
+	CC_BITMAP,
+	CC_608,
+	CC_TEXT,
+};
+
+/**
+* Raw Subtitle struct used as output of decoder (cc608)
+* and input for encoder (sami, srt, transcript or smptett etc)
+*/
+struct cc_subtitle
+{
+	/**
+	* A generic data which contain data according to decoder
+	* just now only struct cc_eia608_screen is placed here
+	* @warn decoder cant output multiple types of data
+	*/
+	void *data;
+	/** number of data */
+	unsigned int nb_data;
+	/**  type of subtitle */
+	enum subtype type;
+	/* set only when all the data is to be displayed at same time */
+	LLONG start_time;
+	LLONG end_time;
+	/* flags */
+	int flags;
+	/* index of language table */
+	int lang_index;
+	/** flag to tell that decoder has given output */
+	int got_output;
+};
 #endif

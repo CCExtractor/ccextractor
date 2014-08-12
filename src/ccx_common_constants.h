@@ -265,11 +265,5 @@ enum cxx_code_type
 #define CCX_TXT_AUTO_NOT_YET_FOUND		1
 #define CCX_TXT_IN_USE					2 // Positive autodetected, or forced, etc
 
-enum subtype
-{
-	CC_BITMAP,
-	CC_608,
-	CC_TEXT,
-};
 extern const char *language[4];
 #endif

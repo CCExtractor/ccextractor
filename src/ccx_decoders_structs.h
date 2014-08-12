@@ -15,33 +15,6 @@ struct cc_bitmap
 	int linesize[2];
 };
 
-/**
-* Raw Subtitle struct used as output of decoder (cc608)
-* and input for encoder (sami, srt, transcript or smptett etc)
-*/
-struct cc_subtitle
-{
-	/**
-	* A generic data which contain data according to decoder
-	* just now only struct cc_eia608_screen is placed here
-	* @warn decoder cant output multiple types of data
-	*/
-	void *data;
-	/** number of data */
-	unsigned int nb_data;
-	/**  type of subtitle */
-	enum subtype type;
-	/* set only when all the data is to be displayed at same time */
-	LLONG start_time;
-	LLONG end_time;
-	/* flags */
-	int flags;
-	/* index of language table */
-	int lang_index;
-	/** flag to tell that decoder has given output */
-	int got_output;
-};
-
 enum ccx_eia608_format
 {
 	SFORMAT_CC_SCREEN,
