@@ -1,8 +1,8 @@
 #ifndef _XDS_H
 #define _XDS_H
 
-#include "ccx_encoders_common.h"
 #include "ccx_decoders_common.h"
+#include "ccx_encoders_common.h"
 
 void process_xds_bytes(const unsigned char hi, int lo);
 void do_end_of_xds(struct cc_subtitle *sub, unsigned char expected_checksum);
