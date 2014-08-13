@@ -2,6 +2,7 @@
 #define _FFMPEG_INTIGRATION
 
 #ifdef ENABLE_FFMPEG
+#include "libavutil/common.h"
 #include "libavutil/error.h"
 #endif
 /**

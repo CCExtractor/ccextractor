@@ -613,7 +613,9 @@ int main(int argc, char *argv[])
 
 	while (switch_to_next_file(0) && !processed_enough)
 	{
+		prepare_for_new_file();
 #ifdef ENABLE_FFMPEG
+		close_input_file();
 		ffmpeg_ctx =  init_ffmpeg(inputfile[0]);
 		if(ffmpeg_ctx)
 		{
@@ -628,20 +630,23 @@ int main(int argc, char *argv[])
 			{
 				int ret = 0;
 				char *bptr = buffer;
+				memset(bptr,0,1024);
 				int len = ff_get_ccframe(ffmpeg_ctx, bptr, 1024);
 				if(len == AVERROR(EAGAIN))
 				{
 					continue;
 				}
+				else if(len == AVERROR_EOF)
+					break;
 				else if(len == 0)
 					continue;
 				else if(len < 0 )
 				{
-					mprint("Some Error \n");
+					mprint("Error extracting Frame\n");
 					break;
 
 				}
-				store_hdcc(bptr,len, i,i++,&dec_sub);
+				store_hdcc(bptr,len, i++,fts_now,&dec_sub);
 				if(dec_sub.got_output)
 				{
 					encode_sub(enc_ctx, &dec_sub);
@@ -657,7 +662,6 @@ int main(int argc, char *argv[])
 			mprint ("\rFailed to initialized ffmpeg falling back to legacy\n");
 		}
 #endif
-		prepare_for_new_file();
 
 		if (auto_stream == CCX_SM_AUTODETECT)
 		{
