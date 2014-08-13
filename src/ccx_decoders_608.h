@@ -48,9 +48,7 @@ typedef struct ccx_decoder_608_context
 	int my_channel; // Used for sanity checks
 	long bytes_processed_608; // To be written ONLY by process_608
 	struct ccx_s_write *out;
-	int have_cursor_position;
-	LLONG subs_delay; // ms to delay (or advance) subs
-	enum ccx_output_format output_format; // What kind of output format should be used? 
+	int have_cursor_position;	
 	
 	int *halt; // Can be used to halt the feeding of caption data. Set to 1 if screens_to_progress != -1 && screenfuls_counter >= screens_to_process
 	int *cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
@@ -116,7 +114,7 @@ enum command_code
 /*
  * 
  */
-ccx_decoder_608_context ccx_decoder_608_init_library(ccx_decoder_608_settings settings, enum ccx_output_format output_format, int channel, int field, LLONG subs_delay, int *halt, int *cc_to_stdout);
+ccx_decoder_608_context ccx_decoder_608_init_library(ccx_decoder_608_settings settings, int channel, int field, int *halt, int *cc_to_stdout);
 
 /**
  * @param data raw cc608 data to be processed

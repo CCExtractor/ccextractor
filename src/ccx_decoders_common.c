@@ -11,6 +11,11 @@ unsigned int encoded_crlf_length;
 unsigned char encoded_br[16];
 unsigned int encoded_br_length;
 
+void ccx_decoders_common_settings_init(LLONG subs_delay, enum ccx_output_format output_format){
+	ccx_decoders_common_settings.subs_delay = subs_delay;
+	ccx_decoders_common_settings.output_format = output_format;
+}
+
 /* This function returns a FTS that is guaranteed to be at least 1 ms later than the end of the previous screen. It shouldn't be needed
    obviously but it guarantees there's no timing overlap */
 LLONG get_visible_start (void)

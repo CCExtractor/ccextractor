@@ -14,4 +14,6 @@ extern uint64_t utc_refvalue; // UTC referential value
 // Declarations
 LLONG get_visible_start(void);
 LLONG get_visible_end(void);
+
+void ccx_decoders_common_settings_init(LLONG subs_delay, enum ccx_output_format output_format);
 #endif

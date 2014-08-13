@@ -225,12 +225,12 @@ spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
     sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex++);
     if ((sp->fppng = fopen(sp->pngfile, "wb")) == NULL)
     {
-        fatal(EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n",
+		fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n",
                 sp->pngfile, strerror(errno));
     }
     if (!spupng_export_png(sp, data))
     {
-        fatal(EXIT_FILE_CREATION_FAILED, "Cannot write %s: %s\n",
+		fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot write %s: %s\n",
                 sp->pngfile, strerror(errno));
     }
     fclose(sp->fppng);

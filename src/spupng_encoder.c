@@ -45,7 +45,7 @@ struct spupng_t *spunpg_init(struct ccx_s_write *out)
 
 	if ((sp->fpxml = fdopen(out->fh, "w")) == NULL)
     {
-		fatal(EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n",
+		fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n",
 		        out->filename, strerror(errno));
     }
     sp->dirname = (char *) malloc(
@@ -63,7 +63,7 @@ struct spupng_t *spunpg_init(struct ccx_s_write *out)
     {
         if (errno != EEXIST)
         {
-            fatal(EXIT_FILE_CREATION_FAILED, "Cannot create %s: %s\n",
+			fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot create %s: %s\n",
                     sp->dirname, strerror(errno));
         }
         // If dirname isn't a directory or if we don't have write permission,

@@ -825,8 +825,8 @@ void parse_708services (char *s)
 			e++;
 		*e=0;
 		svc=atoi (c);
-		if (svc<1 || svc>63)
-			fatal (EXIT_MALFORMED_PARAMETER, "Invalid service number (%d), valid range is 1-63.");
+		if (svc<1 || svc>CCX_DECODERS_708_MAX_SERVICES)
+			fatal (EXIT_MALFORMED_PARAMETER, "Invalid service number (%d), valid range is 1-%d.",svc,CCX_DECODERS_708_MAX_SERVICES);
 		cea708services[svc-1]=1;
 		do_cea708=1;
 		c=e+1;

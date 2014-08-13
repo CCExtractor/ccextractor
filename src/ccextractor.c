@@ -173,8 +173,6 @@ const char *extension; // Output extension
 int current_file=-1; // If current_file!=1, we are processing *inputfile[current_file]
 
 int num_input_files=0; // How many?
-int do_cea708=0; // Process 708 data?
-int cea708services[63]; // [] -> 1 for services to be processed
 
 // Case arrays
 char **spell_lower=NULL;
@@ -215,6 +213,8 @@ int main(int argc, char *argv[])
 
 	// Need to set the 608 data for the report to the correct variable.
 	file_report.data_from_608 = ccx_decoder_608_report;
+	// Same applies for 708 data
+	file_report.data_from_708 = ccx_decoder_708_report;
 
 	// Initialize some constants
 	init_ts();
@@ -241,46 +241,11 @@ int main(int argc, char *argv[])
 
 	int show_myth_banner = 0;
 	
-	memset (&cea708services[0],0,63*sizeof (int));
+	memset (&cea708services[0],0,CCX_DECODERS_708_MAX_SERVICES*sizeof (int)); // Cannot (yet) be moved because it's needed in parse_parameters.
 	memset (&dec_sub, 0,sizeof(dec_sub));
 
 	parse_configuration(&ccx_options);
-	parse_parameters (argc,argv);
-
-	// Set logging functions for libraries
-	ccx_common_logging.debug_ftn = &dbg_print;
-	ccx_common_logging.debug_mask = ccx_options.debug_mask;
-	ccx_common_logging.fatal_ftn = &fatal;
-	ccx_common_logging.log_ftn = &mprint;
-	ccx_common_logging.gui_ftn = &activity_library_process;
-
-	// Prepare 608 context
-	context_cc608_field_1 = ccx_decoder_608_init_library(
-		ccx_options.settings_608,
-		ccx_options.write_format,
-		ccx_options.cc_channel,
-		1,
-		subs_delay,
-		&processed_enough,
-		&cc_to_stdout
-		);
-	context_cc608_field_2 = ccx_decoder_608_init_library(
-		ccx_options.settings_608,
-		ccx_options.write_format,
-		ccx_options.cc_channel,
-		2,
-		subs_delay,
-		&processed_enough,
-		&cc_to_stdout
-		);
-
-	// Set output structures for the 608 decoder
-	context_cc608_field_1.out = &wbout1;
-	context_cc608_field_2.out = &wbout2;
-
-	// Init XDS buffers
-	ccx_decoders_xds_init_library(&ccx_options.transcript_settings,subs_delay,ccx_options.millis_separator);
-	//xds_cea608_test();
+	parse_parameters (argc,argv);	
 
 	if (num_input_files==0 && ccx_options.input_source==CCX_DS_FILE)
 	{
@@ -450,7 +415,7 @@ int main(int argc, char *argv[])
 				wbout1.fh=open (wbout1.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 				if (wbout1.fh==-1)
 				{
-					fatal (EXIT_FILE_CREATION_FAILED, "Failed\n");
+					fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Failed\n");
 				}
 			}
 		}
@@ -482,7 +447,7 @@ int main(int argc, char *argv[])
 					wbout1.fh=open (wbout1.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 					if (wbout1.fh==-1)
 					{
-						fatal (EXIT_FILE_CREATION_FAILED, "Failed (errno=%d)\n",errno);
+						fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Failed (errno=%d)\n", errno);
 					}
 				}
 				switch (ccx_options.write_format)
@@ -532,7 +497,7 @@ int main(int argc, char *argv[])
 					wbout2.fh=open (wbout2.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 					if (wbout2.fh==-1)
 					{
-						fatal (EXIT_FILE_CREATION_FAILED, "Failed\n");				
+						fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Failed\n");
 					}
 					if(ccx_options.write_format == CCX_OF_RAW)
 						writeraw (BROADCAST_HEADER,sizeof (BROADCAST_HEADER),&wbout2);
@@ -576,7 +541,7 @@ int main(int argc, char *argv[])
 	{
 		if ((fh_out_elementarystream = fopen (ccx_options.out_elementarystream_filename,"wb"))==NULL)
 		{
-			fatal (EXIT_FILE_CREATION_FAILED, "Unable to open clean file: %s\n",ccx_options.out_elementarystream_filename);
+			fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to open clean file: %s\n", ccx_options.out_elementarystream_filename);
 		}
 	}
 	if (ccx_options.line_terminator_lf)
@@ -591,7 +556,10 @@ int main(int argc, char *argv[])
 
 	// Initialize HDTV caption buffer
 	init_hdcc();
-	init_708(); // Init 708 decoders
+
+	// Initialize libraries
+	init_libraries();
+	
 
 	time_t start, final;
 	time(&start);
@@ -941,4 +909,43 @@ int main(int argc, char *argv[])
 		mprint ("something is broken it will be fixed. Thanks\n");		
 	}
 	return EXIT_OK;
+}
+
+void init_libraries(){
+	// Set logging functions for libraries
+	ccx_common_logging.debug_ftn = &dbg_print;
+	ccx_common_logging.debug_mask = ccx_options.debug_mask;
+	ccx_common_logging.fatal_ftn = &fatal;
+	ccx_common_logging.log_ftn = &mprint;
+	ccx_common_logging.gui_ftn = &activity_library_process;
+
+	// Init shared decoder settings
+	ccx_decoders_common_settings_init(subs_delay, ccx_options.write_format);
+
+	// Prepare 608 context
+	context_cc608_field_1 = ccx_decoder_608_init_library(
+		ccx_options.settings_608,
+		ccx_options.cc_channel,
+		1,
+		&processed_enough,
+		&cc_to_stdout
+		);
+	context_cc608_field_2 = ccx_decoder_608_init_library(
+		ccx_options.settings_608,
+		ccx_options.cc_channel,
+		2,
+		&processed_enough,
+		&cc_to_stdout
+		);
+
+	// Init 708 decoder(s)
+	ccx_decoders_708_init_library(basefilename,extension,ccx_options.print_file_reports);
+
+	// Set output structures for the 608 decoder
+	context_cc608_field_1.out = &wbout1;
+	context_cc608_field_2.out = &wbout2;
+
+	// Init XDS buffers
+	ccx_decoders_xds_init_library(&ccx_options.transcript_settings, subs_delay, ccx_options.millis_separator);
+	//xds_cea608_test();
 }

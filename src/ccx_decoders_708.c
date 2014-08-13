@@ -1,10 +1,13 @@
 #include "ccx_decoders_708.h"
-#include "ccextractor.h"
-
+//#include "ccextractor.h"
 
 /* Portions by Daniel Kristjansson, extracted from MythTV's source */
 
 // #define DEBUG_708_PACKETS   // Already working. 
+
+int do_cea708 = 0; // Process 708 data?
+int cea708services[CCX_DECODERS_708_MAX_SERVICES]; // [] -> 1 for services to be processed
+int ccx_decoders_708_report = 0;
 
 static unsigned char current_packet[MAX_708_PACKET_LENGTH]; // Length according to EIA-708B, part 5
 static int current_packet_length=0;
@@ -144,16 +147,16 @@ void clearTV (cc708_service_decoder *decoder, int buffer) // Buffer => 1 or 2
 
 void printTVtoSRT (cc708_service_decoder *decoder, int which)
 {
-	if (CCX_OF_NULL == ccx_options.write_format)
+	if (ccx_decoders_common_settings.output_format == CCX_OF_NULL)
 		return;
 
 	/* tvscreen *tv = (which==1)? &decoder->tv1:&decoder->tv2; */
     unsigned h1,m1,s1,ms1;
     unsigned h2,m2,s2,ms2;
     LLONG ms_start= decoder->current_visible_start_ms;
-	LLONG ms_end = get_visible_end()+subs_delay;		
+	LLONG ms_end = get_visible_end() + ccx_decoders_common_settings.subs_delay;
 	int empty=1;
-    ms_start+=subs_delay;
+    ms_start+= ccx_decoders_common_settings.subs_delay;
     if (ms_start<0) // Drop screens that because of subs_delay start too early
         return;
 	
@@ -172,11 +175,11 @@ void printTVtoSRT (cc708_service_decoder *decoder, int which)
 		return; // Nothing to write
 	if (decoder->fh==-1) // File not yet open, do it now
 	{
-		mprint ("Creating %s\n", wbout1.filename);			
-		decoder->fh=open (decoder->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+		mprint ("Creating %s\n", decoder->filename);	// originally wbout1.filename, but since line below uses decoder->filename, assume it's good to use?		
+		decoder->fh= open(decoder->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 		if (decoder->fh==-1)
 		{
-			ccx_common_logging.fatal_ftn (EXIT_FILE_CREATION_FAILED, "Failed\n");
+			ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Failed\n");
 		}
 	}
     mstotime (ms_start,&h1,&m1,&s1,&ms1);
@@ -1147,8 +1150,9 @@ void process_current_packet (void)
 			break;
 		}
 
-		if (block_length != 0)
-			file_report.services708[service_number] = 1;
+		if (block_length != 0){
+			ccx_decoder_708_report.services[service_number] = 1;
+		}
 
 		if (service_number>0 && decoders[service_number-1].inited)
 			process_service_block (&decoders[service_number-1], pos, block_length);
@@ -1176,7 +1180,7 @@ void do_708 (const unsigned char *data, int datalength)
         1 byte for cc_valid        
         1 byte for cc_type
         2 bytes for the actual data */
-	if (!do_cea708 && !ccx_options.print_file_reports)
+	if (!do_cea708 && !ccx_decoders_708_report)
         return;
         
     for (int i=0;i<datalength;i+=4)
@@ -1225,9 +1229,9 @@ void do_708 (const unsigned char *data, int datalength)
     }
 }
 
-void init_708(void)
+void ccx_decoders_708_init_library(char *basefilename,char *extension,int report)
 {
-    for (int i=0;i<63;i++)
+	for (int i = 0; i<CCX_DECODERS_708_MAX_SERVICES; i++)
     {
 		if (!cea708services[i])
 			continue;
@@ -1239,5 +1243,6 @@ void init_708(void)
 		}        
 		decoders[i].fh=-1;
 		decoders[i].srt_counter=0;
-    }    
+    }  
+	ccx_decoders_708_report = report;
 }

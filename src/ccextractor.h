@@ -144,7 +144,7 @@ struct file_report_t
 	unsigned aspect_ratio;
 	unsigned frame_rate;
 	struct ccx_decoder_608_report_t data_from_608;
-	unsigned services708[63];
+	struct ccx_decoder_708_report_t data_from_708;
 	unsigned dvb_sub_pid[SUB_STREAMS_CNT]; 
 	unsigned tlt_sub_pid[SUB_STREAMS_CNT];
 	unsigned mp4_cc_track_cnt;
@@ -190,6 +190,9 @@ struct ccx_s_teletext_config {
 } else result=buffered_read_opt (buffer,1);
 
 extern LLONG buffered_read_opt (unsigned char *buffer, unsigned int bytes);
+
+// ccextractor.c
+void init_libraries();
 
 //params.c
 void parse_parameters (int argc, char *argv[]);
@@ -413,8 +416,6 @@ extern int frames_since_last_gop;
 extern enum ccx_stream_mode_enum auto_stream;
 extern int num_input_files;
 extern char *basefilename;
-extern int do_cea708; // Process 708 data?
-extern int cea708services[63]; // [] -> 1 for services to be processed
 extern struct ccx_s_write wbout1, wbout2, *wbxdsout;
 
 extern char **spell_lower;
@@ -449,7 +450,6 @@ extern long capbuflen;
 #define EXIT_NO_INPUT_FILES                     2
 #define EXIT_TOO_MANY_INPUT_FILES               3
 #define EXIT_INCOMPATIBLE_PARAMETERS            4
-#define EXIT_FILE_CREATION_FAILED               5
 #define EXIT_UNABLE_TO_DETERMINE_FILE_SIZE      6
 #define EXIT_MALFORMED_PARAMETER                7
 #define EXIT_READ_ERROR                         8
