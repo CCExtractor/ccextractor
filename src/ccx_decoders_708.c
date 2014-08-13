@@ -175,7 +175,7 @@ void printTVtoSRT (cc708_service_decoder *decoder, int which)
 		return; // Nothing to write
 	if (decoder->fh==-1) // File not yet open, do it now
 	{
-		mprint ("Creating %s\n", decoder->filename);	// originally wbout1.filename, but since line below uses decoder->filename, assume it's good to use?		
+		ccx_common_logging.log_ftn("Creating %s\n", decoder->filename);	// originally wbout1.filename, but since line below uses decoder->filename, assume it's good to use?		
 		decoder->fh= open(decoder->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 		if (decoder->fh==-1)
 		{
@@ -1026,7 +1026,7 @@ int handle_708_C1 (cc708_service_decoder *decoder, unsigned char *data, int data
             handle_708_DFx_DefineWindow (decoder, com.code-DF0, data); /* Window 0 to 7 */
             break;            
         default:
-            mprint ("BUG: Unhandled code in handle_708_C1.\n");
+            ccx_common_logging.log_ftn ("BUG: Unhandled code in handle_708_C1.\n");
             break;            
     }
     
@@ -1083,7 +1083,7 @@ void process_current_packet (void)
     int seq=(current_packet[0] & 0xC0) >> 6; // Two most significants bits
     int len=current_packet[0] & 0x3F; // 6 least significants bits
 #ifdef DEBUG_708_PACKETS
-    mprint ("Processing EIA-708 packet, length=%d, seq=%d\n",current_packet_length, seq);
+    ccx_common_logging.log_ftn ("Processing EIA-708 packet, length=%d, seq=%d\n",current_packet_length, seq);
 #endif
     if (current_packet_length==0)
         return;
@@ -1093,7 +1093,7 @@ void process_current_packet (void)
         len=len*2;
     // Note that len here is the length including the header
 #ifdef DEBUG_708_PACKETS            
-    mprint ("Sequence: %d, packet length: %d\n",seq,len);
+    ccx_common_logging.log_ftn ("Sequence: %d, packet length: %d\n",seq,len);
 #endif
     if (current_packet_length!=len) // Is this possible?
     {
@@ -1229,7 +1229,7 @@ void do_708 (const unsigned char *data, int datalength)
     }
 }
 
-void ccx_decoders_708_init_library(char *basefilename,char *extension,int report)
+void ccx_decoders_708_init_library(char *basefilename,const char *extension,int report)
 {
 	for (int i = 0; i<CCX_DECODERS_708_MAX_SERVICES; i++)
     {
