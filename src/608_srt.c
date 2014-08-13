@@ -89,7 +89,7 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 #ifdef ENABLE_OCR
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;
-#endif;
+#endif
 	LLONG ms_start, ms_end;
 	//char timeline[128];
 	int len = 0;

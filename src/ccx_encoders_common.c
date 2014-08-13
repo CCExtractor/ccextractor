@@ -235,7 +235,7 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 #ifdef ENABLE_OCR
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
-#endif;
+#endif
 	LLONG start_time, end_time;
 	//char timeline[128];
 	int len = 0;
