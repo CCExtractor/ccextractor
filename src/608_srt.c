@@ -78,18 +78,20 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	int x_pos, y_pos, width, height, i;
 	int x, y, y_off, x_off, ret;
 	uint8_t *pbuf;
-	char *filename;
+	//char *filename;
 	struct cc_bitmap* rect;
 	png_color *palette = NULL;
 	png_byte *alpha = NULL;
 #ifdef ENABLE_OCR
 	char*str = NULL;
 #endif
-	int used;
-	unsigned h1,m1,s1,ms1;
-	unsigned h2,m2,s2,ms2;
+	//int used;
+#ifdef ENABLE_OCR
+	unsigned h1, m1, s1, ms1;
+	unsigned h2, m2, s2, ms2;
+#endif;
 	LLONG ms_start, ms_end;
-	char timeline[128];
+	//char timeline[128];
 	int len = 0;
 
         x_pos = -1;

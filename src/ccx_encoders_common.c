@@ -224,18 +224,20 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 	int x_pos, y_pos, width, height, i;
 	int x, y, y_off, x_off, ret;
 	uint8_t *pbuf;
-	char *filename;
+	//char *filename;
 	struct cc_bitmap* rect;
 	png_color *palette = NULL;
 	png_byte *alpha = NULL;
 #ifdef ENABLE_OCR
 	char*str = NULL;
 #endif
-	int used;
+	//int used;
+#ifdef ENABLE_OCR
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
+#endif;
 	LLONG start_time, end_time;
-	char timeline[128];
+	//char timeline[128];
 	int len = 0;
 
         x_pos = -1;
