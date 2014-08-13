@@ -13,6 +13,7 @@
 #include <libavutil/log.h>
 #include <libavutil/error.h>
 
+#include "ccextractor.h"
 struct ffmpeg_ctx
 {
 	AVFormatContext *ifmt;
@@ -20,6 +21,37 @@ struct ffmpeg_ctx
 	AVFrame *frame;
 	int stream_index;
 };
+/**
+ * call back function to be registered for avlog
+ */
+static void log_cb(void* ptr, int level, const char* fmt, va_list vl)
+{
+	if (level > av_log_get_level())
+		return;
+
+	const char*name = NULL;
+	FILE *flog;
+
+	if (ccx_options.messages_target==CCX_MESSAGES_STDOUT)
+		flog = stdout;
+	else
+		flog = stderr;
+
+        if (level == AV_LOG_PANIC)
+                fprintf(flog, "[panic][%s] ", name);
+        else if (level == AV_LOG_FATAL)
+                fprintf(flog, "[fatal][%s] ", name);
+        else if (level == AV_LOG_ERROR)
+                fprintf(flog, "[error][%s] ", name);
+        else if (level == AV_LOG_WARNING)
+                fprintf(flog, "[warning][%s] ", name);
+        else if (level == AV_LOG_INFO)
+                fprintf(flog, "[info][%s] ", name);
+        else if (level == AV_LOG_DEBUG)
+                fprintf(flog, "[debug][%s] ", name);
+
+	vfprintf(flog, fmt, vl);
+}
 /**
  * @path this path could be relative or absolute path of static file
  * 	 this path could be path of device
@@ -34,6 +66,13 @@ void *init_ffmpeg(char *path)
 	AVCodec *dec = NULL;
 	avcodec_register_all();
 	av_register_all();
+
+	if(ccx_options.debug_mask & CCX_DMT_VERBOSE)
+		av_log_set_level(AV_LOG_INFO);
+	else if (ccx_options.messages_target == 0)
+		av_log_set_level(AV_LOG_FATAL);
+
+	av_log_set_callback(log_cb);
 
 	ctx = av_malloc(sizeof(*ctx));
 	if(!ctx)
@@ -119,12 +158,17 @@ int ff_get_ccframe(void *arg,char*data,int maxlen)
 	{
 		return AVERROR(EAGAIN);
 	}
+	current_pts = av_frame_get_best_effort_timestamp(ctx->frame);
+	if(!pts_set)
+		pts_set = 1;
+	set_fts();
 	for(int i = 0;i< ctx->frame->nb_side_data;i++)
 	{
 		if(ctx->frame->side_data[i]->type == AV_FRAME_DATA_A53_CC)
 		{
+			ctx->frame->pts = av_frame_get_best_effort_timestamp(ctx->frame);
 			if(ctx->frame->side_data[i]->size > maxlen)
-				av_log(NULL,AV_LOG_ERROR,"Please consider increaing length of data\n");
+				av_log(NULL,AV_LOG_ERROR,"Please consider increasing length of data\n");
 			else
 			{
 				memcpy(data,ctx->frame->side_data[i]->data,ctx->frame->side_data[i]->size);
@@ -140,5 +184,4 @@ int ff_get_ccframe(void *arg,char*data,int maxlen)
 
 	return len;
 }
-
 #endif
