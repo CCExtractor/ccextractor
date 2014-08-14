@@ -1535,6 +1535,7 @@ int dvbsub_decode(void *dvb_ctx, const unsigned char *buf, int buf_size, struct 
 	p = buf;
 	p_end = buf + buf_size;
 
+	set_fts();
 	while (p_end - p >= 6 && *p == 0x0f)
 	{
 		p += 1;

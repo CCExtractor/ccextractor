@@ -286,7 +286,7 @@ int parse_PMT (unsigned char *buf,int len, int pos)
 						break;
 					ccx_options.ts_cappid = newcappid = elementary_PID;
 					cap_stream_type = newcap_stream_type = ccx_stream_type;
-					max_dif = 10;
+					max_dif = 30;
 				}
 			}
 		}
