@@ -7,6 +7,7 @@ License: GPL 2.0
 #include "configuration.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "ffmpeg_intgr.h"
 
 void xds_cea608_test();
 
@@ -203,6 +204,7 @@ int main(int argc, char *argv[])
 	char *c;
 	struct encoder_ctx enc_ctx[2];
 	struct cc_subtitle dec_sub;
+	void *ffmpeg_ctx = NULL;
 
 	// Need to set the 608 data for the report to the correct variable.
 	file_report.data_from_608 = ccx_decoder_608_report;
@@ -568,6 +570,54 @@ int main(int argc, char *argv[])
 	while (switch_to_next_file(0) && !processed_enough)
 	{
 		prepare_for_new_file();
+#ifdef ENABLE_FFMPEG
+		close_input_file();
+		ffmpeg_ctx =  init_ffmpeg(inputfile[0]);
+		if(ffmpeg_ctx)
+		{
+			int i =0;
+			buffer = malloc(1024);
+			if(!buffer)
+			{
+				mprint("no memory left\n");
+				break;
+			}
+			do
+			{
+				int ret = 0;
+				char *bptr = buffer;
+				memset(bptr,0,1024);
+				int len = ff_get_ccframe(ffmpeg_ctx, bptr, 1024);
+				if(len == AVERROR(EAGAIN))
+				{
+					continue;
+				}
+				else if(len == AVERROR_EOF)
+					break;
+				else if(len == 0)
+					continue;
+				else if(len < 0 )
+				{
+					mprint("Error extracting Frame\n");
+					break;
+
+				}
+				store_hdcc(bptr,len, i++,fts_now,&dec_sub);
+				if(dec_sub.got_output)
+				{
+					encode_sub(enc_ctx, &dec_sub);
+					dec_sub.got_output = 0;
+				}
+			}while(1);
+
+			free(buffer);
+			continue;
+		}
+		else
+		{
+			mprint ("\rFailed to initialized ffmpeg falling back to legacy\n");
+		}
+#endif
 
 		if (auto_stream == CCX_SM_AUTODETECT)
 		{

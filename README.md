@@ -3,7 +3,12 @@ ccextractor
 
 CCExtractor - Carlos' version (mainstream).
 
-0.71
+GSOC - 0.72
+-----------
+- Fix for WTV files with incorrect timing
+- Added support for fps change using data from AVC video track in a H264 TS file.
+
+GSOC - 0.71
 -----------
 - Added feature to receive captions in BIN format according to CCExtractor's own
   protocol over TCP (-tcp port [-tcppassword password])

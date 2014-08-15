@@ -201,8 +201,8 @@ int do_cb (unsigned char *cc_block, struct cc_subtitle *sub)
 		return 1; 
 
     // Print raw data with FTS.
-    dbg_print(CCX_DMT_CBRAW, "%s   %d   %02X:%02X:%02X", print_mstime(fts_now + fts_global),in_xds_mode,
-               cc_block[0], cc_block[1], cc_block[2]);
+    dbg_print(CCX_DMT_CBRAW, "%s   %d   %02X:%c%c:%02X", print_mstime(fts_now + fts_global),in_xds_mode,
+               cc_block[0], cc_block[1]&0x7f,cc_block[2]&0x7f, cc_block[2]);
 
     /* In theory the writercwtdata() function could return early and not
      * go through the 608/708 cases below.  We do that to get accurate
