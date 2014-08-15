@@ -4,6 +4,7 @@ made to reuse, not duplicate, as many functions as possible */
 #include "ccx_decoders_common.h"
 #include "ccx_common_structs.h"
 #include "ccx_common_constants.h"
+#include "ccx_common_timing.h"
 
 uint64_t utc_refvalue = UINT64_MAX;  /* _UI64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
 

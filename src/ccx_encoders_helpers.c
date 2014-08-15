@@ -1,4 +1,5 @@
 #include "ccx_encoders_helpers.h"
+#include "ccx_common_char_encoding.h"
 #include "ccx_common_constants.h"
 #include "ccx_common_structs.h"
 

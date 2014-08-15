@@ -2,7 +2,9 @@
 #include "ccx_common_common.h"
 #include "ccx_common_structs.h"
 #include "ccx_common_constants.h"
+#include "ccx_common_timing.h"
 #include "ccx_decoders_structs.h"
+#include "ccx_decoders_xds.h"
 
 static const int rowdata[] = {11,-1,1,2,3,4,12,13,14,15,5,6,7,8,9,10};
 // Relationship between the first PAC byte and the row number
