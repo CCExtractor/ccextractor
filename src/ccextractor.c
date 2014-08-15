@@ -536,14 +536,7 @@ int main(int argc, char *argv[])
 		{
 			fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to open clean file: %s\n", ccx_options.out_elementarystream_filename);
 		}
-	}
-	if (ccx_options.line_terminator_lf)
-		encoded_crlf_length = encode_line (encoded_crlf,(unsigned char *) "\n"); 
-	else
-		encoded_crlf_length = encode_line (encoded_crlf,(unsigned char *) "\r\n"); 
-
-	encoded_br_length = encode_line (encoded_br, (unsigned char *) "<br>");
-	
+	}	
 
 	build_parity_table();
 
@@ -552,6 +545,13 @@ int main(int argc, char *argv[])
 
 	// Initialize libraries
 	init_libraries();
+
+	if (ccx_options.line_terminator_lf)
+		encoded_crlf_length = encode_line(encoded_crlf, (unsigned char *) "\n");
+	else
+		encoded_crlf_length = encode_line(encoded_crlf, (unsigned char *) "\r\n");
+
+	encoded_br_length = encode_line(encoded_br, (unsigned char *) "<br>");
 	
 
 	time_t start, final;
