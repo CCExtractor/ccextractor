@@ -3,7 +3,7 @@
 
 #include <sys/types.h>
 
-void connect_to_srv(const char *addr, const char *port, const char *cc_name);
+void connect_to_srv(const char *addr, const char *port, const char *cc_desc);
 
 void net_send_header(const unsigned char *data, size_t len);
 void net_send_cc(const unsigned char *data, size_t len);
