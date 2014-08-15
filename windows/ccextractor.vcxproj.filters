@@ -314,9 +314,6 @@
     <ClCompile Include="..\src\dvb_subtitle_decoder.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\encoding.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\es_functions.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -589,6 +586,9 @@
     </ClCompile>
     <ClCompile Include="..\src\spupng_encoder.c">
       <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ccx_common_char_encoding.c">
+      <Filter>Source Files\ccx_common</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

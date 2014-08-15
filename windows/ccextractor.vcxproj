@@ -106,7 +106,7 @@
     <ClCompile Include="..\src\configuration.c" />
     <ClCompile Include="..\src\ccx_common_constants.c" />
     <ClCompile Include="..\src\dvb_subtitle_decoder.c" />
-    <ClCompile Include="..\src\encoding.c" />
+    <ClCompile Include="..\src\ccx_common_char_encoding.c" />
     <ClCompile Include="..\src\es_functions.c" />
     <ClCompile Include="..\src\es_userdata.c" />
     <ClCompile Include="..\src\file_functions.c" />
