@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\ccx_common_char_encoding.h" />
     <ClInclude Include="..\src\ccx_common_common.h" />
     <ClInclude Include="..\src\ccx_decoders_608.h" />
     <ClInclude Include="..\src\608_spupng.h" />
@@ -63,6 +64,7 @@
     <ClInclude Include="..\src\libpng\pngstruct.h" />
     <ClInclude Include="..\src\networking.h" />
     <ClInclude Include="..\src\ccx_common_platform.h" />
+    <ClInclude Include="..\src\ocr.h" />
     <ClInclude Include="..\src\spupng_encoder.h" />
     <ClInclude Include="..\src\stdint.h" />
     <ClInclude Include="..\src\stdintmsc.h" />
@@ -168,6 +170,7 @@
     <ClCompile Include="..\src\libpng\pngwutil.c" />
     <ClCompile Include="..\src\myth.c" />
     <ClCompile Include="..\src\networking.c" />
+    <ClCompile Include="..\src\ocr.c" />
     <ClCompile Include="..\src\output.c" />
     <ClCompile Include="..\src\params.c" />
     <ClCompile Include="..\src\params_dump.c" />

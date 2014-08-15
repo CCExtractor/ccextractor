@@ -1,5 +1,7 @@
 #include "ccx_common_timing.h"
-//#include "ccextractor.h"
+#include "ccx_common_constants.h"
+#include "ccx_common_structs.h"
+#include "ccx_common_common.h"
 
 /* Provide the current time since the file (or the first file) started
  * in ms using PTS time information.

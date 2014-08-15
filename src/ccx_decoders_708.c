@@ -1,5 +1,7 @@
 #include "ccx_decoders_708.h"
-//#include "ccextractor.h"
+#include "ccx_common_constants.h"
+#include "ccx_common_structs.h"
+#include "ccx_common_timing.h"
 
 /* Portions by Daniel Kristjansson, extracted from MythTV's source */
 

@@ -13,6 +13,8 @@ typedef struct {
 
 struct ccx_s_write
 {
+	int multiple_files;
+	char *first_input_file;
 	int fh;
 	char *filename;
 	void* spupng_data;

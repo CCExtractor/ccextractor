@@ -75,9 +75,6 @@
     <ClInclude Include="..\src\inttypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\spupng_encoder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\stdint.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -264,6 +261,15 @@
     <ClInclude Include="..\src\ccx_encoders_helpers.h">
       <Filter>Header Files\ccx_encoders</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\ocr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\spupng_encoder.h">
+      <Filter>Header Files\ccx_encoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ccx_common_char_encoding.h">
+      <Filter>Header Files\ccx_common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gpacmp4\stbl_read.c">
@@ -336,9 +342,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\sequencing.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\spupng_encoder.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\stream_functions.c">
@@ -579,6 +582,12 @@
       <Filter>Source Files\ccx_decoders</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ccx_encoders_helpers.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ocr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\spupng_encoder.c">
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
   </ItemGroup>

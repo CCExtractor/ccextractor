@@ -1,7 +1,7 @@
-#include "ccx_decoders_common.h"
-#include "ccx_decoders_xds.h"
-
 #ifndef __608_H__
+
+#include "ccx_common_platform.h"
+#include "ccx_decoders_structs.h"
 
 extern LLONG ts_start_of_xds;
 
@@ -140,11 +140,6 @@ unsigned char *debug_608toASC(unsigned char *ccdata, int channel);
 unsigned get_decoder_line_basic(unsigned char *buffer, int line_num, struct eia608_screen *data);
 //void delete_all_lines_but_current(ccx_decoder_608_context *context, struct eia608_screen *data, int row);
 
-void get_char_in_latin_1(unsigned char *buffer, unsigned char c);
-void get_char_in_unicode(unsigned char *buffer, unsigned char c);
-int get_char_in_utf_8(unsigned char *buffer, unsigned char c);
-unsigned char cctolower(unsigned char c);
-unsigned char cctoupper(unsigned char c);
 LLONG get_visible_end(void);
 
 #define __608_H__

@@ -9,6 +9,8 @@
 void init_write (struct ccx_s_write *wb)
 {
 	memset(wb, 0, sizeof(struct ccx_s_write));
+	wb->multiple_files = num_input_files > 0;
+	wb->first_input_file = inputfile[0];
     wb->fh=-1;
     wb->filename=NULL;	
 } 

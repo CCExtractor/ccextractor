@@ -1,6 +1,8 @@
 #include "ccextractor.h"
-#include "utility.h"
-#include "ccx_encoders_common.h"
+
+#include "ccx_common_constants.h"
+#include "ccx_decoders_structs.h"
+
 //extern unsigned char encoded_crlf[16];
 
 unsigned get_decoder_line_basic (unsigned char *buffer, int line_num, struct eia608_screen *data)

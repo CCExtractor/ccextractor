@@ -1,9 +1,8 @@
 #include "ccfont2.xbm" // CC font from libzvbi
-#include "ccx_common_platform.h"
 #include "spupng_encoder.h"
-#include <assert.h>
+#include "ccx_common_common.h"
 #include "ccx_encoders_common.h"
-#include "utility.h"
+#include <assert.h>
 #ifdef ENABLE_OCR
 #include "ocr.h"
 #endif
@@ -20,7 +19,7 @@ spupng_init_font()
 
     /* de-interleave font image (puts all chars in row 0) */
     if (!(t = (uint8_t*)malloc(ccfont2_width * ccfont2_height / 8)))
-        fatal(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
+        ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
 
     for (p = t, i = 0; i < CCH; i++)
         for (j = 0; j < ccfont2_height; p += ccfont2_width / 8, j += CCH)
@@ -35,7 +34,7 @@ struct spupng_t *spunpg_init(struct ccx_s_write *out)
 {
     struct spupng_t *sp = (struct spupng_t *) malloc(sizeof(struct spupng_t));
     if (NULL == sp)
-        fatal(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
+        ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
 
     if (!initialized)
     {
@@ -45,13 +44,13 @@ struct spupng_t *spunpg_init(struct ccx_s_write *out)
 
 	if ((sp->fpxml = fdopen(out->fh, "w")) == NULL)
     {
-		fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n",
+		ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n",
 		        out->filename, strerror(errno));
     }
     sp->dirname = (char *) malloc(
                             sizeof(char) * (strlen(out->filename) + 3));
     if (NULL == sp->dirname)
-        fatal(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
+        ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
 
 	strcpy(sp->dirname, out->filename);
     char* p = strrchr(sp->dirname, '.');
@@ -63,7 +62,7 @@ struct spupng_t *spunpg_init(struct ccx_s_write *out)
     {
         if (errno != EEXIST)
         {
-			fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot create %s: %s\n",
+			ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot create %s: %s\n",
                     sp->dirname, strerror(errno));
         }
         // If dirname isn't a directory or if we don't have write permission,
@@ -73,7 +72,7 @@ struct spupng_t *spunpg_init(struct ccx_s_write *out)
     // enough to append /subNNNN.png
     sp->pngfile = (char *) malloc(sizeof(char) * (strlen(sp->dirname) + 13));
     if (NULL == sp->pngfile)
-        fatal(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
+        ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
     sp->fileIndex = 0;
     sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex);
 
@@ -98,11 +97,11 @@ spunpg_free(struct spupng_t *sp)
 }
 
 void
-spupng_write_header(struct spupng_t *sp)
+spupng_write_header(struct spupng_t *sp,int multiple_files,char *first_input_file)
 {
     fprintf(sp->fpxml, "<subpictures>\n<stream>\n");
-    if (num_input_files > 0)
-        fprintf(sp->fpxml, "<!-- %s -->\n", inputfile[0]);
+    if (multiple_files)
+        fprintf(sp->fpxml, "<!-- %s -->\n", first_input_file);
 }
 
 void
@@ -118,7 +117,7 @@ void write_spumux_header(struct ccx_s_write *out)
     if (0 == out->spupng_data)
         out->spupng_data = spunpg_init(out);
 
-    spupng_write_header((struct spupng_t*)out->spupng_data);
+    spupng_write_header((struct spupng_t*)out->spupng_data,out->multiple_files,out->first_input_file);
 }
 
 void write_spumux_footer(struct ccx_s_write *out)
@@ -352,7 +351,7 @@ static int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
 	f = fopen(filename, "wb");
 	if (!f)
 	{
-		mprint("DVB:unable to open %s in write mode \n", filename);
+		ccx_common_logging.log_ftn("DVB:unable to open %s in write mode \n", filename);
 		ret = -1;
 		goto end;
 	}
@@ -360,12 +359,12 @@ static int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
 	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL,NULL);
 	if (!png_ptr)
 	{
-		mprint("DVB:unable to create png write struct\n");
+		ccx_common_logging.log_ftn("DVB:unable to create png write struct\n");
 		goto end;
 	}
 	if (!(info_ptr = png_create_info_struct(png_ptr)))
 	{
-		mprint("DVB:unable to create png info struct\n");
+		ccx_common_logging.log_ftn("DVB:unable to create png info struct\n");
 		ret = -1;
 		goto end;
 	}
@@ -373,7 +372,7 @@ static int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
 	row_pointer = (png_bytep*) malloc(sizeof(png_bytep) * h);
 	if (!row_pointer)
 	{
-		mprint("DVB: unable to allocate row_pointer\n");
+		ccx_common_logging.log_ftn("DVB: unable to allocate row_pointer\n");
 		ret = -1;
 		goto end;
 	}
@@ -399,7 +398,7 @@ static int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
 	}
 	if (i != h)
 	{
-		mprint("DVB: unable to allocate row_pointer internals\n");
+		ccx_common_logging.log_ftn("DVB: unable to allocate row_pointer internals\n");
 		ret = -1;
 		goto end;
 	}

@@ -4,11 +4,12 @@
 #define VERSION "0.72"
 
 // Load common includes and constants for library usage
+#include "ccx_common_platform.h"
+#include "ccx_common_constants.h"
 #include "ccx_common_common.h"
-
-extern int cc_buffer_saved; // Do we have anything in the CC buffer already? 
-extern int ccblocks_in_avc_total; // Total CC blocks found by the AVC code
-extern int ccblocks_in_avc_lost; // CC blocks found by the AVC code lost due to overwrites (should be 0)
+#include "ccx_common_char_encoding.h"
+#include "ccx_common_structs.h"
+#include "ccx_common_timing.h"
 
 #include "ccx_encoders_common.h"
 #include "ccx_decoders_608.h"
@@ -16,6 +17,10 @@ extern int ccblocks_in_avc_lost; // CC blocks found by the AVC code lost due to 
 #include "bitstream.h"
 
 #include "networking.h"
+
+extern int cc_buffer_saved; // Do we have anything in the CC buffer already? 
+extern int ccblocks_in_avc_total; // Total CC blocks found by the AVC code
+extern int ccblocks_in_avc_lost; // CC blocks found by the AVC code lost due to overwrites (should be 0)
 
 #define TS_PMT_MAP_SIZE 128
 
@@ -395,7 +400,6 @@ extern enum ccx_bufferdata_type bufferdatatype; // Can be CCX_BUFFERDATA_TYPE_RA
 extern unsigned top_field_first;
 
 extern int firstcall;
-extern LLONG minimum_fts; // No screen should start before this FTS
 
 #define MAXBFRAMES 50
 #define SORTBUF (2*MAXBFRAMES+1)
@@ -448,7 +452,6 @@ extern long capbuflen;
 #define EXIT_MALFORMED_PARAMETER                7
 #define EXIT_READ_ERROR                         8
 #define EXIT_NOT_CLASSIFIED                     300
-#define EXIT_NOT_ENOUGH_MEMORY                  500
 #define EXIT_ERROR_IN_CAPITALIZATION_FILE       501
 #define EXIT_BUFFER_FULL                        502
 #define EXIT_MISSING_ASF_HEADER                 1001

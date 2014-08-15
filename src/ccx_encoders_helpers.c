@@ -1,4 +1,6 @@
 #include "ccx_encoders_helpers.h"
+#include "ccx_common_constants.h"
+#include "ccx_common_structs.h"
 
 #ifdef _MSC_VER
 #define strcasecmp stricmp

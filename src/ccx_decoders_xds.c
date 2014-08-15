@@ -1,4 +1,5 @@
 #include "ccx_decoders_xds.h"
+#include "ccx_common_constants.h"
 
 LLONG ts_start_of_xds = -1; // Time at which we switched to XDS mode, =-1 hasn't happened yet
 

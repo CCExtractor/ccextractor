@@ -1,4 +1,8 @@
 #include "ccx_decoders_608.h"
+#include "ccx_common_common.h"
+#include "ccx_common_structs.h"
+#include "ccx_common_constants.h"
+#include "ccx_decoders_structs.h"
 
 static const int rowdata[] = {11,-1,1,2,3,4,12,13,14,15,5,6,7,8,9,10};
 // Relationship between the first PAC byte and the row number
@@ -6,7 +10,6 @@ int in_xds_mode=0;
 
 unsigned char str[2048]; // Another generic general purpose buffer
 
-LLONG minimum_fts=0; // No screen should start before this FTS
 const unsigned char pac2_attribs[][3] = // Color, font, ident
 {
 	{ COL_WHITE, FONT_REGULAR, 0 },  // 0x40 || 0x60

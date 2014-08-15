@@ -9,6 +9,8 @@ extern unsigned int encoded_crlf_length;
 extern unsigned char encoded_br[16];
 extern unsigned int encoded_br_length;
 
+extern LLONG minimum_fts; // No screen should start before this FTS
+
 extern uint64_t utc_refvalue; // UTC referential value
 
 // Declarations

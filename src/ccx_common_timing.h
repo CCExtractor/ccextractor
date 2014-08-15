@@ -1,6 +1,6 @@
-#include "ccx_common_common.h"
-
 #ifndef __Timing_H__
+
+#include "ccx_common_platform.h"
 
 struct gop_time_code
 {
