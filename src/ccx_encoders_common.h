@@ -4,6 +4,7 @@
 #include "ccx_common_structs.h"
 #include "ccx_decoders_structs.h"
 #include "ccx_encoders_structs.h"
+#include "ccx_encoders_helpers.h"
 
 #define REQUEST_BUFFER_CAPACITY(ctx,length) if (length>ctx->capacity) \
 {ctx->capacity = length * 2; ctx->buffer = (unsigned char*)realloc(ctx->buffer, ctx->capacity); \
@@ -75,4 +76,6 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *context);
+
+
 #endif

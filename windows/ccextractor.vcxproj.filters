@@ -261,6 +261,9 @@
     <ClInclude Include="..\src\ccx_decoders_708.h">
       <Filter>Header Files\ccx_decoders</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\ccx_encoders_helpers.h">
+      <Filter>Header Files\ccx_encoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gpacmp4\stbl_read.c">
@@ -574,6 +577,9 @@
     </ClCompile>
     <ClCompile Include="..\src\ccx_decoders_708.c">
       <Filter>Source Files\ccx_decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ccx_encoders_helpers.c">
+      <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

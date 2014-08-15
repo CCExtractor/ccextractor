@@ -5,9 +5,6 @@
 
 extern LLONG ts_start_of_xds;
 
-// Define max width in characters/columns on the screen
-#define CCX_DECODER_608_SCREEN_WIDTH  32
-
 /* 
 This variable (ccx_decoder_608_report) holds data on the cc channels & xds packets that are encountered during file parse.
 This can be interesting if you just want to know what kind of data a file holds that has 608 packets. CCExtractor uses it
@@ -140,16 +137,8 @@ void handle_end_of_data(ccx_decoder_608_context *context, struct cc_subtitle *su
 int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub);
 unsigned char *debug_608toASC(unsigned char *ccdata, int channel);
 
-unsigned get_decoder_line_encoded(unsigned char *buffer, int line_num, struct eia608_screen *data);
-void capitalize(int line_num, struct eia608_screen *data);
-void correct_case(int line_num, struct eia608_screen *data);
-void correct_case(int line_num, struct eia608_screen *data);
-void capitalize(int line_num, struct eia608_screen *data);
-void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank);
 unsigned get_decoder_line_basic(unsigned char *buffer, int line_num, struct eia608_screen *data);
-unsigned get_decoder_line_encoded_for_gui(unsigned char *buffer, int line_num, struct eia608_screen *data);
-unsigned get_decoder_line_encoded(unsigned char *buffer, int line_num, struct eia608_screen *data);
-void delete_all_lines_but_current(ccx_decoder_608_context *context, struct eia608_screen *data, int row);
+//void delete_all_lines_but_current(ccx_decoder_608_context *context, struct eia608_screen *data, int row);
 
 void get_char_in_latin_1(unsigned char *buffer, unsigned char c);
 void get_char_in_unicode(unsigned char *buffer, unsigned char c);

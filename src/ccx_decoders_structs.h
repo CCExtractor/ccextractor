@@ -2,6 +2,9 @@
 
 #include "ccx_common_platform.h"
 
+// Define max width in characters/columns on the screen
+#define CCX_DECODER_608_SCREEN_WIDTH  32
+
 /* flag raised when end of display marker arrives in Dvb Subtitle */
 #define SUB_EOD_MARKER (1 << 0 )
 struct cc_bitmap
