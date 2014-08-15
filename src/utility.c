@@ -1,9 +1,5 @@
 #include "ccextractor.h"
 
-#ifdef _MSC_VER
-#define strcasecmp stricmp
-#endif
-
 static char *text;
 static int text_size=0;
 
@@ -247,40 +243,4 @@ int hex2int (char high, char low)
 	else 
 		return -1;
 	return h*16+l;
-}
-/**
- * @param base points to the start of the array
- * @param nb   number of element in array
- * @param size size of each element
- * @param compar Comparison function, which is called with three argument
- *               that point to the objects being compared and arg.
- * @param arg argument passed as it is to compare function
- */
-void shell_sort(void *base, int nb,size_t size,int (*compar)(const void*p1,const void *p2,void*arg),void *arg)
-{
-	unsigned char *lbase = (unsigned char*)base;
-	unsigned char *tmp = (unsigned char*)malloc(size);
-	for (int gap = nb / 2; gap > 0; gap = gap / 2)
-	{
-		int p, j;
-		for (p = gap; p < nb; p++)
-		{
-			memcpy(tmp, lbase + (p *size), size);
-			for (j = p; j >= gap && ( compar(tmp,lbase + ( (j - gap) * size),arg) < 0); j -= gap)
-			{
-				memcpy(lbase + (j*size),lbase + ( (j - gap) * size),size);
-			}
-			memcpy(lbase + (j *size),tmp, size);
-		}
-	}
-    free(tmp);
-}
-
-int string_cmp2(const void *p1,const void *p2,void *arg)
-{
-	return strcasecmp(*(char**)p1,*(char**)p2);
-}
-int string_cmp(const void *p1,const void *p2)
-{
-	return string_cmp2(p1, p2, NULL);
 }

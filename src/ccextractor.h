@@ -375,7 +375,6 @@ extern LLONG subs_delay;
 extern int startcredits_displayed, end_credits_displayed;
 extern LLONG last_displayed_subs_ms; 
 extern int processed_enough;
-extern unsigned char usercolor_rgb[8];
 
 extern const char *extension;
 extern long FILEBUFFERSIZE; // Uppercase because it used to be a define
@@ -417,11 +416,6 @@ extern enum ccx_stream_mode_enum auto_stream;
 extern int num_input_files;
 extern char *basefilename;
 extern struct ccx_s_write wbout1, wbout2, *wbxdsout;
-
-extern char **spell_lower;
-extern char **spell_correct;
-extern int spell_words;
-extern int spell_capacity;
 
 extern int cc608_parity_table[256]; // From myth
 

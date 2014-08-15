@@ -174,13 +174,6 @@ int current_file=-1; // If current_file!=1, we are processing *inputfile[current
 
 int num_input_files=0; // How many?
 
-// Case arrays
-char **spell_lower=NULL;
-char **spell_correct=NULL;
-int spell_words=0;
-int spell_capacity=0;
-
-
 /* Hauppauge support */
 unsigned hauppauge_warning_shown=0; // Did we detect a possible Hauppauge capture and told the user already?
 unsigned teletext_warning_shown=0; // Did we detect a possible PAL (with teletext subs) and told the user already?
@@ -921,6 +914,8 @@ void init_libraries(){
 
 	// Init shared decoder settings
 	ccx_decoders_common_settings_init(subs_delay, ccx_options.write_format);
+	// Init encoder helper variables
+	ccx_encoders_helpers_setup(ccx_options.encoding, ccx_options.nofontcolor, ccx_options.notypesetting, ccx_options.trim_subs);
 
 	// Prepare 608 context
 	context_cc608_field_1 = ccx_decoder_608_init_library(

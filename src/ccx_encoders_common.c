@@ -5,6 +5,7 @@
 #include "608_spupng.h"
 #include "utility.h"
 #include "ocr.h"
+#include "ccx_decoders_608.h"
 #include "ccx_decoders_xds.h"
 
 // These are the default settings for plain transcripts. No times, no CC or caption mode, and no XDS.
@@ -605,4 +606,53 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	if (!sub->nb_data)
 		freep(&sub->data);
 	return wrote_something;
+}
+
+void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *context)
+{
+	unsigned h1, m1, s1, ms1;
+	unsigned h2, m2, s2, ms2;
+	LLONG ms_start;
+	int with_data = 0;
+
+	for (int i = 0; i<15; i++)
+	{
+		if (data->row_used[i])
+			with_data = 1;
+	}
+	if (!with_data)
+		return;
+
+	ms_start = data->start_time;
+
+	ms_start += subs_delay;
+	if (ms_start<0) // Drop screens that because of subs_delay start too early
+		return;
+	int time_reported = 0;
+	for (int i = 0; i<15; i++)
+	{
+		if (data->row_used[i])
+		{
+			fprintf(stderr, "###SUBTITLE#");
+			if (!time_reported)
+			{
+				LLONG ms_end = data->end_time;
+				mstotime(ms_start, &h1, &m1, &s1, &ms1);
+				mstotime(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
+				// Note, only MM:SS here as we need to save space in the preview window
+				fprintf(stderr, "%02u:%02u#%02u:%02u#",
+					h1 * 60 + m1, s1, h2 * 60 + m2, s2);
+				time_reported = 1;
+			}
+			else
+				fprintf(stderr, "##");
+
+			// We don't capitalize here because whatever function that was used
+			// before to write to file already took care of it.
+			int length = get_decoder_line_encoded_for_gui(subline, i, data);
+			fwrite(subline, 1, length, stderr);
+			fwrite("\n", 1, 1, stderr);
+		}
+	}
+	fflush(stderr);
 }

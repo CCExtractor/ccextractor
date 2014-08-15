@@ -2,7 +2,6 @@
 #include "utility.h"
 
 static int inputfile_capacity=0; 
-static int spell_builtin_added=0; // so we don't do it twice
 
 static const char *DEF_VAL_STARTCREDITSNOTBEFORE="0";
 static const char *DEF_VAL_STARTCREDITSNOTAFTER="5:00"; // To catch the theme after the teaser in TV shows
@@ -10,19 +9,6 @@ static const char *DEF_VAL_STARTCREDITSFORATLEAST="2";
 static const char *DEF_VAL_STARTCREDITSFORATMOST="5";
 static const char *DEF_VAL_ENDCREDITSFORATLEAST="2";
 static const char *DEF_VAL_ENDCREDITSFORATMOST="5";
-
-// Some basic English words, so user-defined doesn't have to
-// include the common stuff
-static const char *spell_builtin[]=
-{
-	"I", "I'd",	"I've",	"I'd", "I'll",
-	"January","February","March","April", // May skipped intentionally
-	"June","July","August","September","October","November",
-	"December","Monday","Tuesday","Wednesday","Thursday",
-	"Friday","Saturday","Sunday","Halloween","United States",
-	"Spain","France","Italy","England",
-	NULL
-}; 
 
 int stringztoms (const char *s, struct ccx_boundary_time *bt)
 {
@@ -68,81 +54,6 @@ int stringztoms (const char *s, struct ccx_boundary_time *bt)
 	bt->time_in_ms=secs*1000;
 	return 0;
 }
-
-
-int add_word (const char *word)
-{
-	char *new_lower;
-	char *new_correct;
-	char **ptr_lower;
-	char **ptr_correct;
-	int i;
-	if (spell_words==spell_capacity)
-	{
-		// Time to grow
-		spell_capacity+=50;
-		ptr_lower=(char **) realloc (spell_lower, sizeof (char *) * 
-				spell_capacity);
-		ptr_correct=(char **) realloc (spell_correct, sizeof (char *) * 
-				spell_capacity);
-	}
-	size_t len=strlen (word);
-	new_lower = (char *) malloc (len+1);
-	new_correct = (char *) malloc (len+1);
-	if (ptr_lower==NULL || ptr_correct==NULL ||
-			new_lower==NULL || new_correct==NULL)
-	{
-		spell_capacity = 0;
-		for ( i = 0; i < spell_words ; i++)
-		{
-			freep(&spell_lower[spell_words]);
-			freep(&spell_correct[spell_words]);
-		}
-		freep(&spell_lower);
-		freep(&spell_correct);
-		freep(&ptr_lower);
-		freep(&ptr_correct);
-		freep(&new_lower);
-		freep(&new_correct);
-		spell_words = 0;
-		return -1;
-	}
-	else
-	{
-		spell_lower = ptr_lower;
-		spell_correct = ptr_correct;
-	}
-	strcpy (new_correct, word);
-	for (size_t i=0; i<len; i++)
-	{
-		char c=new_correct[i];
-		c=tolower (c); // TO-DO: Add Spanish characters
-		new_lower[i]=c;
-	}
-	new_lower[len]=0;
-	spell_lower[spell_words]=new_lower;
-	spell_correct[spell_words]=new_correct;
-	spell_words++;
-	return 0;
-}
-
-
-int add_built_in_words()
-{
-	if (!spell_builtin_added)
-	{
-		int i=0;
-		while (spell_builtin[i]!=NULL)
-		{
-			if (add_word(spell_builtin[i]))
-				return -1;
-			i++;
-		}
-		spell_builtin_added=1;
-	}
-	return 0;
-}
-
 
 int process_cap_file (char *filename)
 {
@@ -871,8 +782,7 @@ void init_option (struct ccx_s_options *option)
 		if(option->sentence_cap_file && process_cap_file (option->sentence_cap_file))
 			fatal (EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the capitalization file.\n");
 
-		shell_sort(spell_lower,spell_words,sizeof(*spell_lower),string_cmp2,NULL);
-		shell_sort(spell_correct,spell_words,sizeof(*spell_correct),string_cmp2,NULL);
+		ccx_encoders_helpers_perform_shellsort_words();
 	}
 	if(option->ts_forced_program != -1)
 		option->ts_forced_program_selected = 1;

@@ -19,15 +19,15 @@ extern ccx_encoders_transcript_format ccx_encoders_default_transcript_settings;
  */
 struct encoder_ctx
 {
-	/** common buffer used by all encoder */
+	/* common buffer used by all encoder */
 	unsigned char *buffer;
-	/** capacity of buffer */
+	/* capacity of buffer */
 	unsigned int capacity;
 	/* keep count of srt subtitle*/
 	unsigned int srt_counter;
-	/** output contet */
+	/* output context */
 	struct ccx_s_write *out;
-	/** start time of previous sub */
+	/* start time of previous sub */
 	LLONG prev_start;
 };
 

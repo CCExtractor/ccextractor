@@ -46,10 +46,6 @@ const unsigned char pac2_attribs[][3] = // Color, font, ident
 unsigned char *subline; // Temp storage for .srt lines
 int new_sentence=1; // Capitalize next letter?
 
-// userdefined rgb color
-unsigned char usercolor_rgb[8]="";
-
-
 static const char *command_type[] =
 {
 	"Unknown",

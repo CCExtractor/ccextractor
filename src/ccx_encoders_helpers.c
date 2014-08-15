@@ -1,31 +1,39 @@
 #include "ccx_encoders_helpers.h"
 
-// Encodes a generic string. Note that since we use the encoders for closed caption
-// data, text would have to be encoded as CCs... so using special characters here
-// it's a bad idea. 
-unsigned encode_line(unsigned char *buffer, unsigned char *text)
+#ifdef _MSC_VER
+#define strcasecmp stricmp
+#endif
+
+// userdefined rgb color
+unsigned char usercolor_rgb[8] = "";
+
+static int spell_builtin_added = 0; // so we don't do it twice
+// Case arrays
+char **spell_lower = NULL;
+char **spell_correct = NULL;
+int spell_words = 0;
+int spell_capacity = 0;
+
+// Some basic English words, so user-defined doesn't have to
+// include the common stuff
+static const char *spell_builtin[] =
 {
-	unsigned bytes = 0;
-	while (*text)
-	{
-		switch (ccx_options.encoding)
-		{
-		case CCX_ENC_UTF_8:
-		case CCX_ENC_LATIN_1:
-			*buffer = *text;
-			bytes++;
-			buffer++;
-			break;
-		case CCX_ENC_UNICODE:
-			*buffer = *text;
-			*(buffer + 1) = 0;
-			bytes += 2;
-			buffer += 2;
-			break;
-		}
-		text++;
-	}
-	return bytes;
+	"I", "I'd", "I've", "I'd", "I'll",
+	"January", "February", "March", "April", // May skipped intentionally
+	"June", "July", "August", "September", "October", "November",
+	"December", "Monday", "Tuesday", "Wednesday", "Thursday",
+	"Friday", "Saturday", "Sunday", "Halloween", "United States",
+	"Spain", "France", "Italy", "England",
+	NULL
+};
+
+int string_cmp2(const void *p1, const void *p2, void *arg)
+{
+	return strcasecmp(*(char**)p1, *(char**)p2);
+}
+int string_cmp(const void *p1, const void *p2)
+{
+	return string_cmp2(p1, p2, NULL);
 }
 
 void correct_case(int line_num, struct eia608_screen *data)
@@ -99,6 +107,34 @@ void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_
 	}
 }
 
+// Encodes a generic string. Note that since we use the encoders for closed caption
+// data, text would have to be encoded as CCs... so using special characters here
+// it's a bad idea. 
+unsigned encode_line(unsigned char *buffer, unsigned char *text)
+{
+	unsigned bytes = 0;
+	while (*text)
+	{
+		switch (ccx_encoders_helpers_settings.encoding)
+		{
+		case CCX_ENC_UTF_8:
+		case CCX_ENC_LATIN_1:
+			*buffer = *text;
+			bytes++;
+			buffer++;
+			break;
+		case CCX_ENC_UNICODE:
+			*buffer = *text;
+			*(buffer + 1) = 0;
+			bytes += 2;
+			buffer += 2;
+			break;
+		}
+		text++;
+	}
+	return bytes;
+}
+
 unsigned get_decoder_line_encoded_for_gui(unsigned char *buffer, int line_num, struct eia608_screen *data)
 {
 	unsigned char *line = data->characters[line_num];
@@ -140,7 +176,7 @@ unsigned char *close_tag(unsigned char *buffer, char *tagstack, char tagtype, in
 			return buffer;
 	}
 	if (tagtype != 'A') // All
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "Mismatched tags in encoding, this is a bug, please report");
+		ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "Mismatched tags in encoding, this is a bug, please report");
 	return buffer;
 }
 
@@ -155,13 +191,13 @@ unsigned get_decoder_line_encoded(unsigned char *buffer, int line_num, struct ei
 	unsigned char *line = data->characters[line_num];
 	unsigned char *orig = buffer; // Keep for debugging
 	int first = 0, last = 31;
-	if (ccx_options.trim_subs)
+	if (ccx_encoders_helpers_settings.trim_subs)
 		find_limit_characters(line, &first, &last);
 	for (int i = first; i <= last; i++)
 	{
 		// Handle color
 		int its_col = data->colors[line_num][i];
-		if (its_col != col  && !ccx_options.nofontcolor &&
+		if (its_col != col  && !ccx_encoders_helpers_settings.no_font_color &&
 			!(col == COL_USERDEFINED && its_col == COL_WHITE)) // Don't replace user defined with white
 		{
 			if (changed_font)
@@ -184,30 +220,30 @@ unsigned get_decoder_line_encoded(unsigned char *buffer, int line_num, struct ei
 		}
 		// Handle underlined
 		int is_underlined = data->fonts[line_num][i] & FONT_UNDERLINED;
-		if (is_underlined && underlined == 0 && !ccx_options.notypesetting) // Open underline
+		if (is_underlined && underlined == 0 && !ccx_encoders_helpers_settings.no_type_setting) // Open underline
 		{
 			buffer += encode_line(buffer, (unsigned char *) "<u>");
 			strcat(tagstack, "U");
 			underlined++;
 		}
-		if (is_underlined == 0 && underlined && !ccx_options.notypesetting) // Close underline
+		if (is_underlined == 0 && underlined && !ccx_encoders_helpers_settings.no_type_setting) // Close underline
 		{
 			buffer = close_tag(buffer, tagstack, 'U', &underlined, &italics, &changed_font);
 		}
 		// Handle italics
 		int has_ita = data->fonts[line_num][i] & FONT_ITALICS;
-		if (has_ita && italics == 0 && !ccx_options.notypesetting) // Open italics
+		if (has_ita && italics == 0 && !ccx_encoders_helpers_settings.no_type_setting) // Open italics
 		{
 			buffer += encode_line(buffer, (unsigned char *) "<i>");
 			strcat(tagstack, "I");
 			italics++;
 		}
-		if (has_ita == 0 && italics && !ccx_options.notypesetting) // Close italics
+		if (has_ita == 0 && italics && !ccx_encoders_helpers_settings.no_type_setting) // Close italics
 		{
 			buffer = close_tag(buffer, tagstack, 'I', &underlined, &italics, &changed_font);
 		}
 		int bytes = 0;
-		switch (ccx_options.encoding)
+		switch (ccx_encoders_helpers_settings.encoding)
 		{
 		case CCX_ENC_UTF_8:
 			bytes = get_char_in_utf_8(buffer, line[i]);
@@ -225,11 +261,10 @@ unsigned get_decoder_line_encoded(unsigned char *buffer, int line_num, struct ei
 	}
 	buffer = close_tag(buffer, tagstack, 'A', &underlined, &italics, &changed_font);
 	if (underlined || italics || changed_font)
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "Not all tags closed in encoding, this is a bug, please report.\n");
+		ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "Not all tags closed in encoding, this is a bug, please report.\n");
 	*buffer = 0;
 	return (unsigned)(buffer - orig); // Return length
 }
-
 
 /*void delete_all_lines_but_current(ccx_decoder_608_context *context, struct eia608_screen *data, int row)
 {
@@ -254,51 +289,115 @@ used=encode_line (ctx->buffer,(unsigned char *) string);
 fwrite (ctx->buffer,used,1,fh);
 }*/
 
-void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *context)
+int add_word(const char *word)
 {
-	unsigned h1, m1, s1, ms1;
-	unsigned h2, m2, s2, ms2;
-	LLONG ms_start;
-	int with_data = 0;
-
-	for (int i = 0; i<15; i++)
+	char *new_lower;
+	char *new_correct;
+	char **ptr_lower;
+	char **ptr_correct;
+	int i;
+	if (spell_words == spell_capacity)
 	{
-		if (data->row_used[i])
-			with_data = 1;
+		// Time to grow
+		spell_capacity += 50;
+		ptr_lower = (char **)realloc(spell_lower, sizeof (char *)*
+			spell_capacity);
+		ptr_correct = (char **)realloc(spell_correct, sizeof (char *)*
+			spell_capacity);
 	}
-	if (!with_data)
-		return;
-
-	ms_start = data->start_time;
-
-	ms_start += subs_delay;
-	if (ms_start<0) // Drop screens that because of subs_delay start too early
-		return;
-	int time_reported = 0;
-	for (int i = 0; i<15; i++)
+	size_t len = strlen(word);
+	new_lower = (char *)malloc(len + 1);
+	new_correct = (char *)malloc(len + 1);
+	if (ptr_lower == NULL || ptr_correct == NULL ||
+		new_lower == NULL || new_correct == NULL)
 	{
-		if (data->row_used[i])
+		spell_capacity = 0;
+		for (i = 0; i < spell_words; i++)
 		{
-			fprintf(stderr, "###SUBTITLE#");
-			if (!time_reported)
-			{
-				LLONG ms_end = data->end_time;
-				mstotime(ms_start, &h1, &m1, &s1, &ms1);
-				mstotime(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
-				// Note, only MM:SS here as we need to save space in the preview window
-				fprintf(stderr, "%02u:%02u#%02u:%02u#",
-					h1 * 60 + m1, s1, h2 * 60 + m2, s2);
-				time_reported = 1;
-			}
-			else
-				fprintf(stderr, "##");
+			freep(&spell_lower[spell_words]);
+			freep(&spell_correct[spell_words]);
+		}
+		freep(&spell_lower);
+		freep(&spell_correct);
+		freep(&ptr_lower);
+		freep(&ptr_correct);
+		freep(&new_lower);
+		freep(&new_correct);
+		spell_words = 0;
+		return -1;
+	}
+	else
+	{
+		spell_lower = ptr_lower;
+		spell_correct = ptr_correct;
+	}
+	strcpy(new_correct, word);
+	for (size_t i = 0; i<len; i++)
+	{
+		char c = new_correct[i];
+		c = tolower(c); // TO-DO: Add Spanish characters
+		new_lower[i] = c;
+	}
+	new_lower[len] = 0;
+	spell_lower[spell_words] = new_lower;
+	spell_correct[spell_words] = new_correct;
+	spell_words++;
+	return 0;
+}
 
-			// We don't capitalize here because whatever function that was used
-			// before to write to file already took care of it.
-			int length = get_decoder_line_encoded_for_gui(subline, i, data);
-			fwrite(subline, 1, length, stderr);
-			fwrite("\n", 1, 1, stderr);
+
+int add_built_in_words()
+{
+	if (!spell_builtin_added)
+	{
+		int i = 0;
+		while (spell_builtin[i] != NULL)
+		{
+			if (add_word(spell_builtin[i]))
+				return -1;
+			i++;
+		}
+		spell_builtin_added = 1;
+	}
+	return 0;
+}
+
+/**
+* @param base points to the start of the array
+* @param nb   number of element in array
+* @param size size of each element
+* @param compar Comparison function, which is called with three argument
+*               that point to the objects being compared and arg.
+* @param arg argument passed as it is to compare function
+*/
+void shell_sort(void *base, int nb, size_t size, int(*compar)(const void*p1, const void *p2, void*arg), void *arg)
+{
+	unsigned char *lbase = (unsigned char*)base;
+	unsigned char *tmp = (unsigned char*)malloc(size);
+	for (int gap = nb / 2; gap > 0; gap = gap / 2)
+	{
+		int p, j;
+		for (p = gap; p < nb; p++)
+		{
+			memcpy(tmp, lbase + (p *size), size);
+			for (j = p; j >= gap && (compar(tmp, lbase + ((j - gap) * size), arg) < 0); j -= gap)
+			{
+				memcpy(lbase + (j*size), lbase + ((j - gap) * size), size);
+			}
+			memcpy(lbase + (j *size), tmp, size);
 		}
 	}
-	fflush(stderr);
+	free(tmp);
+}
+
+void ccx_encoders_helpers_perform_shellsort_words(){
+	shell_sort(spell_lower, spell_words, sizeof(*spell_lower), string_cmp2, NULL);
+	shell_sort(spell_correct, spell_words, sizeof(*spell_correct), string_cmp2, NULL);
+}
+
+void ccx_encoders_helpers_setup(enum ccx_encoding_type encoding,int no_font_color,int no_type_setting,int trim_subs){
+	ccx_encoders_helpers_settings.encoding = encoding;
+	ccx_encoders_helpers_settings.no_font_color = no_font_color;
+	ccx_encoders_helpers_settings.no_type_setting = no_type_setting;
+	ccx_encoders_helpers_settings.trim_subs = trim_subs;
 }

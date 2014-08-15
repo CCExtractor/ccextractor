@@ -1,7 +1,7 @@
-#ifndef __608_H__
-
 #include "ccx_decoders_common.h"
 #include "ccx_decoders_xds.h"
+
+#ifndef __608_H__
 
 extern LLONG ts_start_of_xds;
 
