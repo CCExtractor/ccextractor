@@ -1,6 +1,7 @@
 #ifndef __608_H__
 
 #include "ccx_common_platform.h"
+#include "ccx_common_structs.h"
 #include "ccx_decoders_structs.h"
 
 extern LLONG ts_start_of_xds;

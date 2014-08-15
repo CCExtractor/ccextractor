@@ -1,6 +1,7 @@
 #ifndef CCX_DECODERS_STRUCTS_H
 
 #include "ccx_common_platform.h"
+#include "ccx_common_constants.h"
 
 // Define max width in characters/columns on the screen
 #define CCX_DECODER_608_SCREEN_WIDTH  32

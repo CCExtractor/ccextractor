@@ -2,6 +2,7 @@
 #define _CCX_ENCODERS_HELPERS_H
 
 #include "ccx_common_common.h"
+#include "ccx_common_constants.h"
 #include "ccx_decoders_structs.h"
 #include "ccx_decoders_608.h"
 

@@ -13,6 +13,7 @@
 
 #include "ccx_encoders_common.h"
 #include "ccx_decoders_608.h"
+#include "ccx_decoders_xds.h"
 #include "ccx_decoders_708.h"
 #include "bitstream.h"
 
