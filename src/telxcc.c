@@ -911,16 +911,12 @@ void tlt_read_rcwt() {
 	if (buf == NULL)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory");
 
-	int nread = 0;
-
 	while(1) {
-
 		buffered_read(buf, len);
 		past += result;
-		nread += (int) result;
 
 		if (result != len) {
-			end_of_file=1;
+			end_of_file = 1;
 			return;
 		}
 
