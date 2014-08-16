@@ -1,3 +1,7 @@
+0.73 - GSOC
+-----------
+- Added support of BIN format for Teletext
+
 0.72 - GSOC
 -----------
 - Fix for WTV files with incorrect timing
