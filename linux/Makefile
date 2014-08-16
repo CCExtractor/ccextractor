@@ -41,9 +41,9 @@ LDFLAGS+= $(shell pkg-config --libs tesseract)
 endif
 ifeq ($(ENABLE_FFMPEG),yes)
 CFLAGS+=-DENABLE_FFMPEG
-CFLAGS+= $(shell pkg-config --libs libavcodec)
-CFLAGS+= $(shell pkg-config --libs libavformat)
-CFLAGS+= $(shell pkg-config --libs libavutil)
+CFLAGS+= $(shell pkg-config --cflags libavcodec)
+CFLAGS+= $(shell pkg-config --cflags libavformat)
+CFLAGS+= $(shell pkg-config --cflags libavutil)
 LDFLAGS+= $(shell pkg-config --libs libavcodec )
 LDFLAGS+= $(shell pkg-config --libs libavformat )
 LDFLAGS+= $(shell pkg-config --libs libavutil )
