@@ -917,6 +917,7 @@ void tlt_read_rcwt() {
 
 		if (result != len) {
 			end_of_file = 1;
+			free(buf);
 			return;
 		}
 
