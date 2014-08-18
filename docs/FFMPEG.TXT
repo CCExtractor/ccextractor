@@ -1,0 +1,58 @@
+Overview
+========
+FFmpeg Intigration was done to support multiple encapsulator.
+
+Dependecy
+=========
+FFmpeg library's
+
+Download and Install FFmpeg on your linux pc.
+---------------------------------------------
+
+Download latest source code from following link
+https://ffmpeg.org/download.html
+
+then following command to install ffmpeg
+./configure && make && make install
+
+Note:If you installed ffmpeg on non standurd location, please change/update your
+	 enviorment variable $PATH and $LD_LIBRARY_PATH
+
+Download and Install FFmpeg on your Windows pc.
+----------------------------------------------
+Download prebuild library from following link
+http://ffmpeg.zeranoe.com/builds/
+
+You need to download Shared Versions to run the program and Dev Versions to compile.
+
+How to compile ccextractor
+==========================
+
+In Linux
+--------
+make ENABLE_FFMPEG=yes
+
+On Windows
+----------
+put the path of libs/include of ffmpeg library in library paths.
+step 1) In visual studio 2013 right click <Project> and select property.
+step 2) Select Configuration properties in left panel(column) of property.
+step 3) Select VC++ Directory.
+step 4) In the right pane, in the right-hand column of the VC++ Directory property,
+        open the drop-down menu and choose Edit.
+Step 5) Add path of Directory where you have kept uncompressed library of FFmpeg.
+
+
+Set preprocessor flag ENABLE_FFMPEG=1
+Step 1)In visual studio 2013 right click <Project> and select property.
+Step 2)In the left panel, select Configuration Properties, C/C++, Preprocessor.
+Step 3)In the right panel, in the right-hand column of the Preprocessor Definitions property, open the drop-down menu and choose Edit.
+Step 4)In the Preprocessor Definitions dialog box, add ENABLE_FFMPEG=1. Choose OK to save your changes.
+
+Add library in linker
+step 1)Open property of project
+Step 2)Select Configuration properties
+Step 3)Select Linker in left panel(column)
+Step 4)Select Input
+Step 5)Select Additional dependencies in right panel
+Step 6)Add all FFmpeg's lib in new line

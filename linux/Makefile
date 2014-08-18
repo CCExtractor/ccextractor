@@ -1,12 +1,15 @@
 SHELL = /bin/sh
 
 CC = gcc
-
+SYS := $(shell gcc -dumpmachine)
 CFLAGS = -O3 -std=gnu99
 INCLUDE = -I../src/gpacmp4/ -I../src/libpng -I../src/zlib
 ALL_FLAGS = -Wno-write-strings -D_FILE_OFFSET_BITS=64
 LDFLAGS = -lm
 
+ifneq (, $(findstring linux, $(SYS)))
+CFLAGS +=-DGPAC_CONFIG_LINUX
+endif
 TARGET = ccextractor
 
 OBJS_DIR = objs
@@ -41,9 +44,9 @@ LDFLAGS+= $(shell pkg-config --libs tesseract)
 endif
 ifeq ($(ENABLE_FFMPEG),yes)
 CFLAGS+=-DENABLE_FFMPEG
-CFLAGS+= $(shell pkg-config --libs libavcodec)
-CFLAGS+= $(shell pkg-config --libs libavformat)
-CFLAGS+= $(shell pkg-config --libs libavutil)
+CFLAGS+= $(shell pkg-config --cflags libavcodec)
+CFLAGS+= $(shell pkg-config --cflags libavformat)
+CFLAGS+= $(shell pkg-config --cflags libavutil)
 LDFLAGS+= $(shell pkg-config --libs libavcodec )
 LDFLAGS+= $(shell pkg-config --libs libavformat )
 LDFLAGS+= $(shell pkg-config --libs libavutil )

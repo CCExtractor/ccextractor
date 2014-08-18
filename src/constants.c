@@ -8,7 +8,7 @@
 //4-5       0050    Program version number
 //6-7       0001    File format version
 //8-10      000000  Padding, required  :-)
-const unsigned char rcwt_header[11]={0xCC, 0xCC, 0xED, 0xCC, 0x00, 0x50, 0, 1, 0, 0, 0};
+unsigned char rcwt_header[11]={0xCC, 0xCC, 0xED, 0xCC, 0x00, 0x50, 0, 1, 0, 0, 0};
 
 const unsigned char BROADCAST_HEADER[]={0xff, 0xff, 0xff, 0xff};
 const unsigned char LITTLE_ENDIAN_BOM[]={0xff, 0xfe};
