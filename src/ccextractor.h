@@ -121,6 +121,7 @@ struct ccx_s_options // Options from user parameters
 	unsigned send_to_srv;
 	char *tcpport;
 	char *tcp_password;
+	char *tcp_desc;
 	char *srv_addr;
 	char *srv_port;
 	int line_terminator_lf; // 0 = CRLF, 1=LF

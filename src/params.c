@@ -429,6 +429,8 @@ void usage (void)
 	mprint ("            -tcp port: Reads the input data in BIN format according to CCExtractor's\n");
 	mprint ("                       protocol, listening specified port on the local host\n");
 	mprint ("            -tcppassword password: Sets server password for new connections to tcp server\n");
+	mprint ("            -tcpdesc description: Sends to the server short description about captions e.g.\n");
+	mprint ("                                  channel name or file name\n");
 	mprint ("Options that affect what will be processed:\n");
 	mprint ("          -1, -2, -12: Output Field 1 data, Field 2 data, or both\n");
 	mprint ("                       (DEFAULT is -1)\n");
@@ -1662,6 +1664,14 @@ void parse_parameters (int argc, char *argv[])
 		if (strcmp (argv[i],"-tcppassword")==0 && i<argc-1)
 		{
 			ccx_options.tcp_password = argv[i + 1];
+
+			i++;
+			continue;
+		}
+
+		if (strcmp (argv[i],"-tcpdesc")==0 && i<argc-1)
+		{
+			ccx_options.tcp_desc = argv[i + 1];
 
 			i++;
 			continue;
