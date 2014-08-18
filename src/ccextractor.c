@@ -5,7 +5,6 @@ License: GPL 2.0
 #include <stdio.h>
 #include "ccextractor.h"
 #include "configuration.h"
-#include "cc_encoders_common.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "ffmpeg_intgr.h"
@@ -14,42 +13,14 @@ void xds_cea608_test();
 
 struct ccx_s_options ccx_options;
 
-// These are the default settings for plain transcripts. No times, no CC or caption mode, and no XDS.
-ccx_transcript_format ccx_default_transcript_settings = 
-{ 
-	.showStartTime = 0, 
-	.showEndTime = 0, 
-	.showMode = 0,
-	.showCC = 0, 	
-	.relativeTimestamp = 1, 
-	.xds = 0, 
-	.useColors = 1 
-};
-
 extern unsigned char *filebuffer;
 extern int bytesinbuffer; // Number of bytes we actually have on buffer
-
-// PTS timing related stuff
-LLONG min_pts, max_pts, sync_pts;
-LLONG fts_now; // Time stamp of current file (w/ fts_offset, w/o fts_global)
-LLONG fts_offset; // Time before first sync_pts
-LLONG fts_fc_offset; // Time before first GOP
-LLONG fts_max; // Remember the maximum fts that we saw in current file
-LLONG fts_global=0; // Duration of previous files (-ve mode), see c1global
 
 // global TS PCR value, moved from telxcc. TODO: Rename, see if how to relates to fts_global
 uint32_t global_timestamp = 0, min_global_timestamp=0;
 int global_timestamp_inited=0;
 
-// Count 608 (per field) and 708 blocks since last set_fts() call
-int cb_field1, cb_field2, cb_708;
 int saw_caption_block;
-
-int pts_set; //0 = No, 1 = received, 2 = min_pts set
-unsigned long long  max_dif = 5;
-unsigned pts_big_change;
-
-int MPEG_CLOCK_FREQ = 90000; // This "constant" is part of the standard
 
 // Stuff common to both loops
 unsigned char *buffer = NULL;
@@ -76,7 +47,6 @@ int stat_replay4000headers;
 int stat_dishheaders;
 int stat_hdtv;
 int stat_divicom;
-unsigned total_frames_count;
 unsigned total_pulldownfields;
 unsigned total_pulldownframes;
 int cc_stats[4];
@@ -84,28 +54,19 @@ int false_pict_header;
 int resets_708=0;
 
 /* GOP-based timing */
-struct gop_time_code gop_time, first_gop_time, printed_gop;
 int saw_gop_header=0;
 int frames_since_last_gop=0;
-LLONG fts_at_gop_start=0;
+
 
 /* Time info for timed-transcript */
-LLONG ts_start_of_xds=-1; // Time at which we switched to XDS mode, =-1 hasn't happened yet
-uint64_t utc_refvalue=UINT64_MAX;  /* _UI64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
-
 int max_gop_length=0; // (Maximum) length of a group of pictures
 int last_gop_length=0; // Length of the previous group of pictures
-int frames_since_ref_time=0;
 
-int gop_rollover=0;
 // int hex_mode=HEX_NONE; // Are we processing an hex file?
-
-/* Detect gaps in caption stream - only used for dvr-ms/NTSC. */
-int CaptionGap=0;
 
 /* 608 contexts - note that this shouldn't be global, they should be 
 per program */
-struct s_context_cc608 context_cc608_field_1, context_cc608_field_2;
+ccx_decoder_608_context context_cc608_field_1, context_cc608_field_2;
 
 /* Parameters */
 void init_options (struct ccx_s_options *options)
@@ -114,10 +75,15 @@ void init_options (struct ccx_s_options *options)
 	options->buffer_input = 1; // In Windows buffering seems to help
 #else
 	options->buffer_input = 0; // In linux, not so much.
-#endif
-	options->direct_rollup=0; // Write roll-up captions directly instead of line by line?
+#endif	
 	options->nofontcolor=0; // 1 = don't put <font color> tags 
 	options->notypesetting=0; // 1 = Don't put <i>, <u>, etc typesetting tags
+
+	options->settings_608.direct_rollup = 0;
+	options->settings_608.no_rollup = 0;
+	options->settings_608.force_rollup = 0;
+	options->settings_608.screens_to_process = -1;
+	options->settings_608.default_color = COL_TRANSPARENT; // Defaults to transparant/no-color.
 
 	/* Select subtitle codec */
 	options->codec = CCX_CODEC_ANY;
@@ -131,8 +97,6 @@ void init_options (struct ccx_s_options *options)
 	options->binary_concat=1; // Disabled by -ve or --videoedited
 	options->use_gop_as_pts = 0; // Use GOP instead of PTS timing (0=do as needed, 1=always, -1=never)
 	options->fix_padding = 0; // Replace 0000 with 8080 in HDTV (needed for some cards)
-	options->norollup=0; // If 1, write one line at a time
-	options->forced_ru=0; // 0=Disabled, 1, 2 or 3=max lines in roll-up mode
 	options->trim_subs=0; // "	Remove spaces at sides?	"
 	options->gui_mode_reports=0; // If 1, output in stderr progress updates so the GUI can grab them
 	options->no_progress_bar=0; // If 1, suppress the output of the progress to stdout
@@ -158,9 +122,9 @@ void init_options (struct ccx_s_options *options)
 	options->autodash=0; // Add dashes (-) before each speaker automatically?
 	options->teletext_mode=CCX_TXT_AUTO_NOT_YET_FOUND; // 0=Disabled, 1 = Not found, 2=Found
 
-	options->transcript_settings = ccx_default_transcript_settings;
+	options->transcript_settings = ccx_encoders_default_transcript_settings;
 	options->millis_separator=',';
-	options->screens_to_process=-1; // How many screenfuls we want?
+	
 	options->encoding = CCX_ENC_UTF_8;
 	options->write_format=CCX_OF_SRT; // 0=Raw, 1=srt, 2=SMI
 	options->date_format=ODF_NONE; 
@@ -181,12 +145,12 @@ void init_options (struct ccx_s_options *options)
 	options->send_to_srv = 0;
 	options->tcpport = NULL;
 	options->tcp_password = NULL;
+	options->tcp_desc = NULL;
 	options->srv_addr = NULL;
 	options->srv_port = NULL;
 	options->line_terminator_lf=0; // 0 = CRLF
 	options->noautotimeref=0; // Do NOT set time automatically?
-	options->input_source=CCX_DS_FILE; // Files, stdin or network
-	options->cc608_default_color=COL_TRANSPARENT;
+	options->input_source=CCX_DS_FILE; // Files, stdin or network	
 }
 
 enum ccx_stream_mode_enum stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND; // Data parse mode: 0=elementary, 1=transport, 2=program stream, 3=ASF container
@@ -211,15 +175,6 @@ const char *extension; // Output extension
 int current_file=-1; // If current_file!=1, we are processing *inputfile[current_file]
 
 int num_input_files=0; // How many?
-int do_cea708=0; // Process 708 data?
-int cea708services[63]; // [] -> 1 for services to be processed
-
-// Case arrays
-char **spell_lower=NULL;
-char **spell_correct=NULL;
-int spell_words=0;
-int spell_capacity=0;
-
 
 /* Hauppauge support */
 unsigned hauppauge_warning_shown=0; // Did we detect a possible Hauppauge capture and told the user already?
@@ -252,25 +207,23 @@ int main(int argc, char *argv[])
 	struct cc_subtitle dec_sub;
 	void *ffmpeg_ctx = NULL;
 
+	// Need to set the 608 data for the report to the correct variable.
+	file_report.data_from_608 = ccx_decoder_608_report;
+	// Same applies for 708 data
+	file_report.data_from_708 = ccx_decoder_708_report;
+
 	// Initialize some constants
 	init_ts();
 	init_avc();
 
 	init_options (&ccx_options);
 
+	// Init timing
+	ccx_common_timing_init(&past,ccx_options.nosync);
+
 	// Prepare write structures
 	init_write(&wbout1);
-	init_write(&wbout2);
-
-	// Prepare 608 context
-	init_context_cc608(&context_cc608_field_1,1);
-	init_context_cc608(&context_cc608_field_2,2);	
-	context_cc608_field_1.out = &wbout1;
-	context_cc608_field_2.out = &wbout2;
-
-	// Init XDS buffers
-	xds_init();
-	//xds_cea608_test();
+	init_write(&wbout2);	
 	
 	// Prepare time structures
 	init_boundary_time (&ccx_options.extraction_start);
@@ -284,10 +237,11 @@ int main(int argc, char *argv[])
 
 	int show_myth_banner = 0;
 	
-	memset (&cea708services[0],0,63*sizeof (int));
+	memset (&cea708services[0],0,CCX_DECODERS_708_MAX_SERVICES*sizeof (int)); // Cannot (yet) be moved because it's needed in parse_parameters.
 	memset (&dec_sub, 0,sizeof(dec_sub));
+
 	parse_configuration(&ccx_options);
-	parse_parameters (argc,argv);
+	parse_parameters (argc,argv);	
 
 	if (num_input_files==0 && ccx_options.input_source==CCX_DS_FILE)
 	{
@@ -310,6 +264,11 @@ int main(int argc, char *argv[])
 	{
 		fatal(EXIT_TOO_MANY_INPUT_FILES, "TCP mode is not compatible with input files.\n");
 	}
+
+	wbout1.multiple_files = num_input_files > 0;
+	wbout1.first_input_file = inputfile[0];
+	wbout2.multiple_files = num_input_files > 0;
+	wbout2.first_input_file = inputfile[0];
 
 	// teletext page number out of range
 	if ((tlt_config.page != 0) && ((tlt_config.page < 100) || (tlt_config.page > 899))) {
@@ -357,7 +316,7 @@ int main(int argc, char *argv[])
 			extension = ".dvdraw";
 			break;
 		default:
-			fatal (EXIT_BUG_BUG, "write_format doesn't have any legal value, this is a bug.\n");			
+			fatal (CCX_COMMON_EXIT_BUG_BUG, "write_format doesn't have any legal value, this is a bug.\n");			
 	}
 	params_dump();
 
@@ -433,7 +392,7 @@ int main(int argc, char *argv[])
 
 	if (ccx_options.send_to_srv)
 	{
-		connect_to_srv(ccx_options.srv_addr, ccx_options.srv_port);
+		connect_to_srv(ccx_options.srv_addr, ccx_options.srv_port, ccx_options.tcp_desc);
 	}
 
 	if (ccx_options.write_format!=CCX_OF_NULL)
@@ -457,7 +416,7 @@ int main(int argc, char *argv[])
 				wbout1.fh=open (wbout1.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 				if (wbout1.fh==-1)
 				{
-					fatal (EXIT_FILE_CREATION_FAILED, "Failed\n");
+					fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Failed\n");
 				}
 			}
 		}
@@ -489,7 +448,7 @@ int main(int argc, char *argv[])
 					wbout1.fh=open (wbout1.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 					if (wbout1.fh==-1)
 					{
-						fatal (EXIT_FILE_CREATION_FAILED, "Failed (errno=%d)\n",errno);
+						fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Failed (errno=%d)\n", errno);
 					}
 				}
 				switch (ccx_options.write_format)
@@ -539,7 +498,7 @@ int main(int argc, char *argv[])
 					wbout2.fh=open (wbout2.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 					if (wbout2.fh==-1)
 					{
-						fatal (EXIT_FILE_CREATION_FAILED, "Failed\n");				
+						fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Failed\n");
 					}
 					if(ccx_options.write_format == CCX_OF_RAW)
 						writeraw (BROADCAST_HEADER,sizeof (BROADCAST_HEADER),&wbout2);
@@ -583,22 +542,25 @@ int main(int argc, char *argv[])
 	{
 		if ((fh_out_elementarystream = fopen (ccx_options.out_elementarystream_filename,"wb"))==NULL)
 		{
-			fatal (EXIT_FILE_CREATION_FAILED, "Unable to open clean file: %s\n",ccx_options.out_elementarystream_filename);
+			fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to open clean file: %s\n", ccx_options.out_elementarystream_filename);
 		}
-	}
-	if (ccx_options.line_terminator_lf)
-		encoded_crlf_length = encode_line (encoded_crlf,(unsigned char *) "\n"); 
-	else
-		encoded_crlf_length = encode_line (encoded_crlf,(unsigned char *) "\r\n"); 
-
-	encoded_br_length = encode_line (encoded_br, (unsigned char *) "<br>");
-	
+	}	
 
 	build_parity_table();
 
 	// Initialize HDTV caption buffer
 	init_hdcc();
-	init_708(); // Init 708 decoders
+
+	// Initialize libraries
+	init_libraries();
+
+	if (ccx_options.line_terminator_lf)
+		encoded_crlf_length = encode_line(encoded_crlf, (unsigned char *) "\n");
+	else
+		encoded_crlf_length = encode_line(encoded_crlf, (unsigned char *) "\r\n");
+
+	encoded_br_length = encode_line(encoded_br, (unsigned char *) "<br>");
+	
 
 	time_t start, final;
 	time(&start);
@@ -699,7 +661,7 @@ int main(int argc, char *argv[])
 #endif
 				case CCX_SM_MYTH:
 				case CCX_SM_AUTODETECT:
-					fatal(EXIT_BUG_BUG, "Cannot be reached!");
+					fatal(CCX_COMMON_EXIT_BUG_BUG, "Cannot be reached!");
 					break;
 			}
 		}
@@ -740,12 +702,31 @@ int main(int argc, char *argv[])
 				}
 				break;					
 		}
+
+		// Disable sync check for raw formats - they have the right timeline.
+		// Also true for bin formats, but -nosync might have created a
+		// broken timeline for debug purposes.
+		// Disable too in MP4, specs doesn't say that there can't be a jump
+		switch (stream_mode)
+		{
+		case CCX_SM_MCPOODLESRAW:
+		case CCX_SM_RCWT:
+		case CCX_SM_MP4:
+#ifdef WTV_DEBUG
+		case CCX_SM_HEX_DUMP:
+#endif
+			ccx_common_timing_settings.disable_sync_check = 1;
+			break;
+		default:
+			break;
+		}
 				
 		switch (stream_mode)
 		{
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
 				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
 					ccx_options.use_gop_as_pts = 1; // Force GOP timing for ES
+				ccx_common_timing_settings.is_elementary_stream = 1;
 			case CCX_SM_TRANSPORT:
 			case CCX_SM_PROGRAM:
 			case CCX_SM_ASF:
@@ -780,31 +761,31 @@ int main(int argc, char *argv[])
 				break;
 #endif
 			case CCX_SM_AUTODETECT:
-				fatal(EXIT_BUG_BUG, "Cannot be reached!");
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "Cannot be reached!");
 				break;
 		}
 
 		mprint("\n");
-		dbg_print(CCX_DMT_608, "\nTime stamps after last caption block was written:\n");
-		dbg_print(CCX_DMT_608, "Last time stamps:  PTS: %s (%+2dF)		",
+		dbg_print(CCX_DMT_DECODER_608, "\nTime stamps after last caption block was written:\n");
+		dbg_print(CCX_DMT_DECODER_608, "Last time stamps:  PTS: %s (%+2dF)		",
 			   print_mstime( (LLONG) (sync_pts/(MPEG_CLOCK_FREQ/1000)
 								   +frames_since_ref_time*1000.0/current_fps) ),
 			   frames_since_ref_time);
-		dbg_print(CCX_DMT_608, "GOP: %s	  \n", print_mstime(gop_time.ms) );
+		dbg_print(CCX_DMT_DECODER_608, "GOP: %s	  \n", print_mstime(gop_time.ms) );
 
 		// Blocks since last PTS/GOP time stamp.
-		dbg_print(CCX_DMT_608, "Calc. difference:  PTS: %s (%+3lldms incl.)  ",
+		dbg_print(CCX_DMT_DECODER_608, "Calc. difference:  PTS: %s (%+3lldms incl.)  ",
 			print_mstime( (LLONG) ((sync_pts-min_pts)/(MPEG_CLOCK_FREQ/1000)
 			+ fts_offset + frames_since_ref_time*1000.0/current_fps)),
 			fts_offset + (LLONG) (frames_since_ref_time*1000.0/current_fps) );
-		dbg_print(CCX_DMT_608, "GOP: %s (%+3dms incl.)\n",
+		dbg_print(CCX_DMT_DECODER_608, "GOP: %s (%+3dms incl.)\n",
 			print_mstime((LLONG)(gop_time.ms
 			-first_gop_time.ms
 			+get_fts_max()-fts_at_gop_start)),
 			(int)(get_fts_max()-fts_at_gop_start));
 		// When padding is active the CC block time should be within
 		// 1000/29.97 us of the differences.
-		dbg_print(CCX_DMT_608, "Max. FTS:	   %s  (without caption blocks since then)\n",
+		dbg_print(CCX_DMT_DECODER_608, "Max. FTS:	   %s  (without caption blocks since then)\n",
 			print_mstime(get_fts_max()));
 
 		if (stat_hdtv)
@@ -977,4 +958,49 @@ int main(int argc, char *argv[])
 		mprint ("something is broken it will be fixed. Thanks\n");		
 	}
 	return EXIT_OK;
+}
+
+void init_libraries(){
+	// Set logging functions for libraries
+	ccx_common_logging.debug_ftn = &dbg_print;
+	ccx_common_logging.debug_mask = ccx_options.debug_mask;
+	ccx_common_logging.fatal_ftn = &fatal;
+	ccx_common_logging.log_ftn = &mprint;
+	ccx_common_logging.gui_ftn = &activity_library_process;
+
+	// Init shared decoder settings
+	ccx_decoders_common_settings_init(subs_delay, ccx_options.write_format);
+	// Init encoder helper variables
+	ccx_encoders_helpers_setup(ccx_options.encoding, ccx_options.nofontcolor, ccx_options.notypesetting, ccx_options.trim_subs);
+
+	// Prepare 608 context
+	context_cc608_field_1 = ccx_decoder_608_init_library(
+		ccx_options.settings_608,
+		ccx_options.cc_channel,
+		1,
+		ccx_options.trim_subs,
+		ccx_options.encoding,
+		&processed_enough,
+		&cc_to_stdout
+		);
+	context_cc608_field_2 = ccx_decoder_608_init_library(
+		ccx_options.settings_608,
+		ccx_options.cc_channel,
+		2,
+		ccx_options.trim_subs,
+		ccx_options.encoding,
+		&processed_enough,
+		&cc_to_stdout
+		);
+
+	// Init 708 decoder(s)
+	ccx_decoders_708_init_library(basefilename,extension,ccx_options.print_file_reports);
+
+	// Set output structures for the 608 decoder
+	context_cc608_field_1.out = &wbout1;
+	context_cc608_field_2.out = &wbout2;
+
+	// Init XDS buffers
+	ccx_decoders_xds_init_library(&ccx_options.transcript_settings, subs_delay, ccx_options.millis_separator);
+	//xds_cea608_test();
 }

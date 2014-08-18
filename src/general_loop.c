@@ -5,9 +5,8 @@
 #include <unistd.h>
 #endif
 
-#include "708.h" 
 #include "dvb_subtitle_decoder.h"
-#include "cc_encoders_common.h"
+#include "ccx_encoders_common.h"
 // IMPORTED TRASH INFO, REMOVE
 extern long num_nal_unit_type_7;
 extern long num_vcl_hrd;
@@ -20,8 +19,6 @@ extern long num_unexpected_sei_length;
 unsigned current_vert_size = 0;
 unsigned current_aspect_ratio = 0;
 unsigned current_frame_rate = 4; // Assume standard fps, 29.97
-double current_fps = (double) 30000.0 / 1001; /* 29.97 */ // TODO: Get from framerates_values[] instead
-LLONG current_pts = 0;
 unsigned rollover_bits = 0; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
 LLONG result; // Number of bytes read/skipped in last read operation
 int end_of_file=0; // End of file?
@@ -30,9 +27,6 @@ int end_of_file=0; // End of file?
 const static unsigned char DO_NOTHING[] = {0x80, 0x80};
 LLONG inbuf = 0; // Number of bytes loaded in buffer 
 int ccx_bufferdatatype = CCX_PES; // Can be RAW, PES, H264 or Hauppage
-
-int current_tref = 0; // Store temporal reference of current frame
-enum ccx_frame_type current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
 
 // Remember if the last header was valid. Used to suppress too much output
 // and the expected unrecognized first header for TiVo files.
@@ -577,7 +571,7 @@ void general_loop(void *enc_ctx)
                 i = wtv_getmoredata();
                 break;
             default:
-                fatal(EXIT_BUG_BUG, "Impossible stream_mode");
+                fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible stream_mode");
         }
 
         position_sanity_check();
@@ -669,7 +663,7 @@ void general_loop(void *enc_ctx)
             got = process_avc(buffer, inbuf,&dec_sub);
         }
         else
-            fatal(EXIT_BUG_BUG, "Unknown data type!");
+            fatal(CCX_COMMON_EXIT_BUG_BUG, "Unknown data type!");
 
         if (got>inbuf)
         {
@@ -737,7 +731,7 @@ void rcwt_loop(void *enc_ctx)
 	memset(&dec_sub, 0,sizeof(dec_sub));
     // As BUFSIZE is a macro this is just a reminder
     if (BUFSIZE < (3*0xFFFF + 10))
-        fatal (EXIT_BUG_BUG, "BUFSIZE too small for RCWT caption block.\n");
+        fatal (CCX_COMMON_EXIT_BUG_BUG, "BUFSIZE too small for RCWT caption block.\n");
 
     // Generic buffer to hold some data
     parsebuf = (unsigned char*)malloc(1024);
@@ -770,6 +764,12 @@ void rcwt_loop(void *enc_ctx)
     else
     {
         fatal(EXIT_MISSING_RCWT_HEADER, "Missing RCWT header. Abort.\n");
+    }
+
+    if (parsebuf[6] == 0 && parsebuf[7] == 2)
+    {
+        tlt_read_rcwt();
+        return;
     }
 
     // Initialize first time. As RCWT files come with the correct FTS the

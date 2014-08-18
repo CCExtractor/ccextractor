@@ -1,11 +1,24 @@
-#include "ccextractor.h"
-#include "cc_decoders_common.h"
-#include "cc_encoders_common.h"
+//#include "ccextractor.h"
+#include "ccx_decoders_common.h"
+#include "ccx_encoders_common.h"
 #include "spupng_encoder.h"
 #include "608_spupng.h"
 #include "utility.h"
-#include "xds.h"
 #include "ocr.h"
+#include "ccx_decoders_608.h"
+#include "ccx_decoders_xds.h"
+
+// These are the default settings for plain transcripts. No times, no CC or caption mode, and no XDS.
+ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
+{
+	.showStartTime = 0,
+	.showEndTime = 0,
+	.showMode = 0,
+	.showCC = 0,
+	.relativeTimestamp = 1,
+	.xds = 0,
+	.useColors = 1
+};
 
 static const char *sami_header= // TODO: Revise the <!-- comments
 "<SAMI>\n\
@@ -34,7 +47,7 @@ void write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			sprintf ((char *) str,"</BODY></SAMI>\n");
 			if (ccx_options.encoding!=CCX_ENC_UNICODE)
 			{
-				dbg_print(CCX_DMT_608, "\r%s\n", str);
+				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
 			used=encode_line (ctx->buffer,(unsigned char *) str);
 			write(out->fh, ctx->buffer, used);
@@ -43,7 +56,7 @@ void write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			sprintf ((char *) str,"</div></body></tt>\n");
 			if (ccx_options.encoding!=CCX_ENC_UNICODE)
 			{
-				dbg_print(CCX_DMT_608, "\r%s\n", str);
+				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
 			used=encode_line (ctx->buffer,(unsigned char *) str);
 			write (out->fh, ctx->buffer,used);
@@ -76,6 +89,9 @@ void write_subtitle_file_header(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			write(out->fh, ctx->buffer, used);
 			break;
 		case CCX_OF_RCWT: // Write header
+			if (ccx_options.teletext_mode == CCX_TXT_IN_USE)
+				rcwt_header[7] = 2; // sets file format version
+
 			write(out->fh, rcwt_header, sizeof(rcwt_header));
 
 			if (ccx_options.send_to_srv)
@@ -103,11 +119,11 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		capitalize (line_number,data);
 		correct_case(line_number,data);
 	}
-	int length = get_decoder_line_basic (subline, line_number, data);
+	int length = get_decoder_line_basic (subline, line_number, data,ccx_options.trim_subs,ccx_options.encoding);
 	if (ccx_options.encoding!=CCX_ENC_UNICODE)
 	{
-		dbg_print(CCX_DMT_608, "\r");
-		dbg_print(CCX_DMT_608, "%s\n",subline);
+		dbg_print(CCX_DMT_DECODER_608, "\r");
+		dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
 	}
 	if (length>0)
 	{
@@ -193,7 +209,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context)
 {
 	int wrote_something = 0;
-	dbg_print(CCX_DMT_608, "\n- - - TRANSCRIPT caption - - -\n");
+	dbg_print(CCX_DMT_DECODER_608, "\n- - - TRANSCRIPT caption - - -\n");
 
 	for (int i=0;i<15;i++)
 	{
@@ -203,7 +219,7 @@ int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ct
 		}
 		wrote_something=1;
 	}
-	dbg_print(CCX_DMT_608, "- - - - - - - - - - - -\r\n");
+	dbg_print(CCX_DMT_DECODER_608, "- - - - - - - - - - - -\r\n");
 	return wrote_something;
 }
 int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context)
@@ -212,18 +228,20 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 	int x_pos, y_pos, width, height, i;
 	int x, y, y_off, x_off, ret;
 	uint8_t *pbuf;
-	char *filename;
+	//char *filename;
 	struct cc_bitmap* rect;
 	png_color *palette = NULL;
 	png_byte *alpha = NULL;
 #ifdef ENABLE_OCR
 	char*str = NULL;
 #endif
-	int used;
+	//int used;
+#ifdef ENABLE_OCR
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
+#endif
 	LLONG start_time, end_time;
-	char timeline[128];
+	//char timeline[128];
 	int len = 0;
 
         x_pos = -1;
@@ -591,4 +609,53 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	if (!sub->nb_data)
 		freep(&sub->data);
 	return wrote_something;
+}
+
+void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *context)
+{
+	unsigned h1, m1, s1, ms1;
+	unsigned h2, m2, s2, ms2;
+	LLONG ms_start;
+	int with_data = 0;
+
+	for (int i = 0; i<15; i++)
+	{
+		if (data->row_used[i])
+			with_data = 1;
+	}
+	if (!with_data)
+		return;
+
+	ms_start = data->start_time;
+
+	ms_start += subs_delay;
+	if (ms_start<0) // Drop screens that because of subs_delay start too early
+		return;
+	int time_reported = 0;
+	for (int i = 0; i<15; i++)
+	{
+		if (data->row_used[i])
+		{
+			fprintf(stderr, "###SUBTITLE#");
+			if (!time_reported)
+			{
+				LLONG ms_end = data->end_time;
+				mstotime(ms_start, &h1, &m1, &s1, &ms1);
+				mstotime(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
+				// Note, only MM:SS here as we need to save space in the preview window
+				fprintf(stderr, "%02u:%02u#%02u:%02u#",
+					h1 * 60 + m1, s1, h2 * 60 + m2, s2);
+				time_reported = 1;
+			}
+			else
+				fprintf(stderr, "##");
+
+			// We don't capitalize here because whatever function that was used
+			// before to write to file already took care of it.
+			int length = get_decoder_line_encoded_for_gui(subline, i, data);
+			fwrite(subline, 1, length, stderr);
+			fwrite("\n", 1, 1, stderr);
+		}
+	}
+	fflush(stderr);
 }

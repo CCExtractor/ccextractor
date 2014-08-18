@@ -1,6 +1,13 @@
 #ifndef CCX_CONSTANTS_H
 #define CCX_CONSTANTS_H
 
+#include "stdio.h"
+
+#ifndef __cplusplus
+#define false 0
+#define true 1
+#endif
+
 extern const char *framerates_types[16];
 extern const double framerates_values[16];
 
@@ -20,7 +27,7 @@ extern const unsigned char lc4[2];
 extern const unsigned char lc5[1];
 extern const unsigned char lc6[1];
 
-extern const unsigned char rcwt_header[11];
+extern unsigned char rcwt_header[11];
 
 #define ONEPASS 120 /* Bytes we can always look ahead without going out of limits */
 #define BUFSIZE (2048*1024+ONEPASS) /* 2 Mb plus the safety pass */
@@ -40,9 +47,9 @@ enum ccx_debug_message_types
 	CCX_DMT_VIDES=2,// Show video stream related information
 	CCX_DMT_TIME=4, // Show GOP and PTS timing information
 	CCX_DMT_VERBOSE=8, // Show lots of debugging output
-	CCX_DMT_608=0x10, // Show CC-608 decoder debug? 
+	CCX_DMT_DECODER_608=0x10, // Show CC-608 decoder debug? 
 	CCX_DMT_708=0x20, // Show CC-708 decoder debug? 
-	CCX_DMT_XDS=0x40, // Show XDS decoder debug?
+	CCX_DMT_DECODER_XDS=0x40, // Show XDS decoder debug?
 	CCX_DMT_CBRAW=0x80, // Caption blocks with FTS timing
 	CCX_DMT_GENERIC_NOTICES=0x100, // Generic, always displayed even if no debug is selected
 	CCX_DMT_TELETEXT=0x200, // Show teletext debug?
@@ -258,11 +265,5 @@ enum cxx_code_type
 #define CCX_TXT_AUTO_NOT_YET_FOUND		1
 #define CCX_TXT_IN_USE					2 // Positive autodetected, or forced, etc
 
-enum subtype
-{
-	CC_BITMAP,
-	CC_608,
-	CC_TEXT,
-};
 extern const char *language[4];
 #endif

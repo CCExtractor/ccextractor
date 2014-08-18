@@ -455,7 +455,7 @@ int parse_PAT (void)
 		dbg_print(CCX_DMT_PAT, "Long PAT packet (%u / %u), skipping.\n",
 			section_number, last_section_number);
 		return gotpes;
-        /* fatal(EXIT_BUG_BUG,
+        /* fatal(CCX_COMMON_EXIT_BUG_BUG,
               "Sorry, long PATs not yet supported!\n"); */
     }
 
@@ -519,7 +519,7 @@ int parse_PAT (void)
 
     if ( programm_data+4 > payload_length )
     {
-        fatal(EXIT_BUG_BUG,
+        fatal(CCX_COMMON_EXIT_BUG_BUG,
               "Sorry, PAT too long!\n");
     }
 
@@ -599,7 +599,7 @@ int parse_PAT (void)
 		if (!ccx_options.ts_forced_program_selected)
 		{
 			if (!ccx_options.ts_autoprogram)
-				fatal(EXIT_BUG_BUG, "Run ccextractor again with --program-number specifying which program\nto process.");
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "Run ccextractor again with --program-number specifying which program\nto process.");
 			else
 				mprint ("\nThe first program with a suitable CC stream will be selected.\n");
 		}

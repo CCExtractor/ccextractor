@@ -1,5 +1,5 @@
 #include "ccextractor.h"
-#include "cc_encoders_common.h"
+#include "ccx_encoders_common.h"
 #include "png.h"
 #include "spupng_encoder.h"
 #include "ocr.h"
@@ -23,8 +23,8 @@ void write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_st
 	sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u\r\n",
 			h1,m1,s1,ms1, h2,m2,s2,ms2);
 	used = encode_line(context->buffer,(unsigned char *) timeline);
-	dbg_print(CCX_DMT_608, "\n- - - SRT caption - - -\n");
-	dbg_print(CCX_DMT_608, "%s",timeline);
+	dbg_print(CCX_DMT_DECODER_608, "\n- - - SRT caption - - -\n");
+	dbg_print(CCX_DMT_DECODER_608, "%s",timeline);
 
 	write(context->out->fh, context->buffer, used);
 	int len=strlen (string);
@@ -57,15 +57,15 @@ void write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_st
 		unsigned int u = encode_line (el, begin);
 		if (ccx_options.encoding!=CCX_ENC_UNICODE)
 		{
-			dbg_print(CCX_DMT_608, "\r");
-			dbg_print(CCX_DMT_608, "%s\n",subline);
+			dbg_print(CCX_DMT_DECODER_608, "\r");
+			dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
 		}
 		write(context->out->fh, el, u);
 		write(context->out->fh, encoded_crlf, encoded_crlf_length);
 		begin+= strlen ((const char *) begin)+1;
 	}
 
-	dbg_print(CCX_DMT_608, "- - - - - - - - - - - -\r\n");
+	dbg_print(CCX_DMT_DECODER_608, "- - - - - - - - - - - -\r\n");
 
 	write(context->out->fh, encoded_crlf, encoded_crlf_length);
 	free(el);
@@ -78,20 +78,20 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	int x_pos, y_pos, width, height, i;
 	int x, y, y_off, x_off, ret;
 	uint8_t *pbuf;
-	char *filename;
+	//char *filename;
 	struct cc_bitmap* rect;
 	png_color *palette = NULL;
 	png_byte *alpha = NULL;
 #ifdef ENABLE_OCR
 	char*str = NULL;
-#endif
-	int used;
+#endif	
 	LLONG ms_start, ms_end;
 #ifdef ENABLE_OCR
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
 	char timeline[128];
 	int len = 0;
+	int used;
 #endif
 
         x_pos = -1;
@@ -250,8 +250,8 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 			h1,m1,s1,ms1, h2,m2,s2,ms2);
 	used = encode_line(context->buffer,(unsigned char *) timeline);
 
-	dbg_print(CCX_DMT_608, "\n- - - SRT caption ( %d) - - -\n", context->srt_counter);
-	dbg_print(CCX_DMT_608, "%s",timeline);
+	dbg_print(CCX_DMT_DECODER_608, "\n- - - SRT caption ( %d) - - -\n", context->srt_counter);
+	dbg_print(CCX_DMT_DECODER_608, "%s",timeline);
 
 	write (context->out->fh, context->buffer, used);
 	for (int i=0;i<15;i++)
@@ -297,7 +297,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 				center1=(first+last)/2;
 				if (colon_pos!=-1)
 				{
-					while (colon_pos<CC608_SCREEN_WIDTH &&
+					while (colon_pos<CCX_DECODER_608_SCREEN_WIDTH &&
 							(line[colon_pos]==':' ||
 							 line[colon_pos]==' ' ||
 							 line[colon_pos]==0x89))
@@ -323,8 +323,8 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 			int length = get_decoder_line_encoded (subline, i, data);
 			if (ccx_options.encoding!=CCX_ENC_UNICODE)
 			{
-				dbg_print(CCX_DMT_608, "\r");
-				dbg_print(CCX_DMT_608, "%s\n",subline);
+				dbg_print(CCX_DMT_DECODER_608, "\r");
+				dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
 			}
 			write(context->out->fh, subline, length);
 			write(context->out->fh, encoded_crlf, encoded_crlf_length);
@@ -332,7 +332,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 			// fprintf (wb->fh,encoded_crlf);
 		}
 	}
-	dbg_print(CCX_DMT_608, "- - - - - - - - - - - -\r\n");
+	dbg_print(CCX_DMT_DECODER_608, "- - - - - - - - - - - -\r\n");
 
 	// fprintf (wb->fh, encoded_crlf);
 	write (context->out->fh, encoded_crlf, encoded_crlf_length);	

@@ -1,21 +1,33 @@
 #ifndef _CC_ENCODER_COMMON_H
 #define _CC_ENCODER_COMMON_H
 
+#include "ccx_common_structs.h"
+#include "ccx_decoders_structs.h"
+#include "ccx_encoders_structs.h"
+#include "ccx_encoders_helpers.h"
+
+#define REQUEST_BUFFER_CAPACITY(ctx,length) if (length>ctx->capacity) \
+{ctx->capacity = length * 2; ctx->buffer = (unsigned char*)realloc(ctx->buffer, ctx->capacity); \
+if (ctx->buffer == NULL) { fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, bailing out\n"); } \
+}
+
+extern ccx_encoders_transcript_format ccx_encoders_default_transcript_settings;
+
 /**
  * Context of encoder, This structure gives single interface 
  * to all encoder 
  */
 struct encoder_ctx
 {
-	/** common buffer used by all encoder */
+	/* common buffer used by all encoder */
 	unsigned char *buffer;
-	/** capacity of buffer */
+	/* capacity of buffer */
 	unsigned int capacity;
 	/* keep count of srt subtitle*/
 	unsigned int srt_counter;
-	/** output contet */
+	/* output context */
 	struct ccx_s_write *out;
-	/** start time of previous sub */
+	/* start time of previous sub */
 	LLONG prev_start;
 };
 
@@ -64,4 +76,6 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *context);
+
+
 #endif

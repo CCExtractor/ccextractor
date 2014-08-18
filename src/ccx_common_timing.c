@@ -1,66 +1,86 @@
-#include "ccextractor.h"
+#include "ccx_common_timing.h"
+#include "ccx_common_constants.h"
+#include "ccx_common_structs.h"
+#include "ccx_common_common.h"
 
 /* Provide the current time since the file (or the first file) started
  * in ms using PTS time information.
  * Requires: frames_since_ref_time, current_tref
  */
 
-// int ignore_fts=1; // Don't do any kind of timing stuff. Assume it's being done externally (as happens in MP4)
+// Count 608 (per field) and 708 blocks since last set_fts() call
+int cb_field1, cb_field2, cb_708;
+
+int pts_set; //0 = No, 1 = received, 2 = min_pts set
+int MPEG_CLOCK_FREQ = 90000; // This "constant" is part of the standard
+
+LLONG min_pts, max_pts, sync_pts;
+LLONG current_pts = 0;
+
+int max_dif = 5;
+unsigned pts_big_change;
+
+// PTS timing related stuff
+LLONG fts_now; // Time stamp of current file (w/ fts_offset, w/o fts_global)
+LLONG fts_offset; // Time before first sync_pts
+LLONG fts_fc_offset; // Time before first GOP
+LLONG fts_max; // Remember the maximum fts that we saw in current file
+LLONG fts_global = 0; // Duration of previous files (-ve mode), see c1global
+
+enum ccx_frame_type current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
+int current_tref = 0; // Store temporal reference of current frame
+double current_fps = (double) 30000.0 / 1001; /* 29.97 */ // TODO: Get from framerates_values[] instead
+
+int frames_since_ref_time = 0;
+unsigned total_frames_count;
+
+// Remember the current field for 608 decoding
+int current_field = 1; // 1 = field 1, 2 = field 2, 3 = 708
+
+struct gop_time_code gop_time, first_gop_time, printed_gop;
+LLONG fts_at_gop_start = 0;
+int gop_rollover = 0;
+
+void ccx_common_timing_init(LLONG *file_position,int no_sync){
+	ccx_common_timing_settings.disable_sync_check = 0;
+	ccx_common_timing_settings.is_elementary_stream = 0;
+	ccx_common_timing_settings.file_position = file_position;
+	ccx_common_timing_settings.no_sync = no_sync;
+}
 
 void set_fts(void)
 {
     int pts_jump = 0;
 
     // ES don't have PTS unless GOP timing is used
-    if (!pts_set && stream_mode==CCX_SM_ELEMENTARY_OR_NOT_FOUND)
+    if (!pts_set && ccx_common_timing_settings.is_elementary_stream)
         return;
 
-    // First check for timeline jump (only when min_pts was
-    // set (implies sync_pts).
+    // First check for timeline jump (only when min_pts was set (implies sync_pts)).
     int dif = 0;
     if (pts_set == 2)
     {
         dif=(int) (current_pts-sync_pts)/MPEG_CLOCK_FREQ;
 
-        // Used to distinguish gaps with missing caption information from
-        // jumps in the timeline.  (Currently only used for dvr-ms/NTSC
-        // recordings)
-        if ( CaptionGap )
-            dif = 0;
+		if (ccx_common_timing_settings.disable_sync_check){
+			// Disables sync check. Used for several input formats.
+			dif = 0;
+		}
 
-        // Disable sync check for raw formats - they have the right timeline.
-        // Also true for bin formats, but -nosync might have created a
-        // broken timeline for debug purposes.
-		// Disable too in MP4, specs doesn't say that there can't be a jump
-        switch (stream_mode)
-        {
-            case CCX_SM_MCPOODLESRAW:
-            case CCX_SM_RCWT:
-			case CCX_SM_MP4:
-#ifdef WTV_DEBUG
-			case CCX_SM_HEX_DUMP:
-#endif
-                dif = 0;
-                break;
-            default:
-                break;
-        }
-
-        if (dif < -0.2 || dif >=max_dif )
+        if (dif < -0.2 || dif >= max_dif )
         {
             // ATSC specs: More than 3501 ms means missing component
-            mprint ("\nWarning: Reference clock has changed abruptly (%d seconds filepos=%lld), attempting to synchronize\n", (int) dif, past);
-            mprint ("Last sync PTS value: %lld\n",sync_pts);
-            mprint ("Current PTS value: %lld\n",current_pts);
+            ccx_common_logging.log_ftn ("\nWarning: Reference clock has changed abruptly (%d seconds filepos=%lld), attempting to synchronize\n", (int) dif, *ccx_common_timing_settings.file_position);
+            ccx_common_logging.log_ftn ("Last sync PTS value: %lld\n",sync_pts);
+            ccx_common_logging.log_ftn ("Current PTS value: %lld\n",current_pts);
             pts_jump = 1;
             pts_big_change=1;
 
-            // Discard the gap if it is not on an I-frame or temporal reference
-            // zero.
+            // Discard the gap if it is not on an I-frame or temporal reference zero.
             if(current_tref != 0 && current_picture_coding_type != CCX_FRAME_TYPE_I_FRAME)
             {
                 fts_now = fts_max;
-                mprint ("Change did not occur on first frame - probably a broken GOP\n");
+                ccx_common_logging.log_ftn ("Change did not occur on first frame - probably a broken GOP\n");
                 return;
             }
         }
@@ -103,15 +123,15 @@ void set_fts(void)
                                     -frames_since_ref_time+1)
                                    *1000.0/current_fps);
             }
-            dbg_print(CCX_DMT_TIME, "\nFirst sync time    PTS: %s %+lldms (time before this PTS)\n",
+			ccx_common_logging.debug_ftn(CCX_DMT_TIME, "\nFirst sync time    PTS: %s %+lldms (time before this PTS)\n",
                    print_mstime(min_pts/(MPEG_CLOCK_FREQ/1000)),
                    fts_offset );
-            dbg_print(CCX_DMT_TIME, "Total_frames_count %u frames_since_ref_time %u\n",
+            ccx_common_logging.debug_ftn(CCX_DMT_TIME, "Total_frames_count %u frames_since_ref_time %u\n",
                    total_frames_count, frames_since_ref_time);
         }
 
-        // -nosync diasbles syncing
-        if (pts_jump && !ccx_options.nosync)
+        // -nosync disables syncing
+        if (pts_jump && !ccx_common_timing_settings.no_sync)
         {
             // The current time in the old time base is calculated using
             // sync_pts (set at the beginning of the last GOP) plus the
@@ -132,7 +152,7 @@ void set_fts(void)
             // Set min_pts = sync_pts as this is used for fts_now
             min_pts = sync_pts;
 
-            dbg_print(CCX_DMT_TIME, "\nNew min PTS time: %s %+lldms (time before this PTS)\n",
+            ccx_common_logging.debug_ftn(CCX_DMT_TIME, "\nNew min PTS time: %s %+lldms (time before this PTS)\n",
                    print_mstime(min_pts/(MPEG_CLOCK_FREQ/1000)),
                    fts_offset );
         }
@@ -160,7 +180,7 @@ void set_fts(void)
 		else
 		{
 			// No PTS info at all!!
-			fatal(EXIT_BUG_BUG,
+			ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG,
 				  "No PTS info. Please write bug report.");
 		}
 	}
@@ -187,7 +207,7 @@ LLONG get_fts(void)
             fts = fts_now + fts_global + cb_708*1001/30;
             break;
         default:
-            fatal(EXIT_BUG_BUG, "Cannot be reached!");
+            ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "Cannot be reached!");
     }
 
     return fts;
@@ -235,9 +255,9 @@ void print_debug_timing( void )
     // for uninitialized min_pts
     LLONG tempmin_pts = (min_pts==0x01FFFFFFFFLL ? sync_pts : min_pts);
 
-    mprint("Sync time stamps:  PTS: %s                ",
+    ccx_common_logging.log_ftn("Sync time stamps:  PTS: %s                ",
            print_mstime((sync_pts)/(MPEG_CLOCK_FREQ/1000)) );
-    mprint("GOP: %s      \n", print_mstime(gop_time.ms));
+    ccx_common_logging.log_ftn("GOP: %s      \n", print_mstime(gop_time.ms));
 
     // Length first GOP to last GOP
     LLONG goplenms = (LLONG) (gop_time.ms - first_gop_time.ms);
@@ -245,13 +265,13 @@ void print_debug_timing( void )
     LLONG ptslenms = (unsigned)((sync_pts-tempmin_pts)/(MPEG_CLOCK_FREQ/1000)
                               + fts_offset);
 
-    mprint("Last               FTS: %s",
+    ccx_common_logging.log_ftn("Last               FTS: %s",
            print_mstime(get_fts_max()));
-    mprint("      GOP start FTS: %s\n",
+    ccx_common_logging.log_ftn("      GOP start FTS: %s\n",
            print_mstime(fts_at_gop_start));
 
     // Times are based on last GOP and/or sync time
-    mprint("Max FTS diff. to   PTS:       %6lldms              GOP:       %6lldms\n\n",
+    ccx_common_logging.log_ftn("Max FTS diff. to   PTS:       %6lldms              GOP:       %6lldms\n\n",
            get_fts_max()+(LLONG)(1000.0/current_fps)-ptslenms,
            get_fts_max()+(LLONG)(1000.0/current_fps)-goplenms);
 }

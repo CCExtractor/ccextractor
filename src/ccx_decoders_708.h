@@ -1,6 +1,11 @@
 #ifndef _INCLUDE_708_
 #define _INCLUDE_708_
+
+#include <sys/stat.h>
+#include "ccx_decoders_common.h"
+
 #define MAX_708_PACKET_LENGTH   128
+#define CCX_DECODERS_708_MAX_SERVICES 63
 
 #define I708_MAX_ROWS 15
 #define I708_MAX_COLUMNS 42 
@@ -9,6 +14,15 @@
 #define I708_SCREENGRID_COLUMNS 210
 
 #define I708_MAX_WINDOWS 8
+
+/*
+This variable (ccx_decoder_708_report) holds data on the cc channels & xds packets that are encountered during file parse.
+This can be interesting if you just want to know what kind of data a file holds that has 608 packets. CCExtractor uses it
+for the report functionality.
+*/
+struct ccx_decoder_708_report_t {
+	unsigned services[CCX_DECODERS_708_MAX_SERVICES];
+} ccx_decoder_708_report;
 
 enum COMMANDS_C0_CODES
 {
@@ -278,10 +292,12 @@ typedef struct cc708_service_decoder
 }
 cc708_service_decoder;
 
+extern int do_cea708; // Process 708 data?
+extern int cea708services[]; // [] -> 1 for services to be processed
+
 extern int resets_708;
 
 void do_708 (const unsigned char *data, int datalength);
-void init_708(void);
 
 unsigned char get_internal_from_G0 (unsigned char g0_char);
 unsigned char get_internal_from_G1 (unsigned char g1_char);
@@ -289,4 +305,5 @@ unsigned char get_internal_from_G2 (unsigned char g2_char);
 unsigned char get_internal_from_G3 (unsigned char g3_char);
 void process_character (cc708_service_decoder *decoder, unsigned char internal_char);
 
+void ccx_decoders_708_init_library(char *basefilename,const char *extension, int report);
 #endif

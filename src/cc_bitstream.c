@@ -40,11 +40,11 @@ uint64_t next_bits(struct bitstream *bstr, unsigned bnum)
     uint64_t res = 0;
 
     if(bnum > 64)
-        fatal(EXIT_BUG_BUG, "next_bits: 64 is maximum bit number, argument: %u!", bnum);
+        fatal(CCX_COMMON_EXIT_BUG_BUG, "next_bits: 64 is maximum bit number, argument: %u!", bnum);
 
     // Sanity check
     if(bstr->end - bstr->pos < 0)
-        fatal(EXIT_BUG_BUG, "next_bits: bitstream has negative length!");
+        fatal(CCX_COMMON_EXIT_BUG_BUG, "next_bits: bitstream has negative length!");
 
     // Keep a negative bitstream.bitsleft, but correct it.
     if (bstr->bitsleft <= 0)
@@ -67,7 +67,7 @@ uint64_t next_bits(struct bitstream *bstr, unsigned bnum)
 
     if(vbit < 1 || vbit > 8)
     {
-        fatal(EXIT_BUG_BUG, "next_bits: Illegal bit position value %d!", vbit);
+        fatal(CCX_COMMON_EXIT_BUG_BUG, "next_bits: Illegal bit position value %d!", vbit);
     }
 
     while( 1 )
@@ -75,7 +75,7 @@ uint64_t next_bits(struct bitstream *bstr, unsigned bnum)
         if(vpos >= bstr->end)
         {
             // We should not get here ...
-            fatal(EXIT_BUG_BUG, "next_bits: Reading after end of data ...");
+            fatal(CCX_COMMON_EXIT_BUG_BUG, "next_bits: Reading after end of data ...");
         }
 
         res |= (*vpos & (0x01 << (vbit-1)) ? 1 : 0);
@@ -130,7 +130,7 @@ int skip_bits(struct bitstream *bstr, unsigned bnum)
 {
     // Sanity check
     if(bstr->end - bstr->pos < 0)
-        fatal(EXIT_BUG_BUG, "skip_bits: bitstream has negative length!");
+        fatal(CCX_COMMON_EXIT_BUG_BUG, "skip_bits: bitstream has negative length!");
 
     // Keep a negative bstr->bitsleft, but correct it.
     if (bstr->bitsleft < 0)
@@ -167,13 +167,13 @@ int is_byte_aligned(struct bitstream *bstr)
 {
     // Sanity check
     if(bstr->end - bstr->pos < 0)
-        fatal(EXIT_BUG_BUG, "is_byte_aligned: bitstream has negative length!");
+        fatal(CCX_COMMON_EXIT_BUG_BUG, "is_byte_aligned: bitstream has negative length!");
 
     int vbit = bstr->bpos;
 
     if(vbit == 0 || vbit > 8)
     {
-        fatal(EXIT_BUG_BUG, "is_byte_aligned: Illegal bit position value %d!\n", vbit);
+        fatal(CCX_COMMON_EXIT_BUG_BUG, "is_byte_aligned: Illegal bit position value %d!\n", vbit);
     }
 
     if (vbit == 8)
@@ -188,13 +188,13 @@ void make_byte_aligned(struct bitstream *bstr)
 {
     // Sanity check
     if(bstr->end - bstr->pos < 0)
-        fatal(EXIT_BUG_BUG, "make_byte_aligned: bitstream has negative length!");
+        fatal(CCX_COMMON_EXIT_BUG_BUG, "make_byte_aligned: bitstream has negative length!");
 
     int vbit = bstr->bpos;
 
     if(vbit == 0 || vbit > 8)
     {
-        fatal(EXIT_BUG_BUG, "make_byte_aligned: Illegal bit position value %d!\n", vbit);
+        fatal(CCX_COMMON_EXIT_BUG_BUG, "make_byte_aligned: Illegal bit position value %d!\n", vbit);
     }
 
     // Keep a negative bstr->bitsleft, but correct it.
@@ -226,7 +226,7 @@ unsigned char *next_bytes(struct bitstream *bstr, unsigned bynum)
 {
     // Sanity check
     if(bstr->end - bstr->pos < 0)
-        fatal(EXIT_BUG_BUG, "next_bytes: bitstream has negative length!");
+        fatal(CCX_COMMON_EXIT_BUG_BUG, "next_bytes: bitstream has negative length!");
 
     // Keep a negative bstr->bitsleft, but correct it.
     if (bstr->bitsleft < 0)
@@ -294,7 +294,7 @@ uint64_t bitstream_get_num(struct bitstream *bstr, unsigned bytes, int advance)
 		case 8:
 			break;
 		default:
-			fatal (EXIT_BUG_BUG, "bitstream_get_num: Illegal precision value [%u]!",
+			fatal (CCX_COMMON_EXIT_BUG_BUG, "bitstream_get_num: Illegal precision value [%u]!",
 				   bytes);
 			break;
     }

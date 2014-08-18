@@ -19,7 +19,7 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
 		// ustream->error=1;
 		return 0; // Actually discarded on call.
 		// CFS: Seen in a Wobble edited file.
-        // fatal(EXIT_BUG_BUG, "user_data: Impossible!");
+        // fatal(CCX_COMMON_EXIT_BUG_BUG, "user_data: Impossible!");
 	}
 
     // Do something
@@ -31,7 +31,7 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
 	{		
 		return 0;  // Actually discarded on call.
 		// CFS: Seen in Stick_VHS.mpg. 
-        // fatal(EXIT_BUG_BUG, "user_data: Impossible!");
+        // fatal(CCX_COMMON_EXIT_BUG_BUG, "user_data: Impossible!");
 	}
 
     // DVD CC header, see
@@ -164,7 +164,7 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
                 /* marker = (unsigned int)read_bits(ustream,1); // TODO: Add syntax check */
 
                 if (ustream->bitsleft < 0)
-                    fatal(EXIT_BUG_BUG, "Oops!");
+                    fatal(CCX_COMMON_EXIT_BUG_BUG, "Oops!");
 
                 // Field_number is either
                 //  0 .. forbiden
@@ -243,7 +243,7 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
                 int proceed = 1;
                 unsigned char *cc_data = read_bytes(ustream, cc_count*3);
                 if (ustream->bitsleft < 0)
-                    fatal(EXIT_BUG_BUG, "Not enough for CC captions!");
+                    fatal(CCX_COMMON_EXIT_BUG_BUG, "Not enough for CC captions!");
 
                 // Check for proper marker - This read makes sure that
                 // cc_count*3+1 bytes are read and available in cc_data.

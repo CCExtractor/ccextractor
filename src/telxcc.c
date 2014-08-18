@@ -366,9 +366,9 @@ void telxcc_dump_prev_page (void)
 		fdprintf(wbout1.fh, "%s|", c_temp1);
 	}
 	if (ccx_options.transcript_settings.showEndTime)
-	{		
+	{
 		millis_to_date (prev_hide_timestamp, c_temp2);
-		fdprintf(wbout1.fh,"%s|",c_temp2);					
+		fdprintf(wbout1.fh,"%s|",c_temp2);
 	}
 	if (ccx_options.transcript_settings.showMode){
 		fdprintf(wbout1.fh, "TLT|");
@@ -588,7 +588,7 @@ void process_page(teletext_page_t *page) {
 		}
 	}
 	time_reported=0;
-	
+
 	switch (ccx_options.write_format)
 	{
 		case CCX_OF_TRANSCRIPT:
@@ -712,6 +712,7 @@ void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payload_t *pa
 			// it would be nice, if subtitle hides on previous video frame, so we contract 40 ms (1 frame @25 fps)
 			page_buffer.hide_timestamp = timestamp - 40;
 			process_page(&page_buffer);
+
 		}
 
 		page_buffer.show_timestamp = timestamp;
@@ -898,6 +899,39 @@ void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payload_t *pa
 	}
 }
 
+void tlt_write_rcwt(uint8_t data_unit_id, uint8_t *packet, uint64_t timestamp) {
+	writeraw((unsigned char *) &data_unit_id, sizeof(uint8_t), &wbout1);
+	writeraw((unsigned char *) &timestamp, sizeof(uint64_t), &wbout1);
+	writeraw((unsigned char *) packet, 44, &wbout1);
+}
+
+void tlt_read_rcwt() {
+	int len = 1 + 8 + 44;
+	char *buf = (char *) malloc(len);
+	if (buf == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory");
+
+	while(1) {
+		buffered_read(buf, len);
+		past += result;
+
+		if (result != len) {
+			end_of_file = 1;
+			free(buf);
+			return;
+		}
+
+		data_unit_t id = buf[0];
+		uint64_t t;
+		memcpy(&t, &buf[1], sizeof(uint64_t));
+		teletext_packet_payload_t *pl = (teletext_packet_payload_t *)&buf[9];
+
+		last_timestamp = t;
+
+		process_telx_packet(id, pl, t);
+	}
+}
+
 void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) {
 	uint64_t pes_prefix;
 	uint8_t pes_stream_id;
@@ -1000,8 +1034,11 @@ void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) {
 				// reverse endianess (via lookup table), ETS 300 706, chapter 7.1
 				for (uint8_t j = 0; j < data_unit_len; j++) buffer[i + j] = REVERSE_8[buffer[i + j]];
 
-				// FIXME: This explicit type conversion could be a problem some day -- do not need to be platform independant
-				process_telx_packet((data_unit_t) data_unit_id, (teletext_packet_payload_t *)&buffer[i], last_timestamp);
+				if (ccx_options.write_format == CCX_OF_RCWT)
+					tlt_write_rcwt(data_unit_id, &buffer[i], last_timestamp);
+				else
+					// FIXME: This explicit type conversion could be a problem some day -- do not need to be platform independant
+					process_telx_packet((data_unit_t) data_unit_id, (teletext_packet_payload_t *)&buffer[i], last_timestamp);
 			}
 		}
 
@@ -1016,7 +1053,7 @@ void analyze_pat(uint8_t *buffer, uint8_t size) {
 
 //!
 if (pat.pointer_field > 0) {
-	fatal (EXIT_UNSUPPORTED, "! pat.pointer_field > 0 (0x%02x)\n\n", pat.pointer_field);
+	fatal(CCX_COMMON_EXIT_UNSUPPORTED, "! pat.pointer_field > 0 (0x%02x)\n\n", pat.pointer_field);
 }
 
 	pat.table_id = buffer[1];
@@ -1054,7 +1091,7 @@ void analyze_pmt(uint8_t *buffer, uint8_t size) {
 
 //!
 if (pmt.pointer_field > 0) {
-	fatal (EXIT_UNSUPPORTED, "! pmt.pointer_field > 0 (0x%02x)\n\n", pmt.pointer_field);	
+	fatal(CCX_COMMON_EXIT_UNSUPPORTED, "! pmt.pointer_field > 0 (0x%02x)\n\n", pmt.pointer_field);
 }
 
 	pmt.table_id = buffer[1];
@@ -1110,14 +1147,15 @@ void telxcc_init(void)
 // Close output
 void telxcc_close(void)
 {
-	if (telxcc_inited)
-	{		
+	if (telxcc_inited && ccx_options.write_format != CCX_OF_RCWT)
+	{
 		// output any pending close caption
 		if (page_buffer.tainted == YES) {
 			// this time we do not subtract any frames, there will be no more frames
 			page_buffer.hide_timestamp = last_timestamp;
 			process_page(&page_buffer);
-		}	
+		}
+
 		telxcc_dump_prev_page();
 
 		if ((tlt_frames_produced == 0) && (tlt_config.nonempty == YES)) {
@@ -1208,7 +1246,7 @@ int main_telxcc (int argc, char *argv[]) {
 
 		// not TS packet?
 		if (header.sync != 0x47) 
-			fatal (EXIT_UNSUPPORTED, "- Invalid TS packet header\n- telxcc does not work with unaligned TS.\n\n");
+			fatal (CCX_COMMON_EXIT_UNSUPPORTED, "- Invalid TS packet header\n- telxcc does not work with unaligned TS.\n\n");
 
 		// uncorrectable error?
 		if (header.transport_error > 0) {

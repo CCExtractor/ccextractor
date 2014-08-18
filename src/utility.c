@@ -1,9 +1,5 @@
 #include "ccextractor.h"
 
-#ifdef _MSC_VER
-#define strcasecmp stricmp
-#endif
-
 static char *text;
 static int text_size=0;
 
@@ -71,21 +67,8 @@ void millis_to_date (uint64_t timestamp, char *buffer)
 			break;
 
 		default:
-			fatal (EXIT_BUG_BUG, "Invalid value for date_format in millis_to_date()\n");
+			fatal(CCX_COMMON_EXIT_BUG_BUG, "Invalid value for date_format in millis_to_date()\n");
 	}
-}
-
-void mstotime (LLONG milli, unsigned *hours, unsigned *minutes,
-               unsigned *seconds, unsigned *ms)
-{
-    // LLONG milli = (LLONG) ((ccblock*1000)/29.97);
-    *ms=(unsigned) (milli%1000); // milliseconds
-    milli=(milli-*ms)/1000;  // Remainder, in seconds
-    *seconds = (int) (milli%60);
-    milli=(milli-*seconds)/60; // Remainder, in minutes
-    *minutes = (int) (milli%60);
-    milli=(milli-*minutes)/60; // Remainder, in hours
-    *hours=(int) milli;
 }
 
 bool_t in_array(uint16_t *array, uint16_t length, uint16_t element) {
@@ -123,47 +106,6 @@ void fatal(int exit_code, const char *fmt, ...)
     fprintf(stderr, "\n");
     va_end(args);    
     exit(exit_code);
-}
-
-/* printf() for fd instead of FILE*, since dprintf is not portable */
-void fdprintf (int fd, const char *fmt, ...)
-{
-     /* Guess we need no more than 100 bytes. */
-     int n, size = 100;
-     char *p, *np;
-     va_list ap;
-
-	if( fd < 0)
-		return;
-     if ((p = (char *) malloc (size)) == NULL)
-        return;
-
-     while (1) 
-	 {
-        /* Try to print in the allocated space. */
-        va_start(ap, fmt);
-        n = vsnprintf (p, size, fmt, ap);
-        va_end(ap);
-        /* If that worked, return the string. */
-        if (n > -1 && n < size)
-		{
-			write (fd, p, n);			
-			free (p);
-            return;
-		}
-        /* Else try again with more space. */
-        if (n > -1)    /* glibc 2.1 */
-           size = n+1; /* precisely what is needed */
-        else           /* glibc 2.0 */
-           size *= 2;  /* twice the old size */
-        if ((np = (char *) realloc (p, size)) == NULL) 
-		{
-           free(p);
-           return ;
-        } else {
-           p = np;
-        }
-     }
 }
 
 /* General output, replacement for printf so we can control globally where messages go.
@@ -301,49 +243,4 @@ int hex2int (char high, char low)
 	else 
 		return -1;
 	return h*16+l;
-}
-/**
- * @param base points to the start of the array
- * @param nb   number of element in array
- * @param size size of each element
- * @param compar Comparison function, which is called with three argument
- *               that point to the objects being compared and arg.
- * @param arg argument passed as it is to compare function
- */
-void shell_sort(void *base, int nb,size_t size,int (*compar)(const void*p1,const void *p2,void*arg),void *arg)
-{
-	unsigned char *lbase = (unsigned char*)base;
-	unsigned char *tmp = (unsigned char*)malloc(size);
-	for (int gap = nb / 2; gap > 0; gap = gap / 2)
-	{
-		int p, j;
-		for (p = gap; p < nb; p++)
-		{
-			memcpy(tmp, lbase + (p *size), size);
-			for (j = p; j >= gap && ( compar(tmp,lbase + ( (j - gap) * size),arg) < 0); j -= gap)
-			{
-				memcpy(lbase + (j*size),lbase + ( (j - gap) * size),size);
-			}
-			memcpy(lbase + (j *size),tmp, size);
-		}
-	}
-    free(tmp);
-}
-
-int string_cmp2(const void *p1,const void *p2,void *arg)
-{
-	return strcasecmp(*(char**)p1,*(char**)p2);
-}
-int string_cmp(const void *p1,const void *p2)
-{
-	return string_cmp2(p1, p2, NULL);
-}
-
-void freep(void *arg)
-{
-	void **ptr = (void **) arg;
-	if (*ptr)
-		free(*ptr);
-	*ptr = NULL;
-
 }

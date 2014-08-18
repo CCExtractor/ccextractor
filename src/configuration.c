@@ -43,8 +43,7 @@ static int set_int(void *var, char*val)
 
 struct conf_map configuration_map[] = {
 	{"INPUT_SOURCE",offsetof(struct ccx_s_options,input_source),set_int},
-	{"BUFFER_INPUT",offsetof(struct ccx_s_options,buffer_input),set_int},
-	{"DIRECT_ROLLUP",offsetof(struct ccx_s_options,direct_rollup),set_int},
+	{"BUFFER_INPUT",offsetof(struct ccx_s_options,buffer_input),set_int},	
 	{"NOFONT_COLOR",offsetof(struct ccx_s_options,nofontcolor),set_int},
 	{"NOTYPE_SETTING",offsetof(struct ccx_s_options,notypesetting),set_int},
 	{"CODEC",offsetof(struct ccx_s_options,codec),set_int},
@@ -60,9 +59,7 @@ struct conf_map configuration_map[] = {
 	{"END_CREDITS_FOR_ATMOST",offsetof(struct ccx_s_options,endcreditsforatmost),set_time},
 	{"VIDEO_EDITED",offsetof(struct ccx_s_options,binary_concat),set_int},
 	{"GOP_TIME",offsetof(struct ccx_s_options,use_gop_as_pts),set_int},
-	{"FIX_PADDINDG",offsetof(struct ccx_s_options,fix_padding),set_int},
-	{"NO_ROLL_UP",offsetof(struct ccx_s_options,norollup),set_int},
-	{"FORCED_RU",offsetof(struct ccx_s_options,forced_ru),set_int},
+	{"FIX_PADDINDG",offsetof(struct ccx_s_options,fix_padding),set_int},	
 	{"TRIM",offsetof(struct ccx_s_options,trim_subs),set_int},
 	{"GUI_MODE_REPORTS",offsetof(struct ccx_s_options,gui_mode_reports),set_int},
 	{"NO_PROGRESS_BAR",offsetof(struct ccx_s_options,no_progress_bar),set_int},
@@ -70,8 +67,7 @@ struct conf_map configuration_map[] = {
 	{"CAP_FILE",offsetof(struct ccx_s_options,sentence_cap_file),set_string},
 	{"PROGRAM_NUMBER",offsetof(struct ccx_s_options,ts_forced_program),set_int},
 	{"AUTO_PROGRAM",offsetof(struct ccx_s_options,ts_autoprogram),set_int},
-	{"STREAM",offsetof(struct ccx_s_options,live_stream),set_int},
-	{"SCREEN_TO_PROCESS",offsetof(struct ccx_s_options,screens_to_process),set_int},
+	{"STREAM",offsetof(struct ccx_s_options,live_stream),set_int},	
 	{"START_AT",offsetof(struct ccx_s_options,extraction_start),set_time},
 	{"END_AT",offsetof(struct ccx_s_options,extraction_end),set_time},
 	{"INVASTIGATE_PACKET",offsetof(struct ccx_s_options,investigate_packets),set_int},
@@ -89,6 +85,12 @@ struct conf_map configuration_map[] = {
 	{"STREAM_TYPE",offsetof(struct ccx_s_options,ts_datastreamtype),set_int},
 	{"TS_FORCED_STREAM_TYPE",offsetof(struct ccx_s_options,ts_forced_streamtype),set_int},
 	{"DATE_FORMAT",offsetof(struct ccx_s_options,date_format),set_int},
+	// Settings for 608 decoder
+	{ "NO_ROLL_UP", offsetof(struct ccx_s_options, settings_608.no_rollup), set_int },
+	{ "FORCED_RU", offsetof(struct ccx_s_options, settings_608.force_rollup), set_int },
+	{ "DIRECT_ROLLUP", offsetof(struct ccx_s_options, settings_608.direct_rollup), set_int },
+	{ "SCREEN_TO_PROCESS", offsetof(struct ccx_s_options, settings_608.screens_to_process), set_int },
+
 	{NULL}
 };
 static int parse_opts(char *str, struct ccx_s_options *opt)

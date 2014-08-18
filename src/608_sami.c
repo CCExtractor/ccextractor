@@ -1,9 +1,10 @@
 #include "ccextractor.h"
-#include "cc_encoders_common.h"
+#include "ccx_encoders_common.h"
 #include "png.h"
 #include "spupng_encoder.h"
 #include "ocr.h"
 #include "utility.h"
+
 void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
 	int used;
@@ -12,7 +13,7 @@ void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_s
     		(unsigned long long)ms_start);
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {
-        dbg_print(CCX_DMT_608, "\r%s\n", str);
+        dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
     }
 
 	used = encode_line(context->buffer,(unsigned char *) str);
@@ -47,8 +48,8 @@ void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_s
         unsigned int u = encode_line (el, begin);
         if (ccx_options.encoding!=CCX_ENC_UNICODE)
         {
-            dbg_print(CCX_DMT_608, "\r");
-            dbg_print(CCX_DMT_608, "%s\n",subline);
+            dbg_print(CCX_DMT_DECODER_608, "\r");
+            dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
         }
 		write(context->out->fh, el, u);
 		write(context->out->fh, encoded_br, encoded_br_length);
@@ -60,7 +61,7 @@ void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_s
     sprintf ((char *) str,"</P></SYNC>\r\n");
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {
-        dbg_print(CCX_DMT_608, "\r%s\n", str);
+        dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
     }
 	used=encode_line (context->buffer,(unsigned char *) str);
 	write(context->out->fh, context->buffer, used);
@@ -69,7 +70,7 @@ void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_s
     		(unsigned long long)ms_end);
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {
-        dbg_print(CCX_DMT_608, "\r%s\n", str);
+        dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
     }
 	write(context->out->fh, context->buffer, used);
 	free(el);
@@ -83,18 +84,20 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 	int x_pos, y_pos, width, height, i;
 	int x, y, y_off, x_off, ret;
 	uint8_t *pbuf;
-	char *filename;
+	//char *filename;
 	struct cc_bitmap* rect;
 	png_color *palette = NULL;
 	png_byte *alpha = NULL;
 #ifdef ENABLE_OCR
 	char*str = NULL;
 #endif
-	int used;
-	unsigned h1,m1,s1,ms1;
-	unsigned h2,m2,s2,ms2;
+	//int used;
+#ifdef ENABLE_OCR
+	unsigned h1, m1, s1, ms1;
+	unsigned h2, m2, s2, ms2;
+#endif
 	LLONG ms_start, ms_end;
-	char timeline[128];
+	//char timeline[128];
 	int len = 0;
 
         x_pos = -1;
@@ -241,7 +244,7 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
     		(unsigned long long)startms);
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {
-        dbg_print(CCX_DMT_608, "\r%s\n", str);
+        dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
     }
 	used = encode_line(context->buffer,(unsigned char *) str);
 	write (context->out->fh, context->buffer, used);
@@ -252,8 +255,8 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
             int length = get_decoder_line_encoded (subline, i, data);
             if (ccx_options.encoding!=CCX_ENC_UNICODE)
             {
-                dbg_print(CCX_DMT_608, "\r");
-                dbg_print(CCX_DMT_608, "%s\n",subline);
+                dbg_print(CCX_DMT_DECODER_608, "\r");
+                dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
             }
             write (context->out->fh, subline, length);            
             wrote_something=1;
@@ -265,7 +268,7 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
     sprintf ((char *) str,"</P></SYNC>\r\n");
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {
-        dbg_print(CCX_DMT_608, "\r%s\n", str);
+        dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
     }
 	used = encode_line(context->buffer,(unsigned char *) str);
 	write (context->out->fh, context->buffer, used);
@@ -274,7 +277,7 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
     		(unsigned long long)endms);
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {
-        dbg_print(CCX_DMT_608, "\r%s\n", str);
+        dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
     }
 	used = encode_line(context->buffer,(unsigned char *) str);
 	write (context->out->fh, context->buffer, used);

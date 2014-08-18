@@ -134,7 +134,7 @@ int switch_to_next_file (LLONG bytesinbuffer)
 		infd = start_upd_srv(ccx_options.udpaddr, ccx_options.udpport);
 		return 1;
 		if(infd < 0)
-			fatal (EXIT_BUG_BUG, "socket() failed.");
+			fatal (CCX_COMMON_EXIT_BUG_BUG, "socket() failed.");
 
 	}
 
@@ -209,7 +209,7 @@ void position_sanity_check ()
         LLONG realpos=LSEEK (in,0,SEEK_CUR);
         if (realpos!=past-filebuffer_pos+bytesinbuffer)
         {
-            fatal (EXIT_BUG_BUG, "Position desync, THIS IS A BUG. Real pos =%lld, past=%lld.\n",realpos,past);
+            fatal (CCX_COMMON_EXIT_BUG_BUG, "Position desync, THIS IS A BUG. Real pos =%lld, past=%lld.\n",realpos,past);
         }
     } 
 #endif
@@ -243,7 +243,7 @@ void buffered_seek (int offset)
             // We got into the start buffer (hopefully)
             if (startbytes_pos+filebuffer_pos < 0)
             {
-                fatal (EXIT_BUG_BUG, "PANIC: Attempt to seek before buffer start, this is a bug!");
+                fatal (CCX_COMMON_EXIT_BUG_BUG, "PANIC: Attempt to seek before buffer start, this is a bug!");
             }
             startbytes_pos+=filebuffer_pos;
             filebuffer_pos=0;
@@ -300,7 +300,7 @@ void return_to_buffer (unsigned char *buffer, unsigned int bytes)
 	}
 
 	if (bytesinbuffer + bytes > FILEBUFFERSIZE)
-		fatal (EXIT_BUG_BUG, "Invalid return_to_buffer() - please submit a bug report.");
+		fatal (CCX_COMMON_EXIT_BUG_BUG, "Invalid return_to_buffer() - please submit a bug report.");
 	memmove (filebuffer+bytes,filebuffer,bytesinbuffer);
 	memcpy (filebuffer,buffer,bytes);
 	bytesinbuffer+=bytes;

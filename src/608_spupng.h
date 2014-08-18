@@ -2,7 +2,7 @@
 
 #include "ccextractor.h"
 #include "spupng_encoder.h"
-#include "cc_encoders_common.h"
+#include "ccx_encoders_common.h"
 
 int write_cc_buffer_as_spupng(struct eia608_screen *data,struct encoder_ctx *context);
 

@@ -15,6 +15,8 @@
 #define OK              1
 #define PASSWORD        2
 #define BIN_MODE        3
+#define CC_DESC         4
+#pragma warning( suppress : 4005)
 #define ERROR           51
 #define UNKNOWN_COMMAND 52
 #define WRONG_PASSWORD  53
@@ -66,7 +68,7 @@ void init_sockets (void);
 void pr_command(char c);
 #endif
 
-void connect_to_srv(const char *addr, const char *port)
+void connect_to_srv(const char *addr, const char *port, const char *cc_desc)
 {
 	if (NULL == addr)
 	{
@@ -85,6 +87,12 @@ void connect_to_srv(const char *addr, const char *port)
 
 	if (ask_passwd(srv_sd) < 0)
 		fatal(EXIT_FAILURE, "Unable to connect\n");
+
+	if (cc_desc != NULL &&
+			write_block(srv_sd, CC_DESC, cc_desc, strlen(cc_desc)) < 0)
+	{
+		fatal(EXIT_FAILURE, "Unable to connect\n");
+	}
 
 	mprint("Connected to %s:%s\n", addr, port);
 }
@@ -900,7 +908,7 @@ int start_upd_srv(const char *addr_str, unsigned port)
 		wprintf(L"bind() eror: %ld\n", WSAGetLastError());
 		exit(EXIT_FAILURE);
 #else
-		fatal(EXIT_BUG_BUG, "bind() error: %s\n", strerror(errno));
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "bind() error: %s\n", strerror(errno));
 #endif
 	}
 
@@ -915,7 +923,7 @@ int start_upd_srv(const char *addr_str, unsigned port)
 #else
 			mprint("setsockopt() error: %s\n", strerror(errno));
 #endif
-			fatal(EXIT_BUG_BUG, "Cannot join multicast group.");
+			fatal(CCX_COMMON_EXIT_BUG_BUG, "Cannot join multicast group.");
 		}
 	}
 

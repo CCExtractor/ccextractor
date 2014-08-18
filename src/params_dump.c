@@ -63,7 +63,7 @@ void params_dump(void)
 			break;
 #endif
         default:
-            fatal (EXIT_BUG_BUG, "BUG: Unknown stream mode.\n");
+			fatal(CCX_COMMON_EXIT_BUG_BUG, "BUG: Unknown stream mode.\n");
             break;
     }
     mprint ("]\n");
@@ -117,7 +117,7 @@ void params_dump(void)
     mprint ("[Debug: %s] ", (ccx_options.debug_mask & CCX_DMT_VERBOSE) ? "Yes": "No");
     mprint ("[Buffer input: %s]\n", ccx_options.buffer_input ? "Yes": "No");
     mprint ("[Use pic_order_cnt_lsb for H.264: %s] ", ccx_options.usepicorder ? "Yes": "No");
-    mprint ("[Print CC decoder traces: %s]\n", (ccx_options.debug_mask & CCX_DMT_608) ? "Yes": "No");
+	mprint("[Print CC decoder traces: %s]\n", (ccx_options.debug_mask & CCX_DMT_DECODER_608) ? "Yes" : "No");
     mprint ("[Target format: %s] ",extension);    
     mprint ("[Encoding: ");
     switch (ccx_options.encoding)
@@ -356,12 +356,12 @@ void print_file_report(void)
 
 	if (cc_stats[0] > 0 || cc_stats[1] > 0) 
 	{
-		printf("XDS: %s\n", Y_N(file_report.xds));
+		printf("XDS: %s\n", Y_N(file_report.data_from_608.xds));
 
-		printf("CC1: %s\n", Y_N(file_report.cc_channels_608[0]));
-		printf("CC2: %s\n", Y_N(file_report.cc_channels_608[1]));
-		printf("CC3: %s\n", Y_N(file_report.cc_channels_608[2]));
-		printf("CC4: %s\n", Y_N(file_report.cc_channels_608[3]));
+		printf("CC1: %s\n", Y_N(file_report.data_from_608.cc_channels[0]));
+		printf("CC2: %s\n", Y_N(file_report.data_from_608.cc_channels[1]));
+		printf("CC3: %s\n", Y_N(file_report.data_from_608.cc_channels[2]));
+		printf("CC4: %s\n", Y_N(file_report.data_from_608.cc_channels[3]));
 	}
 
 	printf("CEA-708: %s\n", Y_N(cc_stats[2] > 0 || cc_stats[3] > 0));
@@ -369,17 +369,17 @@ void print_file_report(void)
 	if (cc_stats[2] > 0 || cc_stats[3] > 0) 
 	{
 		printf("Services: ");
-		for (int i = 0; i < 63; i++) 
+		for (int i = 0; i < CCX_DECODERS_708_MAX_SERVICES; i++) 
 		{
-			if (file_report.services708[i] == 0)
+			if (file_report.data_from_708.services[i] == 0)
 				continue;
 			printf("%d ", i);
 		}
 		printf("\n");
 
-		printf("Primary Language Present: %s\n", Y_N(file_report.services708[1]));
+		printf("Primary Language Present: %s\n", Y_N(file_report.data_from_708.services[1]));
 
-		printf("Secondary Language Present: %s\n", Y_N(file_report.services708[2]));
+		printf("Secondary Language Present: %s\n", Y_N(file_report.data_from_708.services[2]));
 	}
 
 	printf("MPEG-4 Timed Text: %s\n", Y_N(file_report.mp4_cc_track_cnt));

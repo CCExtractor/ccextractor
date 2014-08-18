@@ -18,7 +18,7 @@ void writeraw (const unsigned char *data, int length, struct ccx_s_write *wb)
     write (wb->fh,data,length);
 }
 
-void writedata(const unsigned char *data, int length, struct s_context_cc608 *context, struct cc_subtitle *sub)
+void writedata(const unsigned char *data, int length, ccx_decoder_608_context *context, struct cc_subtitle *sub)
 {
     // Don't do anything for empty data
     if (data==NULL)
@@ -37,7 +37,7 @@ void writedata(const unsigned char *data, int length, struct s_context_cc608 *co
 			 ccx_options.write_format==CCX_OF_NULL)
         process608 (data,length,context, sub);
     else
-        fatal(EXIT_BUG_BUG, "Should not be reached!");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "Should not be reached!");
 }
 
 void flushbuffer (struct ccx_s_write *wb, int closefile)

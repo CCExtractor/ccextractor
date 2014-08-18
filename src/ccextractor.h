@@ -1,30 +1,27 @@
 #ifndef CCX_CCEXTRACTOR_H
 #define CCX_CCEXTRACTOR_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <time.h>
-#include <fcntl.h> 
-#include <stdarg.h>
-#include <errno.h>
-
-// compatibility across platforms
-#include "platform.h"
-
 #define VERSION "0.72"
+
+// Load common includes and constants for library usage
+#include "ccx_common_platform.h"
+#include "ccx_common_constants.h"
+#include "ccx_common_common.h"
+#include "ccx_common_char_encoding.h"
+#include "ccx_common_structs.h"
+#include "ccx_common_timing.h"
+
+#include "ccx_encoders_common.h"
+#include "ccx_decoders_608.h"
+#include "ccx_decoders_xds.h"
+#include "ccx_decoders_708.h"
+#include "bitstream.h"
+
+#include "networking.h"
 
 extern int cc_buffer_saved; // Do we have anything in the CC buffer already? 
 extern int ccblocks_in_avc_total; // Total CC blocks found by the AVC code
 extern int ccblocks_in_avc_lost; // CC blocks found by the AVC code lost due to overwrites (should be 0)
-
-#include "608.h"
-#include "708.h"
-#include "bitstream.h"
-#include "constants.h"
-#include "cc_decoders_common.h"
-#include "networking.h"
 
 #define TS_PMT_MAP_SIZE 128
 
@@ -35,29 +32,17 @@ struct ccx_boundary_time
 	int set;
 };
 
-typedef struct {
-	// TODO: add more options, and (perhaps) reduce other ccextractor options?
-	int showStartTime, showEndTime; // Show start and/or end time.
-	int showMode; // Show which mode if available (E.G.: POP, RU1, ...)	
-	int showCC; // Show which CC channel has been captured.	
-	int relativeTimestamp; // Timestamps relative to start of sample or in UTC?
-	int xds; // Show XDS or not
-	int useColors; // Add colors or no colors
-
-} ccx_transcript_format;
-
-extern ccx_transcript_format ccx_default_transcript_settings;
-
 struct ccx_s_options // Options from user parameters
 {
 	int extract; // Extract 1st, 2nd or both fields
 	int cc_channel; // Channel we want to dump in srt mode
-	int buffer_input;
-	int direct_rollup;
+	int buffer_input;	
 	int nofontcolor;
 	int notypesetting;
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
 	int print_file_reports;
+
+	ccx_decoder_608_settings settings_608; //  Contains the settings for the 608 decoder.
 
 	/* subtitle codec type */
 	enum cxx_code_type codec;
@@ -71,8 +56,6 @@ struct ccx_s_options // Options from user parameters
 	int binary_concat; // Disabled by -ve or --videoedited
 	int use_gop_as_pts; // Use GOP instead of PTS timing (0=do as needed, 1=always, -1=never)
 	int fix_padding; // Replace 0000 with 8080 in HDTV (needed for some cards)
-	int norollup; // If 1, write one line at a time
-	int forced_ru; // 0=Disabled, 1, 2 or 3=max lines in roll-up mode
 	int trim_subs; // "    Remove spaces at sides?    "
 	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
 	int no_progress_bar; // If 1, suppress the output of the progress to stdout
@@ -97,13 +80,11 @@ struct ccx_s_options // Options from user parameters
 	int usepicorder; // Force the use of pic_order_cnt_lsb in AVC/H.264 data streams
 	int autodash; // Add dashes (-) before each speaker automatically?
 	unsigned teletext_mode; // 0=Disabled, 1 = Not found, 2=Found
-	ccx_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
+	ccx_encoders_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
 	char millis_separator;
-	LLONG screens_to_process; // How many screenfuls we want?
 	enum ccx_encoding_type encoding;
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 	enum ccx_output_date_format date_format;
-	enum color_code cc608_default_color;
 	char *output_filename;
 	char *out_elementarystream_filename;
 	LLONG debug_mask; // dbg_print will use this mask to print or ignore different types
@@ -121,6 +102,7 @@ struct ccx_s_options // Options from user parameters
 	unsigned send_to_srv;
 	char *tcpport;
 	char *tcp_password;
+	char *tcp_desc;
 	char *srv_addr;
 	char *srv_port;
 	int line_terminator_lf; // 0 = CRLF, 1=LF
@@ -159,28 +141,6 @@ struct PMT_entry
 	unsigned printable_stream_type;
 };
 
-
-struct ccx_s_write
-{
-	int fh;
-	char *filename;
-	void* spupng_data;
-};
-
-
-struct gop_time_code
-{
-	int drop_frame_flag;
-	int time_code_hours;
-	int time_code_minutes;
-	int marker_bit;
-	int time_code_seconds;
-	int time_code_pictures;
-	int inited;
-	LLONG ms;
-};
-
-
 /* Report information */
 #define SUB_STREAMS_CNT 10
 struct file_report_t
@@ -190,14 +150,12 @@ struct file_report_t
 	unsigned height;
 	unsigned aspect_ratio;
 	unsigned frame_rate;
-	unsigned xds : 1;
-	unsigned cc_channels_608[4];
-	unsigned services708[63];
+	struct ccx_decoder_608_report_t data_from_608;
+	struct ccx_decoder_708_report_t data_from_708;
 	unsigned dvb_sub_pid[SUB_STREAMS_CNT]; 
 	unsigned tlt_sub_pid[SUB_STREAMS_CNT];
 	unsigned mp4_cc_track_cnt;
 } file_report;
-
 
 // Stuff for telcc.c
 struct ccx_s_teletext_config {
@@ -208,7 +166,7 @@ struct ccx_s_teletext_config {
 	uint8_t bom : 1; // print UTF-8 BOM characters at the beginning of output
 	uint8_t nonempty : 1; // produce at least one (dummy) frame
 	// uint8_t se_mode : 1; // search engine compatible mode => Uses CCExtractor's write_format
-	// uint64_t utc_refvalue; // UTC referential value => Moved to CCExtractor global, so can be used for 608 too
+	// uint64_t utc_refvalue; // UTC referential value => Moved to ccx_decoders_common, so can be used for other decoders (608/xds) too
 	uint16_t user_page; // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
 };
 
@@ -240,6 +198,9 @@ struct ccx_s_teletext_config {
 
 extern LLONG buffered_read_opt (unsigned char *buffer, unsigned int bytes);
 
+// ccextractor.c
+void init_libraries();
+
 //params.c
 void parse_parameters (int argc, char *argv[]);
 void usage (void);
@@ -257,11 +218,6 @@ void general_loop(void *enc_ctx);
 void processhex (char *filename);
 void rcwt_loop(void *enc_ctx);
 
-#ifndef __cplusplus
-#define false 0
-#define true 1
-#endif
-
 // activity.c
 void activity_header (void);
 void activity_progress (int percentaje, int cur_min, int cur_sec);
@@ -272,10 +228,7 @@ void activity_message (const char *fmt, ...);
 void  activity_video_info (int hor_size,int vert_size, 
     const char *aspect_ratio, const char *framerate);
 void activity_program_number (unsigned program_number);
-void activity_xds_program_name (const char *program_name);
-void activity_xds_network_call_letters (const char *program_name);
-void activity_xds_program_identification_number (unsigned minutes, unsigned hours, unsigned date, unsigned month);
-void activity_xds_program_description (int line_num, const char *program_desc);
+void activity_library_process(enum ccx_common_logging_gui message_type, ...);
 void activity_report_data_read (void);
 
 extern LLONG result;
@@ -303,15 +256,6 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub);
 
 // bitstream.c - see bitstream.h
 
-// 608.c
-int write_cc_buffer(struct s_context_cc608 *context, struct cc_subtitle *sub);
-unsigned char *debug_608toASC (unsigned char *ccdata, int channel);
-
-
-// cc_decoders_common.c
-LLONG get_visible_start (void);
-LLONG get_visible_end (void);
-
 // file_functions.c
 LLONG getfilesize (int in);
 LLONG gettotalfilessize (void);
@@ -319,16 +263,6 @@ void prepare_for_new_file (void);
 void close_input_file (void);
 int switch_to_next_file (LLONG bytesinbuffer);
 void return_to_buffer (unsigned char *buffer, unsigned int bytes);
-
-// timing.c
-void set_fts(void);
-LLONG get_fts(void);
-LLONG get_fts_max(void);
-char *print_mstime( LLONG mstime );
-char *print_mstime2buf( LLONG mstime , char *buf );
-void print_debug_timing( void );
-int gop_accepted(struct gop_time_code* g );
-void calculate_ms_gop_time (struct gop_time_code *g);
 
 // sequencing.c
 void init_hdcc (void);
@@ -346,7 +280,7 @@ void print_file_report(void);
 // output.c
 void init_write (struct ccx_s_write *wb);
 void writeraw (const unsigned char *data, int length, struct ccx_s_write *wb);
-void writedata(const unsigned char *data, int length, struct s_context_cc608 *context, struct cc_subtitle *sub);
+void writedata(const unsigned char *data, int length, ccx_decoder_608_context *context, struct cc_subtitle *sub);
 void flushbuffer (struct ccx_s_write *wb, int closefile);
 void printdata (const unsigned char *data1, int length1,const unsigned char *data2, int length2, struct cc_subtitle *sub);
 void writercwtdata (const unsigned char *data);
@@ -369,17 +303,11 @@ int parse_PAT (void);
 // myth.c
 void myth_loop(void *enc_ctx);
 
-// xds.c
-void process_xds_bytes (const unsigned char hi, int lo);
-void do_end_of_xds (struct cc_subtitle *sub, unsigned char expected_checksum);
-void xds_init();
-
 // utility.c
 void fatal(int exit_code, const char *fmt, ...);
 void dvprint(const char *fmt, ...);
 void mprint (const char *fmt, ...);
 void dbg_print(LLONG mask, const char *fmt, ...);
-void fdprintf (int fd, const char *fmt, ...);
 void init_boundary_time (struct ccx_boundary_time *bt);
 void sleep_secs (int secs);
 void dump (LLONG mask, unsigned char *start, int l, unsigned long abs_start, unsigned clear_high_bit);
@@ -389,7 +317,7 @@ void timestamp_to_srttime(uint64_t timestamp, char *buffer);
 void millis_to_date (uint64_t timestamp, char *buffer) ;
 int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
 
-void init_context_cc608(struct s_context_cc608 *data, int field);
+
 unsigned encode_line (unsigned char *buffer, unsigned char *text);
 void buffered_seek (int offset);
 extern void build_parity_table(void);
@@ -397,22 +325,14 @@ extern void build_parity_table(void);
 void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) ;
 void telxcc_init(void);
 void telxcc_close(void);
+void tlt_read_rcwt();
 void mstotime(LLONG milli, unsigned *hours, unsigned *minutes,
 	unsigned *seconds, unsigned *ms);
 
-extern struct gop_time_code gop_time, first_gop_time, printed_gop;
-extern int gop_rollover;
-extern LLONG min_pts, sync_pts, current_pts;
 extern unsigned rollover_bits;
 extern uint32_t global_timestamp, min_global_timestamp;
 extern int global_timestamp_inited;
-extern LLONG fts_now; // Time stamp of current file (w/ fts_offset, w/o fts_global)
-extern LLONG fts_offset; // Time before first sync_pts
-extern LLONG fts_fc_offset; // Time before first GOP
-extern LLONG fts_max; // Remember the maximum fts that we saw in current file
-extern LLONG fts_global; // Duration of previous files (-ve mode)
-// Count 608 (per field) and 708 blocks since last set_fts() call
-extern int cb_field1, cb_field2, cb_708;
+
 extern int saw_caption_block;
 
 
@@ -432,24 +352,16 @@ extern unsigned int startbytes_pos;
 extern int startbytes_avail; // Needs to be able to hold -1 result.
 
 extern unsigned char *pesheaderbuf;
-extern int pts_set; //0 = No, 1 = received, 2 = min_pts set
-extern unsigned long long max_dif;
 
-extern int MPEG_CLOCK_FREQ; // This is part of the standard
-
-extern unsigned pts_big_change;
-extern unsigned total_frames_count;
 extern unsigned total_pulldownfields;
 extern unsigned total_pulldownframes;
-
-extern int CaptionGap;
 
 extern unsigned char *filebuffer;
 extern LLONG filebuffer_start; // Position of buffer start relative to file
 extern int filebuffer_pos; // Position of pointer relative to buffer start
 extern int bytesinbuffer; // Number of bytes we actually have on buffer
 
-extern struct s_context_cc608 context_cc608_field_1, context_cc608_field_2;
+extern ccx_decoder_608_context context_cc608_field_1, context_cc608_field_2;
 
 extern const char *desc[256];
 
@@ -473,7 +385,6 @@ extern LLONG subs_delay;
 extern int startcredits_displayed, end_credits_displayed;
 extern LLONG last_displayed_subs_ms; 
 extern int processed_enough;
-extern unsigned char usercolor_rgb[8];
 
 extern const char *extension;
 extern long FILEBUFFERSIZE; // Uppercase because it used to be a define
@@ -486,7 +397,6 @@ extern unsigned current_hor_size;
 extern unsigned current_vert_size;
 extern unsigned current_aspect_ratio;
 extern unsigned current_frame_rate;
-extern double current_fps;
 
 extern int end_of_file;
 extern LLONG inbuf;
@@ -495,14 +405,12 @@ extern enum ccx_bufferdata_type bufferdatatype; // Can be CCX_BUFFERDATA_TYPE_RA
 extern unsigned top_field_first;
 
 extern int firstcall;
-extern LLONG minimum_fts; // No screen should start before this FTS
 
 #define MAXBFRAMES 50
 #define SORTBUF (2*MAXBFRAMES+1)
 extern int cc_data_count[SORTBUF];
 extern unsigned char cc_data_pkts[SORTBUF][10*31*3+1];
 extern int has_ccdata_buffered;
-extern int current_field;
 
 extern int last_reported_progress;
 extern int cc_to_stdout;
@@ -513,28 +421,10 @@ extern int saw_gop_header;
 extern int max_gop_length;
 extern int last_gop_length;
 extern int frames_since_last_gop;
-extern LLONG fts_at_gop_start;
-extern int frames_since_ref_time;
 extern enum ccx_stream_mode_enum auto_stream;
 extern int num_input_files;
 extern char *basefilename;
-extern int do_cea708; // Process 708 data?
-extern int cea708services[63]; // [] -> 1 for services to be processed
 extern struct ccx_s_write wbout1, wbout2, *wbxdsout;
-
-extern char **spell_lower;
-extern char **spell_correct;
-extern int spell_words;
-extern int spell_capacity;
-
-extern unsigned char encoded_crlf[16]; // We keep it encoded here so we don't have to do it many times
-extern unsigned int encoded_crlf_length;
-extern unsigned char encoded_br[16];
-extern unsigned int encoded_br_length;
-
-
-extern enum ccx_frame_type current_picture_coding_type; 
-extern int current_tref; // Store temporal reference of current frame
 
 extern int cc608_parity_table[256]; // From myth
 
@@ -558,28 +448,24 @@ extern long capbuflen;
    <100 means display whatever was output to stderr as a warning
    >=100 means display whatever was output to stdout as an error
 */
-
+// Some moved to ccx_common_common.h
 #define EXIT_OK                                 0
 #define EXIT_NO_INPUT_FILES                     2
 #define EXIT_TOO_MANY_INPUT_FILES               3
 #define EXIT_INCOMPATIBLE_PARAMETERS            4
-#define EXIT_FILE_CREATION_FAILED               5
 #define EXIT_UNABLE_TO_DETERMINE_FILE_SIZE      6
 #define EXIT_MALFORMED_PARAMETER                7
 #define EXIT_READ_ERROR                         8
-#define EXIT_UNSUPPORTED						9
 #define EXIT_NOT_CLASSIFIED                     300
-#define EXIT_NOT_ENOUGH_MEMORY                  500
 #define EXIT_ERROR_IN_CAPITALIZATION_FILE       501
 #define EXIT_BUFFER_FULL                        502
-#define EXIT_BUG_BUG                            1000
 #define EXIT_MISSING_ASF_HEADER                 1001
 #define EXIT_MISSING_RCWT_HEADER                1002
 
 extern int PIDs_seen[65536];
 extern struct PMT_entry *PIDs_programs[65536];
 
-extern LLONG ts_start_of_xds; 
+// extern LLONG ts_start_of_xds; // Moved to 608.h, only referenced in 608.c & xds.c
 //extern int timestamps_on_transcript;
 
 extern unsigned teletext_mode;
@@ -587,7 +473,6 @@ extern unsigned teletext_mode;
 #define MAX_TLT_PAGES 1000
 extern short int seen_sub_page[MAX_TLT_PAGES];
 
-extern uint64_t utc_refvalue; // UTC referential value
 extern struct ccx_s_teletext_config tlt_config;
 extern uint32_t tlt_packet_counter;
 extern uint32_t tlt_frames_produced;

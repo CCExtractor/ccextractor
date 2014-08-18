@@ -2,7 +2,7 @@
 For now, integration with ccextractor is a quick hack. It could get better with time. */
 
 #include "ccextractor.h"
-#include "608.h"
+#include "ccx_decoders_608.h"
 #ifdef _WIN32
 #include <io.h>
 #else
@@ -12,7 +12,7 @@ For now, integration with ccextractor is a quick hack. It could get better with 
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
-#include "cc_encoders_common.h"
+#include "ccx_encoders_common.h"
 
 static unsigned int header_state;
 static unsigned char psm_es_type[256];

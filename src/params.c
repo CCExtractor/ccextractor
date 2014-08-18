@@ -2,7 +2,6 @@
 #include "utility.h"
 
 static int inputfile_capacity=0; 
-static int spell_builtin_added=0; // so we don't do it twice
 
 static const char *DEF_VAL_STARTCREDITSNOTBEFORE="0";
 static const char *DEF_VAL_STARTCREDITSNOTAFTER="5:00"; // To catch the theme after the teaser in TV shows
@@ -10,19 +9,6 @@ static const char *DEF_VAL_STARTCREDITSFORATLEAST="2";
 static const char *DEF_VAL_STARTCREDITSFORATMOST="5";
 static const char *DEF_VAL_ENDCREDITSFORATLEAST="2";
 static const char *DEF_VAL_ENDCREDITSFORATMOST="5";
-
-// Some basic English words, so user-defined doesn't have to
-// include the common stuff
-static const char *spell_builtin[]=
-{
-	"I", "I'd",	"I've",	"I'd", "I'll",
-	"January","February","March","April", // May skipped intentionally
-	"June","July","August","September","October","November",
-	"December","Monday","Tuesday","Wednesday","Thursday",
-	"Friday","Saturday","Sunday","Halloween","United States",
-	"Spain","France","Italy","England",
-	NULL
-}; 
 
 int stringztoms (const char *s, struct ccx_boundary_time *bt)
 {
@@ -68,81 +54,6 @@ int stringztoms (const char *s, struct ccx_boundary_time *bt)
 	bt->time_in_ms=secs*1000;
 	return 0;
 }
-
-
-int add_word (const char *word)
-{
-	char *new_lower;
-	char *new_correct;
-	char **ptr_lower;
-	char **ptr_correct;
-	int i;
-	if (spell_words==spell_capacity)
-	{
-		// Time to grow
-		spell_capacity+=50;
-		ptr_lower=(char **) realloc (spell_lower, sizeof (char *) * 
-				spell_capacity);
-		ptr_correct=(char **) realloc (spell_correct, sizeof (char *) * 
-				spell_capacity);
-	}
-	size_t len=strlen (word);
-	new_lower = (char *) malloc (len+1);
-	new_correct = (char *) malloc (len+1);
-	if (ptr_lower==NULL || ptr_correct==NULL ||
-			new_lower==NULL || new_correct==NULL)
-	{
-		spell_capacity = 0;
-		for ( i = 0; i < spell_words ; i++)
-		{
-			freep(&spell_lower[spell_words]);
-			freep(&spell_correct[spell_words]);
-		}
-		freep(&spell_lower);
-		freep(&spell_correct);
-		freep(&ptr_lower);
-		freep(&ptr_correct);
-		freep(&new_lower);
-		freep(&new_correct);
-		spell_words = 0;
-		return -1;
-	}
-	else
-	{
-		spell_lower = ptr_lower;
-		spell_correct = ptr_correct;
-	}
-	strcpy (new_correct, word);
-	for (size_t i=0; i<len; i++)
-	{
-		char c=new_correct[i];
-		c=tolower (c); // TO-DO: Add Spanish characters
-		new_lower[i]=c;
-	}
-	new_lower[len]=0;
-	spell_lower[spell_words]=new_lower;
-	spell_correct[spell_words]=new_correct;
-	spell_words++;
-	return 0;
-}
-
-
-int add_built_in_words()
-{
-	if (!spell_builtin_added)
-	{
-		int i=0;
-		while (spell_builtin[i]!=NULL)
-		{
-			if (add_word(spell_builtin[i]))
-				return -1;
-			i++;
-		}
-		spell_builtin_added=1;
-	}
-	return 0;
-}
-
 
 int process_cap_file (char *filename)
 {
@@ -429,6 +340,8 @@ void usage (void)
 	mprint ("            -tcp port: Reads the input data in BIN format according to CCExtractor's\n");
 	mprint ("                       protocol, listening specified port on the local host\n");
 	mprint ("            -tcppassword password: Sets server password for new connections to tcp server\n");
+	mprint ("            -tcpdesc description: Sends to the server short description about captions e.g.\n");
+	mprint ("                                  channel name or file name\n");
 	mprint ("Options that affect what will be processed:\n");
 	mprint ("          -1, -2, -12: Output Field 1 data, Field 2 data, or both\n");
 	mprint ("                       (DEFAULT is -1)\n");
@@ -825,8 +738,8 @@ void parse_708services (char *s)
 			e++;
 		*e=0;
 		svc=atoi (c);
-		if (svc<1 || svc>63)
-			fatal (EXIT_MALFORMED_PARAMETER, "Invalid service number (%d), valid range is 1-63.");
+		if (svc<1 || svc>CCX_DECODERS_708_MAX_SERVICES)
+			fatal (EXIT_MALFORMED_PARAMETER, "Invalid service number (%d), valid range is 1-%d.",svc,CCX_DECODERS_708_MAX_SERVICES);
 		cea708services[svc-1]=1;
 		do_cea708=1;
 		c=e+1;
@@ -871,8 +784,7 @@ void init_option (struct ccx_s_options *option)
 		if(option->sentence_cap_file && process_cap_file (option->sentence_cap_file))
 			fatal (EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the capitalization file.\n");
 
-		shell_sort(spell_lower,spell_words,sizeof(*spell_lower),string_cmp2,NULL);
-		shell_sort(spell_correct,spell_words,sizeof(*spell_correct),string_cmp2,NULL);
+		ccx_encoders_helpers_perform_shellsort_words();
 	}
 	if(option->ts_forced_program != -1)
 		option->ts_forced_program_selected = 1;
@@ -940,7 +852,7 @@ void parse_parameters (int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-dru")==0)
 		{
-			ccx_options.direct_rollup = 1;
+			ccx_options.settings_608.direct_rollup = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-nofc")==0 ||
@@ -1145,22 +1057,22 @@ void parse_parameters (int argc, char *argv[])
 		if (strcmp (argv[i],"-noru")==0 || 
 				strcmp (argv[i],"--norollup")==0)
 		{
-			ccx_options.norollup = 1;
+			ccx_options.settings_608.no_rollup = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-ru1")==0)
 		{
-			ccx_options.forced_ru=1;
+			ccx_options.settings_608.force_rollup = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-ru2")==0)
 		{
-			ccx_options.forced_ru=2;
+			ccx_options.settings_608.force_rollup = 2;
 			continue;
 		}
 		if (strcmp (argv[i],"-ru3")==0)
 		{
-			ccx_options.forced_ru=3;
+			ccx_options.settings_608 .force_rollup = 3;
 			continue;
 		}
 		if (strcmp (argv[i],"-trim")==0)
@@ -1234,7 +1146,7 @@ void parse_parameters (int argc, char *argv[])
 				fatal (EXIT_MALFORMED_PARAMETER, "--defaultcolor expects a 7 character parameter that starts with #\n");
 			}
 			strcpy ((char *) usercolor_rgb,argv[i+1]);
-			ccx_options.cc608_default_color=COL_USERDEFINED;
+			ccx_options.settings_608.default_color = COL_USERDEFINED;
 			i++;
 			continue;
 		}
@@ -1250,8 +1162,8 @@ void parse_parameters (int argc, char *argv[])
 		if ((strcmp (argv[i],"-scr")==0 || 
 					strcmp (argv[i],"--screenfuls")==0) && i<argc-1)
 		{
-			ccx_options.screens_to_process=atoi_hex (argv[i+1]);
-			if (ccx_options.screens_to_process<0)
+			ccx_options.settings_608.screens_to_process = atoi_hex(argv[i + 1]);
+			if (ccx_options.settings_608.screens_to_process<0)
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "--screenfuls only accepts positive integers.\n");
 			}
@@ -1310,7 +1222,7 @@ void parse_parameters (int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-608")==0)
 		{
-			ccx_options.debug_mask |= CCX_DMT_608;
+			ccx_options.debug_mask |= CCX_DMT_DECODER_608;
 			continue;
 		}
 		if (strcmp (argv[i],"-deblev")==0)
@@ -1352,7 +1264,7 @@ void parse_parameters (int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-xdsdebug")==0)
 		{
-			ccx_options.debug_mask |= CCX_DMT_XDS;
+			ccx_options.debug_mask |= CCX_DMT_DECODER_XDS;
 			continue;
 		}
 		if (strcmp (argv[i],"-parsedebug")==0)
@@ -1662,6 +1574,14 @@ void parse_parameters (int argc, char *argv[])
 		if (strcmp (argv[i],"-tcppassword")==0 && i<argc-1)
 		{
 			ccx_options.tcp_password = argv[i + 1];
+
+			i++;
+			continue;
+		}
+
+		if (strcmp (argv[i],"-tcpdesc")==0 && i<argc-1)
+		{
+			ccx_options.tcp_desc = argv[i + 1];
 
 			i++;
 			continue;

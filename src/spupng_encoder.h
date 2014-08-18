@@ -1,9 +1,9 @@
 #ifndef _SPUPNG_ENCODER_H
 #define _SPUPNG_ENCODER_H
 
-#include <stdio.h>
+#include "ccx_common_platform.h"
+#include "ccx_encoders_structs.h"
 #include "png.h"
-#include "ccextractor.h"
 
 // CC page dimensions
 #define ROWS                    15
