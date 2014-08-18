@@ -1,4 +1,5 @@
 #include "ccx_decoders_708.h"
+#include "ccx_common_common.h"
 #include "ccx_common_constants.h"
 #include "ccx_common_structs.h"
 #include "ccx_common_timing.h"

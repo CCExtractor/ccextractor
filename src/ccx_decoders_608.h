@@ -47,6 +47,9 @@ typedef struct ccx_decoder_608_context
 	long bytes_processed_608; // To be written ONLY by process_608
 	struct ccx_s_write *out;
 	int have_cursor_position;	
+
+	int trim_subs;
+	enum ccx_encoding_type encoding;
 	
 	int *halt; // Can be used to halt the feeding of caption data. Set to 1 if screens_to_progress != -1 && screenfuls_counter >= screens_to_process
 	int *cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
@@ -112,7 +115,7 @@ enum command_code
 /*
  * 
  */
-ccx_decoder_608_context ccx_decoder_608_init_library(ccx_decoder_608_settings settings, int channel, int field, int *halt, int *cc_to_stdout);
+ccx_decoder_608_context ccx_decoder_608_init_library(ccx_decoder_608_settings settings, int channel, int field, int trim_subs, enum ccx_encoding_type encoding, int *halt, int *cc_to_stdout);
 
 /**
  * @param data raw cc608 data to be processed
@@ -138,7 +141,6 @@ void handle_end_of_data(ccx_decoder_608_context *context, struct cc_subtitle *su
 int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub);
 unsigned char *debug_608toASC(unsigned char *ccdata, int channel);
 
-unsigned get_decoder_line_basic(unsigned char *buffer, int line_num, struct eia608_screen *data);
 //void delete_all_lines_but_current(ccx_decoder_608_context *context, struct eia608_screen *data, int row);
 
 LLONG get_visible_end(void);

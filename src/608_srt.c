@@ -84,14 +84,14 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	png_byte *alpha = NULL;
 #ifdef ENABLE_OCR
 	char*str = NULL;
-#endif
-	int used;
+#endif	
 	LLONG ms_start, ms_end;
 #ifdef ENABLE_OCR
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
 	char timeline[128];
 	int len = 0;
+	int used;
 #endif
 
         x_pos = -1;

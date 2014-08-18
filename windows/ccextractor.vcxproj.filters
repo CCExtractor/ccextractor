@@ -51,9 +51,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\608_spupng.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\asf_constants.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -66,9 +63,6 @@
     <ClInclude Include="..\src\disable_warnings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\dvb_subtitle_decoder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\hamming.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -79,9 +73,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\stdintmsc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\teletext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\wtv_constants.h">
@@ -270,30 +261,21 @@
     <ClInclude Include="..\src\ccx_common_char_encoding.h">
       <Filter>Header Files\ccx_common</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\dvb_subtitle_decoder.h">
+      <Filter>Header Files\ccx_decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\teletext.h">
+      <Filter>Header Files\ccx_decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\608_spupng.h">
+      <Filter>Header Files\ccx_encoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gpacmp4\stbl_read.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gpacmp4\stbl_write.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\608_helpers.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\608_sami.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\608_smptett.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\608_spupng.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\608_srt.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\708_encoding.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\activity.c">
@@ -309,9 +291,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ccextractor.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\dvb_subtitle_decoder.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\es_functions.c">
@@ -342,9 +321,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\stream_functions.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\telxcc.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ts_functions.c">
@@ -589,6 +565,27 @@
     </ClCompile>
     <ClCompile Include="..\src\ccx_common_char_encoding.c">
       <Filter>Source Files\ccx_common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\dvb_subtitle_decoder.c">
+      <Filter>Source Files\ccx_decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\telxcc.c">
+      <Filter>Source Files\ccx_decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\608_sami.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\608_smptett.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\608_spupng.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\608_srt.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\708_encoding.c">
+      <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -116,7 +116,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		capitalize (line_number,data);
 		correct_case(line_number,data);
 	}
-	int length = get_decoder_line_basic (subline, line_number, data);
+	int length = get_decoder_line_basic (subline, line_number, data,ccx_options.trim_subs,ccx_options.encoding);
 	if (ccx_options.encoding!=CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r");

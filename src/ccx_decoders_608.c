@@ -116,7 +116,7 @@ void clear_eia608_cc_buffer(ccx_decoder_608_context *context, struct eia608_scre
 	data->empty=1;
 }
 
-ccx_decoder_608_context ccx_decoder_608_init_library(ccx_decoder_608_settings settings, int channel, int field, int *halt, int *cc_to_stdout)
+ccx_decoder_608_context ccx_decoder_608_init_library(ccx_decoder_608_settings settings, int channel, int field, int trim_subs, enum ccx_encoding_type encoding, int *halt, int *cc_to_stdout)
 {
 	ccx_decoder_608_context data;
 
@@ -140,6 +140,9 @@ ccx_decoder_608_context ccx_decoder_608_init_library(ccx_decoder_608_settings se
 	data.my_channel = channel;
 	data.out = NULL;
 	data.have_cursor_position = 0;
+
+	data.trim_subs = trim_subs;
+	data.encoding = encoding;
 	
 	data.halt = halt;
 	data.cc_to_stdout = cc_to_stdout;
@@ -355,7 +358,7 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 	data->channel = context->channel;
 	data->my_field = context->my_field;
 
-	ret = get_decoder_line_basic (subline, context->cursor_row, data);
+	ret = get_decoder_line_basic (subline, context->cursor_row, data,context->trim_subs,context->encoding);
 	if( ret > 0 )
 	{
 		sub->data = (struct eia608_screen *) realloc(sub->data,(sub->nb_data +1) * sizeof(*data));

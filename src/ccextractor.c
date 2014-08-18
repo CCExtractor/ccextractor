@@ -977,6 +977,8 @@ void init_libraries(){
 		ccx_options.settings_608,
 		ccx_options.cc_channel,
 		1,
+		ccx_options.trim_subs,
+		ccx_options.encoding,
 		&processed_enough,
 		&cc_to_stdout
 		);
@@ -984,6 +986,8 @@ void init_libraries(){
 		ccx_options.settings_608,
 		ccx_options.cc_channel,
 		2,
+		ccx_options.trim_subs,
+		ccx_options.encoding,
 		&processed_enough,
 		&cc_to_stdout
 		);

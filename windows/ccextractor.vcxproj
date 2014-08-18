@@ -88,7 +88,6 @@
   <ItemGroup>
     <ClCompile Include="..\src\ccx_common_common.c" />
     <ClCompile Include="..\src\ccx_decoders_608.c" />
-    <ClCompile Include="..\src\608_helpers.c" />
     <ClCompile Include="..\src\608_sami.c" />
     <ClCompile Include="..\src\608_smptett.c" />
     <ClCompile Include="..\src\608_spupng.c" />

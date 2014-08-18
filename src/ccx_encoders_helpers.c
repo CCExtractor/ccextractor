@@ -2,6 +2,7 @@
 #include "ccx_common_char_encoding.h"
 #include "ccx_common_constants.h"
 #include "ccx_common_structs.h"
+#include "ccx_decoders_common.h"
 
 #ifdef _MSC_VER
 #define strcasecmp stricmp
@@ -90,22 +91,6 @@ void capitalize(int line_num, struct eia608_screen *data)
 				data->characters[line_num][i] = cctolower(data->characters[line_num][i]);
 			new_sentence = 0;
 			break;
-		}
-	}
-}
-
-void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank)
-{
-	*last_non_blank = -1;
-	*first_non_blank = -1;
-	for (int i = 0; i<CCX_DECODER_608_SCREEN_WIDTH; i++)
-	{
-		unsigned char c = line[i];
-		if (c != ' ' && c != 0x89)
-		{
-			if (*first_non_blank == -1)
-				*first_non_blank = i;
-			*last_non_blank = i;
 		}
 	}
 }
