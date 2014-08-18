@@ -1,4 +1,4 @@
-ccextractor, 0.71
+ccextractor, 0.73
 -----------------
 Authors: Carlos Fernández (cfsmp3), Volker Quetschke.
 Maintainer: cfsmp3

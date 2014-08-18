@@ -102,6 +102,7 @@ struct ccx_s_options // Options from user parameters
 	unsigned send_to_srv;
 	char *tcpport;
 	char *tcp_password;
+	char *tcp_desc;
 	char *srv_addr;
 	char *srv_port;
 	int line_terminator_lf; // 0 = CRLF, 1=LF
@@ -324,6 +325,9 @@ extern void build_parity_table(void);
 void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) ;
 void telxcc_init(void);
 void telxcc_close(void);
+void tlt_read_rcwt();
+void mstotime(LLONG milli, unsigned *hours, unsigned *minutes,
+	unsigned *seconds, unsigned *ms);
 
 extern unsigned rollover_bits;
 extern uint32_t global_timestamp, min_global_timestamp;

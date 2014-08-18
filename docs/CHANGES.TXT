@@ -1,7 +1,12 @@
+0.73 - GSOC
+-----------
+- Added support of BIN format for Teletext
+
 0.72 - GSOC
 -----------
 - Fix for WTV files with incorrect timing
 - Added support for fps change using data from AVC video track in a H264 TS file.
+- Added FFMpeg Support to enable all encapsulator and decoder provided by ffmpeg
 
 0.71 - GSOC
 -----------
