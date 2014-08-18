@@ -1,6 +1,7 @@
 0.73 - GSOC
 -----------
 - Added support of BIN format for Teletext
+- Added start of librarisation. This will allow in the future for other programs to use encoder/decoder functions and more.
 
 0.72 - GSOC
 -----------
