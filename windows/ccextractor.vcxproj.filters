@@ -272,12 +272,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\gpacmp4\stbl_read.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\stbl_write.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\activity.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -586,6 +580,12 @@
     </ClCompile>
     <ClCompile Include="..\src\708_encoding.c">
       <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gpacmp4\stbl_write.c">
+      <Filter>Source Files\gpacmp4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gpacmp4\stbl_read.c">
+      <Filter>Source Files\gpacmp4</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
