@@ -398,6 +398,7 @@ extern void build_parity_table(void);
 void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) ;
 void telxcc_init(void);
 void telxcc_close(void);
+void tlt_read_rcwt();
 void mstotime(LLONG milli, unsigned *hours, unsigned *minutes,
 	unsigned *seconds, unsigned *ms);
 

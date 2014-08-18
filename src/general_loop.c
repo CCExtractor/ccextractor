@@ -772,6 +772,12 @@ void rcwt_loop(void *enc_ctx)
         fatal(EXIT_MISSING_RCWT_HEADER, "Missing RCWT header. Abort.\n");
     }
 
+    if (parsebuf[6] == 0 && parsebuf[7] == 2)
+    {
+        tlt_read_rcwt();
+        return;
+    }
+
     // Initialize first time. As RCWT files come with the correct FTS the
     // initial (minimal) time needs to be set to 0.
     current_pts = 0;
