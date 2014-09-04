@@ -435,7 +435,7 @@ int main(int argc, char *argv[])
 					wbout1.fh=STDOUT_FILENO;
 					mprint ("Sending captions to stdout.\n");
 				}
-				else
+				else if (!ccx_options.send_to_srv)
 				{
 					if (wbout1.filename[0]==0)
 					{
@@ -485,7 +485,7 @@ int main(int argc, char *argv[])
 				{
 					memcpy(&wbout2, &wbout1,sizeof(wbout1));
 				}
-				else
+				else if (!ccx_options.send_to_srv)
 				{
 					if (wbout2.filename[0]==0)
 					{

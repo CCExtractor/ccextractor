@@ -178,13 +178,15 @@ void writercwtdata (const unsigned char *data)
 
         if (cbcount > 0)
         {
-            writeraw(cbheader,10,&wbout1);
-            writeraw(cbbuffer,3*cbcount, &wbout1);
-
 			if (ccx_options.send_to_srv)
 			{
 				net_send_cc(cbheader, 10);
 				net_send_cc(cbbuffer, 3*cbcount);
+			}
+			else
+			{
+				writeraw(cbheader,10,&wbout1);
+				writeraw(cbbuffer,3*cbcount, &wbout1);
 			}
         }
         cbcount = 0;
@@ -228,13 +230,15 @@ void writercwtdata (const unsigned char *data)
         memcpy(cbbuffer, "\x04\x80\x80", 3); // Field 1 padding
         memcpy(cbbuffer+3, "\x05\x80\x80", 3); // Field 2 padding
 
-        writeraw(cbheader,10,&wbout1);
-        writeraw(cbbuffer,3*cbcount, &wbout1);
-
 		if (ccx_options.send_to_srv)
 		{
 			net_send_cc(cbheader, 10);
 			net_send_cc(cbbuffer, 3*cbcount);
+		}
+		else
+		{
+			writeraw(cbheader,10,&wbout1);
+			writeraw(cbbuffer,3*cbcount, &wbout1);
 		}
 
         cbcount = 0;
