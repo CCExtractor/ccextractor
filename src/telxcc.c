@@ -900,9 +900,15 @@ void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payload_t *pa
 }
 
 void tlt_write_rcwt(uint8_t data_unit_id, uint8_t *packet, uint64_t timestamp) {
-	writeraw((unsigned char *) &data_unit_id, sizeof(uint8_t), &wbout1);
-	writeraw((unsigned char *) &timestamp, sizeof(uint64_t), &wbout1);
-	writeraw((unsigned char *) packet, 44, &wbout1);
+	if (ccx_options.send_to_srv) {
+		net_send_cc((unsigned char *) &data_unit_id, sizeof(uint8_t));
+		net_send_cc((unsigned char *) &timestamp, sizeof(uint64_t));
+		net_send_cc((unsigned char *) packet, 44);
+	} else  {
+		writeraw((unsigned char *) &data_unit_id, sizeof(uint8_t), &wbout1);
+		writeraw((unsigned char *) &timestamp, sizeof(uint64_t), &wbout1);
+		writeraw((unsigned char *) packet, 44, &wbout1);
+	}
 }
 
 void tlt_read_rcwt() {
