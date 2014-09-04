@@ -265,10 +265,13 @@ int main(int argc, char *argv[])
 		fatal(EXIT_TOO_MANY_INPUT_FILES, "TCP mode is not compatible with input files.\n");
 	}
 
-	wbout1.multiple_files = num_input_files > 0;
-	wbout1.first_input_file = inputfile[0];
-	wbout2.multiple_files = num_input_files > 0;
-	wbout2.first_input_file = inputfile[0];
+	if (num_input_files > 0)
+	{
+		wbout1.multiple_files = 1;
+		wbout1.first_input_file = inputfile[0];
+		wbout2.multiple_files = 1;
+		wbout2.first_input_file = inputfile[0];
+	}
 
 	// teletext page number out of range
 	if ((tlt_config.page != 0) && ((tlt_config.page < 100) || (tlt_config.page > 899))) {
