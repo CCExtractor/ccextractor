@@ -523,14 +523,17 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 {
 	int wrote_something = 0 ;
 
-	if (ccx_options.extract!=1)
-		context++;
-
 	if (sub->type == CC_608)
 	{
 		struct eia608_screen *data = NULL;
 		for(data = sub->data; sub->nb_data ; sub->nb_data--,data++)
 		{
+			// Determine context based on channel. This replaces the code that was above, as this was incomplete (for cases where -12 was used for example)
+			//if (ccx_options.extract!=1)
+			//context++;
+			if (data->my_field == 2)
+				context++;
+
 			new_sentence=1;
 
 			if(data->format == SFORMAT_XDS)
