@@ -370,12 +370,12 @@ void telxcc_dump_prev_page (void)
 		millis_to_date (prev_hide_timestamp, c_temp2);
 		fdprintf(wbout1.fh,"%s|",c_temp2);
 	}
-	if (ccx_options.transcript_settings.showMode){
-		fdprintf(wbout1.fh, "TLT|");
-	}
 	if (ccx_options.transcript_settings.showCC){
 		fdprintf(wbout1.fh, "%.3u|", bcd_page_to_int(tlt_config.page));
 	}
+	if (ccx_options.transcript_settings.showMode){
+		fdprintf(wbout1.fh, "TLT|");
+	}	
 
 	if (wbout1.fh!=-1) fdprintf(wbout1.fh, "%s",page_buffer_prev);
 	fdprintf(wbout1.fh,"%s",encoded_crlf);
