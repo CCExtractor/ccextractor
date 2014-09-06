@@ -42,6 +42,8 @@ struct ccx_s_options // Options from user parameters
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
 	int print_file_reports;
 
+	int no_bom; // Set to 1 when no BOM (Byte Order Mark) should be used for files. Note, this might make files unreadable in windows!
+
 	ccx_decoder_608_settings settings_608; //  Contains the settings for the 608 decoder.
 
 	/* subtitle codec type */
@@ -107,8 +109,7 @@ struct ccx_s_options // Options from user parameters
 	char *srv_port;
 	int line_terminator_lf; // 0 = CRLF, 1=LF
 	int noautotimeref; // Do NOT set time automatically?
-	enum ccx_datasource input_source; // Files, stdin or network
-	
+	enum ccx_datasource input_source; // Files, stdin or network	
 };
 
 struct ts_payload

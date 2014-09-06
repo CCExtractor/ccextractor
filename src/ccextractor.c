@@ -79,6 +79,8 @@ void init_options (struct ccx_s_options *options)
 	options->nofontcolor=0; // 1 = don't put <font color> tags 
 	options->notypesetting=0; // 1 = Don't put <i>, <u>, etc typesetting tags
 
+	options->no_bom = 0; // Use BOM by default.
+
 	options->settings_608.direct_rollup = 0;
 	options->settings_608.no_rollup = 0;
 	options->settings_608.force_rollup = 0;
@@ -456,22 +458,27 @@ int main(int argc, char *argv[])
 				}
 				switch (ccx_options.write_format)
 				{
-					case CCX_OF_RAW:
-						writeraw (BROADCAST_HEADER,sizeof (BROADCAST_HEADER),&wbout1);
-						break;
-					case CCX_OF_DVDRAW:
-						break;
-					case CCX_OF_RCWT:
-						if( init_encoder(enc_ctx,&wbout1) )
-							fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
-						break;
-					default:
-						if (ccx_options.encoding==CCX_ENC_UTF_8) // Write BOM
-							writeraw (UTF8_BOM, sizeof (UTF8_BOM), &wbout1);
-						if (ccx_options.encoding==CCX_ENC_UNICODE) // Write BOM				
-							writeraw (LITTLE_ENDIAN_BOM, sizeof (LITTLE_ENDIAN_BOM), &wbout1);
-						if( init_encoder(enc_ctx,&wbout1) )
-							fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+				case CCX_OF_RAW:
+					writeraw(BROADCAST_HEADER, sizeof(BROADCAST_HEADER), &wbout1);
+					break;
+				case CCX_OF_DVDRAW:
+					break;
+				case CCX_OF_RCWT:
+					if (init_encoder(enc_ctx, &wbout1))
+						fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+					break;
+				default:
+					if (!ccx_options.no_bom){
+						if (ccx_options.encoding == CCX_ENC_UTF_8){ // Write BOM
+							writeraw(UTF8_BOM, sizeof(UTF8_BOM), &wbout1);
+						}
+						if (ccx_options.encoding == CCX_ENC_UNICODE){ // Write BOM				
+							writeraw(LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM), &wbout1);
+						}
+					}
+					if (init_encoder(enc_ctx, &wbout1)){
+						fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+					}
 				}
 			}
 			if (ccx_options.extract == 12 && ccx_options.write_format != CCX_OF_RAW)
@@ -517,12 +524,17 @@ int main(int argc, char *argv[])
 							fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 						break;
 					default:
-						if (ccx_options.encoding==CCX_ENC_UTF_8) // Write BOM
-							writeraw (UTF8_BOM, sizeof (UTF8_BOM), &wbout2);
-						if (ccx_options.encoding==CCX_ENC_UNICODE) // Write BOM				
-							writeraw (LITTLE_ENDIAN_BOM, sizeof (LITTLE_ENDIAN_BOM), &wbout2);
-						if( init_encoder(enc_ctx+1,&wbout2) )
-							fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+						if (!ccx_options.no_bom){
+							if (ccx_options.encoding == CCX_ENC_UTF_8){ // Write BOM
+								writeraw(UTF8_BOM, sizeof(UTF8_BOM), &wbout2);
+							}
+							if (ccx_options.encoding == CCX_ENC_UNICODE){ // Write BOM				
+								writeraw(LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM), &wbout2);
+							}
+						}
+						if (init_encoder(enc_ctx + 1, &wbout2)){
+							fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+						}
 				}
 			}
 		}

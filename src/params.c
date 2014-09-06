@@ -348,7 +348,7 @@ void usage (void)
 	mprint ("          -1, -2, -12: Output Field 1 data, Field 2 data, or both\n");
 	mprint ("                       (DEFAULT is -1)\n");
 	mprint ("                 -cc2: When in srt/sami mode, process captions in channel 2\n");
-	mprint ("                       instead channel 1.\n");
+	mprint ("                       instead of channel 1.\n");
 	mprint ("-svc --service N,N...: Enabled CEA-708 captions processing for the listed\n");
 	mprint ("                       services. The parameter is a command delimited list\n");
 	mprint ("                       of services numbers, such as \"1,2\" to process the\n");
@@ -477,6 +477,8 @@ void usage (void)
 	mprint ("                       affects Teletext in timed transcript with -datets.\n");
 	mprint ("\n");
 	mprint ("Options that affect what kind of output will be produced:\n");
+	mprint("				-nobom: Do not append a BOM (Byte Order Mark) to output files.");
+	mprint("						Note that this may break files when using Windows.");
 	mprint ("             -unicode: Encode subtitles in Unicode instead of Latin-1.\n");
 	mprint ("                -utf8: Encode subtitles in UTF-8 (no longer needed.\n");
 	mprint ("                       because UTF-8 is now the default).\n");
@@ -862,6 +864,9 @@ void parse_parameters (int argc, char *argv[])
 		{
 			ccx_options.nofontcolor=1;
 			continue;
+		}
+		if (strcmp(argv[i], "-nobom") == 0){
+			ccx_options.no_bom = 1;
 		}
 		if (strcmp (argv[i],"-nots")==0 ||
 				strcmp (argv[i],"--notypesetting")==0)
@@ -1425,6 +1430,7 @@ void parse_parameters (int argc, char *argv[])
 		if (strcmp (argv[i],"-UCLA")==0 || strcmp (argv[i],"-ucla")==0)
 		{
 			ccx_options.millis_separator='.';
+			ccx_options.no_bom = 1;
 			if (!ccx_options.transcript_settings.isFinal){
 				ccx_options.transcript_settings.showStartTime = 1;
 				ccx_options.transcript_settings.showEndTime = 1;
