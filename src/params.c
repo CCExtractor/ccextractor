@@ -230,10 +230,12 @@ void set_output_format (const char *format)
 		if (ccx_options.date_format==ODF_NONE)
 			ccx_options.date_format=ODF_HHMMSSMS;
 		// Sets the right things so that timestamps and the mode are printed.
-		ccx_options.transcript_settings.showStartTime = 1;
-		ccx_options.transcript_settings.showEndTime = 1;
-		ccx_options.transcript_settings.showCC = 0;
-		ccx_options.transcript_settings.showMode = 1;
+		if (!ccx_options.transcript_settings.isFinal){
+			ccx_options.transcript_settings.showStartTime = 1;
+			ccx_options.transcript_settings.showEndTime = 1;
+			ccx_options.transcript_settings.showCC = 0;
+			ccx_options.transcript_settings.showMode = 1;
+		}
 	}
 	else if (strcmp (format,"report")==0) 
 	{
@@ -1259,7 +1261,9 @@ void parse_parameters (int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-xds")==0)
 		{
-			ccx_options.transcript_settings.xds = 1;
+			if (!ccx_options.transcript_settings.isFinal){
+				ccx_options.transcript_settings.xds = 1;
+			}
 			continue;
 		}
 		if (strcmp (argv[i],"-xdsdebug")==0)
@@ -1421,11 +1425,14 @@ void parse_parameters (int argc, char *argv[])
 		if (strcmp (argv[i],"-UCLA")==0 || strcmp (argv[i],"-ucla")==0)
 		{
 			ccx_options.millis_separator='.';
-			ccx_options.transcript_settings.showStartTime = 1;
-			ccx_options.transcript_settings.showEndTime = 1;
-			ccx_options.transcript_settings.showCC = 1;
-			ccx_options.transcript_settings.showMode = 1;
-			ccx_options.transcript_settings.relativeTimestamp = 0;
+			if (!ccx_options.transcript_settings.isFinal){
+				ccx_options.transcript_settings.showStartTime = 1;
+				ccx_options.transcript_settings.showEndTime = 1;
+				ccx_options.transcript_settings.showCC = 1;
+				ccx_options.transcript_settings.showMode = 1;
+				ccx_options.transcript_settings.relativeTimestamp = 0;
+				ccx_options.transcript_settings.isFinal = 1;
+			}
 			continue;
 		}
 		if (strcmp (argv[i],"-lf")==0 || strcmp (argv[i],"-LF")==0)
@@ -1485,13 +1492,15 @@ void parse_parameters (int argc, char *argv[])
 			if (strlen(format) == 7){
 				if (ccx_options.date_format == ODF_NONE)
 					ccx_options.date_format = ODF_HHMMSSMS; // Necessary for displaying times, if any would be used.
-				ccx_options.transcript_settings.showStartTime = format[0]-'0';
-				ccx_options.transcript_settings.showEndTime = format[1] - '0';
-				ccx_options.transcript_settings.showMode = format[2] - '0';
-				ccx_options.transcript_settings.showCC = format[3] - '0';
-				ccx_options.transcript_settings.relativeTimestamp = format[4] - '0';
-				ccx_options.transcript_settings.xds = format[5] - '0';
-				ccx_options.transcript_settings.useColors = format[6] - '0';
+				if (!ccx_options.transcript_settings.isFinal){
+					ccx_options.transcript_settings.showStartTime = format[0] - '0';
+					ccx_options.transcript_settings.showEndTime = format[1] - '0';
+					ccx_options.transcript_settings.showMode = format[2] - '0';
+					ccx_options.transcript_settings.showCC = format[3] - '0';
+					ccx_options.transcript_settings.relativeTimestamp = format[4] - '0';
+					ccx_options.transcript_settings.xds = format[5] - '0';
+					ccx_options.transcript_settings.useColors = format[6] - '0';
+				}
 				i++;
 			}
 			else {

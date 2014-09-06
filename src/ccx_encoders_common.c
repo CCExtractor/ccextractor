@@ -17,7 +17,8 @@ ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
 	.showCC = 0,
 	.relativeTimestamp = 1,
 	.xds = 0,
-	.useColors = 1
+	.useColors = 1,
+	.isFinal = 0
 };
 
 static const char *sami_header= // TODO: Revise the <!-- comments
