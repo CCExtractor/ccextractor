@@ -317,7 +317,9 @@ int hex2int (char high, char low);
 void timestamp_to_srttime(uint64_t timestamp, char *buffer);
 void millis_to_date (uint64_t timestamp, char *buffer) ;
 int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
+#ifndef _WIN32
 void m_signal(int sig, void (*func)(int));
+#endif
 
 
 unsigned encode_line (unsigned char *buffer, unsigned char *text);

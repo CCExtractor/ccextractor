@@ -596,7 +596,9 @@ int main(int argc, char *argv[])
 			fatal (EXIT_UNABLE_TO_DETERMINE_FILE_SIZE, "Failed to determine total file size.\n");
 	}
 
+#ifndef _WIN32
 	m_signal(SIGINT, sigint_handler);
+#endif
 
 	while (switch_to_next_file(0) && !processed_enough)
 	{

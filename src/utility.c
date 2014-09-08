@@ -246,6 +246,7 @@ int hex2int (char high, char low)
 	return h*16+l;
 }
 
+#ifndef _WIN32
 void m_signal(int sig, void (*func)(int))
 {
 	struct sigaction act;
@@ -258,3 +259,4 @@ void m_signal(int sig, void (*func)(int))
 
 	return;
 }
+#endif
