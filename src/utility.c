@@ -1,3 +1,4 @@
+#include <signal.h>
 #include "ccextractor.h"
 
 static char *text;
@@ -243,4 +244,17 @@ int hex2int (char high, char low)
 	else 
 		return -1;
 	return h*16+l;
+}
+
+void m_signal(int sig, void (*func)(int))
+{
+	struct sigaction act;
+	act.sa_handler = func;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = 0;
+
+	if (sigaction(sig, &act, NULL))
+		perror("sigaction() error");
+
+	return;
 }

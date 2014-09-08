@@ -7,6 +7,7 @@ License: GPL 2.0
 #include "configuration.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <signal.h>
 #include "ffmpeg_intgr.h"
 
 void xds_cea608_test();
@@ -200,6 +201,13 @@ int main_telxcc (int argc, char *argv[]);
 #endif
 LLONG process_raw_with_field (void);
 
+void sigint_handler()
+{
+	if (ccx_options.print_file_reports)
+		print_file_report();
+
+	exit(EXIT_SUCCESS);
+}
 
 
 int main(int argc, char *argv[])
@@ -587,6 +595,8 @@ int main(int argc, char *argv[])
 		if (total_inputsize==-1)
 			fatal (EXIT_UNABLE_TO_DETERMINE_FILE_SIZE, "Failed to determine total file size.\n");
 	}
+
+	m_signal(SIGINT, sigint_handler);
 
 	while (switch_to_next_file(0) && !processed_enough)
 	{

@@ -204,7 +204,7 @@ void params_dump(void)
 
 }
 
-void print_file_report(void) 
+void print_file_report(void)
 {
 	#define Y_N(cond) ((cond) ? "Yes" : "No")
 
@@ -212,6 +212,12 @@ void print_file_report(void)
 	switch (ccx_options.input_source)
 	{
 		case CCX_DS_FILE:
+			if (current_file < 0)
+			{
+				printf("file is not openened yet\n");
+				return;
+			}
+
 			printf("%s\n", inputfile[current_file]);
 			break;
 		case CCX_DS_STDIN:
