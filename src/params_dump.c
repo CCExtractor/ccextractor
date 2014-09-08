@@ -362,12 +362,12 @@ void print_file_report(void)
 
 	if (cc_stats[0] > 0 || cc_stats[1] > 0) 
 	{
-		printf("XDS: %s\n", Y_N(file_report.data_from_608.xds));
+		printf("XDS: %s\n", Y_N(file_report.data_from_608->xds));
 
-		printf("CC1: %s\n", Y_N(file_report.data_from_608.cc_channels[0]));
-		printf("CC2: %s\n", Y_N(file_report.data_from_608.cc_channels[1]));
-		printf("CC3: %s\n", Y_N(file_report.data_from_608.cc_channels[2]));
-		printf("CC4: %s\n", Y_N(file_report.data_from_608.cc_channels[3]));
+		printf("CC1: %s\n", Y_N(file_report.data_from_608->cc_channels[0]));
+		printf("CC2: %s\n", Y_N(file_report.data_from_608->cc_channels[1]));
+		printf("CC3: %s\n", Y_N(file_report.data_from_608->cc_channels[2]));
+		printf("CC4: %s\n", Y_N(file_report.data_from_608->cc_channels[3]));
 	}
 
 	printf("CEA-708: %s\n", Y_N(cc_stats[2] > 0 || cc_stats[3] > 0));
@@ -377,15 +377,15 @@ void print_file_report(void)
 		printf("Services: ");
 		for (int i = 0; i < CCX_DECODERS_708_MAX_SERVICES; i++) 
 		{
-			if (file_report.data_from_708.services[i] == 0)
+			if (file_report.data_from_708->services[i] == 0)
 				continue;
 			printf("%d ", i);
 		}
 		printf("\n");
 
-		printf("Primary Language Present: %s\n", Y_N(file_report.data_from_708.services[1]));
+		printf("Primary Language Present: %s\n", Y_N(file_report.data_from_708->services[1]));
 
-		printf("Secondary Language Present: %s\n", Y_N(file_report.data_from_708.services[2]));
+		printf("Secondary Language Present: %s\n", Y_N(file_report.data_from_708->services[2]));
 	}
 
 	printf("MPEG-4 Timed Text: %s\n", Y_N(file_report.mp4_cc_track_cnt));

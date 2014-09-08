@@ -151,8 +151,8 @@ struct file_report_t
 	unsigned height;
 	unsigned aspect_ratio;
 	unsigned frame_rate;
-	struct ccx_decoder_608_report_t data_from_608;
-	struct ccx_decoder_708_report_t data_from_708;
+	struct ccx_decoder_608_report_t *data_from_608;
+	struct ccx_decoder_708_report_t *data_from_708;
 	unsigned dvb_sub_pid[SUB_STREAMS_CNT]; 
 	unsigned tlt_sub_pid[SUB_STREAMS_CNT];
 	unsigned mp4_cc_track_cnt;
