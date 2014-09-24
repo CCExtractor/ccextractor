@@ -581,7 +581,7 @@ int tcp_bind(const char *port, int *family)
 		if (bind(sockfd, p->ai_addr, p->ai_addrlen) < 0)
 		{
 #if _WIN32
-			wprintf(L"bind() eror: %ld\n", WSAGetLastError());
+			wprintf(L"bind() error: %ld\n", WSAGetLastError());
 			closesocket(sockfd);
 #else
 			mprint("bind() error: %s\n", strerror(errno));

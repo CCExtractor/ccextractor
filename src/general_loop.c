@@ -661,7 +661,7 @@ void general_loop(void *enc_ctx)
         else if (ccx_bufferdatatype == CCX_H264) // H.264 data from TS file
         {
             got = process_avc(buffer, inbuf,&dec_sub);
-        }
+        } 
         else
             fatal(CCX_COMMON_EXIT_BUG_BUG, "Unknown data type!");
 
