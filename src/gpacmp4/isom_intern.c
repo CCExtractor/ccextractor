@@ -21,7 +21,7 @@
  *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. 
  *
  */
-#include "../disable_warnings.h"
+#include "disable_warnings.h"
 #include <gpac/internal/isomedia_dev.h>
 #include <gpac/network.h>
 #ifndef _WIN32

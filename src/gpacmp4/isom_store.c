@@ -22,7 +22,7 @@
  *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. 
  *
  */
-#include "../disable_warnings.h"
+#include "disable_warnings.h"
 #include <gpac/internal/isomedia_dev.h>
 
 #if !defined(GPAC_DISABLE_ISOM) && !defined(GPAC_DISABLE_ISOM_WRITE)
