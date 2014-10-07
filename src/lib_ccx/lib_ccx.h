@@ -47,8 +47,8 @@ struct ccx_s_options // Options from user parameters
 	ccx_decoder_608_settings settings_608; //  Contains the settings for the 608 decoder.
 
 	/* subtitle codec type */
-	enum cxx_code_type codec;
-	enum cxx_code_type nocodec;
+	enum ccx_code_type codec;
+	enum ccx_code_type nocodec;
 	/* Credit stuff */
 	char *start_credits_text;
 	char *end_credits_text;

@@ -9,7 +9,7 @@
 #include "dvb_subtitle_decoder.h"
 #include "utility.h"
 static unsigned pmt_warning_shown=0; // Only display warning once
-void *cxx_dvb_context = NULL;
+void *ccx_dvb_context = NULL;
 
 // PMTs table
 struct PAT_entry pmt_array[TS_PMT_MAP_SIZE] = {{ 0 }};
@@ -281,8 +281,8 @@ int parse_PMT (unsigned char *buf,int len, int pos)
 					ret = parse_dvb_description(&cnf,es_info,desc_len);
 					if(ret < 0)
 						break;
-					cxx_dvb_context = dvbsub_init_decoder(&cnf);
-					if (cxx_dvb_context == NULL)
+					ccx_dvb_context = dvbsub_init_decoder(&cnf);
+					if (ccx_dvb_context == NULL)
 						break;
 					ccx_options.ts_cappid = newcappid = elementary_PID;
 					cap_stream_type = newcap_stream_type = ccx_stream_type;

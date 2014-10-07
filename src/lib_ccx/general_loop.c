@@ -36,7 +36,7 @@ unsigned char *filebuffer;
 LLONG filebuffer_start; // Position of buffer start relative to file
 int filebuffer_pos; // Position of pointer relative to buffer start
 int bytesinbuffer; // Number of bytes we actually have on buffer
-extern void *cxx_dvb_context;
+extern void *ccx_dvb_context;
 
 LLONG process_raw_with_field (struct cc_subtitle *sub);
 
@@ -602,7 +602,7 @@ void general_loop(void *enc_ctx)
 		}
 		else if(ccx_bufferdatatype == CCX_DVB_SUBTITLE)
 		{
-			dvbsub_decode(cxx_dvb_context, buffer + 2, inbuf, &dec_sub);
+			dvbsub_decode(ccx_dvb_context, buffer + 2, inbuf, &dec_sub);
 			set_fts();
 			got = inbuf;
 		}

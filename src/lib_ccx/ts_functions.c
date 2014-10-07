@@ -17,7 +17,7 @@ static long haup_capbuflen = 0; // Bytes read in haup_capbuf
 unsigned TS_program_number = 0; // Identifier for current program
 unsigned pmtpid = 0; // PID for Program Map Table
 unsigned cap_stream_type=CCX_STREAM_TYPE_UNKNOWNSTREAM; // Stream type for cappid
-extern void *cxx_dvb_context;
+extern void *ccx_dvb_context;
 
 // Descriptions for ts ccx_stream_type
 const char *desc[256];
@@ -373,7 +373,7 @@ long ts_readstream(void)
 		 * if dvb subtitle is selected then start time taken from first PTS
 		 * of any stream
 		 */
-		if ( cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cxx_dvb_context && !pts_set)
+		if ( cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && ccx_dvb_context && !pts_set)
 		{
 			if(read_pts_pes(payload.start,payload.length) == 0)
 				set_fts();
@@ -480,7 +480,7 @@ LLONG ts_getmoredata(void)
 			ccx_bufferdatatype = CCX_H264;
 			tstr = "H.264";
 		}
-		else if ( cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cxx_dvb_context )
+		else if ( cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && ccx_dvb_context )
 		{
 			ccx_bufferdatatype = CCX_DVB_SUBTITLE;
 			tstr = "DVB subtitle";

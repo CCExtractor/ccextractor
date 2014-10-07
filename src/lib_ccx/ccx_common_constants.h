@@ -222,7 +222,7 @@ typedef enum {
 	UNDEF = 0xff
 } bool_t;
 
-enum cxx_code_type
+enum ccx_code_type
 {
 	CCX_CODEC_ANY,
 	CCX_CODEC_TELETEXT,
