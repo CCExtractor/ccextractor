@@ -19,7 +19,7 @@
 
 #include "networking.h"
 
-extern int cc_buffer_saved; // Do we have anything in the CC buffer already? 
+extern int cc_buffer_saved; // Do we have anything in the CC buffer already?
 extern int ccblocks_in_avc_total; // Total CC blocks found by the AVC code
 extern int ccblocks_in_avc_lost; // CC blocks found by the AVC code lost due to overwrites (should be 0)
 
@@ -36,7 +36,7 @@ struct ccx_s_options // Options from user parameters
 {
 	int extract; // Extract 1st, 2nd or both fields
 	int cc_channel; // Channel we want to dump in srt mode
-	int buffer_input;	
+	int buffer_input;
 	int nofontcolor;
 	int notypesetting;
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
@@ -51,7 +51,7 @@ struct ccx_s_options // Options from user parameters
 	enum cxx_code_type nocodec;
 	/* Credit stuff */
 	char *start_credits_text;
-	char *end_credits_text;	
+	char *end_credits_text;
 	struct ccx_boundary_time startcreditsnotbefore, startcreditsnotafter; // Where to insert start credits, if possible
 	struct ccx_boundary_time startcreditsforatleast, startcreditsforatmost; // How long to display them?
 	struct ccx_boundary_time endcreditsforatleast, endcreditsforatmost;
@@ -64,17 +64,17 @@ struct ccx_s_options // Options from user parameters
 	int sentence_cap ; // FIX CASE? = Fix case?
 	char *sentence_cap_file; // Extra words file?
 	int live_stream; /* -1 -> Not a complete file but a live stream, without timeout
-                       0 -> A regular file 
+                       0 -> A regular file
                       >0 -> Live stream with a timeout of this value in seconds */
 	int messages_target; // 0 = nowhere (quiet), 1=stdout, 2=stderr
 	/* Levenshtein's parameters, for string comparison */
-	int levdistmincnt, levdistmaxpct; // Means 2 fails or less is "the same", 10% or less is also "the same"	
+	int levdistmincnt, levdistmaxpct; // Means 2 fails or less is "the same", 10% or less is also "the same"
 	int investigate_packets; // Look for captions in all packets when everything else fails
 	int fullbin; // Disable pruning of padding cc blocks
 	int nosync; // Disable syncing
-	unsigned hauppauge_mode; // If 1, use PID=1003, process specially and so on	
+	unsigned hauppauge_mode; // If 1, use PID=1003, process specially and so on
 	int wtvconvertfix; // Fix broken Windows 7 conversion
-	int wtvmpeg2; 
+	int wtvmpeg2;
 	int auto_myth; // Use myth-tv mpeg code? 0=no, 1=yes, 2=auto
 	/* MP4 related stuff */
 	unsigned mp4vidtrack; // Process the video track even if a CC dedicated track exists.
@@ -95,7 +95,7 @@ struct ccx_s_options // Options from user parameters
 	unsigned ts_cappid ; // PID for stream that holds caption information
 	unsigned ts_forced_cappid ; // If 1, never mess with the selected PID
 	unsigned ts_forced_program; // Specific program to process in TS files, if ts_forced_program_selected==1
-	unsigned ts_forced_program_selected; 
+	unsigned ts_forced_program_selected;
 	int ts_datastreamtype ; // User WANTED stream type (i.e. use the stream that has this type)
 	unsigned ts_forced_streamtype; // User selected (forced) stream type
 	/* Networking */
@@ -109,7 +109,7 @@ struct ccx_s_options // Options from user parameters
 	char *srv_port;
 	int line_terminator_lf; // 0 = CRLF, 1=LF
 	int noautotimeref; // Do NOT set time automatically?
-	enum ccx_datasource input_source; // Files, stdin or network	
+	enum ccx_datasource input_source; // Files, stdin or network
 };
 
 struct ts_payload
@@ -153,7 +153,7 @@ struct file_report_t
 	unsigned frame_rate;
 	struct ccx_decoder_608_report_t *data_from_608;
 	struct ccx_decoder_708_report_t *data_from_708;
-	unsigned dvb_sub_pid[SUB_STREAMS_CNT]; 
+	unsigned dvb_sub_pid[SUB_STREAMS_CNT];
 	unsigned tlt_sub_pid[SUB_STREAMS_CNT];
 	unsigned mp4_cc_track_cnt;
 } file_report;
@@ -226,7 +226,7 @@ void activity_report_version (void);
 void activity_input_file_closed (void);
 void activity_input_file_open (const char *filename);
 void activity_message (const char *fmt, ...);
-void  activity_video_info (int hor_size,int vert_size, 
+void  activity_video_info (int hor_size,int vert_size,
     const char *aspect_ratio, const char *framerate);
 void activity_program_number (unsigned program_number);
 void activity_library_process(enum ccx_common_logging_gui message_type, ...);
@@ -351,7 +351,7 @@ extern LLONG result; // Number of bytes read/skipped in last read operation
 
 extern int strangeheader;
 
-extern unsigned char startbytes[STARTBYTESLENGTH]; 
+extern unsigned char startbytes[STARTBYTESLENGTH];
 extern unsigned int startbytes_pos;
 extern int startbytes_avail; // Needs to be able to hold -1 result.
 
@@ -385,9 +385,9 @@ extern enum ccx_stream_mode_enum stream_mode;
 extern int cc_stats[4];
 extern LLONG inputsize;
 
-extern LLONG subs_delay; 
+extern LLONG subs_delay;
 extern int startcredits_displayed, end_credits_displayed;
-extern LLONG last_displayed_subs_ms; 
+extern LLONG last_displayed_subs_ms;
 extern int processed_enough;
 
 extern const char *extension;
@@ -447,7 +447,7 @@ extern long capbuflen;
 
 #define HAUPPAGE_CCPID	1003 // PID for CC's in some Hauppauge recordings
 
-/* Exit codes. Take this seriously as the GUI depends on them. 
+/* Exit codes. Take this seriously as the GUI depends on them.
    0 means OK as usual,
    <100 means display whatever was output to stderr as a warning
    >=100 means display whatever was output to stdout as an error
