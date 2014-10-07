@@ -234,6 +234,9 @@ void set_output_format (const char *format)
 			ccx_options.transcript_settings.showEndTime = 1;
 			ccx_options.transcript_settings.showCC = 0;
 			ccx_options.transcript_settings.showMode = 1;
+		} else {
+			// Throw exception
+			fatal(EXIT_INCOMPATIBLE_PARAMETERS, "timedtranscript cannot be set after -UCLA is used!");
 		}
 	}
 	else if (strcmp (format,"report")==0)
@@ -1265,9 +1268,8 @@ void parse_parameters (int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-xds")==0)
 		{
-			if (!ccx_options.transcript_settings.isFinal){
-				ccx_options.transcript_settings.xds = 1;
-			}
+			// XDS can be set regardless of -UCLA (isFinal) usage.
+			ccx_options.transcript_settings.xds = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-xdsdebug")==0)
@@ -1505,6 +1507,9 @@ void parse_parameters (int argc, char *argv[])
 					ccx_options.transcript_settings.relativeTimestamp = format[4] - '0';
 					ccx_options.transcript_settings.xds = format[5] - '0';
 					ccx_options.transcript_settings.useColors = format[6] - '0';
+				} else {
+					// Throw exception
+					fatal(EXIT_INCOMPATIBLE_PARAMETERS, "customtxt cannot be set after -UCLA is used!");
 				}
 				i++;
 			}
