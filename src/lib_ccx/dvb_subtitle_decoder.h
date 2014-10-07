@@ -18,7 +18,7 @@
 
 #define MAX_LANGUAGE_PER_DESC 5
 
-#include "ccextractor.h"
+#include "lib_ccx.h"
 #ifdef __cplusplus
 extern "C"
 {

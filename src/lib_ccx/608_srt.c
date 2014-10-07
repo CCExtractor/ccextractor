@@ -1,4 +1,4 @@
-#include "ccextractor.h"
+#include "lib_ccx.h"
 #include "ccx_encoders_common.h"
 #include "png.h"
 #include "spupng_encoder.h"

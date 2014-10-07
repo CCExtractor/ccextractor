@@ -1,7 +1,7 @@
 /* This code comes from MythTV.
 For now, integration with ccextractor is a quick hack. It could get better with time. */
 
-#include "ccextractor.h"
+#include "lib_ccx.h"
 #include "ccx_decoders_608.h"
 #ifdef _WIN32
 #include <io.h>

@@ -1,6 +1,6 @@
 #ifndef __608_SPUPNG_H__
 
-#include "ccextractor.h"
+#include "lib_ccx.h"
 #include "spupng_encoder.h"
 #include "ccx_encoders_common.h"
 

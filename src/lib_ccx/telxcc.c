@@ -28,7 +28,7 @@ Werner Brückner -- Teletext in digital television
 */
 
 
-#include "ccextractor.h"
+#include "lib_ccx.h"
 #include "hamming.h"
 #include "teletext.h"
 #include <signal.h>

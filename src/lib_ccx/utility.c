@@ -1,5 +1,5 @@
 #include <signal.h>
-#include "ccextractor.h"
+#include "lib_ccx.h"
 
 static char *text;
 static int text_size=0;

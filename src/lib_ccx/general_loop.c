@@ -1,4 +1,4 @@
-#include "ccextractor.h"
+#include "lib_ccx.h"
 #ifdef _WIN32
 #include <io.h>
 #else

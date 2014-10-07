@@ -1,4 +1,4 @@
-#include "ccextractor.h"
+#include "lib_ccx.h"
 #include "utility.h"
 
 static int inputfile_capacity=0;

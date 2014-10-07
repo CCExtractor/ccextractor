@@ -1,7 +1,7 @@
 /* This file contains functions that report the user of the GUI of
 relevant events. */
 
-#include "ccextractor.h"
+#include "lib_ccx.h"
 
 static int credits_shown=0;
 unsigned long net_activity_gui=0;

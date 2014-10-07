@@ -1,4 +1,4 @@
-#include "ccextractor.h"
+#include "lib_ccx.h"
 
 
 // Parse the user data for captions. The udtype variable denotes

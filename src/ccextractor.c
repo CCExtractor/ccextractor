@@ -3,7 +3,7 @@ Credits: See CHANGES.TXT
 License: GPL 2.0
 */
 #include <stdio.h>
-#include "ccextractor.h"
+#include "lib_ccx.h"
 #include "configuration.h"
 #include <sys/types.h>
 #include <sys/stat.h>

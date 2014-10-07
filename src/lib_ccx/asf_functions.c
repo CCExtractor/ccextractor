@@ -1,4 +1,4 @@
-#include "ccextractor.h"
+#include "lib_ccx.h"
 #include "asf_constants.h"
 
 // Indicate first / subsequent calls to asf_getmoredata()

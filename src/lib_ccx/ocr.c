@@ -1,5 +1,5 @@
 #include "png.h"
-#include "ccextractor.h"
+#include "lib_ccx.h"
 #ifdef ENABLE_OCR
 #include "platform.h"
 #include "capi.h"

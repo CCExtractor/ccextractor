@@ -5,7 +5,7 @@
    PMT specs: ISO13818-1 / table 2-28
    */
 
-#include "ccextractor.h"
+#include "lib_ccx.h"
 #include "dvb_subtitle_decoder.h"
 #include "utility.h"
 static unsigned pmt_warning_shown=0; // Only display warning once

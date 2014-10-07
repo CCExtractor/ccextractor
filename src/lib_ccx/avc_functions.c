@@ -1,4 +1,4 @@
-#include "ccextractor.h"
+#include "lib_ccx.h"
 #include <math.h>
 
 // Functions to parse a AVC/H.264 data stream, see ISO/IEC 14496-10

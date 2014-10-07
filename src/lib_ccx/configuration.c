@@ -1,4 +1,4 @@
-#include "ccextractor.h"
+#include "lib_ccx.h"
 #include "configuration.h"
 #include <stddef.h>
 #define CNF_FILE "ccextractor.cnf"

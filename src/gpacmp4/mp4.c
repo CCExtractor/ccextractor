@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include <gpac/isomedia.h>
-#include "ccextractor.h"
+#include "lib_ccx.h"
 #include "utility.h"
 #include "ccx_encoders_common.h"
 

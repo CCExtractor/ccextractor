@@ -1,4 +1,4 @@
-#include "ccextractor.h"
+#include "lib_ccx.h"
 
 // Hold functions to read streams on a bit or byte oriented basis
 // plus some data related helper functions.

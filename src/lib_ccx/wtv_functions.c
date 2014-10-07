@@ -1,4 +1,4 @@
-#include "ccextractor.h"
+#include "lib_ccx.h"
 #include "wtv_constants.h"
 
 int check_stream_id(int stream_id, int video_streams[], int num_streams);

@@ -1,10 +1,10 @@
-#include "ccextractor.h"
+#include "lib_ccx.h"
 
 // Defined by the maximum number of B-Frames per anchor frame.
-//#define MAXBFRAMES 50 - from ccextractor.h
+//#define MAXBFRAMES 50 - from lib_ccx.h
 //  They can be (temporally) before or after the anchor. Reserve
 // enough space.
-//#define SORTBUF (2*MAXBFRAMES+1) - from ccextractor.h
+//#define SORTBUF (2*MAXBFRAMES+1) - from lib_ccx.h
 // B-Frames can be (temporally) before or after the anchor
 int cc_data_count[SORTBUF];
 // Store fts;
