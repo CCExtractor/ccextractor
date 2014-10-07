@@ -86,30 +86,7 @@
     <ClInclude Include="..\src\zlib\zutil.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\ccx_common_common.c" />
-    <ClCompile Include="..\src\ccx_decoders_608.c" />
-    <ClCompile Include="..\src\608_sami.c" />
-    <ClCompile Include="..\src\608_smptett.c" />
-    <ClCompile Include="..\src\608_spupng.c" />
-    <ClCompile Include="..\src\608_srt.c" />
-    <ClCompile Include="..\src\708_encoding.c" />
-    <ClCompile Include="..\src\activity.c" />
-    <ClCompile Include="..\src\asf_functions.c" />
-    <ClCompile Include="..\src\avc_functions.c" />
     <ClCompile Include="..\src\ccextractor.c" />
-    <ClCompile Include="..\src\ccx_decoders_708.c" />
-    <ClCompile Include="..\src\ccx_encoders_helpers.c" />
-    <ClCompile Include="..\src\cc_bitstream.c" />
-    <ClCompile Include="..\src\ccx_decoders_common.c" />
-    <ClCompile Include="..\src\ccx_encoders_common.c" />
-    <ClCompile Include="..\src\configuration.c" />
-    <ClCompile Include="..\src\ccx_common_constants.c" />
-    <ClCompile Include="..\src\dvb_subtitle_decoder.c" />
-    <ClCompile Include="..\src\ccx_common_char_encoding.c" />
-    <ClCompile Include="..\src\es_functions.c" />
-    <ClCompile Include="..\src\es_userdata.c" />
-    <ClCompile Include="..\src\file_functions.c" />
-    <ClCompile Include="..\src\general_loop.c" />
     <ClCompile Include="..\src\gpacmp4\avc_ext.c" />
     <ClCompile Include="..\src\gpacmp4\avilib.c" />
     <ClCompile Include="..\src\gpacmp4\av_parsers.c" />
@@ -167,22 +144,45 @@
     <ClCompile Include="..\src\libpng\pngwrite.c" />
     <ClCompile Include="..\src\libpng\pngwtran.c" />
     <ClCompile Include="..\src\libpng\pngwutil.c" />
-    <ClCompile Include="..\src\myth.c" />
-    <ClCompile Include="..\src\networking.c" />
-    <ClCompile Include="..\src\ocr.c" />
-    <ClCompile Include="..\src\output.c" />
-    <ClCompile Include="..\src\params.c" />
-    <ClCompile Include="..\src\params_dump.c" />
-    <ClCompile Include="..\src\sequencing.c" />
-    <ClCompile Include="..\src\spupng_encoder.c" />
-    <ClCompile Include="..\src\stream_functions.c" />
-    <ClCompile Include="..\src\telxcc.c" />
-    <ClCompile Include="..\src\ccx_common_timing.c" />
-    <ClCompile Include="..\src\ts_functions.c" />
-    <ClCompile Include="..\src\ts_tables.c" />
-    <ClCompile Include="..\src\utility.c" />
-    <ClCompile Include="..\src\wtv_functions.c" />
-    <ClCompile Include="..\src\ccx_decoders_xds.c" />
+    <ClCompile Include="..\src\lib_ccx\608_sami.c" />
+    <ClCompile Include="..\src\lib_ccx\608_smptett.c" />
+    <ClCompile Include="..\src\lib_ccx\608_spupng.c" />
+    <ClCompile Include="..\src\lib_ccx\608_srt.c" />
+    <ClCompile Include="..\src\lib_ccx\708_encoding.c" />
+    <ClCompile Include="..\src\lib_ccx\activity.c" />
+    <ClCompile Include="..\src\lib_ccx\asf_functions.c" />
+    <ClCompile Include="..\src\lib_ccx\avc_functions.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_common_char_encoding.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_common_common.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_common_constants.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_common_timing.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_decoders_608.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_decoders_708.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_decoders_common.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_decoders_xds.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_common.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_helpers.c" />
+    <ClCompile Include="..\src\lib_ccx\cc_bitstream.c" />
+    <ClCompile Include="..\src\lib_ccx\configuration.c" />
+    <ClCompile Include="..\src\lib_ccx\dvb_subtitle_decoder.c" />
+    <ClCompile Include="..\src\lib_ccx\es_functions.c" />
+    <ClCompile Include="..\src\lib_ccx\es_userdata.c" />
+    <ClCompile Include="..\src\lib_ccx\file_functions.c" />
+    <ClCompile Include="..\src\lib_ccx\general_loop.c" />
+    <ClCompile Include="..\src\lib_ccx\myth.c" />
+    <ClCompile Include="..\src\lib_ccx\networking.c" />
+    <ClCompile Include="..\src\lib_ccx\ocr.c" />
+    <ClCompile Include="..\src\lib_ccx\output.c" />
+    <ClCompile Include="..\src\lib_ccx\params.c" />
+    <ClCompile Include="..\src\lib_ccx\params_dump.c" />
+    <ClCompile Include="..\src\lib_ccx\sequencing.c" />
+    <ClCompile Include="..\src\lib_ccx\spupng_encoder.c" />
+    <ClCompile Include="..\src\lib_ccx\stream_functions.c" />
+    <ClCompile Include="..\src\lib_ccx\telxcc.c" />
+    <ClCompile Include="..\src\lib_ccx\ts_functions.c" />
+    <ClCompile Include="..\src\lib_ccx\ts_tables.c" />
+    <ClCompile Include="..\src\lib_ccx\utility.c" />
+    <ClCompile Include="..\src\lib_ccx\wtv_functions.c" />
     <ClCompile Include="..\src\zlib\adler32.c" />
     <ClCompile Include="..\src\zlib\crc32.c" />
     <ClCompile Include="..\src\zlib\deflate.c" />
@@ -232,7 +232,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../src/gpacmp4;../src/libpng;../src/zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>

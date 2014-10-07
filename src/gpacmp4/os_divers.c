@@ -21,7 +21,7 @@
  *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. 
  *
  */
-#include "../disable_warnings.h"
+#include "disable_warnings.h"
 #include <gpac/tools.h>
 
 #if defined(_WIN32_WCE)
