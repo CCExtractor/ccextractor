@@ -1,4 +1,5 @@
 #include "lib_ccx.h"
+#include "ccx_common_option.h"
 
 unsigned char tspacket[188]; // Current packet
 

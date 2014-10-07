@@ -2,6 +2,7 @@
 relevant events. */
 
 #include "lib_ccx.h"
+#include "ccx_common_option.h"
 
 static int credits_shown=0;
 unsigned long net_activity_gui=0;

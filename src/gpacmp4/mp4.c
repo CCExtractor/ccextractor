@@ -6,6 +6,7 @@
 #include "lib_ccx.h"
 #include "utility.h"
 #include "ccx_encoders_common.h"
+#include "ccx_common_option.h"
 
 void do_NAL (unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub); // From avc_functions.c
 void set_fts(void); // From timing.c

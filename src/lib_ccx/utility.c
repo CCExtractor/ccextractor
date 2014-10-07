@@ -1,5 +1,6 @@
 #include <signal.h>
 #include "lib_ccx.h"
+#include "ccx_common_option.h"
 
 static char *text;
 static int text_size=0;

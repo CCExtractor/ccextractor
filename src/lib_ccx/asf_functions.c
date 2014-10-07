@@ -1,4 +1,5 @@
 #include "lib_ccx.h"
+#include "ccx_common_option.h"
 #include "asf_constants.h"
 
 // Indicate first / subsequent calls to asf_getmoredata()

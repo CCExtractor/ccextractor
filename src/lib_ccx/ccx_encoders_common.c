@@ -6,6 +6,7 @@
 #include "ocr.h"
 #include "ccx_decoders_608.h"
 #include "ccx_decoders_xds.h"
+#include "ccx_common_option.h"
 
 // These are the default settings for plain transcripts. No times, no CC or caption mode, and no XDS.
 ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =

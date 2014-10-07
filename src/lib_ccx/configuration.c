@@ -1,4 +1,5 @@
 #include "lib_ccx.h"
+#include "ccx_common_option.h"
 #include "configuration.h"
 #include <stddef.h>
 #define CNF_FILE "ccextractor.cnf"

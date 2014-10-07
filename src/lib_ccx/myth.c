@@ -2,6 +2,7 @@
 For now, integration with ccextractor is a quick hack. It could get better with time. */
 
 #include "lib_ccx.h"
+#include "ccx_common_option.h"
 #include "ccx_decoders_608.h"
 #ifdef _WIN32
 #include <io.h>

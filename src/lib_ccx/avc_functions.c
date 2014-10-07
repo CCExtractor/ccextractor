@@ -1,4 +1,5 @@
 #include "lib_ccx.h"
+#include "ccx_common_option.h"
 #include <math.h>
 
 // Functions to parse a AVC/H.264 data stream, see ISO/IEC 14496-10

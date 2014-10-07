@@ -1,4 +1,5 @@
 #include "lib_ccx.h"
+#include "ccx_common_option.h"
 #include "utility.h"
 
 static int inputfile_capacity=0;

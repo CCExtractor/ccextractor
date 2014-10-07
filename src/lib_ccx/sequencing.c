@@ -1,4 +1,5 @@
 #include "lib_ccx.h"
+#include "ccx_common_option.h"
 
 // Defined by the maximum number of B-Frames per anchor frame.
 //#define MAXBFRAMES 50 - from lib_ccx.h

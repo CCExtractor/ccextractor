@@ -6,6 +6,7 @@
    */
 
 #include "lib_ccx.h"
+#include "ccx_common_option.h"
 #include "dvb_subtitle_decoder.h"
 #include "utility.h"
 static unsigned pmt_warning_shown=0; // Only display warning once

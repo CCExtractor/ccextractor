@@ -1,6 +1,6 @@
 #ifndef CCX_ENCODERS_STRUCTS_H
 
-typedef struct {
+typedef struct ccx_encoders_transcript_format {
 	// TODO: add more options, and (perhaps) reduce other ccextractor options?
 	int showStartTime, showEndTime; // Show start and/or end time.
 	int showMode; // Show which mode if available (E.G.: POP, RU1, ...)

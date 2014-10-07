@@ -21,6 +21,13 @@ struct ccx_common_timing_settings_t {
 	LLONG *file_position; // The position of the file
 } ccx_common_timing_settings;
 
+struct ccx_boundary_time
+{
+	int hh,mm,ss;
+	LLONG time_in_ms;
+	int set;
+};
+
 // Count 608 (per field) and 708 blocks since last set_fts() call
 extern int cb_field1, cb_field2, cb_708;
 
