@@ -11,23 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\ccx_common_char_encoding.h" />
-    <ClInclude Include="..\src\ccx_common_common.h" />
-    <ClInclude Include="..\src\ccx_decoders_608.h" />
-    <ClInclude Include="..\src\608_spupng.h" />
-    <ClInclude Include="..\src\asf_constants.h" />
-    <ClInclude Include="..\src\bitstream.h" />
     <ClInclude Include="..\src\ccextractor.h" />
-    <ClInclude Include="..\src\ccx_decoders_708.h" />
-    <ClInclude Include="..\src\ccx_decoders_structs.h" />
-    <ClInclude Include="..\src\ccx_encoders_helpers.h" />
-    <ClInclude Include="..\src\ccx_encoders_structs.h" />
-    <ClInclude Include="..\src\ccx_decoders_common.h" />
-    <ClInclude Include="..\src\ccx_encoders_common.h" />
-    <ClInclude Include="..\src\configuration.h" />
-    <ClInclude Include="..\src\ccx_common_constants.h" />
-    <ClInclude Include="..\src\disable_warnings.h" />
-    <ClInclude Include="..\src\dvb_subtitle_decoder.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\avparse.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\base_coding.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\bitstream.h" />
@@ -51,10 +35,6 @@
     <ClInclude Include="..\src\gpacmp4\gpac\tools.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\utf.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\version.h" />
-    <ClInclude Include="..\src\gpacmp4\targetver.h" />
-    <ClInclude Include="..\src\hamming.h" />
-    <ClInclude Include="..\src\ccx_common_structs.h" />
-    <ClInclude Include="..\src\inttypes.h" />
     <ClInclude Include="..\src\libpng\png.h" />
     <ClInclude Include="..\src\libpng\pngconf.h" />
     <ClInclude Include="..\src\libpng\pngdebug.h" />
@@ -62,17 +42,25 @@
     <ClInclude Include="..\src\libpng\pnglibconf.h" />
     <ClInclude Include="..\src\libpng\pngpriv.h" />
     <ClInclude Include="..\src\libpng\pngstruct.h" />
-    <ClInclude Include="..\src\networking.h" />
-    <ClInclude Include="..\src\ccx_common_platform.h" />
-    <ClInclude Include="..\src\ocr.h" />
-    <ClInclude Include="..\src\spupng_encoder.h" />
-    <ClInclude Include="..\src\stdint.h" />
-    <ClInclude Include="..\src\stdintmsc.h" />
-    <ClInclude Include="..\src\teletext.h" />
-    <ClInclude Include="..\src\ccx_common_timing.h" />
-    <ClInclude Include="..\src\utility.h" />
-    <ClInclude Include="..\src\wtv_constants.h" />
-    <ClInclude Include="..\src\ccx_decoders_xds.h" />
+    <ClInclude Include="..\src\lib_ccx\608_spupng.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_common_char_encoding.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_common_common.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_common_constants.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_common_platform.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_common_structs.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_common_timing.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_decoders_608.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_decoders_708.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_decoders_common.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_decoders_structs.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_decoders_xds.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_encoders_common.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_encoders_helpers.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_encoders_structs.h" />
+    <ClInclude Include="..\src\lib_ccx\disable_warnings.h" />
+    <ClInclude Include="..\src\lib_ccx\dvb_subtitle_decoder.h" />
+    <ClInclude Include="..\src\lib_ccx\spupng_encoder.h" />
+    <ClInclude Include="..\src\lib_ccx\teletext.h" />
     <ClInclude Include="..\src\zlib\crc32.h" />
     <ClInclude Include="..\src\zlib\deflate.h" />
     <ClInclude Include="..\src\zlib\gzguts.h" />
@@ -84,6 +72,8 @@
     <ClInclude Include="..\src\zlib\zconf.h" />
     <ClInclude Include="..\src\zlib\zlib.h" />
     <ClInclude Include="..\src\zlib\zutil.h" />
+    <ClInclude Include="include\inttypes.h" />
+    <ClInclude Include="include\stdint.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\ccextractor.c" />
@@ -232,7 +222,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./include/;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>

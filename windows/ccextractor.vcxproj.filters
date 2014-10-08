@@ -51,34 +51,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\asf_constants.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\bitstream.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\ccextractor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\disable_warnings.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\hamming.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\inttypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\stdint.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\stdintmsc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\wtv_constants.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\gpacmp4\gpac\avparse.h">
@@ -204,70 +177,67 @@
     <ClInclude Include="..\src\zlib\zutil.h">
       <Filter>Header Files\zlib</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\utility.h">
+    <ClInclude Include="..\src\lib_ccx\disable_warnings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\configuration.h">
+    <ClInclude Include="include\inttypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\networking.h">
+    <ClInclude Include="include\stdint.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ccx_decoders_structs.h">
+    <ClInclude Include="..\src\lib_ccx\ccx_common_char_encoding.h">
+      <Filter>Header Files\ccx_common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\ccx_common_common.h">
+      <Filter>Header Files\ccx_common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\ccx_common_constants.h">
+      <Filter>Header Files\ccx_common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\ccx_common_platform.h">
+      <Filter>Header Files\ccx_common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\ccx_common_structs.h">
+      <Filter>Header Files\ccx_common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\ccx_common_timing.h">
+      <Filter>Header Files\ccx_common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\ccx_decoders_608.h">
       <Filter>Header Files\ccx_decoders</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ccx_encoders_structs.h">
+    <ClInclude Include="..\src\lib_ccx\ccx_decoders_708.h">
+      <Filter>Header Files\ccx_decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\ccx_decoders_common.h">
+      <Filter>Header Files\ccx_decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\ccx_decoders_structs.h">
+      <Filter>Header Files\ccx_decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\ccx_decoders_xds.h">
+      <Filter>Header Files\ccx_decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\dvb_subtitle_decoder.h">
+      <Filter>Header Files\ccx_decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\teletext.h">
+      <Filter>Header Files\ccx_decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\608_spupng.h">
       <Filter>Header Files\ccx_encoders</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ccx_decoders_608.h">
-      <Filter>Header Files\ccx_decoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ccx_decoders_common.h">
-      <Filter>Header Files\ccx_decoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ccx_decoders_xds.h">
-      <Filter>Header Files\ccx_decoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ccx_encoders_common.h">
+    <ClInclude Include="..\src\lib_ccx\ccx_encoders_common.h">
       <Filter>Header Files\ccx_encoders</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ccx_common_common.h">
-      <Filter>Header Files\ccx_common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ccx_common_structs.h">
-      <Filter>Header Files\ccx_common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ccx_common_platform.h">
-      <Filter>Header Files\ccx_common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ccx_common_constants.h">
-      <Filter>Header Files\ccx_common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ccx_common_timing.h">
-      <Filter>Header Files\ccx_common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ccx_decoders_708.h">
-      <Filter>Header Files\ccx_decoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ccx_encoders_helpers.h">
+    <ClInclude Include="..\src\lib_ccx\ccx_encoders_helpers.h">
       <Filter>Header Files\ccx_encoders</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ocr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\spupng_encoder.h">
+    <ClInclude Include="..\src\lib_ccx\ccx_encoders_structs.h">
       <Filter>Header Files\ccx_encoders</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ccx_common_char_encoding.h">
-      <Filter>Header Files\ccx_common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\dvb_subtitle_decoder.h">
-      <Filter>Header Files\ccx_decoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\teletext.h">
-      <Filter>Header Files\ccx_decoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\608_spupng.h">
+    <ClInclude Include="..\src\lib_ccx\spupng_encoder.h">
       <Filter>Header Files\ccx_encoders</Filter>
     </ClInclude>
   </ItemGroup>
