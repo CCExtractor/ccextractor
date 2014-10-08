@@ -234,7 +234,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 	if (empty_buf) // Prevent writing empty screens. Not needed in .srt
 		return 0;
 
-	ms_start+=subs_delay;
+	ms_start+=context->subs_delay;
 	if (ms_start<0) // Drop screens that because of subs_delay start too early
 		return 0;
 

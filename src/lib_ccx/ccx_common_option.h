@@ -83,5 +83,7 @@ struct ccx_s_options // Options from user parameters
 	int noautotimeref; // Do NOT set time automatically?
 	enum ccx_datasource input_source; // Files, stdin or network
 };
+
+struct ccx_s_options ccx_options;
 void init_options (struct ccx_s_options *options);
 #endif

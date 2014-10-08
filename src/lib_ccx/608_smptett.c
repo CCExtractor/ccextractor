@@ -133,12 +133,12 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 
 	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
 	{
-		ms_start = context->prev_start + subs_delay;
+		ms_start = context->prev_start + context->subs_delay;
 		ms_end = sub->start_time - 1;
 	}
 	else if ( !(sub->flags & SUB_EOD_MARKER))
 	{
-		ms_start = sub->start_time + subs_delay;
+		ms_start = sub->start_time + context->subs_delay;
 		ms_end = sub->end_time - 1;
 	}
 
@@ -248,7 +248,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
     int wrote_something=0;
     LLONG startms = data->start_time;
 
-    startms+=subs_delay;
+    startms+=context->subs_delay;
     if (startms<0) // Drop screens that because of subs_delay start too early
         return 0;
 

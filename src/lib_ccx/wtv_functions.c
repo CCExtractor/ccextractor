@@ -3,16 +3,16 @@
 #include "wtv_constants.h"
 
 int check_stream_id(int stream_id, int video_streams[], int num_streams);
-int add_skip_chunks(struct wtv_chunked_buffer *cb, uint32_t offset, uint32_t flag);
+int add_skip_chunks(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, uint32_t offset, uint32_t flag);
 void init_chunked_buffer(struct wtv_chunked_buffer *cb);
 uint64_t get_meta_chunk_start(uint64_t offset);
 uint64_t time_to_pes_time(uint64_t time);
 void add_chunk(struct wtv_chunked_buffer *cb, uint64_t value);
 int qsort_cmpint (const void * a, const void * b);
-void get_sized_buffer(struct wtv_chunked_buffer *cb, uint32_t size);
-void skip_sized_buffer(struct wtv_chunked_buffer *cb, uint32_t size);
-int read_header(struct wtv_chunked_buffer *cb);
-LLONG get_data(struct wtv_chunked_buffer *cb);
+void get_sized_buffer(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, uint32_t size);
+void skip_sized_buffer(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, uint32_t size);
+int read_header(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb);
+LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb);
 
 // Helper function for qsort (64bit int sort)
 int qsort_cmpint (const void * a, const void * b)
@@ -55,27 +55,27 @@ uint64_t time_to_pes_time(uint64_t time)
 
 // Read the actual values of the passed lookup offset and add them to
 // the list of chunks to skip as nessasary. Returns false on error.
-int add_skip_chunks(struct wtv_chunked_buffer *cb, uint32_t offset, uint32_t flag)
+int add_skip_chunks(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, uint32_t offset, uint32_t flag)
 {
 
-	uint64_t start = past;
-	buffered_seek((int)((offset*WTV_CHUNK_SIZE) - start));
+	uint64_t start = ctx->past;
+	buffered_seek(ctx, (int)((offset*WTV_CHUNK_SIZE) - start));
     uint64_t seek_back=0-((offset*WTV_CHUNK_SIZE)-start);
 
 	uint32_t value;
-	buffered_read((unsigned char*)&value, 4);
+	buffered_read(ctx, (unsigned char*)&value, 4);
     if(result!=4)
         return 0;
     seek_back-=4;
     while(value!=0) {
         dbg_print(CCX_DMT_PARSE, "value: %llx\n", get_meta_chunk_start(value));
-        buffered_read((unsigned char*)&value, 4);
+        buffered_read(ctx, (unsigned char*)&value, 4);
         if(result!=4)
             return 0;
         add_chunk(cb, get_meta_chunk_start(value));
         seek_back-=4;
     }
-    buffered_seek((int)seek_back);
+    buffered_seek(ctx, (int)seek_back);
     dbg_print(CCX_DMT_PARSE, "filebuffer_pos: %x\n", filebuffer_pos);
     return 1;
 }
@@ -92,7 +92,7 @@ void add_chunk(struct wtv_chunked_buffer *cb, uint64_t value)
 
 // skip_sized_buffer. Same as get_sized_buffer, only without actually copying any data
 // in to the buffer.
-void skip_sized_buffer(struct wtv_chunked_buffer *cb, uint32_t size) {
+void skip_sized_buffer(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, uint32_t size) {
     if(cb->buffer!=NULL && cb->buffer_size>0) {
         free(cb->buffer);
     }
@@ -100,21 +100,21 @@ void skip_sized_buffer(struct wtv_chunked_buffer *cb, uint32_t size) {
     cb->buffer_size=0;
     uint64_t start = cb->filepos;
     if(cb->skip_chunks[cb->chunk]!=-1 && start+size>cb->skip_chunks[cb->chunk]) {
-        buffered_seek((int)((cb->skip_chunks[cb->chunk]-start)+(WTV_META_CHUNK_SIZE)+(size-(cb->skip_chunks[cb->chunk]-start))));
+        buffered_seek(ctx, (int)((cb->skip_chunks[cb->chunk]-start)+(WTV_META_CHUNK_SIZE)+(size-(cb->skip_chunks[cb->chunk]-start))));
         cb->filepos+=(cb->skip_chunks[cb->chunk]-start)+(WTV_META_CHUNK_SIZE)+(size-(cb->skip_chunks[cb->chunk]-start));
         cb->chunk++;
     }
     else {
-        buffered_seek(size);
+        buffered_seek(ctx, size);
         cb->filepos+=size;
     }
-    past=cb->filepos;
+    ctx->past=cb->filepos;
 }
 
 // get_sized_buffer will alloc and set a buffer in the passed wtv_chunked_buffer struct
 // it will handle any meta data chunks that need to be skipped in the file
 // Will print error messages and return a null buffer on error.
-void get_sized_buffer(struct wtv_chunked_buffer *cb, uint32_t size) {
+void get_sized_buffer(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, uint32_t size) {
     if(cb->buffer!=NULL && cb->buffer_size>0) {
         free(cb->buffer);
     }
@@ -128,27 +128,27 @@ void get_sized_buffer(struct wtv_chunked_buffer *cb, uint32_t size) {
 	uint64_t start = cb->filepos;
 
 	if(cb->skip_chunks[cb->chunk]!=-1 && start+size>cb->skip_chunks[cb->chunk]) {
-        buffered_read(cb->buffer, (int)(cb->skip_chunks[cb->chunk]-start));
+        buffered_read(ctx, cb->buffer, (int)(cb->skip_chunks[cb->chunk]-start));
         cb->filepos+=cb->skip_chunks[cb->chunk]-start;
-        buffered_seek(WTV_META_CHUNK_SIZE);
+        buffered_seek(ctx, WTV_META_CHUNK_SIZE);
         cb->filepos+=WTV_META_CHUNK_SIZE;
-        buffered_read(cb->buffer+(cb->skip_chunks[cb->chunk]-start), (int)(size-(cb->skip_chunks[cb->chunk]-start)));
+        buffered_read(ctx, cb->buffer+(cb->skip_chunks[cb->chunk]-start), (int)(size-(cb->skip_chunks[cb->chunk]-start)));
         cb->filepos+=size-(cb->skip_chunks[cb->chunk]-start);
         cb->chunk++;
 	}
 	else {
-		buffered_read(cb->buffer, size);
+		buffered_read(ctx, cb->buffer, size);
         cb->filepos+=size;
         if(result!=size) {
             free(cb->buffer);
             cb->buffer_size=0;
-            past=cb->filepos;
+            ctx->past=cb->filepos;
             cb->buffer=NULL;
             mprint("\nPremature end of file!\n");
             return;
         }
     }
-    past=cb->filepos;
+    ctx->past=cb->filepos;
 	return;
 }
 
@@ -156,14 +156,15 @@ void get_sized_buffer(struct wtv_chunked_buffer *cb, uint32_t size) {
 // the wtv header/root sections and calculate the skip_chunks.
 // If successful, will return with the file positioned
 // at the start of the data dir
-int read_header(struct wtv_chunked_buffer *cb) {
-	startbytes_avail = (int)buffered_read_opt(startbytes, STARTBYTESLENGTH);
-	return_to_buffer(startbytes, startbytes_avail);
+int read_header(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb)
+{
+	ctx->startbytes_avail = (int)buffered_read_opt(ctx, ctx->startbytes, STARTBYTESLENGTH);
+	return_to_buffer(ctx->startbytes, ctx->startbytes_avail);
 
-    uint8_t *parsebuf;
-    parsebuf = (uint8_t*)malloc(1024);
-    buffered_read(parsebuf,0x42);
-    past+=result;
+	uint8_t *parsebuf;
+	parsebuf = (uint8_t*)malloc(1024);
+	buffered_read(ctx, parsebuf,0x42);
+	ctx->past+=result;
     if (result!=0x42)
     {
         mprint("\nPremature end of file!\n");
@@ -191,8 +192,8 @@ int read_header(struct wtv_chunked_buffer *cb) {
     dbg_print(CCX_DMT_PARSE, "root_dir: %x\n", root_dir);
 
     //Seek to start of the root dir. Typically 0x1100
-    buffered_skip((root_dir*WTV_CHUNK_SIZE)-0x42);
-    past+=(root_dir*WTV_CHUNK_SIZE)-0x42;
+    buffered_skip(ctx, (root_dir*WTV_CHUNK_SIZE)-0x42);
+    ctx->past+=(root_dir*WTV_CHUNK_SIZE)-0x42;
 
     if (result!=(root_dir*WTV_CHUNK_SIZE)-0x42)
     {
@@ -205,7 +206,7 @@ int read_header(struct wtv_chunked_buffer *cb) {
     int end=0;
     while(!end)
     {
-        buffered_read(parsebuf, 32);
+        buffered_read(ctx, parsebuf, 32);
         int x;
 	for(x=0; x<16; x++)
             dbg_print(CCX_DMT_PARSE, "%02X ", parsebuf[x]);
@@ -218,7 +219,7 @@ int read_header(struct wtv_chunked_buffer *cb) {
             free(parsebuf);
             return 0;
         }
-        past+=32;
+        ctx->past+=32;
         if( !memcmp(parsebuf, WTV_EOF, 16 ))
         {
             dbg_print(CCX_DMT_PARSE, "WTV EOF\n");
@@ -239,7 +240,7 @@ int read_header(struct wtv_chunked_buffer *cb) {
                 free(parsebuf);
                 return 0;
             }
-            buffered_read(parsebuf, len-32);
+            buffered_read(ctx, parsebuf, len-32);
             if (result!=len-32)
             {
                 mprint("Premature end of file!\n");
@@ -247,7 +248,7 @@ int read_header(struct wtv_chunked_buffer *cb) {
                 free(parsebuf);
                 return 0;
             }
-            past+=len-32;
+            ctx->past+=len-32;
             // Read a unicode string
 		uint32_t text_len;
             memcpy(&text_len, parsebuf, 4); //text_len is number of unicode chars, not bytes.
@@ -267,7 +268,7 @@ int read_header(struct wtv_chunked_buffer *cb) {
                 memcpy(&flag, parsebuf+(text_len*2)+4+8, 4);
                 dbg_print(CCX_DMT_PARSE, "value: %x\n", value);
                 dbg_print(CCX_DMT_PARSE, "flag: %x\n", flag);
-                if(!add_skip_chunks(cb, value, flag)) {
+                if(!add_skip_chunks(ctx, cb, value, flag)) {
                     mprint("Premature end of file!\n");
                     end_of_file=1;
                     free(parsebuf);
@@ -288,15 +289,16 @@ int read_header(struct wtv_chunked_buffer *cb) {
 
     // Seek forward to the start of the data dir
     // Typically 0x40000
-	buffered_skip((int)((cb->skip_chunks[cb->chunk]+WTV_META_CHUNK_SIZE)-past));
+	buffered_skip(ctx, (int)((cb->skip_chunks[cb->chunk]+WTV_META_CHUNK_SIZE)-ctx->past));
     cb->filepos=(cb->skip_chunks[cb->chunk]+WTV_META_CHUNK_SIZE);
 	cb->chunk++;
-    past=cb->filepos;
+    ctx->past=cb->filepos;
     free(parsebuf);
     return 1;
 }
 
-LLONG get_data(struct wtv_chunked_buffer *cb) {
+LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb)
+{
     static int video_streams[32];
 	static int alt_stream; //Stream to use for timestamps if the cc stream has broken timestamps
 	static int use_alt_stream = 0;
@@ -305,7 +307,7 @@ LLONG get_data(struct wtv_chunked_buffer *cb) {
     {
         int bytesread = 0;
         // Read the 32 bytes containing the GUID and length and stream_id info
-        get_sized_buffer(cb, 32);
+        get_sized_buffer(ctx, cb, 32);
 
         if(cb->buffer==NULL) {end_of_file=1; return 0; } //Make this a macro?
 
@@ -339,15 +341,15 @@ LLONG get_data(struct wtv_chunked_buffer *cb) {
             uint8_t *parsebuf;
             parsebuf = (uint8_t*)malloc(1024);
             do {
-                buffered_read(parsebuf, 1024);
-                past+=1024;
+                buffered_read(ctx, parsebuf, 1024);
+                ctx->past+=1024;
             } while (result==1024);
-            past+=result;
+            ctx->past+=result;
             free(parsebuf);
             free(cb->buffer);
             cb->buffer=NULL;
             //return one more byte so the final percentage is shown correctly
-            *(buffer+inbuf)=0x00;
+            *(ctx->buffer+inbuf)=0x00;
             end_of_file=1;
             inbuf++;
             return 1;
@@ -357,7 +359,7 @@ LLONG get_data(struct wtv_chunked_buffer *cb) {
             // The WTV_STREAM2 GUID appares near the start of the data dir
             // It maps stream_ids to the type of stream
 			dbg_print(CCX_DMT_PARSE, "WTV STREAM2\n");
-            get_sized_buffer(cb, 0xc+16);
+            get_sized_buffer(ctx, cb, 0xc+16);
             if(cb->buffer==NULL) {end_of_file=1; return 0; }
             static unsigned char stream_type[16];
             memcpy(&stream_type, cb->buffer+0xc, 16); //Read the stream type GUID
@@ -380,7 +382,7 @@ LLONG get_data(struct wtv_chunked_buffer *cb) {
         {
             // The WTV_TIMING GUID contains a timestamp for the given stream_id
             dbg_print(CCX_DMT_PARSE, "WTV TIMING\n");
-            get_sized_buffer(cb, 0x8+0x8);
+            get_sized_buffer(ctx, cb, 0x8+0x8);
             if(cb->buffer==NULL) {end_of_file=1; return 0; }
             int64_t time;
             memcpy(&time, cb->buffer+0x8, 8); // Read the timestamp
@@ -405,15 +407,15 @@ LLONG get_data(struct wtv_chunked_buffer *cb) {
         {
             // This is the data for a stream we want to process
             dbg_print(CCX_DMT_PARSE, "\nWTV DATA\n");
-            get_sized_buffer(cb, len);
+            get_sized_buffer(ctx, cb, len);
             if(cb->buffer==NULL) {end_of_file=1; return 0; }
-            memcpy(buffer+inbuf, cb->buffer, len);
+            memcpy(ctx->buffer+inbuf, cb->buffer, len);
             inbuf+=result;
             bytesread+=(int) len;
             frames_since_ref_time++;
             set_fts();
             if(pad>0) { //Make sure we skip any padding too, since we are returning here
-                skip_sized_buffer(cb, pad);
+                skip_sized_buffer(ctx, cb, pad);
             }
             return bytesread;
         }
@@ -421,12 +423,12 @@ LLONG get_data(struct wtv_chunked_buffer *cb) {
             // skip any remaining data
             // For any unhandled GUIDs this will be len+pad
             // For others it will just be pad
-            skip_sized_buffer(cb, len+pad);
+            skip_sized_buffer(ctx, cb, len+pad);
         }
     }
 }
 
-LLONG wtv_getmoredata(void)
+LLONG wtv_getmoredata(struct lib_ccx_ctx *ctx)
 {
 	static struct wtv_chunked_buffer cb;
     if(firstcall)
@@ -436,11 +438,11 @@ LLONG wtv_getmoredata(void)
             ccx_bufferdatatype=CCX_PES;
         else
             ccx_bufferdatatype=CCX_RAW;
-        if(read_header(&cb)==0)
+        if(read_header(ctx, &cb)==0)
             // read_header returned an error
             // read_header will have printed the error message
             return 0;
         firstcall=0;
     }
-    return get_data(&cb);
+    return get_data(ctx, &cb);
 }

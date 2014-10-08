@@ -29,6 +29,10 @@ struct encoder_ctx
 	struct ccx_s_write *out;
 	/* start time of previous sub */
 	LLONG prev_start;
+
+	LLONG subs_delay;
+	LLONG last_displayed_subs_ms;
+	int startcredits_displayed;
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048
@@ -78,4 +82,7 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *context);
 
 
+void set_encoder_last_displayed_subs_ms(struct encoder_ctx *ctx, LLONG last_displayed_subs_ms);
+void set_encoder_subs_delay(struct encoder_ctx *ctx, LLONG subs_delay);
+void set_encoder_startcredits_displayed(struct encoder_ctx *ctx, int startcredits_displayed);
 #endif

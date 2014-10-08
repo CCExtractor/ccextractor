@@ -340,7 +340,8 @@ void ucs2_to_utf8(char *r, uint16_t ch) {
 }
 
 // check parity and translate any reasonable teletext character into ucs2
-uint16_t telx_to_ucs2(uint8_t c) {
+uint16_t telx_to_ucs2(uint8_t c)
+{
 	if (PARITY_8[c] == 0) {
 		dbg_print (CCX_DMT_TELETEXT,  "- Unrecoverable data error; PARITY(%02x)\n", c);
 		return 0x20;
@@ -356,7 +357,7 @@ uint16_t bcd_page_to_int (uint16_t bcd)
 	return ((bcd&0xf00)>>8)*100 + ((bcd&0xf0)>>4)*10 + (bcd&0xf);
 }
 
-void telxcc_dump_prev_page (void)
+void telxcc_dump_prev_page (struct lib_ccx_ctx *ctx)
 {
 	char c_temp1[80],c_temp2[80]; // For timing
 	if (!page_buffer_prev)
@@ -364,22 +365,22 @@ void telxcc_dump_prev_page (void)
 
 	if (ccx_options.transcript_settings.showStartTime){
 		millis_to_date(prev_show_timestamp, c_temp1); // Note: Delay not added here because it was already accounted for
-		fdprintf(wbout1.fh, "%s|", c_temp1);
+		fdprintf(ctx->wbout1.fh, "%s|", c_temp1);
 	}
 	if (ccx_options.transcript_settings.showEndTime)
 	{
 		millis_to_date (prev_hide_timestamp, c_temp2);
-		fdprintf(wbout1.fh,"%s|",c_temp2);
+		fdprintf(ctx->wbout1.fh,"%s|",c_temp2);
 	}
 	if (ccx_options.transcript_settings.showCC){
-		fdprintf(wbout1.fh, "%.3u|", bcd_page_to_int(tlt_config.page));
+		fdprintf(ctx->wbout1.fh, "%.3u|", bcd_page_to_int(tlt_config.page));
 	}
 	if (ccx_options.transcript_settings.showMode){
-		fdprintf(wbout1.fh, "TLT|");
+		fdprintf(ctx->wbout1.fh, "TLT|");
 	}
 
-	if (wbout1.fh!=-1) fdprintf(wbout1.fh, "%s",page_buffer_prev);
-	fdprintf(wbout1.fh,"%s",encoded_crlf);
+	if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s",page_buffer_prev);
+	fdprintf(ctx->wbout1.fh,"%s",encoded_crlf);
 	if (page_buffer_prev) free (page_buffer_prev);
 	if (ucs2_buffer_prev) free (ucs2_buffer_prev);
 	// Switch "dump" buffers
@@ -416,7 +417,7 @@ int fuzzy_memcmp (const char *c1, const char *c2, const uint64_t *ucs2_buf1, uns
 	return res;
 }
 
-void process_page(teletext_page_t *page) {
+void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
 #ifdef DEBUG
 	for (uint8_t row = 1; row < 25; row++) {
 		fprintf(stdout, "DEBUG[%02u]: ", row);
@@ -517,7 +518,7 @@ void process_page(teletext_page_t *page) {
 				if ((foreground_color != 0x7) && !ccx_options.nofontcolor) {
 					sprintf (c_tempb, "<font color=\"%s\">", TTXT_COLOURS[foreground_color]);
 					page_buffer_add_string (c_tempb);
-					// if (wbout1.fh!=-1) fdprintf(wbout1.fh, "<font color=\"%s\">", TTXT_COLOURS[foreground_color]);
+					// if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "<font color=\"%s\">", TTXT_COLOURS[foreground_color]);
 					font_tag_opened = YES;
 				}
 			}
@@ -529,7 +530,7 @@ void process_page(teletext_page_t *page) {
 					if (!ccx_options.nofontcolor) {
 						if (font_tag_opened == YES) {
 							page_buffer_add_string ("</font>");
-							// if (wbout1.fh!=-1) fdprintf(wbout1.fh, "</font> ");
+							// if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "</font> ");
 							font_tag_opened = NO;
 						}
 
@@ -538,7 +539,7 @@ void process_page(teletext_page_t *page) {
 						if ((v > 0x0) && (v < 0x7)) {
 							sprintf (c_tempb, "<font color=\"%s\">", TTXT_COLOURS[v]);
 							page_buffer_add_string (c_tempb);
-							// if (wbout1.fh!=-1) fdprintf(wbout1.fh, "<font color=\"%s\">", TTXT_COLOURS[v]);
+							// if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "<font color=\"%s\">", TTXT_COLOURS[v]);
 							font_tag_opened = YES;
 						}
 					}
@@ -556,7 +557,7 @@ void process_page(teletext_page_t *page) {
 						if (!ccx_options.nofontcolor) {
 							for (uint8_t i = 0; i < array_length(ENTITIES); i++)
 									if (v == ENTITIES[i].character) {
-												//if (wbout1.fh!=-1) fdprintf(wbout1.fh, "%s", ENTITIES[i].entity);
+												//if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s", ENTITIES[i].entity);
 												page_buffer_add_string (ENTITIES[i].entity);
 												// v < 0x20 won't be printed in next block
 												v = 0;
@@ -567,7 +568,7 @@ void process_page(teletext_page_t *page) {
 
 
 				if (v >= 0x20) {
-					//if (wbout1.fh!=-1) fdprintf(wbout1.fh, "%s", u);
+					//if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s", u);
 					page_buffer_add_string (u);
 					if (ccx_options.gui_mode_reports) // For now we just handle the easy stuff
 						fprintf (stderr,"%s",u);
@@ -577,7 +578,7 @@ void process_page(teletext_page_t *page) {
 
 		// no tag will left opened!
 		if ((!ccx_options.nofontcolor) && (font_tag_opened == YES)) {
-			//if (wbout1.fh!=-1) fdprintf(wbout1.fh, "</font>");
+			//if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "</font>");
 			page_buffer_add_string ("</font>");
 			font_tag_opened = NO;
 		}
@@ -623,15 +624,15 @@ void process_page(teletext_page_t *page) {
 			else
 			{
 				// OK, the old and new buffer don't match. So write the old
-				telxcc_dump_prev_page();
+				telxcc_dump_prev_page(ctx);
 				prev_hide_timestamp=page->hide_timestamp;
 				prev_show_timestamp=page->show_timestamp;
 			}
 			break;
 		default: // Yes, this means everything else is .srt for now
 			page_buffer_add_string ("\r\n");
-			if (wbout1.fh!=-1) fdprintf(wbout1.fh,"%"PRIu32"\r\n%s --> %s\r\n", tlt_frames_produced, timecode_show, timecode_hide);
-			if (wbout1.fh!=-1) fdprintf(wbout1.fh, "%s",page_buffer_cur);
+			if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh,"%"PRIu32"\r\n%s --> %s\r\n", tlt_frames_produced, timecode_show, timecode_hide);
+			if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s",page_buffer_cur);
 	}
 
 	// Also update GUI...
@@ -643,7 +644,7 @@ void process_page(teletext_page_t *page) {
 		fflush (stderr);
 }
 
-void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payload_t *packet, uint64_t timestamp) {
+void process_telx_packet(struct lib_ccx_ctx *ctx, data_unit_t data_unit_id, teletext_packet_payload_t *packet, uint64_t timestamp) {
 	// variable names conform to ETS 300 706, chapter 7.1.2
 	uint8_t address, m, y, designation_code;
 	address = (unham_8_4(packet->address[1]) << 4) | unham_8_4(packet->address[0]);
@@ -712,7 +713,7 @@ void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payload_t *pa
 		if (page_buffer.tainted == YES) {
 			// it would be nice, if subtitle hides on previous video frame, so we contract 40 ms (1 frame @25 fps)
 			page_buffer.hide_timestamp = timestamp - 40;
-			process_page(&page_buffer);
+			process_page(ctx, &page_buffer);
 
 		}
 
@@ -900,27 +901,29 @@ void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payload_t *pa
 	}
 }
 
-void tlt_write_rcwt(uint8_t data_unit_id, uint8_t *packet, uint64_t timestamp) {
+void tlt_write_rcwt(struct lib_ccx_ctx *ctx, uint8_t data_unit_id, uint8_t *packet, uint64_t timestamp)
+{
 	if (ccx_options.send_to_srv) {
 		net_send_cc((unsigned char *) &data_unit_id, sizeof(uint8_t));
 		net_send_cc((unsigned char *) &timestamp, sizeof(uint64_t));
 		net_send_cc((unsigned char *) packet, 44);
 	} else  {
-		writeraw((unsigned char *) &data_unit_id, sizeof(uint8_t), &wbout1);
-		writeraw((unsigned char *) &timestamp, sizeof(uint64_t), &wbout1);
-		writeraw((unsigned char *) packet, 44, &wbout1);
+		writeraw((unsigned char *) &data_unit_id, sizeof(uint8_t), &ctx->wbout1);
+		writeraw((unsigned char *) &timestamp, sizeof(uint64_t), &ctx->wbout1);
+		writeraw((unsigned char *) packet, 44, &ctx->wbout1);
 	}
 }
 
-void tlt_read_rcwt() {
+void tlt_read_rcwt(struct lib_ccx_ctx *ctx)
+{
 	int len = 1 + 8 + 44;
 	char *buf = (char *) malloc(len);
 	if (buf == NULL)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory");
 
 	while(1) {
-		buffered_read(buf, len);
-		past += result;
+		buffered_read(ctx, buf, len);
+		ctx->past += result;
 
 		if (result != len) {
 			end_of_file = 1;
@@ -935,11 +938,12 @@ void tlt_read_rcwt() {
 
 		last_timestamp = t;
 
-		process_telx_packet(id, pl, t);
+		process_telx_packet(ctx, id, pl, t);
 	}
 }
 
-void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) {
+void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t size)
+{
 	uint64_t pes_prefix;
 	uint8_t pes_stream_id;
 	uint16_t pes_packet_length;
@@ -994,7 +998,7 @@ void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) {
 
 	// If there is no PTS available, use global PCR
 	if (using_pts == NO) {
-		t = global_timestamp;
+		t = ctx->global_timestamp;
 	}
 	// if (using_pts == NO) t = get_pts();
 	else {
@@ -1014,12 +1018,12 @@ void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) {
 
 	if (states.pts_initialized == NO) {
 		if (utc_refvalue == UINT64_MAX)
-			delta = (uint64_t) (subs_delay - t);
+			delta = (uint64_t) (ctx->subs_delay - t);
 		else
-			delta = (uint64_t) (subs_delay + 1000 * utc_refvalue - t);
+			delta = (uint64_t) (ctx->subs_delay + 1000 * utc_refvalue - t);
 		t0 = t;
 		states.pts_initialized = YES;
-		if ((using_pts == NO) && (global_timestamp == 0)) {
+		if ((using_pts == NO) && (ctx->global_timestamp == 0)) {
 			// We are using global PCR, nevertheless we still have not received valid PCR timestamp yet
 			states.pts_initialized = NO;
 		}
@@ -1042,10 +1046,10 @@ void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) {
 				for (uint8_t j = 0; j < data_unit_len; j++) buffer[i + j] = REVERSE_8[buffer[i + j]];
 
 				if (ccx_options.write_format == CCX_OF_RCWT)
-					tlt_write_rcwt(data_unit_id, &buffer[i], last_timestamp);
+					tlt_write_rcwt(ctx, data_unit_id, &buffer[i], last_timestamp);
 				else
 					// FIXME: This explicit type conversion could be a problem some day -- do not need to be platform independant
-					process_telx_packet((data_unit_t) data_unit_id, (teletext_packet_payload_t *)&buffer[i], last_timestamp);
+					process_telx_packet(ctx, (data_unit_t) data_unit_id, (teletext_packet_payload_t *)&buffer[i], last_timestamp);
 			}
 		}
 
@@ -1140,19 +1144,19 @@ if (pmt.pointer_field > 0) {
 uint8_t exit_request = NO;
 
 // Called only when teletext is detected or forced and it's going to be used for extraction.
-void telxcc_init(void)
+void telxcc_init(struct lib_ccx_ctx *ctx)
 {
 	if (!telxcc_inited)
 	{
 		telxcc_inited=1;
-		if (wbout1.fh!=-1 && ccx_options.encoding!=CCX_ENC_UTF_8) // If encoding it UTF8 then this was already done
-			fdprintf(wbout1.fh, "\xef\xbb\xbf");
+		if (ctx->wbout1.fh!=-1 && ccx_options.encoding!=CCX_ENC_UTF_8) // If encoding it UTF8 then this was already done
+			fdprintf(ctx->wbout1.fh, "\xef\xbb\xbf");
 		memset (seen_sub_page,0,MAX_TLT_PAGES*sizeof (short int));
 	}
 }
 
 // Close output
-void telxcc_close(void)
+void telxcc_close(struct lib_ccx_ctx *ctx)
 {
 	if (telxcc_inited && ccx_options.write_format != CCX_OF_RCWT)
 	{
@@ -1160,13 +1164,13 @@ void telxcc_close(void)
 		if (page_buffer.tainted == YES) {
 			// this time we do not subtract any frames, there will be no more frames
 			page_buffer.hide_timestamp = last_timestamp;
-			process_page(&page_buffer);
+			process_page(ctx, &page_buffer);
 		}
 
-		telxcc_dump_prev_page();
+		telxcc_dump_prev_page(ctx);
 
 		if ((tlt_frames_produced == 0) && (tlt_config.nonempty == YES)) {
-			if (wbout1.fh!=-1) fdprintf(wbout1.fh, "1\r\n00:00:00,000 --> 00:00:10,000\r\n(no closed captions available)\r\n\r\n");
+			if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "1\r\n00:00:00,000 --> 00:00:10,000\r\n(no closed captions available)\r\n\r\n");
 			tlt_frames_produced++;
 		}
 	}
@@ -1228,7 +1232,7 @@ int main_telxcc (int argc, char *argv[]) {
 
 	// print UTF-8 BOM chars
 	if (tlt_config.bom == YES) {
-		if (wbout1.fh!=-1) fdprintf(wbout1.fh, "\xef\xbb\xbf");
+		if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "\xef\xbb\xbf");
 	}
 	// reading input
 	while ((exit_request == NO) && (fread(&ts_buffer, 1, TS_PACKET_SIZE, infile) == TS_PACKET_SIZE)) {
@@ -1272,14 +1276,14 @@ int main_telxcc (int argc, char *argv[]) {
 				pts |= (ts_buffer[8] << 9);
 				pts |= (ts_buffer[9] << 1);
 				pts |= (ts_buffer[10] >> 7);
-				global_timestamp = (uint32_t) pts / 90;
+				ctx->global_timestamp = (uint32_t) pts / 90;
 				pts = ((ts_buffer[10] & 0x01) << 8);
 				pts |= ts_buffer[11];
-				global_timestamp += (uint32_t) (pts / 27000);
-				if (!global_timestamp_inited)
+				ctx->global_timestamp += (uint32_t) (pts / 27000);
+				if (!ctx->global_timestamp_inited)
 				{
-					min_global_timestamp = global_timestamp;
-					global_timestamp_inited = 1;
+					min_global_timestamp = ctx->global_timestamp;
+					ctx->global_timestamp_inited = 1;
 				}
 			}
 		}

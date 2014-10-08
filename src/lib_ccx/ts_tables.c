@@ -63,7 +63,7 @@ void clear_PMT_array (void)
 		}
 	pmt_array_length=0;
 }
-int parse_PMT (unsigned char *buf,int len, int pos)
+int parse_PMT (struct lib_ccx_ctx *ctx, unsigned char *buf, int len, int pos)
 {
 	int must_flush=0;
 	int ret = 0;
@@ -146,19 +146,19 @@ int parse_PMT (unsigned char *buf,int len, int pos)
                                    | buf[i+2]);
         unsigned ES_info_length = (((buf[i+3] & 0x0F) << 8)
                                    | buf[i+4]);
-		if (PIDs_programs[elementary_PID]==NULL)
+		if (ctx->PIDs_programs[elementary_PID]==NULL)
 		{
-			PIDs_programs[elementary_PID]=(struct PMT_entry *) malloc (sizeof (struct PMT_entry));
-			if (PIDs_programs[elementary_PID]==NULL)
+			ctx->PIDs_programs[elementary_PID]=(struct PMT_entry *) malloc (sizeof (struct PMT_entry));
+			if (ctx->PIDs_programs[elementary_PID]==NULL)
 				fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process PMT.");
 		}
-		PIDs_programs[elementary_PID]->elementary_PID=elementary_PID;
-		PIDs_programs[elementary_PID]->ccx_stream_type=ccx_stream_type;
-		PIDs_programs[elementary_PID]->program_number=program_number;
-		PIDs_programs[elementary_PID]->PMT_PID=payload.pid;
-		PIDs_programs[elementary_PID]->printable_stream_type=get_printable_stream_type (ccx_stream_type);
+		ctx->PIDs_programs[elementary_PID]->elementary_PID=elementary_PID;
+		ctx->PIDs_programs[elementary_PID]->ccx_stream_type=ccx_stream_type;
+		ctx->PIDs_programs[elementary_PID]->program_number=program_number;
+		ctx->PIDs_programs[elementary_PID]->PMT_PID=payload.pid;
+		ctx->PIDs_programs[elementary_PID]->printable_stream_type=get_printable_stream_type (ccx_stream_type);
 		dbg_print(CCX_DMT_PMT, "%6u | %3X (%3u) | %s\n",elementary_PID,ccx_stream_type,ccx_stream_type,
-			desc[PIDs_programs[elementary_PID]->printable_stream_type]);
+			desc[ctx->PIDs_programs[elementary_PID]->printable_stream_type]);
 		process_ccx_mpeg_descriptor (buf+i+5,ES_info_length);
         i += ES_info_length;
 	}
@@ -304,7 +304,7 @@ int parse_PMT (unsigned char *buf,int len, int pos)
 				desc_len = (*es_info++);
 				if(!IS_VALID_TELETEXT_DESC(descriptor_tag))
 					continue;
-				telxcc_init();
+				telxcc_init(ctx);
 				if (!ccx_options.ts_forced_cappid)
 				{
 					ccx_options.ts_cappid = newcappid = elementary_PID;
@@ -395,7 +395,7 @@ int parse_PMT (unsigned char *buf,int len, int pos)
 	return must_flush;
 }
 
-int write_section(struct ts_payload *payload, unsigned char*buf, int size, int pos)
+int write_section(struct lib_ccx_ctx *ctx, struct ts_payload *payload, unsigned char*buf, int size, int pos)
 {
 	if (payload->pesstart)
 	{
@@ -414,7 +414,7 @@ int write_section(struct ts_payload *payload, unsigned char*buf, int size, int p
 
 	if(payload->section_index >= (unsigned)payload->section_size)
 	{
-		if(parse_PMT(payload->section_buf,payload->section_size,pos))
+		if(parse_PMT(ctx, payload->section_buf,payload->section_size,pos))
 			return 1;
 	}
 	return 0;
@@ -425,7 +425,7 @@ int write_section(struct ts_payload *payload, unsigned char*buf, int size, int p
    PIDs of their Program Map Table.
    Returns: gotpes */
 
-int parse_PAT (void)
+int parse_PAT (struct lib_ccx_ctx *ctx)
 {
 	int gotpes=0;
 	int is_multiprogram=0;
@@ -475,7 +475,7 @@ int parse_PAT (void)
 			ccx_options.teletext_mode=CCX_TXT_AUTO_NOT_YET_FOUND;
 		ccx_options.ts_cappid=0;
 		cap_stream_type=CCX_STREAM_TYPE_UNKNOWNSTREAM;
-		memset (PIDs_seen,0,sizeof (int) *65536); // Forget all we saw
+		memset (ctx->PIDs_seen,0,sizeof (int) *65536); // Forget all we saw
 		if (!tlt_config.user_page) // If the user didn't select a page...
 			tlt_config.page=0; // ..forget whatever we detected.
 

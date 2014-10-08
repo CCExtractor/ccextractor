@@ -41,9 +41,9 @@ void writedata(const unsigned char *data, int length, ccx_decoder_608_context *c
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "Should not be reached!");
 }
 
-void flushbuffer (struct ccx_s_write *wb, int closefile)
+void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile)
 {
-    if (closefile && wb!=NULL && wb->fh!=-1 && !cc_to_stdout)
+    if (closefile && wb!=NULL && wb->fh!=-1 && !ctx->cc_to_stdout)
         close (wb->fh);
 }
 
@@ -102,30 +102,30 @@ void writeDVDraw (const unsigned char *data1, int length1,
 
 }
 
-void printdata (const unsigned char *data1, int length1,
+void printdata (struct lib_ccx_ctx *ctx, const unsigned char *data1, int length1,
                 const unsigned char *data2, int length2, struct cc_subtitle *sub)
 {
 	if (ccx_options.write_format==CCX_OF_DVDRAW)
-		writeDVDraw (data1,length1,data2,length2,&wbout1);
+		writeDVDraw (data1,length1,data2,length2,&ctx->wbout1);
 	else /* Broadcast raw or any non-raw */
-    {
-        if (length1 && ccx_options.extract!=2)
-        {
-			writedata(data1, length1, &context_cc608_field_1, sub);
-        }
-        if (length2)
+	{
+		if (length1 && ccx_options.extract != 2)
 		{
-			if (ccx_options.extract!=1)
-				writedata(data2, length2, &context_cc608_field_2, sub);
+			writedata(data1, length1, &ctx->context_cc608_field_1, sub);
+		}
+		if (length2)
+		{
+			if (ccx_options.extract != 1)
+				writedata(data2, length2, &ctx->context_cc608_field_2, sub);
 			else // User doesn't want field 2 data, but we want XDS.
 				writedata (data2,length2,NULL, sub);
-        }
-    }
+		}
+	}
 }
 
 /* Buffer data with the same FTS and write when a new FTS or data==NULL
  * is encountered */
-void writercwtdata (const unsigned char *data)
+void writercwtdata (struct lib_ccx_ctx *ctx, const unsigned char *data)
 {
     static LLONG prevfts = -1;
     LLONG currfts = fts_now + fts_global;
@@ -186,8 +186,8 @@ void writercwtdata (const unsigned char *data)
 			}
 			else
 			{
-				writeraw(cbheader,10,&wbout1);
-				writeraw(cbbuffer,3*cbcount, &wbout1);
+				writeraw(cbheader,10,&ctx->wbout1);
+				writeraw(cbbuffer,3*cbcount, &ctx->wbout1);
 			}
         }
         cbcount = 0;
@@ -238,8 +238,8 @@ void writercwtdata (const unsigned char *data)
 		}
 		else
 		{
-			writeraw(cbheader,10,&wbout1);
-			writeraw(cbbuffer,3*cbcount, &wbout1);
+			writeraw(cbheader,10,&ctx->wbout1);
+			writeraw(cbbuffer,3*cbcount, &ctx->wbout1);
 		}
 
         cbcount = 0;

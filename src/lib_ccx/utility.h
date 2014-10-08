@@ -10,4 +10,5 @@
 #define RL16(x) (*(unsigned short int*)(x))
 #define RB16(x) (ntohs(*(unsigned short int*)(x)))
 
+extern int temp_debug;
 #endif

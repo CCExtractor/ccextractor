@@ -83,17 +83,114 @@ struct ccx_s_teletext_config {
 	// uint64_t utc_refvalue; // UTC referential value => Moved to ccx_decoders_common, so can be used for other decoders (608/xds) too
 	uint16_t user_page; // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
 };
+struct lib_ccx_ctx
+{
+	// TODO relates to fts_global
+	uint32_t global_timestamp;
+	uint32_t min_global_timestamp;
+	int global_timestamp_inited;
 
-#define buffered_skip(bytes) if (bytes<=bytesinbuffer-filebuffer_pos) { \
+	int saw_caption_block;
+
+	// Stuff common to both loops
+	unsigned char *buffer;
+	LLONG past; /* Position in file, if in sync same as ftell()  */
+	unsigned char *pesheaderbuf;
+	LLONG inputsize;
+	LLONG total_inputsize;
+	LLONG total_past; // Only in binary concat mode
+
+	int last_reported_progress;
+	int processed_enough; // If 1, we have enough lines, time, etc.
+
+	// Small buffer to help us with the initial sync
+	unsigned char startbytes[STARTBYTESLENGTH];
+	unsigned int startbytes_pos;
+	int startbytes_avail;
+
+	/* Stats */
+	int stat_numuserheaders;
+	int stat_dvdccheaders;
+	int stat_scte20ccheaders;
+	int stat_replay5000headers;
+	int stat_replay4000headers;
+	int stat_dishheaders;
+	int stat_hdtv;
+	int stat_divicom;
+	unsigned total_pulldownfields;
+	unsigned total_pulldownframes;
+	int cc_stats[4];
+	int false_pict_header;
+
+	/* GOP-based timing */
+	int saw_gop_header;
+	int frames_since_last_gop;
+
+
+	/* Time info for timed-transcript */
+	int max_gop_length; // (Maximum) length of a group of pictures
+	int last_gop_length; // Length of the previous group of pictures
+
+	// int hex_mode=HEX_NONE; // Are we processing an hex file?
+
+	/* 608 contexts - note that this shouldn't be global, they should be
+	per program */
+	ccx_decoder_608_context context_cc608_field_1;
+	ccx_decoder_608_context context_cc608_field_2;
+	enum ccx_stream_mode_enum stream_mode;
+	enum ccx_stream_mode_enum auto_stream;
+
+
+	int rawmode; // Broadcast or DVD
+	// See -d from
+
+	int cc_to_stdout; // If 1, captions go to stdout instead of file
+
+
+	LLONG subs_delay; // ms to delay (or advance) subs
+
+	int startcredits_displayed;
+	int end_credits_displayed;
+	LLONG last_displayed_subs_ms; // When did the last subs end?
+	LLONG screens_to_process; // How many screenfuls we want?
+	char *basefilename; // Input filename without the extension
+	char **inputfile; // List of files to process
+
+	const char *extension; // Output extension
+	int current_file; // If current_file!=1, we are processing *inputfile[current_file]
+
+	int num_input_files; // How many?
+
+	/* Hauppauge support */
+	unsigned hauppauge_warning_shown; // Did we detect a possible Hauppauge capture and told the user already?
+	unsigned teletext_warning_shown; // Did we detect a possible PAL (with teletext subs) and told the user already?
+
+	// Output structures
+	struct ccx_s_write wbout1;
+	struct ccx_s_write wbout2;
+
+	/* File handles */
+	FILE *fh_out_elementarystream;
+	int infd; // descriptor number to input.
+	char *basefilename_for_stdin;
+	char *basefilename_for_network;
+	int PIDs_seen[65536];
+	struct PMT_entry *PIDs_programs[65536];
+};
+#ifdef DEBUG_TELEXCC
+int main_telxcc (int argc, char *argv[]);
+#endif
+
+#define buffered_skip(ctx, bytes) if (bytes<=bytesinbuffer-filebuffer_pos) { \
     filebuffer_pos+=bytes; \
     result=bytes; \
-} else result=buffered_read_opt (NULL,bytes);
+} else result=buffered_read_opt (ctx, NULL,bytes);
 
-#define buffered_read(buffer,bytes) if (bytes<=bytesinbuffer-filebuffer_pos) { \
+#define buffered_read(ctx, buffer,bytes) if (bytes<=bytesinbuffer-filebuffer_pos) { \
     if (buffer!=NULL) memcpy (buffer,filebuffer+filebuffer_pos,bytes); \
     filebuffer_pos+=bytes; \
     result=bytes; \
-} else { result=buffered_read_opt (buffer,bytes); if (ccx_options.gui_mode_reports && ccx_options.input_source==CCX_DS_NETWORK) {net_activity_gui++; if (!(net_activity_gui%1000))activity_report_data_read();}}
+} else { result=buffered_read_opt (ctx, buffer,bytes); if (ccx_options.gui_mode_reports && ccx_options.input_source==CCX_DS_NETWORK) {net_activity_gui++; if (!(net_activity_gui%1000))activity_report_data_read();}}
 
 #define buffered_read_4(buffer) if (4<=bytesinbuffer-filebuffer_pos) { \
     if (buffer) { buffer[0]=filebuffer[filebuffer_pos]; \
@@ -104,19 +201,18 @@ struct ccx_s_teletext_config {
     result=4; } \
 } else result=buffered_read_opt (buffer,4);
 
-#define buffered_read_byte(buffer) if (bytesinbuffer-filebuffer_pos) { \
+#define buffered_read_byte(ctx, buffer) if (bytesinbuffer-filebuffer_pos) { \
     if (buffer) { *buffer=filebuffer[filebuffer_pos]; \
     filebuffer_pos++; \
     result=1; } \
-} else result=buffered_read_opt (buffer,1);
+} else result=buffered_read_opt (ctx, buffer,1);
 
-extern LLONG buffered_read_opt (unsigned char *buffer, unsigned int bytes);
+LLONG buffered_read_opt (struct lib_ccx_ctx *ctx, unsigned char *buffer, unsigned int bytes);
 
-// ccextractor.c
-void init_libraries();
+struct lib_ccx_ctx* init_libraries(void);
 
 //params.c
-void parse_parameters (int argc, char *argv[]);
+void parse_parameters (struct lib_ccx_ctx *ctx, int argc, char *argv[]);
 void usage (void);
 int atoi_hex (char *s);
 int stringztoms (const char *s, struct ccx_boundary_time *bt);
@@ -124,13 +220,13 @@ int stringztoms (const char *s, struct ccx_boundary_time *bt);
 // general_loop.c
 void position_sanity_check ();
 int init_file_buffer( void );
-LLONG ps_getmoredata( void );
-LLONG general_getmoredata( void );
-void raw_loop (void *enc_ctx);
-LLONG process_raw (struct cc_subtitle *sub);
-void general_loop(void *enc_ctx);
+LLONG ps_getmoredata(struct lib_ccx_ctx *ctx);
+LLONG general_getmoredata(struct lib_ccx_ctx *ctx);
+void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx);
+LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub);
+void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
 void processhex (char *filename);
-void rcwt_loop(void *enc_ctx);
+void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
 
 // activity.c
 void activity_header (void);
@@ -151,71 +247,73 @@ extern LLONG inbuf;
 extern int ccx_bufferdatatype; // Can be RAW or PES
 
 // asf_functions.c
-LLONG asf_getmoredata( void );
+LLONG asf_getmoredata(struct lib_ccx_ctx *ctx);
 
 // wtv_functions.c
-LLONG wtv_getmoredata( void );
+LLONG wtv_getmoredata(struct lib_ccx_ctx *ctx);
 
 // avc_functions.c
-LLONG process_avc (unsigned char *avcbuf, LLONG avcbuflen, struct cc_subtitle *sub);
+LLONG process_avc (struct lib_ccx_ctx *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub);
 void init_avc(void);
 
 // es_functions.c
-LLONG process_m2v (unsigned char *data, LLONG length, struct cc_subtitle *sub);
+LLONG process_m2v (struct lib_ccx_ctx *ctx, unsigned char *data, LLONG length,struct cc_subtitle *sub);
 
 extern unsigned top_field_first;
 
 // es_userdata.c
-int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub);
+int user_data(struct lib_ccx_ctx *ctx, struct bitstream *ustream, int udtype, struct cc_subtitle *sub);
 
 // bitstream.c - see bitstream.h
 
 // file_functions.c
 LLONG getfilesize (int in);
-LLONG gettotalfilessize (void);
-void prepare_for_new_file (void);
-void close_input_file (void);
-int switch_to_next_file (LLONG bytesinbuffer);
+LLONG gettotalfilessize (struct lib_ccx_ctx *ctx);
+void prepare_for_new_file (struct lib_ccx_ctx *ctx);
+void close_input_file (struct lib_ccx_ctx *ctx);
+int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer);
 void return_to_buffer (unsigned char *buffer, unsigned int bytes);
 
 // sequencing.c
 void init_hdcc (void);
-void store_hdcc(unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts, struct cc_subtitle *sub);
+void store_hdcc(struct lib_ccx_ctx *ctx, unsigned char *cc_data, int cc_count, int sequence_number,
+			LLONG current_fts_now,struct cc_subtitle *sub);
 void anchor_hdcc(int seq);
-void process_hdcc (struct cc_subtitle *sub);
-int do_cb (unsigned char *cc_block, struct cc_subtitle *sub);
+void process_hdcc (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub);
+int do_cb (struct lib_ccx_ctx *ctx, unsigned char *cc_block, struct cc_subtitle *sub);
 // mp4.c
-int processmp4 (char *file,void *enc_ctx);
+int processmp4 (struct lib_ccx_ctx *ctx, char *file,void *enc_ctx);
 
 // params_dump.c
-void params_dump(void);
-void print_file_report(void);
+void params_dump(struct lib_ccx_ctx *ctx);
+void print_file_report(struct lib_ccx_ctx *ctx);
 
 // output.c
 void init_write (struct ccx_s_write *wb);
 void writeraw (const unsigned char *data, int length, struct ccx_s_write *wb);
 void writedata(const unsigned char *data, int length, ccx_decoder_608_context *context, struct cc_subtitle *sub);
-void flushbuffer (struct ccx_s_write *wb, int closefile);
-void printdata (const unsigned char *data1, int length1,const unsigned char *data2, int length2, struct cc_subtitle *sub);
-void writercwtdata (const unsigned char *data);
+void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile);
+void printdata (struct lib_ccx_ctx *ctx, const unsigned char *data1, int length1,
+                const unsigned char *data2, int length2, struct cc_subtitle *sub);
+void writercwtdata (struct lib_ccx_ctx *ctx, const unsigned char *data);
 
 // stream_functions.c
-void detect_stream_type (void);
-int detect_myth( void );
-int read_video_pes_header (unsigned char *header, int *headerlength, int sbuflen);
+void detect_stream_type (struct lib_ccx_ctx *ctx);
+int detect_myth( struct lib_ccx_ctx *ctx );
+int read_video_pes_header (struct lib_ccx_ctx *ctx, unsigned char *nextheader, int *headerlength, int sbuflen);
 int read_pts_pes(unsigned char*header, int len);
 
 // ts_functions.c
 void init_ts( void );
-int ts_readpacket(void);
-long ts_readstream(void);
-LLONG ts_getmoredata( void );
-int write_section(struct ts_payload *payload, unsigned char*buf, int size, int pos);
-int parse_PMT (unsigned char *buf,int len, int pos);
-int parse_PAT (void);
+int ts_readpacket(struct lib_ccx_ctx* ctx);
+long ts_readstream(struct lib_ccx_ctx *ctx);
+LLONG ts_getmoredata(struct lib_ccx_ctx *ctx);
+int write_section(struct lib_ccx_ctx *ctx, struct ts_payload *payload, unsigned char*buf, int size, int pos);
+int parse_PMT (struct lib_ccx_ctx *ctx, unsigned char *buf, int len, int pos);
+int parse_PAT (struct lib_ccx_ctx *ctx);
 
 // myth.c
-void myth_loop(void *enc_ctx);
+void myth_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
 
 // utility.c
 void fatal(int exit_code, const char *fmt, ...);
@@ -236,77 +334,34 @@ void m_signal(int sig, void (*func)(int));
 
 
 unsigned encode_line (unsigned char *buffer, unsigned char *text);
-void buffered_seek (int offset);
+void buffered_seek (struct lib_ccx_ctx *ctx, int offset);
 extern void build_parity_table(void);
 
-void tlt_process_pes_packet(uint8_t *buffer, uint16_t size) ;
-void telxcc_init(void);
-void telxcc_close(void);
+void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t size);
+void telxcc_init(struct lib_ccx_ctx *ctx);
+void telxcc_close(struct lib_ccx_ctx *ctx);
 void tlt_read_rcwt();
 void mstotime(LLONG milli, unsigned *hours, unsigned *minutes,
 	unsigned *seconds, unsigned *ms);
 
 extern unsigned rollover_bits;
-extern uint32_t global_timestamp, min_global_timestamp;
 extern int global_timestamp_inited;
 
-extern int saw_caption_block;
-
-
-extern unsigned char *buffer;
-extern LLONG past;
-extern LLONG total_inputsize, total_past; // Only in binary concat mode
-
-extern char **inputfile;
-extern int current_file;
 extern LLONG result; // Number of bytes read/skipped in last read operation
 
 
 extern int strangeheader;
-
-extern unsigned char startbytes[STARTBYTESLENGTH];
-extern unsigned int startbytes_pos;
-extern int startbytes_avail; // Needs to be able to hold -1 result.
-
-extern unsigned char *pesheaderbuf;
-
-extern unsigned total_pulldownfields;
-extern unsigned total_pulldownframes;
 
 extern unsigned char *filebuffer;
 extern LLONG filebuffer_start; // Position of buffer start relative to file
 extern int filebuffer_pos; // Position of pointer relative to buffer start
 extern int bytesinbuffer; // Number of bytes we actually have on buffer
 
-extern ccx_decoder_608_context context_cc608_field_1, context_cc608_field_2;
-
 extern const char *desc[256];
 
-extern FILE *fh_out_elementarystream;
-extern int infd;
-extern int false_pict_header;
 
-extern int stat_numuserheaders;
-extern int stat_dvdccheaders;
-extern int stat_scte20ccheaders;
-extern int stat_replay5000headers;
-extern int stat_replay4000headers;
-extern int stat_dishheaders;
-extern int stat_hdtv;
-extern int stat_divicom;
-extern enum ccx_stream_mode_enum stream_mode;
-extern int cc_stats[4];
-extern LLONG inputsize;
-
-extern LLONG subs_delay;
-extern int startcredits_displayed, end_credits_displayed;
-extern LLONG last_displayed_subs_ms;
-extern int processed_enough;
-
-extern const char *extension;
 extern long FILEBUFFERSIZE; // Uppercase because it used to be a define
 extern struct ccx_s_options ccx_options;
-extern int temp_debug;
 extern unsigned long net_activity_gui;
 
 /* General (ES stream) video information */
@@ -329,19 +384,7 @@ extern int cc_data_count[SORTBUF];
 extern unsigned char cc_data_pkts[SORTBUF][10*31*3+1];
 extern int has_ccdata_buffered;
 
-extern int last_reported_progress;
-extern int cc_to_stdout;
-
-extern unsigned hauppauge_warning_shown;
 extern unsigned char *subline;
-extern int saw_gop_header;
-extern int max_gop_length;
-extern int last_gop_length;
-extern int frames_since_last_gop;
-extern enum ccx_stream_mode_enum auto_stream;
-extern int num_input_files;
-extern char *basefilename;
-extern struct ccx_s_write wbout1, wbout2, *wbxdsout;
 
 extern int cc608_parity_table[256]; // From myth
 
@@ -378,12 +421,6 @@ extern long capbuflen;
 #define EXIT_BUFFER_FULL                        502
 #define EXIT_MISSING_ASF_HEADER                 1001
 #define EXIT_MISSING_RCWT_HEADER                1002
-
-extern int PIDs_seen[65536];
-extern struct PMT_entry *PIDs_programs[65536];
-
-// extern LLONG ts_start_of_xds; // Moved to 608.h, only referenced in 608.c & xds.c
-//extern int timestamps_on_transcript;
 
 extern unsigned teletext_mode;
 

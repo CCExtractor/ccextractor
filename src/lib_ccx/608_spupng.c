@@ -196,7 +196,7 @@ int
 spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
                       struct encoder_ctx *context)
 {
-	LLONG ms_start = data->start_time + subs_delay;
+	LLONG ms_start = data->start_time + context->subs_delay;
     if (ms_start < 0)
     {
         dbg_print(CCX_DMT_VERBOSE, "Negative start\n");

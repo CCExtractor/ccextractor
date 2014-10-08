@@ -5,7 +5,7 @@
 static char *text;
 static int text_size=0;
 
-//int temp_debug = 0; // This is a convenience variable used to enable/disable debug on variable conditions. Find references to understand.
+int temp_debug = 0; // This is a convenience variable used to enable/disable debug on variable conditions. Find references to understand.
 
 void timestamp_to_srttime(uint64_t timestamp, char *buffer) {
 	uint64_t p = timestamp;
@@ -141,7 +141,7 @@ void dbg_print(LLONG mask, const char *fmt, ...)
 		return;
 	t=temp_debug ? (ccx_options.debug_mask_on_debug | ccx_options.debug_mask) : ccx_options.debug_mask; // Mask override?
 
-    if(mask & t)
+	if(mask & t)
 	{
 	    va_start(args, fmt);
 		if (ccx_options.messages_target==CCX_MESSAGES_STDOUT)

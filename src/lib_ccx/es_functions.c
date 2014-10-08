@@ -20,24 +20,24 @@ static unsigned pulldownfields = 0;
 
 static uint8_t search_start_code(struct bitstream *esstream);
 static uint8_t next_start_code(struct bitstream *esstream);
-static int es_video_sequence(struct bitstream *esstream, struct cc_subtitle *sub);
+static int es_video_sequence(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
 static int read_seq_info(struct bitstream *esstream);
 static int sequence_header(struct bitstream *esstream);
 static int sequence_ext(struct bitstream *esstream);
-static int read_gop_info(struct bitstream *esstream, struct cc_subtitle *sub);
-static int gop_header(struct bitstream *esstream, struct cc_subtitle *sub);
-static int read_pic_info(struct bitstream *esstream, struct cc_subtitle *sub);
+static int read_gop_info(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
+static int gop_header(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
+static int read_pic_info(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
 static int pic_header(struct bitstream *esstream);
 static int pic_coding_ext(struct bitstream *esstream);
-static int read_eau_info(struct bitstream *esstream, int udtype , struct cc_subtitle *sub);
-static int extension_and_user_data(struct bitstream *esstream, int udtype, struct cc_subtitle *sub);
+static int read_eau_info(struct lib_ccx_ctx* ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub);
+static int extension_and_user_data(struct lib_ccx_ctx *ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub);
 static int read_pic_data(struct bitstream *esstream);
 
 
 /* Process a mpeg-2 data stream with "lenght" bytes in buffer "data".
  * The number of processed bytes is returned.
  * Defined in ISO/IEC 13818-2 6.2 */
-LLONG process_m2v (unsigned char *data, LLONG length,struct cc_subtitle *sub)
+LLONG process_m2v (struct lib_ccx_ctx *ctx, unsigned char *data, LLONG length,struct cc_subtitle *sub)
 {
     if (length<8) // Need to look ahead 8 bytes
         return length;
@@ -48,7 +48,7 @@ LLONG process_m2v (unsigned char *data, LLONG length,struct cc_subtitle *sub)
 
     // Process data. The return value is ignored as esstream.pos holds
     // the information how far the parsing progressed.
-    es_video_sequence(&esstream, sub);
+    es_video_sequence(ctx, &esstream, sub);
 
     // This returns how many bytes were processed and can therefore
     // be discarded from "buffer". "esstream.pos" points to the next byte
@@ -185,7 +185,7 @@ static uint8_t next_start_code(struct bitstream *esstream)
 // Otherwise.  estream->pos shall point to the position where
 // the next call will continue, i.e. the possible begin of an
 // unfinished video sequence or after the finished sequence.
-static int es_video_sequence(struct bitstream *esstream, struct cc_subtitle *sub)
+static int es_video_sequence(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
     // Avoid "Skip forward" message on first call and later only
     // once per search.
@@ -272,7 +272,7 @@ static int es_video_sequence(struct bitstream *esstream, struct cc_subtitle *sub
 
         if (!in_pic_data && startcode == 0xB8)
         {
-            if (!read_gop_info(esstream,sub))
+            if (!read_gop_info(ctx, esstream,sub))
             {
                 if (esstream->error)
                     no_bitstream_error = 0;
@@ -284,7 +284,7 @@ static int es_video_sequence(struct bitstream *esstream, struct cc_subtitle *sub
 
         if (!in_pic_data && startcode == 0x00)
         {
-            if (!read_pic_info(esstream, sub))
+            if (!read_pic_info(ctx, esstream, sub))
             {
                 if (esstream->error)
                     no_bitstream_error = 0;
@@ -300,7 +300,7 @@ static int es_video_sequence(struct bitstream *esstream, struct cc_subtitle *sub
         // This check needs to be before the "in_pic_data" part.
         if ( saw_seqgoppic && (startcode == 0xB2 || startcode == 0xB5))
         {
-            if (!read_eau_info(esstream, saw_seqgoppic-1, sub))
+            if (!read_eau_info(ctx, esstream, saw_seqgoppic-1, sub))
             {
                 if (esstream->error)
                     no_bitstream_error = 0;
@@ -527,7 +527,7 @@ static int sequence_ext(struct bitstream *esstream)
 // If a bitstream syntax problem occured the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
-static int read_gop_info(struct bitstream *esstream, struct cc_subtitle *sub)
+static int read_gop_info(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
     dbg_print(CCX_DMT_VERBOSE, "Read GOP Info\n");
 
@@ -540,7 +540,7 @@ static int read_gop_info(struct bitstream *esstream, struct cc_subtitle *sub)
     // after getting more.
     unsigned char *gop_info_start = esstream->pos;
 
-    gop_header(esstream, sub);
+    gop_header(ctx, esstream, sub);
     //extension_and_user_data(esstream);
 
     if (esstream->error)
@@ -561,7 +561,7 @@ static int read_gop_info(struct bitstream *esstream, struct cc_subtitle *sub)
 // Return TRUE if the data parsing finished, FALSE otherwise.
 // estream->pos is advanced. Data is only processed if esstream->error
 // is FALSE, parsing can set esstream->error to TRUE.
-static int gop_header(struct bitstream *esstream, struct cc_subtitle *sub)
+static int gop_header(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
     dbg_print(CCX_DMT_VERBOSE, "GOP header\n");
 
@@ -594,7 +594,7 @@ static int gop_header(struct bitstream *esstream, struct cc_subtitle *sub)
         // Flush buffered cc blocks before doing the housekeeping
         if (has_ccdata_buffered)
         {
-            process_hdcc(sub);
+            process_hdcc(ctx, sub);
         }
 
         // Last GOPs pulldown frames
@@ -612,19 +612,19 @@ static int gop_header(struct bitstream *esstream, struct cc_subtitle *sub)
         // are 20% or more deviation.
         if ( (ccx_options.debug_mask & CCX_DMT_TIME)
              && ((gtc.ms - gop_time.ms // more than 20% longer
-                  > frames_since_last_gop*1000.0/current_fps*1.2)
+                  > ctx->frames_since_last_gop*1000.0/current_fps*1.2)
                  ||
                  (gtc.ms - gop_time.ms // or 20% shorter
-                  < frames_since_last_gop*1000.0/current_fps*0.8))
+                  < ctx->frames_since_last_gop*1000.0/current_fps*0.8))
              && first_gop_time.inited )
         {
             mprint("\rWarning: Jump in GOP timing.\n");
             mprint("  (old) %s",
                    print_mstime(gop_time.ms));
             mprint("  +  %s (%uF)",
-                   print_mstime((LLONG) (frames_since_last_gop
+                   print_mstime((LLONG) (ctx->frames_since_last_gop
                                       *1000.0/current_fps)),
-                   frames_since_last_gop);
+                   ctx->frames_since_last_gop);
             mprint("  !=  (new) %s\n",
                    print_mstime(gtc.ms));
         }
@@ -657,9 +657,9 @@ static int gop_header(struct bitstream *esstream, struct cc_subtitle *sub)
 
         gop_time = gtc;
 
-        frames_since_last_gop=0;
+        ctx->frames_since_last_gop=0;
         // Indicate that we read a gop header (since last frame number 0)
-        saw_gop_header = 1;
+        ctx->saw_gop_header = 1;
 
         // If we use GOP timing, reconstruct the PTS from the GOP
         if (ccx_options.use_gop_as_pts==1)
@@ -698,7 +698,7 @@ static int gop_header(struct bitstream *esstream, struct cc_subtitle *sub)
 // If a bitstream syntax problem occured the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
-static int read_pic_info(struct bitstream *esstream, struct cc_subtitle *sub)
+static int read_pic_info(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
     dbg_print(CCX_DMT_VERBOSE, "Read PIC Info\n");
 
@@ -737,7 +737,7 @@ static int read_pic_info(struct bitstream *esstream, struct cc_subtitle *sub)
 			// uses fts_now to re-create the timeline !!!!!
 			if (has_ccdata_buffered)
 			{
-				process_hdcc(sub);
+				process_hdcc(ctx, sub);
 			}
 			anchor_hdcc(temporal_reference);
 //		}
@@ -758,7 +758,7 @@ static int read_pic_info(struct bitstream *esstream, struct cc_subtitle *sub)
            (unsigned) (current_pts), temporal_reference,
        pict_types[picture_coding_type],
            (unsigned) (frames_since_ref_time),
-           (unsigned) (frames_since_last_gop));
+           (unsigned) (ctx->frames_since_last_gop));
     dbg_print(CCX_DMT_VIDES, "  t:%d r:%d p:%d", top_field_first,
            repeat_first_field, progressive_frame);
     dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
@@ -772,16 +772,16 @@ static int read_pic_info(struct bitstream *esstream, struct cc_subtitle *sub)
     // the beginning of the GOP, otherwise it is now.
     if(temporal_reference == 0)
     {
-        last_gop_length = maxtref + 1;
+        ctx->last_gop_length = maxtref + 1;
         maxtref = temporal_reference;
 
         // frames_since_ref_time is used in set_fts()
 
-        if( saw_gop_header )
+        if( ctx->saw_gop_header )
         {
             // This time (fts_at_gop_start) that was set in the
             // GOP header and it might be off by one GOP. See the comment there.
-            frames_since_ref_time = frames_since_last_gop; // Should this be 0?
+            frames_since_ref_time = ctx->frames_since_last_gop; // Should this be 0?
         }
         else
         {
@@ -796,39 +796,39 @@ static int read_pic_info(struct bitstream *esstream, struct cc_subtitle *sub)
             print_debug_timing();
         }
 
-        saw_gop_header = 0; // Reset the value
+        ctx->saw_gop_header = 0; // Reset the value
     }
 
-    if ( !saw_gop_header && picture_coding_type==CCX_FRAME_TYPE_I_FRAME )
+    if ( !ctx->saw_gop_header && picture_coding_type==CCX_FRAME_TYPE_I_FRAME )
     {
         // A new GOP beginns with an I-frame. Lets hope there are
         // never more than one per GOP
-        frames_since_last_gop = 0;
+        ctx->frames_since_last_gop = 0;
     }
 
     // Set maxtref
     if( temporal_reference > maxtref ) {
         maxtref = temporal_reference;
-        if (maxtref+1 > max_gop_length)
-            max_gop_length = maxtref+1;
+        if (maxtref+1 > ctx->max_gop_length)
+            ctx->max_gop_length = maxtref+1;
     }
 
     unsigned extraframe = 0;
     if (repeat_first_field)
     {
         pulldownfields++;
-        total_pulldownfields++;
-        if ( current_progressive_sequence || !(total_pulldownfields%2) )
+        ctx->total_pulldownfields++;
+        if ( current_progressive_sequence || !(ctx->total_pulldownfields%2) )
             extraframe = 1;
         if ( current_progressive_sequence && top_field_first )
             extraframe = 2;
         dbg_print(CCX_DMT_VIDES, "Pulldown: total pd fields: %d - %d extra frames\n",
-                   total_pulldownfields, extraframe);
+                   ctx->total_pulldownfields, extraframe);
     }
 
-    total_pulldownframes += extraframe;
+    ctx->total_pulldownframes += extraframe;
     total_frames_count += 1+extraframe;
-    frames_since_last_gop += 1+extraframe;
+    ctx->frames_since_last_gop += 1+extraframe;
     frames_since_ref_time += 1+extraframe;
 
     dbg_print(CCX_DMT_VERBOSE, "Read PIC Info - processed\n\n");
@@ -945,7 +945,7 @@ static int pic_coding_ext(struct bitstream *esstream)
 // If a bitstream syntax problem occured the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
-static int read_eau_info(struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
+static int read_eau_info(struct lib_ccx_ctx* ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
 {
     dbg_print(CCX_DMT_VERBOSE, "Read Extension and User Info\n");
 
@@ -959,7 +959,7 @@ static int read_eau_info(struct bitstream *esstream, int udtype, struct cc_subti
     // user data is not evaluated twice. Should the function run out of
     // data it will make sure that esstream points to where we want to
     // continue after getting more.
-    if( !extension_and_user_data(esstream, udtype, sub) )
+    if( !extension_and_user_data(ctx, esstream, udtype, sub) )
     {
         if (esstream->error)
             dbg_print(CCX_DMT_VERBOSE, "\nWarning: Retry while reading Extension and User Data!\n");
@@ -978,7 +978,7 @@ static int read_eau_info(struct bitstream *esstream, int udtype, struct cc_subti
 // Return TRUE if the data parsing finished, FALSE otherwise.
 // estream->pos is advanced. Data is only processed if esstream->error
 // is FALSE, parsing can set esstream->error to TRUE.
-static int extension_and_user_data(struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
+static int extension_and_user_data(struct lib_ccx_ctx *ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
 {
     dbg_print(CCX_DMT_VERBOSE, "Extension and user data(%d)\n", udtype);
 
@@ -1030,7 +1030,7 @@ static int extension_and_user_data(struct bitstream *esstream, int udtype, struc
             {
                 struct bitstream ustream;
                 init_bitstream(&ustream, dstart, esstream->pos);
-                user_data(&ustream, udtype, sub);
+                user_data(ctx, &ustream, udtype, sub);
             }
             else
             {

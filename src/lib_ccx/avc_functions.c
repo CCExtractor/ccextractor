@@ -1,5 +1,6 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
+#include "utility.h"
 #include <math.h>
 
 // Functions to parse a AVC/H.264 data stream, see ISO/IEC 14496-10
@@ -13,7 +14,7 @@ static void sei_rbsp (unsigned char *seibuf, unsigned char *seiend);
 static unsigned char *sei_message (unsigned char *seibuf, unsigned char *seiend);
 static void user_data_registered_itu_t_t35 (unsigned char *userbuf, unsigned char *userend);
 static void seq_parameter_set_rbsp (unsigned char *seqbuf, unsigned char *seqend);
-static void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub);
+static void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub);
 
 static unsigned char cc_count;
 // buffer to hold cc data
@@ -45,7 +46,7 @@ void init_avc(void)
 	cc_data = (unsigned char*)malloc(1024);
 }
 
-void do_NAL (unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub)
+void do_NAL (struct lib_ccx_ctx *ctx, unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub)
 {
 	unsigned char *NALstop;
 	unsigned nal_unit_type = *NALstart & 0x1F;
@@ -77,7 +78,7 @@ void do_NAL (unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub)
         // Found coded slice of a non-IDR picture
         // We only need the slice header data, no need to implement
         // slice_layer_without_partitioning_rbsp( );
-        slice_header(NALstart+1, NALstop, nal_unit_type, sub);
+        slice_header(ctx, NALstart+1, NALstop, nal_unit_type, sub);
     }
     else if ( got_seq_para && nal_unit_type == CCX_NAL_TYPE_SEI )
     {
@@ -100,7 +101,7 @@ void do_NAL (unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub)
 
 // Process inbuf bytes in buffer holding and AVC (H.264) video stream.
 // The number of processed bytes is returned.
-LLONG process_avc (unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub)
+LLONG process_avc (struct lib_ccx_ctx *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub)
 {
     unsigned char *bpos = avcbuf;
     unsigned char *NALstart;
@@ -204,7 +205,7 @@ LLONG process_avc (unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *s
 		dvprint("BEGIN NAL unit type: %d length %d  zeros: %d  ref_idc: %d - Buffered captions before: %d\n",
                 nal_unit_type,  NALstop-NALstart-1, zeropad, nal_ref_idc, !cc_buffer_saved);
 
-		do_NAL (NALstart, NALstop-NALstart, sub);
+		do_NAL (ctx, NALstart, NALstop-NALstart, sub);
 
 		dvprint("END   NAL unit type: %d length %d  zeros: %d  ref_idc: %d - Buffered captions after: %d\n",
                 nal_unit_type,  NALstop-NALstart-1, zeropad, nal_ref_idc, !cc_buffer_saved);
@@ -818,7 +819,7 @@ void seq_parameter_set_rbsp (unsigned char *seqbuf, unsigned char *seqend)
 
 
 // Process slice header in AVC data.
-void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub)
+void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub)
 {
     LLONG tmp;
     struct bitstream q1;
@@ -966,7 +967,7 @@ void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_ty
 
     // Sometimes two P-slices follow each other, see garbled_dishHD.mpg,
     // in this case we only treat the first as a reference pic
-    if (isref && frames_since_last_gop <= 3) // Used to be == 1, but the sample file
+    if (isref && ctx->frames_since_last_gop <= 3) // Used to be == 1, but the sample file
     { // 2014 SugarHouse Casino Mummers Parade Fancy Brigades_new.ts was garbled
 		// Probably doing a proper PTS sort would be a better solution.
         isref = 0;
@@ -983,10 +984,10 @@ void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_ty
         // Flush buffered cc blocks before doing the housekeeping
         if (has_ccdata_buffered)
         {
-            process_hdcc(sub);
+            process_hdcc(ctx, sub);
         }
-        last_gop_length = frames_since_last_gop;
-        frames_since_last_gop=0;
+        ctx->last_gop_length = ctx->frames_since_last_gop;
+        ctx->frames_since_last_gop=0;
         last_gop_maxtref = maxtref;
         maxtref = 0;
         lastmaxidx = maxidx;
@@ -1040,7 +1041,7 @@ void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_ty
             // Now an ugly workaround where pic_order_cnt_lsb increases in
             // steps of two. The 1.5 is an approximation, it should be:
             // last_gop_maxtref+1 == last_gop_length*2
-            if ( last_gop_maxtref > last_gop_length*1.5 ) {
+            if ( last_gop_maxtref > ctx->last_gop_length*1.5 ) {
                 current_tref = current_tref/2;
             }
         }
@@ -1099,7 +1100,7 @@ void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_ty
            (unsigned) (sync_pts));
     dbg_print(CCX_DMT_TIME, " - %s since GOP: %2u",
            slice_types[slice_type],
-           (unsigned) (frames_since_last_gop));
+           (unsigned) (ctx->frames_since_last_gop));
     dbg_print(CCX_DMT_TIME, "  b:%lld  frame# %lld\n", bottom_field_flag, frame_num);
 
     // sync_pts is (was) set when current_tref was zero
@@ -1113,9 +1114,9 @@ void slice_header (unsigned char *heabuf, unsigned char *heaend, int nal_unit_ty
     }
 
     total_frames_count++;
-    frames_since_last_gop++;
+    ctx->frames_since_last_gop++;
 
-    store_hdcc(cc_data, cc_count, curridx, fts_now, sub);
+    store_hdcc(ctx, cc_data, cc_count, curridx, fts_now, sub);
 	cc_buffer_saved=1; // CFS: store_hdcc supposedly saves the CC buffer to a sequence buffer
 	cc_count=0;
 }

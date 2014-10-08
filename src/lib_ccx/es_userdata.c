@@ -9,7 +9,7 @@
 // Return TRUE if the data parsing finished, FALSE otherwise.
 // estream->pos is advanced. Data is only processed if ustream->error
 // is FALSE, parsing can set ustream->error to TRUE.
-int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
+int user_data(struct lib_ccx_ctx *ctx, struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
 {
     dbg_print(CCX_DMT_VERBOSE, "user_data(%d)\n", udtype);
 
@@ -23,7 +23,7 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
 	}
 
     // Do something
-    stat_numuserheaders++;
+    ctx->stat_numuserheaders++;
     //header+=4;
 
     unsigned char *ud_header = next_bytes(ustream, 4);
@@ -38,7 +38,7 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
     // <http://www.geocities.com/mcpoodle43/SCC_TOOLS/DOCS/SCC_FORMAT.HTML>
     if ( !memcmp(ud_header,"\x43\x43", 2 ) )
     {
-        stat_dvdccheaders++;
+        ctx->stat_dvdccheaders++;
 
         // Probably unneeded, but keep looking for extra caption blocks
         int maybeextracb = 1;
@@ -92,7 +92,7 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
                         data[0]=0x04; // Field 1
                     else
                         data[0]=0x05; // Field 2
-                    do_cb(data, sub);
+                    do_cb(ctx, data, sub);
                     rcbcount++;
                 }
                 else
@@ -123,7 +123,7 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
                         data[0]=0x04; // Field 1
                     else
                         data[0]=0x05; // Field 2
-                    do_cb(data, sub);
+                    do_cb(ctx, data, sub);
                     ecbcount++;
                 }
                 else
@@ -144,7 +144,7 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
         {
             unsigned char cc_data[3*31+1]; // Maximum cc_count is 31
 
-            stat_scte20ccheaders++;
+            ctx->stat_scte20ccheaders++;
             read_bytes(ustream, 2); // "03 01"
 
             unsigned cc_count = (unsigned int) read_bits(ustream,5);
@@ -192,7 +192,7 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
                 }
             }
             cc_data[cc_count*3]=0xFF;
-            store_hdcc(cc_data, cc_count, current_tref, fts_now, sub);
+            store_hdcc(ctx, cc_data, cc_count, current_tref, fts_now, sub);
 
             dbg_print(CCX_DMT_VERBOSE, "Reading SCTE 20 CC blocks - done\n");
         }
@@ -206,25 +206,25 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
     {
         unsigned char data[3];
         if (ud_header[0]==0xbb)
-            stat_replay4000headers++;
+            ctx->stat_replay4000headers++;
         else
-            stat_replay5000headers++;
+            ctx->stat_replay5000headers++;
 
         read_bytes(ustream, 2); // "BB 02" or "99 02"
         data[0]=0x05; // Field 2
         data[1]=read_u8(ustream);
         data[2]=read_u8(ustream);
-        do_cb(data, sub);
+        do_cb(ctx, data, sub);
         read_bytes(ustream, 2); // Skip "CC 02" for R4000 or "AA 02" for R5000
         data[0]=0x04; // Field 1
         data[1]=read_u8(ustream);
         data[2]=read_u8(ustream);
-        do_cb(data, sub);
+        do_cb(ctx, data, sub);
     }
     // HDTV - see A/53 Part 4 (Video)
     else if ( !memcmp(ud_header,"\x47\x41\x39\x34", 4 ) )
     {
-        stat_hdtv++;
+        ctx->stat_hdtv++;
 
         read_bytes(ustream, 4); // "47 41 39 34"
 
@@ -264,7 +264,7 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
                 // Please note we store the current value of the global
                 // fts_now variable (and not get_fts()) as we are going to
                 // re-create the timeline in process_hdcc() (Slightly ugly).
-                store_hdcc(cc_data, cc_count, current_tref, fts_now, sub);
+                store_hdcc(ctx, cc_data, cc_count, current_tref, fts_now, sub);
 
                 dbg_print(CCX_DMT_VERBOSE, "Reading HDTV blocks - done\n");
             }
@@ -285,7 +285,7 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
 
         dbg_print(CCX_DMT_VERBOSE, "Reading Dish Network user data\n");
 
-        stat_dishheaders++;
+        ctx->stat_dishheaders++;
 
         read_bytes(ustream, 2); // "05 02"
 
@@ -344,7 +344,7 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
 
             dishdata[cc_count*3] = 0xFF; // Set end marker
 
-            store_hdcc(dishdata, cc_count, current_tref, fts_now, sub);
+            store_hdcc(ctx, dishdata, cc_count, current_tref, fts_now, sub);
 
             // Ignore 3 (0x0A, followed by two unknown) bytes.
             break;
@@ -369,7 +369,7 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
             dbg_print(CCX_DMT_PARSE, "%s", debug_608toASC( dishdata, 0) );
             dbg_print(CCX_DMT_PARSE, "%s:\n", debug_608toASC( dishdata+3, 0) );
 
-            store_hdcc(dishdata, cc_count, current_tref, fts_now, sub);
+            store_hdcc(ctx, dishdata, cc_count, current_tref, fts_now, sub);
 
             // Ignore 4 (0x020A, followed by two unknown) bytes.
             break;
@@ -434,7 +434,7 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
                 dbg_print(CCX_DMT_PARSE, "%s:\n", debug_608toASC( dishdata+3, 0) );
             }
 
-            store_hdcc(dishdata, cc_count, current_tref, fts_now, sub);
+            store_hdcc(ctx, dishdata, cc_count, current_tref, fts_now, sub);
 
             // Ignore 3 (0x0A, followed by 2 unknown) bytes.
             break;
@@ -450,7 +450,7 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
     else if ( !memcmp(ud_header,"\x02\x09", 2 ) )
     {
         // Either a documentation or more examples are needed.
-        stat_divicom++;
+        ctx->stat_divicom++;
 
         unsigned char data[3];
 
@@ -460,7 +460,7 @@ int user_data(struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
         data[0]=0x04; // Field 1
         data[1]=read_u8(ustream);
         data[2]=read_u8(ustream);
-        do_cb(data, sub);
+        do_cb(ctx, data, sub);
         // This is probably incomplete!
     }
     else

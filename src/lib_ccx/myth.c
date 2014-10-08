@@ -288,57 +288,57 @@ typedef struct AVPacket
 
 static AVPacket av;
 
-int get_be16()
+int get_be16(struct lib_ccx_ctx *ctx)
 {
 	unsigned char a,b;
 	unsigned char *a_p = &a; // Just to suppress warnings
 	unsigned char *b_p = &b;
-	buffered_read_byte (a_p);
-	past++;
-	buffered_read_byte (b_p);
-	past++;
+	buffered_read_byte (ctx, a_p);
+	ctx->past++;
+	buffered_read_byte (ctx, b_p);
+	ctx->past++;
 	return (a<<8) | b;
 }
 
-int get_byte ()
+int get_byte (struct lib_ccx_ctx *ctx)
 {
 	unsigned char b;
 	unsigned char *b_p = &b;
-	buffered_read_byte(b_p);
+	buffered_read_byte(ctx, b_p);
 	if (result==1)
 	{
-		past++;
+		ctx->past++;
 		return b;
 	}
 	else
 		return 0;
 }
 
-unsigned int get_be32()
+unsigned int get_be32(struct lib_ccx_ctx *ctx)
 {
 	unsigned int val;
-	val = get_be16() << 16;
-	val |= get_be16();
+	val = get_be16(ctx) << 16;
+	val |= get_be16(ctx);
 	return val;
 }
 
 
-static LLONG get_pts(int c)
+static LLONG get_pts(struct lib_ccx_ctx *ctx, int c)
 {
 	LLONG pts;
 	int val;
 
 	if (c < 0)
-		c = get_byte();
+		c = get_byte(ctx);
 	pts = (LLONG) ((c >> 1) & 0x07) << 30;
-	val = get_be16();
+	val = get_be16(ctx);
 	pts |= (LLONG) (val >> 1) << 15;
-	val = get_be16();
+	val = get_be16(ctx);
 	pts |= (LLONG) (val >> 1);
 	return pts;
 }
 
-static int find_next_start_code(int *size_ptr,
+static int find_next_start_code(struct lib_ccx_ctx *ctx, int *size_ptr,
 		unsigned int *header_state)
 {
 	unsigned int state, v;
@@ -350,10 +350,10 @@ static int find_next_start_code(int *size_ptr,
 	{
 		unsigned char cx;
 		unsigned char *cx_p = &cx;
-		buffered_read_byte (cx_p);
+		buffered_read_byte (ctx, cx_p);
 		if (result!=1)
 			break;
-		past++;
+		ctx->past++;
 		v = cx;
 		n--;
 		if (state == 0x000001) {
@@ -370,43 +370,43 @@ found:
 	return val;
 }
 
-void url_fskip (int length)
+void url_fskip (struct lib_ccx_ctx *ctx, int length)
 {
-	buffered_seek (length);
-	past+=length;
+	buffered_seek (ctx, length);
+	ctx->past+=length;
 }
 
-static long mpegps_psm_parse(void)
+static long mpegps_psm_parse(struct lib_ccx_ctx *ctx)
 {
 	int psm_length, ps_info_length, es_map_length;
 
-	psm_length = get_be16();
-	get_byte();
-	get_byte();
-	ps_info_length = get_be16();
+	psm_length = get_be16(ctx);
+	get_byte(ctx);
+	get_byte(ctx);
+	ps_info_length = get_be16(ctx);
 
 	/* skip program_stream_info */
-	url_fskip(ps_info_length);
-	es_map_length = get_be16();
+	url_fskip(ctx, ps_info_length);
+	es_map_length = get_be16(ctx);
 
 	/* at least one es available? */
 	while (es_map_length >= 4)
 	{
-		unsigned char type = (unsigned char) get_byte();
-		unsigned char es_id =(unsigned char) get_byte();
-		unsigned int es_info_length = get_be16();
+		unsigned char type = (unsigned char) get_byte(ctx);
+		unsigned char es_id =(unsigned char) get_byte(ctx);
+		unsigned int es_info_length = get_be16(ctx);
 		/* remember mapping from stream id to stream type */
 		psm_es_type[es_id] = type;
 		/* skip program_stream_info */
-		url_fskip(es_info_length);
+		url_fskip(ctx, es_info_length);
 		es_map_length -= 4 + es_info_length;
 	}
-	get_be32(); /* crc32 */
+	get_be32(ctx); /* crc32 */
 	return 2 + psm_length;
 }
 
 
-static int mpegps_read_pes_header(int *pstart_code,
+static int mpegps_read_pes_header(struct lib_ccx_ctx *ctx, int *pstart_code,
 		LLONG *ppts, LLONG *pdts)
 {
 	int len, size, startcode, c, flags, header_len;
@@ -416,7 +416,7 @@ redo:
 	/* next start code (should be immediately after) */
 	header_state = 0xff;
 	size = MAX_SYNC_SIZE;
-	startcode = find_next_start_code(&size, &header_state);
+	startcode = find_next_start_code(ctx, &size, &header_state);
 	//printf("startcode=%x pos=0x%Lx\n", startcode, url_ftell(&s->pb));
 	if (startcode < 0)
 		return AVERROR_IO;
@@ -428,14 +428,14 @@ redo:
 			startcode == PRIVATE_STREAM_2)
 	{
 		/* skip them */
-		len = get_be16();
-		// url_fskip(len);
+		len = get_be16(ctx);
+		// url_fskip(ctx, len);
 		goto redo;
 	}
 	position_sanity_check();
 	if (startcode == PROGRAM_STREAM_MAP)
 	{
-		mpegps_psm_parse();
+		mpegps_psm_parse(ctx);
 		goto redo;
 	}
 
@@ -445,7 +445,7 @@ redo:
 				(startcode == 0x1bd)))
 		goto redo;
 
-	len = get_be16();
+	len = get_be16(ctx);
 	pts = AV_NOPTS_VALUE;
 	dts = AV_NOPTS_VALUE;
 	position_sanity_check();
@@ -453,7 +453,7 @@ redo:
 	for(;;) {
 		if (len < 1)
 			goto redo;
-		c = get_byte();
+		c = get_byte(ctx);
 		len--;
 		/* XXX: for mpeg1, should test only bit 7 */
 		if (c != 0xff)
@@ -464,21 +464,21 @@ redo:
 		/* buffer scale & size */
 		if (len < 2)
 			goto redo;
-		get_byte();
-		c = get_byte();
+		get_byte(ctx);
+		c = get_byte(ctx);
 		len -= 2;
 	}
 	position_sanity_check();
 	if ((c & 0xf0) == 0x20) {
 		if (len < 4)
 			goto redo;
-		dts = pts = get_pts( c);
+		dts = pts = get_pts(ctx, c);
 		len -= 4;
 	} else if ((c & 0xf0) == 0x30) {
 		if (len < 9)
 			goto redo;
-		pts = get_pts(c);
-		dts = get_pts(-1);
+		pts = get_pts(ctx, c);
+		dts = get_pts(ctx, -1);
 		len -= 9;
 	} else if ((c & 0xc0) == 0x80) {
 		/* mpeg 2 PES */
@@ -488,20 +488,20 @@ redo:
 			goto redo;
 		}
 #endif
-		flags = get_byte();
-		header_len = get_byte();
+		flags = get_byte(ctx);
+		header_len = get_byte(ctx);
 		len -= 2;
 		if (header_len > len)
 			goto redo;
 		if ((flags & 0xc0) == 0x80) {
-			dts = pts = get_pts(-1);
+			dts = pts = get_pts(ctx, -1);
 			if (header_len < 5)
 				goto redo;
 			header_len -= 5;
 			len -= 5;
 		} if ((flags & 0xc0) == 0xc0) {
-			pts = get_pts( -1);
-			dts = get_pts( -1);
+			pts = get_pts(ctx, -1);
+			dts = get_pts(ctx, -1);
 			if (header_len < 10)
 				goto redo;
 			header_len -= 10;
@@ -509,7 +509,7 @@ redo:
 		}
 		len -= header_len;
 		while (header_len > 0) {
-			get_byte();
+			get_byte(ctx);
 			header_len--;
 		}
 	}
@@ -520,15 +520,15 @@ redo:
 	{
 		if (len < 1)
 			goto redo;
-		startcode = get_byte();
+		startcode = get_byte(ctx);
 		len--;
 		if (startcode >= 0x80 && startcode <= 0xbf) {
 			/* audio: skip header */
 			if (len < 3)
 				goto redo;
-			get_byte();
-			get_byte();
-			get_byte();
+			get_byte(ctx);
+			get_byte(ctx);
+			get_byte(ctx);
 			len -= 3;
 		}
 	}
@@ -551,7 +551,7 @@ static int cc608_good_parity(const int *parity_table, unsigned int data)
 }
 
 
-void ProcessVBIDataPacket(struct cc_subtitle *sub)
+void ProcessVBIDataPacket(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 {
 
 	const unsigned char *meat = av.data;
@@ -615,7 +615,7 @@ void ProcessVBIDataPacket(struct cc_subtitle *sub)
 							ccdata[0]=0x04; // Field 1
 							ccdata[1]=meat[1];
 							ccdata[2]=meat[2];
-							do_cb(ccdata,sub);
+							do_cb(ctx, ccdata, sub);
 							//                         processed_ccblocks++; // Not sure this is accurate
 						}
 						else
@@ -623,7 +623,7 @@ void ProcessVBIDataPacket(struct cc_subtitle *sub)
 							ccdata[0]=0x05; // Field 1
 							ccdata[1]=meat[1];
 							ccdata[2]=meat[2];
-							do_cb(ccdata, sub);
+							do_cb(ctx, ccdata, sub);
 						}
 					}
 					// utc += 33367;
@@ -644,13 +644,13 @@ void ProcessVBIDataPacket(struct cc_subtitle *sub)
 	// lastccptsu = utc;
 }
 
-static int mpegps_read_packet(void)
+static int mpegps_read_packet(struct lib_ccx_ctx *ctx)
 {
 	LLONG pts, dts;
 
 	int len, startcode,  type, codec_id = 0, es_type;
 redo:
-	len = mpegps_read_pes_header(&startcode, &pts, &dts);
+	len = mpegps_read_pes_header(ctx, &startcode, &pts, &dts);
 	if (len < 0)
 		return len;
 	position_sanity_check();
@@ -695,11 +695,11 @@ redo:
 		{
 			static const unsigned char avs_seqh[4] = { 0, 0, 1, 0xb0 };
 			unsigned char buf[8];
-			buffered_read (buf,8);
-			past+=8;
+			buffered_read (ctx, buf,8);
+			ctx->past+=8;
 			// get_buffer(&s->pb, buf, 8);
-			buffered_seek (-8);
-			past-=8;
+			buffered_seek(ctx, -8);
+			ctx->past-=8;
 			if(!memcmp(buf, avs_seqh, 4) && (buf[6] != 0 || buf[7] != 1))
 				codec_id = CODEC_ID_CAVS;
 			else
@@ -726,7 +726,7 @@ redo:
 		} else {
 skip:
 			// skip packet
-			url_fskip(len);
+			url_fskip(ctx, len);
 			goto redo;
 		}
 	// no stream found: add a new stream
@@ -753,9 +753,9 @@ goto skip; */
 		// audio data
 		if (len <= 3)
 			goto skip;
-		get_byte(); // emphasis (1), muse(1), reserved(1), frame number(5)
-		get_byte(); // quant (2), freq(2), reserved(1), channels(3)
-		get_byte(); // dynamic range control (0x80 = off)
+		get_byte(ctx); // emphasis (1), muse(1), reserved(1), frame number(5)
+		get_byte(ctx); // quant (2), freq(2), reserved(1), channels(3)
+		get_byte(ctx); // dynamic range control (0x80 = off)
 		len -= 3;
 		//freq = (b1 >> 4) & 3;
 		//st->codec->sample_rate = lpcm_freq_tab[freq];
@@ -777,8 +777,8 @@ goto skip; */
 	}
 	av.codec_id=codec_id;
 	av.type=type;
-	buffered_read (av.data,av.size);
-	past+=av.size;
+	buffered_read (ctx, av.data,av.size);
+	ctx->past+=av.size;
 	position_sanity_check();
 	// LSEEK (fh,pkt->size,SEEK_CUR);
 	av.pts = pts;
@@ -824,7 +824,7 @@ void build_parity_table (void)
 	cc608_build_parity_table(cc608_parity_table);
 }
 
-void myth_loop(void *enc_ctx)
+void myth_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 {
 	int rc;
 	int has_vbi=0;
@@ -844,7 +844,7 @@ void myth_loop(void *enc_ctx)
 	saved=0;
 
 	memset(&dec_sub, 0, sizeof(dec_sub));
-	while (!processed_enough && (rc=mpegps_read_packet ())==0)
+	while (!ctx->processed_enough && (rc=mpegps_read_packet(ctx))==0)
 	{
 		position_sanity_check();
 		if (av.codec_id==CODEC_ID_MPEG2VBI && av.type==CODEC_TYPE_DATA)
@@ -855,7 +855,7 @@ void myth_loop(void *enc_ctx)
 				has_vbi=1;
 			}
 			//fts_now=LLONG((processed_ccblocks*1000)/29.97);
-			ProcessVBIDataPacket(&dec_sub);
+			ProcessVBIDataPacket(ctx, &dec_sub);
 		}
 		/* This needs a lot more testing */
 		if (av.codec_id==CODEC_ID_MPEG2VIDEO && av.type==CODEC_TYPE_VIDEO )
@@ -875,7 +875,7 @@ void myth_loop(void *enc_ctx)
 					pts_set=1;
 			}
 			memcpy (desp+saved,av.data,av.size);
-			LLONG used = process_m2v(desp, length, &dec_sub);
+			LLONG used = process_m2v(ctx, desp, length, &dec_sub);
 			memmove (desp,desp+used,(unsigned int) (length-used));
 			saved=length-used;
 		}
@@ -884,24 +884,24 @@ void myth_loop(void *enc_ctx)
 		{
 			int cur_sec = (int) (get_fts() / 1000);
 			int th=cur_sec/10;
-			if (last_reported_progress!=th)
+			if (ctx->last_reported_progress!=th)
 			{
 				activity_progress (-1, cur_sec/60, cur_sec%60);
-				last_reported_progress = th;
+				ctx->last_reported_progress = th;
 			}
 		}
 		else
 		{
-			if (total_inputsize > 0 )
+			if (ctx->total_inputsize > 0 )
 			{
-				int progress = (int) ((((total_past+past)>>8)*100)/(total_inputsize>>8));
-				if (last_reported_progress != progress)
+				int progress = (int) ((((ctx->total_past+ctx->past)>>8)*100)/(ctx->total_inputsize>>8));
+				if (ctx->last_reported_progress != progress)
 				{
 					int cur_sec = (int) (get_fts() / 1000);
 					activity_progress (progress, cur_sec/60, cur_sec%60);
 
 					fflush (stdout);
-					last_reported_progress = progress;
+					ctx->last_reported_progress = progress;
 				}
 			}
 		}

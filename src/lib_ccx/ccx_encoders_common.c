@@ -140,13 +140,13 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		if (ccx_options.transcript_settings.showStartTime){
 			char buf1[80];
 			if (ccx_options.transcript_settings.relativeTimestamp){
-				millis_to_date(start_time + subs_delay, buf1);
+				millis_to_date(start_time + context->subs_delay, buf1);
 				fdprintf(context->out->fh, "%s|", buf1);
 			}
 			else {
-				mstotime(start_time + subs_delay, &h1, &m1, &s1, &ms1);
-				time_t start_time_int = (start_time + subs_delay) / 1000;
-				int start_time_dec = (start_time + subs_delay) % 1000;
+				mstotime(start_time + context->subs_delay, &h1, &m1, &s1, &ms1);
+				time_t start_time_int = (start_time + context->subs_delay) / 1000;
+				int start_time_dec = (start_time + context->subs_delay) % 1000;
 				struct tm *start_time_struct = gmtime(&start_time_int);
 				strftime(buf1, sizeof(buf1), "%Y%m%d%H%M%S", start_time_struct);
 				fdprintf(context->out->fh, "%s%c%03d|", buf1,ccx_options.millis_separator,start_time_dec);
@@ -160,7 +160,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 				fdprintf(context->out->fh, "%s|", buf2);
 			}
 			else {
-				mstotime(get_fts() + subs_delay, &h2, &m2, &s2, &ms2);
+				mstotime(get_fts() + context->subs_delay, &h2, &m2, &s2, &ms2);
 				time_t end_time_int = end_time / 1000;
 				int end_time_dec = end_time % 1000;
 				struct tm *end_time_struct = gmtime(&end_time_int);
@@ -252,12 +252,12 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 
 	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
 	{
-		start_time = context->prev_start + subs_delay;
+		start_time = context->prev_start + context->subs_delay;
 		end_time = sub->start_time - 1;
 	}
 	else if ( !(sub->flags & SUB_EOD_MARKER))
 	{
-		start_time = sub->start_time + subs_delay;
+		start_time = sub->start_time + context->subs_delay;
 		end_time = sub->end_time - 1;
 	}
 
@@ -346,14 +346,14 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 					char buf1[80];
 					if (ccx_options.transcript_settings.relativeTimestamp)
 					{
-						millis_to_date(start_time + subs_delay, buf1);
+						millis_to_date(start_time + context->subs_delay, buf1);
 						fdprintf(context->out->fh, "%s|", buf1);
 					}
 					else
 					{
-						mstotime(start_time + subs_delay, &h1, &m1, &s1, &ms1);
-						time_t start_time_int = (start_time + subs_delay) / 1000;
-						int start_time_dec = (start_time + subs_delay) % 1000;
+						mstotime(start_time + context->subs_delay, &h1, &m1, &s1, &ms1);
+						time_t start_time_int = (start_time + context->subs_delay) / 1000;
+						int start_time_dec = (start_time + context->subs_delay) % 1000;
 						struct tm *start_time_struct = gmtime(&start_time_int);
 						strftime(buf1, sizeof(buf1), "%Y%m%d%H%M%S", start_time_struct);
 						fdprintf(context->out->fh, "%s%c%03d|", buf1,ccx_options.millis_separator,start_time_dec);
@@ -370,7 +370,7 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 					}
 					else
 					{
-						mstotime(get_fts() + subs_delay, &h2, &m2, &s2, &ms2);
+						mstotime(get_fts() + context->subs_delay, &h2, &m2, &s2, &ms2);
 						time_t end_time_int = end_time / 1000;
 						int end_time_dec = end_time % 1000;
 						struct tm *end_time_struct = gmtime(&end_time_int);
@@ -408,7 +408,7 @@ void try_to_add_end_credits(struct encoder_ctx *context, struct ccx_s_write *out
 	LLONG window, length, st, end;
 	if (out->fh == -1)
 		return;
-	window=get_fts()-last_displayed_subs_ms-1;
+	window=get_fts()-context->last_displayed_subs_ms-1;
 	if (window<ccx_options.endcreditsforatleast.time_in_ms) // Won't happen, window is too short
 		return;
 	length=ccx_options.endcreditsforatmost.time_in_ms > window ?
@@ -437,17 +437,17 @@ void try_to_add_end_credits(struct encoder_ctx *context, struct ccx_s_write *out
 void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 {
 	LLONG st, end, window, length;
-	LLONG l = start_ms + subs_delay;
+	LLONG l = start_ms + context->subs_delay;
     // We have a windows from last_displayed_subs_ms to l - we need to see if it fits
 
     if (l<ccx_options.startcreditsnotbefore.time_in_ms) // Too early
         return;
 
-    if (last_displayed_subs_ms+1 > ccx_options.startcreditsnotafter.time_in_ms) // Too late
+    if (context->last_displayed_subs_ms+1 > ccx_options.startcreditsnotafter.time_in_ms) // Too late
         return;
 
-    st = ccx_options.startcreditsnotbefore.time_in_ms>(last_displayed_subs_ms+1) ?
-        ccx_options.startcreditsnotbefore.time_in_ms : (last_displayed_subs_ms+1); // When would credits actually start
+    st = ccx_options.startcreditsnotbefore.time_in_ms>(context->last_displayed_subs_ms+1) ?
+        ccx_options.startcreditsnotbefore.time_in_ms : (context->last_displayed_subs_ms+1); // When would credits actually start
 
     end = ccx_options.startcreditsnotafter.time_in_ms<(l-1) ?
         ccx_options.startcreditsnotafter.time_in_ms : (l-1);
@@ -461,7 +461,7 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
         window : ccx_options.startcreditsforatmost.time_in_ms;
 
     dbg_print(CCX_DMT_VERBOSE, "Last subs: %lld   Current position: %lld\n",
-        last_displayed_subs_ms, l);
+        context->last_displayed_subs_ms, l);
     dbg_print(CCX_DMT_VERBOSE, "Not before: %lld   Not after: %lld\n",
         ccx_options.startcreditsnotbefore.time_in_ms,
 		ccx_options.startcreditsnotafter.time_in_ms);
@@ -489,7 +489,7 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
             // Do nothing for the rest
             break;
     }
-    startcredits_displayed=1;
+    context->startcredits_displayed=1;
     return;
 
 
@@ -509,7 +509,18 @@ int init_encoder(struct encoder_ctx *ctx,struct ccx_s_write *out)
 	return 0;
 
 }
-
+void set_encoder_last_displayed_subs_ms(struct encoder_ctx *ctx, LLONG last_displayed_subs_ms)
+{
+	ctx->last_displayed_subs_ms = last_displayed_subs_ms;
+}
+void set_encoder_subs_delay(struct encoder_ctx *ctx, LLONG subs_delay)
+{
+	ctx->subs_delay = subs_delay;
+}
+void set_encoder_startcredits_displayed(struct encoder_ctx *ctx, int startcredits_displayed)
+{
+	ctx->startcredits_displayed = startcredits_displayed;
+}
 void dinit_encoder(struct encoder_ctx *ctx)
 {
 
@@ -552,17 +563,17 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			switch (ccx_options.write_format)
 			{
 			case CCX_OF_SRT:
-				if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
+				if (!context->startcredits_displayed && ccx_options.start_credits_text!=NULL)
 					try_to_add_start_credits(context, data->start_time);
 				wrote_something = write_cc_buffer_as_srt(data, context);
 				break;
 			case CCX_OF_SAMI:
-				if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
+				if (!context->startcredits_displayed && ccx_options.start_credits_text!=NULL)
 					try_to_add_start_credits(context, data->start_time);
 				wrote_something = write_cc_buffer_as_sami(data, context);
 				break;
 			case CCX_OF_SMPTETT:
-				if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
+				if (!context->startcredits_displayed && ccx_options.start_credits_text!=NULL)
 					try_to_add_start_credits(context, data->start_time);
 				wrote_something = write_cc_buffer_as_smptett(data, context);
 				break;
@@ -576,7 +587,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				break;
 			}
 			if (wrote_something)
-				last_displayed_subs_ms=get_fts()+subs_delay;
+				context->last_displayed_subs_ms=get_fts() + context->subs_delay;
 
 			if (ccx_options.gui_mode_reports)
 				write_cc_buffer_to_gui(sub->data, context);
@@ -588,15 +599,15 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		switch (ccx_options.write_format)
 		{
 		case CCX_OF_SRT:
-			if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
+			if (!context->startcredits_displayed && ccx_options.start_credits_text!=NULL)
 				try_to_add_start_credits(context, sub->start_time);
 			wrote_something = write_cc_bitmap_as_srt(sub, context);
 		case CCX_OF_SAMI:
-			if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
+			if (!context->startcredits_displayed && ccx_options.start_credits_text!=NULL)
 				try_to_add_start_credits(context, sub->start_time);
 			wrote_something = write_cc_bitmap_as_sami(sub, context);
 		case CCX_OF_SMPTETT:
-			if (!startcredits_displayed && ccx_options.start_credits_text!=NULL)
+			if (!context->startcredits_displayed && ccx_options.start_credits_text!=NULL)
 				try_to_add_start_credits(context, sub->start_time);
 			wrote_something = write_cc_bitmap_as_smptett(sub, context);
 		case CCX_OF_TRANSCRIPT:
@@ -632,7 +643,7 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *cont
 
 	ms_start = data->start_time;
 
-	ms_start += subs_delay;
+	ms_start += context->subs_delay;
 	if (ms_start<0) // Drop screens that because of subs_delay start too early
 		return;
 	int time_reported = 0;

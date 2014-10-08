@@ -13,111 +13,11 @@ License: GPL 2.0
 
 void xds_cea608_test();
 
-struct ccx_s_options ccx_options;
-
-extern unsigned char *filebuffer;
-extern int bytesinbuffer; // Number of bytes we actually have on buffer
-
-// global TS PCR value, moved from telxcc. TODO: Rename, see if how to relates to fts_global
-uint32_t global_timestamp = 0, min_global_timestamp=0;
-int global_timestamp_inited=0;
-
-int saw_caption_block;
-
-// Stuff common to both loops
-unsigned char *buffer = NULL;
-LLONG past; /* Position in file, if in sync same as ftell()  */
-unsigned char *pesheaderbuf = NULL;
-LLONG inputsize;
-LLONG total_inputsize=0, total_past=0; // Only in binary concat mode
-
-int last_reported_progress;
-int processed_enough; // If 1, we have enough lines, time, etc. 
-
- 
-// Small buffer to help us with the initial sync
-unsigned char startbytes[STARTBYTESLENGTH]; 
-unsigned int startbytes_pos;
-int startbytes_avail;
-
-/* Stats */
-int stat_numuserheaders;
-int stat_dvdccheaders;
-int stat_scte20ccheaders;
-int stat_replay5000headers;
-int stat_replay4000headers;
-int stat_dishheaders;
-int stat_hdtv;
-int stat_divicom;
-unsigned total_pulldownfields;
-unsigned total_pulldownframes;
-int cc_stats[4];
-int false_pict_header;
-int resets_708=0;
-
-/* GOP-based timing */
-int saw_gop_header=0;
-int frames_since_last_gop=0;
-
-
-/* Time info for timed-transcript */
-int max_gop_length=0; // (Maximum) length of a group of pictures
-int last_gop_length=0; // Length of the previous group of pictures
-
-// int hex_mode=HEX_NONE; // Are we processing an hex file?
-
-/* 608 contexts - note that this shouldn't be global, they should be 
-per program */
-ccx_decoder_608_context context_cc608_field_1, context_cc608_field_2;
-enum ccx_stream_mode_enum stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND; // Data parse mode: 0=elementary, 1=transport, 2=program stream, 3=ASF container
-enum ccx_stream_mode_enum auto_stream = CCX_SM_AUTODETECT;
-
-
-int rawmode = 0; // Broadcast or DVD
-// See -d from 
-
-int cc_to_stdout=0; // If 1, captions go to stdout instead of file
-
-
-LLONG subs_delay=0; // ms to delay (or advance) subs
-
-int startcredits_displayed=0, end_credits_displayed=0;
-LLONG last_displayed_subs_ms=0; // When did the last subs end?
-LLONG screens_to_process=-1; // How many screenfuls we want?
-char *basefilename=NULL; // Input filename without the extension
-char **inputfile=NULL; // List of files to process
-
-const char *extension; // Output extension
-int current_file=-1; // If current_file!=1, we are processing *inputfile[current_file]
-
-int num_input_files=0; // How many?
-
-/* Hauppauge support */
-unsigned hauppauge_warning_shown=0; // Did we detect a possible Hauppauge capture and told the user already?
-unsigned teletext_warning_shown=0; // Did we detect a possible PAL (with teletext subs) and told the user already?
-
-
-struct ccx_s_write wbout1, wbout2; // Output structures
-
-/* File handles */
-FILE *fh_out_elementarystream;
-int infd=-1; // descriptor number to input. Set to -1 to indicate no file is open.
-char *basefilename_for_stdin=(char *) "stdin"; // Default name for output files if input is stdin
-char *basefilename_for_network=(char *) "network"; // Default name for output files if input is network
-int PIDs_seen[65536];
-struct PMT_entry *PIDs_programs[65536];
-
-int temp_debug=0; // This is a convenience variable used to enable/disable debug on variable conditions. Find references to understand.
-
-#ifdef DEBUG_TELEXCC
-int main_telxcc (int argc, char *argv[]);
-#endif
-LLONG process_raw_with_field (void);
-
+struct lib_ccx_ctx *signal_ctx;
 void sigint_handler()
 {
 	if (ccx_options.print_file_reports)
-		print_file_report();
+		print_file_report(signal_ctx);
 
 	exit(EXIT_SUCCESS);
 }
@@ -129,6 +29,7 @@ int main(int argc, char *argv[])
 	struct encoder_ctx enc_ctx[2];
 	struct cc_subtitle dec_sub;
 	void *ffmpeg_ctx = NULL;
+	struct lib_ccx_ctx *ctx;
 
 	// Need to set the 608 data for the report to the correct variable.
 	file_report.data_from_608 = &ccx_decoder_608_report;
@@ -141,12 +42,15 @@ int main(int argc, char *argv[])
 
 	init_options (&ccx_options);
 
+	// Initialize libraries
+	ctx = init_libraries();
+
 	// Init timing
-	ccx_common_timing_init(&past,ccx_options.nosync);
+	ccx_common_timing_init(&ctx->past,ccx_options.nosync);
 
 	// Prepare write structures
-	init_write(&wbout1);
-	init_write(&wbout2);	
+	init_write(&ctx->wbout1);
+	init_write(&ctx->wbout2);
 	
 	// Prepare time structures
 	init_boundary_time (&ccx_options.extraction_start);
@@ -164,18 +68,18 @@ int main(int argc, char *argv[])
 	memset (&dec_sub, 0,sizeof(dec_sub));
 
 	parse_configuration(&ccx_options);
-	parse_parameters (argc,argv);	
+	parse_parameters (ctx, argc, argv);
 
-	if (num_input_files==0 && ccx_options.input_source==CCX_DS_FILE)
+	if (ctx->num_input_files==0 && ccx_options.input_source==CCX_DS_FILE)
 	{
 		usage ();
 		fatal (EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");
 	}
-	if (num_input_files>1 && ccx_options.live_stream)
+	if (ctx->num_input_files>1 && ccx_options.live_stream)
 	{
 		fatal(EXIT_TOO_MANY_INPUT_FILES, "Live stream mode accepts only one input file.\n");
 	}
-	if (num_input_files && ccx_options.input_source==CCX_DS_NETWORK)
+	if (ctx->num_input_files && ccx_options.input_source==CCX_DS_NETWORK)
 	{
 		fatal(EXIT_TOO_MANY_INPUT_FILES, "UDP mode is not compatible with input files.\n");
 	}
@@ -183,17 +87,17 @@ int main(int argc, char *argv[])
 	{
 		ccx_options.buffer_input=1; // Mandatory, because each datagram must be read complete.
 	}
-	if (num_input_files && ccx_options.input_source==CCX_DS_TCP)
+	if (ctx->num_input_files && ccx_options.input_source==CCX_DS_TCP)
 	{
 		fatal(EXIT_TOO_MANY_INPUT_FILES, "TCP mode is not compatible with input files.\n");
 	}
 
-	if (num_input_files > 0)
+	if (ctx->num_input_files > 0)
 	{
-		wbout1.multiple_files = 1;
-		wbout1.first_input_file = inputfile[0];
-		wbout2.multiple_files = 1;
-		wbout2.first_input_file = inputfile[0];
+		ctx->wbout1.multiple_files = 1;
+		ctx->wbout1.first_input_file = ctx->inputfile[0];
+		ctx->wbout2.multiple_files = 1;
+		ctx->wbout2.first_input_file = ctx->inputfile[0];
 	}
 
 	// teletext page number out of range
@@ -207,44 +111,44 @@ int main(int argc, char *argv[])
 		// the -1, -2 switch. If -12 is used, the filename is used for
 		// field 1.
 		if (ccx_options.extract==2)
-			wbout2.filename=ccx_options.output_filename;
+			ctx->wbout2.filename=ccx_options.output_filename;
 		else
-			wbout1.filename=ccx_options.output_filename;
+			ctx->wbout1.filename=ccx_options.output_filename;
 	}
 
 	switch (ccx_options.write_format)
 	{
 		case CCX_OF_RAW:
-			extension = ".raw";
+			ctx->extension = ".raw";
 			break;
 		case CCX_OF_SRT:
-			extension = ".srt";
+			ctx->extension = ".srt";
 			break;
 		case CCX_OF_SAMI:
-			extension = ".smi";
+			ctx->extension = ".smi";
 			break;
 		case CCX_OF_SMPTETT:
-			extension = ".ttml";
+			ctx->extension = ".ttml";
 			break;
 		case CCX_OF_TRANSCRIPT:
-			extension = ".txt";
+			ctx->extension = ".txt";
 			break;
 		case CCX_OF_RCWT:
-			extension = ".bin";
+			ctx->extension = ".bin";
 			break;
 		case CCX_OF_SPUPNG:
-			extension = ".xml";
+			ctx->extension = ".xml";
 			break;
 		case CCX_OF_NULL:
-			extension = "";
+			ctx->extension = "";
 			break;
 		case CCX_OF_DVDRAW:
-			extension = ".dvdraw";
+			ctx->extension = ".dvdraw";
 			break;
 		default:
 			fatal (CCX_COMMON_EXIT_BUG_BUG, "write_format doesn't have any legal value, this is a bug.\n");			
 	}
-	params_dump();
+	params_dump(ctx);
 
 	// default teletext page
 	if (tlt_config.page > 0) {
@@ -252,65 +156,65 @@ int main(int argc, char *argv[])
 		tlt_config.page = ((tlt_config.page / 100) << 8) | (((tlt_config.page / 10) % 10) << 4) | (tlt_config.page % 10);
 	}
 
-	if (auto_stream==CCX_SM_MCPOODLESRAW && ccx_options.write_format==CCX_OF_RAW)
+	if (ctx->auto_stream==CCX_SM_MCPOODLESRAW && ccx_options.write_format==CCX_OF_RAW)
 	{
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "-in=raw can only be used if the output is a subtitle file.\n");
 	}
-	if (auto_stream==CCX_SM_RCWT && ccx_options.write_format==CCX_OF_RCWT && ccx_options.output_filename==NULL)
+	if (ctx->auto_stream==CCX_SM_RCWT && ccx_options.write_format==CCX_OF_RCWT && ccx_options.output_filename==NULL)
 	{
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS,
 			   "CCExtractor's binary format can only be used simultaneously for input and\noutput if the output file name is specified given with -o.\n");
 	}
 
-	buffer = (unsigned char *) malloc (BUFSIZE);
+	ctx->buffer = (unsigned char *) malloc (BUFSIZE);
 	subline = (unsigned char *) malloc (SUBLINESIZE);
-	pesheaderbuf = (unsigned char *) malloc (188); // Never larger anyway
+	ctx->pesheaderbuf = (unsigned char *) malloc (188); // Never larger anyway
 
 	switch (ccx_options.input_source)
 	{
 		case CCX_DS_FILE:
-			basefilename = (char *) malloc (strlen (inputfile[0])+1);
+			ctx->basefilename = (char *) malloc (strlen (ctx->inputfile[0])+1);
 			break;
 		case CCX_DS_STDIN:
-			basefilename = (char *) malloc (strlen (basefilename_for_stdin)+1);
+			ctx->basefilename = (char *) malloc (strlen (ctx->basefilename_for_stdin)+1);
 			break;
 		case CCX_DS_NETWORK:
 		case CCX_DS_TCP:
-			basefilename = (char *) malloc (strlen (basefilename_for_network)+1);
+			ctx->basefilename = (char *) malloc (strlen (ctx->basefilename_for_network)+1);
 			break;
 	}		
-	if (basefilename == NULL)
+	if (ctx->basefilename == NULL)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");		
 	switch (ccx_options.input_source)
 	{
 		case CCX_DS_FILE:
-			strcpy (basefilename, inputfile[0]);
+			strcpy (ctx->basefilename, ctx->inputfile[0]);
 			break;
 		case CCX_DS_STDIN:
-			strcpy (basefilename, basefilename_for_stdin);
+			strcpy (ctx->basefilename, ctx->basefilename_for_stdin);
 			break;
 		case CCX_DS_NETWORK:
 		case CCX_DS_TCP:
-			strcpy (basefilename, basefilename_for_network);
+			strcpy (ctx->basefilename, ctx->basefilename_for_network);
 			break;
 	}		
-	for (c=basefilename+strlen (basefilename)-1; c>basefilename &&
+	for (c=ctx->basefilename+strlen (ctx->basefilename)-1; ctx->basefilename &&
 		*c!='.'; c--) {;} // Get last .
 	if (*c=='.')
 		*c=0;
 
-	if (wbout1.filename==NULL)
+	if (ctx->wbout1.filename==NULL)
 	{
-		wbout1.filename = (char *) malloc (strlen (basefilename)+3+strlen (extension)); 
-		wbout1.filename[0]=0;
+		ctx->wbout1.filename = (char *) malloc (strlen (ctx->basefilename)+3+strlen (ctx->extension));
+		ctx->wbout1.filename[0]=0;
 	}
-	if (wbout2.filename==NULL)
+	if (ctx->wbout2.filename==NULL)
 	{
-		wbout2.filename = (char *) malloc (strlen (basefilename)+3+strlen (extension));
-		wbout2.filename[0]=0;
+		ctx->wbout2.filename = (char *) malloc (strlen (ctx->basefilename)+3+strlen (ctx->extension));
+		ctx->wbout2.filename[0]=0;
 	}
-	if (buffer == NULL || pesheaderbuf==NULL ||
-		wbout1.filename == NULL || wbout2.filename == NULL ||
+	if (ctx->buffer == NULL || ctx->pesheaderbuf==NULL ||
+		ctx->wbout1.filename == NULL || ctx->wbout2.filename == NULL ||
 		subline==NULL || init_file_buffer() )
 	{
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");		
@@ -326,21 +230,21 @@ int main(int argc, char *argv[])
 		/* # DVD format uses one raw file for both fields, while Broadcast requires 2 */
 		if (ccx_options.write_format==CCX_OF_DVDRAW)
 		{
-			if (wbout1.filename[0]==0)
+			if (ctx->wbout1.filename[0]==0)
 			{
-				strcpy (wbout1.filename,basefilename);
-				strcat (wbout1.filename,".raw");
+				strcpy (ctx->wbout1.filename,ctx->basefilename);
+				strcat (ctx->wbout1.filename,".raw");
 			}
-			if (cc_to_stdout)
+			if (ctx->cc_to_stdout)
 			{
-				wbout1.fh=STDOUT_FILENO;
+				ctx->wbout1.fh=STDOUT_FILENO;
 				mprint ("Sending captions to stdout.\n");
 			}
 			else
 			{
-				mprint ("Creating %s\n", wbout1.filename);			
-				wbout1.fh=open (wbout1.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
-				if (wbout1.fh==-1)
+				mprint ("Creating %s\n", ctx->wbout1.filename);
+				ctx->wbout1.fh=open (ctx->wbout1.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+				if (ctx->wbout1.fh==-1)
 				{
 					fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Failed\n");
 				}
@@ -348,31 +252,31 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			if (cc_to_stdout && ccx_options.extract==12)			
+			if (ctx->cc_to_stdout && ccx_options.extract==12)
 				fatal (EXIT_INCOMPATIBLE_PARAMETERS, "You can't extract both fields to stdout at the same time in broadcast mode.");
 			
-			if (ccx_options.write_format == CCX_OF_SPUPNG && cc_to_stdout)
+			if (ccx_options.write_format == CCX_OF_SPUPNG && ctx->cc_to_stdout)
 				fatal (EXIT_INCOMPATIBLE_PARAMETERS, "You cannot use -out=spupng with -stdout.");
 
 			if (ccx_options.extract!=2)
 			{
-				if (cc_to_stdout)
+				if (ctx->cc_to_stdout)
 				{
-					wbout1.fh=STDOUT_FILENO;
+					ctx->wbout1.fh=STDOUT_FILENO;
 					mprint ("Sending captions to stdout.\n");
 				}
 				else if (!ccx_options.send_to_srv)
 				{
-					if (wbout1.filename[0]==0)
+					if (ctx->wbout1.filename[0]==0)
 					{
-						strcpy (wbout1.filename,basefilename);
+						strcpy (ctx->wbout1.filename,ctx->basefilename);
 						if (ccx_options.extract==12) // _1 only added if there's two files
-							strcat (wbout1.filename,"_1");
-						strcat (wbout1.filename,(const char *) extension);
+							strcat (ctx->wbout1.filename,"_1");
+						strcat (ctx->wbout1.filename,(const char *) ctx->extension);
 					}
-					mprint ("Creating %s\n", wbout1.filename);				
-					wbout1.fh=open (wbout1.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
-					if (wbout1.fh==-1)
+					mprint ("Creating %s\n", ctx->wbout1.filename);
+					ctx->wbout1.fh=open (ctx->wbout1.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+					if (ctx->wbout1.fh==-1)
 					{
 						fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Failed (errno=%d)\n", errno);
 					}
@@ -380,59 +284,65 @@ int main(int argc, char *argv[])
 				switch (ccx_options.write_format)
 				{
 				case CCX_OF_RAW:
-					writeraw(BROADCAST_HEADER, sizeof(BROADCAST_HEADER), &wbout1);
+					writeraw(BROADCAST_HEADER, sizeof(BROADCAST_HEADER), &ctx->wbout1);
 					break;
 				case CCX_OF_DVDRAW:
 					break;
 				case CCX_OF_RCWT:
-					if (init_encoder(enc_ctx, &wbout1))
+					if (init_encoder(enc_ctx, &ctx->wbout1))
 						fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+					set_encoder_subs_delay(enc_ctx, ctx->subs_delay);
+					set_encoder_last_displayed_subs_ms(enc_ctx, ctx->last_displayed_subs_ms);
+					set_encoder_startcredits_displayed(enc_ctx, ctx->startcredits_displayed);
 					break;
 				default:
 					if (!ccx_options.no_bom){
 						if (ccx_options.encoding == CCX_ENC_UTF_8){ // Write BOM
-							writeraw(UTF8_BOM, sizeof(UTF8_BOM), &wbout1);
+							writeraw(UTF8_BOM, sizeof(UTF8_BOM), &ctx->wbout1);
 						}
 						if (ccx_options.encoding == CCX_ENC_UNICODE){ // Write BOM				
-							writeraw(LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM), &wbout1);
+							writeraw(LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM), &ctx->wbout1);
 						}
 					}
-					if (init_encoder(enc_ctx, &wbout1)){
+					if (init_encoder(enc_ctx, &ctx->wbout1)){
 						fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 					}
+					set_encoder_subs_delay(enc_ctx, ctx->subs_delay);
+					set_encoder_last_displayed_subs_ms(enc_ctx, ctx->last_displayed_subs_ms);
+					set_encoder_startcredits_displayed(enc_ctx, ctx->startcredits_displayed);
 				}
 			}
 			if (ccx_options.extract == 12 && ccx_options.write_format != CCX_OF_RAW)
 				mprint (" and \n");
 			if (ccx_options.extract!=1)
 			{
-				if (cc_to_stdout)
+				if (ctx->cc_to_stdout)
 				{
-					wbout1.fh=STDOUT_FILENO;
+					ctx->wbout1.fh=STDOUT_FILENO;
 					mprint ("Sending captions to stdout.\n");
 				}
 				else if(ccx_options.write_format == CCX_OF_RAW
 					&& ccx_options.extract == 12)
 				{
-					memcpy(&wbout2, &wbout1,sizeof(wbout1));
+					memcpy(&ctx->wbout2, &ctx->wbout1,sizeof(ctx->wbout1));
 				}
 				else if (!ccx_options.send_to_srv)
 				{
-					if (wbout2.filename[0]==0)
+					if (ctx->wbout2.filename[0]==0)
 					{
-						strcpy (wbout2.filename,basefilename);				
+						strcpy (ctx->wbout2.filename,ctx->basefilename);
 						if (ccx_options.extract==12) // _ only added if there's two files
-							strcat (wbout2.filename,"_2");
-						strcat (wbout2.filename,(const char *) extension);
+							strcat (ctx->wbout2.filename,"_2");
+						strcat (ctx->wbout2.filename,(const char *) ctx->extension);
 					}
-					mprint ("Creating %s\n", wbout2.filename);
-					wbout2.fh=open (wbout2.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
-					if (wbout2.fh==-1)
+					mprint ("Creating %s\n", ctx->wbout2.filename);
+					ctx->wbout2.fh=open (ctx->wbout2.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+					if (ctx->wbout2.fh==-1)
 					{
 						fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Failed\n");
 					}
 					if(ccx_options.write_format == CCX_OF_RAW)
-						writeraw (BROADCAST_HEADER,sizeof (BROADCAST_HEADER),&wbout2);
+						writeraw (BROADCAST_HEADER,sizeof (BROADCAST_HEADER),&ctx->wbout2);
 				}
 
 				switch (ccx_options.write_format)
@@ -441,21 +351,27 @@ int main(int argc, char *argv[])
 					case CCX_OF_DVDRAW:
 						break;
 					case CCX_OF_RCWT:
-						if( init_encoder(enc_ctx+1,&wbout2) )
+						if( init_encoder(enc_ctx+1,&ctx->wbout2) )
 							fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+						set_encoder_subs_delay(enc_ctx+1, ctx->subs_delay);
+						set_encoder_last_displayed_subs_ms(enc_ctx+1, ctx->last_displayed_subs_ms);
+						set_encoder_startcredits_displayed(enc_ctx+1, ctx->startcredits_displayed);
 						break;
 					default:
 						if (!ccx_options.no_bom){
 							if (ccx_options.encoding == CCX_ENC_UTF_8){ // Write BOM
-								writeraw(UTF8_BOM, sizeof(UTF8_BOM), &wbout2);
+								writeraw(UTF8_BOM, sizeof(UTF8_BOM), &ctx->wbout2);
 							}
 							if (ccx_options.encoding == CCX_ENC_UNICODE){ // Write BOM				
-								writeraw(LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM), &wbout2);
+								writeraw(LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM), &ctx->wbout2);
 							}
 						}
-						if (init_encoder(enc_ctx + 1, &wbout2)){
+						if (init_encoder(enc_ctx + 1, &ctx->wbout2)){
 							fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 						}
+						set_encoder_subs_delay(enc_ctx+1, ctx->subs_delay);
+						set_encoder_last_displayed_subs_ms(enc_ctx+1, ctx->last_displayed_subs_ms);
+						set_encoder_startcredits_displayed(enc_ctx+1, ctx->startcredits_displayed);
 				}
 			}
 		}
@@ -471,12 +387,12 @@ int main(int argc, char *argv[])
 	}
 
 	if (ccx_options.teletext_mode == CCX_TXT_IN_USE) // Here, it would mean it was forced by user
-		telxcc_init();
+		telxcc_init(ctx);
 
-	fh_out_elementarystream = NULL;
+	ctx->fh_out_elementarystream = NULL;
 	if (ccx_options.out_elementarystream_filename!=NULL)
 	{
-		if ((fh_out_elementarystream = fopen (ccx_options.out_elementarystream_filename,"wb"))==NULL)
+		if ((ctx->fh_out_elementarystream = fopen (ccx_options.out_elementarystream_filename,"wb"))==NULL)
 		{
 			fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to open clean file: %s\n", ccx_options.out_elementarystream_filename);
 		}
@@ -486,9 +402,6 @@ int main(int argc, char *argv[])
 
 	// Initialize HDTV caption buffer
 	init_hdcc();
-
-	// Initialize libraries
-	init_libraries();
 
 	if (ccx_options.line_terminator_lf)
 		encoded_crlf_length = encode_line(encoded_crlf, (unsigned char *) "\n");
@@ -501,29 +414,30 @@ int main(int argc, char *argv[])
 	time_t start, final;
 	time(&start);
 
-	processed_enough=0;
+	ctx->processed_enough=0;
 	if (ccx_options.binary_concat)
 	{
-		total_inputsize=gettotalfilessize();
-		if (total_inputsize==-1)
+		ctx->total_inputsize=gettotalfilessize(ctx);
+		if (ctx->total_inputsize==-1)
 			fatal (EXIT_UNABLE_TO_DETERMINE_FILE_SIZE, "Failed to determine total file size.\n");
 	}
 
 #ifndef _WIN32
+	signal_ctx = ctx;
 	m_signal(SIGINT, sigint_handler);
 #endif
 
-	while (switch_to_next_file(0) && !processed_enough)
+	while (switch_to_next_file(ctx, 0) && !ctx->processed_enough)
 	{
-		prepare_for_new_file();
+		prepare_for_new_file(ctx);
 #ifdef ENABLE_FFMPEG
-		close_input_file();
-		ffmpeg_ctx =  init_ffmpeg(inputfile[0]);
+		close_input_file(ctx);
+		ffmpeg_ctx =  init_ffmpeg(ctx->inputfile[0]);
 		if(ffmpeg_ctx)
 		{
 			int i =0;
-			buffer = malloc(1024);
-			if(!buffer)
+			ctx->buffer = malloc(1024);
+			if(!ctx->buffer)
 			{
 				mprint("no memory left\n");
 				break;
@@ -565,10 +479,10 @@ int main(int argc, char *argv[])
 		}
 #endif
 
-		if (auto_stream == CCX_SM_AUTODETECT)
+		if (ctx->auto_stream == CCX_SM_AUTODETECT)
 		{
-			detect_stream_type();			
-			switch (stream_mode)
+			detect_stream_type(ctx);
+			switch (ctx->stream_mode)
 			{
 				case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
 					mprint ("\rFile seems to be an elementary stream, enabling ES mode\n");
@@ -607,7 +521,7 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			stream_mode=auto_stream;
+			ctx->stream_mode=ctx->auto_stream;
 		}
 	
 		/* -----------------------------------------------------------------
@@ -622,18 +536,18 @@ int main(int argc, char *argv[])
 				break;
 			case 1:
 				// Force stream mode to myth
-				stream_mode=CCX_SM_MYTH;
+				ctx->stream_mode=CCX_SM_MYTH;
 				break;
 			case 2:
 				// autodetect myth files, but only if it does not conflict with
 				// the current stream mode
-				switch (stream_mode)
+				switch (ctx->stream_mode)
 				{
 					case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
 					case CCX_SM_PROGRAM:
-						if ( detect_myth() )
+						if ( detect_myth(ctx) )
 						{
-							stream_mode=CCX_SM_MYTH;
+							ctx->stream_mode=CCX_SM_MYTH;
 						}
 						break;
 					default:
@@ -647,7 +561,7 @@ int main(int argc, char *argv[])
 		// Also true for bin formats, but -nosync might have created a
 		// broken timeline for debug purposes.
 		// Disable too in MP4, specs doesn't say that there can't be a jump
-		switch (stream_mode)
+		switch (ctx->stream_mode)
 		{
 		case CCX_SM_MCPOODLESRAW:
 		case CCX_SM_RCWT:
@@ -661,7 +575,7 @@ int main(int argc, char *argv[])
 			break;
 		}
 				
-		switch (stream_mode)
+		switch (ctx->stream_mode)
 		{
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
 				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
@@ -674,30 +588,30 @@ int main(int argc, char *argv[])
 				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
 					ccx_options.use_gop_as_pts = 0; 
 				mprint ("\rAnalyzing data in general mode\n");
-				general_loop(&enc_ctx);
+				general_loop(ctx, &enc_ctx);
 				break;
 			case CCX_SM_MCPOODLESRAW:
 				mprint ("\rAnalyzing data in McPoodle raw mode\n");
-				raw_loop(&enc_ctx);
+				raw_loop(ctx, &enc_ctx);
 				break;
 			case CCX_SM_RCWT:
 				mprint ("\rAnalyzing data in CCExtractor's binary format\n");
-				rcwt_loop(&enc_ctx);
+				rcwt_loop(ctx, &enc_ctx);
 				break;
 			case CCX_SM_MYTH:
 				mprint ("\rAnalyzing data in MythTV mode\n");
 				show_myth_banner = 1;
-				myth_loop(&enc_ctx);
+				myth_loop(ctx, &enc_ctx);
 				break;
 			case CCX_SM_MP4:				
 				mprint ("\rAnalyzing data with GPAC (MP4 library)\n");
-				close_input_file(); // No need to have it open. GPAC will do it for us
-				processmp4 (inputfile[0],&enc_ctx);
+				close_input_file(ctx); // No need to have it open. GPAC will do it for us
+				processmp4 (ctx, ctx->inputfile[0],&enc_ctx);
 				break;
 #ifdef WTV_DEBUG
 			case CCX_SM_HEX_DUMP:
-				close_input_file(); // processhex will open it in text mode
-				processhex (inputfile[0]);
+				close_input_file(ctx); // processhex will open it in text mode
+				processhex (ctx, ctx->inputfile[0]);
 				break;
 #endif
 			case CCX_SM_AUTODETECT:
@@ -728,23 +642,23 @@ int main(int argc, char *argv[])
 		dbg_print(CCX_DMT_DECODER_608, "Max. FTS:	   %s  (without caption blocks since then)\n",
 			print_mstime(get_fts_max()));
 
-		if (stat_hdtv)
+		if (ctx->stat_hdtv)
 		{
-			mprint ("\rCC type 0: %d (%s)\n", cc_stats[0], cc_types[0]);
-			mprint ("CC type 1: %d (%s)\n", cc_stats[1], cc_types[1]);
-			mprint ("CC type 2: %d (%s)\n", cc_stats[2], cc_types[2]);
-			mprint ("CC type 3: %d (%s)\n", cc_stats[3], cc_types[3]);
+			mprint ("\rCC type 0: %d (%s)\n", ctx->cc_stats[0], cc_types[0]);
+			mprint ("CC type 1: %d (%s)\n", ctx->cc_stats[1], cc_types[1]);
+			mprint ("CC type 2: %d (%s)\n", ctx->cc_stats[2], cc_types[2]);
+			mprint ("CC type 3: %d (%s)\n", ctx->cc_stats[3], cc_types[3]);
 		}
 		mprint ("\nTotal frames time:	  %s  (%u frames at %.2ffps)\n",
 			print_mstime( (LLONG)(total_frames_count*1000/current_fps) ),
 			total_frames_count, current_fps);
-		if (total_pulldownframes)
+		if (ctx->total_pulldownframes)
 			mprint ("incl. pulldown frames:  %s  (%u frames at %.2ffps)\n",
-					print_mstime( (LLONG)(total_pulldownframes*1000/current_fps) ),
-					total_pulldownframes, current_fps);
+					print_mstime( (LLONG)(ctx->total_pulldownframes*1000/current_fps) ),
+					ctx->total_pulldownframes, current_fps);
 		if (pts_set >= 1 && min_pts != 0x01FFFFFFFFLL)
 		{
-			LLONG postsyncms = (LLONG) (frames_since_last_gop*1000/current_fps);
+			LLONG postsyncms = (LLONG) (ctx->frames_since_last_gop*1000/current_fps);
 			mprint ("\nMin PTS:				%s\n",
 					print_mstime( min_pts/(MPEG_CLOCK_FREQ/1000) - fts_offset));
 			if (pts_big_change)
@@ -757,41 +671,41 @@ int main(int argc, char *argv[])
 								  - min_pts/(MPEG_CLOCK_FREQ/1000) + fts_offset ));
 		}
 		// dvr-ms files have invalid GOPs
-		if (gop_time.inited && first_gop_time.inited && stream_mode != CCX_SM_ASF)
+		if (gop_time.inited && first_gop_time.inited && ctx->stream_mode != CCX_SM_ASF)
 		{
 			mprint ("\nInitial GOP time:	   %s\n",
 				print_mstime(first_gop_time.ms));
 			mprint ("Final GOP time:		 %s%+3dF\n",
 				print_mstime(gop_time.ms),
-				frames_since_last_gop);
+				ctx->frames_since_last_gop);
 			mprint ("Diff. GOP length:	   %s%+3dF",
 				print_mstime(gop_time.ms - first_gop_time.ms),
-				frames_since_last_gop);
+				ctx->frames_since_last_gop);
 			mprint ("	(%s)\n",
 				print_mstime(gop_time.ms - first_gop_time.ms
-				+(LLONG) ((frames_since_last_gop)*1000/29.97)) );
+				+(LLONG) ((ctx->frames_since_last_gop)*1000/29.97)) );
 		}
 
-		if (false_pict_header)
-			mprint ("\nNumber of likely false picture headers (discarded): %d\n",false_pict_header);
+		if (ctx->false_pict_header)
+			mprint ("\nNumber of likely false picture headers (discarded): %d\n",ctx->false_pict_header);
 
-		if (stat_numuserheaders)
-			mprint("\nTotal user data fields: %d\n", stat_numuserheaders);
-		if (stat_dvdccheaders)
-			mprint("DVD-type user data fields: %d\n", stat_dvdccheaders);
-		if (stat_scte20ccheaders)
-			mprint("SCTE-20 type user data fields: %d\n", stat_scte20ccheaders);
-		if (stat_replay4000headers)
-			mprint("ReplayTV 4000 user data fields: %d\n", stat_replay4000headers);
-		if (stat_replay5000headers)
-			mprint("ReplayTV 5000 user data fields: %d\n", stat_replay5000headers);
-		if (stat_hdtv)
-			mprint("HDTV type user data fields: %d\n", stat_hdtv);
-		if (stat_dishheaders)
-			mprint("Dish Network user data fields: %d\n", stat_dishheaders);
-		if (stat_divicom)
+		if (ctx->stat_numuserheaders)
+			mprint("\nTotal user data fields: %d\n", ctx->stat_numuserheaders);
+		if (ctx->stat_dvdccheaders)
+			mprint("DVD-type user data fields: %d\n", ctx->stat_dvdccheaders);
+		if (ctx->stat_scte20ccheaders)
+			mprint("SCTE-20 type user data fields: %d\n", ctx->stat_scte20ccheaders);
+		if (ctx->stat_replay4000headers)
+			mprint("ReplayTV 4000 user data fields: %d\n", ctx->stat_replay4000headers);
+		if (ctx->stat_replay5000headers)
+			mprint("ReplayTV 5000 user data fields: %d\n", ctx->stat_replay5000headers);
+		if (ctx->stat_hdtv)
+			mprint("HDTV type user data fields: %d\n", ctx->stat_hdtv);
+		if (ctx->stat_dishheaders)
+			mprint("Dish Network user data fields: %d\n", ctx->stat_dishheaders);
+		if (ctx->stat_divicom)
 		{
-			mprint("CEA608/Divicom user data fields: %d\n", stat_divicom);
+			mprint("CEA608/Divicom user data fields: %d\n", ctx->stat_divicom);
 
 			mprint("\n\nNOTE! The CEA 608 / Divicom standard encoding for closed\n");
 			mprint("caption is not well understood!\n\n");
@@ -815,23 +729,23 @@ int main(int argc, char *argv[])
 		fts_now = 0;
 		fts_max = 0;		
 	} // file loop
-	close_input_file();
+	close_input_file(ctx);
 	
-	if (fh_out_elementarystream!=NULL)
-		fclose (fh_out_elementarystream);	
+	if (ctx->fh_out_elementarystream!=NULL)
+		fclose (ctx->fh_out_elementarystream);
 
-	flushbuffer (&wbout1,false);
-	flushbuffer (&wbout2,false);
+	flushbuffer (ctx, &ctx->wbout1, false);
+	flushbuffer (ctx, &ctx->wbout2, false);
 
-	prepare_for_new_file (); // To reset counters used by handle_end_of_data()
+	prepare_for_new_file (ctx); // To reset counters used by handle_end_of_data()
 
-	if (wbout1.fh!=-1)
+	if (ctx->wbout1.fh!=-1)
 	{
 		if (ccx_options.write_format==CCX_OF_SMPTETT || ccx_options.write_format==CCX_OF_SAMI || 
 			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT
 			|| ccx_options.write_format==CCX_OF_SPUPNG )
 		{
-			handle_end_of_data(&context_cc608_field_1, &dec_sub);
+			handle_end_of_data(&ctx->context_cc608_field_1, &dec_sub);
 			if (dec_sub.got_output)
 			{
 				encode_sub(enc_ctx,&dec_sub);
@@ -841,17 +755,17 @@ int main(int argc, char *argv[])
 		else if(ccx_options.write_format==CCX_OF_RCWT)
 		{
 			// Write last header and data
-			writercwtdata (NULL);
+			writercwtdata (ctx, NULL);
 		}
 		dinit_encoder(enc_ctx);
 	}
-	if (wbout2.fh!=-1)
+	if (ctx->wbout2.fh!=-1)
 	{
 		if (ccx_options.write_format==CCX_OF_SMPTETT || ccx_options.write_format==CCX_OF_SAMI || 
 			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT
 			|| ccx_options.write_format==CCX_OF_SPUPNG )
 		{
-			handle_end_of_data(&context_cc608_field_2, &dec_sub);
+			handle_end_of_data(&ctx->context_cc608_field_2, &dec_sub);
 			if (dec_sub.got_output)
 			{
 				encode_sub(enc_ctx,&dec_sub);
@@ -860,9 +774,9 @@ int main(int argc, char *argv[])
 		}
 		dinit_encoder(enc_ctx+1);
 	}
-	telxcc_close();
-	flushbuffer (&wbout1,true);
-	flushbuffer (&wbout2,true);
+	telxcc_close(ctx);
+	flushbuffer (ctx, &ctx->wbout1,true);
+	flushbuffer (ctx, &ctx->wbout2,true);
 	time (&final);
 
 	long proc_time=(long) (final-start);
@@ -879,7 +793,7 @@ int main(int argc, char *argv[])
 	if (ccx_options.teletext_mode == CCX_TXT_IN_USE)
 		mprint ( "Teletext decoder: %"PRIu32" packets processed, %"PRIu32" SRT frames written.\n", tlt_packet_counter, tlt_frames_produced);
 
-	if (processed_enough)
+	if (ctx->processed_enough)
 	{
 		mprint ("\rNote: Processing was cancelled before all data was processed because\n");
 		mprint ("\rone or more user-defined limits were reached.\n");
@@ -898,49 +812,4 @@ int main(int argc, char *argv[])
 		mprint ("something is broken it will be fixed. Thanks\n");		
 	}
 	return EXIT_OK;
-}
-
-void init_libraries(){
-	// Set logging functions for libraries
-	ccx_common_logging.debug_ftn = &dbg_print;
-	ccx_common_logging.debug_mask = ccx_options.debug_mask;
-	ccx_common_logging.fatal_ftn = &fatal;
-	ccx_common_logging.log_ftn = &mprint;
-	ccx_common_logging.gui_ftn = &activity_library_process;
-
-	// Init shared decoder settings
-	ccx_decoders_common_settings_init(subs_delay, ccx_options.write_format);
-	// Init encoder helper variables
-	ccx_encoders_helpers_setup(ccx_options.encoding, ccx_options.nofontcolor, ccx_options.notypesetting, ccx_options.trim_subs);
-
-	// Prepare 608 context
-	context_cc608_field_1 = ccx_decoder_608_init_library(
-		ccx_options.settings_608,
-		ccx_options.cc_channel,
-		1,
-		ccx_options.trim_subs,
-		ccx_options.encoding,
-		&processed_enough,
-		&cc_to_stdout
-		);
-	context_cc608_field_2 = ccx_decoder_608_init_library(
-		ccx_options.settings_608,
-		ccx_options.cc_channel,
-		2,
-		ccx_options.trim_subs,
-		ccx_options.encoding,
-		&processed_enough,
-		&cc_to_stdout
-		);
-
-	// Init 708 decoder(s)
-	ccx_decoders_708_init_library(basefilename,extension,ccx_options.print_file_reports);
-
-	// Set output structures for the 608 decoder
-	context_cc608_field_1.out = &wbout1;
-	context_cc608_field_2.out = &wbout2;
-
-	// Init XDS buffers
-	ccx_decoders_xds_init_library(&ccx_options.transcript_settings, subs_delay, ccx_options.millis_separator);
-	//xds_cea608_test();
 }

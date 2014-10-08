@@ -54,10 +54,10 @@ void init_ts(void)
 
 
 // Return 1 for sucessfully read ts packet
-int ts_readpacket(void)
+int ts_readpacket(struct lib_ccx_ctx* ctx)
 {
-	buffered_read(tspacket,188);
-	past+=result;
+	buffered_read(ctx, tspacket, 188);
+	ctx->past+=result;
 	if (result!=188)
 	{
 		if (result>0)
@@ -71,7 +71,7 @@ int ts_readpacket(void)
 	{
 		if (printtsprob)
 		{
-			mprint ("\nProblem: No TS header mark (filepos=%lld). Received bytes:\n", past);
+			mprint ("\nProblem: No TS header mark (filepos=%lld). Received bytes:\n", ctx->past);
 			dump (CCX_DMT_GENERIC_NOTICES, tspacket,4, 0, 0);
 
 			mprint ("Skip forward to the next TS header mark.\n");
@@ -90,8 +90,8 @@ int ts_readpacket(void)
 			int atpos = tstemp-tspacket;
 
 			memmove (tspacket,tstemp,(size_t)(tslen-atpos));
-			buffered_read(tspacket+(tslen-atpos),atpos);
-			past+=result;
+			buffered_read(ctx, tspacket+(tslen-atpos), atpos);
+			ctx->past+=result;
 			if (result!=atpos)
 			{
 				mprint("Premature end of file!\n");
@@ -102,8 +102,8 @@ int ts_readpacket(void)
 		else
 		{
 			// Read the next 188 bytes.
-			buffered_read(tspacket,tslen);
-			past+=result;
+			buffered_read(ctx, tspacket, tslen);
+			ctx->past+=result;
 			if (result!=tslen)
 			{
 				mprint("Premature end of file!\n");
@@ -126,7 +126,7 @@ int ts_readpacket(void)
 
 	if (transport_error_indicator)
 	{
-		mprint ("Warning: Defective (error indicator on) TS packet (filepos=%lld):\n", past);
+		mprint ("Warning: Defective (error indicator on) TS packet (filepos=%lld):\n", ctx->past);
 		dump (CCX_DMT_GENERIC_NOTICES, tspacket, 188, 0, 0);
 	}
 
@@ -144,14 +144,14 @@ int ts_readpacket(void)
 				pts |= (tspacket[8] << 9);
 				pts |= (tspacket[9] << 1);
 				pts |= (tspacket[10] >> 7);
-				global_timestamp = (uint32_t) pts / 90;
+				ctx->global_timestamp = (uint32_t) pts / 90;
 				pts = ((tspacket[10] & 0x01) << 8);
 				pts |= tspacket[11];
-				global_timestamp += (uint32_t) (pts / 27000);
-				if (!global_timestamp_inited)
+				ctx->global_timestamp += (uint32_t) (pts / 27000);
+				if (!ctx->global_timestamp_inited)
 				{
-					min_global_timestamp = global_timestamp;
-					global_timestamp_inited = 1;
+					ctx->min_global_timestamp = ctx->global_timestamp;
+					ctx->global_timestamp_inited = 1;
 				}
 			}
 
@@ -191,10 +191,10 @@ int ts_readpacket(void)
 
 
 
-void look_for_caption_data (void)
+void look_for_caption_data (struct lib_ccx_ctx *ctx)
 {
 	// See if we find the usual CC data marker (GA94) in this packet.
-	if (payload.length<4 || PIDs_seen[payload.pid]==3) // Second thing means we already inspected this PID
+	if (payload.length<4 || ctx->PIDs_seen[payload.pid]==3) // Second thing means we already inspected this PID
 		return;
 	for (unsigned i=0;i<payload.length-3;i++)
 	{
@@ -202,7 +202,7 @@ void look_for_caption_data (void)
 			payload.start[i+2]=='9' && payload.start[i+3]=='4')
 		{
 			mprint ("PID %u seems to contain captions.\n", payload.pid);
-			PIDs_seen[payload.pid]=3;
+			ctx->PIDs_seen[payload.pid]=3;
 			return;
 		}
 	}
@@ -212,7 +212,7 @@ void look_for_caption_data (void)
 // Read ts packets until a complete video PES element can be returned.
 // The data is read into capbuf and the function returns the number of
 // bytes read.
-long ts_readstream(void)
+long ts_readstream(struct lib_ccx_ctx *ctx)
 {
 	static int prev_ccounter = 0;
 	static int prev_packet = 0;
@@ -230,7 +230,7 @@ long ts_readstream(void)
 		if( !prev_packet )
 		{
 			// Exit the loop at EOF
-			if ( !ts_readpacket() )
+			if ( !ts_readpacket(ctx) )
 				break;
 		}
 		else
@@ -256,7 +256,7 @@ long ts_readstream(void)
 		// Check for PAT
 		if( payload.pid == 0) // This is a PAT
 		{
-			if (parse_PAT()) // Returns 1 if there was some data in the buffer already
+			if (parse_PAT(ctx)) // Returns 1 if there was some data in the buffer already
 				capbuflen = 0;
 			continue;
 		}
@@ -276,7 +276,7 @@ long ts_readstream(void)
 		{
 			if (pmt_array[j].PMT_PID==payload.pid)
 			{
-				if (!PIDs_seen[payload.pid])
+				if (!ctx->PIDs_seen[payload.pid])
 					dbg_print(CCX_DMT_PAT, "This PID (%u) is a PMT for program %u.\n",payload.pid, pmt_array[j].program_number);
 				is_pmt=1;
 				break;
@@ -285,17 +285,17 @@ long ts_readstream(void)
 
 		if (is_pmt)
 		{
-			PIDs_seen[payload.pid]=2;
+			ctx->PIDs_seen[payload.pid]=2;
 			if(payload.pesstart)
 			{
 				int len = *payload.start++;
 				payload.start += len;
-				if(write_section(&payload,payload.start,(tspacket + 188 ) - payload.start,j))
+				if(write_section(ctx, &payload,payload.start,(tspacket + 188 ) - payload.start,j))
 					gotpes=1; // Signals that something changed and that we must flush the buffer
 			}
 			else
 			{
-				if(write_section(&payload,payload.start,(tspacket + 188 ) - payload.start,j))
+				if(write_section(ctx, &payload,payload.start,(tspacket + 188 ) - payload.start,j))
 					gotpes=1; // Signals that something changed and that we must flush the buffer
 			}
 			if (payload.pid==pmtpid && ccx_options.ts_cappid==0 && ccx_options.investigate_packets) // It was our PMT yet we don't have a PID to get data from
@@ -304,30 +304,30 @@ long ts_readstream(void)
 			continue;
 		}
 
-		switch (PIDs_seen[payload.pid])
+		switch (ctx->PIDs_seen[payload.pid])
 		{
 			case 0: // First time we see this PID
-				if (PIDs_programs[payload.pid])
+				if (ctx->PIDs_programs[payload.pid])
 				{
 					dbg_print(CCX_DMT_PARSE, "\nNew PID found: %u (%s), belongs to program: %u\n", payload.pid,
-						desc[PIDs_programs[payload.pid]->printable_stream_type],
-						PIDs_programs[payload.pid]->program_number);
-					PIDs_seen[payload.pid]=2;
+						desc[ctx->PIDs_programs[payload.pid]->printable_stream_type],
+						ctx->PIDs_programs[payload.pid]->program_number);
+					ctx->PIDs_seen[payload.pid]=2;
 				}
 				else
 				{
 					dbg_print(CCX_DMT_PARSE, "\nNew PID found: %u, program number still unknown\n", payload.pid);
-					PIDs_seen[payload.pid]=1;
+					ctx->PIDs_seen[payload.pid]=1;
 				}
 				break;
 			case 1: // Saw it before but we didn't know what program it belonged to. Luckier now?
-				if (PIDs_programs[payload.pid])
+				if (ctx->PIDs_programs[payload.pid])
 				{
 					dbg_print(CCX_DMT_PARSE, "\nProgram for PID: %u (previously unknown) is: %u (%s)\n", payload.pid,
-						PIDs_programs[payload.pid]->program_number,
-						desc[PIDs_programs[payload.pid]->printable_stream_type]
+						ctx->PIDs_programs[payload.pid]->program_number,
+						desc[ctx->PIDs_programs[payload.pid]->printable_stream_type]
 						);
-					PIDs_seen[payload.pid]=2;
+					ctx->PIDs_seen[payload.pid]=2;
 				}
 				break;
 			case 2: // Already seen and reported with correct program
@@ -337,11 +337,11 @@ long ts_readstream(void)
 		}
 
 
-		if (payload.pid==1003 && !hauppauge_warning_shown && !ccx_options.hauppauge_mode)
+		if (payload.pid==1003 && !ctx->hauppauge_warning_shown && !ccx_options.hauppauge_mode)
 		{
 			// TODO: Change this very weak test for something more decent such as size.
 			mprint ("\n\nNote: This TS could be a recording from a Hauppage card. If no captions are detected, try --hauppauge\n\n");
-			hauppauge_warning_shown=1;
+			ctx->hauppauge_warning_shown=1;
 		}
 
 		// No caption stream PID defined yet, continue searching.
@@ -351,7 +351,7 @@ long ts_readstream(void)
 				dbg_print(CCX_DMT_PARSE, "Packet (pid %u) skipped - no stream with captions identified yet.\n",
 					   payload.pid);
 			else
-				look_for_caption_data ();
+				look_for_caption_data (ctx);
 			continue;
 		}
 
@@ -449,14 +449,14 @@ long ts_readstream(void)
 
 
 // TS specific data grabber
-LLONG ts_getmoredata(void)
+LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 {
 	long payload_read = 0;
 	const char *tstr; // Temporary string to describe the stream type
 
 	do
 	{
-		if( !ts_readstream() )
+		if( !ts_readstream(ctx) )
 		{   // If we didn't get data, try again
 			mprint("(no CC data extracted)\n");
 			continue;
@@ -526,7 +526,7 @@ LLONG ts_getmoredata(void)
 			{ // If here, the user forced teletext mode but didn't supply a PID, and we haven't found it yet.
 				continue;
 			}
-			memcpy(buffer+inbuf, capbuf, capbuflen);
+			memcpy(ctx->buffer+inbuf, capbuf, capbuflen);
 			payload_read = capbuflen;
 			inbuf += capbuflen;
 			break;
@@ -535,9 +535,9 @@ LLONG ts_getmoredata(void)
 		{
 			dump (CCX_DMT_GENERIC_NOTICES, capbuf, capbuflen,0, 1);
 			// Bogus data, so we return something
-				buffer[inbuf++]=0xFA;
-				buffer[inbuf++]=0x80;
-				buffer[inbuf++]=0x80;
+				ctx->buffer[inbuf++]=0xFA;
+				ctx->buffer[inbuf++]=0x80;
+				ctx->buffer[inbuf++]=0x80;
 				payload_read+=3;
 			break;
 		}
@@ -548,9 +548,9 @@ LLONG ts_getmoredata(void)
 			if (!haup_capbuflen)
 			{
 				// Do this so that we always return something until EOF. This will be skipped.
-				buffer[inbuf++]=0xFA;
-				buffer[inbuf++]=0x80;
-				buffer[inbuf++]=0x80;
+				ctx->buffer[inbuf++]=0xFA;
+				ctx->buffer[inbuf++]=0x80;
+				ctx->buffer[inbuf++]=0x80;
 				payload_read+=3;
 			}
 
@@ -571,11 +571,11 @@ LLONG ts_getmoredata(void)
 					if (haup_capbuf[i+9]==1 || haup_capbuf[i+9]==2) // Field match. // TODO: If extract==12 this won't work!
 					{
 						if (haup_capbuf[i+9]==1)
-							buffer[inbuf++]=4; // Field 1 + cc_valid=1
+							ctx->buffer[inbuf++]=4; // Field 1 + cc_valid=1
 						else
-							buffer[inbuf++]=5; // Field 2 + cc_valid=1
-						buffer[inbuf++]=haup_capbuf[i+10];
-						buffer[inbuf++]=haup_capbuf[i+11];
+							ctx->buffer[inbuf++]=5; // Field 2 + cc_valid=1
+						ctx->buffer[inbuf++]=haup_capbuf[i+10];
+						ctx->buffer[inbuf++]=haup_capbuf[i+11];
 						payload_read+=3;
 					}
 					/*
@@ -592,7 +592,7 @@ LLONG ts_getmoredata(void)
 			   stream_id, capbuflen);
 
 		int pesheaderlen;
-		int vpesdatalen = read_video_pes_header(capbuf, &pesheaderlen, capbuflen);
+		int vpesdatalen = read_video_pes_header(ctx, capbuf, &pesheaderlen, capbuflen);
 
 		if (vpesdatalen < 0)
 		{   // Seems to be a broken PES
@@ -623,7 +623,7 @@ LLONG ts_getmoredata(void)
 
 		if (!ccx_options.hauppauge_mode) // in Haup mode the buffer is filled somewhere else
 		{
-			memcpy(buffer+inbuf, databuf, databuflen);
+			memcpy(ctx->buffer+inbuf, databuf, databuflen);
 			payload_read = databuflen;
 			inbuf += databuflen;
 		}

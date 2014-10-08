@@ -11,6 +11,7 @@
 int do_cea708 = 0; // Process 708 data?
 int cea708services[CCX_DECODERS_708_MAX_SERVICES]; // [] -> 1 for services to be processed
 int ccx_decoders_708_report = 0;
+int resets_708;
 
 static unsigned char current_packet[MAX_708_PACKET_LENGTH]; // Length according to EIA-708B, part 5
 static int current_packet_length=0;

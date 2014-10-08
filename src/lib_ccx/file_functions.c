@@ -23,22 +23,22 @@ LLONG getfilesize (int in)
 	return length;
 }
 
-LLONG gettotalfilessize (void) // -1 if one or more files failed to open
+LLONG gettotalfilessize (struct lib_ccx_ctx *ctx) // -1 if one or more files failed to open
 {
     LLONG ts=0;
     int h;
-    for (int i=0;i<num_input_files;i++)
+    for (int i=0;i<ctx->num_input_files;i++)
     {
-		if (0 == strcmp(inputfile[i],"-")) // Skip stdin
+		if (0 == strcmp(ctx->inputfile[i],"-")) // Skip stdin
 			continue;
 #ifdef _WIN32
-        h=OPEN (inputfile[i],O_RDONLY | O_BINARY);
+        h=OPEN (ctx->inputfile[i],O_RDONLY | O_BINARY);
 #else
-        h=OPEN (inputfile[i],O_RDONLY);
+        h=OPEN (ctx->inputfile[i],O_RDONLY);
 #endif
         if (h==-1)
         {
-            mprint ("\rUnable to open %s\r\n",inputfile[i]);
+            mprint ("\rUnable to open %s\r\n",ctx->inputfile[i]);
             return -1;
         }
         if (!ccx_options.live_stream)
@@ -48,50 +48,50 @@ LLONG gettotalfilessize (void) // -1 if one or more files failed to open
     return ts;
 }
 
-void prepare_for_new_file (void)
+void prepare_for_new_file (struct lib_ccx_ctx *ctx)
 {
     // Init per file variables
     min_pts=0x01FFFFFFFFLL; // 33 bit
     sync_pts=0;
     pts_set = 0;
     // inputsize=0; Now responsibility of switch_to_next_file()
-    last_reported_progress=-1;
-    stat_numuserheaders = 0;
-    stat_dvdccheaders = 0;
-    stat_scte20ccheaders = 0;
-    stat_replay5000headers = 0;
-    stat_replay4000headers = 0;
-    stat_dishheaders = 0;
-    stat_hdtv = 0;
-    stat_divicom = 0;
+    ctx->last_reported_progress=-1;
+    ctx->stat_numuserheaders = 0;
+    ctx->stat_dvdccheaders = 0;
+    ctx->stat_scte20ccheaders = 0;
+    ctx->stat_replay5000headers = 0;
+    ctx->stat_replay4000headers = 0;
+    ctx->stat_dishheaders = 0;
+    ctx->stat_hdtv = 0;
+    ctx->stat_divicom = 0;
     total_frames_count = 0;
-    total_pulldownfields = 0;
-    total_pulldownframes = 0;
-    cc_stats[0]=0; cc_stats[1]=0; cc_stats[2]=0; cc_stats[3]=0;
-    false_pict_header=0;
-    frames_since_last_gop=0;
+    ctx->total_pulldownfields = 0;
+    ctx->total_pulldownframes = 0;
+    ctx->cc_stats[0]=0; ctx->cc_stats[1]=0; ctx->cc_stats[2]=0; ctx->cc_stats[3]=0;
+    ctx->false_pict_header=0;
+    ctx->frames_since_last_gop=0;
     frames_since_ref_time=0;
     gop_time.inited=0;
     first_gop_time.inited=0;
     gop_rollover=0;
     printed_gop.inited=0;
-    saw_caption_block=0;
-    past=0;
+    ctx->saw_caption_block=0;
+    ctx->past=0;
     pts_big_change=0;
-    startbytes_pos=0;
-    startbytes_avail=0;
+    ctx->startbytes_pos=0;
+    ctx->startbytes_avail=0;
     init_file_buffer();
     anchor_hdcc(-1);
     firstcall = 1;
 }
 
 /* Close input file if there is one and let the GUI know */
-void close_input_file (void)
+void close_input_file (struct lib_ccx_ctx *ctx)
 {
-	if (infd!=-1 && ccx_options.input_source==CCX_DS_FILE)
+	if (ctx->infd!=-1 && ccx_options.input_source==CCX_DS_FILE)
     {
-		close (infd);
-        infd=-1;
+		close (ctx->infd);
+        ctx->infd=-1;
         activity_input_file_closed();
     }
 }
@@ -101,100 +101,100 @@ void close_input_file (void)
 to 'past' yet. We provide this number to switch_to_next_file() so a final sanity check
 can be done */
 
-int switch_to_next_file (LLONG bytesinbuffer)
+int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 {
-	if (current_file==-1 || !ccx_options.binary_concat)
+	if (ctx->current_file==-1 || !ccx_options.binary_concat)
 	{
-		memset (PIDs_seen,0,65536*sizeof (int));
-		memset (PIDs_programs,0,65536*sizeof (struct PMT_entry *));
+		memset (ctx->PIDs_seen,0,65536*sizeof (int));
+		memset (ctx->PIDs_programs,0,65536*sizeof (struct PMT_entry *));
 	}
 
 	if (ccx_options.input_source==CCX_DS_STDIN)
 	{
-		if (infd!=-1) // Means we had already processed stdin. So we're done.
+		if (ctx->infd!=-1) // Means we had already processed stdin. So we're done.
 		{
 			if (ccx_options.print_file_reports)
-				print_file_report();
+				print_file_report(ctx);
 			return 0;
 		}
-		infd=0;
+		ctx->infd=0;
 		mprint ("\n\r-----------------------------------------------------------------\n");
 		mprint ("\rReading from standard input\n");
 		return 1;
 	}
 	if (ccx_options.input_source==CCX_DS_NETWORK)
 	{
-		if (infd!=-1) // Means we have already bound a socket.
+		if (ctx->infd!=-1) // Means we have already bound a socket.
 		{
 			if (ccx_options.print_file_reports)
-				print_file_report();
+				print_file_report(ctx);
 
 			return 0;
 		}
 
-		infd = start_upd_srv(ccx_options.udpaddr, ccx_options.udpport);
+		ctx->infd = start_upd_srv(ccx_options.udpaddr, ccx_options.udpport);
 		return 1;
-		if(infd < 0)
+		if(ctx->infd < 0)
 			fatal (CCX_COMMON_EXIT_BUG_BUG, "socket() failed.");
 
 	}
 
 	if (ccx_options.input_source==CCX_DS_TCP)
 	{
-		if (infd != -1)
+		if (ctx->infd != -1)
 		{
 			if (ccx_options.print_file_reports)
-				print_file_report();
+				print_file_report(ctx);
 
 			return 0;
 		}
 
-		infd = start_tcp_srv(ccx_options.tcpport, ccx_options.tcp_password);
+		ctx->infd = start_tcp_srv(ccx_options.tcpport, ccx_options.tcp_password);
 		return 1;
 	}
 
     /* Close current and make sure things are still sane */
-    if (infd!=-1)
+    if (ctx->infd!=-1)
     {
 		if (ccx_options.print_file_reports)
-			print_file_report();
-        close_input_file ();
-        if (inputsize>0 && ((past+bytesinbuffer) < inputsize) && !processed_enough)
+			print_file_report(ctx);
+        close_input_file (ctx);
+        if (ctx->inputsize>0 && ((ctx->past+bytesinbuffer) < ctx->inputsize) && !ctx->processed_enough)
         {
             mprint("\n\n\n\nATTENTION!!!!!!\n");
             mprint("In switch_to_next_file(): Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
-                   inputfile[current_file], current_file, past, inputsize);
+                   ctx->inputfile[ctx->current_file], ctx->current_file, ctx->past, ctx->inputsize);
         }
         if (ccx_options.binary_concat)
         {
-            total_past+=inputsize;
-            past=0; // Reset always or at the end we'll have double the size
+            ctx->total_past+=ctx->inputsize;
+            ctx->past=0; // Reset always or at the end we'll have double the size
         }
     }
     for (;;)
     {
-        current_file++;
-        if (current_file>=num_input_files)
+        ctx->current_file++;
+        if (ctx->current_file>=ctx->num_input_files)
             break;
 
         // The following \n keeps the progress percentage from being overwritten.
         mprint ("\n\r-----------------------------------------------------------------\n");
-		mprint ("\rOpening file: %s\n", inputfile[current_file]);
+		mprint ("\rOpening file: %s\n", ctx->inputfile[ctx->current_file]);
 #ifdef _WIN32
-		infd=OPEN (inputfile[current_file],O_RDONLY | O_BINARY);
+		ctx->infd=OPEN (ctx->inputfile[ctx->current_file],O_RDONLY | O_BINARY);
 #else
-        infd=OPEN (inputfile[current_file],O_RDONLY);
+        ctx->infd=OPEN (ctx->inputfile[ctx->current_file],O_RDONLY);
 #endif
-        if (infd == -1)
-            mprint ("\rWarning: Unable to open input file [%s]\n", inputfile[current_file]);
+        if (ctx->infd == -1)
+            mprint ("\rWarning: Unable to open input file [%s]\n", ctx->inputfile[ctx->current_file]);
         else
         {
-            activity_input_file_open (inputfile[current_file]);
+            activity_input_file_open (ctx->inputfile[ctx->current_file]);
             if (!ccx_options.live_stream)
             {
-                inputsize = getfilesize (infd);
+                ctx->inputsize = getfilesize (ctx->infd);
                 if (!ccx_options.binary_concat)
-                    total_inputsize=inputsize;
+                    ctx->total_inputsize=ctx->inputsize;
             }
             return 1; // Succeeded
         }
@@ -208,9 +208,9 @@ void position_sanity_check ()
     if (in!=-1)
     {
         LLONG realpos=LSEEK (in,0,SEEK_CUR);
-        if (realpos!=past-filebuffer_pos+bytesinbuffer)
+        if (realpos!=ctx->past-filebuffer_pos+bytesinbuffer)
         {
-            fatal (CCX_COMMON_EXIT_BUG_BUG, "Position desync, THIS IS A BUG. Real pos =%lld, past=%lld.\n",realpos,past);
+            fatal (CCX_COMMON_EXIT_BUG_BUG, "Position desync, THIS IS A BUG. Real pos =%lld, past=%lld.\n",realpos,ctx->past);
         }
     }
 #endif
@@ -233,7 +233,7 @@ int init_file_buffer(void)
     return 0;
 }
 
-void buffered_seek (int offset)
+void buffered_seek (struct lib_ccx_ctx *ctx, int offset)
 {
     position_sanity_check();
     if (offset<0)
@@ -242,17 +242,17 @@ void buffered_seek (int offset)
         if (filebuffer_pos<0)
         {
             // We got into the start buffer (hopefully)
-            if (startbytes_pos+filebuffer_pos < 0)
+            if (ctx->startbytes_pos+filebuffer_pos < 0)
             {
                 fatal (CCX_COMMON_EXIT_BUG_BUG, "PANIC: Attempt to seek before buffer start, this is a bug!");
             }
-            startbytes_pos+=filebuffer_pos;
+            ctx->startbytes_pos+=filebuffer_pos;
             filebuffer_pos=0;
         }
     }
     else
     {
-        buffered_read_opt (NULL, offset);
+        buffered_read_opt (ctx, NULL, offset);
         position_sanity_check();
     }
 }
@@ -307,7 +307,7 @@ void return_to_buffer (unsigned char *buffer, unsigned int bytes)
 	bytesinbuffer+=bytes;
 }
 
-LLONG buffered_read_opt (unsigned char *buffer, unsigned int bytes)
+LLONG buffered_read_opt (struct lib_ccx_ctx *ctx, unsigned char *buffer, unsigned int bytes)
 {
     LLONG copied=0;
     position_sanity_check();
@@ -317,7 +317,7 @@ LLONG buffered_read_opt (unsigned char *buffer, unsigned int bytes)
     if (ccx_options.buffer_input || filebuffer_pos<bytesinbuffer)
     {
         // Needs to return data from filebuffer_start+pos to filebuffer_start+pos+bytes-1;
-        int eof = (infd==-1);
+        int eof = (ctx->infd==-1);
 
         while ((!eof || ccx_options.live_stream) && bytes)
         {
@@ -342,7 +342,7 @@ LLONG buffered_read_opt (unsigned char *buffer, unsigned int bytes)
 						// buffered - if here, then it must be files.
                         if (buffer!=NULL) // Read
                         {
-                            i=read (infd,buffer,bytes);
+                            i=read (ctx->infd,buffer,bytes);
                             if( i == -1)
                                 fatal (EXIT_READ_ERROR, "Error reading input file!\n");
                             buffer+=i;
@@ -350,10 +350,10 @@ LLONG buffered_read_opt (unsigned char *buffer, unsigned int bytes)
                         else // Seek
                         {
 							LLONG op, np;
-                            op =LSEEK (infd,0,SEEK_CUR); // Get current pos
+                            op =LSEEK (ctx->infd,0,SEEK_CUR); // Get current pos
                             if (op+bytes<0) // Would mean moving beyond start of file: Not supported
                                 return 0;
-                            np =LSEEK (infd,bytes,SEEK_CUR); // Pos after moving
+                            np =LSEEK (ctx->infd,bytes,SEEK_CUR); // Pos after moving
                             i=(int) (np-op);
                         }
                         if (i==0 && ccx_options.live_stream)
@@ -376,7 +376,7 @@ LLONG buffered_read_opt (unsigned char *buffer, unsigned int bytes)
 
                     }
                     while ((i || ccx_options.live_stream ||
-						(ccx_options.binary_concat && switch_to_next_file(copied))) && bytes);
+						(ccx_options.binary_concat && switch_to_next_file(ctx, copied))) && bytes);
                     return copied;
                 }
                 // Keep the last 8 bytes, so we have a guaranteed
@@ -385,16 +385,16 @@ LLONG buffered_read_opt (unsigned char *buffer, unsigned int bytes)
                 memmove (filebuffer,filebuffer+(FILEBUFFERSIZE-keep),keep);
 				int i;
 				if (ccx_options.input_source==CCX_DS_FILE || ccx_options.input_source==CCX_DS_STDIN)
-					i=read (infd, filebuffer+keep,FILEBUFFERSIZE-keep);
+					i=read (ctx->infd, filebuffer+keep,FILEBUFFERSIZE-keep);
 				else
-					i = recvfrom(infd,(char *) filebuffer+keep,FILEBUFFERSIZE-keep,0,NULL,NULL);
+					i = recvfrom(ctx->infd,(char *) filebuffer+keep,FILEBUFFERSIZE-keep,0,NULL,NULL);
                 if (i == -1)
                     fatal (EXIT_READ_ERROR, "Error reading input stream!\n");
                 if (i==0)
                 {
                     /* If live stream, don't try to switch - acknowledge eof here as it won't
                     cause a loop end */
-                    if (ccx_options.live_stream || !(ccx_options.binary_concat && switch_to_next_file(copied)))
+                    if (ccx_options.live_stream || !(ccx_options.binary_concat && switch_to_next_file(ctx, copied)))
                         eof=1;
                 }
                 filebuffer_pos=keep;
@@ -422,9 +422,9 @@ LLONG buffered_read_opt (unsigned char *buffer, unsigned int bytes)
         if (buffer!=NULL)
         {
             int i;
-            while (bytes>0 && infd!=-1 &&
-                ((i=read(infd,buffer,bytes))!=0 || ccx_options.live_stream ||
-				(ccx_options.binary_concat && switch_to_next_file(copied))))
+            while (bytes>0 && ctx->infd!=-1 &&
+                ((i=read(ctx->infd,buffer,bytes))!=0 || ccx_options.live_stream ||
+				(ccx_options.binary_concat && switch_to_next_file(ctx, copied))))
             {
                 if( i == -1)
                     fatal (EXIT_READ_ERROR, "Error reading input file!\n");
@@ -441,13 +441,13 @@ LLONG buffered_read_opt (unsigned char *buffer, unsigned int bytes)
         }
         // return fread(buffer,1,bytes,in);
         //return FSEEK (in,bytes,SEEK_CUR);
-        while (bytes!=0 && infd!=-1)
+        while (bytes!=0 && ctx->infd!=-1)
         {
 			LLONG op, np;
-            op =LSEEK (infd,0,SEEK_CUR); // Get current pos
+            op =LSEEK (ctx->infd,0,SEEK_CUR); // Get current pos
             if (op+bytes<0) // Would mean moving beyond start of file: Not supported
                 return 0;
-            np =LSEEK (infd,bytes,SEEK_CUR); // Pos after moving
+            np =LSEEK (ctx->infd,bytes,SEEK_CUR); // Pos after moving
             copied=copied+(np-op);
             bytes=bytes-(unsigned int) copied;
             if (copied==0)
@@ -457,7 +457,7 @@ LLONG buffered_read_opt (unsigned char *buffer, unsigned int bytes)
                 else
                 {
                     if (ccx_options.binary_concat)
-                        switch_to_next_file(0);
+                        switch_to_next_file(ctx, 0);
                     else
                         break;
                 }

@@ -61,7 +61,7 @@ asf_data asf_data_container;
  * When the function is called the next time it continues to read
  * where it stopped before, static variables make sure that parameters
  * are remembered between calls. */
-LLONG asf_getmoredata(void)
+LLONG asf_getmoredata(struct lib_ccx_ctx *ctx)
 {
     int enough = 0;
     int payload_read = 0;
@@ -152,8 +152,8 @@ LLONG asf_getmoredata(void)
 			asf_data_container.PayloadExtPTSEntry[stream] = -1;
         }
 
-        buffered_read(asf_data_container.parsebuf,30);
-        past+=result;
+        buffered_read(ctx, asf_data_container.parsebuf,30);
+        ctx->past+=result;
         if (result!=30)
         {
             mprint("Premature end of file!\n");
@@ -186,8 +186,8 @@ LLONG asf_getmoredata(void)
 		curpos = asf_data_container.parsebuf + 30;
 		getbytes = asf_data_container.HeaderObjectSize - 30;
 
-        buffered_read(curpos, (int) getbytes);
-        past+=result;
+        buffered_read(ctx, curpos, (int) getbytes);
+        ctx->past+=result;
         if (result!=getbytes)
         {
             mprint("Premature end of file!\n");
@@ -535,8 +535,8 @@ LLONG asf_getmoredata(void)
 			asf_data_container.PacketSize = MinPacketSize;
 
         // Now the Data Object, except for the packages
-		buffered_read(asf_data_container.parsebuf, 50); // No realloc needed.
-        past+=result;
+		buffered_read(ctx, asf_data_container.parsebuf, 50); // No realloc needed.
+        ctx->past+=result;
         if (result!=50)
         {
             mprint("Premature end of file!\n");
@@ -577,8 +577,8 @@ LLONG asf_getmoredata(void)
 			dbg_print(CCX_DMT_PARSE, "\nReading packet %d/%d\n", asf_data_container.datapacketcur + 1, asf_data_container.TotalDataPackets);
 
             // First packet
-			buffered_read(asf_data_container.parsebuf, 1); // No realloc needed.
-            past+=result;
+			buffered_read(ctx, asf_data_container.parsebuf, 1); // No realloc needed.
+            ctx->past+=result;
 			asf_data_container.dobjectread += result;
             if (result!=1)
             {
@@ -594,8 +594,8 @@ LLONG asf_getmoredata(void)
                 {
                     fatal(EXIT_NOT_CLASSIFIED, "Error Correction Length Type not 00 - reserved - aborting ...\n");
                 }
-				buffered_read(asf_data_container.parsebuf + 1, ecdatalength);
-                past+=result;
+				buffered_read(ctx, asf_data_container.parsebuf + 1, ecdatalength);
+                ctx->past+=result;
 				asf_data_container.dobjectread += result;
                 if (result!=ecdatalength)
                 {
@@ -615,8 +615,8 @@ LLONG asf_getmoredata(void)
             }
 
             // Now payload parsing information
-			buffered_read(asf_data_container.parsebuf + ecinfo, 2 - ecinfo); // No realloc needed
-            past+=result;
+			buffered_read(ctx, asf_data_container.parsebuf + ecinfo, 2 - ecinfo); // No realloc needed
+            ctx->past+=result;
 			asf_data_container.dobjectread += result;
             if (result!=2)
             {
@@ -651,8 +651,8 @@ LLONG asf_getmoredata(void)
 
 			payloadparsersize = asf_data_container.PacketLType + SequenceType + PaddingLType + 6;
 
-			buffered_read(asf_data_container.parsebuf + 2, payloadparsersize); // No realloc needed
-            past+=result;
+			buffered_read(ctx, asf_data_container.parsebuf + 2, payloadparsersize); // No realloc needed
+            ctx->past+=result;
 			asf_data_container.dobjectread += result;
             if (result!=payloadparsersize)
             {
@@ -689,8 +689,8 @@ LLONG asf_getmoredata(void)
             {
                 unsigned char plheader[1];
 
-                buffered_read(plheader, 1);
-                past+=result;
+                buffered_read(ctx, plheader, 1);
+                ctx->past+=result;
 				asf_data_container.dobjectread += result;
                 if (result!=1)
                 {
@@ -728,8 +728,8 @@ LLONG asf_getmoredata(void)
 
 				int payloadheadersize = 1 + asf_data_container.MediaNumberLType + asf_data_container.OffsetMediaLType + asf_data_container.ReplicatedLType;
 
-				buffered_read(asf_data_container.parsebuf, payloadheadersize); // No realloc needed
-                past+=result;
+				buffered_read(ctx, asf_data_container.parsebuf, payloadheadersize); // No realloc needed
+                ctx->past+=result;
 				asf_data_container.dobjectread += result;
                 if (result!=payloadheadersize)
                 {
@@ -756,8 +756,8 @@ LLONG asf_getmoredata(void)
                         fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
 					asf_data_container.parsebufsize = ReplicatedLength;
                 }
-				buffered_read(asf_data_container.parsebuf, (long)ReplicatedLength);
-                past+=result;
+				buffered_read(ctx, asf_data_container.parsebuf, (long)ReplicatedLength);
+                ctx->past+=result;
 				asf_data_container.dobjectread += result;
                 if (result!=ReplicatedLength)
                 {
@@ -832,8 +832,8 @@ LLONG asf_getmoredata(void)
                 {
                     unsigned char plheader[4];
 
-					buffered_read(plheader, asf_data_container.PayloadLType);
-                    past+=result;
+					buffered_read(ctx, plheader, asf_data_container.PayloadLType);
+                    ctx->past+=result;
 					asf_data_container.dobjectread += result;
 					if (result != asf_data_container.PayloadLType)
                     {
@@ -975,10 +975,10 @@ LLONG asf_getmoredata(void)
 					asf_data_container.PayloadLength : (BUFSIZE - inbuf));
 				if (want < (long)asf_data_container.PayloadLength)
                     fatal(CCX_COMMON_EXIT_BUG_BUG, "Buffer size to small for ASF payload!\nPlease file a bug report!\n");
-                buffered_read (buffer+inbuf,want);
+                buffered_read (ctx, ctx->buffer+inbuf,want);
                 payload_read+=(int) result;
                 inbuf+=result;
-                past+=result;
+                ctx->past+=result;
 				if (result != asf_data_container.PayloadLength)
                 {
                     mprint("Premature end of file!\n");
@@ -991,8 +991,8 @@ LLONG asf_getmoredata(void)
             {
                 // Skip non-cc data
 				dbg_print(CCX_DMT_PARSE, "Skipping Stream #%d data ...\n", asf_data_container.PayloadStreamNumber);
-				buffered_skip((int)asf_data_container.PayloadLength);
-                past+=result;
+				buffered_skip(ctx, (int)asf_data_container.PayloadLength);
+                ctx->past+=result;
 				if (result != asf_data_container.PayloadLength)
                 {
                     mprint("Premature end of file!\n");
@@ -1009,8 +1009,8 @@ LLONG asf_getmoredata(void)
 
         // Skip padding bytes
 		dbg_print(CCX_DMT_PARSE, "Skip %d padding\n", asf_data_container.PaddingLength);
-		buffered_skip((long)asf_data_container.PaddingLength);
-        past+=result;
+		buffered_skip(ctx, (long)asf_data_container.PaddingLength);
+        ctx->past+=result;
 		if (result != asf_data_container.PaddingLength)
         {
             mprint("Premature end of file!\n");
@@ -1029,8 +1029,8 @@ LLONG asf_getmoredata(void)
 
         // Skip the rest of the file
 		dbg_print(CCX_DMT_PARSE, "Skip the rest: %d\n", (int)(asf_data_container.FileSize - asf_data_container.HeaderObjectSize - asf_data_container.DataObjectSize));
-		buffered_skip((int)(asf_data_container.FileSize - asf_data_container.HeaderObjectSize - asf_data_container.DataObjectSize));
-        past+=result;
+		buffered_skip(ctx, (int)(asf_data_container.FileSize - asf_data_container.HeaderObjectSize - asf_data_container.DataObjectSize));
+        ctx->past+=result;
         // Don not set end_of_file (although it is true) as this would
         // produce an premature end error.
         //end_of_file=1;

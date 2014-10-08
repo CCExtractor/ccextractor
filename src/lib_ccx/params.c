@@ -107,7 +107,7 @@ int isanumber (char *s)
 	return 1;
 }
 
-int parsedelay (char *par)
+int parsedelay (struct lib_ccx_ctx *ctx, char *par)
 {
 	int sign=0;
 	char *c=par;
@@ -124,37 +124,37 @@ int parsedelay (char *par)
 		{
 			if (!isdigit (*c))
 				return 1;
-			subs_delay=subs_delay*10 + (*c-'0');
+			ctx->subs_delay = ctx->subs_delay*10 + (*c-'0');
 		}
 		c++;
 	}
 	if (sign)
-		subs_delay=-subs_delay;
+		ctx->subs_delay =- ctx->subs_delay;
 	return 0;
 }
 
-int append_file_to_queue (char *filename)
+int append_file_to_queue (struct lib_ccx_ctx *ctx,char *filename)
 {
 	char *c=(char *) malloc (strlen (filename)+1);
 	if (c==NULL)
 		return -1;
 	strcpy (c,filename);
-	if (inputfile_capacity<=num_input_files)
+	if (inputfile_capacity<=ctx->num_input_files)
 	{
 		inputfile_capacity+=10;
-		inputfile=(char **) realloc (inputfile,sizeof (char *) * inputfile_capacity);
-		if (inputfile==NULL)
+		ctx->inputfile=(char **) realloc (ctx->inputfile,sizeof (char *) * inputfile_capacity);
+		if (ctx->inputfile==NULL)
 		{
 			free(c);
 			return -1;
 		}
 	}
-	inputfile[num_input_files]=c;
-	num_input_files++;
+	ctx->inputfile[ctx->num_input_files]=c;
+	ctx->num_input_files++;
 	return 0;
 }
 
-int add_file_sequence (char *filename)
+int add_file_sequence (struct lib_ccx_ctx *ctx, char *filename)
 {
 	int m,n;
 	n=strlen (filename)-1;
@@ -162,7 +162,7 @@ int add_file_sequence (char *filename)
 	while (n>=0 && !isdigit (filename[n]))
 		n--;
 	if (n==-1) // None. No expansion needed
-		return append_file_to_queue(filename);
+		return append_file_to_queue(ctx, filename);
 	m=n;
 	while (m>=0 && isdigit (filename[m]))
 		m--;
@@ -187,7 +187,7 @@ int add_file_sequence (char *filename)
 		if (f==NULL) // Doesn't exist or we can't read it. We're done
 			break;
 		fclose (f);
-		if (append_file_to_queue (filename)) // Memory panic
+		if (append_file_to_queue (ctx, filename)) // Memory panic
 		{
 			free(num);
 			free(temp);
@@ -263,7 +263,7 @@ void set_output_format (const char *format)
 		fatal (EXIT_MALFORMED_PARAMETER, "Unknown output file format: %s\n", format);
 }
 
-void set_input_format (const char *format)
+void set_input_format (struct lib_ccx_ctx *ctx, const char *format)
 {
 	if (ccx_options.input_source == CCX_DS_TCP && strcmp(format, "bin")!=0)
 	{
@@ -274,24 +274,24 @@ void set_input_format (const char *format)
 	while (*format=='-')
 		format++;
 	if (strcmp (format,"es")==0) // Does this actually do anything?
-		auto_stream = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
+		ctx->auto_stream = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
 	else if (strcmp (format,"ts")==0)
-		auto_stream = CCX_SM_TRANSPORT;
+		ctx->auto_stream = CCX_SM_TRANSPORT;
 	else if (strcmp (format,"ps")==0 || strcmp (format,"nots")==0)
-		auto_stream = CCX_SM_PROGRAM;
+		ctx->auto_stream = CCX_SM_PROGRAM;
 	else if (strcmp (format,"asf")==0 || strcmp (format,"dvr-ms")==0)
-		auto_stream = CCX_SM_ASF;
+		ctx->auto_stream = CCX_SM_ASF;
 	else if (strcmp (format,"wtv")==0)
-		auto_stream = CCX_SM_WTV;
+		ctx->auto_stream = CCX_SM_WTV;
 	else if (strcmp (format,"raw")==0)
-		auto_stream = CCX_SM_MCPOODLESRAW;
+		ctx->auto_stream = CCX_SM_MCPOODLESRAW;
 	else if (strcmp (format,"bin")==0)
-		auto_stream = CCX_SM_RCWT;
+		ctx->auto_stream = CCX_SM_RCWT;
 	else if (strcmp (format,"mp4")==0)
-		auto_stream = CCX_SM_MP4;
+		ctx->auto_stream = CCX_SM_MP4;
 #ifdef WTV_DEBUG
 	else if (strcmp (format,"hex")==0)
-		auto_stream = CCX_SM_HEX_DUMP;
+		ctx->auto_stream = CCX_SM_HEX_DUMP;
 #endif
 	else
 		fatal (EXIT_MALFORMED_PARAMETER, "Unknown input file format: %s\n", format);
@@ -797,7 +797,7 @@ void init_option (struct ccx_s_options *option)
 		option->ts_forced_program_selected = 1;
 }
 
-void parse_parameters (int argc, char *argv[])
+void parse_parameters (struct lib_ccx_ctx *ctx, int argc, char *argv[])
 {
 	char *cea708_service_list=NULL; // List CEA-708 services
 
@@ -824,12 +824,12 @@ void parse_parameters (int argc, char *argv[])
 			int rc;
 			if (argv[i][strlen (argv[i])-1]!='+')
 			{
-				rc=append_file_to_queue (argv[i]);
+				rc=append_file_to_queue (ctx, argv[i]);
 			}
 			else
 			{
 				argv[i][strlen (argv[i])-1]=0;
-				rc=add_file_sequence (argv[i]);
+				rc=add_file_sequence (ctx, argv[i]);
 			}
 			if (rc)
 			{
@@ -888,12 +888,12 @@ void parse_parameters (int argc, char *argv[])
 			strcmp (argv[i],"-mp4")==0 ||
 			strcmp (argv[i],"--dvr-ms")==0 )
 		{
-			set_input_format (argv[i]);
+			set_input_format (ctx, argv[i]);
 			continue;
 		}
 		if (strncmp (argv[i],"-in=", 4)==0)
 		{
-			set_input_format (argv[i]+4);
+			set_input_format (ctx, argv[i]+4);
 			continue;
 		}
 
@@ -1162,7 +1162,7 @@ void parse_parameters (int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-delay")==0 && i<argc-1)
 		{
-			if (parsedelay (argv[i+1]))
+			if (parsedelay (ctx, argv[i+1]))
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "-delay only accept integers (such as -300 or 300)\n");
 			}
@@ -1217,7 +1217,7 @@ void parse_parameters (int argc, char *argv[])
 		{
 			if (ccx_options.messages_target==1) // Only change this if still stdout. -quiet could set it to 0 for example
 				ccx_options.messages_target=2; // stderr
-			cc_to_stdout=1;
+			ctx->cc_to_stdout=1;
 			continue;
 		}
 		if (strcmp (argv[i],"-quiet")==0)
@@ -1383,13 +1383,13 @@ void parse_parameters (int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-o1")==0 && i<argc-1)
 		{
-			wbout1.filename=argv[i+1];
+			ctx->wbout1.filename=argv[i+1];
 			i++;
 			continue;
 		}
 		if (strcmp (argv[i],"-o2")==0 && i<argc-1)
 		{
-			wbout2.filename=argv[i+1];
+			ctx->wbout2.filename=argv[i+1];
 			i++;
 			continue;
 		}
@@ -1585,7 +1585,7 @@ void parse_parameters (int argc, char *argv[])
 			ccx_options.tcpport = argv[i + 1];
 			ccx_options.input_source = CCX_DS_TCP;
 
-			set_input_format("bin");
+			set_input_format(ctx, "bin");
 
 			i++;
 			continue;

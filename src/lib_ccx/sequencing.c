@@ -34,7 +34,7 @@ void init_hdcc (void)
 }
 
 // Buffer caption blocks for later sorting/flushing.
-void store_hdcc(unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now,struct cc_subtitle *sub)
+void store_hdcc(struct lib_ccx_ctx *ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now,struct cc_subtitle *sub)
 {
     // Uninitialized?
     if (anchor_seq_number < 0)
@@ -49,7 +49,7 @@ void store_hdcc(unsigned char *cc_data, int cc_count, int sequence_number, LLONG
         // Maybe missing an anchor frame - try to recover
         dbg_print(CCX_DMT_VERBOSE, "Too many B-frames, or missing anchor frame. Trying to recover ..\n");
 
-        process_hdcc(sub);
+        process_hdcc(ctx, sub);
         anchor_hdcc( sequence_number);
         seq_index = sequence_number - anchor_seq_number + MAXBFRAMES;
     }
@@ -70,7 +70,7 @@ void store_hdcc(unsigned char *cc_data, int cc_count, int sequence_number, LLONG
 			// Changed by CFS to concat, i.e. don't assume there's no data already for this seq_index.
 			// Needed at least for MP4 samples. // TODO: make sure we don't overflow
 			cc_fts[seq_index] = current_fts_now; // CFS: Maybe do even if there's no data?
-			if (stream_mode!=CCX_SM_MP4) // CFS: Very ugly hack, but looks like overwriting is needed for at least some ES
+			if (ctx->stream_mode!=CCX_SM_MP4) // CFS: Very ugly hack, but looks like overwriting is needed for at least some ES
 				cc_data_count[seq_index]  = 0;
 			memcpy(cc_data_pkts[seq_index]+cc_data_count[seq_index]*3, cc_data, cc_count*3+1);
 		}
@@ -95,7 +95,7 @@ void anchor_hdcc(int seq)
 }
 
 // Sort/flash caption block buffer
-void process_hdcc (struct cc_subtitle *sub)
+void process_hdcc (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 {
     // Remember the current value
     LLONG store_fts_now = fts_now;
@@ -165,7 +165,7 @@ void process_hdcc (struct cc_subtitle *sub)
                     cc_data_pkts[seq][j+1]=0x7F;
                 }
             }
-            do_cb(cc_data_pkts[seq]+j, sub);
+            do_cb(ctx, cc_data_pkts[seq]+j, sub);
 
         } // for loop over packets
     }
@@ -178,7 +178,7 @@ void process_hdcc (struct cc_subtitle *sub)
 }
 
 
-int do_cb (unsigned char *cc_block, struct cc_subtitle *sub)
+int do_cb (struct lib_ccx_ctx *ctx, unsigned char *cc_block, struct cc_subtitle *sub)
 {
     unsigned char cc_valid = (*cc_block & 4) >>2;
     unsigned char cc_type = *cc_block & 3;
@@ -213,7 +213,7 @@ int do_cb (unsigned char *cc_block, struct cc_subtitle *sub)
 
     if (cc_valid || cc_type==3)
     {
-        cc_stats[cc_type]++;
+        ctx->cc_stats[cc_type]++;
 
         switch (cc_type)
         {
@@ -221,7 +221,7 @@ int do_cb (unsigned char *cc_block, struct cc_subtitle *sub)
             dbg_print(CCX_DMT_CBRAW, "    %s   ..   ..\n",  debug_608toASC( cc_block, 0));
 
             current_field=1;
-            saw_caption_block = 1;
+            ctx->saw_caption_block = 1;
 
             if (ccx_options.extraction_start.set &&
 				get_fts() < ccx_options.extraction_start.time_in_ms)
@@ -230,14 +230,14 @@ int do_cb (unsigned char *cc_block, struct cc_subtitle *sub)
 				get_fts() > ccx_options.extraction_end.time_in_ms)
             {
                 timeok = 0;
-                processed_enough=1;
+                ctx->processed_enough=1;
             }
             if (timeok)
             {
                 if(ccx_options.write_format!=CCX_OF_RCWT)
-                    printdata (cc_block+1,2,0,0, sub);
+                    printdata (ctx, cc_block+1,2,0,0, sub);
                 else
-                    writercwtdata(cc_block);
+                    writercwtdata(ctx, cc_block);
             }
             cb_field1++;
             break;
@@ -245,7 +245,7 @@ int do_cb (unsigned char *cc_block, struct cc_subtitle *sub)
             dbg_print(CCX_DMT_CBRAW, "    ..   %s   ..\n",  debug_608toASC( cc_block, 1));
 
             current_field=2;
-            saw_caption_block = 1;
+            ctx->saw_caption_block = 1;
 
             if (ccx_options.extraction_start.set &&
 				get_fts() < ccx_options.extraction_start.time_in_ms)
@@ -254,14 +254,14 @@ int do_cb (unsigned char *cc_block, struct cc_subtitle *sub)
 				get_fts() > ccx_options.extraction_end.time_in_ms)
             {
                 timeok = 0;
-                processed_enough=1;
+                ctx->processed_enough=1;
             }
             if (timeok)
             {
                 if(ccx_options.write_format!=CCX_OF_RCWT)
-                    printdata (0,0,cc_block+1,2, sub);
+                    printdata (ctx, 0,0,cc_block+1,2, sub);
                 else
-                    writercwtdata(cc_block);
+                    writercwtdata(ctx, cc_block);
             }
             cb_field2++;
             break;
@@ -281,7 +281,7 @@ int do_cb (unsigned char *cc_block, struct cc_subtitle *sub)
 				get_fts() > ccx_options.extraction_end.time_in_ms)
             {
                 timeok = 0;
-                processed_enough=1;
+                ctx->processed_enough=1;
             }
             char temp[4];
             temp[0]=cc_valid;
@@ -293,7 +293,7 @@ int do_cb (unsigned char *cc_block, struct cc_subtitle *sub)
                 if(ccx_options.write_format!=CCX_OF_RCWT)
                    do_708 ((const unsigned char *) temp, 4);
                 else
-                    writercwtdata(cc_block);
+                    writercwtdata(ctx, cc_block);
             }
             cb_708++;
             // Check for bytes read

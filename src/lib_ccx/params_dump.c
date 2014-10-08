@@ -1,15 +1,15 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 
-void params_dump(void)
+void params_dump(struct lib_ccx_ctx *ctx)
 {
     // Display parsed parameters
     mprint ("Input: ");
 	switch (ccx_options.input_source)
 	{
 		case CCX_DS_FILE:
-			for (int i=0;i<num_input_files;i++)
-			mprint ("%s%s",inputfile[i],i==(num_input_files-1)?"":",");
+			for (int i=0;i<ctx->num_input_files;i++)
+			mprint ("%s%s",ctx->inputfile[i],i==(ctx->num_input_files-1)?"":",");
 			break;
 		case CCX_DS_STDIN:
 			mprint ("stdin");
@@ -29,7 +29,7 @@ void params_dump(void)
     mprint ("\n");
     mprint ("[Extract: %d] ", ccx_options.extract);
     mprint ("[Stream mode: ");
-    switch (auto_stream)
+    switch (ctx->auto_stream)
     {
         case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
             mprint ("Elementary");
@@ -119,7 +119,7 @@ void params_dump(void)
     mprint ("[Buffer input: %s]\n", ccx_options.buffer_input ? "Yes": "No");
     mprint ("[Use pic_order_cnt_lsb for H.264: %s] ", ccx_options.usepicorder ? "Yes": "No");
 	mprint("[Print CC decoder traces: %s]\n", (ccx_options.debug_mask & CCX_DMT_DECODER_608) ? "Yes" : "No");
-    mprint ("[Target format: %s] ",extension);
+    mprint ("[Target format: %s] ",ctx->extension);
     mprint ("[Encoding: ");
     switch (ccx_options.encoding)
     {
@@ -134,7 +134,7 @@ void params_dump(void)
             break;
     }
     mprint ("] ");
-    mprint ("[Delay: %lld] ",subs_delay);
+    mprint ("[Delay: %lld] ",ctx->subs_delay);
 
     mprint ("[Trim lines: %s]\n",ccx_options.trim_subs?"Yes":"No");
     mprint ("[Add font color data: %s] ", ccx_options.nofontcolor? "No" : "Yes");
@@ -205,7 +205,7 @@ void params_dump(void)
 
 }
 
-void print_file_report(void)
+void print_file_report(struct lib_ccx_ctx *ctx)
 {
 	#define Y_N(cond) ((cond) ? "Yes" : "No")
 
@@ -213,13 +213,13 @@ void print_file_report(void)
 	switch (ccx_options.input_source)
 	{
 		case CCX_DS_FILE:
-			if (current_file < 0)
+			if (ctx->current_file < 0)
 			{
 				printf("file is not openened yet\n");
 				return;
 			}
 
-			printf("%s\n", inputfile[current_file]);
+			printf("%s\n", ctx->inputfile[ctx->current_file]);
 			break;
 		case CCX_DS_STDIN:
 			printf("stdin\n");
@@ -231,7 +231,7 @@ void print_file_report(void)
 	}
 
 	printf("Stream Mode: ");
-	switch (stream_mode)
+	switch (ctx->stream_mode)
 	{
 		case CCX_SM_TRANSPORT:
 			printf("Transport Stream\n");
@@ -250,10 +250,10 @@ void print_file_report(void)
 
 			for (int i = 0; i < 65536; i++)
 			{
-				if (PIDs_programs[i] == 0)
+				if (ctx->PIDs_programs[i] == 0)
 					continue;
 
-				printf("PID: %u, Program: %u, ", i, PIDs_programs[i]->program_number);
+				printf("PID: %u, Program: %u, ", i, ctx->PIDs_programs[i]->program_number);
 				int j;
 				for (j = 0; j < SUB_STREAMS_CNT; j++)
 				{
@@ -269,7 +269,7 @@ void print_file_report(void)
 					}
 				}
 				if (j == SUB_STREAMS_CNT)
-					printf("%s\n", desc[PIDs_programs[i]->printable_stream_type]);
+					printf("%s\n", desc[ctx->PIDs_programs[i]->printable_stream_type]);
 			}
 
 			break;
@@ -304,10 +304,10 @@ void print_file_report(void)
 	}
 
 	if (ccx_bufferdatatype == CCX_PES &&
-		(stream_mode == CCX_SM_TRANSPORT ||
-		stream_mode == CCX_SM_PROGRAM ||
-		stream_mode == CCX_SM_ASF ||
-		stream_mode == CCX_SM_WTV))
+		(ctx->stream_mode == CCX_SM_TRANSPORT ||
+		ctx->stream_mode == CCX_SM_PROGRAM ||
+		ctx->stream_mode == CCX_SM_ASF ||
+		ctx->stream_mode == CCX_SM_WTV))
 	{
 		printf("Width: %u\n", file_report.width);
 		printf("Height: %u\n", file_report.height);
@@ -325,7 +325,7 @@ void print_file_report(void)
 		unsigned pid = file_report.dvb_sub_pid[j];
 		if (pid == 0)
 			continue;
-		if (PIDs_programs[pid]->program_number == TS_program_number)
+		if (ctx->PIDs_programs[pid]->program_number == TS_program_number)
 		{
 			printf("Yes\n");
 			break;
@@ -340,7 +340,7 @@ void print_file_report(void)
 		unsigned pid = file_report.tlt_sub_pid[j];
 		if (pid == 0)
 			continue;
-		if (PIDs_programs[pid]->program_number == TS_program_number)
+		if (ctx->PIDs_programs[pid]->program_number == TS_program_number)
 		{
 			printf("Yes\n");
 
@@ -359,9 +359,9 @@ void print_file_report(void)
 	if (j == SUB_STREAMS_CNT)
 		printf("No\n");
 
-	printf("EIA-608: %s\n", Y_N(cc_stats[0] > 0 || cc_stats[1] > 0));
+	printf("EIA-608: %s\n", Y_N(ctx->cc_stats[0] > 0 || ctx->cc_stats[1] > 0));
 
-	if (cc_stats[0] > 0 || cc_stats[1] > 0)
+	if (ctx->cc_stats[0] > 0 || ctx->cc_stats[1] > 0)
 	{
 		printf("XDS: %s\n", Y_N(file_report.data_from_608->xds));
 
@@ -371,9 +371,9 @@ void print_file_report(void)
 		printf("CC4: %s\n", Y_N(file_report.data_from_608->cc_channels[3]));
 	}
 
-	printf("CEA-708: %s\n", Y_N(cc_stats[2] > 0 || cc_stats[3] > 0));
+	printf("CEA-708: %s\n", Y_N(ctx->cc_stats[2] > 0 || ctx->cc_stats[3] > 0));
 
-	if (cc_stats[2] > 0 || cc_stats[3] > 0)
+	if (ctx->cc_stats[2] > 0 || ctx->cc_stats[3] > 0)
 	{
 		printf("Services: ");
 		for (int i = 0; i < CCX_DECODERS_708_MAX_SERVICES; i++)
