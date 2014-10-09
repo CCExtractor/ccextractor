@@ -8,7 +8,7 @@
 #include "ccx_encoders_common.h"
 #include "ccx_common_option.h"
 
-void do_NAL (unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub); // From avc_functions.c
+void do_NAL (struct lib_ccx_ctx *ctx, unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub);
 void set_fts(void); // From timing.c
 
 static short bswap16(short v)
@@ -27,7 +27,7 @@ static struct {
 	unsigned type[32];
 }s_nalu_stats;
 
-static int process_avc_sample(u32 timescale, GF_AVCConfig* c, GF_ISOSample* s, struct cc_subtitle *sub)
+static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConfig* c, GF_ISOSample* s, struct cc_subtitle *sub)
 {
 	int status = 0;
 	u32 i;
@@ -62,7 +62,7 @@ static int process_avc_sample(u32 timescale, GF_AVCConfig* c, GF_ISOSample* s, s
 		temp_debug=0;
 
 		if (nal_length>0)
-			do_NAL ((unsigned char *) &(s->data[i]) ,nal_length, sub);
+			do_NAL (ctx, (unsigned char *) &(s->data[i]) ,nal_length, sub);
 		i += nal_length;
 	} // outer for
 	assert(i == s->dataLength);
@@ -155,7 +155,7 @@ static int process_avc_track(struct lib_ccx_ctx *ctx, const char* basename, GF_I
 				last_sdi = sdi;
 			}
 
-			status = process_avc_sample(timescale, c, s, sub);
+			status = process_avc_sample(ctx, timescale, c, s, sub);
 
 			gf_isom_sample_del(&s);
 
@@ -268,7 +268,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, char *file,void *enc_ctx)
 				for (j=0; j<gf_list_count(cnf->sequenceParameterSets);j++)
 				{
 					GF_AVCConfigSlot* seqcnf=(GF_AVCConfigSlot* )gf_list_get(cnf->sequenceParameterSets,j);
-					do_NAL ((unsigned char *) seqcnf->data, seqcnf->size, &dec_sub);
+					do_NAL (ctx, (unsigned char *) seqcnf->data, seqcnf->size, &dec_sub);
 				}
 			}
 
