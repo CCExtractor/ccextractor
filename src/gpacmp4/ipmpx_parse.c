@@ -22,7 +22,7 @@
  *
  */
 
-#include "../disable_warnings.h"
+#include "disable_warnings.h"
 #include <gpac/internal/odf_dev.h>
 
 #ifndef GPAC_MINIMAL_ODF

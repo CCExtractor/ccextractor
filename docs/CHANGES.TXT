@@ -6,6 +6,7 @@
 - Added nobom parameter, for when files are processed by tools that can't handle the BOM. If using this, files might be not readable under windows.
 - Segfault fix when no input files were given
 - No more bin output when sending to server + possibility to send TT to server for processing
+- Windows: Added the Microsoft redistributable MSVCR120.DLL to both the installation package and the application zip.
 
 0.73 - GSOC
 -----------

@@ -25,7 +25,7 @@
  *
  */
 
-#include "../disable_warnings.h"
+#include "disable_warnings.h"
 #include <gpac/setup.h>
 
 #ifndef GPAC_DISABLE_AVILIB

@@ -1,0 +1,6 @@
+/**
+ * the configured options and settings for CCExtractor
+ */
+
+#define CCExtractor_VERSION_MAJOR @CCEXTRACTOR_VERSION_MAJOR@
+#define CCExtractor_VERSION_MINOR @CCEXTRACTOR_VERSION_MINOR@
