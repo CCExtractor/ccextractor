@@ -557,5 +557,11 @@
     <ClCompile Include="..\src\lib_ccx\spupng_encoder.c">
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\lib_ccx.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_common_option.c">
+      <Filter>Source Files\ccx_common</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
