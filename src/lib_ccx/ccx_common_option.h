@@ -82,6 +82,15 @@ struct ccx_s_options // Options from user parameters
 	int line_terminator_lf; // 0 = CRLF, 1=LF
 	int noautotimeref; // Do NOT set time automatically?
 	enum ccx_datasource input_source; // Files, stdin or network
+
+	char **inputfile; // List of files to process
+	int num_input_files; // How many?
+	enum ccx_stream_mode_enum auto_stream;
+	LLONG subs_delay; // ms to delay (or advance) subs
+	int *cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
+	// Output structures
+	struct ccx_s_write wbout1;
+	struct ccx_s_write wbout2;
 };
 
 struct ccx_s_options ccx_options;

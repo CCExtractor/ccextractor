@@ -10,6 +10,7 @@
 #include "ccx_common_char_encoding.h"
 #include "ccx_common_structs.h"
 #include "ccx_common_timing.h"
+#include "ccx_common_option.h"
 
 #include "ccx_encoders_common.h"
 #include "ccx_decoders_608.h"
@@ -154,11 +155,11 @@ struct lib_ccx_ctx
 	LLONG last_displayed_subs_ms; // When did the last subs end?
 	LLONG screens_to_process; // How many screenfuls we want?
 	char *basefilename; // Input filename without the extension
-	char **inputfile; // List of files to process
 
 	const char *extension; // Output extension
 	int current_file; // If current_file!=1, we are processing *inputfile[current_file]
 
+	char **inputfile; // List of files to process
 	int num_input_files; // How many?
 
 	/* Hauppauge support */
@@ -209,10 +210,10 @@ int main_telxcc (int argc, char *argv[]);
 
 LLONG buffered_read_opt (struct lib_ccx_ctx *ctx, unsigned char *buffer, unsigned int bytes);
 
-struct lib_ccx_ctx* init_libraries(void);
+struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt);
 
 //params.c
-void parse_parameters (struct lib_ccx_ctx *ctx, int argc, char *argv[]);
+void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[]);
 void usage (void);
 int atoi_hex (char *s);
 int stringztoms (const char *s, struct ccx_boundary_time *bt);

@@ -2,7 +2,7 @@
 #include "ccx_common_option.h"
 
 
-struct lib_ccx_ctx* init_libraries(void)
+struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 {
 	struct lib_ccx_ctx *ctx;
 
@@ -12,7 +12,7 @@ struct lib_ccx_ctx* init_libraries(void)
 	memset(ctx,0,sizeof(struct lib_ccx_ctx));
 
 	ctx->stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
-	ctx->auto_stream = CCX_SM_AUTODETECT;
+	ctx->auto_stream = opt->auto_stream;
 	ctx->screens_to_process = -1;
 	ctx->current_file = -1;
 	ctx->infd = -1;//Set to -1 to indicate no file is open.
@@ -63,5 +63,14 @@ struct lib_ccx_ctx* init_libraries(void)
 	// Init XDS buffers
 	ccx_decoders_xds_init_library(&ccx_options.transcript_settings, ctx->subs_delay, ccx_options.millis_separator);
 	//xds_cea608_test();
+
+	//Initialize input files
+	ctx->inputfile = opt->inputfile;
+	ctx->num_input_files = opt->num_input_files;
+	ctx->subs_delay = opt->subs_delay;
+	ctx->wbout1.filename = opt->wbout2.filename;
+	ctx->wbout2.filename = opt->wbout2.filename;
+
+
 	return ctx;
 }

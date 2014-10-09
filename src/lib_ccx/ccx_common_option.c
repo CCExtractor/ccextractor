@@ -86,4 +86,5 @@ void init_options (struct ccx_s_options *options)
 	options->line_terminator_lf=0; // 0 = CRLF
 	options->noautotimeref=0; // Do NOT set time automatically?
 	options->input_source=CCX_DS_FILE; // Files, stdin or network
+	options->auto_stream = CCX_SM_AUTODETECT;
 }

@@ -42,8 +42,11 @@ int main(int argc, char *argv[])
 
 	init_options (&ccx_options);
 
+	parse_configuration(&ccx_options);
+	parse_parameters (&ccx_options, argc, argv);
+
 	// Initialize libraries
-	ctx = init_libraries();
+	ctx = init_libraries(&ccx_options);
 
 	// Init timing
 	ccx_common_timing_init(&ctx->past,ccx_options.nosync);
@@ -67,8 +70,6 @@ int main(int argc, char *argv[])
 	memset (&cea708services[0],0,CCX_DECODERS_708_MAX_SERVICES*sizeof (int)); // Cannot (yet) be moved because it's needed in parse_parameters.
 	memset (&dec_sub, 0,sizeof(dec_sub));
 
-	parse_configuration(&ccx_options);
-	parse_parameters (ctx, argc, argv);
 
 	if (ctx->num_input_files==0 && ccx_options.input_source==CCX_DS_FILE)
 	{
