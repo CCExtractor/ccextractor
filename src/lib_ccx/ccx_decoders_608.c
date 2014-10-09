@@ -1197,7 +1197,7 @@ int process608(const unsigned char *data, int length, ccx_decoder_608_context *c
 				context->current_visible_start_ms = get_visible_start();
 			}
 		}
-		if (wrote_to_screen && *context->cc_to_stdout)
+		if (wrote_to_screen && context->cc_to_stdout)
 			fflush (stdout);
 	} // for
 	return i;

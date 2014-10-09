@@ -18,7 +18,7 @@ include_directories ("${PROJECT_SOURCE_DIR}/lib_ccx")
 include_directories ("${PROJECT_SOURCE_DIR}/gpacmp4/")
 include_directories ("${PROJECT_SOURCE_DIR}/libccx_common/")
 
-SET (CMAKE_C_FLAGS "-O3 -Wall -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64")
+SET (CMAKE_C_FLAGS "-O0 -Wall -g -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64")
 add_subdirectory (lib_ccx)
 
 AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR} SOURCEFILE)

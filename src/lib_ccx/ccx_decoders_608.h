@@ -52,7 +52,7 @@ typedef struct ccx_decoder_608_context
 	enum ccx_encoding_type encoding;
 
 	int *halt; // Can be used to halt the feeding of caption data. Set to 1 if screens_to_progress != -1 && screenfuls_counter >= screens_to_process
-	int *cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
+	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
 } ccx_decoder_608_context;
 
 extern unsigned char *enc_buffer;
