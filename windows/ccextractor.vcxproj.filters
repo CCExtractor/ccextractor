@@ -51,9 +51,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\ccextractor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\gpacmp4\gpac\avparse.h">
       <Filter>Header Files\gpacmp4</Filter>
     </ClInclude>
@@ -239,6 +236,9 @@
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\spupng_encoder.h">
       <Filter>Header Files\ccx_encoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\lib_ccx.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -556,6 +556,12 @@
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\spupng_encoder.c">
       <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\lib_ccx.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_common_option.c">
+      <Filter>Source Files\ccx_common</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

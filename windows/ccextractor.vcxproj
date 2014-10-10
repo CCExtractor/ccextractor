@@ -11,7 +11,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\ccextractor.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\avparse.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\base_coding.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\bitstream.h" />
@@ -59,6 +58,7 @@
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_structs.h" />
     <ClInclude Include="..\src\lib_ccx\disable_warnings.h" />
     <ClInclude Include="..\src\lib_ccx\dvb_subtitle_decoder.h" />
+    <ClInclude Include="..\src\lib_ccx\lib_ccx.h" />
     <ClInclude Include="..\src\lib_ccx\spupng_encoder.h" />
     <ClInclude Include="..\src\lib_ccx\teletext.h" />
     <ClInclude Include="..\src\zlib\crc32.h" />
@@ -145,6 +145,7 @@
     <ClCompile Include="..\src\lib_ccx\ccx_common_char_encoding.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_common_common.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_common_constants.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_common_option.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_common_timing.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_608.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_708.c" />
@@ -159,6 +160,7 @@
     <ClCompile Include="..\src\lib_ccx\es_userdata.c" />
     <ClCompile Include="..\src\lib_ccx\file_functions.c" />
     <ClCompile Include="..\src\lib_ccx\general_loop.c" />
+    <ClCompile Include="..\src\lib_ccx\lib_ccx.c" />
     <ClCompile Include="..\src\lib_ccx\myth.c" />
     <ClCompile Include="..\src\lib_ccx\networking.c" />
     <ClCompile Include="..\src\lib_ccx\ocr.c" />
