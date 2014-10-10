@@ -140,13 +140,13 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		if (ccx_options.transcript_settings.showStartTime){
 			char buf1[80];
 			if (ccx_options.transcript_settings.relativeTimestamp){
-				millis_to_date(start_time, buf1);
+				millis_to_date(start_time + context->subs_delay, buf1);
 				fdprintf(context->out->fh, "%s|", buf1);
 			}
 			else {
 				mstotime(start_time + context->subs_delay, &h1, &m1, &s1, &ms1);
-				time_t start_time_int = start_time / 1000;
-				int start_time_dec = start_time % 1000;
+				time_t start_time_int = (start_time + context->subs_delay) / 1000;
+				int start_time_dec = (start_time + context->subs_delay) % 1000;
 				struct tm *start_time_struct = gmtime(&start_time_int);
 				strftime(buf1, sizeof(buf1), "%Y%m%d%H%M%S", start_time_struct);
 				fdprintf(context->out->fh, "%s%c%03d|", buf1,ccx_options.millis_separator,start_time_dec);
@@ -161,8 +161,8 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 			}
 			else {
 				mstotime(get_fts() + context->subs_delay, &h2, &m2, &s2, &ms2);
-				time_t end_time_int = end_time / 1000;
-				int end_time_dec = end_time % 1000;
+				time_t end_time_int = (end_time + context->subs_delay) / 1000;
+				int end_time_dec = (end_time + context->subs_delay) % 1000;
 				struct tm *end_time_struct = gmtime(&end_time_int);
 				strftime(buf2, sizeof(buf2), "%Y%m%d%H%M%S", end_time_struct);
 				fdprintf(context->out->fh, "%s%c%03d|", buf2,ccx_options.millis_separator,end_time_dec);
