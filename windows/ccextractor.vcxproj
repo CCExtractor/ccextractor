@@ -145,6 +145,7 @@
     <ClCompile Include="..\src\lib_ccx\ccx_common_char_encoding.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_common_common.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_common_constants.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_common_option.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_common_timing.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_608.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_708.c" />
@@ -159,6 +160,7 @@
     <ClCompile Include="..\src\lib_ccx\es_userdata.c" />
     <ClCompile Include="..\src\lib_ccx\file_functions.c" />
     <ClCompile Include="..\src\lib_ccx\general_loop.c" />
+    <ClCompile Include="..\src\lib_ccx\lib_ccx.c" />
     <ClCompile Include="..\src\lib_ccx\myth.c" />
     <ClCompile Include="..\src\lib_ccx\networking.c" />
     <ClCompile Include="..\src\lib_ccx\ocr.c" />
@@ -222,7 +224,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>./include/;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
