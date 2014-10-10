@@ -14,7 +14,8 @@ struct ccx_common_logging_t {
 	void(*debug_ftn) (LLONG mask, const char *fmt, ...); // Used to process debug output. Mask can be ignored (custom set by debug_mask).
 	void(*log_ftn)(const char *fmt, ...); // Used to print things. Replacement of standard printf, to allow more control.
 	void(*gui_ftn)(enum ccx_common_logging_gui message_type, ...); // Used to display things in a gui (if appropriate). Is called with the message_type and appropriate variables (described in enum)
-} ccx_common_logging;
+};
+extern struct ccx_common_logging_t ccx_common_logging;
 
 enum subtype
 {

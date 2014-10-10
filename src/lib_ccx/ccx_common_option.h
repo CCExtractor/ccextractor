@@ -93,6 +93,6 @@ struct ccx_s_options // Options from user parameters
 	struct ccx_s_write wbout2;
 };
 
-struct ccx_s_options ccx_options;
+extern struct ccx_s_options ccx_options;
 void init_options (struct ccx_s_options *options);
 #endif

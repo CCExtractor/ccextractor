@@ -41,7 +41,10 @@ struct gop_time_code gop_time, first_gop_time, printed_gop;
 LLONG fts_at_gop_start = 0;
 int gop_rollover = 0;
 
-void ccx_common_timing_init(LLONG *file_position,int no_sync){
+struct ccx_common_timing_settings_t ccx_common_timing_settings;
+
+void ccx_common_timing_init(LLONG *file_position,int no_sync)
+{
 	ccx_common_timing_settings.disable_sync_check = 0;
 	ccx_common_timing_settings.is_elementary_stream = 0;
 	ccx_common_timing_settings.file_position = file_position;

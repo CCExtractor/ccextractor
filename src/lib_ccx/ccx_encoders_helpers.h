@@ -18,7 +18,8 @@ struct ccx_encoders_helpers_settings_t {
 	int no_font_color;
 	int no_type_setting;
 	enum ccx_encoding_type encoding;
-} ccx_encoders_helpers_settings;
+};
+extern struct ccx_encoders_helpers_settings_t ccx_encoders_helpers_settings;
 
 // Helper functions
 void correct_case(int line_num, struct eia608_screen *data);

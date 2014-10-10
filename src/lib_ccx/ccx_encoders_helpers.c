@@ -17,7 +17,7 @@ char **spell_lower = NULL;
 char **spell_correct = NULL;
 int spell_words = 0;
 int spell_capacity = 0;
-
+struct ccx_encoders_helpers_settings_t ccx_encoders_helpers_settings;
 // Some basic English words, so user-defined doesn't have to
 // include the common stuff
 static const char *spell_builtin[] =

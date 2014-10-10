@@ -1,7 +1,8 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 
-
+struct ccx_common_logging_t ccx_common_logging;
+struct ccx_decoders_common_settings_t ccx_decoders_common_settings;
 struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 {
 	struct lib_ccx_ctx *ctx;

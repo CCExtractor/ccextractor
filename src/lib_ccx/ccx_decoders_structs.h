@@ -70,10 +70,11 @@ typedef struct eia608_screen // A CC buffer
 	int cur_xds_packet_class;
 } eia608_screen;
 
-struct ccx_decoderrs_common_settings_t {
+struct ccx_decoders_common_settings_t {
 	LLONG subs_delay; // ms to delay (or advance) subs
 	enum ccx_output_format output_format; // What kind of output format should be used?
-} ccx_decoders_common_settings;
+};
+extern struct ccx_decoders_common_settings_t ccx_decoders_common_settings;
 
 #define CCX_DECODERS_STRUCTS_H
 #endif

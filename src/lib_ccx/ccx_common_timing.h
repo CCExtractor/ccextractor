@@ -19,7 +19,8 @@ struct ccx_common_timing_settings_t {
 	int no_sync; // If 1, there will be no sync at all. Mostly useful for debugging.
 	int is_elementary_stream; // Needs to be set, as it's used in set_fts.
 	LLONG *file_position; // The position of the file
-} ccx_common_timing_settings;
+};
+extern struct ccx_common_timing_settings_t ccx_common_timing_settings;
 
 struct ccx_boundary_time
 {
