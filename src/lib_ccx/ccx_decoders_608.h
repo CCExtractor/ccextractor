@@ -141,9 +141,5 @@ void handle_end_of_data(ccx_decoder_608_context *context, struct cc_subtitle *su
 int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub);
 unsigned char *debug_608toASC(unsigned char *ccdata, int channel);
 
-//void delete_all_lines_but_current(ccx_decoder_608_context *context, struct eia608_screen *data, int row);
-
-LLONG get_visible_end(void);
-
 #define __608_H__
 #endif

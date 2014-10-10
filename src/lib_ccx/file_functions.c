@@ -202,7 +202,7 @@ int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
     return 0;
 }
 
-void position_sanity_check ()
+void position_sanity_check (void)
 {
 #ifdef SANITY_CHECK
     if (in!=-1)

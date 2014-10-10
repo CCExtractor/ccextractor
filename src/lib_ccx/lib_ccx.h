@@ -219,7 +219,7 @@ int atoi_hex (char *s);
 int stringztoms (const char *s, struct ccx_boundary_time *bt);
 
 // general_loop.c
-void position_sanity_check ();
+void position_sanity_check (void);
 int init_file_buffer( void );
 LLONG ps_getmoredata(struct lib_ccx_ctx *ctx);
 LLONG general_getmoredata(struct lib_ccx_ctx *ctx);
@@ -341,15 +341,10 @@ extern void build_parity_table(void);
 void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t size);
 void telxcc_init(struct lib_ccx_ctx *ctx);
 void telxcc_close(struct lib_ccx_ctx *ctx);
-void tlt_read_rcwt();
-void mstotime(LLONG milli, unsigned *hours, unsigned *minutes,
-	unsigned *seconds, unsigned *ms);
+void tlt_read_rcwt(struct lib_ccx_ctx *ctx);
 
 extern unsigned rollover_bits;
 extern int global_timestamp_inited;
-
-extern LLONG result; // Number of bytes read/skipped in last read operation
-
 
 extern int strangeheader;
 
@@ -362,7 +357,6 @@ extern const char *desc[256];
 
 
 extern long FILEBUFFERSIZE; // Uppercase because it used to be a define
-extern struct ccx_s_options ccx_options;
 extern unsigned long net_activity_gui;
 
 /* General (ES stream) video information */
@@ -371,11 +365,7 @@ extern unsigned current_vert_size;
 extern unsigned current_aspect_ratio;
 extern unsigned current_frame_rate;
 
-extern int end_of_file;
-extern LLONG inbuf;
 extern enum ccx_bufferdata_type bufferdatatype; // Can be CCX_BUFFERDATA_TYPE_RAW or CCX_BUFFERDATA_TYPE_PES
-
-extern unsigned top_field_first;
 
 extern int firstcall;
 

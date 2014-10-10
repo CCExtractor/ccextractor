@@ -767,7 +767,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 
     if (parsebuf[6] == 0 && parsebuf[7] == 2)
     {
-        tlt_read_rcwt();
+        tlt_read_rcwt(ctx);
         return;
     }
 

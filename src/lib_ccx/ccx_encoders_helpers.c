@@ -334,7 +334,7 @@ int add_word(const char *word)
 }
 
 
-int add_built_in_words()
+int add_built_in_words(void)
 {
 	if (!spell_builtin_added)
 	{
@@ -378,7 +378,8 @@ void shell_sort(void *base, int nb, size_t size, int(*compar)(const void*p1, con
 	free(tmp);
 }
 
-void ccx_encoders_helpers_perform_shellsort_words(){
+void ccx_encoders_helpers_perform_shellsort_words(void)
+{
 	shell_sort(spell_lower, spell_words, sizeof(*spell_lower), string_cmp2, NULL);
 	shell_sort(spell_correct, spell_words, sizeof(*spell_correct), string_cmp2, NULL);
 }

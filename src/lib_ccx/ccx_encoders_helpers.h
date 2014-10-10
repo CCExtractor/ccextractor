@@ -28,11 +28,11 @@ unsigned get_decoder_line_encoded(unsigned char *buffer, int line_num, struct ei
 
 int string_cmp(const void *p1, const void *p2);
 int string_cmp2(const void *p1, const void *p2, void *arg);
-int add_built_in_words();
+int add_built_in_words(void);
 int add_word(const char *word);
 
 void shell_sort(void *base, int nb, size_t size, int(*compar)(const void*p1, const void *p2, void*arg), void *arg);
 
-void ccx_encoders_helpers_perform_shellsort_words();
+void ccx_encoders_helpers_perform_shellsort_words(void);
 void ccx_encoders_helpers_setup(enum ccx_encoding_type encoding, int no_font_color, int no_type_setting, int trim_subs);
 #endif
