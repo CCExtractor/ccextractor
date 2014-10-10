@@ -58,19 +58,19 @@ struct PMT_entry
 
 /* Report information */
 #define SUB_STREAMS_CNT 10
-struct file_report_t
+struct file_report
 {
 	unsigned program_cnt;
 	unsigned width;
 	unsigned height;
 	unsigned aspect_ratio;
 	unsigned frame_rate;
-	struct ccx_decoder_608_report_t *data_from_608;
+	struct ccx_decoder_608_report *data_from_608;
 	struct ccx_decoder_708_report_t *data_from_708;
 	unsigned dvb_sub_pid[SUB_STREAMS_CNT];
 	unsigned tlt_sub_pid[SUB_STREAMS_CNT];
 	unsigned mp4_cc_track_cnt;
-} file_report;
+};
 
 // Stuff for telcc.c
 struct ccx_s_teletext_config {
@@ -177,6 +177,7 @@ struct lib_ccx_ctx
 	char *basefilename_for_network;
 	int PIDs_seen[65536];
 	struct PMT_entry *PIDs_programs[65536];
+	struct file_report freport;
 };
 #ifdef DEBUG_TELEXCC
 int main_telxcc (int argc, char *argv[]);

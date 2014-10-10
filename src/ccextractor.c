@@ -31,11 +31,6 @@ int main(int argc, char *argv[])
 	void *ffmpeg_ctx = NULL;
 	struct lib_ccx_ctx *ctx;
 
-	// Need to set the 608 data for the report to the correct variable.
-	file_report.data_from_608 = &ccx_decoder_608_report;
-	// Same applies for 708 data
-	file_report.data_from_708 = &ccx_decoder_708_report;
-
 	// Initialize some constants
 	init_ts();
 	init_avc();

@@ -20,9 +20,11 @@ This variable (ccx_decoder_708_report) holds data on the cc channels & xds packe
 This can be interesting if you just want to know what kind of data a file holds that has 608 packets. CCExtractor uses it
 for the report functionality.
 */
-struct ccx_decoder_708_report_t {
+struct ccx_decoder_708_report_t
+{
 	unsigned services[CCX_DECODERS_708_MAX_SERVICES];
-} ccx_decoder_708_report;
+};
+extern struct ccx_decoder_708_report_t ccx_decoder_708_report;
 
 enum COMMANDS_C0_CODES
 {

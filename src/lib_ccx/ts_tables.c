@@ -194,29 +194,29 @@ int parse_PMT (struct lib_ccx_ctx *ctx, unsigned char *buf, int len, int pos)
 			{
 				int k = 0;
 				for (int j = 0; j < SUB_STREAMS_CNT; j++) {
-					if (file_report.dvb_sub_pid[i] == 0)
+					if (ctx->freport.dvb_sub_pid[i] == 0)
 						k = j;
-					if (file_report.dvb_sub_pid[i] == elementary_PID)
+					if (ctx->freport.dvb_sub_pid[i] == elementary_PID)
 					{
 						k = j;
 						break;
 					}
 				}
-				file_report.dvb_sub_pid[k] = elementary_PID;
+				ctx->freport.dvb_sub_pid[k] = elementary_PID;
 			}
 			if(IS_VALID_TELETEXT_DESC(descriptor_tag))
 			{
 				int k = 0;
 				for (int j = 0; j < SUB_STREAMS_CNT; j++) {
-					if (file_report.tlt_sub_pid[i] == 0)
+					if (ctx->freport.tlt_sub_pid[i] == 0)
 						k = j;
-					if (file_report.tlt_sub_pid[i] == elementary_PID)
+					if (ctx->freport.tlt_sub_pid[i] == elementary_PID)
 					{
 						k = j;
 						break;
 					}
 				}
-				file_report.tlt_sub_pid[k] = elementary_PID;
+				ctx->freport.tlt_sub_pid[k] = elementary_PID;
 			}
 		}
 		i += ES_info_length;
@@ -528,17 +528,17 @@ int parse_PAT (struct lib_ccx_ctx *ctx)
     unsigned ts_prog_map_pid = 0;
     dbg_print(CCX_DMT_PAT, "\nProgram association section (PAT)\n");
 
-	file_report.program_cnt=0;
+	ctx->freport.program_cnt=0;
 	for( unsigned i=0; i < programm_data; i+=4)
 	{
         unsigned program_number = ((payload_start[i] << 8)
 			| payload_start[i+1]);
 		if( !program_number )
 			continue;
-		file_report.program_cnt++;
+		ctx->freport.program_cnt++;
 	}
 
-	is_multiprogram = (file_report.program_cnt>1);
+	is_multiprogram = (ctx->freport.program_cnt>1);
 
     for( unsigned i=0; i < programm_data; i+=4)
     {

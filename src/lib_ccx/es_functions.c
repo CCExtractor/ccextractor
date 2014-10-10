@@ -21,8 +21,8 @@ static unsigned pulldownfields = 0;
 static uint8_t search_start_code(struct bitstream *esstream);
 static uint8_t next_start_code(struct bitstream *esstream);
 static int es_video_sequence(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
-static int read_seq_info(struct bitstream *esstream);
-static int sequence_header(struct bitstream *esstream);
+static int read_seq_info(struct lib_ccx_ctx *ctx, struct bitstream *esstream);
+static int sequence_header(struct lib_ccx_ctx *ctx, struct bitstream *esstream);
 static int sequence_ext(struct bitstream *esstream);
 static int read_gop_info(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
 static int gop_header(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
@@ -260,7 +260,7 @@ static int es_video_sequence(struct lib_ccx_ctx *ctx, struct bitstream *esstream
 
         if (!in_pic_data && startcode == 0xB3)
         {
-            if (!read_seq_info(esstream))
+            if (!read_seq_info(ctx, esstream))
             {
                 if (esstream->error)
                     no_bitstream_error = 0;
@@ -345,7 +345,7 @@ static int es_video_sequence(struct lib_ccx_ctx *ctx, struct bitstream *esstream
 // If a bitstream syntax problem occured the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
-static int read_seq_info(struct bitstream *esstream)
+static int read_seq_info(struct lib_ccx_ctx *ctx, struct bitstream *esstream)
 {
     dbg_print(CCX_DMT_VERBOSE, "Read Sequence Info\n");
 
@@ -358,7 +358,7 @@ static int read_seq_info(struct bitstream *esstream)
     // after getting more.
     unsigned char *video_seq_start = esstream->pos;
 
-    sequence_header(esstream);
+    sequence_header(ctx, esstream);
     sequence_ext(esstream);
     // FIXME: if sequence extension is missing this is not MPEG-2,
     // or broken.  Set bitstream error.
@@ -382,7 +382,7 @@ static int read_seq_info(struct bitstream *esstream)
 // Return TRUE if the data parsing finished, FALSE otherwise.
 // estream->pos is advanced. Data is only processed if esstream->error
 // is FALSE, parsing can set esstream->error to TRUE.
-static int sequence_header(struct bitstream *esstream)
+static int sequence_header(struct lib_ccx_ctx *ctx, struct bitstream *esstream)
 {
     dbg_print(CCX_DMT_VERBOSE, "Sequence header\n");
 
@@ -398,10 +398,10 @@ static int sequence_header(struct bitstream *esstream)
     unsigned aspect_ratio = (unsigned) read_bits(esstream,4);
     unsigned frame_rate = (unsigned) read_bits(esstream,4);
 
-    file_report.width = hor_size;
-    file_report.height = vert_size;
-    file_report.aspect_ratio = aspect_ratio;
-    file_report.frame_rate = frame_rate;
+    ctx->freport.width = hor_size;
+    ctx->freport.height = vert_size;
+    ctx->freport.aspect_ratio = aspect_ratio;
+    ctx->freport.frame_rate = frame_rate;
 
     // Discard some information
     read_bits(esstream, 18+1+10+1);

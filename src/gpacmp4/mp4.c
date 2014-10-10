@@ -397,7 +397,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, char *file,void *enc_ctx)
 	else
 		mprint ("found no dedicated CC track(s).\n");
 
-	file_report.mp4_cc_track_cnt = cc_track_count;
+	ctx->freport.mp4_cc_track_cnt = cc_track_count;
 	if (ccx_options.print_file_reports)
 		print_file_report(ctx);
 

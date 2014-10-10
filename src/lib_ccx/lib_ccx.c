@@ -5,11 +5,17 @@
 struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 {
 	struct lib_ccx_ctx *ctx;
+	struct ccx_decoder_608_report *report_608;
 
 	ctx = malloc(sizeof(struct lib_ccx_ctx));
 	if(!ctx)
 		return NULL;
 	memset(ctx,0,sizeof(struct lib_ccx_ctx));
+
+	report_608 = malloc(sizeof(struct ccx_decoder_608_report));
+	if (!report_608)
+		return NULL;
+	memset(report_608,0,sizeof(struct ccx_decoder_608_report));
 
 	ctx->stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
 	ctx->auto_stream = opt->auto_stream;
@@ -27,6 +33,11 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ccx_common_logging.fatal_ftn = &fatal;
 	ccx_common_logging.log_ftn = &mprint;
 	ccx_common_logging.gui_ftn = &activity_library_process;
+
+	// Need to set the 608 data for the report to the correct variable.
+	ctx->freport.data_from_608 = report_608;
+	// Same applies for 708 data
+	ctx->freport.data_from_708 = &ccx_decoder_708_report;
 
 	// Init shared decoder settings
 	ccx_decoders_common_settings_init(ctx->subs_delay, ccx_options.write_format);

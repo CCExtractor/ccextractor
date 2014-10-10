@@ -1065,10 +1065,14 @@ int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *cont
 /* If wb is NULL, then only XDS will be processed */
 int process608(const unsigned char *data, int length, ccx_decoder_608_context *context, struct cc_subtitle *sub)
 {
+	struct ccx_decoder_608_report  *report = NULL;
 	static int textprinted = 0;
 	int i;
 	if (context)
+	{
+		report = &context->report;
 		context->bytes_processed_608 += length;
+	}
 	if (!data)
 	{
 		return -1;
@@ -1091,7 +1095,8 @@ int process608(const unsigned char *data, int length, ccx_decoder_608_context *c
 			if (context == NULL || context->my_field == 2) // Originally: current_field from sequencing.c. Seems to be just to change channel, so context->my_field seems good.
 				ch+=2;
 
-			ccx_decoder_608_report.cc_channels[ch - 1] = 1;
+			if(report)
+				report->cc_channels[ch - 1] = 1;
 		}
 
 		if (hi >= 0x01 && hi <= 0x0E && (context == NULL || context->my_field == 2)) // XDS can only exist in field 2.
@@ -1103,8 +1108,8 @@ int process608(const unsigned char *data, int length, ccx_decoder_608_context *c
 				ts_start_of_xds=get_fts();
 				in_xds_mode=1;
 			}
-
-			ccx_decoder_608_report.xds=1;
+			if(report)
+				report->xds=1;
 		}
 		if (hi == 0x0F && in_xds_mode && (context == NULL || context->my_field == 2)) // End of XDS block
 		{

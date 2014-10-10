@@ -236,7 +236,7 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 		case CCX_SM_TRANSPORT:
 			printf("Transport Stream\n");
 
-			printf("Program Count: %d\n", file_report.program_cnt);
+			printf("Program Count: %d\n", ctx->freport.program_cnt);
 
 			printf("Program Numbers: ");
 			for (int i = 0; i < pmt_array_length; i++)
@@ -257,12 +257,12 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 				int j;
 				for (j = 0; j < SUB_STREAMS_CNT; j++)
 				{
-					if (file_report.dvb_sub_pid[j] == i)
+					if (ctx->freport.dvb_sub_pid[j] == i)
 					{
 						printf("DVB Subtitles\n");
 						break;
 					}
-					if (file_report.tlt_sub_pid[j] == i)
+					if (ctx->freport.tlt_sub_pid[j] == i)
 					{
 						printf("Teletext Subtitles\n");
 						break;
@@ -309,20 +309,20 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 		ctx->stream_mode == CCX_SM_ASF ||
 		ctx->stream_mode == CCX_SM_WTV))
 	{
-		printf("Width: %u\n", file_report.width);
-		printf("Height: %u\n", file_report.height);
-		printf("Aspect Ratio: %s\n", aspect_ratio_types[file_report.aspect_ratio]);
-		printf("Frame Rate: %s\n", framerates_types[file_report.frame_rate]);
+		printf("Width: %u\n", ctx->freport.width);
+		printf("Height: %u\n", ctx->freport.height);
+		printf("Aspect Ratio: %s\n", aspect_ratio_types[ctx->freport.aspect_ratio]);
+		printf("Frame Rate: %s\n", framerates_types[ctx->freport.frame_rate]);
 	}
 
-	if (file_report.program_cnt > 1)
+	if (ctx->freport.program_cnt > 1)
 		printf("//////// Program #%u: ////////\n", TS_program_number);
 
 	printf("DVB Subtitles: ");
 	int j;
 	for (j = 0; j < SUB_STREAMS_CNT; j++)
 	{
-		unsigned pid = file_report.dvb_sub_pid[j];
+		unsigned pid = ctx->freport.dvb_sub_pid[j];
 		if (pid == 0)
 			continue;
 		if (ctx->PIDs_programs[pid]->program_number == TS_program_number)
@@ -337,7 +337,7 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 	printf("Teletext: ");
 	for (j = 0; j < SUB_STREAMS_CNT; j++)
 	{
-		unsigned pid = file_report.tlt_sub_pid[j];
+		unsigned pid = ctx->freport.tlt_sub_pid[j];
 		if (pid == 0)
 			continue;
 		if (ctx->PIDs_programs[pid]->program_number == TS_program_number)
@@ -363,12 +363,12 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 
 	if (ctx->cc_stats[0] > 0 || ctx->cc_stats[1] > 0)
 	{
-		printf("XDS: %s\n", Y_N(file_report.data_from_608->xds));
+		printf("XDS: %s\n", Y_N(ctx->freport.data_from_608->xds));
 
-		printf("CC1: %s\n", Y_N(file_report.data_from_608->cc_channels[0]));
-		printf("CC2: %s\n", Y_N(file_report.data_from_608->cc_channels[1]));
-		printf("CC3: %s\n", Y_N(file_report.data_from_608->cc_channels[2]));
-		printf("CC4: %s\n", Y_N(file_report.data_from_608->cc_channels[3]));
+		printf("CC1: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[0]));
+		printf("CC2: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[1]));
+		printf("CC3: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[2]));
+		printf("CC4: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[3]));
 	}
 
 	printf("CEA-708: %s\n", Y_N(ctx->cc_stats[2] > 0 || ctx->cc_stats[3] > 0));
@@ -378,23 +378,23 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 		printf("Services: ");
 		for (int i = 0; i < CCX_DECODERS_708_MAX_SERVICES; i++)
 		{
-			if (file_report.data_from_708->services[i] == 0)
+			if (ctx->freport.data_from_708->services[i] == 0)
 				continue;
 			printf("%d ", i);
 		}
 		printf("\n");
 
-		printf("Primary Language Present: %s\n", Y_N(file_report.data_from_708->services[1]));
+		printf("Primary Language Present: %s\n", Y_N(ctx->freport.data_from_708->services[1]));
 
-		printf("Secondary Language Present: %s\n", Y_N(file_report.data_from_708->services[2]));
+		printf("Secondary Language Present: %s\n", Y_N(ctx->freport.data_from_708->services[2]));
 	}
 
-	printf("MPEG-4 Timed Text: %s\n", Y_N(file_report.mp4_cc_track_cnt));
-	if (file_report.mp4_cc_track_cnt) {
-		printf("MPEG-4 Timed Text tracks count: %d\n", file_report.mp4_cc_track_cnt);
+	printf("MPEG-4 Timed Text: %s\n", Y_N(ctx->freport.mp4_cc_track_cnt));
+	if (ctx->freport.mp4_cc_track_cnt) {
+		printf("MPEG-4 Timed Text tracks count: %d\n", ctx->freport.mp4_cc_track_cnt);
 	}
 
-	memset(&file_report, 0, sizeof (struct file_report_t));
+	memset(&ctx->freport, 0, sizeof (struct file_report));
 
 	#undef Y_N
 }

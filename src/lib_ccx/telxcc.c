@@ -917,7 +917,7 @@ void tlt_write_rcwt(struct lib_ccx_ctx *ctx, uint8_t data_unit_id, uint8_t *pack
 void tlt_read_rcwt(struct lib_ccx_ctx *ctx)
 {
 	int len = 1 + 8 + 44;
-	char *buf = (char *) malloc(len);
+	unsigned char *buf = (unsigned char *) malloc(len);
 	if (buf == NULL)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory");
 

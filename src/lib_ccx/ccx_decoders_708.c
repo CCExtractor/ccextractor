@@ -13,6 +13,7 @@ int cea708services[CCX_DECODERS_708_MAX_SERVICES]; // [] -> 1 for services to be
 int ccx_decoders_708_report = 0;
 int resets_708;
 
+struct ccx_decoder_708_report_t ccx_decoder_708_report;
 static unsigned char current_packet[MAX_708_PACKET_LENGTH]; // Length according to EIA-708B, part 5
 static int current_packet_length=0;
 static int last_seq=-1; // -1 -> No last sequence yet

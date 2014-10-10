@@ -11,12 +11,14 @@ This variable (ccx_decoder_608_report) holds data on the cc channels & xds packe
 This can be interesting if you just want to know what kind of data a file holds that has 608 packets. CCExtractor uses it
 for the report functionality.
 */
-struct ccx_decoder_608_report_t {
+struct ccx_decoder_608_report
+{
 	unsigned xds : 1;
 	unsigned cc_channels[4];
-} ccx_decoder_608_report;
+};
 
-typedef struct ccx_decoder_608_settings {
+typedef struct ccx_decoder_608_settings
+{
 	int direct_rollup; // Write roll-up captions directly instead of line by line?
 	int force_rollup; // 0=Disabled, 1, 2 or 3=max lines in roll-up mode
 	int no_rollup; // If 1, write one line at a time
@@ -53,6 +55,7 @@ typedef struct ccx_decoder_608_context
 
 	int *halt; // Can be used to halt the feeding of caption data. Set to 1 if screens_to_progress != -1 && screenfuls_counter >= screens_to_process
 	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
+	struct ccx_decoder_608_report report;
 } ccx_decoder_608_context;
 
 extern unsigned char *enc_buffer;
