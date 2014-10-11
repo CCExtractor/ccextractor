@@ -84,5 +84,6 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->wbout2.filename = opt->wbout2.filename;
 
 
+	build_parity_table();
 	return ctx;
 }

@@ -533,7 +533,7 @@ void dinit_encoder(struct encoder_ctx *ctx)
 
 int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 {
-	int wrote_something = 0 ;
+	int wrote_something = 0;
 
 	if (sub->type == CC_608)
 	{

@@ -394,7 +394,6 @@ int main(int argc, char *argv[])
 		}
 	}	
 
-	build_parity_table();
 
 	// Initialize HDTV caption buffer
 	init_hdcc();
@@ -442,8 +441,9 @@ int main(int argc, char *argv[])
 			{
 				int ret = 0;
 				char *bptr = ctx->buffer;
-				memset(bptr,0,1024);
 				int len = ff_get_ccframe(ffmpeg_ctx, bptr, 1024);
+                                int cc_count = 0;
+				memset(bptr,0,1024);
 				if(len == AVERROR(EAGAIN))
 				{
 					continue;
@@ -458,7 +458,9 @@ int main(int argc, char *argv[])
 					break;
 
 				}
-				store_hdcc(ctx, bptr,len, i++,fts_now,&dec_sub);
+                                else
+                                    cc_count = (len-2)/3;
+				store_hdcc(ctx, bptr, cc_count, i++,fts_now,&dec_sub);
 				if(dec_sub.got_output)
 				{
 					encode_sub(enc_ctx, &dec_sub);
