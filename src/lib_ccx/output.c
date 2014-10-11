@@ -7,11 +7,11 @@
 #endif
 
 
-void init_write (struct ccx_s_write *wb)
+void init_write (struct ccx_s_write *wb,char *filename)
 {
 	memset(wb, 0, sizeof(struct ccx_s_write));
     wb->fh=-1;
-    wb->filename=NULL;
+    wb->filename=filename;
 }
 
 void writeraw (const unsigned char *data, int length, struct ccx_s_write *wb)
