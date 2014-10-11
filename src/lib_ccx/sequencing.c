@@ -11,7 +11,7 @@ int cc_data_count[SORTBUF];
 // Store fts;
 static LLONG cc_fts[SORTBUF];
 // Store HD CC packets
-unsigned char cc_data_pkts[SORTBUF][10*31*3+1]; // *10, because MP4 seems to have different limits
+unsigned char cc_data_pkts[SORTBUF][10*31*3+2]; // *10, because MP4 seems to have different limits
 
 // Set to true if data is buffered
 int has_ccdata_buffered = 0;
@@ -29,7 +29,7 @@ void init_hdcc (void)
         cc_data_count[j] = 0;
         cc_fts[j] = 0;
     }
-    memset(cc_data_pkts, 0, SORTBUF*(31*3+1));
+    memset(cc_data_pkts, 0, SORTBUF*(31*3+2));
     has_ccdata_buffered = 0;
 }
 

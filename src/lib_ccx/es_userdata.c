@@ -142,7 +142,7 @@ int user_data(struct lib_ccx_ctx *ctx, struct bitstream *ustream, int udtype, st
     {
         if ((ud_header[1]&0x7F) == 0x01)
         {
-            unsigned char cc_data[3*31+1]; // Maximum cc_count is 31
+            unsigned char cc_data[3*31+2]; // Maximum cc_count is 31
 
             ctx->stat_scte20ccheaders++;
             read_bytes(ustream, 2); // "03 01"
