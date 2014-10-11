@@ -458,7 +458,7 @@ int main(int argc, char *argv[])
 					break;
 
 				}
-				store_hdcc(bptr,len, i++,fts_now,&dec_sub);
+				store_hdcc(ctx, bptr,len, i++,fts_now,&dec_sub);
 				if(dec_sub.got_output)
 				{
 					encode_sub(enc_ctx, &dec_sub);
