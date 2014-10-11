@@ -4,7 +4,7 @@ project (CCExtractor)
 
 #Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
-set (CCEXTRACTOR_VERSION_MINOR 74)
+set (CCEXTRACTOR_VERSION_MINOR 75)
 
 # configure a header file to pass some of the CMake settings
 # to the source code

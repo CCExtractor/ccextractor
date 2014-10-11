@@ -1,3 +1,7 @@
+0.75
+-----------
+- CCExtractor can be used as library if compiled using cmake
+
 0.74
 -----------
 - Fixed issue with -o1 -o2 and -12 parameters (where it would write output only in the o2 file)
