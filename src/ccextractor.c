@@ -441,7 +441,7 @@ int main(int argc, char *argv[])
 			do
 			{
 				int ret = 0;
-				char *bptr = buffer;
+				char *bptr = ctx->buffer;
 				memset(bptr,0,1024);
 				int len = ff_get_ccframe(ffmpeg_ctx, bptr, 1024);
 				if(len == AVERROR(EAGAIN))
@@ -466,7 +466,7 @@ int main(int argc, char *argv[])
 				}
 			}while(1);
 
-			free(buffer);
+			free(ctx->buffer);
 			continue;
 		}
 		else
