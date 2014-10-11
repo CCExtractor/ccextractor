@@ -459,7 +459,7 @@ int main(int argc, char *argv[])
 
 				}
                                 else
-                                    cc_count = (len-2)/3;
+                                    cc_count = len/3;
 				store_hdcc(ctx, bptr, cc_count, i++,fts_now,&dec_sub);
 				if(dec_sub.got_output)
 				{
