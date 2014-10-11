@@ -52,8 +52,8 @@ int main(int argc, char *argv[])
 	ccx_common_timing_init(&ctx->past,ccx_options.nosync);
 
 	// Prepare write structures
-	init_write(&ctx->wbout1);
-	init_write(&ctx->wbout2);
+	init_write(&ctx->wbout1,ccx_options.wbout1.filename);
+	init_write(&ctx->wbout2,ccx_options.wbout2.filename);
 	
 	// Prepare time structures
 	init_boundary_time (&ccx_options.extraction_start);
