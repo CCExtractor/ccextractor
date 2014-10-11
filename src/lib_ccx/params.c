@@ -235,9 +235,6 @@ void set_output_format (const char *format)
 			ccx_options.transcript_settings.showEndTime = 1;
 			ccx_options.transcript_settings.showCC = 0;
 			ccx_options.transcript_settings.showMode = 1;
-		} else {
-			// Throw exception
-			fatal(EXIT_INCOMPATIBLE_PARAMETERS, "timedtranscript cannot be set after -UCLA is used!");
 		}
 	}
 	else if (strcmp (format,"report")==0)
