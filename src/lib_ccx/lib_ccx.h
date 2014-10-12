@@ -291,7 +291,7 @@ void params_dump(struct lib_ccx_ctx *ctx);
 void print_file_report(struct lib_ccx_ctx *ctx);
 
 // output.c
-void init_write (struct ccx_s_write *wb);
+void init_write(struct ccx_s_write *wb, char *filename);
 void writeraw (const unsigned char *data, int length, struct ccx_s_write *wb);
 void writedata(const unsigned char *data, int length, ccx_decoder_608_context *context, struct cc_subtitle *sub);
 void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile);
