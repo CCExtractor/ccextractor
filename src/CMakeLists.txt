@@ -28,3 +28,5 @@ set (EXTRA_LIBS ${EXTRA_LIBS} m)
 
 add_executable(ccextractor ${SOURCEFILE})
 target_link_libraries (ccextractor ${EXTRA_LIBS})
+
+install (TARGETS ccextractor DESTINATION bin)
