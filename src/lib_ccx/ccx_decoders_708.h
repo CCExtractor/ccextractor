@@ -291,6 +291,8 @@ typedef struct cc708_service_decoder
 	char *filename; // Where we are going to write our output
 	int fh; // Handle to output file. -1 if not yet open
 	int srt_counter;
+	enum ccx_output_format output_format; // What kind of output format should be used?
+	LLONG subs_delay; // ms to delay (or advance) subs
 }
 cc708_service_decoder;
 
@@ -299,7 +301,7 @@ extern int cea708services[]; // [] -> 1 for services to be processed
 
 extern int resets_708;
 
-void do_708 (const unsigned char *data, int datalength);
+void do_708 (struct lib_cc_decode* ctx, const unsigned char *data, int datalength);
 
 unsigned char get_internal_from_G0 (unsigned char g0_char);
 unsigned char get_internal_from_G1 (unsigned char g1_char);

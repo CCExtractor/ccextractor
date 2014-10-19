@@ -97,7 +97,7 @@ struct lib_cc_decode
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
 	void *wbout1;
+	LLONG subs_delay; // ms to delay (or advance) subs
 };
-extern struct ccx_decoders_common_settings_t ccx_decoders_common_settings;
 
 #endif

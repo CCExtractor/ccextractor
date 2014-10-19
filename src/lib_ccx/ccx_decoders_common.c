@@ -19,9 +19,6 @@ unsigned int encoded_crlf_length;
 unsigned char encoded_br[16];
 unsigned int encoded_br_length;
 
-void ccx_decoders_common_settings_init(LLONG subs_delay, enum ccx_output_format output_format){
-}
-
 LLONG minimum_fts = 0; // No screen should start before this FTS
 
 /* This function returns a FTS that is guaranteed to be at least 1 ms later than the end of the previous screen. It shouldn't be needed
@@ -253,7 +250,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
             if (timeok)
             {
                 if(ctx->write_format!=CCX_OF_RCWT)
-                   do_708 ((const unsigned char *) temp, 4);
+                   do_708 (ctx,(const unsigned char *) temp, 4);
                 else
                     writercwtdata(ctx, cc_block);
             }
@@ -289,7 +286,9 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 		ccx_options.trim_subs,
 		ccx_options.encoding,
 		&ctx->processed_enough,
-		setting->cc_to_stdout
+		setting->cc_to_stdout,
+		setting->subs_delay,
+		setting->write_format
 		);
 	ctx->context_cc608_field_2 = ccx_decoder_608_init_library(
 		ccx_options.settings_608,
@@ -298,11 +297,14 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 		ccx_options.trim_subs,
 		ccx_options.encoding,
 		&ctx->processed_enough,
-		setting->cc_to_stdout
+		setting->cc_to_stdout,
+		setting->subs_delay,
+		setting->write_format
 		);
 
 	ctx->fix_padding = setting->fix_padding;
 	ctx->write_format =  setting->write_format;
+	ctx->subs_delay =  setting->subs_delay;
 	ctx->wbout1 = setting->wbout1;
 	return ctx;
 }

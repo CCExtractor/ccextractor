@@ -2,7 +2,6 @@
 #include "ccx_common_option.h"
 
 struct ccx_common_logging_t ccx_common_logging;
-struct ccx_decoders_common_settings_t ccx_decoders_common_settings;
 static struct ccx_decoders_common_settings_t *init_decoder_setting(
 		struct ccx_s_options *opt)
 {
