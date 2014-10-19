@@ -3,10 +3,26 @@
 
 struct ccx_common_logging_t ccx_common_logging;
 struct ccx_decoders_common_settings_t ccx_decoders_common_settings;
+static struct ccx_decoders_common_settings_t *init_decoder_setting(
+		struct ccx_s_options *opt)
+{
+	struct ccx_decoders_common_settings_t *setting;
+
+	setting = malloc(sizeof(struct ccx_decoders_common_settings_t));
+	if(!setting)
+		return NULL;
+
+	setting->subs_delay = opt->subs_delay;
+	setting->output_format = opt->write_format;
+	setting->fix_padding = opt->fix_padding;
+	return setting;
+}
+
 struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 {
 	struct lib_ccx_ctx *ctx;
 	struct ccx_decoder_608_report *report_608;
+	struct ccx_decoders_common_settings_t *dec_setting;
 
 	ctx = malloc(sizeof(struct lib_ccx_ctx));
 	if(!ctx)
@@ -41,36 +57,18 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->freport.data_from_708 = &ccx_decoder_708_report;
 
 	// Init shared decoder settings
-	ccx_decoders_common_settings_init(ctx->subs_delay, ccx_options.write_format);
+	dec_setting = init_decoder_setting(opt);
+	ctx->dec_ctx = init_cc_decode(dec_setting);
+
 	// Init encoder helper variables
 	ccx_encoders_helpers_setup(ccx_options.encoding, ccx_options.nofontcolor, ccx_options.notypesetting, ccx_options.trim_subs);
-
-	// Prepare 608 context
-	ctx->context_cc608_field_1 = ccx_decoder_608_init_library(
-		ccx_options.settings_608,
-		ccx_options.cc_channel,
-		1,
-		ccx_options.trim_subs,
-		ccx_options.encoding,
-		&ctx->processed_enough,
-		&ctx->cc_to_stdout
-		);
-	ctx->context_cc608_field_2 = ccx_decoder_608_init_library(
-		ccx_options.settings_608,
-		ccx_options.cc_channel,
-		2,
-		ccx_options.trim_subs,
-		ccx_options.encoding,
-		&ctx->processed_enough,
-		&ctx->cc_to_stdout
-		);
 
 	// Init 708 decoder(s)
 	ccx_decoders_708_init_library(ctx->basefilename,ctx->extension,ccx_options.print_file_reports);
 
 	// Set output structures for the 608 decoder
-	ctx->context_cc608_field_1.out = &ctx->wbout1;
-	ctx->context_cc608_field_2.out = &ctx->wbout2;
+	//ctx->dec_ctx->context_cc608_field_1->out = ctx->dec_ctx->wbout1;
+	//ctx->dec_ctx->context_cc608_field_2->out = ctx->dec_ctx->wbout2;
 
 	// Init XDS buffers
 	ccx_decoders_xds_init_library(&ccx_options.transcript_settings, ctx->subs_delay, ccx_options.millis_separator);

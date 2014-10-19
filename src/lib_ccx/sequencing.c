@@ -19,9 +19,6 @@ int has_ccdata_buffered = 0;
 // B-Frames belong to this I- or P-frame.
 static int anchor_seq_number = -1;
 
-
-static int in_xds_mode ; // Stolen from 608.c We need this for debug
-
 void init_hdcc (void)
 {
     for (int j=0; j<SORTBUF; j++)
@@ -97,217 +94,61 @@ void anchor_hdcc(int seq)
 // Sort/flash caption block buffer
 void process_hdcc (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 {
-    // Remember the current value
-    LLONG store_fts_now = fts_now;
+	// Remember the current value
+	LLONG store_fts_now = fts_now;
+	struct lib_cc_decode *dec_ctx;
+	int reset_cb = -1;
 
-    dbg_print(CCX_DMT_VERBOSE, "Flush HD caption blocks\n");
+	dbg_print(CCX_DMT_VERBOSE, "Flush HD caption blocks\n");
+	dec_ctx = ctx->dec_ctx;
 
-    int reset_cb = -1;
-
-    for (int seq=0; seq<SORTBUF; seq++)
-    {
-        // We rely on this.
-        if (ccx_bufferdatatype == CCX_H264)
-            reset_cb = 1;
-
-	// If fts_now is unchanged we rely on cc block counting,
-	// otherwise reset counters as they get changed by do_cb()
-	// below. This only happens when current_pts does not get
-	// updated, like it used do happen for elementary streams.
-	// Since use_gop_as_pts this is not needed anymore, but left
-	// here for posterity.
-	if (reset_cb < 0 && cc_fts[seq] && seq<SORTBUF-1 && cc_fts[seq+1])
+	for (int seq=0; seq<SORTBUF; seq++)
 	{
-	    if (cc_fts[seq] != cc_fts[seq+1])
+		// We rely on this.
+		if (ccx_bufferdatatype == CCX_H264)
 		reset_cb = 1;
-	    else
-		reset_cb = 0;
+
+		// If fts_now is unchanged we rely on cc block counting,
+		// otherwise reset counters as they get changed by do_cb()
+		// below. This only happens when current_pts does not get
+		// updated, like it used do happen for elementary streams.
+		// Since use_gop_as_pts this is not needed anymore, but left
+		// here for posterity.
+		if (reset_cb < 0 && cc_fts[seq] && seq<SORTBUF-1 && cc_fts[seq+1])
+		{
+			if (cc_fts[seq] != cc_fts[seq+1])
+				reset_cb = 1;
+			else
+				reset_cb = 0;
+		}
+		if (reset_cb == 1)
+		{
+			cb_field1 = 0;
+			cb_field2 = 0;
+			cb_708 = 0;
+		}
+
+		// Skip sequence numbers without data
+		if (cc_data_count[seq] == 0)
+			continue;
+
+		if (cc_data_pkts[seq][cc_data_count[seq]*3]!=0xFF)
+		{
+			// This is not optional. Something is wrong.
+			dbg_print(CCX_DMT_VERBOSE, "Missing 0xFF marker at end\n");
+			// A "continue;" here would ignore this caption, but we
+			// process it.
+		}
+
+		// Re-create original time
+		fts_now = cc_fts[seq];
+		process_cc_data( dec_ctx, cc_data_pkts[seq], cc_data_count[seq], sub);
+
 	}
-	if (reset_cb == 1)
-	{
-	    cb_field1 = 0;
-	    cb_field2 = 0;
-	    cb_708 = 0;
-	}
 
-        // Skip sequence numbers without data
-        if (cc_data_count[seq] == 0)
-            continue;
+	// Restore the value
+	fts_now = store_fts_now;
 
-        if (cc_data_pkts[seq][cc_data_count[seq]*3]!=0xFF)
-        {
-            // This is not optional. Something is wrong.
-            dbg_print(CCX_DMT_VERBOSE, "Missing 0xFF marker at end\n");
-            // A "continue;" here would ignore this caption, but we
-            // process it.
-        }
-
-        // Re-create original time
-        fts_now = cc_fts[seq];
-
-        for (int j=0; j<(cc_data_count[seq])*3; j=j+3)
-        {
-            unsigned char cc_valid = (*(cc_data_pkts[seq]+j) & 4) >>2;
-            unsigned char cc_type = (*(cc_data_pkts[seq]+j)) & 3;
-
-            if (cc_valid && (cc_type==0 || cc_type==1))
-            {
-                // For EIA-608 data we verify parity.
-                if (!cc608_parity_table[cc_data_pkts[seq][j+2]])
-                {
-                    // If the second byte doesn't pass parity, ignore pair
-                    continue;
-                }
-                if (!cc608_parity_table[cc_data_pkts[seq][j+1]])
-                {
-                    // The first byte doesn't pass parity, we replace it with a solid blank
-                    // and process the pair.
-                    cc_data_pkts[seq][j+1]=0x7F;
-                }
-            }
-            do_cb(ctx, cc_data_pkts[seq]+j, sub);
-
-        } // for loop over packets
-    }
-
-    // Restore the value
-    fts_now = store_fts_now;
-
-    // Now that we are done, clean up.
-    init_hdcc();
-}
-
-
-int do_cb (struct lib_ccx_ctx *ctx, unsigned char *cc_block, struct cc_subtitle *sub)
-{
-    unsigned char cc_valid = (*cc_block & 4) >>2;
-    unsigned char cc_type = *cc_block & 3;
-
-    int timeok = 1;
-
-    if ( ccx_options.fix_padding
-         && cc_valid==0 && cc_type <= 1 // Only fix NTSC packets
-         && cc_block[1]==0 && cc_block[2]==0 )
-    {
-        /* Padding */
-        cc_valid=1;
-        cc_block[1]=0x80;
-        cc_block[2]=0x80;
-    }
-
-	if ( ccx_options.write_format!=CCX_OF_RAW && // In raw we cannot skip padding because timing depends on it
-		 ccx_options.write_format!=CCX_OF_DVDRAW &&
-		(cc_block[0]==0xFA || cc_block[0]==0xFC || cc_block[0]==0xFD )
-		&& (cc_block[1]&0x7F)==0 && (cc_block[2]&0x7F)==0) // CFS: Skip non-data, makes debugging harder.
-		return 1;
-
-    // Print raw data with FTS.
-    dbg_print(CCX_DMT_CBRAW, "%s   %d   %02X:%c%c:%02X", print_mstime(fts_now + fts_global),in_xds_mode,
-               cc_block[0], cc_block[1]&0x7f,cc_block[2]&0x7f, cc_block[2]);
-
-    /* In theory the writercwtdata() function could return early and not
-     * go through the 608/708 cases below.  We do that to get accurate
-     * counts for cb_field1, cb_field2 and cb_708.
-     * Note that printdata() and do_708() must not be called for
-     * the CCX_OF_RCWT case. */
-
-    if (cc_valid || cc_type==3)
-    {
-        ctx->cc_stats[cc_type]++;
-
-        switch (cc_type)
-        {
-        case 0:
-            dbg_print(CCX_DMT_CBRAW, "    %s   ..   ..\n",  debug_608toASC( cc_block, 0));
-
-            current_field=1;
-            ctx->saw_caption_block = 1;
-
-            if (ccx_options.extraction_start.set &&
-				get_fts() < ccx_options.extraction_start.time_in_ms)
-                timeok = 0;
-            if (ccx_options.extraction_end.set &&
-				get_fts() > ccx_options.extraction_end.time_in_ms)
-            {
-                timeok = 0;
-                ctx->processed_enough=1;
-            }
-            if (timeok)
-            {
-                if(ccx_options.write_format!=CCX_OF_RCWT)
-                    printdata (ctx, cc_block+1,2,0,0, sub);
-                else
-                    writercwtdata(ctx, cc_block);
-            }
-            cb_field1++;
-            break;
-        case 1:
-            dbg_print(CCX_DMT_CBRAW, "    ..   %s   ..\n",  debug_608toASC( cc_block, 1));
-
-            current_field=2;
-            ctx->saw_caption_block = 1;
-
-            if (ccx_options.extraction_start.set &&
-				get_fts() < ccx_options.extraction_start.time_in_ms)
-                timeok = 0;
-            if (ccx_options.extraction_end.set &&
-				get_fts() > ccx_options.extraction_end.time_in_ms)
-            {
-                timeok = 0;
-                ctx->processed_enough=1;
-            }
-            if (timeok)
-            {
-                if(ccx_options.write_format!=CCX_OF_RCWT)
-                    printdata (ctx, 0,0,cc_block+1,2, sub);
-                else
-                    writercwtdata(ctx, cc_block);
-            }
-            cb_field2++;
-            break;
-        case 2: //EIA-708
-            // DTVCC packet data
-            // Fall through
-        case 3: //EIA-708
-            dbg_print(CCX_DMT_CBRAW, "    ..   ..   DD\n");
-
-            // DTVCC packet start
-            current_field=3;
-
-            if (ccx_options.extraction_start.set &&
-				get_fts() < ccx_options.extraction_start.time_in_ms)
-                timeok = 0;
-            if (ccx_options.extraction_end.set &&
-				get_fts() > ccx_options.extraction_end.time_in_ms)
-            {
-                timeok = 0;
-                ctx->processed_enough=1;
-            }
-            char temp[4];
-            temp[0]=cc_valid;
-            temp[1]=cc_type;
-            temp[2]=cc_block[1];
-            temp[3]=cc_block[2];
-            if (timeok)
-            {
-                if(ccx_options.write_format!=CCX_OF_RCWT)
-                   do_708 ((const unsigned char *) temp, 4);
-                else
-                    writercwtdata(ctx, cc_block);
-            }
-            cb_708++;
-            // Check for bytes read
-            // printf ("Warning: Losing EIA-708 data!\n");
-            break;
-        default:
-			fatal(CCX_COMMON_EXIT_BUG_BUG, "Cannot be reached!");
-        } // switch (cc_type)
-    } // cc_valid
-    else
-    {
-        dbg_print(CCX_DMT_CBRAW, "    ..   ..   ..\n");
-        dbg_print(CCX_DMT_VERBOSE, "Found !(cc_valid || cc_type==3) - ignore this block\n");
-    }
-
-    return 1;
+	// Now that we are done, clean up.
+	init_hdcc();
 }

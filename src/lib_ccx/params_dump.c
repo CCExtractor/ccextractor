@@ -207,6 +207,8 @@ void params_dump(struct lib_ccx_ctx *ctx)
 
 void print_file_report(struct lib_ccx_ctx *ctx)
 {
+	struct lib_cc_decode *dec_ctx = NULL;
+	dec_ctx = ctx->dec_ctx;
 	#define Y_N(cond) ((cond) ? "Yes" : "No")
 
 	printf("File: ");
@@ -359,9 +361,9 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 	if (j == SUB_STREAMS_CNT)
 		printf("No\n");
 
-	printf("EIA-608: %s\n", Y_N(ctx->cc_stats[0] > 0 || ctx->cc_stats[1] > 0));
+	printf("EIA-608: %s\n", Y_N(dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0));
 
-	if (ctx->cc_stats[0] > 0 || ctx->cc_stats[1] > 0)
+	if (dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0)
 	{
 		printf("XDS: %s\n", Y_N(ctx->freport.data_from_608->xds));
 
@@ -371,9 +373,9 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 		printf("CC4: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[3]));
 	}
 
-	printf("CEA-708: %s\n", Y_N(ctx->cc_stats[2] > 0 || ctx->cc_stats[3] > 0));
+	printf("CEA-708: %s\n", Y_N(dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0));
 
-	if (ctx->cc_stats[2] > 0 || ctx->cc_stats[3] > 0)
+	if (dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0)
 	{
 		printf("Services: ");
 		for (int i = 0; i < CCX_DECODERS_708_MAX_SERVICES; i++)

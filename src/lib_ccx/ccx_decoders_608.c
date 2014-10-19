@@ -116,42 +116,44 @@ void clear_eia608_cc_buffer(ccx_decoder_608_context *context, struct eia608_scre
 	data->empty=1;
 }
 
-ccx_decoder_608_context ccx_decoder_608_init_library(ccx_decoder_608_settings settings, int channel, int field, int trim_subs, enum ccx_encoding_type encoding, int *halt, int *cc_to_stdout)
+ccx_decoder_608_context* ccx_decoder_608_init_library(ccx_decoder_608_settings settings, int channel, int field, int trim_subs, enum ccx_encoding_type encoding, int *halt, int cc_to_stdout)
 {
-	ccx_decoder_608_context data;
+	ccx_decoder_608_context *data = NULL;
 
-	data.cursor_column=0;
-	data.cursor_row=0;
-	data.visible_buffer=1;
-	data.last_c1=0;
-	data.last_c2=0;
-	data.mode=MODE_POPON;
-	// data.current_visible_start_cc=0;
-	data.current_visible_start_ms=0;
-	data.screenfuls_counter=0;
-	data.channel=1;
-	data.font=FONT_REGULAR;
-	data.rollup_base_row=14;
-	data.ts_start_of_current_line=-1;
-	data.ts_last_char_received=-1;
-	data.new_channel=1;
-	data.bytes_processed_608 = 0;
-	data.my_field = field;
-	data.my_channel = channel;
-	data.out = NULL;
-	data.have_cursor_position = 0;
+	data = malloc(sizeof(ccx_decoder_608_context));
 
-	data.trim_subs = trim_subs;
-	data.encoding = encoding;
+	data->cursor_column=0;
+	data->cursor_row=0;
+	data->visible_buffer=1;
+	data->last_c1=0;
+	data->last_c2=0;
+	data->mode=MODE_POPON;
+	// data->current_visible_start_cc=0;
+	data->current_visible_start_ms=0;
+	data->screenfuls_counter=0;
+	data->channel=1;
+	data->font=FONT_REGULAR;
+	data->rollup_base_row=14;
+	data->ts_start_of_current_line=-1;
+	data->ts_last_char_received=-1;
+	data->new_channel=1;
+	data->bytes_processed_608 = 0;
+	data->my_field = field;
+	data->my_channel = channel;
+	data->out = NULL;
+	data->have_cursor_position = 0;
 
-	data.halt = halt;
-	data.cc_to_stdout = cc_to_stdout;
+	data->trim_subs = trim_subs;
+	data->encoding = encoding;
 
-	data.settings = settings;
-	data.current_color = data.settings.default_color;
+	data->halt = halt;
+	data->cc_to_stdout = cc_to_stdout;
 
-	clear_eia608_cc_buffer(&data, &data.buffer1);
-	clear_eia608_cc_buffer(&data, &data.buffer2);
+	data->settings = settings;
+	data->current_color = data->settings.default_color;
+
+	clear_eia608_cc_buffer(data, &data->buffer1);
+	clear_eia608_cc_buffer(data, &data->buffer2);
 
 	return data;
 }

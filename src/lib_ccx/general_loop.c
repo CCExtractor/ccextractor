@@ -474,28 +474,30 @@ void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
  * The number of processed bytes is returned. */
 LLONG process_raw_with_field (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 {
-    unsigned char data[3];
-    data[0]=0x04; // Field 1
-    current_field=1;
+	unsigned char data[3];
+	struct lib_cc_decode *dec_ctx = NULL;
+	dec_ctx = ctx->dec_ctx;
+	data[0]=0x04; // Field 1
+	current_field=1;
 
-    for (unsigned long i=0; i<inbuf; i=i+3)
-    {
-        if ( !ctx->saw_caption_block && *(ctx->buffer+i)==0xff && *(ctx->buffer+i+1)==0xff)
-        {
-            // Skip broadcast header
-        }
-        else
-        {
+	for (unsigned long i=0; i<inbuf; i=i+3)
+	{
+		if ( !dec_ctx->saw_caption_block && *(ctx->buffer+i)==0xff && *(ctx->buffer+i+1)==0xff)
+		{
+			// Skip broadcast header
+		}
+		else
+		{
 			data[0]=ctx->buffer[i];
-            data[1]=ctx->buffer[i+1];
-            data[2]=ctx->buffer[i+2];
+			data[1]=ctx->buffer[i+1];
+			data[2]=ctx->buffer[i+2];
 
-            // do_cb increases the cb_field1 counter so that get_fts()
-            // is correct.
-            do_cb(ctx, data, sub);
-        }
-    }
-    return inbuf;
+			// do_cb increases the cb_field1 counter so that get_fts()
+			// is correct.
+			do_cb(dec_ctx, data, sub);
+		}
+	}
+	return inbuf;
 }
 
 
@@ -503,13 +505,15 @@ LLONG process_raw_with_field (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
  * The number of processed bytes is returned. */
 LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 {
-    unsigned char data[3];
+	unsigned char data[3];
+	struct lib_cc_decode *dec_ctx = NULL;
+	dec_ctx = ctx->dec_ctx;
     data[0]=0x04; // Field 1
     current_field=1;
 
     for (unsigned long i=0; i<inbuf; i=i+2)
     {
-        if ( !ctx->saw_caption_block && *(ctx->buffer+i)==0xff && *(ctx->buffer+i+1)==0xff)
+        if ( !dec_ctx->saw_caption_block && *(ctx->buffer+i)==0xff && *(ctx->buffer+i+1)==0xff)
         {
             // Skip broadcast header
         }
@@ -520,7 +524,7 @@ LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 
             // do_cb increases the cb_field1 counter so that get_fts()
             // is correct.
-            do_cb(ctx, data, sub);
+            do_cb(dec_ctx, data, sub);
         }
     }
     return inbuf;
@@ -532,12 +536,14 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
     LLONG overlap=0;
     LLONG pos = 0; /* Current position in buffer */
 	struct cc_subtitle dec_sub;
+	struct lib_cc_decode *dec_ctx = NULL;
+	dec_ctx = ctx->dec_ctx;
     inbuf = 0; // No data yet
 
     end_of_file = 0;
     current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
 	memset(&dec_sub, 0,sizeof(dec_sub));
-    while (!end_of_file && !ctx->processed_enough)
+    while (!end_of_file && !dec_ctx->processed_enough)
     {
         /* Get rid of the bytes we already processed */
         overlap=inbuf-pos;
@@ -707,7 +713,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
     if (has_ccdata_buffered)
         process_hdcc(ctx, &dec_sub);
 
-    if (ctx->total_past!=ctx->total_inputsize && ccx_options.binary_concat && !ctx->processed_enough)
+    if (ctx->total_past!=ctx->total_inputsize && ccx_options.binary_concat && !dec_ctx->processed_enough)
     {
         mprint("\n\n\n\nATTENTION!!!!!!\n");
         mprint("Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
@@ -726,6 +732,8 @@ void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 	static unsigned char *parsebuf;
 	static long parsebufsize = 1024;
 	struct cc_subtitle dec_sub;
+	struct lib_cc_decode *dec_ctx = NULL;
+	dec_ctx = ctx->dec_ctx;
 
 	memset(&dec_sub, 0,sizeof(dec_sub));
     // As BUFSIZE is a macro this is just a reminder
@@ -831,7 +839,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 
             for (int j=0; j<cbcount*3; j=j+3)
             {
-                do_cb(ctx, parsebuf+j, &dec_sub);
+                do_cb(dec_ctx, parsebuf+j, &dec_sub);
             }
         }
 		if (dec_sub.got_output)

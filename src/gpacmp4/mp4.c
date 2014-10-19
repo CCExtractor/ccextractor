@@ -350,7 +350,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, char *file,void *enc_ctx)
 #endif
 						do
 						{
-							ret = process608((unsigned char*)data, len, &ctx->context_cc608_field_1, &dec_sub);
+							ret = process608((unsigned char*)data, len, ctx->dec_ctx->context_cc608_field_1, &dec_sub);
 							len -= ret;
 							data += ret;
 							if(dec_sub.got_output)

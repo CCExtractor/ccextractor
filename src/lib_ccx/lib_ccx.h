@@ -91,7 +91,6 @@ struct lib_ccx_ctx
 	uint32_t min_global_timestamp;
 	int global_timestamp_inited;
 
-	int saw_caption_block;
 
 	// Stuff common to both loops
 	unsigned char *buffer;
@@ -102,7 +101,6 @@ struct lib_ccx_ctx
 	LLONG total_past; // Only in binary concat mode
 
 	int last_reported_progress;
-	int processed_enough; // If 1, we have enough lines, time, etc.
 
 	// Small buffer to help us with the initial sync
 	unsigned char startbytes[STARTBYTESLENGTH];
@@ -120,7 +118,6 @@ struct lib_ccx_ctx
 	int stat_divicom;
 	unsigned total_pulldownfields;
 	unsigned total_pulldownframes;
-	int cc_stats[4];
 	int false_pict_header;
 
 	/* GOP-based timing */
@@ -134,10 +131,7 @@ struct lib_ccx_ctx
 
 	// int hex_mode=HEX_NONE; // Are we processing an hex file?
 
-	/* 608 contexts - note that this shouldn't be global, they should be
-	per program */
-	ccx_decoder_608_context context_cc608_field_1;
-	ccx_decoder_608_context context_cc608_field_2;
+	struct lib_cc_decode *dec_ctx;
 	enum ccx_stream_mode_enum stream_mode;
 	enum ccx_stream_mode_enum auto_stream;
 
@@ -282,7 +276,6 @@ void store_hdcc(struct lib_ccx_ctx *ctx, unsigned char *cc_data, int cc_count, i
 			LLONG current_fts_now,struct cc_subtitle *sub);
 void anchor_hdcc(int seq);
 void process_hdcc (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub);
-int do_cb (struct lib_ccx_ctx *ctx, unsigned char *cc_block, struct cc_subtitle *sub);
 // mp4.c
 int processmp4 (struct lib_ccx_ctx *ctx, char *file,void *enc_ctx);
 
@@ -295,9 +288,7 @@ void init_write (struct ccx_s_write *wb);
 void writeraw (const unsigned char *data, int length, struct ccx_s_write *wb);
 void writedata(const unsigned char *data, int length, ccx_decoder_608_context *context, struct cc_subtitle *sub);
 void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile);
-void printdata (struct lib_ccx_ctx *ctx, const unsigned char *data1, int length1,
-                const unsigned char *data2, int length2, struct cc_subtitle *sub);
-void writercwtdata (struct lib_ccx_ctx *ctx, const unsigned char *data);
+void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data);
 
 // stream_functions.c
 void detect_stream_type (struct lib_ccx_ctx *ctx);
@@ -321,7 +312,6 @@ void myth_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
 void fatal(int exit_code, const char *fmt, ...);
 void dvprint(const char *fmt, ...);
 void mprint (const char *fmt, ...);
-void dbg_print(LLONG mask, const char *fmt, ...);
 void init_boundary_time (struct ccx_boundary_time *bt);
 void sleep_secs (int secs);
 void dump (LLONG mask, unsigned char *start, int l, unsigned long abs_start, unsigned clear_high_bit);
@@ -378,7 +368,6 @@ extern int has_ccdata_buffered;
 
 extern unsigned char *subline;
 
-extern int cc608_parity_table[256]; // From myth
 
 // From ts_functions
 extern unsigned cap_stream_type;

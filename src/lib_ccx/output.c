@@ -6,6 +6,8 @@
 #include <unistd.h>
 #endif
 
+/* TODO remove dependency of encoder by removing writeDVDraw from this file */
+#include "ccx_encoders_structs.h"
 
 void init_write (struct ccx_s_write *wb)
 {
@@ -102,21 +104,24 @@ void writeDVDraw (const unsigned char *data1, int length1,
 
 }
 
-void printdata (struct lib_ccx_ctx *ctx, const unsigned char *data1, int length1,
+void printdata (struct lib_cc_decode *ctx, const unsigned char *data1, int length1,
                 const unsigned char *data2, int length2, struct cc_subtitle *sub)
 {
-	if (ccx_options.write_format==CCX_OF_DVDRAW)
-		writeDVDraw (data1,length1,data2,length2,&ctx->wbout1);
+	struct ccx_decoder_608_context *field_1 = ctx->context_cc608_field_1;
+	struct ccx_decoder_608_context *field_2 = ctx->context_cc608_field_2;
+	struct ccx_s_write *wbout1 = ctx->wbout1;
+	if (ctx->write_format==CCX_OF_DVDRAW)
+		writeDVDraw (data1, length1, data2, length2, wbout1);
 	else /* Broadcast raw or any non-raw */
 	{
 		if (length1 && ccx_options.extract != 2)
 		{
-			writedata(data1, length1, &ctx->context_cc608_field_1, sub);
+			writedata(data1, length1, field_1, sub);
 		}
 		if (length2)
 		{
 			if (ccx_options.extract != 1)
-				writedata(data2, length2, &ctx->context_cc608_field_2, sub);
+				writedata(data2, length2, field_2, sub);
 			else // User doesn't want field 2 data, but we want XDS.
 				writedata (data2,length2,NULL, sub);
 		}
@@ -125,14 +130,15 @@ void printdata (struct lib_ccx_ctx *ctx, const unsigned char *data1, int length1
 
 /* Buffer data with the same FTS and write when a new FTS or data==NULL
  * is encountered */
-void writercwtdata (struct lib_ccx_ctx *ctx, const unsigned char *data)
+void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data)
 {
-    static LLONG prevfts = -1;
-    LLONG currfts = fts_now + fts_global;
-    static uint16_t cbcount = 0;
-    static int cbempty=0;
-    static unsigned char cbbuffer[0xFFFF*3]; // TODO: use malloc
-    static unsigned char cbheader[8+2];
+	static LLONG prevfts = -1;
+	LLONG currfts = fts_now + fts_global;
+	static uint16_t cbcount = 0;
+	static int cbempty=0;
+	static unsigned char cbbuffer[0xFFFF*3]; // TODO: use malloc
+	static unsigned char cbheader[8+2];
+	struct ccx_s_write *wbout1 = ctx->wbout1;
 
     if ( (prevfts != currfts && prevfts != -1)
          || data == NULL
@@ -186,8 +192,8 @@ void writercwtdata (struct lib_ccx_ctx *ctx, const unsigned char *data)
 			}
 			else
 			{
-				writeraw(cbheader,10,&ctx->wbout1);
-				writeraw(cbbuffer,3*cbcount, &ctx->wbout1);
+				writeraw(cbheader,10,wbout1);
+				writeraw(cbbuffer,3*cbcount, wbout1);
 			}
         }
         cbcount = 0;
@@ -238,8 +244,8 @@ void writercwtdata (struct lib_ccx_ctx *ctx, const unsigned char *data)
 		}
 		else
 		{
-			writeraw(cbheader,10,&ctx->wbout1);
-			writeraw(cbbuffer,3*cbcount, &ctx->wbout1);
+			writeraw(cbheader,10, wbout1);
+			writeraw(cbbuffer,3*cbcount, wbout1);
 		}
 
         cbcount = 0;

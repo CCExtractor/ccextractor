@@ -554,6 +554,7 @@ static int cc608_good_parity(const int *parity_table, unsigned int data)
 void ProcessVBIDataPacket(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 {
 
+	struct lib_cc_decode *dec_ctx = NULL;
 	const unsigned char *meat = av.data;
 	if (meat==NULL)
 	{
@@ -562,6 +563,7 @@ void ProcessVBIDataPacket(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 	}
 
 	LLONG linemask      = 0;
+	dec_ctx = ctx->dec_ctx;
 	// unsigned long long utc = lastccptsu;
 
 	// [i]tv0 means there is a linemask
@@ -615,7 +617,7 @@ void ProcessVBIDataPacket(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 							ccdata[0]=0x04; // Field 1
 							ccdata[1]=meat[1];
 							ccdata[2]=meat[2];
-							do_cb(ctx, ccdata, sub);
+							do_cb(dec_ctx, ccdata, sub);
 							//                         processed_ccblocks++; // Not sure this is accurate
 						}
 						else
@@ -623,7 +625,7 @@ void ProcessVBIDataPacket(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 							ccdata[0]=0x05; // Field 1
 							ccdata[1]=meat[1];
 							ccdata[2]=meat[2];
-							do_cb(ctx, ccdata, sub);
+							do_cb(dec_ctx, ccdata, sub);
 						}
 					}
 					// utc += 33367;
@@ -830,9 +832,11 @@ void myth_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 	int has_vbi=0;
 	LLONG saved = 0;
 	struct cc_subtitle dec_sub;
+	struct lib_cc_decode *dec_ctx = NULL;
 
 	av.data=NULL;
 	ccx_options.buffer_input = 1;
+	dec_ctx = ctx->dec_ctx;
 	if (init_file_buffer())
 	{
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory.\n");
@@ -844,7 +848,7 @@ void myth_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 	saved=0;
 
 	memset(&dec_sub, 0, sizeof(dec_sub));
-	while (!ctx->processed_enough && (rc=mpegps_read_packet(ctx))==0)
+	while (!dec_ctx->processed_enough && (rc=mpegps_read_packet(ctx))==0)
 	{
 		position_sanity_check();
 		if (av.codec_id==CODEC_ID_MPEG2VBI && av.type==CODEC_TYPE_DATA)

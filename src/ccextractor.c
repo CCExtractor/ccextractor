@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
 	struct cc_subtitle dec_sub;
 	void *ffmpeg_ctx = NULL;
 	struct lib_ccx_ctx *ctx;
+	struct lib_cc_decode *dec_ctx = NULL;
 
 	// Initialize some constants
 	init_ts();
@@ -42,6 +43,7 @@ int main(int argc, char *argv[])
 
 	// Initialize libraries
 	ctx = init_libraries(&ccx_options);
+	dec_ctx = ctx->dec_ctx;
 
 	// Init timing
 	ccx_common_timing_init(&ctx->past,ccx_options.nosync);
@@ -409,7 +411,7 @@ int main(int argc, char *argv[])
 	time_t start, final;
 	time(&start);
 
-	ctx->processed_enough=0;
+	dec_ctx->processed_enough=0;
 	if (ccx_options.binary_concat)
 	{
 		ctx->total_inputsize=gettotalfilessize(ctx);
@@ -422,7 +424,7 @@ int main(int argc, char *argv[])
 	m_signal(SIGINT, sigint_handler);
 #endif
 
-	while (switch_to_next_file(ctx, 0) && !ctx->processed_enough)
+	while (switch_to_next_file(ctx, 0) && !dec_ctx->processed_enough)
 	{
 		prepare_for_new_file(ctx);
 #ifdef ENABLE_FFMPEG
@@ -642,10 +644,10 @@ int main(int argc, char *argv[])
 
 		if (ctx->stat_hdtv)
 		{
-			mprint ("\rCC type 0: %d (%s)\n", ctx->cc_stats[0], cc_types[0]);
-			mprint ("CC type 1: %d (%s)\n", ctx->cc_stats[1], cc_types[1]);
-			mprint ("CC type 2: %d (%s)\n", ctx->cc_stats[2], cc_types[2]);
-			mprint ("CC type 3: %d (%s)\n", ctx->cc_stats[3], cc_types[3]);
+			mprint ("\rCC type 0: %d (%s)\n", dec_ctx->cc_stats[0], cc_types[0]);
+			mprint ("CC type 1: %d (%s)\n", dec_ctx->cc_stats[1], cc_types[1]);
+			mprint ("CC type 2: %d (%s)\n", dec_ctx->cc_stats[2], cc_types[2]);
+			mprint ("CC type 3: %d (%s)\n", dec_ctx->cc_stats[3], cc_types[3]);
 		}
 		mprint ("\nTotal frames time:	  %s  (%u frames at %.2ffps)\n",
 			print_mstime( (LLONG)(total_frames_count*1000/current_fps) ),
@@ -743,7 +745,7 @@ int main(int argc, char *argv[])
 			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT
 			|| ccx_options.write_format==CCX_OF_SPUPNG )
 		{
-			handle_end_of_data(&ctx->context_cc608_field_1, &dec_sub);
+			handle_end_of_data(dec_ctx->context_cc608_field_1, &dec_sub);
 			if (dec_sub.got_output)
 			{
 				encode_sub(enc_ctx,&dec_sub);
@@ -753,7 +755,7 @@ int main(int argc, char *argv[])
 		else if(ccx_options.write_format==CCX_OF_RCWT)
 		{
 			// Write last header and data
-			writercwtdata (ctx, NULL);
+			writercwtdata (dec_ctx, NULL);
 		}
 		dinit_encoder(enc_ctx);
 	}
@@ -763,7 +765,7 @@ int main(int argc, char *argv[])
 			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT
 			|| ccx_options.write_format==CCX_OF_SPUPNG )
 		{
-			handle_end_of_data(&ctx->context_cc608_field_2, &dec_sub);
+			handle_end_of_data(dec_ctx->context_cc608_field_2, &dec_sub);
 			if (dec_sub.got_output)
 			{
 				encode_sub(enc_ctx,&dec_sub);
@@ -791,7 +793,7 @@ int main(int argc, char *argv[])
 	if (ccx_options.teletext_mode == CCX_TXT_IN_USE)
 		mprint ( "Teletext decoder: %"PRIu32" packets processed, %"PRIu32" SRT frames written.\n", tlt_packet_counter, tlt_frames_produced);
 
-	if (ctx->processed_enough)
+	if (dec_ctx->processed_enough)
 	{
 		mprint ("\rNote: Processing was cancelled before all data was processed because\n");
 		mprint ("\rone or more user-defined limits were reached.\n");
