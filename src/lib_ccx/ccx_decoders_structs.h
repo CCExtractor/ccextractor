@@ -77,7 +77,6 @@ struct ccx_decoders_common_settings_t
 	LLONG subs_delay; // ms to delay (or advance) subs
 	enum ccx_output_format output_format; // What kind of output format should be used?
 	int fix_padding; // Replace 0000 with 8080 in HDTV (needed for some cards)
-	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
 	void *wbout1;
 	int cc_to_stdout;

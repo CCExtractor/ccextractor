@@ -288,7 +288,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 		&ctx->processed_enough,
 		setting->cc_to_stdout,
 		setting->subs_delay,
-		setting->write_format
+		setting->output_format
 		);
 	ctx->context_cc608_field_2 = ccx_decoder_608_init_library(
 		ccx_options.settings_608,
@@ -299,11 +299,11 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 		&ctx->processed_enough,
 		setting->cc_to_stdout,
 		setting->subs_delay,
-		setting->write_format
+		setting->output_format
 		);
 
 	ctx->fix_padding = setting->fix_padding;
-	ctx->write_format =  setting->write_format;
+	ctx->write_format =  setting->output_format;
 	ctx->subs_delay =  setting->subs_delay;
 	ctx->wbout1 = setting->wbout1;
 	return ctx;
