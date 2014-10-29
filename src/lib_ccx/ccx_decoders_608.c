@@ -116,6 +116,10 @@ void clear_eia608_cc_buffer(ccx_decoder_608_context *context, struct eia608_scre
 	data->empty=1;
 }
 
+void ccx_decoder_608_dinit_library(void **ctx)
+{
+	freep(ctx);
+}
 ccx_decoder_608_context* ccx_decoder_608_init_library(ccx_decoder_608_settings settings, int channel,
 		int field, int trim_subs,
 		enum ccx_encoding_type encoding, int *halt,
@@ -366,6 +370,7 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 	data->channel = context->channel;
 	data->my_field = context->my_field;
 
+	//TODO need to put below functionality in encoder context
 	ret = get_decoder_line_basic (subline, context->cursor_row, data,context->trim_subs,context->encoding);
 	if( ret > 0 )
 	{

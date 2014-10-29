@@ -8,9 +8,6 @@ unsigned char *last_pat_payload=NULL;
 unsigned last_pat_length = 0;
 
 
-static long capbufsize = 20000;
-static unsigned char *capbuf = NULL;
-long capbuflen = 0; // Bytes read in capbuf
 static unsigned char *haup_capbuf = NULL;
 static long haup_capbufsize = 0;
 static long haup_capbuflen = 0; // Bytes read in haup_capbuf
@@ -23,7 +20,11 @@ extern void *ccx_dvb_context;
 // Descriptions for ts ccx_stream_type
 const char *desc[256];
 
-void init_ts(void)
+void dinit_ts (struct lib_ccx_ctx *ctx)
+{
+	freep(&ctx->capbuf);
+}
+void init_ts(struct lib_ccx_ctx *ctx)
 {
 	// Constants
 	desc[CCX_STREAM_TYPE_UNKNOWNSTREAM] = "Unknown";
@@ -49,7 +50,7 @@ void init_ts(void)
 	desc[CCX_STREAM_TYPE_ISO_IEC_13818_6_TYPE_D] = "ISO/IEC 13818-6 type D";
 
 	//Buffer
-	capbuf = (unsigned char*)malloc(capbufsize);
+	ctx->capbuf = (unsigned char*)malloc(ctx->capbufsize);
 }
 
 
@@ -221,7 +222,7 @@ long ts_readstream(struct lib_ccx_ctx *ctx)
 	long pcount=0; // count all packets until PES is complete
 	int saw_pesstart = 0;
 	int packet_analysis_mode=0; // If we can't find any packet with CC based from PMT, look for captions in all packets
-	capbuflen = 0;
+	ctx->capbuflen = 0;
 
 	do
 	{
@@ -257,7 +258,7 @@ long ts_readstream(struct lib_ccx_ctx *ctx)
 		if( payload.pid == 0) // This is a PAT
 		{
 			if (parse_PAT(ctx)) // Returns 1 if there was some data in the buffer already
-				capbuflen = 0;
+				ctx->capbuflen = 0;
 			continue;
 		}
 
@@ -403,10 +404,10 @@ long ts_readstream(struct lib_ccx_ctx *ctx)
 			}
 
 			// If the buffer is empty we just started this function
-			if (payload.pesstart && capbuflen > 0)
+			if (payload.pesstart && ctx->capbuflen > 0)
 			{
 				dbg_print(CCX_DMT_PARSE, "\nPES finished (%ld bytes/%ld PES packets/%ld total packets)\n",
-						   capbuflen, pespcount, pcount);
+						   ctx->capbuflen, pespcount, pcount);
 
 				// Keep the data in capbuf to be worked on
 
@@ -425,15 +426,15 @@ long ts_readstream(struct lib_ccx_ctx *ctx)
 
 			pespcount++;
 			// copy payload to capbuf
-			int newcapbuflen = capbuflen + payload.length;
-			if ( newcapbuflen > capbufsize) {
-				capbuf = (unsigned char*)realloc(capbuf, newcapbuflen);
-				if (!capbuf)
+			int newcapbuflen = ctx->capbuflen + payload.length;
+			if ( newcapbuflen > ctx->capbufsize) {
+				ctx->capbuf = (unsigned char*)realloc(ctx->capbuf, newcapbuflen);
+				if (!ctx->capbuf)
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
-				capbufsize = newcapbuflen;
+				ctx->capbufsize = newcapbuflen;
 			}
-			memcpy(capbuf+capbuflen, payload.start, payload.length);
-			capbuflen = newcapbuflen;
+			memcpy(ctx->capbuf + ctx->capbuflen, payload.start, payload.length);
+			ctx->capbuflen = newcapbuflen;
 		}
 		//else
 		//	if(debug_verbose)
@@ -444,7 +445,7 @@ long ts_readstream(struct lib_ccx_ctx *ctx)
 	}
 	while( !gotpes ); // gotpes==1 never arrives here because of the breaks
 
-	return capbuflen;
+	return ctx->capbuflen;
 }
 
 
@@ -510,15 +511,15 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 		}
 		// We read a video PES
 
-		if (capbuf[0]!=0x00 || capbuf[1]!=0x00 ||
-			capbuf[2]!=0x01)
+		if (ctx->capbuf[0]!=0x00 || ctx->capbuf[1]!=0x00 ||
+			ctx->capbuf[2]!=0x01)
 		{
 			// ??? Shouldn't happen. Complain and try again.
 			mprint("Missing PES header!\n");
-			dump(CCX_DMT_GENERIC_NOTICES, capbuf,256, 0, 0);
+			dump(CCX_DMT_GENERIC_NOTICES, ctx->capbuf,256, 0, 0);
 			continue;
 		}
-		unsigned stream_id = capbuf[3];
+		unsigned stream_id = ctx->capbuf[3];
 
 		if (ccx_options.teletext_mode == CCX_TXT_IN_USE)
 		{
@@ -526,14 +527,14 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 			{ // If here, the user forced teletext mode but didn't supply a PID, and we haven't found it yet.
 				continue;
 			}
-			memcpy(ctx->buffer+inbuf, capbuf, capbuflen);
-			payload_read = capbuflen;
-			inbuf += capbuflen;
+			memcpy(ctx->buffer+inbuf, ctx->capbuf, ctx->capbuflen);
+			payload_read = ctx->capbuflen;
+			inbuf += ctx->capbuflen;
 			break;
 		}
 		if (ccx_bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 		{
-			dump (CCX_DMT_GENERIC_NOTICES, capbuf, capbuflen,0, 1);
+			dump (CCX_DMT_GENERIC_NOTICES, ctx->capbuf, ctx->capbuflen,0, 1);
 			// Bogus data, so we return something
 				ctx->buffer[inbuf++]=0xFA;
 				ctx->buffer[inbuf++]=0x80;
@@ -589,10 +590,10 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 		}
 
 		dbg_print(CCX_DMT_VERBOSE, "TS payload start video PES id: %d  len: %ld\n",
-			   stream_id, capbuflen);
+			   stream_id, ctx->capbuflen);
 
 		int pesheaderlen;
-		int vpesdatalen = read_video_pes_header(ctx, capbuf, &pesheaderlen, capbuflen);
+		int vpesdatalen = read_video_pes_header(ctx, ctx->capbuf, &pesheaderlen, ctx->capbuflen);
 
 		if (vpesdatalen < 0)
 		{   // Seems to be a broken PES
@@ -600,8 +601,8 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 			break;
 		}
 
-		unsigned char *databuf = capbuf + pesheaderlen;
-		long databuflen = capbuflen - pesheaderlen;
+		unsigned char *databuf = ctx->capbuf + pesheaderlen;
+		long databuflen = ctx->capbuflen - pesheaderlen;
 
 		// If the package length is unknown vpesdatalen is zero.
 		// If we know he package length, use it to quit

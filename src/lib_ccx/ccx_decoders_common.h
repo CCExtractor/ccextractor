@@ -30,4 +30,5 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 void printdata (struct lib_cc_decode *ctx, const unsigned char *data1, int length1,
                 const unsigned char *data2, int length2, struct cc_subtitle *sub);
 struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *setting);
+void dinit_cc_decode(struct lib_cc_decode **ctx);
 #endif

@@ -1,5 +1,7 @@
 #include "ccx_common_option.h"
 #include "ccx_encoders_common.h"
+#include "utility.h"
+
 struct ccx_s_options ccx_options;
 /* Parameters */
 void init_options (struct ccx_s_options *options)
@@ -87,4 +89,14 @@ void init_options (struct ccx_s_options *options)
 	options->noautotimeref=0; // Do NOT set time automatically?
 	options->input_source=CCX_DS_FILE; // Files, stdin or network
 	options->auto_stream = CCX_SM_AUTODETECT;
+
+	// Prepare time structures
+	init_boundary_time (&options->extraction_start);
+	init_boundary_time (&options->extraction_end);
+	init_boundary_time (&options->startcreditsnotbefore);
+	init_boundary_time (&options->startcreditsnotafter);
+	init_boundary_time (&options->startcreditsforatleast);
+	init_boundary_time (&options->startcreditsforatmost);
+	init_boundary_time (&options->endcreditsforatleast);
+	init_boundary_time (&options->endcreditsforatmost);
 }

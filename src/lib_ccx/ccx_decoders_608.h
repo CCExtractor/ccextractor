@@ -117,6 +117,7 @@ enum command_code
 };
 
 
+void ccx_decoder_608_dinit_library(void **ctx);
 /*
  *
  */

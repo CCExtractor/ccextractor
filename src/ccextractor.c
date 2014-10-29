@@ -32,9 +32,6 @@ int main(int argc, char *argv[])
 	struct lib_ccx_ctx *ctx;
 	struct lib_cc_decode *dec_ctx = NULL;
 
-	// Initialize some constants
-	init_ts();
-	init_avc();
 
 	init_options (&ccx_options);
 
@@ -52,15 +49,6 @@ int main(int argc, char *argv[])
 	init_write(&ctx->wbout1);
 	init_write(&ctx->wbout2);
 	
-	// Prepare time structures
-	init_boundary_time (&ccx_options.extraction_start);
-	init_boundary_time (&ccx_options.extraction_end);
-	init_boundary_time (&ccx_options.startcreditsnotbefore);
-	init_boundary_time (&ccx_options.startcreditsnotafter);
-	init_boundary_time (&ccx_options.startcreditsforatleast);
-	init_boundary_time (&ccx_options.startcreditsforatmost);
-	init_boundary_time (&ccx_options.endcreditsforatleast);
-	init_boundary_time (&ccx_options.endcreditsforatmost);
 
 	int show_myth_banner = 0;
 	
@@ -164,9 +152,7 @@ int main(int argc, char *argv[])
 			   "CCExtractor's binary format can only be used simultaneously for input and\noutput if the output file name is specified given with -o.\n");
 	}
 
-	ctx->buffer = (unsigned char *) malloc (BUFSIZE);
 	subline = (unsigned char *) malloc (SUBLINESIZE);
-	ctx->pesheaderbuf = (unsigned char *) malloc (188); // Never larger anyway
 
 	switch (ccx_options.input_source)
 	{
@@ -811,5 +797,6 @@ int main(int argc, char *argv[])
 		mprint ("code in the MythTV's branch. Please report results to the address above. If\n");
 		mprint ("something is broken it will be fixed. Thanks\n");		
 	}
+	dinit_libraries(&ctx);
 	return EXIT_OK;
 }

@@ -306,5 +306,14 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->write_format =  setting->output_format;
 	ctx->subs_delay =  setting->subs_delay;
 	ctx->wbout1 = setting->wbout1;
+	memcpy(&ctx->extraction_start, &setting->extraction_start,sizeof(struct ccx_boundary_time));
+	memcpy(&ctx->extraction_end, &setting->extraction_end,sizeof(struct ccx_boundary_time));
 	return ctx;
+}
+void dinit_cc_decode(struct lib_cc_decode **ctx)
+{
+	struct lib_cc_decode *lctx = *ctx;
+	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_1);
+	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_2);
+	freep(ctx);
 }
