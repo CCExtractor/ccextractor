@@ -14,8 +14,8 @@ file(WRITE ccx.pc "prefix=${CMAKE_INSTALL_PREFIX}\n"
                   "Description: Closed Caption Extraction library\n"
                   "Version: 0.75\n"
                   "Cflags: -I\${includedir}/\n"
-                  "Libs: -L\${libdir} -lccx -lpng15\n"
-                  "Libs.private: -lpng15\n" )
+                  "Libs: -L\${libdir} -lccx -lpng\n"
+                  "Libs.private: -lpng\n" )
 
 install (TARGETS ccx DESTINATION lib)
 install (FILES ${HeaderFiles} DESTINATION include)
