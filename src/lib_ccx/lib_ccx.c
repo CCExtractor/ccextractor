@@ -98,6 +98,8 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->buffer = (unsigned char *) malloc (BUFSIZE);
 	ctx->pesheaderbuf = (unsigned char *) malloc (188); // Never larger anyway
 
+	// Init timing
+	ccx_common_timing_init(&ctx->past,opt->nosync);
 
 	build_parity_table();
 	return ctx;

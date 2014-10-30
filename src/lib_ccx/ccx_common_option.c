@@ -99,4 +99,5 @@ void init_options (struct ccx_s_options *options)
 	init_boundary_time (&options->startcreditsforatmost);
 	init_boundary_time (&options->endcreditsforatleast);
 	init_boundary_time (&options->endcreditsforatmost);
+
 }

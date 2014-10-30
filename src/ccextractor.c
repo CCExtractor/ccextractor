@@ -42,8 +42,6 @@ int main(int argc, char *argv[])
 	ctx = init_libraries(&ccx_options);
 	dec_ctx = ctx->dec_ctx;
 
-	// Init timing
-	ccx_common_timing_init(&ctx->past,ccx_options.nosync);
 
 	// Prepare write structures
 	init_write(&ctx->wbout1);
