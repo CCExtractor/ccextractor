@@ -18,6 +18,10 @@ include_directories ("${PROJECT_SOURCE_DIR}/lib_ccx")
 include_directories ("${PROJECT_SOURCE_DIR}/gpacmp4/")
 include_directories ("${PROJECT_SOURCE_DIR}/libccx_common/")
 
+#Adding some platform specific library path
+LINK_DIRECTORIES(/opt/local/lib)
+LINK_DIRECTORIES(/usr/local/lib)
+
 SET (CMAKE_C_FLAGS "-O0 -Wall -g -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64")
 add_subdirectory (lib_ccx)
 
