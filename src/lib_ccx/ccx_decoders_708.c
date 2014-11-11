@@ -121,16 +121,21 @@ void cc708_service_reset(cc708_service_decoder *decoder)
 	decoder->inited=1;
 }
 
-void cc708_reset()
+void cc708_reset(struct lib_cc_decode *ctx)
 {
-    ccx_common_logging.debug_ftn(CCX_DMT_708, ">>> Entry in cc708_reset()\n");
-    // Clear states of decoders
-    cc708_service_reset(&decoders[0]);
-    cc708_service_reset(&decoders[1]);
-    // Empty packet buffer
-    clear_packet();
-    last_seq=-1;
-    resets_708++;
+	ccx_common_logging.debug_ftn(CCX_DMT_708, ">>> Entry in cc708_reset()\n");
+
+	decoders[0].output_format = ctx->write_format;
+	decoders[1].output_format = ctx->write_format;
+	decoders[0].subs_delay = ctx->subs_delay;
+	decoders[1].subs_delay = ctx->subs_delay;
+	// Clear states of decoders
+	cc708_service_reset(&decoders[0]);
+	cc708_service_reset(&decoders[1]);
+	// Empty packet buffer
+	clear_packet();
+	last_seq=-1;
+	resets_708++;
 }
 
 int compWindowsPriorities (const void *a, const void *b)
@@ -152,16 +157,16 @@ void clearTV (cc708_service_decoder *decoder, int buffer) // Buffer => 1 or 2
 
 void printTVtoSRT (cc708_service_decoder *decoder, int which)
 {
-	if (ccx_decoders_common_settings.output_format == CCX_OF_NULL)
+	if (decoder->output_format == CCX_OF_NULL)
 		return;
 
 	/* tvscreen *tv = (which==1)? &decoder->tv1:&decoder->tv2; */
     unsigned h1,m1,s1,ms1;
     unsigned h2,m2,s2,ms2;
     LLONG ms_start= decoder->current_visible_start_ms;
-	LLONG ms_end = get_visible_end() + ccx_decoders_common_settings.subs_delay;
+	LLONG ms_end = get_visible_end() + decoder->subs_delay;
 	int empty=1;
-    ms_start+= ccx_decoders_common_settings.subs_delay;
+    ms_start+= decoder->subs_delay;
     if (ms_start<0) // Drop screens that because of subs_delay start too early
         return;
 
@@ -1083,7 +1088,7 @@ void process_service_block (cc708_service_decoder *decoder, unsigned char *data,
 }
 
 
-void process_current_packet (void)
+void process_current_packet (struct lib_cc_decode* ctx)
 {
     int seq=(current_packet[0] & 0xC0) >> 6; // Two most significants bits
     int len=current_packet[0] & 0x3F; // 6 least significants bits
@@ -1105,14 +1110,14 @@ void process_current_packet (void)
         ccx_common_logging.debug_ftn(CCX_DMT_708, "Packet length mismatch (%s%d), first two data bytes %02X %02X, current picture:%s\n",
         current_packet_length-len>0?"+":"", current_packet_length-len,
         current_packet[0], current_packet[1], pict_types[current_picture_coding_type]);
-        cc708_reset();
+        cc708_reset(ctx);
         return;
     }
     if (last_seq!=-1 && (last_seq+1)%4!=seq)
     {
         ccx_common_logging.debug_ftn(CCX_DMT_708, "Unexpected sequence number, it was [%d] but should have been [%d]\n",
             seq,(last_seq+1)%4);
-        cc708_reset();
+        cc708_reset(ctx);
         return;
     }
     last_seq=seq;
@@ -1170,7 +1175,7 @@ void process_current_packet (void)
     if (pos!=current_packet+len) // For some reason we didn't parse the whole packet
     {
         ccx_common_logging.debug_ftn(CCX_DMT_708, "There was a problem with this packet, reseting\n");
-        cc708_reset();
+        cc708_reset(ctx);
     }
 
     if (len<128 && *pos) // Null header is mandatory if there is room
@@ -1179,9 +1184,9 @@ void process_current_packet (void)
     }
 }
 
-void do_708 (const unsigned char *data, int datalength)
+void do_708 (struct lib_cc_decode* ctx, const unsigned char *data, int datalength)
 {
-    /* Note: The data has this format:
+	/* Note: The data has this format:
         1 byte for cc_valid
         1 byte for cc_type
         2 bytes for the actual data */
@@ -1198,7 +1203,7 @@ void do_708 (const unsigned char *data, int datalength)
             case 2:
                 ccx_common_logging.debug_ftn (CCX_DMT_708, "708: DTVCC Channel Packet Data\n");
                 if (cc_valid==0) // This ends the previous packet
-                    process_current_packet();
+                    process_current_packet(ctx);
                 else
                 {
                     if (current_packet_length>253)
@@ -1214,7 +1219,7 @@ void do_708 (const unsigned char *data, int datalength)
                 break;
             case 3:
                 ccx_common_logging.debug_ftn (CCX_DMT_708, "708: DTVCC Channel Packet Start\n");
-                process_current_packet();
+                process_current_packet(ctx);
                 if (cc_valid)
                 {
                     if (current_packet_length>127)

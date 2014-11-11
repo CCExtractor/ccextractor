@@ -56,6 +56,8 @@ typedef struct ccx_decoder_608_context
 	int *halt; // Can be used to halt the feeding of caption data. Set to 1 if screens_to_progress != -1 && screenfuls_counter >= screens_to_process
 	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
 	struct ccx_decoder_608_report report;
+	LLONG subs_delay; // ms to delay (or advance) subs
+	enum ccx_output_format output_format; // What kind of output format should be used?
 } ccx_decoder_608_context;
 
 extern unsigned char *enc_buffer;
@@ -115,10 +117,15 @@ enum command_code
 };
 
 
+void ccx_decoder_608_dinit_library(void **ctx);
 /*
  *
  */
-ccx_decoder_608_context ccx_decoder_608_init_library(ccx_decoder_608_settings settings, int channel, int field, int trim_subs, enum ccx_encoding_type encoding, int *halt, int *cc_to_stdout);
+ccx_decoder_608_context* ccx_decoder_608_init_library(ccx_decoder_608_settings settings, int channel,
+		int field, int trim_subs,
+		enum ccx_encoding_type encoding, int *halt,
+		int cc_to_stdout, LLONG subs_delay,
+		enum ccx_output_format output_format);
 
 /**
  * @param data raw cc608 data to be processed
@@ -142,7 +149,6 @@ int process608(const unsigned char *data, int length, ccx_decoder_608_context *c
 void handle_end_of_data(ccx_decoder_608_context *context, struct cc_subtitle *sub);
 
 int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub);
-unsigned char *debug_608toASC(unsigned char *ccdata, int channel);
 
 #define __608_H__
 #endif

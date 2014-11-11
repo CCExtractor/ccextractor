@@ -389,7 +389,7 @@ int parse_PMT (struct lib_ccx_ctx *ctx, unsigned char *buf, int len, int pos)
 			TS_program_number = program_number;
 		}
         // If we have data flush it
-        if( capbuflen > 0 )
+        if( ctx->capbuflen > 0 )
             must_flush=1;
     }
 	return must_flush;
@@ -614,7 +614,7 @@ int parse_PAT (struct lib_ccx_ctx *ctx)
 		if (!ccx_options.ts_forced_cappid)
 			ccx_options.ts_cappid = 0; // Reset caption stream pid
         // If we have data flush it
-        if( capbuflen > 0 )
+        if( ctx->capbuflen > 0 )
             gotpes = 1;
     }
 	return gotpes;

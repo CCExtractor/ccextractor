@@ -116,42 +116,54 @@ void clear_eia608_cc_buffer(ccx_decoder_608_context *context, struct eia608_scre
 	data->empty=1;
 }
 
-ccx_decoder_608_context ccx_decoder_608_init_library(ccx_decoder_608_settings settings, int channel, int field, int trim_subs, enum ccx_encoding_type encoding, int *halt, int *cc_to_stdout)
+void ccx_decoder_608_dinit_library(void **ctx)
 {
-	ccx_decoder_608_context data;
+	freep(ctx);
+}
+ccx_decoder_608_context* ccx_decoder_608_init_library(ccx_decoder_608_settings settings, int channel,
+		int field, int trim_subs,
+		enum ccx_encoding_type encoding, int *halt,
+		int cc_to_stdout, LLONG subs_delay,
+		enum ccx_output_format output_format)
+{
+	ccx_decoder_608_context *data = NULL;
 
-	data.cursor_column=0;
-	data.cursor_row=0;
-	data.visible_buffer=1;
-	data.last_c1=0;
-	data.last_c2=0;
-	data.mode=MODE_POPON;
-	// data.current_visible_start_cc=0;
-	data.current_visible_start_ms=0;
-	data.screenfuls_counter=0;
-	data.channel=1;
-	data.font=FONT_REGULAR;
-	data.rollup_base_row=14;
-	data.ts_start_of_current_line=-1;
-	data.ts_last_char_received=-1;
-	data.new_channel=1;
-	data.bytes_processed_608 = 0;
-	data.my_field = field;
-	data.my_channel = channel;
-	data.out = NULL;
-	data.have_cursor_position = 0;
+	data = malloc(sizeof(ccx_decoder_608_context));
 
-	data.trim_subs = trim_subs;
-	data.encoding = encoding;
+	data->cursor_column=0;
+	data->cursor_row=0;
+	data->visible_buffer=1;
+	data->last_c1=0;
+	data->last_c2=0;
+	data->mode=MODE_POPON;
+	// data->current_visible_start_cc=0;
+	data->current_visible_start_ms=0;
+	data->screenfuls_counter=0;
+	data->channel=1;
+	data->font=FONT_REGULAR;
+	data->rollup_base_row=14;
+	data->ts_start_of_current_line=-1;
+	data->ts_last_char_received=-1;
+	data->new_channel=1;
+	data->bytes_processed_608 = 0;
+	data->my_field = field;
+	data->my_channel = channel;
+	data->out = NULL;
+	data->have_cursor_position = 0;
 
-	data.halt = halt;
-	data.cc_to_stdout = cc_to_stdout;
+	data->trim_subs = trim_subs;
+	data->encoding = encoding;
 
-	data.settings = settings;
-	data.current_color = data.settings.default_color;
+	data->halt = halt;
+	data->cc_to_stdout = cc_to_stdout;
+	data->subs_delay = subs_delay;
+	data->output_format = output_format;
 
-	clear_eia608_cc_buffer(&data, &data.buffer1);
-	clear_eia608_cc_buffer(&data, &data.buffer2);
+	data->settings = settings;
+	data->current_color = data->settings.default_color;
+
+	clear_eia608_cc_buffer(data, &data->buffer1);
+	clear_eia608_cc_buffer(data, &data->buffer2);
 
 	return data;
 }
@@ -292,7 +304,7 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 		context->current_visible_start_ms = context->ts_start_of_current_line;
 
 	start_time = context->current_visible_start_ms;
-	end_time = get_visible_end() + ccx_decoders_common_settings.subs_delay;
+	end_time = get_visible_end() + context->subs_delay;
 	sub->type = CC_608;
 	data->format = SFORMAT_CC_SCREEN;
 	data->start_time = 0;
@@ -348,8 +360,8 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 	int ret = 0;
 	data = get_current_visible_buffer(context);
 
-	start_time = context->ts_start_of_current_line + ccx_decoders_common_settings.subs_delay;
-	end_time = get_fts() + ccx_decoders_common_settings.subs_delay;
+	start_time = context->ts_start_of_current_line + context->subs_delay;
+	end_time = get_fts() + context->subs_delay;
 	sub->type = CC_608;
 	data->format = SFORMAT_CC_LINE;
 	data->start_time = 0;
@@ -358,6 +370,7 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 	data->channel = context->channel;
 	data->my_field = context->my_field;
 
+	//TODO need to put below functionality in encoder context
 	ret = get_decoder_line_basic (subline, context->cursor_row, data,context->trim_subs,context->encoding);
 	if( ret > 0 )
 	{
@@ -728,7 +741,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, ccx_dec
 					context->cursor_row++;
 				break;
 			}
-			if (ccx_decoders_common_settings.output_format == CCX_OF_TRANSCRIPT)
+			if (context->output_format == CCX_OF_TRANSCRIPT)
 			{
 				write_cc_line(context,sub);
 			}
@@ -739,7 +752,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, ccx_dec
 			if (changes)
 			{
 				// Only if the roll up would actually cause a line to disappear we write the buffer
-				if (ccx_decoders_common_settings.output_format != CCX_OF_TRANSCRIPT)
+				if (context->output_format != CCX_OF_TRANSCRIPT)
 				{
 					if (write_cc_buffer(context, sub))
 						context->screenfuls_counter++;
@@ -759,7 +772,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, ccx_dec
 		case COM_ERASEDISPLAYEDMEMORY:
 			// Write it to disk before doing this, and make a note of the new
 			// time it became clear.
-			if (ccx_decoders_common_settings.output_format == CCX_OF_TRANSCRIPT &&
+			if (context->output_format == CCX_OF_TRANSCRIPT &&
 				(context->mode == MODE_FAKE_ROLLUP_1 ||
 				context->mode == MODE_ROLLUP_2 ||
 				context->mode == MODE_ROLLUP_3 ||
@@ -772,7 +785,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, ccx_dec
 			}
 			else
 			{
-				if (ccx_decoders_common_settings.output_format == CCX_OF_TRANSCRIPT)
+				if (context->output_format == CCX_OF_TRANSCRIPT)
 					context->ts_start_of_current_line = context->current_visible_start_ms;
 				if (write_cc_buffer(context, sub))
 					context->screenfuls_counter++;

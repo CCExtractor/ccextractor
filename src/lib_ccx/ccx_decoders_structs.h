@@ -1,7 +1,9 @@
 #ifndef CCX_DECODERS_STRUCTS_H
+#define CCX_DECODERS_STRUCTS_H
 
 #include "ccx_common_platform.h"
 #include "ccx_common_constants.h"
+#include "ccx_common_timing.h"
 
 // Define max width in characters/columns on the screen
 #define CCX_DECODER_608_SCREEN_WIDTH  32
@@ -70,11 +72,31 @@ typedef struct eia608_screen // A CC buffer
 	int cur_xds_packet_class;
 } eia608_screen;
 
-struct ccx_decoders_common_settings_t {
+struct ccx_decoders_common_settings_t
+{
 	LLONG subs_delay; // ms to delay (or advance) subs
 	enum ccx_output_format output_format; // What kind of output format should be used?
+	int fix_padding; // Replace 0000 with 8080 in HDTV (needed for some cards)
+	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
+	void *wbout1;
+	int cc_to_stdout;
 };
-extern struct ccx_decoders_common_settings_t ccx_decoders_common_settings;
+struct lib_cc_decode
+{
+	int cc_stats[4];
+	int saw_caption_block;
+	int processed_enough; // If 1, we have enough lines, time, etc.
 
-#define CCX_DECODERS_STRUCTS_H
+	/* 608 contexts - note that this shouldn't be global, they should be
+	per program */
+	void *context_cc608_field_1;
+	void *context_cc608_field_2;
+
+	int fix_padding; // Replace 0000 with 8080 in HDTV (needed for some cards)
+	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
+	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
+	void *wbout1;
+	LLONG subs_delay; // ms to delay (or advance) subs
+};
+
 #endif

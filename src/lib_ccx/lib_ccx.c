@@ -2,11 +2,33 @@
 #include "ccx_common_option.h"
 
 struct ccx_common_logging_t ccx_common_logging;
-struct ccx_decoders_common_settings_t ccx_decoders_common_settings;
+static struct ccx_decoders_common_settings_t *init_decoder_setting(
+		struct ccx_s_options *opt)
+{
+	struct ccx_decoders_common_settings_t *setting;
+
+	setting = malloc(sizeof(struct ccx_decoders_common_settings_t));
+	if(!setting)
+		return NULL;
+
+	setting->subs_delay = opt->subs_delay;
+	setting->output_format = opt->write_format;
+	setting->fix_padding = opt->fix_padding;
+	memcpy(&setting->extraction_start,&opt->extraction_start,sizeof(struct ccx_boundary_time));
+	memcpy(&setting->extraction_end,&opt->extraction_end,sizeof(struct ccx_boundary_time));
+	setting->cc_to_stdout = opt->cc_to_stdout;
+	return setting;
+}
+static void dinit_decoder_setting (struct ccx_decoders_common_settings_t **setting)
+{
+	freep(setting);
+}
+
 struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 {
 	struct lib_ccx_ctx *ctx;
 	struct ccx_decoder_608_report *report_608;
+	struct ccx_decoders_common_settings_t *dec_setting;
 
 	ctx = malloc(sizeof(struct lib_ccx_ctx));
 	if(!ctx)
@@ -17,6 +39,14 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	if (!report_608)
 		return NULL;
 	memset(report_608,0,sizeof(struct ccx_decoder_608_report));
+
+	ctx->capbufsize = 20000;
+	ctx->capbuf = NULL;
+	ctx->capbuflen = 0; // Bytes read in capbuf
+
+	// Initialize some constants
+	init_ts(ctx);
+	init_avc();
 
 	ctx->stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
 	ctx->auto_stream = opt->auto_stream;
@@ -30,7 +60,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 
 	// Set logging functions for libraries
 	ccx_common_logging.debug_ftn = &dbg_print;
-	ccx_common_logging.debug_mask = ccx_options.debug_mask;
+	ccx_common_logging.debug_mask = opt->debug_mask;
 	ccx_common_logging.fatal_ftn = &fatal;
 	ccx_common_logging.log_ftn = &mprint;
 	ccx_common_logging.gui_ftn = &activity_library_process;
@@ -41,39 +71,22 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->freport.data_from_708 = &ccx_decoder_708_report;
 
 	// Init shared decoder settings
-	ccx_decoders_common_settings_init(ctx->subs_delay, ccx_options.write_format);
-	// Init encoder helper variables
-	ccx_encoders_helpers_setup(ccx_options.encoding, ccx_options.nofontcolor, ccx_options.notypesetting, ccx_options.trim_subs);
+	dec_setting = init_decoder_setting(opt);
+	ctx->dec_ctx = init_cc_decode(dec_setting);
+	dinit_decoder_setting(&dec_setting);
 
-	// Prepare 608 context
-	ctx->context_cc608_field_1 = ccx_decoder_608_init_library(
-		ccx_options.settings_608,
-		ccx_options.cc_channel,
-		1,
-		ccx_options.trim_subs,
-		ccx_options.encoding,
-		&ctx->processed_enough,
-		&ctx->cc_to_stdout
-		);
-	ctx->context_cc608_field_2 = ccx_decoder_608_init_library(
-		ccx_options.settings_608,
-		ccx_options.cc_channel,
-		2,
-		ccx_options.trim_subs,
-		ccx_options.encoding,
-		&ctx->processed_enough,
-		&ctx->cc_to_stdout
-		);
+	// Init encoder helper variables
+	ccx_encoders_helpers_setup(opt->encoding, opt->nofontcolor, opt->notypesetting, opt->trim_subs);
 
 	// Init 708 decoder(s)
-	ccx_decoders_708_init_library(ctx->basefilename,ctx->extension,ccx_options.print_file_reports);
+	ccx_decoders_708_init_library(ctx->basefilename,ctx->extension,opt->print_file_reports);
 
 	// Set output structures for the 608 decoder
-	ctx->context_cc608_field_1.out = &ctx->wbout1;
-	ctx->context_cc608_field_2.out = &ctx->wbout2;
+	//ctx->dec_ctx->context_cc608_field_1->out = ctx->dec_ctx->wbout1;
+	//ctx->dec_ctx->context_cc608_field_2->out = ctx->dec_ctx->wbout2;
 
 	// Init XDS buffers
-	ccx_decoders_xds_init_library(&ccx_options.transcript_settings, ctx->subs_delay, ccx_options.millis_separator);
+	ccx_decoders_xds_init_library(&opt->transcript_settings, ctx->subs_delay, opt->millis_separator);
 	//xds_cea608_test();
 
 	//Initialize input files
@@ -82,8 +95,29 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->subs_delay = opt->subs_delay;
 	ctx->wbout1.filename = opt->wbout2.filename;
 	ctx->wbout2.filename = opt->wbout2.filename;
+	ctx->buffer = (unsigned char *) malloc (BUFSIZE);
+	ctx->pesheaderbuf = (unsigned char *) malloc (188); // Never larger anyway
 
+	// Init timing
+	ccx_common_timing_init(&ctx->past,opt->nosync);
 
 	build_parity_table();
 	return ctx;
+}
+
+void dinit_libraries( struct lib_ccx_ctx **ctx)
+{
+	struct lib_ccx_ctx *lctx = *ctx;
+	int i = 0;
+	for (i = 0; i < MAX_PID; i++)
+	{
+		if( lctx->PIDs_programs[i])
+			freep(lctx->PIDs_programs + i);
+	}
+	dinit_ts(lctx);
+	dinit_cc_decode(&lctx->dec_ctx);
+	freep(&lctx->buffer);
+	freep(&lctx->pesheaderbuf);
+	freep(&lctx->freport.data_from_608);
+	freep(ctx);
 }

@@ -11,6 +11,8 @@
 // is FALSE, parsing can set ustream->error to TRUE.
 int user_data(struct lib_ccx_ctx *ctx, struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
 {
+	struct lib_cc_decode *dec_ctx = NULL;
+	dec_ctx = ctx->dec_ctx;
     dbg_print(CCX_DMT_VERBOSE, "user_data(%d)\n", udtype);
 
     // Shall not happen
@@ -92,7 +94,7 @@ int user_data(struct lib_ccx_ctx *ctx, struct bitstream *ustream, int udtype, st
                         data[0]=0x04; // Field 1
                     else
                         data[0]=0x05; // Field 2
-                    do_cb(ctx, data, sub);
+                    do_cb(dec_ctx, data, sub);
                     rcbcount++;
                 }
                 else
@@ -123,7 +125,7 @@ int user_data(struct lib_ccx_ctx *ctx, struct bitstream *ustream, int udtype, st
                         data[0]=0x04; // Field 1
                     else
                         data[0]=0x05; // Field 2
-                    do_cb(ctx, data, sub);
+                    do_cb(dec_ctx, data, sub);
                     ecbcount++;
                 }
                 else
@@ -214,12 +216,12 @@ int user_data(struct lib_ccx_ctx *ctx, struct bitstream *ustream, int udtype, st
         data[0]=0x05; // Field 2
         data[1]=read_u8(ustream);
         data[2]=read_u8(ustream);
-        do_cb(ctx, data, sub);
+        do_cb(dec_ctx, data, sub);
         read_bytes(ustream, 2); // Skip "CC 02" for R4000 or "AA 02" for R5000
         data[0]=0x04; // Field 1
         data[1]=read_u8(ustream);
         data[2]=read_u8(ustream);
-        do_cb(ctx, data, sub);
+        do_cb(dec_ctx, data, sub);
     }
     // HDTV - see A/53 Part 4 (Video)
     else if ( !memcmp(ud_header,"\x47\x41\x39\x34", 4 ) )
@@ -460,7 +462,7 @@ int user_data(struct lib_ccx_ctx *ctx, struct bitstream *ustream, int udtype, st
         data[0]=0x04; // Field 1
         data[1]=read_u8(ustream);
         data[2]=read_u8(ustream);
-        do_cb(ctx, data, sub);
+        do_cb(dec_ctx, data, sub);
         // This is probably incomplete!
     }
     else

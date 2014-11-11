@@ -11,4 +11,5 @@
 #define RB16(x) (ntohs(*(unsigned short int*)(x)))
 
 extern int temp_debug;
+void init_boundary_time (struct ccx_boundary_time *bt);
 #endif

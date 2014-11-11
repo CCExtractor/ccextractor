@@ -13,5 +13,8 @@
 void fdprintf(int fd, const char *fmt, ...);
 void mstotime(LLONG milli, unsigned *hours, unsigned *minutes,unsigned *seconds, unsigned *ms);
 void freep(void *arg);
+void dbg_print(LLONG mask, const char *fmt, ...);
+unsigned char *debug_608toASC(unsigned char *ccdata, int channel);
 
+extern int cc608_parity_table[256]; // From myth
 #endif
