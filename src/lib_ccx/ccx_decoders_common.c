@@ -100,7 +100,7 @@ unsigned get_decoder_line_basic(unsigned char *buffer, int line_num, struct eia6
 
 int process_cc_data (struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count, struct cc_subtitle *sub)
 {
-	int ret = 0;
+	int ret = -1;
 	for (int j = 0; j < cc_count * 3; j = j + 3)
 	{
 		if (validate_cc_data_pair( cc_data + j ) )
