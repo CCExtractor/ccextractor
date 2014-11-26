@@ -19,5 +19,5 @@ void *init_ffmpeg(char *path);
  * @param maxlen length of buffer, where data will be copied
  * @return number of bytes recieved as data
  */
-int ff_get_ccframe(void *arg,char*data,int maxlen);
+int ff_get_ccframe(void *arg, unsigned char*data, int maxlen);
 #endif

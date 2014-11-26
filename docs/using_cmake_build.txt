@@ -1,0 +1,28 @@
+For building ccextractor using cmake folllow below steps..
+
+Step 1) Check you have right version of cmake installed. ( version >= 3.0.2 )
+	We are using CMP0037 policy of cmake which was introduced in 3.0.0
+	since we have tested our system only with cmake version 3.0.2, I would
+	suggest to use 3.0.2 or higher version.
+
+
+Step 2) create a seprate directory where you want to build the target.
+	In Unix you can do it using follwing commands.
+	~> cd ccextractor
+	~> mkdir build
+
+Step 3) make the build sytem using cmake
+	~> cmake ../src/
+
+Step 4) Compile the code.
+	~> make
+	~> make install
+
+Step 5) Use CCextractor as you would like
+
+
+If you want to build CCExtractor with FFMpeg you need to pass
+cmake -DWITH_FFMPEG=ON ../src/
+
+Hint for looking all the things you want to set from outside
+cmake -LAH ../src/

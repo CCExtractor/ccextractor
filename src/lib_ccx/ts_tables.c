@@ -271,7 +271,7 @@ int parse_PMT (struct lib_ccx_ctx *ctx, unsigned char *buf, int len, int pos)
 #ifndef ENABLE_OCR
 				if(ccx_options.write_format != CCX_OF_SPUPNG )
 				{
-					mprint ("Please Compile with ENABLE_OCR flag \n");
+					mprint ("DVB subtitles detected, OCR subsystem not present. Use -out=spupng for graphic output\n");
 					continue;
 				}
 #endif
