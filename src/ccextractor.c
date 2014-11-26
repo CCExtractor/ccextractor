@@ -28,7 +28,9 @@ int main(int argc, char *argv[])
 	char *c;
 	struct encoder_ctx enc_ctx[2];
 	struct cc_subtitle dec_sub;
+#ifdef ENABLE_FFMPEG
 	void *ffmpeg_ctx = NULL;
+#endif
 	struct lib_ccx_ctx *ctx;
 	struct lib_cc_decode *dec_ctx = NULL;
 
@@ -416,20 +418,12 @@ int main(int argc, char *argv[])
 		ffmpeg_ctx =  init_ffmpeg(ctx->inputfile[0]);
 		if(ffmpeg_ctx)
 		{
-			int i =0;
-			ctx->buffer = malloc(1024);
-			if(!ctx->buffer)
-			{
-				mprint("no memory left\n");
-				break;
-			}
 			do
 			{
 				int ret = 0;
-				char *bptr = ctx->buffer;
+				unsigned char *bptr = ctx->buffer;
 				int len = ff_get_ccframe(ffmpeg_ctx, bptr, 1024);
                                 int cc_count = 0;
-				memset(bptr,0,1024);
 				if(len == AVERROR(EAGAIN))
 				{
 					continue;
@@ -446,15 +440,13 @@ int main(int argc, char *argv[])
 				}
                                 else
                                     cc_count = len/3;
-				store_hdcc(ctx, bptr, cc_count, i++,fts_now,&dec_sub);
-				if(dec_sub.got_output)
+				ret = process_cc_data(dec_ctx, bptr, cc_count, &dec_sub);
+				if(ret >= 0 && dec_sub.got_output)
 				{
 					encode_sub(enc_ctx, &dec_sub);
 					dec_sub.got_output = 0;
 				}
 			}while(1);
-
-			free(ctx->buffer);
 			continue;
 		}
 		else
@@ -462,7 +454,6 @@ int main(int argc, char *argv[])
 			mprint ("\rFailed to initialized ffmpeg falling back to legacy\n");
 		}
 #endif
-
 		if (ctx->auto_stream == CCX_SM_AUTODETECT)
 		{
 			detect_stream_type(ctx);
@@ -711,7 +702,7 @@ int main(int argc, char *argv[])
 		// and need to be written after the last file is processed.		
 		cb_field1 = 0; cb_field2 = 0; cb_708 = 0;
 		fts_now = 0;
-		fts_max = 0;		
+		fts_max = 0;
 	} // file loop
 	close_input_file(ctx);
 	
