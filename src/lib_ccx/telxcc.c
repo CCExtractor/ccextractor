@@ -449,6 +449,7 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
 	int time_reported=0;
 	++tlt_frames_produced;
 	char c_tempb[256]; // For buffering
+    uint8_t line_count = 0;
 
 	timestamp_to_srttime(page->show_timestamp, timecode_show);
 	timecode_show[12] = 0;
@@ -464,6 +465,7 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
 		for (int8_t col = 39; col >= 0; col--) {
 			if (page->text[row][col] == 0xb) {
 				col_start = col;
+                line_count++;
 				break;
 			}
 		}
@@ -486,6 +488,19 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
 		// black(0), red(1), green(2), yellow(3), blue(4), magenta(5), cyan(6), white(7)
 		uint8_t foreground_color = 0x7;
 		uint8_t font_tag_opened = NO;
+
+        if (line_count > 1) {
+            switch (ccx_options.write_format) {
+                case CCX_OF_TRANSCRIPT:
+                    page_buffer_add_string(" ");
+                    break;
+                case CCX_OF_SMPTETT:
+                    page_buffer_add_string("<br/>");
+                    break;
+                default:
+                    page_buffer_add_string(encoded_crlf);
+            }
+        }
 
 		if (ccx_options.gui_mode_reports)
 		{
@@ -583,7 +598,6 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
 			font_tag_opened = NO;
 		}
 
-		page_buffer_add_string ((ccx_options.write_format == CCX_OF_TRANSCRIPT) ? " " : "\r\n");
 		if (ccx_options.gui_mode_reports)
 		{
 			fprintf (stderr,"\n");
@@ -637,9 +651,12 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
             }
             break;
 		default: // Yes, this means everything else is .srt for now
-			page_buffer_add_string ("\r\n");
-			if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh,"%"PRIu32"\r\n%s --> %s\r\n", tlt_frames_produced, timecode_show, timecode_hide);
-			if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s",page_buffer_cur);
+            page_buffer_add_string (encoded_crlf);
+            page_buffer_add_string (encoded_crlf);
+            if (ctx->wbout1.fh!=-1) {
+                fdprintf(ctx->wbout1.fh,"%"PRIu32"%s%s --> %s%s", tlt_frames_produced, encoded_crlf, timecode_show, timecode_hide, encoded_crlf);
+                fdprintf(ctx->wbout1.fh, "%s",page_buffer_cur);
+            }
 	}
 
 	// Also update GUI...
