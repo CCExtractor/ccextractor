@@ -324,6 +324,7 @@ void dump (LLONG mask, unsigned char *start, int l, unsigned long abs_start, uns
 bool_t in_array(uint16_t *array, uint16_t length, uint16_t element) ;
 int hex2int (char high, char low);
 void timestamp_to_srttime(uint64_t timestamp, char *buffer);
+void timestamp_to_smptetttime(uint64_t timestamp, char *buffer);
 void millis_to_date (uint64_t timestamp, char *buffer) ;
 int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
 #ifndef _WIN32

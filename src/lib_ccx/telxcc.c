@@ -629,6 +629,13 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
 				prev_show_timestamp=page->show_timestamp;
 			}
 			break;
+        case CCX_OF_SMPTETT:
+            if (ctx->wbout1.fh!=-1) {
+                timestamp_to_smptetttime(page->show_timestamp, timecode_show);
+                timestamp_to_smptetttime(page->hide_timestamp, timecode_hide);
+                fdprintf(ctx->wbout1.fh,"      <p region=\"speaker\" begin=\"%s\" end=\"%s\">%s</p>\n", timecode_show, timecode_hide, page_buffer_cur);
+            }
+            break;
 		default: // Yes, this means everything else is .srt for now
 			page_buffer_add_string ("\r\n");
 			if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh,"%"PRIu32"\r\n%s --> %s\r\n", tlt_frames_produced, timecode_show, timecode_hide);
