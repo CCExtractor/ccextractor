@@ -37,7 +37,7 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
     mstotime (ms_start,&h1,&m1,&s1,&ms1);
     mstotime (ms_end-1,&h2,&m2,&s2,&ms2);
 
-    sprintf ((char *) str,"<p begin=\"%02u:%02u:%02u,%03u\" end=\"%02u:%02u:%02u.%03u\">\r\n",h1,m1,s1,ms1, h2,m2,s2,ms2);
+    sprintf ((char *) str,"<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\r\n",h1,m1,s1,ms1, h2,m2,s2,ms2);
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
