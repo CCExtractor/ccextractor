@@ -714,6 +714,7 @@ int main(int argc, char *argv[])
 
 	prepare_for_new_file (ctx); // To reset counters used by handle_end_of_data()
 
+	telxcc_close(ctx);
 	if (ctx->wbout1.fh!=-1)
 	{
 		if (ccx_options.write_format==CCX_OF_SMPTETT || ccx_options.write_format==CCX_OF_SAMI || 
@@ -749,7 +750,6 @@ int main(int argc, char *argv[])
 		}
 		dinit_encoder(enc_ctx+1);
 	}
-	telxcc_close(ctx);
 	flushbuffer (ctx, &ctx->wbout1,true);
 	flushbuffer (ctx, &ctx->wbout2,true);
 	time (&final);
