@@ -477,8 +477,13 @@ void usage (void)
 	mprint ("                       affects Teletext in timed transcript with -datets.\n");
 	mprint ("\n");
 	mprint ("Options that affect what kind of output will be produced:\n");
+	mprint("				  -bom: Append a BOM (Byte Order Mark) to output files.");
+	mprint("						Note that most text processing tools in linux will not");
+	mprint("						like BOM.");
+	mprint("						This is the default in Windows builds.");
 	mprint("				-nobom: Do not append a BOM (Byte Order Mark) to output files.");
 	mprint("						Note that this may break files when using Windows.");
+	mprint("						This is the default in non-Windows builds.");
 	mprint ("             -unicode: Encode subtitles in Unicode instead of Latin-1.\n");
 	mprint ("                -utf8: Encode subtitles in UTF-8 (no longer needed.\n");
 	mprint ("                       because UTF-8 is now the default).\n");
@@ -865,8 +870,13 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			ccx_options.nofontcolor=1;
 			continue;
 		}
+		if (strcmp(argv[i], "-bom") == 0){
+			ccx_options.no_bom = 0;
+			continue;
+		}
 		if (strcmp(argv[i], "-nobom") == 0){
 			ccx_options.no_bom = 1;
+			continue;
 		}
 		if (strcmp (argv[i],"-nots")==0 ||
 				strcmp (argv[i],"--notypesetting")==0)

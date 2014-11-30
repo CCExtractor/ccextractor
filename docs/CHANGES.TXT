@@ -1,6 +1,10 @@
 0.75
 -----------
 - CCExtractor can be used as library if compiled using cmake
+- By default the Windows version adds BOM to generated UTF files (this is
+  because it's needed to open the files correctly) while all other
+  builds don't add it (because it messes with text processing tools). 
+  You can use -bom and -nobom to change the behaviour.
 
 0.74
 -----------

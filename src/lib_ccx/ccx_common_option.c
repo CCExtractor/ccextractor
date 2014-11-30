@@ -8,8 +8,10 @@ void init_options (struct ccx_s_options *options)
 {
 #ifdef _WIN32
 	options->buffer_input = 1; // In Windows buffering seems to help
+	options->no_bom = 0;
 #else
 	options->buffer_input = 0; // In linux, not so much.
+	options->no_bom = 1;
 #endif
 	options->nofontcolor=0; // 1 = don't put <font color> tags
 	options->notypesetting=0; // 1 = Don't put <i>, <u>, etc typesetting tags

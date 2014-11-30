@@ -34,11 +34,18 @@ text-align: center; font-size: 18pt; font-family: arial; font-weight: bold; colo
 </HEAD>\n\n\
 <BODY>\n";
 
-static const char *smptett_header =
-"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\
-<tt xmlns=\"http://www.w3.org/ns/ttml\" xml:lang=\"en\">\n\
-<body>\n<div>\n" ;
-
+static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
+"<tt xmlns:ttm=\"http://www.w3.org/ns/ttml#metadata\" xmlns:tts=\"http://www.w3.org/ns/ttml#styling\" xmlns=\"http://www.w3.org/ns/ttml\" xml:lang=\"en\">\n"
+"  <head>\n"
+"    <styling>\n"
+"      <style xml:id=\"speakerStyle\" tts:fontFamily=\"proportionalSansSerif\" tts:fontSize\"150%\" tts:textAlign=\"center\" tts:displayAlign=\"center\" tts:color=\"white\" tts:textOutline=\"black 1px\"/>\n"
+"    </styling>\n"
+"    <layout>\n"
+"      <region xml:id=\"speaker\" tts:origin=\"10% 80%\" tts:extent=\"80% 10%\" style=\"speakerStyle\"/>\n"
+"    </layout>\n"
+"  </head>\n"
+"  <body>\n"
+"    <div>\n";
 void write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 {
 	int used;
@@ -54,7 +61,7 @@ void write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			write(out->fh, ctx->buffer, used);
 			break;
 		case CCX_OF_SMPTETT:
-			sprintf ((char *) str,"</div></body></tt>\n");
+			sprintf ((char *) str,"    </div>\n  </body>\n</tt>\n");
 			if (ccx_options.encoding!=CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);

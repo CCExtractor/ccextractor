@@ -18,11 +18,11 @@ void write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_st
 	mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 	char timeline[128];
 	context->srt_counter++;
-	sprintf(timeline, "%u\r\n", context->srt_counter);
+	sprintf(timeline, "%u%s", context->srt_counter, encoded_crlf);
 	used = encode_line(context->buffer,(unsigned char *) timeline);
 	write(context->out->fh, context->buffer, used);
-	sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u\r\n",
-			h1,m1,s1,ms1, h2,m2,s2,ms2);
+	sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
+		h1, m1, s1, ms1, h2, m2, s2, ms2, encoded_crlf);
 	used = encode_line(context->buffer,(unsigned char *) timeline);
 	dbg_print(CCX_DMT_DECODER_608, "\n- - - SRT caption - - -\n");
 	dbg_print(CCX_DMT_DECODER_608, "%s",timeline);
@@ -244,11 +244,11 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 	mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 	char timeline[128];
 	context->srt_counter++;
-	sprintf(timeline, "%u\r\n", context->srt_counter);
+	sprintf(timeline, "%u%s", context->srt_counter, encoded_crlf);
 	used = encode_line(context->buffer,(unsigned char *) timeline);
 	write(context->out->fh, context->buffer, used);
-	sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u\r\n",
-			h1,m1,s1,ms1, h2,m2,s2,ms2);
+	sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
+		h1, m1, s1, ms1, h2, m2, s2, ms2, encoded_crlf);
 	used = encode_line(context->buffer,(unsigned char *) timeline);
 
 	dbg_print(CCX_DMT_DECODER_608, "\n- - - SRT caption ( %d) - - -\n", context->srt_counter);
