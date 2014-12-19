@@ -91,7 +91,7 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
     }
 	used = encode_line(context->buffer,(unsigned char *) str);
 	write(context->out->fh, context->buffer, used);
-    sprintf ((char *) str,"<p begin=\"%02u:%02u:%02u,%03u\">\n\n",h2,m2,s2,ms2);
+    sprintf ((char *) str,"<p begin=\"%02u:%02u:%02u.%03u\">\n\n",h2,m2,s2,ms2);
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
@@ -219,7 +219,7 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 		{
 			mstotime (ms_start,&h1,&m1,&s1,&ms1);
 			mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
-			sprintf ((char *) context->buffer,"<p begin=\"%02u:%02u:%02u,%03u\" end=\"%02u:%02u:%02u,%03u\">\n",h1,m1,s1,ms1, h2,m2,s2,ms2);
+			sprintf ((char *) context->buffer,"<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\n",h1,m1,s1,ms1, h2,m2,s2,ms2);
 			write (context->out->fh, context->buffer,strlen(context->buffer) );
 			len = strlen(str);
 			write (context->out->fh, str, len);
@@ -257,7 +257,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
     mstotime (startms,&h1,&m1,&s1,&ms1);
     mstotime (endms-1,&h2,&m2,&s2,&ms2);
 
-    sprintf ((char *) str,"<p begin=\"%02u:%02u:%02u,%03u\" end=\"%02u:%02u:%02u,%03u\">\n",h1,m1,s1,ms1, h2,m2,s2,ms2);
+    sprintf ((char *) str,"<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\n",h1,m1,s1,ms1, h2,m2,s2,ms2);
 
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {
