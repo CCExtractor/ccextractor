@@ -593,7 +593,7 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 {
 	struct spupng_t *sp = (struct spupng_t *)context->out->spupng_data;
 	int x_pos, y_pos, width, height, i;
-	int x, y, y_off, x_off, ret;
+	int x, y, y_off, x_off, ret=0;
 	uint8_t *pbuf;
 	char *filename;
 	struct cc_bitmap* rect;
