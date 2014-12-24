@@ -1,5 +1,6 @@
 0.75
 -----------
+- Fixed issue with teletext to other then srt.
 - CCExtractor can be used as library if compiled using cmake
 - By default the Windows version adds BOM to generated UTF files (this is
   because it's needed to open the files correctly) while all other
