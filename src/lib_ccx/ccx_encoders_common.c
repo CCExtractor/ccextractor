@@ -38,7 +38,7 @@ static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
 "<tt xmlns:ttm=\"http://www.w3.org/ns/ttml#metadata\" xmlns:tts=\"http://www.w3.org/ns/ttml#styling\" xmlns=\"http://www.w3.org/ns/ttml\" xml:lang=\"en\">\n"
 "  <head>\n"
 "    <styling>\n"
-"      <style xml:id=\"speakerStyle\" tts:fontFamily=\"proportionalSansSerif\" tts:fontSize\"150%\" tts:textAlign=\"center\" tts:displayAlign=\"center\" tts:color=\"white\" tts:textOutline=\"black 1px\"/>\n"
+"      <style xml:id=\"speakerStyle\" tts:fontFamily=\"proportionalSansSerif\" tts:fontSize=\"150%\" tts:textAlign=\"center\" tts:displayAlign=\"center\" tts:color=\"white\" tts:textOutline=\"black 1px\"/>\n"
 "    </styling>\n"
 "    <layout>\n"
 "      <region xml:id=\"speaker\" tts:origin=\"10% 80%\" tts:extent=\"80% 10%\" style=\"speakerStyle\"/>\n"

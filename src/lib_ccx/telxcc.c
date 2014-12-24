@@ -418,6 +418,11 @@ int fuzzy_memcmp (const char *c1, const char *c2, const uint64_t *ucs2_buf1, uns
 }
 
 void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
+    if ((ccx_options.extraction_start.set && page->hide_timestamp < ccx_options.extraction_start.time_in_ms) ||
+        (ccx_options.extraction_end.set && page->show_timestamp > ccx_options.extraction_end.time_in_ms) ||
+        page->hide_timestamp == 0) {
+        return;
+    }
 #ifdef DEBUG
 	for (uint8_t row = 1; row < 25; row++) {
 		fprintf(stdout, "DEBUG[%02u]: ", row);
@@ -737,6 +742,9 @@ void process_telx_packet(struct lib_ccx_ctx *ctx, data_unit_t data_unit_id, tele
 		if (page_buffer.tainted == YES) {
 			// it would be nice, if subtitle hides on previous video frame, so we contract 40 ms (1 frame @25 fps)
 			page_buffer.hide_timestamp = timestamp - 40;
+            if (page_buffer.hide_timestamp > timestamp) {
+                page_buffer.hide_timestamp = 0;
+            }
 			process_page(ctx, &page_buffer);
 
 		}
@@ -1054,6 +1062,9 @@ void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t s
 	}
 	if (t < t0) delta = last_timestamp;
 	last_timestamp = t + delta;
+    if (delta < 0 && last_timestamp > t) {
+        last_timestamp = 0;
+    }
 	t0 = t;
 
 	// skip optional PES header and process each 46-byte teletext packet

@@ -1523,7 +1523,7 @@ int dvbsub_decode(void *dvb_ctx, const unsigned char *buf, int buf_size, struct 
 	int segment_type;
 	int page_id;
 	int segment_length;
-	int ret;
+	int ret = 0;
 	int got_segment = 0;
 
 	if (buf_size <= 6 || *buf != 0x0f)
