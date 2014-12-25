@@ -6,8 +6,8 @@ extract text from images. In the World of Subtile, subtitle stored
 in bitmap format are common and even neccassary. for converting subtile 
 in bitmap format to subtilte in text format ocr is used.
 
-Dependecy
-=========
+Dependency
+==========
 Tesseract (OCR library by google)
 Leptonica (image processing library)
 
@@ -55,7 +55,7 @@ make ENABLE_OCR=yes
 
 
 How to compile ccextractor  on Windows with OCR
-=============================================
+===============================================
 
 Download prebuild library of leptonica from following link
 http://www.leptonica.com/source/leptonica-1.68-win32-lib-include-dirs.zip
