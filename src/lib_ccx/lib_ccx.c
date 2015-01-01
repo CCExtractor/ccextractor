@@ -101,6 +101,8 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	// Init timing
 	ccx_common_timing_init(&ctx->past,opt->nosync);
 
+	ctx->cc_to_stdout = opt->cc_to_stdout;
+
 	build_parity_table();
 	return ctx;
 }
