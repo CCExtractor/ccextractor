@@ -5,6 +5,7 @@
 #include <assert.h>
 #ifdef ENABLE_OCR
 #include "ocr.h"
+#undef OCR_DEBUG
 #endif
 
 #define CCPL (ccfont2_width / CCW * ccfont2_height / CCH)
@@ -430,7 +431,12 @@ static int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
 	return ret;
 
 }
-
+/**
+ * alpha value 255 means completely opaque
+ * alpha value 0   means completely transparent
+ * r g b all 0 means black
+ * r g b all 255 means white
+ */
 int mapclut_paletee(png_color *palette, png_byte *alpha, uint32_t *clut,
 		uint8_t depth)
 {
@@ -441,6 +447,14 @@ int mapclut_paletee(png_color *palette, png_byte *alpha, uint32_t *clut,
 		palette[i].blue = (clut[i] & 0xff);
 		alpha[i] = ((clut[i] >> 24) & 0xff);
 	}
+#if OCR_DEBUG
+	ccx_common_logging.log_ftn("Colors present in original Image\n");
+	for (int i = 0; i < depth; i++)
+	{
+		ccx_common_logging.log_ftn("%02d)r %03d g %03d b %03d a %03d\n",
+			i, palette[i].red, palette[i].green, palette[i].blue, alpha[i]);
+	}
+#endif
 	return 0;
 }
 
@@ -519,6 +533,8 @@ int quantize_map(png_byte *alpha, png_color *palette,
 	}
 
 	memset(histogram, 0, nb_color * sizeof(uint32_t));
+
+	/* initializing intensity  ordered table with serial order of unsorted color table */
 	for (int i = 0; i < nb_color; i++)
 	{
 		iot[i] = i;
@@ -530,9 +546,21 @@ int quantize_map(png_byte *alpha, png_color *palette,
 	{
 		histogram[bitmap[i]]++;
 	}
+	/* sorted in increasing order of intensity */
 	shell_sort((void*)iot, nb_color, sizeof(*iot), check_trans_tn_intensity, (void*)&ti);
 
-	/* using selection  sort since need to find only max_color */
+#if OCR_DEBUG
+	ccx_common_logging.log_ftn("Intensity ordered table\n");
+	for (int i = 0; i < nb_color; i++)
+	{
+		ccx_common_logging.log_ftn("%02d) map %02d hist %02d\n",
+			i, iot[i], histogram[iot[i]]);
+	}
+#endif
+	/**
+	 * using selection  sort since need to find only max_color
+	 * Hostogram becomes invalid in this loop
+	 */
 	for (int i = 0; i < max_color; i++)
 	{
 		uint32_t max_val = 0;
@@ -554,6 +582,14 @@ int quantize_map(png_byte *alpha, png_color *palette,
 		histogram[iot[max_ind]] = 0;
 	}
 
+#if OCR_DEBUG
+	ccx_common_logging.log_ftn("max redundant  intensities table\n");
+	for (int i = 0; i < max_color; i++)
+	{
+		ccx_common_logging.log_ftn("%02d) mcit %02d\n",
+			i, mcit[i]);
+	}
+#endif
 	for (int i = 0, mxi = 0; i < nb_color; i++)
 	{
 		int step, inc;
@@ -563,25 +599,33 @@ int quantize_map(png_byte *alpha, png_color *palette,
 			continue;
 		}
 		inc = (mxi) ? -1 : 0;
-		step = mcit[mxi + inc] + ((mcit[mxi] - mcit[mxi + inc]) / 3);
+		step = mcit[mxi + inc] + ((mcit[mxi] - mcit[mxi + inc]) / 2);
 		if (i <= step)
 		{
 			int index = iot[mcit[mxi + inc]];
-			alpha[i] = alpha[index];
-			palette[i].red = palette[index].red;
-			palette[i].blue = palette[index].blue;
-			palette[i].green = palette[index].green;
+			alpha[iot[i]] = alpha[index];
+			palette[iot[i]].red = palette[index].red;
+			palette[iot[i]].blue = palette[index].blue;
+			palette[iot[i]].green = palette[index].green;
 		}
 		else
 		{
 			int index = iot[mcit[mxi]];
-			alpha[i] = alpha[index];
-			palette[i].red = palette[index].red;
-			palette[i].blue = palette[index].blue;
-			palette[i].green = palette[index].green;
+			alpha[iot[i]] = alpha[index];
+			palette[iot[i]].red = palette[index].red;
+			palette[iot[i]].blue = palette[index].blue;
+			palette[iot[i]].green = palette[index].green;
 		}
 
 	}
+#if OCR_DEBUG
+	ccx_common_logging.log_ftn("Colors present in quantized Image\n");
+	for (int i = 0; i < nb_color; i++)
+	{
+		ccx_common_logging.log_ftn("%02d)r %03d g %03d b %03d a %03d\n",
+			i, palette[i].red, palette[i].green, palette[i].blue, alpha[i]);
+	}
+#endif
 	end: freep(&histogram);
 	freep(&mcit);
 	freep(&iot);
@@ -685,10 +729,11 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
                 ret = -1;
                 goto end;
         }
-	/* TODO do rectangle, wise one color table should not be used for all rectangle */
+
+#ifdef ENABLE_OCR
+	/* TODO do rectangle wise, one color table should not be used for all rectangles */
         mapclut_paletee(palette, alpha, (uint32_t *)rect[0].data[1],rect[0].nb_colors);
 	quantize_map(alpha, palette, pbuf, width*height, 3, rect[0].nb_colors);
-#ifdef ENABLE_OCR
 	str = ocr_bitmap(palette,alpha,pbuf,width,height);
 	if(str && str[0])
 	{

@@ -1440,19 +1440,21 @@ static int write_dvb_sub(void *dvb_ctx, struct cc_subtitle *sub)
 		if (region && region->dirty)
 			sub->nb_data++;
 	}
-	sub->start_time = get_visible_start();
-	sub->end_time = sub->start_time + ( ctx->time_out * 1000 );
-	sub->flags |= SUB_EOD_MARKER;
-	sub->got_output = 1;
 	if( sub->nb_data <= 0 )
 	{
 		return 0;
 	}
+
 	rect = malloc( sizeof(struct cc_bitmap) * sub->nb_data);
 	if(!rect)
 	{
 		return -1;
 	}
+
+	sub->start_time = get_visible_start();
+	sub->end_time = sub->start_time + ( ctx->time_out * 1000 );
+	sub->flags |= SUB_EOD_MARKER;
+	sub->got_output = 1;
 	sub->data = rect;
 	for (display = ctx->display_list; display; display = display->next)
 	{
@@ -1528,7 +1530,7 @@ int dvbsub_decode(void *dvb_ctx, const unsigned char *buf, int buf_size, struct 
 
 	if (buf_size <= 6 || *buf != 0x0f)
 	{
-		mprint("incomplete or broken packet");
+		mprint("incomplete or broken packet\n");
 		return -1;
 	}
 
@@ -1547,7 +1549,7 @@ int dvbsub_decode(void *dvb_ctx, const unsigned char *buf, int buf_size, struct 
 
 		if (p_end - p < segment_length)
 		{
-			mprint("incomplete or broken packet");
+			mprint("incomplete or broken packet\n");
 			return -1;
 		}
 

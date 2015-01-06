@@ -45,6 +45,7 @@ ifeq ($(ENABLE_OCR),yes)
 CFLAGS+=-I/usr/local/include/tesseract -I/usr/local/include/leptonica
 CFLAGS+=-DENABLE_OCR
 LDFLAGS+= $(shell pkg-config --libs tesseract)
+LDFLAGS+= $(shell pkg-config --libs lept)
 endif
 ifeq ($(ENABLE_FFMPEG),yes)
 CFLAGS+=-DENABLE_FFMPEG

@@ -141,6 +141,11 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 		ms_start = sub->start_time + context->subs_delay;
 		ms_end = sub->end_time - 1;
 	}
+	else if (context->prev_start == -1 && (sub->flags & SUB_EOD_MARKER))
+	{
+		ms_start = 1 + context->subs_delay;
+		ms_end = sub->start_time - 1;
+	}
 
 	if(sub->nb_data == 0 )
 		return 0;
