@@ -74,7 +74,7 @@ void *init_ffmpeg(char *path)
 
 	av_log_set_callback(log_cb);
 
-	ctx = av_malloc(sizeof(*ctx));
+	ctx = av_mallocz(sizeof(*ctx));
 	if(!ctx)
 	{
 		av_log(NULL,AV_LOG_ERROR,"Not enough memory\n");

@@ -75,7 +75,6 @@ void write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_st
 
 int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
-	struct spupng_t *sp = (struct spupng_t *)context->out->spupng_data;
 	int x_pos, y_pos, width, height, i;
 	int x, y, y_off, x_off, ret;
 	uint8_t *pbuf;
@@ -109,6 +108,11 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	{
 		ms_start = sub->start_time;
 		ms_end = sub->end_time;
+	}
+	else if (context->prev_start == -1 && (sub->flags & SUB_EOD_MARKER))
+	{
+		ms_start = 1;
+		ms_end = sub->start_time;
 	}
 
 	if(sub->nb_data == 0 )

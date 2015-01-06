@@ -952,7 +952,7 @@ void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *con
 				memset(use_buffer->colors[j], context->settings.default_color, CCX_DECODER_608_SCREEN_WIDTH);
 				memset(use_buffer->fonts[j], FONT_REGULAR, CCX_DECODER_608_SCREEN_WIDTH);
 				use_buffer->characters[j][CCX_DECODER_608_SCREEN_WIDTH] = 0;
-				use_buffer->row_used[j]=0;
+				use_buffer->row_used[j] = 0;
 			}
 		}
 	}
