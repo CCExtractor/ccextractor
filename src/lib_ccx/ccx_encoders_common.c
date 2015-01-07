@@ -232,30 +232,14 @@ int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ct
 }
 int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
-	struct spupng_t *sp = (struct spupng_t *)context->out->spupng_data;
-	int x_pos, y_pos, width, height, i;
-	int x, y, y_off, x_off, ret;
-	uint8_t *pbuf;
-	//char *filename;
+	int ret = 0;
 	struct cc_bitmap* rect;
-	png_color *palette = NULL;
-	png_byte *alpha = NULL;
-#ifdef ENABLE_OCR
-	char*str = NULL;
-#endif
-	//int used;
+
 #ifdef ENABLE_OCR
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
 #endif
 	LLONG start_time, end_time;
-	//char timeline[128];
-	int len = 0;
-
-        x_pos = -1;
-        y_pos = -1;
-        width = 0;
-        height = 0;
 
 	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
 	{
@@ -269,82 +253,19 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 	}
 
 	if(sub->nb_data == 0 )
-		return 0;
+		return ret;
 	rect = sub->data;
-	for(i = 0;i < sub->nb_data;i++)
-	{
-		if(x_pos == -1)
-		{
-			x_pos = rect[i].x;
-			y_pos = rect[i].y;
-			width = rect[i].w;
-			height = rect[i].h;
-		}
-		else
-		{
-			if(x_pos > rect[i].x)
-			{
-				width += (x_pos - rect[i].x);
-				x_pos = rect[i].x;
-			}
 
-                        if (rect[i].y < y_pos)
-                        {
-                                height += (y_pos - rect[i].y);
-                                y_pos = rect[i].y;
-                        }
-
-                        if (rect[i].x + rect[i].w > x_pos + width)
-                        {
-                                width = rect[i].x + rect[i].w - x_pos;
-                        }
-
-                        if (rect[i].y + rect[i].h > y_pos + height)
-                        {
-                                height = rect[i].y + rect[i].h - y_pos;
-                        }
-
-		}
-	}
 	if ( sub->flags & SUB_EOD_MARKER )
 		context->prev_start =  sub->start_time;
-	pbuf = (uint8_t*) malloc(width * height);
-	memset(pbuf, 0x0, width * height);
 
-	for(i = 0;i < sub->nb_data;i++)
-	{
-		x_off = rect[i].x - x_pos;
-		y_off = rect[i].y - y_pos;
-		for (y = 0; y < rect[i].h; y++)
-		{
-			for (x = 0; x < rect[i].w; x++)
-				pbuf[((y + y_off) * width) + x_off + x] = rect[i].data[0][y * rect[i].w + x];
-
-		}
-	}
-	palette = (png_color*) malloc(rect[0].nb_colors * sizeof(png_color));
-	if(!palette)
-	{
-		ret = -1;
-		goto end;
-	}
-        alpha = (png_byte*) malloc(rect[0].nb_colors * sizeof(png_byte));
-        if(!alpha)
-        {
-                ret = -1;
-                goto end;
-        }
-	/* TODO do rectangle, wise one color table should not be used for all rectangle */
-        mapclut_paletee(palette, alpha, (uint32_t *)rect[0].data[1],rect[0].nb_colors);
-	quantize_map(alpha, palette, pbuf, width*height, 3, rect[0].nb_colors);
-#ifdef ENABLE_OCR
-	str = ocr_bitmap(palette, alpha, pbuf, width, height, sub->lang_index);
-	if(str && str[0])
+#if ENABLE_OCR
+	if (rect[0].ocr_text && *(rect[0].ocr_text))
 	{
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 		{
 			char *token = NULL;
-			token = strtok(str,"\r\n");
+			token = strtok(rect[0].ocr_text ,"\r\n");
 			while (token)
 			{
 
@@ -402,11 +323,8 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 	}
 #endif
 
-end:
 	sub->nb_data = 0;
 	freep(&sub->data);
-	freep(&palette);
-	freep(&alpha);
 	return ret;
 
 }

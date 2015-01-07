@@ -19,6 +19,9 @@ struct cc_bitmap
 	int nb_colors;
 	unsigned char *data[2];
 	int linesize[2];
+#ifdef ENABLE_OCR
+	char *ocr_text;
+#endif
 };
 
 enum ccx_eia608_format

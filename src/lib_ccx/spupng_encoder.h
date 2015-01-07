@@ -34,6 +34,4 @@ void inc_spupng_fileindex(void *ctx);
 void set_spupng_offset(void *ctx,int x,int y);
 int mapclut_paletee(png_color *palette, png_byte *alpha, uint32_t *clut,
 		uint8_t depth);
-int quantize_map(png_byte *alpha, png_color *palette,
-		uint8_t *bitmap, int size, int max_color, int nb_color);
 #endif

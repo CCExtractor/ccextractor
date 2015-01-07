@@ -334,7 +334,7 @@ void set_spupng_offset(void *ctx,int x,int y)
     sp->xOffset = x;
     sp->yOffset = y;
 }
-static int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
+int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
 		png_color *palette, png_byte *alpha, int nb_color)
 {
 	FILE *f = NULL;
@@ -458,181 +458,6 @@ int mapclut_paletee(png_color *palette, png_byte *alpha, uint32_t *clut,
 	return 0;
 }
 
-struct transIntensity
-{
-	uint8_t *t;
-	png_color *palette;
-};
-int check_trans_tn_intensity(const void *p1, const void *p2, void *arg)
-{
-	struct transIntensity *ti = arg;
-	unsigned char* tmp = (unsigned char*)p1;
-	unsigned char* act = (unsigned char*)p2;
-	unsigned char tmp_i;
-	unsigned char act_i;
-	/** TODO verify that RGB follow ITU-R BT.709
-	 *  Below fomula is valid only for 709 standurd
-         *  Y = 0.2126 R + 0.7152 G + 0.0722 B
-         */
-	tmp_i = (0.2126 * ti->palette[*tmp].red) + (0.7152 * ti->palette[*tmp].green) + (0.0722 * ti->palette[*tmp].blue);
-	act_i = (0.2126 * ti->palette[*act].red) + (0.7152 * ti->palette[*act].green) + (0.0722 * ti->palette[*act].blue);;
-
-	if (ti->t[*tmp] < ti->t[*act] || (ti->t[*tmp] == ti->t[*act] &&  tmp_i < act_i))
-		return -1;
-	else if (ti->t[*tmp] == ti->t[*act] &&  tmp_i == act_i)
-		return 0;
-
-
-	return 1;
-}
-/*
- * @param alpha out
- * @param intensity in
- * @param palette out should be already initialized
- * @param bitmap in
- * @param size in size of bitmap
- * @param max_color in
- * @param nb_color in
- */
-int quantize_map(png_byte *alpha, png_color *palette,
-		uint8_t *bitmap, int size, int max_color, int nb_color)
-{
-	/*
-	 * occurrence of color in image
-	 */
-	uint32_t *histogram = NULL;
-	/* intensity ordered table */
-	uint8_t *iot = NULL;
-	/* array of color with most occurrence according to histogram
-	 * save index of intensity order table
-	 */
-	uint32_t *mcit = NULL;
-	struct transIntensity ti = { alpha,palette};
-
-	int ret = 0;
-
-	histogram = (uint32_t*) malloc(nb_color * sizeof(uint32_t));
-	if (!histogram)
-	{
-		ret = -1;
-		goto end;
-	}
-
-	iot = (uint8_t*) malloc(nb_color * sizeof(uint8_t));
-	if (!iot)
-	{
-		ret = -1;
-		goto end;
-	}
-
-	mcit = (uint32_t*) malloc(nb_color * sizeof(uint32_t));
-	if (!mcit)
-	{
-		ret = -1;
-		goto end;
-	}
-
-	memset(histogram, 0, nb_color * sizeof(uint32_t));
-
-	/* initializing intensity  ordered table with serial order of unsorted color table */
-	for (int i = 0; i < nb_color; i++)
-	{
-		iot[i] = i;
-	}
-	memset(mcit, 0, nb_color * sizeof(uint32_t));
-
-	/* calculate histogram of image */
-	for (int i = 0; i < size; i++)
-	{
-		histogram[bitmap[i]]++;
-	}
-	/* sorted in increasing order of intensity */
-	shell_sort((void*)iot, nb_color, sizeof(*iot), check_trans_tn_intensity, (void*)&ti);
-
-#if OCR_DEBUG
-	ccx_common_logging.log_ftn("Intensity ordered table\n");
-	for (int i = 0; i < nb_color; i++)
-	{
-		ccx_common_logging.log_ftn("%02d) map %02d hist %02d\n",
-			i, iot[i], histogram[iot[i]]);
-	}
-#endif
-	/**
-	 * using selection  sort since need to find only max_color
-	 * Hostogram becomes invalid in this loop
-	 */
-	for (int i = 0; i < max_color; i++)
-	{
-		uint32_t max_val = 0;
-		uint32_t max_ind = 0;
-		int j;
-		for (j = 0; j < nb_color; j++)
-		{
-			if (max_val < histogram[iot[j]])
-			{
-				max_val = histogram[iot[j]];
-				max_ind = j;
-			}
-		}
-		for (j = i; j > 0 && max_ind < mcit[j - 1]; j--)
-		{
-			mcit[j] = mcit[j - 1];
-		}
-		mcit[j] = max_ind;
-		histogram[iot[max_ind]] = 0;
-	}
-
-#if OCR_DEBUG
-	ccx_common_logging.log_ftn("max redundant  intensities table\n");
-	for (int i = 0; i < max_color; i++)
-	{
-		ccx_common_logging.log_ftn("%02d) mcit %02d\n",
-			i, mcit[i]);
-	}
-#endif
-	for (int i = 0, mxi = 0; i < nb_color; i++)
-	{
-		int step, inc;
-		if (i == mcit[mxi])
-		{
-			mxi = (mxi < max_color) ? mxi + 1 : mxi;
-			continue;
-		}
-		inc = (mxi) ? -1 : 0;
-		step = mcit[mxi + inc] + ((mcit[mxi] - mcit[mxi + inc]) / 2);
-		if (i <= step)
-		{
-			int index = iot[mcit[mxi + inc]];
-			alpha[iot[i]] = alpha[index];
-			palette[iot[i]].red = palette[index].red;
-			palette[iot[i]].blue = palette[index].blue;
-			palette[iot[i]].green = palette[index].green;
-		}
-		else
-		{
-			int index = iot[mcit[mxi]];
-			alpha[iot[i]] = alpha[index];
-			palette[iot[i]].red = palette[index].red;
-			palette[iot[i]].blue = palette[index].blue;
-			palette[iot[i]].green = palette[index].green;
-		}
-
-	}
-#if OCR_DEBUG
-	ccx_common_logging.log_ftn("Colors present in quantized Image\n");
-	for (int i = 0; i < nb_color; i++)
-	{
-		ccx_common_logging.log_ftn("%02d)r %03d g %03d b %03d a %03d\n",
-			i, palette[i].red, palette[i].green, palette[i].blue, alpha[i]);
-	}
-#endif
-	end: freep(&histogram);
-	freep(&mcit);
-	freep(&iot);
-	return ret;
-}
-
-
 int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
 	struct spupng_t *sp = (struct spupng_t *)context->out->spupng_data;
@@ -643,9 +468,6 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 	struct cc_bitmap* rect;
 	png_color *palette = NULL;
 	png_byte *alpha = NULL;
-#ifdef ENABLE_OCR
-	char*str = NULL;
-#endif
 
         x_pos = -1;
         y_pos = -1;
@@ -730,14 +552,12 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
                 goto end;
         }
 
-#ifdef ENABLE_OCR
 	/* TODO do rectangle wise, one color table should not be used for all rectangles */
         mapclut_paletee(palette, alpha, (uint32_t *)rect[0].data[1],rect[0].nb_colors);
-	quantize_map(alpha, palette, pbuf, width*height, 3, rect[0].nb_colors);
-	str = ocr_bitmap(palette, alpha, pbuf, width, height,sub->lang_index);
-	if(str && str[0])
+#if ENABLE_OCR
+	if (rect[0].ocr_text && *(rect[0].ocr_text))
 	{
-		write_spucomment(sp,str);
+		write_spucomment(sp, rect[0].ocr_text);
 	}
 #endif
 	save_spupng(filename,pbuf,width, height, palette, alpha,rect[0].nb_colors);
