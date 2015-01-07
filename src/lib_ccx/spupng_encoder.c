@@ -734,7 +734,7 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 	/* TODO do rectangle wise, one color table should not be used for all rectangles */
         mapclut_paletee(palette, alpha, (uint32_t *)rect[0].data[1],rect[0].nb_colors);
 	quantize_map(alpha, palette, pbuf, width*height, 3, rect[0].nb_colors);
-	str = ocr_bitmap(palette,alpha,pbuf,width,height);
+	str = ocr_bitmap(palette, alpha, pbuf, width, height,sub->lang_index);
 	if(str && str[0])
 	{
 		write_spucomment(sp,str);

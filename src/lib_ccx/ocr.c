@@ -3,9 +3,10 @@
 #ifdef ENABLE_OCR
 #include "platform.h"
 #include "capi.h"
+#include "ccx_common_constants.h"
 #include "allheaders.h"
 
-char* ocr_bitmap(png_color *palette,png_byte *alpha, unsigned char* indata,int w, int h)
+char* ocr_bitmap(png_color *palette,png_byte *alpha, unsigned char* indata,int w, int h, int  lang_index)
 {
 	TessBaseAPI* api;
 	PIX	*pix;
@@ -37,7 +38,13 @@ char* ocr_bitmap(png_color *palette,png_byte *alpha, unsigned char* indata,int w
 		}
 	}
 
-	ret = TessBaseAPIInit3(api,"", "eng");
+	if(lang_index == 0)
+	{
+		/* select english */
+		lang_index = 1;
+	}
+	//ret = TessBaseAPIInit3(api,"", language[lang_index]);
+	ret = TessBaseAPIInit3(api,"", "foo");
 	if(ret < 0)
 	{
 		return NULL;

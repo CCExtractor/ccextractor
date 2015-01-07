@@ -267,5 +267,6 @@ enum ccx_code_type
 #define CCX_TXT_AUTO_NOT_YET_FOUND		1
 #define CCX_TXT_IN_USE					2 // Positive autodetected, or forced, etc
 
-extern const char *language[4];
+#define NB_LANGUAGE 5
+extern const char *language[NB_LANGUAGE];
 #endif

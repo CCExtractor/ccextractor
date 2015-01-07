@@ -338,7 +338,7 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
         mapclut_paletee(palette, alpha, (uint32_t *)rect[0].data[1],rect[0].nb_colors);
 	quantize_map(alpha, palette, pbuf, width*height, 3, rect[0].nb_colors);
 #ifdef ENABLE_OCR
-	str = ocr_bitmap(palette,alpha,pbuf,width,height);
+	str = ocr_bitmap(palette, alpha, pbuf, width, height, sub->lang_index);
 	if(str && str[0])
 	{
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
