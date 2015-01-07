@@ -101,6 +101,10 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 
 	if(sub->nb_data == 0 )
 		return 0;
+
+	if(sub->flags & SUB_EOD_MARKER)
+		context->prev_start =  sub->start_time;
+
 	rect = sub->data;
 #ifdef ENABLE_OCR
 	if (rect[0].ocr_text && *(rect[0].ocr_text))
