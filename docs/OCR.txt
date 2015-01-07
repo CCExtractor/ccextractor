@@ -90,7 +90,7 @@ Step 7)Add liblept168.lib in new line
 
 Download language data from following link
 https://code.google.com/p/tesseract-ocr/downloads/list
-after downloading the tesseract-ocr-3.02.eng.tar extract the tar file and put
+after downloading the tesseract-ocr-3.02.eng.tar.gz extract the tar file and put
 tessdata folder where you have kept ccextractor executable
 
 Copy the tesseract and leptonica dll in the folder of executable or in system32.
