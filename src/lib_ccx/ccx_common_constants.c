@@ -124,10 +124,15 @@ enum
     DTVCC_PACKET_START = 3,
 };
 
-const char *language[4] =
+/**
+ * After Adding a new language here, dont forget
+ * to increase NB_LANGUAGE define ccx_common_constants.h
+ */
+const char *language[NB_LANGUAGE] =
 {
 	"und",
 	"eng",
 	"fin",
+	"spa",
 	NULL
 };

@@ -25,6 +25,7 @@
 #include "dvb_subtitle_decoder.h"
 #include "utility.h"
 #include "ccx_decoders_common.h"
+#include "ocr.h"
 
 #define DVBSUB_PAGE_SEGMENT     0x10
 #define DVBSUB_REGION_SEGMENT   0x11
@@ -272,6 +273,9 @@ typedef struct DVBSubContext
 	int lang_index;
 	int version;
 	int time_out;
+#ifdef ENABLE_OCR
+	void *ocr_ctx;
+#endif
 	DVBSubRegion *region_list;
 	DVBSubCLUT *clut_list;
 	DVBSubObject *object_list;
@@ -429,6 +433,9 @@ void* dvbsub_init_decoder(struct dvb_config* cfg)
 	ctx->ancillary_id = cfg->ancillary_id[0];
 	ctx->lang_index = cfg->lang_index[0];
 
+#ifdef ENABLE_OCR
+	ctx->ocr_ctx = init_ocr(ctx->lang_index);
+#endif
 	ctx->version = -1;
 
 	default_clut.id = -1;
@@ -1425,6 +1432,7 @@ static int write_dvb_sub(void *dvb_ctx, struct cc_subtitle *sub)
         struct cc_bitmap *rect = NULL;
 	uint32_t *clut_table;
 	int offset_x=0, offset_y=0;
+	int ret = 0;
 
         sub->type = CC_BITMAP;
 	sub->lang_index = ctx->lang_index;
@@ -1458,6 +1466,9 @@ static int write_dvb_sub(void *dvb_ctx, struct cc_subtitle *sub)
 	sub->data = rect;
 	for (display = ctx->display_list; display; display = display->next)
 	{
+#ifdef ENABLE_OCR
+		char *ocr_str = NULL;
+#endif
 		region = get_region(ctx, display->region_id);
 
 		if (!region)
@@ -1497,6 +1508,11 @@ static int write_dvb_sub(void *dvb_ctx, struct cc_subtitle *sub)
 
 		rect->data[0] = malloc(region->buf_size);
 		memcpy(rect->data[0], region->pbuf, region->buf_size);
+#ifdef ENABLE_OCR
+		ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str);
+		if(ret >= 0)
+			rect->ocr_text = ocr_str;
+#endif
 		rect++;
 
 	}
