@@ -435,6 +435,11 @@ void* dvbsub_init_decoder(struct dvb_config* cfg)
 
 #ifdef ENABLE_OCR
 	ctx->ocr_ctx = init_ocr(ctx->lang_index);
+        if(!ctx->ocr_ctx)
+	{
+		freep(&ctx);
+		return NULL;
+	}
 #endif
 	ctx->version = -1;
 

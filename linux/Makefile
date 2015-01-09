@@ -42,11 +42,31 @@ INSTLALL_PROGRAM = $(INSTLALL)
 DESTDIR = /usr/bin
 
 ifeq ($(ENABLE_OCR),yes)
-CFLAGS+=-I/usr/local/include/tesseract -I/usr/local/include/leptonica
 CFLAGS+=-DENABLE_OCR
-LDFLAGS+= $(shell pkg-config --libs tesseract)
-LDFLAGS+= $(shell pkg-config --libs lept)
+TESS_LDFLAGS+= $(shell pkg-config --libs tesseract)
+LEPT_LDFLAGS+= $(shell pkg-config --libs lept)
+
+#error checking of library are there or not
+ifeq ($(TESS_LDFLAGS),$(EMPTY))
+$(error **ERROR** "tesseract not found")
+else
+#TODO print the version of library found
+$(info  "tesseract found")
 endif
+ifeq ($(LEPT_LDFLAGS),$(EMPTY))
+$(error **ERROR** "leptonica not found")
+else
+#TODO print the version of library found
+$(info  "Leptonica found")
+endif
+
+CFLAGS  += $(shell pkg-config --cflags tesseract)
+CFLAGS  += $(shell pkg-config --cflags lept)
+LDFLAGS += $(TESS_LDFLAGS)
+LDFLAGS += $(LEPT_LDFLAGS)
+endif
+
+
 ifeq ($(ENABLE_FFMPEG),yes)
 CFLAGS+=-DENABLE_FFMPEG
 CFLAGS+= $(shell pkg-config --cflags libavcodec)

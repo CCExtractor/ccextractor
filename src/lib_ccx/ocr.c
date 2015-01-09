@@ -67,7 +67,7 @@ static void delete_ocr (struct ocrCtx* ctx)
 {
         TessBaseAPIEnd(ctx->api);
         TessBaseAPIDelete(ctx->api);
-	freep(ctx);
+	freep(&ctx);
 }
 void* init_ocr(int lang_index)
 {
