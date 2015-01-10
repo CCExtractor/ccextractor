@@ -730,9 +730,9 @@ static int read_pic_info(struct lib_ccx_ctx *ctx, struct bitstream *esstream, st
     // in GOP header already.
     if (picture_coding_type==CCX_FRAME_TYPE_I_FRAME || picture_coding_type==CCX_FRAME_TYPE_P_FRAME)
     {
-//		if (((picture_structure != 0x1) && (picture_structure != 0x2)) ||
-//		(temporal_reference != current_tref))
-//		{
+		if (((picture_structure != 0x1) && (picture_structure != 0x2)) ||
+		(temporal_reference != current_tref))
+		{
 			// NOTE: process_hdcc() needs to be called before set_fts() as it
 			// uses fts_now to re-create the timeline !!!!!
 			if (has_ccdata_buffered)
@@ -740,7 +740,7 @@ static int read_pic_info(struct lib_ccx_ctx *ctx, struct bitstream *esstream, st
 				process_hdcc(ctx, sub);
 			}
 			anchor_hdcc(temporal_reference);
-//		}
+		}
     }
 
     current_tref = temporal_reference;
