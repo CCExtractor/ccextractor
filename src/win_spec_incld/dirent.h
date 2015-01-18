@@ -22,7 +22,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * $Id: dirent.h,v 1.20 2014/03/19 17:52:23 tronkko Exp $
+ * $Id: dirent.h,v 1.1 2015/01/16 07:40:15 cfsmp3 Exp $
  */
 #ifndef DIRENT_H
 #define DIRENT_H

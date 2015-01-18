@@ -246,7 +246,7 @@ void buffered_seek (struct lib_ccx_ctx *ctx, int offset)
         if (filebuffer_pos<0)
         {
             // We got into the start buffer (hopefully)
-            if (ctx->startbytes_pos+filebuffer_pos < 0)
+			if ((filebuffer_pos+ctx->startbytes_pos) < 0)
             {
                 fatal (CCX_COMMON_EXIT_BUG_BUG, "PANIC: Attempt to seek before buffer start, this is a bug!");
             }

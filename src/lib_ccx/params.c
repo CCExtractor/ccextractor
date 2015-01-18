@@ -129,7 +129,7 @@ int parsedelay (struct ccx_s_options *opt, char *par)
 		c++;
 	}
 	if (sign)
-		opt->subs_delay =- opt->subs_delay;
+		opt->subs_delay = -opt->subs_delay;
 	return 0;
 }
 

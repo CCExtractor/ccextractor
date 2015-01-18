@@ -427,7 +427,8 @@ static int sequence_header(struct lib_ccx_ctx *ctx, struct bitstream *esstream)
         // whole sequence info.
         if (vert_size >= 288 && vert_size <= 1088 &&
             hor_size >= 352 && hor_size <= 1920 &&
-            hor_size / vert_size >= 352/576 && hor_size / vert_size <= 2 &&
+            (hor_size*100) / vert_size >= (352*100)/576 && // The weird *100 is to avoid using floats
+			hor_size / vert_size <= 2 &&
             frame_rate>0 && frame_rate<9 &&
             aspect_ratio>0 && aspect_ratio<5)
         {

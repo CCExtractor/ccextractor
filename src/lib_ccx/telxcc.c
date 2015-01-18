@@ -503,7 +503,7 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
                     page_buffer_add_string("<br/>");
                     break;
                 default:
-                    page_buffer_add_string(encoded_crlf);
+                    page_buffer_add_string((const char *) encoded_crlf);
             }
         }
 
@@ -656,8 +656,8 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
             }
             break;
 		default: // Yes, this means everything else is .srt for now
-            page_buffer_add_string (encoded_crlf);
-            page_buffer_add_string (encoded_crlf);
+            page_buffer_add_string ((const char *) encoded_crlf);
+			page_buffer_add_string((const char *) encoded_crlf);
             if (ctx->wbout1.fh!=-1) {
                 fdprintf(ctx->wbout1.fh,"%"PRIu32"%s%s --> %s%s", tlt_frames_produced, encoded_crlf, timecode_show, timecode_hide, encoded_crlf);
                 fdprintf(ctx->wbout1.fh, "%s",page_buffer_cur);
