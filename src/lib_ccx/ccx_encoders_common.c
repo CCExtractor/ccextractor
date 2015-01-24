@@ -519,7 +519,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		}
 		freep(&sub->data);
 	}
-	if(sub->type == CC_BITMAP)
+	else if(sub->type == CC_BITMAP)
 	{
 		switch (ccx_options.write_format)
 		{
@@ -545,6 +545,29 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			break;
 		}
 
+	}
+	else if (sub->type == CC_TEXT)
+	{
+		switch (ccx_options.write_format)
+		{
+		case CCX_OF_SRT:
+			if (!context->startcredits_displayed && ccx_options.start_credits_text!=NULL)
+				try_to_add_start_credits(context, sub->start_time);
+			write_stringz_as_srt(sub->data, context, sub->start_time, sub->end_time);
+			break;
+		case CCX_OF_SAMI:
+			if (!context->startcredits_displayed && ccx_options.start_credits_text!=NULL)
+				try_to_add_start_credits(context, sub->start_time);
+			write_stringz_as_sami(sub, context, sub->start_time, sub->end_time);
+			break;
+		case CCX_OF_SMPTETT:
+			if (!context->startcredits_displayed && ccx_options.start_credits_text!=NULL)
+				try_to_add_start_credits(context, sub->start_time);
+			write_stringz_as_smptett(sub, context, sub->start_time, sub->end_time);
+			break;
+		default:
+			break;
+		}
 	}
 	if (!sub->nb_data)
 		freep(&sub->data);

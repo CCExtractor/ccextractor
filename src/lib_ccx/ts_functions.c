@@ -487,6 +487,11 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 			ccx_bufferdatatype = CCX_DVB_SUBTITLE;
 			tstr = "DVB subtitle";
 		}
+		else if ( cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 )
+		{
+			ccx_bufferdatatype = CCX_PES;
+			tstr = "ISDB closed caption";
+		}
 		else if ( cap_stream_type == CCX_STREAM_TYPE_UNKNOWNSTREAM && ccx_options.hauppauge_mode)
 		{
 			ccx_bufferdatatype = CCX_HAUPPAGE;
@@ -589,7 +594,7 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 			haup_capbuflen=0;
 		}
 
-		dbg_print(CCX_DMT_VERBOSE, "TS payload start video PES id: %d  len: %ld\n",
+		dbg_print(CCX_DMT_VERBOSE, "TS payload start video PES id: 0x%x  len: %ld\n",
 			   stream_id, ctx->capbuflen);
 
 		int pesheaderlen;

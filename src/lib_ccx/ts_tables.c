@@ -7,7 +7,9 @@
 
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
+#include "ocr.h"
 #include "dvb_subtitle_decoder.h"
+#include "isdb.h"
 #include "utility.h"
 static unsigned pmt_warning_shown=0; // Only display warning once
 void *ccx_dvb_context = NULL;
@@ -258,25 +260,44 @@ int parse_PMT (struct lib_ccx_ctx *ctx, unsigned char *buf, int len, int pos)
 			ccx_options.ts_cappid = newcappid = elementary_PID;
 			cap_stream_type=CCX_STREAM_TYPE_UNKNOWNSTREAM;
 		}
-		if(IS_FEASIBLE(ccx_options.codec,ccx_options.nocodec,CCX_CODEC_DVB) &&
-				!ccx_options.ts_cappid &&
-				ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 &&
-				ES_info_length  )
+
+		if(!ccx_options.ts_cappid && ES_info_length &&
+			ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 )
 		{
 			unsigned char *es_info = buf + i + 5;
 			for (desc_len = 0;(buf + i + 5 + ES_info_length) > es_info ;es_info += desc_len)
 			{
 				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
 				desc_len = (*es_info++);
-#ifndef ENABLE_OCR
-				if(ccx_options.write_format != CCX_OF_SPUPNG )
+				if(CCX_MPEG_DESC_DATA_COMP == descriptor_tag)
 				{
-					mprint ("DVB subtitles detected, OCR subsystem not present. Use -out=spupng for graphic output\n");
-					continue;
+					int16_t component_id = 0;
+					if(!IS_FEASIBLE(ccx_options.codec, ccx_options.nocodec, CCX_CODEC_ISDB_CC))
+						break;
+					if (desc_len < 2)
+						break;
+
+					component_id = RB16(es_info);
+					if (component_id != 0x08)
+						break;
+					mprint ("*****ISDB subtitles detected\n");
+					ccx_options.ts_cappid = newcappid = elementary_PID;
+					cap_stream_type = newcap_stream_type = ccx_stream_type;
+					ctx->dec_ctx->codec_type = CCX_CODEC_ISDB_CC;
+					ctx->dec_ctx->codec_ctx = init_isdb_caption();
 				}
-#endif
-				if(CCX_MPEG_DSC_DVB_SUBTITLE == descriptor_tag)
+				else if(CCX_MPEG_DSC_DVB_SUBTITLE == descriptor_tag)
 				{
+#ifndef ENABLE_OCR
+					if(ccx_options.write_format != CCX_OF_SPUPNG )
+					{
+						mprint ("DVB subtitles detected, OCR subsystem not present. Use -out=spupng for graphic output\n");
+						break;
+					}
+#endif
+					if(!IS_FEASIBLE(ccx_options.codec,ccx_options.nocodec,CCX_CODEC_DVB))
+						break;
+
 					struct dvb_config cnf;
 					memset((void*)&cnf,0,sizeof(struct dvb_config));
 					ret = parse_dvb_description(&cnf,es_info,desc_len);
