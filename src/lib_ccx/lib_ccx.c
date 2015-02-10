@@ -50,6 +50,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 
 	ctx->stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
 	ctx->auto_stream = opt->auto_stream;
+	ctx->m2ts = opt->m2ts;
 	ctx->screens_to_process = -1;
 	ctx->current_file = -1;
 	ctx->infd = -1;//Set to -1 to indicate no file is open.

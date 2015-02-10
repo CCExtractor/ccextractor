@@ -91,6 +91,7 @@ void init_options (struct ccx_s_options *options)
 	options->noautotimeref=0; // Do NOT set time automatically?
 	options->input_source=CCX_DS_FILE; // Files, stdin or network
 	options->auto_stream = CCX_SM_AUTODETECT;
+	options->m2ts = 0;
 
 	// Prepare time structures
 	init_boundary_time (&options->extraction_start);

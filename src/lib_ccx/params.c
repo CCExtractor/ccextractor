@@ -272,8 +272,16 @@ void set_input_format (struct ccx_s_options *opt, const char *format)
 		format++;
 	if (strcmp (format,"es")==0) // Does this actually do anything?
 		opt->auto_stream = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
-	else if (strcmp (format,"ts")==0)
+	else if (strcmp(format, "ts") == 0)
+	{
 		opt->auto_stream = CCX_SM_TRANSPORT;
+		opt->m2ts = 0;
+	}	
+	else if (strcmp(format, "m2ts") == 0)
+	{
+		opt->auto_stream = CCX_SM_TRANSPORT;
+		opt->m2ts = 1;
+	}
 	else if (strcmp (format,"ps")==0 || strcmp (format,"nots")==0)
 		opt->auto_stream = CCX_SM_PROGRAM;
 	else if (strcmp (format,"asf")==0 || strcmp (format,"dvr-ms")==0)

@@ -1,3 +1,7 @@
+0.76 
+-----------------
+- Added basic M2TS support
+
 0.75 (2015-01-15)
 -----------------
 - Fixed issue with teletext to other then srt.

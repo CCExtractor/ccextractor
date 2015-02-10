@@ -73,9 +73,26 @@ void detect_stream_type (struct lib_ccx_ctx *ctx)
                     // Eight sync bytes, that's good enough
                     ctx->startbytes_pos=i;
                     ctx->stream_mode=CCX_SM_TRANSPORT;
+					ctx->m2ts = 0;
                     break;
                 }
             }
+			// Check for M2TS
+			for (unsigned i = 0; i<192; i++)
+			{
+				if (ctx->startbytes[i+4] == 0x47 && ctx->startbytes[i + 4 + 192] == 0x47 &&
+					ctx->startbytes[i + 192 * 2+4] == 0x47 && ctx->startbytes[i + 192 * 3+4] == 0x47 &&
+					ctx->startbytes[i + 192 * 4+4] == 0x47 && ctx->startbytes[i + 192 * 5+4] == 0x47 &&
+					ctx->startbytes[i + 192 * 6+4] == 0x47 && ctx->startbytes[i + 192 * 7+4] == 0x47
+					)
+				{
+					// Eight sync bytes, that's good enough
+					ctx->startbytes_pos = i;
+					ctx->stream_mode = CCX_SM_TRANSPORT;
+					ctx->m2ts = 1;
+					break;
+				}
+			}
             // Now check for PS (Needs PACK header)
             for (unsigned i=0;
                  i < (unsigned) (ctx->startbytes_avail<50000?ctx->startbytes_avail-3:49997);

@@ -86,6 +86,7 @@ struct ccx_s_options // Options from user parameters
 	char **inputfile; // List of files to process
 	int num_input_files; // How many?
 	enum ccx_stream_mode_enum auto_stream;
+	int m2ts; // Regular TS or M2TS
 	LLONG subs_delay; // ms to delay (or advance) subs
 	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
 	// Output structures

@@ -135,6 +135,7 @@ struct lib_ccx_ctx
 	struct lib_cc_decode *dec_ctx;
 	enum ccx_stream_mode_enum stream_mode;
 	enum ccx_stream_mode_enum auto_stream;
+	int m2ts;
 
 
 	int rawmode; // Broadcast or DVD

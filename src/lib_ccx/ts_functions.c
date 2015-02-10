@@ -57,6 +57,25 @@ void init_ts(struct lib_ccx_ctx *ctx)
 // Return 1 for sucessfully read ts packet
 int ts_readpacket(struct lib_ccx_ctx* ctx)
 {
+	if (ctx->m2ts)
+	{
+		/* M2TS just adds 4 bytes to each packet (so size goes from 188 to 192)
+		 The 4 bytes are not important to us, so just skip
+		// TP_extra_header {   
+		Copy_permission_indicator 2  unimsbf
+			Arrival_time_stamp 30 unimsbf
+		} */
+		char tp_extra_header[4];
+		buffered_read(ctx, tp_extra_header, 4);
+		ctx->past += result;
+		if (result != 4)
+		{
+			if (result>0)
+				mprint("Premature end of file!\n");
+			end_of_file = 1;
+			return 0;
+		}
+	}
 	buffered_read(ctx, tspacket, 188);
 	ctx->past+=result;
 	if (result!=188)
