@@ -2,6 +2,7 @@
 #include "isdb.h"
 #include "lib_ccx.h"
 #include "utility.h"
+#include "limits.h"
 
 #define DEBUG
 
@@ -41,7 +42,7 @@ enum csi_command
 {
 	/* Set Writing Format */
 	CSI_CMD_SWF = 0x53,
-	/* Set Display  Format */
+	/* Set Display Format */
 	CSI_CMD_SDF = 0x56,
 	/* Character composition dot designation */
 	CSI_CMD_SSM = 0x57,
@@ -56,73 +57,73 @@ enum csi_command
 };
 
 #define IS_HORIZONTAL_LAYOUT(format) \
-    ((format) == ISDBSUB_FMT_960H || (format) == ISDBSUB_FMT_720H)
+	((format) == ISDBSUB_FMT_960H || (format) == ISDBSUB_FMT_720H)
 #define LAYOUT_GET_WIDTH(format) \
-    (((format) == ISDBSUB_FMT_960H || (format) == ISDBSUB_FMT_960V) ? 960 : 720)
+	(((format) == ISDBSUB_FMT_960H || (format) == ISDBSUB_FMT_960V) ? 960 : 720)
 #define LAYOUT_GET_HEIGHT(format) \
-    (((format) == ISDBSUB_FMT_960H || (format) == ISDBSUB_FMT_960V) ? 540 : 480)
+	(((format) == ISDBSUB_FMT_960H || (format) == ISDBSUB_FMT_960V) ? 540 : 480)
 
 #define RGBA(r,g,b,a) (((unsigned)(255 - (a)) << 24) | ((b) << 16) | ((g) << 8) | (r))
 typedef uint32_t rgba;
 static rgba Default_clut[128] =
-{   
-    //0-7
-    RGBA(0,0,0,255), RGBA(255,0,0,255), RGBA(0,255,0,255), RGBA(255,255,0,255),
-    RGBA(0,0,255,255), RGBA(255,0,255,255), RGBA(0,255,255,255), RGBA(255,255,255,255),
-    //8-15
-    RGBA(0,0,0,0), RGBA(170,0,0,255), RGBA(0,170,0,255), RGBA(170,170,0,255),
-    RGBA(0,0,170,255), RGBA(170,0,170,255), RGBA(0,170,170,255), RGBA(170,170,170,255),
-    //16-23
-    RGBA(0,0,85,255), RGBA(0,85,0,255), RGBA(0,85,85,255), RGBA(0,85,170,255),
-    RGBA(0,85,255,255), RGBA(0,170,85,255), RGBA(0,170,255,255), RGBA(0,255,85,255),
-    //24-31
-    RGBA(0,255,170,255), RGBA(85,0,0,255), RGBA(85,0,85,255), RGBA(85,0,170,255),
-    RGBA(85,0,255,255), RGBA(85,85,0,255), RGBA(85,85,85,255), RGBA(85,85,170,255),
-    //32-39
-    RGBA(85,85,255,255), RGBA(85,170,0,255), RGBA(85,170,85,255), RGBA(85,170,170,255),
-    RGBA(85,170,255,255), RGBA(85,255,0,255), RGBA(85,255,85,255), RGBA(85,255,170,255),
-    //40-47
-    RGBA(85,255,255,255), RGBA(170,0,85,255), RGBA(170,0,255,255), RGBA(170,85,0,255),
-    RGBA(170,85,85,255), RGBA(170,85,170,255), RGBA(170,85,255,255), RGBA(170,170,85,255),
-    //48-55
-    RGBA(170,170,255,255), RGBA(170,255,0,255), RGBA(170,255,85,255), RGBA(170,255,170,255),
-    RGBA(170,255,255,255), RGBA(255,0,85,255), RGBA(255,0,170,255), RGBA(255,85,0,255),
-    //56-63
-    RGBA(255,85,85,255), RGBA(255,85,170,255), RGBA(255,85,255,255), RGBA(255,170,0,255),
-    RGBA(255,170,85,255), RGBA(255,170,170,255), RGBA(255,170,255,255), RGBA(255,255,85,255),
-    //64
-    RGBA(255,255,170,255),
-    // 65-127 are caliculated later.
+{
+	//0-7
+	RGBA(0,0,0,255), RGBA(255,0,0,255), RGBA(0,255,0,255), RGBA(255,255,0,255),
+	RGBA(0,0,255,255), RGBA(255,0,255,255), RGBA(0,255,255,255), RGBA(255,255,255,255),
+	//8-15
+	RGBA(0,0,0,0), RGBA(170,0,0,255), RGBA(0,170,0,255), RGBA(170,170,0,255),
+	RGBA(0,0,170,255), RGBA(170,0,170,255), RGBA(0,170,170,255), RGBA(170,170,170,255),
+	//16-23
+	RGBA(0,0,85,255), RGBA(0,85,0,255), RGBA(0,85,85,255), RGBA(0,85,170,255),
+	RGBA(0,85,255,255), RGBA(0,170,85,255), RGBA(0,170,255,255), RGBA(0,255,85,255),
+	//24-31
+	RGBA(0,255,170,255), RGBA(85,0,0,255), RGBA(85,0,85,255), RGBA(85,0,170,255),
+	RGBA(85,0,255,255), RGBA(85,85,0,255), RGBA(85,85,85,255), RGBA(85,85,170,255),
+	//32-39
+	RGBA(85,85,255,255), RGBA(85,170,0,255), RGBA(85,170,85,255), RGBA(85,170,170,255),
+	RGBA(85,170,255,255), RGBA(85,255,0,255), RGBA(85,255,85,255), RGBA(85,255,170,255),
+	//40-47
+	RGBA(85,255,255,255), RGBA(170,0,85,255), RGBA(170,0,255,255), RGBA(170,85,0,255),
+	RGBA(170,85,85,255), RGBA(170,85,170,255), RGBA(170,85,255,255), RGBA(170,170,85,255),
+	//48-55
+	RGBA(170,170,255,255), RGBA(170,255,0,255), RGBA(170,255,85,255), RGBA(170,255,170,255),
+	RGBA(170,255,255,255), RGBA(255,0,85,255), RGBA(255,0,170,255), RGBA(255,85,0,255),
+	//56-63
+	RGBA(255,85,85,255), RGBA(255,85,170,255), RGBA(255,85,255,255), RGBA(255,170,0,255),
+	RGBA(255,170,85,255), RGBA(255,170,170,255), RGBA(255,170,255,255), RGBA(255,255,85,255),
+	//64
+	RGBA(255,255,170,255),
+	// 65-127 are caliculated later.
 };
 struct b24str_state
 {
-  int gl;                       /* index of the group invoked to GL */
-  int gr;                       /* index of the group invoked to GR */
-  int ss;                       /* flag if in SS2 or SS3.  2:SS2, 3:SS3 */
+	int gl;/* index of the group invoked to GL */
+	int gr;/* index of the group invoked to GR */
+	int ss;/* flag if in SS2 or SS3. 2:SS2, 3:SS3 */
 
-  struct group
-  {
-    unsigned char mb;          /* how many bytes one character consists of. */
-    // code for character sets
-#define CODE_ASCII ('\x40')
-#define CODE_ASCII2 ('\x4A')
-#define CODE_JISX0208 ('\x42')
-#define CODE_JISX0213_1 ('\x51')
-#define CODE_JISX0213_2 ('\x50')
-#define CODE_JISX0201_KATA ('\x49')
-#define CODE_MOSAIC_C ('\x34')
-#define CODE_MOSAIC_D ('\x35')
-#define CODE_EXT ('\x3B')
-#define CODE_X_HIRA ('\x30')
-#define CODE_X_HIRA_P ('\x37')
-#define CODE_X_KATA ('\x31')
-#define CODE_X_KATA_P ('\x38')
-#define CODE_X_DRCS_MB ('\x40')
-#define CODE_X_DRCS_MIN ('\x41')
-#define CODE_X_DRCS_MAX ('\x4F')
-#define CODE_X_MACRO ('\x70')
-    unsigned char code;        /* character set that this group designates */
-  } g[4];
+	struct group
+	{
+		unsigned char mb;/* how many bytes one character consists of. */
+		// code for character sets
+		#define CODE_ASCII ('\x40')
+		#define CODE_ASCII2 ('\x4A')
+		#define CODE_JISX0208 ('\x42')
+		#define CODE_JISX0213_1 ('\x51')
+		#define CODE_JISX0213_2 ('\x50')
+		#define CODE_JISX0201_KATA ('\x49')
+		#define CODE_MOSAIC_C ('\x34')
+		#define CODE_MOSAIC_D ('\x35')
+		#define CODE_EXT ('\x3B')
+		#define CODE_X_HIRA ('\x30')
+		#define CODE_X_HIRA_P ('\x37')
+		#define CODE_X_KATA ('\x31')
+		#define CODE_X_KATA_P ('\x38')
+		#define CODE_X_DRCS_MB ('\x40')
+		#define CODE_X_DRCS_MIN ('\x41')
+		#define CODE_X_DRCS_MAX ('\x4F')
+		#define CODE_X_MACRO ('\x70')
+		unsigned char code;/* character set that this group designates */
+	} g[4];
 };
 
 typedef struct
@@ -133,7 +134,7 @@ typedef struct
 		ISDBSUB_FMT_720H,
 		ISDBSUB_FMT_720V,
 	} format;
-	int is_profile_c;  // profile C: "1seg". see ARIB TR-B14 3-4
+	int is_profile_c;// profile C: "1seg". see ARIB TR-B14 3-4
 
 	// clipping area.
 	struct disp_area {
@@ -164,31 +165,31 @@ typedef struct
 	int prev_break_idx; // ctx->text.buf[prev_break_idx] holds the previous "\N"
 	int shift_baseline; // special case where baseline should be shifted down ?
 
-	int block_offset_h;  // text[0].hspacing / 2
-	int block_offset_v;  // line[0].lspacing_upper
+	int block_offset_h;// text[0].hspacing / 2
+	int block_offset_v;// line[0].lspacing_upper
 
 	int repeat_count; // -1: none, 0: until EOL, 1...i: repeat the next char i times
 	int in_combining; // bool
 	struct scroll_param {
 		enum {SCROLL_DIR_NONE, SCROLL_DIR_COLUMN, SCROLL_DIR_ROW} direction;
-		int rollout;  // bool
-		int speed;  // in pixel/sec
+		int rollout;// bool
+		int speed;// in pixel/sec
 	} scroll;
 }ISDBSubLayout;
 
 typedef struct {
-    int auto_display; // bool. forced to be displayed w/o user interaction
-    int rollup_mode;  // bool
+	int auto_display; // bool. forced to be displayed w/o user interaction
+	int rollup_mode;  // bool
 
-    uint8_t need_init; // bool
-    uint8_t clut_high_idx; // color = default_clut[high_idx << 8 | low_idx]
+	uint8_t need_init; // bool
+	uint8_t clut_high_idx; // color = default_clut[high_idx << 8 | low_idx]
 
-    uint32_t fg_color;
-    uint32_t bg_color;
-    uint32_t mat_color;
+	uint32_t fg_color;
+	uint32_t bg_color;
+	uint32_t mat_color;
 
-    ISDBSubLayout layout_state;
-    struct b24str_state text_state;
+	ISDBSubLayout layout_state;
+	struct b24str_state text_state;
 } ISDBSubState;
 
 typedef struct
@@ -199,6 +200,8 @@ typedef struct
 	enum writing_format write_fmt;
 	int nb_char;
 	int nb_line;
+	uint64_t timestamp;
+	uint64_t prev_timestamp;
 	struct {
 		int raster_color;
 		int clut_high_idx;
@@ -235,91 +238,108 @@ void *init_isdb_caption(void)
 		return NULL;
 
 	ctx->char_buf = malloc(1024);
-	if(!ctx->char_buf) {
+	if(!ctx->char_buf)
+	{
 		free(ctx);
 		return NULL;
 	}
 	ctx->len = 1024; 
 	ctx->char_buf_index = 0;
+	ctx->prev_timestamp = UINT_MAX;
 	return ctx;
 }
 
 static void advance(ISDBSubContext *ctx)
 {
-    ISDBSubLayout *ls = &ctx->current_state.layout_state;
-    int cscale;
-    int h;
-    int asc, desc;
-    int csp;
+	ISDBSubLayout *ls = &ctx->current_state.layout_state;
+	int cscale;
+	int h;
+	int asc, desc;
+	int csp;
 
-    if (IS_HORIZONTAL_LAYOUT(ls->format)) {
-        cscale = ls->font_scale.fscx;
-        h = ls->font_size * ls->font_scale.fscy / 100;
-        if (ls->font_scale.fscy == 200) {
-            desc = ls->cell_spacing.row / 2;
-            asc = ls->cell_spacing.row * 2 - desc + h;
-        } else {
-            desc = ls->cell_spacing.row * ls->font_scale.fscy / 200;
-            asc = ls->cell_spacing.row * ls->font_scale.fscy / 100 - desc + h;
-        }
-        if (asc > ls->line_height + ls->linesep_upper) {
-            if (h > ls->line_height)
-                ls->line_height = h;
-            ls->linesep_upper = asc - ls->line_height;
-        } else if (h > ls->line_height) {
-            ls->linesep_upper = ls->line_height + ls->linesep_upper - h;
-            ls->line_height = h;
-        }
+	if (IS_HORIZONTAL_LAYOUT(ls->format))
+	{
+		cscale = ls->font_scale.fscx;
+		h = ls->font_size * ls->font_scale.fscy / 100;
+		if (ls->font_scale.fscy == 200)
+		{
+			desc = ls->cell_spacing.row / 2;
+			asc = ls->cell_spacing.row * 2 - desc + h;
+		}
+		else
+		{
+			desc = ls->cell_spacing.row * ls->font_scale.fscy / 200;
+			asc = ls->cell_spacing.row * ls->font_scale.fscy / 100 - desc + h;
+		}
+		if (asc > ls->line_height + ls->linesep_upper)
+		{
+			if (h > ls->line_height)
+				ls->line_height = h;
+			ls->linesep_upper = asc - ls->line_height;
+		}
+		else if (h > ls->line_height)
+		{
+			ls->linesep_upper = ls->line_height + ls->linesep_upper - h;
+			ls->line_height = h;
+		}
 
-        if (ls->prev_line_bottom == 0 && ls->linesep_upper > ls->block_offset_v)
-            ls->block_offset_v = ls->linesep_upper;
-        if (ls->font_scale.fscy != 50)
-            ls->shift_baseline = 0;
-    } else {
-        int lsp;
-        cscale = ls->font_scale.fscy;
-        h = ls->font_size * ls->font_scale.fscx / 100;
-        lsp = ls->cell_spacing.row * ls->font_scale.fscx / 100;
-        desc = h / 2 + lsp / 2;
-        asc = h - h / 2 + lsp - lsp / 2;
-        if (asc > ls->line_height + ls->linesep_upper) {
-            if (h - h / 2 > ls->line_height)
-                ls->line_height = h - h / 2;
-            ls->linesep_upper = asc - ls->line_height;
-        } else if (h - h / 2 > ls->line_height) {
-            ls->linesep_upper = ls->line_height + ls->linesep_upper - h + h / 2;
-        } else if (h - h / 2 > ls->line_height) {
-            ls->linesep_upper = ls->line_height + ls->linesep_upper - h + h / 2;
-            ls->line_height = h - h / 2;
-        }
+		if (ls->prev_line_bottom == 0 && ls->linesep_upper > ls->block_offset_v)
+			ls->block_offset_v = ls->linesep_upper;
+		if (ls->font_scale.fscy != 50)
+			ls->shift_baseline = 0;
+	}
+	else
+	{
+		int lsp;
+		cscale = ls->font_scale.fscy;
+		h = ls->font_size * ls->font_scale.fscx / 100;
+		lsp = ls->cell_spacing.row * ls->font_scale.fscx / 100;
+		desc = h / 2 + lsp / 2;
+		asc = h - h / 2 + lsp - lsp / 2;
+		if (asc > ls->line_height + ls->linesep_upper)
+		{
+			if (h - h / 2 > ls->line_height)
+				ls->line_height = h - h / 2;
+			ls->linesep_upper = asc - ls->line_height;
+		}
+		else if (h - h / 2 > ls->line_height)
+		{
+			ls->linesep_upper = ls->line_height + ls->linesep_upper - h + h / 2;
+		}
+		else if (h - h / 2 > ls->line_height)
+		{
+			ls->linesep_upper = ls->line_height + ls->linesep_upper - h + h / 2;
+			ls->line_height = h - h / 2;
+		}
 
-        if (ls->prev_line_bottom == 0 && ls->linesep_upper > ls->block_offset_h)
-            ls->block_offset_h = ls->linesep_upper;
-        ls->shift_baseline = 0;
-    }
-    if (desc > ls->line_desc)
-        ls->line_desc = desc;
+		if (ls->prev_line_bottom == 0 && ls->linesep_upper > ls->block_offset_h)
+			ls->block_offset_h = ls->linesep_upper;
+		ls->shift_baseline = 0;
+	}
+	if (desc > ls->line_desc)
+		ls->line_desc = desc;
 
-    csp = ls->cell_spacing.col * cscale / 100;
-    ls->line_width += ls->font_size * cscale / 100 + csp;
-    ls->prev_char_sep = csp;
+	csp = ls->cell_spacing.col * cscale / 100;
+	ls->line_width += ls->font_size * cscale / 100 + csp;
+	ls->prev_char_sep = csp;
 }
 
 static void reserve_buf(ISDBSubContext *ctx, size_t len)
 {
-    size_t blen;
+	size_t blen;
 
-    if (ctx->text.len >= ctx->text.used + len)
-        return;
+	if (ctx->text.len >= ctx->text.used + len)
+		return;
 
-    blen = ((ctx->text.used + len + 127) >> 7) << 7;
-    ctx->text.buf = realloc(ctx->text.buf, blen);
-    if (!ctx->text.buf) {
-        isdb_log("out of memory for ctx->text.\n");
-        return;
-    }
-    ctx->text.len = blen;
-    isdb_log ("expanded ctx->text(%lu)\n", blen);
+	blen = ((ctx->text.used + len + 127) >> 7) << 7;
+	ctx->text.buf = realloc(ctx->text.buf, blen);
+	if (!ctx->text.buf)
+	{
+		isdb_log("out of memory for ctx->text.\n");
+		return;
+	}
+	ctx->text.len = blen;
+	isdb_log ("expanded ctx->text(%lu)\n", blen);
 }
 
 static int append_char(ISDBSubContext *ctx, const char ch)
@@ -335,58 +355,54 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 }
 static void insert_str(ISDBSubContext *ctx, const char *txt, int begin)
 {
-    int end = ctx->text.used;
-    size_t len = strlen(txt);
+	int end = ctx->text.used;
+	size_t len = strlen(txt);
 
-    if (len == 0 || len > 128)
-        return;
+	if (len == 0 || len > 128)
+		return;
 
-    reserve_buf(ctx, len + 1); // +1 for terminating '\0'
-    memmove(ctx->text.buf + begin + len, ctx->text.buf + begin, end - begin);
-    memcpy(ctx->text.buf + begin, txt, len);
-    ctx->text.txt_tail += len;
-    ctx->text.used += len;
-    ctx->text.buf[ctx->text.used] = '\0';
+	reserve_buf(ctx, len + 1); // +1 for terminating '\0'
+	memmove(ctx->text.buf + begin + len, ctx->text.buf + begin, end - begin);
+	memcpy(ctx->text.buf + begin, txt, len);
+	ctx->text.txt_tail += len;
+	ctx->text.used += len;
+	ctx->text.buf[ctx->text.used] = '\0';
 }
 
 static void advance_by_pixels(ISDBSubContext *ctx, int csp)
 {
-    ISDBSubLayout *ls = &ctx->current_state.layout_state;
-    int cscale;
-    int csep_orig;
+	ISDBSubLayout *ls = &ctx->current_state.layout_state;
+	int cscale;
+	int csep_orig;
 
-    if (IS_HORIZONTAL_LAYOUT(ls->format))
-        cscale = ls->font_scale.fscx;
-    else
-        cscale = ls->font_scale.fscy;
-    csep_orig = ls->cell_spacing.col * cscale / 100;
+	if (IS_HORIZONTAL_LAYOUT(ls->format))
+		cscale = ls->font_scale.fscx;
+	else
+		cscale = ls->font_scale.fscy;
+	csep_orig = ls->cell_spacing.col * cscale / 100;
 
-    ls->line_width += csp;
-    ls->prev_char_sep = csep_orig;
-    isdb_log("advanced %d pixel using fsp.\n", csp);
+	ls->line_width += csp;
+	ls->prev_char_sep = csep_orig;
+	isdb_log("advanced %d pixel using fsp.\n", csp);
 }
 
 static void fixup_linesep(ISDBSubContext *ctx)
 {
-    ISDBSubLayout *ls = &ctx->current_state.layout_state;
-    //char tmp[16];
-    //int lsp;
+	ISDBSubLayout *ls = &ctx->current_state.layout_state;
+	//char tmp[16];
+	//int lsp;
 
-    if (ls->prev_break_idx <= 0)
-        return;
-    // adjust baseline if all chars in the line are 50% tall of one font size.
-    if (ls->shift_baseline && IS_HORIZONTAL_LAYOUT(ls->format)) {
-        int delta = ls->cell_spacing.row / 4;
-        ls->linesep_upper += delta;
-        ls->line_desc -= delta;
-        isdb_log("baseline shifted down %dpx.\n", delta);
-    }
+	if (ls->prev_break_idx <= 0)
+		return;
+	// adjust baseline if all chars in the line are 50% tall of one font size.
+	if (ls->shift_baseline && IS_HORIZONTAL_LAYOUT(ls->format))
+	{
+		int delta = ls->cell_spacing.row / 4;
+		ls->linesep_upper += delta;
+		ls->line_desc -= delta;
+		isdb_log("baseline shifted down %dpx.\n", delta);
+	}
 
-    // not the first line
-    //tmp[0]='\0';
-    //lsp = ls->prev_line_desc + ls->linesep_upper;
-    //snprintf(tmp, sizeof(tmp), "{\\lsp%d}", lsp);
-    //insert_str(ctx, tmp, ls->prev_break_idx);
 }
 
 static void do_line_break(ISDBSubContext *ctx)
@@ -401,7 +417,8 @@ static void do_line_break(ISDBSubContext *ctx)
 
 	if (ls->line_width == 0)
 	{
-		if (ls->prev_line_bottom == 0) {
+		if (ls->prev_line_bottom == 0)
+		{
 			if (IS_HORIZONTAL_LAYOUT(ls->format))
 				ls->block_offset_h = csp / 2;
 			else
@@ -421,7 +438,7 @@ static void do_line_break(ISDBSubContext *ctx)
 	ls->prev_break_idx = ctx->text.used;
 
 	ls->prev_line_desc = ls->line_desc;
-	ls->prev_line_bottom  += ls->linesep_upper + ls->line_height + ls->line_desc;
+	ls->prev_line_bottom += ls->linesep_upper + ls->line_height + ls->line_desc;
 	ls->prev_char_sep = csp;
 	ls->line_height = 0;
 	ls->line_width = 0;
@@ -440,7 +457,7 @@ static void set_writing_format(ISDBSubContext *ctx, uint8_t *arg)
 		return;
 	}
 
-	/* P1  I1 p2 I2 P31 ~ P3i I3 P41 ~ P4j I4 F */
+	/* P1 I1 p2 I2 P31 ~ P3i I3 P41 ~ P4j I4 F */
 	if ( *(arg + 1) == 0x3B)
 	{
 		ctx->write_fmt = WF_HORIZONTAL_CUSTOM;
@@ -464,7 +481,8 @@ static void set_writing_format(ISDBSubContext *ctx, uint8_t *arg)
 	}
 	/* P3 */
 	isdb_log("character numbers in one line in decimal:");
-	while (*arg != 0x3b && *arg != 0x20) {
+	while (*arg != 0x3b && *arg != 0x20)
+	{
 		ctx->nb_char = *arg;
 		printf(" %x",*arg & 0x0f);
 		arg++;
@@ -473,7 +491,8 @@ static void set_writing_format(ISDBSubContext *ctx, uint8_t *arg)
 		return;
 	arg++;
 	isdb_log("line numbers in decimal: ");
-	while (*arg != 0x20) {
+	while (*arg != 0x20)
+	{
 		ctx->nb_line = *arg;
 		printf(" %x",*arg & 0x0f);
 		arg++;
@@ -495,7 +514,8 @@ static void move_penpos(ISDBSubContext *ctx, int col, int row)
 	int cell_desc;
 
 	isdb_log("move pen pos. to (%d, %d).\n", col, row);
-	if (IS_HORIZONTAL_LAYOUT(ls->format)) {
+	if (IS_HORIZONTAL_LAYOUT(ls->format))
+	{
 		// convert pen pos. to upper left of the cell.
 		cell_height = (ls->font_size + ls->cell_spacing.row)
 			* ls->font_scale.fscy / 100;
@@ -509,7 +529,9 @@ static void move_penpos(ISDBSubContext *ctx, int col, int row)
 		if (ls->line_width == 0 && ls->prev_line_bottom == 0)
 			ls->block_offset_h = csp_l;
 		col_ofs = ls->block_offset_h;
-	} else {
+	}
+	else
+	{
 		cell_height = (ls->font_size + ls->cell_spacing.row)
 			* ls->font_scale.fscx / 100;
 		cell_desc = cell_height / 2;
@@ -525,17 +547,22 @@ static void move_penpos(ISDBSubContext *ctx, int col, int row)
 		ls->linesep_upper + ls->line_height + ls->line_desc;
 	// allow adjusting +- cell_height/2 at maximum
 	//     to align to the current line bottom.
-	if (row + cell_height / 2 > cur_bottom) {
+	if (row + cell_height / 2 > cur_bottom)
+	{
 		do_line_break(ctx); // ls->prev_line_bottom == cur_bottom
 		ls->linesep_upper = row + cell_height - cell_desc - ls->prev_line_bottom;
 		ls->line_height = 0;
 
 		advance_by_pixels(ctx, col + csp_l - col_ofs);
-	} else if (row + cell_height * 3 / 2 > cur_bottom &&
-			col + csp_l > col_ofs + ls->line_width) {
+	}
+	else if (row + cell_height * 3 / 2 > cur_bottom &&
+			col + csp_l > col_ofs + ls->line_width)
+	{
 		// append to the current line...
 		advance_by_pixels(ctx, col + csp_l - (col_ofs + ls->line_width));
-	} else {
+	}
+	else
+	{
 		isdb_log ("backward move not supported.\n");
 		return;
 	}
@@ -549,20 +576,23 @@ static void set_position(ISDBSubContext *ctx, unsigned int p1, unsigned int p2)
 	int col, row; 
 
 
-	if (IS_HORIZONTAL_LAYOUT(ls->format)) {
+	if (IS_HORIZONTAL_LAYOUT(ls->format))
+	{
 		cw = (ls->font_size + ls->cell_spacing.col) * ls->font_scale.fscx / 100; 
 		ch = (ls->font_size + ls->cell_spacing.row) * ls->font_scale.fscy / 100; 
 		// pen position is at bottom left
 		col = p2 * cw;
 		row = p1 * ch + ch;
-	} else {
+	}
+	else
+	{
 		cw = (ls->font_size + ls->cell_spacing.col) * ls->font_scale.fscy / 100; 
 		ch = (ls->font_size + ls->cell_spacing.row) * ls->font_scale.fscx / 100; 
 		// pen position is at upper center,
 		// but in -90deg rotated coordinates, it is at middle left.
 		col = p2 * cw;
 		row = p1 * ch + ch / 2; 
-	}    
+	}
 	move_penpos(ctx, col, row);
 }
 
@@ -573,17 +603,19 @@ static int get_csi_params(const uint8_t *q, unsigned int *p1, unsigned int *p2)
 		return -1;
 
 	*p1 = 0; 
-	for (; *q >= 0x30 && *q <= 0x39; q++) {
+	for (; *q >= 0x30 && *q <= 0x39; q++)
+	{
 		*p1 *= 10;
 		*p1 += *q - 0x30;
-	}    
+	} 
 	if (*q != 0x20 && *q != 0x3B)
 		return -1;
 	q++;
 	if (!p2)
 		return q - q_pivot;
 	*p2 = 0; 
-	for (; *q >= 0x30 && *q <= 0x39; q++) {
+	for (; *q >= 0x30 && *q <= 0x39; q++)
+	{
 		*p2 *= 10;
 		*p2 += *q - 0x30;
 	}
@@ -591,13 +623,13 @@ static int get_csi_params(const uint8_t *q, unsigned int *p1, unsigned int *p2)
 	return q - q_pivot;
 }
 
-static int parse_csi(ISDBSubContext *ctx, unsigned char *buf, int len)
+static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 {
 	uint8_t arg[10] = {0};
 	int i = 0;
 	int ret = 0;
 	unsigned int p1,p2;
-	unsigned char *buf_pivot = buf;
+	const uint8_t *buf_pivot = buf;
 	ISDBSubState *state = &ctx->current_state;
 	ISDBSubLayout *ls = &state->layout_state;
 	for(i = 0; *buf != 0x20; i++)
@@ -606,7 +638,7 @@ static int parse_csi(ISDBSubContext *ctx, unsigned char *buf, int len)
 		buf++;
 	}
 	/* ignore terminating 0x20 character */
-	arg[i] =  *buf++;
+	arg[i] = *buf++;
 
 	switch(*buf) {
 	/* Set Writing Format */
@@ -615,7 +647,8 @@ static int parse_csi(ISDBSubContext *ctx, unsigned char *buf, int len)
 		break;
 	case CSI_CMD_SDF:
 		ret = get_csi_params(arg, &p1, &p2);
-		if (ret > 0) {
+		if (ret > 0)
+		{
 			ls->display_area.w = p1;
 			ls->display_area.h = p2;
 		}
@@ -628,7 +661,8 @@ static int parse_csi(ISDBSubContext *ctx, unsigned char *buf, int len)
 
 	case CSI_CMD_SDP:
 		ret = get_csi_params(arg, &p1, &p2);
-		if (ret > 0) {
+		if (ret > 0)
+		{
 			ls->display_area.x = p1;
 			ls->display_area.y = p2;
 		}
@@ -657,17 +691,18 @@ static int parse_csi(ISDBSubContext *ctx, unsigned char *buf, int len)
 	return buf - buf_pivot;
 }
 
-static  int parse_command(ISDBSubContext *ctx, unsigned char *buf, int len)
+static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 {
-	unsigned char *buf_pivot = buf;
-	unsigned char code_lo = *buf & 0x0f;
-	unsigned char code_hi = (*buf & 0xf0) >> 4;
+	const uint8_t *buf_pivot = buf;
+	uint8_t code_lo = *buf & 0x0f;
+	uint8_t code_hi = (*buf & 0xf0) >> 4;
 	int ret;
 	ISDBSubState *state = &ctx->current_state;
 	ISDBSubLayout *ls = &state->layout_state;
 
 	buf++;
-	if ( code_hi == 0x00) {
+	if ( code_hi == 0x00)
+	{
 		switch(code_lo) {
 		/* NUL Control code, which can be added or deleted without effecting to
 			information content. */
@@ -947,19 +982,20 @@ static  int parse_command(ISDBSubContext *ctx, unsigned char *buf, int len)
 
 }
 
-static int parse_caption_management_data(uint8_t *buf, int size)
+static int parse_caption_management_data(const uint8_t *buf, int size)
 {
-	uint8_t *buf_pivot = buf;
+	const uint8_t *buf_pivot = buf;
 
 	return buf - buf_pivot;
 }
 
-static int parse_statement(ISDBSubContext *ctx, uint8_t *buf, int size)
+static int parse_statement(ISDBSubContext *ctx,const uint8_t *buf, int size)
 {
-	uint8_t *buf_pivot = buf;
+	const uint8_t *buf_pivot = buf;
 	int ret;
 
-	while( (buf - buf_pivot) < size) {
+	while( (buf - buf_pivot) < size)
+	{
 		unsigned char code    = (*buf & 0xf0) >> 4;
 		unsigned char code_lo = *buf & 0x0f;
 		if (code <= 0x1)
@@ -990,7 +1026,7 @@ static int parse_statement(ISDBSubContext *ctx, uint8_t *buf, int size)
 	return 0;
 }
 
-static int parse_data_unit(ISDBSubContext *ctx, uint8_t *buf, int size)
+static int parse_data_unit(ISDBSubContext *ctx,const uint8_t *buf, int size)
 {
 	int unit_parameter;
 	int len;
@@ -1009,7 +1045,7 @@ static int parse_data_unit(ISDBSubContext *ctx, uint8_t *buf, int size)
 	return 0;
 }
 
-static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id,uint8_t *buf, int size)
+static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const uint8_t *buf, int size)
 {
 	int tmd;
 	int len;
@@ -1029,10 +1065,10 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id,uint8_t
 	return 0;
 }
 
-int isdb_parse_data_group(void *codec_ctx, uint8_t *buf, struct cc_subtitle *sub)
+int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle *sub)
 {
 	ISDBSubContext *ctx = codec_ctx;
-	unsigned char *buf_pivot = buf;
+	const uint8_t *buf_pivot = buf;
 	int id = (*buf >> 2);
 	int version = (*buf & 2);
 	int link_number = 0;
@@ -1061,6 +1097,10 @@ int isdb_parse_data_group(void *codec_ctx, uint8_t *buf, struct cc_subtitle *sub
 	buf += 2;
 	isdb_log("ISDB (Data group) group_size %d\n", group_size);
 
+	if (ctx->prev_timestamp > ctx->timestamp)
+	{
+		ctx->prev_timestamp = ctx->timestamp;
+	}
 	if((id & 0x0F) == 0)
 	{
 		/* Its Caption management */
@@ -1090,9 +1130,47 @@ int isdb_parse_data_group(void *codec_ctx, uint8_t *buf, struct cc_subtitle *sub
 		ctx->text.len = 0;
 		ctx->text.used = 0;
 		ctx->text.buf[0] = 0;
+		sub->start_time = ctx->prev_timestamp;
+		sub->end_time = ctx->timestamp;
+		if (sub->start_time == sub->end_time)
+			sub->end_time += 2;
+		ctx->prev_timestamp = ctx->timestamp;
 	}
 	//TODO check CRC
 	buf += 2;
 
 	return buf - buf_pivot;
+}
+
+int isdbsub_decode(void *codec_ctx, const uint8_t *buf, int buf_size, struct cc_subtitle *sub)
+{
+	const uint8_t *header_end = NULL;
+	int ret = 0;
+	ISDBSubContext *ctx = codec_ctx;
+	if(*buf++ != 0x80)
+	{
+		mprint("\nNot a Syncronised PES\n");
+		return -1;
+	}
+	/* private data stream = 0xFF */
+	buf++;
+	header_end = buf + (*buf & 0x0f);
+	buf++;
+	while (buf < header_end)
+	{
+	/* TODO find in spec what is header */
+		buf++;
+	}
+	ret = isdb_parse_data_group(ctx, buf, sub);
+	if (ret < 0)
+		return -1;
+
+
+	return 1;
+}
+int isdb_set_global_time(void *codec_ctx, uint64_t timestamp)
+{
+	ISDBSubContext *ctx = codec_ctx;
+	ctx->timestamp = timestamp;
+
 }

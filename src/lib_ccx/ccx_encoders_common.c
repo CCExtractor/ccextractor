@@ -558,12 +558,12 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		case CCX_OF_SAMI:
 			if (!context->startcredits_displayed && ccx_options.start_credits_text!=NULL)
 				try_to_add_start_credits(context, sub->start_time);
-			write_stringz_as_sami(sub, context, sub->start_time, sub->end_time);
+			write_stringz_as_sami(sub->data, context, sub->start_time, sub->end_time);
 			break;
 		case CCX_OF_SMPTETT:
 			if (!context->startcredits_displayed && ccx_options.start_credits_text!=NULL)
 				try_to_add_start_credits(context, sub->start_time);
-			write_stringz_as_smptett(sub, context, sub->start_time, sub->end_time);
+			write_stringz_as_smptett(sub->data, context, sub->start_time, sub->end_time);
 			break;
 		default:
 			break;

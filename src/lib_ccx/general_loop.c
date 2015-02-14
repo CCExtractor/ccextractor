@@ -8,6 +8,7 @@
 
 #include "dvb_subtitle_decoder.h"
 #include "ccx_encoders_common.h"
+#include "isdb.h"
 // IMPORTED TRASH INFO, REMOVE
 extern long num_nal_unit_type_7;
 extern long num_vcl_hrd;
@@ -609,6 +610,11 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		{
 			dvbsub_decode(ccx_dvb_context, ctx->buffer + 2, inbuf, &dec_sub);
 			set_fts();
+			got = inbuf;
+		}
+		else if (ccx_bufferdatatype == CCX_ISDB_SUBTITLE)
+		{
+			isdbsub_decode(ctx->dec_ctx->codec_ctx, ctx->buffer, inbuf, &dec_sub);
 			got = inbuf;
 		}
 		else if (ccx_bufferdatatype == CCX_PES)
