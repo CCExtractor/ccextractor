@@ -7,6 +7,7 @@
 
 #define RL32(x) (*(unsigned int *)(x))
 #define RB32(x) (ntohl(*(unsigned int *)(x)))
+#define RB24(x) (  ((unsigned char*)(x))[0] << 16 | ((unsigned char*)(x))[1] << 8 | ((unsigned char*)(x))[2]  )
 #define RL16(x) (*(unsigned short int*)(x))
 #define RB16(x) (ntohs(*(unsigned short int*)(x)))
 

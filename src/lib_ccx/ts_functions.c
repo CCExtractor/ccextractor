@@ -1,5 +1,6 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
+#include "isdb.h"
 
 unsigned char tspacket[188]; // Current packet
 
@@ -157,23 +158,28 @@ int ts_readpacket(struct lib_ccx_ctx* ctx)
 		adaptation_field_length = tspacket[4];
 
 		uint8_t af_pcr_exists = (tspacket[5] & 0x10) >> 4;
-			if (af_pcr_exists > 0) {
-				uint64_t pts = 0;
-				pts |= (tspacket[6] << 25);
-				pts |= (tspacket[7] << 17);
-				pts |= (tspacket[8] << 9);
-				pts |= (tspacket[9] << 1);
-				pts |= (tspacket[10] >> 7);
-				ctx->global_timestamp = (uint32_t) pts / 90;
-				pts = ((tspacket[10] & 0x01) << 8);
-				pts |= tspacket[11];
-				ctx->global_timestamp += (uint32_t) (pts / 27000);
-				if (!ctx->global_timestamp_inited)
-				{
-					ctx->min_global_timestamp = ctx->global_timestamp;
-					ctx->global_timestamp_inited = 1;
-				}
+		if (af_pcr_exists > 0) {
+			uint64_t pts = 0;
+			pts |= (tspacket[6] << 25);
+			pts |= (tspacket[7] << 17);
+			pts |= (tspacket[8] << 9);
+			pts |= (tspacket[9] << 1);
+			pts |= (tspacket[10] >> 7);
+			ctx->global_timestamp = (uint32_t) pts / 90;
+			pts = ((tspacket[10] & 0x01) << 8);
+			pts |= tspacket[11];
+			ctx->global_timestamp += (uint32_t) (pts / 27000);
+			if (!ctx->global_timestamp_inited)
+			{
+				ctx->min_global_timestamp = ctx->global_timestamp;
+				ctx->global_timestamp_inited = 1;
 			}
+			if( ctx->dec_ctx->codec_type == CCX_CODEC_ISDB_CC && ctx->global_timestamp_inited)
+			{
+				isdb_set_global_time(ctx->dec_ctx->codec_ctx,
+				ctx->global_timestamp - ctx->min_global_timestamp);
+			}
+		}
 
 
 		payload_start = payload_start + adaptation_field_length + 1;
@@ -391,8 +397,8 @@ long ts_readstream(struct lib_ccx_ctx *ctx)
 
 		}
 		/*
-		 * if dvb subtitle is selected then start time taken from first PTS
-		 * of any stream
+		 * if dvb subtitle is selected then start time taken 
+		 * from first PTS of any stream
 		 */
 		if ( cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && ccx_dvb_context && !pts_set)
 		{
@@ -506,6 +512,11 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 			ccx_bufferdatatype = CCX_DVB_SUBTITLE;
 			tstr = "DVB subtitle";
 		}
+		else if ( ctx->dec_ctx->codec_type == CCX_CODEC_ISDB_CC )
+		{
+			ccx_bufferdatatype = CCX_ISDB_SUBTITLE;
+			tstr = "ISDB closed caption";
+		}
 		else if ( cap_stream_type == CCX_STREAM_TYPE_UNKNOWNSTREAM && ccx_options.hauppauge_mode)
 		{
 			ccx_bufferdatatype = CCX_HAUPPAGE;
@@ -584,7 +595,7 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 					if (2 > BUFSIZE - inbuf)
 					{
 						fatal(CCX_COMMON_EXIT_BUG_BUG,
-							"Remaining buffer (%lld) not enough to hold the 3 Hauppage bytes.\n"
+							"Remaining buffer (%lld) not enough to hold the 1 Hauppage bytes.\n"
 							"Please send bug report!",
 							BUFSIZE - inbuf);
 					}
@@ -608,7 +619,7 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 			haup_capbuflen=0;
 		}
 
-		dbg_print(CCX_DMT_VERBOSE, "TS payload start video PES id: %d  len: %ld\n",
+		dbg_print(CCX_DMT_VERBOSE, "TS payload start video PES id: 0x%x  len: %ld\n",
 			   stream_id, ctx->capbuflen);
 
 		int pesheaderlen;
