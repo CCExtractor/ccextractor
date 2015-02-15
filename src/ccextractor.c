@@ -181,9 +181,11 @@ int main(int argc, char *argv[])
 		case CCX_DS_TCP:
 			strcpy (ctx->basefilename, ctx->basefilename_for_network);
 			break;
-	}		
-	for (c=ctx->basefilename+strlen (ctx->basefilename)-1; ctx->basefilename &&
-		*c!='.'; c--) {;} // Get last .
+	}
+	c=ctx->basefilename+strlen (ctx->basefilename)-1;
+	for (c=ctx->basefilename+strlen (ctx->basefilename)-1;
+		ctx->basefilename && c != ctx->basefilename && *c!='.';
+		c--); // Get last .
 	if (*c=='.')
 		*c=0;
 
