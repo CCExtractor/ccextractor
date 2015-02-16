@@ -117,8 +117,8 @@ void EPG_print_event(struct EPG_event *event, uint32_t channel, FILE *f) {
 	fprintf(f, "\" ");
 	fprintf(f, "channel=\"%i\">\n", channel);
 	if(event->has_simple) {
-		fprintf(f, "    <title lang=\"\%s\">%s</title>\n",event->ISO_639_language_code, event->event_name);
-		fprintf(f, "    <sub-title lang=\"\%s\">%s</sub-title>\n",event->ISO_639_language_code, event->text);
+		fprintf(f, "    <title lang=\"%s\">%s</title>\n",event->ISO_639_language_code, event->event_name);
+		fprintf(f, "    <sub-title lang=\"%s\">%s</sub-title>\n",event->ISO_639_language_code, event->text);
 	}
 	if(event->extended_text!=NULL)
 		fprintf(f, "    <desc lang=\"%s\">%s</desc>\n", event->extended_ISO_639_language_code, event->extended_text);
@@ -127,7 +127,7 @@ void EPG_print_event(struct EPG_event *event, uint32_t channel, FILE *f) {
 		if(event->ratings[i].age>0 && event->ratings[i].age<0x10)
 			fprintf(f, "    <rating system=\"dvb:%s\">%i</desc>\n", event->ratings[i].country_code, event->ratings[i].age+3);
 	for(i=0; i<event->num_categories; i++)
-		fprintf(f, "    <category lang=\"en\">%s</category>\n", EPG_DVB_content_type_to_string(event->categories[i]));
+		fprintf(f, "    <category lang=\"eng\">%s</category>\n", EPG_DVB_content_type_to_string(event->categories[i]));
 	fprintf(f, "    <ts-meta-id>%i</ts-meta-id>\n", event->id);
 	fprintf(f, "  </program>\n");
 
