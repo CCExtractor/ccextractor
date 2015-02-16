@@ -56,6 +56,48 @@ struct PMT_entry
 	unsigned printable_stream_type;
 };
 
+struct EIT_buffer
+{
+	uint32_t prev_ccounter;
+	uint8_t *buffer;
+	uint32_t buffer_length;
+	uint32_t ccounter;
+};
+
+struct EPG_rating
+{
+	char country_code[4];
+	uint8_t age;
+};
+
+struct EPG_event
+{
+	uint32_t id;
+	char start_time_string[21]; //"YYYYMMDDHHMMSS +0000" = 20 chars
+	char end_time_string[21];
+	uint8_t running_status;
+	uint8_t free_ca_mode;
+	char ISO_639_language_code[4];
+	char *event_name;
+	char *text;
+	char extended_ISO_639_language_code[4];
+	char *extended_text;
+	uint8_t has_simple;
+	struct EPG_rating *ratings;
+	uint32_t num_ratings;
+	uint8_t *categories;
+	uint32_t num_categories;
+	long long int count; //incremented by one each time the event is updated
+	uint8_t live_output; //boolean flag, true if this event has been output
+};
+
+#define EPG_MAX_EVENTS 60*24*7
+struct EIT_program
+{
+	uint32_t array_len;
+	struct EPG_event epg_events[EPG_MAX_EVENTS];
+};
+
 /* Report information */
 #define SUB_STREAMS_CNT 10
 struct file_report
@@ -173,6 +215,14 @@ struct lib_ccx_ctx
 	char *basefilename_for_network;
 	int PIDs_seen[MAX_PID];
 	struct PMT_entry *PIDs_programs[MAX_PID];
+	
+	//struct EIT_buffer eit_buffer;
+	struct EIT_buffer epg_buffers[0xfff+1];
+	struct EIT_program eit_programs[TS_PMT_MAP_SIZE];
+	int32_t eit_current_events[TS_PMT_MAP_SIZE];
+	int16_t ATSC_source_pg_map[0xffff];
+	int epg_last_output; 
+	int epg_last_live_output; 
 	struct file_report freport;
 
 	long capbufsize;
@@ -312,6 +362,8 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx);
 int write_section(struct lib_ccx_ctx *ctx, struct ts_payload *payload, unsigned char*buf, int size, int pos);
 int parse_PMT (struct lib_ccx_ctx *ctx, unsigned char *buf, int len, int pos);
 int parse_PAT (struct lib_ccx_ctx *ctx);
+int parse_EPG_packet (struct lib_ccx_ctx *ctx);
+void EPG_free();
 
 // myth.c
 void myth_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);

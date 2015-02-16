@@ -59,6 +59,9 @@ void init_options (struct ccx_s_options *options)
 	/* General stuff */
 	options->usepicorder = 0; // Force the use of pic_order_cnt_lsb in AVC/H.264 data streams
 	options->autodash=0; // Add dashes (-) before each speaker automatically?
+	options->xmltv=0; // 1 = full output. 2 = live output. 3 = both
+	options->xmltvliveinterval=10; // interval in seconds between writting xmltv output files in live mode
+	options->xmltvoutputinterval=0; // interval in seconds between writting xmltv full file output
 	options->teletext_mode=CCX_TXT_AUTO_NOT_YET_FOUND; // 0=Disabled, 1 = Not found, 2=Found
 
 	options->transcript_settings = ccx_encoders_default_transcript_settings;

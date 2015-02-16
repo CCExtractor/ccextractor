@@ -85,6 +85,16 @@ void prepare_for_new_file (struct lib_ccx_ctx *ctx)
     init_file_buffer();
     anchor_hdcc(-1);
     firstcall = 1;
+	for(int x=0; x<0xfff; x++) {
+		ctx->epg_buffers[x].buffer=NULL;
+		ctx->epg_buffers[x].ccounter=0;
+	}
+	for (int i = 0; i < TS_PMT_MAP_SIZE; i++) {
+		ctx->eit_programs[i].array_len=0;
+		ctx->eit_current_events[i]=-1;
+	}
+	ctx->epg_last_output=-1;
+	ctx->epg_last_live_output=-1;
 }
 
 /* Close input file if there is one and let the GUI know */

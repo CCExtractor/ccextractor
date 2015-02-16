@@ -53,6 +53,9 @@ struct ccx_s_options // Options from user parameters
 	/* General settings */
 	int usepicorder; // Force the use of pic_order_cnt_lsb in AVC/H.264 data streams
 	int autodash; // Add dashes (-) before each speaker automatically?
+	int xmltv; // 1 = full output. 2 = live output. 3 = both
+	int xmltvliveinterval; // interval in seconds between writting xmltv output files in live mode
+	int xmltvoutputinterval; // interval in seconds between writting xmltv full file output
 	unsigned teletext_mode; // 0=Disabled, 1 = Not found, 2=Found
 	ccx_encoders_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
 	char millis_separator;

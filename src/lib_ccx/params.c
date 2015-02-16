@@ -533,6 +533,8 @@ void usage (void)
 	mprint ("            -autodash: Based on position on screen, attempt to determine\n");
 	mprint ("                       the different speakers and a dash (-) when each\n");
 	mprint ("                       of them talks (.srt only, -trim required).");
+	mprint ("              -xmltv:  produce an XMLTV file containing the EPG data from\n");
+	mprint ("                       the source TS file.");
 
 	mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
 
@@ -1473,6 +1475,45 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			ccx_options.autodash = 1;
 			continue;
 		}
+		if (strcmp (argv[i],"-xmltv")==0)
+		{
+			if (i==argc-1 // Means no following argument
+					|| !isanumber (argv[i+1])) // Means is not a number
+			ccx_options.xmltv = 1;
+			else
+			{
+				ccx_options.xmltv=atoi_hex (argv[i+1]);
+				i++;
+			}
+			continue;
+		}
+		
+		if (strcmp (argv[i],"-xmltvliveinterval")==0)
+		{
+			if (i==argc-1 // Means no following argument
+					|| !isanumber (argv[i+1])) // Means is not a number
+			ccx_options.xmltvliveinterval = 10;
+			else
+			{
+				ccx_options.xmltvliveinterval=atoi_hex (argv[i+1]);
+				i++;
+			}
+			continue;
+		}
+		
+		if (strcmp (argv[i],"-xmltvoutputinterval")==0)
+		{
+			if (i==argc-1 // Means no following argument
+					|| !isanumber (argv[i+1])) // Means is not a number
+			ccx_options.xmltvoutputinterval = 0;
+			else
+			{
+				ccx_options.xmltvoutputinterval=atoi_hex (argv[i+1]);
+				i++;
+			}
+			continue;
+		}
+		
 		if (strcmp (argv[i],"-unixts")==0 && i<argc-1)
 		{
 			uint64_t t = 0;

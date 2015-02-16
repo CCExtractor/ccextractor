@@ -280,6 +280,11 @@ long ts_readstream(struct lib_ccx_ctx *ctx)
 				ctx->capbuflen = 0;
 			continue;
 		}
+		
+		if( ccx_options.xmltv>=1 && payload.pid == 0x12) // This is DVB EIT
+			parse_EPG_packet(ctx);
+		if( ccx_options.xmltv>=1 && payload.pid >= 0x1000) // This may be ATSC EPG packet
+			parse_EPG_packet(ctx);
 
 		// PID != 0 but no PMT selected yet, ignore the rest of the current
 		// package and continue searching, UNLESS we are in -autoprogram, which requires us

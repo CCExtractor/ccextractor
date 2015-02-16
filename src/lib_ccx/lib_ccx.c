@@ -117,6 +117,8 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 		if( lctx->PIDs_programs[i])
 			freep(lctx->PIDs_programs + i);
 	}
+	// free EPG memory
+	EPG_free(lctx);
 	dinit_ts(lctx);
 	dinit_cc_decode(&lctx->dec_ctx);
 	freep(&lctx->buffer);
