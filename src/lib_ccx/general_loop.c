@@ -538,6 +538,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 	struct cc_subtitle dec_sub;
 	struct lib_cc_decode *dec_ctx = NULL;
 	dec_ctx = ctx->dec_ctx;
+    dec_ctx->wbout1 = (struct ccx_s_write*)&ctx->wbout1 ; 
     inbuf = 0; // No data yet
 
     end_of_file = 0;
