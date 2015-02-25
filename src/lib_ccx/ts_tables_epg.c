@@ -395,7 +395,7 @@ char* EPG_DVB_decode_string(uint8_t *in, size_t size) {
 	}
 
 	if((long)cd != -1 && !skipiconv) {
-		ret = iconv(cd, (const char **)&in, &size, &dp, &obl);
+		ret = iconv(cd, (char **)&in, &size, &dp, &obl);
 		obl=decode_buffer_size-obl;
 		decode_buffer[obl]=0x00;
 	}
@@ -424,6 +424,8 @@ char* EPG_DVB_decode_string(uint8_t *in, size_t size) {
 	memcpy(out, decode_buffer, osize);
 	out[osize]=0x00;
 	free(decode_buffer);
+	if (cd != (iconv_t)-1)
+		iconv_close(cd);
 	return out;
 }
 
