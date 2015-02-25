@@ -173,6 +173,7 @@
     <ClCompile Include="..\src\lib_ccx\telxcc.c" />
     <ClCompile Include="..\src\lib_ccx\ts_functions.c" />
     <ClCompile Include="..\src\lib_ccx\ts_tables.c" />
+    <ClCompile Include="..\src\lib_ccx\ts_tables_epg.c" />
     <ClCompile Include="..\src\lib_ccx\utility.c" />
     <ClCompile Include="..\src\lib_ccx\wtv_functions.c" />
     <ClCompile Include="..\src\zlib\adler32.c" />
