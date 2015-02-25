@@ -905,7 +905,7 @@ int start_upd_srv(const char *addr_str, unsigned port)
 	if (bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) != 0)
 	{
 #if _WIN32
-		wprintf(L"bind() eror: %ld\n", WSAGetLastError());
+		wprintf(L"bind() error: %ld\n", WSAGetLastError());
 		exit(EXIT_FAILURE);
 #else
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "bind() error: %s\n", strerror(errno));
