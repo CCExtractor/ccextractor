@@ -119,8 +119,8 @@ void EPG_print_event(struct EPG_event *event, uint32_t channel, FILE *f) {
 	fprintf(f, "\" ");
 	fprintf(f, "channel=\"%i\">\n", channel);
 	if(event->has_simple) {
-		fprintf(f, "    <title lang=\"\%s\">%s</title>\n",event->ISO_639_language_code, event->event_name);
-		fprintf(f, "    <sub-title lang=\"\%s\">%s</sub-title>\n",event->ISO_639_language_code, event->text);
+		fprintf(f, "    <title lang=\"%s\">%s</title>\n",event->ISO_639_language_code, event->event_name);
+		fprintf(f, "    <sub-title lang=\"%s\">%s</sub-title>\n",event->ISO_639_language_code, event->text);
 	}
 	if(event->extended_text!=NULL)
 		fprintf(f, "    <desc lang=\"%s\">%s</desc>\n", event->extended_ISO_639_language_code, event->extended_text);
