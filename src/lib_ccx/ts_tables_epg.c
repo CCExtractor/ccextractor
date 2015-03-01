@@ -492,7 +492,8 @@ void EPG_decode_extended_event_descriptor(uint8_t *offset, uint32_t descriptor_l
 		memcpy(net, event->extended_text, strlen(event->extended_text));
 		free(event->extended_text);
 		event->extended_text=net;
-
+		if(offset[1]<0x20)
+			offset++;
 	}
 	else
 		event->extended_text = malloc(text_length+1);
