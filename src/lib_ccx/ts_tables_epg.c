@@ -487,13 +487,15 @@ void EPG_decode_extended_event_descriptor(uint8_t *offset, uint32_t descriptor_l
 	
 	//TODO: can this leak memory with a malformed descriptor?
 	if(descriptor_number>0) {
+			if(offset[1]<0x20) {
+			offset++;
+			text_length--;
+		}
 		uint8_t *net = malloc(strlen(event->extended_text)+text_length+1);
 		oldlen=strlen(event->extended_text);
 		memcpy(net, event->extended_text, strlen(event->extended_text));
 		free(event->extended_text);
 		event->extended_text=net;
-		if(offset[1]<0x20)
-			offset++;
 	}
 	else
 		event->extended_text = malloc(text_length+1);
