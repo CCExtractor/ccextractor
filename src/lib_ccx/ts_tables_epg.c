@@ -127,7 +127,7 @@ void EPG_print_event(struct EPG_event *event, uint32_t channel, FILE *f) {
 
 	for(i=0; i<event->num_ratings; i++)
 		if(event->ratings[i].age>0 && event->ratings[i].age<0x10)
-			fprintf(f, "    <rating system=\"dvb:%s\">%i</desc>\n", event->ratings[i].country_code, event->ratings[i].age+3);
+			fprintf(f, "    <rating system=\"dvb:%s\">%i</rating>\n", event->ratings[i].country_code, event->ratings[i].age+3);
 	for(i=0; i<event->num_categories; i++)
 		fprintf(f, "    <category lang=\"en\">%s</category>\n", EPG_DVB_content_type_to_string(event->categories[i]));
 	fprintf(f, "    <ts-meta-id>%i</ts-meta-id>\n", event->id);
