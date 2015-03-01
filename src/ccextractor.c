@@ -268,6 +268,7 @@ int main(int argc, char *argv[])
 				switch (ccx_options.write_format)
 				{
 				case CCX_OF_RAW:
+					init_encoder(enc_ctx, &ctx->wbout1);
 					writeraw(BROADCAST_HEADER, sizeof(BROADCAST_HEADER), &ctx->wbout1);
 					break;
 				case CCX_OF_DVDRAW:

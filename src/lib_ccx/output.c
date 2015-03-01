@@ -110,6 +110,8 @@ void printdata (struct lib_cc_decode *ctx, const unsigned char *data1, int lengt
 	struct ccx_decoder_608_context *field_1 = ctx->context_cc608_field_1;
 	struct ccx_decoder_608_context *field_2 = ctx->context_cc608_field_2;
 	struct ccx_s_write *wbout1 = ctx->wbout1;
+    field_1->out = ctx->wbout1 ;
+    field_2->out = ctx->wbout2 ;
 	if (ctx->write_format==CCX_OF_DVDRAW)
 		writeDVDraw (data1, length1, data2, length2, wbout1);
 	else /* Broadcast raw or any non-raw */
