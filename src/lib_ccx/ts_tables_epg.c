@@ -119,15 +119,15 @@ void EPG_print_event(struct EPG_event *event, uint32_t channel, FILE *f) {
 	fprintf(f, "\" ");
 	fprintf(f, "channel=\"%i\">\n", channel);
 	if(event->has_simple) {
-		fprintf(f, "    <title lang=\"\%s\">%s</title>\n",event->ISO_639_language_code, event->event_name);
-		fprintf(f, "    <sub-title lang=\"\%s\">%s</sub-title>\n",event->ISO_639_language_code, event->text);
+		fprintf(f, "    <title lang=\"%s\">%s</title>\n",event->ISO_639_language_code, event->event_name);
+		fprintf(f, "    <sub-title lang=\"%s\">%s</sub-title>\n",event->ISO_639_language_code, event->text);
 	}
 	if(event->extended_text!=NULL)
 		fprintf(f, "    <desc lang=\"%s\">%s</desc>\n", event->extended_ISO_639_language_code, event->extended_text);
 
 	for(i=0; i<event->num_ratings; i++)
 		if(event->ratings[i].age>0 && event->ratings[i].age<0x10)
-			fprintf(f, "    <rating system=\"dvb:%s\">%i</desc>\n", event->ratings[i].country_code, event->ratings[i].age+3);
+			fprintf(f, "    <rating system=\"dvb:%s\">%i</rating>\n", event->ratings[i].country_code, event->ratings[i].age+3);
 	for(i=0; i<event->num_categories; i++)
 		fprintf(f, "    <category lang=\"en\">%s</category>\n", EPG_DVB_content_type_to_string(event->categories[i]));
 	fprintf(f, "    <ts-meta-id>%i</ts-meta-id>\n", event->id);
@@ -199,6 +199,10 @@ void EPG_output(struct lib_ccx_ctx *ctx) {
 		for(j=0; j<ctx->eit_programs[i].array_len; j++)
 			EPG_print_event(&ctx->eit_programs[i].epg_events[j], pmt_array[i].program_number, f);
 	}
+
+	if(pmt_array_length==0) //Stream has no PMT, fall back to unordered events
+		for(j=0; j<ctx->eit_programs[TS_PMT_MAP_SIZE].array_len; j++)
+			EPG_print_event(&ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j], ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j].service_id, f);
 	fprintf(f, "</tv>");
 	fclose(f);
 }
@@ -395,7 +399,7 @@ char* EPG_DVB_decode_string(uint8_t *in, size_t size) {
 	}
 
 	if((long)cd != -1 && !skipiconv) {
-		ret = iconv(cd, (const char **)&in, &size, &dp, &obl);
+		ret = iconv(cd, (char **)&in, &size, &dp, &obl);
 		obl=decode_buffer_size-obl;
 		decode_buffer[obl]=0x00;
 	}
@@ -424,6 +428,8 @@ char* EPG_DVB_decode_string(uint8_t *in, size_t size) {
 	memcpy(out, decode_buffer, osize);
 	out[osize]=0x00;
 	free(decode_buffer);
+	if (cd != (iconv_t)-1)
+		iconv_close(cd);
 	return out;
 }
 
@@ -486,7 +492,8 @@ void EPG_decode_extended_event_descriptor(uint8_t *offset, uint32_t descriptor_l
 		memcpy(net, event->extended_text, strlen(event->extended_text));
 		free(event->extended_text);
 		event->extended_text=net;
-
+		if(offset[1]<0x20)
+			offset++;
 	}
 	else
 		event->extended_text = malloc(text_length+1);
@@ -567,7 +574,7 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 
 	//Don't know how to stroe EPG until we know the programs. Ignore it.
 	if(pmt_map==-1)
-		return;
+		pmt_map=TS_PMT_MAP_SIZE;
 	
 	num_events_in_section = payload_start[9];
 	offset=&payload_start[10];
@@ -579,6 +586,7 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 		uint16_t event_id = ((offset[0]&0x3F) << 8) | offset[1];
 		full_id = (source_id << 16) | event_id;
 		event.id=full_id;
+		event.service_id=source_id;
 		start_time = (offset[2] << 24) | (offset[3] << 16) | (offset[4] << 8)| (offset[5] << 0);
 		EPG_ATSC_calc_time(event.start_time_string, start_time);
 		emt_location = (offset[6]&0x30)>>4;
@@ -636,9 +644,9 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 			pmt_map=i;
 	}
 
-	//Don't know how to stroe EPG until we know the programs. Ignore it.
+	//For any service we don't have an PMT for (yet), store it in the special last array pos.
 	if(pmt_map==-1)
-		return;
+		pmt_map=TS_PMT_MAP_SIZE;
 
 	if(events_length>size-14) {
 		dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid EIT packet size detected.\n");
@@ -655,6 +663,7 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 		event.num_ratings=0;
 		event.num_categories=0;
 		event.live_output=false;
+		event.service_id=service_id;
 
 		//40 bits
 		start_time = ((uint64_t)offset[16] << 32) | ((uint64_t)offset[17] << 24) | ((uint64_t)offset[18] << 16) | ((uint64_t)offset[19] << 8)| ((uint64_t)offset[20] << 0);
