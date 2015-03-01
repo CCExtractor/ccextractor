@@ -87,6 +87,7 @@ struct EPG_event
 	uint32_t num_ratings;
 	uint8_t *categories;
 	uint32_t num_categories;
+	uint16_t service_id;
 	long long int count; //incremented by one each time the event is updated
 	uint8_t live_output; //boolean flag, true if this event has been output
 };
@@ -218,8 +219,8 @@ struct lib_ccx_ctx
 	
 	//struct EIT_buffer eit_buffer;
 	struct EIT_buffer epg_buffers[0xfff+1];
-	struct EIT_program eit_programs[TS_PMT_MAP_SIZE];
-	int32_t eit_current_events[TS_PMT_MAP_SIZE];
+	struct EIT_program eit_programs[TS_PMT_MAP_SIZE+1];
+	int32_t eit_current_events[TS_PMT_MAP_SIZE+1];
 	int16_t ATSC_source_pg_map[0xffff];
 	int epg_last_output; 
 	int epg_last_live_output; 

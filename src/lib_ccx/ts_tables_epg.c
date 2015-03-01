@@ -199,6 +199,10 @@ void EPG_output(struct lib_ccx_ctx *ctx) {
 		for(j=0; j<ctx->eit_programs[i].array_len; j++)
 			EPG_print_event(&ctx->eit_programs[i].epg_events[j], pmt_array[i].program_number, f);
 	}
+
+	if(pmt_array_length==0) //Stream has no PMT, fall back to unordered events
+		for(j=0; j<ctx->eit_programs[TS_PMT_MAP_SIZE].array_len; j++)
+			EPG_print_event(&ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j], ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j].service_id, f);
 	fprintf(f, "</tv>");
 	fclose(f);
 }
@@ -569,7 +573,7 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 
 	//Don't know how to stroe EPG until we know the programs. Ignore it.
 	if(pmt_map==-1)
-		return;
+		pmt_map=TS_PMT_MAP_SIZE;
 	
 	num_events_in_section = payload_start[9];
 	offset=&payload_start[10];
@@ -581,6 +585,7 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 		uint16_t event_id = ((offset[0]&0x3F) << 8) | offset[1];
 		full_id = (source_id << 16) | event_id;
 		event.id=full_id;
+		event.service_id=source_id;
 		start_time = (offset[2] << 24) | (offset[3] << 16) | (offset[4] << 8)| (offset[5] << 0);
 		EPG_ATSC_calc_time(event.start_time_string, start_time);
 		emt_location = (offset[6]&0x30)>>4;
@@ -638,9 +643,9 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 			pmt_map=i;
 	}
 
-	//Don't know how to stroe EPG until we know the programs. Ignore it.
+	//For any service we don't have an PMT for (yet), store it in the special last array pos.
 	if(pmt_map==-1)
-		return;
+		pmt_map=TS_PMT_MAP_SIZE;
 
 	if(events_length>size-14) {
 		dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid EIT packet size detected.\n");
@@ -657,6 +662,7 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 		event.num_ratings=0;
 		event.num_categories=0;
 		event.live_output=false;
+		event.service_id=service_id;
 
 		//40 bits
 		start_time = ((uint64_t)offset[16] << 32) | ((uint64_t)offset[17] << 24) | ((uint64_t)offset[18] << 16) | ((uint64_t)offset[19] << 8)| ((uint64_t)offset[20] << 0);
