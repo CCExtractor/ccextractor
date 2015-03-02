@@ -182,7 +182,8 @@ int main(int argc, char *argv[])
 			strcpy (ctx->basefilename, ctx->basefilename_for_network);
 			break;
 	}		
-	for (c=ctx->basefilename+strlen (ctx->basefilename)-1; ctx->basefilename>=0 &&
+	
+	for (c = ctx->basefilename + strlen(ctx->basefilename) - 1; c>ctx->basefilename &&
 		*c!='.'; c--) {;} // Get last .
 	if (*c=='.')
 		*c=0;
