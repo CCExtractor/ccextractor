@@ -39,7 +39,7 @@ void EPG_DVB_calc_start_time(struct EPG_event *event, uint64_t time) {
 		y = y + k + 1900;
 		m = m - 1 - k*12;
 
-		sprintf(event->start_time_string, "%02d%02d%02d%06x +0000",y,m,d,time&0xffffff);
+		sprintf(event->start_time_string, "%02d%02d%02d%06x +0000",(int)y,(int)m,(int)d,(int)(time&0xffffff));
 	}
 }
 
