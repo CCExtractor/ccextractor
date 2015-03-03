@@ -39,7 +39,7 @@ void EPG_DVB_calc_start_time(struct EPG_event *event, uint64_t time) {
 		y = y + k + 1900;
 		m = m - 1 - k*12;
 
-		sprintf(event->start_time_string, "%02d%02d%02d%06x +0000",(int)y,(int)m,(int)d,(int)(time&0xffffff));
+		sprintf(event->start_time_string, "%02d%02d%02d%06x +0000",y,m,d,time&0xffffff);
 	}
 }
 
@@ -754,7 +754,7 @@ void EPG_parse_table(struct lib_ccx_ctx *ctx, uint8_t *b, uint32_t size) {
 }
 
 // recounsructs DVB EIT and ATSC tables
-int parse_EPG_packet(struct lib_ccx_ctx *ctx) {
+void parse_EPG_packet(struct lib_ccx_ctx *ctx) {
 	unsigned char *payload_start = tspacket + 4;
 	unsigned payload_length = 188 - 4;
 	unsigned transport_error_indicator = (tspacket[1]&0x80)>>7;
@@ -774,7 +774,7 @@ int parse_EPG_packet(struct lib_ccx_ctx *ctx) {
 	}
 	
 	if((pid!=0x12 && pid!=0x1ffb && pid<0x1000) || pid==0x1fff)
-		return 0;
+		return;
 	
 	if(pid!=0x12)
 		buffer_map = pid-0x1000;
