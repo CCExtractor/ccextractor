@@ -9,6 +9,43 @@
 	#include "iconv.h"
 #endif
 
+//Prints a string to a file pointer, escaping XML special chars
+//Works with UTF-8
+void EPG_fprintxml(FILE *f, char *string) {
+	char *p = string;
+	char *start = p;
+	while(*p!='\0') {
+		switch(*p) {
+		case '<':
+			fwrite(start, 1, p-start, f);
+			fprintf(f, "&lt;");
+			start = p+1;
+			break;
+		case '>':
+			fwrite(start, 1, p-start, f);
+			fprintf(f, "&gt;");
+			start = p+1;
+			break;
+		case '"':
+			fwrite(start, 1, p-start, f);
+			fprintf(f, "&quot;");
+			start = p+1;
+			break;
+		case '&':
+			fwrite(start, 1, p-start, f);
+			fprintf(f, "&amp;");
+			start = p+1;
+			break;
+		case '\'':
+			fwrite(start, 1, p-start, f);
+			fprintf(f, "&apos;");
+			start = p+1;
+			break;
+		}
+		p++;
+	}
+	fwrite(start, 1, p-start, f);
+}
 
 // Fills given string with given (event.*_time_string) ATSC time converted to XMLTV style time string
 void EPG_ATSC_calc_time(char *output, uint32_t time) {
@@ -119,21 +156,28 @@ void EPG_print_event(struct EPG_event *event, uint32_t channel, FILE *f) {
 	fprintf(f, "\" ");
 	fprintf(f, "channel=\"%i\">\n", channel);
 	if(event->has_simple) {
-		fprintf(f, "    <title lang=\"%s\">%s</title>\n",event->ISO_639_language_code, event->event_name);
-		fprintf(f, "    <sub-title lang=\"%s\">%s</sub-title>\n",event->ISO_639_language_code, event->text);
+		fprintf(f, "    <title lang=\"%s\">", event->ISO_639_language_code);
+		EPG_fprintxml(f, event->event_name);
+		fprintf(f, "</title>\n");
+		fprintf(f, "    <sub-title lang=\"%s\">", event->ISO_639_language_code);
+		EPG_fprintxml(f, event->text);
+		fprintf(f, "</sub-title>\n");
 	}
-	if(event->extended_text!=NULL)
-		fprintf(f, "    <desc lang=\"%s\">%s</desc>\n", event->extended_ISO_639_language_code, event->extended_text);
-
+	if(event->extended_text!=NULL) {
+		fprintf(f, "    <desc lang=\"%s\">", event->extended_ISO_639_language_code);
+		EPG_fprintxml(f, event->extended_text);
+		fprintf(f, "</desc>\n");
+	}
 	for(i=0; i<event->num_ratings; i++)
 		if(event->ratings[i].age>0 && event->ratings[i].age<0x10)
 			fprintf(f, "    <rating system=\"dvb:%s\">%i</rating>\n", event->ratings[i].country_code, event->ratings[i].age+3);
-	for(i=0; i<event->num_categories; i++)
-		fprintf(f, "    <category lang=\"en\">%s</category>\n", EPG_DVB_content_type_to_string(event->categories[i]));
+	for(i=0; i<event->num_categories; i++) {
+		fprintf(f, "    <category lang=\"en\">");
+		EPG_fprintxml(f, EPG_DVB_content_type_to_string(event->categories[i]));
+		fprintf(f, "</category>\n");
+	}
 	fprintf(f, "    <ts-meta-id>%i</ts-meta-id>\n", event->id);
 	fprintf(f, "  </program>\n");
-
-	
 }
 
 // Creates fills and closes a new XMLTV file for live mode output.
