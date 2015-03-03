@@ -151,7 +151,7 @@ void EPG_output_live(struct lib_ccx_ctx *ctx) {
 	if(!c)
 		return;
 
-	filename = malloc(strlen(ctx->wbout1.filename)+30);
+	filename = malloc(strlen(ctx->basefilename)+30);
 	sprintf(filename, "%s_%i.xml.part", ctx->basefilename, ctx->epg_last_live_output);
 	f = fopen(filename, "w");
 
@@ -184,7 +184,7 @@ void EPG_output(struct lib_ccx_ctx *ctx) {
 	FILE *f;
 	char *filename;
 	int i,j;
-	filename = malloc(strlen(ctx->wbout1.filename)+9);
+	filename = malloc(strlen(ctx->basefilename) + 9);
 	memcpy(filename, ctx->basefilename, strlen(ctx->basefilename)+1);
 	strcat(filename, "_epg.xml");
 	f = fopen(filename, "w");
@@ -716,7 +716,6 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 }
 	//handle outputing to xml files
 void EPG_handle_output(struct lib_ccx_ctx *ctx) {
-
 	int cur_sec = (int) ((ctx->global_timestamp-ctx->min_global_timestamp) / 1000);
 	if(ccx_options.xmltv==1 || ccx_options.xmltv==3) { //full outout
 		if(ccx_options.xmltvoutputinterval!=0 && cur_sec>ctx->epg_last_output+ccx_options.xmltvliveinterval) {
