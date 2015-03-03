@@ -4,7 +4,7 @@
 #include "utility.h"
 #include "limits.h"
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 #define isdb_log( format, ... ) mprint(format, ##__VA_ARGS__ )
@@ -56,6 +56,25 @@ enum csi_command
 	CSI_CMD_RCS = 0x6E,
 };
 
+enum color
+{
+	BLACK,
+	FI_RED,
+	FI_GREEN,
+	FI_YELLOW,
+	FI_BLUE,
+	FI_MAGENTA,
+	FI_CYAN,
+	FI_WHITE,
+	TRANSPARENT,
+	HI_RED,
+	HI_GREEN,
+	HI_YELLOW,
+	HI_BLUE,
+	HI_MAGENTA,
+	HI_CYAN,
+	HI_WHITE,
+};
 #define IS_HORIZONTAL_LAYOUT(format) \
 	((format) == ISDBSUB_FMT_960H || (format) == ISDBSUB_FMT_720H)
 #define LAYOUT_GET_WIDTH(format) \
@@ -175,6 +194,7 @@ typedef struct
 		int rollout;// bool
 		int speed;// in pixel/sec
 	} scroll;
+
 }ISDBSubLayout;
 
 typedef struct {
@@ -217,6 +237,7 @@ typedef struct
 		size_t txt_tail; // tail of the text, excluding trailing control sequences.
 	} text;
 
+        enum color bg_color;
 
 
 }ISDBSubContext;
@@ -547,7 +568,7 @@ static void move_penpos(ISDBSubContext *ctx, int col, int row)
 		ls->linesep_upper + ls->line_height + ls->line_desc;
 	// allow adjusting +- cell_height/2 at maximum
 	//     to align to the current line bottom.
-	if (row + cell_height / 2 > cur_bottom)
+	if (row + cell_height / 2 >= cur_bottom)
 	{
 		do_line_break(ctx); // ls->prev_line_bottom == cur_bottom
 		ls->linesep_upper = row + cell_height - cell_desc - ls->prev_line_bottom;
@@ -910,6 +931,11 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 			{
 				ctx->state.clut_high_idx = (buf[0] & 0x0F);
 				buf++;
+			}
+			else if ((*buf & 0XF0) == 0x50)
+			{
+			/* SET background color */
+				ctx->bg_color = *buf & 0x0F;
 			}
 			break;
 
