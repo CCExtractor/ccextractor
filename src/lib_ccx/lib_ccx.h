@@ -363,7 +363,7 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx);
 int write_section(struct lib_ccx_ctx *ctx, struct ts_payload *payload, unsigned char*buf, int size, int pos);
 int parse_PMT (struct lib_ccx_ctx *ctx, unsigned char *buf, int len, int pos);
 int parse_PAT (struct lib_ccx_ctx *ctx);
-int parse_EPG_packet (struct lib_ccx_ctx *ctx);
+void parse_EPG_packet (struct lib_ccx_ctx *ctx);
 void EPG_free();
 
 // myth.c

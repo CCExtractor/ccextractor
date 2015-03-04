@@ -56,6 +56,7 @@ struct ccx_s_options // Options from user parameters
 	int xmltv; // 1 = full output. 2 = live output. 3 = both
 	int xmltvliveinterval; // interval in seconds between writting xmltv output files in live mode
 	int xmltvoutputinterval; // interval in seconds between writting xmltv full file output
+	int xmltvonlycurrent; // 0 off 1 on
 	unsigned teletext_mode; // 0=Disabled, 1 = Not found, 2=Found
 	ccx_encoders_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
 	char millis_separator;

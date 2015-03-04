@@ -4,11 +4,48 @@
 #include "utility.h"
 #include <stdbool.h>
 #ifdef WIN32
-	#include "..\\win_iconv\\win_iconv.c"
+	#include "..\\win_iconv\\win_iconv.h"
 #else
 	#include "iconv.h"
 #endif
 
+//Prints a string to a file pointer, escaping XML special chars
+//Works with UTF-8
+void EPG_fprintxml(FILE *f, char *string) {
+	char *p = string;
+	char *start = p;
+	while(*p!='\0') {
+		switch(*p) {
+		case '<':
+			fwrite(start, 1, p-start, f);
+			fprintf(f, "&lt;");
+			start = p+1;
+			break;
+		case '>':
+			fwrite(start, 1, p-start, f);
+			fprintf(f, "&gt;");
+			start = p+1;
+			break;
+		case '"':
+			fwrite(start, 1, p-start, f);
+			fprintf(f, "&quot;");
+			start = p+1;
+			break;
+		case '&':
+			fwrite(start, 1, p-start, f);
+			fprintf(f, "&amp;");
+			start = p+1;
+			break;
+		case '\'':
+			fwrite(start, 1, p-start, f);
+			fprintf(f, "&apos;");
+			start = p+1;
+			break;
+		}
+		p++;
+	}
+	fwrite(start, 1, p-start, f);
+}
 
 // Fills given string with given (event.*_time_string) ATSC time converted to XMLTV style time string
 void EPG_ATSC_calc_time(char *output, uint32_t time) {
@@ -119,21 +156,28 @@ void EPG_print_event(struct EPG_event *event, uint32_t channel, FILE *f) {
 	fprintf(f, "\" ");
 	fprintf(f, "channel=\"%i\">\n", channel);
 	if(event->has_simple) {
-		fprintf(f, "    <title lang=\"%s\">%s</title>\n",event->ISO_639_language_code, event->event_name);
-		fprintf(f, "    <sub-title lang=\"%s\">%s</sub-title>\n",event->ISO_639_language_code, event->text);
+		fprintf(f, "    <title lang=\"%s\">", event->ISO_639_language_code);
+		EPG_fprintxml(f, event->event_name);
+		fprintf(f, "</title>\n");
+		fprintf(f, "    <sub-title lang=\"%s\">", event->ISO_639_language_code);
+		EPG_fprintxml(f, event->text);
+		fprintf(f, "</sub-title>\n");
 	}
-	if(event->extended_text!=NULL)
-		fprintf(f, "    <desc lang=\"%s\">%s</desc>\n", event->extended_ISO_639_language_code, event->extended_text);
-
+	if(event->extended_text!=NULL) {
+		fprintf(f, "    <desc lang=\"%s\">", event->extended_ISO_639_language_code);
+		EPG_fprintxml(f, event->extended_text);
+		fprintf(f, "</desc>\n");
+	}
 	for(i=0; i<event->num_ratings; i++)
 		if(event->ratings[i].age>0 && event->ratings[i].age<0x10)
 			fprintf(f, "    <rating system=\"dvb:%s\">%i</rating>\n", event->ratings[i].country_code, event->ratings[i].age+3);
-	for(i=0; i<event->num_categories; i++)
-		fprintf(f, "    <category lang=\"en\">%s</category>\n", EPG_DVB_content_type_to_string(event->categories[i]));
+	for(i=0; i<event->num_categories; i++) {
+		fprintf(f, "    <category lang=\"en\">");
+		EPG_fprintxml(f, EPG_DVB_content_type_to_string(event->categories[i]));
+		fprintf(f, "</category>\n");
+	}
 	fprintf(f, "    <ts-meta-id>%i</ts-meta-id>\n", event->id);
 	fprintf(f, "  </program>\n");
-
-	
 }
 
 // Creates fills and closes a new XMLTV file for live mode output.
@@ -151,7 +195,7 @@ void EPG_output_live(struct lib_ccx_ctx *ctx) {
 	if(!c)
 		return;
 
-	filename = malloc(strlen(ctx->wbout1.filename)+30);
+	filename = malloc(strlen(ctx->basefilename)+30);
 	sprintf(filename, "%s_%i.xml.part", ctx->basefilename, ctx->epg_last_live_output);
 	f = fopen(filename, "w");
 
@@ -183,8 +227,8 @@ void EPG_output_live(struct lib_ccx_ctx *ctx) {
 void EPG_output(struct lib_ccx_ctx *ctx) {
 	FILE *f;
 	char *filename;
-	int i,j;
-	filename = malloc(strlen(ctx->wbout1.filename)+9);
+	int i,j, ce;
+	filename = malloc(strlen(ctx->basefilename) + 9);
 	memcpy(filename, ctx->basefilename, strlen(ctx->basefilename)+1);
 	strcat(filename, "_epg.xml");
 	f = fopen(filename, "w");
@@ -195,14 +239,25 @@ void EPG_output(struct lib_ccx_ctx *ctx) {
 		fprintf(f, "    <display-name>%i</display-name>\n", pmt_array[i].program_number);
 		fprintf(f, "  </channel>\n");
 	}
-	for(i=0; i<pmt_array_length; i++) {
-		for(j=0; j<ctx->eit_programs[i].array_len; j++)
-			EPG_print_event(&ctx->eit_programs[i].epg_events[j], pmt_array[i].program_number, f);
-	}
+	if(ccx_options.xmltvonlycurrent==0) { // print all events
+		for(i=0; i<pmt_array_length; i++) {
+			for(j=0; j<ctx->eit_programs[i].array_len; j++)
+				EPG_print_event(&ctx->eit_programs[i].epg_events[j], pmt_array[i].program_number, f);
+		}
 
-	if(pmt_array_length==0) //Stream has no PMT, fall back to unordered events
-		for(j=0; j<ctx->eit_programs[TS_PMT_MAP_SIZE].array_len; j++)
-			EPG_print_event(&ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j], ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j].service_id, f);
+		if(pmt_array_length==0) //Stream has no PMT, fall back to unordered events
+			for(j=0; j<ctx->eit_programs[TS_PMT_MAP_SIZE].array_len; j++)
+				EPG_print_event(&ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j], ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j].service_id, f);
+	}
+	else { // print current events only
+		for(i=0; i<pmt_array_length; i++) {
+			ce = ctx->eit_current_events[i];
+			for(j=0; j<ctx->eit_programs[i].array_len; j++) {
+				if(ce==ctx->eit_programs[i].epg_events[j].id)
+					EPG_print_event(&ctx->eit_programs[i].epg_events[j], pmt_array[i].program_number, f);
+			}
+		}
+	}
 	fprintf(f, "</tv>");
 	fclose(f);
 }
@@ -716,7 +771,6 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 }
 	//handle outputing to xml files
 void EPG_handle_output(struct lib_ccx_ctx *ctx) {
-
 	int cur_sec = (int) ((ctx->global_timestamp-ctx->min_global_timestamp) / 1000);
 	if(ccx_options.xmltv==1 || ccx_options.xmltv==3) { //full outout
 		if(ccx_options.xmltvoutputinterval!=0 && cur_sec>ctx->epg_last_output+ccx_options.xmltvliveinterval) {
@@ -754,7 +808,7 @@ void EPG_parse_table(struct lib_ccx_ctx *ctx, uint8_t *b, uint32_t size) {
 }
 
 // recounsructs DVB EIT and ATSC tables
-int parse_EPG_packet(struct lib_ccx_ctx *ctx) {
+void parse_EPG_packet(struct lib_ccx_ctx *ctx) {
 	unsigned char *payload_start = tspacket + 4;
 	unsigned payload_length = 188 - 4;
 	unsigned transport_error_indicator = (tspacket[1]&0x80)>>7;
@@ -774,7 +828,7 @@ int parse_EPG_packet(struct lib_ccx_ctx *ctx) {
 	}
 	
 	if((pid!=0x12 && pid!=0x1ffb && pid<0x1000) || pid==0x1fff)
-		return 0;
+		return;
 	
 	if(pid!=0x12)
 		buffer_map = pid-0x1000;
