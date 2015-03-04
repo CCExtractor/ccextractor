@@ -1513,6 +1513,12 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
+		if (strcmp (argv[i],"-xmltvonlycurrent")==0)
+		{
+			ccx_options.xmltvonlycurrent=1;
+			i++;
+			continue;
+		}
 		
 		if (strcmp (argv[i],"-unixts")==0 && i<argc-1)
 		{

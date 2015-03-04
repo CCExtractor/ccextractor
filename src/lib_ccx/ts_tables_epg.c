@@ -227,7 +227,7 @@ void EPG_output_live(struct lib_ccx_ctx *ctx) {
 void EPG_output(struct lib_ccx_ctx *ctx) {
 	FILE *f;
 	char *filename;
-	int i,j;
+	int i,j, ce;
 	filename = malloc(strlen(ctx->basefilename) + 9);
 	memcpy(filename, ctx->basefilename, strlen(ctx->basefilename)+1);
 	strcat(filename, "_epg.xml");
@@ -239,14 +239,25 @@ void EPG_output(struct lib_ccx_ctx *ctx) {
 		fprintf(f, "    <display-name>%i</display-name>\n", pmt_array[i].program_number);
 		fprintf(f, "  </channel>\n");
 	}
-	for(i=0; i<pmt_array_length; i++) {
-		for(j=0; j<ctx->eit_programs[i].array_len; j++)
-			EPG_print_event(&ctx->eit_programs[i].epg_events[j], pmt_array[i].program_number, f);
-	}
+	if(ccx_options.xmltvonlycurrent==0) { // print all events
+		for(i=0; i<pmt_array_length; i++) {
+			for(j=0; j<ctx->eit_programs[i].array_len; j++)
+				EPG_print_event(&ctx->eit_programs[i].epg_events[j], pmt_array[i].program_number, f);
+		}
 
-	if(pmt_array_length==0) //Stream has no PMT, fall back to unordered events
-		for(j=0; j<ctx->eit_programs[TS_PMT_MAP_SIZE].array_len; j++)
-			EPG_print_event(&ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j], ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j].service_id, f);
+		if(pmt_array_length==0) //Stream has no PMT, fall back to unordered events
+			for(j=0; j<ctx->eit_programs[TS_PMT_MAP_SIZE].array_len; j++)
+				EPG_print_event(&ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j], ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j].service_id, f);
+	}
+	else { // print current events only
+		for(i=0; i<pmt_array_length; i++) {
+			ce = ctx->eit_current_events[i];
+			for(j=0; j<ctx->eit_programs[i].array_len; j++) {
+				if(ce==ctx->eit_programs[i].epg_events[j].id)
+					EPG_print_event(&ctx->eit_programs[i].epg_events[j], pmt_array[i].program_number, f);
+			}
+		}
+	}
 	fprintf(f, "</tv>");
 	fclose(f);
 }
