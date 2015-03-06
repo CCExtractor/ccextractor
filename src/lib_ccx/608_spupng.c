@@ -259,8 +259,8 @@ spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
                         break;
                 }
             }
-                        strncat(str,(const char*)subline,256);
-                        strncat(str,"\n",256);
+                        strncat(str,(const char*)subline,256 - strlen(str) - 1); // 256 - (Size of buffer already filled)
+                        strncat(str,"\n",256 - strlen(str) - 1);                 // -1 for the terminating null character
         }
     }
 
