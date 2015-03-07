@@ -48,25 +48,18 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
     unsigned char *unescaped= (unsigned char *) malloc (len+1);
     unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
     if (el==NULL || unescaped==NULL)
-        fatal (EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_sami() - not enough memory.\n");
-    int pos_r=0;
-    int pos_w=0;
-    // Scan for \n in the string and replace it with a 0
-    while (pos_r<len)
-    {
-        if (string[pos_r]=='\\' && string[pos_r+1]=='n')
-        {
-            unescaped[pos_w]=0;
-            pos_r+=2;
-        }
-        else
-        {
-            unescaped[pos_w]=string[pos_r];
-            pos_r++;
-        }
-        pos_w++;
-    }
-    unescaped[pos_w]=0;
+        fatal (EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_smptett() - not enough memory.\n");
+    int pos=0;
+	// Scan for \n in the string and replace it with a 0
+	while (pos<len)
+	{
+		if (string[pos]=='\n')
+			unescaped[pos]=0;
+		else
+			unescaped[pos]=string[pos];
+		pos++;
+	}
+	unescaped[pos]=0;
     // Now read the unescaped string (now several string'z and write them)
     unsigned char *begin=unescaped;
     while (begin<unescaped+len)
@@ -83,7 +76,6 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 		write(context->out->fh, encoded_crlf, encoded_crlf_length);
         begin+= strlen ((const char *) begin)+1;
     }
-
     sprintf ((char *) str,"</p>\n");
     if (ccx_options.encoding!=CCX_ENC_UNICODE)
     {

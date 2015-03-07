@@ -23,24 +23,17 @@ void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_s
 	unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
 	if (el==NULL || unescaped==NULL)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_sami() - not enough memory.\n");
-	int pos_r=0;
-	int pos_w=0;
+	int pos=0;
 	// Scan for \n in the string and replace it with a 0
-	while (pos_r<len)
+	while (pos<len)
 	{
-		if (string[pos_r]=='\\' && string[pos_r+1]=='n')
-		{
-			unescaped[pos_w]=0;
-			pos_r+=2;
-		}
+		if (string[pos]=='\n')
+			unescaped[pos]=0;
 		else
-		{
-			unescaped[pos_w]=string[pos_r];
-			pos_r++;
-		}
-		pos_w++;
+			unescaped[pos]=string[pos];
+		pos++;
 	}
-	unescaped[pos_w]=0;
+	unescaped[pos]=0;
 	// Now read the unescaped string (now several string'z and write them)
 	unsigned char *begin=unescaped;
 	while (begin<unescaped+len)
@@ -121,7 +114,6 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 			token = strtok(rect[0].ocr_text,"\r\n");
 			while (token)
 			{
-
 				sprintf(buf, "%s", token);
 				token = strtok(NULL,"\r\n");
 				if(token)
