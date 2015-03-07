@@ -206,6 +206,7 @@ enum ccx_bufferdata_type
 	CCX_TELETEXT = 5,
 	CCX_PRIVATE_MPEG2_CC = 6,
 	CCX_DVB_SUBTITLE = 7,
+	CCX_ISDB_SUBTITLE = 8,
 };
 
 enum ccx_frame_type
