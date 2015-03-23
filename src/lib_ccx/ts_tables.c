@@ -600,7 +600,18 @@ int parse_PAT (struct lib_ccx_ctx *ctx)
 		if (!ccx_options.ts_forced_program_selected)
 		{
 			if (!ccx_options.ts_autoprogram)
-				fatal(CCX_COMMON_EXIT_BUG_BUG, "Run ccextractor again with --program-number specifying which program\nto process.");
+			{
+				if (ccx_options.xmltv >= 1)
+				{
+					mprint("Processing EPG only. If you want to extract subtitles use --program-number to select a program.");
+					ccx_options.ts_forced_program_selected = 1;
+					warning_program_not_found_shown = 1; 
+					ccx_options.write_format = CCX_OF_NULL;
+				}
+				else
+					fatal(CCX_COMMON_EXIT_BUG_BUG, "Run ccextractor again with --program-number specifying which program\nto process.");
+			}
+				
 			else
 				mprint ("\nThe first program with a suitable CC stream will be selected.\n");
 		}
