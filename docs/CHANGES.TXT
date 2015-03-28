@@ -1,6 +1,8 @@
-0.76 
+0.76 (2015-03-28)
 -----------------
 - Added basic M2TS support
+- Added EPG support - you can now export the Program Guide to XML
+- Some bugfixes
 
 0.75 (2015-01-15)
 -----------------
