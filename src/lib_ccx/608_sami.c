@@ -142,6 +142,9 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 
 	sub->nb_data = 0;
 	freep(&sub->data);
+	FIX_UNUSED(ms_start);
+	FIX_UNUSED(ms_end);
+	FIX_UNUSED(rect);
 	return ret;
 
 }

@@ -38,7 +38,7 @@ extern unsigned char rcwt_header[11];
 #define STARTBYTESLENGTH	(1024*1024)
 
 #define XMLRPC_CHUNK_SIZE (64*1024) // 64 Kb per chunk, to avoid too many realloc()
-
+#define FIX_UNUSED(x)	(void)(x) // Remove [-Wunused-but-set-variable] warning
 enum ccx_debug_message_types
 {
 	/* Each debug message now belongs to one of these types. Use bitmaps in case
