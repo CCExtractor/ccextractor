@@ -1673,3 +1673,14 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		// Unrecognized switches are silently ignored
 	}
 }
+
+int detect_input_file_overwrite(struct lib_ccx_ctx *ctx, const char *output_filename)
+{
+	for (int i = 0; i < ctx->num_input_files; i++)
+	{
+		if (!strcmp(ctx->inputfile[i], output_filename)) {
+			return 1;
+		}
+	}
+	return 0;
+}
