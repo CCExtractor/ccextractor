@@ -91,6 +91,7 @@ static const char *XDSProgramTypes[]=
 #define XDS_TYPE_CONTENT_ADVISORY 5
 #define XDS_TYPE_AUDIO_SERVICES 6
 #define XDS_TYPE_CGMS 8 // Copy Generation Management System
+#define XDS_TYPE_ASPECT_RATIO_INFO 9 // Appears in CEA-608-B but in E it's been removed as is "reserved"
 #define XDS_TYPE_PROGRAM_DESC_1 0x10
 #define XDS_TYPE_PROGRAM_DESC_2 0x11
 #define XDS_TYPE_PROGRAM_DESC_3 0x12
@@ -532,6 +533,15 @@ void xds_do_content_advisory (struct cc_subtitle *sub, unsigned c1, unsigned c2)
 			sprintf (rating,"ContentAdvisory: Canadian English Rating: %s", ratingtext[g2*4+g1*2+g0]);
 			supported=1;
 		}
+		if (a0 && a1 && Da2 && !La3) // Canadian French Language Rating
+		{
+			const char *ratingtext[8] = { "Exemptées", "Général", "Général - Déconseillé aux jeunes enfants",
+				"Cette émission peut ne pas convenir aux enfants de moins de 13 ans", 
+				"Cette émission ne convient pas aux moins de 16 ans",
+				"Cette émission est réservée aux adultes", "[invalid]", "[invalid]" };
+			sprintf(rating, "ContentAdvisory: Canadian French Rating: %s", ratingtext[g2 * 4 + g1 * 2 + g0]);
+			supported = 1;
+		}
 
 	}
 	// Bits a1 and a0 determine the encoding. I'll add parsing as more samples become available
@@ -551,7 +561,8 @@ void xds_do_content_advisory (struct cc_subtitle *sub, unsigned c1, unsigned c2)
 		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: %s\n",content);
 	}
 	if (!a0 || // MPA
-			(a0 && a1 && !Da2 && !La3) // Canadian English Language Rating
+			(a0 && a1 && !Da2 && !La3) ||  // Canadian English Language Rating
+			(a0 && a1 && Da2 && !La3) // Canadian French Language Rating
 	)
 	{
 		if (ccx_decoders_xds_context.transcriptFormat.xds)
@@ -750,6 +761,25 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 			was_proc=1;
 			xds_do_copy_generation_management_system (sub, cur_xds_payload[2],cur_xds_payload[3]);
 			break;
+		case XDS_TYPE_ASPECT_RATIO_INFO:
+		{
+			unsigned ar_start, ar_end;
+			was_proc = 1;
+			if (cur_xds_payload_length < 5) // We need 2 data bytes
+				break;
+			if (!cur_xds_payload[2] & 20 || !cur_xds_payload[3] & 20) // Bit 6 must be 1
+				break;
+			/* CEA-608-B: The starting line is computed by adding 22 to the decimal number
+			represented by bits S0 to S5. The ending line is computing by substracting 
+			the decimal number represented by bits E0 to E5 from 262 */
+			ar_start = (cur_xds_payload[2] & 0x1F) + 22; 
+			ar_end = 262 - (cur_xds_payload[3] & 0x1F);
+			unsigned active_picture_height = ar_end - ar_start;
+			float aspect_ratio = (float) 320 / active_picture_height;
+			ccx_common_logging.log_ftn("\rXDS Notice: Aspect ratio info, start line=%u, end line=%u\n", ar_start,ar_end);
+			ccx_common_logging.log_ftn("\rXDS Notice: Aspect ratio info, active picture height=%u, ratio=%f\n", active_picture_height, aspect_ratio);
+
+		}
 		case XDS_TYPE_PROGRAM_DESC_1:
 		case XDS_TYPE_PROGRAM_DESC_2:
 		case XDS_TYPE_PROGRAM_DESC_3:
