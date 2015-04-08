@@ -141,7 +141,7 @@ void detect_stream_type (struct lib_ccx_ctx *ctx)
 			   (ctx->startbytes[i]=='m' && ctx->startbytes[i+1]=='d' &&
                ctx->startbytes[i+2]=='a' && ctx->startbytes[i+3]=='t')
 			   ||
-			   (ctx->startbytes[i]=='f' && ctx->startbytes[i+1]=='e' &&
+			   (ctx->startbytes[i]=='f' && ctx->startbytes[i+1]=='r' &&
                ctx->startbytes[i+2]=='e' && ctx->startbytes[i+3]=='e')
 			   ||
 			   (ctx->startbytes[i]=='s' && ctx->startbytes[i+1]=='k' &&
@@ -155,6 +155,9 @@ void detect_stream_type (struct lib_ccx_ctx *ctx)
 			   ||
 			   (ctx->startbytes[i]=='v' && ctx->startbytes[i+1]=='o' &&
                ctx->startbytes[i+2]=='i' && ctx->startbytes[i+3]=='d')
+               ||
+               (ctx->startbytes[i]=='w' && ctx->startbytes[i+1]=='i' &&
+                ctx->startbytes[i+2]=='d' && ctx->startbytes[i+3]=='e')
 			   )
 			{
 				ctx->stream_mode=CCX_SM_MP4;
