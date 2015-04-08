@@ -1527,7 +1527,7 @@ static int write_dvb_sub(void *dvb_ctx, struct cc_subtitle *sub)
 		//save_display_set(ctx);
 	}
 #endif
-
+	FIX_UNUSED(ret);
 	return 0;
 }
 /**

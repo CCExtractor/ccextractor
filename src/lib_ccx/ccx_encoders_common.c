@@ -324,6 +324,9 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 #endif
 
 	sub->nb_data = 0;
+	FIX_UNUSED(start_time);
+	FIX_UNUSED(end_time);
+	FIX_UNUSED(rect);
 	freep(&sub->data);
 	return ret;
 

@@ -128,6 +128,9 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	}
 #endif
 	sub->nb_data = 0;
+	FIX_UNUSED(ms_start);
+	FIX_UNUSED(ms_end);
+	FIX_UNUSED(rect);
 	freep(&sub->data);
 	return ret;
 
@@ -163,6 +166,8 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 
 	mstotime (ms_start,&h1,&m1,&s1,&ms1);
 	mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+	FIX_UNUSED(ms_start);
+	FIX_UNUSED(ms_end);
 	char timeline[128];
 	context->srt_counter++;
 	sprintf(timeline, "%u%s", context->srt_counter, encoded_crlf);

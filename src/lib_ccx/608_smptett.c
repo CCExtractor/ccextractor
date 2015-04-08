@@ -159,6 +159,10 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 #endif
 
 	sub->nb_data = 0;
+    FIX_UNUSED(ms_start);
+    FIX_UNUSED(ms_end);
+    FIX_UNUSED(rect);
+    FIX_UNUSED(len);
 	freep(&sub->data);
 	return ret;
 
