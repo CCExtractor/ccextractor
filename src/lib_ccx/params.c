@@ -787,27 +787,6 @@ int atoi_hex (char *s)
 		return atoi (s);
 	}
 }
-void init_option (struct ccx_s_options *option)
-{
-	if(option->gui_mode_reports)
-	{
-		option->no_progress_bar=1;
-		// Do it as soon as possible, because it something fails we might not have a chance
-		activity_report_version();
-	}
-
-	if(option->sentence_cap)
-	{
-		if(add_built_in_words())
-			fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for word list");
-		if(option->sentence_cap_file && process_cap_file (option->sentence_cap_file))
-			fatal (EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the capitalization file.\n");
-
-		ccx_encoders_helpers_perform_shellsort_words();
-	}
-	if(option->ts_forced_program != -1)
-		option->ts_forced_program_selected = 1;
-}
 
 void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 {
@@ -1672,4 +1651,22 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "Error: Parameter %s not understood.\n", argv[i]);
 		// Unrecognized switches are silently ignored
 	}
+	if(opt->gui_mode_reports)
+	{
+		opt->no_progress_bar=1;
+		// Do it as soon as possible, because it something fails we might not have a chance
+		activity_report_version();
+	}
+
+	if(opt->sentence_cap)
+	{
+		if(add_built_in_words())
+			fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for word list");
+		if(opt->sentence_cap_file && process_cap_file (opt->sentence_cap_file))
+			fatal (EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the capitalization file.\n");
+
+		ccx_encoders_helpers_perform_shellsort_words();
+	}
+	if(opt->ts_forced_program != -1)
+		opt->ts_forced_program_selected = 1;
 }
