@@ -228,6 +228,10 @@ int main(int argc, char *argv[])
 			else
 			{
 				mprint ("Creating %s\n", ctx->wbout1.filename);
+				if (detect_input_file_overwrite(ctx, ctx->wbout1.filename)) {
+					fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED,
+						  "Output filename is same as one of input filenames. Check output parameters.\n");
+				}
 				ctx->wbout1.fh=open (ctx->wbout1.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 				if (ctx->wbout1.fh==-1)
 				{
@@ -260,6 +264,10 @@ int main(int argc, char *argv[])
 						strcat (ctx->wbout1.filename,(const char *) ctx->extension);
 					}
 					mprint ("Creating %s\n", ctx->wbout1.filename);
+					if (detect_input_file_overwrite(ctx, ctx->wbout1.filename)) {
+						fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED,
+							  "Output filename is same as one of input filenames. Check output parameters.\n");
+					}
 					ctx->wbout1.fh=open (ctx->wbout1.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 					if (ctx->wbout1.fh==-1)
 					{
@@ -322,6 +330,10 @@ int main(int argc, char *argv[])
 						strcat (ctx->wbout2.filename,(const char *) ctx->extension);
 					}
 					mprint ("Creating %s\n", ctx->wbout2.filename);
+					if (detect_input_file_overwrite(ctx, ctx->wbout2.filename)) {
+						fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED,
+							  "Output filename is same as one of input filenames. Check output parameters.\n");
+					}
 					ctx->wbout2.fh=open (ctx->wbout2.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 					if (ctx->wbout2.fh==-1)
 					{
