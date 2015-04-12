@@ -397,8 +397,18 @@ int parse_PMT (struct lib_ccx_ctx *ctx, unsigned char *buf, int len, int pos)
 
 int write_section(struct lib_ccx_ctx *ctx, struct ts_payload *payload, unsigned char*buf, int size, int pos)
 {
-	if (payload->pesstart)
+	static int in_error = 0;  // If a broken section arrives we will skip everything until the next PES start
+	if (size < 0)
 	{
+		in_error = 1;
+		return 0;
+	}
+	if (payload->pesstart)
+		in_error = 0;
+	if (in_error) 
+		return 0; 
+	if (payload->pesstart)
+	{		
 		memcpy(payload->section_buf, buf, size);
 		payload->section_index = size;
 		payload->section_size = -1;
