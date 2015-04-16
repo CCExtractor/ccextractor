@@ -619,9 +619,18 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 		int pesheaderlen;
 		int vpesdatalen = read_video_pes_header(ctx, ctx->capbuf, &pesheaderlen, ctx->capbuflen);
 
+		if (ccx_bufferdatatype == CCX_DVB_SUBTITLE && !vpesdatalen)
+		{
+			dbg_print(CCX_DMT_VERBOSE, "TS payload is a DVB Subtitle\n");
+			payload_read = ctx->capbuflen;
+			inbuf += payload_read;
+			break;
+		}
+
 		if (vpesdatalen < 0)
-		{   // Seems to be a broken PES
-			end_of_file=1;
+		{
+			dbg_print(CCX_DMT_VERBOSE, "Seems to be a broken PES. Terminating file handling.\n");
+			end_of_file = 1;
 			break;
 		}
 
