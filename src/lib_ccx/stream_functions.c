@@ -257,9 +257,15 @@ int read_video_pes_header (struct lib_ccx_ctx *ctx, unsigned char *nextheader, i
     }
     else
     {
-	// We need at least 9 bytes to continue
-	if( sbuflen < 9 )
-	    return -1;
+        if (ccx_bufferdatatype == CCX_DVB_SUBTITLE && sbuflen < 9)
+        {
+            *headerlength = sbuflen;
+            return 0;
+        }
+        if (sbuflen < 9) // We need at least 9 bytes to continue
+        {
+            return -1;
+        }
     }
     *headerlength = 6+3;
 
