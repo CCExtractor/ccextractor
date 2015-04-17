@@ -259,7 +259,7 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 	if ( sub->flags & SUB_EOD_MARKER )
 		context->prev_start =  sub->start_time;
 
-#if ENABLE_OCR
+#ifdef ENABLE_OCR
 	if (rect[0].ocr_text && *(rect[0].ocr_text))
 	{
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
