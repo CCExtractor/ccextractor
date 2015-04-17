@@ -24,5 +24,8 @@ Step 5) Use CCextractor as you would like
 If you want to build CCExtractor with FFMpeg you need to pass
 cmake -DWITH_FFMPEG=ON ../src/
 
+If you want to build CCExtractor with OCR you need to pass
+cmake -DWITH_OCR=ON ../src/
+
 Hint for looking all the things you want to set from outside
 cmake -LAH ../src/
