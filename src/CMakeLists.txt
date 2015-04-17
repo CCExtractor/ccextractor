@@ -3,6 +3,7 @@ cmake_minimum_required (VERSION 3.0.2)
 project (CCExtractor)
 
 option(WITH_FFMPEG "Build using FFmpeg demuxer and decoder" OFF)
+option(WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
 #Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
 set (CCEXTRACTOR_VERSION_MINOR 75)
@@ -47,6 +48,20 @@ set (EXTRA_LIBS ${EXTRA_LIBS} ${AVCODEC_STATIC_LIBRARIES} )
 
 SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_FFMPEG")
 endif (WITH_FFMPEG)
+
+########################################################
+# Build with OCR using leptonica and tesseract libraries
+#
+if (WITH_OCR)
+
+find_package(PkgConfig)
+pkg_check_modules(TESSERACT REQUIRED tesseract)
+pkg_check_modules(LEPTONICA REQUIRED lept)
+set (EXTRA_LIBS ${EXTRA_LIBS} ${TESSERACT_STATIC_LIBRARIES} )
+set (EXTRA_LIBS ${EXTRA_LIBS} ${LEPTONICA_STATIC_LIBRARIES} )
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR ${TESSERACT_CFLAGS} ${LEPTONICA_CFLAGS}")
+
+endif (WITH_OCR)
 
 add_executable(ccextractor ${SOURCEFILE})
 target_link_libraries (ccextractor ${EXTRA_LIBS})
