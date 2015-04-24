@@ -247,7 +247,7 @@ unsigned char * ccdp_extract_data(unsigned char * ccdp_atom_content, unsigned in
 
 	if (*cc_count != 10 && *cc_count != 20 && *cc_count != 25 && *cc_count != 30)
 	{
-		dbg_print(CCX_DMT_PARSE, "mp4-708-cdp: unexpected cc_count %u\n", cc_count);
+		dbg_print(CCX_DMT_PARSE, "mp4-708-cdp: unexpected cc_count %u\n", *cc_count);
 		return NULL;
 	}
 
@@ -256,7 +256,7 @@ unsigned char * ccdp_extract_data(unsigned char * ccdp_atom_content, unsigned in
 
 	if ((*cc_count) * 3 > len)
 	{
-		dbg_print(CCX_DMT_PARSE, "mp4-708-cdp: not enough bytes left (%u) to carry %u*3 bytes\n", len, cc_count);
+		dbg_print(CCX_DMT_PARSE, "mp4-708-cdp: not enough bytes left (%u) to carry %u*3 bytes\n", len, *cc_count);
 		return NULL;
 	}
 
