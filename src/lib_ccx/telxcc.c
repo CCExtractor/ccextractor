@@ -33,6 +33,7 @@ Werner Brückner -- Teletext in digital television
 #include "hamming.h"
 #include "teletext.h"
 #include <signal.h>
+#include "ccx_common_char_encoding.c"
 #ifdef I18N
 #include <libintl.h>
 #include <locale.h>
@@ -235,6 +236,22 @@ static unsigned ucs2_buffer_prev_used=0;
 static uint64_t prev_hide_timestamp;
 static uint64_t prev_show_timestamp;
 
+char cap_telx(char *a)
+ {	static int flag=1;
+
+	if(*a == '\r' || *a == '?' || *a=='.' || *a == '!' || *a == ':')
+ 		{flag = 1; return *a; }
+
+ 	if(flag && (*a != '\r' || *a != '?' || *a != '.' || *a != '!' || *a != ':'))
+ 	{	
+ 		flag = 0;
+ 		return cctoupper(*a);
+ 	}
+ 	else
+		return cctolower(*a);
+		
+}
+
 void page_buffer_add_string (const char *s)
 {
 	if (page_buffer_cur_size<(page_buffer_cur_used+strlen (s)+1))
@@ -245,9 +262,22 @@ void page_buffer_add_string (const char *s)
 		if (!page_buffer_cur)
 			fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process teletext page.\n");
 	}
-	memcpy (page_buffer_cur+page_buffer_cur_used, s, strlen (s));
-	page_buffer_cur_used+=strlen (s);
+	
+	if(strlen(s) <= 2 && ( (*s >= 'A' && *s <= 'Z') || (*s >= 'a' && *s <= 'z')) || (*s == '\r') ) 
+	{char t = cap_telx(s);
+	s = &t;
+	memcpy (page_buffer_cur+page_buffer_cur_used, s,1);
+	
+	page_buffer_cur_used+=1;
+	page_buffer_cur[page_buffer_cur_used]=0; 
+	}
+	
+	else
+	{memcpy (page_buffer_cur+page_buffer_cur_used, s,strlen(s));
+	
+	page_buffer_cur_used+=strlen(s);
 	page_buffer_cur[page_buffer_cur_used]=0;
+	}
 }
 
 void ucs2_buffer_add_char (uint64_t c)
@@ -460,6 +490,7 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
 	timecode_show[12] = 0;
 	timestamp_to_srttime(page->hide_timestamp, timecode_hide);
 	timecode_hide[12] = 0;
+	int i_flag=0;			// flag to detect presence of " I " - matter of Capitalization
 
 	// process data
 	for (uint8_t row = 1; row < 25; row++) {
@@ -588,8 +619,48 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
 
 
 				if (v >= 0x20) {
-					//if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s", u);
-					page_buffer_add_string (u);
+				
+					if(u[0] == ' '){ 				//just to detect presence of " I "
+						if(i_flag == 0){
+							i_flag = 1;
+							continue;
+						}
+						else if (i_flag == 2)
+							i_flag++;
+					}
+
+					if(i_flag == 1 && u[0] == 'I'){
+						i_flag = 2; 
+						continue;
+					}
+					
+					if(i_flag==3 && u[0]== ' '){		//" I " - detected. Add " I ".
+						char p[3] = {' ','I',' '} ;
+						page_buffer_add_string(p);
+						i_flag=0;
+						continue;
+					}
+
+					if(i_flag == 2 && u[0]!=' '){		//" I" detected earlier but next char i.e. u,
+						char temp_1[2] = {'I','\0'}; 		// contains a char, therefore "I" is a part of word.
+						char temp_2[2] = {' ','\0'};
+						page_buffer_add_string(temp_2);		//recover string that was skipped order to detect "I"
+						page_buffer_add_string(temp_1);
+						page_buffer_add_string(u);		//after adding skipped string, add current char now
+						i_flag=0;
+						continue;
+					}	
+				
+					if(i_flag==1){
+						char l[2]= {' ','\0'};
+						page_buffer_add_string(l);
+						i_flag=0;
+					}
+
+					
+					page_buffer_add_string (u);				//u contains non-"I" character here.add that.
+					i_flag=0;
+					
 					if (ccx_options.gui_mode_reports) // For now we just handle the easy stuff
 						fprintf (stderr,"%s",u);
 				}
