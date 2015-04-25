@@ -239,10 +239,10 @@ static uint64_t prev_show_timestamp;
 char cap_telx(char *a)
  {	static int flag=1;
 
-	if(*a == '\r')
- 		{flag = 1; }
+	if(*a == '\r' || *a == '?' || *a=='.' || *a == '!' || *a == ':')
+ 		{flag = 1; return *a; }
 
- 	if(flag && (*a != '\r'))
+ 	if(flag && (*a != '\r' || *a != '?' || *a != '.' || *a != '!' || *a != ':'))
  	{	
  		flag = 0;
  		return cctoupper(*a);
@@ -263,7 +263,7 @@ void page_buffer_add_string (const char *s)
 			fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process teletext page.\n");
 	}
 	
-	if(strlen(s) <= 2) 
+	if(strlen(s) <= 2 && ( (*s >= 'A' && *s <= 'Z') || (*s >= 'a' && *s <= 'z')) || (*s == '\r') ) 
 	{char t = cap_telx(s);
 	s = &t;
 	memcpy (page_buffer_cur+page_buffer_cur_used, s,1);
