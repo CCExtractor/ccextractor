@@ -382,7 +382,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, char *file,void *enc_ctx)
 
 			u32 ProcessingStreamDescriptionIndex = 0; // Current track we are processing, 0 = we don't know yet
 			u32 timescale = gf_isom_get_media_timescale(f,i+1);
-#ifdef MP$DEBUG
+#ifdef MP4_DEBUG
 			u64 duration = gf_isom_get_media_duration(f,i+1);
 			mprint ("%u streams\n",num_streams);
 			mprint ("%u sample counts\n",num_samples);
