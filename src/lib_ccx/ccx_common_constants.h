@@ -234,9 +234,9 @@ enum ccx_code_type
 
 enum cdp_section_type
 {
-	CDP_DATA_SECTION = 0x72,
-	CDP_SVC_INFO_SECTION = 0x73,
-	CDP_FOOTER_SECTION = 0x74
+	CDP_SECTION_DATA = 0x72,
+	CDP_SECTION_SVC_INFO = 0x73,
+	CDP_SECTION_FOOTER = 0x74
 };
 
 /*

@@ -185,7 +185,7 @@ static int process_avc_track(struct lib_ccx_ctx *ctx, const char* basename, GF_I
 	return status;
 }
 
-unsigned char * ccdp_extract_data(unsigned char * ccdp_atom_content, unsigned int len, unsigned int *cc_count)
+unsigned char * ccdp_find_data(unsigned char * ccdp_atom_content, unsigned int len, unsigned int *cc_count)
 {
 	unsigned char *data = ccdp_atom_content;
 
@@ -237,7 +237,7 @@ unsigned char * ccdp_extract_data(unsigned char * ccdp_atom_content, unsigned in
 		len -= 4;
 	}
 
-	if (data[0] != CDP_DATA_SECTION)
+	if (data[0] != CDP_SECTION_DATA)
 	{
 		dbg_print(CCX_DMT_PARSE, "mp4-708-cdp: cdp_data_section byte not found\n");
 		return NULL;
@@ -443,7 +443,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, char *file,void *enc_ctx)
 
 							unsigned int cc_count;
 							data += 4;
-							unsigned char *cc_data = ccdp_extract_data((unsigned char *) data, sample->dataLength - 8, &cc_count);
+							unsigned char *cc_data = ccdp_find_data((unsigned char *) data, sample->dataLength - 8, &cc_count);
 
 							if (!cc_data)
 							{
@@ -459,7 +459,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, char *file,void *enc_ctx)
 								unsigned char cc_valid = (unsigned char) ((cc_info & 4) >> 2);
 								unsigned char cc_type = (unsigned char) (cc_info & 3);
 
-								if (cc_info == CDP_SVC_INFO_SECTION || cc_info == CDP_FOOTER_SECTION)
+								if (cc_info == CDP_SECTION_SVC_INFO || cc_info == CDP_SECTION_FOOTER)
 								{
 									dbg_print(CCX_DMT_PARSE, "mp4-708: premature end of sample (0x73 or 0x74)\n");
 									break;
