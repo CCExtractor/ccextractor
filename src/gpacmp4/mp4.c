@@ -285,7 +285,10 @@ int processmp4 (struct lib_ccx_ctx *ctx, char *file,void *enc_ctx)
 
 			
 		}
-		if (type == GF_ISOM_MEDIA_CAPTIONS && subtype == GF_ISOM_SUBTYPE_C608)
+		if (type == GF_ISOM_MEDIA_CAPTIONS && 
+			( (subtype == GF_ISOM_SUBTYPE_C608) 
+			//|| (subtype == GF_ISOM_SUBTYPE_C708) && 1) 
+			)
 		{			
 			if (avc_track_count && ccx_options.mp4vidtrack)
 				continue;
@@ -340,7 +343,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, char *file,void *enc_ctx)
 					}
 
 					data += 4;
-					if (!strncmp(data, "cdat", 4) || !strncmp(data, "cdt2", 4))
+					if (!strncmp(data, "cdat", 4) || !strncmp(data, "cdt2", 4) )
 					{
 						int ret = 0;
 						int len = atomLength - 8;
