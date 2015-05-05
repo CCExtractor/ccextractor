@@ -227,7 +227,8 @@ enum
 	GF_ISOM_SUBTYPE_LSR1		= GF_4CC( 'l', 's', 'r', '1' ),
 
 	/* CAPTIONS */
-	GF_ISOM_SUBTYPE_C608		= GF_4CC ('c', '6', '0', '8' )
+	GF_ISOM_SUBTYPE_C608		= GF_4CC( 'c', '6', '0', '8' ),
+	GF_ISOM_SUBTYPE_C708		= GF_4CC( 'c', '7', '0', '8' )
 };
 
 

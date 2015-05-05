@@ -231,6 +231,14 @@ enum ccx_code_type
 	CCX_CODEC_ISDB_CC,
 	CCX_CODEC_NONE,
 };
+
+enum cdp_section_type
+{
+	CDP_SECTION_DATA = 0x72,
+	CDP_SECTION_SVC_INFO = 0x73,
+	CDP_SECTION_FOOTER = 0x74
+};
+
 /*
  * This Macro check whether descriptor tag is valid for teletext
  * codec or not.
