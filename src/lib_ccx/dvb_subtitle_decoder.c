@@ -1551,7 +1551,7 @@ int dvbsub_decode(void *dvb_ctx, const unsigned char *buf, int buf_size, struct 
 
 	if (buf_size <= 6 || *buf != 0x0f)
 	{
-		mprint("incomplete or broken packet\n");
+		mprint("dvbsub_decode: incomplete, broken or empty packet\n");
 		return -1;
 	}
 
@@ -1570,7 +1570,7 @@ int dvbsub_decode(void *dvb_ctx, const unsigned char *buf, int buf_size, struct 
 
 		if (p_end - p < segment_length)
 		{
-			mprint("incomplete or broken packet\n");
+			mprint("dvbsub_decode: incomplete, broken or empty packet\n");
 			return -1;
 		}
 

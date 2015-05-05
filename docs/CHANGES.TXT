@@ -5,7 +5,10 @@
 - Fixed bug in capitalization code ('I' was not being capitalized).
 - GUI should now run in Windows 8 (using the include .Net runtime, since
   3.5 cannot be installed in Windows 8 apparently).
-
+- Fixed Mac build script, binary is now compiled with support for
+  files over 2 GB.
+- Fixed bug in PMT code, damaged PMT sections could make CCExtractor
+  crash.
 
 0.76 (2015-03-28)
 -----------------

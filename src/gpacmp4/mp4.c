@@ -369,9 +369,9 @@ int processmp4 (struct lib_ccx_ctx *ctx, char *file,void *enc_ctx)
 
 			
 		}
-		if ((type == GF_ISOM_MEDIA_CAPTIONS && subtype == GF_ISOM_SUBTYPE_C608) ||
-			(type == GF_ISOM_MEDIA_CAPTIONS && subtype == GF_ISOM_SUBTYPE_C708))
-		{			
+		if (type == GF_ISOM_MEDIA_CAPTIONS &&
+				(subtype == GF_ISOM_SUBTYPE_C608 || subtype == GF_ISOM_SUBTYPE_C708))
+		{
 			if (avc_track_count && ccx_options.mp4vidtrack)
 				continue;
 
