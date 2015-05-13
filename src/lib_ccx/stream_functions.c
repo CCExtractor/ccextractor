@@ -57,48 +57,6 @@ void detect_stream_type (struct lib_ccx_ctx *ctx)
             ctx->startbytes[10]==0)
             ctx->stream_mode=CCX_SM_RCWT;
     }
-	if ((ctx->stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND || ccx_options.print_file_reports)
-		&& ctx->startbytes_avail >= 4) // Still not found
-	{
-		// Try for MP4 by looking for box signatures - this should happen very
-		// early in the file according to specs
-		for (int i = 0; i<ctx->startbytes_avail - 3; i++)
-		{
-			// Look for the a box of type 'file'
-			if (
-				(ctx->startbytes[i] == 'f' && ctx->startbytes[i + 1] == 't' &&
-				ctx->startbytes[i + 2] == 'y' && ctx->startbytes[i + 3] == 'p')
-				||
-				(ctx->startbytes[i] == 'm' && ctx->startbytes[i + 1] == 'o' &&
-				ctx->startbytes[i + 2] == 'o' && ctx->startbytes[i + 3] == 'v')
-				||
-				(ctx->startbytes[i] == 'm' && ctx->startbytes[i + 1] == 'd' &&
-				ctx->startbytes[i + 2] == 'a' && ctx->startbytes[i + 3] == 't')
-				||
-				(ctx->startbytes[i] == 'f' && ctx->startbytes[i + 1] == 'r' &&
-				ctx->startbytes[i + 2] == 'e' && ctx->startbytes[i + 3] == 'e')
-				||
-				(ctx->startbytes[i] == 's' && ctx->startbytes[i + 1] == 'k' &&
-				ctx->startbytes[i + 2] == 'i' && ctx->startbytes[i + 3] == 'p')
-				||
-				(ctx->startbytes[i] == 'u' && ctx->startbytes[i + 1] == 'd' &&
-				ctx->startbytes[i + 2] == 't' && ctx->startbytes[i + 3] == 'a')
-				||
-				(ctx->startbytes[i] == 'm' && ctx->startbytes[i + 1] == 'e' &&
-				ctx->startbytes[i + 2] == 't' && ctx->startbytes[i + 3] == 'a')
-				||
-				(ctx->startbytes[i] == 'v' && ctx->startbytes[i + 1] == 'o' &&
-				ctx->startbytes[i + 2] == 'i' && ctx->startbytes[i + 3] == 'd')
-				||
-				(ctx->startbytes[i] == 'w' && ctx->startbytes[i + 1] == 'i' &&
-				ctx->startbytes[i + 2] == 'd' && ctx->startbytes[i + 3] == 'e')
-				)
-			{
-				ctx->stream_mode = CCX_SM_MP4;
-				break;
-			}
-		}
-	}
     if (ctx->stream_mode==CCX_SM_ELEMENTARY_OR_NOT_FOUND) // Still not found
     {
         if (ctx->startbytes_avail > 188*8) // Otherwise, assume no TS
@@ -165,6 +123,48 @@ void detect_stream_type (struct lib_ccx_ctx *ctx)
             ctx->stream_mode=CCX_SM_ELEMENTARY_OR_NOT_FOUND;
         }
     }
+	if ((ctx->stream_mode==CCX_SM_ELEMENTARY_OR_NOT_FOUND || ccx_options.print_file_reports)
+			&& ctx->startbytes_avail>=4) // Still not found
+	{
+		// Try for MP4 by looking for box signatures - this should happen very
+		// early in the file according to specs
+		for (int i=0;i<ctx->startbytes_avail-3;i++)
+		{
+			// Look for the a box of type 'file'
+			if (
+			   (ctx->startbytes[i]=='f' && ctx->startbytes[i+1]=='t' &&
+               ctx->startbytes[i+2]=='y' && ctx->startbytes[i+3]=='p')
+			   ||
+			   (ctx->startbytes[i]=='m' && ctx->startbytes[i+1]=='o' &&
+               ctx->startbytes[i+2]=='o' && ctx->startbytes[i+3]=='v')
+			   ||
+			   (ctx->startbytes[i]=='m' && ctx->startbytes[i+1]=='d' &&
+               ctx->startbytes[i+2]=='a' && ctx->startbytes[i+3]=='t')
+			   ||
+			   (ctx->startbytes[i]=='f' && ctx->startbytes[i+1]=='r' &&
+               ctx->startbytes[i+2]=='e' && ctx->startbytes[i+3]=='e')
+			   ||
+			   (ctx->startbytes[i]=='s' && ctx->startbytes[i+1]=='k' &&
+               ctx->startbytes[i+2]=='i' && ctx->startbytes[i+3]=='p')
+			   ||
+			   (ctx->startbytes[i]=='u' && ctx->startbytes[i+1]=='d' &&
+               ctx->startbytes[i+2]=='t' && ctx->startbytes[i+3]=='a')
+			   ||
+			   (ctx->startbytes[i]=='m' && ctx->startbytes[i+1]=='e' &&
+               ctx->startbytes[i+2]=='t' && ctx->startbytes[i+3]=='a')
+			   ||
+			   (ctx->startbytes[i]=='v' && ctx->startbytes[i+1]=='o' &&
+               ctx->startbytes[i+2]=='i' && ctx->startbytes[i+3]=='d')
+               ||
+               (ctx->startbytes[i]=='w' && ctx->startbytes[i+1]=='i' &&
+                ctx->startbytes[i+2]=='d' && ctx->startbytes[i+3]=='e')
+			   )
+			{
+				ctx->stream_mode=CCX_SM_MP4;
+				break;
+			}
+		}
+	}
    // Don't use STARTBYTESLENGTH. It might be longer than the file length!
 	return_to_buffer (ctx->startbytes, ctx->startbytes_avail);
 }
