@@ -335,8 +335,6 @@ void store_hdcc(struct lib_ccx_ctx *ctx, unsigned char *cc_data, int cc_count, i
 			LLONG current_fts_now,struct cc_subtitle *sub);
 void anchor_hdcc(int seq);
 void process_hdcc (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub);
-// mp4.c
-int processmp4 (struct lib_ccx_ctx *ctx, char *file,void *enc_ctx);
 
 // params_dump.c
 void params_dump(struct lib_ccx_ctx *ctx);

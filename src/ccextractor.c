@@ -10,6 +10,7 @@ License: GPL 2.0
 #include <signal.h>
 #include "ffmpeg_intgr.h"
 #include "ccx_common_option.h"
+#include "ccx_mp4.h"
 
 struct lib_ccx_ctx *signal_ctx;
 void sigint_handler()
@@ -564,6 +565,7 @@ int main(int argc, char *argv[])
 				
 		switch (ctx->stream_mode)
 		{
+			struct ccx_s_mp4Cfg mp4_cfg = {ccx_options.mp4vidtrack};
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
 				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
 					ccx_options.use_gop_as_pts = 1; // Force GOP timing for ES
@@ -590,10 +592,12 @@ int main(int argc, char *argv[])
 				show_myth_banner = 1;
 				myth_loop(ctx, &enc_ctx);
 				break;
-			case CCX_SM_MP4:				
+			case CCX_SM_MP4:
 				mprint ("\rAnalyzing data with GPAC (MP4 library)\n");
 				close_input_file(ctx); // No need to have it open. GPAC will do it for us
-				processmp4 (ctx, ctx->inputfile[0],&enc_ctx);
+				processmp4 (ctx, &mp4_cfg, ctx->inputfile[0],&enc_ctx);
+				if (ccx_options.print_file_reports)
+					print_file_report(ctx);
 				break;
 #ifdef WTV_DEBUG
 			case CCX_SM_HEX_DUMP:

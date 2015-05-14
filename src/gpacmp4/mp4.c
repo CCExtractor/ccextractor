@@ -7,6 +7,7 @@
 #include "utility.h"
 #include "ccx_encoders_common.h"
 #include "ccx_common_option.h"
+#include "ccx_mp4.h"
 
 void do_NAL (struct lib_ccx_ctx *ctx, unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub);
 void set_fts(void); // From timing.c
@@ -279,7 +280,7 @@ unsigned char * ccdp_find_data(unsigned char * ccdp_atom_content, unsigned int l
 		}
 
 */
-int processmp4 (struct lib_ccx_ctx *ctx, char *file,void *enc_ctx)
+int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file,void *enc_ctx)
 {	
 	GF_ISOFile* f;
 	u32 i, j, track_count, avc_track_count, cc_track_count;
@@ -328,7 +329,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, char *file,void *enc_ctx)
 
 		if ( type == GF_ISOM_MEDIA_VISUAL && subtype == GF_ISOM_SUBTYPE_XDVB)
 		{
-			if (cc_track_count && !ccx_options.mp4vidtrack)
+			if (cc_track_count && !cfg->mp4vidtrack)
 				continue;
 			if(process_xdvb_track(ctx, file, f, i + 1, &dec_sub) != 0)
 			{
@@ -344,7 +345,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, char *file,void *enc_ctx)
 
 		if( type == GF_ISOM_MEDIA_VISUAL && subtype == GF_ISOM_SUBTYPE_AVC_H264)
 		{			
-			if (cc_track_count && !ccx_options.mp4vidtrack)
+			if (cc_track_count && !cfg->mp4vidtrack)
 				continue;
 			GF_AVCConfig *cnf = gf_isom_avc_config_get(f,i+1,1);
 			if (cnf!=NULL)
@@ -372,7 +373,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, char *file,void *enc_ctx)
 		if (type == GF_ISOM_MEDIA_CAPTIONS &&
 				(subtype == GF_ISOM_SUBTYPE_C608 || subtype == GF_ISOM_SUBTYPE_C708))
 		{
-			if (avc_track_count && ccx_options.mp4vidtrack)
+			if (avc_track_count && cfg->mp4vidtrack)
 				continue;
 
 #ifdef MP4_DEBUG
@@ -550,8 +551,6 @@ int processmp4 (struct lib_ccx_ctx *ctx, char *file,void *enc_ctx)
 		mprint ("found no dedicated CC track(s).\n");
 
 	ctx->freport.mp4_cc_track_cnt = cc_track_count;
-	if (ccx_options.print_file_reports)
-		print_file_report(ctx);
 
 	return 0;
 }
