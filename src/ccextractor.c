@@ -20,7 +20,7 @@ void sigint_handler()
 	exit(EXIT_SUCCESS);
 }
 
-
+struct ccx_s_options ccx_options;
 int main(int argc, char *argv[])
 {
 	char *c;
