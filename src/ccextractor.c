@@ -11,8 +11,6 @@ License: GPL 2.0
 #include "ffmpeg_intgr.h"
 #include "ccx_common_option.h"
 
-void xds_cea608_test();
-
 struct lib_ccx_ctx *signal_ctx;
 void sigint_handler()
 {
