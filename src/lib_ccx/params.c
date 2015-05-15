@@ -1669,6 +1669,20 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	}
 	if(opt->ts_forced_program != -1)
 		opt->ts_forced_program_selected = 1;
+
+	// Init telexcc redundant options
+	tlt_config.transcript_settings = &opt->transcript_settings;
+	tlt_config.levdistmincnt = opt->levdistmincnt;
+	tlt_config.levdistmaxpct = opt->levdistmaxpct;
+	tlt_config.extraction_start = opt->extraction_start;
+	tlt_config.extraction_end = opt->extraction_end;
+	tlt_config.write_format = opt->write_format;
+	tlt_config.gui_mode_reports = opt->gui_mode_reports;
+	tlt_config.date_format = opt->date_format;
+	tlt_config.noautotimeref = opt->noautotimeref;
+	tlt_config.send_to_srv = opt->send_to_srv;
+	tlt_config.encoding = opt->encoding;
+	tlt_config.nofontcolor = opt->nofontcolor;
 }
 
 int detect_input_file_overwrite(struct lib_ccx_ctx *ctx, const char *output_filename)
