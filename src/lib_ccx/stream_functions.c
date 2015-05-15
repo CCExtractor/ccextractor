@@ -57,6 +57,37 @@ void detect_stream_type (struct lib_ccx_ctx *ctx)
             ctx->startbytes[10]==0)
             ctx->stream_mode=CCX_SM_RCWT;
     }
+	if ((ctx->stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND || ccx_options.print_file_reports)
+		&& ctx->startbytes_avail >= 4) // Still not found
+	{
+		long idx = 0, nextBoxLocation = 0, lastBoxLocation = 0;
+		int boxScore = 0;
+		// Scan the buffer for valid succeeding MP4 boxes.
+		while (idx < ctx->startbytes_avail - 7){
+			lastBoxLocation = idx;
+			// Check if we have a valid box
+			if (isValidMP4Box(&ctx->startbytes, idx, &nextBoxLocation, &boxScore))
+			{
+				idx = nextBoxLocation; // If the box is valid, a new box should be found on the next location... Not somewhere in between.
+				if (boxScore > 7)
+				{
+					break;
+				}
+				continue;
+			}
+			else
+			{
+				// Not a valid box, reset score. We need a couple of successive boxes to identify a MP4 file.
+				boxScore = 0;
+				idx++;
+			}
+		}
+		if (boxScore > 1)
+		{
+			// We had at least one box (or multiple) at the end to "claim" this is MP4. A single valid box at the end is doubtful...
+			ctx->stream_mode = CCX_SM_MP4;
+		}
+	}
     if (ctx->stream_mode==CCX_SM_ELEMENTARY_OR_NOT_FOUND) // Still not found
     {
         if (ctx->startbytes_avail > 188*8) // Otherwise, assume no TS
@@ -123,48 +154,6 @@ void detect_stream_type (struct lib_ccx_ctx *ctx)
             ctx->stream_mode=CCX_SM_ELEMENTARY_OR_NOT_FOUND;
         }
     }
-	if ((ctx->stream_mode==CCX_SM_ELEMENTARY_OR_NOT_FOUND || ccx_options.print_file_reports)
-			&& ctx->startbytes_avail>=4) // Still not found
-	{
-		// Try for MP4 by looking for box signatures - this should happen very
-		// early in the file according to specs
-		for (int i=0;i<ctx->startbytes_avail-3;i++)
-		{
-			// Look for the a box of type 'file'
-			if (
-			   (ctx->startbytes[i]=='f' && ctx->startbytes[i+1]=='t' &&
-               ctx->startbytes[i+2]=='y' && ctx->startbytes[i+3]=='p')
-			   ||
-			   (ctx->startbytes[i]=='m' && ctx->startbytes[i+1]=='o' &&
-               ctx->startbytes[i+2]=='o' && ctx->startbytes[i+3]=='v')
-			   ||
-			   (ctx->startbytes[i]=='m' && ctx->startbytes[i+1]=='d' &&
-               ctx->startbytes[i+2]=='a' && ctx->startbytes[i+3]=='t')
-			   ||
-			   (ctx->startbytes[i]=='f' && ctx->startbytes[i+1]=='r' &&
-               ctx->startbytes[i+2]=='e' && ctx->startbytes[i+3]=='e')
-			   ||
-			   (ctx->startbytes[i]=='s' && ctx->startbytes[i+1]=='k' &&
-               ctx->startbytes[i+2]=='i' && ctx->startbytes[i+3]=='p')
-			   ||
-			   (ctx->startbytes[i]=='u' && ctx->startbytes[i+1]=='d' &&
-               ctx->startbytes[i+2]=='t' && ctx->startbytes[i+3]=='a')
-			   ||
-			   (ctx->startbytes[i]=='m' && ctx->startbytes[i+1]=='e' &&
-               ctx->startbytes[i+2]=='t' && ctx->startbytes[i+3]=='a')
-			   ||
-			   (ctx->startbytes[i]=='v' && ctx->startbytes[i+1]=='o' &&
-               ctx->startbytes[i+2]=='i' && ctx->startbytes[i+3]=='d')
-               ||
-               (ctx->startbytes[i]=='w' && ctx->startbytes[i+1]=='i' &&
-                ctx->startbytes[i+2]=='d' && ctx->startbytes[i+3]=='e')
-			   )
-			{
-				ctx->stream_mode=CCX_SM_MP4;
-				break;
-			}
-		}
-	}
    // Don't use STARTBYTESLENGTH. It might be longer than the file length!
 	return_to_buffer (ctx->startbytes, ctx->startbytes_avail);
 }
@@ -404,4 +393,68 @@ int read_video_pes_header (struct lib_ccx_ctx *ctx, unsigned char *nextheader, i
                *headerlength, hskip+9, payloadlength);
 
     return payloadlength;
+}
+
+/*
+ * Structure for a MP4 box type. Contains the name of the box type and the score we want to assign when a given box type is found.
+ */
+typedef struct ccx_stream_mp4_box
+{
+	char boxType[5]; // Name of the box structure
+	int score; // The weight of how heavy a box structure should be counted in order to "recognize" an MP4 file.
+} ccx_stream_mp4_box;
+
+/* The box types below are taken from table 1 from ISO/IEC 14496-12_2012 (page 12 and further).
+* An asterisk (*) marks a mandatory box for a regular file.
+* Box types that are on the second level or deeper are omitted.
+*/
+ccx_stream_mp4_box ccx_stream_mp4_boxes[11] = {
+		{ "ftyp", 6 }, // File type and compatibility*
+		{ "pdin", 1 }, // Progressive download information
+		{ "moov", 5 }, // Container for all metadata*
+		{ "moof", 4 }, // Movie fragment
+		{ "mfra", 3 }, // Movie fragment random access
+		{ "mdat", 2 }, // Media data container
+		{ "free", 1 }, // Free space
+		{ "skip", 1 }, // Free space
+		{ "meta", 1 }, // Metadata
+		{ "wide", 1 }, // For boxes that are > 2^32 bytes (https://developer.apple.com/library/mac/documentation/QuickTime/QTFF/QTFFChap1/qtff1.html)
+		{ "void", 1 }  // Unknown where this is from/for, assume free space.
+};
+
+/*
+ * Checks if the buffer, beginning at the given position, contains a valid MP4 box (defined in the ccx_stream_mp4_boxes array). 
+ * If it does contain one, it will set the nextBoxLocation to position + current box size (this should be the place in the buffer 
+ * where the next box should be in case of an mp4) and increment the box score with the defined score for the found box.
+ *
+ * Returns 1 when a box is found, 0 when none is found.
+ */
+int isValidMP4Box(unsigned char *buffer, long position, long *nextBoxLocation, int *boxScore){
+	for (int idx = 0; idx < 11; idx++){
+		if (buffer[position + 4] == ccx_stream_mp4_boxes[idx].boxType[0] && buffer[position + 5] == ccx_stream_mp4_boxes[idx].boxType[1] &&
+			buffer[position + 6] == ccx_stream_mp4_boxes[idx].boxType[2] && buffer[position + 7] == ccx_stream_mp4_boxes[idx].boxType[3]){
+			mprint("Detected MP4 box with name: %s\n", ccx_stream_mp4_boxes[idx].boxType);
+			// Box name matches. Do crude validation of possible box size, and if valid, add points for "valid" box
+			long boxSize = buffer[position] << 24;
+			boxSize |= buffer[position + 1] << 16;
+			boxSize |= buffer[position + 2] << 8;
+			boxSize |= buffer[position + 3];
+			*boxScore += ccx_stream_mp4_boxes[idx].score;
+			if (boxSize == 0 || boxSize == 1)
+			{
+				// If 0, runs to end of file. If 1, next field contains int_64 containing size, which is definitely bigger than the cache. Both times we can skip further checks by setting
+				// nextBoxLocation to the max possible.
+				*nextBoxLocation = UINT32_MAX;
+
+			}
+			else
+			{
+				// Set nextBoxLocation to current position + boxSize, as that will be the location of the next box.
+				*nextBoxLocation = position + boxSize;
+			}
+			return 1;
+		}
+
+	}
+	return 0;
 }
