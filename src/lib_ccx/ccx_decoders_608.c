@@ -1076,9 +1076,10 @@ int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *cont
 }
 
 /* If wb is NULL, then only XDS will be processed */
-int process608(const unsigned char *data, int length, ccx_decoder_608_context *context, struct cc_subtitle *sub)
+int process608(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub)
 {
 	struct ccx_decoder_608_report  *report = NULL;
+	ccx_decoder_608_context *context = private_data;
 	static int textprinted = 0;
 	int i;
 	if (context)

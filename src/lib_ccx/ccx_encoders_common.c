@@ -146,7 +146,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		if (ccx_options.transcript_settings.showStartTime){
 			char buf1[80];
 			if (ccx_options.transcript_settings.relativeTimestamp){
-				millis_to_date(start_time + context->subs_delay, buf1);
+				millis_to_date(start_time + context->subs_delay, buf1, context->date_format, context->millis_separator);
 				fdprintf(context->out->fh, "%s|", buf1);
 			}
 			else {
@@ -162,7 +162,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		if (ccx_options.transcript_settings.showEndTime){
 			char buf2[80];
 			if (ccx_options.transcript_settings.relativeTimestamp){
-				millis_to_date(end_time, buf2);
+				millis_to_date(end_time, buf2, context->date_format, context->millis_separator);
 				fdprintf(context->out->fh, "%s|", buf2);
 			}
 			else {

@@ -35,6 +35,8 @@ struct encoder_ctx
 	LLONG last_displayed_subs_ms;
 	int startcredits_displayed;
 	enum ccx_encoding_type encoding;
+	enum ccx_output_date_format date_format;
+	char millis_separator;
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048

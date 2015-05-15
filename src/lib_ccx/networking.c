@@ -137,7 +137,7 @@ void net_send_header(const unsigned char *data, size_t len)
 	}
 }
 
-void net_send_cc(const unsigned char *data, size_t len)
+int net_send_cc(const unsigned char *data, int len, void *private_data, struct cc_subtitle *sub)
 {
 	assert(srv_sd > 0);
 

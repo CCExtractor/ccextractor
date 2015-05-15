@@ -132,7 +132,7 @@ ccx_decoder_608_context* ccx_decoder_608_init_library(ccx_decoder_608_settings s
  *
  * @param length length of data passed
  *
- * @param context context of cc608 where important information related to 608
+ * @param private_data context of cc608 where important information related to 608
  * 		  are stored.
  *
  * @param sub pointer to subtitle should be memset to 0 when passed first time
@@ -140,7 +140,7 @@ ccx_decoder_608_context* ccx_decoder_608_init_library(ccx_decoder_608_settings s
  *
  * @return number of bytes used from data, -1 when any error is encountered
  */
-int process608(const unsigned char *data, int length, ccx_decoder_608_context *context, struct cc_subtitle *sub);
+int process608(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 
 /**
  * Issue a EraseDisplayedMemory here so if there's any captions pending

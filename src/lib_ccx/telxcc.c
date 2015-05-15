@@ -364,12 +364,12 @@ void telxcc_dump_prev_page (struct lib_ccx_ctx *ctx)
 		return;
 
 	if (tlt_config.transcript_settings->showStartTime){
-		millis_to_date(prev_show_timestamp, c_temp1); // Note: Delay not added here because it was already accounted for
+		millis_to_date(prev_show_timestamp, c_temp1, tlt_config.date_format, tlt_config.millis_separator); // Note: Delay not added here because it was already accounted for
 		fdprintf(ctx->wbout1.fh, "%s|", c_temp1);
 	}
 	if (tlt_config.transcript_settings->showEndTime)
 	{
-		millis_to_date (prev_hide_timestamp, c_temp2);
+		millis_to_date (prev_hide_timestamp, c_temp2, tlt_config.date_format, tlt_config.millis_separator);
 		fdprintf(ctx->wbout1.fh,"%s|",c_temp2);
 	}
 	if (tlt_config.transcript_settings->showCC){

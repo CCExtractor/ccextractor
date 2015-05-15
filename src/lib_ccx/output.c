@@ -16,11 +16,12 @@ void init_write (struct ccx_s_write *wb,char *filename)
     wb->filename=filename;
 }
 
-void writeraw (const unsigned char *data, int length, ccx_decoder_608_context *context, struct cc_subtitle *sub)
+int writeraw (const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub)
 {
+	ccx_decoder_608_context *context = private_data;
 	// Don't do anything for empty data
 	if (data==NULL)
-		return;
+		return -1;
 
 	/* TODO dont write directly to file instead follow complete path and write raw data in sub and in above 
            layer choose whether u want to write it to file or not */

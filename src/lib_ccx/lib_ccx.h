@@ -136,6 +136,7 @@ struct ccx_s_teletext_config {
 	unsigned send_to_srv;
 	enum ccx_encoding_type encoding;
 	int nofontcolor;
+	char millis_separator;
 };
 #define MAX_PID 65536
 struct lib_ccx_ctx
@@ -352,8 +353,7 @@ void print_file_report(struct lib_ccx_ctx *ctx);
 
 // output.c
 void init_write(struct ccx_s_write *wb, char *filename);
-void writeraw (const unsigned char *data, int length, ccx_decoder_608_context *context, struct cc_subtitle *sub);
-void writedata(const unsigned char *data, int length, ccx_decoder_608_context *context, struct cc_subtitle *sub);
+int writeraw (const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile);
 void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data);
 
@@ -388,8 +388,8 @@ bool_t in_array(uint16_t *array, uint16_t length, uint16_t element) ;
 int hex2int (char high, char low);
 void timestamp_to_srttime(uint64_t timestamp, char *buffer);
 void timestamp_to_smptetttime(uint64_t timestamp, char *buffer);
-void millis_to_date (uint64_t timestamp, char *buffer) ;
 int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
+void millis_to_date (uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator);
 #ifndef _WIN32
 void m_signal(int sig, void (*func)(int));
 #endif
