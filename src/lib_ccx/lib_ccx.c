@@ -14,6 +14,8 @@ static struct ccx_decoders_common_settings_t *init_decoder_setting(
 	setting->subs_delay = opt->subs_delay;
 	setting->output_format = opt->write_format;
 	setting->fix_padding = opt->fix_padding;
+	setting->extract = opt->extract;
+	setting->fullbin = opt->fullbin;
 	memcpy(&setting->extraction_start,&opt->extraction_start,sizeof(struct ccx_boundary_time));
 	memcpy(&setting->extraction_end,&opt->extraction_end,sizeof(struct ccx_boundary_time));
 	setting->cc_to_stdout = opt->cc_to_stdout;

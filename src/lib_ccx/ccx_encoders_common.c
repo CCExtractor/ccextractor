@@ -6,7 +6,6 @@
 #include "ocr.h"
 #include "ccx_decoders_608.h"
 #include "ccx_decoders_xds.h"
-#include "ccx_common_option.h"
 
 // These are the default settings for plain transcripts. No times, no CC or caption mode, and no XDS.
 ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
@@ -419,7 +418,7 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 
 
 }
-int init_encoder(struct encoder_ctx *ctx,struct ccx_s_write *out)
+int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_options *opt)
 {
 	ctx->buffer = (unsigned char *) malloc (INITIAL_ENC_BUFFER_CAPACITY);
 	if (ctx->buffer==NULL)
@@ -429,6 +428,8 @@ int init_encoder(struct encoder_ctx *ctx,struct ccx_s_write *out)
 	ctx->out = out;
 	/** used in case of SUB_EOD_MARKER */
 	ctx->prev_start = -1;
+
+	ctx->encoding = opt->encoding;
 	write_subtitle_file_header(ctx,out);
 
 	return 0;

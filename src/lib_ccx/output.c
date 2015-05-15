@@ -16,31 +16,15 @@ void init_write (struct ccx_s_write *wb,char *filename)
     wb->filename=filename;
 }
 
-void writeraw (const unsigned char *data, int length, struct ccx_s_write *wb)
+void writeraw (const unsigned char *data, int length, ccx_decoder_608_context *context, struct cc_subtitle *sub)
 {
-    write (wb->fh,data,length);
-}
+	// Don't do anything for empty data
+	if (data==NULL)
+		return;
 
-void writedata(const unsigned char *data, int length, ccx_decoder_608_context *context, struct cc_subtitle *sub)
-{
-    // Don't do anything for empty data
-    if (data==NULL)
-        return;
-
-    if (ccx_options.write_format==CCX_OF_RAW || ccx_options.write_format==CCX_OF_DVDRAW)
-	{
-		if (context && context->out)
-			writeraw (data,length,context->out);
-	}
-    else if (ccx_options.write_format==CCX_OF_SMPTETT ||
-             ccx_options.write_format==CCX_OF_SAMI ||
-             ccx_options.write_format==CCX_OF_SRT ||
-             ccx_options.write_format==CCX_OF_TRANSCRIPT ||
-             ccx_options.write_format==CCX_OF_SPUPNG ||
-			 ccx_options.write_format==CCX_OF_NULL)
-        process608 (data,length,context, sub);
-    else
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "Should not be reached!");
+	/* TODO dont write directly to file instead follow complete path and write raw data in sub and in above 
+           layer choose whether u want to write it to file or not */
+	write (context->out->fh,data,length);
 }
 
 void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile)
@@ -116,16 +100,16 @@ void printdata (struct lib_cc_decode *ctx, const unsigned char *data1, int lengt
 		writeDVDraw (data1, length1, data2, length2, wbout1);
 	else /* Broadcast raw or any non-raw */
 	{
-		if (length1 && ccx_options.extract != 2)
+		if (length1 && ctx->extract != 2)
 		{
-			writedata(data1, length1, field_1, sub);
+			ctx->writedata(data1, length1, field_1, sub);
 		}
 		if (length2)
 		{
-			if (ccx_options.extract != 1)
-				writedata(data2, length2, field_2, sub);
+			if (ctx->extract != 1)
+				ctx->writedata(data2, length2, field_2, sub);
 			else // User doesn't want field 2 data, but we want XDS.
-				writedata (data2,length2,NULL, sub);
+				ctx->writedata (data2,length2,NULL, sub);
 		}
 	}
 }
@@ -160,7 +144,7 @@ void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data)
 
                 // The -fullbin option disables pruning of 608 padding blocks
                 if ( (cc_valid && cc_type <= 1 // Only skip NTSC padding packets
-                      && !ccx_options.fullbin // Unless we want to keep them
+                      && !ctx->fullbin // Unless we want to keep them
                       && *(cbbuffer+3*cb+1)==0x80
                       && *(cbbuffer+3*cb+2)==0x80)
                      || !(cc_valid || cc_type==3) ) // or unused packets
@@ -187,16 +171,8 @@ void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data)
 
         if (cbcount > 0)
         {
-			if (ccx_options.send_to_srv)
-			{
-				net_send_cc(cbheader, 10);
-				net_send_cc(cbbuffer, 3*cbcount);
-			}
-			else
-			{
-				writeraw(cbheader,10,wbout1);
-				writeraw(cbbuffer,3*cbcount, wbout1);
-			}
+		ctx->writedata(cbheader, 10, ctx->context_cc608_field_1, NULL);
+		ctx->writedata(cbbuffer, 3 * cbcount, ctx->context_cc608_field_1, NULL);
         }
         cbcount = 0;
         cbempty = 0;
@@ -238,17 +214,8 @@ void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data)
 
         memcpy(cbbuffer, "\x04\x80\x80", 3); // Field 1 padding
         memcpy(cbbuffer+3, "\x05\x80\x80", 3); // Field 2 padding
-
-		if (ccx_options.send_to_srv)
-		{
-			net_send_cc(cbheader, 10);
-			net_send_cc(cbbuffer, 3*cbcount);
-		}
-		else
-		{
-			writeraw(cbheader,10, wbout1);
-			writeraw(cbbuffer,3*cbcount, wbout1);
-		}
+		ctx->writedata(cbheader, 10, ctx->context_cc608_field_1, NULL);
+		ctx->writedata(cbbuffer, 3 * cbcount, ctx->context_cc608_field_1, NULL);
 
         cbcount = 0;
         cbempty = 0;

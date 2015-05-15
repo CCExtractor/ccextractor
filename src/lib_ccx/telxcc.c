@@ -935,15 +935,10 @@ void process_telx_packet(struct lib_ccx_ctx *ctx, data_unit_t data_unit_id, tele
 
 void tlt_write_rcwt(struct lib_ccx_ctx *ctx, uint8_t data_unit_id, uint8_t *packet, uint64_t timestamp)
 {
-	if (tlt_config.send_to_srv) {
-		net_send_cc((unsigned char *) &data_unit_id, sizeof(uint8_t));
-		net_send_cc((unsigned char *) &timestamp, sizeof(uint64_t));
-		net_send_cc((unsigned char *) packet, 44);
-	} else  {
-		writeraw((unsigned char *) &data_unit_id, sizeof(uint8_t), &ctx->wbout1);
-		writeraw((unsigned char *) &timestamp, sizeof(uint64_t), &ctx->wbout1);
-		writeraw((unsigned char *) packet, 44, &ctx->wbout1);
-	}
+	struct lib_cc_decode *dec_ctx = ctx->dec_ctx;
+	dec_ctx->writedata((unsigned char *) &data_unit_id, sizeof(uint8_t), dec_ctx->context_cc608_field_1, NULL);
+	dec_ctx->writedata((unsigned char *) &timestamp, sizeof(uint64_t), dec_ctx->context_cc608_field_1, NULL);
+	dec_ctx->writedata((unsigned char *) packet, 44, dec_ctx->context_cc608_field_1, NULL);
 }
 
 void tlt_read_rcwt(struct lib_ccx_ctx *ctx)

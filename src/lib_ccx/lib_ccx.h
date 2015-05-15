@@ -352,7 +352,7 @@ void print_file_report(struct lib_ccx_ctx *ctx);
 
 // output.c
 void init_write(struct ccx_s_write *wb, char *filename);
-void writeraw (const unsigned char *data, int length, struct ccx_s_write *wb);
+void writeraw (const unsigned char *data, int length, ccx_decoder_608_context *context, struct cc_subtitle *sub);
 void writedata(const unsigned char *data, int length, ccx_decoder_608_context *context, struct cc_subtitle *sub);
 void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile);
 void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data);

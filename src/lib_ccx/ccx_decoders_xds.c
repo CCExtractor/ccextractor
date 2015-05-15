@@ -684,7 +684,6 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 				if (cur_xds_packet_class==XDS_CLASS_CURRENT &&
 					strcmp (xds_program_name, current_xds_program_name)) // Change of program
 				{
-					//if (!ccx_options.gui_mode_reports)
 					ccx_common_logging.log_ftn ("\rXDS Notice: Program is now %s\n", xds_program_name);
 					strncpy (current_xds_program_name,xds_program_name, 33);
 					ccx_common_logging.gui_ftn(CCX_COMMON_LOGGING_GUI_XDS_PROGRAM_NAME, xds_program_name);

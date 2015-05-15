@@ -276,13 +276,13 @@ int main(int argc, char *argv[])
 				switch (ccx_options.write_format)
 				{
 				case CCX_OF_RAW:
-					init_encoder(enc_ctx, &ctx->wbout1);
-					writeraw(BROADCAST_HEADER, sizeof(BROADCAST_HEADER), &ctx->wbout1);
+					init_encoder(enc_ctx, &ctx->wbout1,&ccx_options);
+					dec_ctx->writedata(BROADCAST_HEADER, sizeof(BROADCAST_HEADER), dec_ctx->context_cc608_field_1, NULL);
 					break;
 				case CCX_OF_DVDRAW:
 					break;
 				case CCX_OF_RCWT:
-					if (init_encoder(enc_ctx, &ctx->wbout1))
+					if (init_encoder(enc_ctx, &ctx->wbout1, &ccx_options))
 						fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 					set_encoder_subs_delay(enc_ctx, ctx->subs_delay);
 					set_encoder_last_displayed_subs_ms(enc_ctx, ctx->last_displayed_subs_ms);
@@ -291,13 +291,13 @@ int main(int argc, char *argv[])
 				default:
 					if (!ccx_options.no_bom){
 						if (ccx_options.encoding == CCX_ENC_UTF_8){ // Write BOM
-							writeraw(UTF8_BOM, sizeof(UTF8_BOM), &ctx->wbout1);
+							dec_ctx->writedata(UTF8_BOM, sizeof(UTF8_BOM), dec_ctx->context_cc608_field_1, NULL);
 						}
 						if (ccx_options.encoding == CCX_ENC_UNICODE){ // Write BOM				
-							writeraw(LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM), &ctx->wbout1);
+							dec_ctx->writedata(LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM), dec_ctx->context_cc608_field_1, NULL);
 						}
 					}
-					if (init_encoder(enc_ctx, &ctx->wbout1)){
+					if (init_encoder(enc_ctx, &ctx->wbout1, &ccx_options)){
 						fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 					}
 					set_encoder_subs_delay(enc_ctx, ctx->subs_delay);
@@ -339,7 +339,7 @@ int main(int argc, char *argv[])
 						fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Failed\n");
 					}
 					if(ccx_options.write_format == CCX_OF_RAW)
-						writeraw (BROADCAST_HEADER,sizeof (BROADCAST_HEADER),&ctx->wbout2);
+						dec_ctx->writedata (BROADCAST_HEADER,sizeof (BROADCAST_HEADER), dec_ctx->context_cc608_field_2, NULL);
 				}
 
 				switch (ccx_options.write_format)
@@ -348,7 +348,7 @@ int main(int argc, char *argv[])
 					case CCX_OF_DVDRAW:
 						break;
 					case CCX_OF_RCWT:
-						if( init_encoder(enc_ctx+1,&ctx->wbout2) )
+						if( init_encoder(enc_ctx+1, &ctx->wbout2, &ccx_options) )
 							fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 						set_encoder_subs_delay(enc_ctx+1, ctx->subs_delay);
 						set_encoder_last_displayed_subs_ms(enc_ctx+1, ctx->last_displayed_subs_ms);
@@ -357,13 +357,13 @@ int main(int argc, char *argv[])
 					default:
 						if (!ccx_options.no_bom){
 							if (ccx_options.encoding == CCX_ENC_UTF_8){ // Write BOM
-								writeraw(UTF8_BOM, sizeof(UTF8_BOM), &ctx->wbout2);
+								dec_ctx->writedata(UTF8_BOM, sizeof(UTF8_BOM), dec_ctx->context_cc608_field_2, NULL);
 							}
 							if (ccx_options.encoding == CCX_ENC_UNICODE){ // Write BOM				
-								writeraw(LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM), &ctx->wbout2);
+								dec_ctx->writedata(LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM), dec_ctx->context_cc608_field_2, NULL);
 							}
 						}
-						if (init_encoder(enc_ctx + 1, &ctx->wbout2)){
+						if (init_encoder(enc_ctx + 1, &ctx->wbout2, &ccx_options)){
 							fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 						}
 						set_encoder_subs_delay(enc_ctx+1, ctx->subs_delay);

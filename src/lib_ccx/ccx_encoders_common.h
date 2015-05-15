@@ -5,6 +5,7 @@
 #include "ccx_decoders_structs.h"
 #include "ccx_encoders_structs.h"
 #include "ccx_encoders_helpers.h"
+#include "ccx_common_option.h"
 
 #define REQUEST_BUFFER_CAPACITY(ctx,length) if (length>ctx->capacity) \
 {ctx->capacity = length * 2; ctx->buffer = (unsigned char*)realloc(ctx->buffer, ctx->capacity); \
@@ -33,6 +34,7 @@ struct encoder_ctx
 	LLONG subs_delay;
 	LLONG last_displayed_subs_ms;
 	int startcredits_displayed;
+	enum ccx_encoding_type encoding;
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048
@@ -44,10 +46,11 @@ struct encoder_ctx
  *
  * @param ctx preallocated encoder ctx
  * @param out output context
+ * @param opt Option to initilaize encoder cfg params
  *
  * @return 0 on SUCESS, -1 on failure
  */
-int init_encoder(struct encoder_ctx *ctx,struct ccx_s_write *out);
+int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_options *opt);
 
 /**
  * try to add end credits in subtitle file and then write subtitle

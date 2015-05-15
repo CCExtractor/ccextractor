@@ -38,7 +38,7 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
     mstotime (ms_end-1,&h2,&m2,&s2,&ms2);
 
     sprintf ((char *) str,"<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\r\n",h1,m1,s1,ms1, h2,m2,s2,ms2);
-    if (ccx_options.encoding!=CCX_ENC_UNICODE)
+    if (context->encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
     }
@@ -72,7 +72,7 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
     while (begin<unescaped+len)
     {
         unsigned int u = encode_line (el, begin);
-        if (ccx_options.encoding!=CCX_ENC_UNICODE)
+        if (context->encoding!=CCX_ENC_UNICODE)
         {
             dbg_print(CCX_DMT_DECODER_608, "\r");
             dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
@@ -85,14 +85,14 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
     }
 
     sprintf ((char *) str,"</p>\n");
-    if (ccx_options.encoding!=CCX_ENC_UNICODE)
+    if (context->encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
     }
 	used = encode_line(context->buffer,(unsigned char *) str);
 	write(context->out->fh, context->buffer, used);
     sprintf ((char *) str,"<p begin=\"%02u:%02u:%02u.%03u\">\n\n",h2,m2,s2,ms2);
-    if (ccx_options.encoding!=CCX_ENC_UNICODE)
+    if (context->encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
     }
@@ -184,7 +184,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 
     sprintf ((char *) str,"<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\n",h1,m1,s1,ms1, h2,m2,s2,ms2);
 
-    if (ccx_options.encoding!=CCX_ENC_UNICODE)
+    if (context->encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
     }
@@ -195,7 +195,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
         if (data->row_used[i])
         {
             int length = get_decoder_line_encoded (subline, i, data);
-            if (ccx_options.encoding!=CCX_ENC_UNICODE)
+            if (context->encoding!=CCX_ENC_UNICODE)
             {
                 dbg_print(CCX_DMT_DECODER_608, "\r");
                 dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
@@ -207,14 +207,14 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
         }
     }
     sprintf ((char *) str,"</p>\n");
-    if (ccx_options.encoding!=CCX_ENC_UNICODE)
+    if (context->encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
     }
 	used = encode_line(context->buffer,(unsigned char *) str);
 	write (context->out->fh, context->buffer, used);
 
-    if (ccx_options.encoding!=CCX_ENC_UNICODE)
+    if (context->encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
     }
