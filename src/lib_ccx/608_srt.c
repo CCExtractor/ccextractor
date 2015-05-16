@@ -53,7 +53,7 @@ void write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_st
 	while (begin<unescaped+len)
 	{
 		unsigned int u = encode_line (el, begin);
-		if (ccx_options.encoding!=CCX_ENC_UNICODE)
+		if (context->encoding != CCX_ENC_UNICODE)
 		{
 			dbg_print(CCX_DMT_DECODER_608, "\r");
 			dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
@@ -180,12 +180,12 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 	{
 		if (data->row_used[i])
 		{
-			if (ccx_options.sentence_cap)
+			if (context->sentence_cap)
 			{
 				capitalize (i,data);
 				correct_case(i,data);
 			}
-			if (ccx_options.autodash && ccx_options.trim_subs)
+			if (context->autodash && context->trim_subs)
 			{
 				int first=0, last=31, center1=-1, center2=-1;
 				unsigned char *line = data->characters[i];
@@ -243,7 +243,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 
 			}
 			int length = get_decoder_line_encoded (subline, i, data);
-			if (ccx_options.encoding!=CCX_ENC_UNICODE)
+			if (context->encoding!=CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r");
 				dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);

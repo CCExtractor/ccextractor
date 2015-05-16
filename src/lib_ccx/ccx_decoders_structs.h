@@ -85,6 +85,11 @@ struct ccx_decoders_common_settings_t
 	int cc_to_stdout;
 	int extract; // Extract 1st, 2nd or both fields
 	int fullbin; // Disable pruning of padding cc blocks
+	struct ccx_decoder_608_settings *settings_608; //  Contains the settings for the 608 decoder.
+	int cc_channel; // Channel we want to dump in srt mode
+	int trim_subs; // Remove spaces at sides?
+	enum ccx_encoding_type encoding;
+	unsigned send_to_srv;
 };
 struct lib_cc_decode
 {

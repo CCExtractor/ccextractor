@@ -280,22 +280,22 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 	// Prepare 608 context
 	ctx->context_cc608_field_1 = ccx_decoder_608_init_library(
-		ccx_options.settings_608,
-		ccx_options.cc_channel,
+		setting->settings_608,
+		setting->cc_channel,
 		1,
-		ccx_options.trim_subs,
-		ccx_options.encoding,
+		setting->trim_subs,
+		setting->encoding,
 		&ctx->processed_enough,
 		setting->cc_to_stdout,
 		setting->subs_delay,
 		setting->output_format
 		);
 	ctx->context_cc608_field_2 = ccx_decoder_608_init_library(
-		ccx_options.settings_608,
-		ccx_options.cc_channel,
+		setting->settings_608,
+		setting->cc_channel,
 		2,
-		ccx_options.trim_subs,
-		ccx_options.encoding,
+		setting->trim_subs,
+		setting->encoding,
 		&ctx->processed_enough,
 		setting->cc_to_stdout,
 		setting->subs_delay,
@@ -311,7 +311,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	memcpy(&ctx->extraction_start, &setting->extraction_start,sizeof(struct ccx_boundary_time));
 	memcpy(&ctx->extraction_end, &setting->extraction_end,sizeof(struct ccx_boundary_time));
 
-	if (ccx_options.send_to_srv)
+	if (setting->send_to_srv)
 		ctx->writedata = net_send_cc;
 	else if (setting->output_format==CCX_OF_RAW || setting->output_format==CCX_OF_DVDRAW)
 		ctx->writedata = writeraw;

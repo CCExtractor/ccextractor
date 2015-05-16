@@ -5,6 +5,7 @@
 #include "ccx_common_constants.h"
 #include "ccx_common_structs.h"
 #include "ccx_decoders_structs.h"
+#include "ccx_common_option.h"
 
 extern unsigned char encoded_crlf[16]; // We keep it encoded here so we don't have to do it many times
 extern unsigned int encoded_crlf_length;

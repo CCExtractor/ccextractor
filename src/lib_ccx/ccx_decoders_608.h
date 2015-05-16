@@ -1,5 +1,5 @@
-#ifndef __608_H__
-
+#ifndef CCX_DECODER_608_H
+#define CCX_DECODER_608_H 
 #include "ccx_common_platform.h"
 #include "ccx_common_structs.h"
 #include "ccx_decoders_structs.h"
@@ -28,7 +28,7 @@ typedef struct ccx_decoder_608_settings
 
 typedef struct ccx_decoder_608_context
 {
-	ccx_decoder_608_settings settings;
+	ccx_decoder_608_settings *settings;
 	eia608_screen buffer1;
 	eia608_screen buffer2;
 	int cursor_row, cursor_column;
@@ -121,7 +121,7 @@ void ccx_decoder_608_dinit_library(void **ctx);
 /*
  *
  */
-ccx_decoder_608_context* ccx_decoder_608_init_library(ccx_decoder_608_settings settings, int channel,
+ccx_decoder_608_context* ccx_decoder_608_init_library(struct ccx_decoder_608_settings *settings, int channel,
 		int field, int trim_subs,
 		enum ccx_encoding_type encoding, int *halt,
 		int cc_to_stdout, LLONG subs_delay,
@@ -150,5 +150,4 @@ void handle_end_of_data(ccx_decoder_608_context *context, struct cc_subtitle *su
 
 int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub);
 
-#define __608_H__
 #endif

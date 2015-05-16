@@ -67,7 +67,7 @@ void millis_to_date (uint64_t timestamp, char *buffer, enum ccx_output_date_form
 			secs=(time_t) (timestamp/1000);
 			millis=(time_t) (timestamp%1000);
 			sprintf (buffer, "%lu%c%03u", (unsigned long) secs,
-				ccx_options.millis_separator,(unsigned) millis);
+				millis_separator,(unsigned) millis);
 			break;
 		case ODF_DATE:
 			secs=(time_t) (timestamp/1000);

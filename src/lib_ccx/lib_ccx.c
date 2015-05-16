@@ -19,6 +19,10 @@ static struct ccx_decoders_common_settings_t *init_decoder_setting(
 	memcpy(&setting->extraction_start,&opt->extraction_start,sizeof(struct ccx_boundary_time));
 	memcpy(&setting->extraction_end,&opt->extraction_end,sizeof(struct ccx_boundary_time));
 	setting->cc_to_stdout = opt->cc_to_stdout;
+	setting->settings_608 = &opt->settings_608;
+	setting->cc_channel = opt->cc_channel;
+	setting->trim_subs = opt->trim_subs;
+	setting->send_to_srv = opt->send_to_srv;
 	return setting;
 }
 static void dinit_decoder_setting (struct ccx_decoders_common_settings_t **setting)
@@ -106,6 +110,9 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 
 	ctx->cc_to_stdout = opt->cc_to_stdout;
 
+	ctx->hauppauge_mode = opt->hauppauge_mode;
+	ctx->live_stream = opt->live_stream;
+	ctx->binary_concat = opt->binary_concat;
 	build_parity_table();
 	return ctx;
 }

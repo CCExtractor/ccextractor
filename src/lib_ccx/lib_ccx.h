@@ -240,6 +240,12 @@ struct lib_ccx_ctx
 	long capbufsize;
 	unsigned char *capbuf;
 	long capbuflen; // Bytes read in capbuf
+
+	unsigned hauppauge_mode; // If 1, use PID=1003, process specially and so on
+	int live_stream; /* -1 -> Not a complete file but a live stream, without timeout
+                       0 -> A regular file
+                      >0 -> Live stream with a timeout of this value in seconds */
+	int binary_concat; // Disabled by -ve or --videoedited
 };
 #ifdef DEBUG_TELEXCC
 int main_telxcc (int argc, char *argv[]);

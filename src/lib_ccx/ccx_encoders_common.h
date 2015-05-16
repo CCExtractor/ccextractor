@@ -37,6 +37,9 @@ struct encoder_ctx
 	enum ccx_encoding_type encoding;
 	enum ccx_output_date_format date_format;
 	char millis_separator;
+	int sentence_cap ; // FIX CASE? = Fix case?
+	int trim_subs; // "    Remove spaces at sides?    "
+	int autodash; // Add dashes (-) before each speaker automatically?
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048

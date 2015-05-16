@@ -430,6 +430,11 @@ int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_
 	ctx->prev_start = -1;
 
 	ctx->encoding = opt->encoding;
+	ctx->date_format = opt->date_format;
+	ctx->millis_separator = opt->millis_separator;
+	ctx->sentence_cap = opt->sentence_cap;
+	ctx->autodash = opt->autodash;
+	ctx->trim_subs = opt->trim_subs;
 	write_subtitle_file_header(ctx,out);
 
 	return 0;
