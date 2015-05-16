@@ -40,6 +40,17 @@ struct encoder_ctx
 	int sentence_cap ; // FIX CASE? = Fix case?
 	int trim_subs; // "    Remove spaces at sides?    "
 	int autodash; // Add dashes (-) before each speaker automatically?
+	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
+	/* Credit stuff */
+	char *start_credits_text;
+	char *end_credits_text;
+	struct ccx_encoders_transcript_format *transcript_settings; // Keeps the settings for generating transcript output files.
+	struct ccx_boundary_time startcreditsnotbefore, startcreditsnotafter; // Where to insert start credits, if possible
+	struct ccx_boundary_time startcreditsforatleast, startcreditsforatmost; // How long to display them?
+	struct ccx_boundary_time endcreditsforatleast, endcreditsforatmost;
+	unsigned int teletext_mode; // 0=Disabled, 1 = Not found, 2=Found
+	unsigned int send_to_srv;
+	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048
