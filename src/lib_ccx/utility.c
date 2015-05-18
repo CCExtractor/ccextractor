@@ -2,9 +2,6 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 
-static char *text;
-static int text_size = 0;
-
 int temp_debug = 0; // This is a convenience variable used to enable/disable debug on variable conditions. Find references to understand.
 
 void timestamp_to_srttime(uint64_t timestamp, char *buffer) {
@@ -93,18 +90,6 @@ bool_t in_array(uint16_t *array, uint16_t length, uint16_t element) {
 			break;
 		}
 	return r;
-}
-
-/* Alloc text space */
-void resize_text()
-{
-	text_size = (!text_size)?1024:text_size*2;
-	if (text)
-		free (text);
-	text=(char *) malloc (text_size);
-	if (!text)
-		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for text buffer.");
-	memset (text,0,text_size);
 }
 
 /* Write formatted message to stderr and then exit. */
