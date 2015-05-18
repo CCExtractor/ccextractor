@@ -4,7 +4,8 @@
 
 int temp_debug = 0; // This is a convenience variable used to enable/disable debug on variable conditions. Find references to understand.
 
-void timestamp_to_srttime(uint64_t timestamp, char *buffer) {
+void timestamp_to_srttime(uint64_t timestamp, char *buffer)
+{
 	uint64_t p = timestamp;
 	uint8_t h = (uint8_t) (p / 3600000);
 	uint8_t m = (uint8_t) (p / 60000 - 60 * h);
@@ -13,7 +14,8 @@ void timestamp_to_srttime(uint64_t timestamp, char *buffer) {
 	sprintf(buffer, "%02"PRIu8":%02"PRIu8":%02"PRIu8",%03"PRIu16, h, m, s, u);
 }
 
-void timestamp_to_smptetttime(uint64_t timestamp, char *buffer) {
+void timestamp_to_smptetttime(uint64_t timestamp, char *buffer)
+{
 	uint64_t p = timestamp;
 	uint8_t h = (uint8_t) (p / 3600000);
 	uint8_t m = (uint8_t) (p / 60000 - 60 * h);
@@ -40,7 +42,7 @@ int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, un
 			lastdiag = olddiag;
 		}
 	}
-	v=column[s1len];
+	v = column[s1len];
 	free (column);
 	return v;
 }
@@ -54,24 +56,24 @@ void millis_to_date (uint64_t timestamp, char *buffer, enum ccx_output_date_form
 	switch (date_format)
 	{
 		case ODF_NONE:
-			buffer[0]=0;
+			buffer[0] = 0;
 			break;
 		case ODF_HHMMSS:
 			timestamp_to_srttime (timestamp, buffer);
-			buffer[8]=0;
+			buffer[8] = 0;
 			break;
 		case ODF_HHMMSSMS:
 			timestamp_to_srttime (timestamp, buffer);
 			break;
 		case ODF_SECONDS:
-			secs=(time_t) (timestamp/1000);
-			millis=(time_t) (timestamp%1000);
+			secs = (time_t) (timestamp/1000);
+			millis = (time_t) (timestamp%1000);
 			sprintf (buffer, "%lu%c%03u", (unsigned long) secs,
 					millis_separator, (unsigned) millis);
 			break;
 		case ODF_DATE:
-			secs=(time_t) (timestamp/1000);
-			millis=(unsigned int) (timestamp%1000);
+			secs = (time_t) (timestamp/1000);
+			millis = (unsigned int) (timestamp%1000);
 			time_struct = gmtime(&secs);
 			strftime(c_temp, sizeof(c_temp), "%Y%m%d%H%M%S", time_struct);
 			sprintf (buffer, "%s%c%03u", c_temp, millis_separator, millis);
@@ -82,10 +84,12 @@ void millis_to_date (uint64_t timestamp, char *buffer, enum ccx_output_date_form
 	}
 }
 
-bool_t in_array(uint16_t *array, uint16_t length, uint16_t element) {
+bool_t in_array(uint16_t *array, uint16_t length, uint16_t element)
+{
 	bool_t r = NO;
 	for (uint16_t i = 0; i < length; i++)
-		if (array[i] == element) {
+		if (array[i] == element)
+		{
 			r = YES;
 			break;
 		}
