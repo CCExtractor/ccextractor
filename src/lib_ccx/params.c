@@ -1683,6 +1683,7 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	tlt_config.send_to_srv = opt->send_to_srv;
 	tlt_config.encoding = opt->encoding;
 	tlt_config.nofontcolor = opt->nofontcolor;
+	tlt_config.millis_separator = opt->millis_separator;
 }
 
 int detect_input_file_overwrite(struct lib_ccx_ctx *ctx, const char *output_filename)
