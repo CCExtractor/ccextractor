@@ -11,7 +11,7 @@ void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_s
 	int used;
 	sprintf ((char *) str,
 	"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",(unsigned long long)ms_start);
-	if (ccx_options.encoding!=CCX_ENC_UNICODE)
+	if (context->encoding!=CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
@@ -46,7 +46,7 @@ void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_s
 	while (begin<unescaped+len)
 	{
 		unsigned int u = encode_line (el, begin);
-		if (ccx_options.encoding!=CCX_ENC_UNICODE)
+		if (context->encoding!=CCX_ENC_UNICODE)
 		{
 			dbg_print(CCX_DMT_DECODER_608, "\r");
 			dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
@@ -59,7 +59,7 @@ void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_s
 	}
 
     sprintf ((char *) str,"</P></SYNC>\r\n");
-    if (ccx_options.encoding!=CCX_ENC_UNICODE)
+    if (context->encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
     }
@@ -68,7 +68,7 @@ void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_s
     sprintf ((char *) str,
 		"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n",
 		(unsigned long long)ms_end);
-    if (ccx_options.encoding!=CCX_ENC_UNICODE)
+    if (context->encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
     }
@@ -161,7 +161,7 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
     sprintf ((char *) str,
 		"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",
 		(unsigned long long)startms);
-    if (ccx_options.encoding!=CCX_ENC_UNICODE)
+    if (context->encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
     }
@@ -172,7 +172,7 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
         if (data->row_used[i])
         {
             int length = get_decoder_line_encoded (subline, i, data);
-            if (ccx_options.encoding!=CCX_ENC_UNICODE)
+            if (context->encoding!=CCX_ENC_UNICODE)
             {
                 dbg_print(CCX_DMT_DECODER_608, "\r");
                 dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
@@ -185,7 +185,7 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
         }
     }
     sprintf ((char *) str,"</P></SYNC>\r\n");
-    if (ccx_options.encoding!=CCX_ENC_UNICODE)
+    if (context->encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
     }
@@ -194,7 +194,7 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
     sprintf ((char *) str,
 		"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n",
 		(unsigned long long)endms);
-    if (ccx_options.encoding!=CCX_ENC_UNICODE)
+    if (context->encoding!=CCX_ENC_UNICODE)
     {
         dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
     }

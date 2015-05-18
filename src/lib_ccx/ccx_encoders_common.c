@@ -6,7 +6,6 @@
 #include "ocr.h"
 #include "ccx_decoders_608.h"
 #include "ccx_decoders_xds.h"
-#include "ccx_common_option.h"
 
 // These are the default settings for plain transcripts. No times, no CC or caption mode, and no XDS.
 ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
@@ -49,11 +48,11 @@ static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
 void write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 {
 	int used;
-	switch (ccx_options.write_format)
+	switch (ctx->write_format)
 	{
 		case CCX_OF_SAMI:
 			sprintf ((char *) str,"</BODY></SAMI>\n");
-			if (ccx_options.encoding!=CCX_ENC_UNICODE)
+			if (ctx->encoding!=CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
@@ -62,7 +61,7 @@ void write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			break;
 		case CCX_OF_SMPTETT:
 			sprintf ((char *) str,"    </div>\n  </body>\n</tt>\n");
-			if (ccx_options.encoding!=CCX_ENC_UNICODE)
+			if (ctx->encoding!=CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
@@ -80,7 +79,7 @@ void write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 void write_subtitle_file_header(struct encoder_ctx *ctx,struct ccx_s_write *out)
 {
 	int used;
-	switch (ccx_options.write_format)
+	switch (ctx->write_format)
 	{
 		case CCX_OF_SRT: // Subrip subtitles have no header
 			break;
@@ -97,10 +96,10 @@ void write_subtitle_file_header(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			write(out->fh, ctx->buffer, used);
 			break;
 		case CCX_OF_RCWT: // Write header
-			if (ccx_options.teletext_mode == CCX_TXT_IN_USE)
+			if (ctx->teletext_mode == CCX_TXT_IN_USE)
 				rcwt_header[7] = 2; // sets file format version
 
-			if (ccx_options.send_to_srv)
+			if (ctx->send_to_srv)
 				net_send_header(rcwt_header, sizeof(rcwt_header));
 			else
 				write(out->fh, rcwt_header, sizeof(rcwt_header));
@@ -122,13 +121,13 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 	unsigned h2,m2,s2,ms2;
 	LLONG start_time = data->start_time;
 	LLONG end_time = data->end_time;
-	if (ccx_options.sentence_cap)
+	if (context->sentence_cap)
 	{
 		capitalize (line_number,data);
 		correct_case(line_number,data);
 	}
-	int length = get_decoder_line_basic (subline, line_number, data,ccx_options.trim_subs,ccx_options.encoding);
-	if (ccx_options.encoding!=CCX_ENC_UNICODE)
+	int length = get_decoder_line_basic (subline, line_number, data, context->trim_subs, context->encoding);
+	if (context->encoding!=CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r");
 		dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
@@ -144,10 +143,10 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 			return;
 		}
 
-		if (ccx_options.transcript_settings.showStartTime){
+		if (context->transcript_settings->showStartTime){
 			char buf1[80];
-			if (ccx_options.transcript_settings.relativeTimestamp){
-				millis_to_date(start_time + context->subs_delay, buf1);
+			if (context->transcript_settings->relativeTimestamp){
+				millis_to_date(start_time + context->subs_delay, buf1, context->date_format, context->millis_separator);
 				fdprintf(context->out->fh, "%s|", buf1);
 			}
 			else {
@@ -156,14 +155,14 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 				int start_time_dec = (start_time + context->subs_delay) % 1000;
 				struct tm *start_time_struct = gmtime(&start_time_int);
 				strftime(buf1, sizeof(buf1), "%Y%m%d%H%M%S", start_time_struct);
-				fdprintf(context->out->fh, "%s%c%03d|", buf1,ccx_options.millis_separator,start_time_dec);
+				fdprintf(context->out->fh, "%s%c%03d|", buf1,context->millis_separator,start_time_dec);
 			}
 		}
 
-		if (ccx_options.transcript_settings.showEndTime){
+		if (context->transcript_settings->showEndTime){
 			char buf2[80];
-			if (ccx_options.transcript_settings.relativeTimestamp){
-				millis_to_date(end_time, buf2);
+			if (context->transcript_settings->relativeTimestamp){
+				millis_to_date(end_time, buf2, context->date_format, context->millis_separator);
 				fdprintf(context->out->fh, "%s|", buf2);
 			}
 			else {
@@ -172,14 +171,14 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 				int end_time_dec = (end_time + context->subs_delay) % 1000;
 				struct tm *end_time_struct = gmtime(&end_time_int);
 				strftime(buf2, sizeof(buf2), "%Y%m%d%H%M%S", end_time_struct);
-				fdprintf(context->out->fh, "%s%c%03d|", buf2,ccx_options.millis_separator,end_time_dec);
+				fdprintf(context->out->fh, "%s%c%03d|", buf2,context->millis_separator,end_time_dec);
 			}
 		}
 
-		if (ccx_options.transcript_settings.showCC){
+		if (context->transcript_settings->showCC){
 			fdprintf(context->out->fh, "CC%d|", data->my_field == 1 ? data->channel : data->channel + 2); // Data from field 2 is CC3 or 4
 		}
-		if (ccx_options.transcript_settings.showMode){
+		if (context->transcript_settings->showMode){
 			const char *mode = "???";
 			switch (data->mode)
 			{
@@ -269,10 +268,10 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 			while (token)
 			{
 
-				if (ccx_options.transcript_settings.showStartTime)
+				if (context->transcript_settings->showStartTime)
 				{
 					char buf1[80];
-					if (ccx_options.transcript_settings.relativeTimestamp)
+					if (context->transcript_settings->relativeTimestamp)
 					{
 						millis_to_date(start_time + context->subs_delay, buf1);
 						fdprintf(context->out->fh, "%s|", buf1);
@@ -284,14 +283,14 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 						int start_time_dec = (start_time + context->subs_delay) % 1000;
 						struct tm *start_time_struct = gmtime(&start_time_int);
 						strftime(buf1, sizeof(buf1), "%Y%m%d%H%M%S", start_time_struct);
-						fdprintf(context->out->fh, "%s%c%03d|", buf1,ccx_options.millis_separator,start_time_dec);
+						fdprintf(context->out->fh, "%s%c%03d|", buf1,context->millis_separator,start_time_dec);
 					}
 				}
 
-				if (ccx_options.transcript_settings.showEndTime)
+				if (context->transcript_settings->showEndTime)
 				{
 					char buf2[80];
-					if (ccx_options.transcript_settings.relativeTimestamp)
+					if (context->transcript_settings->relativeTimestamp)
 					{
 						millis_to_date(end_time, buf2);
 						fdprintf(context->out->fh, "%s|", buf2);
@@ -303,14 +302,14 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 						int end_time_dec = end_time % 1000;
 						struct tm *end_time_struct = gmtime(&end_time_int);
 						strftime(buf2, sizeof(buf2), "%Y%m%d%H%M%S", end_time_struct);
-						fdprintf(context->out->fh, "%s%c%03d|", buf2,ccx_options.millis_separator,end_time_dec);
+						fdprintf(context->out->fh, "%s%c%03d|", buf2,context->millis_separator,end_time_dec);
 					}
 				}
-				if (ccx_options.transcript_settings.showCC)
+				if (context->transcript_settings->showCC)
 				{
 					fdprintf(context->out->fh,"%s|",language[sub->lang_index]);
 				}
-				if (ccx_options.transcript_settings.showMode)
+				if (context->transcript_settings->showMode)
 				{
 					fdprintf(context->out->fh,"DVB|");
 				}
@@ -334,24 +333,24 @@ void try_to_add_end_credits(struct encoder_ctx *context, struct ccx_s_write *out
 	if (out->fh == -1)
 		return;
 	window=get_fts()-context->last_displayed_subs_ms-1;
-	if (window<ccx_options.endcreditsforatleast.time_in_ms) // Won't happen, window is too short
+	if (window < context->endcreditsforatleast.time_in_ms) // Won't happen, window is too short
 		return;
-	length=ccx_options.endcreditsforatmost.time_in_ms > window ?
-		window : ccx_options.endcreditsforatmost.time_in_ms;
+	length=context->endcreditsforatmost.time_in_ms > window ?
+		window : context->endcreditsforatmost.time_in_ms;
 
 	st=get_fts()-length-1;
 	end=get_fts();
 
-	switch (ccx_options.write_format)
+	switch (context->write_format)
 	{
 		case CCX_OF_SRT:
-			write_stringz_as_srt(ccx_options.end_credits_text, context, st, end);
+			write_stringz_as_srt(context->end_credits_text, context, st, end);
 			break;
 		case CCX_OF_SAMI:
-			write_stringz_as_sami(ccx_options.end_credits_text, context, st, end);
+			write_stringz_as_sami(context->end_credits_text, context, st, end);
 			break;
 		case CCX_OF_SMPTETT:
-			write_stringz_as_smptett(ccx_options.end_credits_text, context, st, end);
+			write_stringz_as_smptett(context->end_credits_text, context, st, end);
 			break ;
 		default:
 			// Do nothing for the rest
@@ -365,31 +364,31 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 	LLONG l = start_ms + context->subs_delay;
     // We have a windows from last_displayed_subs_ms to l - we need to see if it fits
 
-    if (l<ccx_options.startcreditsnotbefore.time_in_ms) // Too early
+    if (l < context->startcreditsnotbefore.time_in_ms) // Too early
         return;
 
-    if (context->last_displayed_subs_ms+1 > ccx_options.startcreditsnotafter.time_in_ms) // Too late
+    if (context->last_displayed_subs_ms+1 > context->startcreditsnotafter.time_in_ms) // Too late
         return;
 
-    st = ccx_options.startcreditsnotbefore.time_in_ms>(context->last_displayed_subs_ms+1) ?
-        ccx_options.startcreditsnotbefore.time_in_ms : (context->last_displayed_subs_ms+1); // When would credits actually start
+    st = context->startcreditsnotbefore.time_in_ms>(context->last_displayed_subs_ms+1) ?
+        context->startcreditsnotbefore.time_in_ms : (context->last_displayed_subs_ms+1); // When would credits actually start
 
-    end = ccx_options.startcreditsnotafter.time_in_ms<(l-1) ?
-        ccx_options.startcreditsnotafter.time_in_ms : (l-1);
+    end = context->startcreditsnotafter.time_in_ms<(l-1) ?
+        context->startcreditsnotafter.time_in_ms : (l-1);
 
     window = end-st; // Allowable time in MS
 
-    if (ccx_options.startcreditsforatleast.time_in_ms>window) // Window is too short
+    if (context->startcreditsforatleast.time_in_ms>window) // Window is too short
         return;
 
-    length=ccx_options.startcreditsforatmost.time_in_ms > window ?
-        window : ccx_options.startcreditsforatmost.time_in_ms;
+    length=context->startcreditsforatmost.time_in_ms > window ?
+        window : context->startcreditsforatmost.time_in_ms;
 
     dbg_print(CCX_DMT_VERBOSE, "Last subs: %lld   Current position: %lld\n",
         context->last_displayed_subs_ms, l);
     dbg_print(CCX_DMT_VERBOSE, "Not before: %lld   Not after: %lld\n",
-        ccx_options.startcreditsnotbefore.time_in_ms,
-		ccx_options.startcreditsnotafter.time_in_ms);
+        context->startcreditsnotbefore.time_in_ms,
+		context->startcreditsnotafter.time_in_ms);
     dbg_print(CCX_DMT_VERBOSE, "Start of window: %lld   End of window: %lld\n",st,end);
 
     if (window>length+2)
@@ -399,16 +398,16 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
         st+=(pad/2);
     }
     end=st+length;
-    switch (ccx_options.write_format)
+    switch (context->write_format)
     {
         case CCX_OF_SRT:
-            write_stringz_as_srt(ccx_options.start_credits_text,context,st,end);
+            write_stringz_as_srt(context->start_credits_text,context,st,end);
             break;
         case CCX_OF_SAMI:
-			write_stringz_as_sami(ccx_options.start_credits_text, context, st, end);
+			write_stringz_as_sami(context->start_credits_text, context, st, end);
             break;
         case CCX_OF_SMPTETT:
-			write_stringz_as_smptett(ccx_options.start_credits_text, context, st, end);
+			write_stringz_as_smptett(context->start_credits_text, context, st, end);
             break;
         default:
             // Do nothing for the rest
@@ -419,7 +418,7 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 
 
 }
-int init_encoder(struct encoder_ctx *ctx,struct ccx_s_write *out)
+int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_options *opt)
 {
 	ctx->buffer = (unsigned char *) malloc (INITIAL_ENC_BUFFER_CAPACITY);
 	if (ctx->buffer==NULL)
@@ -429,6 +428,26 @@ int init_encoder(struct encoder_ctx *ctx,struct ccx_s_write *out)
 	ctx->out = out;
 	/** used in case of SUB_EOD_MARKER */
 	ctx->prev_start = -1;
+
+	ctx->encoding = opt->encoding;
+	ctx->date_format = opt->date_format;
+	ctx->millis_separator = opt->millis_separator;
+	ctx->sentence_cap = opt->sentence_cap;
+	ctx->autodash = opt->autodash;
+	ctx->trim_subs = opt->trim_subs;
+	ctx->write_format = opt->write_format;
+	ctx->start_credits_text = opt->start_credits_text;
+	ctx->end_credits_text = opt->end_credits_text;
+	ctx->transcript_settings = &opt->transcript_settings;
+	ctx->startcreditsnotbefore = opt->startcreditsnotbefore;
+	ctx->startcreditsnotafter = opt->startcreditsnotafter;
+	ctx->startcreditsforatleast = opt->startcreditsforatleast;
+	ctx->startcreditsforatmost = opt->startcreditsforatmost;
+	ctx->endcreditsforatleast = opt->endcreditsforatleast;
+	ctx->endcreditsforatmost = opt->endcreditsforatmost;
+	ctx->teletext_mode = opt->teletext_mode;
+	ctx->send_to_srv = opt->send_to_srv;
+	ctx->gui_mode_reports = opt->gui_mode_reports;
 	write_subtitle_file_header(ctx,out);
 
 	return 0;
@@ -449,7 +468,7 @@ void set_encoder_startcredits_displayed(struct encoder_ctx *ctx, int startcredit
 void dinit_encoder(struct encoder_ctx *ctx)
 {
 
-	if (ccx_options.end_credits_text!=NULL)
+	if (ctx->end_credits_text!=NULL)
 		try_to_add_end_credits(ctx,ctx->out);
 	write_subtitle_file_footer(ctx,ctx->out);
 	freep(&ctx->buffer);
@@ -466,8 +485,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		for(data = sub->data; sub->nb_data ; sub->nb_data--,data++)
 		{
 			// Determine context based on channel. This replaces the code that was above, as this was incomplete (for cases where -12 was used for example)
-			//if (ccx_options.extract!=1)
-			//context++;
 			if (data->my_field == 2)
 				context++;
 
@@ -485,20 +502,20 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 
 			if(!data->start_time)
 				break;
-			switch (ccx_options.write_format)
+			switch (context->write_format)
 			{
 			case CCX_OF_SRT:
-				if (!context->startcredits_displayed && ccx_options.start_credits_text!=NULL)
+				if (!context->startcredits_displayed && context->start_credits_text!=NULL)
 					try_to_add_start_credits(context, data->start_time);
 				wrote_something = write_cc_buffer_as_srt(data, context);
 				break;
 			case CCX_OF_SAMI:
-				if (!context->startcredits_displayed && ccx_options.start_credits_text!=NULL)
+				if (!context->startcredits_displayed && context->start_credits_text!=NULL)
 					try_to_add_start_credits(context, data->start_time);
 				wrote_something = write_cc_buffer_as_sami(data, context);
 				break;
 			case CCX_OF_SMPTETT:
-				if (!context->startcredits_displayed && ccx_options.start_credits_text!=NULL)
+				if (!context->startcredits_displayed && context->start_credits_text!=NULL)
 					try_to_add_start_credits(context, data->start_time);
 				wrote_something = write_cc_buffer_as_smptett(data, context);
 				break;
@@ -514,25 +531,25 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			if (wrote_something)
 				context->last_displayed_subs_ms=get_fts() + context->subs_delay;
 
-			if (ccx_options.gui_mode_reports)
+			if (context->gui_mode_reports)
 				write_cc_buffer_to_gui(sub->data, context);
 		}
 		freep(&sub->data);
 	}
 	if(sub->type == CC_BITMAP)
 	{
-		switch (ccx_options.write_format)
+		switch (context->write_format)
 		{
 		case CCX_OF_SRT:
-			if (!context->startcredits_displayed && ccx_options.start_credits_text!=NULL)
+			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
 				try_to_add_start_credits(context, sub->start_time);
 			wrote_something = write_cc_bitmap_as_srt(sub, context);
 		case CCX_OF_SAMI:
-			if (!context->startcredits_displayed && ccx_options.start_credits_text!=NULL)
+			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
 				try_to_add_start_credits(context, sub->start_time);
 			wrote_something = write_cc_bitmap_as_sami(sub, context);
 		case CCX_OF_SMPTETT:
-			if (!context->startcredits_displayed && ccx_options.start_credits_text!=NULL)
+			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
 				try_to_add_start_credits(context, sub->start_time);
 			wrote_something = write_cc_bitmap_as_smptett(sub, context);
 		case CCX_OF_TRANSCRIPT:

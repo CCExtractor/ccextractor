@@ -144,7 +144,7 @@ typedef struct {
 } teletext_page_t;
 
 // application config global variable
-struct ccx_s_teletext_config tlt_config = { NO, 0, 0, 0, NO, NO, 0 };
+struct ccx_s_teletext_config tlt_config = { NO, 0, 0, 0, NO, NO, 0, NULL};
 
 // macro -- output only when increased verbosity was turned on
 #define VERBOSE_ONLY if (tlt_config.verbose == YES)
@@ -363,19 +363,19 @@ void telxcc_dump_prev_page (struct lib_ccx_ctx *ctx)
 	if (!page_buffer_prev)
 		return;
 
-	if (ccx_options.transcript_settings.showStartTime){
-		millis_to_date(prev_show_timestamp, c_temp1); // Note: Delay not added here because it was already accounted for
+	if (tlt_config.transcript_settings->showStartTime){
+		millis_to_date(prev_show_timestamp, c_temp1, tlt_config.date_format, tlt_config.millis_separator); // Note: Delay not added here because it was already accounted for
 		fdprintf(ctx->wbout1.fh, "%s|", c_temp1);
 	}
-	if (ccx_options.transcript_settings.showEndTime)
+	if (tlt_config.transcript_settings->showEndTime)
 	{
-		millis_to_date (prev_hide_timestamp, c_temp2);
+		millis_to_date (prev_hide_timestamp, c_temp2, tlt_config.date_format, tlt_config.millis_separator);
 		fdprintf(ctx->wbout1.fh,"%s|",c_temp2);
 	}
-	if (ccx_options.transcript_settings.showCC){
+	if (tlt_config.transcript_settings->showCC){
 		fdprintf(ctx->wbout1.fh, "%.3u|", bcd_page_to_int(tlt_config.page));
 	}
-	if (ccx_options.transcript_settings.showMode){
+	if (tlt_config.transcript_settings->showMode){
 		fdprintf(ctx->wbout1.fh, "TLT|");
 	}
 
@@ -405,10 +405,10 @@ int fuzzy_memcmp (const char *c1, const char *c2, const uint64_t *ucs2_buf1, uns
 {
 	size_t l;
 	size_t short_len=ucs2_buf1_len<ucs2_buf2_len?ucs2_buf1_len:ucs2_buf2_len;
-	size_t max=(short_len*ccx_options.levdistmaxpct)/100;
+	size_t max=(short_len * tlt_config.levdistmaxpct)/100;
 	unsigned upto=(ucs2_buf1_len<ucs2_buf2_len)?ucs2_buf1_len:ucs2_buf2_len;
-	if (max<ccx_options.levdistmincnt)
-		max=ccx_options.levdistmincnt;
+	if (max < tlt_config.levdistmincnt)
+		max=tlt_config.levdistmincnt;
 
 	// For the second string, only take the first chars (up to the first string length, that's upto).
 	l = (size_t) levenshtein_dist (ucs2_buf1,ucs2_buf2,ucs2_buf1_len,upto);
@@ -418,8 +418,8 @@ int fuzzy_memcmp (const char *c1, const char *c2, const uint64_t *ucs2_buf1, uns
 }
 
 void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
-    if ((ccx_options.extraction_start.set && page->hide_timestamp < ccx_options.extraction_start.time_in_ms) ||
-        (ccx_options.extraction_end.set && page->show_timestamp > ccx_options.extraction_end.time_in_ms) ||
+    if ((tlt_config.extraction_start.set && page->hide_timestamp < tlt_config.extraction_start.time_in_ms) ||
+        (tlt_config.extraction_end.set && page->show_timestamp > tlt_config.extraction_end.time_in_ms) ||
         page->hide_timestamp == 0) {
         return;
     }
@@ -495,7 +495,7 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
 		uint8_t font_tag_opened = NO;
 
         if (line_count > 1) {
-            switch (ccx_options.write_format) {
+            switch (tlt_config.write_format) {
                 case CCX_OF_TRANSCRIPT:
                     page_buffer_add_string(" ");
                     break;
@@ -507,7 +507,7 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
             }
         }
 
-		if (ccx_options.gui_mode_reports)
+		if (tlt_config.gui_mode_reports)
 		{
 			fprintf (stderr, "###SUBTITLE#");
 			if (!time_reported)
@@ -535,7 +535,7 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
 			}
 
 			if (col == col_start) {
-				if ((foreground_color != 0x7) && !ccx_options.nofontcolor) {
+				if ((foreground_color != 0x7) && !tlt_config.nofontcolor) {
 					sprintf (c_tempb, "<font color=\"%s\">", TTXT_COLOURS[foreground_color]);
 					page_buffer_add_string (c_tempb);
 					// if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "<font color=\"%s\">", TTXT_COLOURS[foreground_color]);
@@ -547,7 +547,7 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
 				if (v <= 0x7) {
 					// ETS 300 706, chapter 12.2: Unless operating in "Hold Mosaics" mode,
 					// each character space occupied by a spacing attribute is displayed as a SPACE.
-					if (!ccx_options.nofontcolor) {
+					if (!tlt_config.nofontcolor) {
 						if (font_tag_opened == YES) {
 							page_buffer_add_string ("</font>");
 							// if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "</font> ");
@@ -574,7 +574,7 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
 
 				if (v >= 0x20) {
 						// translate some chars into entities, if in colour mode
-						if (!ccx_options.nofontcolor) {
+						if (!tlt_config.nofontcolor) {
 							for (uint8_t i = 0; i < array_length(ENTITIES); i++)
 									if (v == ENTITIES[i].character) {
 												//if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s", ENTITIES[i].entity);
@@ -590,27 +590,27 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
 				if (v >= 0x20) {
 					//if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s", u);
 					page_buffer_add_string (u);
-					if (ccx_options.gui_mode_reports) // For now we just handle the easy stuff
+					if (tlt_config.gui_mode_reports) // For now we just handle the easy stuff
 						fprintf (stderr,"%s",u);
 				}
 			}
 		}
 
 		// no tag will left opened!
-		if ((!ccx_options.nofontcolor) && (font_tag_opened == YES)) {
+		if ((!tlt_config.nofontcolor) && (font_tag_opened == YES)) {
 			//if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "</font>");
 			page_buffer_add_string ("</font>");
 			font_tag_opened = NO;
 		}
 
-		if (ccx_options.gui_mode_reports)
+		if (tlt_config.gui_mode_reports)
 		{
 			fprintf (stderr,"\n");
 		}
 	}
 	time_reported=0;
 
-	switch (ccx_options.write_format)
+	switch (tlt_config.write_format)
 	{
 		case CCX_OF_TRANSCRIPT:
 			if (page_buffer_prev_used==0)
@@ -669,7 +669,7 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
 	page_buffer_cur_used=0;
 	if (page_buffer_cur)
 		page_buffer_cur[0]=0;
-	if (ccx_options.gui_mode_reports)
+	if (tlt_config.gui_mode_reports)
 		fflush (stderr);
 }
 
@@ -921,7 +921,7 @@ void process_telx_packet(struct lib_ccx_ctx *ctx, data_unit_t data_unit_id, tele
 
 				dbg_print (CCX_DMT_TELETEXT, "- Transmission mode = %s\n", (transmission_mode == TRANSMISSION_MODE_SERIAL ? "serial" : "parallel"));
 
-				if (ccx_options.write_format == CCX_OF_TRANSCRIPT && ccx_options.date_format==ODF_DATE && !ccx_options.noautotimeref) {
+				if (tlt_config.write_format == CCX_OF_TRANSCRIPT && tlt_config.date_format==ODF_DATE && !tlt_config.noautotimeref) {
                     mprint ("- Broadcast Service Data Packet received, resetting UTC referential value to %s", ctime(&t0));
                     utc_refvalue = t;
                     states.pts_initialized = NO;
@@ -935,15 +935,10 @@ void process_telx_packet(struct lib_ccx_ctx *ctx, data_unit_t data_unit_id, tele
 
 void tlt_write_rcwt(struct lib_ccx_ctx *ctx, uint8_t data_unit_id, uint8_t *packet, uint64_t timestamp)
 {
-	if (ccx_options.send_to_srv) {
-		net_send_cc((unsigned char *) &data_unit_id, sizeof(uint8_t));
-		net_send_cc((unsigned char *) &timestamp, sizeof(uint64_t));
-		net_send_cc((unsigned char *) packet, 44);
-	} else  {
-		writeraw((unsigned char *) &data_unit_id, sizeof(uint8_t), &ctx->wbout1);
-		writeraw((unsigned char *) &timestamp, sizeof(uint64_t), &ctx->wbout1);
-		writeraw((unsigned char *) packet, 44, &ctx->wbout1);
-	}
+	struct lib_cc_decode *dec_ctx = ctx->dec_ctx;
+	dec_ctx->writedata((unsigned char *) &data_unit_id, sizeof(uint8_t), dec_ctx->context_cc608_field_1, NULL);
+	dec_ctx->writedata((unsigned char *) &timestamp, sizeof(uint64_t), dec_ctx->context_cc608_field_1, NULL);
+	dec_ctx->writedata((unsigned char *) packet, 44, dec_ctx->context_cc608_field_1, NULL);
 }
 
 void tlt_read_rcwt(struct lib_ccx_ctx *ctx)
@@ -1080,7 +1075,7 @@ void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t s
 				// reverse endianess (via lookup table), ETS 300 706, chapter 7.1
 				for (uint8_t j = 0; j < data_unit_len; j++) buffer[i + j] = REVERSE_8[buffer[i + j]];
 
-				if (ccx_options.write_format == CCX_OF_RCWT)
+				if (tlt_config.write_format == CCX_OF_RCWT)
 					tlt_write_rcwt(ctx, data_unit_id, &buffer[i], last_timestamp);
 				else
 					// FIXME: This explicit type conversion could be a problem some day -- do not need to be platform independant
@@ -1184,7 +1179,7 @@ void telxcc_init(struct lib_ccx_ctx *ctx)
 	if (!telxcc_inited)
 	{
 		telxcc_inited=1;
-		if (ctx->wbout1.fh!=-1 && ccx_options.encoding!=CCX_ENC_UTF_8) // If encoding it UTF8 then this was already done
+		if (ctx->wbout1.fh!=-1 && tlt_config.encoding!=CCX_ENC_UTF_8) // If encoding it UTF8 then this was already done
 			fdprintf(ctx->wbout1.fh, "\xef\xbb\xbf");
 		memset (seen_sub_page,0,MAX_TLT_PAGES*sizeof (short int));
 	}
@@ -1193,7 +1188,7 @@ void telxcc_init(struct lib_ccx_ctx *ctx)
 // Close output
 void telxcc_close(struct lib_ccx_ctx *ctx)
 {
-	if (telxcc_inited && ccx_options.write_format != CCX_OF_RCWT)
+	if (telxcc_inited && tlt_config.write_format != CCX_OF_RCWT)
 	{
 		// output any pending close caption
 		if (page_buffer.tainted == YES) {

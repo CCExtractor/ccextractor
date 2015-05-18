@@ -205,64 +205,64 @@ int add_file_sequence (struct ccx_s_options *opt, char *filename)
 	return 0;
 }
 
-void set_output_format (const char *format)
+void set_output_format (struct ccx_s_options *opt, const char *format)
 {
 	while (*format=='-')
 		format++;
 
-	if (ccx_options.send_to_srv && strcmp(format, "bin")!=0)
+	if (opt->send_to_srv && strcmp(format, "bin")!=0)
 	{
 		mprint("Output format is changed to bin\n");
 		format = "bin";
 	}
 
 	if (strcmp (format,"srt")==0)
-		ccx_options.write_format=CCX_OF_SRT;
+		opt->write_format=CCX_OF_SRT;
 	else if (strcmp (format,"sami")==0 || strcmp (format,"smi")==0)
-		ccx_options.write_format=CCX_OF_SAMI;
+		opt->write_format=CCX_OF_SAMI;
 	else if (strcmp (format,"transcript")==0 || strcmp (format,"txt")==0)
 	{
-		ccx_options.write_format=CCX_OF_TRANSCRIPT;
+		opt->write_format=CCX_OF_TRANSCRIPT;
 	}
 	else if (strcmp (format,"timedtranscript")==0 || strcmp (format,"ttxt")==0)
 	{
-		ccx_options.write_format=CCX_OF_TRANSCRIPT;
-		if (ccx_options.date_format==ODF_NONE)
-			ccx_options.date_format=ODF_HHMMSSMS;
+		opt->write_format=CCX_OF_TRANSCRIPT;
+		if (opt->date_format==ODF_NONE)
+			opt->date_format=ODF_HHMMSSMS;
 		// Sets the right things so that timestamps and the mode are printed.
-		if (!ccx_options.transcript_settings.isFinal){
-			ccx_options.transcript_settings.showStartTime = 1;
-			ccx_options.transcript_settings.showEndTime = 1;
-			ccx_options.transcript_settings.showCC = 0;
-			ccx_options.transcript_settings.showMode = 1;
+		if (!opt->transcript_settings.isFinal){
+			opt->transcript_settings.showStartTime = 1;
+			opt->transcript_settings.showEndTime = 1;
+			opt->transcript_settings.showCC = 0;
+			opt->transcript_settings.showMode = 1;
 		}
 	}
 	else if (strcmp (format,"report")==0)
 	{
-		ccx_options.write_format=CCX_OF_NULL;
-		ccx_options.messages_target=0;
-		ccx_options.print_file_reports=1;
-		ccx_options.ts_autoprogram=1;
+		opt->write_format=CCX_OF_NULL;
+		opt->messages_target=0;
+		opt->print_file_reports=1;
+		opt->ts_autoprogram=1;
 	}
 	else if (strcmp (format,"raw")==0)
-		ccx_options.write_format=CCX_OF_RAW;
+		opt->write_format=CCX_OF_RAW;
 	else if (strcmp (format, "smptett")==0)
-		ccx_options.write_format=CCX_OF_SMPTETT ;
+		opt->write_format=CCX_OF_SMPTETT ;
 	else if (strcmp (format,"bin")==0)
-		ccx_options.write_format=CCX_OF_RCWT;
+		opt->write_format=CCX_OF_RCWT;
 	else if (strcmp (format,"null")==0)
-		ccx_options.write_format=CCX_OF_NULL;
+		opt->write_format=CCX_OF_NULL;
 	else if (strcmp (format,"dvdraw")==0)
-		ccx_options.write_format=CCX_OF_DVDRAW;
+		opt->write_format=CCX_OF_DVDRAW;
 	else if (strcmp (format,"spupng")==0)
-		ccx_options.write_format=CCX_OF_SPUPNG;
+		opt->write_format=CCX_OF_SPUPNG;
 	else
 		fatal (EXIT_MALFORMED_PARAMETER, "Unknown output file format: %s\n", format);
 }
 
 void set_input_format (struct ccx_s_options *opt, const char *format)
 {
-	if (ccx_options.input_source == CCX_DS_TCP && strcmp(format, "bin")!=0)
+	if (opt->input_source == CCX_DS_TCP && strcmp(format, "bin")!=0)
 	{
 		mprint("Intput format is changed to bin\n");
 		format = "bin";
@@ -831,13 +831,13 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp (argv[i],"-bi")==0 ||
 				strcmp (argv[i],"--bufferinput")==0)
 		{
-			ccx_options.buffer_input = 1;
+			opt->buffer_input = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-nobi")==0 ||
 				strcmp (argv[i],"--nobufferinput")==0)
 		{
-			ccx_options.buffer_input = 0;
+			opt->buffer_input = 0;
 			continue;
 		}
 		if ((strcmp (argv[i],"-bs")==0 || strcmp (argv[i],"--buffersize")==0) && i<argc-1)
@@ -850,27 +850,27 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-dru")==0)
 		{
-			ccx_options.settings_608.direct_rollup = 1;
+			opt->settings_608.direct_rollup = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-nofc")==0 ||
 				strcmp (argv[i],"--nofontcolor")==0)
 		{
-			ccx_options.nofontcolor=1;
+			opt->nofontcolor=1;
 			continue;
 		}
 		if (strcmp(argv[i], "-bom") == 0){
-			ccx_options.no_bom = 0;
+			opt->no_bom = 0;
 			continue;
 		}
 		if (strcmp(argv[i], "-nobom") == 0){
-			ccx_options.no_bom = 1;
+			opt->no_bom = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-nots")==0 ||
 				strcmp (argv[i],"--notypesetting")==0)
 		{
-			ccx_options.notypesetting=1;
+			opt->notypesetting=1;
 			continue;
 		}
 
@@ -900,11 +900,11 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			i++;
 			if(!strcmp (argv[i],"teletext"))
 			{
-				ccx_options.codec = CCX_CODEC_TELETEXT;
+				opt->codec = CCX_CODEC_TELETEXT;
 			}
 			else if(!strcmp (argv[i],"dvbsub"))
 			{
-				ccx_options.codec = CCX_CODEC_DVB;
+				opt->codec = CCX_CODEC_DVB;
 			}
 			else
 			{
@@ -919,11 +919,11 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			i++;
 			if(!strcmp (argv[i],"teletext"))
 			{
-				ccx_options.nocodec = CCX_CODEC_TELETEXT;
+				opt->nocodec = CCX_CODEC_TELETEXT;
 			}
 			else if(!strcmp (argv[i],"dvbsub"))
 			{
-				ccx_options.nocodec = CCX_CODEC_DVB;
+				opt->nocodec = CCX_CODEC_DVB;
 			}
 			else
 			{
@@ -939,12 +939,12 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				strcmp (argv[i],"--timedtranscript")==0 || strcmp (argv[i],"-ttxt")==0 ||
 				strcmp (argv[i],"-null")==0)
 		{
-			set_output_format (argv[i]);
+			set_output_format (opt, argv[i]);
 			continue;
 		}
 		if (strncmp (argv[i],"-out=", 5)==0)
 		{
-			set_output_format (argv[i]+5);
+			set_output_format (opt, argv[i]+5);
 			continue;
 		}
 
@@ -952,14 +952,14 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if ((strcmp (argv[i],"--startcreditstext")==0)
 				&& i<argc-1)
 		{
-			ccx_options.start_credits_text=argv[i+1];
+			opt->start_credits_text=argv[i+1];
 			i++;
 			continue;
 		}
 		if ((strcmp (argv[i],"--startcreditsnotbefore")==0)
 				&& i<argc-1)
 		{
-			if (stringztoms (argv[i+1],&ccx_options.startcreditsnotbefore)==-1)
+			if (stringztoms (argv[i+1],&opt->startcreditsnotbefore)==-1)
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "--startcreditsnotbefore only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -969,7 +969,7 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if ((strcmp (argv[i],"--startcreditsnotafter")==0)
 				&& i<argc-1)
 		{
-			if (stringztoms (argv[i+1],&ccx_options.startcreditsnotafter)==-1)
+			if (stringztoms (argv[i+1],&opt->startcreditsnotafter)==-1)
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "--startcreditsnotafter only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -979,7 +979,7 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if ((strcmp (argv[i],"--startcreditsforatleast")==0)
 				&& i<argc-1)
 		{
-			if (stringztoms (argv[i+1],&ccx_options.startcreditsforatleast)==-1)
+			if (stringztoms (argv[i+1],&opt->startcreditsforatleast)==-1)
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "--startcreditsforatleast only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -989,7 +989,7 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if ((strcmp (argv[i],"--startcreditsforatmost")==0)
 				&& i<argc-1)
 		{
-			if (stringztoms (argv[i+1],&ccx_options.startcreditsforatmost)==-1)
+			if (stringztoms (argv[i+1],&opt->startcreditsforatmost)==-1)
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "--startcreditsforatmost only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -1000,14 +1000,14 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if  ((strcmp (argv[i],"--endcreditstext")==0 )
 				&& i<argc-1)
 		{
-			ccx_options.end_credits_text=argv[i+1];
+			opt->end_credits_text=argv[i+1];
 			i++;
 			continue;
 		}
 		if ((strcmp (argv[i],"--endcreditsforatleast")==0)
 				&& i<argc-1)
 		{
-			if (stringztoms (argv[i+1],&ccx_options.endcreditsforatleast)==-1)
+			if (stringztoms (argv[i+1],&opt->endcreditsforatleast)==-1)
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "--endcreditsforatleast only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -1017,7 +1017,7 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if ((strcmp (argv[i],"--endcreditsforatmost")==0)
 				&& i<argc-1)
 		{
-			if (stringztoms (argv[i+1],&ccx_options.endcreditsforatmost)==-1)
+			if (stringztoms (argv[i+1],&opt->endcreditsforatmost)==-1)
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "--startcreditsforatmost only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -1029,30 +1029,30 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp (argv[i],"-ve")==0 ||
 				strcmp (argv[i],"--videoedited")==0)
 		{
-			ccx_options.binary_concat=0;
+			opt->binary_concat=0;
 			continue;
 		}
 		if (strcmp (argv[i],"-12")==0)
 		{
-			ccx_options.extract = 12;
+			opt->extract = 12;
 			continue;
 		}
 		if (strcmp (argv[i],"-gt")==0 ||
 				strcmp (argv[i],"--goptime")==0)
 		{
-			ccx_options.use_gop_as_pts = 1;
+			opt->use_gop_as_pts = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-nogt")==0 ||
 				strcmp (argv[i],"--nogoptime")==0)
 		{
-			ccx_options.use_gop_as_pts = -1; // Don't use even if we would want to
+			opt->use_gop_as_pts = -1; // Don't use even if we would want to
 			continue;
 		}
 		if (strcmp (argv[i],"-fp")==0 ||
 				strcmp (argv[i],"--fixpadding")==0)
 		{
-			ccx_options.fix_padding = 1;
+			opt->fix_padding = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-90090")==0)
@@ -1063,51 +1063,51 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp (argv[i],"-noru")==0 ||
 				strcmp (argv[i],"--norollup")==0)
 		{
-			ccx_options.settings_608.no_rollup = 1;
+			opt->settings_608.no_rollup = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-ru1")==0)
 		{
-			ccx_options.settings_608.force_rollup = 1;
+			opt->settings_608.force_rollup = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-ru2")==0)
 		{
-			ccx_options.settings_608.force_rollup = 2;
+			opt->settings_608.force_rollup = 2;
 			continue;
 		}
 		if (strcmp (argv[i],"-ru3")==0)
 		{
-			ccx_options.settings_608 .force_rollup = 3;
+			opt->settings_608 .force_rollup = 3;
 			continue;
 		}
 		if (strcmp (argv[i],"-trim")==0)
 		{
-			ccx_options.trim_subs=1;
+			opt->trim_subs=1;
 			continue;
 		}
 		if (strcmp (argv[i],"--gui_mode_reports")==0)
 		{
-			ccx_options.gui_mode_reports=1;
+			opt->gui_mode_reports=1;
 			continue;
 		}
 		if (strcmp (argv[i],"--no_progress_bar")==0)
 		{
-			ccx_options.no_progress_bar=1;
+			opt->no_progress_bar=1;
 			continue;
 		}
 		if (strcmp (argv[i],"--sentencecap")==0 ||
 				strcmp (argv[i],"-sc")==0)
 		{
-			ccx_options.sentence_cap=1;
+			opt->sentence_cap=1;
 			continue;
 		}
 		if ((strcmp (argv[i],"--capfile")==0 ||
 					strcmp (argv[i],"-caf")==0)
 				&& i<argc-1)
 		{
-			ccx_options.sentence_cap=1;
-			ccx_options.sentence_cap_file=argv[i+1];
+			opt->sentence_cap=1;
+			opt->sentence_cap_file=argv[i+1];
 			i++;
 			continue;
 		}
@@ -1116,18 +1116,18 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		{
 			if (i==argc-1 // Means no following argument
 					|| !isanumber (argv[i+1])) // Means is not a number
-				ccx_options.ts_forced_program = (unsigned)-1; // Autodetect
+				opt->ts_forced_program = (unsigned)-1; // Autodetect
 			else
 			{
-				ccx_options.ts_forced_program=atoi_hex (argv[i+1]);
-				ccx_options.ts_forced_program_selected=1;
+				opt->ts_forced_program=atoi_hex (argv[i+1]);
+				opt->ts_forced_program_selected=1;
 				i++;
 			}
 			continue;
 		}
 		if (strcmp (argv[i],"-autoprogram")==0)
 		{
-			ccx_options.ts_autoprogram=1;
+			opt->ts_autoprogram=1;
 			continue;
 		}
 		if (strcmp (argv[i],"--stream")==0 ||
@@ -1135,10 +1135,10 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		{
 			if (i==argc-1 // Means no following argument
 					|| !isanumber (argv[i+1])) // Means is not a number
-				ccx_options.live_stream=-1; // Live stream without timeout
+				opt->live_stream=-1; // Live stream without timeout
 			else
 			{
-				ccx_options.live_stream=atoi_hex (argv[i+1]);
+				opt->live_stream=atoi_hex (argv[i+1]);
 				i++;
 			}
 			continue;
@@ -1152,7 +1152,7 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				fatal (EXIT_MALFORMED_PARAMETER, "--defaultcolor expects a 7 character parameter that starts with #\n");
 			}
 			strcpy ((char *) usercolor_rgb,argv[i+1]);
-			ccx_options.settings_608.default_color = COL_USERDEFINED;
+			opt->settings_608.default_color = COL_USERDEFINED;
 			i++;
 			continue;
 		}
@@ -1168,8 +1168,8 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if ((strcmp (argv[i],"-scr")==0 ||
 					strcmp (argv[i],"--screenfuls")==0) && i<argc-1)
 		{
-			ccx_options.settings_608.screens_to_process = atoi_hex(argv[i + 1]);
-			if (ccx_options.settings_608.screens_to_process<0)
+			opt->settings_608.screens_to_process = atoi_hex(argv[i + 1]);
+			if (opt->settings_608.screens_to_process<0)
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "--screenfuls only accepts positive integers.\n");
 			}
@@ -1178,7 +1178,7 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-startat")==0 && i<argc-1)
 		{
-			if (stringztoms (argv[i+1],&ccx_options.extraction_start)==-1)
+			if (stringztoms (argv[i+1],&opt->extraction_start)==-1)
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "-startat only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -1187,7 +1187,7 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-endat")==0 && i<argc-1)
 		{
-			if (stringztoms (argv[i+1],&ccx_options.extraction_end)==-1)
+			if (stringztoms (argv[i+1],&opt->extraction_end)==-1)
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "-endat only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -1196,184 +1196,184 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-1")==0)
 		{
-			ccx_options.extract = 1;
+			opt->extract = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-2")==0)
 		{
-			ccx_options.extract = 2;
+			opt->extract = 2;
 			continue;
 		}
 		if (strcmp (argv[i],"-cc2")==0 || strcmp (argv[i],"-CC2")==0)
 		{
-			ccx_options.cc_channel=2;
+			opt->cc_channel=2;
 			continue;
 		}
 		if (strcmp (argv[i],"-stdout")==0)
 		{
-			if (ccx_options.messages_target==1) // Only change this if still stdout. -quiet could set it to 0 for example
-				ccx_options.messages_target=2; // stderr
+			if (opt->messages_target==1) // Only change this if still stdout. -quiet could set it to 0 for example
+				opt->messages_target=2; // stderr
 			opt->cc_to_stdout=1;
 			continue;
 		}
 		if (strcmp (argv[i],"-quiet")==0)
 		{
-			ccx_options.messages_target=0;
+			opt->messages_target=0;
 			continue;
 		}
 		if (strcmp (argv[i],"-debug")==0)
 		{
-			ccx_options.debug_mask |= CCX_DMT_VERBOSE;
+			opt->debug_mask |= CCX_DMT_VERBOSE;
 			continue;
 		}
 		if (strcmp (argv[i],"-608")==0)
 		{
-			ccx_options.debug_mask |= CCX_DMT_DECODER_608;
+			opt->debug_mask |= CCX_DMT_DECODER_608;
 			continue;
 		}
 		if (strcmp (argv[i],"-deblev")==0)
 		{
-			ccx_options.debug_mask |= CCX_DMT_LEVENSHTEIN;
+			opt->debug_mask |= CCX_DMT_LEVENSHTEIN;
 			continue;
 		}
 		if (strcmp (argv[i],"-levdistmincnt")==0 && i<argc-1)
 		{
-			ccx_options.levdistmincnt = atoi_hex(argv[i+1]);
+			opt->levdistmincnt = atoi_hex(argv[i+1]);
 			i++;
 			continue;
 		}
 		if (strcmp (argv[i],"-levdistmaxpct")==0 && i<argc-1)
 		{
-			ccx_options.levdistmaxpct = atoi_hex(argv[i+1]);
+			opt->levdistmaxpct = atoi_hex(argv[i+1]);
 			i++;
 			continue;
 		}
 		if (strcmp (argv[i],"-708")==0)
 		{
-			ccx_options.debug_mask |= CCX_DMT_708;
+			opt->debug_mask |= CCX_DMT_708;
 			continue;
 		}
 		if (strcmp (argv[i],"-goppts")==0)
 		{
-			ccx_options.debug_mask |= CCX_DMT_TIME;
+			opt->debug_mask |= CCX_DMT_TIME;
 			continue;
 		}
 		if (strcmp (argv[i],"-vides")==0)
 		{
-			ccx_options.debug_mask |= CCX_DMT_VIDES;
+			opt->debug_mask |= CCX_DMT_VIDES;
 			continue;
 		}
 		if (strcmp (argv[i],"-xds")==0)
 		{
 			// XDS can be set regardless of -UCLA (isFinal) usage.
-			ccx_options.transcript_settings.xds = 1;
+			opt->transcript_settings.xds = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-xdsdebug")==0)
 		{
-			ccx_options.debug_mask |= CCX_DMT_DECODER_XDS;
+			opt->debug_mask |= CCX_DMT_DECODER_XDS;
 			continue;
 		}
 		if (strcmp (argv[i],"-parsedebug")==0)
 		{
-			ccx_options.debug_mask |= CCX_DMT_PARSE;
+			opt->debug_mask |= CCX_DMT_PARSE;
 			continue;
 		}
 		if (strcmp (argv[i],"-parsePAT")==0 || strcmp (argv[i],"-parsepat")==0)
 		{
-			ccx_options.debug_mask |= CCX_DMT_PAT;
+			opt->debug_mask |= CCX_DMT_PAT;
 			continue;
 		}
 		if (strcmp (argv[i],"-parsePMT")==0 || strcmp (argv[i],"-parsepmt")==0)
 		{
-			ccx_options.debug_mask |= CCX_DMT_PMT;
+			opt->debug_mask |= CCX_DMT_PMT;
 			continue;
 		}
 		if (strcmp (argv[i],"-investigate_packets")==0)
 		{
-			ccx_options.investigate_packets=1;
+			opt->investigate_packets=1;
 			continue;
 		}
 		if (strcmp (argv[i],"-cbraw")==0)
 		{
-			ccx_options.debug_mask |= CCX_DMT_CBRAW;
+			opt->debug_mask |= CCX_DMT_CBRAW;
 			continue;
 		}
 		if (strcmp (argv[i],"-tverbose")==0)
 		{
-			ccx_options.debug_mask |= CCX_DMT_TELETEXT;
+			opt->debug_mask |= CCX_DMT_TELETEXT;
 			tlt_config.verbose=1;
 			continue;
 		}
 		if (strcmp (argv[i],"-fullbin")==0)
 		{
-			ccx_options.fullbin = 1;
+			opt->fullbin = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-nosync")==0)
 		{
-			ccx_options.nosync = 1;
+			opt->nosync = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-haup")==0 || strcmp (argv[i],"--hauppauge")==0)
 		{
-			ccx_options.hauppauge_mode = 1;
+			opt->hauppauge_mode = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-mp4vidtrack")==0)
 		{
-			ccx_options.mp4vidtrack = 1;
+			opt->mp4vidtrack = 1;
 			continue;
 		}
 		if (strstr (argv[i],"-unicode")!=NULL)
 		{
-			ccx_options.encoding=CCX_ENC_UNICODE;
+			opt->encoding=CCX_ENC_UNICODE;
 			continue;
 		}
 		if (strstr (argv[i],"-utf8")!=NULL)
 		{
-			ccx_options.encoding=CCX_ENC_UTF_8;
+			opt->encoding=CCX_ENC_UTF_8;
 			continue;
 		}
 		if (strstr (argv[i],"-latin1")!=NULL)
 		{
-			ccx_options.encoding=CCX_ENC_LATIN_1;
+			opt->encoding=CCX_ENC_LATIN_1;
 			continue;
 		}
 		if (strcmp (argv[i],"-poc")==0 || strcmp (argv[i],"--usepicorder")==0)
 		{
-			ccx_options.usepicorder = 1;
+			opt->usepicorder = 1;
 			continue;
 		}
 		if (strstr (argv[i],"-myth")!=NULL)
 		{
-			ccx_options.auto_myth=1;
+			opt->auto_myth=1;
 			continue;
 		}
 		if (strstr (argv[i],"-nomyth")!=NULL)
 		{
-			ccx_options.auto_myth=0;
+			opt->auto_myth=0;
 			continue;
 		}
 		if (strstr (argv[i],"-wtvconvertfix")!=NULL)
 		{
-			ccx_options.wtvconvertfix=1;
+			opt->wtvconvertfix=1;
 			continue;
 		}
 		if (strstr (argv[i],"-wtvmpeg2")!=NULL)
 		{
-			ccx_options.wtvmpeg2=1;
+			opt->wtvmpeg2=1;
 			continue;
 		}
 		if (strcmp (argv[i],"-o")==0 && i<argc-1)
 		{
-			ccx_options.output_filename=argv[i+1];
+			opt->output_filename=argv[i+1];
 			i++;
 			continue;
 		}
 		if (strcmp (argv[i],"-cf")==0 && i<argc-1)
 		{
-			ccx_options.out_elementarystream_filename=argv[i+1];
+			opt->out_elementarystream_filename=argv[i+1];
 			i++;
 			continue;
 		}
@@ -1399,20 +1399,20 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-datapid")==0 && i<argc-1)
 		{
-			ccx_options.ts_cappid = atoi_hex(argv[i+1]);
-			ccx_options.ts_forced_cappid=1;
+			opt->ts_cappid = atoi_hex(argv[i+1]);
+			opt->ts_forced_cappid=1;
 			i++;
 			continue;
 		}
 		if (strcmp (argv[i],"-datastreamtype")==0 && i<argc-1)
 		{
-			ccx_options.ts_datastreamtype = atoi_hex(argv[i+1]);
+			opt->ts_datastreamtype = atoi_hex(argv[i+1]);
 			i++;
 			continue;
 		}
 		if (strcmp (argv[i],"-streamtype")==0 && i<argc-1)
 		{
-			ccx_options.ts_forced_streamtype = atoi_hex(argv[i+1]);
+			opt->ts_forced_streamtype = atoi_hex(argv[i+1]);
 			i++;
 			continue;
 		}
@@ -1421,47 +1421,47 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		{
 			tlt_config.page = atoi_hex(argv[i+1]);
 			tlt_config.user_page = tlt_config.page;
-			ccx_options.teletext_mode=CCX_TXT_IN_USE;
+			opt->teletext_mode=CCX_TXT_IN_USE;
 			i++;
 			continue;
 		}
 		if (strcmp (argv[i],"-UCLA")==0 || strcmp (argv[i],"-ucla")==0)
 		{
-			ccx_options.millis_separator='.';
-			ccx_options.no_bom = 1;
-			if (!ccx_options.transcript_settings.isFinal){
-				ccx_options.transcript_settings.showStartTime = 1;
-				ccx_options.transcript_settings.showEndTime = 1;
-				ccx_options.transcript_settings.showCC = 1;
-				ccx_options.transcript_settings.showMode = 1;
-				ccx_options.transcript_settings.relativeTimestamp = 0;
-				ccx_options.transcript_settings.isFinal = 1;
+			opt->millis_separator='.';
+			opt->no_bom = 1;
+			if (!opt->transcript_settings.isFinal){
+				opt->transcript_settings.showStartTime = 1;
+				opt->transcript_settings.showEndTime = 1;
+				opt->transcript_settings.showCC = 1;
+				opt->transcript_settings.showMode = 1;
+				opt->transcript_settings.relativeTimestamp = 0;
+				opt->transcript_settings.isFinal = 1;
 			}
 			continue;
 		}
 		if (strcmp (argv[i],"-lf")==0 || strcmp (argv[i],"-LF")==0)
 		{
-			ccx_options.line_terminator_lf = 1;
+			opt->line_terminator_lf = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-noautotimeref")==0)
 		{
-			ccx_options.noautotimeref = 1;
+			opt->noautotimeref = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-autodash")==0)
 		{
-			ccx_options.autodash = 1;
+			opt->autodash = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-xmltv")==0)
 		{
 			if (i==argc-1 // Means no following argument
 					|| !isanumber (argv[i+1])) // Means is not a number
-			ccx_options.xmltv = 1;
+			opt->xmltv = 1;
 			else
 			{
-				ccx_options.xmltv=atoi_hex (argv[i+1]);
+				opt->xmltv=atoi_hex (argv[i+1]);
 				i++;
 			}
 			continue;
@@ -1471,10 +1471,10 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		{
 			if (i==argc-1 // Means no following argument
 					|| !isanumber (argv[i+1])) // Means is not a number
-			ccx_options.xmltvliveinterval = 10;
+			opt->xmltvliveinterval = 10;
 			else
 			{
-				ccx_options.xmltvliveinterval=atoi_hex (argv[i+1]);
+				opt->xmltvliveinterval=atoi_hex (argv[i+1]);
 				i++;
 			}
 			continue;
@@ -1484,17 +1484,17 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		{
 			if (i==argc-1 // Means no following argument
 					|| !isanumber (argv[i+1])) // Means is not a number
-			ccx_options.xmltvoutputinterval = 0;
+			opt->xmltvoutputinterval = 0;
 			else
 			{
-				ccx_options.xmltvoutputinterval=atoi_hex (argv[i+1]);
+				opt->xmltvoutputinterval=atoi_hex (argv[i+1]);
 				i++;
 			}
 			continue;
 		}
 		if (strcmp (argv[i],"-xmltvonlycurrent")==0)
 		{
-			ccx_options.xmltvonlycurrent=1;
+			opt->xmltvonlycurrent=1;
 			i++;
 			continue;
 		}
@@ -1510,45 +1510,45 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			utc_refvalue = t;
 			i++;
-			ccx_options.noautotimeref= 1; // If set by user don't attempt to fix
+			opt->noautotimeref= 1; // If set by user don't attempt to fix
 			continue;
 		}
 		if (strcmp (argv[i],"-sects")==0)
 		{
-			ccx_options.date_format=ODF_SECONDS;
+			opt->date_format=ODF_SECONDS;
 			continue;
 		}
 		if (strcmp (argv[i],"-datets")==0)
 		{
-			ccx_options.date_format=ODF_DATE;
+			opt->date_format=ODF_DATE;
 			continue;
 		}
 		if (strcmp (argv[i],"-teletext")==0)
 		{
-			ccx_options.codec = CCX_CODEC_TELETEXT;
-			ccx_options.teletext_mode=CCX_TXT_IN_USE;
+			opt->codec = CCX_CODEC_TELETEXT;
+			opt->teletext_mode=CCX_TXT_IN_USE;
 			continue;
 		}
 		if (strcmp (argv[i],"-noteletext")==0)
 		{
-			ccx_options.nocodec = CCX_CODEC_TELETEXT;
-			ccx_options.teletext_mode=CCX_TXT_FORBIDDEN;
+			opt->nocodec = CCX_CODEC_TELETEXT;
+			opt->teletext_mode=CCX_TXT_FORBIDDEN;
 			continue;
 		}
 		/* Custom transcript */
 		if (strcmp(argv[i], "-customtxt") == 0 && i<argc - 1){
 			char *format = argv[i + 1];
 			if (strlen(format) == 7){
-				if (ccx_options.date_format == ODF_NONE)
-					ccx_options.date_format = ODF_HHMMSSMS; // Necessary for displaying times, if any would be used.
-				if (!ccx_options.transcript_settings.isFinal){
-					ccx_options.transcript_settings.showStartTime = format[0] - '0';
-					ccx_options.transcript_settings.showEndTime = format[1] - '0';
-					ccx_options.transcript_settings.showMode = format[2] - '0';
-					ccx_options.transcript_settings.showCC = format[3] - '0';
-					ccx_options.transcript_settings.relativeTimestamp = format[4] - '0';
-					ccx_options.transcript_settings.xds = format[5] - '0';
-					ccx_options.transcript_settings.useColors = format[6] - '0';
+				if (opt->date_format == ODF_NONE)
+					opt->date_format = ODF_HHMMSSMS; // Necessary for displaying times, if any would be used.
+				if (!opt->transcript_settings.isFinal){
+					opt->transcript_settings.showStartTime = format[0] - '0';
+					opt->transcript_settings.showEndTime = format[1] - '0';
+					opt->transcript_settings.showMode = format[2] - '0';
+					opt->transcript_settings.showCC = format[3] - '0';
+					opt->transcript_settings.relativeTimestamp = format[4] - '0';
+					opt->transcript_settings.xds = format[5] - '0';
+					opt->transcript_settings.useColors = format[6] - '0';
 				} else {
 					// Throw exception
 					fatal(EXIT_INCOMPATIBLE_PARAMETERS, "customtxt cannot be set after -UCLA is used!");
@@ -1568,32 +1568,32 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			if (colon)
 			{
 				*colon = '\0';
-				ccx_options.udpaddr = argv[i + 1];
-				ccx_options.udpport = atoi_hex(colon + 1);
+				opt->udpaddr = argv[i + 1];
+				opt->udpport = atoi_hex(colon + 1);
 			}
 			else
 			{
-				ccx_options.udpaddr = NULL;
-				ccx_options.udpport = atoi_hex(argv[i + 1]);
+				opt->udpaddr = NULL;
+				opt->udpport = atoi_hex(argv[i + 1]);
 			}
 
-			ccx_options.input_source=CCX_DS_NETWORK;
+			opt->input_source=CCX_DS_NETWORK;
 			i++;
 			continue;
 		}
 
 		if (strcmp (argv[i],"-sendto")==0 && i<argc-1)
 		{
-			ccx_options.send_to_srv = 1;
+			opt->send_to_srv = 1;
 
-			set_output_format("bin");
+			set_output_format(opt, "bin");
 
 			char *addr = argv[i + 1];
 			if (*addr == '[')
 			{
 				addr++;
 
-				ccx_options.srv_addr = addr;
+				opt->srv_addr = addr;
 
 				char *br = strchr(addr, ']');
 				if (br == NULL)
@@ -1602,19 +1602,19 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 				br++; /* Colon */
 				if (*br != '\0')
-					ccx_options.srv_port = br + 1;
+					opt->srv_port = br + 1;
 
 				i++;
 				continue;
 			}
 
-			ccx_options.srv_addr = argv[i + 1];
+			opt->srv_addr = argv[i + 1];
 
 			char *colon = strchr(argv[i + 1], ':');
 			if (colon != NULL)
 			{
 				*colon = '\0';
-				ccx_options.srv_port = colon + 1;
+				opt->srv_port = colon + 1;
 			}
 
 			i++;
@@ -1623,8 +1623,8 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 		if (strcmp (argv[i],"-tcp")==0 && i<argc-1)
 		{
-			ccx_options.tcpport = argv[i + 1];
-			ccx_options.input_source = CCX_DS_TCP;
+			opt->tcpport = argv[i + 1];
+			opt->input_source = CCX_DS_TCP;
 
 			set_input_format(opt, "bin");
 
@@ -1634,7 +1634,7 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 		if (strcmp (argv[i],"-tcppassword")==0 && i<argc-1)
 		{
-			ccx_options.tcp_password = argv[i + 1];
+			opt->tcp_password = argv[i + 1];
 
 			i++;
 			continue;
@@ -1642,7 +1642,7 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 		if (strcmp (argv[i],"-tcpdesc")==0 && i<argc-1)
 		{
-			ccx_options.tcp_desc = argv[i + 1];
+			opt->tcp_desc = argv[i + 1];
 
 			i++;
 			continue;
@@ -1669,6 +1669,21 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	}
 	if(opt->ts_forced_program != -1)
 		opt->ts_forced_program_selected = 1;
+
+	// Init telexcc redundant options
+	tlt_config.transcript_settings = &opt->transcript_settings;
+	tlt_config.levdistmincnt = opt->levdistmincnt;
+	tlt_config.levdistmaxpct = opt->levdistmaxpct;
+	tlt_config.extraction_start = opt->extraction_start;
+	tlt_config.extraction_end = opt->extraction_end;
+	tlt_config.write_format = opt->write_format;
+	tlt_config.gui_mode_reports = opt->gui_mode_reports;
+	tlt_config.date_format = opt->date_format;
+	tlt_config.noautotimeref = opt->noautotimeref;
+	tlt_config.send_to_srv = opt->send_to_srv;
+	tlt_config.encoding = opt->encoding;
+	tlt_config.nofontcolor = opt->nofontcolor;
+	tlt_config.millis_separator = opt->millis_separator;
 }
 
 int detect_input_file_overwrite(struct lib_ccx_ctx *ctx, const char *output_filename)

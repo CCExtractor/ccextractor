@@ -109,7 +109,7 @@ void clear_eia608_cc_buffer(ccx_decoder_608_context *context, struct eia608_scre
 	{
 		memset(data->characters[i], ' ', CCX_DECODER_608_SCREEN_WIDTH);
 		data->characters[i][CCX_DECODER_608_SCREEN_WIDTH] = 0;
-		memset(data->colors[i], context->settings.default_color, CCX_DECODER_608_SCREEN_WIDTH + 1);
+		memset(data->colors[i], context->settings->default_color, CCX_DECODER_608_SCREEN_WIDTH + 1);
 		memset(data->fonts[i], FONT_REGULAR, CCX_DECODER_608_SCREEN_WIDTH + 1);
 		data->row_used[i]=0;
 	}
@@ -120,7 +120,7 @@ void ccx_decoder_608_dinit_library(void **ctx)
 {
 	freep(ctx);
 }
-ccx_decoder_608_context* ccx_decoder_608_init_library(ccx_decoder_608_settings settings, int channel,
+ccx_decoder_608_context* ccx_decoder_608_init_library(struct ccx_decoder_608_settings *settings, int channel,
 		int field, int trim_subs,
 		enum ccx_encoding_type encoding, int *halt,
 		int cc_to_stdout, LLONG subs_delay,
@@ -160,7 +160,7 @@ ccx_decoder_608_context* ccx_decoder_608_init_library(ccx_decoder_608_settings s
 	data->output_format = output_format;
 
 	data->settings = settings;
-	data->current_color = data->settings.default_color;
+	data->current_color = data->settings->default_color;
 
 	clear_eia608_cc_buffer(data, &data->buffer1);
 	clear_eia608_cc_buffer(data, &data->buffer2);
@@ -207,7 +207,7 @@ void delete_to_end_of_row(ccx_decoder_608_context *context)
 			// TODO: This can change the 'used' situation of a column, so we'd
 			// need to check and correct.
 			use_buffer->characters[context->cursor_row][i] = ' ';
-			use_buffer->colors[context->cursor_row][i] = context->settings.default_color;
+			use_buffer->colors[context->cursor_row][i] = context->settings->default_color;
 			use_buffer->fonts[context->cursor_row][i] = context->font;
 		}
 	}
@@ -289,8 +289,8 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 	LLONG end_time;
 
 
-	if (context->settings.screens_to_process != -1 &&
-		context->screenfuls_counter >= context->settings.screens_to_process)
+	if (context->settings->screens_to_process != -1 &&
+		context->screenfuls_counter >= context->settings->screens_to_process)
 	{
 		// We are done.
 		*context->halt=1;
@@ -534,13 +534,13 @@ int roll_up(ccx_decoder_608_context *context)
 	for (int j = 0; j<(1 + context->cursor_row - keep_lines); j++)
 	{
 		memset(use_buffer->characters[j], ' ', CCX_DECODER_608_SCREEN_WIDTH);
-		memset(use_buffer->colors[j], context->settings.default_color, CCX_DECODER_608_SCREEN_WIDTH);
+		memset(use_buffer->colors[j], context->settings->default_color, CCX_DECODER_608_SCREEN_WIDTH);
 		memset(use_buffer->fonts[j], FONT_REGULAR, CCX_DECODER_608_SCREEN_WIDTH);
 		use_buffer->characters[j][CCX_DECODER_608_SCREEN_WIDTH] = 0;
 		use_buffer->row_used[j]=0;
 	}
 	memset(use_buffer->characters[lastrow], ' ', CCX_DECODER_608_SCREEN_WIDTH);
-	memset(use_buffer->colors[lastrow], context->settings.default_color, CCX_DECODER_608_SCREEN_WIDTH);
+	memset(use_buffer->colors[lastrow], context->settings->default_color, CCX_DECODER_608_SCREEN_WIDTH);
 	memset(use_buffer->fonts[lastrow], FONT_REGULAR, CCX_DECODER_608_SCREEN_WIDTH);
 
 	use_buffer->characters[lastrow][CCX_DECODER_608_SCREEN_WIDTH] = 0;
@@ -646,12 +646,12 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, ccx_dec
 	if ((c1==0x14 || c1==0x1C) && c2==0x2b)
 		command = COM_RESUMETEXTDISPLAY;
 
-	if ((command == COM_ROLLUP2 || command == COM_ROLLUP3 || command == COM_ROLLUP4) && context->settings.force_rollup == 1)
+	if ((command == COM_ROLLUP2 || command == COM_ROLLUP3 || command == COM_ROLLUP4) && context->settings->force_rollup == 1)
 		command=COM_FAKE_RULLUP1;
 
-	if ((command == COM_ROLLUP3 || command == COM_ROLLUP4) && context->settings.force_rollup == 2)
+	if ((command == COM_ROLLUP3 || command == COM_ROLLUP4) && context->settings->force_rollup == 2)
 		command=COM_ROLLUP2;
-	else if (command == COM_ROLLUP4 && context->settings.force_rollup == 3)
+	else if (command == COM_ROLLUP4 && context->settings->force_rollup == 3)
 		command=COM_ROLLUP3;
 
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\rCommand begin: %02X %02X (%s)\n", c1, c2, command_type[command]);
@@ -756,7 +756,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, ccx_dec
 				{
 					if (write_cc_buffer(context, sub))
 						context->screenfuls_counter++;
-					if (context->settings.no_rollup)
+					if (context->settings->no_rollup)
 						erase_memory(context, true); // Make sure the lines we just wrote aren't written again
 				}
 			}
@@ -802,7 +802,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, ccx_dec
 			context->current_visible_start_ms = get_visible_start();
 			context->cursor_column = 0;
 			context->cursor_row = 0;
-			context->current_color = context->settings.default_color;
+			context->current_color = context->settings->default_color;
 			context->font = FONT_REGULAR;
 			context->mode = MODE_POPON;
 			break;
@@ -926,7 +926,7 @@ void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *con
 	int indent=pac2_attribs[c2][2];
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "  --  Position: %d:%d, color: %s,  font: %s\n", row,
 		indent, color_text[context->current_color][0], font_text[context->font]);
-	if (context->settings.default_color == COL_USERDEFINED && (context->current_color == COL_WHITE || context->current_color == COL_TRANSPARENT))
+	if (context->settings->default_color == COL_USERDEFINED && (context->current_color == COL_WHITE || context->current_color == COL_TRANSPARENT))
 		context->current_color = COL_USERDEFINED;
 	if (context->mode != MODE_TEXT)
 	{
@@ -949,7 +949,7 @@ void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *con
 			if (use_buffer->row_used[j])
 			{
 				memset(use_buffer->characters[j], ' ', CCX_DECODER_608_SCREEN_WIDTH);
-				memset(use_buffer->colors[j], context->settings.default_color, CCX_DECODER_608_SCREEN_WIDTH);
+				memset(use_buffer->colors[j], context->settings->default_color, CCX_DECODER_608_SCREEN_WIDTH);
 				memset(use_buffer->fonts[j], FONT_REGULAR, CCX_DECODER_608_SCREEN_WIDTH);
 				use_buffer->characters[j][CCX_DECODER_608_SCREEN_WIDTH] = 0;
 				use_buffer->row_used[j] = 0;
@@ -980,7 +980,7 @@ void erase_both_memories(ccx_decoder_608_context *context, struct cc_subtitle *s
 	context->current_visible_start_ms = get_visible_start();
 	context->cursor_column = 0;
 	context->cursor_row = 0;
-	context->current_color = context->settings.default_color;
+	context->current_color = context->settings->default_color;
 	context->font = FONT_REGULAR;
 
 	erase_memory(context, true);
@@ -1076,9 +1076,10 @@ int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *cont
 }
 
 /* If wb is NULL, then only XDS will be processed */
-int process608(const unsigned char *data, int length, ccx_decoder_608_context *context, struct cc_subtitle *sub)
+int process608(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub)
 {
 	struct ccx_decoder_608_report  *report = NULL;
+	ccx_decoder_608_context *context = private_data;
 	static int textprinted = 0;
 	int i;
 	if (context)
@@ -1204,7 +1205,7 @@ int process608(const unsigned char *data, int length, ccx_decoder_608_context *c
 				//	   current_field, cb_field1, cb_field2, cb_708 );
 			}
 
-			if (wrote_to_screen && context->settings.direct_rollup && // If direct_rollup is enabled and
+			if (wrote_to_screen && context->settings->direct_rollup && // If direct_rollup is enabled and
 					(context->mode == MODE_FAKE_ROLLUP_1 || // we are in rollup mode, write now.
 					 context->mode == MODE_ROLLUP_2 ||
 					 context->mode == MODE_ROLLUP_3 ||

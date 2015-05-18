@@ -83,6 +83,13 @@ struct ccx_decoders_common_settings_t
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
 	void *wbout1;
 	int cc_to_stdout;
+	int extract; // Extract 1st, 2nd or both fields
+	int fullbin; // Disable pruning of padding cc blocks
+	struct ccx_decoder_608_settings *settings_608; //  Contains the settings for the 608 decoder.
+	int cc_channel; // Channel we want to dump in srt mode
+	int trim_subs; // Remove spaces at sides?
+	enum ccx_encoding_type encoding;
+	unsigned send_to_srv;
 };
 struct lib_cc_decode
 {
@@ -101,6 +108,10 @@ struct lib_cc_decode
 	void *wbout1;
 	void *wbout2;
 	LLONG subs_delay; // ms to delay (or advance) subs
+	int extract; // Extract 1st, 2nd or both fields
+	int fullbin; // Disable pruning of padding cc blocks
+
+	int (*writedata)(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 };
 
 #endif

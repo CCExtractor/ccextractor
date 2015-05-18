@@ -6,7 +6,7 @@
 void connect_to_srv(const char *addr, const char *port, const char *cc_desc);
 
 void net_send_header(const unsigned char *data, size_t len);
-void net_send_cc(const unsigned char *data, size_t len);
+int net_send_cc(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 
 int start_tcp_srv(const char *port, const char *pwd);
 

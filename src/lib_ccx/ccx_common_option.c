@@ -2,7 +2,6 @@
 #include "ccx_encoders_common.h"
 #include "utility.h"
 
-struct ccx_s_options ccx_options;
 /* Parameters */
 void init_options (struct ccx_s_options *options)
 {

@@ -5,6 +5,7 @@
 #include "ccx_decoders_structs.h"
 #include "ccx_encoders_structs.h"
 #include "ccx_encoders_helpers.h"
+#include "ccx_common_option.h"
 
 #define REQUEST_BUFFER_CAPACITY(ctx,length) if (length>ctx->capacity) \
 {ctx->capacity = length * 2; ctx->buffer = (unsigned char*)realloc(ctx->buffer, ctx->capacity); \
@@ -33,6 +34,23 @@ struct encoder_ctx
 	LLONG subs_delay;
 	LLONG last_displayed_subs_ms;
 	int startcredits_displayed;
+	enum ccx_encoding_type encoding;
+	enum ccx_output_date_format date_format;
+	char millis_separator;
+	int sentence_cap ; // FIX CASE? = Fix case?
+	int trim_subs; // "    Remove spaces at sides?    "
+	int autodash; // Add dashes (-) before each speaker automatically?
+	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
+	/* Credit stuff */
+	char *start_credits_text;
+	char *end_credits_text;
+	struct ccx_encoders_transcript_format *transcript_settings; // Keeps the settings for generating transcript output files.
+	struct ccx_boundary_time startcreditsnotbefore, startcreditsnotafter; // Where to insert start credits, if possible
+	struct ccx_boundary_time startcreditsforatleast, startcreditsforatmost; // How long to display them?
+	struct ccx_boundary_time endcreditsforatleast, endcreditsforatmost;
+	unsigned int teletext_mode; // 0=Disabled, 1 = Not found, 2=Found
+	unsigned int send_to_srv;
+	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048
@@ -44,10 +62,11 @@ struct encoder_ctx
  *
  * @param ctx preallocated encoder ctx
  * @param out output context
+ * @param opt Option to initilaize encoder cfg params
  *
  * @return 0 on SUCESS, -1 on failure
  */
-int init_encoder(struct encoder_ctx *ctx,struct ccx_s_write *out);
+int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_options *opt);
 
 /**
  * try to add end credits in subtitle file and then write subtitle

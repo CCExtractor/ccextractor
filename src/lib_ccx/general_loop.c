@@ -601,7 +601,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 
         static LLONG last_pts = 0x01FFFFFFFFLL;
 
-		if (ccx_options.hauppauge_mode)
+		if (ctx->hauppauge_mode)
 		{
 			got = process_raw_with_field(ctx, &dec_sub);
 			if (pts_set)
@@ -678,7 +678,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
         }
         pos+=got;
 
-        if (ccx_options.live_stream)
+        if (ctx->live_stream)
         {
             int cur_sec = (int) (get_fts() / 1000);
             int th=cur_sec/10;
@@ -715,7 +715,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
     if (has_ccdata_buffered)
         process_hdcc(ctx, &dec_sub);
 
-    if (ctx->total_past!=ctx->total_inputsize && ccx_options.binary_concat && !dec_ctx->processed_enough)
+    if (ctx->total_past!=ctx->total_inputsize && ctx->binary_concat && !dec_ctx->processed_enough)
     {
         mprint("\n\n\n\nATTENTION!!!!!!\n");
         mprint("Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",

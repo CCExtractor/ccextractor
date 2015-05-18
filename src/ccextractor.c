@@ -10,6 +10,7 @@ License: GPL 2.0
 #include <signal.h>
 #include "ffmpeg_intgr.h"
 #include "ccx_common_option.h"
+#include "ccx_mp4.h"
 
 struct lib_ccx_ctx *signal_ctx;
 void sigint_handler()
@@ -20,7 +21,7 @@ void sigint_handler()
 	exit(EXIT_SUCCESS);
 }
 
-
+struct ccx_s_options ccx_options;
 int main(int argc, char *argv[])
 {
 	char *c;
@@ -275,13 +276,13 @@ int main(int argc, char *argv[])
 				switch (ccx_options.write_format)
 				{
 				case CCX_OF_RAW:
-					init_encoder(enc_ctx, &ctx->wbout1);
-					writeraw(BROADCAST_HEADER, sizeof(BROADCAST_HEADER), &ctx->wbout1);
+					init_encoder(enc_ctx, &ctx->wbout1,&ccx_options);
+					dec_ctx->writedata(BROADCAST_HEADER, sizeof(BROADCAST_HEADER), dec_ctx->context_cc608_field_1, NULL);
 					break;
 				case CCX_OF_DVDRAW:
 					break;
 				case CCX_OF_RCWT:
-					if (init_encoder(enc_ctx, &ctx->wbout1))
+					if (init_encoder(enc_ctx, &ctx->wbout1, &ccx_options))
 						fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 					set_encoder_subs_delay(enc_ctx, ctx->subs_delay);
 					set_encoder_last_displayed_subs_ms(enc_ctx, ctx->last_displayed_subs_ms);
@@ -290,13 +291,13 @@ int main(int argc, char *argv[])
 				default:
 					if (!ccx_options.no_bom){
 						if (ccx_options.encoding == CCX_ENC_UTF_8){ // Write BOM
-							writeraw(UTF8_BOM, sizeof(UTF8_BOM), &ctx->wbout1);
+							dec_ctx->writedata(UTF8_BOM, sizeof(UTF8_BOM), dec_ctx->context_cc608_field_1, NULL);
 						}
 						if (ccx_options.encoding == CCX_ENC_UNICODE){ // Write BOM				
-							writeraw(LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM), &ctx->wbout1);
+							dec_ctx->writedata(LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM), dec_ctx->context_cc608_field_1, NULL);
 						}
 					}
-					if (init_encoder(enc_ctx, &ctx->wbout1)){
+					if (init_encoder(enc_ctx, &ctx->wbout1, &ccx_options)){
 						fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 					}
 					set_encoder_subs_delay(enc_ctx, ctx->subs_delay);
@@ -338,7 +339,7 @@ int main(int argc, char *argv[])
 						fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Failed\n");
 					}
 					if(ccx_options.write_format == CCX_OF_RAW)
-						writeraw (BROADCAST_HEADER,sizeof (BROADCAST_HEADER),&ctx->wbout2);
+						dec_ctx->writedata (BROADCAST_HEADER,sizeof (BROADCAST_HEADER), dec_ctx->context_cc608_field_2, NULL);
 				}
 
 				switch (ccx_options.write_format)
@@ -347,7 +348,7 @@ int main(int argc, char *argv[])
 					case CCX_OF_DVDRAW:
 						break;
 					case CCX_OF_RCWT:
-						if( init_encoder(enc_ctx+1,&ctx->wbout2) )
+						if( init_encoder(enc_ctx+1, &ctx->wbout2, &ccx_options) )
 							fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 						set_encoder_subs_delay(enc_ctx+1, ctx->subs_delay);
 						set_encoder_last_displayed_subs_ms(enc_ctx+1, ctx->last_displayed_subs_ms);
@@ -356,13 +357,13 @@ int main(int argc, char *argv[])
 					default:
 						if (!ccx_options.no_bom){
 							if (ccx_options.encoding == CCX_ENC_UTF_8){ // Write BOM
-								writeraw(UTF8_BOM, sizeof(UTF8_BOM), &ctx->wbout2);
+								dec_ctx->writedata(UTF8_BOM, sizeof(UTF8_BOM), dec_ctx->context_cc608_field_2, NULL);
 							}
 							if (ccx_options.encoding == CCX_ENC_UNICODE){ // Write BOM				
-								writeraw(LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM), &ctx->wbout2);
+								dec_ctx->writedata(LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM), dec_ctx->context_cc608_field_2, NULL);
 							}
 						}
-						if (init_encoder(enc_ctx + 1, &ctx->wbout2)){
+						if (init_encoder(enc_ctx + 1, &ctx->wbout2, &ccx_options)){
 							fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 						}
 						set_encoder_subs_delay(enc_ctx+1, ctx->subs_delay);
@@ -564,6 +565,7 @@ int main(int argc, char *argv[])
 				
 		switch (ctx->stream_mode)
 		{
+			struct ccx_s_mp4Cfg mp4_cfg = {ccx_options.mp4vidtrack};
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
 				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
 					ccx_options.use_gop_as_pts = 1; // Force GOP timing for ES
@@ -590,10 +592,12 @@ int main(int argc, char *argv[])
 				show_myth_banner = 1;
 				myth_loop(ctx, &enc_ctx);
 				break;
-			case CCX_SM_MP4:				
+			case CCX_SM_MP4:
 				mprint ("\rAnalyzing data with GPAC (MP4 library)\n");
 				close_input_file(ctx); // No need to have it open. GPAC will do it for us
-				processmp4 (ctx, ctx->inputfile[0],&enc_ctx);
+				processmp4 (ctx, &mp4_cfg, ctx->inputfile[0],&enc_ctx);
+				if (ccx_options.print_file_reports)
+					print_file_report(ctx);
 				break;
 #ifdef WTV_DEBUG
 			case CCX_SM_HEX_DUMP:

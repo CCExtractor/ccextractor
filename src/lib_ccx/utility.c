@@ -45,13 +45,13 @@ int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, un
 	return v;
 }
 
-void millis_to_date (uint64_t timestamp, char *buffer)
+void millis_to_date (uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator)
 {
 	time_t secs;
 	unsigned int millis;
 	char c_temp[80];
 	struct tm *time_struct=NULL;
-	switch (ccx_options.date_format)
+	switch (date_format)
 	{
 		case ODF_NONE:
 			buffer[0]=0;
@@ -67,15 +67,14 @@ void millis_to_date (uint64_t timestamp, char *buffer)
 			secs=(time_t) (timestamp/1000);
 			millis=(time_t) (timestamp%1000);
 			sprintf (buffer, "%lu%c%03u", (unsigned long) secs,
-				ccx_options.millis_separator,(unsigned) millis);
+				millis_separator,(unsigned) millis);
 			break;
 		case ODF_DATE:
 			secs=(time_t) (timestamp/1000);
 			millis=(unsigned int) (timestamp%1000);
             time_struct = gmtime(&secs);
             strftime(c_temp, sizeof(c_temp), "%Y%m%d%H%M%S", time_struct);
-			sprintf (buffer,"%s%c%03u",c_temp,
-				ccx_options.millis_separator,millis);
+			sprintf (buffer,"%s%c%03u", c_temp, millis_separator, millis);
 			break;
 
 		default:
