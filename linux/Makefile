@@ -95,10 +95,10 @@ $(OBJS_DIR)/%.o: %.cpp
 
 .PHONY: clean
 clean:
-	rm $(TARGET) 2>/dev/null || true
-	rm $(OBJS_CCX) $(OBJS_PNG) $(OBJS_ZLIB) $(OBJS_GPACMP4) $(OBJS) 2>/dev/null || true
-	rm -rd $(OBJS_DIR) 2>/dev/null || true
-	rm .depend 2>/dev/null || true
+	rm -rf $(TARGET) 2>/dev/null || true
+	rm -rf $(OBJS_CCX) $(OBJS_PNG) $(OBJS_ZLIB) $(OBJS_GPACMP4) $(OBJS) 2>/dev/null || true
+	rm -rdf $(OBJS_DIR) 2>/dev/null || true
+	rm -rf .depend 2>/dev/null || true
 
 .PHONY: install
 install: $(TARGET)
