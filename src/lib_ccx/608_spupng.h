@@ -1,4 +1,5 @@
 #ifndef __608_SPUPNG_H__
+#define __608_SPUPNG_H__
 
 #include "lib_ccx.h"
 #include "spupng_encoder.h"
