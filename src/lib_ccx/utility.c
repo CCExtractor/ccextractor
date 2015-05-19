@@ -159,30 +159,6 @@ void dbg_print(LLONG mask, const char *fmt, ...)
 	}
 }
 
-
-/* Shorten some debug output code. */
-void dvprint(const char *fmt, ...)
-{
-	va_list args;
-	if (!ccx_options.messages_target)
-		return;
-	if(! (ccx_options.debug_mask & CCX_DMT_VIDES ))
-		return;
-
-	va_start(args, fmt);
-	if (ccx_options.messages_target==CCX_MESSAGES_STDOUT)
-	{
-		vfprintf(stdout, fmt, args);
-		fflush (stdout);
-	}
-	else
-	{
-		vfprintf(stderr, fmt, args);
-		fflush (stderr);
-	}
-	va_end(args);
-}
-
 void dump (LLONG mask, unsigned char *start, int l, unsigned long abs_start, unsigned clear_high_bit)
 {
 	LLONG t=temp_debug ? (ccx_options.debug_mask_on_debug | ccx_options.debug_mask) : ccx_options.debug_mask; // Mask override?

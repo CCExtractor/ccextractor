@@ -3,6 +3,7 @@
 #include "utility.h"
 #include <math.h>
 
+#define dvprint(...) dbg_print( CCX_DMT_VIDES, __VA_ARGS__)
 // Functions to parse a AVC/H.264 data stream, see ISO/IEC 14496-10
 
 int ccblocks_in_avc_total=0;

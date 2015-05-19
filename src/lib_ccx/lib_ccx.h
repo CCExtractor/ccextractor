@@ -386,7 +386,6 @@ void myth_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
 
 // utility.c
 void fatal(int exit_code, const char *fmt, ...);
-void dvprint(const char *fmt, ...);
 void mprint (const char *fmt, ...);
 void sleep_secs (int secs);
 void dump (LLONG mask, unsigned char *start, int l, unsigned long abs_start, unsigned clear_high_bit);
