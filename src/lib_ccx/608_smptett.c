@@ -31,74 +31,74 @@
 void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
 	int used;
-    unsigned h1,m1,s1,ms1;
-    unsigned h2,m2,s2,ms2;
+	unsigned h1, m1, s1, ms1;
+	unsigned h2, m2, s2, ms2;
 
-    mstotime (ms_start,&h1,&m1,&s1,&ms1);
-    mstotime (ms_end-1,&h2,&m2,&s2,&ms2);
+	mstotime (ms_start, &h1, &m1, &s1, &ms1);
+	mstotime (ms_end-1, &h2, &m2, &s2, &ms2);
 
-    sprintf ((char *) str,"<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\r\n",h1,m1,s1,ms1, h2,m2,s2,ms2);
-    if (context->encoding!=CCX_ENC_UNICODE)
-    {
-        dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
-    }
-	used = encode_line(context->buffer,(unsigned char *) str);
+	sprintf ((char *) str, "<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\r\n", h1, m1, s1, ms1, h2, m2, s2, ms2);
+	if (context->encoding!=CCX_ENC_UNICODE)
+	{
+		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
+	}
+	used = encode_line(context->buffer, (unsigned char *) str);
 	write (context->out->fh, context->buffer, used);
-    int len=strlen (string);
-    unsigned char *unescaped= (unsigned char *) malloc (len+1);
-    unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
-    if (el==NULL || unescaped==NULL)
-        fatal (EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_sami() - not enough memory.\n");
-    int pos_r=0;
-    int pos_w=0;
-    // Scan for \n in the string and replace it with a 0
-    while (pos_r<len)
-    {
-        if (string[pos_r]=='\\' && string[pos_r+1]=='n')
-        {
-            unescaped[pos_w]=0;
-            pos_r+=2;
-        }
-        else
-        {
-            unescaped[pos_w]=string[pos_r];
-            pos_r++;
-        }
-        pos_w++;
-    }
-    unescaped[pos_w]=0;
-    // Now read the unescaped string (now several string'z and write them)
-    unsigned char *begin=unescaped;
-    while (begin<unescaped+len)
-    {
-        unsigned int u = encode_line (el, begin);
-        if (context->encoding!=CCX_ENC_UNICODE)
-        {
-            dbg_print(CCX_DMT_DECODER_608, "\r");
-            dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
-        }
+	int len = strlen (string);
+	unsigned char *unescaped= (unsigned char *) malloc (len+1);
+	unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
+	if (el == NULL || unescaped == NULL)
+		fatal (EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_sami() - not enough memory.\n");
+	int pos_r = 0;
+	int pos_w = 0;
+	// Scan for \n in the string and replace it with a 0
+	while (pos_r < len)
+	{
+		if (string[pos_r] == '\\' && string[pos_r+1] == 'n')
+		{
+			unescaped[pos_w] = 0;
+			pos_r += 2;
+		}
+		else
+		{
+			unescaped[pos_w] = string[pos_r];
+			pos_r++;
+		}
+		pos_w++;
+	}
+	unescaped[pos_w] = 0;
+	// Now read the unescaped string (now several string'z and write them)
+	unsigned char *begin = unescaped;
+	while (begin < unescaped+len)
+	{
+		unsigned int u = encode_line (el, begin);
+		if (context->encoding != CCX_ENC_UNICODE)
+		{
+			dbg_print(CCX_DMT_DECODER_608, "\r");
+			dbg_print(CCX_DMT_DECODER_608, "%s\n", subline);
+		}
 		write(context->out->fh, el, u);
-        //write (wb->fh, encoded_br, encoded_br_length);
+		//write (wb->fh, encoded_br, encoded_br_length);
 
 		write(context->out->fh, encoded_crlf, encoded_crlf_length);
-        begin+= strlen ((const char *) begin)+1;
-    }
+		begin += strlen ((const char *) begin)+1;
+	}
 
-    sprintf ((char *) str,"</p>\n");
-    if (context->encoding!=CCX_ENC_UNICODE)
-    {
-        dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
-    }
-	used = encode_line(context->buffer,(unsigned char *) str);
+	sprintf ((char *) str, "</p>\n");
+	if (context->encoding != CCX_ENC_UNICODE)
+	{
+		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
+	}
+	used = encode_line(context->buffer, (unsigned char *) str);
 	write(context->out->fh, context->buffer, used);
-    sprintf ((char *) str,"<p begin=\"%02u:%02u:%02u.%03u\">\n\n",h2,m2,s2,ms2);
-    if (context->encoding!=CCX_ENC_UNICODE)
-    {
-        dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
-    }
-	used = encode_line(context->buffer,(unsigned char *) str);
+	sprintf ((char *) str, "<p begin=\"%02u:%02u:%02u.%03u\">\n\n", h2, m2, s2, ms2);
+	if (context->encoding != CCX_ENC_UNICODE)
+	{
+		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
+	}
+	used = encode_line(context->buffer, (unsigned char *) str);
 	write (context->out->fh, context->buffer, used);
-    sprintf ((char *) str,"</p>\n");
+	sprintf ((char *) str, "</p>\n");
 	free(el);
 	free(unescaped);
 }
@@ -167,59 +167,59 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *context)
 {
 	int used;
-    unsigned h1,m1,s1,ms1;
-    unsigned h2,m2,s2,ms2;
+	unsigned h1,m1,s1,ms1;
+	unsigned h2,m2,s2,ms2;
 	LLONG endms;
-    int wrote_something=0;
-    LLONG startms = data->start_time;
+	int wrote_something=0;
+	LLONG startms = data->start_time;
 
-    startms+=context->subs_delay;
-    if (startms<0) // Drop screens that because of subs_delay start too early
-        return 0;
+	startms+=context->subs_delay;
+	if (startms<0) // Drop screens that because of subs_delay start too early
+		return 0;
 
-    endms  = data->end_time;
-    endms--; // To prevent overlapping with next line.
-    mstotime (startms,&h1,&m1,&s1,&ms1);
-    mstotime (endms-1,&h2,&m2,&s2,&ms2);
+	endms  = data->end_time;
+	endms--; // To prevent overlapping with next line.
+	mstotime (startms,&h1,&m1,&s1,&ms1);
+	mstotime (endms-1,&h2,&m2,&s2,&ms2);
 
-    sprintf ((char *) str,"<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\n",h1,m1,s1,ms1, h2,m2,s2,ms2);
+	sprintf ((char *) str,"<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\n",h1,m1,s1,ms1, h2,m2,s2,ms2);
 
-    if (context->encoding!=CCX_ENC_UNICODE)
-    {
-        dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
-    }
+	if (context->encoding!=CCX_ENC_UNICODE)
+	{
+		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
+	}
 	used = encode_line(context->buffer,(unsigned char *) str);
 	write (context->out->fh, context->buffer, used);
-    for (int i=0;i<15;i++)
-    {
-        if (data->row_used[i])
-        {
-            int length = get_decoder_line_encoded (subline, i, data);
-            if (context->encoding!=CCX_ENC_UNICODE)
-            {
-                dbg_print(CCX_DMT_DECODER_608, "\r");
-                dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
-            }
+	for (int i=0; i < 15; i++)
+	{
+		if (data->row_used[i])
+		{
+			int length = get_decoder_line_encoded (subline, i, data);
+			if (context->encoding!=CCX_ENC_UNICODE)
+			{
+				dbg_print(CCX_DMT_DECODER_608, "\r");
+				dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
+			}
 			write(context->out->fh, subline, length);
-            wrote_something=1;
+			wrote_something=1;
 
 			write(context->out->fh, encoded_crlf, encoded_crlf_length);
-        }
-    }
-    sprintf ((char *) str,"</p>\n");
-    if (context->encoding!=CCX_ENC_UNICODE)
-    {
-        dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
-    }
+		}
+	}
+	sprintf ((char *) str,"</p>\n");
+	if (context->encoding!=CCX_ENC_UNICODE)
+	{
+		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
+	}
 	used = encode_line(context->buffer,(unsigned char *) str);
 	write (context->out->fh, context->buffer, used);
 
-    if (context->encoding!=CCX_ENC_UNICODE)
-    {
-        dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
-    }
+	if (context->encoding!=CCX_ENC_UNICODE)
+	{
+		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
+	}
 	used = encode_line(context->buffer,(unsigned char *) str);
-    //write (wb->fh, enc_buffer,enc_buffer_used);
+	//write (wb->fh, enc_buffer,enc_buffer_used);
 
-    return wrote_something;
+	return wrote_something;
 }
