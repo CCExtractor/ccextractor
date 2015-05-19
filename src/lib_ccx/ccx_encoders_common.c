@@ -362,62 +362,63 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 {
 	LLONG st, end, window, length;
 	LLONG l = start_ms + context->subs_delay;
-    // We have a windows from last_displayed_subs_ms to l - we need to see if it fits
+	// We have a windows from last_displayed_subs_ms to l - we need to see if it fits
 
-    if (l < context->startcreditsnotbefore.time_in_ms) // Too early
-        return;
+	if (l < context->startcreditsnotbefore.time_in_ms) // Too early
+		return;
 
-    if (context->last_displayed_subs_ms+1 > context->startcreditsnotafter.time_in_ms) // Too late
-        return;
+	if (context->last_displayed_subs_ms+1 > context->startcreditsnotafter.time_in_ms) // Too late
+		return;
 
-    st = context->startcreditsnotbefore.time_in_ms>(context->last_displayed_subs_ms+1) ?
-        context->startcreditsnotbefore.time_in_ms : (context->last_displayed_subs_ms+1); // When would credits actually start
+	st = context->startcreditsnotbefore.time_in_ms>(context->last_displayed_subs_ms+1) ?
+		context->startcreditsnotbefore.time_in_ms : (context->last_displayed_subs_ms+1); // When would credits actually start
 
-    end = context->startcreditsnotafter.time_in_ms<(l-1) ?
-        context->startcreditsnotafter.time_in_ms : (l-1);
+	end = context->startcreditsnotafter.time_in_ms<(l-1) ?
+		context->startcreditsnotafter.time_in_ms : (l-1);
 
-    window = end-st; // Allowable time in MS
+	window = end-st; // Allowable time in MS
 
-    if (context->startcreditsforatleast.time_in_ms>window) // Window is too short
-        return;
+	if (context->startcreditsforatleast.time_in_ms>window) // Window is too short
+		return;
 
-    length=context->startcreditsforatmost.time_in_ms > window ?
-        window : context->startcreditsforatmost.time_in_ms;
+	length=context->startcreditsforatmost.time_in_ms > window ?
+		window : context->startcreditsforatmost.time_in_ms;
 
-    dbg_print(CCX_DMT_VERBOSE, "Last subs: %lld   Current position: %lld\n",
-        context->last_displayed_subs_ms, l);
-    dbg_print(CCX_DMT_VERBOSE, "Not before: %lld   Not after: %lld\n",
-        context->startcreditsnotbefore.time_in_ms,
-		context->startcreditsnotafter.time_in_ms);
-    dbg_print(CCX_DMT_VERBOSE, "Start of window: %lld   End of window: %lld\n",st,end);
+	dbg_print(CCX_DMT_VERBOSE, "Last subs: %lld   Current position: %lld\n",
+			context->last_displayed_subs_ms, l);
+	dbg_print(CCX_DMT_VERBOSE, "Not before: %lld   Not after: %lld\n",
+			context->startcreditsnotbefore.time_in_ms,
+			context->startcreditsnotafter.time_in_ms);
+	dbg_print(CCX_DMT_VERBOSE, "Start of window: %lld   End of window: %lld\n",st,end);
 
-    if (window>length+2)
-    {
-        // Center in time window
-        LLONG pad=window-length;
-        st+=(pad/2);
-    }
-    end=st+length;
-    switch (context->write_format)
-    {
-        case CCX_OF_SRT:
-            write_stringz_as_srt(context->start_credits_text,context,st,end);
-            break;
-        case CCX_OF_SAMI:
+	if (window>length+2)
+	{
+		// Center in time window
+		LLONG pad=window-length;
+		st+=(pad/2);
+	}
+	end=st+length;
+	switch (context->write_format)
+	{
+		case CCX_OF_SRT:
+			write_stringz_as_srt(context->start_credits_text,context,st,end);
+			break;
+		case CCX_OF_SAMI:
 			write_stringz_as_sami(context->start_credits_text, context, st, end);
-            break;
-        case CCX_OF_SMPTETT:
+			break;
+		case CCX_OF_SMPTETT:
 			write_stringz_as_smptett(context->start_credits_text, context, st, end);
-            break;
-        default:
-            // Do nothing for the rest
-            break;
-    }
-    context->startcredits_displayed=1;
-    return;
+			break;
+		default:
+			// Do nothing for the rest
+			break;
+	}
+	context->startcredits_displayed=1;
+	return;
 
 
 }
+
 int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_options *opt)
 {
 	ctx->buffer = (unsigned char *) malloc (INITIAL_ENC_BUFFER_CAPACITY);
