@@ -42,221 +42,221 @@ extern void *ccx_dvb_context;
 // Program stream specific data grabber
 LLONG ps_getmoredata(struct lib_ccx_ctx *ctx)
 {
-    int enough = 0;
-    int payload_read = 0;
+	int enough = 0;
+	int payload_read = 0;
 
-    static unsigned vpesnum=0;
+	static unsigned vpesnum=0;
 
-    unsigned char nextheader[512]; // Next header in PS
-    int falsepack=0;
+	unsigned char nextheader[512]; // Next header in PS
+	int falsepack=0;
 
-    // Read and return the next video PES payload
-    do
-    {
-        if (BUFSIZE-inbuf<500)
-        {
-            mprint("Less than 500 left\n");
-            enough=1; // Stop when less than 500 bytes are left in buffer
-        }
-        else
-        {
-            buffered_read(ctx, nextheader, 6);
-            ctx->past+=result;
-            if (result!=6)
-            {
-                // Consider this the end of the show.
-                end_of_file=1;
-                break;
-            }
+	// Read and return the next video PES payload
+	do
+	{
+		if (BUFSIZE-inbuf<500)
+		{
+			mprint("Less than 500 left\n");
+			enough=1; // Stop when less than 500 bytes are left in buffer
+		}
+		else
+		{
+			buffered_read(ctx, nextheader, 6);
+			ctx->past+=result;
+			if (result!=6)
+			{
+				// Consider this the end of the show.
+				end_of_file=1;
+				break;
+			}
 
-            // Search for a header that is not a picture header (nextheader[3]!=0x00)
-            while ( !(nextheader[0]==0x00 && nextheader[1]==0x00
-                      && nextheader[2]==0x01 && nextheader[3]!=0x00) )
-            {
-                if( !strangeheader )
-                {
-                    mprint ("\nNot a recognized header. Searching for next header.\n");
-                    dump (CCX_DMT_GENERIC_NOTICES, nextheader,6,0,0);
-                    // Only print the message once per loop / unrecognized header
-                    strangeheader = 1;
-                }
+			// Search for a header that is not a picture header (nextheader[3]!=0x00)
+			while ( !(nextheader[0]==0x00 && nextheader[1]==0x00
+						&& nextheader[2]==0x01 && nextheader[3]!=0x00) )
+			{
+				if( !strangeheader )
+				{
+					mprint ("\nNot a recognized header. Searching for next header.\n");
+					dump (CCX_DMT_GENERIC_NOTICES, nextheader,6,0,0);
+					// Only print the message once per loop / unrecognized header
+					strangeheader = 1;
+				}
 
-                unsigned char *newheader;
-                // The amount of bytes read into nextheader by the buffered_read above
-                int hlen = 6;
-                // Find first 0x00
-                // If there is a 00 in the first element we need to advance
-                // one step as clearly bytes 1,2,3 are wrong
-                newheader = (unsigned char *) memchr (nextheader+1, 0, hlen-1);
-                if (newheader != NULL )
-                {
-                    int atpos = newheader-nextheader;
+				unsigned char *newheader;
+				// The amount of bytes read into nextheader by the buffered_read above
+				int hlen = 6;
+				// Find first 0x00
+				// If there is a 00 in the first element we need to advance
+				// one step as clearly bytes 1,2,3 are wrong
+				newheader = (unsigned char *) memchr (nextheader+1, 0, hlen-1);
+				if (newheader != NULL )
+				{
+					int atpos = newheader-nextheader;
 
-                    memmove (nextheader,newheader,(size_t)(hlen-atpos));
-                    buffered_read(ctx, nextheader+(hlen-atpos),atpos);
-                    ctx->past+=result;
-                    if (result!=atpos)
-                    {
-                        end_of_file=1;
-                        break;
-                    }
-                }
-                else
-                {
-                    buffered_read(ctx, nextheader, hlen);
-                    ctx->past+=result;
-                    if (result!=hlen)
-                    {
-                        end_of_file=1;
-                        break;
-                    }
-                }
-            }
-            if (end_of_file)
-            {
-                // No more headers
-                break;
-            }
-            // Found 00-00-01 in nextheader, assume a regular header
-            strangeheader=0;
+					memmove (nextheader,newheader,(size_t)(hlen-atpos));
+					buffered_read(ctx, nextheader+(hlen-atpos),atpos);
+					ctx->past+=result;
+					if (result!=atpos)
+					{
+						end_of_file=1;
+						break;
+					}
+				}
+				else
+				{
+					buffered_read(ctx, nextheader, hlen);
+					ctx->past+=result;
+					if (result!=hlen)
+					{
+						end_of_file=1;
+						break;
+					}
+				}
+			}
+			if (end_of_file)
+			{
+				// No more headers
+				break;
+			}
+			// Found 00-00-01 in nextheader, assume a regular header
+			strangeheader=0;
 
-            // PACK header
-            if ( nextheader[3]==0xBA)
-            {
-                dbg_print(CCX_DMT_VERBOSE, "PACK header\n");
-                buffered_read(ctx, nextheader+6,8);
-                ctx->past+=result;
-                if (result!=8)
-                {
-                    // Consider this the end of the show.
-                    end_of_file=1;
-                    break;
-                }
+			// PACK header
+			if ( nextheader[3]==0xBA)
+			{
+				dbg_print(CCX_DMT_VERBOSE, "PACK header\n");
+				buffered_read(ctx, nextheader+6,8);
+				ctx->past+=result;
+				if (result!=8)
+				{
+					// Consider this the end of the show.
+					end_of_file=1;
+					break;
+				}
 
-                if ( (nextheader[4]&0xC4)!=0x44 || !(nextheader[6]&0x04)
-                    || !(nextheader[8]&0x04) || !(nextheader[9]&0x01)
-                    || (nextheader[12]&0x03)!=0x03 )
-                {
-                    // broken pack header
-                    falsepack=1;
-                }
-                // We don't need SCR/SCR_ext
-                int stufflen=nextheader[13]&0x07;
+				if ( (nextheader[4]&0xC4)!=0x44 || !(nextheader[6]&0x04)
+						|| !(nextheader[8]&0x04) || !(nextheader[9]&0x01)
+						|| (nextheader[12]&0x03)!=0x03 )
+				{
+					// broken pack header
+					falsepack=1;
+				}
+				// We don't need SCR/SCR_ext
+				int stufflen=nextheader[13]&0x07;
 
-                if (falsepack)
-                {
-                    mprint ("Warning: Defective Pack header\n");
-                }
+				if (falsepack)
+				{
+					mprint ("Warning: Defective Pack header\n");
+				}
 
-                // If not defect, load stuffing
-                buffered_skip (ctx, (int) stufflen);
-                ctx->past+=stufflen;
-                // fake a result value as something was skipped
-                result=1;
-                continue;
-            }
-            // Some PES stream
-            else if (nextheader[3]>=0xBB && nextheader[3]<=0xDF)
-            {
-                // System header
-                // nextheader[3]==0xBB
-                // 0xBD Private 1
-                // 0xBE PAdding
-                // 0xBF Private 2
-                // 0xC0-0DF audio
+				// If not defect, load stuffing
+				buffered_skip (ctx, (int) stufflen);
+				ctx->past+=stufflen;
+				// fake a result value as something was skipped
+				result=1;
+				continue;
+			}
+			// Some PES stream
+			else if (nextheader[3]>=0xBB && nextheader[3]<=0xDF)
+			{
+				// System header
+				// nextheader[3]==0xBB
+				// 0xBD Private 1
+				// 0xBE PAdding
+				// 0xBF Private 2
+				// 0xC0-0DF audio
 
-                unsigned headerlen=nextheader[4]<<8 | nextheader[5];
+				unsigned headerlen=nextheader[4]<<8 | nextheader[5];
 
-                dbg_print(CCX_DMT_VERBOSE, "non Video PES (type 0x%2X) - len %u\n",
-                           nextheader[3], headerlen);
+				dbg_print(CCX_DMT_VERBOSE, "non Video PES (type 0x%2X) - len %u\n",
+						nextheader[3], headerlen);
 
-                // The 15000 here is quite arbitrary, the longest packages I
-                // know of are 12302 bytes (Private 1 data in RTL recording).
-                if ( headerlen > 15000 )
-                {
-                    mprint("Suspicious non Video PES (type 0x%2X) - len %u\n",
-                           nextheader[3], headerlen);
-                    mprint("Do not skip over, search for next.\n");
-                    headerlen = 2;
-                }
+				// The 15000 here is quite arbitrary, the longest packages I
+				// know of are 12302 bytes (Private 1 data in RTL recording).
+				if ( headerlen > 15000 )
+				{
+					mprint("Suspicious non Video PES (type 0x%2X) - len %u\n",
+							nextheader[3], headerlen);
+					mprint("Do not skip over, search for next.\n");
+					headerlen = 2;
+				}
 
-                // Skip over it
-                buffered_skip (ctx, (int) headerlen);
-                ctx->past+=headerlen;
-                // fake a result value as something was skipped
-                result=1;
+				// Skip over it
+				buffered_skip (ctx, (int) headerlen);
+				ctx->past+=headerlen;
+				// fake a result value as something was skipped
+				result=1;
 
-                continue;
-            }
-            // Read the next video PES
-            else if ((nextheader[3]&0xf0)==0xe0)
-            {
-                int hlen; // Dummy variable, unused
-                int peslen = read_video_pes_header(ctx, nextheader, &hlen, 0);
-                if (peslen < 0)
-                {
-                    end_of_file=1;
-                    break;
-                }
+				continue;
+			}
+			// Read the next video PES
+			else if ((nextheader[3]&0xf0)==0xe0)
+			{
+				int hlen; // Dummy variable, unused
+				int peslen = read_video_pes_header(ctx, nextheader, &hlen, 0);
+				if (peslen < 0)
+				{
+					end_of_file=1;
+					break;
+				}
 
-                vpesnum++;
-                dbg_print(CCX_DMT_VERBOSE, "PES video packet #%u\n", vpesnum);
+				vpesnum++;
+				dbg_print(CCX_DMT_VERBOSE, "PES video packet #%u\n", vpesnum);
 
 
-                int want = (int) ((BUFSIZE-inbuf)>peslen ? peslen : (BUFSIZE-inbuf));
+				int want = (int) ((BUFSIZE-inbuf)>peslen ? peslen : (BUFSIZE-inbuf));
 
-                if (want != peslen) {
-                    fatal(EXIT_BUFFER_FULL, "Oh Oh, PES longer than remaining buffer space\n");
-                }
-                if (want == 0) // Found package with header but without payload
-                {
-                    continue;
-                }
+				if (want != peslen) {
+					fatal(EXIT_BUFFER_FULL, "Oh Oh, PES longer than remaining buffer space\n");
+				}
+				if (want == 0) // Found package with header but without payload
+				{
+					continue;
+				}
 
-                buffered_read (ctx, ctx->buffer+inbuf, want);
-                ctx->past=ctx->past+result;
-                if (result>0) {
-                    payload_read+=(int) result;
-                }
-                inbuf+=result;
+				buffered_read (ctx, ctx->buffer+inbuf, want);
+				ctx->past=ctx->past+result;
+				if (result>0) {
+					payload_read+=(int) result;
+				}
+				inbuf+=result;
 
-                if (result!=want) { // Not complete - EOF
-                    end_of_file=1;
-                    break;
-                }
-                enough = 1; // We got one PES
+				if (result!=want) { // Not complete - EOF
+					end_of_file=1;
+					break;
+				}
+				enough = 1; // We got one PES
 
-            } else {
-                // If we are here this is an unknown header type
-                mprint("Unknown header %02X\n", nextheader[3]);
-                strangeheader=1;
-            }
-        }
-    }
-    while (result!=0 && !enough && BUFSIZE!=inbuf);
+			} else {
+				// If we are here this is an unknown header type
+				mprint("Unknown header %02X\n", nextheader[3]);
+				strangeheader=1;
+			}
+		}
+	}
+	while (result!=0 && !enough && BUFSIZE!=inbuf);
 
-    dbg_print(CCX_DMT_VERBOSE, "PES data read: %d\n", payload_read);
+	dbg_print(CCX_DMT_VERBOSE, "PES data read: %d\n", payload_read);
 
-    return payload_read;
+	return payload_read;
 }
 
 
 // Returns number of bytes read, or zero for EOF
 LLONG general_getmoredata(struct lib_ccx_ctx *ctx)
 {
-    int bytesread = 0;
-    int want;
+	int bytesread = 0;
+	int want;
 
-    do
-    {
-        want = (int) (BUFSIZE-inbuf);
-        buffered_read (ctx, ctx->buffer+inbuf,want); // This is a macro.
-        // 'result' HAS the number of bytes read
-        ctx->past=ctx->past+result;
-        inbuf+=result;
-        bytesread+=(int) result;
-    } while (result!=0 && result!=want);
-    return bytesread;
+	do
+	{
+		want = (int) (BUFSIZE-inbuf);
+		buffered_read (ctx, ctx->buffer+inbuf,want); // This is a macro.
+		// 'result' HAS the number of bytes read
+		ctx->past=ctx->past+result;
+		inbuf+=result;
+		bytesread+=(int) result;
+	} while (result!=0 && result!=want);
+	return bytesread;
 }
 
 #ifdef WTV_DEBUG
@@ -423,27 +423,27 @@ void processhex (struct lib_ccx_ctx *ctx, char *filename)
 // Raw file process
 void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
 {
-    LLONG got;
-    LLONG processed;
+	LLONG got;
+	LLONG processed;
 	struct cc_subtitle dec_sub;
 
-    current_pts = 90; // Pick a valid PTS time
-    pts_set = 1;
-    set_fts(); // Now set the FTS related variables
+	current_pts = 90; // Pick a valid PTS time
+	pts_set = 1;
+	set_fts(); // Now set the FTS related variables
 	memset(&dec_sub, 0, sizeof(dec_sub));
-    dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
-               print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-               (unsigned) (current_pts));
-    dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
+	dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
+			print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
+			(unsigned) (current_pts));
+	dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
 
-    do
-    {
-        inbuf=0;
+	do
+	{
+		inbuf=0;
 
-        got = general_getmoredata(ctx);
+		got = general_getmoredata(ctx);
 
-        if (got == 0) // Shortcircuit if we got nothing to process
-            break;
+		if (got == 0) // Shortcircuit if we got nothing to process
+			break;
 
 		processed=process_raw(ctx, &dec_sub);
 		if (dec_sub.got_output)
@@ -452,22 +452,21 @@ void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
 			dec_sub.got_output = 0;
 		}
 
-        int ccblocks = cb_field1;
-        current_pts += cb_field1*1001/30*(MPEG_CLOCK_FREQ/1000);
-        set_fts(); // Now set the FTS related variables including fts_max
+		int ccblocks = cb_field1;
+		current_pts += cb_field1*1001/30*(MPEG_CLOCK_FREQ/1000);
+		set_fts(); // Now set the FTS related variables including fts_max
 
-        dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
-               print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-               (unsigned) (current_pts));
-        dbg_print(CCX_DMT_VIDES, "  FTS: %s incl. %d CB\n",
-               print_mstime(get_fts()), ccblocks);
+		dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
+				print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
+				(unsigned) (current_pts));
+		dbg_print(CCX_DMT_VIDES, "  FTS: %s incl. %d CB\n",
+				print_mstime(get_fts()), ccblocks);
 
-        if (processed<got)
-        {
-            mprint ("BUG BUG\n");
-        }
-    }
-    while (inbuf);
+		if (processed<got)
+		{
+			mprint ("BUG BUG\n");
+		}
+	} while (inbuf);
 }
 
 /* Process inbuf bytes in buffer holding raw caption data (three byte packets, the first being the field).
@@ -508,98 +507,98 @@ LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 	unsigned char data[3];
 	struct lib_cc_decode *dec_ctx = NULL;
 	dec_ctx = ctx->dec_ctx;
-    data[0]=0x04; // Field 1
-    current_field=1;
+	data[0]=0x04; // Field 1
+	current_field=1;
 
-    for (unsigned long i=0; i<inbuf; i=i+2)
-    {
-        if ( !dec_ctx->saw_caption_block && *(ctx->buffer+i)==0xff && *(ctx->buffer+i+1)==0xff)
-        {
-            // Skip broadcast header
-        }
-        else
-        {
-            data[1]=ctx->buffer[i];
-            data[2]=ctx->buffer[i+1];
+	for (unsigned long i=0; i<inbuf; i=i+2)
+	{
+		if ( !dec_ctx->saw_caption_block && *(ctx->buffer+i)==0xff && *(ctx->buffer+i+1)==0xff)
+		{
+			// Skip broadcast header
+		}
+		else
+		{
+			data[1]=ctx->buffer[i];
+			data[2]=ctx->buffer[i+1];
 
-            // do_cb increases the cb_field1 counter so that get_fts()
-            // is correct.
-            do_cb(dec_ctx, data, sub);
-        }
-    }
-    return inbuf;
+			// do_cb increases the cb_field1 counter so that get_fts()
+			// is correct.
+			do_cb(dec_ctx, data, sub);
+		}
+	}
+	return inbuf;
 }
 
 
 void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 {
-    LLONG overlap=0;
-    LLONG pos = 0; /* Current position in buffer */
+	LLONG overlap=0;
+	LLONG pos = 0; /* Current position in buffer */
 	struct cc_subtitle dec_sub;
 	struct lib_cc_decode *dec_ctx = NULL;
 	dec_ctx = ctx->dec_ctx;
-    	dec_ctx->wbout1 = (struct ccx_s_write*)&ctx->wbout1 ; 
+	dec_ctx->wbout1 = (struct ccx_s_write*)&ctx->wbout1 ; 
 	dec_ctx->wbout2 = (struct ccx_s_write*)&ctx->wbout2 ;
-    inbuf = 0; // No data yet
+	inbuf = 0; // No data yet
 
-    end_of_file = 0;
-    current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
+	end_of_file = 0;
+	current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
 	memset(&dec_sub, 0,sizeof(dec_sub));
-    while (!end_of_file && !dec_ctx->processed_enough)
-    {
-        /* Get rid of the bytes we already processed */
-        overlap=inbuf-pos;
-        if ( pos != 0 ) {
-            // Only when needed as memmove has been seen crashing
-            // for dest==source and n >0
-            memmove (ctx->buffer,ctx->buffer+pos,(size_t) (inbuf-pos));
-            inbuf-=pos;
-        }
-        pos = 0;
+	while (!end_of_file && !dec_ctx->processed_enough)
+	{
+		/* Get rid of the bytes we already processed */
+		overlap=inbuf-pos;
+		if ( pos != 0 ) {
+			// Only when needed as memmove has been seen crashing
+			// for dest==source and n >0
+			memmove (ctx->buffer,ctx->buffer+pos,(size_t) (inbuf-pos));
+			inbuf-=pos;
+		}
+		pos = 0;
 
-        // GET MORE DATA IN BUFFER
-        LLONG i;
-        position_sanity_check();
-        switch (ctx->stream_mode)
-        {
-            case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
-                i = general_getmoredata(ctx);
-                break;
-            case CCX_SM_TRANSPORT:
-                i = ts_getmoredata(ctx);
-                break;
-            case CCX_SM_PROGRAM:
-                i = ps_getmoredata(ctx);
-                break;
-            case CCX_SM_ASF:
-                i = asf_getmoredata(ctx);
-                break;
-            case CCX_SM_WTV:
-                i = wtv_getmoredata(ctx);
-                break;
-            default:
-                fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible stream_mode");
-        }
+		// GET MORE DATA IN BUFFER
+		LLONG i;
+		position_sanity_check();
+		switch (ctx->stream_mode)
+		{
+			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
+				i = general_getmoredata(ctx);
+				break;
+			case CCX_SM_TRANSPORT:
+				i = ts_getmoredata(ctx);
+				break;
+			case CCX_SM_PROGRAM:
+				i = ps_getmoredata(ctx);
+				break;
+			case CCX_SM_ASF:
+				i = asf_getmoredata(ctx);
+				break;
+			case CCX_SM_WTV:
+				i = wtv_getmoredata(ctx);
+				break;
+			default:
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible stream_mode");
+		}
 
-        position_sanity_check();
-        if (ctx->fh_out_elementarystream!=NULL)
-            fwrite (ctx->buffer+overlap,1,(size_t) (inbuf-overlap),ctx->fh_out_elementarystream);
+		position_sanity_check();
+		if (ctx->fh_out_elementarystream!=NULL)
+			fwrite (ctx->buffer+overlap,1,(size_t) (inbuf-overlap),ctx->fh_out_elementarystream);
 
-        if (i==0)
-        {
-            end_of_file = 1;
-            memset (ctx->buffer+inbuf, 0, (size_t) (BUFSIZE-inbuf)); /* Clear buffer at the end */
-        }
+		if (i==0)
+		{
+			end_of_file = 1;
+			memset (ctx->buffer+inbuf, 0, (size_t) (BUFSIZE-inbuf)); /* Clear buffer at the end */
+		}
 
-        if (inbuf == 0)
-        {
-            /* Done: Get outta here */
-            break;
-        }
+		if (inbuf == 0)
+		{
+			/* Done: Get outta here */
+			break;
+		}
 
-        LLONG got; // Means 'consumed' from buffer actually
+		LLONG got; // Means 'consumed' from buffer actually
 
-        static LLONG last_pts = 0x01FFFFFFFFLL;
+		static LLONG last_pts = 0x01FFFFFFFFLL;
 
 		if (ctx->hauppauge_mode)
 		{
@@ -627,100 +626,100 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		{
 			got = inbuf; // Do nothing. Still don't know how to process it
 		}
-        else if (ccx_bufferdatatype == CCX_RAW) // Raw two byte 608 data from DVR-MS/ASF
-        {
-            // The asf_getmoredata() loop sets current_pts when possible
-            if (pts_set == 0)
-            {
-                mprint("DVR-MS/ASF file without useful time stamps - count blocks.\n");
-                // Otherwise rely on counting blocks
-                current_pts = 12345; // Pick a valid PTS time
-                pts_set = 1;
-            }
+		else if (ccx_bufferdatatype == CCX_RAW) // Raw two byte 608 data from DVR-MS/ASF
+		{
+			// The asf_getmoredata() loop sets current_pts when possible
+			if (pts_set == 0)
+			{
+				mprint("DVR-MS/ASF file without useful time stamps - count blocks.\n");
+				// Otherwise rely on counting blocks
+				current_pts = 12345; // Pick a valid PTS time
+				pts_set = 1;
+			}
 
-            if (current_pts != last_pts)
-            {
-                // Only initialize the FTS values and reset the cb
-                // counters when the PTS is different. This happens frequently
-                // with ASF files.
+			if (current_pts != last_pts)
+			{
+				// Only initialize the FTS values and reset the cb
+				// counters when the PTS is different. This happens frequently
+				// with ASF files.
 
-                if (min_pts==0x01FFFFFFFFLL)
-                {
-                    // First call
-                    fts_at_gop_start = 0;
-                }
-                else
-                    fts_at_gop_start = get_fts();
+				if (min_pts==0x01FFFFFFFFLL)
+				{
+					// First call
+					fts_at_gop_start = 0;
+				}
+				else
+					fts_at_gop_start = get_fts();
 
-                frames_since_ref_time = 0;
-                set_fts();
+				frames_since_ref_time = 0;
+				set_fts();
 
-                last_pts = current_pts;
-            }
+				last_pts = current_pts;
+			}
 
-            dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
-                   print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-                   (unsigned) (current_pts));
-            dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
+			dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
+					print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
+					(unsigned) (current_pts));
+			dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
 
-            got = process_raw(ctx, &dec_sub);
-        }
-        else if (ccx_bufferdatatype == CCX_H264) // H.264 data from TS file
-        {
-            got = process_avc(ctx, ctx->buffer, inbuf,&dec_sub);
-        }
-        else
-            fatal(CCX_COMMON_EXIT_BUG_BUG, "Unknown data type!");
+			got = process_raw(ctx, &dec_sub);
+		}
+		else if (ccx_bufferdatatype == CCX_H264) // H.264 data from TS file
+		{
+			got = process_avc(ctx, ctx->buffer, inbuf,&dec_sub);
+		}
+		else
+			fatal(CCX_COMMON_EXIT_BUG_BUG, "Unknown data type!");
 
-        if (got>inbuf)
-        {
-            mprint ("BUG BUG\n");
-        }
-        pos+=got;
+		if (got>inbuf)
+		{
+			mprint ("BUG BUG\n");
+		}
+		pos+=got;
 
-        if (ctx->live_stream)
-        {
-            int cur_sec = (int) (get_fts() / 1000);
-            int th=cur_sec/10;
-            if (ctx->last_reported_progress!=th)
-            {
-                activity_progress (-1,cur_sec/60, cur_sec%60);
-                ctx->last_reported_progress = th;
-            }
-        }
-        else
-        {
-            if (ctx->total_inputsize>255) // Less than 255 leads to division by zero below.
-            {
-                int progress = (int) ((((ctx->total_past+ctx->past)>>8)*100)/(ctx->total_inputsize>>8));
-                if (ctx->last_reported_progress != progress)
-                {
+		if (ctx->live_stream)
+		{
+			int cur_sec = (int) (get_fts() / 1000);
+			int th=cur_sec/10;
+			if (ctx->last_reported_progress!=th)
+			{
+				activity_progress (-1,cur_sec/60, cur_sec%60);
+				ctx->last_reported_progress = th;
+			}
+		}
+		else
+		{
+			if (ctx->total_inputsize>255) // Less than 255 leads to division by zero below.
+			{
+				int progress = (int) ((((ctx->total_past+ctx->past)>>8)*100)/(ctx->total_inputsize>>8));
+				if (ctx->last_reported_progress != progress)
+				{
 					LLONG t=get_fts();
 					if (!t && ctx->global_timestamp_inited)
 						t=ctx->global_timestamp-ctx->min_global_timestamp;
-                    int cur_sec = (int) (t / 1000);
-                    activity_progress(progress, cur_sec/60, cur_sec%60);
-                    ctx->last_reported_progress = progress;
-                }
-            }
-        }
+					int cur_sec = (int) (t / 1000);
+					activity_progress(progress, cur_sec/60, cur_sec%60);
+					ctx->last_reported_progress = progress;
+				}
+			}
+		}
 		if (dec_sub.got_output)
 		{
 			encode_sub(enc_ctx,&dec_sub);
 			dec_sub.got_output = 0;
 		}
-        position_sanity_check();
-    }
-    // Flush remaining HD captions
-    if (has_ccdata_buffered)
-        process_hdcc(ctx, &dec_sub);
+		position_sanity_check();
+	}
+	// Flush remaining HD captions
+	if (has_ccdata_buffered)
+		process_hdcc(ctx, &dec_sub);
 
-    if (ctx->total_past!=ctx->total_inputsize && ctx->binary_concat && !dec_ctx->processed_enough)
-    {
-        mprint("\n\n\n\nATTENTION!!!!!!\n");
-        mprint("Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
-           ctx->inputfile[ctx->current_file], ctx->current_file, ctx->past, ctx->inputsize);
-    }
+	if (ctx->total_past!=ctx->total_inputsize && ctx->binary_concat && !dec_ctx->processed_enough)
+	{
+		mprint("\n\n\n\nATTENTION!!!!!!\n");
+		mprint("Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
+				ctx->inputfile[ctx->current_file], ctx->current_file, ctx->past, ctx->inputsize);
+	}
 	mprint ("\nNumber of NAL_type_7: %ld\n",num_nal_unit_type_7);
 	mprint ("Number of VCL_HRD: %ld\n",num_vcl_hrd);
 	mprint ("Number of NAL HRD: %ld\n",num_nal_hrd);
@@ -738,118 +737,118 @@ void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 	dec_ctx = ctx->dec_ctx;
 
 	memset(&dec_sub, 0,sizeof(dec_sub));
-    // As BUFSIZE is a macro this is just a reminder
-    if (BUFSIZE < (3*0xFFFF + 10))
-        fatal (CCX_COMMON_EXIT_BUG_BUG, "BUFSIZE too small for RCWT caption block.\n");
+	// As BUFSIZE is a macro this is just a reminder
+	if (BUFSIZE < (3*0xFFFF + 10))
+		fatal (CCX_COMMON_EXIT_BUG_BUG, "BUFSIZE too small for RCWT caption block.\n");
 
-    // Generic buffer to hold some data
-    parsebuf = (unsigned char*)malloc(1024);
+	// Generic buffer to hold some data
+	parsebuf = (unsigned char*)malloc(1024);
 
 
-    LLONG currfts;
-    uint16_t cbcount = 0;
+	LLONG currfts;
+	uint16_t cbcount = 0;
 
-    int bread = 0; // Bytes read
+	int bread = 0; // Bytes read
 
-    buffered_read(ctx, parsebuf, 11);
-    ctx->past+=result;
-    bread+=(int) result;
-    if (result!=11)
-    {
-        mprint("Premature end of file!\n");
-        end_of_file=1;
-        return;
-    }
+	buffered_read(ctx, parsebuf, 11);
+	ctx->past+=result;
+	bread+=(int) result;
+	if (result!=11)
+	{
+		mprint("Premature end of file!\n");
+		end_of_file=1;
+		return;
+	}
 
-    // Expecting RCWT header
-    if( !memcmp(parsebuf, "\xCC\xCC\xED", 3 ) )
-    {
+	// Expecting RCWT header
+	if( !memcmp(parsebuf, "\xCC\xCC\xED", 3 ) )
+	{
 		dbg_print(CCX_DMT_PARSE, "\nRCWT header\n");
-        dbg_print(CCX_DMT_PARSE, "File created by %02X version %02X%02X\nFile format revision: %02X%02X\n",
-               parsebuf[3], parsebuf[4], parsebuf[5],
-               parsebuf[6], parsebuf[7]);
+		dbg_print(CCX_DMT_PARSE, "File created by %02X version %02X%02X\nFile format revision: %02X%02X\n",
+				parsebuf[3], parsebuf[4], parsebuf[5],
+				parsebuf[6], parsebuf[7]);
 
-    }
-    else
-    {
-        fatal(EXIT_MISSING_RCWT_HEADER, "Missing RCWT header. Abort.\n");
-    }
+	}
+	else
+	{
+		fatal(EXIT_MISSING_RCWT_HEADER, "Missing RCWT header. Abort.\n");
+	}
 
-    if (parsebuf[6] == 0 && parsebuf[7] == 2)
-    {
-        tlt_read_rcwt(ctx);
-        return;
-    }
+	if (parsebuf[6] == 0 && parsebuf[7] == 2)
+	{
+		tlt_read_rcwt(ctx);
+		return;
+	}
 
-    // Initialize first time. As RCWT files come with the correct FTS the
-    // initial (minimal) time needs to be set to 0.
-    current_pts = 0;
-    pts_set=1;
-    set_fts(); // Now set the FTS related variables
+	// Initialize first time. As RCWT files come with the correct FTS the
+	// initial (minimal) time needs to be set to 0.
+	current_pts = 0;
+	pts_set=1;
+	set_fts(); // Now set the FTS related variables
 
-    // Loop until no more data is found
-    while(1)
-    {
-        // Read the data header
-        buffered_read(ctx, parsebuf, 10);
-        ctx->past+=result;
-        bread+=(int) result;
+	// Loop until no more data is found
+	while(1)
+	{
+		// Read the data header
+		buffered_read(ctx, parsebuf, 10);
+		ctx->past+=result;
+		bread+=(int) result;
 
-        if (result!=10)
-        {
-            if (result!=0)
-                mprint("Premature end of file!\n");
+		if (result!=10)
+		{
+			if (result!=0)
+				mprint("Premature end of file!\n");
 
-            // We are done
-            end_of_file=1;
-            break;
-        }
-        currfts = *((LLONG*)(parsebuf));
-        cbcount = *((uint16_t*)(parsebuf+8));
+			// We are done
+			end_of_file=1;
+			break;
+		}
+		currfts = *((LLONG*)(parsebuf));
+		cbcount = *((uint16_t*)(parsebuf+8));
 
-        dbg_print(CCX_DMT_PARSE, "RCWT data header FTS: %s  blocks: %u\n",
-               print_mstime(currfts), cbcount);
+		dbg_print(CCX_DMT_PARSE, "RCWT data header FTS: %s  blocks: %u\n",
+				print_mstime(currfts), cbcount);
 
-        if ( cbcount > 0 )
-        {
-            if ( cbcount*3 > parsebufsize) {
-                parsebuf = (unsigned char*)realloc(parsebuf, cbcount*3);
-                if (!parsebuf)
-                    fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
-                parsebufsize = cbcount*3;
-            }
-            buffered_read(ctx, parsebuf, cbcount*3);
-            ctx->past+=result;
-            bread+=(int) result;
-            if (result!=cbcount*3)
-            {
-                mprint("Premature end of file!\n");
-                end_of_file=1;
-                break;
-            }
+		if ( cbcount > 0 )
+		{
+			if ( cbcount*3 > parsebufsize) {
+				parsebuf = (unsigned char*)realloc(parsebuf, cbcount*3);
+				if (!parsebuf)
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
+				parsebufsize = cbcount*3;
+			}
+			buffered_read(ctx, parsebuf, cbcount*3);
+			ctx->past+=result;
+			bread+=(int) result;
+			if (result!=cbcount*3)
+			{
+				mprint("Premature end of file!\n");
+				end_of_file=1;
+				break;
+			}
 
-            // Process the data
-            current_pts = currfts*(MPEG_CLOCK_FREQ/1000);
-            if (pts_set==0)
-                pts_set=1;
-            set_fts(); // Now set the FTS related variables
+			// Process the data
+			current_pts = currfts*(MPEG_CLOCK_FREQ/1000);
+			if (pts_set==0)
+				pts_set=1;
+			set_fts(); // Now set the FTS related variables
 
-            dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
-                   print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-                   (unsigned) (current_pts));
-            dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
+			dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
+					print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
+					(unsigned) (current_pts));
+			dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
 
-            for (int j=0; j<cbcount*3; j=j+3)
-            {
-                do_cb(dec_ctx, parsebuf+j, &dec_sub);
-            }
-        }
+			for (int j=0; j<cbcount*3; j=j+3)
+			{
+				do_cb(dec_ctx, parsebuf+j, &dec_sub);
+			}
+		}
 		if (dec_sub.got_output)
 		{
 			encode_sub(enc_ctx,&dec_sub);
 			dec_sub.got_output = 0;
 		}
-    } // end while(1)
+	} // end while(1)
 
-    dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
+	dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
 }
