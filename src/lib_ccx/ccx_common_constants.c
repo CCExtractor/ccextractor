@@ -24,104 +24,104 @@ const unsigned char lc6[1]={0xfe};
 
 const double framerates_values[16]=
 {
-    0,
-    24000.0/1001, /* 23.976 */
-    24.0,
-    25.0,
-    30000.0/1001, /* 29.97 */
-    30.0,
-    50.0,
-    60000.0/1001, /* 59.94 */
-    60.0,
-    0,
-    0,
-    0,
-    0,
-    0
+	0,
+	24000.0/1001, /* 23.976 */
+	24.0,
+	25.0,
+	30000.0/1001, /* 29.97 */
+	30.0,
+	50.0,
+	60000.0/1001, /* 59.94 */
+	60.0,
+	0,
+	0,
+	0,
+	0,
+	0
 };
 
 const char *framerates_types[16]=
 {
-    "00 - forbidden",
-    "01 - 23.976",
-    "02 - 24",
-    "03 - 25",
-    "04 - 29.97",
-    "05 - 30",
-    "06 - 50",
-    "07 - 59.94",
-    "08 - 60",
-    "09 - reserved",
-    "10 - reserved",
-    "11 - reserved",
-    "12 - reserved",
-    "13 - reserved",
-    "14 - reserved",
-    "15 - reserved"
+	"00 - forbidden",
+	"01 - 23.976",
+	"02 - 24",
+	"03 - 25",
+	"04 - 29.97",
+	"05 - 30",
+	"06 - 50",
+	"07 - 59.94",
+	"08 - 60",
+	"09 - reserved",
+	"10 - reserved",
+	"11 - reserved",
+	"12 - reserved",
+	"13 - reserved",
+	"14 - reserved",
+	"15 - reserved"
 };
 
 const char *aspect_ratio_types[16]=
 {
-    "00 - forbidden",
-    "01 - 1:1",
-    "02 - 4:3",
-    "03 - 16:9",
-    "04 - 2.21:1",
-    "05 - reserved",
-    "06 - reserved",
-    "07 - reserved",
-    "08 - reserved",
-    "09 - reserved",
-    "10 - reserved",
-    "11 - reserved",
-    "12 - reserved",
-    "13 - reserved",
-    "14 - reserved",
-    "15 - reserved"
+	"00 - forbidden",
+	"01 - 1:1",
+	"02 - 4:3",
+	"03 - 16:9",
+	"04 - 2.21:1",
+	"05 - reserved",
+	"06 - reserved",
+	"07 - reserved",
+	"08 - reserved",
+	"09 - reserved",
+	"10 - reserved",
+	"11 - reserved",
+	"12 - reserved",
+	"13 - reserved",
+	"14 - reserved",
+	"15 - reserved"
 };
 
 
 const char *pict_types[8]=
 {
-    "00 - ilegal (0)",
-    "01 - I",
-    "02 - P",
-    "03 - B",
-    "04 - ilegal (D)",
-    "05 - ilegal (5)",
-    "06 - ilegal (6)",
-    "07 - ilegal (7)"
+	"00 - ilegal (0)",
+	"01 - I",
+	"02 - P",
+	"03 - B",
+	"04 - ilegal (D)",
+	"05 - ilegal (5)",
+	"06 - ilegal (6)",
+	"07 - ilegal (7)"
 };
 
 
 const char *slice_types[10]=
 {
-    "0 - P",
-    "1 - B",
-    "2 - I",
-    "3 - SP",
-    "4 - SI",
-    "5 - P",
-    "6 - B",
-    "7 - I",
-    "8 - SP",
-    "9 - SI"
+	"0 - P",
+	"1 - B",
+	"2 - I",
+	"3 - SP",
+	"4 - SI",
+	"5 - P",
+	"6 - B",
+	"7 - I",
+	"8 - SP",
+	"9 - SI"
 };
 
 const char *cc_types[4] =
 {
-    "NTSC line 21 field 1 closed captions",
-    "NTSC line 21 field 2 closed captions",
-    "DTVCC Channel Packet Data",
-    "DTVCC Channel Packet Start"
+	"NTSC line 21 field 1 closed captions",
+	"NTSC line 21 field 2 closed captions",
+	"DTVCC Channel Packet Data",
+	"DTVCC Channel Packet Start"
 };
 
 enum
 {
-    NTSC_CC_f1         = 0,
-    NTSC_CC_f2         = 1,
-    DTVCC_PACKET_DATA  = 2,
-    DTVCC_PACKET_START = 3,
+	NTSC_CC_f1         = 0,
+	NTSC_CC_f2         = 1,
+	DTVCC_PACKET_DATA  = 2,
+	DTVCC_PACKET_START = 3,
 };
 
 /**

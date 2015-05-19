@@ -36,7 +36,8 @@ void fdprintf(int fd, const char *fmt, ...)
 			free(p);
 			return;
 		}
-		else {
+		else 
+		{
 			p = np;
 		}
 	}
