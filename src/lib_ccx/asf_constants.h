@@ -85,10 +85,10 @@ typedef struct {
 	// Payload parsing information
 	int MultiplePayloads; // ASF
 	int PacketLType; // ASF
-    int ReplicatedLType; // ASF
-    int OffsetMediaLType; // ASF
-    int MediaNumberLType; // ASF
-    int StreamNumberLType; // ASF
+	int ReplicatedLType; // ASF
+	int OffsetMediaLType; // ASF
+	int MediaNumberLType; // ASF
+	int StreamNumberLType; // ASF
 	uint32_t PacketLength;
 	uint32_t PaddingLength;
 } asf_data;
