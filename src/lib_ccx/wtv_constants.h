@@ -24,10 +24,10 @@
 
 struct wtv_chunked_buffer
 {
-    uint64_t skip_chunks[256];
-    uint32_t chunk;
-    uint8_t count;
-    uint8_t* buffer;
-    uint32_t buffer_size;
-    uint64_t filepos;
+	uint64_t skip_chunks[256];
+	uint32_t chunk;
+	uint8_t count;
+	uint8_t* buffer;
+	uint32_t buffer_size;
+	uint64_t filepos;
 };
