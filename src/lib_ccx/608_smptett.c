@@ -1,3 +1,26 @@
+/*
+	Produces minimally-compliant SMPTE Timed Text (W3C TTML)
+	format-compatible output
+
+	See http://www.w3.org/TR/ttaf1-dfxp/ and
+	https://www.smpte.org/sites/default/files/st2052-1-2010.pdf
+
+	Copyright (C) 2012 John Kemp
+
+	This program is free software; you can redistribute it and/or
+	modify it under the terms of the GNU General Public License
+	as published by the Free Software Foundation; either version 2
+	of the License, or (at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "ccx_encoders_common.h"
@@ -6,27 +29,6 @@
 #include "ocr.h"
 #include "utility.h"
 
-// Produces minimally-compliant SMPTE Timed Text (W3C TTML)
-// format-compatible output
-
-// See http://www.w3.org/TR/ttaf1-dfxp/ and
-// https://www.smpte.org/sites/default/files/st2052-1-2010.pdf
-
-// Copyright (C) 2012 John Kemp
-
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
