@@ -35,6 +35,14 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 	int used;
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;
+	int len = strlen (string);
+	unsigned char *unescaped= (unsigned char *) malloc (len+1);
+	unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
+	int pos_r = 0;
+	int pos_w = 0;
+
+	if (el == NULL || unescaped == NULL)
+		fatal (EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_sami() - not enough memory.\n");
 
 	mstotime (ms_start, &h1, &m1, &s1, &ms1);
 	mstotime (ms_end-1, &h2, &m2, &s2, &ms2);
@@ -46,13 +54,6 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 	}
 	used = encode_line(context->buffer, (unsigned char *) str);
 	write (context->out->fh, context->buffer, used);
-	int len = strlen (string);
-	unsigned char *unescaped= (unsigned char *) malloc (len+1);
-	unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
-	if (el == NULL || unescaped == NULL)
-		fatal (EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_sami() - not enough memory.\n");
-	int pos_r = 0;
-	int pos_w = 0;
 	// Scan for \n in the string and replace it with a 0
 	while (pos_r < len)
 	{
