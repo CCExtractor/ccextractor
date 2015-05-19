@@ -9,22 +9,22 @@
 // end is used to check that nothing is read at "end" or after it.
 struct bitstream
 {
-    unsigned char *pos;
-    int bpos;
-    unsigned char *end;
-    // Indicate how many bits are left in the stream after the previous
-    // read call.  A negative number indicates that a read after the
-    // end of the stream was attempted.
-    int64_t bitsleft;
-    // Indicate an error occured while parsing the bitstream.
-    // This is meant to store high level syntax errors, i.e a function
-    // using the bitstream functions found a syntax error.
-    int error;
-    // Internal (private) variable - used to store the the bitstream
-    // position until it is decided if the bitstream pointer will be
-    // increased by the calling function, or not.
-    unsigned char *_i_pos;
-    int _i_bpos;
+	unsigned char *pos;
+	int bpos;
+	unsigned char *end;
+	// Indicate how many bits are left in the stream after the previous
+	// read call.  A negative number indicates that a read after the
+	// end of the stream was attempted.
+	int64_t bitsleft;
+	// Indicate an error occured while parsing the bitstream.
+	// This is meant to store high level syntax errors, i.e a function
+	// using the bitstream functions found a syntax error.
+	int error;
+	// Internal (private) variable - used to store the the bitstream
+	// position until it is decided if the bitstream pointer will be
+	// increased by the calling function, or not.
+	unsigned char *_i_pos;
+	int _i_bpos;
 };
 
 #define read_u8(bstream) (uint8_t)bitstream_get_num(bstream,1,1)
