@@ -42,39 +42,39 @@ int stringztoms (const char *s, struct ccx_boundary_time *bt)
 		}
 		c++;
 	}
-	hh=mm;
-	mm=ss;
-	ss=value;
-	if (mm>59 || ss>59)
+	hh = mm;
+	mm = ss;
+	ss = value;
+	if (mm > 59 || ss > 59)
 		return -1;
-	bt->set=1;
-	bt->hh=hh;
-	bt->mm=mm;
-	bt->ss=ss;
-	LLONG secs=(hh*3600+mm*60+ss);
-	bt->time_in_ms=secs*1000;
+	bt->set = 1;
+	bt->hh = hh;
+	bt->mm = mm;
+	bt->ss = ss;
+	LLONG secs = (hh * 3600 + mm * 60 + ss);
+	bt->time_in_ms = secs*1000;
 	return 0;
 }
 int process_cap_file (char *filename)
 {
 	int ret = 0;
 	FILE *fi = fopen (filename,"rt");
-	if (fi==NULL)
+	if (fi == NULL)
 	{
 		mprint ("\rUnable to open capitalization file: %s\n", filename);
 		return -1;
 	}
 	char line[35]; // For screen width (32)+CRLF+0
-	int num=0;
+	int num = 0;
 	while (fgets (line,35,fi))
 	{
 		num++;
-		if (line[0]=='#') // Comment
+		if (line[0] == '#') // Comment
 			continue;
-		char *c=line+strlen (line)-1;
-		while (c>=line && (*c==0xd || *c==0xa))
+		char *c = line+strlen (line)-1;
+		while (c >= line && (*c == 0xd || *c == 0xa))
 		{
-			*c=0;
+			*c = 0;
 			c--;
 		}
 		if (strlen (line)>32)
@@ -109,16 +109,16 @@ int isanumber (char *s)
 
 int parsedelay (struct ccx_s_options *opt, char *par)
 {
-	int sign=0;
-	char *c=par;
+	int sign = 0;
+	char *c = par;
 	while (*c)
 	{
-		if (*c=='-' || *c=='+')
+		if (*c == '-' || *c == '+')
 		{
-			if (c!=par) // Sign only at the beginning
+			if (c != par) // Sign only at the beginning
 				return 1;
-			if (*c=='-')
-				sign=1;
+			if (*c == '-')
+				sign = 1;
 		}
 		else
 		{
@@ -157,7 +157,7 @@ int append_file_to_queue (struct ccx_s_options *opt,char *filename)
 int add_file_sequence (struct ccx_s_options *opt, char *filename)
 {
 	int m,n;
-	n=strlen (filename)-1;
+	n = strlen (filename)-1;
 	// Look for the last digit in filename
 	while (n>=0 && !isdigit (filename[n]))
 		n--;
@@ -168,13 +168,13 @@ int add_file_sequence (struct ccx_s_options *opt, char *filename)
 		m--;
 	m++;
 	// Here: Significant digits go from filename[m] to filename[n]
-	char *num=(char *) malloc (n-m+2);
+	char *num = (char *) malloc (n-m+2);
 	if(!num)
 		return -1;
 	strncpy (num,filename+m, n-m+1);
 	num[n-m+1]=0;
 	int i = atoi (num);
-	char *temp=(char *) malloc (n-m+3); // For overflows
+	char *temp = (char *) malloc (n-m+3); // For overflows
 	if(!temp)
 	{
 		free(num);

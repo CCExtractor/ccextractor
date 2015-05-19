@@ -14,13 +14,13 @@
 
 struct spupng_t
 {
-    FILE* fpxml;
-    FILE* fppng;
-    char* dirname;
-    char* pngfile;
-    int fileIndex;
-    int xOffset;
-    int yOffset;
+	FILE* fpxml;
+	FILE* fppng;
+	char* dirname;
+	char* pngfile;
+	int fileIndex;
+	int xOffset;
+	int yOffset;
 };
 
 void write_spumux_header(struct ccx_s_write *out);

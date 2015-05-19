@@ -60,10 +60,10 @@ int ts_readpacket(struct lib_ccx_ctx* ctx)
 	if (ctx->m2ts)
 	{
 		/* M2TS just adds 4 bytes to each packet (so size goes from 188 to 192)
-		 The 4 bytes are not important to us, so just skip
+		   The 4 bytes are not important to us, so just skip
 		// TP_extra_header {   
 		Copy_permission_indicator 2  unimsbf
-			Arrival_time_stamp 30 unimsbf
+		Arrival_time_stamp 30 unimsbf
 		} */
 		char tp_extra_header[4];
 		buffered_read(ctx, tp_extra_header, 4);
@@ -157,23 +157,24 @@ int ts_readpacket(struct lib_ccx_ctx* ctx)
 		adaptation_field_length = tspacket[4];
 
 		uint8_t af_pcr_exists = (tspacket[5] & 0x10) >> 4;
-			if (af_pcr_exists > 0) {
-				uint64_t pts = 0;
-				pts |= (tspacket[6] << 25);
-				pts |= (tspacket[7] << 17);
-				pts |= (tspacket[8] << 9);
-				pts |= (tspacket[9] << 1);
-				pts |= (tspacket[10] >> 7);
-				ctx->global_timestamp = (uint32_t) pts / 90;
-				pts = ((tspacket[10] & 0x01) << 8);
-				pts |= tspacket[11];
-				ctx->global_timestamp += (uint32_t) (pts / 27000);
-				if (!ctx->global_timestamp_inited)
-				{
-					ctx->min_global_timestamp = ctx->global_timestamp;
-					ctx->global_timestamp_inited = 1;
-				}
+		if (af_pcr_exists > 0)
+		{
+			uint64_t pts = 0;
+			pts |= (tspacket[6] << 25);
+			pts |= (tspacket[7] << 17);
+			pts |= (tspacket[8] << 9);
+			pts |= (tspacket[9] << 1);
+			pts |= (tspacket[10] >> 7);
+			ctx->global_timestamp = (uint32_t) pts / 90;
+			pts = ((tspacket[10] & 0x01) << 8);
+			pts |= tspacket[11];
+			ctx->global_timestamp += (uint32_t) (pts / 27000);
+			if (!ctx->global_timestamp_inited)
+			{
+				ctx->min_global_timestamp = ctx->global_timestamp;
+				ctx->global_timestamp_inited = 1;
 			}
+		}
 
 
 		payload_start = payload_start + adaptation_field_length + 1;
@@ -219,7 +220,7 @@ void look_for_caption_data (struct lib_ccx_ctx *ctx)
 	for (unsigned i=0;i<payload.length-3;i++)
 	{
 		if (payload.start[i]=='G' && payload.start[i+1]=='A' &&
-			payload.start[i+2]=='9' && payload.start[i+3]=='4')
+				payload.start[i+2]=='9' && payload.start[i+3]=='4')
 		{
 			mprint ("PID %u seems to contain captions.\n", payload.pid);
 			ctx->PIDs_seen[payload.pid]=3;
@@ -237,10 +238,10 @@ long ts_readstream(struct lib_ccx_ctx *ctx)
 	static int prev_ccounter = 0;
 	static int prev_packet = 0;
 	int gotpes = 0;
-	long pespcount=0; // count packets in PES with captions
+	long pespcount = 0; // count packets in PES with captions
 	long pcount=0; // count all packets until PES is complete
 	int saw_pesstart = 0;
-	int packet_analysis_mode=0; // If we can't find any packet with CC based from PMT, look for captions in all packets
+	int packet_analysis_mode = 0; // If we can't find any packet with CC based from PMT, look for captions in all packets
 	ctx->capbuflen = 0;
 
 	do
@@ -281,9 +282,9 @@ long ts_readstream(struct lib_ccx_ctx *ctx)
 			continue;
 		}
 		
-		if( ccx_options.xmltv>=1 && payload.pid == 0x12) // This is DVB EIT
+		if( ccx_options.xmltv >= 1 && payload.pid == 0x12) // This is DVB EIT
 			parse_EPG_packet(ctx);
-		if( ccx_options.xmltv>=1 && payload.pid >= 0x1000) // This may be ATSC EPG packet
+		if( ccx_options.xmltv >= 1 && payload.pid >= 0x1000) // This may be ATSC EPG packet
 			parse_EPG_packet(ctx);
 
 		// PID != 0 but no PMT selected yet, ignore the rest of the current
@@ -535,8 +536,8 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 		}
 		// We read a video PES
 
-		if (ctx->capbuf[0]!=0x00 || ctx->capbuf[1]!=0x00 ||
-			ctx->capbuf[2]!=0x01)
+		if (ctx->capbuf[0] != 0x00 || ctx->capbuf[1] != 0x00 ||
+			ctx->capbuf[2] != 0x01)
 		{
 			// ??? Shouldn't happen. Complain and try again.
 			mprint("Missing PES header!\n");
@@ -560,10 +561,10 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 		{
 			dump (CCX_DMT_GENERIC_NOTICES, ctx->capbuf, ctx->capbuflen,0, 1);
 			// Bogus data, so we return something
-				ctx->buffer[inbuf++]=0xFA;
-				ctx->buffer[inbuf++]=0x80;
-				ctx->buffer[inbuf++]=0x80;
-				payload_read+=3;
+			ctx->buffer[inbuf++] = 0xFA;
+			ctx->buffer[inbuf++] = 0x80;
+			ctx->buffer[inbuf++] = 0x80;
+			payload_read += 3;
 			break;
 		}
 		if (ccx_options.hauppauge_mode)
@@ -573,25 +574,25 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 			if (!haup_capbuflen)
 			{
 				// Do this so that we always return something until EOF. This will be skipped.
-				ctx->buffer[inbuf++]=0xFA;
-				ctx->buffer[inbuf++]=0x80;
-				ctx->buffer[inbuf++]=0x80;
-				payload_read+=3;
+				ctx->buffer[inbuf++] = 0xFA;
+				ctx->buffer[inbuf++] = 0x80;
+				ctx->buffer[inbuf++] = 0x80;
+				payload_read += 3;
 			}
 
-			for (int i=0; i<haup_capbuflen; i+=12)
+			for (int i = 0; i<haup_capbuflen; i += 12)
 			{
 				unsigned haup_stream_id = haup_capbuf[i+3];
-				if (haup_stream_id==0xbd && haup_capbuf[i+4]==0 && haup_capbuf[i+5]==6 )
+				if (haup_stream_id == 0xbd && haup_capbuf[i+4] == 0 && haup_capbuf[i+5] == 6 )
 				{
-				// Because I (CFS) don't have a lot of samples for this, for now I make sure everything is like the one I have:
-				// 12 bytes total length, stream id = 0xbd (Private non-video and non-audio), etc
+					// Because I (CFS) don't have a lot of samples for this, for now I make sure everything is like the one I have:
+					// 12 bytes total length, stream id = 0xbd (Private non-video and non-audio), etc
 					if (2 > BUFSIZE - inbuf)
 					{
 						fatal(CCX_COMMON_EXIT_BUG_BUG,
-							"Remaining buffer (%lld) not enough to hold the 3 Hauppage bytes.\n"
-							"Please send bug report!",
-							BUFSIZE - inbuf);
+								"Remaining buffer (%lld) not enough to hold the 3 Hauppage bytes.\n"
+								"Please send bug report!",
+								BUFSIZE - inbuf);
 					}
 					if (haup_capbuf[i+9]==1 || haup_capbuf[i+9]==2) // Field match. // TODO: If extract==12 this won't work!
 					{
@@ -604,10 +605,10 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 						payload_read+=3;
 					}
 					/*
-					if (inbuf>1024) // Just a way to send the bytes to the decoder from time to time, otherwise the buffer will fill up.
-						break;
-					else
-						continue; */
+					   if (inbuf>1024) // Just a way to send the bytes to the decoder from time to time, otherwise the buffer will fill up.
+					   break;
+					   else
+					   continue; */
 				}
 			}
 			haup_capbuflen=0;
@@ -662,8 +663,7 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 			inbuf += databuflen;
 		}
 		break;
-	}
-	while ( !end_of_file );
+	} while ( !end_of_file );
 
 	return payload_read;
 }

@@ -12,127 +12,123 @@
 
 static int initialized = 0;
 
-void
-spupng_init_font()
+void spupng_init_font()
 {
-    uint8_t *t, *p;
-    int i, j;
+	uint8_t *t, *p;
+	int i, j;
 
-    /* de-interleave font image (puts all chars in row 0) */
-    if (!(t = (uint8_t*)malloc(ccfont2_width * ccfont2_height / 8)))
-        ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
+	/* de-interleave font image (puts all chars in row 0) */
+	if (!(t = (uint8_t*)malloc(ccfont2_width * ccfont2_height / 8)))
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
 
-    for (p = t, i = 0; i < CCH; i++)
-        for (j = 0; j < ccfont2_height; p += ccfont2_width / 8, j += CCH)
-            memcpy(p, ccfont2_bits + (j + i) * ccfont2_width / 8,
-                   ccfont2_width / 8);
+	for (p = t, i = 0; i < CCH; i++)
+		for (j = 0; j < ccfont2_height; p += ccfont2_width / 8, j += CCH)
+			memcpy(p, ccfont2_bits + (j + i) * ccfont2_width / 8,
+					ccfont2_width / 8);
 
-    memcpy(ccfont2_bits, t, ccfont2_width * ccfont2_height / 8);
-    free(t);
+	memcpy(ccfont2_bits, t, ccfont2_width * ccfont2_height / 8);
+	free(t);
 }
 
 struct spupng_t *spunpg_init(struct ccx_s_write *out)
 {
-    struct spupng_t *sp = (struct spupng_t *) malloc(sizeof(struct spupng_t));
-    if (NULL == sp)
-        ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
+	struct spupng_t *sp = (struct spupng_t *) malloc(sizeof(struct spupng_t));
+	if (NULL == sp)
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
 
-    if (!initialized)
-    {
-        initialized = 1;
-        spupng_init_font();
-    }
+	if (!initialized)
+	{
+		initialized = 1;
+		spupng_init_font();
+	}
 
 	if ((sp->fpxml = fdopen(out->fh, "w")) == NULL)
-    {
+	{
 		ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n",
-		        out->filename, strerror(errno));
-    }
-    sp->dirname = (char *) malloc(
-                            sizeof(char) * (strlen(out->filename) + 3));
-    if (NULL == sp->dirname)
-        ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
+				out->filename, strerror(errno));
+	}
+	sp->dirname = (char *) malloc(
+			sizeof(char) * (strlen(out->filename) + 3));
+	if (NULL == sp->dirname)
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
 
 	strcpy(sp->dirname, out->filename);
-    char* p = strrchr(sp->dirname, '.');
-    if (NULL == p)
-        p = sp->dirname + strlen(sp->dirname);
-    *p = '\0';
-    strcat(sp->dirname, ".d");
-    if (0 != mkdir(sp->dirname, 0777))
-    {
-        if (errno != EEXIST)
-        {
+	char* p = strrchr(sp->dirname, '.');
+	if (NULL == p)
+		p = sp->dirname + strlen(sp->dirname);
+	*p = '\0';
+	strcat(sp->dirname, ".d");
+	if (0 != mkdir(sp->dirname, 0777))
+	{
+		if (errno != EEXIST)
+		{
 			ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot create %s: %s\n",
-                    sp->dirname, strerror(errno));
-        }
-        // If dirname isn't a directory or if we don't have write permission,
-        // the first attempt to create a .png file will fail and we'll XXxit.
-    }
+					sp->dirname, strerror(errno));
+		}
+		// If dirname isn't a directory or if we don't have write permission,
+		// the first attempt to create a .png file will fail and we'll XXxit.
+	}
 
-    // enough to append /subNNNN.png
-    sp->pngfile = (char *) malloc(sizeof(char) * (strlen(sp->dirname) + 13));
-    if (NULL == sp->pngfile)
-        ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
-    sp->fileIndex = 0;
-    sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex);
+	// enough to append /subNNNN.png
+	sp->pngfile = (char *) malloc(sizeof(char) * (strlen(sp->dirname) + 13));
+	if (NULL == sp->pngfile)
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
+	sp->fileIndex = 0;
+	sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex);
 
-    // For NTSC closed captions and 720x480 DVD subtitle resolution:
-    // Each character is 16x26.
-    // 15 rows by 32 columns, plus 2 columns for left & right padding
-    // So each .png image will be 16*34 wide and 26*15 high, or 544x390
-    // To center image in 720x480 DVD screen, offset image by 88 and 45
-    // Need to keep yOffset even to prevent flicker on interlaced displays
-    // Would need to do something different for PAL format and teletext.
-    sp->xOffset = 88;
-    sp->yOffset = 46;
+	// For NTSC closed captions and 720x480 DVD subtitle resolution:
+	// Each character is 16x26.
+	// 15 rows by 32 columns, plus 2 columns for left & right padding
+	// So each .png image will be 16*34 wide and 26*15 high, or 544x390
+	// To center image in 720x480 DVD screen, offset image by 88 and 45
+	// Need to keep yOffset even to prevent flicker on interlaced displays
+	// Would need to do something different for PAL format and teletext.
+	sp->xOffset = 88;
+	sp->yOffset = 46;
 
-    return sp;
+	return sp;
 }
-void
-spunpg_free(struct spupng_t *sp)
+void spunpg_free(struct spupng_t *sp)
 {
-    free(sp->dirname);
-    free(sp->pngfile);
-    free(sp);
-}
-
-void
-spupng_write_header(struct spupng_t *sp,int multiple_files,char *first_input_file)
-{
-    fprintf(sp->fpxml, "<subpictures>\n<stream>\n");
-    if (multiple_files)
-        fprintf(sp->fpxml, "<!-- %s -->\n", first_input_file);
+	free(sp->dirname);
+	free(sp->pngfile);
+	free(sp);
 }
 
-void
-spupng_write_footer(struct spupng_t *sp)
+void spupng_write_header(struct spupng_t *sp,int multiple_files,char *first_input_file)
 {
-    fprintf(sp->fpxml, "</stream>\n</subpictures>\n");
-    fflush(sp->fpxml);
-    fclose(sp->fpxml);
+	fprintf(sp->fpxml, "<subpictures>\n<stream>\n");
+	if (multiple_files)
+		fprintf(sp->fpxml, "<!-- %s -->\n", first_input_file);
+}
+
+void spupng_write_footer(struct spupng_t *sp)
+{
+	fprintf(sp->fpxml, "</stream>\n</subpictures>\n");
+	fflush(sp->fpxml);
+	fclose(sp->fpxml);
 }
 
 void write_spumux_header(struct ccx_s_write *out)
 {
-    if (0 == out->spupng_data)
-        out->spupng_data = spunpg_init(out);
+	if (0 == out->spupng_data)
+		out->spupng_data = spunpg_init(out);
 
-    spupng_write_header((struct spupng_t*)out->spupng_data,out->multiple_files,out->first_input_file);
+	spupng_write_header((struct spupng_t*)out->spupng_data,out->multiple_files,out->first_input_file);
 }
 
 void write_spumux_footer(struct ccx_s_write *out)
 {
-    if (0 != out->spupng_data)
-    {
-        struct spupng_t *sp = (struct spupng_t *) out->spupng_data;
+	if (0 != out->spupng_data)
+	{
+		struct spupng_t *sp = (struct spupng_t *) out->spupng_data;
 
-        spupng_write_footer(sp);
-        spunpg_free(sp);
+		spupng_write_footer(sp);
+		spunpg_free(sp);
 
-        out->spupng_data = 0;
-        out->fh = -1;
-    }
+		out->spupng_data = 0;
+		out->fh = -1;
+	}
 }
 
 /**
@@ -171,35 +167,37 @@ void write_spumux_footer(struct ccx_s_write *out)
  * @return
  * Glyph number.
  */
-static unsigned int
-unicode_ccfont2(unsigned int c, int italic)
+static unsigned int unicode_ccfont2(unsigned int c, int italic)
 {
-    static const unsigned short specials[] = {
-                                                        0x00E1, 0x00E9,
-        0x00ED, 0x00F3, 0x00FA, 0x00E7, 0x00F7, 0x00D1, 0x00F1, 0x25A0,
-        0x00AE, 0x00B0, 0x00BD, 0x00BF, 0x2122, 0x00A2, 0x00A3, 0x266A,
-        0x00E0, 0x0020, 0x00E8, 0x00E2, 0x00EA, 0x00EE, 0x00F4, 0x00FB };
-    unsigned int i;
+	static const unsigned short specials[] = {
+		0x00E1, 0x00E9,
+		0x00ED, 0x00F3, 0x00FA, 0x00E7, 0x00F7, 0x00D1, 0x00F1, 0x25A0,
+		0x00AE, 0x00B0, 0x00BD, 0x00BF, 0x2122, 0x00A2, 0x00A3, 0x266A,
+		0x00E0, 0x0020, 0x00E8, 0x00E2, 0x00EA, 0x00EE, 0x00F4, 0x00FB };
+	unsigned int i;
 
-    if (c < 0x0020)
-        c = 15; /* invalid */
-    else if (c < 0x0080)
-        /*c = c */;
-    else {
-        for (i = 0; i < sizeof(specials) / sizeof(specials[0]); i++)
-            if (specials[i] == c) {
-                c = i + 6;
-                goto slant;
-            }
-
-        c = 15; /* invalid */
-    }
+	if (c < 0x0020)
+		c = 15; /* invalid */
+	else if (c < 0x0080)
+		/*c = c */;
+	else
+	{
+		for (i = 0; i < sizeof(specials) / sizeof(specials[0]); i++)
+		{
+			if (specials[i] == c)
+			{
+				c = i + 6;
+				goto slant;
+			}
+		}
+		c = 15; /* invalid */
+	}
 
 slant:
-    if (italic)
-        c += 4 * 32;
+	if (italic)
+		c += 4 * 32;
 
-    return c;
+	return c;
 }
 
 /**
@@ -251,40 +249,41 @@ draw_blank(int canvas_type, uint8_t *canvas, unsigned int rowstride,
  * Draw one character (function template - define a static version with
  * constant @a canvas_type, @a font, @a cpl, @a cw, @a ch).
  */
-static void
-draw_char(int canvas_type, uint8_t *canvas, int rowstride,
+static void draw_char(int canvas_type, uint8_t *canvas, int rowstride,
 	  uint8_t *pen, uint8_t *font, int cpl, int cw, int ch,
 	  int glyph, unsigned int underline)
 {
-    uint8_t *src;
-    int shift, x, y;
+	uint8_t *src;
+	int shift, x, y;
 
-    assert(cw >= 8 && cw <= 16);
-    assert(ch >= 1 && ch <= 31);
+	assert(cw >= 8 && cw <= 16);
+	assert(ch >= 1 && ch <= 31);
 
-    x = glyph * cw;
-    shift = x & 7;
-    src = font + (x >> 3);
+	x = glyph * cw;
+	shift = x & 7;
+	src = font + (x >> 3);
 
-    for (y = 0; y < ch; underline >>= 1, y++) {
-        int bits = ~0;
+	for (y = 0; y < ch; underline >>= 1, y++)
+	{
+		int bits = ~0;
 
-        if (!(underline & 1)) {
+		if (!(underline & 1))
+		{
 #ifdef __i386__
-            bits = (*((uint16_t *) src) >> shift);
+			bits = (*((uint16_t *) src) >> shift);
 #else
-            /* unaligned/little endian */
-            bits = ((src[1] * 256 + src[0]) >> shift);
+			/* unaligned/little endian */
+			bits = ((src[1] * 256 + src[0]) >> shift);
 #endif
-        }
+		}
 
-        for (x = 0; x < cw; bits >>= 1, x++)
-            poke(canvas, x, peek(pen, bits & 1));
+		for (x = 0; x < cw; bits >>= 1, x++)
+			poke(canvas, x, peek(pen, bits & 1));
 
-        canvas += rowstride;
+		canvas += rowstride;
 
-        src += cpl * cw / 8;
-    }
+		src += cpl * cw / 8;
+	}
 }
 
 /*
@@ -293,10 +292,10 @@ draw_char(int canvas_type, uint8_t *canvas, int rowstride,
 void draw_char_indexed(uint8_t * canvas, int rowstride,  uint8_t * pen,
 		     int unicode, int italic, int underline)
 {
-    draw_char(sizeof(*canvas), canvas, rowstride,
-              pen, (uint8_t *) ccfont2_bits, CCPL, CCW, CCH,
-              unicode_ccfont2(unicode, italic),
-              underline * (3 << 24) /* cell row 24, 25 */);
+	draw_char(sizeof(*canvas), canvas, rowstride,
+			pen, (uint8_t *) ccfont2_bits, CCPL, CCW, CCH,
+			unicode_ccfont2(unicode, italic),
+			underline * (3 << 24) /* cell row 24, 25 */);
 }
 
 void write_sputag(struct spupng_t *sp,LLONG ms_start,LLONG ms_end)
@@ -319,8 +318,8 @@ void write_spucomment(struct spupng_t *sp,const char *str)
 
 char* get_spupng_filename(void *ctx)
 {
-        struct spupng_t *sp = (struct spupng_t *)ctx;
-        return sp->pngfile;
+	struct spupng_t *sp = (struct spupng_t *)ctx;
+	return sp->pngfile;
 }
 void inc_spupng_fileindex(void *ctx)
 {
@@ -330,9 +329,9 @@ void inc_spupng_fileindex(void *ctx)
 }
 void set_spupng_offset(void *ctx,int x,int y)
 {
-    struct spupng_t *sp = (struct spupng_t *)ctx;
-    sp->xOffset = x;
-    sp->yOffset = y;
+	struct spupng_t *sp = (struct spupng_t *)ctx;
+	sp->xOffset = x;
+	sp->yOffset = y;
 }
 int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
 		png_color *palette, png_byte *alpha, int nb_color)

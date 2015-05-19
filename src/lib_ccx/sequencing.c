@@ -21,44 +21,44 @@ static int anchor_seq_number = -1;
 
 void init_hdcc (void)
 {
-    for (int j=0; j<SORTBUF; j++)
-    {
-        cc_data_count[j] = 0;
-        cc_fts[j] = 0;
-    }
-    memset(cc_data_pkts, 0, SORTBUF*(31*3+1));
-    has_ccdata_buffered = 0;
+	for (int j=0; j<SORTBUF; j++)
+	{
+		cc_data_count[j] = 0;
+		cc_fts[j] = 0;
+	}
+	memset(cc_data_pkts, 0, SORTBUF*(31*3+1));
+	has_ccdata_buffered = 0;
 }
 
 // Buffer caption blocks for later sorting/flushing.
 void store_hdcc(struct lib_ccx_ctx *ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now,struct cc_subtitle *sub)
 {
-    // Uninitialized?
-    if (anchor_seq_number < 0)
-    {
-        anchor_hdcc( sequence_number);
-    }
+	// Uninitialized?
+	if (anchor_seq_number < 0)
+	{
+		anchor_hdcc( sequence_number);
+	}
 
-    int seq_index = sequence_number - anchor_seq_number + MAXBFRAMES;
+	int seq_index = sequence_number - anchor_seq_number + MAXBFRAMES;
 
-    if (seq_index < 0 || seq_index > 2*MAXBFRAMES)
-    {
-        // Maybe missing an anchor frame - try to recover
-        dbg_print(CCX_DMT_VERBOSE, "Too many B-frames, or missing anchor frame. Trying to recover ..\n");
+	if (seq_index < 0 || seq_index > 2*MAXBFRAMES)
+	{
+		// Maybe missing an anchor frame - try to recover
+		dbg_print(CCX_DMT_VERBOSE, "Too many B-frames, or missing anchor frame. Trying to recover ..\n");
 
-        process_hdcc(ctx, sub);
-        anchor_hdcc( sequence_number);
-        seq_index = sequence_number - anchor_seq_number + MAXBFRAMES;
-    }
+		process_hdcc(ctx, sub);
+		anchor_hdcc( sequence_number);
+		seq_index = sequence_number - anchor_seq_number + MAXBFRAMES;
+	}
 
-    has_ccdata_buffered = 1;
+	has_ccdata_buffered = 1;
 
 	// In GOP mode the fts is set only once for the whole GOP. Recreate
-    // the right time according to the sequence number.
-    if (ccx_options.use_gop_as_pts==1)
-    {
-        current_fts_now += (LLONG) (sequence_number*1000.0/current_fps);
-    }
+	// the right time according to the sequence number.
+	if (ccx_options.use_gop_as_pts==1)
+	{
+		current_fts_now += (LLONG) (sequence_number*1000.0/current_fps);
+	}
 
 	if (cc_count)
 	{
@@ -69,26 +69,26 @@ void store_hdcc(struct lib_ccx_ctx *ctx, unsigned char *cc_data, int cc_count, i
 			cc_fts[seq_index] = current_fts_now; // CFS: Maybe do even if there's no data?
 			if (ctx->stream_mode!=CCX_SM_MP4) // CFS: Very ugly hack, but looks like overwriting is needed for at least some ES
 				cc_data_count[seq_index]  = 0;
-			memcpy(cc_data_pkts[seq_index]+cc_data_count[seq_index]*3, cc_data, cc_count*3+1);
+			memcpy(cc_data_pkts[seq_index] + cc_data_count[seq_index] * 3, cc_data, cc_count * 3 + 1);
 		}
 		cc_data_count[seq_index] += cc_count;
 	}
-    // DEBUG STUFF
-/*
-    printf("\nCC blocks, channel 0:\n");
-    for ( int i=0; i < cc_count*3; i+=3)
-    {
-        printf("%s", debug_608toASC( cc_data+i, 0) );
-    }
-    printf("\n");
-*/
+	// DEBUG STUFF
+	/*
+	   printf("\nCC blocks, channel 0:\n");
+	   for ( int i=0; i < cc_count*3; i+=3)
+	   {
+	   printf("%s", debug_608toASC( cc_data+i, 0) );
+	   }
+	   printf("\n");
+	 */
 }
 
 // Set a new anchor frame that new B-frames refer to.
 void anchor_hdcc(int seq)
 {
-    // Re-init the index
-    anchor_seq_number = seq;
+	// Re-init the index
+	anchor_seq_number = seq;
 }
 
 // Sort/flash caption block buffer
