@@ -529,12 +529,12 @@ void usage (void)
 	mprint ("                       is really live - don't rely on its output format\n");
 	mprint ("                       not changing between versions.\n");
 	mprint ("                  -lf: Use LF (UNIX) instead of CRLF (DOS, Windows) as line\n");
-	mprint ("                       terminator.\n\n");
+	mprint ("                       terminator.\n");
 	mprint ("            -autodash: Based on position on screen, attempt to determine\n");
 	mprint ("                       the different speakers and a dash (-) when each\n");
-	mprint ("                       of them talks (.srt only, -trim required).");
+	mprint ("                       of them talks (.srt only, -trim required).\n");
 	mprint ("              -xmltv:  produce an XMLTV file containing the EPG data from\n");
-	mprint ("                       the source TS file.");
+	mprint ("                       the source TS file.\n\n");
 
 	mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
 
@@ -1670,6 +1670,9 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	if(opt->ts_forced_program != -1)
 		opt->ts_forced_program_selected = 1;
 
+	if(opt->wbout2.filename != NULL && (opt->extract != 2 || opt->extract != 12) )
+		mprint("WARN: -o2 ignored! you might want -2 or -12 with -o2\n");
+	
 	// Init telexcc redundant options
 	tlt_config.transcript_settings = &opt->transcript_settings;
 	tlt_config.levdistmincnt = opt->levdistmincnt;
