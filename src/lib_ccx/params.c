@@ -1577,7 +1577,7 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				opt->udpport = atoi_hex(argv[i + 1]);
 			}
 
-			opt->input_source=CCX_DS_NETWORK;
+			opt->input_source = CCX_DS_NETWORK;
 			i++;
 			continue;
 		}

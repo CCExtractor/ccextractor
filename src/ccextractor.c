@@ -68,11 +68,11 @@ int main(int argc, char *argv[])
 	{
 		fatal(EXIT_TOO_MANY_INPUT_FILES, "UDP mode is not compatible with input files.\n");
 	}
-	if (ccx_options.input_source==CCX_DS_NETWORK || ccx_options.input_source==CCX_DS_TCP)
+	if (ccx_options.input_source == CCX_DS_NETWORK || ccx_options.input_source == CCX_DS_TCP)
 	{
 		ccx_options.buffer_input=1; // Mandatory, because each datagram must be read complete.
 	}
-	if (ctx->num_input_files && ccx_options.input_source==CCX_DS_TCP)
+	if (ctx->num_input_files && ccx_options.input_source == CCX_DS_TCP)
 	{
 		fatal(EXIT_TOO_MANY_INPUT_FILES, "TCP mode is not compatible with input files.\n");
 	}

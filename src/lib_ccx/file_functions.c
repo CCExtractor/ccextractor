@@ -149,9 +149,9 @@ int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 		}
 
 		ctx->infd = start_upd_srv(ccx_options.udpaddr, ccx_options.udpport);
-		return 1;
 		if(ctx->infd < 0)
 			fatal (CCX_COMMON_EXIT_BUG_BUG, "socket() failed.");
+		return 1;
 
 	}
 
