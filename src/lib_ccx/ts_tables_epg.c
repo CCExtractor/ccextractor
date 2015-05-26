@@ -854,7 +854,7 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 	{
 		dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid EIT packet size detected.\n");
 		//XXX hack to override segfault, we should concat packets instead
-		remaining = size - 14;
+		return;
 	}
 
 	while(remaining > 4)
