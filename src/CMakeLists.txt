@@ -33,6 +33,7 @@ aux_source_directory (${PROJECT_SOURCE_DIR} SOURCEFILE)
 set (EXTRA_LIBS ${EXTRA_LIBS} ccx)
 set (EXTRA_LIBS ${EXTRA_LIBS} png)
 set (EXTRA_LIBS ${EXTRA_LIBS} m)
+set (EXTRA_LIBS ${EXTRA_LIBS} iconv)
 
 ########################################################
 # Build using FFmpeg libraries
