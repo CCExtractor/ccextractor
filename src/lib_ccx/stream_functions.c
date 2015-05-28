@@ -108,6 +108,13 @@ void detect_stream_type (struct lib_ccx_ctx *ctx)
 					break;
 				}
 			}
+			if (ctx->stream_mode == CCX_SM_TRANSPORT)
+			{
+				dbg_print(CCX_DMT_PARSE, "detect_stream_type: detected as TS\n");
+				return_to_buffer (ctx->startbytes, (unsigned int)ctx->startbytes_avail);
+				return;
+			}
+
 			// Check for M2TS
 			for (unsigned i = 0; i<192; i++)
 			{
@@ -124,6 +131,13 @@ void detect_stream_type (struct lib_ccx_ctx *ctx)
 					break;
 				}
 			}
+			if (ctx->stream_mode == CCX_SM_TRANSPORT)
+			{
+				dbg_print(CCX_DMT_PARSE, "detect_stream_type: detected as M2TS\n");
+				return_to_buffer (ctx->startbytes, (unsigned int)ctx->startbytes_avail);
+				return;
+			}
+
 			// Now check for PS (Needs PACK header)
 			for (unsigned i=0;
 					i < (unsigned) (ctx->startbytes_avail<50000?ctx->startbytes_avail-3:49997);
@@ -138,11 +152,17 @@ void detect_stream_type (struct lib_ccx_ctx *ctx)
 					break;
 				}
 			}
+			if (ctx->stream_mode == CCX_SM_PROGRAM)
+			{
+				dbg_print(CCX_DMT_PARSE, "detect_stream_type: detected as PS\n");
+			}
+
 			// TiVo is also a PS
 			if (ctx->startbytes[0]=='T' && ctx->startbytes[1]=='i' &&
 					ctx->startbytes[2]=='V' && ctx->startbytes[3]=='o')
 			{
 				// The TiVo header is longer, but the PS loop will find the beginning
+				dbg_print(CCX_DMT_PARSE, "detect_stream_type: detected as Tivo PS\n");
 				ctx->startbytes_pos=187;
 				ctx->stream_mode=CCX_SM_PROGRAM;
 				strangeheader=1; // Avoid message about unrecognized header
