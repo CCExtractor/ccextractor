@@ -19,7 +19,6 @@ endif (WITH_OCR)
 
 aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_ccx/" SOURCEFILE)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/gpacmp4/" SOURCEFILE)
-#aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
 
 add_library (ccx ${SOURCEFILE})
 

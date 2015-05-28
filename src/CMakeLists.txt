@@ -7,7 +7,7 @@ option (WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
 
 #Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
-set (CCEXTRACTOR_VERSION_MINOR 75)
+set (CCEXTRACTOR_VERSION_MINOR 76)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
@@ -20,7 +20,6 @@ configure_file (
 include_directories ("${PROJECT_SOURCE_DIR}")
 include_directories ("${PROJECT_SOURCE_DIR}/lib_ccx")
 include_directories ("${PROJECT_SOURCE_DIR}/gpacmp4/")
-include_directories ("${PROJECT_SOURCE_DIR}/libccx_common/")
 
 #Adding some platform specific library path
 link_directories (/opt/local/lib)
@@ -31,16 +30,30 @@ add_subdirectory (lib_ccx)
 
 aux_source_directory (${PROJECT_SOURCE_DIR} SOURCEFILE)
 set (EXTRA_LIBS ${EXTRA_LIBS} ccx)
-set (EXTRA_LIBS ${EXTRA_LIBS} png)
 set (EXTRA_LIBS ${EXTRA_LIBS} m)
+
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 set (EXTRA_LIBS ${EXTRA_LIBS} iconv)
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+
+find_package (PkgConfig)
+if(PKG_CONFIG_FOUND)
+  pkg_check_modules(PNG libpng )
+  if(PNG_FOUND)
+    set (EXTRA_LIBS ${EXTRA_LIBS} png)
+  else (PNG_FOUND)
+    include_directories ("${PROJECT_SOURCE_DIR}/libpng/")
+    aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
+    aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib/" SOURCEFILE)
+  endif(PNG_FOUND)
+endif (PKG_CONFIG_FOUND)
 
 ########################################################
 # Build using FFmpeg libraries
 ########################################################
 
-if (WITH_FFMPEG)
-  find_package (PkgConfig)
+if (PKG_CONFIG_FOUND AND WITH_FFMPEG)
 
   pkg_check_modules (AVFORMAT REQUIRED libavformat)
   pkg_check_modules (AVUTIL REQUIRED libavutil)
@@ -51,7 +64,7 @@ if (WITH_FFMPEG)
   set (EXTRA_LIBS ${EXTRA_LIBS} ${AVCODEC_STATIC_LIBRARIES})
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_FFMPEG")
-endif (WITH_FFMPEG)
+endif (PKG_CONFIG_FOUND AND WITH_FFMPEG)
 
 ########################################################
 # Build with OCR using leptonica and tesseract libraries
