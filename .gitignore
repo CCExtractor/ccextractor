@@ -9,10 +9,13 @@ CVS
 *.o
 linux/ccextractor
 linux/depend
-windows/debug/*
+windows/debug/**
+windows/release/**
 
 ####
 # Visual Studio project Ignored files
 
 *.suo
 *.sdf
+*.opensdf
+*.user
