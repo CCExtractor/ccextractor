@@ -563,5 +563,8 @@
     <ClCompile Include="..\src\lib_ccx\ccx_common_option.c">
       <Filter>Source Files\ccx_common</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ts_tables_epg.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
