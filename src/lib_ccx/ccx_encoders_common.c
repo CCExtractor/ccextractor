@@ -273,7 +273,7 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 					char buf1[80];
 					if (context->transcript_settings->relativeTimestamp)
 					{
-						millis_to_date(start_time + context->subs_delay, buf1);
+						millis_to_date(start_time + context->subs_delay, buf1, context->date_format, context->millis_separator);
 						fdprintf(context->out->fh, "%s|", buf1);
 					}
 					else
@@ -292,7 +292,7 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 					char buf2[80];
 					if (context->transcript_settings->relativeTimestamp)
 					{
-						millis_to_date(end_time, buf2);
+						millis_to_date(end_time, buf2, context->date_format, context->millis_separator);
 						fdprintf(context->out->fh, "%s|", buf2);
 					}
 					else
