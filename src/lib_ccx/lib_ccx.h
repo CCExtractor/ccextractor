@@ -223,8 +223,6 @@ struct lib_ccx_ctx
 	/* File handles */
 	FILE *fh_out_elementarystream;
 	int infd; // descriptor number to input.
-	char *basefilename_for_stdin;
-	char *basefilename_for_network;
 	int PIDs_seen[MAX_PID];
 	struct PMT_entry *PIDs_programs[MAX_PID];
 	

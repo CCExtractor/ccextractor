@@ -401,26 +401,26 @@ LLONG buffered_read_opt (struct lib_ccx_ctx *ctx, unsigned char *buffer, unsigne
 				memmove (filebuffer,filebuffer+(FILEBUFFERSIZE-keep),keep);
 				int i;
 				if (ccx_options.input_source==CCX_DS_FILE || ccx_options.input_source==CCX_DS_STDIN)
-					i=read (ctx->infd, filebuffer+keep,FILEBUFFERSIZE-keep);
+					i = read (ctx->infd, filebuffer+keep,FILEBUFFERSIZE-keep);
 				else
-					i = recvfrom(ctx->infd,(char *) filebuffer+keep,FILEBUFFERSIZE-keep,0,NULL,NULL);
+					i = recvfrom(ctx->infd,(char *) filebuffer + keep, FILEBUFFERSIZE - keep, 0, NULL, NULL);
 				if (i == -1)
 					fatal (EXIT_READ_ERROR, "Error reading input stream!\n");
-				if (i==0)
+				if (i == 0)
 				{
 					/* If live stream, don't try to switch - acknowledge eof here as it won't
 					   cause a loop end */
 					if (ccx_options.live_stream || !(ccx_options.binary_concat && switch_to_next_file(ctx, copied)))
-						eof=1;
+						eof = 1;
 				}
-				filebuffer_pos=keep;
-				bytesinbuffer=(int) i+keep;
-				ready=i;
+				filebuffer_pos = keep;
+				bytesinbuffer=(int) i + keep;
+				ready = i;
 			}
 			int copy = (int) (ready>=bytes ? bytes:ready);
 			if (copy)
 			{
-				if (buffer!=NULL)
+				if (buffer != NULL)
 				{
 					memcpy (buffer, filebuffer+filebuffer_pos, copy);
 					buffer+=copy;
