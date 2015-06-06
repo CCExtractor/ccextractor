@@ -126,6 +126,7 @@ struct ccx_s_teletext_config {
 	// uint8_t se_mode : 1; // search engine compatible mode => Uses CCExtractor's write_format
 	// uint64_t utc_refvalue; // UTC referential value => Moved to ccx_decoders_common, so can be used for other decoders (608/xds) too
 	uint16_t user_page; // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
+	int sentence_cap;
 };
 #define MAX_PID 65536
 struct lib_ccx_ctx

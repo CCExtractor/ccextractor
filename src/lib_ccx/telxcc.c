@@ -263,7 +263,7 @@ void page_buffer_add_string (const char *s)
 			fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process teletext page.\n");
 	}
 	
-	if(strlen(s) <= 2 && ( (*s >= 'A' && *s <= 'Z') || (*s >= 'a' && *s <= 'z')) || (*s == '.') ) 
+	if(strlen(s) <= 2 && ((*s >= 'A' && *s <= 'Z') || (*s >= 'a' && *s <= 'z')) && tlt_config.sentence_cap || (*s == '.')) 
 	{char t = cap_telx(s);
 	s = &t;
 	memcpy (page_buffer_cur+page_buffer_cur_used, s,1);
@@ -619,8 +619,9 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
 
 
 				if (v >= 0x20) {
-				
+
 					if(u[0] == ' '){ 				//just to detect presence of " I "
+						
 						if(i_flag == 0){
 							i_flag = 1;
 							continue;
@@ -642,9 +643,9 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
 					}
 
 					if(i_flag == 2 && u[0]!=' '){		//" I" detected earlier but next char i.e. u,
-						char temp_1[2] = {'I','\0'}; 		// contains a char, therefore "I" is a part of word.
+						char temp_1[2] = {'I','\0'}; 	// contains a char, therefore "I" is a part of word.
 						char temp_2[2] = {' ','\0'};
-						page_buffer_add_string(temp_2);		//recover string that was skipped order to detect "I"
+						page_buffer_add_string(temp_2);	//recover string that was skipped order to detect "I"
 						page_buffer_add_string(temp_1);
 						page_buffer_add_string(u);		//after adding skipped string, add current char now
 						i_flag=0;
@@ -658,10 +659,10 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page) {
 					}
 
 					
-					page_buffer_add_string (u);				//u contains non-"I" character here.add that.
+					page_buffer_add_string (u);			//u contains non-"I" character here.add that.
 					i_flag=0;
-					
-					if (ccx_options.gui_mode_reports) // For now we just handle the easy stuff
+				
+			if (ccx_options.gui_mode_reports)		// For now we just handle the easy stuff
 						fprintf (stderr,"%s",u);
 				}
 			}

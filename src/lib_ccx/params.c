@@ -1100,6 +1100,8 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				strcmp (argv[i],"-sc")==0)
 		{
 			ccx_options.sentence_cap=1;
+			// Teletext needs to be set as well
+			tlt_config.sentence_cap = 1;
 			continue;
 		}
 		if ((strcmp (argv[i],"--capfile")==0 ||
