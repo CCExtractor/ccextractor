@@ -93,6 +93,9 @@ $(OBJS_DIR)/%.o: %.c
 $(OBJS_DIR)/%.o: %.cpp
 	$(CC) -c $(ALL_FLAGS) $(INCLUDE) $(CFLAGS) $< -o $@ -I../src/gpacmp4 
 
+$(OBJS_DIR)/ccextractor.o: ccextractor.c
+	$(CC) -c $(ALL_FLAGS) $(INCLUDE) $(CFLAGS) -O0 $< -o $@  
+
 .PHONY: clean
 clean:
 	rm -rf $(TARGET) 2>/dev/null || true
