@@ -41,6 +41,11 @@ int main(int argc, char *argv[])
 
 	// Initialize libraries
 	ctx = init_libraries(&ccx_options);
+	if (!ctx && errno == ENOMEM)
+		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+	else if (!ctx && errno == EINVAL)
+		fatal (CCX_COMMON_EXIT_BUG_BUG, "Invalid option to CCextractor Library\n");
+
 	dec_ctx = ctx->dec_ctx;
 
 
@@ -100,39 +105,6 @@ int main(int argc, char *argv[])
 		else
 			ctx->wbout1.filename=ccx_options.output_filename;
 	}
-
-	switch (ccx_options.write_format)
-	{
-		case CCX_OF_RAW:
-			ctx->extension = ".raw";
-			break;
-		case CCX_OF_SRT:
-			ctx->extension = ".srt";
-			break;
-		case CCX_OF_SAMI:
-			ctx->extension = ".smi";
-			break;
-		case CCX_OF_SMPTETT:
-			ctx->extension = ".ttml";
-			break;
-		case CCX_OF_TRANSCRIPT:
-			ctx->extension = ".txt";
-			break;
-		case CCX_OF_RCWT:
-			ctx->extension = ".bin";
-			break;
-		case CCX_OF_SPUPNG:
-			ctx->extension = ".xml";
-			break;
-		case CCX_OF_NULL:
-			ctx->extension = "";
-			break;
-		case CCX_OF_DVDRAW:
-			ctx->extension = ".dvdraw";
-			break;
-		default:
-			fatal (CCX_COMMON_EXIT_BUG_BUG, "write_format doesn't have any legal value, this is a bug.\n");			
-	}
 	params_dump(ctx);
 
 	// default teletext page
@@ -152,40 +124,6 @@ int main(int argc, char *argv[])
 	}
 
 	subline = (unsigned char *) malloc (SUBLINESIZE);
-
-	switch (ccx_options.input_source)
-	{
-		case CCX_DS_FILE:
-			ctx->basefilename = (char *) malloc (strlen (ctx->inputfile[0])+1);
-			break;
-		case CCX_DS_STDIN:
-			ctx->basefilename = (char *) malloc (strlen (ctx->basefilename_for_stdin)+1);
-			break;
-		case CCX_DS_NETWORK:
-		case CCX_DS_TCP:
-			ctx->basefilename = (char *) malloc (strlen (ctx->basefilename_for_network)+1);
-			break;
-	}		
-	if (ctx->basefilename == NULL)
-		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");		
-	switch (ccx_options.input_source)
-	{
-		case CCX_DS_FILE:
-			strcpy (ctx->basefilename, ctx->inputfile[0]);
-			break;
-		case CCX_DS_STDIN:
-			strcpy (ctx->basefilename, ctx->basefilename_for_stdin);
-			break;
-		case CCX_DS_NETWORK:
-		case CCX_DS_TCP:
-			strcpy (ctx->basefilename, ctx->basefilename_for_network);
-			break;
-	}		
-	
-	for (c = ctx->basefilename + strlen(ctx->basefilename) - 1; c>ctx->basefilename &&
-		*c!='.'; c--) {;} // Get last .
-	if (*c=='.')
-		*c=0;
 
 	if (ctx->wbout1.filename==NULL)
 	{
