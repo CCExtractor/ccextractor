@@ -984,7 +984,7 @@ void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char
 	}
 
 	// if slices are buffered - flush
-	if (isref && !bottom_field_flag)
+	if (isref)
 	{
 		dvprint("\nReference pic! [%s]\n", slice_types[slice_type]);
 		dbg_print(CCX_DMT_TIME, "\nReference pic! [%s] maxrefcnt: %3d\n",
