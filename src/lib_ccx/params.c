@@ -1688,6 +1688,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	tlt_config.nofontcolor = opt->nofontcolor;
 	tlt_config.millis_separator = opt->millis_separator;
 
+	// teletext page number out of range
+	if ((tlt_config.page != 0) && ((tlt_config.page < 100) || (tlt_config.page > 899))) {
+		print_error(opt->gui_mode_reports, "Teletext page number could not be lower than 100 or higher than 899\n");
+		return EXIT_NOT_CLASSIFIED;
+	}
+
 	if (opt->num_input_files == 0 && opt->input_source  == CCX_DS_FILE)
 	{
 		return EXIT_NO_INPUT_FILES;

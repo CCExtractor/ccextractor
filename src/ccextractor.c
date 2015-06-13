@@ -76,11 +76,6 @@ int main(int argc, char *argv[])
 		ctx->wbout2.first_input_file = ctx->inputfile[0];
 	}
 
-	// teletext page number out of range
-	if ((tlt_config.page != 0) && ((tlt_config.page < 100) || (tlt_config.page > 899))) {
-		fatal (EXIT_NOT_CLASSIFIED, "Teletext page number could not be lower than 100 or higher than 899\n");
-	}
-
 	if (ccx_options.output_filename!=NULL)
 	{
 		// Use the given output file name for the field specified by
