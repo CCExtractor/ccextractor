@@ -611,43 +611,48 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page)
 	switch (tlt_config.write_format)
 	{
 		case CCX_OF_TRANSCRIPT:
-			if (page_buffer_prev_used==0)
-				prev_show_timestamp=page->show_timestamp;
-			if (page_buffer_prev_used==0 ||
+			if (page_buffer_prev_used == 0)
+				prev_show_timestamp = page->show_timestamp;
+			if (page_buffer_prev_used == 0 ||
 					fuzzy_memcmp (page_buffer_prev, page_buffer_cur,
 						ucs2_buffer_prev, ucs2_buffer_prev_used,
 						ucs2_buffer_cur, ucs2_buffer_cur_used
-						)==0)
+						) == 0)
 			{
 				// If empty previous buffer, we just start one with the
 				// current page and do nothing. Wait until we see more.
-				if (page_buffer_prev) free (page_buffer_prev);
-				page_buffer_prev_used=page_buffer_cur_used;
-				page_buffer_prev_size=page_buffer_cur_size;
-				page_buffer_prev=page_buffer_cur;
-				page_buffer_cur_size=0;
-				page_buffer_cur_used=0;
-				page_buffer_cur=NULL;
-				if (ucs2_buffer_prev) free (ucs2_buffer_prev);
-				ucs2_buffer_prev_used=ucs2_buffer_cur_used;
-				ucs2_buffer_prev_size=ucs2_buffer_cur_size;
-				ucs2_buffer_prev=ucs2_buffer_cur;
-				ucs2_buffer_cur_size=0;
-				ucs2_buffer_cur_used=0;
-				ucs2_buffer_cur=NULL;
-				prev_hide_timestamp=page->hide_timestamp;
+				if (page_buffer_prev)
+					free (page_buffer_prev);
+
+				page_buffer_prev_used	= page_buffer_cur_used;
+				page_buffer_prev_size	= page_buffer_cur_size;
+				page_buffer_prev	= page_buffer_cur;
+				page_buffer_cur_size	= 0;
+				page_buffer_cur_used	= 0;
+				page_buffer_cur		= NULL;
+
+				if (ucs2_buffer_prev)
+					free (ucs2_buffer_prev);
+				ucs2_buffer_prev_used	= ucs2_buffer_cur_used;
+				ucs2_buffer_prev_size	= ucs2_buffer_cur_size;
+				ucs2_buffer_prev	= ucs2_buffer_cur;
+				ucs2_buffer_cur_size	= 0;
+				ucs2_buffer_cur_used	= 0;
+				ucs2_buffer_cur		= NULL;
+				prev_hide_timestamp	= page->hide_timestamp;
 				break;
 			}
 			else
 			{
 				// OK, the old and new buffer don't match. So write the old
 				telxcc_dump_prev_page(ctx);
-				prev_hide_timestamp=page->hide_timestamp;
-				prev_show_timestamp=page->show_timestamp;
+				prev_hide_timestamp = page->hide_timestamp;
+				prev_show_timestamp = page->show_timestamp;
 			}
 			break;
 		case CCX_OF_SMPTETT:
-			if (ctx->wbout1.fh!=-1) {
+			if (ctx->wbout1.fh!=-1)
+			{
 				timestamp_to_smptetttime(page->show_timestamp, timecode_show);
 				timestamp_to_smptetttime(page->hide_timestamp, timecode_hide);
 				fdprintf(ctx->wbout1.fh,"      <p region=\"speaker\" begin=\"%s\" end=\"%s\">%s</p>\n", timecode_show, timecode_hide, page_buffer_cur);
@@ -656,7 +661,8 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page)
 		default: // Yes, this means everything else is .srt for now
 			page_buffer_add_string ((const char *) encoded_crlf);
 			page_buffer_add_string((const char *) encoded_crlf);
-			if (ctx->wbout1.fh!=-1) {
+			if (ctx->wbout1.fh!=-1)
+			{
 				fdprintf(ctx->wbout1.fh,"%"PRIu32"%s%s --> %s%s", tlt_frames_produced, encoded_crlf, timecode_show, timecode_hide, encoded_crlf);
 				fdprintf(ctx->wbout1.fh, "%s",page_buffer_cur);
 			}

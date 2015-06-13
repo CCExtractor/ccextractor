@@ -614,7 +614,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		}
 		else if (ccx_bufferdatatype == CCX_PES)
 		{
-			got = process_m2v (ctx, ctx->buffer, inbuf,&dec_sub);
+			got = process_m2v (ctx, ctx->buffer, inbuf, &dec_sub);
 		}
 		else if (ccx_bufferdatatype == CCX_TELETEXT)
 		{
