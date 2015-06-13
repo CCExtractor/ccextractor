@@ -788,7 +788,7 @@ int atoi_hex (char *s)
 	}
 }
 
-void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
+int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 {
 	char *cea708_service_list=NULL; // List CEA-708 services
 
@@ -1687,6 +1687,33 @@ void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	tlt_config.encoding = opt->encoding;
 	tlt_config.nofontcolor = opt->nofontcolor;
 	tlt_config.millis_separator = opt->millis_separator;
+
+	if (opt->num_input_files == 0 && opt->input_source  == CCX_DS_FILE)
+	{
+		return EXIT_NO_INPUT_FILES;
+	}
+	if (opt->num_input_files > 1 && opt->live_stream)
+	{
+		print_error(opt->gui_mode_reports, "Live stream mode accepts only one input file.\n");
+		return EXIT_TOO_MANY_INPUT_FILES;
+	}
+	if (opt->num_input_files && opt->input_source == CCX_DS_NETWORK)
+	{
+		print_error(opt->gui_mode_reports, "UDP mode is not compatible with input files.\n");
+		return EXIT_TOO_MANY_INPUT_FILES;
+	}
+	if (opt->input_source == CCX_DS_NETWORK || opt->input_source == CCX_DS_TCP)
+	{
+		ccx_options.buffer_input = 1; // Mandatory, because each datagram must be read complete.
+	}
+	if (opt->num_input_files && opt->input_source == CCX_DS_TCP)
+	{
+		print_error(opt->gui_mode_reports, "TCP mode is not compatible with input files.\n");
+		return EXIT_TOO_MANY_INPUT_FILES;
+	}
+
+	return EXIT_OK;
+
 }
 
 int detect_input_file_overwrite(struct lib_ccx_ctx *ctx, const char *output_filename)

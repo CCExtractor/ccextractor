@@ -24,7 +24,6 @@ void sigint_handler()
 struct ccx_s_options ccx_options;
 int main(int argc, char *argv[])
 {
-	char *c;
 	struct encoder_ctx enc_ctx[2];
 	struct cc_subtitle dec_sub;
 #ifdef ENABLE_FFMPEG
@@ -32,13 +31,22 @@ int main(int argc, char *argv[])
 #endif
 	struct lib_ccx_ctx *ctx;
 	struct lib_cc_decode *dec_ctx = NULL;
+	int ret = 0;
 
 
 	init_options (&ccx_options);
 
 	parse_configuration(&ccx_options);
-	parse_parameters (&ccx_options, argc, argv);
-
+	ret = parse_parameters (&ccx_options, argc, argv);
+	if (ret == EXIT_NO_INPUT_FILES)
+	{
+		usage ();
+		fatal (EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");
+	}
+	else if (ret != EXIT_OK)
+	{
+		exit(ret);
+	}
 	// Initialize libraries
 	ctx = init_libraries(&ccx_options);
 	if (!ctx && errno == ENOMEM)
@@ -59,28 +67,6 @@ int main(int argc, char *argv[])
 	memset (&cea708services[0],0,CCX_DECODERS_708_MAX_SERVICES*sizeof (int)); // Cannot (yet) be moved because it's needed in parse_parameters.
 	memset (&dec_sub, 0,sizeof(dec_sub));
 
-
-	if (ctx->num_input_files==0 && ccx_options.input_source==CCX_DS_FILE)
-	{
-		usage ();
-		fatal (EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");
-	}
-	if (ctx->num_input_files>1 && ccx_options.live_stream)
-	{
-		fatal(EXIT_TOO_MANY_INPUT_FILES, "Live stream mode accepts only one input file.\n");
-	}
-	if (ctx->num_input_files && ccx_options.input_source==CCX_DS_NETWORK)
-	{
-		fatal(EXIT_TOO_MANY_INPUT_FILES, "UDP mode is not compatible with input files.\n");
-	}
-	if (ccx_options.input_source == CCX_DS_NETWORK || ccx_options.input_source == CCX_DS_TCP)
-	{
-		ccx_options.buffer_input=1; // Mandatory, because each datagram must be read complete.
-	}
-	if (ctx->num_input_files && ccx_options.input_source == CCX_DS_TCP)
-	{
-		fatal(EXIT_TOO_MANY_INPUT_FILES, "TCP mode is not compatible with input files.\n");
-	}
 
 	if (ctx->num_input_files > 0)
 	{

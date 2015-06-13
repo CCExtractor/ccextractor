@@ -96,6 +96,18 @@ bool_t in_array(uint16_t *array, uint16_t length, uint16_t element)
 	return r;
 }
 
+void print_error (int mode, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	if (mode)
+		fprintf(stderr,"###MESSAGE#");
+	else
+		fprintf(stderr, "\rError: ");
+	vfprintf(stderr, fmt, args);
+	fprintf(stderr, "\n");
+	va_end(args);
+}
 /* Write formatted message to stderr and then exit. */
 void fatal(int exit_code, const char *fmt, ...)
 {

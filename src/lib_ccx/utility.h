@@ -12,4 +12,5 @@
 
 extern int temp_debug;
 void init_boundary_time (struct ccx_boundary_time *bt);
+void print_error (int mode, const char *fmt, ...);
 #endif
