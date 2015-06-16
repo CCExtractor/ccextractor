@@ -139,20 +139,20 @@ int validate_cc_data_pair (unsigned char *cc_data_pair)
 }
 int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle *sub)
 {
-    unsigned char cc_valid = (*cc_block & 4) >>2;
-    unsigned char cc_type = *cc_block & 3;
+	unsigned char cc_valid = (*cc_block & 4) >>2;
+	unsigned char cc_type = *cc_block & 3;
 
-    int timeok = 1;
+	int timeok = 1;
 
-    if ( ctx->fix_padding
-         && cc_valid==0 && cc_type <= 1 // Only fix NTSC packets
-         && cc_block[1]==0 && cc_block[2]==0 )
-    {
-        /* Padding */
-        cc_valid=1;
-        cc_block[1]=0x80;
-        cc_block[2]=0x80;
-    }
+	if ( ctx->fix_padding
+		&& cc_valid==0 && cc_type <= 1 // Only fix NTSC packets
+		&& cc_block[1]==0 && cc_block[2]==0 )
+	{
+		/* Padding */
+		cc_valid=1;
+		cc_block[1]=0x80;
+		cc_block[2]=0x80;
+	}
 
 	if ( ctx->write_format!=CCX_OF_RAW && // In raw we cannot skip padding because timing depends on it
 		 ctx->write_format!=CCX_OF_DVDRAW &&
@@ -160,115 +160,115 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 		&& (cc_block[1]&0x7F)==0 && (cc_block[2]&0x7F)==0) // CFS: Skip non-data, makes debugging harder.
 		return 1;
 
-    // Print raw data with FTS.
-    dbg_print(CCX_DMT_CBRAW, "%s   %d   %02X:%c%c:%02X", print_mstime(fts_now + fts_global),in_xds_mode,
-               cc_block[0], cc_block[1]&0x7f,cc_block[2]&0x7f, cc_block[2]);
+	// Print raw data with FTS.
+	dbg_print(CCX_DMT_CBRAW, "%s   %d   %02X:%c%c:%02X", print_mstime(fts_now + fts_global),in_xds_mode,
+			cc_block[0], cc_block[1]&0x7f,cc_block[2]&0x7f, cc_block[2]);
 
-    /* In theory the writercwtdata() function could return early and not
-     * go through the 608/708 cases below.  We do that to get accurate
-     * counts for cb_field1, cb_field2 and cb_708.
-     * Note that printdata() and do_708() must not be called for
-     * the CCX_OF_RCWT case. */
+	/* In theory the writercwtdata() function could return early and not
+	 * go through the 608/708 cases below.  We do that to get accurate
+	 * counts for cb_field1, cb_field2 and cb_708.
+	 * Note that printdata() and do_708() must not be called for
+	 * the CCX_OF_RCWT case. */
 
-    if (cc_valid || cc_type==3)
-    {
-        ctx->cc_stats[cc_type]++;
+	if (cc_valid || cc_type==3)
+	{
+		ctx->cc_stats[cc_type]++;
 
-        switch (cc_type)
-        {
-        case 0:
-            dbg_print(CCX_DMT_CBRAW, "    %s   ..   ..\n",  debug_608toASC( cc_block, 0));
+		switch (cc_type)
+		{
+			case 0:
+				dbg_print(CCX_DMT_CBRAW, "    %s   ..   ..\n",  debug_608toASC( cc_block, 0));
 
-            current_field=1;
-            ctx->saw_caption_block = 1;
+				current_field=1;
+				ctx->saw_caption_block = 1;
 
-            if (ctx->extraction_start.set &&
-				get_fts() < ctx->extraction_start.time_in_ms)
-                timeok = 0;
-            if (ctx->extraction_end.set &&
-				get_fts() > ctx->extraction_end.time_in_ms)
-            {
-                timeok = 0;
-                ctx->processed_enough=1;
-            }
-            if (timeok)
-            {
-                if(ctx->write_format!=CCX_OF_RCWT)
-                    printdata (ctx, cc_block+1,2,0,0, sub);
-                else
-                    writercwtdata(ctx, cc_block);
-            }
-            cb_field1++;
-            break;
-        case 1:
-            dbg_print(CCX_DMT_CBRAW, "    ..   %s   ..\n",  debug_608toASC( cc_block, 1));
+				if (ctx->extraction_start.set &&
+						get_fts() < ctx->extraction_start.time_in_ms)
+					timeok = 0;
+				if (ctx->extraction_end.set &&
+						get_fts() > ctx->extraction_end.time_in_ms)
+				{
+					timeok = 0;
+					ctx->processed_enough=1;
+				}
+				if (timeok)
+				{
+					if(ctx->write_format!=CCX_OF_RCWT)
+						printdata (ctx, cc_block+1,2,0,0, sub);
+					else
+						writercwtdata(ctx, cc_block);
+				}
+				cb_field1++;
+				break;
+			case 1:
+				dbg_print(CCX_DMT_CBRAW, "    ..   %s   ..\n",  debug_608toASC( cc_block, 1));
 
-            current_field=2;
-            ctx->saw_caption_block = 1;
+				current_field=2;
+				ctx->saw_caption_block = 1;
 
-            if (ctx->extraction_start.set &&
-				get_fts() < ctx->extraction_start.time_in_ms)
-                timeok = 0;
-            if (ctx->extraction_end.set &&
-				get_fts() > ctx->extraction_end.time_in_ms)
-            {
-                timeok = 0;
-                ctx->processed_enough=1;
-            }
-            if (timeok)
-            {
-                if(ctx->write_format!=CCX_OF_RCWT)
-                    printdata (ctx, 0,0,cc_block+1,2, sub);
-                else
-                    writercwtdata(ctx, cc_block);
-            }
-            cb_field2++;
-            break;
-        case 2: //EIA-708
-            // DTVCC packet data
-            // Fall through
-        case 3: //EIA-708
-            dbg_print(CCX_DMT_CBRAW, "    ..   ..   DD\n");
+				if (ctx->extraction_start.set &&
+						get_fts() < ctx->extraction_start.time_in_ms)
+					timeok = 0;
+				if (ctx->extraction_end.set &&
+						get_fts() > ctx->extraction_end.time_in_ms)
+				{
+					timeok = 0;
+					ctx->processed_enough=1;
+				}
+				if (timeok)
+				{
+					if(ctx->write_format!=CCX_OF_RCWT)
+						printdata (ctx, 0,0,cc_block+1,2, sub);
+					else
+						writercwtdata(ctx, cc_block);
+				}
+				cb_field2++;
+				break;
+			case 2: //EIA-708
+				// DTVCC packet data
+				// Fall through
+			case 3: //EIA-708
+				dbg_print(CCX_DMT_CBRAW, "    ..   ..   DD\n");
 
-            // DTVCC packet start
-            current_field=3;
+				// DTVCC packet start
+				current_field=3;
 
-            if (ctx->extraction_start.set &&
-				get_fts() < ctx->extraction_start.time_in_ms)
-                timeok = 0;
-            if (ctx->extraction_end.set &&
-				get_fts() > ctx->extraction_end.time_in_ms)
-            {
-                timeok = 0;
-                ctx->processed_enough=1;
-            }
-            char temp[4];
-            temp[0]=cc_valid;
-            temp[1]=cc_type;
-            temp[2]=cc_block[1];
-            temp[3]=cc_block[2];
-            if (timeok)
-            {
-                if(ctx->write_format!=CCX_OF_RCWT)
-                   do_708 (ctx,(const unsigned char *) temp, 4);
-                else
-                    writercwtdata(ctx, cc_block);
-            }
-            cb_708++;
-            // Check for bytes read
-            // printf ("Warning: Losing EIA-708 data!\n");
-            break;
-        default:
-			fatal(CCX_COMMON_EXIT_BUG_BUG, "Cannot be reached!");
-        } // switch (cc_type)
-    } // cc_valid
-    else
-    {
-        dbg_print(CCX_DMT_CBRAW, "    ..   ..   ..\n");
-        dbg_print(CCX_DMT_VERBOSE, "Found !(cc_valid || cc_type==3) - ignore this block\n");
-    }
+				if (ctx->extraction_start.set &&
+						get_fts() < ctx->extraction_start.time_in_ms)
+					timeok = 0;
+				if (ctx->extraction_end.set &&
+						get_fts() > ctx->extraction_end.time_in_ms)
+				{
+					timeok = 0;
+					ctx->processed_enough=1;
+				}
+				char temp[4];
+				temp[0]=cc_valid;
+				temp[1]=cc_type;
+				temp[2]=cc_block[1];
+				temp[3]=cc_block[2];
+				if (timeok)
+				{
+					if(ctx->write_format!=CCX_OF_RCWT)
+						do_708 (ctx,(const unsigned char *) temp, 4);
+					else
+						writercwtdata(ctx, cc_block);
+				}
+				cb_708++;
+				// Check for bytes read
+				// printf ("Warning: Losing EIA-708 data!\n");
+				break;
+			default:
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "Cannot be reached!");
+		} // switch (cc_type)
+	} // cc_valid
+	else
+	{
+		dbg_print(CCX_DMT_CBRAW, "    ..   ..   ..\n");
+		dbg_print(CCX_DMT_VERBOSE, "Found !(cc_valid || cc_type==3) - ignore this block\n");
+	}
 
-    return 1;
+	return 1;
 }
 struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *setting)
 {
