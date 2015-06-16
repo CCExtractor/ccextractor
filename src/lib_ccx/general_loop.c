@@ -619,7 +619,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		else if (ccx_bufferdatatype == CCX_TELETEXT)
 		{
 			// Dispatch to Petr Kutalek 's telxcc.
-			tlt_process_pes_packet (ctx, ctx->buffer, (uint16_t) inbuf);
+			tlt_process_pes_packet (ctx, ctx->buffer, (uint16_t) inbuf, &dec_sub);
 			got = inbuf;
 		}
 		else if (ccx_bufferdatatype == CCX_PRIVATE_MPEG2_CC)
@@ -776,7 +776,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 
 	if (parsebuf[6] == 0 && parsebuf[7] == 2)
 	{
-		tlt_read_rcwt(ctx);
+		tlt_read_rcwt(ctx, &dec_sub);
 		return;
 	}
 

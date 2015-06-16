@@ -403,10 +403,10 @@ unsigned encode_line (unsigned char *buffer, unsigned char *text);
 void buffered_seek (struct lib_ccx_ctx *ctx, int offset);
 extern void build_parity_table(void);
 
-void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t size);
+void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub);
 void telxcc_init(struct lib_ccx_ctx *ctx);
 void telxcc_close(struct lib_ccx_ctx *ctx);
-void tlt_read_rcwt(struct lib_ccx_ctx *ctx);
+void tlt_read_rcwt(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub);
 
 extern unsigned rollover_bits;
 extern int global_timestamp_inited;

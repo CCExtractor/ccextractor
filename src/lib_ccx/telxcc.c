@@ -677,7 +677,7 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page)
 		fflush (stderr);
 }
 
-void process_telx_packet(struct lib_ccx_ctx *ctx, data_unit_t data_unit_id, teletext_packet_payload_t *packet, uint64_t timestamp)
+void process_telx_packet(struct lib_ccx_ctx *ctx, data_unit_t data_unit_id, teletext_packet_payload_t *packet, uint64_t timestamp, struct cc_subtitle *sub)
 {
 	// variable names conform to ETS 300 706, chapter 7.1.2
 	uint8_t address, m, y, designation_code;
@@ -973,7 +973,7 @@ void tlt_write_rcwt(struct lib_ccx_ctx *ctx, uint8_t data_unit_id, uint8_t *pack
 	dec_ctx->writedata((unsigned char *) packet, 44, dec_ctx->context_cc608_field_1, NULL);
 }
 
-void tlt_read_rcwt(struct lib_ccx_ctx *ctx)
+void tlt_read_rcwt(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 {
 	int len = 1 + 8 + 44;
 	unsigned char *buf = (unsigned char *) malloc(len);
@@ -999,11 +999,11 @@ void tlt_read_rcwt(struct lib_ccx_ctx *ctx)
 
 		last_timestamp = t;
 
-		process_telx_packet(ctx, id, pl, t);
+		process_telx_packet(ctx, id, pl, t, sub);
 	}
 }
 
-void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t size)
+void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub)
 {
 	uint64_t pes_prefix;
 	uint8_t pes_stream_id;
@@ -1129,7 +1129,7 @@ void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t s
 					tlt_write_rcwt(ctx, data_unit_id, &buffer[i], last_timestamp);
 				else
 					// FIXME: This explicit type conversion could be a problem some day -- do not need to be platform independant
-					process_telx_packet(ctx, (data_unit_t) data_unit_id, (teletext_packet_payload_t *)&buffer[i], last_timestamp);
+					process_telx_packet(ctx, (data_unit_t) data_unit_id, (teletext_packet_payload_t *)&buffer[i], last_timestamp, sub);
 			}
 		}
 
