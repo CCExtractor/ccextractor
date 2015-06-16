@@ -281,7 +281,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt);
 void dinit_libraries( struct lib_ccx_ctx **ctx);
 
 //params.c
-void parse_parameters (struct ccx_s_options *opt, int argc, char *argv[]);
+int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[]);
 void usage (void);
 int detect_input_file_overwrite(struct lib_ccx_ctx *ctx, const char *output_filename);
 int atoi_hex (char *s);
