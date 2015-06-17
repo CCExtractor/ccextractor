@@ -564,6 +564,14 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		}
 
 	}
+	if (sub->type == CC_RAW)
+	{
+		if (context->send_to_srv)
+			net_send_header(sub->data, sub->nb_data);
+		else
+			write(context->out->fh, sub->data, sub->nb_data);
+		sub->nb_data = 0;
+	}
 	if (!sub->nb_data)
 		freep(&sub->data);
 	return wrote_something;

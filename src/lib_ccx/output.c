@@ -23,9 +23,17 @@ int writeraw (const unsigned char *data, int length, void *private_data, struct 
 	if (data==NULL)
 		return -1;
 
-	/* TODO dont write directly to file instead follow complete path and write raw data in sub and in above 
-		layer choose whether u want to write it to file or not */
-	write (context->out->fh, data, length);
+	sub->data = realloc(sub->data,length + sub->nb_data);
+	if (!sub->data)
+		return EXIT_NOT_ENOUGH_MEMORY;
+
+	memcpy(sub->data + sub->nb_data, data, length);
+	sub->got_output = 1;
+	sub->nb_data += length;
+	sub->type = CC_RAW;
+
+
+	return EXIT_SUCCESS;
 }
 
 void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile)
@@ -215,8 +223,8 @@ void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct
 
 		memcpy(cbbuffer, "\x04\x80\x80", 3); // Field 1 padding
 		memcpy(cbbuffer+3, "\x05\x80\x80", 3); // Field 2 padding
-		ctx->writedata(cbheader, 10, ctx->context_cc608_field_1, NULL);
-		ctx->writedata(cbbuffer, 3 * cbcount, ctx->context_cc608_field_1, NULL);
+		ctx->writedata(cbheader, 10, ctx->context_cc608_field_1, sub);
+		ctx->writedata(cbbuffer, 3 * cbcount, ctx->context_cc608_field_1, sub);
 
 		cbcount = 0;
 		cbempty = 0;

@@ -667,6 +667,11 @@ int main(int argc, char *argv[])
 		{
 			// Write last header and data
 			writercwtdata (dec_ctx, NULL, &dec_sub);
+			if (dec_sub.got_output)
+			{
+				encode_sub(enc_ctx,&dec_sub);
+				dec_sub.got_output = 0;
+			}
 		}
 		dinit_encoder(enc_ctx);
 	}
