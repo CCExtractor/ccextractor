@@ -359,7 +359,7 @@ void print_file_report(struct lib_ccx_ctx *ctx);
 void init_write(struct ccx_s_write *wb, char *filename);
 int writeraw (const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile);
-void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data);
+void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct cc_subtitle *sub);
 
 // stream_functions.c
 int isValidMP4Box(unsigned char *buffer, long position, long *nextBoxLocation, int *boxScore);

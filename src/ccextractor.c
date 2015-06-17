@@ -666,15 +666,15 @@ int main(int argc, char *argv[])
 		else if(ccx_options.write_format==CCX_OF_RCWT)
 		{
 			// Write last header and data
-			writercwtdata (dec_ctx, NULL);
+			writercwtdata (dec_ctx, NULL, &dec_sub);
 		}
 		dinit_encoder(enc_ctx);
 	}
 	if (ctx->wbout2.fh!=-1)
 	{
-		if (ccx_options.write_format==CCX_OF_SMPTETT || ccx_options.write_format==CCX_OF_SAMI || 
-			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT
-			|| ccx_options.write_format==CCX_OF_SPUPNG )
+		if (ccx_options.write_format == CCX_OF_SMPTETT || ccx_options.write_format == CCX_OF_SAMI ||
+			ccx_options.write_format == CCX_OF_SRT || ccx_options.write_format == CCX_OF_TRANSCRIPT
+			|| ccx_options.write_format == CCX_OF_SPUPNG )
 		{
 			handle_end_of_data(dec_ctx->context_cc608_field_2, &dec_sub);
 			if (dec_sub.got_output)

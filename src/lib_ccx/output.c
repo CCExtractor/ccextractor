@@ -25,7 +25,7 @@ int writeraw (const unsigned char *data, int length, void *private_data, struct 
 
 	/* TODO dont write directly to file instead follow complete path and write raw data in sub and in above 
 		layer choose whether u want to write it to file or not */
-	write (context->out->fh,data,length);
+	write (context->out->fh, data, length);
 }
 
 void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile)
@@ -117,7 +117,7 @@ void printdata (struct lib_cc_decode *ctx, const unsigned char *data1, int lengt
 
 /* Buffer data with the same FTS and write when a new FTS or data==NULL
  * is encountered */
-void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data)
+void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct cc_subtitle *sub)
 {
 	static LLONG prevfts = -1;
 	LLONG currfts = fts_now + fts_global;
@@ -172,8 +172,8 @@ void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data)
 
 		if (cbcount > 0)
 		{
-			ctx->writedata(cbheader, 10, ctx->context_cc608_field_1, NULL);
-			ctx->writedata(cbbuffer, 3 * cbcount, ctx->context_cc608_field_1, NULL);
+			ctx->writedata(cbheader, 10, ctx->context_cc608_field_1, sub);
+			ctx->writedata(cbbuffer, 3 * cbcount, ctx->context_cc608_field_1, sub);
 		}
 		cbcount = 0;
 		cbempty = 0;

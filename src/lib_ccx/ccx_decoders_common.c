@@ -196,7 +196,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 					if(ctx->write_format!=CCX_OF_RCWT)
 						printdata (ctx, cc_block+1,2,0,0, sub);
 					else
-						writercwtdata(ctx, cc_block);
+						writercwtdata(ctx, cc_block, sub);
 				}
 				cb_field1++;
 				break;
@@ -220,7 +220,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 					if(ctx->write_format!=CCX_OF_RCWT)
 						printdata (ctx, 0,0,cc_block+1,2, sub);
 					else
-						writercwtdata(ctx, cc_block);
+						writercwtdata(ctx, cc_block, sub);
 				}
 				cb_field2++;
 				break;
@@ -252,7 +252,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 					if(ctx->write_format!=CCX_OF_RCWT)
 						do_708 (ctx,(const unsigned char *) temp, 4);
 					else
-						writercwtdata(ctx, cc_block);
+						writercwtdata(ctx, cc_block, sub);
 				}
 				cb_708++;
 				// Check for bytes read
@@ -313,7 +313,9 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 	if (setting->send_to_srv)
 		ctx->writedata = net_send_cc;
-	else if (setting->output_format==CCX_OF_RAW || setting->output_format==CCX_OF_DVDRAW)
+	else if (setting->output_format==CCX_OF_RAW ||
+		setting->output_format==CCX_OF_DVDRAW ||
+		setting->output_format==CCX_OF_RCWT )
 		ctx->writedata = writeraw;
 	else if (setting->output_format==CCX_OF_SMPTETT ||
 		setting->output_format==CCX_OF_SAMI ||

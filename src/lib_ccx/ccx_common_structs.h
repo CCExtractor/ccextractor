@@ -22,6 +22,7 @@ enum subtype
 	CC_BITMAP,
 	CC_608,
 	CC_TEXT,
+	CC_RAW,
 };
 
 /**
@@ -32,7 +33,6 @@ struct cc_subtitle
 {
 	/**
 	* A generic data which contain data according to decoder
-	* just now only struct cc_eia608_screen is placed here
 	* @warn decoder cant output multiple types of data
 	*/
 	void *data;
