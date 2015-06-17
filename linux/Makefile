@@ -93,6 +93,9 @@ $(OBJS_DIR)/%.o: %.c
 $(OBJS_DIR)/%.o: %.cpp
 	$(CC) -c $(ALL_FLAGS) $(INCLUDE) $(CFLAGS) $< -o $@ -I../src/gpacmp4 
 
+$(OBJS_DIR)/ccextractor.o: ccextractor.c
+	$(CC) -c $(ALL_FLAGS) $(INCLUDE) $(CFLAGS) -O0 $< -o $@  
+
 .PHONY: clean
 clean:
 	rm -rf $(TARGET) 2>/dev/null || true
@@ -110,7 +113,7 @@ uninstall:
 
 .PHONY: depend dep
 depend dep:
-	$(CC) $(CFLAGS) -E -MM $(SRCS_C) $(SRCS_PNG) $(SRCS_ZLIB) $(SRCS_CXX) \
+	$(CC) $(CFLAGS) $(INCLUDE) -E -MM $(SRCS_C) $(SRCS_PNG) $(SRCS_ZLIB) $(SRCS_CCX) \
 		$(SRCS_GPACMP4_C) $(SRCS_GPACMP4_CPP) |\
 		sed 's/^[a-zA-Z_0-9]*.o/$(OBJS_DIR)\/&/' > .depend
 
