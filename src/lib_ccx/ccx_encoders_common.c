@@ -45,9 +45,10 @@ static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
 "  </head>\n"
 "  <body>\n"
 "    <div>\n";
-void write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
+int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 {
 	int used;
+	int ret = 0;
 	switch (ctx->write_format)
 	{
 		case CCX_OF_SAMI:
@@ -56,8 +57,8 @@ void write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
-			used=encode_line (ctx->buffer,(unsigned char *) str);
-			write(out->fh, ctx->buffer, used);
+			used = encode_line (ctx->buffer,(unsigned char *) str);
+			ret = write(out->fh, ctx->buffer, used);
 			break;
 		case CCX_OF_SMPTETT:
 			sprintf ((char *) str,"    </div>\n  </body>\n</tt>\n");
@@ -66,7 +67,7 @@ void write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
 			used=encode_line (ctx->buffer,(unsigned char *) str);
-			write (out->fh, ctx->buffer,used);
+			ret = write (out->fh, ctx->buffer,used);
 			break;
 		case CCX_OF_SPUPNG:
 			write_spumux_footer(out);
@@ -74,26 +75,69 @@ void write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 		default: // Nothing to do, no footer on this format
 			break;
 	}
+
+	if (ret != used) {
+		mprint("WARNING: loss of data\n");
+	}
+	return ret;
 }
 
-void write_subtitle_file_header(struct encoder_ctx *ctx,struct ccx_s_write *out)
+
+static int write_bom(struct encoder_ctx *ctx, struct ccx_s_write *out)
+{
+	int ret = 0;
+	if (!ctx->no_bom){
+		if (ctx->encoding == CCX_ENC_UTF_8){ // Write BOM
+			ret = write(out->fh, UTF8_BOM, sizeof(UTF8_BOM));
+			if ( ret < sizeof(UTF8_BOM)) {
+				mprint("WARNING: Unable tp write UTF BOM\n");
+				return -1;
+			}
+				
+		}
+		if (ctx->encoding == CCX_ENC_UNICODE){ // Write BOM
+			ret = write(out->fh, LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM));
+			if ( ret < sizeof(LITTLE_ENDIAN_BOM)) {
+				mprint("WARNING: Unable to write LITTLE_ENDIAN_BOM \n");
+				return -1;
+			}
+		}
+	}
+}
+static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_write *out)
 {
 	int used;
+	int ret = 0;
+
 	switch (ctx->write_format)
 	{
 		case CCX_OF_SRT: // Subrip subtitles have no header
+			ret = write_bom(ctx, out);
+			if(ret < 0)
+				return -1;
 			break;
 		case CCX_OF_SAMI: // This header brought to you by McPoodle's CCASDI
 			//fprintf_encoded (wb->fh, sami_header);
+			ret = write_bom(ctx, out);
+			if(ret < 0)
+				return -1;
 			REQUEST_BUFFER_CAPACITY(ctx,strlen (sami_header)*3);
-			used=encode_line (ctx->buffer,(unsigned char *) sami_header);
-			write (out->fh, ctx->buffer,used);
+			used = encode_line (ctx->buffer,(unsigned char *) sami_header);
+			ret = write (out->fh, ctx->buffer,used);
 			break;
 		case CCX_OF_SMPTETT: // This header brought to you by McPoodle's CCASDI
 			//fprintf_encoded (wb->fh, sami_header);
+			ret = write_bom(ctx, out);
+			if(ret < 0)
+				return -1;
 			REQUEST_BUFFER_CAPACITY(ctx,strlen (smptett_header)*3);
 			used=encode_line (ctx->buffer,(unsigned char *) smptett_header);
-			write(out->fh, ctx->buffer, used);
+			ret = write(out->fh, ctx->buffer, used);
+			if(ret < used)
+			{
+				mprint("WARNING: Unable to write complete Buffer \n");
+				return -1;
+			}
 			break;
 		case CCX_OF_RCWT: // Write header
 			if (ctx->teletext_mode == CCX_TXT_IN_USE)
@@ -102,23 +146,46 @@ void write_subtitle_file_header(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			if (ctx->send_to_srv)
 				net_send_header(rcwt_header, sizeof(rcwt_header));
 			else
-				write(out->fh, rcwt_header, sizeof(rcwt_header));
+			{
+				ret = write(out->fh, rcwt_header, sizeof(rcwt_header));
+				if(ret < 0)
+				{
+					mprint("Unable to write rcwt header\n");
+					return -1;
+				}
+			}
 
 			break;
+		case CCX_OF_RAW:
+			ret = write(out->fh,BROADCAST_HEADER, sizeof(BROADCAST_HEADER));
+			if(ret < sizeof(BROADCAST_HEADER))
+			{
+				mprint("Unable to write Raw header\n");
+				return -1;
+			}
 		case CCX_OF_SPUPNG:
+			ret = write_bom(ctx, out);
+			if(ret < 0)
+				return -1;
 			write_spumux_header(out);
 			break;
 		case CCX_OF_TRANSCRIPT: // No header. Fall thru
+			ret = write_bom(ctx, out);
+			if(ret < 0)
+				return -1;
 		default:
 			break;
 	}
+
+	return ret;
 }
 
 
 void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context, int line_number)
 {
-	unsigned h1,m1,s1,ms1;
-	unsigned h2,m2,s2,ms2;
+	int ret = 0;
+	unsigned int h1,m1,s1,ms1;
+	unsigned int h2,m2,s2,ms2;
 	LLONG start_time = data->start_time;
 	LLONG end_time = data->end_time;
 	if (context->sentence_cap)
@@ -207,8 +274,17 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 			fdprintf(context->out->fh, "%s|", mode);
 		}
 
-		write(context->out->fh, subline, length);
-		write(context->out->fh, encoded_crlf, encoded_crlf_length);
+		ret = write(context->out->fh, subline, length);
+		if(ret < length)
+		{
+			mprint("Warning:Loss of data\n");
+		}
+
+		ret = write(context->out->fh, encoded_crlf, encoded_crlf_length);
+		if(ret <  encoded_crlf_length)
+		{
+			mprint("Warning:Loss of data\n");
+		}
 	}
 	// fprintf (wb->fh,encoded_crlf);
 }
@@ -449,6 +525,7 @@ int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_
 	ctx->teletext_mode = opt->teletext_mode;
 	ctx->send_to_srv = opt->send_to_srv;
 	ctx->gui_mode_reports = opt->gui_mode_reports;
+	ctx->no_bom = opt->no_bom;
 	write_subtitle_file_header(ctx,out);
 
 	return 0;
@@ -479,6 +556,7 @@ void dinit_encoder(struct encoder_ctx *ctx)
 int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 {
 	int wrote_something = 0;
+	int ret = 0;
 
 	if (sub->type == CC_608)
 	{
@@ -495,7 +573,13 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			{
 				xds_write_transcript_line_prefix (context->out, data->start_time, data->end_time,data->cur_xds_packet_class);
 				if(data->xds_len > 0)
-					write (context->out->fh, data->xds_str,data->xds_len);
+				{
+					ret = write (context->out->fh, data->xds_str,data->xds_len);
+					if (ret < data->xds_len)
+					{
+						mprint("WARNING:Loss of data\n");
+					}
+				}
 				freep (&data->xds_str);
 				xds_write_transcript_line_suffix (context->out);
 				continue;
@@ -569,7 +653,12 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		if (context->send_to_srv)
 			net_send_header(sub->data, sub->nb_data);
 		else
-			write(context->out->fh, sub->data, sub->nb_data);
+		{
+			ret = write(context->out->fh, sub->data, sub->nb_data);
+			if ( ret < sub->nb_data) {
+				mprint("WARNING: Loss of data\n");
+			}
+		}
 		sub->nb_data = 0;
 	}
 	if (!sub->nb_data)

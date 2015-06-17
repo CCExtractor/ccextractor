@@ -51,6 +51,7 @@ struct encoder_ctx
 	unsigned int teletext_mode; // 0=Disabled, 1 = Not found, 2=Found
 	unsigned int send_to_srv;
 	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
+	int no_bom;
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048
