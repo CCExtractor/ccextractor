@@ -495,7 +495,7 @@ void usage (void)
 	mprint ("             -unicode: Encode subtitles in Unicode instead of Latin-1.\n");
 	mprint ("                -utf8: Encode subtitles in UTF-8 (no longer needed.\n");
 	mprint ("                       because UTF-8 is now the default).\n");
-	mprint ("              -latin1: Encode subtitles in UTF-8 instead of Latin-1\n");
+	mprint ("              -latin1: Encode subtitles in Latin-1\n");
 	mprint ("  -nofc --nofontcolor: For .srt/.sami, don't add font color tags.\n");
 	mprint ("-nots --notypesetting: For .srt/.sami, don't add typesetting tags.\n");
 	mprint ("                -trim: Trim lines.\n");
@@ -543,7 +543,6 @@ void usage (void)
 	mprint (" -bs --buffersize val: Specify a size for reading, in bytes (suffix with K or\n");
 	mprint ("                       or M for kilobytes and megabytes). Default is 16M.\n");
 	mprint ("\n");
-	mprint ("Note: -bo is only used when writing raw files, not .srt or .sami\n\n");
 
 	mprint ("Options that affect the built-in closed caption decoder:\n");
 
@@ -606,7 +605,7 @@ void usage (void)
 			"        valid option are only in form -foo bar\n"
 			"        nocodec and codec parameter must not be same if found to be same \n"
 			"        then parameter of nocodec is ignored, this flag should be passed \n"
-			"        once more then one are not supported yet and last parameter would \n"
+			"        once, more then one are not supported yet and last parameter would \n"
 			"        taken in consideration\n");
 
 	mprint ("Adding start and end credits:\n");
