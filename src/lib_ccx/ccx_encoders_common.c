@@ -59,6 +59,10 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			}
 			used = encode_line (ctx->buffer,(unsigned char *) str);
 			ret = write(out->fh, ctx->buffer, used);
+			if (ret != used)
+			{
+				mprint("WARNING: loss of data\n");
+			}
 			break;
 		case CCX_OF_SMPTETT:
 			sprintf ((char *) str,"    </div>\n  </body>\n</tt>\n");
@@ -67,7 +71,11 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
 			used=encode_line (ctx->buffer,(unsigned char *) str);
-			ret = write (out->fh, ctx->buffer,used);
+			ret = write (out->fh, ctx->buffer, used);
+			if (ret != used)
+			{
+				mprint("WARNING: loss of data\n");
+			}
 			break;
 		case CCX_OF_SPUPNG:
 			write_spumux_footer(out);
@@ -76,9 +84,6 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			break;
 	}
 
-	if (ret != used) {
-		mprint("WARNING: loss of data\n");
-	}
 	return ret;
 }
 
