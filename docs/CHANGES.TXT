@@ -1,5 +1,5 @@
-0.77
-----
+0.77 (2015-06-20)
+-----------------
 - Fixed bug in capitalization code ('I' was not being capitalized).
 - GUI should now run in Windows 8 (using the include .Net runtime, since
   3.5 cannot be installed in Windows 8 apparently).
