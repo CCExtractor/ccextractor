@@ -7,7 +7,7 @@ option (WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
 
 #Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
-set (CCEXTRACTOR_VERSION_MINOR 76)
+set (CCEXTRACTOR_VERSION_MINOR 77)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
