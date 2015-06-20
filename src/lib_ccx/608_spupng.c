@@ -196,6 +196,7 @@ int spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
 	int row;
 	int empty_buf = 1;
 	char str[256] = "";
+	int str_len = 0;
 	LLONG ms_start = data->start_time + context->subs_delay;
 	if (ms_start < 0)
 	{
@@ -255,8 +256,14 @@ int spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
 						break;
 				}
 			}
-			strncat(str,(const char*)subline,256);
-			strncat(str,"\n",256);
+			if (str_len + len + 3 > 256 )
+			{
+				mprint("WARNING: Possible Loss of data\n");
+				break;
+			}
+			strncat(str, (const char*)subline, len);
+			strncat(str,"\n",3);
+			str_len = str_len + len + 2;
 		}
 	}
 

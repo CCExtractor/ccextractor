@@ -18,7 +18,6 @@ void init_write (struct ccx_s_write *wb,char *filename)
 
 int writeraw (const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub)
 {
-	ccx_decoder_608_context *context = private_data;
 	unsigned char* sub_data = NULL;
 	// Don't do anything for empty data
 	if (data==NULL)
