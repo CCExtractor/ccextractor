@@ -293,6 +293,11 @@ int add_word(const char *word)
 		ptr_correct = (char **)realloc(spell_correct, sizeof (char *)*
 			spell_capacity);
 	}
+	else
+	{
+		ptr_lower = spell_lower;
+		ptr_correct = spell_correct;
+	}
 	size_t len = strlen(word);
 	new_lower = (char *)malloc(len + 1);
 	new_correct = (char *)malloc(len + 1);

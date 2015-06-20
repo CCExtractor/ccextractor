@@ -19,15 +19,17 @@ void init_write (struct ccx_s_write *wb,char *filename)
 int writeraw (const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub)
 {
 	ccx_decoder_608_context *context = private_data;
+	unsigned char* sub_data = NULL;
 	// Don't do anything for empty data
 	if (data==NULL)
 		return -1;
 
-	sub->data = realloc(sub->data,length + sub->nb_data);
+	sub->data = realloc(sub->data, length + sub->nb_data);
 	if (!sub->data)
 		return EXIT_NOT_ENOUGH_MEMORY;
 
-	memcpy(sub->data + sub->nb_data, data, length);
+	sub_data = sub->data;
+	memcpy(sub_data + sub->nb_data, data, length);
 	sub->got_output = 1;
 	sub->nb_data += length;
 	sub->type = CC_RAW;
