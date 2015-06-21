@@ -45,7 +45,7 @@ void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile
 
 void writeDVDraw (const unsigned char *data1, int length1,
                   const unsigned char *data2, int length2,
-				  struct ccx_s_write *wb)
+				  struct cc_subtitle *sub)
 {
 	/* these are only used by DVD raw mode: */
 	static int loopcount = 1; /* loop 1: 5 elements, loop 2: 8 elements,
@@ -54,43 +54,43 @@ void writeDVDraw (const unsigned char *data1, int length1,
 
 	if (datacount==0)
 	{
-		write (wb->fh,DVD_HEADER,sizeof (DVD_HEADER));
+		writeraw (DVD_HEADER, sizeof (DVD_HEADER), NULL, sub);
 		if (loopcount==1)
-			write (wb->fh,lc1,sizeof (lc1));
+			writeraw (lc1, sizeof (lc1), NULL, sub);
 		if (loopcount==2)
-			write (wb->fh,lc2,sizeof (lc2));
+			writeraw (lc2, sizeof (lc2), NULL, sub);
 		if (loopcount==3)
 		{
-			write (wb->fh,lc3,sizeof (lc3));
+			writeraw (lc3, sizeof (lc3), NULL, sub);
 			if (data2 && length2)
-				write (wb->fh,data2,length2);
+				writeraw (data2, length2, NULL, sub);
 		}
 		if (loopcount>3)
 		{
-			write (wb->fh,lc4,sizeof (lc4));
+			writeraw (lc4, sizeof (lc4), NULL, sub);
 			if (data2 && length2)
-				write (wb->fh,data2,length2);
+				writeraw (data2, length2, NULL, sub);
 		}
 	}
 	datacount++;
-	write (wb->fh,lc5,sizeof (lc5));
+	writeraw (lc5, sizeof (lc5), NULL, sub);
 	if (data1 && length1)
-		write (wb->fh,data1,length1);
+		writeraw (data1, length1, NULL, sub);
 	if (((loopcount == 1) && (datacount < 5)) || ((loopcount == 2) &&
 				(datacount < 8)) || (( loopcount == 3) && (datacount < 11)) ||
 			((loopcount > 3) && (datacount < 15)))
 	{
-		write (wb->fh,lc6,sizeof (lc6));
+		writeraw (lc6, sizeof(lc6), NULL, sub);
 		if (data2 && length2)
-			write (wb->fh,data2,length2);
+			writeraw (data2, length2, NULL, sub);
 	}
 	else
 	{
 		if (loopcount==1)
 		{
-			write (wb->fh,lc6,sizeof (lc6));
+			writeraw (lc6, sizeof(lc6), NULL, sub);
 			if (data2 && length2)
-				write (wb->fh,data2,length2);
+				writeraw (data2, length2, NULL, sub);
 		}
 		loopcount++;
 		datacount=0;
@@ -107,7 +107,7 @@ void printdata (struct lib_cc_decode *ctx, const unsigned char *data1, int lengt
 	field_1->out = ctx->wbout1 ;
 	field_2->out = ctx->wbout2 ;
 	if (ctx->write_format==CCX_OF_DVDRAW)
-		writeDVDraw (data1, length1, data2, length2, wbout1);
+		writeDVDraw (data1, length1, data2, length2, sub);
 	else /* Broadcast raw or any non-raw */
 	{
 		if (length1 && ctx->extract != 2)
