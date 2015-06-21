@@ -47,7 +47,6 @@ typedef struct ccx_decoder_608_context
 	int my_field; // Used for sanity checks
 	int my_channel; // Used for sanity checks
 	long bytes_processed_608; // To be written ONLY by process_608
-	struct ccx_s_write *out;
 	int have_cursor_position;
 
 	int trim_subs;

@@ -148,7 +148,6 @@ ccx_decoder_608_context* ccx_decoder_608_init_library(struct ccx_decoder_608_set
 	data->bytes_processed_608 = 0;
 	data->my_field = field;
 	data->my_channel = channel;
-	data->out = NULL;
 	data->have_cursor_position = 0;
 
 	data->trim_subs = trim_subs;

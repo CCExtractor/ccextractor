@@ -6,9 +6,6 @@
 #include <unistd.h>
 #endif
 
-/* TODO remove dependency of encoder by removing writeDVDraw from this file */
-#include "ccx_encoders_structs.h"
-
 void init_write (struct ccx_s_write *wb,char *filename)
 {
 	memset(wb, 0, sizeof(struct ccx_s_write));
@@ -103,9 +100,6 @@ void printdata (struct lib_cc_decode *ctx, const unsigned char *data1, int lengt
 {
 	struct ccx_decoder_608_context *field_1 = ctx->context_cc608_field_1;
 	struct ccx_decoder_608_context *field_2 = ctx->context_cc608_field_2;
-	struct ccx_s_write *wbout1 = ctx->wbout1;
-	field_1->out = ctx->wbout1 ;
-	field_2->out = ctx->wbout2 ;
 	if (ctx->write_format==CCX_OF_DVDRAW)
 		writeDVDraw (data1, length1, data2, length2, sub);
 	else /* Broadcast raw or any non-raw */
@@ -134,7 +128,6 @@ void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct
 	static int cbempty=0;
 	static unsigned char cbbuffer[0xFFFF*3]; // TODO: use malloc
 	static unsigned char cbheader[8+2];
-	struct ccx_s_write *wbout1 = ctx->wbout1;
 
 	if ( (prevfts != currfts && prevfts != -1)
 			|| data == NULL
