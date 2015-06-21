@@ -6,6 +6,7 @@
 #include "ocr.h"
 #include "ccx_decoders_608.h"
 #include "ccx_decoders_xds.h"
+#include "ccx_share.h"
 
 // These are the default settings for plain transcripts. No times, no CC or caption mode, and no XDS.
 ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
@@ -562,6 +563,10 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 {
 	int wrote_something = 0;
 	int ret = 0;
+
+	if (ccx_options.sharing_enabled) {
+		ccx_share_send(sub);
+	}
 
 	if (sub->type == CC_608)
 	{

@@ -20,7 +20,7 @@ endif (WITH_OCR)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_ccx/" SOURCEFILE)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/gpacmp4/" SOURCEFILE)
 
-add_library (ccx ${SOURCEFILE})
+add_library (ccx ${SOURCEFILE} ccx_share.h ccx_share.c)
 
 if (MINGW OR CYGWIN)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DGPAC_CONFIG_WIN32")
