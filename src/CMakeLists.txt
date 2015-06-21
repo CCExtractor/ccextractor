@@ -25,7 +25,7 @@ include_directories ("${PROJECT_SOURCE_DIR}/gpacmp4/")
 link_directories (/opt/local/lib)
 link_directories (/usr/local/lib)
 
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -Wall -g -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -Wall -g -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64 -Wl,--fatal-warnings")
 add_subdirectory (lib_ccx)
 
 aux_source_directory (${PROJECT_SOURCE_DIR} SOURCEFILE)
@@ -83,6 +83,7 @@ if (WITH_OCR)
 endif (WITH_OCR)
 
 add_executable (ccextractor ${SOURCEFILE})
+#target_link_libraries (ccextractor nanomsg anl rt)
 target_link_libraries (ccextractor ${EXTRA_LIBS})
 
 install (TARGETS ccextractor DESTINATION bin)

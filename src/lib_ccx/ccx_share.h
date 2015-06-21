@@ -21,14 +21,12 @@ typedef struct ccx_sub_entries {
     unsigned int count;
 } ccx_sub_entries;
 
-typedef struct ccx_share_file {
-    char *filename;
-} ccx_share_file;
-
 typedef struct ccx_share_service {
     long port;
     unsigned long counter;
-    ccx_share_file *file;
+    char *stream_name;
+    int sock;
+    int endpoint;
 } ccx_share_service;
 
 ccx_share_service ccx_share;
@@ -46,10 +44,8 @@ void ccx_sub_entries_init(ccx_sub_entries *);
 void ccx_sub_entries_cleanup(ccx_sub_entries *);
 void ccx_sub_entries_print(ccx_sub_entries *);
 
-ccx_share_status ccx_share_start();
+ccx_share_status ccx_share_start(const char *);
 ccx_share_status ccx_share_stop();
-ccx_share_status ccx_share_file_start(ccx_share_file *);
-ccx_share_status ccx_share_file_done();
 ccx_share_status ccx_share_send(struct cc_subtitle *);
 ccx_share_status _ccx_share_sub_to_entry(struct cc_subtitle *, ccx_sub_entries *);
 

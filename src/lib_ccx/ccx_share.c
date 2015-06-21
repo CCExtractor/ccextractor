@@ -7,6 +7,8 @@
 #include "ccx_share.h"
 #include "ccx_decoders_structs.h"
 #include "lib_ccx.h"
+#include <nanomsg/nn.h>
+#include <nanomsg/pubsub.h>
 
 void ccx_sub_entry_init(ccx_sub_entry *entry)
 {
@@ -76,10 +78,35 @@ void ccx_sub_entries_print(ccx_sub_entries *entries)
 }
 
 
-ccx_share_status ccx_share_start();
-ccx_share_status ccx_share_stop();
-ccx_share_status ccx_share_file_start(ccx_share_file *);
-ccx_share_status ccx_share_file_done();
+ccx_share_status ccx_share_start(const char *stream_name) //TODO add stream
+{
+//    dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: starting service\n");
+//    ccx_share.sock = nn_socket (AF_SP, NN_PUB);
+//    if (ccx_share.sock < 0) {
+//        dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: cant nn_socket()\n");
+//        fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start");
+//    }
+//    ccx_share.endpoint = nn_bind(ccx_share.sock, "ipc:///tmp/pubsub.ipc");
+//    if (ccx_share.endpoint < 0) {
+//        dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: cant nn_bind()\n");
+//        fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start");
+//    }
+//    ccx_share.stream_name = strdup(stream_name ? stream_name : (const char *) "unknown");
+
+    return CCX_SHARE_OK;
+}
+
+ccx_share_status ccx_share_stop()
+{
+//    dbg_print(CCX_DMT_SHARE, "[share] ccx_share_stop: stopping service\n");
+//    if (nn_shutdown(ccx_share.sock, 0) < 0) {
+//        dbg_print(CCX_DMT_SHARE, "[share] ccx_share_stop: cant nn_shutdown()\n");
+//        fatal(EXIT_NOT_CLASSIFIED, "ccx_share_stop");
+//    }
+//    free(ccx_share.stream_name);
+    return CCX_SHARE_OK;
+}
+
 ccx_share_status ccx_share_send(struct cc_subtitle *sub)
 {
     ccx_sub_entries entries;
@@ -87,6 +114,14 @@ ccx_share_status ccx_share_send(struct cc_subtitle *sub)
     _ccx_share_sub_to_entry(sub, &entries);
     ccx_sub_entries_print(&entries);
     ccx_sub_entries_cleanup(&entries);
+
+//    size_t sz_d = strlen(ccx_share.stream_name) + 1; // '\0' too
+//    dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: ping");
+//    int bytes = nn_send (ccx_share.sock, ccx_share.stream_name, sz_d, 0);
+//    if (bytes != sz_d) {
+//        dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: bytes sent (%d) != buffer size (%zd)\n", bytes, sz_d);
+//    }
+//    sleep(1);
     return CCX_SHARE_OK;
 }
 
