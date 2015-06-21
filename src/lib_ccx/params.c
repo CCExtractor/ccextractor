@@ -657,6 +657,12 @@ void usage (void)
 	mprint ("    --no_progress_bar: Suppress the output of the progress bar\n");
 	mprint ("               -quiet: Don't write any message.\n");
 	mprint ("\n");
+
+	mprint ("Sharing extracted captions via TCP:\n");
+	mprint ("      -enable-sharing: Enables realtime sharing of extracted closed captions\n");
+	mprint ("        -sharing-port: Set port for sharing service (default 3269 (~\"CC5\"))\n");
+	mprint ("\n");
+
 	mprint ("Notes on the CEA-708 decoder: While it is starting to be useful, it's\n");
 	mprint ("a work in progress. A number of things don't work yet in the decoder\n");
 	mprint ("itself, and many of the auxiliary tools (case conversion to name one)\n");
@@ -1585,6 +1591,20 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		{
 			opt->tcp_desc = argv[i + 1];
 
+			i++;
+			continue;
+		}
+
+		if (!strcmp(argv[i], "-enable-sharing")) {
+			opt->sharing_enabled = 1;
+			continue;
+		}
+		if (!strcmp(argv[i], "-sharing-port") && i < argc - 1) {
+			errno = 0;
+			opt->sharing_port = strtol(argv[i+1], NULL, 10);
+			if (errno) {
+				fatal (EXIT_INCOMPATIBLE_PARAMETERS, "Can't parse -sharing-port number\n");
+			}
 			i++;
 			continue;
 		}

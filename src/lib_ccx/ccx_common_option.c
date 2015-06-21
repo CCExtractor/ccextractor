@@ -96,6 +96,9 @@ void init_options (struct ccx_s_options *options)
 	options->demux_cfg.auto_stream = CCX_SM_AUTODETECT;
 	options->demux_cfg.m2ts = 0;
 
+	options->sharing_enabled = 0;
+	options->sharing_port = 3269; // ~"CC5"
+
 	// Prepare time structures
 	init_boundary_time (&options->extraction_start);
 	init_boundary_time (&options->extraction_end);
