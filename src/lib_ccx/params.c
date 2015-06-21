@@ -659,7 +659,9 @@ void usage (void)
 	mprint ("            -parsePAT: Print Program Association Table dump.\n");
 	mprint ("            -parsePMT: Print Program Map Table dump.\n");
 	mprint (" -investigate_packets: If no CC packets are detected based on the PMT, try\n");
-	mprint ("                       to find data in all packets by scanning.\n\n");
+	mprint ("                       to find data in all packets by scanning.\n");
+	mprint ("        -sharingdebug: Print extracted CC sharing service messages\n");
+	mprint ("\n");
 
 	mprint ("Teletext related options:\n");
 
@@ -1308,6 +1310,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		{
 			opt->debug_mask |= CCX_DMT_TELETEXT;
 			tlt_config.verbose=1;
+			continue;
+		}
+		if (strcmp (argv[i],"-sharingdebug")==0)
+		{
+			opt->debug_mask |= CCX_DMT_SHARE;
 			continue;
 		}
 		if (strcmp (argv[i],"-fullbin")==0)
