@@ -4,6 +4,50 @@
 
 int temp_debug = 0; // This is a convenience variable used to enable/disable debug on variable conditions. Find references to understand.
 
+int stringztoms (const char *s, struct ccx_boundary_time *bt)
+{
+	unsigned ss=0, mm=0, hh=0;
+	int value=-1;
+	int colons=0;
+	const char *c=s;
+	while (*c)
+	{
+		if (*c==':')
+		{
+			if (value==-1) // : at the start, or ::, etc
+				return -1;
+			colons++;
+			if (colons>2) // Max 2, for HH:MM:SS
+				return -1;
+			hh=mm;
+			mm=ss;
+			ss=value;
+			value=-1;
+		}
+		else
+		{
+			if (!isdigit (*c)) // Only : or digits, so error
+				return -1;
+			if (value==-1)
+				value=*c-'0';
+			else
+				value=value*10+*c-'0';
+		}
+		c++;
+	}
+	hh = mm;
+	mm = ss;
+	ss = value;
+	if (mm > 59 || ss > 59)
+		return -1;
+	bt->set = 1;
+	bt->hh = hh;
+	bt->mm = mm;
+	bt->ss = ss;
+	LLONG secs = (hh * 3600 + mm * 60 + ss);
+	bt->time_in_ms = secs*1000;
+	return 0;
+}
 void timestamp_to_srttime(uint64_t timestamp, char *buffer)
 {
 	uint64_t p = timestamp;

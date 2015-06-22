@@ -228,6 +228,7 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 	EPG_free(lctx);
 	dinit_ts(lctx);
 	dinit_cc_decode(&lctx->dec_ctx);
+	freep(&lctx->basefilename);
 	freep(&lctx->buffer);
 	freep(&lctx->pesheaderbuf);
 	freep(&lctx->freport.data_from_608);

@@ -4,57 +4,6 @@
 
 static int inputfile_capacity=0;
 
-static const char *DEF_VAL_STARTCREDITSNOTBEFORE="0";
-static const char *DEF_VAL_STARTCREDITSNOTAFTER="5:00"; // To catch the theme after the teaser in TV shows
-static const char *DEF_VAL_STARTCREDITSFORATLEAST="2";
-static const char *DEF_VAL_STARTCREDITSFORATMOST="5";
-static const char *DEF_VAL_ENDCREDITSFORATLEAST="2";
-static const char *DEF_VAL_ENDCREDITSFORATMOST="5";
-
-int stringztoms (const char *s, struct ccx_boundary_time *bt)
-{
-	unsigned ss=0, mm=0, hh=0;
-	int value=-1;
-	int colons=0;
-	const char *c=s;
-	while (*c)
-	{
-		if (*c==':')
-		{
-			if (value==-1) // : at the start, or ::, etc
-				return -1;
-			colons++;
-			if (colons>2) // Max 2, for HH:MM:SS
-				return -1;
-			hh=mm;
-			mm=ss;
-			ss=value;
-			value=-1;
-		}
-		else
-		{
-			if (!isdigit (*c)) // Only : or digits, so error
-				return -1;
-			if (value==-1)
-				value=*c-'0';
-			else
-				value=value*10+*c-'0';
-		}
-		c++;
-	}
-	hh = mm;
-	mm = ss;
-	ss = value;
-	if (mm > 59 || ss > 59)
-		return -1;
-	bt->set = 1;
-	bt->hh = hh;
-	bt->mm = mm;
-	bt->ss = ss;
-	LLONG secs = (hh * 3600 + mm * 60 + ss);
-	bt->time_in_ms = secs*1000;
-	return 0;
-}
 int process_cap_file (char *filename)
 {
 	int ret = 0;
@@ -790,14 +739,6 @@ int atoi_hex (char *s)
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 {
 	char *cea708_service_list=NULL; // List CEA-708 services
-
-	// Sensible default values for credits
-	stringztoms (DEF_VAL_STARTCREDITSNOTBEFORE, &opt->startcreditsnotbefore);
-	stringztoms (DEF_VAL_STARTCREDITSNOTAFTER, &opt->startcreditsnotafter);
-	stringztoms (DEF_VAL_STARTCREDITSFORATLEAST, &opt->startcreditsforatleast);
-	stringztoms (DEF_VAL_STARTCREDITSFORATMOST, &opt->startcreditsforatmost);
-	stringztoms (DEF_VAL_ENDCREDITSFORATLEAST, &opt->endcreditsforatleast);
-	stringztoms (DEF_VAL_ENDCREDITSFORATMOST, &opt->endcreditsforatmost);
 
 	// Parse parameters
 	for (int i=1; i<argc; i++)

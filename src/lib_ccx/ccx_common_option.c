@@ -106,4 +106,12 @@ void init_options (struct ccx_s_options *options)
 	init_boundary_time (&options->endcreditsforatleast);
 	init_boundary_time (&options->endcreditsforatmost);
 
+
+	// Sensible default values for credits
+	stringztoms (DEF_VAL_STARTCREDITSNOTBEFORE, &options->startcreditsnotbefore);
+	stringztoms (DEF_VAL_STARTCREDITSNOTAFTER, &options->startcreditsnotafter);
+	stringztoms (DEF_VAL_STARTCREDITSFORATLEAST, &options->startcreditsforatleast);
+	stringztoms (DEF_VAL_STARTCREDITSFORATMOST, &options->startcreditsforatmost);
+	stringztoms (DEF_VAL_ENDCREDITSFORATLEAST, &options->endcreditsforatleast);
+	stringztoms (DEF_VAL_ENDCREDITSFORATMOST, &options->endcreditsforatmost);
 }

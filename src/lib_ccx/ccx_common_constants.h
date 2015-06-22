@@ -276,4 +276,12 @@ enum cdp_section_type
 
 #define NB_LANGUAGE 5
 extern const char *language[NB_LANGUAGE];
+
+#define DEF_VAL_STARTCREDITSNOTBEFORE 	"0"
+// To catch the theme after the teaser in TV shows
+#define DEF_VAL_STARTCREDITSNOTAFTER	"5:00"
+#define DEF_VAL_STARTCREDITSFORATLEAST	"2"
+#define DEF_VAL_STARTCREDITSFORATMOST	"5"
+#define DEF_VAL_ENDCREDITSFORATLEAST	"2"
+#define DEF_VAL_ENDCREDITSFORATMOST	"5"
 #endif
