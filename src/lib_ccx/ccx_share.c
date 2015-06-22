@@ -7,8 +7,7 @@
 #include "ccx_share.h"
 #include "ccx_decoders_structs.h"
 #include "lib_ccx.h"
-#include <nanomsg/nn.h>
-#include <nanomsg/pubsub.h>
+#include "zmq.h"
 
 void ccx_sub_entry_init(ccx_sub_entry *entry)
 {
@@ -80,30 +79,28 @@ void ccx_sub_entries_print(ccx_sub_entries *entries)
 
 ccx_share_status ccx_share_start(const char *stream_name) //TODO add stream
 {
-//    dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: starting service\n");
-//    ccx_share.sock = nn_socket (AF_SP, NN_PUB);
-//    if (ccx_share.sock < 0) {
-//        dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: cant nn_socket()\n");
-//        fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start");
-//    }
-//    ccx_share.endpoint = nn_bind(ccx_share.sock, "ipc:///tmp/pubsub.ipc");
-//    if (ccx_share.endpoint < 0) {
-//        dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: cant nn_bind()\n");
-//        fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start");
-//    }
-//    ccx_share.stream_name = strdup(stream_name ? stream_name : (const char *) "unknown");
+    dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: starting service\n");
+    //TODO for multiple files we have to move creation to ccx_share_init
+    ccx_share.zmq_ctx = zmq_ctx_new();
+    ccx_share.zmq_sock = zmq_socket(ccx_share.zmq_ctx, ZMQ_PUB);
+
+    int rc = zmq_bind(ccx_share.zmq_sock, "tcp://*:3269");
+    if (rc) {
+        dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: cant zmq_bind()\n");
+        fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start");
+    }
+    //TODO remove path from stream name to minimize traffic (/?)
+    ccx_share.stream_name = strdup(stream_name ? stream_name : (const char *) "unknown");
 
     return CCX_SHARE_OK;
 }
 
 ccx_share_status ccx_share_stop()
 {
-//    dbg_print(CCX_DMT_SHARE, "[share] ccx_share_stop: stopping service\n");
-//    if (nn_shutdown(ccx_share.sock, 0) < 0) {
-//        dbg_print(CCX_DMT_SHARE, "[share] ccx_share_stop: cant nn_shutdown()\n");
-//        fatal(EXIT_NOT_CLASSIFIED, "ccx_share_stop");
-//    }
-//    free(ccx_share.stream_name);
+    dbg_print(CCX_DMT_SHARE, "[share] ccx_share_stop: stopping service\n");
+    zmq_close(ccx_share.zmq_sock);
+    zmq_ctx_destroy(ccx_share.zmq_ctx);
+    free(ccx_share.stream_name);
     return CCX_SHARE_OK;
 }
 
@@ -115,41 +112,77 @@ ccx_share_status ccx_share_send(struct cc_subtitle *sub)
     ccx_sub_entries_print(&entries);
     ccx_sub_entries_cleanup(&entries);
 
-//    size_t sz_d = strlen(ccx_share.stream_name) + 1; // '\0' too
-//    dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: ping");
-//    int bytes = nn_send (ccx_share.sock, ccx_share.stream_name, sz_d, 0);
-//    if (bytes != sz_d) {
-//        dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: bytes sent (%d) != buffer size (%zd)\n", bytes, sz_d);
-//    }
-//    sleep(1);
+    ccx_sub_entry *entry;
+    for (unsigned int i = 0; i < entries.count; i++) {
+        entry = &entries.entries[i];
+
+        PbSubEntry msg = PB_SUB_ENTRY__INIT;
+        msg.stream_name = strdup(ccx_share.stream_name);
+        msg.has_counter = 1;
+        msg.counter = (int64_t) entry->counter;
+        msg.has_start_time = 1;
+        msg.start_time = (int64_t) entry->start_time;
+        msg.has_end_time = 1;
+        msg.end_time = (int64_t) entry->end_time;
+        msg.has_lines_count = 1;
+        msg.lines_count = entry->lines_count;
+        msg.n_lines = entry->lines_count;
+        msg.lines = (char **) malloc(msg.lines_count * sizeof(char *));
+        if (!msg.lines) {
+            fatal(EXIT_NOT_ENOUGH_MEMORY, "[share] msg\n");
+        }
+        for (int j = 0; j < msg.lines_count; j++) {
+            msg.lines[j] = strdup(entry->lines[j]);
+            if (!msg.lines[j]) {
+                fatal(EXIT_NOT_ENOUGH_MEMORY, "[share] msg[j]\n");
+            }
+        }
+        if (_ccx_share_send(&msg) != CCX_SHARE_OK) {
+            dbg_print(CCX_DMT_SHARE, "[share] can't send message\n");
+            return CCX_SHARE_FAIL;
+        }
+        //TODO cleanup msg?
+    }
+
+    sleep(1);
     return CCX_SHARE_OK;
 }
 
-///**
-//* Raw Subtitle struct used as output of decoder (cc608)
-//* and input for encoder (sami, srt, transcript or smptett etc)
-//*/
-//struct cc_subtitle
-//{
-//    /**
-//    * A generic data which contain data according to decoder
-//    * @warn decoder cant output multiple types of data
-//    */
-//    void *data;
-//    /** number of data */
-//    unsigned int nb_data;
-//    /**  type of subtitle */
-//    enum subtype type;
-//    /* set only when all the data is to be displayed at same time */
-//    LLONG start_time;
-//    LLONG end_time;
-//    /* flags */
-//    int flags;
-//    /* index of language table */
-//    int lang_index;
-//    /** flag to tell that decoder has given output */
-//    int got_output;
-//};
+ccx_share_status _ccx_share_send(PbSubEntry *msg)
+{
+    size_t len = pb_sub_entry__get_packed_size(msg);
+    void *buf = malloc(len);
+    pb_sub_entry__pack(msg, buf);
+
+    dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: sending\n");
+    int sent = zmq_send(ccx_share.zmq_sock, buf, len, 0);
+    if (sent != len) {
+        dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: len=%zd sent=%d\n", len, sent);
+        return CCX_SHARE_FAIL;
+    }
+    free(buf);
+    return CCX_SHARE_OK;
+}
+
+ccx_share_status ccx_share_stream_done()
+{
+    PbSubEntry msg = PB_SUB_ENTRY__INIT;
+    msg.eos = 1;
+    msg.stream_name = strdup(ccx_share.stream_name);
+    msg.has_lines_count = 0;
+    msg.has_counter = 0;
+    msg.has_start_time = 0;
+    msg.has_end_time = 0;
+    msg.n_lines = 0;
+    msg.lines = NULL;
+
+    if (_ccx_share_send(&msg) != CCX_SHARE_OK) {
+        dbg_print(CCX_DMT_SHARE, "[share] can't send message\n");
+        return CCX_SHARE_FAIL;
+    }
+
+    return CCX_SHARE_OK;
+}
 
 ccx_share_status _ccx_share_sub_to_entry(struct cc_subtitle *sub, ccx_sub_entries *ents)
 {
