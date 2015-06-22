@@ -85,19 +85,27 @@ ccx_share_status ccx_share_start(const char *stream_name) //TODO add stream
     ccx_share.zmq_sock = zmq_socket(ccx_share.zmq_ctx, ZMQ_PUB);
 
     int rc = zmq_bind(ccx_share.zmq_sock, "tcp://*:3269");
+    //int rc = zmq_bind(ccx_share.zmq_sock, "tcp://127.0.0.1:3269");
     if (rc) {
         dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: cant zmq_bind()\n");
         fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start");
     }
     //TODO remove path from stream name to minimize traffic (/?)
     ccx_share.stream_name = strdup(stream_name ? stream_name : (const char *) "unknown");
-
+    sleep(1);
     return CCX_SHARE_OK;
 }
 
 ccx_share_status ccx_share_stop()
 {
     dbg_print(CCX_DMT_SHARE, "[share] ccx_share_stop: stopping service\n");
+    const size_t buf_size = 128;
+    char buf[buf_size];
+    int rc = zmq_getsockopt (ccx_share.zmq_sock, ZMQ_LAST_ENDPOINT, buf, (size_t *)&buf_size);
+    assert (rc == 0);
+    /* Unbind socket by real endpoint */
+    rc = zmq_unbind (ccx_share.zmq_sock, buf);
+    assert (rc == 0);
     zmq_close(ccx_share.zmq_sock);
     zmq_ctx_destroy(ccx_share.zmq_ctx);
     free(ccx_share.stream_name);
@@ -110,7 +118,6 @@ ccx_share_status ccx_share_send(struct cc_subtitle *sub)
     ccx_sub_entries_init(&entries);
     _ccx_share_sub_to_entry(sub, &entries);
     ccx_sub_entries_print(&entries);
-    ccx_sub_entries_cleanup(&entries);
 
     ccx_sub_entry *entry;
     for (unsigned int i = 0; i < entries.count; i++) {
@@ -144,6 +151,7 @@ ccx_share_status ccx_share_send(struct cc_subtitle *sub)
         //TODO cleanup msg?
     }
 
+    ccx_sub_entries_cleanup(&entries);
     sleep(1);
     return CCX_SHARE_OK;
 }
@@ -257,5 +265,18 @@ ccx_share_status _ccx_share_sub_to_entry(struct cc_subtitle *sub, ccx_sub_entrie
     }
     dbg_print(CCX_DMT_SHARE, "[share] done\n");
 
+    return CCX_SHARE_OK;
+}
+
+ccx_share_status ccx_share_launch_translator(char *langs, char *google_api_key)
+{
+    char buf[1024];
+    #ifdef _WIN32
+        sprintf(buf, "start cctranslate -s=extractor -l=%s -k=%s", langs, google_api_key);
+    #else
+        sprintf(buf, "./cctranslate -s=extractor -l=%s -k=%s &", langs, google_api_key);
+    #endif
+    dbg_print(CCX_DMT_SHARE, "[share] launching translator: \"%s\"\n", buf);
+    system(buf);
     return CCX_SHARE_OK;
 }

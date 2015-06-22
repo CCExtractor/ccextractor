@@ -45,6 +45,7 @@ void ccx_sub_entries_init(ccx_sub_entries *);
 void ccx_sub_entries_cleanup(ccx_sub_entries *);
 void ccx_sub_entries_print(ccx_sub_entries *);
 
+ccx_share_status ccx_share_launch_translator(char *langs, char *google_api_key);
 ccx_share_status ccx_share_start(const char *);
 ccx_share_status ccx_share_stop();
 ccx_share_status ccx_share_send(struct cc_subtitle *);
