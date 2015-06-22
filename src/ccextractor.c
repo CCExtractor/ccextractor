@@ -280,7 +280,7 @@ int main(int argc, char *argv[])
 	m_signal(SIGINT, sigint_handler);
 #endif
     if (ccx_options.sharing_enabled) {
-        ccx_share_launch_translator("fr,it", "AIzaSyC5GVfnYMqPs-1fGGl4-AO52ct798SPU0Q");
+        ccx_share_launch_translator("fr,it", "");
     }
 
 	while (switch_to_next_file(ctx, 0) && !dec_ctx->processed_enough)
