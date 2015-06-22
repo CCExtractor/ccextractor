@@ -1,4 +1,5 @@
 #ifndef CCX_ENCODERS_STRUCTS_H
+#define CCX_ENCODERS_STRUCTS_H
 
 typedef struct ccx_encoders_transcript_format {
 	// TODO: add more options, and (perhaps) reduce other ccextractor options?
@@ -21,5 +22,4 @@ struct ccx_s_write
 	void* spupng_data;
 };
 
-#define CCX_ENCODERS_STRUCTS_H
 #endif
