@@ -25,16 +25,16 @@ include_directories ("${PROJECT_SOURCE_DIR}/gpacmp4/")
 link_directories (/opt/local/lib)
 link_directories (/usr/local/lib)
 
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -Wall -g -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64 -Wl,--fatal-warnings")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -Wall -g -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64")
 add_subdirectory (lib_ccx)
 
 aux_source_directory (${PROJECT_SOURCE_DIR} SOURCEFILE)
 set (EXTRA_LIBS ${EXTRA_LIBS} ccx)
 set (EXTRA_LIBS ${EXTRA_LIBS} m)
 
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-set (EXTRA_LIBS ${EXTRA_LIBS} iconv)
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	set (EXTRA_LIBS ${EXTRA_LIBS} iconv)
+endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 
 find_package (PkgConfig)
@@ -82,8 +82,8 @@ if (WITH_OCR)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR ${TESSERACT_CFLAGS} ${LEPTONICA_CFLAGS}")
 endif (WITH_OCR)
 
+set (EXTRA_LIBS ${EXTRA_LIBS} zmq protobuf-c)
 add_executable (ccextractor ${SOURCEFILE})
-#target_link_libraries (ccextractor nanomsg anl rt)
 target_link_libraries (ccextractor ${EXTRA_LIBS})
 
 install (TARGETS ccextractor DESTINATION bin)

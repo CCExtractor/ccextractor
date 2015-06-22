@@ -302,9 +302,9 @@ int main(int argc, char *argv[])
 	while (switch_to_next_file(ctx, 0) && !dec_ctx->processed_enough)
 	{
 		prepare_for_new_file(ctx);
-//		if (ccx_options.sharing_enabled) {
-//			ccx_share_start(ctx->basefilename);
-//		}
+		if (ccx_options.sharing_enabled) {
+			ccx_share_start(ctx->basefilename);
+		}
 #ifdef ENABLE_FFMPEG
 		close_input_file(ctx);
 		ffmpeg_ctx =  init_ffmpeg(ctx->inputfile[0]);
@@ -599,9 +599,10 @@ int main(int argc, char *argv[])
 		fts_now = 0;
 		fts_max = 0;
 
-//		if (ccx_options.sharing_enabled) {
-//			ccx_share_stop();
-//		}
+		if (ccx_options.sharing_enabled) {
+            ccx_share_stream_done();
+			ccx_share_stop();
+		}
 	} // file loop
 	close_input_file(ctx);
 	
