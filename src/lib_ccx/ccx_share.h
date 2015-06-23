@@ -2,6 +2,8 @@
 // Created by Oleg Kisselef (olegkisselef at gmail dot com) on 6/21/15
 //
 
+#ifdef ENABLE_SHARING
+
 #ifndef CCEXTRACTOR_CCX_SHARE_H
 #define CCEXTRACTOR_CCX_SHARE_H
 
@@ -54,3 +56,5 @@ ccx_share_status _ccx_share_sub_to_entry(struct cc_subtitle *, ccx_sub_entries *
 ccx_share_status _ccx_share_send(PbSubEntry *);
 
 #endif //CCEXTRACTOR_CCX_SHARE_H
+
+#endif //ENABLE_SHARING

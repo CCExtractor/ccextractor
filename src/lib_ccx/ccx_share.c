@@ -2,9 +2,12 @@
 // Created by Oleg Kisselef (olegkisselef at gmail dot com) on 6/21/15
 //
 
+#ifdef ENABLE_SHARING
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "ccx_share.h"
+#include "ccx_common_option.h"
 #include "ccx_decoders_structs.h"
 #include "lib_ccx.h"
 #include "zmq.h"
@@ -84,15 +87,23 @@ ccx_share_status ccx_share_start(const char *stream_name) //TODO add stream
     ccx_share.zmq_ctx = zmq_ctx_new();
     ccx_share.zmq_sock = zmq_socket(ccx_share.zmq_ctx, ZMQ_PUB);
 
-    int rc = zmq_bind(ccx_share.zmq_sock, "tcp://*:3269");
-    //int rc = zmq_bind(ccx_share.zmq_sock, "tcp://127.0.0.1:3269");
+    if (ccx_options.sharing_port < 1024) {
+        mprint("[share] can't use %ld < 1024 port for sharing subs. Using default 3269\n", ccx_options.sharing_port);
+        ccx_options.sharing_port = 3269;
+    }
+    char url[128];
+    snprintf(url, 127, "tcp://*:%ld", ccx_options.sharing_port);
+
+    dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: url=%s\n", url);
+
+    int rc = zmq_bind(ccx_share.zmq_sock, url);
     if (rc) {
         dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: cant zmq_bind()\n");
         fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start");
     }
     //TODO remove path from stream name to minimize traffic (/?)
-    ccx_share.stream_name = strdup(stream_name ? stream_name : (const char *) "unknown");
-    sleep(1);
+    ccx_share.stream_name = strdup(stream_name ? stream_name : "unknown");
+    sleep(1); //We have to sleep a while, because it takes some time for subscribers to subscribe
     return CCX_SHARE_OK;
 }
 
@@ -114,22 +125,28 @@ ccx_share_status ccx_share_stop()
 
 ccx_share_status ccx_share_send(struct cc_subtitle *sub)
 {
+    dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: sending\n");
     ccx_sub_entries entries;
     ccx_sub_entries_init(&entries);
     _ccx_share_sub_to_entry(sub, &entries);
     ccx_sub_entries_print(&entries);
+    dbg_print(CCX_DMT_SHARE, "[share] entry obtained:\n");
 
     ccx_sub_entry *entry;
     for (unsigned int i = 0; i < entries.count; i++) {
         entry = &entries.entries[i];
-
+        dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: sending %u\n", i);
         PbSubEntry msg = PB_SUB_ENTRY__INIT;
+        dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: sending %u: inited\n", i);
+        dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: sending name %s\n", ccx_share.stream_name);
         msg.stream_name = strdup(ccx_share.stream_name);
+        dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: sending %u: duped\n", i);
         msg.has_counter = 1;
         msg.counter = (int64_t) entry->counter;
         msg.has_start_time = 1;
         msg.start_time = (int64_t) entry->start_time;
         msg.has_end_time = 1;
+        dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: sending %u: middle\n", i);
         msg.end_time = (int64_t) entry->end_time;
         msg.has_lines_count = 1;
         msg.lines_count = entry->lines_count;
@@ -138,12 +155,14 @@ ccx_share_status ccx_share_send(struct cc_subtitle *sub)
         if (!msg.lines) {
             fatal(EXIT_NOT_ENOUGH_MEMORY, "[share] msg\n");
         }
+        dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: sending %u: allocated\n", i);
         for (int j = 0; j < msg.lines_count; j++) {
             msg.lines[j] = strdup(entry->lines[j]);
             if (!msg.lines[j]) {
                 fatal(EXIT_NOT_ENOUGH_MEMORY, "[share] msg[j]\n");
             }
         }
+        dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: _sending %u\n", i);
         if (_ccx_share_send(&msg) != CCX_SHARE_OK) {
             dbg_print(CCX_DMT_SHARE, "[share] can't send message\n");
             return CCX_SHARE_FAIL;
@@ -152,23 +171,26 @@ ccx_share_status ccx_share_send(struct cc_subtitle *sub)
     }
 
     ccx_sub_entries_cleanup(&entries);
-    sleep(1);
+    //sleep(1);
     return CCX_SHARE_OK;
 }
 
 ccx_share_status _ccx_share_send(PbSubEntry *msg)
 {
+    dbg_print(CCX_DMT_SHARE, "[share] _ccx_share_send\n");
     size_t len = pb_sub_entry__get_packed_size(msg);
     void *buf = malloc(len);
+    dbg_print(CCX_DMT_SHARE, "[share] _ccx_share_send: packing\n");
     pb_sub_entry__pack(msg, buf);
 
-    dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: sending\n");
+    dbg_print(CCX_DMT_SHARE, "[share] _ccx_share_send: sending\n");
     int sent = zmq_send(ccx_share.zmq_sock, buf, len, 0);
     if (sent != len) {
         dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: len=%zd sent=%d\n", len, sent);
         return CCX_SHARE_FAIL;
     }
     free(buf);
+    dbg_print(CCX_DMT_SHARE, "[share] _ccx_share_send: sent\n");
     return CCX_SHARE_OK;
 }
 
@@ -268,15 +290,24 @@ ccx_share_status _ccx_share_sub_to_entry(struct cc_subtitle *sub, ccx_sub_entrie
     return CCX_SHARE_OK;
 }
 
-ccx_share_status ccx_share_launch_translator(char *langs, char *google_api_key)
+ccx_share_status ccx_share_launch_translator(char *langs, char *auth)
 {
+    if (!langs) {
+        fatal(EXIT_NOT_CLASSIFIED, "[translate] launching translator failed: target languages not specified\n");
+    }
+    if (!auth) {
+        fatal(EXIT_NOT_CLASSIFIED, "[translate] launching translator failed: no auth data provided\n");
+    }
+
     char buf[1024];
     #ifdef _WIN32
-        sprintf(buf, "start cctranslate -s=extractor -l=%s -k=%s", langs, google_api_key);
+        sprintf(buf, "start cctranslate -s=extractor -l=%s -k=%s", langs, auth);
     #else
-        sprintf(buf, "./cctranslate -s=extractor -l=%s -k=%s &", langs, google_api_key);
+        sprintf(buf, "./cctranslate -s=extractor -l=%s -k=%s &", langs, auth);
     #endif
     dbg_print(CCX_DMT_SHARE, "[share] launching translator: \"%s\"\n", buf);
     system(buf);
     return CCX_SHARE_OK;
 }
+
+#endif //ENABLE_SHARING

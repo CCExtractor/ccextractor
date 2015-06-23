@@ -96,9 +96,15 @@ struct ccx_s_options // Options from user parameters
 	// Output structures
 	struct ccx_s_write wbout1;
 	struct ccx_s_write wbout2;
+#ifdef ENABLE_SHARING
 	//CC sharing
 	int sharing_enabled;
 	long sharing_port;
+    //Translating
+    int translate_enabled;
+    char *translate_langs;
+    char *translate_key;
+#endif
 };
 
 extern struct ccx_s_options ccx_options;

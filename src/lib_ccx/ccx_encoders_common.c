@@ -564,9 +564,11 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	int wrote_something = 0;
 	int ret = 0;
 
+#ifdef ENABLE_SHARING
 	if (ccx_options.sharing_enabled) {
 		ccx_share_send(sub);
 	}
+#endif //ENABLE_SHARING
 
 	if (sub->type == CC_608)
 	{
