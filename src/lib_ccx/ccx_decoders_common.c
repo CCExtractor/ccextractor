@@ -305,7 +305,6 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->fix_padding = setting->fix_padding;
 	ctx->write_format =  setting->output_format;
 	ctx->subs_delay =  setting->subs_delay;
-	ctx->wbout1 = setting->wbout1;
 	ctx->extract = setting->extract;
 	ctx->fullbin = setting->fullbin;
 	memcpy(&ctx->extraction_start, &setting->extraction_start,sizeof(struct ccx_boundary_time));
