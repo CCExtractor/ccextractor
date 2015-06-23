@@ -4,6 +4,7 @@ project (CCExtractor)
 
 option (WITH_FFMPEG "Build using FFmpeg demuxer and decoder" OFF)
 option (WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
+option (WITH_SHARING "Build with sharing and translation support" OFF)
 
 #Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
@@ -82,7 +83,22 @@ if (WITH_OCR)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR ${TESSERACT_CFLAGS} ${LEPTONICA_CFLAGS}")
 endif (WITH_OCR)
 
-set (EXTRA_LIBS ${EXTRA_LIBS} zmq protobuf-c)
+########################################################
+# Build with CC sharing and translation support
+########################################################
+
+if (WITH_SHARING)
+  find_package(PkgConfig)
+
+  pkg_check_modules (ZEROMQ REQUIRED libzmq)
+  pkg_check_modules (PROTOBUFC REQUIRED libprotobuf-c)
+
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${ZEROMQ_STATIC_LIBRARIES})
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${PROTOBUFC_STATIC_LIBRARIES})
+
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_SHARING")
+endif (WITH_SHARING)
+
 add_executable (ccextractor ${SOURCEFILE})
 target_link_libraries (ccextractor ${EXTRA_LIBS})
 
