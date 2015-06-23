@@ -56,7 +56,9 @@ enum ccx_debug_message_types
 	CCX_DMT_PAT=0x400, // Program Allocation Table dump
 	CCX_DMT_PMT=0x800, // Program Map Table dump
 	CCX_DMT_LEVENSHTEIN=0x1000, // Levenshtein distance calculations
+#ifdef ENABLE_SHARING
 	CCX_DMT_SHARE=0x2000, //Extracted captions sharing service
+#endif //ENABLE_SHARING
 };
 
 // AVC NAL types
