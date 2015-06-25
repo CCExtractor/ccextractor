@@ -5,8 +5,8 @@
 #else
 #include <unistd.h>
 #endif
-
-void detect_stream_type (struct lib_ccx_ctx *ctx)
+#include "activity.h"
+void detect_stream_type (struct ccx_demuxer *ctx)
 {
 	ctx->stream_mode=CCX_SM_ELEMENTARY_OR_NOT_FOUND; // Not found
 	ctx->startbytes_avail = (int) buffered_read_opt(ctx, ctx->startbytes, STARTBYTESLENGTH);
@@ -179,7 +179,7 @@ void detect_stream_type (struct lib_ccx_ctx *ctx)
 }
 
 
-int detect_myth( struct lib_ccx_ctx *ctx )
+int detect_myth( struct ccx_demuxer *ctx )
 {
 	int vbi_blocks=0;
 	// VBI data? if yes, use myth loop
@@ -257,8 +257,8 @@ int read_video_pes_header (struct lib_ccx_ctx *ctx, unsigned char *nextheader, i
 	if ( !sbuflen )
 	{
 		// Extension present, get it
-		buffered_read (ctx, nextheader+6,3);
-		ctx->past=ctx->past+result;
+		buffered_read (ctx->demux_ctx, nextheader+6,3);
+		ctx->demux_ctx->past=ctx->demux_ctx->past+result;
 		if (result!=3) {
 			// Consider this the end of the show.
 			return -1;
@@ -287,8 +287,8 @@ int read_video_pes_header (struct lib_ccx_ctx *ctx, unsigned char *nextheader, i
 	{
 		if (nextheader[8] > 0)
 		{
-			buffered_read (ctx, nextheader+9,nextheader[8]);
-			ctx->past=ctx->past+result;
+			buffered_read (ctx->demux_ctx, nextheader+9,nextheader[8]);
+			ctx->demux_ctx->past=ctx->demux_ctx->past+result;
 			if (result!=nextheader[8])
 			{
 				return -1;

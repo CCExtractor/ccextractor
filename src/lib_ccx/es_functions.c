@@ -1,5 +1,6 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
+#include "activity.h"
 // Functions to parse a mpeg-2 data stream, see ISO/IEC 13818-2 6.2
 
 static int no_bitstream_error = 0;

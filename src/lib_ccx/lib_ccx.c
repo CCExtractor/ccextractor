@@ -1,5 +1,6 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
+#include "activity.h"
 
 struct ccx_common_logging_t ccx_common_logging;
 static struct ccx_decoders_common_settings_t *init_decoder_setting(
@@ -132,20 +133,11 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 		return NULL;
 	memset(report_608,0,sizeof(struct ccx_decoder_608_report));
 
-	ctx->capbufsize = 20000;
-	ctx->capbuf = NULL;
-	ctx->capbuflen = 0; // Bytes read in capbuf
-
 	// Initialize some constants
-	init_ts(ctx);
 	init_avc();
 
-	ctx->stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
-	ctx->auto_stream = opt->auto_stream;
-	ctx->m2ts = opt->m2ts;
 	ctx->screens_to_process = -1;
 	ctx->current_file = -1;
-	ctx->infd = -1;//Set to -1 to indicate no file is open.
 
 	// Set logging functions for libraries
 	ccx_common_logging.debug_ftn = &dbg_print;
@@ -198,7 +190,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->pesheaderbuf = (unsigned char *) malloc (188); // Never larger anyway
 
 	// Init timing
-	ccx_common_timing_init(&ctx->past,opt->nosync);
+	ccx_common_timing_init(&ctx->demux_ctx->past,opt->nosync);
 
 	ctx->cc_to_stdout = opt->cc_to_stdout;
 
@@ -206,6 +198,8 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->live_stream = opt->live_stream;
 	ctx->binary_concat = opt->binary_concat;
 	build_parity_table();
+
+	ctx->demux_ctx = init_demuxer(ctx, &opt->demux_cfg);
 
 end:
 	if (ret < 0) {
@@ -219,14 +213,8 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 {
 	struct lib_ccx_ctx *lctx = *ctx;
 	int i = 0;
-	for (i = 0; i < MAX_PID; i++)
-	{
-		if( lctx->PIDs_programs[i])
-			freep(lctx->PIDs_programs + i);
-	}
 	// free EPG memory
 	EPG_free(lctx);
-	dinit_ts(lctx);
 	dinit_cc_decode(&lctx->dec_ctx);
 	freep(&lctx->basefilename);
 	freep(&lctx->buffer);

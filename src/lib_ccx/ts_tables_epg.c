@@ -923,7 +923,7 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 	//handle outputing to xml files
 void EPG_handle_output(struct lib_ccx_ctx *ctx)
 {
-	int cur_sec = (int) ((ctx->global_timestamp-ctx->min_global_timestamp) / 1000);
+	int cur_sec = (int) ((ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp) / 1000);
 	if(ccx_options.xmltv==1 || ccx_options.xmltv==3)
 	{ //full outout
 		if(ccx_options.xmltvoutputinterval!=0 && cur_sec>ctx->epg_last_output+ccx_options.xmltvliveinterval)

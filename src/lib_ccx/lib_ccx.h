@@ -12,6 +12,7 @@
 #include "ccx_common_timing.h"
 #include "ccx_common_option.h"
 
+#include "ccx_demuxer.h"
 #include "ccx_encoders_common.h"
 #include "ccx_decoders_608.h"
 #include "ccx_decoders_xds.h"
@@ -103,15 +104,12 @@ struct EIT_program
 #define SUB_STREAMS_CNT 10
 struct file_report
 {
-	unsigned program_cnt;
 	unsigned width;
 	unsigned height;
 	unsigned aspect_ratio;
 	unsigned frame_rate;
 	struct ccx_decoder_608_report *data_from_608;
 	struct ccx_decoder_708_report_t *data_from_708;
-	unsigned dvb_sub_pid[SUB_STREAMS_CNT];
-	unsigned tlt_sub_pid[SUB_STREAMS_CNT];
 	unsigned mp4_cc_track_cnt;
 };
 
@@ -138,18 +136,11 @@ struct ccx_s_teletext_config {
 	int nofontcolor;
 	char millis_separator;
 };
-#define MAX_PID 65536
 struct lib_ccx_ctx
 {
-	// TODO relates to fts_global
-	uint32_t global_timestamp;
-	uint32_t min_global_timestamp;
-	int global_timestamp_inited;
-
 
 	// Stuff common to both loops
 	unsigned char *buffer;
-	LLONG past; /* Position in file, if in sync same as ftell()  */
 	unsigned char *pesheaderbuf;
 	LLONG inputsize;
 	LLONG total_inputsize;
@@ -157,10 +148,6 @@ struct lib_ccx_ctx
 
 	int last_reported_progress;
 
-	// Small buffer to help us with the initial sync
-	unsigned char startbytes[STARTBYTESLENGTH];
-	unsigned int startbytes_pos;
-	int startbytes_avail;
 
 	/* Stats */
 	int stat_numuserheaders;
@@ -187,9 +174,6 @@ struct lib_ccx_ctx
 	// int hex_mode=HEX_NONE; // Are we processing an hex file?
 
 	struct lib_cc_decode *dec_ctx;
-	enum ccx_stream_mode_enum stream_mode;
-	enum ccx_stream_mode_enum auto_stream;
-	int m2ts;
 
 
 	int rawmode; // Broadcast or DVD
@@ -212,19 +196,12 @@ struct lib_ccx_ctx
 	char **inputfile; // List of files to process
 	int num_input_files; // How many?
 
-	/* Hauppauge support */
-	unsigned hauppauge_warning_shown; // Did we detect a possible Hauppauge capture and told the user already?
 	unsigned teletext_warning_shown; // Did we detect a possible PAL (with teletext subs) and told the user already?
 
 	// Output structures
 	struct ccx_s_write wbout1;
 	struct ccx_s_write wbout2;
 
-	/* File handles */
-	FILE *fh_out_elementarystream;
-	int infd; // descriptor number to input.
-	int PIDs_seen[MAX_PID];
-	struct PMT_entry *PIDs_programs[MAX_PID];
 	
 	//struct EIT_buffer eit_buffer;
 	struct EIT_buffer epg_buffers[0xfff+1];
@@ -235,15 +212,13 @@ struct lib_ccx_ctx
 	int epg_last_live_output; 
 	struct file_report freport;
 
-	long capbufsize;
-	unsigned char *capbuf;
-	long capbuflen; // Bytes read in capbuf
-
 	unsigned hauppauge_mode; // If 1, use PID=1003, process specially and so on
 	int live_stream; /* -1 -> Not a complete file but a live stream, without timeout
                        0 -> A regular file
                       >0 -> Live stream with a timeout of this value in seconds */
 	int binary_concat; // Disabled by -ve or --videoedited
+
+	struct ccx_demuxer *demux_ctx;
 };
 #ifdef DEBUG_TELEXCC
 int main_telxcc (int argc, char *argv[]);
@@ -275,7 +250,7 @@ int main_telxcc (int argc, char *argv[]);
     result=1; } \
 } else result=buffered_read_opt (ctx, buffer,1);
 
-LLONG buffered_read_opt (struct lib_ccx_ctx *ctx, unsigned char *buffer, unsigned int bytes);
+LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes);
 
 struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt);
 void dinit_libraries( struct lib_ccx_ctx **ctx);
@@ -297,19 +272,6 @@ LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub);
 void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
 void processhex (char *filename);
 void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
-
-// activity.c
-void activity_header (void);
-void activity_progress (int percentaje, int cur_min, int cur_sec);
-void activity_report_version (void);
-void activity_input_file_closed (void);
-void activity_input_file_open (const char *filename);
-void activity_message (const char *fmt, ...);
-void  activity_video_info (int hor_size,int vert_size,
-    const char *aspect_ratio, const char *framerate);
-void activity_program_number (unsigned program_number);
-void activity_library_process(enum ccx_common_logging_gui message_type, ...);
-void activity_report_data_read (void);
 
 extern LLONG result;
 extern int end_of_file;
@@ -363,20 +325,20 @@ void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct
 
 // stream_functions.c
 int isValidMP4Box(unsigned char *buffer, long position, long *nextBoxLocation, int *boxScore);
-void detect_stream_type (struct lib_ccx_ctx *ctx);
-int detect_myth( struct lib_ccx_ctx *ctx );
+void detect_stream_type (struct ccx_demuxer *ctx);
+int detect_myth( struct ccx_demuxer *ctx );
 int read_video_pes_header (struct lib_ccx_ctx *ctx, unsigned char *nextheader, int *headerlength, int sbuflen);
 int read_pts_pes(unsigned char*header, int len);
 
 // ts_functions.c
-void init_ts(struct lib_ccx_ctx *ctx);
-void dinit_ts (struct lib_ccx_ctx *ctx);
-int ts_readpacket(struct lib_ccx_ctx* ctx);
-long ts_readstream(struct lib_ccx_ctx *ctx);
+void init_ts(struct ccx_demuxer *ctx);
+void dinit_ts (struct ccx_demuxer *ctx);
+int ts_readpacket(struct ccx_demuxer* ctx);
+long ts_readstream(struct ccx_demuxer *ctx);
 LLONG ts_getmoredata(struct lib_ccx_ctx *ctx);
 int write_section(struct lib_ccx_ctx *ctx, struct ts_payload *payload, unsigned char*buf, int size, int pos);
-int parse_PMT (struct lib_ccx_ctx *ctx, unsigned char *buf, int len, int pos);
-int parse_PAT (struct lib_ccx_ctx *ctx);
+int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos);
+int parse_PAT (struct ccx_demuxer *ctx);
 void parse_EPG_packet (struct lib_ccx_ctx *ctx);
 void EPG_free();
 
@@ -400,7 +362,7 @@ void m_signal(int sig, void (*func)(int));
 
 
 unsigned encode_line (unsigned char *buffer, unsigned char *text);
-void buffered_seek (struct lib_ccx_ctx *ctx, int offset);
+void buffered_seek (struct ccx_demuxer *ctx, int offset);
 extern void build_parity_table(void);
 
 void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub);

@@ -32,6 +32,7 @@ int main(int argc, char *argv[])
 	struct lib_ccx_ctx *ctx;
 	struct lib_cc_decode *dec_ctx = NULL;
 	int ret = 0;
+	enum ccx_stream_mode_enum stream_mode;
 
 
 	init_options (&ccx_options);
@@ -92,16 +93,6 @@ int main(int argc, char *argv[])
 	if (tlt_config.page > 0) {
 		// dec to BCD, magazine pages numbers are in BCD (ETSI 300 706)
 		tlt_config.page = ((tlt_config.page / 100) << 8) | (((tlt_config.page / 10) % 10) << 4) | (tlt_config.page % 10);
-	}
-
-	if (ctx->auto_stream==CCX_SM_MCPOODLESRAW && ccx_options.write_format==CCX_OF_RAW)
-	{
-		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "-in=raw can only be used if the output is a subtitle file.\n");
-	}
-	if (ctx->auto_stream==CCX_SM_RCWT && ccx_options.write_format==CCX_OF_RCWT && ccx_options.output_filename==NULL)
-	{
-		fatal (EXIT_INCOMPATIBLE_PARAMETERS,
-			   "CCExtractor's binary format can only be used simultaneously for input and\noutput if the output file name is specified given with -o.\n");
 	}
 
 	subline = (unsigned char *) malloc (SUBLINESIZE);
@@ -261,16 +252,6 @@ int main(int argc, char *argv[])
 	if (ccx_options.teletext_mode == CCX_TXT_IN_USE) // Here, it would mean it was forced by user
 		telxcc_init(ctx);
 
-	ctx->fh_out_elementarystream = NULL;
-	if (ccx_options.out_elementarystream_filename!=NULL)
-	{
-		if ((ctx->fh_out_elementarystream = fopen (ccx_options.out_elementarystream_filename,"wb"))==NULL)
-		{
-			fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to open clean file: %s\n", ccx_options.out_elementarystream_filename);
-		}
-	}	
-
-
 	// Initialize HDTV caption buffer
 	init_hdcc();
 
@@ -342,103 +323,29 @@ int main(int argc, char *argv[])
 			mprint ("\rFailed to initialized ffmpeg falling back to legacy\n");
 		}
 #endif
-		if (ctx->auto_stream == CCX_SM_AUTODETECT)
-		{
-			detect_stream_type(ctx);
-			switch (ctx->stream_mode)
-			{
-				case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
-					mprint ("\rFile seems to be an elementary stream, enabling ES mode\n");
-					break;
-				case CCX_SM_TRANSPORT:
-					mprint ("\rFile seems to be a transport stream, enabling TS mode\n");
-					break;
-				case CCX_SM_PROGRAM:
-					mprint ("\rFile seems to be a program stream, enabling PS mode\n");
-					break;
-				case CCX_SM_ASF:
-					mprint ("\rFile seems to be an ASF, enabling DVR-MS mode\n");
-					break;
-				case CCX_SM_WTV:
-					mprint ("\rFile seems to be a WTV, enabling WTV mode\n");
-					break;
-				case CCX_SM_MCPOODLESRAW:
-					mprint ("\rFile seems to be McPoodle raw data\n");
-					break;
-				case CCX_SM_RCWT:
-					mprint ("\rFile seems to be a raw caption with time data\n");
-					break;
-				case CCX_SM_MP4:
-					mprint ("\rFile seems to be a MP4\n");
-					break;
-#ifdef WTV_DEBUG
-				case CCX_SM_HEX_DUMP:
-					mprint ("\rFile seems to be an hexadecimal dump\n");					
-					break;
-#endif
-				case CCX_SM_MYTH:
-				case CCX_SM_AUTODETECT:
-					fatal(CCX_COMMON_EXIT_BUG_BUG, "Cannot be reached!");
-					break;
-			}
-		}
-		else
-		{
-			ctx->stream_mode=ctx->auto_stream;
-		}
-	
-		/* -----------------------------------------------------------------
-		MAIN LOOP
-		----------------------------------------------------------------- */
-
-		// The myth loop autodetect will only be used with ES or PS streams
-		switch (ccx_options.auto_myth)
-		{
-			case 0:
-				// Use whatever stream mode says
-				break;
-			case 1:
-				// Force stream mode to myth
-				ctx->stream_mode=CCX_SM_MYTH;
-				break;
-			case 2:
-				// autodetect myth files, but only if it does not conflict with
-				// the current stream mode
-				switch (ctx->stream_mode)
-				{
-					case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
-					case CCX_SM_PROGRAM:
-						if ( detect_myth(ctx) )
-						{
-							ctx->stream_mode=CCX_SM_MYTH;
-						}
-						break;
-					default:
-						// Keep stream_mode
-						break;
-				}
-				break;					
-		}
-
+		stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 		// Disable sync check for raw formats - they have the right timeline.
 		// Also true for bin formats, but -nosync might have created a
 		// broken timeline for debug purposes.
 		// Disable too in MP4, specs doesn't say that there can't be a jump
-		switch (ctx->stream_mode)
+		switch (stream_mode)
 		{
-		case CCX_SM_MCPOODLESRAW:
-		case CCX_SM_RCWT:
-		case CCX_SM_MP4:
+			case CCX_SM_MCPOODLESRAW:
+			case CCX_SM_RCWT:
+			case CCX_SM_MP4:
 #ifdef WTV_DEBUG
-		case CCX_SM_HEX_DUMP:
+			case CCX_SM_HEX_DUMP:
 #endif
-			ccx_common_timing_settings.disable_sync_check = 1;
-			break;
-		default:
-			break;
+				ccx_common_timing_settings.disable_sync_check = 1;
+				break;
+			default:
+				break;
 		}
-				
-		switch (ctx->stream_mode)
+
+		/* -----------------------------------------------------------------
+		MAIN LOOP
+		----------------------------------------------------------------- */
+		switch (stream_mode)
 		{
 			struct ccx_s_mp4Cfg mp4_cfg = {ccx_options.mp4vidtrack};
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
@@ -537,7 +444,7 @@ int main(int argc, char *argv[])
 								  - min_pts/(MPEG_CLOCK_FREQ/1000) + fts_offset ));
 		}
 		// dvr-ms files have invalid GOPs
-		if (gop_time.inited && first_gop_time.inited && ctx->stream_mode != CCX_SM_ASF)
+		if (gop_time.inited && first_gop_time.inited && stream_mode != CCX_SM_ASF)
 		{
 			mprint ("\nInitial GOP time:	   %s\n",
 				print_mstime(first_gop_time.ms));
@@ -596,10 +503,8 @@ int main(int argc, char *argv[])
 		fts_max = 0;
 	} // file loop
 	close_input_file(ctx);
-	
-	if (ctx->fh_out_elementarystream!=NULL)
-		fclose (ctx->fh_out_elementarystream);
 
+	ccx_demuxer_delete(&ctx->demux_ctx);
 	flushbuffer (ctx, &ctx->wbout1, false);
 	flushbuffer (ctx, &ctx->wbout2, false);
 

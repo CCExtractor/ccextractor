@@ -33,6 +33,7 @@ Werner Brückner -- Teletext in digital television
 #include "hamming.h"
 #include "teletext.h"
 #include <signal.h>
+#include "activity.h"
 
 #ifdef __MINGW32__
 // switch stdin and all normal files into binary mode -- needed for Windows
@@ -982,8 +983,8 @@ void tlt_read_rcwt(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 
 	while(1)
 	{
-		buffered_read(ctx, buf, len);
-		ctx->past += result;
+		buffered_read(ctx->demux_ctx, buf, len);
+		ctx->demux_ctx->past += result;
 
 		if (result != len)
 		{
@@ -1065,7 +1066,7 @@ void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t s
 	// If there is no PTS available, use global PCR
 	if (using_pts == NO)
 	{
-		t = ctx->global_timestamp;
+		t = ctx->demux_ctx->global_timestamp;
 	}
 	// if (using_pts == NO) t = get_pts();
 	else
@@ -1092,7 +1093,7 @@ void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t s
 			delta = (uint64_t) (ctx->subs_delay + 1000 * utc_refvalue - t);
 		t0 = t;
 		states.pts_initialized = YES;
-		if ((using_pts == NO) && (ctx->global_timestamp == 0))
+		if ((using_pts == NO) && (ctx->demux_ctx->global_timestamp == 0))
 		{
 			// We are using global PCR, nevertheless we still have not received valid PCR timestamp yet
 			states.pts_initialized = NO;

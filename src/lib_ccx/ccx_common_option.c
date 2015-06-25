@@ -71,7 +71,7 @@ void init_options (struct ccx_s_options *options)
 	options->write_format=CCX_OF_SRT; // 0=Raw, 1=srt, 2=SMI
 	options->date_format=ODF_NONE;
 	options->output_filename=NULL;
-	options->out_elementarystream_filename=NULL;
+	options->demux_cfg.out_elementarystream_filename=NULL;
 	options->debug_mask=CCX_DMT_GENERIC_NOTICES; // dbg_print will use this mask to print or ignore different types
 	options->debug_mask_on_debug=CCX_DMT_VERBOSE; // If we're using temp_debug to enable/disable debug "live", this is the mask when temp_debug=1
 	options->ts_autoprogram =0; // Try to find a stream with captions automatically (no -pn needed)
@@ -93,8 +93,8 @@ void init_options (struct ccx_s_options *options)
 	options->line_terminator_lf=0; // 0 = CRLF
 	options->noautotimeref=0; // Do NOT set time automatically?
 	options->input_source=CCX_DS_FILE; // Files, stdin or network
-	options->auto_stream = CCX_SM_AUTODETECT;
-	options->m2ts = 0;
+	options->demux_cfg.auto_stream = CCX_SM_AUTODETECT;
+	options->demux_cfg.m2ts = 0;
 
 	// Prepare time structures
 	init_boundary_time (&options->extraction_start);

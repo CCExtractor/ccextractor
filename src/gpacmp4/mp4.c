@@ -8,6 +8,7 @@
 #include "ccx_encoders_common.h"
 #include "ccx_common_option.h"
 #include "ccx_mp4.h"
+#include "activity.h"
 
 void do_NAL (struct lib_ccx_ctx *ctx, unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub);
 void set_fts(void); // From timing.c

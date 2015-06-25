@@ -1,6 +1,7 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "utility.h"
+#include "activity.h"
 
 static int inputfile_capacity=0;
 
@@ -220,32 +221,32 @@ void set_input_format (struct ccx_s_options *opt, const char *format)
 	while (*format=='-')
 		format++;
 	if (strcmp (format,"es")==0) // Does this actually do anything?
-		opt->auto_stream = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
+		opt->demux_cfg.auto_stream = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
 	else if (strcmp(format, "ts") == 0)
 	{
-		opt->auto_stream = CCX_SM_TRANSPORT;
-		opt->m2ts = 0;
+		opt->demux_cfg.auto_stream = CCX_SM_TRANSPORT;
+		opt->demux_cfg.m2ts = 0;
 	}	
 	else if (strcmp(format, "m2ts") == 0)
 	{
-		opt->auto_stream = CCX_SM_TRANSPORT;
-		opt->m2ts = 1;
+		opt->demux_cfg.auto_stream = CCX_SM_TRANSPORT;
+		opt->demux_cfg.m2ts = 1;
 	}
 	else if (strcmp (format,"ps")==0 || strcmp (format,"nots")==0)
-		opt->auto_stream = CCX_SM_PROGRAM;
+		opt->demux_cfg.auto_stream = CCX_SM_PROGRAM;
 	else if (strcmp (format,"asf")==0 || strcmp (format,"dvr-ms")==0)
-		opt->auto_stream = CCX_SM_ASF;
+		opt->demux_cfg.auto_stream = CCX_SM_ASF;
 	else if (strcmp (format,"wtv")==0)
-		opt->auto_stream = CCX_SM_WTV;
+		opt->demux_cfg.auto_stream = CCX_SM_WTV;
 	else if (strcmp (format,"raw")==0)
-		opt->auto_stream = CCX_SM_MCPOODLESRAW;
+		opt->demux_cfg.auto_stream = CCX_SM_MCPOODLESRAW;
 	else if (strcmp (format,"bin")==0)
-		opt->auto_stream = CCX_SM_RCWT;
+		opt->demux_cfg.auto_stream = CCX_SM_RCWT;
 	else if (strcmp (format,"mp4")==0)
-		opt->auto_stream = CCX_SM_MP4;
+		opt->demux_cfg.auto_stream = CCX_SM_MP4;
 #ifdef WTV_DEBUG
 	else if (strcmp (format,"hex")==0)
-		opt->auto_stream = CCX_SM_HEX_DUMP;
+		opt->demux_cfg.auto_stream = CCX_SM_HEX_DUMP;
 #endif
 	else
 		fatal (EXIT_MALFORMED_PARAMETER, "Unknown input file format: %s\n", format);
@@ -1313,7 +1314,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-cf")==0 && i<argc-1)
 		{
-			opt->out_elementarystream_filename=argv[i+1];
+			opt->demux_cfg.out_elementarystream_filename = argv[i+1];
 			i++;
 			continue;
 		}
@@ -1656,6 +1657,18 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	{
 		print_error(opt->gui_mode_reports, "TCP mode is not compatible with input files.\n");
 		return EXIT_TOO_MANY_INPUT_FILES;
+	}
+
+	if (opt->demux_cfg.auto_stream == CCX_SM_MCPOODLESRAW && opt->write_format==CCX_OF_RAW)
+	{
+		print_error(opt->gui_mode_reports, "-in=raw can only be used if the output is a subtitle file.\n");
+		return EXIT_INCOMPATIBLE_PARAMETERS;
+	}
+	if (opt->demux_cfg.auto_stream == CCX_SM_RCWT && opt->write_format==CCX_OF_RCWT && opt->output_filename==NULL)
+	{
+		print_error(opt->gui_mode_reports,
+			   "CCExtractor's binary format can only be used simultaneously for input and\noutput if the output file name is specified given with -o.\n");
+		return EXIT_INCOMPATIBLE_PARAMETERS;
 	}
 
 	return EXIT_OK;

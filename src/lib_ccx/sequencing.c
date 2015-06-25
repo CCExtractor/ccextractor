@@ -33,6 +33,9 @@ void init_hdcc (void)
 // Buffer caption blocks for later sorting/flushing.
 void store_hdcc(struct lib_ccx_ctx *ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now,struct cc_subtitle *sub)
 {
+	enum ccx_stream_mode_enum stream_mode;
+
+	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 	// Uninitialized?
 	if (anchor_seq_number < 0)
 	{
@@ -67,7 +70,7 @@ void store_hdcc(struct lib_ccx_ctx *ctx, unsigned char *cc_data, int cc_count, i
 			// Changed by CFS to concat, i.e. don't assume there's no data already for this seq_index.
 			// Needed at least for MP4 samples. // TODO: make sure we don't overflow
 			cc_fts[seq_index] = current_fts_now; // CFS: Maybe do even if there's no data?
-			if (ctx->stream_mode!=CCX_SM_MP4) // CFS: Very ugly hack, but looks like overwriting is needed for at least some ES
+			if (stream_mode!=CCX_SM_MP4) // CFS: Very ugly hack, but looks like overwriting is needed for at least some ES
 				cc_data_count[seq_index]  = 0;
 			memcpy(cc_data_pkts[seq_index] + cc_data_count[seq_index] * 3, cc_data, cc_count * 3 + 1);
 		}

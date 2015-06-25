@@ -14,6 +14,7 @@ For now, integration with ccextractor is a quick hack. It could get better with 
 #include <stdio.h>
 #include <fcntl.h>
 #include "ccx_encoders_common.h"
+#include "activity.h"
 
 static unsigned int header_state;
 static unsigned char psm_es_type[256];
@@ -293,10 +294,10 @@ int get_be16(struct lib_ccx_ctx *ctx)
 	unsigned char a,b;
 	unsigned char *a_p = &a; // Just to suppress warnings
 	unsigned char *b_p = &b;
-	buffered_read_byte (ctx, a_p);
-	ctx->past++;
-	buffered_read_byte (ctx, b_p);
-	ctx->past++;
+	buffered_read_byte(ctx->demux_ctx,a_p);
+	ctx->demux_ctx->past++;
+	buffered_read_byte(ctx->demux_ctx,b_p);
+	ctx->demux_ctx->past++;
 	return (a<<8) | b;
 }
 
@@ -304,10 +305,10 @@ int get_byte (struct lib_ccx_ctx *ctx)
 {
 	unsigned char b;
 	unsigned char *b_p = &b;
-	buffered_read_byte(ctx, b_p);
+	buffered_read_byte(ctx->demux_ctx,b_p);
 	if (result==1)
 	{
-		ctx->past++;
+		ctx->demux_ctx->past++;
 		return b;
 	}
 	else
@@ -350,10 +351,10 @@ static int find_next_start_code(struct lib_ccx_ctx *ctx, int *size_ptr,
 	{
 		unsigned char cx;
 		unsigned char *cx_p = &cx;
-		buffered_read_byte (ctx, cx_p);
+		buffered_read_byte(ctx->demux_ctx,cx_p);
 		if (result!=1)
 			break;
-		ctx->past++;
+		ctx->demux_ctx->past++;
 		v = cx;
 		n--;
 		if (state == 0x000001) {
@@ -372,8 +373,8 @@ found:
 
 void url_fskip (struct lib_ccx_ctx *ctx, int length)
 {
-	buffered_seek (ctx, length);
-	ctx->past+=length;
+	buffered_seek (ctx->demux_ctx, length);
+	ctx->demux_ctx->past+=length;
 }
 
 static long mpegps_psm_parse(struct lib_ccx_ctx *ctx)
@@ -697,11 +698,11 @@ redo:
 		{
 			static const unsigned char avs_seqh[4] = { 0, 0, 1, 0xb0 };
 			unsigned char buf[8];
-			buffered_read (ctx, buf,8);
-			ctx->past+=8;
+			buffered_read(ctx->demux_ctx,buf,8);
+			ctx->demux_ctx->past+=8;
 			// get_buffer(&s->pb, buf, 8);
-			buffered_seek(ctx, -8);
-			ctx->past-=8;
+			buffered_seek(ctx->demux_ctx, -8);
+			ctx->demux_ctx->past-=8;
 			if(!memcmp(buf, avs_seqh, 4) && (buf[6] != 0 || buf[7] != 1))
 				codec_id = CODEC_ID_CAVS;
 			else
@@ -779,8 +780,8 @@ goto skip; */
 	}
 	av.codec_id=codec_id;
 	av.type=type;
-	buffered_read (ctx, av.data,av.size);
-	ctx->past+=av.size;
+	buffered_read(ctx->demux_ctx,av.data,av.size);
+	ctx->demux_ctx->past+=av.size;
 	position_sanity_check();
 	// LSEEK (fh,pkt->size,SEEK_CUR);
 	av.pts = pts;
@@ -898,7 +899,7 @@ void myth_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		{
 			if (ctx->total_inputsize > 0 )
 			{
-				int progress = (int) ((((ctx->total_past+ctx->past)>>8)*100)/(ctx->total_inputsize>>8));
+				int progress = (int) ((((ctx->total_past+ctx->demux_ctx->past)>>8)*100)/(ctx->total_inputsize>>8));
 				if (ctx->last_reported_progress != progress)
 				{
 					int cur_sec = (int) (get_fts() / 1000);

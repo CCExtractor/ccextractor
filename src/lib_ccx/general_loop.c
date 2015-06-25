@@ -8,6 +8,8 @@
 
 #include "dvb_subtitle_decoder.h"
 #include "ccx_encoders_common.h"
+#include "activity.h"
+
 // IMPORTED TRASH INFO, REMOVE
 extern long num_nal_unit_type_7;
 extern long num_vcl_hrd;
@@ -60,8 +62,8 @@ LLONG ps_getmoredata(struct lib_ccx_ctx *ctx)
 		}
 		else
 		{
-			buffered_read(ctx, nextheader, 6);
-			ctx->past+=result;
+			buffered_read(ctx->demux_ctx, nextheader, 6);
+			ctx->demux_ctx->past+=result;
 			if (result!=6)
 			{
 				// Consider this the end of the show.
@@ -93,8 +95,8 @@ LLONG ps_getmoredata(struct lib_ccx_ctx *ctx)
 					int atpos = newheader-nextheader;
 
 					memmove (nextheader,newheader,(size_t)(hlen-atpos));
-					buffered_read(ctx, nextheader+(hlen-atpos),atpos);
-					ctx->past+=result;
+					buffered_read(ctx->demux_ctx, nextheader+(hlen-atpos),atpos);
+					ctx->demux_ctx->past+=result;
 					if (result!=atpos)
 					{
 						end_of_file=1;
@@ -103,8 +105,8 @@ LLONG ps_getmoredata(struct lib_ccx_ctx *ctx)
 				}
 				else
 				{
-					buffered_read(ctx, nextheader, hlen);
-					ctx->past+=result;
+					buffered_read(ctx->demux_ctx, nextheader, hlen);
+					ctx->demux_ctx->past+=result;
 					if (result!=hlen)
 					{
 						end_of_file=1;
@@ -124,8 +126,8 @@ LLONG ps_getmoredata(struct lib_ccx_ctx *ctx)
 			if ( nextheader[3]==0xBA)
 			{
 				dbg_print(CCX_DMT_VERBOSE, "PACK header\n");
-				buffered_read(ctx, nextheader+6,8);
-				ctx->past+=result;
+				buffered_read(ctx->demux_ctx, nextheader+6,8);
+				ctx->demux_ctx->past+=result;
 				if (result!=8)
 				{
 					// Consider this the end of the show.
@@ -149,8 +151,8 @@ LLONG ps_getmoredata(struct lib_ccx_ctx *ctx)
 				}
 
 				// If not defect, load stuffing
-				buffered_skip (ctx, (int) stufflen);
-				ctx->past+=stufflen;
+				buffered_skip (ctx->demux_ctx, (int) stufflen);
+				ctx->demux_ctx->past+=stufflen;
 				// fake a result value as something was skipped
 				result=1;
 				continue;
@@ -181,8 +183,8 @@ LLONG ps_getmoredata(struct lib_ccx_ctx *ctx)
 				}
 
 				// Skip over it
-				buffered_skip (ctx, (int) headerlen);
-				ctx->past+=headerlen;
+				buffered_skip (ctx->demux_ctx, (int) headerlen);
+				ctx->demux_ctx->past+=headerlen;
 				// fake a result value as something was skipped
 				result=1;
 
@@ -213,8 +215,8 @@ LLONG ps_getmoredata(struct lib_ccx_ctx *ctx)
 					continue;
 				}
 
-				buffered_read (ctx, ctx->buffer+inbuf, want);
-				ctx->past=ctx->past+result;
+				buffered_read (ctx->demux_ctx, ctx->buffer+inbuf, want);
+				ctx->demux_ctx->past=ctx->demux_ctx->past+result;
 				if (result>0) {
 					payload_read+=(int) result;
 				}
@@ -250,9 +252,9 @@ LLONG general_getmoredata(struct lib_ccx_ctx *ctx)
 	do
 	{
 		want = (int) (BUFSIZE-inbuf);
-		buffered_read (ctx, ctx->buffer+inbuf,want); // This is a macro.
+		buffered_read (ctx->demux_ctx, ctx->buffer+inbuf,want); // This is a macro.
 		// 'result' HAS the number of bytes read
-		ctx->past=ctx->past+result;
+		ctx->demux_ctx->past=ctx->demux_ctx->past+result;
 		inbuf+=result;
 		bytesread+=(int) result;
 	} while (result!=0 && result!=want);
@@ -536,12 +538,14 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 	LLONG pos = 0; /* Current position in buffer */
 	struct cc_subtitle dec_sub;
 	struct lib_cc_decode *dec_ctx = NULL;
+	enum ccx_stream_mode_enum stream_mode;
 	dec_ctx = ctx->dec_ctx;
 	inbuf = 0; // No data yet
 
 	end_of_file = 0;
 	current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
 	memset(&dec_sub, 0,sizeof(dec_sub));
+	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 	while (!end_of_file && !dec_ctx->processed_enough)
 	{
 		/* Get rid of the bytes we already processed */
@@ -557,7 +561,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		// GET MORE DATA IN BUFFER
 		LLONG i;
 		position_sanity_check();
-		switch (ctx->stream_mode)
+		switch (stream_mode)
 		{
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
 				i = general_getmoredata(ctx);
@@ -579,8 +583,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		}
 
 		position_sanity_check();
-		if (ctx->fh_out_elementarystream!=NULL)
-			fwrite (ctx->buffer+overlap,1,(size_t) (inbuf-overlap),ctx->fh_out_elementarystream);
+		ctx->demux_ctx->write_es(ctx->demux_ctx, ctx->buffer+overlap, (size_t) (inbuf-overlap));
 
 		if (i==0)
 		{
@@ -689,12 +692,12 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		{
 			if (ctx->total_inputsize>255) // Less than 255 leads to division by zero below.
 			{
-				int progress = (int) ((((ctx->total_past+ctx->past)>>8)*100)/(ctx->total_inputsize>>8));
+				int progress = (int) ((((ctx->total_past+ctx->demux_ctx->past)>>8)*100)/(ctx->total_inputsize>>8));
 				if (ctx->last_reported_progress != progress)
 				{
 					LLONG t=get_fts();
-					if (!t && ctx->global_timestamp_inited)
-						t=ctx->global_timestamp-ctx->min_global_timestamp;
+					if (!t && ctx->demux_ctx->global_timestamp_inited)
+						t=ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
 					int cur_sec = (int) (t / 1000);
 					activity_progress(progress, cur_sec/60, cur_sec%60);
 					ctx->last_reported_progress = progress;
@@ -716,7 +719,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 	{
 		mprint("\n\n\n\nATTENTION!!!!!!\n");
 		mprint("Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
-				ctx->inputfile[ctx->current_file], ctx->current_file, ctx->past, ctx->inputsize);
+				ctx->inputfile[ctx->current_file], ctx->current_file, ctx->demux_ctx->past, ctx->inputsize);
 	}
 	mprint ("\nNumber of NAL_type_7: %ld\n",num_nal_unit_type_7);
 	mprint ("Number of VCL_HRD: %ld\n",num_vcl_hrd);
@@ -748,8 +751,8 @@ void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 
 	int bread = 0; // Bytes read
 
-	buffered_read(ctx, parsebuf, 11);
-	ctx->past+=result;
+	buffered_read(ctx->demux_ctx, parsebuf, 11);
+	ctx->demux_ctx->past+=result;
 	bread+=(int) result;
 	if (result!=11)
 	{
@@ -788,8 +791,8 @@ void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 	while(1)
 	{
 		// Read the data header
-		buffered_read(ctx, parsebuf, 10);
-		ctx->past+=result;
+		buffered_read(ctx->demux_ctx, parsebuf, 10);
+		ctx->demux_ctx->past+=result;
 		bread+=(int) result;
 
 		if (result!=10)
@@ -815,8 +818,8 @@ void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
 				parsebufsize = cbcount*3;
 			}
-			buffered_read(ctx, parsebuf, cbcount*3);
-			ctx->past+=result;
+			buffered_read(ctx->demux_ctx, parsebuf, cbcount*3);
+			ctx->demux_ctx->past+=result;
 			bread+=(int) result;
 			if (result!=cbcount*3)
 			{

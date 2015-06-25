@@ -29,44 +29,8 @@ void params_dump(struct lib_ccx_ctx *ctx)
 	mprint ("\n");
 	mprint ("[Extract: %d] ", ccx_options.extract);
 	mprint ("[Stream mode: ");
-	switch (ctx->auto_stream)
-	{
-		case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
-			mprint ("Elementary");
-			break;
-		case CCX_SM_TRANSPORT:
-			mprint ("Transport");
-			break;
-		case CCX_SM_PROGRAM:
-			mprint ("Program");
-			break;
-		case CCX_SM_ASF:
-			mprint ("DVR-MS");
-			break;
-		case CCX_SM_WTV:
-			mprint ("Windows Television (WTV)");
-			break;
-		case CCX_SM_MCPOODLESRAW:
-			mprint ("McPoodle's raw");
-			break;
-		case CCX_SM_AUTODETECT:
-			mprint ("Autodetect");
-			break;
-		case CCX_SM_RCWT:
-			mprint ("BIN");
-			break;
-		case CCX_SM_MP4:
-			mprint ("MP4");
-			break;
-#ifdef WTV_DEBUG
-		case CCX_SM_HEX_DUMP:
-			mprint ("Hex");
-			break;
-#endif
-		default:
-			fatal(CCX_COMMON_EXIT_BUG_BUG, "BUG: Unknown stream mode.\n");
-			break;
-	}
+
+	ctx->demux_ctx->print_cfg(ctx->demux_ctx);
 	mprint ("]\n");
 	mprint ("[Program : ");
 	if (ccx_options.ts_forced_program_selected != 0)
@@ -208,6 +172,7 @@ void params_dump(struct lib_ccx_ctx *ctx)
 void print_file_report(struct lib_ccx_ctx *ctx)
 {
 	struct lib_cc_decode *dec_ctx = NULL;
+	enum ccx_stream_mode_enum stream_mode;
 	dec_ctx = ctx->dec_ctx;
 #define Y_N(cond) ((cond) ? "Yes" : "No")
 
@@ -232,134 +197,20 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 			break;
 	}
 
-	printf("Stream Mode: ");
-	switch (ctx->stream_mode)
-	{
-		case CCX_SM_TRANSPORT:
-			printf("Transport Stream\n");
-
-			printf("Program Count: %d\n", ctx->freport.program_cnt);
-
-			printf("Program Numbers: ");
-			for (int i = 0; i < pmt_array_length; i++)
-			{
-				if (pmt_array[i].program_number == 0)
-					continue;
-
-				printf("%u ", pmt_array[i].program_number);
-			}
-			printf("\n");
-
-			for (int i = 0; i < 65536; i++)
-			{
-				if (ctx->PIDs_programs[i] == 0)
-					continue;
-
-				printf("PID: %u, Program: %u, ", i, ctx->PIDs_programs[i]->program_number);
-				int j;
-				for (j = 0; j < SUB_STREAMS_CNT; j++)
-				{
-					if (ctx->freport.dvb_sub_pid[j] == i)
-					{
-						printf("DVB Subtitles\n");
-						break;
-					}
-					if (ctx->freport.tlt_sub_pid[j] == i)
-					{
-						printf("Teletext Subtitles\n");
-						break;
-					}
-				}
-				if (j == SUB_STREAMS_CNT)
-					printf("%s\n", desc[ctx->PIDs_programs[i]->printable_stream_type]);
-			}
-
-			break;
-		case CCX_SM_PROGRAM:
-			printf("Program Stream\n");
-			break;
-		case CCX_SM_ASF:
-			printf("ASF\n");
-			break;
-		case CCX_SM_WTV:
-			printf("WTV\n");
-			break;
-		case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
-			printf("Not Found\n");
-			break;
-		case CCX_SM_MP4:
-			printf("MP4\n");
-			break;
-		case CCX_SM_MCPOODLESRAW:
-			printf("McPoodle's raw\n");
-			break;
-		case CCX_SM_RCWT:
-			printf("BIN\n");
-			break;
-#ifdef WTV_DEBUG
-		case CCX_SM_HEX_DUMP:
-			printf("Hex\n");
-			break;
-#endif
-		default:
-			break;
-	}
+	ctx->demux_ctx->print_report(ctx->demux_ctx);
+	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 
 	if (ccx_bufferdatatype == CCX_PES &&
-			(ctx->stream_mode == CCX_SM_TRANSPORT ||
-			 ctx->stream_mode == CCX_SM_PROGRAM ||
-			 ctx->stream_mode == CCX_SM_ASF ||
-			 ctx->stream_mode == CCX_SM_WTV))
+			(stream_mode == CCX_SM_TRANSPORT ||
+			 stream_mode == CCX_SM_PROGRAM ||
+			 stream_mode == CCX_SM_ASF ||
+			 stream_mode == CCX_SM_WTV))
 	{
 		printf("Width: %u\n", ctx->freport.width);
 		printf("Height: %u\n", ctx->freport.height);
 		printf("Aspect Ratio: %s\n", aspect_ratio_types[ctx->freport.aspect_ratio]);
 		printf("Frame Rate: %s\n", framerates_types[ctx->freport.frame_rate]);
 	}
-
-	if (ctx->freport.program_cnt > 1)
-		printf("//////// Program #%u: ////////\n", TS_program_number);
-
-	printf("DVB Subtitles: ");
-	int j;
-	for (j = 0; j < SUB_STREAMS_CNT; j++)
-	{
-		unsigned pid = ctx->freport.dvb_sub_pid[j];
-		if (pid == 0)
-			continue;
-		if (ctx->PIDs_programs[pid]->program_number == TS_program_number)
-		{
-			printf("Yes\n");
-			break;
-		}
-	}
-	if (j == SUB_STREAMS_CNT)
-		printf("No\n");
-
-	printf("Teletext: ");
-	for (j = 0; j < SUB_STREAMS_CNT; j++)
-	{
-		unsigned pid = ctx->freport.tlt_sub_pid[j];
-		if (pid == 0)
-			continue;
-		if (ctx->PIDs_programs[pid]->program_number == TS_program_number)
-		{
-			printf("Yes\n");
-
-			printf("Pages With Subtitles: ");
-			for (int i = 0; i < MAX_TLT_PAGES; i++)
-			{
-				if (seen_sub_page[i] == 0)
-					continue;
-
-				printf("%d ", i);
-			}
-			printf("\n");
-			break;
-		}
-	}
-	if (j == SUB_STREAMS_CNT)
-		printf("No\n");
 
 	printf("EIA-608: %s\n", Y_N(dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0));
 

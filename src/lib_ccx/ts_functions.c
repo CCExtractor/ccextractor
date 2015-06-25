@@ -1,5 +1,6 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
+#include "activity.h"
 
 unsigned char tspacket[188]; // Current packet
 
@@ -20,11 +21,11 @@ extern void *ccx_dvb_context;
 // Descriptions for ts ccx_stream_type
 const char *desc[256];
 
-void dinit_ts (struct lib_ccx_ctx *ctx)
+void dinit_ts (struct ccx_demuxer *ctx)
 {
 	freep(&ctx->capbuf);
 }
-void init_ts(struct lib_ccx_ctx *ctx)
+void init_ts(struct ccx_demuxer *ctx)
 {
 	// Constants
 	desc[CCX_STREAM_TYPE_UNKNOWNSTREAM] = "Unknown";
@@ -55,7 +56,7 @@ void init_ts(struct lib_ccx_ctx *ctx)
 
 
 // Return 1 for sucessfully read ts packet
-int ts_readpacket(struct lib_ccx_ctx* ctx)
+int ts_readpacket(struct ccx_demuxer* ctx)
 {
 	if (ctx->m2ts)
 	{
@@ -205,14 +206,13 @@ int ts_readpacket(struct lib_ccx_ctx* ctx)
 	{
 		dbg_print(CCX_DMT_PARSE, "  No payload in package.\n");
 	}
-
 	// Store packet information
 	return 1;
 }
 
 
 
-void look_for_caption_data (struct lib_ccx_ctx *ctx)
+void look_for_caption_data (struct ccx_demuxer *ctx)
 {
 	// See if we find the usual CC data marker (GA94) in this packet.
 	if (payload.length<4 || ctx->PIDs_seen[payload.pid]==3) // Second thing means we already inspected this PID
@@ -233,7 +233,7 @@ void look_for_caption_data (struct lib_ccx_ctx *ctx)
 // Read ts packets until a complete video PES element can be returned.
 // The data is read into capbuf and the function returns the number of
 // bytes read.
-long ts_readstream(struct lib_ccx_ctx *ctx)
+long ts_readstream(struct ccx_demuxer *ctx)
 {
 	static int prev_ccounter = 0;
 	static int prev_packet = 0;
@@ -283,9 +283,9 @@ long ts_readstream(struct lib_ccx_ctx *ctx)
 		}
 		
 		if( ccx_options.xmltv >= 1 && payload.pid == 0x12) // This is DVB EIT
-			parse_EPG_packet(ctx);
+			parse_EPG_packet(ctx->parent);
 		if( ccx_options.xmltv >= 1 && payload.pid >= 0x1000) // This may be ATSC EPG packet
-			parse_EPG_packet(ctx);
+			parse_EPG_packet(ctx->parent);
 
 		// PID != 0 but no PMT selected yet, ignore the rest of the current
 		// package and continue searching, UNLESS we are in -autoprogram, which requires us
@@ -316,12 +316,12 @@ long ts_readstream(struct lib_ccx_ctx *ctx)
 			{
 				int len = *payload.start++;
 				payload.start += len;
-				if(write_section(ctx, &payload,payload.start,(tspacket + 188 ) - payload.start,j))
+				if(write_section(ctx->parent, &payload,payload.start,(tspacket + 188 ) - payload.start,j))
 					gotpes=1; // Signals that something changed and that we must flush the buffer
 			}
 			else
 			{
-				if(write_section(ctx, &payload,payload.start,(tspacket + 188 ) - payload.start,j))
+				if(write_section(ctx->parent, &payload,payload.start,(tspacket + 188 ) - payload.start,j))
 					gotpes=1; // Signals that something changed and that we must flush the buffer
 			}
 			if (payload.pid==pmtpid && ccx_options.ts_cappid==0 && ccx_options.investigate_packets) // It was our PMT yet we don't have a PID to get data from
@@ -482,7 +482,7 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 
 	do
 	{
-		if( !ts_readstream(ctx) )
+		if( !ts_readstream(ctx->demux_ctx) )
 		{   // If we didn't get data, try again
 			mprint("(no CC data extracted)\n");
 			continue;
@@ -536,15 +536,15 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 		}
 		// We read a video PES
 
-		if (ctx->capbuf[0] != 0x00 || ctx->capbuf[1] != 0x00 ||
-			ctx->capbuf[2] != 0x01)
+		if (ctx->demux_ctx->capbuf[0] != 0x00 || ctx->demux_ctx->capbuf[1] != 0x00 ||
+			ctx->demux_ctx->capbuf[2] != 0x01)
 		{
 			// ??? Shouldn't happen. Complain and try again.
 			mprint("Missing PES header!\n");
-			dump(CCX_DMT_GENERIC_NOTICES, ctx->capbuf,256, 0, 0);
+			dump(CCX_DMT_GENERIC_NOTICES, ctx->demux_ctx->capbuf,256, 0, 0);
 			continue;
 		}
-		unsigned stream_id = ctx->capbuf[3];
+		unsigned stream_id = ctx->demux_ctx->capbuf[3];
 
 		if (ccx_options.teletext_mode == CCX_TXT_IN_USE)
 		{
@@ -552,14 +552,14 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 			{ // If here, the user forced teletext mode but didn't supply a PID, and we haven't found it yet.
 				continue;
 			}
-			memcpy(ctx->buffer+inbuf, ctx->capbuf, ctx->capbuflen);
-			payload_read = ctx->capbuflen;
-			inbuf += ctx->capbuflen;
+			memcpy(ctx->buffer+inbuf, ctx->demux_ctx->capbuf, ctx->demux_ctx->capbuflen);
+			payload_read = ctx->demux_ctx->capbuflen;
+			inbuf += ctx->demux_ctx->capbuflen;
 			break;
 		}
 		if (ccx_bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 		{
-			dump (CCX_DMT_GENERIC_NOTICES, ctx->capbuf, ctx->capbuflen,0, 1);
+			dump (CCX_DMT_GENERIC_NOTICES, ctx->demux_ctx->capbuf, ctx->demux_ctx->capbuflen,0, 1);
 			// Bogus data, so we return something
 			ctx->buffer[inbuf++] = 0xFA;
 			ctx->buffer[inbuf++] = 0x80;
@@ -615,15 +615,15 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 		}
 
 		dbg_print(CCX_DMT_VERBOSE, "TS payload start video PES id: %d  len: %ld\n",
-			   stream_id, ctx->capbuflen);
+			   stream_id, ctx->demux_ctx->capbuflen);
 
 		int pesheaderlen;
-		int vpesdatalen = read_video_pes_header(ctx, ctx->capbuf, &pesheaderlen, ctx->capbuflen);
+		int vpesdatalen = read_video_pes_header(ctx, ctx->demux_ctx->capbuf, &pesheaderlen, ctx->demux_ctx->capbuflen);
 
 		if (ccx_bufferdatatype == CCX_DVB_SUBTITLE && !vpesdatalen)
 		{
 			dbg_print(CCX_DMT_VERBOSE, "TS payload is a DVB Subtitle\n");
-			payload_read = ctx->capbuflen;
+			payload_read = ctx->demux_ctx->capbuflen;
 			inbuf += payload_read;
 			break;
 		}
@@ -635,8 +635,8 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 			break;
 		}
 
-		unsigned char *databuf = ctx->capbuf + pesheaderlen;
-		long databuflen = ctx->capbuflen - pesheaderlen;
+		unsigned char *databuf = ctx->demux_ctx->capbuf + pesheaderlen;
+		long databuflen = ctx->demux_ctx->capbuflen - pesheaderlen;
 
 		// If the package length is unknown vpesdatalen is zero.
 		// If we know he package length, use it to quit

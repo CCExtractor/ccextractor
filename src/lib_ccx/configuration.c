@@ -81,7 +81,6 @@ struct conf_map configuration_map[] = {
 	{"AUTO_MYTH",offsetof(struct ccx_s_options,auto_myth),set_int},
 	{"WTV_MPEG2",offsetof(struct ccx_s_options,wtvmpeg2),set_int},
 	{"OUTPUT_FILENAME",offsetof(struct ccx_s_options,output_filename),set_string},
-	{"OUT_ELEMENTRY_STREAM_FILENAME",offsetof(struct ccx_s_options,out_elementarystream_filename),set_string},
 	{"DATA_PID",offsetof(struct ccx_s_options,ts_cappid),set_int},
 	{"STREAM_TYPE",offsetof(struct ccx_s_options,ts_datastreamtype),set_int},
 	{"TS_FORCED_STREAM_TYPE",offsetof(struct ccx_s_options,ts_forced_streamtype),set_int},

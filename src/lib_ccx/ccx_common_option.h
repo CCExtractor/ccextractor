@@ -4,6 +4,13 @@
 #include "ccx_common_timing.h"
 #include "ccx_decoders_608.h"
 #include "ccx_encoders_structs.h"
+
+struct demuxer_cfg
+{
+	int m2ts; // Regular TS or M2TS
+	enum ccx_stream_mode_enum auto_stream;
+	char *out_elementarystream_filename;
+};
 struct ccx_s_options // Options from user parameters
 {
 	int extract; // Extract 1st, 2nd or both fields
@@ -64,7 +71,6 @@ struct ccx_s_options // Options from user parameters
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 	enum ccx_output_date_format date_format;
 	char *output_filename;
-	char *out_elementarystream_filename;
 	LLONG debug_mask; // dbg_print will use this mask to print or ignore different types
 	LLONG debug_mask_on_debug; // If we're using temp_debug to enable/disable debug "live", this is the mask when temp_debug=1
 	unsigned ts_autoprogram ; // Try to find a stream with captions automatically (no -pn needed)
@@ -89,8 +95,7 @@ struct ccx_s_options // Options from user parameters
 
 	char **inputfile; // List of files to process
 	int num_input_files; // How many?
-	enum ccx_stream_mode_enum auto_stream;
-	int m2ts; // Regular TS or M2TS
+	struct demuxer_cfg demux_cfg;
 	LLONG subs_delay; // ms to delay (or advance) subs
 	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
 	// Output structures

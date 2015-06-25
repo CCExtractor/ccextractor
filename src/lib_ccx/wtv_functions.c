@@ -1,6 +1,7 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "wtv_constants.h"
+#include "activity.h"
 
 int check_stream_id(int stream_id, int video_streams[], int num_streams);
 int add_skip_chunks(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, uint32_t offset, uint32_t flag);
@@ -61,25 +62,25 @@ uint64_t time_to_pes_time(uint64_t time)
 int add_skip_chunks(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, uint32_t offset, uint32_t flag)
 {
 
-	uint64_t start = ctx->past;
-	buffered_seek(ctx, (int)((offset*WTV_CHUNK_SIZE) - start));
+	uint64_t start = ctx->demux_ctx->past;
+	buffered_seek(ctx->demux_ctx, (int)((offset*WTV_CHUNK_SIZE) - start));
 	uint64_t seek_back=0-((offset*WTV_CHUNK_SIZE)-start);
 
 	uint32_t value;
-	buffered_read(ctx, (unsigned char*)&value, 4);
+	buffered_read(ctx->demux_ctx, (unsigned char*)&value, 4);
 	if(result!=4)
 		return 0;
 	seek_back-=4;
 	while(value!=0)
 	{
 		dbg_print(CCX_DMT_PARSE, "value: %llx\n", get_meta_chunk_start(value));
-		buffered_read(ctx, (unsigned char*)&value, 4);
+		buffered_read(ctx->demux_ctx, (unsigned char*)&value, 4);
 		if(result!=4)
 			return 0;
 		add_chunk(cb, get_meta_chunk_start(value));
 		seek_back-=4;
 	}
-	buffered_seek(ctx, (int)seek_back);
+	buffered_seek(ctx->demux_ctx, (int)seek_back);
 	dbg_print(CCX_DMT_PARSE, "filebuffer_pos: %x\n", filebuffer_pos);
 	return 1;
 }
@@ -106,16 +107,16 @@ void skip_sized_buffer(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, u
 	uint64_t start = cb->filepos;
 	if(cb->skip_chunks[cb->chunk]!=-1 && start+size>cb->skip_chunks[cb->chunk])
 	{
-		buffered_seek(ctx, (int)((cb->skip_chunks[cb->chunk]-start)+(WTV_META_CHUNK_SIZE)+(size-(cb->skip_chunks[cb->chunk]-start))));
+		buffered_seek(ctx->demux_ctx, (int)((cb->skip_chunks[cb->chunk]-start)+(WTV_META_CHUNK_SIZE)+(size-(cb->skip_chunks[cb->chunk]-start))));
 		cb->filepos+=(cb->skip_chunks[cb->chunk]-start)+(WTV_META_CHUNK_SIZE)+(size-(cb->skip_chunks[cb->chunk]-start));
 		cb->chunk++;
 	}
 	else
 	{
-		buffered_seek(ctx, size);
+		buffered_seek(ctx->demux_ctx, size);
 		cb->filepos+=size;
 	}
-	ctx->past=cb->filepos;
+	ctx->demux_ctx->past=cb->filepos;
 }
 
 // get_sized_buffer will alloc and set a buffer in the passed wtv_chunked_buffer struct
@@ -139,29 +140,29 @@ void get_sized_buffer(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, ui
 
 	if(cb->skip_chunks[cb->chunk]!=-1 && start+size>cb->skip_chunks[cb->chunk])
 	{
-		buffered_read(ctx, cb->buffer, (int)(cb->skip_chunks[cb->chunk]-start));
+		buffered_read(ctx->demux_ctx, cb->buffer, (int)(cb->skip_chunks[cb->chunk]-start));
 		cb->filepos+=cb->skip_chunks[cb->chunk]-start;
-		buffered_seek(ctx, WTV_META_CHUNK_SIZE);
+		buffered_seek(ctx->demux_ctx, WTV_META_CHUNK_SIZE);
 		cb->filepos+=WTV_META_CHUNK_SIZE;
-		buffered_read(ctx, cb->buffer+(cb->skip_chunks[cb->chunk]-start), (int)(size-(cb->skip_chunks[cb->chunk]-start)));
+		buffered_read(ctx->demux_ctx, cb->buffer+(cb->skip_chunks[cb->chunk]-start), (int)(size-(cb->skip_chunks[cb->chunk]-start)));
 		cb->filepos+=size-(cb->skip_chunks[cb->chunk]-start);
 		cb->chunk++;
 	}
 	else
 	{
-		buffered_read(ctx, cb->buffer, size);
+		buffered_read(ctx->demux_ctx, cb->buffer, size);
 		cb->filepos+=size;
 		if(result!=size)
 		{
 			free(cb->buffer);
 			cb->buffer_size=0;
-			ctx->past=cb->filepos;
+			ctx->demux_ctx->past=cb->filepos;
 			cb->buffer=NULL;
 			mprint("\nPremature end of file!\n");
 			return;
 		}
 	}
-	ctx->past=cb->filepos;
+	ctx->demux_ctx->past=cb->filepos;
 	return;
 }
 
@@ -171,13 +172,13 @@ void get_sized_buffer(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, ui
 // at the start of the data dir
 int read_header(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb)
 {
-	ctx->startbytes_avail = (int)buffered_read_opt(ctx, ctx->startbytes, STARTBYTESLENGTH);
-	return_to_buffer(ctx->startbytes, ctx->startbytes_avail);
+	ctx->demux_ctx->startbytes_avail = (int)buffered_read_opt(ctx->demux_ctx, ctx->demux_ctx->startbytes, STARTBYTESLENGTH);
+	return_to_buffer(ctx->demux_ctx->startbytes, ctx->demux_ctx->startbytes_avail);
 
 	uint8_t *parsebuf;
 	parsebuf = (uint8_t*)malloc(1024);
-	buffered_read(ctx, parsebuf,0x42);
-	ctx->past+=result;
+	buffered_read(ctx->demux_ctx, parsebuf,0x42);
+	ctx->demux_ctx->past+=result;
 	if (result!=0x42)
 	{
 		mprint("\nPremature end of file!\n");
@@ -205,8 +206,8 @@ int read_header(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb)
 	dbg_print(CCX_DMT_PARSE, "root_dir: %x\n", root_dir);
 
 	//Seek to start of the root dir. Typically 0x1100
-	buffered_skip(ctx, (root_dir*WTV_CHUNK_SIZE)-0x42);
-	ctx->past+=(root_dir*WTV_CHUNK_SIZE)-0x42;
+	buffered_skip(ctx->demux_ctx,(root_dir*WTV_CHUNK_SIZE)-0x42);
+	ctx->demux_ctx->past+=(root_dir*WTV_CHUNK_SIZE)-0x42;
 
 	if (result!=(root_dir*WTV_CHUNK_SIZE)-0x42)
 	{
@@ -219,7 +220,7 @@ int read_header(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb)
 	int end=0;
 	while(!end)
 	{
-		buffered_read(ctx, parsebuf, 32);
+		buffered_read(ctx->demux_ctx, parsebuf, 32);
 		int x;
 		for(x=0; x<16; x++)
 			dbg_print(CCX_DMT_PARSE, "%02X ", parsebuf[x]);
@@ -232,7 +233,7 @@ int read_header(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb)
 			free(parsebuf);
 			return 0;
 		}
-		ctx->past+=32;
+		ctx->demux_ctx->past+=32;
 		if( !memcmp(parsebuf, WTV_EOF, 16 ))
 		{
 			dbg_print(CCX_DMT_PARSE, "WTV EOF\n");
@@ -254,7 +255,7 @@ int read_header(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb)
 				free(parsebuf);
 				return 0;
 			}
-			buffered_read(ctx, parsebuf, len-32);
+			buffered_read(ctx->demux_ctx, parsebuf, len-32);
 			if (result!=len-32)
 			{
 				mprint("Premature end of file!\n");
@@ -262,7 +263,7 @@ int read_header(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb)
 				free(parsebuf);
 				return 0;
 			}
-			ctx->past+=len-32;
+			ctx->demux_ctx->past+=len-32;
 			// Read a unicode string
 			uint32_t text_len;
 			memcpy(&text_len, parsebuf, 4); //text_len is number of unicode chars, not bytes.
@@ -306,10 +307,10 @@ int read_header(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb)
 
 	// Seek forward to the start of the data dir
 	// Typically 0x40000
-	buffered_skip(ctx, (int)((cb->skip_chunks[cb->chunk]+WTV_META_CHUNK_SIZE)-ctx->past));
+	buffered_skip(ctx->demux_ctx,(int)((cb->skip_chunks[cb->chunk]+WTV_META_CHUNK_SIZE)-ctx->demux_ctx->past));
 	cb->filepos=(cb->skip_chunks[cb->chunk]+WTV_META_CHUNK_SIZE);
 	cb->chunk++;
-	ctx->past=cb->filepos;
+	ctx->demux_ctx->past=cb->filepos;
 	free(parsebuf);
 	return 1;
 }
@@ -358,10 +359,10 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb)
 			uint8_t *parsebuf;
 			parsebuf = (uint8_t*)malloc(1024);
 			do {
-				buffered_read(ctx, parsebuf, 1024);
-				ctx->past+=1024;
+				buffered_read(ctx->demux_ctx, parsebuf, 1024);
+				ctx->demux_ctx->past+=1024;
 			} while (result==1024);
-			ctx->past+=result;
+			ctx->demux_ctx->past+=result;
 			free(parsebuf);
 			free(cb->buffer);
 			cb->buffer=NULL;

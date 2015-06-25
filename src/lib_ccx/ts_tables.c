@@ -9,6 +9,7 @@
 #include "ccx_common_option.h"
 #include "dvb_subtitle_decoder.h"
 #include "utility.h"
+#include "activity.h"
 static unsigned pmt_warning_shown=0; // Only display warning once
 void *ccx_dvb_context = NULL;
 
@@ -63,7 +64,7 @@ void clear_PMT_array (void)
 		}
 	pmt_array_length=0;
 }
-int parse_PMT (struct lib_ccx_ctx *ctx, unsigned char *buf, int len, int pos)
+int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 {
 	int must_flush=0;
 	int ret = 0;
@@ -304,7 +305,7 @@ int parse_PMT (struct lib_ccx_ctx *ctx, unsigned char *buf, int len, int pos)
 				desc_len = (*es_info++);
 				if(!IS_VALID_TELETEXT_DESC(descriptor_tag))
 					continue;
-				telxcc_init(ctx);
+				telxcc_init(ctx->parent);
 				if (!ccx_options.ts_forced_cappid)
 				{
 					ccx_options.ts_cappid = newcappid = elementary_PID;
@@ -424,7 +425,7 @@ int write_section(struct lib_ccx_ctx *ctx, struct ts_payload *payload, unsigned 
 
 	if(payload->section_index >= (unsigned)payload->section_size)
 	{
-		if(parse_PMT(ctx, payload->section_buf,payload->section_size,pos))
+		if(parse_PMT(ctx->demux_ctx, payload->section_buf,payload->section_size,pos))
 			return 1;
 	}
 	return 0;
@@ -435,7 +436,7 @@ int write_section(struct lib_ccx_ctx *ctx, struct ts_payload *payload, unsigned 
    PIDs of their Program Map Table.
    Returns: gotpes */
 
-int parse_PAT (struct lib_ccx_ctx *ctx)
+int parse_PAT (struct ccx_demuxer *ctx)
 {
 	int gotpes=0;
 	int is_multiprogram=0;
