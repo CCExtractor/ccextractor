@@ -139,13 +139,13 @@ int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 	{
 		if (ccx_options.print_file_reports)
 			print_file_report(ctx);
-		close_input_file (ctx);
 		if (ctx->inputsize>0 && ((ctx->demux_ctx->past+bytesinbuffer) < ctx->inputsize) && !dec_ctx->processed_enough)
 		{
 			mprint("\n\n\n\nATTENTION!!!!!!\n");
 			mprint("In switch_to_next_file(): Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
 					ctx->inputfile[ctx->current_file], ctx->current_file, ctx->demux_ctx->past, ctx->inputsize);
 		}
+		close_input_file (ctx);
 		if (ccx_options.binary_concat)
 		{
 			ctx->total_past+=ctx->inputsize;
