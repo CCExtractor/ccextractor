@@ -188,9 +188,6 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->wbout2.filename = opt->wbout2.filename;
 	ctx->pesheaderbuf = (unsigned char *) malloc (188); // Never larger anyway
 
-	// Init timing
-	ccx_common_timing_init(&ctx->demux_ctx->past,opt->nosync);
-
 	ctx->cc_to_stdout = opt->cc_to_stdout;
 
 	ctx->hauppauge_mode = opt->hauppauge_mode;
@@ -199,6 +196,10 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	build_parity_table();
 
 	ctx->demux_ctx = init_demuxer(ctx, &opt->demux_cfg);
+
+	// Init timing
+	ccx_common_timing_init(&ctx->demux_ctx->past,opt->nosync);
+
 
 end:
 	if (ret < 0) {
