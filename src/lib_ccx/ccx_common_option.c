@@ -97,7 +97,7 @@ void init_options (struct ccx_s_options *options)
 	options->demux_cfg.m2ts = 0;
 #ifdef ENABLE_SHARING
 	options->sharing_enabled = 0;
-	options->sharing_port = 3269; // ~"CC5"
+	options->sharing_url = NULL;
     options->translate_enabled = 0;
     options->translate_key = NULL;
     options->translate_langs = NULL;

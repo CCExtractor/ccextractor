@@ -104,7 +104,7 @@ struct ccx_s_options // Options from user parameters
 #ifdef ENABLE_SHARING
 	//CC sharing
 	int sharing_enabled;
-	long sharing_port;
+	char *sharing_url;
     //Translating
     int translate_enabled;
     char *translate_langs;

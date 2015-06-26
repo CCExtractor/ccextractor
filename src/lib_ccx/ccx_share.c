@@ -1,7 +1,6 @@
 //
 // Created by Oleg Kisselef (olegkisselef at gmail dot com) on 6/21/15
 //
-
 #ifdef ENABLE_SHARING
 
 #include <stdio.h>
@@ -87,16 +86,13 @@ ccx_share_status ccx_share_start(const char *stream_name) //TODO add stream
     ccx_share.zmq_ctx = zmq_ctx_new();
     ccx_share.zmq_sock = zmq_socket(ccx_share.zmq_ctx, ZMQ_PUB);
 
-    if (ccx_options.sharing_port < 1024) {
-        mprint("[share] can't use %ld < 1024 port for sharing subs. Using default 3269\n", ccx_options.sharing_port);
-        ccx_options.sharing_port = 3269;
+    if (!ccx_options.sharing_url) {
+        ccx_options.sharing_url = strdup("tcp://*:3269");
     }
-    char url[128];
-    snprintf(url, 127, "tcp://*:%ld", ccx_options.sharing_port);
 
-    dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: url=%s\n", url);
+    dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: url=%s\n", ccx_options.sharing_url);
 
-    int rc = zmq_bind(ccx_share.zmq_sock, url);
+    int rc = zmq_bind(ccx_share.zmq_sock, ccx_options.sharing_url);
     if (rc) {
         dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: cant zmq_bind()\n");
         fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start");

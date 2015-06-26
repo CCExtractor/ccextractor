@@ -664,7 +664,7 @@ void usage (void)
 #ifdef ENABLE_SHARING
 	mprint ("Sharing extracted captions via TCP:\n");
 	mprint ("      -enable-sharing: Enables realtime sharing of extracted closed captions\n");
-	mprint ("        -sharing-port: Set port for sharing service (default 3269 (~\"CC5\"))\n");
+	mprint ("         -sharing-url: Set url for sharing service in zeroMQ format(default tcp://*:3269)\n");
 	mprint ("\n");
 
 	mprint ("CCTranslate application integration:\n");
@@ -1617,17 +1617,14 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->sharing_enabled = 1;
 			continue;
 		}
-		if (!strcmp(argv[i], "-sharing-port") && i < argc - 1) {
-			errno = 0;
-			opt->sharing_port = strtol(argv[i+1], NULL, 10);
-			if (errno) {
-				fatal (EXIT_INCOMPATIBLE_PARAMETERS, "Can't parse -sharing-port number\n");
-			}
+		if (!strcmp(argv[i], "-sharing-url") && i < argc - 1) {
+			opt->sharing_url = argv[i + 1];
 			i++;
 			continue;
 		}
         if (!strcmp(argv[i], "-translate") && i < argc - 1) {
             opt->translate_enabled = 1;
+            opt->sharing_enabled = 1;
             opt->translate_langs = argv[i + 1];
             i++;
             continue;

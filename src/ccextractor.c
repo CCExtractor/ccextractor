@@ -289,10 +289,6 @@ int main(int argc, char *argv[])
         ccx_options.sharing_enabled = 0;
     }
     if (ccx_options.translate_enabled) {
-        dbg_print(CCX_DMT_SHARE, "[share] translating enabled - auto-enabling sharing \n");
-        ccx_options.sharing_enabled = 1;
-    }
-    if (ccx_options.translate_enabled) {
         mprint("[share] launching translate service\n");
         ccx_share_launch_translator(ccx_options.translate_langs, ccx_options.translate_key);
     }
