@@ -62,7 +62,7 @@ char *guidstr(void *val)
  * When the function is called the next time it continues to read
  * where it stopped before, static variables make sure that parameters
  * are remembered between calls. */
-LLONG asf_getmoredata(struct lib_ccx_ctx *ctx)
+LLONG asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 {
 	int enough = 0;
 	int payload_read = 0;
@@ -976,7 +976,7 @@ LLONG asf_getmoredata(struct lib_ccx_ctx *ctx)
 						asf_data_container.PayloadLength : (BUFSIZE - inbuf));
 				if (want < (long)asf_data_container.PayloadLength)
 					fatal(CCX_COMMON_EXIT_BUG_BUG, "Buffer size to small for ASF payload!\nPlease file a bug report!\n");
-				buffered_read (ctx->demux_ctx, ctx->buffer+inbuf,want);
+				buffered_read (ctx->demux_ctx, data->buffer+inbuf,want);
 				payload_read+=(int) result;
 				inbuf+=result;
 				ctx->demux_ctx->past+=result;

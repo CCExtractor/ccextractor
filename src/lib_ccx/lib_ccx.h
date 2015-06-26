@@ -140,7 +140,6 @@ struct lib_ccx_ctx
 {
 
 	// Stuff common to both loops
-	unsigned char *buffer;
 	unsigned char *pesheaderbuf;
 	LLONG inputsize;
 	LLONG total_inputsize;
@@ -265,10 +264,10 @@ int stringztoms (const char *s, struct ccx_boundary_time *bt);
 // general_loop.c
 void position_sanity_check (void);
 int init_file_buffer( void );
-LLONG ps_getmoredata(struct lib_ccx_ctx *ctx);
-LLONG general_getmoredata(struct lib_ccx_ctx *ctx);
+LLONG ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);
+LLONG general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);
 void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx);
-LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub);
+LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, char *buffer);
 void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
 void processhex (char *filename);
 void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
@@ -279,10 +278,10 @@ extern LLONG inbuf;
 extern int ccx_bufferdatatype; // Can be RAW or PES
 
 // asf_functions.c
-LLONG asf_getmoredata(struct lib_ccx_ctx *ctx);
+LLONG asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);
 
 // wtv_functions.c
-LLONG wtv_getmoredata(struct lib_ccx_ctx *ctx);
+LLONG wtv_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);
 
 // avc_functions.c
 LLONG process_avc (struct lib_ccx_ctx *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub);
@@ -327,7 +326,7 @@ void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct
 int isValidMP4Box(unsigned char *buffer, long position, long *nextBoxLocation, int *boxScore);
 void detect_stream_type (struct ccx_demuxer *ctx);
 int detect_myth( struct ccx_demuxer *ctx );
-int read_video_pes_header (struct lib_ccx_ctx *ctx, unsigned char *nextheader, int *headerlength, int sbuflen);
+int read_video_pes_header (struct ccx_demuxer *ctx, unsigned char *nextheader, int *headerlength, int sbuflen);
 int read_pts_pes(unsigned char*header, int len);
 
 // ts_functions.c
@@ -335,7 +334,7 @@ void init_ts(struct ccx_demuxer *ctx);
 void dinit_ts (struct ccx_demuxer *ctx);
 int ts_readpacket(struct ccx_demuxer* ctx);
 long ts_readstream(struct ccx_demuxer *ctx);
-LLONG ts_getmoredata(struct lib_ccx_ctx *ctx);
+LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data *data);
 int write_section(struct lib_ccx_ctx *ctx, struct ts_payload *payload, unsigned char*buf, int size, int pos);
 int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos);
 int parse_PAT (struct ccx_demuxer *ctx);

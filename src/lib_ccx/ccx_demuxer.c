@@ -400,3 +400,12 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 
 	return ctx;
 }
+
+struct demuxer_data* alloc_demuxer_data(void)
+{
+	struct demuxer_data* data = malloc(sizeof(struct demuxer_data));
+	data->buffer = (unsigned char *) malloc (BUFSIZE);
+
+	return data;
+	
+}

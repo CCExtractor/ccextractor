@@ -13,7 +13,6 @@ int qsort_cmpint (const void * a, const void * b);
 void get_sized_buffer(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, uint32_t size);
 void skip_sized_buffer(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, uint32_t size);
 int read_header(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb);
-LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb);
 
 // Helper function for qsort (64bit int sort)
 int qsort_cmpint (const void * a, const void * b)
@@ -315,7 +314,7 @@ int read_header(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb)
 	return 1;
 }
 
-LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb)
+LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct demuxer_data *data)
 {
 	static int video_streams[32];
 	static int alt_stream; //Stream to use for timestamps if the cc stream has broken timestamps
@@ -367,7 +366,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb)
 			free(cb->buffer);
 			cb->buffer=NULL;
 			//return one more byte so the final percentage is shown correctly
-			*(ctx->buffer+inbuf)=0x00;
+			*(data->buffer+inbuf)=0x00;
 			end_of_file=1;
 			inbuf++;
 			return 1;
@@ -427,7 +426,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb)
 			dbg_print(CCX_DMT_PARSE, "\nWTV DATA\n");
 			get_sized_buffer(ctx, cb, len);
 			if(cb->buffer==NULL) {end_of_file=1; return 0; }
-			memcpy(ctx->buffer+inbuf, cb->buffer, len);
+			memcpy(data->buffer+inbuf, cb->buffer, len);
 			inbuf+=result;
 			bytesread+=(int) len;
 			frames_since_ref_time++;
@@ -448,7 +447,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb)
 	}
 }
 
-LLONG wtv_getmoredata(struct lib_ccx_ctx *ctx)
+LLONG wtv_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 {
 	static struct wtv_chunked_buffer cb;
     if(firstcall)
@@ -464,5 +463,5 @@ LLONG wtv_getmoredata(struct lib_ccx_ctx *ctx)
             return 0;
         firstcall=0;
     }
-    return get_data(ctx, &cb);
+    return get_data(ctx, &cb, data);
 }

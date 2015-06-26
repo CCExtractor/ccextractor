@@ -186,7 +186,6 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->subs_delay = opt->subs_delay;
 	ctx->wbout1.filename = opt->wbout2.filename;
 	ctx->wbout2.filename = opt->wbout2.filename;
-	ctx->buffer = (unsigned char *) malloc (BUFSIZE);
 	ctx->pesheaderbuf = (unsigned char *) malloc (188); // Never larger anyway
 
 	// Init timing
@@ -217,7 +216,6 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 	EPG_free(lctx);
 	dinit_cc_decode(&lctx->dec_ctx);
 	freep(&lctx->basefilename);
-	freep(&lctx->buffer);
 	freep(&lctx->pesheaderbuf);
 	freep(&lctx->freport.data_from_608);
 	freep(ctx);

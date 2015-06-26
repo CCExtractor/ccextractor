@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
 		ctx->wbout2.filename = (char *) malloc (strlen (ctx->basefilename)+3+strlen (ctx->extension));
 		ctx->wbout2.filename[0]=0;
 	}
-	if (ctx->buffer == NULL || ctx->pesheaderbuf==NULL ||
+	if (ctx->pesheaderbuf==NULL ||
 		ctx->wbout1.filename == NULL || ctx->wbout2.filename == NULL ||
 		subline==NULL || init_file_buffer() )
 	{
