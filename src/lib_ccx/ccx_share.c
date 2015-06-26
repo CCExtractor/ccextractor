@@ -163,7 +163,11 @@ ccx_share_status ccx_share_send(struct cc_subtitle *sub)
             dbg_print(CCX_DMT_SHARE, "[share] can't send message\n");
             return CCX_SHARE_FAIL;
         }
-        //TODO cleanup msg?
+
+        for (int j = 0; j < msg.lines_count; j++) {
+            free(msg.lines[j]);
+        }
+        free(msg.lines);
     }
 
     ccx_sub_entries_cleanup(&entries);
