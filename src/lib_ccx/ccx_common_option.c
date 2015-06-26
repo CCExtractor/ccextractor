@@ -95,7 +95,6 @@ void init_options (struct ccx_s_options *options)
 	options->input_source=CCX_DS_FILE; // Files, stdin or network
 	options->demux_cfg.auto_stream = CCX_SM_AUTODETECT;
 	options->demux_cfg.m2ts = 0;
-
 #ifdef ENABLE_SHARING
 	options->sharing_enabled = 0;
 	options->sharing_port = 3269; // ~"CC5"
