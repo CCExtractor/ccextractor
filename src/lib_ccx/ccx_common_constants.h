@@ -257,7 +257,7 @@ enum cdp_section_type
  * should parse f_sel subtitle codec type or not
  *
  * @param u_sel pass the codec selected by user to be searched in
- *  all elementry stream, we ignore the not to be selected stream
+ *  all elementary stream, we ignore the not to be selected stream
  *  if we find stream this is selected stream. since setting
  *  selected stream and not selected to same codec does not
  *  make ay sense.
