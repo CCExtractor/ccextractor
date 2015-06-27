@@ -184,8 +184,11 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	//xds_cea608_test();
 
 	ctx->subs_delay = opt->subs_delay;
-	ctx->wbout1.filename = opt->wbout2.filename;
-	ctx->wbout2.filename = opt->wbout2.filename;
+
+	// Prepare write structures
+	init_write(&ctx->wbout1,ccx_options.output_filename_ch1);
+	init_write(&ctx->wbout2,ccx_options.output_filename_ch2);
+
 	ctx->pesheaderbuf = (unsigned char *) malloc (188); // Never larger anyway
 
 	ctx->cc_to_stdout = opt->cc_to_stdout;

@@ -71,6 +71,8 @@ struct ccx_s_options // Options from user parameters
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 	enum ccx_output_date_format date_format;
 	char *output_filename;
+	char *output_filename_ch1;
+	char *output_filename_ch2;
 	LLONG debug_mask; // dbg_print will use this mask to print or ignore different types
 	LLONG debug_mask_on_debug; // If we're using temp_debug to enable/disable debug "live", this is the mask when temp_debug=1
 	unsigned ts_autoprogram ; // Try to find a stream with captions automatically (no -pn needed)
@@ -98,9 +100,6 @@ struct ccx_s_options // Options from user parameters
 	struct demuxer_cfg demux_cfg;
 	LLONG subs_delay; // ms to delay (or advance) subs
 	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
-	// Output structures
-	struct ccx_s_write wbout1;
-	struct ccx_s_write wbout2;
 };
 
 extern struct ccx_s_options ccx_options;

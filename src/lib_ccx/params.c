@@ -1320,13 +1320,13 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-o1")==0 && i<argc-1)
 		{
-			opt->wbout1.filename=argv[i+1];
+			opt->output_filename_ch1 = argv[i+1];
 			i++;
 			continue;
 		}
 		if (strcmp (argv[i],"-o2")==0 && i<argc-1)
 		{
-			opt->wbout2.filename=argv[i+1];
+			opt->output_filename_ch2 = argv[i+1];
 			i++;
 			continue;
 		}
@@ -1611,9 +1611,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	if(opt->ts_forced_program != -1)
 		opt->ts_forced_program_selected = 1;
 
-	if(opt->wbout2.filename != NULL && (opt->extract != 2 || opt->extract != 12) )
+	if(opt->output_filename_ch2 != NULL && (opt->extract != 2 || opt->extract != 12) )
 		mprint("WARN: -o2 ignored! you might want -2 or -12 with -o2\n");
 	
+	if(opt->output_filename != NULL && opt->output_filename_ch1 != NULL )
+		mprint("WARNING: Ambiguous parameter -o and -o1 Expect undefined behaviour\n");
+
 	// Init telexcc redundant options
 	tlt_config.transcript_settings = &opt->transcript_settings;
 	tlt_config.levdistmincnt = opt->levdistmincnt;

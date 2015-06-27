@@ -59,8 +59,8 @@ int main(int argc, char *argv[])
 
 
 	// Prepare write structures
-	init_write(&ctx->wbout1,ccx_options.wbout1.filename);
-	init_write(&ctx->wbout2,ccx_options.wbout2.filename);
+	init_write(&ctx->wbout1,ccx_options.output_filename_ch1);
+	init_write(&ctx->wbout2,ccx_options.output_filename_ch2);
 	
 
 	int show_myth_banner = 0;
