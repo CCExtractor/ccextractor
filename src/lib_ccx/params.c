@@ -1622,18 +1622,18 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			i++;
 			continue;
 		}
-        if (!strcmp(argv[i], "-translate") && i < argc - 1) {
-            opt->translate_enabled = 1;
-            opt->sharing_enabled = 1;
-            opt->translate_langs = argv[i + 1];
-            i++;
-            continue;
-        }
-        if (!strcmp(argv[i], "-translate-auth") && i < argc - 1) {
-            opt->translate_key = argv[i + 1];
-            i++;
-            continue;
-        }
+		if (!strcmp(argv[i], "-translate") && i < argc - 1) {
+			opt->translate_enabled = 1;
+			opt->sharing_enabled = 1;
+			opt->translate_langs = argv[i + 1];
+			i++;
+			continue;
+		}
+		if (!strcmp(argv[i], "-translate-auth") && i < argc - 1) {
+			opt->translate_key = argv[i + 1];
+			i++;
+			continue;
+		}
 #endif //ENABLE_SHARING
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "Error: Parameter %s not understood.\n", argv[i]);
 		// Unrecognized switches are silently ignored

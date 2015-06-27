@@ -105,10 +105,10 @@ struct ccx_s_options // Options from user parameters
 	//CC sharing
 	int sharing_enabled;
 	char *sharing_url;
-    //Translating
-    int translate_enabled;
-    char *translate_langs;
-    char *translate_key;
+	//Translating
+	int translate_enabled;
+	char *translate_langs;
+	char *translate_key;
 #endif
 };
 

@@ -283,15 +283,15 @@ int main(int argc, char *argv[])
 	m_signal(SIGINT, sigint_handler);
 #endif
 #ifdef ENABLE_SHARING
-    if (ccx_options.translate_enabled && ctx->num_input_files > 1) {
-        mprint("[share] WARNING: simultaneous translation of several input files is not supported yet\n");
-        ccx_options.translate_enabled = 0;
-        ccx_options.sharing_enabled = 0;
-    }
-    if (ccx_options.translate_enabled) {
-        mprint("[share] launching translate service\n");
-        ccx_share_launch_translator(ccx_options.translate_langs, ccx_options.translate_key);
-    }
+	if (ccx_options.translate_enabled && ctx->num_input_files > 1) {
+		mprint("[share] WARNING: simultaneous translation of several input files is not supported yet\n");
+		ccx_options.translate_enabled = 0;
+		ccx_options.sharing_enabled = 0;
+	}
+	if (ccx_options.translate_enabled) {
+		mprint("[share] launching translate service\n");
+		ccx_share_launch_translator(ccx_options.translate_langs, ccx_options.translate_key);
+	}
 #endif //ENABLE_SHARING
 	while (switch_to_next_file(ctx, 0) && !dec_ctx->processed_enough)
 	{
@@ -522,7 +522,7 @@ int main(int argc, char *argv[])
 		fts_max = 0;
 #ifdef ENABLE_SHARING
 		if (ccx_options.sharing_enabled) {
-            ccx_share_stream_done();
+			ccx_share_stream_done();
 			ccx_share_stop();
 		}
 #endif //ENABLE_SHARING

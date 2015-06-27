@@ -12,31 +12,31 @@
 #include "ccx_sub_entry.pb_c.h"
 
 typedef struct ccx_sub_entry {
-    unsigned long counter;
-    unsigned long long start_time;
-    unsigned long long end_time;
-    unsigned int lines_count;
-    char **lines;
+	unsigned long counter;
+	unsigned long long start_time;
+	unsigned long long end_time;
+	unsigned int lines_count;
+	char **lines;
 } ccx_sub_entry;
 
 typedef struct ccx_sub_entries {
-    ccx_sub_entry *entries;
-    unsigned int count;
+	ccx_sub_entry *entries;
+	unsigned int count;
 } ccx_sub_entries;
 
 typedef struct ccx_share_service {
-    long port;
-    unsigned long counter;
-    char *stream_name;
-    void *zmq_ctx;
-    void *zmq_sock;
+	long port;
+	unsigned long counter;
+	char *stream_name;
+	void *zmq_ctx;
+	void *zmq_sock;
 } ccx_share_service;
 
 ccx_share_service ccx_share;
 
 typedef enum ccx_share_status {
-    CCX_SHARE_OK = 0,
-    CCX_SHARE_FAIL
+	CCX_SHARE_OK = 0,
+	CCX_SHARE_FAIL
 } ccx_share_status;
 
 void ccx_sub_entry_init(ccx_sub_entry *);

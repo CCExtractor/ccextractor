@@ -98,9 +98,9 @@ void init_options (struct ccx_s_options *options)
 #ifdef ENABLE_SHARING
 	options->sharing_enabled = 0;
 	options->sharing_url = NULL;
-    options->translate_enabled = 0;
-    options->translate_key = NULL;
-    options->translate_langs = NULL;
+	options->translate_enabled = 0;
+	options->translate_key = NULL;
+	options->translate_langs = NULL;
 #endif //ENABLE_SHARING
 	// Prepare time structures
 	init_boundary_time (&options->extraction_start);
