@@ -189,6 +189,16 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	init_write(&ctx->wbout1,ccx_options.output_filename_ch1);
 	init_write(&ctx->wbout2,ccx_options.output_filename_ch2);
 
+	if (opt->output_filename != NULL)
+	{
+		// Use the given output file name for the field specified by
+		// the -1, -2 switch. If -12 is used, the filename is used for
+		// field 1.
+		if (opt->extract==2)
+			ctx->wbout2.filename = opt->output_filename;
+		else
+			ctx->wbout1.filename = opt->output_filename;
+	}
 	ctx->pesheaderbuf = (unsigned char *) malloc (188); // Never larger anyway
 
 	ctx->cc_to_stdout = opt->cc_to_stdout;

@@ -65,16 +65,6 @@ int main(int argc, char *argv[])
 	memset (&dec_sub, 0,sizeof(dec_sub));
 
 
-	if (ccx_options.output_filename!=NULL)
-	{
-		// Use the given output file name for the field specified by
-		// the -1, -2 switch. If -12 is used, the filename is used for
-		// field 1.
-		if (ccx_options.extract==2)
-			ctx->wbout2.filename=ccx_options.output_filename;
-		else
-			ctx->wbout1.filename=ccx_options.output_filename;
-	}
 	params_dump(ctx);
 
 	// default teletext page
