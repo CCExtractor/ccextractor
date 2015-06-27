@@ -58,24 +58,12 @@ int main(int argc, char *argv[])
 	dec_ctx = ctx->dec_ctx;
 
 
-	// Prepare write structures
-	init_write(&ctx->wbout1,ccx_options.output_filename_ch1);
-	init_write(&ctx->wbout2,ccx_options.output_filename_ch2);
-	
 
 	int show_myth_banner = 0;
 	
 	memset (&cea708services[0],0,CCX_DECODERS_708_MAX_SERVICES*sizeof (int)); // Cannot (yet) be moved because it's needed in parse_parameters.
 	memset (&dec_sub, 0,sizeof(dec_sub));
 
-
-	if (ctx->num_input_files > 0)
-	{
-		ctx->wbout1.multiple_files = 1;
-		ctx->wbout1.first_input_file = ctx->inputfile[0];
-		ctx->wbout2.multiple_files = 1;
-		ctx->wbout2.first_input_file = ctx->inputfile[0];
-	}
 
 	if (ccx_options.output_filename!=NULL)
 	{

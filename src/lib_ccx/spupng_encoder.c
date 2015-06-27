@@ -109,12 +109,12 @@ void spupng_write_footer(struct spupng_t *sp)
 	fclose(sp->fpxml);
 }
 
-void write_spumux_header(struct ccx_s_write *out)
+void write_spumux_header(struct encoder_ctx *ctx, struct ccx_s_write *out)
 {
 	if (0 == out->spupng_data)
 		out->spupng_data = spunpg_init(out);
 
-	spupng_write_header((struct spupng_t*)out->spupng_data,out->multiple_files,out->first_input_file);
+	spupng_write_header((struct spupng_t*)out->spupng_data, ctx->multiple_files, ctx->first_input_file);
 }
 
 void write_spumux_footer(struct ccx_s_write *out)

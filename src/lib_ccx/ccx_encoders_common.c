@@ -172,7 +172,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			ret = write_bom(ctx, out);
 			if(ret < 0)
 				return -1;
-			write_spumux_header(out);
+			write_spumux_header(ctx, out);
 			break;
 		case CCX_OF_TRANSCRIPT: // No header. Fall thru
 			ret = write_bom(ctx, out);
@@ -531,6 +531,12 @@ int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_
 	ctx->send_to_srv = opt->send_to_srv;
 	ctx->gui_mode_reports = opt->gui_mode_reports;
 	ctx->no_bom = opt->no_bom;
+	if (opt->num_input_files > 0)
+	{
+		ctx->multiple_files = 1;
+		ctx->first_input_file = opt->inputfile[0];
+	}
+
 	write_subtitle_file_header(ctx,out);
 
 	return 0;

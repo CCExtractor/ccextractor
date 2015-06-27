@@ -4,6 +4,7 @@
 #include "ccx_common_platform.h"
 #include "ccx_encoders_structs.h"
 #include "png.h"
+#include "ccx_encoders_common.h"
 
 // CC page dimensions
 #define ROWS                    15
@@ -23,7 +24,7 @@ struct spupng_t
 	int yOffset;
 };
 
-void write_spumux_header(struct ccx_s_write *out);
+void write_spumux_header(struct encoder_ctx *ctx, struct ccx_s_write *out);
 void write_spumux_footer(struct ccx_s_write *out);
 void draw_char_indexed(uint8_t * canvas, int rowstride,  uint8_t * pen,
 		     int unicode, int italic, int underline);
