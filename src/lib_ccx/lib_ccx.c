@@ -1,6 +1,7 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "activity.h"
+#include "utility.h"
 
 struct ccx_common_logging_t ccx_common_logging;
 static struct ccx_decoders_common_settings_t *init_decoder_setting(
@@ -116,6 +117,140 @@ static int init_ctx_extension(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx
 	return 0;
 }
 
+char *create_outfilename(const char *basename, const char *suffix, const char *extension)
+{
+	char *ptr = NULL;
+	int len = 0;
+	int blen, slen, elen;
+
+	if(basename)
+		blen = strlen(basename);
+	else
+		blen = 0;
+
+	if(suffix)
+		slen = strlen(suffix);
+	else
+		slen = 0;
+
+	if(extension)
+		elen = strlen(extension);
+	else
+		elen = 0;
+	if ( (elen + slen + blen) <= 0)
+		return NULL;
+
+	ptr = malloc(elen + slen + blen);
+	if(!ptr)
+		return NULL;
+
+	ptr[0] = '\0';
+
+	if(basename)
+		strcat(ptr, basename);
+	if(suffix)
+		strcat(ptr, suffix);
+	if(extension)
+		strcat(ptr, extension);
+
+	return ptr;
+}
+static int init_output_ctx(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx)
+{
+	int ret = EXIT_OK;
+
+#define check_ret(filename) 	if (ret != EXIT_OK)							\
+				{									\
+					print_error(opt->gui_mode_reports,"Failed %s\n", filename);	\
+					return ret;							\
+				}
+	if (opt->output_filename != NULL)
+	{
+		// Use the given output file name for the field specified by
+		// the -1, -2 switch. If -12 is used, the filename is used for
+		// field 1.
+		if (opt->extract == 12)
+		{
+			ret = init_write(&ctx->wbout1, strdup(opt->output_filename));
+			check_ret(opt->output_filename);
+			if(opt->output_filename_ch2)
+			{
+				ret = init_write(&ctx->wbout2, strdup(opt->output_filename_ch2));
+				check_ret(opt->output_filename_ch2);
+			}
+			else
+			{
+				ret = init_write(&ctx->wbout2, create_outfilename(ctx->basefilename, "_2", ctx->extension));
+				check_ret(ctx->wbout2.filename);
+			}
+		}
+		else if (opt->extract == 1)
+		{
+			ret = init_write(&ctx->wbout1, strdup(opt->output_filename));
+			check_ret(opt->output_filename);
+		}
+		else
+		{
+			ret = init_write(&ctx->wbout2, strdup(opt->output_filename));
+			check_ret(opt->output_filename);
+		}
+	}
+	else
+	{
+		if (opt->extract == 12)
+		{
+			if(opt->output_filename_ch1)
+			{
+				ret = init_write(&ctx->wbout1, strdup(opt->output_filename_ch1));
+				check_ret(opt->output_filename_ch1);
+			}
+			else
+			{
+				ret = init_write(&ctx->wbout1, create_outfilename(ctx->basefilename, "_1", ctx->extension));
+				check_ret(ctx->wbout1.filename);
+			}
+			if(opt->output_filename_ch2)
+			{
+				ret = init_write(&ctx->wbout2, strdup(opt->output_filename_ch2));
+				check_ret(opt->output_filename_ch2);
+			}
+			else
+			{
+				ret = init_write(&ctx->wbout2, create_outfilename(ctx->basefilename, "_2", ctx->extension));
+				check_ret(ctx->wbout2.filename);
+			}
+			
+		}
+		else if (opt->extract == 1)
+		{
+			if(opt->output_filename_ch1)
+			{
+				ret = init_write(&ctx->wbout1, strdup(opt->output_filename_ch1));
+				check_ret(opt->output_filename_ch1);
+			}
+			else
+			{
+				ret = init_write(&ctx->wbout1, create_outfilename(ctx->basefilename, "_1", ctx->extension));
+				check_ret(ctx->wbout1.filename);
+			}
+		}
+		else
+		{
+			if(opt->output_filename_ch2)
+			{
+				ret = init_write(&ctx->wbout2, strdup(opt->output_filename_ch2));
+				check_ret(opt->output_filename_ch2);
+			}
+			else
+			{
+				ret = init_write(&ctx->wbout2, create_outfilename(ctx->basefilename, "_2", ctx->extension));
+				check_ret(ctx->wbout2.filename);
+			}
+		}
+	}
+
+	return EXIT_OK;
+}
 struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 {
 	int ret = 0;
@@ -169,9 +304,8 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	}
 
 	ret = init_ctx_extension(opt, ctx);
-	if (ret < 0) {
+	if (ret < 0)
 		goto end;
-	}
 	// Init 708 decoder(s)
 	ccx_decoders_708_init_library(ctx->basefilename, ctx->extension, opt->print_file_reports);
 
@@ -185,20 +319,6 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 
 	ctx->subs_delay = opt->subs_delay;
 
-	// Prepare write structures
-	init_write(&ctx->wbout1,ccx_options.output_filename_ch1);
-	init_write(&ctx->wbout2,ccx_options.output_filename_ch2);
-
-	if (opt->output_filename != NULL)
-	{
-		// Use the given output file name for the field specified by
-		// the -1, -2 switch. If -12 is used, the filename is used for
-		// field 1.
-		if (opt->extract==2)
-			ctx->wbout2.filename = opt->output_filename;
-		else
-			ctx->wbout1.filename = opt->output_filename;
-	}
 	ctx->pesheaderbuf = (unsigned char *) malloc (188); // Never larger anyway
 
 	ctx->cc_to_stdout = opt->cc_to_stdout;
@@ -208,6 +328,10 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->binary_concat = opt->binary_concat;
 	build_parity_table();
 
+	ret = init_output_ctx(opt, ctx);
+	if (ret != EXIT_OK)
+		goto end;
+	
 	ctx->demux_ctx = init_demuxer(ctx, &opt->demux_cfg);
 
 	// Init timing
@@ -215,7 +339,8 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 
 
 end:
-	if (ret < 0) {
+	if (ret != EXIT_OK)
+	{
 		free(ctx);
 		return NULL;
 	}

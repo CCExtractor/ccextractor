@@ -6,11 +6,17 @@
 #include <unistd.h>
 #endif
 
-void init_write (struct ccx_s_write *wb,char *filename)
+int init_write (struct ccx_s_write *wb,char *filename)
 {
 	memset(wb, 0, sizeof(struct ccx_s_write));
 	wb->fh=-1;
-	wb->filename=filename;
+	wb->filename = filename;
+	wb->fh = open (filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+	if (wb->fh == -1)
+	{
+		return CCX_COMMON_EXIT_FILE_CREATION_FAILED;
+	}
+	return EXIT_OK;
 }
 
 int writeraw (const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub)

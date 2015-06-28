@@ -317,7 +317,7 @@ void params_dump(struct lib_ccx_ctx *ctx);
 void print_file_report(struct lib_ccx_ctx *ctx);
 
 // output.c
-void init_write(struct ccx_s_write *wb, char *filename);
+int init_write (struct ccx_s_write *wb,char *filename);
 int writeraw (const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile);
 void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct cc_subtitle *sub);
@@ -418,25 +418,6 @@ extern long capbuflen;
 
 
 #define HAUPPAGE_CCPID	1003 // PID for CC's in some Hauppauge recordings
-
-/* Exit codes. Take this seriously as the GUI depends on them.
-   0 means OK as usual,
-   <100 means display whatever was output to stderr as a warning
-   >=100 means display whatever was output to stdout as an error
-*/
-// Some moved to ccx_common_common.h
-#define EXIT_OK                                 0
-#define EXIT_NO_INPUT_FILES                     2
-#define EXIT_TOO_MANY_INPUT_FILES               3
-#define EXIT_INCOMPATIBLE_PARAMETERS            4
-#define EXIT_UNABLE_TO_DETERMINE_FILE_SIZE      6
-#define EXIT_MALFORMED_PARAMETER                7
-#define EXIT_READ_ERROR                         8
-#define EXIT_NOT_CLASSIFIED                     300
-#define EXIT_ERROR_IN_CAPITALIZATION_FILE       501
-#define EXIT_BUFFER_FULL                        502
-#define EXIT_MISSING_ASF_HEADER                 1001
-#define EXIT_MISSING_RCWT_HEADER                1002
 
 extern unsigned teletext_mode;
 
