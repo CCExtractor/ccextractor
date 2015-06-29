@@ -112,12 +112,6 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			if (ctx->cc_to_stdout && ccx_options.extract==12)
-				fatal (EXIT_INCOMPATIBLE_PARAMETERS, "You can't extract both fields to stdout at the same time in broadcast mode.");
-			
-			if (ccx_options.write_format == CCX_OF_SPUPNG && ctx->cc_to_stdout)
-				fatal (EXIT_INCOMPATIBLE_PARAMETERS, "You cannot use -out=spupng with -stdout.");
-
 			if (ccx_options.extract!=2)
 			{
 				if (ctx->cc_to_stdout)
