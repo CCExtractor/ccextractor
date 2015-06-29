@@ -141,6 +141,7 @@ ccx_share_status ccx_share_send(struct cc_subtitle *sub)
 		PbSubEntry msg = PB_SUB_ENTRY__INIT;
 		dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: sending %u: inited\n", i);
 		dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: sending name %s\n", ccx_share.stream_name);
+		msg.eos = 0;
 		msg.stream_name = strdup(ccx_share.stream_name);
 		dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: sending %u: duped\n", i);
 		msg.has_counter = 1;
