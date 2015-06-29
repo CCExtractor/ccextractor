@@ -39,7 +39,6 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 		ctx->infd = 0;
 		mprint ("\n\r-----------------------------------------------------------------\n");
 		mprint ("\rReading from standard input\n");
-		return 0;
 	}
 	else if (ccx_options.input_source == CCX_DS_NETWORK)
 	{
@@ -57,7 +56,6 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 			print_error(ccx_options.gui_mode_reports,"socket() failed.");
 			return CCX_COMMON_EXIT_BUG_BUG;
 		}
-		return 0;
 
 	}
 
@@ -72,7 +70,6 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 		}
 
 		ctx->infd = start_tcp_srv(ccx_options.tcpport, ccx_options.tcp_password);
-		return 0;
 	}
 	else
 	{
