@@ -1673,12 +1673,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			   "CCExtractor's binary format can only be used simultaneously for input and\noutput if the output file name is specified given with -o.\n");
 		return EXIT_INCOMPATIBLE_PARAMETERS;
 	}
-	if (opt->write_format != CCX_OF_DVDRAW && ctx->cc_to_stdout && ccx_options.extract==12)
+	if (opt->write_format != CCX_OF_DVDRAW && opt->cc_to_stdout && opt->extract==12)
 	{
 		print_error(opt->gui_mode_reports, "You can't extract both fields to stdout at the same time in broadcast mode.");
 		return EXIT_INCOMPATIBLE_PARAMETERS;
 	}		
-	if (ccx_options.write_format == CCX_OF_SPUPNG && ctx->cc_to_stdout)
+	if (opt->write_format == CCX_OF_SPUPNG && opt->cc_to_stdout)
 	{
 		print_error(opt->gui_mode_reports, "You cannot use -out=spupng with -stdout.");
 		return EXIT_INCOMPATIBLE_PARAMETERS;

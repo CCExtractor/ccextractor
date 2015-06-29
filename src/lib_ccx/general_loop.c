@@ -429,12 +429,11 @@ void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
 	LLONG got;
 	LLONG processed;
 	struct demuxer_data *data = alloc_demuxer_data();
-	struct cc_subtitle dec_sub;
+	struct cc_subtitle *dec_sub = &ctx->dec_ctx->dec_sub;
 
 	current_pts = 90; // Pick a valid PTS time
 	pts_set = 1;
 	set_fts(); // Now set the FTS related variables
-	memset(&dec_sub, 0, sizeof(dec_sub));
 	dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
 			print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
 			(unsigned) (current_pts));
@@ -449,11 +448,11 @@ void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
 		if (got == 0) // Shortcircuit if we got nothing to process
 			break;
 
-		processed = process_raw(ctx, &dec_sub, data->buffer);
-		if (dec_sub.got_output)
+		processed = process_raw(ctx, dec_sub, data->buffer);
+		if (dec_sub->got_output)
 		{
-			encode_sub(enc_ctx,&dec_sub);
-			dec_sub.got_output = 0;
+			encode_sub(enc_ctx, dec_sub);
+			dec_sub->got_output = 0;
 		}
 
 		int ccblocks = cb_field1;
@@ -537,7 +536,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 {
 	LLONG overlap=0;
 	LLONG pos = 0; /* Current position in buffer */
-	struct cc_subtitle dec_sub;
+	struct cc_subtitle *dec_sub = &ctx->dec_ctx->dec_sub;
 	struct lib_cc_decode *dec_ctx = NULL;
 	enum ccx_stream_mode_enum stream_mode;
 	struct demuxer_data *data = alloc_demuxer_data();
@@ -546,7 +545,6 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 
 	end_of_file = 0;
 	current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
-	memset(&dec_sub, 0,sizeof(dec_sub));
 	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 	while (!end_of_file && !dec_ctx->processed_enough)
 	{
@@ -605,24 +603,24 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 
 		if (ctx->hauppauge_mode)
 		{
-			got = process_raw_with_field(ctx, &dec_sub, data->buffer);
+			got = process_raw_with_field(ctx, dec_sub, data->buffer);
 			if (pts_set)
 				set_fts(); // Try to fix timing from TS data
 		}
 		else if(ccx_bufferdatatype == CCX_DVB_SUBTITLE)
 		{
-			dvbsub_decode(ccx_dvb_context, data->buffer + 2, inbuf, &dec_sub);
+			dvbsub_decode(ccx_dvb_context, data->buffer + 2, inbuf, dec_sub);
 			set_fts();
 			got = inbuf;
 		}
 		else if (ccx_bufferdatatype == CCX_PES)
 		{
-			got = process_m2v (ctx, data->buffer, inbuf, &dec_sub);
+			got = process_m2v (ctx, data->buffer, inbuf, dec_sub);
 		}
 		else if (ccx_bufferdatatype == CCX_TELETEXT)
 		{
 			// Dispatch to Petr Kutalek 's telxcc.
-			tlt_process_pes_packet (ctx, data->buffer, (uint16_t) inbuf, &dec_sub);
+			tlt_process_pes_packet (ctx, data->buffer, (uint16_t) inbuf, dec_sub);
 			got = inbuf;
 		}
 		else if (ccx_bufferdatatype == CCX_PRIVATE_MPEG2_CC)
@@ -665,11 +663,11 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 					(unsigned) (current_pts));
 			dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
 
-			got = process_raw(ctx, &dec_sub, data->buffer);
+			got = process_raw(ctx, dec_sub, data->buffer);
 		}
 		else if (ccx_bufferdatatype == CCX_H264) // H.264 data from TS file
 		{
-			got = process_avc(ctx, data->buffer, inbuf,&dec_sub);
+			got = process_avc(ctx, data->buffer, inbuf, dec_sub);
 		}
 		else
 			fatal(CCX_COMMON_EXIT_BUG_BUG, "Unknown data type!");
@@ -706,16 +704,16 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 				}
 			}
 		}
-		if (dec_sub.got_output)
+		if (dec_sub->got_output)
 		{
-			encode_sub(enc_ctx,&dec_sub);
-			dec_sub.got_output = 0;
+			encode_sub(enc_ctx, dec_sub);
+			dec_sub->got_output = 0;
 		}
 		position_sanity_check();
 	}
 	// Flush remaining HD captions
 	if (has_ccdata_buffered)
-		process_hdcc(ctx, &dec_sub);
+		process_hdcc(ctx, dec_sub);
 
 	if (ctx->total_past!=ctx->total_inputsize && ctx->binary_concat && !dec_ctx->processed_enough)
 	{
@@ -735,11 +733,10 @@ void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 {
 	static unsigned char *parsebuf;
 	static long parsebufsize = 1024;
-	struct cc_subtitle dec_sub;
 	struct lib_cc_decode *dec_ctx = NULL;
+	struct cc_subtitle *dec_sub = &ctx->dec_ctx->dec_sub;
 	dec_ctx = ctx->dec_ctx;
 
-	memset(&dec_sub, 0,sizeof(dec_sub));
 	// As BUFSIZE is a macro this is just a reminder
 	if (BUFSIZE < (3*0xFFFF + 10))
 		fatal (CCX_COMMON_EXIT_BUG_BUG, "BUFSIZE too small for RCWT caption block.\n");
@@ -779,7 +776,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 
 	if (parsebuf[6] == 0 && parsebuf[7] == 2)
 	{
-		tlt_read_rcwt(ctx, &dec_sub);
+		tlt_read_rcwt(ctx, dec_sub);
 		return;
 	}
 
@@ -843,13 +840,13 @@ void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 
 			for (int j=0; j<cbcount*3; j=j+3)
 			{
-				do_cb(dec_ctx, parsebuf+j, &dec_sub);
+				do_cb(dec_ctx, parsebuf+j, dec_sub);
 			}
 		}
-		if (dec_sub.got_output)
+		if (dec_sub->got_output)
 		{
-			encode_sub(enc_ctx,&dec_sub);
-			dec_sub.got_output = 0;
+			encode_sub(enc_ctx, dec_sub);
+			dec_sub->got_output = 0;
 		}
 	} // end while(1)
 
