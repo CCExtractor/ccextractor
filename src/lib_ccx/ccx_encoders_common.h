@@ -52,6 +52,8 @@ struct encoder_ctx
 	unsigned int send_to_srv;
 	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
 	int no_bom;
+	int multiple_files;
+	char *first_input_file;
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048

@@ -58,6 +58,14 @@ struct ccx_demuxer
 	int (*write_es)(struct ccx_demuxer *ctx, unsigned char* buf, size_t len);
 };
 
+struct demuxer_data
+{
+	int program_id;
+	unsigned char *buffer;
+	int len;
+	int index;
+};
 struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg);
 void ccx_demuxer_delete(struct ccx_demuxer **ctx);
+struct demuxer_data* alloc_demuxer_data(void);
 #endif

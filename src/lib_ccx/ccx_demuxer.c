@@ -155,6 +155,8 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 			}
 			break;					
 	}
+	ctx->past = 0;
+	ctx->global_timestamp_inited = 0;
 
 
 	return 0;
@@ -399,4 +401,13 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	init_ts(ctx);
 
 	return ctx;
+}
+
+struct demuxer_data* alloc_demuxer_data(void)
+{
+	struct demuxer_data* data = malloc(sizeof(struct demuxer_data));
+	data->buffer = (unsigned char *) malloc (BUFSIZE);
+
+	return data;
+	
 }

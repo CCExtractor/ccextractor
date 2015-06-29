@@ -1,6 +1,7 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "activity.h"
+#include "ccx_demuxer.h"
 
 unsigned char tspacket[188]; // Current packet
 
@@ -475,14 +476,14 @@ long ts_readstream(struct ccx_demuxer *ctx)
 
 
 // TS specific data grabber
-LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
+LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data *data)
 {
 	long payload_read = 0;
 	const char *tstr; // Temporary string to describe the stream type
 
 	do
 	{
-		if( !ts_readstream(ctx->demux_ctx) )
+		if( !ts_readstream(ctx) )
 		{   // If we didn't get data, try again
 			mprint("(no CC data extracted)\n");
 			continue;
@@ -536,15 +537,15 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 		}
 		// We read a video PES
 
-		if (ctx->demux_ctx->capbuf[0] != 0x00 || ctx->demux_ctx->capbuf[1] != 0x00 ||
-			ctx->demux_ctx->capbuf[2] != 0x01)
+		if (ctx->capbuf[0] != 0x00 || ctx->capbuf[1] != 0x00 ||
+			ctx->capbuf[2] != 0x01)
 		{
 			// ??? Shouldn't happen. Complain and try again.
 			mprint("Missing PES header!\n");
-			dump(CCX_DMT_GENERIC_NOTICES, ctx->demux_ctx->capbuf,256, 0, 0);
+			dump(CCX_DMT_GENERIC_NOTICES, ctx->capbuf,256, 0, 0);
 			continue;
 		}
-		unsigned stream_id = ctx->demux_ctx->capbuf[3];
+		unsigned stream_id = ctx->capbuf[3];
 
 		if (ccx_options.teletext_mode == CCX_TXT_IN_USE)
 		{
@@ -552,18 +553,18 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 			{ // If here, the user forced teletext mode but didn't supply a PID, and we haven't found it yet.
 				continue;
 			}
-			memcpy(ctx->buffer+inbuf, ctx->demux_ctx->capbuf, ctx->demux_ctx->capbuflen);
-			payload_read = ctx->demux_ctx->capbuflen;
-			inbuf += ctx->demux_ctx->capbuflen;
+			memcpy(data->buffer+inbuf, ctx->capbuf, ctx->capbuflen);
+			payload_read = ctx->capbuflen;
+			inbuf += ctx->capbuflen;
 			break;
 		}
 		if (ccx_bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 		{
-			dump (CCX_DMT_GENERIC_NOTICES, ctx->demux_ctx->capbuf, ctx->demux_ctx->capbuflen,0, 1);
+			dump (CCX_DMT_GENERIC_NOTICES, ctx->capbuf, ctx->capbuflen,0, 1);
 			// Bogus data, so we return something
-			ctx->buffer[inbuf++] = 0xFA;
-			ctx->buffer[inbuf++] = 0x80;
-			ctx->buffer[inbuf++] = 0x80;
+			data->buffer[inbuf++] = 0xFA;
+			data->buffer[inbuf++] = 0x80;
+			data->buffer[inbuf++] = 0x80;
 			payload_read += 3;
 			break;
 		}
@@ -574,9 +575,9 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 			if (!haup_capbuflen)
 			{
 				// Do this so that we always return something until EOF. This will be skipped.
-				ctx->buffer[inbuf++] = 0xFA;
-				ctx->buffer[inbuf++] = 0x80;
-				ctx->buffer[inbuf++] = 0x80;
+				data->buffer[inbuf++] = 0xFA;
+				data->buffer[inbuf++] = 0x80;
+				data->buffer[inbuf++] = 0x80;
 				payload_read += 3;
 			}
 
@@ -597,11 +598,11 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 					if (haup_capbuf[i+9]==1 || haup_capbuf[i+9]==2) // Field match. // TODO: If extract==12 this won't work!
 					{
 						if (haup_capbuf[i+9]==1)
-							ctx->buffer[inbuf++]=4; // Field 1 + cc_valid=1
+							data->buffer[inbuf++]=4; // Field 1 + cc_valid=1
 						else
-							ctx->buffer[inbuf++]=5; // Field 2 + cc_valid=1
-						ctx->buffer[inbuf++]=haup_capbuf[i+10];
-						ctx->buffer[inbuf++]=haup_capbuf[i+11];
+							data->buffer[inbuf++]=5; // Field 2 + cc_valid=1
+						data->buffer[inbuf++]=haup_capbuf[i+10];
+						data->buffer[inbuf++]=haup_capbuf[i+11];
 						payload_read+=3;
 					}
 					/*
@@ -615,15 +616,15 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 		}
 
 		dbg_print(CCX_DMT_VERBOSE, "TS payload start video PES id: %d  len: %ld\n",
-			   stream_id, ctx->demux_ctx->capbuflen);
+			   stream_id, ctx->capbuflen);
 
 		int pesheaderlen;
-		int vpesdatalen = read_video_pes_header(ctx, ctx->demux_ctx->capbuf, &pesheaderlen, ctx->demux_ctx->capbuflen);
+		int vpesdatalen = read_video_pes_header(ctx, ctx->capbuf, &pesheaderlen, ctx->capbuflen);
 
 		if (ccx_bufferdatatype == CCX_DVB_SUBTITLE && !vpesdatalen)
 		{
 			dbg_print(CCX_DMT_VERBOSE, "TS payload is a DVB Subtitle\n");
-			payload_read = ctx->demux_ctx->capbuflen;
+			payload_read = ctx->capbuflen;
 			inbuf += payload_read;
 			break;
 		}
@@ -635,8 +636,8 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 			break;
 		}
 
-		unsigned char *databuf = ctx->demux_ctx->capbuf + pesheaderlen;
-		long databuflen = ctx->demux_ctx->capbuflen - pesheaderlen;
+		unsigned char *databuf = ctx->capbuf + pesheaderlen;
+		long databuflen = ctx->capbuflen - pesheaderlen;
 
 		// If the package length is unknown vpesdatalen is zero.
 		// If we know he package length, use it to quit
@@ -658,7 +659,7 @@ LLONG ts_getmoredata(struct lib_ccx_ctx *ctx)
 
 		if (!ccx_options.hauppauge_mode) // in Haup mode the buffer is filled somewhere else
 		{
-			memcpy(ctx->buffer+inbuf, databuf, databuflen);
+			memcpy(data->buffer+inbuf, databuf, databuflen);
 			payload_read = databuflen;
 			inbuf += databuflen;
 		}

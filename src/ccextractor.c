@@ -62,10 +62,6 @@ int main(int argc, char *argv[])
 	dec_ctx = ctx->dec_ctx;
 
 
-	// Prepare write structures
-	init_write(&ctx->wbout1,ccx_options.wbout1.filename);
-	init_write(&ctx->wbout2,ccx_options.wbout2.filename);
-	
 
 	int show_myth_banner = 0;
 	
@@ -73,24 +69,6 @@ int main(int argc, char *argv[])
 	memset (&dec_sub, 0,sizeof(dec_sub));
 
 
-	if (ctx->num_input_files > 0)
-	{
-		ctx->wbout1.multiple_files = 1;
-		ctx->wbout1.first_input_file = ctx->inputfile[0];
-		ctx->wbout2.multiple_files = 1;
-		ctx->wbout2.first_input_file = ctx->inputfile[0];
-	}
-
-	if (ccx_options.output_filename!=NULL)
-	{
-		// Use the given output file name for the field specified by
-		// the -1, -2 switch. If -12 is used, the filename is used for
-		// field 1.
-		if (ccx_options.extract==2)
-			ctx->wbout2.filename=ccx_options.output_filename;
-		else
-			ctx->wbout1.filename=ccx_options.output_filename;
-	}
 	params_dump(ctx);
 
 	// default teletext page
@@ -101,18 +79,7 @@ int main(int argc, char *argv[])
 
 	subline = (unsigned char *) malloc (SUBLINESIZE);
 
-	if (ctx->wbout1.filename==NULL)
-	{
-		ctx->wbout1.filename = (char *) malloc (strlen (ctx->basefilename)+3+strlen (ctx->extension));
-		ctx->wbout1.filename[0]=0;
-	}
-	if (ctx->wbout2.filename==NULL)
-	{
-		ctx->wbout2.filename = (char *) malloc (strlen (ctx->basefilename)+3+strlen (ctx->extension));
-		ctx->wbout2.filename[0]=0;
-	}
-	if (ctx->buffer == NULL || ctx->pesheaderbuf==NULL ||
-		ctx->wbout1.filename == NULL || ctx->wbout2.filename == NULL ||
+	if (ctx->pesheaderbuf==NULL ||
 		subline==NULL || init_file_buffer() )
 	{
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");		
@@ -128,11 +95,6 @@ int main(int argc, char *argv[])
 		/* # DVD format uses one raw file for both fields, while Broadcast requires 2 */
 		if (ccx_options.write_format==CCX_OF_DVDRAW)
 		{
-			if (ctx->wbout1.filename[0]==0)
-			{
-				strcpy (ctx->wbout1.filename,ctx->basefilename);
-				strcat (ctx->wbout1.filename,".raw");
-			}
 			if (ctx->cc_to_stdout)
 			{
 				ctx->wbout1.fh=STDOUT_FILENO;
@@ -144,11 +106,6 @@ int main(int argc, char *argv[])
 				if (detect_input_file_overwrite(ctx, ctx->wbout1.filename)) {
 					fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED,
 						  "Output filename is same as one of input filenames. Check output parameters.\n");
-				}
-				ctx->wbout1.fh=open (ctx->wbout1.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
-				if (ctx->wbout1.fh==-1)
-				{
-					fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Failed\n");
 				}
 			}
 			if (init_encoder(enc_ctx, &ctx->wbout1, &ccx_options))
@@ -536,7 +493,7 @@ int main(int argc, char *argv[])
 	prepare_for_new_file (ctx); // To reset counters used by handle_end_of_data()
 
 	telxcc_close(ctx);
-	if (ctx->wbout1.fh!=-1)
+	if (ccx_options.extract != 2)
 	{
 		if (ccx_options.write_format==CCX_OF_SMPTETT || ccx_options.write_format==CCX_OF_SAMI || 
 			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT
@@ -560,8 +517,9 @@ int main(int argc, char *argv[])
 			}
 		}
 		dinit_encoder(enc_ctx);
+		flushbuffer (ctx, &ctx->wbout1,true);
 	}
-	if (ctx->wbout2.fh!=-1)
+	if (ccx_options.extract != 1)
 	{
 		if (ccx_options.write_format == CCX_OF_SMPTETT || ccx_options.write_format == CCX_OF_SAMI ||
 			ccx_options.write_format == CCX_OF_SRT || ccx_options.write_format == CCX_OF_TRANSCRIPT
@@ -575,9 +533,8 @@ int main(int argc, char *argv[])
 			}
 		}
 		dinit_encoder(enc_ctx+1);
+		flushbuffer (ctx, &ctx->wbout2,true);
 	}
-	flushbuffer (ctx, &ctx->wbout1,true);
-	flushbuffer (ctx, &ctx->wbout2,true);
 	time (&final);
 
 	long proc_time=(long) (final-start);

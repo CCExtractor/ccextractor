@@ -249,7 +249,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 		unsigned ES_info_length = (((buf[i+3] & 0x0F) << 8)
 				| buf[i+4]);
 
-		/* There is no information about elementry stream */
+		/* There is no information about elementary stream */
 		/*if(!ES_info_length)
 		  continue; */
 

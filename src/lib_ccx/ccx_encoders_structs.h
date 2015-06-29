@@ -15,8 +15,6 @@ typedef struct ccx_encoders_transcript_format {
 
 struct ccx_s_write
 {
-	int multiple_files;
-	char *first_input_file;
 	int fh;
 	char *filename;
 	void* spupng_data;

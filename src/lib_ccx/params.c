@@ -542,14 +542,14 @@ void usage (void)
 
 	mprint ("Options that affect which codec is to be used have to be searched in input\n");
 
-	mprint ("  If codec type is not selected then first elementry stream suitable for \n"
+	mprint ("  If codec type is not selected then first elementary stream suitable for \n"
 			"  subtitle is selected, please consider -teletext -noteletext override this\n"
 			"  option.\n"
-			"      -codec dvbsub    select the dvb subtitle from all elementry stream,\n"
+			"      -codec dvbsub    select the dvb subtitle from all elementary stream,\n"
 			"                        if stream of dvb subtitle type is not found then \n"
 			"                        nothing is selected and no subtitle is generated\n"
 			"      -nocodec dvbsub   ignore dvb subtitle and follow default behaviour\n"
-			"      -codec teletext   select the teletext subtitle from elementry stream\n"
+			"      -codec teletext   select the teletext subtitle from elementary stream\n"
 			"      -nocodec teletext ignore teletext subtitle\n"
 			"  NOTE: option given in form -foo=bar ,-foo = bar and --foo=bar are invalid\n"
 			"        valid option are only in form -foo bar\n"
@@ -1344,13 +1344,13 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-o1")==0 && i<argc-1)
 		{
-			opt->wbout1.filename=argv[i+1];
+			opt->output_filename_ch1 = argv[i+1];
 			i++;
 			continue;
 		}
 		if (strcmp (argv[i],"-o2")==0 && i<argc-1)
 		{
-			opt->wbout2.filename=argv[i+1];
+			opt->output_filename_ch2 = argv[i+1];
 			i++;
 			continue;
 		}
@@ -1657,9 +1657,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	if(opt->ts_forced_program != -1)
 		opt->ts_forced_program_selected = 1;
 
-	if(opt->wbout2.filename != NULL && (opt->extract != 2 || opt->extract != 12) )
+	if(opt->output_filename_ch2 != NULL && (opt->extract != 2 || opt->extract != 12) )
 		mprint("WARN: -o2 ignored! you might want -2 or -12 with -o2\n");
 	
+	if(opt->output_filename != NULL && opt->output_filename_ch1 != NULL )
+		mprint("WARNING: Ambiguous parameter -o and -o1 Expect undefined behaviour\n");
+
 	// Init telexcc redundant options
 	tlt_config.transcript_settings = &opt->transcript_settings;
 	tlt_config.levdistmincnt = opt->levdistmincnt;

@@ -246,7 +246,7 @@ int read_pts_pes(unsigned char*header, int len)
  *    0 .. Read from file into nextheader
  *    >0 .. Use data in nextheader with the length of sbuflen
  */
-int read_video_pes_header (struct lib_ccx_ctx *ctx, unsigned char *nextheader, int *headerlength, int sbuflen)
+int read_video_pes_header (struct ccx_demuxer *ctx, unsigned char *nextheader, int *headerlength, int sbuflen)
 {
 	// Read the next video PES
 	// ((nextheader[3]&0xf0)==0xe0)
@@ -257,8 +257,8 @@ int read_video_pes_header (struct lib_ccx_ctx *ctx, unsigned char *nextheader, i
 	if ( !sbuflen )
 	{
 		// Extension present, get it
-		buffered_read (ctx->demux_ctx, nextheader+6,3);
-		ctx->demux_ctx->past=ctx->demux_ctx->past+result;
+		buffered_read (ctx, nextheader+6,3);
+		ctx->past=ctx->past+result;
 		if (result!=3) {
 			// Consider this the end of the show.
 			return -1;
@@ -287,8 +287,8 @@ int read_video_pes_header (struct lib_ccx_ctx *ctx, unsigned char *nextheader, i
 	{
 		if (nextheader[8] > 0)
 		{
-			buffered_read (ctx->demux_ctx, nextheader+9,nextheader[8]);
-			ctx->demux_ctx->past=ctx->demux_ctx->past+result;
+			buffered_read (ctx, nextheader+9,nextheader[8]);
+			ctx->past=ctx->past+result;
 			if (result!=nextheader[8])
 			{
 				return -1;

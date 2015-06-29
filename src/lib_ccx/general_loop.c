@@ -42,7 +42,7 @@ int bytesinbuffer; // Number of bytes we actually have on buffer
 extern void *ccx_dvb_context;
 
 // Program stream specific data grabber
-LLONG ps_getmoredata(struct lib_ccx_ctx *ctx)
+LLONG ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 {
 	int enough = 0;
 	int payload_read = 0;
@@ -194,7 +194,7 @@ LLONG ps_getmoredata(struct lib_ccx_ctx *ctx)
 			else if ((nextheader[3]&0xf0)==0xe0)
 			{
 				int hlen; // Dummy variable, unused
-				int peslen = read_video_pes_header(ctx, nextheader, &hlen, 0);
+				int peslen = read_video_pes_header(ctx->demux_ctx, nextheader, &hlen, 0);
 				if (peslen < 0)
 				{
 					end_of_file=1;
@@ -215,7 +215,7 @@ LLONG ps_getmoredata(struct lib_ccx_ctx *ctx)
 					continue;
 				}
 
-				buffered_read (ctx->demux_ctx, ctx->buffer+inbuf, want);
+				buffered_read (ctx->demux_ctx, data->buffer+inbuf, want);
 				ctx->demux_ctx->past=ctx->demux_ctx->past+result;
 				if (result>0) {
 					payload_read+=(int) result;
@@ -244,7 +244,7 @@ LLONG ps_getmoredata(struct lib_ccx_ctx *ctx)
 
 
 // Returns number of bytes read, or zero for EOF
-LLONG general_getmoredata(struct lib_ccx_ctx *ctx)
+LLONG general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 {
 	int bytesread = 0;
 	int want;
@@ -252,7 +252,7 @@ LLONG general_getmoredata(struct lib_ccx_ctx *ctx)
 	do
 	{
 		want = (int) (BUFSIZE-inbuf);
-		buffered_read (ctx->demux_ctx, ctx->buffer+inbuf,want); // This is a macro.
+		buffered_read (ctx->demux_ctx, data->buffer+inbuf,want); // This is a macro.
 		// 'result' HAS the number of bytes read
 		ctx->demux_ctx->past=ctx->demux_ctx->past+result;
 		inbuf+=result;
@@ -272,6 +272,7 @@ void processhex (struct lib_ccx_ctx *ctx, char *filename)
 	unsigned char *bytes=NULL;
 	unsigned byte_count=0;
 	int warning_shown=0;
+	struct demuxer_data *data = alloc_demuxer_data();
 	while(fgets(line, max-1, fr) != NULL)
 	{
 		char *c1, *c2=NULL; // Positions for first and second colons
@@ -346,7 +347,7 @@ void processhex (struct lib_ccx_ctx *ctx, char *filename)
 			bytes[i]=value;
 			c2+=3;
 		}
-		memcpy (ctx->buffer, bytes, byte_count);
+		memcpy (data->buffer, bytes, byte_count);
 		inbuf=byte_count;
 		process_raw();
 		continue;
@@ -427,6 +428,7 @@ void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
 {
 	LLONG got;
 	LLONG processed;
+	struct demuxer_data *data = alloc_demuxer_data();
 	struct cc_subtitle dec_sub;
 
 	current_pts = 90; // Pick a valid PTS time
@@ -442,12 +444,12 @@ void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
 	{
 		inbuf=0;
 
-		got = general_getmoredata(ctx);
+		got = general_getmoredata(ctx, data);
 
 		if (got == 0) // Shortcircuit if we got nothing to process
 			break;
 
-		processed=process_raw(ctx, &dec_sub);
+		processed = process_raw(ctx, &dec_sub, data->buffer);
 		if (dec_sub.got_output)
 		{
 			encode_sub(enc_ctx,&dec_sub);
@@ -473,7 +475,7 @@ void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
 
 /* Process inbuf bytes in buffer holding raw caption data (three byte packets, the first being the field).
  * The number of processed bytes is returned. */
-LLONG process_raw_with_field (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
+LLONG process_raw_with_field (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, unsigned char* buffer)
 {
 	unsigned char data[3];
 	struct lib_cc_decode *dec_ctx = NULL;
@@ -483,15 +485,15 @@ LLONG process_raw_with_field (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 
 	for (unsigned long i=0; i<inbuf; i=i+3)
 	{
-		if ( !dec_ctx->saw_caption_block && *(ctx->buffer+i)==0xff && *(ctx->buffer+i+1)==0xff)
+		if ( !dec_ctx->saw_caption_block && *(buffer+i)==0xff && *(buffer+i+1)==0xff)
 		{
 			// Skip broadcast header
 		}
 		else
 		{
-			data[0]=ctx->buffer[i];
-			data[1]=ctx->buffer[i+1];
-			data[2]=ctx->buffer[i+2];
+			data[0] = buffer[i];
+			data[1] = buffer[i+1];
+			data[2] = buffer[i+2];
 
 			// do_cb increases the cb_field1 counter so that get_fts()
 			// is correct.
@@ -501,10 +503,9 @@ LLONG process_raw_with_field (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 	return inbuf;
 }
 
-
 /* Process inbuf bytes in buffer holding raw caption data (two byte packets).
  * The number of processed bytes is returned. */
-LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
+LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, char *buffer)
 {
 	unsigned char data[3];
 	struct lib_cc_decode *dec_ctx = NULL;
@@ -512,16 +513,16 @@ LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 	data[0]=0x04; // Field 1
 	current_field=1;
 
-	for (unsigned long i=0; i<inbuf; i=i+2)
+	for (unsigned long i=0; i < inbuf; i=i+2)
 	{
-		if ( !dec_ctx->saw_caption_block && *(ctx->buffer+i)==0xff && *(ctx->buffer+i+1)==0xff)
+		if ( !dec_ctx->saw_caption_block && *(buffer+i)==0xff && *(buffer+i+1)==0xff)
 		{
 			// Skip broadcast header
 		}
 		else
 		{
-			data[1]=ctx->buffer[i];
-			data[2]=ctx->buffer[i+1];
+			data[1] = buffer[i];
+			data[2] = buffer[i+1];
 
 			// do_cb increases the cb_field1 counter so that get_fts()
 			// is correct.
@@ -539,6 +540,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 	struct cc_subtitle dec_sub;
 	struct lib_cc_decode *dec_ctx = NULL;
 	enum ccx_stream_mode_enum stream_mode;
+	struct demuxer_data *data = alloc_demuxer_data();
 	dec_ctx = ctx->dec_ctx;
 	inbuf = 0; // No data yet
 
@@ -553,7 +555,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		if ( pos != 0 ) {
 			// Only when needed as memmove has been seen crashing
 			// for dest==source and n >0
-			memmove (ctx->buffer,ctx->buffer+pos,(size_t) (inbuf-pos));
+			memmove (data->buffer,data->buffer+pos,(size_t) (inbuf-pos));
 			inbuf-=pos;
 		}
 		pos = 0;
@@ -564,31 +566,31 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		switch (stream_mode)
 		{
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
-				i = general_getmoredata(ctx);
+				i = general_getmoredata(ctx, data);
 				break;
 			case CCX_SM_TRANSPORT:
-				i = ts_getmoredata(ctx);
+				i = ts_getmoredata(ctx->demux_ctx, data);
 				break;
 			case CCX_SM_PROGRAM:
-				i = ps_getmoredata(ctx);
+				i = ps_getmoredata(ctx, data);
 				break;
 			case CCX_SM_ASF:
-				i = asf_getmoredata(ctx);
+				i = asf_getmoredata(ctx, data);
 				break;
 			case CCX_SM_WTV:
-				i = wtv_getmoredata(ctx);
+				i = wtv_getmoredata(ctx, data);
 				break;
 			default:
 				fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible stream_mode");
 		}
 
 		position_sanity_check();
-		ctx->demux_ctx->write_es(ctx->demux_ctx, ctx->buffer+overlap, (size_t) (inbuf-overlap));
+		ctx->demux_ctx->write_es(ctx->demux_ctx, data->buffer+overlap, (size_t) (inbuf-overlap));
 
 		if (i==0)
 		{
 			end_of_file = 1;
-			memset (ctx->buffer+inbuf, 0, (size_t) (BUFSIZE-inbuf)); /* Clear buffer at the end */
+			memset (data->buffer+inbuf, 0, (size_t) (BUFSIZE-inbuf)); /* Clear buffer at the end */
 		}
 
 		if (inbuf == 0)
@@ -603,24 +605,24 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 
 		if (ctx->hauppauge_mode)
 		{
-			got = process_raw_with_field(ctx, &dec_sub);
+			got = process_raw_with_field(ctx, &dec_sub, data->buffer);
 			if (pts_set)
 				set_fts(); // Try to fix timing from TS data
 		}
 		else if(ccx_bufferdatatype == CCX_DVB_SUBTITLE)
 		{
-			dvbsub_decode(ccx_dvb_context, ctx->buffer + 2, inbuf, &dec_sub);
+			dvbsub_decode(ccx_dvb_context, data->buffer + 2, inbuf, &dec_sub);
 			set_fts();
 			got = inbuf;
 		}
 		else if (ccx_bufferdatatype == CCX_PES)
 		{
-			got = process_m2v (ctx, ctx->buffer, inbuf, &dec_sub);
+			got = process_m2v (ctx, data->buffer, inbuf, &dec_sub);
 		}
 		else if (ccx_bufferdatatype == CCX_TELETEXT)
 		{
 			// Dispatch to Petr Kutalek 's telxcc.
-			tlt_process_pes_packet (ctx, ctx->buffer, (uint16_t) inbuf, &dec_sub);
+			tlt_process_pes_packet (ctx, data->buffer, (uint16_t) inbuf, &dec_sub);
 			got = inbuf;
 		}
 		else if (ccx_bufferdatatype == CCX_PRIVATE_MPEG2_CC)
@@ -663,11 +665,11 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 					(unsigned) (current_pts));
 			dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
 
-			got = process_raw(ctx, &dec_sub);
+			got = process_raw(ctx, &dec_sub, data->buffer);
 		}
 		else if (ccx_bufferdatatype == CCX_H264) // H.264 data from TS file
 		{
-			got = process_avc(ctx, ctx->buffer, inbuf,&dec_sub);
+			got = process_avc(ctx, data->buffer, inbuf,&dec_sub);
 		}
 		else
 			fatal(CCX_COMMON_EXIT_BUG_BUG, "Unknown data type!");
