@@ -230,7 +230,7 @@ static int init_output_ctx(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx)
 			}
 			else
 			{
-				ret = init_write(&ctx->wbout1, create_outfilename(ctx->basefilename, "_1", ctx->extension));
+				ret = init_write(&ctx->wbout1, create_outfilename(ctx->basefilename, NULL, ctx->extension));
 				check_ret(ctx->wbout1.filename);
 			}
 		}
@@ -243,7 +243,7 @@ static int init_output_ctx(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx)
 			}
 			else
 			{
-				ret = init_write(&ctx->wbout2, create_outfilename(ctx->basefilename, "_2", ctx->extension));
+				ret = init_write(&ctx->wbout2, create_outfilename(ctx->basefilename, NULL, ctx->extension));
 				check_ret(ctx->wbout2.filename);
 			}
 		}
