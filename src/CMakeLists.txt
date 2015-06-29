@@ -90,10 +90,12 @@ endif (WITH_OCR)
 if (WITH_SHARING)
   find_package(PkgConfig)
 
+  pkg_check_modules (NANOMSG REQUIRED libnanomsg)
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${NANOMSG_STATIC_LIBRARIES})
+
   include_directories ("${PROJECT_SOURCE_DIR}/protobuf-c/")
   aux_source_directory ("${PROJECT_SOURCE_DIR}/protobuf-c/" SOURCEFILE)
 
-  set (EXTRA_LIBS ${EXTRA_LIBS} nanomsg)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_SHARING")
 endif (WITH_SHARING)
 
