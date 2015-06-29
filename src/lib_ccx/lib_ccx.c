@@ -140,7 +140,7 @@ char *create_outfilename(const char *basename, const char *suffix, const char *e
 	if ( (elen + slen + blen) <= 0)
 		return NULL;
 
-	ptr = malloc(elen + slen + blen);
+	ptr = malloc(elen + slen + blen + 1);
 	if(!ptr)
 		return NULL;
 
