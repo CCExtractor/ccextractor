@@ -9,7 +9,9 @@
 #include "ccx_common_option.h"
 #include "ccx_decoders_structs.h"
 #include "lib_ccx.h"
-#include "zmq.h"
+
+#include <nanomsg/nn.h>
+#include <nanomsg/pubsub.h>
 
 void ccx_sub_entry_init(ccx_sub_entry *entry)
 {
@@ -83,22 +85,34 @@ ccx_share_status ccx_share_start(const char *stream_name) //TODO add stream
 {
 	dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: starting service\n");
 	//TODO for multiple files we have to move creation to ccx_share_init
-	ccx_share.zmq_ctx = zmq_ctx_new();
-	ccx_share.zmq_sock = zmq_socket(ccx_share.zmq_ctx, ZMQ_PUB);
-
+	ccx_share.nn_sock = nn_socket(AF_SP, NN_PUB);
+	if (ccx_share.nn_sock < 0) {
+		perror("[share] ccx_share_start: can't nn_socket()\n");
+		fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start");
+	}
+	
 	if (!ccx_options.sharing_url) {
 		ccx_options.sharing_url = strdup("tcp://*:3269");
 	}
-
+	
 	dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: url=%s\n", ccx_options.sharing_url);
-
-	int rc = zmq_bind(ccx_share.zmq_sock, ccx_options.sharing_url);
-	if (rc) {
-		dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: cant zmq_bind()\n");
+	
+	ccx_share.nn_binder = nn_bind(ccx_share.nn_sock, ccx_options.sharing_url);
+	if (ccx_share.nn_binder < 0) {
+		perror("[share] ccx_share_start: can't nn_bind()\n");
 		fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start");
 	}
+	
+	int linger = -1;
+	int rc = nn_setsockopt(ccx_share.nn_sock, NN_SOL_SOCKET, NN_LINGER, &linger, sizeof(int));
+	if (rc < 0) {
+		perror("[share] ccx_share_start: can't nn_setsockopt()\n");
+		fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start");
+	}
+
 	//TODO remove path from stream name to minimize traffic (/?)
 	ccx_share.stream_name = strdup(stream_name ? stream_name : "unknown");
+
 	sleep(1); //We have to sleep a while, because it takes some time for subscribers to subscribe
 	return CCX_SHARE_OK;
 }
@@ -106,15 +120,7 @@ ccx_share_status ccx_share_start(const char *stream_name) //TODO add stream
 ccx_share_status ccx_share_stop()
 {
 	dbg_print(CCX_DMT_SHARE, "[share] ccx_share_stop: stopping service\n");
-	const size_t buf_size = 128;
-	char buf[buf_size];
-	int rc = zmq_getsockopt (ccx_share.zmq_sock, ZMQ_LAST_ENDPOINT, buf, (size_t *)&buf_size);
-	assert (rc == 0);
-	/* Unbind socket by real endpoint */
-	rc = zmq_unbind (ccx_share.zmq_sock, buf);
-	assert (rc == 0);
-	zmq_close(ccx_share.zmq_sock);
-	zmq_ctx_destroy(ccx_share.zmq_ctx);
+	nn_shutdown (ccx_share.nn_sock, ccx_share.nn_binder);
 	free(ccx_share.stream_name);
 	return CCX_SHARE_OK;
 }
@@ -171,7 +177,7 @@ ccx_share_status ccx_share_send(struct cc_subtitle *sub)
 	}
 
 	ccx_sub_entries_cleanup(&entries);
-	//sleep(1);
+
 	return CCX_SHARE_OK;
 }
 
@@ -184,7 +190,7 @@ ccx_share_status _ccx_share_send(PbSubEntry *msg)
 	pb_sub_entry__pack(msg, buf);
 
 	dbg_print(CCX_DMT_SHARE, "[share] _ccx_share_send: sending\n");
-	int sent = zmq_send(ccx_share.zmq_sock, buf, len, 0);
+	int sent = nn_send (ccx_share.nn_sock, buf, len, 0);
 	if (sent != len) {
 		dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: len=%zd sent=%d\n", len, sent);
 		return CCX_SHARE_FAIL;

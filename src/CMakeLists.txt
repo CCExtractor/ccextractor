@@ -90,12 +90,10 @@ endif (WITH_OCR)
 if (WITH_SHARING)
   find_package(PkgConfig)
 
-  pkg_check_modules (ZEROMQ REQUIRED libzmq)
-  pkg_check_modules (PROTOBUFC REQUIRED libprotobuf-c)
+  include_directories ("${PROJECT_SOURCE_DIR}/protobuf-c/")
+  aux_source_directory ("${PROJECT_SOURCE_DIR}/protobuf-c/" SOURCEFILE)
 
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${ZEROMQ_STATIC_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${PROTOBUFC_STATIC_LIBRARIES})
-
+  set (EXTRA_LIBS ${EXTRA_LIBS} nanomsg)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_SHARING")
 endif (WITH_SHARING)
 

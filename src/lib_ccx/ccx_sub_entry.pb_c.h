@@ -6,7 +6,7 @@
 #ifndef PROTOBUF_C_ccx_5fsub_5fentry_2eproto__INCLUDED
 #define PROTOBUF_C_ccx_5fsub_5fentry_2eproto__INCLUDED
 
-#include <protobuf-c/protobuf-c.h>
+#include "../protobuf-c/protobuf-c.h"
 
 PROTOBUF_C__BEGIN_DECLS
 

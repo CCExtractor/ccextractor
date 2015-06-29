@@ -30,6 +30,9 @@ typedef struct ccx_share_service {
 	char *stream_name;
 	void *zmq_ctx;
 	void *zmq_sock;
+	int nn_sock;
+	int nn_binder;
+	
 } ccx_share_service;
 
 ccx_share_service ccx_share;
