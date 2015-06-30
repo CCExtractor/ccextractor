@@ -401,9 +401,6 @@ extern int cc_data_count[SORTBUF];
 extern unsigned char cc_data_pkts[SORTBUF][10*31*3+1];
 extern int has_ccdata_buffered;
 
-extern unsigned char *subline;
-
-
 // From ts_functions
 extern unsigned cap_stream_type;
 extern struct ts_payload payload;

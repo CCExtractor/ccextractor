@@ -71,10 +71,8 @@ int main(int argc, char *argv[])
 		tlt_config.page = ((tlt_config.page / 100) << 8) | (((tlt_config.page / 10) % 10) << 4) | (tlt_config.page % 10);
 	}
 
-	subline = (unsigned char *) malloc (SUBLINESIZE);
 
-	if (ctx->pesheaderbuf==NULL ||
-		subline==NULL || init_file_buffer() )
+	if (ctx->pesheaderbuf==NULL || init_file_buffer() )
 	{
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");		
 	}

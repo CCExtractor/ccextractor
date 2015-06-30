@@ -56,7 +56,7 @@ void write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_st
 		if (context->encoding != CCX_ENC_UNICODE)
 		{
 			dbg_print(CCX_DMT_DECODER_608, "\r");
-			dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
+			dbg_print(CCX_DMT_DECODER_608, "%s\n",context->subline);
 		}
 		write(context->out->fh, el, u);
 		write(context->out->fh, encoded_crlf, encoded_crlf_length);
@@ -242,13 +242,13 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 				prev_line_center2=center2;
 
 			}
-			int length = get_decoder_line_encoded (subline, i, data);
+			int length = get_decoder_line_encoded (context->subline, i, data);
 			if (context->encoding!=CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r");
-				dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
+				dbg_print(CCX_DMT_DECODER_608, "%s\n",context->subline);
 			}
-			write(context->out->fh, subline, length);
+			write(context->out->fh, context->subline, length);
 			write(context->out->fh, encoded_crlf, encoded_crlf_length);
 			wrote_something=1;
 			// fprintf (wb->fh,encoded_crlf);

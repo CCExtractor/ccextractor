@@ -49,7 +49,7 @@ void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_s
 		if (context->encoding != CCX_ENC_UNICODE)
 		{
 			dbg_print(CCX_DMT_DECODER_608, "\r");
-			dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
+			dbg_print(CCX_DMT_DECODER_608, "%s\n",context->subline);
 		}
 		write(context->out->fh, el, u);
 		write(context->out->fh, encoded_br, encoded_br_length);
@@ -171,13 +171,13 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 	{
 		if (data->row_used[i])
 		{
-			int length = get_decoder_line_encoded (subline, i, data);
+			int length = get_decoder_line_encoded (context->subline, i, data);
 			if (context->encoding != CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r");
-				dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
+				dbg_print(CCX_DMT_DECODER_608, "%s\n",context->subline);
 			}
-			write (context->out->fh, subline, length);
+			write (context->out->fh, context->subline, length);
 			wrote_something = 1;
 			if (i!=14)
 				write (context->out->fh, encoded_br, encoded_br_length);

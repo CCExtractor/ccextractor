@@ -236,11 +236,11 @@ int spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
 	{
 		if (data->row_used[row])
 		{
-			int len = get_decoder_line_encoded(subline, row, data);
+			int len = get_decoder_line_encoded(context->subline, row, data);
 			// Check for characters that spumux won't parse
 			// null chars will be changed to space
 			// pairs of dashes will be changed to underscores
-			for (unsigned char* ptr = subline; ptr < subline+len; ptr++)
+			for (unsigned char* ptr = context->subline; ptr < context->subline+len; ptr++)
 			{
 				switch (*ptr)
 				{
@@ -261,7 +261,7 @@ int spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
 				mprint("WARNING: Possible Loss of data\n");
 				break;
 			}
-			strncat(str, (const char*)subline, len);
+			strncat(str, (const char*)context->subline, len);
 			strncat(str,"\n",3);
 			str_len = str_len + len + 2;
 		}
