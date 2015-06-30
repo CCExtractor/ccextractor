@@ -179,7 +179,7 @@ int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 	return 0;
 }
 
-void position_sanity_check (void)
+void position_sanity_check (int in)
 {
 #ifdef SANITY_CHECK
 	if (in!=-1)
@@ -212,7 +212,7 @@ int init_file_buffer(void)
 
 void buffered_seek (struct ccx_demuxer *ctx, int offset)
 {
-	position_sanity_check();
+	position_sanity_check(ctx->infd);
 	if (offset<0)
 	{
 		filebuffer_pos+=offset;
@@ -230,7 +230,7 @@ void buffered_seek (struct ccx_demuxer *ctx, int offset)
 	else
 	{
 		buffered_read_opt (ctx, NULL, offset);
-		position_sanity_check();
+		position_sanity_check(ctx->infd);
 	}
 }
 
@@ -287,8 +287,9 @@ void return_to_buffer (unsigned char *buffer, unsigned int bytes)
 LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes)
 {
 	LLONG copied=0;
-	position_sanity_check();
 	time_t seconds=0;
+
+	position_sanity_check(ctx->infd);
 	if (ccx_options.live_stream>0)
 		time (&seconds);
 	if (ccx_options.buffer_input || filebuffer_pos<bytesinbuffer)

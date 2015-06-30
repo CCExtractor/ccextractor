@@ -262,7 +262,7 @@ int atoi_hex (char *s);
 int stringztoms (const char *s, struct ccx_boundary_time *bt);
 
 // general_loop.c
-void position_sanity_check (void);
+void position_sanity_check (int in);
 int init_file_buffer( void );
 LLONG ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);
 LLONG general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);

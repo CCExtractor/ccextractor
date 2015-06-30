@@ -560,7 +560,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 
 		// GET MORE DATA IN BUFFER
 		LLONG i;
-		position_sanity_check();
+		position_sanity_check(ctx->demux_ctx->infd);
 		switch (stream_mode)
 		{
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
@@ -582,7 +582,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 				fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible stream_mode");
 		}
 
-		position_sanity_check();
+		position_sanity_check(ctx->demux_ctx->infd);
 		ctx->demux_ctx->write_es(ctx->demux_ctx, data->buffer+overlap, (size_t) (inbuf-overlap));
 
 		if (i==0)
@@ -709,7 +709,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 			encode_sub(enc_ctx, dec_sub);
 			dec_sub->got_output = 0;
 		}
-		position_sanity_check();
+		position_sanity_check(ctx->demux_ctx->infd);
 	}
 	// Flush remaining HD captions
 	if (has_ccdata_buffered)
