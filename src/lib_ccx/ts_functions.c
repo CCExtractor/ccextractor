@@ -481,190 +481,192 @@ LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data *data)
 	long payload_read = 0;
 	const char *tstr; // Temporary string to describe the stream type
 
-	do
+#define seach_again goto search
+#define done goto search
+search:
+	if( !ts_readstream(ctx) )
+	{   // If we didn't get data, try again
+		mprint("(no CC data extracted)\n");
+		seach_again;
+	}
+	// Handle obscure case where we didn't find a PMT (so
+	// cap_stream_type wasn't set) but the user told us what kind
+	// of stream to look for, so we move forward anyway. This
+	// happens with MPEG-2 sources from ZeeVee HDbridge.
+	if (cap_stream_type == CCX_STREAM_TYPE_UNKNOWNSTREAM && ccx_options.ts_forced_streamtype != CCX_STREAM_TYPE_UNKNOWNSTREAM)
 	{
-		if( !ts_readstream(ctx) )
-		{   // If we didn't get data, try again
-			mprint("(no CC data extracted)\n");
-			continue;
-		}
-		// Handle obscure case where we didn't find a PMT (so
-		// cap_stream_type wasn't set) but the user told us what kind
-		// of stream to look for, so we move forward anyway. This
-		// happens with MPEG-2 sources from ZeeVee HDbridge.
-		if (cap_stream_type == CCX_STREAM_TYPE_UNKNOWNSTREAM && ccx_options.ts_forced_streamtype != CCX_STREAM_TYPE_UNKNOWNSTREAM)
-		{
-			cap_stream_type = ccx_options.ts_forced_streamtype;
-		}
+		cap_stream_type = ccx_options.ts_forced_streamtype;
+	}
 
-		// Separate MPEG-2 and H.264 video streams
-		if( cap_stream_type == CCX_STREAM_TYPE_VIDEO_MPEG2)
-		{
-			ccx_bufferdatatype = CCX_PES;
-			tstr = "MPG";
-		}
-		else if( cap_stream_type == CCX_STREAM_TYPE_VIDEO_H264 )
-		{
-			ccx_bufferdatatype = CCX_H264;
-			tstr = "H.264";
-		}
-		else if ( cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && ccx_dvb_context )
-		{
-			ccx_bufferdatatype = CCX_DVB_SUBTITLE;
-			tstr = "DVB subtitle";
-		}
-		else if ( cap_stream_type == CCX_STREAM_TYPE_UNKNOWNSTREAM && ccx_options.hauppauge_mode)
-		{
-			ccx_bufferdatatype = CCX_HAUPPAGE;
-			tstr = "Hauppage";
-		}
-		else if ( cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && ccx_options.teletext_mode==CCX_TXT_IN_USE)
-		{
-			ccx_bufferdatatype = CCX_TELETEXT;
-			tstr = "Teletext";
-		}
-		else if ( cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && ccx_options.teletext_mode==CCX_TXT_FORBIDDEN)
-		{
-			ccx_bufferdatatype = CCX_PRIVATE_MPEG2_CC;
-			tstr = "CC in private MPEG packet";
-		}
+	// Separate MPEG-2 and H.264 video streams
+	if( cap_stream_type == CCX_STREAM_TYPE_VIDEO_MPEG2)
+	{
+		ccx_bufferdatatype = CCX_PES;
+		tstr = "MPG";
+	}
+	else if( cap_stream_type == CCX_STREAM_TYPE_VIDEO_H264 )
+	{
+		ccx_bufferdatatype = CCX_H264;
+		tstr = "H.264";
+	}
+	else if ( cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && ccx_dvb_context )
+	{
+		ccx_bufferdatatype = CCX_DVB_SUBTITLE;
+		tstr = "DVB subtitle";
+	}
+	else if ( cap_stream_type == CCX_STREAM_TYPE_UNKNOWNSTREAM && ccx_options.hauppauge_mode)
+	{
+		ccx_bufferdatatype = CCX_HAUPPAGE;
+		tstr = "Hauppage";
+	}
+	else if ( cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && ccx_options.teletext_mode==CCX_TXT_IN_USE)
+	{
+		ccx_bufferdatatype = CCX_TELETEXT;
+		tstr = "Teletext";
+	}
+	else if ( cap_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 && ccx_options.teletext_mode==CCX_TXT_FORBIDDEN)
+	{
+		ccx_bufferdatatype = CCX_PRIVATE_MPEG2_CC;
+		tstr = "CC in private MPEG packet";
+	}
+	else
+	{
+		if (ccx_options.ts_forced_cappid)
+			fatal(CCX_COMMON_EXIT_UNSUPPORTED, "Unable to determine stream type of selected PID.");
 		else
-		{
-			if (ccx_options.ts_forced_cappid)
-				fatal(CCX_COMMON_EXIT_UNSUPPORTED, "Unable to determine stream type of selected PID.");
-			else
-				fatal(CCX_COMMON_EXIT_BUG_BUG, "Not reachable!");
-		}
-		// We read a video PES
+			fatal(CCX_COMMON_EXIT_BUG_BUG, "Not reachable!");
+	}
+	// We read a video PES
 
-		if (ctx->capbuf[0] != 0x00 || ctx->capbuf[1] != 0x00 ||
+	if (ctx->capbuf[0] != 0x00 || ctx->capbuf[1] != 0x00 ||
 			ctx->capbuf[2] != 0x01)
-		{
-			// ??? Shouldn't happen. Complain and try again.
-			mprint("Missing PES header!\n");
-			dump(CCX_DMT_GENERIC_NOTICES, ctx->capbuf,256, 0, 0);
-			continue;
-		}
-		unsigned stream_id = ctx->capbuf[3];
+	{
+		// ??? Shouldn't happen. Complain and try again.
+		mprint("Missing PES header!\n");
+		dump(CCX_DMT_GENERIC_NOTICES, ctx->capbuf,256, 0, 0);
+		seach_again;
+	}
+	unsigned stream_id = ctx->capbuf[3];
 
-		if (ccx_options.teletext_mode == CCX_TXT_IN_USE)
-		{
-			if (ccx_options.ts_cappid==0)
-			{ // If here, the user forced teletext mode but didn't supply a PID, and we haven't found it yet.
-				continue;
-			}
-			memcpy(data->buffer+inbuf, ctx->capbuf, ctx->capbuflen);
-			payload_read = ctx->capbuflen;
-			inbuf += ctx->capbuflen;
-			break;
+	if (ccx_options.teletext_mode == CCX_TXT_IN_USE)
+	{
+		if (ccx_options.ts_cappid==0)
+		{ // If here, the user forced teletext mode but didn't supply a PID, and we haven't found it yet.
+			seach_again;
 		}
-		if (ccx_bufferdatatype == CCX_PRIVATE_MPEG2_CC)
+		memcpy(data->buffer+inbuf, ctx->capbuf, ctx->capbuflen);
+		payload_read = ctx->capbuflen;
+		inbuf += ctx->capbuflen;
+		done;
+	}
+	if (ccx_bufferdatatype == CCX_PRIVATE_MPEG2_CC)
+	{
+		dump (CCX_DMT_GENERIC_NOTICES, ctx->capbuf, ctx->capbuflen,0, 1);
+		// Bogus data, so we return something
+		data->buffer[inbuf++] = 0xFA;
+		data->buffer[inbuf++] = 0x80;
+		data->buffer[inbuf++] = 0x80;
+		payload_read += 3;
+		done;
+	}
+	if (ccx_options.hauppauge_mode)
+	{
+		if (haup_capbuflen%12 != 0)
+			mprint ("Warning: Inconsistent Hauppage's buffer length\n");
+		if (!haup_capbuflen)
 		{
-			dump (CCX_DMT_GENERIC_NOTICES, ctx->capbuf, ctx->capbuflen,0, 1);
-			// Bogus data, so we return something
+			// Do this so that we always return something until EOF. This will be skipped.
 			data->buffer[inbuf++] = 0xFA;
 			data->buffer[inbuf++] = 0x80;
 			data->buffer[inbuf++] = 0x80;
 			payload_read += 3;
-			break;
 		}
-		if (ccx_options.hauppauge_mode)
-		{
-			if (haup_capbuflen%12 != 0)
-				mprint ("Warning: Inconsistent Hauppage's buffer length\n");
-			if (!haup_capbuflen)
-			{
-				// Do this so that we always return something until EOF. This will be skipped.
-				data->buffer[inbuf++] = 0xFA;
-				data->buffer[inbuf++] = 0x80;
-				data->buffer[inbuf++] = 0x80;
-				payload_read += 3;
-			}
 
-			for (int i = 0; i<haup_capbuflen; i += 12)
+		for (int i = 0; i<haup_capbuflen; i += 12)
+		{
+			unsigned haup_stream_id = haup_capbuf[i+3];
+			if (haup_stream_id == 0xbd && haup_capbuf[i+4] == 0 && haup_capbuf[i+5] == 6 )
 			{
-				unsigned haup_stream_id = haup_capbuf[i+3];
-				if (haup_stream_id == 0xbd && haup_capbuf[i+4] == 0 && haup_capbuf[i+5] == 6 )
+				// Because I (CFS) don't have a lot of samples for this, for now I make sure everything is like the one I have:
+				// 12 bytes total length, stream id = 0xbd (Private non-video and non-audio), etc
+				if (2 > BUFSIZE - inbuf)
 				{
-					// Because I (CFS) don't have a lot of samples for this, for now I make sure everything is like the one I have:
-					// 12 bytes total length, stream id = 0xbd (Private non-video and non-audio), etc
-					if (2 > BUFSIZE - inbuf)
-					{
-						fatal(CCX_COMMON_EXIT_BUG_BUG,
-								"Remaining buffer (%lld) not enough to hold the 3 Hauppage bytes.\n"
-								"Please send bug report!",
-								BUFSIZE - inbuf);
-					}
-					if (haup_capbuf[i+9]==1 || haup_capbuf[i+9]==2) // Field match. // TODO: If extract==12 this won't work!
-					{
-						if (haup_capbuf[i+9]==1)
-							data->buffer[inbuf++]=4; // Field 1 + cc_valid=1
-						else
-							data->buffer[inbuf++]=5; // Field 2 + cc_valid=1
-						data->buffer[inbuf++]=haup_capbuf[i+10];
-						data->buffer[inbuf++]=haup_capbuf[i+11];
-						payload_read+=3;
-					}
-					/*
-					   if (inbuf>1024) // Just a way to send the bytes to the decoder from time to time, otherwise the buffer will fill up.
-					   break;
-					   else
-					   continue; */
+					fatal(CCX_COMMON_EXIT_BUG_BUG,
+							"Remaining buffer (%lld) not enough to hold the 3 Hauppage bytes.\n"
+							"Please send bug report!",
+							BUFSIZE - inbuf);
 				}
+				if (haup_capbuf[i+9]==1 || haup_capbuf[i+9]==2) // Field match. // TODO: If extract==12 this won't work!
+				{
+					if (haup_capbuf[i+9]==1)
+						data->buffer[inbuf++]=4; // Field 1 + cc_valid=1
+					else
+						data->buffer[inbuf++]=5; // Field 2 + cc_valid=1
+					data->buffer[inbuf++]=haup_capbuf[i+10];
+					data->buffer[inbuf++]=haup_capbuf[i+11];
+					payload_read+=3;
+				}
+				/*
+				   if (inbuf>1024) // Just a way to send the bytes to the decoder from time to time, otherwise the buffer will fill up.
+				   break;
+				   else
+				   continue; */
 			}
-			haup_capbuflen=0;
 		}
+		haup_capbuflen=0;
+	}
 
-		dbg_print(CCX_DMT_VERBOSE, "TS payload start video PES id: %d  len: %ld\n",
-			   stream_id, ctx->capbuflen);
+	dbg_print(CCX_DMT_VERBOSE, "TS payload start video PES id: %d  len: %ld\n",
+			stream_id, ctx->capbuflen);
 
-		int pesheaderlen;
-		int vpesdatalen = read_video_pes_header(ctx, ctx->capbuf, &pesheaderlen, ctx->capbuflen);
+	int pesheaderlen;
+	int vpesdatalen = read_video_pes_header(ctx, ctx->capbuf, &pesheaderlen, ctx->capbuflen);
 
-		if (ccx_bufferdatatype == CCX_DVB_SUBTITLE && !vpesdatalen)
-		{
-			dbg_print(CCX_DMT_VERBOSE, "TS payload is a DVB Subtitle\n");
-			payload_read = ctx->capbuflen;
-			inbuf += payload_read;
-			break;
-		}
+	if (ccx_bufferdatatype == CCX_DVB_SUBTITLE && !vpesdatalen)
+	{
+		dbg_print(CCX_DMT_VERBOSE, "TS payload is a DVB Subtitle\n");
+		payload_read = ctx->capbuflen;
+		inbuf += payload_read;
+		done;
+	}
 
-		if (vpesdatalen < 0)
-		{
-			dbg_print(CCX_DMT_VERBOSE, "Seems to be a broken PES. Terminating file handling.\n");
-			end_of_file = 1;
-			break;
-		}
+	if (vpesdatalen < 0)
+	{
+		dbg_print(CCX_DMT_VERBOSE, "Seems to be a broken PES. Terminating file handling.\n");
+		end_of_file = 1;
+		done;
+	}
 
-		unsigned char *databuf = ctx->capbuf + pesheaderlen;
-		long databuflen = ctx->capbuflen - pesheaderlen;
+	unsigned char *databuf = ctx->capbuf + pesheaderlen;
+	long databuflen = ctx->capbuflen - pesheaderlen;
 
-		// If the package length is unknown vpesdatalen is zero.
-		// If we know he package length, use it to quit
-		dbg_print(CCX_DMT_VERBOSE, "Read PES-%s (databuffer %ld/PES data %d) ",
-			   tstr, databuflen, vpesdatalen);
-		// We got the whole PES in buffer
-		if( vpesdatalen && (databuflen >= vpesdatalen) )
-			dbg_print(CCX_DMT_VERBOSE, " - complete");
-		dbg_print(CCX_DMT_VERBOSE, "\n");
+	// If the package length is unknown vpesdatalen is zero.
+	// If we know he package length, use it to quit
+	dbg_print(CCX_DMT_VERBOSE, "Read PES-%s (databuffer %ld/PES data %d) ",
+			tstr, databuflen, vpesdatalen);
+	// We got the whole PES in buffer
+	if( vpesdatalen && (databuflen >= vpesdatalen) )
+		dbg_print(CCX_DMT_VERBOSE, " - complete");
+	dbg_print(CCX_DMT_VERBOSE, "\n");
 
 
-		if (databuflen > BUFSIZE - inbuf)
-		{
-			fatal(CCX_COMMON_EXIT_BUG_BUG,
-				  "PES data packet (%ld) larger than remaining buffer (%lld).\n"
-				  "Please send bug report!",
-				   databuflen, BUFSIZE - inbuf);
-		}
+	if (databuflen > BUFSIZE - inbuf)
+	{
+		fatal(CCX_COMMON_EXIT_BUG_BUG,
+				"PES data packet (%ld) larger than remaining buffer (%lld).\n"
+				"Please send bug report!",
+				databuflen, BUFSIZE - inbuf);
+	}
 
-		if (!ccx_options.hauppauge_mode) // in Haup mode the buffer is filled somewhere else
-		{
-			memcpy(data->buffer+inbuf, databuf, databuflen);
-			payload_read = databuflen;
-			inbuf += databuflen;
-		}
-		break;
-	} while ( !end_of_file );
+	if (!ccx_options.hauppauge_mode) // in Haup mode the buffer is filled somewhere else
+	{
+		memcpy(data->buffer+inbuf, databuf, databuflen);
+		payload_read = databuflen;
+		inbuf += databuflen;
+	}
+end:
+#undef seach_again
+#undef done
 
 	return payload_read;
 }
