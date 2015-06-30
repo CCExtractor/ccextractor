@@ -200,7 +200,7 @@ void EPG_output_live(struct lib_ccx_ctx *ctx)
 	int c=false, i, j;
 	FILE *f;
 	char *filename, *finalfilename;
-	for(i=0; i<pmt_array_length; i++)
+	for(i=0; i < ctx->demux_ctx->pmt_array_length; i++)
 	{
 		for(j=0; j<ctx->eit_programs[i].array_len; j++)
 			if(ctx->eit_programs[i].epg_events[j].live_output==false)
@@ -216,19 +216,19 @@ void EPG_output_live(struct lib_ccx_ctx *ctx)
 	f = fopen(filename, "w");
 
 	fprintf(f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n\n<tv>\n");
-	for(i=0; i<pmt_array_length; i++)
+	for(i=0; i < ctx->demux_ctx->pmt_array_length; i++)
 	{
-		fprintf(f, "  <channel id=\"%i\">\n", pmt_array[i].program_number);
-		fprintf(f, "    <display-name>%i</display-name>\n", pmt_array[i].program_number);
+		fprintf(f, "  <channel id=\"%i\">\n", ctx->demux_ctx->pmt_array[i].program_number);
+		fprintf(f, "    <display-name>%i</display-name>\n", ctx->demux_ctx->pmt_array[i].program_number);
 		fprintf(f, "  </channel>\n");
 	}
-	for(i=0; i<pmt_array_length; i++)
+	for(i=0; i < ctx->demux_ctx->pmt_array_length; i++)
 	{
 		for(j=0; j<ctx->eit_programs[i].array_len; j++)
 			if(ctx->eit_programs[i].epg_events[j].live_output==false)
 			{
 				ctx->eit_programs[i].epg_events[j].live_output=true;
-				EPG_print_event(&ctx->eit_programs[i].epg_events[j], pmt_array[i].program_number, f);
+				EPG_print_event(&ctx->eit_programs[i].epg_events[j], ctx->demux_ctx->pmt_array[i].program_number, f);
 			}
 	}
 	fprintf(f, "</tv>");
@@ -254,33 +254,33 @@ void EPG_output(struct lib_ccx_ctx *ctx)
 	f = fopen(filename, "w");
 	free(filename);
 	fprintf(f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n\n<tv>\n");
-	for(i=0; i<pmt_array_length; i++)
+	for(i=0; i<ctx->demux_ctx->pmt_array_length; i++)
 	{
-		fprintf(f, "  <channel id=\"%i\">\n", pmt_array[i].program_number);
-		fprintf(f, "    <display-name>%i</display-name>\n", pmt_array[i].program_number);
+		fprintf(f, "  <channel id=\"%i\">\n", ctx->demux_ctx->pmt_array[i].program_number);
+		fprintf(f, "    <display-name>%i</display-name>\n", ctx->demux_ctx->pmt_array[i].program_number);
 		fprintf(f, "  </channel>\n");
 	}
 	if(ccx_options.xmltvonlycurrent==0)
 	{ // print all events
-		for(i=0; i<pmt_array_length; i++)
+		for(i=0; i<ctx->demux_ctx->pmt_array_length; i++)
 		{
 			for(j=0; j<ctx->eit_programs[i].array_len; j++)
-				EPG_print_event(&ctx->eit_programs[i].epg_events[j], pmt_array[i].program_number, f);
+				EPG_print_event(&ctx->eit_programs[i].epg_events[j], ctx->demux_ctx->pmt_array[i].program_number, f);
 		}
 
-		if(pmt_array_length==0) //Stream has no PMT, fall back to unordered events
+		if(ctx->demux_ctx->pmt_array_length==0) //Stream has no PMT, fall back to unordered events
 			for(j=0; j<ctx->eit_programs[TS_PMT_MAP_SIZE].array_len; j++)
 				EPG_print_event(&ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j], ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j].service_id, f);
 	}
 	else
 	{ // print current events only
-		for(i=0; i<pmt_array_length; i++)
+		for(i=0; i<ctx->demux_ctx->pmt_array_length; i++)
 		{
 			ce = ctx->eit_current_events[i];
 			for(j=0; j<ctx->eit_programs[i].array_len; j++)
 			{
 				if(ce==ctx->eit_programs[i].epg_events[j].id)
-					EPG_print_event(&ctx->eit_programs[i].epg_events[j], pmt_array[i].program_number, f);
+					EPG_print_event(&ctx->eit_programs[i].epg_events[j], ctx->demux_ctx->pmt_array[i].program_number, f);
 			}
 		}
 	}
@@ -721,9 +721,9 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 	event.num_ratings=0;
 	event.num_categories=0;
 	event.live_output=false;
-	for (i = 0; i < pmt_array_length; i++)
+	for (i = 0; i < ctx->demux_ctx->pmt_array_length; i++)
 	{
-		if (pmt_array[i].program_number == ctx->ATSC_source_pg_map[source_id])
+		if (ctx->demux_ctx->pmt_array[i].program_number == ctx->ATSC_source_pg_map[source_id])
 			pmt_map=i;
 	}
 
@@ -840,9 +840,9 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 	offset				= payload_start;
 	remaining			= events_length;
 
-	for (i = 0; i < pmt_array_length; i++)
+	for (i = 0; i < ctx->demux_ctx->pmt_array_length; i++)
 	{
-		if (pmt_array[i].program_number == service_id)
+		if (ctx->demux_ctx->pmt_array[i].program_number == service_id)
 			pmt_map=i;
 	}
 

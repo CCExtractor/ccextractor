@@ -13,10 +13,6 @@
 static unsigned pmt_warning_shown=0; // Only display warning once
 void *ccx_dvb_context = NULL;
 
-// PMTs table
-struct PAT_entry pmt_array[TS_PMT_MAP_SIZE] = {{ 0 }};
-uint16_t pmt_array_length = 0;
-
 void process_ccx_mpeg_descriptor (unsigned char *data, unsigned length);
 
 unsigned get_printable_stream_type (unsigned ccx_stream_type)
@@ -54,15 +50,15 @@ unsigned get_printable_stream_type (unsigned ccx_stream_type)
 	return tmp_stream_type;
 }
 
-void clear_PMT_array (void)
+void clear_PMT_array (struct ccx_demuxer *ctx)
 {
-	for (int i=0;i<pmt_array_length;i++)
-		if (pmt_array[i].last_pmt_payload)
+	for (int i=0;i<ctx->pmt_array_length;i++)
+		if (ctx->pmt_array[i].last_pmt_payload)
 		{
-			free (pmt_array[i].last_pmt_payload);
-			pmt_array[i].last_pmt_payload=NULL;
+			free (ctx->pmt_array[i].last_pmt_payload);
+			ctx->pmt_array[i].last_pmt_payload=NULL;
 		}
-	pmt_array_length=0;
+	ctx->pmt_array_length=0;
 }
 int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 {
@@ -75,18 +71,18 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 		return 0;
 
 	/* We keep a copy of all PMTs, even if not interesting to us for now */
-	if (pmt_array[pos].last_pmt_payload!=NULL && len == pmt_array[pos].last_pmt_length &&
-			!memcmp (buf, pmt_array[pos].last_pmt_payload, len))
+	if (ctx->pmt_array[pos].last_pmt_payload!=NULL && len == ctx->pmt_array[pos].last_pmt_length &&
+			!memcmp (buf, ctx->pmt_array[pos].last_pmt_payload, len))
 	{
 		// dbg_print(CCX_DMT_PMT, "PMT hasn't changed, skipping.\n");
 		return 0;
 	}
-	pmt_array[pos].last_pmt_payload=(unsigned char *)
-		realloc (pmt_array[pos].last_pmt_payload, len+8); // Extra 8 in case memcpy copies dwords, etc
-	if (pmt_array[pos].last_pmt_payload==NULL)
+	ctx->pmt_array[pos].last_pmt_payload=(unsigned char *)
+		realloc (ctx->pmt_array[pos].last_pmt_payload, len+8); // Extra 8 in case memcpy copies dwords, etc
+	if (ctx->pmt_array[pos].last_pmt_payload==NULL)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process PMT.\n");
-	memcpy (pmt_array[pos].last_pmt_payload, buf, len);
-	pmt_array[pos].last_pmt_length = len;
+	memcpy (ctx->pmt_array[pos].last_pmt_payload, buf, len);
+	ctx->pmt_array[pos].last_pmt_length = len;
 
 
 	unsigned table_id = buf[0];
@@ -481,7 +477,7 @@ int parse_PAT (struct ccx_demuxer *ctx)
 	if (last_pat_payload!=NULL)
 	{
 		mprint ("Notice: PAT changed, clearing all variables.\n");
-		clear_PMT_array();
+		clear_PMT_array(ctx);
 		if (ccx_options.teletext_mode==CCX_TXT_IN_USE)
 			ccx_options.teletext_mode=CCX_TXT_AUTO_NOT_YET_FOUND;
 		ccx_options.ts_cappid=0;
@@ -574,19 +570,19 @@ int parse_PAT (struct ccx_demuxer *ctx)
 
 		// Having an array for PMTs comes from telxcc.
 		int found=0,j;
-		for (j=0;j<pmt_array_length; j++)
+		for (j=0;j<ctx->pmt_array_length; j++)
 		{
-			if (pmt_array[j].program_number == program_number)
+			if (ctx->pmt_array[j].program_number == program_number)
 			{
 				found=1;
 				break;
 			}
 		}
-		if (!found && pmt_array_length < TS_PMT_MAP_SIZE)
+		if (!found && ctx->pmt_array_length < TS_PMT_MAP_SIZE)
 		{
-			pmt_array[pmt_array_length].program_number=program_number;
-			pmt_array[pmt_array_length].PMT_PID=prog_map_pid;
-			pmt_array_length++;
+			ctx->pmt_array[ctx->pmt_array_length].program_number=program_number;
+			ctx->pmt_array[ctx->pmt_array_length].PMT_PID=prog_map_pid;
+			ctx->pmt_array_length++;
 		}
 	} // for
 

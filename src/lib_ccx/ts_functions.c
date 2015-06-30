@@ -299,12 +299,12 @@ long ts_readstream(struct ccx_demuxer *ctx)
 		}
 
 		int is_pmt=0, j;
-		for (j=0;j<pmt_array_length;j++)
+		for (j=0;j<ctx->pmt_array_length;j++)
 		{
-			if (pmt_array[j].PMT_PID==payload.pid)
+			if (ctx->pmt_array[j].PMT_PID==payload.pid)
 			{
 				if (!ctx->PIDs_seen[payload.pid])
-					dbg_print(CCX_DMT_PAT, "This PID (%u) is a PMT for program %u.\n",payload.pid, pmt_array[j].program_number);
+					dbg_print(CCX_DMT_PAT, "This PID (%u) is a PMT for program %u.\n",payload.pid, ctx->pmt_array[j].program_number);
 				is_pmt=1;
 				break;
 			}

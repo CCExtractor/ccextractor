@@ -208,12 +208,12 @@ static void ccx_demuxer_print_report(struct ccx_demuxer *ctx)
 			printf("Program Count: %d\n", ctx->freport.program_cnt);
 
 			printf("Program Numbers: ");
-			for (int i = 0; i < pmt_array_length; i++)
+			for (int i = 0; i < ctx->pmt_array_length; i++)
 			{
-				if (pmt_array[i].program_number == 0)
+				if (ctx->pmt_array[i].program_number == 0)
 					continue;
 
-				printf("%u ", pmt_array[i].program_number);
+				printf("%u ", ctx->pmt_array[i].program_number);
 			}
 			printf("\n");
 
@@ -389,6 +389,9 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	ctx->parent = parent;
 
 	ctx->fh_out_elementarystream = NULL;
+
+	ctx->pmt_array_length = 0;
+	memset(ctx->pmt_array, 0, sizeof(struct PAT_entry) * TS_PMT_MAP_SIZE);
 	if (cfg->out_elementarystream_filename != NULL)
 	{
 		if ((ctx->fh_out_elementarystream = fopen (cfg->out_elementarystream_filename,"wb"))==NULL)

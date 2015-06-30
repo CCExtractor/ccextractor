@@ -2,7 +2,7 @@
 #define CCX_DEMUXER_H
 #include "ccx_common_constants.h"
 #include "ccx_common_option.h"
-
+#include "ts_functions.h"
 /* Report information */
 #define SUB_STREAMS_CNT 10
 struct ccx_demux_report
@@ -14,6 +14,7 @@ struct ccx_demux_report
 };
 
 #define MAX_PID 65536
+#define TS_PMT_MAP_SIZE 128
 struct ccx_demuxer
 {
 	int m2ts;
@@ -40,6 +41,11 @@ struct ccx_demuxer
 	int global_timestamp_inited;
 
 	int PIDs_seen[MAX_PID];
+
+	// PMTs table
+	struct PAT_entry pmt_array[TS_PMT_MAP_SIZE];
+	uint16_t pmt_array_length;
+
 	struct PMT_entry *PIDs_programs[MAX_PID];
 	struct ccx_demux_report freport;
 
