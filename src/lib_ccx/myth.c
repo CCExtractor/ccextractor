@@ -433,7 +433,7 @@ redo:
 		// url_fskip(ctx, len);
 		goto redo;
 	}
-	position_sanity_check();
+	position_sanity_check(ctx->demux_ctx->infd);
 	if (startcode == PROGRAM_STREAM_MAP)
 	{
 		mpegps_psm_parse(ctx);
@@ -449,7 +449,7 @@ redo:
 	len = get_be16(ctx);
 	pts = AV_NOPTS_VALUE;
 	dts = AV_NOPTS_VALUE;
-	position_sanity_check();
+	position_sanity_check(ctx->demux_ctx->infd);
 	/* stuffing */
 	for(;;) {
 		if (len < 1)
@@ -460,7 +460,7 @@ redo:
 		if (c != 0xff)
 			break;
 	}
-	position_sanity_check();
+	position_sanity_check(ctx->demux_ctx->infd);
 	if ((c & 0xc0) == 0x40) {
 		/* buffer scale & size */
 		if (len < 2)
@@ -469,7 +469,7 @@ redo:
 		c = get_byte(ctx);
 		len -= 2;
 	}
-	position_sanity_check();
+	position_sanity_check(ctx->demux_ctx->infd);
 	if ((c & 0xf0) == 0x20) {
 		if (len < 4)
 			goto redo;
@@ -516,7 +516,7 @@ redo:
 	}
 	else if( c!= 0xf )
 		goto redo;
-	position_sanity_check();
+	position_sanity_check(ctx->demux_ctx->infd);
 	if (startcode == PRIVATE_STREAM_1 /* && psm_es_type[startcode & 0xff] */)
 	{
 		if (len < 1)
@@ -656,7 +656,7 @@ redo:
 	len = mpegps_read_pes_header(ctx, &startcode, &pts, &dts);
 	if (len < 0)
 		return len;
-	position_sanity_check();
+	position_sanity_check(ctx->demux_ctx->infd);
 	/* now find stream */
 	/*
 	   for(i=0;i<s->nb_streams;i++) {
@@ -782,7 +782,7 @@ goto skip; */
 	av.type=type;
 	buffered_read(ctx->demux_ctx,av.data,av.size);
 	ctx->demux_ctx->past+=av.size;
-	position_sanity_check();
+	position_sanity_check(ctx->demux_ctx->infd);
 	// LSEEK (fh,pkt->size,SEEK_CUR);
 	av.pts = pts;
 	av.dts = dts;
@@ -851,7 +851,7 @@ void myth_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 	memset(&dec_sub, 0, sizeof(dec_sub));
 	while (!dec_ctx->processed_enough && (rc=mpegps_read_packet(ctx))==0)
 	{
-		position_sanity_check();
+		position_sanity_check(ctx->demux_ctx->infd);
 		if (av.codec_id==CODEC_ID_MPEG2VBI && av.type==CODEC_TYPE_DATA)
 		{
 			if (!has_vbi)

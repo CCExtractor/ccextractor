@@ -54,6 +54,7 @@ struct encoder_ctx
 	int no_bom;
 	int multiple_files;
 	char *first_input_file;
+	unsigned char *subline; // Temp storage for .srt lines
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048

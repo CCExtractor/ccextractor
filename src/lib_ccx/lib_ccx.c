@@ -248,6 +248,19 @@ static int init_output_ctx(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx)
 			}
 		}
 	}
+	if(ctx->wbout1.filename)
+		ret = detect_input_file_overwrite(ctx, ctx->wbout1.filename);
+	else if (ctx->wbout2.filename)
+		ret = detect_input_file_overwrite(ctx, ctx->wbout2.filename);
+	else
+		ret = 0;
+
+	if(ret)
+	{
+		print_error(opt->gui_mode_reports,
+			"Output filename is same as one of input filenames. Check output parameters.\n");
+		return CCX_COMMON_EXIT_FILE_CREATION_FAILED;
+	}
 
 	return EXIT_OK;
 }
@@ -328,9 +341,17 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->binary_concat = opt->binary_concat;
 	build_parity_table();
 
-	ret = init_output_ctx(opt, ctx);
-	if (ret != EXIT_OK)
-		goto end;
+	if (ctx->cc_to_stdout)
+	{
+		ctx->wbout1.fh=STDOUT_FILENO;
+		mprint ("Sending captions to stdout.\n");
+	}
+	else if (!ccx_options.send_to_srv)
+	{
+		ret = init_output_ctx(opt, ctx);
+		if (ret != EXIT_OK)
+			goto end;
+	}
 	
 	ctx->demux_ctx = init_demuxer(ctx, &opt->demux_cfg);
 

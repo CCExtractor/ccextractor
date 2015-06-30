@@ -39,9 +39,8 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 		ctx->infd = 0;
 		mprint ("\n\r-----------------------------------------------------------------\n");
 		mprint ("\rReading from standard input\n");
-		return 0;
 	}
-	if (ccx_options.input_source == CCX_DS_NETWORK)
+	else if (ccx_options.input_source == CCX_DS_NETWORK)
 	{
 		if (ctx->infd != -1) // Means we have already bound a socket.
 		{
@@ -57,11 +56,10 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 			print_error(ccx_options.gui_mode_reports,"socket() failed.");
 			return CCX_COMMON_EXIT_BUG_BUG;
 		}
-		return 0;
 
 	}
 
-	if (ccx_options.input_source == CCX_DS_TCP)
+	else if (ccx_options.input_source == CCX_DS_TCP)
 	{
 		if (ctx->infd != -1)
 		{
@@ -72,15 +70,17 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 		}
 
 		ctx->infd = start_tcp_srv(ccx_options.tcpport, ccx_options.tcp_password);
-		return 0;
 	}
+	else
+	{
 #ifdef _WIN32
-	ctx->infd = OPEN (file, O_RDONLY | O_BINARY);
+		ctx->infd = OPEN (file, O_RDONLY | O_BINARY);
 #else
-	ctx->infd = OPEN (file, O_RDONLY);
+		ctx->infd = OPEN (file, O_RDONLY);
 #endif
-	if (ctx->infd < 0)
-		return -1;
+		if (ctx->infd < 0)
+			return -1;
+	}
 
 	if (ctx->auto_stream == CCX_SM_AUTODETECT)
 	{

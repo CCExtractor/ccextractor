@@ -202,11 +202,11 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		capitalize (line_number,data);
 		correct_case(line_number,data);
 	}
-	int length = get_decoder_line_basic (subline, line_number, data, context->trim_subs, context->encoding);
+	int length = get_decoder_line_basic (context->subline, line_number, data, context->trim_subs, context->encoding);
 	if (context->encoding!=CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r");
-		dbg_print(CCX_DMT_DECODER_608, "%s\n",subline);
+		dbg_print(CCX_DMT_DECODER_608, "%s\n",context->subline);
 	}
 	if (length>0)
 	{
@@ -283,7 +283,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 			fdprintf(context->out->fh, "%s|", mode);
 		}
 
-		ret = write(context->out->fh, subline, length);
+		ret = write(context->out->fh, context->subline, length);
 		if(ret < length)
 		{
 			mprint("Warning:Loss of data\n");
@@ -541,6 +541,8 @@ int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_
 		ctx->first_input_file = opt->inputfile[0];
 	}
 
+	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);
+
 	write_subtitle_file_header(ctx,out);
 
 	return 0;
@@ -728,8 +730,8 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *cont
 
 			// We don't capitalize here because whatever function that was used
 			// before to write to file already took care of it.
-			int length = get_decoder_line_encoded_for_gui(subline, i, data);
-			fwrite(subline, 1, length, stderr);
+			int length = get_decoder_line_encoded_for_gui(context->subline, i, data);
+			fwrite(context->subline, 1, length, stderr);
 			fwrite("\n", 1, 1, stderr);
 		}
 	}

@@ -29,7 +29,6 @@ struct ccx_s_options ccx_options;
 int main(int argc, char *argv[])
 {
 	struct encoder_ctx enc_ctx[2];
-	struct cc_subtitle dec_sub;
 #ifdef ENABLE_FFMPEG
 	void *ffmpeg_ctx = NULL;
 #endif
@@ -66,7 +65,6 @@ int main(int argc, char *argv[])
 	int show_myth_banner = 0;
 	
 	memset (&cea708services[0],0,CCX_DECODERS_708_MAX_SERVICES*sizeof (int)); // Cannot (yet) be moved because it's needed in parse_parameters.
-	memset (&dec_sub, 0,sizeof(dec_sub));
 
 
 	params_dump(ctx);
@@ -77,10 +75,8 @@ int main(int argc, char *argv[])
 		tlt_config.page = ((tlt_config.page / 100) << 8) | (((tlt_config.page / 10) % 10) << 4) | (tlt_config.page % 10);
 	}
 
-	subline = (unsigned char *) malloc (SUBLINESIZE);
 
-	if (ctx->pesheaderbuf==NULL ||
-		subline==NULL || init_file_buffer() )
+	if (ctx->pesheaderbuf==NULL || init_file_buffer() )
 	{
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");		
 	}
@@ -95,19 +91,6 @@ int main(int argc, char *argv[])
 		/* # DVD format uses one raw file for both fields, while Broadcast requires 2 */
 		if (ccx_options.write_format==CCX_OF_DVDRAW)
 		{
-			if (ctx->cc_to_stdout)
-			{
-				ctx->wbout1.fh=STDOUT_FILENO;
-				mprint ("Sending captions to stdout.\n");
-			}
-			else
-			{
-				mprint ("Creating %s\n", ctx->wbout1.filename);
-				if (detect_input_file_overwrite(ctx, ctx->wbout1.filename)) {
-					fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED,
-						  "Output filename is same as one of input filenames. Check output parameters.\n");
-				}
-			}
 			if (init_encoder(enc_ctx, &ctx->wbout1, &ccx_options))
 				fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 			set_encoder_subs_delay(enc_ctx, ctx->subs_delay);
@@ -116,80 +99,20 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			if (ctx->cc_to_stdout && ccx_options.extract==12)
-				fatal (EXIT_INCOMPATIBLE_PARAMETERS, "You can't extract both fields to stdout at the same time in broadcast mode.");
-			
-			if (ccx_options.write_format == CCX_OF_SPUPNG && ctx->cc_to_stdout)
-				fatal (EXIT_INCOMPATIBLE_PARAMETERS, "You cannot use -out=spupng with -stdout.");
-
 			if (ccx_options.extract!=2)
 			{
-				if (ctx->cc_to_stdout)
-				{
-					ctx->wbout1.fh=STDOUT_FILENO;
-					mprint ("Sending captions to stdout.\n");
-				}
-				else if (!ccx_options.send_to_srv)
-				{
-					if (ctx->wbout1.filename[0]==0)
-					{
-						strcpy (ctx->wbout1.filename,ctx->basefilename);
-						if (ccx_options.extract==12) // _1 only added if there's two files
-							strcat (ctx->wbout1.filename,"_1");
-						strcat (ctx->wbout1.filename,(const char *) ctx->extension);
-					}
-					mprint ("Creating %s\n", ctx->wbout1.filename);
-					if (detect_input_file_overwrite(ctx, ctx->wbout1.filename)) {
-						fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED,
-							  "Output filename is same as one of input filenames. Check output parameters.\n");
-					}
-					ctx->wbout1.fh=open (ctx->wbout1.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
-					if (ctx->wbout1.fh==-1)
-					{
-						fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Failed (errno=%d)\n", errno);
-					}
-				}
 				if (init_encoder(enc_ctx, &ctx->wbout1, &ccx_options))
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 				set_encoder_subs_delay(enc_ctx, ctx->subs_delay);
 				set_encoder_last_displayed_subs_ms(enc_ctx, ctx->last_displayed_subs_ms);
 				set_encoder_startcredits_displayed(enc_ctx, ctx->startcredits_displayed);
 			}
-			if (ccx_options.extract == 12 && ccx_options.write_format != CCX_OF_RAW)
-				mprint (" and \n");
 			if (ccx_options.extract!=1)
 			{
-				if (ctx->cc_to_stdout)
-				{
-					ctx->wbout1.fh=STDOUT_FILENO;
-					mprint ("Sending captions to stdout.\n");
-				}
-				else if(ccx_options.write_format == CCX_OF_RAW
+				if(ccx_options.write_format == CCX_OF_RAW
 					&& ccx_options.extract == 12)
 				{
 					memcpy(&ctx->wbout2, &ctx->wbout1,sizeof(ctx->wbout1));
-				}
-				else if (!ccx_options.send_to_srv)
-				{
-					if (ctx->wbout2.filename[0]==0)
-					{
-						strcpy (ctx->wbout2.filename,ctx->basefilename);
-						if (ccx_options.extract==12) // _ only added if there's two files
-							strcat (ctx->wbout2.filename,"_2");
-						strcat (ctx->wbout2.filename,(const char *) ctx->extension);
-					}
-					mprint ("Creating %s\n", ctx->wbout2.filename);
-					if (detect_input_file_overwrite(ctx, ctx->wbout2.filename)) {
-						fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED,
-							  "Output filename is same as one of input filenames. Check output parameters.\n");
-					}
-					ctx->wbout2.fh=open (ctx->wbout2.filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
-					if (ctx->wbout2.fh==-1)
-					{
-						fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Failed\n");
-					}
-					if(ccx_options.write_format == CCX_OF_RAW)
-						dec_ctx->writedata (BROADCAST_HEADER,sizeof (BROADCAST_HEADER), dec_ctx->context_cc608_field_2, NULL);
 				}
 
 				if( init_encoder(enc_ctx+1, &ctx->wbout2, &ccx_options) )
@@ -285,11 +208,11 @@ int main(int argc, char *argv[])
 				}
                                 else
                                     cc_count = len/3;
-				ret = process_cc_data(dec_ctx, bptr, cc_count, &dec_sub);
-				if(ret >= 0 && dec_sub.got_output)
+				ret = process_cc_data(dec_ctx, bptr, cc_count, &dec_ctx->dec_sub);
+				if(ret >= 0 && dec_ctx->dec_sub.got_output)
 				{
-					encode_sub(enc_ctx, &dec_sub);
-					dec_sub.got_output = 0;
+					encode_sub(enc_ctx, &dec_ctx->dec_sub);
+					dec_ctx->dec_sub.got_output = 0;
 				}
 			}while(1);
 			continue;
@@ -499,21 +422,21 @@ int main(int argc, char *argv[])
 			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT
 			|| ccx_options.write_format==CCX_OF_SPUPNG )
 		{
-			handle_end_of_data(dec_ctx->context_cc608_field_1, &dec_sub);
-			if (dec_sub.got_output)
+			handle_end_of_data(dec_ctx->context_cc608_field_1, &dec_ctx->dec_sub);
+			if (dec_ctx->dec_sub.got_output)
 			{
-				encode_sub(enc_ctx,&dec_sub);
-				dec_sub.got_output = 0;
+				encode_sub(enc_ctx,&dec_ctx->dec_sub);
+				dec_ctx->dec_sub.got_output = 0;
 			}
 		}
 		else if(ccx_options.write_format==CCX_OF_RCWT)
 		{
 			// Write last header and data
-			writercwtdata (dec_ctx, NULL, &dec_sub);
-			if (dec_sub.got_output)
+			writercwtdata (dec_ctx, NULL, &dec_ctx->dec_sub);
+			if (dec_ctx->dec_sub.got_output)
 			{
-				encode_sub(enc_ctx,&dec_sub);
-				dec_sub.got_output = 0;
+				encode_sub(enc_ctx,&dec_ctx->dec_sub);
+				dec_ctx->dec_sub.got_output = 0;
 			}
 		}
 		dinit_encoder(enc_ctx);
@@ -525,11 +448,11 @@ int main(int argc, char *argv[])
 			ccx_options.write_format == CCX_OF_SRT || ccx_options.write_format == CCX_OF_TRANSCRIPT
 			|| ccx_options.write_format == CCX_OF_SPUPNG )
 		{
-			handle_end_of_data(dec_ctx->context_cc608_field_2, &dec_sub);
-			if (dec_sub.got_output)
+			handle_end_of_data(dec_ctx->context_cc608_field_2, &dec_ctx->dec_sub);
+			if (dec_ctx->dec_sub.got_output)
 			{
-				encode_sub(enc_ctx,&dec_sub);
-				dec_sub.got_output = 0;
+				encode_sub(enc_ctx,&dec_ctx->dec_sub);
+				dec_ctx->dec_sub.got_output = 0;
 			}
 		}
 		dinit_encoder(enc_ctx+1);

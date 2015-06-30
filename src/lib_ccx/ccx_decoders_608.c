@@ -48,7 +48,6 @@ const unsigned char pac2_attribs[][3] = // Color, font, ident
 	{ COL_WHITE, FONT_UNDERLINED, 28 }  // 0x5f || 0x7f
 };
 
-unsigned char *subline; // Temp storage for .srt lines
 int new_sentence=1; // Capitalize next letter?
 
 static const char *command_type[] =
@@ -369,9 +368,7 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 	data->channel = context->channel;
 	data->my_field = context->my_field;
 
-	//TODO need to put below functionality in encoder context
-	ret = get_decoder_line_basic (subline, context->cursor_row, data,context->trim_subs,context->encoding);
-	if( ret > 0 )
+	if (!data->empty)
 	{
 		sub->data = (struct eia608_screen *) realloc(sub->data,(sub->nb_data +1) * sizeof(*data));
 		if (!sub->data)
