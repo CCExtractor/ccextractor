@@ -4,6 +4,7 @@ project (CCExtractor)
 
 option (WITH_FFMPEG "Build using FFmpeg demuxer and decoder" OFF)
 option (WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
+option (WITH_SHARING "Build with sharing and translation support" OFF)
 
 #Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
@@ -32,9 +33,9 @@ aux_source_directory (${PROJECT_SOURCE_DIR} SOURCEFILE)
 set (EXTRA_LIBS ${EXTRA_LIBS} ccx)
 set (EXTRA_LIBS ${EXTRA_LIBS} m)
 
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-set (EXTRA_LIBS ${EXTRA_LIBS} iconv)
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	set (EXTRA_LIBS ${EXTRA_LIBS} iconv)
+endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 
 find_package (PkgConfig)
@@ -81,6 +82,22 @@ if (WITH_OCR)
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR ${TESSERACT_CFLAGS} ${LEPTONICA_CFLAGS}")
 endif (WITH_OCR)
+
+########################################################
+# Build with CC sharing and translation support
+########################################################
+
+if (WITH_SHARING)
+  find_package(PkgConfig)
+
+  pkg_check_modules (NANOMSG REQUIRED libnanomsg)
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${NANOMSG_STATIC_LIBRARIES})
+
+  include_directories ("${PROJECT_SOURCE_DIR}/protobuf-c/")
+  aux_source_directory ("${PROJECT_SOURCE_DIR}/protobuf-c/" SOURCEFILE)
+
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_SHARING")
+endif (WITH_SHARING)
 
 add_executable (ccextractor ${SOURCEFILE})
 target_link_libraries (ccextractor ${EXTRA_LIBS})

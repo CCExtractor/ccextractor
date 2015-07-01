@@ -100,6 +100,15 @@ struct ccx_s_options // Options from user parameters
 	struct demuxer_cfg demux_cfg;
 	LLONG subs_delay; // ms to delay (or advance) subs
 	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
+#ifdef ENABLE_SHARING
+	//CC sharing
+	int sharing_enabled;
+	char *sharing_url;
+	//Translating
+	int translate_enabled;
+	char *translate_langs;
+	char *translate_key;
+#endif
 };
 
 extern struct ccx_s_options ccx_options;

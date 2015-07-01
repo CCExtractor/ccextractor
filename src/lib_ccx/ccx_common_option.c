@@ -95,7 +95,13 @@ void init_options (struct ccx_s_options *options)
 	options->input_source=CCX_DS_FILE; // Files, stdin or network
 	options->demux_cfg.auto_stream = CCX_SM_AUTODETECT;
 	options->demux_cfg.m2ts = 0;
-
+#ifdef ENABLE_SHARING
+	options->sharing_enabled = 0;
+	options->sharing_url = NULL;
+	options->translate_enabled = 0;
+	options->translate_key = NULL;
+	options->translate_langs = NULL;
+#endif //ENABLE_SHARING
 	// Prepare time structures
 	init_boundary_time (&options->extraction_start);
 	init_boundary_time (&options->extraction_end);
