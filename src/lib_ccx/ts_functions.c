@@ -74,8 +74,7 @@ int ts_readpacket(struct ccx_demuxer* ctx)
 		{
 			if (result>0)
 				mprint("Premature end of file!\n");
-			end_of_file = 1;
-			return 0;
+			return CCX_EOF;
 		}
 	}
 	buffered_read(ctx, tspacket, 188);
@@ -84,8 +83,7 @@ int ts_readpacket(struct ccx_demuxer* ctx)
 	{
 		if (result>0)
 			mprint("Premature end of file!\n");
-		end_of_file=1;
-		return 0;
+		return CCX_EOF;
 	}
 
 	int printtsprob = 1;
@@ -117,8 +115,7 @@ int ts_readpacket(struct ccx_demuxer* ctx)
 			if (result!=atpos)
 			{
 				mprint("Premature end of file!\n");
-				end_of_file=1;
-				return 0;
+				return CCX_EOF;
 			}
 		}
 		else
@@ -129,8 +126,7 @@ int ts_readpacket(struct ccx_demuxer* ctx)
 			if (result!=tslen)
 			{
 				mprint("Premature end of file!\n");
-				end_of_file=1;
-				return 0;
+				return CCX_EOF;
 			}
 		}
 	}
@@ -208,7 +204,7 @@ int ts_readpacket(struct ccx_demuxer* ctx)
 		dbg_print(CCX_DMT_PARSE, "  No payload in package.\n");
 	}
 	// Store packet information
-	return 1;
+	return CCX_OK;
 }
 
 
@@ -243,6 +239,7 @@ long ts_readstream(struct ccx_demuxer *ctx)
 	long pcount=0; // count all packets until PES is complete
 	int saw_pesstart = 0;
 	int packet_analysis_mode = 0; // If we can't find any packet with CC based from PMT, look for captions in all packets
+	int ret = CCX_OK;
 	ctx->capbuflen = 0;
 
 	do
@@ -252,7 +249,8 @@ long ts_readstream(struct ccx_demuxer *ctx)
 		if( !prev_packet )
 		{
 			// Exit the loop at EOF
-			if ( !ts_readpacket(ctx) )
+			ret = ts_readpacket(ctx);
+			if ( ret != CCX_OK)
 				break;
 		}
 		else
@@ -471,7 +469,7 @@ long ts_readstream(struct ccx_demuxer *ctx)
 	}
 	while( !gotpes ); // gotpes==1 never arrives here because of the breaks
 
-	return ctx->capbuflen;
+	return ret;
 }
 
 
@@ -480,15 +478,15 @@ LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data *data)
 {
 	long payload_read = 0;
 	const char *tstr; // Temporary string to describe the stream type
+	int ret;
 
 #define seach_again goto search
-#define done goto search
+#define done goto end
 search:
-	if( !ts_readstream(ctx) )
-	{   // If we didn't get data, try again
-		mprint("(no CC data extracted)\n");
-		seach_again;
-	}
+	ret = ts_readstream(ctx);
+	if (ret != CCX_OK)
+		done;
+
 	// Handle obscure case where we didn't find a PMT (so
 	// cap_stream_type wasn't set) but the user told us what kind
 	// of stream to look for, so we move forward anyway. This
@@ -633,8 +631,7 @@ search:
 	if (vpesdatalen < 0)
 	{
 		dbg_print(CCX_DMT_VERBOSE, "Seems to be a broken PES. Terminating file handling.\n");
-		end_of_file = 1;
-		done;
+		return CCX_EOF;
 	}
 
 	unsigned char *databuf = ctx->capbuf + pesheaderlen;
