@@ -484,8 +484,6 @@ LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data *data)
 #define done goto end
 search:
 	ret = ts_readstream(ctx);
-	if (ret != CCX_OK)
-		done;
 
 	// Handle obscure case where we didn't find a PMT (so
 	// cap_stream_type wasn't set) but the user told us what kind
@@ -665,5 +663,5 @@ end:
 #undef seach_again
 #undef done
 
-	return payload_read;
+	return ret;
 }

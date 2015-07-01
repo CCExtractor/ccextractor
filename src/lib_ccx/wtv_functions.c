@@ -447,21 +447,25 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 	}
 }
 
-LLONG wtv_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
+int wtv_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 {
 	static struct wtv_chunked_buffer cb;
-    if(firstcall)
-    {
-        init_chunked_buffer(&cb);
-        if(ccx_options.wtvmpeg2)
-            ccx_bufferdatatype=CCX_PES;
-        else
-            ccx_bufferdatatype=CCX_RAW;
-        if(read_header(ctx, &cb)==0)
-            // read_header returned an error
-            // read_header will have printed the error message
-            return 0;
-        firstcall=0;
-    }
-    return get_data(ctx, &cb, data);
+	int ret = CCX_OK;
+	if(firstcall)
+	{
+		init_chunked_buffer(&cb);
+		if(ccx_options.wtvmpeg2)
+			ccx_bufferdatatype=CCX_PES;
+		else
+			ccx_bufferdatatype=CCX_RAW;
+		if(read_header(ctx, &cb)==0)
+			// read_header returned an error
+			// read_header will have printed the error message
+			return 0;
+		firstcall=0;
+	}
+	ret = get_data(ctx, &cb, data);
+
+	if(!ret)
+		return CCX_EOF;
 }

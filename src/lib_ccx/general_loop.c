@@ -42,7 +42,7 @@ int bytesinbuffer; // Number of bytes we actually have on buffer
 extern void *ccx_dvb_context;
 
 // Program stream specific data grabber
-LLONG ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
+int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 {
 	int enough = 0;
 	int payload_read = 0;
@@ -239,12 +239,14 @@ LLONG ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 
 	dbg_print(CCX_DMT_VERBOSE, "PES data read: %d\n", payload_read);
 
+	if(!payload_read)
+		return CCX_EOF;
 	return payload_read;
 }
 
 
-// Returns number of bytes read, or zero for EOF
-LLONG general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
+// Returns number of bytes read, or CCX_OF for EOF
+int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 {
 	int bytesread = 0;
 	int want;
@@ -258,6 +260,10 @@ LLONG general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 		inbuf+=result;
 		bytesread+=(int) result;
 	} while (result!=0 && result!=want);
+
+	if (!bytesread)
+		return CCX_EOF;
+
 	return bytesread;
 }
 
@@ -540,6 +546,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 	struct lib_cc_decode *dec_ctx = NULL;
 	enum ccx_stream_mode_enum stream_mode;
 	struct demuxer_data *data = alloc_demuxer_data();
+	int ret;
 	dec_ctx = ctx->dec_ctx;
 	inbuf = 0; // No data yet
 
@@ -559,24 +566,23 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		pos = 0;
 
 		// GET MORE DATA IN BUFFER
-		LLONG i;
 		position_sanity_check(ctx->demux_ctx->infd);
 		switch (stream_mode)
 		{
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
-				i = general_getmoredata(ctx, data);
+				ret = general_getmoredata(ctx, data);
 				break;
 			case CCX_SM_TRANSPORT:
-				i = ts_getmoredata(ctx->demux_ctx, data);
+				ret = ts_getmoredata(ctx->demux_ctx, data);
 				break;
 			case CCX_SM_PROGRAM:
-				i = ps_getmoredata(ctx, data);
+				ret = ps_getmoredata(ctx, data);
 				break;
 			case CCX_SM_ASF:
-				i = asf_getmoredata(ctx, data);
+				ret = asf_getmoredata(ctx, data);
 				break;
 			case CCX_SM_WTV:
-				i = wtv_getmoredata(ctx, data);
+				ret = wtv_getmoredata(ctx, data);
 				break;
 			default:
 				fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible stream_mode");
@@ -585,7 +591,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		position_sanity_check(ctx->demux_ctx->infd);
 		ctx->demux_ctx->write_es(ctx->demux_ctx, data->buffer+overlap, (size_t) (inbuf-overlap));
 
-		if (i==0)
+		if (ret == CCX_EOF)
 		{
 			end_of_file = 1;
 			memset (data->buffer+inbuf, 0, (size_t) (BUFSIZE-inbuf)); /* Clear buffer at the end */

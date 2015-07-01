@@ -62,7 +62,7 @@ char *guidstr(void *val)
  * When the function is called the next time it continues to read
  * where it stopped before, static variables make sure that parameters
  * are remembered between calls. */
-LLONG asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
+int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 {
 	int enough = 0;
 	int payload_read = 0;
@@ -1039,5 +1039,7 @@ LLONG asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 		// parsebuf is freed automatically when the program closes.
 	}
 
+	if(!payload_read)
+		return CCX_EOF;
 	return payload_read;
 }

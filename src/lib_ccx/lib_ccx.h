@@ -189,8 +189,8 @@ int stringztoms (const char *s, struct ccx_boundary_time *bt);
 // general_loop.c
 void position_sanity_check (int in);
 int init_file_buffer( void );
-LLONG ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);
-LLONG general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);
+int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);
+int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);
 void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx);
 LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, char *buffer);
 void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
@@ -203,10 +203,10 @@ extern LLONG inbuf;
 extern int ccx_bufferdatatype; // Can be RAW or PES
 
 // asf_functions.c
-LLONG asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);
+int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);
 
 // wtv_functions.c
-LLONG wtv_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);
+int wtv_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);
 
 // avc_functions.c
 LLONG process_avc (struct lib_ccx_ctx *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub);
