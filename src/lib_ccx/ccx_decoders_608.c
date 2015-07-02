@@ -87,7 +87,8 @@ static const char *cc_modes_text[]=
 	"Pop-Up captions"
 };
 #endif
-const char *color_text[][2]=
+
+const char *color_text[MAX_COLOR][2]=
 {
 	{"white",""},
 	{"green","<font color=\"#00ff00\">"},

@@ -190,8 +190,13 @@ unsigned get_decoder_line_encoded(unsigned char *buffer, int line_num, struct ei
 		{
 			if (changed_font)
 				buffer = close_tag(buffer, tagstack, 'F', &underlined, &italics, &changed_font);
+
 			// Add new font tag
-			buffer += encode_line(buffer, (unsigned char*)color_text[its_col][1]);
+			if ( MAX_COLOR > its_col)
+				buffer += encode_line(buffer, (unsigned char*)color_text[its_col][1]);
+			else
+				ccx_common_logging.log_ftn("WARNING:get_decoder_line_encoded:Invalid Color index Selected %d\n", its_col);
+
 			if (its_col == COL_USERDEFINED)
 			{
 				// The previous sentence doesn't copy the whole

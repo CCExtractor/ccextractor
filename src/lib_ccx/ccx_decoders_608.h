@@ -65,7 +65,9 @@ extern unsigned enc_buffer_used;
 extern unsigned enc_buffer_capacity;
 
 extern int new_sentence;
-extern const char *color_text[][2];
+
+#define MAX_COLOR 10
+extern const char *color_text[MAX_COLOR][2];
 
 typedef enum ccx_decoder_608_color_code
 {
