@@ -405,17 +405,34 @@ int write_section(struct lib_ccx_ctx *ctx, struct ts_payload *payload, unsigned 
 	if (in_error) 
 		return 0; 
 	if (payload->pesstart)
-	{		
-		memcpy(payload->section_buf, buf, size);
-		payload->section_index = size;
-		payload->section_size = -1;
+	{
+		if (size <= 0xFFF + 3)
+		{
+			memcpy(payload->section_buf, buf, size);
+			payload->section_index = size;
+			payload->section_size = -1;
+		}
+		else
+		{
+			mprint("Invalid section buffer size %d \n", size);
+			return 0;
+		}
 	}
 	else
 	{
-		memcpy(payload->section_buf + payload->section_index, buf, size);
-		payload->section_index += size;
+		if ( (payload->section_index + size) < (0xFFF + 3))
+		{
+			memcpy(payload->section_buf + payload->section_index, buf, size);
+			payload->section_index += size;
+		}
+		else
+		{
+			mprint("Invalid section buffer size %d section index %d\n", size, payload->section_index);
+			return 0;
+		}
 
 	}
+
 	if(payload->section_size == -1 && payload->section_index >= 3)
 		payload->section_size = (RB16(payload->section_buf + 1) & 0xfff) + 3 ;
 
