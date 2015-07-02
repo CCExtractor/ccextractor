@@ -115,7 +115,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 		return 0;
 	}
 	buf += 12 + pi_length;
-	len = tspacket+188-buf;
+	len -= (12 + pi_length);
 
 	unsigned stream_data = section_length - 9 - pi_length - 4; // prev. bytes and CRC
 

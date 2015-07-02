@@ -239,7 +239,7 @@ long ts_readstream(struct ccx_demuxer *ctx)
 	long pcount=0; // count all packets until PES is complete
 	int saw_pesstart = 0;
 	int packet_analysis_mode = 0; // If we can't find any packet with CC based from PMT, look for captions in all packets
-	int ret = CCX_OK;
+	int ret = CCX_EAGAIN;
 	ctx->capbuflen = 0;
 
 	do
@@ -480,10 +480,14 @@ LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data *data)
 	const char *tstr; // Temporary string to describe the stream type
 	int ret;
 
-#define seach_again goto search
+#define search_again goto search
 #define done goto end
 search:
 	ret = ts_readstream(ctx);
+	if(ret == CCX_EAGAIN)
+		search_again;
+	else if (ret == CCX_EOF && !ctx->capbuflen)
+		done;
 
 	// Handle obscure case where we didn't find a PMT (so
 	// cap_stream_type wasn't set) but the user told us what kind
@@ -540,7 +544,7 @@ search:
 		// ??? Shouldn't happen. Complain and try again.
 		mprint("Missing PES header!\n");
 		dump(CCX_DMT_GENERIC_NOTICES, ctx->capbuf,256, 0, 0);
-		seach_again;
+		search_again;
 	}
 	unsigned stream_id = ctx->capbuf[3];
 
@@ -548,7 +552,7 @@ search:
 	{
 		if (ccx_options.ts_cappid==0)
 		{ // If here, the user forced teletext mode but didn't supply a PID, and we haven't found it yet.
-			seach_again;
+			search_again;
 		}
 		memcpy(data->buffer+inbuf, ctx->capbuf, ctx->capbuflen);
 		payload_read = ctx->capbuflen;
@@ -660,7 +664,7 @@ search:
 		inbuf += databuflen;
 	}
 end:
-#undef seach_again
+#undef search_again
 #undef done
 
 	return ret;
