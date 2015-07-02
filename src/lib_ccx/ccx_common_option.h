@@ -76,7 +76,8 @@ struct ccx_s_options // Options from user parameters
 	LLONG debug_mask; // dbg_print will use this mask to print or ignore different types
 	LLONG debug_mask_on_debug; // If we're using temp_debug to enable/disable debug "live", this is the mask when temp_debug=1
 	unsigned ts_autoprogram ; // Try to find a stream with captions automatically (no -pn needed)
-	unsigned ts_cappid ; // PID for stream that holds caption information
+	unsigned ts_cappids[128]; // PID for stream that holds caption information
+	int nb_ts_cappid;
 	unsigned ts_forced_cappid ; // If 1, never mess with the selected PID
 	unsigned ts_forced_program; // Specific program to process in TS files, if ts_forced_program_selected==1
 	unsigned ts_forced_program_selected;

@@ -323,7 +323,7 @@ long ts_readstream(struct ccx_demuxer *ctx)
 				if(write_section(ctx->parent, &payload,payload.start,(tspacket + 188 ) - payload.start,j))
 					gotpes=1; // Signals that something changed and that we must flush the buffer
 			}
-			if (payload.pid==pmtpid && ccx_options.ts_cappid==0 && ccx_options.investigate_packets) // It was our PMT yet we don't have a PID to get data from
+			if (payload.pid==pmtpid && ccx_options.nb_ts_cappid == 0 && ccx_options.investigate_packets) // It was our PMT yet we don't have a PID to get data from
 				packet_analysis_mode=1;
 
 			continue;
@@ -370,7 +370,7 @@ long ts_readstream(struct ccx_demuxer *ctx)
 		}
 
 		// No caption stream PID defined yet, continue searching.
-		if ( !ccx_options.ts_cappid )
+		if ( !ccx_options.nb_ts_cappid )
 		{
 			if (!packet_analysis_mode)
 				dbg_print(CCX_DMT_PARSE, "Packet (pid %u) skipped - no stream with captions identified yet.\n",
@@ -407,7 +407,7 @@ long ts_readstream(struct ccx_demuxer *ctx)
 
 		// Check for PID with captions. Note that in Hauppauge mode we also process the video stream because
 		// we need the timing from its PES header, which isn't included in Hauppauge's packets
-		if( payload.pid == ccx_options.ts_cappid)
+		if( payload.pid == ccx_options.ts_cappids[0])
 		{   // Now we got a payload
 
 			// Video PES start
@@ -550,7 +550,7 @@ search:
 
 	if (ccx_options.teletext_mode == CCX_TXT_IN_USE)
 	{
-		if (ccx_options.ts_cappid==0)
+		if (ccx_options.nb_ts_cappid==0)
 		{ // If here, the user forced teletext mode but didn't supply a PID, and we haven't found it yet.
 			search_again;
 		}

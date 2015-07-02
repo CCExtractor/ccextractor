@@ -1340,7 +1340,8 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-datapid")==0 && i<argc-1)
 		{
-			opt->ts_cappid = atoi_hex(argv[i+1]);
+			opt->ts_cappids[opt->nb_ts_cappid] = atoi_hex(argv[i+1]);
+			opt->nb_ts_cappid++;
 			opt->ts_forced_cappid=1;
 			i++;
 			continue;

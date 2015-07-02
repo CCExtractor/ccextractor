@@ -75,7 +75,8 @@ void init_options (struct ccx_s_options *options)
 	options->debug_mask=CCX_DMT_GENERIC_NOTICES; // dbg_print will use this mask to print or ignore different types
 	options->debug_mask_on_debug=CCX_DMT_VERBOSE; // If we're using temp_debug to enable/disable debug "live", this is the mask when temp_debug=1
 	options->ts_autoprogram =0; // Try to find a stream with captions automatically (no -pn needed)
-	options->ts_cappid = 0; // PID for stream that holds caption information
+	options->ts_cappids[0] = 0; // PID for stream that holds caption information
+	options->nb_ts_cappid = 0;
 	options->ts_forced_cappid = 0; // If 1, never mess with the selected PID
 	options->ts_forced_program=0; // Specific program to process in TS files, if ts_forced_program_selected==1
 	options->ts_forced_program_selected=0;

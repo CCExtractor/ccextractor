@@ -66,7 +66,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 	int ret = 0;
 	unsigned char desc_len = 0;
 
-	if ((ccx_options.ts_forced_cappid || (ccx_options.teletext_mode==CCX_TXT_IN_USE && ccx_options.ts_cappid)) &&
+	if ((ccx_options.ts_forced_cappid || (ccx_options.teletext_mode==CCX_TXT_IN_USE && ccx_options.ts_cappids[0])) &&
 			cap_stream_type!=CCX_STREAM_TYPE_UNKNOWNSTREAM) // Already know what we need, skip
 		return 0;
 
@@ -249,14 +249,15 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 		/*if(!ES_info_length)
 		  continue; */
 
-		if (ccx_options.ts_cappid==0 && ccx_stream_type==ccx_options.ts_datastreamtype) // Found a stream with the type the user wants
+		if (ccx_options.nb_ts_cappid == 0 && ccx_stream_type==ccx_options.ts_datastreamtype) // Found a stream with the type the user wants
 		{
 			ccx_options.ts_forced_cappid=1;
-			ccx_options.ts_cappid = newcappid = elementary_PID;
+			ccx_options.ts_cappids[0] = newcappid = elementary_PID;
+			ccx_options.nb_ts_cappid++;
 			cap_stream_type=CCX_STREAM_TYPE_UNKNOWNSTREAM;
 		}
 		if(IS_FEASIBLE(ccx_options.codec,ccx_options.nocodec,CCX_CODEC_DVB) &&
-				!ccx_options.ts_cappid &&
+				!ccx_options.nb_ts_cappid &&
 				ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 &&
 				ES_info_length  )
 		{
@@ -282,7 +283,8 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 					ccx_dvb_context = dvbsub_init_decoder(&cnf);
 					if (ccx_dvb_context == NULL)
 						break;
-					ccx_options.ts_cappid = newcappid = elementary_PID;
+					ccx_options.ts_cappids[0] = newcappid = elementary_PID;
+					ccx_options.nb_ts_cappid++;
 					cap_stream_type = newcap_stream_type = ccx_stream_type;
 					max_dif = 30;
 				}
@@ -290,7 +292,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 		}
 
 		if (IS_FEASIBLE(ccx_options.codec,ccx_options.nocodec,CCX_CODEC_TELETEXT) && (ccx_options.teletext_mode==CCX_TXT_AUTO_NOT_YET_FOUND ||
-					(ccx_options.teletext_mode==CCX_TXT_IN_USE && !ccx_options.ts_cappid)) // Want teletext but don't know the PID yet
+					(ccx_options.teletext_mode==CCX_TXT_IN_USE && !ccx_options.nb_ts_cappid)) // Want teletext but don't know the PID yet
 				&& ES_info_length
 				&& ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2) // MPEG-2 Packetized Elementary Stream packets containing private data
 		{
@@ -304,7 +306,8 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 				telxcc_init(ctx->parent);
 				if (!ccx_options.ts_forced_cappid)
 				{
-					ccx_options.ts_cappid = newcappid = elementary_PID;
+					ccx_options.ts_cappids[0] = newcappid = elementary_PID;
+					ccx_options.nb_ts_cappid++;
 					cap_stream_type = newcap_stream_type = ccx_stream_type;
 				}
 				ccx_options.teletext_mode =CCX_TXT_IN_USE;
@@ -320,14 +323,15 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 			unsigned descriptor_tag = buf[i + 5];
 			if (descriptor_tag == 0x45)
 			{
-				ccx_options.ts_cappid = newcappid = elementary_PID;
+				ccx_options.ts_cappids[0] = newcappid = elementary_PID;
+				ccx_options.nb_ts_cappid++;
 				cap_stream_type = newcap_stream_type = ccx_stream_type;
 				mprint ("VBI stream ID %u (0x%x) for SID %u (0x%x) - teletext is disabled, will be processed as closed captions.\n",
 						elementary_PID, elementary_PID, program_number, program_number);
 			}
 		}
 
-		if (ccx_options.ts_forced_cappid && elementary_PID==ccx_options.ts_cappid && cap_stream_type==CCX_STREAM_TYPE_UNKNOWNSTREAM)
+		if (ccx_options.ts_forced_cappid && elementary_PID==ccx_options.ts_cappids[0] && cap_stream_type==CCX_STREAM_TYPE_UNKNOWNSTREAM)
 		{
 			// We found the user selected CAPPID in PMT. We make a note of its type and don't
 			// touch anything else
@@ -374,12 +378,13 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 		}
 		return 0;
 	}
-	if (newcappid != ccx_options.ts_cappid && !ccx_options.ts_forced_cappid)
+	if (newcappid != ccx_options.ts_cappids[0] && !ccx_options.ts_forced_cappid)
 	{
-		ccx_options.ts_cappid = newcappid;
+		ccx_options.ts_cappids[0] = newcappid;
+		ccx_options.nb_ts_cappid++;
 		cap_stream_type = newcap_stream_type;
 		mprint ("Decode captions from program %d - %s stream [0x%02x]  -  PID: %u\n",
-				program_number , desc[cap_stream_type], cap_stream_type, ccx_options.ts_cappid);
+				program_number , desc[cap_stream_type], cap_stream_type, ccx_options.ts_cappids[0]);
 		if (ccx_options.ts_autoprogram) // Make our program selection official
 		{
 			pmtpid=payload.pid;
@@ -497,7 +502,8 @@ int parse_PAT (struct ccx_demuxer *ctx)
 		clear_PMT_array(ctx);
 		if (ccx_options.teletext_mode==CCX_TXT_IN_USE)
 			ccx_options.teletext_mode=CCX_TXT_AUTO_NOT_YET_FOUND;
-		ccx_options.ts_cappid=0;
+		ccx_options.ts_cappids[0] = 0;
+		ccx_options.nb_ts_cappid = 0;
 		cap_stream_type=CCX_STREAM_TYPE_UNKNOWNSTREAM;
 		memset (ctx->PIDs_seen,0,sizeof (int) *65536); // Forget all we saw
 		if (!tlt_config.user_page) // If the user didn't select a page...
@@ -647,7 +653,10 @@ int parse_PAT (struct ccx_demuxer *ctx)
 		TS_program_number = ts_prog_num;
 		pmtpid = ts_prog_map_pid;
 		if (!ccx_options.ts_forced_cappid)
-			ccx_options.ts_cappid = 0; // Reset caption stream pid
+		{
+			ccx_options.ts_cappids[0] = 0; // Reset caption stream pid
+			ccx_options.nb_ts_cappid = 0;
+		}
 		// If we have data flush it
 		if( ctx->capbuflen > 0 )
 			gotpes = 1;
