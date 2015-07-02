@@ -611,7 +611,7 @@ void usage (void)
 	mprint (" -investigate_packets: If no CC packets are detected based on the PMT, try\n");
 	mprint ("                       to find data in all packets by scanning.\n");
 #ifdef ENABLE_SHARING
-	mprint ("        -sharingdebug: Print extracted CC sharing service messages\n");
+	mprint ("       -sharing-debug: Print extracted CC sharing service messages\n");
 #endif //ENABLE_SHARING
 	mprint ("\n");
 
@@ -663,8 +663,8 @@ void usage (void)
 	mprint ("\n");
 #ifdef ENABLE_SHARING
 	mprint ("Sharing extracted captions via TCP:\n");
-	mprint ("      -enable-sharing: Enables realtime sharing of extracted closed captions\n");
-	mprint ("         -sharing-url: Set url for sharing service in zeroMQ format(default tcp://*:3269)\n");
+	mprint ("      -enable-sharing: Enables real-time sharing of extracted captions\n");
+	mprint ("         -sharing-url: Set url for sharing service in nanomsg format. Default: \"tcp://*:3269\"\n");
 	mprint ("\n");
 
 	mprint ("CCTranslate application integration:\n");
@@ -1264,7 +1264,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			continue;
 		}
 #ifdef ENABLE_SHARING
-		if (strcmp (argv[i],"-sharingdebug")==0)
+		if (strcmp (argv[i],"-sharing-debug")==0)
 		{
 			opt->debug_mask |= CCX_DMT_SHARE;
 			continue;
