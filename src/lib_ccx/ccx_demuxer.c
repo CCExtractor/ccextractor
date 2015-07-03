@@ -386,6 +386,7 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	ctx->print_cfg = ccx_demuxer_print_cfg;
 	ctx->print_report = ccx_demuxer_print_report;
 	ctx->write_es = ccx_demuxer_write_es;
+	ctx->hauppauge_warning_shown = 0;
 	ctx->parent = parent;
 
 	ctx->fh_out_elementarystream = NULL;
