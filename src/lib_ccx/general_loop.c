@@ -719,7 +719,14 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 	}
 	// Flush remaining HD captions
 	if (has_ccdata_buffered)
+	{
 		process_hdcc(ctx, dec_sub);
+		if (dec_sub->got_output)
+		{
+			encode_sub(enc_ctx, dec_sub);
+			dec_sub->got_output = 0;
+		}
+	}
 
 	if (ctx->total_past!=ctx->total_inputsize && ctx->binary_concat && !dec_ctx->processed_enough)
 	{
