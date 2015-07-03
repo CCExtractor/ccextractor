@@ -1,9 +1,0 @@
-message pb_sub_entry {
-    required int32 eos = 1;
-    required string stream_name = 2;
-    optional int64 counter = 3;
-    optional int64 start_time = 4;
-    optional int64 end_time = 5;
-    optional int64 lines_count = 6;
-    repeated string lines = 7;
-}
