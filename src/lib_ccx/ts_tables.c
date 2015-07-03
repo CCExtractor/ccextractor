@@ -1,10 +1,3 @@
-/* Process Program Map Table - The PMT contains a list of streams in a program.
-   Input: pos => Index in the PAT array
-   Returns: Changes in the selected PID=1, No changes=0, if changes then if the
-   buffer had anything it should be flushed.
-   PMT specs: ISO13818-1 / table 2-28
-   */
-
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "dvb_subtitle_decoder.h"
@@ -60,6 +53,13 @@ void clear_PMT_array (struct ccx_demuxer *ctx)
 		}
 	ctx->pmt_array_length=0;
 }
+/* Process Program Map Table - The PMT contains a list of streams in a program.
+   Input: pos => Index in the PAT array
+   Returns: Changes in the selected PID=1, No changes=0, if changes then if the
+   buffer had anything it should be flushed.
+   PMT specs: ISO13818-1 / table 2-28
+   */
+
 int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 {
 	int must_flush=0;
