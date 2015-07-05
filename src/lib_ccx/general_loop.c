@@ -590,9 +590,11 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		if (ret == CCX_EOF)
 		{
 			end_of_file = 1;
-			memset (data->buffer+data->windex, 0, (size_t) (BUFSIZE-data->windex)); /* Clear buffer at the end */
+			if(data->windex)
+				memset (data->buffer+data->windex, 0, (size_t) (BUFSIZE-data->windex)); /* Clear buffer at the end */
+			else
+				break;
 		}
-
 
 		LLONG got; // Means 'consumed' from buffer actually
 
@@ -604,30 +606,27 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 			if (pts_set)
 				set_fts(); // Try to fix timing from TS data
 		}
-#if 0
-		else if(ccx_bufferdatatype == CCX_DVB_SUBTITLE)
+		else if(data->bufferdatatype == CCX_DVB_SUBTITLE)
 		{
-			dvbsub_decode(ccx_dvb_context, data->buffer + 2, inbuf, dec_sub);
+			dvbsub_decode(ccx_dvb_context, data->buffer + 2, data->windex - 2, dec_sub);
 			set_fts();
-			got = inbuf;
+			got = data->windex;
 		}
-#endif
 		else if (data->bufferdatatype == CCX_PES)
 		{
 			got = process_m2v (ctx, data->buffer, data->len, dec_sub);
 		}
-#if 0
-		else if (ccx_bufferdatatype == CCX_TELETEXT)
+		else if (data->bufferdatatype == CCX_TELETEXT)
 		{
 			// Dispatch to Petr Kutalek 's telxcc.
-			tlt_process_pes_packet (ctx, data->buffer, (uint16_t) inbuf, dec_sub);
-			got = inbuf;
+			tlt_process_pes_packet (ctx, data->buffer, data->windex, dec_sub);
+			got = data->windex;
 		}
-		else if (ccx_bufferdatatype == CCX_PRIVATE_MPEG2_CC)
+		else if (data->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 		{
-			got = inbuf; // Do nothing. Still don't know how to process it
+			got = data->windex; // Do nothing. Still don't know how to process it
 		}
-		else if (ccx_bufferdatatype == CCX_RAW) // Raw two byte 608 data from DVR-MS/ASF
+		else if (data->bufferdatatype == CCX_RAW) // Raw two byte 608 data from DVR-MS/ASF
 		{
 			// The asf_getmoredata() loop sets current_pts when possible
 			if (pts_set == 0)
@@ -663,13 +662,12 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 					(unsigned) (current_pts));
 			dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
 
-			got = process_raw(ctx, dec_sub, data->buffer);
+			got = process_raw(ctx, dec_sub, data->buffer, data->windex);
 		}
 		else if (data->bufferdatatype == CCX_H264) // H.264 data from TS file
 		{
-			got = process_avc(ctx, data->buffer, inbuf, dec_sub);
+			got = process_avc(ctx, data->buffer, data->windex, dec_sub);
 		}
-#endif
 		else
 			fatal(CCX_COMMON_EXIT_BUG_BUG, "Unknown data type!");
 
