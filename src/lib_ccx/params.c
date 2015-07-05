@@ -192,7 +192,7 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
 		opt->write_format=CCX_OF_NULL;
 		opt->messages_target=0;
 		opt->print_file_reports=1;
-		opt->ts_autoprogram=1;
+		opt->demux_cfg.ts_autoprogram=1;
 	}
 	else if (strcmp (format,"raw")==0)
 		opt->write_format=CCX_OF_RAW;
@@ -841,11 +841,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			i++;
 			if(!strcmp (argv[i],"teletext"))
 			{
-				opt->codec = CCX_CODEC_TELETEXT;
+				opt->demux_cfg.codec = CCX_CODEC_TELETEXT;
 			}
 			else if(!strcmp (argv[i],"dvbsub"))
 			{
-				opt->codec = CCX_CODEC_DVB;
+				opt->demux_cfg.codec = CCX_CODEC_DVB;
 			}
 			else
 			{
@@ -860,11 +860,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			i++;
 			if(!strcmp (argv[i],"teletext"))
 			{
-				opt->nocodec = CCX_CODEC_TELETEXT;
+				opt->demux_cfg.nocodec = CCX_CODEC_TELETEXT;
 			}
 			else if(!strcmp (argv[i],"dvbsub"))
 			{
-				opt->nocodec = CCX_CODEC_DVB;
+				opt->demux_cfg.nocodec = CCX_CODEC_DVB;
 			}
 			else
 			{
@@ -1057,18 +1057,18 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		{
 			if (i==argc-1 // Means no following argument
 					|| !isanumber (argv[i+1])) // Means is not a number
-				opt->ts_forced_program = (unsigned)-1; // Autodetect
+				opt->demux_cfg.ts_forced_program = -1; // Autodetect
 			else
 			{
-				opt->ts_forced_program=atoi_hex (argv[i+1]);
-				opt->ts_forced_program_selected=1;
+				opt->demux_cfg.ts_forced_program=atoi_hex (argv[i+1]);
+				opt->demux_cfg.ts_forced_program_selected=1;
 				i++;
 			}
 			continue;
 		}
 		if (strcmp (argv[i],"-autoprogram")==0)
 		{
-			opt->ts_autoprogram=1;
+			opt->demux_cfg.ts_autoprogram=1;
 			continue;
 		}
 		if (strcmp (argv[i],"--stream")==0 ||
@@ -1340,21 +1340,20 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-datapid")==0 && i<argc-1)
 		{
-			opt->ts_cappids[opt->nb_ts_cappid] = atoi_hex(argv[i+1]);
-			opt->nb_ts_cappid++;
-			opt->ts_forced_cappid=1;
+			opt->demux_cfg.ts_cappids[opt->demux_cfg.nb_ts_cappid] = atoi_hex(argv[i+1]);
+			opt->demux_cfg.nb_ts_cappid++;
 			i++;
 			continue;
 		}
 		if (strcmp (argv[i],"-datastreamtype")==0 && i<argc-1)
 		{
-			opt->ts_datastreamtype = atoi_hex(argv[i+1]);
+			opt->demux_cfg.ts_datastreamtype = atoi_hex(argv[i+1]);
 			i++;
 			continue;
 		}
 		if (strcmp (argv[i],"-streamtype")==0 && i<argc-1)
 		{
-			opt->ts_forced_streamtype = atoi_hex(argv[i+1]);
+			opt->demux_cfg.ts_forced_streamtype = atoi_hex(argv[i+1]);
 			i++;
 			continue;
 		}
@@ -1363,7 +1362,6 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		{
 			tlt_config.page = atoi_hex(argv[i+1]);
 			tlt_config.user_page = tlt_config.page;
-			opt->teletext_mode=CCX_TXT_IN_USE;
 			i++;
 			continue;
 		}
@@ -1467,14 +1465,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-teletext")==0)
 		{
-			opt->codec = CCX_CODEC_TELETEXT;
-			opt->teletext_mode=CCX_TXT_IN_USE;
+			opt->demux_cfg.codec = CCX_CODEC_TELETEXT;
 			continue;
 		}
 		if (strcmp (argv[i],"-noteletext")==0)
 		{
-			opt->nocodec = CCX_CODEC_TELETEXT;
-			opt->teletext_mode=CCX_TXT_FORBIDDEN;
+			opt->demux_cfg.nocodec = CCX_CODEC_TELETEXT;
 			continue;
 		}
 		/* Custom transcript */
@@ -1609,8 +1605,8 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 		ccx_encoders_helpers_perform_shellsort_words();
 	}
-	if(opt->ts_forced_program != -1)
-		opt->ts_forced_program_selected = 1;
+	if(opt->demux_cfg.ts_forced_program != -1)
+		opt->demux_cfg.ts_forced_program_selected = 1;
 
 	if(opt->output_filename_ch2 != NULL && (opt->extract != 2 || opt->extract != 12) )
 		mprint("WARN: -o2 ignored! you might want -2 or -12 with -o2\n");

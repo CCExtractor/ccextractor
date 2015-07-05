@@ -129,8 +129,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (ccx_options.teletext_mode == CCX_TXT_IN_USE) // Here, it would mean it was forced by user
-		telxcc_init(ctx);
 
 	// Initialize HDTV caption buffer
 	init_hdcc();
@@ -446,9 +444,10 @@ int main(int argc, char *argv[])
 			s1, s2);
 	}
 	dbg_print(CCX_DMT_708, "The 708 decoder was reset [%d] times.\n",resets_708);
+/*
 	if (ccx_options.teletext_mode == CCX_TXT_IN_USE)
 		mprint ( "Teletext decoder: %"PRIu32" packets processed, %"PRIu32" SRT frames written.\n", tlt_packet_counter, tlt_frames_produced);
-
+*/
 	if (dec_ctx->processed_enough)
 	{
 		mprint ("\rNote: Processing was cancelled before all data was processed because\n");

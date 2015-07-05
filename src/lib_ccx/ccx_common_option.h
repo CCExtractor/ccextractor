@@ -10,6 +10,20 @@ struct demuxer_cfg
 	int m2ts; // Regular TS or M2TS
 	enum ccx_stream_mode_enum auto_stream;
 	char *out_elementarystream_filename;
+
+	/* subtitle codec type */
+	enum ccx_code_type codec;
+	enum ccx_code_type nocodec;
+
+	unsigned ts_autoprogram; // Try to find a stream with captions automatically (no -pn needed)
+	unsigned ts_allprogram;
+	unsigned ts_cappids[128]; // PID for stream that holds caption information
+	int nb_ts_cappid;
+	unsigned ts_forced_cappid ; // If 1, never mess with the selected PID
+	int ts_forced_program; // Specific program to process in TS files, if ts_forced_program_selected==1
+	unsigned ts_forced_program_selected;
+	int ts_datastreamtype ; // User WANTED stream type (i.e. use the stream that has this type)
+	unsigned ts_forced_streamtype; // User selected (forced) stream type
 };
 struct ccx_s_options // Options from user parameters
 {
@@ -25,9 +39,6 @@ struct ccx_s_options // Options from user parameters
 
 	ccx_decoder_608_settings settings_608; //  Contains the settings for the 608 decoder.
 
-	/* subtitle codec type */
-	enum ccx_code_type codec;
-	enum ccx_code_type nocodec;
 	/* Credit stuff */
 	char *start_credits_text;
 	char *end_credits_text;
@@ -64,7 +75,6 @@ struct ccx_s_options // Options from user parameters
 	int xmltvliveinterval; // interval in seconds between writting xmltv output files in live mode
 	int xmltvoutputinterval; // interval in seconds between writting xmltv full file output
 	int xmltvonlycurrent; // 0 off 1 on
-	unsigned teletext_mode; // 0=Disabled, 1 = Not found, 2=Found
 	ccx_encoders_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
 	char millis_separator;
 	enum ccx_encoding_type encoding;
@@ -75,14 +85,6 @@ struct ccx_s_options // Options from user parameters
 	char *output_filename_ch2;
 	LLONG debug_mask; // dbg_print will use this mask to print or ignore different types
 	LLONG debug_mask_on_debug; // If we're using temp_debug to enable/disable debug "live", this is the mask when temp_debug=1
-	unsigned ts_autoprogram ; // Try to find a stream with captions automatically (no -pn needed)
-	unsigned ts_cappids[128]; // PID for stream that holds caption information
-	int nb_ts_cappid;
-	unsigned ts_forced_cappid ; // If 1, never mess with the selected PID
-	unsigned ts_forced_program; // Specific program to process in TS files, if ts_forced_program_selected==1
-	unsigned ts_forced_program_selected;
-	int ts_datastreamtype ; // User WANTED stream type (i.e. use the stream that has this type)
-	unsigned ts_forced_streamtype; // User selected (forced) stream type
 	/* Networking */
 	char *udpaddr;
 	unsigned udpport; // Non-zero => Listen for UDP packets on this port, no files.

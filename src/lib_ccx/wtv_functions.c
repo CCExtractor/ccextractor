@@ -366,9 +366,9 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			free(cb->buffer);
 			cb->buffer=NULL;
 			//return one more byte so the final percentage is shown correctly
-			*(data->buffer+inbuf)=0x00;
+			*(data->buffer+data->windex)=0x00;
 			end_of_file=1;
-			inbuf++;
+			data->windex++;
 			return 1;
 		}
 		if( !memcmp(guid, WTV_STREAM2, 16 ) )
@@ -426,8 +426,8 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			dbg_print(CCX_DMT_PARSE, "\nWTV DATA\n");
 			get_sized_buffer(ctx, cb, len);
 			if(cb->buffer==NULL) {end_of_file=1; return 0; }
-			memcpy(data->buffer+inbuf, cb->buffer, len);
-			inbuf+=result;
+			memcpy(data->buffer+data->windex, cb->buffer, len);
+			data->windex+=result;
 			bytesread+=(int) len;
 			frames_since_ref_time++;
 			set_fts();
@@ -454,10 +454,12 @@ int wtv_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 	if(firstcall)
 	{
 		init_chunked_buffer(&cb);
+
 		if(ccx_options.wtvmpeg2)
-			ccx_bufferdatatype=CCX_PES;
+			data->bufferdatatype=CCX_PES;
 		else
-			ccx_bufferdatatype=CCX_RAW;
+			data->bufferdatatype=CCX_RAW;
+
 		if(read_header(ctx, &cb)==0)
 			// read_header returned an error
 			// read_header will have printed the error message

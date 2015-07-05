@@ -107,9 +107,10 @@ void process_hdcc (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 
 	for (int seq=0; seq<SORTBUF; seq++)
 	{
+
 		// We rely on this.
-		if (ccx_bufferdatatype == CCX_H264)
-		reset_cb = 1;
+		//if (ccx_bufferdatatype == CCX_H264)
+		//reset_cb = 1;
 
 		// If fts_now is unchanged we rely on cc block counting,
 		// otherwise reset counters as they get changed by do_cb()

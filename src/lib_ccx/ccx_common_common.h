@@ -28,8 +28,11 @@
 #define CCX_COMMON_EXIT_BUG_BUG                1000
 
 #define CCX_OK					0
+#define CCX_FALSE				0
+#define CCX_TRUE				1
 #define CCX_EAGAIN				-100
 #define CCX_EOF					-101
+#define CCX_EINVAL				-102
 
 // Declarations
 void fdprintf(int fd, const char *fmt, ...);

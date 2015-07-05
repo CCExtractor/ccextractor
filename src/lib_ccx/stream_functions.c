@@ -266,13 +266,14 @@ int read_video_pes_header (struct ccx_demuxer *ctx, unsigned char *nextheader, i
 	}
 	else
 	{
+#if 0
 		if (ccx_bufferdatatype == CCX_DVB_SUBTITLE
 				&& peslen == 1 && nextheader[6] == 0xFF)
 		{
 			*headerlength = sbuflen;
 			return 0;
 		}
-
+#endif
 		if (sbuflen < 9) // We need at least 9 bytes to continue
 		{
 			return -1;

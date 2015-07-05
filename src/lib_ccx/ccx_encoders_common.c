@@ -527,7 +527,7 @@ int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_
 	ctx->startcreditsforatmost = opt->startcreditsforatmost;
 	ctx->endcreditsforatleast = opt->endcreditsforatleast;
 	ctx->endcreditsforatmost = opt->endcreditsforatmost;
-	ctx->teletext_mode = opt->teletext_mode;
+//	ctx->teletext_mode = opt->teletext_mode;
 	ctx->send_to_srv = opt->send_to_srv;
 	ctx->gui_mode_reports = opt->gui_mode_reports;
 	ctx->no_bom = opt->no_bom;

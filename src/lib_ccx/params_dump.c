@@ -33,8 +33,8 @@ void params_dump(struct lib_ccx_ctx *ctx)
 	ctx->demux_ctx->print_cfg(ctx->demux_ctx);
 	mprint ("]\n");
 	mprint ("[Program : ");
-	if (ccx_options.ts_forced_program_selected != 0)
-		mprint ("%u ]",ccx_options.ts_forced_program);
+	if (ccx_options.demux_cfg.ts_forced_program_selected != 0)
+		mprint ("%u ]",ccx_options.demux_cfg.ts_forced_program);
 	else
 		mprint ("Auto ]");
 	mprint (" [Hauppage mode: %s]",ccx_options.hauppauge_mode?"Yes":"No");
@@ -199,7 +199,7 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 
 	ctx->demux_ctx->print_report(ctx->demux_ctx);
 	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
-
+/*
 	if (ccx_bufferdatatype == CCX_PES &&
 			(stream_mode == CCX_SM_TRANSPORT ||
 			 stream_mode == CCX_SM_PROGRAM ||
@@ -211,7 +211,7 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 		printf("Aspect Ratio: %s\n", aspect_ratio_types[ctx->freport.aspect_ratio]);
 		printf("Frame Rate: %s\n", framerates_types[ctx->freport.frame_rate]);
 	}
-
+*/
 	printf("EIA-608: %s\n", Y_N(dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0));
 
 	if (dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0)

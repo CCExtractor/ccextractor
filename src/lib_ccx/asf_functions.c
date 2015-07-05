@@ -498,7 +498,7 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 		// it is not reliable.
 
 		// Now decide where we are going to expect the captions
-		ccx_bufferdatatype = CCX_PES; // Except for NTSC captions
+		data->bufferdatatype = CCX_PES; // Except for NTSC captions
 		if (asf_data_container.StreamProperties.CaptionStreamNumber > 0
 				&& (asf_data_container.StreamProperties.CaptionStreamStyle == 1 ||
 					(asf_data_container.StreamProperties.CaptionStreamStyle == 2 && !ccx_options.wtvconvertfix)))
@@ -511,7 +511,7 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 		{
 			//if (debug_parse)
 			mprint("\nNTSC captions in stream #%d\n\n", asf_data_container.StreamProperties.CaptionStreamNumber);
-			ccx_bufferdatatype = CCX_RAW;
+			data->bufferdatatype = CCX_RAW;
 			asf_data_container.StreamProperties.DecodeStreamNumber = asf_data_container.StreamProperties.CaptionStreamNumber;
 		}
 		else if (asf_data_container.StreamProperties.CaptionStreamNumber > 0 && asf_data_container.StreamProperties.CaptionStreamStyle == 2)
@@ -972,13 +972,13 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 				// Read the data
 				dbg_print(CCX_DMT_PARSE, "Reading Stream #%d data ...\n", asf_data_container.PayloadStreamNumber);
 
-				int want = (long)((BUFSIZE - inbuf)>asf_data_container.PayloadLength ?
-						asf_data_container.PayloadLength : (BUFSIZE - inbuf));
+				int want = (long)((BUFSIZE - data->windex)>asf_data_container.PayloadLength ?
+						asf_data_container.PayloadLength : (BUFSIZE - data->windex));
 				if (want < (long)asf_data_container.PayloadLength)
 					fatal(CCX_COMMON_EXIT_BUG_BUG, "Buffer size to small for ASF payload!\nPlease file a bug report!\n");
-				buffered_read (ctx->demux_ctx, data->buffer+inbuf,want);
+				buffered_read (ctx->demux_ctx, data->buffer+data->windex,want);
 				payload_read+=(int) result;
-				inbuf+=result;
+				data->windex+=result;
 				ctx->demux_ctx->past+=result;
 				if (result != asf_data_container.PayloadLength)
 				{

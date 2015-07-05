@@ -24,8 +24,8 @@ void init_options (struct ccx_s_options *options)
 	options->settings_608.default_color = COL_TRANSPARENT; // Defaults to transparant/no-color.
 
 	/* Select subtitle codec */
-	options->codec = CCX_CODEC_ANY;
-	options->nocodec = CCX_CODEC_NONE;
+	options->demux_cfg.codec = CCX_CODEC_ANY;
+	options->demux_cfg.nocodec = CCX_CODEC_NONE;
 
 	/* Credit stuff */
 	options->start_credits_text=NULL;
@@ -62,7 +62,6 @@ void init_options (struct ccx_s_options *options)
 	options->xmltvliveinterval=10; // interval in seconds between writting xmltv output files in live mode
 	options->xmltvoutputinterval=0; // interval in seconds between writting xmltv full file output
 	options->xmltvonlycurrent=0; // 0 off 1 on
-	options->teletext_mode=CCX_TXT_AUTO_NOT_YET_FOUND; // 0=Disabled, 1 = Not found, 2=Found
 
 	options->transcript_settings = ccx_encoders_default_transcript_settings;
 	options->millis_separator=',';
@@ -74,14 +73,13 @@ void init_options (struct ccx_s_options *options)
 	options->demux_cfg.out_elementarystream_filename=NULL;
 	options->debug_mask=CCX_DMT_GENERIC_NOTICES; // dbg_print will use this mask to print or ignore different types
 	options->debug_mask_on_debug=CCX_DMT_VERBOSE; // If we're using temp_debug to enable/disable debug "live", this is the mask when temp_debug=1
-	options->ts_autoprogram =0; // Try to find a stream with captions automatically (no -pn needed)
-	options->ts_cappids[0] = 0; // PID for stream that holds caption information
-	options->nb_ts_cappid = 0;
-	options->ts_forced_cappid = 0; // If 1, never mess with the selected PID
-	options->ts_forced_program=0; // Specific program to process in TS files, if ts_forced_program_selected==1
-	options->ts_forced_program_selected=0;
-	options->ts_datastreamtype = -1; // User WANTED stream type (i.e. use the stream that has this type)
-	options->ts_forced_streamtype=CCX_STREAM_TYPE_UNKNOWNSTREAM; // User selected (forced) stream type
+	options->demux_cfg.ts_autoprogram =0; // Try to find a stream with captions automatically (no -pn needed)
+	options->demux_cfg.ts_cappids[0] = 0; // PID for stream that holds caption information
+	options->demux_cfg.nb_ts_cappid = 0;
+	options->demux_cfg.ts_forced_program = -1; // Specific program to process in TS files, if ts_forced_program_selected==1
+	options->demux_cfg.ts_forced_program_selected=0;
+	options->demux_cfg.ts_datastreamtype = -1; // User WANTED stream type (i.e. use the stream that has this type)
+	options->demux_cfg.ts_forced_streamtype=CCX_STREAM_TYPE_UNKNOWNSTREAM; // User selected (forced) stream type
 	/* Networking */
 	options->udpaddr = NULL;
 	options->udpport=0; // Non-zero => Listen for UDP packets on this port, no files.

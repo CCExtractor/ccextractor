@@ -13,22 +13,51 @@ struct ccx_demux_report
         unsigned mp4_cc_track_cnt;
 };
 
+struct cap_info
+{
+	int pid;
+	int program_number;
+	enum ccx_stream_type stream; 
+	enum ccx_code_type codec;
+	long capbufsize;
+	unsigned char *capbuf;
+	long capbuflen; // Bytes read in capbuf
+	int saw_pesstart;
+};
+
+struct program_info
+{
+	int pid;
+	int program_number;
+};
 #define MAX_PID 65536
 #define TS_PMT_MAP_SIZE 128
+#define MAX_PROGRAM 5
 struct ccx_demuxer
 {
 	int m2ts;
 	enum ccx_stream_mode_enum stream_mode;
 	enum ccx_stream_mode_enum auto_stream;
 
-	long capbufsize;
-	unsigned char *capbuf;
-	long capbuflen; // Bytes read in capbuf
-
 	// Small buffer to help us with the initial sync
 	unsigned char startbytes[STARTBYTESLENGTH];
 	unsigned int startbytes_pos;
 	int startbytes_avail;
+
+	// User Specified Param
+	int ts_autoprogram;
+	int ts_allprogram;
+	int flag_ts_forced_pn;
+	int ts_datastreamtype;
+
+
+	struct program_info pinfo[MAX_PROGRAM];
+	int nb_program;
+	/* subtitle codec type */
+	enum ccx_code_type codec;
+	enum ccx_code_type nocodec;
+	struct cap_info cinfo[MAX_PID];
+	int nb_cap;
 
 	/* File handles */
 	FILE *fh_out_elementarystream;
@@ -66,10 +95,12 @@ struct ccx_demuxer
 
 struct demuxer_data
 {
-	int program_id;
+	int program_number;
+	enum ccx_bufferdata_type bufferdatatype;
 	unsigned char *buffer;
 	int len;
-	int index;
+	int windex;
+	//int index;
 };
 struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg);
 void ccx_demuxer_delete(struct ccx_demuxer **ctx);
