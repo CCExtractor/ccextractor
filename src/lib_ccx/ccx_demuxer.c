@@ -441,6 +441,7 @@ struct demuxer_data* alloc_demuxer_data(void)
 	struct demuxer_data* data = malloc(sizeof(struct demuxer_data));
 	data->buffer = (unsigned char *) malloc (BUFSIZE);
 	data->windex = 0;
+	data->bufferdatatype = CCX_PES;
 	return data;
 	
 }
