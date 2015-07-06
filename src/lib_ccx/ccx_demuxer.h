@@ -98,6 +98,7 @@ struct demuxer_data
 	int program_number;
 	enum ccx_bufferdata_type bufferdatatype;
 	unsigned char *buffer;
+	int nb_buffer;
 	int len;
 	int windex;
 	//int index;

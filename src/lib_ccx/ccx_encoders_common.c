@@ -145,8 +145,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			}
 			break;
 		case CCX_OF_RCWT: // Write header
-			if (ctx->teletext_mode == CCX_TXT_IN_USE)
-				rcwt_header[7] = 2; // sets file format version
+			rcwt_header[7] = ctx->rcwt_fileformat; // sets file format version
 
 			if (ctx->send_to_srv)
 				net_send_header(rcwt_header, sizeof(rcwt_header));
@@ -527,7 +526,7 @@ int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_
 	ctx->startcreditsforatmost = opt->startcreditsforatmost;
 	ctx->endcreditsforatleast = opt->endcreditsforatleast;
 	ctx->endcreditsforatmost = opt->endcreditsforatmost;
-//	ctx->teletext_mode = opt->teletext_mode;
+	ctx->rcwt_fileformat = 1;
 	ctx->send_to_srv = opt->send_to_srv;
 	ctx->gui_mode_reports = opt->gui_mode_reports;
 	ctx->no_bom = opt->no_bom;
@@ -544,6 +543,12 @@ int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_
 	return 0;
 
 }
+
+void set_encoder_rcwt_fileformat(struct encoder_ctx *ctx, short int format)
+{
+	ctx->rcwt_fileformat = format;
+}
+
 void set_encoder_last_displayed_subs_ms(struct encoder_ctx *ctx, LLONG last_displayed_subs_ms)
 {
 	ctx->last_displayed_subs_ms = last_displayed_subs_ms;

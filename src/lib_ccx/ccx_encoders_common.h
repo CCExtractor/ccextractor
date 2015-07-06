@@ -48,7 +48,7 @@ struct encoder_ctx
 	struct ccx_boundary_time startcreditsnotbefore, startcreditsnotafter; // Where to insert start credits, if possible
 	struct ccx_boundary_time startcreditsforatleast, startcreditsforatmost; // How long to display them?
 	struct ccx_boundary_time endcreditsforatleast, endcreditsforatmost;
-	unsigned int teletext_mode; // 0=Disabled, 1 = Not found, 2=Found
+	unsigned int rcwt_fileformat; //1 =Normal, 2=Teletext
 	unsigned int send_to_srv;
 	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
 	int no_bom;
@@ -108,4 +108,5 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 void set_encoder_last_displayed_subs_ms(struct encoder_ctx *ctx, LLONG last_displayed_subs_ms);
 void set_encoder_subs_delay(struct encoder_ctx *ctx, LLONG subs_delay);
 void set_encoder_startcredits_displayed(struct encoder_ctx *ctx, int startcredits_displayed);
+void set_encoder_rcwt_fileformat(struct encoder_ctx *ctx, short int format);
 #endif

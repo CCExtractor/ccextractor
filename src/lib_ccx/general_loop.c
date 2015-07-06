@@ -620,6 +620,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		{
 			// Dispatch to Petr Kutalek 's telxcc.
 			tlt_process_pes_packet (ctx, data->buffer, data->windex, dec_sub);
+			set_encoder_rcwt_fileformat(enc_ctx, 2);
 			got = data->windex;
 		}
 		else if (data->bufferdatatype == CCX_PRIVATE_MPEG2_CC)

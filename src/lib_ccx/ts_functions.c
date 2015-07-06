@@ -331,14 +331,23 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data *data, s
 		return CCX_OK;
 	}
 	vpesdatalen = read_video_pes_header(ctx, cinfo->capbuf, &pesheaderlen, cinfo->capbuflen);
+	if (vpesdatalen < 0)
+	{
+		dbg_print(CCX_DMT_VERBOSE, "Seems to be a broken PES. Terminating file handling.\n");
+		return CCX_EOF;
+	}
 
 	databuf = cinfo->capbuf + pesheaderlen;
 	databuflen = cinfo->capbuflen - pesheaderlen;
 
 	if (!ccx_options.hauppauge_mode) // in Haup mode the buffer is filled somewhere else
 	{
-		if(data->windex + cinfo->capbuflen >= BUFSIZE)
+		if(data->windex + databuflen >= BUFSIZE)
 		{
+			fatal(CCX_COMMON_EXIT_BUG_BUG,
+				"PES data packet (%ld) larger than remaining buffer (%lld).\n"
+				"Please send bug report!",
+				databuflen, BUFSIZE - data->windex);
 			return CCX_EAGAIN;
 		}
 		memcpy(data->buffer + data->windex, databuf, databuflen);
@@ -347,6 +356,18 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data *data, s
 	}
 	return CCX_OK;
 }
+
+void cinfo_cremation(struct ccx_demuxer *ctx, struct demuxer_data *data)
+{
+	int i;
+	for(i = 0;i < ctx->nb_cap;i++)
+	{
+		copy_capbuf_demux_data(ctx, data, ctx->cinfo + i);
+		freep(&ctx->cinfo[i].capbuf);
+	}
+	ctx->nb_cap = 0;
+}
+
 // Read ts packets until a complete video PES element can be returned.
 // The data is read into capbuf and the function returns the number of
 // bytes read.
@@ -573,6 +594,10 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data *data)
 	}
 	while( !gotpes ); // gotpes==1 never arrives here because of the breaks
 
+	if (ret == CCX_EOF)
+	{
+		cinfo_cremation(ctx, data);
+	}
 	return ret;
 }
 
@@ -666,11 +691,6 @@ search:
 		done;
 	}
 
-	if (vpesdatalen < 0)
-	{
-		dbg_print(CCX_DMT_VERBOSE, "Seems to be a broken PES. Terminating file handling.\n");
-		return CCX_EOF;
-	}
 
 
 	// If the package length is unknown vpesdatalen is zero.
@@ -683,13 +703,6 @@ search:
 	dbg_print(CCX_DMT_VERBOSE, "\n");
 
 
-	if (databuflen > BUFSIZE - inbuf)
-	{
-		fatal(CCX_COMMON_EXIT_BUG_BUG,
-				"PES data packet (%ld) larger than remaining buffer (%lld).\n"
-				"Please send bug report!",
-				databuflen, BUFSIZE - inbuf);
-	}
 
 #endif
 end:
