@@ -337,6 +337,50 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data *data, s
 		return CCX_EOF;
 	}
 
+	if (ccx_options.hauppauge_mode)
+	{
+		if (haup_capbuflen%12 != 0)
+			mprint ("Warning: Inconsistent Hauppage's buffer length\n");
+		if (!haup_capbuflen)
+		{
+			// Do this so that we always return something until EOF. This will be skipped.
+			data->buffer[data->windex++] = 0xFA;
+			data->buffer[data->windex++] = 0x80;
+			data->buffer[data->windex++] = 0x80;
+		}
+
+		for (int i = 0; i<haup_capbuflen; i += 12)
+		{
+			unsigned haup_stream_id = haup_capbuf[i+3];
+			if (haup_stream_id == 0xbd && haup_capbuf[i+4] == 0 && haup_capbuf[i+5] == 6 )
+			{
+				// Because I (CFS) don't have a lot of samples for this, for now I make sure everything is like the one I have:
+				// 12 bytes total length, stream id = 0xbd (Private non-video and non-audio), etc
+				if (2 > BUFSIZE - data->windex)
+				{
+					fatal(CCX_COMMON_EXIT_BUG_BUG,
+							"Remaining buffer (%lld) not enough to hold the 3 Hauppage bytes.\n"
+							"Please send bug report!",
+							BUFSIZE - data->windex);
+				}
+				if (haup_capbuf[i+9]==1 || haup_capbuf[i+9]==2) // Field match. // TODO: If extract==12 this won't work!
+				{
+					if (haup_capbuf[i+9]==1)
+						data->buffer[data->windex++]=4; // Field 1 + cc_valid=1
+					else
+						data->buffer[data->windex++]=5; // Field 2 + cc_valid=1
+					data->buffer[data->windex++]=haup_capbuf[i+10];
+					data->buffer[data->windex++]=haup_capbuf[i+11];
+				}
+				/*
+				   if (inbuf>1024) // Just a way to send the bytes to the decoder from time to time, otherwise the buffer will fill up.
+				   break;
+				   else
+				   continue; */
+			}
+		}
+		haup_capbuflen=0;
+	}
 	databuf = cinfo->capbuf + pesheaderlen;
 	databuflen = cinfo->capbuflen - pesheaderlen;
 
@@ -605,7 +649,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data *data)
 // TS specific data grabber
 LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data *data)
 {
-	long payload_read = 0;
 	const char *tstr; // Temporary string to describe the stream type
 	int ret;
 
@@ -627,52 +670,6 @@ search:
 #if 0
 	unsigned stream_id = ctx->capbuf[3];
 
-	if (ccx_options.hauppauge_mode)
-	{
-		if (haup_capbuflen%12 != 0)
-			mprint ("Warning: Inconsistent Hauppage's buffer length\n");
-		if (!haup_capbuflen)
-		{
-			// Do this so that we always return something until EOF. This will be skipped.
-			data->buffer[inbuf++] = 0xFA;
-			data->buffer[inbuf++] = 0x80;
-			data->buffer[inbuf++] = 0x80;
-			payload_read += 3;
-		}
-
-		for (int i = 0; i<haup_capbuflen; i += 12)
-		{
-			unsigned haup_stream_id = haup_capbuf[i+3];
-			if (haup_stream_id == 0xbd && haup_capbuf[i+4] == 0 && haup_capbuf[i+5] == 6 )
-			{
-				// Because I (CFS) don't have a lot of samples for this, for now I make sure everything is like the one I have:
-				// 12 bytes total length, stream id = 0xbd (Private non-video and non-audio), etc
-				if (2 > BUFSIZE - inbuf)
-				{
-					fatal(CCX_COMMON_EXIT_BUG_BUG,
-							"Remaining buffer (%lld) not enough to hold the 3 Hauppage bytes.\n"
-							"Please send bug report!",
-							BUFSIZE - inbuf);
-				}
-				if (haup_capbuf[i+9]==1 || haup_capbuf[i+9]==2) // Field match. // TODO: If extract==12 this won't work!
-				{
-					if (haup_capbuf[i+9]==1)
-						data->buffer[inbuf++]=4; // Field 1 + cc_valid=1
-					else
-						data->buffer[inbuf++]=5; // Field 2 + cc_valid=1
-					data->buffer[inbuf++]=haup_capbuf[i+10];
-					data->buffer[inbuf++]=haup_capbuf[i+11];
-					payload_read+=3;
-				}
-				/*
-				   if (inbuf>1024) // Just a way to send the bytes to the decoder from time to time, otherwise the buffer will fill up.
-				   break;
-				   else
-				   continue; */
-			}
-		}
-		haup_capbuflen=0;
-	}
 
 	dbg_print(CCX_DMT_VERBOSE, "TS payload start video PES id: %d  len: %ld\n",
 			stream_id, ctx->capbuflen);
