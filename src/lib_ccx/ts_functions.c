@@ -618,10 +618,6 @@ search:
 	else if (ret == CCX_EOF)
 		done;
 /*
-	// Handle obscure case where we didn't find a PMT (so
-	// stream type wasn't set) but the user told us what kind
-	// of stream to look for, so we move forward anyway. This
-	// happens with MPEG-2 sources from ZeeVee HDbridge.
 	if (ctx->ts_cap_stream_type[0] == CCX_STREAM_TYPE_UNKNOWNSTREAM && ccx_options.ts_forced_streamtype != CCX_STREAM_TYPE_UNKNOWNSTREAM)
 	{
 		ctx->ts_cap_stream_type[0] = ccx_options.ts_forced_streamtype;

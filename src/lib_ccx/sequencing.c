@@ -31,7 +31,7 @@ void init_hdcc (void)
 }
 
 // Buffer caption blocks for later sorting/flushing.
-void store_hdcc(struct lib_ccx_ctx *ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now,struct cc_subtitle *sub)
+void store_hdcc(struct lib_ccx_ctx *ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now, struct cc_subtitle *sub)
 {
 	enum ccx_stream_mode_enum stream_mode;
 
@@ -109,8 +109,8 @@ void process_hdcc (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 	{
 
 		// We rely on this.
-		//if (ccx_bufferdatatype == CCX_H264)
-		//reset_cb = 1;
+		if (ctx->dec_ctx->in_bufferdatatype == CCX_H264)
+			reset_cb = 1;
 
 		// If fts_now is unchanged we rely on cc block counting,
 		// otherwise reset counters as they get changed by do_cb()

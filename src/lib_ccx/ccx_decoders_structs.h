@@ -108,6 +108,8 @@ struct lib_cc_decode
 	int extract; // Extract 1st, 2nd or both fields
 	int fullbin; // Disable pruning of padding cc blocks
 	struct cc_subtitle dec_sub;
+	enum ccx_bufferdata_type in_bufferdatatype;
+
 
 	int (*writedata)(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 };
