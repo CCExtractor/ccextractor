@@ -11,10 +11,7 @@ License: GPL 2.0
 #include "ffmpeg_intgr.h"
 #include "ccx_common_option.h"
 #include "ccx_mp4.h"
-
-#ifdef ENABLE_SHARING
 #include "ccx_share.h"
-#endif //ENABLE_SHARING
 
 struct lib_ccx_ctx *signal_ctx;
 void sigint_handler()
@@ -162,25 +159,30 @@ int main(int argc, char *argv[])
 	signal_ctx = ctx;
 	m_signal(SIGINT, sigint_handler);
 #endif
+
 #ifdef ENABLE_SHARING
-	if (ccx_options.translate_enabled && ctx->num_input_files > 1) {
+	if (ccx_options.translate_enabled && ctx->num_input_files > 1) 
+	{
 		mprint("[share] WARNING: simultaneous translation of several input files is not supported yet\n");
 		ccx_options.translate_enabled = 0;
 		ccx_options.sharing_enabled = 0;
 	}
-	if (ccx_options.translate_enabled) {
+	if (ccx_options.translate_enabled) 
+	{
 		mprint("[share] launching translate service\n");
 		ccx_share_launch_translator(ccx_options.translate_langs, ccx_options.translate_key);
 	}
 #endif //ENABLE_SHARING
+
 	while (switch_to_next_file(ctx, 0) && !dec_ctx->processed_enough)
 	{
 		prepare_for_new_file(ctx);
+		
 #ifdef ENABLE_SHARING
-		if (ccx_options.sharing_enabled) {
+		if (ccx_options.sharing_enabled)
 			ccx_share_start(ctx->basefilename);
-		}
 #endif //ENABLE_SHARING
+
 #ifdef ENABLE_FFMPEG
 		close_input_file(ctx);
 		ffmpeg_ctx =  init_ffmpeg(ctx->inputfile[0]);
@@ -400,9 +402,11 @@ int main(int argc, char *argv[])
 		cb_field1 = 0; cb_field2 = 0; cb_708 = 0;
 		fts_now = 0;
 		fts_max = 0;
+		
 #ifdef ENABLE_SHARING
-		if (ccx_options.sharing_enabled) {
-			ccx_share_stream_done();
+		if (ccx_options.sharing_enabled) 
+		{
+			ccx_share_stream_done(ctx->basefilename);
 			ccx_share_stop();
 		}
 #endif //ENABLE_SHARING
