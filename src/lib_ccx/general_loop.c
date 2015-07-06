@@ -614,7 +614,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		}
 		else if (data->bufferdatatype == CCX_PES)
 		{
-			got = process_m2v (ctx, data->buffer, data->len, dec_sub);
+			got = process_m2v (ctx, data->buffer, data->windex, dec_sub);
 		}
 		else if (data->bufferdatatype == CCX_TELETEXT)
 		{
@@ -672,7 +672,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		else
 			fatal(CCX_COMMON_EXIT_BUG_BUG, "Unknown data type!");
 
-		if (got>data->len)
+		if (got>data->windex)
 		{
 			mprint ("BUG BUG\n");
 		}
