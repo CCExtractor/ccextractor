@@ -257,7 +257,7 @@ void init_ts(struct ccx_demuxer *ctx);
 int ts_readpacket(struct ccx_demuxer* ctx);
 long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data *data);
 LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data *data);
-int write_section(struct lib_ccx_ctx *ctx, struct ts_payload *payload, unsigned char*buf, int size, int pos);
+int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char*buf, int size, int pos);
 int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos);
 int parse_PAT (struct ccx_demuxer *ctx);
 void parse_EPG_packet (struct lib_ccx_ctx *ctx);

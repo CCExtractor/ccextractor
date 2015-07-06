@@ -14,8 +14,6 @@ static unsigned char *haup_capbuf = NULL;
 static long haup_capbufsize = 0;
 static long haup_capbuflen = 0; // Bytes read in haup_capbuf
 
-extern void *ccx_dvb_context;
-
 // Descriptions for ts ccx_stream_type
 const char *desc[256];
 

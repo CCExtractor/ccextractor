@@ -477,7 +477,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 	return must_flush;
 }
 
-int write_section(struct lib_ccx_ctx *ctx, struct ts_payload *payload, unsigned char*buf, int size, int pos)
+int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char*buf, int size, int pos)
 {
 	static int in_error = 0;  // If a broken section arrives we will skip everything until the next PES start
 	if (size < 0)
@@ -523,7 +523,7 @@ int write_section(struct lib_ccx_ctx *ctx, struct ts_payload *payload, unsigned 
 
 	if(payload->section_index >= (unsigned)payload->section_size)
 	{
-		if(parse_PMT(ctx->demux_ctx, payload->section_buf,payload->section_size,pos))
+		if(parse_PMT(ctx, payload->section_buf,payload->section_size,pos))
 			return 1;
 	}
 	return 0;
