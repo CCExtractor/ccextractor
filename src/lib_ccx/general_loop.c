@@ -543,6 +543,13 @@ LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, char *buffe
 	return len;
 }
 
+struct demuxer_data *get_data_stream(struct demuxer_data *data, int pid)
+{
+	struct demuxer_data *ptr = data;
+	for(ptr = data; ptr; ptr = ptr->next_stream)
+		if(ptr->stream_pid == pid)
+			return ptr;
+}
 struct demuxer_data *get_best_data(struct demuxer_data *data)
 {
 	struct demuxer_data *ret = NULL;
@@ -552,7 +559,7 @@ struct demuxer_data *get_best_data(struct demuxer_data *data)
 		if(ptr->codec == CCX_CODEC_TELETEXT)
 		{
 			ret =  data;
-			break;
+			goto end;
 		}
 	}
 
@@ -561,7 +568,7 @@ struct demuxer_data *get_best_data(struct demuxer_data *data)
 		if(ptr->codec == CCX_CODEC_DVB)
 		{
 			ret =  data;
-			break;
+			goto end;
 		}
 	}
 
@@ -570,10 +577,10 @@ struct demuxer_data *get_best_data(struct demuxer_data *data)
 		if(ptr->codec == CCX_CODEC_ATSC_CC)
 		{
 			ret =  ptr;
-			break;
+			goto end;
 		}
 	}
-
+end:
 	for(ptr = data; ptr && ret; ptr = ptr->next_stream)
 	{
 		if(ptr->stream_pid != ret->stream_pid)
