@@ -70,6 +70,7 @@ int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream
 	ctx->cinfo[ctx->nb_cap].capbuflen = 0;
 	ctx->cinfo[ctx->nb_cap].capbufsize = 0;
 	ctx->cinfo[ctx->nb_cap].capbuf = NULL;
+	ctx->cinfo[ctx->nb_cap].ignore = 0;
 	ctx->nb_cap++;
 
 	return 0;

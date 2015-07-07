@@ -62,7 +62,7 @@ char *guidstr(void *val)
  * When the function is called the next time it continues to read
  * where it stopped before, static variables make sure that parameters
  * are remembered between calls. */
-int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
+int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 {
 	int enough = 0;
 	int payload_read = 0;
@@ -99,6 +99,10 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 
 	unsigned char *curpos;
 	int64_t getbytes;
+	struct demuxer_data *data;
+
+	*ppdata = alloc_demuxer_data();
+	data = *ppdata;
 
 	// Read Header Object and the Top-level Data Object header only once
 	if(firstcall)

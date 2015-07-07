@@ -94,6 +94,7 @@ void init_options (struct ccx_s_options *options)
 	options->input_source=CCX_DS_FILE; // Files, stdin or network
 	options->demux_cfg.auto_stream = CCX_SM_AUTODETECT;
 	options->demux_cfg.m2ts = 0;
+	options->multiprogram = 0;
 
 	// Prepare time structures
 	init_boundary_time (&options->extraction_start);

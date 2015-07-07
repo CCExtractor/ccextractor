@@ -24,6 +24,7 @@ struct cap_info
 	long capbuflen; // Bytes read in capbuf
 	int saw_pesstart;
 	int prev_counter;
+	int ignore;
 };
 
 struct program_info
@@ -99,12 +100,15 @@ struct ccx_demuxer
 struct demuxer_data
 {
 	int program_number;
+	int stream_pid;
+	enum ccx_code_type codec;
 	enum ccx_bufferdata_type bufferdatatype;
 	unsigned char *buffer;
-	int nb_buffer;
 	int len;
 	int windex;
-	//int index;
+	int ignore;
+	struct demuxer_data *next_stream;
+	struct demuxer_data *next_program;
 };
 struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg);
 void ccx_demuxer_delete(struct ccx_demuxer **ctx);

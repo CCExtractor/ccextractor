@@ -39,7 +39,7 @@ int filebuffer_pos; // Position of pointer relative to buffer start
 int bytesinbuffer; // Number of bytes we actually have on buffer
 
 // Program stream specific data grabber
-int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
+int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 {
 	int enough = 0;
 	int payload_read = 0;
@@ -48,6 +48,10 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 
 	unsigned char nextheader[512]; // Next header in PS
 	int falsepack=0;
+	struct demuxer_data *data;
+
+	*ppdata = alloc_demuxer_data();
+	data = *ppdata;
 
 	// Read and return the next video PES payload
 	do
@@ -243,19 +247,25 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
 
 
 // Returns number of bytes read, or CCX_OF for EOF
-int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
+int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
 {
 	int bytesread = 0;
 	int want;
+	struct demuxer_data *ptr;
+	*data = alloc_demuxer_data();
+	ptr = *data;
 
+	//Dummy program numbers
+	ptr->program_number = 1;
+	ptr->stream_pid = 0x100;
 	do
 	{
-		want = (int) (BUFSIZE-data->windex);
-		buffered_read (ctx->demux_ctx, data->buffer+data->windex,want); // This is a macro.
+		want = (int) (BUFSIZE - ptr->windex);
+		buffered_read (ctx->demux_ctx, ptr->buffer + ptr->windex, want); // This is a macro.
 		// 'result' HAS the number of bytes read
 		ctx->demux_ctx->past=ctx->demux_ctx->past+result;
-		data->windex+=result;
-		bytesread+=(int) result;
+		ptr->windex += result;
+		bytesread += (int) result;
 	} while (result!=0 && result!=want);
 
 	if (!bytesread)
@@ -430,7 +440,7 @@ void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
 {
 	LLONG got;
 	LLONG processed;
-	struct demuxer_data *data = alloc_demuxer_data();
+	struct demuxer_data *data = NULL;
 	struct cc_subtitle *dec_sub = &ctx->dec_ctx->dec_sub;
 
 	current_pts = 90; // Pick a valid PTS time
@@ -444,7 +454,7 @@ void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
 	do
 	{
 
-		got = general_getmoredata(ctx, data);
+		got = general_getmoredata(ctx, &data);
 
 		if (got == 0) // Shortcircuit if we got nothing to process
 			break;
@@ -533,6 +543,45 @@ LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, char *buffe
 	return len;
 }
 
+struct demuxer_data *get_best_data(struct demuxer_data *data)
+{
+	struct demuxer_data *ret = NULL;
+	struct demuxer_data *ptr = data;
+	for(ptr = data; ptr; ptr = ptr->next_stream)
+	{
+		if(ptr->codec == CCX_CODEC_TELETEXT)
+		{
+			ret =  data;
+			break;
+		}
+	}
+
+	for(ptr = data; ptr; ptr = ptr->next_stream)
+	{
+		if(ptr->codec == CCX_CODEC_DVB)
+		{
+			ret =  data;
+			break;
+		}
+	}
+
+	for(ptr = data; ptr; ptr = ptr->next_stream)
+	{
+		if(ptr->codec == CCX_CODEC_ATSC_CC)
+		{
+			ret =  ptr;
+			break;
+		}
+	}
+
+	for(ptr = data; ptr && ret; ptr = ptr->next_stream)
+	{
+		if(ptr->stream_pid != ret->stream_pid)
+			ptr->ignore = 1;
+	}
+
+	return ret;
+}
 
 void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 {
@@ -541,7 +590,10 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 	struct cc_subtitle *dec_sub = &ctx->dec_ctx->dec_sub;
 	struct lib_cc_decode *dec_ctx = NULL;
 	enum ccx_stream_mode_enum stream_mode;
-	struct demuxer_data *data = alloc_demuxer_data();
+	struct demuxer_data *datalist = NULL;
+	struct demuxer_data *data_node = NULL;
+	//struct demuxer_data *data = alloc_demuxer_data();
+
 	int ret;
 	dec_ctx = ctx->dec_ctx;
 
@@ -551,12 +603,16 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 	while (!end_of_file && !dec_ctx->processed_enough)
 	{
 		/* Get rid of the bytes we already processed */
-		overlap=data->windex-pos;
-		if ( pos != 0 ) {
-			// Only when needed as memmove has been seen crashing
-			// for dest==source and n >0
-			memmove (data->buffer,data->buffer+pos,(size_t) (data->windex - pos));
-			data->windex -= pos;
+		if (data_node)
+		{
+			overlap = data_node->windex-pos;
+			if ( pos != 0 )
+			{
+				// Only when needed as memmove has been seen crashing
+				// for dest==source and n >0
+				memmove (data_node->buffer,data_node->buffer+pos,(size_t) (data_node->windex - pos));
+				data_node->windex -= pos;
+			}
 		}
 		pos = 0;
 
@@ -565,32 +621,37 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		switch (stream_mode)
 		{
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
-				ret = general_getmoredata(ctx, data);
+				ret = general_getmoredata(ctx, &datalist);
 				break;
 			case CCX_SM_TRANSPORT:
-				ret = ts_getmoredata(ctx->demux_ctx, data);
+				ret = ts_getmoredata(ctx->demux_ctx, &datalist);
 				break;
 			case CCX_SM_PROGRAM:
-				ret = ps_getmoredata(ctx, data);
+				ret = ps_getmoredata(ctx, &datalist);
 				break;
 			case CCX_SM_ASF:
-				ret = asf_getmoredata(ctx, data);
+				ret = asf_getmoredata(ctx, &datalist);
 				break;
 			case CCX_SM_WTV:
-				ret = wtv_getmoredata(ctx, data);
+				ret = wtv_getmoredata(ctx, &datalist);
 				break;
 			default:
 				fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible stream_mode");
 		}
 
 		position_sanity_check(ctx->demux_ctx->infd);
-		ctx->demux_ctx->write_es(ctx->demux_ctx, data->buffer+overlap, (size_t) (data->windex-overlap));
+		if(!ctx->multiprogram)
+			data_node = get_best_data(datalist);
+
+		if(!data_node)
+			break;
+		ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer + overlap, (size_t) (data_node->windex - overlap));
 
 		if (ret == CCX_EOF)
 		{
 			end_of_file = 1;
-			if(data->windex)
-				memset (data->buffer+data->windex, 0, (size_t) (BUFSIZE-data->windex)); /* Clear buffer at the end */
+			if(data_node->windex)
+				memset (data_node->buffer + data_node->windex, 0, (size_t) (BUFSIZE-data_node->windex)); /* Clear buffer at the end */
 			else
 				break;
 		}
@@ -601,32 +662,32 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 
 		if (ctx->hauppauge_mode)
 		{
-			got = process_raw_with_field(ctx, dec_sub, data->buffer, data->windex);
+			got = process_raw_with_field(ctx, dec_sub, data_node->buffer, data_node->windex);
 			if (pts_set)
 				set_fts(); // Try to fix timing from TS data
 		}
-		else if(data->bufferdatatype == CCX_DVB_SUBTITLE)
+		else if(data_node->bufferdatatype == CCX_DVB_SUBTITLE)
 		{
-			dvbsub_decode(ctx->demux_ctx->codec_ctx, data->buffer + 2, data->windex - 2, dec_sub);
+			dvbsub_decode(ctx->demux_ctx->codec_ctx, data_node->buffer + 2, data_node->windex - 2, dec_sub);
 			set_fts();
-			got = data->windex;
+			got = data_node->windex;
 		}
-		else if (data->bufferdatatype == CCX_PES)
+		else if (data_node->bufferdatatype == CCX_PES)
 		{
-			got = process_m2v (ctx, data->buffer, data->windex, dec_sub);
+			got = process_m2v (ctx, data_node->buffer, data_node->windex, dec_sub);
 		}
-		else if (data->bufferdatatype == CCX_TELETEXT)
+		else if (data_node->bufferdatatype == CCX_TELETEXT)
 		{
 			// Dispatch to Petr Kutalek 's telxcc.
-			tlt_process_pes_packet (ctx->demux_ctx->codec_ctx, data->buffer, data->windex, dec_sub);
+			tlt_process_pes_packet (ctx->demux_ctx->codec_ctx, data_node->buffer, data_node->windex, dec_sub);
 			set_encoder_rcwt_fileformat(enc_ctx, 2);
-			got = data->windex;
+			got = data_node->windex;
 		}
-		else if (data->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
+		else if (data_node->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 		{
-			got = data->windex; // Do nothing. Still don't know how to process it
+			got = data_node->windex; // Do nothing. Still don't know how to process it
 		}
-		else if (data->bufferdatatype == CCX_RAW) // Raw two byte 608 data from DVR-MS/ASF
+		else if (data_node->bufferdatatype == CCX_RAW) // Raw two byte 608 data from DVR-MS/ASF
 		{
 			// The asf_getmoredata() loop sets current_pts when possible
 			if (pts_set == 0)
@@ -662,17 +723,17 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 					(unsigned) (current_pts));
 			dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
 
-			got = process_raw(ctx, dec_sub, data->buffer, data->windex);
+			got = process_raw(ctx, dec_sub, data_node->buffer, data_node->windex);
 		}
-		else if (data->bufferdatatype == CCX_H264) // H.264 data from TS file
+		else if (data_node->bufferdatatype == CCX_H264) // H.264 data from TS file
 		{
-			ctx->dec_ctx->in_bufferdatatype = data->bufferdatatype;
-			got = process_avc(ctx, data->buffer, data->windex, dec_sub);
+			ctx->dec_ctx->in_bufferdatatype = data_node->bufferdatatype;
+			got = process_avc(ctx, data_node->buffer, data_node->windex, dec_sub);
 		}
 		else
 			fatal(CCX_COMMON_EXIT_BUG_BUG, "Unknown data type!");
 
-		if (got>data->windex)
+		if (got>data_node->windex)
 		{
 			mprint ("BUG BUG\n");
 		}

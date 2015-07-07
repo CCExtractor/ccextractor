@@ -142,6 +142,7 @@ struct lib_ccx_ctx
                        0 -> A regular file
                       >0 -> Live stream with a timeout of this value in seconds */
 	int binary_concat; // Disabled by -ve or --videoedited
+	int multiprogram;
 
 	struct ccx_demuxer *demux_ctx;
 };
@@ -187,8 +188,8 @@ int stringztoms (const char *s, struct ccx_boundary_time *bt);
 // general_loop.c
 void position_sanity_check (int in);
 int init_file_buffer( void );
-int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);
-int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);
+int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
+int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
 void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx);
 LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, char *buffer, int len);
 void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
@@ -199,10 +200,10 @@ extern LLONG result;
 extern int end_of_file;
 
 // asf_functions.c
-int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);
+int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 
 // wtv_functions.c
-int wtv_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data);
+int wtv_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 
 // avc_functions.c
 LLONG process_avc (struct lib_ccx_ctx *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub);
@@ -253,8 +254,8 @@ int read_pts_pes(unsigned char*header, int len);
 // ts_functions.c
 void init_ts(struct ccx_demuxer *ctx);
 int ts_readpacket(struct ccx_demuxer* ctx);
-long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data *data);
-LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data *data);
+long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data);
+LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **data);
 int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char*buf, int size, int pos);
 int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos);
 int parse_PAT (struct ccx_demuxer *ctx);

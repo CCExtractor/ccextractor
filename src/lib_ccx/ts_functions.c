@@ -302,30 +302,76 @@ void look_for_caption_data (struct ccx_demuxer *ctx)
 
 }
 
-int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data *data, struct cap_info *cinfo)
+struct demuxer_data *search_or_alloc_demuxer_data_node_by_pid(struct demuxer_data **data, int pid)
+{
+	struct demuxer_data *ptr;
+	struct demuxer_data *sptr;
+	if (!*data)
+	{
+		*data = alloc_demuxer_data();
+		(*data)->program_number = -1;
+		(*data)->stream_pid = pid;
+		(*data)->bufferdatatype = CCX_UNKNOWN;
+		(*data)->windex = 0;
+		(*data)->next_program = NULL;
+		(*data)->next_stream = NULL;
+		return *data;
+	}
+	ptr = *data;
+	do
+	{
+		if(ptr->stream_pid == pid)
+		{
+			return ptr;
+		}
+		sptr = ptr;
+		ptr = ptr->next_stream;
+	} while(ptr);
+
+	sptr->next_stream = alloc_demuxer_data();
+	ptr = sptr->next_stream;
+	ptr->program_number = -1;
+	ptr->stream_pid = pid;
+	ptr->bufferdatatype = CCX_UNKNOWN;
+	ptr->windex = 0;
+	ptr->next_program = NULL;
+	ptr->next_stream = NULL;
+
+	return ptr;
+}
+int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, struct cap_info *cinfo)
 {
 	int vpesdatalen;
 	int pesheaderlen;
 	unsigned char *databuf;
 	long databuflen;
-	
-	data->program_number = cinfo->program_number;
-	data->bufferdatatype = get_buffer_type(cinfo); 
+	struct demuxer_data *ptr;
 
-	if (data->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
+	ptr = search_or_alloc_demuxer_data_node_by_pid(data, cinfo->pid);
+	ptr->program_number = cinfo->program_number;
+	ptr->codec = cinfo->codec;
+	ptr->bufferdatatype = get_buffer_type(cinfo);
+
+	if(ptr->ignore)
+	{
+		cinfo->ignore = 1;
+		return CCX_OK;
+	}
+
+	if (ptr->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 	{
 		dump (CCX_DMT_GENERIC_NOTICES, cinfo->capbuf, cinfo->capbuflen, 0, 1);
 		// Bogus data, so we return something
-		data->buffer[data->windex++] = 0xFA;
-		data->buffer[data->windex++] = 0x80;
-		data->buffer[data->windex++] = 0x80;
+		ptr->buffer[ptr->windex++] = 0xFA;
+		ptr->buffer[ptr->windex++] = 0x80;
+		ptr->buffer[ptr->windex++] = 0x80;
 		return CCX_OK;
 	}
 	if (cinfo->codec == CCX_CODEC_TELETEXT)
 	{
-		memcpy(data->buffer + data->windex, cinfo->capbuf, cinfo->capbuflen);
-		data->len = cinfo->capbuflen + data->windex;
-		data->windex += cinfo->capbuflen;
+		memcpy(ptr->buffer+ ptr->windex, cinfo->capbuf, cinfo->capbuflen);
+		ptr->len = cinfo->capbuflen + ptr->windex;
+		ptr->windex += cinfo->capbuflen;
 		return CCX_OK;
 	}
 	vpesdatalen = read_video_pes_header(ctx, cinfo->capbuf, &pesheaderlen, cinfo->capbuflen);
@@ -342,9 +388,9 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data *data, s
 		if (!haup_capbuflen)
 		{
 			// Do this so that we always return something until EOF. This will be skipped.
-			data->buffer[data->windex++] = 0xFA;
-			data->buffer[data->windex++] = 0x80;
-			data->buffer[data->windex++] = 0x80;
+			ptr->buffer[ptr->windex++] = 0xFA;
+			ptr->buffer[ptr->windex++] = 0x80;
+			ptr->buffer[ptr->windex++] = 0x80;
 		}
 
 		for (int i = 0; i<haup_capbuflen; i += 12)
@@ -354,21 +400,21 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data *data, s
 			{
 				// Because I (CFS) don't have a lot of samples for this, for now I make sure everything is like the one I have:
 				// 12 bytes total length, stream id = 0xbd (Private non-video and non-audio), etc
-				if (2 > BUFSIZE - data->windex)
+				if (2 > BUFSIZE - ptr->windex)
 				{
 					fatal(CCX_COMMON_EXIT_BUG_BUG,
 							"Remaining buffer (%lld) not enough to hold the 3 Hauppage bytes.\n"
 							"Please send bug report!",
-							BUFSIZE - data->windex);
+							BUFSIZE - ptr->windex);
 				}
 				if (haup_capbuf[i+9]==1 || haup_capbuf[i+9]==2) // Field match. // TODO: If extract==12 this won't work!
 				{
 					if (haup_capbuf[i+9]==1)
-						data->buffer[data->windex++]=4; // Field 1 + cc_valid=1
+						ptr->buffer[ptr->windex++]=4; // Field 1 + cc_valid=1
 					else
-						data->buffer[data->windex++]=5; // Field 2 + cc_valid=1
-					data->buffer[data->windex++]=haup_capbuf[i+10];
-					data->buffer[data->windex++]=haup_capbuf[i+11];
+						ptr->buffer[ptr->windex++]=5; // Field 2 + cc_valid=1
+					ptr->buffer[ptr->windex++]=haup_capbuf[i+10];
+					ptr->buffer[ptr->windex++]=haup_capbuf[i+11];
 				}
 				/*
 				   if (inbuf>1024) // Just a way to send the bytes to the decoder from time to time, otherwise the buffer will fill up.
@@ -384,22 +430,21 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data *data, s
 
 	if (!ccx_options.hauppauge_mode) // in Haup mode the buffer is filled somewhere else
 	{
-		if(data->windex + databuflen >= BUFSIZE)
+		if(ptr->windex + databuflen >= BUFSIZE)
 		{
 			fatal(CCX_COMMON_EXIT_BUG_BUG,
 				"PES data packet (%ld) larger than remaining buffer (%lld).\n"
 				"Please send bug report!",
-				databuflen, BUFSIZE - data->windex);
+				databuflen, BUFSIZE - ptr->windex);
 			return CCX_EAGAIN;
 		}
-		memcpy(data->buffer + data->windex, databuf, databuflen);
-		data->len = databuflen + data->windex;
-		data->windex += databuflen;
+		memcpy(ptr->buffer+ ptr->windex, databuf, databuflen);
+		ptr->windex += databuflen;
 	}
 	return CCX_OK;
 }
 
-void cinfo_cremation(struct ccx_demuxer *ctx, struct demuxer_data *data)
+void cinfo_cremation(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
 	int i;
 	for(i = 0;i < ctx->nb_cap;i++)
@@ -413,7 +458,7 @@ void cinfo_cremation(struct ccx_demuxer *ctx, struct demuxer_data *data)
 // Read ts packets until a complete video PES element can be returned.
 // The data is read into capbuf and the function returns the number of
 // bytes read.
-long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data *data)
+long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
 	int gotpes = 0;
 	long pespcount = 0; // count packets in PES with captions
@@ -645,7 +690,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data *data)
 
 
 // TS specific data grabber
-LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data *data)
+LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
 	const char *tstr; // Temporary string to describe the stream type
 	int ret;
