@@ -302,10 +302,10 @@ static void ccx_demuxer_print_report(struct ccx_demuxer *ctx)
 			printf("Pages With Subtitles: ");
 			for (int i = 0; i < MAX_TLT_PAGES; i++)
 			{
-				if (seen_sub_page[i] == 0)
-					continue;
+//				if (seen_sub_page[i] == 0)
+//					continue;
 
-				printf("%d ", i);
+//				printf("%d ", i);
 			}
 			printf("\n");
 			break;

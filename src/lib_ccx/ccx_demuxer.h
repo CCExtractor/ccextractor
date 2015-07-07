@@ -23,6 +23,7 @@ struct cap_info
 	unsigned char *capbuf;
 	long capbuflen; // Bytes read in capbuf
 	int saw_pesstart;
+	int prev_counter;
 };
 
 struct program_info
@@ -80,6 +81,8 @@ struct ccx_demuxer
 
 	/* Hauppauge support */
 	unsigned hauppauge_warning_shown; // Did we detect a possible Hauppauge capture and told the user already?
+
+	void *codec_ctx;
 
 	void *parent;
 	void (*print_cfg)(struct ccx_demuxer *ctx);

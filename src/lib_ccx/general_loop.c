@@ -37,7 +37,6 @@ unsigned char *filebuffer;
 LLONG filebuffer_start; // Position of buffer start relative to file
 int filebuffer_pos; // Position of pointer relative to buffer start
 int bytesinbuffer; // Number of bytes we actually have on buffer
-extern void *ccx_dvb_context;
 
 // Program stream specific data grabber
 int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data *data)
@@ -608,7 +607,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		}
 		else if(data->bufferdatatype == CCX_DVB_SUBTITLE)
 		{
-			dvbsub_decode(ccx_dvb_context, data->buffer + 2, data->windex - 2, dec_sub);
+			dvbsub_decode(ctx->demux_ctx->codec_ctx, data->buffer + 2, data->windex - 2, dec_sub);
 			set_fts();
 			got = data->windex;
 		}
@@ -619,7 +618,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		else if (data->bufferdatatype == CCX_TELETEXT)
 		{
 			// Dispatch to Petr Kutalek 's telxcc.
-			tlt_process_pes_packet (ctx, data->buffer, data->windex, dec_sub);
+			tlt_process_pes_packet (ctx->demux_ctx->codec_ctx, data->buffer, data->windex, dec_sub);
 			set_encoder_rcwt_fileformat(enc_ctx, 2);
 			got = data->windex;
 		}

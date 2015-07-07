@@ -39,7 +39,8 @@ struct file_report
 };
 
 // Stuff for telcc.c
-struct ccx_s_teletext_config {
+struct ccx_s_teletext_config
+{
 	uint8_t verbose : 1; // should telxcc be verbose?
 	uint16_t page; // teletext page containing cc we want to filter
 	uint16_t tid; // 13-bit packet ID for teletext stream
@@ -144,9 +145,6 @@ struct lib_ccx_ctx
 
 	struct ccx_demuxer *demux_ctx;
 };
-#ifdef DEBUG_TELEXCC
-int main_telxcc (int argc, char *argv[]);
-#endif
 
 #define buffered_skip(ctx, bytes) if (bytes<=bytesinbuffer-filebuffer_pos) { \
     filebuffer_pos+=bytes; \
@@ -286,10 +284,11 @@ unsigned encode_line (unsigned char *buffer, unsigned char *text);
 void buffered_seek (struct ccx_demuxer *ctx, int offset);
 extern void build_parity_table(void);
 
-void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub);
-void telxcc_init(struct lib_ccx_ctx *ctx);
-void telxcc_close(struct lib_ccx_ctx *ctx);
-void tlt_read_rcwt(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub);
+void tlt_process_pes_packet(void *codec, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub);
+void* telxcc_init(void);
+void telxcc_close(void **ctx, struct cc_subtitle *sub);
+void tlt_read_rcwt(void *codec, struct cc_subtitle *sub);
+void telxcc_configure (void *codec, struct ccx_s_teletext_config *cfg);
 
 extern unsigned rollover_bits;
 extern int global_timestamp_inited;
@@ -335,7 +334,6 @@ extern unsigned last_pat_length;
 extern unsigned teletext_mode;
 
 #define MAX_TLT_PAGES 1000
-extern short int seen_sub_page[MAX_TLT_PAGES];
 
 extern struct ccx_s_teletext_config tlt_config;
 extern uint32_t tlt_packet_counter;

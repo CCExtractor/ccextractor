@@ -48,6 +48,30 @@ int _CRT_fmode = _O_BINARY;
 #include <commctrl.h>
 #endif
 
+struct TeletextCtx
+{
+	short int seen_sub_page[MAX_TLT_PAGES];
+	uint8_t verbose : 1; // should telxcc be verbose?
+	uint16_t page; // teletext page containing cc we want to filter
+	uint16_t tid; // 13-bit packet ID for teletext stream
+	double offset; // time offset in seconds
+	uint8_t bom : 1; // print UTF-8 BOM characters at the beginning of output
+	uint8_t nonempty : 1; // produce at least one (dummy) frame
+	// uint8_t se_mode : 1; // search engine compatible mode => Uses CCExtractor's write_format
+	// uint64_t utc_refvalue; // UTC referential value => Moved to ccx_decoders_common, so can be used for other decoders (608/xds) too
+	uint16_t user_page; // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
+	ccx_encoders_transcript_format *transcript_settings; // Keeps the settings for generating transcript output files.
+	int levdistmincnt, levdistmaxpct; // Means 2 fails or less is "the same", 10% or less is also "the same"
+	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
+	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
+	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
+	enum ccx_output_date_format date_format;
+	int noautotimeref; // Do NOT set time automatically?
+	unsigned send_to_srv;
+	enum ccx_encoding_type encoding;
+	int nofontcolor;
+	char millis_separator;
+};
 typedef enum
 {
 	DATA_UNIT_EBU_TELETEXT_NONSUBTITLE = 0x02,
@@ -70,7 +94,6 @@ static const char* TTXT_COLOURS[8] = {
 
 #define MAX_TLT_PAGES 1000
 
-short int seen_sub_page[MAX_TLT_PAGES];
 
 // 1-byte alignment; just to be sure, this struct is being used for explicit type conversion
 // FIXME: remove explicit type conversion from buffer to structs
@@ -140,20 +163,8 @@ struct {
 	{ '&', "&amp;" }
 };
 
-// PMTs table
-#define TS_PMT_MAP_SIZE 128
-static uint16_t pmt_map[TS_PMT_MAP_SIZE] = { 0 };
-static uint16_t pmt_map_count = 0;
-
-// TTXT streams table
-#define TS_PMT_TTXT_MAP_SIZE 128
-static uint16_t pmt_ttxt_map[TS_PMT_MAP_SIZE] = { 0 };
-static uint16_t pmt_ttxt_map_count = 0;
-
 // FYI, packet counter
 uint32_t tlt_packet_counter = 0;
-
-static int telxcc_inited=0;
 
 #define array_length(a) (sizeof(a)/sizeof(a[0]))
 
@@ -320,12 +331,13 @@ uint16_t bcd_page_to_int (uint16_t bcd)
 	return ((bcd&0xf00)>>8)*100 + ((bcd&0xf0)>>4)*10 + (bcd&0xf);
 }
 
-void telxcc_dump_prev_page (struct lib_ccx_ctx *ctx)
+void telxcc_dump_prev_page (struct TeletextCtx *ctx, struct cc_subtitle *sub)
 {
 	char c_temp1[80],c_temp2[80]; // For timing
 	if (!page_buffer_prev)
 		return;
 
+#if 0
 	if (tlt_config.transcript_settings->showStartTime)
 	{
 		millis_to_date(prev_show_timestamp, c_temp1, tlt_config.date_format, tlt_config.millis_separator); // Note: Delay not added here because it was already accounted for
@@ -347,6 +359,7 @@ void telxcc_dump_prev_page (struct lib_ccx_ctx *ctx)
 
 	if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s",page_buffer_prev);
 		fdprintf(ctx->wbout1.fh,"%s",encoded_crlf);
+#endif
 	if (page_buffer_prev)
 		free (page_buffer_prev);
 	if (ucs2_buffer_prev)
@@ -385,7 +398,7 @@ int fuzzy_memcmp (const char *c1, const char *c2, const uint64_t *ucs2_buf1, uns
 	return res;
 }
 
-void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page)
+void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subtitle *sub)
 {
 	if ((tlt_config.extraction_start.set && page->hide_timestamp < tlt_config.extraction_start.time_in_ms) ||
 		(tlt_config.extraction_end.set && page->show_timestamp > tlt_config.extraction_end.time_in_ms) ||
@@ -646,27 +659,31 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page)
 			else
 			{
 				// OK, the old and new buffer don't match. So write the old
-				telxcc_dump_prev_page(ctx);
+				telxcc_dump_prev_page(ctx, sub);
 				prev_hide_timestamp = page->hide_timestamp;
 				prev_show_timestamp = page->show_timestamp;
 			}
 			break;
 		case CCX_OF_SMPTETT:
+#if 0
 			if (ctx->wbout1.fh!=-1)
 			{
 				timestamp_to_smptetttime(page->show_timestamp, timecode_show);
 				timestamp_to_smptetttime(page->hide_timestamp, timecode_hide);
 				fdprintf(ctx->wbout1.fh,"      <p region=\"speaker\" begin=\"%s\" end=\"%s\">%s</p>\n", timecode_show, timecode_hide, page_buffer_cur);
 			}
+#endif
 			break;
 		default: // Yes, this means everything else is .srt for now
 			page_buffer_add_string ((const char *) encoded_crlf);
 			page_buffer_add_string((const char *) encoded_crlf);
+#if 0
 			if (ctx->wbout1.fh!=-1)
 			{
 				fdprintf(ctx->wbout1.fh,"%"PRIu32"%s%s --> %s%s", tlt_frames_produced, encoded_crlf, timecode_show, timecode_hide, encoded_crlf);
 				fdprintf(ctx->wbout1.fh, "%s",page_buffer_cur);
 			}
+#endif
 	}
 
 	// Also update GUI...
@@ -678,7 +695,7 @@ void process_page(struct lib_ccx_ctx *ctx, teletext_page_t *page)
 		fflush (stderr);
 }
 
-void process_telx_packet(struct lib_ccx_ctx *ctx, data_unit_t data_unit_id, teletext_packet_payload_t *packet, uint64_t timestamp, struct cc_subtitle *sub)
+void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, teletext_packet_payload_t *packet, uint64_t timestamp, struct cc_subtitle *sub)
 {
 	// variable names conform to ETS 300 706, chapter 7.1.2
 	uint8_t address, m, y, designation_code;
@@ -704,9 +721,9 @@ void process_telx_packet(struct lib_ccx_ctx *ctx, data_unit_t data_unit_id, tele
 			char t1[10];
 			sprintf (t1,"%x",thisp); // Example: 1928 -> 788
 			thisp=atoi (t1);
-			if (!seen_sub_page[thisp])
+			if (!ctx->seen_sub_page[thisp])
 			{
-				seen_sub_page[thisp]=1;
+				ctx->seen_sub_page[thisp]=1;
 				mprint ("\rNotice: Teletext page with possible subtitles detected: %03d\n",thisp);
 			}
 		}
@@ -755,7 +772,7 @@ void process_telx_packet(struct lib_ccx_ctx *ctx, data_unit_t data_unit_id, tele
 			{
 				page_buffer.hide_timestamp = 0;
 			}
-			process_page(ctx, &page_buffer);
+			process_page(ctx, &page_buffer, sub);
 
 		}
 
@@ -966,16 +983,17 @@ void process_telx_packet(struct lib_ccx_ctx *ctx, data_unit_t data_unit_id, tele
 	}
 }
 
-void tlt_write_rcwt(struct lib_ccx_ctx *ctx, uint8_t data_unit_id, uint8_t *packet, uint64_t timestamp)
+void tlt_write_rcwt(struct lib_ccx_ctx *ctx, uint8_t data_unit_id, uint8_t *packet, uint64_t timestamp,  struct cc_subtitle *sub)
 {
 	struct lib_cc_decode *dec_ctx = ctx->dec_ctx;
-	dec_ctx->writedata((unsigned char *) &data_unit_id, sizeof(uint8_t), dec_ctx->context_cc608_field_1, NULL);
-	dec_ctx->writedata((unsigned char *) &timestamp, sizeof(uint64_t), dec_ctx->context_cc608_field_1, NULL);
-	dec_ctx->writedata((unsigned char *) packet, 44, dec_ctx->context_cc608_field_1, NULL);
+	dec_ctx->writedata((unsigned char *) &data_unit_id, sizeof(uint8_t), dec_ctx->context_cc608_field_1, sub);
+	dec_ctx->writedata((unsigned char *) &timestamp, sizeof(uint64_t), dec_ctx->context_cc608_field_1, sub);
+	dec_ctx->writedata((unsigned char *) packet, 44, dec_ctx->context_cc608_field_1, sub);
 }
 
-void tlt_read_rcwt(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
+void tlt_read_rcwt(void *codec, struct cc_subtitle *sub)
 {
+	struct TeletextCtx *ctx = codec;
 	int len = 1 + 8 + 44;
 	unsigned char *buf = (unsigned char *) malloc(len);
 	if (buf == NULL)
@@ -983,8 +1001,10 @@ void tlt_read_rcwt(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 
 	while(1)
 	{
+#if 0
 		buffered_read(ctx->demux_ctx, buf, len);
 		ctx->demux_ctx->past += result;
+#endif
 
 		if (result != len)
 		{
@@ -1004,7 +1024,7 @@ void tlt_read_rcwt(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 	}
 }
 
-void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub)
+void tlt_process_pes_packet(void *codec, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub)
 {
 	uint64_t pes_prefix;
 	uint8_t pes_stream_id;
@@ -1016,6 +1036,7 @@ void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t s
 	uint16_t i;
 	static int64_t delta = 0;
 	static uint32_t t0 = 0;
+	struct TeletextCtx *ctx = codec;
 	tlt_packet_counter++;
 	if (size < 6) return;
 
@@ -1066,7 +1087,7 @@ void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t s
 	// If there is no PTS available, use global PCR
 	if (using_pts == NO)
 	{
-		t = ctx->demux_ctx->global_timestamp;
+//		t = ctx->demux_ctx->global_timestamp;
 	}
 	// if (using_pts == NO) t = get_pts();
 	else
@@ -1087,17 +1108,21 @@ void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t s
 
 	if (states.pts_initialized == NO)
 	{
+#if 0
 		if (utc_refvalue == UINT64_MAX)
 			delta = (uint64_t) (ctx->subs_delay - t);
 		else
 			delta = (uint64_t) (ctx->subs_delay + 1000 * utc_refvalue - t);
+#endif
 		t0 = t;
 		states.pts_initialized = YES;
+#if 0
 		if ((using_pts == NO) && (ctx->demux_ctx->global_timestamp == 0))
 		{
 			// We are using global PCR, nevertheless we still have not received valid PCR timestamp yet
 			states.pts_initialized = NO;
 		}
+#endif
 	}
 	if (t < t0)
 		delta = last_timestamp;
@@ -1127,7 +1152,7 @@ void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t s
 				for (uint8_t j = 0; j < data_unit_len; j++) buffer[i + j] = REVERSE_8[buffer[i + j]];
 
 				if (tlt_config.write_format == CCX_OF_RCWT)
-					tlt_write_rcwt(ctx, data_unit_id, &buffer[i], last_timestamp);
+					tlt_write_rcwt((void*)ctx, data_unit_id, &buffer[i], last_timestamp, sub);
 				else
 					// FIXME: This explicit type conversion could be a problem some day -- do not need to be platform independant
 					process_telx_packet(ctx, (data_unit_t) data_unit_id, (teletext_packet_payload_t *)&buffer[i], last_timestamp, sub);
@@ -1139,37 +1164,73 @@ void tlt_process_pes_packet(struct lib_ccx_ctx *ctx, uint8_t *buffer, uint16_t s
 }
 
 // Called only when teletext is detected or forced and it's going to be used for extraction.
-void telxcc_init(struct lib_ccx_ctx *ctx)
+void* telxcc_init(void)
 {
-	if (!telxcc_inited)
-	{
-		telxcc_inited=1;
-		if (ctx->wbout1.fh!=-1 && tlt_config.encoding!=CCX_ENC_UTF_8) // If encoding it UTF8 then this was already done
-			fdprintf(ctx->wbout1.fh, "\xef\xbb\xbf");
-		memset (seen_sub_page, 0, MAX_TLT_PAGES * sizeof(short int));
-	}
+	struct TeletextCtx *ctx = malloc(sizeof(struct TeletextCtx));
+
+	if(!ctx)
+		return NULL;
+	memset (ctx->seen_sub_page, 0, MAX_TLT_PAGES * sizeof(short int));
+
+//	if (ctx->wbout1.fh!=-1 && tlt_config.encoding!=CCX_ENC_UTF_8) // If encoding it UTF8 then this was already done
+//		fdprintf(ctx->wbout1.fh, "\xef\xbb\xbf");
+
+	return ctx;
 }
 
-// Close output
-void telxcc_close(struct lib_ccx_ctx *ctx)
+void telxcc_configure (void *codec, struct ccx_s_teletext_config *cfg)
 {
-	if (telxcc_inited && tlt_config.write_format != CCX_OF_RCWT)
+	struct TeletextCtx *ctx = codec;
+	ctx->verbose = cfg->verbose;
+	ctx->page = cfg->page;
+	ctx->tid = cfg->tid;
+	ctx->offset = cfg->offset;
+	ctx->bom = cfg->bom;
+	ctx->nonempty = cfg->nonempty;
+	ctx->user_page = cfg->user_page;
+	ctx->transcript_settings = cfg->transcript_settings;
+	ctx->levdistmincnt = cfg->levdistmincnt;
+	ctx->levdistmaxpct = cfg->levdistmaxpct;
+	ctx->extraction_start = cfg->extraction_start;
+	ctx->extraction_end = cfg->extraction_end;
+	ctx->write_format = cfg->write_format;
+	ctx->gui_mode_reports = cfg->gui_mode_reports;
+	ctx->date_format = cfg->date_format;
+	ctx->noautotimeref = cfg->noautotimeref;
+	ctx->send_to_srv = cfg->send_to_srv;
+	ctx->encoding = cfg->encoding;
+	ctx->nofontcolor = cfg->nofontcolor;
+	ctx->millis_separator = cfg->millis_separator;
+
+}
+// Close output
+void telxcc_close(void **ctx, struct cc_subtitle *sub)
+{
+	struct TeletextCtx *ttext = *ctx;
+
+	if(!ttext)
+		return;
+
+	if (tlt_config.write_format != CCX_OF_RCWT)
 	{
 		// output any pending close caption
 		if (page_buffer.tainted == YES)
 		{
 			// this time we do not subtract any frames, there will be no more frames
 			page_buffer.hide_timestamp = last_timestamp;
-			process_page(ctx, &page_buffer);
+			process_page(ttext, &page_buffer, sub);
 		}
 
-		telxcc_dump_prev_page(ctx);
+		telxcc_dump_prev_page(ttext, sub);
 
 		if ((tlt_frames_produced == 0) && (tlt_config.nonempty == YES))
 		{
+#if 0
 			if (ctx->wbout1.fh!=-1)
 				fdprintf(ctx->wbout1.fh, "1\r\n00:00:00,000 --> 00:00:10,000\r\n(no closed captions available)\r\n\r\n");
+#endif
 			tlt_frames_produced++;
 		}
 	}
+	freep(ctx);
 }

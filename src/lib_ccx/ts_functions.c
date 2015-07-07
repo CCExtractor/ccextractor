@@ -415,7 +415,6 @@ void cinfo_cremation(struct ccx_demuxer *ctx, struct demuxer_data *data)
 // bytes read.
 long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data *data)
 {
-	static int prev_ccounter = 0;
 	int gotpes = 0;
 	long pespcount = 0; // count packets in PES with captions
 	long pcount=0; // count all packets until PES is complete
@@ -490,7 +489,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data *data)
 			{
 				int len = *payload.start++;
 				payload.start += len;
-				if(write_section(ctx->parent, &payload,payload.start,(tspacket + 188 ) - payload.start,j))
+				if(write_section(ctx, &payload,payload.start,(tspacket + 188 ) - payload.start,j))
 					gotpes=1; // Signals that something changed and that we must flush the buffer
 			}
 			else
@@ -578,6 +577,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data *data)
 		if (payload.pesstart)
 		{
 			cinfo->saw_pesstart = 1;
+			cinfo->prev_counter = payload.counter - 1;
 		}
 
 		// Discard packets when no pesstart was found.
@@ -589,12 +589,12 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data *data)
 		}
 
 
-		if ( (prev_ccounter==15 ? 0 : prev_ccounter+1) != payload.counter )
+		if ( (cinfo->prev_counter == 15 ? 0 : cinfo->prev_counter + 1) != payload.counter )
 		{
 			mprint("TS continuity counter not incremented prev/curr %u/%u\n",
-					prev_ccounter, payload.counter);
+					cinfo->prev_counter, payload.counter);
 		}
-		prev_ccounter = payload.counter;
+		cinfo->prev_counter = payload.counter;
 
 		// If the buffer is empty we just started this function
 		if (payload.pesstart && cinfo->capbuflen > 0)

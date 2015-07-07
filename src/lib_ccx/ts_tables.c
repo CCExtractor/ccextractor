@@ -4,8 +4,6 @@
 #include "utility.h"
 #include "activity.h"
 static unsigned pmt_warning_shown=0; // Only display warning once
-void *ccx_dvb_context = NULL;
-
 void process_ccx_mpeg_descriptor (unsigned char *data, unsigned length);
 
 unsigned get_printable_stream_type (unsigned ccx_stream_type)
@@ -185,7 +183,6 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 	if (need_capInfo(ctx) == CCX_FALSE)
 		return 0;
 
-#if 0
 	/* We keep a copy of all PMTs, even if not interesting to us for now */
 	if (ctx->pmt_array[pos].last_pmt_payload!=NULL && len == ctx->pmt_array[pos].last_pmt_length &&
 			!memcmp (buf, ctx->pmt_array[pos].last_pmt_payload, len))
@@ -199,7 +196,6 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process PMT.\n");
 	memcpy (ctx->pmt_array[pos].last_pmt_payload, buf, len);
 	ctx->pmt_array[pos].last_pmt_length = len;
-#endif
 
 	unsigned table_id = buf[0];
 	unsigned section_length = (((buf[1] & 0x0F) << 8)
@@ -384,8 +380,8 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 					ret = parse_dvb_description(&cnf,es_info,desc_len);
 					if(ret < 0)
 						break;
-					ccx_dvb_context = dvbsub_init_decoder(&cnf);
-					if (ccx_dvb_context == NULL)
+					ctx->codec_ctx = dvbsub_init_decoder(&cnf);
+					if (ctx->codec_ctx == NULL)
 						break;
 					update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_DVB);
 					max_dif = 30;
@@ -403,7 +399,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 				desc_len = (*es_info++);
 				if(!IS_VALID_TELETEXT_DESC(descriptor_tag))
 					continue;
-				telxcc_init(ctx->parent);
+				ctx->codec_ctx = telxcc_init();
 				update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_TELETEXT);
 				mprint ("VBI/teletext stream ID %u (0x%x) for SID %u (0x%x)\n",
 						elementary_PID, elementary_PID, program_number, program_number);
