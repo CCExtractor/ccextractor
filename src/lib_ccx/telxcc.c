@@ -657,14 +657,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 #endif
 			break;
 		default: // Yes, this means everything else is .srt for now
-			page_buffer_add_string (ctx, (const char *) encoded_crlf);
-			page_buffer_add_string(ctx, (const char *) encoded_crlf);
 			add_cc_sub_text(sub, ctx->page_buffer_cur, page->show_timestamp, page->hide_timestamp + 1, NULL, "TLT");
-			sub->type = CC_TEXT;
-			sub->data = strdup(ctx->page_buffer_cur);
-			sub->nb_data = strlen(ctx->page_buffer_cur);
-			sub->start_time = page->show_timestamp;
-			sub->end_time = page->hide_timestamp + 1;
 	}
 
 	// Also update GUI...

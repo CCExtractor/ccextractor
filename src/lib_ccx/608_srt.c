@@ -136,10 +136,27 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 int write_cc_subtitle_as_srt(struct cc_subtitle *sub,struct encoder_ctx *context)
 {
 	int ret = 0;
-	if(sub->type == CC_TEXT)
+	struct cc_subtitle *osub = sub;
+	struct cc_subtitle *lsub = sub;
+
+	while(sub)
 	{
-		ret = write_stringz_as_srt(sub->data, context, sub->start_time, sub->end_time);
+		if(sub->type == CC_TEXT)
+		{
+			ret = write_stringz_as_srt(sub->data, context, sub->start_time, sub->end_time);
+			freep(&sub->data);
+			sub->nb_data = 0;
+		}
+		lsub = sub;
+		sub = sub->next;
 	}
+	while(lsub != osub)
+	{
+		sub = lsub->prev;
+		freep(&lsub);
+		lsub = sub;
+	}
+
 	return ret;
 }
 int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *context)
