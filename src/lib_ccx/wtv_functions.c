@@ -453,8 +453,18 @@ int wtv_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 	int ret = CCX_OK;
 	struct demuxer_data *data;
 
-	*ppdata = alloc_demuxer_data();
-	data = *ppdata;
+	if(!*ppdata)
+	{
+		*ppdata = alloc_demuxer_data();
+		if(!*ppdata)
+			return -1;
+		data = *ppdata;
+		//TODO Set to dummy, find and set actual value
+		data->program_number = 1;
+		data->stream_pid = 1;
+		data->codec  = CCX_CODEC_ATSC_CC;
+	}
+
 	if(firstcall)
 	{
 		init_chunked_buffer(&cb);
@@ -474,4 +484,6 @@ int wtv_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 
 	if(!ret)
 		return CCX_EOF;
+
+	return CCX_OK;
 }

@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
 	else if (!ctx && errno == EACCES)
 		fatal (CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to create Output File\n");
 	else if (!ctx)
-		fatal (EXIT_NOT_CLASSIFIED, "Unable to create Library Context %d\n",EPERM);
+		fatal (EXIT_NOT_CLASSIFIED, "Unable to create Library Context %d\n",errno);
 
 	dec_ctx = ctx->dec_ctx;
 

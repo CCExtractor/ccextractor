@@ -101,7 +101,11 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 	int64_t getbytes;
 	struct demuxer_data *data;
 
-	*ppdata = alloc_demuxer_data();
+	if(!*ppdata)
+		*ppdata = alloc_demuxer_data();
+	if(!*ppdata)
+		return -1;
+
 	data = *ppdata;
 
 	// Read Header Object and the Top-level Data Object header only once
@@ -975,6 +979,10 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 
 				// Read the data
 				dbg_print(CCX_DMT_PARSE, "Reading Stream #%d data ...\n", asf_data_container.PayloadStreamNumber);
+
+				data->stream_pid = asf_data_container.StreamProperties.DecodeStreamNumber;
+				data->program_number = 1;
+				data->codec = CCX_CODEC_ATSC_CC;
 
 				int want = (long)((BUFSIZE - data->windex)>asf_data_container.PayloadLength ?
 						asf_data_container.PayloadLength : (BUFSIZE - data->windex));
