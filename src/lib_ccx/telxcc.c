@@ -71,6 +71,28 @@ struct TeletextCtx
 	enum ccx_encoding_type encoding;
 	int nofontcolor;
 	char millis_separator;
+	uint32_t global_timestamp;
+
+	// Current and previous page buffers. This is the output written to file when
+	// the time comes.
+	char *page_buffer_prev;
+	char *page_buffer_cur;
+	unsigned page_buffer_cur_size;
+	unsigned page_buffer_cur_used;
+	unsigned page_buffer_prev_size;
+	unsigned page_buffer_prev_used;
+	// Current and previous page compare strings. This is plain text (no colors,
+	// tags, etc) in UCS2 (fixed length), so we can compare easily.
+	uint64_t *ucs2_buffer_prev;
+	uint64_t *ucs2_buffer_cur;
+	unsigned ucs2_buffer_cur_size;
+	unsigned ucs2_buffer_cur_used;
+	unsigned ucs2_buffer_prev_size;
+	unsigned ucs2_buffer_prev_used;
+	// Buffer timestamp
+	uint64_t prev_hide_timestamp;
+	uint64_t prev_show_timestamp;
+
 };
 typedef enum
 {
@@ -174,61 +196,41 @@ uint32_t tlt_packet_counter = 0;
 // extracts page number from teletext page
 #define PAGE(p) (p & 0xff)
 
-// Current and previous page buffers. This is the output written to file when
-// the time comes.
-static char *page_buffer_prev=NULL;
-static char *page_buffer_cur=NULL;
-static unsigned page_buffer_cur_size=0;
-static unsigned page_buffer_cur_used=0;
-static unsigned page_buffer_prev_size=0;
-static unsigned page_buffer_prev_used=0;
-// Current and previous page compare strings. This is plain text (no colors,
-// tags, etc) in UCS2 (fixed length), so we can compare easily.
-static uint64_t *ucs2_buffer_prev=NULL;
-static uint64_t *ucs2_buffer_cur=NULL;
-static unsigned ucs2_buffer_cur_size=0;
-static unsigned ucs2_buffer_cur_used=0;
-static unsigned ucs2_buffer_prev_size=0;
-static unsigned ucs2_buffer_prev_used=0;
-// Buffer timestamp
-static uint64_t prev_hide_timestamp;
-static uint64_t prev_show_timestamp;
-
-void page_buffer_add_string (const char *s)
+void page_buffer_add_string (struct TeletextCtx *ctx, const char *s)
 {
-	if (page_buffer_cur_size<(page_buffer_cur_used+strlen (s)+1))
+	if(ctx->page_buffer_cur_size < (ctx->page_buffer_cur_used + strlen (s)+1))
 	{
 		int add=strlen (s)+4096; // So we don't need to realloc often
-		page_buffer_cur_size=page_buffer_cur_size+add;
-		page_buffer_cur=(char *) realloc (page_buffer_cur,page_buffer_cur_size);
-		if (!page_buffer_cur)
+		ctx->page_buffer_cur_size=ctx->page_buffer_cur_size+add;
+		ctx->page_buffer_cur=(char *) realloc (ctx->page_buffer_cur,ctx->page_buffer_cur_size);
+		if (!ctx->page_buffer_cur)
 			fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process teletext page.\n");
 	}
-	memcpy (page_buffer_cur+page_buffer_cur_used, s, strlen (s));
-	page_buffer_cur_used+=strlen (s);
-	page_buffer_cur[page_buffer_cur_used]=0;
+	memcpy (ctx->page_buffer_cur+ctx->page_buffer_cur_used, s, strlen (s));
+	ctx->page_buffer_cur_used+=strlen (s);
+	ctx->page_buffer_cur[ctx->page_buffer_cur_used]=0;
 }
 
-void ucs2_buffer_add_char (uint64_t c)
+void ucs2_buffer_add_char (struct TeletextCtx *ctx, uint64_t c)
 {
-	if (ucs2_buffer_cur_size<(ucs2_buffer_cur_used+2))
+	if (ctx->ucs2_buffer_cur_size<(ctx->ucs2_buffer_cur_used+2))
 	{
 		int add=4096; // So we don't need to realloc often
-		ucs2_buffer_cur_size=ucs2_buffer_cur_size+add;
-		ucs2_buffer_cur=(uint64_t *) realloc (ucs2_buffer_cur,ucs2_buffer_cur_size*sizeof (uint64_t));
-		if (!ucs2_buffer_cur)
+		ctx->ucs2_buffer_cur_size=ctx->ucs2_buffer_cur_size+add;
+		ctx->ucs2_buffer_cur=(uint64_t *) realloc (ctx->ucs2_buffer_cur,ctx->ucs2_buffer_cur_size*sizeof (uint64_t));
+		if (!ctx->ucs2_buffer_cur)
 			fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process teletext page.\n");
 	}
-	ucs2_buffer_cur[ucs2_buffer_cur_used++]=c;
-	ucs2_buffer_cur[ucs2_buffer_cur_used]=0;
+	ctx->ucs2_buffer_cur[ctx->ucs2_buffer_cur_used++]=c;
+	ctx->ucs2_buffer_cur[ctx->ucs2_buffer_cur_used]=0;
 }
 
-void page_buffer_add_char (char c)
+void page_buffer_add_char (struct TeletextCtx *ctx, char c)
 {
 	char t[2];
 	t[0]=c;
 	t[1]=0;
-	page_buffer_add_string (t);
+	page_buffer_add_string (ctx, t);
 }
 
 // ETS 300 706, chapter 8.2
@@ -334,7 +336,7 @@ uint16_t bcd_page_to_int (uint16_t bcd)
 void telxcc_dump_prev_page (struct TeletextCtx *ctx, struct cc_subtitle *sub)
 {
 	char c_temp1[80],c_temp2[80]; // For timing
-	if (!page_buffer_prev)
+	if (!ctx->page_buffer_prev)
 		return;
 
 #if 0
@@ -357,27 +359,27 @@ void telxcc_dump_prev_page (struct TeletextCtx *ctx, struct cc_subtitle *sub)
 		fdprintf(ctx->wbout1.fh, "TLT|");
 	}
 
-	if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s",page_buffer_prev);
+	if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s",ctx->page_buffer_prev);
 		fdprintf(ctx->wbout1.fh,"%s",encoded_crlf);
 #endif
-	if (page_buffer_prev)
-		free (page_buffer_prev);
-	if (ucs2_buffer_prev)
-		free (ucs2_buffer_prev);
+	if (ctx->page_buffer_prev)
+		free (ctx->page_buffer_prev);
+	if (ctx->ucs2_buffer_prev)
+		free (ctx->ucs2_buffer_prev);
 	// Switch "dump" buffers
-	page_buffer_prev_used=page_buffer_cur_used;
-	page_buffer_prev_size=page_buffer_cur_size;
-	page_buffer_prev=page_buffer_cur;
-	page_buffer_cur_size=0;
-	page_buffer_cur_used=0;
-	page_buffer_cur=NULL;
+	ctx->page_buffer_prev_used=ctx->page_buffer_cur_used;
+	ctx->page_buffer_prev_size=ctx->page_buffer_cur_size;
+	ctx->page_buffer_prev=ctx->page_buffer_cur;
+	ctx->page_buffer_cur_size=0;
+	ctx->page_buffer_cur_used=0;
+	ctx->page_buffer_cur=NULL;
 	// Also switch compare buffers
-	ucs2_buffer_prev_used=ucs2_buffer_cur_used;
-	ucs2_buffer_prev_size=ucs2_buffer_cur_size;
-	ucs2_buffer_prev=ucs2_buffer_cur;
-	ucs2_buffer_cur_size=0;
-	ucs2_buffer_cur_used=0;
-	ucs2_buffer_cur=NULL;
+	ctx->ucs2_buffer_prev_used=ctx->ucs2_buffer_cur_used;
+	ctx->ucs2_buffer_prev_size=ctx->ucs2_buffer_cur_size;
+	ctx->ucs2_buffer_prev=ctx->ucs2_buffer_cur;
+	ctx->ucs2_buffer_cur_size=0;
+	ctx->ucs2_buffer_cur_used=0;
+	ctx->ucs2_buffer_cur=NULL;
 }
 
 // Note: c1 and c2 are just used for debug output, not for the actual comparison
@@ -494,13 +496,13 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 			switch (tlt_config.write_format)
 			{
 				case CCX_OF_TRANSCRIPT:
-					page_buffer_add_string(" ");
+					page_buffer_add_string(ctx, " ");
 					break;
 				case CCX_OF_SMPTETT:
-					page_buffer_add_string("<br/>");
+					page_buffer_add_string(ctx, "<br/>");
 					break;
 				default:
-					page_buffer_add_string((const char *) encoded_crlf);
+					page_buffer_add_string(ctx, (const char *) encoded_crlf);
 			}
 		}
 
@@ -537,7 +539,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 				if ((foreground_color != 0x7) && !tlt_config.nofontcolor)
 				{
 					sprintf (c_tempb, "<font color=\"%s\">", TTXT_COLOURS[foreground_color]);
-					page_buffer_add_string (c_tempb);
+					page_buffer_add_string (ctx, c_tempb);
 					// if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "<font color=\"%s\">", TTXT_COLOURS[foreground_color]);
 					font_tag_opened = YES;
 				}
@@ -553,7 +555,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 					{
 						if (font_tag_opened == YES)
 						{
-							page_buffer_add_string ("</font>");
+							page_buffer_add_string (ctx, "</font>");
 							// if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "</font> ");
 							font_tag_opened = NO;
 						}
@@ -563,7 +565,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 						if ((v > 0x0) && (v < 0x7))
 						{
 							sprintf (c_tempb, "<font color=\"%s\">", TTXT_COLOURS[v]);
-							page_buffer_add_string (c_tempb);
+							page_buffer_add_string (ctx, c_tempb);
 							// if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "<font color=\"%s\">", TTXT_COLOURS[v]);
 							font_tag_opened = YES;
 						}
@@ -576,7 +578,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 				{
 					ucs2_to_utf8(u, v);
 					uint64_t ucs2_char=(u[0]<<24) | (u[1]<<16) | (u[2]<<8) | u[3];
-					ucs2_buffer_add_char(ucs2_char);
+					ucs2_buffer_add_char(ctx, ucs2_char);
 				}
 
 				if (v >= 0x20)
@@ -588,7 +590,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 							if (v == ENTITIES[i].character)
 							{
 								//if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s", ENTITIES[i].entity);
-								page_buffer_add_string (ENTITIES[i].entity);
+								page_buffer_add_string (ctx, ENTITIES[i].entity);
 								// v < 0x20 won't be printed in next block
 								v = 0;
 								break;
@@ -600,7 +602,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 				if (v >= 0x20)
 				{
 					//if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s", u);
-					page_buffer_add_string (u);
+					page_buffer_add_string (ctx, u);
 					if (tlt_config.gui_mode_reports) // For now we just handle the easy stuff
 						fprintf (stderr,"%s",u);
 				}
@@ -611,7 +613,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 		if ((!tlt_config.nofontcolor) && (font_tag_opened == YES))
 		{
 			//if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "</font>");
-			page_buffer_add_string ("</font>");
+			page_buffer_add_string (ctx, "</font>");
 			font_tag_opened = NO;
 		}
 
@@ -625,43 +627,43 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 	switch (tlt_config.write_format)
 	{
 		case CCX_OF_TRANSCRIPT:
-			if (page_buffer_prev_used == 0)
-				prev_show_timestamp = page->show_timestamp;
-			if (page_buffer_prev_used == 0 ||
-					fuzzy_memcmp (page_buffer_prev, page_buffer_cur,
-						ucs2_buffer_prev, ucs2_buffer_prev_used,
-						ucs2_buffer_cur, ucs2_buffer_cur_used
+			if (ctx->page_buffer_prev_used == 0)
+				ctx->prev_show_timestamp = page->show_timestamp;
+			if (ctx->page_buffer_prev_used == 0 ||
+					fuzzy_memcmp (ctx->page_buffer_prev, ctx->page_buffer_cur,
+						ctx->ucs2_buffer_prev, ctx->ucs2_buffer_prev_used,
+						ctx->ucs2_buffer_cur, ctx->ucs2_buffer_cur_used
 						) == 0)
 			{
 				// If empty previous buffer, we just start one with the
 				// current page and do nothing. Wait until we see more.
-				if (page_buffer_prev)
-					free (page_buffer_prev);
+				if (ctx->page_buffer_prev)
+					free (ctx->page_buffer_prev);
 
-				page_buffer_prev_used	= page_buffer_cur_used;
-				page_buffer_prev_size	= page_buffer_cur_size;
-				page_buffer_prev	= page_buffer_cur;
-				page_buffer_cur_size	= 0;
-				page_buffer_cur_used	= 0;
-				page_buffer_cur		= NULL;
+				ctx->page_buffer_prev_used	= ctx->page_buffer_cur_used;
+				ctx->page_buffer_prev_size	= ctx->page_buffer_cur_size;
+				ctx->page_buffer_prev	= ctx->page_buffer_cur;
+				ctx->page_buffer_cur_size	= 0;
+				ctx->page_buffer_cur_used	= 0;
+				ctx->page_buffer_cur		= NULL;
 
-				if (ucs2_buffer_prev)
-					free (ucs2_buffer_prev);
-				ucs2_buffer_prev_used	= ucs2_buffer_cur_used;
-				ucs2_buffer_prev_size	= ucs2_buffer_cur_size;
-				ucs2_buffer_prev	= ucs2_buffer_cur;
-				ucs2_buffer_cur_size	= 0;
-				ucs2_buffer_cur_used	= 0;
-				ucs2_buffer_cur		= NULL;
-				prev_hide_timestamp	= page->hide_timestamp;
+				if (ctx->ucs2_buffer_prev)
+					free (ctx->ucs2_buffer_prev);
+				ctx->ucs2_buffer_prev_used	= ctx->ucs2_buffer_cur_used;
+				ctx->ucs2_buffer_prev_size	= ctx->ucs2_buffer_cur_size;
+				ctx->ucs2_buffer_prev	= ctx->ucs2_buffer_cur;
+				ctx->ucs2_buffer_cur_size	= 0;
+				ctx->ucs2_buffer_cur_used	= 0;
+				ctx->ucs2_buffer_cur		= NULL;
+				ctx->prev_hide_timestamp	= page->hide_timestamp;
 				break;
 			}
 			else
 			{
 				// OK, the old and new buffer don't match. So write the old
 				telxcc_dump_prev_page(ctx, sub);
-				prev_hide_timestamp = page->hide_timestamp;
-				prev_show_timestamp = page->show_timestamp;
+				ctx->prev_hide_timestamp = page->hide_timestamp;
+				ctx->prev_show_timestamp = page->show_timestamp;
 			}
 			break;
 		case CCX_OF_SMPTETT:
@@ -670,27 +672,33 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 			{
 				timestamp_to_smptetttime(page->show_timestamp, timecode_show);
 				timestamp_to_smptetttime(page->hide_timestamp, timecode_hide);
-				fdprintf(ctx->wbout1.fh,"      <p region=\"speaker\" begin=\"%s\" end=\"%s\">%s</p>\n", timecode_show, timecode_hide, page_buffer_cur);
+				fdprintf(ctx->wbout1.fh,"      <p region=\"speaker\" begin=\"%s\" end=\"%s\">%s</p>\n", timecode_show, timecode_hide, ctx->page_buffer_cur);
 			}
 #endif
 			break;
 		default: // Yes, this means everything else is .srt for now
-			page_buffer_add_string ((const char *) encoded_crlf);
-			page_buffer_add_string((const char *) encoded_crlf);
+			page_buffer_add_string (ctx, (const char *) encoded_crlf);
+			page_buffer_add_string(ctx, (const char *) encoded_crlf);
+			sub->type = CC_TEXT;
+			sub->data = strdup(ctx->page_buffer_cur);
+			sub->nb_data = strlen(ctx->page_buffer_cur);
+			sub->start_time = page->show_timestamp;
+			sub->end_time = page->hide_timestamp + 1;
+			sub->got_output = 1;
 #if 0
 			if (ctx->wbout1.fh!=-1)
 			{
 				fdprintf(ctx->wbout1.fh,"%"PRIu32"%s%s --> %s%s", tlt_frames_produced, encoded_crlf, timecode_show, timecode_hide, encoded_crlf);
-				fdprintf(ctx->wbout1.fh, "%s",page_buffer_cur);
+				fdprintf(ctx->wbout1.fh, "%s",ctx->page_buffer_cur);
 			}
 #endif
 	}
 
 	// Also update GUI...
 
-	page_buffer_cur_used=0;
-	if (page_buffer_cur)
-		page_buffer_cur[0]=0;
+	ctx->page_buffer_cur_used=0;
+	if (ctx->page_buffer_cur)
+		ctx->page_buffer_cur[0]=0;
 	if (tlt_config.gui_mode_reports)
 		fflush (stderr);
 }
@@ -1087,7 +1095,7 @@ void tlt_process_pes_packet(void *codec, uint8_t *buffer, uint16_t size, struct 
 	// If there is no PTS available, use global PCR
 	if (using_pts == NO)
 	{
-//		t = ctx->demux_ctx->global_timestamp;
+		t = ctx->global_timestamp;
 	}
 	// if (using_pts == NO) t = get_pts();
 	else
@@ -1108,21 +1116,18 @@ void tlt_process_pes_packet(void *codec, uint8_t *buffer, uint16_t size, struct 
 
 	if (states.pts_initialized == NO)
 	{
-#if 0
 		if (utc_refvalue == UINT64_MAX)
-			delta = (uint64_t) (ctx->subs_delay - t);
+			delta = 0 - (uint64_t)t;
 		else
-			delta = (uint64_t) (ctx->subs_delay + 1000 * utc_refvalue - t);
-#endif
+			delta = (uint64_t) (1000 * utc_refvalue - t);
 		t0 = t;
+
 		states.pts_initialized = YES;
-#if 0
-		if ((using_pts == NO) && (ctx->demux_ctx->global_timestamp == 0))
+		if ((using_pts == NO) && (ctx->global_timestamp == 0))
 		{
 			// We are using global PCR, nevertheless we still have not received valid PCR timestamp yet
 			states.pts_initialized = NO;
 		}
-#endif
 	}
 	if (t < t0)
 		delta = last_timestamp;
@@ -1172,6 +1177,22 @@ void* telxcc_init(void)
 		return NULL;
 	memset (ctx->seen_sub_page, 0, MAX_TLT_PAGES * sizeof(short int));
 
+	ctx->page_buffer_prev = NULL;
+	ctx->page_buffer_cur = NULL;
+	ctx->page_buffer_cur_size = 0;
+	ctx->page_buffer_cur_used = 0;
+	ctx->page_buffer_prev_size = 0;
+	ctx->page_buffer_prev_used = 0;
+	// Current and previous page compare strings. This is plain text (no colors,
+	// tags, etc) in UCS2 (fixed length), so we can compare easily.
+	ctx->ucs2_buffer_prev = NULL;
+	ctx->ucs2_buffer_cur = NULL;
+	ctx->ucs2_buffer_cur_size = 0;
+	ctx->ucs2_buffer_cur_used = 0;
+	ctx->ucs2_buffer_prev_size = 0;
+	ctx->ucs2_buffer_prev_used = 0;
+	// Buffer timestamp
+
 //	if (ctx->wbout1.fh!=-1 && tlt_config.encoding!=CCX_ENC_UTF_8) // If encoding it UTF8 then this was already done
 //		fdprintf(ctx->wbout1.fh, "\xef\xbb\xbf");
 
@@ -1203,6 +1224,13 @@ void telxcc_configure (void *codec, struct ccx_s_teletext_config *cfg)
 	ctx->millis_separator = cfg->millis_separator;
 
 }
+
+void telxcc_update_gt(void *codec, uint32_t global_timestamp)
+{
+	struct TeletextCtx *ctx = codec;
+	ctx->global_timestamp = global_timestamp;
+}
+
 // Close output
 void telxcc_close(void **ctx, struct cc_subtitle *sub)
 {

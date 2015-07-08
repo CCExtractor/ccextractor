@@ -2,6 +2,22 @@
 #include <sys/stat.h>
 #include "608_spupng.h"
 
+void draw_str(char *str, uint8_t * canvas, int rowstride)
+{
+	char *ptr;
+	uint8_t* cell;
+	uint8_t pen[2];
+	int i = 0;
+	pen[0] = COL_BLACK;
+	pen[1] = COL_WHITE;
+	for(ptr = str; ptr != '\0';ptr++)
+	{
+		cell = canvas + ((i+1) * CCW);
+		draw_char_indexed(cell, rowstride, pen, 0, 0, 0);
+		i++;
+	}
+	
+}
 void draw_row(struct eia608_screen* data, int row, uint8_t * canvas, int rowstride)
 {
 	int column;
@@ -189,6 +205,77 @@ unknown_error:
 	return 0;
 }
 
+int spupng_export_string2png(struct spupng_t *sp, char *str)
+{
+	png_structp png_ptr;
+	png_infop info_ptr;
+	png_bytep *row_pointer;
+	png_bytep image;
+	int ww, wh, rowstride, row_adv;
+	int row;
+
+	assert ((sizeof(png_byte) == sizeof(uint8_t))
+			&& (sizeof(*image) == sizeof(uint8_t)));
+
+	// Allow space at beginning and end of each row for a padding space
+	ww = CCW * (COLUMNS+2);
+	wh = CCH * ROWS;
+	row_adv = (COLUMNS+2) * CCW * CCH;
+
+	rowstride = ww * sizeof(*image);
+
+	if (!(row_pointer = (png_bytep*)malloc(sizeof(*row_pointer) * wh))) {
+		mprint("Unable to allocate %d byte buffer.\n",
+				sizeof(*row_pointer) * wh);
+		return 0;
+	}
+
+	if (!(image = (png_bytep)malloc(wh * ww * sizeof(*image)))) {
+		mprint("Unable to allocate %d KB image buffer.",
+				wh * ww * sizeof(*image) / 1024);
+		free(row_pointer);
+		return 0;
+	}
+	// Initialize image to transparent
+	memset(image, COL_TRANSPARENT, wh * ww * sizeof(*image));
+
+	/* draw the image */
+	draw_str(str, image + row * row_adv, rowstride);
+
+	/* Now save the image */
+
+	if (!(png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING,
+					NULL, NULL, NULL)))
+		goto unknown_error;
+
+	if (!(info_ptr = png_create_info_struct(png_ptr))) {
+		png_destroy_write_struct(&png_ptr, (png_infopp) NULL);
+		goto unknown_error;
+	}
+#if 0
+	if (!spupng_write_png (sp, data, png_ptr, info_ptr, image, row_pointer, ww, wh)) {
+		png_destroy_write_struct (&png_ptr, &info_ptr);
+		goto write_error;
+	}
+#endif
+	png_destroy_write_struct (&png_ptr, &info_ptr);
+
+	free (row_pointer);
+
+	free (image);
+
+	return 1;
+
+write_error:
+
+unknown_error:
+	free (row_pointer);
+
+	free (image);
+
+	return 0;
+}
+
 int spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
 		struct encoder_ctx *context)
 {
@@ -270,6 +357,55 @@ int spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
 	write_spucomment(sp,str);
 	return 1;
 }
+
+int spupng_write_string(struct spupng_t *sp, char *string, LLONG start_time, LLONG end_time,
+		struct encoder_ctx *context)
+{
+
+	int row;
+	int empty_buf = 1;
+	char str[256] = "";
+	int str_len = 0;
+	LLONG ms_start = start_time + context->subs_delay;
+	if (ms_start < 0)
+	{
+		dbg_print(CCX_DMT_VERBOSE, "Negative start\n");
+		return 0;
+	}
+	
+
+	LLONG ms_end = end_time;
+
+	sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex++);
+	if ((sp->fppng = fopen(sp->pngfile, "wb")) == NULL)
+	{
+		fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n",
+				sp->pngfile, strerror(errno));
+	}
+	if (!spupng_export_string2png(sp, str))
+	{
+		fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot write %s: %s\n",
+				sp->pngfile, strerror(errno));
+	}
+	fclose(sp->fppng);
+	write_sputag(sp,ms_start,ms_end);
+	write_spucomment(sp,str);
+	return 1;
+}
+int write_cc_subtitle_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *context)
+{
+	struct spupng_t *sp = (struct spupng_t *) context->out->spupng_data;
+	if (!sp)
+		return -1;
+
+	if(sub->type == CC_TEXT)
+	{
+		spupng_write_string(sp, sub->data, sub->start_time, sub->end_time, context);
+	}
+
+	return 0;
+}
+
 int write_cc_buffer_as_spupng(struct eia608_screen *data,struct encoder_ctx *context)
 {
 	struct spupng_t *sp = (struct spupng_t *) context->out->spupng_data;

@@ -290,9 +290,9 @@ void* telxcc_init(void);
 void telxcc_close(void **ctx, struct cc_subtitle *sub);
 void tlt_read_rcwt(void *codec, struct cc_subtitle *sub);
 void telxcc_configure (void *codec, struct ccx_s_teletext_config *cfg);
+void telxcc_update_gt(void *codec, uint32_t global_timestamp);
 
 extern unsigned rollover_bits;
-extern int global_timestamp_inited;
 
 extern int strangeheader;
 

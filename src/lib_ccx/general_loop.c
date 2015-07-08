@@ -685,7 +685,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		}
 		else if (data_node->bufferdatatype == CCX_TELETEXT)
 		{
-			// Dispatch to Petr Kutalek 's telxcc.
+			telxcc_update_gt(ctx->demux_ctx->codec_ctx, ctx->demux_ctx->global_timestamp);
 			tlt_process_pes_packet (ctx->demux_ctx->codec_ctx, data_node->buffer, data_node->windex, dec_sub);
 			set_encoder_rcwt_fileformat(enc_ctx, 2);
 			got = data_node->windex;

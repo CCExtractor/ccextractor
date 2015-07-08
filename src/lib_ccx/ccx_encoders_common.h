@@ -90,16 +90,22 @@ void dinit_encoder(struct encoder_ctx *ctx);
 int encode_sub(struct encoder_ctx *ctx,struct cc_subtitle *sub);
 
 int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *context);
+int write_cc_subtitle_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context);
 void write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
 
 int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *context);
 void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
+int write_cc_subtitle_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context);
 
 int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *context);
 void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
+int write_cc_subtitle_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *context);
+
 void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *context);
 
 int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *context);
+int write_cc_subtitle_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *context);
+
 int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *context);

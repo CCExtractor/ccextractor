@@ -167,6 +167,11 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 
 }
 
+int write_cc_subtitle_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *context)
+{
+
+}
+
 int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *context)
 {
 	int used;

@@ -145,6 +145,12 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 	return ret;
 
 }
+
+int write_cc_subtitle_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context)
+{
+
+}
+
 int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *context)
 {
 	int used;

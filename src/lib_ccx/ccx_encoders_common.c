@@ -293,6 +293,11 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 	// fprintf (wb->fh,encoded_crlf);
 }
 
+int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context)
+{
+
+}
+
 int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context)
 {
 	int wrote_something = 0;
@@ -678,6 +683,33 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			}
 		}
 		sub->nb_data = 0;
+	}
+	if(sub->type == CC_TEXT)
+	{
+		switch (context->write_format)
+		{
+		case CCX_OF_SRT:
+			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
+				try_to_add_start_credits(context, sub->start_time);
+			wrote_something = write_cc_subtitle_as_srt(sub, context);
+		case CCX_OF_SAMI:
+			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
+				try_to_add_start_credits(context, sub->start_time);
+			wrote_something = write_cc_subtitle_as_sami(sub, context);
+		case CCX_OF_SMPTETT:
+			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
+				try_to_add_start_credits(context, sub->start_time);
+			wrote_something = write_cc_subtitle_as_smptett(sub, context);
+		case CCX_OF_TRANSCRIPT:
+			wrote_something = write_cc_subtitle_as_transcript(sub, context);
+			break;
+		case CCX_OF_SPUPNG:
+			wrote_something = write_cc_subtitle_as_spupng(sub, context);
+			break;
+		default:
+			break;
+		}
+
 	}
 	if (!sub->nb_data)
 		freep(&sub->data);

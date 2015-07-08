@@ -132,6 +132,14 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	return ret;
 
 }
+
+int write_cc_subtitle_as_srt(struct cc_subtitle *sub,struct encoder_ctx *context)
+{
+	if(sub->type == CC_TEXT)
+	{
+		write_stringz_as_srt(sub->data, context, sub->start_time, sub->end_time);
+	}
+}
 int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *context)
 {
 	int used;
