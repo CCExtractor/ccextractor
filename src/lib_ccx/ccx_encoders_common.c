@@ -195,6 +195,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 	LLONG end_time;
 	char *str;
 	struct cc_subtitle *osub = sub;
+	struct cc_subtitle *lsub = sub;
 
 	while(sub)
 	{
@@ -216,6 +217,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 			dbg_print(CCX_DMT_DECODER_608, "\r");
 			dbg_print(CCX_DMT_DECODER_608, "%s\n", str);
 		}
+
 		if (length>0)
 		{
 			if (start_time == -1)
@@ -281,8 +283,19 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 				mprint("Warning:Loss of data\n");
 			}
 		}
+
+		freep(&sub->data);
+		lsub = sub;
 		sub = sub->next;
 	}
+
+	while(lsub != osub)
+	{
+		sub = lsub->prev;
+		freep(&lsub);
+		lsub = sub;
+	}
+
 	return ret;
 }
 
@@ -638,6 +651,11 @@ int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_
 	}
 
 	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);
+	if(!ctx->subline)
+	{
+		freep(&ctx->buffer);
+		return -1;
+	}
 
 	write_subtitle_file_header(ctx,out);
 
@@ -664,7 +682,7 @@ void set_encoder_startcredits_displayed(struct encoder_ctx *ctx, int startcredit
 }
 void dinit_encoder(struct encoder_ctx *ctx)
 {
-
+	freep(&ctx->subline);
 	if (ctx->end_credits_text!=NULL)
 		try_to_add_end_credits(ctx,ctx->out);
 	write_subtitle_file_footer(ctx,ctx->out);
@@ -748,14 +766,17 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
 				try_to_add_start_credits(context, sub->start_time);
 			wrote_something = write_cc_bitmap_as_srt(sub, context);
+			break;
 		case CCX_OF_SAMI:
 			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
 				try_to_add_start_credits(context, sub->start_time);
 			wrote_something = write_cc_bitmap_as_sami(sub, context);
+			break;
 		case CCX_OF_SMPTETT:
 			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
 				try_to_add_start_credits(context, sub->start_time);
 			wrote_something = write_cc_bitmap_as_smptett(sub, context);
+			break;
 		case CCX_OF_TRANSCRIPT:
 			wrote_something = write_cc_bitmap_as_transcript(sub, context);
 			break;
@@ -788,14 +809,17 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
 				try_to_add_start_credits(context, sub->start_time);
 			wrote_something = write_cc_subtitle_as_srt(sub, context);
+			break;
 		case CCX_OF_SAMI:
 			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
 				try_to_add_start_credits(context, sub->start_time);
 			wrote_something = write_cc_subtitle_as_sami(sub, context);
+			break;
 		case CCX_OF_SMPTETT:
 			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
 				try_to_add_start_credits(context, sub->start_time);
 			wrote_something = write_cc_subtitle_as_smptett(sub, context);
+			break;
 		case CCX_OF_TRANSCRIPT:
 			wrote_something = write_cc_subtitle_as_transcript(sub, context);
 			break;

@@ -5,7 +5,7 @@
 
 /* The timing here is not PTS based, but output based, i.e. user delay must be accounted for
    if there is any */
-void write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
+int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
 	int used;
 	unsigned h1,m1,s1,ms1;
@@ -68,20 +68,21 @@ void write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_st
 	write(context->out->fh, encoded_crlf, encoded_crlf_length);
 	free(el);
 	free(unescaped);
+
+	return 0;
 }
 
 int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
 	int ret = 0;
+#ifdef ENABLE_OCR
 	struct cc_bitmap* rect;
 	LLONG ms_start, ms_end;
-#ifdef ENABLE_OCR
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
 	char timeline[128];
 	int len = 0;
 	int used;
-#endif
 
 	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
 	{
@@ -106,7 +107,6 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 		context->prev_start =  sub->start_time;
 
 	rect = sub->data;
-#ifdef ENABLE_OCR
 	if (rect[0].ocr_text && *(rect[0].ocr_text))
 	{
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
@@ -135,10 +135,12 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 
 int write_cc_subtitle_as_srt(struct cc_subtitle *sub,struct encoder_ctx *context)
 {
+	int ret = 0;
 	if(sub->type == CC_TEXT)
 	{
-		write_stringz_as_srt(sub->data, context, sub->start_time, sub->end_time);
+		ret = write_stringz_as_srt(sub->data, context, sub->start_time, sub->end_time);
 	}
+	return ret;
 }
 int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *context)
 {

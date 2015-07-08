@@ -1132,8 +1132,10 @@ void tlt_process_pes_packet(void *codec, uint8_t *buffer, uint16_t size, struct 
 				if (tlt_config.write_format == CCX_OF_RCWT)
 					tlt_write_rcwt((void*)ctx, data_unit_id, &buffer[i], last_timestamp, sub);
 				else
+				{
 					// FIXME: This explicit type conversion could be a problem some day -- do not need to be platform independant
 					process_telx_packet(ctx, (data_unit_t) data_unit_id, (teletext_packet_payload_t *)&buffer[i], last_timestamp, sub);
+				}
 			}
 		}
 
@@ -1230,5 +1232,7 @@ void telxcc_close(void **ctx, struct cc_subtitle *sub)
 			tlt_frames_produced++;
 		}
 	}
+	freep(&ttext->ucs2_buffer_cur);
+	freep(&ttext->page_buffer_cur);
 	freep(ctx);
 }

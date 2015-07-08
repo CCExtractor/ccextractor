@@ -53,6 +53,12 @@ int main(int argc, char *argv[])
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 	else if (!ctx && errno == EINVAL)
 		fatal (CCX_COMMON_EXIT_BUG_BUG, "Invalid option to CCextractor Library\n");
+	else if (!ctx && errno == EPERM)
+		fatal (CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to create Output File\n");
+	else if (!ctx && errno == EACCES)
+		fatal (CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to create Output File\n");
+	else if (!ctx)
+		fatal (EXIT_NOT_CLASSIFIED, "Unable to create Library Context %d\n",EPERM);
 
 	dec_ctx = ctx->dec_ctx;
 
@@ -382,7 +388,6 @@ int main(int argc, char *argv[])
 	} // file loop
 	close_input_file(ctx);
 
-	ccx_demuxer_delete(&ctx->demux_ctx);
 	flushbuffer (ctx, &ctx->wbout1, false);
 	flushbuffer (ctx, &ctx->wbout2, false);
 

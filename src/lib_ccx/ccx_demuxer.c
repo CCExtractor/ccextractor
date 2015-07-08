@@ -186,6 +186,14 @@ void ccx_demuxer_delete(struct ccx_demuxer **ctx)
 {
 	struct ccx_demuxer *lctx = *ctx;
 	int i;
+	for(i = 0; i < TS_PMT_MAP_SIZE; i++)
+	{
+		if(lctx->pmt_array[i].last_pmt_length)
+		{
+			freep(&lctx->pmt_array[i].last_pmt_payload);
+		}
+		lctx->pmt_array[i].last_pmt_length = 0;
+	}
 	for (i = 0; i < MAX_PID; i++)
 	{
 		if( lctx->PIDs_programs[i])
@@ -358,8 +366,9 @@ static void ccx_demuxer_print_cfg(struct ccx_demuxer *ctx)
 }
 int ccx_demuxer_write_es(struct ccx_demuxer *ctx, unsigned char* buf, size_t len)
 {
-		if (ctx->fh_out_elementarystream!=NULL)
-			fwrite (buf, 1, len,ctx->fh_out_elementarystream);
+	if (ctx->fh_out_elementarystream!=NULL)
+		fwrite (buf, 1, len,ctx->fh_out_elementarystream);
+	return CCX_OK;
 }
 struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 {

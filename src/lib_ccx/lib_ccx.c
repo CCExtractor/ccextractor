@@ -378,6 +378,7 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 	struct lib_ccx_ctx *lctx = *ctx;
 	// free EPG memory
 	EPG_free(lctx);
+	ccx_demuxer_delete(&lctx->demux_ctx);
 	dinit_output_ctx(lctx);
 	dinit_cc_decode(&lctx->dec_ctx);
 	freep(&lctx->basefilename);
