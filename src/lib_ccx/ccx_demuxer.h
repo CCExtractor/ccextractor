@@ -113,4 +113,5 @@ struct demuxer_data
 struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg);
 void ccx_demuxer_delete(struct ccx_demuxer **ctx);
 struct demuxer_data* alloc_demuxer_data(void);
+void delete_demuxer_data(struct demuxer_data *data);
 #endif

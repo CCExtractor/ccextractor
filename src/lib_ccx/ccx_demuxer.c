@@ -436,6 +436,12 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	return ctx;
 }
 
+void delete_demuxer_data(struct demuxer_data *data)
+{
+	free(data->buffer);
+	free(data);
+}
+
 struct demuxer_data* alloc_demuxer_data(void)
 {
 	struct demuxer_data* data = malloc(sizeof(struct demuxer_data));

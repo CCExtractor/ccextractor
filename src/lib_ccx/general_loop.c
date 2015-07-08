@@ -592,6 +592,18 @@ end:
 	return ret;
 }
 
+void delete_datalist(struct demuxer_data *list)
+{
+	struct demuxer_data *slist = list;
+
+	while(list)
+	{
+		slist = list;
+		list = list->next_stream;
+		delete_demuxer_data(slist);
+
+	}
+}
 void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 {
 	LLONG overlap=0;
@@ -798,6 +810,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		}
 	}
 
+	delete_datalist(datalist);
 	if (ctx->total_past!=ctx->total_inputsize && ctx->binary_concat && !dec_ctx->processed_enough)
 	{
 		mprint("\n\n\n\nATTENTION!!!!!!\n");
