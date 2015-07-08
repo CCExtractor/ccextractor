@@ -61,6 +61,10 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 		data->stream_pid = 1;
 		data->codec  = CCX_CODEC_ATSC_CC;
 	}
+	else
+	{
+		data = *ppdata;
+	}
 
 	// Read and return the next video PES payload
 	do
