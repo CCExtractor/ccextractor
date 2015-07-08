@@ -142,7 +142,7 @@ int ts_readpacket(struct ccx_demuxer* ctx)
 		Copy_permission_indicator 2  unimsbf
 		Arrival_time_stamp 30 unimsbf
 		} */
-		char tp_extra_header[4];
+		unsigned char tp_extra_header[4];
 		buffered_read(ctx, tp_extra_header, 3);
 		ctx->past += result;
 		if (result != 4)
@@ -315,9 +315,11 @@ struct demuxer_data *search_or_alloc_demuxer_data_node_by_pid(struct demuxer_dat
 		(*data)->windex = 0;
 		(*data)->next_program = NULL;
 		(*data)->next_stream = NULL;
+		(*data)->ignore = 0;
 		return *data;
 	}
 	ptr = *data;
+
 	do
 	{
 		if(ptr->stream_pid == pid)
@@ -336,6 +338,7 @@ struct demuxer_data *search_or_alloc_demuxer_data_node_by_pid(struct demuxer_dat
 	ptr->windex = 0;
 	ptr->next_program = NULL;
 	ptr->next_stream = NULL;
+	ptr->ignore = 0;
 
 	return ptr;
 }
@@ -692,7 +695,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 // TS specific data grabber
 LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
-	const char *tstr; // Temporary string to describe the stream type
+//	const char *tstr; // Temporary string to describe the stream type
 	int ret;
 
 #define search_again goto search

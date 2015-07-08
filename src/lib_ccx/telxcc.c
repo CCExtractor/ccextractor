@@ -335,33 +335,13 @@ uint16_t bcd_page_to_int (uint16_t bcd)
 
 void telxcc_dump_prev_page (struct TeletextCtx *ctx, struct cc_subtitle *sub)
 {
-	char c_temp1[80],c_temp2[80]; // For timing
+	char info[4]; 
 	if (!ctx->page_buffer_prev)
 		return;
 
-#if 0
-	if (tlt_config.transcript_settings->showStartTime)
-	{
-		millis_to_date(prev_show_timestamp, c_temp1, tlt_config.date_format, tlt_config.millis_separator); // Note: Delay not added here because it was already accounted for
-		fdprintf(ctx->wbout1.fh, "%s|", c_temp1);
-	}
-	if (tlt_config.transcript_settings->showEndTime)
-	{
-		millis_to_date (prev_hide_timestamp, c_temp2, tlt_config.date_format, tlt_config.millis_separator);
-		fdprintf(ctx->wbout1.fh,"%s|",c_temp2);
-	}
-	if (tlt_config.transcript_settings->showCC)
-	{
-		fdprintf(ctx->wbout1.fh, "%.3u|", bcd_page_to_int(tlt_config.page));
-	}
-	if (tlt_config.transcript_settings->showMode)
-	{
-		fdprintf(ctx->wbout1.fh, "TLT|");
-	}
+	snprintf(info, 4, "%.3u", bcd_page_to_int(tlt_config.page));
+	add_cc_sub_text(sub, ctx->page_buffer_prev, ctx->prev_show_timestamp, ctx->prev_hide_timestamp, info, "TLT");
 
-	if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s",ctx->page_buffer_prev);
-		fdprintf(ctx->wbout1.fh,"%s",encoded_crlf);
-#endif
 	if (ctx->page_buffer_prev)
 		free (ctx->page_buffer_prev);
 	if (ctx->ucs2_buffer_prev)
@@ -679,19 +659,12 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 		default: // Yes, this means everything else is .srt for now
 			page_buffer_add_string (ctx, (const char *) encoded_crlf);
 			page_buffer_add_string(ctx, (const char *) encoded_crlf);
+			add_cc_sub_text(sub, ctx->page_buffer_cur, page->show_timestamp, page->hide_timestamp + 1, NULL, "TLT");
 			sub->type = CC_TEXT;
 			sub->data = strdup(ctx->page_buffer_cur);
 			sub->nb_data = strlen(ctx->page_buffer_cur);
 			sub->start_time = page->show_timestamp;
 			sub->end_time = page->hide_timestamp + 1;
-			sub->got_output = 1;
-#if 0
-			if (ctx->wbout1.fh!=-1)
-			{
-				fdprintf(ctx->wbout1.fh,"%"PRIu32"%s%s --> %s%s", tlt_frames_produced, encoded_crlf, timecode_show, timecode_hide, encoded_crlf);
-				fdprintf(ctx->wbout1.fh, "%s",ctx->page_buffer_cur);
-			}
-#endif
 	}
 
 	// Also update GUI...
@@ -1192,9 +1165,6 @@ void* telxcc_init(void)
 	ctx->ucs2_buffer_prev_size = 0;
 	ctx->ucs2_buffer_prev_used = 0;
 	// Buffer timestamp
-
-//	if (ctx->wbout1.fh!=-1 && tlt_config.encoding!=CCX_ENC_UTF_8) // If encoding it UTF8 then this was already done
-//		fdprintf(ctx->wbout1.fh, "\xef\xbb\xbf");
 
 	return ctx;
 }

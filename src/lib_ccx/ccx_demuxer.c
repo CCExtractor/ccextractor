@@ -439,9 +439,27 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 struct demuxer_data* alloc_demuxer_data(void)
 {
 	struct demuxer_data* data = malloc(sizeof(struct demuxer_data));
+
+	if(!data)
+	{
+		return NULL;
+	}
 	data->buffer = (unsigned char *) malloc (BUFSIZE);
+	if(!data->buffer)
+	{
+		free(data);
+		return NULL;
+	}
 	data->windex = 0;
 	data->bufferdatatype = CCX_PES;
+
+	data->program_number = -1;
+	data->stream_pid = -1;
+	data->codec = CCX_CODEC_NONE;
+	data->len = 0;
+	data->ignore = 0;
+	data->next_stream = 0;
+	data->next_program = 0;
 	return data;
 	
 }

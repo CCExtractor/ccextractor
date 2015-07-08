@@ -49,5 +49,11 @@ struct cc_subtitle
 	int lang_index;
 	/** flag to tell that decoder has given output */
 	int got_output;
+	
+	char mode[4];
+	char info[4];
+
+	struct cc_subtitle *next;
+	struct cc_subtitle *prev;
 };
 #endif

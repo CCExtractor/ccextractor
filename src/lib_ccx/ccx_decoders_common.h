@@ -21,7 +21,7 @@ LLONG get_visible_start(void);
 LLONG get_visible_end(void);
 
 void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank);
-unsigned get_decoder_line_basic(unsigned char *buffer, int line_num, struct eia608_screen *data, int trim_subs, enum ccx_encoding_type encoding);
+unsigned int get_decoder_str_basic(unsigned char *buffer, unsigned char *line, int trim_subs, enum ccx_encoding_type encoding);
 
 void ccx_decoders_common_settings_init(LLONG subs_delay, enum ccx_output_format output_format);
 

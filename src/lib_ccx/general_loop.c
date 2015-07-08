@@ -516,7 +516,7 @@ LLONG process_raw_with_field (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, 
 
 /* Process inbuf bytes in buffer holding raw caption data (two byte packets).
  * The number of processed bytes is returned. */
-LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, char *buffer, int len)
+LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, unsigned char *buffer, int len)
 {
 	unsigned char data[3];
 	struct lib_cc_decode *dec_ctx = NULL;
@@ -549,6 +549,8 @@ struct demuxer_data *get_data_stream(struct demuxer_data *data, int pid)
 	for(ptr = data; ptr; ptr = ptr->next_stream)
 		if(ptr->stream_pid == pid)
 			return ptr;
+
+	return NULL;
 }
 struct demuxer_data *get_best_data(struct demuxer_data *data)
 {
@@ -778,6 +780,12 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 			dec_sub->got_output = 0;
 		}
 		position_sanity_check(ctx->demux_ctx->infd);
+	}
+	telxcc_close(&ctx->demux_ctx->codec_ctx, &dec_ctx->dec_sub);
+	if (dec_ctx->dec_sub.got_output)
+	{
+		encode_sub(enc_ctx,&dec_ctx->dec_sub);
+		dec_ctx->dec_sub.got_output = 0;
 	}
 	// Flush remaining HD captions
 	if (has_ccdata_buffered)

@@ -35,8 +35,8 @@ static void dinit_decoder_setting (struct ccx_decoders_common_settings_t **setti
 
 static int init_ctx_input(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx)
 {
-	int len;
 	char *file,*c;
+	int len;
 
 	switch (opt->input_source)
 	{
@@ -120,7 +120,6 @@ static int init_ctx_extension(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx
 char *create_outfilename(const char *basename, const char *suffix, const char *extension)
 {
 	char *ptr = NULL;
-	int len = 0;
 	int blen, slen, elen;
 
 	if(basename)
@@ -154,6 +153,11 @@ char *create_outfilename(const char *basename, const char *suffix, const char *e
 		strcat(ptr, extension);
 
 	return ptr;
+}
+static void dinit_output_ctx(struct lib_ccx_ctx *ctx)
+{
+	dinit_write(&ctx->wbout1);
+	dinit_write(&ctx->wbout2);
 }
 static int init_output_ctx(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx)
 {
@@ -372,9 +376,9 @@ end:
 void dinit_libraries( struct lib_ccx_ctx **ctx)
 {
 	struct lib_ccx_ctx *lctx = *ctx;
-	int i = 0;
 	// free EPG memory
 	EPG_free(lctx);
+	dinit_output_ctx(lctx);
 	dinit_cc_decode(&lctx->dec_ctx);
 	freep(&lctx->basefilename);
 	freep(&lctx->pesheaderbuf);

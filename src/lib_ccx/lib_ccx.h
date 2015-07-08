@@ -191,7 +191,7 @@ int init_file_buffer( void );
 int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
 void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx);
-LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, char *buffer, int len);
+LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, unsigned char *buffer, int len);
 void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
 void processhex (char *filename);
 void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
@@ -239,6 +239,7 @@ void params_dump(struct lib_ccx_ctx *ctx);
 void print_file_report(struct lib_ccx_ctx *ctx);
 
 // output.c
+void dinit_write(struct ccx_s_write *wb);
 int init_write (struct ccx_s_write *wb,char *filename);
 int writeraw (const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile);

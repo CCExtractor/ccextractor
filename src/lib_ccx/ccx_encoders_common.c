@@ -108,6 +108,7 @@ static int write_bom(struct encoder_ctx *ctx, struct ccx_s_write *out)
 			}
 		}
 	}
+	return ret;
 }
 static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_write *out)
 {
@@ -145,7 +146,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			}
 			break;
 		case CCX_OF_RCWT: // Write header
-			rcwt_header[7] = ctx->rcwt_fileformat; // sets file format version
+			rcwt_header[7] = ctx->in_fileformat; // sets file format version
 
 			if (ctx->send_to_srv)
 				net_send_header(rcwt_header, sizeof(rcwt_header));
@@ -184,6 +185,106 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 	return ret;
 }
 
+int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context)
+{
+	int length;
+	int ret = 0;
+	unsigned int h1,m1,s1,ms1;
+	unsigned int h2,m2,s2,ms2;
+	LLONG start_time;
+	LLONG end_time;
+	char *str;
+	struct cc_subtitle *osub = sub;
+
+	while(sub)
+	{
+		if(sub->type == CC_TEXT)
+		{
+			start_time = sub->start_time;
+			end_time = sub->end_time;
+		}
+		if (context->sentence_cap)
+		{
+			//TODO capitalize (line_number,data);
+			//TODO correct_case(line_number,data);
+		}
+
+		str = sub->data;
+		length = strlen(str);
+		if (context->encoding!=CCX_ENC_UNICODE)
+		{
+			dbg_print(CCX_DMT_DECODER_608, "\r");
+			dbg_print(CCX_DMT_DECODER_608, "%s\n", str);
+		}
+		if (length>0)
+		{
+			if (start_time == -1)
+			{
+				// CFS: Means that the line has characters but we don't have a timestamp for the first one. Since the timestamp
+				// is set for example by the write_char function, it possible that we don't have one in empty lines (unclear)
+				// For now, let's not consider this a bug as before and just return.
+				// fatal (EXIT_BUG_BUG, "Bug in timedtranscript (ts_start_of_current_line==-1). Please report.");
+				return 0;
+			}
+
+			if (context->transcript_settings->showStartTime){
+				char buf1[80];
+				if (context->transcript_settings->relativeTimestamp){
+					millis_to_date(start_time + context->subs_delay, buf1, context->date_format, context->millis_separator);
+					fdprintf(context->out->fh, "%s|", buf1);
+				}
+				else {
+					mstotime(start_time + context->subs_delay, &h1, &m1, &s1, &ms1);
+					time_t start_time_int = (start_time + context->subs_delay) / 1000;
+					int start_time_dec = (start_time + context->subs_delay) % 1000;
+					struct tm *start_time_struct = gmtime(&start_time_int);
+					strftime(buf1, sizeof(buf1), "%Y%m%d%H%M%S", start_time_struct);
+					fdprintf(context->out->fh, "%s%c%03d|", buf1,context->millis_separator,start_time_dec);
+				}
+			}
+
+			if (context->transcript_settings->showEndTime){
+				char buf2[80];
+				if (context->transcript_settings->relativeTimestamp){
+					millis_to_date(end_time, buf2, context->date_format, context->millis_separator);
+					fdprintf(context->out->fh, "%s|", buf2);
+				}
+				else {
+					mstotime(get_fts() + context->subs_delay, &h2, &m2, &s2, &ms2);
+					time_t end_time_int = (end_time + context->subs_delay) / 1000;
+					int end_time_dec = (end_time + context->subs_delay) % 1000;
+					struct tm *end_time_struct = gmtime(&end_time_int);
+					strftime(buf2, sizeof(buf2), "%Y%m%d%H%M%S", end_time_struct);
+					fdprintf(context->out->fh, "%s%c%03d|", buf2,context->millis_separator,end_time_dec);
+				}
+			}
+
+			if (context->transcript_settings->showCC) {
+				if(context->in_fileformat == 2 )
+					fdprintf(context->out->fh, sub->info);
+				else
+					//TODO, data->my_field == 1 ? data->channel : data->channel + 2); // Data from field 2 is CC3 or 4
+					fdprintf(context->out->fh, "CC?|");
+			}
+			if (context->transcript_settings->showMode){
+				fdprintf(context->out->fh, "%s|", sub->mode);
+			}
+			ret = write(context->out->fh, str, length);
+			if(ret < length)
+			{
+				mprint("Warning:Loss of data\n");
+			}
+
+			ret = write(context->out->fh, encoded_crlf, encoded_crlf_length);
+			if(ret <  encoded_crlf_length)
+			{
+				mprint("Warning:Loss of data\n");
+			}
+		}
+		sub = sub->next;
+	}
+	return ret;
+}
 
 void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context, int line_number)
 {
@@ -197,7 +298,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		capitalize (line_number,data);
 		correct_case(line_number,data);
 	}
-	int length = get_decoder_line_basic (context->subline, line_number, data, context->trim_subs, context->encoding);
+	int length = get_decoder_str_basic (context->subline, data->characters[line_number], context->trim_subs, context->encoding);
 	if (context->encoding!=CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r");
@@ -293,11 +394,6 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 	// fprintf (wb->fh,encoded_crlf);
 }
 
-int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context)
-{
-
-}
-
 int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context)
 {
 	int wrote_something = 0;
@@ -317,12 +413,12 @@ int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ct
 int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
 	int ret = 0;
+#ifdef ENABLE_OCR
 	struct cc_bitmap* rect;
 
-#ifdef ENABLE_OCR
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
-#endif
+
 	LLONG start_time, end_time;
 
 	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
@@ -343,7 +439,7 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 	if ( sub->flags & SUB_EOD_MARKER )
 		context->prev_start =  sub->start_time;
 
-#ifdef ENABLE_OCR
+
 	if (rect[0].ocr_text && *(rect[0].ocr_text))
 	{
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
@@ -531,7 +627,7 @@ int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_
 	ctx->startcreditsforatmost = opt->startcreditsforatmost;
 	ctx->endcreditsforatleast = opt->endcreditsforatleast;
 	ctx->endcreditsforatmost = opt->endcreditsforatmost;
-	ctx->rcwt_fileformat = 1;
+	ctx->in_fileformat = 1;
 	ctx->send_to_srv = opt->send_to_srv;
 	ctx->gui_mode_reports = opt->gui_mode_reports;
 	ctx->no_bom = opt->no_bom;
@@ -551,7 +647,7 @@ int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_
 
 void set_encoder_rcwt_fileformat(struct encoder_ctx *ctx, short int format)
 {
-	ctx->rcwt_fileformat = format;
+	ctx->in_fileformat = format;
 }
 
 void set_encoder_last_displayed_subs_ms(struct encoder_ctx *ctx, LLONG last_displayed_subs_ms)
@@ -709,6 +805,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		default:
 			break;
 		}
+		sub->nb_data = 0;
 
 	}
 	if (!sub->nb_data)

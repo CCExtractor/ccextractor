@@ -64,3 +64,30 @@ void freep(void *arg)
 	*ptr = NULL;
 
 }
+
+int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time, LLONG end_time, char *info, char *mode)
+{
+	if (sub->nb_data)
+	{
+		for(;sub->next;sub = sub->next);
+		sub->next = malloc(sizeof(struct cc_subtitle));
+		if(!sub->next)
+			return -1;
+		sub->next->prev = sub;
+		sub = sub->next;
+	}
+
+	sub->type = CC_TEXT;
+	sub->data = strdup(str);
+	sub->nb_data = strlen(str);
+	sub->start_time = start_time;
+	sub->end_time = end_time;
+	if(info)
+		strncpy(sub->info, info, 4);
+	if(mode)
+		strncpy(sub->mode, mode, 4);
+	sub->got_output = 1;
+	sub->next = NULL;
+
+	return 0;
+}

@@ -388,12 +388,6 @@ int main(int argc, char *argv[])
 
 	prepare_for_new_file (ctx); // To reset counters used by handle_end_of_data()
 
-	telxcc_close(&ctx->dec_ctx->codec, &dec_ctx->dec_sub);
-	if (dec_ctx->dec_sub.got_output)
-	{
-		encode_sub(enc_ctx,&dec_ctx->dec_sub);
-		dec_ctx->dec_sub.got_output = 0;
-	}
 	if (ccx_options.extract != 2)
 	{
 		if (ccx_options.write_format==CCX_OF_SMPTETT || ccx_options.write_format==CCX_OF_SAMI || 

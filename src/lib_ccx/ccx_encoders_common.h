@@ -48,7 +48,7 @@ struct encoder_ctx
 	struct ccx_boundary_time startcreditsnotbefore, startcreditsnotafter; // Where to insert start credits, if possible
 	struct ccx_boundary_time startcreditsforatleast, startcreditsforatmost; // How long to display them?
 	struct ccx_boundary_time endcreditsforatleast, endcreditsforatmost;
-	unsigned int rcwt_fileformat; //1 =Normal, 2=Teletext
+	unsigned int in_fileformat; //1 =Normal, 2=Teletext
 	unsigned int send_to_srv;
 	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
 	int no_bom;

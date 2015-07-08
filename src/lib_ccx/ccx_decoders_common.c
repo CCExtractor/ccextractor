@@ -58,9 +58,8 @@ void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_
 	}
 }
 
-unsigned get_decoder_line_basic(unsigned char *buffer, int line_num, struct eia608_screen *data, int trim_subs, enum ccx_encoding_type encoding)
+unsigned int get_decoder_str_basic(unsigned char *buffer, unsigned char *line, int trim_subs, enum ccx_encoding_type encoding)
 {
-	unsigned char *line = data->characters[line_num];
 	int last_non_blank = -1;
 	int first_non_blank = -1;
 	unsigned char *orig = buffer; // Keep for debugging
