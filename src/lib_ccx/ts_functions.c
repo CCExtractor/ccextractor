@@ -671,9 +671,10 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		if (cinfo->capbuf[0] != 0x00 || cinfo->capbuf[1] != 0x00 ||
 				cinfo->capbuf[2] != 0x01)
 		{
+			int len = (cinfo->capbuflen>256)?256:cinfo->capbuflen;
 			// ??? Shouldn't happen. Complain and try again.
 			mprint("Missing PES header!\n");
-			dump(CCX_DMT_GENERIC_NOTICES, cinfo->capbuf,256, 0, 0);
+			dump(CCX_DMT_GENERIC_NOTICES, cinfo->capbuf,len, 0, 0);
 			continue;
 		}
 		//else
