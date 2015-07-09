@@ -265,12 +265,19 @@ int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
 	int bytesread = 0;
 	int want;
 	struct demuxer_data *ptr;
-	*data = alloc_demuxer_data();
+	if(!*data)
+	{
+		*data = alloc_demuxer_data();
+		if(!*data)
+			return -1;
+		ptr = *data;
+		//Dummy program numbers
+		ptr->program_number = 1;
+		ptr->stream_pid = 0x100;
+		ptr->codec = CCX_CODEC_ATSC_CC;
+	}
 	ptr = *data;
 
-	//Dummy program numbers
-	ptr->program_number = 1;
-	ptr->stream_pid = 0x100;
 	do
 	{
 		want = (int) (BUFSIZE - ptr->windex);
