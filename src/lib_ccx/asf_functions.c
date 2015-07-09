@@ -984,13 +984,13 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				data->program_number = 1;
 				data->codec = CCX_CODEC_ATSC_CC;
 
-				int want = (long)((BUFSIZE - data->windex)>asf_data_container.PayloadLength ?
-						asf_data_container.PayloadLength : (BUFSIZE - data->windex));
+				int want = (long)((BUFSIZE - data->len)>asf_data_container.PayloadLength ?
+						asf_data_container.PayloadLength : (BUFSIZE - data->len));
 				if (want < (long)asf_data_container.PayloadLength)
 					fatal(CCX_COMMON_EXIT_BUG_BUG, "Buffer size to small for ASF payload!\nPlease file a bug report!\n");
-				buffered_read (ctx->demux_ctx, data->buffer+data->windex,want);
+				buffered_read (ctx->demux_ctx, data->buffer+data->len,want);
 				payload_read+=(int) result;
-				data->windex+=result;
+				data->len+=result;
 				ctx->demux_ctx->past+=result;
 				if (result != asf_data_container.PayloadLength)
 				{

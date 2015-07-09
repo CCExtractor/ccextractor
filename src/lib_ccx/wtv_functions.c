@@ -366,9 +366,9 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			free(cb->buffer);
 			cb->buffer=NULL;
 			//return one more byte so the final percentage is shown correctly
-			*(data->buffer+data->windex)=0x00;
+			*(data->buffer+data->len)=0x00;
 			end_of_file=1;
-			data->windex++;
+			data->len++;
 			return 1;
 		}
 		if( !memcmp(guid, WTV_STREAM2, 16 ) )
@@ -426,8 +426,8 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			dbg_print(CCX_DMT_PARSE, "\nWTV DATA\n");
 			get_sized_buffer(ctx, cb, len);
 			if(cb->buffer==NULL) {end_of_file=1; return 0; }
-			memcpy(data->buffer+data->windex, cb->buffer, len);
-			data->windex+=result;
+			memcpy(data->buffer+data->len, cb->buffer, len);
+			data->len+=result;
 			bytesread+=(int) len;
 			frames_since_ref_time++;
 			set_fts();

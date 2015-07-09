@@ -69,7 +69,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 	// Read and return the next video PES payload
 	do
 	{
-		if (BUFSIZE-data->windex<500)
+		if (BUFSIZE-data->len<500)
 		{
 			mprint("Less than 500 left\n");
 			enough=1; // Stop when less than 500 bytes are left in buffer
@@ -219,7 +219,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				dbg_print(CCX_DMT_VERBOSE, "PES video packet #%u\n", vpesnum);
 
 
-				int want = (int) ((BUFSIZE-data->windex)>peslen ? peslen : (BUFSIZE-data->windex));
+				int want = (int) ((BUFSIZE-data->len)>peslen ? peslen : (BUFSIZE-data->len));
 
 				if (want != peslen) {
 					fatal(EXIT_BUFFER_FULL, "Oh Oh, PES longer than remaining buffer space\n");
@@ -229,12 +229,12 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 					continue;
 				}
 
-				buffered_read (ctx->demux_ctx, data->buffer+data->windex, want);
+				buffered_read (ctx->demux_ctx, data->buffer+data->len, want);
 				ctx->demux_ctx->past=ctx->demux_ctx->past+result;
 				if (result>0) {
 					payload_read+=(int) result;
 				}
-				data->windex+=result;
+				data->len+=result;
 
 				if (result!=want) { // Not complete - EOF
 					end_of_file=1;
@@ -249,7 +249,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 			}
 		}
 	}
-	while (result!=0 && !enough && BUFSIZE!=data->windex);
+	while (result!=0 && !enough && BUFSIZE!=data->len);
 
 	dbg_print(CCX_DMT_VERBOSE, "PES data read: %d\n", payload_read);
 
@@ -280,11 +280,11 @@ int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
 
 	do
 	{
-		want = (int) (BUFSIZE - ptr->windex);
-		buffered_read (ctx->demux_ctx, ptr->buffer + ptr->windex, want); // This is a macro.
+		want = (int) (BUFSIZE - ptr->len);
+		buffered_read (ctx->demux_ctx, ptr->buffer + ptr->len, want); // This is a macro.
 		// 'result' HAS the number of bytes read
 		ctx->demux_ctx->past=ctx->demux_ctx->past+result;
-		ptr->windex += result;
+		ptr->len += result;
 		bytesread += (int) result;
 	} while (result!=0 && result!=want);
 
@@ -380,7 +380,7 @@ void processhex (struct lib_ccx_ctx *ctx, char *filename)
 			c2+=3;
 		}
 		memcpy (data->buffer, bytes, byte_count);
-		data->windex = byte_count;
+		data->len = byte_count;
 		process_raw();
 		continue;
 		// New wtv format, everything else hopefully obsolete
@@ -397,7 +397,7 @@ void processhex (struct lib_ccx_ctx *ctx, char *filename)
 			ok=1;
 			for (unsigned i=3; i<byte_count-2; i+=3)
 			{
-				data->windex = 3;
+				data->len = 3;
 				ctx->buffer[0]=bytes[i];
 				ctx->buffer[1]=bytes[i+1];
 				ctx->buffer[2]=bytes[i+2];
@@ -479,7 +479,7 @@ void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
 		if (got == 0) // Shortcircuit if we got nothing to process
 			break;
 
-		processed = process_raw(ctx, dec_sub, data->buffer, data->windex);
+		processed = process_raw(ctx, dec_sub, data->buffer, data->len);
 		if (dec_sub->got_output)
 		{
 			encode_sub(enc_ctx, dec_sub);
@@ -501,7 +501,7 @@ void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
 			mprint ("BUG BUG\n");
 		}
 
-	} while (data->windex);
+	} while (data->len);
 }
 
 /* Process inbuf bytes in buffer holding raw caption data (three byte packets, the first being the field).
@@ -646,13 +646,13 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		/* Get rid of the bytes we already processed */
 		if (data_node)
 		{
-			overlap = data_node->windex-pos;
+			overlap = data_node->len-pos;
 			if ( pos != 0 )
 			{
 				// Only when needed as memmove has been seen crashing
 				// for dest==source and n >0
-				memmove (data_node->buffer,data_node->buffer+pos,(size_t) (data_node->windex - pos));
-				data_node->windex -= pos;
+				memmove (data_node->buffer,data_node->buffer+pos,(size_t) (data_node->len - pos));
+				data_node->len -= pos;
 			}
 		}
 		pos = 0;
@@ -686,13 +686,13 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 
 		if(!data_node)
 			break;
-		ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer + overlap, (size_t) (data_node->windex - overlap));
+		ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer + overlap, (size_t) (data_node->len - overlap));
 
 		if (ret == CCX_EOF)
 		{
 			end_of_file = 1;
-			if(data_node->windex)
-				memset (data_node->buffer + data_node->windex, 0, (size_t) (BUFSIZE-data_node->windex)); /* Clear buffer at the end */
+			if(data_node->len)
+				memset (data_node->buffer + data_node->len, 0, (size_t) (BUFSIZE-data_node->len)); /* Clear buffer at the end */
 			else
 				break;
 		}
@@ -703,30 +703,30 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 
 		if (ctx->hauppauge_mode)
 		{
-			got = process_raw_with_field(ctx, dec_sub, data_node->buffer, data_node->windex);
+			got = process_raw_with_field(ctx, dec_sub, data_node->buffer, data_node->len);
 			if (pts_set)
 				set_fts(); // Try to fix timing from TS data
 		}
 		else if(data_node->bufferdatatype == CCX_DVB_SUBTITLE)
 		{
-			dvbsub_decode(ctx->demux_ctx->codec_ctx, data_node->buffer + 2, data_node->windex - 2, dec_sub);
+			dvbsub_decode(ctx->demux_ctx->codec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
 			set_fts();
-			got = data_node->windex;
+			got = data_node->len;
 		}
 		else if (data_node->bufferdatatype == CCX_PES)
 		{
-			got = process_m2v (ctx, data_node->buffer, data_node->windex, dec_sub);
+			got = process_m2v (ctx, data_node->buffer, data_node->len, dec_sub);
 		}
 		else if (data_node->bufferdatatype == CCX_TELETEXT)
 		{
 			telxcc_update_gt(ctx->demux_ctx->codec_ctx, ctx->demux_ctx->global_timestamp);
-			tlt_process_pes_packet (ctx->demux_ctx->codec_ctx, data_node->buffer, data_node->windex, dec_sub);
+			tlt_process_pes_packet (ctx->demux_ctx->codec_ctx, data_node->buffer, data_node->len, dec_sub);
 			set_encoder_rcwt_fileformat(enc_ctx, 2);
-			got = data_node->windex;
+			got = data_node->len;
 		}
 		else if (data_node->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 		{
-			got = data_node->windex; // Do nothing. Still don't know how to process it
+			got = data_node->len; // Do nothing. Still don't know how to process it
 		}
 		else if (data_node->bufferdatatype == CCX_RAW) // Raw two byte 608 data from DVR-MS/ASF
 		{
@@ -764,17 +764,17 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 					(unsigned) (current_pts));
 			dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
 
-			got = process_raw(ctx, dec_sub, data_node->buffer, data_node->windex);
+			got = process_raw(ctx, dec_sub, data_node->buffer, data_node->len);
 		}
 		else if (data_node->bufferdatatype == CCX_H264) // H.264 data from TS file
 		{
 			ctx->dec_ctx->in_bufferdatatype = data_node->bufferdatatype;
-			got = process_avc(ctx, data_node->buffer, data_node->windex, dec_sub);
+			got = process_avc(ctx, data_node->buffer, data_node->len, dec_sub);
 		}
 		else
 			fatal(CCX_COMMON_EXIT_BUG_BUG, "Unknown data type!");
 
-		if (got>data_node->windex)
+		if (got>data_node->len)
 		{
 			mprint ("BUG BUG\n");
 		}

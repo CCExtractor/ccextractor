@@ -312,7 +312,7 @@ struct demuxer_data *search_or_alloc_demuxer_data_node_by_pid(struct demuxer_dat
 		(*data)->program_number = -1;
 		(*data)->stream_pid = pid;
 		(*data)->bufferdatatype = CCX_UNKNOWN;
-		(*data)->windex = 0;
+		(*data)->len = 0;
 		(*data)->next_program = NULL;
 		(*data)->next_stream = NULL;
 		(*data)->ignore = 0;
@@ -335,7 +335,7 @@ struct demuxer_data *search_or_alloc_demuxer_data_node_by_pid(struct demuxer_dat
 	ptr->program_number = -1;
 	ptr->stream_pid = pid;
 	ptr->bufferdatatype = CCX_UNKNOWN;
-	ptr->windex = 0;
+	ptr->len = 0;
 	ptr->next_program = NULL;
 	ptr->next_stream = NULL;
 	ptr->ignore = 0;
@@ -365,16 +365,16 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	{
 		dump (CCX_DMT_GENERIC_NOTICES, cinfo->capbuf, cinfo->capbuflen, 0, 1);
 		// Bogus data, so we return something
-		ptr->buffer[ptr->windex++] = 0xFA;
-		ptr->buffer[ptr->windex++] = 0x80;
-		ptr->buffer[ptr->windex++] = 0x80;
+		ptr->buffer[ptr->len++] = 0xFA;
+		ptr->buffer[ptr->len++] = 0x80;
+		ptr->buffer[ptr->len++] = 0x80;
 		return CCX_OK;
 	}
 	if (cinfo->codec == CCX_CODEC_TELETEXT)
 	{
-		memcpy(ptr->buffer+ ptr->windex, cinfo->capbuf, cinfo->capbuflen);
-		ptr->len = cinfo->capbuflen + ptr->windex;
-		ptr->windex += cinfo->capbuflen;
+		memcpy(ptr->buffer+ ptr->len, cinfo->capbuf, cinfo->capbuflen);
+		ptr->len = cinfo->capbuflen + ptr->len;
+		ptr->len += cinfo->capbuflen;
 		return CCX_OK;
 	}
 	vpesdatalen = read_video_pes_header(ctx, cinfo->capbuf, &pesheaderlen, cinfo->capbuflen);
@@ -391,9 +391,9 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 		if (!haup_capbuflen)
 		{
 			// Do this so that we always return something until EOF. This will be skipped.
-			ptr->buffer[ptr->windex++] = 0xFA;
-			ptr->buffer[ptr->windex++] = 0x80;
-			ptr->buffer[ptr->windex++] = 0x80;
+			ptr->buffer[ptr->len++] = 0xFA;
+			ptr->buffer[ptr->len++] = 0x80;
+			ptr->buffer[ptr->len++] = 0x80;
 		}
 
 		for (int i = 0; i<haup_capbuflen; i += 12)
@@ -403,21 +403,21 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 			{
 				// Because I (CFS) don't have a lot of samples for this, for now I make sure everything is like the one I have:
 				// 12 bytes total length, stream id = 0xbd (Private non-video and non-audio), etc
-				if (2 > BUFSIZE - ptr->windex)
+				if (2 > BUFSIZE - ptr->len)
 				{
 					fatal(CCX_COMMON_EXIT_BUG_BUG,
 							"Remaining buffer (%lld) not enough to hold the 3 Hauppage bytes.\n"
 							"Please send bug report!",
-							BUFSIZE - ptr->windex);
+							BUFSIZE - ptr->len);
 				}
 				if (haup_capbuf[i+9]==1 || haup_capbuf[i+9]==2) // Field match. // TODO: If extract==12 this won't work!
 				{
 					if (haup_capbuf[i+9]==1)
-						ptr->buffer[ptr->windex++]=4; // Field 1 + cc_valid=1
+						ptr->buffer[ptr->len++]=4; // Field 1 + cc_valid=1
 					else
-						ptr->buffer[ptr->windex++]=5; // Field 2 + cc_valid=1
-					ptr->buffer[ptr->windex++]=haup_capbuf[i+10];
-					ptr->buffer[ptr->windex++]=haup_capbuf[i+11];
+						ptr->buffer[ptr->len++]=5; // Field 2 + cc_valid=1
+					ptr->buffer[ptr->len++]=haup_capbuf[i+10];
+					ptr->buffer[ptr->len++]=haup_capbuf[i+11];
 				}
 				/*
 				   if (inbuf>1024) // Just a way to send the bytes to the decoder from time to time, otherwise the buffer will fill up.
@@ -433,16 +433,16 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 
 	if (!ccx_options.hauppauge_mode) // in Haup mode the buffer is filled somewhere else
 	{
-		if(ptr->windex + databuflen >= BUFSIZE)
+		if(ptr->len + databuflen >= BUFSIZE)
 		{
 			fatal(CCX_COMMON_EXIT_BUG_BUG,
 				"PES data packet (%ld) larger than remaining buffer (%lld).\n"
 				"Please send bug report!",
-				databuflen, BUFSIZE - ptr->windex);
+				databuflen, BUFSIZE - ptr->len);
 			return CCX_EAGAIN;
 		}
-		memcpy(ptr->buffer+ ptr->windex, databuf, databuflen);
-		ptr->windex += databuflen;
+		memcpy(ptr->buffer+ ptr->len, databuf, databuflen);
+		ptr->len += databuflen;
 	}
 	return CCX_OK;
 }

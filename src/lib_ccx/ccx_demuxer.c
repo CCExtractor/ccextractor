@@ -465,7 +465,7 @@ struct demuxer_data* alloc_demuxer_data(void)
 		free(data);
 		return NULL;
 	}
-	data->windex = 0;
+	data->len = 0;
 	data->bufferdatatype = CCX_PES;
 
 	data->program_number = -1;
