@@ -458,6 +458,36 @@ void cinfo_cremation(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	ctx->nb_cap = 0;
 }
 
+int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
+{
+	int newcapbuflen;
+	//Verify PES before copy to capbuf
+	if(cinfo->capbuflen == 0 )
+	{
+		if(payload->start[0] != 0x00 || payload->start[1] != 0x00 || 
+			payload->start[2] != 0x01)
+		{
+			mprint("Missing PES header!\n");
+			dump(CCX_DMT_GENERIC_NOTICES, payload->start, payload->length, 0, 0);
+			cinfo->saw_pesstart = 0;
+			errno = EINVAL;
+			return -1;
+		}
+	}
+
+	// copy payload to capbuf
+	newcapbuflen = cinfo->capbuflen + payload->length;
+	if ( newcapbuflen > cinfo->capbufsize) {
+		cinfo->capbuf = (unsigned char*)realloc(cinfo->capbuf, newcapbuflen);
+		if (!cinfo->capbuf)
+			return -1;
+		cinfo->capbufsize = newcapbuflen;
+	}
+	memcpy(cinfo->capbuf + cinfo->capbuflen, payload->start, payload->length);
+	cinfo->capbuflen = newcapbuflen;
+
+	return CCX_OK;
+}
 // Read ts packets until a complete video PES element can be returned.
 // The data is read into capbuf and the function returns the number of
 // bytes read.
@@ -607,8 +637,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 		}
 
-		// Check for PID with captions. Note that in Hauppauge mode we also process the video stream because
-		// we need the timing from its PES header, which isn't included in Hauppauge's packets
 		cinfo = get_cinfo(ctx, payload.pid);
 		if(cinfo == NULL)
 		{
@@ -630,11 +658,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 		// Discard packets when no pesstart was found.
 		if ( !cinfo->saw_pesstart )
-		{
-			dbg_print(CCX_DMT_PARSE, "Packet (pid %u) skipped - Did not see pesstart.\n",
-					payload.pid);
 			continue;
-		}
 
 
 		if ( (cinfo->prev_counter == 15 ? 0 : cinfo->prev_counter + 1) != payload.counter )
@@ -644,6 +668,14 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		}
 		cinfo->prev_counter = payload.counter;
 
+		copy_payload_to_capbuf(cinfo, &payload);
+		if(ret < 0)
+		{
+			if(errno == EINVAL)
+				continue;
+			else
+				break;
+		}
 		// If the buffer is empty we just started this function
 		if (payload.pesstart && cinfo->capbuflen > 0)
 		{
@@ -657,26 +689,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		}
 
 		pespcount++;
-		// copy payload to capbuf
-		int newcapbuflen = cinfo->capbuflen + payload.length;
-		if ( newcapbuflen > cinfo->capbufsize) {
-			cinfo->capbuf = (unsigned char*)realloc(cinfo->capbuf, newcapbuflen);
-			if (!cinfo->capbuf)
-				fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
-			cinfo->capbufsize = newcapbuflen;
-		}
-		memcpy(cinfo->capbuf + cinfo->capbuflen, payload.start, payload.length);
-		cinfo->capbuflen = newcapbuflen;
-		//Get current PES payload PID
-		if (cinfo->capbuf[0] != 0x00 || cinfo->capbuf[1] != 0x00 ||
-				cinfo->capbuf[2] != 0x01)
-		{
-			int len = (cinfo->capbuflen>256)?256:cinfo->capbuflen;
-			// ??? Shouldn't happen. Complain and try again.
-			mprint("Missing PES header!\n");
-			dump(CCX_DMT_GENERIC_NOTICES, cinfo->capbuf,len, 0, 0);
-			continue;
-		}
 		//else
 		//	if(debug_verbose)
 		//		printf("Packet (pid %u) skipped - unused.\n",
