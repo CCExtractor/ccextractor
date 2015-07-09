@@ -668,14 +668,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		}
 		cinfo->prev_counter = payload.counter;
 
-		copy_payload_to_capbuf(cinfo, &payload);
-		if(ret < 0)
-		{
-			if(errno == EINVAL)
-				continue;
-			else
-				break;
-		}
 		// If the buffer is empty we just started this function
 		if (payload.pesstart && cinfo->capbuflen > 0)
 		{
@@ -686,6 +678,15 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			ret = copy_capbuf_demux_data(ctx, data, cinfo);
 			cinfo->capbuflen = 0;
 			gotpes = 1;
+		}
+
+		copy_payload_to_capbuf(cinfo, &payload);
+		if(ret < 0)
+		{
+			if(errno == EINVAL)
+				continue;
+			else
+				break;
 		}
 
 		pespcount++;

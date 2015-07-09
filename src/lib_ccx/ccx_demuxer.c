@@ -386,6 +386,7 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	ctx->ts_allprogram = cfg->ts_allprogram;
 	ctx->ts_datastreamtype = cfg->ts_datastreamtype;
 	ctx->nb_program = 0;
+	ctx->codec_ctx = NULL;
 	if(cfg->ts_forced_program  != -1)
 	{
 		ctx->pinfo[ctx->nb_program].pid = CCX_UNKNOWN;
