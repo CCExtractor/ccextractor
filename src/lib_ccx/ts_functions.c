@@ -542,7 +542,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			}
 			else
 			{
-				if(write_section(ctx->parent, &payload,payload.start,(tspacket + 188 ) - payload.start,j))
+				if(write_section(ctx, &payload,payload.start,(tspacket + 188 ) - payload.start,j))
 					gotpes=1; // Signals that something changed and that we must flush the buffer
 			}
 //			if (payload.pid==pmtpid && ctx->nb_cap == 0 && ccx_options.investigate_packets) // It was our PMT yet we don't have a PID to get data from
