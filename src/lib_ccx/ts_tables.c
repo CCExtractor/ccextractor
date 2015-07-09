@@ -3,6 +3,7 @@
 #include "dvb_subtitle_decoder.h"
 #include "utility.h"
 #include "activity.h"
+
 static unsigned pmt_warning_shown=0; // Only display warning once
 void process_ccx_mpeg_descriptor (unsigned char *data, unsigned length);
 
@@ -52,79 +53,6 @@ void clear_PMT_array (struct ccx_demuxer *ctx)
 	ctx->pmt_array_length=0;
 }
 
-int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream, enum ccx_code_type codec)
-{
-	if(!ctx)
-		return -1;
-
-	if (ctx->ts_datastreamtype != -1 && ctx->ts_datastreamtype != stream)
-		return -1;
-
-	ctx->cinfo[ctx->nb_cap].pid = pid;
-	if(stream != CCX_STREAM_TYPE_UNKNOWNSTREAM)
-		ctx->cinfo[ctx->nb_cap].stream = stream;
-	if(codec != CCX_CODEC_NONE)
-		ctx->cinfo[ctx->nb_cap].codec = codec;
-
-	ctx->cinfo[ctx->nb_cap].saw_pesstart = 0;
-	ctx->cinfo[ctx->nb_cap].capbuflen = 0;
-	ctx->cinfo[ctx->nb_cap].capbufsize = 0;
-	ctx->cinfo[ctx->nb_cap].capbuf = NULL;
-	ctx->cinfo[ctx->nb_cap].ignore = 0;
-	ctx->nb_cap++;
-
-	return 0;
-}
-int need_capInfo(struct ccx_demuxer *ctx)
-{
-	int i;
-	if(ctx->nb_cap <= 0)
-	{
-		return CCX_TRUE;
-	}
-
-	for( i = 0; i < ctx->nb_cap; i++)
-	{
-		if (ctx->cinfo[i].codec == CCX_CODEC_NONE)
-			return CCX_TRUE;
-		if (ctx->cinfo[i].stream == CCX_STREAM_TYPE_UNKNOWNSTREAM)
-			return CCX_TRUE;
-	}
-	return CCX_FALSE;
-}
-
-int count_complete_capInfo(struct ccx_demuxer *ctx)
-{
-	int i;
-	int count = 0;
-	if(ctx->nb_cap <= 0)
-	{
-		return 0;
-	}
-	for( i = 0; i < ctx->nb_cap; i++)
-	{
-		if (ctx->cinfo[i].codec == CCX_CODEC_NONE)
-			continue;
-		if (ctx->cinfo[i].stream == CCX_STREAM_TYPE_UNKNOWNSTREAM)
-			continue;
-		count++;
-	}
-	return count;
-}
-int need_capInfo_for_pid(struct ccx_demuxer *ctx, int pid)
-{
-	int i;
-	if(ctx->nb_cap <= 0)
-	{
-		return CCX_FALSE;
-	}
-	for( i = 0; i < ctx->nb_cap; i++)
-	{
-		if (ctx->cinfo[i].stream == CCX_STREAM_TYPE_UNKNOWNSTREAM)
-			return CCX_TRUE;
-	}
-	return CCX_FALSE;
-}
 int need_program(struct ccx_demuxer *ctx)
 {
 	if(ctx->nb_program == 0)
@@ -448,21 +376,10 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 				ccx_stream_type, elementary_PID);
 		i += ES_info_length;
 	}
-/* XXX
-	if (ctx->nb_cap <= 0)
+	if(ctx->multi_stream_per_prog == CCX_FALSE)
 	{
-		if (!ccx_options.ts_autoprogram)
-		{
-			mprint("No supported stream with caption data found, won't be able to process\n");
-			mprint("unless a PID is provided manually or packet inspection is enabled.\n");
-		}
-		else
-		{
-			mprint("No supported stream with caption data found in this program.\n");
-		}
-		return 0;
+
 	}
-*/
 
 
 	present_cap_count = count_complete_capInfo(ctx);

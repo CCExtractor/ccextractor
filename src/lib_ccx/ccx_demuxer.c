@@ -387,6 +387,7 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	ctx->ts_datastreamtype = cfg->ts_datastreamtype;
 	ctx->nb_program = 0;
 	ctx->codec_ctx = NULL;
+	ctx->multi_stream_per_prog = 0;
 	if(cfg->ts_forced_program  != -1)
 	{
 		ctx->pinfo[ctx->nb_program].pid = CCX_UNKNOWN;
@@ -399,19 +400,20 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 		ctx->flag_ts_forced_pn = CCX_FALSE;
 	}
 
-	for(i = 0; i < cfg->nb_ts_cappid; i++)
-	{
-		ctx->cinfo[i].pid = cfg->ts_cappids[i];
-		if (cfg->ts_datastreamtype != -1)
-			ctx->cinfo[i].stream = cfg->ts_datastreamtype;
-		if(ctx->codec == CCX_CODEC_ANY)
-			ctx->cinfo[i].codec = CCX_CODEC_NONE;
-		else
-			ctx->cinfo[i].codec = ctx->codec;
-		ctx->nb_cap++;
-	}
+	INIT_LIST_HEAD(&ctx->cinfo_tree.all_stream);
+	INIT_LIST_HEAD(&ctx->cinfo_tree.sib_stream);
+	INIT_LIST_HEAD(&ctx->cinfo_tree.pg_stream);
 
 	ctx->codec = cfg->codec;
+
+	for(i = 0; i < cfg->nb_ts_cappid; i++)
+	{
+		if(ctx->codec == CCX_CODEC_ANY)
+			update_capinfo(ctx, cfg->ts_cappids[i], cfg->ts_datastreamtype, CCX_CODEC_NONE);
+		else
+			update_capinfo(ctx, cfg->ts_cappids[i], cfg->ts_datastreamtype, ctx->codec);
+	}
+
 	ctx->nocodec = cfg->nocodec;
 
 	ctx->nb_cap = 0;

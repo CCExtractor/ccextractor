@@ -3,14 +3,25 @@
 #include "ccx_common_constants.h"
 #include "ccx_common_option.h"
 #include "ts_functions.h"
+#include "list.h"
+
 /* Report information */
 #define SUB_STREAMS_CNT 10
+#define MAX_PID 65536
+#define TS_PMT_MAP_SIZE 128
+#define MAX_PROGRAM 5
 struct ccx_demux_report
 {
         unsigned program_cnt;
         unsigned dvb_sub_pid[SUB_STREAMS_CNT];
         unsigned tlt_sub_pid[SUB_STREAMS_CNT];
         unsigned mp4_cc_track_cnt;
+};
+
+struct program_info
+{
+	int pid;
+	int program_number;
 };
 
 struct cap_info
@@ -25,16 +36,22 @@ struct cap_info
 	int saw_pesstart;
 	int prev_counter;
 	int ignore;
+
+	/** 
+	  List joining all stream in TS 
+	*/
+	struct list_head all_stream;
+	/** 
+	  List joining all sibling Stream in Program 
+	*/
+	struct list_head sib_stream;
+	/** 
+	  List joining all sibling Stream in Program 
+	*/
+	struct list_head pg_stream;
+
 };
 
-struct program_info
-{
-	int pid;
-	int program_number;
-};
-#define MAX_PID 65536
-#define TS_PMT_MAP_SIZE 128
-#define MAX_PROGRAM 5
 struct ccx_demuxer
 {
 	int m2ts;
@@ -58,7 +75,7 @@ struct ccx_demuxer
 	/* subtitle codec type */
 	enum ccx_code_type codec;
 	enum ccx_code_type nocodec;
-	struct cap_info cinfo[MAX_PID];
+	struct cap_info cinfo_tree;
 	int nb_cap;
 
 	/* File handles */
@@ -84,6 +101,7 @@ struct ccx_demuxer
 	unsigned hauppauge_warning_shown; // Did we detect a possible Hauppauge capture and told the user already?
 
 	void *codec_ctx;
+	int multi_stream_per_prog;
 
 	void *parent;
 	void (*print_cfg)(struct ccx_demuxer *ctx);
@@ -109,8 +127,14 @@ struct demuxer_data
 	struct demuxer_data *next_stream;
 	struct demuxer_data *next_program;
 };
+
+int need_capInfo(struct ccx_demuxer *ctx);
+int count_complete_capInfo(struct ccx_demuxer *ctx);
 struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg);
 void ccx_demuxer_delete(struct ccx_demuxer **ctx);
 struct demuxer_data* alloc_demuxer_data(void);
 void delete_demuxer_data(struct demuxer_data *data);
+int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream, enum ccx_code_type codec);
+struct cap_info * get_cinfo(struct ccx_demuxer *ctx, int pid);
+int need_capInfo(struct ccx_demuxer *ctx);
 #endif

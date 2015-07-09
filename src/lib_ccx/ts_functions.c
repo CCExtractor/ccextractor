@@ -17,31 +17,6 @@ static long haup_capbuflen = 0; // Bytes read in haup_capbuf
 // Descriptions for ts ccx_stream_type
 const char *desc[256];
 
-void dinit_cap (struct ccx_demuxer *ctx)
-{
-	int i = 0;
-	for(i = 0; i < ctx->nb_cap; i++)
-	{
-		freep(&ctx->cinfo[i].capbuf);
-	}
-	ctx->nb_cap = 0;
-}
-
-
-struct cap_info * get_cinfo(struct ccx_demuxer *ctx, int pid)
-{
-	int i = 0;
-	if(ctx->nb_cap == 0)
-		return NULL;
-
-	for(i = 0; i < ctx->nb_cap; i++)
-	{
-		if(ctx->cinfo[i].pid == pid && ctx->cinfo[i].codec != CCX_CODEC_NONE)
-			return &ctx->cinfo[i];
-	}
-	return CCX_FALSE;
-}
-
 char *get_buffer_type_str(struct cap_info *cinfo)
 {
 	if( cinfo->stream == CCX_STREAM_TYPE_VIDEO_MPEG2)
@@ -342,6 +317,53 @@ struct demuxer_data *search_or_alloc_demuxer_data_node_by_pid(struct demuxer_dat
 
 	return ptr;
 }
+
+int get_best_stream_id(struct demuxer_data *data)
+{
+	//int i;
+	//ctx->cinfo[ctx->nb_cap]	
+	return -1;
+}
+struct demuxer_data *get_best_data(struct demuxer_data *data)
+{
+	struct demuxer_data *ret = NULL;
+	struct demuxer_data *ptr = data;
+	for(ptr = data; ptr; ptr = ptr->next_stream)
+	{
+		if(ptr->codec == CCX_CODEC_TELETEXT)
+		{
+			ret =  data;
+			goto end;
+		}
+	}
+
+	for(ptr = data; ptr; ptr = ptr->next_stream)
+	{
+		if(ptr->codec == CCX_CODEC_DVB)
+		{
+			ret =  data;
+			goto end;
+		}
+	}
+
+	for(ptr = data; ptr; ptr = ptr->next_stream)
+	{
+		if(ptr->codec == CCX_CODEC_ATSC_CC)
+		{
+			ret =  ptr;
+			goto end;
+		}
+	}
+end:
+	for(ptr = data; ptr && ret; ptr = ptr->next_stream)
+	{
+		if(ptr->stream_pid != ret->stream_pid)
+			ptr->ignore = 1;
+	}
+
+	return ret;
+}
+
 int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, struct cap_info *cinfo)
 {
 	int vpesdatalen;
@@ -449,13 +471,12 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 
 void cinfo_cremation(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
-	int i;
-	for(i = 0;i < ctx->nb_cap;i++)
+	struct cap_info* iter; 
+	list_for_each_entry(iter ,&ctx->cinfo_tree.all_stream, all_stream)
 	{
-		copy_capbuf_demux_data(ctx, data, ctx->cinfo + i);
-		freep(&ctx->cinfo[i].capbuf);
+		copy_capbuf_demux_data(ctx, data, iter);
+		freep(&iter->capbuf);
 	}
-	ctx->nb_cap = 0;
 }
 
 int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)

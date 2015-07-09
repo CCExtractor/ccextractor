@@ -572,46 +572,6 @@ struct demuxer_data *get_data_stream(struct demuxer_data *data, int pid)
 
 	return NULL;
 }
-struct demuxer_data *get_best_data(struct demuxer_data *data)
-{
-	struct demuxer_data *ret = NULL;
-	struct demuxer_data *ptr = data;
-	for(ptr = data; ptr; ptr = ptr->next_stream)
-	{
-		if(ptr->codec == CCX_CODEC_TELETEXT)
-		{
-			ret =  data;
-			goto end;
-		}
-	}
-
-	for(ptr = data; ptr; ptr = ptr->next_stream)
-	{
-		if(ptr->codec == CCX_CODEC_DVB)
-		{
-			ret =  data;
-			goto end;
-		}
-	}
-
-	for(ptr = data; ptr; ptr = ptr->next_stream)
-	{
-		if(ptr->codec == CCX_CODEC_ATSC_CC)
-		{
-			ret =  ptr;
-			goto end;
-		}
-	}
-end:
-	for(ptr = data; ptr && ret; ptr = ptr->next_stream)
-	{
-		if(ptr->stream_pid != ret->stream_pid)
-			ptr->ignore = 1;
-	}
-
-	return ret;
-}
-
 void delete_datalist(struct demuxer_data *list)
 {
 	struct demuxer_data *slist = list;
@@ -682,11 +642,13 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 
 		position_sanity_check(ctx->demux_ctx->infd);
 		if(!ctx->multiprogram)
+		{
 			data_node = get_best_data(datalist);
 
-		if(!data_node)
-			break;
-		ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer + overlap, (size_t) (data_node->len - overlap));
+			if(!data_node)
+				break;
+			ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer + overlap, (size_t) (data_node->len - overlap));
+		}
 
 		if (ret == CCX_EOF)
 		{
