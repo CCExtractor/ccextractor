@@ -61,7 +61,7 @@ int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream
 		return -1;
 	}
 
-	if (ctx->ts_datastreamtype != -1 && ctx->ts_datastreamtype != stream)
+	if (ctx->ts_datastreamtype != CCX_STREAM_TYPE_UNKNOWNSTREAM && ctx->ts_datastreamtype != stream)
 	{
 		errno = EINVAL;
 		return -1;
@@ -92,10 +92,8 @@ int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream
 	}
 
 	tmp->pid = pid;
-	if(stream != CCX_STREAM_TYPE_UNKNOWNSTREAM)
-		tmp->stream = stream;
-	if(codec != CCX_CODEC_NONE)
-		tmp->codec = codec;
+	tmp->stream = stream;
+	tmp->codec = codec;
 
 	tmp->saw_pesstart = 0;
 	tmp->capbuflen = 0;

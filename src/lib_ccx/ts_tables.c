@@ -348,6 +348,13 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 			}
 		}
 
+		if (ccx_stream_type==CCX_STREAM_TYPE_VIDEO_H264 || ccx_stream_type==CCX_STREAM_TYPE_VIDEO_MPEG2)
+		{
+			update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_ATSC_CC);
+			mprint ("Decode captions from program %d - %s stream [0x%02x]  -  PID: %u\n",
+				program_number , desc[ccx_stream_type], ccx_stream_type, elementary_PID);
+		}
+
 		if(need_capInfo_for_pid(ctx, elementary_PID) == CCX_TRUE)
 		{
 			// We found the user selected CAPPID in PMT. We make a note of its type and don't
@@ -360,13 +367,6 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 			}
 			update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_NONE);
 			continue;
-		}
-
-		if (ccx_stream_type==CCX_STREAM_TYPE_VIDEO_H264 || ccx_stream_type==CCX_STREAM_TYPE_VIDEO_MPEG2)
-		{
-			update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_ATSC_CC);
-			mprint ("Decode captions from program %d - %s stream [0x%02x]  -  PID: %u\n",
-				program_number , desc[ccx_stream_type], ccx_stream_type, elementary_PID);
 		}
 
 		// For the print command below

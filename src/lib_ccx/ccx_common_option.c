@@ -78,7 +78,7 @@ void init_options (struct ccx_s_options *options)
 	options->demux_cfg.nb_ts_cappid = 0;
 	options->demux_cfg.ts_forced_program = -1; // Specific program to process in TS files, if ts_forced_program_selected==1
 	options->demux_cfg.ts_forced_program_selected=0;
-	options->demux_cfg.ts_datastreamtype = -1; // User WANTED stream type (i.e. use the stream that has this type)
+	options->demux_cfg.ts_datastreamtype = CCX_STREAM_TYPE_UNKNOWNSTREAM; // User WANTED stream type (i.e. use the stream that has this type)
 	options->demux_cfg.ts_forced_streamtype=CCX_STREAM_TYPE_UNKNOWNSTREAM; // User selected (forced) stream type
 	/* Networking */
 	options->udpaddr = NULL;
