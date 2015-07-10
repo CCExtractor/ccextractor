@@ -1530,7 +1530,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 			set_output_format(opt, "bin");
 
-            opt->xmltv = 2;
+			opt->xmltv = 2;
 			opt->xmltvliveinterval = 2;
 
 			char *addr = argv[i + 1];
