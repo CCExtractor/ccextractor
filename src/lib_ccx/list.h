@@ -16,7 +16,9 @@
 /**
  * Get offset of a member
  */
+#ifndef offsetof
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+#endif
 
 /**
  * Casts a member of a structure out to the containing structure

@@ -6,9 +6,14 @@
 #include "ocr.h"
 #include "utility.h"
 
-void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
+int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
 	int used;
+	int len = 0;
+	int ret = 0;
+	unsigned char *unescaped = NULL;
+	unsigned char *el = NULL;
+
 	sprintf ((char *) str,
 			"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",(unsigned long long)ms_start);
 	if (context->encoding != CCX_ENC_UNICODE)
@@ -17,12 +22,29 @@ void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_s
 	}
 
 	used = encode_line(context->buffer, (unsigned char *) str);
-	write (context->out->fh, context->buffer, used);
-	int len=strlen (string);
-	unsigned char *unescaped= (unsigned char *) malloc (len+1);
-	unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
-	if (el==NULL || unescaped==NULL)
-		fatal (EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_sami() - not enough memory.\n");
+	ret = write (context->out->fh, context->buffer, used);
+	if(ret != used)
+	{
+		return ret;
+	}
+
+	len = strlen (string);
+	unescaped= (unsigned char *) malloc (len+1);
+	if(!unescaped)
+	{
+		mprint ("In write_stringz_as_sami() - not enough memory for len %d.\n", len);
+		ret = -1;
+		goto end;
+	}
+
+	el = (unsigned char *) malloc (len*3+1); // Be generous
+	if (el == NULL)
+	{
+		mprint ("In write_stringz_as_sami() - not enough memory for len %d.\n", len);
+		ret = -1;
+		goto end;
+	}
+
 	int pos_r=0;
 	int pos_w=0;
 	// Scan for \n in the string and replace it with a 0
@@ -51,10 +73,18 @@ void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_s
 			dbg_print(CCX_DMT_DECODER_608, "\r");
 			dbg_print(CCX_DMT_DECODER_608, "%s\n",context->subline);
 		}
-		write(context->out->fh, el, u);
-		write(context->out->fh, encoded_br, encoded_br_length);
+		ret = write(context->out->fh, el, u);
+		if(ret != u)
+			goto end;
 
-		write(context->out->fh, encoded_crlf, encoded_crlf_length);
+		ret = write(context->out->fh, encoded_br, encoded_br_length);
+		if(ret != encoded_br_length)
+			goto end;
+
+		ret = write(context->out->fh, encoded_crlf, encoded_crlf_length);
+		if(ret != encoded_crlf_length)
+			goto end;
+
 		begin += strlen ((const char *) begin) + 1;
 	}
 
@@ -64,7 +94,9 @@ void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_s
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
 	used = encode_line (context->buffer,(unsigned char *) str);
-	write(context->out->fh, context->buffer, used);
+	ret = write(context->out->fh, context->buffer, used);
+	if(ret != used)
+		goto end;
 	sprintf ((char *) str,
 			"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n",
 			(unsigned long long)ms_end);
@@ -72,15 +104,21 @@ void write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_s
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
-	write(context->out->fh, context->buffer, used);
+	ret = write(context->out->fh, context->buffer, used);
+	if(ret != used)
+		goto end;
+
+end:
 	free(el);
 	free(unescaped);
+	return ret;
 }
 
 
 int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
 	int ret = 0;
+#ifdef ENABLE_OCR
 	struct cc_bitmap* rect;
 	LLONG ms_start, ms_end;
 
@@ -107,7 +145,6 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 	if ( sub->flags & SUB_EOD_MARKER )
 		context->prev_start =  sub->start_time;
 
-#ifdef ENABLE_OCR
 	if (rect[0].ocr_text && *(rect[0].ocr_text))
 	{
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
@@ -148,7 +185,28 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 
 int write_cc_subtitle_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
+	int ret = 0;
+	struct cc_subtitle *osub = sub;
+	struct cc_subtitle *lsub = sub;
+	while(sub)
+	{
+		if(sub->type == CC_TEXT)
+		{
+			ret = write_stringz_as_sami(sub->data, context, sub->start_time, sub->end_time);
+			freep(&sub->data);
+			sub->nb_data = 0;
+		}
+		lsub = sub;
+		sub = sub->next;
+	}
+	while(lsub != osub)
+	{
+		sub = lsub->prev;
+		freep(&lsub);
+		lsub = sub;
+	}
 
+	return ret;
 }
 
 int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *context)

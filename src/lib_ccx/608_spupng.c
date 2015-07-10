@@ -212,7 +212,7 @@ int spupng_export_string2png(struct spupng_t *sp, char *str)
 	png_bytep *row_pointer;
 	png_bytep image;
 	int ww, wh, rowstride, row_adv;
-	int row;
+	int row = 0;
 
 	assert ((sizeof(png_byte) == sizeof(uint8_t))
 			&& (sizeof(*image) == sizeof(uint8_t)));
@@ -266,7 +266,6 @@ int spupng_export_string2png(struct spupng_t *sp, char *str)
 
 	return 1;
 
-write_error:
 
 unknown_error:
 	free (row_pointer);
@@ -362,10 +361,7 @@ int spupng_write_string(struct spupng_t *sp, char *string, LLONG start_time, LLO
 		struct encoder_ctx *context)
 {
 
-	int row;
-	int empty_buf = 1;
 	char str[256] = "";
-	int str_len = 0;
 	LLONG ms_start = start_time + context->subs_delay;
 	if (ms_start < 0)
 	{

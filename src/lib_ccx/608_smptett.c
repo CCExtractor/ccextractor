@@ -110,6 +110,7 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
 	int ret = 0;
+#ifdef ENABLE_OCR
 	struct cc_bitmap* rect;
 	LLONG ms_start, ms_end;
 	//char timeline[128];
@@ -139,7 +140,6 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 	if ( sub->flags & SUB_EOD_MARKER )
 		context->prev_start =  sub->start_time;
 
-#ifdef ENABLE_OCR
 	if (rect[0].ocr_text && *(rect[0].ocr_text))
 	{
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
@@ -169,6 +169,28 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 
 int write_cc_subtitle_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
+	int ret = 0;
+	struct cc_subtitle *osub = sub;
+	struct cc_subtitle *lsub = sub;
+	while(sub)
+	{
+		if(sub->type == CC_TEXT)
+		{
+			write_stringz_as_smptett(sub->data, context, sub->start_time, sub->end_time);
+			freep(&sub->data);
+			sub->nb_data = 0;
+		}
+		lsub = sub;
+		sub = sub->next;
+	}
+	while(lsub != osub)
+	{
+		sub = lsub->prev;
+		freep(&lsub);
+		lsub = sub;
+	}
+
+	return ret;
 
 }
 

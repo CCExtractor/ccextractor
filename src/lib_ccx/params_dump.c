@@ -199,8 +199,8 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 
 	ctx->demux_ctx->print_report(ctx->demux_ctx);
 	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
-/*
-	if (ccx_bufferdatatype == CCX_PES &&
+
+	if (ctx->dec_ctx->in_bufferdatatype == CCX_PES &&
 			(stream_mode == CCX_SM_TRANSPORT ||
 			 stream_mode == CCX_SM_PROGRAM ||
 			 stream_mode == CCX_SM_ASF ||
@@ -211,7 +211,7 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 		printf("Aspect Ratio: %s\n", aspect_ratio_types[ctx->freport.aspect_ratio]);
 		printf("Frame Rate: %s\n", framerates_types[ctx->freport.frame_rate]);
 	}
-*/
+
 	printf("EIA-608: %s\n", Y_N(dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0));
 
 	if (dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0)

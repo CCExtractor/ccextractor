@@ -383,6 +383,9 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 		return CCX_OK;
 	}
 
+	if(!cinfo->capbuf || !cinfo->capbuflen)
+		return -1;
+
 	if (ptr->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 	{
 		dump (CCX_DMT_GENERIC_NOTICES, cinfo->capbuf, cinfo->capbuflen, 0, 1);
