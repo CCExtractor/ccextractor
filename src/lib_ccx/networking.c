@@ -141,6 +141,58 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 	return 1;
 }
 
+void net_send_epg(const char *start, const char *stop, const char *title, const char *desc)
+{
+	/* nanosleep((struct timespec[]){{0, 100000000}}, NULL); */
+	assert(srv_sd > 0);
+    if (NULL == start)
+        return;
+    if (NULL == stop)
+        return;
+
+    size_t st = strlen(start) + 1;
+    size_t sp = strlen(stop) + 1;
+
+    size_t t = 1;
+    if (title != NULL)
+        t += strlen(title);
+
+    size_t d = 1;
+    if (desc != NULL)
+        d += strlen(desc);
+
+    size_t len = st + sp + t + d;
+
+    char *epg = (char *) calloc(len, sizeof(char));
+    if (NULL == epg)
+        return;
+
+    char *end = epg;
+
+    memcpy(end, start, st);
+    end += st;
+
+    memcpy(end, stop, sp);
+    end += sp;
+
+    if (title != NULL)
+        memcpy(end, title, t);
+    end += t;
+
+    if (desc != NULL)
+        memcpy(end, desc, d);
+    end += d;
+
+#if DEBUG_OUT
+    fprintf(stderr, "[C] Sending EPG: %u bytes\n", len);
+#endif
+
+	if (write_block(srv_sd, EPG_DATA, epg, len) <= 0)
+		fprintf(stderr, "Can't send EPG data\n");
+
+    return;
+}
+
 int net_tcp_read(int socket, void *buffer, size_t length)
 {
     int rc;
