@@ -458,8 +458,7 @@ void processhex (struct lib_ccx_ctx *ctx, char *filename)
 // Raw file process
 void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
 {
-	LLONG got;
-	LLONG processed;
+	LLONG ret;
 	struct demuxer_data *data = NULL;
 	struct cc_subtitle *dec_sub = &ctx->dec_ctx->dec_sub;
 
@@ -474,12 +473,11 @@ void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
 	do
 	{
 
-		got = general_getmoredata(ctx, &data);
-
-		if (got == 0) // Shortcircuit if we got nothing to process
+		ret = general_getmoredata(ctx, &data);
+		if(ret == CCX_EOF)
 			break;
 
-		processed = process_raw(ctx, dec_sub, data->buffer, data->len);
+		ret = process_raw(ctx, dec_sub, data->buffer, data->len);
 		if (dec_sub->got_output)
 		{
 			encode_sub(enc_ctx, dec_sub);
@@ -495,11 +493,6 @@ void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
 				(unsigned) (current_pts));
 		dbg_print(CCX_DMT_VIDES, "  FTS: %s incl. %d CB\n",
 				print_mstime(get_fts()), ccblocks);
-
-		if (processed<got)
-		{
-			mprint ("BUG BUG\n");
-		}
 
 	} while (data->len);
 }
@@ -563,15 +556,6 @@ LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, unsigned ch
 	return len;
 }
 
-struct demuxer_data *get_data_stream(struct demuxer_data *data, int pid)
-{
-	struct demuxer_data *ptr = data;
-	for(ptr = data; ptr; ptr = ptr->next_stream)
-		if(ptr->stream_pid == pid)
-			return ptr;
-
-	return NULL;
-}
 void delete_datalist(struct demuxer_data *list)
 {
 	struct demuxer_data *slist = list;
@@ -643,10 +627,19 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		position_sanity_check(ctx->demux_ctx->infd);
 		if(!ctx->multiprogram)
 		{
-			data_node = get_best_data(datalist);
-
-			if(!data_node)
-				break;
+			int pid = get_best_stream(ctx->demux_ctx);
+			if(pid < 0)
+			{
+				data_node = get_best_data(datalist);
+				if(!data_node)
+					break;
+			}
+			else
+			{
+				data_node = get_data_stream(datalist, pid);
+				if(!data_node)
+					break;
+			}
 			ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer + overlap, (size_t) (data_node->len - overlap));
 		}
 

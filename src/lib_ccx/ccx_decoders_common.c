@@ -326,8 +326,6 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "Invalid Write Format Selected");
 
 	memset (&ctx->dec_sub, 0,sizeof(ctx->dec_sub));
-	if(!setting->send_to_srv && setting->output_format == CCX_OF_RAW)
-		ctx->writedata (BROADCAST_HEADER, sizeof (BROADCAST_HEADER), ctx->context_cc608_field_2, &ctx->dec_sub);
 
 	return ctx;
 }
