@@ -364,7 +364,7 @@ LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigne
 				else if (ccx_options.input_source==CCX_DS_TCP)
 				    i = net_tcp_read(ctx->infd, (char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep);
                 else
-					i = recvfrom(ctx->infd,(char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, NULL, NULL);
+					i = recvfrom(ctx->infd, (char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, NULL, NULL);
 				if (i == -1)
 					fatal (EXIT_READ_ERROR, "Error reading input stream!\n");
 				if (i == 0)
