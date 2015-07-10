@@ -193,6 +193,41 @@ void EPG_print_event(struct EPG_event *event, uint32_t channel, FILE *f)
 	fprintf(f, "  </program>\n");
 }
 
+void EPG_output_net(struct lib_ccx_ctx *ctx)
+{
+    int i;
+    unsigned j;
+    struct EPG_event *event;
+
+    /* TODO: don't remove untill someone fixes segfault with -xmltv 2 */
+    if (ctx->demux_ctx == NULL)
+        return;
+
+	if (ctx->demux_ctx->pmt_array_length == 0)
+	    return;
+
+	for (i = 0; i < ctx->demux_ctx->pmt_array_length; i++)
+	{
+	    if (ctx->demux_ctx->pmt_array[i].program_number == ccx_options.ts_forced_program)
+            break;
+	}
+	
+	if (i == ctx->demux_ctx->pmt_array_length)
+	    return;
+
+    for (j = 0; j < ctx->eit_programs[i].array_len; j++)
+    {
+        event = &(ctx->eit_programs[i].epg_events[j]); 
+        if (event->live_output == true)
+            continue;
+
+        event->live_output = true;
+
+        net_send_epg(event->start_time_string, event->end_time_string,
+                event->event_name, event->extended_text);
+    }
+}
+
 // Creates fills and closes a new XMLTV file for live mode output.
 // File should include only events not previously output.
 void EPG_output_live(struct lib_ccx_ctx *ctx)
@@ -932,12 +967,15 @@ void EPG_handle_output(struct lib_ccx_ctx *ctx)
 			EPG_output(ctx);
 		}
 	}
-	if(ccx_options.xmltv==2 || ccx_options.xmltv==3)
+	if(ccx_options.xmltv==2 || ccx_options.xmltv==3 || ccx_options.send_to_srv)
 	{ //live output
 		if(cur_sec>ctx->epg_last_live_output+ccx_options.xmltvliveinterval)
 		{
 			ctx->epg_last_live_output=cur_sec;
-			EPG_output_live(ctx);
+			if (ccx_options.send_to_srv)
+                EPG_output_net(ctx);
+            else
+                EPG_output_live(ctx);
 		}
 	}
 }
@@ -1036,9 +1074,12 @@ void parse_EPG_packet(struct lib_ccx_ctx *ctx)
 void EPG_free(struct lib_ccx_ctx *ctx)
 {
 	int i = 0, j;
-	if(ccx_options.xmltv==2 || ccx_options.xmltv==3)
+	if(ccx_options.xmltv==2 || ccx_options.xmltv==3 || ccx_options.send_to_srv)
 	{
-		EPG_output_live(ctx);
+        if (ccx_options.send_to_srv)
+            EPG_output_net(ctx);
+        else
+            EPG_output_live(ctx);
 	}
 	for (i = 0; i < TS_PMT_MAP_SIZE; i++)
 	{
