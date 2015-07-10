@@ -33,10 +33,18 @@ void dinit_avc(struct avc_ctx **ctx)
 struct avc_ctx *init_avc(void)
 {
 	struct avc_ctx *ctx = malloc(sizeof(struct avc_ctx ));
+	if(!ctx)
+		return NULL;
+
 	ctx->cc_data = (unsigned char*)malloc(1024);
+	if(!ctx->cc_data)
+	{
+		free(ctx);
+		return NULL;
+	}
+
 	ctx->cc_count = 0;
 	// buffer to hold cc data
-	ctx->cc_data = NULL;
 	ctx->cc_databufsize = 1024;
 	ctx->cc_buffer_saved=1; // Was the CC buffer saved after it was last updated?
 
