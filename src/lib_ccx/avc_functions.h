@@ -30,5 +30,6 @@ struct avc_ctx
 };
 
 struct avc_ctx *init_avc(void);
+void dinit_avc(struct avc_ctx **ctx);
 
 #endif

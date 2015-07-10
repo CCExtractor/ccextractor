@@ -111,7 +111,7 @@ void detect_stream_type (struct ccx_demuxer *ctx)
 			if (ctx->stream_mode == CCX_SM_TRANSPORT)
 			{
 				dbg_print(CCX_DMT_PARSE, "detect_stream_type: detected as TS\n");
-				return_to_buffer (ctx->startbytes, (unsigned int)ctx->startbytes_avail);
+				return_to_buffer (ctx, ctx->startbytes, (unsigned int)ctx->startbytes_avail);
 				return;
 			}
 
@@ -134,7 +134,7 @@ void detect_stream_type (struct ccx_demuxer *ctx)
 			if (ctx->stream_mode == CCX_SM_TRANSPORT)
 			{
 				dbg_print(CCX_DMT_PARSE, "detect_stream_type: detected as M2TS\n");
-				return_to_buffer (ctx->startbytes, (unsigned int)ctx->startbytes_avail);
+				return_to_buffer (ctx, ctx->startbytes, (unsigned int)ctx->startbytes_avail);
 				return;
 			}
 
@@ -175,7 +175,7 @@ void detect_stream_type (struct ccx_demuxer *ctx)
 		}
 	}
 	// Don't use STARTBYTESLENGTH. It might be longer than the file length!
-	return_to_buffer (ctx->startbytes, ctx->startbytes_avail);
+	return_to_buffer (ctx, ctx->startbytes, ctx->startbytes_avail);
 }
 
 

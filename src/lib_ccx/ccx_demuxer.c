@@ -73,6 +73,7 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 	}
 	else
 	{
+		init_file_buffer(ctx);
 #ifdef _WIN32
 		ctx->infd = OPEN (file, O_RDONLY | O_BINARY);
 #else

@@ -26,10 +26,6 @@ const static unsigned char DO_NOTHING[] = {0x80, 0x80};
 // and the expected unrecognized first header for TiVo files.
 int strangeheader=0;
 
-unsigned char *filebuffer;
-LLONG filebuffer_start; // Position of buffer start relative to file
-int filebuffer_pos; // Position of pointer relative to buffer start
-int bytesinbuffer; // Number of bytes we actually have on buffer
 
 // Program stream specific data grabber
 int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)

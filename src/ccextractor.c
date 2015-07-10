@@ -78,11 +78,6 @@ int main(int argc, char *argv[])
 	}
 
 
-	if (ctx->pesheaderbuf==NULL || init_file_buffer() )
-	{
-		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");		
-	}
-
 	if (ccx_options.send_to_srv)
 	{
 		connect_to_srv(ccx_options.srv_addr, ccx_options.srv_port, ccx_options.tcp_desc);

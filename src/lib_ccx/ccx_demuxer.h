@@ -106,6 +106,11 @@ struct ccx_demuxer
 	unsigned char *last_pat_payload;
 	unsigned last_pat_length;
 
+	unsigned char *filebuffer;
+	LLONG filebuffer_start; // Position of buffer start relative to file
+	int filebuffer_pos; // Position of pointer relative to buffer start
+	int bytesinbuffer; // Number of bytes we actually have on buffer
+
 	void *parent;
 	void (*print_cfg)(struct ccx_demuxer *ctx);
 	void (*print_report)(struct ccx_demuxer *ctx);

@@ -80,7 +80,6 @@ void prepare_for_new_file (struct lib_ccx_ctx *ctx)
 	printed_gop.inited=0;
 	dec_ctx->saw_caption_block=0;
 	pts_big_change=0;
-	init_file_buffer();
 	anchor_hdcc(-1);
 	firstcall = 1;
 	for(int x=0; x<0xfff; x++)
@@ -194,18 +193,18 @@ void position_sanity_check (int in)
 }
 
 
-int init_file_buffer(void)
+int init_file_buffer(struct ccx_demuxer *ctx)
 {
-	filebuffer_start=0;
-	filebuffer_pos=0;
-	if (filebuffer==NULL)
+	ctx->filebuffer_start = 0;
+	ctx->filebuffer_pos = 0;
+	if (ctx->filebuffer==NULL)
 	{
-		filebuffer=(unsigned char *) malloc (FILEBUFFERSIZE);
-		bytesinbuffer=0;
+		ctx->filebuffer = (unsigned char *) malloc (FILEBUFFERSIZE);
+		ctx->bytesinbuffer = 0;
 	}
-	if (filebuffer==NULL)
+	if (ctx->filebuffer == NULL)
 	{
-		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+		return -1;
 	}
 	return 0;
 }
@@ -213,18 +212,18 @@ int init_file_buffer(void)
 void buffered_seek (struct ccx_demuxer *ctx, int offset)
 {
 	position_sanity_check(ctx->infd);
-	if (offset<0)
+	if (offset < 0)
 	{
-		filebuffer_pos+=offset;
-		if (filebuffer_pos<0)
+		ctx->filebuffer_pos += offset;
+		if (ctx->filebuffer_pos < 0)
 		{
 			// We got into the start buffer (hopefully)
-			if ((filebuffer_pos+ctx->startbytes_pos) < 0)
+			if ((ctx->filebuffer_pos + ctx->startbytes_pos) < 0)
 			{
 				fatal (CCX_COMMON_EXIT_BUG_BUG, "PANIC: Attempt to seek before buffer start, this is a bug!");
 			}
-			ctx->startbytes_pos+=filebuffer_pos;
-			filebuffer_pos=0;
+			ctx->startbytes_pos += ctx->filebuffer_pos;
+			ctx->filebuffer_pos = 0;
 		}
 	}
 	else
@@ -256,32 +255,33 @@ void sleepandchecktimeout (time_t start)
 		sleep_secs(1);
 }
 
-void return_to_buffer (unsigned char *buffer, unsigned int bytes)
+void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes)
 {
-	if (bytes == filebuffer_pos)
+	if (bytes == ctx->filebuffer_pos)
 	{
 		// Usually we're just going back in the buffer and memcpy would be
 		// unnecessary, but we do it in case we intentionally messed with the
 		// buffer
-		memcpy (filebuffer, buffer, bytes);
-		filebuffer_pos=0;
+		memcpy (ctx->filebuffer, buffer, bytes);
+		ctx->filebuffer_pos = 0;
 		return;
 	}
-	if (filebuffer_pos>0) // Discard old bytes, because we may need the space
+	if (ctx->filebuffer_pos > 0) // Discard old bytes, because we may need the space
 	{
 		// Non optimal since data is moved later again but we don't care since
 		// we're never here in ccextractor.
-		memmove (filebuffer,filebuffer+filebuffer_pos,bytesinbuffer-filebuffer_pos);
-		bytesinbuffer-=filebuffer_pos;
-		bytesinbuffer=0;
-		filebuffer_pos=0;
+		memmove (ctx->filebuffer, ctx->filebuffer + ctx->filebuffer_pos, ctx->bytesinbuffer-ctx->filebuffer_pos);
+		ctx->bytesinbuffer -= ctx->filebuffer_pos;
+		ctx->bytesinbuffer = 0;
+		ctx->filebuffer_pos = 0;
 	}
 
-	if (bytesinbuffer + bytes > FILEBUFFERSIZE)
+	if (ctx->bytesinbuffer + bytes > FILEBUFFERSIZE)
 		fatal (CCX_COMMON_EXIT_BUG_BUG, "Invalid return_to_buffer() - please submit a bug report.");
-	memmove (filebuffer+bytes,filebuffer,bytesinbuffer);
-	memcpy (filebuffer,buffer,bytes);
-	bytesinbuffer+=bytes;
+
+	memmove (ctx->filebuffer+bytes, ctx->filebuffer, ctx->bytesinbuffer);
+	memcpy (ctx->filebuffer, buffer, bytes);
+	ctx->bytesinbuffer+=bytes;
 }
 
 LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes)
@@ -292,7 +292,7 @@ LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigne
 	position_sanity_check(ctx->infd);
 	if (ccx_options.live_stream>0)
 		time (&seconds);
-	if (ccx_options.buffer_input || filebuffer_pos<bytesinbuffer)
+	if (ccx_options.buffer_input || ctx->filebuffer_pos < ctx->bytesinbuffer)
 	{
 		// Needs to return data from filebuffer_start+pos to filebuffer_start+pos+bytes-1;
 		int eof = (ctx->infd==-1);
@@ -305,7 +305,7 @@ LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigne
 				// for the data to come up
 				sleepandchecktimeout (seconds);
 			}
-			size_t ready = bytesinbuffer-filebuffer_pos;
+			size_t ready = ctx->bytesinbuffer - ctx->filebuffer_pos;
 			if (ready==0) // We really need to read more
 			{
 				if (!ccx_options.buffer_input)
@@ -359,13 +359,13 @@ LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigne
 				}
 				// Keep the last 8 bytes, so we have a guaranteed
 				// working seek (-8) - needed by mythtv.
-				int keep = bytesinbuffer > 8 ? 8 : bytesinbuffer;
-				memmove (filebuffer,filebuffer+(FILEBUFFERSIZE-keep),keep);
+				int keep = ctx->bytesinbuffer > 8 ? 8 : ctx->bytesinbuffer;
+				memmove (ctx->filebuffer,ctx->filebuffer+(FILEBUFFERSIZE-keep),keep);
 				int i;
 				if (ccx_options.input_source==CCX_DS_FILE || ccx_options.input_source==CCX_DS_STDIN)
-					i = read (ctx->infd, filebuffer+keep,FILEBUFFERSIZE-keep);
+					i = read (ctx->infd, ctx->filebuffer+keep,FILEBUFFERSIZE-keep);
 				else
-					i = recvfrom(ctx->infd,(char *) filebuffer + keep, FILEBUFFERSIZE - keep, 0, NULL, NULL);
+					i = recvfrom(ctx->infd,(char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, NULL, NULL);
 				if (i == -1)
 					fatal (EXIT_READ_ERROR, "Error reading input stream!\n");
 				if (i == 0)
@@ -375,8 +375,8 @@ LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigne
 					if (ccx_options.live_stream || !(ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied)))
 						eof = 1;
 				}
-				filebuffer_pos = keep;
-				bytesinbuffer=(int) i + keep;
+				ctx->filebuffer_pos = keep;
+				ctx->bytesinbuffer = (int) i + keep;
 				ready = i;
 			}
 			int copy = (int) (ready>=bytes ? bytes:ready);
@@ -384,10 +384,10 @@ LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigne
 			{
 				if (buffer != NULL)
 				{
-					memcpy (buffer, filebuffer+filebuffer_pos, copy);
+					memcpy (buffer, ctx->filebuffer + ctx->filebuffer_pos, copy);
 					buffer+=copy;
 				}
-				filebuffer_pos+=copy;
+				ctx->filebuffer_pos+=copy;
 				bytes-=copy;
 				copied+=copy;
 			}

@@ -145,14 +145,14 @@ struct lib_ccx_ctx
 	struct avc_ctx *avc_ctx;
 };
 
-#define buffered_skip(ctx, bytes) if (bytes<=bytesinbuffer-filebuffer_pos) { \
-    filebuffer_pos+=bytes; \
+#define buffered_skip(ctx, bytes) if (bytes<= ctx->bytesinbuffer - ctx->filebuffer_pos) { \
+    ctx->filebuffer_pos+=bytes; \
     result=bytes; \
 } else result=buffered_read_opt (ctx, NULL,bytes);
 
-#define buffered_read(ctx, buffer,bytes) if (bytes<=bytesinbuffer-filebuffer_pos) { \
-    if (buffer!=NULL) memcpy (buffer,filebuffer+filebuffer_pos,bytes); \
-    filebuffer_pos+=bytes; \
+#define buffered_read(ctx, buffer,bytes) if (bytes<= ctx->bytesinbuffer - ctx->filebuffer_pos) { \
+    if (buffer!=NULL) memcpy (buffer, ctx->filebuffer + ctx->filebuffer_pos, bytes); \
+    ctx->filebuffer_pos+=bytes; \
     result=bytes; \
 } else { result=buffered_read_opt (ctx, buffer,bytes); if (ccx_options.gui_mode_reports && ccx_options.input_source==CCX_DS_NETWORK) {net_activity_gui++; if (!(net_activity_gui%1000))activity_report_data_read();}}
 
@@ -165,9 +165,9 @@ struct lib_ccx_ctx
     result=4; } \
 } else result=buffered_read_opt (buffer,4);
 
-#define buffered_read_byte(ctx, buffer) if (bytesinbuffer-filebuffer_pos) { \
-    if (buffer) { *buffer=filebuffer[filebuffer_pos]; \
-    filebuffer_pos++; \
+#define buffered_read_byte(ctx, buffer) if (ctx->bytesinbuffer-ctx->filebuffer_pos) { \
+    if (buffer) { *buffer=ctx->filebuffer[ctx->filebuffer_pos]; \
+    ctx->filebuffer_pos++; \
     result=1; } \
 } else result=buffered_read_opt (ctx, buffer,1);
 
@@ -185,7 +185,7 @@ int stringztoms (const char *s, struct ccx_boundary_time *bt);
 
 // general_loop.c
 void position_sanity_check (int in);
-int init_file_buffer( void );
+int init_file_buffer(struct ccx_demuxer *ctx);
 int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
 void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx);
@@ -219,7 +219,7 @@ LLONG gettotalfilessize (struct lib_ccx_ctx *ctx);
 void prepare_for_new_file (struct lib_ccx_ctx *ctx);
 void close_input_file (struct lib_ccx_ctx *ctx);
 int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer);
-void return_to_buffer (unsigned char *buffer, unsigned int bytes);
+void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes);
 
 // sequencing.c
 void init_hdcc (void);
@@ -291,11 +291,6 @@ void telxcc_update_gt(void *codec, uint32_t global_timestamp);
 extern unsigned rollover_bits;
 
 extern int strangeheader;
-
-extern unsigned char *filebuffer;
-extern LLONG filebuffer_start; // Position of buffer start relative to file
-extern int filebuffer_pos; // Position of pointer relative to buffer start
-extern int bytesinbuffer; // Number of bytes we actually have on buffer
 
 extern const char *desc[256];
 

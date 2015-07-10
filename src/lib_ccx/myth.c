@@ -838,10 +838,6 @@ void myth_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 	av.data=NULL;
 	ccx_options.buffer_input = 1;
 	dec_ctx = ctx->dec_ctx;
-	if (init_file_buffer())
-	{
-		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory.\n");
-	}
 	unsigned long desp_length=65536;
 	unsigned char *desp=(unsigned char *) malloc (desp_length);
 	if (!desp)

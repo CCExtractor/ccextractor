@@ -80,7 +80,6 @@ int add_skip_chunks(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, uint
 		seek_back-=4;
 	}
 	buffered_seek(ctx->demux_ctx, (int)seek_back);
-	dbg_print(CCX_DMT_PARSE, "filebuffer_pos: %x\n", filebuffer_pos);
 	return 1;
 }
 
@@ -172,7 +171,7 @@ void get_sized_buffer(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, ui
 int read_header(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb)
 {
 	ctx->demux_ctx->startbytes_avail = (int)buffered_read_opt(ctx->demux_ctx, ctx->demux_ctx->startbytes, STARTBYTESLENGTH);
-	return_to_buffer(ctx->demux_ctx->startbytes, ctx->demux_ctx->startbytes_avail);
+	return_to_buffer(ctx->demux_ctx, ctx->demux_ctx->startbytes, ctx->demux_ctx->startbytes_avail);
 
 	uint8_t *parsebuf;
 	parsebuf = (uint8_t*)malloc(1024);
