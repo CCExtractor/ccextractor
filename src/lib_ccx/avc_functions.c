@@ -2,49 +2,56 @@
 #include "ccx_common_option.h"
 #include "utility.h"
 #include <math.h>
+#include "avc_functions.h"
 
 #define dvprint(...) dbg_print( CCX_DMT_VIDES, __VA_ARGS__)
 // Functions to parse a AVC/H.264 data stream, see ISO/IEC 14496-10
 
-int ccblocks_in_avc_total=0;
-int ccblocks_in_avc_lost=0;
-
 // local functions
 static unsigned char *remove_03emu(unsigned char *from, unsigned char *to);
-static void sei_rbsp (unsigned char *seibuf, unsigned char *seiend);
-static unsigned char *sei_message (unsigned char *seibuf, unsigned char *seiend);
-static void user_data_registered_itu_t_t35 (unsigned char *userbuf, unsigned char *userend);
-static void seq_parameter_set_rbsp (unsigned char *seqbuf, unsigned char *seqend);
+static void sei_rbsp (struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend);
+static unsigned char *sei_message (struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend);
+static void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf, unsigned char *userend);
+static void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigned char *seqend);
 static void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub);
-
-static unsigned char cc_count;
-// buffer to hold cc data
-static unsigned char *cc_data = NULL;
-static long cc_databufsize = 1024;
-int cc_buffer_saved=1; // Was the CC buffer saved after it was last updated?
-
-static int got_seq_para=0;
-static unsigned nal_ref_idc;
-static LLONG seq_parameter_set_id;
-static int log2_max_frame_num=0;
-static int pic_order_cnt_type;
-static int log2_max_pic_order_cnt_lsb=0;
-static int frame_mbs_only_flag;
-
-// Use and throw stats for debug, remove this uglyness soon
-long num_nal_unit_type_7=0;
-long num_vcl_hrd=0;
-long num_nal_hrd=0;
-long num_jump_in_frames=0;
-long num_unexpected_sei_length=0;
 
 double roundportable(double x) { return floor(x + 0.5); }
 
 int ebsp_to_rbsp(char* rbsp, char* ebsp, int length);
-
-void init_avc(void)
+void dinit_avc(struct avc_ctx **ctx)
 {
-	cc_data = (unsigned char*)malloc(1024);
+	struct avc_ctx *lctx = *ctx;
+	if (lctx->ccblocks_in_avc_lost>0)
+	{
+		mprint ("Total caption blocks received: %d\n", lctx->ccblocks_in_avc_total);
+		mprint ("Total caption blocks lost: %d\n", lctx->ccblocks_in_avc_lost);
+	}
+	freep(lctx->cc_data);
+	freep(ctx);
+}
+
+struct avc_ctx *init_avc(void)
+{
+	struct avc_ctx *ctx = malloc(sizeof(struct avc_ctx ));
+	ctx->cc_data = (unsigned char*)malloc(1024);
+	ctx->cc_count = 0;
+	// buffer to hold cc data
+	ctx->cc_data = NULL;
+	ctx->cc_databufsize = 1024;
+	ctx->cc_buffer_saved=1; // Was the CC buffer saved after it was last updated?
+
+	ctx->got_seq_para = 0;
+	ctx->nal_ref_idc = 0;
+	ctx->seq_parameter_set_id = 0;
+	ctx->log2_max_frame_num = 0;
+	ctx->pic_order_cnt_type = 0;
+	ctx->log2_max_pic_order_cnt_lsb = 0;
+	ctx->frame_mbs_only_flag = 0;
+
+	ctx->ccblocks_in_avc_total = 0;
+	ctx->ccblocks_in_avc_lost = 0;
+
+	return ctx;
 }
 
 void do_NAL (struct lib_ccx_ctx *ctx, unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub)
@@ -69,11 +76,11 @@ void do_NAL (struct lib_ccx_ctx *ctx, unsigned char *NALstart, LLONG NAL_length,
 	{
 		// Found sequence parameter set
 		// We need this to parse NAL type 1 (CCX_NAL_TYPE_CODED_SLICE_NON_IDR_PICTURE_1)
-		num_nal_unit_type_7++;
-		seq_parameter_set_rbsp(NALstart+1, NALstop);
-		got_seq_para = 1;
+		ctx->avc_ctx->num_nal_unit_type_7++;
+		seq_parameter_set_rbsp(ctx->avc_ctx, NALstart+1, NALstop);
+		ctx->avc_ctx->got_seq_para = 1;
 	}
-	else if ( got_seq_para && (nal_unit_type == CCX_NAL_TYPE_CODED_SLICE_NON_IDR_PICTURE_1 ||
+	else if ( ctx->avc_ctx->got_seq_para && (nal_unit_type == CCX_NAL_TYPE_CODED_SLICE_NON_IDR_PICTURE_1 ||
 				nal_unit_type == CCX_NAL_TYPE_CODED_SLICE_IDR_PICTURE)) // Only if nal_unit_type=1
 	{
 		// Found coded slice of a non-IDR picture
@@ -81,13 +88,13 @@ void do_NAL (struct lib_ccx_ctx *ctx, unsigned char *NALstart, LLONG NAL_length,
 		// slice_layer_without_partitioning_rbsp( );
 		slice_header(ctx, NALstart+1, NALstop, nal_unit_type, sub);
 	}
-	else if ( got_seq_para && nal_unit_type == CCX_NAL_TYPE_SEI )
+	else if ( ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_SEI )
 	{
 		// Found SEI (used for subtitles)
 		//set_fts(); // FIXME - check this!!!
-		sei_rbsp(NALstart+1, NALstop);
+		sei_rbsp(ctx->avc_ctx, NALstart+1, NALstop);
 	}
-	else if ( got_seq_para && nal_unit_type == CCX_NAL_TYPE_PICTURE_PARAMETER_SET )
+	else if ( ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_PICTURE_PARAMETER_SET )
 	{
 		// Found Picture parameter set
 	}
@@ -199,16 +206,16 @@ LLONG process_avc (struct lib_ccx_ctx *ctx, unsigned char *avcbuf, LLONG avcbufl
 					"Broken AVC stream - forbidden_zero_bit not zero ...");
 		}
 
-		nal_ref_idc = *NALstart >> 5;
+		ctx->avc_ctx->nal_ref_idc = *NALstart >> 5;
 		unsigned nal_unit_type = *NALstart & 0x1F;
 
 		dvprint("BEGIN NAL unit type: %d length %d  zeros: %d  ref_idc: %d - Buffered captions before: %d\n",
-				nal_unit_type,  NALstop-NALstart-1, zeropad, nal_ref_idc, !cc_buffer_saved);
+				nal_unit_type,  NALstop-NALstart-1, zeropad, ctx->avc_ctx->nal_ref_idc, !ctx->avc_ctx->cc_buffer_saved);
 
 		do_NAL (ctx, NALstart, NALstop-NALstart, sub);
 
 		dvprint("END   NAL unit type: %d length %d  zeros: %d  ref_idc: %d - Buffered captions after: %d\n",
-				nal_unit_type,  NALstop-NALstart-1, zeropad, nal_ref_idc, !cc_buffer_saved);
+				nal_unit_type,  NALstop-NALstart-1, zeropad, ctx->avc_ctx->nal_ref_idc, !ctx->avc_ctx->cc_buffer_saved);
 	}
 
 	return avcbuflen;
@@ -273,12 +280,12 @@ unsigned char *remove_03emu(unsigned char *from, unsigned char *to)
 
 // Process SEI payload in AVC data. This function combines sei_rbsp()
 // and rbsp_trailing_bits().
-void sei_rbsp (unsigned char *seibuf, unsigned char *seiend)
+void sei_rbsp (struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend)
 {
 	unsigned char *tbuf = seibuf;
 	while(tbuf < seiend - 1) // Use -1 because of trailing marker
 	{
-		tbuf = sei_message(tbuf, seiend - 1);
+		tbuf = sei_message(ctx, tbuf, seiend - 1);
 	}
 	if(tbuf == seiend - 1 )
 	{
@@ -293,13 +300,13 @@ void sei_rbsp (unsigned char *seibuf, unsigned char *seiend)
 		mprint ("\n Failed block (at sei_rbsp) was:\n");
 		dump (CCX_DMT_GENERIC_NOTICES,(unsigned char *) seibuf, seiend-seibuf,0,0);
 
-		num_unexpected_sei_length++;
+		ctx->num_unexpected_sei_length++;
 	}
 }
 
 
 // This combines sei_message() and sei_payload().
-unsigned char *sei_message (unsigned char *seibuf, unsigned char *seiend)
+unsigned char *sei_message (struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend)
 {
 	int payloadType = 0;
 	while (*seibuf==0xff)
@@ -341,26 +348,26 @@ unsigned char *sei_message (unsigned char *seibuf, unsigned char *seiend)
 	dbg_print(CCX_DMT_VERBOSE, "\n");
 	// Ignore all except user_data_registered_itu_t_t35() payload
 	if(!broken && payloadType == 4)
-		user_data_registered_itu_t_t35(paystart, paystart+payloadSize);
+		user_data_registered_itu_t_t35(ctx, paystart, paystart+payloadSize);
 
 	return seibuf;
 }
 
-void copy_ccdata_to_buffer (char *source, int new_cc_count)
+void copy_ccdata_to_buffer (struct avc_ctx *ctx, char *source, int new_cc_count)
 {
-	ccblocks_in_avc_total++;
-	if (cc_buffer_saved==0)
+	ctx->ccblocks_in_avc_total++;
+	if (ctx->cc_buffer_saved==0)
 	{
 		mprint ("Warning: Probably loss of CC data, unsaved buffer being rewritten\n");
-		ccblocks_in_avc_lost++;
+		ctx->ccblocks_in_avc_lost++;
 	}
-	memcpy(cc_data+cc_count*3, source, new_cc_count*3+1);
-	cc_count+=new_cc_count;
-	cc_buffer_saved=0;
+	memcpy(ctx->cc_data + ctx->cc_count*3, source, new_cc_count*3+1);
+	ctx->cc_count += new_cc_count;
+	ctx->cc_buffer_saved = 0;
 }
 
 
-void user_data_registered_itu_t_t35 (unsigned char *userbuf, unsigned char *userend)
+void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf, unsigned char *userend)
 {
 	unsigned char *tbuf = userbuf;
 	unsigned char *cc_tmpdata;
@@ -464,15 +471,15 @@ void user_data_registered_itu_t_t35 (unsigned char *userbuf, unsigned char *user
 									"Syntax problem: Final 0xFF marker missing.");
 
 						// Save the data and process once we know the sequence number
-						if (local_cc_count*3+1 > cc_databufsize)
+						if (local_cc_count*3+1 > ctx->cc_databufsize)
 						{
-							cc_data = (unsigned char*)realloc(cc_data, (size_t) cc_count*6+1);
-							if (!cc_data)
+							ctx->cc_data = (unsigned char*)realloc(ctx->cc_data, (size_t) ctx->cc_count*6+1);
+							if (!ctx->cc_data)
 								fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
-							cc_databufsize = (long) cc_count*6+1;
+							ctx->cc_databufsize = (long) ctx->cc_count*6+1;
 						}
 						// Copy new cc data into cc_data
-						copy_ccdata_to_buffer ((char *) cc_tmpdata, local_cc_count);
+						copy_ccdata_to_buffer (ctx, (char *) cc_tmpdata, local_cc_count);
 						break;
 					case 0x06:
 						dbg_print(CCX_DMT_VERBOSE, "bar_data (unsupported for now)\n");
@@ -536,15 +543,15 @@ void user_data_registered_itu_t_t35 (unsigned char *userbuf, unsigned char *user
 						"Syntax problem: Final 0xFF marker missing.");
 
 			// Save the data and process once we know the sequence number
-			if (cc_count*3+1 > cc_databufsize)
+			if (ctx->cc_count*3+1 > ctx->cc_databufsize)
 			{
-				cc_data = (unsigned char*)realloc(cc_data, (size_t) cc_count*6+1);
-				if (!cc_data)
+				ctx->cc_data = (unsigned char*)realloc(ctx->cc_data, (size_t) ctx->cc_count*6+1);
+				if (!ctx->cc_data)
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
-				cc_databufsize = (long) cc_count*6+1;
+				ctx->cc_databufsize = (long) ctx->cc_count*6+1;
 			}
 			// Copy new cc data into cc_data - replace command below.
-			copy_ccdata_to_buffer ((char *) cc_tmpdata, local_cc_count);
+			copy_ccdata_to_buffer (ctx, (char *) cc_tmpdata, local_cc_count);
 
 			//dump(tbuf,user_data_len-1,0);
 			break;
@@ -557,7 +564,7 @@ void user_data_registered_itu_t_t35 (unsigned char *userbuf, unsigned char *user
 
 
 // Process sequence parameters in AVC data.
-void seq_parameter_set_rbsp (unsigned char *seqbuf, unsigned char *seqend)
+void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigned char *seqend)
 {
 	LLONG tmp, tmp1;
 	struct bitstream q1;
@@ -583,8 +590,8 @@ void seq_parameter_set_rbsp (unsigned char *seqbuf, unsigned char *seqend)
 	dvprint("reserved=                                      % 4lld (%#llX)\n",tmp,tmp);
 	tmp=u(&q1,8);
 	dvprint("level_idc=                                     % 4lld (%#llX)\n",tmp,tmp);
-	seq_parameter_set_id = ue(&q1);
-	dvprint("seq_parameter_set_id=                          % 4lld (%#llX)\n", seq_parameter_set_id,seq_parameter_set_id);
+	ctx->seq_parameter_set_id = ue(&q1);
+	dvprint("seq_parameter_set_id=                          % 4lld (%#llX)\n", ctx->seq_parameter_set_id, ctx->seq_parameter_set_id);
 	if (profile_idc == 100 || profile_idc == 110 || profile_idc == 122
 			|| profile_idc == 244 || profile_idc == 44 || profile_idc == 83
 			|| profile_idc == 86 || profile_idc == 118 || profile_idc == 128){
@@ -650,18 +657,18 @@ void seq_parameter_set_rbsp (unsigned char *seqbuf, unsigned char *seqend)
 			}
 		}
 	}
-	log2_max_frame_num = (int)ue(&q1);
-	dvprint("log2_max_frame_num4_minus4=                    % 4d (%#X)\n", log2_max_frame_num,log2_max_frame_num);
-	log2_max_frame_num += 4; // 4 is added due to the formula.
-	pic_order_cnt_type = (int)ue(&q1);
-	dvprint("pic_order_cnt_type=                            % 4d (%#X)\n", pic_order_cnt_type,pic_order_cnt_type);
-	if( pic_order_cnt_type == 0 )
+	ctx->log2_max_frame_num = (int)ue(&q1);
+	dvprint("log2_max_frame_num4_minus4=                    % 4d (%#X)\n", ctx->log2_max_frame_num, ctx->log2_max_frame_num);
+	ctx->log2_max_frame_num += 4; // 4 is added due to the formula.
+	ctx->pic_order_cnt_type = (int)ue(&q1);
+	dvprint("pic_order_cnt_type=                            % 4d (%#X)\n", ctx->pic_order_cnt_type, ctx->pic_order_cnt_type);
+	if( ctx->pic_order_cnt_type == 0 )
 	{
-		log2_max_pic_order_cnt_lsb = (int)ue(&q1);
-		dvprint("log2_max_pic_order_cnt_lsb_minus4=             % 4d (%#X)\n", log2_max_pic_order_cnt_lsb,log2_max_pic_order_cnt_lsb);
-		log2_max_pic_order_cnt_lsb += 4; // 4 is added due to formula.
+		ctx->log2_max_pic_order_cnt_lsb = (int)ue(&q1);
+		dvprint("log2_max_pic_order_cnt_lsb_minus4=             % 4d (%#X)\n", ctx->log2_max_pic_order_cnt_lsb,ctx->log2_max_pic_order_cnt_lsb);
+		ctx->log2_max_pic_order_cnt_lsb += 4; // 4 is added due to formula.
 	}
-	else if( pic_order_cnt_type == 1 )
+	else if( ctx->pic_order_cnt_type == 1 )
 	{
 		// CFS: Untested, just copied from specs.
 		tmp= u(&q1,1);
@@ -691,9 +698,9 @@ void seq_parameter_set_rbsp (unsigned char *seqbuf, unsigned char *seqend)
 	dvprint("pic_width_in_mbs_minus1=                       % 4lld (%#llX)\n",tmp,tmp);
 	tmp=ue(&q1);
 	dvprint("pic_height_in_map_units_minus1=                % 4lld (%#llX)\n",tmp,tmp);
-	frame_mbs_only_flag = (int)u(&q1,1);
-	dvprint("frame_mbs_only_flag=                           % 4d (%#X)\n", frame_mbs_only_flag,frame_mbs_only_flag);
-	if ( !frame_mbs_only_flag )
+	ctx->frame_mbs_only_flag = (int)u(&q1,1);
+	dvprint("frame_mbs_only_flag=                           % 4d (%#X)\n", ctx->frame_mbs_only_flag, ctx->frame_mbs_only_flag);
+	if ( !ctx->frame_mbs_only_flag )
 	{
 		tmp=u(&q1,1);
 		dvprint("mb_adaptive_fr_fi_flag=                        % 4lld (%#llX)\n",tmp,tmp);
@@ -796,7 +803,7 @@ void seq_parameter_set_rbsp (unsigned char *seqbuf, unsigned char *seqend)
 			dvprint ("nal_hrd. Not implemented for now. Hopefully not needed. Skiping rest of NAL\n");
 			//printf("Boom nal_hrd\n");
 			// exit(1);
-			num_nal_hrd++;
+			ctx->num_nal_hrd++;
 			return;
 		}
 		tmp1 = u(&q1,1);
@@ -805,7 +812,7 @@ void seq_parameter_set_rbsp (unsigned char *seqbuf, unsigned char *seqend)
 		{
 			// TODO.
 			mprint ("vcl_hrd. Not implemented for now. Hopefully not needed. Skiping rest of NAL\n");
-			num_vcl_hrd++;
+			ctx->num_vcl_hrd++;
 			// exit(1);
 		}
 		if ( tmp || tmp1 )
@@ -862,14 +869,14 @@ void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char
 	dvprint("pic_parameter_set_id=  % 4lld (%#llX)\n",tmp,tmp);
 
 	lastframe_num = frame_num;
-	int maxframe_num = (int) ((1<<log2_max_frame_num) - 1);
+	int maxframe_num = (int) ((1<<ctx->avc_ctx->log2_max_frame_num) - 1);
 
 	// Needs log2_max_frame_num_minus4 + 4 bits
-	frame_num = u(&q1,log2_max_frame_num);
+	frame_num = u(&q1,ctx->avc_ctx->log2_max_frame_num);
 	dvprint("frame_num=             %llX\n", frame_num);
 
-	LLONG field_pic_flag = 0; // Moved here because it's needed for pic_order_cnt_type==2
-	if( !frame_mbs_only_flag )
+	LLONG field_pic_flag = 0; // Moved here because it's needed for ctx->avc_ctx->pic_order_cnt_type==2
+	if( !ctx->avc_ctx->frame_mbs_only_flag )
 	{
 		field_pic_flag = u(&q1,1);
 		dvprint("field_pic_flag=        %llX\n", field_pic_flag);
@@ -894,14 +901,14 @@ void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char
 		dvprint("idr_pic_id=     % 4lld (%#llX)\n",tmp,tmp);
 		//TODO
 	}
-	if( pic_order_cnt_type == 0 )
+	if( ctx->avc_ctx->pic_order_cnt_type == 0 )
 	{
-		pic_order_cnt_lsb=u(&q1,log2_max_pic_order_cnt_lsb);
+		pic_order_cnt_lsb=u(&q1,ctx->avc_ctx->log2_max_pic_order_cnt_lsb);
 		dvprint("pic_order_cnt_lsb=     %llX\n", pic_order_cnt_lsb);
 	}
-	if( pic_order_cnt_type == 1 )
+	if( ctx->avc_ctx->pic_order_cnt_type == 1 )
 	{
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "AVC: pic_order_cnt_type == 1 not yet supported.");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "AVC: ctx->avc_ctx->pic_order_cnt_type == 1 not yet supported.");
 	}
 #if 0
 	else
@@ -918,7 +925,7 @@ void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char
 		LLONG tempPicOrderCnt=0;
 		if (IdrPicFlag == 1)
 			tempPicOrderCnt=0;
-		else if (nal_ref_idc == 0)
+		else if (ctx->avc_ctx->nal_ref_idc == 0)
 			tempPicOrderCnt = 2*(FrameNumOffset + frame_num) -1 ;
 		else
 			tempPicOrderCnt = 2*(FrameNumOffset + frame_num);
@@ -936,7 +943,7 @@ void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char
 
 		//pic_order_cnt_lsb=tempPicOrderCnt;
 		//pic_order_cnt_lsb=u(&q1,tempPicOrderCnt);
-		//fatal(CCX_COMMON_EXIT_BUG_BUG, "AVC: pic_order_cnt_type != 0 not yet supported.");
+		//fatal(CCX_COMMON_EXIT_BUG_BUG, "AVC: ctx->avc_ctx->pic_order_cnt_type != 0 not yet supported.");
 		//TODO
 		// Calculate picture order count (POC) according to 8.2.1
 	}
@@ -944,7 +951,7 @@ void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char
 	// The rest of the data in slice_header() is currently unused.
 
 	// A reference pic (I or P is always the last displayed picture of a POC
-	// sequence. B slices can be reference pics, so ignore nal_ref_idc.
+	// sequence. B slices can be reference pics, so ignore ctx->avc_ctx->nal_ref_idc.
 	int isref = 0;
 	switch (slice_type)
 	{
@@ -958,7 +965,7 @@ void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char
 			break;
 	}
 
-	int maxrefcnt = (int) ((1<<log2_max_pic_order_cnt_lsb) - 1);
+	int maxrefcnt = (int) ((1<<ctx->avc_ctx->log2_max_pic_order_cnt_lsb) - 1);
 
 	// If we saw a jump set maxidx, lastmaxidx to -1
 	LLONG dif = frame_num - lastframe_num;
@@ -966,7 +973,7 @@ void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char
 		dif = 0;
 	if ( lastframe_num > -1 && (dif < 0 || dif > 1) )
 	{
-		num_jump_in_frames++;
+		ctx->avc_ctx->num_jump_in_frames++;
 		dvprint("\nJump in frame numbers (%lld/%lld)\n", frame_num, lastframe_num);
 		// This will prohibit setting current_tref on potential
 		// jumps.
@@ -1125,9 +1132,9 @@ void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char
 	total_frames_count++;
 	ctx->frames_since_last_gop++;
 
-	store_hdcc(ctx, cc_data, cc_count, curridx, fts_now, sub);
-	cc_buffer_saved=1; // CFS: store_hdcc supposedly saves the CC buffer to a sequence buffer
-	cc_count=0;
+	store_hdcc(ctx, ctx->avc_ctx->cc_data, ctx->avc_ctx->cc_count, curridx, fts_now, sub);
+	ctx->avc_ctx->cc_buffer_saved = 1; // CFS: store_hdcc supposedly saves the CC buffer to a sequence buffer
+	ctx->avc_ctx->cc_count = 0;
 }
 
 // max_dec_frame_buffering .. Max frames in buffer

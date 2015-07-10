@@ -10,13 +10,6 @@
 #include "ccx_encoders_common.h"
 #include "activity.h"
 
-// IMPORTED TRASH INFO, REMOVE
-extern long num_nal_unit_type_7;
-extern long num_vcl_hrd;
-extern long num_nal_hrd;
-extern long num_jump_in_frames;
-extern long num_unexpected_sei_length;
-
 /* General video information */
  unsigned current_hor_size = 0;
 unsigned current_vert_size = 0;
@@ -794,11 +787,6 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		mprint("Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
 				ctx->inputfile[ctx->current_file], ctx->current_file, ctx->demux_ctx->past, ctx->inputsize);
 	}
-	mprint ("\nNumber of NAL_type_7: %ld\n",num_nal_unit_type_7);
-	mprint ("Number of VCL_HRD: %ld\n",num_vcl_hrd);
-	mprint ("Number of NAL HRD: %ld\n",num_nal_hrd);
-	mprint ("Number of jump-in-frames: %ld\n",num_jump_in_frames);
-	mprint ("Number of num_unexpected_sei_length: %ld", num_unexpected_sei_length);
 }
 
 // Raw caption with FTS file process

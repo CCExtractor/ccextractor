@@ -457,12 +457,6 @@ int main(int argc, char *argv[])
 		mprint ("\rNote: Processing was cancelled before all data was processed because\n");
 		mprint ("\rone or more user-defined limits were reached.\n");
 	} 
-	if (ccblocks_in_avc_lost>0)
-	{
-		mprint ("Total caption blocks received: %d\n", ccblocks_in_avc_total);
-		mprint ("Total caption blocks lost: %d\n", ccblocks_in_avc_lost);
-	}
-
 	mprint ("This is beta software. Report issues to carlos at ccextractor org...\n");
 	if (show_myth_banner)
 	{

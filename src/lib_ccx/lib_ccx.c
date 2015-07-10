@@ -286,7 +286,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	memset(report_608,0,sizeof(struct ccx_decoder_608_report));
 
 	// Initialize some constants
-	init_avc();
+	ctx->avc_ctx = init_avc();
 
 	ctx->screens_to_process = -1;
 	ctx->current_file = -1;

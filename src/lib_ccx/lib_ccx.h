@@ -20,10 +20,7 @@
 #include "bitstream.h"
 
 #include "networking.h"
-
-extern int cc_buffer_saved; // Do we have anything in the CC buffer already?
-extern int ccblocks_in_avc_total; // Total CC blocks found by the AVC code
-extern int ccblocks_in_avc_lost; // CC blocks found by the AVC code lost due to overwrites (should be 0)
+#include "avc_functions.h"
 
 /* Report information */
 #define SUB_STREAMS_CNT 10
@@ -145,6 +142,7 @@ struct lib_ccx_ctx
 	int multiprogram;
 
 	struct ccx_demuxer *demux_ctx;
+	struct avc_ctx *avc_ctx;
 };
 
 #define buffered_skip(ctx, bytes) if (bytes<=bytesinbuffer-filebuffer_pos) { \
@@ -205,10 +203,6 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 // wtv_functions.c
 int wtv_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 
-// avc_functions.c
-LLONG process_avc (struct lib_ccx_ctx *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub);
-void init_avc(void);
-
 // es_functions.c
 LLONG process_m2v (struct lib_ccx_ctx *ctx, unsigned char *data, LLONG length,struct cc_subtitle *sub);
 
@@ -266,6 +260,7 @@ void EPG_free();
 // myth.c
 void myth_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
 
+LLONG process_avc (struct lib_ccx_ctx *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub);
 // utility.c
 void fatal(int exit_code, const char *fmt, ...);
 void mprint (const char *fmt, ...);
