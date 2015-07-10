@@ -639,7 +639,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 				ignore_other_stream(ctx->demux_ctx, pid);
 				data_node = get_data_stream(datalist, pid);
 				if(!data_node)
-					break;
+					continue;
 			}
 			ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer + overlap, (size_t) (data_node->len - overlap));
 		}

@@ -182,27 +182,6 @@ static int ccx_demuxer_get_stream_mode(struct ccx_demuxer *ctx)
 	return ctx->stream_mode;
 }
 
-void ccx_demuxer_delete(struct ccx_demuxer **ctx)
-{
-	struct ccx_demuxer *lctx = *ctx;
-	int i;
-	for(i = 0; i < TS_PMT_MAP_SIZE; i++)
-	{
-		if(lctx->pmt_array[i].last_pmt_length)
-		{
-			freep(&lctx->pmt_array[i].last_pmt_payload);
-		}
-		lctx->pmt_array[i].last_pmt_length = 0;
-	}
-	for (i = 0; i < MAX_PID; i++)
-	{
-		if( lctx->PIDs_programs[i])
-			freep(lctx->PIDs_programs + i);
-	}
-	if (lctx->fh_out_elementarystream!=NULL)
-		fclose (lctx->fh_out_elementarystream);
-	freep(ctx);
-}
 
 static void ccx_demuxer_print_report(struct ccx_demuxer *ctx)
 {
@@ -370,6 +349,31 @@ int ccx_demuxer_write_es(struct ccx_demuxer *ctx, unsigned char* buf, size_t len
 		fwrite (buf, 1, len,ctx->fh_out_elementarystream);
 	return CCX_OK;
 }
+
+void ccx_demuxer_delete(struct ccx_demuxer **ctx)
+{
+	struct ccx_demuxer *lctx = *ctx;
+	int i;
+	dinit_cap(lctx);
+	freep(&lctx->last_pat_payload);
+	for(i = 0; i < TS_PMT_MAP_SIZE; i++)
+	{
+		if(lctx->pmt_array[i].last_pmt_length)
+		{
+			freep(&lctx->pmt_array[i].last_pmt_payload);
+		}
+		lctx->pmt_array[i].last_pmt_length = 0;
+	}
+	for (i = 0; i < MAX_PID; i++)
+	{
+		if( lctx->PIDs_programs[i])
+			freep(lctx->PIDs_programs + i);
+	}
+	if (lctx->fh_out_elementarystream != NULL)
+		fclose (lctx->fh_out_elementarystream);
+	freep(ctx);
+}
+
 struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 {
 	int i;
@@ -388,6 +392,7 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	ctx->nb_program = 0;
 	ctx->codec_ctx = NULL;
 	ctx->multi_stream_per_prog = 0;
+
 	if(cfg->ts_forced_program  != -1)
 	{
 		ctx->pinfo[ctx->nb_program].pid = CCX_UNKNOWN;
@@ -429,6 +434,8 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	ctx->write_es = ccx_demuxer_write_es;
 	ctx->hauppauge_warning_shown = 0;
 	ctx->parent = parent;
+	ctx->last_pat_payload = NULL;
+	ctx->last_pat_length = 0;
 
 	ctx->fh_out_elementarystream = NULL;
 

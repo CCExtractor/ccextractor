@@ -483,16 +483,17 @@ int parse_PAT (struct ccx_demuxer *ctx)
 		   "Sorry, long PATs not yet supported!\n"); */
 	}
 
-	if (last_pat_payload!=NULL && payload_length == last_pat_length &&
-			!memcmp (payload_start, last_pat_payload, payload_length))
+	if (ctx->last_pat_payload != NULL && payload_length == ctx->last_pat_length &&
+			!memcmp (payload_start, ctx->last_pat_payload, payload_length))
 	{
 		// dbg_print(CCX_DMT_PAT, "PAT hasn't changed, skipping.\n");
-		return 0;
+		return CCX_OK;
 	}
 
-	if (last_pat_payload!=NULL)
+	if (ctx->last_pat_payload != NULL)
 	{
 		mprint ("Notice: PAT changed, clearing all variables.\n");
+		dinit_cap(ctx);
 		clear_PMT_array(ctx);
 		ctx->nb_cap = 0;
 		memset (ctx->PIDs_seen,0,sizeof (int) *65536); // Forget all we saw
@@ -502,11 +503,17 @@ int parse_PAT (struct ccx_demuxer *ctx)
 		gotpes=1;
 	}
 
-	last_pat_payload=(unsigned char *) realloc (last_pat_payload, payload_length+8); // Extra 8 in case memcpy copies dwords, etc
-	if (last_pat_payload==NULL)
-		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process PAT.\n");
-	memcpy (last_pat_payload, payload_start, payload_length);
-	last_pat_length = payload_length;
+	if(ctx->last_pat_length < payload_length + 8)
+	{
+		ctx->last_pat_payload = (unsigned char *) realloc (ctx->last_pat_payload, payload_length+8); // Extra 8 in case memcpy copies dwords, etc
+		if (ctx->last_pat_payload == NULL)
+		{
+			fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process PAT.\n");
+			return -1;
+		}
+	}
+	memcpy (ctx->last_pat_payload, payload_start, payload_length);
+	ctx->last_pat_length = payload_length;
 
 
 	unsigned table_id = payload_start[0];

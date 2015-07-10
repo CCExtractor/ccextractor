@@ -103,6 +103,9 @@ struct ccx_demuxer
 	void *codec_ctx;
 	int multi_stream_per_prog;
 
+	unsigned char *last_pat_payload;
+	unsigned last_pat_length;
+
 	void *parent;
 	void (*print_cfg)(struct ccx_demuxer *ctx);
 	void (*print_report)(struct ccx_demuxer *ctx);
@@ -141,4 +144,5 @@ struct demuxer_data *get_best_data(struct demuxer_data *data);
 struct demuxer_data *get_data_stream(struct demuxer_data *data, int pid);
 int get_best_stream(struct ccx_demuxer *ctx);
 void ignore_other_stream(struct ccx_demuxer *ctx, int pid);
+void dinit_cap (struct ccx_demuxer *ctx);
 #endif

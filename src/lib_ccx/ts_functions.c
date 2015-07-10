@@ -6,8 +6,6 @@
 unsigned char tspacket[188]; // Current packet
 
 struct ts_payload payload;
-unsigned char *last_pat_payload=NULL;
-unsigned last_pat_length = 0;
 
 
 static unsigned char *haup_capbuf = NULL;
