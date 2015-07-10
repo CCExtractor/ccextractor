@@ -127,7 +127,7 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 	fprintf(stderr, "[C] Sending %u bytes\n", len);
 #endif
 
-    int rc = 1;
+	int rc = 1;
 
 	if ((rc = write_block(srv_sd, BIN_DATA, data, len)) <= 0)
 	{
@@ -145,70 +145,70 @@ void net_send_epg(const char *start, const char *stop, const char *title, const 
 {
 	/* nanosleep((struct timespec[]){{0, 100000000}}, NULL); */
 	assert(srv_sd > 0);
-    if (NULL == start)
-        return;
-    if (NULL == stop)
-        return;
+	if (NULL == start)
+		return;
+	if (NULL == stop)
+		return;
 
-    size_t st = strlen(start) + 1;
-    size_t sp = strlen(stop) + 1;
+	size_t st = strlen(start) + 1;
+	size_t sp = strlen(stop) + 1;
 
-    size_t t = 1;
-    if (title != NULL)
-        t += strlen(title);
+	size_t t = 1;
+	if (title != NULL)
+		t += strlen(title);
 
-    size_t d = 1;
-    if (desc != NULL)
-        d += strlen(desc);
+	size_t d = 1;
+	if (desc != NULL)
+		d += strlen(desc);
 
-    size_t len = st + sp + t + d;
+	size_t len = st + sp + t + d;
 
-    char *epg = (char *) calloc(len, sizeof(char));
-    if (NULL == epg)
-        return;
+	char *epg = (char *) calloc(len, sizeof(char));
+	if (NULL == epg)
+		return;
 
-    char *end = epg;
+	char *end = epg;
 
-    memcpy(end, start, st);
-    end += st;
+	memcpy(end, start, st);
+	end += st;
 
-    memcpy(end, stop, sp);
-    end += sp;
+	memcpy(end, stop, sp);
+	end += sp;
 
-    if (title != NULL)
-        memcpy(end, title, t);
-    end += t;
+	if (title != NULL)
+		memcpy(end, title, t);
+	end += t;
 
-    if (desc != NULL)
-        memcpy(end, desc, d);
-    end += d;
+	if (desc != NULL)
+		memcpy(end, desc, d);
+	end += d;
 
 #if DEBUG_OUT
-    fprintf(stderr, "[C] Sending EPG: %u bytes\n", len);
+	fprintf(stderr, "[C] Sending EPG: %u bytes\n", len);
 #endif
 
 	if (write_block(srv_sd, EPG_DATA, epg, len) <= 0)
 		fprintf(stderr, "Can't send EPG data\n");
 
-    return;
+	return;
 }
 
 int net_tcp_read(int socket, void *buffer, size_t length)
 {
-    int rc;
+	int rc;
 	char c;
 	size_t l;
 
 	do
 	{
-        l = length;
+		l = length;
 
-        if ((rc = read_block(socket, &c, buffer, &l)) <= 0)
-            return rc;
-    }
-    while (c != BIN_DATA && c != BIN_HEADER);
+		if ((rc = read_block(socket, &c, buffer, &l)) <= 0)
+			return rc;
+	}
+	while (c != BIN_DATA && c != BIN_HEADER);
 
-    return l;
+	return l;
 }
 
 /*
@@ -245,8 +245,8 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 	nwritten += rc;
 
 #if DEBUG_OUT
-    fwrite(len_str, sizeof(char), INT_LEN, stderr);
-    fprintf(stderr, " ");
+	fwrite(len_str, sizeof(char), INT_LEN, stderr);
+	fprintf(stderr, " ");
 #endif
 
 	if (buf_len > 0)
@@ -686,11 +686,11 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 	nread += rc;
 
 #if DEBUG_OUT
-    fwrite(len_str, sizeof(char), INT_LEN, stderr);
-    fprintf(stderr, " ");
+	fwrite(len_str, sizeof(char), INT_LEN, stderr);
+	fprintf(stderr, " ");
 #endif
 
-    size_t len = atoi(len_str);
+	size_t len = atoi(len_str);
 
 	if (len > 0)
 	{
@@ -717,11 +717,11 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 		nread += rc;
 
 #if DEBUG_OUT
-        if (*command != BIN_DATA && *command != BIN_HEADER)
-        {
-            fwrite(buf, sizeof(char), len, stderr);
-            fprintf(stderr, " ");
-        }
+		if (*command != BIN_DATA && *command != BIN_HEADER)
+		{
+			fwrite(buf, sizeof(char), len, stderr);
+			fprintf(stderr, " ");
+		}
 #endif
 	}
 
