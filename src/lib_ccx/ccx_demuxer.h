@@ -141,4 +141,5 @@ int need_capInfo_for_pid(struct ccx_demuxer *ctx, int pid);
 struct demuxer_data *get_best_data(struct demuxer_data *data);
 struct demuxer_data *get_data_stream(struct demuxer_data *data, int pid);
 int get_best_stream(struct ccx_demuxer *ctx);
+void ignore_other_stream(struct ccx_demuxer *ctx, int pid);
 #endif

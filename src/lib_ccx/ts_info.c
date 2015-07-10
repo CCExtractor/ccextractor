@@ -36,6 +36,15 @@ int count_complete_capInfo(struct ccx_demuxer *ctx)
 	return count;
 }
 
+void ignore_other_stream(struct ccx_demuxer *ctx, int pid)
+{
+	struct cap_info* iter; 
+	list_for_each_entry(iter ,&ctx->cinfo_tree.all_stream, all_stream)
+	{
+		if(iter->pid == pid)
+			iter->ignore = 1;
+	}
+}
 int get_best_stream(struct ccx_demuxer *ctx)
 {
 	struct cap_info* iter;

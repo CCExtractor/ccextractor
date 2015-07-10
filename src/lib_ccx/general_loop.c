@@ -636,6 +636,7 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 			}
 			else
 			{
+				ignore_other_stream(ctx->demux_ctx, pid);
 				data_node = get_data_stream(datalist, pid);
 				if(!data_node)
 					break;
