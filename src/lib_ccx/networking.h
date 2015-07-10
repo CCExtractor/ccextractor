@@ -6,7 +6,10 @@
 void connect_to_srv(const char *addr, const char *port, const char *cc_desc);
 
 void net_send_header(const unsigned char *data, size_t len);
+void net_send_epg(const char *start, const char *stop, const char *title, const char *desc);
 int net_send_cc(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
+
+int net_tcp_read(int socket, void *buffer, size_t length);
 
 int start_tcp_srv(const char *port, const char *pwd);
 

@@ -16,11 +16,16 @@
 #define PASSWORD        2
 #define BIN_MODE        3
 #define CC_DESC         4
+#define BIN_HEADER      5
+#define BIN_DATA        6
+#define EPG_DATA        7
 #pragma warning( suppress : 4005)
 #define ERROR           51
 #define UNKNOWN_COMMAND 52
 #define WRONG_PASSWORD  53
 #define CONN_LIMIT      54
+
+/* #include <time.h> */
 
 #define DFT_PORT "2048" /* Default port for server and client */
 #define WRONG_PASSWORD_DELAY 2 /* Seconds */
@@ -106,33 +111,10 @@ void net_send_header(const unsigned char *data, size_t len)
 	fprintf(stderr, "File created by %02X version %02X%02X\n", data[3], data[4], data[5]);
 	fprintf(stderr, "File format revision: %02X%02X\n", data[6], data[7]);
 #endif
-	if (write_block(srv_sd, BIN_MODE, NULL, 0) <= 0)
+
+	if (write_block(srv_sd, BIN_HEADER, data, len) <= 0)
 	{
 		printf("Can't send BIN header\n");
-		return;
-	}
-
-	char ok;
-	if (read_byte(srv_sd, &ok) != 1)
-		return;
-
-#if DEBUG_OUT
-	fprintf(stderr, "[S] ");
-	pr_command(ok);
-	fprintf(stderr, "\n");
-#endif
-
-	if (ERROR == ok)
-	{
-		printf("Internal server error\n");
-		return;
-	}
-
-	ssize_t rc;
-	if ((rc = writen(srv_sd, data, len)) != (int) len)
-	{
-		if (rc < 0)
-			mprint("write() error: %s", strerror(errno));
 		return;
 	}
 }
@@ -145,17 +127,36 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 	fprintf(stderr, "[C] Sending %u bytes\n", len);
 #endif
 
-	ssize_t rc;
-	if ((rc = writen(srv_sd, data, len)) != (int) len)
+    int rc = 1;
+
+	if ((rc = write_block(srv_sd, BIN_DATA, data, len)) <= 0)
 	{
-		if (rc < 0)
-			mprint("write() error: %s", strerror(errno));
-		return rc;
+		printf("Can't send BIN data\n");
+		return -1;
 	}
 
-	/* nanosleep((struct timespec[]){{0, 100000000}}, NULL); */
+	/* nanosleep((struct timespec[]){{0, 10000000}}, NULL); */
+
 	/* Sleep(100); */
-	return rc;
+	return 1;
+}
+
+int net_tcp_read(int socket, void *buffer, size_t length)
+{
+    int rc;
+	char c;
+	size_t l;
+
+	do
+	{
+        l = length;
+
+        if ((rc = read_block(socket, &c, buffer, &l)) <= 0)
+            return rc;
+    }
+    while (c != BIN_DATA && c != BIN_HEADER);
+
+    return l;
 }
 
 /*
@@ -192,8 +193,8 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 	nwritten += rc;
 
 #if DEBUG_OUT
-	fwrite(len_str, sizeof(char), INT_LEN, stderr);
-	fprintf(stderr, " ");
+    fwrite(len_str, sizeof(char), INT_LEN, stderr);
+    fprintf(stderr, " ");
 #endif
 
 	if (buf_len > 0)
@@ -206,7 +207,7 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 	}
 
 #if DEBUG_OUT
-	if (buf != NULL)
+	if (buf != NULL && command != BIN_HEADER && command != BIN_DATA)
 	{
 		fwrite(buf, sizeof(char), buf_len, stderr);
 		fprintf(stderr, " ");
@@ -445,21 +446,6 @@ int start_tcp_srv(const char *port, const char *pwd)
 		if (write_byte(sockfd, OK) != 1)
 			goto close_conn;
 
-		char c;
-		size_t len = BUFFER_SIZE;
-		char buf[BUFFER_SIZE];
-
-		do {
-			if (read_block(sockfd, &c, buf, &len) <= 0)
-				goto close_conn;
-		} while (c != BIN_MODE);
-
-#if DEBUG_OUT
-		fprintf(stderr, "[S] OK\n");
-#endif
-		if (write_byte(sockfd, OK) != 1)
-			goto close_conn;
-
 		break;
 
 close_conn:
@@ -648,8 +634,8 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 	nread += rc;
 
 #if DEBUG_OUT
-	fwrite(len_str, sizeof(char), INT_LEN, stderr);
-	fprintf(stderr, " ");
+    fwrite(len_str, sizeof(char), INT_LEN, stderr);
+    fprintf(stderr, " ");
 #endif
 
     size_t len = atoi(len_str);
@@ -679,8 +665,11 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 		nread += rc;
 
 #if DEBUG_OUT
-		fwrite(buf, sizeof(char), len, stderr);
-		fprintf(stderr, " ");
+        if (*command != BIN_DATA && *command != BIN_HEADER)
+        {
+            fwrite(buf, sizeof(char), len, stderr);
+            fprintf(stderr, " ");
+        }
 #endif
 	}
 
@@ -733,6 +722,15 @@ void pr_command(char c)
 			break;
 		case PASSWORD:
 			fprintf(stderr, "PASSWORD");
+			break;
+		case BIN_HEADER:
+			fprintf(stderr, "BIN_HEADER");
+			break;
+		case BIN_DATA:
+			fprintf(stderr, "BIN_DATA");
+			break;
+		case EPG_DATA:
+			fprintf(stderr, "EPG_DATA");
 			break;
 		default:
 			fprintf(stderr, "UNKNOWN (%d)", (int) c);
