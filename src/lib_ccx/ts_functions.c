@@ -290,7 +290,6 @@ struct demuxer_data *search_or_alloc_demuxer_data_node_by_pid(struct demuxer_dat
 		(*data)->len = 0;
 		(*data)->next_program = NULL;
 		(*data)->next_stream = NULL;
-		(*data)->ignore = 0;
 		return *data;
 	}
 	ptr = *data;
@@ -313,7 +312,6 @@ struct demuxer_data *search_or_alloc_demuxer_data_node_by_pid(struct demuxer_dat
 	ptr->len = 0;
 	ptr->next_program = NULL;
 	ptr->next_stream = NULL;
-	ptr->ignore = 0;
 
 	return ptr;
 }
@@ -355,11 +353,6 @@ struct demuxer_data *get_best_data(struct demuxer_data *data)
 		}
 	}
 end:
-	for(ptr = data; ptr && ret; ptr = ptr->next_stream)
-	{
-		if(ptr->stream_pid != ret->stream_pid)
-			ptr->ignore = 1;
-	}
 
 	return ret;
 }
@@ -377,9 +370,8 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	ptr->codec = cinfo->codec;
 	ptr->bufferdatatype = get_buffer_type(cinfo);
 
-	if(ptr->ignore)
+	if(cinfo->ignore)
 	{
-		cinfo->ignore = 1;
 		return CCX_OK;
 	}
 

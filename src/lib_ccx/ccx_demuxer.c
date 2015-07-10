@@ -475,7 +475,6 @@ struct demuxer_data* alloc_demuxer_data(void)
 	data->stream_pid = -1;
 	data->codec = CCX_CODEC_NONE;
 	data->len = 0;
-	data->ignore = 0;
 	data->next_stream = 0;
 	data->next_program = 0;
 	return data;

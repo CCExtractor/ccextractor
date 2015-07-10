@@ -123,7 +123,6 @@ struct demuxer_data
 	enum ccx_bufferdata_type bufferdatatype;
 	unsigned char *buffer;
 	int len;
-	int ignore;
 	struct demuxer_data *next_stream;
 	struct demuxer_data *next_program;
 };
