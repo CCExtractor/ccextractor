@@ -45,7 +45,7 @@ int need_capInfo_for_pid(struct ccx_demuxer *ctx, int pid)
 
 	list_for_each_entry(iter ,&ctx->cinfo_tree.all_stream, all_stream)
 	{
-		if (iter->stream == CCX_STREAM_TYPE_UNKNOWNSTREAM)
+		if (iter->pid == pid && iter->stream == CCX_STREAM_TYPE_UNKNOWNSTREAM)
 			return CCX_TRUE;
 	}
 	return CCX_FALSE;
