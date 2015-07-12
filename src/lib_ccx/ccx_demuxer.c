@@ -372,6 +372,8 @@ void ccx_demuxer_delete(struct ccx_demuxer **ctx)
 	}
 	if (lctx->fh_out_elementarystream != NULL)
 		fclose (lctx->fh_out_elementarystream);
+
+	freep(&lctx->filebuffer);
 	freep(ctx);
 }
 
@@ -452,6 +454,7 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	}
 
 	init_ts(ctx);
+	ctx->filebuffer = NULL;
 
 	return ctx;
 }

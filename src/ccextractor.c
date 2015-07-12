@@ -90,9 +90,6 @@ int main(int argc, char *argv[])
 		{
 			if (init_encoder(enc_ctx, &ccx_options.enc_cfg))
 				fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
-			set_encoder_subs_delay(enc_ctx, ctx->subs_delay);
-			set_encoder_last_displayed_subs_ms(enc_ctx, ctx->last_displayed_subs_ms);
-			set_encoder_startcredits_displayed(enc_ctx, ctx->startcredits_displayed);
 		}
 		else
 		{
@@ -100,9 +97,6 @@ int main(int argc, char *argv[])
 			{
 				if (init_encoder(enc_ctx, &ccx_options.enc_cfg))
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
-				set_encoder_subs_delay(enc_ctx, ctx->subs_delay);
-				set_encoder_last_displayed_subs_ms(enc_ctx, ctx->last_displayed_subs_ms);
-				set_encoder_startcredits_displayed(enc_ctx, ctx->startcredits_displayed);
 			}
 			if (ccx_options.extract!=1)
 			{
@@ -114,9 +108,6 @@ int main(int argc, char *argv[])
 
 				if (init_encoder(enc_ctx, &ccx_options.enc_cfg))
 					fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
-				set_encoder_subs_delay(enc_ctx+1, ctx->subs_delay);
-				set_encoder_last_displayed_subs_ms(enc_ctx+1, ctx->last_displayed_subs_ms);
-				set_encoder_startcredits_displayed(enc_ctx+1, ctx->startcredits_displayed);
 			}
 		}
 	}

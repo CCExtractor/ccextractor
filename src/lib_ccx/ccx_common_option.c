@@ -95,6 +95,7 @@ void init_options (struct ccx_s_options *options)
 	options->demux_cfg.m2ts = 0;
 	options->multiprogram = 0;
 
+	options->subs_delay = 0;
 	// Prepare time structures
 	init_boundary_time (&options->extraction_start);
 	init_boundary_time (&options->extraction_end);

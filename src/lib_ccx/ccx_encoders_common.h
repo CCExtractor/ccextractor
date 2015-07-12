@@ -23,37 +23,49 @@ struct encoder_ctx
 	unsigned int capacity;
 	/* keep count of srt subtitle*/
 	unsigned int srt_counter;
-	/* output context */
-	struct ccx_s_write *out;
-	/* start time of previous sub */
-	LLONG prev_start;
 
-	LLONG subs_delay;
-	LLONG last_displayed_subs_ms;
-	int startcredits_displayed;
+	/* Input outputs */
+	/* Flag giving hint that output is send to server through network */
+	unsigned int send_to_srv;
+	/* Used only in Spupng output */
+	int multiple_files;
+	/* Used only in Spupng output and creating name of output file*/
+	char *first_input_file;
+	/* Its array with length of number of languages */
+	struct ccx_s_write *out;
+	/* number of member in array of write out array */
+	int nb_out;
+	/* Input file format used in Teletext for exceptional output */
+	unsigned int in_fileformat; //1 =Normal, 2=Teletext
+
+	/* Flag saying BOM to be written in each output file */
 	enum ccx_encoding_type encoding;
-	enum ccx_output_date_format date_format;
-	char millis_separator;
+	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
+	struct ccx_encoders_transcript_format *transcript_settings; // Keeps the settings for generating transcript output files.
+	int no_bom;
 	int sentence_cap ; // FIX CASE? = Fix case?
 	int trim_subs; // "    Remove spaces at sides?    "
 	int autodash; // Add dashes (-) before each speaker automatically?
-	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
+	int no_font_color;
+	int no_type_setting;
+	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
+	unsigned char *subline; // Temp storage for storing each line
+
+	/* Timing related variables*/
+	/* start time of previous sub */
+	LLONG prev_start;
+	LLONG subs_delay;
+	LLONG last_displayed_subs_ms;
+	enum ccx_output_date_format date_format;
+	char millis_separator;
+
 	/* Credit stuff */
+	int startcredits_displayed;
 	char *start_credits_text;
 	char *end_credits_text;
-	struct ccx_encoders_transcript_format *transcript_settings; // Keeps the settings for generating transcript output files.
 	struct ccx_boundary_time startcreditsnotbefore, startcreditsnotafter; // Where to insert start credits, if possible
 	struct ccx_boundary_time startcreditsforatleast, startcreditsforatmost; // How long to display them?
 	struct ccx_boundary_time endcreditsforatleast, endcreditsforatmost;
-	unsigned int in_fileformat; //1 =Normal, 2=Teletext
-	unsigned int send_to_srv;
-	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
-	int no_bom;
-	int multiple_files;
-	char *first_input_file;
-	unsigned char *subline; // Temp storage for .srt lines
-	int no_font_color;
-	int no_type_setting;
 
 	// Preencoded strings
 	unsigned char encoded_crlf[16];

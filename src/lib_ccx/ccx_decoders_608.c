@@ -148,6 +148,8 @@ ccx_decoder_608_context* ccx_decoder_608_init_library(struct ccx_decoder_608_set
 	data->my_field = field;
 	data->my_channel = channel;
 	data->have_cursor_position = 0;
+	data->output_format = output_format;
+	data->cc_to_stdout = cc_to_stdout;
 
 	data->halt = halt;
 
@@ -352,8 +354,8 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 	int ret = 0;
 	data = get_current_visible_buffer(context);
 
-	start_time = context->ts_start_of_current_line + context->subs_delay;
-	end_time = get_fts() + context->subs_delay;
+	start_time = context->ts_start_of_current_line;
+	end_time = get_fts();
 	sub->type = CC_608;
 	data->format = SFORMAT_CC_LINE;
 	data->start_time = 0;

@@ -671,12 +671,6 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 
 }
 
-static void dinit_output_ctx(struct encoder_ctx *ctx)
-{
-	dinit_write(&ctx->out[0]);
-	dinit_write(&ctx->out[1]);
-}
-
 static char *get_file_extension(enum ccx_output_format write_format)
 {
 	switch (write_format)
@@ -743,6 +737,14 @@ char *create_outfilename(const char *basename, const char *suffix, const char *e
 
 	return ptr;
 }
+
+static int dinit_output_ctx(struct encoder_ctx *ctx)
+{
+	int i;
+	for(i = 0; i < ctx->nb_out; i++)
+		dinit_write(ctx->out + i);
+	freep(&ctx->out);
+}
 static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 {
 	int ret = EXIT_OK;
@@ -757,7 +759,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 					return ret;							\
 				}
 
-	if (cfg->extract == 12)
+	if (cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE && cfg->extract == 12)
 		nb_lang = 2;
 	else
 		nb_lang = 1;
@@ -765,63 +767,69 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	ctx->out = malloc(sizeof(struct ccx_s_write) * nb_lang);
 	if(!ctx->out)
 		return -1;
+	ctx->nb_out = nb_lang;
 
-	if (cfg->cc_to_stdout)
+	if(cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE)
+	{
+		if (cfg->output_filename != NULL)
+		{
+			// Use the given output file name for the field specified by
+			// the -1, -2 switch. If -12 is used, the filename is used for
+			// field 1.
+			if (cfg->extract == 12)
+			{
+				basefilename = get_basename(cfg->output_filename);
+				extension = get_file_extension(cfg->write_format);
+
+				ret = init_write(&ctx->out[0], strdup(cfg->output_filename));
+				check_ret(cfg->output_filename);
+				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension));
+				check_ret(ctx->out[1].filename);
+			}
+			else if (cfg->extract == 1)
+			{
+				ret = init_write(&ctx->out[0], strdup(cfg->output_filename));
+				check_ret(cfg->output_filename);
+			}
+			else
+			{
+				ret = init_write(&ctx->out[1], strdup(cfg->output_filename));
+				check_ret(cfg->output_filename);
+			}
+		}
+		else
+		{
+			basefilename = get_basename(ctx->first_input_file);
+			extension = get_file_extension(cfg->write_format);
+
+			if (cfg->extract == 12)
+			{
+				ret = init_write(&ctx->out[0], create_outfilename(basefilename, "_1", extension));
+				check_ret(ctx->out[0].filename);
+				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension));
+				check_ret(ctx->out[1].filename);
+			}
+			else if (cfg->extract == 1)
+			{
+				ret = init_write(&ctx->out[0], create_outfilename(basefilename, NULL, extension));
+				check_ret(ctx->out[0].filename);
+			}
+			else
+			{
+				ret = init_write(&ctx->out[1], create_outfilename(basefilename, NULL, extension));
+				check_ret(ctx->out[1].filename);
+			}
+		}
+
+		freep(&basefilename);
+		freep(&extension);
+	}
+
+	if (cfg->cc_to_stdout == CCX_TRUE)
 	{
 		ctx->out[0].fh=STDOUT_FILENO;
 		mprint ("Sending captions to stdout.\n");
 	}
-	if (cfg->output_filename != NULL)
-	{
-		// Use the given output file name for the field specified by
-		// the -1, -2 switch. If -12 is used, the filename is used for
-		// field 1.
-		if (cfg->extract == 12)
-		{
-			basefilename = get_basename(cfg->output_filename);
-			extension = get_file_extension(cfg->write_format);
-
-			ret = init_write(&ctx->out[0], strdup(cfg->output_filename));
-			check_ret(cfg->output_filename);
-			ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension));
-			check_ret(ctx->out[1].filename);
-		}
-		else if (cfg->extract == 1)
-		{
-			ret = init_write(&ctx->out[0], strdup(cfg->output_filename));
-			check_ret(cfg->output_filename);
-		}
-		else
-		{
-			ret = init_write(&ctx->out[1], strdup(cfg->output_filename));
-			check_ret(cfg->output_filename);
-		}
-	}
-	else
-	{
-		basefilename = get_basename(ctx->first_input_file);
-		extension = get_file_extension(cfg->write_format);
-
-		if (cfg->extract == 12)
-		{
-			ret = init_write(&ctx->out[0], create_outfilename(basefilename, "_1", extension));
-			check_ret(ctx->out[0].filename);
-			ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension));
-			check_ret(ctx->out[1].filename);
-		}
-		else if (cfg->extract == 1)
-		{
-			ret = init_write(&ctx->out[0], create_outfilename(basefilename, NULL, extension));
-			check_ret(ctx->out[0].filename);
-		}
-		else
-		{
-			ret = init_write(&ctx->out[1], create_outfilename(basefilename, NULL, extension));
-			check_ret(ctx->out[1].filename);
-		}
-	}
-	freep(&basefilename);
-	freep(&extension);
 
 
 	if(ret)
@@ -834,6 +842,17 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	return EXIT_OK;
 }
 
+void dinit_encoder(struct encoder_ctx *ctx)
+{
+	if (ctx->end_credits_text!=NULL)
+		try_to_add_end_credits(ctx,ctx->out);
+	write_subtitle_file_footer(ctx,ctx->out);
+	dinit_output_ctx(ctx);
+	freep(&ctx->subline);
+	freep(&ctx->buffer);
+	ctx->capacity = 0;
+}
+
 int init_encoder(struct encoder_ctx *ctx, struct encoder_cfg *opt)
 {
 	int ret;
@@ -842,42 +861,54 @@ int init_encoder(struct encoder_ctx *ctx, struct encoder_cfg *opt)
 		return -1;
 	ctx->capacity=INITIAL_ENC_BUFFER_CAPACITY;
 	ctx->srt_counter = 0;
+
+	ctx->send_to_srv = opt->send_to_srv;
+	ctx->multiple_files = opt->multiple_files;
+	ctx->first_input_file = opt->first_input_file;
+	ret = init_output_ctx(ctx, opt);
+	if (ret != EXIT_OK)
+	{
+		freep(&ctx->buffer);
+		return -1;
+	}
+	ctx->in_fileformat = 1;
+
 	/** used in case of SUB_EOD_MARKER */
 	ctx->prev_start = -1;
-
-	ctx->encoding = opt->encoding;
+	ctx->subs_delay = opt->subs_delay;
+	ctx->last_displayed_subs_ms = 0;
 	ctx->date_format = opt->date_format;
 	ctx->millis_separator = opt->millis_separator;
-	ctx->sentence_cap = opt->sentence_cap;
-	ctx->autodash = opt->autodash;
-	ctx->trim_subs = opt->trim_subs;
+	ctx->startcredits_displayed = 0;
+
+	ctx->encoding = opt->encoding;
 	ctx->write_format = opt->write_format;
+	ctx->transcript_settings = &opt->transcript_settings;
+	ctx->no_bom = opt->no_bom;
+	ctx->sentence_cap = opt->sentence_cap;
+	ctx->trim_subs = opt->trim_subs;
+	ctx->autodash = opt->autodash;
+	ctx->no_font_color = opt->no_font_color;
+	ctx->no_type_setting = opt->no_type_setting;
+	ctx->gui_mode_reports = opt->gui_mode_reports;
+	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);
+	if(!ctx->subline)
+	{
+		freep(&ctx->out);
+		freep(&ctx->buffer);
+		return -1;
+	}
+
+
 	ctx->start_credits_text = opt->start_credits_text;
 	ctx->end_credits_text = opt->end_credits_text;
-	ctx->transcript_settings = &opt->transcript_settings;
 	ctx->startcreditsnotbefore = opt->startcreditsnotbefore;
 	ctx->startcreditsnotafter = opt->startcreditsnotafter;
 	ctx->startcreditsforatleast = opt->startcreditsforatleast;
 	ctx->startcreditsforatmost = opt->startcreditsforatmost;
 	ctx->endcreditsforatleast = opt->endcreditsforatleast;
 	ctx->endcreditsforatmost = opt->endcreditsforatmost;
-	ctx->in_fileformat = 1;
-	ctx->send_to_srv = opt->send_to_srv;
-	ctx->gui_mode_reports = opt->gui_mode_reports;
-	ctx->no_bom = opt->no_bom;
-	ctx->no_font_color = opt->no_font_color;
-	ctx->no_type_setting = opt->no_type_setting;
 
-	if (!ctx->send_to_srv)
-	{
-		ret = init_output_ctx(ctx, opt);
-		if (ret != EXIT_OK)
-		{
-			freep(&ctx->buffer);
-			return -1;
-		}
-	}
-	
 	if (opt->line_terminator_lf)
 		ctx->encoded_crlf_length = encode_line(ctx, ctx->encoded_crlf, (unsigned char *) "\n");
 	else
@@ -885,44 +916,15 @@ int init_encoder(struct encoder_ctx *ctx, struct encoder_cfg *opt)
 
 	ctx->encoded_br_length = encode_line(ctx, ctx->encoded_br, (unsigned char *) "<br>");
 
-	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);
-	if(!ctx->subline)
-	{
-		freep(&ctx->buffer);
-		return -1;
-	}
-
 	write_subtitle_file_header(ctx,ctx->out);
 
-	return 0;
+	return CCX_OK;
 
 }
 
 void set_encoder_rcwt_fileformat(struct encoder_ctx *ctx, short int format)
 {
 	ctx->in_fileformat = format;
-}
-
-void set_encoder_last_displayed_subs_ms(struct encoder_ctx *ctx, LLONG last_displayed_subs_ms)
-{
-	ctx->last_displayed_subs_ms = last_displayed_subs_ms;
-}
-void set_encoder_subs_delay(struct encoder_ctx *ctx, LLONG subs_delay)
-{
-	ctx->subs_delay = subs_delay;
-}
-void set_encoder_startcredits_displayed(struct encoder_ctx *ctx, int startcredits_displayed)
-{
-	ctx->startcredits_displayed = startcredits_displayed;
-}
-void dinit_encoder(struct encoder_ctx *ctx)
-{
-	freep(&ctx->subline);
-	if (ctx->end_credits_text!=NULL)
-		try_to_add_end_credits(ctx,ctx->out);
-	write_subtitle_file_footer(ctx,ctx->out);
-	freep(&ctx->buffer);
-	ctx->capacity = 0;
 }
 
 static int write_newline(struct encoder_ctx *ctx, int lang)

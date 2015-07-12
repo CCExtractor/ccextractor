@@ -55,6 +55,7 @@ struct encoder_cfg
 	int no_type_setting;
 	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
 	int line_terminator_lf; // 0 = CRLF, 1=LF
+	LLONG subs_delay; // ms to delay (or advance) subs
 };
 struct ccx_s_options // Options from user parameters
 {
