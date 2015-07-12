@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 		/* # DVD format uses one raw file for both fields, while Broadcast requires 2 */
 		if (ccx_options.write_format==CCX_OF_DVDRAW)
 		{
-			if (init_encoder(enc_ctx, &ctx->wbout1, &ccx_options))
+			if (init_encoder(enc_ctx, &ccx_options.enc_cfg))
 				fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 			set_encoder_subs_delay(enc_ctx, ctx->subs_delay);
 			set_encoder_last_displayed_subs_ms(enc_ctx, ctx->last_displayed_subs_ms);
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 		{
 			if (ccx_options.extract!=2)
 			{
-				if (init_encoder(enc_ctx, &ctx->wbout1, &ccx_options))
+				if (init_encoder(enc_ctx, &ccx_options.enc_cfg))
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 				set_encoder_subs_delay(enc_ctx, ctx->subs_delay);
 				set_encoder_last_displayed_subs_ms(enc_ctx, ctx->last_displayed_subs_ms);
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 					memcpy(&ctx->wbout2, &ctx->wbout1,sizeof(ctx->wbout1));
 				}
 
-				if( init_encoder(enc_ctx+1, &ctx->wbout2, &ccx_options) )
+				if (init_encoder(enc_ctx, &ccx_options.enc_cfg))
 					fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 				set_encoder_subs_delay(enc_ctx+1, ctx->subs_delay);
 				set_encoder_last_displayed_subs_ms(enc_ctx+1, ctx->last_displayed_subs_ms);
@@ -133,14 +133,6 @@ int main(int argc, char *argv[])
 
 	// Initialize HDTV caption buffer
 	init_hdcc();
-
-	if (ccx_options.line_terminator_lf)
-		encoded_crlf_length = encode_line(encoded_crlf, (unsigned char *) "\n");
-	else
-		encoded_crlf_length = encode_line(encoded_crlf, (unsigned char *) "\r\n");
-
-	encoded_br_length = encode_line(encoded_br, (unsigned char *) "<br>");
-	
 
 	time_t start, final;
 	time(&start);

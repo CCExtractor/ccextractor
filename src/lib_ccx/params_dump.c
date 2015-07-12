@@ -85,7 +85,7 @@ void params_dump(struct lib_ccx_ctx *ctx)
 	mprint("[Print CC decoder traces: %s]\n", (ccx_options.debug_mask & CCX_DMT_DECODER_608) ? "Yes" : "No");
 	mprint ("[Target format: %s] ",ctx->extension);
 	mprint ("[Encoding: ");
-	switch (ccx_options.encoding)
+	switch (ccx_options.enc_cfg.encoding)
 	{
 		case CCX_ENC_UNICODE:
 			mprint ("Unicode");
@@ -100,7 +100,7 @@ void params_dump(struct lib_ccx_ctx *ctx)
 	mprint ("] ");
 	mprint ("[Delay: %lld] ",ctx->subs_delay);
 
-	mprint ("[Trim lines: %s]\n",ccx_options.trim_subs?"Yes":"No");
+	mprint ("[Trim lines: %s]\n",ccx_options.enc_cfg.trim_subs?"Yes":"No");
 	mprint ("[Add font color data: %s] ", ccx_options.nofontcolor? "No" : "Yes");
 	mprint ("[Add font typesetting: %s]\n", ccx_options.notypesetting? "No" : "Yes");
 	mprint ("[Convert case: ");
@@ -108,7 +108,7 @@ void params_dump(struct lib_ccx_ctx *ctx)
 		mprint ("Yes, using %s", ccx_options.sentence_cap_file);
 	else
 	{
-		mprint ("%s",ccx_options.sentence_cap?"Yes, but only built-in words":"No");
+		mprint ("%s",ccx_options.enc_cfg.sentence_cap?"Yes, but only built-in words":"No");
 	}
 	mprint ("]");
 	mprint (" [Video-edit join: %s]", ccx_options.binary_concat?"No":"Yes");
@@ -145,25 +145,25 @@ void params_dump(struct lib_ccx_ctx *ctx)
 	else
 		mprint ("Autodetect]\n");
 	mprint ("Start credits text: [%s]\n",
-			ccx_options.start_credits_text?ccx_options.start_credits_text:"None");
-	if (ccx_options.start_credits_text)
+			ccx_options.enc_cfg.start_credits_text?ccx_options.enc_cfg.start_credits_text:"None");
+	if (ccx_options.enc_cfg.start_credits_text)
 	{
 		mprint ("Start credits time: Insert between [%ld] and [%ld] seconds\n",
-				(long) (ccx_options.startcreditsnotbefore.time_in_ms/1000),
-				(long) (ccx_options.startcreditsnotafter.time_in_ms/1000)
+				(long) (ccx_options.enc_cfg.startcreditsnotbefore.time_in_ms/1000),
+				(long) (ccx_options.enc_cfg.startcreditsnotafter.time_in_ms/1000)
 		       );
 		mprint ("                    Display for at least [%ld] and at most [%ld] seconds\n",
-				(long) (ccx_options.startcreditsforatleast.time_in_ms/1000),
-				(long) (ccx_options.startcreditsforatmost.time_in_ms/1000)
+				(long) (ccx_options.enc_cfg.startcreditsforatleast.time_in_ms/1000),
+				(long) (ccx_options.enc_cfg.startcreditsforatmost.time_in_ms/1000)
 		       );
 	}
-	if (ccx_options.end_credits_text)
+	if (ccx_options.enc_cfg.end_credits_text)
 	{
 		mprint ("End credits text: [%s]\n",
-				ccx_options.end_credits_text?ccx_options.end_credits_text:"None");
+				ccx_options.enc_cfg.end_credits_text?ccx_options.enc_cfg.end_credits_text:"None");
 		mprint ("                    Display for at least [%ld] and at most [%ld] seconds\n",
-				(long) (ccx_options.endcreditsforatleast.time_in_ms/1000),
-				(long) (ccx_options.endcreditsforatmost.time_in_ms/1000)
+				(long) (ccx_options.enc_cfg.endcreditsforatleast.time_in_ms/1000),
+				(long) (ccx_options.enc_cfg.endcreditsforatmost.time_in_ms/1000)
 		       );
 	}
 

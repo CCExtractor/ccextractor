@@ -294,4 +294,22 @@ void m_signal(int sig, void (*func)(int))
 
 	return;
 }
+char *get_basename(char *filename)
+{
+	char *c;
+	int len = strlen(filename);
+	char *basefilename = (char *) malloc(len+1);
+	if (basefilename == NULL) {
+		return NULL;
+	}
+
+	strcpy (basefilename, filename);
+
+	for (c = basefilename + len; c > basefilename && *c != '.'; c--)
+	{;} // Get last .
+	if (*c == '.')
+		*c = 0;
+
+	return basefilename;	
+}
 #endif

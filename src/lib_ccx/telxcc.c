@@ -60,7 +60,6 @@ struct TeletextCtx
 	// uint8_t se_mode : 1; // search engine compatible mode => Uses CCExtractor's write_format
 	// uint64_t utc_refvalue; // UTC referential value => Moved to ccx_decoders_common, so can be used for other decoders (608/xds) too
 	uint16_t user_page; // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
-	ccx_encoders_transcript_format *transcript_settings; // Keeps the settings for generating transcript output files.
 	int levdistmincnt, levdistmaxpct; // Means 2 fails or less is "the same", 10% or less is also "the same"
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
@@ -68,7 +67,6 @@ struct TeletextCtx
 	enum ccx_output_date_format date_format;
 	int noautotimeref; // Do NOT set time automatically?
 	unsigned send_to_srv;
-	enum ccx_encoding_type encoding;
 	int nofontcolor;
 	char millis_separator;
 	uint32_t global_timestamp;
@@ -137,7 +135,7 @@ typedef struct {
 } teletext_page_t;
 
 // application config global variable
-struct ccx_s_teletext_config tlt_config = { NO, 0, 0, 0, NO, NO, 0, NULL};
+struct ccx_s_teletext_config tlt_config = { 0};
 
 // macro -- output only when increased verbosity was turned on
 #define VERBOSE_ONLY if (tlt_config.verbose == YES)
@@ -482,7 +480,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 					page_buffer_add_string(ctx, "<br/>");
 					break;
 				default:
-					page_buffer_add_string(ctx, (const char *) encoded_crlf);
+					page_buffer_add_string(ctx, "\r\n");
 			}
 		}
 
@@ -1174,7 +1172,6 @@ void telxcc_configure (void *codec, struct ccx_s_teletext_config *cfg)
 	ctx->bom = cfg->bom;
 	ctx->nonempty = cfg->nonempty;
 	ctx->user_page = cfg->user_page;
-	ctx->transcript_settings = cfg->transcript_settings;
 	ctx->levdistmincnt = cfg->levdistmincnt;
 	ctx->levdistmaxpct = cfg->levdistmaxpct;
 	ctx->extraction_start = cfg->extraction_start;
@@ -1184,7 +1181,6 @@ void telxcc_configure (void *codec, struct ccx_s_teletext_config *cfg)
 	ctx->date_format = cfg->date_format;
 	ctx->noautotimeref = cfg->noautotimeref;
 	ctx->send_to_srv = cfg->send_to_srv;
-	ctx->encoding = cfg->encoding;
 	ctx->nofontcolor = cfg->nofontcolor;
 	ctx->millis_separator = cfg->millis_separator;
 

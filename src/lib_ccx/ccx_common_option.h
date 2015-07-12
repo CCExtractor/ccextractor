@@ -25,6 +25,37 @@ struct demuxer_cfg
 	int ts_datastreamtype ; // User WANTED stream type (i.e. use the stream that has this type)
 	unsigned ts_forced_streamtype; // User selected (forced) stream type
 };
+
+struct encoder_cfg
+{
+	int extract; // Extract 1st, 2nd or both fields
+	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
+	char *output_filename;
+	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
+	
+	enum ccx_encoding_type encoding;
+	enum ccx_output_date_format date_format;
+	char millis_separator;
+	int autodash; // Add dashes (-) before each speaker automatically?
+	int trim_subs; // "    Remove spaces at sides?    "
+	int sentence_cap ; // FIX CASE? = Fix case?
+	/* Credit stuff */
+	char *start_credits_text;
+	char *end_credits_text;
+	struct ccx_boundary_time startcreditsnotbefore, startcreditsnotafter; // Where to insert start credits, if possible
+	struct ccx_boundary_time startcreditsforatleast, startcreditsforatmost; // How long to display them?
+	struct ccx_boundary_time endcreditsforatleast, endcreditsforatmost;
+
+	ccx_encoders_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
+	unsigned int send_to_srv;
+	int no_bom; // Set to 1 when no BOM (Byte Order Mark) should be used for files. Note, this might make files unreadable in windows!
+	char *first_input_file;
+	int multiple_files;
+	int no_font_color;
+	int no_type_setting;
+	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
+	int line_terminator_lf; // 0 = CRLF, 1=LF
+};
 struct ccx_s_options // Options from user parameters
 {
 	int extract; // Extract 1st, 2nd or both fields
@@ -35,23 +66,15 @@ struct ccx_s_options // Options from user parameters
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
 	int print_file_reports;
 
-	int no_bom; // Set to 1 when no BOM (Byte Order Mark) should be used for files. Note, this might make files unreadable in windows!
 
 	ccx_decoder_608_settings settings_608; //  Contains the settings for the 608 decoder.
 
-	/* Credit stuff */
-	char *start_credits_text;
-	char *end_credits_text;
-	struct ccx_boundary_time startcreditsnotbefore, startcreditsnotafter; // Where to insert start credits, if possible
-	struct ccx_boundary_time startcreditsforatleast, startcreditsforatmost; // How long to display them?
-	struct ccx_boundary_time endcreditsforatleast, endcreditsforatmost;
+	char millis_separator;
 	int binary_concat; // Disabled by -ve or --videoedited
 	int use_gop_as_pts; // Use GOP instead of PTS timing (0=do as needed, 1=always, -1=never)
 	int fix_padding; // Replace 0000 with 8080 in HDTV (needed for some cards)
-	int trim_subs; // "    Remove spaces at sides?    "
 	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
 	int no_progress_bar; // If 1, suppress the output of the progress to stdout
-	int sentence_cap ; // FIX CASE? = Fix case?
 	char *sentence_cap_file; // Extra words file?
 	int live_stream; /* -1 -> Not a complete file but a live stream, without timeout
                        0 -> A regular file
@@ -70,37 +93,32 @@ struct ccx_s_options // Options from user parameters
 	unsigned mp4vidtrack; // Process the video track even if a CC dedicated track exists.
 	/* General settings */
 	int usepicorder; // Force the use of pic_order_cnt_lsb in AVC/H.264 data streams
-	int autodash; // Add dashes (-) before each speaker automatically?
 	int xmltv; // 1 = full output. 2 = live output. 3 = both
 	int xmltvliveinterval; // interval in seconds between writting xmltv output files in live mode
 	int xmltvoutputinterval; // interval in seconds between writting xmltv full file output
 	int xmltvonlycurrent; // 0 off 1 on
+
 	ccx_encoders_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
-	char millis_separator;
-	enum ccx_encoding_type encoding;
-	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 	enum ccx_output_date_format date_format;
-	char *output_filename;
-	char *output_filename_ch1;
-	char *output_filename_ch2;
+	unsigned send_to_srv;
+	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 	LLONG debug_mask; // dbg_print will use this mask to print or ignore different types
 	LLONG debug_mask_on_debug; // If we're using temp_debug to enable/disable debug "live", this is the mask when temp_debug=1
 	/* Networking */
 	char *udpaddr;
 	unsigned udpport; // Non-zero => Listen for UDP packets on this port, no files.
-	unsigned send_to_srv;
 	char *tcpport;
 	char *tcp_password;
 	char *tcp_desc;
 	char *srv_addr;
 	char *srv_port;
-	int line_terminator_lf; // 0 = CRLF, 1=LF
 	int noautotimeref; // Do NOT set time automatically?
 	enum ccx_datasource input_source; // Files, stdin or network
 
 	char **inputfile; // List of files to process
 	int num_input_files; // How many?
 	struct demuxer_cfg demux_cfg;
+	struct encoder_cfg enc_cfg;
 	LLONG subs_delay; // ms to delay (or advance) subs
 	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
 	int multiprogram;

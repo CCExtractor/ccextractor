@@ -2,6 +2,8 @@
 #include "ccx_common_option.h"
 #include "utility.h"
 #include "activity.h"
+#include "ccx_encoders_helpers.h"
+#include "ccx_common_common.h"
 
 static int inputfile_capacity=0;
 
@@ -801,11 +803,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			continue;
 		}
 		if (strcmp(argv[i], "-bom") == 0){
-			opt->no_bom = 0;
+			opt->enc_cfg.no_bom = 0;
 			continue;
 		}
 		if (strcmp(argv[i], "-nobom") == 0){
-			opt->no_bom = 1;
+			opt->enc_cfg.no_bom = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-nots")==0 ||
@@ -893,14 +895,14 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if ((strcmp (argv[i],"--startcreditstext")==0)
 				&& i<argc-1)
 		{
-			opt->start_credits_text=argv[i+1];
+			opt->enc_cfg.start_credits_text=argv[i+1];
 			i++;
 			continue;
 		}
 		if ((strcmp (argv[i],"--startcreditsnotbefore")==0)
 				&& i<argc-1)
 		{
-			if (stringztoms (argv[i+1],&opt->startcreditsnotbefore)==-1)
+			if (stringztoms (argv[i+1],&opt->enc_cfg.startcreditsnotbefore)==-1)
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "--startcreditsnotbefore only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -910,7 +912,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if ((strcmp (argv[i],"--startcreditsnotafter")==0)
 				&& i<argc-1)
 		{
-			if (stringztoms (argv[i+1],&opt->startcreditsnotafter)==-1)
+			if (stringztoms (argv[i+1],&opt->enc_cfg.startcreditsnotafter)==-1)
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "--startcreditsnotafter only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -920,7 +922,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if ((strcmp (argv[i],"--startcreditsforatleast")==0)
 				&& i<argc-1)
 		{
-			if (stringztoms (argv[i+1],&opt->startcreditsforatleast)==-1)
+			if (stringztoms (argv[i+1],&opt->enc_cfg.startcreditsforatleast)==-1)
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "--startcreditsforatleast only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -930,7 +932,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if ((strcmp (argv[i],"--startcreditsforatmost")==0)
 				&& i<argc-1)
 		{
-			if (stringztoms (argv[i+1],&opt->startcreditsforatmost)==-1)
+			if (stringztoms (argv[i+1],&opt->enc_cfg.startcreditsforatmost)==-1)
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "--startcreditsforatmost only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -941,14 +943,14 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if  ((strcmp (argv[i],"--endcreditstext")==0 )
 				&& i<argc-1)
 		{
-			opt->end_credits_text=argv[i+1];
+			opt->enc_cfg.end_credits_text=argv[i+1];
 			i++;
 			continue;
 		}
 		if ((strcmp (argv[i],"--endcreditsforatleast")==0)
 				&& i<argc-1)
 		{
-			if (stringztoms (argv[i+1],&opt->endcreditsforatleast)==-1)
+			if (stringztoms (argv[i+1],&opt->enc_cfg.endcreditsforatleast)==-1)
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "--endcreditsforatleast only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -958,7 +960,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if ((strcmp (argv[i],"--endcreditsforatmost")==0)
 				&& i<argc-1)
 		{
-			if (stringztoms (argv[i+1],&opt->endcreditsforatmost)==-1)
+			if (stringztoms (argv[i+1],&opt->enc_cfg.endcreditsforatmost)==-1)
 			{
 				fatal (EXIT_MALFORMED_PARAMETER, "--startcreditsforatmost only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -1024,7 +1026,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-trim")==0)
 		{
-			opt->trim_subs=1;
+			opt->enc_cfg.trim_subs=1;
 			continue;
 		}
 		if (strcmp (argv[i],"--gui_mode_reports")==0)
@@ -1040,14 +1042,14 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp (argv[i],"--sentencecap")==0 ||
 				strcmp (argv[i],"-sc")==0)
 		{
-			opt->sentence_cap=1;
+			opt->enc_cfg.sentence_cap=1;
 			continue;
 		}
 		if ((strcmp (argv[i],"--capfile")==0 ||
 					strcmp (argv[i],"-caf")==0)
 				&& i<argc-1)
 		{
-			opt->sentence_cap=1;
+			opt->enc_cfg.sentence_cap=1;
 			opt->sentence_cap_file=argv[i+1];
 			i++;
 			continue;
@@ -1268,17 +1270,17 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strstr (argv[i],"-unicode")!=NULL)
 		{
-			opt->encoding=CCX_ENC_UNICODE;
+			opt->enc_cfg.encoding=CCX_ENC_UNICODE;
 			continue;
 		}
 		if (strstr (argv[i],"-utf8")!=NULL)
 		{
-			opt->encoding=CCX_ENC_UTF_8;
+			opt->enc_cfg.encoding=CCX_ENC_UTF_8;
 			continue;
 		}
 		if (strstr (argv[i],"-latin1")!=NULL)
 		{
-			opt->encoding=CCX_ENC_LATIN_1;
+			opt->enc_cfg.encoding=CCX_ENC_LATIN_1;
 			continue;
 		}
 		if (strcmp (argv[i],"-poc")==0 || strcmp (argv[i],"--usepicorder")==0)
@@ -1308,25 +1310,13 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-o")==0 && i<argc-1)
 		{
-			opt->output_filename=argv[i+1];
+			opt->enc_cfg.output_filename=argv[i+1];
 			i++;
 			continue;
 		}
 		if (strcmp (argv[i],"-cf")==0 && i<argc-1)
 		{
 			opt->demux_cfg.out_elementarystream_filename = argv[i+1];
-			i++;
-			continue;
-		}
-		if (strcmp (argv[i],"-o1")==0 && i<argc-1)
-		{
-			opt->output_filename_ch1 = argv[i+1];
-			i++;
-			continue;
-		}
-		if (strcmp (argv[i],"-o2")==0 && i<argc-1)
-		{
-			opt->output_filename_ch2 = argv[i+1];
 			i++;
 			continue;
 		}
@@ -1368,7 +1358,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp (argv[i],"-UCLA")==0 || strcmp (argv[i],"-ucla")==0)
 		{
 			opt->millis_separator='.';
-			opt->no_bom = 1;
+			opt->enc_cfg.no_bom = 1;
 			if (!opt->transcript_settings.isFinal){
 				opt->transcript_settings.showStartTime = 1;
 				opt->transcript_settings.showEndTime = 1;
@@ -1381,7 +1371,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-lf")==0 || strcmp (argv[i],"-LF")==0)
 		{
-			opt->line_terminator_lf = 1;
+			opt->enc_cfg.line_terminator_lf = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-noautotimeref")==0)
@@ -1391,7 +1381,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-autodash")==0)
 		{
-			opt->autodash = 1;
+			opt->enc_cfg.autodash = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-xmltv")==0)
@@ -1596,7 +1586,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		activity_report_version();
 	}
 
-	if(opt->sentence_cap)
+	if(opt->enc_cfg.sentence_cap)
 	{
 		if(add_built_in_words())
 			fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for word list");
@@ -1608,14 +1598,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	if(opt->demux_cfg.ts_forced_program != -1)
 		opt->demux_cfg.ts_forced_program_selected = 1;
 
-	if(opt->output_filename_ch2 != NULL && (opt->extract != 2 || opt->extract != 12) )
-		mprint("WARN: -o2 ignored! you might want -2 or -12 with -o2\n");
-	
-	if(opt->output_filename != NULL && opt->output_filename_ch1 != NULL )
-		mprint("WARNING: Ambiguous parameter -o and -o1 Expect undefined behaviour\n");
-
 	// Init telexcc redundant options
-	tlt_config.transcript_settings = &opt->transcript_settings;
 	tlt_config.levdistmincnt = opt->levdistmincnt;
 	tlt_config.levdistmaxpct = opt->levdistmaxpct;
 	tlt_config.extraction_start = opt->extraction_start;
@@ -1625,7 +1608,6 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	tlt_config.date_format = opt->date_format;
 	tlt_config.noautotimeref = opt->noautotimeref;
 	tlt_config.send_to_srv = opt->send_to_srv;
-	tlt_config.encoding = opt->encoding;
 	tlt_config.nofontcolor = opt->nofontcolor;
 	tlt_config.millis_separator = opt->millis_separator;
 
@@ -1664,7 +1646,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		print_error(opt->gui_mode_reports, "-in=raw can only be used if the output is a subtitle file.\n");
 		return EXIT_INCOMPATIBLE_PARAMETERS;
 	}
-	if (opt->demux_cfg.auto_stream == CCX_SM_RCWT && opt->write_format==CCX_OF_RCWT && opt->output_filename==NULL)
+	if (opt->demux_cfg.auto_stream == CCX_SM_RCWT && opt->write_format==CCX_OF_RCWT && opt->enc_cfg.output_filename==NULL)
 	{
 		print_error(opt->gui_mode_reports,
 			   "CCExtractor's binary format can only be used simultaneously for input and\noutput if the output file name is specified given with -o.\n");
@@ -1681,18 +1663,21 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		return EXIT_INCOMPATIBLE_PARAMETERS;
 	}
 
-
+	/* Initialize some Encoder Configuration */
+	opt->enc_cfg.extract = opt->extract;
+	if (opt->num_input_files > 0)
+	{
+		opt->enc_cfg.multiple_files = 1;
+		opt->enc_cfg.first_input_file = opt->inputfile[0];
+	}
+	opt->enc_cfg.write_format = opt->write_format;
+	opt->enc_cfg.send_to_srv = opt->send_to_srv;
+	opt->enc_cfg.date_format = opt->date_format;
+	opt->enc_cfg.transcript_settings = opt->transcript_settings;
+	opt->enc_cfg.millis_separator = opt->millis_separator;
+	opt->enc_cfg.no_font_color = opt->nofontcolor;
+	opt->enc_cfg.no_type_setting = opt->notypesetting;
 	return EXIT_OK;
 
 }
 
-int detect_input_file_overwrite(struct lib_ccx_ctx *ctx, const char *output_filename)
-{
-	for (int i = 0; i < ctx->num_input_files; i++)
-	{
-		if (!strcmp(ctx->inputfile[i], output_filename)) {
-			return 1;
-		}
-	}
-	return 0;
-}

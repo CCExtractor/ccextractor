@@ -28,6 +28,7 @@
 #include "spupng_encoder.h"
 #include "ocr.h"
 #include "utility.h"
+#include "ccx_encoders_helpers.h"
 
 
 void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
@@ -52,7 +53,7 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
-	used = encode_line(context->buffer, (unsigned char *) str);
+	used = encode_line(context, context->buffer, (unsigned char *) str);
 	write (context->out->fh, context->buffer, used);
 	// Scan for \n in the string and replace it with a 0
 	while (pos_r < len)
@@ -74,7 +75,7 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 	unsigned char *begin = unescaped;
 	while (begin < unescaped+len)
 	{
-		unsigned int u = encode_line (el, begin);
+		unsigned int u = encode_line (context, el, begin);
 		if (context->encoding != CCX_ENC_UNICODE)
 		{
 			dbg_print(CCX_DMT_DECODER_608, "\r");
@@ -83,7 +84,7 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 		write(context->out->fh, el, u);
 		//write (wb->fh, encoded_br, encoded_br_length);
 
-		write(context->out->fh, encoded_crlf, encoded_crlf_length);
+		write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		begin += strlen ((const char *) begin)+1;
 	}
 
@@ -92,14 +93,14 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
-	used = encode_line(context->buffer, (unsigned char *) str);
+	used = encode_line(context, context->buffer, (unsigned char *) str);
 	write(context->out->fh, context->buffer, used);
 	sprintf ((char *) str, "<p begin=\"%02u:%02u:%02u.%03u\">\n\n", h2, m2, s2, ms2);
 	if (context->encoding != CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
-	used = encode_line(context->buffer, (unsigned char *) str);
+	used = encode_line(context, context->buffer, (unsigned char *) str);
 	write (context->out->fh, context->buffer, used);
 	sprintf ((char *) str, "</p>\n");
 	free(el);
@@ -153,7 +154,7 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 			write (context->out->fh, buf,strlen(buf) );
 			len = strlen(rect[0].ocr_text);
 			write (context->out->fh, rect[0].ocr_text, len);
-			write (context->out->fh, encoded_crlf, encoded_crlf_length);
+			write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 			sprintf ( buf,"</p>\n");
 			write (context->out->fh, buf,strlen(buf) );
 
@@ -218,13 +219,13 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
-	used = encode_line(context->buffer,(unsigned char *) str);
+	used = encode_line(context, context->buffer,(unsigned char *) str);
 	write (context->out->fh, context->buffer, used);
 	for (int i=0; i < 15; i++)
 	{
 		if (data->row_used[i])
 		{
-			int length = get_decoder_line_encoded (context->subline, i, data);
+			int length = get_decoder_line_encoded (context, context->subline, i, data);
 			if (context->encoding!=CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r");
@@ -233,7 +234,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 			write(context->out->fh, context->subline, length);
 			wrote_something=1;
 
-			write(context->out->fh, encoded_crlf, encoded_crlf_length);
+			write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		}
 	}
 	sprintf ((char *) str,"</p>\n");
@@ -241,14 +242,14 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
-	used = encode_line(context->buffer,(unsigned char *) str);
+	used = encode_line(context, context->buffer,(unsigned char *) str);
 	write (context->out->fh, context->buffer, used);
 
 	if (context->encoding!=CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
-	used = encode_line(context->buffer,(unsigned char *) str);
+	used = encode_line(context, context->buffer,(unsigned char *) str);
 	//write (wb->fh, enc_buffer,enc_buffer_used);
 
 	return wrote_something;

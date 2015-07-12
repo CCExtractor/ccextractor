@@ -6,6 +6,7 @@
 #include "ocr.h"
 #include "ccx_decoders_608.h"
 #include "ccx_decoders_xds.h"
+#include "ccx_encoders_helpers.h"
 
 // These are the default settings for plain transcripts. No times, no CC or caption mode, and no XDS.
 ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
@@ -45,6 +46,63 @@ static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
 "  </head>\n"
 "  <body>\n"
 "    <div>\n";
+
+void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank)
+{
+	*last_non_blank = -1;
+	*first_non_blank = -1;
+	for (int i = 0; i<CCX_DECODER_608_SCREEN_WIDTH; i++)
+	{
+		unsigned char c = line[i];
+		if (c != ' ' && c != 0x89)
+		{
+			if (*first_non_blank == -1)
+				*first_non_blank = i;
+			*last_non_blank = i;
+		}
+	}
+}
+
+
+unsigned int get_str_basic(unsigned char *buffer, unsigned char *line, int trim_subs, enum ccx_encoding_type encoding)
+{
+	int last_non_blank = -1;
+	int first_non_blank = -1;
+	unsigned char *orig = buffer; // Keep for debugging
+	find_limit_characters(line, &first_non_blank, &last_non_blank);
+	if (!trim_subs)
+		first_non_blank = 0;
+
+	if (first_non_blank == -1)
+	{
+		*buffer = 0;
+		return 0;
+	}
+
+	int bytes = 0;
+	for (int i = first_non_blank; i <= last_non_blank; i++)
+	{
+		char c = line[i];
+		switch (encoding)
+		{
+		case CCX_ENC_UTF_8:
+			bytes = get_char_in_utf_8(buffer, c);
+			break;
+		case CCX_ENC_LATIN_1:
+			get_char_in_latin_1(buffer, c);
+			bytes = 1;
+			break;
+		case CCX_ENC_UNICODE:
+			get_char_in_unicode(buffer, c);
+			bytes = 2;
+			break;
+		}
+		buffer += bytes;
+	}
+	*buffer = 0;
+	return (unsigned)(buffer - orig); // Return length
+}
+
 int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 {
 	int used;
@@ -57,7 +115,7 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
-			used = encode_line (ctx->buffer,(unsigned char *) str);
+			used = encode_line (ctx, ctx->buffer,(unsigned char *) str);
 			ret = write(out->fh, ctx->buffer, used);
 			if (ret != used)
 			{
@@ -70,7 +128,7 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
-			used=encode_line (ctx->buffer,(unsigned char *) str);
+			used=encode_line (ctx, ctx->buffer,(unsigned char *) str);
 			ret = write (out->fh, ctx->buffer, used);
 			if (ret != used)
 			{
@@ -128,7 +186,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			if(ret < 0)
 				return -1;
 			REQUEST_BUFFER_CAPACITY(ctx,strlen (sami_header)*3);
-			used = encode_line (ctx->buffer,(unsigned char *) sami_header);
+			used = encode_line (ctx, ctx->buffer,(unsigned char *) sami_header);
 			ret = write (out->fh, ctx->buffer,used);
 			break;
 		case CCX_OF_SMPTETT: // This header brought to you by McPoodle's CCASDI
@@ -137,7 +195,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			if(ret < 0)
 				return -1;
 			REQUEST_BUFFER_CAPACITY(ctx,strlen (smptett_header)*3);
-			used=encode_line (ctx->buffer,(unsigned char *) smptett_header);
+			used=encode_line (ctx, ctx->buffer,(unsigned char *) smptett_header);
 			ret = write(out->fh, ctx->buffer, used);
 			if(ret < used)
 			{
@@ -277,8 +335,8 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 				mprint("Warning:Loss of data\n");
 			}
 
-			ret = write(context->out->fh, encoded_crlf, encoded_crlf_length);
-			if(ret <  encoded_crlf_length)
+			ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+			if(ret <  context->encoded_crlf_length)
 			{
 				mprint("Warning:Loss of data\n");
 			}
@@ -311,7 +369,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		capitalize (line_number,data);
 		correct_case(line_number,data);
 	}
-	int length = get_decoder_str_basic (context->subline, data->characters[line_number], context->trim_subs, context->encoding);
+	int length = get_str_basic (context->subline, data->characters[line_number], context->trim_subs, context->encoding);
 	if (context->encoding!=CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r");
@@ -398,8 +456,8 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 			mprint("Warning:Loss of data\n");
 		}
 
-		ret = write(context->out->fh, encoded_crlf, encoded_crlf_length);
-		if(ret <  encoded_crlf_length)
+		ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+		if(ret <  context->encoded_crlf_length)
 		{
 			mprint("Warning:Loss of data\n");
 		}
@@ -613,14 +671,177 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 
 }
 
-int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_options *opt)
+static void dinit_output_ctx(struct encoder_ctx *ctx)
 {
+	dinit_write(&ctx->out[0]);
+	dinit_write(&ctx->out[1]);
+}
+
+static char *get_file_extension(enum ccx_output_format write_format)
+{
+	switch (write_format)
+	{
+		case CCX_OF_RAW:
+			return strdup(".raw");
+		case CCX_OF_SRT:
+			return strdup(".srt");
+		case CCX_OF_SAMI:
+			return strdup(".smi");
+		case CCX_OF_SMPTETT:
+			return strdup(".ttml");
+		case CCX_OF_TRANSCRIPT:
+			return strdup(".txt");
+		case CCX_OF_RCWT:
+			return strdup(".bin");
+		case CCX_OF_SPUPNG:
+			return strdup(".xml");
+		case CCX_OF_DVDRAW:
+			return strdup(".dvdraw");
+		case CCX_OF_NULL:
+			return NULL;
+		default:
+			mprint ("write_format doesn't have any legal value, this is a bug.\n");
+			errno = EINVAL;
+			return NULL;
+	}
+	return 0;
+}
+char *create_outfilename(const char *basename, const char *suffix, const char *extension)
+{
+	char *ptr = NULL;
+	int blen, slen, elen;
+
+	if(basename)
+		blen = strlen(basename);
+	else
+		blen = 0;
+
+	if(suffix)
+		slen = strlen(suffix);
+	else
+		slen = 0;
+
+	if(extension)
+		elen = strlen(extension);
+	else
+		elen = 0;
+	if ( (elen + slen + blen) <= 0)
+		return NULL;
+
+	ptr = malloc(elen + slen + blen + 1);
+	if(!ptr)
+		return NULL;
+
+	ptr[0] = '\0';
+
+	if(basename)
+		strcat(ptr, basename);
+	if(suffix)
+		strcat(ptr, suffix);
+	if(extension)
+		strcat(ptr, extension);
+
+	return ptr;
+}
+static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
+{
+	int ret = EXIT_OK;
+	int nb_lang;
+	char *basefilename = NULL; // Input filename without the extension
+	char *extension = NULL; // Input filename without the extension
+
+
+#define check_ret(filename) 	if (ret != EXIT_OK)							\
+				{									\
+					print_error(cfg->gui_mode_reports,"Failed %s\n", filename);	\
+					return ret;							\
+				}
+
+	if (cfg->extract == 12)
+		nb_lang = 2;
+	else
+		nb_lang = 1;
+
+	ctx->out = malloc(sizeof(struct ccx_s_write) * nb_lang);
+	if(!ctx->out)
+		return -1;
+
+	if (cfg->cc_to_stdout)
+	{
+		ctx->out[0].fh=STDOUT_FILENO;
+		mprint ("Sending captions to stdout.\n");
+	}
+	if (cfg->output_filename != NULL)
+	{
+		// Use the given output file name for the field specified by
+		// the -1, -2 switch. If -12 is used, the filename is used for
+		// field 1.
+		if (cfg->extract == 12)
+		{
+			basefilename = get_basename(cfg->output_filename);
+			extension = get_file_extension(cfg->write_format);
+
+			ret = init_write(&ctx->out[0], strdup(cfg->output_filename));
+			check_ret(cfg->output_filename);
+			ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension));
+			check_ret(ctx->out[1].filename);
+		}
+		else if (cfg->extract == 1)
+		{
+			ret = init_write(&ctx->out[0], strdup(cfg->output_filename));
+			check_ret(cfg->output_filename);
+		}
+		else
+		{
+			ret = init_write(&ctx->out[1], strdup(cfg->output_filename));
+			check_ret(cfg->output_filename);
+		}
+	}
+	else
+	{
+		basefilename = get_basename(ctx->first_input_file);
+		extension = get_file_extension(cfg->write_format);
+
+		if (cfg->extract == 12)
+		{
+			ret = init_write(&ctx->out[0], create_outfilename(basefilename, "_1", extension));
+			check_ret(ctx->out[0].filename);
+			ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension));
+			check_ret(ctx->out[1].filename);
+		}
+		else if (cfg->extract == 1)
+		{
+			ret = init_write(&ctx->out[0], create_outfilename(basefilename, NULL, extension));
+			check_ret(ctx->out[0].filename);
+		}
+		else
+		{
+			ret = init_write(&ctx->out[1], create_outfilename(basefilename, NULL, extension));
+			check_ret(ctx->out[1].filename);
+		}
+	}
+	freep(&basefilename);
+	freep(&extension);
+
+
+	if(ret)
+	{
+		print_error(cfg->gui_mode_reports,
+			"Output filename is same as one of input filenames. Check output parameters.\n");
+		return CCX_COMMON_EXIT_FILE_CREATION_FAILED;
+	}
+
+	return EXIT_OK;
+}
+
+int init_encoder(struct encoder_ctx *ctx, struct encoder_cfg *opt)
+{
+	int ret;
 	ctx->buffer = (unsigned char *) malloc (INITIAL_ENC_BUFFER_CAPACITY);
 	if (ctx->buffer==NULL)
 		return -1;
 	ctx->capacity=INITIAL_ENC_BUFFER_CAPACITY;
 	ctx->srt_counter = 0;
-	ctx->out = out;
 	/** used in case of SUB_EOD_MARKER */
 	ctx->prev_start = -1;
 
@@ -644,11 +865,25 @@ int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_
 	ctx->send_to_srv = opt->send_to_srv;
 	ctx->gui_mode_reports = opt->gui_mode_reports;
 	ctx->no_bom = opt->no_bom;
-	if (opt->num_input_files > 0)
+	ctx->no_font_color = opt->no_font_color;
+	ctx->no_type_setting = opt->no_type_setting;
+
+	if (!ctx->send_to_srv)
 	{
-		ctx->multiple_files = 1;
-		ctx->first_input_file = opt->inputfile[0];
+		ret = init_output_ctx(ctx, opt);
+		if (ret != EXIT_OK)
+		{
+			freep(&ctx->buffer);
+			return -1;
+		}
 	}
+	
+	if (opt->line_terminator_lf)
+		ctx->encoded_crlf_length = encode_line(ctx, ctx->encoded_crlf, (unsigned char *) "\n");
+	else
+		ctx->encoded_crlf_length = encode_line(ctx, ctx->encoded_crlf, (unsigned char *) "\r\n");
+
+	ctx->encoded_br_length = encode_line(ctx, ctx->encoded_br, (unsigned char *) "<br>");
 
 	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);
 	if(!ctx->subline)
@@ -657,7 +892,7 @@ int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_
 		return -1;
 	}
 
-	write_subtitle_file_header(ctx,out);
+	write_subtitle_file_header(ctx,ctx->out);
 
 	return 0;
 
@@ -690,6 +925,10 @@ void dinit_encoder(struct encoder_ctx *ctx)
 	ctx->capacity = 0;
 }
 
+static int write_newline(struct encoder_ctx *ctx, int lang)
+{
+	write (ctx->out[lang].fh, ctx->encoded_crlf, ctx->encoded_crlf_length);
+}
 int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 {
 	int wrote_something = 0;
@@ -718,7 +957,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					}
 				}
 				freep (&data->xds_str);
-				xds_write_transcript_line_suffix (context->out);
+				write_newline(context, 0);
 				continue;
 			}
 

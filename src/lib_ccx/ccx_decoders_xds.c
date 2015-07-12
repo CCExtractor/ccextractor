@@ -1,6 +1,7 @@
 #include "ccx_decoders_xds.h"
 #include "ccx_common_constants.h"
 #include "ccx_common_timing.h"
+#include "ccx_common_common.h"
 
 LLONG ts_start_of_xds = -1; // Time at which we switched to XDS mode, =-1 hasn't happened yet
 
@@ -180,14 +181,6 @@ int write_xds_string(struct cc_subtitle *sub,char *p,size_t len)
 
 	return 0;
 
-}
-
-
-void xds_write_transcript_line_suffix (struct ccx_s_write *wb)
-{
-	if (!wb || wb->fh==-1)
-		return;
-	write (wb->fh, encoded_crlf, encoded_crlf_length);
 }
 
 void xds_write_transcript_line_prefix (struct ccx_s_write *wb, LLONG start_time, LLONG end_time, int cur_xds_packet_class)

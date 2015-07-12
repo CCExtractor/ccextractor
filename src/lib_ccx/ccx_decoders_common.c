@@ -13,12 +13,6 @@ made to reuse, not duplicate, as many functions as possible */
 uint64_t utc_refvalue = UINT64_MAX;  /* _UI64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
 extern int in_xds_mode;
 
-// Preencoded strings
-unsigned char encoded_crlf[16];
-unsigned int encoded_crlf_length;
-unsigned char encoded_br[16];
-unsigned int encoded_br_length;
-
 LLONG minimum_fts = 0; // No screen should start before this FTS
 
 /* This function returns a FTS that is guaranteed to be at least 1 ms later than the end of the previous screen. It shouldn't be needed
@@ -40,61 +34,6 @@ LLONG get_visible_end (void)
 		minimum_fts=fts;
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Visible End time=%s\n", print_mstime(fts));
 	return fts;
-}
-
-void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank)
-{
-	*last_non_blank = -1;
-	*first_non_blank = -1;
-	for (int i = 0; i<CCX_DECODER_608_SCREEN_WIDTH; i++)
-	{
-		unsigned char c = line[i];
-		if (c != ' ' && c != 0x89)
-		{
-			if (*first_non_blank == -1)
-				*first_non_blank = i;
-			*last_non_blank = i;
-		}
-	}
-}
-
-unsigned int get_decoder_str_basic(unsigned char *buffer, unsigned char *line, int trim_subs, enum ccx_encoding_type encoding)
-{
-	int last_non_blank = -1;
-	int first_non_blank = -1;
-	unsigned char *orig = buffer; // Keep for debugging
-	find_limit_characters(line, &first_non_blank, &last_non_blank);
-	if (!trim_subs)
-		first_non_blank = 0;
-
-	if (first_non_blank == -1)
-	{
-		*buffer = 0;
-		return 0;
-	}
-
-	int bytes = 0;
-	for (int i = first_non_blank; i <= last_non_blank; i++)
-	{
-		char c = line[i];
-		switch (encoding)
-		{
-		case CCX_ENC_UTF_8:
-			bytes = get_char_in_utf_8(buffer, c);
-			break;
-		case CCX_ENC_LATIN_1:
-			get_char_in_latin_1(buffer, c);
-			bytes = 1;
-			break;
-		case CCX_ENC_UNICODE:
-			get_char_in_unicode(buffer, c);
-			bytes = 2;
-			break;
-		}
-		buffer += bytes;
-	}
-	*buffer = 0;
-	return (unsigned)(buffer - orig); // Return length
 }
 
 int process_cc_data (struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count, struct cc_subtitle *sub)
@@ -282,22 +221,16 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 		setting->settings_608,
 		setting->cc_channel,
 		1,
-		setting->trim_subs,
-		setting->encoding,
 		&ctx->processed_enough,
 		setting->cc_to_stdout,
-		setting->subs_delay,
 		setting->output_format
 		);
 	ctx->context_cc608_field_2 = ccx_decoder_608_init_library(
 		setting->settings_608,
 		setting->cc_channel,
 		2,
-		setting->trim_subs,
-		setting->encoding,
 		&ctx->processed_enough,
 		setting->cc_to_stdout,
-		setting->subs_delay,
 		setting->output_format
 		);
 

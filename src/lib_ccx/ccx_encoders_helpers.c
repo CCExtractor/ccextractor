@@ -3,6 +3,7 @@
 #include "ccx_common_constants.h"
 #include "ccx_common_structs.h"
 #include "ccx_decoders_common.h"
+#include "ccx_encoders_common.h"
 
 #ifdef _MSC_VER
 #define strcasecmp stricmp
@@ -17,7 +18,6 @@ char **spell_lower = NULL;
 char **spell_correct = NULL;
 int spell_words = 0;
 int spell_capacity = 0;
-struct ccx_encoders_helpers_settings_t ccx_encoders_helpers_settings;
 // Some basic English words, so user-defined doesn't have to
 // include the common stuff
 static const char *spell_builtin[] =
@@ -98,12 +98,12 @@ void capitalize(int line_num, struct eia608_screen *data)
 // Encodes a generic string. Note that since we use the encoders for closed caption
 // data, text would have to be encoded as CCs... so using special characters here
 // it's a bad idea.
-unsigned encode_line(unsigned char *buffer, unsigned char *text)
+unsigned encode_line(struct encoder_ctx *ctx, unsigned char *buffer, unsigned char *text)
 {
 	unsigned bytes = 0;
 	while (*text)
 	{
-		switch (ccx_encoders_helpers_settings.encoding)
+		switch (ctx->encoding)
 		{
 		case CCX_ENC_UTF_8:
 		case CCX_ENC_LATIN_1:
@@ -120,6 +120,7 @@ unsigned encode_line(unsigned char *buffer, unsigned char *text)
 		}
 		text++;
 	}
+	*buffer = 0;
 	return bytes;
 }
 
@@ -139,7 +140,7 @@ unsigned get_decoder_line_encoded_for_gui(unsigned char *buffer, int line_num, s
 
 }
 
-unsigned char *close_tag(unsigned char *buffer, char *tagstack, char tagtype, int *punderlined, int *pitalics, int *pchanged_font)
+unsigned char *close_tag(struct encoder_ctx *ctx, unsigned char *buffer, char *tagstack, char tagtype, int *punderlined, int *pitalics, int *pchanged_font)
 {
 	for (int l = strlen(tagstack) - 1; l >= 0; l--)
 	{
@@ -147,15 +148,15 @@ unsigned char *close_tag(unsigned char *buffer, char *tagstack, char tagtype, in
 		switch (cur)
 		{
 		case 'F':
-			buffer += encode_line(buffer, (unsigned char *) "</font>");
+			buffer += encode_line(ctx, buffer, (unsigned char *) "</font>");
 			(*pchanged_font)--;
 			break;
 		case 'U':
-			buffer += encode_line(buffer, (unsigned char *) "</u>");
+			buffer += encode_line(ctx, buffer, (unsigned char *) "</u>");
 			(*punderlined)--;
 			break;
 		case 'I':
-			buffer += encode_line(buffer, (unsigned char *) "</i>");
+			buffer += encode_line(ctx, buffer, (unsigned char *) "</i>");
 			(*pitalics)--;
 			break;
 		}
@@ -168,7 +169,7 @@ unsigned char *close_tag(unsigned char *buffer, char *tagstack, char tagtype, in
 	return buffer;
 }
 
-unsigned get_decoder_line_encoded(unsigned char *buffer, int line_num, struct eia608_screen *data)
+unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
 {
 	int col = COL_WHITE;
 	int underlined = 0;
@@ -179,21 +180,21 @@ unsigned get_decoder_line_encoded(unsigned char *buffer, int line_num, struct ei
 	unsigned char *line = data->characters[line_num];
 	unsigned char *orig = buffer; // Keep for debugging
 	int first = 0, last = 31;
-	if (ccx_encoders_helpers_settings.trim_subs)
+	if (ctx->trim_subs)
 		find_limit_characters(line, &first, &last);
 	for (int i = first; i <= last; i++)
 	{
 		// Handle color
 		int its_col = data->colors[line_num][i];
-		if (its_col != col  && !ccx_encoders_helpers_settings.no_font_color &&
+		if (its_col != col  && !ctx->no_font_color &&
 			!(col == COL_USERDEFINED && its_col == COL_WHITE)) // Don't replace user defined with white
 		{
 			if (changed_font)
-				buffer = close_tag(buffer, tagstack, 'F', &underlined, &italics, &changed_font);
+				buffer = close_tag(ctx, buffer, tagstack, 'F', &underlined, &italics, &changed_font);
 
 			// Add new font tag
 			if ( MAX_COLOR > its_col)
-				buffer += encode_line(buffer, (unsigned char*)color_text[its_col][1]);
+				buffer += encode_line(ctx, buffer, (unsigned char*)color_text[its_col][1]);
 			else
 				ccx_common_logging.log_ftn("WARNING:get_decoder_line_encoded:Invalid Color index Selected %d\n", its_col);
 
@@ -201,8 +202,8 @@ unsigned get_decoder_line_encoded(unsigned char *buffer, int line_num, struct ei
 			{
 				// The previous sentence doesn't copy the whole
 				// <font> tag, just up to the quote before the color
-				buffer += encode_line(buffer, (unsigned char*)usercolor_rgb);
-				buffer += encode_line(buffer, (unsigned char*) "\">");
+				buffer += encode_line(ctx, buffer, (unsigned char*)usercolor_rgb);
+				buffer += encode_line(ctx, buffer, (unsigned char*) "\">");
 			}
 			if (color_text[its_col][1][0]) // That means a <font> was added to the buffer
 			{
@@ -213,30 +214,30 @@ unsigned get_decoder_line_encoded(unsigned char *buffer, int line_num, struct ei
 		}
 		// Handle underlined
 		int is_underlined = data->fonts[line_num][i] & FONT_UNDERLINED;
-		if (is_underlined && underlined == 0 && !ccx_encoders_helpers_settings.no_type_setting) // Open underline
+		if (is_underlined && underlined == 0 && !ctx->no_type_setting) // Open underline
 		{
-			buffer += encode_line(buffer, (unsigned char *) "<u>");
+			buffer += encode_line(ctx, buffer, (unsigned char *) "<u>");
 			strcat(tagstack, "U");
 			underlined++;
 		}
-		if (is_underlined == 0 && underlined && !ccx_encoders_helpers_settings.no_type_setting) // Close underline
+		if (is_underlined == 0 && underlined && !ctx->no_type_setting) // Close underline
 		{
-			buffer = close_tag(buffer, tagstack, 'U', &underlined, &italics, &changed_font);
+			buffer = close_tag(ctx, buffer, tagstack, 'U', &underlined, &italics, &changed_font);
 		}
 		// Handle italics
 		int has_ita = data->fonts[line_num][i] & FONT_ITALICS;
-		if (has_ita && italics == 0 && !ccx_encoders_helpers_settings.no_type_setting) // Open italics
+		if (has_ita && italics == 0 && !ctx->no_type_setting) // Open italics
 		{
-			buffer += encode_line(buffer, (unsigned char *) "<i>");
+			buffer += encode_line(ctx, buffer, (unsigned char *) "<i>");
 			strcat(tagstack, "I");
 			italics++;
 		}
-		if (has_ita == 0 && italics && !ccx_encoders_helpers_settings.no_type_setting) // Close italics
+		if (has_ita == 0 && italics && !ctx->no_type_setting) // Close italics
 		{
-			buffer = close_tag(buffer, tagstack, 'I', &underlined, &italics, &changed_font);
+			buffer = close_tag(ctx, buffer, tagstack, 'I', &underlined, &italics, &changed_font);
 		}
 		int bytes = 0;
-		switch (ccx_encoders_helpers_settings.encoding)
+		switch (ctx->encoding)
 		{
 		case CCX_ENC_UTF_8:
 			bytes = get_char_in_utf_8(buffer, line[i]);
@@ -252,7 +253,7 @@ unsigned get_decoder_line_encoded(unsigned char *buffer, int line_num, struct ei
 		}
 		buffer += bytes;
 	}
-	buffer = close_tag(buffer, tagstack, 'A', &underlined, &italics, &changed_font);
+	buffer = close_tag(ctx, buffer, tagstack, 'A', &underlined, &italics, &changed_font);
 	if (underlined || italics || changed_font)
 		ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "Not all tags closed in encoding, this is a bug, please report.\n");
 	*buffer = 0;
@@ -394,9 +395,3 @@ void ccx_encoders_helpers_perform_shellsort_words(void)
 	shell_sort(spell_correct, spell_words, sizeof(*spell_correct), string_cmp2, NULL);
 }
 
-void ccx_encoders_helpers_setup(enum ccx_encoding_type encoding,int no_font_color,int no_type_setting,int trim_subs){
-	ccx_encoders_helpers_settings.encoding = encoding;
-	ccx_encoders_helpers_settings.no_font_color = no_font_color;
-	ccx_encoders_helpers_settings.no_type_setting = no_type_setting;
-	ccx_encoders_helpers_settings.trim_subs = trim_subs;
-}

@@ -7,11 +7,6 @@
 #include "ccx_decoders_structs.h"
 #include "ccx_common_option.h"
 
-extern unsigned char encoded_crlf[16]; // We keep it encoded here so we don't have to do it many times
-extern unsigned int encoded_crlf_length;
-extern unsigned char encoded_br[16];
-extern unsigned int encoded_br_length;
-
 extern LLONG minimum_fts; // No screen should start before this FTS
 
 extern uint64_t utc_refvalue; // UTC referential value

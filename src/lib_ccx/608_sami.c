@@ -5,6 +5,7 @@
 #include "spupng_encoder.h"
 #include "ocr.h"
 #include "utility.h"
+#include "ccx_encoders_helpers.h"
 
 int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
@@ -21,7 +22,7 @@ int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_st
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
 
-	used = encode_line(context->buffer, (unsigned char *) str);
+	used = encode_line(context, context->buffer, (unsigned char *) str);
 	ret = write (context->out->fh, context->buffer, used);
 	if(ret != used)
 	{
@@ -67,7 +68,7 @@ int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_st
 	unsigned char *begin = unescaped;
 	while (begin < unescaped+len)
 	{
-		unsigned int u = encode_line (el, begin);
+		unsigned int u = encode_line (context, el, begin);
 		if (context->encoding != CCX_ENC_UNICODE)
 		{
 			dbg_print(CCX_DMT_DECODER_608, "\r");
@@ -77,12 +78,12 @@ int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_st
 		if(ret != u)
 			goto end;
 
-		ret = write(context->out->fh, encoded_br, encoded_br_length);
-		if(ret != encoded_br_length)
+		ret = write(context->out->fh, context->encoded_br, context->encoded_br_length);
+		if(ret != context->encoded_br_length)
 			goto end;
 
-		ret = write(context->out->fh, encoded_crlf, encoded_crlf_length);
-		if(ret != encoded_crlf_length)
+		ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+		if(ret != context->encoded_crlf_length)
 			goto end;
 
 		begin += strlen ((const char *) begin) + 1;
@@ -93,7 +94,7 @@ int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_st
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
-	used = encode_line (context->buffer,(unsigned char *) str);
+	used = encode_line (context, context->buffer,(unsigned char *) str);
 	ret = write(context->out->fh, context->buffer, used);
 	if(ret != used)
 		goto end;
@@ -229,13 +230,13 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
-	used = encode_line(context->buffer,(unsigned char *) str);
+	used = encode_line(context, context->buffer,(unsigned char *) str);
 	write (context->out->fh, context->buffer, used);
 	for (int i=0;i<15;i++)
 	{
 		if (data->row_used[i])
 		{
-			int length = get_decoder_line_encoded (context->subline, i, data);
+			int length = get_decoder_line_encoded (context, context->subline, i, data);
 			if (context->encoding != CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r");
@@ -244,8 +245,8 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 			write (context->out->fh, context->subline, length);
 			wrote_something = 1;
 			if (i!=14)
-				write (context->out->fh, encoded_br, encoded_br_length);
-			write (context->out->fh, encoded_crlf, encoded_crlf_length);
+				write (context->out->fh, context->encoded_br, context->encoded_br_length);
+			write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		}
 	}
 	sprintf ((char *) str,"</P></SYNC>\r\n");
@@ -253,7 +254,7 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
-	used = encode_line(context->buffer,(unsigned char *) str);
+	used = encode_line(context, context->buffer,(unsigned char *) str);
 	write (context->out->fh, context->buffer, used);
 	sprintf ((char *) str,
 			"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n",
@@ -262,7 +263,7 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
-	used = encode_line(context->buffer,(unsigned char *) str);
+	used = encode_line(context, context->buffer,(unsigned char *) str);
 	write (context->out->fh, context->buffer, used);
 	return wrote_something;
 }

@@ -121,9 +121,8 @@ void ccx_decoder_608_dinit_library(void **ctx)
 	freep(ctx);
 }
 ccx_decoder_608_context* ccx_decoder_608_init_library(struct ccx_decoder_608_settings *settings, int channel,
-		int field, int trim_subs,
-		enum ccx_encoding_type encoding, int *halt,
-		int cc_to_stdout, LLONG subs_delay,
+		int field, int *halt,
+		int cc_to_stdout,
 		enum ccx_output_format output_format)
 {
 	ccx_decoder_608_context *data = NULL;
@@ -150,13 +149,7 @@ ccx_decoder_608_context* ccx_decoder_608_init_library(struct ccx_decoder_608_set
 	data->my_channel = channel;
 	data->have_cursor_position = 0;
 
-	data->trim_subs = trim_subs;
-	data->encoding = encoding;
-
 	data->halt = halt;
-	data->cc_to_stdout = cc_to_stdout;
-	data->subs_delay = subs_delay;
-	data->output_format = output_format;
 
 	data->settings = settings;
 	data->current_color = data->settings->default_color;

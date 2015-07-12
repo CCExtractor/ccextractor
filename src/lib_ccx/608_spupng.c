@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <sys/stat.h>
 #include "608_spupng.h"
+#include "ccx_encoders_helpers.h"
 
 void draw_str(char *str, uint8_t * canvas, int rowstride)
 {
@@ -322,7 +323,7 @@ int spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
 	{
 		if (data->row_used[row])
 		{
-			int len = get_decoder_line_encoded(context->subline, row, data);
+			int len = get_decoder_line_encoded(context, context->subline, row, data);
 			// Check for characters that spumux won't parse
 			// null chars will be changed to space
 			// pairs of dashes will be changed to underscores

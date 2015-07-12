@@ -4,15 +4,12 @@
 #include "ccx_common_structs.h"
 #include "ccx_decoders_structs.h"
 #include "ccx_encoders_structs.h"
-#include "ccx_encoders_helpers.h"
 #include "ccx_common_option.h"
 
 #define REQUEST_BUFFER_CAPACITY(ctx,length) if (length>ctx->capacity) \
 {ctx->capacity = length * 2; ctx->buffer = (unsigned char*)realloc(ctx->buffer, ctx->capacity); \
 if (ctx->buffer == NULL) { fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, bailing out\n"); } \
 }
-
-extern ccx_encoders_transcript_format ccx_encoders_default_transcript_settings;
 
 /**
  * Context of encoder, This structure gives single interface
@@ -55,6 +52,15 @@ struct encoder_ctx
 	int multiple_files;
 	char *first_input_file;
 	unsigned char *subline; // Temp storage for .srt lines
+	int no_font_color;
+	int no_type_setting;
+
+	// Preencoded strings
+	unsigned char encoded_crlf[16];
+	unsigned int encoded_crlf_length;
+	unsigned char encoded_br[16];
+	unsigned int encoded_br_length;
+
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048
@@ -65,12 +71,11 @@ struct encoder_ctx
  * output context
  *
  * @param ctx preallocated encoder ctx
- * @param out output context
- * @param opt Option to initilaize encoder cfg params
+ * @param cfg Option to initilaize encoder cfg params
  *
  * @return 0 on SUCESS, -1 on failure
  */
-int init_encoder(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_s_options *opt);
+int init_encoder(struct encoder_ctx *ctx, struct encoder_cfg *cfg);
 
 /**
  * try to add end credits in subtitle file and then write subtitle
