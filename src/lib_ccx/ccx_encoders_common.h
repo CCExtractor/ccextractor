@@ -50,6 +50,7 @@ struct encoder_ctx
 	int no_type_setting;
 	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
 	unsigned char *subline; // Temp storage for storing each line
+	int extract;
 
 	/* Timing related variables*/
 	/* start time of previous sub */
@@ -82,12 +83,11 @@ struct encoder_ctx
  * write subtitle header to file refrenced by
  * output context
  *
- * @param ctx preallocated encoder ctx
  * @param cfg Option to initilaize encoder cfg params
  *
- * @return 0 on SUCESS, -1 on failure
+ * @return Allocated and properly initilaized Encoder Context, NULL on failure
  */
-int init_encoder(struct encoder_ctx *ctx, struct encoder_cfg *cfg);
+struct encoder_ctx *init_encoder(struct encoder_cfg *opt);
 
 /**
  * try to add end credits in subtitle file and then write subtitle
@@ -96,9 +96,9 @@ int init_encoder(struct encoder_ctx *ctx, struct encoder_cfg *cfg);
  * deallocate encoder ctx, so before using encoder_ctx again
  * after deallocating user need to allocate encoder ctx again
  *
- * @oaram ctx Initialized encoder ctx using init_encoder
+ * @oaram arg pointer to initialized encoder ctx using init_encoder
  */
-void dinit_encoder(struct encoder_ctx *ctx);
+void dinit_encoder(struct encoder_ctx **arg);
 
 /**
  * @param ctx encoder context

@@ -24,7 +24,7 @@ void sigint_handler()
 struct ccx_s_options ccx_options;
 int main(int argc, char *argv[])
 {
-	struct encoder_ctx enc_ctx[2];
+	struct encoder_ctx *enc_ctx = NULL;
 #ifdef ENABLE_FFMPEG
 	void *ffmpeg_ctx = NULL;
 #endif
@@ -85,31 +85,9 @@ int main(int argc, char *argv[])
 
 	if (ccx_options.write_format!=CCX_OF_NULL)
 	{
-		/* # DVD format uses one raw file for both fields, while Broadcast requires 2 */
-		if (ccx_options.write_format==CCX_OF_DVDRAW)
-		{
-			if (init_encoder(enc_ctx, &ccx_options.enc_cfg))
-				fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
-		}
-		else
-		{
-			if (ccx_options.extract!=2)
-			{
-				if (init_encoder(enc_ctx, &ccx_options.enc_cfg))
-					fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
-			}
-			if (ccx_options.extract!=1)
-			{
-				if(ccx_options.write_format == CCX_OF_RAW
-					&& ccx_options.extract == 12)
-				{
-					memcpy(&ctx->wbout2, &ctx->wbout1,sizeof(ctx->wbout1));
-				}
-
-				if (init_encoder(enc_ctx, &ccx_options.enc_cfg))
-					fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
-			}
-		}
+		enc_ctx = init_encoder(&ccx_options.enc_cfg);
+		if (!enc_ctx)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 	}
 
 	if (ccx_options.transcript_settings.xds)
@@ -221,25 +199,25 @@ int main(int argc, char *argv[])
 				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
 					ccx_options.use_gop_as_pts = 0; 
 				mprint ("\rAnalyzing data in general mode\n");
-				general_loop(ctx, &enc_ctx);
+				general_loop(ctx, enc_ctx);
 				break;
 			case CCX_SM_MCPOODLESRAW:
 				mprint ("\rAnalyzing data in McPoodle raw mode\n");
-				raw_loop(ctx, &enc_ctx);
+				raw_loop(ctx, enc_ctx);
 				break;
 			case CCX_SM_RCWT:
 				mprint ("\rAnalyzing data in CCExtractor's binary format\n");
-				rcwt_loop(ctx, &enc_ctx);
+				rcwt_loop(ctx, enc_ctx);
 				break;
 			case CCX_SM_MYTH:
 				mprint ("\rAnalyzing data in MythTV mode\n");
 				show_myth_banner = 1;
-				myth_loop(ctx, &enc_ctx);
+				myth_loop(ctx, enc_ctx);
 				break;
 			case CCX_SM_MP4:
 				mprint ("\rAnalyzing data with GPAC (MP4 library)\n");
 				close_input_file(ctx); // No need to have it open. GPAC will do it for us
-				processmp4 (ctx, &mp4_cfg, ctx->inputfile[0],&enc_ctx);
+				processmp4 (ctx, &mp4_cfg, ctx->inputfile[0],enc_ctx);
 				if (ccx_options.print_file_reports)
 					print_file_report(ctx);
 				break;
@@ -366,9 +344,6 @@ int main(int argc, char *argv[])
 	} // file loop
 	close_input_file(ctx);
 
-	flushbuffer (ctx, &ctx->wbout1, false);
-	flushbuffer (ctx, &ctx->wbout2, false);
-
 	prepare_for_new_file (ctx); // To reset counters used by handle_end_of_data()
 
 	if (ccx_options.extract != 2)
@@ -390,12 +365,10 @@ int main(int argc, char *argv[])
 			writercwtdata (dec_ctx, NULL, &dec_ctx->dec_sub);
 			if (dec_ctx->dec_sub.got_output)
 			{
-				encode_sub(enc_ctx,&dec_ctx->dec_sub);
+				encode_sub(enc_ctx, &dec_ctx->dec_sub);
 				dec_ctx->dec_sub.got_output = 0;
 			}
 		}
-		dinit_encoder(enc_ctx);
-		flushbuffer (ctx, &ctx->wbout1,true);
 	}
 	if (ccx_options.extract != 1)
 	{
@@ -406,13 +379,13 @@ int main(int argc, char *argv[])
 			handle_end_of_data(dec_ctx->context_cc608_field_2, &dec_ctx->dec_sub);
 			if (dec_ctx->dec_sub.got_output)
 			{
-				encode_sub(enc_ctx,&dec_ctx->dec_sub);
+				encode_sub(enc_ctx, &dec_ctx->dec_sub);
 				dec_ctx->dec_sub.got_output = 0;
 			}
 		}
-		dinit_encoder(enc_ctx+1);
-		flushbuffer (ctx, &ctx->wbout2,true);
 	}
+
+	dinit_encoder(&enc_ctx);
 	time (&final);
 
 	long proc_time=(long) (final-start);

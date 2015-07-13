@@ -298,7 +298,7 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 		context->current_visible_start_ms = context->ts_start_of_current_line;
 
 	start_time = context->current_visible_start_ms;
-	end_time = get_visible_end() + context->subs_delay;
+	end_time = get_visible_end();
 	sub->type = CC_608;
 	data->format = SFORMAT_CC_SCREEN;
 	data->start_time = 0;

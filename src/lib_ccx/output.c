@@ -46,12 +46,6 @@ int writeraw (const unsigned char *data, int length, void *private_data, struct 
 	return EXIT_SUCCESS;
 }
 
-void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile)
-{
-	if (closefile && wb!=NULL && wb->fh!=-1 && !ctx->cc_to_stdout)
-		close (wb->fh);
-}
-
 void writeDVDraw (const unsigned char *data1, int length1,
                   const unsigned char *data2, int length2,
 				  struct cc_subtitle *sub)

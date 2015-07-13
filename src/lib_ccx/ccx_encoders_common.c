@@ -788,12 +788,12 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			}
 			else if (cfg->extract == 1)
 			{
-				ret = init_write(&ctx->out[0], strdup(cfg->output_filename));
+				ret = init_write(ctx->out, strdup(cfg->output_filename));
 				check_ret(cfg->output_filename);
 			}
 			else
 			{
-				ret = init_write(&ctx->out[1], strdup(cfg->output_filename));
+				ret = init_write(ctx->out, strdup(cfg->output_filename));
 				check_ret(cfg->output_filename);
 			}
 		}
@@ -811,13 +811,13 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			}
 			else if (cfg->extract == 1)
 			{
-				ret = init_write(&ctx->out[0], create_outfilename(basefilename, NULL, extension));
-				check_ret(ctx->out[0].filename);
+				ret = init_write(ctx->out, create_outfilename(basefilename, NULL, extension));
+				check_ret(ctx->out->filename);
 			}
 			else
 			{
-				ret = init_write(&ctx->out[1], create_outfilename(basefilename, NULL, extension));
-				check_ret(ctx->out[1].filename);
+				ret = init_write(ctx->out, create_outfilename(basefilename, NULL, extension));
+				check_ret(ctx->out->filename);
 			}
 		}
 
@@ -842,23 +842,39 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	return EXIT_OK;
 }
 
-void dinit_encoder(struct encoder_ctx *ctx)
+void dinit_encoder(struct encoder_ctx **arg)
 {
-	if (ctx->end_credits_text!=NULL)
-		try_to_add_end_credits(ctx,ctx->out);
-	write_subtitle_file_footer(ctx,ctx->out);
+	struct encoder_ctx *ctx = *arg;
+	int i;
+	for (i = 0; i < ctx->nb_out; i++)
+	{
+		if (ctx->end_credits_text!=NULL)
+			try_to_add_end_credits(ctx,ctx->out);
+		write_subtitle_file_footer(ctx,ctx->out+i);
+	}
+
 	dinit_output_ctx(ctx);
 	freep(&ctx->subline);
 	freep(&ctx->buffer);
 	ctx->capacity = 0;
+	freep(arg);
 }
 
-int init_encoder(struct encoder_ctx *ctx, struct encoder_cfg *opt)
+struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 {
 	int ret;
+	int i;
+	struct encoder_ctx *ctx = malloc(sizeof(struct encoder_ctx));
+	if(!ctx)
+		return NULL;
+
 	ctx->buffer = (unsigned char *) malloc (INITIAL_ENC_BUFFER_CAPACITY);
-	if (ctx->buffer==NULL)
-		return -1;
+	if (!ctx->buffer)
+	{
+		free(ctx);
+		return NULL;
+	}
+
 	ctx->capacity=INITIAL_ENC_BUFFER_CAPACITY;
 	ctx->srt_counter = 0;
 
@@ -869,7 +885,8 @@ int init_encoder(struct encoder_ctx *ctx, struct encoder_cfg *opt)
 	if (ret != EXIT_OK)
 	{
 		freep(&ctx->buffer);
-		return -1;
+		free(ctx);
+		return NULL;
 	}
 	ctx->in_fileformat = 1;
 
@@ -891,12 +908,14 @@ int init_encoder(struct encoder_ctx *ctx, struct encoder_cfg *opt)
 	ctx->no_font_color = opt->no_font_color;
 	ctx->no_type_setting = opt->no_type_setting;
 	ctx->gui_mode_reports = opt->gui_mode_reports;
+	ctx->extract = opt->extract;
 	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);
 	if(!ctx->subline)
 	{
 		freep(&ctx->out);
 		freep(&ctx->buffer);
-		return -1;
+		free(ctx);
+		return NULL;
 	}
 
 
@@ -916,9 +935,10 @@ int init_encoder(struct encoder_ctx *ctx, struct encoder_cfg *opt)
 
 	ctx->encoded_br_length = encode_line(ctx, ctx->encoded_br, (unsigned char *) "<br>");
 
-	write_subtitle_file_header(ctx,ctx->out);
+	for (i = 0; i < ctx->nb_out; i++)
+	 	write_subtitle_file_header(ctx,ctx->out+i);
 
-	return CCX_OK;
+	return ctx;
 
 }
 
@@ -931,6 +951,19 @@ static int write_newline(struct encoder_ctx *ctx, int lang)
 {
 	write (ctx->out[lang].fh, ctx->encoded_crlf, ctx->encoded_crlf_length);
 }
+
+struct ccx_s_write *get_output_ctx(struct encoder_ctx *ctx, int lan)
+{
+	if (ctx->extract == 12 && lan == 2)
+	{
+		return ctx->out+1;
+	}
+	else
+	{
+		return ctx->out;
+	}
+}
+
 int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 {
 	int wrote_something = 0;
@@ -939,20 +972,20 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	if (sub->type == CC_608)
 	{
 		struct eia608_screen *data = NULL;
+		struct ccx_s_write *out;
 		for(data = sub->data; sub->nb_data ; sub->nb_data--,data++)
 		{
 			// Determine context based on channel. This replaces the code that was above, as this was incomplete (for cases where -12 was used for example)
-			if (data->my_field == 2)
-				context++;
+			out = get_output_ctx(context, data->my_field);
 
 			new_sentence=1;
 
 			if(data->format == SFORMAT_XDS)
 			{
-				xds_write_transcript_line_prefix (context->out, data->start_time, data->end_time,data->cur_xds_packet_class);
+				xds_write_transcript_line_prefix (out, data->start_time, data->end_time,data->cur_xds_packet_class);
 				if(data->xds_len > 0)
 				{
-					ret = write (context->out->fh, data->xds_str,data->xds_len);
+					ret = write (out->fh, data->xds_str,data->xds_len);
 					if (ret < data->xds_len)
 					{
 						mprint("WARNING:Loss of data\n");
