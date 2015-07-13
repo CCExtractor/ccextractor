@@ -846,6 +846,8 @@ void dinit_encoder(struct encoder_ctx **arg)
 {
 	struct encoder_ctx *ctx = *arg;
 	int i;
+	if(!ctx)
+		return;
 	for (i = 0; i < ctx->nb_out; i++)
 	{
 		if (ctx->end_credits_text!=NULL)
