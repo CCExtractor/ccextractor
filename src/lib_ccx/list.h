@@ -7,7 +7,7 @@
  */
 #ifndef _LINUX_LIST_H
 #define _LINUX_LIST_H
-
+#include "ccx_common_platform.h"
 /**
  * @name from other kernel headers
  */
@@ -27,9 +27,7 @@
  * @param member     the name of the member within the struct.
  *
  */
-#define container_of(ptr, type, member) ({                      \
-        const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
-        (type *)( (char *)__mptr - offsetof(type,member) );})
+#define container_of(ptr, type, member) ((type *)( (char *)ptr - offsetof(type,member) ))
 /*@}*/
 
 
@@ -273,11 +271,12 @@ static inline void list_splice_init(struct list_head *list,
  * @pos:	the type * to use as a loop counter.
  * @head:	the head for your list.
  * @member:	the name of the list_struct within the struct.
+ * @type iterator type
  */
-#define list_for_each_entry(pos, head, member)				\
-	for (pos = list_entry((head)->next, typeof(*pos), member);	\
+#define list_for_each_entry(pos, head, member, type)				\
+	for (pos = list_entry((head)->next, type, member);	\
 	     &pos->member != (head);					\
-	     pos = list_entry(pos->member.next, typeof(*pos), member))
+	     pos = list_entry(pos->member.next, type, member))
 
 /**
  * list_for_each_entry_reverse - iterate backwards over list of given type.

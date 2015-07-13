@@ -14,6 +14,8 @@
 	#define __STDC_FORMAT_MACROS
 
 	#ifdef _WIN32
+		#define inline _inline
+		#define typeof decltype
 		#include <io.h>
 		#include <ws2tcpip.h>
 		#include <windows.h>

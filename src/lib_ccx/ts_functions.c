@@ -2,6 +2,7 @@
 #include "ccx_common_option.h"
 #include "activity.h"
 #include "ccx_demuxer.h"
+#include "list.h"
 
 unsigned char tspacket[188]; // Current packet
 
@@ -465,7 +466,7 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 void cinfo_cremation(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
 	struct cap_info* iter; 
-	list_for_each_entry(iter ,&ctx->cinfo_tree.all_stream, all_stream)
+	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		copy_capbuf_demux_data(ctx, data, iter);
 		freep(&iter->capbuf);

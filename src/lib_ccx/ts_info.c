@@ -9,7 +9,7 @@ int need_capInfo(struct ccx_demuxer *ctx)
 		return CCX_TRUE;
 	}
 
-	list_for_each_entry(iter ,&ctx->cinfo_tree.all_stream, all_stream)
+	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		if(iter->codec == CCX_CODEC_NONE)
 			return CCX_TRUE;
@@ -25,7 +25,7 @@ int count_complete_capInfo(struct ccx_demuxer *ctx)
 	int count = 0;
 	struct cap_info* iter; 
 
-	list_for_each_entry(iter ,&ctx->cinfo_tree.all_stream, all_stream)
+	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		if(iter->codec == CCX_CODEC_NONE)
 			return CCX_TRUE;
@@ -39,7 +39,7 @@ int count_complete_capInfo(struct ccx_demuxer *ctx)
 void ignore_other_stream(struct ccx_demuxer *ctx, int pid)
 {
 	struct cap_info* iter; 
-	list_for_each_entry(iter ,&ctx->cinfo_tree.all_stream, all_stream)
+	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		if(iter->pid != pid)
 			iter->ignore = 1;
@@ -49,18 +49,18 @@ int get_best_stream(struct ccx_demuxer *ctx)
 {
 	struct cap_info* iter;
 
-	list_for_each_entry(iter ,&ctx->cinfo_tree.all_stream, all_stream)
+	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		if(iter->codec == CCX_CODEC_TELETEXT)
 			return iter->pid;
 	}
-	list_for_each_entry(iter ,&ctx->cinfo_tree.all_stream, all_stream)
+	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		if(iter->codec == CCX_CODEC_DVB)
 			return iter->pid;
 	}
 
-	list_for_each_entry(iter ,&ctx->cinfo_tree.all_stream, all_stream)
+	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		if(iter->codec == CCX_CODEC_ATSC_CC)
 			return iter->pid;
@@ -86,7 +86,7 @@ int need_capInfo_for_pid(struct ccx_demuxer *ctx, int pid)
 		return CCX_FALSE;
 	}
 
-	list_for_each_entry(iter ,&ctx->cinfo_tree.all_stream, all_stream)
+	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		if (iter->pid == pid && iter->stream == CCX_STREAM_TYPE_UNKNOWNSTREAM)
 			return CCX_TRUE;
@@ -112,7 +112,7 @@ int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream
 
 	ptr = &ctx->cinfo_tree;
 
-	list_for_each_entry(tmp ,&ptr->all_stream, all_stream)
+	list_for_each_entry(tmp, &ptr->all_stream, all_stream, struct cap_info)
 	{
 		if (tmp->pid == pid)
 		{
@@ -165,7 +165,7 @@ struct cap_info * get_cinfo(struct ccx_demuxer *ctx, int pid)
 {
 	struct cap_info* iter; 
 
-	list_for_each_entry(iter ,&ctx->cinfo_tree.all_stream, all_stream)
+	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		if(iter->pid == pid && iter->codec != CCX_CODEC_NONE)
 			return iter;

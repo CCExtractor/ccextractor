@@ -294,6 +294,7 @@ void m_signal(int sig, void (*func)(int))
 
 	return;
 }
+#endif
 char *get_basename(char *filename)
 {
 	char *c;
@@ -310,6 +311,5 @@ char *get_basename(char *filename)
 	if (*c == '.')
 		*c = 0;
 
-	return basefilename;	
+	return basefilename;
 }
-#endif

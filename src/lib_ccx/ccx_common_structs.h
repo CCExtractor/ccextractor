@@ -9,7 +9,7 @@ enum ccx_common_logging_gui {
 };
 
 struct ccx_common_logging_t {
-	int debug_mask; // The debug mask that is used to determine if things should be printed or not.
+	LLONG debug_mask; // The debug mask that is used to determine if things should be printed or not.
 	void(*fatal_ftn) (int exit_code, const char *fmt, ...); // Used when an unrecoverable error happens. This should log output/save the error and then exit the program.
 	void(*debug_ftn) (LLONG mask, const char *fmt, ...); // Used to process debug output. Mask can be ignored (custom set by debug_mask).
 	void(*log_ftn)(const char *fmt, ...); // Used to print things. Replacement of standard printf, to allow more control.
