@@ -1239,18 +1239,13 @@ void do_708 (struct lib_cc_decode* ctx, const unsigned char *data, int datalengt
 	}
 }
 
-void ccx_decoders_708_init_library(char *basefilename,const char *extension,int report)
+void ccx_decoders_708_init_library(int report)
 {
 	for (int i = 0; i<CCX_DECODERS_708_MAX_SERVICES; i++)
 	{
 		if (!cea708services[i])
 			continue;
 		cc708_service_reset (&decoders[i]);
-		if (decoders[i].filename==NULL)
-		{
-			decoders[i].filename = (char *) malloc (strlen (basefilename)+4+strlen (extension));
-			sprintf (decoders[i].filename, "%s_%d%s", basefilename,i+1,extension);
-		}
 		decoders[i].fh=-1;
 		decoders[i].srt_counter=0;
 	}
