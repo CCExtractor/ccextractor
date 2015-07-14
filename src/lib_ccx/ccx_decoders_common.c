@@ -262,6 +262,34 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 	return ctx;
 }
+
+void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
+{
+	if (ctx->extract != 2)
+	{
+		if (ctx->write_format==CCX_OF_SMPTETT || ctx->write_format==CCX_OF_SAMI || 
+			ctx->write_format==CCX_OF_SRT || ctx->write_format==CCX_OF_TRANSCRIPT
+			|| ctx->write_format==CCX_OF_SPUPNG )
+		{
+			handle_end_of_data(ctx->context_cc608_field_1, sub);
+		}
+		else if(ctx->write_format == CCX_OF_RCWT)
+		{
+			// Write last header and data
+			writercwtdata (ctx, NULL, sub);
+		}
+	}
+	if (ctx->extract != 1)
+	{
+		if (ctx->write_format == CCX_OF_SMPTETT || ctx->write_format == CCX_OF_SAMI ||
+			ctx->write_format == CCX_OF_SRT || ctx->write_format == CCX_OF_TRANSCRIPT
+			|| ctx->write_format == CCX_OF_SPUPNG )
+		{
+			handle_end_of_data(ctx->context_cc608_field_2, sub);
+		}
+	}
+
+}
 void dinit_cc_decode(struct lib_cc_decode **ctx)
 {
 	struct lib_cc_decode *lctx = *ctx;

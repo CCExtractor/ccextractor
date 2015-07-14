@@ -113,7 +113,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	}
 
 	// Init 708 decoder(s)
-	ccx_decoders_708_init_library(ctx->basefilename, ctx->extension, opt->print_file_reports);
+	ccx_decoders_708_init_library(opt->print_file_reports);
 
 	// Init XDS buffers
 	ccx_decoders_xds_init_library(&opt->transcript_settings, ctx->subs_delay, opt->millis_separator);

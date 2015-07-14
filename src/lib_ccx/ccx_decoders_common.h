@@ -27,4 +27,5 @@ void printdata (struct lib_cc_decode *ctx, const unsigned char *data1, int lengt
                 const unsigned char *data2, int length2, struct cc_subtitle *sub);
 struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *setting);
 void dinit_cc_decode(struct lib_cc_decode **ctx);
+void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub);
 #endif

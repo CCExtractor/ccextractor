@@ -346,45 +346,13 @@ int main(int argc, char *argv[])
 
 	prepare_for_new_file (ctx); // To reset counters used by handle_end_of_data()
 
-	if (ccx_options.extract != 2)
-	{
-		if (ccx_options.write_format==CCX_OF_SMPTETT || ccx_options.write_format==CCX_OF_SAMI || 
-			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT
-			|| ccx_options.write_format==CCX_OF_SPUPNG )
-		{
-			handle_end_of_data(dec_ctx->context_cc608_field_1, &dec_ctx->dec_sub);
-			if (dec_ctx->dec_sub.got_output)
-			{
-				encode_sub(enc_ctx,&dec_ctx->dec_sub);
-				dec_ctx->dec_sub.got_output = 0;
-			}
-		}
-		else if(ccx_options.write_format==CCX_OF_RCWT)
-		{
-			// Write last header and data
-			writercwtdata (dec_ctx, NULL, &dec_ctx->dec_sub);
-			if (dec_ctx->dec_sub.got_output)
-			{
-				encode_sub(enc_ctx, &dec_ctx->dec_sub);
-				dec_ctx->dec_sub.got_output = 0;
-			}
-		}
-	}
-	if (ccx_options.extract != 1)
-	{
-		if (ccx_options.write_format == CCX_OF_SMPTETT || ccx_options.write_format == CCX_OF_SAMI ||
-			ccx_options.write_format == CCX_OF_SRT || ccx_options.write_format == CCX_OF_TRANSCRIPT
-			|| ccx_options.write_format == CCX_OF_SPUPNG )
-		{
-			handle_end_of_data(dec_ctx->context_cc608_field_2, &dec_ctx->dec_sub);
-			if (dec_ctx->dec_sub.got_output)
-			{
-				encode_sub(enc_ctx, &dec_ctx->dec_sub);
-				dec_ctx->dec_sub.got_output = 0;
-			}
-		}
-	}
 
+	flush_cc_decode(dec_ctx, &dec_ctx->dec_sub);
+	if (dec_ctx->dec_sub.got_output)
+	{
+		encode_sub(enc_ctx,&dec_ctx->dec_sub);
+		dec_ctx->dec_sub.got_output = 0;
+	}
 	dinit_encoder(&enc_ctx);
 	time (&final);
 
