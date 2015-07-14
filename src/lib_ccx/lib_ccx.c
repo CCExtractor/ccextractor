@@ -34,8 +34,7 @@ static void dinit_decoder_setting (struct ccx_decoders_common_settings_t **setti
 
 static int init_ctx_input(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx)
 {
-	char *file,*c;
-	int len;
+	char *file;
 
 	switch (opt->input_source)
 	{
@@ -115,10 +114,6 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 
 	// Init 708 decoder(s)
 	ccx_decoders_708_init_library(ctx->basefilename, ctx->extension, opt->print_file_reports);
-
-	// Set output structures for the 608 decoder
-	//ctx->dec_ctx->context_cc608_field_1->out = ctx->dec_ctx->wbout1;
-	//ctx->dec_ctx->context_cc608_field_2->out = ctx->dec_ctx->wbout2;
 
 	// Init XDS buffers
 	ccx_decoders_xds_init_library(&opt->transcript_settings, ctx->subs_delay, opt->millis_separator);
