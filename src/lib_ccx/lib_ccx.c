@@ -135,6 +135,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	// Init timing
 	ccx_common_timing_init(&ctx->demux_ctx->past,opt->nosync);
 	ctx->multiprogram = opt->multiprogram;
+	ctx->write_format = opt->write_format;
 
 
 end:

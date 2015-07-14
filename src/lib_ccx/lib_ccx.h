@@ -139,6 +139,7 @@ struct lib_ccx_ctx
                       >0 -> Live stream with a timeout of this value in seconds */
 	int binary_concat; // Disabled by -ve or --videoedited
 	int multiprogram;
+	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 
 	struct ccx_demuxer *demux_ctx;
 	struct avc_ctx *avc_ctx;
@@ -187,11 +188,11 @@ void position_sanity_check (int in);
 int init_file_buffer(struct ccx_demuxer *ctx);
 int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
-void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx);
+void raw_loop (struct lib_ccx_ctx *ctx);
 LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, unsigned char *buffer, int len);
-void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
+void general_loop(struct lib_ccx_ctx *ctx);
 void processhex (char *filename);
-void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
+void rcwt_loop(struct lib_ccx_ctx *ctx);
 
 extern LLONG result;
 extern int end_of_file;
@@ -257,7 +258,7 @@ void parse_EPG_packet (struct lib_ccx_ctx *ctx);
 void EPG_free();
 
 // myth.c
-void myth_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
+void myth_loop(struct lib_ccx_ctx *ctx);
 
 LLONG process_avc (struct lib_ccx_ctx *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub);
 // utility.c

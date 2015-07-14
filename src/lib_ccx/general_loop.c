@@ -445,11 +445,19 @@ void processhex (struct lib_ccx_ctx *ctx, char *filename)
 }
 #endif
 // Raw file process
-void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
+void raw_loop (struct lib_ccx_ctx *ctx)
 {
 	LLONG ret;
 	struct demuxer_data *data = NULL;
 	struct cc_subtitle *dec_sub = &ctx->dec_ctx->dec_sub;
+	struct encoder_ctx *enc_ctx = NULL;
+
+	if (ctx->write_format!=CCX_OF_NULL)
+	{
+		enc_ctx = init_encoder(&ccx_options.enc_cfg);
+		if (!enc_ctx)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+	}
 
 	current_pts = 90; // Pick a valid PTS time
 	pts_set = 1;
@@ -484,6 +492,13 @@ void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
 				print_mstime(get_fts()), ccblocks);
 
 	} while (data->len);
+	flush_cc_decode(ctx->dec_ctx, &ctx->dec_ctx->dec_sub);
+	if (ctx->dec_ctx->dec_sub.got_output)
+	{
+		encode_sub(enc_ctx,&ctx->dec_ctx->dec_sub);
+		ctx->dec_ctx->dec_sub.got_output = 0;
+	}
+	dinit_encoder(&enc_ctx);
 }
 
 /* Process inbuf bytes in buffer holding raw caption data (three byte packets, the first being the field).
@@ -557,7 +572,7 @@ void delete_datalist(struct demuxer_data *list)
 
 	}
 }
-void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
+void general_loop(struct lib_ccx_ctx *ctx)
 {
 	LLONG overlap=0;
 	LLONG pos = 0; /* Current position in buffer */
@@ -566,10 +581,18 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 	enum ccx_stream_mode_enum stream_mode;
 	struct demuxer_data *datalist = NULL;
 	struct demuxer_data *data_node = NULL;
+	struct encoder_ctx *enc_ctx = NULL;
 	//struct demuxer_data *data = alloc_demuxer_data();
 
 	int ret;
 	dec_ctx = ctx->dec_ctx;
+
+	if (ctx->write_format!=CCX_OF_NULL)
+	{
+		enc_ctx = init_encoder(&ccx_options.enc_cfg);
+		if (!enc_ctx)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+	}
 
 	end_of_file = 0;
 	current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
@@ -783,16 +806,31 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		mprint("Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
 				ctx->inputfile[ctx->current_file], ctx->current_file, ctx->demux_ctx->past, ctx->inputsize);
 	}
+	flush_cc_decode(dec_ctx, &dec_ctx->dec_sub);
+	if (dec_ctx->dec_sub.got_output)
+	{
+		encode_sub(enc_ctx,&dec_ctx->dec_sub);
+		dec_ctx->dec_sub.got_output = 0;
+	}
+	dinit_encoder(&enc_ctx);
 }
 
 // Raw caption with FTS file process
-void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
+void rcwt_loop(struct lib_ccx_ctx *ctx)
 {
 	static unsigned char *parsebuf;
 	static long parsebufsize = 1024;
 	struct lib_cc_decode *dec_ctx = NULL;
 	struct cc_subtitle *dec_sub = &ctx->dec_ctx->dec_sub;
+	struct encoder_ctx *enc_ctx = NULL;
 	dec_ctx = ctx->dec_ctx;
+
+	if (ctx->write_format!=CCX_OF_NULL)
+	{
+		enc_ctx = init_encoder(&ccx_options.enc_cfg);
+		if (!enc_ctx)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+	}
 
 	// As BUFSIZE is a macro this is just a reminder
 	if (BUFSIZE < (3*0xFFFF + 10))
@@ -906,6 +944,13 @@ void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 			dec_sub->got_output = 0;
 		}
 	} // end while(1)
+	flush_cc_decode(dec_ctx, &dec_ctx->dec_sub);
+	if (dec_ctx->dec_sub.got_output)
+	{
+		encode_sub(enc_ctx,&dec_ctx->dec_sub);
+		dec_ctx->dec_sub.got_output = 0;
+	}
+	dinit_encoder(&enc_ctx);
 
 	dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
 }

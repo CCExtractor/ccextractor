@@ -281,11 +281,19 @@ unsigned char * ccdp_find_data(unsigned char * ccdp_atom_content, unsigned int l
 		}
 
 */
-int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file,void *enc_ctx)
+int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 {	
 	GF_ISOFile* f;
 	u32 i, j, track_count, avc_track_count, cc_track_count;
 	struct cc_subtitle dec_sub;
+	struct encoder_ctx *enc_ctx = NULL;
+
+	if (ctx->write_format!=CCX_OF_NULL)
+	{
+		enc_ctx = init_encoder(&ccx_options.enc_cfg);
+		if (!enc_ctx)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+	}
 
 	memset(&dec_sub,0,sizeof(dec_sub));
 	mprint("opening \'%s\': ", file);
@@ -552,6 +560,13 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file,voi
 		mprint ("found no dedicated CC track(s).\n");
 
 	ctx->freport.mp4_cc_track_cnt = cc_track_count;
+	flush_cc_decode(ctx->dec_ctx, &ctx->dec_ctx->dec_sub);
+	if (ctx->dec_ctx->dec_sub.got_output)
+	{
+		encode_sub(enc_ctx,&ctx->dec_ctx->dec_sub);
+		ctx->dec_ctx->dec_sub.got_output = 0;
+	}
+	dinit_encoder(&enc_ctx);
 
 	return 0;
 }

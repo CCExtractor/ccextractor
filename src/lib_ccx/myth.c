@@ -827,19 +827,22 @@ void build_parity_table (void)
 	cc608_build_parity_table(cc608_parity_table);
 }
 
-void myth_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
+void myth_loop(struct lib_ccx_ctx *ctx)
 {
 	int rc;
 	int has_vbi=0;
 	LLONG saved = 0;
 	struct cc_subtitle dec_sub;
 	struct lib_cc_decode *dec_ctx = NULL;
+	struct encoder_ctx *enc_ctx = NULL;
+	unsigned long desp_length=65536;
+	unsigned char *desp=(unsigned char *) malloc (desp_length);
 
 	av.data=NULL;
 	ccx_options.buffer_input = 1;
 	dec_ctx = ctx->dec_ctx;
-	unsigned long desp_length=65536;
-	unsigned char *desp=(unsigned char *) malloc (desp_length);
+	desp_length = 65536;
+	desp = (unsigned char *) malloc (desp_length);
 	if (!desp)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory.\n");
 	saved=0;
@@ -914,5 +917,12 @@ void myth_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 	}
 	if (desp)
 		free (desp);
+	flush_cc_decode(ctx->dec_ctx, &ctx->dec_ctx->dec_sub);
+	if (ctx->dec_ctx->dec_sub.got_output)
+	{
+		encode_sub(enc_ctx,&ctx->dec_ctx->dec_sub);
+		ctx->dec_ctx->dec_sub.got_output = 0;
+	}
+	dinit_encoder(&enc_ctx);
 	free (av.data);
 }
