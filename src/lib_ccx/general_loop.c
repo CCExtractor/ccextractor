@@ -616,15 +616,6 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible stream_mode");
 		}
 
-		if (ret == CCX_EOF)
-		{
-			end_of_file = 1;
-			if(data_node->len)
-				memset (data_node->buffer + data_node->len, 0, (size_t) (BUFSIZE-data_node->len)); /* Clear buffer at the end */
-			else
-				break;
-		}
-
 		position_sanity_check(ctx->demux_ctx->infd);
 		if(!ctx->multiprogram)
 		{
@@ -649,6 +640,16 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			}
 			ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer + overlap, (size_t) (data_node->len - overlap));
 		}
+
+		if (ret == CCX_EOF)
+		{
+			end_of_file = 1;
+			if(data_node->len)
+				memset (data_node->buffer + data_node->len, 0, (size_t) (BUFSIZE-data_node->len)); /* Clear buffer at the end */
+			else
+				break;
+		}
+
 		LLONG got; // Means 'consumed' from buffer actually
 
 		static LLONG last_pts = 0x01FFFFFFFFLL;
