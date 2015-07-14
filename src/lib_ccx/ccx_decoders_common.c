@@ -271,7 +271,7 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 			ctx->write_format==CCX_OF_SRT || ctx->write_format==CCX_OF_TRANSCRIPT
 			|| ctx->write_format==CCX_OF_SPUPNG )
 		{
-			handle_end_of_data(ctx->context_cc608_field_1, sub);
+			flush_608_context(ctx->context_cc608_field_1, sub);
 		}
 		else if(ctx->write_format == CCX_OF_RCWT)
 		{
@@ -285,7 +285,7 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 			ctx->write_format == CCX_OF_SRT || ctx->write_format == CCX_OF_TRANSCRIPT
 			|| ctx->write_format == CCX_OF_SPUPNG )
 		{
-			handle_end_of_data(ctx->context_cc608_field_2, sub);
+			flush_608_context(ctx->context_cc608_field_2, sub);
 		}
 	}
 

@@ -131,6 +131,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	build_parity_table();
 
 	ctx->demux_ctx = init_demuxer(ctx, &opt->demux_cfg);
+	ctx->enc_ctx = NULL;
 
 	// Init timing
 	ccx_common_timing_init(&ctx->demux_ctx->past,opt->nosync);
@@ -151,6 +152,15 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 {
 	struct lib_ccx_ctx *lctx = *ctx;
 	int i;
+	flush_cc_decode(lctx->dec_ctx, &lctx->dec_ctx->dec_sub);
+	if (&lctx->dec_ctx->dec_sub.got_output)
+	{
+		encode_sub(lctx->enc_ctx, &lctx->dec_ctx->dec_sub);
+		lctx->dec_ctx->dec_sub.got_output = 0;
+	}
+	dinit_encoder(&lctx->enc_ctx);
+
+
 	// free EPG memory
 	EPG_free(lctx);
 	ccx_demuxer_delete(&lctx->demux_ctx);
@@ -163,4 +173,27 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 		freep(&lctx->inputfile[i]);
 	freep(&lctx->inputfile);
 	freep(ctx);
+}
+
+struct encoder_ctx *update_encoder_list_pn(struct lib_ccx_ctx *ctx, int pn)
+{
+	if (ctx->write_format == CCX_OF_NULL)
+		return NULL;
+
+	if(ctx->multiprogram == CCX_FALSE)
+	{
+		if (ctx->enc_ctx == NULL)
+		{
+			ctx->enc_ctx = init_encoder(&ccx_options.enc_cfg);
+			if (!ctx->enc_ctx)
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+			return ctx->enc_ctx;
+		}
+		return ctx->enc_ctx;
+	}
+}
+
+struct encoder_ctx *update_encoder_list(struct lib_ccx_ctx *ctx)
+{
+	return update_encoder_list_pn(ctx, 0);
 }

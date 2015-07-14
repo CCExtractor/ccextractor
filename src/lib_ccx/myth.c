@@ -834,7 +834,7 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 	LLONG saved = 0;
 	struct cc_subtitle dec_sub;
 	struct lib_cc_decode *dec_ctx = NULL;
-	struct encoder_ctx *enc_ctx = NULL;
+	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 	unsigned long desp_length=65536;
 	unsigned char *desp=(unsigned char *) malloc (desp_length);
 
@@ -917,12 +917,5 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 	}
 	if (desp)
 		free (desp);
-	flush_cc_decode(ctx->dec_ctx, &ctx->dec_ctx->dec_sub);
-	if (ctx->dec_ctx->dec_sub.got_output)
-	{
-		encode_sub(enc_ctx,&ctx->dec_ctx->dec_sub);
-		ctx->dec_ctx->dec_sub.got_output = 0;
-	}
-	dinit_encoder(&enc_ctx);
 	free (av.data);
 }

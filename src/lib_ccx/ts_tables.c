@@ -495,7 +495,6 @@ int parse_PAT (struct ccx_demuxer *ctx)
 		mprint ("Notice: PAT changed, clearing all variables.\n");
 		dinit_cap(ctx);
 		clear_PMT_array(ctx);
-		ctx->nb_cap = 0;
 		memset (ctx->PIDs_seen,0,sizeof (int) *65536); // Forget all we saw
 		if (!tlt_config.user_page) // If the user didn't select a page...
 			tlt_config.page=0; // ..forget whatever we detected.

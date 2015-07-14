@@ -76,7 +76,6 @@ struct ccx_demuxer
 	enum ccx_code_type codec;
 	enum ccx_code_type nocodec;
 	struct cap_info cinfo_tree;
-	int nb_cap;
 
 	/* File handles */
 	FILE *fh_out_elementarystream;
@@ -150,4 +149,5 @@ struct demuxer_data *get_data_stream(struct demuxer_data *data, int pid);
 int get_best_stream(struct ccx_demuxer *ctx);
 void ignore_other_stream(struct ccx_demuxer *ctx, int pid);
 void dinit_cap (struct ccx_demuxer *ctx);
+int get_programme_number(struct ccx_demuxer *ctx, int pid);
 #endif

@@ -820,7 +820,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, ccx_dec
 
 }
 
-void handle_end_of_data(ccx_decoder_608_context *context, struct cc_subtitle *sub)
+void flush_608_context(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 {
 	// We issue a EraseDisplayedMemory here so if there's any captions pending
 	// they get written to Subtitle.

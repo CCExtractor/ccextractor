@@ -971,6 +971,9 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	int wrote_something = 0;
 	int ret = 0;
 
+	if(!context)
+		return CCX_OK;
+
 	if (sub->type == CC_608)
 	{
 		struct eia608_screen *data = NULL;

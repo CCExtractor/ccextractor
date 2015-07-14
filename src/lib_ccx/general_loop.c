@@ -450,14 +450,7 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 	LLONG ret;
 	struct demuxer_data *data = NULL;
 	struct cc_subtitle *dec_sub = &ctx->dec_ctx->dec_sub;
-	struct encoder_ctx *enc_ctx = NULL;
-
-	if (ctx->write_format!=CCX_OF_NULL)
-	{
-		enc_ctx = init_encoder(&ccx_options.enc_cfg);
-		if (!enc_ctx)
-			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
-	}
+	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 
 	current_pts = 90; // Pick a valid PTS time
 	pts_set = 1;
@@ -492,13 +485,6 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 				print_mstime(get_fts()), ccblocks);
 
 	} while (data->len);
-	flush_cc_decode(ctx->dec_ctx, &ctx->dec_ctx->dec_sub);
-	if (ctx->dec_ctx->dec_sub.got_output)
-	{
-		encode_sub(enc_ctx,&ctx->dec_ctx->dec_sub);
-		ctx->dec_ctx->dec_sub.got_output = 0;
-	}
-	dinit_encoder(&enc_ctx);
 }
 
 /* Process inbuf bytes in buffer holding raw caption data (three byte packets, the first being the field).
@@ -587,12 +573,6 @@ void general_loop(struct lib_ccx_ctx *ctx)
 	int ret;
 	dec_ctx = ctx->dec_ctx;
 
-	if (ctx->write_format!=CCX_OF_NULL)
-	{
-		enc_ctx = init_encoder(&ccx_options.enc_cfg);
-		if (!enc_ctx)
-			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
-	}
 
 	end_of_file = 0;
 	current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
@@ -636,26 +616,6 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible stream_mode");
 		}
 
-		position_sanity_check(ctx->demux_ctx->infd);
-		if(!ctx->multiprogram)
-		{
-			int pid = get_best_stream(ctx->demux_ctx);
-			if(pid < 0)
-			{
-				data_node = get_best_data(datalist);
-				if(!data_node)
-					break;
-			}
-			else
-			{
-				ignore_other_stream(ctx->demux_ctx, pid);
-				data_node = get_data_stream(datalist, pid);
-				if(!data_node)
-					continue;
-			}
-			ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer + overlap, (size_t) (data_node->len - overlap));
-		}
-
 		if (ret == CCX_EOF)
 		{
 			end_of_file = 1;
@@ -665,6 +625,30 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				break;
 		}
 
+		position_sanity_check(ctx->demux_ctx->infd);
+		if(!ctx->multiprogram)
+		{
+			int pid = get_best_stream(ctx->demux_ctx);
+			if(pid < 0)
+			{
+				data_node = get_best_data(datalist);
+				update_encoder_list(ctx);
+				if(!data_node)
+					break;
+			}
+			else
+			{
+				int pn;
+				ignore_other_stream(ctx->demux_ctx, pid);
+				pn = get_programme_number(ctx->demux_ctx, pid);
+				update_encoder_list_pn(ctx, pn);
+
+				data_node = get_data_stream(datalist, pid);
+				if(!data_node)
+					continue;
+			}
+			ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer + overlap, (size_t) (data_node->len - overlap));
+		}
 		LLONG got; // Means 'consumed' from buffer actually
 
 		static LLONG last_pts = 0x01FFFFFFFFLL;
@@ -806,13 +790,6 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		mprint("Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
 				ctx->inputfile[ctx->current_file], ctx->current_file, ctx->demux_ctx->past, ctx->inputsize);
 	}
-	flush_cc_decode(dec_ctx, &dec_ctx->dec_sub);
-	if (dec_ctx->dec_sub.got_output)
-	{
-		encode_sub(enc_ctx,&dec_ctx->dec_sub);
-		dec_ctx->dec_sub.got_output = 0;
-	}
-	dinit_encoder(&enc_ctx);
 }
 
 // Raw caption with FTS file process
@@ -822,15 +799,8 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	static long parsebufsize = 1024;
 	struct lib_cc_decode *dec_ctx = NULL;
 	struct cc_subtitle *dec_sub = &ctx->dec_ctx->dec_sub;
-	struct encoder_ctx *enc_ctx = NULL;
+	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 	dec_ctx = ctx->dec_ctx;
-
-	if (ctx->write_format!=CCX_OF_NULL)
-	{
-		enc_ctx = init_encoder(&ccx_options.enc_cfg);
-		if (!enc_ctx)
-			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
-	}
 
 	// As BUFSIZE is a macro this is just a reminder
 	if (BUFSIZE < (3*0xFFFF + 10))
@@ -944,13 +914,6 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 			dec_sub->got_output = 0;
 		}
 	} // end while(1)
-	flush_cc_decode(dec_ctx, &dec_ctx->dec_sub);
-	if (dec_ctx->dec_sub.got_output)
-	{
-		encode_sub(enc_ctx,&dec_ctx->dec_sub);
-		dec_ctx->dec_sub.got_output = 0;
-	}
-	dinit_encoder(&enc_ctx);
 
 	dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
 }

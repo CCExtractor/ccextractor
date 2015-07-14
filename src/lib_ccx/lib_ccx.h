@@ -142,6 +142,7 @@ struct lib_ccx_ctx
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 
 	struct ccx_demuxer *demux_ctx;
+	struct encoder_ctx *enc_ctx;
 	struct avc_ctx *avc_ctx;
 };
 
@@ -330,4 +331,6 @@ extern struct ccx_s_teletext_config tlt_config;
 extern uint32_t tlt_packet_counter;
 extern uint32_t tlt_frames_produced;
 
+struct encoder_ctx *update_encoder_list_pn(struct lib_ccx_ctx *ctx, int pn);
+struct encoder_ctx * update_encoder_list(struct lib_ccx_ctx *ctx);
 #endif

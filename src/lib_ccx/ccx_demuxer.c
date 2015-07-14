@@ -424,8 +424,6 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 
 	ctx->nocodec = cfg->nocodec;
 
-	ctx->nb_cap = 0;
-
 	ctx->reset = ccx_demuxer_reset;
 	ctx->close = ccx_demuxer_close;
 	ctx->open = ccx_demuxer_open;
