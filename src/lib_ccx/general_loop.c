@@ -632,7 +632,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			if(pid < 0)
 			{
 				data_node = get_best_data(datalist);
-				update_encoder_list(ctx);
+				enc_ctx = update_encoder_list(ctx);
 				if(!data_node)
 					break;
 			}
@@ -641,7 +641,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				int pn;
 				ignore_other_stream(ctx->demux_ctx, pid);
 				pn = get_programme_number(ctx->demux_ctx, pid);
-				update_encoder_list_pn(ctx, pn);
+				enc_ctx = update_encoder_list_pn(ctx, pn);
 
 				data_node = get_data_stream(datalist, pid);
 				if(!data_node)

@@ -946,7 +946,10 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 void set_encoder_rcwt_fileformat(struct encoder_ctx *ctx, short int format)
 {
-	ctx->in_fileformat = format;
+	if(ctx)
+	{
+		ctx->in_fileformat = format;
+	}
 }
 
 static int write_newline(struct encoder_ctx *ctx, int lang)
