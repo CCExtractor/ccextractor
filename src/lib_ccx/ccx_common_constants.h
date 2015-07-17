@@ -160,6 +160,7 @@ enum ccx_output_format
 	CCX_OF_SMPTETT = 6,
 	CCX_OF_SPUPNG = 7,
 	CCX_OF_DVDRAW = 8, // See -d at http://www.geocities.com/mcpoodle43/SCC_TOOLS/DOCS/SCC_TOOLS.HTML#CCExtract
+	CCX_OF_WEBVTT = 9,
 };
 
 enum ccx_output_date_format

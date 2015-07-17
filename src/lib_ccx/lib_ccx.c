@@ -88,6 +88,9 @@ static int init_ctx_extension(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx
 		case CCX_OF_SRT:
 			ctx->extension = ".srt";
 			break;
+        case CCX_OF_WEBVTT:
+            ctx->extension = ".vtt";
+            break;
 		case CCX_OF_SAMI:
 			ctx->extension = ".smi";
 			break;
