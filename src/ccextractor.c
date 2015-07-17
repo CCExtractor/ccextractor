@@ -391,8 +391,8 @@ int main(int argc, char *argv[])
 	if (ccx_options.extract != 2)
 	{
 		if (ccx_options.write_format==CCX_OF_SMPTETT || ccx_options.write_format==CCX_OF_SAMI || 
-			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT
-			|| ccx_options.write_format==CCX_OF_SPUPNG )
+			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT ||
+			ccx_options.write_format==CCX_OF_WEBVTT || ccx_options.write_format==CCX_OF_SPUPNG )
 		{
 			handle_end_of_data(dec_ctx->context_cc608_field_1, &dec_ctx->dec_sub);
 			if (dec_ctx->dec_sub.got_output)
@@ -417,8 +417,8 @@ int main(int argc, char *argv[])
 	if (ccx_options.extract != 1)
 	{
 		if (ccx_options.write_format == CCX_OF_SMPTETT || ccx_options.write_format == CCX_OF_SAMI ||
-			ccx_options.write_format == CCX_OF_SRT || ccx_options.write_format == CCX_OF_TRANSCRIPT
-			|| ccx_options.write_format == CCX_OF_SPUPNG )
+			ccx_options.write_format == CCX_OF_SRT || ccx_options.write_format == CCX_OF_TRANSCRIPT ||
+			ccx_options.write_format == CCX_OF_WEBVTT || ccx_options.write_format == CCX_OF_SPUPNG )
 		{
 			handle_end_of_data(dec_ctx->context_cc608_field_2, &dec_ctx->dec_sub);
 			if (dec_ctx->dec_sub.got_output)
