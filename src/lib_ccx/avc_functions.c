@@ -13,7 +13,7 @@ static void sei_rbsp (struct avc_ctx *ctx, unsigned char *seibuf, unsigned char 
 static unsigned char *sei_message (struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend);
 static void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf, unsigned char *userend);
 static void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigned char *seqend);
-static void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub);
+static void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub);
 
 double roundportable(double x) { return floor(x + 0.5); }
 
@@ -62,7 +62,7 @@ struct avc_ctx *init_avc(void)
 	return ctx;
 }
 
-void do_NAL (struct lib_ccx_ctx *ctx, unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub)
+void do_NAL (struct lib_cc_decode *ctx, unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub)
 {
 	unsigned char *NALstop;
 	unsigned nal_unit_type = *NALstart & 0x1F;
@@ -117,7 +117,7 @@ void do_NAL (struct lib_ccx_ctx *ctx, unsigned char *NALstart, LLONG NAL_length,
 
 // Process inbuf bytes in buffer holding and AVC (H.264) video stream.
 // The number of processed bytes is returned.
-LLONG process_avc (struct lib_ccx_ctx *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub)
+LLONG process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub)
 {
 	unsigned char *bpos = avcbuf;
 	unsigned char *NALstart;
@@ -843,7 +843,7 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
 
 
 // Process slice header in AVC data.
-void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub)
+void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub)
 {
 	LLONG tmp;
 	struct bitstream q1;

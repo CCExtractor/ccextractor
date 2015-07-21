@@ -24,6 +24,7 @@ static struct ccx_decoders_common_settings_t *init_decoder_setting(
 	setting->settings_608 = &opt->settings_608;
 	setting->cc_channel = opt->cc_channel;
 	setting->send_to_srv = opt->send_to_srv;
+	setting->hauppauge_mode = opt->hauppauge_mode;
 	return setting;
 }
 static void dinit_decoder_setting (struct ccx_decoders_common_settings_t **setting)
@@ -81,8 +82,6 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	memset(report_608,0,sizeof(struct ccx_decoder_608_report));
 
 	// Initialize some constants
-	ctx->avc_ctx = init_avc();
-
 	ctx->screens_to_process = -1;
 	ctx->current_file = -1;
 
@@ -131,7 +130,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	build_parity_table();
 
 	ctx->demux_ctx = init_demuxer(ctx, &opt->demux_cfg);
-	ctx->enc_ctx = NULL;
+	INIT_LIST_HEAD(&ctx->enc_ctx_head);
 
 	// Init timing
 	ccx_common_timing_init(&ctx->demux_ctx->past,opt->nosync);
@@ -151,20 +150,24 @@ end:
 void dinit_libraries( struct lib_ccx_ctx **ctx)
 {
 	struct lib_ccx_ctx *lctx = *ctx;
+	struct encoder_ctx *enc_ctx;
+	struct encoder_ctx *enc_ctx1;
 	int i;
-	flush_cc_decode(lctx->dec_ctx, &lctx->dec_ctx->dec_sub);
-	if (&lctx->dec_ctx->dec_sub.got_output)
+	list_for_each_entry_safe(enc_ctx, enc_ctx1, &lctx->enc_ctx_head, list, struct encoder_ctx)
 	{
-		encode_sub(lctx->enc_ctx, &lctx->dec_ctx->dec_sub);
-		lctx->dec_ctx->dec_sub.got_output = 0;
+		flush_cc_decode(lctx->dec_ctx, &lctx->dec_ctx->dec_sub);
+		if (&lctx->dec_ctx->dec_sub.got_output)
+		{
+			encode_sub(enc_ctx, &lctx->dec_ctx->dec_sub);
+			lctx->dec_ctx->dec_sub.got_output = 0;
+		}
+		dinit_encoder(&enc_ctx);
 	}
-	dinit_encoder(&lctx->enc_ctx);
 
 
 	// free EPG memory
 	EPG_free(lctx);
 	ccx_demuxer_delete(&lctx->demux_ctx);
-	dinit_avc(&lctx->avc_ctx);
 	dinit_cc_decode(&lctx->dec_ctx);
 	freep(&lctx->basefilename);
 	freep(&lctx->pesheaderbuf);
@@ -177,20 +180,47 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 
 struct encoder_ctx *update_encoder_list_pn(struct lib_ccx_ctx *ctx, int pn)
 {
+	struct encoder_ctx *enc_ctx;
 	if (ctx->write_format == CCX_OF_NULL)
 		return NULL;
 
+
+	list_for_each_entry(enc_ctx, &ctx->enc_ctx_head, list, struct encoder_ctx)
+	{
+		if (enc_ctx->program_number == pn)
+			return enc_ctx;
+	}
 	if(ctx->multiprogram == CCX_FALSE)
 	{
-		if (ctx->enc_ctx == NULL)
+		if (list_empty(&ctx->enc_ctx_head))
 		{
-			ctx->enc_ctx = init_encoder(&ccx_options.enc_cfg);
-			if (!ctx->enc_ctx)
+			ccx_options.enc_cfg.program_number = pn;
+			enc_ctx = init_encoder(&ccx_options.enc_cfg);
+			if (!enc_ctx)
 				fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
-			return ctx->enc_ctx;
+			list_add_tail( &(enc_ctx->list), &(ctx->enc_ctx_head) );
 		}
-		return ctx->enc_ctx;
 	}
+	else
+	{
+		int len;
+		char *basefilename;
+		char *extension;
+
+		extension = get_file_extension(ccx_options.enc_cfg.write_format);
+		if(ccx_options.output_filename)
+			basefilename = get_basename(ccx_options.output_filename);
+		else
+			basefilename = get_basename(ccx_options.inputfile[0]);
+		len = strlen(basefilename) + 10 + strlen(extension);
+
+		ccx_options.enc_cfg.program_number = pn;
+		ccx_options.enc_cfg.output_filename = malloc(len);
+		sprintf(ccx_options.enc_cfg.output_filename, "%s_%d%s", basefilename, pn, extension);
+		enc_ctx = init_encoder(&ccx_options.enc_cfg);
+		list_add_tail( &(enc_ctx->list), &(ctx->enc_ctx_head) );
+	}
+	return enc_ctx;
 }
 
 struct encoder_ctx *update_encoder_list(struct lib_ccx_ctx *ctx)

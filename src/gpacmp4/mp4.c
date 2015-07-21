@@ -98,7 +98,7 @@ static int process_xdvb_track(struct lib_ccx_ctx *ctx, const char* basename, GF_
 				pts_set=1;
 			set_fts();
 
-			process_m2v (ctx, (unsigned char *) s->data,s->dataLength, sub);
+			process_m2v (ctx->dec_ctx, (unsigned char *) s->data,s->dataLength, sub);
 			gf_isom_sample_del(&s);
 		}
 

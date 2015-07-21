@@ -671,35 +671,6 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 
 }
 
-static char *get_file_extension(enum ccx_output_format write_format)
-{
-	switch (write_format)
-	{
-		case CCX_OF_RAW:
-			return strdup(".raw");
-		case CCX_OF_SRT:
-			return strdup(".srt");
-		case CCX_OF_SAMI:
-			return strdup(".smi");
-		case CCX_OF_SMPTETT:
-			return strdup(".ttml");
-		case CCX_OF_TRANSCRIPT:
-			return strdup(".txt");
-		case CCX_OF_RCWT:
-			return strdup(".bin");
-		case CCX_OF_SPUPNG:
-			return strdup(".xml");
-		case CCX_OF_DVDRAW:
-			return strdup(".dvdraw");
-		case CCX_OF_NULL:
-			return NULL;
-		default:
-			mprint ("write_format doesn't have any legal value, this is a bug.\n");
-			errno = EINVAL;
-			return NULL;
-	}
-	return 0;
-}
 char *create_outfilename(const char *basename, const char *suffix, const char *extension)
 {
 	char *ptr = NULL;

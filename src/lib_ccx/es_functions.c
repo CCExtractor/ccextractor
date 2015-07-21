@@ -21,24 +21,24 @@ static unsigned pulldownfields = 0;
 
 static uint8_t search_start_code(struct bitstream *esstream);
 static uint8_t next_start_code(struct bitstream *esstream);
-static int es_video_sequence(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
-static int read_seq_info(struct lib_ccx_ctx *ctx, struct bitstream *esstream);
-static int sequence_header(struct lib_ccx_ctx *ctx, struct bitstream *esstream);
+static int es_video_sequence(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
+static int read_seq_info(struct lib_cc_decode *ctx, struct bitstream *esstream);
+static int sequence_header(struct lib_cc_decode *ctx, struct bitstream *esstream);
 static int sequence_ext(struct bitstream *esstream);
-static int read_gop_info(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
-static int gop_header(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
-static int read_pic_info(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
+static int read_gop_info(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
+static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
+static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
 static int pic_header(struct bitstream *esstream);
 static int pic_coding_ext(struct bitstream *esstream);
-static int read_eau_info(struct lib_ccx_ctx* ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub);
-static int extension_and_user_data(struct lib_ccx_ctx *ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub);
+static int read_eau_info(struct lib_cc_decode* ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub);
+static int extension_and_user_data(struct lib_cc_decode *ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub);
 static int read_pic_data(struct bitstream *esstream);
 
 
 /* Process a mpeg-2 data stream with "lenght" bytes in buffer "data".
  * The number of processed bytes is returned.
  * Defined in ISO/IEC 13818-2 6.2 */
-LLONG process_m2v (struct lib_ccx_ctx *ctx, unsigned char *data, LLONG length, struct cc_subtitle *sub)
+LLONG process_m2v (struct lib_cc_decode *ctx, unsigned char *data, LLONG length, struct cc_subtitle *sub)
 {
 	if (length<8) // Need to look ahead 8 bytes
 		return length;
@@ -186,7 +186,7 @@ static uint8_t next_start_code(struct bitstream *esstream)
 // Otherwise.  estream->pos shall point to the position where
 // the next call will continue, i.e. the possible begin of an
 // unfinished video sequence or after the finished sequence.
-static int es_video_sequence(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
+static int es_video_sequence(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
 	// Avoid "Skip forward" message on first call and later only
 	// once per search.
@@ -345,7 +345,7 @@ static int es_video_sequence(struct lib_ccx_ctx *ctx, struct bitstream *esstream
 // If a bitstream syntax problem occured the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
-static int read_seq_info(struct lib_ccx_ctx *ctx, struct bitstream *esstream)
+static int read_seq_info(struct lib_cc_decode *ctx, struct bitstream *esstream)
 {
 	dbg_print(CCX_DMT_VERBOSE, "Read Sequence Info\n");
 
@@ -382,7 +382,7 @@ static int read_seq_info(struct lib_ccx_ctx *ctx, struct bitstream *esstream)
 // Return TRUE if the data parsing finished, FALSE otherwise.
 // estream->pos is advanced. Data is only processed if esstream->error
 // is FALSE, parsing can set esstream->error to TRUE.
-static int sequence_header(struct lib_ccx_ctx *ctx, struct bitstream *esstream)
+static int sequence_header(struct lib_cc_decode *ctx, struct bitstream *esstream)
 {
 	dbg_print(CCX_DMT_VERBOSE, "Sequence header\n");
 
@@ -398,10 +398,12 @@ static int sequence_header(struct lib_ccx_ctx *ctx, struct bitstream *esstream)
 	unsigned aspect_ratio = (unsigned) read_bits(esstream,4);
 	unsigned frame_rate = (unsigned) read_bits(esstream,4);
 
+#if 0
 	ctx->freport.width = hor_size;
 	ctx->freport.height = vert_size;
 	ctx->freport.aspect_ratio = aspect_ratio;
 	ctx->freport.frame_rate = frame_rate;
+#endif
 
 	// Discard some information
 	read_bits(esstream, 18+1+10+1);
@@ -528,7 +530,7 @@ static int sequence_ext(struct bitstream *esstream)
 // If a bitstream syntax problem occured the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
-static int read_gop_info(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
+static int read_gop_info(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
 	dbg_print(CCX_DMT_VERBOSE, "Read GOP Info\n");
 
@@ -562,7 +564,7 @@ static int read_gop_info(struct lib_ccx_ctx *ctx, struct bitstream *esstream, st
 // Return TRUE if the data parsing finished, FALSE otherwise.
 // estream->pos is advanced. Data is only processed if esstream->error
 // is FALSE, parsing can set esstream->error to TRUE.
-static int gop_header(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
+static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
 	dbg_print(CCX_DMT_VERBOSE, "GOP header\n");
 
@@ -699,7 +701,7 @@ static int gop_header(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struc
 // If a bitstream syntax problem occured the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
-static int read_pic_info(struct lib_ccx_ctx *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
+static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
 	dbg_print(CCX_DMT_VERBOSE, "Read PIC Info\n");
 
@@ -946,7 +948,7 @@ static int pic_coding_ext(struct bitstream *esstream)
 // If a bitstream syntax problem occured the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
-static int read_eau_info(struct lib_ccx_ctx* ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
+static int read_eau_info(struct lib_cc_decode* ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
 {
 	dbg_print(CCX_DMT_VERBOSE, "Read Extension and User Info\n");
 
@@ -979,7 +981,7 @@ static int read_eau_info(struct lib_ccx_ctx* ctx, struct bitstream *esstream, in
 // Return TRUE if the data parsing finished, FALSE otherwise.
 // estream->pos is advanced. Data is only processed if esstream->error
 // is FALSE, parsing can set esstream->error to TRUE.
-static int extension_and_user_data(struct lib_ccx_ctx *ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
+static int extension_and_user_data(struct lib_cc_decode *ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
 {
 	dbg_print(CCX_DMT_VERBOSE, "Extension and user data(%d)\n", udtype);
 

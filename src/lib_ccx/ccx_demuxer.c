@@ -393,7 +393,6 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	ctx->ts_allprogram = cfg->ts_allprogram;
 	ctx->ts_datastreamtype = cfg->ts_datastreamtype;
 	ctx->nb_program = 0;
-	ctx->codec_ctx = NULL;
 	ctx->multi_stream_per_prog = 0;
 
 	if(cfg->ts_forced_program  != -1)
@@ -417,9 +416,9 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	for(i = 0; i < cfg->nb_ts_cappid; i++)
 	{
 		if(ctx->codec == CCX_CODEC_ANY)
-			update_capinfo(ctx, cfg->ts_cappids[i], cfg->ts_datastreamtype, CCX_CODEC_NONE);
+			update_capinfo(ctx, cfg->ts_cappids[i], cfg->ts_datastreamtype, CCX_CODEC_NONE, 0, NULL);
 		else
-			update_capinfo(ctx, cfg->ts_cappids[i], cfg->ts_datastreamtype, ctx->codec);
+			update_capinfo(ctx, cfg->ts_cappids[i], cfg->ts_datastreamtype, ctx->codec, 0, NULL);
 	}
 
 	ctx->nocodec = cfg->nocodec;

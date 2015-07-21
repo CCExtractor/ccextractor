@@ -74,6 +74,8 @@ struct encoder_ctx
 	unsigned char encoded_br[16];
 	unsigned int encoded_br_length;
 
+	int program_number;
+	struct list_head list;
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048

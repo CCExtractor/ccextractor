@@ -879,7 +879,7 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 					pts_set=1;
 			}
 			memcpy (desp+saved,av.data,av.size);
-			LLONG used = process_m2v(ctx, desp, length, &dec_sub);
+			LLONG used = process_m2v(ctx->dec_ctx, desp, length, &dec_sub);
 			memmove (desp,desp+used,(unsigned int) (length-used));
 			saved=length-used;
 		}

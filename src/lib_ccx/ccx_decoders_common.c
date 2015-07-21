@@ -216,6 +216,8 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	if(!ctx)
 		return NULL;
 
+	ctx->avc_ctx = init_avc();
+
 	// Prepare 608 context
 	ctx->context_cc608_field_1 = ccx_decoder_608_init_library(
 		setting->settings_608,
@@ -239,6 +241,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->subs_delay =  setting->subs_delay;
 	ctx->extract = setting->extract;
 	ctx->fullbin = setting->fullbin;
+	ctx->hauppauge_mode = setting->hauppauge_mode;
 	memcpy(&ctx->extraction_start, &setting->extraction_start,sizeof(struct ccx_boundary_time));
 	memcpy(&ctx->extraction_end, &setting->extraction_end,sizeof(struct ccx_boundary_time));
 
@@ -293,6 +296,7 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 void dinit_cc_decode(struct lib_cc_decode **ctx)
 {
 	struct lib_cc_decode *lctx = *ctx;
+	dinit_avc(&lctx->avc_ctx);
 	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_1);
 	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_2);
 	freep(ctx);

@@ -4,6 +4,7 @@
 #include "ccx_common_timing.h"
 #include "ccx_decoders_608.h"
 #include "ccx_encoders_structs.h"
+#include "list.h"
 
 struct demuxer_cfg
 {
@@ -56,6 +57,7 @@ struct encoder_cfg
 	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
 	int line_terminator_lf; // 0 = CRLF, 1=LF
 	LLONG subs_delay; // ms to delay (or advance) subs
+	int program_number;
 };
 struct ccx_s_options // Options from user parameters
 {
@@ -86,7 +88,7 @@ struct ccx_s_options // Options from user parameters
 	int investigate_packets; // Look for captions in all packets when everything else fails
 	int fullbin; // Disable pruning of padding cc blocks
 	int nosync; // Disable syncing
-	unsigned hauppauge_mode; // If 1, use PID=1003, process specially and so on
+	unsigned int hauppauge_mode; // If 1, use PID=1003, process specially and so on
 	int wtvconvertfix; // Fix broken Windows 7 conversion
 	int wtvmpeg2;
 	int auto_myth; // Use myth-tv mpeg code? 0=no, 1=yes, 2=auto
@@ -115,6 +117,8 @@ struct ccx_s_options // Options from user parameters
 	char *srv_port;
 	int noautotimeref; // Do NOT set time automatically?
 	enum ccx_datasource input_source; // Files, stdin or network
+
+	char *output_filename;
 
 	char **inputfile; // List of files to process
 	int num_input_files; // How many?

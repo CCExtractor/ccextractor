@@ -35,6 +35,7 @@ struct cap_info
 	long capbuflen; // Bytes read in capbuf
 	int saw_pesstart;
 	int prev_counter;
+	void *codec_private_data;
 	int ignore;
 
 	/** 
@@ -44,6 +45,7 @@ struct cap_info
 	/** 
 	  List joining all sibling Stream in Program 
 	*/
+	struct list_head sib_head;
 	struct list_head sib_stream;
 	/** 
 	  List joining all sibling Stream in Program 
@@ -99,7 +101,6 @@ struct ccx_demuxer
 	/* Hauppauge support */
 	unsigned hauppauge_warning_shown; // Did we detect a possible Hauppauge capture and told the user already?
 
-	void *codec_ctx;
 	int multi_stream_per_prog;
 
 	unsigned char *last_pat_payload;
@@ -134,15 +135,14 @@ struct demuxer_data
 	struct demuxer_data *next_program;
 };
 
-int need_capInfo(struct ccx_demuxer *ctx);
 int count_complete_capInfo(struct ccx_demuxer *ctx);
 struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg);
 void ccx_demuxer_delete(struct ccx_demuxer **ctx);
 struct demuxer_data* alloc_demuxer_data(void);
 void delete_demuxer_data(struct demuxer_data *data);
-int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream, enum ccx_code_type codec);
+int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream, enum ccx_code_type codec, int pn, void *private_data);
 struct cap_info * get_cinfo(struct ccx_demuxer *ctx, int pid);
-int need_capInfo(struct ccx_demuxer *ctx);
+int need_capInfo(struct ccx_demuxer *ctx, int program_number);
 int need_capInfo_for_pid(struct ccx_demuxer *ctx, int pid);
 struct demuxer_data *get_best_data(struct demuxer_data *data);
 struct demuxer_data *get_data_stream(struct demuxer_data *data, int pid);
@@ -150,4 +150,6 @@ int get_best_stream(struct ccx_demuxer *ctx);
 void ignore_other_stream(struct ccx_demuxer *ctx, int pid);
 void dinit_cap (struct ccx_demuxer *ctx);
 int get_programme_number(struct ccx_demuxer *ctx, int pid);
+int get_best_sib_stream(struct cap_info* program);
+void ignore_other_sib_stream(struct cap_info* head, int pid);
 #endif

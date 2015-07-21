@@ -68,7 +68,7 @@ void init_options (struct ccx_s_options *options)
 	options->enc_cfg.encoding = CCX_ENC_UTF_8;
 	options->write_format=CCX_OF_SRT; // 0=Raw, 1=srt, 2=SMI
 	options->date_format=ODF_NONE;
-	options->enc_cfg.output_filename=NULL;
+	options->output_filename = NULL;
 	options->demux_cfg.out_elementarystream_filename=NULL;
 	options->debug_mask=CCX_DMT_GENERIC_NOTICES; // dbg_print will use this mask to print or ignore different types
 	options->debug_mask_on_debug=CCX_DMT_VERBOSE; // If we're using temp_debug to enable/disable debug "live", this is the mask when temp_debug=1

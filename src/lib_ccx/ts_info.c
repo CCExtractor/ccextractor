@@ -1,7 +1,7 @@
 #include "ccx_demuxer.h"
 #include "ccx_common_common.h"
 
-int need_capInfo(struct ccx_demuxer *ctx)
+int need_capInfo(struct ccx_demuxer *ctx, int program_number)
 {
 	struct cap_info* iter; 
 	if(list_empty(&ctx->cinfo_tree.all_stream))
@@ -9,6 +9,16 @@ int need_capInfo(struct ccx_demuxer *ctx)
 		return CCX_TRUE;
 	}
 
+	if(ctx->ts_allprogram == CCX_TRUE)
+	{
+		int found_pn = CCX_FALSE;
+		list_for_each_entry(iter, &ctx->cinfo_tree.pg_stream, pg_stream, struct cap_info)
+		{
+			if (iter->program_number == program_number)
+				return CCX_FALSE;
+		}
+		return CCX_TRUE;
+	}
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		if(iter->codec == CCX_CODEC_NONE)
@@ -55,6 +65,40 @@ int get_programme_number(struct ccx_demuxer *ctx, int pid)
 			return iter->program_number;
 	}
 }
+
+int get_best_sib_stream(struct cap_info* program)
+{
+	struct cap_info* iter;
+
+	list_for_each_entry(iter, &program->sib_head, sib_stream, struct cap_info)
+	{
+		if(iter->codec == CCX_CODEC_TELETEXT)
+			return iter->pid;
+	}
+	list_for_each_entry(iter, &program->sib_head, sib_stream, struct cap_info)
+	{
+		if(iter->codec == CCX_CODEC_DVB)
+			return iter->pid;
+	}
+
+	list_for_each_entry(iter, &program->sib_head, sib_stream, struct cap_info)
+	{
+		if(iter->codec == CCX_CODEC_ATSC_CC)
+			return iter->pid;
+	}
+	return -1;
+}
+
+void ignore_other_sib_stream(struct cap_info* head, int pid)
+{
+	struct cap_info* iter; 
+	list_for_each_entry(iter, &head->sib_head, sib_stream, struct cap_info)
+	{
+		if(iter->pid != pid)
+			iter->ignore = 1;
+	}
+}
+
 int get_best_stream(struct ccx_demuxer *ctx)
 {
 	struct cap_info* iter;
@@ -104,10 +148,11 @@ int need_capInfo_for_pid(struct ccx_demuxer *ctx, int pid)
 	return CCX_FALSE;
 }
 
-int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream, enum ccx_code_type codec)
+int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream, enum ccx_code_type codec, int pn, void *private_data)
 {
 	struct cap_info* ptr;
 	struct cap_info* tmp;
+	struct cap_info* program_iter;
 	if(!ctx)
 	{
 		errno = EINVAL;
@@ -147,14 +192,28 @@ int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream
 	tmp->pid = pid;
 	tmp->stream = stream;
 	tmp->codec = codec;
+	tmp->program_number = pn;
 
 	tmp->saw_pesstart = 0;
 	tmp->capbuflen = 0;
 	tmp->capbufsize = 0;
 	tmp->capbuf = NULL;
-	tmp->ignore = 0;
+	tmp->ignore = CCX_FALSE;
+	tmp->codec_private_data = private_data;
 
 	list_add_tail( &(tmp->all_stream), &(ptr->all_stream) );
+
+	list_for_each_entry(program_iter, &ptr->pg_stream, pg_stream, struct cap_info)
+	{
+		if (program_iter->program_number == pn)
+		{
+			list_add_tail( &(tmp->sib_stream), &(program_iter->sib_head) );
+			return CCX_OK;
+		}
+	}
+	INIT_LIST_HEAD(&(tmp->sib_head));
+	list_add_tail( &(tmp->sib_stream), &(tmp->sib_head) );
+	list_add_tail( &(tmp->pg_stream), &(ptr->pg_stream) );
 
 	return 0;
 }

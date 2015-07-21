@@ -1073,6 +1073,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->demux_cfg.ts_autoprogram=1;
 			continue;
 		}
+		if (strcmp (argv[i],"-multiprogram")==0)
+		{
+			opt->multiprogram = 1;
+			opt->demux_cfg.ts_allprogram = CCX_TRUE;
+			continue;
+		}
 		if (strcmp (argv[i],"--stream")==0 ||
 				strcmp (argv[i],"-s")==0)
 		{
@@ -1310,7 +1316,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-o")==0 && i<argc-1)
 		{
-			opt->enc_cfg.output_filename=argv[i+1];
+			opt->output_filename = argv[i+1];
 			i++;
 			continue;
 		}
@@ -1646,7 +1652,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		print_error(opt->gui_mode_reports, "-in=raw can only be used if the output is a subtitle file.\n");
 		return EXIT_INCOMPATIBLE_PARAMETERS;
 	}
-	if (opt->demux_cfg.auto_stream == CCX_SM_RCWT && opt->write_format==CCX_OF_RCWT && opt->enc_cfg.output_filename==NULL)
+	if (opt->demux_cfg.auto_stream == CCX_SM_RCWT && opt->write_format==CCX_OF_RCWT && opt->output_filename == NULL)
 	{
 		print_error(opt->gui_mode_reports,
 			   "CCExtractor's binary format can only be used simultaneously for input and\noutput if the output file name is specified given with -o.\n");
@@ -1678,6 +1684,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	opt->enc_cfg.no_font_color = opt->nofontcolor;
 	opt->enc_cfg.no_type_setting = opt->notypesetting;
 	opt->enc_cfg.subs_delay = opt->subs_delay;
+	opt->enc_cfg.output_filename = strdup(opt->output_filename);
 	return EXIT_OK;
 
 }

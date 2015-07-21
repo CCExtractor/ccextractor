@@ -79,18 +79,7 @@ struct lib_ccx_ctx
 	int stat_dishheaders;
 	int stat_hdtv;
 	int stat_divicom;
-	unsigned total_pulldownfields;
-	unsigned total_pulldownframes;
 	int false_pict_header;
-
-	/* GOP-based timing */
-	int saw_gop_header;
-	int frames_since_last_gop;
-
-
-	/* Time info for timed-transcript */
-	int max_gop_length; // (Maximum) length of a group of pictures
-	int last_gop_length; // Length of the previous group of pictures
 
 	// int hex_mode=HEX_NONE; // Are we processing an hex file?
 
@@ -133,7 +122,7 @@ struct lib_ccx_ctx
 	int epg_last_live_output; 
 	struct file_report freport;
 
-	unsigned hauppauge_mode; // If 1, use PID=1003, process specially and so on
+	unsigned int hauppauge_mode; // If 1, use PID=1003, process specially and so on
 	int live_stream; /* -1 -> Not a complete file but a live stream, without timeout
                        0 -> A regular file
                       >0 -> Live stream with a timeout of this value in seconds */
@@ -142,8 +131,7 @@ struct lib_ccx_ctx
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 
 	struct ccx_demuxer *demux_ctx;
-	struct encoder_ctx *enc_ctx;
-	struct avc_ctx *avc_ctx;
+	struct list_head enc_ctx_head;
 };
 
 #define buffered_skip(ctx, bytes) if (bytes<= ctx->bytesinbuffer - ctx->filebuffer_pos) { \
@@ -190,7 +178,7 @@ int init_file_buffer(struct ccx_demuxer *ctx);
 int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
 void raw_loop (struct lib_ccx_ctx *ctx);
-LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, unsigned char *buffer, int len);
+LLONG process_raw (struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned char *buffer, int len);
 void general_loop(struct lib_ccx_ctx *ctx);
 void processhex (char *filename);
 void rcwt_loop(struct lib_ccx_ctx *ctx);
@@ -205,12 +193,12 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 int wtv_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 
 // es_functions.c
-LLONG process_m2v (struct lib_ccx_ctx *ctx, unsigned char *data, LLONG length,struct cc_subtitle *sub);
+LLONG process_m2v (struct lib_cc_decode *ctx, unsigned char *data, LLONG length,struct cc_subtitle *sub);
 
 extern unsigned top_field_first;
 
 // es_userdata.c
-int user_data(struct lib_ccx_ctx *ctx, struct bitstream *ustream, int udtype, struct cc_subtitle *sub);
+int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, struct cc_subtitle *sub);
 
 // bitstream.c - see bitstream.h
 
@@ -224,10 +212,9 @@ void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned 
 
 // sequencing.c
 void init_hdcc (void);
-void store_hdcc(struct lib_ccx_ctx *ctx, unsigned char *cc_data, int cc_count, int sequence_number,
-			LLONG current_fts_now,struct cc_subtitle *sub);
+void store_hdcc(struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now, struct cc_subtitle *sub);
 void anchor_hdcc(int seq);
-void process_hdcc (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub);
+void process_hdcc (struct lib_cc_decode *ctx, struct cc_subtitle *sub);
 
 // params_dump.c
 void params_dump(struct lib_ccx_ctx *ctx);
@@ -261,7 +248,7 @@ void EPG_free();
 // myth.c
 void myth_loop(struct lib_ccx_ctx *ctx);
 
-LLONG process_avc (struct lib_ccx_ctx *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub);
+LLONG process_avc (struct lib_cc_decode *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub);
 // utility.c
 void fatal(int exit_code, const char *fmt, ...);
 void mprint (const char *fmt, ...);

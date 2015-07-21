@@ -109,9 +109,6 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 	int prev_cap_cont = 0;
 	int present_cap_count = 0;
 
-	if (need_capInfo(ctx) == CCX_FALSE)
-		return 0;
-
 	/* We keep a copy of all PMTs, even if not interesting to us for now */
 	if (ctx->pmt_array[pos].last_pmt_payload!=NULL && len == ctx->pmt_array[pos].last_pmt_length &&
 			!memcmp (buf, ctx->pmt_array[pos].last_pmt_payload, len))
@@ -157,6 +154,10 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 	}
 	buf += 12 + pi_length;
 	len -= (12 + pi_length);
+
+	if (need_capInfo(ctx, program_number) == CCX_FALSE)
+		return 0;
+
 
 	unsigned stream_data = section_length - 9 - pi_length - 4; // prev. bytes and CRC
 
@@ -305,14 +306,15 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 				if(CCX_MPEG_DSC_DVB_SUBTITLE == descriptor_tag)
 				{
 					struct dvb_config cnf;
+					void *ptr;
 					memset((void*)&cnf,0,sizeof(struct dvb_config));
 					ret = parse_dvb_description(&cnf,es_info,desc_len);
 					if(ret < 0)
 						break;
-					ctx->codec_ctx = dvbsub_init_decoder(&cnf);
-					if (ctx->codec_ctx == NULL)
+					ptr = dvbsub_init_decoder(&cnf);
+					if (ptr == NULL)
 						break;
-					update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_DVB);
+					update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_DVB, program_number, ptr);
 					max_dif = 30;
 				}
 			}
@@ -325,11 +327,14 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 			for (desc_len = 0;(buf + i + 5 + ES_info_length) - es_info ;es_info += desc_len)
 			{
 				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
+				void *ptr;
 				desc_len = (*es_info++);
 				if(!IS_VALID_TELETEXT_DESC(descriptor_tag))
 					continue;
-				ctx->codec_ctx = telxcc_init();
-				update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_TELETEXT);
+				ptr = telxcc_init();
+				if (ptr == NULL)
+					break;
+				update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_TELETEXT, program_number, ptr);
 				mprint ("VBI/teletext stream ID %u (0x%x) for SID %u (0x%x)\n",
 						elementary_PID, elementary_PID, program_number, program_number);
 			}
@@ -342,7 +347,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 			unsigned descriptor_tag = buf[i + 5];
 			if (descriptor_tag == 0x45)
 			{
-				update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_ATSC_CC);
+				update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
 				mprint ("VBI stream ID %u (0x%x) for SID %u (0x%x) - teletext is disabled, will be processed as closed captions.\n",
 						elementary_PID, elementary_PID, program_number, program_number);
 			}
@@ -350,7 +355,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 
 		if (ccx_stream_type==CCX_STREAM_TYPE_VIDEO_H264 || ccx_stream_type==CCX_STREAM_TYPE_VIDEO_MPEG2)
 		{
-			update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_ATSC_CC);
+			update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
 			mprint ("Decode captions from program %d - %s stream [0x%02x]  -  PID: %u\n",
 				program_number , desc[ccx_stream_type], ccx_stream_type, elementary_PID);
 		}
@@ -365,7 +370,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 				mprint ("Please pass -streamtype to select manually.\n");
 				fatal (EXIT_FAILURE, "(user assistance needed)");
 			}
-			update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_NONE);
+			update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_NONE, program_number, NULL);
 			continue;
 		}
 

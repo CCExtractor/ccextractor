@@ -68,11 +68,11 @@ void prepare_for_new_file (struct lib_ccx_ctx *ctx)
 	ctx->stat_hdtv = 0;
 	ctx->stat_divicom = 0;
 	total_frames_count = 0;
-	ctx->total_pulldownfields = 0;
-	ctx->total_pulldownframes = 0;
+//	ctx->total_pulldownfields = 0;
+//	ctx->total_pulldownframes = 0;
 	dec_ctx->cc_stats[0]=0; dec_ctx->cc_stats[1]=0; dec_ctx->cc_stats[2]=0; dec_ctx->cc_stats[3]=0;
 	ctx->false_pict_header=0;
-	ctx->frames_since_last_gop=0;
+//	ctx->frames_since_last_gop=0;
 	frames_since_ref_time=0;
 	gop_time.inited=0;
 	first_gop_time.inited=0;

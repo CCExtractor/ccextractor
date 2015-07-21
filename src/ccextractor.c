@@ -257,6 +257,7 @@ int main(int argc, char *argv[])
 		mprint ("\nTotal frames time:	  %s  (%u frames at %.2ffps)\n",
 			print_mstime( (LLONG)(total_frames_count*1000/current_fps) ),
 			total_frames_count, current_fps);
+#if 0
 		if (ctx->total_pulldownframes)
 			mprint ("incl. pulldown frames:  %s  (%u frames at %.2ffps)\n",
 					print_mstime( (LLONG)(ctx->total_pulldownframes*1000/current_fps) ),
@@ -316,6 +317,7 @@ int main(int argc, char *argv[])
 			mprint("caption is not well understood!\n\n");
 			mprint("Please submit samples to the developers.\n\n\n");
 		}
+#endif
 
 		// Add one frame as fts_max marks the beginning of the last frame,
 		// but we need the end.
