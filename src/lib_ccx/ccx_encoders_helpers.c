@@ -196,7 +196,10 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 			if ( MAX_COLOR > its_col)
 				buffer += encode_line(ctx, buffer, (unsigned char*)color_text[its_col][1]);
 			else
+			{
 				ccx_common_logging.log_ftn("WARNING:get_decoder_line_encoded:Invalid Color index Selected %d\n", its_col);
+				its_col = COL_WHITE;
+			}
 
 			if (its_col == COL_USERDEFINED)
 			{

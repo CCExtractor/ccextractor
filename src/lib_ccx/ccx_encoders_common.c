@@ -798,7 +798,8 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 
 	if (cfg->cc_to_stdout == CCX_TRUE)
 	{
-		ctx->out[0].fh=STDOUT_FILENO;
+		ctx->out[0].fh = STDOUT_FILENO;
+		ctx->out[0].filename = NULL;
 		mprint ("Sending captions to stdout.\n");
 	}
 
@@ -851,6 +852,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->capacity=INITIAL_ENC_BUFFER_CAPACITY;
 	ctx->srt_counter = 0;
 
+	ctx->program_number = opt->program_number;
 	ctx->send_to_srv = opt->send_to_srv;
 	ctx->multiple_files = opt->multiple_files;
 	ctx->first_input_file = opt->first_input_file;

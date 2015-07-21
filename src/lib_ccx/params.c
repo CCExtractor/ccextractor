@@ -1676,6 +1676,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		opt->enc_cfg.multiple_files = 1;
 		opt->enc_cfg.first_input_file = opt->inputfile[0];
 	}
+	opt->enc_cfg.cc_to_stdout = opt->cc_to_stdout;
 	opt->enc_cfg.write_format = opt->write_format;
 	opt->enc_cfg.send_to_srv = opt->send_to_srv;
 	opt->enc_cfg.date_format = opt->date_format;
@@ -1684,7 +1685,10 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	opt->enc_cfg.no_font_color = opt->nofontcolor;
 	opt->enc_cfg.no_type_setting = opt->notypesetting;
 	opt->enc_cfg.subs_delay = opt->subs_delay;
-	opt->enc_cfg.output_filename = strdup(opt->output_filename);
+	if(opt->output_filename)
+		opt->enc_cfg.output_filename = strdup(opt->output_filename);
+	else
+		opt->enc_cfg.output_filename = NULL;
 	return EXIT_OK;
 
 }

@@ -218,6 +218,8 @@ struct encoder_ctx *update_encoder_list_pn(struct lib_ccx_ctx *ctx, int pn)
 		ccx_options.enc_cfg.output_filename = malloc(len);
 		sprintf(ccx_options.enc_cfg.output_filename, "%s_%d%s", basefilename, pn, extension);
 		enc_ctx = init_encoder(&ccx_options.enc_cfg);
+		if (!enc_ctx)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 		list_add_tail( &(enc_ctx->list), &(ctx->enc_ctx_head) );
 	}
 	return enc_ctx;

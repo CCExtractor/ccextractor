@@ -558,24 +558,10 @@ void delete_datalist(struct demuxer_data *list)
 void process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct demuxer_data *data_node)
 {
 	LLONG got; // Means 'consumed' from buffer actually
-	LLONG pos = 0; /* Current position in buffer */
 	static LLONG last_pts = 0x01FFFFFFFFLL;
 	struct cc_subtitle *dec_sub = &dec_ctx->dec_sub;
 	LLONG overlap = 0;
 
-	/* Get rid of the bytes we already processed */
-	if (data_node)
-	{
-		overlap = data_node->len-pos;
-		if ( pos != 0 )
-		{
-			// Only when needed as memmove has been seen crashing
-			// for dest==source and n >0
-			memmove (data_node->buffer,data_node->buffer+pos,(size_t) (data_node->len - pos));
-			data_node->len -= pos;
-		}
-	}
-	pos = 0;
 #if 0
 	ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer + overlap, (size_t) (data_node->len - overlap));
 #endif
@@ -653,11 +639,19 @@ void process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, st
 	else
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "Unknown data type!");
 
-	if (got>data_node->len)
+	if (got > data_node->len)
 	{
 		mprint ("BUG BUG\n");
 	}
-	pos+=got;
+	/* Get rid of the bytes we already processed */
+	if (data_node)
+	{
+		if ( got > 0 )
+		{
+			memmove (data_node->buffer,data_node->buffer+got,(size_t) (data_node->len - got));
+			data_node->len -= got;
+		}
+	}
 
 	if (dec_sub->got_output)
 	{
@@ -722,8 +716,6 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				if(!data_node)
 					continue;
 			}
-			enc_ctx = update_encoder_list(ctx);
-			process_data(enc_ctx, dec_ctx, data_node);
 			if (ret == CCX_EOF)
 			{
 				end_of_file = 1;
@@ -732,6 +724,8 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				else
 					break;
 			}
+			enc_ctx = update_encoder_list(ctx);
+			process_data(enc_ctx, dec_ctx, data_node);
 		}
 		else
 		{
