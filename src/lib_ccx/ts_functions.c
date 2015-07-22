@@ -315,12 +315,6 @@ struct demuxer_data *search_or_alloc_demuxer_data_node_by_pid(struct demuxer_dat
 	return ptr;
 }
 
-int get_best_stream_id(struct demuxer_data *data)
-{
-	//int i;
-	//ctx->cinfo[ctx->nb_cap]	
-	return -1;
-}
 struct demuxer_data *get_best_data(struct demuxer_data *data)
 {
 	struct demuxer_data *ret = NULL;

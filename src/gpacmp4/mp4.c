@@ -74,8 +74,11 @@ static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConf
 static int process_xdvb_track(struct lib_ccx_ctx *ctx, const char* basename, GF_ISOFile* f, u32 track, struct cc_subtitle *sub)
 {
 	u32 timescale, i, sample_count;
-
 	int status;
+
+	struct lib_cc_decode *dec_ctx = NULL;
+
+	dec_ctx = update_decoder_list(ctx);
 	if((sample_count = gf_isom_get_sample_count(f, track)) < 1)
 	{
 		return 0;
@@ -98,7 +101,7 @@ static int process_xdvb_track(struct lib_ccx_ctx *ctx, const char* basename, GF_
 				pts_set=1;
 			set_fts();
 
-			process_m2v (ctx->dec_ctx, (unsigned char *) s->data,s->dataLength, sub);
+			process_m2v (dec_ctx, (unsigned char *) s->data,s->dataLength, sub);
 			gf_isom_sample_del(&s);
 		}
 
@@ -286,7 +289,10 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 	GF_ISOFile* f;
 	u32 i, j, track_count, avc_track_count, cc_track_count;
 	struct cc_subtitle dec_sub;
+	struct lib_cc_decode *dec_ctx = NULL;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
+
+	dec_ctx = update_decoder_list(ctx);
 
 	memset(&dec_sub,0,sizeof(dec_sub));
 	mprint("opening \'%s\': ", file);
@@ -485,7 +491,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 									dbg_print(CCX_DMT_PARSE, "mp4-708: atom skipped (cc_type < 2)\n");
 									continue;
 								}
-								do_708(ctx->dec_ctx, (unsigned char *) temp, 4);
+								do_708(dec_ctx, (unsigned char *) temp, 4);
 								cb_708++;
 							}
 							atomStart = sample->dataLength;
@@ -505,7 +511,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 							data += 4;
 
 							do {
-								ret = process608((unsigned char *) data, len, ctx->dec_ctx->context_cc608_field_1,
+								ret = process608((unsigned char *) data, len, dec_ctx->context_cc608_field_1,
 												 &dec_sub);
 								len -= ret;
 								data += ret;

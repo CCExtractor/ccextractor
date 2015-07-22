@@ -171,9 +171,9 @@ void params_dump(struct lib_ccx_ctx *ctx)
 
 void print_file_report(struct lib_ccx_ctx *ctx)
 {
-	struct lib_cc_decode *dec_ctx = NULL;
+//	struct lib_cc_decode *dec_ctx = NULL;
 	enum ccx_stream_mode_enum stream_mode;
-	dec_ctx = ctx->dec_ctx;
+//	dec_ctx = ctx->dec_ctx;
 #define Y_N(cond) ((cond) ? "Yes" : "No")
 
 	printf("File: ");
@@ -199,7 +199,7 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 
 	ctx->demux_ctx->print_report(ctx->demux_ctx);
 	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
-
+#if 0
 	if (ctx->dec_ctx->in_bufferdatatype == CCX_PES &&
 			(stream_mode == CCX_SM_TRANSPORT ||
 			 stream_mode == CCX_SM_PROGRAM ||
@@ -248,6 +248,6 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 	}
 
 	memset(&ctx->freport, 0, sizeof (struct file_report));
-
+#endif
 #undef Y_N
 }

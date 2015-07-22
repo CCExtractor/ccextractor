@@ -59,10 +59,6 @@ int main(int argc, char *argv[])
 	else if (!ctx)
 		fatal (EXIT_NOT_CLASSIFIED, "Unable to create Library Context %d\n",errno);
 
-	dec_ctx = ctx->dec_ctx;
-
-
-
 	int show_myth_banner = 0;
 	
 	memset (&cea708services[0],0,CCX_DECODERS_708_MAX_SERVICES*sizeof (int)); // Cannot (yet) be moved because it's needed in parse_parameters.
@@ -98,7 +94,6 @@ int main(int argc, char *argv[])
 	time_t start, final;
 	time(&start);
 
-	dec_ctx->processed_enough=0;
 	if (ccx_options.binary_concat)
 	{
 		ctx->total_inputsize=gettotalfilessize(ctx);
@@ -111,7 +106,7 @@ int main(int argc, char *argv[])
 	m_signal(SIGINT, sigint_handler);
 #endif
 
-	while (switch_to_next_file(ctx, 0) && !dec_ctx->processed_enough)
+	while (switch_to_next_file(ctx, 0))
 	{
 		prepare_for_new_file(ctx);
 #ifdef ENABLE_FFMPEG
@@ -335,6 +330,9 @@ int main(int argc, char *argv[])
 		cb_field1 = 0; cb_field2 = 0; cb_708 = 0;
 		fts_now = 0;
 		fts_max = 0;
+
+		if(is_decoder_processed_enough(ctx) == CCX_TRUE)
+			break;
 	} // file loop
 	close_input_file(ctx);
 
@@ -358,7 +356,7 @@ int main(int argc, char *argv[])
 	if (ccx_options.teletext_mode == CCX_TXT_IN_USE)
 		mprint ( "Teletext decoder: %"PRIu32" packets processed, %"PRIu32" SRT frames written.\n", tlt_packet_counter, tlt_frames_produced);
 */
-	if (dec_ctx->processed_enough)
+	if (is_decoder_processed_enough(ctx) == CCX_TRUE)
 	{
 		mprint ("\rNote: Processing was cancelled before all data was processed because\n");
 		mprint ("\rone or more user-defined limits were reached.\n");

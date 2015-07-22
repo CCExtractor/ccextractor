@@ -564,7 +564,7 @@ void ProcessVBIDataPacket(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 	}
 
 	LLONG linemask      = 0;
-	dec_ctx = ctx->dec_ctx;
+	dec_ctx = update_decoder_list(ctx);
 	// unsigned long long utc = lastccptsu;
 
 	// [i]tv0 means there is a linemask
@@ -840,7 +840,7 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 
 	av.data=NULL;
 	ccx_options.buffer_input = 1;
-	dec_ctx = ctx->dec_ctx;
+	dec_ctx = update_decoder_list(ctx);
 	desp_length = 65536;
 	desp = (unsigned char *) malloc (desp_length);
 	if (!desp)
@@ -848,7 +848,7 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 	saved=0;
 
 	memset(&dec_sub, 0, sizeof(dec_sub));
-	while (!dec_ctx->processed_enough && (rc=mpegps_read_packet(ctx))==0)
+	while (is_decoder_processed_enough(ctx) == CCX_FALSE && (rc=mpegps_read_packet(ctx))==0)
 	{
 		position_sanity_check(ctx->demux_ctx->infd);
 		if (av.codec_id==CODEC_ID_MPEG2VBI && av.type==CODEC_TYPE_DATA)
@@ -879,7 +879,7 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 					pts_set=1;
 			}
 			memcpy (desp+saved,av.data,av.size);
-			LLONG used = process_m2v(ctx->dec_ctx, desp, length, &dec_sub);
+			LLONG used = process_m2v(dec_ctx, desp, length, &dec_sub);
 			memmove (desp,desp+used,(unsigned int) (length-used));
 			saved=length-used;
 		}

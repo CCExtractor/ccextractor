@@ -449,8 +449,12 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 {
 	LLONG ret;
 	struct demuxer_data *data = NULL;
-	struct cc_subtitle *dec_sub = &ctx->dec_ctx->dec_sub;
+	struct cc_subtitle *dec_sub = NULL;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
+	struct lib_cc_decode *dec_ctx = NULL;
+
+	dec_ctx = update_decoder_list(ctx);
+	dec_sub = &dec_ctx->dec_sub;
 
 	current_pts = 90; // Pick a valid PTS time
 	pts_set = 1;
@@ -467,7 +471,7 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 		if(ret == CCX_EOF)
 			break;
 
-		ret = process_raw(ctx->dec_ctx, dec_sub, data->buffer, data->len);
+		ret = process_raw(dec_ctx, dec_sub, data->buffer, data->len);
 		if (dec_sub->got_output)
 		{
 			encode_sub(enc_ctx, dec_sub);
@@ -560,11 +564,7 @@ void process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, st
 	LLONG got; // Means 'consumed' from buffer actually
 	static LLONG last_pts = 0x01FFFFFFFFLL;
 	struct cc_subtitle *dec_sub = &dec_ctx->dec_sub;
-	LLONG overlap = 0;
 
-#if 0
-	ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer + overlap, (size_t) (data_node->len - overlap));
-#endif
 	if (dec_ctx->hauppauge_mode)
 	{
 		got = process_raw_with_field(dec_ctx, dec_sub, data_node->buffer, data_node->len);
@@ -643,6 +643,10 @@ void process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, st
 	{
 		mprint ("BUG BUG\n");
 	}
+
+
+//	ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer, (size_t) (data_node->len - got));
+
 	/* Get rid of the bytes we already processed */
 	if (data_node)
 	{
@@ -666,13 +670,13 @@ void general_loop(struct lib_ccx_ctx *ctx)
 	struct demuxer_data *datalist = NULL;
 	struct demuxer_data *data_node = NULL;
 	int ret;
-	dec_ctx = ctx->dec_ctx;
+
 
 
 	end_of_file = 0;
 	current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
 	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
-	while (!end_of_file && !dec_ctx->processed_enough)
+	while (!end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE)
 	{
 
 		// GET MORE DATA IN BUFFER
@@ -701,6 +705,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		position_sanity_check(ctx->demux_ctx->infd);
 		if(!ctx->multiprogram)
 		{
+			struct cap_info* cinfo = NULL;
 			struct encoder_ctx *enc_ctx = NULL;
 			int pid = get_best_stream(ctx->demux_ctx);
 			if(pid < 0)
@@ -724,11 +729,14 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				else
 					break;
 			}
+			cinfo = get_cinfo(ctx->demux_ctx, pid);
 			enc_ctx = update_encoder_list(ctx);
+			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 			process_data(enc_ctx, dec_ctx, data_node);
 		}
 		else
 		{
+			struct cap_info* cinfo = NULL;
 			struct cap_info* program_iter;
 			struct cap_info *ptr = &ctx->demux_ctx->cinfo_tree;
 			struct encoder_ctx *enc_ctx = NULL;
@@ -743,17 +751,24 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				}
 				else
 				{
-					int pn;
 					ignore_other_sib_stream(program_iter, pid);
 					data_node = get_data_stream(datalist, pid);
 					if(!data_node)
 					continue;
 				}
-				enc_ctx = update_encoder_list_pn(ctx, program_iter->program_number);
+				if (ret == CCX_EOF)
+				{
+					end_of_file = 1;
+					if(data_node->len)
+						memset (data_node->buffer + data_node->len, 0, (size_t) (BUFSIZE-data_node->len)); /* Clear buffer at the end */
+					else
+						break;
+				}
+				cinfo = get_cinfo(ctx->demux_ctx, pid);
+				enc_ctx = update_encoder_list_pn(ctx, cinfo->program_number);
+				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
+				process_data(enc_ctx, dec_ctx, data_node);
 			}
-			
-			//pn = get_programme_number(ctx->demux_ctx, pid);
-			
 		}
 		if (ctx->live_stream)
 		{
@@ -804,7 +819,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 
 #endif
 	delete_datalist(datalist);
-	if (ctx->total_past!=ctx->total_inputsize && ctx->binary_concat && !dec_ctx->processed_enough)
+	if (ctx->total_past!=ctx->total_inputsize && ctx->binary_concat && is_decoder_processed_enough(ctx))
 	{
 		mprint("\n\n\n\nATTENTION!!!!!!\n");
 		mprint("Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
@@ -818,9 +833,11 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	static unsigned char *parsebuf;
 	static long parsebufsize = 1024;
 	struct lib_cc_decode *dec_ctx = NULL;
-	struct cc_subtitle *dec_sub = &ctx->dec_ctx->dec_sub;
+	struct cc_subtitle *dec_sub = NULL;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
-	dec_ctx = ctx->dec_ctx;
+
+	dec_ctx = update_decoder_list(ctx);
+	dec_sub = &dec_ctx->dec_sub;
 
 	// As BUFSIZE is a macro this is just a reminder
 	if (BUFSIZE < (3*0xFFFF + 10))

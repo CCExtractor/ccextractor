@@ -709,7 +709,7 @@ char *create_outfilename(const char *basename, const char *suffix, const char *e
 	return ptr;
 }
 
-static int dinit_output_ctx(struct encoder_ctx *ctx)
+static void dinit_output_ctx(struct encoder_ctx *ctx)
 {
 	int i;
 	for(i = 0; i < ctx->nb_out; i++)

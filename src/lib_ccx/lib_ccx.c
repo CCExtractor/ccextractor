@@ -62,14 +62,22 @@ static int init_ctx_input(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx)
 	return 0;
 }
 
-
+struct lib_cc_decode *get_decoder_by_pn(struct lib_ccx_ctx *ctx, int pn)
+{
+	struct lib_cc_decode *dec_ctx;
+	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
+	{
+		if (dec_ctx->program_number == pn)
+			return dec_ctx;
+	}
+	return NULL;
+}
 
 struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 {
 	int ret = 0;
 	struct lib_ccx_ctx *ctx;
 	struct ccx_decoder_608_report *report_608;
-	struct ccx_decoders_common_settings_t *dec_setting;
 
 	ctx = malloc(sizeof(struct lib_ccx_ctx));
 	if(!ctx)
@@ -98,9 +106,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->freport.data_from_708 = &ccx_decoder_708_report;
 
 	// Init shared decoder settings
-	dec_setting = init_decoder_setting(opt);
-	ctx->dec_ctx = init_cc_decode(dec_setting);
-	dinit_decoder_setting(&dec_setting);
+	ctx->dec_global_setting = init_decoder_setting(opt);
 
 	//Initialize input files
 	ctx->inputfile = opt->inputfile;
@@ -130,6 +136,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	build_parity_table();
 
 	ctx->demux_ctx = init_demuxer(ctx, &opt->demux_cfg);
+	INIT_LIST_HEAD(&ctx->dec_ctx_head);
 	INIT_LIST_HEAD(&ctx->enc_ctx_head);
 
 	// Init timing
@@ -152,15 +159,23 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 	struct lib_ccx_ctx *lctx = *ctx;
 	struct encoder_ctx *enc_ctx;
 	struct encoder_ctx *enc_ctx1;
+	struct lib_cc_decode *dec_ctx;
 	int i;
 	list_for_each_entry_safe(enc_ctx, enc_ctx1, &lctx->enc_ctx_head, list, struct encoder_ctx)
 	{
-		flush_cc_decode(lctx->dec_ctx, &lctx->dec_ctx->dec_sub);
-		if (&lctx->dec_ctx->dec_sub.got_output)
+		dec_ctx = get_decoder_by_pn(lctx, enc_ctx->program_number);
+		if(dec_ctx)
 		{
-			encode_sub(enc_ctx, &lctx->dec_ctx->dec_sub);
-			lctx->dec_ctx->dec_sub.got_output = 0;
+			flush_cc_decode(dec_ctx, &dec_ctx->dec_sub);
+			if (&dec_ctx->dec_sub.got_output)
+			{
+				encode_sub(enc_ctx, &dec_ctx->dec_sub);
+				dec_ctx->dec_sub.got_output = 0;
+			}
+			dinit_cc_decode(&dec_ctx);
+			list_del(&dec_ctx->list);
 		}
+		list_del(&enc_ctx->list);
 		dinit_encoder(&enc_ctx);
 	}
 
@@ -168,7 +183,7 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 	// free EPG memory
 	EPG_free(lctx);
 	ccx_demuxer_delete(&lctx->demux_ctx);
-	dinit_cc_decode(&lctx->dec_ctx);
+	dinit_decoder_setting(&lctx->dec_global_setting);
 	freep(&lctx->basefilename);
 	freep(&lctx->pesheaderbuf);
 	freep(&lctx->freport.data_from_608);
@@ -176,6 +191,71 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 		freep(&lctx->inputfile[i]);
 	freep(&lctx->inputfile);
 	freep(ctx);
+}
+
+int is_decoder_processed_enough(struct lib_ccx_ctx *ctx)
+{
+	struct lib_cc_decode *dec_ctx;
+	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
+	{
+		if (dec_ctx->processed_enough == CCX_TRUE && ctx->multiprogram == CCX_FALSE)
+			return CCX_TRUE;
+	}
+
+	return CCX_FALSE;
+}
+struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx)
+{
+	struct lib_cc_decode *dec_ctx;
+	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
+	{
+		return dec_ctx;
+	}
+
+	if (list_empty(&ctx->dec_ctx_head))
+	{
+		ctx->dec_global_setting->program_number = 0;
+		dec_ctx = init_cc_decode(ctx->dec_global_setting);
+		if (!dec_ctx)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+		list_add_tail( &(dec_ctx->list), &(ctx->dec_ctx_head) );
+	}
+	return dec_ctx;
+}
+
+struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct cap_info* cinfo)
+{
+	struct lib_cc_decode *dec_ctx = NULL;
+
+	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
+	{
+		if (dec_ctx->program_number == cinfo->program_number)
+			return dec_ctx;
+	}
+	if(cinfo)
+	{
+		ctx->dec_global_setting->program_number = cinfo->program_number;
+		ctx->dec_global_setting->codec = cinfo->codec;
+		ctx->dec_global_setting->private_data = cinfo->codec_private_data;
+	}
+	if(ctx->multiprogram == CCX_FALSE)
+	{
+		if (list_empty(&ctx->dec_ctx_head))
+		{
+			dec_ctx = init_cc_decode(ctx->dec_global_setting);
+			if (!dec_ctx)
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+			list_add_tail( &(dec_ctx->list), &(ctx->dec_ctx_head) );
+		}
+	}
+	else
+	{
+		dec_ctx = init_cc_decode(ctx->dec_global_setting);
+		if (!dec_ctx)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+		list_add_tail( &(dec_ctx->list), &(ctx->dec_ctx_head) );
+	}
+	return dec_ctx;
 }
 
 struct encoder_ctx *update_encoder_list_pn(struct lib_ccx_ctx *ctx, int pn)

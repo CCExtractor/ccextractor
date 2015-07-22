@@ -82,8 +82,8 @@ struct lib_ccx_ctx
 	int false_pict_header;
 
 	// int hex_mode=HEX_NONE; // Are we processing an hex file?
-
-	struct lib_cc_decode *dec_ctx;
+	struct ccx_decoders_common_settings_t *dec_global_setting;
+	struct list_head dec_ctx_head;
 
 
 	int rawmode; // Broadcast or DVD
@@ -243,7 +243,7 @@ int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned 
 int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos);
 int parse_PAT (struct ccx_demuxer *ctx);
 void parse_EPG_packet (struct lib_ccx_ctx *ctx);
-void EPG_free();
+void EPG_free(struct lib_ccx_ctx *ctx);
 
 // myth.c
 void myth_loop(struct lib_ccx_ctx *ctx);
@@ -317,6 +317,10 @@ extern unsigned teletext_mode;
 extern struct ccx_s_teletext_config tlt_config;
 extern uint32_t tlt_packet_counter;
 extern uint32_t tlt_frames_produced;
+
+int is_decoder_processed_enough(struct lib_ccx_ctx *ctx);
+struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct cap_info* cinfo);
+struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx);
 
 struct encoder_ctx *update_encoder_list_pn(struct lib_ccx_ctx *ctx, int pn);
 struct encoder_ctx * update_encoder_list(struct lib_ccx_ctx *ctx);

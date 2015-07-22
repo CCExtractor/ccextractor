@@ -218,30 +218,34 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 	ctx->avc_ctx = init_avc();
 
-	// Prepare 608 context
-	ctx->context_cc608_field_1 = ccx_decoder_608_init_library(
-		setting->settings_608,
-		setting->cc_channel,
-		1,
-		&ctx->processed_enough,
-		setting->cc_to_stdout,
-		setting->output_format
-		);
-	ctx->context_cc608_field_2 = ccx_decoder_608_init_library(
-		setting->settings_608,
-		setting->cc_channel,
-		2,
-		&ctx->processed_enough,
-		setting->cc_to_stdout,
-		setting->output_format
-		);
-
+	if(setting->codec == CCX_CODEC_ATSC_CC)
+	{
+		// Prepare 608 context
+		ctx->context_cc608_field_1 = ccx_decoder_608_init_library(
+				setting->settings_608,
+				setting->cc_channel,
+				1,
+				&ctx->processed_enough,
+				setting->cc_to_stdout,
+				setting->output_format
+				);
+		ctx->context_cc608_field_2 = ccx_decoder_608_init_library(
+				setting->settings_608,
+				setting->cc_channel,
+				2,
+				&ctx->processed_enough,
+				setting->cc_to_stdout,
+				setting->output_format
+				);
+	}
+	ctx->private_data = setting->private_data;
 	ctx->fix_padding = setting->fix_padding;
 	ctx->write_format =  setting->output_format;
 	ctx->subs_delay =  setting->subs_delay;
 	ctx->extract = setting->extract;
 	ctx->fullbin = setting->fullbin;
 	ctx->hauppauge_mode = setting->hauppauge_mode;
+	ctx->program_number = setting->program_number;
 	memcpy(&ctx->extraction_start, &setting->extraction_start,sizeof(struct ccx_boundary_time));
 	memcpy(&ctx->extraction_end, &setting->extraction_end,sizeof(struct ccx_boundary_time));
 

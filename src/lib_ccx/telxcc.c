@@ -957,10 +957,12 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 
 void tlt_write_rcwt(struct lib_ccx_ctx *ctx, uint8_t data_unit_id, uint8_t *packet, uint64_t timestamp,  struct cc_subtitle *sub)
 {
+#if 0
 	struct lib_cc_decode *dec_ctx = ctx->dec_ctx;
 	dec_ctx->writedata((unsigned char *) &data_unit_id, sizeof(uint8_t), dec_ctx->context_cc608_field_1, sub);
 	dec_ctx->writedata((unsigned char *) &timestamp, sizeof(uint64_t), dec_ctx->context_cc608_field_1, sub);
 	dec_ctx->writedata((unsigned char *) packet, 44, dec_ctx->context_cc608_field_1, sub);
+#endif
 }
 
 void tlt_read_rcwt(void *codec, struct cc_subtitle *sub)

@@ -5,6 +5,7 @@
 #include "ccx_common_constants.h"
 #include "ccx_common_timing.h"
 #include "ccx_common_structs.h"
+#include "list.h"
 // Define max width in characters/columns on the screen
 #define CCX_DECODER_608_SCREEN_WIDTH  32
 
@@ -88,6 +89,9 @@ struct ccx_decoders_common_settings_t
 	int cc_channel; // Channel we want to dump in srt mode
 	unsigned send_to_srv;
 	unsigned int hauppauge_mode; // If 1, use PID=1003, process specially and so on
+	int program_number;
+	enum ccx_code_type codec;
+	void *private_data;
 };
 struct lib_cc_decode
 {
@@ -118,6 +122,8 @@ struct lib_cc_decode
 	int last_gop_length; // Length of the previous group of pictures
 	unsigned total_pulldownfields;
 	unsigned total_pulldownframes;
+	int program_number;
+	struct list_head list;
 
 	struct avc_ctx *avc_ctx;
 
