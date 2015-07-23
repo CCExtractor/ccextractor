@@ -141,7 +141,14 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 	return 1;
 }
 
-void net_send_epg(const char *start, const char *stop, const char *title, const char *desc)
+void net_send_epg(
+		const char *start,
+		const char *stop,
+		const char *title,
+		const char *desc,
+		const char *lang,
+		const char *category
+		)
 {
 	/* nanosleep((struct timespec[]){{0, 100000000}}, NULL); */
 	assert(srv_sd > 0);
@@ -161,7 +168,15 @@ void net_send_epg(const char *start, const char *stop, const char *title, const 
 	if (desc != NULL)
 		d += strlen(desc);
 
-	size_t len = st + sp + t + d;
+    size_t l = 1;
+    if (lang != NULL)
+        l += strlen(lang);
+
+    size_t c = 1;
+    if (category != NULL)
+        c += strlen(category);
+
+    size_t len = st + sp + t + d + l + c;
 
 	char *epg = (char *) calloc(len, sizeof(char));
 	if (NULL == epg)
@@ -182,6 +197,14 @@ void net_send_epg(const char *start, const char *stop, const char *title, const 
 	if (desc != NULL)
 		memcpy(end, desc, d);
 	end += d;
+
+    if (lang != NULL)
+        memcpy(end, lang, l);
+    end += l;
+
+    if (category != NULL)
+        memcpy(end, category, c);
+    end += c;
 
 #if DEBUG_OUT
 	fprintf(stderr, "[C] Sending EPG: %u bytes\n", len);

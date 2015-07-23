@@ -223,8 +223,17 @@ void EPG_output_net(struct lib_ccx_ctx *ctx)
 
 		event->live_output = true;
 
-		net_send_epg(event->start_time_string, event->end_time_string,
-				event->event_name, event->extended_text);
+		char *category = NULL;
+		if (event->num_categories > 0)
+			category = EPG_DVB_content_type_to_string(event->categories[0]);
+
+		net_send_epg(
+				event->start_time_string, event->end_time_string,
+				event->event_name,
+				event->extended_text,
+				event->ISO_639_language_code,
+				category
+				);
 	}
 }
 
