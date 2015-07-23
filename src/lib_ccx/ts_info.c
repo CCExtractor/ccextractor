@@ -1,5 +1,7 @@
 #include "ccx_demuxer.h"
 #include "ccx_common_common.h"
+#include "lib_ccx.h"
+#include "dvb_subtitle_decoder.h" 
 
 int need_capInfo(struct ccx_demuxer *ctx, int program_number)
 {
@@ -200,7 +202,22 @@ int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream
 	tmp->capbufsize = 0;
 	tmp->capbuf = NULL;
 	tmp->ignore = CCX_FALSE;
-	tmp->codec_private_data = private_data;
+	if(!private_data)
+	{
+		switch(tmp->codec)
+		{
+		case CCX_CODEC_TELETEXT:
+			tmp->codec_private_data = telxcc_init();
+			break;
+		case CCX_CODEC_DVB:
+			tmp->codec_private_data = dvbsub_init_decoder(NULL);
+			break;
+		default:
+			tmp->codec_private_data = NULL;
+		}
+	}
+	else
+		tmp->codec_private_data = private_data;
 
 	list_add_tail( &(tmp->all_stream), &(ptr->all_stream) );
 
@@ -237,7 +254,7 @@ struct cap_info * get_cinfo(struct ccx_demuxer *ctx, int pid)
 
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
-		if(iter->pid == pid && iter->codec != CCX_CODEC_NONE)
+		if(iter->pid == pid && iter->codec != CCX_CODEC_NONE && iter->stream != CCX_STREAM_TYPE_UNKNOWNSTREAM)
 			return iter;
 	}
 	return NULL;

@@ -429,9 +429,18 @@ void* dvbsub_init_decoder(struct dvb_config* cfg)
 	DVBSubContext *ctx = (DVBSubContext*) malloc(sizeof(DVBSubContext));
 	memset(ctx, 0, sizeof(DVBSubContext));
 
-	ctx->composition_id = cfg->composition_id[0];
-	ctx->ancillary_id = cfg->ancillary_id[0];
-	ctx->lang_index = cfg->lang_index[0];
+	if(cfg)
+	{
+		ctx->composition_id = cfg->composition_id[0];
+		ctx->ancillary_id = cfg->ancillary_id[0];
+		ctx->lang_index = cfg->lang_index[0];
+	}
+	else
+	{
+		ctx->composition_id = 1;
+		ctx->ancillary_id = 1;
+		ctx->lang_index = 1;
+	}
 
 #ifdef ENABLE_OCR
 	ctx->ocr_ctx = init_ocr(ctx->lang_index);
