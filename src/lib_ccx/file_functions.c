@@ -194,7 +194,7 @@ int init_file_buffer(struct ccx_demuxer *ctx)
 {
 	ctx->filebuffer_start = 0;
 	ctx->filebuffer_pos = 0;
-	if (ctx->filebuffer==NULL)
+	if (ctx->filebuffer == NULL)
 	{
 		ctx->filebuffer = (unsigned char *) malloc (FILEBUFFERSIZE);
 		ctx->bytesinbuffer = 0;

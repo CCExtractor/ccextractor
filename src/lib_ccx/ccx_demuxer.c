@@ -30,6 +30,7 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 {
 	if (ccx_options.input_source==CCX_DS_STDIN)
 	{
+		init_file_buffer(ctx);
 		if (ctx->infd != -1) // Means we had already processed stdin. So we're done.
 		{
 			if (ccx_options.print_file_reports)
