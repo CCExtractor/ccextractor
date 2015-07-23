@@ -6,7 +6,7 @@
 
 unsigned char tspacket[188]; // Current packet
 
-struct ts_payload payload;
+//struct ts_payload payload;
 
 
 static unsigned char *haup_capbuf = NULL;
@@ -106,8 +106,10 @@ void init_ts(struct ccx_demuxer *ctx)
 
 
 // Return 1 for sucessfully read ts packet
-int ts_readpacket(struct ccx_demuxer* ctx)
+int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 {
+	unsigned int adaptation_field_length = 0;
+	unsigned int adaptation_field_control;
 	if (ctx->m2ts)
 	{
 		/* M2TS just adds 4 bytes to each packet (so size goes from 188 to 192)
@@ -126,11 +128,12 @@ int ts_readpacket(struct ccx_demuxer* ctx)
 			return CCX_EOF;
 		}
 	}
+
 	buffered_read(ctx, tspacket, 188);
-	ctx->past+=result;
-	if (result!=188)
+	ctx->past += result;
+	if (result != 188)
 	{
-		if (result>0)
+		if (result > 0)
 			mprint("Premature end of file!\n");
 		return CCX_EOF;
 	}
@@ -180,24 +183,23 @@ int ts_readpacket(struct ccx_demuxer* ctx)
 		}
 	}
 
-	unsigned char *payload_start = tspacket + 4;
-	unsigned payload_length = 188 - 4;
 
-	unsigned transport_error_indicator = (tspacket[1]&0x80)>>7;
-	unsigned payload_start_indicator = (tspacket[1]&0x40)>>6;
+	payload->transport_error = (tspacket[1]&0x80)>>7;
+	payload->pesstart =  (tspacket[1] & 0x40) >> 6;
 	// unsigned transport_priority = (tspacket[1]&0x20)>>5;
-	unsigned pid = (((tspacket[1] & 0x1F) << 8) | tspacket[2]) & 0x1FFF;
+	payload->pid = (((tspacket[1] & 0x1F) << 8) | tspacket[2]) & 0x1FFF;
 	// unsigned transport_scrambling_control = (tspacket[3]&0xC0)>>6;
-	unsigned adaptation_field_control = (tspacket[3]&0x30)>>4;
-	unsigned ccounter = tspacket[3] & 0xF;
+	adaptation_field_control = (tspacket[3]&0x30)>>4;
+	payload->counter = tspacket[3] & 0xF;
 
-	if (transport_error_indicator)
+	if (payload->transport_error)
 	{
 		mprint ("Warning: Defective (error indicator on) TS packet (filepos=%lld):\n", ctx->past);
 		dump (CCX_DMT_GENERIC_NOTICES, tspacket, 188, 0, 0);
 	}
 
-	unsigned adaptation_field_length = 0;
+	payload->start = tspacket + 4;
+	payload->length = 188 - 4;
 	if ( adaptation_field_control & 2 )
 	{
 		// Take the PCR (Program Clock Reference) from here, in case PTS is not available (copied from telxcc).
@@ -223,32 +225,26 @@ int ts_readpacket(struct ccx_demuxer* ctx)
 			}
 		}
 
-
-		payload_start = payload_start + adaptation_field_length + 1;
-		payload_length = tspacket+188-payload_start;
+		// Catch bad packages with adaptation_field_length > 184 and
+		// the unsigned nature of payload_length leading to huge numbers.
+		if(adaptation_field_length < payload->length)
+		{
+			payload->start += adaptation_field_length + 1;
+			payload->length -= adaptation_field_length + 1;
+		}
+		else
+		{
+			// This renders the package invalid
+			payload->length = 0;
+			dbg_print(CCX_DMT_PARSE, "  Reject package - set length to zero.\n");
+		}
 	}
 
 	dbg_print(CCX_DMT_PARSE, "TS pid: %d  PES start: %d  counter: %u  payload length: %u  adapt length: %d\n",
-			pid, payload_start_indicator, ccounter, payload_length,
+			payload->pid, payload->start, payload->counter, payload->length,
 			(int) (adaptation_field_length));
 
-	// Catch bad packages with adaptation_field_length > 184 and
-	// the unsigned nature of payload_length leading to huge numbers.
-	if (payload_length > 184)
-	{
-		// This renders the package invalid
-		payload_length = 0;
-		dbg_print(CCX_DMT_PARSE, "  Reject package - set length to zero.\n");
-	}
-
-	// Save data in global struct
-	payload.start = payload_start;
-	payload.length = payload_length;
-	payload.pesstart = payload_start_indicator;
-	payload.pid = pid;
-	payload.counter = ccounter;
-	payload.transport_error = transport_error_indicator;
-	if (payload_length == 0)
+	if (payload->length == 0)
 	{
 		dbg_print(CCX_DMT_PARSE, "  No payload in package.\n");
 	}
@@ -260,6 +256,7 @@ int ts_readpacket(struct ccx_demuxer* ctx)
 
 void look_for_caption_data (struct ccx_demuxer *ctx)
 {
+#if 0
 	// See if we find the usual CC data marker (GA94) in this packet.
 	if (payload.length<4 || ctx->PIDs_seen[payload.pid]==3) // Second thing means we already inspected this PID
 		return;
@@ -273,7 +270,7 @@ void look_for_caption_data (struct ccx_demuxer *ctx)
 			return;
 		}
 	}
-
+#endif
 }
 
 struct demuxer_data *search_or_alloc_demuxer_data_node_by_pid(struct demuxer_data **data, int pid)
@@ -508,13 +505,14 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	int packet_analysis_mode = 0; // If we can't find any packet with CC based from PMT, look for captions in all packets
 	int ret = CCX_EAGAIN;
 	struct cap_info *cinfo;
+	struct ts_payload payload;
 
 	do
 	{
 		pcount++;
 
 		// Exit the loop at EOF
-		ret = ts_readpacket(ctx);
+		ret = ts_readpacket(ctx, &payload);
 		if ( ret != CCX_OK)
 			break;
 
@@ -538,7 +536,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		// Check for PAT
 		if( payload.pid == 0) // This is a PAT
 		{
-			parse_PAT(ctx); // Returns 1 if there was some data in the buffer already
+			parse_PAT(ctx, &payload); // Returns 1 if there was some data in the buffer already
 			continue;
 		}
 		
@@ -547,23 +545,13 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		if( ccx_options.xmltv >= 1 && payload.pid >= 0x1000) // This may be ATSC EPG packet
 			parse_EPG_packet(ctx->parent);
 
-		// PID != 0 but no PMT selected yet, ignore the rest of the current
-		// package and continue searching, UNLESS we are in -autoprogram, which requires us
-		// to analyze all PMTs to look for a stream with data.
-//		if ( !pmtpid && ccx_options.teletext_mode!=CCX_TXT_IN_USE && !ctx->ts_autoprogram)
-//		{
-//			dbg_print(CCX_DMT_PARSE, "Packet (pid %u) skipped - no PMT pid identified yet.\n",
-//					   payload.pid);
-//			continue;
-//		}
-
 		int is_pmt=0, j;
-		for (j=0;j<ctx->pmt_array_length;j++)
+		for (j = 0; j < ctx->nb_program; j++)
 		{
-			if (ctx->pmt_array[j].PMT_PID==payload.pid)
+			if (ctx->pinfo[j].pid == payload.pid)
 			{
 				if (!ctx->PIDs_seen[payload.pid])
-					dbg_print(CCX_DMT_PAT, "This PID (%u) is a PMT for program %u.\n",payload.pid, ctx->pmt_array[j].program_number);
+					dbg_print(CCX_DMT_PAT, "This PID (%u) is a PMT for program %u.\n",payload.pid, ctx->pinfo[j].program_number);
 				is_pmt=1;
 				break;
 			}

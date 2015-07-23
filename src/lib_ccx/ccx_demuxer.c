@@ -196,13 +196,10 @@ static void ccx_demuxer_print_report(struct ccx_demuxer *ctx)
 			printf("Program Count: %d\n", ctx->freport.program_cnt);
 
 			printf("Program Numbers: ");
-			for (int i = 0; i < ctx->pmt_array_length; i++)
-			{
-				if (ctx->pmt_array[i].program_number == 0)
-					continue;
 
-				printf("%u ", ctx->pmt_array[i].program_number);
-			}
+			for (int i = 0; i < ctx->nb_program; i++)
+				printf("%u ", ctx->pinfo[i].program_number);
+
 			printf("\n");
 
 			for (int i = 0; i < 65536; i++)
@@ -358,14 +355,6 @@ void ccx_demuxer_delete(struct ccx_demuxer **ctx)
 	int i;
 	dinit_cap(lctx);
 	freep(&lctx->last_pat_payload);
-	for(i = 0; i < TS_PMT_MAP_SIZE; i++)
-	{
-		if(lctx->pmt_array[i].last_pmt_length)
-		{
-			freep(&lctx->pmt_array[i].last_pmt_payload);
-		}
-		lctx->pmt_array[i].last_pmt_length = 0;
-	}
 	for (i = 0; i < MAX_PID; i++)
 	{
 		if( lctx->PIDs_programs[i])
@@ -439,9 +428,7 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	ctx->last_pat_length = 0;
 
 	ctx->fh_out_elementarystream = NULL;
-
-	ctx->pmt_array_length = 0;
-	memset(ctx->pmt_array, 0, sizeof(struct PAT_entry) * TS_PMT_MAP_SIZE);
+	ctx->warning_program_not_found_shown = CCX_FALSE;
 	if (cfg->out_elementarystream_filename != NULL)
 	{
 		if ((ctx->fh_out_elementarystream = fopen (cfg->out_elementarystream_filename,"wb"))==NULL)

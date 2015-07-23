@@ -91,10 +91,6 @@ struct ccx_demuxer
 
 	int PIDs_seen[MAX_PID];
 
-	// PMTs table
-	struct PAT_entry pmt_array[TS_PMT_MAP_SIZE];
-	uint16_t pmt_array_length;
-
 	struct PMT_entry *PIDs_programs[MAX_PID];
 	struct ccx_demux_report freport;
 
@@ -110,6 +106,8 @@ struct ccx_demuxer
 	LLONG filebuffer_start; // Position of buffer start relative to file
 	int filebuffer_pos; // Position of pointer relative to buffer start
 	int bytesinbuffer; // Number of bytes we actually have on buffer
+
+	int warning_program_not_found_shown;
 
 	void *parent;
 	void (*print_cfg)(struct ccx_demuxer *ctx);

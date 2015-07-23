@@ -998,7 +998,7 @@ void tlt_read_rcwt(void *codec, struct cc_subtitle *sub)
 	}
 }
 
-void tlt_process_pes_packet(void *codec, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub)
+int tlt_process_pes_packet(void *codec, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub)
 {
 	uint64_t pes_prefix;
 	uint8_t pes_stream_id;
@@ -1011,25 +1011,36 @@ void tlt_process_pes_packet(void *codec, uint8_t *buffer, uint16_t size, struct 
 	static int64_t delta = 0;
 	static uint32_t t0 = 0;
 	struct TeletextCtx *ctx = codec;
+
+	if(!ctx)
+	{
+		mprint("Teletext: Context cant be NULL, use telxcc_init");
+		return CCX_EINVAL;
+	}
+
 	tlt_packet_counter++;
-	if (size < 6) return;
+	if (size < 6)
+		return CCX_OK;
 
 	// Packetized Elementary Stream (PES) 32-bit start code
 	pes_prefix = (buffer[0] << 16) | (buffer[1] << 8) | buffer[2];
 	pes_stream_id = buffer[3];
 
 	// check for PES header
-	if (pes_prefix != 0x000001) return;
+	if (pes_prefix != 0x000001)
+		return 0;
 
 	// stream_id is not "Private Stream 1" (0xbd)
-	if (pes_stream_id != 0xbd) return;
+	if (pes_stream_id != 0xbd)
+		return 0;
 
 	// PES packet length
 	// ETSI EN 301 775 V1.2.1 (2003-05) chapter 4.3: (N x 184) - 6 + 6 B header
 	pes_packet_length = 6 + ((buffer[4] << 8) | buffer[5]);
 	// Can be zero. If the "PES packet length" is set to zero, the PES packet can be of any length.
 	// A value of zero for the PES packet length can be used only when the PES packet payload is a video elementary stream.
-	if (pes_packet_length == 6) return;
+	if (pes_packet_length == 6)
+		return CCX_OK;
 
 	// truncate incomplete PES packets
 	if (pes_packet_length > size) pes_packet_length = size;
@@ -1134,6 +1145,7 @@ void tlt_process_pes_packet(void *codec, uint8_t *buffer, uint16_t size, struct 
 
 		i += data_unit_len;
 	}
+	return CCX_OK;
 }
 
 // Called only when teletext is detected or forced and it's going to be used for extraction.

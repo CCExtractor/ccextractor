@@ -235,12 +235,12 @@ int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, u
 
 // ts_functions.c
 void init_ts(struct ccx_demuxer *ctx);
-int ts_readpacket(struct ccx_demuxer* ctx);
+int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload);
 long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data);
 LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **data);
 int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char*buf, int size, int pos);
-int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos);
-int parse_PAT (struct ccx_demuxer *ctx);
+int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char *buf, int len, int pos);
+int parse_PAT (struct ccx_demuxer *ctx, struct ts_payload *payload);
 void parse_EPG_packet (struct lib_ccx_ctx *ctx);
 void EPG_free(struct lib_ccx_ctx *ctx);
 
@@ -267,7 +267,7 @@ void m_signal(int sig, void (*func)(int));
 void buffered_seek (struct ccx_demuxer *ctx, int offset);
 extern void build_parity_table(void);
 
-void tlt_process_pes_packet(void *codec, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub);
+int tlt_process_pes_packet(void *codec, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub);
 void* telxcc_init(void);
 void telxcc_close(void **ctx, struct cc_subtitle *sub);
 void tlt_read_rcwt(void *codec, struct cc_subtitle *sub);
@@ -301,7 +301,7 @@ extern unsigned char cc_data_pkts[SORTBUF][10*31*3+1];
 extern int has_ccdata_buffered;
 
 // From ts_functions
-extern struct ts_payload payload;
+//extern struct ts_payload payload;
 extern unsigned char tspacket[188];
 extern unsigned char *last_pat_payload;
 extern unsigned last_pat_length;

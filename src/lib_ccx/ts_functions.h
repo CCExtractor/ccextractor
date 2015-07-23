@@ -25,7 +25,6 @@ struct PAT_entry
 struct PMT_entry
 {
 	unsigned program_number;
-	unsigned PMT_PID;
 	unsigned elementary_PID;
 	unsigned ccx_stream_type;
 	unsigned printable_stream_type;
