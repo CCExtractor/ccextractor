@@ -54,9 +54,6 @@ void prepare_for_new_file (struct lib_ccx_ctx *ctx)
 //	struct lib_cc_decode *dec_ctx = NULL;
 //	dec_ctx = ctx->dec_ctx;
 	// Init per file variables
-	min_pts=0x01FFFFFFFFLL; // 33 bit
-	sync_pts=0;
-	pts_set = 0;
 	// inputsize=0; Now responsibility of switch_to_next_file()
 	ctx->last_reported_progress=-1;
 	ctx->stat_numuserheaders = 0;

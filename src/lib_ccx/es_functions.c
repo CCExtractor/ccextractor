@@ -435,12 +435,6 @@ static int sequence_header(struct lib_cc_decode *ctx, struct bitstream *esstream
 				aspect_ratio>0 && aspect_ratio<5)
 		{
 			mprint ("\n\nNew video information found");
-			if (pts_set==2)
-			{
-				unsigned cur_sec = (unsigned) ((current_pts - min_pts)
-						/ MPEG_CLOCK_FREQ);
-				mprint (" at %02u:%02u",cur_sec/60, cur_sec % 60);
-			}
 			mprint ("\n");
 			mprint ("[%u * %u] [AR: %s] [FR: %s]",
 					hor_size,vert_size,
@@ -667,12 +661,10 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 		// If we use GOP timing, reconstruct the PTS from the GOP
 		if (ccx_options.use_gop_as_pts==1)
 		{
-			current_pts = gtc.ms*(MPEG_CLOCK_FREQ/1000);
-			if (pts_set==0)
-				pts_set=1;
-			current_tref = 0;
+			set_current_pts(ctx->timing, gtc.ms*(MPEG_CLOCK_FREQ/1000));
+			ctx->timing->current_tref = 0;
 			frames_since_ref_time = 0;
-			set_fts();
+			set_fts(ctx->timing);
 			fts_at_gop_start = get_fts_max();
 		}
 		else
@@ -689,7 +681,7 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 		{
 			dbg_print(CCX_DMT_TIME, "\nNew GOP:\n");
 			dbg_print(CCX_DMT_TIME, "\nDrop frame flag: %u:\n", drop_frame_flag);
-			print_debug_timing();
+			print_debug_timing(ctx->timing);
 		}
 	}
 
@@ -734,7 +726,7 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 	if (picture_coding_type==CCX_FRAME_TYPE_I_FRAME || picture_coding_type==CCX_FRAME_TYPE_P_FRAME)
 	{
 		if (((picture_structure != 0x1) && (picture_structure != 0x2)) ||
-				(temporal_reference != current_tref))
+				(temporal_reference != ctx->timing->current_tref))
 		{
 			// NOTE: process_hdcc() needs to be called before set_fts() as it
 			// uses fts_now to re-create the timeline !!!!!
@@ -746,22 +738,16 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 		}
 	}
 
-	current_tref = temporal_reference;
-	current_picture_coding_type = picture_coding_type;
+	ctx->timing->current_tref = temporal_reference;
+	ctx->timing->current_picture_coding_type = picture_coding_type;
 
 	// We mostly use PTS, but when the GOP mode is enabled do not set
 	// the FTS time here.
 	if (ccx_options.use_gop_as_pts!=1)
 	{
-		set_fts(); // Initialize fts
+		set_fts(ctx->timing); // Initialize fts
 	}
 
-	dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u) - tref: %2d - %s  since tref0/GOP: %2u/%2u",
-			print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-			(unsigned) (current_pts), temporal_reference,
-			pict_types[picture_coding_type],
-			(unsigned) (frames_since_ref_time),
-			(unsigned) (ctx->frames_since_last_gop));
 	dbg_print(CCX_DMT_VIDES, "  t:%d r:%d p:%d", top_field_first,
 			repeat_first_field, progressive_frame);
 	dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
@@ -796,7 +782,7 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 		if (ccx_options.debug_mask & CCX_DMT_TIME)
 		{
 			dbg_print(CCX_DMT_TIME, "\nNew temporal reference:\n");
-			print_debug_timing();
+			print_debug_timing(ctx->timing);
 		}
 
 		ctx->saw_gop_header = 0; // Reset the value

@@ -936,9 +936,7 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 					}
 
 					// Remember, we are reading the previous package.
-					current_pts = asf_data_container.StreamProperties.currDecodeStreamPTS*(MPEG_CLOCK_FREQ / 1000);
-					if (pts_set==0)
-						pts_set=1;
+					data->pts = asf_data_container.StreamProperties.currDecodeStreamPTS*(MPEG_CLOCK_FREQ / 1000);
 				}
 			}
 

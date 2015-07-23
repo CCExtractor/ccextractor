@@ -9,6 +9,7 @@
 #include "dvb_subtitle_decoder.h"
 #include "ccx_encoders_common.h"
 #include "activity.h"
+#include "utility.h"
 
 /* General video information */
  unsigned current_hor_size = 0;
@@ -197,7 +198,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 			else if ((nextheader[3]&0xf0)==0xe0)
 			{
 				int hlen; // Dummy variable, unused
-				int peslen = read_video_pes_header(ctx->demux_ctx, nextheader, &hlen, 0);
+				int peslen = read_video_pes_header(ctx->demux_ctx, data, nextheader, &hlen, 0);
 				if (peslen < 0)
 				{
 					end_of_file=1;
@@ -456,13 +457,8 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 	dec_ctx = update_decoder_list(ctx);
 	dec_sub = &dec_ctx->dec_sub;
 
-	current_pts = 90; // Pick a valid PTS time
-	pts_set = 1;
-	set_fts(); // Now set the FTS related variables
-	dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
-			print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-			(unsigned) (current_pts));
-	dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
+	set_current_pts(dec_ctx->timing, 90);
+	set_fts(dec_ctx->timing); // Now set the FTS related variables
 
 	do
 	{
@@ -479,14 +475,9 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 		}
 
 		int ccblocks = cb_field1;
-		current_pts += cb_field1*1001/30*(MPEG_CLOCK_FREQ/1000);
-		set_fts(); // Now set the FTS related variables including fts_max
+		add_current_pts(dec_ctx->timing, cb_field1*1001/30*(MPEG_CLOCK_FREQ/1000));
+		set_fts(dec_ctx->timing); // Now set the FTS related variables including fts_max
 
-		dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
-				print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-				(unsigned) (current_pts));
-		dbg_print(CCX_DMT_VIDES, "  FTS: %s incl. %d CB\n",
-				print_mstime(get_fts()), ccblocks);
 
 	} while (data->len);
 }
@@ -568,13 +559,13 @@ void process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, st
 	if (dec_ctx->hauppauge_mode)
 	{
 		got = process_raw_with_field(dec_ctx, dec_sub, data_node->buffer, data_node->len);
-		if (pts_set)
-			set_fts(); // Try to fix timing from TS data
+		if (dec_ctx->timing->pts_set)
+			set_fts(dec_ctx->timing); // Try to fix timing from TS data
 	}
 	else if(data_node->bufferdatatype == CCX_DVB_SUBTITLE)
 	{
 		dvbsub_decode(dec_ctx->private_data, data_node->buffer + 2, data_node->len - 2, dec_sub);
-		set_fts();
+		set_fts(dec_ctx->timing);
 		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_PES)
@@ -593,6 +584,7 @@ void process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, st
 	{
 		got = data_node->len; // Do nothing. Still don't know how to process it
 	}
+#if 0
 	else if (data_node->bufferdatatype == CCX_RAW) // Raw two byte 608 data from DVR-MS/ASF
 	{
 		// The asf_getmoredata() loop sets current_pts when possible
@@ -631,6 +623,7 @@ void process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, st
 
 		got = process_raw(dec_ctx, dec_sub, data_node->buffer, data_node->len);
 	}
+#endif
 	else if (data_node->bufferdatatype == CCX_H264) // H.264 data from TS file
 	{
 		dec_ctx->in_bufferdatatype = data_node->bufferdatatype;
@@ -674,7 +667,6 @@ void general_loop(struct lib_ccx_ctx *ctx)
 
 
 	end_of_file = 0;
-	current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
 	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 	while (!end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE)
 	{
@@ -732,6 +724,8 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			cinfo = get_cinfo(ctx->demux_ctx, pid);
 			enc_ctx = update_encoder_list(ctx);
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
+			if(data_node->pts != CCX_NOPTS)
+				set_current_pts(dec_ctx->timing, data_node->pts);
 			process_data(enc_ctx, dec_ctx, data_node);
 		}
 		else
@@ -767,6 +761,8 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				cinfo = get_cinfo(ctx->demux_ctx, pid);
 				enc_ctx = update_encoder_list_pn(ctx, cinfo->program_number);
 				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
+				if(data_node->pts != CCX_NOPTS)
+					set_current_pts(dec_ctx->timing, data_node->pts);
 				process_data(enc_ctx, dec_ctx, data_node);
 			}
 		}
@@ -882,11 +878,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 		return;
 	}
 
-	// Initialize first time. As RCWT files come with the correct FTS the
-	// initial (minimal) time needs to be set to 0.
-	current_pts = 0;
-	pts_set=1;
-	set_fts(); // Now set the FTS related variables
+	set_fts(dec_ctx->timing); // Now set the FTS related variables
 
 	// Loop until no more data is found
 	while(1)
@@ -930,15 +922,8 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 			}
 
 			// Process the data
-			current_pts = currfts*(MPEG_CLOCK_FREQ/1000);
-			if (pts_set==0)
-				pts_set=1;
-			set_fts(); // Now set the FTS related variables
-
-			dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
-					print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-					(unsigned) (current_pts));
-			dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
+			set_current_pts(dec_ctx->timing, currfts*(MPEG_CLOCK_FREQ/1000));
+			set_fts(dec_ctx->timing); // Now set the FTS related variables
 
 			for (int j=0; j<cbcount*3; j=j+3)
 			{

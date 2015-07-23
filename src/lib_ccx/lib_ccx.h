@@ -231,8 +231,7 @@ void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct
 int isValidMP4Box(unsigned char *buffer, long position, long *nextBoxLocation, int *boxScore);
 void detect_stream_type (struct ccx_demuxer *ctx);
 int detect_myth( struct ccx_demuxer *ctx );
-int read_video_pes_header (struct ccx_demuxer *ctx, unsigned char *nextheader, int *headerlength, int sbuflen);
-int read_pts_pes(unsigned char*header, int len);
+int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, unsigned char *nextheader, int *headerlength, int sbuflen);
 
 // ts_functions.c
 void init_ts(struct ccx_demuxer *ctx);

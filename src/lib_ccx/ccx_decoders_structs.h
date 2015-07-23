@@ -124,6 +124,7 @@ struct lib_cc_decode
 	unsigned total_pulldownframes;
 	int program_number;
 	struct list_head list;
+	struct ccx_common_timing_ctx *timing;
 
 	struct avc_ctx *avc_ctx;
 

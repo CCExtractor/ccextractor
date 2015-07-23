@@ -10,9 +10,6 @@
 #include "ccx_mp4.h"
 #include "activity.h"
 
-void do_NAL (struct lib_ccx_ctx *ctx, unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub);
-void set_fts(void); // From timing.c
-
 static short bswap16(short v)
 {
 	return ((v >> 8) & 0x00FF) | ((v << 8) & 0xFF00);
@@ -34,11 +31,12 @@ static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConf
 	int status = 0;
 	u32 i;
 	s32 signed_cts=(s32) s->CTS_Offset; // Convert from unsigned to signed. GPAC uses u32 but unsigned values are legal.
-	current_pts=(LLONG )(s->DTS + signed_cts)*MPEG_CLOCK_FREQ/timescale ; // Convert frequency to official one
+	struct lib_cc_decode *dec_ctx = NULL;
 
-	if (pts_set==0)
-		pts_set=1;
-	set_fts();
+	dec_ctx = update_decoder_list(ctx);
+
+	set_current_pts(dec_ctx->timing, (s->DTS + signed_cts)*MPEG_CLOCK_FREQ/timescale);
+	set_fts(dec_ctx->timing);
 
 	for(i = 0; i < s->dataLength; )
 	{
@@ -64,7 +62,7 @@ static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConf
 		temp_debug=0;
 
 		if (nal_length>0)
-			do_NAL (ctx, (unsigned char *) &(s->data[i]) ,nal_length, sub);
+			do_NAL (dec_ctx, (unsigned char *) &(s->data[i]) ,nal_length, sub);
 		i += nal_length;
 	} // outer for
 	assert(i == s->dataLength);
@@ -96,10 +94,8 @@ static int process_xdvb_track(struct lib_ccx_ctx *ctx, const char* basename, GF_
 		if (s!=NULL)
 		{
 			s32 signed_cts=(s32) s->CTS_Offset; // Convert from unsigned to signed. GPAC uses u32 but unsigned values are legal.
-			current_pts=(LLONG )(s->DTS + signed_cts)*MPEG_CLOCK_FREQ/timescale ; // Convert frequency to official one
-			if (pts_set==0)
-				pts_set=1;
-			set_fts();
+			set_current_pts(dec_ctx->timing, (s->DTS + signed_cts)*MPEG_CLOCK_FREQ/timescale);
+			set_fts(dec_ctx->timing);
 
 			process_m2v (dec_ctx, (unsigned char *) s->data,s->dataLength, sub);
 			gf_isom_sample_del(&s);
@@ -361,7 +357,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 				for (j=0; j<gf_list_count(cnf->sequenceParameterSets);j++)
 				{
 					GF_AVCConfigSlot* seqcnf=(GF_AVCConfigSlot* )gf_list_get(cnf->sequenceParameterSets,j);
-					do_NAL (ctx, (unsigned char *) seqcnf->data, seqcnf->size, &dec_sub);
+					do_NAL (dec_ctx, (unsigned char *) seqcnf->data, seqcnf->size, &dec_sub);
 				}
 			}
 
@@ -416,10 +412,8 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 				 mprint ("Data length: %lu\n",sample->dataLength);
 				const LLONG timestamp = (LLONG )((sample->DTS + sample->CTS_Offset) * 1000) / timescale;
 #endif
-				current_pts=(LLONG )(sample->DTS + sample->CTS_Offset)*MPEG_CLOCK_FREQ/timescale ; // Convert frequency to official one
-				if (pts_set==0)
-					pts_set=1;
-				set_fts();
+				set_current_pts(dec_ctx->timing, (sample->DTS + sample->CTS_Offset)*MPEG_CLOCK_FREQ/timescale);
+				set_fts(dec_ctx->timing);
 
 				int atomStart = 0;
 				// process Atom by Atom

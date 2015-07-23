@@ -6,6 +6,8 @@
 #include <unistd.h>
 #endif
 #include "activity.h"
+#include "utility.h"
+#include "ccx_common_timing.h"
 void detect_stream_type (struct ccx_demuxer *ctx)
 {
 	ctx->stream_mode=CCX_SM_ELEMENTARY_OR_NOT_FOUND; // Not found
@@ -204,40 +206,6 @@ int detect_myth( struct ccx_demuxer *ctx )
 
 	return 0;
 }
-int read_pts_pes(unsigned char*header, int len)
-{
-	/* unsigned int peslen = 0; */
-	LLONG bits_9;
-	unsigned int bits_10;
-	unsigned int bits_11;
-	unsigned int bits_12;
-	unsigned int bits_13;
-
-	//function used only to set start time
-	if(pts_set)
-		return -1;
-	//it might not be pes packet
-	if (!(header[0] == 0 && header[1] == 0 && header[2] == 1))
-		return -1;
-
-
-	/* peslen = header[4] << 8 | header[5]; */
-
-	if (header[7] & 0x80)
-	{
-		bits_9 = ((LLONG) header[9] & 0x0E) << 29; // PTS 32..30 - Must be LLONG to prevent overflow
-		bits_10 = header[10] << 22; // PTS 29..22
-		bits_11 = (header[11] & 0xFE) << 14; // PTS 21..15
-		bits_12 = header[12] << 7; // PTS 14-7
-		bits_13 = header[13] >> 1; // PTS 6-0
-	}
-	else
-		return -1;
-	current_pts = bits_9 | bits_10 | bits_11 | bits_12 | bits_13;
-	pts_set = 1;
-
-	return 0;
-}
 
 /* Read and evaluate the current video PES header. The function returns
  * the length of the payload if successful, otherwise -1 is returned
@@ -246,7 +214,7 @@ int read_pts_pes(unsigned char*header, int len)
  *    0 .. Read from file into nextheader
  *    >0 .. Use data in nextheader with the length of sbuflen
  */
-int read_video_pes_header (struct ccx_demuxer *ctx, unsigned char *nextheader, int *headerlength, int sbuflen)
+int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, unsigned char *nextheader, int *headerlength, int sbuflen)
 {
 	// Read the next video PES
 	// ((nextheader[3]&0xf0)==0xe0)
@@ -392,7 +360,7 @@ int read_video_pes_header (struct ccx_demuxer *ctx, unsigned char *nextheader, i
 		unsigned bits_12 = nextheader[12] << 7; // PTS 14-7
 		unsigned bits_13 = nextheader[13] >> 1; // PTS 6-0
 
-		if (pts_set) // Otherwise can't check for rollovers yet
+		if (data->pts != CCX_NOPTS) // Otherwise can't check for rollovers yet
 		{
 			if (!bits_9 && ((current_pts_33>>30)&7)==7) // PTS about to rollover
 				rollover_bits++;
@@ -402,14 +370,8 @@ int read_video_pes_header (struct ccx_demuxer *ctx, unsigned char *nextheader, i
 
 
 		current_pts_33 = bits_9 | bits_10 | bits_11 | bits_12 | bits_13;
-		current_pts = (LLONG) rollover_bits<<33 | current_pts_33;
+		data->pts = (LLONG) rollover_bits<<33 | current_pts_33;
 
-		if (pts_set==0)
-			pts_set=1;
-
-		dbg_print(CCX_DMT_VERBOSE, "Set PTS: %s (%u)\n",
-				print_mstime((current_pts)/(MPEG_CLOCK_FREQ/1000)),
-				(unsigned) (current_pts) );
 		/* The user data holding the captions seems to come between GOP and
 		 * the first frame. The sync PTS (sync_pts) (set at picture 0)
 		 * corresponds to the first frame of the current GOP. */

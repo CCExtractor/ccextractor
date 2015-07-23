@@ -246,6 +246,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->fullbin = setting->fullbin;
 	ctx->hauppauge_mode = setting->hauppauge_mode;
 	ctx->program_number = setting->program_number;
+	ctx->timing = init_timing_ctx(&ccx_common_timing_settings);
 	memcpy(&ctx->extraction_start, &setting->extraction_start,sizeof(struct ccx_boundary_time));
 	memcpy(&ctx->extraction_end, &setting->extraction_end,sizeof(struct ccx_boundary_time));
 

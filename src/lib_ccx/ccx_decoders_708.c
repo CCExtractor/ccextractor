@@ -1107,9 +1107,6 @@ void process_current_packet (struct lib_cc_decode* ctx)
 #endif
 	if (current_packet_length!=len) // Is this possible?
 	{
-		ccx_common_logging.debug_ftn(CCX_DMT_708, "Packet length mismatch (%s%d), first two data bytes %02X %02X, current picture:%s\n",
-				current_packet_length-len>0?"+":"", current_packet_length-len,
-				current_packet[0], current_packet[1], pict_types[current_picture_coding_type]);
 		cc708_reset(ctx);
 		return;
 	}

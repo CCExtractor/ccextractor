@@ -221,17 +221,8 @@ int main(int argc, char *argv[])
 
 		mprint("\n");
 		dbg_print(CCX_DMT_DECODER_608, "\nTime stamps after last caption block was written:\n");
-		dbg_print(CCX_DMT_DECODER_608, "Last time stamps:  PTS: %s (%+2dF)		",
-			   print_mstime( (LLONG) (sync_pts/(MPEG_CLOCK_FREQ/1000)
-								   +frames_since_ref_time*1000.0/current_fps) ),
-			   frames_since_ref_time);
 		dbg_print(CCX_DMT_DECODER_608, "GOP: %s	  \n", print_mstime(gop_time.ms) );
 
-		// Blocks since last PTS/GOP time stamp.
-		dbg_print(CCX_DMT_DECODER_608, "Calc. difference:  PTS: %s (%+3lldms incl.)  ",
-			print_mstime( (LLONG) ((sync_pts-min_pts)/(MPEG_CLOCK_FREQ/1000)
-			+ fts_offset + frames_since_ref_time*1000.0/current_fps)),
-			fts_offset + (LLONG) (frames_since_ref_time*1000.0/current_fps) );
 		dbg_print(CCX_DMT_DECODER_608, "GOP: %s (%+3dms incl.)\n",
 			print_mstime((LLONG)(gop_time.ms
 			-first_gop_time.ms

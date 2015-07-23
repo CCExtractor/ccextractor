@@ -874,9 +874,7 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 			}
 			if (av.pts!=AV_NOPTS_VALUE)
 			{
-				current_pts=av.pts;
-				if (pts_set==0)
-					pts_set=1;
+				set_current_pts(dec_ctx->timing, av.pts);
 			}
 			memcpy (desp+saved,av.data,av.size);
 			LLONG used = process_m2v(dec_ctx, desp, length, &dec_sub);

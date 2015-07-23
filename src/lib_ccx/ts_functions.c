@@ -387,7 +387,7 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 		ptr->len += cinfo->capbuflen;
 		return CCX_OK;
 	}
-	vpesdatalen = read_video_pes_header(ctx, cinfo->capbuf, &pesheaderlen, cinfo->capbuflen);
+	vpesdatalen = read_video_pes_header(ctx, ptr, cinfo->capbuf, &pesheaderlen, cinfo->capbuflen);
 	if (vpesdatalen < 0)
 	{
 		dbg_print(CCX_DMT_VERBOSE, "Seems to be a broken PES. Terminating file handling.\n");

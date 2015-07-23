@@ -172,8 +172,8 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 				encode_sub(enc_ctx, &dec_ctx->dec_sub);
 				dec_ctx->dec_sub.got_output = 0;
 			}
-			dinit_cc_decode(&dec_ctx);
 			list_del(&dec_ctx->list);
+			dinit_cc_decode(&dec_ctx);
 		}
 		list_del(&enc_ctx->list);
 		dinit_encoder(&enc_ctx);
@@ -229,6 +229,9 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 
 	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
+		if (!cinfo)
+			return dec_ctx;
+
 		if (dec_ctx->program_number == cinfo->program_number)
 			return dec_ctx;
 	}
@@ -237,6 +240,11 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 		ctx->dec_global_setting->program_number = cinfo->program_number;
 		ctx->dec_global_setting->codec = cinfo->codec;
 		ctx->dec_global_setting->private_data = cinfo->codec_private_data;
+	}
+	else
+	{
+		ctx->dec_global_setting->program_number = 0;
+		ctx->dec_global_setting->codec = CCX_CODEC_ATSC_CC;
 	}
 	if(ctx->multiprogram == CCX_FALSE)
 	{

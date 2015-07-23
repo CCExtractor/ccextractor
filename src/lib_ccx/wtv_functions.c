@@ -318,7 +318,10 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 	static int video_streams[32];
 	static int alt_stream; //Stream to use for timestamps if the cc stream has broken timestamps
 	static int use_alt_stream = 0;
-	static int num_streams=0;
+	static int num_streams = 0;
+	struct lib_cc_decode *dec_ctx = update_decoder_list(ctx);
+	int flag_current_pts = 0;
+
 	while(1)
 	{
 		int bytesread = 0;
@@ -404,10 +407,10 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			memcpy(&time, cb->buffer+0x8, 8); // Read the timestamp
 			dbg_print(CCX_DMT_PARSE, "TIME: %ld\n", time);
 			if (time != -1 && time != WTV_CC_TIMESTAMP_MAGIC) { // Ignore -1 timestamps
-				current_pts = time_to_pes_time(time); // Convert from WTV to PES time
-				pts_set = 1;
+				set_current_pts(dec_ctx->timing, time_to_pes_time(time));
 				frames_since_ref_time = 0;
-				set_fts();
+				set_fts(dec_ctx->timing);
+				flag_current_pts = CCX_TRUE;
 			}
 			else if (time == WTV_CC_TIMESTAMP_MAGIC && stream_id != alt_stream) {
 				use_alt_stream++;
@@ -418,7 +421,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			len-=16;
 		}
 		if( !memcmp(guid, WTV_DATA, 16 )
-				&& check_stream_id(stream_id, video_streams, num_streams) && current_pts!=0
+				&& check_stream_id(stream_id, video_streams, num_streams) && flag_current_pts != CCX_FALSE
 				&& (ccx_options.wtvmpeg2 || (!ccx_options.wtvmpeg2 && len==2)))
 		{
 			// This is the data for a stream we want to process
@@ -429,7 +432,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			data->len+=result;
 			bytesread+=(int) len;
 			frames_since_ref_time++;
-			set_fts();
+			set_fts(dec_ctx->timing);
 			if(pad>0)
 			{ //Make sure we skip any padding too, since we are returning here
 				skip_sized_buffer(ctx, cb, pad);
