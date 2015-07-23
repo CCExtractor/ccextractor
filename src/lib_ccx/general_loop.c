@@ -474,7 +474,7 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 			dec_sub->got_output = 0;
 		}
 
-		int ccblocks = cb_field1;
+		//int ccblocks = cb_field1;
 		add_current_pts(dec_ctx->timing, cb_field1*1001/30*(MPEG_CLOCK_FREQ/1000));
 		set_fts(dec_ctx->timing); // Now set the FTS related variables including fts_max
 
@@ -584,25 +584,24 @@ void process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, st
 	{
 		got = data_node->len; // Do nothing. Still don't know how to process it
 	}
-#if 0
 	else if (data_node->bufferdatatype == CCX_RAW) // Raw two byte 608 data from DVR-MS/ASF
 	{
 		// The asf_getmoredata() loop sets current_pts when possible
-		if (pts_set == 0)
+		if (dec_ctx->timing->pts_set == 0)
 		{
 			mprint("DVR-MS/ASF file without useful time stamps - count blocks.\n");
 			// Otherwise rely on counting blocks
-			current_pts = 12345; // Pick a valid PTS time
-			pts_set = 1;
+			dec_ctx->timing->current_pts = 12345; // Pick a valid PTS time
+			dec_ctx->timing->pts_set = 1;
 		}
 
-		if (current_pts != last_pts)
+		if (dec_ctx->timing->current_pts != last_pts)
 		{
 			// Only initialize the FTS values and reset the cb
 			// counters when the PTS is different. This happens frequently
 			// with ASF files.
 
-			if (min_pts==0x01FFFFFFFFLL)
+			if (dec_ctx->timing->min_pts==0x01FFFFFFFFLL)
 			{
 				// First call
 				fts_at_gop_start = 0;
@@ -611,19 +610,18 @@ void process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, st
 				fts_at_gop_start = get_fts();
 
 			frames_since_ref_time = 0;
-			set_fts();
+			set_fts(dec_ctx->timing);
 
-			last_pts = current_pts;
+			last_pts = dec_ctx->timing->current_pts;
 		}
 
 		dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
-				print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-				(unsigned) (current_pts));
+				print_mstime(dec_ctx->timing->current_pts/(MPEG_CLOCK_FREQ/1000)),
+				(unsigned) (dec_ctx->timing->current_pts));
 		dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
 
 		got = process_raw(dec_ctx, dec_sub, data_node->buffer, data_node->len);
 	}
-#endif
 	else if (data_node->bufferdatatype == CCX_H264) // H.264 data from TS file
 	{
 		dec_ctx->in_bufferdatatype = data_node->bufferdatatype;
