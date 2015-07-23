@@ -802,7 +802,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 
 	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
-		telxcc_close(dec_ctx->private_data, &dec_ctx->dec_sub);
+		telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
 		// Flush remaining HD captions
 		if (dec_ctx->has_ccdata_buffered)
                 	process_hdcc(dec_ctx, &dec_ctx->dec_sub);
