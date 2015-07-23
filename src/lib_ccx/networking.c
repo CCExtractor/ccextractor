@@ -39,12 +39,6 @@ int srv_sd = -1; /* Server socket descriptor */
  */
 int tcp_connect(const char *addr, const char *port);
 
-/*
- * Asks password from stdin, sends it to the server and waits for
- * it's response
- */
-int ask_passwd(int sd);
-
 int check_password(int fd, const char *pwd);
 
 int tcp_bind(const char *port, int *family);
@@ -73,7 +67,7 @@ void init_sockets (void);
 void pr_command(char c);
 #endif
 
-void connect_to_srv(const char *addr, const char *port, const char *cc_desc)
+void connect_to_srv(const char *addr, const char *port, const char *cc_desc, const char *pwd)
 {
 	if (NULL == addr)
 	{
@@ -90,7 +84,7 @@ void connect_to_srv(const char *addr, const char *port, const char *cc_desc)
 	if ((srv_sd = tcp_connect(addr, port)) < 0)
 		fatal(EXIT_FAILURE, "Unable to connect\n");
 
-	if (ask_passwd(srv_sd) < 0)
+	if (pwd != NULL && write_block(srv_sd, PASSWORD, pwd, strlen(pwd)) < 0)
 		fatal(EXIT_FAILURE, "Unable to connect\n");
 
 	if (cc_desc != NULL &&
@@ -375,80 +369,6 @@ int tcp_connect(const char *host, const char *port)
 	return sockfd;
 }
 
-int ask_passwd(int sd)
-{
-	assert(sd >= 0);
-
-	size_t len;
-	char pw[BUFFER_SIZE] = { 0 };
-
-	char ok;
-
-	do {
-		do {
-			if (read_byte(sd, &ok) != 1)
-			{
-				fatal(EXIT_FAILURE, "read() error: %s", strerror(errno));
-			}
-
-#if DEBUG_OUT
-			fprintf(stderr, "[S] ");
-			pr_command(ok);
-			fprintf(stderr, "\n");
-#endif
-
-			if (OK == ok)
-			{
-				return 1;
-			}
-			else if (CONN_LIMIT == ok)
-			{
-				mprint("Too many connections to the server, try later\n");
-				return -1;
-			}
-			else if (ERROR == ok)
-			{
-				mprint("Internal server error\n");
-				return -1;
-			}
-
-		} while(ok != PASSWORD);
-
-		printf("Enter password: ");
-		fflush(stdout);
-
-		char *p = pw;
-		while ((unsigned)(p - pw) < sizeof(pw) && ((*p = fgetc(stdin)) != '\n'))
-			p++;
-		len = p - pw; /* without \n */
-
-		if (write_block(sd, PASSWORD, pw, len) < 0)
-			return -1;
-
-		if (read_byte(sd, &ok) != 1)
-			return -1;
-
-#if DEBUG_OUT
-		fprintf(stderr, "[S] ");
-		pr_command(ok);
-		fprintf(stderr, "\n");
-#endif
-
-		if (UNKNOWN_COMMAND == ok)
-		{
-			printf("Wrong password\n");
-			fflush(stdout);
-		}
-		else if (ERROR == ok)
-		{
-			mprint("Internal server error\n");
-			return -1;
-		}
-	} while(OK != ok);
-
-	return 1;
-}
-
 int start_tcp_srv(const char *port, const char *pwd)
 {
 	if (NULL == port)
@@ -512,18 +432,9 @@ int start_tcp_srv(const char *port, const char *pwd)
 
 		free(cliaddr);
 
-		if (pwd != NULL && (rc = check_password(sockfd, pwd)) <= 0)
-			goto close_conn;
+		if (pwd == NULL || (rc = check_password(sockfd, pwd)) > 0)
+			break;
 
-#if DEBUG_OUT
-		fprintf(stderr, "[S] OK\n");
-#endif
-		if (write_byte(sockfd, OK) != 1)
-			goto close_conn;
-
-		break;
-
-close_conn:
 		mprint("Connection closed\n");
 #if _WIN32
 		closesocket(sockfd);
@@ -550,36 +461,25 @@ int check_password(int fd, const char *pwd)
 	size_t len;
 	char buf[BUFFER_SIZE];
 
-	while(1)
-	{
-		len = BUFFER_SIZE;
-#if DEBUG_OUT
-		fprintf(stderr, "[S] PASSWORD\n");
-#endif
-		if ((rc = write_byte(fd, PASSWORD)) <= 0)
-			return rc;
+	if ((rc = read_block(fd, &c, buf, &len)) <= 0)
+		return rc;
 
-		if ((rc = read_block(fd, &c, buf, &len)) <= 0)
-			return rc;
+	buf[len] = '\0';
 
-		if (c != PASSWORD)
-			return -1;
-
-		if (strlen(pwd) != len || strncmp(pwd, buf, len) != 0)
-		{
-			sleep(WRONG_PASSWORD_DELAY);
-
-#if DEBUG_OUT
-			fprintf(stderr, "[S] WRONG_PASSWORD\n");
-#endif
-			if ((rc = write_byte(fd, WRONG_PASSWORD)) <= 0)
-				return rc;
-
-			continue;
-		}
-
+	if (c == PASSWORD && strcmp(pwd, buf) == 0) {
 		return 1;
 	}
+
+#if DEBUG_OUT
+	fprintf(stderr, "[C] Wrong passsword\n");
+#endif
+
+#if DEBUG_OUT
+	fprintf(stderr, "[S] PASSWORD\n");
+#endif
+	if (write_byte(fd, PASSWORD) < 0)
+		return -1;
+	return -1;
 }
 
 int tcp_bind(const char *port, int *family)

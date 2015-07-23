@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 
 	if (ccx_options.send_to_srv)
 	{
-		connect_to_srv(ccx_options.srv_addr, ccx_options.srv_port, ccx_options.tcp_desc);
+		connect_to_srv(ccx_options.srv_addr, ccx_options.srv_port, ccx_options.tcp_desc, ccx_options.tcp_password);
 	}
 
 	if (ccx_options.write_format!=CCX_OF_NULL)
