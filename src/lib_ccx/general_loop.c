@@ -724,7 +724,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 					break;
 			}
 			cinfo = get_cinfo(ctx->demux_ctx, pid);
-			enc_ctx = update_encoder_list(ctx);
+			enc_ctx = update_encoder_list_pn(ctx, cinfo->program_number);
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 			if(data_node->pts != CCX_NOPTS)
 				set_current_pts(dec_ctx->timing, data_node->pts);
