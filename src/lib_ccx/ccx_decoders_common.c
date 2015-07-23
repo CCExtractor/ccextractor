@@ -284,11 +284,6 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 {
 	if(ctx->codec == CCX_CODEC_ATSC_CC)
 	{
-		// Flush remaining HD captions
-		if (ctx->has_ccdata_buffered)
-		{
-			process_hdcc(ctx, sub);
-		}
 		if (ctx->extract != 2)
 		{
 			if (ctx->write_format==CCX_OF_SMPTETT || ctx->write_format==CCX_OF_SAMI || 

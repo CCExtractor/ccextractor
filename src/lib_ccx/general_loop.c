@@ -806,8 +806,14 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		encode_sub(enc_ctx,&dec_ctx->dec_sub);
 		dec_ctx->dec_sub.got_output = 0;
 	}
-
 #endif
+	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
+	{
+		// Flush remaining HD captions
+		if (dec_ctx->has_ccdata_buffered)
+                	process_hdcc(dec_ctx, &dec_ctx->dec_sub);
+	}
+
 	delete_datalist(datalist);
 	if (ctx->total_past!=ctx->total_inputsize && ctx->binary_concat && is_decoder_processed_enough(ctx))
 	{
