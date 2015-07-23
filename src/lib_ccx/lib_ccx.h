@@ -211,7 +211,7 @@ int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer);
 void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes);
 
 // sequencing.c
-void init_hdcc (void);
+void init_hdcc (struct lib_cc_decode *ctx);
 void store_hdcc(struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now, struct cc_subtitle *sub);
 void anchor_hdcc(int seq);
 void process_hdcc (struct lib_cc_decode *ctx, struct cc_subtitle *sub);
@@ -298,7 +298,6 @@ extern int firstcall;
 #define SORTBUF (2*MAXBFRAMES+1)
 extern int cc_data_count[SORTBUF];
 extern unsigned char cc_data_pkts[SORTBUF][10*31*3+1];
-extern int has_ccdata_buffered;
 
 // From ts_functions
 //extern struct ts_payload payload;

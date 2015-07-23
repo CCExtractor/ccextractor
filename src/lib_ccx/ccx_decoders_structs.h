@@ -126,6 +126,8 @@ struct lib_cc_decode
 	struct list_head list;
 	struct ccx_common_timing_ctx *timing;
 	enum ccx_code_type codec;
+	// Set to true if data is buffered
+	int has_ccdata_buffered;
 
 	struct avc_ctx *avc_ctx;
 

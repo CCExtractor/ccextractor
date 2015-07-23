@@ -806,16 +806,6 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		encode_sub(enc_ctx,&dec_ctx->dec_sub);
 		dec_ctx->dec_sub.got_output = 0;
 	}
-	// Flush remaining HD captions
-	if (has_ccdata_buffered)
-	{
-		process_hdcc(ctx, dec_sub);
-		if (dec_sub->got_output)
-		{
-			encode_sub(enc_ctx, dec_sub);
-			dec_sub->got_output = 0;
-		}
-	}
 
 #endif
 	delete_datalist(datalist);

@@ -13,13 +13,11 @@ static LLONG cc_fts[SORTBUF];
 // Store HD CC packets
 unsigned char cc_data_pkts[SORTBUF][10*31*3+1]; // *10, because MP4 seems to have different limits
 
-// Set to true if data is buffered
-int has_ccdata_buffered = 0;
 // The sequence number of the current anchor frame.  All currently read
 // B-Frames belong to this I- or P-frame.
 static int anchor_seq_number = -1;
 
-void init_hdcc (void)
+void init_hdcc (struct lib_cc_decode *ctx)
 {
 	for (int j=0; j<SORTBUF; j++)
 	{
@@ -27,7 +25,7 @@ void init_hdcc (void)
 		cc_fts[j] = 0;
 	}
 	memset(cc_data_pkts, 0, SORTBUF*(31*3+1));
-	has_ccdata_buffered = 0;
+	ctx->has_ccdata_buffered = 0;
 }
 
 // Buffer caption blocks for later sorting/flushing.
@@ -54,7 +52,7 @@ void store_hdcc(struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count,
 		seq_index = sequence_number - anchor_seq_number + MAXBFRAMES;
 	}
 
-	has_ccdata_buffered = 1;
+	ctx->has_ccdata_buffered = 1;
 
 	// In GOP mode the fts is set only once for the whole GOP. Recreate
 	// the right time according to the sequence number.
@@ -152,5 +150,5 @@ void process_hdcc (struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 	fts_now = store_fts_now;
 
 	// Now that we are done, clean up.
-	init_hdcc();
+	init_hdcc(ctx);
 }

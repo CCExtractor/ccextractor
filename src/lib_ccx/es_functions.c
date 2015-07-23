@@ -589,7 +589,7 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 		// do the padding.
 
 		// Flush buffered cc blocks before doing the housekeeping
-		if (has_ccdata_buffered)
+		if (ctx->has_ccdata_buffered)
 		{
 			process_hdcc(ctx, sub);
 		}
@@ -730,7 +730,7 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 		{
 			// NOTE: process_hdcc() needs to be called before set_fts() as it
 			// uses fts_now to re-create the timeline !!!!!
-			if (has_ccdata_buffered)
+			if (ctx->has_ccdata_buffered)
 			{
 				process_hdcc(ctx, sub);
 			}

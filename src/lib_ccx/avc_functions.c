@@ -1006,7 +1006,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 				slice_types[slice_type], maxrefcnt);
 
 		// Flush buffered cc blocks before doing the housekeeping
-		if (has_ccdata_buffered)
+		if (ctx->has_ccdata_buffered)
 		{
 			process_hdcc(ctx, sub);
 		}

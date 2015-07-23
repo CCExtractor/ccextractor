@@ -254,6 +254,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->program_number = setting->program_number;
 	ctx->processed_enough = 0;
 	ctx->max_gop_length = 0;
+	ctx->has_ccdata_buffered = 0;
 	ctx->timing = init_timing_ctx(&ccx_common_timing_settings);
 	memcpy(&ctx->extraction_start, &setting->extraction_start,sizeof(struct ccx_boundary_time));
 	memcpy(&ctx->extraction_end, &setting->extraction_end,sizeof(struct ccx_boundary_time));
@@ -283,6 +284,11 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 {
 	if(ctx->codec == CCX_CODEC_ATSC_CC)
 	{
+		// Flush remaining HD captions
+		if (ctx->has_ccdata_buffered)
+		{
+			process_hdcc(ctx, sub);
+		}
 		if (ctx->extract != 2)
 		{
 			if (ctx->write_format==CCX_OF_SMPTETT || ctx->write_format==CCX_OF_SAMI || 
