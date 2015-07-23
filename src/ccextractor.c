@@ -88,9 +88,6 @@ int main(int argc, char *argv[])
 	}
 
 
-	// Initialize HDTV caption buffer
-	init_hdcc();
-
 	time_t start, final;
 	time(&start);
 

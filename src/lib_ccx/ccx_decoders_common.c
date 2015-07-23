@@ -277,6 +277,8 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 	memset (&ctx->dec_sub, 0,sizeof(ctx->dec_sub));
 
+	// Initialize HDTV caption buffer
+	init_hdcc(ctx);
 	return ctx;
 }
 
