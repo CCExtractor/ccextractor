@@ -214,6 +214,7 @@ struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx)
 
 	if (list_empty(&ctx->dec_ctx_head))
 	{
+		ctx->dec_global_setting->codec = CCX_CODEC_ATSC_CC;
 		ctx->dec_global_setting->program_number = 0;
 		dec_ctx = init_cc_decode(ctx->dec_global_setting);
 		if (!dec_ctx)
