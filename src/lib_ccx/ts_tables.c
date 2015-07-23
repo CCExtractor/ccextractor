@@ -331,8 +331,8 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 				if (ptr == NULL)
 					break;
 				update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_TELETEXT, program_number, ptr);
-				mprint ("VBI/teletext stream ID %u (0x%x) for SID %u (0x%x)\n",
-						elementary_PID, elementary_PID, program_number, program_number);
+				//mprint ("VBI/teletext stream ID %u (0x%x) for SID %u (0x%x)\n",
+				//		elementary_PID, elementary_PID, program_number, program_number);
 			}
 
 		}
@@ -344,16 +344,16 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 			if (descriptor_tag == 0x45)
 			{
 				update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
-				mprint ("VBI stream ID %u (0x%x) for SID %u (0x%x) - teletext is disabled, will be processed as closed captions.\n",
-						elementary_PID, elementary_PID, program_number, program_number);
+				//mprint ("VBI stream ID %u (0x%x) for SID %u (0x%x) - teletext is disabled, will be processed as closed captions.\n",
+				//		elementary_PID, elementary_PID, program_number, program_number);
 			}
 		}
 
 		if (ccx_stream_type==CCX_STREAM_TYPE_VIDEO_H264 || ccx_stream_type==CCX_STREAM_TYPE_VIDEO_MPEG2)
 		{
 			update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
-			mprint ("Decode captions from program %d - %s stream [0x%02x]  -  PID: %u\n",
-				program_number , desc[ccx_stream_type], ccx_stream_type, elementary_PID);
+			//mprint ("Decode captions from program %d - %s stream [0x%02x]  -  PID: %u\n",
+			//	program_number , desc[ccx_stream_type], ccx_stream_type, elementary_PID);
 		}
 
 		if(need_capInfo_for_pid(ctx, elementary_PID) == CCX_TRUE)
@@ -682,7 +682,7 @@ void process_ccx_mpeg_descriptor (unsigned char *data, unsigned length)
 				break;
 			if (data[0]>=0x40 && data[0]<=0xFF) // User private
 				break;
-			mprint ("Still unsupported MPEG descriptor type=%d (%02X)\n",data[0],data[0]);
+			//mprint ("Still unsupported MPEG descriptor type=%d (%02X)\n",data[0],data[0]);
 			break;
 	}
 }

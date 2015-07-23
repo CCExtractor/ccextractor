@@ -550,9 +550,10 @@ void delete_datalist(struct demuxer_data *list)
 	}
 }
 
-void process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct demuxer_data *data_node)
+int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct demuxer_data *data_node)
 {
 	LLONG got; // Means 'consumed' from buffer actually
+	int ret = 0;
 	static LLONG last_pts = 0x01FFFFFFFFLL;
 	struct cc_subtitle *dec_sub = &dec_ctx->dec_sub;
 
@@ -576,7 +577,9 @@ void process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, st
 	else if (data_node->bufferdatatype == CCX_TELETEXT)
 	{
 		//telxcc_update_gt(dec_ctx->private_data, ctx->demux_ctx->global_timestamp);
-		tlt_process_pes_packet (dec_ctx->private_data, data_node->buffer, data_node->len, dec_sub);
+		ret = tlt_process_pes_packet (dec_ctx->private_data, data_node->buffer, data_node->len, dec_sub);
+		if(ret == CCX_EINVAL)
+			return ret;
 		set_encoder_rcwt_fileformat(enc_ctx, 2);
 		got = data_node->len;
 	}
@@ -653,6 +656,7 @@ void process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, st
 		encode_sub(enc_ctx, dec_sub);
 		dec_sub->got_output = 0;
 	}
+	return CCX_OK;
 }
 void general_loop(struct lib_ccx_ctx *ctx)
 {
@@ -724,7 +728,9 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 			if(data_node->pts != CCX_NOPTS)
 				set_current_pts(dec_ctx->timing, data_node->pts);
-			process_data(enc_ctx, dec_ctx, data_node);
+			ret = process_data(enc_ctx, dec_ctx, data_node);
+			if( ret != CCX_OK)
+				break;
 		}
 		else
 		{

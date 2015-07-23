@@ -217,6 +217,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 		return NULL;
 
 	ctx->avc_ctx = init_avc();
+	ctx->codec = setting->codec;
 
 	if(setting->codec == CCX_CODEC_ATSC_CC)
 	{
@@ -237,6 +238,11 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 				setting->cc_to_stdout,
 				setting->output_format
 				);
+	}
+	else
+	{
+		ctx->context_cc608_field_1 = NULL;
+		ctx->context_cc608_field_2 = NULL;
 	}
 	ctx->private_data = setting->private_data;
 	ctx->fix_padding = setting->fix_padding;
@@ -275,27 +281,30 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 {
-	if (ctx->extract != 2)
+	if(ctx->codec == CCX_CODEC_ATSC_CC)
 	{
-		if (ctx->write_format==CCX_OF_SMPTETT || ctx->write_format==CCX_OF_SAMI || 
-			ctx->write_format==CCX_OF_SRT || ctx->write_format==CCX_OF_TRANSCRIPT
-			|| ctx->write_format==CCX_OF_SPUPNG )
+		if (ctx->extract != 2)
 		{
-			flush_608_context(ctx->context_cc608_field_1, sub);
+			if (ctx->write_format==CCX_OF_SMPTETT || ctx->write_format==CCX_OF_SAMI || 
+					ctx->write_format==CCX_OF_SRT || ctx->write_format==CCX_OF_TRANSCRIPT
+					|| ctx->write_format==CCX_OF_SPUPNG )
+			{
+				flush_608_context(ctx->context_cc608_field_1, sub);
+			}
+			else if(ctx->write_format == CCX_OF_RCWT)
+			{
+				// Write last header and data
+				writercwtdata (ctx, NULL, sub);
+			}
 		}
-		else if(ctx->write_format == CCX_OF_RCWT)
+		if (ctx->extract != 1)
 		{
-			// Write last header and data
-			writercwtdata (ctx, NULL, sub);
-		}
-	}
-	if (ctx->extract != 1)
-	{
-		if (ctx->write_format == CCX_OF_SMPTETT || ctx->write_format == CCX_OF_SAMI ||
-			ctx->write_format == CCX_OF_SRT || ctx->write_format == CCX_OF_TRANSCRIPT
-			|| ctx->write_format == CCX_OF_SPUPNG )
-		{
-			flush_608_context(ctx->context_cc608_field_2, sub);
+			if (ctx->write_format == CCX_OF_SMPTETT || ctx->write_format == CCX_OF_SAMI ||
+					ctx->write_format == CCX_OF_SRT || ctx->write_format == CCX_OF_TRANSCRIPT
+					|| ctx->write_format == CCX_OF_SPUPNG )
+			{
+				flush_608_context(ctx->context_cc608_field_2, sub);
+			}
 		}
 	}
 

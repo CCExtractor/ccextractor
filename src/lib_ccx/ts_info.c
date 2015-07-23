@@ -11,7 +11,6 @@ int need_capInfo(struct ccx_demuxer *ctx, int program_number)
 
 	if(ctx->ts_allprogram == CCX_TRUE)
 	{
-		int found_pn = CCX_FALSE;
 		list_for_each_entry(iter, &ctx->cinfo_tree.pg_stream, pg_stream, struct cap_info)
 		{
 			if (iter->program_number == program_number)
@@ -64,6 +63,7 @@ int get_programme_number(struct ccx_demuxer *ctx, int pid)
 		if(iter->pid == pid)
 			return iter->program_number;
 	}
+	return CCX_UNKNOWN;
 }
 
 int get_best_sib_stream(struct cap_info* program)
@@ -180,6 +180,7 @@ int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream
 			tmp->capbuflen = 0;
 			tmp->capbufsize = 0;
 			tmp->ignore = 0;
+			tmp->codec_private_data = private_data;
 			return CCX_OK;
 		}
 	}

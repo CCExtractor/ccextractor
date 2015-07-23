@@ -125,6 +125,7 @@ struct lib_cc_decode
 	int program_number;
 	struct list_head list;
 	struct ccx_common_timing_ctx *timing;
+	enum ccx_code_type codec;
 
 	struct avc_ctx *avc_ctx;
 

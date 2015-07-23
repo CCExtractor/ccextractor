@@ -167,10 +167,10 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 		if(dec_ctx)
 		{
 			flush_cc_decode(dec_ctx, &dec_ctx->dec_sub);
-			if (&dec_ctx->dec_sub.got_output)
+			if (dec_ctx->dec_sub.got_output == CCX_TRUE)
 			{
 				encode_sub(enc_ctx, &dec_ctx->dec_sub);
-				dec_ctx->dec_sub.got_output = 0;
+				dec_ctx->dec_sub.got_output = CCX_FALSE;
 			}
 			list_del(&dec_ctx->list);
 			dinit_cc_decode(&dec_ctx);

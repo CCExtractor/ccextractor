@@ -1014,7 +1014,7 @@ int tlt_process_pes_packet(void *codec, uint8_t *buffer, uint16_t size, struct c
 
 	if(!ctx)
 	{
-		mprint("Teletext: Context cant be NULL, use telxcc_init");
+		mprint("Teletext: Context cant be NULL, use telxcc_init\n");
 		return CCX_EINVAL;
 	}
 
