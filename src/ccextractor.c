@@ -78,6 +78,44 @@ int main(int argc, char *argv[])
 		connect_to_srv(ccx_options.srv_addr, ccx_options.srv_port, ccx_options.tcp_desc, ccx_options.tcp_password);
 	}
 
+	if (ccx_options.write_format!=CCX_OF_NULL)
+	{
+		/* # DVD format uses one raw file for both fields, while Broadcast requires 2 */
+		if (ccx_options.write_format==CCX_OF_DVDRAW)
+		{
+			if (init_encoder(enc_ctx, &ctx->wbout1, &ccx_options))
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+			set_encoder_subs_delay(enc_ctx, ctx->subs_delay);
+			set_encoder_last_displayed_subs_ms(enc_ctx, ctx->last_displayed_subs_ms);
+			set_encoder_startcredits_displayed(enc_ctx, ctx->startcredits_displayed);
+		}
+		else
+		{
+			if (ccx_options.extract!=2)
+			{
+				if (init_encoder(enc_ctx, &ctx->wbout1, &ccx_options))
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+				set_encoder_subs_delay(enc_ctx, ctx->subs_delay);
+				set_encoder_last_displayed_subs_ms(enc_ctx, ctx->last_displayed_subs_ms);
+				set_encoder_startcredits_displayed(enc_ctx, ctx->startcredits_displayed);
+			}
+			if (ccx_options.extract!=1)
+			{
+				if(ccx_options.write_format == CCX_OF_RAW
+					&& ccx_options.extract == 12)
+				{
+					memcpy(&ctx->wbout2, &ctx->wbout1,sizeof(ctx->wbout1));
+				}
+
+				if( init_encoder(enc_ctx+1, &ctx->wbout2, &ccx_options) )
+					fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+				set_encoder_subs_delay(enc_ctx+1, ctx->subs_delay);
+				set_encoder_last_displayed_subs_ms(enc_ctx+1, ctx->last_displayed_subs_ms);
+				set_encoder_startcredits_displayed(enc_ctx+1, ctx->startcredits_displayed);
+			}
+		}
+	}
+
 	if (ccx_options.transcript_settings.xds)
 	{
 		if (ccx_options.write_format != CCX_OF_TRANSCRIPT)
