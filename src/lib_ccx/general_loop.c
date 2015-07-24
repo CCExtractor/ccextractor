@@ -701,6 +701,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		{
 			struct cap_info* cinfo = NULL;
 			struct encoder_ctx *enc_ctx = NULL;
+			int pn = 0;
 			int pid = get_best_stream(ctx->demux_ctx);
 			if(pid < 0)
 			{
@@ -724,7 +725,12 @@ void general_loop(struct lib_ccx_ctx *ctx)
 					break;
 			}
 			cinfo = get_cinfo(ctx->demux_ctx, pid);
-			enc_ctx = update_encoder_list_pn(ctx, cinfo->program_number);
+			if(cinfo)
+				pn = cinfo->program_number;
+			else
+				pn = 0;
+
+			enc_ctx = update_encoder_list_pn(ctx, pn);
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 			if(data_node->pts != CCX_NOPTS)
 				set_current_pts(dec_ctx->timing, data_node->pts);
@@ -741,6 +747,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			list_for_each_entry(program_iter, &ptr->pg_stream, pg_stream, struct cap_info)
 			{
 				int pid = get_best_sib_stream(program_iter);
+				int pn = 0;
 				if(pid < 0)
 				{
 					data_node = get_best_data(datalist);
@@ -763,7 +770,11 @@ void general_loop(struct lib_ccx_ctx *ctx)
 						break;
 				}
 				cinfo = get_cinfo(ctx->demux_ctx, pid);
-				enc_ctx = update_encoder_list_pn(ctx, cinfo->program_number);
+				if(cinfo)
+					pn = cinfo->program_number;
+				else
+					pn = 0;
+				enc_ctx = update_encoder_list_pn(ctx, pn);
 				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 				if(data_node->pts != CCX_NOPTS)
 					set_current_pts(dec_ctx->timing, data_node->pts);
