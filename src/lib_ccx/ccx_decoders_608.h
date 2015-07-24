@@ -143,7 +143,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
  * Issue a EraseDisplayedMemory here so if there's any captions pending
  * they get written to cc_subtitle
  */
-void handle_end_of_data(ccx_decoder_608_context *context, struct cc_subtitle *sub);
+void flush_608_context(ccx_decoder_608_context *context, struct cc_subtitle *sub);
 
 int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub);
 

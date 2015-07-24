@@ -13,7 +13,7 @@ static void sei_rbsp (struct avc_ctx *ctx, unsigned char *seibuf, unsigned char 
 static unsigned char *sei_message (struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend);
 static void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf, unsigned char *userend);
 static void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigned char *seqend);
-static void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub);
+static void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub);
 
 double roundportable(double x) { return floor(x + 0.5); }
 
@@ -62,7 +62,7 @@ struct avc_ctx *init_avc(void)
 	return ctx;
 }
 
-void do_NAL (struct lib_ccx_ctx *ctx, unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub)
+void do_NAL (struct lib_cc_decode *ctx, unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub)
 {
 	unsigned char *NALstop;
 	unsigned nal_unit_type = *NALstart & 0x1F;
@@ -117,7 +117,7 @@ void do_NAL (struct lib_ccx_ctx *ctx, unsigned char *NALstart, LLONG NAL_length,
 
 // Process inbuf bytes in buffer holding and AVC (H.264) video stream.
 // The number of processed bytes is returned.
-LLONG process_avc (struct lib_ccx_ctx *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub)
+LLONG process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub)
 {
 	unsigned char *bpos = avcbuf;
 	unsigned char *NALstart;
@@ -843,7 +843,7 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
 
 
 // Process slice header in AVC data.
-void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub)
+void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub)
 {
 	LLONG tmp;
 	struct bitstream q1;
@@ -1006,7 +1006,7 @@ void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char
 				slice_types[slice_type], maxrefcnt);
 
 		// Flush buffered cc blocks before doing the housekeeping
-		if (has_ccdata_buffered)
+		if (ctx->has_ccdata_buffered)
 		{
 			process_hdcc(ctx, sub);
 		}
@@ -1036,7 +1036,7 @@ void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char
 				lastmaxidx -=maxrefcnt+1;
 		} else {
 			// Use PTS ordering
-			currefpts = current_pts;
+			currefpts = ctx->timing->current_pts;
 			currref = 0;
 		}
 
@@ -1057,22 +1057,22 @@ void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char
 
 		// Calculate tref
 		if ( lastmaxidx > 0 ) {
-			current_tref = curridx - lastmaxidx -1;
+			ctx->timing->current_tref = curridx - lastmaxidx -1;
 			// Set maxtref
-			if( current_tref > maxtref ) {
-				maxtref = current_tref;
+			if( ctx->timing->current_tref > maxtref ) {
+				maxtref = ctx->timing->current_tref;
 			}
 			// Now an ugly workaround where pic_order_cnt_lsb increases in
 			// steps of two. The 1.5 is an approximation, it should be:
 			// last_gop_maxtref+1 == last_gop_length*2
 			if ( last_gop_maxtref > ctx->last_gop_length*1.5 ) {
-				current_tref = current_tref/2;
+				ctx->timing->current_tref = ctx->timing->current_tref/2;
 			}
 		}
 		else
-			current_tref = 0;
+			ctx->timing->current_tref = 0;
 
-		if ( current_tref < 0 ) {
+		if ( ctx->timing->current_tref < 0 ) {
 			mprint("current_tref is negative!?\n");
 		}
 	} else {
@@ -1080,7 +1080,7 @@ void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char
 		// frame rate
 		// The 2* accounts for a discrepancy between current and actual FPS
 		// seen in some files (CCSample2.mpg)
-		curridx = (int)roundportable(2*(current_pts - currefpts)/(MPEG_CLOCK_FREQ/current_fps));
+		curridx = (int)roundportable(2*(ctx->timing->current_pts - currefpts)/(MPEG_CLOCK_FREQ/current_fps));
 
 		if (abs(curridx) >= MAXBFRAMES) {
 			// Probably a jump in the timeline. Warn and handle gracefully.
@@ -1096,44 +1096,39 @@ void slice_header (struct lib_ccx_ctx *ctx, unsigned char *heabuf, unsigned char
 		if ( curridx < minidx )
 			minidx = curridx;
 
-		current_tref = 1;
+		ctx->timing->current_tref = 1;
 		if ( curridx == lastminidx ) {
 			// This implies that the minimal index (assuming its number is
 			// fairly constant) sets the temporal reference to zero - needed to set sync_pts.
-			current_tref = 0;
+			ctx->timing->current_tref = 0;
 		}
 		if ( lastmaxidx == -1) {
 			// Set temporal reference to zero on minimal index and in the first GOP
 			// to avoid setting a wrong fts_offset
-			current_tref = 0;
+			ctx->timing->current_tref = 0;
 		}
 	}
 
-	set_fts(); // Keep frames_since_ref_time==0, use current_tref
+	set_fts(ctx->timing); // Keep frames_since_ref_time==0, use current_tref
 
-	dbg_print(CCX_DMT_TIME, "PTS: %s (%8u)",
-			print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-			(unsigned) (current_pts));
 	dbg_print(CCX_DMT_TIME, "  picordercnt:%3lld tref:%3d idx:%3d refidx:%3d lmaxidx:%3d maxtref:%3d\n",
-			pic_order_cnt_lsb, current_tref,
+			pic_order_cnt_lsb, ctx->timing->current_tref,
 			curridx, currref, lastmaxidx, maxtref);
-	dbg_print(CCX_DMT_TIME, "FTS: %s",
-			print_mstime(get_fts()));
 	dbg_print(CCX_DMT_TIME, "  sync_pts:%s (%8u)",
-			print_mstime(sync_pts/(MPEG_CLOCK_FREQ/1000)),
-			(unsigned) (sync_pts));
+			print_mstime(ctx->timing->sync_pts/(MPEG_CLOCK_FREQ/1000)),
+			(unsigned) (ctx->timing->sync_pts));
 	dbg_print(CCX_DMT_TIME, " - %s since GOP: %2u",
 			slice_types[slice_type],
 			(unsigned) (ctx->frames_since_last_gop));
 	dbg_print(CCX_DMT_TIME, "  b:%lld  frame# %lld\n", bottom_field_flag, frame_num);
 
 	// sync_pts is (was) set when current_tref was zero
-	if ( lastmaxidx > -1 && current_tref == 0 )
+	if ( lastmaxidx > -1 && ctx->timing->current_tref == 0 )
 	{
 		if (ccx_options.debug_mask & CCX_DMT_TIME )
 		{
 			dbg_print(CCX_DMT_TIME, "\nNew temporal reference:\n");
-			print_debug_timing();
+			print_debug_timing(ctx->timing);
 		}
 	}
 

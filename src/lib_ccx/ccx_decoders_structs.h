@@ -5,6 +5,7 @@
 #include "ccx_common_constants.h"
 #include "ccx_common_timing.h"
 #include "ccx_common_structs.h"
+#include "list.h"
 // Define max width in characters/columns on the screen
 #define CCX_DECODER_608_SCREEN_WIDTH  32
 
@@ -87,6 +88,10 @@ struct ccx_decoders_common_settings_t
 	struct ccx_decoder_608_settings *settings_608; //  Contains the settings for the 608 decoder.
 	int cc_channel; // Channel we want to dump in srt mode
 	unsigned send_to_srv;
+	unsigned int hauppauge_mode; // If 1, use PID=1003, process specially and so on
+	int program_number;
+	enum ccx_code_type codec;
+	void *private_data;
 };
 struct lib_cc_decode
 {
@@ -106,8 +111,27 @@ struct lib_cc_decode
 	int extract; // Extract 1st, 2nd or both fields
 	int fullbin; // Disable pruning of padding cc blocks
 	struct cc_subtitle dec_sub;
-	void *codec;
 	enum ccx_bufferdata_type in_bufferdatatype;
+	unsigned int hauppauge_mode; // If 1, use PID=1003, process specially and so on
+
+	int frames_since_last_gop;
+	/* GOP-based timing */
+	int saw_gop_header;
+	/* Time info for timed-transcript */
+	int max_gop_length; // (Maximum) length of a group of pictures
+	int last_gop_length; // Length of the previous group of pictures
+	unsigned total_pulldownfields;
+	unsigned total_pulldownframes;
+	int program_number;
+	struct list_head list;
+	struct ccx_common_timing_ctx *timing;
+	enum ccx_code_type codec;
+	// Set to true if data is buffered
+	int has_ccdata_buffered;
+
+	struct avc_ctx *avc_ctx;
+
+	void *private_data;
 
 
 	int (*writedata)(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);

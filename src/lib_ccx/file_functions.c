@@ -51,12 +51,9 @@ LLONG gettotalfilessize (struct lib_ccx_ctx *ctx) // -1 if one or more files fai
 
 void prepare_for_new_file (struct lib_ccx_ctx *ctx)
 {
-	struct lib_cc_decode *dec_ctx = NULL;
-	dec_ctx = ctx->dec_ctx;
+//	struct lib_cc_decode *dec_ctx = NULL;
+//	dec_ctx = ctx->dec_ctx;
 	// Init per file variables
-	min_pts=0x01FFFFFFFFLL; // 33 bit
-	sync_pts=0;
-	pts_set = 0;
 	// inputsize=0; Now responsibility of switch_to_next_file()
 	ctx->last_reported_progress=-1;
 	ctx->stat_numuserheaders = 0;
@@ -68,17 +65,17 @@ void prepare_for_new_file (struct lib_ccx_ctx *ctx)
 	ctx->stat_hdtv = 0;
 	ctx->stat_divicom = 0;
 	total_frames_count = 0;
-	ctx->total_pulldownfields = 0;
-	ctx->total_pulldownframes = 0;
-	dec_ctx->cc_stats[0]=0; dec_ctx->cc_stats[1]=0; dec_ctx->cc_stats[2]=0; dec_ctx->cc_stats[3]=0;
+//	ctx->total_pulldownfields = 0;
+//	ctx->total_pulldownframes = 0;
+//	dec_ctx->cc_stats[0]=0; dec_ctx->cc_stats[1]=0; dec_ctx->cc_stats[2]=0; dec_ctx->cc_stats[3]=0;
 	ctx->false_pict_header=0;
-	ctx->frames_since_last_gop=0;
+//	ctx->frames_since_last_gop=0;
 	frames_since_ref_time=0;
 	gop_time.inited=0;
 	first_gop_time.inited=0;
 	gop_rollover=0;
 	printed_gop.inited=0;
-	dec_ctx->saw_caption_block=0;
+//	dec_ctx->saw_caption_block=0;
 	pts_big_change=0;
 	anchor_hdcc(-1);
 	firstcall = 1;
@@ -109,9 +106,9 @@ can be done */
 
 int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 {
-	struct lib_cc_decode *dec_ctx = NULL;
+//	struct lib_cc_decode *dec_ctx = NULL;
 	int ret = 0;
-	dec_ctx = ctx->dec_ctx;
+//	dec_ctx = ctx->dec_ctx;
 	if (ctx->current_file==-1 || !ccx_options.binary_concat)
 	{
 		ctx->demux_ctx->reset(ctx->demux_ctx);
@@ -138,7 +135,7 @@ int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 	{
 		if (ccx_options.print_file_reports)
 			print_file_report(ctx);
-		if (ctx->inputsize>0 && ((ctx->demux_ctx->past+bytesinbuffer) < ctx->inputsize) && !dec_ctx->processed_enough)
+		if (ctx->inputsize>0 && ((ctx->demux_ctx->past+bytesinbuffer) < ctx->inputsize) && is_decoder_processed_enough(ctx) == CCX_FALSE)
 		{
 			mprint("\n\n\n\nATTENTION!!!!!!\n");
 			mprint("In switch_to_next_file(): Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
@@ -197,7 +194,7 @@ int init_file_buffer(struct ccx_demuxer *ctx)
 {
 	ctx->filebuffer_start = 0;
 	ctx->filebuffer_pos = 0;
-	if (ctx->filebuffer==NULL)
+	if (ctx->filebuffer == NULL)
 	{
 		ctx->filebuffer = (unsigned char *) malloc (FILEBUFFERSIZE);
 		ctx->bytesinbuffer = 0;

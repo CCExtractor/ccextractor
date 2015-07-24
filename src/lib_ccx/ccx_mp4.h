@@ -7,5 +7,5 @@ struct ccx_s_mp4Cfg
 	unsigned int mp4vidtrack :1;
 };
 
-int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file,void *enc_ctx);
+int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file);
 #endif

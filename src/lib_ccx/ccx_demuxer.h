@@ -35,6 +35,7 @@ struct cap_info
 	long capbuflen; // Bytes read in capbuf
 	int saw_pesstart;
 	int prev_counter;
+	void *codec_private_data;
 	int ignore;
 
 	/** 
@@ -44,6 +45,7 @@ struct cap_info
 	/** 
 	  List joining all sibling Stream in Program 
 	*/
+	struct list_head sib_head;
 	struct list_head sib_stream;
 	/** 
 	  List joining all sibling Stream in Program 
@@ -76,7 +78,6 @@ struct ccx_demuxer
 	enum ccx_code_type codec;
 	enum ccx_code_type nocodec;
 	struct cap_info cinfo_tree;
-	int nb_cap;
 
 	/* File handles */
 	FILE *fh_out_elementarystream;
@@ -90,17 +91,12 @@ struct ccx_demuxer
 
 	int PIDs_seen[MAX_PID];
 
-	// PMTs table
-	struct PAT_entry pmt_array[TS_PMT_MAP_SIZE];
-	uint16_t pmt_array_length;
-
 	struct PMT_entry *PIDs_programs[MAX_PID];
 	struct ccx_demux_report freport;
 
 	/* Hauppauge support */
 	unsigned hauppauge_warning_shown; // Did we detect a possible Hauppauge capture and told the user already?
 
-	void *codec_ctx;
 	int multi_stream_per_prog;
 
 	unsigned char *last_pat_payload;
@@ -110,6 +106,8 @@ struct ccx_demuxer
 	LLONG filebuffer_start; // Position of buffer start relative to file
 	int filebuffer_pos; // Position of pointer relative to buffer start
 	int bytesinbuffer; // Number of bytes we actually have on buffer
+
+	int warning_program_not_found_shown;
 
 	void *parent;
 	void (*print_cfg)(struct ccx_demuxer *ctx);
@@ -131,23 +129,26 @@ struct demuxer_data
 	enum ccx_bufferdata_type bufferdatatype;
 	unsigned char *buffer;
 	int len;
+	LLONG pts;
 	struct demuxer_data *next_stream;
 	struct demuxer_data *next_program;
 };
 
-int need_capInfo(struct ccx_demuxer *ctx);
 int count_complete_capInfo(struct ccx_demuxer *ctx);
 struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg);
 void ccx_demuxer_delete(struct ccx_demuxer **ctx);
 struct demuxer_data* alloc_demuxer_data(void);
 void delete_demuxer_data(struct demuxer_data *data);
-int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream, enum ccx_code_type codec);
+int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream, enum ccx_code_type codec, int pn, void *private_data);
 struct cap_info * get_cinfo(struct ccx_demuxer *ctx, int pid);
-int need_capInfo(struct ccx_demuxer *ctx);
+int need_capInfo(struct ccx_demuxer *ctx, int program_number);
 int need_capInfo_for_pid(struct ccx_demuxer *ctx, int pid);
 struct demuxer_data *get_best_data(struct demuxer_data *data);
 struct demuxer_data *get_data_stream(struct demuxer_data *data, int pid);
 int get_best_stream(struct ccx_demuxer *ctx);
 void ignore_other_stream(struct ccx_demuxer *ctx, int pid);
 void dinit_cap (struct ccx_demuxer *ctx);
+int get_programme_number(struct ccx_demuxer *ctx, int pid);
+int get_best_sib_stream(struct cap_info* program);
+void ignore_other_sib_stream(struct cap_info* head, int pid);
 #endif

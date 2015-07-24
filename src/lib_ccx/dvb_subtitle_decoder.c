@@ -429,9 +429,18 @@ void* dvbsub_init_decoder(struct dvb_config* cfg)
 	DVBSubContext *ctx = (DVBSubContext*) malloc(sizeof(DVBSubContext));
 	memset(ctx, 0, sizeof(DVBSubContext));
 
-	ctx->composition_id = cfg->composition_id[0];
-	ctx->ancillary_id = cfg->ancillary_id[0];
-	ctx->lang_index = cfg->lang_index[0];
+	if(cfg)
+	{
+		ctx->composition_id = cfg->composition_id[0];
+		ctx->ancillary_id = cfg->ancillary_id[0];
+		ctx->lang_index = cfg->lang_index[0];
+	}
+	else
+	{
+		ctx->composition_id = 1;
+		ctx->ancillary_id = 1;
+		ctx->lang_index = 1;
+	}
 
 #ifdef ENABLE_OCR
 	ctx->ocr_ctx = init_ocr(ctx->lang_index);
@@ -1539,9 +1548,9 @@ static int write_dvb_sub(void *dvb_ctx, struct cc_subtitle *sub)
  *
  * @return           -1 on error
  */
-int dvbsub_decode(void *dvb_ctx, const unsigned char *buf, int buf_size, struct cc_subtitle *sub)
+int dvbsub_decode(struct lib_cc_decode *dec_ctx, const unsigned char *buf, int buf_size, struct cc_subtitle *sub)
 {
-	DVBSubContext *ctx = (DVBSubContext *) dvb_ctx;
+	DVBSubContext *ctx = (DVBSubContext *) dec_ctx->private_data;
 	const uint8_t *p, *p_end;
 	int segment_type;
 	int page_id;
@@ -1558,7 +1567,7 @@ int dvbsub_decode(void *dvb_ctx, const unsigned char *buf, int buf_size, struct 
 	p = buf;
 	p_end = buf + buf_size;
 
-	set_fts();
+	set_fts(dec_ctx->timing);
 	while (p_end - p >= 6 && *p == 0x0f)
 	{
 		p += 1;
@@ -1580,29 +1589,29 @@ int dvbsub_decode(void *dvb_ctx, const unsigned char *buf, int buf_size, struct 
 			switch (segment_type)
 			{
 			case DVBSUB_PAGE_SEGMENT:
-				dvbsub_parse_page_segment(dvb_ctx, p, segment_length);
+				dvbsub_parse_page_segment(ctx, p, segment_length);
 				got_segment |= 1;
 				break;
 			case DVBSUB_REGION_SEGMENT:
-				dvbsub_parse_region_segment(dvb_ctx, p, segment_length);
+				dvbsub_parse_region_segment(ctx, p, segment_length);
 				got_segment |= 2;
 				break;
 			case DVBSUB_CLUT_SEGMENT:
-				ret = dvbsub_parse_clut_segment(dvb_ctx, p, segment_length);
+				ret = dvbsub_parse_clut_segment(ctx, p, segment_length);
 				if (ret < 0)
 					goto end;
 				got_segment |= 4;
 				break;
 			case DVBSUB_OBJECT_SEGMENT:
-				dvbsub_parse_object_segment(dvb_ctx, p, segment_length);
+				dvbsub_parse_object_segment(ctx, p, segment_length);
 				got_segment |= 8;
 				break;
 			case DVBSUB_DISPLAYDEFINITION_SEGMENT:
-				dvbsub_parse_display_definition_segment(dvb_ctx, p,
+				dvbsub_parse_display_definition_segment(ctx, p,
 						segment_length);
 				break;
 			case DVBSUB_DISPLAY_SEGMENT:
-				write_dvb_sub(dvb_ctx,sub);
+				write_dvb_sub(ctx,sub);
 				got_segment |= 16;
 				break;
 			default:
@@ -1618,7 +1627,7 @@ int dvbsub_decode(void *dvb_ctx, const unsigned char *buf, int buf_size, struct 
 	// segments then we need no further data.
 	if (got_segment == 15)
 	{
-		write_dvb_sub(dvb_ctx,sub);
+		write_dvb_sub(ctx,sub);
 
 
 	}

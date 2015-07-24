@@ -309,5 +309,5 @@ unsigned char get_internal_from_G2 (unsigned char g2_char);
 unsigned char get_internal_from_G3 (unsigned char g3_char);
 void process_character (cc708_service_decoder *decoder, unsigned char internal_char);
 
-void ccx_decoders_708_init_library(char *basefilename,const char *extension, int report);
+void ccx_decoders_708_init_library(int report);
 #endif

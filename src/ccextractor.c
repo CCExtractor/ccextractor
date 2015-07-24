@@ -24,7 +24,6 @@ void sigint_handler()
 struct ccx_s_options ccx_options;
 int main(int argc, char *argv[])
 {
-	struct encoder_ctx *enc_ctx = NULL;
 #ifdef ENABLE_FFMPEG
 	void *ffmpeg_ctx = NULL;
 #endif
@@ -60,10 +59,6 @@ int main(int argc, char *argv[])
 	else if (!ctx)
 		fatal (EXIT_NOT_CLASSIFIED, "Unable to create Library Context %d\n",errno);
 
-	dec_ctx = ctx->dec_ctx;
-
-
-
 	int show_myth_banner = 0;
 	
 	memset (&cea708services[0],0,CCX_DECODERS_708_MAX_SERVICES*sizeof (int)); // Cannot (yet) be moved because it's needed in parse_parameters.
@@ -83,13 +78,6 @@ int main(int argc, char *argv[])
 		connect_to_srv(ccx_options.srv_addr, ccx_options.srv_port, ccx_options.tcp_desc);
 	}
 
-	if (ccx_options.write_format!=CCX_OF_NULL)
-	{
-		enc_ctx = init_encoder(&ccx_options.enc_cfg);
-		if (!enc_ctx)
-			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
-	}
-
 	if (ccx_options.transcript_settings.xds)
 	{
 		if (ccx_options.write_format != CCX_OF_TRANSCRIPT)
@@ -100,13 +88,9 @@ int main(int argc, char *argv[])
 	}
 
 
-	// Initialize HDTV caption buffer
-	init_hdcc();
-
 	time_t start, final;
 	time(&start);
 
-	dec_ctx->processed_enough=0;
 	if (ccx_options.binary_concat)
 	{
 		ctx->total_inputsize=gettotalfilessize(ctx);
@@ -119,7 +103,7 @@ int main(int argc, char *argv[])
 	m_signal(SIGINT, sigint_handler);
 #endif
 
-	while (switch_to_next_file(ctx, 0) && !dec_ctx->processed_enough)
+	while (switch_to_next_file(ctx, 0))
 	{
 		prepare_for_new_file(ctx);
 #ifdef ENABLE_FFMPEG
@@ -199,25 +183,25 @@ int main(int argc, char *argv[])
 				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
 					ccx_options.use_gop_as_pts = 0; 
 				mprint ("\rAnalyzing data in general mode\n");
-				general_loop(ctx, enc_ctx);
+				general_loop(ctx);
 				break;
 			case CCX_SM_MCPOODLESRAW:
 				mprint ("\rAnalyzing data in McPoodle raw mode\n");
-				raw_loop(ctx, enc_ctx);
+				raw_loop(ctx);
 				break;
 			case CCX_SM_RCWT:
 				mprint ("\rAnalyzing data in CCExtractor's binary format\n");
-				rcwt_loop(ctx, enc_ctx);
+				rcwt_loop(ctx);
 				break;
 			case CCX_SM_MYTH:
 				mprint ("\rAnalyzing data in MythTV mode\n");
 				show_myth_banner = 1;
-				myth_loop(ctx, enc_ctx);
+				myth_loop(ctx);
 				break;
 			case CCX_SM_MP4:
 				mprint ("\rAnalyzing data with GPAC (MP4 library)\n");
 				close_input_file(ctx); // No need to have it open. GPAC will do it for us
-				processmp4 (ctx, &mp4_cfg, ctx->inputfile[0],enc_ctx);
+				processmp4 (ctx, &mp4_cfg, ctx->inputfile[0]);
 				if (ccx_options.print_file_reports)
 					print_file_report(ctx);
 				break;
@@ -234,17 +218,8 @@ int main(int argc, char *argv[])
 
 		mprint("\n");
 		dbg_print(CCX_DMT_DECODER_608, "\nTime stamps after last caption block was written:\n");
-		dbg_print(CCX_DMT_DECODER_608, "Last time stamps:  PTS: %s (%+2dF)		",
-			   print_mstime( (LLONG) (sync_pts/(MPEG_CLOCK_FREQ/1000)
-								   +frames_since_ref_time*1000.0/current_fps) ),
-			   frames_since_ref_time);
 		dbg_print(CCX_DMT_DECODER_608, "GOP: %s	  \n", print_mstime(gop_time.ms) );
 
-		// Blocks since last PTS/GOP time stamp.
-		dbg_print(CCX_DMT_DECODER_608, "Calc. difference:  PTS: %s (%+3lldms incl.)  ",
-			print_mstime( (LLONG) ((sync_pts-min_pts)/(MPEG_CLOCK_FREQ/1000)
-			+ fts_offset + frames_since_ref_time*1000.0/current_fps)),
-			fts_offset + (LLONG) (frames_since_ref_time*1000.0/current_fps) );
 		dbg_print(CCX_DMT_DECODER_608, "GOP: %s (%+3dms incl.)\n",
 			print_mstime((LLONG)(gop_time.ms
 			-first_gop_time.ms
@@ -265,6 +240,7 @@ int main(int argc, char *argv[])
 		mprint ("\nTotal frames time:	  %s  (%u frames at %.2ffps)\n",
 			print_mstime( (LLONG)(total_frames_count*1000/current_fps) ),
 			total_frames_count, current_fps);
+#if 0
 		if (ctx->total_pulldownframes)
 			mprint ("incl. pulldown frames:  %s  (%u frames at %.2ffps)\n",
 					print_mstime( (LLONG)(ctx->total_pulldownframes*1000/current_fps) ),
@@ -324,6 +300,7 @@ int main(int argc, char *argv[])
 			mprint("caption is not well understood!\n\n");
 			mprint("Please submit samples to the developers.\n\n\n");
 		}
+#endif
 
 		// Add one frame as fts_max marks the beginning of the last frame,
 		// but we need the end.
@@ -341,51 +318,15 @@ int main(int argc, char *argv[])
 		cb_field1 = 0; cb_field2 = 0; cb_708 = 0;
 		fts_now = 0;
 		fts_max = 0;
+
+		if(is_decoder_processed_enough(ctx) == CCX_TRUE)
+			break;
 	} // file loop
 	close_input_file(ctx);
 
 	prepare_for_new_file (ctx); // To reset counters used by handle_end_of_data()
 
-	if (ccx_options.extract != 2)
-	{
-		if (ccx_options.write_format==CCX_OF_SMPTETT || ccx_options.write_format==CCX_OF_SAMI || 
-			ccx_options.write_format==CCX_OF_SRT || ccx_options.write_format==CCX_OF_TRANSCRIPT
-			|| ccx_options.write_format==CCX_OF_SPUPNG )
-		{
-			handle_end_of_data(dec_ctx->context_cc608_field_1, &dec_ctx->dec_sub);
-			if (dec_ctx->dec_sub.got_output)
-			{
-				encode_sub(enc_ctx,&dec_ctx->dec_sub);
-				dec_ctx->dec_sub.got_output = 0;
-			}
-		}
-		else if(ccx_options.write_format==CCX_OF_RCWT)
-		{
-			// Write last header and data
-			writercwtdata (dec_ctx, NULL, &dec_ctx->dec_sub);
-			if (dec_ctx->dec_sub.got_output)
-			{
-				encode_sub(enc_ctx, &dec_ctx->dec_sub);
-				dec_ctx->dec_sub.got_output = 0;
-			}
-		}
-	}
-	if (ccx_options.extract != 1)
-	{
-		if (ccx_options.write_format == CCX_OF_SMPTETT || ccx_options.write_format == CCX_OF_SAMI ||
-			ccx_options.write_format == CCX_OF_SRT || ccx_options.write_format == CCX_OF_TRANSCRIPT
-			|| ccx_options.write_format == CCX_OF_SPUPNG )
-		{
-			handle_end_of_data(dec_ctx->context_cc608_field_2, &dec_ctx->dec_sub);
-			if (dec_ctx->dec_sub.got_output)
-			{
-				encode_sub(enc_ctx, &dec_ctx->dec_sub);
-				dec_ctx->dec_sub.got_output = 0;
-			}
-		}
-	}
 
-	dinit_encoder(&enc_ctx);
 	time (&final);
 
 	long proc_time=(long) (final-start);
@@ -403,7 +344,7 @@ int main(int argc, char *argv[])
 	if (ccx_options.teletext_mode == CCX_TXT_IN_USE)
 		mprint ( "Teletext decoder: %"PRIu32" packets processed, %"PRIu32" SRT frames written.\n", tlt_packet_counter, tlt_frames_produced);
 */
-	if (dec_ctx->processed_enough)
+	if (is_decoder_processed_enough(ctx) == CCX_TRUE)
 	{
 		mprint ("\rNote: Processing was cancelled before all data was processed because\n");
 		mprint ("\rone or more user-defined limits were reached.\n");

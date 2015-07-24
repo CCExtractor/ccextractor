@@ -216,29 +216,46 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	if(!ctx)
 		return NULL;
 
-	// Prepare 608 context
-	ctx->context_cc608_field_1 = ccx_decoder_608_init_library(
-		setting->settings_608,
-		setting->cc_channel,
-		1,
-		&ctx->processed_enough,
-		setting->cc_to_stdout,
-		setting->output_format
-		);
-	ctx->context_cc608_field_2 = ccx_decoder_608_init_library(
-		setting->settings_608,
-		setting->cc_channel,
-		2,
-		&ctx->processed_enough,
-		setting->cc_to_stdout,
-		setting->output_format
-		);
+	ctx->avc_ctx = init_avc();
+	ctx->codec = setting->codec;
 
+	if(setting->codec == CCX_CODEC_ATSC_CC)
+	{
+		// Prepare 608 context
+		ctx->context_cc608_field_1 = ccx_decoder_608_init_library(
+				setting->settings_608,
+				setting->cc_channel,
+				1,
+				&ctx->processed_enough,
+				setting->cc_to_stdout,
+				setting->output_format
+				);
+		ctx->context_cc608_field_2 = ccx_decoder_608_init_library(
+				setting->settings_608,
+				setting->cc_channel,
+				2,
+				&ctx->processed_enough,
+				setting->cc_to_stdout,
+				setting->output_format
+				);
+	}
+	else
+	{
+		ctx->context_cc608_field_1 = NULL;
+		ctx->context_cc608_field_2 = NULL;
+	}
+	ctx->private_data = setting->private_data;
 	ctx->fix_padding = setting->fix_padding;
 	ctx->write_format =  setting->output_format;
 	ctx->subs_delay =  setting->subs_delay;
 	ctx->extract = setting->extract;
 	ctx->fullbin = setting->fullbin;
+	ctx->hauppauge_mode = setting->hauppauge_mode;
+	ctx->program_number = setting->program_number;
+	ctx->processed_enough = 0;
+	ctx->max_gop_length = 0;
+	ctx->has_ccdata_buffered = 0;
+	ctx->timing = init_timing_ctx(&ccx_common_timing_settings);
 	memcpy(&ctx->extraction_start, &setting->extraction_start,sizeof(struct ccx_boundary_time));
 	memcpy(&ctx->extraction_end, &setting->extraction_end,sizeof(struct ccx_boundary_time));
 
@@ -260,11 +277,45 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 	memset (&ctx->dec_sub, 0,sizeof(ctx->dec_sub));
 
+	// Initialize HDTV caption buffer
+	init_hdcc(ctx);
 	return ctx;
+}
+
+void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
+{
+	if(ctx->codec == CCX_CODEC_ATSC_CC)
+	{
+		if (ctx->extract != 2)
+		{
+			if (ctx->write_format==CCX_OF_SMPTETT || ctx->write_format==CCX_OF_SAMI || 
+					ctx->write_format==CCX_OF_SRT || ctx->write_format==CCX_OF_TRANSCRIPT
+					|| ctx->write_format==CCX_OF_SPUPNG )
+			{
+				flush_608_context(ctx->context_cc608_field_1, sub);
+			}
+			else if(ctx->write_format == CCX_OF_RCWT)
+			{
+				// Write last header and data
+				writercwtdata (ctx, NULL, sub);
+			}
+		}
+		if (ctx->extract != 1)
+		{
+			if (ctx->write_format == CCX_OF_SMPTETT || ctx->write_format == CCX_OF_SAMI ||
+					ctx->write_format == CCX_OF_SRT || ctx->write_format == CCX_OF_TRANSCRIPT
+					|| ctx->write_format == CCX_OF_SPUPNG )
+			{
+				flush_608_context(ctx->context_cc608_field_2, sub);
+			}
+		}
+	}
+
 }
 void dinit_cc_decode(struct lib_cc_decode **ctx)
 {
 	struct lib_cc_decode *lctx = *ctx;
+	dinit_avc(&lctx->avc_ctx);
 	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_1);
 	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_2);
 	freep(ctx);

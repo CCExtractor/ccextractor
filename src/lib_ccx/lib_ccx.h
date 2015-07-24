@@ -24,6 +24,8 @@
 
 /* Report information */
 #define SUB_STREAMS_CNT 10
+
+#define TELETEXT_CHUNK_LEN 1 + 8 + 44
 struct file_report
 {
 	unsigned width;
@@ -79,22 +81,11 @@ struct lib_ccx_ctx
 	int stat_dishheaders;
 	int stat_hdtv;
 	int stat_divicom;
-	unsigned total_pulldownfields;
-	unsigned total_pulldownframes;
 	int false_pict_header;
 
-	/* GOP-based timing */
-	int saw_gop_header;
-	int frames_since_last_gop;
-
-
-	/* Time info for timed-transcript */
-	int max_gop_length; // (Maximum) length of a group of pictures
-	int last_gop_length; // Length of the previous group of pictures
-
 	// int hex_mode=HEX_NONE; // Are we processing an hex file?
-
-	struct lib_cc_decode *dec_ctx;
+	struct ccx_decoders_common_settings_t *dec_global_setting;
+	struct list_head dec_ctx_head;
 
 
 	int rawmode; // Broadcast or DVD
@@ -133,15 +124,16 @@ struct lib_ccx_ctx
 	int epg_last_live_output; 
 	struct file_report freport;
 
-	unsigned hauppauge_mode; // If 1, use PID=1003, process specially and so on
+	unsigned int hauppauge_mode; // If 1, use PID=1003, process specially and so on
 	int live_stream; /* -1 -> Not a complete file but a live stream, without timeout
                        0 -> A regular file
                       >0 -> Live stream with a timeout of this value in seconds */
 	int binary_concat; // Disabled by -ve or --videoedited
 	int multiprogram;
+	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 
 	struct ccx_demuxer *demux_ctx;
-	struct avc_ctx *avc_ctx;
+	struct list_head enc_ctx_head;
 };
 
 #define buffered_skip(ctx, bytes) if (bytes<= ctx->bytesinbuffer - ctx->filebuffer_pos) { \
@@ -187,11 +179,11 @@ void position_sanity_check (int in);
 int init_file_buffer(struct ccx_demuxer *ctx);
 int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
-void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx);
-LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, unsigned char *buffer, int len);
-void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
+void raw_loop (struct lib_ccx_ctx *ctx);
+LLONG process_raw (struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned char *buffer, int len);
+void general_loop(struct lib_ccx_ctx *ctx);
 void processhex (char *filename);
-void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
+void rcwt_loop(struct lib_ccx_ctx *ctx);
 
 extern LLONG result;
 extern int end_of_file;
@@ -203,12 +195,12 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 int wtv_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 
 // es_functions.c
-LLONG process_m2v (struct lib_ccx_ctx *ctx, unsigned char *data, LLONG length,struct cc_subtitle *sub);
+LLONG process_m2v (struct lib_cc_decode *ctx, unsigned char *data, LLONG length,struct cc_subtitle *sub);
 
 extern unsigned top_field_first;
 
 // es_userdata.c
-int user_data(struct lib_ccx_ctx *ctx, struct bitstream *ustream, int udtype, struct cc_subtitle *sub);
+int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, struct cc_subtitle *sub);
 
 // bitstream.c - see bitstream.h
 
@@ -221,11 +213,10 @@ int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer);
 void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes);
 
 // sequencing.c
-void init_hdcc (void);
-void store_hdcc(struct lib_ccx_ctx *ctx, unsigned char *cc_data, int cc_count, int sequence_number,
-			LLONG current_fts_now,struct cc_subtitle *sub);
+void init_hdcc (struct lib_cc_decode *ctx);
+void store_hdcc(struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now, struct cc_subtitle *sub);
 void anchor_hdcc(int seq);
-void process_hdcc (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub);
+void process_hdcc (struct lib_cc_decode *ctx, struct cc_subtitle *sub);
 
 // params_dump.c
 void params_dump(struct lib_ccx_ctx *ctx);
@@ -242,24 +233,23 @@ void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct
 int isValidMP4Box(unsigned char *buffer, long position, long *nextBoxLocation, int *boxScore);
 void detect_stream_type (struct ccx_demuxer *ctx);
 int detect_myth( struct ccx_demuxer *ctx );
-int read_video_pes_header (struct ccx_demuxer *ctx, unsigned char *nextheader, int *headerlength, int sbuflen);
-int read_pts_pes(unsigned char*header, int len);
+int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, unsigned char *nextheader, int *headerlength, int sbuflen);
 
 // ts_functions.c
 void init_ts(struct ccx_demuxer *ctx);
-int ts_readpacket(struct ccx_demuxer* ctx);
+int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload);
 long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data);
 LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **data);
 int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char*buf, int size, int pos);
-int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos);
-int parse_PAT (struct ccx_demuxer *ctx);
+int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char *buf, int len, int pos);
+int parse_PAT (struct ccx_demuxer *ctx, struct ts_payload *payload);
 void parse_EPG_packet (struct lib_ccx_ctx *ctx);
-void EPG_free();
+void EPG_free(struct lib_ccx_ctx *ctx);
 
 // myth.c
-void myth_loop(struct lib_ccx_ctx *ctx, void *enc_ctx);
+void myth_loop(struct lib_ccx_ctx *ctx);
 
-LLONG process_avc (struct lib_ccx_ctx *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub);
+LLONG process_avc (struct lib_cc_decode *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub);
 // utility.c
 void fatal(int exit_code, const char *fmt, ...);
 void mprint (const char *fmt, ...);
@@ -279,10 +269,10 @@ void m_signal(int sig, void (*func)(int));
 void buffered_seek (struct ccx_demuxer *ctx, int offset);
 extern void build_parity_table(void);
 
-void tlt_process_pes_packet(void *codec, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub);
+int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub);
 void* telxcc_init(void);
 void telxcc_close(void **ctx, struct cc_subtitle *sub);
-void tlt_read_rcwt(void *codec, struct cc_subtitle *sub);
+void tlt_read_rcwt(void *codec, unsigned char *buf, struct cc_subtitle *sub);
 void telxcc_configure (void *codec, struct ccx_s_teletext_config *cfg);
 void telxcc_update_gt(void *codec, uint32_t global_timestamp);
 
@@ -310,10 +300,9 @@ extern int firstcall;
 #define SORTBUF (2*MAXBFRAMES+1)
 extern int cc_data_count[SORTBUF];
 extern unsigned char cc_data_pkts[SORTBUF][10*31*3+1];
-extern int has_ccdata_buffered;
 
 // From ts_functions
-extern struct ts_payload payload;
+//extern struct ts_payload payload;
 extern unsigned char tspacket[188];
 extern unsigned char *last_pat_payload;
 extern unsigned last_pat_length;
@@ -329,4 +318,10 @@ extern struct ccx_s_teletext_config tlt_config;
 extern uint32_t tlt_packet_counter;
 extern uint32_t tlt_frames_produced;
 
+int is_decoder_processed_enough(struct lib_ccx_ctx *ctx);
+struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct cap_info* cinfo);
+struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx);
+
+struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct cap_info* cinfo);
+struct encoder_ctx * update_encoder_list(struct lib_ccx_ctx *ctx);
 #endif

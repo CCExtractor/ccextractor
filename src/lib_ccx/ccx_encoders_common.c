@@ -671,35 +671,6 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 
 }
 
-static char *get_file_extension(enum ccx_output_format write_format)
-{
-	switch (write_format)
-	{
-		case CCX_OF_RAW:
-			return strdup(".raw");
-		case CCX_OF_SRT:
-			return strdup(".srt");
-		case CCX_OF_SAMI:
-			return strdup(".smi");
-		case CCX_OF_SMPTETT:
-			return strdup(".ttml");
-		case CCX_OF_TRANSCRIPT:
-			return strdup(".txt");
-		case CCX_OF_RCWT:
-			return strdup(".bin");
-		case CCX_OF_SPUPNG:
-			return strdup(".xml");
-		case CCX_OF_DVDRAW:
-			return strdup(".dvdraw");
-		case CCX_OF_NULL:
-			return NULL;
-		default:
-			mprint ("write_format doesn't have any legal value, this is a bug.\n");
-			errno = EINVAL;
-			return NULL;
-	}
-	return 0;
-}
 char *create_outfilename(const char *basename, const char *suffix, const char *extension)
 {
 	char *ptr = NULL;
@@ -738,7 +709,7 @@ char *create_outfilename(const char *basename, const char *suffix, const char *e
 	return ptr;
 }
 
-static int dinit_output_ctx(struct encoder_ctx *ctx)
+static void dinit_output_ctx(struct encoder_ctx *ctx)
 {
 	int i;
 	for(i = 0; i < ctx->nb_out; i++)
@@ -827,7 +798,8 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 
 	if (cfg->cc_to_stdout == CCX_TRUE)
 	{
-		ctx->out[0].fh=STDOUT_FILENO;
+		ctx->out[0].fh = STDOUT_FILENO;
+		ctx->out[0].filename = NULL;
 		mprint ("Sending captions to stdout.\n");
 	}
 
@@ -846,6 +818,8 @@ void dinit_encoder(struct encoder_ctx **arg)
 {
 	struct encoder_ctx *ctx = *arg;
 	int i;
+	if(!ctx)
+		return;
 	for (i = 0; i < ctx->nb_out; i++)
 	{
 		if (ctx->end_credits_text!=NULL)
@@ -878,6 +852,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->capacity=INITIAL_ENC_BUFFER_CAPACITY;
 	ctx->srt_counter = 0;
 
+	ctx->program_number = opt->program_number;
 	ctx->send_to_srv = opt->send_to_srv;
 	ctx->multiple_files = opt->multiple_files;
 	ctx->first_input_file = opt->first_input_file;
@@ -888,7 +863,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 		free(ctx);
 		return NULL;
 	}
-	ctx->in_fileformat = 1;
+	ctx->in_fileformat = opt->in_format;
 
 	/** used in case of SUB_EOD_MARKER */
 	ctx->prev_start = -1;
@@ -944,12 +919,15 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 void set_encoder_rcwt_fileformat(struct encoder_ctx *ctx, short int format)
 {
-	ctx->in_fileformat = format;
+	if(ctx)
+	{
+		ctx->in_fileformat = format;
+	}
 }
 
 static int write_newline(struct encoder_ctx *ctx, int lang)
 {
-	write (ctx->out[lang].fh, ctx->encoded_crlf, ctx->encoded_crlf_length);
+	return write(ctx->out[lang].fh, ctx->encoded_crlf, ctx->encoded_crlf_length);
 }
 
 struct ccx_s_write *get_output_ctx(struct encoder_ctx *ctx, int lan)
@@ -968,6 +946,9 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 {
 	int wrote_something = 0;
 	int ret = 0;
+
+	if(!context)
+		return CCX_OK;
 
 	if (sub->type == CC_608)
 	{

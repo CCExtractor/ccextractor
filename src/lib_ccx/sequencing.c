@@ -13,13 +13,11 @@ static LLONG cc_fts[SORTBUF];
 // Store HD CC packets
 unsigned char cc_data_pkts[SORTBUF][10*31*3+1]; // *10, because MP4 seems to have different limits
 
-// Set to true if data is buffered
-int has_ccdata_buffered = 0;
 // The sequence number of the current anchor frame.  All currently read
 // B-Frames belong to this I- or P-frame.
 static int anchor_seq_number = -1;
 
-void init_hdcc (void)
+void init_hdcc (struct lib_cc_decode *ctx)
 {
 	for (int j=0; j<SORTBUF; j++)
 	{
@@ -27,15 +25,15 @@ void init_hdcc (void)
 		cc_fts[j] = 0;
 	}
 	memset(cc_data_pkts, 0, SORTBUF*(31*3+1));
-	has_ccdata_buffered = 0;
+	ctx->has_ccdata_buffered = 0;
 }
 
 // Buffer caption blocks for later sorting/flushing.
-void store_hdcc(struct lib_ccx_ctx *ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now, struct cc_subtitle *sub)
+void store_hdcc(struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now, struct cc_subtitle *sub)
 {
 	enum ccx_stream_mode_enum stream_mode;
 
-	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
+	//stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 	// Uninitialized?
 	if (anchor_seq_number < 0)
 	{
@@ -54,7 +52,7 @@ void store_hdcc(struct lib_ccx_ctx *ctx, unsigned char *cc_data, int cc_count, i
 		seq_index = sequence_number - anchor_seq_number + MAXBFRAMES;
 	}
 
-	has_ccdata_buffered = 1;
+	ctx->has_ccdata_buffered = 1;
 
 	// In GOP mode the fts is set only once for the whole GOP. Recreate
 	// the right time according to the sequence number.
@@ -70,7 +68,7 @@ void store_hdcc(struct lib_ccx_ctx *ctx, unsigned char *cc_data, int cc_count, i
 			// Changed by CFS to concat, i.e. don't assume there's no data already for this seq_index.
 			// Needed at least for MP4 samples. // TODO: make sure we don't overflow
 			cc_fts[seq_index] = current_fts_now; // CFS: Maybe do even if there's no data?
-			if (stream_mode!=CCX_SM_MP4) // CFS: Very ugly hack, but looks like overwriting is needed for at least some ES
+			//if (stream_mode!=CCX_SM_MP4) // CFS: Very ugly hack, but looks like overwriting is needed for at least some ES
 				cc_data_count[seq_index]  = 0;
 			memcpy(cc_data_pkts[seq_index] + cc_data_count[seq_index] * 3, cc_data, cc_count * 3 + 1);
 		}
@@ -95,21 +93,19 @@ void anchor_hdcc(int seq)
 }
 
 // Sort/flash caption block buffer
-void process_hdcc (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
+void process_hdcc (struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 {
 	// Remember the current value
 	LLONG store_fts_now = fts_now;
-	struct lib_cc_decode *dec_ctx;
 	int reset_cb = -1;
 
 	dbg_print(CCX_DMT_VERBOSE, "Flush HD caption blocks\n");
-	dec_ctx = ctx->dec_ctx;
 
 	for (int seq=0; seq<SORTBUF; seq++)
 	{
 
 		// We rely on this.
-		if (ctx->dec_ctx->in_bufferdatatype == CCX_H264)
+		if (ctx->in_bufferdatatype == CCX_H264)
 			reset_cb = 1;
 
 		// If fts_now is unchanged we rely on cc block counting,
@@ -146,7 +142,7 @@ void process_hdcc (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 
 		// Re-create original time
 		fts_now = cc_fts[seq];
-		process_cc_data( dec_ctx, cc_data_pkts[seq], cc_data_count[seq], sub);
+		process_cc_data( ctx, cc_data_pkts[seq], cc_data_count[seq], sub);
 
 	}
 
@@ -154,5 +150,5 @@ void process_hdcc (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 	fts_now = store_fts_now;
 
 	// Now that we are done, clean up.
-	init_hdcc();
+	init_hdcc(ctx);
 }

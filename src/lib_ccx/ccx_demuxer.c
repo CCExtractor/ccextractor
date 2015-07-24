@@ -30,6 +30,7 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 {
 	if (ccx_options.input_source==CCX_DS_STDIN)
 	{
+		init_file_buffer(ctx);
 		if (ctx->infd != -1) // Means we had already processed stdin. So we're done.
 		{
 			if (ccx_options.print_file_reports)
@@ -195,13 +196,10 @@ static void ccx_demuxer_print_report(struct ccx_demuxer *ctx)
 			printf("Program Count: %d\n", ctx->freport.program_cnt);
 
 			printf("Program Numbers: ");
-			for (int i = 0; i < ctx->pmt_array_length; i++)
-			{
-				if (ctx->pmt_array[i].program_number == 0)
-					continue;
 
-				printf("%u ", ctx->pmt_array[i].program_number);
-			}
+			for (int i = 0; i < ctx->nb_program; i++)
+				printf("%u ", ctx->pinfo[i].program_number);
+
 			printf("\n");
 
 			for (int i = 0; i < 65536; i++)
@@ -357,14 +355,6 @@ void ccx_demuxer_delete(struct ccx_demuxer **ctx)
 	int i;
 	dinit_cap(lctx);
 	freep(&lctx->last_pat_payload);
-	for(i = 0; i < TS_PMT_MAP_SIZE; i++)
-	{
-		if(lctx->pmt_array[i].last_pmt_length)
-		{
-			freep(&lctx->pmt_array[i].last_pmt_payload);
-		}
-		lctx->pmt_array[i].last_pmt_length = 0;
-	}
 	for (i = 0; i < MAX_PID; i++)
 	{
 		if( lctx->PIDs_programs[i])
@@ -393,7 +383,6 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	ctx->ts_allprogram = cfg->ts_allprogram;
 	ctx->ts_datastreamtype = cfg->ts_datastreamtype;
 	ctx->nb_program = 0;
-	ctx->codec_ctx = NULL;
 	ctx->multi_stream_per_prog = 0;
 
 	if(cfg->ts_forced_program  != -1)
@@ -417,14 +406,12 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	for(i = 0; i < cfg->nb_ts_cappid; i++)
 	{
 		if(ctx->codec == CCX_CODEC_ANY)
-			update_capinfo(ctx, cfg->ts_cappids[i], cfg->ts_datastreamtype, CCX_CODEC_NONE);
+			update_capinfo(ctx, cfg->ts_cappids[i], cfg->ts_datastreamtype, CCX_CODEC_NONE, 0, NULL);
 		else
-			update_capinfo(ctx, cfg->ts_cappids[i], cfg->ts_datastreamtype, ctx->codec);
+			update_capinfo(ctx, cfg->ts_cappids[i], cfg->ts_datastreamtype, ctx->codec, 0, NULL);
 	}
 
 	ctx->nocodec = cfg->nocodec;
-
-	ctx->nb_cap = 0;
 
 	ctx->reset = ccx_demuxer_reset;
 	ctx->close = ccx_demuxer_close;
@@ -441,9 +428,7 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	ctx->last_pat_length = 0;
 
 	ctx->fh_out_elementarystream = NULL;
-
-	ctx->pmt_array_length = 0;
-	memset(ctx->pmt_array, 0, sizeof(struct PAT_entry) * TS_PMT_MAP_SIZE);
+	ctx->warning_program_not_found_shown = CCX_FALSE;
 	if (cfg->out_elementarystream_filename != NULL)
 	{
 		if ((ctx->fh_out_elementarystream = fopen (cfg->out_elementarystream_filename,"wb"))==NULL)
@@ -486,6 +471,7 @@ struct demuxer_data* alloc_demuxer_data(void)
 	data->stream_pid = -1;
 	data->codec = CCX_CODEC_NONE;
 	data->len = 0;
+	data->pts = CCX_NOPTS;
 	data->next_stream = 0;
 	data->next_program = 0;
 	return data;

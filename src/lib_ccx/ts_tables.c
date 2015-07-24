@@ -44,13 +44,10 @@ unsigned get_printable_stream_type (unsigned ccx_stream_type)
 
 void clear_PMT_array (struct ccx_demuxer *ctx)
 {
-	for (int i=0;i<ctx->pmt_array_length;i++)
-		if (ctx->pmt_array[i].last_pmt_payload)
-		{
-			free (ctx->pmt_array[i].last_pmt_payload);
-			ctx->pmt_array[i].last_pmt_payload=NULL;
-		}
-	ctx->pmt_array_length=0;
+	if(ctx->flag_ts_forced_pn == CCX_FALSE)
+	{
+		ctx->nb_program = 0;
+	}
 }
 
 int need_program(struct ccx_demuxer *ctx)
@@ -101,7 +98,7 @@ int update_pinfo(struct ccx_demuxer *ctx, int pid, int program_number)
    PMT specs: ISO13818-1 / table 2-28
    */
 
-int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
+int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char *buf, int len, int pos)
 {
 	int must_flush=0;
 	int ret = 0;
@@ -109,9 +106,19 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 	int prev_cap_cont = 0;
 	int present_cap_count = 0;
 
-	if (need_capInfo(ctx) == CCX_FALSE)
-		return 0;
+	uint8_t table_id;
+	uint16_t section_length;
+	uint16_t program_number;
+	uint8_t version_number;
+	uint8_t current_next_indicator;
+	uint8_t section_number;
+	uint8_t last_section_number;
 
+	uint16_t PCR_PID;
+	uint16_t pi_length;
+
+
+#if 0
 	/* We keep a copy of all PMTs, even if not interesting to us for now */
 	if (ctx->pmt_array[pos].last_pmt_payload!=NULL && len == ctx->pmt_array[pos].last_pmt_length &&
 			!memcmp (buf, ctx->pmt_array[pos].last_pmt_payload, len))
@@ -125,28 +132,32 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process PMT.\n");
 	memcpy (ctx->pmt_array[pos].last_pmt_payload, buf, len);
 	ctx->pmt_array[pos].last_pmt_length = len;
+#endif
 
-	unsigned table_id = buf[0];
-	unsigned section_length = (((buf[1] & 0x0F) << 8)
+	table_id = buf[0];
+	section_length = (((buf[1] & 0x0F) << 8)
 			| buf[2]);
-	unsigned program_number = ((buf[3] << 8)
+	program_number = ((buf[3] << 8)
 			| buf[4]);
 
-	unsigned version_number = (buf[5] & 0x3E) >> 1;
-	unsigned current_next_indicator = buf[5] & 0x01;
+	version_number = (buf[5] & 0x3E) >> 1;
+
+	current_next_indicator = buf[5] & 0x01;
+	// This table is not active, no need to evaluate
 	if (!current_next_indicator)
-		// This table is not active, no need to evaluate
 		return 0;
-	unsigned section_number = buf[6];
-	unsigned last_section_number = buf[7];
+
+	section_number = buf[6];
+	last_section_number = buf[7];
 	if ( last_section_number > 0 )
 	{
 		mprint("Long PMTs are not supported - skipped.\n");
 		return 0;
 	}
-	unsigned PCR_PID = (((buf[8] & 0x1F) << 8)
+
+	PCR_PID = (((buf[8] & 0x1F) << 8)
 			| buf[9]);
-	unsigned pi_length = (((buf[10] & 0x0F) << 8)
+	pi_length = (((buf[10] & 0x0F) << 8)
 			| buf[11]);
 
 	if( 12 + pi_length >  len )
@@ -157,6 +168,10 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 	}
 	buf += 12 + pi_length;
 	len -= (12 + pi_length);
+
+	if (need_capInfo(ctx, program_number) == CCX_FALSE)
+		return 0;
+
 
 	unsigned stream_data = section_length - 9 - pi_length - 4; // prev. bytes and CRC
 
@@ -174,8 +189,6 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 		dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Probably parsing incomplete PMT, expected data longer than available payload.\n");
 		pmt_warning_shown=1;
 	}
-	dbg_print(CCX_DMT_PMT, "\nProgram Map Table for program %u, PMT PID: %u\n",
-			program_number,payload.pid);
 	// Make a note of the program number for all PIDs, so we can report it later
 	for( unsigned i=0; i < stream_data && (i+4)<len; i+=5)
 	{
@@ -193,7 +206,6 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 		ctx->PIDs_programs[elementary_PID]->elementary_PID=elementary_PID;
 		ctx->PIDs_programs[elementary_PID]->ccx_stream_type=ccx_stream_type;
 		ctx->PIDs_programs[elementary_PID]->program_number=program_number;
-		ctx->PIDs_programs[elementary_PID]->PMT_PID=payload.pid;
 		ctx->PIDs_programs[elementary_PID]->printable_stream_type=get_printable_stream_type (ccx_stream_type);
 		dbg_print(CCX_DMT_PMT, "%6u | %3X (%3u) | %s\n",elementary_PID,ccx_stream_type,ccx_stream_type,
 				desc[ctx->PIDs_programs[elementary_PID]->printable_stream_type]);
@@ -305,14 +317,15 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 				if(CCX_MPEG_DSC_DVB_SUBTITLE == descriptor_tag)
 				{
 					struct dvb_config cnf;
+					void *ptr;
 					memset((void*)&cnf,0,sizeof(struct dvb_config));
 					ret = parse_dvb_description(&cnf,es_info,desc_len);
 					if(ret < 0)
 						break;
-					ctx->codec_ctx = dvbsub_init_decoder(&cnf);
-					if (ctx->codec_ctx == NULL)
+					ptr = dvbsub_init_decoder(&cnf);
+					if (ptr == NULL)
 						break;
-					update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_DVB);
+					update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_DVB, program_number, ptr);
 					max_dif = 30;
 				}
 			}
@@ -325,13 +338,16 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 			for (desc_len = 0;(buf + i + 5 + ES_info_length) - es_info ;es_info += desc_len)
 			{
 				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
+				void *ptr;
 				desc_len = (*es_info++);
 				if(!IS_VALID_TELETEXT_DESC(descriptor_tag))
 					continue;
-				ctx->codec_ctx = telxcc_init();
-				update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_TELETEXT);
-				mprint ("VBI/teletext stream ID %u (0x%x) for SID %u (0x%x)\n",
-						elementary_PID, elementary_PID, program_number, program_number);
+				ptr = telxcc_init();
+				if (ptr == NULL)
+					break;
+				update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_TELETEXT, program_number, ptr);
+				//mprint ("VBI/teletext stream ID %u (0x%x) for SID %u (0x%x)\n",
+				//		elementary_PID, elementary_PID, program_number, program_number);
 			}
 
 		}
@@ -342,17 +358,17 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 			unsigned descriptor_tag = buf[i + 5];
 			if (descriptor_tag == 0x45)
 			{
-				update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_ATSC_CC);
-				mprint ("VBI stream ID %u (0x%x) for SID %u (0x%x) - teletext is disabled, will be processed as closed captions.\n",
-						elementary_PID, elementary_PID, program_number, program_number);
+				update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
+				//mprint ("VBI stream ID %u (0x%x) for SID %u (0x%x) - teletext is disabled, will be processed as closed captions.\n",
+				//		elementary_PID, elementary_PID, program_number, program_number);
 			}
 		}
 
 		if (ccx_stream_type==CCX_STREAM_TYPE_VIDEO_H264 || ccx_stream_type==CCX_STREAM_TYPE_VIDEO_MPEG2)
 		{
-			update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_ATSC_CC);
-			mprint ("Decode captions from program %d - %s stream [0x%02x]  -  PID: %u\n",
-				program_number , desc[ccx_stream_type], ccx_stream_type, elementary_PID);
+			update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
+			//mprint ("Decode captions from program %d - %s stream [0x%02x]  -  PID: %u\n",
+			//	program_number , desc[ccx_stream_type], ccx_stream_type, elementary_PID);
 		}
 
 		if(need_capInfo_for_pid(ctx, elementary_PID) == CCX_TRUE)
@@ -365,7 +381,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 				mprint ("Please pass -streamtype to select manually.\n");
 				fatal (EXIT_FAILURE, "(user assistance needed)");
 			}
-			update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_NONE);
+			update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_NONE, program_number, NULL);
 			continue;
 		}
 
@@ -385,7 +401,6 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len, int pos)
 	present_cap_count = count_complete_capInfo(ctx);
 	if(present_cap_count > prev_cap_cont)
 	{
-		update_pinfo(ctx, payload.pid, program_number);
 	}
 
 	return must_flush;
@@ -437,7 +452,7 @@ int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned 
 
 	if(payload->section_index >= (unsigned)payload->section_size)
 	{
-		if(parse_PMT(ctx, payload->section_buf,payload->section_size,pos))
+		if(parse_PMT(ctx, payload, payload->section_buf,payload->section_size,pos))
 			return 1;
 	}
 	return 0;
@@ -448,26 +463,37 @@ int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned 
    PIDs of their Program Map Table.
    Returns: gotpes */
 
-int parse_PAT (struct ccx_demuxer *ctx)
+int parse_PAT (struct ccx_demuxer *ctx, struct ts_payload *payload)
 {
-	int gotpes=0;
-	int is_multiprogram=0;
-	static int warning_program_not_found_shown=0;
+	int gotpes = 0;
+	int is_multiprogram = 0;
+	unsigned char pointer_field = 0;
+	unsigned char *payload_start = NULL;
+	unsigned int payload_length = 0;
+	unsigned int section_number = 0;
+	unsigned int last_section_number = 0;
+
+	if(need_capInfo(ctx, 0) == CCX_FALSE)
+		return CCX_OK;
+
+	if (payload->pesstart)
+		pointer_field = *(payload->start);
+	payload->start += pointer_field + 1;
+	payload->length -= pointer_field + 1;
+
+	payload_start = payload->start;
+	payload_length = payload->length;
+
+	section_number = payload_start[6];
+	last_section_number = payload_start[7];
 
 	/* if ((forced_cappid || telext_mode==CCX_TXT_IN_USE) && cap_stream_type!=CCX_STREAM_TYPE_UNKNOWNSTREAM) // Already know what we need, skip
 		return 0;  */
 
-	if (!payload.pesstart)
-		// Not the first entry. Ignore it, it should not be here.
+	if (!payload->pesstart)
+		// Not the first entry. Ignore it, may be Pat larger then 184.
 		return 0;
 
-	unsigned pointer_field = *(payload.start);
-	unsigned char *payload_start = payload.start + pointer_field + 1;
-	if (tspacket-payload_start+188<0) // Negative length? Seen it, but impossible
-		return 0;
-	unsigned payload_length = tspacket+188-payload_start;
-	unsigned section_number = payload_start[6];
-	unsigned last_section_number = payload_start[7];
 	if (section_number > last_section_number) // Impossible: Defective PAT
 	{
 		dbg_print(CCX_DMT_PAT, "Skipped defective PAT packet, section_number=%u but last_section_number=%u\n",
@@ -495,7 +521,6 @@ int parse_PAT (struct ccx_demuxer *ctx)
 		mprint ("Notice: PAT changed, clearing all variables.\n");
 		dinit_cap(ctx);
 		clear_PMT_array(ctx);
-		ctx->nb_cap = 0;
 		memset (ctx->PIDs_seen,0,sizeof (int) *65536); // Forget all we saw
 		if (!tlt_config.user_page) // If the user didn't select a page...
 			tlt_config.page=0; // ..forget whatever we detected.
@@ -552,7 +577,6 @@ int parse_PAT (struct ccx_demuxer *ctx)
 	}
 
 	unsigned ts_prog_num = 0;
-	unsigned ts_prog_map_pid = 0;
 	dbg_print(CCX_DMT_PAT, "\nProgram association section (PAT)\n");
 
 	ctx->freport.program_cnt=0;
@@ -567,56 +591,35 @@ int parse_PAT (struct ccx_demuxer *ctx)
 
 	is_multiprogram = (ctx->freport.program_cnt>1);
 
-	for( unsigned i=0; i < programm_data; i+=4)
+	for( unsigned int i = 0; i < programm_data; i+=4)
 	{
 		unsigned program_number = ((payload_start[i] << 8)
 				| payload_start[i+1]);
 		unsigned prog_map_pid = ((payload_start[i+2] << 8)
 				| payload_start[i+3]) & 0x1FFF;
+		int j = 0;
 
 		dbg_print(CCX_DMT_PAT, "  Program number: %u  -> PMTPID: %u\n",
 				program_number, prog_map_pid);
 
 		if( !program_number )
 			continue;
-/*XXX
-		if (!is_multiprogram || (ctx->ts_forced_program_selected && program_number == ctx->ts_forced_program))
+
+		for (j = 0; j < ctx->nb_program; j++)
 		{
-			// If there's just one program we select it unless the user selected
-			// something else anyway.
-			ts_prog_num = program_number;
-			ts_prog_map_pid = prog_map_pid;
-		}
-*/
-		// Having an array for PMTs comes from telxcc.
-		int found=0,j;
-		for (j=0;j<ctx->pmt_array_length; j++)
-		{
-			if (ctx->pmt_array[j].program_number == program_number)
+			if (ctx->pinfo[j].program_number == program_number)
 			{
-				found=1;
+				if(ctx->flag_ts_forced_pn== CCX_TRUE && ctx->pinfo[j].pid == CCX_UNKNOWN)
+					ctx->pinfo[j].pid = prog_map_pid;
 				break;
 			}
 		}
-		if (!found && ctx->pmt_array_length < TS_PMT_MAP_SIZE)
-		{
-			ctx->pmt_array[ctx->pmt_array_length].program_number=program_number;
-			ctx->pmt_array[ctx->pmt_array_length].PMT_PID=prog_map_pid;
-			ctx->pmt_array_length++;
-		}
+		if( j == ctx->nb_program && ctx->flag_ts_forced_pn == CCX_FALSE)
+			update_pinfo(ctx, prog_map_pid, program_number);
 	} // for
 
 	if (is_multiprogram && !ts_prog_num)
 	{
-/*
-		// We can only work with "simple" ts files
-		if (ctx->ts_forced_program_selected && !warning_program_not_found_shown)
-		{
-			mprint ("\rThe program you selected (%u) wasn't found in the first Program Association Table in the stream.\n",ctx->ts_forced_program);
-			mprint ("I will continue reading the stream in case the program appears later.\n\n");
-			warning_program_not_found_shown=1;
-		}
-*/
 		mprint ("\nThis TS file has more than one program. These are the program numbers found: \n");
 		for( unsigned j=0; j < programm_data; j+=4)
 		{
@@ -626,40 +629,8 @@ int parse_PAT (struct ccx_demuxer *ctx)
 				mprint ("%u\n",pn);
 			activity_program_number (pn);
 		}
-/*
-		if (!ctx->ts_forced_program_selected)
-		{
-			if (!ctx->ts_autoprogram)
-			{
-				if (ccx_options.xmltv >= 1)
-				{
-					mprint("Processing EPG only. If you want to extract subtitles use --program-number to select a program.");
-					ctx->ts_forced_program_selected = 1;
-					warning_program_not_found_shown = 1; 
-					ccx_options.write_format = CCX_OF_NULL;
-				}
-				else
-					fatal(CCX_COMMON_EXIT_BUG_BUG, "Run ccextractor again with --program-number specifying which program\nto process.");
-			}
-
-			else
-				mprint ("\nThe first program with a suitable CC stream will be selected.\n");
-		}
-*/
 	}
 
-	// If we found a new PAT reset all TS stream variables
-//	if( ts_prog_num != TS_program_number )
-	{
-//		TS_program_number = ts_prog_num;
-//		pmtpid = ts_prog_map_pid;
-//		ctx->nb_cap = 0;
-/* XXX
-		// If we have data flush it
-		if( ctx->capbuflen > 0 )
-			gotpes = 1;
-*/
-	}
 	return gotpes;
 }
 
@@ -726,7 +697,7 @@ void process_ccx_mpeg_descriptor (unsigned char *data, unsigned length)
 				break;
 			if (data[0]>=0x40 && data[0]<=0xFF) // User private
 				break;
-			mprint ("Still unsupported MPEG descriptor type=%d (%02X)\n",data[0],data[0]);
+			//mprint ("Still unsupported MPEG descriptor type=%d (%02X)\n",data[0],data[0]);
 			break;
 	}
 }

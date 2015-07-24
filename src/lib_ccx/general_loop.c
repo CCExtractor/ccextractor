@@ -9,6 +9,7 @@
 #include "dvb_subtitle_decoder.h"
 #include "ccx_encoders_common.h"
 #include "activity.h"
+#include "utility.h"
 
 /* General video information */
  unsigned current_hor_size = 0;
@@ -197,7 +198,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 			else if ((nextheader[3]&0xf0)==0xe0)
 			{
 				int hlen; // Dummy variable, unused
-				int peslen = read_video_pes_header(ctx->demux_ctx, nextheader, &hlen, 0);
+				int peslen = read_video_pes_header(ctx->demux_ctx, data, nextheader, &hlen, 0);
 				if (peslen < 0)
 				{
 					end_of_file=1;
@@ -445,19 +446,19 @@ void processhex (struct lib_ccx_ctx *ctx, char *filename)
 }
 #endif
 // Raw file process
-void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
+void raw_loop (struct lib_ccx_ctx *ctx)
 {
 	LLONG ret;
 	struct demuxer_data *data = NULL;
-	struct cc_subtitle *dec_sub = &ctx->dec_ctx->dec_sub;
+	struct cc_subtitle *dec_sub = NULL;
+	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
+	struct lib_cc_decode *dec_ctx = NULL;
 
-	current_pts = 90; // Pick a valid PTS time
-	pts_set = 1;
-	set_fts(); // Now set the FTS related variables
-	dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
-			print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-			(unsigned) (current_pts));
-	dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
+	dec_ctx = update_decoder_list(ctx);
+	dec_sub = &dec_ctx->dec_sub;
+
+	set_current_pts(dec_ctx->timing, 90);
+	set_fts(dec_ctx->timing); // Now set the FTS related variables
 
 	do
 	{
@@ -466,33 +467,26 @@ void raw_loop (struct lib_ccx_ctx *ctx, void *enc_ctx)
 		if(ret == CCX_EOF)
 			break;
 
-		ret = process_raw(ctx, dec_sub, data->buffer, data->len);
+		ret = process_raw(dec_ctx, dec_sub, data->buffer, data->len);
 		if (dec_sub->got_output)
 		{
 			encode_sub(enc_ctx, dec_sub);
 			dec_sub->got_output = 0;
 		}
 
-		int ccblocks = cb_field1;
-		current_pts += cb_field1*1001/30*(MPEG_CLOCK_FREQ/1000);
-		set_fts(); // Now set the FTS related variables including fts_max
+		//int ccblocks = cb_field1;
+		add_current_pts(dec_ctx->timing, cb_field1*1001/30*(MPEG_CLOCK_FREQ/1000));
+		set_fts(dec_ctx->timing); // Now set the FTS related variables including fts_max
 
-		dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
-				print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-				(unsigned) (current_pts));
-		dbg_print(CCX_DMT_VIDES, "  FTS: %s incl. %d CB\n",
-				print_mstime(get_fts()), ccblocks);
 
 	} while (data->len);
 }
 
 /* Process inbuf bytes in buffer holding raw caption data (three byte packets, the first being the field).
  * The number of processed bytes is returned. */
-LLONG process_raw_with_field (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, unsigned char* buffer, int len)
+LLONG process_raw_with_field (struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub, unsigned char* buffer, int len)
 {
 	unsigned char data[3];
-	struct lib_cc_decode *dec_ctx = NULL;
-	dec_ctx = ctx->dec_ctx;
 	data[0]=0x04; // Field 1
 	current_field=1;
 
@@ -518,17 +512,15 @@ LLONG process_raw_with_field (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, 
 
 /* Process inbuf bytes in buffer holding raw caption data (two byte packets).
  * The number of processed bytes is returned. */
-LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, unsigned char *buffer, int len)
+LLONG process_raw ( struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned char *buffer, int len)
 {
 	unsigned char data[3];
-	struct lib_cc_decode *dec_ctx = NULL;
-	dec_ctx = ctx->dec_ctx;
 	data[0]=0x04; // Field 1
 	current_field=1;
 
 	for (unsigned long i=0; i < len; i=i+2)
 	{
-		if ( !dec_ctx->saw_caption_block && *(buffer+i)==0xff && *(buffer+i+1)==0xff)
+		if ( !ctx->saw_caption_block && *(buffer+i)==0xff && *(buffer+i+1)==0xff)
 		{
 			// Skip broadcast header
 		}
@@ -539,7 +531,7 @@ LLONG process_raw (struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, unsigned ch
 
 			// do_cb increases the cb_field1 counter so that get_fts()
 			// is correct.
-			do_cb(dec_ctx, data, sub);
+			do_cb(ctx, data, sub);
 		}
 	}
 	return len;
@@ -557,38 +549,128 @@ void delete_datalist(struct demuxer_data *list)
 
 	}
 }
-void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
+
+int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct demuxer_data *data_node)
 {
-	LLONG overlap=0;
-	LLONG pos = 0; /* Current position in buffer */
-	struct cc_subtitle *dec_sub = &ctx->dec_ctx->dec_sub;
+	LLONG got; // Means 'consumed' from buffer actually
+	int ret = 0;
+	static LLONG last_pts = 0x01FFFFFFFFLL;
+	struct cc_subtitle *dec_sub = &dec_ctx->dec_sub;
+
+	if (dec_ctx->hauppauge_mode)
+	{
+		got = process_raw_with_field(dec_ctx, dec_sub, data_node->buffer, data_node->len);
+		if (dec_ctx->timing->pts_set)
+			set_fts(dec_ctx->timing); // Try to fix timing from TS data
+	}
+	else if(data_node->bufferdatatype == CCX_DVB_SUBTITLE)
+	{
+		dvbsub_decode(dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
+		set_fts(dec_ctx->timing);
+		got = data_node->len;
+	}
+	else if (data_node->bufferdatatype == CCX_PES)
+	{
+		dec_ctx->in_bufferdatatype = CCX_PES;
+		got = process_m2v (dec_ctx, data_node->buffer, data_node->len, dec_sub);
+	}
+	else if (data_node->bufferdatatype == CCX_TELETEXT)
+	{
+		//telxcc_update_gt(dec_ctx->private_data, ctx->demux_ctx->global_timestamp);
+		ret = tlt_process_pes_packet (dec_ctx, data_node->buffer, data_node->len, dec_sub);
+		if(ret == CCX_EINVAL)
+			return ret;
+		got = data_node->len;
+	}
+	else if (data_node->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
+	{
+		got = data_node->len; // Do nothing. Still don't know how to process it
+	}
+	else if (data_node->bufferdatatype == CCX_RAW) // Raw two byte 608 data from DVR-MS/ASF
+	{
+		// The asf_getmoredata() loop sets current_pts when possible
+		if (dec_ctx->timing->pts_set == 0)
+		{
+			mprint("DVR-MS/ASF file without useful time stamps - count blocks.\n");
+			// Otherwise rely on counting blocks
+			dec_ctx->timing->current_pts = 12345; // Pick a valid PTS time
+			dec_ctx->timing->pts_set = 1;
+		}
+
+		if (dec_ctx->timing->current_pts != last_pts)
+		{
+			// Only initialize the FTS values and reset the cb
+			// counters when the PTS is different. This happens frequently
+			// with ASF files.
+
+			if (dec_ctx->timing->min_pts==0x01FFFFFFFFLL)
+			{
+				// First call
+				fts_at_gop_start = 0;
+			}
+			else
+				fts_at_gop_start = get_fts();
+
+			frames_since_ref_time = 0;
+			set_fts(dec_ctx->timing);
+
+			last_pts = dec_ctx->timing->current_pts;
+		}
+
+		dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
+				print_mstime(dec_ctx->timing->current_pts/(MPEG_CLOCK_FREQ/1000)),
+				(unsigned) (dec_ctx->timing->current_pts));
+		dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
+
+		got = process_raw(dec_ctx, dec_sub, data_node->buffer, data_node->len);
+	}
+	else if (data_node->bufferdatatype == CCX_H264) // H.264 data from TS file
+	{
+		dec_ctx->in_bufferdatatype = data_node->bufferdatatype;
+		got = process_avc(dec_ctx, data_node->buffer, data_node->len, dec_sub);
+	}
+	else
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "Unknown data type!");
+
+	if (got > data_node->len)
+	{
+		mprint ("BUG BUG\n");
+	}
+
+
+//	ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer, (size_t) (data_node->len - got));
+
+	/* Get rid of the bytes we already processed */
+	if (data_node)
+	{
+		if ( got > 0 )
+		{
+			memmove (data_node->buffer,data_node->buffer+got,(size_t) (data_node->len - got));
+			data_node->len -= got;
+		}
+	}
+
+	if (dec_sub->got_output)
+	{
+		encode_sub(enc_ctx, dec_sub);
+		dec_sub->got_output = 0;
+	}
+	return CCX_OK;
+}
+void general_loop(struct lib_ccx_ctx *ctx)
+{
 	struct lib_cc_decode *dec_ctx = NULL;
 	enum ccx_stream_mode_enum stream_mode;
 	struct demuxer_data *datalist = NULL;
 	struct demuxer_data *data_node = NULL;
-	//struct demuxer_data *data = alloc_demuxer_data();
-
 	int ret;
-	dec_ctx = ctx->dec_ctx;
+
+
 
 	end_of_file = 0;
-	current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
 	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
-	while (!end_of_file && !dec_ctx->processed_enough)
+	while (!end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE)
 	{
-		/* Get rid of the bytes we already processed */
-		if (data_node)
-		{
-			overlap = data_node->len-pos;
-			if ( pos != 0 )
-			{
-				// Only when needed as memmove has been seen crashing
-				// for dest==source and n >0
-				memmove (data_node->buffer,data_node->buffer+pos,(size_t) (data_node->len - pos));
-				data_node->len -= pos;
-			}
-		}
-		pos = 0;
 
 		// GET MORE DATA IN BUFFER
 		position_sanity_check(ctx->demux_ctx->infd);
@@ -616,6 +698,8 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		position_sanity_check(ctx->demux_ctx->infd);
 		if(!ctx->multiprogram)
 		{
+			struct cap_info* cinfo = NULL;
+			struct encoder_ctx *enc_ctx = NULL;
 			int pid = get_best_stream(ctx->demux_ctx);
 			if(pid < 0)
 			{
@@ -630,102 +714,61 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 				if(!data_node)
 					continue;
 			}
-			ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer + overlap, (size_t) (data_node->len - overlap));
-		}
-
-		if (ret == CCX_EOF)
-		{
-			end_of_file = 1;
-			if(data_node->len)
-				memset (data_node->buffer + data_node->len, 0, (size_t) (BUFSIZE-data_node->len)); /* Clear buffer at the end */
-			else
+			if (ret == CCX_EOF)
+			{
+				end_of_file = 1;
+				if(data_node->len)
+					memset (data_node->buffer + data_node->len, 0, (size_t) (BUFSIZE-data_node->len)); /* Clear buffer at the end */
+				else
+					break;
+			}
+			cinfo = get_cinfo(ctx->demux_ctx, pid);
+			enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
+			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
+			if(data_node->pts != CCX_NOPTS)
+				set_current_pts(dec_ctx->timing, data_node->pts);
+			ret = process_data(enc_ctx, dec_ctx, data_node);
+			if( ret != CCX_OK)
 				break;
 		}
-
-		LLONG got; // Means 'consumed' from buffer actually
-
-		static LLONG last_pts = 0x01FFFFFFFFLL;
-
-		if (ctx->hauppauge_mode)
+		else
 		{
-			got = process_raw_with_field(ctx, dec_sub, data_node->buffer, data_node->len);
-			if (pts_set)
-				set_fts(); // Try to fix timing from TS data
-		}
-		else if(data_node->bufferdatatype == CCX_DVB_SUBTITLE)
-		{
-			dvbsub_decode(ctx->demux_ctx->codec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
-			set_fts();
-			got = data_node->len;
-		}
-		else if (data_node->bufferdatatype == CCX_PES)
-		{
-			ctx->dec_ctx->in_bufferdatatype = CCX_PES;
-			got = process_m2v (ctx, data_node->buffer, data_node->len, dec_sub);
-		}
-		else if (data_node->bufferdatatype == CCX_TELETEXT)
-		{
-			telxcc_update_gt(ctx->demux_ctx->codec_ctx, ctx->demux_ctx->global_timestamp);
-			tlt_process_pes_packet (ctx->demux_ctx->codec_ctx, data_node->buffer, data_node->len, dec_sub);
-			set_encoder_rcwt_fileformat(enc_ctx, 2);
-			got = data_node->len;
-		}
-		else if (data_node->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
-		{
-			got = data_node->len; // Do nothing. Still don't know how to process it
-		}
-		else if (data_node->bufferdatatype == CCX_RAW) // Raw two byte 608 data from DVR-MS/ASF
-		{
-			// The asf_getmoredata() loop sets current_pts when possible
-			if (pts_set == 0)
+			struct cap_info* cinfo = NULL;
+			struct cap_info* program_iter;
+			struct cap_info *ptr = &ctx->demux_ctx->cinfo_tree;
+			struct encoder_ctx *enc_ctx = NULL;
+			list_for_each_entry(program_iter, &ptr->pg_stream, pg_stream, struct cap_info)
 			{
-				mprint("DVR-MS/ASF file without useful time stamps - count blocks.\n");
-				// Otherwise rely on counting blocks
-				current_pts = 12345; // Pick a valid PTS time
-				pts_set = 1;
-			}
-
-			if (current_pts != last_pts)
-			{
-				// Only initialize the FTS values and reset the cb
-				// counters when the PTS is different. This happens frequently
-				// with ASF files.
-
-				if (min_pts==0x01FFFFFFFFLL)
+				int pid = get_best_sib_stream(program_iter);
+				if(pid < 0)
 				{
-					// First call
-					fts_at_gop_start = 0;
+					data_node = get_best_data(datalist);
+					if(!data_node)
+						break;
 				}
 				else
-					fts_at_gop_start = get_fts();
-
-				frames_since_ref_time = 0;
-				set_fts();
-
-				last_pts = current_pts;
+				{
+					ignore_other_sib_stream(program_iter, pid);
+					data_node = get_data_stream(datalist, pid);
+					if(!data_node)
+					continue;
+				}
+				if (ret == CCX_EOF)
+				{
+					end_of_file = 1;
+					if(data_node->len)
+						memset (data_node->buffer + data_node->len, 0, (size_t) (BUFSIZE-data_node->len)); /* Clear buffer at the end */
+					else
+						break;
+				}
+				cinfo = get_cinfo(ctx->demux_ctx, pid);
+				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
+				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
+				if(data_node->pts != CCX_NOPTS)
+					set_current_pts(dec_ctx->timing, data_node->pts);
+				process_data(enc_ctx, dec_ctx, data_node);
 			}
-
-			dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
-					print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-					(unsigned) (current_pts));
-			dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
-
-			got = process_raw(ctx, dec_sub, data_node->buffer, data_node->len);
 		}
-		else if (data_node->bufferdatatype == CCX_H264) // H.264 data from TS file
-		{
-			ctx->dec_ctx->in_bufferdatatype = data_node->bufferdatatype;
-			got = process_avc(ctx, data_node->buffer, data_node->len, dec_sub);
-		}
-		else
-			fatal(CCX_COMMON_EXIT_BUG_BUG, "Unknown data type!");
-
-		if (got>data_node->len)
-		{
-			mprint ("BUG BUG\n");
-		}
-		pos+=got;
-
 		if (ctx->live_stream)
 		{
 			int cur_sec = (int) (get_fts() / 1000);
@@ -752,32 +795,21 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 				}
 			}
 		}
-		if (dec_sub->got_output)
-		{
-			encode_sub(enc_ctx, dec_sub);
-			dec_sub->got_output = 0;
-		}
-		position_sanity_check(ctx->demux_ctx->infd);
+
+
 	}
-	telxcc_close(&ctx->demux_ctx->codec_ctx, &dec_ctx->dec_sub);
-	if (dec_ctx->dec_sub.got_output)
+
+	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
-		encode_sub(enc_ctx,&dec_ctx->dec_sub);
-		dec_ctx->dec_sub.got_output = 0;
-	}
-	// Flush remaining HD captions
-	if (has_ccdata_buffered)
-	{
-		process_hdcc(ctx, dec_sub);
-		if (dec_sub->got_output)
-		{
-			encode_sub(enc_ctx, dec_sub);
-			dec_sub->got_output = 0;
-		}
+		if (dec_ctx->codec == CCX_CODEC_TELETEXT)
+			telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
+		// Flush remaining HD captions
+		if (dec_ctx->has_ccdata_buffered)
+                	process_hdcc(dec_ctx, &dec_ctx->dec_sub);
 	}
 
 	delete_datalist(datalist);
-	if (ctx->total_past!=ctx->total_inputsize && ctx->binary_concat && !dec_ctx->processed_enough)
+	if (ctx->total_past!=ctx->total_inputsize && ctx->binary_concat && is_decoder_processed_enough(ctx))
 	{
 		mprint("\n\n\n\nATTENTION!!!!!!\n");
 		mprint("Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
@@ -786,13 +818,15 @@ void general_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 }
 
 // Raw caption with FTS file process
-void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
+void rcwt_loop(struct lib_ccx_ctx *ctx)
 {
-	static unsigned char *parsebuf;
-	static long parsebufsize = 1024;
+	unsigned char *parsebuf;
+	long parsebufsize = 1024;
+	unsigned char buf[TELETEXT_CHUNK_LEN] = "";
 	struct lib_cc_decode *dec_ctx = NULL;
-	struct cc_subtitle *dec_sub = &ctx->dec_ctx->dec_sub;
-	dec_ctx = ctx->dec_ctx;
+	struct cc_subtitle *dec_sub = NULL;
+	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
+
 
 	// As BUFSIZE is a macro this is just a reminder
 	if (BUFSIZE < (3*0xFFFF + 10))
@@ -831,21 +865,31 @@ void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 		fatal(EXIT_MISSING_RCWT_HEADER, "Missing RCWT header. Abort.\n");
 	}
 
+	dec_ctx = update_decoder_list(ctx);
 	if (parsebuf[6] == 0 && parsebuf[7] == 2)
 	{
-		tlt_read_rcwt(ctx, dec_sub);
-		return;
+		dec_ctx->private_data = telxcc_init();
 	}
-
-	// Initialize first time. As RCWT files come with the correct FTS the
-	// initial (minimal) time needs to be set to 0.
-	current_pts = 0;
-	pts_set=1;
-	set_fts(); // Now set the FTS related variables
-
+	dec_sub = &dec_ctx->dec_sub;
 	// Loop until no more data is found
 	while(1)
 	{
+		if (parsebuf[6] == 0 && parsebuf[7] == 2)
+		{
+			buffered_read(ctx->demux_ctx, buf, TELETEXT_CHUNK_LEN);
+			ctx->demux_ctx->past += result;
+			if (result != TELETEXT_CHUNK_LEN)
+				break;
+
+			tlt_read_rcwt(dec_ctx->private_data, buf, dec_sub);
+			if(dec_sub->got_output == CCX_TRUE)
+			{
+				encode_sub(enc_ctx, dec_sub);
+				dec_sub->got_output = 0;
+			}
+			continue;
+		}
+
 		// Read the data header
 		buffered_read(ctx->demux_ctx, parsebuf, 10);
 		ctx->demux_ctx->past+=result;
@@ -885,15 +929,8 @@ void rcwt_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 			}
 
 			// Process the data
-			current_pts = currfts*(MPEG_CLOCK_FREQ/1000);
-			if (pts_set==0)
-				pts_set=1;
-			set_fts(); // Now set the FTS related variables
-
-			dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
-					print_mstime(current_pts/(MPEG_CLOCK_FREQ/1000)),
-					(unsigned) (current_pts));
-			dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
+			set_current_pts(dec_ctx->timing, currfts*(MPEG_CLOCK_FREQ/1000));
+			set_fts(dec_ctx->timing); // Now set the FTS related variables
 
 			for (int j=0; j<cbcount*3; j=j+3)
 			{

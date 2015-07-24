@@ -564,7 +564,7 @@ void ProcessVBIDataPacket(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 	}
 
 	LLONG linemask      = 0;
-	dec_ctx = ctx->dec_ctx;
+	dec_ctx = update_decoder_list(ctx);
 	// unsigned long long utc = lastccptsu;
 
 	// [i]tv0 means there is a linemask
@@ -827,25 +827,28 @@ void build_parity_table (void)
 	cc608_build_parity_table(cc608_parity_table);
 }
 
-void myth_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
+void myth_loop(struct lib_ccx_ctx *ctx)
 {
 	int rc;
 	int has_vbi=0;
 	LLONG saved = 0;
 	struct cc_subtitle dec_sub;
 	struct lib_cc_decode *dec_ctx = NULL;
+	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
+	unsigned long desp_length=65536;
+	unsigned char *desp=(unsigned char *) malloc (desp_length);
 
 	av.data=NULL;
 	ccx_options.buffer_input = 1;
-	dec_ctx = ctx->dec_ctx;
-	unsigned long desp_length=65536;
-	unsigned char *desp=(unsigned char *) malloc (desp_length);
+	dec_ctx = update_decoder_list(ctx);
+	desp_length = 65536;
+	desp = (unsigned char *) malloc (desp_length);
 	if (!desp)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory.\n");
 	saved=0;
 
 	memset(&dec_sub, 0, sizeof(dec_sub));
-	while (!dec_ctx->processed_enough && (rc=mpegps_read_packet(ctx))==0)
+	while (is_decoder_processed_enough(ctx) == CCX_FALSE && (rc=mpegps_read_packet(ctx))==0)
 	{
 		position_sanity_check(ctx->demux_ctx->infd);
 		if (av.codec_id==CODEC_ID_MPEG2VBI && av.type==CODEC_TYPE_DATA)
@@ -871,12 +874,10 @@ void myth_loop(struct lib_ccx_ctx *ctx, void *enc_ctx)
 			}
 			if (av.pts!=AV_NOPTS_VALUE)
 			{
-				current_pts=av.pts;
-				if (pts_set==0)
-					pts_set=1;
+				set_current_pts(dec_ctx->timing, av.pts);
 			}
 			memcpy (desp+saved,av.data,av.size);
-			LLONG used = process_m2v(ctx, desp, length, &dec_sub);
+			LLONG used = process_m2v(dec_ctx, desp, length, &dec_sub);
 			memmove (desp,desp+used,(unsigned int) (length-used));
 			saved=length-used;
 		}
