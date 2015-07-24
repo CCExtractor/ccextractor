@@ -320,7 +320,6 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 	static int use_alt_stream = 0;
 	static int num_streams = 0;
 	struct lib_cc_decode *dec_ctx = update_decoder_list(ctx);
-	int flag_current_pts = 0;
 
 	while(1)
 	{
@@ -410,7 +409,6 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 				set_current_pts(dec_ctx->timing, time_to_pes_time(time));
 				frames_since_ref_time = 0;
 				set_fts(dec_ctx->timing);
-				flag_current_pts = CCX_TRUE;
 			}
 			else if (time == WTV_CC_TIMESTAMP_MAGIC && stream_id != alt_stream) {
 				use_alt_stream++;
@@ -421,7 +419,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			len-=16;
 		}
 		if( !memcmp(guid, WTV_DATA, 16 )
-				&& check_stream_id(stream_id, video_streams, num_streams) && flag_current_pts != CCX_FALSE
+				&& check_stream_id(stream_id, video_streams, num_streams) && dec_ctx->timing->current_pts != 0
 				&& (ccx_options.wtvmpeg2 || (!ccx_options.wtvmpeg2 && len==2)))
 		{
 			// This is the data for a stream we want to process
