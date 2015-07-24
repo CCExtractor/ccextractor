@@ -106,6 +106,18 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	int prev_cap_cont = 0;
 	int present_cap_count = 0;
 
+	uint8_t table_id;
+	uint16_t section_length;
+	uint16_t program_number;
+	uint8_t version_number;
+	uint8_t current_next_indicator;
+	uint8_t section_number;
+	uint8_t last_section_number;
+
+	uint16_t PCR_PID;
+	uint16_t pi_length;
+
+
 #if 0
 	/* We keep a copy of all PMTs, even if not interesting to us for now */
 	if (ctx->pmt_array[pos].last_pmt_payload!=NULL && len == ctx->pmt_array[pos].last_pmt_length &&
@@ -122,27 +134,30 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	ctx->pmt_array[pos].last_pmt_length = len;
 #endif
 
-	unsigned table_id = buf[0];
-	unsigned section_length = (((buf[1] & 0x0F) << 8)
+	table_id = buf[0];
+	section_length = (((buf[1] & 0x0F) << 8)
 			| buf[2]);
-	unsigned program_number = ((buf[3] << 8)
+	program_number = ((buf[3] << 8)
 			| buf[4]);
 
-	unsigned version_number = (buf[5] & 0x3E) >> 1;
-	unsigned current_next_indicator = buf[5] & 0x01;
+	version_number = (buf[5] & 0x3E) >> 1;
+
+	current_next_indicator = buf[5] & 0x01;
+	// This table is not active, no need to evaluate
 	if (!current_next_indicator)
-		// This table is not active, no need to evaluate
 		return 0;
-	unsigned section_number = buf[6];
-	unsigned last_section_number = buf[7];
+
+	section_number = buf[6];
+	last_section_number = buf[7];
 	if ( last_section_number > 0 )
 	{
 		mprint("Long PMTs are not supported - skipped.\n");
 		return 0;
 	}
-	unsigned PCR_PID = (((buf[8] & 0x1F) << 8)
+
+	PCR_PID = (((buf[8] & 0x1F) << 8)
 			| buf[9]);
-	unsigned pi_length = (((buf[10] & 0x0F) << 8)
+	pi_length = (((buf[10] & 0x0F) << 8)
 			| buf[11]);
 
 	if( 12 + pi_length >  len )

@@ -565,7 +565,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if(data_node->bufferdatatype == CCX_DVB_SUBTITLE)
 	{
-		dvbsub_decode(dec_ctx->private_data, data_node->buffer + 2, data_node->len - 2, dec_sub);
+		dvbsub_decode(dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
 		set_fts(dec_ctx->timing);
 		got = data_node->len;
 	}
@@ -801,7 +801,8 @@ void general_loop(struct lib_ccx_ctx *ctx)
 
 	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
-		telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
+		if (dec_ctx->codec == CCX_CODEC_TELETEXT)
+			telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
 		// Flush remaining HD captions
 		if (dec_ctx->has_ccdata_buffered)
                 	process_hdcc(dec_ctx, &dec_ctx->dec_sub);

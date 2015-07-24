@@ -129,7 +129,7 @@ struct demuxer_data *get_data_stream(struct demuxer_data *data, int pid)
 {
 	struct demuxer_data *ptr = data;
 	for(ptr = data; ptr; ptr = ptr->next_stream)
-		if(ptr->stream_pid == pid)
+		if(ptr->stream_pid == pid && ptr->len > 0)
 			return ptr;
 
 	return NULL;
