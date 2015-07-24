@@ -577,10 +577,9 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	else if (data_node->bufferdatatype == CCX_TELETEXT)
 	{
 		//telxcc_update_gt(dec_ctx->private_data, ctx->demux_ctx->global_timestamp);
-		ret = tlt_process_pes_packet (dec_ctx->private_data, data_node->buffer, data_node->len, dec_sub);
+		ret = tlt_process_pes_packet (dec_ctx, data_node->buffer, data_node->len, dec_sub);
 		if(ret == CCX_EINVAL)
 			return ret;
-		set_encoder_rcwt_fileformat(enc_ctx, 2);
 		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
@@ -701,7 +700,6 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		{
 			struct cap_info* cinfo = NULL;
 			struct encoder_ctx *enc_ctx = NULL;
-			int pn = 0;
 			int pid = get_best_stream(ctx->demux_ctx);
 			if(pid < 0)
 			{
@@ -725,12 +723,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 					break;
 			}
 			cinfo = get_cinfo(ctx->demux_ctx, pid);
-			if(cinfo)
-				pn = cinfo->program_number;
-			else
-				pn = 0;
-
-			enc_ctx = update_encoder_list_pn(ctx, pn);
+			enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 			if(data_node->pts != CCX_NOPTS)
 				set_current_pts(dec_ctx->timing, data_node->pts);
@@ -747,7 +740,6 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			list_for_each_entry(program_iter, &ptr->pg_stream, pg_stream, struct cap_info)
 			{
 				int pid = get_best_sib_stream(program_iter);
-				int pn = 0;
 				if(pid < 0)
 				{
 					data_node = get_best_data(datalist);
@@ -770,11 +762,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 						break;
 				}
 				cinfo = get_cinfo(ctx->demux_ctx, pid);
-				if(cinfo)
-					pn = cinfo->program_number;
-				else
-					pn = 0;
-				enc_ctx = update_encoder_list_pn(ctx, pn);
+				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 				if(data_node->pts != CCX_NOPTS)
 					set_current_pts(dec_ctx->timing, data_node->pts);
@@ -831,14 +819,13 @@ void general_loop(struct lib_ccx_ctx *ctx)
 // Raw caption with FTS file process
 void rcwt_loop(struct lib_ccx_ctx *ctx)
 {
-	static unsigned char *parsebuf;
-	static long parsebufsize = 1024;
+	unsigned char *parsebuf;
+	long parsebufsize = 1024;
+	unsigned char buf[TELETEXT_CHUNK_LEN] = "";
 	struct lib_cc_decode *dec_ctx = NULL;
 	struct cc_subtitle *dec_sub = NULL;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 
-	dec_ctx = update_decoder_list(ctx);
-	dec_sub = &dec_ctx->dec_sub;
 
 	// As BUFSIZE is a macro this is just a reminder
 	if (BUFSIZE < (3*0xFFFF + 10))
@@ -877,17 +864,31 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 		fatal(EXIT_MISSING_RCWT_HEADER, "Missing RCWT header. Abort.\n");
 	}
 
+	dec_ctx = update_decoder_list(ctx);
 	if (parsebuf[6] == 0 && parsebuf[7] == 2)
 	{
-		tlt_read_rcwt(ctx, dec_sub);
-		return;
+		dec_ctx->private_data = telxcc_init();
 	}
-
-	set_fts(dec_ctx->timing); // Now set the FTS related variables
-
+	dec_sub = &dec_ctx->dec_sub;
 	// Loop until no more data is found
 	while(1)
 	{
+		if (parsebuf[6] == 0 && parsebuf[7] == 2)
+		{
+			buffered_read(ctx->demux_ctx, buf, TELETEXT_CHUNK_LEN);
+			ctx->demux_ctx->past += result;
+			if (result != TELETEXT_CHUNK_LEN)
+				break;
+
+			tlt_read_rcwt(dec_ctx->private_data, buf, dec_sub);
+			if(dec_sub->got_output == CCX_TRUE)
+			{
+				encode_sub(enc_ctx, dec_sub);
+				dec_sub->got_output = 0;
+			}
+			continue;
+		}
+
 		// Read the data header
 		buffered_read(ctx->demux_ctx, parsebuf, 10);
 		ctx->demux_ctx->past+=result;

@@ -267,13 +267,23 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 	return dec_ctx;
 }
 
-struct encoder_ctx *update_encoder_list_pn(struct lib_ccx_ctx *ctx, int pn)
+struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct cap_info* cinfo)
 {
 	struct encoder_ctx *enc_ctx;
+	unsigned int pn = 0;
+	unsigned char in_format = 1;
+
 	if (ctx->write_format == CCX_OF_NULL)
 		return NULL;
 
-
+	if(cinfo)
+	{
+		pn = cinfo->program_number;
+		if (cinfo->codec == CCX_CODEC_TELETEXT)
+			in_format = 2;
+		else
+			in_format = 1;
+	}
 	list_for_each_entry(enc_ctx, &ctx->enc_ctx_head, list, struct encoder_ctx)
 	{
 		if (enc_ctx->program_number == pn)
@@ -284,6 +294,7 @@ struct encoder_ctx *update_encoder_list_pn(struct lib_ccx_ctx *ctx, int pn)
 		if (list_empty(&ctx->enc_ctx_head))
 		{
 			ccx_options.enc_cfg.program_number = pn;
+			ccx_options.enc_cfg.in_format = in_format;
 			enc_ctx = init_encoder(&ccx_options.enc_cfg);
 			if (!enc_ctx)
 				fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
@@ -316,5 +327,5 @@ struct encoder_ctx *update_encoder_list_pn(struct lib_ccx_ctx *ctx, int pn)
 
 struct encoder_ctx *update_encoder_list(struct lib_ccx_ctx *ctx)
 {
-	return update_encoder_list_pn(ctx, 0);
+	return update_encoder_list_cinfo(ctx, NULL);
 }

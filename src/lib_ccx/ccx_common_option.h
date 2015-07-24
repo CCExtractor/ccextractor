@@ -58,6 +58,7 @@ struct encoder_cfg
 	int line_terminator_lf; // 0 = CRLF, 1=LF
 	LLONG subs_delay; // ms to delay (or advance) subs
 	int program_number;
+	unsigned char in_format;
 };
 struct ccx_s_options // Options from user parameters
 {

@@ -955,50 +955,28 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 	}
 }
 
-void tlt_write_rcwt(struct lib_ccx_ctx *ctx, uint8_t data_unit_id, uint8_t *packet, uint64_t timestamp,  struct cc_subtitle *sub)
+void tlt_write_rcwt(struct lib_cc_decode *ctx, uint8_t data_unit_id, uint8_t *packet, uint64_t timestamp,  struct cc_subtitle *sub)
 {
-#if 0
-	struct lib_cc_decode *dec_ctx = ctx->dec_ctx;
-	dec_ctx->writedata((unsigned char *) &data_unit_id, sizeof(uint8_t), dec_ctx->context_cc608_field_1, sub);
-	dec_ctx->writedata((unsigned char *) &timestamp, sizeof(uint64_t), dec_ctx->context_cc608_field_1, sub);
-	dec_ctx->writedata((unsigned char *) packet, 44, dec_ctx->context_cc608_field_1, sub);
-#endif
+	ctx->writedata((unsigned char *) &data_unit_id, sizeof(uint8_t), NULL, sub);
+	ctx->writedata((unsigned char *) &timestamp, sizeof(uint64_t), NULL, sub);
+	ctx->writedata((unsigned char *) packet, 44, NULL, sub);
 }
 
-void tlt_read_rcwt(void *codec, struct cc_subtitle *sub)
+void tlt_read_rcwt(void *codec, unsigned char *buf, struct cc_subtitle *sub)
 {
 	struct TeletextCtx *ctx = codec;
-	int len = 1 + 8 + 44;
-	unsigned char *buf = (unsigned char *) malloc(len);
-	if (buf == NULL)
-		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory");
 
-	while(1)
-	{
-#if 0
-		buffered_read(ctx->demux_ctx, buf, len);
-		ctx->demux_ctx->past += result;
-#endif
+	data_unit_t id = buf[0];
+	uint64_t t;
+	memcpy(&t, &buf[1], sizeof(uint64_t));
+	teletext_packet_payload_t *pl = (teletext_packet_payload_t *)&buf[9];
 
-		if (result != len)
-		{
-			end_of_file = 1;
-			free(buf);
-			return;
-		}
+	last_timestamp = t;
 
-		data_unit_t id = buf[0];
-		uint64_t t;
-		memcpy(&t, &buf[1], sizeof(uint64_t));
-		teletext_packet_payload_t *pl = (teletext_packet_payload_t *)&buf[9];
-
-		last_timestamp = t;
-
-		process_telx_packet(ctx, id, pl, t, sub);
-	}
+	process_telx_packet(ctx, id, pl, t, sub);
 }
 
-int tlt_process_pes_packet(void *codec, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub)
+int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub)
 {
 	uint64_t pes_prefix;
 	uint8_t pes_stream_id;
@@ -1010,7 +988,7 @@ int tlt_process_pes_packet(void *codec, uint8_t *buffer, uint16_t size, struct c
 	uint16_t i;
 	static int64_t delta = 0;
 	static uint32_t t0 = 0;
-	struct TeletextCtx *ctx = codec;
+	struct TeletextCtx *ctx = dec_ctx->private_data;
 
 	if(!ctx)
 	{
@@ -1134,7 +1112,7 @@ int tlt_process_pes_packet(void *codec, uint8_t *buffer, uint16_t size, struct c
 				for (uint8_t j = 0; j < data_unit_len; j++) buffer[i + j] = REVERSE_8[buffer[i + j]];
 
 				if (tlt_config.write_format == CCX_OF_RCWT)
-					tlt_write_rcwt((void*)ctx, data_unit_id, &buffer[i], last_timestamp, sub);
+					tlt_write_rcwt(dec_ctx, data_unit_id, &buffer[i], last_timestamp, sub);
 				else
 				{
 					// FIXME: This explicit type conversion could be a problem some day -- do not need to be platform independant

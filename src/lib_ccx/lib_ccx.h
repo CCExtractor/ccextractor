@@ -24,6 +24,8 @@
 
 /* Report information */
 #define SUB_STREAMS_CNT 10
+
+#define TELETEXT_CHUNK_LEN 1 + 8 + 44
 struct file_report
 {
 	unsigned width;
@@ -267,10 +269,10 @@ void m_signal(int sig, void (*func)(int));
 void buffered_seek (struct ccx_demuxer *ctx, int offset);
 extern void build_parity_table(void);
 
-int tlt_process_pes_packet(void *codec, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub);
+int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub);
 void* telxcc_init(void);
 void telxcc_close(void **ctx, struct cc_subtitle *sub);
-void tlt_read_rcwt(void *codec, struct cc_subtitle *sub);
+void tlt_read_rcwt(void *codec, unsigned char *buf, struct cc_subtitle *sub);
 void telxcc_configure (void *codec, struct ccx_s_teletext_config *cfg);
 void telxcc_update_gt(void *codec, uint32_t global_timestamp);
 
@@ -320,6 +322,6 @@ int is_decoder_processed_enough(struct lib_ccx_ctx *ctx);
 struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct cap_info* cinfo);
 struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx);
 
-struct encoder_ctx *update_encoder_list_pn(struct lib_ccx_ctx *ctx, int pn);
+struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct cap_info* cinfo);
 struct encoder_ctx * update_encoder_list(struct lib_ccx_ctx *ctx);
 #endif

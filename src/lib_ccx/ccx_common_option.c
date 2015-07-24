@@ -96,6 +96,8 @@ void init_options (struct ccx_s_options *options)
 	options->multiprogram = 0;
 
 	options->subs_delay = 0;
+
+	options->enc_cfg.in_format = 1;
 	// Prepare time structures
 	init_boundary_time (&options->extraction_start);
 	init_boundary_time (&options->extraction_end);

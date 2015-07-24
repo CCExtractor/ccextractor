@@ -863,7 +863,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 		free(ctx);
 		return NULL;
 	}
-	ctx->in_fileformat = 1;
+	ctx->in_fileformat = opt->in_format;
 
 	/** used in case of SUB_EOD_MARKER */
 	ctx->prev_start = -1;
@@ -927,7 +927,7 @@ void set_encoder_rcwt_fileformat(struct encoder_ctx *ctx, short int format)
 
 static int write_newline(struct encoder_ctx *ctx, int lang)
 {
-	write (ctx->out[lang].fh, ctx->encoded_crlf, ctx->encoded_crlf_length);
+	return write(ctx->out[lang].fh, ctx->encoded_crlf, ctx->encoded_crlf_length);
 }
 
 struct ccx_s_write *get_output_ctx(struct encoder_ctx *ctx, int lan)
