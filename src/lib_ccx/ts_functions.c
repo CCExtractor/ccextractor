@@ -504,6 +504,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	long pcount=0; // count all packets until PES is complete
 	int packet_analysis_mode = 0; // If we can't find any packet with CC based from PMT, look for captions in all packets
 	int ret = CCX_EAGAIN;
+	struct program_info *pinfo = NULL;
 	struct cap_info *cinfo;
 	struct ts_payload payload;
 
@@ -552,24 +553,24 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			{
 				if (!ctx->PIDs_seen[payload.pid])
 					dbg_print(CCX_DMT_PAT, "This PID (%u) is a PMT for program %u.\n",payload.pid, ctx->pinfo[j].program_number);
-				is_pmt=1;
+				pinfo = ctx->pinfo + j;
 				break;
 			}
 		}
 
-		if (is_pmt)
+		if (pinfo)
 		{
 			ctx->PIDs_seen[payload.pid]=2;
 			if(payload.pesstart)
 			{
 				int len = *payload.start++;
 				payload.start += len;
-				if(write_section(ctx, &payload,payload.start,(tspacket + 188 ) - payload.start,j))
+				if(write_section(ctx, &payload,payload.start,(tspacket + 188 ) - payload.start, pinfo))
 					gotpes=1; // Signals that something changed and that we must flush the buffer
 			}
 			else
 			{
-				if(write_section(ctx, &payload,payload.start,(tspacket + 188 ) - payload.start,j))
+				if(write_section(ctx, &payload,payload.start,(tspacket + 188 ) - payload.start, pinfo))
 					gotpes=1; // Signals that something changed and that we must flush the buffer
 			}
 //			if (payload.pid==pmtpid && ctx->nb_cap == 0 && ccx_options.investigate_packets) // It was our PMT yet we don't have a PID to get data from

@@ -3,6 +3,12 @@
 #include "lib_ccx.h"
 #include "dvb_subtitle_decoder.h" 
 
+/**
+    We need stream info from PMT table when any of the following Condition meets:
+    1) Dont have any caption stream registered to be extracted
+    2) Want a streams per program, and program_number has never been registered
+    3) We need single stream and its info about codec and buffertype is incomplete
+*/
 int need_capInfo(struct ccx_demuxer *ctx, int program_number)
 {
 	struct cap_info* iter; 
@@ -29,22 +35,6 @@ int need_capInfo(struct ccx_demuxer *ctx, int program_number)
 	}
 
 	return CCX_FALSE;
-}
-
-int count_complete_capInfo(struct ccx_demuxer *ctx)
-{
-	int count = 0;
-	struct cap_info* iter; 
-
-	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
-	{
-		if(iter->codec == CCX_CODEC_NONE)
-			return CCX_TRUE;
-		if (iter->stream == CCX_STREAM_TYPE_UNKNOWNSTREAM)
-			return CCX_TRUE;
-		count++;
-	}
-	return count;
 }
 
 void ignore_other_stream(struct ccx_demuxer *ctx, int pid)

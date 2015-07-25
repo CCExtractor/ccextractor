@@ -22,6 +22,9 @@ struct program_info
 {
 	int pid;
 	int program_number;
+	uint8_t analysed_PMT_once:1;
+	uint8_t version;
+	uint8_t saved_section[1021];
 };
 
 struct cap_info
@@ -134,7 +137,6 @@ struct demuxer_data
 	struct demuxer_data *next_program;
 };
 
-int count_complete_capInfo(struct ccx_demuxer *ctx);
 struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg);
 void ccx_demuxer_delete(struct ccx_demuxer **ctx);
 struct demuxer_data* alloc_demuxer_data(void);
