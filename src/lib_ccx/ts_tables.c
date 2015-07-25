@@ -106,7 +106,7 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	table_id = buf[0];
 	if(table_id != 0x2)
 	{
-		mprint("Warning: As per MPEG table defination PMT must have table id 0x2");
+		mprint("Warning: As per MPEG table defination PMT must have table id 0x2\n");
 	}
 
 	section_length = (((buf[1] & 0x0F) << 8)| buf[2]);
