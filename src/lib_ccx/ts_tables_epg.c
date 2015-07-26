@@ -203,16 +203,16 @@ void EPG_output_net(struct lib_ccx_ctx *ctx)
 	if (ctx->demux_ctx == NULL)
 		return;
 
-	if (ctx->demux_ctx->pmt_array_length == 0)
+	if (ctx->demux_ctx->nb_program == 0)
 		return;
 
-	for (i = 0; i < ctx->demux_ctx->pmt_array_length; i++)
+	for (i = 0; i < ctx->demux_ctx->nb_program; i++)
 	{
-		if (ctx->demux_ctx->pmt_array[i].program_number == ccx_options.ts_forced_program)
+		if (ctx->demux_ctx->pinfo[i].program_number == ccx_options.demux_cfg.ts_forced_program)
 			break;
 	}
 
-	if (i == ctx->demux_ctx->pmt_array_length)
+	if (i == ctx->demux_ctx->nb_program)
 		return;
 
 	for (j = 0; j < ctx->eit_programs[i].array_len; j++)

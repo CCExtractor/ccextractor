@@ -212,6 +212,9 @@ void net_send_epg(
 
 int net_tcp_read(int socket, void *buffer, size_t length)
 {
+	assert(buffer != NULL);
+	assert(length > 0);
+
 	int rc;
 	char c;
 	size_t l;
