@@ -281,10 +281,6 @@ extern const char *desc[256];
 extern long FILEBUFFERSIZE; // Uppercase because it used to be a define
 extern unsigned long net_activity_gui;
 
-/* General (ES stream) video information */
-extern unsigned current_hor_size;
-extern unsigned current_vert_size;
-extern unsigned current_aspect_ratio;
 extern unsigned current_frame_rate;
 
 extern enum ccx_bufferdata_type bufferdatatype; // Can be CCX_BUFFERDATA_TYPE_RAW or CCX_BUFFERDATA_TYPE_PES

@@ -11,12 +11,8 @@
 #include "activity.h"
 #include "utility.h"
 
-/* General video information */
- unsigned current_hor_size = 0;
-unsigned current_vert_size = 0;
-unsigned current_aspect_ratio = 0;
-unsigned current_frame_rate = 4; // Assume standard fps, 29.97
-unsigned rollover_bits = 0; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
+unsigned int current_frame_rate = 4; // Assume standard fps, 29.97
+unsigned int rollover_bits = 0; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
 LLONG result; // Number of bytes read/skipped in last read operation
 int end_of_file=0; // End of file?
 

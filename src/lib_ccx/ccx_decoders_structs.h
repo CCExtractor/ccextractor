@@ -130,9 +130,12 @@ struct lib_cc_decode
 	int has_ccdata_buffered;
 
 	struct avc_ctx *avc_ctx;
-
 	void *private_data;
 
+	/* General video information */
+	unsigned int current_hor_size;
+	unsigned int current_vert_size;
+	unsigned int current_aspect_ratio;
 
 	int (*writedata)(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 };

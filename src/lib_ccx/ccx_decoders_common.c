@@ -279,6 +279,10 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 	// Initialize HDTV caption buffer
 	init_hdcc(ctx);
+
+	ctx->current_hor_size = 0;
+	ctx->current_vert_size = 0;
+	ctx->current_aspect_ratio = 0;
 	return ctx;
 }
 

@@ -419,10 +419,10 @@ static int sequence_header(struct lib_cc_decode *ctx, struct bitstream *esstream
 		return 0;
 
 	// If we got the whole sequence, process
-	if (hor_size!=current_hor_size ||
-			vert_size!=current_vert_size ||
-			aspect_ratio!=current_aspect_ratio ||
-			frame_rate!=current_frame_rate)
+	if (hor_size!= ctx->current_hor_size ||
+		vert_size!= ctx->current_vert_size ||
+		aspect_ratio!=ctx->current_aspect_ratio ||
+		frame_rate!=current_frame_rate)
 	{
 		// If horizontal/vertical size, framerate and/or aspect
 		// ratio are ilegal, we discard the
@@ -444,9 +444,9 @@ static int sequence_header(struct lib_cc_decode *ctx, struct bitstream *esstream
 			// info part.
 			current_progressive_sequence = 2;
 
-			current_hor_size=hor_size;
-			current_vert_size=vert_size;
-			current_aspect_ratio=aspect_ratio;
+			ctx->current_hor_size     = hor_size;
+			ctx->current_vert_size    = vert_size;
+			ctx->current_aspect_ratio = aspect_ratio;
 			current_frame_rate=frame_rate;
 			current_fps = framerates_values[current_frame_rate];
 			activity_video_info (hor_size,vert_size,
