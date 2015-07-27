@@ -191,10 +191,11 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
 	}
 	else if (strcmp (format,"report")==0)
 	{
-		opt->write_format=CCX_OF_NULL;
-		opt->messages_target=0;
-		opt->print_file_reports=1;
-		opt->demux_cfg.ts_autoprogram=1;
+		opt->write_format            = CCX_OF_NULL;
+		opt->messages_target         = 0;
+		opt->print_file_reports      = 1;
+		opt->multiprogram = 1;
+		opt->demux_cfg.ts_allprogram = CCX_TRUE;
 	}
 	else if (strcmp (format,"raw")==0)
 		opt->write_format=CCX_OF_RAW;

@@ -617,7 +617,6 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if (data_node->bufferdatatype == CCX_H264) // H.264 data from TS file
 	{
-		dec_ctx->in_bufferdatatype = data_node->bufferdatatype;
 		got = process_avc(dec_ctx, data_node->buffer, data_node->len, dec_sub);
 	}
 	else
@@ -727,19 +726,18 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			struct encoder_ctx *enc_ctx = NULL;
 			list_for_each_entry(program_iter, &ptr->pg_stream, pg_stream, struct cap_info)
 			{
-				int pid = get_best_sib_stream(program_iter);
-				if(pid < 0)
+				cinfo = get_best_sib_stream(program_iter);
+				if(!cinfo)
 				{
 					data_node = get_best_data(datalist);
 				}
 				else
 				{
-					ignore_other_sib_stream(program_iter, pid);
-					data_node = get_data_stream(datalist, pid);
+					ignore_other_sib_stream(program_iter, cinfo->pid);
+					data_node = get_data_stream(datalist, cinfo->pid);
 				}
 				if(!data_node)
 					continue;
-				cinfo = get_cinfo(ctx->demux_ctx, pid);
 				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 				if(data_node->pts != CCX_NOPTS)

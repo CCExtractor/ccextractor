@@ -1,5 +1,6 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
+#include "teletext.h"
 
 void params_dump(struct lib_ccx_ctx *ctx)
 {
@@ -171,9 +172,10 @@ void params_dump(struct lib_ccx_ctx *ctx)
 
 void print_file_report(struct lib_ccx_ctx *ctx)
 {
-//	struct lib_cc_decode *dec_ctx = NULL;
+	struct lib_cc_decode *dec_ctx = NULL;
 	enum ccx_stream_mode_enum stream_mode;
-//	dec_ctx = ctx->dec_ctx;
+	struct ccx_demuxer *demux_ctx = ctx->demux_ctx;
+
 #define Y_N(cond) ((cond) ? "Yes" : "No")
 
 	printf("File: ");
@@ -197,20 +199,131 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 			break;
 	}
 
-	ctx->demux_ctx->print_report(ctx->demux_ctx);
-	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
-#if 0
-	if (ctx->dec_ctx->in_bufferdatatype == CCX_PES &&
-			(stream_mode == CCX_SM_TRANSPORT ||
-			 stream_mode == CCX_SM_PROGRAM ||
-			 stream_mode == CCX_SM_ASF ||
-			 stream_mode == CCX_SM_WTV))
+	struct cap_info* program;
+	printf("Stream Mode: ");
+	switch (demux_ctx->stream_mode)
 	{
-		printf("Width: %u\n", ctx->freport.width);
-		printf("Height: %u\n", ctx->freport.height);
-		printf("Aspect Ratio: %s\n", aspect_ratio_types[ctx->freport.aspect_ratio]);
-		printf("Frame Rate: %s\n", framerates_types[ctx->freport.frame_rate]);
+		case CCX_SM_TRANSPORT:
+			printf("Transport Stream\n");
+
+			printf("Program Count: %d\n", demux_ctx->freport.program_cnt);
+
+			printf("Program Numbers: ");
+
+			for (int i = 0; i < demux_ctx->nb_program; i++)
+				printf("%u ", demux_ctx->pinfo[i].program_number);
+
+			printf("\n");
+
+			for (int i = 0; i < 65536; i++)
+			{
+				if (demux_ctx->PIDs_programs[i] == 0)
+					continue;
+
+				printf("PID: %u, Program: %u, ", i, demux_ctx->PIDs_programs[i]->program_number);
+				int j;
+				for (j = 0; j < SUB_STREAMS_CNT; j++)
+				{
+					if (demux_ctx->freport.dvb_sub_pid[j] == i)
+					{
+						printf("DVB Subtitles\n");
+						break;
+					}
+					if (demux_ctx->freport.tlt_sub_pid[j] == i)
+					{
+						printf("Teletext Subtitles\n");
+						break;
+					}
+				}
+				if (j == SUB_STREAMS_CNT)
+					printf("%s\n", desc[demux_ctx->PIDs_programs[i]->printable_stream_type]);
+			}
+
+			break;
+		case CCX_SM_PROGRAM:
+			printf("Program Stream\n");
+			break;
+		case CCX_SM_ASF:
+			printf("ASF\n");
+			break;
+		case CCX_SM_WTV:
+			printf("WTV\n");
+			break;
+		case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
+			printf("Not Found\n");
+			break;
+		case CCX_SM_MP4:
+			printf("MP4\n");
+			break;
+		case CCX_SM_MCPOODLESRAW:
+			printf("McPoodle's raw\n");
+			break;
+		case CCX_SM_RCWT:
+			printf("BIN\n");
+			break;
+#ifdef WTV_DEBUG
+		case CCX_SM_HEX_DUMP:
+			printf("Hex\n");
+			break;
+#endif
+		default:
+			break;
 	}
+	list_for_each_entry(program, &demux_ctx->cinfo_tree.pg_stream, pg_stream, struct cap_info)
+	{
+		struct cap_info* info = NULL;
+		printf("//////// Program #%u: ////////\n", program->program_number);
+
+		printf("DVB Subtitles: ");
+		info = get_sib_stream_by_type(program, CCX_CODEC_DVB);
+		if(info)
+			printf("Yes\n");
+		else
+			printf("No\n");
+
+		printf("Teletext: ");
+		info = get_sib_stream_by_type(program, CCX_CODEC_TELETEXT);
+		if(info)
+		{
+			printf("Yes\n");
+			dec_ctx = update_decoder_list_cinfo(ctx, info);
+			printf("Pages With Subtitles: ");
+			tlt_print_seen_pages(dec_ctx);
+
+				printf("\n");
+		}
+		else
+			printf("No\n");
+
+
+		printf("ATSC Closed Caption: ");
+		info = get_sib_stream_by_type(program, CCX_CODEC_ATSC_CC);
+		if(info)
+			printf("Yes\n");
+		else
+			printf("No\n");
+
+
+		info = get_best_sib_stream(program);
+		if(!info)
+			continue;
+
+		dec_ctx = update_decoder_list_cinfo(ctx, info);
+		if (dec_ctx->in_bufferdatatype == CCX_PES &&
+			(info->stream == CCX_SM_TRANSPORT ||
+			 info->stream == CCX_SM_PROGRAM ||
+			 info->stream == CCX_SM_ASF ||
+			 info->stream == CCX_SM_WTV))
+		{
+			printf("Width: %u\n", dec_ctx->current_hor_size);
+			printf("Height: %u\n", dec_ctx->current_vert_size);
+			printf("Aspect Ratio: %s\n", aspect_ratio_types[dec_ctx->current_aspect_ratio]);
+			printf("Frame Rate: %s\n", framerates_types[dec_ctx->current_frame_rate]);
+		}
+		printf("\n");
+	}
+
+#if 0
 
 	printf("EIA-608: %s\n", Y_N(dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0));
 
