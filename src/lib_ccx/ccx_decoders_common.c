@@ -283,6 +283,23 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->current_hor_size = 0;
 	ctx->current_vert_size = 0;
 	ctx->current_aspect_ratio = 0;
+	ctx->current_frame_rate = 4; // Assume standard fps, 29.97
+
+	ctx->no_bitstream_error = 0;
+	ctx->saw_seqgoppic = 0;
+	ctx->in_pic_data = 0;
+
+	ctx->current_progressive_sequence = 2;
+	ctx->current_pulldownfields = 32768;
+
+	ctx->temporal_reference = 0;
+	ctx->picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
+	ctx->picture_structure = 0;
+	ctx->top_field_first = 0;
+	ctx->repeat_first_field = 0;
+	ctx->progressive_frame = 0;
+	ctx->pulldownfields = 0;
+
 	return ctx;
 }
 
