@@ -110,11 +110,6 @@ struct lib_ccx_ctx
 
 	unsigned teletext_warning_shown; // Did we detect a possible PAL (with teletext subs) and told the user already?
 
-	// Output structures
-	struct ccx_s_write wbout1;
-	struct ccx_s_write wbout2;
-
-	
 	//struct EIT_buffer eit_buffer;
 	struct EIT_buffer epg_buffers[0xfff+1];
 	struct EIT_program eit_programs[TS_PMT_MAP_SIZE+1];

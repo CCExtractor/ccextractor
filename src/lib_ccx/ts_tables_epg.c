@@ -233,7 +233,7 @@ void EPG_output_live(struct lib_ccx_ctx *ctx)
 	}
 	fprintf(f, "</tv>");
 	fclose(f);
-	finalfilename = malloc(strlen(ctx->wbout1.filename)+30);
+	finalfilename = malloc(strlen(filename)+30);
 	memcpy(finalfilename, filename, strlen(filename)-5);
 	finalfilename[strlen(filename)-5]='\0';
 	rename(filename, finalfilename);
