@@ -685,6 +685,12 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			default:
 				fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible stream_mode");
 		}
+		if (ret == CCX_EOF)
+		{
+			end_of_file = 1;
+			if(!datalist)
+				break;
+		}
 
 		position_sanity_check(ctx->demux_ctx->infd);
 		if(!ctx->multiprogram)
@@ -695,24 +701,15 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			if(pid < 0)
 			{
 				data_node = get_best_data(datalist);
-				if(!data_node)
-					break;
 			}
 			else
 			{
 				ignore_other_stream(ctx->demux_ctx, pid);
 				data_node = get_data_stream(datalist, pid);
-				if(!data_node)
-					continue;
 			}
-			if (ret == CCX_EOF)
-			{
-				end_of_file = 1;
-				if(data_node->len)
-					memset (data_node->buffer + data_node->len, 0, (size_t) (BUFSIZE-data_node->len)); /* Clear buffer at the end */
-				else
-					break;
-			}
+			if(!data_node)
+				continue;
+
 			cinfo = get_cinfo(ctx->demux_ctx, pid);
 			enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
@@ -734,24 +731,14 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				if(pid < 0)
 				{
 					data_node = get_best_data(datalist);
-					if(!data_node)
-						break;
 				}
 				else
 				{
 					ignore_other_sib_stream(program_iter, pid);
 					data_node = get_data_stream(datalist, pid);
-					if(!data_node)
+				}
+				if(!data_node)
 					continue;
-				}
-				if (ret == CCX_EOF)
-				{
-					end_of_file = 1;
-					if(data_node->len)
-						memset (data_node->buffer + data_node->len, 0, (size_t) (BUFSIZE-data_node->len)); /* Clear buffer at the end */
-					else
-						break;
-				}
 				cinfo = get_cinfo(ctx->demux_ctx, pid);
 				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
