@@ -48,6 +48,25 @@ int _CRT_fmode = _O_BINARY;
 #include <commctrl.h>
 #endif
 
+typedef struct {
+	uint64_t show_timestamp; // show at timestamp (in ms)
+	uint64_t hide_timestamp; // hide at timestamp (in ms)
+	uint16_t text[25][40]; // 25 lines x 40 cols (1 screen/page) of wide chars
+	uint8_t tainted; // 1 = text variable contains any data
+} teletext_page_t;
+
+// application states -- flags for notices that should be printed only once
+struct s_states {
+	uint8_t programme_info_processed;
+	uint8_t pts_initialized;
+};
+
+typedef enum
+{
+	TRANSMISSION_MODE_PARALLEL = 0,
+	TRANSMISSION_MODE_SERIAL = 1
+} transmission_mode_t;
+
 struct TeletextCtx
 {
 	short int seen_sub_page[MAX_TLT_PAGES];
@@ -73,6 +92,7 @@ struct TeletextCtx
 
 	// Current and previous page buffers. This is the output written to file when
 	// the time comes.
+	teletext_page_t page_buffer;
 	char *page_buffer_prev;
 	char *page_buffer_cur;
 	unsigned page_buffer_cur_size;
@@ -90,7 +110,17 @@ struct TeletextCtx
 	// Buffer timestamp
 	uint64_t prev_hide_timestamp;
 	uint64_t prev_show_timestamp;
-
+	// subtitle type pages bitmap, 2048 bits = 2048 possible pages in teletext (excl. subpages)
+	uint8_t cc_map[256];
+	// last timestamp computed
+	uint64_t last_timestamp;
+	struct s_states states;
+	// FYI, packet counter
+	uint32_t tlt_packet_counter;
+	// teletext transmission mode
+	transmission_mode_t transmission_mode;
+	// flag indicating if incoming data should be processed or ignored
+	uint8_t receiving_data;
 };
 typedef enum
 {
@@ -100,12 +130,6 @@ typedef enum
 	DATA_UNIT_VPS = 0xc3,
 	DATA_UNIT_CLOSED_CAPTIONS = 0xc5
 } data_unit_t;
-
-typedef enum
-{
-	TRANSMISSION_MODE_PARALLEL = 0,
-	TRANSMISSION_MODE_SERIAL = 1
-} transmission_mode_t;
 
 static const char* TTXT_COLOURS[8] = {
 	//black,   red,       green,     yellow,    blue,      magenta,   cyan,      white
@@ -127,42 +151,11 @@ typedef struct {
 } teletext_packet_payload_t;
 #pragma pack(pop)
 
-typedef struct {
-	uint64_t show_timestamp; // show at timestamp (in ms)
-	uint64_t hide_timestamp; // hide at timestamp (in ms)
-	uint16_t text[25][40]; // 25 lines x 40 cols (1 screen/page) of wide chars
-	uint8_t tainted; // 1 = text variable contains any data
-} teletext_page_t;
-
 // application config global variable
 struct ccx_s_teletext_config tlt_config = { 0};
 
 // macro -- output only when increased verbosity was turned on
 #define VERBOSE_ONLY if (tlt_config.verbose == YES)
-
-// application states -- flags for notices that should be printed only once
-static struct s_states {
-	uint8_t programme_info_processed;
-	uint8_t pts_initialized;
-} states = { NO, NO };
-
-// SRT frames produced
-uint32_t tlt_frames_produced = 0;
-
-// subtitle type pages bitmap, 2048 bits = 2048 possible pages in teletext (excl. subpages)
-static uint8_t cc_map[256] = { 0 };
-
-// last timestamp computed
-static uint64_t last_timestamp = 0;
-
-// working teletext page buffer
-teletext_page_t page_buffer = { 0 };
-
-// teletext transmission mode
-static transmission_mode_t transmission_mode = TRANSMISSION_MODE_SERIAL;
-
-// flag indicating if incoming data should be processed or ignored
-static uint8_t receiving_data = NO;
 
 // current charset (charset can be -- and always is -- changed during transmission)
 struct s_primary_charset {
@@ -182,9 +175,6 @@ struct {
 	{ '>', "&gt;" },
 	{ '&', "&amp;" }
 };
-
-// FYI, packet counter
-uint32_t tlt_packet_counter = 0;
 
 #define array_length(a) (sizeof(a)/sizeof(a[0]))
 
@@ -418,7 +408,6 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 	char timecode_show[24] = { 0 }, timecode_hide[24] = { 0 };
 
 	int time_reported=0;
-	++tlt_frames_produced;
 	char c_tempb[256]; // For buffering
 	uint8_t line_count = 0;
 
@@ -685,7 +674,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		uint16_t page_number;
 		uint8_t charset;
 		uint8_t c;
-		cc_map[i] |= flag_subtitle << (m - 1);
+		ctx->cc_map[i] |= flag_subtitle << (m - 1);
 
 		if ((flag_subtitle == YES) && (i < 0xff))
 		{
@@ -719,40 +708,41 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		// The same setting shall be used for all page headers in the service.
 		// ETS 300 706, chapter 7.2.1: Page is terminated by and excludes the next page header packet
 		// having the same magazine address in parallel transmission mode, or any magazine address in serial transmission mode.
-		transmission_mode = (transmission_mode_t) (unham_8_4(packet->data[7]) & 0x01);
+		ctx->transmission_mode = (transmission_mode_t) (unham_8_4(packet->data[7]) & 0x01);
 
 		// FIXME: Well, this is not ETS 300 706 kosher, however we are interested in DATA_UNIT_EBU_TELETEXT_SUBTITLE only
-		if ((transmission_mode == TRANSMISSION_MODE_PARALLEL) && (data_unit_id != DATA_UNIT_EBU_TELETEXT_SUBTITLE)) return;
+		if ((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (data_unit_id != DATA_UNIT_EBU_TELETEXT_SUBTITLE)) return;
 
-		if ((receiving_data == YES) && (
-			((transmission_mode == TRANSMISSION_MODE_SERIAL) && (PAGE(page_number) != PAGE(tlt_config.page))) ||
-			((transmission_mode == TRANSMISSION_MODE_PARALLEL) && (PAGE(page_number) != PAGE(tlt_config.page)) && (m == MAGAZINE(tlt_config.page)))))
+		if ((ctx->receiving_data == YES) && (
+			((ctx->transmission_mode == TRANSMISSION_MODE_SERIAL) && (PAGE(page_number) != PAGE(tlt_config.page))) ||
+			((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (PAGE(page_number) != PAGE(tlt_config.page)) && (m == MAGAZINE(tlt_config.page)))))
 		{
-			receiving_data = NO;
+			ctx->receiving_data = NO;
 			return;
 		}
 
 		// Page transmission is terminated, however now we are waiting for our new page
-		if (page_number != tlt_config.page) return;
+		if (page_number != tlt_config.page)
+			return;
 
 		// Now we have the begining of page transmission; if there is page_buffer pending, process it
-		if (page_buffer.tainted == YES)
+		if (ctx->page_buffer.tainted == YES)
 		{
 			// it would be nice, if subtitle hides on previous video frame, so we contract 40 ms (1 frame @25 fps)
-			page_buffer.hide_timestamp = timestamp - 40;
-			if (page_buffer.hide_timestamp > timestamp)
+			ctx->page_buffer.hide_timestamp = timestamp - 40;
+			if (ctx->page_buffer.hide_timestamp > timestamp)
 			{
-				page_buffer.hide_timestamp = 0;
+				ctx->page_buffer.hide_timestamp = 0;
 			}
-			process_page(ctx, &page_buffer, sub);
+			process_page(ctx, &ctx->page_buffer, sub);
 
 		}
 
-		page_buffer.show_timestamp = timestamp;
-		page_buffer.hide_timestamp = 0;
-		memset(page_buffer.text, 0x00, sizeof(page_buffer.text));
-		page_buffer.tainted = NO;
-		receiving_data = YES;
+		ctx->page_buffer.show_timestamp = timestamp;
+		ctx->page_buffer.hide_timestamp = 0;
+		memset(ctx->page_buffer.text, 0x00, sizeof(ctx->page_buffer.text));
+		ctx->page_buffer.tainted = NO;
+		ctx->receiving_data = YES;
 		primary_charset.g0_x28 = UNDEF;
 
 		c = (primary_charset.g0_m29 != UNDEF) ? primary_charset.g0_m29 : charset;
@@ -767,17 +757,21 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		}
 		*/
 	}
-	else if ((m == MAGAZINE(tlt_config.page)) && (y >= 1) && (y <= 23) && (receiving_data == YES))
+	else if ((m == MAGAZINE(tlt_config.page)) && (y >= 1) && (y <= 23) && (ctx->receiving_data == YES))
 	{
 		// ETS 300 706, chapter 9.4.1: Packets X/26 at presentation Levels 1.5, 2.5, 3.5 are used for addressing
 		// a character location and overwriting the existing character defined on the Level 1 page
 		// ETS 300 706, annex B.2.2: Packets with Y = 26 shall be transmitted before any packets with Y = 1 to Y = 25;
 		// so page_buffer.text[y][i] may already contain any character received
 		// in frame number 26, skip original G0 character
-		for (uint8_t i = 0; i < 40; i++) if (page_buffer.text[y][i] == 0x00) page_buffer.text[y][i] = telx_to_ucs2(packet->data[i]);
-		page_buffer.tainted = YES;
+		for (uint8_t i = 0; i < 40; i++)
+		{
+			if (ctx->page_buffer.text[y][i] == 0x00)
+				ctx->page_buffer.text[y][i] = telx_to_ucs2(packet->data[i]);
+		}
+		ctx->page_buffer.tainted = YES;
 	}
-	else if ((m == MAGAZINE(tlt_config.page)) && (y == 26) && (receiving_data == YES))
+	else if ((m == MAGAZINE(tlt_config.page)) && (y == 26) && (ctx->receiving_data == YES))
 	{
 		// ETS 300 706, chapter 12.3.2: X/26 definition
 		uint8_t x26_row = 0;
@@ -819,7 +813,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			if ((mode == 0x0f) && (row_address_group == NO))
 			{
 				x26_col = address;
-				if (data > 31) page_buffer.text[x26_row][x26_col] = G2[0][data - 0x20];
+				if (data > 31) ctx->page_buffer.text[x26_row][x26_col] = G2[0][data - 0x20];
 			}
 
 			// ETS 300 706, chapter 12.3.1, table 27: G0 character with diacritical mark
@@ -828,15 +822,18 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				x26_col = address;
 
 				// A - Z
-				if ((data >= 65) && (data <= 90)) page_buffer.text[x26_row][x26_col] = G2_ACCENTS[mode - 0x11][data - 65];
+				if ((data >= 65) && (data <= 90))
+					ctx->page_buffer.text[x26_row][x26_col] = G2_ACCENTS[mode - 0x11][data - 65];
 				// a - z
-				else if ((data >= 97) && (data <= 122)) page_buffer.text[x26_row][x26_col] = G2_ACCENTS[mode - 0x11][data - 71];
+				else if ((data >= 97) && (data <= 122))
+					ctx->page_buffer.text[x26_row][x26_col] = G2_ACCENTS[mode - 0x11][data - 71];
 				// other
-				else page_buffer.text[x26_row][x26_col] = telx_to_ucs2(data);
+				else
+					ctx->page_buffer.text[x26_row][x26_col] = telx_to_ucs2(data);
 			}
 		}
 	}
-	else if ((m == MAGAZINE(tlt_config.page)) && (y == 28) && (receiving_data == YES))
+	else if ((m == MAGAZINE(tlt_config.page)) && (y == 28) && (ctx->receiving_data == YES))
 	{
 		// TODO:
 		//   ETS 300 706, chapter 9.4.7: Packet X/28/4
@@ -898,7 +895,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 	else if ((m == 8) && (y == 30))
 	{
 		// ETS 300 706, chapter 9.8: Broadcast Service Data Packets
-		if (states.programme_info_processed == NO)
+		if (ctx->states.programme_info_processed == NO)
 		{
 			// ETS 300 706, chapter 9.8.1: Packet 8/30 Format 1
 			if (unham_8_4(packet->data[0]) < 2)
@@ -940,16 +937,16 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				// ctime output itself is \n-ended
 				mprint ("- Universal Time Co-ordinated = %s", ctime(&t0));
 
-				dbg_print (CCX_DMT_TELETEXT, "- Transmission mode = %s\n", (transmission_mode == TRANSMISSION_MODE_SERIAL ? "serial" : "parallel"));
+				dbg_print (CCX_DMT_TELETEXT, "- Transmission mode = %s\n", (ctx->transmission_mode == TRANSMISSION_MODE_SERIAL ? "serial" : "parallel"));
 
 				if (tlt_config.write_format == CCX_OF_TRANSCRIPT && tlt_config.date_format==ODF_DATE && !tlt_config.noautotimeref)
 				{
 					mprint ("- Broadcast Service Data Packet received, resetting UTC referential value to %s", ctime(&t0));
 					utc_refvalue = t;
-					states.pts_initialized = NO;
+					ctx->states.pts_initialized = NO;
 				}
 
-				states.programme_info_processed = YES;
+				ctx->states.programme_info_processed = YES;
 			}
 		}
 	}
@@ -971,7 +968,7 @@ void tlt_read_rcwt(void *codec, unsigned char *buf, struct cc_subtitle *sub)
 	memcpy(&t, &buf[1], sizeof(uint64_t));
 	teletext_packet_payload_t *pl = (teletext_packet_payload_t *)&buf[9];
 
-	last_timestamp = t;
+	ctx->last_timestamp = t;
 
 	process_telx_packet(ctx, id, pl, t, sub);
 }
@@ -996,7 +993,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 		return CCX_EINVAL;
 	}
 
-	tlt_packet_counter++;
+	ctx->tlt_packet_counter++;
 	if (size < 6)
 		return CCX_OK;
 
@@ -1069,7 +1066,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 		t = (uint32_t) (pts / 90);
 	}
 
-	if (states.pts_initialized == NO)
+	if (ctx->states.pts_initialized == NO)
 	{
 		if (utc_refvalue == UINT64_MAX)
 			delta = 0 - (uint64_t)t;
@@ -1077,19 +1074,19 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 			delta = (uint64_t) (1000 * utc_refvalue - t);
 		t0 = t;
 
-		states.pts_initialized = YES;
+		ctx->states.pts_initialized = YES;
 		if ((using_pts == NO) && (ctx->global_timestamp == 0))
 		{
 			// We are using global PCR, nevertheless we still have not received valid PCR timestamp yet
-			states.pts_initialized = NO;
+			ctx->states.pts_initialized = NO;
 		}
 	}
 	if (t < t0)
-		delta = last_timestamp;
-	last_timestamp = t + delta;
-	if (delta < 0 && last_timestamp > t)
+		delta = ctx->last_timestamp;
+	ctx->last_timestamp = t + delta;
+	if (delta < 0 && ctx->last_timestamp > t)
 	{
-		last_timestamp = 0;
+		ctx->last_timestamp = 0;
 	}
 	t0 = t;
 
@@ -1112,11 +1109,11 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 				for (uint8_t j = 0; j < data_unit_len; j++) buffer[i + j] = REVERSE_8[buffer[i + j]];
 
 				if (tlt_config.write_format == CCX_OF_RCWT)
-					tlt_write_rcwt(dec_ctx, data_unit_id, &buffer[i], last_timestamp, sub);
+					tlt_write_rcwt(dec_ctx, data_unit_id, &buffer[i], ctx->last_timestamp, sub);
 				else
 				{
 					// FIXME: This explicit type conversion could be a problem some day -- do not need to be platform independant
-					process_telx_packet(ctx, (data_unit_t) data_unit_id, (teletext_packet_payload_t *)&buffer[i], last_timestamp, sub);
+					process_telx_packet(ctx, (data_unit_t) data_unit_id, (teletext_packet_payload_t *)&buffer[i], ctx->last_timestamp, sub);
 				}
 			}
 		}
@@ -1134,6 +1131,7 @@ void* telxcc_init(void)
 	if(!ctx)
 		return NULL;
 	memset (ctx->seen_sub_page, 0, MAX_TLT_PAGES * sizeof(short int));
+	memset (ctx->cc_map, 0, 256);
 
 	ctx->page_buffer_prev = NULL;
 	ctx->page_buffer_cur = NULL;
@@ -1149,7 +1147,15 @@ void* telxcc_init(void)
 	ctx->ucs2_buffer_cur_used = 0;
 	ctx->ucs2_buffer_prev_size = 0;
 	ctx->ucs2_buffer_prev_used = 0;
+
 	// Buffer timestamp
+	ctx->last_timestamp = 0;
+	memset(&ctx->page_buffer, 0, sizeof(teletext_page_t));
+	ctx->states.programme_info_processed = NO;
+	ctx->states.pts_initialized = NO;
+	ctx->tlt_packet_counter = 0;
+	ctx->transmission_mode = TRANSMISSION_MODE_SERIAL;
+	ctx->receiving_data = NO;
 
 	return ctx;
 }
@@ -1195,23 +1201,15 @@ void telxcc_close(void **ctx, struct cc_subtitle *sub)
 	if (tlt_config.write_format != CCX_OF_RCWT)
 	{
 		// output any pending close caption
-		if (page_buffer.tainted == YES)
+		if (ttext->page_buffer.tainted == YES)
 		{
 			// this time we do not subtract any frames, there will be no more frames
-			page_buffer.hide_timestamp = last_timestamp;
-			process_page(ttext, &page_buffer, sub);
+			ttext->page_buffer.hide_timestamp = ttext->last_timestamp;
+			process_page(ttext, &ttext->page_buffer, sub);
 		}
 
 		telxcc_dump_prev_page(ttext, sub);
 
-		if ((tlt_frames_produced == 0) && (tlt_config.nonempty == YES))
-		{
-#if 0
-			if (ctx->wbout1.fh!=-1)
-				fdprintf(ctx->wbout1.fh, "1\r\n00:00:00,000 --> 00:00:10,000\r\n(no closed captions available)\r\n\r\n");
-#endif
-			tlt_frames_produced++;
-		}
 	}
 	freep(&ttext->ucs2_buffer_cur);
 	freep(&ttext->page_buffer_cur);

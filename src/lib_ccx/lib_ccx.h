@@ -306,8 +306,6 @@ extern unsigned teletext_mode;
 #define MAX_TLT_PAGES 1000
 
 extern struct ccx_s_teletext_config tlt_config;
-extern uint32_t tlt_packet_counter;
-extern uint32_t tlt_frames_produced;
 
 int is_decoder_processed_enough(struct lib_ccx_ctx *ctx);
 struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct cap_info* cinfo);
