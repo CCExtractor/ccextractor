@@ -18,7 +18,6 @@ For now, integration with ccextractor is a quick hack. It could get better with 
 
 static unsigned int header_state;
 static unsigned char psm_es_type[256];
-int cc608_parity_table[256];
 
 // LLONG processed_ccblocks = 0;
 
@@ -794,37 +793,6 @@ goto skip; */
 #endif
 
 	return 0;
-}
-
-static int cc608_parity(unsigned int byte)
-{
-	int ones = 0;
-
-	for (int i = 0; i < 7; i++)
-	{
-		if (byte & (1 << i))
-			ones++;
-	}
-
-	return ones & 1;
-}
-
-static void cc608_build_parity_table(int *parity_table)
-{
-	unsigned int byte;
-	int parity_v;
-	for (byte = 0; byte <= 127; byte++)
-	{
-		parity_v = cc608_parity(byte);
-		/* CC uses odd parity (i.e., # of 1's in byte is odd.) */
-		parity_table[byte] = parity_v;
-		parity_table[byte | 0x80] = !parity_v;
-	}
-}
-
-void build_parity_table (void)
-{
-	cc608_build_parity_table(cc608_parity_table);
 }
 
 void myth_loop(struct lib_ccx_ctx *ctx)
