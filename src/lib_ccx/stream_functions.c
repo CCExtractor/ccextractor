@@ -165,9 +165,9 @@ void detect_stream_type (struct ccx_demuxer *ctx)
 			{
 				// The TiVo header is longer, but the PS loop will find the beginning
 				dbg_print(CCX_DMT_PARSE, "detect_stream_type: detected as Tivo PS\n");
-				ctx->startbytes_pos=187;
-				ctx->stream_mode=CCX_SM_PROGRAM;
-				strangeheader=1; // Avoid message about unrecognized header
+				ctx->startbytes_pos = 187;
+				ctx->stream_mode = CCX_SM_PROGRAM;
+				ctx->strangeheader = 1; // Avoid message about unrecognized header
 			}
 		}
 		else

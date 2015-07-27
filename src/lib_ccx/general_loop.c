@@ -18,10 +18,6 @@ int end_of_file=0; // End of file?
 
 const static unsigned char DO_NOTHING[] = {0x80, 0x80};
 
-// Remember if the last header was valid. Used to suppress too much output
-// and the expected unrecognized first header for TiVo files.
-int strangeheader=0;
-
 
 // Program stream specific data grabber
 int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
@@ -74,12 +70,12 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 			while ( !(nextheader[0]==0x00 && nextheader[1]==0x00
 						&& nextheader[2]==0x01 && nextheader[3]!=0x00) )
 			{
-				if( !strangeheader )
+				if( !ctx->demux_ctx->strangeheader )
 				{
 					mprint ("\nNot a recognized header. Searching for next header.\n");
 					dump (CCX_DMT_GENERIC_NOTICES, nextheader,6,0,0);
 					// Only print the message once per loop / unrecognized header
-					strangeheader = 1;
+					ctx->demux_ctx->strangeheader = 1;
 				}
 
 				unsigned char *newheader;
@@ -119,7 +115,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				break;
 			}
 			// Found 00-00-01 in nextheader, assume a regular header
-			strangeheader=0;
+			ctx->demux_ctx->strangeheader = 0;
 
 			// PACK header
 			if ( nextheader[3]==0xBA)
@@ -230,7 +226,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 			} else {
 				// If we are here this is an unknown header type
 				mprint("Unknown header %02X\n", nextheader[3]);
-				strangeheader=1;
+				ctx->demux_ctx->strangeheader = 1;
 			}
 		}
 	}

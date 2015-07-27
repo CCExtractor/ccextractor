@@ -112,6 +112,10 @@ struct ccx_demuxer
 
 	int warning_program_not_found_shown;
 
+	// Remember if the last header was valid. Used to suppress too much output
+	// and the expected unrecognized first header for TiVo files.
+	int strangeheader;
+
 	void *parent;
 	void (*print_cfg)(struct ccx_demuxer *ctx);
 	void (*print_report)(struct ccx_demuxer *ctx);
