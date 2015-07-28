@@ -58,27 +58,33 @@ int get_programme_number(struct ccx_demuxer *ctx, int pid)
 	return CCX_UNKNOWN;
 }
 
-int get_best_sib_stream(struct cap_info* program)
+struct cap_info *get_sib_stream_by_type(struct cap_info* program, enum ccx_code_type type)
 {
 	struct cap_info* iter;
+	list_for_each_entry(iter, &program->sib_head, sib_stream, struct cap_info)
+	{
+		if(iter->codec == type)
+			return iter;
+	}
+	return NULL;
+}
+struct cap_info* get_best_sib_stream(struct cap_info* program)
+{
+	struct cap_info* info;
 
-	list_for_each_entry(iter, &program->sib_head, sib_stream, struct cap_info)
-	{
-		if(iter->codec == CCX_CODEC_TELETEXT)
-			return iter->pid;
-	}
-	list_for_each_entry(iter, &program->sib_head, sib_stream, struct cap_info)
-	{
-		if(iter->codec == CCX_CODEC_DVB)
-			return iter->pid;
-	}
+	info = get_sib_stream_by_type(program, CCX_CODEC_TELETEXT);
+	if(info)
+		return info;
 
-	list_for_each_entry(iter, &program->sib_head, sib_stream, struct cap_info)
-	{
-		if(iter->codec == CCX_CODEC_ATSC_CC)
-			return iter->pid;
-	}
-	return -1;
+	info = get_sib_stream_by_type(program, CCX_CODEC_DVB);
+	if(info)
+		return info;
+
+	info = get_sib_stream_by_type(program, CCX_CODEC_ATSC_CC);
+	if(info)
+		return info;
+
+	return NULL;
 }
 
 void ignore_other_sib_stream(struct cap_info* head, int pid)
