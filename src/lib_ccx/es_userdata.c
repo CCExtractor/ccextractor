@@ -184,7 +184,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 					field_number = (field_number - 1) & 0x01;
 					// top_field_first also affects to which field the caption
 					// belongs.
-					if(!top_field_first)
+					if(!ctx->top_field_first)
 						field_number ^= 0x01;
 					cc_data[j*3]=0x04|(field_number);
 					cc_data[j*3+1]=reverse8(cc_data1);

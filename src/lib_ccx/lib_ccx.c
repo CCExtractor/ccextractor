@@ -33,32 +33,40 @@ static void dinit_decoder_setting (struct ccx_decoders_common_settings_t **setti
 }
 
 
-static int init_ctx_input(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx)
+static int init_ctx_outbase(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx)
 {
 	char *file;
 
-	switch (opt->input_source)
+	if (opt->output_filename)
 	{
-		case CCX_DS_FILE:
-			if(!ctx->inputfile || !ctx->inputfile[0]) {
+		ctx->basefilename = get_basename(opt->output_filename);
+	}
+	else
+	{
+		switch (opt->input_source)
+		{
+			case CCX_DS_FILE:
+				if(!ctx->inputfile || !ctx->inputfile[0])
+				{
+					errno = EINVAL;
+					return -1;
+				}
+				file = ctx->inputfile[0];
+				break;
+			case CCX_DS_STDIN:
+				file = "stdin";
+				break;
+			case CCX_DS_NETWORK:
+			case CCX_DS_TCP:
+				file = "network";
+				break;
+			default:
 				errno = EINVAL;
 				return -1;
-			}
-			file = ctx->inputfile[0];
-			break;
-		case CCX_DS_STDIN:
-			file = "stdin";
-			break;
-		case CCX_DS_NETWORK:
-		case CCX_DS_TCP:
-			file = "network";
-			break;
-		default:
-			errno = EINVAL;
-			return -1;
-	}
+		}
 
-	ctx->basefilename = get_basename(file);
+		ctx->basefilename = get_basename(file);
+	}
 	return 0;
 }
 
@@ -112,7 +120,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->inputfile = opt->inputfile;
 	ctx->num_input_files = opt->num_input_files;
 
-	ret = init_ctx_input(opt, ctx);
+	ret = init_ctx_outbase(opt, ctx);
 	if (ret < 0) {
 		goto end;
 	}
@@ -297,29 +305,24 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 			ccx_options.enc_cfg.in_format = in_format;
 			enc_ctx = init_encoder(&ccx_options.enc_cfg);
 			if (!enc_ctx)
-				fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+				return NULL;
 			list_add_tail( &(enc_ctx->list), &(ctx->enc_ctx_head) );
 		}
 	}
 	else
 	{
 		int len;
-		char *basefilename;
 		char *extension;
 
 		extension = get_file_extension(ccx_options.enc_cfg.write_format);
-		if(ccx_options.output_filename)
-			basefilename = get_basename(ccx_options.output_filename);
-		else
-			basefilename = get_basename(ccx_options.inputfile[0]);
-		len = strlen(basefilename) + 10 + strlen(extension);
+		len = strlen(ctx->basefilename) + 10 + strlen(extension);
 
 		ccx_options.enc_cfg.program_number = pn;
 		ccx_options.enc_cfg.output_filename = malloc(len);
-		sprintf(ccx_options.enc_cfg.output_filename, "%s_%d%s", basefilename, pn, extension);
+		sprintf(ccx_options.enc_cfg.output_filename, "%s_%d%s", ctx->basefilename, pn, extension);
 		enc_ctx = init_encoder(&ccx_options.enc_cfg);
 		if (!enc_ctx)
-			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+			return NULL;
 		list_add_tail( &(enc_ctx->list), &(ctx->enc_ctx_head) );
 	}
 	return enc_ctx;

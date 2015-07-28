@@ -62,32 +62,16 @@ int need_program(struct ccx_demuxer *ctx)
 }
 int update_pinfo(struct ccx_demuxer *ctx, int pid, int program_number)
 {
-	int i = 0;
 	if(!ctx)
 		return -1;
 
 	if(ctx->nb_program >= MAX_PROGRAM)
 		return -1;
 
-	for( i = 0; i < ctx->nb_program; i++)
-	{
-		if(ctx->pinfo[i].pid == pid)
-		{
-			ctx->pinfo[i].program_number = program_number;
-			return CCX_OK;
-		}
-		if(ctx->pinfo[i].program_number == program_number)
-		{
-			ctx->pinfo[i].pid = pid;
-			return CCX_OK;
-		}
-	}
-	if(ctx->flag_ts_forced_pn  == CCX_FALSE)
-	{
-		ctx->pinfo[ctx->nb_program].pid = pid;
-		ctx->pinfo[ctx->nb_program].program_number = program_number;
-		ctx->nb_program++;
-	}
+	ctx->pinfo[ctx->nb_program].pid = pid;
+	ctx->pinfo[ctx->nb_program].program_number = program_number;
+	ctx->pinfo[ctx->nb_program].analysed_PMT_once = CCX_FALSE;
+	ctx->nb_program++;
 
 	return CCX_OK;
 }
@@ -98,13 +82,11 @@ int update_pinfo(struct ccx_demuxer *ctx, int pid, int program_number)
    PMT specs: ISO13818-1 / table 2-28
    */
 
-int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char *buf, int len, int pos)
+int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char *buf, int len,  struct program_info *pinfo)
 {
 	int must_flush=0;
 	int ret = 0;
 	unsigned char desc_len = 0;
-	int prev_cap_cont = 0;
-	int present_cap_count = 0;
 
 	uint8_t table_id;
 	uint16_t section_length;
@@ -117,35 +99,44 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	uint16_t PCR_PID;
 	uint16_t pi_length;
 
-
-#if 0
-	/* We keep a copy of all PMTs, even if not interesting to us for now */
-	if (ctx->pmt_array[pos].last_pmt_payload!=NULL && len == ctx->pmt_array[pos].last_pmt_length &&
-			!memcmp (buf, ctx->pmt_array[pos].last_pmt_payload, len))
-	{
-		// dbg_print(CCX_DMT_PMT, "PMT hasn't changed, skipping.\n");
-		return 0;
-	}
-	ctx->pmt_array[pos].last_pmt_payload=(unsigned char *)
-		realloc (ctx->pmt_array[pos].last_pmt_payload, len+8); // Extra 8 in case memcpy copies dwords, etc
-	if (ctx->pmt_array[pos].last_pmt_payload==NULL)
-		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process PMT.\n");
-	memcpy (ctx->pmt_array[pos].last_pmt_payload, buf, len);
-	ctx->pmt_array[pos].last_pmt_length = len;
-#endif
+	ret = verify_crc32(buf, len);
+	if (ret == CCX_FALSE)
+		return -1;
 
 	table_id = buf[0];
-	section_length = (((buf[1] & 0x0F) << 8)
-			| buf[2]);
-	program_number = ((buf[3] << 8)
-			| buf[4]);
+	if(table_id != 0x2)
+	{
+		mprint("Warning: As per MPEG table defination PMT must have table id 0x2\n");
+	}
 
+	section_length = (((buf[1] & 0x0F) << 8)| buf[2]);
+	if(section_length > (len - 3))
+	{
+		mprint("Long PMTs are not supported - skipped.\n");
+		return 0;
+	}
+
+	program_number = ((buf[3] << 8)	| buf[4]);
 	version_number = (buf[5] & 0x3E) >> 1;
 
 	current_next_indicator = buf[5] & 0x01;
 	// This table is not active, no need to evaluate
 	if (!current_next_indicator)
 		return 0;
+
+	if (pinfo->analysed_PMT_once == CCX_TRUE && pinfo->version == version_number)
+	{
+		if (pinfo->version == version_number)
+			return 0;
+		else if ( (pinfo->version+1)%32 != version_number)
+			mprint("TS PMT:Glitch in version number incremnt");
+	}
+	pinfo->version = version_number;
+
+	memcpy (pinfo->saved_section, buf, len);
+	if (need_capInfo(ctx, program_number) == CCX_FALSE)
+		return 0;
+
 
 	section_number = buf[6];
 	last_section_number = buf[7];
@@ -168,9 +159,6 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	}
 	buf += 12 + pi_length;
 	len -= (12 + pi_length);
-
-	if (need_capInfo(ctx, program_number) == CCX_FALSE)
-		return 0;
 
 
 	unsigned stream_data = section_length - 9 - pi_length - 4; // prev. bytes and CRC
@@ -215,8 +203,6 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	dbg_print(CCX_DMT_PMT, "---\n");
 
 	dbg_print(CCX_DMT_VERBOSE, "\nProgram map section (PMT)\n");
-
-	prev_cap_cont = count_complete_capInfo(ctx);
 
 	for (unsigned i=0; i < stream_data && (i+4)<len; i+=5)
 	{
@@ -392,21 +378,12 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 				ccx_stream_type, elementary_PID);
 		i += ES_info_length;
 	}
-	if(ctx->multi_stream_per_prog == CCX_FALSE)
-	{
-
-	}
-
-
-	present_cap_count = count_complete_capInfo(ctx);
-	if(present_cap_count > prev_cap_cont)
-	{
-	}
+	pinfo->analysed_PMT_once = CCX_TRUE;
 
 	return must_flush;
 }
 
-int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char*buf, int size, int pos)
+int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char*buf, int size,  struct program_info *pinfo)
 {
 	static int in_error = 0;  // If a broken section arrives we will skip everything until the next PES start
 	if (size < 0)
@@ -452,7 +429,7 @@ int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned 
 
 	if(payload->section_index >= (unsigned)payload->section_size)
 	{
-		if(parse_PMT(ctx, payload, payload->section_buf,payload->section_size,pos))
+		if(parse_PMT(ctx, payload, payload->section_buf,payload->section_size, pinfo))
 			return 1;
 	}
 	return 0;
@@ -609,8 +586,11 @@ int parse_PAT (struct ccx_demuxer *ctx, struct ts_payload *payload)
 		{
 			if (ctx->pinfo[j].program_number == program_number)
 			{
-				if(ctx->flag_ts_forced_pn== CCX_TRUE && ctx->pinfo[j].pid == CCX_UNKNOWN)
+				if(ctx->flag_ts_forced_pn == CCX_TRUE && ctx->pinfo[j].pid == CCX_UNKNOWN)
+				{
 					ctx->pinfo[j].pid = prog_map_pid;
+					ctx->pinfo[j].analysed_PMT_once = CCX_FALSE;
+				}
 				break;
 			}
 		}

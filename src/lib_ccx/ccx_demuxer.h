@@ -9,7 +9,7 @@
 #define SUB_STREAMS_CNT 10
 #define MAX_PID 65536
 #define TS_PMT_MAP_SIZE 128
-#define MAX_PROGRAM 5
+#define MAX_PROGRAM 128
 struct ccx_demux_report
 {
         unsigned program_cnt;
@@ -22,6 +22,9 @@ struct program_info
 {
 	int pid;
 	int program_number;
+	uint8_t analysed_PMT_once:1;
+	uint8_t version;
+	uint8_t saved_section[1021];
 };
 
 struct cap_info
@@ -109,9 +112,12 @@ struct ccx_demuxer
 
 	int warning_program_not_found_shown;
 
+	// Remember if the last header was valid. Used to suppress too much output
+	// and the expected unrecognized first header for TiVo files.
+	int strangeheader;
+
 	void *parent;
 	void (*print_cfg)(struct ccx_demuxer *ctx);
-	void (*print_report)(struct ccx_demuxer *ctx);
 	void (*reset)(struct ccx_demuxer *ctx);
 	void (*close)(struct ccx_demuxer *ctx);
 	int (*open)(struct ccx_demuxer *ctx, const char *file_name);
@@ -134,7 +140,7 @@ struct demuxer_data
 	struct demuxer_data *next_program;
 };
 
-int count_complete_capInfo(struct ccx_demuxer *ctx);
+struct cap_info *get_sib_stream_by_type(struct cap_info* program, enum ccx_code_type type);
 struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg);
 void ccx_demuxer_delete(struct ccx_demuxer **ctx);
 struct demuxer_data* alloc_demuxer_data(void);
@@ -149,6 +155,6 @@ int get_best_stream(struct ccx_demuxer *ctx);
 void ignore_other_stream(struct ccx_demuxer *ctx, int pid);
 void dinit_cap (struct ccx_demuxer *ctx);
 int get_programme_number(struct ccx_demuxer *ctx, int pid);
-int get_best_sib_stream(struct cap_info* program);
+struct cap_info* get_best_sib_stream(struct cap_info* program);
 void ignore_other_sib_stream(struct cap_info* head, int pid);
 #endif
