@@ -8,6 +8,7 @@ made to reuse, not duplicate, as many functions as possible */
 #include "ccx_common_timing.h"
 #include "ccx_common_common.h"
 #include "lib_ccx.h"
+#include "ccx_decoders_608.h"
 
 
 uint64_t utc_refvalue = UINT64_MAX;  /* _UI64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */

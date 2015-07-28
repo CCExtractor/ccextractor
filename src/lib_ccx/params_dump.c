@@ -299,7 +299,38 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 		printf("ATSC Closed Caption: ");
 		info = get_sib_stream_by_type(program, CCX_CODEC_ATSC_CC);
 		if(info)
+		{
 			printf("Yes\n");
+			dec_ctx = update_decoder_list_cinfo(ctx, info);
+			printf("EIA-608: %s\n", Y_N(dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0));
+
+			if (dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0)
+			{
+				printf("XDS: %s\n", Y_N(ctx->freport.data_from_608->xds));
+
+				printf("CC1: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[0]));
+				printf("CC2: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[1]));
+				printf("CC3: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[2]));
+				printf("CC4: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[3]));
+			}
+			printf("CEA-708: %s\n", Y_N(dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0));
+
+			if (dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0)
+			{
+				printf("Services: ");
+				for (int i = 0; i < CCX_DECODERS_708_MAX_SERVICES; i++)
+				{
+					if (ctx->freport.data_from_708->services[i] == 0)
+						continue;
+					printf("%d ", i);
+				}
+				printf("\n");
+
+				printf("Primary Language Present: %s\n", Y_N(ctx->freport.data_from_708->services[1]));
+
+				printf("Secondary Language Present: %s\n", Y_N(ctx->freport.data_from_708->services[2]));
+			}
+		}
 		else
 			printf("No\n");
 
@@ -323,44 +354,11 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 		printf("\n");
 	}
 
-#if 0
-
-	printf("EIA-608: %s\n", Y_N(dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0));
-
-	if (dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0)
-	{
-		printf("XDS: %s\n", Y_N(ctx->freport.data_from_608->xds));
-
-		printf("CC1: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[0]));
-		printf("CC2: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[1]));
-		printf("CC3: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[2]));
-		printf("CC4: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[3]));
-	}
-
-	printf("CEA-708: %s\n", Y_N(dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0));
-
-	if (dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0)
-	{
-		printf("Services: ");
-		for (int i = 0; i < CCX_DECODERS_708_MAX_SERVICES; i++)
-		{
-			if (ctx->freport.data_from_708->services[i] == 0)
-				continue;
-			printf("%d ", i);
-		}
-		printf("\n");
-
-		printf("Primary Language Present: %s\n", Y_N(ctx->freport.data_from_708->services[1]));
-
-		printf("Secondary Language Present: %s\n", Y_N(ctx->freport.data_from_708->services[2]));
-	}
-
 	printf("MPEG-4 Timed Text: %s\n", Y_N(ctx->freport.mp4_cc_track_cnt));
 	if (ctx->freport.mp4_cc_track_cnt) {
 		printf("MPEG-4 Timed Text tracks count: %d\n", ctx->freport.mp4_cc_track_cnt);
 	}
 
 	memset(&ctx->freport, 0, sizeof (struct file_report));
-#endif
 #undef Y_N
 }

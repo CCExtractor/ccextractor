@@ -95,6 +95,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	report_608 = malloc(sizeof(struct ccx_decoder_608_report));
 	if (!report_608)
 		return NULL;
+
 	memset(report_608,0,sizeof(struct ccx_decoder_608_report));
 
 	// Initialize some constants
@@ -108,13 +109,17 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ccx_common_logging.log_ftn = &mprint;
 	ccx_common_logging.gui_ftn = &activity_library_process;
 
-	// Need to set the 608 data for the report to the correct variable.
-	ctx->freport.data_from_608 = report_608;
-	// Same applies for 708 data
-	ctx->freport.data_from_708 = &ccx_decoder_708_report;
-
 	// Init shared decoder settings
 	ctx->dec_global_setting = init_decoder_setting(opt);
+	if(!ctx->dec_global_setting)
+		return NULL;
+
+	// Need to set the 608 data for the report to the correct variable.
+	ctx->freport.data_from_608 = report_608;
+	ctx->dec_global_setting->settings_608->report = report_608;
+
+	// Same applies for 708 data
+	ctx->freport.data_from_708 = &ccx_decoder_708_report;
 
 	//Initialize input files
 	ctx->inputfile = opt->inputfile;
