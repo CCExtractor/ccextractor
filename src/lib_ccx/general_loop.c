@@ -10,6 +10,7 @@
 #include "ccx_encoders_common.h"
 #include "activity.h"
 #include "utility.h"
+#include "ccx_demuxer.h"
 
 unsigned int rollover_bits = 0; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
 LLONG result; // Number of bytes read/skipped in last read operation

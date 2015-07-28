@@ -230,9 +230,9 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 			{
 				int k = 0;
 				for (int j = 0; j < SUB_STREAMS_CNT; j++) {
-					if (ctx->freport.dvb_sub_pid[i] == 0)
+					if (ctx->freport.dvb_sub_pid[j] == 0)
 						k = j;
-					if (ctx->freport.dvb_sub_pid[i] == elementary_PID)
+					if (ctx->freport.dvb_sub_pid[j] == elementary_PID)
 					{
 						k = j;
 						break;
@@ -244,9 +244,9 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 			{
 				int k = 0;
 				for (int j = 0; j < SUB_STREAMS_CNT; j++) {
-					if (ctx->freport.tlt_sub_pid[i] == 0)
+					if (ctx->freport.tlt_sub_pid[j] == 0)
 						k = j;
-					if (ctx->freport.tlt_sub_pid[i] == elementary_PID)
+					if (ctx->freport.tlt_sub_pid[j] == elementary_PID)
 					{
 						k = j;
 						break;
