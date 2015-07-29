@@ -45,6 +45,10 @@ void ccx_common_timing_init(LLONG *file_position,int no_sync)
 	ccx_common_timing_settings.no_sync = no_sync;
 }
 
+void dinit_timing_ctx(struct ccx_common_timing_ctx **arg)
+{
+	freep(arg);
+}
 struct ccx_common_timing_ctx *init_timing_ctx(struct ccx_common_timing_settings_t *cfg)
 {
 	struct ccx_common_timing_ctx *ctx = malloc(sizeof(struct ccx_common_timing_ctx));

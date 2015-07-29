@@ -308,7 +308,7 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 	data->channel = context->channel;
 	data->my_field = context->my_field;
 
-	if (!data->empty)
+	if (!data->empty && context->output_format != CCX_OF_NULL)
 	{
 		sub->data = (struct eia608_screen *) realloc(sub->data,( sub->nb_data + 1 ) * sizeof(*data));
 		if (!sub->data)

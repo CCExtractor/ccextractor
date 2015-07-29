@@ -312,6 +312,7 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	ctx->fh_out_elementarystream = NULL;
 	ctx->warning_program_not_found_shown = CCX_FALSE;
 	ctx->strangeheader = 0;
+	memset(&ctx->freport, 0, sizeof(ctx->freport));
 	if (cfg->out_elementarystream_filename != NULL)
 	{
 		if ((ctx->fh_out_elementarystream = fopen (cfg->out_elementarystream_filename,"wb"))==NULL)

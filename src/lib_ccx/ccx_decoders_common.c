@@ -209,6 +209,17 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 
 	return 1;
 }
+
+void dinit_cc_decode(struct lib_cc_decode **ctx)
+{
+	struct lib_cc_decode *lctx = *ctx;
+	dinit_avc(&lctx->avc_ctx);
+	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_1);
+	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_2);
+	dinit_timing_ctx(&lctx->timing);
+	freep(ctx);
+}
+
 struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *setting)
 {
 	struct lib_cc_decode *ctx = NULL;
@@ -301,6 +312,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->repeat_first_field = 0;
 	ctx->progressive_frame = 0;
 	ctx->pulldownfields = 0;
+	memset(ctx->cc_stats, 0, 4 * sizeof(int)); 
 
 	return ctx;
 }
@@ -334,12 +346,4 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 		}
 	}
 
-}
-void dinit_cc_decode(struct lib_cc_decode **ctx)
-{
-	struct lib_cc_decode *lctx = *ctx;
-	dinit_avc(&lctx->avc_ctx);
-	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_1);
-	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_2);
-	freep(ctx);
 }

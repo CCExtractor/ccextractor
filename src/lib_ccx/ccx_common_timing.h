@@ -67,6 +67,8 @@ extern LLONG fts_at_gop_start;
 extern int gop_rollover;
 
 void ccx_common_timing_init(LLONG *file_position, int no_sync);
+
+void dinit_timing_ctx(struct ccx_common_timing_ctx **arg);
 struct ccx_common_timing_ctx *init_timing_ctx(struct ccx_common_timing_settings_t *cfg);
 
 void set_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts);
