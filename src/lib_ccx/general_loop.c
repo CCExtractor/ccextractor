@@ -692,6 +692,8 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			if(!datalist)
 				break;
 		}
+		if (!datalist)
+			continue;
 
 		position_sanity_check(ctx->demux_ctx->infd);
 		if(!ctx->multiprogram)

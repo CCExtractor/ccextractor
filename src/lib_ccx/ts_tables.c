@@ -99,9 +99,6 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	uint16_t PCR_PID;
 	uint16_t pi_length;
 
-	ret = verify_crc32(buf, len);
-	if (ret == CCX_FALSE)
-		return -1;
 
 	table_id = buf[0];
 	if(table_id != 0x2)
@@ -127,7 +124,11 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	if (pinfo->analysed_PMT_once == CCX_TRUE && pinfo->version == version_number)
 	{
 		if (pinfo->version == version_number)
-			return 0;
+		{
+			/* Same Version number and there was valid CRC last time */
+			if (pinfo->valid_crc == CCX_TRUE)
+				return 0;
+		}
 		else if ( (pinfo->version+1)%32 != version_number)
 			mprint("TS PMT:Glitch in version number incremnt");
 	}
@@ -378,7 +379,16 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 				ccx_stream_type, elementary_PID);
 		i += ES_info_length;
 	}
+
 	pinfo->analysed_PMT_once = CCX_TRUE;
+
+	ret = verify_crc32(buf, len);
+	if (ret == CCX_FALSE)
+		pinfo->valid_crc = CCX_FALSE;
+	else
+		pinfo->valid_crc = CCX_TRUE;
+
+	pinfo->crc = (*(int32_t*)(buf+len-4));
 
 	return must_flush;
 }
