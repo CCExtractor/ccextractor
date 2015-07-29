@@ -618,6 +618,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if (data_node->bufferdatatype == CCX_H264) // H.264 data from TS file
 	{
+		dec_ctx->in_bufferdatatype = CCX_H264;
 		got = process_avc(dec_ctx, data_node->buffer, data_node->len, dec_sub);
 	}
 	else
