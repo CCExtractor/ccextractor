@@ -121,22 +121,21 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	if (!current_next_indicator)
 		return 0;
 
+	memcpy (pinfo->saved_section, buf, len);
+
 	if (pinfo->analysed_PMT_once == CCX_TRUE && pinfo->version == version_number)
 	{
 		if (pinfo->version == version_number)
 		{
 			/* Same Version number and there was valid CRC last time */
-			if (pinfo->valid_crc == CCX_TRUE)
+			if (pinfo->valid_crc == CCX_TRUE && need_capInfo(ctx, program_number) == CCX_FALSE)
 				return 0;
+
 		}
 		else if ( (pinfo->version+1)%32 != version_number)
 			mprint("TS PMT:Glitch in version number incremnt");
 	}
 	pinfo->version = version_number;
-
-	memcpy (pinfo->saved_section, buf, len);
-	if (need_capInfo(ctx, program_number) == CCX_FALSE)
-		return 0;
 
 
 	section_number = buf[6];
