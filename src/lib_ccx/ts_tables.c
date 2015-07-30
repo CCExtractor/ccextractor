@@ -89,6 +89,7 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	unsigned char desc_len = 0;
 	unsigned char *sbuf = buf;
 	unsigned int olen = len;
+	uint32_t crc;
 
 	uint8_t table_id;
 	uint16_t section_length;
@@ -101,6 +102,7 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	uint16_t PCR_PID;
 	uint16_t pi_length;
 
+	crc = (*(int32_t*)(sbuf+olen-4));
 	table_id = buf[0];
 	if(table_id != 0x2)
 	{
@@ -128,8 +130,10 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	{
 		if (pinfo->version == version_number)
 		{
-			/* Same Version number and there was valid CRC last time */
-			if (pinfo->valid_crc == CCX_TRUE && need_capInfo(ctx, program_number) == CCX_FALSE)
+			/* Same Version number and there was valid or similar CRC last time */
+			if ( (pinfo->valid_crc == CCX_TRUE ||
+				pinfo->crc == crc) &&
+				need_capInfo(ctx, program_number) == CCX_FALSE)
 				return 0;
 
 		}
