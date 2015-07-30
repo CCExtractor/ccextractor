@@ -380,7 +380,6 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	if (cinfo->codec == CCX_CODEC_TELETEXT)
 	{
 		memcpy(ptr->buffer+ ptr->len, cinfo->capbuf, cinfo->capbuflen);
-		ptr->len = cinfo->capbuflen + ptr->len;
 		ptr->len += cinfo->capbuflen;
 		return CCX_OK;
 	}
