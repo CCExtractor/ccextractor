@@ -87,6 +87,8 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	int must_flush=0;
 	int ret = 0;
 	unsigned char desc_len = 0;
+	unsigned char *sbuf = buf;
+	unsigned int olen = len;
 
 	uint8_t table_id;
 	uint16_t section_length;
@@ -98,7 +100,6 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 
 	uint16_t PCR_PID;
 	uint16_t pi_length;
-
 
 	table_id = buf[0];
 	if(table_id != 0x2)
@@ -381,13 +382,13 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 
 	pinfo->analysed_PMT_once = CCX_TRUE;
 
-	ret = verify_crc32(buf, len);
+	ret = verify_crc32(sbuf, olen);
 	if (ret == CCX_FALSE)
 		pinfo->valid_crc = CCX_FALSE;
 	else
 		pinfo->valid_crc = CCX_TRUE;
 
-	pinfo->crc = (*(int32_t*)(buf+len-4));
+	pinfo->crc = (*(int32_t*)(sbuf+olen-4));
 
 	return must_flush;
 }
