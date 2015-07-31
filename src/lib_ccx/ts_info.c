@@ -169,10 +169,12 @@ int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream
 	{
 		if (tmp->pid == pid)
 		{
-			if(stream != CCX_STREAM_TYPE_UNKNOWNSTREAM || codec != CCX_CODEC_NONE)
+			if(tmp->stream == CCX_STREAM_TYPE_UNKNOWNSTREAM || tmp->codec == CCX_CODEC_NONE)
 			{
-				tmp->stream = stream;
-				tmp->codec = codec;
+				if(stream != CCX_STREAM_TYPE_UNKNOWNSTREAM)
+					tmp->stream = stream;
+				if(codec != CCX_CODEC_NONE)
+					tmp->codec = codec;
 
 				tmp->saw_pesstart = 0;
 				tmp->capbuflen = 0;
