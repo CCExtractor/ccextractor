@@ -244,7 +244,7 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 
 	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
-		if (!cinfo)
+		if (!cinfo || ctx->multiprogram == CCX_FALSE)
 			return dec_ctx;
 
 		if (dec_ctx->program_number == cinfo->program_number)
@@ -300,6 +300,9 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	}
 	list_for_each_entry(enc_ctx, &ctx->enc_ctx_head, list, struct encoder_ctx)
 	{
+		if ( ctx->multiprogram == CCX_FALSE)
+			return enc_ctx;
+
 		if (enc_ctx->program_number == pn)
 			return enc_ctx;
 	}
