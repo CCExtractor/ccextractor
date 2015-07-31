@@ -198,6 +198,7 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 	freep(&lctx->freport.data_from_608);
 	ccx_demuxer_delete(&lctx->demux_ctx);
 	dinit_decoder_setting(&lctx->dec_global_setting);
+	freep(&ccx_options.enc_cfg.output_filename);
 	freep(&lctx->basefilename);
 	freep(&lctx->pesheaderbuf);
 	for(i = 0;i < lctx->num_input_files;i++)
@@ -329,6 +330,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		if (!enc_ctx)
 			return NULL;
 		list_add_tail( &(enc_ctx->list), &(ctx->enc_ctx_head) );
+		freep(&extension);
 	}
 	return enc_ctx;
 }

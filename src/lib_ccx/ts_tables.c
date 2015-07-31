@@ -464,8 +464,8 @@ int parse_PAT (struct ccx_demuxer *ctx, struct ts_payload *payload)
 	unsigned int section_number = 0;
 	unsigned int last_section_number = 0;
 
-	if(need_capInfo(ctx, 0) == CCX_FALSE)
-		return CCX_OK;
+//	if(need_capInfo(ctx, 0) == CCX_FALSE)
+//		return CCX_OK;
 
 	if (payload->pesstart)
 		pointer_field = *(payload->start);
@@ -512,6 +512,7 @@ int parse_PAT (struct ccx_demuxer *ctx, struct ts_payload *payload)
 		mprint ("Notice: PAT changed, clearing all variables.\n");
 		dinit_cap(ctx);
 		clear_PMT_array(ctx);
+		//XXX clear_pinfo too
 		memset (ctx->PIDs_seen,0,sizeof (int) *65536); // Forget all we saw
 		if (!tlt_config.user_page) // If the user didn't select a page...
 			tlt_config.page=0; // ..forget whatever we detected.

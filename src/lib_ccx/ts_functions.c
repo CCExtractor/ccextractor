@@ -289,9 +289,13 @@ void delete_demuxer_data_node_by_pid(struct demuxer_data **data, int pid)
 				sptr->next_stream = ptr->next_stream;
 
 			delete_demuxer_data(ptr);
+			ptr = NULL;
 		}
-		sptr = ptr;
-		ptr = ptr->next_stream;
+		else
+		{
+			sptr = ptr;
+			ptr = ptr->next_stream;
+		}
 	}
 
 }

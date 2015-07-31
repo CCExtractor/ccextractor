@@ -1686,7 +1686,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	opt->enc_cfg.no_font_color = opt->nofontcolor;
 	opt->enc_cfg.no_type_setting = opt->notypesetting;
 	opt->enc_cfg.subs_delay = opt->subs_delay;
-	if(opt->output_filename)
+	if(opt->output_filename && opt->multiprogram == CCX_FALSE)
 		opt->enc_cfg.output_filename = strdup(opt->output_filename);
 	else
 		opt->enc_cfg.output_filename = NULL;

@@ -242,6 +242,9 @@ void dinit_cap (struct ccx_demuxer *ctx)
 		list_del(&iter->all_stream);
 		free(iter);
 	}
+	INIT_LIST_HEAD(&ctx->cinfo_tree.all_stream);
+	INIT_LIST_HEAD(&ctx->cinfo_tree.sib_stream);
+	INIT_LIST_HEAD(&ctx->cinfo_tree.pg_stream);
 }
 
 
