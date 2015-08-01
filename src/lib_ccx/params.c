@@ -217,7 +217,7 @@ void set_input_format (struct ccx_s_options *opt, const char *format)
 {
 	if (opt->input_source == CCX_DS_TCP && strcmp(format, "bin")!=0)
 	{
-		mprint("Intput format is changed to bin\n");
+		mprint("Input format is changed to bin\n");
 		format = "bin";
 	}
 
