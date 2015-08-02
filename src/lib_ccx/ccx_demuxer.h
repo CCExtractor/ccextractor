@@ -25,6 +25,8 @@ struct program_info
 	uint8_t analysed_PMT_once:1;
 	uint8_t version;
 	uint8_t saved_section[1021];
+	int32_t crc;
+	uint8_t valid_crc:1;
 };
 
 struct cap_info

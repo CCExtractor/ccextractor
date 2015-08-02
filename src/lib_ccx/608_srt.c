@@ -11,10 +11,13 @@ int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_sta
 	int used;
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
+	char timeline[128];
+
+	if(!string || !string[0])
+		return 0;
 
 	mstotime (ms_start,&h1,&m1,&s1,&ms1);
 	mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
-	char timeline[128];
 	context->srt_counter++;
 	sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
 	used = encode_line(context, context->buffer,(unsigned char *) timeline);

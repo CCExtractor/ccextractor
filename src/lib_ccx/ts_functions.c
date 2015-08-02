@@ -273,6 +273,33 @@ void look_for_caption_data (struct ccx_demuxer *ctx)
 #endif
 }
 
+void delete_demuxer_data_node_by_pid(struct demuxer_data **data, int pid)
+{
+	struct demuxer_data *ptr;
+	struct demuxer_data *sptr = NULL;
+
+	ptr = *data;
+	while (ptr)
+	{
+		if(ptr->stream_pid == pid)
+		{
+			if (sptr == NULL)
+				*data = ptr->next_stream;
+			else
+				sptr->next_stream = ptr->next_stream;
+
+			delete_demuxer_data(ptr);
+			ptr = NULL;
+		}
+		else
+		{
+			sptr = ptr;
+			ptr = ptr->next_stream;
+		}
+	}
+
+}
+
 struct demuxer_data *search_or_alloc_demuxer_data_node_by_pid(struct demuxer_data **data, int pid)
 {
 	struct demuxer_data *ptr;
@@ -360,11 +387,6 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	ptr->codec = cinfo->codec;
 	ptr->bufferdatatype = get_buffer_type(cinfo);
 
-	if(cinfo->ignore)
-	{
-		return CCX_OK;
-	}
-
 	if(!cinfo->capbuf || !cinfo->capbuflen)
 		return -1;
 
@@ -380,7 +402,6 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	if (cinfo->codec == CCX_CODEC_TELETEXT)
 	{
 		memcpy(ptr->buffer+ ptr->len, cinfo->capbuf, cinfo->capbuflen);
-		ptr->len = cinfo->capbuflen + ptr->len;
 		ptr->len += cinfo->capbuflen;
 		return CCX_OK;
 	}
@@ -467,6 +488,12 @@ void cinfo_cremation(struct ccx_demuxer *ctx, struct demuxer_data **data)
 int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 {
 	int newcapbuflen;
+
+	if(cinfo->ignore == CCX_TRUE)
+	{
+		return CCX_OK;
+	}
+
 	//Verify PES before copy to capbuf
 	if(cinfo->capbuflen == 0 )
 	{
@@ -639,6 +666,17 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 					   payload.pid);
 			else
 				look_for_caption_data (ctx);
+			continue;
+		}
+		else if (cinfo->ignore)
+		{
+			if (cinfo->capbuflen > 0)
+			{
+				freep(&cinfo->capbuf);
+				cinfo->capbufsize = 0;
+				cinfo->capbuflen = 0;
+				delete_demuxer_data_node_by_pid(data, cinfo->pid);
+			}
 			continue;
 		}
 

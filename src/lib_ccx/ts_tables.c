@@ -87,6 +87,9 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	int must_flush=0;
 	int ret = 0;
 	unsigned char desc_len = 0;
+	unsigned char *sbuf = buf;
+	unsigned int olen = len;
+	uint32_t crc;
 
 	uint8_t table_id;
 	uint16_t section_length;
@@ -99,10 +102,7 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	uint16_t PCR_PID;
 	uint16_t pi_length;
 
-	ret = verify_crc32(buf, len);
-	if (ret == CCX_FALSE)
-		return -1;
-
+	crc = (*(int32_t*)(sbuf+olen-4));
 	table_id = buf[0];
 	if(table_id != 0x2)
 	{
@@ -124,18 +124,23 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	if (!current_next_indicator)
 		return 0;
 
+	memcpy (pinfo->saved_section, buf, len);
+
 	if (pinfo->analysed_PMT_once == CCX_TRUE && pinfo->version == version_number)
 	{
 		if (pinfo->version == version_number)
-			return 0;
+		{
+			/* Same Version number and there was valid or similar CRC last time */
+			if ( (pinfo->valid_crc == CCX_TRUE ||
+				pinfo->crc == crc) &&
+				need_capInfo(ctx, program_number) == CCX_FALSE)
+				return 0;
+
+		}
 		else if ( (pinfo->version+1)%32 != version_number)
 			mprint("TS PMT:Glitch in version number incremnt");
 	}
 	pinfo->version = version_number;
-
-	memcpy (pinfo->saved_section, buf, len);
-	if (need_capInfo(ctx, program_number) == CCX_FALSE)
-		return 0;
 
 
 	section_number = buf[6];
@@ -230,9 +235,9 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 			{
 				int k = 0;
 				for (int j = 0; j < SUB_STREAMS_CNT; j++) {
-					if (ctx->freport.dvb_sub_pid[i] == 0)
+					if (ctx->freport.dvb_sub_pid[j] == 0)
 						k = j;
-					if (ctx->freport.dvb_sub_pid[i] == elementary_PID)
+					if (ctx->freport.dvb_sub_pid[j] == elementary_PID)
 					{
 						k = j;
 						break;
@@ -244,9 +249,9 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 			{
 				int k = 0;
 				for (int j = 0; j < SUB_STREAMS_CNT; j++) {
-					if (ctx->freport.tlt_sub_pid[i] == 0)
+					if (ctx->freport.tlt_sub_pid[j] == 0)
 						k = j;
-					if (ctx->freport.tlt_sub_pid[i] == elementary_PID)
+					if (ctx->freport.tlt_sub_pid[j] == elementary_PID)
 					{
 						k = j;
 						break;
@@ -378,7 +383,16 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 				ccx_stream_type, elementary_PID);
 		i += ES_info_length;
 	}
+
 	pinfo->analysed_PMT_once = CCX_TRUE;
+
+	ret = verify_crc32(sbuf, olen);
+	if (ret == CCX_FALSE)
+		pinfo->valid_crc = CCX_FALSE;
+	else
+		pinfo->valid_crc = CCX_TRUE;
+
+	pinfo->crc = (*(int32_t*)(sbuf+olen-4));
 
 	return must_flush;
 }
@@ -450,8 +464,8 @@ int parse_PAT (struct ccx_demuxer *ctx, struct ts_payload *payload)
 	unsigned int section_number = 0;
 	unsigned int last_section_number = 0;
 
-	if(need_capInfo(ctx, 0) == CCX_FALSE)
-		return CCX_OK;
+//	if(need_capInfo(ctx, 0) == CCX_FALSE)
+//		return CCX_OK;
 
 	if (payload->pesstart)
 		pointer_field = *(payload->start);

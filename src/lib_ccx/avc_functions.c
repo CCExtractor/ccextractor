@@ -800,8 +800,11 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
 			if (fixed_frame_rate_flag){
 				double clock_tick = (double) num_units_in_tick / time_scale;
 				dvprint("clock_tick= %f\n", clock_tick);
-				current_fps = (double)time_scale / (2 * num_units_in_tick); // Based on formula D-2, p. 359 of the ISO/IEC 14496-10:2012(E) spec.
-				mprint("Changed fps using NAL to: %f\n", current_fps);
+				if (current_fps != (double)time_scale / (2 * num_units_in_tick))
+				{
+					current_fps = (double)time_scale / (2 * num_units_in_tick); // Based on formula D-2, p. 359 of the ISO/IEC 14496-10:2012(E) spec.
+					mprint("Changed fps using NAL to: %f\n", current_fps);
+				}
 			}
 		}
 		tmp = u(&q1,1);

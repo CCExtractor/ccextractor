@@ -10,6 +10,7 @@
 #include "ccx_encoders_common.h"
 #include "activity.h"
 #include "utility.h"
+#include "ccx_demuxer.h"
 
 unsigned int rollover_bits = 0; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
 LLONG result; // Number of bytes read/skipped in last read operation
@@ -617,6 +618,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if (data_node->bufferdatatype == CCX_H264) // H.264 data from TS file
 	{
+		dec_ctx->in_bufferdatatype = CCX_H264;
 		got = process_avc(dec_ctx, data_node->buffer, data_node->len, dec_sub);
 	}
 	else
@@ -690,6 +692,8 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			if(!datalist)
 				break;
 		}
+		if (!datalist)
+			continue;
 
 		position_sanity_check(ctx->demux_ctx->infd);
 		if(!ctx->multiprogram)
