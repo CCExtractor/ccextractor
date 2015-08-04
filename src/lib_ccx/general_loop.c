@@ -204,7 +204,8 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				int want = (int) ((BUFSIZE-data->len)>peslen ? peslen : (BUFSIZE-data->len));
 
 				if (want != peslen) {
-					fatal(EXIT_BUFFER_FULL, "Oh Oh, PES longer than remaining buffer space\n");
+					mprint("General LOOP: want(%d) != peslen(%d) \n", want, peslen);
+					continue;
 				}
 				if (want == 0) // Found package with header but without payload
 				{
@@ -657,7 +658,8 @@ void general_loop(struct lib_ccx_ctx *ctx)
 	struct demuxer_data *data_node = NULL;
 	int ret;
 
-
+	if(stream_mode == CCX_SM_TRANSPORT && ctx->write_format == CCX_OF_NULL)
+		ctx->multiprogram = 1;
 
 	end_of_file = 0;
 	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);

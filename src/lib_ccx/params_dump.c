@@ -170,13 +170,46 @@ void params_dump(struct lib_ccx_ctx *ctx)
 
 }
 
+#define Y_N(cond) ((cond) ? "Yes" : "No")
+
+void print_cc_report(struct lib_ccx_ctx *ctx, struct cap_info* info)
+{
+	struct lib_cc_decode *dec_ctx = NULL;
+	dec_ctx = update_decoder_list_cinfo(ctx, info);
+	printf("EIA-608: %s\n", Y_N(dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0));
+
+	if (dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0)
+	{
+		printf("XDS: %s\n", Y_N(ctx->freport.data_from_608->xds));
+
+		printf("CC1: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[0]));
+		printf("CC2: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[1]));
+		printf("CC3: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[2]));
+		printf("CC4: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[3]));
+	}
+	printf("CEA-708: %s\n", Y_N(dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0));
+
+	if (dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0)
+	{
+		printf("Services: ");
+		for (int i = 0; i < CCX_DECODERS_708_MAX_SERVICES; i++)
+		{
+			if (ctx->freport.data_from_708->services[i] == 0)
+				continue;
+			printf("%d ", i);
+		}
+		printf("\n");
+
+		printf("Primary Language Present: %s\n", Y_N(ctx->freport.data_from_708->services[1]));
+
+		printf("Secondary Language Present: %s\n", Y_N(ctx->freport.data_from_708->services[2]));
+	}
+}
 void print_file_report(struct lib_ccx_ctx *ctx)
 {
 	struct lib_cc_decode *dec_ctx = NULL;
 	enum ccx_stream_mode_enum stream_mode;
 	struct ccx_demuxer *demux_ctx = ctx->demux_ctx;
-
-#define Y_N(cond) ((cond) ? "Yes" : "No")
 
 	printf("File: ");
 	switch (ccx_options.input_source)
@@ -269,6 +302,10 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 		default:
 			break;
 	}
+	if(list_empty(&demux_ctx->cinfo_tree.all_stream))
+	{
+		print_cc_report(ctx, NULL);
+	}
 	list_for_each_entry(program, &demux_ctx->cinfo_tree.pg_stream, pg_stream, struct cap_info)
 	{
 		struct cap_info* info = NULL;
@@ -301,35 +338,7 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 		if(info)
 		{
 			printf("Yes\n");
-			dec_ctx = update_decoder_list_cinfo(ctx, info);
-			printf("EIA-608: %s\n", Y_N(dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0));
-
-			if (dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0)
-			{
-				printf("XDS: %s\n", Y_N(ctx->freport.data_from_608->xds));
-
-				printf("CC1: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[0]));
-				printf("CC2: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[1]));
-				printf("CC3: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[2]));
-				printf("CC4: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[3]));
-			}
-			printf("CEA-708: %s\n", Y_N(dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0));
-
-			if (dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0)
-			{
-				printf("Services: ");
-				for (int i = 0; i < CCX_DECODERS_708_MAX_SERVICES; i++)
-				{
-					if (ctx->freport.data_from_708->services[i] == 0)
-						continue;
-					printf("%d ", i);
-				}
-				printf("\n");
-
-				printf("Primary Language Present: %s\n", Y_N(ctx->freport.data_from_708->services[1]));
-
-				printf("Secondary Language Present: %s\n", Y_N(ctx->freport.data_from_708->services[2]));
-			}
+			print_cc_report(ctx, info);
 		}
 		else
 			printf("No\n");
