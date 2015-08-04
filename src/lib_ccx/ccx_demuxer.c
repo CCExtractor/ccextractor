@@ -286,6 +286,7 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 
 	ctx->codec = cfg->codec;
 
+	ctx->flag_ts_forced_cappid = CCX_FALSE;
 	for(i = 0; i < cfg->nb_ts_cappid; i++)
 	{
 		if(ctx->codec == CCX_CODEC_ANY)
@@ -294,6 +295,7 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 			update_capinfo(ctx, cfg->ts_cappids[i], cfg->ts_datastreamtype, ctx->codec, 0, NULL);
 	}
 
+	ctx->flag_ts_forced_cappid = cfg->nb_ts_cappid ? CCX_TRUE : CCX_FALSE;
 	ctx->nocodec = cfg->nocodec;
 
 	ctx->reset = ccx_demuxer_reset;

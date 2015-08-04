@@ -146,6 +146,18 @@ int need_capInfo_for_pid(struct ccx_demuxer *ctx, int pid)
 	return CCX_FALSE;
 }
 
+static void* init_private_data(enum ccx_code_type codec)
+{
+	switch(codec)
+	{
+	case CCX_CODEC_TELETEXT:
+		return telxcc_init();
+	case CCX_CODEC_DVB:
+		return dvbsub_init_decoder(NULL);
+	default:
+		return NULL;
+	}
+}
 int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream, enum ccx_code_type codec, int pn, void *private_data)
 {
 	struct cap_info* ptr;
@@ -174,17 +186,25 @@ int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream
 				if(stream != CCX_STREAM_TYPE_UNKNOWNSTREAM)
 					tmp->stream = stream;
 				if(codec != CCX_CODEC_NONE)
+				{
 					tmp->codec = codec;
+					tmp->codec_private_data = init_private_data(codec);
+				}
 
 				tmp->saw_pesstart = 0;
 				tmp->capbuflen = 0;
 				tmp->capbufsize = 0;
 				tmp->ignore = 0;
-				tmp->codec_private_data = private_data;
+				if(private_data)
+					tmp->codec_private_data = private_data;
 			}
 			return CCX_OK;
 		}
 	}
+
+	if( ctx->flag_ts_forced_cappid == CCX_TRUE)
+		return CCX_EINVAL;
+
 	tmp = malloc(sizeof(struct cap_info));
 	if(!tmp)
 	{
@@ -201,20 +221,8 @@ int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream
 	tmp->capbufsize = 0;
 	tmp->capbuf = NULL;
 	tmp->ignore = CCX_FALSE;
-	if(!private_data)
-	{
-		switch(tmp->codec)
-		{
-		case CCX_CODEC_TELETEXT:
-			tmp->codec_private_data = telxcc_init();
-			break;
-		case CCX_CODEC_DVB:
-			tmp->codec_private_data = dvbsub_init_decoder(NULL);
-			break;
-		default:
-			tmp->codec_private_data = NULL;
-		}
-	}
+	if(!private_data && codec != CCX_CODEC_NONE)
+		tmp->codec_private_data = init_private_data(codec);
 	else
 		tmp->codec_private_data = private_data;
 

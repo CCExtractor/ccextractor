@@ -74,6 +74,7 @@ struct ccx_demuxer
 	int ts_autoprogram;
 	int ts_allprogram;
 	int flag_ts_forced_pn;
+	int flag_ts_forced_cappid;
 	int ts_datastreamtype;
 
 
