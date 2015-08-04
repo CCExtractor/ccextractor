@@ -329,16 +329,12 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 			for (desc_len = 0;(buf + i + 5 + ES_info_length) - es_info ;es_info += desc_len)
 			{
 				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
-				void *ptr;
 				desc_len = (*es_info++);
 				if(!IS_VALID_TELETEXT_DESC(descriptor_tag))
 					continue;
-				ptr = telxcc_init();
-				if (ptr == NULL)
-					break;
-				update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_TELETEXT, program_number, ptr);
-				//mprint ("VBI/teletext stream ID %u (0x%x) for SID %u (0x%x)\n",
-				//		elementary_PID, elementary_PID, program_number, program_number);
+				update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_TELETEXT, program_number, NULL);
+				mprint ("VBI/teletext stream ID %u (0x%x) for SID %u (0x%x)\n",
+						elementary_PID, elementary_PID, program_number, program_number);
 			}
 
 		}

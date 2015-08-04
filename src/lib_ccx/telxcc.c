@@ -1462,7 +1462,7 @@ void telxcc_close(void **ctx, struct cc_subtitle *sub)
 	if(!ttext)
 		return;
 
-	if (tlt_config.write_format != CCX_OF_RCWT)
+	if (tlt_config.write_format != CCX_OF_RCWT && sub)
 	{
 		// output any pending close caption
 		if (ttext->page_buffer.tainted == YES)

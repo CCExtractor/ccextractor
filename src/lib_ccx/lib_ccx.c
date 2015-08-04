@@ -324,16 +324,31 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		char *extension;
 
 		extension = get_file_extension(ccx_options.enc_cfg.write_format);
+		if(!extension)
+			return NULL;
+
 		len = strlen(ctx->basefilename) + 10 + strlen(extension);
 
 		ccx_options.enc_cfg.program_number = pn;
 		ccx_options.enc_cfg.output_filename = malloc(len);
+		if (!ccx_options.enc_cfg.output_filename)
+		{
+			freep(&extension);
+			return NULL;
+		}
+
 		sprintf(ccx_options.enc_cfg.output_filename, "%s_%d%s", ctx->basefilename, pn, extension);
 		enc_ctx = init_encoder(&ccx_options.enc_cfg);
 		if (!enc_ctx)
+		{
+			freep(&extension);
+			freep(&ccx_options.enc_cfg.output_filename);
 			return NULL;
+		}
+
 		list_add_tail( &(enc_ctx->list), &(ctx->enc_ctx_head) );
 		freep(&extension);
+		freep(&ccx_options.enc_cfg.output_filename);
 	}
 	return enc_ctx;
 }

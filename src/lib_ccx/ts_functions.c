@@ -670,6 +670,22 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		}
 		else if (cinfo->ignore)
 		{
+			if(cinfo->codec_private_data)
+			{
+				switch(cinfo->codec)
+				{
+				case CCX_CODEC_TELETEXT:
+					telxcc_close(&cinfo->codec_private_data, NULL);
+					break;
+				case CCX_CODEC_DVB:
+					dvbsub_close_decoder(cinfo->codec_private_data);
+					break;
+				default:
+					break;
+				}
+				cinfo->codec_private_data = NULL;
+			}
+			
 			if (cinfo->capbuflen > 0)
 			{
 				freep(&cinfo->capbuf);
