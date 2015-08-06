@@ -24,6 +24,7 @@
 #define UNKNOWN_COMMAND 52
 #define WRONG_PASSWORD  53
 #define CONN_LIMIT      54
+#define PING            55
 
 /* #include <time.h> */
 
@@ -66,6 +67,9 @@ void init_sockets (void);
 #if DEBUG_OUT
 void pr_command(char c);
 #endif
+
+void handle_write_error();
+int set_nonblocking(int fd);
 
 void connect_to_srv(const char *addr, const char *port, const char *cc_desc, const char *pwd)
 {
@@ -121,16 +125,24 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 	fprintf(stderr, "[C] Sending %u bytes\n", len);
 #endif
 
-	int rc = 1;
-
-	if ((rc = write_block(srv_sd, BIN_DATA, data, len)) <= 0)
+	if (write_block(srv_sd, BIN_DATA, data, len) <= 0)
 	{
 		printf("Can't send BIN data\n");
 		return -1;
 	}
 
-	/* nanosleep((struct timespec[]){{0, 10000000}}, NULL); */
+	int rc;
+	char c = 0;
+	do {
+		c = 0;
+		rc = read_byte(srv_sd, &c);
+#if DEBUG_OUT
+		if (c == PING)
+			fprintf(stderr, "[S] Recieved PING\n");
+#endif
+	} while (rc > 0 && c == PING);
 
+	/* nanosleep((struct timespec[]){{0, 10000000}}, NULL); */
 	/* Sleep(100); */
 	return 1;
 }
@@ -367,6 +379,9 @@ int tcp_connect(const char *host, const char *port)
 	freeaddrinfo(ai);
 
 	if (NULL == p)
+		return -1;
+
+	if (set_nonblocking(sockfd) < 0)
 		return -1;
 
 	return sockfd;
@@ -732,6 +747,10 @@ ssize_t readn(int fd, void *vptr, size_t n)
 			char c;
 			nread = recv(fd, &c, 1, 0);
 		}
+		else if (errno == EAGAIN || errno == EWOULDBLOCK)
+		{
+			break;
+		}
 		else
 		{
 			nread = recv(fd, (void*)ptr, nleft, 0);
@@ -786,11 +805,7 @@ ssize_t writen(int fd, const void *vptr, size_t n)
 			}
 			else
 			{
-#if _WIN32
-				wprintf(L"send() eror: %ld\n", WSAGetLastError());
-#else
-				mprint("send() error: %s\n", strerror(errno));
-#endif
+				handle_write_error();
 				return -1;
 			}
 		}
@@ -937,3 +952,68 @@ void init_sockets (void)
 		socket_inited = 1;
 	}
 }
+
+void handle_write_error()
+{
+#if _WIN32
+	long err = WSAGetLastError();
+#else
+	char *err = strerror(errno);
+#endif
+
+	if (srv_sd < 0)
+		return;
+
+	char c = 0;
+	int rc;
+	do {
+		c = 0;
+		rc = read_byte(srv_sd, &c);
+		if (rc < 0)
+		{
+#if _WIN32
+			wprintf(L"send() eror: %ld\n", err);
+#else
+			mprint("send() error: %s\n", err);
+#endif
+			return;
+		}
+	} while (rc > 0 && c == PING);
+
+	switch (c)
+	{
+		case PASSWORD:
+			mprint("Wrong password\n");
+			break;
+		case CONN_LIMIT:
+			mprint("Too many connections to the server, please wait\n");
+			break;
+		case ERROR:
+			mprint("Internal server error");
+			break;
+		default:
+#if _WIN32
+			wprintf(L"send() eror: %ld\n", err);
+#else
+			mprint("send() error: %s\n", err);
+#endif
+			break;
+	}
+
+	return;
+}
+
+int set_nonblocking(int fd) 
+{
+    int f;
+#ifdef O_NONBLOCK
+    if ((f = fcntl(fd, F_GETFL, 0)) < 0)
+        f = 0;
+
+    return fcntl(fd, F_SETFL, f | O_NONBLOCK); 
+#else
+    f = 1;
+    return ioctl(fd, FIONBIO, &f);
+#endif
+}
+
