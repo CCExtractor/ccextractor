@@ -10,7 +10,7 @@ uint64_t get_meta_chunk_start(uint64_t offset);
 uint64_t time_to_pes_time(uint64_t time);
 void add_chunk(struct wtv_chunked_buffer *cb, uint64_t value);
 int qsort_cmpint (const void * a, const void * b);
-void get_sized_buffer(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, uint32_t size);
+void get_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, uint32_t size);
 void skip_sized_buffer(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, uint32_t size);
 int read_header(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb);
 
@@ -120,7 +120,7 @@ void skip_sized_buffer(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, u
 // get_sized_buffer will alloc and set a buffer in the passed wtv_chunked_buffer struct
 // it will handle any meta data chunks that need to be skipped in the file
 // Will print error messages and return a null buffer on error.
-void get_sized_buffer(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, uint32_t size)
+void get_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, uint32_t size)
 {
 	if(cb->buffer!=NULL && cb->buffer_size>0)
 	{
@@ -138,29 +138,29 @@ void get_sized_buffer(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, ui
 
 	if(cb->skip_chunks[cb->chunk]!=-1 && start+size>cb->skip_chunks[cb->chunk])
 	{
-		buffered_read(ctx->demux_ctx, cb->buffer, (int)(cb->skip_chunks[cb->chunk]-start));
+		buffered_read(ctx, cb->buffer, (int)(cb->skip_chunks[cb->chunk]-start));
 		cb->filepos+=cb->skip_chunks[cb->chunk]-start;
-		buffered_seek(ctx->demux_ctx, WTV_META_CHUNK_SIZE);
+		buffered_seek(ctx, WTV_META_CHUNK_SIZE);
 		cb->filepos+=WTV_META_CHUNK_SIZE;
-		buffered_read(ctx->demux_ctx, cb->buffer+(cb->skip_chunks[cb->chunk]-start), (int)(size-(cb->skip_chunks[cb->chunk]-start)));
+		buffered_read(ctx, cb->buffer+(cb->skip_chunks[cb->chunk]-start), (int)(size-(cb->skip_chunks[cb->chunk]-start)));
 		cb->filepos+=size-(cb->skip_chunks[cb->chunk]-start);
 		cb->chunk++;
 	}
 	else
 	{
-		buffered_read(ctx->demux_ctx, cb->buffer, size);
+		buffered_read(ctx, cb->buffer, size);
 		cb->filepos+=size;
 		if(result!=size)
 		{
 			free(cb->buffer);
 			cb->buffer_size=0;
-			ctx->demux_ctx->past=cb->filepos;
+			ctx->past=cb->filepos;
 			cb->buffer=NULL;
 			mprint("\nPremature end of file!\n");
 			return;
 		}
 	}
-	ctx->demux_ctx->past=cb->filepos;
+	ctx->past=cb->filepos;
 	return;
 }
 
@@ -325,7 +325,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 	{
 		int bytesread = 0;
 		// Read the 32 bytes containing the GUID and length and stream_id info
-		get_sized_buffer(ctx, cb, 32);
+		get_sized_buffer(ctx->demux_ctx, cb, 32);
 
 		if(cb->buffer==NULL) {end_of_file=1; return 0; } //Make this a macro?
 
@@ -377,7 +377,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			// The WTV_STREAM2 GUID appares near the start of the data dir
 			// It maps stream_ids to the type of stream
 			dbg_print(CCX_DMT_PARSE, "WTV STREAM2\n");
-			get_sized_buffer(ctx, cb, 0xc+16);
+			get_sized_buffer(ctx->demux_ctx, cb, 0xc+16);
 			if(cb->buffer==NULL) {end_of_file=1; return 0; }
 			static unsigned char stream_type[16];
 			memcpy(&stream_type, cb->buffer+0xc, 16); //Read the stream type GUID
@@ -400,7 +400,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 		{
 			// The WTV_TIMING GUID contains a timestamp for the given stream_id
 			dbg_print(CCX_DMT_PARSE, "WTV TIMING\n");
-			get_sized_buffer(ctx, cb, 0x8+0x8);
+			get_sized_buffer(ctx->demux_ctx, cb, 0x8+0x8);
 			if(cb->buffer==NULL) {end_of_file=1; return 0; }
 			int64_t time;
 			memcpy(&time, cb->buffer+0x8, 8); // Read the timestamp
@@ -424,7 +424,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 		{
 			// This is the data for a stream we want to process
 			dbg_print(CCX_DMT_PARSE, "\nWTV DATA\n");
-			get_sized_buffer(ctx, cb, len);
+			get_sized_buffer(ctx->demux_ctx, cb, len);
 			if(cb->buffer==NULL) {end_of_file=1; return 0; }
 			memcpy(data->buffer+data->len, cb->buffer, len);
 			data->len+=result;
