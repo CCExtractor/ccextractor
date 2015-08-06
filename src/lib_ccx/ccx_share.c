@@ -246,6 +246,7 @@ ccx_share_status _ccx_share_sub_to_entries(struct cc_subtitle *sub, ccx_sub_entr
 				}
 				i++;
 			}
+			entries->messages[entry_index].eos = 0;
 			entries->messages[entry_index].start_time = data->start_time;
 			entries->messages[entry_index].end_time = data->end_time;
 			entries->messages[entry_index].counter = ++ccx_share_ctx.counter;
