@@ -122,45 +122,47 @@ void skip_sized_buffer(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, u
 // Will print error messages and return a null buffer on error.
 void get_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, uint32_t size)
 {
-	if(cb->buffer!=NULL && cb->buffer_size>0)
+	if(cb->buffer != NULL && cb->buffer_size > 0)
 	{
 		free(cb->buffer);
 	}
-	if(size>WTV_MAX_ALLOC)
+
+	if(size > WTV_MAX_ALLOC)
 	{
 		mprint("\nRequested buffer of %i > %i bytes (WTV_MAX_ALLOC)!\n", size, WTV_MAX_ALLOC);
-		cb->buffer=NULL;
+		cb->buffer = NULL;
 		return;
 	}
+
 	cb->buffer = (uint8_t*)malloc(size);
-	cb->buffer_size=size;
+	cb->buffer_size = size;
 	uint64_t start = cb->filepos;
 
-	if(cb->skip_chunks[cb->chunk]!=-1 && start+size>cb->skip_chunks[cb->chunk])
+	if(cb->skip_chunks[cb->chunk] != -1 && (start + size) > cb->skip_chunks[cb->chunk])
 	{
 		buffered_read(ctx, cb->buffer, (int)(cb->skip_chunks[cb->chunk]-start));
-		cb->filepos+=cb->skip_chunks[cb->chunk]-start;
+		cb->filepos += cb->skip_chunks[cb->chunk]-start;
 		buffered_seek(ctx, WTV_META_CHUNK_SIZE);
-		cb->filepos+=WTV_META_CHUNK_SIZE;
+		cb->filepos += WTV_META_CHUNK_SIZE;
 		buffered_read(ctx, cb->buffer+(cb->skip_chunks[cb->chunk]-start), (int)(size-(cb->skip_chunks[cb->chunk]-start)));
-		cb->filepos+=size-(cb->skip_chunks[cb->chunk]-start);
+		cb->filepos += size-(cb->skip_chunks[cb->chunk]-start);
 		cb->chunk++;
 	}
 	else
 	{
 		buffered_read(ctx, cb->buffer, size);
-		cb->filepos+=size;
-		if(result!=size)
+		cb->filepos += size;
+		if(result != size)
 		{
 			free(cb->buffer);
-			cb->buffer_size=0;
-			ctx->past=cb->filepos;
-			cb->buffer=NULL;
+			cb->buffer_size = 0;
+			ctx->past       = cb->filepos;
+			cb->buffer      = NULL;
 			mprint("\nPremature end of file!\n");
 			return;
 		}
 	}
-	ctx->past=cb->filepos;
+	ctx->past = cb->filepos;
 	return;
 }
 
