@@ -319,7 +319,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 		int bytesread = 0;
 		// Read the 32 bytes containing the GUID and length and stream_id info
 		get_sized_buffer(ctx->demux_ctx, cb, 32);
-		if(cb->buffer==NULL)
+		if(cb->buffer == NULL)
 			return CCX_EOF;
 
 		uint8_t guid[16];
@@ -339,7 +339,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 		uint32_t stream_id;
 		memcpy(&stream_id, cb->buffer+20, 4);
 		stream_id = stream_id & 0x7f;       // Read and calculate the stream_id
-		dbg_print(CCX_DMT_PARSE, "stream_id: %X\n", stream_id);
+		dbg_print(CCX_DMT_PARSE, "stream_id: 0x%X\n", stream_id);
 
 		for(x=0; x<num_streams; x++)
 			dbg_print(CCX_DMT_PARSE, "video stream_id: %X\n", video_streams[x]);
