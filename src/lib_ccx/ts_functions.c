@@ -3,6 +3,7 @@
 #include "activity.h"
 #include "ccx_demuxer.h"
 #include "list.h"
+#include "dvb_subtitle_decoder.h"
 
 unsigned char tspacket[188]; // Current packet
 
