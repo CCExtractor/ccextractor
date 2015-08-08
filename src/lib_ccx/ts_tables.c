@@ -131,9 +131,7 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 		if (pinfo->version == version_number)
 		{
 			/* Same Version number and there was valid or similar CRC last time */
-			if ( (pinfo->valid_crc == CCX_TRUE ||
-				pinfo->crc == crc) &&
-				need_capInfo(ctx, program_number) == CCX_FALSE)
+			if ( pinfo->valid_crc == CCX_TRUE || pinfo->crc == crc )
 				return 0;
 
 		}
@@ -460,9 +458,6 @@ int parse_PAT (struct ccx_demuxer *ctx, struct ts_payload *payload)
 	unsigned int section_number = 0;
 	unsigned int last_section_number = 0;
 
-//	if(need_capInfo(ctx, 0) == CCX_FALSE)
-//		return CCX_OK;
-
 	if (payload->pesstart)
 		pointer_field = *(payload->start);
 	payload->start += pointer_field + 1;
@@ -473,9 +468,6 @@ int parse_PAT (struct ccx_demuxer *ctx, struct ts_payload *payload)
 
 	section_number = payload_start[6];
 	last_section_number = payload_start[7];
-
-	/* if ((forced_cappid || telext_mode==CCX_TXT_IN_USE) && cap_stream_type!=CCX_STREAM_TYPE_UNKNOWNSTREAM) // Already know what we need, skip
-		return 0;  */
 
 	if (!payload->pesstart)
 		// Not the first entry. Ignore it, may be Pat larger then 184.

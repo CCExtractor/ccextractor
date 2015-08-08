@@ -255,23 +255,23 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 
 
 
-void look_for_caption_data (struct ccx_demuxer *ctx)
+void look_for_caption_data (struct ccx_demuxer *ctx, struct ts_payload *payload)
 {
-#if 0
+	unsigned int i = 0;
 	// See if we find the usual CC data marker (GA94) in this packet.
-	if (payload.length<4 || ctx->PIDs_seen[payload.pid]==3) // Second thing means we already inspected this PID
+	if (payload->length < 4 || ctx->PIDs_seen[payload->pid]==3) // Second thing means we already inspected this PID
 		return;
-	for (unsigned i=0;i<payload.length-3;i++)
+
+	for (unsigned int i = 0; i < (payload->length - 3); i++)
 	{
-		if (payload.start[i]=='G' && payload.start[i+1]=='A' &&
-				payload.start[i+2]=='9' && payload.start[i+3]=='4')
+		if (payload->start[i]=='G' && payload->start[i+1]=='A' &&
+				payload->start[i+2]=='9' && payload->start[i+3]=='4')
 		{
-			mprint ("PID %u seems to contain captions.\n", payload.pid);
-			ctx->PIDs_seen[payload.pid]=3;
+			mprint ("PID %u seems to contain captions.\n", payload->pid);
+			ctx->PIDs_seen[payload->pid]=3;
 			return;
 		}
 	}
-#endif
 }
 
 void delete_demuxer_data_node_by_pid(struct demuxer_data **data, int pid)
@@ -666,7 +666,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 				dbg_print(CCX_DMT_PARSE, "Packet (pid %u) skipped - no stream with captions identified yet.\n",
 					   payload.pid);
 			else
-				look_for_caption_data (ctx);
+				look_for_caption_data (ctx, &payload);
 			continue;
 		}
 		else if (cinfo->ignore)
