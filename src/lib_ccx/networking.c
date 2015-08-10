@@ -31,6 +31,7 @@
 #define DFT_PORT "2048" /* Default port for server and client */
 #define WRONG_PASSWORD_DELAY 2 /* Seconds */
 #define BUFFER_SIZE 50
+#define NO_RESPONCE_INTERVAL 20
 
 int srv_sd = -1; /* Server socket descriptor */
 
@@ -131,16 +132,37 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 		return -1;
 	}
 
-	int rc;
+	time_t now = time(NULL);
+
+	static time_t last_ping = 0;
+	if (last_ping == 0)
+		last_ping = now;
+
+	static time_t last_cc = 0;
+	if (last_cc == 0)
+		last_cc = now;
+
+	if (now - last_cc < NO_RESPONCE_INTERVAL && now - last_ping > NO_RESPONCE_INTERVAL)
+	{
+		fprintf(stderr, "No responce from the server in %d sec\n", NO_RESPONCE_INTERVAL);
+		close(srv_sd);
+		exit(0);
+	}
+
 	char c = 0;
+	int rc;
 	do {
 		c = 0;
 		rc = read_byte(srv_sd, &c);
+		if (c == PING) {
 #if DEBUG_OUT
-		if (c == PING)
 			fprintf(stderr, "[S] Recieved PING\n");
 #endif
+			last_ping = now;
+		}
 	} while (rc > 0 && c == PING);
+
+	last_cc = now;
 
 	/* nanosleep((struct timespec[]){{0, 10000000}}, NULL); */
 	/* Sleep(100); */
@@ -747,10 +769,6 @@ ssize_t readn(int fd, void *vptr, size_t n)
 			char c;
 			nread = recv(fd, &c, 1, 0);
 		}
-		else if (errno == EAGAIN || errno == EWOULDBLOCK)
-		{
-			break;
-		}
 		else
 		{
 			nread = recv(fd, (void*)ptr, nleft, 0);
@@ -761,6 +779,10 @@ ssize_t readn(int fd, void *vptr, size_t n)
 			if (errno == EINTR)
 			{
 				nread = 0;
+			}
+			else if (errno == EAGAIN || errno == EWOULDBLOCK)
+			{
+				break;
 			}
 			else
 			{
@@ -983,7 +1005,7 @@ void handle_write_error()
 	switch (c)
 	{
 		case PASSWORD:
-			mprint("Wrong password\n");
+			mprint("Wrong password (use -tcppassword)\n");
 			break;
 		case CONN_LIMIT:
 			mprint("Too many connections to the server, please wait\n");
