@@ -165,9 +165,9 @@ void detect_stream_type (struct ccx_demuxer *ctx)
 			{
 				// The TiVo header is longer, but the PS loop will find the beginning
 				dbg_print(CCX_DMT_PARSE, "detect_stream_type: detected as Tivo PS\n");
-				ctx->startbytes_pos=187;
-				ctx->stream_mode=CCX_SM_PROGRAM;
-				strangeheader=1; // Avoid message about unrecognized header
+				ctx->startbytes_pos = 187;
+				ctx->stream_mode = CCX_SM_PROGRAM;
+				ctx->strangeheader = 1; // Avoid message about unrecognized header
 			}
 		}
 		else
@@ -234,14 +234,12 @@ int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, u
 	}
 	else
 	{
-#if 0
-		if (ccx_bufferdatatype == CCX_DVB_SUBTITLE
+		if (data->bufferdatatype == CCX_DVB_SUBTITLE
 				&& peslen == 1 && nextheader[6] == 0xFF)
 		{
 			*headerlength = sbuflen;
 			return 0;
 		}
-#endif
 		if (sbuflen < 9) // We need at least 9 bytes to continue
 		{
 			return -1;

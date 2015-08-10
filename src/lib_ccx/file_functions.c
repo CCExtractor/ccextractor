@@ -391,7 +391,6 @@ LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigne
 				copied+=copy;
 			}
 		}
-		return copied;
 	}
 	else // Read without buffering
 	{
@@ -440,6 +439,6 @@ LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigne
 				}
 			}
 		}
-		return copied;
 	}
+	return copied;
 }

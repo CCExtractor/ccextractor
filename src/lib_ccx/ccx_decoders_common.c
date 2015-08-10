@@ -8,6 +8,7 @@ made to reuse, not duplicate, as many functions as possible */
 #include "ccx_common_timing.h"
 #include "ccx_common_common.h"
 #include "lib_ccx.h"
+#include "ccx_decoders_608.h"
 
 
 uint64_t utc_refvalue = UINT64_MAX;  /* _UI64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
@@ -208,6 +209,17 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 
 	return 1;
 }
+
+void dinit_cc_decode(struct lib_cc_decode **ctx)
+{
+	struct lib_cc_decode *lctx = *ctx;
+	dinit_avc(&lctx->avc_ctx);
+	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_1);
+	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_2);
+	dinit_timing_ctx(&lctx->timing);
+	freep(ctx);
+}
+
 struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *setting)
 {
 	struct lib_cc_decode *ctx = NULL;
@@ -256,6 +268,8 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->max_gop_length = 0;
 	ctx->has_ccdata_buffered = 0;
 	ctx->timing = init_timing_ctx(&ccx_common_timing_settings);
+	ctx->in_bufferdatatype = CCX_UNKNOWN;
+	ctx->frames_since_last_gop = 0;
 	memcpy(&ctx->extraction_start, &setting->extraction_start,sizeof(struct ccx_boundary_time));
 	memcpy(&ctx->extraction_end, &setting->extraction_end,sizeof(struct ccx_boundary_time));
 
@@ -279,6 +293,28 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 	// Initialize HDTV caption buffer
 	init_hdcc(ctx);
+
+	ctx->current_hor_size = 0;
+	ctx->current_vert_size = 0;
+	ctx->current_aspect_ratio = 0;
+	ctx->current_frame_rate = 4; // Assume standard fps, 29.97
+
+	ctx->no_bitstream_error = 0;
+	ctx->saw_seqgoppic = 0;
+	ctx->in_pic_data = 0;
+
+	ctx->current_progressive_sequence = 2;
+	ctx->current_pulldownfields = 32768;
+
+	ctx->temporal_reference = 0;
+	ctx->picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
+	ctx->picture_structure = 0;
+	ctx->top_field_first = 0;
+	ctx->repeat_first_field = 0;
+	ctx->progressive_frame = 0;
+	ctx->pulldownfields = 0;
+	memset(ctx->cc_stats, 0, 4 * sizeof(int)); 
+
 	return ctx;
 }
 
@@ -311,12 +347,4 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 		}
 	}
 
-}
-void dinit_cc_decode(struct lib_cc_decode **ctx)
-{
-	struct lib_cc_decode *lctx = *ctx;
-	dinit_avc(&lctx->avc_ctx);
-	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_1);
-	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_2);
-	freep(ctx);
 }

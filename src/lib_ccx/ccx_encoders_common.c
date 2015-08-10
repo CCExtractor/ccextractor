@@ -963,6 +963,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 
 			if(data->format == SFORMAT_XDS)
 			{
+				data->end_time = data->end_time + context->subs_delay;
 				xds_write_transcript_line_prefix (out, data->start_time, data->end_time,data->cur_xds_packet_class);
 				if(data->xds_len > 0)
 				{
@@ -979,6 +980,8 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 
 			if(!data->start_time)
 				break;
+
+			data->end_time = data->end_time + context->subs_delay;
 			switch (context->write_format)
 			{
 			case CCX_OF_SRT:

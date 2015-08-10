@@ -910,9 +910,11 @@ int start_upd_srv(const char *addr_str, unsigned port)
 	struct sockaddr_in servaddr;
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons(port);
+#ifndef _WIN32
 	if (IN_MULTICAST(addr))
 		servaddr.sin_addr.s_addr = htonl(addr);
 	else
+#endif
 		servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	if (bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) != 0)

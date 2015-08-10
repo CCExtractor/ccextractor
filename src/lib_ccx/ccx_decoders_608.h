@@ -13,8 +13,8 @@ extern LLONG ts_start_of_xds;
  */
 struct ccx_decoder_608_report
 {
-	unsigned xds : 1;
-	unsigned cc_channels[4];
+	uint8_t xds : 1;
+	uint8_t cc_channels[4];
 };
 
 typedef struct ccx_decoder_608_settings
@@ -24,6 +24,7 @@ typedef struct ccx_decoder_608_settings
 	int no_rollup; // If 1, write one line at a time
 	unsigned char default_color; // Default color to use.
 	int screens_to_process; // How many screenfuls we want? Use -1 for unlimited
+	struct ccx_decoder_608_report *report;
 } ccx_decoder_608_settings;
 
 typedef struct ccx_decoder_608_context
@@ -51,7 +52,7 @@ typedef struct ccx_decoder_608_context
 
 	int *halt; // Can be used to halt the feeding of caption data. Set to 1 if screens_to_progress != -1 && screenfuls_counter >= screens_to_process
 	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
-	struct ccx_decoder_608_report report;
+	struct ccx_decoder_608_report *report;
 	LLONG subs_delay; // ms to delay (or advance) subs
 	enum ccx_output_format output_format; // What kind of output format should be used?
 } ccx_decoder_608_context;

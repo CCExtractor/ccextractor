@@ -155,6 +155,7 @@ ccx_decoder_608_context* ccx_decoder_608_init_library(struct ccx_decoder_608_set
 
 	data->settings = settings;
 	data->current_color = data->settings->default_color;
+	data->report = settings->report;
 
 	clear_eia608_cc_buffer(data, &data->buffer1);
 	clear_eia608_cc_buffer(data, &data->buffer2);
@@ -307,7 +308,7 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 	data->channel = context->channel;
 	data->my_field = context->my_field;
 
-	if (!data->empty)
+	if (!data->empty && context->output_format != CCX_OF_NULL)
 	{
 		sub->data = (struct eia608_screen *) realloc(sub->data,( sub->nb_data + 1 ) * sizeof(*data));
 		if (!sub->data)
@@ -1076,7 +1077,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 	int i;
 	if (context)
 	{
-		report = &context->report;
+		report = context->report;
 		context->bytes_processed_608 += length;
 	}
 	if (!data)

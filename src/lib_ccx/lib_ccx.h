@@ -110,11 +110,6 @@ struct lib_ccx_ctx
 
 	unsigned teletext_warning_shown; // Did we detect a possible PAL (with teletext subs) and told the user already?
 
-	// Output structures
-	struct ccx_s_write wbout1;
-	struct ccx_s_write wbout2;
-
-	
 	//struct EIT_buffer eit_buffer;
 	struct EIT_buffer epg_buffers[0xfff+1];
 	struct EIT_program eit_programs[TS_PMT_MAP_SIZE+1];
@@ -240,8 +235,8 @@ void init_ts(struct ccx_demuxer *ctx);
 int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload);
 long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data);
 LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **data);
-int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char*buf, int size, int pos);
-int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char *buf, int len, int pos);
+int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char*buf, int size,  struct program_info *pinfo);
+int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char *buf, int len,  struct program_info *pinfo);
 int parse_PAT (struct ccx_demuxer *ctx, struct ts_payload *payload);
 void parse_EPG_packet (struct lib_ccx_ctx *ctx);
 void EPG_free(struct lib_ccx_ctx *ctx);
@@ -286,14 +281,6 @@ extern const char *desc[256];
 extern long FILEBUFFERSIZE; // Uppercase because it used to be a define
 extern unsigned long net_activity_gui;
 
-/* General (ES stream) video information */
-extern unsigned current_hor_size;
-extern unsigned current_vert_size;
-extern unsigned current_aspect_ratio;
-extern unsigned current_frame_rate;
-
-extern enum ccx_bufferdata_type bufferdatatype; // Can be CCX_BUFFERDATA_TYPE_RAW or CCX_BUFFERDATA_TYPE_PES
-
 extern int firstcall;
 
 #define MAXBFRAMES 50
@@ -315,8 +302,6 @@ extern unsigned teletext_mode;
 #define MAX_TLT_PAGES 1000
 
 extern struct ccx_s_teletext_config tlt_config;
-extern uint32_t tlt_packet_counter;
-extern uint32_t tlt_frames_produced;
 
 int is_decoder_processed_enough(struct lib_ccx_ctx *ctx);
 struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct cap_info* cinfo);

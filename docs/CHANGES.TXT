@@ -1,3 +1,7 @@
+0.78 (--)
+-----------------
+- Support to extract Closed Caption from MultiProgram at once
+
 0.77 (2015-06-20)
 -----------------
 - Fixed bug in capitalization code ('I' was not being capitalized).

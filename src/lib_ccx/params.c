@@ -191,10 +191,10 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
 	}
 	else if (strcmp (format,"report")==0)
 	{
-		opt->write_format=CCX_OF_NULL;
-		opt->messages_target=0;
-		opt->print_file_reports=1;
-		opt->demux_cfg.ts_autoprogram=1;
+		opt->write_format            = CCX_OF_NULL;
+		opt->messages_target         = 0;
+		opt->print_file_reports      = 1;
+		opt->demux_cfg.ts_allprogram = CCX_TRUE;
 	}
 	else if (strcmp (format,"raw")==0)
 		opt->write_format=CCX_OF_RAW;
@@ -1688,7 +1688,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	opt->enc_cfg.no_font_color = opt->nofontcolor;
 	opt->enc_cfg.no_type_setting = opt->notypesetting;
 	opt->enc_cfg.subs_delay = opt->subs_delay;
-	if(opt->output_filename)
+	if(opt->output_filename && opt->multiprogram == CCX_FALSE)
 		opt->enc_cfg.output_filename = strdup(opt->output_filename);
 	else
 		opt->enc_cfg.output_filename = NULL;

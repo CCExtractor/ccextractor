@@ -1,5 +1,7 @@
 #include "ccx_common_common.h"
 
+int cc608_parity_table[256];
+
 /* printf() for fd instead of FILE*, since dprintf is not portable */
 void fdprintf(int fd, const char *fmt, ...)
 {
@@ -90,4 +92,35 @@ int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time, LLONG 
 	sub->next = NULL;
 
 	return 0;
+}
+
+int cc608_parity(unsigned int byte)
+{
+	int ones = 0;
+
+	for (int i = 0; i < 7; i++)
+	{
+		if (byte & (1 << i))
+			ones++;
+	}
+
+	return ones & 1;
+}
+
+void cc608_build_parity_table(int *parity_table)
+{
+	unsigned int byte;
+	int parity_v;
+	for (byte = 0; byte <= 127; byte++)
+	{
+		parity_v = cc608_parity(byte);
+		/* CC uses odd parity (i.e., # of 1's in byte is odd.) */
+		parity_table[byte] = parity_v;
+		parity_table[byte | 0x80] = !parity_v;
+	}
+}
+
+void build_parity_table (void)
+{
+	cc608_build_parity_table(cc608_parity_table);
 }

@@ -1,5 +1,6 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
+#include "teletext.h"
 
 void params_dump(struct lib_ccx_ctx *ctx)
 {
@@ -169,12 +170,46 @@ void params_dump(struct lib_ccx_ctx *ctx)
 
 }
 
+#define Y_N(cond) ((cond) ? "Yes" : "No")
+
+void print_cc_report(struct lib_ccx_ctx *ctx, struct cap_info* info)
+{
+	struct lib_cc_decode *dec_ctx = NULL;
+	dec_ctx = update_decoder_list_cinfo(ctx, info);
+	printf("EIA-608: %s\n", Y_N(dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0));
+
+	if (dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0)
+	{
+		printf("XDS: %s\n", Y_N(ctx->freport.data_from_608->xds));
+
+		printf("CC1: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[0]));
+		printf("CC2: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[1]));
+		printf("CC3: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[2]));
+		printf("CC4: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[3]));
+	}
+	printf("CEA-708: %s\n", Y_N(dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0));
+
+	if (dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0)
+	{
+		printf("Services: ");
+		for (int i = 0; i < CCX_DECODERS_708_MAX_SERVICES; i++)
+		{
+			if (ctx->freport.data_from_708->services[i] == 0)
+				continue;
+			printf("%d ", i);
+		}
+		printf("\n");
+
+		printf("Primary Language Present: %s\n", Y_N(ctx->freport.data_from_708->services[1]));
+
+		printf("Secondary Language Present: %s\n", Y_N(ctx->freport.data_from_708->services[2]));
+	}
+}
 void print_file_report(struct lib_ccx_ctx *ctx)
 {
-//	struct lib_cc_decode *dec_ctx = NULL;
+	struct lib_cc_decode *dec_ctx = NULL;
 	enum ccx_stream_mode_enum stream_mode;
-//	dec_ctx = ctx->dec_ctx;
-#define Y_N(cond) ((cond) ? "Yes" : "No")
+	struct ccx_demuxer *demux_ctx = ctx->demux_ctx;
 
 	printf("File: ");
 	switch (ccx_options.input_source)
@@ -197,49 +232,135 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 			break;
 	}
 
-	ctx->demux_ctx->print_report(ctx->demux_ctx);
-	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
-#if 0
-	if (ctx->dec_ctx->in_bufferdatatype == CCX_PES &&
-			(stream_mode == CCX_SM_TRANSPORT ||
-			 stream_mode == CCX_SM_PROGRAM ||
-			 stream_mode == CCX_SM_ASF ||
-			 stream_mode == CCX_SM_WTV))
+	struct cap_info* program;
+	printf("Stream Mode: ");
+	switch (demux_ctx->stream_mode)
 	{
-		printf("Width: %u\n", ctx->freport.width);
-		printf("Height: %u\n", ctx->freport.height);
-		printf("Aspect Ratio: %s\n", aspect_ratio_types[ctx->freport.aspect_ratio]);
-		printf("Frame Rate: %s\n", framerates_types[ctx->freport.frame_rate]);
+		case CCX_SM_TRANSPORT:
+			printf("Transport Stream\n");
+
+			printf("Program Count: %d\n", demux_ctx->freport.program_cnt);
+
+			printf("Program Numbers: ");
+
+			for (int i = 0; i < demux_ctx->nb_program; i++)
+				printf("%u ", demux_ctx->pinfo[i].program_number);
+
+			printf("\n");
+
+			for (int i = 0; i < 65536; i++)
+			{
+				if (demux_ctx->PIDs_programs[i] == 0)
+					continue;
+
+				printf("PID: %u, Program: %u, ", i, demux_ctx->PIDs_programs[i]->program_number);
+				int j;
+				for (j = 0; j < SUB_STREAMS_CNT; j++)
+				{
+					if (demux_ctx->freport.dvb_sub_pid[j] == i)
+					{
+						printf("DVB Subtitles\n");
+						break;
+					}
+					if (demux_ctx->freport.tlt_sub_pid[j] == i)
+					{
+						printf("Teletext Subtitles\n");
+						break;
+					}
+				}
+				if (j == SUB_STREAMS_CNT)
+					printf("%s\n", desc[demux_ctx->PIDs_programs[i]->printable_stream_type]);
+			}
+
+			break;
+		case CCX_SM_PROGRAM:
+			printf("Program Stream\n");
+			break;
+		case CCX_SM_ASF:
+			printf("ASF\n");
+			break;
+		case CCX_SM_WTV:
+			printf("WTV\n");
+			break;
+		case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
+			printf("Not Found\n");
+			break;
+		case CCX_SM_MP4:
+			printf("MP4\n");
+			break;
+		case CCX_SM_MCPOODLESRAW:
+			printf("McPoodle's raw\n");
+			break;
+		case CCX_SM_RCWT:
+			printf("BIN\n");
+			break;
+#ifdef WTV_DEBUG
+		case CCX_SM_HEX_DUMP:
+			printf("Hex\n");
+			break;
+#endif
+		default:
+			break;
 	}
-
-	printf("EIA-608: %s\n", Y_N(dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0));
-
-	if (dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0)
+	if(list_empty(&demux_ctx->cinfo_tree.all_stream))
 	{
-		printf("XDS: %s\n", Y_N(ctx->freport.data_from_608->xds));
-
-		printf("CC1: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[0]));
-		printf("CC2: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[1]));
-		printf("CC3: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[2]));
-		printf("CC4: %s\n", Y_N(ctx->freport.data_from_608->cc_channels[3]));
+		print_cc_report(ctx, NULL);
 	}
-
-	printf("CEA-708: %s\n", Y_N(dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0));
-
-	if (dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0)
+	list_for_each_entry(program, &demux_ctx->cinfo_tree.pg_stream, pg_stream, struct cap_info)
 	{
-		printf("Services: ");
-		for (int i = 0; i < CCX_DECODERS_708_MAX_SERVICES; i++)
+		struct cap_info* info = NULL;
+		printf("//////// Program #%u: ////////\n", program->program_number);
+
+		printf("DVB Subtitles: ");
+		info = get_sib_stream_by_type(program, CCX_CODEC_DVB);
+		if(info)
+			printf("Yes\n");
+		else
+			printf("No\n");
+
+		printf("Teletext: ");
+		info = get_sib_stream_by_type(program, CCX_CODEC_TELETEXT);
+		if(info)
 		{
-			if (ctx->freport.data_from_708->services[i] == 0)
-				continue;
-			printf("%d ", i);
+			printf("Yes\n");
+			dec_ctx = update_decoder_list_cinfo(ctx, info);
+			printf("Pages With Subtitles: ");
+			tlt_print_seen_pages(dec_ctx);
+
+				printf("\n");
+		}
+		else
+			printf("No\n");
+
+
+		printf("ATSC Closed Caption: ");
+		info = get_sib_stream_by_type(program, CCX_CODEC_ATSC_CC);
+		if(info)
+		{
+			printf("Yes\n");
+			print_cc_report(ctx, info);
+		}
+		else
+			printf("No\n");
+
+
+		info = get_best_sib_stream(program);
+		if(!info)
+			continue;
+
+		dec_ctx = update_decoder_list_cinfo(ctx, info);
+		if (dec_ctx->in_bufferdatatype == CCX_PES &&
+			(info->stream == CCX_SM_TRANSPORT ||
+			 info->stream == CCX_SM_PROGRAM ||
+			 info->stream == CCX_SM_ASF ||
+			 info->stream == CCX_SM_WTV))
+		{
+			printf("Width: %u\n", dec_ctx->current_hor_size);
+			printf("Height: %u\n", dec_ctx->current_vert_size);
+			printf("Aspect Ratio: %s\n", aspect_ratio_types[dec_ctx->current_aspect_ratio]);
+			printf("Frame Rate: %s\n", framerates_types[dec_ctx->current_frame_rate]);
 		}
 		printf("\n");
-
-		printf("Primary Language Present: %s\n", Y_N(ctx->freport.data_from_708->services[1]));
-
-		printf("Secondary Language Present: %s\n", Y_N(ctx->freport.data_from_708->services[2]));
 	}
 
 	printf("MPEG-4 Timed Text: %s\n", Y_N(ctx->freport.mp4_cc_track_cnt));
@@ -247,7 +368,7 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 		printf("MPEG-4 Timed Text tracks count: %d\n", ctx->freport.mp4_cc_track_cnt);
 	}
 
+	freep(&ctx->freport.data_from_608);
 	memset(&ctx->freport, 0, sizeof (struct file_report));
-#endif
 #undef Y_N
 }

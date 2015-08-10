@@ -45,6 +45,10 @@ void ccx_common_timing_init(LLONG *file_position,int no_sync)
 	ccx_common_timing_settings.no_sync = no_sync;
 }
 
+void dinit_timing_ctx(struct ccx_common_timing_ctx **arg)
+{
+	freep(arg);
+}
 struct ccx_common_timing_ctx *init_timing_ctx(struct ccx_common_timing_settings_t *cfg)
 {
 	struct ccx_common_timing_ctx *ctx = malloc(sizeof(struct ccx_common_timing_ctx));
@@ -76,13 +80,13 @@ void set_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts)
 	dbg_print(CCX_DMT_VIDES, "  FTS: %s \n",print_mstime(get_fts()));
 }
 
-void set_fts(struct ccx_common_timing_ctx *ctx)
+int set_fts(struct ccx_common_timing_ctx *ctx)
 {
 	int pts_jump = 0;
 
 	// ES don't have PTS unless GOP timing is used
 	if (!ctx->pts_set && ccx_common_timing_settings.is_elementary_stream)
-		return;
+		return CCX_OK;
 
 	// First check for timeline jump (only when min_pts was set (implies sync_pts)).
 	int dif = 0;
@@ -109,7 +113,7 @@ void set_fts(struct ccx_common_timing_ctx *ctx)
 			{
 				fts_now = fts_max;
 				ccx_common_logging.log_ftn ("Change did not occur on first frame - probably a broken GOP\n");
-				return;
+				return CCX_OK;
 			}
 		}
 	}
@@ -208,14 +212,15 @@ void set_fts(struct ccx_common_timing_ctx *ctx)
 		else
 		{
 			// No PTS info at all!!
-			ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG,
-					"No PTS info. Please write bug report.");
+			ccx_common_logging.log_ftn("Set PTS called without any global timestamp set\n");
+			return CCX_EINVAL;
 		}
 	}
 	if ( fts_now > fts_max )
 	{
 		fts_max = fts_now;
 	}
+	return CCX_OK;
 }
 
 

@@ -130,8 +130,30 @@ struct lib_cc_decode
 	int has_ccdata_buffered;
 
 	struct avc_ctx *avc_ctx;
-
 	void *private_data;
+
+	/* General video information */
+	unsigned int current_hor_size;
+	unsigned int current_vert_size;
+	unsigned int current_aspect_ratio;
+	unsigned int current_frame_rate; // Assume standard fps, 29.97
+
+	/* Reguired in es_function.c */
+	int no_bitstream_error;
+	int saw_seqgoppic;
+	int in_pic_data;
+
+	unsigned int current_progressive_sequence;
+	unsigned int current_pulldownfields ;
+
+	int temporal_reference;
+	enum ccx_frame_type picture_coding_type;
+	unsigned picture_structure;
+	unsigned repeat_first_field;
+	unsigned progressive_frame;
+	unsigned pulldownfields;
+	/* Reguired in es_function.c and es_userdata.c */
+	unsigned top_field_first; // Needs to be global
 
 
 	int (*writedata)(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);

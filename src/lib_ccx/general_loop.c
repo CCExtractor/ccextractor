@@ -10,22 +10,14 @@
 #include "ccx_encoders_common.h"
 #include "activity.h"
 #include "utility.h"
+#include "ccx_demuxer.h"
 
-/* General video information */
- unsigned current_hor_size = 0;
-unsigned current_vert_size = 0;
-unsigned current_aspect_ratio = 0;
-unsigned current_frame_rate = 4; // Assume standard fps, 29.97
-unsigned rollover_bits = 0; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
+unsigned int rollover_bits = 0; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
 LLONG result; // Number of bytes read/skipped in last read operation
 int end_of_file=0; // End of file?
 
 
 const static unsigned char DO_NOTHING[] = {0x80, 0x80};
-
-// Remember if the last header was valid. Used to suppress too much output
-// and the expected unrecognized first header for TiVo files.
-int strangeheader=0;
 
 
 // Program stream specific data grabber
@@ -79,12 +71,12 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 			while ( !(nextheader[0]==0x00 && nextheader[1]==0x00
 						&& nextheader[2]==0x01 && nextheader[3]!=0x00) )
 			{
-				if( !strangeheader )
+				if( !ctx->demux_ctx->strangeheader )
 				{
 					mprint ("\nNot a recognized header. Searching for next header.\n");
 					dump (CCX_DMT_GENERIC_NOTICES, nextheader,6,0,0);
 					// Only print the message once per loop / unrecognized header
-					strangeheader = 1;
+					ctx->demux_ctx->strangeheader = 1;
 				}
 
 				unsigned char *newheader;
@@ -124,7 +116,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				break;
 			}
 			// Found 00-00-01 in nextheader, assume a regular header
-			strangeheader=0;
+			ctx->demux_ctx->strangeheader = 0;
 
 			// PACK header
 			if ( nextheader[3]==0xBA)
@@ -212,7 +204,8 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				int want = (int) ((BUFSIZE-data->len)>peslen ? peslen : (BUFSIZE-data->len));
 
 				if (want != peslen) {
-					fatal(EXIT_BUFFER_FULL, "Oh Oh, PES longer than remaining buffer space\n");
+					mprint("General LOOP: want(%d) != peslen(%d) \n", want, peslen);
+					continue;
 				}
 				if (want == 0) // Found package with header but without payload
 				{
@@ -235,7 +228,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 			} else {
 				// If we are here this is an unknown header type
 				mprint("Unknown header %02X\n", nextheader[3]);
-				strangeheader=1;
+				ctx->demux_ctx->strangeheader = 1;
 			}
 		}
 	}
@@ -626,7 +619,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if (data_node->bufferdatatype == CCX_H264) // H.264 data from TS file
 	{
-		dec_ctx->in_bufferdatatype = data_node->bufferdatatype;
+		dec_ctx->in_bufferdatatype = CCX_H264;
 		got = process_avc(dec_ctx, data_node->buffer, data_node->len, dec_sub);
 	}
 	else
@@ -665,7 +658,8 @@ void general_loop(struct lib_ccx_ctx *ctx)
 	struct demuxer_data *data_node = NULL;
 	int ret;
 
-
+	if(stream_mode == CCX_SM_TRANSPORT && ctx->write_format == CCX_OF_NULL)
+		ctx->multiprogram = 1;
 
 	end_of_file = 0;
 	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
@@ -694,6 +688,14 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			default:
 				fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible stream_mode");
 		}
+		if (ret == CCX_EOF)
+		{
+			end_of_file = 1;
+			if(!datalist)
+				break;
+		}
+		if (!datalist)
+			continue;
 
 		position_sanity_check(ctx->demux_ctx->infd);
 		if(!ctx->multiprogram)
@@ -704,24 +706,15 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			if(pid < 0)
 			{
 				data_node = get_best_data(datalist);
-				if(!data_node)
-					break;
 			}
 			else
 			{
 				ignore_other_stream(ctx->demux_ctx, pid);
 				data_node = get_data_stream(datalist, pid);
-				if(!data_node)
-					continue;
 			}
-			if (ret == CCX_EOF)
-			{
-				end_of_file = 1;
-				if(data_node->len)
-					memset (data_node->buffer + data_node->len, 0, (size_t) (BUFSIZE-data_node->len)); /* Clear buffer at the end */
-				else
-					break;
-			}
+			if(!data_node)
+				continue;
+
 			cinfo = get_cinfo(ctx->demux_ctx, pid);
 			enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
@@ -739,29 +732,18 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			struct encoder_ctx *enc_ctx = NULL;
 			list_for_each_entry(program_iter, &ptr->pg_stream, pg_stream, struct cap_info)
 			{
-				int pid = get_best_sib_stream(program_iter);
-				if(pid < 0)
+				cinfo = get_best_sib_stream(program_iter);
+				if(!cinfo)
 				{
 					data_node = get_best_data(datalist);
-					if(!data_node)
-						break;
 				}
 				else
 				{
-					ignore_other_sib_stream(program_iter, pid);
-					data_node = get_data_stream(datalist, pid);
-					if(!data_node)
+					ignore_other_sib_stream(program_iter, cinfo->pid);
+					data_node = get_data_stream(datalist, cinfo->pid);
+				}
+				if(!data_node)
 					continue;
-				}
-				if (ret == CCX_EOF)
-				{
-					end_of_file = 1;
-					if(data_node->len)
-						memset (data_node->buffer + data_node->len, 0, (size_t) (BUFSIZE-data_node->len)); /* Clear buffer at the end */
-					else
-						break;
-				}
-				cinfo = get_cinfo(ctx->demux_ctx, pid);
 				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 				if(data_node->pts != CCX_NOPTS)

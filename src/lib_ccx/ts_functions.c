@@ -273,6 +273,33 @@ void look_for_caption_data (struct ccx_demuxer *ctx)
 #endif
 }
 
+void delete_demuxer_data_node_by_pid(struct demuxer_data **data, int pid)
+{
+	struct demuxer_data *ptr;
+	struct demuxer_data *sptr = NULL;
+
+	ptr = *data;
+	while (ptr)
+	{
+		if(ptr->stream_pid == pid)
+		{
+			if (sptr == NULL)
+				*data = ptr->next_stream;
+			else
+				sptr->next_stream = ptr->next_stream;
+
+			delete_demuxer_data(ptr);
+			ptr = NULL;
+		}
+		else
+		{
+			sptr = ptr;
+			ptr = ptr->next_stream;
+		}
+	}
+
+}
+
 struct demuxer_data *search_or_alloc_demuxer_data_node_by_pid(struct demuxer_data **data, int pid)
 {
 	struct demuxer_data *ptr;
@@ -360,11 +387,6 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	ptr->codec = cinfo->codec;
 	ptr->bufferdatatype = get_buffer_type(cinfo);
 
-	if(cinfo->ignore)
-	{
-		return CCX_OK;
-	}
-
 	if(!cinfo->capbuf || !cinfo->capbuflen)
 		return -1;
 
@@ -380,7 +402,6 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	if (cinfo->codec == CCX_CODEC_TELETEXT)
 	{
 		memcpy(ptr->buffer+ ptr->len, cinfo->capbuf, cinfo->capbuflen);
-		ptr->len = cinfo->capbuflen + ptr->len;
 		ptr->len += cinfo->capbuflen;
 		return CCX_OK;
 	}
@@ -467,6 +488,12 @@ void cinfo_cremation(struct ccx_demuxer *ctx, struct demuxer_data **data)
 int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 {
 	int newcapbuflen;
+
+	if(cinfo->ignore == CCX_TRUE)
+	{
+		return CCX_OK;
+	}
+
 	//Verify PES before copy to capbuf
 	if(cinfo->capbuflen == 0 )
 	{
@@ -504,8 +531,10 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	long pcount=0; // count all packets until PES is complete
 	int packet_analysis_mode = 0; // If we can't find any packet with CC based from PMT, look for captions in all packets
 	int ret = CCX_EAGAIN;
+	struct program_info *pinfo = NULL;
 	struct cap_info *cinfo;
 	struct ts_payload payload;
+	int j;
 
 	do
 	{
@@ -545,36 +574,31 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		if( ccx_options.xmltv >= 1 && payload.pid >= 0x1000) // This may be ATSC EPG packet
 			parse_EPG_packet(ctx->parent);
 
-		int is_pmt=0, j;
 		for (j = 0; j < ctx->nb_program; j++)
 		{
 			if (ctx->pinfo[j].pid == payload.pid)
 			{
 				if (!ctx->PIDs_seen[payload.pid])
 					dbg_print(CCX_DMT_PAT, "This PID (%u) is a PMT for program %u.\n",payload.pid, ctx->pinfo[j].program_number);
-				is_pmt=1;
+				pinfo = ctx->pinfo + j;
 				break;
 			}
 		}
-
-		if (is_pmt)
+		if (j != ctx->nb_program)
 		{
 			ctx->PIDs_seen[payload.pid]=2;
 			if(payload.pesstart)
 			{
 				int len = *payload.start++;
 				payload.start += len;
-				if(write_section(ctx, &payload,payload.start,(tspacket + 188 ) - payload.start,j))
+				if(write_section(ctx, &payload,payload.start,(tspacket + 188 ) - payload.start, pinfo))
 					gotpes=1; // Signals that something changed and that we must flush the buffer
 			}
 			else
 			{
-				if(write_section(ctx, &payload,payload.start,(tspacket + 188 ) - payload.start,j))
+				if(write_section(ctx, &payload,payload.start,(tspacket + 188 ) - payload.start, pinfo))
 					gotpes=1; // Signals that something changed and that we must flush the buffer
 			}
-//			if (payload.pid==pmtpid && ctx->nb_cap == 0 && ccx_options.investigate_packets) // It was our PMT yet we don't have a PID to get data from
-//				packet_analysis_mode=1;
-
 			continue;
 		}
 
@@ -644,6 +668,33 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 				look_for_caption_data (ctx);
 			continue;
 		}
+		else if (cinfo->ignore)
+		{
+			if(cinfo->codec_private_data)
+			{
+				switch(cinfo->codec)
+				{
+				case CCX_CODEC_TELETEXT:
+					telxcc_close(&cinfo->codec_private_data, NULL);
+					break;
+				case CCX_CODEC_DVB:
+					dvbsub_close_decoder(cinfo->codec_private_data);
+					break;
+				default:
+					break;
+				}
+				cinfo->codec_private_data = NULL;
+			}
+			
+			if (cinfo->capbuflen > 0)
+			{
+				freep(&cinfo->capbuf);
+				cinfo->capbufsize = 0;
+				cinfo->capbuflen = 0;
+				delete_demuxer_data_node_by_pid(data, cinfo->pid);
+			}
+			continue;
+		}
 
 
 		// Video PES start
@@ -687,11 +738,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		}
 
 		pespcount++;
-		//else
-		//	if(debug_verbose)
-		//		printf("Packet (pid %u) skipped - unused.\n",
-		//			   payload.pid);
-		// Nothing suitable found, start over
 	}
 	while( !gotpes ); // gotpes==1 never arrives here because of the breaks
 
@@ -706,58 +752,11 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 // TS specific data grabber
 LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
-//	const char *tstr; // Temporary string to describe the stream type
-	int ret;
+	int ret = CCX_OK;
 
-#define search_again goto search
-#define done goto end
-search:
-	ret = ts_readstream(ctx, data);
-	if(ret == CCX_EAGAIN)
-		search_again;
-	else if (ret == CCX_EOF)
-		done;
-/*
-	if (ctx->ts_cap_stream_type[0] == CCX_STREAM_TYPE_UNKNOWNSTREAM && ccx_options.ts_forced_streamtype != CCX_STREAM_TYPE_UNKNOWNSTREAM)
-	{
-		ctx->ts_cap_stream_type[0] = ccx_options.ts_forced_streamtype;
-	}
-*/
-
-#if 0
-	unsigned stream_id = ctx->capbuf[3];
-
-
-	dbg_print(CCX_DMT_VERBOSE, "TS payload start video PES id: %d  len: %ld\n",
-			stream_id, ctx->capbuflen);
-
-#endif
-#if 0
-	if (ccx_bufferdatatype == CCX_DVB_SUBTITLE && !vpesdatalen)
-	{
-		dbg_print(CCX_DMT_VERBOSE, "TS payload is a DVB Subtitle\n");
-		payload_read = ctx->capbuflen;
-		inbuf += payload_read;
-		done;
-	}
-
-
-
-	// If the package length is unknown vpesdatalen is zero.
-	// If we know he package length, use it to quit
-	dbg_print(CCX_DMT_VERBOSE, "Read PES-%s (databuffer %ld/PES data %d) ",
-			tstr, databuflen, vpesdatalen);
-	// We got the whole PES in buffer
-	if( vpesdatalen && (databuflen >= vpesdatalen) )
-		dbg_print(CCX_DMT_VERBOSE, " - complete");
-	dbg_print(CCX_DMT_VERBOSE, "\n");
-
-
-
-#endif
-end:
-#undef search_again
-#undef done
+	do {
+		ret = ts_readstream(ctx, data);
+	} while(ret == CCX_EAGAIN);
 
 	return ret;
 }
