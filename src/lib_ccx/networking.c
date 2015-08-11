@@ -92,11 +92,12 @@ void connect_to_srv(const char *addr, const char *port, const char *cc_desc, con
 	if (pwd != NULL && write_block(srv_sd, PASSWORD, pwd, strlen(pwd)) < 0)
 		fatal(EXIT_FAILURE, "Unable to connect\n");
 
-	if (cc_desc != NULL &&
-			write_block(srv_sd, CC_DESC, cc_desc, strlen(cc_desc)) < 0)
-	{
+	size_t len = 0;
+	if (cc_desc != NULL)
+		len = strlen(cc_desc);
+
+	if (write_block(srv_sd, CC_DESC, cc_desc, len) < 0)
 		fatal(EXIT_FAILURE, "Unable to connect\n");
-	}
 
 	mprint("Connected to %s:%s\n", addr, port);
 }
@@ -164,7 +165,7 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 
 	last_cc = now;
 
-	/* nanosleep((struct timespec[]){{0, 10000000}}, NULL); */
+	/* nanosleep((struct timespec[]){{0, 4000000}}, NULL); */
 	/* Sleep(100); */
 	return 1;
 }
