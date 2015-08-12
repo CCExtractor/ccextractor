@@ -431,10 +431,13 @@ const uint16_t G2_ACCENTS[15][52] = {
 };
 
 char cap_telx(const char *a)
-{	static int flag=1;
-
+{	
+	static int flag=1;
 	if(*a == '?' || *a=='.' || *a == '!' || *a == ':')
- 		{flag = 1; return *a; }
+ 	{
+ 		flag = 1; 
+ 		return *a;
+ 	}
 
  	if(flag && (*a != '?' || *a != '.' || *a != '!' || *a != ':'))
  	{	
@@ -457,19 +460,19 @@ void page_buffer_add_string (struct TeletextCtx *ctx, const char *s)
 			fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process teletext page.\n");
 	}
 	if(ctx->sentence_cap && (strlen(s) <= 2) && ((*s >= 'A' && *s <= 'Z') || (*s >= 'a' && *s <= 'z')) || (*s == '.'))
-	 	 	{char t = cap_telx(s);
-	 	 	s = &t;
-	 	 	memcpy (ctx->page_buffer_cur+ctx->page_buffer_cur_used, s,1);
-	 	 	
-	 	 	ctx->page_buffer_cur_used+=1;
-	 	 	ctx->page_buffer_cur[ctx->page_buffer_cur_used]=0; 
-	 	 	}
+	{
+		char t = cap_telx(s);
+ 	 	s = &t;
+ 	 	memcpy (ctx->page_buffer_cur+ctx->page_buffer_cur_used, s,1);
+ 	 	ctx->page_buffer_cur_used+=1;
+ 	 	ctx->page_buffer_cur[ctx->page_buffer_cur_used]=0; 
+	}
 
  	else
- 	{memcpy (ctx->page_buffer_cur+ctx->page_buffer_cur_used, s,strlen(s));
- 	
- 	ctx->page_buffer_cur_used+=strlen(s);
- 	ctx->page_buffer_cur[ctx->page_buffer_cur_used]=0;
+ 	{
+	 	memcpy (ctx->page_buffer_cur+ctx->page_buffer_cur_used, s,strlen(s));
+	 	ctx->page_buffer_cur_used+=strlen(s);
+	 	ctx->page_buffer_cur[ctx->page_buffer_cur_used]=0;
  	}
 }
 
@@ -845,28 +848,34 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 				if (v >= 0x20)
 				{
 					//if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s", u);
-					if(u[0] == ' '){ 				//just to detect presence of " I "
-						if(i_flag == 0){
+					if(u[0] == ' ')	//just to detect presence of " I "
+					{ 				
+						if(i_flag == 0)
+						{
 							i_flag = 1;
 							continue;
 						}
+						
 						else if (i_flag == 2)
 							i_flag++;
 					}
 
-					if(i_flag == 1 && u[0] == 'I'){
+					if(i_flag == 1 && u[0] == 'I')
+					{
 						i_flag = 2; 
 						continue;
 					}
 					
-					if(i_flag==3 && u[0]== ' '){		//" I " - detected. Add " I ".
-						char p[4] = {' ','I',' ','\0'} ;
+					if(i_flag==3 && u[0]== ' ')	//" I " - detected. Add " I ".
+					{		
+						char p[4] = {' ','I',' ','\0'};
 						page_buffer_add_string(ctx,p);
 						i_flag=0;
 						continue;
 					}
 
-					if(i_flag == 2 && u[0]!=' '){		//" I" detected earlier but next char i.e. u,
+					if(i_flag == 2 && u[0]!=' ')//" I" detected earlier but next char i.e. u,
+					{		
 						char temp_1[2] = {'I','\0'}; 		// contains a char, therefore "I" is a part of word.
 						char temp_2[2] = {' ','\0'};
 						page_buffer_add_string(ctx,temp_2);		//recover string that was skipped order to detect "I"
@@ -876,14 +885,15 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 						continue;
 					}	
 				
-					if(i_flag==1){
-						char l[2]= {' ','\0'};
-						page_buffer_add_string(ctx,l);
+					if(i_flag==1)
+					{
+						char temp[2]= {' ','\0'};
+						page_buffer_add_string(ctx,temp);
 						i_flag=0;
-				}
+					}
 
 					
-					page_buffer_add_string (ctx,u);				//u contains non-"I" character here.add that.
+					page_buffer_add_string (ctx,u);		//u contains non-"I" character here.add that.
 					i_flag=0;
 					
 					if (tlt_config.gui_mode_reports) // For now we just handle the easy stuff
