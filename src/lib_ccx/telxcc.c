@@ -89,6 +89,7 @@ struct TeletextCtx
 	int nofontcolor;
 	char millis_separator;
 	uint32_t global_timestamp;
+	int sentence_cap; //FIX CASE = Fix Case ??
 
 	// Current and previous page buffers. This is the output written to file when
 	// the time comes.
@@ -428,6 +429,23 @@ const uint16_t G2_ACCENTS[15][52] = {
 		0x0000, 0x0000, 0x0000, 0x017e
 	}
 };
+
+char cap_telx(const char *a)
+{	static int flag=1;
+
+	if(*a == '?' || *a=='.' || *a == '!' || *a == ':')
+ 		{flag = 1; return *a; }
+
+ 	if(flag && (*a != '?' || *a != '.' || *a != '!' || *a != ':'))
+ 	{	
+ 		flag = 0;
+ 		return cctoupper(*a);
+ 	}
+ 	else
+		return cctolower(*a);
+		
+}
+
 void page_buffer_add_string (struct TeletextCtx *ctx, const char *s)
 {
 	if(ctx->page_buffer_cur_size < (ctx->page_buffer_cur_used + strlen (s)+1))
@@ -438,9 +456,21 @@ void page_buffer_add_string (struct TeletextCtx *ctx, const char *s)
 		if (!ctx->page_buffer_cur)
 			fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process teletext page.\n");
 	}
-	memcpy (ctx->page_buffer_cur+ctx->page_buffer_cur_used, s, strlen (s));
-	ctx->page_buffer_cur_used+=strlen (s);
-	ctx->page_buffer_cur[ctx->page_buffer_cur_used]=0;
+	if(ctx->sentence_cap && (strlen(s) <= 2) && ((*s >= 'A' && *s <= 'Z') || (*s >= 'a' && *s <= 'z')) || (*s == '.'))
+	 	 	{char t = cap_telx(s);
+	 	 	s = &t;
+	 	 	memcpy (ctx->page_buffer_cur+ctx->page_buffer_cur_used, s,1);
+	 	 	
+	 	 	ctx->page_buffer_cur_used+=1;
+	 	 	ctx->page_buffer_cur[ctx->page_buffer_cur_used]=0; 
+	 	 	}
+
+ 	else
+ 	{memcpy (ctx->page_buffer_cur+ctx->page_buffer_cur_used, s,strlen(s));
+ 	
+ 	ctx->page_buffer_cur_used+=strlen(s);
+ 	ctx->page_buffer_cur[ctx->page_buffer_cur_used]=0;
+ 	}
 }
 
 void ucs2_buffer_add_char (struct TeletextCtx *ctx, uint64_t c)
@@ -659,6 +689,8 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 	timecode_show[12] = 0;
 	timestamp_to_srttime(page->hide_timestamp, timecode_hide);
 	timecode_hide[12] = 0;
+	ctx->sentence_cap = sub->sentence_cap; //pass -sc info to TeletextCtx struct 
+	int i_flag = 0; //for detecting " I ",fix case purpose
 
 	// process data
 	for (uint8_t row = 1; row < 25; row++)
@@ -813,7 +845,47 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 				if (v >= 0x20)
 				{
 					//if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s", u);
-					page_buffer_add_string (ctx, u);
+					if(u[0] == ' '){ 				//just to detect presence of " I "
+						if(i_flag == 0){
+							i_flag = 1;
+							continue;
+						}
+						else if (i_flag == 2)
+							i_flag++;
+					}
+
+					if(i_flag == 1 && u[0] == 'I'){
+						i_flag = 2; 
+						continue;
+					}
+					
+					if(i_flag==3 && u[0]== ' '){		//" I " - detected. Add " I ".
+						char p[4] = {' ','I',' ','\0'} ;
+						page_buffer_add_string(ctx,p);
+						i_flag=0;
+						continue;
+					}
+
+					if(i_flag == 2 && u[0]!=' '){		//" I" detected earlier but next char i.e. u,
+						char temp_1[2] = {'I','\0'}; 		// contains a char, therefore "I" is a part of word.
+						char temp_2[2] = {' ','\0'};
+						page_buffer_add_string(ctx,temp_2);		//recover string that was skipped order to detect "I"
+						page_buffer_add_string(ctx,temp_1);
+						page_buffer_add_string(ctx,u);		//after adding skipped string, add current char now
+						i_flag=0;
+						continue;
+					}	
+				
+					if(i_flag==1){
+						char l[2]= {' ','\0'};
+						page_buffer_add_string(ctx,l);
+						i_flag=0;
+				}
+
+					
+					page_buffer_add_string (ctx,u);				//u contains non-"I" character here.add that.
+					i_flag=0;
+					
 					if (tlt_config.gui_mode_reports) // For now we just handle the easy stuff
 						fprintf (stderr,"%s",u);
 				}
