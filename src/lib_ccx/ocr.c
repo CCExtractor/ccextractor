@@ -7,7 +7,8 @@
 #include "allheaders.h"
 #include <dirent.h>
 #include "spupng_encoder.h"
-
+#include "ccx_encoders_helpers.h"
+#undef OCR_DEBUG
 struct ocrCtx
 {
 	TessBaseAPI* api;
@@ -63,11 +64,12 @@ static int search_language_pack(const char *dirname,const char *lang)
 	return -1;
 }
 
-static void delete_ocr (struct ocrCtx* ctx)
+void delete_ocr (void** arg)
 {
+	struct ocrCtx* ctx = *arg;
         TessBaseAPIEnd(ctx->api);
         TessBaseAPIDelete(ctx->api);
-	freep(&ctx);
+	freep(arg);
 }
 void* init_ocr(int lang_index)
 {
@@ -93,24 +95,58 @@ void* init_ocr(int lang_index)
 		/* select english */
 		lang_index = 1;
 	}
-	ret = TessBaseAPIInit3(ctx->api,"", language[lang_index]);
+
+	ret = TessBaseAPIInit3(ctx->api, NULL, language[lang_index]);
 	if(ret < 0)
 	{
 		goto fail;
 	}
 	return ctx;
 fail:
-	delete_ocr(ctx);
+	delete_ocr((void**)&ctx);
 	return NULL;
 
 }
+
+int ignore_alpha_at_edge(png_byte *alpha, unsigned char* indata, int w, int h, PIX *in, PIX **out)
+{
+	int i, j, index, start_y, end_y;
+	int find_end_x = CCX_FALSE;
+	BOX* cropWindow;
+	for (j = 1; j < w-1; j++)
+	{
+		for (i = 0; i < h; i++)
+		{
+			index = indata[i * w + (j)];
+			if(alpha[index] != 0)
+			{
+				if(find_end_x == CCX_FALSE)
+				{
+					start_y = j;
+					find_end_x = CCX_TRUE;
+				}
+				else
+				{
+					end_y = j;
+				}
+			}
+		}
+	}
+	cropWindow = boxCreate(start_y, 0, (w - (start_y + ( w - end_y) )), h - 1);
+	*out = pixClipRectangle(in, cropWindow, NULL);
+	boxDestroy(&cropWindow);
+
+	return 0;
+}
 char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* indata,int w, int h)
 {
-	PIX	*pix;
+	PIX	*pix = NULL;
+	PIX	*cpix = NULL;
 	char*text_out= NULL;
 	int i,j,index;
 	unsigned int wpl;
 	unsigned int *data,*ppixel;
+	BOOL tess_ret = FALSE;
 	struct ocrCtx* ctx = arg;
 	pix = pixCreate(w, h, 32);
 	if(pix == NULL)
@@ -133,13 +169,24 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 			ppixel++;
 		}
 	}
-
-	text_out = TessBaseAPIProcessPage(ctx->api, pix, 0, NULL, NULL, 0);
-	if(!text_out)
+	ignore_alpha_at_edge(alpha, indata, w, h, pix, &cpix);
+#ifdef OCR_DEBUG
+	{
+	char str[128] = "";
+	static int i = 0;
+	sprintf(str,"temp/file_c_%d.png",i);
+	pixWrite(str, cpix, IFF_PNG);
+	i++;
+	}
+#endif
+	TessBaseAPISetImage2(ctx->api, cpix);
+	tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
+	if( tess_ret != 0)
 		printf("\nsomething messy\n");
 
-        //TessDeleteText(text_out);
-        pixDestroy(&pix);
+	text_out = TessBaseAPIGetUTF8Text(ctx->api);
+	pixDestroy(&pix);
+	pixDestroy(&cpix);
 
 	return text_out;
 }
@@ -207,7 +254,7 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 	/* sorted in increasing order of intensity */
 	shell_sort((void*)iot, nb_color, sizeof(*iot), check_trans_tn_intensity, (void*)&ti);
 
-#if OCR_DEBUG
+#ifdef OCR_DEBUG
 	ccx_common_logging.log_ftn("Intensity ordered table\n");
 	for (int i = 0; i < nb_color; i++)
 	{
@@ -240,7 +287,7 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 		histogram[iot[max_ind]] = 0;
 	}
 
-#if OCR_DEBUG
+#ifdef OCR_DEBUG
 	ccx_common_logging.log_ftn("max redundant  intensities table\n");
 	for (int i = 0; i < max_color; i++)
 	{
@@ -276,7 +323,7 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 		}
 
 	}
-#if OCR_DEBUG
+#ifdef OCR_DEBUG
 	ccx_common_logging.log_ftn("Colors present in quantized Image\n");
 	for (int i = 0; i < nb_color; i++)
 	{
@@ -296,29 +343,87 @@ int ocr_rect(void* arg, struct cc_bitmap *rect, char **str)
 	png_color *palette = NULL;
 	png_byte *alpha = NULL;
 
-	palette = (png_color*) malloc(rect[0].nb_colors * sizeof(png_color));
+	palette = (png_color*) malloc(rect->nb_colors * sizeof(png_color));
 	if(!palette)
 	{
 		ret = -1;
 		goto end;
 	}
-        alpha = (png_byte*) malloc(rect[0].nb_colors * sizeof(png_byte));
+        alpha = (png_byte*) malloc(rect->nb_colors * sizeof(png_byte));
         if(!alpha)
         {
                 ret = -1;
                 goto end;
         }
 
-	/* TODO do rectangle wise, one color table should not be used for all rectangles */
         mapclut_paletee(palette, alpha, (uint32_t *)rect->data[1],rect->nb_colors);
 
         quantize_map(alpha, palette, rect->data[0], rect->w * rect->h, 3, rect->nb_colors);
         *str = ocr_bitmap(arg, palette, alpha, rect->data[0], rect->w, rect->h);
+
 end:
 	freep(&palette);
 	freep(&alpha);
 	return ret;
 
+}
+
+/**
+ * Call back function used while sorting rectangle by y position
+ * if both rectangle have same y position then x position is considered
+ */
+int compare_rect_by_ypos(const void*p1, const void *p2, void*arg)
+{
+	const struct cc_bitmap* r1 = p1;
+	const struct cc_bitmap* r2 = p2;
+	if(r1->y > r2->y)
+	{
+		return 1;
+	}
+	else if (r1->y == r2->y)
+	{
+		if(r1->x > r2->x)
+			return 1;
+	}
+	else
+	{
+		return -1;
+	}
+}
+
+/**
+ * Check multiple rectangles and combine them to give one paragraph
+ * for all text detected from rectangles
+ */
+char *paraof_ocrtext(struct cc_subtitle *sub)
+{
+	int i;
+	int len = 0;
+	char *str;
+	struct cc_bitmap* rect;
+
+	shell_sort(sub->data, sub->nb_data, sizeof(struct cc_bitmap), compare_rect_by_ypos, NULL);
+	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
+	{
+		if(rect->ocr_text)
+			len += strlen(rect->ocr_text);
+	}
+	if(len <= 0)
+		return NULL;
+	else
+	{
+		str = malloc(len+1);
+		if(!str)
+			return NULL;
+		*str = '\0';
+	}
+
+	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
+	{
+		strcat(str, rect->ocr_text);
+		freep(&rect->ocr_text);
+	}
+	return str;
 }
 #else
 char* ocr_bitmap(png_color *palette,png_byte *alpha, unsigned char* indata,unsigned char d,int w, int h)

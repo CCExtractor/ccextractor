@@ -2,6 +2,7 @@
 #include "ccx_common_option.h"
 #include "activity.h"
 #include "utility.h"
+#include "dvb_subtitle_decoder.h"
 
 struct ccx_common_logging_t ccx_common_logging;
 static struct ccx_decoders_common_settings_t *init_decoder_setting(
@@ -176,6 +177,8 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 	int i;
 	list_for_each_entry_safe(dec_ctx, dec_ctx1, &lctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
+		if (dec_ctx->codec == CCX_CODEC_DVB)
+			dvbsub_close_decoder(&dec_ctx->private_data);
 		flush_cc_decode(dec_ctx, &dec_ctx->dec_sub);
 		enc_ctx = get_encoder_by_pn(lctx, dec_ctx->program_number);
 		if (enc_ctx && dec_ctx->dec_sub.got_output == CCX_TRUE)

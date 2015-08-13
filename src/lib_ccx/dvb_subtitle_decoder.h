@@ -44,7 +44,7 @@ struct dvb_config
  */
 void* dvbsub_init_decoder(struct dvb_config* cfg);
 
-int dvbsub_close_decoder(void *dvb_ctx);
+int dvbsub_close_decoder(void **dvb_ctx);
 
 /**
  * @param dvb_ctx    PreInitialized DVB context using DVB

@@ -679,7 +679,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 					telxcc_close(&cinfo->codec_private_data, NULL);
 					break;
 				case CCX_CODEC_DVB:
-					dvbsub_close_decoder(cinfo->codec_private_data);
+					dvbsub_close_decoder(&cinfo->codec_private_data);
 					break;
 				default:
 					break;
