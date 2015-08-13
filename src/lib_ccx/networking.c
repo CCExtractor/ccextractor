@@ -32,6 +32,7 @@
 #define WRONG_PASSWORD_DELAY 2 /* Seconds */
 #define BUFFER_SIZE 50
 #define NO_RESPONCE_INTERVAL 20
+#define PING_INTERVAL 3
 
 int srv_sd = -1; /* Server socket descriptor */
 
@@ -133,22 +134,21 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 		return -1;
 	}
 
+	/* nanosleep((struct timespec[]){{0, 4000000}}, NULL); */
+	/* Sleep(100); */
+	return 1;
+}
+
+void net_check_conn()
+{
+	if (srv_sd <= 0)
+		return;
+
 	time_t now = time(NULL);
 
 	static time_t last_ping = 0;
 	if (last_ping == 0)
 		last_ping = now;
-
-	static time_t last_cc = 0;
-	if (last_cc == 0)
-		last_cc = now;
-
-	if (now - last_cc < NO_RESPONCE_INTERVAL && now - last_ping > NO_RESPONCE_INTERVAL)
-	{
-		fprintf(stderr, "No responce from the server in %d sec\n", NO_RESPONCE_INTERVAL);
-		close(srv_sd);
-		exit(0);
-	}
 
 	char c = 0;
 	int rc;
@@ -163,11 +163,24 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 		}
 	} while (rc > 0 && c == PING);
 
-	last_cc = now;
+	if (now - last_ping > NO_RESPONCE_INTERVAL)
+	{
+		fprintf(stderr, "[S] No PING recieved in 20 sec\n");
+		close(srv_sd);
+		exit(0);
+	}
 
-	/* nanosleep((struct timespec[]){{0, 4000000}}, NULL); */
-	/* Sleep(100); */
-	return 1;
+	static time_t last_send_ping = 0;
+	if (now - last_send_ping >= PING_INTERVAL)
+	{
+		if (write_block(srv_sd, PING, NULL, 0) < 0)
+		{
+			printf("Unable to send data\n");
+			exit(EXIT_FAILURE);
+		}
+
+		last_send_ping = now;
+	}
 }
 
 void net_send_epg(
@@ -747,6 +760,9 @@ void pr_command(char c)
 			break;
 		case EPG_DATA:
 			fprintf(stderr, "EPG_DATA");
+			break;
+		case PING:
+			fprintf(stderr, "PING");
 			break;
 		default:
 			fprintf(stderr, "UNKNOWN (%d)", (int) c);
