@@ -298,14 +298,7 @@ extern int dtvcc_active; // Process 708 data?
 extern int dtvcc_services[]; // [] -> 1 for services to be processed
 extern int dtvcc_reset_count;
 
-unsigned char dtvcc_get_internal_from_G0(unsigned char g0_char);
-unsigned char dtvcc_get_internal_from_G1(unsigned char g1_char);
-unsigned char dtvcc_get_internal_from_G2(unsigned char g2_char);
-unsigned char dtvcc_get_internal_from_G3(unsigned char g3_char);
-
-void dtvcc_process(struct lib_cc_decode *ctx, const unsigned char *data, int datalength);
-void dtvcc_process_character(dtvcc_service_decoder *decoder, unsigned char internal_char);
-void dtvcc_tv_clear(dtvcc_service_decoder *decoder, int buffer);
-void dtvcc_init_library(int report);
+void dtvcc_process_data(struct lib_cc_decode *ctx, const unsigned char *data, int data_length);
+void dtvcc_init(int enable_report);
 
 #endif

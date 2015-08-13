@@ -485,7 +485,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 									dbg_print(CCX_DMT_PARSE, "mp4-708: atom skipped (cc_type < 2)\n");
 									continue;
 								}
-								dtvcc_process(dec_ctx, (unsigned char *) temp, 4);
+								dtvcc_process_data(dec_ctx, (unsigned char *) temp, 4);
 								cb_708++;
 							}
 							atomStart = sample->dataLength;
