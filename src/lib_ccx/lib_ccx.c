@@ -119,7 +119,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->dec_global_setting->settings_608->report = report_608;
 
 	// Same applies for 708 data
-	ctx->freport.data_from_708 = &ccx_decoder_708_report;
+	ctx->freport.data_from_708 = &dtvcc_report;
 
 	//Initialize input files
 	ctx->inputfile = opt->inputfile;
@@ -131,7 +131,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	}
 
 	// Init 708 decoder(s)
-	ccx_decoders_708_init_library(opt->print_file_reports);
+	dtvcc_init_library(opt->print_file_reports);
 
 	// Init XDS buffers
 	ccx_decoders_xds_init_library(&opt->transcript_settings, ctx->subs_delay, opt->millis_separator);

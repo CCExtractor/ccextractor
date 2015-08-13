@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 
 	int show_myth_banner = 0;
 	
-	memset (&cea708services[0],0,CCX_DECODERS_708_MAX_SERVICES*sizeof (int)); // Cannot (yet) be moved because it's needed in parse_parameters.
+	memset (&dtvcc_services[0],0, DTVCC_MAX_SERVICES*sizeof (int)); // Cannot (yet) be moved because it's needed in parse_parameters.
 
 
 	params_dump(ctx);
@@ -339,7 +339,7 @@ int main(int argc, char *argv[])
 		mprint ("Performance (real length/process time) = %u.%02u\n", 
 			s1, s2);
 	}
-	dbg_print(CCX_DMT_708, "The 708 decoder was reset [%d] times.\n",resets_708);
+	dbg_print(CCX_DMT_708, "The 708 decoder was reset [%d] times.\n", dtvcc_reset_count);
 /*
 	if (ccx_options.teletext_mode == CCX_TXT_IN_USE)
 		mprint ( "Teletext decoder: %"PRIu32" packets processed, %"PRIu32" SRT frames written.\n", tlt_packet_counter, tlt_frames_produced);
