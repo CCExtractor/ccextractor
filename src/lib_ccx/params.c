@@ -690,29 +690,30 @@ void usage (void)
 	mprint("    ...\n");
 }
 
-void parse_708services (char *s)
+void parse_708_services (char *s)
 {
 	char *c, *e, *l;
-	if (s==NULL)
+	if (s == NULL)
 		return;
-	l=s+strlen (s);
-	for (c=s; c<l && *c; )
+	l = s + strlen(s);
+	for (c = s; c < l && *c; )
 	{
-		int svc=-1;
-		while (*c && !isdigit (*c))
+		int svc = -1;
+		while (*c && !isdigit(*c))
 			c++;
 		if (!*c) // We're done
 			break;
-		e=c;
+		e = c;
 		while (isdigit (*e))
 			e++;
-		*e=0;
-		svc=atoi (c);
-		if (svc<1 || svc> DTVCC_MAX_SERVICES)
-			fatal (EXIT_MALFORMED_PARAMETER, "Invalid service number (%d), valid range is 1-%d.",svc, DTVCC_MAX_SERVICES);
-		dtvcc_services[svc-1]=1;
-		dtvcc_active =1;
-		c=e+1;
+		*e = 0;
+		svc = atoi(c);
+		if (svc < 1 || svc > DTVCC_MAX_SERVICES)
+			fatal (EXIT_MALFORMED_PARAMETER,
+				   "[CEA-708] Invalid service number (%d), valid range is 1-%d.", svc, DTVCC_MAX_SERVICES);
+		ccx_dtvcc_ctx.services_active[svc - 1] = 1;
+		ccx_dtvcc_ctx.is_active = 1;
+		c = e + 1;
 	}
 }
 
@@ -741,8 +742,6 @@ int atoi_hex (char *s)
 
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 {
-	char *cea708_service_list=NULL; // List CEA-708 services
-
 	// Parse parameters
 	for (int i=1; i<argc; i++)
 	{
@@ -1329,8 +1328,8 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if ( (strcmp (argv[i],"-svc")==0 || strcmp (argv[i],"--service")==0) &&
 				i<argc-1)
 		{
-			cea708_service_list=argv[i+1];
-			parse_708services (cea708_service_list);
+			char *cea708_service_list = argv[i+1];
+			parse_708_services(cea708_service_list);
 			i++;
 			continue;
 		}

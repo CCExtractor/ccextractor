@@ -6,7 +6,7 @@
 #include "ccx_common_option.h"
 #include "lib_ccx.h"
 
-#define DTVCC_MAX_PACKET_LENGTH 128
+#define DTVCC_MAX_PACKET_LENGTH 128 //According to EIA-708B, part 5
 #define DTVCC_MAX_SERVICES 63
 
 #define DTVCC_MAX_ROWS 15
@@ -19,16 +19,17 @@
 
 #define DTVCC_FILENAME_TEMPLATE "%s-svc-%02u"
 
+#define DTVCC_NO_LAST_SEQUENCE -1
+
 /*
 This variable (dtvcc_report) holds data on the cc channels & xds packets that are encountered during file parse.
 This can be interesting if you just want to know what kind of data a file holds that has 608 packets. CCExtractor uses it
 for the report functionality.
 */
-struct dtvcc_report_t
+typedef struct dtvcc_report_t
 {
 	unsigned services[DTVCC_MAX_SERVICES];
-};
-extern struct dtvcc_report_t dtvcc_report;
+} dtvcc_report_t;
 
 enum DTVCC_COMMANDS_C0_CODES
 {
@@ -299,9 +300,26 @@ typedef struct dtvcc_service_decoder
 	LLONG subs_delay; // ms to delay (or advance) subs
 } dtvcc_service_decoder;
 
-extern int dtvcc_active; // Process 708 data?
-extern int dtvcc_services[]; // [] -> 1 for services to be processed
-extern int dtvcc_reset_count;
+typedef struct ccx_dtvcc_ctx_t
+{
+	int is_active; //processing CEA-708
+	int services_active[DTVCC_MAX_SERVICES]; //0 - inactive, 1 - active
+	int reset_count;
+	int report_enabled;
+
+	dtvcc_service_decoder decoders[DTVCC_MAX_SERVICES];
+	dtvcc_report_t report;
+
+	unsigned char current_packet[DTVCC_MAX_PACKET_LENGTH];
+	int current_packet_length;
+
+	int last_sequence;
+} ccx_dtvcc_ctx_t;
+
+extern ccx_dtvcc_ctx_t ccx_dtvcc_ctx;
+
+void dtvcc_ctx_init(ccx_dtvcc_ctx_t *ctx);
+void dtvcc_ctx_free(ccx_dtvcc_ctx_t *ctx);
 
 void dtvcc_process_data(struct lib_cc_decode *ctx, const unsigned char *data, int data_length);
 void dtvcc_init(struct lib_ccx_ctx *ctx, struct ccx_s_options *opt);

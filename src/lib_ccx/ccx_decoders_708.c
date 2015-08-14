@@ -10,17 +10,7 @@
 
 /* Portions by Daniel Kristjansson, extracted from MythTV's source */
 
-dtvcc_service_decoder decoders[DTVCC_MAX_SERVICES]; // For primary and secondary languages
-
-int dtvcc_active = 0; // Process 708 data?
-int dtvcc_services[DTVCC_MAX_SERVICES]; // [] -> 1 for services to be processed
-int dtvcc_report_enabled = 0;
-int dtvcc_reset_count = 0;
-
-struct dtvcc_report_t dtvcc_report;
-static unsigned char dtvcc_current_packet[DTVCC_MAX_PACKET_LENGTH]; // Length according to EIA-708B, part 5
-static int dtvcc_current_packet_length = 0;
-static int dtvcc_last_seq = -1; // -1 -> No last sequence yet
+ccx_dtvcc_ctx_t ccx_dtvcc_ctx;
 
 const char *DTVCC_COMMANDS_C0[32] =
 {
@@ -98,8 +88,8 @@ struct DTVCC_S_COMMANDS_C1 DTVCC_COMMANDS_C1[32] =
 
 void _dtvcc_clear_packet(void)
 {
-	dtvcc_current_packet_length = 0;
-	memset(dtvcc_current_packet, 0, DTVCC_MAX_PACKET_LENGTH);
+	ccx_dtvcc_ctx.current_packet_length = 0;
+	memset(ccx_dtvcc_ctx.current_packet, 0, DTVCC_MAX_PACKET_LENGTH * sizeof(unsigned char));
 }
 
 void _dtvcc_tv_clear(dtvcc_service_decoder *decoder, int buffer_index) // Buffer => 1 or 2
@@ -140,17 +130,17 @@ void _dtvcc_decoders_reset(struct lib_cc_decode *ctx)
 
 	for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
 	{
-		if (!dtvcc_services[i])
+		if (!ccx_dtvcc_ctx.services_active[i])
 			continue;
-		decoders[i].output_format = ctx->write_format;
-		decoders[i].subs_delay = ctx->subs_delay;
-		_dtvcc_windows_reset(&decoders[i]);
+		ccx_dtvcc_ctx.decoders[i].output_format = ctx->write_format;
+		ccx_dtvcc_ctx.decoders[i].subs_delay = ctx->subs_delay;
+		_dtvcc_windows_reset(&ccx_dtvcc_ctx.decoders[i]);
 	}
 
 	_dtvcc_clear_packet();
 
-	dtvcc_last_seq = -1;
-	dtvcc_reset_count++;
+	ccx_dtvcc_ctx.last_sequence = DTVCC_NO_LAST_SEQUENCE;
+	ccx_dtvcc_ctx.reset_count++;
 }
 
 int _dtvcc_compare_win_priorities(const void *a, const void *b)
@@ -528,14 +518,14 @@ void dtvcc_handle_TGW_ToggleWindows(dtvcc_service_decoder *decoder, int windows_
 		{
 			if (windows_bitmap & 1)
 			{
-				ccx_common_logging.debug_ftn(CCX_DMT_708, "[Window %d] ", i);
+				ccx_common_logging.debug_ftn(CCX_DMT_708, "[W-%d] ", i);
 				decoder->windows[i].visible = !decoder->windows[i].visible;
 			}
 			windows_bitmap >>= 1;
 		}
+		ccx_common_logging.debug_ftn(CCX_DMT_708, "\n");
 		_dtvcc_screen_update(decoder);
 	}
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "\n");
 }
 
 void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_idx, unsigned char *data)
@@ -1104,13 +1094,13 @@ void dtvcc_process_service_block(dtvcc_service_decoder *decoder, unsigned char *
 
 void dtvcc_process_current_packet(struct lib_cc_decode *ctx)
 {
-	int seq = (dtvcc_current_packet[0] & 0xC0) >> 6; // Two most significants bits
-	int len = dtvcc_current_packet[0] & 0x3F; // 6 least significants bits
+	int seq = (ccx_dtvcc_ctx.current_packet[0] & 0xC0) >> 6; // Two most significants bits
+	int len = ccx_dtvcc_ctx.current_packet[0] & 0x3F; // 6 least significants bits
 #ifdef DEBUG_708_PACKETS
 	ccx_common_logging.log_ftn("[CEA-708] dtvcc_process_current_packet: length=%d, seq=%d\n",
-							   dtvcc_current_packet_length, seq);
+							   ccx_dtvcc_ctx.current_packet_length, seq);
 #endif
-	if (dtvcc_current_packet_length == 0)
+	if (ccx_dtvcc_ctx.current_packet_length == 0)
 		return;
 	if (len == 0) // This is well defined in EIA-708; no magic.
 		len = 128;
@@ -1121,24 +1111,25 @@ void dtvcc_process_current_packet(struct lib_cc_decode *ctx)
 	ccx_common_logging.log_ftn("[CEA-708] dtvcc_process_current_packet: "
 									   "Sequence: %d, packet length: %d\n", seq, len);
 #endif
-	if (dtvcc_current_packet_length != len) // Is this possible?
+	if (ccx_dtvcc_ctx.current_packet_length != len) // Is this possible?
 	{
 		_dtvcc_decoders_reset(ctx);
 		return;
 	}
-	if (dtvcc_last_seq != -1 && (dtvcc_last_seq + 1) % 4 != seq)
+	if (ccx_dtvcc_ctx.last_sequence != DTVCC_NO_LAST_SEQUENCE &&
+			(ccx_dtvcc_ctx.last_sequence + 1) % 4 != seq)
 	{
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_current_packet: "
 											 "Unexpected sequence number, it is [%d] but should be [%d]\n",
-				seq, (dtvcc_last_seq + 1 ) % 4);
+				seq, (ccx_dtvcc_ctx.last_sequence + 1 ) % 4);
 		_dtvcc_decoders_reset(ctx);
 		return;
 	}
-	dtvcc_last_seq = seq;
+	ccx_dtvcc_ctx.last_sequence = seq;
 
-	unsigned char *pos = dtvcc_current_packet + 1;
+	unsigned char *pos = ccx_dtvcc_ctx.current_packet + 1;
 
-	while (pos < dtvcc_current_packet + len)
+	while (pos < ccx_dtvcc_ctx.current_packet + len)
 	{
 		int service_number = (pos[0] & 0xE0) >> 5; // 3 more significant bits
 		int block_length = (pos[0] & 0x1F); // 5 less significant bits
@@ -1162,7 +1153,7 @@ void dtvcc_process_current_packet(struct lib_cc_decode *ctx)
 
 //		if (service_number == 0 && block_length == 0) // Null header already?
 //		{
-//			if (pos != (dtvcc_current_packet + len - 1)) // i.e. last byte in packet
+//			if (pos != (ccx_dtvcc_ctx.current_packet + len - 1)) // i.e. last byte in packet
 //			{
 //				// Not sure if this is correct
 //				printf ("Null header before it was expected.\n");
@@ -1175,24 +1166,24 @@ void dtvcc_process_current_packet(struct lib_cc_decode *ctx)
 		{
 			ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_current_packet: "
 					"Data received for service 0, skipping rest of packet.");
-			pos = dtvcc_current_packet + len; // Move to end
+			pos = ccx_dtvcc_ctx.current_packet + len; // Move to end
 			break;
 		}
 
 		if (block_length != 0)
 		{
-			dtvcc_report.services[service_number] = 1;
+			ccx_dtvcc_ctx.report.services[service_number] = 1;
 		}
 
-		if (service_number > 0 && decoders[service_number - 1].inited)
-			dtvcc_process_service_block(&decoders[service_number - 1], pos, block_length);
+		if (service_number > 0 && ccx_dtvcc_ctx.decoders[service_number - 1].inited)
+			dtvcc_process_service_block(&ccx_dtvcc_ctx.decoders[service_number - 1], pos, block_length);
 
 		pos += block_length; // Skip data
 	}
 
 	_dtvcc_clear_packet();
 
-	if (pos != dtvcc_current_packet +len) // For some reason we didn't parse the whole packet
+	if (pos != ccx_dtvcc_ctx.current_packet +len) // For some reason we didn't parse the whole packet
 	{
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_current_packet:"
 				" There was a problem with this packet, reseting\n");
@@ -1217,7 +1208,7 @@ void dtvcc_process_data(struct lib_cc_decode *ctx, const unsigned char *data, in
 	 * 2 bytes for the actual data
 	 */
 
-	if (!dtvcc_active && !dtvcc_report_enabled)
+	if (!ccx_dtvcc_ctx.is_active && !ccx_dtvcc_ctx.report_enabled)
 		return;
 
 	for (int i = 0; i < data_length; i += 4)
@@ -1233,15 +1224,15 @@ void dtvcc_process_data(struct lib_cc_decode *ctx, const unsigned char *data, in
 					dtvcc_process_current_packet(ctx);
 				else
 				{
-					if (dtvcc_current_packet_length > 253) //TODO why DTVCC_MAX_PACKET_LENGTH == 128 then?
+					if (ccx_dtvcc_ctx.current_packet_length > 253) //TODO why DTVCC_MAX_PACKET_LENGTH == 128 then?
 					{
 						ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: "
 								"Warning: Legal packet size exceeded (1), data not added.\n");
 					}
 					else
 					{
-						dtvcc_current_packet[dtvcc_current_packet_length++] = data[i + 2];
-						dtvcc_current_packet[dtvcc_current_packet_length++] = data[i + 3];
+						ccx_dtvcc_ctx.current_packet[ccx_dtvcc_ctx.current_packet_length++] = data[i + 2];
+						ccx_dtvcc_ctx.current_packet[ccx_dtvcc_ctx.current_packet_length++] = data[i + 3];
 					}
 				}
 				break;
@@ -1250,15 +1241,15 @@ void dtvcc_process_data(struct lib_cc_decode *ctx, const unsigned char *data, in
 				dtvcc_process_current_packet(ctx);
 				if (cc_valid)
 				{
-					if (dtvcc_current_packet_length > 127)
+					if (ccx_dtvcc_ctx.current_packet_length > 127)
 					{
 						ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: "
 								"Warning: Legal packet size exceeded (2), data not added.\n");
 					}
 					else
 					{
-						dtvcc_current_packet[dtvcc_current_packet_length++] = data[i + 2];
-						dtvcc_current_packet[dtvcc_current_packet_length++] = data[i + 3];
+						ccx_dtvcc_ctx.current_packet[ccx_dtvcc_ctx.current_packet_length++] = data[i + 2];
+						ccx_dtvcc_ctx.current_packet[ccx_dtvcc_ctx.current_packet_length++] = data[i + 3];
 					}
 				}
 				break;
@@ -1273,24 +1264,24 @@ void dtvcc_init(struct lib_ccx_ctx *ctx, struct ccx_s_options *opt)
 {
 	for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
 	{
-		if (!dtvcc_services[i])
+		if (!ccx_dtvcc_ctx.services_active[i])
 			continue;
 
-		decoders[i].fh = -1;
-		decoders[i].cc_count = 0;
-		decoders[i].filename = NULL;
-		decoders[i].output_started = 0;
+		ccx_dtvcc_ctx.decoders[i].fh = -1;
+		ccx_dtvcc_ctx.decoders[i].cc_count = 0;
+		ccx_dtvcc_ctx.decoders[i].filename = NULL;
+		ccx_dtvcc_ctx.decoders[i].output_started = 0;
 
-		_dtvcc_windows_reset(&decoders[i]);
-		_dtvcc_decoder_init_write(ctx, &decoders[i], i + 1);
+		_dtvcc_windows_reset(&ccx_dtvcc_ctx.decoders[i]);
+		_dtvcc_decoder_init_write(ctx, &ccx_dtvcc_ctx.decoders[i], i + 1);
 
 		if (opt->cc_to_stdout)
 		{
-			decoders[i].fh = STDOUT_FILENO;
-			decoders[i].output_started = 1;
+			ccx_dtvcc_ctx.decoders[i].fh = STDOUT_FILENO;
+			ccx_dtvcc_ctx.decoders[i].output_started = 1;
 		}
 	}
-	dtvcc_report_enabled = opt->print_file_reports;
+	ccx_dtvcc_ctx.report_enabled = opt->print_file_reports;
 }
 
 void dtvcc_free()
@@ -1298,11 +1289,33 @@ void dtvcc_free()
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_free: cleaning up\n");
 	for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
 	{
-		if (!dtvcc_services[i])
+		if (!ccx_dtvcc_ctx.services_active[i])
 			continue;
-		if (decoders[i].fh != -1 && decoders[i].fh != STDOUT_FILENO) {
-			close(decoders[i].fh);
+
+		if (ccx_dtvcc_ctx.decoders[i].fh != -1 && ccx_dtvcc_ctx.decoders[i].fh != STDOUT_FILENO) {
+			close(ccx_dtvcc_ctx.decoders[i].fh);
 		}
-		free(decoders[i].filename);
+		free(ccx_dtvcc_ctx.decoders[i].filename);
 	}
+}
+
+//---------------------------------- CONTEXT -----------------------------------
+
+void dtvcc_ctx_init(ccx_dtvcc_ctx_t *ctx)
+{
+	ctx->reset_count = 0;
+	ctx->is_active = 0;
+	ctx->report_enabled = 0;
+
+	memset(ctx->services_active, 0, DTVCC_MAX_SERVICES * sizeof(int));
+
+	memset(ctx->current_packet, 0, DTVCC_MAX_PACKET_LENGTH * sizeof(unsigned char));
+	ctx->current_packet_length = 0;
+
+	ctx->last_sequence = DTVCC_NO_LAST_SEQUENCE;
+}
+
+void dtvcc_ctx_free(ccx_dtvcc_ctx_t *ctx)
+{
+
 }

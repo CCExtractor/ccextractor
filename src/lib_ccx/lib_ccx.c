@@ -119,7 +119,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->dec_global_setting->settings_608->report = report_608;
 
 	// Same applies for 708 data
-	ctx->freport.data_from_708 = &dtvcc_report;
+	ctx->freport.data_from_708 = &ccx_dtvcc_ctx.report;
 
 	//Initialize input files
 	ctx->inputfile = opt->inputfile;

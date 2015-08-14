@@ -454,7 +454,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 								break;
 							}
 
-							dtvcc_active = 1;
+							ccx_dtvcc_ctx.is_active = 1;
 							unsigned char temp[4];
 							for (int cc_i = 0; cc_i < cc_count; cc_i++, cc_data += 3)
 							{
