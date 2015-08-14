@@ -386,13 +386,13 @@ void _dtvcc_process_character(dtvcc_service_decoder *decoder, unsigned char inte
 
 void _dtvcc_process_utf8_character(dtvcc_service_decoder *decoder, unsigned char *buf, size_t len)
 {
-	if (len > 4) //max utf-8 bytes
+	if (len > UTF8_MAX_BYTES)
 	{
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_process_utf8_character: too long symbol\n");
 		return;
 	}
 
-	char out_buf[5];
+	char out_buf[UTF8_MAX_BYTES + 1];
 	strncpy(out_buf, (char *) buf, len);
 	out_buf[len] = '\0';
 
@@ -829,7 +829,7 @@ int _dtvcc_handle_C0_P16(dtvcc_service_decoder *decoder, unsigned char *data) //
 {
 	unsigned short utf16_char = (data[0] << 8) | data[1];
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] C0_P16: [%04X]\n", utf16_char);
-	unsigned char utf8_buf[4];
+	unsigned char utf8_buf[UTF8_MAX_BYTES];
 	size_t len = utf16_to_utf8(utf16_char, utf8_buf);
 	_dtvcc_process_utf8_character(decoder, utf8_buf, len);
 	return 1;
