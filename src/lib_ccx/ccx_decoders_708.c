@@ -75,13 +75,13 @@ struct DTVCC_S_COMMANDS_C1 DTVCC_COMMANDS_C1[32] =
 	{RSV96, "RSV96", "Reserved",          1},
 	{SWA, "SWA", "SetWindowAttributes",   5},
 	{DF0, "DF0", "DefineWindow0",         7},
-	{DF1, "DF0", "DefineWindow1",         7},
-	{DF2, "DF0", "DefineWindow2",         7},
-	{DF3, "DF0", "DefineWindow3",         7},
-	{DF4, "DF0", "DefineWindow4",         7},
-	{DF5, "DF0", "DefineWindow5",         7},
-	{DF6, "DF0", "DefineWindow6",         7},
-	{DF7, "DF0", "DefineWindow7",         7}
+	{DF1, "DF1", "DefineWindow1",         7},
+	{DF2, "DF2", "DefineWindow2",         7},
+	{DF3, "DF3", "DefineWindow3",         7},
+	{DF4, "DF4", "DefineWindow4",         7},
+	{DF5, "DF5", "DefineWindow5",         7},
+	{DF6, "DF6", "DefineWindow6",         7},
+	{DF7, "DF7", "DefineWindow7",         7}
 };
 
 //---------------------------------- HELPERS ------------------------------------
@@ -179,6 +179,7 @@ void _dtvcc_screen_toggle(dtvcc_service_decoder *decoder, int tv_id)
 
 void _dtvcc_screen_write(dtvcc_service_decoder *decoder, int tv_id)
 {
+	ccx_common_logging.log_ftn("[CEA-708] _dtvcc_screen_write: writing screen tv[%d]\n", tv_id);
 	if (!decoder->output_started)
 	{
 		if (decoder->output_format != CCX_OF_NULL)
@@ -190,6 +191,7 @@ void _dtvcc_screen_write(dtvcc_service_decoder *decoder, int tv_id)
 				ccx_common_logging.fatal_ftn(
 						CCX_COMMON_EXIT_FILE_CREATION_FAILED, "[CEA-708] Failed to open a file\n");
 			}
+			write(decoder->fh, UTF8_BOM, sizeof(UTF8_BOM)); //TODO if BOM
 		}
 		decoder->output_started = 1;
 	}
@@ -380,7 +382,27 @@ void _dtvcc_process_character(dtvcc_service_decoder *decoder, unsigned char inte
 			}
 			break;
 	}
+}
 
+void _dtvcc_process_utf8_character(dtvcc_service_decoder *decoder, unsigned char *buf, size_t len)
+{
+	if (len > 4) //max utf-8 bytes
+	{
+		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_process_utf8_character: too long symbol\n");
+		return;
+	}
+
+	char out_buf[5];
+	strncpy(out_buf, (char *) buf, len);
+	out_buf[len] = '\0';
+
+	ccx_common_logging.debug_ftn(
+			CCX_DMT_708, "[CEA-708] _dtvcc_process_utf8_character: %s\n", out_buf);
+
+	for (size_t i = 0; i < len; i++)
+	{
+		_dtvcc_process_character(decoder, buf[i]); //TODO is it a workaround or not? :)
+	}
 }
 
 //----------------------------- WINDOW HELPERS -----------------------------------
@@ -803,6 +825,16 @@ void dtvcc_handle_DLC_DelayCancel(dtvcc_service_decoder *decoder)
 
 //-------------------------- CHARACTERS AND COMMANDS -------------------------
 
+int _dtvcc_handle_C0_P16(dtvcc_service_decoder *decoder, unsigned char *data) //16-byte chars always have 2 bytes
+{
+	unsigned short utf16_char = (data[0] << 8) | data[1];
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] C0_P16: [%04X]\n", utf16_char);
+	unsigned char utf8_buf[4];
+	size_t len = utf16_to_utf8(utf16_char, utf8_buf);
+	_dtvcc_process_utf8_character(decoder, utf8_buf, len);
+	return 1;
+}
+
 // G0 - Code Set - ASCII printable characters
 int _dtvcc_handle_G0(dtvcc_service_decoder *decoder, unsigned char *data, int data_length)
 {
@@ -862,7 +894,7 @@ int _dtvcc_handle_C0(dtvcc_service_decoder *decoder, unsigned char *data, int da
 		// Only PE16 is defined.
 		if (data[0] == 0x18) // PE16
 		{
-			; // TODO: Handle PE16
+			_dtvcc_handle_C0_P16(decoder, data + 1);
 		}
 		len = 3;
 	}
@@ -1047,6 +1079,8 @@ int _dtvcc_handle_extended_char(dtvcc_service_decoder *decoder, unsigned char *d
 
 void dtvcc_process_service_block(dtvcc_service_decoder *decoder, unsigned char *data, int data_length)
 {
+	dump(CCX_DMT_708, data, data_length, 0, 0);
+
 	int i = 0;
 	while (i < data_length)
 	{
@@ -1064,7 +1098,7 @@ void dtvcc_process_service_block(dtvcc_service_decoder *decoder, unsigned char *
 				used = _dtvcc_handle_G0(decoder, data + i, data_length - i);
 			}
 			// Group C1
-			else if (data[i]>=0x80 && data[i]<=0x9F)
+			else if (data[i] >= 0x80 && data[i] <= 0x9F)
 			{
 				used = _dtvcc_handle_C1(decoder, data + i, data_length - i);
 			}
@@ -1091,6 +1125,8 @@ void dtvcc_process_service_block(dtvcc_service_decoder *decoder, unsigned char *
 		i += used;
 	}
 }
+
+#define DEBUG_708_PACKETS
 
 void dtvcc_process_current_packet(struct lib_cc_decode *ctx)
 {
