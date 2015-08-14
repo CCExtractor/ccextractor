@@ -3,9 +3,6 @@
 
 void printTVtoSRT(dtvcc_service_decoder *decoder, int which)
 {
-	if (decoder->output_format == CCX_OF_NULL)
-		return;
-
 	/* dtvcc_tv_screen *tv = (which==1)? &decoder->tv1:&decoder->tv2; */
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;
@@ -32,25 +29,13 @@ void printTVtoSRT(dtvcc_service_decoder *decoder, int which)
 	if (empty)
 		return; // Nothing to write
 
-	if (decoder->fh == -1) // File not yet open, do it now
-	{
-
-		ccx_common_logging.log_ftn("[CEA-708] Creating %s\n", decoder->filename);
-		// originally wbout1.filename, but since line below uses decoder->filename, assume it's good to use?
-		decoder->fh = open(decoder->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
-		if (decoder->fh == -1)
-		{
-			ccx_common_logging.fatal_ftn(
-					CCX_COMMON_EXIT_FILE_CREATION_FAILED, "[CEA-708] Failed to open a file\n");
-		}
-	}
 	mstotime(ms_start, &h1, &m1, &s1, &ms1);
 	mstotime(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 
-	decoder->srt_counter++;
+	decoder->cc_count++;
 	char timeline[128];
 
-	sprintf(timeline, "%u\r\n", decoder->srt_counter);
+	sprintf(timeline, "%u\r\n", decoder->cc_count);
 	write(decoder->fh, timeline, strlen(timeline));
 	sprintf(timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u\r\n",
 			h1, m1, s1, ms1,

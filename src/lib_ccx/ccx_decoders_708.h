@@ -3,6 +3,8 @@
 
 #include <sys/stat.h>
 #include "ccx_decoders_common.h"
+#include "ccx_common_option.h"
+#include "lib_ccx.h"
 
 #define DTVCC_MAX_PACKET_LENGTH 128
 #define DTVCC_MAX_SERVICES 63
@@ -14,6 +16,8 @@
 #define DTVCC_SCREENGRID_COLUMNS 210
 
 #define DTVCC_MAX_WINDOWS 8
+
+#define DTVCC_FILENAME_TEMPLATE "%s-svc-%02u"
 
 /*
 This variable (dtvcc_report) holds data on the cc channels & xds packets that are encountered during file parse.
@@ -289,7 +293,8 @@ typedef struct dtvcc_service_decoder
 	dtvcc_tv_screen *tv; // Pointer to the current TV buffer
 	char *filename; // Where we are going to write our output
 	int fh; // Handle to output file. -1 if not yet open
-	int srt_counter;
+	int cc_count;
+	int output_started;
 	enum ccx_output_format output_format; // What kind of output format should be used?
 	LLONG subs_delay; // ms to delay (or advance) subs
 } dtvcc_service_decoder;
@@ -299,6 +304,7 @@ extern int dtvcc_services[]; // [] -> 1 for services to be processed
 extern int dtvcc_reset_count;
 
 void dtvcc_process_data(struct lib_cc_decode *ctx, const unsigned char *data, int data_length);
-void dtvcc_init(int enable_report);
+void dtvcc_init(struct lib_ccx_ctx *ctx, struct ccx_s_options *opt);
+void dtvcc_free();
 
 #endif

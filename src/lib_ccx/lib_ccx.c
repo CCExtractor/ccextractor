@@ -130,9 +130,6 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 		goto end;
 	}
 
-	// Init 708 decoder(s)
-	dtvcc_init(opt->print_file_reports);
-
 	// Init XDS buffers
 	ccx_decoders_xds_init_library(&opt->transcript_settings, ctx->subs_delay, opt->millis_separator);
 	//xds_cea608_test();
@@ -157,6 +154,8 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->multiprogram = opt->multiprogram;
 	ctx->write_format = opt->write_format;
 
+	// Init 708 decoder(s)
+	dtvcc_init(ctx, opt);
 
 end:
 	if (ret != EXIT_OK)
@@ -205,6 +204,8 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 		freep(&lctx->inputfile[i]);
 	freep(&lctx->inputfile);
 	freep(ctx);
+
+	dtvcc_free();
 }
 
 int is_decoder_processed_enough(struct lib_ccx_ctx *ctx)

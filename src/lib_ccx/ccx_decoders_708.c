@@ -5,6 +5,8 @@
 #include "ccx_common_constants.h"
 #include "ccx_common_structs.h"
 #include "ccx_common_timing.h"
+#include "lib_ccx.h"
+#include "utility.h"
 
 /* Portions by Daniel Kristjansson, extracted from MythTV's source */
 
@@ -128,6 +130,7 @@ void _dtvcc_windows_reset(dtvcc_service_decoder *decoder)
 	_dtvcc_tv_clear(decoder, 2);
 
 	decoder->tv = &decoder->tv1;
+	//TODO: decoder->cur_tv = 1; ?
 	decoder->inited = 1;
 }
 
@@ -135,7 +138,10 @@ void _dtvcc_decoders_reset(struct lib_cc_decode *ctx)
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_decoders_reset: Resetting all decoders\n");
 
-	for (int i = 0; i < DTVCC_MAX_SERVICES; i++) {
+	for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
+	{
+		if (!dtvcc_services[i])
+			continue;
 		decoders[i].output_format = ctx->write_format;
 		decoders[i].subs_delay = ctx->subs_delay;
 		_dtvcc_windows_reset(&decoders[i]);
@@ -154,6 +160,26 @@ int _dtvcc_compare_win_priorities(const void *a, const void *b)
 	return (w1->priority - w2->priority);
 }
 
+void _dtvcc_decoder_init_write(struct lib_ccx_ctx *ctx, dtvcc_service_decoder *decoder, int id)
+{
+	decoder->output_format = ctx->write_format;
+	char *ext = get_file_extension(decoder->output_format);
+
+	size_t bfname_len = strlen(ctx->basefilename);
+	size_t ext_len = strlen(ext);
+	size_t temp_len = strlen(DTVCC_FILENAME_TEMPLATE); //seems to be enough
+
+	decoder->filename = (char *) malloc(bfname_len + temp_len + ext_len + 1);
+	if (!decoder->filename)
+		ccx_common_logging.fatal_ftn(
+				EXIT_NOT_ENOUGH_MEMORY, "[CEA-708] _dtvcc_decoder_init_write: not enough memory");
+
+	sprintf(decoder->filename, DTVCC_FILENAME_TEMPLATE, ctx->basefilename, id);
+	strcat(decoder->filename, ext);
+
+	free(ext);
+}
+
 void _dtvcc_screen_toggle(dtvcc_service_decoder *decoder, int tv_id)
 {
 	_dtvcc_tv_clear(decoder, tv_id);
@@ -163,8 +189,34 @@ void _dtvcc_screen_toggle(dtvcc_service_decoder *decoder, int tv_id)
 
 void _dtvcc_screen_write(dtvcc_service_decoder *decoder, int tv_id)
 {
-	printTVtoConsole(decoder, tv_id);
-	printTVtoSRT(decoder, tv_id);
+	if (!decoder->output_started)
+	{
+		if (decoder->output_format != CCX_OF_NULL)
+		{
+			ccx_common_logging.log_ftn("[CEA-708] _dtvcc_screen_write: creating %s\n", decoder->filename);
+			decoder->fh = open(decoder->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+			if (decoder->fh == -1)
+			{
+				ccx_common_logging.fatal_ftn(
+						CCX_COMMON_EXIT_FILE_CREATION_FAILED, "[CEA-708] Failed to open a file\n");
+			}
+		}
+		decoder->output_started = 1;
+	}
+
+	switch (decoder->output_format)
+	{
+		case CCX_OF_NULL:
+			break;
+		case CCX_OF_SRT:
+			printTVtoSRT(decoder, tv_id);
+			break;
+		case CCX_OF_TRANSCRIPT:
+			break;
+		default:
+			printTVtoConsole(decoder, tv_id);
+			break;
+	}
 }
 
 void _dtvcc_screen_update(dtvcc_service_decoder *decoder)
@@ -1217,15 +1269,40 @@ void dtvcc_process_data(struct lib_cc_decode *ctx, const unsigned char *data, in
 	}
 }
 
-void dtvcc_init(int enable_report)
+void dtvcc_init(struct lib_ccx_ctx *ctx, struct ccx_s_options *opt)
 {
-	for (int i = 0; i< DTVCC_MAX_SERVICES; i++)
+	for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
 	{
 		if (!dtvcc_services[i])
 			continue;
-		_dtvcc_windows_reset(&decoders[i]);
+
 		decoders[i].fh = -1;
-		decoders[i].srt_counter = 0;
+		decoders[i].cc_count = 0;
+		decoders[i].filename = NULL;
+		decoders[i].output_started = 0;
+
+		_dtvcc_windows_reset(&decoders[i]);
+		_dtvcc_decoder_init_write(ctx, &decoders[i], i + 1);
+
+		if (opt->cc_to_stdout)
+		{
+			decoders[i].fh = STDOUT_FILENO;
+			decoders[i].output_started = 1;
+		}
 	}
-	dtvcc_report_enabled = enable_report;
+	dtvcc_report_enabled = opt->print_file_reports;
+}
+
+void dtvcc_free()
+{
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_free: cleaning up\n");
+	for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
+	{
+		if (!dtvcc_services[i])
+			continue;
+		if (decoders[i].fh != -1 && decoders[i].fh != STDOUT_FILENO) {
+			close(decoders[i].fh);
+		}
+		free(decoders[i].filename);
+	}
 }
