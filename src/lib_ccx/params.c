@@ -313,6 +313,8 @@ void usage (void)
 	mprint ("                       services. The parameter is a command delimited list\n");
 	mprint ("                       of services numbers, such as \"1,2\" to process the\n");
 	mprint ("                       primary and secondary language services.\n");
+	mprint ("                       Pass \"all\" to process all services found\n");
+	mprint ("\n");
 	mprint ("In general, if you want English subtitles you don't need to use these options\n");
 	mprint ("as they are broadcast in field 1, channel 1. If you want the second language\n");
 	mprint ("(usually Spanish) you may need to try -2, or -cc2, or both.\n\n");
@@ -692,6 +694,15 @@ void usage (void)
 
 void parse_708_services (char *s)
 {
+	if (!strcmp(s, "all"))
+	{
+		ccx_dtvcc_ctx.is_active = 1;
+		for (int i = 0; i < DTVCC_MAX_SERVICES; i++) {
+			ccx_dtvcc_ctx.services_active[i] = 1;
+		}
+		return;
+	}
+
 	char *c, *e, *l;
 	if (s == NULL)
 		return;
