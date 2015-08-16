@@ -40,6 +40,8 @@ const char *srv_addr;
 const char *srv_port;
 const char *srv_cc_desc;
 const char *srv_pwd;
+unsigned char *srv_header;
+size_t srv_header_len;
 
 /*
  * Established connection to speciefied addres.
@@ -124,6 +126,15 @@ void net_send_header(const unsigned char *data, size_t len)
 		printf("Can't send BIN header\n");
 		return;
 	}
+
+	if (srv_header != NULL)
+		return;
+
+	if ((srv_header = malloc(len)) == NULL)
+		fatal(EXIT_FAILURE, "Not enought memory");
+
+	memcpy(srv_header, data, len);
+	srv_header_len = len;
 }
 
 int net_send_cc(const unsigned char *data, int len, void *private_data, struct cc_subtitle *sub)
@@ -178,6 +189,8 @@ void net_check_conn()
 		srv_sd = -1;
 
 		connect_to_srv(srv_addr, srv_port, srv_cc_desc, srv_pwd);
+
+		net_send_header(srv_header, srv_header_len);
 		last_ping = now;
 	}
 
