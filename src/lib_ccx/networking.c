@@ -36,6 +36,11 @@
 
 int srv_sd = -1; /* Server socket descriptor */
 
+const char *srv_addr;
+const char *srv_port;
+const char *srv_cc_desc;
+const char *srv_pwd;
+
 /*
  * Established connection to speciefied addres.
  * Returns socked id
@@ -95,6 +100,11 @@ void connect_to_srv(const char *addr, const char *port, const char *cc_desc, con
 
 	if (write_block(srv_sd, CC_DESC, cc_desc, cc_desc ? strlen(cc_desc) : 0) < 0)
 		fatal(EXIT_FAILURE, "Unable to connect\n");
+
+	srv_addr = addr;
+	srv_port = port;
+	srv_cc_desc = cc_desc;
+	srv_pwd = pwd;
 
 	mprint("Connected to %s:%s\n", addr, port);
 }
@@ -161,9 +171,14 @@ void net_check_conn()
 
 	if (now - last_ping > NO_RESPONCE_INTERVAL)
 	{
-		fprintf(stderr, "[S] No PING recieved in 20 sec\n");
+		fprintf(stderr,
+				"[S] No PING recieved from the server in %u sec, reconnecting\n",
+				NO_RESPONCE_INTERVAL);
 		close(srv_sd);
-		exit(0);
+		srv_sd = -1;
+
+		connect_to_srv(srv_addr, srv_port, srv_cc_desc, srv_pwd);
+		last_ping = now;
 	}
 
 	static time_t last_send_ping = 0;
