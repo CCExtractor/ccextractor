@@ -90,14 +90,10 @@ void connect_to_srv(const char *addr, const char *port, const char *cc_desc, con
 	if ((srv_sd = tcp_connect(addr, port)) < 0)
 		fatal(EXIT_FAILURE, "Unable to connect\n");
 
-	if (pwd != NULL && write_block(srv_sd, PASSWORD, pwd, strlen(pwd)) < 0)
+	if (write_block(srv_sd, PASSWORD, pwd, pwd ? strlen(pwd) : 0) < 0)
 		fatal(EXIT_FAILURE, "Unable to connect\n");
 
-	size_t len = 0;
-	if (cc_desc != NULL)
-		len = strlen(cc_desc);
-
-	if (write_block(srv_sd, CC_DESC, cc_desc, len) < 0)
+	if (write_block(srv_sd, CC_DESC, cc_desc, cc_desc ? strlen(cc_desc) : 0) < 0)
 		fatal(EXIT_FAILURE, "Unable to connect\n");
 
 	mprint("Connected to %s:%s\n", addr, port);
