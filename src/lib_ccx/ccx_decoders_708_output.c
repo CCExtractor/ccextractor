@@ -164,7 +164,6 @@ void ccx_dtvcc_write_debug(dtvcc_service_decoder *decoder)
 void ccx_dtvcc_write_transcript(dtvcc_service_decoder *decoder)
 {
 	struct encoder_ctx *encoder = ccx_dtvcc_ctx.encoder;
-	dtvcc_window *window = &decoder->windows[decoder->current_window];
 
 	if (_dtvcc_is_caption_empty(decoder))
 		return;
@@ -207,9 +206,84 @@ void ccx_dtvcc_write_transcript(dtvcc_service_decoder *decoder)
 	write(decoder->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
 }
 
+void _dtvcc_write_sami_header(dtvcc_service_decoder *decoder)
+{
+	struct encoder_ctx *encoder = ccx_dtvcc_ctx.encoder;
+	char *buf = (char *) encoder->buffer;
+	memset(buf, 0, INITIAL_ENC_BUFFER_CAPACITY);
+	size_t buf_len = 0;
+
+	buf_len += sprintf(buf + buf_len, "<sami>%s", encoder->encoded_crlf);
+	buf_len += sprintf(buf + buf_len, "<head>%s", encoder->encoded_crlf);
+	buf_len += sprintf(buf + buf_len, "<style type=\"text/css\">%s", encoder->encoded_crlf);
+	buf_len += sprintf(buf + buf_len, "<!--%s", encoder->encoded_crlf);
+	buf_len += sprintf(buf + buf_len,
+					   "p {margin-left: 16pt; margin-right: 16pt; margin-bottom: 16pt; margin-top: 16pt;%s",
+					   encoder->encoded_crlf);
+	buf_len += sprintf(buf + buf_len,
+					   "text-align: center; font-size: 18pt; font-family: arial; font-weight: bold; color: #f0f0f0;}%s",
+					   encoder->encoded_crlf);
+	buf_len += sprintf(buf + buf_len, ".unknowncc {Name:Unknown; lang:en-US; SAMIType:CC;}%s", encoder->encoded_crlf);
+	buf_len += sprintf(buf + buf_len, "-->%s", encoder->encoded_crlf);
+	buf_len += sprintf(buf + buf_len, "</style>%s", encoder->encoded_crlf);
+	buf_len += sprintf(buf + buf_len, "</head>%s%s", encoder->encoded_crlf, encoder->encoded_crlf);
+	buf_len += sprintf(buf + buf_len, "<body>%s", encoder->encoded_crlf);
+
+	write(decoder->fh, buf, buf_len);
+}
+
+void _dtvcc_write_sami_footer(dtvcc_service_decoder *decoder)
+{
+	struct encoder_ctx *encoder = ccx_dtvcc_ctx.encoder;
+	char *buf = (char *) encoder->buffer;
+	sprintf(buf, "</body></sami>");
+	write(decoder->fh, buf, strlen(buf));
+	write(decoder->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
+}
+
 void ccx_dtvcc_write_sami(dtvcc_service_decoder *decoder)
 {
-	//TODO merge
+	struct encoder_ctx *encoder = ccx_dtvcc_ctx.encoder;
+
+	if (_dtvcc_is_caption_empty(decoder))
+		return;
+
+	LLONG ms_start = decoder->current_visible_start_ms + decoder->subs_delay;
+	LLONG ms_end = get_visible_end() + decoder->subs_delay - 1; //-1 to prevent overlap
+
+	if (ms_start < 0) // Drop screens that because of subs_delay start too early
+		return;
+
+	if (!decoder->cc_count)
+		_dtvcc_write_sami_header(decoder);
+
+	decoder->cc_count++;
+
+	char *buf = (char *) encoder->buffer;
+
+	buf[0] = 0;
+	sprintf(buf, "<sync start=%llu><p class=\"unknowncc\">%s",
+			(unsigned long long) ms_start,
+			encoder->encoded_crlf);
+	write(decoder->fh, buf, strlen(buf));
+
+	_dtvcc_write_tag_open(decoder);
+
+	for (int i = 0; i < DTVCC_SCREENGRID_ROWS; i++)
+	{
+		if (!_dtvcc_is_row_empty(decoder, i))
+		{
+			_dtvcc_write_row(decoder, i);
+			write(decoder->fh, encoder->encoded_br, encoder->encoded_br_length);
+			write(decoder->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
+		}
+	}
+
+	_dtvcc_write_tag_close(decoder);
+
+	sprintf(buf, "<sync start=%llu><p class=\"unknowncc\">&nbsp;</p></sync>%s%s",
+			(unsigned long long) ms_end, encoder->encoded_crlf, encoder->encoded_crlf);
+	write(decoder->fh, buf, strlen(buf));
 }
 
 void ccx_dtvcc_write(dtvcc_service_decoder *decoder)
@@ -237,6 +311,9 @@ void ccx_dtvcc_write_done(dtvcc_service_decoder *decoder)
 {
 	switch (decoder->output_format)
 	{
+		case CCX_OF_SAMI:
+			_dtvcc_write_sami_footer(decoder);
+			break;
 		default:
 			ccx_common_logging.debug_ftn(
 					CCX_DMT_708, "[CEA-708] ccx_dtvcc_write_done: no handling required\n");
