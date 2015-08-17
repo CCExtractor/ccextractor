@@ -11,7 +11,7 @@ void dinit_write(struct ccx_s_write *wb)
 	close(wb->fh);
 	freep(&wb->filename);	
 }
-int init_write (struct ccx_s_write *wb,char *filename)
+int init_write (struct ccx_s_write *wb, char *filename)
 {
 	memset(wb, 0, sizeof(struct ccx_s_write));
 	wb->fh=-1;

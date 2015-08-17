@@ -36,6 +36,7 @@ extern unsigned char rcwt_header[11];
 #define TS_PACKET_PAYLOAD_LENGTH     184     // From specs
 #define SUBLINESIZE 2048 // Max. length of a .srt line - TODO: Get rid of this
 #define STARTBYTESLENGTH	(1024*1024)
+#define UTF8_MAX_BYTES 6
 
 #define XMLRPC_CHUNK_SIZE (64*1024) // 64 Kb per chunk, to avoid too many realloc()
 

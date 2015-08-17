@@ -119,7 +119,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->dec_global_setting->settings_608->report = report_608;
 
 	// Same applies for 708 data
-	ctx->freport.data_from_708 = &ccx_decoder_708_report;
+	ctx->freport.data_from_708 = &ccx_dtvcc_ctx.report;
 
 	//Initialize input files
 	ctx->inputfile = opt->inputfile;
@@ -129,9 +129,6 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	if (ret < 0) {
 		goto end;
 	}
-
-	// Init 708 decoder(s)
-	ccx_decoders_708_init_library(opt->print_file_reports);
 
 	// Init XDS buffers
 	ccx_decoders_xds_init_library(&opt->transcript_settings, ctx->subs_delay, opt->millis_separator);
@@ -157,6 +154,8 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->multiprogram = opt->multiprogram;
 	ctx->write_format = opt->write_format;
 
+	// Init 708 decoder(s)
+	dtvcc_init(ctx, opt);
 
 end:
 	if (ret != EXIT_OK)
@@ -205,6 +204,9 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 		freep(&lctx->inputfile[i]);
 	freep(&lctx->inputfile);
 	freep(ctx);
+
+	dtvcc_free();
+	dtvcc_ctx_free(&ccx_dtvcc_ctx);
 }
 
 int is_decoder_processed_enough(struct lib_ccx_ctx *ctx)

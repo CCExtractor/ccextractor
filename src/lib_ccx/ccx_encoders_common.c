@@ -21,6 +21,7 @@ ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
 	.isFinal = 0
 };
 
+//TODO sami header doesn't carry about CRLF/LF option
 static const char *sami_header= // TODO: Revise the <!-- comments
 "<SAMI>\n\
 <HEAD>\n\

@@ -192,7 +192,7 @@ void print_cc_report(struct lib_ccx_ctx *ctx, struct cap_info* info)
 	if (dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0)
 	{
 		printf("Services: ");
-		for (int i = 0; i < CCX_DECODERS_708_MAX_SERVICES; i++)
+		for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
 		{
 			if (ctx->freport.data_from_708->services[i] == 0)
 				continue;
