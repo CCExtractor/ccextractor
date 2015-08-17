@@ -163,7 +163,48 @@ void ccx_dtvcc_write_debug(dtvcc_service_decoder *decoder)
 
 void ccx_dtvcc_write_transcript(dtvcc_service_decoder *decoder)
 {
-	//TODO merge
+	struct encoder_ctx *encoder = ccx_dtvcc_ctx.encoder;
+	dtvcc_window *window = &decoder->windows[decoder->current_window];
+
+	if (_dtvcc_is_caption_empty(decoder))
+		return;
+
+	LLONG ms_start = decoder->current_visible_start_ms + decoder->subs_delay;
+	LLONG ms_end = get_visible_end() + decoder->subs_delay - 1; //-1 to prevent overlap
+
+	if (ms_start < 0) // Drop screens that because of subs_delay start too early
+		return;
+
+	decoder->cc_count++;
+
+	char *buf = (char *) encoder->buffer;
+
+	for (int i = 0; i < DTVCC_SCREENGRID_ROWS; i++)
+	{
+		if (!_dtvcc_is_row_empty(decoder, i))
+		{
+			buf[0] = 0;
+
+			if (encoder->transcript_settings->showStartTime)
+				mstime_sprintf(ms_start, "%02u:%02u:%02u,%03u|", buf + strlen(buf));
+
+			if (encoder->transcript_settings->showEndTime)
+				mstime_sprintf(ms_end, "%02u:%02u:%02u,%03u|", buf + strlen(buf));
+
+			if (encoder->transcript_settings->showCC)
+				sprintf(buf + strlen(buf), "CC1|"); //always CC1 because CEA-708 is field-independent
+
+			if (encoder->transcript_settings->showMode)
+				sprintf(buf + strlen(buf), "POP|"); //TODO caption mode(pop, rollup, etc.)
+
+			if (strlen(buf))
+				write(decoder->fh, buf, strlen(buf));
+
+			_dtvcc_write_row(decoder, i);
+			write(decoder->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
+		}
+	}
+	write(decoder->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
 }
 
 void ccx_dtvcc_write_sami(dtvcc_service_decoder *decoder)
