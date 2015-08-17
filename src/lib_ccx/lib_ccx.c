@@ -206,6 +206,7 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 	freep(ctx);
 
 	dtvcc_free();
+	dtvcc_ctx_free(&ccx_dtvcc_ctx);
 }
 
 int is_decoder_processed_enough(struct lib_ccx_ctx *ctx)

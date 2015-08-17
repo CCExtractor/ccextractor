@@ -273,6 +273,28 @@ char *print_mstime2buf( LLONG mstime , char *buf )
 	return buf;
 }
 
+/**
+ * Fill buffer with a time string using specified format
+ * @param fmt has to contain 4 format specifiers for h, m, s and ms respectively
+ */
+size_t mstime_sprintf(LLONG mstime, char *fmt, char *buf)
+{
+	unsigned hh, mm, ss, ms;
+	int signoffset = (mstime < 0 ? 1 : 0);
+
+	if (mstime < 0) // Avoid loss of data warning with abs()
+		mstime = -mstime;
+
+	hh = (unsigned) (mstime / 1000 / 60 / 60);
+	mm = (unsigned) (mstime / 1000 / 60 - 60 * hh);
+	ss = (unsigned) (mstime / 1000 - 60 * (mm + 60 * hh));
+	ms = (unsigned) (mstime - 1000 * (ss + 60 * (mm + 60 * hh)));
+
+	buf[0] = '-';
+	return (size_t) sprintf(buf + signoffset, fmt, hh, mm, ss, ms);
+}
+
+
 /* Fill a static buffer with a time string (hh:mm:ss:ms) corresponding
    to the microsecond value in mstime. */
 char *print_mstime( LLONG mstime )

@@ -310,6 +310,8 @@ typedef struct ccx_dtvcc_ctx_t
 	dtvcc_service_decoder decoders[DTVCC_MAX_SERVICES];
 	dtvcc_report_t report;
 
+	struct encoder_ctx *encoder;
+
 	unsigned char current_packet[DTVCC_MAX_PACKET_LENGTH];
 	int current_packet_length;
 
@@ -317,6 +319,7 @@ typedef struct ccx_dtvcc_ctx_t
 } ccx_dtvcc_ctx_t;
 
 extern ccx_dtvcc_ctx_t ccx_dtvcc_ctx;
+struct lib_ccx_ctx;
 
 void dtvcc_ctx_init(ccx_dtvcc_ctx_t *ctx);
 void dtvcc_ctx_free(ccx_dtvcc_ctx_t *ctx);

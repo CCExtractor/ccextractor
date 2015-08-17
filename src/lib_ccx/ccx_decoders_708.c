@@ -196,19 +196,7 @@ void _dtvcc_screen_write(dtvcc_service_decoder *decoder, int tv_id)
 		decoder->output_started = 1;
 	}
 
-	switch (decoder->output_format)
-	{
-		case CCX_OF_NULL:
-			break;
-		case CCX_OF_SRT:
-			printTVtoSRT(decoder, tv_id);
-			break;
-		case CCX_OF_TRANSCRIPT:
-			break;
-		default:
-			printTVtoConsole(decoder, tv_id);
-			break;
-	}
+	ccx_dtvcc_write(decoder);
 }
 
 void _dtvcc_screen_update(dtvcc_service_decoder *decoder)
@@ -1083,7 +1071,7 @@ int _dtvcc_handle_extended_char(dtvcc_service_decoder *decoder, unsigned char *d
 
 void dtvcc_process_service_block(dtvcc_service_decoder *decoder, unsigned char *data, int data_length)
 {
-	dump(CCX_DMT_708, data, data_length, 0, 0);
+	//dump(CCX_DMT_708, data, data_length, 0, 0);
 
 	int i = 0;
 	while (i < data_length)
@@ -1322,6 +1310,7 @@ void dtvcc_init(struct lib_ccx_ctx *ctx, struct ccx_s_options *opt)
 		}
 	}
 	ccx_dtvcc_ctx.report_enabled = opt->print_file_reports;
+	ccx_dtvcc_ctx.encoder = init_encoder(&ccx_options.enc_cfg);
 }
 
 void dtvcc_free()
@@ -1333,6 +1322,7 @@ void dtvcc_free()
 			continue;
 
 		if (ccx_dtvcc_ctx.decoders[i].fh != -1 && ccx_dtvcc_ctx.decoders[i].fh != STDOUT_FILENO) {
+			ccx_dtvcc_write_done(&ccx_dtvcc_ctx.decoders[i]);
 			close(ccx_dtvcc_ctx.decoders[i].fh);
 		}
 		free(ccx_dtvcc_ctx.decoders[i].filename);
@@ -1357,5 +1347,5 @@ void dtvcc_ctx_init(ccx_dtvcc_ctx_t *ctx)
 
 void dtvcc_ctx_free(ccx_dtvcc_ctx_t *ctx)
 {
-
+	//TODO free all mem
 }
