@@ -561,7 +561,8 @@ void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id
 		// When a decoder receives a DefineWindow command for an existing window, the
 		// command is to be ignored if the command parameters are unchanged from the
 		// previous window definition.
-		ccx_common_logging.debug_ftn(CCX_DMT_708, "\tRepeated window definition, ignored\n");
+		ccx_common_logging.debug_ftn(
+				CCX_DMT_708, "[CEA-708] dtvcc_handle_DFx_DefineWindow: Repeated window definition, ignored\n");
 		return;
 	}
 
@@ -616,6 +617,7 @@ void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id
 		{
 			for (int i = 0; i <= DTVCC_MAX_ROWS; i++)
 			{
+				//TODO free memory
 				decoder->windows[window_idx].rows[i] = (unsigned char *) malloc(DTVCC_MAX_COLUMNS + 1);
 				if (!decoder->windows[window_idx].rows[i])
 				{
@@ -827,11 +829,12 @@ void dtvcc_handle_DLC_DelayCancel(dtvcc_service_decoder *decoder)
 
 int _dtvcc_handle_C0_P16(dtvcc_service_decoder *decoder, unsigned char *data) //16-byte chars always have 2 bytes
 {
-	unsigned short utf16_char = (data[0] << 8) | data[1];
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] C0_P16: [%04X]\n", utf16_char);
+	unsigned short char16 = (data[0] << 8) | data[1];
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] C0_P16: [%04X]\n", char16);
 	unsigned char utf8_buf[UTF8_MAX_BYTES];
-	size_t len = utf16_to_utf8(utf16_char, utf8_buf);
-	_dtvcc_process_utf8_character(decoder, utf8_buf, len);
+	//TODO convert char16 from 16bit representation to UTF-8
+	//size_t len = utf16_to_utf8(char16, utf8_buf);
+	//_dtvcc_process_utf8_character(decoder, utf8_buf, len);
 	return 1;
 }
 
@@ -839,6 +842,7 @@ int _dtvcc_handle_C0_P16(dtvcc_service_decoder *decoder, unsigned char *data) //
 int _dtvcc_handle_G0(dtvcc_service_decoder *decoder, unsigned char *data, int data_length)
 {
 	// TODO: Substitution of the music note character for the ASCII DEL character
+	// TODO: this means substitute 0x7F -> 0x266A (UTF-16)
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] G0: [%02X]  (%c)\n", data[0], data[0]);
 	unsigned char c = dtvcc_get_internal_from_G0(data[0]);
 	_dtvcc_process_character(decoder, c);
