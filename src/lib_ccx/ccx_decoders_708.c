@@ -120,7 +120,7 @@ void _dtvcc_windows_reset(dtvcc_service_decoder *decoder)
 	_dtvcc_tv_clear(decoder, 2);
 
 	decoder->tv = &decoder->tv1;
-	//TODO: decoder->cur_tv = 1; ?
+	decoder->cur_tv = 1;
 	decoder->inited = 1;
 }
 
@@ -273,6 +273,9 @@ void _dtvcc_screen_update(dtvcc_service_decoder *decoder)
 				top, left
 		);
 
+		ccx_common_logging.debug_ftn(
+				CCX_DMT_708, "[CEA-708] we have top [%d] and left [%d]\n", top, left);
+
 		top = top < 0 ? 0 : top;
 		left = left < 0 ? 0 : left;
 
@@ -301,6 +304,11 @@ void _dtvcc_process_cr(dtvcc_service_decoder *decoder)
 			window->pen_column = 0;
 			if (window->pen_row + 1 < window->row_count)
 				window->pen_row++;
+//			else
+//			{
+//				ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_process_cr: rolling up\n");
+//				_dtvcc_screen_update(decoder);
+//			}
 			break;
 		case pd_right_to_left:
 			window->pen_column = window->col_count;
@@ -569,14 +577,14 @@ void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id
 	int pen_style = data[6] & 0x7;
 	int win_style = (data[6] >> 3) & 0x7;
 
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "                   Priority: [%d]        Column lock: [%3s]      Row lock: [%3s]\n",
-			priority, col_lock ? "Yes" : "No", row_lock ? "Yes" : "No");
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "                    Visible: [%3s]  Anchor vertical: [%2d]   Relative pos: [%s]\n",
-			visible ? "Yes" : "No", anchor_vertical, relative_pos ? "Yes" : "No");
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "          Anchor horizontal: [%3d]        Row count: [%2d]+1  Anchor point: [%d]\n",
-			anchor_horizontal, row_count, anchor_point);
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "               Column count: [%2d]1      Pen style: [%d]      Win style: [%d]\n",
-			col_count, pen_style, win_style);
+	/**
+	 * Korean samples have "anchor_vertical" and "anchor_horizontal" mixed up,
+	 * this seems to be an encoder issue, but we can workaround it
+	 */
+	if (anchor_vertical > DTVCC_SCREENGRID_ROWS - row_count)
+		anchor_vertical = DTVCC_SCREENGRID_ROWS - row_count;
+	if (anchor_horizontal > DTVCC_SCREENGRID_COLUMNS - col_count)
+		anchor_horizontal = DTVCC_SCREENGRID_COLUMNS - col_count;
 
 	col_count++; // These increments seems to be needed but no documentation
 	row_count++; // backs it up
@@ -592,6 +600,15 @@ void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id
 	decoder->windows[window_idx].col_count = col_count;
 	decoder->windows[window_idx].pen_style = pen_style;
 	decoder->windows[window_idx].win_style = win_style;
+
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "                   Priority: [%d]        Column lock: [%3s]      Row lock: [%3s]\n",
+								 priority, col_lock ? "Yes" : "No", row_lock ? "Yes" : "No");
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "                    Visible: [%3s]  Anchor vertical: [%2d]   Relative pos: [%s]\n",
+								 visible ? "Yes" : "No", anchor_vertical, relative_pos ? "Yes" : "No");
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "          Anchor horizontal: [%3d]        Row count: [%2d]+1  Anchor point: [%d]\n",
+								 anchor_horizontal, row_count, anchor_point);
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "               Column count: [%2d]        Pen style: [%d]      Win style: [%d]\n",
+								 col_count, pen_style, win_style);
 
 	if (!decoder->windows[window_idx].is_defined)
 	{
