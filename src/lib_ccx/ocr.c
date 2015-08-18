@@ -1,7 +1,6 @@
 #include "png.h"
 #include "lib_ccx.h"
 #ifdef ENABLE_OCR
-#include "platform.h"
 #include "capi.h"
 #include "ccx_common_constants.h"
 #include "allheaders.h"
