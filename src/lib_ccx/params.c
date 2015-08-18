@@ -309,11 +309,14 @@ void usage (void)
 	mprint ("                       (DEFAULT is -1)\n");
 	mprint ("                 -cc2: When in srt/sami mode, process captions in channel 2\n");
 	mprint ("                       instead of channel 1.\n");
-	mprint ("-svc --service N,N...: Enabled CEA-708 captions processing for the listed\n");
+	mprint ("-svc --service N1[enc1],N2[enc2]...:\n");
+	mprint ("                       Enable CEA-708 captions processing for the listed\n");
 	mprint ("                       services. The parameter is a command delimited list\n");
 	mprint ("                       of services numbers, such as \"1,2\" to process the\n");
 	mprint ("                       primary and secondary language services.\n");
-	mprint ("                       Pass \"all\" to process all services found\n");
+	mprint ("                       Pass \"all\" to process all services found.\n");
+	mprint ("                       To tell encoder what kind of character encoding was used,\n");
+	mprint ("                       pass its name after service number (e.g. 1[EUC-KR],3\n");
 	mprint ("\n");
 	mprint ("In general, if you want English subtitles you don't need to use these options\n");
 	mprint ("as they are broadcast in field 1, channel 1. If you want the second language\n");
@@ -357,13 +360,6 @@ void usage (void)
 	mprint ("                                 in specified input. Don't produce any file\n");
 	mprint ("                                 output\n\n");
 	mprint ("       Note: Teletext output can only be srt, txt or ttxt for now.\n\n");
-
-	mprint ("CEA-708 Options:\n");  		  //
-	mprint ("    --708-encoding ENC1,ENC2,..: If CEA-708 service uses non-latin characters (e.g. Korean),\n");
-	mprint ("                                 characters will have 16-bit representation.\n");
-	mprint ("                                 To tell decoder what charset it uses, pass its iconv code here\n");
-	mprint ("                                 respectively with services numbers specified in -svc parameter\n");
-	mprint ("\n");
 
 	mprint ("Options that affect how input files will be processed.\n");
 
