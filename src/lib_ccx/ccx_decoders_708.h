@@ -330,6 +330,8 @@ typedef struct ccx_dtvcc_ctx_t
 	int last_sequence;
 } ccx_dtvcc_ctx_t;
 
+void _dtvcc_window_clear_row(dtvcc_window *window, int row_index);
+void _dtvcc_window_clear_text(dtvcc_window *window);
 void _dtvcc_window_clear(dtvcc_service_decoder *decoder, int window_idx);
 
 extern ccx_dtvcc_ctx_t ccx_dtvcc_ctx;

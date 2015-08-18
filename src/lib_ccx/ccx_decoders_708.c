@@ -191,7 +191,8 @@ void _dtvcc_screen_write(dtvcc_service_decoder *decoder, int tv_id)
 				ccx_common_logging.fatal_ftn(
 						CCX_COMMON_EXIT_FILE_CREATION_FAILED, "[CEA-708] Failed to open a file\n");
 			}
-			write(decoder->fh, UTF8_BOM, sizeof(UTF8_BOM)); //TODO if BOM
+			if (!ccx_dtvcc_ctx.encoder->no_bom)
+				write(decoder->fh, UTF8_BOM, sizeof(UTF8_BOM));
 		}
 		decoder->output_started = 1;
 	}
@@ -199,7 +200,7 @@ void _dtvcc_screen_write(dtvcc_service_decoder *decoder, int tv_id)
 	ccx_dtvcc_write(decoder);
 }
 
-void _dtvcc_screen_update(dtvcc_service_decoder *decoder)
+void _dtvcc_screen_update(dtvcc_service_decoder *decoder, int toggled)
 {
 	// Print the previous screenful, which wasn't possible because we had no timing info
 	int toggled_id = (decoder->cur_tv == 1 ? 2 : 1);
@@ -291,25 +292,44 @@ void _dtvcc_screen_update(dtvcc_service_decoder *decoder)
 		{
 			memcpy(decoder->tv->chars[top + j], wnd[i]->rows[j], copycols * sizeof(unsigned char));
 		}
-		_dtvcc_window_clear(decoder, wnd[i]->number);
+		if (!toggled) //TODO handle rolling
+			_dtvcc_window_clear(decoder, wnd[i]->number);
 	}
 	decoder->current_visible_start_ms = get_visible_start();
+}
+
+void _dtvcc_process_hcr(dtvcc_service_decoder *decoder)
+{
+	dtvcc_window *window = &decoder->windows[decoder->current_window];
+	window->pen_column = 0;
+	_dtvcc_window_clear_row(window, window->pen_row);
+}
+
+void _dtvcc_process_ff(dtvcc_service_decoder *decoder)
+{
+	dtvcc_window *window = &decoder->windows[decoder->current_window];
+	window->pen_column = 0;
+	window->pen_row = 0;
+	_dtvcc_window_clear_text(window);
 }
 
 void _dtvcc_process_cr(dtvcc_service_decoder *decoder)
 {
 	dtvcc_window *window = &decoder->windows[decoder->current_window];
+	int rollup_required = 0;
 	switch (window->attribs.print_dir)
 	{
 		case pd_left_to_right:
 			window->pen_column = 0;
 			if (window->pen_row + 1 < window->row_count)
 				window->pen_row++;
+			else rollup_required = 1;
 			break;
 		case pd_right_to_left:
 			window->pen_column = window->col_count;
 			if (window->pen_row + 1 < window->row_count)
 				window->pen_row++;
+			else rollup_required = 1;
 			break;
 		case pd_top_to_bottom:
 			window->pen_row = 0;
@@ -326,7 +346,11 @@ void _dtvcc_process_cr(dtvcc_service_decoder *decoder)
 			break;
 	}
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_process_cr: rolling up\n");
-	_dtvcc_screen_update(decoder); //TODO real rollup if needed
+	if (rollup_required)
+	{
+		//TODO real rollup
+	}
+	_dtvcc_screen_update(decoder, 0);
 }
 
 void _dtvcc_process_character(dtvcc_service_decoder *decoder, unsigned char internal_char)
@@ -393,22 +417,22 @@ void _dtvcc_process_utf8_character(dtvcc_service_decoder *decoder, unsigned char
 	ccx_common_logging.debug_ftn(
 			CCX_DMT_708, "[CEA-708] _dtvcc_process_utf8_character: %s\n", out_buf);
 
-	for (size_t i = 0; i < len; i++)
-	{
-		_dtvcc_process_character(decoder, buf[i]); //TODO is it a workaround or not? :)
-	}
+	for (size_t i = 0; i < len; i++) //processing each utf8 byte
+		_dtvcc_process_character(decoder, buf[i]);
 }
 
 //----------------------------- WINDOW HELPERS -----------------------------------
 
+void _dtvcc_window_clear_row(dtvcc_window *window, int row_index)
+{
+	memset(window->rows[row_index], ' ', DTVCC_MAX_COLUMNS);
+	window->rows[row_index][DTVCC_MAX_COLUMNS] = 0;
+}
+
 void _dtvcc_window_clear_text(dtvcc_window *window)
 {
 	for (int i = 0; i < DTVCC_MAX_ROWS; i++)
-	{
-		memset(window->rows[i], ' ', DTVCC_MAX_COLUMNS);
-		window->rows[i][DTVCC_MAX_COLUMNS] = 0;
-	}
-	//memset(window->rows[DTVCC_MAX_ROWS], 0, DTVCC_MAX_COLUMNS);
+		_dtvcc_window_clear_row(window, i);
 	window->is_empty = 1;
 }
 
@@ -428,9 +452,7 @@ void _dtvcc_window_delete(dtvcc_service_decoder *decoder, int window_idx)
 	}
 	// TODO: Do the actual deletion (remove from display if needed, etc), mark as not defined, etc
 	if (decoder->windows[window_idx].is_defined)
-	{
 		_dtvcc_window_clear_text(&decoder->windows[window_idx]);
-	}
 	decoder->windows[window_idx].is_defined = 0;
 }
 
@@ -490,7 +512,7 @@ void dtvcc_handle_DSW_DisplayWindows(dtvcc_service_decoder *decoder, int windows
 		}
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "\n");
 		if (changed)
-			_dtvcc_screen_update(decoder);
+			_dtvcc_screen_update(decoder, 0);
 	}
 }
 
@@ -512,13 +534,12 @@ void dtvcc_handle_HDW_HideWindows(dtvcc_service_decoder *decoder, int windows_bi
 					changed = 1;
 					decoder->windows[i].visible = 0;
 				}
-				// TODO: Actually Hide Window
 			}
 			windows_bitmap >>= 1;
 		}
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "\n");
 		if (changed)
-			_dtvcc_screen_update(decoder);
+			_dtvcc_screen_update(decoder, 0);
 	}
 }
 
@@ -539,7 +560,7 @@ void dtvcc_handle_TGW_ToggleWindows(dtvcc_service_decoder *decoder, int windows_
 			windows_bitmap >>= 1;
 		}
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "\n");
-		_dtvcc_screen_update(decoder);
+		_dtvcc_screen_update(decoder, 1);
 	}
 }
 
@@ -610,16 +631,13 @@ void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id
 	if (!decoder->windows[window_idx].is_defined)
 	{
 		// If the window is being created, all character positions in the window
-		// are set to the fill color...
-		// TODO: COLORS
-		// ...and the pen location is set to (0,0)
+		// are set to the fill color and the pen location is set to (0,0)
 		decoder->windows[window_idx].pen_column = 0;
 		decoder->windows[window_idx].pen_row = 0;
 		if (!decoder->windows[window_idx].memory_reserved)
 		{
 			for (int i = 0; i < DTVCC_MAX_ROWS; i++)
 			{
-				//TODO free memory
 				decoder->windows[window_idx].rows[i] = (unsigned char *) malloc(DTVCC_MAX_COLUMNS);
 				if (!decoder->windows[window_idx].rows[i])
 				{
@@ -717,7 +735,7 @@ void dtvcc_handle_DLW_DeleteWindows(dtvcc_service_decoder *decoder, int windows_
 	}
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "\n");
 	if (changed)
-		_dtvcc_screen_update(decoder);
+		_dtvcc_screen_update(decoder, 0);
 }
 
 void dtvcc_handle_SPA_SetPenAttributes(dtvcc_service_decoder *decoder, unsigned char *data)
@@ -881,11 +899,19 @@ int _dtvcc_handle_C0_P16(dtvcc_service_decoder *decoder, unsigned char *data) //
 // G0 - Code Set - ASCII printable characters
 int _dtvcc_handle_G0(dtvcc_service_decoder *decoder, unsigned char *data, int data_length)
 {
-	// TODO: Substitution of the music note character for the ASCII DEL character
-	// TODO: this means substitute 0x7F -> 0x266A (UTF-16)
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] G0: [%02X]  (%c)\n", data[0], data[0]);
-	unsigned char c = dtvcc_get_internal_from_G0(data[0]);
-	_dtvcc_process_character(decoder, c);
+	unsigned char c = data[0];
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] G0: [%02X]  (%c)\n", c, c);
+	if (c == 0x7F) //ASCII DEL character -> ?
+	{
+		size_t n_size = 3;
+		unsigned char note[] = {0xE2, 0x99, 0xAA}; //?
+		_dtvcc_process_utf8_character(decoder, note, n_size);
+	}
+	else
+	{
+		unsigned char uc = dtvcc_get_internal_from_G0(c);
+		_dtvcc_process_character(decoder, uc);
+	}
 	return 1;
 }
 
@@ -900,26 +926,27 @@ int _dtvcc_handle_G1(dtvcc_service_decoder *decoder, unsigned char *data, int da
 
 int _dtvcc_handle_C0(dtvcc_service_decoder *decoder, unsigned char *data, int data_length)
 {
-	const char *name = DTVCC_COMMANDS_C0[data[0]];
+	unsigned char c0 = data[0];
+	const char *name = DTVCC_COMMANDS_C0[c0];
 	if (name == NULL)
 		name = "Reserved";
 
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] C0: [%02X]  (%d)   [%s]\n", data[0], data_length, name);
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] C0: [%02X]  (%d)   [%s]\n", c0, data_length, name);
 
 	int len = -1;
 	// These commands have a known length even if they are reserved.
-	if (/* data[0]>=0x00 && */ data[0] <= 0xF) // Comment to silence warning
+	if (c0 <= 0xF)
 	{
-		switch (data[0])
+		switch (c0)
 		{
 			case 0x0d: //CR
 				_dtvcc_process_cr(decoder);
 				break;
 			case 0x0e: // HCR (Horizontal Carriage Return)
-				// TODO: Process HDR
+				_dtvcc_process_hcr(decoder);
 				break;
 			case 0x0c: // FF (Form Feed)
-				// TODO: Process FF
+				_dtvcc_process_ff(decoder);
 				break;
 			default:
 				ccx_common_logging.log_ftn("[CEA-708] _dtvcc_handle_C0: unhandled branch\n");
@@ -927,19 +954,16 @@ int _dtvcc_handle_C0(dtvcc_service_decoder *decoder, unsigned char *data, int da
 		}
 		len = 1;
 	}
-	else if (data[0] >= 0x10 && data[0] <= 0x17)
+	else if (c0 >= 0x10 && c0 <= 0x17)
 	{
 		// Note that 0x10 is actually EXT1 and is dealt with somewhere else. Rest is undefined as per
 		// CEA-708-D
 		len = 2;
 	}
-	else if (data[0] >= 0x18 && data[0] <= 0x1F)
+	else if (c0 >= 0x18 && c0 <= 0x1F)
 	{
-		// Only PE16 is defined.
-		if (data[0] == 0x18) // PE16
-		{
+		if (c0 == 0x18) // PE16
 			_dtvcc_handle_C0_P16(decoder, data + 1);
-		}
 		len = 3;
 	}
 	if (len == -1)
@@ -953,7 +977,6 @@ int _dtvcc_handle_C0(dtvcc_service_decoder *decoder, unsigned char *data, int da
 				"command is %d bytes long but we only have %d\n", len, data_length);
 		return -1;
 	}
-	// TODO: Do something useful eventually
 	return len;
 }
 
@@ -1047,7 +1070,7 @@ int _dtvcc_handle_C1(dtvcc_service_decoder *decoder, unsigned char *data, int da
    how many bytes would be consumed if these codes were supported, as defined in the specs.
 Note: EXT1 not included */
 // C2: Extended Miscellaneous Control Codes
-// TODO: This code is completely untested due to lack of samples. Just following specs!
+// WARN: This code is completely untested due to lack of samples. Just following specs!
 int _dtvcc_handle_C2(dtvcc_service_decoder *decoder, unsigned char *data, int data_length)
 {
 	if (data[0] <= 0x07) // 00-07...
@@ -1072,7 +1095,6 @@ int _dtvcc_handle_C3(dtvcc_service_decoder *decoder, unsigned char *data, int da
 
 	// These are variable length commands, that can even span several segments
 	// (they allow even downloading fonts or graphics).
-	// TODO: Implement if a sample ever appears
 	ccx_common_logging.fatal_ftn(
 			CCX_COMMON_EXIT_UNSUPPORTED, "[CEA-708] This sample contains unsupported 708 data. "
 			"PLEASE help us improve CCExtractor by submitting it.\n");
@@ -1083,7 +1105,7 @@ int _dtvcc_handle_C3(dtvcc_service_decoder *decoder, unsigned char *data, int da
 // G2 (20-7F) => Mostly unmapped, except for a few characters.
 // G3 (A0-FF) => A0 is the CC symbol, everything else reserved for future expansion in EIA708-B
 // C2 (00-1F) => Reserved for future extended misc. control and captions command codes
-// TODO: This code is completely untested due to lack of samples. Just following specs!
+// WARN: This code is completely untested due to lack of samples. Just following specs!
 // Returns number of used bytes, usually 1 (since EXT1 is not counted).
 int _dtvcc_handle_extended_char(dtvcc_service_decoder *decoder, unsigned char *data, int data_length)
 {
@@ -1131,26 +1153,14 @@ void dtvcc_process_service_block(dtvcc_service_decoder *decoder, unsigned char *
 		int used = -1;
 		if (data[i] != EXT1)
 		{
-			// Group C0
-			if (/* data[i]>=0x00 && */ data[i] <= 0x1F) // Comment to silence warning
-			{
+			if (data[i] <= 0x1F)
 				used = _dtvcc_handle_C0(decoder, data + i, data_length - i);
-			}
-			// Group G0
 			else if (data[i] >= 0x20 && data[i] <= 0x7F)
-			{
 				used = _dtvcc_handle_G0(decoder, data + i, data_length - i);
-			}
-			// Group C1
 			else if (data[i] >= 0x80 && data[i] <= 0x9F)
-			{
 				used = _dtvcc_handle_C1(decoder, data + i, data_length - i);
-			}
-			// Group C2
 			else
-			{
 				used = _dtvcc_handle_G1(decoder, data + i, data_length - i);
-			}
 
 			if (used == -1)
 			{
@@ -1202,8 +1212,10 @@ void dtvcc_process_current_packet(struct lib_cc_decode *ctx)
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_current_packet: "
 											 "Unexpected sequence number, it is [%d] but should be [%d]\n",
 				seq, (ccx_dtvcc_ctx.last_sequence + 1 ) % 4);
-		_dtvcc_decoders_reset(ctx);
-		return;
+		//WARN: if we reset decoders here, buffer will not be written
+		//WARN: resetting decoders breaks some samples
+		//_dtvcc_decoders_reset(ctx);
+		//return;
 	}
 	ccx_dtvcc_ctx.last_sequence = seq;
 
@@ -1263,7 +1275,7 @@ void dtvcc_process_current_packet(struct lib_cc_decode *ctx)
 
 	_dtvcc_clear_packet();
 
-	if (pos != ccx_dtvcc_ctx.current_packet +len) // For some reason we didn't parse the whole packet
+	if (pos != ccx_dtvcc_ctx.current_packet + len) // For some reason we didn't parse the whole packet
 	{
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_current_packet:"
 				" There was a problem with this packet, reseting\n");
@@ -1304,7 +1316,7 @@ void dtvcc_process_data(struct lib_cc_decode *ctx, const unsigned char *data, in
 					dtvcc_process_current_packet(ctx);
 				else
 				{
-					if (ccx_dtvcc_ctx.current_packet_length > 253) //TODO why DTVCC_MAX_PACKET_LENGTH == 128 then?
+					if (ccx_dtvcc_ctx.current_packet_length > 253)
 					{
 						ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: "
 								"Warning: Legal packet size exceeded (1), data not added.\n");
@@ -1321,7 +1333,7 @@ void dtvcc_process_data(struct lib_cc_decode *ctx, const unsigned char *data, in
 				dtvcc_process_current_packet(ctx);
 				if (cc_valid)
 				{
-					if (ccx_dtvcc_ctx.current_packet_length > 127)
+					if (ccx_dtvcc_ctx.current_packet_length > DTVCC_MAX_PACKET_LENGTH - 1)
 					{
 						ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: "
 								"Warning: Legal packet size exceeded (2), data not added.\n");
@@ -1347,35 +1359,39 @@ void dtvcc_init(struct lib_ccx_ctx *ctx, struct ccx_s_options *opt)
 		if (!ccx_dtvcc_ctx.services_active[i])
 			continue;
 
-		ccx_dtvcc_ctx.decoders[i].fh = -1;
-		ccx_dtvcc_ctx.decoders[i].cc_count = 0;
-		ccx_dtvcc_ctx.decoders[i].filename = NULL;
-		ccx_dtvcc_ctx.decoders[i].output_started = 0;
+		dtvcc_service_decoder *decoder = &ccx_dtvcc_ctx.decoders[i];
 
-		if (ccx_dtvcc_ctx.services_encoding[i][0])
+		decoder->fh = -1;
+		decoder->cc_count = 0;
+		decoder->filename = NULL;
+		decoder->output_started = 0;
+
+		char *enc = ccx_dtvcc_ctx.services_encoding[i];
+
+		if (*enc)
 		{
-			ccx_dtvcc_ctx.decoders[i].encoding = strdup(ccx_dtvcc_ctx.services_encoding[i]);
-			ccx_dtvcc_ctx.decoders[i].cd = iconv_open("UTF-8", ccx_dtvcc_ctx.decoders[i].encoding);
-			if (ccx_dtvcc_ctx.decoders[i].cd == (iconv_t) -1)
+			decoder->encoding = strdup(enc);
+			decoder->cd = iconv_open("UTF-8", decoder->encoding);
+			if (decoder->cd == (iconv_t) -1)
 			{
 				ccx_common_logging.fatal_ftn(EXIT_FAILURE, "[CEA-708] dtvcc_init: "
 						"can't create iconv for encoding \"%s\": %s\n",
-											 ccx_dtvcc_ctx.decoders[i].encoding, strerror(errno));
+											 decoder->encoding, strerror(errno));
 			}
 		}
 		else
 		{
-			ccx_dtvcc_ctx.decoders[i].encoding = NULL;
-			ccx_dtvcc_ctx.decoders[i].cd = (iconv_t) -1;
+			decoder->encoding = NULL;
+			decoder->cd = (iconv_t) -1;
 		}
 
-		_dtvcc_windows_reset(&ccx_dtvcc_ctx.decoders[i]);
-		_dtvcc_decoder_init_write(ctx, &ccx_dtvcc_ctx.decoders[i], i + 1);
+		_dtvcc_windows_reset(decoder);
+		_dtvcc_decoder_init_write(ctx, decoder, i + 1);
 
 		if (opt->cc_to_stdout)
 		{
-			ccx_dtvcc_ctx.decoders[i].fh = STDOUT_FILENO;
-			ccx_dtvcc_ctx.decoders[i].output_started = 1;
+			decoder->fh = STDOUT_FILENO;
+			decoder->output_started = 1;
 		}
 	}
 	ccx_dtvcc_ctx.report_enabled = opt->print_file_reports;
@@ -1390,16 +1406,28 @@ void dtvcc_free()
 		if (!ccx_dtvcc_ctx.services_active[i])
 			continue;
 
-		_dtvcc_screen_update(&ccx_dtvcc_ctx.decoders[i]);
+		dtvcc_service_decoder *decoder = &ccx_dtvcc_ctx.decoders[i];
 
-		if (ccx_dtvcc_ctx.decoders[i].encoding)
-			iconv_close(ccx_dtvcc_ctx.decoders[i].cd);
+		if (decoder->output_started)
+			_dtvcc_screen_update(decoder, 0);
 
-		if (ccx_dtvcc_ctx.decoders[i].fh != -1 && ccx_dtvcc_ctx.decoders[i].fh != STDOUT_FILENO) {
-			ccx_dtvcc_write_done(&ccx_dtvcc_ctx.decoders[i]);
-			close(ccx_dtvcc_ctx.decoders[i].fh);
+		if (decoder->encoding)
+			iconv_close(decoder->cd);
+
+		if (decoder->fh != -1 && decoder->fh != STDOUT_FILENO) {
+			ccx_dtvcc_write_done(decoder);
+			close(decoder->fh);
 		}
-		free(ccx_dtvcc_ctx.decoders[i].filename);
+
+		free(decoder->filename);
+
+		for (int j = 0; j < DTVCC_MAX_WINDOWS; j++)
+			if (decoder->windows[j].memory_reserved)
+			{
+				for (int k = 0; k < DTVCC_MAX_ROWS; k++)
+					free(decoder->windows[j].rows[k]);
+				decoder->windows[j].memory_reserved = 0;
+			}
 	}
 }
 
@@ -1425,5 +1453,5 @@ void dtvcc_ctx_init(ccx_dtvcc_ctx_t *ctx)
 
 void dtvcc_ctx_free(ccx_dtvcc_ctx_t *ctx)
 {
-	//TODO free all mem
+
 }
