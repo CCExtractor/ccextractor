@@ -29,3 +29,13 @@ To do:
   though. No samples, no support.
 - A few commands are not yet supported, specifically those related
   to delay. 
+
+Done (18.08.2015):
+
+- Major refactoring
+- Librarized as much as possible (global vars moved to dtvcc context)
+- 16 bit charset support added
+- SAMI output added
+- Transcript output added
+- Timed transcript output added
+- Added colour support
