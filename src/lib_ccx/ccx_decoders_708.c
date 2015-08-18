@@ -291,6 +291,7 @@ void _dtvcc_screen_update(dtvcc_service_decoder *decoder)
 		{
 			memcpy(decoder->tv->chars[top + j], wnd[i]->rows[j], copycols * sizeof(unsigned char));
 		}
+		_dtvcc_window_clear(decoder, wnd[i]->number);
 	}
 	decoder->current_visible_start_ms = get_visible_start();
 }
@@ -304,11 +305,6 @@ void _dtvcc_process_cr(dtvcc_service_decoder *decoder)
 			window->pen_column = 0;
 			if (window->pen_row + 1 < window->row_count)
 				window->pen_row++;
-			else
-			{
-				ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_process_cr: rolling up\n");
-				_dtvcc_screen_update(decoder);
-			}
 			break;
 		case pd_right_to_left:
 			window->pen_column = window->col_count;
@@ -329,6 +325,8 @@ void _dtvcc_process_cr(dtvcc_service_decoder *decoder)
 			ccx_common_logging.log_ftn("[CEA-708] _dtvcc_process_cr: unhandled branch\n");
 			break;
 	}
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_process_cr: rolling up\n");
+	_dtvcc_screen_update(decoder); //TODO real rollup if needed
 }
 
 void _dtvcc_process_character(dtvcc_service_decoder *decoder, unsigned char internal_char)
@@ -403,12 +401,6 @@ void _dtvcc_process_utf8_character(dtvcc_service_decoder *decoder, unsigned char
 
 //----------------------------- WINDOW HELPERS -----------------------------------
 
-void _dtvcc_window_clear(dtvcc_service_decoder *decoder, int window_idx)
-{
-	// TODO: Removes any existing text from the specified window. When a window
-	// is cleared the entire window is filled with the window fill color.
-}
-
 void _dtvcc_window_clear_text(dtvcc_window *window)
 {
 	for (int i = 0; i < DTVCC_MAX_ROWS; i++)
@@ -416,8 +408,13 @@ void _dtvcc_window_clear_text(dtvcc_window *window)
 		memset(window->rows[i], ' ', DTVCC_MAX_COLUMNS);
 		window->rows[i][DTVCC_MAX_COLUMNS] = 0;
 	}
-	memset(window->rows[DTVCC_MAX_ROWS], 0, DTVCC_MAX_COLUMNS + 1);
+	//memset(window->rows[DTVCC_MAX_ROWS], 0, DTVCC_MAX_COLUMNS);
 	window->is_empty = 1;
+}
+
+void _dtvcc_window_clear(dtvcc_service_decoder *decoder, int window_idx)
+{
+	_dtvcc_window_clear_text(&decoder->windows[window_idx]);
 }
 
 void _dtvcc_window_delete(dtvcc_service_decoder *decoder, int window_idx)
@@ -597,7 +594,7 @@ void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id
 	decoder->windows[window_idx].anchor_horizontal = anchor_horizontal;
 	decoder->windows[window_idx].row_count = row_count;
 	decoder->windows[window_idx].anchor_point = anchor_point;
-	decoder->windows[window_idx].col_count = col_count;
+	decoder->windows[window_idx].col_count = col_count * UTF8_MAX_BYTES;
 	decoder->windows[window_idx].pen_style = pen_style;
 	decoder->windows[window_idx].win_style = win_style;
 
@@ -620,10 +617,10 @@ void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id
 		decoder->windows[window_idx].pen_row = 0;
 		if (!decoder->windows[window_idx].memory_reserved)
 		{
-			for (int i = 0; i <= DTVCC_MAX_ROWS; i++)
+			for (int i = 0; i < DTVCC_MAX_ROWS; i++)
 			{
 				//TODO free memory
-				decoder->windows[window_idx].rows[i] = (unsigned char *) malloc(DTVCC_MAX_COLUMNS + 1);
+				decoder->windows[window_idx].rows[i] = (unsigned char *) malloc(DTVCC_MAX_COLUMNS);
 				if (!decoder->windows[window_idx].rows[i])
 				{
 					ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "[CEA-708] dtvcc_handle_DFx_DefineWindow");
@@ -643,7 +640,7 @@ void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id
 	{
 		// Specs unclear here: Do we need to delete the text in the existing window?
 		// We do this because one of the sample files demands it.
-		//  _dtvcc_window_clear_text (&decoder->windows[window]);
+		_dtvcc_window_clear_text (&decoder->windows[window_idx]);
 	}
 	// ...also makes the defined windows the current window (setCurrentWindow)
 	dtvcc_handle_CWx_SetCurrentWindow(decoder, window_idx);
@@ -1392,6 +1389,8 @@ void dtvcc_free()
 	{
 		if (!ccx_dtvcc_ctx.services_active[i])
 			continue;
+
+		_dtvcc_screen_update(&ccx_dtvcc_ctx.decoders[i]);
 
 		if (ccx_dtvcc_ctx.decoders[i].encoding)
 			iconv_close(ccx_dtvcc_ctx.decoders[i].cd);

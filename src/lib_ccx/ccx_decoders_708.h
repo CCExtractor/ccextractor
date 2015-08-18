@@ -17,7 +17,7 @@
 #define DTVCC_MAX_ENCODING_LENGTH 24
 
 #define DTVCC_MAX_ROWS 15
-#define DTVCC_MAX_COLUMNS 42
+#define DTVCC_MAX_COLUMNS 45*UTF8_MAX_BYTES + 1
 
 #define DTVCC_SCREENGRID_ROWS 75
 #define DTVCC_SCREENGRID_COLUMNS 210
@@ -260,7 +260,7 @@ typedef struct dtvcc_window_attribs
 typedef struct dtvcc_window
 {
 	int is_defined;
-	int number; // Handy, in case we only have a pointer to the window
+	int number;
 	int priority;
 	int col_lock;
 	int row_lock;
@@ -329,6 +329,8 @@ typedef struct ccx_dtvcc_ctx_t
 
 	int last_sequence;
 } ccx_dtvcc_ctx_t;
+
+void _dtvcc_window_clear(dtvcc_service_decoder *decoder, int window_idx);
 
 extern ccx_dtvcc_ctx_t ccx_dtvcc_ctx;
 struct lib_ccx_ctx;
