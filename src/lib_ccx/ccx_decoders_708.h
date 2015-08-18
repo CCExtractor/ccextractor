@@ -14,7 +14,7 @@
 
 #define DTVCC_MAX_PACKET_LENGTH 128 //According to EIA-708B, part 5
 #define DTVCC_MAX_SERVICES 63
-#define DTVCC_MAX_ENCODING_LENGTH 24
+#define DTVCC_MAX_CHARSET_LENGTH 24
 
 #define DTVCC_MAX_ROWS 15
 #define DTVCC_MAX_COLUMNS 45*UTF8_MAX_BYTES + 1
@@ -306,7 +306,7 @@ typedef struct dtvcc_service_decoder
 	enum ccx_output_format output_format; // What kind of output format should be used?
 	LLONG subs_delay; // ms to delay (or advance) subs
 
-	char *encoding;
+	char *charset;
 	iconv_t cd; //Conversion descriptor
 } dtvcc_service_decoder;
 
@@ -315,7 +315,7 @@ typedef struct ccx_dtvcc_ctx_t
 	int is_active; //processing CEA-708
 	int active_services_count;
 	int services_active[DTVCC_MAX_SERVICES]; //0 - inactive, 1 - active
-	char services_encoding[DTVCC_MAX_SERVICES][DTVCC_MAX_ENCODING_LENGTH];
+	char services_charsets[DTVCC_MAX_SERVICES][DTVCC_MAX_CHARSET_LENGTH];
 	int reset_count;
 	int report_enabled;
 

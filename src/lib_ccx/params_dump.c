@@ -61,16 +61,16 @@ void params_dump(struct lib_ccx_ctx *ctx)
 		mprint ("[CEA-708: %d decoders active]\n", ccx_dtvcc_ctx.active_services_count);
 		if (ccx_dtvcc_ctx.active_services_count == DTVCC_MAX_SERVICES)
 		{
-			mprint ("[CEA-708: using encoding \"%s\" for all services]\n",
-				   ccx_dtvcc_ctx.services_encoding[0][0] ? ccx_dtvcc_ctx.services_encoding[0] : "Auto");
+			mprint ("[CEA-708: using charset \"%s\" for all services]\n",
+				   ccx_dtvcc_ctx.services_charsets[0][0] ? ccx_dtvcc_ctx.services_charsets[0] : "Auto");
 		}
 		else
 		{
 			for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
 			{
 				if (ccx_dtvcc_ctx.services_active[i])
-					mprint("[CEA-708: using encoding \"%s\" for service %d]\n",
-						   ccx_dtvcc_ctx.services_encoding[i][0] ? ccx_dtvcc_ctx.services_encoding[i] : "Auto",
+					mprint("[CEA-708: using charset \"%s\" for service %d]\n",
+						   ccx_dtvcc_ctx.services_charsets[i][0] ? ccx_dtvcc_ctx.services_charsets[i] : "Auto",
 						   i + 1);
 			}
 		}

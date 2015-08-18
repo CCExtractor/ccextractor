@@ -854,7 +854,7 @@ int _dtvcc_handle_C0_P16(dtvcc_service_decoder *decoder, unsigned char *data) //
 	char *utf8_buf = calloc(UTF8_MAX_BYTES + 1, sizeof(char));
 	char *utf8_start = utf8_buf;
 
-	if (decoder->encoding)
+	if (decoder->charset)
 	{
 		char *inbuf = calloc(2, sizeof(char));
 		char *inbuf_start = inbuf;
@@ -1366,22 +1366,22 @@ void dtvcc_init(struct lib_ccx_ctx *ctx, struct ccx_s_options *opt)
 		decoder->filename = NULL;
 		decoder->output_started = 0;
 
-		char *enc = ccx_dtvcc_ctx.services_encoding[i];
+		char *enc = ccx_dtvcc_ctx.services_charsets[i];
 
 		if (*enc)
 		{
-			decoder->encoding = strdup(enc);
-			decoder->cd = iconv_open("UTF-8", decoder->encoding);
+			decoder->charset = strdup(enc);
+			decoder->cd = iconv_open("UTF-8", decoder->charset);
 			if (decoder->cd == (iconv_t) -1)
 			{
 				ccx_common_logging.fatal_ftn(EXIT_FAILURE, "[CEA-708] dtvcc_init: "
-						"can't create iconv for encoding \"%s\": %s\n",
-											 decoder->encoding, strerror(errno));
+						"can't create iconv for charset \"%s\": %s\n",
+											 decoder->charset, strerror(errno));
 			}
 		}
 		else
 		{
-			decoder->encoding = NULL;
+			decoder->charset = NULL;
 			decoder->cd = (iconv_t) -1;
 		}
 
@@ -1411,7 +1411,7 @@ void dtvcc_free()
 		if (decoder->output_started)
 			_dtvcc_screen_update(decoder, 0);
 
-		if (decoder->encoding)
+		if (decoder->charset)
 			iconv_close(decoder->cd);
 
 		if (decoder->fh != -1 && decoder->fh != STDOUT_FILENO) {
@@ -1443,7 +1443,7 @@ void dtvcc_ctx_init(ccx_dtvcc_ctx_t *ctx)
 	memset(ctx->services_active, 0, DTVCC_MAX_SERVICES * sizeof(int));
 
 	for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
-		memset(ctx->services_encoding[i], 0, DTVCC_MAX_ENCODING_LENGTH * sizeof(char));
+		memset(ctx->services_charsets[i], 0, DTVCC_MAX_CHARSET_LENGTH * sizeof(char));
 
 	memset(ctx->current_packet, 0, DTVCC_MAX_PACKET_LENGTH * sizeof(unsigned char));
 	ctx->current_packet_length = 0;

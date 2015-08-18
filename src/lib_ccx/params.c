@@ -309,14 +309,14 @@ void usage (void)
 	mprint ("                       (DEFAULT is -1)\n");
 	mprint ("                 -cc2: When in srt/sami mode, process captions in channel 2\n");
 	mprint ("                       instead of channel 1.\n");
-	mprint ("-svc --service N1[enc1],N2[enc2]...:\n");
+	mprint ("-svc --service N1[cs1],N2[cs2]...:\n");
 	mprint ("                       Enable CEA-708 captions processing for the listed\n");
 	mprint ("                       services. The parameter is a command delimited list\n");
 	mprint ("                       of services numbers, such as \"1,2\" to process the\n");
 	mprint ("                       primary and secondary language services.\n");
 	mprint ("                       Pass \"all\" to process all services found.\n");
-	mprint ("                       To tell encoder what kind of character encoding was used,\n");
-	mprint ("                       pass its name after service number (e.g. 1[EUC-KR],3\n");
+	mprint ("                       To tell encoder what kind of charset was used, pass its name after\n");
+	mprint ("                       service number (e.g. \"1[EUC-KR],3\" or \"all[EUC-KR]\"\n");
 	mprint ("\n");
 	mprint ("In general, if you want English subtitles you don't need to use these options\n");
 	mprint ("as they are broadcast in field 1, channel 1. If you want the second language\n");
@@ -703,18 +703,18 @@ void parse_708_services (char *s)
 	if (!diff)
 	{
 		size_t s_len = strlen(s);
-		char *encoding = NULL;
+		char *charset = NULL;
 		if (s_len > all_len + 2) // '[' and ']'
-			encoding = strndup(s + all_len + 1, s_len - all_len - 2);
+			charset = strndup(s + all_len + 1, s_len - all_len - 2);
 
 		ccx_dtvcc_ctx.is_active = 1;
 		for (int i = 0; i < DTVCC_MAX_SERVICES; i++) {
 			ccx_dtvcc_ctx.services_active[i] = 1;
-			if (encoding)
-				strncpy(ccx_dtvcc_ctx.services_encoding[i], encoding, DTVCC_MAX_ENCODING_LENGTH);
+			if (charset)
+				strncpy(ccx_dtvcc_ctx.services_charsets[i], charset, DTVCC_MAX_CHARSET_LENGTH);
 		}
 		ccx_dtvcc_ctx.active_services_count = DTVCC_MAX_SERVICES;
-		free(encoding);
+		free(charset);
 		return;
 	}
 
@@ -732,7 +732,7 @@ void parse_708_services (char *s)
 		e = c;
 		while (isdigit (*e))
 			e++;
-		int encoding_start_found = (*e == '[');
+		int charset_start_found = (*e == '[');
 		*e = 0;
 		svc = atoi(c);
 		if (svc < 1 || svc > DTVCC_MAX_SERVICES)
@@ -745,17 +745,17 @@ void parse_708_services (char *s)
 		e = e + 1;
 		c = e;
 
-		if (!encoding_start_found)
+		if (!charset_start_found)
 			continue;
 
 		while (*e && *e != ']' && *e != ',')
 			e++;
 		if (*e == ']')
 		{
-			char *encoding = strndup(c, e - c);
-			if (strlen(encoding))
-				strncpy(ccx_dtvcc_ctx.services_encoding[svc - 1], encoding, DTVCC_MAX_ENCODING_LENGTH);
-			free(encoding);
+			char *charset = strndup(c, e - c);
+			if (strlen(charset))
+				strncpy(ccx_dtvcc_ctx.services_charsets[svc - 1], charset, DTVCC_MAX_CHARSET_LENGTH);
+			free(charset);
 			c = e + 1;
 		}
 	}
