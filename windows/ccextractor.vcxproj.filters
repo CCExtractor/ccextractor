@@ -566,5 +566,11 @@
     <ClCompile Include="..\src\lib_ccx\ts_tables_epg.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_demuxer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ts_info.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

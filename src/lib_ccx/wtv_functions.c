@@ -317,26 +317,29 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 	while(1)
 	{
 		int bytesread = 0;
+		uint8_t guid[16];
+		int x;
+		uint32_t len;
+		uint32_t pad;
+		uint32_t stream_id;
+
 		// Read the 32 bytes containing the GUID and length and stream_id info
 		get_sized_buffer(ctx->demux_ctx, cb, 32);
 		if(cb->buffer == NULL)
 			return CCX_EOF;
 
-		uint8_t guid[16];
 		memcpy(&guid, cb->buffer, 16); // Read the GUID
-		int x;
+
 		for(x=0; x<16; x++)
 			dbg_print(CCX_DMT_PARSE, "%02X ", guid[x]);
 		dbg_print(CCX_DMT_PARSE, "\n");
-		uint32_t len;
+
 		memcpy(&len, cb->buffer+16, 4); // Read the length
 		len-=32;
 		dbg_print(CCX_DMT_PARSE, "len %X\n", len);
-		uint32_t pad;
 		pad = len%8==0 ? 0 : 8- (len % 8);  // Calculate the padding to add to the length
 		// to get to the next GUID
 		dbg_print(CCX_DMT_PARSE, "pad %X\n", pad);
-		uint32_t stream_id;
 		memcpy(&stream_id, cb->buffer+20, 4);
 		stream_id = stream_id & 0x7f;       // Read and calculate the stream_id
 		dbg_print(CCX_DMT_PARSE, "stream_id: 0x%X\n", stream_id);
@@ -348,8 +351,9 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			// This is the end of the data in this file
 			// read the padding at the end of the file
 			// and return one more byte
-			dbg_print(CCX_DMT_PARSE, "WTV EOF\n");
 			uint8_t *parsebuf;
+
+			dbg_print(CCX_DMT_PARSE, "WTV EOF\n");
 			parsebuf = (uint8_t*)malloc(1024);
 			do {
 				buffered_read(ctx->demux_ctx, parsebuf, 1024);
@@ -391,12 +395,13 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 		if (!memcmp(guid, WTV_TIMING, 16) && ((use_alt_stream < WTV_CC_TIMESTAMP_MAGIC_THRESH && check_stream_id(stream_id, video_streams, num_streams))
 					|| (use_alt_stream == WTV_CC_TIMESTAMP_MAGIC_THRESH && stream_id == alt_stream)))
 		{
+			int64_t time;
 			// The WTV_TIMING GUID contains a timestamp for the given stream_id
 			dbg_print(CCX_DMT_PARSE, "WTV TIMING\n");
 			get_sized_buffer(ctx->demux_ctx, cb, 0x8+0x8);
 			if(cb->buffer==NULL)
 				return CCX_EOF;
-			int64_t time;
+
 			memcpy(&time, cb->buffer+0x8, 8); // Read the timestamp
 			dbg_print(CCX_DMT_PARSE, "TIME: %ld\n", time);
 			if (time != -1 && time != WTV_CC_TIMESTAMP_MAGIC) { // Ignore -1 timestamps

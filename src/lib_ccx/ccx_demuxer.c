@@ -164,14 +164,14 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 }
 LLONG ccx_demuxer_getfilesize (struct ccx_demuxer *ctx)
 {
-	int ret = 0;
+	LLONG ret = 0;
 	int in = ctx->infd;
 	LLONG current=LSEEK (in, 0, SEEK_CUR);
 	LLONG length = LSEEK (in,0,SEEK_END);
 	if(current < 0 ||length < 0)
 		return -1;
 
-	ret = LSEEK (in,current,SEEK_SET);
+	ret = LSEEK (in, current, SEEK_SET);
 	if (ret < 0)
 		return -1;
 
