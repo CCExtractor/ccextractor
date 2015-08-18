@@ -358,6 +358,13 @@ void usage (void)
 	mprint ("                                 output\n\n");
 	mprint ("       Note: Teletext output can only be srt, txt or ttxt for now.\n\n");
 
+	mprint ("CEA-708 Options:\n");  		  //
+	mprint ("    --708-encoding ENC1,ENC2,..: If CEA-708 service uses non-latin characters (e.g. Korean),\n");
+	mprint ("                                 characters will have 16-bit representation.\n");
+	mprint ("                                 To tell decoder what charset it uses, pass its iconv code here\n");
+	mprint ("                                 respectively with services numbers specified in -svc parameter\n");
+	mprint ("\n");
+
 	mprint ("Options that affect how input files will be processed.\n");
 
 	mprint ("        -gt --goptime: Use GOP for timing instead of PTS. This only applies\n");
@@ -694,12 +701,24 @@ void usage (void)
 
 void parse_708_services (char *s)
 {
-	if (!strcmp(s, "all"))
+	const char *all = "all";
+	size_t all_len = strlen(all);
+	int diff = strncmp(s, all, all_len);
+	if (!diff)
 	{
+		size_t s_len = strlen(s);
+		char *encoding = NULL;
+		if (s_len > all_len + 2) // '[' and ']'
+			encoding = strndup(s + all_len + 1, s_len - all_len - 2);
+
 		ccx_dtvcc_ctx.is_active = 1;
 		for (int i = 0; i < DTVCC_MAX_SERVICES; i++) {
 			ccx_dtvcc_ctx.services_active[i] = 1;
+			if (encoding)
+				strncpy(ccx_dtvcc_ctx.services_encoding[i], encoding, DTVCC_MAX_ENCODING_LENGTH);
 		}
+		ccx_dtvcc_ctx.active_services_count = DTVCC_MAX_SERVICES;
+		free(encoding);
 		return;
 	}
 
@@ -717,6 +736,7 @@ void parse_708_services (char *s)
 		e = c;
 		while (isdigit (*e))
 			e++;
+		int encoding_start_found = (*e == '[');
 		*e = 0;
 		svc = atoi(c);
 		if (svc < 1 || svc > DTVCC_MAX_SERVICES)
@@ -724,7 +744,24 @@ void parse_708_services (char *s)
 				   "[CEA-708] Invalid service number (%d), valid range is 1-%d.", svc, DTVCC_MAX_SERVICES);
 		ccx_dtvcc_ctx.services_active[svc - 1] = 1;
 		ccx_dtvcc_ctx.is_active = 1;
-		c = e + 1;
+		ccx_dtvcc_ctx.active_services_count++;
+
+		e = e + 1;
+		c = e;
+
+		if (!encoding_start_found)
+			continue;
+
+		while (*e && *e != ']' && *e != ',')
+			e++;
+		if (*e == ']')
+		{
+			char *encoding = strndup(c, e - c);
+			if (strlen(encoding))
+				strncpy(ccx_dtvcc_ctx.services_encoding[svc - 1], encoding, DTVCC_MAX_ENCODING_LENGTH);
+			free(encoding);
+			c = e + 1;
+		}
 	}
 }
 

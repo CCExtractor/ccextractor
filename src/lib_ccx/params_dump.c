@@ -54,17 +54,33 @@ void params_dump(struct lib_ccx_ctx *ctx)
 			break;
 	}
 	mprint ("]");
-	if (ccx_options.wtvconvertfix)
-	{
-		mprint (" [Windows 7 wtv to dvr-ms conversion fix: Enabled]");
-	}
 	mprint ("\n");
 
-	if (ccx_options.wtvmpeg2)
+	if (ccx_dtvcc_ctx.is_active)
 	{
-		mprint (" [WTV use MPEG2 stream: Enabled]");
+		mprint ("[CEA-708: %d decoders active]\n", ccx_dtvcc_ctx.active_services_count);
+		if (ccx_dtvcc_ctx.active_services_count == DTVCC_MAX_SERVICES)
+		{
+			mprint ("[CEA-708: using encoding \"%s\" for all services]\n",
+				   ccx_dtvcc_ctx.services_encoding[0][0] ? ccx_dtvcc_ctx.services_encoding[0] : "Auto");
+		}
+		else
+		{
+			for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
+			{
+				if (ccx_dtvcc_ctx.services_active[i])
+					mprint("[CEA-708: using encoding \"%s\" for service %d]\n",
+						   ccx_dtvcc_ctx.services_encoding[i][0] ? ccx_dtvcc_ctx.services_encoding[i] : "Auto",
+						   i + 1);
+			}
+		}
 	}
-	mprint ("\n");
+
+	if (ccx_options.wtvconvertfix)
+		mprint (" [Windows 7 wtv to dvr-ms conversion fix: Enabled]\n");
+
+	if (ccx_options.wtvmpeg2)
+		mprint (" [WTV use MPEG2 stream: Enabled]\n");
 
 	mprint ("[Timing mode: ");
 	switch (ccx_options.use_gop_as_pts)
@@ -140,12 +156,12 @@ void params_dump(struct lib_ccx_ctx *ctx)
 			mprint ("Yes, timeout: %d seconds",ccx_options.live_stream);
 	}
 	mprint ("] [Clock frequency: %d]\n",MPEG_CLOCK_FREQ);
-	mprint ("Teletext page: [");
+	mprint ("[Teletext page: ");
 	if (tlt_config.page)
 		mprint ("%d]\n",tlt_config.page);
 	else
 		mprint ("Autodetect]\n");
-	mprint ("Start credits text: [%s]\n",
+	mprint ("[Start credits text: %s]\n",
 			ccx_options.enc_cfg.start_credits_text?ccx_options.enc_cfg.start_credits_text:"None");
 	if (ccx_options.enc_cfg.start_credits_text)
 	{
@@ -167,7 +183,6 @@ void params_dump(struct lib_ccx_ctx *ctx)
 				(long) (ccx_options.enc_cfg.endcreditsforatmost.time_in_ms/1000)
 		       );
 	}
-
 }
 
 #define Y_N(cond) ((cond) ? "Yes" : "No")

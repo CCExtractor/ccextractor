@@ -304,11 +304,11 @@ void _dtvcc_process_cr(dtvcc_service_decoder *decoder)
 			window->pen_column = 0;
 			if (window->pen_row + 1 < window->row_count)
 				window->pen_row++;
-//			else
-//			{
-//				ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_process_cr: rolling up\n");
-//				_dtvcc_screen_update(decoder);
-//			}
+			else
+			{
+				ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_process_cr: rolling up\n");
+				_dtvcc_screen_update(decoder);
+			}
 			break;
 		case pd_right_to_left:
 			window->pen_column = window->col_count;
@@ -835,11 +835,49 @@ void dtvcc_handle_DLC_DelayCancel(dtvcc_service_decoder *decoder)
 int _dtvcc_handle_C0_P16(dtvcc_service_decoder *decoder, unsigned char *data) //16-byte chars always have 2 bytes
 {
 	unsigned short char16 = (data[0] << 8) | data[1];
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] C0_P16: [%04X]\n", char16);
-	unsigned char utf8_buf[UTF8_MAX_BYTES];
-	//TODO convert char16 from 16bit representation to UTF-8
-	//size_t len = utf16_to_utf8(char16, utf8_buf);
-	//_dtvcc_process_utf8_character(decoder, utf8_buf, len);
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_handle_C0_P16: [%04X]\n", char16);
+	char *utf8_buf = calloc(UTF8_MAX_BYTES + 1, sizeof(char));
+	char *utf8_start = utf8_buf;
+
+	if (decoder->encoding)
+	{
+		char *inbuf = calloc(2, sizeof(char));
+		char *inbuf_start = inbuf;
+
+		size_t inbytesleft = 2,
+				outbytesleft = UTF8_MAX_BYTES;
+
+		if (data[0] != 0x00)
+		{
+			inbuf[0] = data[0];
+			inbuf[1] = data[1];
+		}
+		else
+		{
+			inbuf[0] = data[1];
+			inbytesleft = 1;
+		}
+
+		size_t result = iconv(decoder->cd, &inbuf, &inbytesleft, &utf8_buf, &outbytesleft);
+
+		if (result == -1)
+			ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_handle_C0_P16: "
+					"conversion failed: %s\n", strerror(errno));
+
+		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_handle_C0_P16: "
+				"Converted to [%s] with result [%d]\n", utf8_start, result);
+
+		free(inbuf_start);
+	}
+	else
+	{
+		*utf8_buf = '?';
+		utf8_buf++;
+	}
+
+	_dtvcc_process_utf8_character(decoder, (unsigned char *) utf8_start, utf8_buf - utf8_start);
+
+	free(utf8_start);
 	return 1;
 }
 
@@ -1317,6 +1355,23 @@ void dtvcc_init(struct lib_ccx_ctx *ctx, struct ccx_s_options *opt)
 		ccx_dtvcc_ctx.decoders[i].filename = NULL;
 		ccx_dtvcc_ctx.decoders[i].output_started = 0;
 
+		if (ccx_dtvcc_ctx.services_encoding[i][0])
+		{
+			ccx_dtvcc_ctx.decoders[i].encoding = strdup(ccx_dtvcc_ctx.services_encoding[i]);
+			ccx_dtvcc_ctx.decoders[i].cd = iconv_open("UTF-8", ccx_dtvcc_ctx.decoders[i].encoding);
+			if (ccx_dtvcc_ctx.decoders[i].cd == (iconv_t) -1)
+			{
+				ccx_common_logging.fatal_ftn(EXIT_FAILURE, "[CEA-708] dtvcc_init: "
+						"can't create iconv for encoding \"%s\": %s\n",
+											 ccx_dtvcc_ctx.decoders[i].encoding, strerror(errno));
+			}
+		}
+		else
+		{
+			ccx_dtvcc_ctx.decoders[i].encoding = NULL;
+			ccx_dtvcc_ctx.decoders[i].cd = (iconv_t) -1;
+		}
+
 		_dtvcc_windows_reset(&ccx_dtvcc_ctx.decoders[i]);
 		_dtvcc_decoder_init_write(ctx, &ccx_dtvcc_ctx.decoders[i], i + 1);
 
@@ -1338,6 +1393,9 @@ void dtvcc_free()
 		if (!ccx_dtvcc_ctx.services_active[i])
 			continue;
 
+		if (ccx_dtvcc_ctx.decoders[i].encoding)
+			iconv_close(ccx_dtvcc_ctx.decoders[i].cd);
+
 		if (ccx_dtvcc_ctx.decoders[i].fh != -1 && ccx_dtvcc_ctx.decoders[i].fh != STDOUT_FILENO) {
 			ccx_dtvcc_write_done(&ccx_dtvcc_ctx.decoders[i]);
 			close(ccx_dtvcc_ctx.decoders[i].fh);
@@ -1353,8 +1411,12 @@ void dtvcc_ctx_init(ccx_dtvcc_ctx_t *ctx)
 	ctx->reset_count = 0;
 	ctx->is_active = 0;
 	ctx->report_enabled = 0;
+	ctx->active_services_count = 0;
 
 	memset(ctx->services_active, 0, DTVCC_MAX_SERVICES * sizeof(int));
+
+	for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
+		memset(ctx->services_encoding[i], 0, DTVCC_MAX_ENCODING_LENGTH * sizeof(char));
 
 	memset(ctx->current_packet, 0, DTVCC_MAX_PACKET_LENGTH * sizeof(unsigned char));
 	ctx->current_packet_length = 0;
