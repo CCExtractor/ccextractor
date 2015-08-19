@@ -28,6 +28,9 @@ enum subtype
 /**
 * Raw Subtitle struct used as output of decoder (cc608)
 * and input for encoder (sami, srt, transcript or smptett etc)
+*
+* if subtype CC_BITMAP then data contain nb_data numbers of rectangle
+* which have to be displayed at same time.
 */
 struct cc_subtitle
 {

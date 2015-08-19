@@ -531,9 +531,9 @@ void* dvbsub_init_decoder(struct dvb_config* cfg)
 
 	return (void*) ctx;
 }
-int dvbsub_close_decoder(void *dvb_ctx)
+int dvbsub_close_decoder(void **dvb_ctx)
 {
-	DVBSubContext *ctx = (DVBSubContext *) dvb_ctx;
+	DVBSubContext *ctx = (DVBSubContext *) *dvb_ctx;
 	DVBSubRegionDisplay *display;
 
 	delete_regions(ctx);
@@ -551,6 +551,10 @@ int dvbsub_close_decoder(void *dvb_ctx)
 		free(display);
 	}
 
+#ifdef ENABLE_OCR
+	delete_ocr(&ctx->ocr_ctx);
+#endif
+	freep(dvb_ctx);
 	return 0;
 }
 
@@ -1436,9 +1440,13 @@ static void dvbsub_parse_display_definition_segment(void *dvb_ctx,
 	}
 }
 
-static int write_dvb_sub(void *dvb_ctx, struct cc_subtitle *sub)
+/**
+ * Write Subtitle in cc_subtitle structure in CC_BITMAP format
+ * when OCR subsystem is present then it also write recognised text in
+ * cc_bitmap ocr_text variable.
+ */
+static int write_dvb_sub(DVBSubContext *ctx, struct cc_subtitle *sub)
 {
-	DVBSubContext *ctx = (DVBSubContext *) dvb_ctx;
 	DVBSubRegion *region;
 	DVBSubRegionDisplay *display;
 	DVBSubCLUT *clut;
@@ -1530,12 +1538,6 @@ static int write_dvb_sub(void *dvb_ctx, struct cc_subtitle *sub)
 		rect++;
 
 	}
-#ifdef DeBUG
-	if (ctx->object_list)
-	{
-		//save_display_set(ctx);
-	}
-#endif
 
 	return 0;
 }
@@ -1567,7 +1569,9 @@ int dvbsub_decode(struct lib_cc_decode *dec_ctx, const unsigned char *buf, int b
 	p = buf;
 	p_end = buf + buf_size;
 
+	dec_ctx->timing->current_tref = 0;
 	set_fts(dec_ctx->timing);
+
 	while (p_end - p >= 6 && *p == 0x0f)
 	{
 		p += 1;
@@ -1611,7 +1615,7 @@ int dvbsub_decode(struct lib_cc_decode *dec_ctx, const unsigned char *buf, int b
 						segment_length);
 				break;
 			case DVBSUB_DISPLAY_SEGMENT:
-				write_dvb_sub(ctx,sub);
+				write_dvb_sub(ctx, sub);
 				got_segment |= 16;
 				break;
 			default:
@@ -1627,7 +1631,7 @@ int dvbsub_decode(struct lib_cc_decode *dec_ctx, const unsigned char *buf, int b
 	// segments then we need no further data.
 	if (got_segment == 15)
 	{
-		write_dvb_sub(ctx,sub);
+		write_dvb_sub(ctx, sub);
 
 
 	}

@@ -3,6 +3,7 @@
 #include "ccx_encoders_common.h"
 #include "utility.h"
 #include "ccx_encoders_helpers.h"
+#include "ocr.h"
 
 /* The timing here is not PTS based, but output based, i.e. user delay must be accounted for
    if there is any */
@@ -87,6 +88,8 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	char timeline[128];
 	int len = 0;
 	int used;
+	int i = 0;
+	char *str;
 
 	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
 	{
@@ -110,8 +113,8 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	if(sub->flags & SUB_EOD_MARKER)
 		context->prev_start =  sub->start_time;
 
-	rect = sub->data;
-	if (rect[0].ocr_text && *(rect[0].ocr_text))
+	str = paraof_ocrtext(sub);
+	if (str)
 	{
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 		{
@@ -125,14 +128,20 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 				h1,m1,s1,ms1, h2,m2,s2,ms2);
 			used = encode_line(context, context->buffer,(unsigned char *) timeline);
 			write (context->out->fh, context->buffer, used);
-			len = strlen(rect[0].ocr_text);
-			write (context->out->fh, rect[0].ocr_text, len);
+			len = strlen(str);
+			write (context->out->fh, str, len);
 			write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		}
+	}
+	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
+	{
+		freep(rect->data);
+		freep(rect->data+1);
 	}
 #endif
 	sub->nb_data = 0;
 	freep(&sub->data);
+	freep(&str);
 	return ret;
 
 }

@@ -121,6 +121,10 @@ struct TeletextCtx
 	transmission_mode_t transmission_mode;
 	// flag indicating if incoming data should be processed or ignored
 	uint8_t receiving_data;
+
+	uint8_t using_pts;
+	int64_t delta;
+	uint32_t t0;
 };
 typedef enum
 {
@@ -1242,13 +1246,10 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	uint64_t pes_prefix;
 	uint8_t pes_stream_id;
 	uint16_t pes_packet_length;
-	uint8_t optional_pes_header_included;
-	uint16_t optional_pes_header_length;
-	static uint8_t using_pts = UNDEF;
+	uint8_t optional_pes_header_included = NO;
+	uint16_t optional_pes_header_length = 0;
 	uint32_t t = 0;
 	uint16_t i;
-	static int64_t delta = 0;
-	static uint32_t t0 = 0;
 	struct TeletextCtx *ctx = dec_ctx->private_data;
 
 	if(!ctx)
@@ -1282,10 +1283,9 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 		return CCX_OK;
 
 	// truncate incomplete PES packets
-	if (pes_packet_length > size) pes_packet_length = size;
+	if (pes_packet_length > size)
+		pes_packet_length = size;
 
-	optional_pes_header_included = NO;
-	optional_pes_header_length = 0;
 	// optional PES header marker bits (10.. ....)
 	if ((buffer[6] & 0xc0) == 0x80)
 	{
@@ -1294,22 +1294,22 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	}
 
 	// should we use PTS or PCR?
-	if (using_pts == UNDEF)
+	if (ctx->using_pts == UNDEF)
 	{
 		if ((optional_pes_header_included == YES) && ((buffer[7] & 0x80) > 0))
 		{
-			using_pts = YES;
+			ctx->using_pts = YES;
 			dbg_print (CCX_DMT_TELETEXT, "- PID 0xbd PTS available\n");
 		}
 		else
 		{
-			using_pts = NO;
+			ctx->using_pts = NO;
 			dbg_print (CCX_DMT_TELETEXT, "- PID 0xbd PTS unavailable, using TS PCR\n");
 		}
 	}
 
 	// If there is no PTS available, use global PCR
-	if (using_pts == NO)
+	if (ctx->using_pts == NO)
 	{
 		t = ctx->global_timestamp;
 	}
@@ -1333,26 +1333,26 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	if (ctx->states.pts_initialized == NO)
 	{
 		if (utc_refvalue == UINT64_MAX)
-			delta = 0 - (uint64_t)t;
+			ctx->delta = 0 - (uint64_t)t;
 		else
-			delta = (uint64_t) (1000 * utc_refvalue - t);
-		t0 = t;
+			ctx->delta = (uint64_t) (1000 * utc_refvalue - t);
+		ctx->t0 = t;
 
 		ctx->states.pts_initialized = YES;
-		if ((using_pts == NO) && (ctx->global_timestamp == 0))
+		if ((ctx->using_pts == NO) && (ctx->global_timestamp == 0))
 		{
 			// We are using global PCR, nevertheless we still have not received valid PCR timestamp yet
 			ctx->states.pts_initialized = NO;
 		}
 	}
-	if (t < t0)
-		delta = ctx->last_timestamp;
-	ctx->last_timestamp = t + delta;
-	if (delta < 0 && ctx->last_timestamp > t)
+	if (t < ctx->t0)
+		ctx->delta = ctx->last_timestamp;
+	ctx->last_timestamp = t + ctx->delta;
+	if (ctx->delta < 0 && ctx->last_timestamp > t)
 	{
 		ctx->last_timestamp = 0;
 	}
-	t0 = t;
+	ctx->t0 = t;
 
 	// skip optional PES header and process each 46-byte teletext packet
 	i = 7;
@@ -1420,6 +1420,10 @@ void* telxcc_init(void)
 	ctx->tlt_packet_counter = 0;
 	ctx->transmission_mode = TRANSMISSION_MODE_SERIAL;
 	ctx->receiving_data = NO;
+
+	ctx->using_pts = UNDEF;
+	ctx->delta = 0;
+	ctx->t0 = 0;
 
 	return ctx;
 }

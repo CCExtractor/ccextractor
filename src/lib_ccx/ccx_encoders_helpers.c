@@ -370,6 +370,9 @@ int add_built_in_words(void)
 * @param size size of each element
 * @param compar Comparison function, which is called with three argument
 *               that point to the objects being compared and arg.
+*		compare Funtion should return an integer less than, equal to,
+*		or greater than zero if p1 is found, respectively, to be less than,
+*		to match, or be greater than p2.
 * @param arg argument passed as it is, to compare function
 */
 void shell_sort(void *base, int nb, size_t size, int(*compar)(const void*p1, const void *p2, void*arg), void *arg)

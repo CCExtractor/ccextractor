@@ -658,11 +658,12 @@ void general_loop(struct lib_ccx_ctx *ctx)
 	struct demuxer_data *data_node = NULL;
 	int ret;
 
+	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
+
 	if(stream_mode == CCX_SM_TRANSPORT && ctx->write_format == CCX_OF_NULL)
 		ctx->multiprogram = 1;
 
 	end_of_file = 0;
-	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 	while (!end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE)
 	{
 

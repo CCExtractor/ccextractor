@@ -43,7 +43,7 @@ sudo make install
 sudo ldconfig
 
  Note: 
-1) CCExtractor is tested with Tesseract 3.02.02 version. 
+1) CCExtractor is tested with Tesseract 3.04 version but it works with older versions. 
 
 you can download tesseract from https://drive.google.com/folderview?id=0B7l10Bj_LprhQnpSRkpGMGV2eE0&usp=sharing
 
@@ -57,11 +57,8 @@ make ENABLE_OCR=yes
 How to compile ccextractor  on Windows with OCR
 ===============================================
 
-Download prebuild library of leptonica from following link
-http://www.leptonica.com/source/leptonica-1.68-win32-lib-include-dirs.zip
-
-Download prebuild library of tesseract from following tesseract official link
-https://code.google.com/p/tesseract-ocr/downloads/detail?name=tesseract-3.02.02-win32-lib-include-dirs.zip
+Download prebuild library of leptonica and tesseract from following link
+https://drive.google.com/file/d/0B2ou7ZfB-2nZOTRtc3hJMHBtUFk/view?usp=sharing
 
 put the path of libs/include of leptonica and tesseract in library paths.
 step 1) In visual studio 2013 right click <Project> and select property.
@@ -85,12 +82,12 @@ Step 2)Select Configuration properties
 Step 3)Select Linker in left panel(column)
 Step 4)Select Input
 Step 5)Select Additional dependencies in right panel
-Step 6)Add libtesseract302.lib in new line
-Step 7)Add liblept168.lib in new line
+Step 6)Add libtesseract304d.lib in new line
+Step 7)Add liblept172.lib in new line
 
 Download language data from following link
 https://code.google.com/p/tesseract-ocr/downloads/list
 after downloading the tesseract-ocr-3.02.eng.tar.gz extract the tar file and put
 tessdata folder where you have kept ccextractor executable
 
-Copy the tesseract and leptonica dll in the folder of executable or in system32.
+Copy the tesseract and leptonica dll from lib folder downloaded from above link to folder of executable or in system32.
