@@ -309,8 +309,10 @@ int main(int argc, char *argv[])
 		// counters.
 		if (cb_field1!=0)
 			fts_global += cb_field1*1001/3;
-		else
+		else if (cb_field2!=0)
 			fts_global += cb_field2*1001/3;
+		else
+			fts_global += cb_708*1001/3;
 		// Reset counters - This is needed if some captions are still buffered
 		// and need to be written after the last file is processed.		
 		cb_field1 = 0; cb_field2 = 0; cb_708 = 0;
