@@ -240,9 +240,11 @@ LLONG get_fts(void)
 			fts = fts_now + fts_global + cb_708*1001/30;
 			break;
 		default:
-			ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "Cannot be reached!");
+			ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "get_fts: unhandled branch");
 	}
-
+//	ccx_common_logging.debug_ftn(CCX_DMT_TIME, "[FTS] "
+//			"fts: %llu, fts_now: %llu, fts_global: %llu, current_field: %llu, cb_708: %llu\n",
+//								 fts, fts_now, fts_global, current_field, cb_708);
 	return fts;
 }
 
