@@ -105,10 +105,7 @@ void ccx_dtvcc_write_srt(dtvcc_service_decoder *decoder)
 	if (_dtvcc_is_caption_empty(decoder))
 		return;
 
-	LLONG ms_start = decoder->current_visible_start_ms + decoder->subs_delay;
-	LLONG ms_end = get_visible_end() + decoder->subs_delay - 1; //-1 to prevent overlap
-
-	if (ms_start < 0) // Drop screens that because of subs_delay start too early
+	if (decoder->tv->time_ms_show + decoder->subs_delay < 0)
 		return;
 
 	decoder->cc_count++;
@@ -117,9 +114,11 @@ void ccx_dtvcc_write_srt(dtvcc_service_decoder *decoder)
 	memset(buf, 0, INITIAL_ENC_BUFFER_CAPACITY);
 
 	sprintf(buf, "%u\r\n", decoder->cc_count);
-	mstime_sprintf(ms_start, "%02u:%02u:%02u,%03u", buf + strlen(buf));
+	mstime_sprintf(decoder->tv->time_ms_show + decoder->subs_delay,
+				   "%02u:%02u:%02u,%03u", buf + strlen(buf));
 	sprintf(buf + strlen(buf), " --> ");
-	mstime_sprintf(ms_end, "%02u:%02u:%02u,%03u", buf + strlen(buf));
+	mstime_sprintf(decoder->tv->time_ms_hide + decoder->subs_delay,
+				   "%02u:%02u:%02u,%03u", buf + strlen(buf));
 	sprintf(buf + strlen(buf), (char *) encoder->encoded_crlf);
 
 	write(decoder->fh, buf, strlen(buf));
@@ -142,8 +141,8 @@ void ccx_dtvcc_write_debug(dtvcc_service_decoder *decoder)
 	char tbuf1[SUBLINESIZE],
 			tbuf2[SUBLINESIZE];
 
-	print_mstime2buf(decoder->current_visible_start_ms, tbuf1);
-	print_mstime2buf(get_visible_end(), tbuf2);
+	print_mstime2buf(decoder->tv->time_ms_show + decoder->subs_delay, tbuf1);
+	print_mstime2buf(decoder->tv->time_ms_hide + decoder->subs_delay, tbuf2);
 
 	ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "\r%s --> %s\n", tbuf1, tbuf2);
 	for (int i = 0; i < DTVCC_SCREENGRID_ROWS; i++)
@@ -166,10 +165,7 @@ void ccx_dtvcc_write_transcript(dtvcc_service_decoder *decoder)
 	if (_dtvcc_is_caption_empty(decoder))
 		return;
 
-	LLONG ms_start = decoder->current_visible_start_ms + decoder->subs_delay;
-	LLONG ms_end = get_visible_end() + decoder->subs_delay - 1; //-1 to prevent overlap
-
-	if (ms_start < 0) // Drop screens that because of subs_delay start too early
+	if (decoder->tv->time_ms_show + decoder->subs_delay < 0) // Drop screens that because of subs_delay start too early
 		return;
 
 	decoder->cc_count++;
@@ -183,10 +179,12 @@ void ccx_dtvcc_write_transcript(dtvcc_service_decoder *decoder)
 			buf[0] = 0;
 
 			if (encoder->transcript_settings->showStartTime)
-				mstime_sprintf(ms_start, "%02u:%02u:%02u,%03u|", buf + strlen(buf));
+				mstime_sprintf(decoder->tv->time_ms_show + decoder->subs_delay,
+							   "%02u:%02u:%02u,%03u|", buf + strlen(buf));
 
 			if (encoder->transcript_settings->showEndTime)
-				mstime_sprintf(ms_end, "%02u:%02u:%02u,%03u|", buf + strlen(buf));
+				mstime_sprintf(decoder->tv->time_ms_hide + decoder->subs_delay,
+							   "%02u:%02u:%02u,%03u|", buf + strlen(buf));
 
 			if (encoder->transcript_settings->showCC)
 				sprintf(buf + strlen(buf), "CC1|"); //always CC1 because CEA-708 is field-independent
@@ -246,10 +244,7 @@ void ccx_dtvcc_write_sami(dtvcc_service_decoder *decoder)
 	if (_dtvcc_is_caption_empty(decoder))
 		return;
 
-	LLONG ms_start = decoder->current_visible_start_ms + decoder->subs_delay;
-	LLONG ms_end = get_visible_end() + decoder->subs_delay - 1; //-1 to prevent overlap
-
-	if (ms_start < 0) // Drop screens that because of subs_delay start too early
+	if (decoder->tv->time_ms_show + decoder->subs_delay < 0)
 		return;
 
 	if (!decoder->cc_count)
@@ -261,7 +256,7 @@ void ccx_dtvcc_write_sami(dtvcc_service_decoder *decoder)
 
 	buf[0] = 0;
 	sprintf(buf, "<sync start=%llu><p class=\"unknowncc\">%s",
-			(unsigned long long) ms_start,
+			(unsigned long long) decoder->tv->time_ms_show + decoder->subs_delay,
 			encoder->encoded_crlf);
 	write(decoder->fh, buf, strlen(buf));
 
@@ -280,7 +275,8 @@ void ccx_dtvcc_write_sami(dtvcc_service_decoder *decoder)
 	_dtvcc_write_tag_close(decoder);
 
 	sprintf(buf, "<sync start=%llu><p class=\"unknowncc\">&nbsp;</p></sync>%s%s",
-			(unsigned long long) ms_end, encoder->encoded_crlf, encoder->encoded_crlf);
+			(unsigned long long) decoder->tv->time_ms_hide + decoder->subs_delay,
+			encoder->encoded_crlf, encoder->encoded_crlf);
 	write(decoder->fh, buf, strlen(buf));
 }
 
