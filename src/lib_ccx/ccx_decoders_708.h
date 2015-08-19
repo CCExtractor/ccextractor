@@ -17,7 +17,7 @@
 #define DTVCC_MAX_CHARSET_LENGTH 24
 
 #define DTVCC_MAX_ROWS 15
-#define DTVCC_MAX_COLUMNS 45*UTF8_MAX_BYTES + 1
+#define DTVCC_MAX_COLUMNS (45*UTF8_MAX_BYTES + 1)
 
 #define DTVCC_SCREENGRID_ROWS 75
 #define DTVCC_SCREENGRID_COLUMNS 210
@@ -282,6 +282,8 @@ typedef struct dtvcc_window
 	unsigned char *rows[DTVCC_MAX_ROWS + 1]; // Max is 15, but we define an extra one for convenience
 	int memory_reserved;
 	int is_empty;
+	LLONG time_ms_show;
+	LLONG time_ms_hide;
 } dtvcc_window;
 
 typedef struct dtvcc_tv_screen
@@ -289,6 +291,9 @@ typedef struct dtvcc_tv_screen
 	unsigned char chars[DTVCC_SCREENGRID_ROWS][DTVCC_SCREENGRID_COLUMNS + 1];
 	dtvcc_pen_attribs pen;
 	dtvcc_pen_color pen_color;
+
+	LLONG time_ms_show;
+	LLONG time_ms_hide;
 } dtvcc_tv_screen;
 
 typedef struct dtvcc_service_decoder
@@ -296,7 +301,6 @@ typedef struct dtvcc_service_decoder
 	dtvcc_window windows[DTVCC_MAX_WINDOWS];
 	int current_window;
 	int inited;
-	LLONG current_visible_start_ms;
 	dtvcc_tv_screen tv1, tv2; // Current and previous "screenfuls", note that we switch between them
 	int is_empty_tv1, is_empty_tv2;
 	int cur_tv; // 1 or 2 rather than 0 or 1, to at least be consistent with the decoder
