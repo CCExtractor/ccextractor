@@ -1,6 +1,9 @@
 0.78 (--)
 -----------------
 - Support to extract Closed Caption from MultiProgram at once
+- CEA-708: exporting to SAMI (.smi), Transcript (.txt), Timed Transcript (ttxt) and SubRip (.srt)
+- CEA-708: 16 bit charset support (tested on Korean)
+- CEA-708: Roll Up captions handling
 
 0.77 (2015-06-20)
 -----------------

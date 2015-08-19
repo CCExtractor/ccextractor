@@ -29,13 +29,16 @@ To do:
   though. No samples, no support.
 - A few commands are not yet supported, specifically those related
   to delay. 
+- Detect and extract captions from MP4 (MOV) files, handled by gpacmp4
 
 Done (18.08.2015):
 
 - Major refactoring
 - Librarized as much as possible (global vars moved to dtvcc context)
-- 16 bit charset support added
+- Added some control commands support
+- 16 bit charset support added (not "moved everything to 16-bit", but they could be successfully exported)
 - SAMI output added
 - Transcript output added
 - Timed transcript output added
-- Added colour support
+- Added colour support (only one colour/style can be applied for the whole screen at the moment)
+- Roll up captions handling
