@@ -44,20 +44,19 @@ void _dtvcc_color_to_hex(int color, unsigned *hR, unsigned *hG, unsigned *hB)
 void _dtvcc_write_tag_open(dtvcc_service_decoder *decoder)
 {
 	struct encoder_ctx *encoder = ccx_dtvcc_ctx.encoder;
-	dtvcc_window *window = &decoder->windows[decoder->current_window];
 	char *buf = (char *) encoder->buffer;
 	size_t buf_len = 0;
 
-	if (window->pen.italic)
+	if (decoder->tv->pen.italic)
 		buf_len += sprintf(buf + buf_len, "<i>");
 
-	if (window->pen.underline)
+	if (decoder->tv->pen.underline)
 		buf_len += sprintf(buf + buf_len, "<u>");
 
-	if (window->pen_color.fg_color != 0x3f && !encoder->no_font_color) //assuming white is default
+	if (decoder->tv->pen_color.fg_color != 0x3f && !encoder->no_font_color) //assuming white is default
 	{
 		unsigned red, green, blue;
-		_dtvcc_color_to_hex(window->pen_color.fg_color, &red, &green, &blue);
+		_dtvcc_color_to_hex(decoder->tv->pen_color.fg_color, &red, &green, &blue);
 		red = (255 / 3) * red;
 		green = (255 / 3) * green;
 		blue = (255 / 3) * blue;
@@ -69,17 +68,16 @@ void _dtvcc_write_tag_open(dtvcc_service_decoder *decoder)
 void _dtvcc_write_tag_close(dtvcc_service_decoder *decoder)
 {
 	struct encoder_ctx *encoder = ccx_dtvcc_ctx.encoder;
-	dtvcc_window *window = &decoder->windows[decoder->current_window];
 	char *buf = (char *) encoder->buffer;
 	size_t buf_len = 0;
 
-	if (window->pen_color.fg_color != 0x3f && !encoder->no_font_color)
+	if (decoder->tv->pen_color.fg_color != 0x3f && !encoder->no_font_color)
 		buf_len += sprintf(buf + buf_len, "</font>");
 
-	if (window->pen.underline)
+	if (decoder->tv->pen.underline)
 		buf_len += sprintf(buf + buf_len, "</u>");
 
-	if (window->pen.italic)
+	if (decoder->tv->pen.italic)
 		buf_len += sprintf(buf + buf_len, "</i>");
 
 	write(decoder->fh, buf, buf_len);

@@ -289,9 +289,10 @@ void _dtvcc_screen_update(dtvcc_service_decoder *decoder, int toggled)
 				CCX_DMT_708, "[CEA-708] %d*%d will be copied to the TV.\n", copyrows, copycols);
 
 		for (int j = 0; j < copyrows; j++)
-		{
 			memcpy(decoder->tv->chars[top + j], wnd[i]->rows[j], copycols * sizeof(unsigned char));
-		}
+		decoder->tv->pen = wnd[i]->pen;
+		decoder->tv->pen_color = wnd[i]->pen_color;
+
 		if (!toggled) //TODO handle rolling
 			_dtvcc_window_clear(decoder, wnd[i]->number);
 	}
@@ -662,7 +663,7 @@ void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id
 	}
 	// ...also makes the defined windows the current window (setCurrentWindow)
 	dtvcc_handle_CWx_SetCurrentWindow(decoder, window_idx);
-	memcpy (decoder->windows[window_idx].commands, data + 1, 6);
+	memcpy(decoder->windows[window_idx].commands, data + 1, 6);
 }
 
 void dtvcc_handle_SWA_SetWindowAttributes(dtvcc_service_decoder *decoder, unsigned char *data)

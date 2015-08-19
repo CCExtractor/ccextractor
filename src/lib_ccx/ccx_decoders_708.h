@@ -287,6 +287,8 @@ typedef struct dtvcc_window
 typedef struct dtvcc_tv_screen
 {
 	unsigned char chars[DTVCC_SCREENGRID_ROWS][DTVCC_SCREENGRID_COLUMNS + 1];
+	dtvcc_pen_attribs pen;
+	dtvcc_pen_color pen_color;
 } dtvcc_tv_screen;
 
 typedef struct dtvcc_service_decoder
