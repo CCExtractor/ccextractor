@@ -42,7 +42,7 @@ INSTLALL_PROGRAM = $(INSTLALL)
 DESTDIR = /usr/bin
 
 ifeq ($(ENABLE_OCR),yes)
-CFLAGS+=-DENABLE_OCR
+CFLAGS+=-DENABLE_OCR -DPNG_NO_CONFIG_H
 TESS_LDFLAGS+= $(shell pkg-config --libs tesseract)
 LEPT_LDFLAGS+= $(shell pkg-config --libs lept)
 
