@@ -8,7 +8,8 @@
 
 void dinit_write(struct ccx_s_write *wb)
 {
-	close(wb->fh);
+	if (wb->fh > 0)
+		close(wb->fh);
 	freep(&wb->filename);	
 }
 int init_write (struct ccx_s_write *wb,char *filename)

@@ -803,6 +803,13 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 		mprint ("Sending captions to stdout.\n");
 	}
 
+	if (cfg->send_to_srv == CCX_TRUE)
+	{
+		ctx->out[0].fh = -1;
+		ctx->out[0].filename = NULL;
+
+		connect_to_srv(ccx_options.srv_addr, ccx_options.srv_port, ccx_options.tcp_desc, ccx_options.tcp_password);
+	}
 
 	if(ret)
 	{

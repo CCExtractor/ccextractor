@@ -151,7 +151,7 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 		return -1;
 	}
 
-	nanosleep((struct timespec[]){{0, 4000000}}, NULL);
+	/* nanosleep((struct timespec[]){{0, 4000000}}, NULL); */
 	/* Sleep(100); */
 	return 1;
 }
@@ -522,7 +522,7 @@ int start_tcp_srv(const char *port, const char *pwd)
 
 		free(cliaddr);
 
-		if (pwd == NULL || (rc = check_password(sockfd, pwd)) > 0)
+		if (check_password(sockfd, pwd) > 0)
 			break;
 
 		mprint("Connection closed\n");
@@ -544,17 +544,18 @@ int start_tcp_srv(const char *port, const char *pwd)
 
 int check_password(int fd, const char *pwd)
 {
-	assert(pwd != NULL);
-
 	char c;
 	int rc;
-	size_t len;
-	char buf[BUFFER_SIZE];
+	size_t len = BUFFER_SIZE;
+	static char buf[BUFFER_SIZE + 1];
 
 	if ((rc = read_block(fd, &c, buf, &len)) <= 0)
 		return rc;
 
 	buf[len] = '\0';
+
+	if (pwd == NULL)
+		return 1;
 
 	if (c == PASSWORD && strcmp(pwd, buf) == 0) {
 		return 1;
