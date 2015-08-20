@@ -72,12 +72,6 @@ int main(int argc, char *argv[])
 		tlt_config.page = ((tlt_config.page / 100) << 8) | (((tlt_config.page / 10) % 10) << 4) | (tlt_config.page % 10);
 	}
 
-
-	if (ccx_options.send_to_srv)
-	{
-		connect_to_srv(ccx_options.srv_addr, ccx_options.srv_port, ccx_options.tcp_desc, ccx_options.tcp_password);
-	}
-
 	if (ccx_options.transcript_settings.xds)
 	{
 		if (ccx_options.write_format != CCX_OF_TRANSCRIPT)
