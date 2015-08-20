@@ -151,7 +151,7 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 		return -1;
 	}
 
-	/* nanosleep((struct timespec[]){{0, 4000000}}, NULL); */
+	nanosleep((struct timespec[]){{0, 4000000}}, NULL);
 	/* Sleep(100); */
 	return 1;
 }
@@ -286,6 +286,18 @@ int net_tcp_read(int socket, void *buffer, size_t length)
 {
 	assert(buffer != NULL);
 	assert(length > 0);
+
+	time_t now = time(NULL);
+	static time_t last_ping = 0;
+	if (last_ping == 0)
+		last_ping = now;
+
+	if (now - last_ping > PING_INTERVAL)
+	{
+		last_ping = now;
+		if (write_byte(socket, PING) <= 0)
+			fatal(EXIT_FAILURE, "Unable to send keep-alive packet to client\n");
+	}
 
 	int rc;
 	char c;
