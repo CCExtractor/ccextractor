@@ -40,21 +40,21 @@ void _dtvcc_color_to_hex(int color, unsigned *hR, unsigned *hG, unsigned *hB)
 								 color, color, *hR, *hG, *hB);
 }
 
-void _dtvcc_write_tag_open(dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
+void _dtvcc_write_tag_open(dtvcc_service_decoder *decoder, struct encoder_ctx *encoder, int row_index)
 {
 	char *buf = (char *) encoder->buffer;
 	size_t buf_len = 0;
 
-	if (decoder->tv->pen.italic)
+	if (decoder->tv->pen_attribs[row_index].italic)
 		buf_len += sprintf(buf + buf_len, "<i>");
 
-	if (decoder->tv->pen.underline)
+	if (decoder->tv->pen_attribs[row_index].underline)
 		buf_len += sprintf(buf + buf_len, "<u>");
 
-	if (decoder->tv->pen_color.fg_color != 0x3f && !encoder->no_font_color) //assuming white is default
+	if (decoder->tv->pen_colors[row_index].fg_color != 0x3f && !encoder->no_font_color) //assuming white is default
 	{
 		unsigned red, green, blue;
-		_dtvcc_color_to_hex(decoder->tv->pen_color.fg_color, &red, &green, &blue);
+		_dtvcc_color_to_hex(decoder->tv->pen_colors[row_index].fg_color, &red, &green, &blue);
 		red = (255 / 3) * red;
 		green = (255 / 3) * green;
 		blue = (255 / 3) * blue;
@@ -63,18 +63,18 @@ void _dtvcc_write_tag_open(dtvcc_service_decoder *decoder, struct encoder_ctx *e
 	write(decoder->fh, buf, buf_len);
 }
 
-void _dtvcc_write_tag_close(dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
+void _dtvcc_write_tag_close(dtvcc_service_decoder *decoder, struct encoder_ctx *encoder, int row_index)
 {
 	char *buf = (char *) encoder->buffer;
 	size_t buf_len = 0;
 
-	if (decoder->tv->pen_color.fg_color != 0x3f && !encoder->no_font_color)
+	if (decoder->tv->pen_colors[row_index].fg_color != 0x3f && !encoder->no_font_color)
 		buf_len += sprintf(buf + buf_len, "</font>");
 
-	if (decoder->tv->pen.underline)
+	if (decoder->tv->pen_attribs[row_index].underline)
 		buf_len += sprintf(buf + buf_len, "</u>");
 
-	if (decoder->tv->pen.italic)
+	if (decoder->tv->pen_attribs[row_index].italic)
 		buf_len += sprintf(buf + buf_len, "</i>");
 
 	write(decoder->fh, buf, buf_len);
@@ -121,9 +121,9 @@ void ccx_dtvcc_write_srt(dtvcc_service_decoder *decoder, struct encoder_ctx *enc
 	{
 		if (!_dtvcc_is_row_empty(decoder, i))
 		{
-			_dtvcc_write_tag_open(decoder, encoder);
+			_dtvcc_write_tag_open(decoder, encoder, i);
 			_dtvcc_write_row(decoder, i, encoder);
-			_dtvcc_write_tag_close(decoder, encoder);
+			_dtvcc_write_tag_close(decoder, encoder, i);
 			write(decoder->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
 	}
@@ -248,19 +248,17 @@ void ccx_dtvcc_write_sami(dtvcc_service_decoder *decoder, struct encoder_ctx *en
 			encoder->encoded_crlf);
 	write(decoder->fh, buf, strlen(buf));
 
-	_dtvcc_write_tag_open(decoder, encoder);
-
 	for (int i = 0; i < DTVCC_SCREENGRID_ROWS; i++)
 	{
 		if (!_dtvcc_is_row_empty(decoder, i))
 		{
+			_dtvcc_write_tag_open(decoder, encoder, i);
 			_dtvcc_write_row(decoder, i, encoder);
+			_dtvcc_write_tag_close(decoder, encoder, i);
 			write(decoder->fh, encoder->encoded_br, encoder->encoded_br_length);
 			write(decoder->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
 	}
-
-	_dtvcc_write_tag_close(decoder, encoder);
 
 	sprintf(buf, "<sync start=%llu><p class=\"unknowncc\">&nbsp;</p></sync>%s%s",
 			(unsigned long long) decoder->tv->time_ms_hide + decoder->subs_delay,

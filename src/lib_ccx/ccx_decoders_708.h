@@ -274,11 +274,11 @@ typedef struct dtvcc_window
 	int win_style;
 	unsigned char commands[6]; // Commands used to create this window
 	dtvcc_window_attribs attribs;
-	dtvcc_pen_attribs pen;
-	dtvcc_pen_color pen_color;
 	int pen_row;
 	int pen_column;
 	unsigned char *rows[DTVCC_MAX_ROWS + 1]; // Max is 15, but we define an extra one for convenience
+	dtvcc_pen_color pen_colors[DTVCC_MAX_ROWS + 1];
+	dtvcc_pen_attribs pen_attribs[DTVCC_MAX_ROWS + 1];
 	int memory_reserved;
 	int is_empty;
 	LLONG time_ms_show;
@@ -288,8 +288,8 @@ typedef struct dtvcc_window
 typedef struct dtvcc_tv_screen
 {
 	unsigned char chars[DTVCC_SCREENGRID_ROWS][DTVCC_SCREENGRID_COLUMNS + 1];
-	dtvcc_pen_attribs pen;
-	dtvcc_pen_color pen_color;
+	dtvcc_pen_color pen_colors[DTVCC_SCREENGRID_ROWS];
+	dtvcc_pen_attribs pen_attribs[DTVCC_SCREENGRID_ROWS];
 
 	LLONG time_ms_show;
 	LLONG time_ms_hide;

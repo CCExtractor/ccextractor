@@ -82,6 +82,27 @@ struct DTVCC_S_COMMANDS_C1 DTVCC_COMMANDS_C1[32] =
 	{DF7, "DF7", "DefineWindow7",         7}
 };
 
+
+dtvcc_pen_color dtvcc_default_pen_color =
+{
+	0,
+	0,
+	0,
+	0,
+	0
+};
+
+dtvcc_pen_attribs dtvcc_default_pen_attribs =
+{
+	pensize_standard,
+	0,
+	texttag_undefined_12,
+	0,
+	edgetype_none,
+	0,
+	0
+};
+
 //---------------------------------- HELPERS ------------------------------------
 
 void _dtvcc_clear_packet(ccx_dtvcc_ctx_t *ctx)
@@ -114,7 +135,11 @@ int _dtvcc_decoder_has_visible_windows(dtvcc_service_decoder *decoder)
 void _dtvcc_window_clear_row(dtvcc_window *window, int row_index)
 {
 	if (window->memory_reserved)
+	{
 		memset(window->rows[row_index], ' ', DTVCC_MAX_COLUMNS);
+		window->pen_attribs[row_index] = dtvcc_default_pen_attribs;
+		window->pen_colors[row_index] = dtvcc_default_pen_color;
+	}
 }
 
 void _dtvcc_window_clear_text(dtvcc_window *window)
@@ -356,10 +381,11 @@ void _dtvcc_window_copy_to_screen(dtvcc_service_decoder *decoder, dtvcc_window *
 			CCX_DMT_708, "[CEA-708] %d*%d will be copied to the TV.\n", copyrows, copycols);
 
 	for (int j = 0; j < copyrows; j++)
+	{
 		memcpy(decoder->tv->chars[top + j], window->rows[j], copycols * sizeof(unsigned char));
-
-	decoder->tv->pen = window->pen;
-	decoder->tv->pen_color = window->pen_color;
+		decoder->tv->pen_attribs[top + j] = window->pen_attribs[j];
+		decoder->tv->pen_colors[top + j] = window->pen_colors[j];
+	}
 
 	_dtvcc_screen_update_time_show(decoder->tv, window->time_ms_show);
 	_dtvcc_screen_update_time_hide(decoder->tv, window->time_ms_hide);
@@ -441,7 +467,12 @@ void _dtvcc_process_etx(dtvcc_service_decoder *decoder)
 void _dtvcc_window_rollup(dtvcc_service_decoder *decoder, dtvcc_window *window)
 {
 	for (int i = 0; i < window->row_count - 1; i++)
+	{
 		memcpy(window->rows[i], window->rows[i + 1], DTVCC_MAX_COLUMNS);
+		window->pen_colors[i] = window->pen_colors[i + 1];
+		window->pen_attribs[i] = window->pen_attribs[i + 1];
+	}
+
 	_dtvcc_window_clear_row(window, window->row_count - 1);
 }
 
@@ -944,13 +975,23 @@ void dtvcc_handle_SPA_SetPenAttributes(dtvcc_service_decoder *decoder, unsigned 
 	}
 
 	dtvcc_window *window = &decoder->windows[decoder->current_window];
-	window->pen.pen_size = pen_size;
-	window->pen.offset = offset;
-	window->pen.text_tag = text_tag;
-	window->pen.font_tag = font_tag;
-	window->pen.edge_type = edge_type;
-	window->pen.underline = underline;
-	window->pen.italic = italic;
+
+	if (window->pen_row == -1)
+	{
+		ccx_common_logging.log_ftn("[CEA-708] dtvcc_handle_SPA_SetPenAttributes: "
+										   "can't set pen attribs for undefined row\n");
+		return;
+	}
+
+	dtvcc_pen_attribs *pen = &window->pen_attribs[window->pen_row];
+
+	pen->pen_size = pen_size;
+	pen->offset = offset;
+	pen->text_tag = text_tag;
+	pen->font_tag = font_tag;
+	pen->edge_type = edge_type;
+	pen->underline = underline;
+	pen->italic = italic;
 }
 
 void dtvcc_handle_SPC_SetPenColor(dtvcc_service_decoder *decoder, unsigned char *data)
@@ -978,11 +1019,21 @@ void dtvcc_handle_SPC_SetPenColor(dtvcc_service_decoder *decoder, unsigned char 
 	}
 
 	dtvcc_window *window = &decoder->windows[decoder->current_window];
-	window->pen_color.fg_color = fg_color;
-	window->pen_color.fg_opacity = fg_opacity;
-	window->pen_color.bg_color = bg_color;
-	window->pen_color.bg_opacity = bg_opacity;
-	window->pen_color.edge_color = edge_color;
+
+	if (window->pen_row == -1)
+	{
+		ccx_common_logging.log_ftn("[CEA-708] dtvcc_handle_SPA_SetPenAttributes: "
+										   "can't set pen color for undefined row\n");
+		return;
+	}
+
+	dtvcc_pen_color *color = &window->pen_colors[window->pen_row];
+
+	color->fg_color = fg_color;
+	color->fg_opacity = fg_opacity;
+	color->bg_color = bg_color;
+	color->bg_opacity = bg_opacity;
+	color->edge_color = edge_color;
 }
 
 void dtvcc_handle_SPL_SetPenLocation(dtvcc_service_decoder *decoder, unsigned char *data)
