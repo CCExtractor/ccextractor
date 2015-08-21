@@ -407,6 +407,12 @@ void _dtvcc_screen_print(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder)
 
 void _dtvcc_process_hcr(dtvcc_service_decoder *decoder)
 {
+	if (decoder->current_window == -1)
+	{
+		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_handle_G0: Window has to be defined first\n");
+		return;
+	}
+
 	dtvcc_window *window = &decoder->windows[decoder->current_window];
 	window->pen_column = 0;
 	_dtvcc_window_clear_row(window, window->pen_row);
@@ -414,6 +420,11 @@ void _dtvcc_process_hcr(dtvcc_service_decoder *decoder)
 
 void _dtvcc_process_ff(dtvcc_service_decoder *decoder)
 {
+	if (decoder->current_window == -1)
+	{
+		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_handle_G0: Window has to be defined first\n");
+		return;
+	}
 	dtvcc_window *window = &decoder->windows[decoder->current_window];
 	window->pen_column = 0;
 	window->pen_row = 0;
@@ -441,7 +452,7 @@ void _dtvcc_process_cr(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder)
 		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_handle_G0: Window has to be defined first\n");
 		return;
 	}
-	
+
 	dtvcc_window *window = &decoder->windows[decoder->current_window];
 
 	int rollup_required = 0;
