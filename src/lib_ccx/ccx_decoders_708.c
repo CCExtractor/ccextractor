@@ -409,7 +409,7 @@ void _dtvcc_process_hcr(dtvcc_service_decoder *decoder)
 {
 	if (decoder->current_window == -1)
 	{
-		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_handle_G0: Window has to be defined first\n");
+		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_process_hcr: Window has to be defined first\n");
 		return;
 	}
 
@@ -422,7 +422,7 @@ void _dtvcc_process_ff(dtvcc_service_decoder *decoder)
 {
 	if (decoder->current_window == -1)
 	{
-		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_handle_G0: Window has to be defined first\n");
+		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_process_ff: Window has to be defined first\n");
 		return;
 	}
 	dtvcc_window *window = &decoder->windows[decoder->current_window];
@@ -449,7 +449,7 @@ void _dtvcc_process_cr(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder)
 {
 	if (decoder->current_window == -1)
 	{
-		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_handle_G0: Window has to be defined first\n");
+		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_process_cr: Window has to be defined first\n");
 		return;
 	}
 
@@ -1033,7 +1033,7 @@ int _dtvcc_handle_C0_P16(dtvcc_service_decoder *decoder, unsigned char *data) //
 {
 	if (decoder->current_window == -1)
 	{
-		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_handle_G0: Window has to be defined first\n");
+		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_handle_C0_P16: Window has to be defined first\n");
 		return 3;
 	}
 
