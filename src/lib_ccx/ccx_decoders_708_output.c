@@ -1,6 +1,5 @@
 #include "ccx_decoders_708_output.h"
-#include "ccx_common_common.h"
-
+#include "ccx_encoders_common.h"
 
 int _dtvcc_is_row_empty(dtvcc_service_decoder *decoder, int row_index)
 {
@@ -41,9 +40,8 @@ void _dtvcc_color_to_hex(int color, unsigned *hR, unsigned *hG, unsigned *hB)
 								 color, color, *hR, *hG, *hB);
 }
 
-void _dtvcc_write_tag_open(dtvcc_service_decoder *decoder)
+void _dtvcc_write_tag_open(dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
-	struct encoder_ctx *encoder = ccx_dtvcc_ctx.encoder;
 	char *buf = (char *) encoder->buffer;
 	size_t buf_len = 0;
 
@@ -65,9 +63,8 @@ void _dtvcc_write_tag_open(dtvcc_service_decoder *decoder)
 	write(decoder->fh, buf, buf_len);
 }
 
-void _dtvcc_write_tag_close(dtvcc_service_decoder *decoder)
+void _dtvcc_write_tag_close(dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
-	struct encoder_ctx *encoder = ccx_dtvcc_ctx.encoder;
 	char *buf = (char *) encoder->buffer;
 	size_t buf_len = 0;
 
@@ -83,9 +80,8 @@ void _dtvcc_write_tag_close(dtvcc_service_decoder *decoder)
 	write(decoder->fh, buf, buf_len);
 }
 
-void _dtvcc_write_row(dtvcc_service_decoder *decoder, int row_index)
+void _dtvcc_write_row(dtvcc_service_decoder *decoder, int row_index, struct encoder_ctx *encoder)
 {
-	struct encoder_ctx *encoder = ccx_dtvcc_ctx.encoder;
 	char *buf = (char *) encoder->buffer;
 	size_t buf_len = 0;
 	memset(buf, 0, INITIAL_ENC_BUFFER_CAPACITY);
@@ -98,10 +94,8 @@ void _dtvcc_write_row(dtvcc_service_decoder *decoder, int row_index)
 	write(decoder->fh, buf, buf_len);
 }
 
-void ccx_dtvcc_write_srt(dtvcc_service_decoder *decoder)
+void ccx_dtvcc_write_srt(dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
-	struct encoder_ctx *encoder = ccx_dtvcc_ctx.encoder;
-
 	if (_dtvcc_is_caption_empty(decoder))
 		return;
 
@@ -127,16 +121,16 @@ void ccx_dtvcc_write_srt(dtvcc_service_decoder *decoder)
 	{
 		if (!_dtvcc_is_row_empty(decoder, i))
 		{
-			_dtvcc_write_tag_open(decoder);
-			_dtvcc_write_row(decoder, i);
-			_dtvcc_write_tag_close(decoder);
+			_dtvcc_write_tag_open(decoder, encoder);
+			_dtvcc_write_row(decoder, i, encoder);
+			_dtvcc_write_tag_close(decoder, encoder);
 			write(decoder->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
 	}
 	write(decoder->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
 }
 
-void ccx_dtvcc_write_debug(dtvcc_service_decoder *decoder)
+void ccx_dtvcc_write_debug(dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
 	char tbuf1[SUBLINESIZE],
 			tbuf2[SUBLINESIZE];
@@ -158,10 +152,8 @@ void ccx_dtvcc_write_debug(dtvcc_service_decoder *decoder)
 	}
 }
 
-void ccx_dtvcc_write_transcript(dtvcc_service_decoder *decoder)
+void ccx_dtvcc_write_transcript(dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
-	struct encoder_ctx *encoder = ccx_dtvcc_ctx.encoder;
-
 	if (_dtvcc_is_caption_empty(decoder))
 		return;
 
@@ -195,16 +187,15 @@ void ccx_dtvcc_write_transcript(dtvcc_service_decoder *decoder)
 			if (strlen(buf))
 				write(decoder->fh, buf, strlen(buf));
 
-			_dtvcc_write_row(decoder, i);
+			_dtvcc_write_row(decoder, i, encoder);
 			write(decoder->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
 	}
 	write(decoder->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
 }
 
-void _dtvcc_write_sami_header(dtvcc_service_decoder *decoder)
+void _dtvcc_write_sami_header(dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
-	struct encoder_ctx *encoder = ccx_dtvcc_ctx.encoder;
 	char *buf = (char *) encoder->buffer;
 	memset(buf, 0, INITIAL_ENC_BUFFER_CAPACITY);
 	size_t buf_len = 0;
@@ -228,19 +219,16 @@ void _dtvcc_write_sami_header(dtvcc_service_decoder *decoder)
 	write(decoder->fh, buf, buf_len);
 }
 
-void _dtvcc_write_sami_footer(dtvcc_service_decoder *decoder)
+void _dtvcc_write_sami_footer(dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
-	struct encoder_ctx *encoder = ccx_dtvcc_ctx.encoder;
 	char *buf = (char *) encoder->buffer;
 	sprintf(buf, "</body></sami>");
 	write(decoder->fh, buf, strlen(buf));
 	write(decoder->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
 }
 
-void ccx_dtvcc_write_sami(dtvcc_service_decoder *decoder)
+void ccx_dtvcc_write_sami(dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
-	struct encoder_ctx *encoder = ccx_dtvcc_ctx.encoder;
-
 	if (_dtvcc_is_caption_empty(decoder))
 		return;
 
@@ -248,7 +236,7 @@ void ccx_dtvcc_write_sami(dtvcc_service_decoder *decoder)
 		return;
 
 	if (!decoder->cc_count)
-		_dtvcc_write_sami_header(decoder);
+		_dtvcc_write_sami_header(decoder, encoder);
 
 	decoder->cc_count++;
 
@@ -260,19 +248,19 @@ void ccx_dtvcc_write_sami(dtvcc_service_decoder *decoder)
 			encoder->encoded_crlf);
 	write(decoder->fh, buf, strlen(buf));
 
-	_dtvcc_write_tag_open(decoder);
+	_dtvcc_write_tag_open(decoder, encoder);
 
 	for (int i = 0; i < DTVCC_SCREENGRID_ROWS; i++)
 	{
 		if (!_dtvcc_is_row_empty(decoder, i))
 		{
-			_dtvcc_write_row(decoder, i);
+			_dtvcc_write_row(decoder, i, encoder);
 			write(decoder->fh, encoder->encoded_br, encoder->encoded_br_length);
 			write(decoder->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
 	}
 
-	_dtvcc_write_tag_close(decoder);
+	_dtvcc_write_tag_close(decoder, encoder);
 
 	sprintf(buf, "<sync start=%llu><p class=\"unknowncc\">&nbsp;</p></sync>%s%s",
 			(unsigned long long) decoder->tv->time_ms_hide + decoder->subs_delay,
@@ -280,33 +268,33 @@ void ccx_dtvcc_write_sami(dtvcc_service_decoder *decoder)
 	write(decoder->fh, buf, strlen(buf));
 }
 
-void ccx_dtvcc_write(dtvcc_service_decoder *decoder)
+void ccx_dtvcc_write(dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
 	switch (decoder->output_format)
 	{
 		case CCX_OF_NULL:
 			break;
 		case CCX_OF_SRT:
-			ccx_dtvcc_write_srt(decoder);
+			ccx_dtvcc_write_srt(decoder, encoder);
 			break;
 		case CCX_OF_TRANSCRIPT:
-			ccx_dtvcc_write_transcript(decoder);
+			ccx_dtvcc_write_transcript(decoder, encoder);
 			break;
 		case CCX_OF_SAMI:
-			ccx_dtvcc_write_sami(decoder);
+			ccx_dtvcc_write_sami(decoder, encoder);
 			break;
 		default:
-			ccx_dtvcc_write_debug(decoder);
+			ccx_dtvcc_write_debug(decoder, encoder);
 			break;
 	}
 }
 
-void ccx_dtvcc_write_done(dtvcc_service_decoder *decoder)
+void ccx_dtvcc_write_done(dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
 	switch (decoder->output_format)
 	{
 		case CCX_OF_SAMI:
-			_dtvcc_write_sami_footer(decoder);
+			_dtvcc_write_sami_footer(decoder, encoder);
 			break;
 		default:
 			ccx_common_logging.debug_ftn(

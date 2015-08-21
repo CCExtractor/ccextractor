@@ -20,6 +20,7 @@
 
 #include "networking.h"
 #include "avc_functions.h"
+#include "ccx_decoders_708.h"
 
 /* Report information */
 #define SUB_STREAMS_CNT 10
@@ -32,7 +33,7 @@ struct file_report
 	unsigned aspect_ratio;
 	unsigned frame_rate;
 	struct ccx_decoder_608_report *data_from_608;
-	struct dtvcc_report_t *data_from_708;
+	struct ccx_decoder_dtvcc_report_t *data_from_708;
 	unsigned mp4_cc_track_cnt;
 };
 
@@ -85,7 +86,6 @@ struct lib_ccx_ctx
 	// int hex_mode=HEX_NONE; // Are we processing an hex file?
 	struct ccx_decoders_common_settings_t *dec_global_setting;
 	struct list_head dec_ctx_head;
-
 
 	int rawmode; // Broadcast or DVD
 	// See -d from

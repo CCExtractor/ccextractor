@@ -58,21 +58,22 @@ void params_dump(struct lib_ccx_ctx *ctx)
 	mprint ("]");
 	mprint ("\n");
 
-	if (ccx_dtvcc_ctx.is_active)
+	if (ccx_options.settings_dtvcc.enabled)
 	{
-		mprint ("[CEA-708: %d decoders active]\n", ccx_dtvcc_ctx.active_services_count);
-		if (ccx_dtvcc_ctx.active_services_count == DTVCC_MAX_SERVICES)
+		mprint ("[CEA-708: %d decoders active]\n", ccx_options.settings_dtvcc.active_services_count);
+		if (ccx_options.settings_dtvcc.active_services_count == DTVCC_MAX_SERVICES)
 		{
-			mprint ("[CEA-708: using charset \"%s\" for all services]\n",
-				   ccx_dtvcc_ctx.services_charsets[0][0] ? ccx_dtvcc_ctx.services_charsets[0] : "Auto");
+			char *charset = ccx_options.settings_dtvcc.all_services_charset;
+			mprint ("[CEA-708: using charset \"%s\" for all services]\n", charset ? charset : "Auto");
 		}
 		else
 		{
 			for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
 			{
-				if (ccx_dtvcc_ctx.services_active[i])
+				if (ccx_options.settings_dtvcc.services_enabled[i])
 					mprint("[CEA-708: using charset \"%s\" for service %d]\n",
-						   ccx_dtvcc_ctx.services_charsets[i][0] ? ccx_dtvcc_ctx.services_charsets[i] : "Auto",
+						   ccx_options.settings_dtvcc.services_charsets[i] ?
+						   ccx_options.settings_dtvcc.services_charsets[i] : "Auto",
 						   i + 1);
 			}
 		}

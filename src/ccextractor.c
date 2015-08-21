@@ -11,7 +11,6 @@ License: GPL 2.0
 #include "ffmpeg_intgr.h"
 #include "ccx_common_option.h"
 #include "ccx_mp4.h"
-#include "ccx_decoders_708.h"
 
 struct lib_ccx_ctx *signal_ctx;
 void sigint_handler()
@@ -32,8 +31,6 @@ int main(int argc, char *argv[])
 	struct lib_cc_decode *dec_ctx = NULL;
 	int ret = 0;
 	enum ccx_stream_mode_enum stream_mode;
-
-	dtvcc_ctx_init(&ccx_dtvcc_ctx);
 
 	init_options (&ccx_options);
 
@@ -340,7 +337,7 @@ int main(int argc, char *argv[])
 		mprint ("Performance (real length/process time) = %u.%02u\n", 
 			s1, s2);
 	}
-	dbg_print(CCX_DMT_708, "[CEA-708] The 708 decoder was reset [%d] times.\n", ccx_dtvcc_ctx.reset_count);
+	dbg_print(CCX_DMT_708, "[CEA-708] The 708 decoder was reset [%d] times.\n", ctx->freport.data_from_708->reset_count);
 /*
 	if (ccx_options.teletext_mode == CCX_TXT_IN_USE)
 		mprint ( "Teletext decoder: %"PRIu32" packets processed, %"PRIu32" SRT frames written.\n", tlt_packet_counter, tlt_frames_produced);

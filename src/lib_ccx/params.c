@@ -696,7 +696,7 @@ void usage (void)
 	mprint("    ...\n");
 }
 
-void parse_708_services (char *s)
+void parse_708_services (struct ccx_s_options *opts, char *s)
 {
 	const char *all = "all";
 	size_t all_len = strlen(all);
@@ -708,14 +708,13 @@ void parse_708_services (char *s)
 		if (s_len > all_len + 2) // '[' and ']'
 			charset = strndup(s + all_len + 1, s_len - all_len - 2);
 
-		ccx_dtvcc_ctx.is_active = 1;
-		for (int i = 0; i < DTVCC_MAX_SERVICES; i++) {
-			ccx_dtvcc_ctx.services_active[i] = 1;
-			if (charset)
-				strncpy(ccx_dtvcc_ctx.services_charsets[i], charset, DTVCC_MAX_CHARSET_LENGTH);
-		}
-		ccx_dtvcc_ctx.active_services_count = DTVCC_MAX_SERVICES;
-		free(charset);
+		opts->settings_dtvcc.enabled = 1;
+		opts->settings_dtvcc.all_services_charset = charset;
+
+		for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
+			opts->settings_dtvcc.services_enabled[i] = 1;
+
+		opts->settings_dtvcc.active_services_count = DTVCC_MAX_SERVICES;
 		return;
 	}
 
@@ -739,9 +738,16 @@ void parse_708_services (char *s)
 		if (svc < 1 || svc > DTVCC_MAX_SERVICES)
 			fatal (EXIT_MALFORMED_PARAMETER,
 				   "[CEA-708] Invalid service number (%d), valid range is 1-%d.", svc, DTVCC_MAX_SERVICES);
-		ccx_dtvcc_ctx.services_active[svc - 1] = 1;
-		ccx_dtvcc_ctx.is_active = 1;
-		ccx_dtvcc_ctx.active_services_count++;
+		opts->settings_dtvcc.services_enabled[svc - 1] = 1;
+		opts->settings_dtvcc.enabled = 1;
+		opts->settings_dtvcc.active_services_count++;
+
+		if (!opts->settings_dtvcc.services_charsets)
+		{
+			opts->settings_dtvcc.services_charsets = (char **) calloc(sizeof(char *), DTVCC_MAX_SERVICES);
+			if (!opts->settings_dtvcc.services_charsets)
+				ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "parse_708_services");
+		}
 
 		e = e + 1;
 		c = e;
@@ -755,8 +761,7 @@ void parse_708_services (char *s)
 		{
 			char *charset = strndup(c, e - c);
 			if (strlen(charset))
-				strncpy(ccx_dtvcc_ctx.services_charsets[svc - 1], charset, DTVCC_MAX_CHARSET_LENGTH);
-			free(charset);
+				opts->settings_dtvcc.services_charsets[svc - 1] = charset;
 			c = e + 1;
 		}
 	}
@@ -1373,8 +1378,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if ( (strcmp (argv[i],"-svc")==0 || strcmp (argv[i],"--service")==0) &&
 				i<argc-1)
 		{
-			char *cea708_service_list = argv[i+1];
-			parse_708_services(cea708_service_list);
+			parse_708_services(opt, argv[i + 1]);
 			i++;
 			continue;
 		}

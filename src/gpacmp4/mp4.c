@@ -9,7 +9,7 @@
 #include "ccx_common_option.h"
 #include "ccx_mp4.h"
 #include "activity.h"
-#include "ccx_decoders_708.h"
+#include "ccx_dtvcc.h"
 
 static short bswap16(short v)
 {
@@ -455,7 +455,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 								break;
 							}
 
-							ccx_dtvcc_ctx.is_active = 1;
+							ctx->dec_global_setting->settings_dtvcc->enabled = 1;
 							unsigned char temp[4];
 							for (int cc_i = 0; cc_i < cc_count; cc_i++, cc_data += 3)
 							{
@@ -486,7 +486,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 									dbg_print(CCX_DMT_PARSE, "mp4-708: atom skipped (cc_type < 2)\n");
 									continue;
 								}
-								dtvcc_process_data(dec_ctx, (unsigned char *) temp, 4);
+								ccx_dtvcc_process_data(dec_ctx, (unsigned char *) temp, 4);
 								cb_708++;
 							}
 							atomStart = sample->dataLength;

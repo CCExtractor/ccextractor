@@ -2,9 +2,8 @@
 #define _INCLUDE_708_
 
 #include <sys/stat.h>
-#include "lib_ccx.h"
-#include "ccx_common_option.h"
-#include "ccx_decoders_common.h"
+#include "ccx_common_platform.h"
+#include "ccx_common_constants.h"
 
 #ifdef WIN32
 	#include "..\\win_iconv\\win_iconv.h"
@@ -28,15 +27,15 @@
 
 #define DTVCC_NO_LAST_SEQUENCE -1
 
-/*
-This variable (dtvcc_report) holds data on the cc channels & xds packets that are encountered during file parse.
-This can be interesting if you just want to know what kind of data a file holds that has 608 packets. CCExtractor uses it
-for the report functionality.
-*/
-typedef struct dtvcc_report_t
+/**
+ * Holds data on the CEA 708 services that are encountered during file parse
+ * This can be interesting, so CCExtractor uses it for the report functionality.
+ */
+typedef struct ccx_decoder_dtvcc_report_t
 {
+	int reset_count;
 	unsigned services[DTVCC_MAX_SERVICES];
-} dtvcc_report_t;
+} ccx_decoder_dtvcc_report_t;
 
 enum DTVCC_COMMANDS_C0_CODES
 {
@@ -316,17 +315,44 @@ typedef struct dtvcc_service_decoder
 	iconv_t cd; //Conversion descriptor
 } dtvcc_service_decoder;
 
+struct encoder_ctx; //TODO temporary solution. subtitles has to be outputed to cc_subtitle struct
+
+typedef struct ccx_decoder_dtvcc_settings_t
+{
+	int enabled;
+	int cc_to_stdout;
+	int print_file_reports;
+	ccx_decoder_dtvcc_report_t *report;
+
+	enum ccx_output_format output_format;
+
+	int active_services_count;
+	int services_enabled[DTVCC_MAX_SERVICES];
+
+	char *basefilename;
+
+	char** services_charsets;
+	char* all_services_charset;
+
+	struct encoder_cfg *enc_cfg; //TODO temporary solution. subtitles has to be outputed to cc_subtitle struct
+} ccx_decoder_dtvcc_settings_t;
+
+/**
+ * TODO
+ * solution requires "sink" or "writer" entity to write captions to output file
+ * decoders have to know nothing about output files
+ */
+
 typedef struct ccx_dtvcc_ctx_t
 {
 	int is_active; //processing CEA-708
 	int active_services_count;
 	int services_active[DTVCC_MAX_SERVICES]; //0 - inactive, 1 - active
-	char services_charsets[DTVCC_MAX_SERVICES][DTVCC_MAX_CHARSET_LENGTH];
-	int reset_count;
 	int report_enabled;
 
+	ccx_decoder_dtvcc_report_t *report;
+
 	dtvcc_service_decoder decoders[DTVCC_MAX_SERVICES];
-	dtvcc_report_t report;
 
 	struct encoder_ctx *encoder;
 
@@ -336,17 +362,16 @@ typedef struct ccx_dtvcc_ctx_t
 	int last_sequence;
 } ccx_dtvcc_ctx_t;
 
-extern ccx_dtvcc_ctx_t ccx_dtvcc_ctx;
 
-void _dtvcc_window_clear_row(dtvcc_window *window, int row_index);
-void _dtvcc_window_clear_text(dtvcc_window *window);
-void _dtvcc_window_clear(dtvcc_service_decoder *decoder, int window_idx);
+void _dtvcc_clear_packet(ccx_dtvcc_ctx_t *ctx);
+void _dtvcc_windows_reset(dtvcc_service_decoder *decoder);
+void _dtvcc_decoder_init_write(dtvcc_service_decoder *decoder, char *basefilename, int id);
+void _dtvcc_decoder_flush(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder);
 
-void dtvcc_ctx_init(ccx_dtvcc_ctx_t *ctx);
-void dtvcc_ctx_free(ccx_dtvcc_ctx_t *ctx);
-
-void dtvcc_process_data(struct lib_cc_decode *ctx, const unsigned char *data, int data_length);
-void dtvcc_init(struct lib_ccx_ctx *ctx, struct ccx_s_options *opt);
-void dtvcc_free();
+void dtvcc_process_current_packet(ccx_dtvcc_ctx_t *dtvcc);
+void dtvcc_process_service_block(ccx_dtvcc_ctx_t *dtvcc,
+								 dtvcc_service_decoder *decoder,
+								 unsigned char *data,
+								 int data_length);
 
 #endif
