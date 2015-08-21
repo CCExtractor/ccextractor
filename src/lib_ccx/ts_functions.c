@@ -566,10 +566,9 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		// Check for PAT
 		if( payload.pid == 0) // This is a PAT
 		{
+			ts_buffer_psi_packet(ctx);
 			if(ctx->PID_buffers[payload.pid]!=NULL && ctx->PID_buffers[payload.pid]->buffer_length>0)
 				parse_PAT(ctx); // Returns 1 if there was some data in the buffer already
-			ts_buffer_psi_packet(ctx);
-
 			continue;
 		}
 		
@@ -591,10 +590,10 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		if (j != ctx->nb_program)
 		{
 			ctx->PIDs_seen[payload.pid]=2;
+			ts_buffer_psi_packet(ctx);
 			if(ctx->PID_buffers[payload.pid]!=NULL && ctx->PID_buffers[payload.pid]->buffer_length>0)
 				if(parse_PMT(ctx, ctx->PID_buffers[payload.pid]->buffer+1, ctx->PID_buffers[payload.pid]->buffer_length-1, pinfo))
 					gotpes=1; // Signals that something changed and that we must flush the buffer
-			ts_buffer_psi_packet(ctx);
 			continue;
 		}
 
