@@ -82,7 +82,7 @@ int update_pinfo(struct ccx_demuxer *ctx, int pid, int program_number)
    PMT specs: ISO13818-1 / table 2-28
    */
 
-int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char *buf, int len,  struct program_info *pinfo)
+int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct program_info *pinfo)
 {
 	int must_flush=0;
 	int ret = 0;
@@ -112,8 +112,7 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	section_length = (((buf[1] & 0x0F) << 8)| buf[2]);
 	if(section_length > (len - 3))
 	{
-		mprint("Long PMTs are not supported - skipped.\n");
-		return 0;
+		return 0; //We don't have the full section yet. We will parse again when we have it.
 	}
 
 	program_number = ((buf[3] << 8)	| buf[4]);
@@ -391,64 +390,70 @@ int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned cha
 	return must_flush;
 }
 
-int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char*buf, int size,  struct program_info *pinfo)
-{
-	static int in_error = 0;  // If a broken section arrives we will skip everything until the next PES start
-	if (size < 0)
-	{
-		in_error = 1;
-		return 0;
-	}
-	if (payload->pesstart)
-		in_error = 0;
-	if (in_error) 
-		return 0; 
-	if (payload->pesstart)
-	{
-		if (size <= 0xFFF + 3)
-		{
-			memcpy(payload->section_buf, buf, size);
-			payload->section_index = size;
-			payload->section_size = -1;
-		}
-		else
-		{
-			mprint("Invalid section buffer size %d \n", size);
-			return 0;
-		}
-	}
-	else
-	{
-		if ( (payload->section_index + size) < (0xFFF + 3))
-		{
-			memcpy(payload->section_buf + payload->section_index, buf, size);
-			payload->section_index += size;
-		}
-		else
-		{
-			mprint("Invalid section buffer size %d section index %d\n", size, payload->section_index);
-			return 0;
-		}
+void ts_buffer_psi_packet(struct ccx_demuxer *ctx) {
+	unsigned char *payload_start = tspacket + 4;
+	unsigned payload_length = 188 - 4;
+//	unsigned transport_error_indicator = (tspacket[1]&0x80)>>7;
+	unsigned payload_start_indicator = (tspacket[1]&0x40)>>6;
+// 	unsigned transport_priority = (tspacket[1]&0x20)>>5;
+	unsigned pid = (((tspacket[1] & 0x1F) << 8) | tspacket[2]) & 0x1FFF;
+// 	unsigned transport_scrambling_control = (tspacket[3]&0xC0)>>6;
+	unsigned adaptation_field_control = (tspacket[3]&0x30)>>4;
+	unsigned ccounter = tspacket[3] & 0xF;
+	unsigned adaptation_field_length = 0;
 
+    if ( adaptation_field_control & 2 )
+	{
+		adaptation_field_length = tspacket[4];
+		payload_start = payload_start + adaptation_field_length + 1;
+		payload_length = tspacket+188-payload_start;
 	}
 
-	if(payload->section_size == -1 && payload->section_index >= 3)
-		payload->section_size = (RB16(payload->section_buf + 1) & 0xfff) + 3 ;
+    if(ctx->PID_buffers[pid]==NULL) {//First packet for this pid. Creat a buffer
+        ctx->PID_buffers[pid]=malloc(sizeof(struct PSI_buffer));
+        ctx->PID_buffers[pid]->buffer=NULL;
+        ctx->PID_buffers[pid]->buffer_length=0;
+        ctx->PID_buffers[pid]->ccounter=0;
+        ctx->PID_buffers[pid]->prev_ccounter=0xff;
+    }
 
-	if(payload->section_index >= (unsigned)payload->section_size)
+    if(payload_start_indicator)
 	{
-		if(parse_PMT(ctx, payload, payload->section_buf,payload->section_size, pinfo))
-			return 1;
-	}
-	return 0;
+        if(ctx->PID_buffers[pid]->ccounter>0) {
+			ctx->PID_buffers[pid]->ccounter=0;
+		}
+        ctx->PID_buffers[pid]->prev_ccounter = ccounter;
 
+		if(ctx->PID_buffers[pid]->buffer!=NULL)
+			free(ctx->PID_buffers[pid]->buffer);
+		else {
+			// must be first packet for PID
+		}
+        ctx->PID_buffers[pid]->buffer = (uint8_t *)malloc(payload_length);
+		memcpy(ctx->PID_buffers[pid]->buffer, payload_start, payload_length);
+		ctx->PID_buffers[pid]->buffer_length=payload_length;
+		ctx->PID_buffers[pid]->ccounter++;
+    }
+    else if(ccounter==ctx->PID_buffers[pid]->prev_ccounter+1 || (ctx->PID_buffers[pid]->prev_ccounter==0x0f && ccounter==0))
+    {
+		ctx->PID_buffers[pid]->prev_ccounter = ccounter;
+		ctx->PID_buffers[pid]->buffer = (uint8_t *)realloc(ctx->PID_buffers[pid]->buffer, ctx->PID_buffers[pid]->buffer_length+payload_length);
+		memcpy(ctx->PID_buffers[pid]->buffer+ctx->PID_buffers[pid]->buffer_length, payload_start, payload_length);
+		ctx->PID_buffers[pid]->ccounter++;
+		ctx->PID_buffers[pid]->buffer_length+=payload_length;
+	}
+	else if(ctx->PID_buffers[pid]->prev_ccounter<= 0x0f)
+	{
+		dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Out of order packets detected for PID:.\n\
+        ctx->PID_buffers[pid]->prev_ccounter:%i, ctx->ctx->PID_buffers[pid]->ccounter:%i\n",pid, ctx->PID_buffers[pid]->prev_ccounter, ctx->PID_buffers[pid]->ccounter);
+	}
 }
 
 /* Program Allocation Table. It contains a list of all programs and the
    PIDs of their Program Map Table.
    Returns: gotpes */
 
-int parse_PAT (struct ccx_demuxer *ctx, struct ts_payload *payload)
+int parse_PAT (struct ccx_demuxer *ctx)
 {
 	int gotpes = 0;
 	int is_multiprogram = 0;
@@ -458,20 +463,23 @@ int parse_PAT (struct ccx_demuxer *ctx, struct ts_payload *payload)
 	unsigned int section_number = 0;
 	unsigned int last_section_number = 0;
 
-	if (payload->pesstart)
-		pointer_field = *(payload->start);
-	payload->start += pointer_field + 1;
-	payload->length -= pointer_field + 1;
+	pointer_field = *(ctx->PID_buffers[0]->buffer);
 
-	payload_start = payload->start;
-	payload_length = payload->length;
+	payload_start = ctx->PID_buffers[0]->buffer + pointer_field + 1;
+	payload_length = ctx->PID_buffers[0]->buffer_length - (pointer_field + 1);
 
 	section_number = payload_start[6];
 	last_section_number = payload_start[7];
 
-	if (!payload->pesstart)
-		// Not the first entry. Ignore it, may be Pat larger then 184.
-		return 0;
+	unsigned section_length = (((payload_start[1] & 0x0F) << 8)
+		| payload_start[2]);
+	payload_length = ctx->PID_buffers[0]->buffer_length-8;
+	unsigned programm_data = section_length - 5 - 4; // prev. bytes and CRC
+
+	if ( programm_data+4 > payload_length )
+	{
+		return 0; //We don't have the full section yet. We will parse again when we have it.
+	}
 
 	if (section_number > last_section_number) // Impossible: Defective PAT
 	{
@@ -521,8 +529,6 @@ int parse_PAT (struct ccx_demuxer *ctx, struct ts_payload *payload)
 
 
 	unsigned table_id = payload_start[0];
-	unsigned section_length = (((payload_start[1] & 0x0F) << 8)
-			| payload_start[2]);
 	unsigned transport_stream_id = ((payload_start[3] << 8)
 			| payload_start[4]);
 	unsigned version_number = (payload_start[5] & 0x3E) >> 1;
@@ -538,9 +544,6 @@ int parse_PAT (struct ccx_demuxer *ctx, struct ts_payload *payload)
 		return 0;
 
 	payload_start += 8;
-	payload_length = tspacket+188-payload_start;
-
-	unsigned programm_data = section_length - 5 - 4; // prev. bytes and CRC
 
 	dbg_print(CCX_DMT_PAT, "Read PAT packet (id: %u) ts-id: 0x%04x\n",
 			table_id, transport_stream_id);
@@ -548,12 +551,6 @@ int parse_PAT (struct ccx_demuxer *ctx, struct ts_payload *payload)
 			section_length, section_number, last_section_number);
 	dbg_print(CCX_DMT_PAT, "  version_number: %u  current_next_indicator: %u\n",
 			version_number, current_next_indicator);
-
-	if ( programm_data+4 > payload_length )
-	{
-		fatal(CCX_COMMON_EXIT_BUG_BUG,
-				"Sorry, PAT too long!\n");
-	}
 
 	unsigned ts_prog_num = 0;
 	dbg_print(CCX_DMT_PAT, "\nProgram association section (PAT)\n");
