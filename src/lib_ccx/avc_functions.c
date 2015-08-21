@@ -58,7 +58,23 @@ struct avc_ctx *init_avc(void)
 
 	ctx->ccblocks_in_avc_total = 0;
 	ctx->ccblocks_in_avc_lost = 0;
+	ctx->frame_num = -1;
+	ctx->lastframe_num = -1;
 
+	ctx->currref = 0;
+	ctx->maxidx = -1;
+	ctx->lastmaxidx=-1;
+
+	// Used to find tref zero in PTS mode
+	ctx->minidx=10000;
+	ctx->lastminidx=10000;
+
+	// Used to remember the max temporal reference number (poc mode)
+	ctx->maxtref = 0;
+	ctx->last_gop_maxtref = 0;
+
+	// Used for PTS ordering of CC blocks
+	ctx->currefpts = 0;
 	return ctx;
 }
 
@@ -850,26 +866,20 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 {
 	LLONG tmp;
 	struct bitstream q1;
+	int maxframe_num;
+	LLONG slice_type, bottom_field_flag=0, pic_order_cnt_lsb=-1;
+	int curridx;
+	int IdrPicFlag;
+	LLONG field_pic_flag = 0; // Moved here because it's needed for ctx->avc_ctx->pic_order_cnt_type==2
+
 	if (init_bitstream(&q1, heabuf, heaend))
 	{
 		mprint ("Skipping slice header due to failure in init_bitstream.\n");
 		return;
 	}
 
-	LLONG slice_type, bottom_field_flag=0, pic_order_cnt_lsb=-1;
-	static LLONG frame_num=-1, lastframe_num = -1;
-	static int currref=0, maxidx=-1, lastmaxidx=-1;
-	// Used to find tref zero in PTS mode
-	static int minidx=10000, lastminidx=10000;
-	int curridx;
-	int IdrPicFlag = ((nal_unit_type == 5 )?1:0);
+	IdrPicFlag = ((nal_unit_type == 5 )?1:0);
 
-	// Used to remember the max temporal reference number (poc mode)
-	static int maxtref = 0;
-	static int last_gop_maxtref = 0;
-
-	// Used for PTS ordering of CC blocks
-	static LLONG currefpts = 0;
 
 	dvprint("\nSLICE HEADER\n");
 	tmp = ue(&q1);
@@ -879,14 +889,13 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 	tmp = ue(&q1);
 	dvprint("pic_parameter_set_id=  % 4lld (%#llX)\n",tmp,tmp);
 
-	lastframe_num = frame_num;
-	int maxframe_num = (int) ((1<<ctx->avc_ctx->log2_max_frame_num) - 1);
+	ctx->avc_ctx->lastframe_num = ctx->avc_ctx->frame_num;
+	maxframe_num = (int) ((1<<ctx->avc_ctx->log2_max_frame_num) - 1);
 
 	// Needs log2_max_frame_num_minus4 + 4 bits
-	frame_num = u(&q1,ctx->avc_ctx->log2_max_frame_num);
-	dvprint("frame_num=             %llX\n", frame_num);
+	ctx->avc_ctx->frame_num = u(&q1,ctx->avc_ctx->log2_max_frame_num);
+	dvprint("frame_num=             %llX\n", ctx->avc_ctx->frame_num);
 
-	LLONG field_pic_flag = 0; // Moved here because it's needed for ctx->avc_ctx->pic_order_cnt_type==2
 	if( !ctx->avc_ctx->frame_mbs_only_flag )
 	{
 		field_pic_flag = u(&q1,1);
@@ -979,17 +988,17 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 	int maxrefcnt = (int) ((1<<ctx->avc_ctx->log2_max_pic_order_cnt_lsb) - 1);
 
 	// If we saw a jump set maxidx, lastmaxidx to -1
-	LLONG dif = frame_num - lastframe_num;
+	LLONG dif = ctx->avc_ctx->frame_num - ctx->avc_ctx->lastframe_num;
 	if (dif == -maxframe_num)
 		dif = 0;
-	if ( lastframe_num > -1 && (dif < 0 || dif > 1) )
+	if ( ctx->avc_ctx->lastframe_num > -1 && (dif < 0 || dif > 1) )
 	{
 		ctx->avc_ctx->num_jump_in_frames++;
-		dvprint("\nJump in frame numbers (%lld/%lld)\n", frame_num, lastframe_num);
+		dvprint("\nJump in frame numbers (%lld/%lld)\n", ctx->avc_ctx->frame_num, ctx->avc_ctx->lastframe_num);
 		// This will prohibit setting current_tref on potential
 		// jumps.
-		maxidx = -1;
-		lastmaxidx = -1;
+		ctx->avc_ctx->maxidx = -1;
+		ctx->avc_ctx->lastmaxidx = -1;
 	}
 
 	// Sometimes two P-slices follow each other, see garbled_dishHD.mpg,
@@ -1015,60 +1024,60 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 		}
 		ctx->last_gop_length = ctx->frames_since_last_gop;
 		ctx->frames_since_last_gop = 0;
-		last_gop_maxtref = maxtref;
-		maxtref = 0;
-		lastmaxidx = maxidx;
-		maxidx = 0;
-		lastminidx = minidx;
-		minidx = 10000;
+		ctx->avc_ctx->last_gop_maxtref = ctx->avc_ctx->maxtref;
+		ctx->avc_ctx->maxtref = 0;
+		ctx->avc_ctx->lastmaxidx = ctx->avc_ctx->maxidx;
+		ctx->avc_ctx->maxidx = 0;
+		ctx->avc_ctx->lastminidx = ctx->avc_ctx->minidx;
+		ctx->avc_ctx->minidx = 10000;
 
 		if ( ccx_options.usepicorder ) {
 			// Use pic_order_cnt_lsb
 
 			// Make sure that curridx never wraps for curidx values that
 			// are smaller than currref
-			currref = (int)pic_order_cnt_lsb;
-			if (currref < maxrefcnt/3)
+			ctx->avc_ctx->currref = (int)pic_order_cnt_lsb;
+			if (ctx->avc_ctx->currref < maxrefcnt/3)
 			{
-				currref += maxrefcnt+1;
+				ctx->avc_ctx->currref += maxrefcnt+1;
 			}
 
 			// If we wrapped arround lastmaxidx might be larger than
 			// the current index - fix this.
-			if (lastmaxidx > currref + maxrefcnt/2) // implies lastmaxidx > 0
-				lastmaxidx -=maxrefcnt+1;
+			if (ctx->avc_ctx->lastmaxidx > ctx->avc_ctx->currref + maxrefcnt/2) // implies lastmaxidx > 0
+				ctx->avc_ctx->lastmaxidx -=maxrefcnt+1;
 		} else {
 			// Use PTS ordering
-			currefpts = ctx->timing->current_pts;
-			currref = 0;
+			ctx->avc_ctx->currefpts = ctx->timing->current_pts;
+			ctx->avc_ctx->currref = 0;
 		}
 
-		anchor_hdcc( currref );
+		anchor_hdcc( ctx->avc_ctx->currref );
 	}
 
 	if ( ccx_options.usepicorder ) {
 		// Use pic_order_cnt_lsb
 		// Wrap (add max index value) curridx if needed.
-		if( currref - pic_order_cnt_lsb > maxrefcnt/2 )
+		if( ctx->avc_ctx->currref - pic_order_cnt_lsb > maxrefcnt/2 )
 			curridx = (int)pic_order_cnt_lsb + maxrefcnt+1;
 		else
 			curridx = (int)pic_order_cnt_lsb;
 
 		// Track maximum index for this GOP
-		if ( curridx > maxidx )
-			maxidx = curridx;
+		if ( curridx > ctx->avc_ctx->maxidx )
+			ctx->avc_ctx->maxidx = curridx;
 
 		// Calculate tref
-		if ( lastmaxidx > 0 ) {
-			ctx->timing->current_tref = curridx - lastmaxidx -1;
+		if ( ctx->avc_ctx->lastmaxidx > 0 ) {
+			ctx->timing->current_tref = curridx - ctx->avc_ctx->lastmaxidx -1;
 			// Set maxtref
-			if( ctx->timing->current_tref > maxtref ) {
-				maxtref = ctx->timing->current_tref;
+			if( ctx->timing->current_tref > ctx->avc_ctx->maxtref ) {
+				ctx->avc_ctx->maxtref = ctx->timing->current_tref;
 			}
 			// Now an ugly workaround where pic_order_cnt_lsb increases in
 			// steps of two. The 1.5 is an approximation, it should be:
 			// last_gop_maxtref+1 == last_gop_length*2
-			if ( last_gop_maxtref > ctx->last_gop_length*1.5 ) {
+			if ( ctx->avc_ctx->last_gop_maxtref > ctx->last_gop_length*1.5 ) {
 				ctx->timing->current_tref = ctx->timing->current_tref/2;
 			}
 		}
@@ -1083,7 +1092,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 		// frame rate
 		// The 2* accounts for a discrepancy between current and actual FPS
 		// seen in some files (CCSample2.mpg)
-		curridx = (int)roundportable(2*(ctx->timing->current_pts - currefpts)/(MPEG_CLOCK_FREQ/current_fps));
+		curridx = (int)roundportable(2*(ctx->timing->current_pts - ctx->avc_ctx->currefpts)/(MPEG_CLOCK_FREQ/current_fps));
 
 		if (abs(curridx) >= MAXBFRAMES) {
 			// Probably a jump in the timeline. Warn and handle gracefully.
@@ -1092,20 +1101,20 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 		}
 
 		// Track maximum index for this GOP
-		if ( curridx > maxidx )
-			maxidx = curridx;
+		if ( curridx > ctx->avc_ctx->maxidx )
+			ctx->avc_ctx->maxidx = curridx;
 
 		// Track minimum index for this GOP
-		if ( curridx < minidx )
-			minidx = curridx;
+		if ( curridx < ctx->avc_ctx->minidx )
+			ctx->avc_ctx->minidx = curridx;
 
 		ctx->timing->current_tref = 1;
-		if ( curridx == lastminidx ) {
+		if ( curridx == ctx->avc_ctx->lastminidx ) {
 			// This implies that the minimal index (assuming its number is
 			// fairly constant) sets the temporal reference to zero - needed to set sync_pts.
 			ctx->timing->current_tref = 0;
 		}
-		if ( lastmaxidx == -1) {
+		if ( ctx->avc_ctx->lastmaxidx == -1) {
 			// Set temporal reference to zero on minimal index and in the first GOP
 			// to avoid setting a wrong fts_offset
 			ctx->timing->current_tref = 0;
@@ -1116,17 +1125,17 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 
 	dbg_print(CCX_DMT_TIME, "  picordercnt:%3lld tref:%3d idx:%3d refidx:%3d lmaxidx:%3d maxtref:%3d\n",
 			pic_order_cnt_lsb, ctx->timing->current_tref,
-			curridx, currref, lastmaxidx, maxtref);
+			curridx, ctx->avc_ctx->currref, ctx->avc_ctx->lastmaxidx, ctx->avc_ctx->maxtref);
 	dbg_print(CCX_DMT_TIME, "  sync_pts:%s (%8u)",
 			print_mstime(ctx->timing->sync_pts/(MPEG_CLOCK_FREQ/1000)),
 			(unsigned) (ctx->timing->sync_pts));
 	dbg_print(CCX_DMT_TIME, " - %s since GOP: %2u",
 			slice_types[slice_type],
 			(unsigned) (ctx->frames_since_last_gop));
-	dbg_print(CCX_DMT_TIME, "  b:%lld  frame# %lld\n", bottom_field_flag, frame_num);
+	dbg_print(CCX_DMT_TIME, "  b:%lld  frame# %lld\n", bottom_field_flag, ctx->avc_ctx->frame_num);
 
 	// sync_pts is (was) set when current_tref was zero
-	if ( lastmaxidx > -1 && ctx->timing->current_tref == 0 )
+	if ( ctx->avc_ctx->lastmaxidx > -1 && ctx->timing->current_tref == 0 )
 	{
 		if (ccx_options.debug_mask & CCX_DMT_TIME )
 		{

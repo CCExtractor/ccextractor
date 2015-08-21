@@ -55,6 +55,8 @@ typedef struct ccx_decoder_608_context
 	struct ccx_decoder_608_report *report;
 	LLONG subs_delay; // ms to delay (or advance) subs
 	enum ccx_output_format output_format; // What kind of output format should be used?
+	int textprinted;
+
 } ccx_decoder_608_context;
 
 extern unsigned char *enc_buffer;

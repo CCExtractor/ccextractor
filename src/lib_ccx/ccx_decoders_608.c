@@ -150,6 +150,7 @@ ccx_decoder_608_context* ccx_decoder_608_init_library(struct ccx_decoder_608_set
 	data->have_cursor_position = 0;
 	data->output_format = output_format;
 	data->cc_to_stdout = cc_to_stdout;
+	data->textprinted = 0;
 
 	data->halt = halt;
 
@@ -1073,7 +1074,6 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 {
 	struct ccx_decoder_608_report  *report = NULL;
 	ccx_decoder_608_context *context = private_data;
-	static int textprinted = 0;
 	int i;
 	if (context)
 	{
@@ -1132,10 +1132,10 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 		{
 			// We were writing characters before, start a new line for
 			// diagnostic output from disCommand()
-			if (textprinted == 1 )
+			if (context->textprinted == 1 )
 			{
 				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\n");
-				textprinted = 0;
+				context->textprinted = 0;
 			}
 			if (!context || context->my_field == 2)
 				in_xds_mode=0; // Back to normal (CEA 608-8.6.2)
@@ -1176,10 +1176,10 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 				if (context->channel != context->my_channel)
 					continue;
 
-				if( textprinted == 0 )
+				if( context->textprinted == 0 )
 				{
 					ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\n");
-					textprinted = 1;
+					context->textprinted = 1;
 				}
 
 				handle_single(hi, context);
@@ -1189,7 +1189,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 				context->last_c2 = 0;
 			}
 
-			if (!textprinted && context->channel == context->my_channel)
+			if (!context->textprinted && context->channel == context->my_channel)
 			{   // Current FTS information after the characters are shown
 				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Current FTS: %s\n", print_mstime(get_fts()));
 				//printf("  N:%u", unsigned(fts_now) );

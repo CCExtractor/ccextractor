@@ -27,6 +27,23 @@ struct avc_ctx
 
 	int ccblocks_in_avc_total;
 	int ccblocks_in_avc_lost;
+
+	LLONG frame_num;
+	LLONG lastframe_num;
+	int currref;
+	int maxidx;
+	int lastmaxidx;
+
+	// Used to find tref zero in PTS mode
+	int minidx;
+	int lastminidx;
+
+	// Used to remember the max temporal reference number (poc mode)
+	int maxtref;
+	int last_gop_maxtref;
+
+	// Used for PTS ordering of CC blocks
+	LLONG currefpts;
 };
 
 struct avc_ctx *init_avc(void);
