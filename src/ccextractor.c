@@ -32,7 +32,6 @@ int main(int argc, char *argv[])
 	int ret = 0;
 	enum ccx_stream_mode_enum stream_mode;
 
-
 	init_options (&ccx_options);
 
 	parse_configuration(&ccx_options);
@@ -60,9 +59,6 @@ int main(int argc, char *argv[])
 		fatal (EXIT_NOT_CLASSIFIED, "Unable to create Library Context %d\n",errno);
 
 	int show_myth_banner = 0;
-	
-	memset (&cea708services[0],0,CCX_DECODERS_708_MAX_SERVICES*sizeof (int)); // Cannot (yet) be moved because it's needed in parse_parameters.
-
 
 	params_dump(ctx);
 
@@ -70,12 +66,6 @@ int main(int argc, char *argv[])
 	if (tlt_config.page > 0) {
 		// dec to BCD, magazine pages numbers are in BCD (ETSI 300 706)
 		tlt_config.page = ((tlt_config.page / 100) << 8) | (((tlt_config.page / 10) % 10) << 4) | (tlt_config.page % 10);
-	}
-
-
-	if (ccx_options.send_to_srv)
-	{
-		connect_to_srv(ccx_options.srv_addr, ccx_options.srv_port, ccx_options.tcp_desc);
 	}
 
 	if (ccx_options.transcript_settings.xds)
@@ -311,8 +301,10 @@ int main(int argc, char *argv[])
 		// counters.
 		if (cb_field1!=0)
 			fts_global += cb_field1*1001/3;
-		else
+		else if (cb_field2!=0)
 			fts_global += cb_field2*1001/3;
+		else
+			fts_global += cb_708*1001/3;
 		// Reset counters - This is needed if some captions are still buffered
 		// and need to be written after the last file is processed.		
 		cb_field1 = 0; cb_field2 = 0; cb_708 = 0;
@@ -339,7 +331,7 @@ int main(int argc, char *argv[])
 		mprint ("Performance (real length/process time) = %u.%02u\n", 
 			s1, s2);
 	}
-	dbg_print(CCX_DMT_708, "The 708 decoder was reset [%d] times.\n",resets_708);
+	dbg_print(CCX_DMT_708, "[CEA-708] The 708 decoder was reset [%d] times.\n", ctx->freport.data_from_708->reset_count);
 /*
 	if (ccx_options.teletext_mode == CCX_TXT_IN_USE)
 		mprint ( "Teletext decoder: %"PRIu32" packets processed, %"PRIu32" SRT frames written.\n", tlt_packet_counter, tlt_frames_produced);

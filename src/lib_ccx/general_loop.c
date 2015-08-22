@@ -779,7 +779,8 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			}
 		}
 
-
+		if (ccx_options.send_to_srv)
+			net_check_conn();
 	}
 
 	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)

@@ -9,6 +9,7 @@ made to reuse, not duplicate, as many functions as possible */
 #include "ccx_common_common.h"
 #include "lib_ccx.h"
 #include "ccx_decoders_608.h"
+#include "ccx_dtvcc.h"
 
 
 uint64_t utc_refvalue = UINT64_MAX;  /* _UI64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
@@ -106,7 +107,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 	/* In theory the writercwtdata() function could return early and not
 	 * go through the 608/708 cases below.  We do that to get accurate
 	 * counts for cb_field1, cb_field2 and cb_708.
-	 * Note that printdata() and do_708() must not be called for
+	 * Note that printdata() and dtvcc_process_data() must not be called for
 	 * the CCX_OF_RCWT case. */
 
 	if (cc_valid || cc_type==3)
@@ -189,7 +190,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 				if (timeok)
 				{
 					if(ctx->write_format!=CCX_OF_RCWT)
-						do_708 (ctx,(const unsigned char *) temp, 4);
+						ccx_dtvcc_process_data(ctx, (const unsigned char *) temp, 4);
 					else
 						writercwtdata(ctx, cc_block, sub);
 				}
@@ -213,6 +214,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 void dinit_cc_decode(struct lib_cc_decode **ctx)
 {
 	struct lib_cc_decode *lctx = *ctx;
+	ccx_dtvcc_free(&lctx->dtvcc);
 	dinit_avc(&lctx->avc_ctx);
 	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_1);
 	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_2);
@@ -230,6 +232,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 	ctx->avc_ctx = init_avc();
 	ctx->codec = setting->codec;
+	ctx->dtvcc = ccx_dtvcc_init(setting->settings_dtvcc);
 
 	if(setting->codec == CCX_CODEC_ATSC_CC)
 	{

@@ -78,6 +78,7 @@ LLONG get_fts(void);
 LLONG get_fts_max(void);
 char *print_mstime(LLONG mstime);
 char *print_mstime2buf(LLONG mstime, char *buf);
+size_t mstime_sprintf(LLONG mstime, char *fmt, char *buf);
 void print_debug_timing(struct ccx_common_timing_ctx *ctx);
 int gop_accepted(struct gop_time_code* g);
 void calculate_ms_gop_time(struct gop_time_code *g);

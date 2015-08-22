@@ -4,6 +4,7 @@
 #include "activity.h"
 #include "ccx_encoders_helpers.h"
 #include "ccx_common_common.h"
+#include "ccx_decoders_708.h"
 
 static int inputfile_capacity=0;
 
@@ -309,10 +310,15 @@ void usage (void)
 	mprint ("                       (DEFAULT is -1)\n");
 	mprint ("                 -cc2: When in srt/sami mode, process captions in channel 2\n");
 	mprint ("                       instead of channel 1.\n");
-	mprint ("-svc --service N,N...: Enabled CEA-708 captions processing for the listed\n");
+	mprint ("-svc --service N1[cs1],N2[cs2]...:\n");
+	mprint ("                       Enable CEA-708 captions processing for the listed\n");
 	mprint ("                       services. The parameter is a command delimited list\n");
 	mprint ("                       of services numbers, such as \"1,2\" to process the\n");
 	mprint ("                       primary and secondary language services.\n");
+	mprint ("                       Pass \"all\" to process all services found.\n");
+	mprint ("                       To tell encoder what kind of charset was used, pass its name after\n");
+	mprint ("                       service number (e.g. \"1[EUC-KR],3\" or \"all[EUC-KR]\"\n");
+	mprint ("\n");
 	mprint ("In general, if you want English subtitles you don't need to use these options\n");
 	mprint ("as they are broadcast in field 1, channel 1. If you want the second language\n");
 	mprint ("(usually Spanish) you may need to try -2, or -cc2, or both.\n\n");
@@ -690,29 +696,74 @@ void usage (void)
 	mprint("    ...\n");
 }
 
-void parse_708services (char *s)
+void parse_708_services (struct ccx_s_options *opts, char *s)
 {
-	char *c, *e, *l;
-	if (s==NULL)
-		return;
-	l=s+strlen (s);
-	for (c=s; c<l && *c; )
+	const char *all = "all";
+	size_t all_len = strlen(all);
+	int diff = strncmp(s, all, all_len);
+	if (!diff)
 	{
-		int svc=-1;
-		while (*c && !isdigit (*c))
+		size_t s_len = strlen(s);
+		char *charset = NULL;
+		if (s_len > all_len + 2) // '[' and ']'
+			charset = strndup(s + all_len + 1, s_len - all_len - 2);
+
+		opts->settings_dtvcc.enabled = 1;
+		opts->settings_dtvcc.all_services_charset = charset;
+
+		for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
+			opts->settings_dtvcc.services_enabled[i] = 1;
+
+		opts->settings_dtvcc.active_services_count = DTVCC_MAX_SERVICES;
+		return;
+	}
+
+	char *c, *e, *l;
+	if (s == NULL)
+		return;
+	l = s + strlen(s);
+	for (c = s; c < l && *c; )
+	{
+		int svc = -1;
+		while (*c && !isdigit(*c))
 			c++;
 		if (!*c) // We're done
 			break;
-		e=c;
+		e = c;
 		while (isdigit (*e))
 			e++;
-		*e=0;
-		svc=atoi (c);
-		if (svc<1 || svc>CCX_DECODERS_708_MAX_SERVICES)
-			fatal (EXIT_MALFORMED_PARAMETER, "Invalid service number (%d), valid range is 1-%d.",svc,CCX_DECODERS_708_MAX_SERVICES);
-		cea708services[svc-1]=1;
-		do_cea708=1;
-		c=e+1;
+		int charset_start_found = (*e == '[');
+		*e = 0;
+		svc = atoi(c);
+		if (svc < 1 || svc > DTVCC_MAX_SERVICES)
+			fatal (EXIT_MALFORMED_PARAMETER,
+				   "[CEA-708] Invalid service number (%d), valid range is 1-%d.", svc, DTVCC_MAX_SERVICES);
+		opts->settings_dtvcc.services_enabled[svc - 1] = 1;
+		opts->settings_dtvcc.enabled = 1;
+		opts->settings_dtvcc.active_services_count++;
+
+		if (!opts->settings_dtvcc.services_charsets)
+		{
+			opts->settings_dtvcc.services_charsets = (char **) calloc(sizeof(char *), DTVCC_MAX_SERVICES);
+			if (!opts->settings_dtvcc.services_charsets)
+				ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "parse_708_services");
+		}
+
+		e = e + 1;
+		c = e;
+
+		if (!charset_start_found)
+			continue;
+
+		while (*e && *e != ']' && *e != ',')
+			e++;
+		if (*e == ']')
+		{
+			char *charset = strndup(c, e - c);
+			if (strlen(charset))
+				opts->settings_dtvcc.services_charsets[svc - 1] = charset;
+			c = e + 1;
+		}
 	}
 }
 
@@ -741,8 +792,6 @@ int atoi_hex (char *s)
 
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 {
-	char *cea708_service_list=NULL; // List CEA-708 services
-
 	// Parse parameters
 	for (int i=1; i<argc; i++)
 	{
@@ -1329,8 +1378,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if ( (strcmp (argv[i],"-svc")==0 || strcmp (argv[i],"--service")==0) &&
 				i<argc-1)
 		{
-			cea708_service_list=argv[i+1];
-			parse_708services (cea708_service_list);
+			parse_708_services(opt, argv[i + 1]);
 			i++;
 			continue;
 		}
@@ -1521,6 +1569,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->send_to_srv = 1;
 
 			set_output_format(opt, "bin");
+
+			opt->xmltv = 2;
+			opt->xmltvliveinterval = 2;
 
 			char *addr = argv[i + 1];
 			if (*addr == '[')

@@ -2,6 +2,8 @@
 #include "ccx_common_option.h"
 #include "teletext.h"
 
+#include "ccx_decoders_708.h"
+
 void params_dump(struct lib_ccx_ctx *ctx)
 {
 	// Display parsed parameters
@@ -54,17 +56,34 @@ void params_dump(struct lib_ccx_ctx *ctx)
 			break;
 	}
 	mprint ("]");
-	if (ccx_options.wtvconvertfix)
-	{
-		mprint (" [Windows 7 wtv to dvr-ms conversion fix: Enabled]");
-	}
 	mprint ("\n");
 
-	if (ccx_options.wtvmpeg2)
+	if (ccx_options.settings_dtvcc.enabled)
 	{
-		mprint (" [WTV use MPEG2 stream: Enabled]");
+		mprint ("[CEA-708: %d decoders active]\n", ccx_options.settings_dtvcc.active_services_count);
+		if (ccx_options.settings_dtvcc.active_services_count == DTVCC_MAX_SERVICES)
+		{
+			char *charset = ccx_options.settings_dtvcc.all_services_charset;
+			mprint ("[CEA-708: using charset \"%s\" for all services]\n", charset ? charset : "Auto");
+		}
+		else
+		{
+			for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
+			{
+				if (ccx_options.settings_dtvcc.services_enabled[i])
+					mprint("[CEA-708: using charset \"%s\" for service %d]\n",
+						   ccx_options.settings_dtvcc.services_charsets[i] ?
+						   ccx_options.settings_dtvcc.services_charsets[i] : "Auto",
+						   i + 1);
+			}
+		}
 	}
-	mprint ("\n");
+
+	if (ccx_options.wtvconvertfix)
+		mprint (" [Windows 7 wtv to dvr-ms conversion fix: Enabled]\n");
+
+	if (ccx_options.wtvmpeg2)
+		mprint (" [WTV use MPEG2 stream: Enabled]\n");
 
 	mprint ("[Timing mode: ");
 	switch (ccx_options.use_gop_as_pts)
@@ -140,12 +159,12 @@ void params_dump(struct lib_ccx_ctx *ctx)
 			mprint ("Yes, timeout: %d seconds",ccx_options.live_stream);
 	}
 	mprint ("] [Clock frequency: %d]\n",MPEG_CLOCK_FREQ);
-	mprint ("Teletext page: [");
+	mprint ("[Teletext page: ");
 	if (tlt_config.page)
 		mprint ("%d]\n",tlt_config.page);
 	else
 		mprint ("Autodetect]\n");
-	mprint ("Start credits text: [%s]\n",
+	mprint ("[Start credits text: %s]\n",
 			ccx_options.enc_cfg.start_credits_text?ccx_options.enc_cfg.start_credits_text:"None");
 	if (ccx_options.enc_cfg.start_credits_text)
 	{
@@ -167,7 +186,6 @@ void params_dump(struct lib_ccx_ctx *ctx)
 				(long) (ccx_options.enc_cfg.endcreditsforatmost.time_in_ms/1000)
 		       );
 	}
-
 }
 
 #define Y_N(cond) ((cond) ? "Yes" : "No")
@@ -192,7 +210,7 @@ void print_cc_report(struct lib_ccx_ctx *ctx, struct cap_info* info)
 	if (dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0)
 	{
 		printf("Services: ");
-		for (int i = 0; i < CCX_DECODERS_708_MAX_SERVICES; i++)
+		for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
 		{
 			if (ctx->freport.data_from_708->services[i] == 0)
 				continue;

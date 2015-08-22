@@ -6,6 +6,7 @@
 #include "ccx_common_timing.h"
 #include "ccx_common_structs.h"
 #include "list.h"
+#include "ccx_decoders_708.h"
 // Define max width in characters/columns on the screen
 #define CCX_DECODER_608_SCREEN_WIDTH  32
 
@@ -86,6 +87,7 @@ struct ccx_decoders_common_settings_t
 	int extract; // Extract 1st, 2nd or both fields
 	int fullbin; // Disable pruning of padding cc blocks
 	struct ccx_decoder_608_settings *settings_608; //  Contains the settings for the 608 decoder.
+	ccx_decoder_dtvcc_settings_t *settings_dtvcc; //Same for cea 708 captions decoder (dtvcc)
 	int cc_channel; // Channel we want to dump in srt mode
 	unsigned send_to_srv;
 	unsigned int hauppauge_mode; // If 1, use PID=1003, process specially and so on
@@ -93,6 +95,7 @@ struct ccx_decoders_common_settings_t
 	enum ccx_code_type codec;
 	void *private_data;
 };
+
 struct lib_cc_decode
 {
 	int cc_stats[4];
@@ -155,6 +158,7 @@ struct lib_cc_decode
 	/* Reguired in es_function.c and es_userdata.c */
 	unsigned top_field_first; // Needs to be global
 
+	ccx_dtvcc_ctx_t *dtvcc;
 
 	int (*writedata)(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 };

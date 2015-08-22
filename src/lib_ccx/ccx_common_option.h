@@ -72,6 +72,7 @@ struct ccx_s_options // Options from user parameters
 
 
 	ccx_decoder_608_settings settings_608; //  Contains the settings for the 608 decoder.
+	ccx_decoder_dtvcc_settings_t settings_dtvcc; //Same for 708 decoder
 
 	char millis_separator;
 	int binary_concat; // Disabled by -ve or --videoedited

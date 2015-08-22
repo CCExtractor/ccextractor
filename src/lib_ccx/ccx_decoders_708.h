@@ -2,79 +2,90 @@
 #define _INCLUDE_708_
 
 #include <sys/stat.h>
-#include "ccx_decoders_common.h"
+#include "ccx_common_platform.h"
+#include "ccx_common_constants.h"
 
-#define MAX_708_PACKET_LENGTH   128
-#define CCX_DECODERS_708_MAX_SERVICES 63
+#ifdef WIN32
+	#include "..\\win_iconv\\win_iconv.h"
+#else
+	#include "iconv.h"
+#endif
 
-#define I708_MAX_ROWS 15
-#define I708_MAX_COLUMNS 42
+#define DTVCC_MAX_PACKET_LENGTH 128 //According to EIA-708B, part 5
+#define DTVCC_MAX_SERVICES 63
+#define DTVCC_MAX_CHARSET_LENGTH 24
 
-#define I708_SCREENGRID_ROWS 75
-#define I708_SCREENGRID_COLUMNS 210
+#define DTVCC_MAX_ROWS 15
+#define DTVCC_MAX_COLUMNS (45*UTF8_MAX_BYTES + 1)
 
-#define I708_MAX_WINDOWS 8
+#define DTVCC_SCREENGRID_ROWS 75
+#define DTVCC_SCREENGRID_COLUMNS 210
 
-/*
-This variable (ccx_decoder_708_report) holds data on the cc channels & xds packets that are encountered during file parse.
-This can be interesting if you just want to know what kind of data a file holds that has 608 packets. CCExtractor uses it
-for the report functionality.
-*/
-struct ccx_decoder_708_report_t
+#define DTVCC_MAX_WINDOWS 8
+
+#define DTVCC_FILENAME_TEMPLATE "%s-svc-%02u"
+
+#define DTVCC_NO_LAST_SEQUENCE -1
+
+/**
+ * Holds data on the CEA 708 services that are encountered during file parse
+ * This can be interesting, so CCExtractor uses it for the report functionality.
+ */
+typedef struct ccx_decoder_dtvcc_report_t
 {
-	unsigned services[CCX_DECODERS_708_MAX_SERVICES];
-};
-extern struct ccx_decoder_708_report_t ccx_decoder_708_report;
+	int reset_count;
+	unsigned services[DTVCC_MAX_SERVICES];
+} ccx_decoder_dtvcc_report_t;
 
-enum COMMANDS_C0_CODES
+enum DTVCC_COMMANDS_C0_CODES
 {
-	NUL=0,
-	ETX=3,
-	BS=8,
-	FF=0xC,
-	CR=0xD,
-	HCR=0xE,
-	EXT1=0x10,
-	P16=0x18
-};
-
-enum COMMANDS_C1_CODES
-{
-	CW0=0x80,
-	CW1=0x81,
-	CW2=0x82,
-	CW3=0x83,
-	CW4=0x84,
-	CW5=0x85,
-	CW6=0x86,
-	CW7=0x87,
-	CLW=0x88,
-	DSW=0x89,
-	HDW=0x8A,
-	TGW=0x8B,
-	DLW=0x8C,
-	DLY=0x8D,
-	DLC=0x8E,
-	RST=0x8F,
-	SPA=0x90,
-	SPC=0x91,
-	SPL=0x92,
-	RSV93=0x93,
-	RSV94=0x94,
-	RSV95=0x95,
-	RSV96=0x96,
-	SWA=0x97,
-	DF0=0x98,
-	DF1=0x99,
-	DF2=0x9A,
-	DF3=0x9B,
-	DF4=0x9C,
-	DF5=0x9D,
-	DF6=0x9E,
-	DF7=0x9F
+	NUL		= 0,
+	ETX		= 3,
+	BS 		= 8,
+	FF 		= 0xC,
+	CR 		= 0xD,
+	HCR 	= 0xE,
+	EXT1 	= 0x10,
+	P16 	= 0x18
 };
 
-struct S_COMMANDS_C1
+enum DTVCC_COMMANDS_C1_CODES
+{
+	CW0 = 0x80,
+	CW1 = 0x81,
+	CW2 = 0x82,
+	CW3 = 0x83,
+	CW4 = 0x84,
+	CW5 = 0x85,
+	CW6 = 0x86,
+	CW7 = 0x87,
+	CLW = 0x88,
+	DSW = 0x89,
+	HDW = 0x8A,
+	TGW = 0x8B,
+	DLW = 0x8C,
+	DLY = 0x8D,
+	DLC = 0x8E,
+	RST = 0x8F,
+	SPA = 0x90,
+	SPC = 0x91,
+	SPL = 0x92,
+	RSV93 = 0x93,
+	RSV94 = 0x94,
+	RSV95 = 0x95,
+	RSV96 = 0x96,
+	SWA = 0x97,
+	DF0 = 0x98,
+	DF1 = 0x99,
+	DF2 = 0x9A,
+	DF3 = 0x9B,
+	DF4 = 0x9C,
+	DF5 = 0x9D,
+	DF6 = 0x9E,
+	DF7 = 0x9F
+};
+
+struct DTVCC_S_COMMANDS_C1
 {
 	int code;
 	const char *name;
@@ -83,142 +94,142 @@ struct S_COMMANDS_C1
 };
 
 
-enum eWindowsAttribJustify
+enum dtvcc_eWindowsAttribJustify
 {
-	left=0,
-	right=1,
-	center=2,
-	full=3
+	left	= 0,
+	right	= 1,
+	center	= 2,
+	full	= 3
 };
 
-enum eWindowsAttribPrintDirection
+enum dtvcc_eWindowsAttribPrintDirection
 {
-	pd_left_to_right=0,
-	pd_right_to_left=1,
-	pd_top_to_bottom=2,
-	pd_bottom_to_top=3
+	pd_left_to_right = 0,
+	pd_right_to_left = 1,
+	pd_top_to_bottom = 2,
+	pd_bottom_to_top = 3
 };
 
-enum eWindowsAttribScrollDirection
+enum dtvcc_eWindowsAttribScrollDirection
 {
-	sd_left_to_right=0,
-	sd_right_to_left=1,
-	sd_top_to_bottom=2,
-	sd_bottom_to_top=3
+	sd_left_to_right = 0,
+	sd_right_to_left = 1,
+	sd_top_to_bottom = 2,
+	sd_bottom_to_top = 3
 };
 
-enum eWindowsAttribScrollDisplayEffect
+enum dtvcc_eWindowsAttribScrollDisplayEffect
 {
-	snap=0,
-	fade=1,
-	wipe=2
+	snap = 0,
+	fade = 1,
+	wipe = 2
 };
 
-enum eWindowsAttribEffectDirection
+enum dtvcc_eWindowsAttribEffectDirection
 {
-	left_to_right=0,
-	right_to_left=1,
-	top_to_bottom=2,
-	bottom_to_top=3
+	left_to_right = 0,
+	right_to_left = 1,
+	top_to_bottom = 2,
+	bottom_to_top = 3
 };
 
-enum eWindowsAttribFillOpacity
+enum dtvcc_eWindowsAttribFillOpacity
 {
-	solid=0,
-	flash=1,
-	traslucent=2,
-	transparent=3
+	solid 			= 0,
+	flash 			= 1,
+	traslucent 		= 2,
+	transparent 	= 3
 };
 
-enum eWindowsAttribBorderType
+enum dtvcc_eWindowsAttribBorderType
 {
-	none=0,
-	raised=1,
-	depressed=2,
-	uniform=3,
-	shadow_left=4,
-	shadow_right=5
+	none			= 0,
+	raised			= 1,
+	depressed		= 2,
+	uniform			= 3,
+	shadow_left		= 4,
+	shadow_right	= 5
 };
 
-enum ePenAttribSize
+enum dtvcc_ePenAttribSize
 {
-	pensize_small=0,
-	pensize_standard=1,
-	pensize_large=2
+	pensize_small		= 0,
+	pensize_standard	= 1,
+	pensize_large 		= 2
 };
 
-enum ePenAttribFontStyle
+enum dtvcc_ePenAttribFontStyle
 {
-	fontstyle_default_or_undefined=0,
-	monospaced_with_serifs=1,
-	proportionally_spaced_with_serifs=2,
-	monospaced_without_serifs=3,
-	proportionally_spaced_without_serifs=4,
-	casual_font_type=5,
-	cursive_font_type=6,
-	small_capitals=7
+	fontstyle_default_or_undefined			= 0,
+	monospaced_with_serifs					= 1,
+	proportionally_spaced_with_serifs		= 2,
+	monospaced_without_serifs				= 3,
+	proportionally_spaced_without_serifs	= 4,
+	casual_font_type						= 5,
+	cursive_font_type						= 6,
+	small_capitals							= 7
 };
 
-enum ePanAttribTextTag
+enum dtvcc_ePanAttribTextTag
 {
-	texttag_dialog=0,
-	texttag_source_or_speaker_id=1,
-	texttag_electronic_voice=2,
-	texttag_foreign_language=3,
-	texttag_voiceover=4,
-	texttag_audible_translation=5,
-	texttag_subtitle_translation=6,
-	texttag_voice_quality_description=7,
-	texttag_song_lyrics=8,
-	texttag_sound_effect_description=9,
-	texttag_musical_score_description=10,
-	texttag_expletitive=11,
-	texttag_undefined_12=12,
-	texttag_undefined_13=13,
-	texttag_undefined_14=14,
-	texttag_not_to_be_displayed=15
+	texttag_dialog						= 0,
+	texttag_source_or_speaker_id		= 1,
+	texttag_electronic_voice			= 2,
+	texttag_foreign_language			= 3,
+	texttag_voiceover					= 4,
+	texttag_audible_translation			= 5,
+	texttag_subtitle_translation		= 6,
+	texttag_voice_quality_description	= 7,
+	texttag_song_lyrics					= 8,
+	texttag_sound_effect_description	= 9,
+	texttag_musical_score_description	= 10,
+	texttag_expletitive					= 11,
+	texttag_undefined_12				= 12,
+	texttag_undefined_13				= 13,
+	texttag_undefined_14				= 14,
+	texttag_not_to_be_displayed			= 15
 };
 
-enum ePanAttribOffset
+enum dtvcc_ePanAttribOffset
 {
-	offset_subscript=0,
-	offset_normal=1,
-	offset_superscript=2
+	offset_subscript	= 0,
+	offset_normal		= 1,
+	offset_superscript	= 2
 };
 
-enum ePanAttribEdgeType
+enum dtvcc_ePanAttribEdgeType
 {
-	edgetype_none=0,
-	edgetype_raised=1,
-	edgetype_depressed=2,
-	edgetype_uniform=3,
-	edgetype_left_drop_shadow=4,
-	edgetype_right_drop_shadow=5
+	edgetype_none				= 0,
+	edgetype_raised				= 1,
+	edgetype_depressed			= 2,
+	edgetype_uniform			= 3,
+	edgetype_left_drop_shadow	= 4,
+	edgetype_right_drop_shadow	= 5
 };
 
-enum eAnchorPoints
+enum dtvcc_eAnchorPoints
 {
-	anchorpoint_top_left = 0,
-	anchorpoint_top_center = 1,
-	anchorpoint_top_right =2,
-	anchorpoint_middle_left = 3,
-	anchorpoint_middle_center = 4,
-	anchorpoint_middle_right = 5,
-	anchorpoint_bottom_left = 6,
-	anchorpoint_bottom_center = 7,
-	anchorpoint_bottom_right = 8
+	anchorpoint_top_left 		= 0,
+	anchorpoint_top_center 		= 1,
+	anchorpoint_top_right 		= 2,
+	anchorpoint_middle_left 	= 3,
+	anchorpoint_middle_center 	= 4,
+	anchorpoint_middle_right 	= 5,
+	anchorpoint_bottom_left 	= 6,
+	anchorpoint_bottom_center 	= 7,
+	anchorpoint_bottom_right 	= 8
 };
 
-typedef struct e708Pen_color
+typedef struct dtvcc_pen_color
 {
 	int fg_color;
 	int fg_opacity;
 	int bg_color;
 	int bg_opacity;
 	int edge_color;
-} e708Pen_color;
+} dtvcc_pen_color;
 
-typedef struct e708Pen_attribs
+typedef struct dtvcc_pen_attribs
 {
 	int pen_size;
 	int offset;
@@ -227,9 +238,9 @@ typedef struct e708Pen_attribs
 	int edge_type;
 	int underline;
 	int italic;
-} e708Pen_attribs;
+} dtvcc_pen_attribs;
 
-typedef struct e708Window_attribs
+typedef struct dtvcc_window_attribs
 {
 	int fill_color;
 	int fill_opacity;
@@ -243,12 +254,12 @@ typedef struct e708Window_attribs
 	int display_eff;
 	int effect_dir;
 	int effect_speed;
-} e708Window_attribs;
+} dtvcc_window_attribs;
 
-typedef struct e708Window
+typedef struct dtvcc_window
 {
 	int is_defined;
-	int number; // Handy, in case we only have a pointer to the window
+	int number;
 	int priority;
 	int col_lock;
 	int row_lock;
@@ -262,52 +273,105 @@ typedef struct e708Window
 	int pen_style;
 	int win_style;
 	unsigned char commands[6]; // Commands used to create this window
-	e708Window_attribs attribs;
-	e708Pen_attribs pen;
-	e708Pen_color pen_color;
+	dtvcc_window_attribs attribs;
 	int pen_row;
 	int pen_column;
-	unsigned char *rows[I708_MAX_ROWS+1]; // Max is 15, but we define an extra one for convenience
+	unsigned char *rows[DTVCC_MAX_ROWS + 1]; // Max is 15, but we define an extra one for convenience
+	dtvcc_pen_color pen_colors[DTVCC_MAX_ROWS + 1];
+	dtvcc_pen_attribs pen_attribs[DTVCC_MAX_ROWS + 1];
 	int memory_reserved;
 	int is_empty;
-} e708Window;
+	LLONG time_ms_show;
+	LLONG time_ms_hide;
+} dtvcc_window;
 
-typedef struct tvscreen
+typedef struct dtvcc_tv_screen
 {
-	unsigned char chars[I708_SCREENGRID_ROWS][I708_SCREENGRID_COLUMNS+1];
-}
-tvscreen;
+	unsigned char chars[DTVCC_SCREENGRID_ROWS][DTVCC_SCREENGRID_COLUMNS + 1];
+	dtvcc_pen_color pen_colors[DTVCC_SCREENGRID_ROWS];
+	dtvcc_pen_attribs pen_attribs[DTVCC_SCREENGRID_ROWS];
 
-typedef struct cc708_service_decoder
+	LLONG time_ms_show;
+	LLONG time_ms_hide;
+} dtvcc_tv_screen;
+
+typedef struct dtvcc_service_decoder
 {
-	e708Window windows[I708_MAX_WINDOWS];
+	dtvcc_window windows[DTVCC_MAX_WINDOWS];
 	int current_window;
 	int inited;
-	LLONG current_visible_start_ms;
-	tvscreen tv1, tv2; // Current and previous "screenfuls", note that we switch between them
+	dtvcc_tv_screen tv1, tv2; // Current and previous "screenfuls", note that we switch between them
 	int is_empty_tv1, is_empty_tv2;
 	int cur_tv; // 1 or 2 rather than 0 or 1, to at least be consistent with the decoder
-	tvscreen *tv; // Pointer to the current TV buffer
+	dtvcc_tv_screen *tv; // Pointer to the current TV buffer
 	char *filename; // Where we are going to write our output
 	int fh; // Handle to output file. -1 if not yet open
-	int srt_counter;
+	int cc_count;
+	int output_started;
 	enum ccx_output_format output_format; // What kind of output format should be used?
 	LLONG subs_delay; // ms to delay (or advance) subs
-}
-cc708_service_decoder;
 
-extern int do_cea708; // Process 708 data?
-extern int cea708services[]; // [] -> 1 for services to be processed
+	char *charset;
+	iconv_t cd; //Conversion descriptor
+} dtvcc_service_decoder;
 
-extern int resets_708;
+struct encoder_ctx; //TODO temporary solution. subtitles has to be outputed to cc_subtitle struct
 
-void do_708 (struct lib_cc_decode* ctx, const unsigned char *data, int datalength);
+typedef struct ccx_decoder_dtvcc_settings_t
+{
+	int enabled;
+	int cc_to_stdout;
+	int print_file_reports;
+	ccx_decoder_dtvcc_report_t *report;
 
-unsigned char get_internal_from_G0 (unsigned char g0_char);
-unsigned char get_internal_from_G1 (unsigned char g1_char);
-unsigned char get_internal_from_G2 (unsigned char g2_char);
-unsigned char get_internal_from_G3 (unsigned char g3_char);
-void process_character (cc708_service_decoder *decoder, unsigned char internal_char);
+	enum ccx_output_format output_format;
 
-void ccx_decoders_708_init_library(int report);
+	int active_services_count;
+	int services_enabled[DTVCC_MAX_SERVICES];
+
+	char *basefilename;
+
+	char** services_charsets;
+	char* all_services_charset;
+
+	struct encoder_cfg *enc_cfg; //TODO temporary solution. subtitles has to be outputed to cc_subtitle struct
+} ccx_decoder_dtvcc_settings_t;
+
+/**
+ * TODO
+ * solution requires "sink" or "writer" entity to write captions to output file
+ * decoders have to know nothing about output files
+ */
+
+typedef struct ccx_dtvcc_ctx_t
+{
+	int is_active; //processing CEA-708
+	int active_services_count;
+	int services_active[DTVCC_MAX_SERVICES]; //0 - inactive, 1 - active
+	int report_enabled;
+
+	ccx_decoder_dtvcc_report_t *report;
+
+	dtvcc_service_decoder decoders[DTVCC_MAX_SERVICES];
+
+	struct encoder_ctx *encoder;
+
+	unsigned char current_packet[DTVCC_MAX_PACKET_LENGTH];
+	int current_packet_length;
+
+	int last_sequence;
+} ccx_dtvcc_ctx_t;
+
+
+void _dtvcc_clear_packet(ccx_dtvcc_ctx_t *ctx);
+void _dtvcc_windows_reset(dtvcc_service_decoder *decoder);
+void _dtvcc_decoder_init_write(dtvcc_service_decoder *decoder, char *basefilename, int id);
+void _dtvcc_decoder_flush(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder);
+
+void dtvcc_process_current_packet(ccx_dtvcc_ctx_t *dtvcc);
+void dtvcc_process_service_block(ccx_dtvcc_ctx_t *dtvcc,
+								 dtvcc_service_decoder *decoder,
+								 unsigned char *data,
+								 int data_length);
+
 #endif

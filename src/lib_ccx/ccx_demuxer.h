@@ -8,6 +8,7 @@
 /* Report information */
 #define SUB_STREAMS_CNT 10
 #define MAX_PID 65536
+#define MAX_PSI_PID 8191
 #define TS_PMT_MAP_SIZE 128
 #define MAX_PROGRAM 128
 struct ccx_demux_report
@@ -95,6 +96,7 @@ struct ccx_demuxer
 	uint32_t min_global_timestamp;
 	int global_timestamp_inited;
 
+	struct PSI_buffer *PID_buffers[MAX_PSI_PID];
 	int PIDs_seen[MAX_PID];
 
 	struct PMT_entry *PIDs_programs[MAX_PID];

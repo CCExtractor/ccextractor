@@ -16,11 +16,11 @@
 #include "ccx_encoders_common.h"
 #include "ccx_decoders_608.h"
 #include "ccx_decoders_xds.h"
-#include "ccx_decoders_708.h"
 #include "bitstream.h"
 
 #include "networking.h"
 #include "avc_functions.h"
+#include "ccx_decoders_708.h"
 
 /* Report information */
 #define SUB_STREAMS_CNT 10
@@ -33,7 +33,7 @@ struct file_report
 	unsigned aspect_ratio;
 	unsigned frame_rate;
 	struct ccx_decoder_608_report *data_from_608;
-	struct ccx_decoder_708_report_t *data_from_708;
+	struct ccx_decoder_dtvcc_report_t *data_from_708;
 	unsigned mp4_cc_track_cnt;
 };
 
@@ -87,7 +87,6 @@ struct lib_ccx_ctx
 	struct ccx_decoders_common_settings_t *dec_global_setting;
 	struct list_head dec_ctx_head;
 
-
 	int rawmode; // Broadcast or DVD
 	// See -d from
 
@@ -110,8 +109,7 @@ struct lib_ccx_ctx
 
 	unsigned teletext_warning_shown; // Did we detect a possible PAL (with teletext subs) and told the user already?
 
-	//struct EIT_buffer eit_buffer;
-	struct EIT_buffer epg_buffers[0xfff+1];
+	struct PSI_buffer epg_buffers[0xfff+1];
 	struct EIT_program eit_programs[TS_PMT_MAP_SIZE+1];
 	int32_t eit_current_events[TS_PMT_MAP_SIZE+1];
 	int16_t ATSC_source_pg_map[0xffff];
@@ -236,8 +234,9 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload);
 long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data);
 LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **data);
 int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char*buf, int size,  struct program_info *pinfo);
-int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char *buf, int len,  struct program_info *pinfo);
-int parse_PAT (struct ccx_demuxer *ctx, struct ts_payload *payload);
+void ts_buffer_psi_packet(struct ccx_demuxer *ctx);
+int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct program_info *pinfo);
+int parse_PAT (struct ccx_demuxer *ctx);
 void parse_EPG_packet (struct lib_ccx_ctx *ctx);
 void EPG_free(struct lib_ccx_ctx *ctx);
 

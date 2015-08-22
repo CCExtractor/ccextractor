@@ -21,6 +21,7 @@ ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
 	.isFinal = 0
 };
 
+//TODO sami header doesn't carry about CRLF/LF option
 static const char *sami_header= // TODO: Revise the <!-- comments
 "<SAMI>\n\
 <HEAD>\n\
@@ -768,7 +769,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 				check_ret(cfg->output_filename);
 			}
 		}
-		else
+		else if (cfg->write_format != CCX_OF_NULL)
 		{
 			basefilename = get_basename(ctx->first_input_file);
 			extension = get_file_extension(cfg->write_format);
@@ -803,6 +804,13 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 		mprint ("Sending captions to stdout.\n");
 	}
 
+	if (cfg->send_to_srv == CCX_TRUE)
+	{
+		ctx->out[0].fh = -1;
+		ctx->out[0].filename = NULL;
+
+		connect_to_srv(ccx_options.srv_addr, ccx_options.srv_port, ccx_options.tcp_desc, ccx_options.tcp_password);
+	}
 
 	if(ret)
 	{

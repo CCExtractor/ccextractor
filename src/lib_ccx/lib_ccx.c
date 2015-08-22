@@ -3,6 +3,7 @@
 #include "activity.h"
 #include "utility.h"
 #include "dvb_subtitle_decoder.h"
+#include "ccx_decoders_708.h"
 
 struct ccx_common_logging_t ccx_common_logging;
 static struct ccx_decoders_common_settings_t *init_decoder_setting(
@@ -23,6 +24,7 @@ static struct ccx_decoders_common_settings_t *init_decoder_setting(
 	memcpy(&setting->extraction_end,&opt->extraction_end,sizeof(struct ccx_boundary_time));
 	setting->cc_to_stdout = opt->cc_to_stdout;
 	setting->settings_608 = &opt->settings_608;
+	setting->settings_dtvcc = &opt->settings_dtvcc;
 	setting->cc_channel = opt->cc_channel;
 	setting->send_to_srv = opt->send_to_srv;
 	setting->hauppauge_mode = opt->hauppauge_mode;
@@ -85,19 +87,22 @@ struct encoder_ctx *get_encoder_by_pn(struct lib_ccx_ctx *ctx, int pn)
 struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 {
 	int ret = 0;
-	struct lib_ccx_ctx *ctx;
-	struct ccx_decoder_608_report *report_608;
 
-	ctx = malloc(sizeof(struct lib_ccx_ctx));
+	struct lib_ccx_ctx *ctx = malloc(sizeof(struct lib_ccx_ctx));
 	if(!ctx)
-		return NULL;
-	memset(ctx,0,sizeof(struct lib_ccx_ctx));
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "lib_ccx_ctx");
+	memset(ctx, 0, sizeof(struct lib_ccx_ctx));
 
-	report_608 = malloc(sizeof(struct ccx_decoder_608_report));
+	struct ccx_decoder_608_report *report_608 = malloc(sizeof(struct ccx_decoder_608_report));
 	if (!report_608)
-		return NULL;
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "report_608");
+	memset(report_608, 0, sizeof(struct ccx_decoder_608_report));
 
-	memset(report_608,0,sizeof(struct ccx_decoder_608_report));
+	ccx_decoder_dtvcc_report_t *report_dtvcc = (ccx_decoder_dtvcc_report_t *)
+			malloc(sizeof(ccx_decoder_dtvcc_report_t));
+	if (!report_dtvcc)
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "report_dtvcc");
+	memset(report_dtvcc, 0, sizeof(ccx_decoder_dtvcc_report_t));
 
 	// Initialize some constants
 	ctx->screens_to_process = -1;
@@ -112,15 +117,14 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 
 	// Init shared decoder settings
 	ctx->dec_global_setting = init_decoder_setting(opt);
-	if(!ctx->dec_global_setting)
+	if (!ctx->dec_global_setting)
 		return NULL;
 
 	// Need to set the 608 data for the report to the correct variable.
 	ctx->freport.data_from_608 = report_608;
 	ctx->dec_global_setting->settings_608->report = report_608;
-
-	// Same applies for 708 data
-	ctx->freport.data_from_708 = &ccx_decoder_708_report;
+	ctx->freport.data_from_708 = report_dtvcc;
+	ctx->dec_global_setting->settings_dtvcc->report = report_dtvcc;
 
 	//Initialize input files
 	ctx->inputfile = opt->inputfile;
@@ -130,9 +134,6 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	if (ret < 0) {
 		goto end;
 	}
-
-	// Init 708 decoder(s)
-	ccx_decoders_708_init_library(opt->print_file_reports);
 
 	// Init XDS buffers
 	ccx_decoders_xds_init_library(&opt->transcript_settings, ctx->subs_delay, opt->millis_separator);
@@ -158,6 +159,10 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->multiprogram = opt->multiprogram;
 	ctx->write_format = opt->write_format;
 
+	ctx->dec_global_setting->settings_dtvcc->output_format = opt->write_format;
+	ctx->dec_global_setting->settings_dtvcc->cc_to_stdout = opt->cc_to_stdout;
+	ctx->dec_global_setting->settings_dtvcc->basefilename = ctx->basefilename;
+	ctx->dec_global_setting->settings_dtvcc->enc_cfg = &opt->enc_cfg;
 
 end:
 	if (ret != EXIT_OK)
@@ -194,7 +199,6 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 			dinit_encoder(&enc_ctx);
 		}
 	}
-
 
 	// free EPG memory
 	EPG_free(lctx);

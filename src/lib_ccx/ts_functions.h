@@ -30,7 +30,7 @@ struct PMT_entry
 	unsigned printable_stream_type;
 };
 
-struct EIT_buffer
+struct PSI_buffer
 {
 	uint32_t prev_ccounter;
 	uint8_t *buffer;

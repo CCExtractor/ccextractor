@@ -240,9 +240,11 @@ LLONG get_fts(void)
 			fts = fts_now + fts_global + cb_708*1001/30;
 			break;
 		default:
-			ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "Cannot be reached!");
+			ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "get_fts: unhandled branch");
 	}
-
+//	ccx_common_logging.debug_ftn(CCX_DMT_TIME, "[FTS] "
+//			"fts: %llu, fts_now: %llu, fts_global: %llu, current_field: %llu, cb_708: %llu\n",
+//								 fts, fts_now, fts_global, current_field, cb_708);
 	return fts;
 }
 
@@ -272,6 +274,28 @@ char *print_mstime2buf( LLONG mstime , char *buf )
 
 	return buf;
 }
+
+/**
+ * Fill buffer with a time string using specified format
+ * @param fmt has to contain 4 format specifiers for h, m, s and ms respectively
+ */
+size_t mstime_sprintf(LLONG mstime, char *fmt, char *buf)
+{
+	unsigned hh, mm, ss, ms;
+	int signoffset = (mstime < 0 ? 1 : 0);
+
+	if (mstime < 0) // Avoid loss of data warning with abs()
+		mstime = -mstime;
+
+	hh = (unsigned) (mstime / 1000 / 60 / 60);
+	mm = (unsigned) (mstime / 1000 / 60 - 60 * hh);
+	ss = (unsigned) (mstime / 1000 - 60 * (mm + 60 * hh));
+	ms = (unsigned) (mstime - 1000 * (ss + 60 * (mm + 60 * hh)));
+
+	buf[0] = '-';
+	return (size_t) sprintf(buf + signoffset, fmt, hh, mm, ss, ms);
+}
+
 
 /* Fill a static buffer with a time string (hh:mm:ss:ms) corresponding
    to the microsecond value in mstime. */

@@ -427,3 +427,27 @@ char *get_file_extension(enum ccx_output_format write_format)
 	}
 	return 0;
 }
+
+size_t utf16_to_utf8(unsigned short utf16_char, unsigned char *out)
+{
+	if (utf16_char < 0x80) {
+		out[0] = (unsigned char)((utf16_char >> 0 & 0x7F) | 0x00);
+		return 1;
+	} else if (utf16_char < 0x0800) {
+		out[0] = (unsigned char)((utf16_char >> 6 & 0x1F) | 0xC0);
+		out[1] = (unsigned char)((utf16_char >> 0 & 0x3F) | 0x80);
+		return 2;
+	} else if (utf16_char < 0x010000) {
+		out[0] = (unsigned char)((utf16_char >> 12 & 0x0F) | 0xE0);
+		out[1] = (unsigned char)((utf16_char >> 6 & 0x3F) | 0x80);
+		out[2] = (unsigned char)((utf16_char >> 0 & 0x3F) | 0x80);
+		return 3;
+	} else if (utf16_char < 0x110000) {
+		out[0] = (unsigned char)((utf16_char >> 18 & 0x07) | 0xF0);
+		out[1] = (unsigned char)((utf16_char >> 12 & 0x3F) | 0x80);
+		out[2] = (unsigned char)((utf16_char >> 6 & 0x3F) | 0x80);
+		out[3] = (unsigned char)((utf16_char >> 0 & 0x3F) | 0x80);
+		return 4;
+	}
+	return 0;
+}
