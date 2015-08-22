@@ -16,29 +16,38 @@
 #define PASSWORD        2
 #define BIN_MODE        3
 #define CC_DESC         4
+#define BIN_HEADER      5
+#define BIN_DATA        6
+#define EPG_DATA        7
 #pragma warning( suppress : 4005)
 #define ERROR           51
 #define UNKNOWN_COMMAND 52
 #define WRONG_PASSWORD  53
 #define CONN_LIMIT      54
+#define PING            55
+
+/* #include <time.h> */
 
 #define DFT_PORT "2048" /* Default port for server and client */
 #define WRONG_PASSWORD_DELAY 2 /* Seconds */
 #define BUFFER_SIZE 50
+#define NO_RESPONCE_INTERVAL 20
+#define PING_INTERVAL 3
 
 int srv_sd = -1; /* Server socket descriptor */
+
+const char *srv_addr;
+const char *srv_port;
+const char *srv_cc_desc;
+const char *srv_pwd;
+unsigned char *srv_header;
+size_t srv_header_len;
 
 /*
  * Established connection to speciefied addres.
  * Returns socked id
  */
 int tcp_connect(const char *addr, const char *port);
-
-/*
- * Asks password from stdin, sends it to the server and waits for
- * it's response
- */
-int ask_passwd(int sd);
 
 int check_password(int fd, const char *pwd);
 
@@ -68,7 +77,10 @@ void init_sockets (void);
 void pr_command(char c);
 #endif
 
-void connect_to_srv(const char *addr, const char *port, const char *cc_desc)
+void handle_write_error();
+int set_nonblocking(int fd);
+
+void connect_to_srv(const char *addr, const char *port, const char *cc_desc, const char *pwd)
 {
 	if (NULL == addr)
 	{
@@ -85,14 +97,16 @@ void connect_to_srv(const char *addr, const char *port, const char *cc_desc)
 	if ((srv_sd = tcp_connect(addr, port)) < 0)
 		fatal(EXIT_FAILURE, "Unable to connect\n");
 
-	if (ask_passwd(srv_sd) < 0)
+	if (write_block(srv_sd, PASSWORD, pwd, pwd ? strlen(pwd) : 0) < 0)
 		fatal(EXIT_FAILURE, "Unable to connect\n");
 
-	if (cc_desc != NULL &&
-			write_block(srv_sd, CC_DESC, cc_desc, strlen(cc_desc)) < 0)
-	{
+	if (write_block(srv_sd, CC_DESC, cc_desc, cc_desc ? strlen(cc_desc) : 0) < 0)
 		fatal(EXIT_FAILURE, "Unable to connect\n");
-	}
+
+	srv_addr = addr;
+	srv_port = port;
+	srv_cc_desc = cc_desc;
+	srv_pwd = pwd;
 
 	mprint("Connected to %s:%s\n", addr, port);
 }
@@ -106,35 +120,21 @@ void net_send_header(const unsigned char *data, size_t len)
 	fprintf(stderr, "File created by %02X version %02X%02X\n", data[3], data[4], data[5]);
 	fprintf(stderr, "File format revision: %02X%02X\n", data[6], data[7]);
 #endif
-	if (write_block(srv_sd, BIN_MODE, NULL, 0) <= 0)
+
+	if (write_block(srv_sd, BIN_HEADER, data, len) <= 0)
 	{
 		printf("Can't send BIN header\n");
 		return;
 	}
 
-	char ok;
-	if (read_byte(srv_sd, &ok) != 1)
+	if (srv_header != NULL)
 		return;
 
-#if DEBUG_OUT
-	fprintf(stderr, "[S] ");
-	pr_command(ok);
-	fprintf(stderr, "\n");
-#endif
+	if ((srv_header = malloc(len)) == NULL)
+		fatal(EXIT_FAILURE, "Not enought memory");
 
-	if (ERROR == ok)
-	{
-		printf("Internal server error\n");
-		return;
-	}
-
-	ssize_t rc;
-	if ((rc = writen(srv_sd, data, len)) != (int) len)
-	{
-		if (rc < 0)
-			mprint("write() error: %s", strerror(errno));
-		return;
-	}
+	memcpy(srv_header, data, len);
+	srv_header_len = len;
 }
 
 int net_send_cc(const unsigned char *data, int len, void *private_data, struct cc_subtitle *sub)
@@ -145,17 +145,174 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 	fprintf(stderr, "[C] Sending %u bytes\n", len);
 #endif
 
-	ssize_t rc;
-	if ((rc = writen(srv_sd, data, len)) != (int) len)
+	if (write_block(srv_sd, BIN_DATA, data, len) <= 0)
 	{
-		if (rc < 0)
-			mprint("write() error: %s", strerror(errno));
-		return rc;
+		printf("Can't send BIN data\n");
+		return -1;
 	}
 
-	/* nanosleep((struct timespec[]){{0, 100000000}}, NULL); */
+	/* nanosleep((struct timespec[]){{0, 4000000}}, NULL); */
 	/* Sleep(100); */
-	return rc;
+	return 1;
+}
+
+void net_check_conn()
+{
+	if (srv_sd <= 0)
+		return;
+
+	time_t now = time(NULL);
+
+	static time_t last_ping = 0;
+	if (last_ping == 0)
+		last_ping = now;
+
+	char c = 0;
+	int rc;
+	do {
+		c = 0;
+		rc = read_byte(srv_sd, &c);
+		if (c == PING) {
+#if DEBUG_OUT
+			fprintf(stderr, "[S] Recieved PING\n");
+#endif
+			last_ping = now;
+		}
+	} while (rc > 0 && c == PING);
+
+	if (now - last_ping > NO_RESPONCE_INTERVAL)
+	{
+		fprintf(stderr,
+				"[S] No PING recieved from the server in %u sec, reconnecting\n",
+				NO_RESPONCE_INTERVAL);
+		close(srv_sd);
+		srv_sd = -1;
+
+		connect_to_srv(srv_addr, srv_port, srv_cc_desc, srv_pwd);
+
+		net_send_header(srv_header, srv_header_len);
+		last_ping = now;
+	}
+
+	static time_t last_send_ping = 0;
+	if (now - last_send_ping >= PING_INTERVAL)
+	{
+		if (write_block(srv_sd, PING, NULL, 0) < 0)
+		{
+			printf("Unable to send data\n");
+			exit(EXIT_FAILURE);
+		}
+
+		last_send_ping = now;
+	}
+}
+
+void net_send_epg(
+		const char *start,
+		const char *stop,
+		const char *title,
+		const char *desc,
+		const char *lang,
+		const char *category
+		)
+{
+	/* nanosleep((struct timespec[]){{0, 100000000}}, NULL); */
+	assert(srv_sd > 0);
+	if (NULL == start)
+		return;
+	if (NULL == stop)
+		return;
+
+	size_t st = strlen(start) + 1;
+	size_t sp = strlen(stop) + 1;
+
+	size_t t = 1;
+	if (title != NULL)
+		t += strlen(title);
+
+	size_t d = 1;
+	if (desc != NULL)
+		d += strlen(desc);
+
+    size_t l = 1;
+    if (lang != NULL)
+        l += strlen(lang);
+
+    size_t c = 1;
+    if (category != NULL)
+        c += strlen(category);
+
+    size_t len = st + sp + t + d + l + c;
+
+	char *epg = (char *) calloc(len, sizeof(char));
+	if (NULL == epg)
+		return;
+
+	char *end = epg;
+
+	memcpy(end, start, st);
+	end += st;
+
+	memcpy(end, stop, sp);
+	end += sp;
+
+	if (title != NULL)
+		memcpy(end, title, t);
+	end += t;
+
+	if (desc != NULL)
+		memcpy(end, desc, d);
+	end += d;
+
+    if (lang != NULL)
+        memcpy(end, lang, l);
+    end += l;
+
+    if (category != NULL)
+        memcpy(end, category, c);
+    end += c;
+
+#if DEBUG_OUT
+	fprintf(stderr, "[C] Sending EPG: %u bytes\n", len);
+#endif
+
+	if (write_block(srv_sd, EPG_DATA, epg, len) <= 0)
+		fprintf(stderr, "Can't send EPG data\n");
+
+	return;
+}
+
+int net_tcp_read(int socket, void *buffer, size_t length)
+{
+	assert(buffer != NULL);
+	assert(length > 0);
+
+	time_t now = time(NULL);
+	static time_t last_ping = 0;
+	if (last_ping == 0)
+		last_ping = now;
+
+	if (now - last_ping > PING_INTERVAL)
+	{
+		last_ping = now;
+		if (write_byte(socket, PING) <= 0)
+			fatal(EXIT_FAILURE, "Unable to send keep-alive packet to client\n");
+	}
+
+	int rc;
+	char c;
+	size_t l;
+
+	do
+	{
+		l = length;
+
+		if ((rc = read_block(socket, &c, buffer, &l)) <= 0)
+			return rc;
+	}
+	while (c != BIN_DATA && c != BIN_HEADER);
+
+	return l;
 }
 
 /*
@@ -206,7 +363,7 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 	}
 
 #if DEBUG_OUT
-	if (buf != NULL)
+	if (buf != NULL && command != BIN_HEADER && command != BIN_DATA)
 	{
 		fwrite(buf, sizeof(char), buf_len, stderr);
 		fprintf(stderr, " ");
@@ -296,81 +453,10 @@ int tcp_connect(const char *host, const char *port)
 	if (NULL == p)
 		return -1;
 
+	if (set_nonblocking(sockfd) < 0)
+		return -1;
+
 	return sockfd;
-}
-
-int ask_passwd(int sd)
-{
-	assert(sd >= 0);
-
-	size_t len;
-	char pw[BUFFER_SIZE] = { 0 };
-
-	char ok;
-
-	do {
-		do {
-			if (read_byte(sd, &ok) != 1)
-			{
-				fatal(EXIT_FAILURE, "read() error: %s", strerror(errno));
-			}
-
-#if DEBUG_OUT
-			fprintf(stderr, "[S] ");
-			pr_command(ok);
-			fprintf(stderr, "\n");
-#endif
-
-			if (OK == ok)
-			{
-				return 1;
-			}
-			else if (CONN_LIMIT == ok)
-			{
-				mprint("Too many connections to the server, try later\n");
-				return -1;
-			}
-			else if (ERROR == ok)
-			{
-				mprint("Internal server error\n");
-				return -1;
-			}
-
-		} while(ok != PASSWORD);
-
-		printf("Enter password: ");
-		fflush(stdout);
-
-		char *p = pw;
-		while ((unsigned)(p - pw) < sizeof(pw) && ((*p = fgetc(stdin)) != '\n'))
-			p++;
-		len = p - pw; /* without \n */
-
-		if (write_block(sd, PASSWORD, pw, len) < 0)
-			return -1;
-
-		if (read_byte(sd, &ok) != 1)
-			return -1;
-
-#if DEBUG_OUT
-		fprintf(stderr, "[S] ");
-		pr_command(ok);
-		fprintf(stderr, "\n");
-#endif
-
-		if (UNKNOWN_COMMAND == ok)
-		{
-			printf("Wrong password\n");
-			fflush(stdout);
-		}
-		else if (ERROR == ok)
-		{
-			mprint("Internal server error\n");
-			return -1;
-		}
-	} while(OK != ok);
-
-	return 1;
 }
 
 int start_tcp_srv(const char *port, const char *pwd)
@@ -436,33 +522,9 @@ int start_tcp_srv(const char *port, const char *pwd)
 
 		free(cliaddr);
 
-		if (pwd != NULL && (rc = check_password(sockfd, pwd)) <= 0)
-			goto close_conn;
+		if (check_password(sockfd, pwd) > 0)
+			break;
 
-#if DEBUG_OUT
-		fprintf(stderr, "[S] OK\n");
-#endif
-		if (write_byte(sockfd, OK) != 1)
-			goto close_conn;
-
-		char c;
-		size_t len = BUFFER_SIZE;
-		char buf[BUFFER_SIZE];
-
-		do {
-			if (read_block(sockfd, &c, buf, &len) <= 0)
-				goto close_conn;
-		} while (c != BIN_MODE);
-
-#if DEBUG_OUT
-		fprintf(stderr, "[S] OK\n");
-#endif
-		if (write_byte(sockfd, OK) != 1)
-			goto close_conn;
-
-		break;
-
-close_conn:
 		mprint("Connection closed\n");
 #if _WIN32
 		closesocket(sockfd);
@@ -482,43 +544,33 @@ close_conn:
 
 int check_password(int fd, const char *pwd)
 {
-	assert(pwd != NULL);
-
 	char c;
 	int rc;
-	size_t len;
-	char buf[BUFFER_SIZE];
+	size_t len = BUFFER_SIZE;
+	static char buf[BUFFER_SIZE + 1];
 
-	while(1)
-	{
-		len = BUFFER_SIZE;
-#if DEBUG_OUT
-		fprintf(stderr, "[S] PASSWORD\n");
-#endif
-		if ((rc = write_byte(fd, PASSWORD)) <= 0)
-			return rc;
+	if ((rc = read_block(fd, &c, buf, &len)) <= 0)
+		return rc;
 
-		if ((rc = read_block(fd, &c, buf, &len)) <= 0)
-			return rc;
+	buf[len] = '\0';
 
-		if (c != PASSWORD)
-			return -1;
+	if (pwd == NULL)
+		return 1;
 
-		if (strlen(pwd) != len || strncmp(pwd, buf, len) != 0)
-		{
-			sleep(WRONG_PASSWORD_DELAY);
-
-#if DEBUG_OUT
-			fprintf(stderr, "[S] WRONG_PASSWORD\n");
-#endif
-			if ((rc = write_byte(fd, WRONG_PASSWORD)) <= 0)
-				return rc;
-
-			continue;
-		}
-
+	if (c == PASSWORD && strcmp(pwd, buf) == 0) {
 		return 1;
 	}
+
+#if DEBUG_OUT
+	fprintf(stderr, "[C] Wrong passsword\n");
+#endif
+
+#if DEBUG_OUT
+	fprintf(stderr, "[S] PASSWORD\n");
+#endif
+	if (write_byte(fd, PASSWORD) < 0)
+		return -1;
+	return -1;
 }
 
 int tcp_bind(const char *port, int *family)
@@ -652,7 +704,7 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 	fprintf(stderr, " ");
 #endif
 
-    size_t len = atoi(len_str);
+	size_t len = atoi(len_str);
 
 	if (len > 0)
 	{
@@ -679,8 +731,11 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 		nread += rc;
 
 #if DEBUG_OUT
-		fwrite(buf, sizeof(char), len, stderr);
-		fprintf(stderr, " ");
+		if (*command != BIN_DATA && *command != BIN_HEADER)
+		{
+			fwrite(buf, sizeof(char), len, stderr);
+			fprintf(stderr, " ");
+		}
 #endif
 	}
 
@@ -734,6 +789,18 @@ void pr_command(char c)
 		case PASSWORD:
 			fprintf(stderr, "PASSWORD");
 			break;
+		case BIN_HEADER:
+			fprintf(stderr, "BIN_HEADER");
+			break;
+		case BIN_DATA:
+			fprintf(stderr, "BIN_DATA");
+			break;
+		case EPG_DATA:
+			fprintf(stderr, "EPG_DATA");
+			break;
+		case PING:
+			fprintf(stderr, "PING");
+			break;
 		default:
 			fprintf(stderr, "UNKNOWN (%d)", (int) c);
 			break;
@@ -766,6 +833,10 @@ ssize_t readn(int fd, void *vptr, size_t n)
 			if (errno == EINTR)
 			{
 				nread = 0;
+			}
+			else if (errno == EAGAIN || errno == EWOULDBLOCK)
+			{
+				break;
 			}
 			else
 			{
@@ -810,11 +881,7 @@ ssize_t writen(int fd, const void *vptr, size_t n)
 			}
 			else
 			{
-#if _WIN32
-				wprintf(L"send() eror: %ld\n", WSAGetLastError());
-#else
-				mprint("send() error: %s\n", strerror(errno));
-#endif
+				handle_write_error();
 				return -1;
 			}
 		}
@@ -963,3 +1030,68 @@ void init_sockets (void)
 		socket_inited = 1;
 	}
 }
+
+void handle_write_error()
+{
+#if _WIN32
+	long err = WSAGetLastError();
+#else
+	char *err = strerror(errno);
+#endif
+
+	if (srv_sd < 0)
+		return;
+
+	char c = 0;
+	int rc;
+	do {
+		c = 0;
+		rc = read_byte(srv_sd, &c);
+		if (rc < 0)
+		{
+#if _WIN32
+			wprintf(L"send() eror: %ld\n", err);
+#else
+			mprint("send() error: %s\n", err);
+#endif
+			return;
+		}
+	} while (rc > 0 && c == PING);
+
+	switch (c)
+	{
+		case PASSWORD:
+			mprint("Wrong password (use -tcppassword)\n");
+			break;
+		case CONN_LIMIT:
+			mprint("Too many connections to the server, please wait\n");
+			break;
+		case ERROR:
+			mprint("Internal server error");
+			break;
+		default:
+#if _WIN32
+			wprintf(L"send() eror: %ld\n", err);
+#else
+			mprint("send() error: %s\n", err);
+#endif
+			break;
+	}
+
+	return;
+}
+
+int set_nonblocking(int fd) 
+{
+    int f;
+#ifdef O_NONBLOCK
+    if ((f = fcntl(fd, F_GETFL, 0)) < 0)
+        f = 0;
+
+    return fcntl(fd, F_SETFL, f | O_NONBLOCK); 
+#else
+    f = 1;
+    return ioctl(fd, FIONBIO, &f);
+#endif
+}
+
