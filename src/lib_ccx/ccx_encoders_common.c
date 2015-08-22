@@ -769,7 +769,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 				check_ret(cfg->output_filename);
 			}
 		}
-		else
+		else if (cfg->write_format != CCX_OF_NULL)
 		{
 			basefilename = get_basename(ctx->first_input_file);
 			extension = get_file_extension(cfg->write_format);
