@@ -45,7 +45,8 @@ sudo ldconfig
  Note: 
 1) CCExtractor is tested with Tesseract 3.04 version but it works with older versions. 
 
-you can download tesseract from https://drive.google.com/folderview?id=0B7l10Bj_LprhQnpSRkpGMGV2eE0&usp=sharing
+you can download tesseract from https://github.com/tesseract-ocr/tesseract/archive/3.04.00.tar.gz
+you can download tesseract training data from https://github.com/tesseract-ocr/tessdata/archive/3.04.00.tar.gz
 
 
 
