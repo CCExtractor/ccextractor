@@ -4,6 +4,7 @@
 #include "activity.h"
 #include "ccx_encoders_helpers.h"
 #include "ccx_common_common.h"
+#include "ccx_decoders_708.h"
 
 static int inputfile_capacity=0;
 

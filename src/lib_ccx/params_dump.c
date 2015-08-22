@@ -2,6 +2,8 @@
 #include "ccx_common_option.h"
 #include "teletext.h"
 
+#include "ccx_decoders_708.h"
+
 void params_dump(struct lib_ccx_ctx *ctx)
 {
 	// Display parsed parameters

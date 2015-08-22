@@ -11,6 +11,7 @@ License: GPL 2.0
 #include "ffmpeg_intgr.h"
 #include "ccx_common_option.h"
 #include "ccx_mp4.h"
+#include "ccx_decoders_708.h"
 
 struct lib_ccx_ctx *signal_ctx;
 void sigint_handler()

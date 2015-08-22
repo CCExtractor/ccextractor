@@ -2,9 +2,9 @@
 #define _INCLUDE_708_
 
 #include <sys/stat.h>
-#include "ccx_decoders_common.h"
-#include "ccx_common_option.h"
 #include "lib_ccx.h"
+#include "ccx_common_option.h"
+#include "ccx_decoders_common.h"
 
 #ifdef WIN32
 	#include "..\\win_iconv\\win_iconv.h"
@@ -336,12 +336,11 @@ typedef struct ccx_dtvcc_ctx_t
 	int last_sequence;
 } ccx_dtvcc_ctx_t;
 
+extern ccx_dtvcc_ctx_t ccx_dtvcc_ctx;
+
 void _dtvcc_window_clear_row(dtvcc_window *window, int row_index);
 void _dtvcc_window_clear_text(dtvcc_window *window);
 void _dtvcc_window_clear(dtvcc_service_decoder *decoder, int window_idx);
-
-extern ccx_dtvcc_ctx_t ccx_dtvcc_ctx;
-struct lib_ccx_ctx;
 
 void dtvcc_ctx_init(ccx_dtvcc_ctx_t *ctx);
 void dtvcc_ctx_free(ccx_dtvcc_ctx_t *ctx);

@@ -3,6 +3,7 @@
 #include "activity.h"
 #include "utility.h"
 #include "dvb_subtitle_decoder.h"
+#include "ccx_decoders_708.h"
 
 struct ccx_common_logging_t ccx_common_logging;
 static struct ccx_decoders_common_settings_t *init_decoder_setting(

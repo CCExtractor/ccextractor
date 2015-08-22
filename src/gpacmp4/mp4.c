@@ -9,6 +9,7 @@
 #include "ccx_common_option.h"
 #include "ccx_mp4.h"
 #include "activity.h"
+#include "ccx_decoders_708.h"
 
 static short bswap16(short v)
 {
