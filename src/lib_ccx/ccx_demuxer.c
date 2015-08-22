@@ -238,6 +238,15 @@ void ccx_demuxer_delete(struct ccx_demuxer **ctx)
 	int i;
 	dinit_cap(lctx);
 	freep(&lctx->last_pat_payload);
+	for (i = 0; i < MAX_PSI_PID; i++)
+	{
+		if(lctx->PID_buffers[i]!=NULL && lctx->PID_buffers[i]->buffer!=NULL)
+		{
+			free(lctx->PID_buffers[i]->buffer);
+			lctx->PID_buffers[i]->buffer=NULL;
+			lctx->PID_buffers[i]->buffer_length=0;
+		}
+	}
 	for (i = 0; i < MAX_PID; i++)
 	{
 		if( lctx->PIDs_programs[i])
@@ -323,6 +332,9 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 			return NULL;
 		}
 	}
+
+	for(i = 0; i < MAX_PSI_PID; i++)
+		ctx->PID_buffers[i]=NULL;
 
 	init_ts(ctx);
 	ctx->filebuffer = NULL;

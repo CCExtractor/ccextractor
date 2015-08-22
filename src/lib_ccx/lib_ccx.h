@@ -109,8 +109,7 @@ struct lib_ccx_ctx
 
 	unsigned teletext_warning_shown; // Did we detect a possible PAL (with teletext subs) and told the user already?
 
-	//struct EIT_buffer eit_buffer;
-	struct EIT_buffer epg_buffers[0xfff+1];
+	struct PSI_buffer epg_buffers[0xfff+1];
 	struct EIT_program eit_programs[TS_PMT_MAP_SIZE+1];
 	int32_t eit_current_events[TS_PMT_MAP_SIZE+1];
 	int16_t ATSC_source_pg_map[0xffff];
@@ -235,8 +234,9 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload);
 long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data);
 LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **data);
 int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char*buf, int size,  struct program_info *pinfo);
-int parse_PMT (struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char *buf, int len,  struct program_info *pinfo);
-int parse_PAT (struct ccx_demuxer *ctx, struct ts_payload *payload);
+void ts_buffer_psi_packet(struct ccx_demuxer *ctx);
+int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct program_info *pinfo);
+int parse_PAT (struct ccx_demuxer *ctx);
 void parse_EPG_packet (struct lib_ccx_ctx *ctx);
 void EPG_free(struct lib_ccx_ctx *ctx);
 
