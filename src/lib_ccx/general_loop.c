@@ -602,7 +602,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 				fts_at_gop_start = 0;
 			}
 			else
-				fts_at_gop_start = get_fts();
+				fts_at_gop_start = get_fts(dec_ctx->timing);
 
 			frames_since_ref_time = 0;
 			set_fts(dec_ctx->timing);
@@ -613,7 +613,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
 				print_mstime(dec_ctx->timing->current_pts/(MPEG_CLOCK_FREQ/1000)),
 				(unsigned) (dec_ctx->timing->current_pts));
-		dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
+		dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts(dec_ctx->timing)));
 
 		got = process_raw(dec_ctx, dec_sub, data_node->buffer, data_node->len);
 	}
@@ -754,7 +754,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		}
 		if (ctx->live_stream)
 		{
-			int cur_sec = (int) (get_fts() / 1000);
+			int cur_sec = (int) (get_fts(dec_ctx->timing) / 1000);
 			int th=cur_sec/10;
 			if (ctx->last_reported_progress!=th)
 			{
@@ -769,7 +769,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				int progress = (int) ((((ctx->total_past+ctx->demux_ctx->past)>>8)*100)/(ctx->total_inputsize>>8));
 				if (ctx->last_reported_progress != progress)
 				{
-					LLONG t=get_fts();
+					LLONG t=get_fts(dec_ctx->timing);
 					if (!t && ctx->demux_ctx->global_timestamp_inited)
 						t=ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
 					int cur_sec = (int) (t / 1000);

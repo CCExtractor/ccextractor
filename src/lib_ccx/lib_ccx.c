@@ -182,9 +182,11 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 	int i;
 	list_for_each_entry_safe(dec_ctx, dec_ctx1, &lctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
+		LLONG cfts;
 		if (dec_ctx->codec == CCX_CODEC_DVB)
 			dvbsub_close_decoder(&dec_ctx->private_data);
 		flush_cc_decode(dec_ctx, &dec_ctx->dec_sub);
+		cfts = get_fts(dec_ctx->timing);
 		enc_ctx = get_encoder_by_pn(lctx, dec_ctx->program_number);
 		if (enc_ctx && dec_ctx->dec_sub.got_output == CCX_TRUE)
 		{
@@ -196,7 +198,7 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 		if (enc_ctx)
 		{
 			list_del(&enc_ctx->list);
-			dinit_encoder(&enc_ctx);
+			dinit_encoder(&enc_ctx, cfts);
 		}
 	}
 

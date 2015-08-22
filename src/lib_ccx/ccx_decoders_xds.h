@@ -5,7 +5,7 @@
 #include "ccx_encoders_common.h"
 
 void process_xds_bytes(const unsigned char hi, int lo);
-void do_end_of_xds(struct cc_subtitle *sub, unsigned char expected_checksum);
+void do_end_of_xds (struct cc_subtitle *sub, ccx_decoder_608_context *context, unsigned char expected_checksum);
 
 void ccx_decoders_xds_init_library(ccx_encoders_transcript_format *transcriptSettings, LLONG subs_delay, char millis_separator);
 

@@ -267,19 +267,19 @@ void _dtvcc_decoder_init_write(dtvcc_service_decoder *decoder, char *basefilenam
 	free(ext);
 }
 
-void _dtvcc_window_update_time_show(dtvcc_window *window)
+void _dtvcc_window_update_time_show(dtvcc_window *window, struct ccx_common_timing_ctx *timing)
 {
 	char buf[128];
-	window->time_ms_show = get_visible_start();
+	window->time_ms_show = get_visible_start(timing);
 	print_mstime2buf(window->time_ms_show, buf);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] "
 			"[W-%d] show time updated to %s\n", window->number, buf);
 }
 
-void _dtvcc_window_update_time_hide(dtvcc_window *window)
+void _dtvcc_window_update_time_hide(dtvcc_window *window, struct ccx_common_timing_ctx *timing)
 {
 	char buf[128];
-	window->time_ms_hide = get_visible_end();
+	window->time_ms_hide = get_visible_end(timing);
 	print_mstime2buf(window->time_ms_hide, buf);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] "
 			"[W-%d] hide time updated to %s\n", window->number, buf);
@@ -400,7 +400,7 @@ void _dtvcc_screen_print(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder)
 	//TODO use priorities to solve windows overlap (with a video sample, please)
 	//qsort(wnd, visible, sizeof(dtvcc_window *), _dtvcc_compare_win_priorities);
 
-	_dtvcc_screen_update_time_hide(decoder->tv, get_visible_end());
+	_dtvcc_screen_update_time_hide(decoder->tv, get_visible_end(dtvcc->timing));
 
 #ifdef DTVCC_PRINT_DEBUG
 	ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "[CEA-708] TV dump:\n");
@@ -478,15 +478,16 @@ void _dtvcc_window_rollup(dtvcc_service_decoder *decoder, dtvcc_window *window)
 
 void _dtvcc_process_cr(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder)
 {
+	dtvcc_window *window = &decoder->windows[decoder->current_window];
+	int rollup_required = 0;
+
 	if (decoder->current_window == -1)
 	{
 		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_process_cr: Window has to be defined first\n");
 		return;
 	}
 
-	dtvcc_window *window = &decoder->windows[decoder->current_window];
 
-	int rollup_required = 0;
 	switch (window->attribs.print_dir)
 	{
 		case pd_left_to_right:
@@ -522,7 +523,7 @@ void _dtvcc_process_cr(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder)
 	{
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_process_cr: rolling up\n");
 
-		_dtvcc_window_update_time_hide(window);
+		_dtvcc_window_update_time_hide(window, dtvcc->timing);
 		_dtvcc_window_copy_to_screen(decoder, window);
 		_dtvcc_screen_print(dtvcc, decoder);
 
@@ -533,7 +534,7 @@ void _dtvcc_process_cr(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder)
 			else
 				_dtvcc_window_rollup(decoder, window);
 		}
-		_dtvcc_window_update_time_show(window);
+		_dtvcc_window_update_time_show(window, dtvcc->timing);
 	}
 }
 
@@ -617,7 +618,7 @@ void _dtvcc_decoder_flush(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder
 		if (window->visible)
 		{
 			screen_content_changed = 1;
-			_dtvcc_window_update_time_hide(window);
+			_dtvcc_window_update_time_hide(window, dtvcc->timing);
 			_dtvcc_window_copy_to_screen(decoder, window);
 			window->visible = 0;
 		}
@@ -659,7 +660,7 @@ void dtvcc_handle_CLW_ClearWindows(dtvcc_service_decoder *decoder, int windows_b
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "\n");
 }
 
-void dtvcc_handle_DSW_DisplayWindows(dtvcc_service_decoder *decoder, int windows_bitmap)
+void dtvcc_handle_DSW_DisplayWindows(dtvcc_service_decoder *decoder, int windows_bitmap, struct ccx_common_timing_ctx *timing)
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_handle_DSW_DisplayWindows: windows: ");
 	if (windows_bitmap == 0)
@@ -679,7 +680,7 @@ void dtvcc_handle_DSW_DisplayWindows(dtvcc_service_decoder *decoder, int windows
 				if (!decoder->windows[i].visible)
 				{
 					decoder->windows[i].visible = 1;
-					_dtvcc_window_update_time_show(&decoder->windows[i]);
+					_dtvcc_window_update_time_show(&decoder->windows[i], timing);
 				}
 			}
 			windows_bitmap >>= 1;
@@ -705,7 +706,7 @@ void dtvcc_handle_HDW_HideWindows(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder 
 				{
 					screen_content_changed = 1;
 					decoder->windows[i].visible = 0;
-					_dtvcc_window_update_time_hide(&decoder->windows[i]);
+					_dtvcc_window_update_time_hide(&decoder->windows[i], dtvcc->timing);
 					if (!decoder->windows[i].is_empty)
 						_dtvcc_window_copy_to_screen(decoder, &decoder->windows[i]);
 				}
@@ -734,10 +735,10 @@ void dtvcc_handle_TGW_ToggleWindows(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decode
 				ccx_common_logging.debug_ftn(CCX_DMT_708, "[W-%d: %d->%d]", i, window->visible, !window->visible);
 				window->visible = !window->visible;
 				if (window->visible)
-					_dtvcc_window_update_time_show(window);
+					_dtvcc_window_update_time_show(window, dtvcc->timing);
 				else
 				{
-					_dtvcc_window_update_time_hide(window);
+					_dtvcc_window_update_time_hide(window, dtvcc->timing);
 					if (!window->is_empty)
 					{
 						screen_content_changed = 1;
@@ -754,7 +755,7 @@ void dtvcc_handle_TGW_ToggleWindows(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decode
 	}
 }
 
-void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id, unsigned char *data)
+void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id, unsigned char *data, struct ccx_common_timing_ctx *timing)
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_handle_DFx_DefineWindow: "
 			"W[%d], attributes: \n", window_id);
@@ -857,7 +858,7 @@ void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id
 	memcpy(window->commands, data + 1, 6);
 
 	if (window->visible)
-		_dtvcc_window_update_time_show(window);
+		_dtvcc_window_update_time_show(window, timing);
 }
 
 void dtvcc_handle_SWA_SetWindowAttributes(dtvcc_service_decoder *decoder, unsigned char *data)
@@ -927,7 +928,7 @@ void dtvcc_handle_DLW_DeleteWindows(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decode
 				if (window_had_content)
 				{
 					screen_content_changed = 1;
-					_dtvcc_window_update_time_hide(window);
+					_dtvcc_window_update_time_hide(window, dtvcc->timing);
 					_dtvcc_window_copy_to_screen(decoder, &decoder->windows[i]);
 				}
 				decoder->windows[i].is_defined = 0;
@@ -1233,7 +1234,7 @@ int _dtvcc_handle_C1(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder, uns
 {
 	struct DTVCC_S_COMMANDS_C1 com = DTVCC_COMMANDS_C1[data[0] - 0x80];
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] C1: %s | [%02X]  [%s] [%s] (%d)\n",
-			print_mstime(get_fts()),
+			print_mstime(get_fts(dtvcc->timing)),
 			data[0], com.name, com.description, com.length);
 
 	if (com.length > data_length)
@@ -1258,7 +1259,7 @@ int _dtvcc_handle_C1(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder, uns
 			dtvcc_handle_CLW_ClearWindows(decoder, data[1]);
 			break;
 		case DSW:
-			dtvcc_handle_DSW_DisplayWindows(decoder, data[1]);
+			dtvcc_handle_DSW_DisplayWindows(decoder, data[1], dtvcc->timing);
 			break;
 		case HDW:
 			dtvcc_handle_HDW_HideWindows(dtvcc, decoder, data[1]);
@@ -1304,7 +1305,7 @@ int _dtvcc_handle_C1(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder, uns
 		case DF5:
 		case DF6:
 		case DF7:
-			dtvcc_handle_DFx_DefineWindow(decoder, com.code - DF0, data); /* Window 0 to 7 */
+			dtvcc_handle_DFx_DefineWindow(decoder, com.code - DF0, data, dtvcc->timing); /* Window 0 to 7 */
 			break;
 		default:
 			ccx_common_logging.log_ftn ("[CEA-708] BUG: Unhandled code in _dtvcc_handle_C1.\n");

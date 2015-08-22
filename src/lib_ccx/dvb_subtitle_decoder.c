@@ -1445,8 +1445,9 @@ static void dvbsub_parse_display_definition_segment(void *dvb_ctx,
  * when OCR subsystem is present then it also write recognised text in
  * cc_bitmap ocr_text variable.
  */
-static int write_dvb_sub(DVBSubContext *ctx, struct cc_subtitle *sub)
+static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 {
+	DVBSubContext *ctx;
 	DVBSubRegion *region;
 	DVBSubRegionDisplay *display;
 	DVBSubCLUT *clut;
@@ -1456,6 +1457,7 @@ static int write_dvb_sub(DVBSubContext *ctx, struct cc_subtitle *sub)
 	int offset_x=0, offset_y=0;
 	int ret = 0;
 
+	ctx = (DVBSubContext *) dec_ctx->private_data;
         sub->type = CC_BITMAP;
 	sub->lang_index = ctx->lang_index;
 	if (display_def)
@@ -1481,7 +1483,7 @@ static int write_dvb_sub(DVBSubContext *ctx, struct cc_subtitle *sub)
 		return -1;
 	}
 
-	sub->start_time = get_visible_start();
+	sub->start_time = get_visible_start(dec_ctx->timing);
 	sub->end_time = sub->start_time + ( ctx->time_out * 1000 );
 	sub->flags |= SUB_EOD_MARKER;
 	sub->got_output = 1;
@@ -1615,7 +1617,7 @@ int dvbsub_decode(struct lib_cc_decode *dec_ctx, const unsigned char *buf, int b
 						segment_length);
 				break;
 			case DVBSUB_DISPLAY_SEGMENT:
-				write_dvb_sub(ctx, sub);
+				write_dvb_sub(dec_ctx, sub);
 				got_segment |= 16;
 				break;
 			default:
@@ -1631,7 +1633,7 @@ int dvbsub_decode(struct lib_cc_decode *dec_ctx, const unsigned char *buf, int b
 	// segments then we need no further data.
 	if (got_segment == 15)
 	{
-		write_dvb_sub(ctx, sub);
+		write_dvb_sub(dec_ctx, sub);
 
 
 	}

@@ -19,19 +19,19 @@ LLONG minimum_fts = 0; // No screen should start before this FTS
 
 /* This function returns a FTS that is guaranteed to be at least 1 ms later than the end of the previous screen. It shouldn't be needed
    obviously but it guarantees there's no timing overlap */
-LLONG get_visible_start (void)
+LLONG get_visible_start (struct ccx_common_timing_ctx *ctx)
 {
-	LLONG fts = get_fts();
+	LLONG fts = get_fts(ctx);
 	if (fts <= minimum_fts)
 		fts = minimum_fts+1;
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Visible Start time=%s\n", print_mstime(fts));
 	return fts;
 }
 
-/* This function returns the current FTS and saves it so it can be used by get_visible_start */
-LLONG get_visible_end (void)
+/* This function returns the current FTS and saves it so it can be used by ctxget_visible_start */
+LLONG get_visible_end (struct ccx_common_timing_ctx *ctx)
 {
-	LLONG fts = get_fts();
+	LLONG fts = get_fts(ctx);
 	if (fts>minimum_fts)
 		minimum_fts=fts;
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Visible End time=%s\n", print_mstime(fts));
@@ -123,10 +123,10 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 				ctx->saw_caption_block = 1;
 
 				if (ctx->extraction_start.set &&
-						get_fts() < ctx->extraction_start.time_in_ms)
+						get_fts(ctx->timing) < ctx->extraction_start.time_in_ms)
 					timeok = 0;
 				if (ctx->extraction_end.set &&
-						get_fts() > ctx->extraction_end.time_in_ms)
+						get_fts(ctx->timing) > ctx->extraction_end.time_in_ms)
 				{
 					timeok = 0;
 					ctx->processed_enough=1;
@@ -147,10 +147,10 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 				ctx->saw_caption_block = 1;
 
 				if (ctx->extraction_start.set &&
-						get_fts() < ctx->extraction_start.time_in_ms)
+						get_fts(ctx->timing) < ctx->extraction_start.time_in_ms)
 					timeok = 0;
 				if (ctx->extraction_end.set &&
-						get_fts() > ctx->extraction_end.time_in_ms)
+						get_fts(ctx->timing) > ctx->extraction_end.time_in_ms)
 				{
 					timeok = 0;
 					ctx->processed_enough=1;
@@ -174,10 +174,10 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 				current_field=3;
 
 				if (ctx->extraction_start.set &&
-						get_fts() < ctx->extraction_start.time_in_ms)
+						get_fts(ctx->timing) < ctx->extraction_start.time_in_ms)
 					timeok = 0;
 				if (ctx->extraction_end.set &&
-						get_fts() > ctx->extraction_end.time_in_ms)
+						get_fts(ctx->timing) > ctx->extraction_end.time_in_ms)
 				{
 					timeok = 0;
 					ctx->processed_enough=1;
@@ -232,6 +232,8 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 	ctx->avc_ctx = init_avc();
 	ctx->codec = setting->codec;
+	ctx->timing = init_timing_ctx(&ccx_common_timing_settings);
+	setting->settings_dtvcc->timing = ctx->timing;
 	ctx->dtvcc = ccx_dtvcc_init(setting->settings_dtvcc);
 
 	if(setting->codec == CCX_CODEC_ATSC_CC)
@@ -243,7 +245,8 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 				1,
 				&ctx->processed_enough,
 				setting->cc_to_stdout,
-				setting->output_format
+				setting->output_format,
+				ctx->timing
 				);
 		ctx->context_cc608_field_2 = ccx_decoder_608_init_library(
 				setting->settings_608,
@@ -251,7 +254,8 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 				2,
 				&ctx->processed_enough,
 				setting->cc_to_stdout,
-				setting->output_format
+				setting->output_format,
+				ctx->timing
 				);
 	}
 	else
@@ -270,7 +274,6 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->processed_enough = 0;
 	ctx->max_gop_length = 0;
 	ctx->has_ccdata_buffered = 0;
-	ctx->timing = init_timing_ctx(&ccx_common_timing_settings);
 	ctx->in_bufferdatatype = CCX_UNKNOWN;
 	ctx->frames_since_last_gop = 0;
 	memcpy(&ctx->extraction_start, &setting->extraction_start,sizeof(struct ccx_boundary_time));

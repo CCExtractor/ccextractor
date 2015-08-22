@@ -333,6 +333,7 @@ typedef struct ccx_decoder_dtvcc_settings_t
 
 	char** services_charsets;
 	char* all_services_charset;
+	struct ccx_common_timing_ctx *timing;
 
 	struct encoder_cfg *enc_cfg; //TODO temporary solution. subtitles has to be outputed to cc_subtitle struct
 } ccx_decoder_dtvcc_settings_t;
@@ -360,6 +361,7 @@ typedef struct ccx_dtvcc_ctx_t
 	int current_packet_length;
 
 	int last_sequence;
+	struct ccx_common_timing_ctx *timing;
 } ccx_dtvcc_ctx_t;
 
 

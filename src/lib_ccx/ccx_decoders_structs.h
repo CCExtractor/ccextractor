@@ -159,7 +159,7 @@ struct lib_cc_decode
 	unsigned top_field_first; // Needs to be global
 
 	ccx_dtvcc_ctx_t *dtvcc;
-
+	int current_field;
 	int (*writedata)(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 };
 

@@ -153,7 +153,7 @@ void ccx_decoders_xds_init_library(ccx_encoders_transcript_format *transcriptSet
 	memset(current_xds_program_type, 0, 33);
 }
 
-int write_xds_string(struct cc_subtitle *sub,char *p,size_t len)
+int write_xds_string(struct cc_subtitle *sub, ccx_decoder_608_context *context, char *p, size_t len)
 {
 	struct eia608_screen *data = NULL;
 	data = (struct eia608_screen *) realloc(sub->data,( sub->nb_data + 1 ) * sizeof(*data));
@@ -170,7 +170,7 @@ int write_xds_string(struct cc_subtitle *sub,char *p,size_t len)
 		data = (struct eia608_screen *)sub->data + sub->nb_data;
 		data->format = SFORMAT_XDS;
 		data->start_time = ts_start_of_xds;
-		data->end_time =  get_fts();
+		data->end_time =  get_fts(context->timing);
 		data->xds_str = p;
 		data->xds_len = len;
 		data->cur_xds_packet_class = cur_xds_packet_class;
@@ -258,7 +258,7 @@ void xds_write_transcript_line_prefix (struct ccx_s_write *wb, LLONG start_time,
 		fdprintf(wb->fh, "%s|", XDSclasses_short[cur_xds_packet_class]);
 	}
 }
-void xdsprint (struct cc_subtitle *sub,const char *fmt,...)
+void xdsprint (struct cc_subtitle *sub, ccx_decoder_608_context *context, const char *fmt,...)
 {
 	/* Guess we need no more than 100 bytes. */
 	int n, size = 100;
@@ -277,7 +277,7 @@ void xdsprint (struct cc_subtitle *sub,const char *fmt,...)
 		/* If that worked, return the string. */
 		if (n > -1 && n < size)
 		{
-			write_xds_string(sub, p, n);
+			write_xds_string(sub, context, p, n);
 			return;
 		}
 		/* Else try again with more space. */
@@ -299,9 +299,9 @@ void xdsprint (struct cc_subtitle *sub,const char *fmt,...)
 
 void xds_debug_test(struct cc_subtitle *sub)
 {
-	process_xds_bytes (0x05,0x02);
-	process_xds_bytes (0x20,0x20);
-	do_end_of_xds (sub, 0x2a);
+	process_xds_bytes (0x05, 0x02);
+	process_xds_bytes (0x20, 0x20);
+	do_end_of_xds (sub, NULL, 0x2a);
 
 }
 
@@ -317,7 +317,7 @@ void xds_cea608_test(struct cc_subtitle *sub)
 	process_xds_bytes (0x02,0x03);
 	process_xds_bytes (0x02,0x03);
 	process_xds_bytes (0x6b,0x00);
-	do_end_of_xds (sub, 0x1d);
+	do_end_of_xds (sub, NULL, 0x1d);
 }
 
 int how_many_used()
@@ -409,7 +409,7 @@ void process_xds_bytes (const unsigned char hi, int lo)
 	}
 }
 
-void xds_do_copy_generation_management_system (struct cc_subtitle *sub, unsigned c1, unsigned c2)
+void xds_do_copy_generation_management_system (struct cc_subtitle *sub, ccx_decoder_608_context *context, unsigned c1, unsigned c2)
 {
 	static unsigned last_c1=-1, last_c2=-1;
 	static char copy_permited[256];
@@ -450,9 +450,9 @@ void xds_do_copy_generation_management_system (struct cc_subtitle *sub, unsigned
 
 	if (ccx_decoders_xds_context.transcriptFormat.xds)
 	{
-		xdsprint(sub, copy_permited);
-		xdsprint(sub, aps);
-		xdsprint(sub, rcd);
+		xdsprint(sub, context, copy_permited);
+		xdsprint(sub, context, aps);
+		xdsprint(sub, context, rcd);
 	}
 	if (changed)
 	{
@@ -465,7 +465,7 @@ void xds_do_copy_generation_management_system (struct cc_subtitle *sub, unsigned
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: %s\n",rcd);
 }
 
-void xds_do_content_advisory (struct cc_subtitle *sub, unsigned c1, unsigned c2)
+void xds_do_content_advisory (struct cc_subtitle *sub, ccx_decoder_608_context *context, unsigned c1, unsigned c2)
 {
 	static unsigned last_c1=-1, last_c2=-1;
 	static char age[256];
@@ -552,8 +552,8 @@ void xds_do_content_advisory (struct cc_subtitle *sub, unsigned c1, unsigned c2)
 	{
 		if (ccx_decoders_xds_context.transcriptFormat.xds)
 		{
-			xdsprint(sub, age);
-			xdsprint(sub, content);
+			xdsprint(sub, context, age);
+			xdsprint(sub, context, content);
 		}
 		if (changed)
 		{
@@ -569,7 +569,7 @@ void xds_do_content_advisory (struct cc_subtitle *sub, unsigned c1, unsigned c2)
 	   )
 	{
 		if (ccx_decoders_xds_context.transcriptFormat.xds)
-			xdsprint(sub, rating);
+			xdsprint(sub, context, rating);
 		if (changed)
 			ccx_common_logging.log_ftn ("\rXDS: %s\n  ",rating);
 		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: %s\n",rating);
@@ -581,7 +581,7 @@ void xds_do_content_advisory (struct cc_subtitle *sub, unsigned c1, unsigned c2)
 
 }
 
-int xds_do_current_and_future (struct cc_subtitle *sub)
+int xds_do_current_and_future (struct cc_subtitle *sub, ccx_decoder_608_context *context)
 {
 	int was_proc=0;
 
@@ -617,7 +617,7 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 					(cur_xds_packet_class==XDS_CLASS_CURRENT?"Current":"Future"),
 					date,month,hour,min);
 			if (ccx_decoders_xds_context.transcriptFormat.xds)
-				xdsprint (sub, "PIN (Start Time): %s  %02d-%02d %02d:%02d\n",
+				xdsprint (sub, context, "PIN (Start Time): %s  %02d-%02d %02d:%02d\n",
 						(cur_xds_packet_class==XDS_CLASS_CURRENT?"Current":"Future"),
 						date,month,hour,min);
 
@@ -642,7 +642,7 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 					ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: Program length (HH:MM): %02d:%02d  ",hour,min);
 
 				if (ccx_decoders_xds_context.transcriptFormat.xds)
-					xdsprint(sub, "Program length (HH:MM): %02d:%02d  ",hour,min);
+					xdsprint(sub, context, "Program length (HH:MM): %02d:%02d  ",hour,min);
 
 				if (cur_xds_payload_length>6) // Next two bytes (optional) available
 				{
@@ -653,7 +653,7 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 					else
 						ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "Elapsed (HH:MM): %02d:%02d",el_hour,el_min);
 					if (ccx_decoders_xds_context.transcriptFormat.xds)
-						xdsprint(sub, "Elapsed (HH:MM): %02d:%02d",el_hour,el_min);
+						xdsprint(sub, context, "Elapsed (HH:MM): %02d:%02d",el_hour,el_min);
 
 				}
 				if (cur_xds_payload_length>8) // Next two bytes (optional) available
@@ -662,7 +662,7 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 					if (!xds_program_length_shown)
 						ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, ":%02d",el_sec);
 					if (ccx_decoders_xds_context.transcriptFormat.xds)
-						xdsprint(sub, "Elapsed (SS) :%02d",el_sec);
+						xdsprint(sub, context, "Elapsed (SS) :%02d",el_sec);
 				}
 				if (!xds_program_length_shown)
 					ccx_common_logging.log_ftn("\n");
@@ -681,7 +681,7 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 				xds_program_name[i-2]=0;
 				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS Program name: %s\n",xds_program_name);
 				if (ccx_decoders_xds_context.transcriptFormat.xds)
-					xdsprint(sub, "Program name: %s",xds_program_name);
+					xdsprint(sub, context, "Program name: %s",xds_program_name);
 				if (cur_xds_packet_class==XDS_CLASS_CURRENT &&
 						strcmp (xds_program_name, current_xds_program_name)) // Change of program
 				{
@@ -743,7 +743,7 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 				}
 			}
 			if (ccx_decoders_xds_context.transcriptFormat.xds)
-				xdsprint(sub,"Program type %s",str);
+				xdsprint(sub, context, "Program type %s",str);
 			if (!current_program_type_reported)
 				ccx_common_logging.log_ftn ("\n");
 			current_program_type_reported=1;
@@ -752,14 +752,14 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 			was_proc=1;
 			if (cur_xds_payload_length<5) // We need 2 data bytes
 				break;
-			xds_do_content_advisory (sub, cur_xds_payload[2],cur_xds_payload[3]);
+			xds_do_content_advisory (sub, context, cur_xds_payload[2],cur_xds_payload[3]);
 			break;
 		case XDS_TYPE_AUDIO_SERVICES:
 			was_proc=1; // I don't have any sample with this.
 			break;
 		case XDS_TYPE_CGMS:
 			was_proc=1;
-			xds_do_copy_generation_management_system (sub, cur_xds_payload[2],cur_xds_payload[3]);
+			xds_do_copy_generation_management_system (sub, context, cur_xds_payload[2],cur_xds_payload[3]);
 			break;
 		case XDS_TYPE_ASPECT_RATIO_INFO:
 			{
@@ -812,7 +812,7 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 						ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS description line %d: %s\n",line_num,xds_desc);
 					}
 					if (ccx_decoders_xds_context.transcriptFormat.xds)
-						xdsprint(sub, "XDS description line %d: %s",line_num,xds_desc);
+						xdsprint(sub, context, "XDS description line %d: %s",line_num,xds_desc);
 					ccx_common_logging.gui_ftn(CCX_COMMON_LOGGING_GUI_XDS_PROGRAM_DESCRIPTION, line_num, xds_desc);
 				}
 				break;
@@ -823,7 +823,7 @@ int xds_do_current_and_future (struct cc_subtitle *sub)
 	return was_proc;
 }
 
-int xds_do_channel (struct cc_subtitle *sub)
+int xds_do_channel (struct cc_subtitle *sub, ccx_decoder_608_context *context)
 {
 	int was_proc=0;
 	switch (cur_xds_packet_type)
@@ -837,7 +837,7 @@ int xds_do_channel (struct cc_subtitle *sub)
 			xds_network_name[i-2]=0;
 			ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "XDS Network name: %s\n",xds_network_name);
 			if (ccx_decoders_xds_context.transcriptFormat.xds)
-				xdsprint (sub, "Network: %s",xds_network_name);
+				xdsprint (sub, context, "Network: %s",xds_network_name);
 			if (strcmp (xds_network_name, current_xds_network_name)) // Change of station
 			{
 				ccx_common_logging.log_ftn ("XDS Notice: Network is now %s\n", xds_network_name);
@@ -858,7 +858,7 @@ int xds_do_channel (struct cc_subtitle *sub)
 				xds_call_letters[i-2]=0;
 				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "XDS Network call letters: %s\n",xds_call_letters);
 				if (ccx_decoders_xds_context.transcriptFormat.xds)
-					xdsprint (sub, "Call Letters: %s",xds_call_letters);
+					xdsprint (sub, context, "Call Letters: %s",xds_call_letters);
 				if (strncmp (xds_call_letters, current_xds_call_letters, 7)) // Change of station
 				{
 					ccx_common_logging.log_ftn ("XDS Notice: Network call letters now %s\n", xds_call_letters);
@@ -879,7 +879,7 @@ int xds_do_channel (struct cc_subtitle *sub)
 			unsigned b4=(cur_xds_payload[5])&0x10;
 			unsigned tsid=(b4<<12) | (b3<<8) | (b2<<4) | b1;
 			if (tsid && ccx_decoders_xds_context.transcriptFormat.xds)
-				xdsprint (sub, "TSID: %u",tsid);
+				xdsprint (sub, context, "TSID: %u",tsid);
 			break;
 	}
 	return was_proc;
@@ -887,7 +887,7 @@ int xds_do_channel (struct cc_subtitle *sub)
 
 
 
-int xds_do_private_data (struct cc_subtitle *sub)
+int xds_do_private_data (struct cc_subtitle *sub, ccx_decoder_608_context *context)
 {
 	char *str = malloc((cur_xds_payload_length *3) + 1);
 	if (str==NULL) // Only thing we can do with private data is dump it.
@@ -895,7 +895,7 @@ int xds_do_private_data (struct cc_subtitle *sub)
 	for (int i=2;i<cur_xds_payload_length-1;i++)
 		sprintf(str, "%02X ",cur_xds_payload[i]);
 
-	xdsprint(sub,str);
+	xdsprint(sub, context, str);
 	free(str);
 	return 1;
 }
@@ -940,7 +940,7 @@ int xds_do_misc ()
 	return was_proc;
 }
 
-void do_end_of_xds (struct cc_subtitle *sub, unsigned char expected_checksum)
+void do_end_of_xds (struct cc_subtitle *sub, ccx_decoder_608_context *context, unsigned char expected_checksum)
 {
 	if (cur_xds_buffer_idx== -1 || /* Unknown buffer, or not in use (bug) */
 			!xds_buffers[cur_xds_buffer_idx].in_use)
@@ -989,10 +989,10 @@ void do_end_of_xds (struct cc_subtitle *sub, unsigned char expected_checksum)
 				break;
 			}
 		case XDS_CLASS_CURRENT: // Info on current program
-			was_proc = xds_do_current_and_future(sub);
+			was_proc = xds_do_current_and_future(sub, context);
 			break;
 		case XDS_CLASS_CHANNEL:
-			was_proc = xds_do_channel(sub);
+			was_proc = xds_do_channel(sub, context);
 			break;
 
 		case XDS_CLASS_MISC:
@@ -1002,7 +1002,7 @@ void do_end_of_xds (struct cc_subtitle *sub, unsigned char expected_checksum)
 			// The Private Data Class is for use in any closed system for whatever that
 			// system wishes. It shall not be defined by this standard now or in the future.
 			if (ccx_decoders_xds_context.transcriptFormat.xds)
-				was_proc=xds_do_private_data(sub);
+				was_proc = xds_do_private_data(sub, context);
 			break;
 		case XDS_CLASS_OUT_OF_BAND:
 			ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "Out-of-band data, ignored.");

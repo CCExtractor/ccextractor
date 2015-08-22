@@ -89,6 +89,7 @@ ccx_dtvcc_ctx_t *ccx_dtvcc_init(struct ccx_decoder_dtvcc_settings_t *opts)
 
 	ctx->report_enabled = opts->print_file_reports;
 	ctx->encoder = init_encoder(opts->enc_cfg);
+	ctx->timing = opts->timing;
 
 	for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
 	{

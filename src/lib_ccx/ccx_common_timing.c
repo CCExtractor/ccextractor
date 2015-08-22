@@ -77,7 +77,7 @@ void set_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts)
 		ctx->pts_set = 1;
 	dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)", print_mstime(ctx->current_pts/(MPEG_CLOCK_FREQ/1000)),
 				(unsigned) (ctx->current_pts));
-	dbg_print(CCX_DMT_VIDES, "  FTS: %s \n",print_mstime(get_fts()));
+	dbg_print(CCX_DMT_VIDES, "  FTS: %s \n",print_mstime(get_fts(ctx)));
 }
 
 int set_fts(struct ccx_common_timing_ctx *ctx)
@@ -224,7 +224,7 @@ int set_fts(struct ccx_common_timing_ctx *ctx)
 }
 
 
-LLONG get_fts(void)
+LLONG get_fts(struct ccx_common_timing_ctx *ctx)
 {
 	LLONG fts;
 

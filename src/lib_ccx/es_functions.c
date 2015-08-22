@@ -749,7 +749,7 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 
 	dbg_print(CCX_DMT_VIDES, "  t:%d r:%d p:%d", ctx->top_field_first,
 			ctx->repeat_first_field, ctx->progressive_frame);
-	dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
+	dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts(ctx->timing)));
 
 	// Set min_pts/sync_pts according to the current time stamp.
 	// Use fts_at_gop_start as reference when a GOP header was seen
@@ -774,7 +774,7 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 		else
 		{
 			// No GOP header, use the current values
-			fts_at_gop_start=get_fts();
+			fts_at_gop_start = get_fts(ctx->timing);
 			frames_since_ref_time = 0;
 		}
 

@@ -852,7 +852,7 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 
 		if (ccx_options.live_stream)
 		{
-			int cur_sec = (int) (get_fts() / 1000);
+			int cur_sec = (int) (get_fts(dec_ctx->timing) / 1000);
 			int th=cur_sec/10;
 			if (ctx->last_reported_progress!=th)
 			{
@@ -867,7 +867,7 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 				int progress = (int) ((((ctx->total_past+ctx->demux_ctx->past)>>8)*100)/(ctx->total_inputsize>>8));
 				if (ctx->last_reported_progress != progress)
 				{
-					int cur_sec = (int) (get_fts() / 1000);
+					int cur_sec = (int) (get_fts(dec_ctx->timing) / 1000);
 					activity_progress (progress, cur_sec/60, cur_sec%60);
 
 					fflush (stdout);

@@ -99,8 +99,10 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt);
  * after deallocating user need to allocate encoder ctx again
  *
  * @oaram arg pointer to initialized encoder ctx using init_encoder
+ * 
+ * @param current_fts to calculate window for end credits
  */
-void dinit_encoder(struct encoder_ctx **arg);
+void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts);
 
 /**
  * @param ctx encoder context
