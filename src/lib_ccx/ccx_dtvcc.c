@@ -70,6 +70,7 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx, const unsigned char *data
 
 ccx_dtvcc_ctx_t *ccx_dtvcc_init(struct ccx_decoder_dtvcc_settings_t *opts)
 {
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] initializing dtvcc decoder\n");
 	ccx_dtvcc_ctx_t *ctx = (ccx_dtvcc_ctx_t *) malloc(sizeof(ccx_dtvcc_ctx_t));
 	if (!ctx)
 		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "[CEA-708] ccx_dtvcc_init");
