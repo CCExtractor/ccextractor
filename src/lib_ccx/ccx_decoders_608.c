@@ -1144,6 +1144,11 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 			// http://www.geocities.com/mcpoodle43/SCC_TOOLS/DOCS/CC_CODES.HTML
 			// http://www.geocities.com/mcpoodle43/SCC_TOOLS/DOCS/CC_CHARS.HTML
 		{
+			if (!context || context->my_field == 2)
+				in_xds_mode=0; // Back to normal (CEA 608-8.6.2)
+			if (!context) // Not XDS and we don't have a writebuffer, nothing else would have an effect
+				continue;
+
 			// We were writing characters before, start a new line for
 			// diagnostic output from disCommand()
 			if (context->textprinted == 1 )
@@ -1151,10 +1156,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\n");
 				context->textprinted = 0;
 			}
-			if (!context || context->my_field == 2)
-				in_xds_mode=0; // Back to normal (CEA 608-8.6.2)
-			if (!context) // Not XDS and we don't have a writebuffer, nothing else would have an effect
-				continue;
+
 			if (context->last_c1 == hi && context->last_c2 == lo)
 			{
 				// Duplicate dual code, discard. Correct to do it only in
