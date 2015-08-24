@@ -132,7 +132,7 @@ void printdata (struct lib_cc_decode *ctx, const unsigned char *data1, int lengt
 void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct cc_subtitle *sub)
 {
 	static LLONG prevfts = -1;
-	LLONG currfts = fts_now + fts_global;
+	LLONG currfts = ctx->timing->fts_now + ctx->timing->fts_global;
 	static uint16_t cbcount = 0;
 	static int cbempty=0;
 	static unsigned char cbbuffer[0xFFFF*3]; // TODO: use malloc

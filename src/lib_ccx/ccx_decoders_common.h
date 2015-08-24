@@ -7,8 +7,6 @@
 #include "ccx_decoders_structs.h"
 #include "ccx_common_option.h"
 
-extern LLONG minimum_fts; // No screen should start before this FTS
-
 extern uint64_t utc_refvalue; // UTC referential value
 
 // Declarations

@@ -23,7 +23,7 @@ struct ccx_encoders_helpers_settings_t {
 
 // Helper functions
 void correct_case(int line_num, struct eia608_screen *data);
-void capitalize(int line_num, struct eia608_screen *data);
+void capitalize(struct encoder_ctx *context, int line_num, struct eia608_screen *data);
 unsigned get_decoder_line_encoded_for_gui(unsigned char *buffer, int line_num, struct eia608_screen *data);
 unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data);
 

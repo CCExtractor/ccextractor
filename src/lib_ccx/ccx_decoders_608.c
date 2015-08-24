@@ -10,7 +10,7 @@ static const int rowdata[] = {11,-1,1,2,3,4,12,13,14,15,5,6,7,8,9,10};
 // Relationship between the first PAC byte and the row number
 int in_xds_mode=0;
 
-unsigned char str[2048]; // Another generic general purpose buffer
+//unsigned char str[2048]; // Another generic general purpose buffer
 
 const unsigned char pac2_attribs[][3] = // Color, font, ident
 {
@@ -48,7 +48,6 @@ const unsigned char pac2_attribs[][3] = // Color, font, ident
 	{ COL_WHITE, FONT_UNDERLINED, 28 }  // 0x5f || 0x7f
 };
 
-int new_sentence=1; // Capitalize next letter?
 
 static const char *command_type[] =
 {

@@ -60,12 +60,6 @@ typedef struct ccx_decoder_608_context
 
 } ccx_decoder_608_context;
 
-extern unsigned char *enc_buffer;
-extern unsigned char str[2048];
-extern unsigned enc_buffer_used;
-extern unsigned enc_buffer_capacity;
-
-extern int new_sentence;
 
 #define MAX_COLOR 10
 extern const char *color_text[MAX_COLOR][2];

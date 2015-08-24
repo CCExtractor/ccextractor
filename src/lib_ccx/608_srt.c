@@ -132,6 +132,7 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 			write (context->out->fh, str, len);
 			write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		}
+		freep(&str);
 	}
 	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
@@ -141,7 +142,6 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 #endif
 	sub->nb_data = 0;
 	freep(&sub->data);
-	freep(&str);
 	return ret;
 
 }
@@ -222,7 +222,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 		{
 			if (context->sentence_cap)
 			{
-				capitalize (i,data);
+				capitalize (context, i, data);
 				correct_case(i,data);
 			}
 			if (context->autodash && context->trim_subs)

@@ -1147,7 +1147,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 	total_frames_count++;
 	ctx->frames_since_last_gop++;
 
-	store_hdcc(ctx, ctx->avc_ctx->cc_data, ctx->avc_ctx->cc_count, curridx, fts_now, sub);
+	store_hdcc(ctx, ctx->avc_ctx->cc_data, ctx->avc_ctx->cc_count, curridx, ctx->timing->fts_now, sub);
 	ctx->avc_ctx->cc_buffer_saved = 1; // CFS: store_hdcc supposedly saves the CC buffer to a sequence buffer
 	ctx->avc_ctx->cc_count = 0;
 }

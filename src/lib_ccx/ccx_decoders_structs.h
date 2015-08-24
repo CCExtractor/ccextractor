@@ -160,6 +160,9 @@ struct lib_cc_decode
 
 	ccx_dtvcc_ctx_t *dtvcc;
 	int current_field;
+	// Analyse/use the picture information
+	int maxtref; // Use to remember the temporal reference number
+
 	int (*writedata)(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 };
 

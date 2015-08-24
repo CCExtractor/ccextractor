@@ -206,30 +206,6 @@ int main(int argc, char *argv[])
 				break;
 		}
 
-		mprint("\n");
-		dbg_print(CCX_DMT_DECODER_608, "\nTime stamps after last caption block was written:\n");
-		dbg_print(CCX_DMT_DECODER_608, "GOP: %s	  \n", print_mstime(gop_time.ms) );
-
-		dbg_print(CCX_DMT_DECODER_608, "GOP: %s (%+3dms incl.)\n",
-			print_mstime((LLONG)(gop_time.ms
-			-first_gop_time.ms
-			+get_fts_max()-fts_at_gop_start)),
-			(int)(get_fts_max()-fts_at_gop_start));
-		// When padding is active the CC block time should be within
-		// 1000/29.97 us of the differences.
-		dbg_print(CCX_DMT_DECODER_608, "Max. FTS:	   %s  (without caption blocks since then)\n",
-			print_mstime(get_fts_max()));
-
-		if (ctx->stat_hdtv)
-		{
-			mprint ("\rCC type 0: %d (%s)\n", dec_ctx->cc_stats[0], cc_types[0]);
-			mprint ("CC type 1: %d (%s)\n", dec_ctx->cc_stats[1], cc_types[1]);
-			mprint ("CC type 2: %d (%s)\n", dec_ctx->cc_stats[2], cc_types[2]);
-			mprint ("CC type 3: %d (%s)\n", dec_ctx->cc_stats[3], cc_types[3]);
-		}
-		mprint ("\nTotal frames time:	  %s  (%u frames at %.2ffps)\n",
-			print_mstime( (LLONG)(total_frames_count*1000/current_fps) ),
-			total_frames_count, current_fps);
 #if 0
 		if (ctx->total_pulldownframes)
 			mprint ("incl. pulldown frames:  %s  (%u frames at %.2ffps)\n",
@@ -292,24 +268,52 @@ int main(int argc, char *argv[])
 		}
 #endif
 
-		// Add one frame as fts_max marks the beginning of the last frame,
-		// but we need the end.
-		fts_global += fts_max + (LLONG) (1000.0/current_fps);
-		// CFS: At least in Hauppage mode, cb_field can be responsible for ALL the 
-		// timing (cb_fields having a huge number and fts_now and fts_global being 0 all
-		// the time), so we need to take that into account in fts_global before resetting
-		// counters.
-		if (cb_field1!=0)
-			fts_global += cb_field1*1001/3;
-		else if (cb_field2!=0)
-			fts_global += cb_field2*1001/3;
-		else
-			fts_global += cb_708*1001/3;
-		// Reset counters - This is needed if some captions are still buffered
-		// and need to be written after the last file is processed.		
-		cb_field1 = 0; cb_field2 = 0; cb_708 = 0;
-		fts_now = 0;
-		fts_max = 0;
+		list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
+		{
+			mprint("\n");
+			dbg_print(CCX_DMT_DECODER_608, "\nTime stamps after last caption block was written:\n");
+			dbg_print(CCX_DMT_DECODER_608, "GOP: %s	  \n", print_mstime(gop_time.ms) );
+	
+			dbg_print(CCX_DMT_DECODER_608, "GOP: %s (%+3dms incl.)\n",
+				print_mstime((LLONG)(gop_time.ms
+				-first_gop_time.ms
+				+get_fts_max(dec_ctx->timing)-fts_at_gop_start)),
+				(int)(get_fts_max(dec_ctx->timing)-fts_at_gop_start));
+			// When padding is active the CC block time should be within
+			// 1000/29.97 us of the differences.
+			dbg_print(CCX_DMT_DECODER_608, "Max. FTS:	   %s  (without caption blocks since then)\n",
+				print_mstime(get_fts_max(dec_ctx->timing)));
+
+			mprint ("\nTotal frames time:	  %s  (%u frames at %.2ffps)\n",
+			print_mstime( (LLONG)(total_frames_count*1000/current_fps) ),
+			total_frames_count, current_fps);
+
+			if (ctx->stat_hdtv)
+			{
+				mprint ("\rCC type 0: %d (%s)\n", dec_ctx->cc_stats[0], cc_types[0]);
+				mprint ("CC type 1: %d (%s)\n", dec_ctx->cc_stats[1], cc_types[1]);
+				mprint ("CC type 2: %d (%s)\n", dec_ctx->cc_stats[2], cc_types[2]);
+				mprint ("CC type 3: %d (%s)\n", dec_ctx->cc_stats[3], cc_types[3]);
+			}
+			// Add one frame as fts_max marks the beginning of the last frame,
+			// but we need the end.
+			dec_ctx->timing->fts_global += dec_ctx->timing->fts_max + (LLONG) (1000.0/current_fps);
+			// CFS: At least in Hauppage mode, cb_field can be responsible for ALL the 
+			// timing (cb_fields having a huge number and fts_now and fts_global being 0 all
+			// the time), so we need to take that into account in fts_global before resetting
+			// counters.
+			if (cb_field1!=0)
+				dec_ctx->timing->fts_global += cb_field1*1001/3;
+			else if (cb_field2!=0)
+				dec_ctx->timing->fts_global += cb_field2*1001/3;
+			else
+				dec_ctx->timing->fts_global += cb_708*1001/3;
+			// Reset counters - This is needed if some captions are still buffered
+			// and need to be written after the last file is processed.		
+			cb_field1 = 0; cb_field2 = 0; cb_708 = 0;
+			dec_ctx->timing->fts_now = 0;
+			dec_ctx->timing->fts_max = 0;
+		}
 
 		if(is_decoder_processed_enough(ctx) == CCX_TRUE)
 			break;
@@ -323,6 +327,7 @@ int main(int argc, char *argv[])
 
 	long proc_time=(long) (final-start);
 	mprint ("\rDone, processing time = %ld seconds\n", proc_time);
+#if 0
 	if (proc_time>0)
 	{
 		LLONG ratio=(get_fts_max()/10)/proc_time;
@@ -331,6 +336,7 @@ int main(int argc, char *argv[])
 		mprint ("Performance (real length/process time) = %u.%02u\n", 
 			s1, s2);
 	}
+#endif
 	dbg_print(CCX_DMT_708, "[CEA-708] The 708 decoder was reset [%d] times.\n", ctx->freport.data_from_708->reset_count);
 /*
 	if (ccx_options.teletext_mode == CCX_TXT_IN_USE)

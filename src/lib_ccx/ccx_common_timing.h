@@ -40,6 +40,12 @@ struct ccx_common_timing_ctx
 	LLONG min_pts;
 	LLONG max_pts;
 	LLONG sync_pts;
+	LLONG minimum_fts; // No screen should start before this FTS
+	LLONG fts_now; // Time stamp of current file (w/ fts_offset, w/o fts_global)
+	LLONG fts_offset; // Time before first sync_pts
+	LLONG fts_fc_offset; // Time before first GOP
+	LLONG fts_max; // Remember the maximum fts that we saw in current file
+	LLONG fts_global; // Duration of previous files (-ve mode)
 };
 // Count 608 (per field) and 708 blocks since last set_fts() call
 extern int cb_field1, cb_field2, cb_708;
@@ -49,11 +55,6 @@ extern int MPEG_CLOCK_FREQ; // This is part of the standard
 extern int max_dif;
 extern unsigned pts_big_change;
 
-extern LLONG fts_now; // Time stamp of current file (w/ fts_offset, w/o fts_global)
-extern LLONG fts_offset; // Time before first sync_pts
-extern LLONG fts_fc_offset; // Time before first GOP
-extern LLONG fts_max; // Remember the maximum fts that we saw in current file
-extern LLONG fts_global; // Duration of previous files (-ve mode)
 
 extern enum ccx_frame_type current_picture_coding_type;
 extern double current_fps;
@@ -75,7 +76,7 @@ void set_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts);
 void add_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts);
 int set_fts(struct ccx_common_timing_ctx *ctx);
 LLONG get_fts(struct ccx_common_timing_ctx *ctx);
-LLONG get_fts_max(void);
+LLONG get_fts_max(struct ccx_common_timing_ctx *ctx);
 char *print_mstime(LLONG mstime);
 char *print_mstime2buf(LLONG mstime, char *buf);
 size_t mstime_sprintf(LLONG mstime, char *fmt, char *buf);

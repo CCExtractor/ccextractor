@@ -96,7 +96,7 @@ void anchor_hdcc(int seq)
 void process_hdcc (struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 {
 	// Remember the current value
-	LLONG store_fts_now = fts_now;
+	LLONG store_fts_now = ctx->timing->fts_now;
 	int reset_cb = -1;
 
 	dbg_print(CCX_DMT_VERBOSE, "Flush HD caption blocks\n");
@@ -141,13 +141,13 @@ void process_hdcc (struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 		}
 
 		// Re-create original time
-		fts_now = cc_fts[seq];
+		ctx->timing->fts_now = cc_fts[seq];
 		process_cc_data( ctx, cc_data_pkts[seq], cc_data_count[seq], sub);
 
 	}
 
 	// Restore the value
-	fts_now = store_fts_now;
+	ctx->timing->fts_now = store_fts_now;
 
 	// Now that we are done, clean up.
 	init_hdcc(ctx);

@@ -8,6 +8,10 @@
 #include "ccx_decoders_xds.h"
 #include "ccx_encoders_helpers.h"
 
+extern unsigned char *enc_buffer;
+extern unsigned enc_buffer_used;
+extern unsigned enc_buffer_capacity;
+
 // These are the default settings for plain transcripts. No times, no CC or caption mode, and no XDS.
 ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
 {
@@ -108,11 +112,12 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 {
 	int used;
 	int ret = 0;
+	char str[1024];
 	switch (ctx->write_format)
 	{
 		case CCX_OF_SAMI:
 			sprintf ((char *) str,"</BODY></SAMI>\n");
-			if (ctx->encoding!=CCX_ENC_UNICODE)
+			if (ctx->encoding != CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
@@ -125,11 +130,11 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			break;
 		case CCX_OF_SMPTETT:
 			sprintf ((char *) str,"    </div>\n  </body>\n</tt>\n");
-			if (ctx->encoding!=CCX_ENC_UNICODE)
+			if (ctx->encoding != CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
-			used=encode_line (ctx, ctx->buffer,(unsigned char *) str);
+			used = encode_line (ctx, ctx->buffer,(unsigned char *) str);
 			ret = write (out->fh, ctx->buffer, used);
 			if (ret != used)
 			{
@@ -367,7 +372,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 	LLONG end_time = data->end_time;
 	if (context->sentence_cap)
 	{
-		capitalize (line_number,data);
+		capitalize (context, line_number, data);
 		correct_case(line_number,data);
 	}
 	int length = get_str_basic (context->subline, data->characters[line_number], context->trim_subs, context->encoding);
@@ -922,6 +927,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->endcreditsforatleast = opt->endcreditsforatleast;
 	ctx->endcreditsforatmost = opt->endcreditsforatmost;
 
+	ctx->new_sentence = 1; // Capitalize next letter?
 	if (opt->line_terminator_lf)
 		ctx->encoded_crlf_length = encode_line(ctx, ctx->encoded_crlf, (unsigned char *) "\n");
 	else
@@ -978,7 +984,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			// Determine context based on channel. This replaces the code that was above, as this was incomplete (for cases where -12 was used for example)
 			out = get_output_ctx(context, data->my_field);
 
-			new_sentence=1;
+			context->new_sentence = 1;
 
 			if(data->format == SFORMAT_XDS)
 			{

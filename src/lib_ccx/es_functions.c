@@ -633,22 +633,22 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 			// need the length of all frames.
 			if ( total_frames_count == 0 )
 			{   // If this is the first frame there cannot be an offset
-				fts_fc_offset = 0;
+				ctx->timing->fts_fc_offset = 0;
 				// first_gop_time.ms stays unchanged
 			}
 			else
 			{
-				fts_fc_offset = (LLONG) ((total_frames_count+1)
+				ctx->timing->fts_fc_offset = (LLONG) ((total_frames_count+1)
 						*1000.0/current_fps);
 				// Compensate for those written before
-				first_gop_time.ms -= fts_fc_offset;
+				first_gop_time.ms -= ctx->timing->fts_fc_offset;
 			}
 
 			dbg_print(CCX_DMT_TIME, "\nFirst GOP time: %02u:%02u:%02u:%03u %+lldms\n",
 					gtc.time_code_hours,
 					gtc.time_code_minutes, gtc.time_code_seconds,
 					(unsigned) (1000.0*gtc.time_code_pictures/current_fps),
-					fts_fc_offset);
+					ctx->timing->fts_fc_offset);
 		}
 
 		gop_time = gtc;
@@ -664,7 +664,7 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 			ctx->timing->current_tref = 0;
 			frames_since_ref_time = 0;
 			set_fts(ctx->timing);
-			fts_at_gop_start = get_fts_max();
+			fts_at_gop_start = get_fts_max(ctx->timing);
 		}
 		else
 		{
@@ -673,7 +673,7 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 			// next GOP.
 			// This effect will also lead to captions being one GOP early
 			// for DVD captions.
-			fts_at_gop_start = get_fts_max() + (LLONG) (1000.0/current_fps);
+			fts_at_gop_start = get_fts_max(ctx->timing) + (LLONG) (1000.0/current_fps);
 		}
 
 		if (ccx_options.debug_mask & CCX_DMT_TIME)
@@ -717,9 +717,6 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 		return 0;
 	}
 
-	// Analyse/use the picture information
-	static int maxtref; // Use to remember the temporal reference number
-
 	// A new anchor frame - flush buffered caption data. Might be flushed
 	// in GOP header already.
 	if (ctx->picture_coding_type==CCX_FRAME_TYPE_I_FRAME || ctx->picture_coding_type==CCX_FRAME_TYPE_P_FRAME)
@@ -760,8 +757,8 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 	// the beginning of the GOP, otherwise it is now.
 	if(ctx->temporal_reference == 0)
 	{
-		ctx->last_gop_length = maxtref + 1;
-		maxtref = ctx->temporal_reference;
+		ctx->last_gop_length = ctx->maxtref + 1;
+		ctx->maxtref = ctx->temporal_reference;
 
 		// frames_since_ref_time is used in set_fts()
 
@@ -795,10 +792,10 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 	}
 
 	// Set maxtref
-	if( ctx->temporal_reference > maxtref ) {
-		maxtref = ctx->temporal_reference;
-		if (maxtref+1 > ctx->max_gop_length)
-			ctx->max_gop_length = maxtref+1;
+	if( ctx->temporal_reference > ctx->maxtref ) {
+		ctx->maxtref = ctx->temporal_reference;
+		if (ctx->maxtref + 1 > ctx->max_gop_length)
+			ctx->max_gop_length = ctx->maxtref + 1;
 	}
 
 	unsigned extraframe = 0;
