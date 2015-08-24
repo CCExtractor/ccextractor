@@ -711,6 +711,11 @@ void parse_708_services (struct ccx_s_options *opts, char *s)
 		opts->settings_dtvcc.enabled = 1;
 		opts->settings_dtvcc.all_services_charset = charset;
 
+		opts->settings_dtvcc.services_charsets = (char **) calloc(sizeof(char *), DTVCC_MAX_SERVICES);
+		if (!opts->settings_dtvcc.services_charsets)
+			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "parse_708_services");
+		memset(opts->settings_dtvcc.services_charsets, 0, DTVCC_MAX_SERVICES * sizeof(char *));
+
 		for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
 			opts->settings_dtvcc.services_enabled[i] = 1;
 
@@ -747,6 +752,7 @@ void parse_708_services (struct ccx_s_options *opts, char *s)
 			opts->settings_dtvcc.services_charsets = (char **) calloc(sizeof(char *), DTVCC_MAX_SERVICES);
 			if (!opts->settings_dtvcc.services_charsets)
 				ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "parse_708_services");
+			memset(opts->settings_dtvcc.services_charsets, 0, DTVCC_MAX_SERVICES * sizeof(char *));
 		}
 
 		e = e + 1;
