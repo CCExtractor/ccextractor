@@ -13,10 +13,9 @@
 
 #define DTVCC_MAX_PACKET_LENGTH 128 //According to EIA-708B, part 5
 #define DTVCC_MAX_SERVICES 63
-#define DTVCC_MAX_CHARSET_LENGTH 24
 
 #define DTVCC_MAX_ROWS 15
-#define DTVCC_MAX_COLUMNS (45*UTF8_MAX_BYTES + 1)
+#define DTVCC_MAX_COLUMNS 45
 
 #define DTVCC_SCREENGRID_ROWS 75
 #define DTVCC_SCREENGRID_COLUMNS 210
@@ -26,16 +25,6 @@
 #define DTVCC_FILENAME_TEMPLATE "%s-svc-%02u"
 
 #define DTVCC_NO_LAST_SEQUENCE -1
-
-/**
- * Holds data on the CEA 708 services that are encountered during file parse
- * This can be interesting, so CCExtractor uses it for the report functionality.
- */
-typedef struct ccx_decoder_dtvcc_report_t
-{
-	int reset_count;
-	unsigned services[DTVCC_MAX_SERVICES];
-} ccx_decoder_dtvcc_report_t;
 
 enum DTVCC_COMMANDS_C0_CODES
 {
@@ -256,6 +245,26 @@ typedef struct dtvcc_window_attribs
 	int effect_speed;
 } dtvcc_window_attribs;
 
+/**
+ * Since 1-byte and 2-byte symbols could appear in captions and
+ * since we have to keep symbols alignment and several windows could appear on a screen at one time,
+ * we use special structure for holding symbols
+ */
+typedef struct ccx_dtvcc_symbol_t
+{
+	unsigned short sym; //symbol itself, at least 16 bit
+	unsigned char len; //length. could be 1 or 2
+} ccx_dtvcc_symbol_t;
+
+#define CCX_DTVCC_SYM_SET(x, c) {x.len = 1; x.sym = c;}
+#define CCX_DTVCC_SYM_SET_16(x, c1, c2) {x.len = 2; x.sym = (c1 << 8) | c2;}
+#define CCX_DTVCC_SYM_IS_16(x) (x.len == 2)
+#define CCX_DTVCC_SYM(x) ((unsigned char)(x.sym))
+#define CCX_DTVCC_SYM_16_FIRST(x) ((unsigned char)(x.sym >> 8))
+#define CCX_DTVCC_SYM_16_SECOND(x) ((unsigned char)(x.sym & 0xff))
+#define CCX_DTVCC_SYM_IS_EMPTY(x) (x.len == 0)
+#define CCX_DTVCC_SYM_IS_SET(x) (x.len > 0)
+
 typedef struct dtvcc_window
 {
 	int is_defined;
@@ -276,9 +285,9 @@ typedef struct dtvcc_window
 	dtvcc_window_attribs attribs;
 	int pen_row;
 	int pen_column;
-	unsigned char *rows[DTVCC_MAX_ROWS + 1]; // Max is 15, but we define an extra one for convenience
-	dtvcc_pen_color pen_colors[DTVCC_MAX_ROWS + 1];
-	dtvcc_pen_attribs pen_attribs[DTVCC_MAX_ROWS + 1];
+	ccx_dtvcc_symbol_t *rows[DTVCC_MAX_ROWS];
+	dtvcc_pen_color pen_colors[DTVCC_MAX_ROWS];
+	dtvcc_pen_attribs pen_attribs[DTVCC_MAX_ROWS];
 	int memory_reserved;
 	int is_empty;
 	LLONG time_ms_show;
@@ -287,13 +296,22 @@ typedef struct dtvcc_window
 
 typedef struct dtvcc_tv_screen
 {
-	unsigned char chars[DTVCC_SCREENGRID_ROWS][DTVCC_SCREENGRID_COLUMNS + 1];
+	ccx_dtvcc_symbol_t chars[DTVCC_SCREENGRID_ROWS][DTVCC_SCREENGRID_COLUMNS];
 	dtvcc_pen_color pen_colors[DTVCC_SCREENGRID_ROWS];
 	dtvcc_pen_attribs pen_attribs[DTVCC_SCREENGRID_ROWS];
-
 	LLONG time_ms_show;
 	LLONG time_ms_hide;
 } dtvcc_tv_screen;
+
+/**
+ * Holds data on the CEA 708 services that are encountered during file parse
+ * This can be interesting, so CCExtractor uses it for the report functionality.
+ */
+typedef struct ccx_decoder_dtvcc_report_t
+{
+	int reset_count;
+	unsigned services[DTVCC_MAX_SERVICES];
+} ccx_decoder_dtvcc_report_t;
 
 typedef struct dtvcc_service_decoder
 {

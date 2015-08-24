@@ -90,6 +90,8 @@ ccx_dtvcc_ctx_t *ccx_dtvcc_init(struct ccx_decoder_dtvcc_settings_t *opts)
 	ctx->report_enabled = opts->print_file_reports;
 	ctx->encoder = init_encoder(opts->enc_cfg);
 
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] initializing services\n");
+
 	for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
 	{
 		if (!ctx->services_active[i])

@@ -5,7 +5,7 @@ int _dtvcc_is_row_empty(dtvcc_service_decoder *decoder, int row_index)
 {
 	for (int j = 0; j < DTVCC_SCREENGRID_COLUMNS; j++)
 	{
-		if (decoder->tv->chars[row_index][j] != ' ')
+		if (CCX_DTVCC_SYM_IS_SET(decoder->tv->chars[row_index][j]))
 			return 0;
 	}
 	return 1;
@@ -24,10 +24,10 @@ int _dtvcc_is_caption_empty(dtvcc_service_decoder *decoder)
 void _dtvcc_get_write_interval(dtvcc_service_decoder *decoder, int row_index, int *first, int *last)
 {
 	for (*first = 0; *first < DTVCC_SCREENGRID_COLUMNS; (*first)++)
-		if (decoder->tv->chars[row_index][*first] != ' ')
+		if (CCX_DTVCC_SYM_IS_SET(decoder->tv->chars[row_index][*first]))
 			break;
 	for (*last = DTVCC_SCREENGRID_COLUMNS - 1; *last > 0; (*last)--)
-		if (decoder->tv->chars[row_index][*last] != ' ')
+		if (CCX_DTVCC_SYM_IS_SET(decoder->tv->chars[row_index][*last]))
 			break;
 }
 
@@ -89,7 +89,19 @@ void _dtvcc_write_row(dtvcc_service_decoder *decoder, int row_index, struct enco
 
 	_dtvcc_get_write_interval(decoder, row_index, &first, &last);
 	for (int j = first; j <= last; j++)
-		buf[buf_len++] = decoder->tv->chars[row_index][j];
+	{
+		if (CCX_DTVCC_SYM_IS_16(decoder->tv->chars[row_index][j]))
+		{
+			buf[buf_len++] = CCX_DTVCC_SYM_16_FIRST(decoder->tv->chars[row_index][j]);
+			buf[buf_len++] = CCX_DTVCC_SYM_16_SECOND(decoder->tv->chars[row_index][j]);
+		}
+		else
+		{
+			buf[buf_len++] = CCX_DTVCC_SYM(decoder->tv->chars[row_index][j]);
+		}
+	}
+
+	//TODO handle with iconv
 
 	write(decoder->fh, buf, buf_len);
 }
