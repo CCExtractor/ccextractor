@@ -239,6 +239,8 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 int parse_PAT (struct ccx_demuxer *ctx);
 void parse_EPG_packet (struct lib_ccx_ctx *ctx);
 void EPG_free(struct lib_ccx_ctx *ctx);
+char* EPG_DVB_decode_string(uint8_t *in, size_t size);
+void parse_SDT(struct ccx_demuxer *ctx);
 
 // myth.c
 void myth_loop(struct lib_ccx_ctx *ctx);
