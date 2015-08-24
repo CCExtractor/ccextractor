@@ -135,10 +135,6 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 		goto end;
 	}
 
-	// Init XDS buffers
-	ccx_decoders_xds_init_library(&opt->transcript_settings, ctx->subs_delay, opt->millis_separator);
-	//xds_cea608_test();
-
 	ctx->subs_delay = opt->subs_delay;
 
 	ctx->pesheaderbuf = (unsigned char *) malloc (188); // Never larger anyway
