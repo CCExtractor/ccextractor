@@ -1052,7 +1052,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 			ctx->avc_ctx->currref = 0;
 		}
 
-		anchor_hdcc( ctx->avc_ctx->currref );
+		anchor_hdcc( ctx, ctx->avc_ctx->currref );
 	}
 
 	if ( ccx_options.usepicorder ) {

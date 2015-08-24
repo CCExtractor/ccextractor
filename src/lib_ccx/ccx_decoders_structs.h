@@ -9,6 +9,9 @@
 #include "ccx_decoders_708.h"
 // Define max width in characters/columns on the screen
 #define CCX_DECODER_608_SCREEN_WIDTH  32
+#define MAXBFRAMES 50
+#define SORTBUF (2*MAXBFRAMES+1)
+
 
 /* flag raised when end of display marker arrives in Dvb Subtitle */
 #define SUB_EOD_MARKER (1 << 0 )
@@ -162,6 +165,16 @@ struct lib_cc_decode
 	int current_field;
 	// Analyse/use the picture information
 	int maxtref; // Use to remember the temporal reference number
+
+	int cc_data_count[SORTBUF];
+	// Store fts;
+	LLONG cc_fts[SORTBUF];
+	// Store HD CC packets
+	unsigned char cc_data_pkts[SORTBUF][10*31*3+1]; // *10, because MP4 seems to have different limits
+
+	// The sequence number of the current anchor frame.  All currently read
+	// B-Frames belong to this I- or P-frame.
+	int anchor_seq_number;
 
 	int (*writedata)(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 };

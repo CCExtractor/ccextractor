@@ -7,24 +7,15 @@
 // enough space.
 //#define SORTBUF (2*MAXBFRAMES+1) - from lib_ccx.h
 // B-Frames can be (temporally) before or after the anchor
-int cc_data_count[SORTBUF];
-// Store fts;
-static LLONG cc_fts[SORTBUF];
-// Store HD CC packets
-unsigned char cc_data_pkts[SORTBUF][10*31*3+1]; // *10, because MP4 seems to have different limits
-
-// The sequence number of the current anchor frame.  All currently read
-// B-Frames belong to this I- or P-frame.
-static int anchor_seq_number = -1;
 
 void init_hdcc (struct lib_cc_decode *ctx)
 {
 	for (int j=0; j<SORTBUF; j++)
 	{
-		cc_data_count[j] = 0;
-		cc_fts[j] = 0;
+		ctx->cc_data_count[j] = 0;
+		ctx->cc_fts[j] = 0;
 	}
-	memset(cc_data_pkts, 0, SORTBUF*(31*3+1));
+	memset(ctx->cc_data_pkts, 0, SORTBUF*(31*3+1));
 	ctx->has_ccdata_buffered = 0;
 }
 
@@ -35,12 +26,12 @@ void store_hdcc(struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count,
 
 	//stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 	// Uninitialized?
-	if (anchor_seq_number < 0)
+	if (ctx->anchor_seq_number < 0)
 	{
-		anchor_hdcc( sequence_number);
+		anchor_hdcc( ctx, sequence_number);
 	}
 
-	int seq_index = sequence_number - anchor_seq_number + MAXBFRAMES;
+	int seq_index = sequence_number - ctx->anchor_seq_number + MAXBFRAMES;
 
 	if (seq_index < 0 || seq_index > 2*MAXBFRAMES)
 	{
@@ -48,8 +39,8 @@ void store_hdcc(struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count,
 		dbg_print(CCX_DMT_VERBOSE, "Too many B-frames, or missing anchor frame. Trying to recover ..\n");
 
 		process_hdcc(ctx, sub);
-		anchor_hdcc( sequence_number);
-		seq_index = sequence_number - anchor_seq_number + MAXBFRAMES;
+		anchor_hdcc( ctx, sequence_number);
+		seq_index = sequence_number - ctx->anchor_seq_number + MAXBFRAMES;
 	}
 
 	ctx->has_ccdata_buffered = 1;
@@ -67,12 +58,12 @@ void store_hdcc(struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count,
 		{
 			// Changed by CFS to concat, i.e. don't assume there's no data already for this seq_index.
 			// Needed at least for MP4 samples. // TODO: make sure we don't overflow
-			cc_fts[seq_index] = current_fts_now; // CFS: Maybe do even if there's no data?
+			ctx->cc_fts[seq_index] = current_fts_now; // CFS: Maybe do even if there's no data?
 			//if (stream_mode!=CCX_SM_MP4) // CFS: Very ugly hack, but looks like overwriting is needed for at least some ES
-				cc_data_count[seq_index]  = 0;
-			memcpy(cc_data_pkts[seq_index] + cc_data_count[seq_index] * 3, cc_data, cc_count * 3 + 1);
+				ctx->cc_data_count[seq_index]  = 0;
+			memcpy(ctx->cc_data_pkts[seq_index] + ctx->cc_data_count[seq_index] * 3, cc_data, cc_count * 3 + 1);
 		}
-		cc_data_count[seq_index] += cc_count;
+		ctx->cc_data_count[seq_index] += cc_count;
 	}
 	// DEBUG STUFF
 	/*
@@ -86,10 +77,10 @@ void store_hdcc(struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count,
 }
 
 // Set a new anchor frame that new B-frames refer to.
-void anchor_hdcc(int seq)
+void anchor_hdcc(struct lib_cc_decode *ctx, int seq)
 {
 	// Re-init the index
-	anchor_seq_number = seq;
+	ctx->anchor_seq_number = seq;
 }
 
 // Sort/flash caption block buffer
@@ -114,9 +105,9 @@ void process_hdcc (struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 		// updated, like it used do happen for elementary streams.
 		// Since use_gop_as_pts this is not needed anymore, but left
 		// here for posterity.
-		if (reset_cb < 0 && cc_fts[seq] && seq<SORTBUF-1 && cc_fts[seq+1])
+		if (reset_cb < 0 && ctx->cc_fts[seq] && seq<SORTBUF-1 && ctx->cc_fts[seq+1])
 		{
-			if (cc_fts[seq] != cc_fts[seq+1])
+			if (ctx->cc_fts[seq] != ctx->cc_fts[seq+1])
 				reset_cb = 1;
 			else
 				reset_cb = 0;
@@ -129,10 +120,10 @@ void process_hdcc (struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 		}
 
 		// Skip sequence numbers without data
-		if (cc_data_count[seq] == 0)
+		if (ctx->cc_data_count[seq] == 0)
 			continue;
 
-		if (cc_data_pkts[seq][cc_data_count[seq]*3]!=0xFF)
+		if (ctx->cc_data_pkts[seq][ctx->cc_data_count[seq]*3]!=0xFF)
 		{
 			// This is not optional. Something is wrong.
 			dbg_print(CCX_DMT_VERBOSE, "Missing 0xFF marker at end\n");
@@ -141,8 +132,8 @@ void process_hdcc (struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 		}
 
 		// Re-create original time
-		ctx->timing->fts_now = cc_fts[seq];
-		process_cc_data( ctx, cc_data_pkts[seq], cc_data_count[seq], sub);
+		ctx->timing->fts_now = ctx->cc_fts[seq];
+		process_cc_data( ctx, ctx->cc_data_pkts[seq], ctx->cc_data_count[seq], sub);
 
 	}
 

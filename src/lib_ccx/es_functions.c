@@ -730,7 +730,7 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 			{
 				process_hdcc(ctx, sub);
 			}
-			anchor_hdcc(ctx->temporal_reference);
+			anchor_hdcc(ctx, ctx->temporal_reference);
 		}
 	}
 

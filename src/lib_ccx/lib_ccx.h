@@ -208,7 +208,7 @@ void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned 
 // sequencing.c
 void init_hdcc (struct lib_cc_decode *ctx);
 void store_hdcc(struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now, struct cc_subtitle *sub);
-void anchor_hdcc(int seq);
+void anchor_hdcc(struct lib_cc_decode *ctx, int seq);
 void process_hdcc (struct lib_cc_decode *ctx, struct cc_subtitle *sub);
 
 // params_dump.c
@@ -281,11 +281,6 @@ extern long FILEBUFFERSIZE; // Uppercase because it used to be a define
 extern unsigned long net_activity_gui;
 
 extern int firstcall;
-
-#define MAXBFRAMES 50
-#define SORTBUF (2*MAXBFRAMES+1)
-extern int cc_data_count[SORTBUF];
-extern unsigned char cc_data_pkts[SORTBUF][10*31*3+1];
 
 // From ts_functions
 //extern struct ts_payload payload;

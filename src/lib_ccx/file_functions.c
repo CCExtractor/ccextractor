@@ -77,7 +77,6 @@ void prepare_for_new_file (struct lib_ccx_ctx *ctx)
 	printed_gop.inited=0;
 //	dec_ctx->saw_caption_block=0;
 	pts_big_change=0;
-	anchor_hdcc(-1);
 	firstcall = 1;
 	for(int x=0; x<0xfff; x++)
 	{

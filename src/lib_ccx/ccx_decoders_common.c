@@ -320,6 +320,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->pulldownfields = 0;
 	memset(ctx->cc_stats, 0, 4 * sizeof(int)); 
 
+	ctx->anchor_seq_number = -1;
 	return ctx;
 }
 
