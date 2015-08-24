@@ -1135,7 +1135,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 		if (hi == 0x0F && in_xds_mode && (context == NULL || context->my_field == 2)) // End of XDS block
 		{
 			in_xds_mode=0;
-			do_end_of_xds (sub, context, lo);
+			do_end_of_xds (sub, dec_ctx->xds_ctx, lo);
 			if (context)
 				context->channel = context->new_channel; // Switch from channel 3
 			continue;
@@ -1175,7 +1175,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 		{
 			if (in_xds_mode && (context == NULL || context->my_field == 2))
 			{
-				process_xds_bytes (hi,lo);
+				process_xds_bytes (dec_ctx->xds_ctx, hi, lo);
 				continue;
 			}
 			if (!context) // No XDS code after this point, and user doesn't want captions.

@@ -232,6 +232,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->avc_ctx = init_avc();
 	ctx->codec = setting->codec;
 	ctx->timing = init_timing_ctx(&ccx_common_timing_settings);
+
 	setting->settings_dtvcc->timing = ctx->timing;
 	ctx->dtvcc = ccx_dtvcc_init(setting->settings_dtvcc);
 
@@ -321,6 +322,10 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	memset(ctx->cc_stats, 0, 4 * sizeof(int)); 
 
 	ctx->anchor_seq_number = -1;
+	// Init XDS buffers
+	ctx->xds_ctx = ccx_decoders_xds_init_library(ctx->timing);
+	//xds_cea608_test(ctx->xds_ctx);
+
 	return ctx;
 }
 

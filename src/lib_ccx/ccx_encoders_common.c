@@ -5,7 +5,7 @@
 #include "utility.h"
 #include "ocr.h"
 #include "ccx_decoders_608.h"
-#include "ccx_decoders_xds.h"
+#include "ccx_encoder_xds.h"
 #include "ccx_encoders_helpers.h"
 
 extern unsigned char *enc_buffer;
@@ -989,10 +989,10 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			if(data->format == SFORMAT_XDS)
 			{
 				data->end_time = data->end_time + context->subs_delay;
-				xds_write_transcript_line_prefix (out, data->start_time, data->end_time,data->cur_xds_packet_class);
+				xds_write_transcript_line_prefix (context, out, data->start_time, data->end_time, data->cur_xds_packet_class);
 				if(data->xds_len > 0)
 				{
-					ret = write (out->fh, data->xds_str,data->xds_len);
+					ret = write (out->fh, data->xds_str, data->xds_len);
 					if (ret < data->xds_len)
 					{
 						mprint("WARNING:Loss of data\n");
