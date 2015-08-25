@@ -853,6 +853,11 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 		dec_ctx->private_data = telxcc_init();
 	}
 	dec_sub = &dec_ctx->dec_sub;
+
+	/* Set minimum and current pts since rcwt has correct time */
+	dec_ctx->timing->min_pts = 0;
+	dec_ctx->timing->current_pts = 0;
+
 	// Loop until no more data is found
 	while(1)
 	{
