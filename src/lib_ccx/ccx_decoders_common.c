@@ -263,6 +263,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 		ctx->context_cc608_field_1 = NULL;
 		ctx->context_cc608_field_2 = NULL;
 	}
+	ctx->current_field = 1;
 	ctx->private_data = setting->private_data;
 	ctx->fix_padding = setting->fix_padding;
 	ctx->write_format =  setting->output_format;

@@ -161,7 +161,6 @@ int main(int argc, char *argv[])
 		----------------------------------------------------------------- */
 		switch (stream_mode)
 		{
-			struct ccx_s_mp4Cfg mp4_cfg = {ccx_options.mp4vidtrack};
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
 				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
 					ccx_options.use_gop_as_pts = 1; // Force GOP timing for ES
@@ -191,7 +190,7 @@ int main(int argc, char *argv[])
 			case CCX_SM_MP4:
 				mprint ("\rAnalyzing data with GPAC (MP4 library)\n");
 				close_input_file(ctx); // No need to have it open. GPAC will do it for us
-				processmp4 (ctx, &mp4_cfg, ctx->inputfile[0]);
+				processmp4 (ctx, &ctx->mp4_cfg, ctx->inputfile[0]);
 				if (ccx_options.print_file_reports)
 					print_file_report(ctx);
 				break;

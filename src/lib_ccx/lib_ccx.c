@@ -161,6 +161,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->dec_global_setting->settings_dtvcc->cc_to_stdout = opt->cc_to_stdout;
 	ctx->dec_global_setting->settings_dtvcc->basefilename = ctx->basefilename;
 	ctx->dec_global_setting->settings_dtvcc->enc_cfg = &opt->enc_cfg;
+	ctx->mp4_cfg.mp4vidtrack = opt->mp4vidtrack;
 
 end:
 	if (ret != EXIT_OK)

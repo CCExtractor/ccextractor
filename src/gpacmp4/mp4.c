@@ -352,7 +352,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 		}
 
 		if( type == GF_ISOM_MEDIA_VISUAL && subtype == GF_ISOM_SUBTYPE_AVC_H264)
-		{			
+		{
 			if (cc_track_count && !cfg->mp4vidtrack)
 				continue;
 			GF_AVCConfig *cnf = gf_isom_avc_config_get(f,i+1,1);

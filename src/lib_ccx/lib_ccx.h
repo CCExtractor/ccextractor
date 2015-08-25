@@ -60,6 +60,12 @@ struct ccx_s_teletext_config
 	int nofontcolor;
 	char millis_separator;
 };
+
+struct ccx_s_mp4Cfg
+{
+	unsigned int mp4vidtrack :1;
+};
+
 struct lib_ccx_ctx
 {
 
@@ -127,6 +133,7 @@ struct lib_ccx_ctx
 
 	struct ccx_demuxer *demux_ctx;
 	struct list_head enc_ctx_head;
+	struct ccx_s_mp4Cfg mp4_cfg;
 };
 
 #define buffered_skip(ctx, bytes) if (bytes<= ctx->bytesinbuffer - ctx->filebuffer_pos) { \
