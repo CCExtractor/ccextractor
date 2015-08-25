@@ -189,8 +189,11 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 				temp[3]=cc_block[2];
 				if (timeok)
 				{
-					if(ctx->write_format!=CCX_OF_RCWT)
-						ccx_dtvcc_process_data(ctx, (const unsigned char *) temp, 4);
+					if (ctx->write_format != CCX_OF_RCWT)
+					{
+						sub->got_output = 0;
+						ccx_dtvcc_process_data(ctx, (const unsigned char *) temp, 4, sub);
+					}
 					else
 						writercwtdata(ctx, cc_block, sub);
 				}
@@ -349,5 +352,18 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 			}
 		}
 	}
-
+	if (ctx->dtvcc->is_active)
+	{
+		for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
+		{
+			dtvcc_service_decoder *decoder = &ctx->dtvcc->decoders[i];
+			if (!ctx->dtvcc->services_active[i])
+				continue;
+			if (decoder->cc_count > 0)
+			{
+				current_field = 3;
+				dtvcc_decoder_flush(ctx->dtvcc, decoder, sub);
+			}
+		}
+	}
 }

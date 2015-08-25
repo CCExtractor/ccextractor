@@ -106,9 +106,6 @@ void init_options (struct ccx_s_options *options)
 	options->settings_dtvcc.services_charsets = NULL;
 	options->settings_dtvcc.all_services_charset = NULL;
 	options->settings_dtvcc.print_file_reports = 1;
-	options->settings_dtvcc.basefilename = NULL;
-	options->settings_dtvcc.output_format = CCX_OF_SRT;
-	options->settings_dtvcc.cc_to_stdout = 0;
 	options->settings_dtvcc.report = NULL;
 	memset(options->settings_dtvcc.services_enabled, 0, DTVCC_MAX_SERVICES);
 

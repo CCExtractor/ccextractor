@@ -5,6 +5,8 @@
 #include "utility.h"
 #include "ocr.h"
 #include "ccx_decoders_608.h"
+#include "ccx_decoders_708.h"
+#include "ccx_decoders_708_output.h"
 #include "ccx_decoders_xds.h"
 #include "ccx_encoders_helpers.h"
 
@@ -1097,6 +1099,11 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		}
 		sub->nb_data = 0;
 
+	}
+	if (sub->type == CC_708)
+	{
+		dtvcc_tv_screen *tv = (dtvcc_tv_screen *) sub->data;
+		ccx_dtvcc_write(tv, context);
 	}
 	if (!sub->nb_data)
 		freep(&sub->data);

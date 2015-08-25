@@ -159,11 +159,6 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->multiprogram = opt->multiprogram;
 	ctx->write_format = opt->write_format;
 
-	ctx->dec_global_setting->settings_dtvcc->output_format = opt->write_format;
-	ctx->dec_global_setting->settings_dtvcc->cc_to_stdout = opt->cc_to_stdout;
-	ctx->dec_global_setting->settings_dtvcc->basefilename = ctx->basefilename;
-	ctx->dec_global_setting->settings_dtvcc->enc_cfg = &opt->enc_cfg;
-
 end:
 	if (ret != EXIT_OK)
 	{

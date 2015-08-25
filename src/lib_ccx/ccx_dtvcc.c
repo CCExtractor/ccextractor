@@ -3,7 +3,10 @@
 #include "ccx_encoders_common.h"
 #include "ccx_decoders_708_output.h"
 
-void ccx_dtvcc_process_data(struct lib_cc_decode *ctx, const unsigned char *data, int data_length)
+void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
+							const unsigned char *data,
+							int data_length,
+							struct cc_subtitle *sub)
 {
 	/*
 	 * Note: the data has following format:
@@ -27,7 +30,7 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx, const unsigned char *data
 			case 2:
 				ccx_common_logging.debug_ftn (CCX_DMT_708, "[CEA-708] dtvcc_process_data: DTVCC Channel Packet Data\n");
 				if (cc_valid == 0) // This ends the previous packet
-					dtvcc_process_current_packet(dtvcc);
+					dtvcc_process_current_packet(dtvcc, sub);
 				else
 				{
 					if (dtvcc->current_packet_length > 253)
@@ -44,7 +47,7 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx, const unsigned char *data
 				break;
 			case 3:
 				ccx_common_logging.debug_ftn (CCX_DMT_708, "[CEA-708] dtvcc_process_data: DTVCC Channel Packet Start\n");
-				dtvcc_process_current_packet(dtvcc);
+				dtvcc_process_current_packet(dtvcc, sub);
 				if (cc_valid)
 				{
 					if (dtvcc->current_packet_length > DTVCC_MAX_PACKET_LENGTH - 1)
@@ -88,7 +91,6 @@ ccx_dtvcc_ctx_t *ccx_dtvcc_init(struct ccx_decoder_dtvcc_settings_t *opts)
 	ctx->last_sequence = DTVCC_NO_LAST_SEQUENCE;
 
 	ctx->report_enabled = opts->print_file_reports;
-	ctx->encoder = init_encoder(opts->enc_cfg);
 
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] initializing services\n");
 
@@ -98,43 +100,11 @@ ccx_dtvcc_ctx_t *ccx_dtvcc_init(struct ccx_decoder_dtvcc_settings_t *opts)
 			continue;
 
 		dtvcc_service_decoder *decoder = &ctx->decoders[i];
-
-		decoder->fh = -1;
 		decoder->cc_count = 0;
-		decoder->filename = NULL;
-		decoder->output_started = 0;
-		decoder->output_format = opts->output_format;
-
-		char *enc = opts->all_services_charset ?
-					opts->all_services_charset :
-					opts->services_charsets[i];
-
-		if (enc)
-		{
-			decoder->charset = strdup(enc);
-			decoder->cd = iconv_open("UTF-8", decoder->charset);
-			if (decoder->cd == (iconv_t) -1)
-			{
-				ccx_common_logging.fatal_ftn(EXIT_FAILURE, "[CEA-708] dtvcc_init: "
-													 "can't create iconv for charset \"%s\": %s\n",
-											 decoder->charset, strerror(errno));
-			}
-		}
-		else
-		{
-			decoder->charset = NULL;
-			decoder->cd = (iconv_t) -1;
-		}
-
+		decoder->tv = (dtvcc_tv_screen *) malloc(sizeof(dtvcc_tv_screen));
+		if (!decoder->tv)
+			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "ccx_dtvcc_init");
 		_dtvcc_windows_reset(decoder);
-
-		_dtvcc_decoder_init_write(decoder, opts->basefilename, i + 1);
-
-		if (opts->cc_to_stdout)
-		{
-			decoder->fh = STDOUT_FILENO;
-			decoder->output_started = 1;
-		}
 	}
 
 	return ctx;
@@ -153,25 +123,8 @@ void ccx_dtvcc_free(ccx_dtvcc_ctx_t **ctx_ptr)
 
 		dtvcc_service_decoder *decoder = &ctx->decoders[i];
 
-		if (decoder->output_started)
-		{
-			current_field = 3;
-			_dtvcc_decoder_flush(ctx, decoder);
-		}
-
-		if (decoder->charset)
-		{
-			iconv_close(decoder->cd);
-			free(decoder->charset);
-		}
-
-		if (decoder->fh != -1 && decoder->fh != STDOUT_FILENO)
-		{
-			ccx_dtvcc_write_done(decoder, ctx->encoder);
-			close(decoder->fh);
-		}
-
-		free(decoder->filename);
+//		if (decoder->cc_count > 0)
+//			ccx_dtvcc_write_done(decoder->tv, ctx->encoder);
 
 		for (int j = 0; j < DTVCC_MAX_WINDOWS; j++)
 			if (decoder->windows[j].memory_reserved)
@@ -180,6 +133,8 @@ void ccx_dtvcc_free(ccx_dtvcc_ctx_t **ctx_ptr)
 					free(decoder->windows[j].rows[k]);
 				decoder->windows[j].memory_reserved = 0;
 			}
+
+		free(decoder->tv);
 	}
 	freep(ctx_ptr);
 }

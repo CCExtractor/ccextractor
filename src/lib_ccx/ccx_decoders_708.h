@@ -4,12 +4,7 @@
 #include <sys/stat.h>
 #include "ccx_common_platform.h"
 #include "ccx_common_constants.h"
-
-#ifdef WIN32
-	#include "..\\win_iconv\\win_iconv.h"
-#else
-	#include "iconv.h"
-#endif
+#include "ccx_common_structs.h"
 
 #define DTVCC_MAX_PACKET_LENGTH 128 //According to EIA-708B, part 5
 #define DTVCC_MAX_SERVICES 63
@@ -301,6 +296,7 @@ typedef struct dtvcc_tv_screen
 	dtvcc_pen_attribs pen_attribs[DTVCC_SCREENGRID_ROWS];
 	LLONG time_ms_show;
 	LLONG time_ms_hide;
+	unsigned int cc_count;
 } dtvcc_tv_screen;
 
 /**
@@ -317,42 +313,21 @@ typedef struct dtvcc_service_decoder
 {
 	dtvcc_window windows[DTVCC_MAX_WINDOWS];
 	int current_window;
-	int inited;
-	dtvcc_tv_screen tv1, tv2; // Current and previous "screenfuls", note that we switch between them
-	int is_empty_tv1, is_empty_tv2;
-	int cur_tv; // 1 or 2 rather than 0 or 1, to at least be consistent with the decoder
-	dtvcc_tv_screen *tv; // Pointer to the current TV buffer
-	char *filename; // Where we are going to write our output
-	int fh; // Handle to output file. -1 if not yet open
+	dtvcc_tv_screen *tv;
 	int cc_count;
-	int output_started;
-	enum ccx_output_format output_format; // What kind of output format should be used?
-	LLONG subs_delay; // ms to delay (or advance) subs
-
-	char *charset;
-	iconv_t cd; //Conversion descriptor
 } dtvcc_service_decoder;
-
-struct encoder_ctx; //TODO temporary solution. subtitles has to be outputed to cc_subtitle struct
 
 typedef struct ccx_decoder_dtvcc_settings_t
 {
 	int enabled;
-	int cc_to_stdout;
 	int print_file_reports;
 	ccx_decoder_dtvcc_report_t *report;
-
-	enum ccx_output_format output_format;
 
 	int active_services_count;
 	int services_enabled[DTVCC_MAX_SERVICES];
 
-	char *basefilename;
-
-	char** services_charsets;
+	char** services_charsets; //TODO this is actually for encoder
 	char* all_services_charset;
-
-	struct encoder_cfg *enc_cfg; //TODO temporary solution. subtitles has to be outputed to cc_subtitle struct
 } ccx_decoder_dtvcc_settings_t;
 
 /**
@@ -372,8 +347,6 @@ typedef struct ccx_dtvcc_ctx_t
 
 	dtvcc_service_decoder decoders[DTVCC_MAX_SERVICES];
 
-	struct encoder_ctx *encoder;
-
 	unsigned char current_packet[DTVCC_MAX_PACKET_LENGTH];
 	int current_packet_length;
 
@@ -383,13 +356,13 @@ typedef struct ccx_dtvcc_ctx_t
 
 void _dtvcc_clear_packet(ccx_dtvcc_ctx_t *ctx);
 void _dtvcc_windows_reset(dtvcc_service_decoder *decoder);
-void _dtvcc_decoder_init_write(dtvcc_service_decoder *decoder, char *basefilename, int id);
-void _dtvcc_decoder_flush(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder);
+void dtvcc_decoder_flush(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder, struct cc_subtitle *sub);
 
-void dtvcc_process_current_packet(ccx_dtvcc_ctx_t *dtvcc);
+void dtvcc_process_current_packet(ccx_dtvcc_ctx_t *dtvcc, struct cc_subtitle *sub);
 void dtvcc_process_service_block(ccx_dtvcc_ctx_t *dtvcc,
 								 dtvcc_service_decoder *decoder,
 								 unsigned char *data,
-								 int data_length);
+								 int data_length,
+								 struct cc_subtitle *sub);
 
 #endif

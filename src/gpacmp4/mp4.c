@@ -486,7 +486,8 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 									dbg_print(CCX_DMT_PARSE, "mp4-708: atom skipped (cc_type < 2)\n");
 									continue;
 								}
-								ccx_dtvcc_process_data(dec_ctx, (unsigned char *) temp, 4);
+								//TODO is it really always 4-bytes long?
+								ccx_dtvcc_process_data(dec_ctx, (unsigned char *) temp, 4, &dec_sub);
 								cb_708++;
 							}
 							atomStart = sample->dataLength;
