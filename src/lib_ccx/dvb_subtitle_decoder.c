@@ -1451,15 +1451,18 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	DVBSubRegion *region;
 	DVBSubRegionDisplay *display;
 	DVBSubCLUT *clut;
-        DVBSubDisplayDefinition *display_def = ctx->display_definition;
+        DVBSubDisplayDefinition *display_def;
         struct cc_bitmap *rect = NULL;
 	uint32_t *clut_table;
 	int offset_x=0, offset_y=0;
 	int ret = 0;
 
 	ctx = (DVBSubContext *) dec_ctx->private_data;
+
+        display_def = ctx->display_definition;
         sub->type = CC_BITMAP;
 	sub->lang_index = ctx->lang_index;
+
 	if (display_def)
 	{
 		offset_x = display_def->x;
