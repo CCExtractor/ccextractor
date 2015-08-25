@@ -809,6 +809,9 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	unsigned char buf[TELETEXT_CHUNK_LEN] = "";
 	struct lib_cc_decode *dec_ctx = NULL;
 	struct cc_subtitle *dec_sub = NULL;
+	LLONG currfts;
+	uint16_t cbcount = 0;
+	int bread = 0; // Bytes read
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 
 
@@ -820,18 +823,13 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	parsebuf = (unsigned char*)malloc(1024);
 
 
-	LLONG currfts;
-	uint16_t cbcount = 0;
-
-	int bread = 0; // Bytes read
-
 	buffered_read(ctx->demux_ctx, parsebuf, 11);
-	ctx->demux_ctx->past+=result;
-	bread+=(int) result;
-	if (result!=11)
+	ctx->demux_ctx->past += result;
+	bread += (int) result;
+	if (result != 11)
 	{
 		mprint("Premature end of file!\n");
-		end_of_file=1;
+		end_of_file = 1;
 		return;
 	}
 
