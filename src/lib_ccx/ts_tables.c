@@ -717,7 +717,6 @@ void decode_service_descriptors(struct ccx_demuxer *ctx, uint8_t *buf, uint32_t 
 						memcpy(ctx->pinfo[x].name, s, service_name_length);
 					}
 					free(s);
-					ctx->pinfo[x].name[service_name_length]='\0';
 				}
 			}
 			offset+=service_name_length;
