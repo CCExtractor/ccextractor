@@ -647,8 +647,8 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 					}
 				}
 			}
-			if (!(ccx_common_logging.debug_mask & CCX_DMT_DECODER_XDS) && ctx->current_program_type_reported)
-				break;
+			//if (!(ccx_common_logging.debug_mask & CCX_DMT_DECODER_XDS) && ctx->current_program_type_reported)
+			//	break;
 			memcpy (ctx->current_xds_program_type,ctx->cur_xds_payload,ctx->cur_xds_payload_length);
 			ctx->current_xds_program_type[ctx->cur_xds_payload_length]=0;
 			if (!ctx->current_program_type_reported)
