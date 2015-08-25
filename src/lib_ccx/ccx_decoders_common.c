@@ -323,7 +323,10 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 	ctx->anchor_seq_number = -1;
 	// Init XDS buffers
-	ctx->xds_ctx = ccx_decoders_xds_init_library(ctx->timing);
+	if(setting->ignore_xds == CCX_TRUE)
+		ctx->xds_ctx = NULL;
+	else
+		ctx->xds_ctx = ccx_decoders_xds_init_library(ctx->timing);
 	//xds_cea608_test(ctx->xds_ctx);
 
 	return ctx;

@@ -96,6 +96,7 @@ struct ccx_decoders_common_settings_t
 	unsigned int hauppauge_mode; // If 1, use PID=1003, process specially and so on
 	int program_number;
 	enum ccx_code_type codec;
+	int ignore_xds;
 	void *private_data;
 };
 
