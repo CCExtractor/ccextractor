@@ -790,6 +790,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			{
 				ctx->dtvcc_writers[i].fd = -1;
 				ctx->dtvcc_writers[i].filename = NULL;
+				ctx->dtvcc_writers[i].cd = (iconv_t) -1;
 				continue;
 			}
 
@@ -797,6 +798,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			{
 				ctx->dtvcc_writers[i].fd = STDOUT_FILENO;
 				ctx->dtvcc_writers[i].filename = NULL;
+				ctx->dtvcc_writers[i].cd = (iconv_t) -1;
 			}
 			else
 			{

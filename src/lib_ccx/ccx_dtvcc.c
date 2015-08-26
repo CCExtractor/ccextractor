@@ -107,6 +107,10 @@ ccx_dtvcc_ctx_t *ccx_dtvcc_init(struct ccx_decoder_dtvcc_settings_t *opts)
 		decoder->tv->service_number = i + 1;
 		if (!decoder->tv)
 			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "ccx_dtvcc_init");
+
+		for (int j = 0; j < DTVCC_MAX_WINDOWS; j++)
+			decoder->windows[j].memory_reserved = 0;
+
 		_dtvcc_windows_reset(decoder);
 	}
 
@@ -125,9 +129,6 @@ void ccx_dtvcc_free(ccx_dtvcc_ctx_t **ctx_ptr)
 			continue;
 
 		dtvcc_service_decoder *decoder = &ctx->decoders[i];
-
-//		if (decoder->cc_count > 0)
-//			ccx_dtvcc_write_done(decoder->tv, ctx->encoder);
 
 		for (int j = 0; j < DTVCC_MAX_WINDOWS; j++)
 			if (decoder->windows[j].memory_reserved)

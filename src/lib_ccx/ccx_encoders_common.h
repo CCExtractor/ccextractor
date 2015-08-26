@@ -1,6 +1,12 @@
 #ifndef _CC_ENCODER_COMMON_H
 #define _CC_ENCODER_COMMON_H
 
+#ifdef WIN32
+	#include "..\\win_iconv\\win_iconv.h"
+#else
+	#include "iconv.h"
+#endif
+
 #include "ccx_common_structs.h"
 #include "ccx_decoders_structs.h"
 #include "ccx_encoders_structs.h"
@@ -15,6 +21,7 @@ typedef struct ccx_dtvcc_writer_ctx_t
 {
 	int fd;
 	char *filename;
+	iconv_t cd;
 } ccx_dtvcc_writer_ctx_t;
 
 /**

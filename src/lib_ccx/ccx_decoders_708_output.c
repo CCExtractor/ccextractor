@@ -82,11 +82,11 @@ void _dtvcc_write_tag_close(dtvcc_tv_screen *tv, struct encoder_ctx *encoder, in
 	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, buf_len);
 }
 
-void _dtvcc_write_row(dtvcc_tv_screen *tv, int row_index, struct encoder_ctx *encoder)
+void _dtvcc_write_row(ccx_dtvcc_writer_ctx_t *writer, dtvcc_tv_screen *tv, int row_index, struct encoder_ctx *encoder)
 {
 	char *buf = (char *) encoder->buffer;
 	size_t buf_len = 0;
-	memset(buf, 0, INITIAL_ENC_BUFFER_CAPACITY);
+	memset(buf, 0, INITIAL_ENC_BUFFER_CAPACITY * sizeof(char));
 	int first, last;
 
 	_dtvcc_get_write_interval(tv, row_index, &first, &last);
@@ -103,12 +103,36 @@ void _dtvcc_write_row(dtvcc_tv_screen *tv, int row_index, struct encoder_ctx *en
 		}
 	}
 
-	//TODO handle with iconv
+	int fd = encoder->dtvcc_writers[tv->service_number - 1].fd;
 
-	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, buf_len);
+	if (writer->cd != (iconv_t) -1)
+	{
+		char *encoded_buf = calloc(INITIAL_ENC_BUFFER_CAPACITY, sizeof(char));
+		if (!encoded_buf)
+			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "_dtvcc_write_row");
+
+		char *encoded_buf_start = encoded_buf;
+
+		size_t in_bytes_left = buf_len;
+		size_t out_bytes_left = INITIAL_ENC_BUFFER_CAPACITY * sizeof(char);
+
+		size_t result = iconv(writer->cd, &buf, &in_bytes_left, &encoded_buf, &out_bytes_left);
+
+		if (result == -1)
+			ccx_common_logging.log_ftn("[CEA-708] _dtvcc_write_row: "
+					"conversion failed: %s\n", strerror(errno));
+
+		write(fd, encoded_buf_start, encoded_buf - encoded_buf_start);
+
+		free(encoded_buf_start);
+	}
+	else
+	{
+		write(fd, buf, buf_len);
+	}
 }
 
-void ccx_dtvcc_write_srt(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
+void ccx_dtvcc_write_srt(ccx_dtvcc_writer_ctx_t *writer, dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 {
 	if (_dtvcc_is_screen_empty(tv))
 		return;
@@ -134,7 +158,7 @@ void ccx_dtvcc_write_srt(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 		if (!_dtvcc_is_row_empty(tv, i))
 		{
 			_dtvcc_write_tag_open(tv, encoder, i);
-			_dtvcc_write_row(tv, i, encoder);
+			_dtvcc_write_row(writer, tv, i, encoder);
 			_dtvcc_write_tag_close(tv, encoder, i);
 			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
 				  encoder->encoded_crlf, encoder->encoded_crlf_length);
@@ -166,7 +190,7 @@ void ccx_dtvcc_write_debug(dtvcc_tv_screen *tv)
 	}
 }
 
-void ccx_dtvcc_write_transcript(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
+void ccx_dtvcc_write_transcript(ccx_dtvcc_writer_ctx_t *writer, dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 {
 	if (_dtvcc_is_screen_empty(tv))
 		return;
@@ -199,7 +223,7 @@ void ccx_dtvcc_write_transcript(dtvcc_tv_screen *tv, struct encoder_ctx *encoder
 			if (strlen(buf))
 				write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 
-			_dtvcc_write_row(tv, i, encoder);
+			_dtvcc_write_row(writer, tv, i, encoder);
 			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
 				  encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
@@ -242,7 +266,7 @@ void _dtvcc_write_sami_footer(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 		  encoder->encoded_crlf, encoder->encoded_crlf_length);
 }
 
-void ccx_dtvcc_write_sami(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
+void ccx_dtvcc_write_sami(ccx_dtvcc_writer_ctx_t *writer, dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 {
 	if (_dtvcc_is_screen_empty(tv))
 		return;
@@ -266,7 +290,7 @@ void ccx_dtvcc_write_sami(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 		if (!_dtvcc_is_row_empty(tv, i))
 		{
 			_dtvcc_write_tag_open(tv, encoder, i);
-			_dtvcc_write_row(tv, i, encoder);
+			_dtvcc_write_row(writer, tv, i, encoder);
 			_dtvcc_write_tag_close(tv, encoder, i);
 			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
 				  encoder->encoded_br, encoder->encoded_br_length);
@@ -281,20 +305,20 @@ void ccx_dtvcc_write_sami(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 }
 
-void _ccx_dtvcc_write(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
+void _ccx_dtvcc_write(ccx_dtvcc_writer_ctx_t *writer, dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 {
 	switch (encoder->write_format)
 	{
 		case CCX_OF_NULL:
 			break;
 		case CCX_OF_SRT:
-			ccx_dtvcc_write_srt(tv, encoder);
+			ccx_dtvcc_write_srt(writer, tv, encoder);
 			break;
 		case CCX_OF_TRANSCRIPT:
-			ccx_dtvcc_write_transcript(tv, encoder);
+			ccx_dtvcc_write_transcript(writer, tv, encoder);
 			break;
 		case CCX_OF_SAMI:
-			ccx_dtvcc_write_sami(tv, encoder);
+			ccx_dtvcc_write_sami(writer, tv, encoder);
 			break;
 		default:
 			ccx_dtvcc_write_debug(tv);
@@ -325,6 +349,7 @@ void ccx_dtvcc_writer_init(ccx_dtvcc_writer_ctx_t *writer,
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_writer_init\n");
 	writer->fd = -1;
+	writer->cd = (iconv_t) -1;
 	if (write_format == CCX_OF_NULL)
 	{
 		writer->filename = NULL;
@@ -345,6 +370,21 @@ void ccx_dtvcc_writer_init(ccx_dtvcc_writer_ctx_t *writer,
 
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_writer_init: inited [%s]\n", writer->filename);
 
+	char *charset = cfg->all_services_charset ?
+					cfg->all_services_charset :
+					cfg->services_charsets[service_number - 1];
+
+	if (charset)
+	{
+		writer->cd = iconv_open("UTF-8", charset);
+		if (writer->cd == (iconv_t) -1)
+		{
+			ccx_common_logging.fatal_ftn(EXIT_FAILURE, "[CEA-708] dtvcc_init: "
+												 "can't create iconv for charset \"%s\": %s\n",
+										 charset, strerror(errno));
+		}
+	}
+
 	free(ext);
 }
 
@@ -353,6 +393,12 @@ void ccx_dtvcc_writer_cleanup(ccx_dtvcc_writer_ctx_t *writer)
 	if (writer->fd >= 0 && writer->fd != STDOUT_FILENO)
 		close(writer->fd);
 	free(writer->filename);
+	if (writer->cd == (iconv_t) -1)
+	{
+		//TODO nothing to do here
+	}
+	else
+		iconv_close(writer->cd);
 }
 
 void ccx_dtvcc_writer_output(ccx_dtvcc_writer_ctx_t *writer, dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
@@ -377,5 +423,5 @@ void ccx_dtvcc_writer_output(ccx_dtvcc_writer_ctx_t *writer, dtvcc_tv_screen *tv
 			write(writer->fd, UTF8_BOM, sizeof(UTF8_BOM));
 	}
 
-	_ccx_dtvcc_write(tv, encoder);
+	_ccx_dtvcc_write(writer, tv, encoder);
 }
