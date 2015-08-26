@@ -10,7 +10,11 @@
 #define DTVCC_MAX_SERVICES 63
 
 #define DTVCC_MAX_ROWS 15
-#define DTVCC_MAX_COLUMNS 45
+/**
+ * This value should be 32, but there were 16-bit encoded samples (from Korea),
+ * where RowCount calculated another way and equals 46 (23[8bit]*2)
+ */
+#define DTVCC_MAX_COLUMNS (32*2)
 
 #define DTVCC_SCREENGRID_ROWS 75
 #define DTVCC_SCREENGRID_COLUMNS 210

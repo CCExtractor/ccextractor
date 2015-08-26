@@ -143,7 +143,7 @@ void ccx_dtvcc_write_srt(ccx_dtvcc_writer_ctx_t *writer, dtvcc_tv_screen *tv, st
 	char *buf = (char *) encoder->buffer;
 	memset(buf, 0, INITIAL_ENC_BUFFER_CAPACITY);
 
-	sprintf(buf, "%u\r\n", tv->cc_count);
+	sprintf(buf, "%u%s", tv->cc_count, encoder->encoded_crlf);
 	mstime_sprintf(tv->time_ms_show + encoder->subs_delay,
 				   "%02u:%02u:%02u,%03u", buf + strlen(buf));
 	sprintf(buf + strlen(buf), " --> ");

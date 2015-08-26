@@ -105,6 +105,7 @@ ccx_dtvcc_ctx_t *ccx_dtvcc_init(struct ccx_decoder_dtvcc_settings_t *opts)
 		decoder->cc_count = 0;
 		decoder->tv = (dtvcc_tv_screen *) malloc(sizeof(dtvcc_tv_screen));
 		decoder->tv->service_number = i + 1;
+		decoder->tv->cc_count = 0;
 		if (!decoder->tv)
 			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "ccx_dtvcc_init");
 
