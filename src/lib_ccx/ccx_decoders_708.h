@@ -17,7 +17,7 @@
 
 #define DTVCC_MAX_WINDOWS 8
 
-#define DTVCC_FILENAME_TEMPLATE "%s-svc-%02u"
+#define DTVCC_FILENAME_TEMPLATE ".p%u.svc%02u"
 
 #define DTVCC_NO_LAST_SEQUENCE -1
 
@@ -297,6 +297,7 @@ typedef struct dtvcc_tv_screen
 	LLONG time_ms_show;
 	LLONG time_ms_hide;
 	unsigned int cc_count;
+	int service_number;
 } dtvcc_tv_screen;
 
 /**
@@ -325,9 +326,6 @@ typedef struct ccx_decoder_dtvcc_settings_t
 
 	int active_services_count;
 	int services_enabled[DTVCC_MAX_SERVICES];
-
-	char** services_charsets; //TODO this is actually for encoder
-	char* all_services_charset;
 } ccx_decoder_dtvcc_settings_t;
 
 /**
@@ -351,18 +349,19 @@ typedef struct ccx_dtvcc_ctx_t
 	int current_packet_length;
 
 	int last_sequence;
+
+	void *encoder; //we can't include header, so keeping it this way
 } ccx_dtvcc_ctx_t;
 
 
 void _dtvcc_clear_packet(ccx_dtvcc_ctx_t *ctx);
 void _dtvcc_windows_reset(dtvcc_service_decoder *decoder);
-void dtvcc_decoder_flush(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder, struct cc_subtitle *sub);
+void dtvcc_decoder_flush(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder);
 
-void dtvcc_process_current_packet(ccx_dtvcc_ctx_t *dtvcc, struct cc_subtitle *sub);
+void dtvcc_process_current_packet(ccx_dtvcc_ctx_t *dtvcc);
 void dtvcc_process_service_block(ccx_dtvcc_ctx_t *dtvcc,
 								 dtvcc_service_decoder *decoder,
 								 unsigned char *data,
-								 int data_length,
-								 struct cc_subtitle *sub);
+								 int data_length);
 
 #endif

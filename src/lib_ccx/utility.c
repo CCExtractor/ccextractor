@@ -428,6 +428,44 @@ char *get_file_extension(enum ccx_output_format write_format)
 	return 0;
 }
 
+char *create_outfilename(const char *basename, const char *suffix, const char *extension)
+{
+	char *ptr = NULL;
+	size_t blen, slen, elen;
+
+	if(basename)
+		blen = strlen(basename);
+	else
+		blen = 0;
+
+	if(suffix)
+		slen = strlen(suffix);
+	else
+		slen = 0;
+
+	if(extension)
+		elen = strlen(extension);
+	else
+		elen = 0;
+	if ( (elen + slen + blen) <= 0)
+		return NULL;
+
+	ptr = malloc(elen + slen + blen + 1);
+	if(!ptr)
+		return NULL;
+
+	ptr[0] = '\0';
+
+	if(basename)
+		strcat(ptr, basename);
+	if(suffix)
+		strcat(ptr, suffix);
+	if(extension)
+		strcat(ptr, extension);
+
+	return ptr;
+}
+
 size_t utf16_to_utf8(unsigned short utf16_char, unsigned char *out)
 {
 	if (utf16_char < 0x80) {

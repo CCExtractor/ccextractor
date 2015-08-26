@@ -674,44 +674,6 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 
 }
 
-char *create_outfilename(const char *basename, const char *suffix, const char *extension)
-{
-	char *ptr = NULL;
-	int blen, slen, elen;
-
-	if(basename)
-		blen = strlen(basename);
-	else
-		blen = 0;
-
-	if(suffix)
-		slen = strlen(suffix);
-	else
-		slen = 0;
-
-	if(extension)
-		elen = strlen(extension);
-	else
-		elen = 0;
-	if ( (elen + slen + blen) <= 0)
-		return NULL;
-
-	ptr = malloc(elen + slen + blen + 1);
-	if(!ptr)
-		return NULL;
-
-	ptr[0] = '\0';
-
-	if(basename)
-		strcat(ptr, basename);
-	if(suffix)
-		strcat(ptr, suffix);
-	if(extension)
-		strcat(ptr, extension);
-
-	return ptr;
-}
-
 static void dinit_output_ctx(struct encoder_ctx *ctx)
 {
 	int i;
@@ -721,6 +683,7 @@ static void dinit_output_ctx(struct encoder_ctx *ctx)
 }
 static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 {
+	mprint("Init out ctx %d %d\n", cfg->extract, cfg->dtvcc_extract);
 	int ret = EXIT_OK;
 	int nb_lang;
 	char *basefilename = NULL; // Input filename without the extension
@@ -814,6 +777,35 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 		connect_to_srv(ccx_options.srv_addr, ccx_options.srv_port, ccx_options.tcp_desc, ccx_options.tcp_password);
 	}
 
+	if (cfg->dtvcc_extract)
+	{
+		for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
+		{
+			if (!cfg->services_enabled[i])
+			{
+				ctx->dtvcc_writers[i].fd = -1;
+				ctx->dtvcc_writers[i].filename = NULL;
+				continue;
+			}
+
+			if (cfg->cc_to_stdout)
+			{
+				ctx->dtvcc_writers[i].fd = STDOUT_FILENO;
+				ctx->dtvcc_writers[i].filename = NULL;
+			}
+			else
+			{
+				if (cfg->output_filename)
+					basefilename = get_basename(cfg->output_filename);
+				else
+					basefilename = get_basename(ctx->first_input_file);
+
+				ccx_dtvcc_writer_init(&ctx->dtvcc_writers[i], basefilename, ctx->program_number, i + 1, cfg->write_format);
+				free(basefilename);
+			}
+		}
+	}
+
 	if(ret)
 	{
 		print_error(cfg->gui_mode_reports,
@@ -894,6 +886,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->no_type_setting = opt->no_type_setting;
 	ctx->gui_mode_reports = opt->gui_mode_reports;
 	ctx->extract = opt->extract;
+
 	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);
 	if(!ctx->subline)
 	{
@@ -902,7 +895,6 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 		free(ctx);
 		return NULL;
 	}
-
 
 	ctx->start_credits_text = opt->start_credits_text;
 	ctx->end_credits_text = opt->end_credits_text;
@@ -923,8 +915,9 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	for (i = 0; i < ctx->nb_out; i++)
 	 	write_subtitle_file_header(ctx,ctx->out+i);
 
-	return ctx;
+	ctx->dtvcc_extract = opt->dtvcc_extract;
 
+	return ctx;
 }
 
 void set_encoder_rcwt_fileformat(struct encoder_ctx *ctx, short int format)
@@ -1100,11 +1093,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		sub->nb_data = 0;
 
 	}
-	if (sub->type == CC_708)
-	{
-		dtvcc_tv_screen *tv = (dtvcc_tv_screen *) sub->data;
-		ccx_dtvcc_write(tv, context);
-	}
+
 	if (!sub->nb_data)
 		freep(&sub->data);
 	return wrote_something;

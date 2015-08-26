@@ -538,10 +538,10 @@ void xds_do_content_advisory (struct cc_subtitle *sub, unsigned c1, unsigned c2)
 		}
 		if (a0 && a1 && Da2 && !La3) // Canadian French Language Rating
 		{
-			const char *ratingtext[8] = { "Exemptées", "Général", "Général - Déconseillé aux jeunes enfants",
-				"Cette émission peut ne pas convenir aux enfants de moins de 13 ans",
-				"Cette émission ne convient pas aux moins de 16 ans",
-				"Cette émission est réservée aux adultes", "[invalid]", "[invalid]" };
+			const char *ratingtext[8] = { "Exempt?es", "G?n?ral", "G?n?ral - D?conseill? aux jeunes enfants",
+				"Cette ?mission peut ne pas convenir aux enfants de moins de 13 ans",
+				"Cette ?mission ne convient pas aux moins de 16 ans",
+				"Cette ?mission est r?serv?e aux adultes", "[invalid]", "[invalid]" };
 			sprintf(rating, "ContentAdvisory: Canadian French Rating: %s", ratingtext[g2 * 4 + g1 * 2 + g0]);
 			supported = 1;
 		}

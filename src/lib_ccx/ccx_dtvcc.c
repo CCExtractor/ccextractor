@@ -5,8 +5,7 @@
 
 void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 							const unsigned char *data,
-							int data_length,
-							struct cc_subtitle *sub)
+							int data_length)
 {
 	/*
 	 * Note: the data has following format:
@@ -30,7 +29,7 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 			case 2:
 				ccx_common_logging.debug_ftn (CCX_DMT_708, "[CEA-708] dtvcc_process_data: DTVCC Channel Packet Data\n");
 				if (cc_valid == 0) // This ends the previous packet
-					dtvcc_process_current_packet(dtvcc, sub);
+					dtvcc_process_current_packet(dtvcc);
 				else
 				{
 					if (dtvcc->current_packet_length > 253)
@@ -47,7 +46,7 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 				break;
 			case 3:
 				ccx_common_logging.debug_ftn (CCX_DMT_708, "[CEA-708] dtvcc_process_data: DTVCC Channel Packet Start\n");
-				dtvcc_process_current_packet(dtvcc, sub);
+				dtvcc_process_current_packet(dtvcc);
 				if (cc_valid)
 				{
 					if (dtvcc->current_packet_length > DTVCC_MAX_PACKET_LENGTH - 1)
@@ -76,7 +75,10 @@ ccx_dtvcc_ctx_t *ccx_dtvcc_init(struct ccx_decoder_dtvcc_settings_t *opts)
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] initializing dtvcc decoder\n");
 	ccx_dtvcc_ctx_t *ctx = (ccx_dtvcc_ctx_t *) malloc(sizeof(ccx_dtvcc_ctx_t));
 	if (!ctx)
+	{
 		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "[CEA-708] ccx_dtvcc_init");
+		return NULL;
+	}
 
 	ctx->report = opts->report;
 	ctx->report->reset_count = 0;
@@ -102,6 +104,7 @@ ccx_dtvcc_ctx_t *ccx_dtvcc_init(struct ccx_decoder_dtvcc_settings_t *opts)
 		dtvcc_service_decoder *decoder = &ctx->decoders[i];
 		decoder->cc_count = 0;
 		decoder->tv = (dtvcc_tv_screen *) malloc(sizeof(dtvcc_tv_screen));
+		decoder->tv->service_number = i + 1;
 		if (!decoder->tv)
 			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "ccx_dtvcc_init");
 		_dtvcc_windows_reset(decoder);

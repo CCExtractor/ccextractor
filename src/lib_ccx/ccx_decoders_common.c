@@ -9,6 +9,7 @@ made to reuse, not duplicate, as many functions as possible */
 #include "ccx_common_common.h"
 #include "lib_ccx.h"
 #include "ccx_decoders_608.h"
+#include "ccx_decoders_708.h"
 #include "ccx_dtvcc.h"
 
 
@@ -190,10 +191,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 				if (timeok)
 				{
 					if (ctx->write_format != CCX_OF_RCWT)
-					{
-						sub->got_output = 0;
-						ccx_dtvcc_process_data(ctx, (const unsigned char *) temp, 4, sub);
-					}
+						ccx_dtvcc_process_data(ctx, (const unsigned char *) temp, 4);
 					else
 						writercwtdata(ctx, cc_block, sub);
 				}
@@ -236,6 +234,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->avc_ctx = init_avc();
 	ctx->codec = setting->codec;
 	ctx->dtvcc = ccx_dtvcc_init(setting->settings_dtvcc);
+	ctx->dtvcc->is_active = setting->settings_dtvcc->enabled;
 
 	if(setting->codec == CCX_CODEC_ATSC_CC)
 	{
@@ -362,7 +361,7 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 			if (decoder->cc_count > 0)
 			{
 				current_field = 3;
-				dtvcc_decoder_flush(ctx->dtvcc, decoder, sub);
+				dtvcc_decoder_flush(ctx->dtvcc, decoder);
 			}
 		}
 	}

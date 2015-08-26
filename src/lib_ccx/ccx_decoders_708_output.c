@@ -1,5 +1,7 @@
 #include "ccx_decoders_708_output.h"
 #include "ccx_encoders_common.h"
+#include "utility.h"
+#include "ccx_common_common.h"
 
 int _dtvcc_is_row_empty(dtvcc_tv_screen *tv, int row_index)
 {
@@ -60,7 +62,7 @@ void _dtvcc_write_tag_open(dtvcc_tv_screen *tv, struct encoder_ctx *encoder, int
 		blue = (255 / 3) * blue;
 		buf_len += sprintf(buf + buf_len, "<font color=\"%02x%02x%02x\">", red, green, blue);
 	}
-	write(encoder->out->fh, buf, buf_len);
+	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, buf_len);
 }
 
 void _dtvcc_write_tag_close(dtvcc_tv_screen *tv, struct encoder_ctx *encoder, int row_index)
@@ -77,7 +79,7 @@ void _dtvcc_write_tag_close(dtvcc_tv_screen *tv, struct encoder_ctx *encoder, in
 	if (tv->pen_attribs[row_index].italic)
 		buf_len += sprintf(buf + buf_len, "</i>");
 
-	write(encoder->out->fh, buf, buf_len);
+	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, buf_len);
 }
 
 void _dtvcc_write_row(dtvcc_tv_screen *tv, int row_index, struct encoder_ctx *encoder)
@@ -103,7 +105,7 @@ void _dtvcc_write_row(dtvcc_tv_screen *tv, int row_index, struct encoder_ctx *en
 
 	//TODO handle with iconv
 
-	write(encoder->out->fh, buf, buf_len);
+	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, buf_len);
 }
 
 void ccx_dtvcc_write_srt(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
@@ -125,7 +127,7 @@ void ccx_dtvcc_write_srt(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 				   "%02u:%02u:%02u,%03u", buf + strlen(buf));
 	sprintf(buf + strlen(buf), (char *) encoder->encoded_crlf);
 
-	write(encoder->out->fh, buf, strlen(buf));
+	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 
 	for (int i = 0; i < DTVCC_SCREENGRID_ROWS; i++)
 	{
@@ -134,10 +136,12 @@ void ccx_dtvcc_write_srt(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 			_dtvcc_write_tag_open(tv, encoder, i);
 			_dtvcc_write_row(tv, i, encoder);
 			_dtvcc_write_tag_close(tv, encoder, i);
-			write(encoder->out->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
+			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
+				  encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
 	}
-	write(encoder->out->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
+	write(encoder->dtvcc_writers[tv->service_number - 1].fd,
+		  encoder->encoded_crlf, encoder->encoded_crlf_length);
 }
 
 void ccx_dtvcc_write_debug(dtvcc_tv_screen *tv)
@@ -193,13 +197,15 @@ void ccx_dtvcc_write_transcript(dtvcc_tv_screen *tv, struct encoder_ctx *encoder
 				sprintf(buf + strlen(buf), "POP|"); //TODO caption mode(pop, rollup, etc.)
 
 			if (strlen(buf))
-				write(encoder->out->fh, buf, strlen(buf));
+				write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 
 			_dtvcc_write_row(tv, i, encoder);
-			write(encoder->out->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
+			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
+				  encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
 	}
-	write(encoder->out->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
+	write(encoder->dtvcc_writers[tv->service_number - 1].fd,
+		  encoder->encoded_crlf, encoder->encoded_crlf_length);
 }
 
 void _dtvcc_write_sami_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
@@ -224,15 +230,16 @@ void _dtvcc_write_sami_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 	buf_len += sprintf(buf + buf_len, "</head>%s%s", encoder->encoded_crlf, encoder->encoded_crlf);
 	buf_len += sprintf(buf + buf_len, "<body>%s", encoder->encoded_crlf);
 
-	write(encoder->out->fh, buf, buf_len);
+	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, buf_len);
 }
 
 void _dtvcc_write_sami_footer(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 {
 	char *buf = (char *) encoder->buffer;
 	sprintf(buf, "</body></sami>");
-	write(encoder->out->fh, buf, strlen(buf));
-	write(encoder->out->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
+	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
+	write(encoder->dtvcc_writers[tv->service_number - 1].fd,
+		  encoder->encoded_crlf, encoder->encoded_crlf_length);
 }
 
 void ccx_dtvcc_write_sami(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
@@ -252,7 +259,7 @@ void ccx_dtvcc_write_sami(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 	sprintf(buf, "<sync start=%llu><p class=\"unknowncc\">%s",
 			(unsigned long long) tv->time_ms_show + encoder->subs_delay,
 			encoder->encoded_crlf);
-	write(encoder->out->fh, buf, strlen(buf));
+	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 
 	for (int i = 0; i < DTVCC_SCREENGRID_ROWS; i++)
 	{
@@ -261,18 +268,20 @@ void ccx_dtvcc_write_sami(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 			_dtvcc_write_tag_open(tv, encoder, i);
 			_dtvcc_write_row(tv, i, encoder);
 			_dtvcc_write_tag_close(tv, encoder, i);
-			write(encoder->out->fh, encoder->encoded_br, encoder->encoded_br_length);
-			write(encoder->out->fh, encoder->encoded_crlf, encoder->encoded_crlf_length);
+			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
+				  encoder->encoded_br, encoder->encoded_br_length);
+			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
+				  encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
 	}
 
 	sprintf(buf, "<sync start=%llu><p class=\"unknowncc\">&nbsp;</p></sync>%s%s",
 			(unsigned long long) tv->time_ms_hide + encoder->subs_delay,
 			encoder->encoded_crlf, encoder->encoded_crlf);
-	write(encoder->out->fh, buf, strlen(buf));
+	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 }
 
-void ccx_dtvcc_write(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
+void _ccx_dtvcc_write(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 {
 	switch (encoder->write_format)
 	{
@@ -305,4 +314,66 @@ void ccx_dtvcc_write_done(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 					CCX_DMT_708, "[CEA-708] ccx_dtvcc_write_done: no handling required\n");
 			break;
 	}
+}
+
+void ccx_dtvcc_writer_init(ccx_dtvcc_writer_ctx_t *writer,
+						   char *base_filename,
+						   int program_number,
+						   int service_number,
+						   enum ccx_output_format write_format)
+{
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_writer_init\n");
+	writer->fd = -1;
+	if (write_format == CCX_OF_NULL)
+	{
+		writer->filename = NULL;
+		return;
+	}
+
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_writer_init: "
+			"[%s][%d][%d]\n", base_filename, program_number, service_number);
+
+	char *ext = get_file_extension(write_format);
+	char suffix[32];
+	sprintf(suffix, DTVCC_FILENAME_TEMPLATE, program_number, service_number);
+
+	writer->filename = create_outfilename(base_filename, suffix, ext);
+	if (!writer->filename)
+		ccx_common_logging.fatal_ftn(
+				EXIT_NOT_ENOUGH_MEMORY, "[CEA-708] _dtvcc_decoder_init_write: not enough memory");
+
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_writer_init: inited [%s]\n", writer->filename);
+
+	free(ext);
+}
+
+void ccx_dtvcc_writer_cleanup(ccx_dtvcc_writer_ctx_t *writer)
+{
+	close(writer->fd);
+	free(writer->filename);
+}
+
+void ccx_dtvcc_writer_output(ccx_dtvcc_writer_ctx_t *writer, dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
+{
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_writer_output: "
+			"writing... [%s][%d]\n", writer->filename, writer->fd);
+
+	if (!writer->filename && writer->fd < 0)
+		return;
+
+	if (writer->filename && writer->fd < 0) //first request to write
+	{
+		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] "
+				"ccx_dtvcc_writer_output: creating %s\n", writer->filename);
+		writer->fd = open(writer->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+		if (writer->fd == -1)
+		{
+			ccx_common_logging.fatal_ftn(
+					CCX_COMMON_EXIT_FILE_CREATION_FAILED, "[CEA-708] Failed to open a file\n");
+		}
+		if (!encoder->no_bom)
+			write(writer->fd, UTF8_BOM, sizeof(UTF8_BOM));
+	}
+
+	_ccx_dtvcc_write(tv, encoder);
 }

@@ -701,23 +701,26 @@ void parse_708_services (struct ccx_s_options *opts, char *s)
 	const char *all = "all";
 	size_t all_len = strlen(all);
 	int diff = strncmp(s, all, all_len);
-	if (!diff)
-	{
+	if (!diff) {
 		size_t s_len = strlen(s);
 		char *charset = NULL;
 		if (s_len > all_len + 2) // '[' and ']'
 			charset = strndup(s + all_len + 1, s_len - all_len - 2);
 
 		opts->settings_dtvcc.enabled = 1;
-		opts->settings_dtvcc.all_services_charset = charset;
+		opts->enc_cfg.dtvcc_extract = 1;
+		opts->enc_cfg.all_services_charset = charset;
 
-		opts->settings_dtvcc.services_charsets = (char **) calloc(sizeof(char *), DTVCC_MAX_SERVICES);
-		if (!opts->settings_dtvcc.services_charsets)
+		opts->enc_cfg.services_charsets = (char **) calloc(sizeof(char *), DTVCC_MAX_SERVICES);
+		if (!opts->enc_cfg.services_charsets)
 			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "parse_708_services");
-		memset(opts->settings_dtvcc.services_charsets, 0, DTVCC_MAX_SERVICES * sizeof(char *));
+		memset(opts->enc_cfg.services_charsets, 0, DTVCC_MAX_SERVICES * sizeof(char *));
 
 		for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
+		{
 			opts->settings_dtvcc.services_enabled[i] = 1;
+			opts->enc_cfg.services_enabled[i] = 1;
+		}
 
 		opts->settings_dtvcc.active_services_count = DTVCC_MAX_SERVICES;
 		return;
@@ -744,15 +747,17 @@ void parse_708_services (struct ccx_s_options *opts, char *s)
 			fatal (EXIT_MALFORMED_PARAMETER,
 				   "[CEA-708] Invalid service number (%d), valid range is 1-%d.", svc, DTVCC_MAX_SERVICES);
 		opts->settings_dtvcc.services_enabled[svc - 1] = 1;
+		opts->enc_cfg.services_enabled[svc - 1] = 1;
 		opts->settings_dtvcc.enabled = 1;
+		opts->enc_cfg.dtvcc_extract = 1;
 		opts->settings_dtvcc.active_services_count++;
 
-		if (!opts->settings_dtvcc.services_charsets)
+		if (!opts->enc_cfg.services_charsets)
 		{
-			opts->settings_dtvcc.services_charsets = (char **) calloc(sizeof(char *), DTVCC_MAX_SERVICES);
-			if (!opts->settings_dtvcc.services_charsets)
+			opts->enc_cfg.services_charsets = (char **) calloc(sizeof(char *), DTVCC_MAX_SERVICES);
+			if (!opts->enc_cfg.services_charsets)
 				ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "parse_708_services");
-			memset(opts->settings_dtvcc.services_charsets, 0, DTVCC_MAX_SERVICES * sizeof(char *));
+			memset(opts->enc_cfg.services_charsets, 0, DTVCC_MAX_SERVICES * sizeof(char *));
 		}
 
 		e = e + 1;
@@ -767,7 +772,7 @@ void parse_708_services (struct ccx_s_options *opts, char *s)
 		{
 			char *charset = strndup(c, e - c);
 			if (strlen(charset))
-				opts->settings_dtvcc.services_charsets[svc - 1] = charset;
+				opts->enc_cfg.services_charsets[svc - 1] = charset;
 			c = e + 1;
 		}
 	}
