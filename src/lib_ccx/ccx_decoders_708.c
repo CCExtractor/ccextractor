@@ -500,7 +500,7 @@ void _dtvcc_process_cr(ccx_dtvcc_ctx_t *dtvcc, dtvcc_service_decoder *decoder)
 
 		if (rollup_required)
 		{
-			if (ccx_options.settings_608.no_rollup)
+			if (dtvcc->no_rollup)
 				_dtvcc_window_clear_row(window, window->pen_row);
 			else
 				_dtvcc_window_rollup(decoder, window);

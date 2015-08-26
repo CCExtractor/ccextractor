@@ -176,6 +176,7 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
 	else if (strcmp (format,"transcript")==0 || strcmp (format,"txt")==0)
 	{
 		opt->write_format=CCX_OF_TRANSCRIPT;
+		opt->settings_dtvcc.no_rollup = 1;
 	}
 	else if (strcmp (format,"timedtranscript")==0 || strcmp (format,"ttxt")==0)
 	{
@@ -1076,6 +1077,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				strcmp (argv[i],"--norollup")==0)
 		{
 			opt->settings_608.no_rollup = 1;
+			opt->settings_dtvcc.no_rollup = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-ru1")==0)

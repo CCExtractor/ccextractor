@@ -106,6 +106,7 @@ void init_options (struct ccx_s_options *options)
 	options->settings_dtvcc.enabled = 0;
 	options->settings_dtvcc.active_services_count = 0;
 	options->settings_dtvcc.print_file_reports = 1;
+	options->settings_dtvcc.no_rollup = 0;
 	options->settings_dtvcc.report = NULL;
 	memset(options->settings_dtvcc.services_enabled, 0, DTVCC_MAX_SERVICES);
 

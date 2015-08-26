@@ -326,6 +326,7 @@ typedef struct ccx_decoder_dtvcc_settings_t
 {
 	int enabled;
 	int print_file_reports;
+	int no_rollup;
 	ccx_decoder_dtvcc_report_t *report;
 
 	int active_services_count;
@@ -355,6 +356,7 @@ typedef struct ccx_dtvcc_ctx_t
 	int last_sequence;
 
 	void *encoder; //we can't include header, so keeping it this way
+	int no_rollup;
 } ccx_dtvcc_ctx_t;
 
 
