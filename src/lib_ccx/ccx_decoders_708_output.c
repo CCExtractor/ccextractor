@@ -228,8 +228,6 @@ void ccx_dtvcc_write_transcript(ccx_dtvcc_writer_ctx_t *writer, dtvcc_tv_screen 
 				  encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
 	}
-	write(encoder->dtvcc_writers[tv->service_number - 1].fd,
-		  encoder->encoded_crlf, encoder->encoded_crlf_length);
 }
 
 void _dtvcc_write_sami_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
