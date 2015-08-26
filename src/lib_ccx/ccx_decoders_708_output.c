@@ -320,7 +320,8 @@ void ccx_dtvcc_writer_init(ccx_dtvcc_writer_ctx_t *writer,
 						   char *base_filename,
 						   int program_number,
 						   int service_number,
-						   enum ccx_output_format write_format)
+						   enum ccx_output_format write_format,
+						   struct encoder_cfg *cfg)
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_writer_init\n");
 	writer->fd = -1;
@@ -349,7 +350,8 @@ void ccx_dtvcc_writer_init(ccx_dtvcc_writer_ctx_t *writer,
 
 void ccx_dtvcc_writer_cleanup(ccx_dtvcc_writer_ctx_t *writer)
 {
-	close(writer->fd);
+	if (writer->fd >= 0 && writer->fd != STDOUT_FILENO)
+		close(writer->fd);
 	free(writer->filename);
 }
 
