@@ -683,7 +683,6 @@ static void dinit_output_ctx(struct encoder_ctx *ctx)
 }
 static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 {
-	mprint("Init out ctx %d %d\n", cfg->extract, cfg->dtvcc_extract);
 	int ret = EXIT_OK;
 	int nb_lang;
 	char *basefilename = NULL; // Input filename without the extension
