@@ -744,8 +744,9 @@ void parse_708_services (struct ccx_s_options *opts, char *s)
 		*e = 0;
 		svc = atoi(c);
 		if (svc < 1 || svc > DTVCC_MAX_SERVICES)
-			fatal (EXIT_MALFORMED_PARAMETER,
-				   "[CEA-708] Invalid service number (%d), valid range is 1-%d.", svc, DTVCC_MAX_SERVICES);
+			fatal(EXIT_MALFORMED_PARAMETER,
+				   "[CEA-708] Malformed parameter: "
+						   "Invalid service number (%d), valid range is 1-%d.", svc, DTVCC_MAX_SERVICES);
 		opts->settings_dtvcc.services_enabled[svc - 1] = 1;
 		opts->enc_cfg.services_enabled[svc - 1] = 1;
 		opts->settings_dtvcc.enabled = 1;
@@ -775,7 +776,15 @@ void parse_708_services (struct ccx_s_options *opts, char *s)
 				opts->enc_cfg.services_charsets[svc - 1] = charset;
 			c = e + 1;
 		}
+		else if (!*e)
+		{
+			fatal(EXIT_MALFORMED_PARAMETER,
+				   "[CEA-708] Malformed parameter: missing closing ] in CEA-708 services list");
+		}
 	}
+	if (!opts->settings_dtvcc.active_services_count)
+		fatal(EXIT_MALFORMED_PARAMETER,
+			  "[CEA-708] Malformed parameter: no services");
 }
 
 long atol_size (char *s)
