@@ -85,7 +85,7 @@ struct DTVCC_S_COMMANDS_C1 DTVCC_COMMANDS_C1[32] =
 
 dtvcc_pen_color dtvcc_default_pen_color =
 {
-	0,
+	0x3f,
 	0,
 	0,
 	0,
