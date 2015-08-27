@@ -353,15 +353,15 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 	}
 	if (ctx->dtvcc->is_active)
 	{
-		for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
+		for (int i = 0; i < CCX_DTVCC_MAX_SERVICES; i++)
 		{
-			dtvcc_service_decoder *decoder = &ctx->dtvcc->decoders[i];
+			ccx_dtvcc_service_decoder *decoder = &ctx->dtvcc->decoders[i];
 			if (!ctx->dtvcc->services_active[i])
 				continue;
 			if (decoder->cc_count > 0)
 			{
 				current_field = 3;
-				dtvcc_decoder_flush(ctx->dtvcc, decoder);
+				ccx_dtvcc_decoder_flush(ctx->dtvcc, decoder);
 			}
 		}
 	}

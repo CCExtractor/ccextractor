@@ -683,7 +683,7 @@ static void dinit_output_ctx(struct encoder_ctx *ctx)
 
 	if (ctx->dtvcc_extract)
 	{
-		for (i = 0; i < DTVCC_MAX_SERVICES; i++)
+		for (i = 0; i < CCX_DTVCC_MAX_SERVICES; i++)
 			ccx_dtvcc_writer_cleanup(&ctx->dtvcc_writers[i]);
 	}
 }
@@ -784,7 +784,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 
 	if (cfg->dtvcc_extract)
 	{
-		for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
+		for (int i = 0; i < CCX_DTVCC_MAX_SERVICES; i++)
 		{
 			if (!cfg->services_enabled[i])
 			{

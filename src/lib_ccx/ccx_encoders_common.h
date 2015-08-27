@@ -17,12 +17,12 @@
 if (ctx->buffer == NULL) { fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, bailing out\n"); } \
 }
 
-typedef struct ccx_dtvcc_writer_ctx_t
+typedef struct ccx_dtvcc_writer_ctx
 {
 	int fd;
 	char *filename;
 	iconv_t cd;
-} ccx_dtvcc_writer_ctx_t;
+} ccx_dtvcc_writer_ctx;
 
 /**
  * Context of encoder, This structure gives single interface
@@ -66,7 +66,7 @@ struct encoder_ctx
 	int extract;
 
 	int dtvcc_extract; //1 or 0 depending if we have to handle dtvcc
-	ccx_dtvcc_writer_ctx_t dtvcc_writers[DTVCC_MAX_SERVICES];
+	ccx_dtvcc_writer_ctx dtvcc_writers[CCX_DTVCC_MAX_SERVICES];
 
 	/* Timing related variables*/
 	/* start time of previous sub */

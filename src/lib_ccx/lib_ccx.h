@@ -33,7 +33,7 @@ struct file_report
 	unsigned aspect_ratio;
 	unsigned frame_rate;
 	struct ccx_decoder_608_report *data_from_608;
-	struct ccx_decoder_dtvcc_report_t *data_from_708;
+	struct ccx_decoder_dtvcc_report *data_from_708;
 	unsigned mp4_cc_track_cnt;
 };
 

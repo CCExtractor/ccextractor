@@ -98,11 +98,11 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "report_608");
 	memset(report_608, 0, sizeof(struct ccx_decoder_608_report));
 
-	ccx_decoder_dtvcc_report_t *report_dtvcc = (ccx_decoder_dtvcc_report_t *)
-			malloc(sizeof(ccx_decoder_dtvcc_report_t));
+	ccx_decoder_dtvcc_report *report_dtvcc = (ccx_decoder_dtvcc_report *)
+			malloc(sizeof(ccx_decoder_dtvcc_report));
 	if (!report_dtvcc)
 		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "report_dtvcc");
-	memset(report_dtvcc, 0, sizeof(ccx_decoder_dtvcc_report_t));
+	memset(report_dtvcc, 0, sizeof(ccx_decoder_dtvcc_report));
 
 	// Initialize some constants
 	ctx->screens_to_process = -1;

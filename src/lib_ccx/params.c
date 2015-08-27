@@ -712,18 +712,18 @@ void parse_708_services (struct ccx_s_options *opts, char *s)
 		opts->enc_cfg.dtvcc_extract = 1;
 		opts->enc_cfg.all_services_charset = charset;
 
-		opts->enc_cfg.services_charsets = (char **) calloc(sizeof(char *), DTVCC_MAX_SERVICES);
+		opts->enc_cfg.services_charsets = (char **) calloc(sizeof(char *), CCX_DTVCC_MAX_SERVICES);
 		if (!opts->enc_cfg.services_charsets)
 			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "parse_708_services");
-		memset(opts->enc_cfg.services_charsets, 0, DTVCC_MAX_SERVICES * sizeof(char *));
+		memset(opts->enc_cfg.services_charsets, 0, CCX_DTVCC_MAX_SERVICES * sizeof(char *));
 
-		for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
+		for (int i = 0; i < CCX_DTVCC_MAX_SERVICES; i++)
 		{
 			opts->settings_dtvcc.services_enabled[i] = 1;
 			opts->enc_cfg.services_enabled[i] = 1;
 		}
 
-		opts->settings_dtvcc.active_services_count = DTVCC_MAX_SERVICES;
+		opts->settings_dtvcc.active_services_count = CCX_DTVCC_MAX_SERVICES;
 		return;
 	}
 
@@ -744,10 +744,10 @@ void parse_708_services (struct ccx_s_options *opts, char *s)
 		int charset_start_found = (*e == '[');
 		*e = 0;
 		svc = atoi(c);
-		if (svc < 1 || svc > DTVCC_MAX_SERVICES)
+		if (svc < 1 || svc > CCX_DTVCC_MAX_SERVICES)
 			fatal(EXIT_MALFORMED_PARAMETER,
 				   "[CEA-708] Malformed parameter: "
-						   "Invalid service number (%d), valid range is 1-%d.", svc, DTVCC_MAX_SERVICES);
+						   "Invalid service number (%d), valid range is 1-%d.", svc, CCX_DTVCC_MAX_SERVICES);
 		opts->settings_dtvcc.services_enabled[svc - 1] = 1;
 		opts->enc_cfg.services_enabled[svc - 1] = 1;
 		opts->settings_dtvcc.enabled = 1;
@@ -756,10 +756,10 @@ void parse_708_services (struct ccx_s_options *opts, char *s)
 
 		if (!opts->enc_cfg.services_charsets)
 		{
-			opts->enc_cfg.services_charsets = (char **) calloc(sizeof(char *), DTVCC_MAX_SERVICES);
+			opts->enc_cfg.services_charsets = (char **) calloc(sizeof(char *), CCX_DTVCC_MAX_SERVICES);
 			if (!opts->enc_cfg.services_charsets)
 				ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "parse_708_services");
-			memset(opts->enc_cfg.services_charsets, 0, DTVCC_MAX_SERVICES * sizeof(char *));
+			memset(opts->enc_cfg.services_charsets, 0, CCX_DTVCC_MAX_SERVICES * sizeof(char *));
 		}
 
 		e = e + 1;

@@ -87,7 +87,7 @@ struct ccx_decoders_common_settings_t
 	int extract; // Extract 1st, 2nd or both fields
 	int fullbin; // Disable pruning of padding cc blocks
 	struct ccx_decoder_608_settings *settings_608; //  Contains the settings for the 608 decoder.
-	ccx_decoder_dtvcc_settings_t *settings_dtvcc; //Same for cea 708 captions decoder (dtvcc)
+	ccx_decoder_dtvcc_settings *settings_dtvcc; //Same for cea 708 captions decoder (dtvcc)
 	int cc_channel; // Channel we want to dump in srt mode
 	unsigned send_to_srv;
 	unsigned int hauppauge_mode; // If 1, use PID=1003, process specially and so on
@@ -158,7 +158,7 @@ struct lib_cc_decode
 	/* Reguired in es_function.c and es_userdata.c */
 	unsigned top_field_first; // Needs to be global
 
-	ccx_dtvcc_ctx_t *dtvcc;
+	ccx_dtvcc_ctx *dtvcc;
 
 	int (*writedata)(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 };
