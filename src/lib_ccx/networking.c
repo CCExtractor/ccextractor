@@ -1098,4 +1098,3 @@ int set_nonblocking(int fd)
 	#endif
 #endif
 }
-
