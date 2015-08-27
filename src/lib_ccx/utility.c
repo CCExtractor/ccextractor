@@ -489,3 +489,17 @@ size_t utf16_to_utf8(unsigned short utf16_char, unsigned char *out)
 	}
 	return 0;
 }
+
+#ifdef _WIN32
+char *strndup(const char *s, size_t n)
+{
+	char *p;
+
+	p = (char *)malloc(n + 1);
+	if (p == NULL)
+		return NULL;
+	memcpy(p, s, n);
+	p[n] = '\0';
+	return p;
+}
+#endif //_WIN32
