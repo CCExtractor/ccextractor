@@ -1081,17 +1081,21 @@ void handle_write_error()
 	return;
 }
 
-int set_nonblocking(int fd) 
+int set_nonblocking(int fd)
 {
     int f;
 #ifdef O_NONBLOCK
     if ((f = fcntl(fd, F_GETFL, 0)) < 0)
         f = 0;
 
-    return fcntl(fd, F_SETFL, f | O_NONBLOCK); 
+    return fcntl(fd, F_SETFL, f | O_NONBLOCK);
 #else
     f = 1;
-    return ioctl(fd, FIONBIO, &f);
+	#if _WIN32
+		return ioctlsocket(fd, FIONBIO, &f);
+	#else
+		return ioctl(fd, FIONBIO, &f);
+	#endif
 #endif
 }
 
