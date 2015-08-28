@@ -572,6 +572,11 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			continue;
 		}
 		
+		if( ccx_options.xmltv >= 1 && payload.pid == 0x11) {// This is SDT (or BAT)
+			ts_buffer_psi_packet(ctx);
+			if(ctx->PID_buffers[payload.pid]!=NULL && ctx->PID_buffers[payload.pid]->buffer_length>0)
+				parse_SDT(ctx);
+		}
 		if( ccx_options.xmltv >= 1 && payload.pid == 0x12) // This is DVB EIT
 			parse_EPG_packet(ctx->parent);
 		if( ccx_options.xmltv >= 1 && payload.pid >= 0x1000) // This may be ATSC EPG packet
