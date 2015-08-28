@@ -104,6 +104,23 @@ ccx_dtvcc_pen_attribs ccx_dtvcc_default_pen_attribs =
 	0
 };
 
+ccx_dtvcc_window_attribs ccx_dtvcc_predefined_window_styles[] =
+{
+		{
+			CCX_DTVCC_WINDOW_JUSTIFY_LEFT,
+			CCX_DTVCC_WINDOW_PD_LEFT_RIGHT,
+			CCX_DTVCC_WINDOW_SD_BOTTOM_TOP,
+			0,
+			CCX_DTVCC_WINDOW_SDE_SNAP,
+			0, //n/a
+			0, //n/a
+			0,
+			CCX_DTVCC_WINDOW_FO_SOLID,
+			CCX_DTVCC_WINDOW_BORDER_NONE,
+			0 //n/a
+		}
+};
+
 //---------------------------------- HELPERS ------------------------------------
 
 void ccx_dtvcc_clear_packet(ccx_dtvcc_ctx *ctx)
@@ -151,6 +168,21 @@ void _dtvcc_window_clear(ccx_dtvcc_service_decoder *decoder, int window_id)
 {
 	_dtvcc_window_clear_text(&decoder->windows[window_id]);
 	//OPT fill window with a window fill color
+}
+
+void _dtvcc_window_apply_style(ccx_dtvcc_window *window, ccx_dtvcc_window_attribs *style)
+{
+	window->attribs.border_color = style->border_color;
+	window->attribs.border_type = style->border_type;
+	window->attribs.display_effect = style->display_effect;
+	window->attribs.effect_direction = style->effect_direction;
+	window->attribs.effect_speed = style->effect_speed;
+	window->attribs.fill_color = style->fill_color;
+	window->attribs.fill_opacity = style->fill_opacity;
+	window->attribs.justify = style->justify;
+	window->attribs.print_direction = style->print_direction;
+	window->attribs.scroll_direction = style->scroll_direction;
+	window->attribs.word_wrap = style->word_wrap;
 }
 
 //#define DTVCC_PRINT_DEBUG
@@ -460,7 +492,7 @@ void _dtvcc_process_cr(ccx_dtvcc_ctx *dtvcc, ccx_dtvcc_service_decoder *decoder)
 	ccx_dtvcc_window *window = &decoder->windows[decoder->current_window];
 
 	int rollup_required = 0;
-	switch (window->attribs.print_dir)
+	switch (window->attribs.print_direction)
 	{
 		case CCX_DTVCC_WINDOW_PD_LEFT_RIGHT:
 			window->pen_column = 0;
@@ -529,7 +561,7 @@ void _dtvcc_process_character(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_symb
 
 	window->is_empty = 0;
 	window->rows[window->pen_row][window->pen_column] = symbol;
-	switch (window->attribs.print_dir)
+	switch (window->attribs.print_direction)
 	{
 		case CCX_DTVCC_WINDOW_PD_LEFT_RIGHT:
 			if (window->pen_column + 1 < window->col_count)
@@ -797,6 +829,10 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 		}
 		window->is_defined = 1;
 		_dtvcc_window_clear_text(window);
+
+		//Accorgind to CEA-708-D if window_style is 0 for newly created window , we have to apply predefined style #1
+		if (window->win_style == 0)
+			_dtvcc_window_apply_style(window, &ccx_dtvcc_predefined_window_styles[0]);
 	}
 	else
 	{
@@ -824,7 +860,7 @@ void dtvcc_handle_SWA_SetWindowAttributes(ccx_dtvcc_service_decoder *decoder, un
 	int scroll_dir    = (data[3] >> 2) & 0x03;
 	int print_dir     = (data[3] >> 4) & 0x03;
 	int word_wrap     = (data[3] >> 6) & 0x01;
-	int border_type   = (data[3] >> 5) | border_type01;
+	int border_type   = ((data[3] >> 5) & 0x04)| border_type01;
 	int display_eff   = (data[4]     ) & 0x03;
 	int effect_dir    = (data[4] >> 2) & 0x03;
 	int effect_speed  = (data[4] >> 4) & 0x0f;
@@ -848,14 +884,13 @@ void dtvcc_handle_SWA_SetWindowAttributes(ccx_dtvcc_service_decoder *decoder, un
 	window->attribs.fill_color = fill_color;
 	window->attribs.fill_opacity = fill_opacity;
 	window->attribs.border_color = border_color;
-	window->attribs.border_type01 = border_type01;
 	window->attribs.justify = justify;
-	window->attribs.scroll_dir = scroll_dir;
-	window->attribs.print_dir = print_dir;
+	window->attribs.scroll_direction = scroll_dir;
+	window->attribs.print_direction = print_dir;
 	window->attribs.word_wrap = word_wrap;
 	window->attribs.border_type = border_type;
-	window->attribs.display_eff = display_eff;
-	window->attribs.effect_dir = effect_dir;
+	window->attribs.display_effect = display_eff;
+	window->attribs.effect_direction = effect_dir;
 	window->attribs.effect_speed = effect_speed;
 }
 

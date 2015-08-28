@@ -81,7 +81,7 @@ struct CCX_DTVCC_S_COMMANDS_C1
 	int length;
 };
 
-enum CCX_DTVCC_WINDOW_JUSTIFY
+enum ccx_dtvcc_window_justify
 {
 	CCX_DTVCC_WINDOW_JUSTIFY_LEFT	= 0,
 	CCX_DTVCC_WINDOW_JUSTIFY_RIGHT	= 1,
@@ -89,7 +89,7 @@ enum CCX_DTVCC_WINDOW_JUSTIFY
 	CCX_DTVCC_WINDOW_JUSTIFY_FULL	= 3
 };
 
-enum CCX_DTVCC_WINDOW_PD //Print Direction
+enum ccx_dtvcc_window_pd //Print Direction
 {
 	CCX_DTVCC_WINDOW_PD_LEFT_RIGHT = 0, //left -> right
 	CCX_DTVCC_WINDOW_PD_RIGHT_LEFT = 1,
@@ -97,7 +97,7 @@ enum CCX_DTVCC_WINDOW_PD //Print Direction
 	CCX_DTVCC_WINDOW_PD_BOTTOM_TOP = 3
 };
 
-enum CCX_DTVCC_WINDOW_SD //Scroll Direction
+enum ccx_dtvcc_window_sd //Scroll Direction
 {
 	CCX_DTVCC_WINDOW_SD_LEFT_RIGHT = 0,
 	CCX_DTVCC_WINDOW_SD_RIGHT_LEFT = 1,
@@ -105,14 +105,14 @@ enum CCX_DTVCC_WINDOW_SD //Scroll Direction
 	CCX_DTVCC_WINDOW_SD_BOTTOM_TOP = 3
 };
 
-enum CCX_DTVCC_WINDOW_SDE //Scroll Display Effect
+enum ccx_dtvcc_window_sde //Scroll Display Effect
 {
 	CCX_DTVCC_WINDOW_SDE_SNAP = 0,
 	CCX_DTVCC_WINDOW_SDE_FADE = 1,
 	CCX_DTVCC_WINDOW_SDE_WIPE = 2
 };
 
-enum CCX_DTVCC_WINDOW_ED //Effect Direction
+enum ccx_dtvcc_window_ed //Effect Direction
 {
 	CCX_DTVCC_WINDOW_ED_LEFT_RIGHT = 0,
 	CCX_DTVCC_WINDOW_ED_RIGHT_LEFT = 1,
@@ -120,7 +120,7 @@ enum CCX_DTVCC_WINDOW_ED //Effect Direction
 	CCX_DTVCC_WINDOW_ED_BOTTOM_TOP = 3
 };
 
-enum CCX_DTVCC_WINDOW_FO //Fill Opacity
+enum ccx_dtvcc_window_fo //Fill Opacity
 {
 	CCX_DTVCC_WINDOW_FO_SOLID		= 0,
 	CCX_DTVCC_WINDOW_FO_FLASH		= 1,
@@ -128,7 +128,7 @@ enum CCX_DTVCC_WINDOW_FO //Fill Opacity
 	CCX_DTVCC_WINDOW_FO_TRANSPARENT = 3
 };
 
-enum CCX_DTVCC_WINDOW_BORDER
+enum ccx_dtvcc_window_border
 {
 	CCX_DTVCC_WINDOW_BORDER_NONE			= 0,
 	CCX_DTVCC_WINDOW_BORDER_RAISED			= 1,
@@ -138,14 +138,14 @@ enum CCX_DTVCC_WINDOW_BORDER
 	CCX_DTVCC_WINDOW_BORDER_SHADOW_RIGHT	= 5
 };
 
-enum CCX_DTVCC_PEN_SIZE
+enum ccx_dtvcc_pen_size
 {
 	CCX_DTVCC_PEN_SIZE_SMALL 	= 0,
 	CCX_DTVCC_PEN_SIZE_STANDART = 1,
 	CCX_DTVCC_PEN_SIZE_LARGE	= 2
 };
 
-enum CCX_DTVCC_PEN_FONT_STYLE
+enum ccx_dtvcc_pen_font_style
 {
 	CCX_DTVCC_PEN_FONT_STYLE_DEFAULT_OR_UNDEFINED					= 0,
 	CCX_DTVCC_PEN_FONT_STYLE_MONOSPACED_WITH_SERIFS					= 1,
@@ -157,7 +157,7 @@ enum CCX_DTVCC_PEN_FONT_STYLE
 	CCX_DTVCC_PEN_FONT_STYLE_SMALL_CAPITALS							= 7
 };
 
-enum CCX_DTVCC_PEN_TEXT_TAG
+enum ccx_dtvcc_pen_text_tag
 {
 	CCX_DTVCC_PEN_TEXT_TAG_DIALOG						= 0,
 	CCX_DTVCC_PEN_TEXT_TAG_SOURCE_OR_SPEAKER_ID			= 1,
@@ -177,14 +177,14 @@ enum CCX_DTVCC_PEN_TEXT_TAG
 	CCX_DTVCC_PEN_TEXT_TAG_NOT_TO_BE_DISPLAYED			= 15
 };
 
-enum CCX_DTVCC_PEN_OFFSET
+enum ccx_dtvcc_pen_offset
 {
 	CCX_DTVCC_PEN_OFFSET_SUBSCRIPT		= 0,
 	CCX_DTVCC_PEN_OFFSET_NORMAL			= 1,
 	CCX_DTVCC_PEN_OFFSET_SUPERSCRIPT	= 2
 };
 
-enum CCX_DTVCC_PEN_EDGE
+enum ccx_dtvcc_pen_edge
 {
 	CCX_DTVCC_PEN_EDGE_NONE					= 0,
 	CCX_DTVCC_PEN_EDGE_RAISED				= 1,
@@ -194,7 +194,7 @@ enum CCX_DTVCC_PEN_EDGE
 	CCX_DTVCC_PEN_EDGE_RIGHT_DROP_SHADOW	= 5
 };
 
-enum CCX_DTVCC_ANCHOR_POINT
+enum ccx_dtvcc_pen_anchor_point
 {
 	CCX_DTVCC_ANCHOR_POINT_TOP_LEFT 		= 0,
 	CCX_DTVCC_ANCHOR_POINT_TOP_CENTER 		= 1,
@@ -229,18 +229,17 @@ typedef struct ccx_dtvcc_pen_attribs
 
 typedef struct ccx_dtvcc_window_attribs
 {
+	int justify;
+	int print_direction;
+	int scroll_direction;
+	int word_wrap;
+	int display_effect;
+	int effect_direction;
+	int effect_speed;
 	int fill_color;
 	int fill_opacity;
-	int border_color;
-	int border_type01;
-	int justify;
-	int scroll_dir;
-	int print_dir;
-	int word_wrap;
 	int border_type;
-	int display_eff;
-	int effect_dir;
-	int effect_speed;
+	int border_color;
 } ccx_dtvcc_window_attribs;
 
 /**
