@@ -176,6 +176,7 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
 	else if (strcmp (format,"transcript")==0 || strcmp (format,"txt")==0)
 	{
 		opt->write_format=CCX_OF_TRANSCRIPT;
+		opt->settings_dtvcc.no_rollup = 1;
 	}
 	else if (strcmp (format,"timedtranscript")==0 || strcmp (format,"ttxt")==0)
 	{
@@ -311,13 +312,17 @@ void usage (void)
 	mprint ("                 -cc2: When in srt/sami mode, process captions in channel 2\n");
 	mprint ("                       instead of channel 1.\n");
 	mprint ("-svc --service N1[cs1],N2[cs2]...:\n");
-	mprint ("                       Enable CEA-708 captions processing for the listed\n");
-	mprint ("                       services. The parameter is a command delimited list\n");
+	mprint ("                       Enable CEA-708 (DTVCC) captions processing for the listed\n");
+	mprint ("                       services. The parameter is a comma delimited list\n");
 	mprint ("                       of services numbers, such as \"1,2\" to process the\n");
 	mprint ("                       primary and secondary language services.\n");
 	mprint ("                       Pass \"all\" to process all services found.\n");
-	mprint ("                       To tell encoder what kind of charset was used, pass its name after\n");
-	mprint ("                       service number (e.g. \"1[EUC-KR],3\" or \"all[EUC-KR]\"\n");
+	mprint ("\n");
+	mprint ("                       If captions in a service are stored in 16-bit encoding, you can\n");
+	mprint ("                       specify what charset or encoding was used. Pass its name after\n");
+	mprint ("                       service number (e.g. \"1[EUC-KR],3\" or \"all[EUC-KR]\") and it will\n");
+	mprint ("                       encode specified charset to UTF-8 using iconv. See iconv documentation\n");
+	mprint ("                       to check if required encoding/charset is supported.\n");
 	mprint ("\n");
 	mprint ("In general, if you want English subtitles you don't need to use these options\n");
 	mprint ("as they are broadcast in field 1, channel 1. If you want the second language\n");
@@ -701,20 +706,28 @@ void parse_708_services (struct ccx_s_options *opts, char *s)
 	const char *all = "all";
 	size_t all_len = strlen(all);
 	int diff = strncmp(s, all, all_len);
-	if (!diff)
-	{
+	if (!diff) {
 		size_t s_len = strlen(s);
 		char *charset = NULL;
 		if (s_len > all_len + 2) // '[' and ']'
 			charset = strndup(s + all_len + 1, s_len - all_len - 2);
 
 		opts->settings_dtvcc.enabled = 1;
-		opts->settings_dtvcc.all_services_charset = charset;
+		opts->enc_cfg.dtvcc_extract = 1;
+		opts->enc_cfg.all_services_charset = charset;
 
-		for (int i = 0; i < DTVCC_MAX_SERVICES; i++)
+		opts->enc_cfg.services_charsets = (char **) calloc(sizeof(char *), CCX_DTVCC_MAX_SERVICES);
+		if (!opts->enc_cfg.services_charsets)
+			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "parse_708_services");
+		memset(opts->enc_cfg.services_charsets, 0, CCX_DTVCC_MAX_SERVICES * sizeof(char *));
+
+		for (int i = 0; i < CCX_DTVCC_MAX_SERVICES; i++)
+		{
 			opts->settings_dtvcc.services_enabled[i] = 1;
+			opts->enc_cfg.services_enabled[i] = 1;
+		}
 
-		opts->settings_dtvcc.active_services_count = DTVCC_MAX_SERVICES;
+		opts->settings_dtvcc.active_services_count = CCX_DTVCC_MAX_SERVICES;
 		return;
 	}
 
@@ -735,18 +748,22 @@ void parse_708_services (struct ccx_s_options *opts, char *s)
 		int charset_start_found = (*e == '[');
 		*e = 0;
 		svc = atoi(c);
-		if (svc < 1 || svc > DTVCC_MAX_SERVICES)
-			fatal (EXIT_MALFORMED_PARAMETER,
-				   "[CEA-708] Invalid service number (%d), valid range is 1-%d.", svc, DTVCC_MAX_SERVICES);
+		if (svc < 1 || svc > CCX_DTVCC_MAX_SERVICES)
+			fatal(EXIT_MALFORMED_PARAMETER,
+				   "[CEA-708] Malformed parameter: "
+						   "Invalid service number (%d), valid range is 1-%d.", svc, CCX_DTVCC_MAX_SERVICES);
 		opts->settings_dtvcc.services_enabled[svc - 1] = 1;
+		opts->enc_cfg.services_enabled[svc - 1] = 1;
 		opts->settings_dtvcc.enabled = 1;
+		opts->enc_cfg.dtvcc_extract = 1;
 		opts->settings_dtvcc.active_services_count++;
 
-		if (!opts->settings_dtvcc.services_charsets)
+		if (!opts->enc_cfg.services_charsets)
 		{
-			opts->settings_dtvcc.services_charsets = (char **) calloc(sizeof(char *), DTVCC_MAX_SERVICES);
-			if (!opts->settings_dtvcc.services_charsets)
+			opts->enc_cfg.services_charsets = (char **) calloc(sizeof(char *), CCX_DTVCC_MAX_SERVICES);
+			if (!opts->enc_cfg.services_charsets)
 				ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "parse_708_services");
+			memset(opts->enc_cfg.services_charsets, 0, CCX_DTVCC_MAX_SERVICES * sizeof(char *));
 		}
 
 		e = e + 1;
@@ -761,10 +778,18 @@ void parse_708_services (struct ccx_s_options *opts, char *s)
 		{
 			char *charset = strndup(c, e - c);
 			if (strlen(charset))
-				opts->settings_dtvcc.services_charsets[svc - 1] = charset;
+				opts->enc_cfg.services_charsets[svc - 1] = charset;
 			c = e + 1;
 		}
+		else if (!*e)
+		{
+			fatal(EXIT_MALFORMED_PARAMETER,
+				   "[CEA-708] Malformed parameter: missing closing ] in CEA-708 services list");
+		}
 	}
+	if (!opts->settings_dtvcc.active_services_count)
+		fatal(EXIT_MALFORMED_PARAMETER,
+			  "[CEA-708] Malformed parameter: no services");
 }
 
 long atol_size (char *s)
@@ -1056,6 +1081,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				strcmp (argv[i],"--norollup")==0)
 		{
 			opt->settings_608.no_rollup = 1;
+			opt->settings_dtvcc.no_rollup = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-ru1")==0)

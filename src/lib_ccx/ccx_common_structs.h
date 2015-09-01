@@ -21,6 +21,7 @@ enum subtype
 {
 	CC_BITMAP,
 	CC_608,
+	CC_708,
 	CC_TEXT,
 	CC_RAW,
 };

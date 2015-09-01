@@ -18,6 +18,12 @@ void print_error (int mode, const char *fmt, ...);
 int stringztoms (const char *s, struct ccx_boundary_time *bt);
 char *get_basename(char *filename);
 char *get_file_extension(enum ccx_output_format write_format);
+char *create_outfilename(const char *basename, const char *suffix, const char *extension);
 int verify_crc32(uint8_t *buf, int len);
 size_t utf16_to_utf8(unsigned short utf16_char, unsigned char *out);
-#endif
+
+#ifdef _WIN32
+char *strndup(const char *s, size_t n);
+#endif //_WIN32
+
+#endif //CC_UTILITY_H

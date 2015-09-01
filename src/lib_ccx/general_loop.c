@@ -719,6 +719,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			cinfo = get_cinfo(ctx->demux_ctx, pid);
 			enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
+			dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
 			if(data_node->pts != CCX_NOPTS)
 				set_current_pts(dec_ctx->timing, data_node->pts);
 			ret = process_data(enc_ctx, dec_ctx, data_node);
@@ -747,6 +748,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 					continue;
 				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
+				dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
 				if(data_node->pts != CCX_NOPTS)
 					set_current_pts(dec_ctx->timing, data_node->pts);
 				process_data(enc_ctx, dec_ctx, data_node);

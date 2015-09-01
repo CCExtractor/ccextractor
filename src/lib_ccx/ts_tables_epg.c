@@ -4,7 +4,7 @@
 #include "utility.h"
 #include <stdbool.h>
 #ifdef WIN32
-	#include "..\\win_iconv\\win_iconv.h"
+	#include "..\\win_iconv\\iconv.h"
 #else
 	#include "iconv.h"
 #endif
@@ -301,7 +301,12 @@ void EPG_output(struct lib_ccx_ctx *ctx)
 	for(i=0; i<ctx->demux_ctx->nb_program; i++)
 	{
 		fprintf(f, "  <channel id=\"%i\">\n", ctx->demux_ctx->pinfo[i].program_number);
-		fprintf(f, "    <display-name>%i</display-name>\n", ctx->demux_ctx->pinfo[i].program_number);
+		fprintf(f, "    <display-name>");
+		if(ctx->demux_ctx->pinfo[i].name[0]!='\0')
+			EPG_fprintxml(f, ctx->demux_ctx->pinfo[i].name);
+		else
+			fprintf(f, "%i\n", ctx->demux_ctx->pinfo[i].program_number);
+		fprintf(f, "</display-name>\n");
 		fprintf(f, "  </channel>\n");
 	}
 	if(ccx_options.xmltvonlycurrent==0)

@@ -100,11 +100,11 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "report_608");
 	memset(report_608, 0, sizeof(struct ccx_decoder_608_report));
 
-	ccx_decoder_dtvcc_report_t *report_dtvcc = (ccx_decoder_dtvcc_report_t *)
-			malloc(sizeof(ccx_decoder_dtvcc_report_t));
+	ccx_decoder_dtvcc_report *report_dtvcc = (ccx_decoder_dtvcc_report *)
+			malloc(sizeof(ccx_decoder_dtvcc_report));
 	if (!report_dtvcc)
 		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "report_dtvcc");
-	memset(report_dtvcc, 0, sizeof(ccx_decoder_dtvcc_report_t));
+	memset(report_dtvcc, 0, sizeof(ccx_decoder_dtvcc_report));
 
 	// Initialize some constants
 	ctx->screens_to_process = -1;
@@ -127,7 +127,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->dec_global_setting->settings_608->report = report_608;
 	ctx->freport.data_from_708 = report_dtvcc;
 	ctx->dec_global_setting->settings_dtvcc->report = report_dtvcc;
-
+	ctx->mp4_cfg.mp4vidtrack = opt->mp4vidtrack;
 	//Initialize input files
 	ctx->inputfile = opt->inputfile;
 	ctx->num_input_files = opt->num_input_files;
@@ -156,12 +156,6 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ccx_common_timing_init(&ctx->demux_ctx->past,opt->nosync);
 	ctx->multiprogram = opt->multiprogram;
 	ctx->write_format = opt->write_format;
-
-	ctx->dec_global_setting->settings_dtvcc->output_format = opt->write_format;
-	ctx->dec_global_setting->settings_dtvcc->cc_to_stdout = opt->cc_to_stdout;
-	ctx->dec_global_setting->settings_dtvcc->basefilename = ctx->basefilename;
-	ctx->dec_global_setting->settings_dtvcc->enc_cfg = &opt->enc_cfg;
-	ctx->mp4_cfg.mp4vidtrack = opt->mp4vidtrack;
 
 end:
 	if (ret != EXIT_OK)

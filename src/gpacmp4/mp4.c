@@ -375,8 +375,6 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 				encode_sub(enc_ctx, &dec_sub);
 				dec_sub.got_output = 0;
 			}
-
-			
 		}
 		if (type == GF_ISOM_MEDIA_CAPTIONS &&
 				(subtype == GF_ISOM_SUBTYPE_C608 || subtype == GF_ISOM_SUBTYPE_C708))
@@ -489,6 +487,8 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 									dbg_print(CCX_DMT_PARSE, "mp4-708: atom skipped (cc_type < 2)\n");
 									continue;
 								}
+								dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
+								//TODO is it really always 4-bytes long?
 								ccx_dtvcc_process_data(dec_ctx, (unsigned char *) temp, 4);
 								cb_708++;
 							}

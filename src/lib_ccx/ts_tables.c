@@ -680,3 +680,108 @@ void process_ccx_mpeg_descriptor (unsigned char *data, unsigned length)
 			break;
 	}
 }
+
+void decode_service_descriptors(struct ccx_demuxer *ctx, uint8_t *buf, uint32_t length, uint32_t service_id) {
+	unsigned descriptor_tag;
+	unsigned descriptor_length;
+	uint32_t x;
+	uint32_t offset=0;
+
+	while(offset+5<length) {
+		descriptor_tag = buf[offset];
+		descriptor_length = buf[offset+1];
+		offset+=2;
+		if(descriptor_tag==0x48) { // service descriptor
+			uint8_t service_type = buf[offset];
+			uint8_t service_provider_name_length = buf[offset+1];
+			offset+=2;
+			if(offset+service_provider_name_length > length)
+			{
+				dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid SDT service_provider_name_length detected.\n");
+				return;
+			}
+			offset+=service_provider_name_length; // Service provider name. Not sure what this is useful for.
+			uint8_t service_name_length = buf[offset];
+			offset++;
+			if(offset+service_name_length > length)
+			{
+				dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid SDT service_name_length detected.\n");
+				return;
+			}
+			for(x=0; x<ctx->nb_program; x++) {
+			// Not sure if programs can have multiple names (in different encodings?) Need more samples.
+			// For now just assume the last one in the loop is as good as any if there are multiple.
+				if(ctx->pinfo[x].program_number == service_id && service_name_length<199) {
+					char* s = EPG_DVB_decode_string(&buf[offset], service_name_length); //String encoding is the same as for EPG
+					if(strlen(s)<MAX_PROGRAM_NAME_LEN-1) {
+						memcpy(ctx->pinfo[x].name, s, service_name_length);
+					}
+					free(s);
+				}
+			}
+			offset+=service_name_length;
+		}
+		else {
+			// Some other tag
+			offset+=descriptor_length;
+		}
+	}
+}
+
+void decode_SDT_services_loop(struct ccx_demuxer *ctx, uint8_t *buf, uint32_t length) {
+	unsigned descriptor_tag = buf[0];
+	unsigned descriptor_length = buf[1];
+	uint32_t x;
+	uint32_t offset=0;
+
+	while(offset+5<length) {
+		uint16_t serive_id = ((buf[offset+0]) << 8) | buf[offset+1];
+		uint32_t descriptors_loop_length = (((buf[offset+3] & 0x0F) << 8) | buf[offset+4]);
+		offset+=5;
+		if(offset+descriptors_loop_length > length)
+		{
+			dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid SDT descriptors_loop_length detected.\n");
+			return;
+		}
+		decode_service_descriptors(ctx, &buf[offset], descriptors_loop_length, serive_id);
+		offset+=descriptors_loop_length;
+	}
+}
+
+void parse_SDT(struct ccx_demuxer *ctx) {
+	unsigned char pointer_field = 0;
+	unsigned char *payload_start = NULL;
+	unsigned int payload_length = 0;
+	unsigned int section_number = 0;
+	unsigned int last_section_number = 0;
+
+	pointer_field = *(ctx->PID_buffers[0x11]->buffer);
+	payload_start = ctx->PID_buffers[0x11]->buffer + pointer_field + 1;
+	payload_length = ctx->PID_buffers[0x11]->buffer_length - (pointer_field + 1);
+
+	section_number = payload_start[6];
+	last_section_number = payload_start[7];
+
+	unsigned table_id = payload_start[0];
+	unsigned section_length = (((payload_start[1] & 0x0F) << 8)
+			| payload_start[2]);
+	unsigned transport_stream_id = ((payload_start[3] << 8)
+			| payload_start[4]);
+	unsigned version_number = (payload_start[5] & 0x3E) >> 1;
+
+	if(section_length>payload_length-4) {
+		return;
+	}
+	unsigned current_next_indicator = payload_start[5] & 0x01;
+
+	uint16_t original_network_id = ((payload_start[8]) << 8) | payload_start[9];
+
+	if (!current_next_indicator)
+		// This table is not active, no need to evaluate
+		return;
+	if (table_id!=0x42)
+	   // This table isn't for the active TS
+		return;
+
+	decode_SDT_services_loop(ctx, &payload_start[11], section_length-4-8);
+}

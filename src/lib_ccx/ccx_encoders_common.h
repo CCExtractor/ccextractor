@@ -1,6 +1,12 @@
 #ifndef _CC_ENCODER_COMMON_H
 #define _CC_ENCODER_COMMON_H
 
+#ifdef WIN32
+	#include "..\\win_iconv\\iconv.h"
+#else
+	#include "iconv.h"
+#endif
+
 #include "ccx_common_structs.h"
 #include "ccx_decoders_structs.h"
 #include "ccx_encoders_structs.h"
@@ -10,6 +16,13 @@
 {ctx->capacity = length * 2; ctx->buffer = (unsigned char*)realloc(ctx->buffer, ctx->capacity); \
 if (ctx->buffer == NULL) { fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, bailing out\n"); } \
 }
+
+typedef struct ccx_dtvcc_writer_ctx
+{
+	int fd;
+	char *filename;
+	iconv_t cd;
+} ccx_dtvcc_writer_ctx;
 
 /**
  * Context of encoder, This structure gives single interface
@@ -51,6 +64,9 @@ struct encoder_ctx
 	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
 	unsigned char *subline; // Temp storage for storing each line
 	int extract;
+
+	int dtvcc_extract; //1 or 0 depending if we have to handle dtvcc
+	ccx_dtvcc_writer_ctx dtvcc_writers[CCX_DTVCC_MAX_SERVICES];
 
 	/* Timing related variables*/
 	/* start time of previous sub */

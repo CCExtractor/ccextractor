@@ -33,7 +33,7 @@ struct file_report
 	unsigned aspect_ratio;
 	unsigned frame_rate;
 	struct ccx_decoder_608_report *data_from_608;
-	struct ccx_decoder_dtvcc_report_t *data_from_708;
+	struct ccx_decoder_dtvcc_report *data_from_708;
 	unsigned mp4_cc_track_cnt;
 };
 
@@ -246,6 +246,8 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 int parse_PAT (struct ccx_demuxer *ctx);
 void parse_EPG_packet (struct lib_ccx_ctx *ctx);
 void EPG_free(struct lib_ccx_ctx *ctx);
+char* EPG_DVB_decode_string(uint8_t *in, size_t size);
+void parse_SDT(struct ccx_demuxer *ctx);
 
 // myth.c
 void myth_loop(struct lib_ccx_ctx *ctx);
