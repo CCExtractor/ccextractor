@@ -23,9 +23,6 @@ double current_fps = (double) 30000.0 / 1001; /* 29.97 */ // TODO: Get from fram
 int frames_since_ref_time = 0;
 unsigned total_frames_count;
 
-// Remember the current field for 608 decoding
-int current_field = 1; // 1 = field 1, 2 = field 2, 3 = 708
-
 struct gop_time_code gop_time, first_gop_time, printed_gop;
 LLONG fts_at_gop_start = 0;
 int gop_rollover = 0;
@@ -80,7 +77,7 @@ void set_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts)
 		ctx->pts_set = 1;
 	dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)", print_mstime(ctx->current_pts/(MPEG_CLOCK_FREQ/1000)),
 				(unsigned) (ctx->current_pts));
-	dbg_print(CCX_DMT_VIDES, "  FTS: %s \n",print_mstime(get_fts(ctx)));
+	dbg_print(CCX_DMT_VIDES, "  FTS: %s \n",print_mstime(ctx->fts_now));
 }
 
 int set_fts(struct ccx_common_timing_ctx *ctx)
@@ -227,7 +224,7 @@ int set_fts(struct ccx_common_timing_ctx *ctx)
 }
 
 
-LLONG get_fts(struct ccx_common_timing_ctx *ctx)
+LLONG get_fts(struct ccx_common_timing_ctx *ctx, int current_field)
 {
 	LLONG fts;
 

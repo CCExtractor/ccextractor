@@ -61,8 +61,6 @@ extern double current_fps;
 extern int frames_since_ref_time;
 extern unsigned total_frames_count;
 
-extern int current_field;
-
 extern struct gop_time_code gop_time, first_gop_time, printed_gop;
 extern LLONG fts_at_gop_start;
 extern int gop_rollover;
@@ -75,7 +73,7 @@ struct ccx_common_timing_ctx *init_timing_ctx(struct ccx_common_timing_settings_
 void set_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts);
 void add_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts);
 int set_fts(struct ccx_common_timing_ctx *ctx);
-LLONG get_fts(struct ccx_common_timing_ctx *ctx);
+LLONG get_fts(struct ccx_common_timing_ctx *ctx, int current_field);
 LLONG get_fts_max(struct ccx_common_timing_ctx *ctx);
 char *print_mstime(LLONG mstime);
 char *print_mstime2buf(LLONG mstime, char *buf);

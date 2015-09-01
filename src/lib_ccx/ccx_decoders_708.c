@@ -287,7 +287,7 @@ int _dtvcc_compare_win_priorities(const void *a, const void *b)
 void _dtvcc_window_update_time_show(ccx_dtvcc_window *window, struct ccx_common_timing_ctx *timing)
 {
 	char buf[128];
-	window->time_ms_show = get_visible_start(timing);
+	window->time_ms_show = get_visible_start(timing, 3);
 	print_mstime2buf(window->time_ms_show, buf);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] "
 			"[W-%d] show time updated to %s\n", window->number, buf);
@@ -296,7 +296,7 @@ void _dtvcc_window_update_time_show(ccx_dtvcc_window *window, struct ccx_common_
 void _dtvcc_window_update_time_hide(ccx_dtvcc_window *window, struct ccx_common_timing_ctx *timing)
 {
 	char buf[128];
-	window->time_ms_hide = get_visible_end(timing);
+	window->time_ms_hide = get_visible_end(timing, 3);
 	print_mstime2buf(window->time_ms_hide, buf);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] "
 			"[W-%d] hide time updated to %s\n", window->number, buf);
@@ -419,7 +419,7 @@ void _dtvcc_screen_print(ccx_dtvcc_ctx *dtvcc, ccx_dtvcc_service_decoder *decode
 
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_screen_print\n");
 
-	_dtvcc_screen_update_time_hide(decoder->tv, get_visible_end());
+	_dtvcc_screen_update_time_hide(decoder->tv, get_visible_end(dtvcc->timing, 3));
 
 #ifdef DTVCC_PRINT_DEBUG
 	//ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "[CEA-708] TV dump:\n");
@@ -1192,7 +1192,7 @@ int _dtvcc_handle_C1(ccx_dtvcc_ctx *dtvcc,
 {
 	struct CCX_DTVCC_S_COMMANDS_C1 com = DTVCC_COMMANDS_C1[data[0] - 0x80];
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] C1: %s | [%02X]  [%s] [%s] (%d)\n",
-			print_mstime(get_fts()),
+			print_mstime(get_fts(dtvcc->timing, 3)),
 			data[0], com.name, com.description, com.length);
 
 	if (com.length > data_length)
@@ -1217,7 +1217,7 @@ int _dtvcc_handle_C1(ccx_dtvcc_ctx *dtvcc,
 			dtvcc_handle_CLW_ClearWindows(decoder, data[1]);
 			break;
 		case CCX_DTVCC_C1_DSW:
-			dtvcc_handle_DSW_DisplayWindows(decoder, data[1]);
+			dtvcc_handle_DSW_DisplayWindows(decoder, data[1], dtvcc->timing);
 			break;
 		case CCX_DTVCC_C1_HDW:
 			dtvcc_handle_HDW_HideWindows(dtvcc, decoder, data[1]);
@@ -1263,7 +1263,7 @@ int _dtvcc_handle_C1(ccx_dtvcc_ctx *dtvcc,
 		case CCX_DTVCC_C1_DF5:
 		case CCX_DTVCC_C1_DF6:
 		case CCX_DTVCC_C1_DF7:
-			dtvcc_handle_DFx_DefineWindow(decoder, com.code - CCX_DTVCC_C1_DF0, data); /* Window 0 to 7 */
+			dtvcc_handle_DFx_DefineWindow(decoder, com.code - CCX_DTVCC_C1_DF0, data, dtvcc->timing); /* Window 0 to 7 */
 			break;
 		default:
 			ccx_common_logging.log_ftn ("[CEA-708] BUG: Unhandled code in _dtvcc_handle_C1.\n");

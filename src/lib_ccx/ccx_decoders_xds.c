@@ -177,7 +177,7 @@ int write_xds_string(struct cc_subtitle *sub, struct ccx_decoders_xds_context *c
 		data = (struct eia608_screen *)sub->data + sub->nb_data;
 		data->format = SFORMAT_XDS;
 		data->start_time = ts_start_of_xds;
-		data->end_time =  get_fts(ctx->timing);
+		data->end_time =  get_fts(ctx->timing, 2);
 		data->xds_str = p;
 		data->xds_len = len;
 		data->cur_xds_packet_class = ctx->cur_xds_packet_class;

@@ -179,7 +179,7 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 		if (dec_ctx->codec == CCX_CODEC_DVB)
 			dvbsub_close_decoder(&dec_ctx->private_data);
 		flush_cc_decode(dec_ctx, &dec_ctx->dec_sub);
-		cfts = get_fts(dec_ctx->timing);
+		cfts = get_fts(dec_ctx->timing, dec_ctx->current_field);
 		enc_ctx = get_encoder_by_pn(lctx, dec_ctx->program_number);
 		if (enc_ctx && dec_ctx->dec_sub.got_output == CCX_TRUE)
 		{

@@ -1486,7 +1486,8 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		return -1;
 	}
 
-	sub->start_time = get_visible_start(dec_ctx->timing);
+	/* USE PTS and convert here in required time */
+	sub->start_time = get_visible_start(dec_ctx->timing, 1);
 	sub->end_time = sub->start_time + ( ctx->time_out * 1000 );
 	sub->flags |= SUB_EOD_MARKER;
 	sub->got_output = 1;

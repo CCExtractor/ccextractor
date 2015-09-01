@@ -397,7 +397,7 @@ void processhex (struct lib_ccx_ctx *ctx, char *filename)
 			unsigned filler=((magic>>6)&1);
 			/* unsigned pattern=((magic>>7)&1); */
 			int always_ff=1;
-			int current_field=0;
+			int current_field = 0;
 			if (filler==0 && caption_count*6==byte_count-1) // Note that we are ignoring the extra field for now...
 			{
 				ok=1;
@@ -416,8 +416,8 @@ void processhex (struct lib_ccx_ctx *ctx, char *filename)
 					inbuf=3;
 					if (always_ff) // Try to tell apart the fields based on the pattern field.
 					{
-						ctx->buffer[0]=current_field | 4; // | 4 to enable the 'valid' bit
-						current_field = !current_field;
+						ctx->buffer[0] = current_field | 4; // | 4 to enable the 'valid' bit
+						current_field  = !current_field;
 					}
 					else
 						ctx->buffer[0]=bytes[i];
@@ -481,7 +481,7 @@ LLONG process_raw_with_field (struct lib_cc_decode *dec_ctx, struct cc_subtitle 
 {
 	unsigned char data[3];
 	data[0]=0x04; // Field 1
-	current_field=1;
+	dec_ctx->current_field = 1;
 
 	for (unsigned long i=0; i < len; i=i+3)
 	{
@@ -509,7 +509,6 @@ LLONG process_raw ( struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned
 {
 	unsigned char data[3];
 	data[0]=0x04; // Field 1
-	current_field=1;
 
 	for (unsigned long i=0; i < len; i=i+2)
 	{
@@ -602,7 +601,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 				fts_at_gop_start = 0;
 			}
 			else
-				fts_at_gop_start = get_fts(dec_ctx->timing);
+				fts_at_gop_start = get_fts(dec_ctx->timing, dec_ctx->current_field);
 
 			frames_since_ref_time = 0;
 			set_fts(dec_ctx->timing);
@@ -613,7 +612,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
 				print_mstime(dec_ctx->timing->current_pts/(MPEG_CLOCK_FREQ/1000)),
 				(unsigned) (dec_ctx->timing->current_pts));
-		dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts(dec_ctx->timing)));
+		dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts(dec_ctx->timing, dec_ctx->current_field)));
 
 		got = process_raw(dec_ctx, dec_sub, data_node->buffer, data_node->len);
 	}
@@ -756,7 +755,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		}
 		if (ctx->live_stream)
 		{
-			int cur_sec = (int) (get_fts(dec_ctx->timing) / 1000);
+			int cur_sec = (int) (get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
 			int th=cur_sec/10;
 			if (ctx->last_reported_progress!=th)
 			{
@@ -771,7 +770,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				int progress = (int) ((((ctx->total_past+ctx->demux_ctx->past)>>8)*100)/(ctx->total_inputsize>>8));
 				if (ctx->last_reported_progress != progress)
 				{
-					LLONG t=get_fts(dec_ctx->timing);
+					LLONG t=get_fts(dec_ctx->timing, dec_ctx->current_field);
 					if (!t && ctx->demux_ctx->global_timestamp_inited)
 						t=ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
 					int cur_sec = (int) (t / 1000);

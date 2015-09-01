@@ -110,11 +110,13 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 {
 	int used;
 	int ret = 0;
+	char str[1024];
+
 	switch (ctx->write_format)
 	{
 		case CCX_OF_SAMI:
 			sprintf ((char *) str,"</BODY></SAMI>\n");
-			if (ctx->encoding!=CCX_ENC_UNICODE)
+			if (ctx->encoding != CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
@@ -127,11 +129,11 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			break;
 		case CCX_OF_SMPTETT:
 			sprintf ((char *) str,"    </div>\n  </body>\n</tt>\n");
-			if (ctx->encoding!=CCX_ENC_UNICODE)
+			if (ctx->encoding != CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
-			used=encode_line (ctx, ctx->buffer,(unsigned char *) str);
+			used = encode_line (ctx, ctx->buffer,(unsigned char *) str);
 			ret = write (out->fh, ctx->buffer, used);
 			if (ret != used)
 			{
@@ -250,8 +252,6 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 {
 	int length;
 	int ret = 0;
-	unsigned int h1,m1,s1,ms1;
-	unsigned int h2,m2,s2,ms2;
 	LLONG start_time;
 	LLONG end_time;
 	char *str;
@@ -297,7 +297,6 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 					fdprintf(context->out->fh, "%s|", buf1);
 				}
 				else {
-					mstotime(start_time + context->subs_delay, &h1, &m1, &s1, &ms1);
 					time_t start_time_int = (start_time + context->subs_delay) / 1000;
 					int start_time_dec = (start_time + context->subs_delay) % 1000;
 					struct tm *start_time_struct = gmtime(&start_time_int);
@@ -313,7 +312,6 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 					fdprintf(context->out->fh, "%s|", buf2);
 				}
 				else {
-					mstotime(get_fts() + context->subs_delay, &h2, &m2, &s2, &ms2);
 					time_t end_time_int = (end_time + context->subs_delay) / 1000;
 					int end_time_dec = (end_time + context->subs_delay) % 1000;
 					struct tm *end_time_struct = gmtime(&end_time_int);
@@ -363,13 +361,11 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context, int line_number)
 {
 	int ret = 0;
-	unsigned int h1,m1,s1,ms1;
-	unsigned int h2,m2,s2,ms2;
 	LLONG start_time = data->start_time;
 	LLONG end_time = data->end_time;
 	if (context->sentence_cap)
 	{
-		capitalize (line_number,data);
+		capitalize (context, line_number, data);
 		correct_case(line_number,data);
 	}
 	int length = get_str_basic (context->subline, data->characters[line_number], context->trim_subs, context->encoding);
@@ -396,7 +392,6 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 				fdprintf(context->out->fh, "%s|", buf1);
 			}
 			else {
-				mstotime(start_time + context->subs_delay, &h1, &m1, &s1, &ms1);
 				time_t start_time_int = (start_time + context->subs_delay) / 1000;
 				int start_time_dec = (start_time + context->subs_delay) % 1000;
 				struct tm *start_time_struct = gmtime(&start_time_int);
@@ -412,7 +407,6 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 				fdprintf(context->out->fh, "%s|", buf2);
 			}
 			else {
-				mstotime(get_fts() + context->subs_delay, &h2, &m2, &s2, &ms2);
 				time_t end_time_int = (end_time + context->subs_delay) / 1000;
 				int end_time_dec = (end_time + context->subs_delay) % 1000;
 				struct tm *end_time_struct = gmtime(&end_time_int);
@@ -552,7 +546,6 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 					}
 					else
 					{
-						mstotime(get_fts() + context->subs_delay, &h2, &m2, &s2, &ms2);
 						time_t end_time_int = end_time / 1000;
 						int end_time_dec = end_time % 1000;
 						struct tm *end_time_struct = gmtime(&end_time_int);
@@ -582,19 +575,27 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 	return ret;
 
 }
-void try_to_add_end_credits(struct encoder_ctx *context, struct ccx_s_write *out)
+
+/**
+ * @brief Function to add credits at end of subtitles File
+ *
+ * @param context encoder context in which you want to add credits at end
+ *
+ * @param out output context which usually keeps file handler
+ */
+static void try_to_add_end_credits(struct encoder_ctx *context, struct ccx_s_write *out, LLONG current_fts)
 {
 	LLONG window, length, st, end;
 	if (out->fh == -1)
 		return;
-	window=get_fts()-context->last_displayed_subs_ms-1;
+	window = current_fts - context->last_displayed_subs_ms - 1;
 	if (window < context->endcreditsforatleast.time_in_ms) // Won't happen, window is too short
 		return;
-	length=context->endcreditsforatmost.time_in_ms > window ?
+	length = context->endcreditsforatmost.time_in_ms > window ?
 		window : context->endcreditsforatmost.time_in_ms;
 
-	st=get_fts()-length-1;
-	end=get_fts();
+	st = current_fts - length - 1;
+	end = current_fts;
 
 	switch (context->write_format)
 	{
@@ -824,7 +825,10 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	return EXIT_OK;
 }
 
-void dinit_encoder(struct encoder_ctx **arg)
+/**
+ * @param current_fts used while calculating window for end credits
+ */
+void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts)
 {
 	struct encoder_ctx *ctx = *arg;
 	int i;
@@ -833,8 +837,8 @@ void dinit_encoder(struct encoder_ctx **arg)
 	for (i = 0; i < ctx->nb_out; i++)
 	{
 		if (ctx->end_credits_text!=NULL)
-			try_to_add_end_credits(ctx,ctx->out);
-		write_subtitle_file_footer(ctx,ctx->out+i);
+			try_to_add_end_credits(ctx, ctx->out + i, current_fts);
+		write_subtitle_file_footer(ctx, ctx->out + i);
 	}
 
 	dinit_output_ctx(ctx);
@@ -913,6 +917,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->endcreditsforatleast = opt->endcreditsforatleast;
 	ctx->endcreditsforatmost = opt->endcreditsforatmost;
 
+	ctx->new_sentence = 1; // Capitalize next letter?
 	if (opt->line_terminator_lf)
 		ctx->encoded_crlf_length = encode_line(ctx, ctx->encoded_crlf, (unsigned char *) "\n");
 	else
@@ -970,7 +975,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			// Determine context based on channel. This replaces the code that was above, as this was incomplete (for cases where -12 was used for example)
 			out = get_output_ctx(context, data->my_field);
 
-			new_sentence=1;
+			context->new_sentence = 1;
 
 			if(data->format == SFORMAT_XDS)
 			{
@@ -1020,7 +1025,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				break;
 			}
 			if (wrote_something)
-				context->last_displayed_subs_ms=get_fts() + context->subs_delay;
+				context->last_displayed_subs_ms = data->end_time;
 
 			if (context->gui_mode_reports)
 				write_cc_buffer_to_gui(sub->data, context);
@@ -1101,7 +1106,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		sub->nb_data = 0;
 
 	}
-
 	if (!sub->nb_data)
 		freep(&sub->data);
 	return wrote_something;

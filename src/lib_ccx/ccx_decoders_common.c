@@ -19,9 +19,9 @@ extern int in_xds_mode;
 
 /* This function returns a FTS that is guaranteed to be at least 1 ms later than the end of the previous screen. It shouldn't be needed
    obviously but it guarantees there's no timing overlap */
-LLONG get_visible_start (struct ccx_common_timing_ctx *ctx)
+LLONG get_visible_start (struct ccx_common_timing_ctx *ctx, int current_field)
 {
-	LLONG fts = get_fts(ctx);
+	LLONG fts = get_fts(ctx, current_field);
 	if (fts <= ctx->minimum_fts)
 		fts = ctx->minimum_fts + 1;
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Visible Start time=%s\n", print_mstime(fts));
@@ -29,9 +29,9 @@ LLONG get_visible_start (struct ccx_common_timing_ctx *ctx)
 }
 
 /* This function returns the current FTS and saves it so it can be used by ctxget_visible_start */
-LLONG get_visible_end (struct ccx_common_timing_ctx *ctx)
+LLONG get_visible_end (struct ccx_common_timing_ctx *ctx, int current_field)
 {
-	LLONG fts = get_fts(ctx);
+	LLONG fts = get_fts(ctx, current_field);
 	if (fts > ctx->minimum_fts)
 		ctx->minimum_fts = fts;
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Visible End time=%s\n", print_mstime(fts));
@@ -119,14 +119,14 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 			case 0:
 				dbg_print(CCX_DMT_CBRAW, "    %s   ..   ..\n",  debug_608toASC( cc_block, 0));
 
-				current_field=1;
+				ctx->current_field = 1;
 				ctx->saw_caption_block = 1;
 
 				if (ctx->extraction_start.set &&
-						get_fts(ctx->timing) < ctx->extraction_start.time_in_ms)
+						get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
 					timeok = 0;
 				if (ctx->extraction_end.set &&
-						get_fts(ctx->timing) > ctx->extraction_end.time_in_ms)
+						get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
 				{
 					timeok = 0;
 					ctx->processed_enough=1;
@@ -143,14 +143,14 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 			case 1:
 				dbg_print(CCX_DMT_CBRAW, "    ..   %s   ..\n",  debug_608toASC( cc_block, 1));
 
-				current_field=2;
+				ctx->current_field = 2;
 				ctx->saw_caption_block = 1;
 
 				if (ctx->extraction_start.set &&
-						get_fts(ctx->timing) < ctx->extraction_start.time_in_ms)
+						get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
 					timeok = 0;
 				if (ctx->extraction_end.set &&
-						get_fts(ctx->timing) > ctx->extraction_end.time_in_ms)
+						get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
 				{
 					timeok = 0;
 					ctx->processed_enough=1;
@@ -171,13 +171,13 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 				dbg_print(CCX_DMT_CBRAW, "    ..   ..   DD\n");
 
 				// DTVCC packet start
-				current_field=3;
+				ctx->current_field = 3;
 
 				if (ctx->extraction_start.set &&
-						get_fts(ctx->timing) < ctx->extraction_start.time_in_ms)
+						get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
 					timeok = 0;
 				if (ctx->extraction_end.set &&
-						get_fts(ctx->timing) > ctx->extraction_end.time_in_ms)
+						get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
 				{
 					timeok = 0;
 					ctx->processed_enough=1;
@@ -372,7 +372,7 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 				continue;
 			if (decoder->cc_count > 0)
 			{
-				current_field = 3;
+				ctx->current_field = 3;
 				ccx_dtvcc_decoder_flush(ctx->dtvcc, decoder);
 			}
 		}
