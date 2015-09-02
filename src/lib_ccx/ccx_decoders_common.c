@@ -10,6 +10,7 @@ made to reuse, not duplicate, as many functions as possible */
 #include "lib_ccx.h"
 #include "ccx_decoders_608.h"
 #include "ccx_decoders_708.h"
+#include "ccx_decoders_xds.h"
 #include "ccx_dtvcc.h"
 
 

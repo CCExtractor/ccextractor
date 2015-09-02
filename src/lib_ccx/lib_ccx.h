@@ -14,13 +14,12 @@
 
 #include "ccx_demuxer.h"
 #include "ccx_encoders_common.h"
-#include "ccx_decoders_608.h"
-#include "ccx_decoders_xds.h"
+#include "ccx_decoders_common.h"
 #include "bitstream.h"
 
 #include "networking.h"
 #include "avc_functions.h"
-#include "ccx_decoders_708.h"
+//#include "ccx_decoders_708.h"
 
 /* Report information */
 #define SUB_STREAMS_CNT 10
