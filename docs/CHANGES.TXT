@@ -4,6 +4,8 @@
 - CEA-708: exporting to SAMI (.smi), Transcript (.txt), Timed Transcript (ttxt) and SubRip (.srt)
 - CEA-708: 16 bit charset support (tested on Korean)
 - CEA-708: Roll Up captions handling
+- Changed TCP connection protocol (BIN data is now wrapped in packets, added EPG support and keep-alive packets)
+- TCP connection password promt is removed. To set connection password use -tcppassword argument instead.
 
 0.77 (2015-06-20)
 -----------------
