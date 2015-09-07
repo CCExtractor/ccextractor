@@ -171,6 +171,8 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
 
 	if (strcmp (format,"srt")==0)
 		opt->write_format=CCX_OF_SRT;
+	else if (strcmp(format, "webvtt") == 0)
+		opt->write_format = CCX_OF_WEBVTT;
 	else if (strcmp (format,"sami")==0 || strcmp (format,"smi")==0)
 		opt->write_format=CCX_OF_SAMI;
 	else if (strcmp (format,"transcript")==0 || strcmp (format,"txt")==0)
@@ -349,6 +351,7 @@ void usage (void)
 	mprint ("                 -out=format\n\n");
 	mprint ("       where format is one of these:\n");
 	mprint ("                      srt     -> SubRip (default, so not actually needed).\n");
+	mprint ("                      webvtt  -> WebVTT format\n");
 	mprint ("                      sami    -> MS Synchronized Accesible Media Interface.\n");
 	mprint ("                      bin     -> CC data in CCExtractor's own binary format.\n");
 	mprint ("                      raw     -> CC data in McPoodle's Broadcast format.\n");
@@ -365,7 +368,7 @@ void usage (void)
 	mprint ("                      report  -> Prints to stdout information about captions\n");
 	mprint ("                                 in specified input. Don't produce any file\n");
 	mprint ("                                 output\n\n");
-	mprint ("       Note: Teletext output can only be srt, txt or ttxt for now.\n\n");
+	mprint ("       Note: Teletext output can only be srt, webvtt, txt or ttxt for now.\n\n");
 
 	mprint ("Options that affect how input files will be processed.\n");
 
@@ -459,11 +462,11 @@ void usage (void)
 	mprint ("                -utf8: Encode subtitles in UTF-8 (no longer needed.\n");
 	mprint ("                       because UTF-8 is now the default).\n");
 	mprint ("              -latin1: Encode subtitles in Latin-1\n");
-	mprint ("  -nofc --nofontcolor: For .srt/.sami, don't add font color tags.\n");
-	mprint ("-nots --notypesetting: For .srt/.sami, don't add typesetting tags.\n");
+	mprint ("  -nofc --nofontcolor: For .srt/.sami/.vtt, don't add font color tags.\n");
+	mprint ("-nots --notypesetting: For .srt/.sami/.vtt, don't add typesetting tags.\n");
 	mprint ("                -trim: Trim lines.\n");
 	mprint ("   -dc --defaultcolor: Select a different default color (instead of\n");
-	mprint ("                       white). This causes all output in .srt/.smi\n");
+	mprint ("                       white). This causes all output in .srt/.smi/.vtt\n");
 	mprint ("                       files to have a font tag, which makes the files\n");
 	mprint ("                       larger. Add the color you want in RGB, such as\n");
 	mprint ("                       -dc #FF0000 for red.\n");
@@ -495,7 +498,7 @@ void usage (void)
 	mprint ("                       terminator.\n");
 	mprint ("            -autodash: Based on position on screen, attempt to determine\n");
 	mprint ("                       the different speakers and a dash (-) when each\n");
-	mprint ("                       of them talks (.srt only, -trim required).\n");
+	mprint ("                       of them talks (.srt/.vtt only, -trim required).\n");
 	mprint ("              -xmltv:  produce an XMLTV file containing the EPG data from\n");
 	mprint ("                       the source TS file.\n\n");
 
@@ -529,7 +532,7 @@ void usage (void)
 
 	mprint ("Options that affect timing:\n");
 
-	mprint ("            -delay ms: For srt/sami, add this number of milliseconds to\n");
+	mprint ("            -delay ms: For srt/sami/webvtt, add this number of milliseconds to\n");
 	mprint ("                       all times. For example, -delay 400 makes subtitles\n");
 	mprint ("                       appear 400ms late. You can also use negative numbers\n");
 	mprint ("                       to make subs appear early.\n");
@@ -951,7 +954,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		/* Output file formats */
 		if (strcmp (argv[i],"-srt")==0 ||
 				strcmp (argv[i],"-dvdraw")==0 ||
-				strcmp (argv[i],"-sami")==0 || strcmp (argv[i],"-smi")==0 ||
+				strcmp(argv[i], "-sami") == 0 || strcmp(argv[i], "-smi") == 0 || strcmp(argv[i], "-webvtt") == 0 ||
 				strcmp (argv[i],"--transcript")==0 || strcmp (argv[i],"-txt")==0 ||
 				strcmp (argv[i],"--timedtranscript")==0 || strcmp (argv[i],"-ttxt")==0 ||
 				strcmp (argv[i],"-null")==0)
@@ -1744,6 +1747,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	{
 		print_error(opt->gui_mode_reports, "You cannot use -out=spupng with -stdout.");
 		return EXIT_INCOMPATIBLE_PARAMETERS;
+	}
+
+	if (opt->write_format == CCX_OF_WEBVTT && opt->enc_cfg.encoding != CCX_ENC_UTF_8)
+	{
+		mprint("Note: Output format is WebVTT, forcing UTF-8");
+		opt->enc_cfg.encoding = CCX_ENC_UTF_8;
 	}
 
 	/* Initialize some Encoder Configuration */
