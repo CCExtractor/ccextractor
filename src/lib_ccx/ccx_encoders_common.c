@@ -50,6 +50,8 @@ static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
 "  <body>\n"
 "    <div>\n";
 
+static const char *webvtt_header = "WEBVTT\r\n\r\n";
+
 void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank)
 {
 	*last_non_blank = -1;
@@ -185,10 +187,18 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			if(ret < 0)
 				return -1;
 			break;
-		case CCX_OF_WEBVTT: // WEBVTT subtitles have no header
+		case CCX_OF_WEBVTT:
 			ret = write_bom(ctx, out);
 			if (ret < 0)
 				return -1;
+			REQUEST_BUFFER_CAPACITY(ctx, strlen (webvtt_header)*3);
+			used = encode_line (ctx, ctx->buffer,(unsigned char *) webvtt_header);
+			ret = write (out->fh, ctx->buffer,used);
+			if(ret < used)
+			{
+				mprint("WARNING: Unable to write complete Buffer \n");
+				return -1;
+			}
 			break;
 		case CCX_OF_SAMI: // This header brought to you by McPoodle's CCASDI
 			//fprintf_encoded (wb->fh, sami_header);
@@ -197,7 +207,12 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				return -1;
 			REQUEST_BUFFER_CAPACITY(ctx,strlen (sami_header)*3);
 			used = encode_line (ctx, ctx->buffer,(unsigned char *) sami_header);
-			ret = write (out->fh, ctx->buffer,used);
+			ret = write (out->fh, ctx->buffer, used);
+			if(ret < used)
+			{
+				mprint("WARNING: Unable to write complete Buffer \n");
+				return -1;
+			}
 			break;
 		case CCX_OF_SMPTETT: // This header brought to you by McPoodle's CCASDI
 			//fprintf_encoded (wb->fh, sami_header);
@@ -272,8 +287,8 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 		}
 		if (context->sentence_cap)
 		{
-			//TODO capitalize (line_number,data);
-			//TODO correct_case(line_number,data);
+			//TODO capitalize (context, line_number,data);
+			//TODO correct_case(line_number, data);
 		}
 
 		str = sub->data;
@@ -371,7 +386,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 	if (context->sentence_cap)
 	{
 		capitalize (context, line_number, data);
-		correct_case(line_number,data);
+		correct_case(line_number, data);
 	}
 	int length = get_str_basic (context->subline, data->characters[line_number], context->trim_subs, context->encoding);
 	if (context->encoding!=CCX_ENC_UNICODE)

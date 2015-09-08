@@ -1,6 +1,7 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "ccx_encoders_common.h"
+#include "ccx_encoders_helpers.h"
 #include "utility.h"
 
 
@@ -13,29 +14,19 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;
 	int written;
+	char timeline[128];
 
 	mstotime(ms_start, &h1, &m1, &s1, &ms1);
 	mstotime(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
-	char timeline[128];
 
-	if (context->srt_counter == 0)
-	{
-		written = write(context->out->fh, "WEBVTT\n\n", strlen("WEBVTT\n\n"));
-		if (written != strlen("WEBVTT\n\n"))
-			return -1;
-	}
 
-	context->srt_counter++;
-
-	sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
-
-	used = encode_line(context->buffer, (unsigned char *)timeline);
+	used = encode_line(context, context->buffer, (unsigned char *)timeline);
 	written = write(context->out->fh, context->buffer, used);
 	if (written != used)
 		return -1;
 	sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
 		h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
-	used = encode_line(context->buffer, (unsigned char *)timeline);
+	used = encode_line(context, context->buffer, (unsigned char *)timeline);
 	dbg_print(CCX_DMT_DECODER_608, "\n- - - WEBVTT caption - - -\n");
 	dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
 
@@ -69,7 +60,7 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 	unsigned char *begin = unescaped;
 	while (begin<unescaped + len)
 	{
-		unsigned int u = encode_line(el, begin);
+		unsigned int u = encode_line(context, el, begin);
 		if (context->encoding != CCX_ENC_UNICODE)
 		{
 			dbg_print(CCX_DMT_DECODER_608, "\r");
@@ -151,6 +142,7 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 	int prev_line_start = -1, prev_line_end = -1; // Column in which the previous line started and ended, for autodash
 	int prev_line_center1 = -1, prev_line_center2 = -1; // Center column of previous line text
 	int empty_buf = 1;
+	char timeline[128] = "";
 	for (int i = 0; i<15; i++)
 	{
 		if (data->row_used[i])
@@ -170,18 +162,14 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 
 	mstotime(ms_start, &h1, &m1, &s1, &ms1);
 	mstotime(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
-	char timeline[128];
-	context->srt_counter++;
-	sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
-	used = encode_line(context->buffer, (unsigned char *)timeline);
 	written = write(context->out->fh, context->buffer, used);
 	if (written != used)
 		return -1;
 	sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
 		h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
-	used = encode_line(context->buffer, (unsigned char *)timeline);
+	used = encode_line(context, context->buffer, (unsigned char *)timeline);
 
-	dbg_print(CCX_DMT_DECODER_608, "\n- - - WEBVTT caption ( %d) - - -\n", context->srt_counter);
+	dbg_print(CCX_DMT_DECODER_608, "\n- - - WEBVTT caption - - -\n");
 	dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
 
 	written = write(context->out->fh, context->buffer, used);
@@ -194,7 +182,7 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 		{
 			if (context->sentence_cap)
 			{
-				capitalize(i, data);
+				capitalize(context, i, data);
 				correct_case(i, data);
 			}
 			if (context->autodash && context->trim_subs)
@@ -258,7 +246,7 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 				prev_line_center2 = center2;
 
 			}
-			int length = get_decoder_line_encoded(context->subline, i, data);
+			int length = get_decoder_line_encoded(context, context->subline, i, data);
 			if (context->encoding != CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r");
