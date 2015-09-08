@@ -406,6 +406,9 @@ char *get_file_extension(enum ccx_output_format write_format)
 			return strdup(".raw");
 		case CCX_OF_SRT:
 			return strdup(".srt");
+		case CCX_OF_WEBVTT:
+			return strdup (".vtt");
+			break;
 		case CCX_OF_SAMI:
 			return strdup(".smi");
 		case CCX_OF_SMPTETT:

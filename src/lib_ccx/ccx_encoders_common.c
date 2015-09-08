@@ -185,6 +185,11 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			if(ret < 0)
 				return -1;
 			break;
+		case CCX_OF_WEBVTT: // WEBVTT subtitles have no header
+			ret = write_bom(ctx, out);
+			if (ret < 0)
+				return -1;
+			break;
 		case CCX_OF_SAMI: // This header brought to you by McPoodle's CCASDI
 			//fprintf_encoded (wb->fh, sami_header);
 			ret = write_bom(ctx, out);
@@ -602,6 +607,9 @@ static void try_to_add_end_credits(struct encoder_ctx *context, struct ccx_s_wri
 		case CCX_OF_SRT:
 			write_stringz_as_srt(context->end_credits_text, context, st, end);
 			break;
+		case CCX_OF_WEBVTT:
+			write_stringz_as_webvtt(context->end_credits_text, context, st, end);
+			break;
 		case CCX_OF_SAMI:
 			write_stringz_as_sami(context->end_credits_text, context, st, end);
 			break;
@@ -658,6 +666,9 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 	{
 		case CCX_OF_SRT:
 			write_stringz_as_srt(context->start_credits_text,context,st,end);
+			break;
+		case CCX_OF_WEBVTT:
+			write_stringz_as_webvtt(context->start_credits_text, context, st, end);
 			break;
 		case CCX_OF_SAMI:
 			write_stringz_as_sami(context->start_credits_text, context, st, end);
@@ -1005,6 +1016,11 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					try_to_add_start_credits(context, data->start_time);
 				wrote_something = write_cc_buffer_as_srt(data, context);
 				break;
+			case CCX_OF_WEBVTT:
+				if (!context->startcredits_displayed && context->start_credits_text != NULL)
+					try_to_add_start_credits(context, data->start_time);
+				wrote_something = write_cc_buffer_as_webvtt(data, context);
+				break;
 			case CCX_OF_SAMI:
 				if (!context->startcredits_displayed && context->start_credits_text!=NULL)
 					try_to_add_start_credits(context, data->start_time);
@@ -1040,6 +1056,11 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
 				try_to_add_start_credits(context, sub->start_time);
 			wrote_something = write_cc_bitmap_as_srt(sub, context);
+			break;
+		case CCX_OF_WEBVTT:
+			if (!context->startcredits_displayed && context->start_credits_text != NULL)
+				try_to_add_start_credits(context, sub->start_time);
+			wrote_something = write_cc_bitmap_as_webvtt(sub, context);
 			break;
 		case CCX_OF_SAMI:
 			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
@@ -1083,6 +1104,11 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
 				try_to_add_start_credits(context, sub->start_time);
 			wrote_something = write_cc_subtitle_as_srt(sub, context);
+			break;
+		case CCX_OF_WEBVTT:
+			if (!context->startcredits_displayed && context->start_credits_text != NULL)
+				try_to_add_start_credits(context, sub->start_time);
+			wrote_something = write_cc_subtitle_as_webvtt(sub, context);
 			break;
 		case CCX_OF_SAMI:
 			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
