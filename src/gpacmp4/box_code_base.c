@@ -6159,6 +6159,12 @@ static void gf_isom_check_sample_desc(GF_TrackBox *trak)
 	u32 i;
 
 	i=0;
+	if(!trak->Media->information->sampleTable->SampleDescription)
+	{
+		printf("\nCCEXTRACTOR: Ignore table without description\n");
+		return;
+	}
+
 	while ((a = (GF_UnknownBox*)gf_list_enum(trak->Media->information->sampleTable->SampleDescription->boxList, &i))) {
 		switch (a->type) {
 		case GF_ISOM_BOX_TYPE_MP4S:
