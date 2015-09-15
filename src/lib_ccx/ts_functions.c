@@ -120,7 +120,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		Arrival_time_stamp 30 unimsbf
 		} */
 		unsigned char tp_extra_header[4];
-		buffered_read(ctx, tp_extra_header, 3);
+		result = buffered_read(ctx, tp_extra_header, 3);
 		ctx->past += result;
 		if (result != 4)
 		{
@@ -130,7 +130,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		}
 	}
 
-	buffered_read(ctx, tspacket, 188);
+	result = buffered_read(ctx, tspacket, 188);
 	ctx->past += result;
 	if (result != 188)
 	{
@@ -163,7 +163,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 			int atpos = tstemp-tspacket;
 
 			memmove (tspacket,tstemp,(size_t)(tslen-atpos));
-			buffered_read(ctx, tspacket+(tslen-atpos), atpos);
+			result = buffered_read(ctx, tspacket+(tslen-atpos), atpos);
 			ctx->past+=result;
 			if (result!=atpos)
 			{
@@ -174,7 +174,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		else
 		{
 			// Read the next 188 bytes.
-			buffered_read(ctx, tspacket, tslen);
+			result = buffered_read(ctx, tspacket, tslen);
 			ctx->past+=result;
 			if (result!=tslen)
 			{

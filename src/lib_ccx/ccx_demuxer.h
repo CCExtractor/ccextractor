@@ -4,6 +4,7 @@
 #include "ccx_common_option.h"
 #include "ts_functions.h"
 #include "list.h"
+#include "activity.h"
 
 /* Report information */
 #define SUB_STREAMS_CNT 10
@@ -164,4 +165,62 @@ void dinit_cap (struct ccx_demuxer *ctx);
 int get_programme_number(struct ccx_demuxer *ctx, int pid);
 struct cap_info* get_best_sib_stream(struct cap_info* program);
 void ignore_other_sib_stream(struct cap_info* head, int pid);
+
+LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes);
+
+static inline int buffered_skip(struct ccx_demuxer *ctx, int bytes)
+{
+	int result;
+	if (bytes <= ctx->bytesinbuffer - ctx->filebuffer_pos)
+	{
+		ctx->filebuffer_pos += bytes;
+		result = bytes;
+	}
+	else
+	{
+		result = buffered_read_opt (ctx, NULL,bytes);
+	}
+	return result;
+}
+
+static int inline buffered_read(struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes)
+{
+	int result;
+	if (bytes <= ctx->bytesinbuffer - ctx->filebuffer_pos)
+	{
+		if (buffer != NULL)
+			memcpy (buffer, ctx->filebuffer + ctx->filebuffer_pos, bytes);
+		ctx->filebuffer_pos+=bytes;
+		result = bytes;
+	}
+	else
+	{
+		result = buffered_read_opt (ctx, buffer, bytes);
+		if (ccx_options.gui_mode_reports && ccx_options.input_source == CCX_DS_NETWORK)
+		{
+			net_activity_gui++;
+			if (!(net_activity_gui%1000))
+				activity_report_data_read();
+		}
+	}
+	return result;
+}
+
+static int inline buffered_read_byte(struct ccx_demuxer *ctx, unsigned char *buffer)
+{
+	int result;
+	if (ctx->bytesinbuffer - ctx->filebuffer_pos)
+	{
+		if (buffer)
+		{
+			*buffer=ctx->filebuffer[ctx->filebuffer_pos];
+			ctx->filebuffer_pos++;
+			result = 1;
+		}
+	}
+	else
+		result = buffered_read_opt (ctx, buffer, 1);
+
+	return result;
+}
 #endif

@@ -350,8 +350,8 @@ static int find_next_start_code(struct lib_ccx_ctx *ctx, int *size_ptr,
 	{
 		unsigned char cx;
 		unsigned char *cx_p = &cx;
-		buffered_read_byte(ctx->demux_ctx,cx_p);
-		if (result!=1)
+		result = buffered_read_byte(ctx->demux_ctx,cx_p);
+		if (result != 1)
 			break;
 		ctx->demux_ctx->past++;
 		v = cx;

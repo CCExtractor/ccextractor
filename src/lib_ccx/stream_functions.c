@@ -225,7 +225,7 @@ int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, u
 	if ( !sbuflen )
 	{
 		// Extension present, get it
-		buffered_read (ctx, nextheader+6,3);
+		result = buffered_read (ctx, nextheader+6,3);
 		ctx->past=ctx->past+result;
 		if (result!=3) {
 			// Consider this the end of the show.
@@ -254,8 +254,8 @@ int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, u
 	{
 		if (nextheader[8] > 0)
 		{
-			buffered_read (ctx, nextheader+9,nextheader[8]);
-			ctx->past=ctx->past+result;
+			result = buffered_read (ctx, nextheader+9,nextheader[8]);
+			ctx->past = ctx->past+result;
 			if (result!=nextheader[8])
 			{
 				return -1;

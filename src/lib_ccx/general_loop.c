@@ -58,7 +58,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 		}
 		else
 		{
-			buffered_read(ctx->demux_ctx, nextheader, 6);
+			result = buffered_read(ctx->demux_ctx, nextheader, 6);
 			ctx->demux_ctx->past+=result;
 			if (result!=6)
 			{
@@ -91,7 +91,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 					int atpos = newheader-nextheader;
 
 					memmove (nextheader,newheader,(size_t)(hlen-atpos));
-					buffered_read(ctx->demux_ctx, nextheader+(hlen-atpos),atpos);
+					result = buffered_read(ctx->demux_ctx, nextheader+(hlen-atpos),atpos);
 					ctx->demux_ctx->past+=result;
 					if (result!=atpos)
 					{
@@ -101,7 +101,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				}
 				else
 				{
-					buffered_read(ctx->demux_ctx, nextheader, hlen);
+					result = buffered_read(ctx->demux_ctx, nextheader, hlen);
 					ctx->demux_ctx->past+=result;
 					if (result!=hlen)
 					{
@@ -122,7 +122,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 			if ( nextheader[3]==0xBA)
 			{
 				dbg_print(CCX_DMT_VERBOSE, "PACK header\n");
-				buffered_read(ctx->demux_ctx, nextheader+6,8);
+				result = buffered_read(ctx->demux_ctx, nextheader+6,8);
 				ctx->demux_ctx->past+=result;
 				if (result!=8)
 				{
@@ -264,7 +264,7 @@ int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
 	do
 	{
 		want = (int) (BUFSIZE - ptr->len);
-		buffered_read (ctx->demux_ctx, ptr->buffer + ptr->len, want); // This is a macro.
+		ressult = buffered_read (ctx->demux_ctx, ptr->buffer + ptr->len, want); // This is a macro.
 		// 'result' HAS the number of bytes read
 		ctx->demux_ctx->past=ctx->demux_ctx->past+result;
 		ptr->len += result;
@@ -824,7 +824,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	parsebuf = (unsigned char*)malloc(1024);
 
 
-	buffered_read(ctx->demux_ctx, parsebuf, 11);
+	result = buffered_read(ctx->demux_ctx, parsebuf, 11);
 	ctx->demux_ctx->past += result;
 	bread += (int) result;
 	if (result != 11)
@@ -864,7 +864,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	{
 		if (parsebuf[6] == 0 && parsebuf[7] == 2)
 		{
-			buffered_read(ctx->demux_ctx, buf, TELETEXT_CHUNK_LEN);
+			result = buffered_read(ctx->demux_ctx, buf, TELETEXT_CHUNK_LEN);
 			ctx->demux_ctx->past += result;
 			if (result != TELETEXT_CHUNK_LEN)
 				break;
@@ -879,7 +879,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 		}
 
 		// Read the data header
-		buffered_read(ctx->demux_ctx, parsebuf, 10);
+		result = buffered_read(ctx->demux_ctx, parsebuf, 10);
 		ctx->demux_ctx->past+=result;
 		bread+=(int) result;
 
@@ -906,7 +906,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
 				parsebufsize = cbcount*3;
 			}
-			buffered_read(ctx->demux_ctx, parsebuf, cbcount*3);
+			result = buffered_read(ctx->demux_ctx, parsebuf, cbcount*3);
 			ctx->demux_ctx->past+=result;
 			bread+=(int) result;
 			if (result!=cbcount*3)
