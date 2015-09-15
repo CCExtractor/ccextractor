@@ -264,7 +264,7 @@ int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
 	do
 	{
 		want = (int) (BUFSIZE - ptr->len);
-		ressult = buffered_read (ctx->demux_ctx, ptr->buffer + ptr->len, want); // This is a macro.
+		result = buffered_read (ctx->demux_ctx, ptr->buffer + ptr->len, want); // This is a macro.
 		// 'result' HAS the number of bytes read
 		ctx->demux_ctx->past=ctx->demux_ctx->past+result;
 		ptr->len += result;
