@@ -144,10 +144,10 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 	{
 		if (printtsprob)
 		{
-			mprint ("\nProblem: No TS header mark (filepos=%lld). Received bytes:\n", ctx->past);
-			dump (CCX_DMT_GENERIC_NOTICES, tspacket,4, 0, 0);
+			dbg_print(CCX_DMT_DUMPDEF,"\nProblem: No TS header mark (filepos=%lld). Received bytes:\n", ctx->past);
+			dump(CCX_DMT_DUMPDEF, tspacket, 4, 0, 0);
 
-			mprint ("Skip forward to the next TS header mark.\n");
+			dbg_print(CCX_DMT_DUMPDEF, "Skip forward to the next TS header mark.\n");
 			printtsprob = 0;
 		}
 
@@ -195,8 +195,8 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 
 	if (payload->transport_error)
 	{
-		mprint ("Warning: Defective (error indicator on) TS packet (filepos=%lld):\n", ctx->past);
-		dump (CCX_DMT_GENERIC_NOTICES, tspacket, 188, 0, 0);
+		dbg_print(CCX_DMT_DUMPDEF, "Warning: Defective (error indicator on) TS packet (filepos=%lld):\n", ctx->past);
+		dump(CCX_DMT_DUMPDEF, tspacket, 188, 0, 0);
 	}
 
 	payload->start = tspacket + 4;

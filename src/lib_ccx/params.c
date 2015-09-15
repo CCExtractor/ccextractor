@@ -499,8 +499,9 @@ void usage (void)
 	mprint ("            -autodash: Based on position on screen, attempt to determine\n");
 	mprint ("                       the different speakers and a dash (-) when each\n");
 	mprint ("                       of them talks (.srt/.vtt only, -trim required).\n");
-	mprint ("              -xmltv:  produce an XMLTV file containing the EPG data from\n");
-	mprint ("                       the source TS file.\n\n");
+	mprint ("         -xmltv mode:  produce an XMLTV file containing the EPG data from\n");
+	mprint ("                       the source TS file. Mode: 1 = full output\n");
+	mprint ("                       2 = live output. 3 = both\n\n");
 
 	mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
 
@@ -624,6 +625,7 @@ void usage (void)
 	mprint ("                       file. (Only for TS/ASF files at the moment.)\n");
 	mprint ("            -parsePAT: Print Program Association Table dump.\n");
 	mprint ("            -parsePMT: Print Program Map Table dump.\n");
+	mprint("              -dumpdef: Hex-dump defective TS packets.\n");
 	mprint (" -investigate_packets: If no CC packets are detected based on the PMT, try\n");
 	mprint ("                       to find data in all packets by scanning.\n\n");
 
@@ -1314,6 +1316,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp (argv[i],"-parsePMT")==0 || strcmp (argv[i],"-parsepmt")==0)
 		{
 			opt->debug_mask |= CCX_DMT_PMT;
+			continue;
+		}
+		if (strcmp(argv[i], "-dumpdef") == 0)
+		{
+			opt->debug_mask |= CCX_DMT_DUMPDEF;
 			continue;
 		}
 		if (strcmp (argv[i],"-investigate_packets")==0)
