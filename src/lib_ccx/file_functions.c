@@ -272,6 +272,17 @@ void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned 
 	ctx->bytesinbuffer += bytes;
 }
 
+/**
+ * @param buffer can be NULL, in case when user want to just buffer it or skip some data.
+ *
+ * Global options that have efffect on this function are following
+ * 1) ccx_options.live_stream
+ * 2) ccx_options.buffer_input
+ * 3) ccx_options.input_source
+ * 4) ccx_options.binary_concat
+ *
+ * TODO instead of using global ccx_options move them to ccx_demuxer
+ */
 LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes)
 {
 	LLONG copied   = 0;
@@ -281,10 +292,11 @@ LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigne
 
 	if (ccx_options.live_stream > 0)
 		time (&seconds);
+
 	if (ccx_options.buffer_input || ctx->filebuffer_pos < ctx->bytesinbuffer)
 	{
 		// Needs to return data from filebuffer_start+pos to filebuffer_start+pos+bytes-1;
-		int eof = (ctx->infd==-1);
+		int eof = (ctx->infd == -1);
 
 		while ((!eof || ccx_options.live_stream) && bytes)
 		{
@@ -309,7 +321,7 @@ LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigne
 						// buffered - if here, then it must be files.
 						if (buffer != NULL) // Read
 						{
-							i = read (ctx->infd,buffer,bytes);
+							i = read (ctx->infd, buffer, bytes);
 							if( i == -1)
 								fatal (EXIT_READ_ERROR, "Error reading input file!\n");
 							buffer += i;
@@ -407,7 +419,7 @@ LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigne
 			}
 			return copied;
 		}
-		while (bytes!=0 && ctx->infd!=-1)
+		while (bytes != 0 && ctx->infd != -1)
 		{
 			LLONG op, np;
 			op = LSEEK (ctx->infd, 0, SEEK_CUR); // Get current pos
