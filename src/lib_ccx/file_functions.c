@@ -50,10 +50,7 @@ LLONG gettotalfilessize (struct lib_ccx_ctx *ctx) // -1 if one or more files fai
 
 void prepare_for_new_file (struct lib_ccx_ctx *ctx)
 {
-//	struct lib_cc_decode *dec_ctx = NULL;
-//	dec_ctx = ctx->dec_ctx;
 	// Init per file variables
-	// inputsize=0; Now responsibility of switch_to_next_file()
 	ctx->last_reported_progress=-1;
 	ctx->stat_numuserheaders = 0;
 	ctx->stat_dvdccheaders = 0;
@@ -64,17 +61,12 @@ void prepare_for_new_file (struct lib_ccx_ctx *ctx)
 	ctx->stat_hdtv = 0;
 	ctx->stat_divicom = 0;
 	total_frames_count = 0;
-//	ctx->total_pulldownfields = 0;
-//	ctx->total_pulldownframes = 0;
-//	dec_ctx->cc_stats[0]=0; dec_ctx->cc_stats[1]=0; dec_ctx->cc_stats[2]=0; dec_ctx->cc_stats[3]=0;
 	ctx->false_pict_header=0;
-//	ctx->frames_since_last_gop=0;
 	frames_since_ref_time=0;
 	gop_time.inited=0;
 	first_gop_time.inited=0;
 	gop_rollover=0;
 	printed_gop.inited=0;
-//	dec_ctx->saw_caption_block=0;
 	pts_big_change=0;
 	firstcall = 1;
 	for(int x=0; x<0xfff; x++)
@@ -104,9 +96,7 @@ can be done */
 
 int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 {
-//	struct lib_cc_decode *dec_ctx = NULL;
 	int ret = 0;
-//	dec_ctx = ctx->dec_ctx;
 	if (ctx->current_file==-1 || !ccx_options.binary_concat)
 	{
 		ctx->demux_ctx->reset(ctx->demux_ctx);
