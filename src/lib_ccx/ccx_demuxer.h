@@ -115,8 +115,8 @@ struct ccx_demuxer
 
 	unsigned char *filebuffer;
 	LLONG filebuffer_start; // Position of buffer start relative to file
-	int filebuffer_pos; // Position of pointer relative to buffer start
-	int bytesinbuffer; // Number of bytes we actually have on buffer
+	unsigned int filebuffer_pos; // Position of pointer relative to buffer start
+	unsigned int bytesinbuffer; // Number of bytes we actually have on buffer
 
 	int warning_program_not_found_shown;
 
@@ -168,9 +168,9 @@ void ignore_other_sib_stream(struct cap_info* head, int pid);
 
 LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes);
 
-static inline int buffered_skip(struct ccx_demuxer *ctx, int bytes)
+static LLONG inline  buffered_skip(struct ccx_demuxer *ctx, unsigned int bytes)
 {
-	int result;
+	LLONG result;
 	if (bytes <= ctx->bytesinbuffer - ctx->filebuffer_pos)
 	{
 		ctx->filebuffer_pos += bytes;
@@ -183,9 +183,9 @@ static inline int buffered_skip(struct ccx_demuxer *ctx, int bytes)
 	return result;
 }
 
-static int inline buffered_read(struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes)
+static LLONG inline buffered_read(struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes)
 {
-	int result;
+	LLONG result;
 	if (bytes <= ctx->bytesinbuffer - ctx->filebuffer_pos)
 	{
 		if (buffer != NULL)
@@ -206,9 +206,9 @@ static int inline buffered_read(struct ccx_demuxer *ctx, unsigned char *buffer, 
 	return result;
 }
 
-static int inline buffered_read_byte(struct ccx_demuxer *ctx, unsigned char *buffer)
+static LLONG inline buffered_read_byte(struct ccx_demuxer *ctx, unsigned char *buffer)
 {
-	int result;
+	LLONG result;
 	if (ctx->bytesinbuffer - ctx->filebuffer_pos)
 	{
 		if (buffer)

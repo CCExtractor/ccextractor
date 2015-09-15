@@ -158,17 +158,19 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 
 void net_check_conn()
 {
+	time_t now;
+	static time_t last_ping = 0;
+	char c = 0;
+	int rc;
+
 	if (srv_sd <= 0)
 		return;
 
-	time_t now = time(NULL);
+	now = time(NULL);
 
-	static time_t last_ping = 0;
 	if (last_ping == 0)
 		last_ping = now;
 
-	char c = 0;
-	int rc;
 	do {
 		c = 0;
 		rc = read_byte(srv_sd, &c);
@@ -216,6 +218,16 @@ void net_send_epg(
 		const char *category
 		)
 {
+	size_t st;
+	size_t sp;
+	size_t t;
+	size_t d;
+	size_t l;
+	size_t c;
+	size_t len;
+	char *epg;
+	char *end;
+
 	/* nanosleep((struct timespec[]){{0, 100000000}}, NULL); */
 	assert(srv_sd > 0);
 	if (NULL == start)
@@ -223,32 +235,32 @@ void net_send_epg(
 	if (NULL == stop)
 		return;
 
-	size_t st = strlen(start) + 1;
-	size_t sp = strlen(stop) + 1;
+	st = strlen(start) + 1;
+	sp = strlen(stop) + 1;
 
-	size_t t = 1;
+	t = 1;
 	if (title != NULL)
 		t += strlen(title);
 
-	size_t d = 1;
+	d = 1;
 	if (desc != NULL)
 		d += strlen(desc);
 
-    size_t l = 1;
+    l = 1;
     if (lang != NULL)
         l += strlen(lang);
 
-    size_t c = 1;
+    c = 1;
     if (category != NULL)
         c += strlen(category);
 
-    size_t len = st + sp + t + d + l + c;
+    len = st + sp + t + d + l + c;
 
-	char *epg = (char *) calloc(len, sizeof(char));
+	epg = (char *) calloc(len, sizeof(char));
 	if (NULL == epg)
 		return;
 
-	char *end = epg;
+	end = epg;
 
 	memcpy(end, start, st);
 	end += st;
