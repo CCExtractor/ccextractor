@@ -71,6 +71,7 @@ int update_pinfo(struct ccx_demuxer *ctx, int pid, int program_number)
 	ctx->pinfo[ctx->nb_program].pid = pid;
 	ctx->pinfo[ctx->nb_program].program_number = program_number;
 	ctx->pinfo[ctx->nb_program].analysed_PMT_once = CCX_FALSE;
+	ctx->pinfo[ctx->nb_program].name[0] = '\0';
 	ctx->nb_program++;
 
 	return CCX_OK;
@@ -718,6 +719,7 @@ void decode_service_descriptors(struct ccx_demuxer *ctx, uint8_t *buf, uint32_t 
 					char* s = EPG_DVB_decode_string(&buf[offset], service_name_length); //String encoding is the same as for EPG
 					if(strlen(s) < MAX_PROGRAM_NAME_LEN - 1) {
 						memcpy(ctx->pinfo[x].name, s, service_name_length);
+						ctx->pinfo[x].name[service_name_length] = '\0';
 					}
 					free(s);
 				}

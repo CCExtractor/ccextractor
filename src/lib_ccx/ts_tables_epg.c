@@ -292,17 +292,22 @@ void EPG_output(struct lib_ccx_ctx *ctx)
 	FILE *f;
 	char *filename;
 	int i,j, ce;
+
 	filename = malloc(strlen(ctx->basefilename) + 9);
+	if(filename == NULL)
+		return;
+
 	memcpy(filename, ctx->basefilename, strlen(ctx->basefilename)+1);
 	strcat(filename, "_epg.xml");
 	f = fopen(filename, "w");
-	free(filename);
+	freep(&filename);
+
 	fprintf(f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n\n<tv>\n");
 	for(i=0; i<ctx->demux_ctx->nb_program; i++)
 	{
 		fprintf(f, "  <channel id=\"%i\">\n", ctx->demux_ctx->pinfo[i].program_number);
 		fprintf(f, "    <display-name>");
-		if(ctx->demux_ctx->pinfo[i].name[0]!='\0')
+		if(ctx->demux_ctx->pinfo[i].name[0] != '\0')
 			EPG_fprintxml(f, ctx->demux_ctx->pinfo[i].name);
 		else
 			fprintf(f, "%i\n", ctx->demux_ctx->pinfo[i].program_number);
