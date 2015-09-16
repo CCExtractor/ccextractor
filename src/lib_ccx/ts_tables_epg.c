@@ -81,7 +81,7 @@ void EPG_DVB_calc_start_time(struct EPG_event *event, uint64_t time)
 		y = y + k + 1900;
 		m = m - 1 - k*12;
 
-		sprintf(event->start_time_string, "%02ld%02ld%02ld%06lx +0000",y,m,d,time&0xffffff);
+		sprintf(event->start_time_string, "%02ld%02ld%02ld%06llx +0000",y,m,d,time&0xffffff);
 	}
 }
 
@@ -876,8 +876,8 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 	uint8_t last_section_number;
 	uint8_t segment_last_section_number;
 	uint32_t events_length;
-	uint8_t *offset=payload_start;
-	uint32_t remaining=events_length;
+	uint8_t *offset;
+	uint32_t remaining;
 
 
 	if(size < 13)

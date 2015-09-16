@@ -7,10 +7,10 @@
 static unsigned pmt_warning_shown=0; // Only display warning once
 void process_ccx_mpeg_descriptor (unsigned char *data, unsigned length);
 
-unsigned get_printable_stream_type (unsigned ccx_stream_type)
+unsigned get_printable_stream_type (enum ccx_stream_type stream_type)
 {
-	unsigned tmp_stream_type=ccx_stream_type;
-	switch (ccx_stream_type)
+	enum ccx_stream_type tmp_stream_type = stream_type;
+	switch (stream_type)
 	{
 		case CCX_STREAM_TYPE_VIDEO_MPEG2:
 		case CCX_STREAM_TYPE_VIDEO_H264:
@@ -33,8 +33,8 @@ unsigned get_printable_stream_type (unsigned ccx_stream_type)
 		case CCX_STREAM_TYPE_AUDIO_HDMV_DTS:
 			break;
 		default:
-			if (ccx_stream_type>=0x80 && ccx_stream_type<=0xFF)
-				tmp_stream_type=CCX_STREAM_TYPE_PRIVATE_USER_MPEG2;
+			if (stream_type >= 0x80 && stream_type <= 0xFF)
+				tmp_stream_type = CCX_STREAM_TYPE_PRIVATE_USER_MPEG2;
 			else
 				tmp_stream_type = CCX_STREAM_TYPE_UNKNOWNSTREAM;
 			break;
@@ -183,7 +183,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 	// Make a note of the program number for all PIDs, so we can report it later
 	for( unsigned i=0; i < stream_data && (i+4)<len; i+=5)
 	{
-		unsigned ccx_stream_type = buf[i];
+		enum ccx_stream_type stream_type = buf[i];
 		unsigned elementary_PID = (((buf[i+1] & 0x1F) << 8)
 				| buf[i+2]);
 		unsigned ES_info_length = (((buf[i+3] & 0x0F) << 8)
@@ -195,10 +195,10 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 				fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process PMT.");
 		}
 		ctx->PIDs_programs[elementary_PID]->elementary_PID=elementary_PID;
-		ctx->PIDs_programs[elementary_PID]->ccx_stream_type=ccx_stream_type;
+		ctx->PIDs_programs[elementary_PID]->stream_type = stream_type;
 		ctx->PIDs_programs[elementary_PID]->program_number=program_number;
-		ctx->PIDs_programs[elementary_PID]->printable_stream_type=get_printable_stream_type (ccx_stream_type);
-		dbg_print(CCX_DMT_PMT, "%6u | %3X (%3u) | %s\n",elementary_PID,ccx_stream_type,ccx_stream_type,
+		ctx->PIDs_programs[elementary_PID]->printable_stream_type=get_printable_stream_type (stream_type);
+		dbg_print(CCX_DMT_PMT, "%6u | %3X (%3u) | %s\n",elementary_PID,stream_type,stream_type,
 				desc[ctx->PIDs_programs[elementary_PID]->printable_stream_type]);
 		process_ccx_mpeg_descriptor (buf+i+5,ES_info_length);
 		i += ES_info_length;
@@ -209,14 +209,14 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 
 	for (unsigned i=0; i < stream_data && (i+4)<len; i+=5)
 	{
-		unsigned ccx_stream_type = buf[i];
+		enum ccx_stream_type stream_type = buf[i];
 		unsigned elementary_PID = (((buf[i+1] & 0x1F) << 8)
 				| buf[i+2]);
 		unsigned ES_info_length = (((buf[i+3] & 0x0F) << 8)
 				| buf[i+4]);
 
 		if (!ccx_options.print_file_reports ||
-				ccx_stream_type != CCX_STREAM_TYPE_PRIVATE_MPEG2 ||
+				stream_type != CCX_STREAM_TYPE_PRIVATE_MPEG2 ||
 				!ES_info_length)
 		{
 			i += ES_info_length;
@@ -281,14 +281,14 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 */
 	for( unsigned i=0; i < stream_data && (i+4)<len; i+=5)
 	{
-		unsigned ccx_stream_type = buf[i];
+		enum ccx_stream_type stream_type = buf[i];
 		unsigned elementary_PID = (((buf[i+1] & 0x1F) << 8)
 				| buf[i+2]);
 		unsigned ES_info_length = (((buf[i+3] & 0x0F) << 8)
 				| buf[i+4]);
 
 
-		if(IS_FEASIBLE(ctx->codec, ctx->nocodec, CCX_CODEC_DVB) && ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 &&
+		if(IS_FEASIBLE(ctx->codec, ctx->nocodec, CCX_CODEC_DVB) && stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 &&
 				ES_info_length  )
 		{
 			unsigned char *es_info = buf + i + 5;
@@ -314,14 +314,14 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 					ptr = dvbsub_init_decoder(&cnf);
 					if (ptr == NULL)
 						break;
-					update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_DVB, program_number, ptr);
+					update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_DVB, program_number, ptr);
 					max_dif = 30;
 				}
 			}
 		}
 
 		if (IS_FEASIBLE(ctx->codec,ctx->nocodec,CCX_CODEC_TELETEXT) && ES_info_length
-				&& ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2) // MPEG-2 Packetized Elementary Stream packets containing private data
+				&& stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2) // MPEG-2 Packetized Elementary Stream packets containing private data
 		{
 			unsigned char *es_info = buf + i + 5;
 			for (desc_len = 0;(buf + i + 5 + ES_info_length) - es_info ;es_info += desc_len)
@@ -330,7 +330,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 				desc_len = (*es_info++);
 				if(!IS_VALID_TELETEXT_DESC(descriptor_tag))
 					continue;
-				update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_TELETEXT, program_number, NULL);
+				update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_TELETEXT, program_number, NULL);
 				mprint ("VBI/teletext stream ID %u (0x%x) for SID %u (0x%x)\n",
 						elementary_PID, elementary_PID, program_number, program_number);
 			}
@@ -338,43 +338,43 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 		}
 
 		if (!IS_FEASIBLE(ctx->codec,ctx->nocodec,CCX_CODEC_TELETEXT) &&
-				ccx_stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2) // MPEG-2 Packetized Elementary Stream packets containing private data
+				stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2) // MPEG-2 Packetized Elementary Stream packets containing private data
 		{
 			unsigned descriptor_tag = buf[i + 5];
 			if (descriptor_tag == 0x45)
 			{
-				update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
+				update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
 				//mprint ("VBI stream ID %u (0x%x) for SID %u (0x%x) - teletext is disabled, will be processed as closed captions.\n",
 				//		elementary_PID, elementary_PID, program_number, program_number);
 			}
 		}
 
-		if (ccx_stream_type==CCX_STREAM_TYPE_VIDEO_H264 || ccx_stream_type==CCX_STREAM_TYPE_VIDEO_MPEG2)
+		if (stream_type == CCX_STREAM_TYPE_VIDEO_H264 || stream_type == CCX_STREAM_TYPE_VIDEO_MPEG2)
 		{
-			update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
+			update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
 			//mprint ("Decode captions from program %d - %s stream [0x%02x]  -  PID: %u\n",
-			//	program_number , desc[ccx_stream_type], ccx_stream_type, elementary_PID);
+			//	program_number , desc[stream_type], stream_type, elementary_PID);
 		}
 
 		if(need_capInfo_for_pid(ctx, elementary_PID) == CCX_TRUE)
 		{
 			// We found the user selected CAPPID in PMT. We make a note of its type and don't
 			// touch anything else
-			if (ccx_stream_type>=0x80 && ccx_stream_type<=0xFF)
+			if (stream_type >= 0x80 && stream_type <= 0xFF)
 			{
 				mprint ("I can't tell the stream type of the manually selected PID.\n");
 				mprint ("Please pass -streamtype to select manually.\n");
 				fatal (EXIT_FAILURE, "(user assistance needed)");
 			}
-			update_capinfo(ctx, elementary_PID, ccx_stream_type, CCX_CODEC_NONE, program_number, NULL);
+			update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_NONE, program_number, NULL);
 			continue;
 		}
 
 		// For the print command below
-		unsigned tmp_stream_type = get_printable_stream_type (ccx_stream_type);
+		unsigned tmp_stream_type = get_printable_stream_type (stream_type);
 		dbg_print(CCX_DMT_VERBOSE, "  %s stream [0x%02x]  -  PID: %u\n",
 				desc[tmp_stream_type],
-				ccx_stream_type, elementary_PID);
+				stream_type, elementary_PID);
 		i += ES_info_length;
 	}
 
@@ -696,7 +696,7 @@ void decode_service_descriptors(struct ccx_demuxer *ctx, uint8_t *buf, uint32_t 
 		offset += 2;
 		if(descriptor_tag == 0x48)
 		{ // service descriptor
-			uint8_t service_type = buf[offset];
+			//uint8_t service_type = buf[offset];
 			uint8_t service_provider_name_length = buf[offset+1];
 			offset += 2;
 			if(offset + service_provider_name_length > length)
@@ -734,10 +734,11 @@ void decode_service_descriptors(struct ccx_demuxer *ctx, uint8_t *buf, uint32_t 
 	}
 }
 
-void decode_SDT_services_loop(struct ccx_demuxer *ctx, uint8_t *buf, uint32_t length) {
-	unsigned descriptor_tag = buf[0];
-	unsigned descriptor_length = buf[1];
-	uint32_t x;
+void decode_SDT_services_loop(struct ccx_demuxer *ctx, uint8_t *buf, uint32_t length)
+{
+	//unsigned descriptor_tag = buf[0];
+	//unsigned descriptor_length = buf[1];
+	//uint32_t x;
 	uint32_t offset=0;
 
 	while(offset+5<length) {
@@ -754,33 +755,34 @@ void decode_SDT_services_loop(struct ccx_demuxer *ctx, uint8_t *buf, uint32_t le
 	}
 }
 
-void parse_SDT(struct ccx_demuxer *ctx) {
+void parse_SDT(struct ccx_demuxer *ctx)
+{
 	unsigned char pointer_field = 0;
 	unsigned char *payload_start = NULL;
 	unsigned int payload_length = 0;
-	unsigned int section_number = 0;
-	unsigned int last_section_number = 0;
+	//unsigned int section_number = 0;
+	//unsigned int last_section_number = 0;
 
 	pointer_field = *(ctx->PID_buffers[0x11]->buffer);
 	payload_start = ctx->PID_buffers[0x11]->buffer + pointer_field + 1;
 	payload_length = ctx->PID_buffers[0x11]->buffer_length - (pointer_field + 1);
 
-	section_number = payload_start[6];
-	last_section_number = payload_start[7];
+	//section_number = payload_start[6];
+	//last_section_number = payload_start[7];
 
 	unsigned table_id = payload_start[0];
 	unsigned section_length = (((payload_start[1] & 0x0F) << 8)
 			| payload_start[2]);
-	unsigned transport_stream_id = ((payload_start[3] << 8)
-			| payload_start[4]);
-	unsigned version_number = (payload_start[5] & 0x3E) >> 1;
+	//unsigned transport_stream_id = ((payload_start[3] << 8)
+	//		| payload_start[4]);
+	//unsigned version_number = (payload_start[5] & 0x3E) >> 1;
 
 	if(section_length>payload_length-4) {
 		return;
 	}
 	unsigned current_next_indicator = payload_start[5] & 0x01;
 
-	uint16_t original_network_id = ((payload_start[8]) << 8) | payload_start[9];
+	//uint16_t original_network_id = ((payload_start[8]) << 8) | payload_start[9];
 
 	if (!current_next_indicator)
 		// This table is not active, no need to evaluate

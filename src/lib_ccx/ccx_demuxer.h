@@ -30,7 +30,7 @@ struct program_info
 	uint8_t saved_section[1021];
 	int32_t crc;
 	uint8_t valid_crc:1;
-	uint8_t name[MAX_PROGRAM_NAME_LEN];
+	char name[MAX_PROGRAM_NAME_LEN];
 };
 
 struct cap_info

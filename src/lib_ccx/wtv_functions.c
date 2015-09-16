@@ -2,6 +2,7 @@
 #include "ccx_common_option.h"
 #include "wtv_constants.h"
 #include "activity.h"
+#include "file_buffer.h"
 
 int check_stream_id(int stream_id, int video_streams[], int num_streams);
 int add_skip_chunks(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, uint32_t offset, uint32_t flag);

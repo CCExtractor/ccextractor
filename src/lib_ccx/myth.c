@@ -15,6 +15,7 @@ For now, integration with ccextractor is a quick hack. It could get better with 
 #include <fcntl.h>
 #include "ccx_encoders_common.h"
 #include "activity.h"
+#include "file_buffer.h"
 
 static unsigned int header_state;
 static unsigned char psm_es_type[256];

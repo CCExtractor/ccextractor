@@ -4,6 +4,7 @@
 #include "ccx_demuxer.h"
 #include "list.h"
 #include "dvb_subtitle_decoder.h"
+#include "file_buffer.h"
 
 unsigned char tspacket[188]; // Current packet
 
@@ -262,7 +263,7 @@ void look_for_caption_data (struct ccx_demuxer *ctx, struct ts_payload *payload)
 	if (payload->length < 4 || ctx->PIDs_seen[payload->pid]==3) // Second thing means we already inspected this PID
 		return;
 
-	for (unsigned int i = 0; i < (payload->length - 3); i++)
+	for (i = 0; i < (payload->length - 3); i++)
 	{
 		if (payload->start[i]=='G' && payload->start[i+1]=='A' &&
 				payload->start[i+2]=='9' && payload->start[i+3]=='4')

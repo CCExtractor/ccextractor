@@ -8,6 +8,8 @@
 #include "activity.h"
 #include "utility.h"
 #include "ccx_common_timing.h"
+#include "file_buffer.h"
+
 void detect_stream_type (struct ccx_demuxer *ctx)
 {
 	ctx->stream_mode=CCX_SM_ELEMENTARY_OR_NOT_FOUND; // Not found

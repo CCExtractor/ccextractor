@@ -1,7 +1,7 @@
 #include "ccx_decoders_common.h"
 #include "ccx_encoders_common.h"
 #include "spupng_encoder.h"
-#include "608_spupng.h"
+#include "ccx_encoders_spupng.h"
 #include "utility.h"
 #include "ocr.h"
 #include "ccx_decoders_608.h"
