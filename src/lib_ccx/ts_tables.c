@@ -681,39 +681,42 @@ void process_ccx_mpeg_descriptor (unsigned char *data, unsigned length)
 	}
 }
 
-void decode_service_descriptors(struct ccx_demuxer *ctx, uint8_t *buf, uint32_t length, uint32_t service_id) {
+void decode_service_descriptors(struct ccx_demuxer *ctx, uint8_t *buf, uint32_t length, uint32_t service_id)
+{
 	unsigned descriptor_tag;
 	unsigned descriptor_length;
 	uint32_t x;
-	uint32_t offset=0;
+	uint32_t offset = 0;
 
-	while(offset+5<length) {
+	while( offset + 5 < length)
+	{
 		descriptor_tag = buf[offset];
 		descriptor_length = buf[offset+1];
-		offset+=2;
-		if(descriptor_tag==0x48) { // service descriptor
+		offset += 2;
+		if(descriptor_tag == 0x48)
+		{ // service descriptor
 			uint8_t service_type = buf[offset];
 			uint8_t service_provider_name_length = buf[offset+1];
-			offset+=2;
-			if(offset+service_provider_name_length > length)
+			offset += 2;
+			if(offset + service_provider_name_length > length)
 			{
 				dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid SDT service_provider_name_length detected.\n");
 				return;
 			}
-			offset+=service_provider_name_length; // Service provider name. Not sure what this is useful for.
+			offset += service_provider_name_length; // Service provider name. Not sure what this is useful for.
 			uint8_t service_name_length = buf[offset];
 			offset++;
-			if(offset+service_name_length > length)
+			if(offset + service_name_length > length)
 			{
 				dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid SDT service_name_length detected.\n");
 				return;
 			}
-			for(x=0; x<ctx->nb_program; x++) {
+			for(x = 0; x < ctx->nb_program; x++) {
 			// Not sure if programs can have multiple names (in different encodings?) Need more samples.
 			// For now just assume the last one in the loop is as good as any if there are multiple.
-				if(ctx->pinfo[x].program_number == service_id && service_name_length<199) {
+				if(ctx->pinfo[x].program_number == service_id && service_name_length < 199) {
 					char* s = EPG_DVB_decode_string(&buf[offset], service_name_length); //String encoding is the same as for EPG
-					if(strlen(s)<MAX_PROGRAM_NAME_LEN-1) {
+					if(strlen(s) < MAX_PROGRAM_NAME_LEN - 1) {
 						memcpy(ctx->pinfo[x].name, s, service_name_length);
 					}
 					free(s);
@@ -721,9 +724,10 @@ void decode_service_descriptors(struct ccx_demuxer *ctx, uint8_t *buf, uint32_t 
 			}
 			offset+=service_name_length;
 		}
-		else {
+		else
+		{
 			// Some other tag
-			offset+=descriptor_length;
+			offset += descriptor_length;
 		}
 	}
 }

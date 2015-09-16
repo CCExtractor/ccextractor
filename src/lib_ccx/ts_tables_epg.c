@@ -865,12 +865,12 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 	uint16_t service_id;
 	int32_t pmt_map = -1;
 	int i;
-	int hasnew=false;
+	int hasnew = false;
 	struct EPG_event event;
 	uint8_t section_number;
 	uint8_t last_section_number;
 	uint8_t segment_last_section_number;
-	uint32_t events_length = section_length - 11;
+	uint32_t events_length;
 	uint8_t *offset=payload_start;
 	uint32_t remaining=events_length;
 
@@ -892,14 +892,14 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 	for (i = 0; i < ctx->demux_ctx->nb_program; i++)
 	{
 		if (ctx->demux_ctx->pinfo[i].program_number == service_id)
-			pmt_map=i;
+			pmt_map = i;
 	}
 
 	//For any service we don't have an PMT for (yet), store it in the special last array pos.
-	if(pmt_map==-1)
-		pmt_map=TS_PMT_MAP_SIZE;
+	if(pmt_map == -1)
+		pmt_map = TS_PMT_MAP_SIZE;
 
-	if(events_length>size-14)
+	if(events_length > size-14)
 	{
 		dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid EIT packet size detected.\n");
 		//XXX hack to override segfault, we should concat packets instead
