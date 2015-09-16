@@ -335,6 +335,8 @@ LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigne
 							np = LSEEK (ctx->infd, bytes, SEEK_CUR); // Pos after moving
 							i = (int) (np - op);
 						}
+						// if both above lseek returned -1 (error); i would be 0 here and
+						// in case when its not live stream copied would decrease and bytes would...
 						if (i == 0 && ccx_options.live_stream)
 						{
 							if (ccx_options.input_source == CCX_DS_STDIN)
