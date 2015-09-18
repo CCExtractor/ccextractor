@@ -465,7 +465,9 @@ unsigned char buffered_get_byte (struct ccx_demuxer *ctx)
 {
 	unsigned char b;
 	unsigned char *b_p = &b;
-	buffered_read_byte(ctx, b_p);
+	int result;
+
+	result = buffered_read_byte(ctx, b_p);
 	if (result == 1)
 	{
 		ctx->past++;

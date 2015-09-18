@@ -112,6 +112,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 {
 	unsigned int adaptation_field_length = 0;
 	unsigned int adaptation_field_control;
+	long long result;
 	if (ctx->m2ts)
 	{
 		/* M2TS just adds 4 bytes to each packet (so size goes from 188 to 192)

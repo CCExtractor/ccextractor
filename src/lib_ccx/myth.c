@@ -311,6 +311,7 @@ static int find_next_start_code(struct ccx_demuxer *ctx, int *size_ptr,
 {
 	unsigned int state, v;
 	int val, n;
+	LLONG result;
 
 	state = *header_state;
 	n = *size_ptr;

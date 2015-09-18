@@ -157,7 +157,6 @@ void general_loop(struct lib_ccx_ctx *ctx);
 void processhex (char *filename);
 void rcwt_loop(struct lib_ccx_ctx *ctx);
 
-extern LLONG result;
 extern int end_of_file;
 
 // asf_functions.c
