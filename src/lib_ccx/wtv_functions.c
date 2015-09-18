@@ -432,7 +432,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			if(cb->buffer==NULL)
 				return CCX_EOF;
 			memcpy(data->buffer+data->len, cb->buffer, len);
-			data->len+=result;
+			data->len += len;
 			bytesread+=(int) len;
 			frames_since_ref_time++;
 			set_fts(dec_ctx->timing);
