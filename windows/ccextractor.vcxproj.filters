@@ -539,18 +539,6 @@
     <ClCompile Include="..\src\lib_ccx\ccx_common_timing.c">
       <Filter>Source Files\ccx_common</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\608_sami.c">
-      <Filter>Source Files\ccx_encoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\608_smptett.c">
-      <Filter>Source Files\ccx_encoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\608_spupng.c">
-      <Filter>Source Files\ccx_encoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\608_srt.c">
-      <Filter>Source Files\ccx_encoders</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_common.c">
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
@@ -575,9 +563,6 @@
     <ClCompile Include="..\src\lib_ccx\ts_info.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\ccx_encoder_xds.c">
-      <Filter>Source Files\ccx_encoders</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_708_encoding.c">
       <Filter>Source Files\ccx_decoders</Filter>
     </ClCompile>
@@ -586,9 +571,6 @@
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_708_output.c">
       <Filter>Source Files\ccx_decoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\608_webvtt.c">
-      <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
     <ClCompile Include="..\src\win_iconv\win_iconv.c">
       <Filter>Source Files</Filter>
@@ -609,6 +591,24 @@
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoder_xds.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_sami.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_smptett.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_spupng.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_srt.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_webvtt.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_xds.c">
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
   </ItemGroup>

@@ -136,11 +136,6 @@
     <ClCompile Include="..\src\libpng\pngwrite.c" />
     <ClCompile Include="..\src\libpng\pngwtran.c" />
     <ClCompile Include="..\src\libpng\pngwutil.c" />
-    <ClCompile Include="..\src\lib_ccx\608_sami.c" />
-    <ClCompile Include="..\src\lib_ccx\608_smptett.c" />
-    <ClCompile Include="..\src\lib_ccx\608_spupng.c" />
-    <ClCompile Include="..\src\lib_ccx\608_srt.c" />
-    <ClCompile Include="..\src\lib_ccx\608_webvtt.c" />
     <ClCompile Include="..\src\lib_ccx\activity.c" />
     <ClCompile Include="..\src\lib_ccx\asf_functions.c" />
     <ClCompile Include="..\src\lib_ccx\avc_functions.c" />
@@ -159,7 +154,12 @@
     <ClCompile Include="..\src\lib_ccx\ccx_dtvcc.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_common.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_helpers.c" />
-    <ClCompile Include="..\src\lib_ccx\ccx_encoder_xds.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_sami.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_smptett.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_spupng.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_srt.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_webvtt.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_xds.c" />
     <ClCompile Include="..\src\lib_ccx\cc_bitstream.c" />
     <ClCompile Include="..\src\lib_ccx\configuration.c" />
     <ClCompile Include="..\src\lib_ccx\dvb_subtitle_decoder.c" />
