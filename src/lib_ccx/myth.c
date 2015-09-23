@@ -15,6 +15,7 @@ For now, integration with ccextractor is a quick hack. It could get better with 
 #include <fcntl.h>
 #include "ccx_encoders_common.h"
 #include "activity.h"
+#include "file_buffer.h"
 
 static unsigned int header_state;
 static unsigned char psm_es_type[256];
@@ -288,61 +289,29 @@ typedef struct AVPacket
 
 static AVPacket av;
 
-int get_be16(struct lib_ccx_ctx *ctx)
-{
-	unsigned char a,b;
-	unsigned char *a_p = &a; // Just to suppress warnings
-	unsigned char *b_p = &b;
-	buffered_read_byte(ctx->demux_ctx,a_p);
-	ctx->demux_ctx->past++;
-	buffered_read_byte(ctx->demux_ctx,b_p);
-	ctx->demux_ctx->past++;
-	return (a<<8) | b;
-}
-
-int get_byte (struct lib_ccx_ctx *ctx)
-{
-	unsigned char b;
-	unsigned char *b_p = &b;
-	buffered_read_byte(ctx->demux_ctx,b_p);
-	if (result==1)
-	{
-		ctx->demux_ctx->past++;
-		return b;
-	}
-	else
-		return 0;
-}
-
-unsigned int get_be32(struct lib_ccx_ctx *ctx)
-{
-	unsigned int val;
-	val = get_be16(ctx) << 16;
-	val |= get_be16(ctx);
-	return val;
-}
 
 
-static LLONG get_pts(struct lib_ccx_ctx *ctx, int c)
+static LLONG get_pts(struct ccx_demuxer *ctx, int c)
 {
 	LLONG pts;
 	int val;
 
 	if (c < 0)
-		c = get_byte(ctx);
+		c = buffered_get_byte(ctx);
 	pts = (LLONG) ((c >> 1) & 0x07) << 30;
-	val = get_be16(ctx);
+	val = buffered_get_be16(ctx);
 	pts |= (LLONG) (val >> 1) << 15;
-	val = get_be16(ctx);
+	val = buffered_get_be16(ctx);
 	pts |= (LLONG) (val >> 1);
 	return pts;
 }
 
-static int find_next_start_code(struct lib_ccx_ctx *ctx, int *size_ptr,
+static int find_next_start_code(struct ccx_demuxer *ctx, int *size_ptr,
 		unsigned int *header_state)
 {
 	unsigned int state, v;
 	int val, n;
+	LLONG result;
 
 	state = *header_state;
 	n = *size_ptr;
@@ -350,10 +319,10 @@ static int find_next_start_code(struct lib_ccx_ctx *ctx, int *size_ptr,
 	{
 		unsigned char cx;
 		unsigned char *cx_p = &cx;
-		buffered_read_byte(ctx->demux_ctx,cx_p);
-		if (result!=1)
+		result = buffered_read_byte(ctx, cx_p);
+		if (result != 1)
 			break;
-		ctx->demux_ctx->past++;
+		ctx->past++;
 		v = cx;
 		n--;
 		if (state == 0x000001) {
@@ -370,43 +339,43 @@ found:
 	return val;
 }
 
-void url_fskip (struct lib_ccx_ctx *ctx, int length)
+void url_fskip (struct ccx_demuxer *ctx, int length)
 {
-	buffered_seek (ctx->demux_ctx, length);
-	ctx->demux_ctx->past+=length;
+	buffered_seek (ctx, length);
+	ctx->past += length;
 }
 
-static long mpegps_psm_parse(struct lib_ccx_ctx *ctx)
+static long mpegps_psm_parse(struct ccx_demuxer *ctx)
 {
 	int psm_length, ps_info_length, es_map_length;
 
-	psm_length = get_be16(ctx);
-	get_byte(ctx);
-	get_byte(ctx);
-	ps_info_length = get_be16(ctx);
+	psm_length = buffered_get_be16(ctx);
+	buffered_get_byte(ctx);
+	buffered_get_byte(ctx);
+	ps_info_length = buffered_get_be16(ctx);
 
 	/* skip program_stream_info */
 	url_fskip(ctx, ps_info_length);
-	es_map_length = get_be16(ctx);
+	es_map_length = buffered_get_be16(ctx);
 
 	/* at least one es available? */
 	while (es_map_length >= 4)
 	{
-		unsigned char type = (unsigned char) get_byte(ctx);
-		unsigned char es_id =(unsigned char) get_byte(ctx);
-		unsigned int es_info_length = get_be16(ctx);
+		unsigned char type = (unsigned char) buffered_get_byte(ctx);
+		unsigned char es_id =(unsigned char) buffered_get_byte(ctx);
+		unsigned int es_info_length = buffered_get_be16(ctx);
 		/* remember mapping from stream id to stream type */
 		psm_es_type[es_id] = type;
 		/* skip program_stream_info */
 		url_fskip(ctx, es_info_length);
 		es_map_length -= 4 + es_info_length;
 	}
-	get_be32(ctx); /* crc32 */
+	buffered_get_be32(ctx); /* crc32 */
 	return 2 + psm_length;
 }
 
 
-static int mpegps_read_pes_header(struct lib_ccx_ctx *ctx, int *pstart_code,
+static int mpegps_read_pes_header(struct ccx_demuxer *ctx, int *pstart_code,
 		LLONG *ppts, LLONG *pdts)
 {
 	int len, size, startcode, c, flags, header_len;
@@ -428,11 +397,11 @@ redo:
 			startcode == PRIVATE_STREAM_2)
 	{
 		/* skip them */
-		len = get_be16(ctx);
+		len = buffered_get_be16(ctx);
 		// url_fskip(ctx, len);
 		goto redo;
 	}
-	position_sanity_check(ctx->demux_ctx->infd);
+	position_sanity_check(ctx->infd);
 	if (startcode == PROGRAM_STREAM_MAP)
 	{
 		mpegps_psm_parse(ctx);
@@ -445,30 +414,30 @@ redo:
 				(startcode == 0x1bd)))
 		goto redo;
 
-	len = get_be16(ctx);
+	len = buffered_get_be16(ctx);
 	pts = AV_NOPTS_VALUE;
 	dts = AV_NOPTS_VALUE;
-	position_sanity_check(ctx->demux_ctx->infd);
+	position_sanity_check(ctx->infd);
 	/* stuffing */
 	for(;;) {
 		if (len < 1)
 			goto redo;
-		c = get_byte(ctx);
+		c = buffered_get_byte(ctx);
 		len--;
 		/* XXX: for mpeg1, should test only bit 7 */
 		if (c != 0xff)
 			break;
 	}
-	position_sanity_check(ctx->demux_ctx->infd);
+	position_sanity_check(ctx->infd);
 	if ((c & 0xc0) == 0x40) {
 		/* buffer scale & size */
 		if (len < 2)
 			goto redo;
-		get_byte(ctx);
-		c = get_byte(ctx);
+		buffered_get_byte(ctx);
+		c = buffered_get_byte(ctx);
 		len -= 2;
 	}
-	position_sanity_check(ctx->demux_ctx->infd);
+	position_sanity_check(ctx->infd);
 	if ((c & 0xf0) == 0x20) {
 		if (len < 4)
 			goto redo;
@@ -488,8 +457,8 @@ redo:
 			goto redo;
 		}
 #endif
-		flags = get_byte(ctx);
-		header_len = get_byte(ctx);
+		flags = buffered_get_byte(ctx);
+		header_len = buffered_get_byte(ctx);
 		len -= 2;
 		if (header_len > len)
 			goto redo;
@@ -509,26 +478,26 @@ redo:
 		}
 		len -= header_len;
 		while (header_len > 0) {
-			get_byte(ctx);
+			buffered_get_byte(ctx);
 			header_len--;
 		}
 	}
 	else if( c!= 0xf )
 		goto redo;
-	position_sanity_check(ctx->demux_ctx->infd);
+	position_sanity_check(ctx->infd);
 	if (startcode == PRIVATE_STREAM_1 /* && psm_es_type[startcode & 0xff] */)
 	{
 		if (len < 1)
 			goto redo;
-		startcode = get_byte(ctx);
+		startcode = buffered_get_byte(ctx);
 		len--;
 		if (startcode >= 0x80 && startcode <= 0xbf) {
 			/* audio: skip header */
 			if (len < 3)
 				goto redo;
-			get_byte(ctx);
-			get_byte(ctx);
-			get_byte(ctx);
+			buffered_get_byte(ctx);
+			buffered_get_byte(ctx);
+			buffered_get_byte(ctx);
 			len -= 3;
 		}
 	}
@@ -646,7 +615,7 @@ void ProcessVBIDataPacket(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 	// lastccptsu = utc;
 }
 
-static int mpegps_read_packet(struct lib_ccx_ctx *ctx)
+static int mpegps_read_packet(struct ccx_demuxer *ctx)
 {
 	LLONG pts, dts;
 
@@ -655,7 +624,7 @@ redo:
 	len = mpegps_read_pes_header(ctx, &startcode, &pts, &dts);
 	if (len < 0)
 		return len;
-	position_sanity_check(ctx->demux_ctx->infd);
+	position_sanity_check(ctx->infd);
 	/* now find stream */
 	/*
 	   for(i=0;i<s->nb_streams;i++) {
@@ -697,11 +666,11 @@ redo:
 		{
 			static const unsigned char avs_seqh[4] = { 0, 0, 1, 0xb0 };
 			unsigned char buf[8];
-			buffered_read(ctx->demux_ctx,buf,8);
-			ctx->demux_ctx->past+=8;
+			buffered_read(ctx, buf, 8);
+			ctx->past+=8;
 			// get_buffer(&s->pb, buf, 8);
-			buffered_seek(ctx->demux_ctx, -8);
-			ctx->demux_ctx->past-=8;
+			buffered_seek(ctx, -8);
+			ctx->past-=8;
 			if(!memcmp(buf, avs_seqh, 4) && (buf[6] != 0 || buf[7] != 1))
 				codec_id = CODEC_ID_CAVS;
 			else
@@ -755,9 +724,9 @@ goto skip; */
 		// audio data
 		if (len <= 3)
 			goto skip;
-		get_byte(ctx); // emphasis (1), muse(1), reserved(1), frame number(5)
-		get_byte(ctx); // quant (2), freq(2), reserved(1), channels(3)
-		get_byte(ctx); // dynamic range control (0x80 = off)
+		buffered_get_byte(ctx); // emphasis (1), muse(1), reserved(1), frame number(5)
+		buffered_get_byte(ctx); // quant (2), freq(2), reserved(1), channels(3)
+		buffered_get_byte(ctx); // dynamic range control (0x80 = off)
 		len -= 3;
 		//freq = (b1 >> 4) & 3;
 		//st->codec->sample_rate = lpcm_freq_tab[freq];
@@ -779,9 +748,9 @@ goto skip; */
 	}
 	av.codec_id=codec_id;
 	av.type=type;
-	buffered_read(ctx->demux_ctx,av.data,av.size);
-	ctx->demux_ctx->past+=av.size;
-	position_sanity_check(ctx->demux_ctx->infd);
+	buffered_read(ctx, av.data, av.size);
+	ctx->past += av.size;
+	position_sanity_check(ctx->infd);
 	// LSEEK (fh,pkt->size,SEEK_CUR);
 	av.pts = pts;
 	av.dts = dts;
@@ -816,7 +785,7 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 	saved=0;
 
 	memset(&dec_sub, 0, sizeof(dec_sub));
-	while (is_decoder_processed_enough(ctx) == CCX_FALSE && (rc=mpegps_read_packet(ctx))==0)
+	while (is_decoder_processed_enough(ctx) == CCX_FALSE && (rc=mpegps_read_packet(ctx->demux_ctx))==0)
 	{
 		position_sanity_check(ctx->demux_ctx->infd);
 		if (av.codec_id==CODEC_ID_MPEG2VBI && av.type==CODEC_TYPE_DATA)

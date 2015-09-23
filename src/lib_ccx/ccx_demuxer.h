@@ -4,6 +4,7 @@
 #include "ccx_common_option.h"
 #include "ts_functions.h"
 #include "list.h"
+#include "activity.h"
 
 /* Report information */
 #define SUB_STREAMS_CNT 10
@@ -29,7 +30,7 @@ struct program_info
 	uint8_t saved_section[1021];
 	int32_t crc;
 	uint8_t valid_crc:1;
-	uint8_t name[MAX_PROGRAM_NAME_LEN];
+	char name[MAX_PROGRAM_NAME_LEN];
 };
 
 struct cap_info
@@ -114,8 +115,8 @@ struct ccx_demuxer
 
 	unsigned char *filebuffer;
 	LLONG filebuffer_start; // Position of buffer start relative to file
-	int filebuffer_pos; // Position of pointer relative to buffer start
-	int bytesinbuffer; // Number of bytes we actually have on buffer
+	unsigned int filebuffer_pos; // Position of pointer relative to buffer start
+	unsigned int bytesinbuffer; // Number of bytes we actually have on buffer
 
 	int warning_program_not_found_shown;
 

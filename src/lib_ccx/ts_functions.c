@@ -4,6 +4,7 @@
 #include "ccx_demuxer.h"
 #include "list.h"
 #include "dvb_subtitle_decoder.h"
+#include "file_buffer.h"
 
 unsigned char tspacket[188]; // Current packet
 
@@ -111,6 +112,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 {
 	unsigned int adaptation_field_length = 0;
 	unsigned int adaptation_field_control;
+	long long result;
 	if (ctx->m2ts)
 	{
 		/* M2TS just adds 4 bytes to each packet (so size goes from 188 to 192)
@@ -120,7 +122,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		Arrival_time_stamp 30 unimsbf
 		} */
 		unsigned char tp_extra_header[4];
-		buffered_read(ctx, tp_extra_header, 3);
+		result = buffered_read(ctx, tp_extra_header, 3);
 		ctx->past += result;
 		if (result != 4)
 		{
@@ -130,7 +132,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		}
 	}
 
-	buffered_read(ctx, tspacket, 188);
+	result = buffered_read(ctx, tspacket, 188);
 	ctx->past += result;
 	if (result != 188)
 	{
@@ -163,7 +165,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 			int atpos = tstemp-tspacket;
 
 			memmove (tspacket,tstemp,(size_t)(tslen-atpos));
-			buffered_read(ctx, tspacket+(tslen-atpos), atpos);
+			result = buffered_read(ctx, tspacket+(tslen-atpos), atpos);
 			ctx->past+=result;
 			if (result!=atpos)
 			{
@@ -174,7 +176,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		else
 		{
 			// Read the next 188 bytes.
-			buffered_read(ctx, tspacket, tslen);
+			result = buffered_read(ctx, tspacket, tslen);
 			ctx->past+=result;
 			if (result!=tslen)
 			{
@@ -262,7 +264,7 @@ void look_for_caption_data (struct ccx_demuxer *ctx, struct ts_payload *payload)
 	if (payload->length < 4 || ctx->PIDs_seen[payload->pid]==3) // Second thing means we already inspected this PID
 		return;
 
-	for (unsigned int i = 0; i < (payload->length - 3); i++)
+	for (i = 0; i < (payload->length - 3); i++)
 	{
 		if (payload->start[i]=='G' && payload->start[i+1]=='A' &&
 				payload->start[i+2]=='9' && payload->start[i+3]=='4')

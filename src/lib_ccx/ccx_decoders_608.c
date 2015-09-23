@@ -353,7 +353,6 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 	LLONG end_time;
 	int i = 0;
 	int wrote_something=0;
-	int ret = 0;
 	data = get_current_visible_buffer(context);
 
 	start_time = context->ts_start_of_current_line;

@@ -135,33 +135,6 @@ struct lib_ccx_ctx
 	struct ccx_s_mp4Cfg mp4_cfg;
 };
 
-#define buffered_skip(ctx, bytes) if (bytes<= ctx->bytesinbuffer - ctx->filebuffer_pos) { \
-    ctx->filebuffer_pos+=bytes; \
-    result=bytes; \
-} else result=buffered_read_opt (ctx, NULL,bytes);
-
-#define buffered_read(ctx, buffer,bytes) if (bytes<= ctx->bytesinbuffer - ctx->filebuffer_pos) { \
-    if (buffer!=NULL) memcpy (buffer, ctx->filebuffer + ctx->filebuffer_pos, bytes); \
-    ctx->filebuffer_pos+=bytes; \
-    result=bytes; \
-} else { result=buffered_read_opt (ctx, buffer,bytes); if (ccx_options.gui_mode_reports && ccx_options.input_source==CCX_DS_NETWORK) {net_activity_gui++; if (!(net_activity_gui%1000))activity_report_data_read();}}
-
-#define buffered_read_4(buffer) if (4<=bytesinbuffer-filebuffer_pos) { \
-    if (buffer) { buffer[0]=filebuffer[filebuffer_pos]; \
-    buffer[1]=filebuffer[filebuffer_pos+1]; \
-    buffer[2]=filebuffer[filebuffer_pos+2]; \
-    buffer[3]=filebuffer[filebuffer_pos+3]; \
-    filebuffer_pos+=4; \
-    result=4; } \
-} else result=buffered_read_opt (buffer,4);
-
-#define buffered_read_byte(ctx, buffer) if (ctx->bytesinbuffer-ctx->filebuffer_pos) { \
-    if (buffer) { *buffer=ctx->filebuffer[ctx->filebuffer_pos]; \
-    ctx->filebuffer_pos++; \
-    result=1; } \
-} else result=buffered_read_opt (ctx, buffer,1);
-
-LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes);
 
 struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt);
 void dinit_libraries( struct lib_ccx_ctx **ctx);
@@ -184,7 +157,6 @@ void general_loop(struct lib_ccx_ctx *ctx);
 void processhex (char *filename);
 void rcwt_loop(struct lib_ccx_ctx *ctx);
 
-extern LLONG result;
 extern int end_of_file;
 
 // asf_functions.c
@@ -286,7 +258,6 @@ extern const char *desc[256];
 
 
 extern long FILEBUFFERSIZE; // Uppercase because it used to be a define
-extern unsigned long net_activity_gui;
 
 extern int firstcall;
 
