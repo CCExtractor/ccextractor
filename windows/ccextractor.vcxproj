@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -50,6 +50,8 @@
     <ClInclude Include="..\src\lib_ccx\ccx_common_timing.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_608.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_708.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_decoders_708_encoding.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_decoders_708_output.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_common.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_structs.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_xds.h" />
@@ -138,7 +140,7 @@
     <ClCompile Include="..\src\lib_ccx\608_smptett.c" />
     <ClCompile Include="..\src\lib_ccx\608_spupng.c" />
     <ClCompile Include="..\src\lib_ccx\608_srt.c" />
-    <ClCompile Include="..\src\lib_ccx\708_encoding.c" />
+    <ClCompile Include="..\src\lib_ccx\608_webvtt.c" />
     <ClCompile Include="..\src\lib_ccx\activity.c" />
     <ClCompile Include="..\src\lib_ccx\asf_functions.c" />
     <ClCompile Include="..\src\lib_ccx\avc_functions.c" />
@@ -149,11 +151,15 @@
     <ClCompile Include="..\src\lib_ccx\ccx_common_timing.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_608.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_708.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_decoders_708_encoding.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_decoders_708_output.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_common.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_xds.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_demuxer.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_dtvcc.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_common.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_helpers.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_encoder_xds.c" />
     <ClCompile Include="..\src\lib_ccx\cc_bitstream.c" />
     <ClCompile Include="..\src\lib_ccx\configuration.c" />
     <ClCompile Include="..\src\lib_ccx\dvb_subtitle_decoder.c" />
@@ -178,6 +184,7 @@
     <ClCompile Include="..\src\lib_ccx\ts_tables_epg.c" />
     <ClCompile Include="..\src\lib_ccx\utility.c" />
     <ClCompile Include="..\src\lib_ccx\wtv_functions.c" />
+    <ClCompile Include="..\src\win_iconv\win_iconv.c" />
     <ClCompile Include="..\src\zlib\adler32.c" />
     <ClCompile Include="..\src\zlib\crc32.c" />
     <ClCompile Include="..\src\zlib\deflate.c" />
@@ -195,11 +202,11 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
