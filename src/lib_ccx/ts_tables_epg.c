@@ -81,7 +81,7 @@ void EPG_DVB_calc_start_time(struct EPG_event *event, uint64_t time)
 		y = y + k + 1900;
 		m = m - 1 - k*12;
 
-		sprintf(event->start_time_string, "%02ld%02ld%02ld%06lx +0000",y,m,d,time&0xffffff);
+		sprintf(event->start_time_string, "%02ld%02ld%02ld%06llx +0000",y,m,d,time&0xffffff);
 	}
 }
 
@@ -292,17 +292,22 @@ void EPG_output(struct lib_ccx_ctx *ctx)
 	FILE *f;
 	char *filename;
 	int i,j, ce;
+
 	filename = malloc(strlen(ctx->basefilename) + 9);
+	if(filename == NULL)
+		return;
+
 	memcpy(filename, ctx->basefilename, strlen(ctx->basefilename)+1);
 	strcat(filename, "_epg.xml");
 	f = fopen(filename, "w");
-	free(filename);
+	freep(&filename);
+
 	fprintf(f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n\n<tv>\n");
 	for(i=0; i<ctx->demux_ctx->nb_program; i++)
 	{
 		fprintf(f, "  <channel id=\"%i\">\n", ctx->demux_ctx->pinfo[i].program_number);
 		fprintf(f, "    <display-name>");
-		if(ctx->demux_ctx->pinfo[i].name[0]!='\0')
+		if(ctx->demux_ctx->pinfo[i].name[0] != '\0')
 			EPG_fprintxml(f, ctx->demux_ctx->pinfo[i].name);
 		else
 			fprintf(f, "%i\n", ctx->demux_ctx->pinfo[i].program_number);
@@ -865,14 +870,14 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 	uint16_t service_id;
 	int32_t pmt_map = -1;
 	int i;
-	int hasnew=false;
+	int hasnew = false;
 	struct EPG_event event;
 	uint8_t section_number;
 	uint8_t last_section_number;
 	uint8_t segment_last_section_number;
-	uint32_t events_length = section_length - 11;
-	uint8_t *offset=payload_start;
-	uint32_t remaining=events_length;
+	uint32_t events_length;
+	uint8_t *offset;
+	uint32_t remaining;
 
 
 	if(size < 13)
@@ -892,14 +897,14 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 	for (i = 0; i < ctx->demux_ctx->nb_program; i++)
 	{
 		if (ctx->demux_ctx->pinfo[i].program_number == service_id)
-			pmt_map=i;
+			pmt_map = i;
 	}
 
 	//For any service we don't have an PMT for (yet), store it in the special last array pos.
-	if(pmt_map==-1)
-		pmt_map=TS_PMT_MAP_SIZE;
+	if(pmt_map == -1)
+		pmt_map = TS_PMT_MAP_SIZE;
 
-	if(events_length>size-14)
+	if(events_length > size-14)
 	{
 		dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid EIT packet size detected.\n");
 		//XXX hack to override segfault, we should concat packets instead

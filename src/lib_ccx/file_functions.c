@@ -1,6 +1,7 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "activity.h"
+#include "file_buffer.h"
 long FILEBUFFERSIZE = 1024*1024*16; // 16 Mbytes no less. Minimize number of real read calls()
 
 #ifdef _WIN32
@@ -335,6 +336,8 @@ LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigne
 							np = LSEEK (ctx->infd, bytes, SEEK_CUR); // Pos after moving
 							i = (int) (np - op);
 						}
+						// if both above lseek returned -1 (error); i would be 0 here and
+						// in case when its not live stream copied would decrease and bytes would...
 						if (i == 0 && ccx_options.live_stream)
 						{
 							if (ccx_options.input_source == CCX_DS_STDIN)
@@ -444,4 +447,40 @@ LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigne
 		}
 	}
 	return copied;
+}
+
+unsigned short buffered_get_be16(struct ccx_demuxer *ctx)
+{
+	unsigned char a,b;
+	unsigned char *a_p = &a; // Just to suppress warnings
+	unsigned char *b_p = &b;
+	buffered_read_byte(ctx, a_p);
+	ctx->past++;
+	buffered_read_byte(ctx, b_p);
+	ctx->past++;
+	return ( (unsigned short) (a<<8) )| ( (unsigned short) b);
+}
+
+unsigned char buffered_get_byte (struct ccx_demuxer *ctx)
+{
+	unsigned char b;
+	unsigned char *b_p = &b;
+	int result;
+
+	result = buffered_read_byte(ctx, b_p);
+	if (result == 1)
+	{
+		ctx->past++;
+		return b;
+	}
+	else
+		return 0;
+}
+
+unsigned int buffered_get_be32(struct ccx_demuxer *ctx)
+{
+	unsigned int val;
+	val = buffered_get_be16(ctx) << 16;
+	val |= buffered_get_be16(ctx);
+	return val;
 }

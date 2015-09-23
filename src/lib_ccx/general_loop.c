@@ -11,9 +11,9 @@
 #include "activity.h"
 #include "utility.h"
 #include "ccx_demuxer.h"
+#include "file_buffer.h"
 
 unsigned int rollover_bits = 0; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
-LLONG result; // Number of bytes read/skipped in last read operation
 int end_of_file=0; // End of file?
 
 
@@ -25,6 +25,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 {
 	int enough = 0;
 	int payload_read = 0;
+	int result;
 
 	static unsigned vpesnum=0;
 
@@ -59,8 +60,8 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 		else
 		{
 			result = buffered_read(ctx->demux_ctx, nextheader, 6);
-			ctx->demux_ctx->past+=result;
-			if (result!=6)
+			ctx->demux_ctx->past += result;
+			if (result != 6)
 			{
 				// Consider this the end of the show.
 				end_of_file=1;
@@ -92,8 +93,8 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 
 					memmove (nextheader,newheader,(size_t)(hlen-atpos));
 					result = buffered_read(ctx->demux_ctx, nextheader+(hlen-atpos),atpos);
-					ctx->demux_ctx->past+=result;
-					if (result!=atpos)
+					ctx->demux_ctx->past += result;
+					if (result != atpos)
 					{
 						end_of_file=1;
 						break;
@@ -247,6 +248,7 @@ int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
 {
 	int bytesread = 0;
 	int want;
+	int result;
 	struct demuxer_data *ptr;
 	if(!*data)
 	{
@@ -841,6 +843,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	LLONG currfts;
 	uint16_t cbcount = 0;
 	int bread = 0; // Bytes read
+	int result;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 
 

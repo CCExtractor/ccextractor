@@ -8,6 +8,8 @@
 #include "activity.h"
 #include "utility.h"
 #include "ccx_common_timing.h"
+#include "file_buffer.h"
+
 void detect_stream_type (struct ccx_demuxer *ctx)
 {
 	ctx->stream_mode=CCX_SM_ELEMENTARY_OR_NOT_FOUND; // Not found
@@ -218,6 +220,7 @@ int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, u
 {
 	// Read the next video PES
 	// ((nextheader[3]&0xf0)==0xe0)
+	long long result;
 	unsigned peslen=nextheader[4]<<8 | nextheader[5];
 	unsigned payloadlength = 0; // Length of packet data bytes
 	static LLONG current_pts_33=0; // Last PTS from the header, without rollover bits

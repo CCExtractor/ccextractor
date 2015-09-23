@@ -26,7 +26,7 @@ struct PMT_entry
 {
 	unsigned program_number;
 	unsigned elementary_PID;
-	unsigned ccx_stream_type;
+	enum ccx_stream_type stream_type;
 	unsigned printable_stream_type;
 };
 

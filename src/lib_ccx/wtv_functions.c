@@ -2,6 +2,7 @@
 #include "ccx_common_option.h"
 #include "wtv_constants.h"
 #include "activity.h"
+#include "file_buffer.h"
 
 int check_stream_id(int stream_id, int video_streams[], int num_streams);
 int add_skip_chunks(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, uint32_t offset, uint32_t flag);
@@ -61,11 +62,12 @@ uint64_t time_to_pes_time(uint64_t time)
 int add_skip_chunks(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, uint32_t offset, uint32_t flag)
 {
 
+	uint32_t value;
+	int64_t result;
 	uint64_t start = ctx->past;
 	buffered_seek(ctx, (int)((offset*WTV_CHUNK_SIZE) - start));
 	uint64_t seek_back=0-((offset*WTV_CHUNK_SIZE)-start);
 
-	uint32_t value;
 	result = buffered_read(ctx, (unsigned char*)&value, 4);
 	if(result!=4)
 		return 0;
@@ -122,6 +124,7 @@ void skip_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, u
 // Will print error messages and return a null buffer on error.
 void get_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, uint32_t size)
 {
+	int64_t result;
 	if(cb->buffer != NULL && cb->buffer_size > 0)
 	{
 		free(cb->buffer);
@@ -172,6 +175,7 @@ void get_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, ui
 // at the start of the data dir
 int read_header(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb)
 {
+	int64_t result;
 	ctx->startbytes_avail = (int)buffered_read_opt(ctx, ctx->startbytes, STARTBYTESLENGTH);
 	return_to_buffer(ctx, ctx->startbytes, ctx->startbytes_avail);
 
@@ -312,6 +316,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 	static int alt_stream; //Stream to use for timestamps if the cc stream has broken timestamps
 	static int use_alt_stream = 0;
 	static int num_streams = 0;
+	int64_t result;
 	struct lib_cc_decode *dec_ctx = update_decoder_list(ctx);
 
 	while(1)
@@ -427,7 +432,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			if(cb->buffer==NULL)
 				return CCX_EOF;
 			memcpy(data->buffer+data->len, cb->buffer, len);
-			data->len+=result;
+			data->len += len;
 			bytesread+=(int) len;
 			frames_since_ref_time++;
 			set_fts(dec_ctx->timing);

@@ -2,6 +2,7 @@
 #include "ccx_common_option.h"
 #include "asf_constants.h"
 #include "activity.h"
+#include "file_buffer.h"
 
 // Indicate first / subsequent calls to asf_getmoredata()
 int firstcall;
