@@ -293,6 +293,8 @@ void usage (void)
 	mprint ("Output will be one single file (either raw or srt). Use this if you made your\n");
 	mprint ("recording in several cuts (to skip commercials for example) but you want one\n");
 	mprint ("subtitle file with contiguous timing.\n\n");
+	mprint ("Effect output files\n");
+	mprint ("    -outinterval x output in interval of x seconds\n");
 	mprint ("Network support:\n");
 	mprint ("            -udp port: Read the input via UDP (listening in the specified port)\n");
 	mprint ("                       instead of reading a file.\n\n");
@@ -1107,6 +1109,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp (argv[i],"-trim")==0)
 		{
 			opt->enc_cfg.trim_subs=1;
+			continue;
+		}
+		if (strcmp (argv[i],"-outinterval")==0)
+		{
+			opt->out_interval = atoi(argv[i+1]);
+			i++;
 			continue;
 		}
 		if (strcmp (argv[i],"--gui_mode_reports")==0)
