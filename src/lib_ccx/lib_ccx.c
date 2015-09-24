@@ -156,6 +156,9 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ccx_common_timing_init(&ctx->demux_ctx->past,opt->nosync);
 	ctx->multiprogram = opt->multiprogram;
 	ctx->write_format = opt->write_format;
+	ctx->out_interval = opt->out_interval;
+	ctx->segment_counter = 0;
+	ctx->system_start_time = -1;
 
 end:
 	if (ret != EXIT_OK)
@@ -288,6 +291,11 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	struct encoder_ctx *enc_ctx;
 	unsigned int pn = 0;
 	unsigned char in_format = 1;
+	char *extension;
+
+	extension = get_file_extension(ccx_options.enc_cfg.write_format);
+	if(!extension)
+		return NULL;
 
 	if (ctx->write_format == CCX_OF_NULL)
 		return NULL;
@@ -308,8 +316,21 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		if (enc_ctx->program_number == pn)
 			return enc_ctx;
 	}
+
+
 	if(ctx->multiprogram == CCX_FALSE)
 	{
+		if(ctx->out_interval != -1)
+		{
+			int len;
+
+			len = strlen(ctx->basefilename) + 10 + strlen(extension);
+
+			freep(&ccx_options.enc_cfg.output_filename);
+			ccx_options.enc_cfg.output_filename = malloc(len);
+
+			sprintf(ccx_options.enc_cfg.output_filename, "%s_%d%s", ctx->basefilename, ctx->segment_counter, extension);
+		}
 		if (list_empty(&ctx->enc_ctx_head))
 		{
 			ccx_options.enc_cfg.program_number = pn;
@@ -323,11 +344,6 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	else
 	{
 		int len;
-		char *extension;
-
-		extension = get_file_extension(ccx_options.enc_cfg.write_format);
-		if(!extension)
-			return NULL;
 
 		len = strlen(ctx->basefilename) + 10 + strlen(extension);
 
@@ -352,6 +368,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		freep(&extension);
 		freep(&ccx_options.enc_cfg.output_filename);
 	}
+	freep(&extension);
 	return enc_ctx;
 }
 

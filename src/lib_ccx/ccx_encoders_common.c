@@ -714,6 +714,7 @@ static void dinit_output_ctx(struct encoder_ctx *ctx)
 			ccx_dtvcc_writer_cleanup(&ctx->dtvcc_writers[i]);
 	}
 }
+
 static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 {
 	int ret = EXIT_OK;

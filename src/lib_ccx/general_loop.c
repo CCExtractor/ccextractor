@@ -651,6 +651,44 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	return CCX_OK;
 }
+
+void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
+{
+	LLONG cur_sec;
+	LLONG t;
+	struct encoder_ctx *enc_ctx;
+
+
+#if SEGMENT_BY_FILE_TIME
+	t = get_fts(dec_ctx->timing, dec_ctx->current_field);
+	if (!t && ctx->demux_ctx->global_timestamp_inited)
+		t = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
+
+	cur_sec = t/1000;
+#else
+	cur_sec = time(NULL);
+#endif
+
+	if (ctx->system_start_time == -1)
+		ctx->system_start_time = cur_sec;
+
+	cur_sec = cur_sec - ctx->system_start_time;
+
+	if (ctx->out_interval < 1)
+		return;
+
+	if (cur_sec/ctx->out_interval > ctx->segment_counter)
+	{
+		ctx->segment_counter++;
+
+		enc_ctx = get_encoder_by_pn(ctx, dec_ctx->program_number);
+		if (enc_ctx)
+		{
+			list_del(&enc_ctx->list);
+			dinit_encoder(&enc_ctx, t);
+		}
+	}
+}
 void general_loop(struct lib_ccx_ctx *ctx)
 {
 	struct lib_cc_decode *dec_ctx = NULL;
@@ -781,6 +819,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				}
 			}
 		}
+		segment_output_file(ctx, dec_ctx);
 
 		if (ccx_options.send_to_srv)
 			net_check_conn();
