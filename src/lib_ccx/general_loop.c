@@ -659,11 +659,11 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 	struct encoder_ctx *enc_ctx;
 
 
-#if SEGMENT_BY_FILE_TIME
 	t = get_fts(dec_ctx->timing, dec_ctx->current_field);
 	if (!t && ctx->demux_ctx->global_timestamp_inited)
 		t = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
 
+#if SEGMENT_BY_FILE_TIME
 	cur_sec = t/1000;
 #else
 	cur_sec = time(NULL);
