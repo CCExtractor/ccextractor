@@ -158,6 +158,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->write_format = opt->write_format;
 	ctx->out_interval = opt->out_interval;
 	ctx->segment_counter = 0;
+	ctx->system_start_time = -1;
 
 end:
 	if (ret != EXIT_OK)

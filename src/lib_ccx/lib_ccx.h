@@ -135,6 +135,7 @@ struct lib_ccx_ctx
 	struct ccx_s_mp4Cfg mp4_cfg;
 	int out_interval;
 	int segment_counter;
+	LLONG system_start_time;
 };
 
 
