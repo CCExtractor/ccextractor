@@ -53,7 +53,7 @@ struct cc_subtitle
 	int lang_index;
 	/** flag to tell that decoder has given output */
 	int got_output;
-	
+	int sentence_cap; //FIX CASE = Fix Case ?	
 	char mode[4];
 	char info[4];
 

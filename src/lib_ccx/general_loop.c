@@ -550,6 +550,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	int ret = 0;
 	static LLONG last_pts = 0x01FFFFFFFFLL;
 	struct cc_subtitle *dec_sub = &dec_ctx->dec_sub;
+	dec_sub->sentence_cap = enc_ctx->sentence_cap; //dec_sub eventually gets passed to teletext so passing -sc info to it.
 
 	if (dec_ctx->hauppauge_mode)
 	{
