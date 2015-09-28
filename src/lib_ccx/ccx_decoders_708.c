@@ -106,18 +106,96 @@ ccx_dtvcc_pen_attribs ccx_dtvcc_default_pen_attribs =
 
 ccx_dtvcc_window_attribs ccx_dtvcc_predefined_window_styles[] =
 {
-		{
+		{//1 - NTSC Style PopUp Captions
 			CCX_DTVCC_WINDOW_JUSTIFY_LEFT,
 			CCX_DTVCC_WINDOW_PD_LEFT_RIGHT,
 			CCX_DTVCC_WINDOW_SD_BOTTOM_TOP,
 			0,
 			CCX_DTVCC_WINDOW_SDE_SNAP,
-			0, //n/a
-			0, //n/a
+			0,
+			0,
 			0,
 			CCX_DTVCC_WINDOW_FO_SOLID,
 			CCX_DTVCC_WINDOW_BORDER_NONE,
-			0 //n/a
+			0
+		},
+		{//2 - PopUp Captions w/o Black Background
+			CCX_DTVCC_WINDOW_JUSTIFY_LEFT,
+			CCX_DTVCC_WINDOW_PD_LEFT_RIGHT,
+			CCX_DTVCC_WINDOW_SD_BOTTOM_TOP,
+			0,
+			CCX_DTVCC_WINDOW_SDE_SNAP,
+			0,
+			0,
+			0,
+			CCX_DTVCC_WINDOW_FO_TRANSPARENT,
+			CCX_DTVCC_WINDOW_BORDER_NONE,
+			0
+		},
+		{//3 - NTSC Style Centered PopUp Captions
+			CCX_DTVCC_WINDOW_JUSTIFY_CENTER,
+			CCX_DTVCC_WINDOW_PD_LEFT_RIGHT,
+			CCX_DTVCC_WINDOW_SD_BOTTOM_TOP,
+			0,
+			CCX_DTVCC_WINDOW_SDE_SNAP,
+			0,
+			0,
+			0,
+			CCX_DTVCC_WINDOW_FO_SOLID,
+			CCX_DTVCC_WINDOW_BORDER_NONE,
+			0
+		},
+		{//4 - NTSC Style RollUp Captions
+			CCX_DTVCC_WINDOW_JUSTIFY_LEFT,
+			CCX_DTVCC_WINDOW_PD_LEFT_RIGHT,
+			CCX_DTVCC_WINDOW_SD_BOTTOM_TOP,
+			1,
+			CCX_DTVCC_WINDOW_SDE_SNAP,
+			0,
+			0,
+			0,
+			CCX_DTVCC_WINDOW_FO_SOLID,
+			CCX_DTVCC_WINDOW_BORDER_NONE,
+			0
+		},
+		{//5 - RollUp Captions w/o Black Background
+			CCX_DTVCC_WINDOW_JUSTIFY_LEFT,
+			CCX_DTVCC_WINDOW_PD_LEFT_RIGHT,
+			CCX_DTVCC_WINDOW_SD_BOTTOM_TOP,
+			1,
+			CCX_DTVCC_WINDOW_SDE_SNAP,
+			0,
+			0,
+			0,
+			CCX_DTVCC_WINDOW_FO_TRANSPARENT,
+			CCX_DTVCC_WINDOW_BORDER_NONE,
+			0
+		},
+		{//6 - NTSC Style Centered RollUp Captions
+			CCX_DTVCC_WINDOW_JUSTIFY_CENTER,
+			CCX_DTVCC_WINDOW_PD_LEFT_RIGHT,
+			CCX_DTVCC_WINDOW_SD_BOTTOM_TOP,
+			1,
+			CCX_DTVCC_WINDOW_SDE_SNAP,
+			0,
+			0,
+			0,
+			CCX_DTVCC_WINDOW_FO_SOLID,
+			CCX_DTVCC_WINDOW_BORDER_NONE,
+			0
+		},
+		{//7 - Ticker tape
+			CCX_DTVCC_WINDOW_JUSTIFY_LEFT,
+			CCX_DTVCC_WINDOW_PD_TOP_BOTTOM,
+			CCX_DTVCC_WINDOW_SD_RIGHT_LEFT,
+			0,
+			CCX_DTVCC_WINDOW_SDE_SNAP,
+			0,
+			0,
+			0,
+			CCX_DTVCC_WINDOW_FO_SOLID,
+			CCX_DTVCC_WINDOW_BORDER_NONE,
+			0
 		}
 };
 
@@ -580,7 +658,8 @@ void _dtvcc_process_character(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_symb
 				window->pen_row--;
 			break;
 		default:
-			ccx_common_logging.log_ftn("[CEA-708] _dtvcc_process_character: unhandled branch\n");
+			ccx_common_logging.log_ftn("[CEA-708] _dtvcc_process_character: unhandled branch (%02d)\n",
+				window->attribs.print_direction);
 			break;
 	}
 }
@@ -833,6 +912,8 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 		//Accorgind to CEA-708-D if window_style is 0 for newly created window , we have to apply predefined style #1
 		if (window->win_style == 0)
 			_dtvcc_window_apply_style(window, &ccx_dtvcc_predefined_window_styles[0]);
+		else
+			_dtvcc_window_apply_style(window, &ccx_dtvcc_predefined_window_styles[window->win_style - 1]);
 	}
 	else
 	{
