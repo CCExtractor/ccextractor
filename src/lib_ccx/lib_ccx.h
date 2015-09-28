@@ -14,13 +14,12 @@
 
 #include "ccx_demuxer.h"
 #include "ccx_encoders_common.h"
-#include "ccx_decoders_608.h"
-#include "ccx_decoders_xds.h"
+#include "ccx_decoders_common.h"
 #include "bitstream.h"
 
 #include "networking.h"
 #include "avc_functions.h"
-#include "ccx_decoders_708.h"
+//#include "ccx_decoders_708.h"
 
 /* Report information */
 #define SUB_STREAMS_CNT 10
@@ -60,6 +59,12 @@ struct ccx_s_teletext_config
 	int nofontcolor;
 	char millis_separator;
 };
+
+struct ccx_s_mp4Cfg
+{
+	unsigned int mp4vidtrack :1;
+};
+
 struct lib_ccx_ctx
 {
 
@@ -127,35 +132,9 @@ struct lib_ccx_ctx
 
 	struct ccx_demuxer *demux_ctx;
 	struct list_head enc_ctx_head;
+	struct ccx_s_mp4Cfg mp4_cfg;
 };
 
-#define buffered_skip(ctx, bytes) if (bytes<= ctx->bytesinbuffer - ctx->filebuffer_pos) { \
-    ctx->filebuffer_pos+=bytes; \
-    result=bytes; \
-} else result=buffered_read_opt (ctx, NULL,bytes);
-
-#define buffered_read(ctx, buffer,bytes) if (bytes<= ctx->bytesinbuffer - ctx->filebuffer_pos) { \
-    if (buffer!=NULL) memcpy (buffer, ctx->filebuffer + ctx->filebuffer_pos, bytes); \
-    ctx->filebuffer_pos+=bytes; \
-    result=bytes; \
-} else { result=buffered_read_opt (ctx, buffer,bytes); if (ccx_options.gui_mode_reports && ccx_options.input_source==CCX_DS_NETWORK) {net_activity_gui++; if (!(net_activity_gui%1000))activity_report_data_read();}}
-
-#define buffered_read_4(buffer) if (4<=bytesinbuffer-filebuffer_pos) { \
-    if (buffer) { buffer[0]=filebuffer[filebuffer_pos]; \
-    buffer[1]=filebuffer[filebuffer_pos+1]; \
-    buffer[2]=filebuffer[filebuffer_pos+2]; \
-    buffer[3]=filebuffer[filebuffer_pos+3]; \
-    filebuffer_pos+=4; \
-    result=4; } \
-} else result=buffered_read_opt (buffer,4);
-
-#define buffered_read_byte(ctx, buffer) if (ctx->bytesinbuffer-ctx->filebuffer_pos) { \
-    if (buffer) { *buffer=ctx->filebuffer[ctx->filebuffer_pos]; \
-    ctx->filebuffer_pos++; \
-    result=1; } \
-} else result=buffered_read_opt (ctx, buffer,1);
-
-LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes);
 
 struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt);
 void dinit_libraries( struct lib_ccx_ctx **ctx);
@@ -178,7 +157,6 @@ void general_loop(struct lib_ccx_ctx *ctx);
 void processhex (char *filename);
 void rcwt_loop(struct lib_ccx_ctx *ctx);
 
-extern LLONG result;
 extern int end_of_file;
 
 // asf_functions.c
@@ -208,7 +186,7 @@ void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned 
 // sequencing.c
 void init_hdcc (struct lib_cc_decode *ctx);
 void store_hdcc(struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now, struct cc_subtitle *sub);
-void anchor_hdcc(int seq);
+void anchor_hdcc(struct lib_cc_decode *ctx, int seq);
 void process_hdcc (struct lib_cc_decode *ctx, struct cc_subtitle *sub);
 
 // params_dump.c
@@ -280,14 +258,8 @@ extern const char *desc[256];
 
 
 extern long FILEBUFFERSIZE; // Uppercase because it used to be a define
-extern unsigned long net_activity_gui;
 
 extern int firstcall;
-
-#define MAXBFRAMES 50
-#define SORTBUF (2*MAXBFRAMES+1)
-extern int cc_data_count[SORTBUF];
-extern unsigned char cc_data_pkts[SORTBUF][10*31*3+1];
 
 // From ts_functions
 //extern struct ts_payload payload;

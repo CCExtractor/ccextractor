@@ -105,22 +105,24 @@ void writeDVDraw (const unsigned char *data1, int length1,
 void printdata (struct lib_cc_decode *ctx, const unsigned char *data1, int length1,
                 const unsigned char *data2, int length2, struct cc_subtitle *sub)
 {
-	struct ccx_decoder_608_context *field_1 = ctx->context_cc608_field_1;
-	struct ccx_decoder_608_context *field_2 = ctx->context_cc608_field_2;
 	if (ctx->write_format==CCX_OF_DVDRAW)
 		writeDVDraw (data1, length1, data2, length2, sub);
 	else /* Broadcast raw or any non-raw */
 	{
 		if (length1 && ctx->extract != 2)
 		{
-			ctx->writedata(data1, length1, field_1, sub);
+			ctx->current_field = 1;
+			ctx->writedata(data1, length1, ctx, sub);
 		}
 		if (length2)
 		{
+			ctx->current_field = 2;
 			if (ctx->extract != 1)
-				ctx->writedata(data2, length2, field_2, sub);
+				ctx->writedata(data2, length2, ctx, sub);
 			else // User doesn't want field 2 data, but we want XDS.
-				ctx->writedata (data2,length2,NULL, sub);
+			{
+				ctx->writedata (data2, length2, ctx, sub);
+			}
 		}
 	}
 }
@@ -130,7 +132,7 @@ void printdata (struct lib_cc_decode *ctx, const unsigned char *data1, int lengt
 void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct cc_subtitle *sub)
 {
 	static LLONG prevfts = -1;
-	LLONG currfts = fts_now + fts_global;
+	LLONG currfts = ctx->timing->fts_now + ctx->timing->fts_global;
 	static uint16_t cbcount = 0;
 	static int cbempty=0;
 	static unsigned char cbbuffer[0xFFFF*3]; // TODO: use malloc

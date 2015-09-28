@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <sys/stat.h>
-#include "608_spupng.h"
+#include "ccx_encoders_spupng.h"
 #include "ccx_encoders_helpers.h"
 
 void draw_str(char *str, uint8_t * canvas, int rowstride)

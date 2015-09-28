@@ -10,7 +10,7 @@ static const int rowdata[] = {11,-1,1,2,3,4,12,13,14,15,5,6,7,8,9,10};
 // Relationship between the first PAC byte and the row number
 int in_xds_mode=0;
 
-unsigned char str[2048]; // Another generic general purpose buffer
+//unsigned char str[2048]; // Another generic general purpose buffer
 
 const unsigned char pac2_attribs[][3] = // Color, font, ident
 {
@@ -48,7 +48,6 @@ const unsigned char pac2_attribs[][3] = // Color, font, ident
 	{ COL_WHITE, FONT_UNDERLINED, 28 }  // 0x5f || 0x7f
 };
 
-int new_sentence=1; // Capitalize next letter?
 
 static const char *command_type[] =
 {
@@ -123,7 +122,7 @@ void ccx_decoder_608_dinit_library(void **ctx)
 ccx_decoder_608_context* ccx_decoder_608_init_library(struct ccx_decoder_608_settings *settings, int channel,
 		int field, int *halt,
 		int cc_to_stdout,
-		enum ccx_output_format output_format)
+		enum ccx_output_format output_format, struct ccx_common_timing_ctx *timing)
 {
 	ccx_decoder_608_context *data = NULL;
 
@@ -150,12 +149,14 @@ ccx_decoder_608_context* ccx_decoder_608_init_library(struct ccx_decoder_608_set
 	data->have_cursor_position = 0;
 	data->output_format = output_format;
 	data->cc_to_stdout = cc_to_stdout;
+	data->textprinted = 0;
 
 	data->halt = halt;
 
 	data->settings = settings;
 	data->current_color = data->settings->default_color;
 	data->report = settings->report;
+	data->timing = timing;
 
 	clear_eia608_cc_buffer(data, &data->buffer1);
 	clear_eia608_cc_buffer(data, &data->buffer2);
@@ -224,15 +225,15 @@ void write_char(const unsigned char c, ccx_decoder_608_context *context)
 		if (use_buffer->empty)
 		{
 			if (MODE_POPON != context->mode)
-				context->current_visible_start_ms = get_visible_start();
+				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
 		}
 		use_buffer->empty=0;
 
 		if (context->cursor_column<CCX_DECODER_608_SCREEN_WIDTH - 1)
 			context->cursor_column++;
 		if (context->ts_start_of_current_line == -1)
-			context->ts_start_of_current_line = get_fts();
-		context->ts_last_char_received = get_fts();
+			context->ts_start_of_current_line = get_fts(context->timing, context->my_field);
+		context->ts_last_char_received = get_fts(context->timing, context->my_field);
 	}
 }
 
@@ -299,7 +300,7 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 		context->current_visible_start_ms = context->ts_start_of_current_line;
 
 	start_time = context->current_visible_start_ms;
-	end_time = get_visible_end();
+	end_time = get_visible_end(context->timing, context->my_field);
 	sub->type = CC_608;
 	data->format = SFORMAT_CC_SCREEN;
 	data->start_time = 0;
@@ -352,11 +353,10 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 	LLONG end_time;
 	int i = 0;
 	int wrote_something=0;
-	int ret = 0;
 	data = get_current_visible_buffer(context);
 
 	start_time = context->ts_start_of_current_line;
-	end_time = get_fts();
+	end_time = get_fts(context->timing, context->my_field);
 	sub->type = CC_608;
 	data->format = SFORMAT_CC_LINE;
 	data->start_time = 0;
@@ -592,7 +592,7 @@ int is_current_row_empty(ccx_decoder_608_context *context)
 }
 
 /* Process GLOBAL CODES */
-void handle_command(/*const */ unsigned char c1, const unsigned char c2, ccx_decoder_608_context *context, struct cc_subtitle *sub)
+void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_context *context, struct cc_subtitle *sub)
 {
 	int changes=0;
 
@@ -756,7 +756,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, ccx_dec
 			roll_up(context); // The roll must be done anyway of course.
 			context->ts_start_of_current_line = -1; // Unknown.
 			if (changes)
-				context->current_visible_start_ms = get_visible_start();
+				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
 			context->cursor_column = 0;
 			break;
 		case COM_ERASENONDISPLAYEDMEMORY:
@@ -784,7 +784,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, ccx_dec
 					context->screenfuls_counter++;
 			}
 			erase_memory(context, true);
-			context->current_visible_start_ms = get_visible_start();
+			context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
 			break;
 		case COM_ENDOFCAPTION: // Switch buffers
 			// The currently *visible* buffer is leaving, so now we know its ending
@@ -792,7 +792,7 @@ void handle_command(/*const */ unsigned char c1, const unsigned char c2, ccx_dec
 			if (write_cc_buffer(context, sub))
 				context->screenfuls_counter++;
 			context->visible_buffer = (context->visible_buffer == 1) ? 2 : 1;
-			context->current_visible_start_ms = get_visible_start();
+			context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
 			context->cursor_column = 0;
 			context->cursor_row = 0;
 			context->current_color = context->settings->default_color;
@@ -970,7 +970,7 @@ void erase_both_memories(ccx_decoder_608_context *context, struct cc_subtitle *s
 			// time. Time to actually write it to file.
 	if (write_cc_buffer(context, sub))
 		context->screenfuls_counter++;
-	context->current_visible_start_ms = get_visible_start();
+	context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
 	context->cursor_column = 0;
 	context->cursor_row = 0;
 	context->current_color = context->settings->default_color;
@@ -1068,13 +1068,26 @@ int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *cont
 	return wrote_to_screen;
 }
 
-/* If wb is NULL, then only XDS will be processed */
+/* If private data is NULL, then only XDS will be processed */
 int process608(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub)
 {
 	struct ccx_decoder_608_report  *report = NULL;
-	ccx_decoder_608_context *context = private_data;
-	static int textprinted = 0;
+	struct lib_cc_decode *dec_ctx = private_data;
+	struct ccx_decoder_608_context *context;
 	int i;
+
+	if(dec_ctx->current_field == 1)
+	{
+		context = dec_ctx->context_cc608_field_1;
+	}
+	else if (dec_ctx->current_field == 2 && dec_ctx->extract == 1)
+	{
+		context = NULL;
+	}
+	else
+	{
+		context = dec_ctx->context_cc608_field_2;
+	}
 	if (context)
 	{
 		report = context->report;
@@ -1112,16 +1125,16 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 				context->channel = 3;
 			if (!in_xds_mode)
 			{
-				ts_start_of_xds=get_fts();
-				in_xds_mode=1;
+				ts_start_of_xds = get_fts(dec_ctx->timing, dec_ctx->current_field);
+				in_xds_mode = 1;
 			}
 			if(report)
-				report->xds=1;
+				report->xds = 1;
 		}
 		if (hi == 0x0F && in_xds_mode && (context == NULL || context->my_field == 2)) // End of XDS block
 		{
 			in_xds_mode=0;
-			do_end_of_xds (sub, lo);
+			do_end_of_xds (sub, dec_ctx->xds_ctx, lo);
 			if (context)
 				context->channel = context->new_channel; // Switch from channel 3
 			continue;
@@ -1130,17 +1143,19 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 			// http://www.geocities.com/mcpoodle43/SCC_TOOLS/DOCS/CC_CODES.HTML
 			// http://www.geocities.com/mcpoodle43/SCC_TOOLS/DOCS/CC_CHARS.HTML
 		{
-			// We were writing characters before, start a new line for
-			// diagnostic output from disCommand()
-			if (textprinted == 1 )
-			{
-				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\n");
-				textprinted = 0;
-			}
 			if (!context || context->my_field == 2)
 				in_xds_mode=0; // Back to normal (CEA 608-8.6.2)
 			if (!context) // Not XDS and we don't have a writebuffer, nothing else would have an effect
 				continue;
+
+			// We were writing characters before, start a new line for
+			// diagnostic output from disCommand()
+			if (context->textprinted == 1 )
+			{
+				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\n");
+				context->textprinted = 0;
+			}
+
 			if (context->last_c1 == hi && context->last_c2 == lo)
 			{
 				// Duplicate dual code, discard. Correct to do it only in
@@ -1161,7 +1176,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 		{
 			if (in_xds_mode && (context == NULL || context->my_field == 2))
 			{
-				process_xds_bytes (hi,lo);
+				process_xds_bytes (dec_ctx->xds_ctx, hi, lo);
 				continue;
 			}
 			if (!context) // No XDS code after this point, and user doesn't want captions.
@@ -1176,10 +1191,10 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 				if (context->channel != context->my_channel)
 					continue;
 
-				if( textprinted == 0 )
+				if( context->textprinted == 0 )
 				{
 					ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\n");
-					textprinted = 1;
+					context->textprinted = 1;
 				}
 
 				handle_single(hi, context);
@@ -1189,9 +1204,9 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 				context->last_c2 = 0;
 			}
 
-			if (!textprinted && context->channel == context->my_channel)
+			if (!context->textprinted && context->channel == context->my_channel)
 			{   // Current FTS information after the characters are shown
-				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Current FTS: %s\n", print_mstime(get_fts()));
+				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Current FTS: %s\n", print_mstime(get_fts(dec_ctx->timing, context->my_field)));
 				//printf("  N:%u", unsigned(fts_now) );
 				//printf("  G:%u", unsigned(fts_global) );
 				//printf("  F:%d %d %d %d\n",
@@ -1206,7 +1221,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 			{
 				// We don't increase screenfuls_counter here.
 				write_cc_buffer(context, sub);
-				context->current_visible_start_ms = get_visible_start();
+				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
 			}
 		}
 		if (wrote_to_screen && context->cc_to_stdout)

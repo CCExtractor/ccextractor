@@ -328,6 +328,7 @@ typedef struct ccx_decoder_dtvcc_settings
 	ccx_decoder_dtvcc_report *report;
 	int active_services_count;
 	int services_enabled[CCX_DTVCC_MAX_SERVICES];
+	struct ccx_common_timing_ctx *timing;
 } ccx_decoder_dtvcc_settings;
 
 /**
@@ -354,6 +355,7 @@ typedef struct ccx_dtvcc_ctx
 
 	void *encoder; //we can't include header, so keeping it this way
 	int no_rollup;
+	struct ccx_common_timing_ctx *timing;
 } ccx_dtvcc_ctx;
 
 

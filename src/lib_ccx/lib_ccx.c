@@ -28,6 +28,8 @@ static struct ccx_decoders_common_settings_t *init_decoder_setting(
 	setting->cc_channel = opt->cc_channel;
 	setting->send_to_srv = opt->send_to_srv;
 	setting->hauppauge_mode = opt->hauppauge_mode;
+	/* if in transcript setting xds is not selected then set ignore xds flag */
+	setting->ignore_xds = !opt->transcript_settings.xds;
 	return setting;
 }
 static void dinit_decoder_setting (struct ccx_decoders_common_settings_t **setting)
@@ -125,7 +127,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->dec_global_setting->settings_608->report = report_608;
 	ctx->freport.data_from_708 = report_dtvcc;
 	ctx->dec_global_setting->settings_dtvcc->report = report_dtvcc;
-
+	ctx->mp4_cfg.mp4vidtrack = opt->mp4vidtrack;
 	//Initialize input files
 	ctx->inputfile = opt->inputfile;
 	ctx->num_input_files = opt->num_input_files;
@@ -134,10 +136,6 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	if (ret < 0) {
 		goto end;
 	}
-
-	// Init XDS buffers
-	ccx_decoders_xds_init_library(&opt->transcript_settings, ctx->subs_delay, opt->millis_separator);
-	//xds_cea608_test();
 
 	ctx->subs_delay = opt->subs_delay;
 
@@ -177,9 +175,11 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 	int i;
 	list_for_each_entry_safe(dec_ctx, dec_ctx1, &lctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
+		LLONG cfts;
 		if (dec_ctx->codec == CCX_CODEC_DVB)
 			dvbsub_close_decoder(&dec_ctx->private_data);
 		flush_cc_decode(dec_ctx, &dec_ctx->dec_sub);
+		cfts = get_fts(dec_ctx->timing, dec_ctx->current_field);
 		enc_ctx = get_encoder_by_pn(lctx, dec_ctx->program_number);
 		if (enc_ctx && dec_ctx->dec_sub.got_output == CCX_TRUE)
 		{
@@ -191,7 +191,7 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 		if (enc_ctx)
 		{
 			list_del(&enc_ctx->list);
-			dinit_encoder(&enc_ctx);
+			dinit_encoder(&enc_ctx, cfts);
 		}
 	}
 

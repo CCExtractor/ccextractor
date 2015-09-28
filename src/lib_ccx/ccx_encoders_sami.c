@@ -14,9 +14,9 @@ int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_st
 	int ret = 0;
 	unsigned char *unescaped = NULL;
 	unsigned char *el = NULL;
+	char str[1024];
 
-	sprintf ((char *) str,
-			"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",(unsigned long long)ms_start);
+	sprintf (str,"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",(unsigned long long)ms_start);
 	if (context->encoding != CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
@@ -215,6 +215,8 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 	int used;
 	LLONG startms, endms;
 	int wrote_something=0;
+	char str[1024];
+
 	startms = data->start_time;
 
 	startms+=context->subs_delay;
@@ -223,8 +225,7 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 
 	endms   = data->end_time;
 	endms--; // To prevent overlapping with next line.
-	sprintf ((char *) str,
-			"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",
+	sprintf (str,"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",
 			(unsigned long long)startms);
 	if (context->encoding != CCX_ENC_UNICODE)
 	{

@@ -10,31 +10,31 @@ made to reuse, not duplicate, as many functions as possible */
 #include "lib_ccx.h"
 #include "ccx_decoders_608.h"
 #include "ccx_decoders_708.h"
+#include "ccx_decoders_xds.h"
 #include "ccx_dtvcc.h"
 
 
 uint64_t utc_refvalue = UINT64_MAX;  /* _UI64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
 extern int in_xds_mode;
 
-LLONG minimum_fts = 0; // No screen should start before this FTS
 
 /* This function returns a FTS that is guaranteed to be at least 1 ms later than the end of the previous screen. It shouldn't be needed
    obviously but it guarantees there's no timing overlap */
-LLONG get_visible_start (void)
+LLONG get_visible_start (struct ccx_common_timing_ctx *ctx, int current_field)
 {
-	LLONG fts = get_fts();
-	if (fts <= minimum_fts)
-		fts = minimum_fts+1;
+	LLONG fts = get_fts(ctx, current_field);
+	if (fts <= ctx->minimum_fts)
+		fts = ctx->minimum_fts + 1;
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Visible Start time=%s\n", print_mstime(fts));
 	return fts;
 }
 
-/* This function returns the current FTS and saves it so it can be used by get_visible_start */
-LLONG get_visible_end (void)
+/* This function returns the current FTS and saves it so it can be used by ctxget_visible_start */
+LLONG get_visible_end (struct ccx_common_timing_ctx *ctx, int current_field)
 {
-	LLONG fts = get_fts();
-	if (fts>minimum_fts)
-		minimum_fts=fts;
+	LLONG fts = get_fts(ctx, current_field);
+	if (fts > ctx->minimum_fts)
+		ctx->minimum_fts = fts;
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Visible End time=%s\n", print_mstime(fts));
 	return fts;
 }
@@ -102,7 +102,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 		return 1;
 
 	// Print raw data with FTS.
-	dbg_print(CCX_DMT_CBRAW, "%s   %d   %02X:%c%c:%02X", print_mstime(fts_now + fts_global),in_xds_mode,
+	dbg_print(CCX_DMT_CBRAW, "%s   %d   %02X:%c%c:%02X", print_mstime(ctx->timing->fts_now + ctx->timing->fts_global),in_xds_mode,
 			cc_block[0], cc_block[1]&0x7f,cc_block[2]&0x7f, cc_block[2]);
 
 	/* In theory the writercwtdata() function could return early and not
@@ -120,14 +120,14 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 			case 0:
 				dbg_print(CCX_DMT_CBRAW, "    %s   ..   ..\n",  debug_608toASC( cc_block, 0));
 
-				current_field=1;
+				ctx->current_field = 1;
 				ctx->saw_caption_block = 1;
 
 				if (ctx->extraction_start.set &&
-						get_fts() < ctx->extraction_start.time_in_ms)
+						get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
 					timeok = 0;
 				if (ctx->extraction_end.set &&
-						get_fts() > ctx->extraction_end.time_in_ms)
+						get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
 				{
 					timeok = 0;
 					ctx->processed_enough=1;
@@ -144,14 +144,14 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 			case 1:
 				dbg_print(CCX_DMT_CBRAW, "    ..   %s   ..\n",  debug_608toASC( cc_block, 1));
 
-				current_field=2;
+				ctx->current_field = 2;
 				ctx->saw_caption_block = 1;
 
 				if (ctx->extraction_start.set &&
-						get_fts() < ctx->extraction_start.time_in_ms)
+						get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
 					timeok = 0;
 				if (ctx->extraction_end.set &&
-						get_fts() > ctx->extraction_end.time_in_ms)
+						get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
 				{
 					timeok = 0;
 					ctx->processed_enough=1;
@@ -172,13 +172,13 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 				dbg_print(CCX_DMT_CBRAW, "    ..   ..   DD\n");
 
 				// DTVCC packet start
-				current_field=3;
+				ctx->current_field = 3;
 
 				if (ctx->extraction_start.set &&
-						get_fts() < ctx->extraction_start.time_in_ms)
+						get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
 					timeok = 0;
 				if (ctx->extraction_end.set &&
-						get_fts() > ctx->extraction_end.time_in_ms)
+						get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
 				{
 					timeok = 0;
 					ctx->processed_enough=1;
@@ -233,6 +233,9 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 	ctx->avc_ctx = init_avc();
 	ctx->codec = setting->codec;
+	ctx->timing = init_timing_ctx(&ccx_common_timing_settings);
+
+	setting->settings_dtvcc->timing = ctx->timing;
 	ctx->dtvcc = ccx_dtvcc_init(setting->settings_dtvcc);
 	ctx->dtvcc->is_active = setting->settings_dtvcc->enabled;
 
@@ -245,7 +248,8 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 				1,
 				&ctx->processed_enough,
 				setting->cc_to_stdout,
-				setting->output_format
+				setting->output_format,
+				ctx->timing
 				);
 		ctx->context_cc608_field_2 = ccx_decoder_608_init_library(
 				setting->settings_608,
@@ -253,7 +257,8 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 				2,
 				&ctx->processed_enough,
 				setting->cc_to_stdout,
-				setting->output_format
+				setting->output_format,
+				ctx->timing
 				);
 	}
 	else
@@ -261,6 +266,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 		ctx->context_cc608_field_1 = NULL;
 		ctx->context_cc608_field_2 = NULL;
 	}
+	ctx->current_field = 1;
 	ctx->private_data = setting->private_data;
 	ctx->fix_padding = setting->fix_padding;
 	ctx->write_format =  setting->output_format;
@@ -272,7 +278,6 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->processed_enough = 0;
 	ctx->max_gop_length = 0;
 	ctx->has_ccdata_buffered = 0;
-	ctx->timing = init_timing_ctx(&ccx_common_timing_settings);
 	ctx->in_bufferdatatype = CCX_UNKNOWN;
 	ctx->frames_since_last_gop = 0;
 	memcpy(&ctx->extraction_start, &setting->extraction_start,sizeof(struct ccx_boundary_time));
@@ -287,6 +292,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	else if (setting->output_format==CCX_OF_SMPTETT ||
 		setting->output_format==CCX_OF_SAMI ||
 		setting->output_format==CCX_OF_SRT ||
+		setting->output_format == CCX_OF_WEBVTT ||
 		setting->output_format==CCX_OF_TRANSCRIPT ||
 		setting->output_format==CCX_OF_SPUPNG ||
 		setting->output_format==CCX_OF_NULL)
@@ -320,6 +326,14 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->pulldownfields = 0;
 	memset(ctx->cc_stats, 0, 4 * sizeof(int)); 
 
+	ctx->anchor_seq_number = -1;
+	// Init XDS buffers
+	if(setting->ignore_xds == CCX_TRUE)
+		ctx->xds_ctx = NULL;
+	else
+		ctx->xds_ctx = ccx_decoders_xds_init_library(ctx->timing);
+	//xds_cea608_test(ctx->xds_ctx);
+
 	return ctx;
 }
 
@@ -330,8 +344,8 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 		if (ctx->extract != 2)
 		{
 			if (ctx->write_format==CCX_OF_SMPTETT || ctx->write_format==CCX_OF_SAMI || 
-					ctx->write_format==CCX_OF_SRT || ctx->write_format==CCX_OF_TRANSCRIPT
-					|| ctx->write_format==CCX_OF_SPUPNG )
+					ctx->write_format==CCX_OF_SRT || ctx->write_format==CCX_OF_TRANSCRIPT ||
+					ctx->write_format == CCX_OF_WEBVTT || ctx->write_format == CCX_OF_SPUPNG)
 			{
 				flush_608_context(ctx->context_cc608_field_1, sub);
 			}
@@ -344,8 +358,8 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 		if (ctx->extract != 1)
 		{
 			if (ctx->write_format == CCX_OF_SMPTETT || ctx->write_format == CCX_OF_SAMI ||
-					ctx->write_format == CCX_OF_SRT || ctx->write_format == CCX_OF_TRANSCRIPT
-					|| ctx->write_format == CCX_OF_SPUPNG )
+					ctx->write_format == CCX_OF_SRT || ctx->write_format == CCX_OF_TRANSCRIPT ||
+					ctx->write_format == CCX_OF_WEBVTT || ctx->write_format == CCX_OF_SPUPNG)
 			{
 				flush_608_context(ctx->context_cc608_field_2, sub);
 			}
@@ -360,7 +374,7 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 				continue;
 			if (decoder->cc_count > 0)
 			{
-				current_field = 3;
+				ctx->current_field = 3;
 				ccx_dtvcc_decoder_flush(ctx->dtvcc, decoder);
 			}
 		}

@@ -41,6 +41,7 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 	unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
 	int pos_r = 0;
 	int pos_w = 0;
+	char str[1024];
 
 	if (el == NULL || unescaped == NULL)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_sami() - not enough memory.\n");
@@ -203,6 +204,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 	LLONG endms;
 	int wrote_something=0;
 	LLONG startms = data->start_time;
+	char str[1024];
 
 	startms+=context->subs_delay;
 	if (startms<0) // Drop screens that because of subs_delay start too early

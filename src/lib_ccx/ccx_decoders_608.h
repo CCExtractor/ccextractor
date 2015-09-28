@@ -55,14 +55,11 @@ typedef struct ccx_decoder_608_context
 	struct ccx_decoder_608_report *report;
 	LLONG subs_delay; // ms to delay (or advance) subs
 	enum ccx_output_format output_format; // What kind of output format should be used?
+	int textprinted;
+	struct ccx_common_timing_ctx *timing;
+
 } ccx_decoder_608_context;
 
-extern unsigned char *enc_buffer;
-extern unsigned char str[2048];
-extern unsigned enc_buffer_used;
-extern unsigned enc_buffer_capacity;
-
-extern int new_sentence;
 
 #define MAX_COLOR 10
 extern const char *color_text[MAX_COLOR][2];
@@ -123,7 +120,7 @@ void ccx_decoder_608_dinit_library(void **ctx);
 ccx_decoder_608_context* ccx_decoder_608_init_library(struct ccx_decoder_608_settings *settings, int channel,
 		int field, int *halt,
 		int cc_to_stdout,
-		enum ccx_output_format output_format);
+		enum ccx_output_format output_format, struct ccx_common_timing_ctx *timing);
 
 /**
  * @param data raw cc608 data to be processed

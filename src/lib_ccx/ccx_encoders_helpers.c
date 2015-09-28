@@ -68,9 +68,9 @@ void correct_case(int line_num, struct eia608_screen *data)
 	free(line);
 }
 
-void capitalize(int line_num, struct eia608_screen *data)
+void capitalize(struct encoder_ctx *context, int line_num, struct eia608_screen *data)
 {
-	for (int i = 0; i<CCX_DECODER_608_SCREEN_WIDTH; i++)
+	for (int i = 0; i < CCX_DECODER_608_SCREEN_WIDTH; i++)
 	{
 		switch (data->characters[line_num][i])
 		{
@@ -82,14 +82,14 @@ void capitalize(int line_num, struct eia608_screen *data)
 		case '?': // Fallthrough
 		case '!':
 		case ':':
-			new_sentence = 1;
+			context->new_sentence = 1;
 			break;
 		default:
-			if (new_sentence)
+			if (context->new_sentence)
 				data->characters[line_num][i] = cctoupper(data->characters[line_num][i]);
 			else
 				data->characters[line_num][i] = cctolower(data->characters[line_num][i]);
-			new_sentence = 0;
+			context->new_sentence = 0;
 			break;
 		}
 	}

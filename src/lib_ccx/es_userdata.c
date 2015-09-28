@@ -64,8 +64,8 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 		// current time to one frame after the maximum time of the
 		// last GOP.  Only usefull when there are frames before
 		// the GOP.
-		if (fts_max > 0)
-			fts_now = fts_max + (LLONG) (1000.0/current_fps);
+		if (ctx->timing->fts_max > 0)
+			ctx->timing->fts_now = ctx->timing->fts_max + (LLONG) (1000.0/current_fps);
 
 		int rcbcount = 0;
 		for (int i=0; i<capcount; i++)
@@ -192,7 +192,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 				}
 			}
 			cc_data[cc_count*3]=0xFF;
-			store_hdcc(ctx, cc_data, cc_count, ctx->timing->current_tref, fts_now, sub);
+			store_hdcc(ctx, cc_data, cc_count, ctx->timing->current_tref, ctx->timing->fts_now, sub);
 
 			dbg_print(CCX_DMT_VERBOSE, "Reading SCTE 20 CC blocks - done\n");
 		}
@@ -266,7 +266,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 				// Please note we store the current value of the global
 				// fts_now variable (and not get_fts()) as we are going to
 				// re-create the timeline in process_hdcc() (Slightly ugly).
-				store_hdcc(ctx, cc_data, cc_count, ctx->timing->current_tref, fts_now, sub);
+				store_hdcc(ctx, cc_data, cc_count, ctx->timing->current_tref, ctx->timing->fts_now, sub);
 
 				dbg_print(CCX_DMT_VERBOSE, "Reading HDTV blocks - done\n");
 			}
@@ -346,7 +346,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 
 				dishdata[cc_count*3] = 0xFF; // Set end marker
 
-				store_hdcc(ctx, dishdata, cc_count, ctx->timing->current_tref, fts_now, sub);
+				store_hdcc(ctx, dishdata, cc_count, ctx->timing->current_tref, ctx->timing->fts_now, sub);
 
 				// Ignore 3 (0x0A, followed by two unknown) bytes.
 				break;
@@ -371,7 +371,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 				dbg_print(CCX_DMT_PARSE, "%s", debug_608toASC( dishdata, 0) );
 				dbg_print(CCX_DMT_PARSE, "%s:\n", debug_608toASC( dishdata+3, 0) );
 
-				store_hdcc(ctx, dishdata, cc_count, ctx->timing->current_tref, fts_now, sub);
+				store_hdcc(ctx, dishdata, cc_count, ctx->timing->current_tref, ctx->timing->fts_now, sub);
 
 				// Ignore 4 (0x020A, followed by two unknown) bytes.
 				break;
@@ -436,7 +436,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 					dbg_print(CCX_DMT_PARSE, "%s:\n", debug_608toASC( dishdata+3, 0) );
 				}
 
-				store_hdcc(ctx, dishdata, cc_count, ctx->timing->current_tref, fts_now, sub);
+				store_hdcc(ctx, dishdata, cc_count, ctx->timing->current_tref, ctx->timing->fts_now, sub);
 
 				// Ignore 3 (0x0A, followed by 2 unknown) bytes.
 				break;

@@ -11,9 +11,9 @@
 #include "activity.h"
 #include "utility.h"
 #include "ccx_demuxer.h"
+#include "file_buffer.h"
 
 unsigned int rollover_bits = 0; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
-LLONG result; // Number of bytes read/skipped in last read operation
 int end_of_file=0; // End of file?
 
 
@@ -25,6 +25,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 {
 	int enough = 0;
 	int payload_read = 0;
+	int result;
 
 	static unsigned vpesnum=0;
 
@@ -58,9 +59,9 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 		}
 		else
 		{
-			buffered_read(ctx->demux_ctx, nextheader, 6);
-			ctx->demux_ctx->past+=result;
-			if (result!=6)
+			result = buffered_read(ctx->demux_ctx, nextheader, 6);
+			ctx->demux_ctx->past += result;
+			if (result != 6)
 			{
 				// Consider this the end of the show.
 				end_of_file=1;
@@ -91,9 +92,9 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 					int atpos = newheader-nextheader;
 
 					memmove (nextheader,newheader,(size_t)(hlen-atpos));
-					buffered_read(ctx->demux_ctx, nextheader+(hlen-atpos),atpos);
-					ctx->demux_ctx->past+=result;
-					if (result!=atpos)
+					result = buffered_read(ctx->demux_ctx, nextheader+(hlen-atpos),atpos);
+					ctx->demux_ctx->past += result;
+					if (result != atpos)
 					{
 						end_of_file=1;
 						break;
@@ -101,7 +102,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				}
 				else
 				{
-					buffered_read(ctx->demux_ctx, nextheader, hlen);
+					result = buffered_read(ctx->demux_ctx, nextheader, hlen);
 					ctx->demux_ctx->past+=result;
 					if (result!=hlen)
 					{
@@ -122,7 +123,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 			if ( nextheader[3]==0xBA)
 			{
 				dbg_print(CCX_DMT_VERBOSE, "PACK header\n");
-				buffered_read(ctx->demux_ctx, nextheader+6,8);
+				result = buffered_read(ctx->demux_ctx, nextheader+6,8);
 				ctx->demux_ctx->past+=result;
 				if (result!=8)
 				{
@@ -212,7 +213,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 					continue;
 				}
 
-				buffered_read (ctx->demux_ctx, data->buffer+data->len, want);
+				result = buffered_read (ctx->demux_ctx, data->buffer+data->len, want);
 				ctx->demux_ctx->past=ctx->demux_ctx->past+result;
 				if (result>0) {
 					payload_read+=(int) result;
@@ -247,6 +248,7 @@ int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
 {
 	int bytesread = 0;
 	int want;
+	int result;
 	struct demuxer_data *ptr;
 	if(!*data)
 	{
@@ -264,7 +266,7 @@ int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
 	do
 	{
 		want = (int) (BUFSIZE - ptr->len);
-		buffered_read (ctx->demux_ctx, ptr->buffer + ptr->len, want); // This is a macro.
+		result = buffered_read (ctx->demux_ctx, ptr->buffer + ptr->len, want); // This is a macro.
 		// 'result' HAS the number of bytes read
 		ctx->demux_ctx->past=ctx->demux_ctx->past+result;
 		ptr->len += result;
@@ -397,7 +399,7 @@ void processhex (struct lib_ccx_ctx *ctx, char *filename)
 			unsigned filler=((magic>>6)&1);
 			/* unsigned pattern=((magic>>7)&1); */
 			int always_ff=1;
-			int current_field=0;
+			int current_field = 0;
 			if (filler==0 && caption_count*6==byte_count-1) // Note that we are ignoring the extra field for now...
 			{
 				ok=1;
@@ -416,8 +418,8 @@ void processhex (struct lib_ccx_ctx *ctx, char *filename)
 					inbuf=3;
 					if (always_ff) // Try to tell apart the fields based on the pattern field.
 					{
-						ctx->buffer[0]=current_field | 4; // | 4 to enable the 'valid' bit
-						current_field = !current_field;
+						ctx->buffer[0] = current_field | 4; // | 4 to enable the 'valid' bit
+						current_field  = !current_field;
 					}
 					else
 						ctx->buffer[0]=bytes[i];
@@ -481,7 +483,7 @@ LLONG process_raw_with_field (struct lib_cc_decode *dec_ctx, struct cc_subtitle 
 {
 	unsigned char data[3];
 	data[0]=0x04; // Field 1
-	current_field=1;
+	dec_ctx->current_field = 1;
 
 	for (unsigned long i=0; i < len; i=i+3)
 	{
@@ -509,7 +511,6 @@ LLONG process_raw ( struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned
 {
 	unsigned char data[3];
 	data[0]=0x04; // Field 1
-	current_field=1;
 
 	for (unsigned long i=0; i < len; i=i+2)
 	{
@@ -602,7 +603,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 				fts_at_gop_start = 0;
 			}
 			else
-				fts_at_gop_start = get_fts();
+				fts_at_gop_start = get_fts(dec_ctx->timing, dec_ctx->current_field);
 
 			frames_since_ref_time = 0;
 			set_fts(dec_ctx->timing);
@@ -613,7 +614,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
 				print_mstime(dec_ctx->timing->current_pts/(MPEG_CLOCK_FREQ/1000)),
 				(unsigned) (dec_ctx->timing->current_pts));
-		dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts()));
+		dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts(dec_ctx->timing, dec_ctx->current_field)));
 
 		got = process_raw(dec_ctx, dec_sub, data_node->buffer, data_node->len);
 	}
@@ -756,7 +757,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		}
 		if (ctx->live_stream)
 		{
-			int cur_sec = (int) (get_fts() / 1000);
+			int cur_sec = (int) (get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
 			int th=cur_sec/10;
 			if (ctx->last_reported_progress!=th)
 			{
@@ -771,7 +772,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				int progress = (int) ((((ctx->total_past+ctx->demux_ctx->past)>>8)*100)/(ctx->total_inputsize>>8));
 				if (ctx->last_reported_progress != progress)
 				{
-					LLONG t=get_fts();
+					LLONG t=get_fts(dec_ctx->timing, dec_ctx->current_field);
 					if (!t && ctx->demux_ctx->global_timestamp_inited)
 						t=ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
 					int cur_sec = (int) (t / 1000);
@@ -811,6 +812,10 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	unsigned char buf[TELETEXT_CHUNK_LEN] = "";
 	struct lib_cc_decode *dec_ctx = NULL;
 	struct cc_subtitle *dec_sub = NULL;
+	LLONG currfts;
+	uint16_t cbcount = 0;
+	int bread = 0; // Bytes read
+	int result;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 
 
@@ -822,18 +827,13 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	parsebuf = (unsigned char*)malloc(1024);
 
 
-	LLONG currfts;
-	uint16_t cbcount = 0;
-
-	int bread = 0; // Bytes read
-
-	buffered_read(ctx->demux_ctx, parsebuf, 11);
-	ctx->demux_ctx->past+=result;
-	bread+=(int) result;
-	if (result!=11)
+	result = buffered_read(ctx->demux_ctx, parsebuf, 11);
+	ctx->demux_ctx->past += result;
+	bread += (int) result;
+	if (result != 11)
 	{
 		mprint("Premature end of file!\n");
-		end_of_file=1;
+		end_of_file = 1;
 		return;
 	}
 
@@ -857,12 +857,17 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 		dec_ctx->private_data = telxcc_init();
 	}
 	dec_sub = &dec_ctx->dec_sub;
+
+	/* Set minimum and current pts since rcwt has correct time */
+	dec_ctx->timing->min_pts = 0;
+	dec_ctx->timing->current_pts = 0;
+
 	// Loop until no more data is found
 	while(1)
 	{
 		if (parsebuf[6] == 0 && parsebuf[7] == 2)
 		{
-			buffered_read(ctx->demux_ctx, buf, TELETEXT_CHUNK_LEN);
+			result = buffered_read(ctx->demux_ctx, buf, TELETEXT_CHUNK_LEN);
 			ctx->demux_ctx->past += result;
 			if (result != TELETEXT_CHUNK_LEN)
 				break;
@@ -877,7 +882,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 		}
 
 		// Read the data header
-		buffered_read(ctx->demux_ctx, parsebuf, 10);
+		result = buffered_read(ctx->demux_ctx, parsebuf, 10);
 		ctx->demux_ctx->past+=result;
 		bread+=(int) result;
 
@@ -904,7 +909,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
 				parsebufsize = cbcount*3;
 			}
-			buffered_read(ctx->demux_ctx, parsebuf, cbcount*3);
+			result = buffered_read(ctx->demux_ctx, parsebuf, cbcount*3);
 			ctx->demux_ctx->past+=result;
 			bread+=(int) result;
 			if (result!=cbcount*3)

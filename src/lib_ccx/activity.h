@@ -1,6 +1,7 @@
 #ifndef ACTIVITY_H
 #define ACTIVITY_H
 
+extern unsigned long net_activity_gui;
 void activity_header (void);
 void activity_progress (int percentaje, int cur_min, int cur_sec);
 void activity_report_version (void);

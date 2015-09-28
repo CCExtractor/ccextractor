@@ -90,6 +90,8 @@ struct encoder_ctx
 	unsigned char encoded_br[16];
 	unsigned int encoded_br_length;
 
+	int new_sentence; // Capitalize next letter?
+
 	int program_number;
 	struct list_head list;
 };
@@ -115,8 +117,10 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt);
  * after deallocating user need to allocate encoder ctx again
  *
  * @oaram arg pointer to initialized encoder ctx using init_encoder
+ * 
+ * @param current_fts to calculate window for end credits
  */
-void dinit_encoder(struct encoder_ctx **arg);
+void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts);
 
 /**
  * @param ctx encoder context
@@ -127,6 +131,10 @@ int encode_sub(struct encoder_ctx *ctx,struct cc_subtitle *sub);
 int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *context);
 int write_cc_subtitle_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
+
+int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *context);
+int write_cc_subtitle_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *context);
+int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
 
 int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *context);
 int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
@@ -142,6 +150,7 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 int write_cc_subtitle_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *context);
 
 int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context);
+int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *context);
 

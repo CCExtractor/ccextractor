@@ -94,6 +94,7 @@ ccx_dtvcc_ctx *ccx_dtvcc_init(struct ccx_decoder_dtvcc_settings *opts)
 	ctx->last_sequence = CCX_DTVCC_NO_LAST_SEQUENCE;
 
 	ctx->report_enabled = opts->print_file_reports;
+	ctx->timing = opts->timing;
 
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] initializing services\n");
 

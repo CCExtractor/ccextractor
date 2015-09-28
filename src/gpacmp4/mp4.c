@@ -105,12 +105,12 @@ static int process_xdvb_track(struct lib_ccx_ctx *ctx, const char* basename, GF_
 		int progress = (int) ((i*100) / sample_count);
 		if (ctx->last_reported_progress != progress)
 		{
-			int cur_sec = (int) (get_fts() / 1000);
+			int cur_sec = (int) (get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
 			activity_progress(progress, cur_sec/60, cur_sec%60);
 			ctx->last_reported_progress = progress;
 		}
 	}
-	int cur_sec = (int) (get_fts() / 1000);
+	int cur_sec = (int) (get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
 	activity_progress(100, cur_sec/60, cur_sec%60);
 
 	return status;
@@ -121,6 +121,9 @@ static int process_avc_track(struct lib_ccx_ctx *ctx, const char* basename, GF_I
 	u32 timescale, i, sample_count, last_sdi = 0;
 	int status;
 	GF_AVCConfig* c = NULL;
+	struct lib_cc_decode *dec_ctx = NULL;
+
+	dec_ctx = update_decoder_list(ctx);
 	
 	if((sample_count = gf_isom_get_sample_count(f, track)) < 1)
 	{
@@ -170,12 +173,12 @@ static int process_avc_track(struct lib_ccx_ctx *ctx, const char* basename, GF_I
 		int progress = (int) ((i*100) / sample_count);
 		if (ctx->last_reported_progress != progress)
 		{
-			int cur_sec = (int) (get_fts() / 1000);
+			int cur_sec = (int) (get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
 			activity_progress(progress, cur_sec/60, cur_sec%60);
 			ctx->last_reported_progress = progress;
 		}
 	}
-	int cur_sec = (int) (get_fts() / 1000);
+	int cur_sec = (int) (get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
 	activity_progress(100, cur_sec/60, cur_sec%60);
 
 	if(c != NULL)
@@ -349,7 +352,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 		}
 
 		if( type == GF_ISOM_MEDIA_VISUAL && subtype == GF_ISOM_SUBTYPE_AVC_H264)
-		{			
+		{
 			if (cc_track_count && !cfg->mp4vidtrack)
 				continue;
 			GF_AVCConfig *cnf = gf_isom_avc_config_get(f,i+1,1);
@@ -506,7 +509,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 							data += 4;
 
 							do {
-								ret = process608((unsigned char *) data, len, dec_ctx->context_cc608_field_1,
+								ret = process608((unsigned char *) data, len, dec_ctx,
 												 &dec_sub);
 								len -= ret;
 								data += ret;
@@ -524,12 +527,12 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 				int progress = (int) ((k*100) / num_samples);
 				if (ctx->last_reported_progress != progress)
 				{
-					int cur_sec = (int) (get_fts() / 1000);
+					int cur_sec = (int) (get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
 					activity_progress(progress, cur_sec/60, cur_sec%60);
 					ctx->last_reported_progress = progress;
 				}
 			}
-			int cur_sec = (int) (get_fts() / 1000);
+			int cur_sec = (int) (get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
 			activity_progress(100, cur_sec/60, cur_sec%60);
 		}
 	}

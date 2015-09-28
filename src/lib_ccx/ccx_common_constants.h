@@ -57,6 +57,7 @@ enum ccx_debug_message_types
 	CCX_DMT_PAT=0x400, // Program Allocation Table dump
 	CCX_DMT_PMT=0x800, // Program Map Table dump
 	CCX_DMT_LEVENSHTEIN=0x1000, // Levenshtein distance calculations
+	CCX_DMT_DUMPDEF=0x2000 // Dump defective TS packets
 };
 
 // AVC NAL types
@@ -161,6 +162,7 @@ enum ccx_output_format
 	CCX_OF_SMPTETT = 6,
 	CCX_OF_SPUPNG = 7,
 	CCX_OF_DVDRAW = 8, // See -d at http://www.geocities.com/mcpoodle43/SCC_TOOLS/DOCS/SCC_TOOLS.HTML#CCExtract
+	CCX_OF_WEBVTT = 9
 };
 
 enum ccx_output_date_format
