@@ -58,7 +58,7 @@ enum csi_command
 
 enum color
 {
-	BLACK,
+	CCX_ISDB_BLACK,
 	FI_RED,
 	FI_GREEN,
 	FI_YELLOW,
@@ -66,7 +66,7 @@ enum color
 	FI_MAGENTA,
 	FI_CYAN,
 	FI_WHITE,
-	TRANSPARENT,
+	CCX_ISDB_TRANSPARENT,
 	HI_RED,
 	HI_GREEN,
 	HI_YELLOW,
