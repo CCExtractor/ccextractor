@@ -28,6 +28,10 @@ char *get_buffer_type_str(struct cap_info *cinfo)
 	{
 		return strdup("H.264");
 	}
+	else if ( cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_ISDB_CC )
+	{
+		return strdup("ISDB CC subtitle");
+	}
 	else if ( cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_DVB )
 	{
 		return strdup("DVB subtitle");
@@ -62,6 +66,10 @@ enum ccx_stream_type get_buffer_type(struct cap_info *cinfo)
 	else if ( cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_DVB )
 	{
 		return CCX_DVB_SUBTITLE;
+	}
+	else if ( cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_ISDB_CC )
+	{
+		return CCX_ISDB_SUBTITLE;
 	}
 	else if ( cinfo->stream == CCX_STREAM_TYPE_UNKNOWNSTREAM && ccx_options.hauppauge_mode)
 	{
@@ -209,9 +217,10 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		adaptation_field_length = tspacket[4];
 
 		uint8_t af_pcr_exists = (tspacket[5] & 0x10) >> 4;
-		if (af_pcr_exists > 0)
+		if (af_pcr_exists > 0 )
 		{
 			uint64_t pts = 0;
+			ctx->last_global_timestamp = ctx->global_timestamp;
 			pts |= (tspacket[6] << 25);
 			pts |= (tspacket[7] << 17);
 			pts |= (tspacket[8] << 9);
@@ -225,6 +234,11 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 			{
 				ctx->min_global_timestamp = ctx->global_timestamp;
 				ctx->global_timestamp_inited = 1;
+			}
+			if (ctx->min_global_timestamp > ctx->global_timestamp + 1000)
+			{
+				ctx->offset_global_timestamp = ctx->last_global_timestamp - ctx->min_global_timestamp;
+				ctx->min_global_timestamp = ctx->global_timestamp;
 			}
 		}
 
@@ -364,6 +378,14 @@ struct demuxer_data *get_best_data(struct demuxer_data *data)
 		}
 	}
 
+	for(ptr = data; ptr; ptr = ptr->next_stream)
+	{
+		if(ptr->codec == CCX_CODEC_ISDB_CC)
+		{
+			ret =  ptr;
+			goto end;
+		}
+	}
 	for(ptr = data; ptr; ptr = ptr->next_stream)
 	{
 		if(ptr->codec == CCX_CODEC_ATSC_CC)

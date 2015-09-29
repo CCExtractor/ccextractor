@@ -12,6 +12,7 @@
 #include "utility.h"
 #include "ccx_demuxer.h"
 #include "file_buffer.h"
+#include "ccx_decoders_isdb.h"
 
 unsigned int rollover_bits = 0; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
 int end_of_file=0; // End of file?
@@ -623,6 +624,11 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		dec_ctx->in_bufferdatatype = CCX_H264;
 		got = process_avc(dec_ctx, data_node->buffer, data_node->len, dec_sub);
 	}
+	else if (data_node->bufferdatatype == CCX_ISDB_SUBTITLE)
+	{
+		isdbsub_decode(dec_ctx, data_node->buffer, data_node->len, dec_sub);
+		got = data_node->len;
+	}
 	else
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "Unknown data type!");
 
@@ -723,6 +729,14 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
 			if(data_node->pts != CCX_NOPTS)
 				set_current_pts(dec_ctx->timing, data_node->pts);
+
+			if( data_node->bufferdatatype == CCX_ISDB_SUBTITLE && ctx->demux_ctx->global_timestamp_inited)
+			{
+				uint64_t tstamp = ( ctx->demux_ctx->global_timestamp + ctx->demux_ctx->offset_global_timestamp )
+							- ctx->demux_ctx->min_global_timestamp;
+				isdb_set_global_time(dec_ctx, tstamp);
+                        }
+
 			ret = process_data(enc_ctx, dec_ctx, data_node);
 			if( ret != CCX_OK)
 				break;
