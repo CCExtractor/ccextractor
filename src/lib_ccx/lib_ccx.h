@@ -133,6 +133,9 @@ struct lib_ccx_ctx
 	struct ccx_demuxer *demux_ctx;
 	struct list_head enc_ctx_head;
 	struct ccx_s_mp4Cfg mp4_cfg;
+	int out_interval;
+	int segment_counter;
+	LLONG system_start_time;
 };
 
 
@@ -282,4 +285,5 @@ struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx);
 
 struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct cap_info* cinfo);
 struct encoder_ctx * update_encoder_list(struct lib_ccx_ctx *ctx);
+struct encoder_ctx *get_encoder_by_pn(struct lib_ccx_ctx *ctx, int pn);
 #endif
