@@ -114,6 +114,12 @@ int get_best_stream(struct ccx_demuxer *ctx)
 
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
+		if(iter->codec == CCX_CODEC_ISDB_CC)
+			return iter->pid;
+	}
+
+	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
+	{
 		if(iter->codec == CCX_CODEC_ATSC_CC)
 			return iter->pid;
 	}

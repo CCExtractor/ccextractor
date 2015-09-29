@@ -1,6 +1,7 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "dvb_subtitle_decoder.h"
+#include "ccx_decoders_isdb.h"
 #include "utility.h"
 #include "activity.h"
 
@@ -288,25 +289,46 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 				| buf[i+4]);
 
 
-		if(IS_FEASIBLE(ctx->codec, ctx->nocodec, CCX_CODEC_DVB) && stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 &&
+		if(stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 &&
 				ES_info_length  )
 		{
 			unsigned char *es_info = buf + i + 5;
 			for (desc_len = 0;(buf + i + 5 + ES_info_length) > es_info ;es_info += desc_len)
 			{
+				void *ptr;
 				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
 				desc_len = (*es_info++);
-#ifndef ENABLE_OCR
-				if(ccx_options.write_format != CCX_OF_SPUPNG && CCX_MPEG_DSC_DVB_SUBTITLE == descriptor_tag)
+				if(CCX_MPEG_DESC_DATA_COMP == descriptor_tag)
 				{
-					mprint ("DVB subtitles detected, OCR subsystem not present. Use -out=spupng for graphic output\n");
-					continue;
+					int16_t component_id = 0;
+					if(!IS_FEASIBLE(ctx->codec, ctx->nocodec, CCX_CODEC_ISDB_CC))
+						continue;
+					if (desc_len < 2)
+						break;
+
+					component_id = RB16(es_info);
+					if (component_id != 0x08)
+						break;
+					mprint ("*****ISDB subtitles detected\n");
+					ptr = init_isdb_caption();
+					if (ptr == NULL)
+						break;
+					update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ISDB_CC, program_number, ptr);
+
 				}
-#endif
 				if(CCX_MPEG_DSC_DVB_SUBTITLE == descriptor_tag)
 				{
 					struct dvb_config cnf;
-					void *ptr;
+#ifndef ENABLE_OCR
+					if(ccx_options.write_format != CCX_OF_SPUPNG)
+					{
+						mprint ("DVB subtitles detected, OCR subsystem not present. Use -out=spupng for graphic output\n");
+						continue;
+					}
+#endif
+					if (!IS_FEASIBLE(ctx->codec, ctx->nocodec, CCX_CODEC_DVB))
+						continue;
+
 					memset((void*)&cnf,0,sizeof(struct dvb_config));
 					ret = parse_dvb_description(&cnf,es_info,desc_len);
 					if(ret < 0)

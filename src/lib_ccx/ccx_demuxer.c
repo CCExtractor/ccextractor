@@ -158,6 +158,8 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 	}
 	ctx->past = 0;
 	ctx->global_timestamp_inited = 0;
+	ctx->last_global_timestamp = 0;
+	ctx->offset_global_timestamp = 0;
 
 
 	return 0;
