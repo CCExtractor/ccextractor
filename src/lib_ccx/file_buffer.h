@@ -15,7 +15,7 @@
  * @return 0 or number of bytes, if returned 0 then op should check error number to know 
  *              details of error 
  */
-size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes);
+size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t bytes);
 
 
 /**
