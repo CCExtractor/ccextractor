@@ -6,6 +6,7 @@
 - CEA-708: Roll Up captions handling
 - Changed TCP connection protocol (BIN data is now wrapped in packets, added EPG support and keep-alive packets)
 - TCP connection password promt is removed. To set connection password use -tcppassword argument instead.
+- Support ISDB Closed Caption
 
 0.77 (2015-06-20)
 -----------------
