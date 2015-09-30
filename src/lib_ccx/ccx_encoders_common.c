@@ -474,7 +474,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		}
 
 		ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-		if(ret <  context->encoded_crlf_length)
+		if(ret < context->encoded_crlf_length)
 		{
 			mprint("Warning:Loss of data\n");
 		}

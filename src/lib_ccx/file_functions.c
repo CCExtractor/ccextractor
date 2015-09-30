@@ -284,9 +284,9 @@ void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned 
  *
  * TODO instead of using global ccx_options move them to ccx_demuxer
  */
-LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes)
+size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t bytes)
 {
-	LLONG copied   = 0;
+	size_t copied   = 0;
 	time_t seconds = 0;
 
 	position_sanity_check(ctx->infd);
@@ -465,7 +465,7 @@ unsigned char buffered_get_byte (struct ccx_demuxer *ctx)
 {
 	unsigned char b;
 	unsigned char *b_p = &b;
-	int result;
+	size_t result;
 
 	result = buffered_read_byte(ctx, b_p);
 	if (result == 1)

@@ -246,6 +246,12 @@
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_708_output.h">
       <Filter>Header Files\ccx_decoders</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\ccx_decoders_isdb.h">
+      <Filter>Header Files\ccx_decoders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\avc_functions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\ccextractor.c">
@@ -587,12 +593,6 @@
     <ClCompile Include="..\src\win_iconv\win_iconv.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\608_webvtt.c">
-      <Filter>Source Files\ccx_encoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\ccx_encoder_xds.c">
-      <Filter>Source Files\ccx_encoders</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_sami.c">
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
@@ -610,6 +610,9 @@
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_xds.c">
       <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_decoders_isdb.c">
+      <Filter>Source Files\ccx_decoders</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

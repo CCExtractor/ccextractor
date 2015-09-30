@@ -26,7 +26,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 {
 	int enough = 0;
 	int payload_read = 0;
-	int result;
+	size_t result;
 
 	static unsigned vpesnum=0;
 
@@ -192,18 +192,24 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 			else if ((nextheader[3]&0xf0)==0xe0)
 			{
 				int hlen; // Dummy variable, unused
-				int peslen = read_video_pes_header(ctx->demux_ctx, data, nextheader, &hlen, 0);
-				if (peslen < 0)
+				int ret;
+				size_t peslen;
+				ret = read_video_pes_header(ctx->demux_ctx, data, nextheader, &hlen, 0);
+				if (ret < 0)
 				{
 					end_of_file=1;
 					break;
+				}
+				else
+				{
+					peslen = ret;
 				}
 
 				vpesnum++;
 				dbg_print(CCX_DMT_VERBOSE, "PES video packet #%u\n", vpesnum);
 
-
-				int want = (int) ((BUFSIZE-data->len)>peslen ? peslen : (BUFSIZE-data->len));
+				//peslen is unsigned since loop would have already broken if it was negative
+				int want = (int) ((BUFSIZE-data->len) > peslen ? peslen : (BUFSIZE-data->len));
 
 				if (want != peslen) {
 					mprint("General LOOP: want(%d) != peslen(%d) \n", want, peslen);
@@ -480,13 +486,14 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 
 /* Process inbuf bytes in buffer holding raw caption data (three byte packets, the first being the field).
  * The number of processed bytes is returned. */
-LLONG process_raw_with_field (struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub, unsigned char* buffer, int len)
+size_t process_raw_with_field(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub, unsigned char* buffer, size_t len)
 {
 	unsigned char data[3];
+	size_t i;
 	data[0]=0x04; // Field 1
 	dec_ctx->current_field = 1;
 
-	for (unsigned long i=0; i < len; i=i+3)
+	for (i = 0; i < len; i=i+3)
 	{
 		if ( !dec_ctx->saw_caption_block && *(buffer+i)==0xff && *(buffer+i+1)==0xff)
 		{
@@ -508,12 +515,13 @@ LLONG process_raw_with_field (struct lib_cc_decode *dec_ctx, struct cc_subtitle 
 
 /* Process inbuf bytes in buffer holding raw caption data (two byte packets).
  * The number of processed bytes is returned. */
-LLONG process_raw ( struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned char *buffer, int len)
+size_t process_raw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned char *buffer, size_t len)
 {
 	unsigned char data[3];
+	size_t i;
 	data[0]=0x04; // Field 1
 
-	for (unsigned long i=0; i < len; i=i+2)
+	for (i = 0; i < len; i = i+2)
 	{
 		if ( !ctx->saw_caption_block && *(buffer+i)==0xff && *(buffer+i+1)==0xff)
 		{
@@ -547,7 +555,7 @@ void delete_datalist(struct demuxer_data *list)
 
 int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct demuxer_data *data_node)
 {
-	LLONG got; // Means 'consumed' from buffer actually
+	size_t got; // Means 'consumed' from buffer actually
 	int ret = 0;
 	static LLONG last_pts = 0x01FFFFFFFFLL;
 	struct cc_subtitle *dec_sub = &dec_ctx->dec_sub;
@@ -868,7 +876,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	LLONG currfts;
 	uint16_t cbcount = 0;
 	int bread = 0; // Bytes read
-	int result;
+	LLONG result;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 
 

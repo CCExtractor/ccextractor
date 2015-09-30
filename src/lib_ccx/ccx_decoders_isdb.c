@@ -1170,7 +1170,7 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 	return buf - buf_pivot;
 }
 
-int isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, int buf_size, struct cc_subtitle *sub)
+int isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, size_t buf_size, struct cc_subtitle *sub)
 {
 	const uint8_t *header_end = NULL;
 	int ret = 0;
@@ -1200,5 +1200,5 @@ int isdb_set_global_time(struct lib_cc_decode *dec_ctx, uint64_t timestamp)
 {
 	ISDBSubContext *ctx = dec_ctx->private_data;
 	ctx->timestamp = timestamp;
-
+	return CCX_OK;
 }

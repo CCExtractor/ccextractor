@@ -144,7 +144,7 @@ struct demuxer_data
 	enum ccx_code_type codec;
 	enum ccx_bufferdata_type bufferdatatype;
 	unsigned char *buffer;
-	int len;
+	size_t len;
 	LLONG pts;
 	struct demuxer_data *next_stream;
 	struct demuxer_data *next_program;

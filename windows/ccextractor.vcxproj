@@ -42,6 +42,7 @@
     <ClInclude Include="..\src\libpng\pngpriv.h" />
     <ClInclude Include="..\src\libpng\pngstruct.h" />
     <ClInclude Include="..\src\lib_ccx\608_spupng.h" />
+    <ClInclude Include="..\src\lib_ccx\avc_functions.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_common_char_encoding.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_common_common.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_common_constants.h" />
@@ -53,6 +54,7 @@
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_708_encoding.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_708_output.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_common.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_decoders_isdb.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_structs.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_xds.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_common.h" />
@@ -149,6 +151,7 @@
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_708_encoding.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_708_output.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_common.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_decoders_isdb.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_xds.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_demuxer.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_dtvcc.c" />
@@ -206,7 +209,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">

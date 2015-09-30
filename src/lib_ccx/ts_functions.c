@@ -774,7 +774,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 
 // TS specific data grabber
-LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **data)
+int ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
 	int ret = CCX_OK;
 
