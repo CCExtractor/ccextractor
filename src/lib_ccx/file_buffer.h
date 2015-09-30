@@ -15,16 +15,16 @@
  * @return 0 or number of bytes, if returned 0 then op should check error number to know 
  *              details of error 
  */
-LLONG buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes);
+size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t bytes);
 
 
 /**
  * Skip bytes from file buffer and if needed also seek file for number of bytes.
  *
  */
-static LLONG inline  buffered_skip(struct ccx_demuxer *ctx, unsigned int bytes)
+static size_t inline  buffered_skip(struct ccx_demuxer *ctx, unsigned int bytes)
 {
-	LLONG result;
+	size_t result;
 	if (bytes <= ctx->bytesinbuffer - ctx->filebuffer_pos)
 	{
 		ctx->filebuffer_pos += bytes;
@@ -41,9 +41,9 @@ static LLONG inline  buffered_skip(struct ccx_demuxer *ctx, unsigned int bytes)
  * Read bytes from file buffer and if needed also read file for number of bytes.
  *
  */
-static LLONG inline buffered_read(struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes)
+static size_t inline buffered_read(struct ccx_demuxer *ctx, unsigned char *buffer, size_t bytes)
 {
-	LLONG result;
+	size_t result;
 	if (bytes <= ctx->bytesinbuffer - ctx->filebuffer_pos)
 	{
 		if (buffer != NULL)
@@ -68,9 +68,9 @@ static LLONG inline buffered_read(struct ccx_demuxer *ctx, unsigned char *buffer
  * Read single byte from file buffer and if needed also read file for number of bytes.
  *
  */
-static LLONG inline buffered_read_byte(struct ccx_demuxer *ctx, unsigned char *buffer)
+static size_t inline buffered_read_byte(struct ccx_demuxer *ctx, unsigned char *buffer)
 {
-	LLONG result;
+	size_t result;
 	if (ctx->bytesinbuffer - ctx->filebuffer_pos)
 	{
 		if (buffer)

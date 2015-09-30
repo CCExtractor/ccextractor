@@ -155,7 +155,7 @@ int init_file_buffer(struct ccx_demuxer *ctx);
 int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
 void raw_loop (struct lib_ccx_ctx *ctx);
-LLONG process_raw (struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned char *buffer, int len);
+size_t process_raw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned char *buffer, size_t len);
 void general_loop(struct lib_ccx_ctx *ctx);
 void processhex (char *filename);
 void rcwt_loop(struct lib_ccx_ctx *ctx);
@@ -169,7 +169,7 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 int wtv_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 
 // es_functions.c
-LLONG process_m2v (struct lib_cc_decode *ctx, unsigned char *data, LLONG length,struct cc_subtitle *sub);
+size_t process_m2v(struct lib_cc_decode *ctx, unsigned char *data, size_t length, struct cc_subtitle *sub);
 
 extern unsigned top_field_first;
 
@@ -213,7 +213,7 @@ int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, u
 void init_ts(struct ccx_demuxer *ctx);
 int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload);
 long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data);
-LLONG ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **data);
+int ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **data);
 int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char*buf, int size,  struct program_info *pinfo);
 void ts_buffer_psi_packet(struct ccx_demuxer *ctx);
 int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct program_info *pinfo);
@@ -226,7 +226,6 @@ void parse_SDT(struct ccx_demuxer *ctx);
 // myth.c
 void myth_loop(struct lib_ccx_ctx *ctx);
 
-LLONG process_avc (struct lib_cc_decode *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub);
 // utility.c
 void fatal(int exit_code, const char *fmt, ...);
 void mprint (const char *fmt, ...);

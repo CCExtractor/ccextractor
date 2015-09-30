@@ -100,7 +100,7 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 
 	unsigned char *curpos;
 	int64_t getbytes;
-	int result = 0;
+	size_t result = 0;
 	struct demuxer_data *data;
 
 	if(!*ppdata)

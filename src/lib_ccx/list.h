@@ -16,8 +16,9 @@
 /**
  * Get offset of a member
  */
-#ifndef offsetof
-#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+
+#ifndef ccx_offsetof
+#define ccx_offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #endif
 
 /**
@@ -27,7 +28,7 @@
  * @param member     the name of the member within the struct.
  *
  */
-#define container_of(ptr, type, member) ((type *)( (char *)ptr - offsetof(type,member) ))
+#define container_of(ptr, type, member) ((type *)( (char *)ptr - ccx_offsetof(type,member) ))
 /*@}*/
 
 

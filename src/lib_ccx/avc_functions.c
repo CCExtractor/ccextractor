@@ -133,7 +133,7 @@ void do_NAL (struct lib_cc_decode *ctx, unsigned char *NALstart, LLONG NAL_lengt
 
 // Process inbuf bytes in buffer holding and AVC (H.264) video stream.
 // The number of processed bytes is returned.
-LLONG process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, LLONG avcbuflen ,struct cc_subtitle *sub)
+size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t avcbuflen ,struct cc_subtitle *sub)
 {
 	unsigned char *bpos = avcbuf;
 	unsigned char *NALstart;
