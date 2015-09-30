@@ -219,27 +219,15 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		uint8_t af_pcr_exists = (tspacket[5] & 0x10) >> 4;
 		if (af_pcr_exists > 0 )
 		{
-			uint64_t pts = 0;
-			ctx->last_global_timestamp = ctx->global_timestamp;
-			pts |= (tspacket[6] << 25);
-			pts |= (tspacket[7] << 17);
-			pts |= (tspacket[8] << 9);
-			pts |= (tspacket[9] << 1);
-			pts |= (tspacket[10] >> 7);
-			ctx->global_timestamp = (uint32_t) pts / 90;
-			pts = ((tspacket[10] & 0x01) << 8);
-			pts |= tspacket[11];
-			ctx->global_timestamp += (uint32_t) (pts / 27000);
-			if (!ctx->global_timestamp_inited)
-			{
-				ctx->min_global_timestamp = ctx->global_timestamp;
-				ctx->global_timestamp_inited = 1;
-			}
-			if (ctx->min_global_timestamp > ctx->global_timestamp + 1000)
-			{
-				ctx->offset_global_timestamp = ctx->last_global_timestamp - ctx->min_global_timestamp;
-				ctx->min_global_timestamp = ctx->global_timestamp;
-			}
+			payload->pcr = 0;
+			payload->pcr |= (tspacket[6] << 25);
+			payload->pcr |= (tspacket[7] << 17);
+			payload->pcr |= (tspacket[8] << 9);
+			payload->pcr |= (tspacket[9] << 1);
+			payload->pcr |= (tspacket[10] >> 7);
+			/* Ignore 27 Mhz clock since we dont deal in nano seconds*/
+			//payload->pcr = ((tspacket[10] & 0x01) << 8);
+			//payload->pcr |= tspacket[11];
 		}
 
 		// Catch bad packages with adaptation_field_length > 184 and
@@ -577,15 +565,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 				payload.pid);
 			continue;
 		}
-		// Skip packets with no payload.  This also fixes the problems
-		// with the continuity counter not being incremented in empty
-		// packets.
-		if ( !payload.length )
-		{
-			dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - no payload.\n",
-				payload.pid);
-			continue;
-		}
 
 		// Check for PAT
 		if( payload.pid == 0) // This is a PAT
@@ -608,6 +587,22 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 		for (j = 0; j < ctx->nb_program; j++)
 		{
+			if (ctx->pinfo[j].analysed_PMT_once == CCX_TRUE && ctx->pinfo[j].pcr_pid == payload.pid)
+			{
+				ctx->last_global_timestamp = ctx->global_timestamp;
+				ctx->global_timestamp = (uint32_t) payload.pcr / 90;
+				if (!ctx->global_timestamp_inited)
+				{
+					ctx->min_global_timestamp = ctx->global_timestamp;
+					ctx->global_timestamp_inited = 1;
+				}
+				if (ctx->min_global_timestamp > ctx->global_timestamp)
+				{
+					ctx->offset_global_timestamp = ctx->last_global_timestamp - ctx->min_global_timestamp;
+					ctx->min_global_timestamp = ctx->global_timestamp;
+				}
+
+			}
 			if (ctx->pinfo[j].pid == payload.pid)
 			{
 				if (!ctx->PIDs_seen[payload.pid])

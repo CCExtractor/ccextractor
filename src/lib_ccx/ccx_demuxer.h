@@ -31,6 +31,10 @@ struct program_info
 	int32_t crc;
 	uint8_t valid_crc:1;
 	char name[MAX_PROGRAM_NAME_LEN];
+	/**
+	 * -1 pid represent that pcr_pid is not available
+	 */
+	int16_t pcr_pid;
 };
 
 struct cap_info
@@ -95,10 +99,10 @@ struct ccx_demuxer
 	LLONG past; /* Position in file, if in sync same as ftell()  */
 
 	// TODO relates to fts_global
-	uint64_t global_timestamp;
-	uint64_t min_global_timestamp;
-	uint64_t offset_global_timestamp;
-	uint64_t last_global_timestamp;
+	int64_t global_timestamp;
+	int64_t min_global_timestamp;
+	int64_t offset_global_timestamp;
+	int64_t last_global_timestamp;
 	int global_timestamp_inited;
 
 	struct PSI_buffer *PID_buffers[MAX_PSI_PID];

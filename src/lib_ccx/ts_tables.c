@@ -73,6 +73,7 @@ int update_pinfo(struct ccx_demuxer *ctx, int pid, int program_number)
 	ctx->pinfo[ctx->nb_program].program_number = program_number;
 	ctx->pinfo[ctx->nb_program].analysed_PMT_once = CCX_FALSE;
 	ctx->pinfo[ctx->nb_program].name[0] = '\0';
+	ctx->pinfo[ctx->nb_program].pcr_pid = -1;
 	ctx->nb_program++;
 
 	return CCX_OK;
@@ -101,7 +102,6 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 	uint8_t section_number;
 	uint8_t last_section_number;
 
-	uint16_t PCR_PID;
 	uint16_t pi_length;
 
 	crc = (*(int32_t*)(sbuf+olen-4));
@@ -150,7 +150,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 		return 0;
 	}
 
-	PCR_PID = (((buf[8] & 0x1F) << 8)
+	pinfo->pcr_pid = (((buf[8] & 0x1F) << 8)
 			| buf[9]);
 	pi_length = (((buf[10] & 0x0F) << 8)
 			| buf[11]);
@@ -174,7 +174,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 	dbg_print(CCX_DMT_PARSE, "  version_number: %u  current_next_indicator: %u\n",
 			version_number, current_next_indicator);
 	dbg_print(CCX_DMT_PARSE, "  PCR_PID: %u  data length: %u  payload_length: %u\n",
-			PCR_PID, stream_data, len);
+			pinfo->pcr_pid, stream_data, len);
 
 	if (!pmt_warning_shown && stream_data+4 > len )
 	{
@@ -575,7 +575,6 @@ int parse_PAT (struct ccx_demuxer *ctx)
 	dbg_print(CCX_DMT_PAT, "  version_number: %u  current_next_indicator: %u\n",
 			version_number, current_next_indicator);
 
-	unsigned ts_prog_num = 0;
 	dbg_print(CCX_DMT_PAT, "\nProgram association section (PAT)\n");
 
 	ctx->freport.program_cnt=0;
@@ -604,6 +603,14 @@ int parse_PAT (struct ccx_demuxer *ctx)
 		if( !program_number )
 			continue;
 
+		/**
+		 * loop never break at j == ctx->nb_program when program_number
+		 * is already there in pinfo array and if we have program number
+		 * already in our array we dont need to update our array
+		 * so we break if program_number already exist and make j != ctx->nb_program
+		 * 
+		 * Loop without break means j would be equal to ctx->nb_program
+		 */
 		for (j = 0; j < ctx->nb_program; j++)
 		{
 			if (ctx->pinfo[j].program_number == program_number)
@@ -620,7 +627,7 @@ int parse_PAT (struct ccx_demuxer *ctx)
 			update_pinfo(ctx, prog_map_pid, program_number);
 	} // for
 
-	if (is_multiprogram && !ts_prog_num)
+	if (is_multiprogram && !ctx->flag_ts_forced_pn)
 	{
 		mprint ("\nThis TS file has more than one program. These are the program numbers found: \n");
 		for( unsigned j=0; j < programm_data; j+=4)
