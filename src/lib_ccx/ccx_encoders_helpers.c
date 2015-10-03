@@ -129,7 +129,7 @@ unsigned get_decoder_line_encoded_for_gui(unsigned char *buffer, int line_num, s
 	unsigned char *line = data->characters[line_num];
 	unsigned char *orig = buffer; // Keep for debugging
 	int first = 0, last = 31;
-	find_limit_characters(line, &first, &last);
+	find_limit_characters(line, &first, &last, CCX_DECODER_608_SCREEN_WIDTH);
 	for (int i = first; i <= last; i++)
 	{
 		get_char_in_latin_1(buffer, line[i]);
@@ -181,7 +181,7 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 	unsigned char *orig = buffer; // Keep for debugging
 	int first = 0, last = 31;
 	if (ctx->trim_subs)
-		find_limit_characters(line, &first, &last);
+		find_limit_characters(line, &first, &last, CCX_DECODER_608_SCREEN_WIDTH);
 	for (int i = first; i <= last; i++)
 	{
 		// Handle color

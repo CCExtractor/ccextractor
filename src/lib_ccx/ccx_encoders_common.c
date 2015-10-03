@@ -352,11 +352,11 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 
 			if (context->transcript_settings->showCC)
 			{
-				if(context->in_fileformat == 2 )
-					fdprintf(context->out->fh, sub->info);
-				else
+				if(context->in_fileformat == 1)
 					//TODO, data->my_field == 1 ? data->channel : data->channel + 2); // Data from field 2 is CC3 or 4
 					fdprintf(context->out->fh, "CC?|");
+				else
+					fdprintf(context->out->fh, sub->info);
 			}
 			if (context->transcript_settings->showMode)
 			{
@@ -596,7 +596,7 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 				{
 					fdprintf(context->out->fh,"DVB|");
 				}
-				fdprintf(context->out->fh,"%s\n",token);
+				fdprintf(context->out->fh,"%s",token);
 				token = strtok(NULL,"\r\n");
 
 			}

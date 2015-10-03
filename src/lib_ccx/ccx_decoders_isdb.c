@@ -1151,15 +1151,7 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 	/* Copy data if there in buffer */
 	if (ctx->text.len > 0 )
 	{
-		sub->type = CC_TEXT;
-		sub->nb_data = 1;
-		sub->got_output = 1;
-		sub->data = strndup(ctx->text.buf, ctx->text.len);
-		ctx->text.len = 0;
-		ctx->text.used = 0;
-		ctx->text.buf[0] = 0;
-		sub->start_time = ctx->prev_timestamp;
-		sub->end_time = ctx->timestamp;
+		add_cc_sub_text(sub, ctx->text.buf, ctx->prev_timestamp, ctx->timestamp, "NA", "ISDB");
 		if (sub->start_time == sub->end_time)
 			sub->end_time += 2;
 		ctx->prev_timestamp = ctx->timestamp;

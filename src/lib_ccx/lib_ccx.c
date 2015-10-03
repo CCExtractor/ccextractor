@@ -303,7 +303,9 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	if(cinfo)
 	{
 		pn = cinfo->program_number;
-		if (cinfo->codec == CCX_CODEC_TELETEXT)
+		if (cinfo->codec == CCX_CODEC_ISDB_CC)
+			in_format = 3;
+		else if (cinfo->codec == CCX_CODEC_TELETEXT)
 			in_format = 2;
 		else
 			in_format = 1;
