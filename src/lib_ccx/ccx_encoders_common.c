@@ -52,29 +52,31 @@ static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
 
 static const char *webvtt_header = "WEBVTT\r\n\r\n";
 
-void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank)
+void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank, int max_len)
 {
 	*last_non_blank = -1;
 	*first_non_blank = -1;
-	for (int i = 0; i<CCX_DECODER_608_SCREEN_WIDTH; i++)
+	for (int i = 0; i < max_len; i++)
 	{
 		unsigned char c = line[i];
-		if (c != ' ' && c != 0x89)
+		if (c != ' ' && c != 0x89 )
 		{
 			if (*first_non_blank == -1)
 				*first_non_blank = i;
 			*last_non_blank = i;
 		}
+		if (c == '\0' || c == '\n' || c == '\r')
+			break;
 	}
 }
 
 
-unsigned int get_str_basic(unsigned char *buffer, unsigned char *line, int trim_subs, enum ccx_encoding_type encoding)
+unsigned int get_str_basic(unsigned char *buffer, unsigned char *line, int trim_subs, enum ccx_encoding_type encoding, int max_len)
 {
 	int last_non_blank = -1;
 	int first_non_blank = -1;
-	unsigned char *orig = buffer; // Keep for debugging
-	find_limit_characters(line, &first_non_blank, &last_non_blank);
+	unsigned char *orig = buffer; // Keep for calculating length
+	find_limit_characters(line, &first_non_blank, &last_non_blank, max_len);
 	if (!trim_subs)
 		first_non_blank = 0;
 
@@ -272,9 +274,10 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 {
 	int length;
 	int ret = 0;
-	LLONG start_time;
-	LLONG end_time;
+	LLONG start_time = -1;
+	LLONG end_time = -1;
 	char *str;
+	char *save_str;
 	struct cc_subtitle *osub = sub;
 	struct cc_subtitle *lsub = sub;
 
@@ -291,32 +294,36 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 			//TODO correct_case(line_number, data);
 		}
 
-		str = sub->data;
-		length = strlen(str);
-		if (context->encoding!=CCX_ENC_UNICODE)
+		if (start_time == -1)
 		{
-			dbg_print(CCX_DMT_DECODER_608, "\r");
-			dbg_print(CCX_DMT_DECODER_608, "%s\n", str);
+			// CFS: Means that the line has characters but we don't have a timestamp for the first one. Since the timestamp
+			// is set for example by the write_char function, it possible that we don't have one in empty lines (unclear)
+			// For now, let's not consider this a bug as before and just return.
+			// fatal (EXIT_BUG_BUG, "Bug in timedtranscript (ts_start_of_current_line==-1). Please report.");
+			return 0;
 		}
 
-		if (length>0)
+		str = sub->data;
+
+		str = strtok_r(str, "\r\n", &save_str);
+		do
 		{
-			if (start_time == -1)
+			length = get_str_basic(context->subline, str, context->trim_subs, context->encoding, strlen(str));
+			if (length <= 0)
 			{
-				// CFS: Means that the line has characters but we don't have a timestamp for the first one. Since the timestamp
-				// is set for example by the write_char function, it possible that we don't have one in empty lines (unclear)
-				// For now, let's not consider this a bug as before and just return.
-				// fatal (EXIT_BUG_BUG, "Bug in timedtranscript (ts_start_of_current_line==-1). Please report.");
-				return 0;
+				continue;
 			}
 
-			if (context->transcript_settings->showStartTime){
+			if (context->transcript_settings->showStartTime)
+			{
 				char buf1[80];
-				if (context->transcript_settings->relativeTimestamp){
+				if (context->transcript_settings->relativeTimestamp)
+				{
 					millis_to_date(start_time + context->subs_delay, buf1, context->date_format, context->millis_separator);
 					fdprintf(context->out->fh, "%s|", buf1);
 				}
-				else {
+				else
+				{
 					time_t start_time_int = (start_time + context->subs_delay) / 1000;
 					int start_time_dec = (start_time + context->subs_delay) % 1000;
 					struct tm *start_time_struct = gmtime(&start_time_int);
@@ -325,13 +332,16 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 				}
 			}
 
-			if (context->transcript_settings->showEndTime){
+			if (context->transcript_settings->showEndTime)
+			{
 				char buf2[80];
-				if (context->transcript_settings->relativeTimestamp){
+				if (context->transcript_settings->relativeTimestamp)
+				{
 					millis_to_date(end_time, buf2, context->date_format, context->millis_separator);
 					fdprintf(context->out->fh, "%s|", buf2);
 				}
-				else {
+				else
+				{
 					time_t end_time_int = (end_time + context->subs_delay) / 1000;
 					int end_time_dec = (end_time + context->subs_delay) % 1000;
 					struct tm *end_time_struct = gmtime(&end_time_int);
@@ -340,14 +350,16 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 				}
 			}
 
-			if (context->transcript_settings->showCC) {
+			if (context->transcript_settings->showCC)
+			{
 				if(context->in_fileformat == 2 )
 					fdprintf(context->out->fh, sub->info);
 				else
 					//TODO, data->my_field == 1 ? data->channel : data->channel + 2); // Data from field 2 is CC3 or 4
 					fdprintf(context->out->fh, "CC?|");
 			}
-			if (context->transcript_settings->showMode){
+			if (context->transcript_settings->showMode)
+			{
 				fdprintf(context->out->fh, "%s|", sub->mode);
 			}
 			ret = write(context->out->fh, str, length);
@@ -361,7 +373,8 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 			{
 				mprint("Warning:Loss of data\n");
 			}
-		}
+
+		} while (str = strtok_r(NULL, "\r\n", &save_str) );
 
 		freep(&sub->data);
 		lsub = sub;
@@ -388,7 +401,9 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		capitalize (context, line_number, data);
 		correct_case(line_number, data);
 	}
-	int length = get_str_basic (context->subline, data->characters[line_number], context->trim_subs, context->encoding);
+	int length = get_str_basic (context->subline, data->characters[line_number],
+			context->trim_subs, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
+
 	if (context->encoding!=CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r");

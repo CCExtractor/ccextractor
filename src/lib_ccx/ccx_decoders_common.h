@@ -13,7 +13,6 @@ extern uint64_t utc_refvalue; // UTC referential value
 LLONG get_visible_start (struct ccx_common_timing_ctx *ctx, int current_field);
 LLONG get_visible_end (struct ccx_common_timing_ctx *ctx, int current_field);
 
-void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank);
 unsigned int get_decoder_str_basic(unsigned char *buffer, unsigned char *line, int trim_subs, enum ccx_encoding_type encoding);
 
 void ccx_decoders_common_settings_init(LLONG subs_delay, enum ccx_output_format output_format);
