@@ -54,7 +54,7 @@ struct cc_subtitle
 	/** flag to tell that decoder has given output */
 	int got_output;
 	
-	char mode[4];
+	char mode[5];
 	char info[4];
 
 	struct cc_subtitle *next;

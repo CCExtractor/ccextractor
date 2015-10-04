@@ -230,7 +230,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 				int first=0, last=31, center1=-1, center2=-1;
 				unsigned char *line = data->characters[i];
 				int do_dash=1, colon_pos=-1;
-				find_limit_characters(line,&first,&last);
+				find_limit_characters(line, &first, &last, CCX_DECODER_608_SCREEN_WIDTH);
 				if (first==-1 || last==-1)  // Probably a bug somewhere though
 					break;
 				// Is there a speaker named, for example: TOM: What are you doing?

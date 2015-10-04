@@ -159,4 +159,7 @@ void set_encoder_last_displayed_subs_ms(struct encoder_ctx *ctx, LLONG last_disp
 void set_encoder_subs_delay(struct encoder_ctx *ctx, LLONG subs_delay);
 void set_encoder_startcredits_displayed(struct encoder_ctx *ctx, int startcredits_displayed);
 void set_encoder_rcwt_fileformat(struct encoder_ctx *ctx, short int format);
+
+void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank, int max_len);
+unsigned int get_str_basic(unsigned char *buffer, unsigned char *line, int trim_subs, enum ccx_encoding_type encoding, int max_len);
 #endif
