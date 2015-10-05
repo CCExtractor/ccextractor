@@ -26,6 +26,7 @@ size_t utf16_to_utf8(unsigned short utf16_char, unsigned char *out);
 
 #ifdef _WIN32
 char *strndup(const char *s, size_t n);
+char *strtok_r(char *str, const char *delim, char **saveptr);
 #endif //_WIN32
 
 #endif //CC_UTILITY_H
