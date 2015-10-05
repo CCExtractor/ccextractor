@@ -252,6 +252,9 @@
     <ClInclude Include="..\src\lib_ccx\avc_functions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\utility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\ccextractor.c">

@@ -65,6 +65,7 @@
     <ClInclude Include="..\src\lib_ccx\lib_ccx.h" />
     <ClInclude Include="..\src\lib_ccx\spupng_encoder.h" />
     <ClInclude Include="..\src\lib_ccx\teletext.h" />
+    <ClInclude Include="..\src\lib_ccx\utility.h" />
     <ClInclude Include="..\src\zlib\crc32.h" />
     <ClInclude Include="..\src\zlib\deflate.h" />
     <ClInclude Include="..\src\zlib\gzguts.h" />
