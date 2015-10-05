@@ -318,6 +318,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->current_pulldownfields = 32768;
 
 	ctx->temporal_reference = 0;
+	ctx->maxtref = 0;
 	ctx->picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
 	ctx->picture_structure = 0;
 	ctx->top_field_first = 0;
