@@ -150,6 +150,7 @@ ccx_decoder_608_context* ccx_decoder_608_init_library(struct ccx_decoder_608_set
 	data->output_format = output_format;
 	data->cc_to_stdout = cc_to_stdout;
 	data->textprinted = 0;
+	data->ts_start_of_current_line = 0;
 
 	data->halt = halt;
 
@@ -375,6 +376,7 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 		}
 		memcpy(((struct eia608_screen *)sub->data) + sub->nb_data, data, sizeof(*data));
 		data = (struct eia608_screen *)sub->data + sub->nb_data;
+		ccx_common_logging.log_ftn("nb _data %d\n", sub->nb_data);
 		sub->nb_data++;
 
 		for(i = 0; i < 15; i++)

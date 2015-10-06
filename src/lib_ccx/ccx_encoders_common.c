@@ -1036,9 +1036,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				continue;
 			}
 
-			if(!data->start_time)
-				break;
-
 			data->end_time = data->end_time + context->subs_delay;
 			switch (context->write_format)
 			{
