@@ -1152,6 +1152,8 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 	if (ctx->text.len > 0 )
 	{
 		add_cc_sub_text(sub, ctx->text.buf, ctx->prev_timestamp, ctx->timestamp, "NA", "ISDB");
+		ctx->text.used = 0;
+		ctx->text.len = 0;
 		if (sub->start_time == sub->end_time)
 			sub->end_time += 2;
 		ctx->prev_timestamp = ctx->timestamp;

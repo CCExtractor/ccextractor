@@ -362,7 +362,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 			{
 				fdprintf(context->out->fh, "%s|", sub->mode);
 			}
-			ret = write(context->out->fh, str, length);
+			ret = write(context->out->fh, context->subline, length);
 			if(ret < length)
 			{
 				mprint("Warning:Loss of data\n");
