@@ -582,10 +582,12 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			if(ctx->PID_buffers[payload.pid]!=NULL && ctx->PID_buffers[payload.pid]->buffer_length>0)
 				parse_SDT(ctx);
 		}
+
 		if( ccx_options.xmltv >= 1 && payload.pid == 0x12) // This is DVB EIT
 			parse_EPG_packet(ctx->parent);
 		if( ccx_options.xmltv >= 1 && payload.pid >= 0x1000) // This may be ATSC EPG packet
 			parse_EPG_packet(ctx->parent);
+
 
 		for (j = 0; j < ctx->nb_program; j++)
 		{
@@ -678,6 +680,17 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			haup_capbuflen = haup_newcapbuflen;
 
 		}
+
+                // Skip packets with no payload.  This also fixes the problems
+                // with the continuity counter not being incremented in empty
+                // packets.
+                if ( !payload.length )
+                {   
+                        dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - no payload.\n",
+                                payload.pid);
+                        continue;
+                }   
+
 
 		cinfo = get_cinfo(ctx, payload.pid);
 		if(cinfo == NULL)
