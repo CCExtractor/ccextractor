@@ -495,12 +495,12 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 									"Syntax problem: Final 0xFF marker missing.");
 
 						// Save the data and process once we know the sequence number
-						if (local_cc_count*3+1 > ctx->cc_databufsize)
+						if ( ( (ctx->cc_count + local_cc_count) * 3) + 1 > ctx->cc_databufsize)
 						{
-							ctx->cc_data = (unsigned char*)realloc(ctx->cc_data, (size_t) ctx->cc_count*6+1);
+							ctx->cc_data = (unsigned char*)realloc(ctx->cc_data, (size_t) ( (ctx->cc_count + local_cc_count) * 6) + 1);
 							if (!ctx->cc_data)
 								fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
-							ctx->cc_databufsize = (long) ctx->cc_count*6+1;
+							ctx->cc_databufsize = (long) ( (ctx->cc_count + local_cc_count) * 6) + 1;
 						}
 						// Copy new cc data into cc_data
 						copy_ccdata_to_buffer (ctx, (char *) cc_tmpdata, local_cc_count);
@@ -567,12 +567,12 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 						"Syntax problem: Final 0xFF marker missing.");
 
 			// Save the data and process once we know the sequence number
-			if (ctx->cc_count*3+1 > ctx->cc_databufsize)
+			if ( (((local_cc_count + ctx->cc_count) * 3) + 1) > ctx->cc_databufsize)
 			{
-				ctx->cc_data = (unsigned char*)realloc(ctx->cc_data, (size_t) ctx->cc_count*6+1);
+				ctx->cc_data = (unsigned char*)realloc(ctx->cc_data, (size_t) (((local_cc_count + ctx->cc_count) * 6) + 1));
 				if (!ctx->cc_data)
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
-				ctx->cc_databufsize = (long) ctx->cc_count*6+1;
+				ctx->cc_databufsize = (long) (((local_cc_count + ctx->cc_count) * 6) + 1);
 			}
 			// Copy new cc data into cc_data - replace command below.
 			copy_ccdata_to_buffer (ctx, (char *) cc_tmpdata, local_cc_count);
