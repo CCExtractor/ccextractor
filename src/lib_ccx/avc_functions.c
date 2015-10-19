@@ -315,6 +315,8 @@ void sei_rbsp (struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend
 	{
 		if(*tbuf != 0x80)
 			mprint("Strange rbsp_trailing_bits value: %02X\n",*tbuf);
+                else
+			dvprint("\n");
 	}
 	else
 	{
@@ -1096,7 +1098,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 
 		if (abs(curridx) >= MAXBFRAMES) {
 			// Probably a jump in the timeline. Warn and handle gracefully.
-			mprint("\nFound large gap in PTS! Trying to recover ...\n");
+			mprint("\nFound large gap(%d) in PTS! Trying to recover ...\n", curridx);
 			curridx = 0;
 		}
 
