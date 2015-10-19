@@ -18,7 +18,7 @@ static int read_eau_info(struct lib_cc_decode* ctx, struct bitstream *esstream, 
 static int extension_and_user_data(struct lib_cc_decode *ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub);
 static int read_pic_data(struct bitstream *esstream);
 
-
+#define debug( ... ) ccx_common_logging.debug_ftn( CCX_DMT_VERBOSE, __VA_ARGS__)
 /* Process a mpeg-2 data stream with "lenght" bytes in buffer "data".
  * The number of processed bytes is returned.
  * Defined in ISO/IEC 13818-2 6.2 */
@@ -56,7 +56,7 @@ static uint8_t search_start_code(struct bitstream *esstream)
 	// Keep a negative esstream->bitsleft, but correct it.
 	if (esstream->bitsleft <= 0)
 	{
-		dbg_print(CCX_DMT_VERBOSE, "search_start_code: bitsleft <= 0\n");
+		debug("search_start_code: bitsleft <= 0\n");
 		esstream->bitsleft -= 8*4;
 		return 0xB4;
 	}
@@ -95,12 +95,12 @@ static uint8_t search_start_code(struct bitstream *esstream)
 	esstream->pos = tstr;
 	if (esstream->bitsleft < 0)
 	{
-		dbg_print(CCX_DMT_VERBOSE, "search_start_code: bitsleft <= 0\n");
+		debug("search_start_code: bitsleft <= 0\n");
 		return 0xB4;
 	}
 	else
 	{
-		dbg_print(CCX_DMT_VERBOSE, "search_start_code: Found %02X\n", tstr[3]);
+		debug("search_start_code: Found %02X\n", tstr[3]);
 		return tstr[3];
 	}
 }
@@ -127,7 +127,7 @@ static uint8_t next_start_code(struct bitstream *esstream)
 	// Only start looking if there is enough data. Adjust bitsleft.
 	if (esstream->bitsleft < 4*8)
 	{
-		dbg_print(CCX_DMT_VERBOSE, "next_start_code: bitsleft %lld < 32\n", esstream->bitsleft);
+		debug("next_start_code: bitsleft %lld < 32\n", esstream->bitsleft);
 		esstream->bitsleft -= 8*4;
 		return 0xB4;
 	}
@@ -139,7 +139,7 @@ static uint8_t next_start_code(struct bitstream *esstream)
 		tmp = read_u8(esstream);
 		if (tmp)
 		{
-			dbg_print(CCX_DMT_VERBOSE, "next_start_code: Non zero stuffing\n");
+			debug("next_start_code: Non zero stuffing\n");
 			esstream->error = 1;
 			return 0xB4;
 		}
@@ -148,16 +148,16 @@ static uint8_t next_start_code(struct bitstream *esstream)
 	if (esstream->bitsleft < 8)
 	{
 		esstream->bitsleft -= 8;
-		dbg_print(CCX_DMT_VERBOSE, "next_start_code: bitsleft <= 0\n");
+		debug("next_start_code: bitsleft <= 0\n");
 		return 0xB4;
 	}
 	else
 	{
-		dbg_print(CCX_DMT_VERBOSE, "next_start_code: Found %02X\n", *(esstream->pos+3));
+		debug("next_start_code: Found %02X\n", *(esstream->pos+3));
 
 		if ( *(esstream->pos+3) == 0xB4 )
 		{
-			dbg_print(CCX_DMT_VERBOSE, "B4: assume bitstream syntax error!\n");
+			debug("B4: assume bitstream syntax error!\n");
 			esstream->error = 1;
 		}
 
@@ -177,7 +177,7 @@ static int es_video_sequence(struct lib_cc_decode *ctx, struct bitstream *esstre
 	static int noskipmessage = 1;
 	uint8_t startcode;
 
-	dbg_print(CCX_DMT_VERBOSE, "es_video_sequence()\n");
+	debug("es_video_sequence()\n");
 
 	esstream->error = 0;
 
@@ -219,7 +219,7 @@ static int es_video_sequence(struct lib_cc_decode *ctx, struct bitstream *esstre
 	{
 		startcode = next_start_code(esstream);
 
-		dbg_print(CCX_DMT_VERBOSE, "\nM2V - next start code %02X %d\n", startcode, ctx->in_pic_data);
+		debug("\nM2V - next start code %02X %d\n", startcode, ctx->in_pic_data);
 
 		// Syntax check - also returns on bitsleft < 0
 		if (startcode == 0xB4)
@@ -227,10 +227,10 @@ static int es_video_sequence(struct lib_cc_decode *ctx, struct bitstream *esstre
 			if (esstream->error)
 			{
 				ctx->no_bitstream_error = 0;
-				dbg_print(CCX_DMT_VERBOSE, "es_video_sequence: syntax problem.\n");
+				debug("es_video_sequence: syntax problem.\n");
 			}
 
-			dbg_print(CCX_DMT_VERBOSE, "es_video_sequence: return on B4 startcode.\n");
+			debug("es_video_sequence: return on B4 startcode.\n");
 
 			return 0;
 		}
@@ -331,7 +331,7 @@ static int es_video_sequence(struct lib_cc_decode *ctx, struct bitstream *esstre
 // will point to where we want to restart after getting more.
 static int read_seq_info(struct lib_cc_decode *ctx, struct bitstream *esstream)
 {
-	dbg_print(CCX_DMT_VERBOSE, "Read Sequence Info\n");
+	debug("Read Sequence Info\n");
 
 	// We only get here after seeing that start code
 	if (next_u32(esstream) != 0xB3010000) // LSB first (0x000001B3)
@@ -357,7 +357,7 @@ static int read_seq_info(struct lib_cc_decode *ctx, struct bitstream *esstream)
 		return 0;
 	}
 
-	dbg_print(CCX_DMT_VERBOSE, "Read Sequence Info - processed\n\n");
+	debug("Read Sequence Info - processed\n\n");
 
 	return 1;
 }
@@ -368,7 +368,7 @@ static int read_seq_info(struct lib_cc_decode *ctx, struct bitstream *esstream)
 // is FALSE, parsing can set esstream->error to TRUE.
 static int sequence_header(struct lib_cc_decode *ctx, struct bitstream *esstream)
 {
-	dbg_print(CCX_DMT_VERBOSE, "Sequence header\n");
+	debug("Sequence header\n");
 
 	if (esstream->error || esstream->bitsleft <= 0)
 		return 0;
@@ -439,8 +439,8 @@ static int sequence_header(struct lib_cc_decode *ctx, struct bitstream *esstream
 		}
 		else
 		{
-			dbg_print(CCX_DMT_VERBOSE, "\nInvalid sequence header:\n");
-			dbg_print(CCX_DMT_VERBOSE, "V: %u H: %u FR: %u AS: %u\n",
+			debug("\nInvalid sequence header:\n");
+			debug("V: %u H: %u FR: %u AS: %u\n",
 					vert_size, hor_size, frame_rate, aspect_ratio);
 			esstream->error = 1;
 			return 0;
@@ -457,7 +457,7 @@ static int sequence_header(struct lib_cc_decode *ctx, struct bitstream *esstream
 // is FALSE, parsing can set esstream->error to TRUE.
 static int sequence_ext(struct lib_cc_decode *ctx, struct bitstream *esstream)
 {
-	dbg_print(CCX_DMT_VERBOSE, "Sequence extension\n");
+	debug("Sequence extension\n");
 
 	if (esstream->error || esstream->bitsleft <= 0)
 		return 0;
@@ -465,7 +465,7 @@ static int sequence_ext(struct lib_cc_decode *ctx, struct bitstream *esstream)
 	// Syntax check
 	if (next_start_code(esstream) != 0xB5)
 	{
-		dbg_print(CCX_DMT_VERBOSE, "sequence_ext: syntax problem.\n");
+		debug("sequence_ext: syntax problem.\n");
 		return 0;
 	}
 
@@ -479,7 +479,7 @@ static int sequence_ext(struct lib_cc_decode *ctx, struct bitstream *esstream)
 			esstream->error = 1;
 
 		if (esstream->error)
-			dbg_print(CCX_DMT_VERBOSE, "sequence_ext: syntax problem.\n");
+			debug("sequence_ext: syntax problem.\n");
 		return 0;
 	}
 
@@ -510,7 +510,7 @@ static int sequence_ext(struct lib_cc_decode *ctx, struct bitstream *esstream)
 // will point to where we want to restart after getting more.
 static int read_gop_info(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
-	dbg_print(CCX_DMT_VERBOSE, "Read GOP Info\n");
+	debug("Read GOP Info\n");
 
 	// We only get here after seeing that start code
 	if (next_u32(esstream) != 0xB8010000) // LSB first (0x000001B8)
@@ -533,7 +533,7 @@ static int read_gop_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 		return 0;
 	}
 
-	dbg_print(CCX_DMT_VERBOSE, "Read GOP Info - processed\n\n");
+	debug("Read GOP Info - processed\n\n");
 
 	return 1;
 }
@@ -544,7 +544,7 @@ static int read_gop_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 // is FALSE, parsing can set esstream->error to TRUE.
 static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
-	dbg_print(CCX_DMT_VERBOSE, "GOP header\n");
+	debug("GOP header\n");
 
 	if (esstream->error || esstream->bitsleft <= 0)
 		return 0;
@@ -582,10 +582,10 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 		if ((ctx->current_pulldownfields>0) != (ctx->pulldownfields>0))
 		{
 			ctx->current_pulldownfields = ctx->pulldownfields;
-			dbg_print(CCX_DMT_VERBOSE, "Pulldown: %s", (ctx->pulldownfields ? "on" : "off"));
+			debug("Pulldown: %s", (ctx->pulldownfields ? "on" : "off"));
 			if (ctx->pulldownfields)
-				dbg_print(CCX_DMT_VERBOSE, " - %u fields in last GOP", ctx->pulldownfields);
-			dbg_print(CCX_DMT_VERBOSE, "\n");
+				debug(" - %u fields in last GOP", ctx->pulldownfields);
+			debug("\n");
 		}
 		ctx->pulldownfields = 0;
 
@@ -679,7 +679,7 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 // will point to where we want to restart after getting more.
 static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
-	dbg_print(CCX_DMT_VERBOSE, "Read PIC Info\n");
+	debug("Read PIC Info\n");
 
 	// We only get here after seeing that start code
 	if (next_u32(esstream) != 0x00010000) // LSB first (0x00000100)
@@ -801,7 +801,7 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 	ctx->frames_since_last_gop += 1+extraframe;
 	frames_since_ref_time += 1+extraframe;
 
-	dbg_print(CCX_DMT_VERBOSE, "Read PIC Info - processed\n\n");
+	debug("Read PIC Info - processed\n\n");
 
 	return 1;
 }
@@ -812,7 +812,7 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 // is FALSE, parsing can set esstream->error to TRUE.
 static int pic_header(struct lib_cc_decode *ctx, struct bitstream *esstream)
 {
-	dbg_print(CCX_DMT_VERBOSE, "PIC header\n");
+	debug("PIC header\n");
 
 	if (esstream->error || esstream->bitsleft <= 0)
 		return 0;
@@ -850,7 +850,7 @@ static int pic_header(struct lib_cc_decode *ctx, struct bitstream *esstream)
 			esstream->error = 1;
 
 		if (esstream->error)
-			dbg_print(CCX_DMT_VERBOSE, "pic_header: syntax problem.\n");
+			debug("pic_header: syntax problem.\n");
 		return 0;
 	}
 
@@ -863,7 +863,7 @@ static int pic_header(struct lib_cc_decode *ctx, struct bitstream *esstream)
 // is FALSE, parsing can set esstream->error to TRUE.
 static int pic_coding_ext(struct lib_cc_decode *ctx, struct bitstream *esstream)
 {
-	dbg_print(CCX_DMT_VERBOSE, "Picture coding extension %lld\n", esstream->bitsleft);
+	debug("Picture coding extension %lld\n", esstream->bitsleft);
 
 	if (esstream->error || esstream->bitsleft <= 0)
 		return 0;
@@ -871,7 +871,7 @@ static int pic_coding_ext(struct lib_cc_decode *ctx, struct bitstream *esstream)
 	// Syntax check
 	if (next_start_code(esstream) != 0xB5)
 	{
-		dbg_print(CCX_DMT_VERBOSE, "pic_coding_ext: syntax problem.\n");
+		debug("pic_coding_ext: syntax problem.\n");
 		return 0;
 	}
 
@@ -885,7 +885,7 @@ static int pic_coding_ext(struct lib_cc_decode *ctx, struct bitstream *esstream)
 			esstream->error = 1;
 
 		if (esstream->error)
-			dbg_print(CCX_DMT_VERBOSE, "pic_coding_ext: syntax problem.\n");
+			debug("pic_coding_ext: syntax problem.\n");
 		return 0;
 	}
 
@@ -904,7 +904,7 @@ static int pic_coding_ext(struct lib_cc_decode *ctx, struct bitstream *esstream)
 	if (esstream->bitsleft < 0)
 		return 0;
 
-	dbg_print(CCX_DMT_VERBOSE, "Picture coding extension - processed\n");
+	debug("Picture coding extension - processed\n");
 
 	// Read complete
 	return 1;
@@ -917,7 +917,7 @@ static int pic_coding_ext(struct lib_cc_decode *ctx, struct bitstream *esstream)
 // will point to where we want to restart after getting more.
 static int read_eau_info(struct lib_cc_decode* ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
 {
-	dbg_print(CCX_DMT_VERBOSE, "Read Extension and User Info\n");
+	debug("Read Extension and User Info\n");
 
 	// We only get here after seeing that start code
 	unsigned char *tst = next_bytes(esstream, 4);
@@ -932,14 +932,14 @@ static int read_eau_info(struct lib_cc_decode* ctx, struct bitstream *esstream, 
 	if( !extension_and_user_data(ctx, esstream, udtype, sub) )
 	{
 		if (esstream->error)
-			dbg_print(CCX_DMT_VERBOSE, "\nWarning: Retry while reading Extension and User Data!\n");
+			debug("\nWarning: Retry while reading Extension and User Data!\n");
 		else
-			dbg_print(CCX_DMT_VERBOSE, "\nBitstream problem while reading Extension and User Data!\n");
+			debug("\nBitstream problem while reading Extension and User Data!\n");
 
 		return 0;
 	}
 
-	dbg_print(CCX_DMT_VERBOSE, "Read Extension and User Info - processed\n\n");
+	debug("Read Extension and User Info - processed\n\n");
 
 	return 1;
 }
@@ -950,7 +950,7 @@ static int read_eau_info(struct lib_cc_decode* ctx, struct bitstream *esstream, 
 // is FALSE, parsing can set esstream->error to TRUE.
 static int extension_and_user_data(struct lib_cc_decode *ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
 {
-	dbg_print(CCX_DMT_VERBOSE, "Extension and user data(%d)\n", udtype);
+	debug("Extension and user data(%d)\n", udtype);
 
 	if (esstream->error || esstream->bitsleft <= 0)
 		return 0;
@@ -983,13 +983,13 @@ static int extension_and_user_data(struct lib_cc_decode *ctx, struct bitstream *
 
 			if (esstream->error)
 			{
-				dbg_print(CCX_DMT_VERBOSE, "Extension and user data - syntax problem\n");
+				debug("Extension and user data - syntax problem\n");
 				return 0;
 			}
 
 			if (esstream->bitsleft < 0)
 			{
-				dbg_print(CCX_DMT_VERBOSE, "Extension and user data - inclomplete\n");
+				debug("Extension and user data - inclomplete\n");
 				// Restore to where we need to continue
 				init_bitstream(esstream, eau_start, esstream->end);
 				esstream->bitsleft = -1; // Redundant
@@ -1004,7 +1004,7 @@ static int extension_and_user_data(struct lib_cc_decode *ctx, struct bitstream *
 			}
 			else
 			{
-				dbg_print(CCX_DMT_VERBOSE, "Skip %d bytes extension data.\n",
+				debug("Skip %d bytes extension data.\n",
 						esstream->pos - dstart);
 			}
 			// If we get here esstream points to the end of a block
@@ -1017,19 +1017,19 @@ static int extension_and_user_data(struct lib_cc_decode *ctx, struct bitstream *
 
 	if (esstream->error)
 	{
-		dbg_print(CCX_DMT_VERBOSE, "Extension and user data - syntax problem\n");
+		debug("Extension and user data - syntax problem\n");
 		return 0;
 	}
 	if (esstream->bitsleft < 0)
 	{
-		dbg_print(CCX_DMT_VERBOSE, "Extension and user data - inclomplete\n");
+		debug("Extension and user data - inclomplete\n");
 		// Restore to where we need to continue
 		init_bitstream(esstream, eau_start, esstream->end);
 		esstream->bitsleft = -1; // Redundant
 		return 0;
 	}
 
-	dbg_print(CCX_DMT_VERBOSE, "Extension and user data - processed\n");
+	debug("Extension and user data - processed\n");
 
 	// Read complete
 	return 1;
@@ -1042,7 +1042,7 @@ static int extension_and_user_data(struct lib_cc_decode *ctx, struct bitstream *
 // will point to where we want to restart after getting more.
 static int read_pic_data(struct bitstream *esstream)
 {
-	dbg_print(CCX_DMT_VERBOSE, "Read PIC Data\n");
+	debug("Read PIC Data\n");
 
 	uint8_t startcode = next_start_code(esstream);
 
@@ -1053,7 +1053,7 @@ static int read_pic_data(struct bitstream *esstream)
 	// We only get here after seeing that start code
 	if (startcode < 0x01 || startcode > 0xAF)
 	{
-		dbg_print(CCX_DMT_VERBOSE, "Read Pic Data - processed0\n");
+		debug("Read Pic Data - processed0\n");
 
 		return 1;
 	}
@@ -1073,9 +1073,9 @@ static int read_pic_data(struct bitstream *esstream)
 				init_bitstream(esstream, slice_start, esstream->end);
 
 			if ( esstream->error )
-				dbg_print(CCX_DMT_VERBOSE, "read_pic_data: syntax problem.\n");
+				debug("read_pic_data: syntax problem.\n");
 			else
-				dbg_print(CCX_DMT_VERBOSE, "read_pic_data: reached end of bitstream.\n");
+				debug("read_pic_data: reached end of bitstream.\n");
 
 			return 0;
 		}
@@ -1095,7 +1095,7 @@ static int read_pic_data(struct bitstream *esstream)
 		return 0;
 	}
 
-	dbg_print(CCX_DMT_VERBOSE, "Read Pic Data - processed\n");
+	debug("Read Pic Data - processed\n");
 
 	return 1;
 }
