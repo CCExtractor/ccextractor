@@ -46,7 +46,7 @@ struct avc_ctx *init_avc(void)
 	ctx->cc_count = 0;
 	// buffer to hold cc data
 	ctx->cc_databufsize = 1024;
-	ctx->cc_buffer_saved=1; // Was the CC buffer saved after it was last updated?
+	ctx->cc_buffer_saved = CCX_TRUE; // Was the CC buffer saved after it was last updated?
 
 	ctx->got_seq_para = 0;
 	ctx->nal_ref_idc = 0;
@@ -380,14 +380,14 @@ unsigned char *sei_message (struct avc_ctx *ctx, unsigned char *seibuf, unsigned
 void copy_ccdata_to_buffer (struct avc_ctx *ctx, char *source, int new_cc_count)
 {
 	ctx->ccblocks_in_avc_total++;
-	if (ctx->cc_buffer_saved==0)
+	if (ctx->cc_buffer_saved == CCX_FALSE)
 	{
-		mprint ("Warning: Probably loss of CC data, unsaved buffer being rewritten\n");
+		mprint ("Warning: Probably loss of CC data, unsaved buffer being rewritten, trailing end might get lost\n");
 		ctx->ccblocks_in_avc_lost++;
 	}
 	memcpy(ctx->cc_data + ctx->cc_count*3, source, new_cc_count*3+1);
 	ctx->cc_count += new_cc_count;
-	ctx->cc_buffer_saved = 0;
+	ctx->cc_buffer_saved = CCX_FALSE;
 }
 
 
@@ -1148,7 +1148,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 	ctx->frames_since_last_gop++;
 
 	store_hdcc(ctx, ctx->avc_ctx->cc_data, ctx->avc_ctx->cc_count, curridx, ctx->timing->fts_now, sub);
-	ctx->avc_ctx->cc_buffer_saved = 1; // CFS: store_hdcc supposedly saves the CC buffer to a sequence buffer
+	ctx->avc_ctx->cc_buffer_saved = CCX_TRUE; // CFS: store_hdcc supposedly saves the CC buffer to a sequence buffer
 	ctx->avc_ctx->cc_count = 0;
 }
 
