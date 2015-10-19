@@ -1,23 +1,8 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "activity.h"
+
 // Functions to parse a mpeg-2 data stream, see ISO/IEC 13818-2 6.2
-/*
--static int no_bitstream_error = 0;
--static int saw_seqgoppic = 0;
--static int in_pic_data = 0;
--
--static unsigned current_progressive_sequence = 2;
--static unsigned current_pulldownfields = 32768;
--
--static int temporal_reference = 0;
--static enum ccx_frame_type picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
--static unsigned picture_structure = 0;
--unsigned top_field_first = 0; // Needs to be global
--static unsigned repeat_first_field = 0;
--static unsigned progressive_frame = 0;
--static unsigned pulldownfields = 0;
-*/
 static uint8_t search_start_code(struct bitstream *esstream);
 static uint8_t next_start_code(struct bitstream *esstream);
 static int es_video_sequence(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
