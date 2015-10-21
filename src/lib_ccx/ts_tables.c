@@ -362,15 +362,29 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 		}
 		else if(stream_type == CCX_STREAM_TYPE_PRIVATE_USER_MPEG2 && ES_info_length  )
 		{
+			//if this any generally used video stream tyoe get clashed with ATSC/SCTE standard
+			//then this code can go in some atsc flag
 			unsigned char *es_info = buf + i + 5;
 			for (desc_len = 0;(buf + i + 5 + ES_info_length) > es_info ;es_info += desc_len)
 			{
 				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
+				int nb_service;
+				int is_608;
+				int ser_i;
 				desc_len = (*es_info++);
 				if (CCX_MPEG_DSC_CAPTION_SERVICE == descriptor_tag)
 				{
-					update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
+					nb_service = es_info[0] & 0x1f;
+					for (ser_i = 0; ser_i < nb_service; ser_i++)
+					{
+						dbg_print(CCX_DMT_PMT, "CC SERVICE %d: language (%c%c%c)", nb_service,
+							es_info[1], es_info[2], es_info[3]);
+						is_608 = es_info[4] >> 7;
+						dbg_print(CCX_DMT_PMT, "%s", is_608?" CEA-608":" CEA-708");
+						dbg_print(CCX_DMT_PMT, "%s", is_608?" CEA-608":" CEA-708");
+					}
 				}
+				update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
 			}
 		}
 
