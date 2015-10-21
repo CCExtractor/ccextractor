@@ -78,6 +78,7 @@ int update_pinfo(struct ccx_demuxer *ctx, int pid, int program_number)
 
 	return CCX_OK;
 }
+
 /* Process Program Map Table - The PMT contains a list of streams in a program.
    Input: pos => Index in the PAT array
    Returns: Changes in the selected PID=1, No changes=0, if changes then if the
@@ -87,7 +88,7 @@ int update_pinfo(struct ccx_demuxer *ctx, int pid, int program_number)
 
 int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct program_info *pinfo)
 {
-	int must_flush=0;
+	int must_flush = 0;
 	int ret = 0;
 	unsigned char desc_len = 0;
 	unsigned char *sbuf = buf;
@@ -106,9 +107,27 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 
 	crc = (*(int32_t*)(sbuf+olen-4));
 	table_id = buf[0];
-	if(table_id != 0x2)
+
+	if (table_id == 0xC0)
 	{
-		mprint("Warning: As per MPEG table defination PMT must have table id 0x2\n");
+		/*
+		 * Acc to System Information for Satellite Distribution
+		 * of Digital Television for Cable and MMDS (ANSI/SCTE 57 2003 )
+		 * PROGRAM INFORMATION Table found in PMT
+		 */
+		dbg_print(CCX_DMT_PARSE, "PMT: PROGRAM INFORMATION Table need implementation");
+		return 0;
+	}
+	else if (table_id == 0xC1)
+	{
+                //SCTE 57 2003
+		dbg_print(CCX_DMT_PARSE, "PMT: PROGRAM Name Table need implementation");
+		return 0;
+	}
+	else if(table_id != 0x2)
+	{
+		mprint("Please Report: Unknown table id in PMT expected 0x02 found 0x%X\n", table_id);
+		return 0;
 	}
 
 	section_length = (((buf[1] & 0x0F) << 8)| buf[2]);
@@ -338,6 +357,19 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 						break;
 					update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_DVB, program_number, ptr);
 					max_dif = 30;
+				}
+			}
+		}
+		else if(stream_type == CCX_STREAM_TYPE_PRIVATE_USER_MPEG2 && ES_info_length  )
+		{
+			unsigned char *es_info = buf + i + 5;
+			for (desc_len = 0;(buf + i + 5 + ES_info_length) > es_info ;es_info += desc_len)
+			{
+				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
+				desc_len = (*es_info++);
+				if (CCX_MPEG_DSC_CAPTION_SERVICE == descriptor_tag)
+				{
+					update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
 				}
 			}
 		}

@@ -83,6 +83,10 @@ enum ccx_stream_type get_buffer_type(struct cap_info *cinfo)
 	{
 		return CCX_PRIVATE_MPEG2_CC;
 	}
+	else if ( cinfo->stream == CCX_STREAM_TYPE_PRIVATE_USER_MPEG2 && cinfo->codec == CCX_CODEC_ATSC_CC)
+	{
+		return CCX_PES;
+	}
 	else
 	{
 		return CCX_EINVAL;
