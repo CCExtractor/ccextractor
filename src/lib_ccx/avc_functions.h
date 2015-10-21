@@ -44,6 +44,8 @@ struct avc_ctx
 
 	// Used for PTS ordering of CC blocks
 	LLONG currefpts;
+	LLONG last_pic_order_cnt_lsb;
+	LLONG last_slice_pts;
 };
 
 struct avc_ctx *init_avc(void);

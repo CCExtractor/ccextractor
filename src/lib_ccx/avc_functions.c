@@ -75,16 +75,22 @@ struct avc_ctx *init_avc(void)
 
 	// Used for PTS ordering of CC blocks
 	ctx->currefpts = 0;
+
+	ctx->last_pic_order_cnt_lsb = -1;
+	ctx->last_slice_pts = -1;
 	return ctx;
 }
 
 void do_NAL (struct lib_cc_decode *ctx, unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub)
 {
 	unsigned char *NALstop;
-	unsigned nal_unit_type = *NALstart & 0x1F;
+	enum ccx_avc_nal_types nal_unit_type = *NALstart & 0x1F;
 
 	NALstop = NAL_length+NALstart;
 	NALstop = remove_03emu(NALstart+1, NALstop); // Add +1 to NALstop for TS, without it for MP4. Still don't know why
+
+	dvprint("BEGIN NAL unit type: %d length %d ref_idc: %d - Buffered captions before: %d\n",
+				nal_unit_type,  NALstop-NALstart-1, ctx->avc_ctx->nal_ref_idc, !ctx->avc_ctx->cc_buffer_saved);
 
 	if (NALstop==NULL) // remove_03emu failed.
 	{
@@ -115,7 +121,7 @@ void do_NAL (struct lib_cc_decode *ctx, unsigned char *NALstart, LLONG NAL_lengt
 	else if ( ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_SEI )
 	{
 		// Found SEI (used for subtitles)
-		//set_fts(); // FIXME - check this!!!
+		//set_fts(ctx->timing); // FIXME - check this!!!
 		sei_rbsp(ctx->avc_ctx, NALstart+1, NALstop);
 	}
 	else if ( ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_PICTURE_PARAMETER_SET )
@@ -128,6 +134,9 @@ void do_NAL (struct lib_cc_decode *ctx, unsigned char *NALstart, LLONG NAL_lengt
 		mprint ("\n After decoding, the actual thing was (length =%d)\n", NALstop-(NALstart+1));
 		dump (CCX_DMT_GENERIC_NOTICES,NALstart+1, NALstop-(NALstart+1),0, 0);
 	}
+
+	dvprint("END   NAL unit type: %d length %d ref_idc: %d - Buffered captions after: %d\n",
+			nal_unit_type,  NALstop-NALstart-1, ctx->avc_ctx->nal_ref_idc, !ctx->avc_ctx->cc_buffer_saved);
 
 }
 
@@ -231,15 +240,8 @@ size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t av
 		}
 
 		ctx->avc_ctx->nal_ref_idc = *NALstart >> 5;
-		unsigned nal_unit_type = *NALstart & 0x1F;
-
-		dvprint("BEGIN NAL unit type: %d length %d  zeros: %d  ref_idc: %d - Buffered captions before: %d\n",
-				nal_unit_type,  NALstop-NALstart-1, zeropad, ctx->avc_ctx->nal_ref_idc, !ctx->avc_ctx->cc_buffer_saved);
-
+                dvprint("process_avc: zeropad %d\n", zeropad);
 		do_NAL (ctx, NALstart, NALstop-NALstart, sub);
-
-		dvprint("END   NAL unit type: %d length %d  zeros: %d  ref_idc: %d - Buffered captions after: %d\n",
-				nal_unit_type,  NALstop-NALstart-1, zeropad, ctx->avc_ctx->nal_ref_idc, !ctx->avc_ctx->cc_buffer_saved);
 	}
 
 	return avcbuflen;
@@ -863,7 +865,10 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
 }
 
 
-// Process slice header in AVC data.
+/**
+    Process slice header in AVC data.
+    Slice Header is parsed to get sequence of frames
+*/
 void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub)
 {
 	LLONG tmp;
@@ -887,7 +892,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 	tmp = ue(&q1);
 	dvprint("first_mb_in_slice=     % 4lld (%#llX)\n",tmp,tmp);
 	slice_type = ue(&q1);
-	dvprint("slice_type=            %llX\n", slice_type);
+	dvprint("slice_type=            % 4llX\n", slice_type);
 	tmp = ue(&q1);
 	dvprint("pic_parameter_set_id=  % 4lld (%#llX)\n",tmp,tmp);
 
@@ -896,17 +901,17 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 
 	// Needs log2_max_frame_num_minus4 + 4 bits
 	ctx->avc_ctx->frame_num = u(&q1,ctx->avc_ctx->log2_max_frame_num);
-	dvprint("frame_num=             %llX\n", ctx->avc_ctx->frame_num);
+	dvprint("frame_num=             % 4llX\n", ctx->avc_ctx->frame_num);
 
 	if( !ctx->avc_ctx->frame_mbs_only_flag )
 	{
 		field_pic_flag = u(&q1,1);
-		dvprint("field_pic_flag=        %llX\n", field_pic_flag);
+		dvprint("field_pic_flag=        % 4llX\n", field_pic_flag);
 		if( field_pic_flag )
 		{
 			// bottom_field_flag
 			bottom_field_flag = u(&q1,1);
-			dvprint("bottom_field_flag=     %llX\n", bottom_field_flag);
+			dvprint("bottom_field_flag=     % 4llX\n", bottom_field_flag);
 
 			// TODO - Do this right.
 			// When bottom_field_flag is set the video is interlaced,
@@ -915,22 +920,36 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 		}
 	}
 
-	dvprint("IdrPicFlag=            %d\n", IdrPicFlag	);
+	dvprint("IdrPicFlag=            % 4d\n", IdrPicFlag	);
 
 	if( nal_unit_type == 5 )
 	{
 		tmp=ue(&q1);
-		dvprint("idr_pic_id=     % 4lld (%#llX)\n",tmp,tmp);
+		dvprint("idr_pic_id=            % 4lld (%#llX)\n",tmp,tmp);
 		//TODO
 	}
 	if( ctx->avc_ctx->pic_order_cnt_type == 0 )
 	{
 		pic_order_cnt_lsb=u(&q1,ctx->avc_ctx->log2_max_pic_order_cnt_lsb);
-		dvprint("pic_order_cnt_lsb=     %llX\n", pic_order_cnt_lsb);
+		dvprint("pic_order_cnt_lsb=     % 4llX\n", pic_order_cnt_lsb);
 	}
 	if( ctx->avc_ctx->pic_order_cnt_type == 1 )
 	{
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "AVC: ctx->avc_ctx->pic_order_cnt_type == 1 not yet supported.");
+	}
+
+        //Ignore slice with same pic order or pts
+	if ( ccx_options.usepicorder )
+	{
+		if ( ctx->avc_ctx->last_pic_order_cnt_lsb == pic_order_cnt_lsb)
+			return;
+		ctx->avc_ctx->last_pic_order_cnt_lsb = pic_order_cnt_lsb;
+	}
+	else
+	{
+		if (ctx->timing->current_pts == ctx->avc_ctx->last_slice_pts)
+			return;
+		ctx->avc_ctx->last_slice_pts = ctx->timing->current_pts;
 	}
 #if 0
 	else
@@ -980,7 +999,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 		// P-SLICES
 		case 0:
 		case 5:
-			// I-SLICES
+		// I-SLICES
 		case 2:
 		case 7:
 			isref=1;
@@ -1003,14 +1022,19 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 		ctx->avc_ctx->lastmaxidx = -1;
 	}
 
+
+#if 0
+Leaving it for record,  after testing garbled_dishHD.mpg, and
+2014 SugarHouse Casino Mummers Parade Fancy Brigades_new.ts might need to come back
 	// Sometimes two P-slices follow each other, see garbled_dishHD.mpg,
 	// in this case we only treat the first as a reference pic
 	if (isref && ctx->frames_since_last_gop <= 3) // Used to be == 1, but the sample file
 	{ // 2014 SugarHouse Casino Mummers Parade Fancy Brigades_new.ts was garbled
 		// Probably doing a proper PTS sort would be a better solution.
-		isref = 0;
+		//isref = 0;
 		dbg_print(CCX_DMT_TIME, "Ignoring this reference pic.\n");
 	}
+#endif
 
 	// if slices are buffered - flush
 	if (isref)

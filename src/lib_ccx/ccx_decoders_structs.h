@@ -9,7 +9,7 @@
 #include "ccx_decoders_708.h"
 // Define max width in characters/columns on the screen
 #define CCX_DECODER_608_SCREEN_WIDTH  32
-#define MAXBFRAMES 50
+#define MAXBFRAMES 10
 #define SORTBUF (2*MAXBFRAMES+1)
 
 
