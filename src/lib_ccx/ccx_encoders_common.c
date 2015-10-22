@@ -70,28 +70,137 @@ void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_
 	}
 }
 
+unsigned int utf8_to_latin1_map(const unsigned int code)
+{
+    /* Code points 0 to U+00FF are the same in both. */
+    if (code < 256U)
+        return code;
+
+    switch (code)
+	{
+    case 0x0152U:
+		return 188U; /* U+0152 = 0xBC: OE ligature */
+    case 0x0153U:
+		return 189U; /* U+0153 = 0xBD: oe ligature */
+    case 0x0160U:
+		return 166U; /* U+0160 = 0xA6: S with caron */
+    case 0x0161U: return 168U; /* U+0161 = 0xA8: s with caron */
+    case 0x0178U: return 190U; /* U+0178 = 0xBE: Y with diaresis */
+    case 0x017DU: return 180U; /* U+017D = 0xB4: Z with caron */
+    case 0x017EU: return 184U; /* U+017E = 0xB8: z with caron */
+    case 0x20ACU: return 164U; /* U+20AC = 0xA4: Euro */
+    default:      return 256U;
+    }
+}
+
 int change_utf8_encoding(unsigned char* dest, unsigned char* src, int len, enum ccx_encoding_type out_enc)
 {
 	unsigned char *orig = dest; // Keep for calculating length
+	unsigned char *orig_src = src; // Keep for calculating length
 	int bytes = 0;
-	for (int i = 0; i < len; i++)
+	for (int i = 0; src < orig_src + len;)
 	{
-		char c = src[i];
+		unsigned char c = src[i];
+		int c_len = 0;
+
+		if ( c < 0x80 )
+			c_len = 1;
+		else if ( ( c & 0x20 ) == 0 )
+			c_len = 2;
+		else if ( ( c & 0x10 ) == 0 )
+			c_len = 3;
+		else if ( ( c & 0x08 ) == 0 )
+			c_len = 4;
+		else if ( ( c & 0x04 ) == 0 )
+			c_len = 5;
+
 		switch (out_enc)
 		{
 		case CCX_ENC_UTF_8:
 			memcpy(dest, src, len);
 			return len;
 		case CCX_ENC_LATIN_1:
-			return CCX_ENOSUPP;
+			if (c_len == 1)
+				*dest++ = *src;
+			else if (c_len == 2)
+			{
+				if ((src[1] & 0x40) == 0)
+				{
+					c = utf8_to_latin1_map((((unsigned int)(src[0] & 0x1F)) << 6)
+							|  ((unsigned int)(src[1] & 0x3F)));
+					if (c < 256)
+						*dest++ = c;
+					else
+						*dest++ = '?';
+				}
+				else
+					*dest++ = '?';
+			}
+			else if (c_len == 3)
+			{
+				if ((src[1] & 0x40) == 0 && (src[2] & 0x40) == 0 )
+				{
+					c = utf8_to_latin1_map( (((unsigned int)(src[0] & 0x0F)) << 12)
+						| (((unsigned int)(src[1] & 0x3F)) << 6)
+						|  ((unsigned int)(src[2] & 0x3F)) );
+                	if (c < 256)
+                    	*dest++ = c;
+					else
+						*dest++ = '?';
+				}
+			}
+			else if (c_len == 4)
+			{
+				if ((src[1] & 0x40) == 0 &&
+					(src[2] & 0x40) == 0 &&
+                	(src[3] & 0x40) == 0)
+				{
+					c = utf8_to_latin1_map( (((unsigned int)(src[0] & 0x07)) << 18)
+						| (((unsigned int)(src[1] & 0x3F)) << 12)
+						| (((unsigned int)(src[2] & 0x3F)) << 6)
+						|  ((unsigned int)(src[3] & 0x3F)) );
+					if (c < 256)
+						*(dest++) = c;
+					else
+						*dest++ = '?';
+				}
+				else
+					*dest++ = '?';
+			}
+			else if (c_len == 5)
+			{
+				if ((src[1] & 0x40) == 0 &&
+					(src[2] & 0x40) == 0 &&
+					(src[3] & 0x40) == 0 &&
+					(src[4] & 0x40) == 0)
+				{
+					c = utf8_to_latin1_map( (((unsigned int)(src[0] & 0x03)) << 24U)
+						| (((unsigned int)(src[1] & 0x3F)) << 18U)
+						| (((unsigned int)(src[2] & 0x3F)) << 12U)
+						| (((unsigned int)(src[3] & 0x3F)) << 6U)
+						|  ((unsigned int)(src[4] & 0x3FU)) );
+                	if (c < 256)
+                    	*(dest++) = c;
+					else
+						*dest++ = '?';
+            	}
+				else
+					*dest++ = '?';
+			}
+			else
+				*dest++ = '?';
+			break;
 		case CCX_ENC_UNICODE:
 			return CCX_ENOSUPP;
 		case CCX_ENC_ASCII:
-			return CCX_ENOSUPP;
+			if (c_len == 1)
+				*dest++ = *src;
+			else
+				*dest++ = '?';
 		default:
 			return CCX_ENOSUPP;
 		}
-		dest += bytes;
+		src += c_len;
 	}
 	*dest = 0;
 	return (dest - orig); // Return length
