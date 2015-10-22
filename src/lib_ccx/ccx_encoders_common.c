@@ -70,44 +70,117 @@ void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_
 	}
 }
 
+int change_utf8_encoding(unsigned char* dest, unsigned char* src, int len, enum ccx_encoding_type out_enc)
+{
+	unsigned char *orig = dest; // Keep for calculating length
+	int bytes = 0;
+	for (int i = 0; i < len; i++)
+	{
+		char c = src[i];
+		switch (out_enc)
+		{
+		case CCX_ENC_UTF_8:
+			memcpy(dest, src, len);
+			return len;
+		case CCX_ENC_LATIN_1:
+			return CCX_ENOSUPP;
+		case CCX_ENC_UNICODE:
+			return CCX_ENOSUPP;
+		case CCX_ENC_ASCII:
+			return CCX_ENOSUPP;
+		default:
+			return CCX_ENOSUPP;
+		}
+		dest += bytes;
+	}
+	*dest = 0;
+	return (dest - orig); // Return length
+}
 
-unsigned int get_str_basic(unsigned char *buffer, unsigned char *line, int trim_subs, enum ccx_encoding_type encoding, int max_len)
+int change_latin1_encoding(unsigned char* dest, unsigned char* src, int len, enum ccx_encoding_type out_enc)
+{
+	return CCX_ENOSUPP;
+}
+
+int change_unicode_encoding(unsigned char* dest, unsigned char* src, int len, enum ccx_encoding_type out_enc)
+{
+	return CCX_ENOSUPP;
+}
+
+int change_ascii_encoding(unsigned char* dest, unsigned char* src, int len, enum ccx_encoding_type out_enc)
+{
+	unsigned char *orig = dest; // Keep for calculating length
+	int bytes = 0;
+	for (int i = 0; i < len; i++)
+	{
+		char c = src[i];
+		switch (out_enc)
+		{
+		case CCX_ENC_UTF_8:
+			bytes = get_char_in_utf_8(dest, c);
+			break;
+		case CCX_ENC_LATIN_1:
+			get_char_in_latin_1(dest, c);
+			bytes = 1;
+			break;
+		case CCX_ENC_UNICODE:
+			get_char_in_unicode(dest, c);
+			bytes = 2;
+			break;
+		case CCX_ENC_ASCII:
+			memcpy(dest, src, len);
+			return len;
+		default:
+			return CCX_ENOSUPP;
+		}
+		dest += bytes;
+	}
+	*dest = 0;
+	return (dest - orig); // Return length
+}
+
+int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_subs,
+	enum ccx_encoding_type in_enc, enum ccx_encoding_type out_enc, int max_len)
 {
 	int last_non_blank = -1;
 	int first_non_blank = -1;
-	unsigned char *orig = buffer; // Keep for calculating length
-	find_limit_characters(line, &first_non_blank, &last_non_blank, max_len);
+	int len = 0;
+	find_limit_characters(in_buffer, &first_non_blank, &last_non_blank, max_len);
 	if (!trim_subs)
 		first_non_blank = 0;
 
 	if (first_non_blank == -1)
 	{
-		*buffer = 0;
+		*out_buffer = 0;
 		return 0;
 	}
 
-	int bytes = 0;
-	for (int i = first_non_blank; i <= last_non_blank; i++)
+
+	// change encoding only when required
+	switch (in_enc)
 	{
-		char c = line[i];
-		switch (encoding)
-		{
-		case CCX_ENC_UTF_8:
-			bytes = get_char_in_utf_8(buffer, c);
-			break;
-		case CCX_ENC_LATIN_1:
-			get_char_in_latin_1(buffer, c);
-			bytes = 1;
-			break;
-		case CCX_ENC_UNICODE:
-			get_char_in_unicode(buffer, c);
-			bytes = 2;
-			break;
-		}
-		buffer += bytes;
+	case CCX_ENC_UTF_8:
+		len = change_utf8_encoding(out_buffer, in_buffer + first_non_blank, last_non_blank-first_non_blank, out_enc);
+		break;
+	case CCX_ENC_LATIN_1:
+		len = change_latin1_encoding(out_buffer, in_buffer + first_non_blank, last_non_blank-first_non_blank, out_enc);
+		break;
+	case CCX_ENC_UNICODE:
+		len = change_unicode_encoding(out_buffer, in_buffer + first_non_blank, last_non_blank-first_non_blank, out_enc);
+		break;
+	case CCX_ENC_ASCII:
+		len = change_ascii_encoding(out_buffer, in_buffer + first_non_blank, last_non_blank-first_non_blank, out_enc);
+		break;
 	}
-	*buffer = 0;
-	return (unsigned)(buffer - orig); // Return length
+	if (len < 0)
+		mprint("WARNING: Could not encode in specified format\n");
+	else if (len == CCX_ENOSUPP)
+	// we only support ASCII to other encoding std
+		mprint("WARNING: Encoding is not yet supported\n");
+	else
+		return (unsigned)len; // Return length
+
+	return 0; // Return length
 }
 
 int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
@@ -308,7 +381,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 		str = strtok_r(str, "\r\n", &save_str);
 		do
 		{
-			length = get_str_basic(context->subline, str, context->trim_subs, context->encoding, strlen(str));
+			length = get_str_basic(context->subline, str, context->trim_subs, sub->enc_type, context->encoding, strlen(str));
 			if (length <= 0)
 			{
 				continue;
@@ -391,6 +464,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 	return ret;
 }
 
+//TODO Convert CC line to TEXT format and remove this function
 void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context, int line_number)
 {
 	int ret = 0;
@@ -402,7 +476,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		correct_case(line_number, data);
 	}
 	int length = get_str_basic (context->subline, data->characters[line_number],
-			context->trim_subs, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
+			context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
 
 	if (context->encoding!=CCX_ENC_UNICODE)
 	{

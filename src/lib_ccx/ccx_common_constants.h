@@ -196,7 +196,8 @@ enum ccx_encoding_type
 {
 	CCX_ENC_UNICODE = 0,
 	CCX_ENC_LATIN_1 = 1,
-	CCX_ENC_UTF_8 = 2
+	CCX_ENC_UTF_8 = 2,
+	CCX_ENC_ASCII = 3
 };
 
 enum ccx_bufferdata_type

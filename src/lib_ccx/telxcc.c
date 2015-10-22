@@ -576,7 +576,8 @@ void telxcc_dump_prev_page (struct TeletextCtx *ctx, struct cc_subtitle *sub)
 		return;
 
 	snprintf(info, 4, "%.3u", bcd_page_to_int(tlt_config.page));
-	add_cc_sub_text(sub, ctx->page_buffer_prev, ctx->prev_show_timestamp, ctx->prev_hide_timestamp, info, "TLT");
+	add_cc_sub_text(sub, ctx->page_buffer_prev, ctx->prev_show_timestamp,
+		ctx->prev_hide_timestamp, info, "TLT", CCX_ENC_UTF_8);
 
 	if (ctx->page_buffer_prev)
 		free (ctx->page_buffer_prev);
@@ -892,7 +893,8 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 #endif
 			break;
 		default: // Yes, this means everything else is .srt for now
-			add_cc_sub_text(sub, ctx->page_buffer_cur, page->show_timestamp, page->hide_timestamp + 1, NULL, "TLT");
+			add_cc_sub_text(sub, ctx->page_buffer_cur, page->show_timestamp,
+				page->hide_timestamp + 1, NULL, "TLT", CCX_ENC_UTF_8);
 	}
 
 	// Also update GUI...

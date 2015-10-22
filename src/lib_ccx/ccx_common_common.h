@@ -28,12 +28,13 @@
 #define EXIT_NOT_ENOUGH_MEMORY                 500
 #define CCX_COMMON_EXIT_BUG_BUG                1000
 
-#define CCX_OK					0
-#define CCX_FALSE				0
-#define CCX_TRUE				1
-#define CCX_EAGAIN				-100
-#define CCX_EOF					-101
-#define CCX_EINVAL				-102
+#define CCX_OK       0
+#define CCX_FALSE    0
+#define CCX_TRUE     1
+#define CCX_EAGAIN  -100
+#define CCX_EOF     -101
+#define CCX_EINVAL  -102
+#define CCX_ENOSUPP -103
 
 // Declarations
 void fdprintf(int fd, const char *fmt, ...);
@@ -41,7 +42,8 @@ void mstotime(LLONG milli, unsigned *hours, unsigned *minutes,unsigned *seconds,
 void freep(void *arg);
 void dbg_print(LLONG mask, const char *fmt, ...);
 unsigned char *debug_608toASC(unsigned char *ccdata, int channel);
-int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time, LLONG end_time, char *info, char *mode);
+int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time,
+		LLONG end_time, char *info, char *mode, enum ccx_encoding_type);
 
 extern int cc608_parity_table[256]; // From myth
 #endif

@@ -1093,6 +1093,11 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
 	return 0;
 }
 
+/** Acc to http://www.bocra.org.bw/sites/default/files/documents/Appendix%201%20-%20Operational%20Guideline%20for%20ISDB-Tbw.pdf
+ * In table AP8-1 there are modification to ARIB TR-B14 in volume 3 Section 2 4.4.1 character encoding is UTF-8
+ * instead of 8 bit character, just now we dont have any means to detect which country this video is
+ * therefor we have hardcoded UTF-8 as encoding
+ */
 int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle *sub)
 {
 	ISDBSubContext *ctx = codec_ctx;
@@ -1151,7 +1156,7 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 	/* Copy data if there in buffer */
 	if (ctx->text.len > 0 )
 	{
-		add_cc_sub_text(sub, ctx->text.buf, ctx->prev_timestamp, ctx->timestamp, "NA", "ISDB");
+		add_cc_sub_text(sub, ctx->text.buf, ctx->prev_timestamp, ctx->timestamp, "NA", "ISDB", CCX_ENC_UTF_8);
 		ctx->text.used = 0;
 		ctx->text.len = 0;
 		if (sub->start_time == sub->end_time)

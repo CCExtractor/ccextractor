@@ -161,5 +161,6 @@ void set_encoder_startcredits_displayed(struct encoder_ctx *ctx, int startcredit
 void set_encoder_rcwt_fileformat(struct encoder_ctx *ctx, short int format);
 
 void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank, int max_len);
-unsigned int get_str_basic(unsigned char *buffer, unsigned char *line, int trim_subs, enum ccx_encoding_type encoding, int max_len);
+int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_subs,
+	enum ccx_encoding_type in_enc, enum ccx_encoding_type out_enc, int max_len);
 #endif

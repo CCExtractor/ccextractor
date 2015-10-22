@@ -1,6 +1,8 @@
 #ifndef _CC_COMMON_STRUCTS
 #define _CC_COMMON_STRUCTS
 
+#include "ccx_common_constants.h"
+
 enum ccx_common_logging_gui {
 	CCX_COMMON_LOGGING_GUI_XDS_PROGRAM_NAME, // Called with xds_program_name
 	CCX_COMMON_LOGGING_GUI_XDS_PROGRAM_ID_NR, // Called with current_xds_min, current_xds_hour, current_xds_date, current_xds_month
@@ -44,6 +46,8 @@ struct cc_subtitle
 	unsigned int nb_data;
 	/**  type of subtitle */
 	enum subtype type;
+    /** Encoding type of Text, must be ignored in case of subtype as bitmap or cc_screen*/
+    enum ccx_encoding_type  enc_type;
 	/* set only when all the data is to be displayed at same time */
 	LLONG start_time;
 	LLONG end_time;
