@@ -160,16 +160,16 @@ int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_
 	switch (in_enc)
 	{
 	case CCX_ENC_UTF_8:
-		len = change_utf8_encoding(out_buffer, in_buffer + first_non_blank, last_non_blank-first_non_blank, out_enc);
+		len = change_utf8_encoding(out_buffer, in_buffer + first_non_blank, last_non_blank-first_non_blank+1, out_enc);
 		break;
 	case CCX_ENC_LATIN_1:
-		len = change_latin1_encoding(out_buffer, in_buffer + first_non_blank, last_non_blank-first_non_blank, out_enc);
+		len = change_latin1_encoding(out_buffer, in_buffer + first_non_blank, last_non_blank-first_non_blank+1, out_enc);
 		break;
 	case CCX_ENC_UNICODE:
-		len = change_unicode_encoding(out_buffer, in_buffer + first_non_blank, last_non_blank-first_non_blank, out_enc);
+		len = change_unicode_encoding(out_buffer, in_buffer + first_non_blank, last_non_blank-first_non_blank+1, out_enc);
 		break;
 	case CCX_ENC_ASCII:
-		len = change_ascii_encoding(out_buffer, in_buffer + first_non_blank, last_non_blank-first_non_blank, out_enc);
+		len = change_ascii_encoding(out_buffer, in_buffer + first_non_blank, last_non_blank-first_non_blank+1, out_enc);
 		break;
 	}
 	if (len < 0)
