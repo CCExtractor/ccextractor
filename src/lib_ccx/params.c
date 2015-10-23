@@ -1103,7 +1103,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-ru3")==0)
 		{
-			opt->settings_608 .force_rollup = 3;
+			opt->settings_608.force_rollup = 3;
 			continue;
 		}
 		if (strcmp (argv[i],"-trim")==0)
