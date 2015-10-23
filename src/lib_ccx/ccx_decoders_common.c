@@ -236,6 +236,11 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->timing = init_timing_ctx(&ccx_common_timing_settings);
 
 	setting->settings_dtvcc->timing = ctx->timing;
+
+	setting->settings_608->no_rollup = setting->no_rollup;
+	setting->settings_dtvcc->no_rollup = setting->no_rollup;
+	ctx->no_rollup = setting->no_rollup;
+
 	ctx->dtvcc = ccx_dtvcc_init(setting->settings_dtvcc);
 	ctx->dtvcc->is_active = setting->settings_dtvcc->enabled;
 
