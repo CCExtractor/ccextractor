@@ -1087,6 +1087,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp (argv[i],"-noru")==0 ||
 				strcmp (argv[i],"--norollup")==0)
 		{
+			opt->no_rollup = 1;
 			opt->settings_608.no_rollup = 1;
 			opt->settings_dtvcc.no_rollup = 1;
 			continue;

@@ -119,8 +119,24 @@ enum color
 	HI_CYAN,
 	HI_WHITE,
 };
+
+enum isdb_tmd
+{
+	ISDB_TMD_FREE = 0,
+	ISDB_TMD_REAL_TIME = 0x1,
+	ISDB_TMD_OFFSET_TIME = 0x2,
+};
+
 #define IS_HORIZONTAL_LAYOUT(format) \
-	((format) == ISDBSUB_FMT_960H || (format) == ISDBSUB_FMT_720H)
+	( (format) == WF_HORIZONTAL_STD_DENSITY\
+	||(format) == WF_HORIZONTAL_HIGH_DENSITY\
+	||(format) == WF_HORIZONTAL_WESTERN_LANG\
+	||(format) == WF_HORIZONTAL_1920x1080\
+	||(format) == WF_HORIZONTAL_960x540\
+	||(format) == WF_HORIZONTAL_720x480\
+	||(format) == WF_HORIZONTAL_1280x720\
+	||(format) == WF_HORIZONTAL_CUSTOM )
+
 #define LAYOUT_GET_WIDTH(format) \
 	(((format) == ISDBSUB_FMT_960H || (format) == ISDBSUB_FMT_960V) ? 960 : 720)
 #define LAYOUT_GET_HEIGHT(format) \
@@ -191,13 +207,7 @@ struct b24str_state
 
 typedef struct
 {
-	enum isdbsub_format
-	{
-		ISDBSUB_FMT_960H = 0x08,
-		ISDBSUB_FMT_960V,
-		ISDBSUB_FMT_720H,
-		ISDBSUB_FMT_720V,
-	} format;
+	enum writing_format format;
 	int is_profile_c;// profile C: "1seg". see ARIB TR-B14 3-4
 
 	// clipping area.
@@ -254,6 +264,15 @@ typedef struct {
 
 	uint32_t fg_color;
 	uint32_t bg_color;
+	/**
+	 * Colour between foreground and background in gradation font is defined that
+	 * colour near to foreground colour is half foreground colour and colour near to
+	 * background colour is half background colour.
+	 */
+	//Half forground color
+	uint32_t hfg_color;
+	//Half background color
+	uint32_t hbg_color;
 	uint32_t mat_color;
 
 	ISDBSubLayout layout_state;
@@ -265,7 +284,6 @@ typedef struct
 	char *char_buf;
 	int char_buf_index;
 	int len;
-	enum writing_format write_fmt;
 	int nb_char;
 	int nb_line;
 	uint64_t timestamp;
@@ -274,9 +292,6 @@ typedef struct
 		int raster_color;
 		int clut_high_idx;
 	}state;
-	struct {
-		int col, row;
-	} cell_spacing;
 	ISDBSubState current_state; //modified default_state[lang_tag]
 	struct {
 		char *buf;
@@ -284,9 +299,17 @@ typedef struct
 		size_t used;
 		size_t txt_tail; // tail of the text, excluding trailing control sequences.
 	} text;
-
-        enum color bg_color;
-
+	enum isdb_tmd tmd;
+	int nb_lang;
+	struct
+	{
+		int hour;
+		int min;
+		int sec;
+		int milli;
+	}offset_time;
+	uint8_t dmf;
+	uint8_t dc;
 
 }ISDBSubContext;
 
@@ -518,18 +541,19 @@ static void do_line_break(ISDBSubContext *ctx)
 
 static void set_writing_format(ISDBSubContext *ctx, uint8_t *arg)
 {
+	ISDBSubLayout *ls = &ctx->current_state.layout_state;
 
 	/* One param means its initialization */
 	if( *(arg+1) == 0x20)
 	{
-		ctx->write_fmt = (arg[0] & 0x0F);
+		ls->format = (arg[0] & 0x0F);
 		return;
 	}
 
 	/* P1 I1 p2 I2 P31 ~ P3i I3 P41 ~ P4j I4 F */
 	if ( *(arg + 1) == 0x3B)
 	{
-		ctx->write_fmt = WF_HORIZONTAL_CUSTOM;
+		ls->format = WF_HORIZONTAL_CUSTOM;
 		arg += 2;
 	}
 	if ( *(arg + 1) == 0x3B)
@@ -570,10 +594,12 @@ static void set_writing_format(ISDBSubContext *ctx, uint8_t *arg)
 	return;
 }
 
-// move pen position to (col, row) relative to display area's top left.
-//  Note 1: In vertical layout, coordinates are rotated 90 deg.
-//          on the display area's top right.
-//  Note 2: the cell includes line/char spacings in both sides.
+/** move pen position to (col, row) relative to display area's top left.
+ *  Note 1: In vertical layout, coordinates are rotated 90 deg.
+ *          on the display area's top right.
+ *  Note 2: the cell includes line/char spacings in both sides.
+ *  NOte 3: Lmt) == `gic taken from Mplayer
+ */
 static void move_penpos(ISDBSubContext *ctx, int col, int row)
 {
 	ISDBSubLayout *ls = &ctx->current_state.layout_state;
@@ -582,12 +608,12 @@ static void move_penpos(ISDBSubContext *ctx, int col, int row)
 	int cell_height;
 	int cell_desc;
 
-	isdb_log("move pen pos. to (%d, %d).\n", col, row);
 	if (IS_HORIZONTAL_LAYOUT(ls->format))
 	{
 		// convert pen pos. to upper left of the cell.
 		cell_height = (ls->font_size + ls->cell_spacing.row)
 			* ls->font_scale.fscy / 100;
+
 		if (ls->font_scale.fscy == 200)
 			cell_desc = ls->cell_spacing.row / 2;
 		else
@@ -616,7 +642,9 @@ static void move_penpos(ISDBSubContext *ctx, int col, int row)
 		ls->linesep_upper + ls->line_height + ls->line_desc;
 	// allow adjusting +- cell_height/2 at maximum
 	//     to align to the current line bottom.
-	if (row + cell_height / 2 >= cur_bottom)
+	isdb_log("move pen pos from %d to %d\n", cur_bottom, row + cell_height / 2);
+	//if (row + cell_height / 2 >= cur_bottom)
+	if (row + cell_height / 2 > cur_bottom)
 	{
 		do_line_break(ctx); // ls->prev_line_bottom == cur_bottom
 		ls->linesep_upper = row + cell_height - cell_desc - ls->prev_line_bottom;
@@ -633,7 +661,6 @@ static void move_penpos(ISDBSubContext *ctx, int col, int row)
 	else
 	{
 		isdb_log ("ENOSUPP: backward move not supported.\n");
-		return;
 	}
 }
 
@@ -719,10 +746,12 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 	switch(*buf) {
 	/* Set Writing Format */
 	case CSI_CMD_SWF:
+		isdb_command_log("Command:CSI: SWF\n");
 		set_writing_format(ctx, arg);
 		break;
 	/* Composite Character Composition */
 	case CSI_CMD_CCC:
+		isdb_command_log("Command:CSI: CCC\n");
 		ret = get_csi_params(arg, &p1, NULL);
 		if (ret > 0)
 		{
@@ -737,12 +766,14 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 			ls->display_area.w = p1;
 			ls->display_area.h = p2;
 		}
+		isdb_command_log("Command:CSI: SDF (w:%d, h:%d)\n", p1, p2);
 		break;
 	/* Character composition dot designation */
 	case CSI_CMD_SSM:
 		ret = get_csi_params(arg, &p1, &p2);
 		if (ret > 0)
 			ls->font_size = p1;
+		isdb_command_log("Command:CSI: SSM (x:%d y:%d)\n", p1, p2);
 		break;
 	/* Set Display Position */
 	case CSI_CMD_SDP:
@@ -752,34 +783,39 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 			ls->display_area.x = p1;
 			ls->display_area.y = p2;
 		}
+		isdb_command_log("Command:CSI: SDP (x:%d, y:%d)\n", p1, p2);
 		break;
 	/* Raster Colour command */
 	case CSI_CMD_RCS:
 		ret = get_csi_params(arg, &p1, NULL);
 		if (ret > 0)
 			ctx->state.raster_color = Default_clut[ctx->state.clut_high_idx << 4 | p1];
+		isdb_command_log("Command:CSI: RCS (%d)\n", p1);
 		break;
 	/* Set Horizontal Spacing */
 	case CSI_CMD_SHS:
 		ret = get_csi_params(arg, &p1, NULL);
 		if (ret > 0)
-			ctx->cell_spacing.col = p1;
+			ls->cell_spacing.col = p1;
+		isdb_command_log("Command:CSI: SHS (%d)\n", p1);
 		break;
 	/* Set Vertical Spacing */
 	case CSI_CMD_SVS:
 		ret = get_csi_params(arg, &p1, NULL);
 		if (ret > 0)
-			ctx->cell_spacing.row = p1;
+			ls->cell_spacing.row = p1;
+		isdb_command_log("Command:CSI: SVS (%d)\n", p1);
 		break;
 	/* Active Coordinate Position Set */
 	case CSI_CMD_ACPS:
+		isdb_command_log("Command:CSI: ACPS\n");
 		ret = get_csi_params(arg, &p1, &p2);
 		if (ret > 0)
 			ls->acps[0] = p1;
 			ls->acps[1] = p1;
 		break;
 	default:
-		isdb_log("Unknown CSI command 0x%x\n", *buf);
+		isdb_log("Command:CSI: Unknown command 0x%x\n", *buf);
 		break;
 	}
 	buf++;
@@ -854,9 +890,13 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 			isdb_command_log("Command: APU\n");
 			break;
 
-		/* CS: Display area of the display screen is erased. */
+		/**
+		 * CS: Display area of the display screen is erased.
+		 * Specs does not say clearly about whether we have to clear cursor
+		 * Need Samples to see whether CS is called after pen move or before it
+		 */
 		case 0xC:
-			isdb_command_log("Command: CS\n");
+			isdb_command_log("Command: CS clear Screen\n");
 			break;
 
 		/** APR: Active position down is made, moving to the first position of the same
@@ -950,6 +990,7 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 
 		/* Verify the new version of specs or packet is corrupted */
 		default:
+			isdb_command_log("Command: Unknown\n");
 			break;
 		}
 	}
@@ -958,43 +999,22 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 		switch(code_lo) {
 		/* BKF */
 		case 0x0:
-			isdb_command_log("Command: BKF\n");
-			break;
-
 		/* RDF */
 		case 0x1:
-			isdb_command_log("Command: RDF\n");
-			break;
-
 		/* GRF */
 		case 0x2:
-			isdb_command_log("Command: GRF\n");
-			break;
-
 		/* YLF */
 		case 0x3:
-			isdb_command_log("Command: VLF\n");
-			break;
-
 		/* BLF 	*/
 		case 0x4:
-			isdb_command_log("Command: BLF\n");
-			break;
-
 		/* MGF */
 		case 0x5:
-			isdb_command_log("Command: MGF\n");
-			break;
-
 		/* CNF */
 		case 0x6:
-			isdb_command_log("Command: CNF\n");
-			break;
-
 		/* WHF */
 		case 0x7:
-			isdb_command_log("Command: WHF\n");
-			state->fg_color = Default_clut[(state->clut_high_idx << 4) | (code_hi)];
+			isdb_command_log("Command: Forground color (0x%X)\n", Default_clut[code_lo]);
+			state->fg_color = Default_clut[code_lo];
 			break;
 
 		/* SSZ */
@@ -1006,11 +1026,15 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 
 		/* MSZ */
 		case 0x9:
+			ls->font_scale.fscx = 200;
+			ls->font_scale.fscy = 200;
 			isdb_command_log("Command: MSZ\n");
 			break;
 
 		/* NSZ */
 		case 0xA:
+			ls->font_scale.fscx = 100;
+			ls->font_scale.fscy = 100;
 			isdb_command_log("Command: NSZ\n");
 			break;
 
@@ -1022,6 +1046,7 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 
 		/* Verify the new version of specs or packet is corrupted */
 		default:
+			isdb_command_log("Command: Unknown\n");
 			break;
 
 		}
@@ -1031,19 +1056,35 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 		switch(code_lo) {
 		/* COL */
 		case 0x0:
-			isdb_command_log("Command: COL\n");
-			buf++;
 			/* Pallete Col */
 			if(*buf == 0x20)
 			{
-				ctx->state.clut_high_idx = (buf[0] & 0x0F);
+				isdb_command_log("Command: COL: Set Clut %d\n",(buf[0] & 0x0F));
 				buf++;
+				ctx->state.clut_high_idx = (buf[0] & 0x0F);
+			}
+			else if ((*buf & 0XF0) == 0x40)
+			{
+				isdb_command_log("Command: COL: Set Forground 0x%08X\n", Default_clut[*buf & 0x0F]);
+				ctx->current_state.fg_color = Default_clut[*buf & 0x0F];
 			}
 			else if ((*buf & 0XF0) == 0x50)
 			{
-			/* SET background color */
-				ctx->bg_color = *buf & 0x0F;
+				isdb_command_log("Command: COL: Set Background 0x%08X\n", Default_clut[*buf & 0x0F]);
+				ctx->current_state.bg_color = Default_clut[*buf & 0x0F];
 			}
+			else if ((*buf & 0XF0) == 0x60)
+			{
+				isdb_command_log("Command: COL: Set half Forground 0x%08X\n", Default_clut[*buf & 0x0F]);
+				ctx->current_state.hfg_color = Default_clut[*buf & 0x0F];
+			}
+			else if ((*buf & 0XF0) == 0x70)
+			{
+				isdb_command_log("Command: COL: Set Half Background 0x%8X\n", Default_clut[*buf & 0x0F]);
+				ctx->current_state.hbg_color = Default_clut[*buf & 0x0F];
+			}
+
+			buf++;
 			break;
 
 		/* FLC */
@@ -1104,7 +1145,6 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 
 		/* CSI Code for code system extension indicated*/
 		case 0xB:
-			isdb_command_log("Command: CSI\n");
 			ret = parse_csi(ctx, buf, len);
 			buf += ret;
 			break;
@@ -1127,14 +1167,80 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 
 }
 
-static int parse_caption_management_data(const uint8_t *buf, int size)
+static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf, int size)
 {
 	const uint8_t *buf_pivot = buf;
+	int i;
 
+	ctx->tmd = (*buf >> 6);
+	isdb_log("CC MGMT DATA: TMD: %d\n", ctx->tmd);
+	buf++;
+
+	if (ctx->tmd == ISDB_TMD_FREE)
+	{
+		isdb_log("Playback time is not restricted to synchronize to the clock.\n");
+	}
+	else if (ctx->tmd == ISDB_TMD_OFFSET_TIME)
+	{
+		/**
+		 * This 36-bit field indicates offset time to add to the playback time when the
+		 * clock control mode is in offset time mode. Offset time is coded in the
+		 * order of hour, minute, second and millisecond, using nine 4-bit binary
+                 * coded decimals (BCD).
+		 * 
+		 * +-----------+-----------+---------+--------------+
+		 * |  hour     |   minute  |   sec   |  millisecond |
+		 * +-----------+-----------+---------+--------------+
+		 * |  2 (4bit) | 2 (4bit)  | 2 (4bit)|    3 (4bit)  |
+		 * +-----------+-----------+---------+--------------+
+		 */
+		ctx->offset_time.hour = ((*buf>>4) * 10) + (*buf&0xf);
+		buf++;
+		ctx->offset_time.min = ((*buf>>4) * 10) + (*buf&0xf);
+		buf++;
+		ctx->offset_time.sec = ((*buf>>4) * 10) + (*buf&0xf);
+		buf++;
+		ctx->offset_time.milli = ((*buf>>4) * 100) + ( (*buf&0xf) * 10) + (buf[1]&0xf);
+		buf += 2;
+		isdb_log("CC MGMT DATA: OTD( h:%d m:%d s:%d millis: %d\n",
+			ctx->offset_time.hour, ctx->offset_time.min,
+			ctx->offset_time.sec, ctx->offset_time.milli);
+		
+
+	}
+	else
+	{
+		isdb_log("Playback time is in accordance with the time of the clock,"
+			"which is calibrated by clock signal (TDT). Playback time is"
+			"given by PTS.\n");
+	}
+	ctx->nb_lang = *buf;
+	isdb_log("CC MGMT DATA: nb languages: %d\n", ctx->nb_lang);
+	buf++;
+
+	for (i = 0; i < ctx->nb_lang; i++)
+	{
+		isdb_log("CC MGMT DATA: %d\n", (*buf&0x1F) >> 5);
+		ctx->dmf = *buf&0x0F;
+		isdb_log("CC MGMT DATA: DMF 0x%X\n", ctx->dmf);
+		buf++;
+		if (ctx->dmf == 0xC || ctx->dmf == 0xD|| ctx->dmf == 0xE)
+		{
+			ctx->dc = *buf;
+			if(ctx->dc == 0x00)
+				isdb_log("Attinuation Due to Rain\n");
+		}
+		isdb_log("CC MGMT DATA: languages: %c%c%c\n", buf[0], buf[1], buf[2]);
+		buf += 3;
+		isdb_log("CC MGMT DATA: Format: 0x%X\n", *buf>>4);
+		/* 8bit code is not used by brazilians Arib they use utf-8*/
+		isdb_log("CC MGMT DATA: TCS: 0x%X\n", (*buf>>2)&0x3);
+		isdb_log("CC MGMT DATA: Rollup mode: 0x%X\n", *buf&0x3);
+	} 
 	return buf - buf_pivot;
 }
 
-static int parse_statement(ISDBSubContext *ctx,const uint8_t *buf, int size)
+static int parse_statement(ISDBSubContext *ctx, const uint8_t *buf, int size)
 {
 	const uint8_t *buf_pivot = buf;
 	int ret;
@@ -1160,7 +1266,7 @@ static int parse_statement(ISDBSubContext *ctx,const uint8_t *buf, int size)
 		else if ( code == 0xA && code_lo == 0x0 )
 			/*TODO handle */;
 		/* Special case *4(15/15) */
-		else if (code == 0x0F && code_lo == 0Xf )
+		else if (code == 0x0F && code_lo == 0XF )
 			/*TODO handle */;
 		else
 			ret = append_char(ctx, buf[0]);
@@ -1254,7 +1360,7 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 	if((id & 0x0F) == 0)
 	{
 		/* Its Caption management */
-		ret = parse_caption_management_data(buf, group_size);
+		ret = parse_caption_management_data(ctx, buf, group_size);
 	}
 	else if ((id & 0x0F) < 8 )
 	{
