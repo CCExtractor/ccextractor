@@ -42,12 +42,15 @@ struct cc_subtitle
 	* @warn decoder cant output multiple types of data
 	*/
 	void *data;
+
 	/** number of data */
 	unsigned int nb_data;
+
 	/**  type of subtitle */
 	enum subtype type;
-    /** Encoding type of Text, must be ignored in case of subtype as bitmap or cc_screen*/
-    enum ccx_encoding_type  enc_type;
+
+	/** Encoding type of Text, must be ignored in case of subtype as bitmap or cc_screen*/
+	enum ccx_encoding_type  enc_type;
 	/* set only when all the data is to be displayed at same time */
 	LLONG start_time;
 	LLONG end_time;
