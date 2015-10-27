@@ -459,7 +459,8 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 	return must_flush;
 }
 
-void ts_buffer_psi_packet(struct ccx_demuxer *ctx) {
+void ts_buffer_psi_packet(struct ccx_demuxer *ctx)
+{
 	unsigned char *payload_start = tspacket + 4;
 	unsigned payload_length = 188 - 4;
 //	unsigned transport_error_indicator = (tspacket[1]&0x80)>>7;
@@ -471,40 +472,43 @@ void ts_buffer_psi_packet(struct ccx_demuxer *ctx) {
 	unsigned ccounter = tspacket[3] & 0xF;
 	unsigned adaptation_field_length = 0;
 
-    if ( adaptation_field_control & 2 )
+	if ( adaptation_field_control & 2 )
 	{
 		adaptation_field_length = tspacket[4];
 		payload_start = payload_start + adaptation_field_length + 1;
 		payload_length = tspacket+188-payload_start;
 	}
 
-    if(ctx->PID_buffers[pid]==NULL) {//First packet for this pid. Creat a buffer
-        ctx->PID_buffers[pid]=malloc(sizeof(struct PSI_buffer));
-        ctx->PID_buffers[pid]->buffer=NULL;
-        ctx->PID_buffers[pid]->buffer_length=0;
-        ctx->PID_buffers[pid]->ccounter=0;
-        ctx->PID_buffers[pid]->prev_ccounter=0xff;
-    }
+	if(ctx->PID_buffers[pid]==NULL)
+	{//First packet for this pid. Creat a buffer
+		ctx->PID_buffers[pid] = malloc(sizeof(struct PSI_buffer));
+		ctx->PID_buffers[pid]->buffer=NULL;
+		ctx->PID_buffers[pid]->buffer_length=0;
+		ctx->PID_buffers[pid]->ccounter=0;
+		ctx->PID_buffers[pid]->prev_ccounter=0xff;
+	}
 
-    if(payload_start_indicator)
+	if(payload_start_indicator)
 	{
-        if(ctx->PID_buffers[pid]->ccounter>0) {
+		if(ctx->PID_buffers[pid]->ccounter>0)
+		{
 			ctx->PID_buffers[pid]->ccounter=0;
 		}
-        ctx->PID_buffers[pid]->prev_ccounter = ccounter;
+		ctx->PID_buffers[pid]->prev_ccounter = ccounter;
 
 		if(ctx->PID_buffers[pid]->buffer!=NULL)
 			free(ctx->PID_buffers[pid]->buffer);
-		else {
+		else
+		{
 			// must be first packet for PID
 		}
-        ctx->PID_buffers[pid]->buffer = (uint8_t *)malloc(payload_length);
+		ctx->PID_buffers[pid]->buffer = (uint8_t *)malloc(payload_length);
 		memcpy(ctx->PID_buffers[pid]->buffer, payload_start, payload_length);
 		ctx->PID_buffers[pid]->buffer_length=payload_length;
 		ctx->PID_buffers[pid]->ccounter++;
-    }
-    else if(ccounter==ctx->PID_buffers[pid]->prev_ccounter+1 || (ctx->PID_buffers[pid]->prev_ccounter==0x0f && ccounter==0))
-    {
+	}
+	else if(ccounter==ctx->PID_buffers[pid]->prev_ccounter+1 || (ctx->PID_buffers[pid]->prev_ccounter==0x0f && ccounter==0))
+	{
 		ctx->PID_buffers[pid]->prev_ccounter = ccounter;
 		ctx->PID_buffers[pid]->buffer = (uint8_t *)realloc(ctx->PID_buffers[pid]->buffer, ctx->PID_buffers[pid]->buffer_length+payload_length);
 		memcpy(ctx->PID_buffers[pid]->buffer+ctx->PID_buffers[pid]->buffer_length, payload_start, payload_length);
@@ -514,7 +518,7 @@ void ts_buffer_psi_packet(struct ccx_demuxer *ctx) {
 	else if(ctx->PID_buffers[pid]->prev_ccounter<= 0x0f)
 	{
 		dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Out of order packets detected for PID:.\n\
-        ctx->PID_buffers[pid]->prev_ccounter:%i, ctx->ctx->PID_buffers[pid]->ccounter:%i\n",pid, ctx->PID_buffers[pid]->prev_ccounter, ctx->PID_buffers[pid]->ccounter);
+       ctx->PID_buffers[pid]->prev_ccounter:%i, ctx->ctx->PID_buffers[pid]->ccounter:%i\n",pid, ctx->PID_buffers[pid]->prev_ccounter, ctx->PID_buffers[pid]->ccounter);
 	}
 }
 
