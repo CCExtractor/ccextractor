@@ -175,36 +175,6 @@ static rgba Default_clut[128] =
 	RGBA(255,255,170,255),
 	// 65-127 are caliculated later.
 };
-struct b24str_state
-{
-	int gl;/* index of the group invoked to GL */
-	int gr;/* index of the group invoked to GR */
-	int ss;/* flag if in SS2 or SS3. 2:SS2, 3:SS3 */
-
-	struct group
-	{
-		unsigned char mb;/* how many bytes one character consists of. */
-		// code for character sets
-		#define CODE_ASCII ('\x40')
-		#define CODE_ASCII2 ('\x4A')
-		#define CODE_JISX0208 ('\x42')
-		#define CODE_JISX0213_1 ('\x51')
-		#define CODE_JISX0213_2 ('\x50')
-		#define CODE_JISX0201_KATA ('\x49')
-		#define CODE_MOSAIC_C ('\x34')
-		#define CODE_MOSAIC_D ('\x35')
-		#define CODE_EXT ('\x3B')
-		#define CODE_X_HIRA ('\x30')
-		#define CODE_X_HIRA_P ('\x37')
-		#define CODE_X_KATA ('\x31')
-		#define CODE_X_KATA_P ('\x38')
-		#define CODE_X_DRCS_MB ('\x40')
-		#define CODE_X_DRCS_MIN ('\x41')
-		#define CODE_X_DRCS_MAX ('\x4F')
-		#define CODE_X_MACRO ('\x70')
-		unsigned char code;/* character set that this group designates */
-	} g[4];
-};
 
 struct ISDBPos{
 	int x,y;
@@ -226,7 +196,6 @@ struct ISDBText
 typedef struct
 {
 	enum writing_format format;
-	int is_profile_c;// profile C: "1seg". see ARIB TR-B14 3-4
 
 	// clipping area.
 	struct disp_area {
@@ -234,7 +203,6 @@ typedef struct
 		int w, h;
 	} display_area;
 
-	// for tracking pen position
 	int font_size; // valid values: {16, 20, 24, 30, 36} (TR-B14/B15)
 
 	struct fscale { // in [percent]
@@ -246,33 +214,9 @@ typedef struct
 	} cell_spacing;
 
 	struct ISDBPos cursor_pos;
-	// internal use for tracking pen position/line break.
-	// Although texts are laid out by libass,
-	// we need to track pen position by ourselves
-	// in order to calculate line breaking positions and charcter/line spacing.
-	int prev_char_sep;
-	int prev_line_desc;
-	int prev_line_bottom; // offset from display_area.y, not from top-margin.
-	int line_desc;
-	int linesep_upper;
-	int line_height;
-	int line_width; // pen position x
-	int prev_break_idx; // ctx->text.buf[prev_break_idx] holds the previous "\N"
-	int shift_baseline; // special case where baseline should be shifted down ?
 
-	int block_offset_h;// text[0].hspacing / 2
-	int block_offset_v;// line[0].lspacing_upper
-
-	int repeat_count; // -1: none, 0: until EOL, 1...i: repeat the next char i times
-	int in_combining; // bool
 	enum isdb_CC_composition ccc;
 	int acps[2];
-	struct scroll_param 
-	{
-		enum {SCROLL_DIR_NONE, SCROLL_DIR_COLUMN, SCROLL_DIR_ROW} direction;
-		int rollout;// bool
-		int speed;// in pixel/sec
-	} scroll;
 
 }ISDBSubLayout;
 
@@ -281,7 +225,7 @@ typedef struct {
 	int rollup_mode;  // bool
 
 	uint8_t need_init; // bool
-	uint8_t clut_high_idx; // color = default_clut[high_idx << 8 | low_idx]
+	uint8_t clut_high_idx; // color = default_clut[high_idx << 4 | low_idx]
 
 	uint32_t fg_color;
 	uint32_t bg_color;
@@ -295,9 +239,9 @@ typedef struct {
 	//Half background color
 	uint32_t hbg_color;
 	uint32_t mat_color;
+	uint32_t raster_color;
 
 	ISDBSubLayout layout_state;
-	struct b24str_state text_state;
 } ISDBSubState;
 
 typedef struct
@@ -306,10 +250,6 @@ typedef struct
 	int nb_line;
 	uint64_t timestamp;
 	uint64_t prev_timestamp;
-	struct {
-		int raster_color;
-		int clut_high_idx;
-	}state;
 	/**
 	 * List of string for each row there
 	 * TODO test with vertical string
@@ -345,6 +285,16 @@ void delete_isdb_caption(void *isdb_ctx)
 	free(ctx);
 }
 
+static void init_layout(ISDBSubLayout *ls)
+{
+	ls->font_size = 36;
+	ls->display_area.x = 0;
+	ls->display_area.y = 0;
+
+	ls->font_scale.fscx = 100; 
+	ls->font_scale.fscy = 100; 
+
+}
 void *init_isdb_caption(void)
 {
 	ISDBSubContext *ctx;
@@ -356,82 +306,11 @@ void *init_isdb_caption(void)
 	INIT_LIST_HEAD(&ctx->text_list_head);
 	INIT_LIST_HEAD(&ctx->buffered_text);
 	ctx->prev_timestamp = UINT_MAX;
+
+	ctx->current_state.clut_high_idx = 0;
+	ctx->current_state.rollup_mode = 0;
+	init_layout(&ctx->current_state.layout_state);
 	return ctx;
-}
-
-static void advance(ISDBSubContext *ctx)
-{
-	ISDBSubLayout *ls = &ctx->current_state.layout_state;
-	int cscale;
-	int h;
-	int asc, desc;
-	int csp;
-
-	if (IS_HORIZONTAL_LAYOUT(ls->format))
-	{
-		cscale = ls->font_scale.fscx;
-		h = ls->font_size * ls->font_scale.fscy / 100;
-		if (ls->font_scale.fscy == 200)
-		{
-			desc = ls->cell_spacing.row / 2;
-			asc = ls->cell_spacing.row * 2 - desc + h;
-		}
-		else
-		{
-			desc = ls->cell_spacing.row * ls->font_scale.fscy / 200;
-			asc = ls->cell_spacing.row * ls->font_scale.fscy / 100 - desc + h;
-		}
-		if (asc > ls->line_height + ls->linesep_upper)
-		{
-			if (h > ls->line_height)
-				ls->line_height = h;
-			ls->linesep_upper = asc - ls->line_height;
-		}
-		else if (h > ls->line_height)
-		{
-			ls->linesep_upper = ls->line_height + ls->linesep_upper - h;
-			ls->line_height = h;
-		}
-
-		if (ls->prev_line_bottom == 0 && ls->linesep_upper > ls->block_offset_v)
-			ls->block_offset_v = ls->linesep_upper;
-		if (ls->font_scale.fscy != 50)
-			ls->shift_baseline = 0;
-	}
-	else
-	{
-		int lsp;
-		cscale = ls->font_scale.fscy;
-		h = ls->font_size * ls->font_scale.fscx / 100;
-		lsp = ls->cell_spacing.row * ls->font_scale.fscx / 100;
-		desc = h / 2 + lsp / 2;
-		asc = h - h / 2 + lsp - lsp / 2;
-		if (asc > ls->line_height + ls->linesep_upper)
-		{
-			if (h - h / 2 > ls->line_height)
-				ls->line_height = h - h / 2;
-			ls->linesep_upper = asc - ls->line_height;
-		}
-		else if (h - h / 2 > ls->line_height)
-		{
-			ls->linesep_upper = ls->line_height + ls->linesep_upper - h + h / 2;
-		}
-		else if (h - h / 2 > ls->line_height)
-		{
-			ls->linesep_upper = ls->line_height + ls->linesep_upper - h + h / 2;
-			ls->line_height = h - h / 2;
-		}
-
-		if (ls->prev_line_bottom == 0 && ls->linesep_upper > ls->block_offset_h)
-			ls->block_offset_h = ls->linesep_upper;
-		ls->shift_baseline = 0;
-	}
-	if (desc > ls->line_desc)
-		ls->line_desc = desc;
-
-	csp = ls->cell_spacing.col * cscale / 100;
-	ls->line_width += ls->font_size * cscale / 100 + csp;
-	ls->prev_char_sep = csp;
 }
 
 /**
@@ -601,6 +480,7 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 				list_add_tail(&sb_text->list, &ctx->buffered_text);
 				reserve_buf(sb_text, text->used);
 				memcpy(sb_text->buf, text->buf, text->used);
+				sb_text->buf[text->used] = '\0';
 				sb_text->used = text->used;
 			}
 			//Dont do anything else, other then copy buffer in start state
@@ -631,6 +511,7 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 				list_add_tail(&sb_text->list, &ctx->buffered_text);
 				reserve_buf(sb_text, text->used);
 				memcpy(sb_text->buf, text->buf, text->used);
+				sb_text->buf[text->used] = '\0';
 				sb_text->used = text->used;
 			}
 		}
@@ -681,96 +562,6 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 		}
 	}
 	return index;
-}
-/**
- * Leave Space for number of pixels/font_width
- */
-static void advance_by_pixels(ISDBSubContext *ctx, int csp)
-{
-	ISDBSubLayout *ls = &ctx->current_state.layout_state;
-	int cscale;
-	int csep_orig;
-
-	if (IS_HORIZONTAL_LAYOUT(ls->format))
-		cscale = ls->font_scale.fscx;
-	else
-		cscale = ls->font_scale.fscy;
-
-	//Character sepration can increase or decrease on basis of scale of font
-	csep_orig = ls->cell_spacing.col * cscale / 100;
-
-	ls->line_width += csp;
-	ls->prev_char_sep = csep_orig;
-
-	if (ls->font_size <= 0)
-	{
-		isdb_log("can not advance by position since font size unknown\n");
-		return;
-	}
-
-	isdb_log("advanced %d pixel by appending %d space\n", csp, csp/(ls->font_size + csep_orig));
-	while(csp > (ls->font_size + csep_orig) )
-	{
-		//TODO feature not tested
-		append_char(ctx, ' ');
-		csp -= (ls->font_size + csep_orig);
-	}
-}
-
-static void fixup_linesep(ISDBSubContext *ctx)
-{
-	ISDBSubLayout *ls = &ctx->current_state.layout_state;
-
-	if (ls->prev_break_idx <= 0)
-		return;
-
-	// adjust baseline if all chars in the line are 50% tall of one font size.
-	if (ls->shift_baseline && IS_HORIZONTAL_LAYOUT(ls->format))
-	{
-		int delta = ls->cell_spacing.row / 4;
-		ls->linesep_upper += delta;
-		ls->line_desc -= delta;
-		isdb_log("baseline shifted down %dpx.\n", delta);
-	}
-
-}
-
-static void do_line_break(ISDBSubContext *ctx)
-{
-	ISDBSubLayout *ls = &ctx->current_state.layout_state;
-	int csp;
-
-	if (IS_HORIZONTAL_LAYOUT(ls->format))
-		csp = ls->cell_spacing.col * ls->font_scale.fscx / 100;
-	else
-		csp = ls->cell_spacing.col * ls->font_scale.fscy / 100;
-
-	if (ls->line_width == 0)
-	{
-		if (ls->prev_line_bottom == 0)
-		{
-			if (IS_HORIZONTAL_LAYOUT(ls->format))
-				ls->block_offset_h = csp / 2;
-			else
-				ls->block_offset_v = csp / 2;
-		}
-
-		//append_str(ctx, "\xe3\x80\x80");
-		advance(ctx);
-	}
-
-	fixup_linesep(ctx);
-
-	//ls->prev_break_idx = ctx->text.used;
-
-	ls->prev_line_desc = ls->line_desc;
-	ls->prev_line_bottom += ls->linesep_upper + ls->line_height + ls->line_desc;
-	ls->prev_char_sep = csp;
-	ls->line_height = 0;
-	ls->line_width = 0;
-	ls->line_desc = 0;
-	ls->linesep_upper = 0;
-	ls->shift_baseline = 0;
 }
 
 static void set_writing_format(ISDBSubContext *ctx, uint8_t *arg)
@@ -837,67 +628,9 @@ static void set_writing_format(ISDBSubContext *ctx, uint8_t *arg)
 static void move_penpos(ISDBSubContext *ctx, int col, int row)
 {
 	ISDBSubLayout *ls = &ctx->current_state.layout_state;
-	int csp_l, col_ofs;
-	int cur_bottom;
-	int cell_height;
-	int cell_desc;
 
 	ls->cursor_pos.x = row;
 	ls->cursor_pos.y = col;
-	if (IS_HORIZONTAL_LAYOUT(ls->format))
-	{
-		// convert pen pos. to upper left of the cell.
-		cell_height = (ls->font_size + ls->cell_spacing.row)
-			* ls->font_scale.fscy / 100;
-
-		if (ls->font_scale.fscy == 200)
-			cell_desc = ls->cell_spacing.row / 2;
-		else
-			cell_desc = ls->cell_spacing.row * ls->font_scale.fscy / 200;
-		row -= cell_height;
-
-		csp_l = ls->cell_spacing.col * ls->font_scale.fscx / 200;
-		if (ls->line_width == 0 && ls->prev_line_bottom == 0)
-			ls->block_offset_h = csp_l;
-		col_ofs = ls->block_offset_h;
-	}
-	else
-	{
-		cell_height = (ls->font_size + ls->cell_spacing.row)
-			* ls->font_scale.fscx / 100;
-		cell_desc = cell_height / 2;
-		row -= cell_height - cell_desc;
-
-		csp_l = ls->cell_spacing.col * ls->font_scale.fscy / 200;
-		if (ls->line_width == 0 && ls->prev_line_bottom == 0)
-			ls->block_offset_v = csp_l;
-		col_ofs = ls->block_offset_v;
-	}
-
-	cur_bottom = ls->prev_line_bottom +
-		ls->linesep_upper + ls->line_height + ls->line_desc;
-	// allow adjusting +- cell_height/2 at maximum
-	//     to align to the current line bottom.
-	isdb_log("move pen pos from %d to %d\n", cur_bottom, row + cell_height);
-	//if (row + cell_height / 2 >= cur_bottom)
-	if (row + cell_height / 2 > cur_bottom)
-	{
-		do_line_break(ctx); // ls->prev_line_bottom == cur_bottom
-		ls->linesep_upper = row + cell_height - cell_desc - ls->prev_line_bottom;
-		ls->line_height = 0;
-
-		advance_by_pixels(ctx, col + csp_l - col_ofs);
-	}
-	else if (row + cell_height * 3 / 2 > cur_bottom &&
-			col + csp_l > col_ofs + ls->line_width)
-	{
-		// append to the current line...
-		advance_by_pixels(ctx, col + csp_l - (col_ofs + ls->line_width));
-	}
-	else
-	{
-		isdb_log ("ENOSUPP: backward move not supported.\n");
-	}
 }
 
 
@@ -1025,7 +758,7 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 	case CSI_CMD_RCS:
 		ret = get_csi_params(arg, &p1, NULL);
 		if (ret > 0)
-			ctx->state.raster_color = Default_clut[ctx->state.clut_high_idx << 4 | p1];
+			ctx->current_state.raster_color = Default_clut[ctx->current_state.clut_high_idx << 4 | p1];
 		isdb_command_log("Command:CSI: RCS (%d)\n", p1);
 		break;
 	/* Set Horizontal Spacing */
@@ -1297,7 +1030,7 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 			{
 				isdb_command_log("Command: COL: Set Clut %d\n",(buf[0] & 0x0F));
 				buf++;
-				ctx->state.clut_high_idx = (buf[0] & 0x0F);
+				ctx->current_state.clut_high_idx = (buf[0] & 0x0F);
 			}
 			else if ((*buf & 0XF0) == 0x40)
 			{
