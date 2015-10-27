@@ -257,7 +257,7 @@ typedef struct
 	struct list_head text_list_head;
 	/**
 	 * Keep second list to confirm that string does not get repeated
-	 * Used in No Rollup in Configuration and ISDB specs have string in 
+	 * Used in No Rollup in Configuration and ISDB specs have string in
 	 * rollup mode
 	 * For Second Pass
 	 */
@@ -309,8 +309,8 @@ static void init_layout(ISDBSubLayout *ls)
 	ls->display_area.x = 0;
 	ls->display_area.y = 0;
 
-	ls->font_scale.fscx = 100; 
-	ls->font_scale.fscy = 100; 
+	ls->font_scale.fscx = 100;
+	ls->font_scale.fscy = 100;
 
 }
 
@@ -474,8 +474,8 @@ static int ccx_strstr_ignorespace(const unsigned char *str1, const unsigned char
 /**
  * Copy data not more then len provided
  * User should check for return type to check how much data he has got
- * 
- * If ISDB is configured with no rollup then only text which has gone 
+ *
+ * If ISDB is configured with no rollup then only text which has gone
  * off site should be returned
  */
 static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
@@ -1175,7 +1175,7 @@ static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf
 		 * clock control mode is in offset time mode. Offset time is coded in the
 		 * order of hour, minute, second and millisecond, using nine 4-bit binary
                  * coded decimals (BCD).
-		 * 
+		 *
 		 * +-----------+-----------+---------+--------------+
 		 * |  hour     |   minute  |   sec   |  millisecond |
 		 * +-----------+-----------+---------+--------------+
@@ -1193,8 +1193,6 @@ static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf
 		isdb_log("CC MGMT DATA: OTD( h:%d m:%d s:%d millis: %d\n",
 			ctx->offset_time.hour, ctx->offset_time.min,
 			ctx->offset_time.sec, ctx->offset_time.milli);
-		
-
 	}
 	else
 	{
@@ -1225,7 +1223,7 @@ static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf
 		isdb_log("CC MGMT DATA: TCS: 0x%X\n", (*buf>>2)&0x3);
 		ctx->current_state.rollup_mode = !!(*buf&0x3);
 		isdb_log("CC MGMT DATA: Rollup mode: 0x%X\n", ctx->current_state.rollup_mode);
-	} 
+	}
 	return buf - buf_pivot;
 }
 
