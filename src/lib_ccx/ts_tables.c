@@ -280,25 +280,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 		}
 		i += ES_info_length;
 	}
-/*XXX
-	if (TS_program_number || !ctx->ts_autoprogram)
-	{
-		if( payload.pid != pmtpid)
-		{
-			// This isn't the PMT we are interested in (note: If TS_program_number=0 &&
-			// autoprogram then we need to check this PMT in case there's a suitable
-			// stream)
-			return 0;
-		}
-		if (program_number != TS_program_number) // Is this the PMT of the program we want?
-		{
-			// Only use PMTs with matching program number
-			dbg_print(CCX_DMT_PARSE,"Reject this PMT packet (pid: %u) program number: %u\n",
-					pmtpid, program_number);
-			return 0;
-		}
-	}
-*/
+
 	for( unsigned i=0; i < stream_data && (i+4)<len; i+=5)
 	{
 		enum ccx_stream_type stream_type = buf[i];
