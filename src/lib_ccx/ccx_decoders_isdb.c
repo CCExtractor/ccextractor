@@ -279,10 +279,28 @@ typedef struct
 }ISDBSubContext;
 
 
-void delete_isdb_caption(void *isdb_ctx)
+/**
+ * Find way to put remaining data
+ */
+void delete_isdb_decoder(void **isdb_ctx)
 {
-	ISDBSubContext *ctx = isdb_ctx;
-	free(ctx);
+	ISDBSubContext *ctx = *isdb_ctx;
+	struct ISDBText *text = NULL;
+	struct ISDBText *text1 = NULL;
+	list_for_each_entry_safe(text, text1, &ctx->text_list_head, list, struct ISDBText)
+	{
+		list_del(&text->list);
+		free(text->buf);
+		free(text);
+	}
+
+	list_for_each_entry_safe(text, text1, &ctx->buffered_text, list, struct ISDBText)
+	{
+		list_del(&text->list);
+		free(text->buf);
+		free(text);
+	}
+	freep(isdb_ctx);
 }
 
 static void init_layout(ISDBSubLayout *ls)
@@ -295,7 +313,8 @@ static void init_layout(ISDBSubLayout *ls)
 	ls->font_scale.fscy = 100; 
 
 }
-void *init_isdb_caption(void)
+
+void *init_isdb_decoder(void)
 {
 	ISDBSubContext *ctx;
 

@@ -249,6 +249,7 @@ void ccx_demuxer_delete(struct ccx_demuxer **ctx)
 			lctx->PID_buffers[i]->buffer=NULL;
 			lctx->PID_buffers[i]->buffer_length=0;
 		}
+		freep(&lctx->PID_buffers[i]);
 	}
 	for (i = 0; i < MAX_PID; i++)
 	{

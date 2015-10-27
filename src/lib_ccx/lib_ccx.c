@@ -4,6 +4,7 @@
 #include "utility.h"
 #include "dvb_subtitle_decoder.h"
 #include "ccx_decoders_708.h"
+#include "ccx_decoders_isdb.h"
 
 struct ccx_common_logging_t ccx_common_logging;
 static struct ccx_decoders_common_settings_t *init_decoder_setting(
@@ -182,6 +183,12 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 		LLONG cfts;
 		if (dec_ctx->codec == CCX_CODEC_DVB)
 			dvbsub_close_decoder(&dec_ctx->private_data);
+		//Test memory for teletext
+		//else if (dec_ctx->codec == CCX_CODEC_TELETEXT)
+		//	telxcc_close(&dec_ctx->private_data, NULL);
+		else if (dec_ctx->codec == CCX_CODEC_ISDB_CC)
+			delete_isdb_decoder(&dec_ctx->private_data);
+
 		flush_cc_decode(dec_ctx, &dec_ctx->dec_sub);
 		cfts = get_fts(dec_ctx->timing, dec_ctx->current_field);
 		enc_ctx = get_encoder_by_pn(lctx, dec_ctx->program_number);
@@ -202,6 +209,7 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 	// free EPG memory
 	EPG_free(lctx);
 	freep(&lctx->freport.data_from_608);
+	freep(&lctx->freport.data_from_708);
 	ccx_demuxer_delete(&lctx->demux_ctx);
 	dinit_decoder_setting(&lctx->dec_global_setting);
 	freep(&ccx_options.enc_cfg.output_filename);
@@ -294,9 +302,6 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	unsigned char in_format = 1;
 	char *extension;
 
-	extension = get_file_extension(ccx_options.enc_cfg.write_format);
-	if(!extension)
-		return NULL;
 
 	if (ctx->write_format == CCX_OF_NULL)
 		return NULL;
@@ -320,6 +325,9 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 			return enc_ctx;
 	}
 
+	extension = get_file_extension(ccx_options.enc_cfg.write_format);
+	if(!extension)
+		return NULL;
 
 	if(ctx->multiprogram == CCX_FALSE)
 	{

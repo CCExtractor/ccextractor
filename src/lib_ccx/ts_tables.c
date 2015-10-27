@@ -311,7 +311,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 					if (component_id != 0x08)
 						break;
 					mprint ("*****ISDB subtitles detected\n");
-					ptr = init_isdb_caption();
+					ptr = init_isdb_decoder();
 					if (ptr == NULL)
 						break;
 					update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ISDB_CC, program_number, ptr);

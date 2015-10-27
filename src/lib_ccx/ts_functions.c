@@ -4,6 +4,7 @@
 #include "ccx_demuxer.h"
 #include "list.h"
 #include "dvb_subtitle_decoder.h"
+#include "ccx_decoders_isdb.h"
 #include "file_buffer.h"
 
 unsigned char tspacket[188]; // Current packet
@@ -718,6 +719,8 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 				case CCX_CODEC_DVB:
 					dvbsub_close_decoder(&cinfo->codec_private_data);
 					break;
+				case CCX_CODEC_ISDB_CC:
+					delete_isdb_decoder(&cinfo->codec_private_data);
 				default:
 					break;
 				}
