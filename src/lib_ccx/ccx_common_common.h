@@ -35,6 +35,7 @@
 #define CCX_EOF     -101
 #define CCX_EINVAL  -102
 #define CCX_ENOSUPP -103
+#define CCX_ENOMEM  -104
 
 // Declarations
 void fdprintf(int fd, const char *fmt, ...);

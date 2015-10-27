@@ -4,18 +4,19 @@
 #include "utility.h"
 #include "limits.h"
 
-#define DEBUG
-#define COMMAND_DEBUG
+//#define DEBUG
+//#define COMMAND_DEBUG
 
 #ifdef DEBUG
 	#define isdb_log( format, ... ) mprint(format, ##__VA_ARGS__ )
-	#ifdef COMMAND_DEBUG
-		#define isdb_command_log( format, ... ) mprint(format, ##__VA_ARGS__ )
-	#else
-		#define isdb_command_log( format, ... ) mprint(format, ##__VA_ARGS__ )
-	#endif
 #else
 	#define isdb_log( ...) ((void)0)
+#endif
+
+#ifdef COMMAND_DEBUG
+	#define isdb_command_log( format, ... ) mprint(format, ##__VA_ARGS__ )
+#else
+	#define isdb_command_log( format, ... )  ((void)0)
 #endif
 
 enum writing_format
@@ -205,6 +206,23 @@ struct b24str_state
 	} g[4];
 };
 
+struct ISDBPos{
+	int x,y;
+};
+
+struct ISDBText
+{
+	char *buf;
+	size_t len;
+	size_t used;
+	struct ISDBPos pos;
+	size_t txt_tail; // tail of the text, excluding trailing control sequences.
+	//Time Stamp when first string is recieved
+	uint64_t timestamp;
+	int refcount;
+	struct list_head list;
+};
+
 typedef struct
 {
 	enum writing_format format;
@@ -218,13 +236,16 @@ typedef struct
 
 	// for tracking pen position
 	int font_size; // valid values: {16, 20, 24, 30, 36} (TR-B14/B15)
+
 	struct fscale { // in [percent]
 		int fscx, fscy;
 	} font_scale; // 1/2x1/2, 1/2*1, 1*1, 1*2, 2*1, 2*2
+
 	struct spacing {
 		int col, row;
 	} cell_spacing;
 
+	struct ISDBPos cursor_pos;
 	// internal use for tracking pen position/line break.
 	// Although texts are laid out by libass,
 	// we need to track pen position by ourselves
@@ -281,9 +302,6 @@ typedef struct {
 
 typedef struct
 {
-	char *char_buf;
-	int char_buf_index;
-	int len;
 	int nb_char;
 	int nb_line;
 	uint64_t timestamp;
@@ -292,13 +310,19 @@ typedef struct
 		int raster_color;
 		int clut_high_idx;
 	}state;
+	/**
+	 * List of string for each row there
+	 * TODO test with vertical string
+         */
+	struct list_head text_list_head;
+	/**
+	 * Keep second list to confirm that string does not get repeated
+	 * Used in No Rollup in Configuration and ISDB specs have string in 
+	 * rollup mode
+	 * For Second Pass
+	 */
+	struct list_head buffered_text;
 	ISDBSubState current_state; //modified default_state[lang_tag]
-	struct {
-		char *buf;
-		size_t len;
-		size_t used;
-		size_t txt_tail; // tail of the text, excluding trailing control sequences.
-	} text;
 	enum isdb_tmd tmd;
 	int nb_lang;
 	struct
@@ -310,6 +334,7 @@ typedef struct
 	}offset_time;
 	uint8_t dmf;
 	uint8_t dc;
+	int cfg_no_rollup;
 
 }ISDBSubContext;
 
@@ -317,7 +342,6 @@ typedef struct
 void delete_isdb_caption(void *isdb_ctx)
 {
 	ISDBSubContext *ctx = isdb_ctx;
-	free(ctx->char_buf);
 	free(ctx);
 }
 
@@ -329,14 +353,8 @@ void *init_isdb_caption(void)
 	if(!ctx)
 		return NULL;
 
-	ctx->char_buf = malloc(1024);
-	if(!ctx->char_buf)
-	{
-		free(ctx);
-		return NULL;
-	}
-	ctx->len = 1024;
-	ctx->char_buf_index = 0;
+	INIT_LIST_HEAD(&ctx->text_list_head);
+	INIT_LIST_HEAD(&ctx->buffered_text);
 	ctx->prev_timestamp = UINT_MAX;
 	return ctx;
 }
@@ -416,51 +434,257 @@ static void advance(ISDBSubContext *ctx)
 	ls->prev_char_sep = csp;
 }
 
-static void reserve_buf(ISDBSubContext *ctx, size_t len)
+/**
+ * Single Character on screen can take space of 6 byte in UTF-8
+ * so size of text buffer should not be on the basis of character
+ * that can be placed on screen.
+ * And scale and size of font can change any time so knowing 
+ * buffer length before allocating is difficult task
+ */
+static struct ISDBText *allocate_text_node(ISDBSubLayout *ls)
+{
+	struct ISDBText *text = NULL;
+
+	text = malloc(sizeof(struct ISDBText));
+	if(!text)
+		return NULL;
+
+	text->used = 0;
+	text->buf = malloc(128);
+	text->len = 128;
+	*text->buf = 0;
+	return text;
+}
+
+static int reserve_buf(struct ISDBText *text, size_t len)
 {
 	size_t blen;
+	unsigned char *ptr;
 
-	if (ctx->text.len >= ctx->text.used + len)
-		return;
+	if (text->len >= text->used + len)
+		return CCX_OK;
 
-	blen = ((ctx->text.used + len + 127) >> 7) << 7;
-	ctx->text.buf = realloc(ctx->text.buf, blen);
-	if (!ctx->text.buf)
+	// Allocate always in multiple of 128
+	blen = ((text->used + len + 127) >> 7) << 7;
+	ptr = realloc(text->buf, blen);
+	if (!ptr)
 	{
-		isdb_log("out of memory for ctx->text.\n");
-		return;
+		isdb_log("ISDB: out of memory for ctx->text.buf\n");
+		return CCX_ENOMEM;
 	}
-	ctx->text.len = blen;
+	text->buf = ptr;
+	text->len = blen;
 	isdb_log ("expanded ctx->text(%lu)\n", blen);
 }
 
 static int append_char(ISDBSubContext *ctx, const char ch)
 {
-	if (!ctx->text.used && ( ch == '\n' || ch == '\r') )
-		return 1;
-	reserve_buf(ctx, 2); // +1 for terminating '\0'
-	ctx->text.buf[ctx->text.used] = ch;
-	ctx->text.used ++;
-	ctx->text.buf[ctx->text.used] = '\0';
+	ISDBSubLayout *ls = &ctx->current_state.layout_state;
+	struct ISDBText *text = NULL;
+	// Current Line Position
+	int cur_lpos;
+	//Space taken by character
+	int csp;
+
+	if (IS_HORIZONTAL_LAYOUT(ls->format))
+	{
+		cur_lpos = ls->cursor_pos.x;
+		csp = ls->font_size * ls->font_scale.fscx / 100;;
+	}
+	else
+	{
+		cur_lpos = ls->cursor_pos.y;
+		csp = ls->font_size * ls->font_scale.fscy / 100;;
+	}
+
+	list_for_each_entry(text, &ctx->text_list_head, list, struct ISDBText)
+	{
+		//Text Line Position
+		int text_lpos;
+		if (IS_HORIZONTAL_LAYOUT(ls->format))
+			text_lpos = text->pos.x;
+		else
+			text_lpos = text->pos.y;
+
+		if(text_lpos == cur_lpos)
+		{
+			break;
+		}
+		else if(text_lpos > cur_lpos)
+		{
+			struct ISDBText *text1 = NULL;
+			//Allocate Text here so that list is always sorted
+			text1 = allocate_text_node(ls);
+			text1->pos.x = ls->cursor_pos.x;
+			text1->pos.y = ls->cursor_pos.y;
+			list_add(&text1->list, text->list.prev);
+			text = text1;
+			break;
+		}
+	}
+	if (&text->list == &ctx->text_list_head)
+	{
+		text = allocate_text_node(ls);
+		text->pos.x = ls->cursor_pos.x;
+		text->pos.y = ls->cursor_pos.y;
+		list_add_tail(&text->list, &ctx->text_list_head);
+	}
+
+	//Check position of character and if moving backword then clean text
+	if (IS_HORIZONTAL_LAYOUT(ls->format))
+	{
+		if (ls->cursor_pos.y < text->pos.y)
+		{
+			text->pos.y = ls->cursor_pos.y;
+			text->used = 0;
+		}
+		ls->cursor_pos.y += csp;
+		text->pos.y += csp;
+	}
+	else
+	{
+		if (ls->cursor_pos.y < text->pos.y)
+		{
+			text->pos.y = ls->cursor_pos.y;
+			text->used = 0;
+		}
+		ls->cursor_pos.x += csp;
+		text->pos.x += csp;
+	}
+
+	reserve_buf(text, 2); //+1 for terminating '\0'
+	text->buf[text->used] = ch;
+	text->used ++;
+	text->buf[text->used] = '\0';
+
 
 	return 1;
 }
-static void insert_str(ISDBSubContext *ctx, const char *txt, int begin)
+
+static int ccx_strstr_ignorespace(const unsigned char *str1, const unsigned char *str2)
 {
-	int end = ctx->text.used;
-	size_t len = strlen(txt);
-
-	if (len == 0 || len > 128)
-		return;
-
-	reserve_buf(ctx, len + 1); // +1 for terminating '\0'
-	memmove(ctx->text.buf + begin + len, ctx->text.buf + begin, end - begin);
-	memcpy(ctx->text.buf + begin, txt, len);
-	ctx->text.txt_tail += len;
-	ctx->text.used += len;
-	ctx->text.buf[ctx->text.used] = '\0';
+	int i;
+	for( i = 0; str2[i] != '\0'; i++)
+	{
+		if (isspace(str2[i]))
+			continue;
+		if (str2[i] != str1[i])
+			return 0;
+	}
+	return 1;
 }
+/**
+ * Copy data not more then len provided
+ * User should check for return type to check how much data he has got
+ * 
+ * If ISDB is configured with no rollup then only text which has gone 
+ * off site should be returned
+ */
+static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
+{
+	ISDBSubLayout *ls = &ctx->current_state.layout_state;
+	struct ISDBText *text = NULL;
+	struct ISDBText *sb_text = NULL;
+	struct ISDBText *sb_temp = NULL;
+	struct ISDBText *wtrepeat_text = NULL;
+	//TO keep track we dont over flow in buffer from user
+	int index = 0;
 
+	if (ctx->cfg_no_rollup == ctx->current_state.rollup_mode)
+	{
+		wtrepeat_text = NULL;
+		if (list_empty(&ctx->buffered_text))
+		{
+			list_for_each_entry(text, &ctx->text_list_head, list, struct ISDBText)
+			{
+				sb_text = allocate_text_node(ls);
+				list_add_tail(&sb_text->list, &ctx->buffered_text);
+				reserve_buf(sb_text, text->used);
+				memcpy(sb_text->buf, text->buf, text->used);
+				sb_text->used = text->used;
+			}
+			//Dont do anything else, other then copy buffer in start state
+			return 0;
+		}
+
+		//Update Secondary Buffer for new entry in primary buffer
+		list_for_each_entry(text, &ctx->text_list_head, list, struct ISDBText)
+		{
+			int found = CCX_FALSE;
+			list_for_each_entry(sb_text, &ctx->buffered_text, list, struct ISDBText)
+			{
+				if (ccx_strstr_ignorespace(text->buf, sb_text->buf))
+				{
+					found = CCX_TRUE;
+					//See if complete string is there if not update that string
+					if (!ccx_strstr_ignorespace(sb_text->buf, text->buf))
+					{
+						reserve_buf(sb_text, text->used);
+						memcpy(sb_text->buf, text->buf, text->used);
+					}
+					break;
+				}
+			}
+			if (found == CCX_FALSE)
+			{
+				sb_text = allocate_text_node(ls);
+				list_add_tail(&sb_text->list, &ctx->buffered_text);
+				reserve_buf(sb_text, text->used);
+				memcpy(sb_text->buf, text->buf, text->used);
+				sb_text->used = text->used;
+			}
+		}
+
+		//Flush Secondary Buffer if text not in primary buffer
+		list_for_each_entry_safe(sb_text, sb_temp, &ctx->buffered_text, list, struct ISDBText)
+		{
+			int found = CCX_FALSE;
+			list_for_each_entry(text, &ctx->text_list_head, list, struct ISDBText)
+			{
+				if (ccx_strstr_ignorespace(text->buf, sb_text->buf))
+				{
+					found = CCX_TRUE;
+					break;
+				}
+			}
+			if (found == CCX_FALSE)
+			{
+				// Write that buffer in file
+				if (len - index > sb_text->used + 2 && sb_text->used  > 0)
+				{
+					memcpy(buffer+index, sb_text->buf, sb_text->used);
+					buffer[sb_text->used+index] = '\n';
+					buffer[sb_text->used+index+1] = '\r';
+					index += sb_text->used + 2;
+					sb_text->used = 0;
+					list_del(&sb_text->list);
+					free(sb_text->buf);
+					free(sb_text);
+					//delete entry from SB here
+				}
+			}
+		}
+	}
+	else
+	{
+		list_for_each_entry(text, &ctx->text_list_head, list, struct ISDBText)
+		{
+			if (len - index > text->used + 2 && text->used  > 0)
+			{
+				memcpy(buffer+index, text->buf, text->used);
+				buffer[text->used+index] = '\n';
+				buffer[text->used+index+1] = '\r';
+				index += text->used + 2;
+				text->used = 0;
+				text->buf[0] = '\0';
+			}
+		}
+	}
+	return index;
+}
+/**
+ * Leave Space for number of pixels/font_width
+ */
 static void advance_by_pixels(ISDBSubContext *ctx, int csp)
 {
 	ISDBSubLayout *ls = &ctx->current_state.layout_state;
@@ -471,21 +695,35 @@ static void advance_by_pixels(ISDBSubContext *ctx, int csp)
 		cscale = ls->font_scale.fscx;
 	else
 		cscale = ls->font_scale.fscy;
+
+	//Character sepration can increase or decrease on basis of scale of font
 	csep_orig = ls->cell_spacing.col * cscale / 100;
 
 	ls->line_width += csp;
 	ls->prev_char_sep = csep_orig;
-	isdb_log("advanced %d pixel using fsp.\n", csp);
+
+	if (ls->font_size <= 0)
+	{
+		isdb_log("can not advance by position since font size unknown\n");
+		return;
+	}
+
+	isdb_log("advanced %d pixel by appending %d space\n", csp, csp/(ls->font_size + csep_orig));
+	while(csp > (ls->font_size + csep_orig) )
+	{
+		//TODO feature not tested
+		append_char(ctx, ' ');
+		csp -= (ls->font_size + csep_orig);
+	}
 }
 
 static void fixup_linesep(ISDBSubContext *ctx)
 {
 	ISDBSubLayout *ls = &ctx->current_state.layout_state;
-	//char tmp[16];
-	//int lsp;
 
 	if (ls->prev_break_idx <= 0)
 		return;
+
 	// adjust baseline if all chars in the line are 50% tall of one font size.
 	if (ls->shift_baseline && IS_HORIZONTAL_LAYOUT(ls->format))
 	{
@@ -517,17 +755,13 @@ static void do_line_break(ISDBSubContext *ctx)
 				ls->block_offset_v = csp / 2;
 		}
 
-		// avoid empty lines by prepending a space,
-		// as ASS halves line-spacing of empty lines.
 		//append_str(ctx, "\xe3\x80\x80");
 		advance(ctx);
 	}
 
-	append_char(ctx, '\r');
-	append_char(ctx, '\n');
 	fixup_linesep(ctx);
 
-	ls->prev_break_idx = ctx->text.used;
+	//ls->prev_break_idx = ctx->text.used;
 
 	ls->prev_line_desc = ls->line_desc;
 	ls->prev_line_bottom += ls->linesep_upper + ls->line_height + ls->line_desc;
@@ -608,6 +842,8 @@ static void move_penpos(ISDBSubContext *ctx, int col, int row)
 	int cell_height;
 	int cell_desc;
 
+	ls->cursor_pos.x = row;
+	ls->cursor_pos.y = col;
 	if (IS_HORIZONTAL_LAYOUT(ls->format))
 	{
 		// convert pen pos. to upper left of the cell.
@@ -642,7 +878,7 @@ static void move_penpos(ISDBSubContext *ctx, int col, int row)
 		ls->linesep_upper + ls->line_height + ls->line_desc;
 	// allow adjusting +- cell_height/2 at maximum
 	//     to align to the current line bottom.
-	isdb_log("move pen pos from %d to %d\n", cur_bottom, row + cell_height / 2);
+	isdb_log("move pen pos from %d to %d\n", cur_bottom, row + cell_height);
 	//if (row + cell_height / 2 >= cur_bottom)
 	if (row + cell_height / 2 > cur_bottom)
 	{
@@ -1235,7 +1471,8 @@ static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf
 		isdb_log("CC MGMT DATA: Format: 0x%X\n", *buf>>4);
 		/* 8bit code is not used by brazilians Arib they use utf-8*/
 		isdb_log("CC MGMT DATA: TCS: 0x%X\n", (*buf>>2)&0x3);
-		isdb_log("CC MGMT DATA: Rollup mode: 0x%X\n", *buf&0x3);
+		ctx->current_state.rollup_mode = !!(*buf&0x3);
+		isdb_log("CC MGMT DATA: Rollup mode: 0x%X\n", ctx->current_state.rollup_mode);
 	} 
 	return buf - buf_pivot;
 }
@@ -1296,11 +1533,12 @@ static int parse_data_unit(ISDBSubContext *ctx,const uint8_t *buf, int size)
 	return 0;
 }
 
-static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const uint8_t *buf, int size)
+static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const uint8_t *buf, int size, struct cc_subtitle *sub)
 {
 	int tmd;
 	int len;
 	int ret;
+	unsigned char buffer[1024] = "";
 
 	tmd = *buf >> 6;
 	buf++;
@@ -1313,6 +1551,19 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
 	ret = parse_data_unit(ctx, buf, len);
 	if( ret < 0)
 		return -1;
+
+	ret = get_text(ctx, buffer, 1024);
+	/* Copy data if there in buffer */
+	if (ret < 0 )
+		return CCX_OK;
+
+	if (ret > 0)
+	{
+		add_cc_sub_text(sub, buffer, ctx->prev_timestamp, ctx->timestamp, "NA", "ISDB", CCX_ENC_UTF_8);
+		if (sub->start_time == sub->end_time)
+			sub->end_time += 2;
+		ctx->prev_timestamp = ctx->timestamp;
+	}
 	return 0;
 }
 
@@ -1366,7 +1617,7 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 	{
 		/* Caption statement data */
 		isdb_log("ISDB %d language\n",id);
-		ret = parse_caption_statement_data(ctx, id & 0x0F, buf, group_size);
+		ret = parse_caption_statement_data(ctx, id & 0x0F, buf, group_size, sub);
 	}
 	else
 	{
@@ -1376,16 +1627,6 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 		return -1;
 	buf += group_size;
 
-	/* Copy data if there in buffer */
-	if (ctx->text.len > 0 )
-	{
-		add_cc_sub_text(sub, ctx->text.buf, ctx->prev_timestamp, ctx->timestamp, "NA", "ISDB", CCX_ENC_UTF_8);
-		ctx->text.used = 0;
-		ctx->text.len = 0;
-		if (sub->start_time == sub->end_time)
-			sub->end_time += 2;
-		ctx->prev_timestamp = ctx->timestamp;
-	}
 	//TODO check CRC
 	buf += 2;
 
@@ -1411,6 +1652,8 @@ int isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, size_t buf
 	/* TODO find in spec what is header */
 		buf++;
 	}
+
+	ctx->cfg_no_rollup = dec_ctx->no_rollup;
 	ret = isdb_parse_data_group(ctx, buf, sub);
 	if (ret < 0)
 		return -1;

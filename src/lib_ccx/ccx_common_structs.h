@@ -51,13 +51,17 @@ struct cc_subtitle
 
 	/** Encoding type of Text, must be ignored in case of subtype as bitmap or cc_screen*/
 	enum ccx_encoding_type  enc_type;
+
 	/* set only when all the data is to be displayed at same time */
 	LLONG start_time;
 	LLONG end_time;
+
 	/* flags */
 	int flags;
+
 	/* index of language table */
 	int lang_index;
+
 	/** flag to tell that decoder has given output */
 	int got_output;
 	
