@@ -340,7 +340,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 			freep(&ccx_options.enc_cfg.output_filename);
 			ccx_options.enc_cfg.output_filename = malloc(len);
 
-			sprintf(ccx_options.enc_cfg.output_filename, "%s_%06d%s", ctx->basefilename, ctx->segment_counter, extension);
+			sprintf(ccx_options.enc_cfg.output_filename, "%s_%06d%s", ctx->basefilename, ctx->segment_counter+1, extension);
 		}
 		if (list_empty(&ctx->enc_ctx_head))
 		{
