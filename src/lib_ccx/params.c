@@ -212,6 +212,8 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
 		opt->write_format=CCX_OF_DVDRAW;
 	else if (strcmp (format,"spupng")==0)
 		opt->write_format=CCX_OF_SPUPNG;
+	else if (strcmp (format,"simplexml")==0)
+		opt->write_format=CCX_OF_SIMPLE_XML;
 	else
 		fatal (EXIT_MALFORMED_PARAMETER, "Unknown output file format: %s\n", format);
 }

@@ -408,7 +408,6 @@ char *get_file_extension(enum ccx_output_format write_format)
 			return strdup(".srt");
 		case CCX_OF_WEBVTT:
 			return strdup (".vtt");
-			break;
 		case CCX_OF_SAMI:
 			return strdup(".smi");
 		case CCX_OF_SMPTETT:
@@ -421,6 +420,8 @@ char *get_file_extension(enum ccx_output_format write_format)
 			return strdup(".xml");
 		case CCX_OF_DVDRAW:
 			return strdup(".dvdraw");
+		case CCX_OF_SIMPLE_XML:
+			return strdup(".xml");
 		case CCX_OF_NULL:
 			return NULL;
 		default:

@@ -52,6 +52,8 @@ static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
 
 static const char *webvtt_header = "WEBVTT\r\n\r\n";
 
+static const char *simple_xml_header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<captions>\r\n";
+
 void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank, int max_len)
 {
 	*last_non_blank = -1;
@@ -329,6 +331,19 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 		case CCX_OF_SPUPNG:
 			write_spumux_footer(out);
 			break;
+		case CCX_OF_SIMPLE_XML:
+			sprintf ((char *) str,"</captions>\n");
+			if (ctx->encoding != CCX_ENC_UNICODE)
+			{
+				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
+			}
+			used = encode_line (ctx, ctx->buffer,(unsigned char *) str);
+			ret = write (out->fh, ctx->buffer, used);
+			if (ret != used)
+			{
+				mprint("WARNING: loss of data\n");
+			}
+			break;
 		default: // Nothing to do, no footer on this format
 			break;
 	}
@@ -445,11 +460,65 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			ret = write_bom(ctx, out);
 			if(ret < 0)
 				return -1;
+		case CCX_OF_SIMPLE_XML: // No header. Fall thru
+			ret = write_bom(ctx, out);
+			if(ret < 0)
+				return -1;
+			REQUEST_BUFFER_CAPACITY(ctx,strlen (simple_xml_header)*3);
+			used=encode_line (ctx, ctx->buffer,(unsigned char *) simple_xml_header);
+			ret = write(out->fh, ctx->buffer, used);
+			if(ret < used)
+			{
+				mprint("WARNING: Unable to write complete Buffer \n");
+				return -1;
+			}
 		default:
 			break;
 	}
 
 	return ret;
+}
+
+int write_cc_subtitle_as_simplexml(struct cc_subtitle *sub, struct encoder_ctx *context)
+{
+	int length;
+	int ret = 0;
+	char *str;
+	char *save_str;
+	struct cc_subtitle *osub = sub;
+	struct cc_subtitle *lsub = sub;
+
+	while(sub)
+	{
+		str = sub->data;
+
+		str = strtok_r(str, "\r\n", &save_str);
+		do
+		{
+			length = get_str_basic(context->subline, str, context->trim_subs, sub->enc_type, context->encoding, strlen(str));
+			if (length <= 0)
+			{
+				continue;
+			}
+			ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+			if(ret <  context->encoded_crlf_length)
+			{
+				mprint("Warning:Loss of data\n");
+			}
+
+		} while (str = strtok_r(NULL, "\r\n", &save_str) );
+
+		freep(&sub->data);
+		lsub = sub;
+		sub = sub->next;
+	}
+	while(lsub != osub)
+	{
+		sub = lsub->prev;
+		freep(&lsub);
+		lsub = sub;
+	}
+
 }
 
 int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context)
@@ -573,6 +642,30 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 	return ret;
 }
 
+void write_cc_line_as_simplexml(struct eia608_screen *data, struct encoder_ctx *context, int line_number)
+{
+	int ret;
+	int length = 0;
+	char *cap = "<caption>";
+	char *cap1 = "</caption>";
+	if (context->sentence_cap)
+	{
+		capitalize (context, line_number, data);
+		correct_case(line_number, data);
+	}
+	length = get_str_basic (context->subline, data->characters[line_number],
+			context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
+
+	ret = write(context->out->fh, cap, strlen(cap));
+	ret = write(context->out->fh, context->subline, length);
+	if(ret < length)
+	{
+		mprint("Warning:Loss of data\n");
+	}
+	ret = write(context->out->fh, cap1, strlen(cap1));
+	ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+
+}
 //TODO Convert CC line to TEXT format and remove this function
 void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context, int line_number)
 {
@@ -680,6 +773,21 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 	// fprintf (wb->fh,encoded_crlf);
 }
 
+int write_cc_buffer_as_simplexml(struct eia608_screen *data, struct encoder_ctx *context)
+{
+	int wrote_something = 0;
+
+	for (int i=0;i<15;i++)
+	{
+		if (data->row_used[i])
+		{
+			write_cc_line_as_simplexml(data, context, i);
+		}
+		wrote_something=1;
+	}
+	return wrote_something;
+}
+
 int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context)
 {
 	int wrote_something = 0;
@@ -696,6 +804,17 @@ int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ct
 	dbg_print(CCX_DMT_DECODER_608, "- - - - - - - - - - - -\r\n");
 	return wrote_something;
 }
+
+//Dummy Function for support DVB in simple xml
+int write_cc_bitmap_as_simplexml(struct cc_subtitle *sub, struct encoder_ctx *context)
+{
+	int ret = 0;
+
+	sub->nb_data = 0;
+	freep(&sub->data);
+	return ret;
+}
+
 int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
 	int ret = 0;
@@ -1248,6 +1367,9 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			case CCX_OF_SPUPNG:
 				wrote_something = write_cc_buffer_as_spupng(data, context);
 				break;
+			case CCX_OF_SIMPLE_XML:
+				wrote_something = write_cc_buffer_as_simplexml(data, context);
+				break;
 			default:
 				break;
 			}
@@ -1288,6 +1410,9 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			break;
 		case CCX_OF_SPUPNG:
 			wrote_something = write_cc_bitmap_as_spupng(sub, context);
+			break;
+		case CCX_OF_SIMPLE_XML:
+			wrote_something = write_cc_bitmap_as_simplexml(sub, context);
 			break;
 		default:
 			break;
@@ -1336,6 +1461,9 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			break;
 		case CCX_OF_SPUPNG:
 			wrote_something = write_cc_subtitle_as_spupng(sub, context);
+			break;
+		case CCX_OF_SIMPLE_XML:
+			wrote_something = write_cc_subtitle_as_simplexml(sub, context);
 			break;
 		default:
 			break;

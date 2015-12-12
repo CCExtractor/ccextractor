@@ -300,6 +300,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 		setting->output_format == CCX_OF_WEBVTT ||
 		setting->output_format==CCX_OF_TRANSCRIPT ||
 		setting->output_format==CCX_OF_SPUPNG ||
+		setting->output_format==CCX_OF_SIMPLE_XML ||
 		setting->output_format==CCX_OF_NULL)
 		ctx->writedata = process608;
 	else
