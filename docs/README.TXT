@@ -1,4 +1,4 @@
-ccextractor, 0.77
+ccextractor, 0.78
 -----------------
 Authors: Carlos Fernández (cfsmp3), Volker Quetschke.
 Maintainer: cfsmp3
@@ -20,7 +20,7 @@ Google Summer of Code 2014 students
 
 Google Summer of Code 2015 students
 - Willem van iseghem
-- Ruslan KuchumoV
+- Ruslan Kuchumov
 - Anshul Maheshwari
 - Nurendra Choudhary
 - Oleg Kiselev
