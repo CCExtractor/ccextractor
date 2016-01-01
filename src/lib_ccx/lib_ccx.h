@@ -204,7 +204,7 @@ void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile
 void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct cc_subtitle *sub);
 
 // stream_functions.c
-int isValidMP4Box(unsigned char *buffer, long position, long *nextBoxLocation, int *boxScore);
+int isValidMP4Box(unsigned char *buffer, size_t position, size_t *nextBoxLocation, int *boxScore);
 void detect_stream_type (struct ccx_demuxer *ctx);
 int detect_myth( struct ccx_demuxer *ctx );
 int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, unsigned char *nextheader, int *headerlength, int sbuflen);

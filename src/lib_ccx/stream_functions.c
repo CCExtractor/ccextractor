@@ -64,11 +64,10 @@ void detect_stream_type (struct ccx_demuxer *ctx)
 	if ((ctx->stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND || ccx_options.print_file_reports)
 			&& ctx->startbytes_avail >= 4) // Still not found
 	{
-		long idx = 0, nextBoxLocation = 0, lastBoxLocation = 0;
+		size_t idx = 0, nextBoxLocation = 0;
 		int boxScore = 0;
 		// Scan the buffer for valid succeeding MP4 boxes.
-		while (idx < ctx->startbytes_avail - 7){
-			lastBoxLocation = idx;
+		while (idx < ctx->startbytes_avail - 8){
 			// Check if we have a valid box
 			if (isValidMP4Box(ctx->startbytes, idx, &nextBoxLocation, &boxScore))
 			{
@@ -431,7 +430,7 @@ ccx_stream_mp4_box ccx_stream_mp4_boxes[11] = {
  *
  * Returns 1 when a box is found, 0 when none is found.
  */
-int isValidMP4Box(unsigned char *buffer, long position, long *nextBoxLocation, int *boxScore)
+int isValidMP4Box(unsigned char *buffer, size_t position, size_t *nextBoxLocation, int *boxScore)
 {
 	for (int idx = 0; idx < 11; idx++)
 	{
@@ -439,7 +438,7 @@ int isValidMP4Box(unsigned char *buffer, long position, long *nextBoxLocation, i
 				buffer[position + 6] == ccx_stream_mp4_boxes[idx].boxType[2] && buffer[position + 7] == ccx_stream_mp4_boxes[idx].boxType[3]){
 			mprint("Detected MP4 box with name: %s\n", ccx_stream_mp4_boxes[idx].boxType);
 			// Box name matches. Do crude validation of possible box size, and if valid, add points for "valid" box
-			long boxSize = buffer[position] << 24;
+			size_t boxSize = buffer[position] << 24;
 			boxSize |= buffer[position + 1] << 16;
 			boxSize |= buffer[position + 2] << 8;
 			boxSize |= buffer[position + 3];
