@@ -372,7 +372,6 @@ void usage (void)
 	mprint ("                      report  -> Prints to stdout information about captions\n");
 	mprint ("                                 in specified input. Don't produce any file\n");
 	mprint ("                                 output\n\n");
-	mprint ("       Note: Teletext output can only be srt, webvtt, txt or ttxt for now.\n\n");
 
 	mprint ("Options that affect how input files will be processed.\n");
 
