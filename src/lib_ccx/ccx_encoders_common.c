@@ -460,6 +460,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			ret = write_bom(ctx, out);
 			if(ret < 0)
 				return -1;
+			break;
 		case CCX_OF_SIMPLE_XML: // No header. Fall thru
 			ret = write_bom(ctx, out);
 			if(ret < 0)
@@ -472,6 +473,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				mprint("WARNING: Unable to write complete Buffer \n");
 				return -1;
 			}
+			break;
 		default:
 			break;
 	}
