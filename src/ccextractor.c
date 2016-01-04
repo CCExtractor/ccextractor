@@ -41,6 +41,10 @@ int main(int argc, char *argv[])
 		usage ();
 		fatal (EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");
 	}
+	else if (ret == EXIT_WITH_HELP)
+	{
+		return EXIT_OK;
+	}
 	else if (ret != EXIT_OK)
 	{
 		exit(ret);

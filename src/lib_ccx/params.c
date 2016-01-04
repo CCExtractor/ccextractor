@@ -273,6 +273,7 @@ void usage (void)
 	mprint ("  Syntax:\n");
 	mprint ("  ccextractor [options] inputfile1 [inputfile2...] [-o outputfilename]\n");
 	mprint ("               [-o1 outputfilename1] [-o2 outputfilename2]\n\n");
+	mprint ("To see This Help Message: -h or --help\n\n");
 	mprint ("File name related options:\n");
 	mprint ("            inputfile: file(s) to process\n");
 	mprint ("    -o outputfilename: Use -o parameters to define output filename if you don't\n");
@@ -828,6 +829,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	// Parse parameters
 	for (int i=1; i<argc; i++)
 	{
+		if (!strcmp (argv[i],"--help") || !strcmp(argv[i], "-h"))
+		{
+			usage();
+			return EXIT_WITH_HELP;
+		}
 		if (strcmp (argv[i], "-")==0 || strcmp(argv[i], "-stdin") == 0)
 		{
 
