@@ -915,6 +915,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	dec_ctx = update_decoder_list(ctx);
 	if (parsebuf[6] == 0 && parsebuf[7] == 2)
 	{
+		dec_ctx->codec = CCX_CODEC_TELETEXT;
 		dec_ctx->private_data = telxcc_init();
 	}
 	dec_sub = &dec_ctx->dec_sub;

@@ -337,10 +337,7 @@ int main(int argc, char *argv[])
 	}
 #endif
 	dbg_print(CCX_DMT_708, "[CEA-708] The 708 decoder was reset [%d] times.\n", ctx->freport.data_from_708->reset_count);
-/*
-	if (ccx_options.teletext_mode == CCX_TXT_IN_USE)
-		mprint ( "Teletext decoder: %"PRIu32" packets processed, %"PRIu32" SRT frames written.\n", tlt_packet_counter, tlt_frames_produced);
-*/
+
 	if (is_decoder_processed_enough(ctx) == CCX_TRUE)
 	{
 		mprint ("\rNote: Processing was cancelled before all data was processed because\n");

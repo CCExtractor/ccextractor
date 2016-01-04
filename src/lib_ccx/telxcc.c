@@ -1220,6 +1220,7 @@ void tlt_read_rcwt(void *codec, unsigned char *buf, struct cc_subtitle *sub)
 
 	ctx->last_timestamp = t;
 
+	ctx->tlt_packet_counter++;
 	process_telx_packet(ctx, id, pl, t, sub);
 }
 
@@ -1468,6 +1469,7 @@ void telxcc_close(void **ctx, struct cc_subtitle *sub)
 	if(!ttext)
 		return;
 
+	mprint ( "Teletext decoder: %"PRIu32" packets processed \n", ttext->tlt_packet_counter);
 	if (tlt_config.write_format != CCX_OF_RCWT && sub)
 	{
 		// output any pending close caption
