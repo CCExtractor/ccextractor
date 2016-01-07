@@ -1,6 +1,11 @@
 0.79 ()
 -----------------
 - Support for Grid Format (g608)
+- Show Correct number of teletext packet processed
+- Removed Segfault on incorrect mp4 detection
+- Remove xml header from transcript format
+- Help message updated for Teletext
+- Added --help and -h for help message
 
 0.78 (2015-12-12)
 -----------------
