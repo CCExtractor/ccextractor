@@ -1,3 +1,7 @@
+0.79 ()
+-----------------
+- Support for Grid Format (g608)
+
 0.78 (2015-12-12)
 -----------------
 - Support to extract Closed Caption from MultiProgram at once.

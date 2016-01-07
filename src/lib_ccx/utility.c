@@ -422,6 +422,8 @@ char *get_file_extension(enum ccx_output_format write_format)
 			return strdup(".dvdraw");
 		case CCX_OF_SIMPLE_XML:
 			return strdup(".xml");
+		case CCX_OF_G608:
+			return strdup(".g608");
 		case CCX_OF_NULL:
 			return NULL;
 		default:

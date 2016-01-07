@@ -214,6 +214,8 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
 		opt->write_format=CCX_OF_SPUPNG;
 	else if (strcmp (format,"simplexml")==0)
 		opt->write_format=CCX_OF_SIMPLE_XML;
+	else if (strcmp (format,"g608")==0)
+		opt->write_format=CCX_OF_G608;
 	else
 		fatal (EXIT_MALFORMED_PARAMETER, "Unknown output file format: %s\n", format);
 }

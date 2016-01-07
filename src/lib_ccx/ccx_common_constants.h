@@ -165,6 +165,7 @@ enum ccx_output_format
 	CCX_OF_DVDRAW = 8, // See -d at http://www.geocities.com/mcpoodle43/SCC_TOOLS/DOCS/SCC_TOOLS.HTML#CCExtract
 	CCX_OF_WEBVTT = 9,
 	CCX_OF_SIMPLE_XML = 10,
+	CCX_OF_G608 = 11,
 };
 
 enum ccx_output_date_format

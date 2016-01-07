@@ -99,7 +99,6 @@ int change_utf8_encoding(unsigned char* dest, unsigned char* src, int len, enum 
 {
 	unsigned char *orig = dest; // Keep for calculating length
 	unsigned char *orig_src = src; // Keep for calculating length
-	int bytes = 0;
 	for (int i = 0; src < orig_src + len;)
 	{
 		unsigned char c = src[i];
@@ -382,6 +381,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 	switch (ctx->write_format)
 	{
 		case CCX_OF_SRT: // Subrip subtitles have no header
+		case CCX_OF_G608:
 			ret = write_bom(ctx, out);
 			if(ret < 0)
 				return -1;
@@ -497,7 +497,7 @@ int write_cc_subtitle_as_simplexml(struct cc_subtitle *sub, struct encoder_ctx *
 		str = strtok_r(str, "\r\n", &save_str);
 		do
 		{
-			length = get_str_basic(context->subline, str, context->trim_subs, sub->enc_type, context->encoding, strlen(str));
+			length = get_str_basic(context->subline, (unsigned char*)str, context->trim_subs, sub->enc_type, context->encoding, strlen(str));
 			if (length <= 0)
 			{
 				continue;
@@ -508,7 +508,7 @@ int write_cc_subtitle_as_simplexml(struct cc_subtitle *sub, struct encoder_ctx *
 				mprint("Warning:Loss of data\n");
 			}
 
-		} while (str = strtok_r(NULL, "\r\n", &save_str) );
+		} while ( (str = strtok_r(NULL, "\r\n", &save_str) ));
 
 		freep(&sub->data);
 		lsub = sub;
@@ -521,6 +521,7 @@ int write_cc_subtitle_as_simplexml(struct cc_subtitle *sub, struct encoder_ctx *
 		lsub = sub;
 	}
 
+	return ret;
 }
 
 int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context)
@@ -561,7 +562,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 		str = strtok_r(str, "\r\n", &save_str);
 		do
 		{
-			length = get_str_basic(context->subline, str, context->trim_subs, sub->enc_type, context->encoding, strlen(str));
+			length = get_str_basic(context->subline, (unsigned char*)str, context->trim_subs, sub->enc_type, context->encoding, strlen(str));
 			if (length <= 0)
 			{
 				continue;
@@ -627,7 +628,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 				mprint("Warning:Loss of data\n");
 			}
 
-		} while (str = strtok_r(NULL, "\r\n", &save_str) );
+		} while ( (str = strtok_r(NULL, "\r\n", &save_str)) );
 
 		freep(&sub->data);
 		lsub = sub;
@@ -1347,6 +1348,9 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				if (!context->startcredits_displayed && context->start_credits_text!=NULL)
 					try_to_add_start_credits(context, data->start_time);
 				wrote_something = write_cc_buffer_as_srt(data, context);
+				break;
+			case CCX_OF_G608:
+				wrote_something = write_cc_buffer_as_g608(data, context);
 				break;
 			case CCX_OF_WEBVTT:
 				if (!context->startcredits_displayed && context->start_credits_text != NULL)
