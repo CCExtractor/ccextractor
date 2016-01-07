@@ -35,7 +35,7 @@ static unsigned int get_color_encoded(struct encoder_ctx *ctx, unsigned char *bu
 	for (int i = 0; i < 32; i++)
 	{
 		if (data->colors[line_num][i] < 10)
-			*buffer++ = data->colors[line_num][i] + 48;
+			*buffer++ = data->colors[line_num][i] + '0';
 		else
 			*buffer++ = 'E';
 	}
