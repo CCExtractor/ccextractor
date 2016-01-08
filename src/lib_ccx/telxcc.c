@@ -86,7 +86,6 @@ struct TeletextCtx
 	enum ccx_output_date_format date_format;
 	int noautotimeref; // Do NOT set time automatically?
 	unsigned send_to_srv;
-	int nofontcolor;
 	char millis_separator;
 	uint32_t global_timestamp;
 
@@ -792,12 +791,9 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 					ucs2_to_utf8(u, v);
 					uint64_t ucs2_char=(u[0]<<24) | (u[1]<<16) | (u[2]<<8) | u[3];
 					ucs2_buffer_add_char(ctx, ucs2_char);
-				}
 
-				if (v >= 0x20)
-				{
 					// translate some chars into entities, if in colour mode
-					if (!tlt_config.nofontcolor)
+					if (!tlt_config.nofontcolor && !tlt_config.nohtmlescape)
 					{
 						for (uint8_t i = 0; i < array_length(ENTITIES); i++)
 							if (v == ENTITIES[i].character)
@@ -809,8 +805,6 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 							}
 					}
 				}
-
-
 				if (v >= 0x20)
 				{
 					page_buffer_add_string (ctx, u);
@@ -1413,30 +1407,6 @@ void* telxcc_init(void)
 	ctx->t0 = 0;
 
 	return ctx;
-}
-
-void telxcc_configure (void *codec, struct ccx_s_teletext_config *cfg)
-{
-	struct TeletextCtx *ctx = codec;
-	ctx->verbose = cfg->verbose;
-	ctx->page = cfg->page;
-	ctx->tid = cfg->tid;
-	ctx->offset = cfg->offset;
-	ctx->bom = cfg->bom;
-	ctx->nonempty = cfg->nonempty;
-	ctx->user_page = cfg->user_page;
-	ctx->levdistmincnt = cfg->levdistmincnt;
-	ctx->levdistmaxpct = cfg->levdistmaxpct;
-	ctx->extraction_start = cfg->extraction_start;
-	ctx->extraction_end = cfg->extraction_end;
-	ctx->write_format = cfg->write_format;
-	ctx->gui_mode_reports = cfg->gui_mode_reports;
-	ctx->date_format = cfg->date_format;
-	ctx->noautotimeref = cfg->noautotimeref;
-	ctx->send_to_srv = cfg->send_to_srv;
-	ctx->nofontcolor = cfg->nofontcolor;
-	ctx->millis_separator = cfg->millis_separator;
-
 }
 
 void telxcc_update_gt(void *codec, uint32_t global_timestamp)

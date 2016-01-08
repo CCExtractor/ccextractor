@@ -57,6 +57,7 @@ struct ccx_s_teletext_config
 	unsigned send_to_srv;
 	enum ccx_encoding_type encoding;
 	int nofontcolor;
+	int nohtmlescape;
 	char millis_separator;
 };
 

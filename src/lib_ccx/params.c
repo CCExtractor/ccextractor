@@ -469,6 +469,7 @@ void usage (void)
 	mprint ("                       because UTF-8 is now the default).\n");
 	mprint ("              -latin1: Encode subtitles in Latin-1\n");
 	mprint ("  -nofc --nofontcolor: For .srt/.sami/.vtt, don't add font color tags.\n");
+	mprint ("  --nohtmlescape: For .srt/.sami/.vtt, don't covert html unsafe character\n");
 	mprint ("-nots --notypesetting: For .srt/.sami/.vtt, don't add typesetting tags.\n");
 	mprint ("                -trim: Trim lines.\n");
 	mprint ("   -dc --defaultcolor: Select a different default color (instead of\n");
@@ -890,6 +891,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				strcmp (argv[i],"--nofontcolor")==0)
 		{
 			opt->nofontcolor=1;
+			continue;
+		}
+		if (strcmp (argv[i],"--nohtmlescape")==0)
+		{
+			opt->nohtmlescape=1;
 			continue;
 		}
 		if (strcmp(argv[i], "-bom") == 0){
@@ -1720,6 +1726,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	tlt_config.noautotimeref = opt->noautotimeref;
 	tlt_config.send_to_srv = opt->send_to_srv;
 	tlt_config.nofontcolor = opt->nofontcolor;
+	tlt_config.nohtmlescape = opt->nohtmlescape;
 	tlt_config.millis_separator = opt->millis_separator;
 
 	// teletext page number out of range

@@ -73,6 +73,7 @@ struct ccx_s_options // Options from user parameters
 	int cc_channel; // Channel we want to dump in srt mode
 	int buffer_input;
 	int nofontcolor;
+	int nohtmlescape;
 	int notypesetting;
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
 	int print_file_reports;
