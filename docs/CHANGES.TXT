@@ -6,6 +6,7 @@
 - Remove xml header from transcript format
 - Help message updated for Teletext
 - Added --help and -h for help message
+- Added --nohtmlescape option
 
 0.78 (2015-12-12)
 -----------------
