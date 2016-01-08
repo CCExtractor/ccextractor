@@ -756,7 +756,6 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 				{
 					sprintf (c_tempb, "<font color=\"%s\">", TTXT_COLOURS[foreground_color]);
 					page_buffer_add_string (ctx, c_tempb);
-					// if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "<font color=\"%s\">", TTXT_COLOURS[foreground_color]);
 					font_tag_opened = YES;
 				}
 			}
@@ -772,7 +771,6 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 						if (font_tag_opened == YES)
 						{
 							page_buffer_add_string (ctx, "</font>");
-							// if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "</font> ");
 							font_tag_opened = NO;
 						}
 
@@ -782,7 +780,6 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 						{
 							sprintf (c_tempb, "<font color=\"%s\">", TTXT_COLOURS[v]);
 							page_buffer_add_string (ctx, c_tempb);
-							// if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "<font color=\"%s\">", TTXT_COLOURS[v]);
 							font_tag_opened = YES;
 						}
 					}
@@ -805,7 +802,6 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 						for (uint8_t i = 0; i < array_length(ENTITIES); i++)
 							if (v == ENTITIES[i].character)
 							{
-								//if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s", ENTITIES[i].entity);
 								page_buffer_add_string (ctx, ENTITIES[i].entity);
 								// v < 0x20 won't be printed in next block
 								v = 0;
@@ -817,7 +813,6 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 
 				if (v >= 0x20)
 				{
-					//if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "%s", u);
 					page_buffer_add_string (ctx, u);
 					if (tlt_config.gui_mode_reports) // For now we just handle the easy stuff
 						fprintf (stderr,"%s",u);
@@ -828,7 +823,6 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 		// no tag will left opened!
 		if ((!tlt_config.nofontcolor) && (font_tag_opened == YES))
 		{
-			//if (ctx->wbout1.fh!=-1) fdprintf(ctx->wbout1.fh, "</font>");
 			page_buffer_add_string (ctx, "</font>");
 			font_tag_opened = NO;
 		}
@@ -882,17 +876,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 				ctx->prev_show_timestamp = page->show_timestamp;
 			}
 			break;
-		case CCX_OF_SMPTETT:
-#if 0
-			if (ctx->wbout1.fh!=-1)
-			{
-				timestamp_to_smptetttime(page->show_timestamp, timecode_show);
-				timestamp_to_smptetttime(page->hide_timestamp, timecode_hide);
-				fdprintf(ctx->wbout1.fh,"      <p region=\"speaker\" begin=\"%s\" end=\"%s\">%s</p>\n", timecode_show, timecode_hide, ctx->page_buffer_cur);
-			}
-#endif
-			break;
-		default: // Yes, this means everything else is .srt for now
+		default:
 			add_cc_sub_text(sub, ctx->page_buffer_cur, page->show_timestamp,
 				page->hide_timestamp + 1, NULL, "TLT", CCX_ENC_UTF_8);
 	}
