@@ -1423,7 +1423,7 @@ void telxcc_close(void **ctx, struct cc_subtitle *sub)
 	if(!ttext)
 		return;
 
-	mprint ( "Teletext decoder: %"PRIu32" packets processed \n", ttext->tlt_packet_counter);
+	mprint ( "\nTeletext decoder: %"PRIu32" packets processed \n", ttext->tlt_packet_counter);
 	if (tlt_config.write_format != CCX_OF_RCWT && sub)
 	{
 		// output any pending close caption
