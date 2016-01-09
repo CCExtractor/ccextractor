@@ -1,5 +1,6 @@
 #include "lib_ccx.h"
 #include "ccx_encoders_common.h"
+#include "ccx_encoders_helpers.h"
 
 static unsigned int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
 {

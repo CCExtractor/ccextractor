@@ -1,4 +1,4 @@
-0.79 ()
+0.79 (2016-01-09)
 -----------------
 - Support for Grid Format (g608)
 - Show Correct number of teletext packet processed
