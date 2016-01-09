@@ -287,9 +287,12 @@ int main(int argc, char *argv[])
 			dbg_print(CCX_DMT_DECODER_608, "Max. FTS:	   %s  (without caption blocks since then)\n",
 				print_mstime(get_fts_max(dec_ctx->timing)));
 
-			mprint ("\nTotal frames time:	  %s  (%u frames at %.2ffps)\n",
-			print_mstime( (LLONG)(total_frames_count*1000/current_fps) ),
-			total_frames_count, current_fps);
+			if (dec_ctx->codec == CCX_CODEC_ATSC_CC)
+			{
+				mprint ("\nTotal frames time:	  %s  (%u frames at %.2ffps)\n",
+				print_mstime( (LLONG)(total_frames_count*1000/current_fps) ),
+				total_frames_count, current_fps);
+			}
 
 			if (ctx->stat_hdtv)
 			{
