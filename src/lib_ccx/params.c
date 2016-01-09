@@ -1099,6 +1099,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			MPEG_CLOCK_FREQ=90090;
 			continue;
 		}
+		if (strcmp (argv[i],"--noscte20")==0)
+		{
+			opt->noscte20 = 1;
+			continue;
+		}
 		if (strcmp (argv[i],"-noru")==0 ||
 				strcmp (argv[i],"--norollup")==0)
 		{

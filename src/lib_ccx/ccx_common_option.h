@@ -70,6 +70,7 @@ struct ccx_s_options // Options from user parameters
 {
 	int extract; // Extract 1st, 2nd or both fields
 	int no_rollup;
+	int noscte20;
 	int cc_channel; // Channel we want to dump in srt mode
 	int buffer_input;
 	int nofontcolor;

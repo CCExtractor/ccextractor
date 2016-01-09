@@ -240,6 +240,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	setting->settings_608->no_rollup = setting->no_rollup;
 	setting->settings_dtvcc->no_rollup = setting->no_rollup;
 	ctx->no_rollup = setting->no_rollup;
+	ctx->noscte20 = setting->noscte20;
 
 	ctx->dtvcc = ccx_dtvcc_init(setting->settings_dtvcc);
 	ctx->dtvcc->is_active = setting->settings_dtvcc->enabled;

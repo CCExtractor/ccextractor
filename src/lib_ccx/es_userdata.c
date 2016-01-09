@@ -138,7 +138,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 		dbg_print(CCX_DMT_VERBOSE, "Read %d/%d DVD CC blocks\n", rcbcount, ecbcount);
 	}
 	// SCTE 20 user data
-	else if (ud_header[0] == 0x03)
+	else if (!ctx->noscte20 && ud_header[0] == 0x03)
 	{
 		if ((ud_header[1]&0x7F) == 0x01)
 		{

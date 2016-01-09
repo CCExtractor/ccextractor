@@ -7,6 +7,7 @@
 - Help message updated for Teletext
 - Added --help and -h for help message
 - Added --nohtmlescape option
+- Added --noscte20 option
 
 0.78 (2015-12-12)
 -----------------

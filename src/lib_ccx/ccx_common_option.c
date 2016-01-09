@@ -14,6 +14,8 @@ void init_options (struct ccx_s_options *options)
 #endif
 	options->nofontcolor=0; // 1 = don't put <font color> tags
 	options->notypesetting=0; // 1 = Don't put <i>, <u>, etc typesetting tags
+	options->no_rollup = 0;
+	options->noscte20 = 0;
 
 
 	options->settings_608.direct_rollup = 0;

@@ -90,6 +90,7 @@ struct ccx_decoders_common_settings_t
 	int extract; // Extract 1st, 2nd or both fields
 	int fullbin; // Disable pruning of padding cc blocks
 	int no_rollup;
+	int noscte20;
 	struct ccx_decoder_608_settings *settings_608; //  Contains the settings for the 608 decoder.
 	ccx_decoder_dtvcc_settings *settings_dtvcc; //Same for cea 708 captions decoder (dtvcc)
 	int cc_channel; // Channel we want to dump in srt mode
@@ -113,6 +114,7 @@ struct lib_cc_decode
 	void *context_cc608_field_2;
 
 	int no_rollup; // If 1, write one line at a time
+	int noscte20;
 	int fix_padding; // Replace 0000 with 8080 in HDTV (needed for some cards)
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
