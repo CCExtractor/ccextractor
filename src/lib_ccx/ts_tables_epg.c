@@ -300,6 +300,11 @@ void EPG_output(struct lib_ccx_ctx *ctx)
 	memcpy(filename, ctx->basefilename, strlen(ctx->basefilename)+1);
 	strcat(filename, "_epg.xml");
 	f = fopen(filename, "w");
+	if(!f)
+	{
+		dbg_print (CCX_DMT_GENERIC_NOTICES, "\rUnable to open %s\n", filename);
+		return;
+	}
 	freep(&filename);
 
 	fprintf(f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n\n<tv>\n");
