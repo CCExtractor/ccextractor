@@ -129,6 +129,9 @@ struct ccx_demuxer
 	// Remember if the last header was valid. Used to suppress too much output
 	// and the expected unrecognized first header for TiVo files.
 	int strangeheader;
+#ifdef ENABLE_FFMPEG
+	void *ffmpeg_ctx;
+#endif
 
 	void *parent;
 	void (*print_cfg)(struct ccx_demuxer *ctx);

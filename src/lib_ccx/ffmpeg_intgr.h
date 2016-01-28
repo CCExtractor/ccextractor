@@ -5,19 +5,14 @@
 #include "libavutil/common.h"
 #include "libavutil/error.h"
 #endif
+#include "ccx_demuxer.h"
 /**
  * @path this path could be relative or absolute path of static file
  * 	 this path could be path of device
  *
  * @return ctx Context of ffmpeg
  */
-void *init_ffmpeg(char *path);
+void *init_ffmpeg(const char *path);
 
-/**
- * @param ctx context of ffmpeg
- * @param data preallocated buffer where data will be recieved
- * @param maxlen length of buffer, where data will be copied
- * @return number of bytes recieved as data
- */
-int ff_get_ccframe(void *arg, unsigned char*data, int maxlen);
+int ffmpeg_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **ppdata);
 #endif

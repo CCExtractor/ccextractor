@@ -21,6 +21,7 @@ struct ffmpeg_ctx
 	AVFrame *frame;
 	int stream_index;
 };
+
 /**
  * call back function to be registered for avlog
  */
@@ -52,13 +53,14 @@ static void log_cb(void* ptr, int level, const char* fmt, va_list vl)
 
 	vfprintf(flog, fmt, vl);
 }
+
 /**
  * @path this path could be relative or absolute path of static file
  * 	 this path could be path of device
  *
  * @return ctx Context of ffmpeg
  */
-void *init_ffmpeg(char *path)
+void *init_ffmpeg(const char *path)
 {
 	int ret = 0;
 	int stream_index = 0;
@@ -120,6 +122,7 @@ void *init_ffmpeg(char *path)
 fail:
 	return ctx;
 }
+
 /**
  * @param ctx context of ffmpeg
  * @param data preallocated buffer where data will be recieved
@@ -158,10 +161,10 @@ int ff_get_ccframe(void *arg, unsigned char*data, int maxlen)
 	{
 		return AVERROR(EAGAIN);
 	}
-	current_pts = av_frame_get_best_effort_timestamp(ctx->frame);
-	if(!pts_set)
-		pts_set = 1;
-	set_fts();
+//	current_pts = av_frame_get_best_effort_timestamp(ctx->frame);
+//	if(!pts_set)
+//		pts_set = 1;
+//	set_fts();
 	for(int i = 0;i< ctx->frame->nb_side_data;i++)
 	{
 		if(ctx->frame->side_data[i]->type == AV_FRAME_DATA_A53_CC)
@@ -183,5 +186,57 @@ int ff_get_ccframe(void *arg, unsigned char*data, int maxlen)
 		return ret;
 
 	return len;
+}
+
+int ffmpeg_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **ppdata)
+{
+	struct demuxer_data *data;
+	int ret = 0;
+    if(!*ppdata)
+    {
+        *ppdata = alloc_demuxer_data();
+        if(!*ppdata)
+            return -1;
+        data = *ppdata;
+        //TODO Set to dummy, find and set actual value
+        data->program_number = 1;
+        data->stream_pid = 1;
+        data->codec  = CCX_CODEC_ATSC_CC;
+		data->bufferdatatype = CCX_RAW_TYPE;
+    }
+    else
+    {
+        data = *ppdata;
+    }
+
+	do
+	{
+		int len = ff_get_ccframe(ctx->ffmpeg_ctx, data->buffer, BUFSIZE);
+		if(len == AVERROR(EAGAIN))
+		{
+			continue;
+		}
+		else if(len == AVERROR_EOF)
+		{
+			ret = CCX_EOF;
+			break;
+		}
+		else if(len == 0)
+			continue;
+		else if(len < 0 )
+		{
+			mprint("Error extracting Frame\n");
+			break;
+
+		}
+		else
+		{
+			data->len = len;
+			break;
+		}
+
+	}while(1);
+
+	return ret;
 }
 #endif

@@ -8,7 +8,6 @@ License: GPL 2.0
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <signal.h>
-#include "ffmpeg_intgr.h"
 #include "ccx_common_option.h"
 #include "ccx_mp4.h"
 
@@ -24,9 +23,6 @@ void sigint_handler()
 struct ccx_s_options ccx_options;
 int main(int argc, char *argv[])
 {
-#ifdef ENABLE_FFMPEG
-	void *ffmpeg_ctx = NULL;
-#endif
 	struct lib_ccx_ctx *ctx;
 	struct lib_cc_decode *dec_ctx = NULL;
 	int ret = 0;
@@ -100,47 +96,6 @@ int main(int argc, char *argv[])
 	while (switch_to_next_file(ctx, 0))
 	{
 		prepare_for_new_file(ctx);
-#ifdef ENABLE_FFMPEG
-		close_input_file(ctx);
-		ffmpeg_ctx =  init_ffmpeg(ctx->inputfile[0]);
-		if(ffmpeg_ctx)
-		{
-			do
-			{
-				int ret = 0;
-				unsigned char *bptr = ctx->buffer;
-				int len = ff_get_ccframe(ffmpeg_ctx, bptr, 1024);
-                                int cc_count = 0;
-				if(len == AVERROR(EAGAIN))
-				{
-					continue;
-				}
-				else if(len == AVERROR_EOF)
-					break;
-				else if(len == 0)
-					continue;
-				else if(len < 0 )
-				{
-					mprint("Error extracting Frame\n");
-					break;
-
-				}
-                                else
-                                    cc_count = len/3;
-				ret = process_cc_data(dec_ctx, bptr, cc_count, &dec_ctx->dec_sub);
-				if(ret >= 0 && dec_ctx->dec_sub.got_output)
-				{
-					encode_sub(enc_ctx, &dec_ctx->dec_sub);
-					dec_ctx->dec_sub.got_output = 0;
-				}
-			}while(1);
-			continue;
-		}
-		else
-		{
-			mprint ("\rFailed to initialized ffmpeg falling back to legacy\n");
-		}
-#endif
 		stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 		// Disable sync check for raw formats - they have the right timeline.
 		// Also true for bin formats, but -nosync might have created a
@@ -173,6 +128,9 @@ int main(int argc, char *argv[])
 			case CCX_SM_PROGRAM:
 			case CCX_SM_ASF:
 			case CCX_SM_WTV:
+#ifdef ENABLE_FFMPEG
+			case CCX_SM_FFMPEG:
+#endif
 				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
 					ccx_options.use_gop_as_pts = 0; 
 				mprint ("\rAnalyzing data in general mode\n");
