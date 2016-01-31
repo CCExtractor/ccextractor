@@ -13,6 +13,7 @@
 #include "ccx_demuxer.h"
 #include "file_buffer.h"
 #include "ccx_decoders_isdb.h"
+#include "ffmpeg_intgr.h"
 
 unsigned int rollover_bits = 0; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
 int end_of_file=0; // End of file?
@@ -632,6 +633,10 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		dec_ctx->in_bufferdatatype = CCX_H264;
 		got = process_avc(dec_ctx, data_node->buffer, data_node->len, dec_sub);
 	}
+	else if (data_node->bufferdatatype == CCX_RAW_TYPE)
+	{
+		got = process_raw_with_field(dec_ctx, dec_sub, data_node->buffer, data_node->len);
+	}
 	else if (data_node->bufferdatatype == CCX_ISDB_SUBTITLE)
 	{
 		isdbsub_decode(dec_ctx, data_node->buffer, data_node->len, dec_sub);
@@ -739,6 +744,11 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			case CCX_SM_WTV:
 				ret = wtv_getmoredata(ctx, &datalist);
 				break;
+#ifdef ENABLE_FFMPEG
+			case CCX_SM_FFMPEG:
+				ret = ffmpeg_getmoredata(ctx->demux_ctx, &datalist);
+				break;
+#endif
 			default:
 				fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible stream_mode");
 		}

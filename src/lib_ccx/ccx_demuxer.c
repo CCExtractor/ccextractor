@@ -2,6 +2,7 @@
 #include "activity.h"
 #include "lib_ccx.h"
 #include "utility.h"
+#include "ffmpeg_intgr.h"
 
 static void ccx_demuxer_reset(struct ccx_demuxer *ctx)
 {
@@ -28,6 +29,25 @@ static int ccx_demuxer_isopen(struct ccx_demuxer *ctx)
 }
 static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 {
+	ctx->past = 0;
+	ctx->min_global_timestamp = 0;
+	ctx->global_timestamp_inited = 0;
+	ctx->last_global_timestamp = 0;
+	ctx->offset_global_timestamp = 0;
+
+#ifdef ENABLE_FFMPEG
+	ctx->ffmpeg_ctx =  init_ffmpeg(file);
+	if(ctx->ffmpeg_ctx)
+	{
+		ctx->stream_mode = CCX_SM_FFMPEG;
+		ctx->auto_stream = CCX_SM_FFMPEG;
+		return 0;
+	}
+	else
+	{
+		mprint ("\rFailed to initialized ffmpeg falling back to legacy\n");
+	}
+#endif
 	init_file_buffer(ctx);
 	if (ccx_options.input_source==CCX_DS_STDIN)
 	{
@@ -156,12 +176,6 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 			}
 			break;					
 	}
-	ctx->past = 0;
-	ctx->min_global_timestamp = 0;
-	ctx->global_timestamp_inited = 0;
-	ctx->last_global_timestamp = 0;
-	ctx->offset_global_timestamp = 0;
-
 
 	return 0;
 }
