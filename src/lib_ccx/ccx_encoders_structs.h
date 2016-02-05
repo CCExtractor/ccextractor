@@ -16,6 +16,7 @@ typedef struct ccx_encoders_transcript_format {
 struct ccx_s_write
 {
 	int fh;
+	int temporarily_closed; // 1 means the file was created OK before but we released the handle
 	char *filename;
 	void* spupng_data;
 };

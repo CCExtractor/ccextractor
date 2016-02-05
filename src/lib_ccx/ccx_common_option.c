@@ -55,6 +55,7 @@ void init_options (struct ccx_s_options *options)
 	options->xmltvliveinterval=10; // interval in seconds between writting xmltv output files in live mode
 	options->xmltvoutputinterval=0; // interval in seconds between writting xmltv full file output
 	options->xmltvonlycurrent=0; // 0 off 1 on
+	options->keep_output_closed = 0; // By default just keep the file open.
 
 	options->transcript_settings = ccx_encoders_default_transcript_settings;
 	options->millis_separator=',';

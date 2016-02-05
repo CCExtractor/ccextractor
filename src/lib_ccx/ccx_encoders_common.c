@@ -1058,6 +1058,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	if(!ctx->out)
 		return -1;
 	ctx->nb_out = nb_lang;
+	ctx->keep_output_closed = cfg->keep_output_closed;
 
 	if(cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE)
 	{
@@ -1245,6 +1246,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->no_type_setting = opt->no_type_setting;
 	ctx->gui_mode_reports = opt->gui_mode_reports;
 	ctx->extract = opt->extract;
+	ctx->keep_output_closed = opt->keep_output_closed;
 
 	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);
 	if(!ctx->subline)
@@ -1374,7 +1376,17 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				wrote_something = write_cc_buffer_as_spupng(data, context);
 				break;
 			case CCX_OF_SIMPLE_XML:
+				if (ccx_options.keep_output_closed && context->out->temporarily_closed)
+				{
+					temporarily_open_output(context->out);
+					write_subtitle_file_header(context, context->out);
+				}
 				wrote_something = write_cc_buffer_as_simplexml(data, context);
+				if (ccx_options.keep_output_closed)
+				{
+					write_subtitle_file_footer(context, context->out);
+					temporarily_close_output(context->out);
+				}
 				break;
 			default:
 				break;

@@ -517,6 +517,9 @@ void usage (void)
 	mprint (" -nobi -nobufferinput: Disables input buffering.\n");
 	mprint (" -bs --buffersize val: Specify a size for reading, in bytes (suffix with K or\n");
 	mprint ("                       or M for kilobytes and megabytes). Default is 16M.\n");
+	mprint ("                 -koc: keep-output-close. If used then CCExtractor will close\n"); 
+	mprint ("                       the output file after writing each subtitle frame and\n");
+	mprint ("                       attempt to create it again when needed.");
 	mprint ("\n");
 
 	mprint ("Options that affect the built-in closed caption decoder:\n");
@@ -875,6 +878,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->buffer_input = 0;
 			continue;
 		}
+		if (strcmp(argv[i], "-koc") == 0)
+		{
+			opt->keep_output_closed = 1;
+			continue;
+		}
+
 		if ((strcmp (argv[i],"-bs")==0 || strcmp (argv[i],"--buffersize")==0) && i<argc-1)
 		{
 			FILEBUFFERSIZE = atol_size(argv[i+1]);

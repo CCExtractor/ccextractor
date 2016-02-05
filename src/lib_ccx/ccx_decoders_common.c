@@ -286,6 +286,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->has_ccdata_buffered = 0;
 	ctx->in_bufferdatatype = CCX_UNKNOWN;
 	ctx->frames_since_last_gop = 0;
+	
 	memcpy(&ctx->extraction_start, &setting->extraction_start,sizeof(struct ccx_boundary_time));
 	memcpy(&ctx->extraction_end, &setting->extraction_end,sizeof(struct ccx_boundary_time));
 

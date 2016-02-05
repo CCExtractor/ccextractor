@@ -12,10 +12,40 @@ void dinit_write(struct ccx_s_write *wb)
 		close(wb->fh);
 	freep(&wb->filename);	
 }
+
+int temporarily_close_output(struct ccx_s_write *wb)
+{
+	close(wb->fh);
+	wb->fh = -1;
+	wb->temporarily_closed = 1;
+}
+
+int temporarily_open_output(struct ccx_s_write *wb)
+{
+	int t = 0;
+	// Try a few times before giving up. This is because this close/open stuff exists for processes
+	// that demand exclusive access to the file, so often we'll find out that we cannot reopen the
+	// file immediately.
+	while (t < 5 && wb->fh == -1)
+	{
+		wb->fh = open(wb->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+		sleep(1);
+	}
+	if (wb->fh == -1)
+	{
+		return CCX_COMMON_EXIT_FILE_CREATION_FAILED;
+	}
+	wb->temporarily_closed = 0;
+	return EXIT_OK;
+}
+
+
+
 int init_write (struct ccx_s_write *wb, char *filename)
 {
 	memset(wb, 0, sizeof(struct ccx_s_write));
 	wb->fh=-1;
+	wb->temporarily_closed = 0; 
 	wb->filename = filename;
 	mprint ("Creating %s\n", filename);
 	wb->fh = open (filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
