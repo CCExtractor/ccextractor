@@ -9,6 +9,7 @@
 #include "utility.h"
 #include "ccx_common_timing.h"
 #include "file_buffer.h"
+#include "ccx_gxf.h"
 
 void detect_stream_type (struct ccx_demuxer *ctx)
 {
@@ -26,6 +27,14 @@ void detect_stream_type (struct ccx_demuxer *ctx)
 				ctx->startbytes[2]==0xb2 &&
 				ctx->startbytes[3]==0x75)
 			ctx->stream_mode=CCX_SM_ASF;
+	}
+	if (ctx->stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND)
+	{
+		if (ccx_gxf_probe(ctx->startbytes, ctx->startbytes_avail) == CCX_TRUE)
+		{
+			ctx->stream_mode = CCX_SM_GXF;
+			ctx->private_data = ccx_gxf_init(ctx);
+		}
 	}
 	if (ctx->stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND && ctx->startbytes_avail >= 4)
 	{

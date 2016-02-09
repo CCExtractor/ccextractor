@@ -496,6 +496,14 @@ size_t utf16_to_utf8(unsigned short utf16_char, unsigned char *out)
 	return 0;
 }
 
+LLONG change_timebase(LLONG val, struct ccx_rational cur_tb, struct ccx_rational dest_tb)
+{
+	/* val = (value * current timebase) / destination timebase */
+	val = val * cur_tb.num * dest_tb.den;
+	val = val / ( cur_tb.den * dest_tb.num);
+	return val;
+}
+
 #ifdef _WIN32
 char *strndup(const char *s, size_t n)
 {

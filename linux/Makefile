@@ -4,6 +4,7 @@ CC = gcc
 SYS := $(shell gcc -dumpmachine)
 CFLAGS = -O3 -std=gnu99
 INCLUDE = -I../src/gpacmp4/ -I../src/libpng -I../src/zlib -I../src/lib_ccx -I../src/.
+INCLUDE += -I../src/zvbi
 ALL_FLAGS = -Wno-write-strings -D_FILE_OFFSET_BITS=64
 LDFLAGS = -lm
 
@@ -13,7 +14,7 @@ endif
 TARGET = ccextractor
 
 OBJS_DIR = objs
-VPATH = ../src:../src/gpacmp4:../src/libpng:../src/zlib:../src/lib_ccx
+VPATH = ../src:../src/gpacmp4:../src/libpng:../src/zlib:../src/lib_ccx:../src/zvbi
 
 SRCS_DIR = ../src
 SRCS_C = $(wildcard $(SRCS_DIR)/*.c)
@@ -26,6 +27,10 @@ OBJS_CCX = $(SRCS_CCX:$(SRCS_CCX_DIR)/%.c=$(OBJS_DIR)/%.o)
 SRCS_PNG_DIR = $(SRCS_DIR)/libpng
 SRCS_PNG = $(wildcard $(SRCS_PNG_DIR)/*.c)
 OBJS_PNG = $(SRCS_PNG:$(SRCS_PNG_DIR)/%.c=$(OBJS_DIR)/%.o)
+
+SRCS_ZVBI_DIR = $(SRCS_DIR)/zvbi
+SRCS_ZVBI = $(wildcard $(SRCS_ZVBI_DIR)/*.c)
+OBJS_ZVBI = $(SRCS_ZVBI:$(SRCS_ZVBI_DIR)/%.c=$(OBJS_DIR)/%.o)
 
 SRCS_GPACMP4_DIR = $(SRCS_DIR)/gpacmp4
 SRCS_GPACMP4_C = $(wildcard $(SRCS_GPACMP4_DIR)/*.c)
@@ -84,8 +89,8 @@ all: objs_dir $(TARGET)
 objs_dir: 
 	mkdir -p $(OBJS_DIR)
 
-$(TARGET): $(OBJS) $(OBJS_PNG) $(OBJS_GPACMP4) $(OBJS_ZLIB) $(OBJS_CCX)
-	$(CC) $(ALL_FLAGS) $(CFLAGS) $(OBJS) $(OBJS_CCX) $(OBJS_PNG) $(OBJS_GPACMP4) $(OBJS_ZLIB) $(LDFLAGS) -o $@
+$(TARGET): $(OBJS) $(OBJS_PNG) $(OBJS_GPACMP4) $(OBJS_ZVBI) $(OBJS_ZLIB) $(OBJS_CCX)
+	$(CC) $(ALL_FLAGS) $(CFLAGS) $(OBJS) $(OBJS_CCX) $(OBJS_PNG) $(OBJS_ZVBI) $(OBJS_GPACMP4) $(OBJS_ZLIB) $(LDFLAGS) -o $@
 
 $(OBJS_DIR)/%.o: %.c
 	$(CC) -c $(ALL_FLAGS) $(INCLUDE) $(CFLAGS) $< -o $@  
@@ -113,7 +118,7 @@ uninstall:
 
 .PHONY: depend dep
 depend dep:
-	$(CC) $(CFLAGS) $(INCLUDE) -E -MM $(SRCS_C) $(SRCS_PNG) $(SRCS_ZLIB) $(SRCS_CCX) \
+	$(CC) $(CFLAGS) $(INCLUDE) -E -MM $(SRCS_C) $(SRCS_PNG) $(SRCS_ZVBI) $(SRCS_ZLIB) $(SRCS_CCX) \
 		$(SRCS_GPACMP4_C) $(SRCS_GPACMP4_CPP) |\
 		sed 's/^[a-zA-Z_0-9]*.o/$(OBJS_DIR)\/&/' > .depend
 

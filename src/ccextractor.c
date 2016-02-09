@@ -128,6 +128,7 @@ int main(int argc, char *argv[])
 			case CCX_SM_PROGRAM:
 			case CCX_SM_ASF:
 			case CCX_SM_WTV:
+			case CCX_SM_GXF:
 #ifdef ENABLE_FFMPEG
 			case CCX_SM_FFMPEG:
 #endif

@@ -14,6 +14,7 @@
 #include "file_buffer.h"
 #include "ccx_decoders_isdb.h"
 #include "ffmpeg_intgr.h"
+#include "ccx_gxf.h"
 
 unsigned int rollover_bits = 0; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
 int end_of_file=0; // End of file?
@@ -744,6 +745,9 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			case CCX_SM_WTV:
 				ret = wtv_getmoredata(ctx, &datalist);
 				break;
+			case CCX_SM_GXF:
+				ret = ccx_gxf_getmoredata(ctx->demux_ctx, &datalist);
+				break;
 #ifdef ENABLE_FFMPEG
 			case CCX_SM_FFMPEG:
 				ret = ffmpeg_getmoredata(ctx->demux_ctx, &datalist);
@@ -784,7 +788,18 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 			dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
 			if(data_node->pts != CCX_NOPTS)
-				set_current_pts(dec_ctx->timing, data_node->pts);
+			{
+				struct ccx_rational tb = {1,MPEG_CLOCK_FREQ};
+				LLONG pts;
+				if(data_node->tb.num != 1 || data_node->tb.den != MPEG_CLOCK_FREQ)
+				{
+					pts = change_timebase(data_node->pts, data_node->tb, tb);
+				}
+				else
+					pts = data_node->pts;
+				set_current_pts(dec_ctx->timing, pts);
+				set_fts(dec_ctx->timing);
+			}
 
 			if( data_node->bufferdatatype == CCX_ISDB_SUBTITLE && ctx->demux_ctx->global_timestamp_inited)
 			{

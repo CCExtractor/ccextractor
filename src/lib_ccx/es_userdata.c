@@ -1,4 +1,5 @@
 #include "lib_ccx.h"
+#include "ccx_decoders_vbi.h"
 
 
 // Parse the user data for captions. The udtype variable denotes
@@ -464,6 +465,31 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 		data[2]=read_u8(ustream);
 		do_cb(ctx, data, sub);
 		// This is probably incomplete!
+	}
+	// GXF vbi OEM code
+	else if ( !memcmp(ud_header,"\x73\x52\x21\x06", 4 ) )
+	{
+		int udatalen = ustream->end - ustream->pos;
+		uint16_t line_nb;
+		uint8_t line_type;
+		uint8_t field = 1;
+		read_bytes(ustream, 4); //skip header code
+		read_bytes(ustream, 2); //skip data length 
+		line_nb = read_bits(ustream, 16);
+		line_type = read_u8(ustream);
+		field = (line_type & 0x03);
+		if(field == 0)
+			mprint("MPEG:VBI: Invalid field\n");
+
+		line_type = line_type >> 2;
+		if(line_type != 1)
+			mprint("MPEG:VBI: only support Luma line\n");
+
+		if (udatalen < 720)
+			mprint("MPEG:VBI: Minimum 720 bytes in luma line required\n");
+
+		decode_vbi(ctx, field, ustream->pos, 720, sub); 
+		dbg_print(CCX_DMT_VERBOSE, "GXF (vbi line %d) user data:\n", line_nb);
 	}
 	else
 	{
