@@ -347,6 +347,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 		ctx->xds_ctx = ccx_decoders_xds_init_library(ctx->timing);
 	//xds_cea608_test(ctx->xds_ctx);
 
+	ctx->vbi_decoder = NULL;
 	return ctx;
 }
 

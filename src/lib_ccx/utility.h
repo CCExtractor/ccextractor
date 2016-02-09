@@ -14,6 +14,11 @@
 
 #define CCX_NOPTS	((int64_t)UINT64_C(0x8000000000000000))
 
+struct ccx_rational
+{
+	int num;
+	int den;
+};
 extern int temp_debug;
 void init_boundary_time (struct ccx_boundary_time *bt);
 void print_error (int mode, const char *fmt, ...);
@@ -23,7 +28,9 @@ char *get_file_extension(enum ccx_output_format write_format);
 char *create_outfilename(const char *basename, const char *suffix, const char *extension);
 int verify_crc32(uint8_t *buf, int len);
 size_t utf16_to_utf8(unsigned short utf16_char, unsigned char *out);
+LLONG change_timebase(LLONG val, struct ccx_rational cur_tb, struct ccx_rational dest_tb);
 
+void dump (LLONG mask, unsigned char *start, int l, unsigned long abs_start, unsigned clear_high_bit);
 #ifdef _WIN32
 char *strndup(const char *s, size_t n);
 char *strtok_r(char *str, const char *delim, char **saveptr);

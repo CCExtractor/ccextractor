@@ -484,3 +484,23 @@ unsigned int buffered_get_be32(struct ccx_demuxer *ctx)
 	val |= buffered_get_be16(ctx);
 	return val;
 }
+
+unsigned short buffered_get_le16(struct ccx_demuxer *ctx)
+{
+	unsigned char a,b;
+	unsigned char *a_p = &a; // Just to suppress warnings
+	unsigned char *b_p = &b;
+	buffered_read_byte(ctx, a_p);
+	ctx->past++;
+	buffered_read_byte(ctx, b_p);
+	ctx->past++;
+	return ( (unsigned short) (b<<8) )| ( (unsigned short) a);
+}
+
+unsigned int buffered_get_le32(struct ccx_demuxer *ctx)
+{
+	unsigned int val;
+	val = buffered_get_le16(ctx);
+	val |= buffered_get_le16(ctx) << 16;
+	return val;
+}

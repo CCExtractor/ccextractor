@@ -181,6 +181,7 @@ struct lib_cc_decode
 	// B-Frames belong to this I- or P-frame.
 	int anchor_seq_number;
 	struct ccx_decoders_xds_context *xds_ctx;
+	struct ccx_decoder_vbi_ctx *vbi_decoder;
 
 	int (*writedata)(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 };
