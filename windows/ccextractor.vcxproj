@@ -77,6 +77,13 @@
     <ClInclude Include="..\src\zlib\zconf.h" />
     <ClInclude Include="..\src\zlib\zlib.h" />
     <ClInclude Include="..\src\zlib\zutil.h" />
+    <ClInclude Include="..\src\zvbi\bcd.h" />
+    <ClInclude Include="..\src\zvbi\bit_slicer.h" />
+    <ClInclude Include="..\src\zvbi\macros.h" />
+    <ClInclude Include="..\src\zvbi\misc.h" />
+    <ClInclude Include="..\src\zvbi\raw_decoder.h" />
+    <ClInclude Include="..\src\zvbi\sampling_par.h" />
+    <ClInclude Include="..\src\zvbi\sliced.h" />
     <ClInclude Include="include\inttypes.h" />
     <ClInclude Include="include\stdint.h" />
   </ItemGroup>
@@ -153,10 +160,12 @@
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_708_output.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_common.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_isdb.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_decoders_vbi.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_xds.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_demuxer.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_dtvcc.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_common.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_g608.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_helpers.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_sami.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_smptett.c" />
@@ -164,6 +173,7 @@
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_srt.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_webvtt.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_xds.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_gxf.c" />
     <ClCompile Include="..\src\lib_ccx\cc_bitstream.c" />
     <ClCompile Include="..\src\lib_ccx\configuration.c" />
     <ClCompile Include="..\src\lib_ccx\dvb_subtitle_decoder.c" />
@@ -197,6 +207,10 @@
     <ClCompile Include="..\src\zlib\inftrees.c" />
     <ClCompile Include="..\src\zlib\trees.c" />
     <ClCompile Include="..\src\zlib\zutil.c" />
+    <ClCompile Include="..\src\zvbi\bit_slicer.c" />
+    <ClCompile Include="..\src\zvbi\decoder.c" />
+    <ClCompile Include="..\src\zvbi\raw_decoder.c" />
+    <ClCompile Include="..\src\zvbi\sampling_par.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0F0063C4-BCBC-4379-A6D5-84A5669C940A}</ProjectGuid>
@@ -238,7 +252,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;C:\Users\Anshul\Documents\GitHub\ccextractor\src\zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>

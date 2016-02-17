@@ -27,9 +27,6 @@
 #include "bcd.h"
 #include "sliced.h"
 
-/* Public */
-
-#include <pthread.h>
 
 /* Bit slicer */
 
@@ -362,10 +359,6 @@ typedef struct vbi_raw_decoder {
 	 * decoding of data services depending on the field number.
 	 */
 	int		synchronous;
-
-	/*< private >*/
-
-	pthread_mutex_t		mutex;
 
 	unsigned int		services;
 	int			num_jobs;

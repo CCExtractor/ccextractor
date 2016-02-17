@@ -24,8 +24,7 @@
 #ifndef BCD_H
 #define BCD_H
 
-//#include "misc.h"
-
+#include "ccx_common_platform.h"
 /**
  * @addtogroup BCD BCD arithmetic for Teletext page numbers
  * @ingroup HiDec

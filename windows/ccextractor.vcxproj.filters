@@ -49,6 +49,12 @@
     <Filter Include="Source Files\ccx_common">
       <UniqueIdentifier>{2b841054-ad06-429d-9b44-fabd29fbeef0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\zvbi">
+      <UniqueIdentifier>{d86f4f94-df28-4fed-a455-c54bc521c86a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\zvbi">
+      <UniqueIdentifier>{288f48c3-470a-45ad-a70a-8f062c51aeb1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\gpacmp4\gpac\avparse.h">
@@ -254,6 +260,27 @@
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\utility.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\zvbi\bcd.h">
+      <Filter>Header Files\zvbi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\zvbi\bit_slicer.h">
+      <Filter>Header Files\zvbi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\zvbi\macros.h">
+      <Filter>Header Files\zvbi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\zvbi\misc.h">
+      <Filter>Header Files\zvbi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\zvbi\raw_decoder.h">
+      <Filter>Header Files\zvbi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\zvbi\sampling_par.h">
+      <Filter>Header Files\zvbi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\zvbi\sliced.h">
+      <Filter>Header Files\zvbi</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -615,6 +642,27 @@
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_isdb.c">
+      <Filter>Source Files\ccx_decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\zvbi\bit_slicer.c">
+      <Filter>Source Files\zvbi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\zvbi\decoder.c">
+      <Filter>Source Files\zvbi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\zvbi\raw_decoder.c">
+      <Filter>Source Files\zvbi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\zvbi\sampling_par.c">
+      <Filter>Source Files\zvbi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_gxf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_decoders_vbi.c">
+      <Filter>Source Files\ccx_decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_g608.c">
       <Filter>Source Files\ccx_decoders</Filter>
     </ClCompile>
   </ItemGroup>
