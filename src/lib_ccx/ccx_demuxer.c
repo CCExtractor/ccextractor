@@ -187,10 +187,7 @@ LLONG ccx_demuxer_getfilesize (struct ccx_demuxer *ctx)
 	LLONG ret = 0;
 	int in = ctx->infd;
 	if (in < 0)
-	{
-		mprint("Bug : Input file is not open.");
-		return -1;
-	}
+		return -1; //Bug : Input file is not open.
 	LLONG current=LSEEK (in, 0, SEEK_CUR);
 	LLONG length = LSEEK (in,0,SEEK_END);
 	if(current < 0 ||length < 0)
