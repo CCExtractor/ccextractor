@@ -11,6 +11,7 @@ linux/ccextractor
 linux/depend
 windows/debug/**
 windows/release/**
+build/
 
 ####
 # Visual Studio project Ignored files

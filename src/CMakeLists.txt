@@ -20,6 +20,8 @@ configure_file (
 include_directories ("${PROJECT_SOURCE_DIR}")
 include_directories ("${PROJECT_SOURCE_DIR}/lib_ccx")
 include_directories ("${PROJECT_SOURCE_DIR}/gpacmp4/")
+include_directories ("${PROJECT_SOURCE_DIR}/zvbi")
+aux_source_directory ("${PROJECT_SOURCE_DIR}/zvbi" SOURCEFILE)
 
 #Adding some platform specific library path
 link_directories (/opt/local/lib)
@@ -44,9 +46,15 @@ if(PKG_CONFIG_FOUND)
     set (EXTRA_LIBS ${EXTRA_LIBS} png)
   else (PNG_FOUND)
     include_directories ("${PROJECT_SOURCE_DIR}/libpng/")
+    include_directories ("${PROJEXT_SOURCE_DIR}/zlib/")
     aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
     aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib/" SOURCEFILE)
   endif(PNG_FOUND)
+else(PKG_CONFIG_FOUND)
+    include_directories ("${PROJECT_SOURCE_DIR}/libpng/")
+    include_directories ("${PROJEXT_SOURCE_DIR}/zlib/")
+    aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
+    aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib/" SOURCEFILE)
 endif (PKG_CONFIG_FOUND)
 
 ########################################################
