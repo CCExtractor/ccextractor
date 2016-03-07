@@ -1,6 +1,6 @@
 #ifndef OCR_H
 #define OCR_H
-#include <png.h>
+#include "./libpng/png.h"
 
 void delete_ocr (void** arg);
 void* init_ocr(int lang_index);

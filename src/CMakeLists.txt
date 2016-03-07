@@ -6,7 +6,7 @@ option (WITH_FFMPEG "Build using FFmpeg demuxer and decoder" OFF)
 option (WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
 
 #Version number
-set (CCEXTRACTOR_VERSION_MAJOR 0)
+set (CCEXTRACTOR_VERSION_MAJOR 79)
 set (CCEXTRACTOR_VERSION_MINOR 77)
 
 # configure a header file to pass some of the CMake settings
@@ -20,8 +20,7 @@ configure_file (
 include_directories ("${PROJECT_SOURCE_DIR}")
 include_directories ("${PROJECT_SOURCE_DIR}/lib_ccx")
 include_directories ("${PROJECT_SOURCE_DIR}/gpacmp4/")
-include_directories ("${PROJECT_SOURCE_DIR}/zvbi")
-aux_source_directory ("${PROJECT_SOURCE_DIR}/zvbi" SOURCEFILE)
+include_directories ("${PROJECT_SOURCE_DIR}/zvbi/")
 
 #Adding some platform specific library path
 link_directories (/opt/local/lib)
@@ -46,15 +45,12 @@ if(PKG_CONFIG_FOUND)
     set (EXTRA_LIBS ${EXTRA_LIBS} png)
   else (PNG_FOUND)
     include_directories ("${PROJECT_SOURCE_DIR}/libpng/")
-    include_directories ("${PROJEXT_SOURCE_DIR}/zlib/")
+    include_directories ("${PROJECT_SOURCE_DIR}/zlib/")
+    include_directories ("${PROJECT_SOURCE_DIR}/zvbi/")
     aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
     aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib/" SOURCEFILE)
+    aux_source_directory ("${PROJECT_SOURCE_DIR}/zvbi/" SOURCEFILE)
   endif(PNG_FOUND)
-else(PKG_CONFIG_FOUND)
-    include_directories ("${PROJECT_SOURCE_DIR}/libpng/")
-    include_directories ("${PROJEXT_SOURCE_DIR}/zlib/")
-    aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
-    aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib/" SOURCEFILE)
 endif (PKG_CONFIG_FOUND)
 
 ########################################################
