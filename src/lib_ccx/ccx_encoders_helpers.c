@@ -33,6 +33,26 @@ static const char *spell_builtin[] =
 
 int string_cmp2(const void *p1, const void *p2, void *arg)
 {
+	int flag = 0;
+	if(p1==NULL||p2==NULL)
+	{	
+		dbg_print (CCX_DMT_GENERIC_NOTICES, "\rNull pointer passed to string_cmp2\n");
+		flag = 1;
+	}
+	if(*(char**)p1==NULL)
+	{
+		dbg_print (CCX_DMT_GENERIC_NOTICES, "\rValue of arg1 of string_cmp2 is NULL\n");
+		flag = 1;
+	}
+	if(*(char**)p2==NULL)
+	{
+		dbg_print (CCX_DMT_GENERIC_NOTICES, "\rValue of arg2 of string_cmp2 is NULL\n");
+		flag = 1;
+	}
+	if(flag==1)
+	{
+		return 1; //Returning any non-zero value will not cause the seg-fault.
+	}
 	return strcasecmp(*(char**)p1, *(char**)p2);
 }
 int string_cmp(const void *p1, const void *p2)
