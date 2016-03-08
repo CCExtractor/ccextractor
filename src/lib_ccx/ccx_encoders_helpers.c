@@ -296,12 +296,6 @@ int add_word(const char *word)
 	char **ptr_correct;
 	int i;
 
-	puts(word);
-	if (*word == NULL || word == NULL)
-	{
-		puts("DO!\n");
-		return -1;
-	}
 	if (spell_words == spell_capacity)
 	{
 		// Time to grow
