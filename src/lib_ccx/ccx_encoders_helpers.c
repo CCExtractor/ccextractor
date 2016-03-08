@@ -33,6 +33,8 @@ static const char *spell_builtin[] =
 
 int string_cmp2(const void *p1, const void *p2, void *arg)
 {
+	if (p1 == NULL || *(char**)p1 == NULL || p2 == NULL || *(char**)p2 == NULL)
+		return EXCEPTION_NULL_STRCMP;
 	return strcasecmp(*(char**)p1, *(char**)p2);
 }
 int string_cmp(const void *p1, const void *p2)
@@ -293,6 +295,7 @@ int add_word(const char *word)
 	char **ptr_lower;
 	char **ptr_correct;
 	int i;
+
 	if (spell_words == spell_capacity)
 	{
 		// Time to grow
@@ -334,6 +337,7 @@ int add_word(const char *word)
 		spell_correct = ptr_correct;
 	}
 	strcpy(new_correct, word);
+
 	for (size_t i = 0; i<len; i++)
 	{
 		char c = new_correct[i];
@@ -341,6 +345,7 @@ int add_word(const char *word)
 		new_lower[i] = c;
 	}
 	new_lower[len] = 0;
+
 	spell_lower[spell_words] = new_lower;
 	spell_correct[spell_words] = new_correct;
 	spell_words++;
