@@ -1491,8 +1491,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	}
 	if (!sub->nb_data)
 		freep(&sub->data);
-	if (wrote_something)
-		fflush(context->out->fh); // Don't buffer
 	return wrote_something;
 }
 
