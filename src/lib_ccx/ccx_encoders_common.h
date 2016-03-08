@@ -3,14 +3,20 @@
 
 #ifdef WIN32
 	#include "..\\win_iconv\\iconv.h"
+	#include <io.h>
+	#include <fileapi.h>
+	#define FileFlush FlushFileBuffers
 #else
 	#include "iconv.h"
+	#include <unistd.h>
+	#define FileFlush fsync
 #endif
 
 #include "ccx_common_structs.h"
 #include "ccx_decoders_structs.h"
 #include "ccx_encoders_structs.h"
 #include "ccx_common_option.h"
+
 
 #define REQUEST_BUFFER_CAPACITY(ctx,length) if (length>ctx->capacity) \
 {ctx->capacity = length * 2; ctx->buffer = (unsigned char*)realloc(ctx->buffer, ctx->capacity); \

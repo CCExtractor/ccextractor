@@ -7,6 +7,8 @@
 #include "ccx_decoders_608.h"
 #include "ccx_encoders_common.h"
 
+#define EXCEPTION_NULL_STRCMP -1000
+
 extern char **spell_lower;
 extern char **spell_correct;
 extern int spell_words;
