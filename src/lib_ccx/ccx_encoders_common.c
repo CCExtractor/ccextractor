@@ -10,6 +10,13 @@
 #include "ccx_encoders_xds.h"
 #include "ccx_encoders_helpers.h"
 
+#ifdef WIN32
+int fsync(int fd)
+{
+	FlushFileBuffers(fd);
+}
+#endif
+
 // These are the default settings for plain transcripts. No times, no CC or caption mode, and no XDS.
 ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
 {
@@ -1492,7 +1499,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	if (!sub->nb_data)
 		freep(&sub->data);
 	if (wrote_something)
-		fflush(context->out->fh); // Don't buffer
+		fsync(context->out->fh); // Don't buffer
 	return wrote_something;
 }
 
