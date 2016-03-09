@@ -54,6 +54,11 @@ void correct_case(int line_num, struct eia608_screen *data)
 	char *line = strdup(((char*)data->characters[line_num]));
 	char *oline = (char*)data->characters[line_num];
 	char *c = strtok(line, delim);
+	if (c == NULL)
+	{
+		free(line);
+		return;
+	}
 	do
 	{
 		char **index = bsearch(&c, spell_lower, spell_words, sizeof(*spell_lower), string_cmp);
