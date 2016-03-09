@@ -3,7 +3,7 @@
 
 #include "ccx_common_platform.h"
 #include "ccx_encoders_structs.h"
-#include "png.h"
+#include "../libpng/png.h"
 #include "ccx_encoders_common.h"
 
 // CC page dimensions

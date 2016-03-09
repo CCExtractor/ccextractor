@@ -1,4 +1,4 @@
-#include "png.h"
+#include "../libpng/png.h"
 #include "lib_ccx.h"
 #ifdef ENABLE_OCR
 #include "capi.h"
