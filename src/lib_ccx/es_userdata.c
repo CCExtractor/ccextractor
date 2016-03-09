@@ -154,7 +154,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 			unsigned field_number;
 			unsigned cc_data1;
 			unsigned cc_data2;
-			/* unsigned marker; */
+            
 			for (unsigned j=0;j<cc_count;j++)
 			{
 				skip_bits(ustream,2); // priority - unused
@@ -162,7 +162,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 				skip_bits(ustream,5); // line_offset - unused
 				cc_data1 = (unsigned int) read_bits(ustream,8);
 				cc_data2 = (unsigned int) read_bits(ustream,8);
-				/* marker = (unsigned int)read_bits(ustream,1); // TODO: Add syntax check */
+				read_bits(ustream,1); // TODO: Add syntax check */
 
 				if (ustream->bitsleft < 0)
 					fatal(CCX_COMMON_EXIT_BUG_BUG, "Oops!");
