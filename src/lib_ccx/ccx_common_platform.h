@@ -25,7 +25,7 @@
 		#include "inttypes.h"
 		#define UINT64_MAX   _UI64_MAX
 		typedef int socklen_t;
-		typedef int ssize_t;
+		typedef int sssize_t;
 		typedef uint32_t in_addr_t;
 		#ifndef IN_CLASSD
 			#define IN_CLASSD(i)       (((INT32)(i) & 0xf0000000) == 0xe0000000)
