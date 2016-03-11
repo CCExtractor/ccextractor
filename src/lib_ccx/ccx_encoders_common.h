@@ -70,6 +70,8 @@ struct encoder_ctx
 	int dtvcc_extract; //1 or 0 depending if we have to handle dtvcc
 	ccx_dtvcc_writer_ctx dtvcc_writers[CCX_DTVCC_MAX_SERVICES];
 
+
+
 	/* Timing related variables*/
 	/* start time of previous sub */
 	LLONG prev_start;
@@ -96,6 +98,8 @@ struct encoder_ctx
 
 	int program_number;
 	struct list_head list;
+
+	int force_flush; //Flush only if the parameter is passed
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048
