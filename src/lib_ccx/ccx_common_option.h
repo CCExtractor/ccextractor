@@ -35,7 +35,7 @@ struct encoder_cfg
 	char *output_filename;
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 	int keep_output_closed;
-	
+	int force_flush; //Flushing only when passed as a parameter	
 	enum ccx_encoding_type encoding;
 	enum ccx_output_date_format date_format;
 	char millis_separator;
@@ -80,7 +80,7 @@ struct ccx_s_options // Options from user parameters
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
 	int print_file_reports;
 
-
+	int force_flush ; // Flushing only when passed as a parameter. //0 - Don't flush, 1- Force Flush
 	ccx_decoder_608_settings settings_608; //  Contains the settings for the 608 decoder.
 	ccx_decoder_dtvcc_settings settings_dtvcc; //Same for 708 decoder
 

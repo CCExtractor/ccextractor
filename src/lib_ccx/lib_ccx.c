@@ -145,7 +145,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->pesheaderbuf = (unsigned char *) malloc (188); // Never larger anyway
 
 	ctx->cc_to_stdout = opt->cc_to_stdout;
-
+	ctx->force_flush = opt->force_flush;
 	ctx->hauppauge_mode = opt->hauppauge_mode;
 	ctx->live_stream = opt->live_stream;
 	ctx->binary_concat = opt->binary_concat;
@@ -325,6 +325,8 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		if (enc_ctx->program_number == pn)
 			return enc_ctx;
 	}
+
+	enc_ctx->force_flush = ctx->force_flush;
 
 	extension = get_file_extension(ccx_options.enc_cfg.write_format);
 	if(!extension)
