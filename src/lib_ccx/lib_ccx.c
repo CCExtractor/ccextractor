@@ -104,7 +104,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	memset(report_608, 0, sizeof(struct ccx_decoder_608_report));
 
 	ccx_decoder_dtvcc_report *report_dtvcc = (ccx_decoder_dtvcc_report *)
-			malloc(sizeof(ccx_decoder_dtvcc_report));
+		malloc(sizeof(ccx_decoder_dtvcc_report));
 	if (!report_dtvcc)
 		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "report_dtvcc");
 	memset(report_dtvcc, 0, sizeof(ccx_decoder_dtvcc_report));
@@ -145,6 +145,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->pesheaderbuf = (unsigned char *) malloc (188); // Never larger anyway
 
 	ctx->cc_to_stdout = opt->cc_to_stdout;
+	ctx->force_flush = opt->force_flush;
 
 	ctx->hauppauge_mode = opt->hauppauge_mode;
 	ctx->live_stream = opt->live_stream;
@@ -325,6 +326,8 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		if (enc_ctx->program_number == pn)
 			return enc_ctx;
 	}
+	//Flushing
+	enc_ctx->force_flush = (ctx->force_flush == 1) ? 1: 0;
 
 	extension = get_file_extension(ccx_options.enc_cfg.write_format);
 	if(!extension)
