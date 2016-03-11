@@ -65,6 +65,7 @@ void init_options (struct ccx_s_options *options)
 	options->output_filename = NULL;
 	options->debug_mask=CCX_DMT_GENERIC_NOTICES; // dbg_print will use this mask to print or ignore different types
 	options->debug_mask_on_debug=CCX_DMT_VERBOSE; // If we're using temp_debug to enable/disable debug "live", this is the mask when temp_debug=1
+	options->force_flush = 0; //set forceflush default value=0  
 	/* Networking */
 	options->udpaddr = NULL;
 	options->udpport=0; // Non-zero => Listen for UDP packets on this port, no files.

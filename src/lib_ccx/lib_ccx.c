@@ -162,6 +162,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->out_interval = opt->out_interval;
 	ctx->segment_counter = 0;
 	ctx->system_start_time = -1;
+	ctx->force_flush = opt->force_flush; 
 
 end:
 	if (ret != EXIT_OK)
@@ -326,6 +327,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 			return enc_ctx;
 	}
 
+	enc_ctx->force_flush = ctx->force_flush;
 	extension = get_file_extension(ccx_options.enc_cfg.write_format);
 	if(!extension)
 		return NULL;

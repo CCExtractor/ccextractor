@@ -137,6 +137,7 @@ struct lib_ccx_ctx
 	int out_interval;
 	int segment_counter;
 	LLONG system_start_time;
+	int force_flush;
 };
 
 
