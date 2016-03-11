@@ -1707,7 +1707,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			i++;
 			continue;
 		}
-
+		if ((strcmp(argv[i],"-ff")==0 || strcmp(argv[i],"--forceflush")==0) && i<argc-1)
+		{
+			opt->force_flush = 1;
+			continue;
+		}
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "Error: Parameter %s not understood.\n", argv[i]);
 		// Unrecognized switches are silently ignored
 	}

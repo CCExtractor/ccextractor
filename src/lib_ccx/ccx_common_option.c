@@ -112,6 +112,7 @@ void init_options (struct ccx_s_options *options)
 	options->settings_dtvcc.print_file_reports = 1;
 	options->settings_dtvcc.no_rollup = 0;
 	options->settings_dtvcc.report = NULL;
+	options->force_flush =0; //set forceflush to be disabled by default
 	memset(options->settings_dtvcc.services_enabled, 0, CCX_DTVCC_MAX_SERVICES);
 
 	// Prepare time structures
