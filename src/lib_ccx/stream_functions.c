@@ -418,7 +418,7 @@ typedef struct ccx_stream_mp4_box
 * An asterisk (*) marks a mandatory box for a regular file.
 * Box types that are on the second level or deeper are omitted.
 */
-ccx_stream_mp4_box ccx_stream_mp4_boxes[11] = {
+ccx_stream_mp4_box ccx_stream_mp4_boxes[16] = {
 		{ "ftyp", 6 }, // File type and compatibility*
 		{ "pdin", 1 }, // Progressive download information
 		{ "moov", 5 }, // Container for all metadata*
@@ -429,7 +429,14 @@ ccx_stream_mp4_box ccx_stream_mp4_boxes[11] = {
 		{ "skip", 1 }, // Free space
 		{ "meta", 1 }, // Metadata
 		{ "wide", 1 }, // For boxes that are > 2^32 bytes (https://developer.apple.com/library/mac/documentation/QuickTime/QTFF/QTFFChap1/qtff1.html)
-		{ "void", 1 }  // Unknown where this is from/for, assume free space.
+		{ "void", 1 },  // Unknown where this is from/for, assume free space.
+
+		// new ones in standard ISO/IEC 14496-12:2015
+		{ "meco", 1 }, // additional metadata container
+		{ "styp", 1 }, // segment type
+		{ "sidx", 1 }, // segment index
+		{ "ssix", 1 }, // subsegment index
+		{ "prft", 1 }  // producer reference time
 };
 
 /*
@@ -441,7 +448,7 @@ ccx_stream_mp4_box ccx_stream_mp4_boxes[11] = {
  */
 int isValidMP4Box(unsigned char *buffer, size_t position, size_t *nextBoxLocation, int *boxScore)
 {
-	for (int idx = 0; idx < 11; idx++)
+	for (int idx = 0; idx < 16; idx++)
 	{
 		if (buffer[position + 4] == ccx_stream_mp4_boxes[idx].boxType[0] && buffer[position + 5] == ccx_stream_mp4_boxes[idx].boxType[1] &&
 				buffer[position + 6] == ccx_stream_mp4_boxes[idx].boxType[2] && buffer[position + 7] == ccx_stream_mp4_boxes[idx].boxType[3]){

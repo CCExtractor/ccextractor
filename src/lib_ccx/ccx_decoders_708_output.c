@@ -149,7 +149,7 @@ void ccx_dtvcc_write_srt(ccx_dtvcc_writer_ctx *writer, dtvcc_tv_screen *tv, stru
 	sprintf(buf + strlen(buf), " --> ");
 	mstime_sprintf(tv->time_ms_hide + encoder->subs_delay,
 				   "%02u:%02u:%02u,%03u", buf + strlen(buf));
-	sprintf(buf + strlen(buf), (char *) encoder->encoded_crlf);
+	sprintf(buf + strlen(buf),"%s", (char *) encoder->encoded_crlf);
 
 	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 
