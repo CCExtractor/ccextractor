@@ -13,6 +13,7 @@
 #ifdef WIN32
 int fsync(int fd)
 {
+	printf("Flushing");
 	FlushFileBuffers(fd);
 }
 #endif
@@ -1500,7 +1501,10 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	}
 	if (!sub->nb_data)
 		freep(&sub->data);
-	if (wrote_something && context->force_flush)   //Flush only if -ff has been parsed.
+	
+	   //Flush only if -forceflush has been parsed and wrote_something returns non-zero value(by default both 0).
+	
+	if (wrote_something && context->force_flush)
 		fsync(context->out->fh); // Don't buffer
 	return wrote_something;
 }
