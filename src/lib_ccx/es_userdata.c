@@ -36,7 +36,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 	}
 
 	// DVD CC header, see
-	// <http://www.geocities.com/mcpoodle43/SCC_TOOLS/DOCS/SCC_FORMAT.HTML>
+	// <http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/SCC_FORMAT.HTML>
 	if ( !memcmp(ud_header,"\x43\x43", 2 ) )
 	{
 //		ctx->stat_dvdccheaders++;
