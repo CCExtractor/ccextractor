@@ -51,7 +51,7 @@ struct encoder_ctx
 	/* Input file format used in Teletext for exceptional output */
 	unsigned int in_fileformat; //1 =Normal, 2=Teletext
 	/* Keep output file closed when not actually writing to it and start over each time (add headers, etc) */
-	unsigned int keep_output_closed; 
+	unsigned int keep_output_closed;
 
 	/* Flag saying BOM to be written in each output file */
 	enum ccx_encoding_type encoding;
@@ -66,6 +66,7 @@ struct encoder_ctx
 	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
 	unsigned char *subline; // Temp storage for storing each line
 	int extract;
+	int force_flush; // If 1, enable force flush
 
 	int dtvcc_extract; //1 or 0 depending if we have to handle dtvcc
 	ccx_dtvcc_writer_ctx dtvcc_writers[CCX_DTVCC_MAX_SERVICES];
@@ -119,7 +120,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt);
  * after deallocating user need to allocate encoder ctx again
  *
  * @oaram arg pointer to initialized encoder ctx using init_encoder
- * 
+ *
  * @param current_fts to calculate window for end credits
  */
 void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts);
