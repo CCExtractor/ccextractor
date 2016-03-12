@@ -598,7 +598,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 				char buf[80];
 				if (context->transcript_settings->relativeTimestamp)
 				{
-					millis_to_date(end_time, buf, context->date_format, context->millis_separator);
+					millis_to_date(end_time + context->subs_delay, buf, context->date_format, context->millis_separator);
 					fdprintf(context->out->fh, "%s|", buf);
 				}
 				else
