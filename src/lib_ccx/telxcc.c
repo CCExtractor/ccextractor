@@ -196,7 +196,9 @@ typedef enum
 	GREEK,
 	ARABIC,
 	HEBREW
-} g0_charsets_t;
+} g0_charsets_type;
+
+g0_charsets_type g0_charset;
 
 
 // Note: All characters are encoded in UCS-2
@@ -503,6 +505,25 @@ uint32_t unham_24_18(uint32_t a)
 	return (a & 0x000004) >> 2 | (a & 0x000070) >> 3 | (a & 0x007f00) >> 4 | (a & 0x7f0000) >> 5;
 }
 
+//Default G0 Character Set 
+void map_g0_charset(uint32_t triplet)
+{
+	// ETS 300 706, Table 32
+	if((triplet & 0x3c00) == 0x1000)
+	{
+		if((triplet & 0x0380) == 0x0000)
+			g0_charset=CYRILLIC1;
+		else if((triplet & 0x0380) == 0x0200)
+			g0_charset=CYRILLIC2;
+		else if((triplet & 0x0380) == 0x0280)
+			g0_charset=CYRILLIC3;
+		else
+			g0_charset=LATIN;	
+	}
+	else
+		g0_charset=LATIN;
+}
+
 void remap_g0_charset(uint8_t c)
 {
 	if (c != primary_charset.current)
@@ -521,7 +542,6 @@ void remap_g0_charset(uint8_t c)
 		}
 	}
 }
-
 
 
 // wide char (16 bits) to utf-8 conversion
@@ -559,7 +579,7 @@ uint16_t telx_to_ucs2(uint8_t c)
 
 	uint16_t r = c & 0x7f;
 	if (r >= 0x20)
-		r = G0[LATIN][r - 0x20];
+		r = G0[g0_charset][r - 0x20];
 	return r;
 }
 
@@ -972,7 +992,6 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		ctx->page_buffer.tainted = NO;
 		ctx->receiving_data = YES;
 		primary_charset.g0_x28 = UNDEF;
-
 		c = (primary_charset.g0_m29 != UNDEF) ? primary_charset.g0_m29 : charset;
 		remap_g0_charset(c);
 
@@ -996,6 +1015,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		{
 			if (ctx->page_buffer.text[y][i] == 0x00)
 				ctx->page_buffer.text[y][i] = telx_to_ucs2(packet->data[i]);
+			
 		}
 		ctx->page_buffer.tainted = YES;
 	}
@@ -1072,6 +1092,8 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			// ETS 300 706, chapter 9.4.7: Packet X/28/4
 			uint32_t triplet0 = unham_24_18((packet->data[3] << 16) | (packet->data[2] << 8) | packet->data[1]);
 
+			// mprint("c12 c13 c14 %x %x %x\n", packet->data[3], packet->data[2], packet->data[1]);
+			// mprint("triplet0 :%04x\n", triplet0);
 			if (triplet0 == 0xffffffff)
 			{
 				// invalid data (HAM24/18 uncorrectable error detected), skip group
@@ -1081,9 +1103,14 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			{
 				// ETS 300 706, chapter 9.4.2: Packet X/28/0 Format 1 only
 				if ((triplet0 & 0x0f) == 0x00)
-				{
-					primary_charset.g0_x28 = (triplet0 & 0x3f80) >> 7;
-					remap_g0_charset(primary_charset.g0_x28);
+				{					
+					// ETS 300 706, Table 32
+					map_g0_charset(triplet0); // Deciding G0 Character Set
+					if(g0_charset == LATIN)
+					{
+						primary_charset.g0_x28 = (triplet0 & 0x3f80) >> 7;
+						remap_g0_charset(primary_charset.g0_x28);
+					}
 				}
 			}
 		}
@@ -1098,7 +1125,8 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			// ETS 300 706, chapter 9.5.1: Packet M/29/0
 			// ETS 300 706, chapter 9.5.3: Packet M/29/4
 			uint32_t triplet0 = unham_24_18((packet->data[3] << 16) | (packet->data[2] << 8) | packet->data[1]);
-
+			// mprint("y=29 c12 c13 c14 %u%u%u\n", packet->data[3], packet->data[2], packet->data[1]);
+			// mprint("triplet0 :%u\n", triplet0);
 			if (triplet0 == 0xffffffff)
 			{
 				// invalid data (HAM24/18 uncorrectable error detected), skip group
@@ -1110,11 +1138,15 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				// ETS 300 706, table 13: Coding of Packet M/29/4
 				if ((triplet0 & 0xff) == 0x00)
 				{
-					primary_charset.g0_m29 = (triplet0 & 0x3f80) >> 7;
-					// X/28 takes precedence over M/29
-					if (primary_charset.g0_x28 == UNDEF)
+					map_g0_charset(triplet0);
+					if(g0_charset == LATIN)
 					{
-						remap_g0_charset(primary_charset.g0_m29);
+						primary_charset.g0_m29 = (triplet0 & 0x3f80) >> 7;
+						// X/28 takes precedence over M/29
+						if (primary_charset.g0_x28 == UNDEF)
+						{
+							remap_g0_charset(primary_charset.g0_m29);
+						}
 					}
 				}
 			}
