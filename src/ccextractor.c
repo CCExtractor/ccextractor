@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
 			case CCX_SM_FFMPEG:
 #endif
 				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
-					ccx_options.use_gop_as_pts = 0; 
+					ccx_options.use_gop_as_pts = 0;
 				mprint ("\rAnalyzing data in general mode\n");
 				general_loop(ctx);
 				break;
@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
 			mprint("\n");
 			dbg_print(CCX_DMT_DECODER_608, "\nTime stamps after last caption block was written:\n");
 			dbg_print(CCX_DMT_DECODER_608, "GOP: %s	  \n", print_mstime(gop_time.ms) );
-	
+
 			dbg_print(CCX_DMT_DECODER_608, "GOP: %s (%+3dms incl.)\n",
 				print_mstime((LLONG)(gop_time.ms
 				-first_gop_time.ms
@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
 			// Add one frame as fts_max marks the beginning of the last frame,
 			// but we need the end.
 			dec_ctx->timing->fts_global += dec_ctx->timing->fts_max + (LLONG) (1000.0/current_fps);
-			// CFS: At least in Hauppage mode, cb_field can be responsible for ALL the 
+			// CFS: At least in Hauppage mode, cb_field can be responsible for ALL the
 			// timing (cb_fields having a huge number and fts_now and fts_global being 0 all
 			// the time), so we need to take that into account in fts_global before resetting
 			// counters.
@@ -274,7 +274,7 @@ int main(int argc, char *argv[])
 			else
 				dec_ctx->timing->fts_global += cb_708*1001/3;
 			// Reset counters - This is needed if some captions are still buffered
-			// and need to be written after the last file is processed.		
+			// and need to be written after the last file is processed.
 			cb_field1 = 0; cb_field2 = 0; cb_708 = 0;
 			dec_ctx->timing->fts_now = 0;
 			dec_ctx->timing->fts_max = 0;
@@ -297,8 +297,8 @@ int main(int argc, char *argv[])
 	{
 		LLONG ratio=(get_fts_max()/10)/proc_time;
 		unsigned s1=(unsigned) (ratio/100);
-		unsigned s2=(unsigned) (ratio%100);	
-		mprint ("Performance (real length/process time) = %u.%02u\n", 
+		unsigned s2=(unsigned) (ratio%100);
+		mprint ("Performance (real length/process time) = %u.%02u\n",
 			s1, s2);
 	}
 #endif
@@ -308,13 +308,13 @@ int main(int argc, char *argv[])
 	{
 		mprint ("\rNote: Processing was cancelled before all data was processed because\n");
 		mprint ("\rone or more user-defined limits were reached.\n");
-	} 
+	}
 	mprint ("This is beta software. Report issues to carlos at ccextractor org...\n");
 	if (show_myth_banner)
 	{
 		mprint ("NOTICE: Due to the major rework in 0.49, we needed to change part of the timing\n");
 		mprint ("code in the MythTV's branch. Please report results to the address above. If\n");
-		mprint ("something is broken it will be fixed. Thanks\n");		
+		mprint ("something is broken it will be fixed. Thanks\n");
 	}
 	dinit_libraries(&ctx);
 	return EXIT_OK;

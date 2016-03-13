@@ -236,7 +236,7 @@ void set_input_format (struct ccx_s_options *opt, const char *format)
 	{
 		opt->demux_cfg.auto_stream = CCX_SM_TRANSPORT;
 		opt->demux_cfg.m2ts = 0;
-	}	
+	}
 	else if (strcmp(format, "m2ts") == 0)
 	{
 		opt->demux_cfg.auto_stream = CCX_SM_TRANSPORT;
@@ -517,7 +517,7 @@ void usage (void)
 	mprint (" -nobi -nobufferinput: Disables input buffering.\n");
 	mprint (" -bs --buffersize val: Specify a size for reading, in bytes (suffix with K or\n");
 	mprint ("                       or M for kilobytes and megabytes). Default is 16M.\n");
-	mprint ("                 -koc: keep-output-close. If used then CCExtractor will close\n"); 
+	mprint ("                 -koc: keep-output-close. If used then CCExtractor will close\n");
 	mprint ("                       the output file after writing each subtitle frame and\n");
 	mprint ("                       attempt to create it again when needed.");
 	mprint ("\n");
@@ -883,7 +883,6 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->keep_output_closed = 1;
 			continue;
 		}
-
 		if ((strcmp (argv[i],"-bs")==0 || strcmp (argv[i],"--buffersize")==0) && i<argc-1)
 		{
 			FILEBUFFERSIZE = atol_size(argv[i+1]);
@@ -914,6 +913,14 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp(argv[i], "-nobom") == 0){
 			opt->enc_cfg.no_bom = 1;
+			continue;
+		}
+		if (strcmp(argv[i], "-ff") == 0){
+			opt->enc_cfg.force_flush = 1;
+			continue;
+		}
+		if (strcmp(argv[i], "--forceflush") == 0){
+			opt->enc_cfg.force_flush = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-nots")==0 ||
@@ -1525,7 +1532,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
-		
+
 		if (strcmp (argv[i],"-xmltvliveinterval")==0)
 		{
 			if (i==argc-1 // Means no following argument
@@ -1538,7 +1545,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
-		
+
 		if (strcmp (argv[i],"-xmltvoutputinterval")==0)
 		{
 			if (i==argc-1 // Means no following argument
@@ -1557,7 +1564,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			i++;
 			continue;
 		}
-		
+
 		if (strcmp (argv[i],"-unixts")==0 && i<argc-1)
 		{
 			uint64_t t = 0;
@@ -1789,7 +1796,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	{
 		print_error(opt->gui_mode_reports, "You can't extract both fields to stdout at the same time in broadcast mode.");
 		return EXIT_INCOMPATIBLE_PARAMETERS;
-	}		
+	}
 	if (opt->write_format == CCX_OF_SPUPNG && opt->cc_to_stdout)
 	{
 		print_error(opt->gui_mode_reports, "You cannot use -out=spupng with -stdout.");
@@ -1825,4 +1832,3 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	return EXIT_OK;
 
 }
-

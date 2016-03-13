@@ -77,7 +77,6 @@ struct lib_ccx_ctx
 
 	int last_reported_progress;
 
-
 	/* Stats */
 	int stat_numuserheaders;
 	int stat_dvdccheaders;
@@ -119,8 +118,8 @@ struct lib_ccx_ctx
 	struct EIT_program eit_programs[TS_PMT_MAP_SIZE+1];
 	int32_t eit_current_events[TS_PMT_MAP_SIZE+1];
 	int16_t ATSC_source_pg_map[0xffff];
-	int epg_last_output; 
-	int epg_last_live_output; 
+	int epg_last_output;
+	int epg_last_live_output;
 	struct file_report freport;
 
 	unsigned int hauppauge_mode; // If 1, use PID=1003, process specially and so on

@@ -35,7 +35,8 @@ struct encoder_cfg
 	char *output_filename;
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 	int keep_output_closed;
-	
+	int force_flush; // If 1, force flush is enabled
+
 	enum ccx_encoding_type encoding;
 	enum ccx_output_date_format date_format;
 	char millis_separator;

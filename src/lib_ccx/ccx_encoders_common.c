@@ -368,7 +368,7 @@ static int write_bom(struct encoder_ctx *ctx, struct ccx_s_write *out)
 				mprint("WARNING: Unable tp write UTF BOM\n");
 				return -1;
 			}
-				
+
 		}
 		if (ctx->encoding == CCX_ENC_UNICODE){ // Write BOM
 			ret = write(out->fh, LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM));
@@ -1225,6 +1225,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->send_to_srv = opt->send_to_srv;
 	ctx->multiple_files = opt->multiple_files;
 	ctx->first_input_file = opt->first_input_file;
+	ctx->force_flush = opt->force_flush;
 	ret = init_output_ctx(ctx, opt);
 	if (ret != EXIT_OK)
 	{
@@ -1498,7 +1499,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	}
 	if (!sub->nb_data)
 		freep(&sub->data);
-	if (wrote_something)
+	if (wrote_something && context->force_flush)
 		fsync(context->out->fh); // Don't buffer
 	return wrote_something;
 }
