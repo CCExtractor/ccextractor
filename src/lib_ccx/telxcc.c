@@ -198,7 +198,8 @@ typedef enum
 	HEBREW
 } g0_charsets_type;
 
-g0_charsets_type g0_charset;
+g0_charsets_type default_g0_charset;
+int g0_init=0; // 0-  1 - 
 
 
 // Note: All characters are encoded in UCS-2
@@ -506,24 +507,25 @@ uint32_t unham_24_18(uint32_t a)
 }
 
 //Default G0 Character Set 
-void map_g0_charset(uint32_t triplet)
+void set_g0_charset(uint32_t triplet)
 {
 	// ETS 300 706, Table 32
 	if((triplet & 0x3c00) == 0x1000)
 	{
 		if((triplet & 0x0380) == 0x0000)
-			g0_charset=CYRILLIC1;
+			default_g0_charset = CYRILLIC1;
 		else if((triplet & 0x0380) == 0x0200)
-			g0_charset=CYRILLIC2;
+			default_g0_charset = CYRILLIC2;
 		else if((triplet & 0x0380) == 0x0280)
-			g0_charset=CYRILLIC3;
+			default_g0_charset = CYRILLIC3;
 		else
-			g0_charset=LATIN;	
+			default_g0_charset = LATIN;	
 	}
 	else
-		g0_charset=LATIN;
+		default_g0_charset = LATIN;
 }
 
+// Latin National Subset Selection
 void remap_g0_charset(uint8_t c)
 {
 	if (c != primary_charset.current)
@@ -579,7 +581,7 @@ uint16_t telx_to_ucs2(uint8_t c)
 
 	uint16_t r = c & 0x7f;
 	if (r >= 0x20)
-		r = G0[g0_charset][r - 0x20];
+		r = G0[default_g0_charset][r - 0x20];
 	return r;
 }
 
@@ -1105,8 +1107,8 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				if ((triplet0 & 0x0f) == 0x00)
 				{					
 					// ETS 300 706, Table 32
-					map_g0_charset(triplet0); // Deciding G0 Character Set
-					if(g0_charset == LATIN)
+					set_g0_charset(triplet0); // Deciding G0 Character Set
+					if(default_g0_charset == LATIN)
 					{
 						primary_charset.g0_x28 = (triplet0 & 0x3f80) >> 7;
 						remap_g0_charset(primary_charset.g0_x28);
@@ -1138,8 +1140,8 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				// ETS 300 706, table 13: Coding of Packet M/29/4
 				if ((triplet0 & 0xff) == 0x00)
 				{
-					map_g0_charset(triplet0);
-					if(g0_charset == LATIN)
+					set_g0_charset(triplet0);
+					if(default_g0_charset == LATIN)
 					{
 						primary_charset.g0_m29 = (triplet0 & 0x3f80) >> 7;
 						// X/28 takes precedence over M/29
