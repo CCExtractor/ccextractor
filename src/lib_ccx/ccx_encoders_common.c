@@ -1066,7 +1066,8 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 		return -1;
 	ctx->nb_out = nb_lang;
 	ctx->keep_output_closed = cfg->keep_output_closed;
-
+	ctx->force_flush = cfg->force_flush;
+	
 	if(cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE)
 	{
 		if (cfg->output_filename != NULL)
@@ -1254,7 +1255,8 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->gui_mode_reports = opt->gui_mode_reports;
 	ctx->extract = opt->extract;
 	ctx->keep_output_closed = opt->keep_output_closed;
-
+	ctx->force_flush = opt->force_flush;
+	
 	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);
 	if(!ctx->subline)
 	{
@@ -1498,7 +1500,8 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	}
 	if (!sub->nb_data)
 		freep(&sub->data);
-	if (wrote_something)
+	//Flush only if -forceflush has been parsed and wrote_something returns non-zero value(by default both 0).
+	if (wrote_something && context->force_flush)
 		fsync(context->out->fh); // Don't buffer
 	return wrote_something;
 }
