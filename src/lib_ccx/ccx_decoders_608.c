@@ -1141,8 +1141,8 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 			continue;
 		}
 		if (hi>=0x10 && hi<=0x1F) // Non-character code or special/extended char
-			// http://www.geocities.com/mcpoodle43/SCC_TOOLS/DOCS/CC_CODES.HTML
-			// http://www.geocities.com/mcpoodle43/SCC_TOOLS/DOCS/CC_CHARS.HTML
+			// http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/CC_CODES.HTML
+			// http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/CC_CHARS.HTML
 		{
 			if (!context || context->my_field == 2)
 				in_xds_mode=0; // Back to normal (CEA 608-8.6.2)
