@@ -198,9 +198,7 @@ typedef enum
 	HEBREW
 } g0_charsets_type;
 
-g0_charsets_type default_g0_charset;
-
-// int g0_non_latin = 0; // 0 - Default G0 characterset is Latin 1 - Default G0 characterset is Non Latin 
+g0_charsets_type default_g0_charset; 
 
 // Note: All characters are encoded in UCS-2
 
@@ -980,22 +978,22 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		// Now we have the begining of page transmission; if there is page_buffer pending, process it
 		if (ctx->page_buffer.tainted == YES)
 		{
-				// Convert telx to UCS-2 before processing
-				for(uint8_t yt = 1; yt <= 23; ++yt)
+			// Convert telx to UCS-2 before processing
+			for(uint8_t yt = 1; yt <= 23; ++yt)
+			{
+				for(uint8_t it = 0; it < 40; it++)
 				{
-					for(uint8_t it = 0; it < 40; it++)
-					{
-						if (ctx->page_buffer.text[yt][it] != 0x00)
-							ctx->page_buffer.text[yt][it] = telx_to_ucs2(ctx->page_buffer.text[yt][it]);
-					}
+					if (ctx->page_buffer.text[yt][it] != 0x00)
+						ctx->page_buffer.text[yt][it] = telx_to_ucs2(ctx->page_buffer.text[yt][it]);
 				}
-				// it would be nice, if subtitle hides on previous video frame, so we contract 40 ms (1 frame @25 fps)
-				ctx->page_buffer.hide_timestamp = timestamp - 40;
-				if (ctx->page_buffer.hide_timestamp > timestamp)
-				{
-					ctx->page_buffer.hide_timestamp = 0;
-				}
-				process_page(ctx, &ctx->page_buffer, sub);
+			}
+			// it would be nice, if subtitle hides on previous video frame, so we contract 40 ms (1 frame @25 fps)
+			ctx->page_buffer.hide_timestamp = timestamp - 40;
+			if (ctx->page_buffer.hide_timestamp > timestamp)
+			{
+				ctx->page_buffer.hide_timestamp = 0;
+			}
+			process_page(ctx, &ctx->page_buffer, sub);
 		}
 
 		ctx->page_buffer.show_timestamp = timestamp;
@@ -1028,7 +1026,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		for (uint8_t i = 0; i < 40; i++)
 		{
 			if (ctx->page_buffer.text[y][i] == 0x00)
-					ctx->page_buffer.text[y][i] = packet->data[i];
+				ctx->page_buffer.text[y][i] = packet->data[i];
 		}
 		ctx->page_buffer.tainted = YES;
 	}
@@ -1105,8 +1103,6 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			// ETS 300 706, chapter 9.4.7: Packet X/28/4
 			uint32_t triplet0 = unham_24_18((packet->data[3] << 16) | (packet->data[2] << 8) | packet->data[1]);
 
-			// mprint("c12 c13 c14 %x %x %x\n", packet->data[3], packet->data[2], packet->data[1]);
-			// mprint("triplet0 :%04x\n", triplet0);
 			if (triplet0 == 0xffffffff)
 			{
 				// invalid data (HAM24/18 uncorrectable error detected), skip group
@@ -1138,8 +1134,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			// ETS 300 706, chapter 9.5.1: Packet M/29/0
 			// ETS 300 706, chapter 9.5.3: Packet M/29/4
 			uint32_t triplet0 = unham_24_18((packet->data[3] << 16) | (packet->data[2] << 8) | packet->data[1]);
-			// mprint("y=29 c12 c13 c14 %u%u%u\n", packet->data[3], packet->data[2], packet->data[1]);
-			// mprint("triplet0 :%u\n", triplet0);
+	
 			if (triplet0 == 0xffffffff)
 			{
 				// invalid data (HAM24/18 uncorrectable error detected), skip group
