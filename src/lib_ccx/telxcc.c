@@ -199,9 +199,6 @@ typedef enum
 } g0_charsets_type;
 
 g0_charsets_type default_g0_charset;
-uint8_t jarhahai = 0;
-uint8_t flag_first_buffer = 0; // 0 - No page processed yet 1 - At least one page processed 
-
 
 // int g0_non_latin = 0; // 0 - Default G0 characterset is Latin 1 - Default G0 characterset is Non Latin 
 
@@ -531,7 +528,6 @@ void set_g0_charset(uint32_t triplet)
 // Latin National Subset Selection
 void remap_g0_charset(uint8_t c)
 {
-	mprint("remap");
 	if (c != primary_charset.current)
 	{
 		uint8_t m = G0_LATIN_NATIONAL_SUBSETS_MAP[c];
@@ -979,14 +975,20 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		// Page transmission is terminated, however now we are waiting for our new page
 		if (page_number != tlt_config.page)
 			return;
-		
-		mprint("y=%u\n", y);
+
 
 		// Now we have the begining of page transmission; if there is page_buffer pending, process it
 		if (ctx->page_buffer.tainted == YES)
 		{
-			if(jarhahai == 0 || (jarhahai==1 && default_g0_charset == LATIN))
-			{
+				// Convert telx to UCS-2 before processing
+				for(uint8_t yt = 1; yt <= 23; ++yt)
+				{
+					for(uint8_t it = 0; it < 40; it++)
+					{
+						if (ctx->page_buffer.text[yt][it] != 0x00)
+							ctx->page_buffer.text[yt][it] = telx_to_ucs2(ctx->page_buffer.text[yt][it]);
+					}
+				}
 				// it would be nice, if subtitle hides on previous video frame, so we contract 40 ms (1 frame @25 fps)
 				ctx->page_buffer.hide_timestamp = timestamp - 40;
 				if (ctx->page_buffer.hide_timestamp > timestamp)
@@ -994,34 +996,10 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 					ctx->page_buffer.hide_timestamp = 0;
 				}
 				process_page(ctx, &ctx->page_buffer, sub);
-			}
-			else if(jarhahai == 1)
-			{
-				if(flag_first_buffer == 0)
-				{
-					for(uint8_t yt = 1; yt <= 23; ++yt)
-					{
-						for (uint8_t i = 0; i < 40; i++)
-						{
-							if (ctx->page_buffer.text[yt][i] != 0x00)
-								ctx->page_buffer.text[yt][i] = ctx->page_buffer.text[yt][i];
-						}
-					}
-					flag_first_buffer = 1;
-				}
-				ctx->page_buffer.hide_timestamp = timestamp - 40;
-				if (ctx->page_buffer.hide_timestamp > timestamp)
-				{
-					ctx->page_buffer.hide_timestamp = 0;
-				}
-				process_page(ctx, &ctx->page_buffer, sub);
-				
-			}
 		}
 
 		ctx->page_buffer.show_timestamp = timestamp;
 		ctx->page_buffer.hide_timestamp = 0;
-		mprint("time: %u\n", timestamp);
 		memset(ctx->page_buffer.text, 0x00, sizeof(ctx->page_buffer.text));
 		ctx->page_buffer.tainted = NO;
 		ctx->receiving_data = YES;
@@ -1042,8 +1020,6 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 	}
 	else if ((m == MAGAZINE(tlt_config.page)) && (y >= 1) && (y <= 23) && (ctx->receiving_data == YES))
 	{
-		mprint("y=%u\n", y);
-
 		// ETS 300 706, chapter 9.4.1: Packets X/26 at presentation Levels 1.5, 2.5, 3.5 are used for addressing
 		// a character location and overwriting the existing character defined on the Level 1 page
 		// ETS 300 706, annex B.2.2: Packets with Y = 26 shall be transmitted before any packets with Y = 1 to Y = 25;
@@ -1052,14 +1028,12 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		for (uint8_t i = 0; i < 40; i++)
 		{
 			if (ctx->page_buffer.text[y][i] == 0x00)
-					ctx->page_buffer.text[y][i] = telx_to_ucs2(packet->data[i]);
+					ctx->page_buffer.text[y][i] = packet->data[i];
 		}
 		ctx->page_buffer.tainted = YES;
 	}
 	else if ((m == MAGAZINE(tlt_config.page)) && (y == 26) && (ctx->receiving_data == YES))
 	{
-		mprint("y=%u\n", y);
-
 		// ETS 300 706, chapter 12.3.2: X/26 definition
 		uint8_t x26_row = 0;
 		uint8_t x26_col = 0;
@@ -1122,13 +1096,11 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 	}
 	else if ((m == MAGAZINE(tlt_config.page)) && (y == 28) && (ctx->receiving_data == YES))
 	{
-		mprint("y=%u\n", y);
 		// TODO:
 		//   ETS 300 706, chapter 9.4.7: Packet X/28/4
 		//   Where packets 28/0 and 28/4 are both transmitted as part of a page, packet 28/0 takes precedence over 28/4 for all but the colour map entry coding.
 		if ((designation_code == 0) || (designation_code == 4))
 		{
-			jarhahai = 1;
 			// ETS 300 706, chapter 9.4.2: Packet X/28/0 Format 1
 			// ETS 300 706, chapter 9.4.7: Packet X/28/4
 			uint32_t triplet0 = unham_24_18((packet->data[3] << 16) | (packet->data[2] << 8) | packet->data[1]);
@@ -1158,14 +1130,11 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 	}
 	else if ((m == MAGAZINE(tlt_config.page)) && (y == 29))
 	{
-		mprint("y=%u\n", y);
-
 		// TODO:
 		//   ETS 300 706, chapter 9.5.1 Packet M/29/0
 		//   Where M/29/0 and M/29/4 are transmitted for the same magazine, M/29/0 takes precedence over M/29/4.
 		if ((designation_code == 0) || (designation_code == 4))
 		{
-			jarhahai = 1;
 			// ETS 300 706, chapter 9.5.1: Packet M/29/0
 			// ETS 300 706, chapter 9.5.3: Packet M/29/4
 			uint32_t triplet0 = unham_24_18((packet->data[3] << 16) | (packet->data[2] << 8) | packet->data[1]);
@@ -1198,11 +1167,9 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 	}
 	else if ((m == 8) && (y == 30))
 	{
-
 		// ETS 300 706, chapter 9.8: Broadcast Service Data Packets
 		if (ctx->states.programme_info_processed == NO)
 		{
-		mprint("y=%u\n", y);
 			// ETS 300 706, chapter 9.8.1: Packet 8/30 Format 1
 			if (unham_8_4(packet->data[0]) < 2)
 			{
