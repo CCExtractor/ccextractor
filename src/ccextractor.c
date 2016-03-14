@@ -84,22 +84,8 @@ int main(int argc, char *argv[])
 	if (ccx_options.binary_concat)
 	{
 		ctx->total_inputsize=gettotalfilessize(ctx);
-		if (ctx->total_inputsize < 0)
-		{
-			switch (ctx->total_inputsize)
-			{
-			case -1*ENOENT:
-				fatal(EXIT_NO_INPUT_FILES, "Failed to open file: File not Exist");
-			case -1*EACCES:
-				fatal(EXIT_READ_ERROR, "Failed to open file: Unable to access");
-			case -1*EINVAL:
-				fatal(EXIT_READ_ERROR, "Failed to open file: Invalid opening flag.");
-			case -1*EMFILE:
-				fatal(EXIT_TOO_MANY_INPUT_FILES, "Failed to open file: Too many files are open.");
-			default:
-				fatal(EXIT_READ_ERROR, "Failed to open file: Reason unknown");
-			}
-		}
+		if (ctx->total_inputsize==-1)
+			fatal (EXIT_UNABLE_TO_DETERMINE_FILE_SIZE, "Failed to determine total file size.\n");
 	}
 
 #ifndef _WIN32

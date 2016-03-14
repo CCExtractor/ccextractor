@@ -37,23 +37,11 @@ LLONG gettotalfilessize (struct lib_ccx_ctx *ctx) // -1 if one or more files fai
 #else
 		h = OPEN (ctx->inputfile[i], O_RDONLY);
 #endif
-
-		if (h == -1) {
-			switch (errno)
-			{
-			case ENOENT:
-				return -1 * ENOENT;
-			case EACCES:
-				return -1 * EACCES;
-			case EINVAL:
-				return -1 * EINVAL;
-			case EMFILE:
-				return -1 * EMFILE;
-			default:
-				return -1;
-			}
+		if (h == -1)
+		{
+			mprint ("\rUnable to open %s\r\n", ctx->inputfile[i]);
+			return -1;
 		}
-
 		if (!ccx_options.live_stream)
 			ts += getfilesize (h);
 		close (h);
