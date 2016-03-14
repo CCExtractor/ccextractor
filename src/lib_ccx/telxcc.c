@@ -196,8 +196,9 @@ typedef enum
 	GREEK,
 	ARABIC,
 	HEBREW
-} g0_charsets_t;
+} g0_charsets_type;
 
+g0_charsets_type default_g0_charset; 
 
 // Note: All characters are encoded in UCS-2
 
@@ -503,6 +504,26 @@ uint32_t unham_24_18(uint32_t a)
 	return (a & 0x000004) >> 2 | (a & 0x000070) >> 3 | (a & 0x007f00) >> 4 | (a & 0x7f0000) >> 5;
 }
 
+//Default G0 Character Set 
+void set_g0_charset(uint32_t triplet)
+{
+	// ETS 300 706, Table 32
+	if((triplet & 0x3c00) == 0x1000)
+	{
+		if((triplet & 0x0380) == 0x0000)
+			default_g0_charset = CYRILLIC1;
+		else if((triplet & 0x0380) == 0x0200)
+			default_g0_charset = CYRILLIC2;
+		else if((triplet & 0x0380) == 0x0280)
+			default_g0_charset = CYRILLIC3;
+		else
+			default_g0_charset = LATIN;	
+	}
+	else
+		default_g0_charset = LATIN;
+}
+
+// Latin National Subset Selection
 void remap_g0_charset(uint8_t c)
 {
 	if (c != primary_charset.current)
@@ -521,7 +542,6 @@ void remap_g0_charset(uint8_t c)
 		}
 	}
 }
-
 
 
 // wide char (16 bits) to utf-8 conversion
@@ -559,7 +579,7 @@ uint16_t telx_to_ucs2(uint8_t c)
 
 	uint16_t r = c & 0x7f;
 	if (r >= 0x20)
-		r = G0[LATIN][r - 0x20];
+		r = G0[default_g0_charset][r - 0x20];
 	return r;
 }
 
@@ -896,6 +916,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 
 	if (y == 0)
 	{
+
 		// CC map
 		uint8_t i = (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
 		uint8_t flag_subtitle = (unham_8_4(packet->data[5]) & 0x08) >> 3;
@@ -953,9 +974,19 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		if (page_number != tlt_config.page)
 			return;
 
+
 		// Now we have the begining of page transmission; if there is page_buffer pending, process it
 		if (ctx->page_buffer.tainted == YES)
 		{
+			// Convert telx to UCS-2 before processing
+			for(uint8_t yt = 1; yt <= 23; ++yt)
+			{
+				for(uint8_t it = 0; it < 40; it++)
+				{
+					if (ctx->page_buffer.text[yt][it] != 0x00)
+						ctx->page_buffer.text[yt][it] = telx_to_ucs2(ctx->page_buffer.text[yt][it]);
+				}
+			}
 			// it would be nice, if subtitle hides on previous video frame, so we contract 40 ms (1 frame @25 fps)
 			ctx->page_buffer.hide_timestamp = timestamp - 40;
 			if (ctx->page_buffer.hide_timestamp > timestamp)
@@ -963,7 +994,6 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				ctx->page_buffer.hide_timestamp = 0;
 			}
 			process_page(ctx, &ctx->page_buffer, sub);
-
 		}
 
 		ctx->page_buffer.show_timestamp = timestamp;
@@ -971,11 +1001,12 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		memset(ctx->page_buffer.text, 0x00, sizeof(ctx->page_buffer.text));
 		ctx->page_buffer.tainted = NO;
 		ctx->receiving_data = YES;
-		primary_charset.g0_x28 = UNDEF;
-
-		c = (primary_charset.g0_m29 != UNDEF) ? primary_charset.g0_m29 : charset;
-		remap_g0_charset(c);
-
+		if(default_g0_charset == LATIN) // G0 Character National Option Sub-sets selection required only for Latin Character Sets
+		{
+			primary_charset.g0_x28 = UNDEF;
+			c = (primary_charset.g0_m29 != UNDEF) ? primary_charset.g0_m29 : charset;
+			remap_g0_charset(c);
+		}
 		/*
 		// I know -- not needed; in subtitles we will never need disturbing teletext page status bar
 		// displaying tv station name, current time etc.
@@ -995,7 +1026,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		for (uint8_t i = 0; i < 40; i++)
 		{
 			if (ctx->page_buffer.text[y][i] == 0x00)
-				ctx->page_buffer.text[y][i] = telx_to_ucs2(packet->data[i]);
+				ctx->page_buffer.text[y][i] = packet->data[i];
 		}
 		ctx->page_buffer.tainted = YES;
 	}
@@ -1081,9 +1112,14 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			{
 				// ETS 300 706, chapter 9.4.2: Packet X/28/0 Format 1 only
 				if ((triplet0 & 0x0f) == 0x00)
-				{
-					primary_charset.g0_x28 = (triplet0 & 0x3f80) >> 7;
-					remap_g0_charset(primary_charset.g0_x28);
+				{					
+					// ETS 300 706, Table 32
+					set_g0_charset(triplet0); // Deciding G0 Character Set
+					if(default_g0_charset == LATIN)
+					{
+						primary_charset.g0_x28 = (triplet0 & 0x3f80) >> 7;
+						remap_g0_charset(primary_charset.g0_x28);
+					}
 				}
 			}
 		}
@@ -1098,7 +1134,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			// ETS 300 706, chapter 9.5.1: Packet M/29/0
 			// ETS 300 706, chapter 9.5.3: Packet M/29/4
 			uint32_t triplet0 = unham_24_18((packet->data[3] << 16) | (packet->data[2] << 8) | packet->data[1]);
-
+	
 			if (triplet0 == 0xffffffff)
 			{
 				// invalid data (HAM24/18 uncorrectable error detected), skip group
@@ -1110,11 +1146,15 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				// ETS 300 706, table 13: Coding of Packet M/29/4
 				if ((triplet0 & 0xff) == 0x00)
 				{
-					primary_charset.g0_m29 = (triplet0 & 0x3f80) >> 7;
-					// X/28 takes precedence over M/29
-					if (primary_charset.g0_x28 == UNDEF)
+					set_g0_charset(triplet0);
+					if(default_g0_charset == LATIN)
 					{
-						remap_g0_charset(primary_charset.g0_m29);
+						primary_charset.g0_m29 = (triplet0 & 0x3f80) >> 7;
+						// X/28 takes precedence over M/29
+						if (primary_charset.g0_x28 == UNDEF)
+						{
+							remap_g0_charset(primary_charset.g0_m29);
+						}
 					}
 				}
 			}
