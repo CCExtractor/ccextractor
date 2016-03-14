@@ -1,31 +1,31 @@
 /*!
-(c) 2011-2013 Forers, s. r. o.: telxcc
+  (c) 2011-2013 Forers, s. r. o.: telxcc
 
-telxcc conforms to ETSI 300 706 Presentation Level 1.5: Presentation Level 1 defines the basic Teletext page,
-characterised by the use of spacing attributes only and a limited alphanumeric and mosaics repertoire.
-Presentation Level 1.5 decoder responds as Level 1 but the character repertoire is extended via packets X/26.
-Selection of national option sub-sets related features from Presentation Level 2.5 feature set have been implemented, too.
-(X/28/0 Format 1, X/28/4, M/29/0 and M/29/4 packets)
+  telxcc conforms to ETSI 300 706 Presentation Level 1.5: Presentation Level 1 defines the basic Teletext page,
+  characterised by the use of spacing attributes only and a limited alphanumeric and mosaics repertoire.
+  Presentation Level 1.5 decoder responds as Level 1 but the character repertoire is extended via packets X/26.
+  Selection of national option sub-sets related features from Presentation Level 2.5 feature set have been implemented, too.
+  (X/28/0 Format 1, X/28/4, M/29/0 and M/29/4 packets)
 
-Further documentation:
-ETSI TS 101 154 V1.9.1 (2009-09), Technical Specification
+  Further documentation:
+  ETSI TS 101 154 V1.9.1 (2009-09), Technical Specification
   Digital Video Broadcasting (DVB); Specification for the use of Video and Audio Coding in Broadcasting Applications based on the MPEG-2 Transport Stream
-ETSI EN 300 231 V1.3.1 (2003-04), European Standard (Telecommunications series)
+  ETSI EN 300 231 V1.3.1 (2003-04), European Standard (Telecommunications series)
   Television systems; Specification of the domestic video Programme Delivery Control system (PDC)
-ETSI EN 300 472 V1.3.1 (2003-05), European Standard (Telecommunications series)
+  ETSI EN 300 472 V1.3.1 (2003-05), European Standard (Telecommunications series)
   Digital Video Broadcasting (DVB); Specification for conveying ITU-R System B Teletext in DVB bitstreams
-ETSI EN 301 775 V1.2.1 (2003-05), European Standard (Telecommunications series)
+  ETSI EN 301 775 V1.2.1 (2003-05), European Standard (Telecommunications series)
   Digital Video Broadcasting (DVB); Specification for the carriage of Vertical Blanking Information (VBI) data in DVB bitstreams
-ETS 300 706 (May 1997)
+  ETS 300 706 (May 1997)
   Enhanced Teletext Specification
-ETS 300 708 (March 1997)
+  ETS 300 708 (March 1997)
   Television systems; Data transmission within Teletext
-ISO/IEC STANDARD 13818-1 Second edition (2000-12-01)
+  ISO/IEC STANDARD 13818-1 Second edition (2000-12-01)
   Information technology — Generic coding of moving pictures and associated audio information: Systems
-ISO/IEC STANDARD 6937 Third edition (2001-12-15)
+  ISO/IEC STANDARD 6937 Third edition (2001-12-15)
   Information technology — Coded graphic character set for text communication — Latin alphabet
-Werner Brückner -- Teletext in digital television
-*/
+  Werner Brückner -- Teletext in digital television
+ */
 
 
 #include "lib_ccx.h"
@@ -287,7 +287,7 @@ struct {
 	},
 	{ // 5
 		"Portuguese, Spanish",
-		 { 0x00e7, 0x0024, 0x00a1, 0x00e1, 0x00e9, 0x00ed, 0x00f3, 0x00fa, 0x00bf, 0x00fc, 0x00f1, 0x00e8, 0x00e0 }
+		{ 0x00e7, 0x0024, 0x00a1, 0x00e1, 0x00e9, 0x00ed, 0x00f3, 0x00fa, 0x00bf, 0x00fc, 0x00f1, 0x00e8, 0x00e0 }
 	},
 	{ // 6
 		"Italian",
@@ -341,12 +341,12 @@ const uint16_t G2[1][96] = {
 		0x03a9, 0x00c6, 0x0110, 0x00aa, 0x0126, 0x0000, 0x0132, 0x013f, 0x0141, 0x00d8, 0x0152, 0x00ba, 0x00de, 0x0166, 0x014a, 0x0149,
 		0x0138, 0x00e6, 0x0111, 0x00f0, 0x0127, 0x0131, 0x0133, 0x0140, 0x0142, 0x00f8, 0x0153, 0x00df, 0x00fe, 0x0167, 0x014b, 0x0020
 	}
-//	{ // Cyrillic G2 Supplementary Set
-//	},
-//	{ // Greek G2 Supplementary Set
-//	},
-//	{ // Arabic G2 Supplementary Set
-//	}
+	//	{ // Cyrillic G2 Supplementary Set
+	//	},
+	//	{ // Greek G2 Supplementary Set
+	//	},
+	//	{ // Arabic G2 Supplementary Set
+	//	}
 };
 
 const uint16_t G2_ACCENTS[15][52] = {
@@ -578,6 +578,10 @@ uint16_t telx_to_ucs2(uint8_t c)
 	}
 
 	uint16_t r = c & 0x7f;
+	if(r == 0x0040) //Return @
+	{
+		return 0x0040;
+	}
 	if (r >= 0x20)
 		r = G0[default_g0_charset][r - 0x20];
 	return r;
@@ -596,7 +600,7 @@ void telxcc_dump_prev_page (struct TeletextCtx *ctx, struct cc_subtitle *sub)
 
 	snprintf(info, 4, "%.3u", bcd_page_to_int(tlt_config.page));
 	add_cc_sub_text(sub, ctx->page_buffer_prev, ctx->prev_show_timestamp,
-		ctx->prev_hide_timestamp, info, "TLT", CCX_ENC_UTF_8);
+			ctx->prev_hide_timestamp, info, "TLT", CCX_ENC_UTF_8);
 
 	if (ctx->page_buffer_prev)
 		free (ctx->page_buffer_prev);
@@ -620,7 +624,7 @@ void telxcc_dump_prev_page (struct TeletextCtx *ctx, struct cc_subtitle *sub)
 
 // Note: c1 and c2 are just used for debug output, not for the actual comparison
 int fuzzy_memcmp (const char *c1, const char *c2, const uint64_t *ucs2_buf1, unsigned ucs2_buf1_len,
-				  const uint64_t *ucs2_buf2, unsigned ucs2_buf2_len)
+		const uint64_t *ucs2_buf2, unsigned ucs2_buf2_len)
 {
 	size_t l;
 	size_t short_len=ucs2_buf1_len<ucs2_buf2_len?ucs2_buf1_len:ucs2_buf2_len;
@@ -639,10 +643,10 @@ int fuzzy_memcmp (const char *c1, const char *c2, const uint64_t *ucs2_buf1, uns
 void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subtitle *sub)
 {
 	if ((tlt_config.extraction_start.set && page->hide_timestamp < tlt_config.extraction_start.time_in_ms) ||
-		(tlt_config.extraction_end.set && page->show_timestamp > tlt_config.extraction_end.time_in_ms) ||
-        	page->hide_timestamp == 0)
+			(tlt_config.extraction_end.set && page->show_timestamp > tlt_config.extraction_end.time_in_ms) ||
+			page->hide_timestamp == 0)
 	{
-        	return;
+		return;
 	}
 #ifdef DEBUG
 	for (uint8_t row = 1; row < 25; row++) {
@@ -667,7 +671,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 			}
 		}
 	}
-	page_is_empty:
+page_is_empty:
 	if (page_is_empty == YES) return;
 
 	if (page->show_timestamp > page->hide_timestamp)
@@ -892,7 +896,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 			break;
 		default:
 			add_cc_sub_text(sub, ctx->page_buffer_cur, page->show_timestamp,
-				page->hide_timestamp + 1, NULL, "TLT", CCX_ENC_UTF_8);
+					page->hide_timestamp + 1, NULL, "TLT", CCX_ENC_UTF_8);
 	}
 
 	// Also update GUI...
@@ -963,8 +967,8 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		if ((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (data_unit_id != DATA_UNIT_EBU_TELETEXT_SUBTITLE)) return;
 
 		if ((ctx->receiving_data == YES) && (
-			((ctx->transmission_mode == TRANSMISSION_MODE_SERIAL) && (PAGE(page_number) != PAGE(tlt_config.page))) ||
-			((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (PAGE(page_number) != PAGE(tlt_config.page)) && (m == MAGAZINE(tlt_config.page)))))
+					((ctx->transmission_mode == TRANSMISSION_MODE_SERIAL) && (PAGE(page_number) != PAGE(tlt_config.page))) ||
+					((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (PAGE(page_number) != PAGE(tlt_config.page)) && (m == MAGAZINE(tlt_config.page)))))
 		{
 			ctx->receiving_data = NO;
 			return;
@@ -1011,10 +1015,10 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		// I know -- not needed; in subtitles we will never need disturbing teletext page status bar
 		// displaying tv station name, current time etc.
 		if (flag_suppress_header == NO) {
-			for (uint8_t i = 14; i < 40; i++) page_buffer.text[y][i] = telx_to_ucs2(packet->data[i]);
-			//page_buffer.tainted = YES;
+		for (uint8_t i = 14; i < 40; i++) page_buffer.text[y][i] = telx_to_ucs2(packet->data[i]);
+		//page_buffer.tainted = YES;
 		}
-		*/
+		 */
 	}
 	else if ((m == MAGAZINE(tlt_config.page)) && (y >= 1) && (y <= 23) && (ctx->receiving_data == YES))
 	{
@@ -1022,12 +1026,59 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		// a character location and overwriting the existing character defined on the Level 1 page
 		// ETS 300 706, annex B.2.2: Packets with Y = 26 shall be transmitted before any packets with Y = 1 to Y = 25;
 		// so page_buffer.text[y][i] may already contain any character received
+
+
 		// in frame number 26, skip original G0 character
-		for (uint8_t i = 0; i < 40; i++)
+/*		for (uint8_t i = 0; i < 40; i++)
 		{
 			if (ctx->page_buffer.text[y][i] == 0x00)
 				ctx->page_buffer.text[y][i] = packet->data[i];
+
+			if(ctx->page_buffer.text[y][i]==42)
+			{
+				printf("Ival:%d\n",i);
+			}
+		}*/
+
+
+		uint8_t x26_row = 0;
+		uint8_t x26_col = 0;
+
+		uint32_t triplets[13] = { 0 };
+		for (uint8_t i = 1, j = 0; i < 40; i += 3, j++) triplets[j] = unham_24_18((packet->data[i + 2] << 16) | (packet->data[i + 1] << 8) | packet->data[i]);
+
+		for (uint8_t j = 0; j < 13; j++)
+		{
+			uint8_t data;
+			uint8_t mode;
+			uint8_t address;
+			uint8_t row_address_group;
+			// invalid data (HAM24/18 uncorrectable error detected), skip group
+			if (triplets[j] == 0xffffffff)
+			{
+				dbg_print (CCX_DMT_TELETEXT, "- Unrecoverable data error; UNHAM24/18()=%04x\n", triplets[j]);
+				continue;
+			}
+
+			data = (triplets[j] & 0x3f800) >> 11;
+			mode = (triplets[j] & 0x7c0) >> 6;
+			address = triplets[j] & 0x3f;
+			row_address_group = (address >= 40) && (address <= 63);
+
+			for (uint8_t k = 0; k < 40; k++)
+			{
+				if (ctx->page_buffer.text[y][k] == 0x00)
+					ctx->page_buffer.text[y][k] = packet->data[k];
+
+
+				if(data == 10 && mode == 2 && ctx->page_buffer.text[y][k] == 42 && default_g0_charset == LATIN) //* is replaced with @
+				ctx->page_buffer.text[y][k] = 0x0040;
+
+			}
+
 		}
+
+
 		ctx->page_buffer.tainted = YES;
 	}
 	else if ((m == MAGAZINE(tlt_config.page)) && (y == 26) && (ctx->receiving_data == YES))
@@ -1056,7 +1107,6 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			mode = (triplets[j] & 0x7c0) >> 6;
 			address = triplets[j] & 0x3f;
 			row_address_group = (address >= 40) && (address <= 63);
-
 			// ETS 300 706, chapter 12.3.1, table 27: set active position
 			if ((mode == 0x04) && (row_address_group == YES))
 			{
@@ -1084,13 +1134,16 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				if ((data >= 65) && (data <= 90))
 					ctx->page_buffer.text[x26_row][x26_col] = G2_ACCENTS[mode - 0x11][data - 65];
 				// a - z
+
 				else if ((data >= 97) && (data <= 122))
 					ctx->page_buffer.text[x26_row][x26_col] = G2_ACCENTS[mode - 0x11][data - 71];
 				// other
+
 				else
 					ctx->page_buffer.text[x26_row][x26_col] = telx_to_ucs2(data);
 			}
 		}
+
 	}
 	else if ((m == MAGAZINE(tlt_config.page)) && (y == 28) && (ctx->receiving_data == YES))
 	{
@@ -1134,7 +1187,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			// ETS 300 706, chapter 9.5.1: Packet M/29/0
 			// ETS 300 706, chapter 9.5.3: Packet M/29/4
 			uint32_t triplet0 = unham_24_18((packet->data[3] << 16) | (packet->data[2] << 8) | packet->data[1]);
-	
+
 			if (triplet0 == 0xffffffff)
 			{
 				// invalid data (HAM24/18 uncorrectable error detected), skip group
