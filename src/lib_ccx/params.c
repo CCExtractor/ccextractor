@@ -519,7 +519,8 @@ void usage (void)
 	mprint ("                       or M for kilobytes and megabytes). Default is 16M.\n");
 	mprint ("                 -koc: keep-output-close. If used then CCExtractor will close\n"); 
 	mprint ("                       the output file after writing each subtitle frame and\n");
-	mprint ("                       attempt to create it again when needed.");
+	mprint ("                       attempt to create it again when needed.\n");
+	mprint ("     -ff --forceflush: Forceflush file buffer\n");
 	mprint ("\n");
 
 	mprint ("Options that affect the built-in closed caption decoder:\n");
@@ -1707,6 +1708,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			i++;
 			continue;
 		}
+	if (strcmp(argv[i], "-ff") == 0 || strcmp(argv[i], "--forceflush") == 0)
+		{
+			opt->force_flush = 1;
+			continue;
+		}
 
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "Error: Parameter %s not understood.\n", argv[i]);
 		// Unrecognized switches are silently ignored
@@ -1801,6 +1807,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		mprint("Note: Output format is WebVTT, forcing UTF-8");
 		opt->enc_cfg.encoding = CCX_ENC_UTF_8;
 	}
+	
 
 	/* Initialize some Encoder Configuration */
 	opt->enc_cfg.extract = opt->extract;
