@@ -98,6 +98,7 @@ struct encoder_ctx
 
 	int program_number;
 	struct list_head list;
+	int force_flush;   //--forceflush
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048
