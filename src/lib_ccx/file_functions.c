@@ -276,7 +276,7 @@ void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned 
 /**
  * @param buffer can be NULL, in case when user want to just buffer it or skip some data.
  *
- * Global options that have efffect on this function are following
+ * Global options that have effect on this function are following
  * 1) ccx_options.live_stream
  * 2) ccx_options.buffer_input
  * 3) ccx_options.input_source
@@ -301,9 +301,10 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 
 		while ((!eof || ccx_options.live_stream) && bytes)
 		{
+			int size = getfilesize(ctx->infd);
 			if (eof)
 			{
-				// No more data available inmediately, we sleep a while to give time
+				// No more data available immediately, we sleep a while to give time
 				// for the data to come up
 				sleepandchecktimeout (seconds);
 			}
@@ -378,7 +379,7 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 				{
 					/* If live stream, don't try to switch - acknowledge eof here as it won't
 					   cause a loop end */
-					if (ccx_options.live_stream || !(ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied)))
+					if (ccx_options.live_stream || (size <= buffer) ||!(ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied)))
 						eof = 1;
 				}
 				ctx->filebuffer_pos = keep;
