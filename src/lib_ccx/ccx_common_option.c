@@ -56,6 +56,7 @@ void init_options (struct ccx_s_options *options)
 	options->xmltvoutputinterval=0; // interval in seconds between writting xmltv full file output
 	options->xmltvonlycurrent=0; // 0 off 1 on
 	options->keep_output_closed = 0; // By default just keep the file open.
+	options->force_flush = 0; // Don't flush whenever content is writtern.
 
 	options->transcript_settings = ccx_encoders_default_transcript_settings;
 	options->millis_separator=',';

@@ -35,6 +35,7 @@ struct encoder_cfg
 	char *output_filename;
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 	int keep_output_closed;
+	int force_flush; // Force flush on content write
 	
 	enum ccx_encoding_type encoding;
 	enum ccx_output_date_format date_format;
@@ -113,6 +114,7 @@ struct ccx_s_options // Options from user parameters
 	int xmltvoutputinterval; // interval in seconds between writting xmltv full file output
 	int xmltvonlycurrent; // 0 off 1 on
 	int keep_output_closed;
+	int force_flush; // Force flush on content write
 
 	ccx_encoders_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
 	enum ccx_output_date_format date_format;
