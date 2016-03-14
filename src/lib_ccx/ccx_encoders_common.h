@@ -52,6 +52,8 @@ struct encoder_ctx
 	unsigned int in_fileformat; //1 =Normal, 2=Teletext
 	/* Keep output file closed when not actually writing to it and start over each time (add headers, etc) */
 	unsigned int keep_output_closed; 
+	/* Force a flush on the file buffer whenever content is written */
+	int force_flush;
 
 	/* Flag saying BOM to be written in each output file */
 	enum ccx_encoding_type encoding;
