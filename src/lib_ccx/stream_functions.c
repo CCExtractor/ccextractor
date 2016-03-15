@@ -228,7 +228,7 @@ int detect_myth( struct ccx_demuxer *ctx )
 {
 	int vbi_blocks=0;
 	// VBI data? if yes, use myth loop
-	// STuARTBTYTESLENGTH is 1MB, if the file is shorter we will never detect
+	// STARTBYTESLENGTH is 1MB, if the file is shorter we will never detect
 	// it as a mythTV file
 	if (ctx->startbytes_avail==STARTBYTESLENGTH)
 	{
