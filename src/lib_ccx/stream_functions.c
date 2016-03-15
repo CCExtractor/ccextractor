@@ -101,7 +101,7 @@ void detect_stream_type (struct ccx_demuxer *ctx)
 		}
 	}
 	if (ctx->stream_mode==CCX_SM_ELEMENTARY_OR_NOT_FOUND) // Still not found
-	{	
+	{
 		if (ctx->startbytes_avail > 188*8) // Otherwise, assume no TS
 		{
 			// First check for TS
