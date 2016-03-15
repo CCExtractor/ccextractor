@@ -519,7 +519,8 @@ void usage (void)
 	mprint ("                       or M for kilobytes and megabytes). Default is 16M.\n");
 	mprint ("                 -koc: keep-output-close. If used then CCExtractor will close\n"); 
 	mprint ("                       the output file after writing each subtitle frame and\n");
-	mprint ("                       attempt to create it again when needed.");
+	mprint ("                       attempt to create it again when needed.\n");
+	mprint ("     -ff --forceflush: Flush the file buffer whenever content is written.\n");
 	mprint ("\n");
 
 	mprint ("Options that affect the built-in closed caption decoder:\n");
@@ -881,6 +882,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp(argv[i], "-koc") == 0)
 		{
 			opt->keep_output_closed = 1;
+			continue;
+		}
+		if (strcmp(argv[i], "-ff") == 0 || strcmp(argv[i], "--forceflush") == 0)
+		{
+			opt->force_flush = 1;
 			continue;
 		}
 
@@ -1816,6 +1822,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	opt->enc_cfg.transcript_settings = opt->transcript_settings;
 	opt->enc_cfg.millis_separator = opt->millis_separator;
 	opt->enc_cfg.no_font_color = opt->nofontcolor;
+	opt->enc_cfg.force_flush = opt->force_flush;
 	opt->enc_cfg.no_type_setting = opt->notypesetting;
 	opt->enc_cfg.subs_delay = opt->subs_delay;
 	if(opt->output_filename && opt->multiprogram == CCX_FALSE)
