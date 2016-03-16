@@ -950,7 +950,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 		/*user specified subtitle to be selected */
 
-		if(strcmp (argv[i],"-codec") == 0 && i<argc-1)
+		if(!strcmp (argv[i],"-codec") && i < argc - 1)
 		{
 			i++;
 			if(!strcmp (argv[i],"teletext"))
@@ -969,7 +969,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		/*user specified subtitle to be selected */
 
-		if(strcmp (argv[i],"-nocodec") == 0 && i<argc-1)
+		if(!strcmp (argv[i],"-nocodec") && i < argc - 1)
 		{
 			i++;
 			if(!strcmp (argv[i],"teletext"))
@@ -1832,4 +1832,3 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	return EXIT_OK;
 
 }
-
