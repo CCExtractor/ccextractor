@@ -728,8 +728,8 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 				fdprintf(context->out->fh, "%s|", buf2);
 			}
 			else {
-				time_t end_time_int = (end_time + context->subs_delay) / 1000;
-				int end_time_dec = (end_time + context->subs_delay) % 1000;
+				time_t end_time_int = end_time / 1000;
+				int end_time_dec = end_time % 1000;
 				struct tm *end_time_struct = gmtime(&end_time_int);
 				strftime(buf2, sizeof(buf2), "%Y%m%d%H%M%S", end_time_struct);
 				fdprintf(context->out->fh, "%s%c%03d|", buf2,context->millis_separator,end_time_dec);
