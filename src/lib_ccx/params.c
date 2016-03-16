@@ -1830,5 +1830,4 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	else
 		opt->enc_cfg.output_filename = NULL;
 	return EXIT_OK;
-
 }
