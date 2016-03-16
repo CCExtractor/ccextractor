@@ -578,10 +578,6 @@ uint16_t telx_to_ucs2(uint8_t c)
 	}
 
 	uint16_t r = c & 0x7f;
-	if(r == 0x0040) //Return @
-	{
-		return 0x0040;
-	}
 	if (r >= 0x20)
 		r = G0[default_g0_charset][r - 0x20];
 	return r;
@@ -988,7 +984,13 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				for(uint8_t it = 0; it < 40; it++)
 				{
 					if (ctx->page_buffer.text[yt][it] != 0x00)
+					{
 						ctx->page_buffer.text[yt][it] = telx_to_ucs2(ctx->page_buffer.text[yt][it]);
+						if(yt==22 && it == 22)
+						{
+							printf("Neymar");
+						}
+					}
 				}
 			}
 			// it would be nice, if subtitle hides on previous video frame, so we contract 40 ms (1 frame @25 fps)
@@ -1029,18 +1031,18 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 
 
 		// in frame number 26, skip original G0 character
-/*		for (uint8_t i = 0; i < 40; i++)
+		for (uint8_t i = 0; i < 40; i++)
 		{
 			if (ctx->page_buffer.text[y][i] == 0x00)
 				ctx->page_buffer.text[y][i] = packet->data[i];
 
 			if(ctx->page_buffer.text[y][i]==42)
 			{
-				printf("Ival:%d\n",i);
+				printf("Ival:%d\t%d\n",i,y);
 			}
-		}*/
+		}
 
-
+/*
 		uint8_t x26_row = 0;
 		uint8_t x26_col = 0;
 
@@ -1077,7 +1079,22 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			}
 
 		}
+*/
 
+		
+			for (uint8_t k = 0; k < 40; k++)
+			{
+				if (ctx->page_buffer.text[y][k] == 0x00)
+					ctx->page_buffer.text[y][k] = packet->data[k];
+
+
+				if(y==22 && k==22 && packet->data[k]==42)
+				{ //* is replaced with @
+					ctx->page_buffer.text[y][k] = 64;
+					printf("Making");
+				}
+
+			}
 
 		ctx->page_buffer.tainted = YES;
 	}
@@ -1108,6 +1125,8 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			address = triplets[j] & 0x3f;
 			row_address_group = (address >= 40) && (address <= 63);
 			// ETS 300 706, chapter 12.3.1, table 27: set active position
+		
+
 			if ((mode == 0x04) && (row_address_group == YES))
 			{
 				x26_row = address - 40;
