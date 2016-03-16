@@ -728,8 +728,8 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 				fdprintf(context->out->fh, "%s|", buf2);
 			}
 			else {
-				time_t end_time_int = (end_time + context->subs_delay) / 1000;
-				int end_time_dec = (end_time + context->subs_delay) % 1000;
+				time_t end_time_int = end_time / 1000;
+				int end_time_dec = end_time % 1000;
 				struct tm *end_time_struct = gmtime(&end_time_int);
 				strftime(buf2, sizeof(buf2), "%Y%m%d%H%M%S", end_time_struct);
 				fdprintf(context->out->fh, "%s%c%03d|", buf2,context->millis_separator,end_time_dec);
@@ -1066,7 +1066,6 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 		return -1;
 	ctx->nb_out = nb_lang;
 	ctx->keep_output_closed = cfg->keep_output_closed;
-	ctx->force_flush = cfg->force_flush;
 
 	if(cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE)
 	{
@@ -1255,7 +1254,6 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->gui_mode_reports = opt->gui_mode_reports;
 	ctx->extract = opt->extract;
 	ctx->keep_output_closed = opt->keep_output_closed;
-	ctx->force_flush = opt->force_flush;
 
 	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);
 	if(!ctx->subline)
@@ -1500,7 +1498,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	}
 	if (!sub->nb_data)
 		freep(&sub->data);
-	if (wrote_something && context->force_flush)
+	if (wrote_something)
 		fsync(context->out->fh); // Don't buffer
 	return wrote_something;
 }
