@@ -1148,7 +1148,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->enc_cfg.trim_subs=1;
 			continue;
 		}
-		if (strcmp (argv[i],"-outinterval")==0)
+		if (strcmp (argv[i],"-outinterval")==0 && i<argc-1)
 		{
 			opt->out_interval = atoi(argv[i+1]);
 			i++;
@@ -1832,4 +1832,3 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	return EXIT_OK;
 
 }
-
