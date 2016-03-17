@@ -54,6 +54,8 @@ struct encoder_ctx
 	unsigned int keep_output_closed; 
 	/* Force a flush on the file buffer whenever content is written */
 	int force_flush;
+	/* Keep track of whether -UCLA used */
+	int ucla;
 
 	/* Flag saying BOM to be written in each output file */
 	enum ccx_encoding_type encoding;
