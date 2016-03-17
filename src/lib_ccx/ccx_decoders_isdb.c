@@ -1388,7 +1388,6 @@ int isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, size_t buf
 	const uint8_t *header_end = NULL;
 	int ret = 0;
 	ISDBSubContext *ctx = dec_ctx->private_data;
-	ctx->timestamp = get_fts(dec_ctx->timing, dec_ctx->current_field);
 	if(*buf++ != 0x80)
 	{
 		mprint("\nNot a Syncronised PES\n");
