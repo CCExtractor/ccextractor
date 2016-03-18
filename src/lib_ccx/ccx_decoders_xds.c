@@ -962,14 +962,8 @@ void do_end_of_xds (struct cc_subtitle *sub, struct ccx_decoders_xds_context *ct
 		ccx_common_logging.log_ftn ("Note: We found a currently unsupported XDS packet.\n");
 		
 		printf("Note: We found a currently unsupported XDS packet ; printing the hexdump of that packet\n");
-		int i,j;
-		for ( i=0; i<NUM_XDS_BUFFERS ; i++)
-		{
-			for (j=0 ; j<NUM_BYTES_PER_PACKET; j++)
-				if (ctx->xds_buffers[i].bytes[j]) // check if data present 
-					printf("%02x ", ctx->xds_buffers[i].bytes[j]);
-			printf("\n");
-		}
+		dump (1, ctx->xds_buffers[ctx->cur_xds_buffer_idx].bytes , ctx->cur_xds_payload_length, 0, 0)
+
 	}
 	clear_xds_buffer (ctx, ctx->cur_xds_buffer_idx);
 
