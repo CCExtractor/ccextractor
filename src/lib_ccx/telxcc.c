@@ -52,6 +52,7 @@ typedef struct {
 	uint64_t show_timestamp; // show at timestamp (in ms)
 	uint64_t hide_timestamp; // hide at timestamp (in ms)
 	uint16_t text[25][40]; // 25 lines x 40 cols (1 screen/page) of wide chars
+	uint8_t g2_char_present[25][40]; // 0- Supplementary G2 character set NOT used at this position 1-Supplementary G2 character set used at this position
 	uint8_t tainted; // 1 = text variable contains any data
 } teletext_page_t;
 
@@ -345,7 +346,7 @@ const uint16_t G2[1][96] = {
 //	},
 //	{ // Greek G2 Supplementary Set
 //	},
-//	{ // Arabic G2 Supplementary Set
+//	{ // Arabic G2 Supplementary Set
 //	}
 };
 
@@ -983,7 +984,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			{
 				for(uint8_t it = 0; it < 40; it++)
 				{
-					if (ctx->page_buffer.text[yt][it] != 0x00)
+					if (ctx->page_buffer.text[yt][it] != 0x00 && ctx->page_buffer.g2_char_present[yt][it] == 0)
 						ctx->page_buffer.text[yt][it] = telx_to_ucs2(ctx->page_buffer.text[yt][it]);
 				}
 			}
@@ -999,6 +1000,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		ctx->page_buffer.show_timestamp = timestamp;
 		ctx->page_buffer.hide_timestamp = 0;
 		memset(ctx->page_buffer.text, 0x00, sizeof(ctx->page_buffer.text));
+		memset(ctx->page_buffer.g2_char_present, 0x00, sizeof(ctx->page_buffer.g2_char_present));
 		ctx->page_buffer.tainted = NO;
 		ctx->receiving_data = YES;
 		if(default_g0_charset == LATIN) // G0 Character National Option Sub-sets selection required only for Latin Character Sets
@@ -1072,7 +1074,23 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			if ((mode == 0x0f) && (row_address_group == NO))
 			{
 				x26_col = address;
-				if (data > 31) ctx->page_buffer.text[x26_row][x26_col] = G2[0][data - 0x20];
+				if (data > 31) 
+				{
+					ctx->page_buffer.text[x26_row][x26_col] = G2[0][data - 0x20];
+					ctx->page_buffer.g2_char_present[x26_row][x26_col] = 1;
+				}
+			}
+
+			// ETS 300 706 v1.2.1, chapter 12.3.4, Table 29: G0 character without diacritical mark (display '@' instead of '*')
+			if ((mode == 0x10) && (row_address_group == NO))
+			{
+				x26_col = address;
+				if (data == 64) // check for @ symbol
+				{
+					remap_g0_charset(0);
+					ctx->page_buffer.text[x26_row][x26_col] = 0x40;
+				}
+
 			}
 
 			// ETS 300 706, chapter 12.3.1, table 27: G0 character with diacritical mark
@@ -1089,6 +1107,8 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				// other
 				else
 					ctx->page_buffer.text[x26_row][x26_col] = telx_to_ucs2(data);
+				
+				ctx->page_buffer.g2_char_present[x26_row][x26_col] = 1;
 			}
 		}
 	}
@@ -1469,6 +1489,15 @@ void telxcc_close(void **ctx, struct cc_subtitle *sub)
 		// output any pending close caption
 		if (ttext->page_buffer.tainted == YES)
 		{
+			// Convert telx to UCS-2 before processing
+			for(uint8_t yt = 1; yt <= 23; ++yt)
+			{
+				for(uint8_t it = 0; it < 40; it++)
+				{
+					if (ttext->page_buffer.text[yt][it] != 0x00 && ttext->page_buffer.g2_char_present[yt][it] == 0)
+						ttext->page_buffer.text[yt][it] = telx_to_ucs2(ttext->page_buffer.text[yt][it]);
+				}
+			}
 			// this time we do not subtract any frames, there will be no more frames
 			ttext->page_buffer.hide_timestamp = ttext->last_timestamp;
 			process_page(ttext, &ttext->page_buffer, sub);
