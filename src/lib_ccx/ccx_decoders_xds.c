@@ -2,6 +2,7 @@
 #include "ccx_common_constants.h"
 #include "ccx_common_timing.h"
 #include "ccx_common_common.h"
+#include "utility.h"
 
 LLONG ts_start_of_xds = -1; // Time at which we switched to XDS mode, =-1 hasn't happened yet
 
@@ -962,7 +963,7 @@ void do_end_of_xds (struct cc_subtitle *sub, struct ccx_decoders_xds_context *ct
 		ccx_common_logging.log_ftn ("Note: We found a currently unsupported XDS packet.\n");
 		
 		printf("Note: We found a currently unsupported XDS packet ; printing the hexdump of that packet\n");
-		dump (1, ctx->xds_buffers[ctx->cur_xds_buffer_idx].bytes , ctx->cur_xds_payload_length, 0, 0)
+		dump (1, ctx->xds_buffers[ctx->cur_xds_buffer_idx].bytes , ctx->cur_xds_payload_length, 0, 0);
 
 	}
 	clear_xds_buffer (ctx, ctx->cur_xds_buffer_idx);
