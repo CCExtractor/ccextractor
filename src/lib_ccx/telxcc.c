@@ -1094,7 +1094,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			}
 
 			// ETS 300 706, chapter 12.3.1, table 27: G0 character with diacritical mark
-			if ((mode >= 0x11) && (mode <= 0x1f) && (row_address_group == NO))
+			if ((mode >= 0x10) && (mode <= 0x1f) && (row_address_group == NO))
 			{
 				x26_col = address;
 
@@ -1104,6 +1104,13 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				// a - z
 				else if ((data >= 97) && (data <= 122))
 					ctx->page_buffer.text[x26_row][x26_col] = G2_ACCENTS[mode - 0x11][data - 71];
+				// ETS 300 706 v1.2.1, chapter 12.3.4, table 29: replace * with @
+                                else if ((mode == 0x10) && (data == 64)) {
+                                    // FIXME: Actually overwrite the current packet's charset instead of switching to English national option subset.
+                                    //        Implement an enum type with named constants for national option subsets.
+                                    remap_g0_charset(0);
+                                    ctx->page_buffer.text[x26_row][x26_col] = telx_to_ucs2(data);
+                                }
 				// other
 				else
 					ctx->page_buffer.text[x26_row][x26_col] = telx_to_ucs2(data);
