@@ -195,7 +195,7 @@ int detect_myth( struct ccx_demuxer *ctx )
 {
 	int vbi_blocks=0;
 	// VBI data? if yes, use myth loop
-	// STARTBTYTESLENGTH is 1MB, if the file is shorter we will never detect
+	// STARTBYTESLENGTH is 1MB, if the file is shorter we will never detect
 	// it as a mythTV file
 	if (ctx->startbytes_avail==STARTBYTESLENGTH)
 	{
@@ -423,7 +423,7 @@ ccx_stream_mp4_box ccx_stream_mp4_boxes[16] = {
 		{ "pdin", 1 }, // Progressive download information
 		{ "moov", 5 }, // Container for all metadata*
 		{ "moof", 4 }, // Movie fragment
-		{ "mfra", 3 }, // Movie fragment random access
+		{ "mfra", 1 }, // Movie fragment random access
 		{ "mdat", 2 }, // Media data container
 		{ "free", 1 }, // Free space
 		{ "skip", 1 }, // Free space
