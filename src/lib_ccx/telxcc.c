@@ -52,7 +52,7 @@ typedef struct {
 	uint64_t show_timestamp; // show at timestamp (in ms)
 	uint64_t hide_timestamp; // hide at timestamp (in ms)
 	uint16_t text[25][40]; // 25 lines x 40 cols (1 screen/page) of wide chars
-	uint8_t g2_char_present[25][40]; // 0- Supplementary G2 character set NOT used at this position 1-Supplementary G2 character set NOT used at this position
+	uint8_t g2_char_present[25][40]; // 0- Supplementary G2 character set NOT used at this position 1-Supplementary G2 character set used at this position
 	uint8_t tainted; // 1 = text variable contains any data
 } teletext_page_t;
 
@@ -1079,6 +1079,18 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 					ctx->page_buffer.text[x26_row][x26_col] = G2[0][data - 0x20];
 					ctx->page_buffer.g2_char_present[x26_row][x26_col] = 1;
 				}
+			}
+
+			// ETS 300 706 v1.2.1, chapter 12.3.4, Table 29: G0 character without diacritical mark (display '@' instead of '*')
+			if ((mode == 0x10) && (row_address_group == NO))
+			{
+				x26_col = address;
+				if (data == 64) // check for @ symbol
+				{
+					remap_g0_charset(0);
+					ctx->page_buffer.text[x26_row][x26_col] = 0x40;
+				}
+
 			}
 
 			// ETS 300 706, chapter 12.3.1, table 27: G0 character with diacritical mark
