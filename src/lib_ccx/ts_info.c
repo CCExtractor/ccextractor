@@ -103,24 +103,24 @@ int get_best_stream(struct ccx_demuxer *ctx)
 
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
-		if(iter->codec == CCX_CODEC_TELETEXT)
+		if(iter->codec == CCX_CODEC_TELETEXT && ctx->PIDs_seen[iter->pid] == 2)
 			return iter->pid;
 	}
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
-		if(iter->codec == CCX_CODEC_DVB)
-			return iter->pid;
-	}
-
-	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
-	{
-		if(iter->codec == CCX_CODEC_ISDB_CC)
+		if(iter->codec == CCX_CODEC_DVB && ctx->PIDs_seen[iter->pid] == 2)
 			return iter->pid;
 	}
 
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
-		if(iter->codec == CCX_CODEC_ATSC_CC)
+		if(iter->codec == CCX_CODEC_ISDB_CC && ctx->PIDs_seen[iter->pid] == 2)
+			return iter->pid;
+	}
+
+	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
+	{
+		if(iter->codec == CCX_CODEC_ATSC_CC && ctx->PIDs_seen[iter->pid] == 2)
 			return iter->pid;
 	}
 
