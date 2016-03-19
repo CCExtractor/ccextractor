@@ -811,11 +811,11 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				}
 				else
 				{
-					// Temporary fix if global timestamp not inited
+					// Fix if global timestamp not inited
 					tstamp = get_fts(dec_ctx->timing, dec_ctx->current_field);
 				}
 				isdb_set_global_time(dec_ctx, tstamp);
-            }
+			}
 
 			ret = process_data(enc_ctx, dec_ctx, data_node);
 			if( ret != CCX_OK)
@@ -887,7 +887,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
 		// Flush remaining HD captions
 		if (dec_ctx->has_ccdata_buffered)
-                	process_hdcc(dec_ctx, &dec_ctx->dec_sub);
+					process_hdcc(dec_ctx, &dec_ctx->dec_sub);
 	}
 
 	delete_datalist(datalist);

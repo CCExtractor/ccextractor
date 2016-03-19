@@ -577,19 +577,19 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 
 			if (context->transcript_settings->showStartTime)
 			{
-				char buf1[80];
+				char buf[80];
 				if (context->transcript_settings->relativeTimestamp)
 				{
-					millis_to_date(start_time + context->subs_delay, buf1, context->date_format, context->millis_separator);
-					fdprintf(context->out->fh, "%s|", buf1);
+					millis_to_date(start_time + context->subs_delay, buf, context->date_format, context->millis_separator);
+					fdprintf(context->out->fh, "%s|", buf);
 				}
 				else
 				{
 					time_t start_time_int = (start_time + context->subs_delay) / 1000;
 					int start_time_dec = (start_time + context->subs_delay) % 1000;
 					struct tm *start_time_struct = gmtime(&start_time_int);
-					strftime(buf1, sizeof(buf1), "%Y%m%d%H%M%S", start_time_struct);
-					fdprintf(context->out->fh, "%s%c%03d|", buf1, context->millis_separator, start_time_dec);
+					strftime(buf, sizeof(buf), "%Y%m%d%H%M%S", start_time_struct);
+					fdprintf(context->out->fh, "%s%c%03d|", buf, context->millis_separator, start_time_dec);
 				}
 			}
 
