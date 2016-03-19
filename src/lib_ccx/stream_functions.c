@@ -94,7 +94,7 @@ void detect_stream_type (struct ccx_demuxer *ctx)
 				idx++;
 			}
 		}
-		if (boxScore > 1)
+		if (boxScore > 7) // will check again for mp4 with boxscore > 1 after checking for all other file types
 		{
 			// We had at least one box (or multiple) at the end to "claim" this is MP4. A single valid box at the end is doubtful...
 			ctx->stream_mode = CCX_SM_MP4;
@@ -186,6 +186,39 @@ void detect_stream_type (struct ccx_demuxer *ctx)
 			ctx->stream_mode=CCX_SM_ELEMENTARY_OR_NOT_FOUND;
 		}
 	}
+	if ((ctx->stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND || ccx_options.print_file_reports)
+			&& ctx->startbytes_avail >= 4) // Still not found check for mp4 again
+	{	
+		printf("Checking if file is mp4 again\n");
+		size_t idx = 0, nextBoxLocation = 0;
+		int boxScore = 0;
+		// Scan the buffer for valid succeeding MP4 boxes.
+		while (idx < ctx->startbytes_avail - 8){
+			// Check if we have a valid box
+			if (isValidMP4Box(ctx->startbytes, idx, &nextBoxLocation, &boxScore))
+			{
+				idx = nextBoxLocation; // If the box is valid, a new box should be found on the next location... Not somewhere in between.
+				if (boxScore > 7)
+				{
+					break;
+				}
+				continue;
+			}
+			else
+			{
+				// Not a valid box, reset score. We need a couple of successive boxes to identify a MP4 file.
+				boxScore = 0;
+				idx++;
+			}
+		}
+		if (boxScore > 1)
+		{
+			// We had at least one box (or multiple) at the end to "claim" this is MP4. A single valid box at the end is doubtful...
+			ctx->stream_mode = CCX_SM_MP4;
+		}
+	}
+	
+
 	// Don't use STARTBYTESLENGTH. It might be longer than the file length!
 	return_to_buffer (ctx, ctx->startbytes, ctx->startbytes_avail);
 }
