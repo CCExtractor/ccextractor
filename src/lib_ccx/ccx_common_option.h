@@ -36,6 +36,7 @@ struct encoder_cfg
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 	int keep_output_closed;
 	int force_flush; // Force flush on content write
+	int ucla; // 1 if -UCLA used, 0 if not
 	
 	enum ccx_encoding_type encoding;
 	enum ccx_output_date_format date_format;
@@ -115,6 +116,7 @@ struct ccx_s_options // Options from user parameters
 	int xmltvonlycurrent; // 0 off 1 on
 	int keep_output_closed;
 	int force_flush; // Force flush on content write
+	int ucla; // 1 if UCLA used, 0 if not
 
 	ccx_encoders_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
 	enum ccx_output_date_format date_format;
