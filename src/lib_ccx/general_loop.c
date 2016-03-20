@@ -801,12 +801,21 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				set_fts(dec_ctx->timing);
 			}
 
-			if( data_node->bufferdatatype == CCX_ISDB_SUBTITLE && ctx->demux_ctx->global_timestamp_inited)
+			if( data_node->bufferdatatype == CCX_ISDB_SUBTITLE)
 			{
-				uint64_t tstamp = ( ctx->demux_ctx->global_timestamp + ctx->demux_ctx->offset_global_timestamp )
-							- ctx->demux_ctx->min_global_timestamp;
+				uint64_t tstamp;
+				if(ctx->demux_ctx->global_timestamp_inited)
+				{
+					tstamp = ( ctx->demux_ctx->global_timestamp + ctx->demux_ctx->offset_global_timestamp )
+								- ctx->demux_ctx->min_global_timestamp;
+				}
+				else
+				{
+					// Fix if global timestamp not inited
+					tstamp = get_fts(dec_ctx->timing, dec_ctx->current_field);
+				}
 				isdb_set_global_time(dec_ctx, tstamp);
-                        }
+			}
 
 			ret = process_data(enc_ctx, dec_ctx, data_node);
 			if( ret != CCX_OK)
@@ -878,7 +887,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
 		// Flush remaining HD captions
 		if (dec_ctx->has_ccdata_buffered)
-                	process_hdcc(dec_ctx, &dec_ctx->dec_sub);
+					process_hdcc(dec_ctx, &dec_ctx->dec_sub);
 	}
 
 	delete_datalist(datalist);

@@ -598,7 +598,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 				char buf[80];
 				if (context->transcript_settings->relativeTimestamp)
 				{
-					millis_to_date(end_time, buf, context->date_format, context->millis_separator);
+					millis_to_date(end_time + context->subs_delay, buf, context->date_format, context->millis_separator);
 					fdprintf(context->out->fh, "%s|", buf);
 				}
 				else
@@ -616,7 +616,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 				if(context->in_fileformat == 1)
 					//TODO, data->my_field == 1 ? data->channel : data->channel + 2); // Data from field 2 is CC3 or 4
 					fdprintf(context->out->fh, "CC?|");
-				else
+				else if (!context->ucla)
 					fdprintf(context->out->fh, sub->info);
 			}
 			if (context->transcript_settings->showMode)
@@ -1067,6 +1067,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	ctx->nb_out = nb_lang;
 	ctx->keep_output_closed = cfg->keep_output_closed;
 	ctx->force_flush = cfg->force_flush;
+	ctx->ucla = cfg->ucla;
 
 	if(cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE)
 	{
@@ -1256,6 +1257,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->extract = opt->extract;
 	ctx->keep_output_closed = opt->keep_output_closed;
 	ctx->force_flush = opt->force_flush;
+	ctx->ucla = opt->ucla;
 
 	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);
 	if(!ctx->subline)
