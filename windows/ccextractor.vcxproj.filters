@@ -282,6 +282,9 @@
     <ClInclude Include="..\src\zvbi\sliced.h">
       <Filter>Header Files\zvbi</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\zvbi\zvbi_decoder.h">
+      <Filter>Header Files\zvbi</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\ccextractor.c">
