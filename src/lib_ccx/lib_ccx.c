@@ -139,6 +139,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	if (ret < 0) {
 		goto end;
 	}
+	ctx->extension = get_file_extension(opt->write_format);
 
 	ctx->subs_delay = opt->subs_delay;
 
