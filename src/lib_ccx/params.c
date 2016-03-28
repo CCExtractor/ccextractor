@@ -1345,6 +1345,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-xdsdebug")==0)
 		{
+			opt->transcript_settings.xds = 1;
 			opt->debug_mask |= CCX_DMT_DECODER_XDS;
 			continue;
 		}
