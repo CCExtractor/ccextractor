@@ -341,16 +341,15 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 	ctx->anchor_seq_number = -1;
 	// Init XDS buffers
-	int xds_write_to_file;
 	if(setting->output_format==CCX_OF_TRANSCRIPT)
 	{
-		xds_write_to_file = 1;
+		setting->xds_write_to_file = 1;
 	}
 	else
 	{
-		xds_write_to_file = 0;
+		setting->xds_write_to_file = 0;
 	}
-	ctx->xds_ctx = ccx_decoders_xds_init_library(ctx->timing, xds_write_to_file);
+	ctx->xds_ctx = ccx_decoders_xds_init_library(ctx->timing, setting->xds_write_to_file);
 
 	ctx->vbi_decoder = NULL;
 	return ctx;
