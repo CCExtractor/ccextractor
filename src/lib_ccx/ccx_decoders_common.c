@@ -341,11 +341,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 	ctx->anchor_seq_number = -1;
 	// Init XDS buffers
-	if(setting->output_format==CCX_OF_TRANSCRIPT)
-	{
-		setting->xds_write_to_file = 1;
-	}
-	else
+	if(setting->output_format!=CCX_OF_TRANSCRIPT)
 	{
 		setting->xds_write_to_file = 0;
 	}
