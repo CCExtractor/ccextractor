@@ -31,16 +31,8 @@ static struct ccx_decoders_common_settings_t *init_decoder_setting(
 	setting->cc_channel = opt->cc_channel;
 	setting->send_to_srv = opt->send_to_srv;
 	setting->hauppauge_mode = opt->hauppauge_mode;
-	/* if in transcript setting xds is not selected then set ignore xds flag */
-	if(opt->write_format == CCX_OF_TRANSCRIPT)
-	{
-		setting->ignore_xds = !opt->transcript_settings.xds;
-	}
-	else
-	{
-		// Ignoring XDS for all formats except transcripts
-		setting->ignore_xds = 1;
-	}
+	setting->xds_write_to_file = opt->transcript_settings.xds;
+	
 	return setting;
 }
 static void dinit_decoder_setting (struct ccx_decoders_common_settings_t **setting)
