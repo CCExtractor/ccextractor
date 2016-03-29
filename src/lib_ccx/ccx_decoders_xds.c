@@ -116,9 +116,11 @@ typedef struct ccx_decoders_xds_context
 	int cur_xds_packet_type;
 	struct ccx_common_timing_ctx *timing;
 
+	int xds_write_to_file; // Set to 1 if XDS data is to be written to file
+
 } ccx_decoders_xds_context_t;
 
-struct ccx_decoders_xds_context *ccx_decoders_xds_init_library(struct ccx_common_timing_ctx *timing)
+struct ccx_decoders_xds_context *ccx_decoders_xds_init_library(struct ccx_common_timing_ctx *timing, int xds_write_to_file)
 {
 	int i;
 	struct ccx_decoders_xds_context *ctx = NULL;
@@ -158,6 +160,8 @@ struct ccx_decoders_xds_context *ccx_decoders_xds_init_library(struct ccx_common
 	ctx->cur_xds_packet_type	= 0;
 	ctx->timing = timing;
 
+	ctx->xds_write_to_file = xds_write_to_file;
+
 	return ctx;
 }
 
@@ -193,6 +197,8 @@ int write_xds_string(struct cc_subtitle *sub, struct ccx_decoders_xds_context *c
 
 void xdsprint (struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, const char *fmt,...)
 {
+	if(!ctx->xds_write_to_file)
+		return;
 	/* Guess we need no more than 100 bytes. */
 	int n, size = 100;
 	char *p, *np;
