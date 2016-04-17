@@ -888,6 +888,12 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		// Flush remaining HD captions
 		if (dec_ctx->has_ccdata_buffered)
 					process_hdcc(dec_ctx, &dec_ctx->dec_sub);
+		
+	mprint ("\nNumber of NAL_type_7: %ld\n",dec_ctx->avc_ctx->num_nal_unit_type_7);
+	mprint ("Number of VCL_HRD: %ld\n",dec_ctx->avc_ctx->num_vcl_hrd);
+	mprint ("Number of NAL HRD: %ld\n",dec_ctx->avc_ctx->num_nal_hrd);
+	mprint ("Number of jump-in-frames: %ld\n",dec_ctx->avc_ctx->num_jump_in_frames);
+	mprint ("Number of num_unexpected_sei_length: %ld", dec_ctx->avc_ctx->num_unexpected_sei_length);
 	}
 
 	delete_datalist(datalist);
