@@ -100,29 +100,53 @@ void ignore_other_sib_stream(struct cap_info* head, int pid)
 int get_best_stream(struct ccx_demuxer *ctx)
 {
 	struct cap_info* iter;
+	int max_PIDs_seen=-1;
+	int iter_pid=0;
 
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		if(iter->codec == CCX_CODEC_TELETEXT)
-			return iter->pid;
+		{	if(max_PIDs_seen<ctx->PIDs_seen[iter->pid])
+			{	
+				max_PIDs_seen=ctx->PIDs_seen[iter->pid];
+				iter_pid=iter->pid;
+			}
+		}
 	}
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		if(iter->codec == CCX_CODEC_DVB)
-			return iter->pid;
+		{	if(max_PIDs_seen<ctx->PIDs_seen[iter->pid])
+			{	
+				max_PIDs_seen=ctx->PIDs_seen[iter->pid];
+				iter_pid=iter->pid;
+			}
+		}
 	}
 
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		if(iter->codec == CCX_CODEC_ISDB_CC)
-			return iter->pid;
+		{	if(max_PIDs_seen<ctx->PIDs_seen[iter->pid])
+			{	
+				max_PIDs_seen=ctx->PIDs_seen[iter->pid];
+				iter_pid=iter->pid;
+			}
+		}
 	}
 
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		if(iter->codec == CCX_CODEC_ATSC_CC)
-			return iter->pid;
+		{	if(max_PIDs_seen<ctx->PIDs_seen[iter->pid])
+			{	
+				max_PIDs_seen=ctx->PIDs_seen[iter->pid];
+				iter_pid=iter->pid;
+			}
+		}
 	}
+	if(iter->pid==0 && iter_pid!=0)
+		return iter_pid;
 
 	return -1;
 }
