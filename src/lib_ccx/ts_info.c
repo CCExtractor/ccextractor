@@ -112,6 +112,8 @@ int get_best_stream(struct ccx_demuxer *ctx)
 				iter_pid=iter->pid;
 			}
 		}
+		if( (list_entry(iter->all_stream.next, struct cap_info, all_stream))->pid==0 && iter_pid!=0)
+			return iter_pid;
 	}
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
@@ -122,6 +124,8 @@ int get_best_stream(struct ccx_demuxer *ctx)
 				iter_pid=iter->pid;
 			}
 		}
+		if( (list_entry(iter->all_stream.next, struct cap_info, all_stream))->pid==0 && iter_pid!=0)
+			return iter_pid;
 	}
 
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
@@ -133,6 +137,8 @@ int get_best_stream(struct ccx_demuxer *ctx)
 				iter_pid=iter->pid;
 			}
 		}
+		if( (list_entry(iter->all_stream.next, struct cap_info, all_stream))->pid==0 && iter_pid!=0)
+			return iter_pid;
 	}
 
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
@@ -144,9 +150,10 @@ int get_best_stream(struct ccx_demuxer *ctx)
 				iter_pid=iter->pid;
 			}
 		}
+		if( (list_entry(iter->all_stream.next, struct cap_info, all_stream))->pid==0 && iter_pid!=0)
+			return iter_pid;
 	}
-	if(iter->pid==0 && iter_pid!=0)
-		return iter_pid;
+	
 
 	return -1;
 }
