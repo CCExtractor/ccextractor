@@ -716,12 +716,11 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 				/* CEA-608-B: The starting line is computed by adding 22 to the decimal number
 				   represented by bits S0 to S5. The ending line is computing by substracting
 				   the decimal number represented by bits E0 to E5 from 262 */
-
 				ar_start = (ctx->cur_xds_payload[2] & 0x1F) + 22;
 				ar_end = 262 - (ctx->cur_xds_payload[3] & 0x1F);
 				unsigned active_picture_height = ar_end - ar_start;
 				float aspect_ratio = (float) 320 / active_picture_height;
-				
+
 				if (ar_start != ctx->current_ar_start)
 				{	
 					ctx->current_ar_start = ar_start;
@@ -736,7 +735,6 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 					ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS Notice: Aspect ratio info, active picture height=%u, ratio=%f\n", active_picture_height, aspect_ratio);
 				}
 
-				
 			}
 		case XDS_TYPE_PROGRAM_DESC_1:
 		case XDS_TYPE_PROGRAM_DESC_2:
