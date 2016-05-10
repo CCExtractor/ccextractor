@@ -721,9 +721,7 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 				ar_end = 262 - (ctx->cur_xds_payload[3] & 0x1F);
 				unsigned active_picture_height = ar_end - ar_start;
 				float aspect_ratio = (float) 320 / active_picture_height;
-
-				/* ctx->current_ar_start */
-
+				
 				if (ar_start != ctx->current_ar_start)
 				{	
 					ctx->current_ar_start = ar_start;
