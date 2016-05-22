@@ -298,6 +298,8 @@ void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned 
  */
 size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t bytes)
 {
+	size_t origin_bytes_length = bytes;
+	size_t file_size;
 	size_t copied   = 0;
 	time_t seconds = 0;
 
@@ -310,6 +312,9 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 	{
 		// Needs to return data from filebuffer_start+pos to filebuffer_start+pos+bytes-1;
 		int eof = (ctx->infd == -1);
+		if (!eof) {
+			file_size = getfilesize(ctx->infd);
+		}
 
 		while ((!eof || ccx_options.live_stream) && bytes)
 		{
@@ -390,7 +395,7 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 				{
 					/* If live stream, don't try to switch - acknowledge eof here as it won't
 					   cause a loop end */
-					if (ccx_options.live_stream || !(ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied)))
+					if (ccx_options.live_stream || file_size <= origin_bytes_length || !(ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied)))
 						eof = 1;
 				}
 				ctx->filebuffer_pos = keep;
