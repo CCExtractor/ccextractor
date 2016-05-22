@@ -5,6 +5,8 @@
 #include "ccx_encoders_helpers.h"
 #include "ccx_common_common.h"
 #include "ccx_decoders_708.h"
+#include "compile_info.h"
+#include "../lib_hash/sha2.h"
 
 static int inputfile_capacity=0;
 
@@ -718,6 +720,44 @@ void usage (void)
 	mprint("    ...\n");
 }
 
+char *calculateSHA256(char *location) {
+	int		kl, l, fd, ac;
+	int		quiet = 0, hash = 0;
+	char		*av, *file = (char*)0;
+	FILE		*fh = (FILE*)0;
+	SHA256_CTX	ctx256;
+	unsigned char	buf[16384];
+
+	SHA256_Init(&ctx256);
+
+	#ifdef _WIN32
+		fh = OPEN(location, O_RDONLY | O_BINARY);
+	#else
+		fh = OPEN(location, O_RDONLY);
+	#endif
+
+	if (fh < 0) {
+		return "Could not open file";
+	}
+	kl = 0;
+	while ((l = read(fh, buf, 16384)) > 0) {
+		kl += l;
+		SHA256_Update(&ctx256, (unsigned char*)buf, l);
+	}
+	close(fh);
+	SHA256_End(&ctx256, buf);
+	return buf;
+}
+
+void version(char *location) {
+	char *hash = calculateSHA256(location);
+	mprint("CCExtractor detailed version info\n");
+	mprint("	Version: %s\n", VERSION);
+	mprint("	Git commit: %s\n", GIT_COMMIT);
+	mprint("	Compilation date: %s\n", COMPILE_DATE);
+	mprint("	File SHA256: %s\n", hash);
+}
+
 void parse_708_services (struct ccx_s_options *opts, char *s)
 {
 	const char *all = "all";
@@ -840,6 +880,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (!strcmp (argv[i],"--help") || !strcmp(argv[i], "-h"))
 		{
 			usage();
+			return EXIT_WITH_HELP;
+		}
+		if (!strcmp(argv[i], "--version"))
+		{
+			version(argv[0]);
 			return EXIT_WITH_HELP;
 		}
 		if (strcmp (argv[i], "-")==0 || strcmp(argv[i], "-stdin") == 0)
