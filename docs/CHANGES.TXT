@@ -1,3 +1,29 @@
+- Fix: Correcting display of sub mode and info in transcripts
+- Fix: Teletext page number displayed in -UCLA
+- Fix: Removal of excessive XDS notices about aspect ratio info
+
+0.80 (2016-04-24)
+-----------------
+- Fix: "Premature end of file" (one of the scenarios)
+- Fix: XDS data is always parsed again (needed to extract information such as program name)
+- Fix: Teletext parsing: @ was incorrectly exported as * - X/26 packet specifications in ETS 300 706 v1.2.1 now better followed
+- Fix: Teletext parsing: Latin G2 subsets and accented characters not displaying properly
+- Fix: Timing in -ucla
+- Fix: Timing in ISDB (some instances)
+- Fix: "mfra" mp4 box weight changed to 1 (this helps with correct file format detection)
+- Fix: Fix for TARGET File is null. 
+- Fix: Fixed SegFaults while parsing parameters (if mandatory parameter is not present in -outinterval, -codec or -nocodec)
+- Fix: Crash when input small is too small
+- Fix: Update some URLs in code (references to docs)
+- Fix: -delay now updates final timestamp in ISDB, too
+- Fix: Removed minor compiler warnings
+- Fix: Visual Studio solution files working again
+- Fix: ffmpeg integration working again
+- New: Added --forceflush (-ff). If used, output file descriptors will be flushed immediately after being written to
+- New: Hexdump XDS packets that we cannot parse (shouldn't be many of those anyway)
+- New: If input file cannot be open, provide a decent human readable explanation
+- New: GXF support
+
 0.79 (2016-01-09)
 -----------------
 - Support for Grid Format (g608)

@@ -621,10 +621,10 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 			}
 			if (context->transcript_settings->showMode)
 			{
-				if(strcmp(sub->mode,"TLT") != 0)
-					fdprintf(context->out->fh, "%s|", sub->mode);
-				else
+				if(context->ucla && strcmp(sub->mode,"TLT") == 0)
 					fdprintf(context->out->fh, "|");
+				else
+					fdprintf(context->out->fh, "%s|", sub->mode);
 			}
 			ret = write(context->out->fh, context->subline, length);
 			if(ret < length)
