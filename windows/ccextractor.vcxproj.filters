@@ -55,6 +55,21 @@
     <Filter Include="Header Files\zvbi">
       <UniqueIdentifier>{288f48c3-470a-45ad-a70a-8f062c51aeb1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\lib_hash">
+      <UniqueIdentifier>{140e6ccb-2042-4ecc-9cba-42a04a5b0803}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\lib_hash">
+      <UniqueIdentifier>{dcb7e1ec-51eb-4f69-93db-b10133e98402}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\win_spec_incld">
+      <UniqueIdentifier>{de4fb954-0fd9-407a-8803-4dec4640296b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\win_iconv">
+      <UniqueIdentifier>{1870287a-d318-4ef0-9bd1-11c965a1474c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\win_iconv">
+      <UniqueIdentifier>{964b0a18-918d-4b08-ba92-5a84e3c48b43}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\gpacmp4\gpac\avparse.h">
@@ -183,12 +198,6 @@
     <ClInclude Include="..\src\lib_ccx\disable_warnings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\inttypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\stdint.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_common_char_encoding.h">
       <Filter>Header Files\ccx_common</Filter>
     </ClInclude>
@@ -284,6 +293,24 @@
     </ClInclude>
     <ClInclude Include="..\src\zvbi\zvbi_decoder.h">
       <Filter>Header Files\zvbi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\compile_info.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_hash\sha2.h">
+      <Filter>Header Files\lib_hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\win_spec_incld\stdint.h">
+      <Filter>Header Files\win_spec_incld</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\win_spec_incld\inttypes.h">
+      <Filter>Header Files\win_spec_incld</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\win_spec_incld\dirent.h">
+      <Filter>Header Files\win_spec_incld</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\win_iconv\iconv.h">
+      <Filter>Header Files\win_iconv</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -611,9 +638,6 @@
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_708_output.c">
       <Filter>Source Files\ccx_decoders</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\win_iconv\win_iconv.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_708_encoding.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -667,6 +691,12 @@
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_g608.c">
       <Filter>Source Files\ccx_decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_hash\sha2.c">
+      <Filter>Source Files\lib_hash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\win_iconv\win_iconv.c">
+      <Filter>Source Files\win_iconv</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
