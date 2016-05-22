@@ -44,7 +44,7 @@ OBJS_ZLIB = $(SRCS_ZLIB:$(SRCS_ZLIB_DIR)/%.c=$(OBJS_DIR)/%.o)
 
 SRCS_HASH_DIR = $(SRCS_DIR)/lib_hash
 SRCS_HASH = $(wildcard $(SRCS_HASH_DIR)/*.c)
-OBJS_HASH = $(SRCS_ZLIB:$(SRCS_HASH_DIR)/%.c=$(OBJS_DIR)/%.o)
+OBJS_HASH = $(SRCS_HASH:$(SRCS_HASH_DIR)/%.c=$(OBJS_DIR)/%.o)
 
 INSTLALL = cp -f -p
 INSTLALL_PROGRAM = $(INSTLALL)
@@ -87,7 +87,7 @@ LDFLAGS+= $(shell pkg-config --libs libavutil )
 endif
 
 .PHONY: all
-all: objs_dir $(TARGET) 
+all: pre-build objs_dir $(TARGET) 
 
 .PHONY: objs_dir
 objs_dir: 
@@ -125,5 +125,9 @@ depend dep:
 	$(CC) $(CFLAGS) $(INCLUDE) -E -MM $(SRCS_C) $(SRCS_PNG) $(SRCS_ZVBI) $(SRCS_ZLIB) $(SRCS_HASH) $(SRCS_CCX) \
 		$(SRCS_GPACMP4_C) $(SRCS_GPACMP4_CPP) |\
 		sed 's/^[a-zA-Z_0-9]*.o/$(OBJS_DIR)\/&/' > .depend
+
+.PHONY: pre-build
+pre-build:
+	./pre-build.sh
 
 -include .depend

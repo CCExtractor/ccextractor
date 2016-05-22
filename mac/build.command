@@ -11,6 +11,7 @@ SRC_LIB_HASH="$(find ../src/lib_hash -name '*.c')"
 BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZVBI $SRC_ZLIB $SRC_LIBPNG $SRC_LIB_HASH"
 BLD_LINKER="-lm -liconv"
 
+./pre-build.sh
 gcc $BLD_FLAGS $BLD_INCLUDE -o ccextractor $BLD_SOURCES $BLD_LINKER
 
 
