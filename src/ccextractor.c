@@ -270,7 +270,7 @@ int main(int argc, char *argv[])
 				+(LLONG) ((dec_ctx->frames_since_last_gop)*1000/29.97)) );
 		}
 
-/*		if (dec_ctx->false_pict_header)
+		if (dec_ctx->false_pict_header)
 			mprint ("\nNumber of likely false picture headers (discarded): %d\n",dec_ctx->false_pict_header);
 
 		if (dec_ctx->stat_numuserheaders)
@@ -294,7 +294,7 @@ int main(int argc, char *argv[])
 			mprint("\n\nNOTE! The CEA 608 / Divicom standard encoding for closed\n");
 			mprint("caption is not well understood!\n\n");
 			mprint("Please submit samples to the developers.\n\n\n");
-		}*/
+		}
 
 		}
 

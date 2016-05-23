@@ -24,7 +24,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 	}
 
 	// Do something
-	//ctx->stat_numuserheaders++;
+	ctx->stat_numuserheaders++;
 	//header+=4;
 
 	unsigned char *ud_header = next_bytes(ustream, 4);
@@ -39,7 +39,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 	// <http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/SCC_FORMAT.HTML>
 	if ( !memcmp(ud_header,"\x43\x43", 2 ) )
 	{
-//		ctx->stat_dvdccheaders++;
+		ctx->stat_dvdccheaders++;
 
 		// Probably unneeded, but keep looking for extra caption blocks
 		int maybeextracb = 1;
@@ -145,7 +145,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 		{
 			unsigned char cc_data[3*31+1]; // Maximum cc_count is 31
 
-//			ctx->stat_scte20ccheaders++;
+			ctx->stat_scte20ccheaders++;
 			read_bytes(ustream, 2); // "03 01"
 
 			unsigned cc_count = (unsigned int) read_bits(ustream,5);
@@ -206,12 +206,12 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 			&& ud_header[1] == 0x02 )
 	{
 		unsigned char data[3];
-#if 0
+
 		if (ud_header[0]==0xbb)
 			ctx->stat_replay4000headers++;
 		else
 			ctx->stat_replay5000headers++;
-#endif
+
 
 		read_bytes(ustream, 2); // "BB 02" or "99 02"
 		data[0]=0x05; // Field 2
@@ -227,7 +227,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 	// HDTV - see A/53 Part 4 (Video)
 	else if ( !memcmp(ud_header,"\x47\x41\x39\x34", 4 ) )
 	{
-//		ctx->stat_hdtv++;
+		ctx->stat_hdtv++;
 
 		read_bytes(ustream, 4); // "47 41 39 34"
 
@@ -288,7 +288,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 
 		dbg_print(CCX_DMT_VERBOSE, "Reading Dish Network user data\n");
 
-//		ctx->stat_dishheaders++;
+		ctx->stat_dishheaders++;
 
 		read_bytes(ustream, 2); // "05 02"
 
@@ -453,7 +453,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 	else if ( !memcmp(ud_header,"\x02\x09", 2 ) )
 	{
 		// Either a documentation or more examples are needed.
-//		ctx->stat_divicom++;
+		ctx->stat_divicom++;
 
 		unsigned char data[3];
 
