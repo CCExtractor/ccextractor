@@ -928,7 +928,6 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 		default:
 			if (ctx->sentence_cap)
 				telx_case_fix(ctx);
-			printf("%s\n", ctx->page_buffer_cur);
 			add_cc_sub_text(sub, ctx->page_buffer_cur, page->show_timestamp,
 				page->hide_timestamp + 1, NULL, "TLT", CCX_ENC_UTF_8);
 	}
