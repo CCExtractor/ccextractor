@@ -248,7 +248,7 @@ void m_signal(int sig, void (*func)(int));
 void buffered_seek (struct ccx_demuxer *ctx, int offset);
 extern void build_parity_table(void);
 
-int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub);
+int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub, int sentence_cap);
 void* telxcc_init(void);
 void telxcc_close(void **ctx, struct cc_subtitle *sub);
 void tlt_read_rcwt(void *codec, unsigned char *buf, struct cc_subtitle *sub);

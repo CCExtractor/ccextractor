@@ -73,6 +73,39 @@ void correct_case(int line_num, struct eia608_screen *data)
 	free(line);
 }
 
+void telx_correct_case(char *sub_line)
+{
+	char delim[64] = {
+		' ', '\n', '\r', 0x89, 0x99,
+		'!', '"', '#', '%', '&',
+		'\'', '(', ')', ';', '<',
+		'=', '>', '?', '[', '\\',
+		']', '*', '+', ',', '-',
+		'.', '/', ':', '^', '_',
+		'{', '|', '}', '~', '\0' };
+
+	char *line = strdup(((char*)sub_line));
+	char *oline = (char*)sub_line;
+	char *c = strtok(line, delim);
+	if (c == NULL)
+	{
+		free(line);
+		return;
+	}
+	do
+	{
+		char **index = bsearch(&c, spell_lower, spell_words, sizeof(*spell_lower), string_cmp);
+
+		if (index)
+		{
+			char *correct_c = *(spell_correct + (index - spell_lower));
+			size_t len = strlen(correct_c);
+			memcpy(oline + (c - line), correct_c, len);
+		}
+	} while ((c = strtok(NULL, delim)) != NULL);
+	free(line);
+}
+
 void capitalize(struct encoder_ctx *context, int line_num, struct eia608_screen *data)
 {
 	for (int i = 0; i < CCX_DECODER_608_SCREEN_WIDTH; i++)

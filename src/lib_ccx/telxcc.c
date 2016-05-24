@@ -34,6 +34,7 @@ Werner Brückner -- Teletext in digital television
 #include "teletext.h"
 #include <signal.h>
 #include "activity.h"
+#include "ccx_encoders_helpers.h"
 
 #ifdef __MINGW32__
 // switch stdin and all normal files into binary mode -- needed for Windows
@@ -125,6 +126,9 @@ struct TeletextCtx
 	uint8_t using_pts;
 	int64_t delta;
 	uint32_t t0;
+
+	int sentence_cap;//Set to 1 if -sc is passed
+	int new_sentence;
 };
 typedef enum
 {
@@ -589,6 +593,36 @@ uint16_t bcd_page_to_int (uint16_t bcd)
 	return ((bcd&0xf00)>>8)*100 + ((bcd&0xf0)>>4)*10 + (bcd&0xf);
 }
 
+void telx_case_fix (struct TeletextCtx *context)
+{
+	//Capitalizing first letter of every sentence
+	int line_len = strlen(context->page_buffer_cur);
+	for(int i = 0; i < line_len; i++)
+	{
+		switch(context->page_buffer_cur[i])
+		{
+			case ' ':
+			//case 0x89: // This is a transparent space
+			case '-':
+				break;
+			case '.': // Fallthrough
+			case '?': // Fallthrough
+			case '!':
+			case ':':
+				context->new_sentence = 1;
+				break;
+			default:
+				if (context->new_sentence)
+					context->page_buffer_cur[i] = cctoupper(context->page_buffer_cur[i]);
+				else
+					context->page_buffer_cur[i] = cctolower(context->page_buffer_cur[i]);
+				context->new_sentence = 0;
+				break;
+		}
+	}
+	telx_correct_case(context->page_buffer_cur);
+}
+
 void telxcc_dump_prev_page (struct TeletextCtx *ctx, struct cc_subtitle *sub)
 {
 	char info[4]; 
@@ -892,6 +926,9 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 			}
 			break;
 		default:
+			if (ctx->sentence_cap)
+				telx_case_fix(ctx);
+			printf("%s\n", ctx->page_buffer_cur);
 			add_cc_sub_text(sub, ctx->page_buffer_cur, page->show_timestamp,
 				page->hide_timestamp + 1, NULL, "TLT", CCX_ENC_UTF_8);
 	}
@@ -1282,7 +1319,7 @@ int tlt_print_seen_pages(struct lib_cc_decode *dec_ctx)
 	}
 	return CCX_OK;
 }
-int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub)
+int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub, int sentence_cap)
 {
 	uint64_t pes_prefix;
 	uint8_t pes_stream_id;
@@ -1292,6 +1329,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	uint32_t t = 0;
 	uint16_t i;
 	struct TeletextCtx *ctx = dec_ctx->private_data;
+	ctx->sentence_cap = sentence_cap;
 
 	if(!ctx)
 	{
@@ -1465,6 +1503,9 @@ void* telxcc_init(void)
 	ctx->using_pts = UNDEF;
 	ctx->delta = 0;
 	ctx->t0 = 0;
+
+	ctx->sentence_cap = 0;
+	ctx->new_sentence = 0;
 
 	return ctx;
 }
