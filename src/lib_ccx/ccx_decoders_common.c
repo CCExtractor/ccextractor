@@ -286,7 +286,17 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->has_ccdata_buffered = 0;
 	ctx->in_bufferdatatype = CCX_UNKNOWN;
 	ctx->frames_since_last_gop = 0;
-	
+
+	ctx->stat_numuserheaders    = 0;
+	ctx->stat_dvdccheaders      = 0;
+	ctx->stat_scte20ccheaders   = 0;
+	ctx->stat_replay5000headers = 0;
+	ctx->stat_replay4000headers = 0;
+	ctx->stat_dishheaders       = 0;
+	ctx->stat_hdtv              = 0;
+	ctx->stat_divicom           = 0;
+	ctx->false_pict_header = 0;
+
 	memcpy(&ctx->extraction_start, &setting->extraction_start,sizeof(struct ccx_boundary_time));
 	memcpy(&ctx->extraction_end, &setting->extraction_end,sizeof(struct ccx_boundary_time));
 

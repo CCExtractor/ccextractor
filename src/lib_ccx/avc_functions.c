@@ -78,6 +78,12 @@ struct avc_ctx *init_avc(void)
 
 	ctx->last_pic_order_cnt_lsb = -1;
 	ctx->last_slice_pts = -1;
+
+	ctx->num_nal_unit_type_7 = 0;
+	ctx->num_vcl_hrd = 0;
+	ctx->num_nal_hrd = 0;
+	ctx->num_jump_in_frames = 0;
+	ctx->num_unexpected_sei_length = 0;	
 	return ctx;
 }
 
