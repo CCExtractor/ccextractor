@@ -709,7 +709,7 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 		}
 	}
 }
-void general_loop(struct lib_ccx_ctx *ctx)
+void general_loop(struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx)
 {
 	struct lib_cc_decode *dec_ctx = NULL;
 	enum ccx_stream_mode_enum stream_mode;
@@ -734,7 +734,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				ret = general_getmoredata(ctx, &datalist);
 				break;
 			case CCX_SM_TRANSPORT:
-				ret = ts_getmoredata(ctx->demux_ctx, &datalist);
+				ret = ts_getmoredata(ctx->demux_ctx, epgctx, &datalist);
 				break;
 			case CCX_SM_PROGRAM:
 				ret = ps_getmoredata(ctx, &datalist);

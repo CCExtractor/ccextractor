@@ -193,7 +193,7 @@ void EPG_print_event(struct EPG_event *event, uint32_t channel, FILE *f)
 	fprintf(f, "  </program>\n");
 }
 
-void EPG_output_net(struct lib_ccx_ctx *ctx)
+void EPG_output_net(struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx)
 {
 	int i;
 	unsigned j;
@@ -215,9 +215,9 @@ void EPG_output_net(struct lib_ccx_ctx *ctx)
 	if (i == ctx->demux_ctx->nb_program)
 		return;
 
-	for (j = 0; j < ctx->eit_programs[i].array_len; j++)
+	for (j = 0; j < epgctx->eit_programs[i].array_len; j++)
 	{
-		event = &(ctx->eit_programs[i].epg_events[j]); 
+		event = &(epgctx->eit_programs[i].epg_events[j]); 
 		if (event->live_output == true)
 			continue;
 
@@ -239,15 +239,15 @@ void EPG_output_net(struct lib_ccx_ctx *ctx)
 
 // Creates fills and closes a new XMLTV file for live mode output.
 // File should include only events not previously output.
-void EPG_output_live(struct lib_ccx_ctx *ctx)
+void EPG_output_live(struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx)
 {
 	int c=false, i, j;
 	FILE *f;
 	char *filename, *finalfilename;
 	for(i=0; i < ctx->demux_ctx->nb_program; i++)
 	{
-		for(j=0; j<ctx->eit_programs[i].array_len; j++)
-			if(ctx->eit_programs[i].epg_events[j].live_output==false)
+		for(j=0; j<epgctx->eit_programs[i].array_len; j++)
+			if(epgctx->eit_programs[i].epg_events[j].live_output==false)
 			{
 				c=true;
 			}
@@ -256,7 +256,7 @@ void EPG_output_live(struct lib_ccx_ctx *ctx)
 		return;
 
 	filename = malloc(strlen(ctx->basefilename)+30);
-	sprintf(filename, "%s_%i.xml.part", ctx->basefilename, ctx->epg_last_live_output);
+	sprintf(filename, "%s_%i.xml.part", ctx->basefilename, epgctx->epg_last_live_output);
 	f = fopen(filename, "w");
 
 	fprintf(f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n\n<tv>\n");
@@ -268,11 +268,11 @@ void EPG_output_live(struct lib_ccx_ctx *ctx)
 	}
 	for(i=0; i < ctx->demux_ctx->nb_program; i++)
 	{
-		for(j=0; j<ctx->eit_programs[i].array_len; j++)
-			if(ctx->eit_programs[i].epg_events[j].live_output==false)
+		for(j=0; j<epgctx->eit_programs[i].array_len; j++)
+			if(epgctx->eit_programs[i].epg_events[j].live_output==false)
 			{
-				ctx->eit_programs[i].epg_events[j].live_output=true;
-				EPG_print_event(&ctx->eit_programs[i].epg_events[j], ctx->demux_ctx->pinfo[i].program_number, f);
+				epgctx->eit_programs[i].epg_events[j].live_output=true;
+				EPG_print_event(&epgctx->eit_programs[i].epg_events[j], ctx->demux_ctx->pinfo[i].program_number, f);
 			}
 	}
 	fprintf(f, "</tv>");
@@ -287,7 +287,7 @@ void EPG_output_live(struct lib_ccx_ctx *ctx)
 
 // Creates fills and closes a new XMLTV file for full output mode.
 // File should include all events in memory.
-void EPG_output(struct lib_ccx_ctx *ctx)
+void EPG_output(struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx)
 {
 	FILE *f;
 	char *filename;
@@ -323,23 +323,23 @@ void EPG_output(struct lib_ccx_ctx *ctx)
 	{ // print all events
 		for(i=0; i<ctx->demux_ctx->nb_program; i++)
 		{
-			for(j=0; j<ctx->eit_programs[i].array_len; j++)
-				EPG_print_event(&ctx->eit_programs[i].epg_events[j], ctx->demux_ctx->pinfo[i].program_number, f);
+			for(j=0; j<epgctx->eit_programs[i].array_len; j++)
+				EPG_print_event(&epgctx->eit_programs[i].epg_events[j], ctx->demux_ctx->pinfo[i].program_number, f);
 		}
 
 		if(ctx->demux_ctx->nb_program==0) //Stream has no PMT, fall back to unordered events
-			for(j=0; j<ctx->eit_programs[TS_PMT_MAP_SIZE].array_len; j++)
-				EPG_print_event(&ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j], ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j].service_id, f);
+			for(j=0; j<epgctx->eit_programs[TS_PMT_MAP_SIZE].array_len; j++)
+				EPG_print_event(&epgctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j], epgctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j].service_id, f);
 	}
 	else
 	{ // print current events only
 		for(i=0; i<ctx->demux_ctx->nb_program; i++)
 		{
-			ce = ctx->eit_current_events[i];
-			for(j=0; j<ctx->eit_programs[i].array_len; j++)
+			ce = epgctx->eit_current_events[i];
+			for(j=0; j<epgctx->eit_programs[i].array_len; j++)
 			{
-				if(ce==ctx->eit_programs[i].epg_events[j].id)
-					EPG_print_event(&ctx->eit_programs[i].epg_events[j], ctx->demux_ctx->pinfo[i].program_number, f);
+				if(ce==epgctx->eit_programs[i].epg_events[j].id)
+					EPG_print_event(&epgctx->eit_programs[i].epg_events[j], ctx->demux_ctx->pinfo[i].program_number, f);
 			}
 		}
 	}
@@ -374,29 +374,29 @@ int EPG_event_cmp(struct EPG_event *e1, struct EPG_event *e2)
 
 // Add given event to array of events.
 // Return FALSE if nothing changed, TRUE if this is a new or updated event.
-int EPG_add_event(struct lib_ccx_ctx *ctx, int32_t pmt_map, struct EPG_event *event)
+int EPG_add_event(struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx, int32_t pmt_map, struct EPG_event *event)
 {
 	int isnew=true, j;
 	
-	for(j=0; j<ctx->eit_programs[pmt_map].array_len; j++)
+	for(j=0; j<epgctx->eit_programs[pmt_map].array_len; j++)
 	{
-		if(ctx->eit_programs[pmt_map].epg_events[j].id==event->id)
+		if(epgctx->eit_programs[pmt_map].epg_events[j].id==event->id)
 		{
-			if(EPG_event_cmp(event, &ctx->eit_programs[pmt_map].epg_events[j]))
+			if(EPG_event_cmp(event, &epgctx->eit_programs[pmt_map].epg_events[j]))
 				return false; //event already in array, nothing to do
 			else
 			{ //event with this id is already in the array but something has changed. Update it.
-				event->count=ctx->eit_programs[pmt_map].epg_events[j].count;
-				EPG_free_event(&ctx->eit_programs[pmt_map].epg_events[j]);
-				memcpy(&ctx->eit_programs[pmt_map].epg_events[j], event, sizeof(struct EPG_event));
+				event->count=epgctx->eit_programs[pmt_map].epg_events[j].count;
+				EPG_free_event(&epgctx->eit_programs[pmt_map].epg_events[j]);
+				memcpy(&epgctx->eit_programs[pmt_map].epg_events[j], event, sizeof(struct EPG_event));
 				return true;
 			}
 		}
 	}
 	// id not in array. Add new event;
 	event->count=0;
-	memcpy(&ctx->eit_programs[pmt_map].epg_events[ctx->eit_programs[pmt_map].array_len], event, sizeof(struct EPG_event));
-	ctx->eit_programs[pmt_map].array_len++;
+	memcpy(&epgctx->eit_programs[pmt_map].epg_events[epgctx->eit_programs[pmt_map].array_len], event, sizeof(struct EPG_event));
+	epgctx->eit_programs[pmt_map].array_len++;
 	return true;
 }
 
@@ -758,7 +758,7 @@ void EPG_ATSC_decode_multiple_string(uint8_t *offset, uint32_t length, struct EP
 }
 
 // decode ATSC EIT table.
-void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_t size)
+void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx, uint8_t *payload_start, uint32_t size)
 {
 	uint8_t table_id;
 	struct EPG_event event;
@@ -782,7 +782,7 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 	event.live_output=false;
 	for (i = 0; i < ctx->demux_ctx->nb_program; i++)
 	{
-		if (ctx->demux_ctx->pinfo[i].program_number == ctx->ATSC_source_pg_map[source_id])
+		if (ctx->demux_ctx->pinfo[i].program_number == epgctx->ATSC_source_pg_map[source_id])
 			pmt_map=i;
 	}
 
@@ -822,16 +822,16 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 
 		descriptors_loop_length = ((offset[10+title_length] & 0x0f) << 8) | offset[10+title_length+1];
 		
-		hasnew |= EPG_add_event(ctx, pmt_map, &event);
+		hasnew |= EPG_add_event(ctx, epgctx, pmt_map, &event);
 		offset += 12 + descriptors_loop_length + title_length;
 	}
 	if((ccx_options.xmltv==1 || ccx_options.xmltv==3) && ccx_options.xmltvoutputinterval==0 && hasnew)
-		EPG_output(ctx);
+		EPG_output(ctx, epgctx);
 #undef CHECK_OFFSET
 }
 
 // decode ATSC VCT table.
-void EPG_ATSC_decode_VCT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_t size)
+void EPG_ATSC_decode_VCT(struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx, uint8_t *payload_start, uint32_t size)
 {
 	uint8_t table_id;
 	uint8_t num_channels_in_section;
@@ -861,12 +861,12 @@ void EPG_ATSC_decode_VCT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 
 		memcpy(short_name, &offset[0], 7*2);
 		offset += 32 + descriptors_loop_length;
-		ctx->ATSC_source_pg_map[source_id]=program_number;
+		epgctx->ATSC_source_pg_map[source_id]=program_number;
 	}
 }
 
 
-void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_t size)
+void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx, uint8_t *payload_start, uint32_t size)
 {
 
 	uint8_t table_id;
@@ -970,42 +970,42 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 		}
 		remaining = remaining - (descriptors_loop_length + 12);
 		offset = offset + descriptors_loop_length + 12;
-		hasnew |= EPG_add_event(ctx, pmt_map, &event);
+		hasnew |= EPG_add_event(ctx, epgctx, pmt_map, &event);
 
 		if(hasnew && section_number==0 && table_id==0x4e)
-			ctx->eit_current_events[pmt_map]=event.id;
+			epgctx->eit_current_events[pmt_map]=event.id;
 	}
 	
 	if((ccx_options.xmltv==1 || ccx_options.xmltv==3) && ccx_options.xmltvoutputinterval==0 && hasnew)
-		EPG_output(ctx);
+		EPG_output(ctx, epgctx);
 }
 	//handle outputing to xml files
-void EPG_handle_output(struct lib_ccx_ctx *ctx)
+void EPG_handle_output(struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx)
 {
 	int cur_sec = (int) ((ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp) / 1000);
 	if(ccx_options.xmltv==1 || ccx_options.xmltv==3)
 	{ //full outout
-		if(ccx_options.xmltvoutputinterval!=0 && cur_sec>ctx->epg_last_output+ccx_options.xmltvliveinterval)
+		if(ccx_options.xmltvoutputinterval!=0 && cur_sec>epgctx->epg_last_output+ccx_options.xmltvliveinterval)
 		{
-			ctx->epg_last_output=cur_sec;
-			EPG_output(ctx);
+			epgctx->epg_last_output=cur_sec;
+			EPG_output(ctx, epgctx);
 		}
 	}
 	if(ccx_options.xmltv==2 || ccx_options.xmltv==3 || ccx_options.send_to_srv)
 	{ //live output
-		if(cur_sec>ctx->epg_last_live_output+ccx_options.xmltvliveinterval)
+		if(cur_sec>epgctx->epg_last_live_output+ccx_options.xmltvliveinterval)
 		{
-			ctx->epg_last_live_output=cur_sec;
+			epgctx->epg_last_live_output=cur_sec;
 			if (ccx_options.send_to_srv)
-				EPG_output_net(ctx);
+				EPG_output_net(ctx, epgctx);
 			else
-				EPG_output_live(ctx);
+				EPG_output_live(ctx, epgctx);
 		}
 	}
 }
 
 //determin table type and call the correct function to handle it
-void EPG_parse_table(struct lib_ccx_ctx *ctx, uint8_t *b, uint32_t size)
+void EPG_parse_table(struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx, uint8_t *b, uint32_t size)
 {
 	uint8_t pointer_field = b[0];
 	uint8_t *payload_start;
@@ -1019,21 +1019,21 @@ void EPG_parse_table(struct lib_ccx_ctx *ctx, uint8_t *b, uint32_t size)
 	table_id = payload_start[0];
 	switch (table_id) {
 	case 0x0cb:
-		EPG_ATSC_decode_EIT(ctx, payload_start, size - (payload_start - b));
+		EPG_ATSC_decode_EIT(ctx, epgctx, payload_start, size - (payload_start - b));
 		break;
 	case 0xc8:
-		EPG_ATSC_decode_VCT(ctx, payload_start, size - (payload_start - b));
+		EPG_ATSC_decode_VCT(ctx, epgctx, payload_start, size - (payload_start - b));
 		break;
 	default:
 		if (table_id>=0x4e && table_id<=0x6f)
-			EPG_DVB_decode_EIT(ctx, payload_start, size - (payload_start - b));
+			EPG_DVB_decode_EIT(ctx, epgctx, payload_start, size - (payload_start - b));
 		break;
 	}
-	EPG_handle_output(ctx);
+	EPG_handle_output(ctx, epgctx);
 }
 
 // recounsructs DVB EIT and ATSC tables
-void parse_EPG_packet(struct lib_ccx_ctx *ctx)
+void parse_EPG_packet(struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx)
 {
 	unsigned char *payload_start = tspacket + 4;
 	unsigned payload_length = 188 - 4;
@@ -1061,32 +1061,32 @@ void parse_EPG_packet(struct lib_ccx_ctx *ctx)
 
 	if(payload_start_indicator)
 	{
-		if(ctx->epg_buffers[buffer_map].ccounter>0) {
-			ctx->epg_buffers[buffer_map].ccounter=0;
-			EPG_parse_table(ctx, ctx->epg_buffers[buffer_map].buffer, ctx->epg_buffers[buffer_map].buffer_length);
+		if(epgctx->epg_buffers[buffer_map].ccounter>0) {
+			epgctx->epg_buffers[buffer_map].ccounter=0;
+			EPG_parse_table(ctx, epgctx, epgctx->epg_buffers[buffer_map].buffer, epgctx->epg_buffers[buffer_map].buffer_length);
 		}
 
 
-		ctx->epg_buffers[buffer_map].prev_ccounter = ccounter;
+		epgctx->epg_buffers[buffer_map].prev_ccounter = ccounter;
 		
-		if(ctx->epg_buffers[buffer_map].buffer!=NULL)
-			free(ctx->epg_buffers[buffer_map].buffer);
+		if(epgctx->epg_buffers[buffer_map].buffer!=NULL)
+			free(epgctx->epg_buffers[buffer_map].buffer);
 		else {
 			// must be first EIT packet
 		}
-		ctx->epg_buffers[buffer_map].buffer = (uint8_t *)malloc(payload_length);
-		memcpy(ctx->epg_buffers[buffer_map].buffer, payload_start, payload_length);
-		ctx->epg_buffers[buffer_map].buffer_length=payload_length;
-		ctx->epg_buffers[buffer_map].ccounter++;
+		epgctx->epg_buffers[buffer_map].buffer = (uint8_t *)malloc(payload_length);
+		memcpy(epgctx->epg_buffers[buffer_map].buffer, payload_start, payload_length);
+		epgctx->epg_buffers[buffer_map].buffer_length=payload_length;
+		epgctx->epg_buffers[buffer_map].ccounter++;
 		
 	}
-	else if(ccounter==ctx->epg_buffers[buffer_map].prev_ccounter+1 || (ctx->epg_buffers[buffer_map].prev_ccounter==0x0f && ccounter==0))
+	else if(ccounter==epgctx->epg_buffers[buffer_map].prev_ccounter+1 || (epgctx->epg_buffers[buffer_map].prev_ccounter==0x0f && ccounter==0))
 	{
-		ctx->epg_buffers[buffer_map].prev_ccounter = ccounter;
-		ctx->epg_buffers[buffer_map].buffer = (uint8_t *)realloc(ctx->epg_buffers[buffer_map].buffer, ctx->epg_buffers[buffer_map].buffer_length+payload_length);
-		memcpy(ctx->epg_buffers[buffer_map].buffer+ctx->epg_buffers[buffer_map].buffer_length, payload_start, payload_length);
-		ctx->epg_buffers[buffer_map].ccounter++;
-		ctx->epg_buffers[buffer_map].buffer_length+=payload_length;
+		epgctx->epg_buffers[buffer_map].prev_ccounter = ccounter;
+		epgctx->epg_buffers[buffer_map].buffer = (uint8_t *)realloc(epgctx->epg_buffers[buffer_map].buffer, epgctx->epg_buffers[buffer_map].buffer_length+payload_length);
+		memcpy(epgctx->epg_buffers[buffer_map].buffer+epgctx->epg_buffers[buffer_map].buffer_length, payload_start, payload_length);
+		epgctx->epg_buffers[buffer_map].ccounter++;
+		epgctx->epg_buffers[buffer_map].buffer_length+=payload_length;
 	}
 	else
 	{
@@ -1095,38 +1095,38 @@ void parse_EPG_packet(struct lib_ccx_ctx *ctx)
 }
 
 // Free all memory used for EPG parsing
-void EPG_free(struct lib_ccx_ctx *ctx)
+void EPG_free(struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx)
 {
 	int i = 0, j;
 	if(ccx_options.xmltv==2 || ccx_options.xmltv==3 || ccx_options.send_to_srv)
 	{
 		if (ccx_options.send_to_srv)
-			EPG_output_net(ctx);
+			EPG_output_net(ctx, epgctx);
 		else
-			EPG_output_live(ctx);
+			EPG_output_live(ctx, epgctx);
 	}
 	for (i = 0; i < TS_PMT_MAP_SIZE; i++)
 	{
-		for(j = 0; j < ctx->eit_programs[i].array_len; j++)
+		for(j = 0; j < epgctx->eit_programs[i].array_len; j++)
 		{
-			if(ctx->eit_programs[i].epg_events[j].has_simple)
+			if(epgctx->eit_programs[i].epg_events[j].has_simple)
 			{
-				free(ctx->eit_programs[i].epg_events[j].event_name);
-				free(ctx->eit_programs[i].epg_events[j].text);
+				free(epgctx->eit_programs[i].epg_events[j].event_name);
+				free(epgctx->eit_programs[i].epg_events[j].text);
 			}
-			if(ctx->eit_programs[i].epg_events[j].extended_text!=NULL)
-				free(ctx->eit_programs[i].epg_events[j].extended_text);
-			if(ctx->eit_programs[i].epg_events[j].num_ratings>0)
-				free(ctx->eit_programs[i].epg_events[j].ratings);
-			if(ctx->eit_programs[i].epg_events[j].num_categories>0)
-				free(ctx->eit_programs[i].epg_events[j].categories);
+			if(epgctx->eit_programs[i].epg_events[j].extended_text!=NULL)
+				free(epgctx->eit_programs[i].epg_events[j].extended_text);
+			if(epgctx->eit_programs[i].epg_events[j].num_ratings>0)
+				free(epgctx->eit_programs[i].epg_events[j].ratings);
+			if(epgctx->eit_programs[i].epg_events[j].num_categories>0)
+				free(epgctx->eit_programs[i].epg_events[j].categories);
 		}
-		ctx->eit_programs[i].array_len=0;
+		epgctx->eit_programs[i].array_len=0;
 	}
 	
 	for (i = 0; i < 0xfff; i++)
 	{
-		if(ctx->epg_buffers[i].buffer!=NULL)
-			free(ctx->epg_buffers[i].buffer);
+		if(epgctx->epg_buffers[i].buffer!=NULL)
+			free(epgctx->epg_buffers[i].buffer);
 	}
 }
