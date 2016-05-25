@@ -74,7 +74,7 @@ int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_sta
 	free(el);
 	free(unescaped);
 
-	return EXIT_OK;
+	return 0;
 }
 
 int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
