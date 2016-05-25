@@ -159,10 +159,7 @@ int write_cc_subtitle_as_srt(struct cc_subtitle *sub,struct encoder_ctx *context
 			ret = write_stringz_as_srt(sub->data, context, sub->start_time, sub->end_time);
 			freep(&sub->data);
 			sub->nb_data = 0;
-			if(ret == EXIT_OK)
-			{
-				ret = 1;
-			}
+			ret = 1;
 		}
 		lsub = sub;
 		sub = sub->next;
