@@ -138,6 +138,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ret = init_ctx_outbase(opt, ctx);
 	if (ret < 0) {
 		goto end;
+		printf("RET < 0\n");
 	}
 	ctx->extension = get_file_extension(opt->write_format);
 
@@ -235,6 +236,8 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 		}
 	}
 
+	// free EPG memory
+	// EPG_free(lctx);
 	freep(&lctx->freport.data_from_608);
 	freep(&lctx->freport.data_from_708);
 	ccx_demuxer_delete(&lctx->demux_ctx);
