@@ -168,7 +168,7 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 			{
 				case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
 				case CCX_SM_PROGRAM:
-					if ( detect_myth(ctx->parent) )
+					if ( detect_myth(ctx) )
 					{
 						ctx->stream_mode=CCX_SM_MYTH;
 					}
