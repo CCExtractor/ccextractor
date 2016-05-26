@@ -720,13 +720,11 @@ void usage (void)
 	mprint("    ...\n");
 }
 
+unsigned char sha256_buf[16384];
+
 char *calculateSHA256(char *location) {
-	int		kl, l, fd, ac;
-	int		quiet = 0, hash = 0;
-	char		*av, *file = (char*)0;
-	FILE		*fh = (FILE*)0;
+	int	size_read, bytes_read, fh = 0;
 	SHA256_CTX	ctx256;
-	unsigned char	buf[16384];
 
 	SHA256_Init(&ctx256);
 
@@ -739,14 +737,14 @@ char *calculateSHA256(char *location) {
 	if (fh < 0) {
 		return "Could not open file";
 	}
-	kl = 0;
-	while ((l = read(fh, buf, 16384)) > 0) {
-		kl += l;
-		SHA256_Update(&ctx256, (unsigned char*)buf, l);
+	size_read = 0;
+	while ((bytes_read = read(fh, sha256_buf, 16384)) > 0) {
+		size_read += bytes_read;
+		SHA256_Update(&ctx256, (unsigned char*)sha256_buf, bytes_read);
 	}
 	close(fh);
-	SHA256_End(&ctx256, buf);
-	return buf;
+	SHA256_End(&ctx256, sha256_buf);
+	return sha256_buf;
 }
 
 void version(char *location) {
