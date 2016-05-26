@@ -24,7 +24,6 @@ struct ccx_s_options ccx_options;
 int main(int argc, char *argv[])
 {
 	struct lib_ccx_ctx *ctx;
-	struct epg_ctx *epgctx;
 	struct lib_cc_decode *dec_ctx = NULL;
 	int ret = 0;
 	enum ccx_stream_mode_enum stream_mode;
@@ -48,7 +47,6 @@ int main(int argc, char *argv[])
 	}
 	// Initialize libraries
 	ctx = init_libraries(&ccx_options);
-	epgctx = init_epg(&ccx_options);//Abhinav95 : Separate EPG init to save memory if not needed
 	if (!ctx && errno == ENOMEM)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 	else if (!ctx && errno == EINVAL)
@@ -111,7 +109,7 @@ int main(int argc, char *argv[])
 
 	while (switch_to_next_file(ctx, 0))
 	{
-		prepare_for_new_file(ctx,epgctx);
+		prepare_for_new_file(ctx);
 		stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 		// Disable sync check for raw formats - they have the right timeline.
 		// Also true for bin formats, but -nosync might have created a
@@ -151,7 +149,7 @@ int main(int argc, char *argv[])
 				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
 					ccx_options.use_gop_as_pts = 0; 
 				mprint ("\rAnalyzing data in general mode\n");
-				general_loop(ctx, epgctx);
+				general_loop(ctx);
 				break;
 			case CCX_SM_MCPOODLESRAW:
 				mprint ("\rAnalyzing data in McPoodle raw mode\n");
@@ -307,7 +305,7 @@ int main(int argc, char *argv[])
 	} // file loop
 	close_input_file(ctx);
 
-	prepare_for_new_file (ctx,epgctx); // To reset counters used by handle_end_of_data()
+	prepare_for_new_file (ctx); // To reset counters used by handle_end_of_data()
 
 
 	time (&final);
@@ -338,7 +336,6 @@ int main(int argc, char *argv[])
 		mprint ("code in the MythTV's branch. Please report results to the address above. If\n");
 		mprint ("something is broken it will be fixed. Thanks\n");		
 	}
-	dinit_epg(&ctx,&epgctx);
 	dinit_libraries(&ctx);
 	return EXIT_OK;
 }

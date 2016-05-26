@@ -138,7 +138,6 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ret = init_ctx_outbase(opt, ctx);
 	if (ret < 0) {
 		goto end;
-		printf("RET < 0\n");
 	}
 	ctx->extension = get_file_extension(opt->write_format);
 
@@ -172,33 +171,6 @@ end:
 		return NULL;
 	}
 	return ctx;
-}
-
-struct epg_ctx* init_epg(struct ccx_s_options *opt)
-{
-	// Separate EPG context to save 180 MB RAM when not needed
-	if(opt->xmltv!=1)
-	{
-		//Since no EPG output, no need to allocate
-		return NULL;
-	}
-	struct epg_ctx *ctx = malloc(sizeof(struct epg_ctx));
-	if(!ctx)
-		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "epg_ctx");
-	memset(ctx, 0, sizeof(struct epg_ctx));
-	return ctx;
-}
-
-void dinit_epg( struct lib_ccx_ctx **ctx, struct epg_ctx **epgctx)
-{
-	if(*epgctx==NULL)
-	{
-		//Since no EPG context, nothing to free
-		return;
-	}
-	struct lib_ccx_ctx *lctx = *ctx;
-	struct epg_ctx *lepgctx = *epgctx;
-	EPG_free(lctx,lepgctx);
 }
 
 void dinit_libraries( struct lib_ccx_ctx **ctx)
@@ -237,7 +209,7 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 	}
 
 	// free EPG memory
-	// EPG_free(lctx);
+	EPG_free(lctx);
 	freep(&lctx->freport.data_from_608);
 	freep(&lctx->freport.data_from_708);
 	ccx_demuxer_delete(&lctx->demux_ctx);

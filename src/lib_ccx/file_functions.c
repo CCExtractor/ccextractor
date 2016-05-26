@@ -61,7 +61,7 @@ LLONG gettotalfilessize (struct lib_ccx_ctx *ctx) // -1 if one or more files fai
 	return ts;
 }
 
-void prepare_for_new_file (struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx)
+void prepare_for_new_file (struct lib_ccx_ctx *ctx)
 {
 	// Init per file variables
 	ctx->last_reported_progress =-1;
@@ -83,21 +83,18 @@ void prepare_for_new_file (struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx)
 	pts_big_change              = 0;
 	firstcall                   = 1;
 
-	if(epgctx)
+	for(int x = 0; x < 0xfff; x++)
 	{
-		for(int x = 0; x < 0xfff; x++)
-		{
-			epgctx->epg_buffers[x].buffer   = NULL;
-			epgctx->epg_buffers[x].ccounter = 0;
-		}
-		for (int i = 0; i < TS_PMT_MAP_SIZE; i++)
-		{
-			epgctx->eit_programs[i].array_len = 0;
-			epgctx->eit_current_events[i] = -1;
-		}
-		epgctx->epg_last_output      = -1;
-		epgctx->epg_last_live_output = -1;
+		ctx->epg_buffers[x].buffer   = NULL;
+		ctx->epg_buffers[x].ccounter = 0;
 	}
+	for (int i = 0; i < TS_PMT_MAP_SIZE; i++)
+	{
+		ctx->eit_programs[i].array_len = 0;
+		ctx->eit_current_events[i] = -1;
+	}
+	ctx->epg_last_output      = -1;
+	ctx->epg_last_live_output = -1;
 }
 
 /* Close input file if there is one and let the GUI know */

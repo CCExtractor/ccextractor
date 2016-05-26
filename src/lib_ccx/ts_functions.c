@@ -542,7 +542,7 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 // Read ts packets until a complete video PES element can be returned.
 // The data is read into capbuf and the function returns the number of
 // bytes read.
-long ts_readstream(struct ccx_demuxer *ctx, struct epg_ctx *epgctx, struct demuxer_data **data)
+long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
 	int gotpes = 0;
 	long pespcount = 0; // count packets in PES with captions
@@ -588,13 +588,11 @@ long ts_readstream(struct ccx_demuxer *ctx, struct epg_ctx *epgctx, struct demux
 				parse_SDT(ctx);
 		}
 
-		if(epgctx)
-		{
-			if( ccx_options.xmltv >= 1 && payload.pid == 0x12) // This is DVB EIT
-				parse_EPG_packet(ctx->parent, epgctx);
-			if( ccx_options.xmltv >= 1 && payload.pid >= 0x1000) // This may be ATSC EPG packet
-				parse_EPG_packet(ctx->parent, epgctx);
-		}
+		if( ccx_options.xmltv >= 1 && payload.pid == 0x12) // This is DVB EIT
+			parse_EPG_packet(ctx->parent);
+		if( ccx_options.xmltv >= 1 && payload.pid >= 0x1000) // This may be ATSC EPG packet
+			parse_EPG_packet(ctx->parent);
+
 
 		for (j = 0; j < ctx->nb_program; j++)
 		{
@@ -793,12 +791,12 @@ long ts_readstream(struct ccx_demuxer *ctx, struct epg_ctx *epgctx, struct demux
 
 
 // TS specific data grabber
-int ts_getmoredata(struct ccx_demuxer *ctx, struct epg_ctx *epgctx, struct demuxer_data **data)
+int ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
 	int ret = CCX_OK;
 
 	do {
-		ret = ts_readstream(ctx, epgctx, data);
+		ret = ts_readstream(ctx, data);
 	} while(ret == CCX_EAGAIN);
 
 	return ret;

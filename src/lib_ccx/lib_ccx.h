@@ -114,7 +114,13 @@ struct lib_ccx_ctx
 	int num_input_files; // How many?
 
 	unsigned teletext_warning_shown; // Did we detect a possible PAL (with teletext subs) and told the user already?
- 
+
+	struct PSI_buffer epg_buffers[0xfff+1];
+	struct EIT_program eit_programs[TS_PMT_MAP_SIZE+1];
+	int32_t eit_current_events[TS_PMT_MAP_SIZE+1];
+	int16_t ATSC_source_pg_map[0xffff];
+	int epg_last_output; 
+	int epg_last_live_output; 
 	struct file_report freport;
 
 	unsigned int hauppauge_mode; // If 1, use PID=1003, process specially and so on
@@ -133,20 +139,9 @@ struct lib_ccx_ctx
 	LLONG system_start_time;
 };
 
-struct epg_ctx
-{
-	struct PSI_buffer epg_buffers[0xfff+1];
-	struct EIT_program eit_programs[TS_PMT_MAP_SIZE+1];
-	int32_t eit_current_events[TS_PMT_MAP_SIZE+1];
-	int16_t ATSC_source_pg_map[0xffff];
-	int epg_last_output; 
-	int epg_last_live_output;
-};
 
 struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt);
 void dinit_libraries( struct lib_ccx_ctx **ctx);
-struct epg_ctx* init_epg(struct ccx_s_options *opt);
-void dinit_epg( struct lib_ccx_ctx **ctx, struct epg_ctx **epgctx);
 
 //params.c
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[]);
@@ -162,7 +157,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
 void raw_loop (struct lib_ccx_ctx *ctx);
 size_t process_raw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned char *buffer, size_t len);
-void general_loop(struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx);
+void general_loop(struct lib_ccx_ctx *ctx);
 void processhex (char *filename);
 void rcwt_loop(struct lib_ccx_ctx *ctx);
 
@@ -187,7 +182,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 // file_functions.c
 LLONG getfilesize (int in);
 LLONG gettotalfilessize (struct lib_ccx_ctx *ctx);
-void prepare_for_new_file (struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx);
+void prepare_for_new_file (struct lib_ccx_ctx *ctx);
 void close_input_file (struct lib_ccx_ctx *ctx);
 int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer);
 void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes);
@@ -220,14 +215,14 @@ int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, u
 // ts_functions.c
 void init_ts(struct ccx_demuxer *ctx);
 int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload);
-long ts_readstream(struct ccx_demuxer *ctx, struct epg_ctx *epgctx, struct demuxer_data **data);
-int ts_getmoredata(struct ccx_demuxer *ctx, struct epg_ctx *epgctx, struct demuxer_data **data);
+long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data);
+int ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **data);
 int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char*buf, int size,  struct program_info *pinfo);
 void ts_buffer_psi_packet(struct ccx_demuxer *ctx);
 int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct program_info *pinfo);
 int parse_PAT (struct ccx_demuxer *ctx);
-void parse_EPG_packet (struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx);
-void EPG_free(struct lib_ccx_ctx *ctx, struct epg_ctx *epgctx);
+void parse_EPG_packet (struct lib_ccx_ctx *ctx);
+void EPG_free(struct lib_ccx_ctx *ctx);
 char* EPG_DVB_decode_string(uint8_t *in, size_t size);
 void parse_SDT(struct ccx_demuxer *ctx);
 
