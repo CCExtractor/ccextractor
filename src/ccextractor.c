@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 			case CCX_SM_MP4:
 				mprint ("\rAnalyzing data with GPAC (MP4 library)\n");
 				close_input_file(ctx); // No need to have it open. GPAC will do it for us
-				processmp4 (ctx, &ctx->mp4_cfg, ctx->inputfile[0]);
+				processmp4(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
 				if (ccx_options.print_file_reports)
 					print_file_report(ctx);
 				break;
