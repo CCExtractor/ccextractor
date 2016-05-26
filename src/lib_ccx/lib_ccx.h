@@ -115,6 +115,7 @@ struct lib_ccx_ctx
 
 	unsigned teletext_warning_shown; // Did we detect a possible PAL (with teletext subs) and told the user already?
 
+	int epg_inited;
 	struct PSI_buffer *epg_buffers;
 	struct EIT_program *eit_programs;
 	int32_t *eit_current_events;

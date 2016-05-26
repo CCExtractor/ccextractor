@@ -1096,13 +1096,16 @@ void parse_EPG_packet(struct lib_ccx_ctx *ctx)
 
 // Free all memory used for EPG parsing
 void EPG_free(struct lib_ccx_ctx *ctx)
-{
-	if(ccx_options.xmltv==2 || ccx_options.xmltv==3 || ccx_options.send_to_srv)
+{	
+	if(ctx->epg_inited)
 	{
-		if (ccx_options.send_to_srv)
-			EPG_output_net(ctx);
-		else
-			EPG_output_live(ctx);
+		if(ccx_options.xmltv==2 || ccx_options.xmltv==3 || ccx_options.send_to_srv)
+		{
+			if (ccx_options.send_to_srv)
+				EPG_output_net(ctx);
+			else
+				EPG_output_live(ctx);
+		}
 	}
 	free(ctx->epg_buffers);
 	free(ctx->eit_programs);

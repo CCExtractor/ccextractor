@@ -83,7 +83,7 @@ void prepare_for_new_file (struct lib_ccx_ctx *ctx)
 	pts_big_change              = 0;
 	firstcall                   = 1;
 
-	if(ccx_options.xmltv)
+	if(ctx->epg_inited)
 	{
 		for(int x = 0; x < 0xfff; x++)
 		{
