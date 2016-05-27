@@ -11,6 +11,9 @@ void dinit_write(struct ccx_s_write *wb)
 	if (wb->fh > 0)
 		close(wb->fh);
 	freep(&wb->filename);	
+	if (wb->with_semaphore && wb->semaphore_filename)
+		unlink(wb->semaphore_filename);
+	freep(&wb->semaphore_filename);
 }
 
 int temporarily_close_output(struct ccx_s_write *wb)
@@ -41,17 +44,32 @@ int temporarily_open_output(struct ccx_s_write *wb)
 
 
 
-int init_write (struct ccx_s_write *wb, char *filename)
+int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
 {
 	memset(wb, 0, sizeof(struct ccx_s_write));
 	wb->fh=-1;
 	wb->temporarily_closed = 0; 
 	wb->filename = filename;
+	wb->with_semaphore = with_semaphore;
 	mprint ("Creating %s\n", filename);
 	wb->fh = open (filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 	if (wb->fh == -1)
 	{
 		return CCX_COMMON_EXIT_FILE_CREATION_FAILED;
+	}
+	if (with_semaphore)
+	{
+		wb->semaphore_filename = (char *)malloc(strlen(filename) + 6);
+		if (!wb->semaphore_filename)
+			return EXIT_NOT_ENOUGH_MEMORY;
+		sprintf(wb->semaphore_filename, "%s.sem", filename);
+		int t = open(wb->semaphore_filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+		if (t == -1)
+		{
+			close(wb->fh);
+			return CCX_COMMON_EXIT_FILE_CREATION_FAILED;
+		}
+		close(t);
 	}
 	return EXIT_OK;
 }

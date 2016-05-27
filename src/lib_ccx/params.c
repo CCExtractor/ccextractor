@@ -509,10 +509,12 @@ void usage (void)
 	mprint ("            -autodash: Based on position on screen, attempt to determine\n");
 	mprint ("                       the different speakers and a dash (-) when each\n");
 	mprint ("                       of them talks (.srt/.vtt only, -trim required).\n");
-	mprint ("         -xmltv mode:  produce an XMLTV file containing the EPG data from\n");
+	mprint ("          -xmltv mode: produce an XMLTV file containing the EPG data from\n");
 	mprint ("                       the source TS file. Mode: 1 = full output\n");
-	mprint ("                       2 = live output. 3 = both\n\n");
-
+	mprint ("                       2 = live output. 3 = both\n");
+	mprint ("                 -sem: Create a .sem file for each output file that is open\n");
+	mprint ("                       and delete it on file close.\n");
+	mprint ("\n");
 	mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
 
 	mprint ("    -bi --bufferinput: Forces input buffering.\n");
@@ -965,6 +967,10 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->enc_cfg.no_bom = 1;
 			continue;
 		}
+		if (strcmp(argv[i], "-sem") == 0){
+			opt->enc_cfg.with_semaphore = 1;
+			continue;		
+		}	
 		if (strcmp (argv[i],"-nots")==0 ||
 				strcmp (argv[i],"--notypesetting")==0)
 		{
@@ -1560,6 +1566,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			continue;
 		}
 		if (strcmp (argv[i],"-autodash")==0)
+		{
+			opt->enc_cfg.autodash = 1;
+			continue;
+		}
+		if (strcmp(argv[i], "-sem") == 0)
 		{
 			opt->enc_cfg.autodash = 1;
 			continue;
