@@ -276,7 +276,7 @@ void usage (void)
 	mprint ("     .mp4, HDHomeRun are known to work).\n\n");
 	mprint ("  Syntax:\n");
 	mprint ("  ccextractor [options] inputfile1 [inputfile2...] [-o outputfilename]\n");
-	mprint ("               [-o1 outputfilename1] [-o2 outputfilename2]\n\n");
+	mprint ("\n");
 	mprint ("To see This Help Message: -h or --help\n\n");
 	mprint ("File name related options:\n");
 	mprint ("            inputfile: file(s) to process\n");

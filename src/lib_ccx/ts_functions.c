@@ -150,7 +150,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 	if (result != 188)
 	{
 		if (result > 0)
-			mprint("Premature end of file!\n");
+			mprint("Premature end of file - Transport Stream packet is incomplete (expected 188 bytes, got %lld)\n", result);
 		return CCX_EOF;
 	}
 
