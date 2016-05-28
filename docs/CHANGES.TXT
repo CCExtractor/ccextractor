@@ -1,6 +1,7 @@
 0.81 (TBD)
 -----------------
 - New: --version parameter for extensive version information (version number, compile date, executable hash, git commit (if appropriate))
+- New: Add -sem (semaphore) to create a .sem file when an output file is open and delete it when it's closed.
 - Fix: Issues with files <1 Mb
 - Fix: Preview of generated transcript
 - Fix: Statistics were not generated anymore
