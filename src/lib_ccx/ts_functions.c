@@ -518,8 +518,8 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 		if(payload->start[0] != 0x00 || payload->start[1] != 0x00 || 
 			payload->start[2] != 0x01)
 		{
-			mprint("Missing PES header!\n");
-			dump(CCX_DMT_GENERIC_NOTICES, payload->start, payload->length, 0, 0);
+			mprint("Notice: Missing PES header\n");
+			dump(CCX_DMT_DUMPDEF, payload->start, payload->length, 0, 0);
 			cinfo->saw_pesstart = 0;
 			errno = EINVAL;
 			return -1;
