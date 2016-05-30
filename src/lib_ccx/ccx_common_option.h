@@ -118,6 +118,7 @@ struct ccx_s_options // Options from user parameters
 	int keep_output_closed;
 	int force_flush; // Force flush on content write
 	int ucla; // 1 if UCLA used, 0 if not
+	int hardsubx; // 1 if burned-in subtitles to be extracted
 
 	ccx_encoders_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
 	enum ccx_output_date_format date_format;

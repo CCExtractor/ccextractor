@@ -58,6 +58,7 @@ void init_options (struct ccx_s_options *options)
 	options->keep_output_closed = 0; // By default just keep the file open.
 	options->force_flush = 0; // Don't flush whenever content is writtern.
 	options->ucla = 0; // By default, -UCLA not used
+	options->hardsubx = 0; // By default, don't try to extract hard subtitles
 
 	options->transcript_settings = ccx_encoders_default_transcript_settings;
 	options->millis_separator=',';
