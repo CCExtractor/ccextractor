@@ -1,6 +1,6 @@
 #ifndef CC_UTILITY_H
 #define CC_UTILITY_H
-
+#include <signal.h>
 #ifndef _WIN32
 	#include <arpa/inet.h>
 #endif
@@ -20,6 +20,7 @@ struct ccx_rational
 	int den;
 };
 extern int temp_debug;
+extern volatile sig_atomic_t change_filename_requested;
 void init_boundary_time (struct ccx_boundary_time *bt);
 void print_error (int mode, const char *fmt, ...);
 int stringztoms (const char *s, struct ccx_boundary_time *bt);

@@ -241,6 +241,9 @@ void timestamp_to_srttime(uint64_t timestamp, char *buffer);
 void timestamp_to_smptetttime(uint64_t timestamp, char *buffer);
 int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
 void millis_to_date (uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator);
+void create_signal(void);
+void signal_handler(int sig_type);
+struct encoder_ctx* change_filename(struct encoder_ctx*);
 #ifndef _WIN32
 void m_signal(int sig, void (*func)(int));
 #endif

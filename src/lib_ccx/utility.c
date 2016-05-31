@@ -1,10 +1,13 @@
+#include <stdio.h>
 #include <signal.h>
+#include <string.h>
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "activity.h"
+#include "utility.h"
 
 int temp_debug = 0; // This is a convenience variable used to enable/disable debug on variable conditions. Find references to understand.
-
+volatile sig_atomic_t change_filename_requested = 0;
 
 
 static uint32_t crc32_table [] = {
@@ -372,6 +375,51 @@ void m_signal(int sig, void (*func)(int))
 	return;
 }
 #endif
+
+void create_signal(void)
+{
+        if (signal(SIGUSR1, signal_handler) == SIG_ERR)
+		mprint("Can't catch SIGUSR1.\n");
+}
+
+void signal_handler(int sig_type)
+{
+	int ret;
+
+        if (sig_type == SIGUSR1)
+        {
+			mprint("Received SIGUSR1\n");
+        	change_filename_requested = 1;
+        	mprint("Changing status %d\n",change_filename_requested);
+        }
+
+}
+struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
+{
+	//mprint("\n\n%s\n\n\n",enc_ctx->out->filename);
+	if (enc_ctx->out->fh != -1)
+	{
+		enc_ctx->out->fh=-1;
+		if (enc_ctx->out->fh > 0)
+			close(enc_ctx->out->fh);
+		int ret;
+		char new_extension[6];
+		enc_ctx->out->renaming_extension++;
+		sprintf(new_extension, ".%d", enc_ctx->out->renaming_extension); 
+		char *newname = strdup(enc_ctx->out->filename);
+		strcat(newname,new_extension);
+		ret = rename(enc_ctx->out->filename, newname);
+		mprint ("Creating %s\n", newname);
+		enc_ctx->out->fh = open(enc_ctx->out->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+		
+		/*if (enc_ctx->out->fh == -1)
+		{
+		return CCX_COMMON_EXIT_FILE_CREATION_FAILED;
+		}*/		
+		change_filename_requested = 0;
+	}
+	return enc_ctx;
+}
 char *get_basename(char *filename)
 {
 	char *c;
