@@ -388,15 +388,17 @@ void signal_handler(int sig_type)
 
         if (sig_type == SIGUSR1)
         {
-			mprint("Received SIGUSR1\n");
         	change_filename_requested = 1;
-        	mprint("Changing status %d\n",change_filename_requested);
         }
 
 }
 struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 {
 	//mprint("\n\n%s\n\n\n",enc_ctx->out->filename);
+	if(change_filename_requested == 0)
+	{
+		return enc_ctx;
+	}
 	if (enc_ctx->out->fh != -1)
 	{
 		enc_ctx->out->fh=-1;

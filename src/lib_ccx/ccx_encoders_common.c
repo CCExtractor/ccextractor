@@ -1328,10 +1328,10 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 
 	if(!context)
 		return CCX_OK;
-	if(change_filename_requested)
-	{
+	//if(change_filename_requested)
+	//{
 		context = change_filename(context);
-	}
+	//}
 	if (sub->type == CC_608)
 	{
 		struct eia608_screen *data = NULL;
