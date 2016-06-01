@@ -388,17 +388,19 @@ void signal_handler(int sig_type)
 
         if (sig_type == SIGUSR1)
         {
+        	mprint("Caught SIGUSR1\n. Filename Change Requested");
         	change_filename_requested = 1;
         }
 
 }
 struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 {
-	//mprint("\n\n%s\n\n\n",enc_ctx->out->filename);
 	if(change_filename_requested == 0)
 	{
 		return enc_ctx;
 	}
+	struct encoder_ctx *temp_encoder = malloc(sizeof(struct encoder_ctx));
+	*temp_encoder = *enc_ctx;
 	if (enc_ctx->out->fh != -1)
 	{
 		enc_ctx->out->fh=-1;
@@ -411,16 +413,25 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 		char *newname = strdup(enc_ctx->out->filename);
 		strcat(newname,new_extension);
 		ret = rename(enc_ctx->out->filename, newname);
+		if(ret)
+		{
+			mprint("Failed to rename the file\n");
+			return temp_encoder;
+		}
 		mprint ("Creating %s\n", newname);
 		enc_ctx->out->fh = open(enc_ctx->out->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 		
-		/*if (enc_ctx->out->fh == -1)
+		if (enc_ctx->out->fh == -1)
 		{
-		return CCX_COMMON_EXIT_FILE_CREATION_FAILED;
-		}*/		
+			mprint("Failed to create a new rotation file\n");
+			return temp_encoder;
+		}
+					
 		change_filename_requested = 0;
+		return enc_ctx;
+		
 	}
-	return enc_ctx;
+	return temp_encoder;
 }
 char *get_basename(char *filename)
 {
