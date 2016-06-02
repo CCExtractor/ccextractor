@@ -1,12 +1,24 @@
+#ifdef ENABLE_OCR
 #include "hardsubx.h"
 #include "capi.h"
 #include "allheaders.h"
 #include "ocr.h"
-#ifdef ENABLE_OCR
+#include "utility.h"
+
+//TODO: Correct FFMpeg integration
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
+
+int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
+{
+	// 
+}
 
 void _hardsubx_params_dump(struct ccx_s_options *options, struct lib_hardsubx_ctx *ctx)
 {
 	// Print the relevant passed parameters onto the screen
+	mprint("Input : %s\n", ctx->inputfile[0]);
 }
 
 struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
@@ -18,7 +30,7 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	memset(ctx, 0, sizeof(struct lib_hardsubx_ctx));
 
 	//Initialize attributes common to lib_ccx context
-	ctx->basefilename = get_basename(opt->output_filename);//TODO: Check validity, add stdin, network
+	ctx->basefilename = get_basename(options->output_filename);//TODO: Check validity, add stdin, network
 	ctx->current_file = -1;
 	ctx->inputfile = options->inputfile;
 	ctx->num_input_files = options->num_input_files;
@@ -28,6 +40,11 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	ctx->cc_to_stdout = options->cc_to_stdout;
 
 	return ctx;
+}
+
+void _dinit_hardsubx(struct lib_hardsubx_ctx **ctx)
+{
+	// Free all memory allocated to everything in the context
 }
 
 void hardsubx(struct ccx_s_options *options)
@@ -40,12 +57,19 @@ void hardsubx(struct ccx_s_options *options)
 	ctx = _init_hardsubx(options);
 
 	// Dump parameters (Not using params_dump since completely different parameters)
+	_hardsubx_params_dump(options, ctx);
 
 	// Configure output settings (write format, capitalization etc)
 
 	// Data processing loop
+	time_t start, end;
+	time(&start);
+	hardsubx_process_data(ctx);
 
 	// Show statistics (time taken, frames processed, mode etc)
+	time(&end);
+	long processing_time=(long) (end-start);
+	mprint ("\rDone, processing time = %ld seconds\n", processing_time);
 
 	// Free all allocated memory for the data structures
 }

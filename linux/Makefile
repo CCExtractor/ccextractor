@@ -2,7 +2,7 @@ SHELL = /bin/sh
 
 CC = gcc
 SYS := $(shell gcc -dumpmachine)
-CFLAGS = -O3 -std=gnu99
+CFLAGS = -O3 -std=gnu99 -s
 INCLUDE = -I../src/gpacmp4/ -I../src/libpng -I../src/lib_hash -I../src/zlib -I../src/lib_ccx -I../src/.
 INCLUDE += -I../src/zvbi
 ALL_FLAGS = -Wno-write-strings -D_FILE_OFFSET_BITS=64
@@ -54,6 +54,14 @@ ifeq ($(ENABLE_OCR),yes)
 CFLAGS+=-DENABLE_OCR -DPNG_NO_CONFIG_H
 TESS_LDFLAGS+= $(shell pkg-config --libs tesseract)
 LEPT_LDFLAGS+= $(shell pkg-config --libs lept)
+CFLAGS+= $(shell pkg-config --cflags libavcodec)
+CFLAGS+= $(shell pkg-config --cflags libavformat)
+CFLAGS+= $(shell pkg-config --cflags libavutil)
+CFLAGS+= $(shell pkg-config --cflags libswscale)
+LDFLAGS+= $(shell pkg-config --libs libavcodec )
+LDFLAGS+= $(shell pkg-config --libs libavformat )
+LDFLAGS+= $(shell pkg-config --libs libavutil )
+LDFLAGS+= $(shell pkg-config --libs libswscale )
 
 #error checking of library are there or not
 ifeq ($(TESS_LDFLAGS),$(EMPTY))
