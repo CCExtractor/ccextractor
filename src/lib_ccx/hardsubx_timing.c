@@ -8,3 +8,5 @@
 #include <libswscale/swscale.h>
 #include "allheaders.h"
 #include "hardsubx.h"
+
+#endif

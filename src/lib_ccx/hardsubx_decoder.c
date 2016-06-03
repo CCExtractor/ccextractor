@@ -8,13 +8,17 @@
 #include <libswscale/swscale.h>
 #include "allheaders.h"
 #include "hardsubx.h"
+#include "capi.h"
 
 void _process_frame(AVFrame *frame, int width, int height, int index)
 {
-	printf("frame : %04d\n", index);
+	// printf("frame : %04d\n", index);
 	if(index % 60 != 0)
 		return;
+	printf("frame : %04d\n", index);
 	PIX *im;
+	TessBaseAPI *handle;
+	char *subtitle_text;
 	im = pixCreate(width,height,32);
 	int i,j;
 	for(i=0;i<height;i++)
@@ -25,13 +29,36 @@ void _process_frame(AVFrame *frame, int width, int height, int index)
 			int r=frame->data[0][p];
 			int g=frame->data[0][p+1];
 			int b=frame->data[0][p+2];
-			pixSetRGBPixel(im,j,i,r,g,b);
+			float L,A,B;
+			rgb2lab((float)r,(float)g,(float)b,&L,&A,&B);
+			if(L>95) // TODO: Make this threshold a parameter and also automatically calculate it
+				pixSetRGBPixel(im,j,i,255,255,255);
+			else
+				pixSetRGBPixel(im,j,i,0,0,0);
+			//pixSetRGBPixel(im,j,i,r,g,b);
 		}
 	}
+
+	handle = TessBaseAPICreate();
+    if(TessBaseAPIInit3(handle, NULL, "eng") != 0)
+        printf("Error initialising tesseract\n");
+
+    TessBaseAPISetImage2(handle, im);
+    if(TessBaseAPIRecognize(handle, NULL) != 0)
+        printf("Error in Tesseract recognition\n");
+
+    if((subtitle_text = TessBaseAPIGetUTF8Text(handle)) == NULL)
+        printf("Error getting text\n");
+    TessBaseAPIEnd(handle);
+    TessBaseAPIDelete(handle);
+
+    printf("Recognized text : \"%s\"\n", subtitle_text);
+
 	char write_path[100];
 	sprintf(write_path,"../../ffmpeg-examples/frames/temp%04d.jpg",index);
-	printf("%s\n", write_path);
+	//printf("%s\n", write_path);
 	pixWrite(write_path,im,IFF_JFIF_JPEG);
+
 	pixDestroy(&im);
 }
 

@@ -55,6 +55,9 @@ void hardsubx(struct ccx_s_options *options);
 //hardsubx_decoder.c
 int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx);
 
+//hardsubx_imgops.c
+void rgb2lab(float R, float G, float B,float *L, float *a, float *b);
+
 #endif
 
 #endif
