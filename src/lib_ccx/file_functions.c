@@ -138,6 +138,7 @@ int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 	/* Close current and make sure things are still sane */
 	if (ctx->demux_ctx->is_open(ctx->demux_ctx))
 	{
+		dbg_print(CCX_DMT_708, "[CEA-708] The 708 decoder was reset [%d] times.\n", ctx->freport.data_from_708->reset_count);
 		if (ccx_options.print_file_reports)
 			print_file_report(ctx);
 
