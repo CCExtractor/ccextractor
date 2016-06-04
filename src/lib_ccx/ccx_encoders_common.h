@@ -54,6 +54,8 @@ struct encoder_ctx
 	unsigned int keep_output_closed; 
 	/* Force a flush on the file buffer whenever content is written */
 	int force_flush;
+	/* Append the file. Prevent overwriting of files */
+	int append_mode;
 	/* Keep track of whether -UCLA used */
 	int ucla;
 

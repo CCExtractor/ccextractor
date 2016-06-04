@@ -202,7 +202,7 @@ void print_file_report(struct lib_ccx_ctx *ctx);
 void dinit_write(struct ccx_s_write *wb);
 int temporarily_open_output(struct ccx_s_write *wb);
 int temporarily_close_output(struct ccx_s_write *wb);
-int init_write(struct ccx_s_write *wb, char *filename, int with_semaphore);
+int init_write(struct ccx_s_write *wb, char *filename, int with_semaphore, int append_mode);
 int writeraw (const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile);
 void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct cc_subtitle *sub);

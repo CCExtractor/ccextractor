@@ -442,7 +442,14 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 
 		}
 
-		enc_ctx->out->fh = open(enc_ctx->out->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+		if(!enc_ctx->append_mode)
+		{
+			enc_ctx->out->fh = open(enc_ctx->out->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+		}
+		else
+		{
+			enc_ctx->out->fh = open(enc_ctx->out->filename, O_RDWR | O_CREAT | O_APPEND | O_BINARY, S_IREAD | S_IWRITE);
+		}
 		
 		if (enc_ctx->out->fh == -1)
 		{
