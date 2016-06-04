@@ -406,19 +406,38 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 		enc_ctx->out->fh=-1;
 		if (enc_ctx->out->fh > 0)
 			close(enc_ctx->out->fh);
-		int ret;
-		char new_extension[6];
-		enc_ctx->out->renaming_extension++;
-		sprintf(new_extension, ".%d", enc_ctx->out->renaming_extension); 
-		char *newname = strdup(enc_ctx->out->filename);
-		strcat(newname,new_extension);
-		ret = rename(enc_ctx->out->filename, newname);
-		if(ret)
+		int iter;
+		char *current_name = enc_ctx->out->filename; 
+		if(enc_ctx->out->renaming_extension)
 		{
-			mprint("Failed to rename the file\n");
-			return temp_encoder;
+			strcat(current_name,".");
+			strcat(current_name,enc_ctx->out->renaming_extension);
 		}
-		mprint ("Creating %s\n", newname);
+		enc_ctx->out->renaming_extension++;
+		for (iter = enc_ctx->out->renaming_extension; iter >= 1; iter--)
+		{
+			int ret;
+			char new_extension[6];
+			sprintf(new_extension, ".%d", iter); 
+			char *newname = strdup(enc_ctx->out->filename);
+			strcat(newname,new_extension);
+			ret = rename(current_name, newname);
+			if(ret)
+			{
+				mprint("Failed to rename the file\n");
+
+			}
+			mprint ("Creating %s\n", newname);
+			*current_name = enc_ctx->out->filename;
+			
+			if(iter-2>0)
+			{
+				strcat(current_name,".");
+				strcat(current_name,iter-2);
+			}
+
+		}
+
 		enc_ctx->out->fh = open(enc_ctx->out->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 		
 		if (enc_ctx->out->fh == -1)
