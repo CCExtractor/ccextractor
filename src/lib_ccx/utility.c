@@ -407,11 +407,14 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 		if (enc_ctx->out->fh > 0)
 			close(enc_ctx->out->fh);
 		int iter;
-		char *current_name = enc_ctx->out->filename; 
+		char str_number[15];
+		char *current_name = strdup(enc_ctx->out->filename); 
+		mprint ("Creating %s\n", enc_ctx->out->filename);
 		if(enc_ctx->out->renaming_extension)
 		{
 			strcat(current_name,".");
-			strcat(current_name,enc_ctx->out->renaming_extension);
+			sprintf(str_number, "%d", enc_ctx->out->renaming_extension);
+			strcat(current_name,str_number);
 		}
 		enc_ctx->out->renaming_extension++;
 		for (iter = enc_ctx->out->renaming_extension; iter >= 1; iter--)
@@ -428,12 +431,13 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 
 			}
 			mprint ("Creating %s\n", newname);
-			*current_name = enc_ctx->out->filename;
+			strcpy(current_name,enc_ctx->out->filename);
 			
 			if(iter-2>0)
 			{
 				strcat(current_name,".");
-				strcat(current_name,iter-2);
+				sprintf(str_number, "%d", iter-2);
+				strcat(current_name,str_number);
 			}
 
 		}
