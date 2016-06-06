@@ -322,7 +322,6 @@ int main(int argc, char *argv[])
 			s1, s2);
 	}
 #endif
-	dbg_print(CCX_DMT_708, "[CEA-708] The 708 decoder was reset [%d] times.\n", ctx->freport.data_from_708->reset_count);
 
 	if (is_decoder_processed_enough(ctx) == CCX_TRUE)
 	{
