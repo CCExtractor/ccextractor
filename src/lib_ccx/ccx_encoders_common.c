@@ -1070,7 +1070,6 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	ctx->nb_out = nb_lang;
 	ctx->keep_output_closed = cfg->keep_output_closed;
 	ctx->force_flush = cfg->force_flush;
-	ctx->out->append_mode = cfg->append_mode;
 	ctx->ucla = cfg->ucla;
 
 	if(cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE)
