@@ -1070,7 +1070,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	ctx->nb_out = nb_lang;
 	ctx->keep_output_closed = cfg->keep_output_closed;
 	ctx->force_flush = cfg->force_flush;
-	ctx->append_mode = cfg->append_mode;
+	ctx->out->append_mode = cfg->append_mode;
 	ctx->ucla = cfg->ucla;
 
 	if(cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE)
@@ -1085,14 +1085,14 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 				basefilename = get_basename(cfg->output_filename);
 				extension = get_file_extension(cfg->write_format);
 
-				ret = init_write(&ctx->out[0], strdup(cfg->output_filename), cfg->with_semaphore, ctx->append_mode);
+				ret = init_write(&ctx->out[0], strdup(cfg->output_filename), cfg->with_semaphore);
 				check_ret(cfg->output_filename);
-				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore, ctx->append_mode);
+				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
 				check_ret(ctx->out[1].filename);
 			}
 			else
 			{
-				ret = init_write(ctx->out, strdup(cfg->output_filename), cfg->with_semaphore, ctx->append_mode);
+				ret = init_write(ctx->out, strdup(cfg->output_filename), cfg->with_semaphore );
 				check_ret(cfg->output_filename);
 			}
 		}
@@ -1103,14 +1103,14 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 
 			if (cfg->extract == 12)
 			{
-				ret = init_write(&ctx->out[0], create_outfilename(basefilename, "_1", extension), cfg->with_semaphore, ctx->append_mode);
+				ret = init_write(&ctx->out[0], create_outfilename(basefilename, "_1", extension), cfg->with_semaphore);
 				check_ret(ctx->out[0].filename);
-				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore, ctx->append_mode);
+				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
 				check_ret(ctx->out[1].filename);
 			}
 			else
 			{
-				ret = init_write(ctx->out, create_outfilename(basefilename, NULL, extension), cfg->with_semaphore, ctx->append_mode);
+				ret = init_write(ctx->out, create_outfilename(basefilename, NULL, extension), cfg->with_semaphore);
 				check_ret(ctx->out->filename);
 			}
 		}
@@ -1251,7 +1251,6 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->extract = opt->extract;
 	ctx->keep_output_closed = opt->keep_output_closed;
 	ctx->force_flush = opt->force_flush;
-	ctx->append_mode = opt->append_mode;
 	ctx->ucla = opt->ucla;
 
 	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);

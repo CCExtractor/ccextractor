@@ -44,7 +44,7 @@ int temporarily_open_output(struct ccx_s_write *wb)
 
 
 
-int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore, int append_mode)
+int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
 {
 	memset(wb, 0, sizeof(struct ccx_s_write));
 	wb->fh=-1;
@@ -52,7 +52,7 @@ int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore, int 
 	wb->filename = filename;
 	wb->with_semaphore = with_semaphore;
 	mprint ("Creating %s\n", filename);
-	if(!append_mode)
+	if(!(wb->append_mode))
 		wb->fh = open (filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 	else
 		wb->fh = open (filename, O_RDWR | O_CREAT | O_APPEND | O_BINARY, S_IREAD | S_IWRITE);

@@ -388,7 +388,7 @@ void signal_handler(int sig_type)
 
         if (sig_type == SIGUSR1)
         {
-        	mprint("Caught SIGUSR1\n. Filename Change Requested");
+        	mprint("Caught SIGUSR1. Filename Change Requested\n");
         	change_filename_requested = 1;
         }
 
