@@ -408,7 +408,8 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 			close(enc_ctx->out->fh);
 		int iter;
 		char str_number[15];
-		char *current_name = strdup(enc_ctx->out->filename); 
+		char *current_name = malloc(sizeof(char)*(strlen(enc_ctx->out->filename)+10));
+		strcpy(current_name,enc_ctx->out->filename);
 		mprint ("Creating %s\n", enc_ctx->out->filename);
 		if(enc_ctx->out->renaming_extension)
 		{
@@ -422,7 +423,8 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 			int ret;
 			char new_extension[6];
 			sprintf(new_extension, ".%d", iter); 
-			char *newname = strdup(enc_ctx->out->filename);
+			char *newname = malloc(sizeof(char)*(strlen(enc_ctx->out->filename)+10));
+			strcpy(newname,enc_ctx->out->filename);
 			strcat(newname,new_extension);
 			ret = rename(current_name, newname);
 			if(ret)
@@ -439,17 +441,18 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 				sprintf(str_number, "%d", iter-2);
 				strcat(current_name,str_number);
 			}
-
+			free(newname);
+		
 		}
 
 		enc_ctx->out->fh = open(enc_ctx->out->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
-		
+		free(current_name);
 		if (enc_ctx->out->fh == -1)
 		{
 			mprint("Failed to create a new rotation file\n");
 			return temp_encoder;
 		}
-					
+		free(temp_encoder);		
 		change_filename_requested = 0;
 		return enc_ctx;
 		
