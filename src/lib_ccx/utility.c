@@ -403,9 +403,9 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 	*temp_encoder = *enc_ctx;
 	if (enc_ctx->out->fh != -1)
 	{
-		enc_ctx->out->fh=-1;
 		if (enc_ctx->out->fh > 0)
 			close(enc_ctx->out->fh);
+		enc_ctx->out->fh=-1;
 		int iter;
 		char str_number[15];
 		char *current_name = malloc(sizeof(char)*(strlen(enc_ctx->out->filename)+10));
