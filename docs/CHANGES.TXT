@@ -8,6 +8,9 @@
 - Fix: Correcting display of sub mode and info in transcripts
 - Fix: Teletext page number displayed in -UCLA
 - Fix: Removal of excessive XDS notices about aspect ratio info
+- Fix: Force Flushing of file buffers works for all files now.
+- New: Add --append parameter. This will prevent overwriting of exisiting files.
+- New: File Rotation support added. The user has to send a USR1 signal to rotate.
 
 0.80 (2016-04-24)
 -----------------
