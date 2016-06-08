@@ -320,6 +320,7 @@ void usage (void)
 	mprint ("Options that affect what will be processed:\n");
 	mprint ("          -1, -2, -12: Output Field 1 data, Field 2 data, or both\n");
 	mprint ("                       (DEFAULT is -1)\n");
+	mprint ("Use --append to prevent overwriting of existing files. The output will be appended instead.");
 	mprint ("                 -cc2: When in srt/sami mode, process captions in channel 2\n");
 	mprint ("                       instead of channel 1.\n");
 	mprint ("-svc --service N1[cs1],N2[cs2]...:\n");
@@ -934,7 +935,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->force_flush = 1;
 			continue;
 		}
-
+		if (strcmp(argv[i], "--append") == 0)
+		{
+			opt->append_mode = 1;
+			continue;
+		}
 		if ((strcmp (argv[i],"-bs")==0 || strcmp (argv[i],"--buffersize")==0) && i<argc-1)
 		{
 			FILEBUFFERSIZE = atol_size(argv[i+1]);
@@ -1879,6 +1884,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	opt->enc_cfg.millis_separator = opt->millis_separator;
 	opt->enc_cfg.no_font_color = opt->nofontcolor;
 	opt->enc_cfg.force_flush = opt->force_flush;
+	opt->enc_cfg.append_mode = opt->append_mode;
 	opt->enc_cfg.ucla = opt->ucla;
 	opt->enc_cfg.no_type_setting = opt->notypesetting;
 	opt->enc_cfg.subs_delay = opt->subs_delay;
