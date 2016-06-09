@@ -374,7 +374,6 @@ void m_signal(int sig, void (*func)(int))
 
 	return;
 }
-#endif
 
 void create_signal(void)
 {
@@ -391,8 +390,9 @@ void signal_handler(int sig_type)
         	mprint("Caught SIGUSR1. Filename Change Requested\n");
         	change_filename_requested = 1;
         }
-
 }
+#endif
+
 struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 {
 	if(change_filename_requested == 0)
