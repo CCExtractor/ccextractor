@@ -12,8 +12,7 @@
 
 void _process_frame(AVFrame *frame, int width, int height, int index)
 {
-	// printf("frame : %04d\n", index);
-	if(index % 60 != 0)
+	if(index%25!=0)
 		return;
 	printf("frame : %04d\n", index);
 	PIX *im;
@@ -29,6 +28,7 @@ void _process_frame(AVFrame *frame, int width, int height, int index)
 			int r=frame->data[0][p];
 			int g=frame->data[0][p+1];
 			int b=frame->data[0][p+2];
+			//pixSetRGBPixel(im,j,i,r,g,b);
 			float L,A,B;
 			rgb2lab((float)r,(float)g,(float)b,&L,&A,&B);
 			if(L>95) // TODO: Make this threshold a parameter and also automatically calculate it
@@ -55,8 +55,8 @@ void _process_frame(AVFrame *frame, int width, int height, int index)
     printf("Recognized text : \"%s\"\n", subtitle_text);
 
 	char write_path[100];
-	sprintf(write_path,"../../ffmpeg-examples/frames/temp%04d.jpg",index);
-	//printf("%s\n", write_path);
+	sprintf(write_path,"./ffmpeg-examples/frames/temp%04d.jpg",index);
+	// printf("%s\n", write_path);
 	pixWrite(write_path,im,IFF_JFIF_JPEG);
 
 	pixDestroy(&im);
@@ -64,13 +64,15 @@ void _process_frame(AVFrame *frame, int width, int height, int index)
 
 int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx)
 {
+	// Do an exhaustive linear search over the video
 	int got_frame;
 	int frame_number = 0;
 	while(av_read_frame(ctx->format_ctx, &ctx->packet)>=0)
 	{
-		frame_number++;
 		if(ctx->packet.stream_index == ctx->video_stream_id)
 		{
+			frame_number++;
+			// printf("%d\n", frame_number);
 			avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
 			if(got_frame)
 			{
@@ -89,6 +91,11 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx)
 		}
 		av_packet_unref(&ctx->packet);
 	}
+}
+
+int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
+{
+	// Do a binary search over the input video for faster processing
 }
 
 #endif

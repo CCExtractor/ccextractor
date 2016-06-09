@@ -28,7 +28,9 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 	}
 
 	//TODO: Remove this and handle in params dump?
+	// Need to calculate stuff too in that case
 	av_dump_format(ctx->format_ctx, 0, ctx->inputfile[0], 0);
+	
 
 	ctx->video_stream_id = -1;
 	for(int i = 0; i < ctx->format_ctx->nb_streams; i++)
