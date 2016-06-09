@@ -285,8 +285,9 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->max_gop_length = 0;
 	ctx->has_ccdata_buffered = 0;
 	ctx->in_bufferdatatype = CCX_UNKNOWN;
-	ctx->frames_since_last_gop = 0;
-
+	ctx->frames_since_last_gop  = 0;
+	ctx->total_pulldownfields   = 0;
+	ctx->total_pulldownframes   = 0;
 	ctx->stat_numuserheaders    = 0;
 	ctx->stat_dvdccheaders      = 0;
 	ctx->stat_scte20ccheaders   = 0;
