@@ -605,6 +605,6 @@ char *strndup(const char *s, size_t n)
 }
 char *strtok_r(char *str, const char *delim, char **saveptr)
 {
-	strtok_s(str, delim, saveptr);
+	return strtok_s(str, delim, saveptr);
 }
 #endif //_WIN32

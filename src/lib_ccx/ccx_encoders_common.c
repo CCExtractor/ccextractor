@@ -13,7 +13,7 @@
 #ifdef WIN32
 int fsync(int fd)
 {
-	FlushFileBuffers(fd);
+	return FlushFileBuffers((HANDLE)_get_osfhandle(fd)) ? 0 : -1;
 }
 #endif
 

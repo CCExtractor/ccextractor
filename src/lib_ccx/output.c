@@ -21,6 +21,7 @@ int temporarily_close_output(struct ccx_s_write *wb)
 	close(wb->fh);
 	wb->fh = -1;
 	wb->temporarily_closed = 1;
+	return 0;
 }
 
 int temporarily_open_output(struct ccx_s_write *wb)

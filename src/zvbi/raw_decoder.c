@@ -1211,8 +1211,6 @@ vbi3_raw_decoder_set_log_fn	(vbi3_raw_decoder *	rd,
 				 void *			user_data,
 				 vbi_log_mask		mask)
 {
-	unsigned int i;
-
 	assert (NULL != rd);
 
 	if (NULL == log_fn)
