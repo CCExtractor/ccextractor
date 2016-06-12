@@ -76,7 +76,14 @@ GF_Err gf_isom_parse_box_ex(GF_Box **outBox, GF_BitStream *bs, u32 parent_type)
 		if (!size) {
 			type = gf_bs_peek_bits(bs, 32, 0);
 			if (!isalnum((type>>24)&0xFF) || !isalnum((type>>16)&0xFF) || !isalnum((type>>8)&0xFF) || !isalnum(type&0xFF)) {
-				size = 4;
+				/* size = 4; */
+
+				/* In some files there are a single 0x00 at the end of atom. When the size is set to 4, */
+				/* but parent atom expects this atom to be 1 byte, it causes GF_ISOM_INCOMPLETE_FILE. */
+				/* In case there are multiple 0x00 bytes at the end, they will be handled individually, I hope :) */
+				size = 1;
+				hdr_size = 1;
+
 				type = GF_ISOM_BOX_TYPE_VOID;
 			} else {
 				goto proceed_box;
@@ -102,7 +109,7 @@ proceed_box:
 	}
 	
 	//handle large box
-	if (size == 1) {
+	if (size == 1 && type != GF_ISOM_BOX_TYPE_VOID) {
 		size = gf_bs_read_u64(bs);
 		hdr_size += 8;
 	}
