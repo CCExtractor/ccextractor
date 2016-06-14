@@ -13,7 +13,7 @@
 #ifdef WIN32
 int fsync(int fd)
 {
-	FlushFileBuffers(fd);
+	return FlushFileBuffers((HANDLE)_get_osfhandle(fd)) ? 0 : -1;
 }
 #endif
 
@@ -1089,14 +1089,9 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
 				check_ret(ctx->out[1].filename);
 			}
-			else if (cfg->extract == 1)
-			{
-				ret = init_write(ctx->out, strdup(cfg->output_filename), cfg->with_semaphore);
-				check_ret(cfg->output_filename);
-			}
 			else
 			{
-				ret = init_write(ctx->out, strdup(cfg->output_filename), cfg->with_semaphore);
+				ret = init_write(ctx->out, strdup(cfg->output_filename), cfg->with_semaphore );
 				check_ret(cfg->output_filename);
 			}
 		}
@@ -1111,11 +1106,6 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 				check_ret(ctx->out[0].filename);
 				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
 				check_ret(ctx->out[1].filename);
-			}
-			else if (cfg->extract == 1)
-			{
-				ret = init_write(ctx->out, create_outfilename(basefilename, NULL, extension), cfg->with_semaphore);
-				check_ret(ctx->out->filename);
 			}
 			else
 			{
@@ -1328,6 +1318,8 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 
 	if(!context)
 		return CCX_OK;
+
+	context = change_filename(context);
 
 	if (sub->type == CC_608)
 	{

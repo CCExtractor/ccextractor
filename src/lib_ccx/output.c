@@ -21,6 +21,7 @@ int temporarily_close_output(struct ccx_s_write *wb)
 	close(wb->fh);
 	wb->fh = -1;
 	wb->temporarily_closed = 1;
+	return 0;
 }
 
 int temporarily_open_output(struct ccx_s_write *wb)
@@ -51,8 +52,13 @@ int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
 	wb->temporarily_closed = 0; 
 	wb->filename = filename;
 	wb->with_semaphore = with_semaphore;
+	wb->append_mode = ccx_options.enc_cfg.append_mode;
 	mprint ("Creating %s\n", filename);
-	wb->fh = open (filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+	if(!(wb->append_mode))
+		wb->fh = open (filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+	else
+		wb->fh = open (filename, O_RDWR | O_CREAT | O_APPEND | O_BINARY, S_IREAD | S_IWRITE);
+	wb->renaming_extension = 0;
 	if (wb->fh == -1)
 	{
 		return CCX_COMMON_EXIT_FILE_CREATION_FAILED;

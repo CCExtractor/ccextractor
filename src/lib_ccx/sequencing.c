@@ -22,8 +22,6 @@ void init_hdcc (struct lib_cc_decode *ctx)
 // Buffer caption blocks for later sorting/flushing.
 void store_hdcc(struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now, struct cc_subtitle *sub)
 {
-	enum ccx_stream_mode_enum stream_mode;
-
 	//stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 	// Uninitialized?
 	if (ctx->anchor_seq_number < 0)

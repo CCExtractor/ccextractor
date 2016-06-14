@@ -102,7 +102,7 @@ proceed_box:
 	}
 	
 	//handle large box
-	if (size == 1) {
+	if (size == 1 && type != GF_ISOM_BOX_TYPE_VOID) {
 		size = gf_bs_read_u64(bs);
 		hdr_size += 8;
 	}
