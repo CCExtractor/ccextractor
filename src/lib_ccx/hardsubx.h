@@ -39,7 +39,6 @@ struct lib_hardsubx_ctx
 	struct SwsContext *sws_ctx;
 	uint8_t *rgb_buffer;
 	int video_stream_id;
-	int duration;
 
 	// Leptonica Image Context
 	PIX *im;
