@@ -25,3 +25,5 @@ build/
 ####
 # Ignore the header file that is updated upon build
 src/lib_ccx/compile_info.h
+
+*.tags*

@@ -186,22 +186,31 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				}
 
 				datalen = packetlength - 4 - nextheader[6];
+				dbg_print(CCX_DMT_VERBOSE, "datalen:%d packetlen :%" PRIu16 " pes header ext:%d\n", datalen, packetlength, nextheader[6]);
+
 				//Subtitle substream ID 0x20 - 0x39 (32 possible)		
 				if( nextheader[7] >= 0x20 && nextheader[7] < 0x40)
 				{
-					result = buffered_read(ctx->demux_ctx, datalen);
-					ctx->demux_ctx->past += (packetlength-4- nextheader[6]);
+					dbg_print(CCX_DMT_VERBOSE, "Subtitle found Stream id:%02x\n", nextheader[7]);
+					result = buffered_read(ctx->demux_ctx, data->buffer + data->len, datalen);
+					ctx->demux_ctx->past += datalen;
 					if(result != datalen)
 					{
 						end_of_file = 1;
 						break;
 					}
+					if (result>0) 
+					{
+						payload_read+=(int) result;
+					}
+					data->len+=result;
 
 					enough = 1;
 					continue;
 				}
 				else
 				{
+					//Non Subtitle packet
 					buffered_skip(ctx->demux_ctx, datalen);
 					ctx->demux_ctx->past += (packetlength-4- nextheader[6]);
 					// fake a result value as something was skipped
