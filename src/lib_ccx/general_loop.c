@@ -157,6 +157,60 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				result=1;
 				continue;
 			}
+			//Private Stream 1 (non MPEG audio , subpictures) 
+			else if (nextheader[3] == 0xBD)
+			{
+				uint16_t packetlength = (nextheader[4] << 8) | nextheader[5];
+				int ret, datalen;
+				//TODO: read PES Header extension , skipped for now
+				// read_video_pes_header() might do
+				buffered_skip (ctx->demux_ctx, 2);
+				ctx->demux_ctx->past += 2;
+				ret = buffered_read(ctx->demux_ctx, nextheader+6, 1); // PES header data length (extension)
+				ctx->demux_ctx->past += 1;
+				if(ret != 1)
+				{
+					end_of_file = 1;
+					break;
+				}
+				buffered_skip(ctx->demux_ctx, (int)nextheader[6]);
+				ctx->demux_ctx->past += (int)nextheader[6];
+
+				//Substream ID 
+				ret = buffered_read(ctx->demux_ctx, nextheader+7, 1);
+				ctx->demux_ctx->past += 1;
+				if(ret != 1)
+				{
+					end_of_file = 1;
+					break;					
+				}
+
+				datalen = packetlength - 4 - nextheader[6];
+				//Subtitle substream ID 0x20 - 0x39 (32 possible)		
+				if( nextheader[7] >= 0x20 && nextheader[7] < 0x40)
+				{
+					result = buffered_read(ctx->demux_ctx, datalen);
+					ctx->demux_ctx->past += (packetlength-4- nextheader[6]);
+					if(result != datalen)
+					{
+						end_of_file = 1;
+						break;
+					}
+
+					enough = 1;
+					continue;
+				}
+				else
+				{
+					buffered_skip(ctx->demux_ctx, datalen);
+					ctx->demux_ctx->past += (packetlength-4- nextheader[6]);
+					// fake a result value as something was skipped
+					result=1;
+
+					continue;
+				}
+
+			}
 			// Some PES stream
 			else if (nextheader[3]>=0xBB && nextheader[3]<=0xDF)
 			{

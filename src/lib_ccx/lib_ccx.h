@@ -36,7 +36,7 @@ struct file_report
 	unsigned mp4_cc_track_cnt;
 };
 
-// Stuff for telcc.c
+// Stuff for telxcc.c
 struct ccx_s_teletext_config
 {
 	uint8_t verbose : 1; // should telxcc be verbose?

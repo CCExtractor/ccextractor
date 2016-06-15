@@ -1,5 +1,5 @@
 #ifndef CCX_CCEXTRACTOR_COMPILE_H
 #define CCX_CCEXTRACTOR_COMPILE_H
-#define GIT_COMMIT "Unknown"
-#define COMPILE_DATE "Unknown"
+#define GIT_COMMIT "db1fab51f4969f93b61b5e9ebe188ad305726f5d"
+#define COMPILE_DATE "2016-06-15"
 #endif
