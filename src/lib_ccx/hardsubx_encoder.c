@@ -9,4 +9,9 @@
 #include "allheaders.h"
 #include "hardsubx.h"
 
+int hardsubx_write_subtitle(struct lib_hardsubx_ctx *ctx)
+{
+	
+}
+
 #endif

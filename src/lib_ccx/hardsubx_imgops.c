@@ -12,6 +12,52 @@
 #define BLACK 20.0
 #define YELLOW 70.0
 
+#define min_f(a, b, c)  (fminf(a, fminf(b, c)))
+#define max_f(a, b, c) (fmaxf(a, fmaxf(b, c)))
+
+void rgb2hsv(float R, float G, float B,float *H, float *S, float *V)
+{
+	//Conversion into HSV color space to get Hue
+	float r = R / 255.0f;
+	float g = G / 255.0f;
+	float b = B / 255.0f;
+
+	float h, s, v; // h:0-360.0, s:0.0-1.0, v:0.0-1.0
+
+	float max = max_f(r, g, b);
+	float min = min_f(r, g, b);
+
+	v = max;
+
+	if (max == 0.0f) {
+		s = 0;
+		h = 0;
+	}
+	else if (max - min == 0.0f) {
+		s = 0;
+		h = 0;
+	}
+	else {
+		s = (max - min) / max;
+
+		if (max == r) {
+			h = 60 * ((g - b) / (max - min)) + 0;
+		}
+		else if (max == g) {
+			h = 60 * ((b - r) / (max - min)) + 120;
+		}
+		else {
+			h = 60 * ((r - g) / (max - min)) + 240;
+		}
+	}
+
+	if (h < 0) h += 360.0f;
+
+	H = (unsigned char)(h / 2);   // dst_h : 0-180
+	S = (unsigned char)(s * 255); // dst_s : 0-255
+	V = (unsigned char)(v * 255); // dst_v : 0-255
+}
+
 void rgb2lab(float R, float G, float B,float *L, float *a, float *b)
 {
 	//Conversion to the CIE-LAB color space to get the Luminance

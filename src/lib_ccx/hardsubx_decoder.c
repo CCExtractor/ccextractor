@@ -92,7 +92,7 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
 	char write_path[100];
 	sprintf(write_path,"./ffmpeg-examples/frames/temp%04d.jpg",index);
 	// printf("%s\n", write_path);
-	pixWrite(write_path,mov_im,IFF_JFIF_JPEG);
+	// pixWrite(write_path,feature_img,IFF_JFIF_JPEG);
 
 	pixCopy(prev_im,im);
 
