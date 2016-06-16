@@ -105,6 +105,31 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
 	pixDestroy(&im);
 }
 
+void _display_frame(AVFrame *frame, int width, int height)
+{
+	PIX *im;
+	im = pixCreate(width,height,32);
+
+	int i,j;
+	for(i=0;i<height;i++)
+	{
+		for(j=0;j<width;j++)
+		{
+			int p=j*3+i*frame->linesize[0];
+			int r=frame->data[0][p];
+			int g=frame->data[0][p+1];
+			int b=frame->data[0][p+2];
+			pixSetRGBPixel(im,j,i,r,g,b);
+		}
+	}
+
+
+	char write_path[100];
+	sprintf(write_path,"./ffmpeg-examples/frames/temp.jpg");
+
+	pixWrite(write_path,im,IFF_JFIF_JPEG);
+}
+
 int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx)
 {
 	// Do an exhaustive linear search over the video
@@ -142,7 +167,47 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx)
 int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 {
 	// Do a binary search over the input video for faster processing
+	printf("Duration: %d\n", (int)ctx->format_ctx->duration);
+	int got_frame;
+
 	
+	
+	int ret = av_seek_frame(ctx->format_ctx, ctx->video_stream_id, seek_time, AVSEEK_FLAG_ANY);
+	if(ret < 0)
+	{
+		ret = av_seek_frame(ctx->format_ctx, ctx->video_stream_id, seek_time, AVSEEK_FLAG_BACKWARD);
+	}
+	if(ret >= 0)
+	{
+		while(av_read_frame(ctx->format_ctx, &ctx->packet)>=0)
+		{
+			if(ctx->packet.stream_index == ctx->video_stream_id)
+			{
+				avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
+				if(got_frame)
+				{
+					printf("GOT FRAME\n");
+					// sws_scale is used to convert the pixel format to RGB24 from all other cases
+					sws_scale(
+							ctx->sws_ctx,
+							(uint8_t const * const *)ctx->frame->data,
+							ctx->frame->linesize,
+							0,
+							ctx->codec_ctx->height,
+							ctx->rgb_frame->data,
+							ctx->rgb_frame->linesize
+						);
+					// Send the frame to other functions for processing
+					_display_frame(ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height);
+					break;
+				}
+			}
+		}
+	}
+	else
+	{
+		printf("Seeking to timestamp failed\n");
+	}
 }
 
 #endif

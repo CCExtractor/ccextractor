@@ -86,8 +86,9 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 	avpicture_fill((AVPicture *)ctx->rgb_frame, ctx->rgb_buffer, AV_PIX_FMT_RGB24, ctx->codec_ctx->width, ctx->codec_ctx->height);
 
 	// Pass on the processing context to the appropriate functions
-	hardsubx_process_frames_linear(ctx);
+	//hardsubx_process_frames_linear(ctx);
 	// TODO: Add binary search processing mode
+	hardsubx_process_frames_binary(ctx);
 
 	// Free the allocated memory for frame processing
 	av_free(ctx->rgb_buffer);
