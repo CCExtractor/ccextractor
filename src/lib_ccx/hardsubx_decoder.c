@@ -87,6 +87,8 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
     TessBaseAPIEnd(handle);
     TessBaseAPIDelete(handle);
 
+    int timestamp = av_frame_get_best_effort_timestamp(frame);
+    printf("Timestamp %d\n", timestamp);
     printf("Recognized text : \"%s\"\n", subtitle_text);
 
 	char write_path[100];
@@ -119,6 +121,7 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx)
 			avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
 			if(got_frame)
 			{
+				// sws_scale is used to convert the pixel format to RGB24 from all other cases
 				sws_scale(
 						ctx->sws_ctx,
 						(uint8_t const * const *)ctx->frame->data,
@@ -139,6 +142,7 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx)
 int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 {
 	// Do a binary search over the input video for faster processing
+	
 }
 
 #endif

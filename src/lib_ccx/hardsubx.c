@@ -87,6 +87,7 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 
 	// Pass on the processing context to the appropriate functions
 	hardsubx_process_frames_linear(ctx);
+	// TODO: Add binary search processing mode
 
 	// Free the allocated memory for frame processing
 	av_free(ctx->rgb_buffer);
@@ -153,6 +154,7 @@ void hardsubx(struct ccx_s_options *options)
 	mprint ("\rDone, processing time = %ld seconds\n", processing_time);
 
 	// Free all allocated memory for the data structures
+	_dinit_hardsubx(&ctx);
 }
 
 #endif

@@ -9,10 +9,14 @@
 #include "allheaders.h"
 #include "hardsubx.h"
 
-int bsearch_frame_neighbourhood()
+int detect_italics()
 {
-	// Searches the neighbourhood of the frame with the detected sub to get exact timing
-	
+	//TODO: Get orientation of the detected subtitles
+}
+
+int detect_subtitle_color()
+{
+	//TODO: Detect the color of detected subtitle line
 }
 
 #endif

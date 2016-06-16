@@ -9,9 +9,29 @@
 #include "allheaders.h"
 #include "hardsubx.h"
 
-int hardsubx_write_subtitle(struct lib_hardsubx_ctx *ctx)
+int _hardsubx_write_subtitle_as_srt()
+{
+
+}
+
+int _hardsubx_write_subtitle_as_transcript()
 {
 	
+}
+
+int _hardsubx_write_subtitle_as_sami()
+{
+	
+}
+
+int _hardsubx_write_subtitle_as_ass()
+{
+	
+}
+
+int hardsubx_write_subtitle(struct lib_hardsubx_ctx *ctx)
+{
+
 }
 
 #endif
