@@ -15,6 +15,7 @@
 #include "ccx_decoders_isdb.h"
 #include "ffmpeg_intgr.h"
 #include "ccx_gxf.h"
+#include "dvd_subtitle_decoder.h"
 
 unsigned int rollover_bits = 0; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
 int end_of_file=0; // End of file?
@@ -157,6 +158,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				result=1;
 				continue;
 			}
+			//PES Header
 			//Private Stream 1 (non MPEG audio , subpictures) 
 			else if (nextheader[3] == 0xBD)
 			{
@@ -192,6 +194,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				if( nextheader[7] >= 0x20 && nextheader[7] < 0x40)
 				{
 					dbg_print(CCX_DMT_VERBOSE, "Subtitle found Stream id:%02x\n", nextheader[7]);
+					dbg_print(CCX_DMT_VERBOSE, "data->len: %d\n", data->len);
 					result = buffered_read(ctx->demux_ctx, data->buffer + data->len, datalen);
 					ctx->demux_ctx->past += datalen;
 					if(result != datalen)
@@ -203,16 +206,20 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 					{
 						payload_read+=(int) result;
 					}
-					data->len+=result;
+					//FIXME: Temporary bypass
+					data->bufferdatatype = CCX_DVD_SUBTITLE;
 
+					data->len+=result;
+					dbg_print(CCX_DMT_VERBOSE, "data->len: %d\n", data->len);
 					enough = 1;
 					continue;
 				}
 				else
 				{
+					data->bufferdatatype = CCX_PES;
 					//Non Subtitle packet
 					buffered_skip(ctx->demux_ctx, datalen);
-					ctx->demux_ctx->past += (packetlength-4- nextheader[6]);
+					ctx->demux_ctx->past += datalen;
 					// fake a result value as something was skipped
 					result=1;
 
@@ -244,6 +251,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 					mprint("Do not skip over, search for next.\n");
 					headerlen = 2;
 				}
+				data->bufferdatatype = CCX_PES;
 
 				// Skip over it
 				buffered_skip (ctx->demux_ctx, (int) headerlen);
@@ -284,6 +292,8 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				{
 					continue;
 				}
+				
+				data->bufferdatatype = CCX_PES;
 
 				result = buffered_read (ctx->demux_ctx, data->buffer+data->len, want);
 				ctx->demux_ctx->past=ctx->demux_ctx->past+result;
@@ -642,6 +652,10 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		dec_ctx->in_bufferdatatype = CCX_PES;
 		got = process_m2v (dec_ctx, data_node->buffer, data_node->len, dec_sub);
 	}
+	else if (data_node->bufferdatatype = CCX_DVD_SUBTITLE)
+	{		
+		got = process_spu (data_node->buffer, data_node->len);
+	}
 	else if (data_node->bufferdatatype == CCX_TELETEXT)
 	{
 		//telxcc_update_gt(dec_ctx->private_data, ctx->demux_ctx->global_timestamp);
@@ -831,6 +845,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		position_sanity_check(ctx->demux_ctx->infd);
 		if(!ctx->multiprogram)
 		{
+			printf("not multiprogram\n");
 			struct cap_info* cinfo = NULL;
 			struct encoder_ctx *enc_ctx = NULL;
 			int pid = get_best_stream(ctx->demux_ctx);
@@ -879,7 +894,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				}
 				isdb_set_global_time(dec_ctx, tstamp);
 			}
-
+			printf("%d\n", data_node->bufferdatatype);
 			ret = process_data(enc_ctx, dec_ctx, data_node);
 			if( ret != CCX_OK)
 				break;

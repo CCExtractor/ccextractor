@@ -219,6 +219,7 @@ enum ccx_bufferdata_type
 	CCX_ISDB_SUBTITLE = 8,
 	/* BUffer where cc data contain 3 byte cc_valid ccdata 1 ccdata 2 */
 	CCX_RAW_TYPE = 9,
+	CCX_DVD_SUBTITLE =10,
 };
 
 enum ccx_frame_type
