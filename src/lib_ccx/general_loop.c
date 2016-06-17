@@ -194,8 +194,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				if( nextheader[7] >= 0x20 && nextheader[7] < 0x40)
 				{
 					dbg_print(CCX_DMT_VERBOSE, "Subtitle found Stream id:%02x\n", nextheader[7]);
-					dbg_print(CCX_DMT_VERBOSE, "data->len: %d\n", data->len);
-					result = buffered_read(ctx->demux_ctx, data->buffer + data->len, datalen);
+					result = buffered_read(ctx->demux_ctx, data->buffer, datalen);
 					ctx->demux_ctx->past += datalen;
 					if(result != datalen)
 					{
@@ -209,9 +208,10 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 					//FIXME: Temporary bypass
 					data->bufferdatatype = CCX_DVD_SUBTITLE;
 
-					data->len+=result;
+					data->len = result;
 					dbg_print(CCX_DMT_VERBOSE, "data->len: %d\n", data->len);
 					enough = 1;
+
 					continue;
 				}
 				else
@@ -318,6 +318,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 	while (result!=0 && !enough && BUFSIZE!=data->len);
 
 	dbg_print(CCX_DMT_VERBOSE, "PES data read: %d\n", payload_read);
+	// printf("payload\n");
 
 	if(!payload_read)
 		return CCX_EOF;
@@ -841,7 +842,6 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		}
 		if (!datalist)
 			continue;
-
 		position_sanity_check(ctx->demux_ctx->infd);
 		if(!ctx->multiprogram)
 		{
