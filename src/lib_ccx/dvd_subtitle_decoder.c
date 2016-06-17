@@ -108,10 +108,6 @@ int process_spu(unsigned char *buff, int length)
 	data->len = length;
 	
 	data->size_spu = (data->buffer[0] << 8) | data->buffer[1];
-	dbg_print(CCX_DMT_VERBOSE, "%02x %02x\n", data->buffer[0], data->buffer[1]);
-	dbg_print(CCX_DMT_VERBOSE, "spu%d\n", data->size_spu);
-	
-
 	if(data->size_spu > length)
 	{
 		// TODO: Data might be spread over several packets, handle this case to append to one buffer
@@ -126,7 +122,6 @@ int process_spu(unsigned char *buff, int length)
 	}
 
 	data->size_data = (data->buffer[2] << 8) | data->buffer[3];
-	dbg_print(CCX_DMT_VERBOSE, "data%d\n", data->size_data);
 	if(data->size_data > data->size_spu)
 	{
 		dbg_print(CCX_DMT_VERBOSE, "Invalid SPU Packet\n");

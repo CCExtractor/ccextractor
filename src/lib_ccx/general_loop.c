@@ -188,7 +188,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				}
 
 				datalen = packetlength - 4 - nextheader[6];
-				dbg_print(CCX_DMT_VERBOSE, "datalen:%d packetlen :%" PRIu16 " pes header ext:%d\n", datalen, packetlength, nextheader[6]);
+				dbg_print(CCX_DMT_VERBOSE, "datalen :%d packetlen :%" PRIu16 " pes header ext :%d\n", datalen, packetlength, nextheader[6]);
 
 				//Subtitle substream ID 0x20 - 0x39 (32 possible)		
 				if( nextheader[7] >= 0x20 && nextheader[7] < 0x40)
@@ -209,7 +209,6 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 					data->bufferdatatype = CCX_DVD_SUBTITLE;
 
 					data->len = result;
-					dbg_print(CCX_DMT_VERBOSE, "data->len: %d\n", data->len);
 					enough = 1;
 
 					continue;
@@ -845,7 +844,6 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		position_sanity_check(ctx->demux_ctx->infd);
 		if(!ctx->multiprogram)
 		{
-			printf("not multiprogram\n");
 			struct cap_info* cinfo = NULL;
 			struct encoder_ctx *enc_ctx = NULL;
 			int pid = get_best_stream(ctx->demux_ctx);
@@ -894,7 +892,6 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				}
 				isdb_set_global_time(dec_ctx, tstamp);
 			}
-			printf("%d\n", data_node->bufferdatatype);
 			ret = process_data(enc_ctx, dec_ctx, data_node);
 			if( ret != CCX_OK)
 				break;
