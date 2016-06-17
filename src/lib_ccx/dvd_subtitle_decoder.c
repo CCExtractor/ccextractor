@@ -86,7 +86,7 @@ void process_ctrl_seq(struct dvd_cc_data *data)
 							ctrl->pixoffset[1] = (data->buffer[data->pos + 2] << 8) | data->buffer[data->pos + 3];
 							data->pos+=4;
 							break;
-				case 0x07:	dbg_print(CCX_DMT_VERBOSE, "Cmmand 0x07 found\n");
+				case 0x07:	dbg_print(CCX_DMT_VERBOSE, "Command 0x07 found\n");
 							uint16_t skip = (data->buffer[data->pos] << 8) | data->buffer[data->pos + 1];
 							data->pos+=skip;
 							break;
@@ -96,6 +96,9 @@ void process_ctrl_seq(struct dvd_cc_data *data)
 			}
 		}
 	}
+
+
+	
 
 
 }
@@ -119,6 +122,7 @@ int process_spu(unsigned char *buff, int length)
 	{
 		dbg_print(CCX_DMT_VERBOSE, "SPU size mismatch\n");
 		// return -1;
+		return length; //FIXME: not the write thing to return
 	}
 
 	data->size_data = (data->buffer[2] << 8) | data->buffer[3];
@@ -126,6 +130,7 @@ int process_spu(unsigned char *buff, int length)
 	{
 		dbg_print(CCX_DMT_VERBOSE, "Invalid SPU Packet\n");
 		// return -1;
+		return length; //FIXME: not the write thing to return
 	} 
 
 	process_ctrl_seq(data);
