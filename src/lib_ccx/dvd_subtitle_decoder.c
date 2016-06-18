@@ -16,6 +16,8 @@ struct dvd_cc_data
 	int pos; //position in the buffer
 	uint16_t size_spu; //total size of spu packet
 	uint16_t size_data; //size of data in the packet, offset to control packet
+	struct ctrl_seq *ctrl;
+	unsigned char *bitmap;
 };
 
 struct ctrl_seq
@@ -30,7 +32,8 @@ struct ctrl_seq
 void process_ctrl_seq(struct dvd_cc_data *data)
 {
 	uint16_t date, next_ctrl;
-	struct ctrl_seq *ctrl = malloc(sizeof(struct ctrl_seq));
+	data->ctrl = malloc(sizeof(struct ctrl_seq));
+	struct ctrl_seq *control = data->ctrl; 
 	int command; // next command
 	int seq_end, pack_end = 0;
 
@@ -55,35 +58,35 @@ void process_ctrl_seq(struct dvd_cc_data *data)
 			data->pos += 1;
 			switch(command)
 			{
-				case 0x01:	ctrl->start_time = date;
+				case 0x01:	control->start_time = date;
 							break;
-				case 0x02:	ctrl->stop_time = date; 
+				case 0x02:	control->stop_time = date; 
 							break;
 				case 0x03:	// SET_COLOR
-							ctrl->color[0] = (data->buffer[data->pos] & 0xf0) >> 4;
-							ctrl->color[1] = data->buffer[data->pos] & 0x0f;
-							ctrl->color[2] = (data->buffer[data->pos + 1] & 0xf0) >> 4;
-							ctrl->color[3] = data->buffer[data->pos + 1] & 0x0f;
+							control->color[0] = (data->buffer[data->pos] & 0xf0) >> 4;
+							control->color[1] = data->buffer[data->pos] & 0x0f;
+							control->color[2] = (data->buffer[data->pos + 1] & 0xf0) >> 4;
+							control->color[3] = data->buffer[data->pos + 1] & 0x0f;
 							data->pos+=2;
 							break;
 				case 0x04:	//SET_CONTR
-							ctrl->alpha[0] = (data->buffer[data->pos] & 0xf0) >> 4;
-							ctrl->alpha[1] = data->buffer[data->pos] & 0x0f;
-							ctrl->alpha[2] = (data->buffer[data->pos + 1] & 0xf0) >> 4;
-							ctrl->alpha[3] = data->buffer[data->pos + 1] & 0x0f;
+							control->alpha[0] = (data->buffer[data->pos] & 0xf0) >> 4;
+							control->alpha[1] = data->buffer[data->pos] & 0x0f;
+							control->alpha[2] = (data->buffer[data->pos + 1] & 0xf0) >> 4;
+							control->alpha[3] = data->buffer[data->pos + 1] & 0x0f;
 							data->pos+=2;
 							break;
 				case 0x05:	//SET_DAREA
-							ctrl->coord[0] = ((data->buffer[data->pos] << 8) | (data->buffer[data->pos + 1] & 0xf0)) >> 4 ; //starting x coordinate
-							ctrl->coord[1] = ((data->buffer[data->pos + 1] & 0x0f) << 8 ) | data->buffer[data->pos + 2] ; //ending x coordinate
-							ctrl->coord[2] = ((data->buffer[data->pos + 3] << 8) | (data->buffer[data->pos + 4] & 0xf0)) >> 4 ; //starting y coordinate
-							ctrl->coord[3] = ((data->buffer[data->pos + 4] & 0x0f) << 8 ) | data->buffer[data->pos + 5] ; //ending y coordinate
+							control->coord[0] = ((data->buffer[data->pos] << 8) | (data->buffer[data->pos + 1] & 0xf0)) >> 4 ; //starting x coordinate
+							control->coord[1] = ((data->buffer[data->pos + 1] & 0x0f) << 8 ) | data->buffer[data->pos + 2] ; //ending x coordinate
+							control->coord[2] = ((data->buffer[data->pos + 3] << 8) | (data->buffer[data->pos + 4] & 0xf0)) >> 4 ; //starting y coordinate
+							control->coord[3] = ((data->buffer[data->pos + 4] & 0x0f) << 8 ) | data->buffer[data->pos + 5] ; //ending y coordinate
 							data->pos+=6;
 							//(x1-x2+1)*(y1-y2+1)
 							break;
 				case 0x06:	//SET_DSPXA - Pixel address
-							ctrl->pixoffset[0] = (data->buffer[data->pos] << 8) | data->buffer[data->pos + 1];
-							ctrl->pixoffset[1] = (data->buffer[data->pos + 2] << 8) | data->buffer[data->pos + 3];
+							control->pixoffset[0] = (data->buffer[data->pos] << 8) | data->buffer[data->pos + 1];
+							control->pixoffset[1] = (data->buffer[data->pos + 2] << 8) | data->buffer[data->pos + 3];
 							data->pos+=4;
 							break;
 				case 0x07:	dbg_print(CCX_DMT_VERBOSE, "Command 0x07 found\n");
@@ -98,7 +101,7 @@ void process_ctrl_seq(struct dvd_cc_data *data)
 	}
 
 
-	
+
 
 
 }
