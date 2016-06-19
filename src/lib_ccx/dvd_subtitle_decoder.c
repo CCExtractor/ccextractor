@@ -29,41 +29,74 @@ struct ctrl_seq
 	uint16_t start_time, stop_time;
 };
 
-int get_bits(uint16_t temp, int n)
+// 0 false 1 true
+
+#define bitoff(x) (x ? 0x0f : 0xf0 )
+
+// int get_bits(uint16_t temp, int n)
+// {
+// 	// Get n bits from 16 bits
+// 	unsigned mask;
+// 	mask = ((1 << n) - 1) << (16-n);
+// 	return (temp & mask);
+// }
+
+int get_bits(struct dvd_cc_data data, int *nextbyte, int *pos, int *m)
 {
-	// Get n bits from 16 bits
-	unsigned mask;
-	mask = ((1 << n) - 1) << (16-n);
-	return (temp & mask);
+	int ret;
+	ret = nextbyte & 0xf0;
+	if(*m == 0)
+		*pos++;
+	nextbyte = (nextbyte << 4) | (data->buffer[pos] & bitoff(*m));
+	*m = (*m + 1)%2;
 }
+
+
+int get_rlen(struct dvd_cc_data *data, int *color, uint8_t *nextbyte, int *pos, int *m)
+{
+	int val;
+	uint16_t rlen;
+
+	val = 4;
+	rlen = get_bits(data, nextbyte, pos, m);
+	while(rlen < val && val <= 0x40)
+	{
+		rlen = (rlen << 4) | get_bits(data, nextbyte, pos, m);
+		val = val << 2;
+	}
+	*color = rlen & 0x3;
+	rlen = rlen >> 2;
+	return rlen;
+}		
+
 
 void rle_decode(struct dvd_cc_data *data)
 {
-	int w, h;
-	int pos = 4;
-	uint16_t temp, rlen;
-	int count, color, val;
+	int w, h, x, lineno, pos, color, m;
+	uint8_t nextbyte;
 
 	// Calculate size
 	w = (data->ctrl->coord[1] - data->ctrl->coord[0]) + 1;
 	h = (data->ctrl->coord[3] - data->ctrl->coord[2]) + 1;
-
 	dbg_print(CCX_DMT_VERBOSE, "w:%d h:%d\n", w, h);
 
-	while(pos <= data->size_data)
+	pos = 4;
+	nextbyte = data->buffer[pos];
+	m = 0;
+	data->bitmap = malloc(w*h);
+	x = 0; lineno = 0;
+
+	while(lineno < h/2)
 	{
-		temp = (data->buffer[pos] << 8) | data->buffer[pos + 1];
-		val = 4;
-		rlen = get_bits(temp, 4);
-		while(rlen < val && val <= 0x40)
-		{
-			temp = temp << 4;
-			rlen = (rlen << 4) | get_bits(temp, 4);
-			val = val << 2;
-		}
-		color = rlen & 0x3;
-		rlen = rlen >> 2;
+		len = get_rlen(data, &color, &nextbyte, &pos, &m);
+		
 	}
+
+	while(y < h/2)
+	{
+
+	}
+
 
 
 }
