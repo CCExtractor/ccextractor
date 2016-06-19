@@ -29,7 +29,47 @@ struct ctrl_seq
 	uint16_t start_time, stop_time;
 };
 
-void process_ctrl_seq(struct dvd_cc_data *data)
+int get_bits(uint16_t temp, int n)
+{
+	// Get n bits from 16 bits
+	unsigned mask;
+	mask = ((1 << n) - 1) << (16-n);
+	return (temp & mask);
+}
+
+void rle_decode(struct dvd_cc_data *data)
+{
+	int w, h;
+	int pos = 4;
+	uint16_t temp, rlen;
+	int count, color, val;
+
+	// Calculate size
+	w = (data->ctrl->coord[1] - data->ctrl->coord[0]) + 1;
+	h = (data->ctrl->coord[3] - data->ctrl->coord[2]) + 1;
+
+	dbg_print(CCX_DMT_VERBOSE, "w:%d h:%d\n", w, h);
+
+	while(pos <= data->size_data)
+	{
+		temp = (data->buffer[pos] << 8) | data->buffer[pos + 1];
+		val = 4;
+		rlen = get_bits(temp, 4);
+		while(rlen < val && val <= 0x40)
+		{
+			temp = temp << 4;
+			rlen = (rlen << 4) | get_bits(temp, 4);
+			val = val << 2;
+		}
+		color = rlen & 0x3;
+		rlen = rlen >> 2;
+	}
+
+
+}
+
+
+void decode_packet(struct dvd_cc_data *data)
 {
 	uint16_t date, next_ctrl;
 	data->ctrl = malloc(sizeof(struct ctrl_seq));
@@ -38,10 +78,11 @@ void process_ctrl_seq(struct dvd_cc_data *data)
 	int seq_end, pack_end = 0;
 
 	data->pos = data->size_data;
-	dbg_print(CCX_DMT_VERBOSE, "In process_ctrl_seq()\n");
+	dbg_print(CCX_DMT_VERBOSE, "In decode_packet()\n");
 
 	while(data->pos <= data->len && pack_end == 0)
 	{
+		// Process control packet first
 		date = (data->buffer[data->pos] << 8) | data->buffer[data->pos + 1];
 		next_ctrl = (data->buffer[data->pos + 2] << 8) | data->buffer[data->pos + 3];
 		if(next_ctrl == (data->pos))
@@ -82,7 +123,7 @@ void process_ctrl_seq(struct dvd_cc_data *data)
 							control->coord[2] = ((data->buffer[data->pos + 3] << 8) | (data->buffer[data->pos + 4] & 0xf0)) >> 4 ; //starting y coordinate
 							control->coord[3] = ((data->buffer[data->pos + 4] & 0x0f) << 8 ) | data->buffer[data->pos + 5] ; //ending y coordinate
 							data->pos+=6;
-							//(x1-x2+1)*(y1-y2+1)
+							//(x2-x1+1)*(y2-y1+1)
 							break;
 				case 0x06:	//SET_DSPXA - Pixel address
 							control->pixoffset[0] = (data->buffer[data->pos] << 8) | data->buffer[data->pos + 1];
@@ -98,12 +139,11 @@ void process_ctrl_seq(struct dvd_cc_data *data)
 				default:	dbg_print(CCX_DMT_VERBOSE, "Unknown command in control sequence!\n");
 			}
 		}
+		
+		// Decode data
+		rle_decode(data);		
+
 	}
-
-
-
-
-
 }
 
 
@@ -136,7 +176,7 @@ int process_spu(unsigned char *buff, int length)
 		return length; //FIXME: not the write thing to return
 	} 
 
-	process_ctrl_seq(data);
+	decode_packet(data);
 
 	return length;
 }
