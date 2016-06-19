@@ -29,8 +29,6 @@ struct ctrl_seq
 	uint16_t start_time, stop_time;
 };
 
-// 0 false 1 true
-
 #define bitoff(x) (x ? 0x0f : 0xf0 )
 
 // int get_bits(uint16_t temp, int n)
@@ -41,14 +39,15 @@ struct ctrl_seq
 // 	return (temp & mask);
 // }
 
-int get_bits(struct dvd_cc_data data, int *nextbyte, int *pos, int *m)
+int get_bits(struct dvd_cc_data *data, uint8_t *nextbyte, int *pos, int *m)
 {
 	int ret;
-	ret = nextbyte & 0xf0;
+	ret = *nextbyte & 0xf0;
 	if(*m == 0)
 		*pos++;
-	nextbyte = (nextbyte << 4) | (data->buffer[pos] & bitoff(*m));
+	*nextbyte = (*nextbyte << 4) | (data->buffer[*pos] & bitoff(*m));
 	*m = (*m + 1)%2;
+	return ret;
 }
 
 
@@ -72,33 +71,69 @@ int get_rlen(struct dvd_cc_data *data, int *color, uint8_t *nextbyte, int *pos, 
 
 void rle_decode(struct dvd_cc_data *data)
 {
-	int w, h, x, lineno, pos, color, m;
+	int w, h, x, lineno, pos, color, m, len;
 	uint8_t nextbyte;
+	unsigned char *buffp; // Copy of pointer to buffer to change
 
 	// Calculate size
 	w = (data->ctrl->coord[1] - data->ctrl->coord[0]) + 1;
 	h = (data->ctrl->coord[3] - data->ctrl->coord[2]) + 1;
 	dbg_print(CCX_DMT_VERBOSE, "w:%d h:%d\n", w, h);
 
-	pos = 4;
+	pos = 4; m = 0;
 	nextbyte = data->buffer[pos];
-	m = 0;
+
 	data->bitmap = malloc(w*h);
+	buffp = data->bitmap;
+	x = 0; lineno = 0;
+
+	while(lineno < (h+1)/2)
+	{
+		len = get_rlen(data, &color, &nextbyte, &pos, &m);
+		if(len > (w-x) || len == 0) // len is 0 if data is 0x000*
+			len = w-x;
+		memset(buffp + x, color, len);
+		x+=len;
+		if(x >= w)
+		{
+			// End of line
+			x = 0;
+			++lineno;
+			buffp += (2*w); // Skip 1 line
+
+			// Align byte at end of line
+			if(bitoff(m) == 0x0f)
+			{
+				int discard = get_bits(data, &nextbyte, &pos, &m);
+			}
+		}	
+	}
+
+	// Lines are interlaced, for other half of alternate lines
+	buffp = data->bitmap + w; 
 	x = 0; lineno = 0;
 
 	while(lineno < h/2)
 	{
 		len = get_rlen(data, &color, &nextbyte, &pos, &m);
-		
+		if(len > (w-x) || len == 0) // len is 0 if data is 0x000*
+			len = w-x;
+		memset(buffp + x, color, len);
+		x+=len;
+		if(x >= w)
+		{
+			// End of line
+			x = 0;
+			++lineno;
+			buffp += (2*w); // Skip 1 line
+
+			// Align byte at end of line
+			if(bitoff(m) == 0x0f)
+			{
+				int discard = get_bits(data, &nextbyte, &pos, &m);
+			}
+		}
 	}
-
-	while(y < h/2)
-	{
-
-	}
-
-
-
 }
 
 
