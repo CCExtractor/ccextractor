@@ -46,36 +46,31 @@ int get_bits(struct dvd_cc_data *data, uint8_t *nextbyte, int *pos, int *m)
 	ret = (*nextbyte & 0xf0) >> 4;
 	if(*m == 0)
 		*pos += 1;
-	printf("n:%02x p:%d d:%02x m:%02x ", *nextbyte, *pos, data->buffer[*pos], bitoff(*m));
 	*nextbyte = (*nextbyte << 4) | next4(data->buffer[*pos] , *m);
 	*m = (*m + 1)%2;
-	printf("nb:%02x ret:%x ", *nextbyte, ret);
 	return ret;
 }
 
 
-int get_rlen(struct dvd_cc_data *data, int *color, uint8_t *nextbyte, int *pos, int *m)
+int rle_decode(struct dvd_cc_data *data, int *color, uint8_t *nextbyte, int *pos, int *m)
 {
 	int val;
 	uint16_t rlen;
 
 	val = 4;
 	rlen = get_bits(data, nextbyte, pos, m);
-	printf("rlen:%x ", rlen);
 	while(rlen < val && val <= 0x40)
 	{
 		rlen = (rlen << 4) | get_bits(data, nextbyte, pos, m);
 		val = val << 2;
-		printf("%x ", rlen);
 	}
 	*color = rlen & 0x3;
 	rlen = rlen >> 2;
-	printf("fin: %x color:%d\n", rlen, *color);
 	return rlen;
 }		
 
 
-void rle_decode(struct dvd_cc_data *data)
+void get_bitmap(struct dvd_cc_data *data)
 {
 	int w, h, x, lineno, pos, color, m, len;
 	uint8_t nextbyte;
@@ -96,14 +91,15 @@ void rle_decode(struct dvd_cc_data *data)
 
 	while(lineno < (h+1)/2)
 	{
-		printf("nextbyte:%02x ", nextbyte);
-		len = get_rlen(data, &color, &nextbyte, &pos, &m);
+		len = rle_decode(data, &color, &nextbyte, &pos, &m);
+		// dbg_print(CCX_DMT_VERBOSE, "Len:%d Color:%d ", len, color);
 		if(len > (w-x) || len == 0) // len is 0 if data is 0x000*
 			len = w-x;
 		memset(buffp + x, color, len);
 		x+=len;
 		if(x >= w)
 		{
+			printf("\n");
 			// End of line
 			x = 0;
 			++lineno;
@@ -118,7 +114,7 @@ void rle_decode(struct dvd_cc_data *data)
 	}
 
 	// Lines are interlaced, for other half of alternate lines
-	printf("posnow: %d\n", pos);
+	// printf("posnow: %d\n", pos);
 	if(pos > data->ctrl->pixoffset[1])
 	{
 		dbg_print(CCX_DMT_VERBOSE, "Error creating bitmap!");
@@ -131,7 +127,7 @@ void rle_decode(struct dvd_cc_data *data)
 
 	while(lineno < h/2)
 	{
-		len = get_rlen(data, &color, &nextbyte, &pos, &m);
+		len = rle_decode(data, &color, &nextbyte, &pos, &m);
 		if(len > (w-x) || len == 0) // len is 0 if data is 0x000*
 			len = w-x;
 		memset(buffp + x, color, len);
@@ -150,18 +146,17 @@ void rle_decode(struct dvd_cc_data *data)
 			}
 		}
 	}
-	// Data to be decoded: 06d206b30000 02d8 0000 02d8 0000 0200 a 0d0 0000 34 2e 08c 22 0a4 22 24 16 080 22 30 00 00 02ce 
-	int i,j,c=0;
+	// int i,j,c=0;
 
-	for(i=0; i<h; ++i)
-	{
-		for(j=0;j<w;++j)
-		{
-			printf("%x", data->bitmap[c]);
-			++c;
-		}
-		printf("\n");
-	}
+	// for(i=0; i<h; ++i)
+	// {
+	// 	for(j=0;j<w;++j)
+	// 	{
+	// 		printf("%d", data->bitmap[c]);
+	// 		++c;
+	// 	}
+	// 	printf("\n");
+	// }
 }
 
 
@@ -238,12 +233,11 @@ void decode_packet(struct dvd_cc_data *data)
 							break;
 				default:	dbg_print(CCX_DMT_VERBOSE, "Unknown command in control sequence!\n");
 			}
-		}
-		
-		// Decode data
-		rle_decode(data);		
+		}	
 
 	}
+		// Decode data
+		get_bitmap(data);		
 }
 
 
