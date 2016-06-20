@@ -29,7 +29,8 @@ struct ctrl_seq
 	uint16_t start_time, stop_time;
 };
 
-#define bitoff(x) (x ? 0x0f : 0xf0 )
+#define bitoff(x) ((x) ? 0x0f : 0xf0)
+#define next4(x,y) ((y) ? (x & 0x0f) : ((x & 0xf0) >> 4) )
 
 // int get_bits(uint16_t temp, int n)
 // {
@@ -42,11 +43,13 @@ struct ctrl_seq
 int get_bits(struct dvd_cc_data *data, uint8_t *nextbyte, int *pos, int *m)
 {
 	int ret;
-	ret = *nextbyte & 0xf0;
+	ret = (*nextbyte & 0xf0) >> 4;
 	if(*m == 0)
-		*pos++;
-	*nextbyte = (*nextbyte << 4) | (data->buffer[*pos] & bitoff(*m));
+		*pos += 1;
+	printf("n:%02x p:%d d:%02x m:%02x ", *nextbyte, *pos, data->buffer[*pos], bitoff(*m));
+	*nextbyte = (*nextbyte << 4) | next4(data->buffer[*pos] , *m);
 	*m = (*m + 1)%2;
+	printf("nb:%02x ret:%x ", *nextbyte, ret);
 	return ret;
 }
 
@@ -58,13 +61,16 @@ int get_rlen(struct dvd_cc_data *data, int *color, uint8_t *nextbyte, int *pos, 
 
 	val = 4;
 	rlen = get_bits(data, nextbyte, pos, m);
+	printf("rlen:%x ", rlen);
 	while(rlen < val && val <= 0x40)
 	{
 		rlen = (rlen << 4) | get_bits(data, nextbyte, pos, m);
 		val = val << 2;
+		printf("%x ", rlen);
 	}
 	*color = rlen & 0x3;
 	rlen = rlen >> 2;
+	printf("fin: %x color:%d\n", rlen, *color);
 	return rlen;
 }		
 
@@ -80,7 +86,8 @@ void rle_decode(struct dvd_cc_data *data)
 	h = (data->ctrl->coord[3] - data->ctrl->coord[2]) + 1;
 	dbg_print(CCX_DMT_VERBOSE, "w:%d h:%d\n", w, h);
 
-	pos = 4; m = 0;
+	pos = data->ctrl->pixoffset[0];
+	m = 0;
 	nextbyte = data->buffer[pos];
 
 	data->bitmap = malloc(w*h);
@@ -89,6 +96,7 @@ void rle_decode(struct dvd_cc_data *data)
 
 	while(lineno < (h+1)/2)
 	{
+		printf("nextbyte:%02x ", nextbyte);
 		len = get_rlen(data, &color, &nextbyte, &pos, &m);
 		if(len > (w-x) || len == 0) // len is 0 if data is 0x000*
 			len = w-x;
@@ -110,6 +118,14 @@ void rle_decode(struct dvd_cc_data *data)
 	}
 
 	// Lines are interlaced, for other half of alternate lines
+	printf("posnow: %d\n", pos);
+	if(pos > data->ctrl->pixoffset[1])
+	{
+		dbg_print(CCX_DMT_VERBOSE, "Error creating bitmap!");
+		return;
+	}
+
+	pos = data->ctrl->pixoffset[1];
 	buffp = data->bitmap + w; 
 	x = 0; lineno = 0;
 
@@ -133,6 +149,18 @@ void rle_decode(struct dvd_cc_data *data)
 				int discard = get_bits(data, &nextbyte, &pos, &m);
 			}
 		}
+	}
+	// Data to be decoded: 06d206b30000 02d8 0000 02d8 0000 0200 a 0d0 0000 34 2e 08c 22 0a4 22 24 16 080 22 30 00 00 02ce 
+	int i,j,c=0;
+
+	for(i=0; i<h; ++i)
+	{
+		for(j=0;j<w;++j)
+		{
+			printf("%x", data->bitmap[c]);
+			++c;
+		}
+		printf("\n");
 	}
 }
 
@@ -176,6 +204,7 @@ void decode_packet(struct dvd_cc_data *data)
 							control->color[1] = data->buffer[data->pos] & 0x0f;
 							control->color[2] = (data->buffer[data->pos + 1] & 0xf0) >> 4;
 							control->color[3] = data->buffer[data->pos + 1] & 0x0f;
+							dbg_print(CCX_DMT_VERBOSE, "col: %x col: %x col: %x col: %x\n", control->color[0], control->color[1], control->color[2], control->color[3]);
 							data->pos+=2;
 							break;
 				case 0x04:	//SET_CONTR
@@ -183,6 +212,7 @@ void decode_packet(struct dvd_cc_data *data)
 							control->alpha[1] = data->buffer[data->pos] & 0x0f;
 							control->alpha[2] = (data->buffer[data->pos + 1] & 0xf0) >> 4;
 							control->alpha[3] = data->buffer[data->pos + 1] & 0x0f;
+							dbg_print(CCX_DMT_VERBOSE, "alp: %d alp: %d alp: %d alp: %d\n", control->alpha[0], control->alpha[1], control->alpha[2], control->alpha[3]);
 							data->pos+=2;
 							break;
 				case 0x05:	//SET_DAREA
@@ -190,12 +220,14 @@ void decode_packet(struct dvd_cc_data *data)
 							control->coord[1] = ((data->buffer[data->pos + 1] & 0x0f) << 8 ) | data->buffer[data->pos + 2] ; //ending x coordinate
 							control->coord[2] = ((data->buffer[data->pos + 3] << 8) | (data->buffer[data->pos + 4] & 0xf0)) >> 4 ; //starting y coordinate
 							control->coord[3] = ((data->buffer[data->pos + 4] & 0x0f) << 8 ) | data->buffer[data->pos + 5] ; //ending y coordinate
+							dbg_print(CCX_DMT_VERBOSE, "cord: %d cord: %d cord: %d cord: %d\n", control->coord[0], control->coord[1], control->coord[2], control->coord[3]);
 							data->pos+=6;
 							//(x2-x1+1)*(y2-y1+1)
 							break;
 				case 0x06:	//SET_DSPXA - Pixel address
 							control->pixoffset[0] = (data->buffer[data->pos] << 8) | data->buffer[data->pos + 1];
 							control->pixoffset[1] = (data->buffer[data->pos + 2] << 8) | data->buffer[data->pos + 3];
+							dbg_print(CCX_DMT_VERBOSE, "off1: %d off2 %d\n", control->pixoffset[0], control->pixoffset[1]);
 							data->pos+=4;
 							break;
 				case 0x07:	dbg_print(CCX_DMT_VERBOSE, "Command 0x07 found\n");
