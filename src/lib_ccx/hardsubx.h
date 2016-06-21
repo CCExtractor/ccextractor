@@ -46,6 +46,7 @@ struct lib_hardsubx_ctx
 	// Classifier parameters
 
 	// Subtitle text parameters
+	float min_sub_duration;
 };
 
 struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options);

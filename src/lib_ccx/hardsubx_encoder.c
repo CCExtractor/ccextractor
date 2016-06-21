@@ -31,7 +31,19 @@ int _hardsubx_write_subtitle_as_ass()
 
 int hardsubx_write_subtitle(struct lib_hardsubx_ctx *ctx)
 {
-
+	switch(ctx->write_format) // Replace with timer context write_format?
+	{
+		case CCX_OF_NULL:
+			break;
+		case CCX_OF_SRT:
+			break;
+		case CCX_OF_TRANSCRIPT:
+			break;
+		case CCX_OF_SAMI:
+			break;
+		default:
+			break;
+	}
 }
 
 #endif

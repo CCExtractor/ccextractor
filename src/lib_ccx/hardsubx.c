@@ -86,9 +86,9 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 	avpicture_fill((AVPicture *)ctx->rgb_frame, ctx->rgb_buffer, AV_PIX_FMT_RGB24, ctx->codec_ctx->width, ctx->codec_ctx->height);
 
 	// Pass on the processing context to the appropriate functions
-	//hardsubx_process_frames_linear(ctx);
+	hardsubx_process_frames_linear(ctx);
 	// TODO: Add binary search processing mode
-	hardsubx_process_frames_binary(ctx);
+	// hardsubx_process_frames_binary(ctx);
 
 	// Free the allocated memory for frame processing
 	av_free(ctx->rgb_buffer);
@@ -121,6 +121,9 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	ctx->write_format = options->write_format;
 	ctx->subs_delay = options->subs_delay;
 	ctx->cc_to_stdout = options->cc_to_stdout;
+
+	//Initialize subtitle text parameters
+	ctx->min_sub_duration = 0.5;
 
 	return ctx;
 }

@@ -9,10 +9,10 @@
 #include "allheaders.h"
 #include "hardsubx.h"
 
-int bsearch_frame_neighbourhood()
+int bsearch_frame_neighbourhood(struct lib_hardsubx_ctx *ctx)
 {
 	// Searches the neighbourhood of the frame with the detected sub to get exact timing
-	
+
 }
 
 #endif

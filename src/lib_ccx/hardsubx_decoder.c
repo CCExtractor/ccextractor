@@ -28,7 +28,7 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
 	mov_im = pixCreate(width,height,32);
 	feature_img = pixCreate(width,height,32);
 	int i,j;
-	for(i=(3*height)/4;i<height;i++)
+	for(i=0;i<height;i++)
 	{
 		for(j=0;j<width;j++)
 		{
@@ -59,7 +59,7 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
 	edge_im = pixThresholdToBinary(edge_im,50);
 	//edge_im = pixConvert1To8(NULL,pixThresholdToBinary(edge_im, 50),0,255);
 
-	for(i=(3*height)/4;i<height;i++)
+	for(i=0;i<height;i++)
 	{
 		for(j=0;j<width;j++)
 		{
@@ -87,14 +87,12 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
     TessBaseAPIEnd(handle);
     TessBaseAPIDelete(handle);
 
-    int timestamp = av_frame_get_best_effort_timestamp(frame);
-    printf("Timestamp %d\n", timestamp);
     printf("Recognized text : \"%s\"\n", subtitle_text);
 
 	char write_path[100];
 	sprintf(write_path,"./ffmpeg-examples/frames/temp%04d.jpg",index);
 	// printf("%s\n", write_path);
-	// pixWrite(write_path,feature_img,IFF_JFIF_JPEG);
+	pixWrite(write_path,lum_im,IFF_JFIF_JPEG);
 
 	pixCopy(prev_im,im);
 
@@ -105,7 +103,7 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
 	pixDestroy(&im);
 }
 
-void _display_frame(AVFrame *frame, int width, int height)
+void _display_frame(AVFrame *frame, int width, int height, int timestamp)
 {
 	PIX *im;
 	im = pixCreate(width,height,32);
@@ -125,7 +123,7 @@ void _display_frame(AVFrame *frame, int width, int height)
 
 
 	char write_path[100];
-	sprintf(write_path,"./ffmpeg-examples/frames/temp.jpg");
+	sprintf(write_path,"./ffmpeg-examples/frames/temp%04d.jpg",timestamp);
 
 	pixWrite(write_path,im,IFF_JFIF_JPEG);
 }
@@ -169,14 +167,18 @@ int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 	// Do a binary search over the input video for faster processing
 	printf("Duration: %d\n", (int)ctx->format_ctx->duration);
 	int got_frame;
+	int seconds_time = 0;
+	for(seconds_time=0;seconds_time<20;seconds_time++){
+	int64_t seek_time = (int64_t)(seconds_time*AV_TIME_BASE);
+	seek_time = av_rescale_q(seek_time, AV_TIME_BASE_Q, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 
-	
-	
-	int ret = av_seek_frame(ctx->format_ctx, ctx->video_stream_id, seek_time, AVSEEK_FLAG_ANY);
-	if(ret < 0)
-	{
-		ret = av_seek_frame(ctx->format_ctx, ctx->video_stream_id, seek_time, AVSEEK_FLAG_BACKWARD);
-	}
+	int ret = av_seek_frame(ctx->format_ctx, ctx->video_stream_id, seek_time, AVSEEK_FLAG_BACKWARD);
+	printf("%d\n", ret);
+	// if(ret < 0)
+	// {
+	// 	printf("seeking back\n");
+	// 	ret = av_seek_frame(ctx->format_ctx, -1, seek_time, AVSEEK_FLAG_BACKWARD);
+	// }
 	if(ret >= 0)
 	{
 		while(av_read_frame(ctx->format_ctx, &ctx->packet)>=0)
@@ -186,7 +188,10 @@ int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 				avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
 				if(got_frame)
 				{
-					printf("GOT FRAME\n");
+					// printf("%d\n", seek_time);
+					if(ctx->packet.pts < seek_time)
+						continue;
+					printf("GOT FRAME: %d\n",ctx->packet.pts);
 					// sws_scale is used to convert the pixel format to RGB24 from all other cases
 					sws_scale(
 							ctx->sws_ctx,
@@ -198,7 +203,7 @@ int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 							ctx->rgb_frame->linesize
 						);
 					// Send the frame to other functions for processing
-					_display_frame(ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height);
+					_display_frame(ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,seconds_time);
 					break;
 				}
 			}
@@ -207,6 +212,7 @@ int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 	else
 	{
 		printf("Seeking to timestamp failed\n");
+	}
 	}
 }
 
