@@ -28,7 +28,7 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
 	mov_im = pixCreate(width,height,32);
 	feature_img = pixCreate(width,height,32);
 	int i,j;
-	for(i=0;i<height;i++)
+	for(i=(3*height)/4;i<height;i++)
 	{
 		for(j=0;j<width;j++)
 		{
@@ -59,7 +59,7 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
 	edge_im = pixThresholdToBinary(edge_im,50);
 	//edge_im = pixConvert1To8(NULL,pixThresholdToBinary(edge_im, 50),0,255);
 
-	for(i=0;i<height;i++)
+	for(i=(3*height)/4;i<height;i++)
 	{
 		for(j=0;j<width;j++)
 		{
@@ -92,7 +92,7 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
 	char write_path[100];
 	sprintf(write_path,"./ffmpeg-examples/frames/temp%04d.jpg",index);
 	// printf("%s\n", write_path);
-	pixWrite(write_path,lum_im,IFF_JFIF_JPEG);
+	// pixWrite(write_path,lum_im,IFF_JFIF_JPEG);
 
 	pixCopy(prev_im,im);
 
