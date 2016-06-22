@@ -654,7 +654,8 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if (data_node->bufferdatatype = CCX_DVD_SUBTITLE)
 	{		
-		got = process_spu (data_node->buffer, data_node->len);
+		process_spu (dec_ctx, data_node->buffer, data_node->len);
+		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_TELETEXT)
 	{

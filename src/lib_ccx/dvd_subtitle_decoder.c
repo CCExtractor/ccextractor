@@ -30,6 +30,8 @@ struct ctrl_seq
 };
 
 #define bitoff(x) ((x) ? 0x0f : 0xf0)
+
+// Get fisrt 4 or last 4 bits from the byte
 #define next4(x,y) ((y) ? (x & 0x0f) : ((x & 0xf0) >> 4) )
 
 // int get_bits(uint16_t temp, int n)
@@ -40,6 +42,9 @@ struct ctrl_seq
 // 	return (temp & mask);
 // }
 
+/**
+ * Get 4 bits data from buffer for RLE decoding
+ */
 int get_bits(struct dvd_cc_data *data, uint8_t *nextbyte, int *pos, int *m)
 {
 	int ret;
@@ -48,6 +53,7 @@ int get_bits(struct dvd_cc_data *data, uint8_t *nextbyte, int *pos, int *m)
 		*pos += 1;
 	*nextbyte = (*nextbyte << 4) | next4(data->buffer[*pos] , *m);
 	*m = (*m + 1)%2;
+
 	return ret;
 }
 
@@ -69,14 +75,14 @@ int rle_decode(struct dvd_cc_data *data, int *color, uint8_t *nextbyte, int *pos
 	return rlen;
 }		
 
-
 void get_bitmap(struct dvd_cc_data *data)
 {
-	int w, h, x, lineno, pos, color, m, len;
+	int w, h, x, lineno;
+	int pos, color, m;
+	int len;
 	uint8_t nextbyte;
 	unsigned char *buffp; // Copy of pointer to buffer to change
 
-	// Calculate size
 	w = (data->ctrl->coord[1] - data->ctrl->coord[0]) + 1;
 	h = (data->ctrl->coord[3] - data->ctrl->coord[2]) + 1;
 	dbg_print(CCX_DMT_VERBOSE, "w:%d h:%d\n", w, h);
@@ -93,17 +99,21 @@ void get_bitmap(struct dvd_cc_data *data)
 	{
 		len = rle_decode(data, &color, &nextbyte, &pos, &m);
 		// dbg_print(CCX_DMT_VERBOSE, "Len:%d Color:%d ", len, color);
-		if(len > (w-x) || len == 0) // len is 0 if data is 0x000*
+		
+		// len is 0 if data is 0x000* - End of line
+		if(len > (w-x) || len == 0) 
 			len = w-x;
+
 		memset(buffp + x, color, len);
 		x+=len;
 		if(x >= w)
 		{
-			printf("\n");
 			// End of line
 			x = 0;
 			++lineno;
-			buffp += (2*w); // Skip 1 line
+
+			// Skip 1 line due to interlacing
+			buffp += (2*w); 
 
 			// Align byte at end of line
 			if(bitoff(m) == 0x0f)
@@ -128,8 +138,11 @@ void get_bitmap(struct dvd_cc_data *data)
 	while(lineno < h/2)
 	{
 		len = rle_decode(data, &color, &nextbyte, &pos, &m);
-		if(len > (w-x) || len == 0) // len is 0 if data is 0x000*
+		
+		// len is 0 if data is 0x000* - End of line
+		if(len > (w-x) || len == 0) 
 			len = w-x;
+
 		memset(buffp + x, color, len);
 		x+=len;
 		if(x >= w)
@@ -137,7 +150,9 @@ void get_bitmap(struct dvd_cc_data *data)
 			// End of line
 			x = 0;
 			++lineno;
-			buffp += (2*w); // Skip 1 line
+			
+			// Skip 1 line due to interlacing
+			buffp += (2*w);
 
 			// Align byte at end of line
 			if(bitoff(m) == 0x0f)
@@ -146,23 +161,25 @@ void get_bitmap(struct dvd_cc_data *data)
 			}
 		}
 	}
-	// int i,j,c=0;
-
-	// for(i=0; i<h; ++i)
-	// {
-	// 	for(j=0;j<w;++j)
-	// 	{
-	// 		printf("%d", data->bitmap[c]);
-	// 		++c;
-	// 	}
-	// 	printf("\n");
-	// }
+	
+	int i,j,c=0;
+	for(i=0; i<h; ++i)
+	{
+		for(j=0;j<w;++j)
+		{
+			printf("%d", data->bitmap[c]);
+			++c;
+		}
+		printf("\n");
+	}
 }
 
 
 void decode_packet(struct dvd_cc_data *data)
 {
 	uint16_t date, next_ctrl;
+	unsigned char *buff = data->buffer;
+	
 	data->ctrl = malloc(sizeof(struct ctrl_seq));
 	struct ctrl_seq *control = data->ctrl; 
 	int command; // next command
@@ -174,8 +191,8 @@ void decode_packet(struct dvd_cc_data *data)
 	while(data->pos <= data->len && pack_end == 0)
 	{
 		// Process control packet first
-		date = (data->buffer[data->pos] << 8) | data->buffer[data->pos + 1];
-		next_ctrl = (data->buffer[data->pos + 2] << 8) | data->buffer[data->pos + 3];
+		date = (buff[data->pos] << 8) | buff[data->pos + 1];
+		next_ctrl = (buff[data->pos + 2] << 8) | buff[data->pos + 3];
 		if(next_ctrl == (data->pos))
 		{
 			// If it is the last control sequence, it points to itself
@@ -186,8 +203,9 @@ void decode_packet(struct dvd_cc_data *data)
 
 		while(seq_end == 0)
 		{
-			command = data->buffer[data->pos];
+			command = buff[data->pos];
 			data->pos += 1;
+
 			switch(command)
 			{
 				case 0x01:	control->start_time = date;
@@ -195,38 +213,38 @@ void decode_packet(struct dvd_cc_data *data)
 				case 0x02:	control->stop_time = date; 
 							break;
 				case 0x03:	// SET_COLOR
-							control->color[0] = (data->buffer[data->pos] & 0xf0) >> 4;
-							control->color[1] = data->buffer[data->pos] & 0x0f;
-							control->color[2] = (data->buffer[data->pos + 1] & 0xf0) >> 4;
-							control->color[3] = data->buffer[data->pos + 1] & 0x0f;
+							control->color[0] = (buff[data->pos] & 0xf0) >> 4;
+							control->color[1] = buff[data->pos] & 0x0f;
+							control->color[2] = (buff[data->pos + 1] & 0xf0) >> 4;
+							control->color[3] = buff[data->pos + 1] & 0x0f;
 							dbg_print(CCX_DMT_VERBOSE, "col: %x col: %x col: %x col: %x\n", control->color[0], control->color[1], control->color[2], control->color[3]);
 							data->pos+=2;
 							break;
 				case 0x04:	//SET_CONTR
-							control->alpha[0] = (data->buffer[data->pos] & 0xf0) >> 4;
-							control->alpha[1] = data->buffer[data->pos] & 0x0f;
-							control->alpha[2] = (data->buffer[data->pos + 1] & 0xf0) >> 4;
-							control->alpha[3] = data->buffer[data->pos + 1] & 0x0f;
+							control->alpha[0] = (buff[data->pos] & 0xf0) >> 4;
+							control->alpha[1] = buff[data->pos] & 0x0f;
+							control->alpha[2] = (buff[data->pos + 1] & 0xf0) >> 4;
+							control->alpha[3] = buff[data->pos + 1] & 0x0f;
 							dbg_print(CCX_DMT_VERBOSE, "alp: %d alp: %d alp: %d alp: %d\n", control->alpha[0], control->alpha[1], control->alpha[2], control->alpha[3]);
 							data->pos+=2;
 							break;
 				case 0x05:	//SET_DAREA
-							control->coord[0] = ((data->buffer[data->pos] << 8) | (data->buffer[data->pos + 1] & 0xf0)) >> 4 ; //starting x coordinate
-							control->coord[1] = ((data->buffer[data->pos + 1] & 0x0f) << 8 ) | data->buffer[data->pos + 2] ; //ending x coordinate
-							control->coord[2] = ((data->buffer[data->pos + 3] << 8) | (data->buffer[data->pos + 4] & 0xf0)) >> 4 ; //starting y coordinate
-							control->coord[3] = ((data->buffer[data->pos + 4] & 0x0f) << 8 ) | data->buffer[data->pos + 5] ; //ending y coordinate
+							control->coord[0] = ((buff[data->pos] << 8) | (buff[data->pos + 1] & 0xf0)) >> 4 ; //starting x coordinate
+							control->coord[1] = ((buff[data->pos + 1] & 0x0f) << 8 ) | buff[data->pos + 2] ; //ending x coordinate
+							control->coord[2] = ((buff[data->pos + 3] << 8) | (buff[data->pos + 4] & 0xf0)) >> 4 ; //starting y coordinate
+							control->coord[3] = ((buff[data->pos + 4] & 0x0f) << 8 ) | buff[data->pos + 5] ; //ending y coordinate
 							dbg_print(CCX_DMT_VERBOSE, "cord: %d cord: %d cord: %d cord: %d\n", control->coord[0], control->coord[1], control->coord[2], control->coord[3]);
 							data->pos+=6;
 							//(x2-x1+1)*(y2-y1+1)
 							break;
 				case 0x06:	//SET_DSPXA - Pixel address
-							control->pixoffset[0] = (data->buffer[data->pos] << 8) | data->buffer[data->pos + 1];
-							control->pixoffset[1] = (data->buffer[data->pos + 2] << 8) | data->buffer[data->pos + 3];
+							control->pixoffset[0] = (buff[data->pos] << 8) | buff[data->pos + 1];
+							control->pixoffset[1] = (buff[data->pos + 2] << 8) | buff[data->pos + 3];
 							dbg_print(CCX_DMT_VERBOSE, "off1: %d off2 %d\n", control->pixoffset[0], control->pixoffset[1]);
 							data->pos+=4;
 							break;
 				case 0x07:	dbg_print(CCX_DMT_VERBOSE, "Command 0x07 found\n");
-							uint16_t skip = (data->buffer[data->pos] << 8) | data->buffer[data->pos + 1];
+							uint16_t skip = (buff[data->pos] << 8) | buff[data->pos + 1];
 							data->pos+=skip;
 							break;
 				case 0xff:	seq_end = 1;
@@ -236,12 +254,12 @@ void decode_packet(struct dvd_cc_data *data)
 		}	
 
 	}
-		// Decode data
-		get_bitmap(data);		
+	// Decode data
+	get_bitmap(data);		
 }
 
 
-int process_spu(unsigned char *buff, int length)
+int process_spu(struct lib_cc_decode *dec_ctx, unsigned char *buff, int length)
 {
 	struct dvd_cc_data *data = malloc( sizeof(struct dvd_cc_data) );
 	data->buffer = buff;
