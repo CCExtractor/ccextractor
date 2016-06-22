@@ -4,6 +4,11 @@
 #include "ccx_decoders_structs.h"
 
 /**
+ * @return DVD context 
+ */
+void *init_dvdsub_decode();
+
+/**
  * @param buffer	buffer containing the spu packet data
  * @param length	Length of the data buffer received
  * @return			-1 on error
