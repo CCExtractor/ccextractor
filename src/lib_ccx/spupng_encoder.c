@@ -554,9 +554,10 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 	/* TODO do rectangle wise, one color table should not be used for all rectangles */
         mapclut_paletee(palette, alpha, (uint32_t *)rect[0].data[1],rect[0].nb_colors);
 #ifdef ENABLE_OCR
-	if (rect[0].ocr_text && *(rect[0].ocr_text))
 	{
-		write_spucomment(sp, rect[0].ocr_text);
+		char *str;
+		str = paraof_ocrtext(sub);
+		write_spucomment(sp, str);
 	}
 #endif
 	save_spupng(filename,pbuf,width, height, palette, alpha,rect[0].nb_colors);

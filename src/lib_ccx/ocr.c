@@ -420,7 +420,7 @@ char *paraof_ocrtext(struct cc_subtitle *sub)
 	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
 		strcat(str, rect->ocr_text);
-		freep(&rect->ocr_text);
+		TessDeleteText(rect->ocr_text);
 	}
 	return str;
 }
