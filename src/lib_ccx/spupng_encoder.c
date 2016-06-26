@@ -558,12 +558,19 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 		char *str;
 		str = paraof_ocrtext(sub);
 		write_spucomment(sp, str);
+		freep(&str);
 	}
 #endif
 	save_spupng(filename,pbuf,width, height, palette, alpha,rect[0].nb_colors);
+	freep(&pbuf);
 
 
 end:
+	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
+	{
+		freep(rect->data);
+		freep(rect->data+1);
+	}
 	sub->nb_data = 0;
 	freep(&sub->data);
 	freep(&palette);
