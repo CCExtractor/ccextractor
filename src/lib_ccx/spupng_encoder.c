@@ -521,7 +521,7 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 	}
 	inc_spupng_fileindex(sp);
 	filename = get_spupng_filename(sp);
-	set_spupng_offset(sp,y_pos,x_pos);
+	set_spupng_offset(sp, x_pos, y_pos);
 	if ( sub->flags & SUB_EOD_MARKER )
 		context->prev_start =  sub->start_time;
 	pbuf = (uint8_t*) malloc(width * height);
