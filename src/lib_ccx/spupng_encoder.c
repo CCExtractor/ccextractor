@@ -521,7 +521,7 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 	}
 	inc_spupng_fileindex(sp);
 	filename = get_spupng_filename(sp);
-	set_spupng_offset(sp,y_pos,x_pos);
+	set_spupng_offset(sp, x_pos, y_pos);
 	if ( sub->flags & SUB_EOD_MARKER )
 		context->prev_start =  sub->start_time;
 	pbuf = (uint8_t*) malloc(width * height);
@@ -554,15 +554,23 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 	/* TODO do rectangle wise, one color table should not be used for all rectangles */
         mapclut_paletee(palette, alpha, (uint32_t *)rect[0].data[1],rect[0].nb_colors);
 #ifdef ENABLE_OCR
-	if (rect[0].ocr_text && *(rect[0].ocr_text))
 	{
-		write_spucomment(sp, rect[0].ocr_text);
+		char *str;
+		str = paraof_ocrtext(sub);
+		write_spucomment(sp, str);
+		freep(&str);
 	}
 #endif
 	save_spupng(filename,pbuf,width, height, palette, alpha,rect[0].nb_colors);
+	freep(&pbuf);
 
 
 end:
+	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
+	{
+		freep(rect->data);
+		freep(rect->data+1);
+	}
 	sub->nb_data = 0;
 	freep(&sub->data);
 	freep(&palette);
