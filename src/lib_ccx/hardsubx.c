@@ -86,9 +86,19 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 	avpicture_fill((AVPicture *)ctx->rgb_frame, ctx->rgb_buffer, AV_PIX_FMT_RGB24, ctx->codec_ctx->width, ctx->codec_ctx->height);
 
 	// Pass on the processing context to the appropriate functions
-	hardsubx_process_frames_linear(ctx);
+	struct encoder_ctx *enc_ctx;
+	enc_ctx = init_encoder(&ccx_options.enc_cfg);
+	//hardsubx_process_frames_linear(ctx, enc_ctx);
 	// TODO: Add binary search processing mode
 	// hardsubx_process_frames_binary(ctx);
+	
+	for(int i=0;i<10;i++){
+	add_cc_sub_text(ctx->dec_sub, "test", 10000*i, 10000*(i+1) , "", "BURN", CCX_ENC_UTF_8);
+	encode_sub(enc_ctx, ctx->dec_sub);
+	// Whenever you want to output a subtitle line, use these two commands
+	}
+
+	dinit_encoder(&enc_ctx, 0); //TODO: Replace 0 with end timestamp
 
 	// Free the allocated memory for frame processing
 	av_free(ctx->rgb_buffer);
@@ -124,6 +134,10 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 
 	//Initialize subtitle text parameters
 	ctx->min_sub_duration = 0.5;
+
+	//Initialize subtitle structure memory
+	ctx->dec_sub = (struct cc_subtitle *)malloc(sizeof(struct cc_subtitle));
+	memset (ctx->dec_sub, 0,sizeof(struct cc_subtitle));
 
 	return ctx;
 }

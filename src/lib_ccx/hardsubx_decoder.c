@@ -74,6 +74,12 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
 		}
 	}
 
+
+
+	
+
+	// TESSERACT OCR FOR THE FRAME HERE
+
 	handle = TessBaseAPICreate();
     if(TessBaseAPIInit3(handle, NULL, "eng") != 0)
         printf("Error initialising tesseract\n");
@@ -86,6 +92,10 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
         printf("Error getting text\n");
     TessBaseAPIEnd(handle);
     TessBaseAPIDelete(handle);
+
+
+
+
 
     printf("Recognized text : \"%s\"\n", subtitle_text);
 

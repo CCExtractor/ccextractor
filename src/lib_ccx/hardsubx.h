@@ -46,6 +46,7 @@ struct lib_hardsubx_ctx
 	// Classifier parameters
 
 	// Subtitle text parameters
+	struct cc_subtitle *dec_sub;
 	float min_sub_duration;
 };
 

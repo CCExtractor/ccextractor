@@ -9,22 +9,7 @@
 #include "allheaders.h"
 #include "hardsubx.h"
 
-int _hardsubx_write_subtitle_as_srt()
-{
-
-}
-
-int _hardsubx_write_subtitle_as_transcript()
-{
-	
-}
-
-int _hardsubx_write_subtitle_as_sami()
-{
-	
-}
-
-int _hardsubx_write_subtitle_as_ass()
+int hardsubx_init_encoder()
 {
 	
 }
