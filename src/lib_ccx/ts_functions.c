@@ -221,8 +221,8 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		// Take the PCR (Program Clock Reference) from here, in case PTS is not available (copied from telxcc).
 		adaptation_field_length = tspacket[4];
 
-		uint8_t af_pcr_exists = (tspacket[5] & 0x10) >> 4;
-		if (af_pcr_exists > 0 )
+		payload->have_pcr = (tspacket[5] & 0x10) >> 4;
+		if (payload->have_pcr)
 		{
 			payload->pcr = 0;
 			payload->pcr |= (tspacket[6] << 25);
@@ -596,7 +596,9 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 		for (j = 0; j < ctx->nb_program; j++)
 		{
-			if (ctx->pinfo[j].analysed_PMT_once == CCX_TRUE && ctx->pinfo[j].pcr_pid == payload.pid)
+			if (ctx->pinfo[j].analysed_PMT_once == CCX_TRUE &&
+				ctx->pinfo[j].pcr_pid == payload.pid &&
+				payload.have_pcr)
 			{
 				ctx->last_global_timestamp = ctx->global_timestamp;
 				ctx->global_timestamp = (uint32_t) payload.pcr / 90;
