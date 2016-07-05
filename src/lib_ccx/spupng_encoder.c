@@ -556,7 +556,7 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 #ifdef ENABLE_OCR
 	{
 		char *str;
-		str = paraof_ocrtext(sub);
+		str = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);
 		if (str)
 		{
 			write_spucomment(sp, str);
