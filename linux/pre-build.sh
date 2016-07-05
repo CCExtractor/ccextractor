@@ -25,10 +25,10 @@ builddate=`date +%Y-%m-%d`
 echo "Storing variables in file"
 echo "Commit: $commit"
 echo "Date: $builddate"
-echo "#ifndef CCX_CCEXTRACTOR_COMPILE_H" > ../src/lib_ccx/compile_info.h
-echo "#define CCX_CCEXTRACTOR_COMPILE_H" >> ../src/lib_ccx/compile_info.h
-echo "#define GIT_COMMIT \"$commit\"" >> ../src/lib_ccx/compile_info.h
-echo "#define COMPILE_DATE \"$builddate\"" >> ../src/lib_ccx/compile_info.h
-echo "#endif" >> ../src/lib_ccx/compile_info.h
+echo "#ifndef CCX_CCEXTRACTOR_COMPILE_REAL_H" > ../src/lib_ccx/compile_info_real.h
+echo "#define CCX_CCEXTRACTOR_COMPILE_REAL_H" >> ../src/lib_ccx/compile_info_real.h
+echo "#define GIT_COMMIT \"$commit\"" >> ../src/lib_ccx/compile_info_real.h
+echo "#define COMPILE_DATE \"$builddate\"" >> ../src/lib_ccx/compile_info_real.h
+echo "#endif" >> ../src/lib_ccx/compile_info_real.h
 echo "Stored all in compile.h"
 echo "Done."

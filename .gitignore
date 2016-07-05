@@ -24,7 +24,7 @@ build/
 
 ####
 # Ignore the header file that is updated upon build
-src/lib_ccx/compile_info.h
+src/lib_ccx/compile_info_real.h
 
 #### Ignore windows OCR libraries and folders
 windows/libs/leptonica/**
