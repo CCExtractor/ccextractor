@@ -1,6 +1,6 @@
 #!/bin/bash
 cd `dirname $0`
-BLD_FLAGS="-std=gnu99 -Wno-write-strings -DGPAC_CONFIG_DARWIN -D_FILE_OFFSET_BITS=64 -Dfopen64=fopen -Dopen64=open -Dlseek64=lseek"
+BLD_FLAGS="-std=gnu99 -Wno-write-strings -DGPAC_CONFIG_DARWIN -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -Dfopen64=fopen -Dopen64=open -Dlseek64=lseek"
 BLD_INCLUDE="-I../src/lib_ccx -I../src/gpacmp4 -I../src/libpng -I../src/zlib -I../src/zvbi -I../src/lib_hash"
 SRC_LIBPNG="$(find ../src/libpng -name '*.c')"
 SRC_ZLIB="$(find ../src/zlib -name '*.c')"

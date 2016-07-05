@@ -5,7 +5,7 @@ SYS := $(shell gcc -dumpmachine)
 CFLAGS = -O3 -std=gnu99
 INCLUDE = -I../src/gpacmp4/ -I../src/libpng -I../src/lib_hash -I../src/zlib -I../src/lib_ccx -I../src/.
 INCLUDE += -I../src/zvbi
-ALL_FLAGS = -Wno-write-strings -D_FILE_OFFSET_BITS=64
+ALL_FLAGS = -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT
 LDFLAGS = -lm
 
 ifneq (, $(findstring linux, $(SYS)))
