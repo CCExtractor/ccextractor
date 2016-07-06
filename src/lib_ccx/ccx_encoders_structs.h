@@ -21,6 +21,8 @@ struct ccx_s_write
 	void* spupng_data;
 	int with_semaphore; // 1 means create a .sem file when the file is open and delete it when it's closed
 	char *semaphore_filename;
+	int with_playlist; // For m3u8 /webvtt: If 1, we'll generate a playlist and segments
+	char *playlist_filename; 
 	int renaming_extension; //Used for file rotations
 	int append_mode; /* Append the file. Prevent overwriting of files */
 
