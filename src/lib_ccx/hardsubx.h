@@ -40,8 +40,9 @@ struct lib_hardsubx_ctx
 	uint8_t *rgb_buffer;
 	int video_stream_id;
 
-	// Leptonica Image Context
+	// Leptonica Image and Tesseract Context
 	PIX *im;
+	// TessBaseAPI *handle;
 
 	// Classifier parameters
 
@@ -55,7 +56,7 @@ void _hardsubx_params_dump(struct ccx_s_options *options, struct lib_hardsubx_ct
 void hardsubx(struct ccx_s_options *options);
 
 //hardsubx_decoder.c
-int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx);
+int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx);
 int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx);
 
 //hardsubx_imgops.c

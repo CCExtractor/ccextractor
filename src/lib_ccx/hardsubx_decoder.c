@@ -12,7 +12,7 @@
 
 void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_im)
 {
-	if(index%25!=0)
+	if(index%5!=0)
 		return;
 	printf("frame : %04d\n", index);
 	PIX *im;
@@ -53,11 +53,40 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
 			}
 		}
 	}
+
+	PIX *pixd,*pixs,*edge_im_2;
+	pixd = pixCreate(width,height,1);
+	pixs = pixCreate(width,height,8);
+	edge_im_2 = pixCreate(width,height,8);
+
 	edge_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
+	pixCopy(pixs,edge_im);
+	pixCopy(edge_im_2,edge_im);
 	edge_im = pixSobelEdgeFilter(edge_im, L_VERTICAL_EDGES);
 	edge_im = pixDilateGray(edge_im, 31, 11);
+	// edge_im = pixDilateGray(edge_im, 5, 5);
+	// edge_im = pixDilateGray(edge_im, 3, 1);
 	edge_im = pixThresholdToBinary(edge_im,50);
 	//edge_im = pixConvert1To8(NULL,pixThresholdToBinary(edge_im, 50),0,255);
+
+	// edge_im_2 = pixDilateGray(edge_im_2, 5, 5);
+	edge_im_2 = pixSobelEdgeFilter(edge_im_2, L_ALL_EDGES);
+	edge_im_2 = pixDilateGray(edge_im_2, 5, 5);
+	edge_im_2 = pixThresholdToBinary(edge_im_2,50);
+	// for(i=(3*height)/4;i<height;i++)
+	// {
+	// 	for(j=0;j<width;j++)
+	// 	{
+	// 		unsigned int pixelval;
+	// 		pixGetPixel(edge_im,j,i,&pixelval);
+	// 		if(pixelval > 0)
+	// 		{
+	// 			pixSetPixel(edge_im_2,j,i,1);
+	// 		}
+	// 	}
+	// }
+	
+	pixSauvolaBinarize(pixs, 3, 0.01, 1, NULL, NULL, NULL, &pixd);
 
 	for(i=(3*height)/4;i<height;i++)
 	{
@@ -65,9 +94,9 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
 		{
 			unsigned int pixelval,pixelval1,pixelval2;
 			pixGetPixel(edge_im,j,i,&pixelval);
-			pixGetPixel(lum_im,j,i,&pixelval1);
-			pixGetPixel(mov_im,j,i,&pixelval2);
-			if(pixelval1 > 0 && pixelval == 0)
+			pixGetPixel(edge_im_2,j,i,&pixelval1);
+			pixGetPixel(pixd,j,i,&pixelval2);
+			if(pixelval2 == 0  && pixelval1 == 0 && pixelval == 0)
 			{
 				pixSetRGBPixel(feature_img,j,i,255,255,255);
 			}
@@ -78,31 +107,31 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
 
 	
 
-	// TESSERACT OCR FOR THE FRAME HERE
+	// // TESSERACT OCR FOR THE FRAME HERE
+	// // TODO: Move to ctx
+	// handle = TessBaseAPICreate();
+ //    if(TessBaseAPIInit3(handle, NULL, "eng") != 0)
+ //        printf("Error initialising tesseract\n");
 
-	handle = TessBaseAPICreate();
-    if(TessBaseAPIInit3(handle, NULL, "eng") != 0)
-        printf("Error initialising tesseract\n");
+ //    TessBaseAPISetImage2(handle, lum_im);
+ //    if(TessBaseAPIRecognize(handle, NULL) != 0)
+ //        printf("Error in Tesseract recognition\n");
 
-    TessBaseAPISetImage2(handle, lum_im);
-    if(TessBaseAPIRecognize(handle, NULL) != 0)
-        printf("Error in Tesseract recognition\n");
-
-    if((subtitle_text = TessBaseAPIGetUTF8Text(handle)) == NULL)
-        printf("Error getting text\n");
-    TessBaseAPIEnd(handle);
-    TessBaseAPIDelete(handle);
-
-
+ //    if((subtitle_text = TessBaseAPIGetUTF8Text(handle)) == NULL)
+ //        printf("Error getting text\n");
+ //    TessBaseAPIEnd(handle);
+ //    TessBaseAPIDelete(handle);
 
 
 
-    printf("Recognized text : \"%s\"\n", subtitle_text);
+
+
+    // printf("Recognized text : \"%s\"\n", subtitle_text);
 
 	char write_path[100];
 	sprintf(write_path,"./ffmpeg-examples/frames/temp%04d.jpg",index);
 	// printf("%s\n", write_path);
-	// pixWrite(write_path,lum_im,IFF_JFIF_JPEG);
+	pixWrite(write_path,feature_img,IFF_JFIF_JPEG);
 
 	pixCopy(prev_im,im);
 
@@ -138,7 +167,7 @@ void _display_frame(AVFrame *frame, int width, int height, int timestamp)
 	pixWrite(write_path,im,IFF_JFIF_JPEG);
 }
 
-int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx)
+int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx)
 {
 	// Do an exhaustive linear search over the video
 	int got_frame;
