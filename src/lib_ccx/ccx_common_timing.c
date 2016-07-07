@@ -55,6 +55,9 @@ struct ccx_common_timing_ctx *init_timing_ctx(struct ccx_common_timing_settings_
 	ctx->max_pts = 0;
 	ctx->sync_pts = 0; 
 	ctx->minimum_fts = 0;
+	ctx->sync_pts2fts_set = 0;
+	ctx->sync_pts2fts_fts = 0;
+	ctx->sync_pts2fts_pts = 0;
 
 	ctx->fts_now = 0; // Time stamp of current file (w/ fts_offset, w/o fts_global)
 	ctx->fts_offset = 0; // Time before first sync_pts
@@ -175,6 +178,7 @@ int set_fts(struct ccx_common_timing_ctx *ctx)
 
 			// Start counting again from here
 			ctx->pts_set = 1; // Force min to be set again
+			ctx->sync_pts2fts_set = 0; // Make note of the new conversion values
 
 			// Avoid next async test - the gap might have occured on
 			// current_tref != 0.
@@ -208,6 +212,12 @@ int set_fts(struct ccx_common_timing_ctx *ctx)
 			// If pts_set is TRUE we have min_pts
 			ctx->fts_now = (LLONG)((ctx->current_pts - ctx->min_pts)/(MPEG_CLOCK_FREQ/1000)
 					+ ctx->fts_offset);
+			if (!ctx->sync_pts2fts_set)
+			{
+				ctx->sync_pts2fts_pts = ctx->current_pts;
+				ctx->sync_pts2fts_fts = ctx->fts_now;
+				ctx->sync_pts2fts_set = 1;
+			}
 		}
 		else
 		{

@@ -390,11 +390,29 @@ int compare_rect_by_ypos(const void*p1, const void *p2, void*arg)
 	}
 }
 
+void add_ocrtext2str(char *dest, char *src, const char *crlf, unsigned crlf_length)
+{
+	while (*dest != '\0')
+		dest++;
+	while(*src != '\0' && *src != '\n')
+	{
+		*dest = *src;
+		src++;
+		dest++;
+	}
+	memcpy(dest, crlf, crlf_length);
+	dest[crlf_length] = 0;	
+	/*
+	*dest++ = '\n';
+	*dest = '\0'; */
+}
+
 /**
  * Check multiple rectangles and combine them to give one paragraph
  * for all text detected from rectangles
  */
-char *paraof_ocrtext(struct cc_subtitle *sub)
+
+char *paraof_ocrtext(struct cc_subtitle *sub, const char *crlf, unsigned crlf_length)
 {
 	int i;
 	int len = 0;
@@ -419,7 +437,7 @@ char *paraof_ocrtext(struct cc_subtitle *sub)
 
 	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
-		strcat(str, rect->ocr_text);
+		add_ocrtext2str(str, rect->ocr_text, crlf, crlf_length);
 		TessDeleteText(rect->ocr_text);
 	}
 	return str;

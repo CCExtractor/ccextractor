@@ -298,7 +298,7 @@ void draw_char_indexed(uint8_t * canvas, int rowstride,  uint8_t * pen,
 			underline * (3 << 24) /* cell row 24, 25 */);
 }
 
-void write_sputag(struct spupng_t *sp,LLONG ms_start,LLONG ms_end)
+void write_sputag_open (struct spupng_t *sp,LLONG ms_start,LLONG ms_end)
 {
         fprintf(sp->fpxml, "<spu start=\"%.3f\"", ((double)ms_start) / 1000);
         fprintf(sp->fpxml, " end=\"%.3f\"", ((double)ms_end) / 1000);
@@ -306,9 +306,13 @@ void write_sputag(struct spupng_t *sp,LLONG ms_start,LLONG ms_end)
         fprintf(sp->fpxml, " xoffset=\"%d\"", sp->xOffset);
         fprintf(sp->fpxml, " yoffset=\"%d\"", sp->yOffset);
         fprintf(sp->fpxml, ">\n");
-        fprintf(sp->fpxml, "</spu>\n");
-
 }
+
+void write_sputag_close(struct spupng_t *sp)
+{
+		fprintf(sp->fpxml, "</spu>\n");
+}
+
 void write_spucomment(struct spupng_t *sp,const char *str)
 {
         fprintf(sp->fpxml, "<!--\n");
@@ -467,20 +471,27 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 	struct cc_bitmap* rect;
 	png_color *palette = NULL;
 	png_byte *alpha = NULL;
+	int wrote_opentag = 1;
 
         x_pos = -1;
         y_pos = -1;
         width = 0;
         height = 0;
 
+	
+
 	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
-		write_sputag(sp, context->prev_start, sub->start_time);
-	else if ( !(sub->flags & SUB_EOD_MARKER))
-		write_sputag(sp, sub->start_time, sub->end_time);
+		write_sputag_open(sp, context->prev_start, sub->start_time);
+	else if (!(sub->flags & SUB_EOD_MARKER))
+		write_sputag_open(sp, sub->start_time, sub->end_time);
+	else
+		wrote_opentag = 0;
 
 	if(sub->nb_data == 0 && (sub->flags & SUB_EOD_MARKER))
 	{
 		context->prev_start = -1;
+		if (wrote_opentag)
+			write_sputag_close(sp);
 		return 0;
 	}
 	rect = sub->data;
@@ -556,9 +567,12 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 #ifdef ENABLE_OCR
 	{
 		char *str;
-		str = paraof_ocrtext(sub);
-		write_spucomment(sp, str);
-		freep(&str);
+		str = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);
+		if (str)
+		{
+			write_spucomment(sp, str);
+			freep(&str);
+		}
 	}
 #endif
 	save_spupng(filename,pbuf,width, height, palette, alpha,rect[0].nb_colors);
@@ -566,6 +580,9 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 
 
 end:
+	if (wrote_opentag)
+		write_sputag_close(sp);
+
 	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
 		freep(rect->data);

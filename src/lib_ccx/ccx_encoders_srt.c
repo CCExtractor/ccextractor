@@ -113,7 +113,7 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	if(sub->flags & SUB_EOD_MARKER)
 		context->prev_start =  sub->start_time;
 
-	str = paraof_ocrtext(sub);
+	str = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);
 	if (str)
 	{
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
