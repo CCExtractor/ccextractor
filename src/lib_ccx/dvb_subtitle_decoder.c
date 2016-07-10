@@ -1535,7 +1535,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 #ifdef ENABLE_OCR
 		if (ctx->ocr_ctx)
 		{
-			ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str);
+			ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str,region->bgcolor);
 			if(ret >= 0)
 				rect->ocr_text = ocr_str;
 			else

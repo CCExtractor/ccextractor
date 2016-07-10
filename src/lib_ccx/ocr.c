@@ -25,6 +25,7 @@ struct image_copy
 	png_color *palette;
 	png_byte *alpha;
 	unsigned char *data;
+	int bgcolor;
 };
 
 static int check_trans_tn_intensity(const void *p1, const void *p2, void *arg)
@@ -75,8 +76,8 @@ static int search_language_pack(const char *dirname,const char *lang)
 void delete_ocr (void** arg)
 {
 	struct ocrCtx* ctx = *arg;
-		TessBaseAPIEnd(ctx->api);
-		TessBaseAPIDelete(ctx->api);
+	TessBaseAPIEnd(ctx->api);
+	TessBaseAPIDelete(ctx->api);
 	freep(arg);
 }
 void* init_ocr(int lang_index)
@@ -197,15 +198,15 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 		}
 	}
 	BOX *crop_points = ignore_alpha_at_edge(copy->alpha, copy->data, w, h, color_pix, &color_pix_out);
-#ifdef OCR_DEBUG
+// #ifdef OCR_DEBUG
 	{
 	char str[128] = "";
 	static int i = 0;
-	sprintf(str,"temp/file_c_%d.png",i);
-	pixWrite(str, cpix, IFF_PNG);
+	sprintf(str,"temp/file_c_%d.jpg",i);
+	pixWrite(str, color_pix_out, IFF_JFIF_JPEG);
 	i++;
 	}
-#endif
+// #endif
 	TessBaseAPISetImage2(ctx->api, cpix);
 	tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
 	if( tess_ret != 0)
@@ -229,21 +230,21 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 			float conf = TessResultIteratorConfidence(ri,level);
 			int x1, y1, x2, y2;
 			TessPageIteratorBoundingBox(ri,level, &x1, &y1, &x2, &y2);
-			//printf("word: '%s';  \tconf: %.2f; BoundingBox: %d,%d,%d,%d;\n",word, conf, x1, y1, x2, y2);
-			printf("word: '%s';", word);
-			{
-			char str[128] = "";
-			static int i = 0;
-			sprintf(str,"temp/file_c_%d.jpg",i);
-			pixWrite(str, pixClipRectangle(color_pix_out, boxCreate(x1,y1,x2-x1,y2-y1) ,NULL), IFF_JFIF_JPEG);
-			i++;
-			}
+			printf("word: '%s';  \tconf: %.2f; BoundingBox: %d,%d,%d,%d;",word, conf, x1, y1, x2, y2);
+			// printf("word: '%s';\n", word);
+			// {
+			// char str[128] = "";
+			// static int i = 0;
+			// sprintf(str,"temp/file_c_%d.jpg",i);
+			// pixWrite(str, pixClipRectangle(color_pix_out, boxCreate(x1,y1,x2-x1,y2-y1) ,NULL), IFF_JFIF_JPEG);
+			// i++;
+			// }
 
 			uint32_t *histogram = NULL;
 			uint8_t *iot = NULL;
 			uint32_t *mcit = NULL;
 			int ret = 0;
-			int max_color=3;
+			int max_color=2;
 
 			histogram = (uint32_t*) malloc(copy->nb_colors * sizeof(uint32_t));
 			iot = (uint8_t*) malloc(copy->nb_colors * sizeof(uint8_t));
@@ -298,10 +299,18 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 				mcit[j] = max_ind;
 				histogram[iot[max_ind]] = 0;
 			}
+			for (int i = 0; i < copy->nb_colors; i++)
+			{
+				palette[i].red = copy->palette[i].red;
+				palette[i].green = copy->palette[i].green;
+				palette[i].blue = copy->palette[i].blue;
+				alpha[i]=copy->alpha[i];
+			}
 			// for (int i = 0; i < max_color; i++)
 			// {
-			// 	ccx_common_logging.log_ftn("%02d) mcit %02d\n",
-			// 		i, mcit[i]);
+				// ccx_common_logging.log_ftn("%02d) mcit %02d\n",
+				// 	i, mcit[i]);
+				// printf("palette: %d %d %d\n", palette[mcit[i]].red,palette[mcit[i]].green,palette[mcit[i]].blue);
 			// }
 			for (int i = 0, mxi = 0; i < copy->nb_colors; i++)
 				{
@@ -355,23 +364,10 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 					g_avg/=denom;
 					b_avg/=denom;
 				}
+				if(r_avg==0&&b_avg==0&&g_avg==0)
+					exit(0);
 				printf("\tColor: '%d %d %d';\n", r_avg, g_avg, b_avg);
-			// for(int i=y1;i<=y2;i++)
-			// {
-			// 	for(int j=x1;j<=x2;j++)
-			// 	{
-			// 		printf("%d",copy->data[(crop_points->y+i)*w + (crop_points->x+j)]);
-			// 	}
-			// 	printf("\n");
-			// }
-
-			// BOX *word_box = boxCreate(x1,y1,x2-x1,y2-y1);
-			// PIX *word_im = pixClipRectangle(color_pix_out,word_box,NULL);
-			// // int a[1];
-			// // pixGetMostPopulatedColors(word_im,2,1,1,&a,NULL);
-			// // printf("%d %d %d %d\n", (a[0]>>24)&0xff, (a[0]>>16)&0xff, (a[0]>>8)&0xff, a[0]&0xff);
-			// boxDestroy(&word_box);
-			// pixDestroy(&word_im);
+			
 		} while (TessResultIteratorNext(ri,level));
 	}
 
@@ -529,7 +525,7 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 	return ret;
 }
 
-int ocr_rect(void* arg, struct cc_bitmap *rect, char **str)
+int ocr_rect(void* arg, struct cc_bitmap *rect, char **str, int bgcolor)
 {
 	int ret = 0;
 	png_color *palette = NULL;
@@ -540,6 +536,7 @@ int ocr_rect(void* arg, struct cc_bitmap *rect, char **str)
 	copy->nb_colors = rect->nb_colors;
 	copy->palette = (png_color*) malloc(rect->nb_colors * sizeof(png_color));
 	copy->alpha = (png_byte*) malloc(rect->nb_colors * sizeof(png_byte));
+	copy->bgcolor = bgcolor;
 
 	palette = (png_color*) malloc(rect->nb_colors * sizeof(png_color));
 	if(!palette||!copy->palette)
