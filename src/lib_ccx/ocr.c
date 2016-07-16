@@ -198,7 +198,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 		}
 	}
 	BOX *crop_points = ignore_alpha_at_edge(copy->alpha, copy->data, w, h, color_pix, &color_pix_out);
-// #ifdef OCR_DEBUG
+#ifdef OCR_DEBUG
 	{
 	char str[128] = "";
 	static int i = 0;
@@ -206,7 +206,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	pixWrite(str, color_pix_out, IFF_JFIF_JPEG);
 	i++;
 	}
-// #endif
+#endif
 	TessBaseAPISetImage2(ctx->api, cpix);
 	tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
 	if( tess_ret != 0)
@@ -221,6 +221,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	TessResultIterator* ri = TessBaseAPIGetIterator(ctx->api);
 	TessPageIteratorLevel level = RIL_WORD;
 
+	char *wordwise_text = NULL;
 	// printf("%d %d %d %d\n", crop_points->x,crop_points->y,crop_points->w,crop_points->h);
 	if(ri!=0)
 	{
@@ -313,33 +314,33 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 				// printf("palette: %d %d %d\n", palette[mcit[i]].red,palette[mcit[i]].green,palette[mcit[i]].blue);
 			// }
 			for (int i = 0, mxi = 0; i < copy->nb_colors; i++)
+			{
+				int step, inc;
+				if (i == mcit[mxi])
 				{
-					int step, inc;
-					if (i == mcit[mxi])
-					{
-						mxi = (mxi < max_color) ? mxi + 1 : mxi;
-						continue;
-					}
-					inc = (mxi) ? -1 : 0;
-					step = mcit[mxi + inc] + ((mcit[mxi] - mcit[mxi + inc]) / 2);
-					if (i <= step)
-					{
-						int index = iot[mcit[mxi + inc]];
-						alpha[iot[i]] = alpha[index];
-						palette[iot[i]].red = palette[index].red;
-						palette[iot[i]].blue = palette[index].blue;
-						palette[iot[i]].green = palette[index].green;
-					}
-					else
-					{
-						int index = iot[mcit[mxi]];
-						alpha[iot[i]] = alpha[index];
-						palette[iot[i]].red = palette[index].red;
-						palette[iot[i]].blue = palette[index].blue;
-						palette[iot[i]].green = palette[index].green;
-					}
-
+					mxi = (mxi < max_color) ? mxi + 1 : mxi;
+					continue;
 				}
+				inc = (mxi) ? -1 : 0;
+				step = mcit[mxi + inc] + ((mcit[mxi] - mcit[mxi + inc]) / 2);
+				if (i <= step)
+				{
+					int index = iot[mcit[mxi + inc]];
+					alpha[iot[i]] = alpha[index];
+					palette[iot[i]].red = palette[index].red;
+					palette[iot[i]].blue = palette[index].blue;
+					palette[iot[i]].green = palette[index].green;
+				}
+				else
+				{
+					int index = iot[mcit[mxi]];
+					alpha[iot[i]] = alpha[index];
+					palette[iot[i]].red = palette[index].red;
+					palette[iot[i]].blue = palette[index].blue;
+					palette[iot[i]].green = palette[index].green;
+				}
+
+			}
 			// #ifdef OCR_DEBUG
 				// ccx_common_logging.log_ftn("Colors present in quantized Image\n");
 				// for (int i = 0; i < copy->nb_colors; i++)
@@ -347,26 +348,26 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 				// 	ccx_common_logging.log_ftn("%02d)r %03d g %03d b %03d a %03d\n",
 				// 		i, palette[i].red, palette[i].green, palette[i].blue, alpha[i]);
 				// }
-			// #endif
-				int r_avg=0,g_avg=0,b_avg=0,denom=0;
-				for (int i = 0; i < copy->nb_colors; i++)
-				{
-					if(palette[i].red == 0 && palette[i].green == 0 && palette[i].blue == 0)
-						continue;
-					denom++;
-					r_avg+=palette[i].red;
-					g_avg+=palette[i].green;
-					b_avg+=palette[i].blue;
-				}
-				if(denom!=0)
-				{
-					r_avg/=denom;
-					g_avg/=denom;
-					b_avg/=denom;
-				}
-				if(r_avg==0&&b_avg==0&&g_avg==0)
-					exit(0);
-				printf("\tColor: '%d %d %d';\n", r_avg, g_avg, b_avg);
+			// #endif			
+			int r_avg=0,g_avg=0,b_avg=0,denom=0;
+			for (int i = 0; i < copy->nb_colors; i++)
+			{
+				if(palette[i].red == 0 && palette[i].green == 0 && palette[i].blue == 0)
+					continue;
+				denom++;
+				r_avg+=palette[i].red;
+				g_avg+=palette[i].green;
+				b_avg+=palette[i].blue;
+			}
+			if(denom!=0)
+			{
+				r_avg/=denom;
+				g_avg/=denom;
+				b_avg/=denom;
+			}
+			if(r_avg==0&&b_avg==0&&g_avg==0)
+				exit(0);
+			printf("\tColor: '%d %d %d';\n", r_avg, g_avg, b_avg);
 			
 		} while (TessResultIteratorNext(ri,level));
 	}
@@ -376,7 +377,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	pixDestroy(&color_pix);
 	pixDestroy(&color_pix_out);
 
-	return text_out;
+	//return text_out;
 }
 /*
  * @param alpha out
