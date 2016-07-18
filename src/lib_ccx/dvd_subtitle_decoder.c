@@ -6,6 +6,8 @@
 
 #include "dvd_subtitle_decoder.h"
 #include "ccx_common_common.h"
+#include "ccx_decoders_structs.h"
+
 
 #define MAX_BUFFERSIZE 4096 // arbitrary value
 
@@ -176,6 +178,7 @@ void get_bitmap(struct DVD_Ctx *ctx)
 }
 
 
+
 void decode_packet(struct DVD_Ctx *ctx)
 {
 	uint16_t date, next_ctrl;
@@ -254,12 +257,47 @@ void decode_packet(struct DVD_Ctx *ctx)
 		}
 
 	}
-	// Decode data
-	get_bitmap(ctx);
+	
+}
+
+int write_dvd_sub(struct DVD_Ctx *ctx, struct cc_subtitle *sub)
+{
+
+	struct cc_bitmap *rect = NULL;
+
+	int ret =0;
+	int w, h;
+
+	sub->type = CC_BITMAP;
+	sub->nb_data = 1;
+
+	rect = malloc( sizeof(struct cc_bitmap) * sub->nb_data);
+	if(!rect)
+	{
+		return -1;
+	}
+
+	sub->got_output = 1;
+	sub->data = rect;
+
+	w = (ctx->ctrl->coord[1] - ctx->ctrl->coord[0]) + 1;
+	h = (ctx->ctrl->coord[3] - ctx->ctrl->coord[2]) + 1;
+	
+	rect->data[0] = malloc(sizeof(ctx->bitmap));
+	memcpy(rect->data[0], ctx->bitmap, sizeof(ctx->bitmap));
+	rect->data[1] = malloc(1024);
+	memset(rect->data[1], 0, 1024);
+	rect->nb_colors = 4;
+
+	rect->x = ctx->ctrl->coord[0];
+	rect->y = ctx->ctrl->coord[2];
+	rect->w = w;
+	rect->h = h;
+    rect->linesize[0] = w;
 }
 
 
-int process_spu(struct lib_cc_decode *dec_ctx, unsigned char *buff, int length)
+int process_spu(struct lib_cc_decode *dec_ctx, unsigned char *buff, int length, struct cc_subtitle *sub)
 {
 	struct DVD_Ctx *ctx = (struct DVD_Ctx *)init_dvdsub_decode();
 	ctx->buffer = buff;
@@ -290,6 +328,11 @@ int process_spu(struct lib_cc_decode *dec_ctx, unsigned char *buff, int length)
 
 	decode_packet(ctx);
 
+	// Decode data
+	get_bitmap(ctx);
+
+	write_dvd_sub(ctx, sub);
+	// dec_ctx->got_output = 1;
 	return length;
 }
 

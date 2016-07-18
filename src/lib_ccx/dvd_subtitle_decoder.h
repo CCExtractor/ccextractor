@@ -13,5 +13,5 @@ void *init_dvdsub_decode();
  * @param length	Length of the data buffer received
  * @return			-1 on error
  */
-int process_spu(struct lib_cc_decode *dec_ctx, unsigned char *buffer, int length);
+int process_spu(struct lib_cc_decode *dec_ctx, unsigned char *buffer, int length, struct cc_subtitle *sub);
 #endif
