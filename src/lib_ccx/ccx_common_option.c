@@ -59,6 +59,7 @@ void init_options (struct ccx_s_options *options)
 	options->force_flush = 0; // Don't flush whenever content is written.
 	options->append_mode = 0; //By default, files are overwritten.
 	options->ucla = 0; // By default, -UCLA not used
+	options->dvbcolor = 0; // By default, only text detected in DVB
 
 	options->transcript_settings = ccx_encoders_default_transcript_settings;
 	options->millis_separator=',';
