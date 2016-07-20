@@ -214,6 +214,9 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 
 	text_out = TessBaseAPIGetUTF8Text(ctx->api);
 
+	// Begin color detection
+
+	float h0 = -100;
 	TessBaseAPISetImage2(ctx->api, color_pix_out);
 	tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
 	if( tess_ret != 0)
@@ -221,8 +224,6 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	TessResultIterator* ri = TessBaseAPIGetIterator(ctx->api);
 	TessPageIteratorLevel level = RIL_WORD;
 
-	char *wordwise_text = NULL;
-	// printf("%d %d %d %d\n", crop_points->x,crop_points->y,crop_points->w,crop_points->h);
 	if(ri!=0)
 	{
 		do
@@ -230,9 +231,9 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 			char* word = TessResultIteratorGetUTF8Text(ri,level);
 			float conf = TessResultIteratorConfidence(ri,level);
 			int x1, y1, x2, y2;
-			TessPageIteratorBoundingBox(ri,level, &x1, &y1, &x2, &y2);
-			printf("word: '%s';  \tconf: %.2f; BoundingBox: %d,%d,%d,%d;",word, conf, x1, y1, x2, y2);
-			// printf("word: '%s';\n", word);
+			TessPageIteratorBoundingBox((TessPageIterator *)ri,level, &x1, &y1, &x2, &y2);
+			// printf("word: '%s';  \tconf: %.2f; BoundingBox: %d,%d,%d,%d;",word, conf, x1, y1, x2, y2);
+			// printf("word: '%s';", word);
 			// {
 			// char str[128] = "";
 			// static int i = 0;
@@ -261,11 +262,13 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 			memset(mcit, 0, copy->nb_colors * sizeof(uint32_t));
 
 			/* calculate histogram of image */
+			int firstpixel = copy->data[0];  //TODO: Verify this border pixel assumption holds
 			for(int i=y1;i<=y2;i++)
 			{
 				for(int j=x1;j<=x2;j++)
 				{
-					histogram[copy->data[(crop_points->y+i)*w + (crop_points->x+j)]]++;
+					if(copy->data[(crop_points->y+i)*w + (crop_points->x+j)]!=firstpixel)
+						histogram[copy->data[(crop_points->y+i)*w + (crop_points->x+j)]]++;
 				}
 			}
 			/* sorted in increasing order of intensity */
@@ -278,7 +281,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 			// }
 			/**
 			 * using selection  sort since need to find only max_color
-			 * Hostogram becomes invalid in this loop
+			 * Histogram becomes invalid in this loop
 			 */
 			for (int i = 0; i < max_color; i++)
 			{
@@ -307,12 +310,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 				palette[i].blue = copy->palette[i].blue;
 				alpha[i]=copy->alpha[i];
 			}
-			// for (int i = 0; i < max_color; i++)
-			// {
-				// ccx_common_logging.log_ftn("%02d) mcit %02d\n",
-				// 	i, mcit[i]);
-				// printf("palette: %d %d %d\n", palette[mcit[i]].red,palette[mcit[i]].green,palette[mcit[i]].blue);
-			// }
+			
 			for (int i = 0, mxi = 0; i < copy->nb_colors; i++)
 			{
 				int step, inc;
@@ -341,18 +339,14 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 				}
 
 			}
-			// #ifdef OCR_DEBUG
-				// ccx_common_logging.log_ftn("Colors present in quantized Image\n");
-				// for (int i = 0; i < copy->nb_colors; i++)
-				// {
-				// 	ccx_common_logging.log_ftn("%02d)r %03d g %03d b %03d a %03d\n",
-				// 		i, palette[i].red, palette[i].green, palette[i].blue, alpha[i]);
-				// }
-			// #endif			
+			
+			// Detecting the color present in quantized word image			
 			int r_avg=0,g_avg=0,b_avg=0,denom=0;
 			for (int i = 0; i < copy->nb_colors; i++)
 			{
-				if(palette[i].red == 0 && palette[i].green == 0 && palette[i].blue == 0)
+				if(palette[i].red == ((copy->bgcolor >> 16) & 0xff) &&
+				   palette[i].green == ((copy->bgcolor >> 8) & 0xff) && 
+				   palette[i].blue == ((copy->bgcolor >> 0) & 0xff))
 					continue;
 				denom++;
 				r_avg+=palette[i].red;
@@ -365,9 +359,36 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 				g_avg/=denom;
 				b_avg/=denom;
 			}
-			if(r_avg==0&&b_avg==0&&g_avg==0)
-				exit(0);
-			printf("\tColor: '%d %d %d';\n", r_avg, g_avg, b_avg);
+
+			// Getting the hue value
+			float h;
+			float max = (((r_avg > g_avg) && (r_avg > b_avg)) ? r_avg : (g_avg > b_avg) ? g_avg : b_avg);
+			float min = (((r_avg < g_avg) && (r_avg < b_avg)) ? r_avg : (g_avg < b_avg) ? g_avg : b_avg);
+			if(max==0.0f||max-min==0.0f) h = 0;
+			else if(max==r_avg) h = 60 * ((g_avg - b_avg)/(max - min)) + 0;
+			else if(max==g_avg) h = 60 * ((b_avg - r_avg)/(max - min)) + 120;
+			else h = 60 * ((r_avg - g_avg)/(max - min)) + 240;
+
+			if(abs(h-h0)>50) // Color has changed
+			{
+				char *substr = (char*)malloc(sizeof("<font color='000000'>"));
+				sprintf(substr,"<font color='%02x%02x%02x'>",r_avg,g_avg,b_avg);
+				if(strstr(text_out,word))
+				{
+					char *text_out_copy = strdup(text_out);
+					free(text_out);
+					text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
+					memset(text_out,0,sizeof(text_out));
+					int pos = (int)(strstr(text_out_copy,word)-text_out_copy);
+					strncpy(text_out,text_out_copy,pos);
+					int len = strlen(text_out);
+					strcpy(text_out+len,substr);
+					strcpy(text_out+len+strlen(substr),text_out_copy+len);
+					free(text_out_copy);
+				}
+			}
+
+			h0=h;
 			
 		} while (TessResultIteratorNext(ri,level));
 	}
@@ -377,7 +398,9 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	pixDestroy(&color_pix);
 	pixDestroy(&color_pix_out);
 
-	//return text_out;
+	// End color detection
+
+	return text_out;
 }
 /*
  * @param alpha out
@@ -561,6 +584,7 @@ int ocr_rect(void* arg, struct cc_bitmap *rect, char **str, int bgcolor)
 		{
 			copy->data[i] = rect->data[0][i];
 		}
+
 
 		quantize_map(alpha, palette, rect->data[0], size, 3, rect->nb_colors);
 		*str = ocr_bitmap(arg, palette, alpha, rect->data[0], rect->w, rect->h, copy);
