@@ -418,7 +418,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 
 				h0=h;
 				
-			} while (TessResultIteratorNext(ri,level));
+			} while (TessPageIteratorNext((TessPageIterator *)ri,level));
 
 			// char *substr = "</font>";
 			// char *text_out_copy = strdup(text_out);
