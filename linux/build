@@ -8,7 +8,7 @@ SRC_CCX="$(find ../src/lib_ccx/ -name '*.c')"
 SRC_GPAC="$(find ../src/gpacmp4/ -name '*.c')"
 SRC_HASH="$(find ../src/lib_hash/ -name '*.c')"
 BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH"
-BLD_LINKER="-lm -zmuldefs"
+BLD_LINKER="-lm -zmuldefs -l tesseract -l lept"
 
 ./pre-build.sh
 gcc $BLD_FLAGS $BLD_INCLUDE -o ccextractor $BLD_SOURCES $BLD_LINKER
