@@ -108,11 +108,6 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
 	
 
 	// // TESSERACT OCR FOR THE FRAME HERE
-	// // TODO: Move to ctx
-	// handle = TessBaseAPICreate();
- //    if(TessBaseAPIInit3(handle, NULL, "eng") != 0)
- //        printf("Error initialising tesseract\n");
-
  //    TessBaseAPISetImage2(handle, lum_im);
  //    if(TessBaseAPIRecognize(handle, NULL) != 0)
  //        printf("Error in Tesseract recognition\n");
@@ -131,7 +126,7 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
 	char write_path[100];
 	sprintf(write_path,"./ffmpeg-examples/frames/temp%04d.jpg",index);
 	// printf("%s\n", write_path);
-	pixWrite(write_path,feature_img,IFF_JFIF_JPEG);
+	//pixWrite(write_path,feature_img,IFF_JFIF_JPEG);
 
 	pixCopy(prev_im,im);
 

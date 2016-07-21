@@ -121,6 +121,12 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	if(!ctx)
 		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "lib_hardsubx_ctx");
 	memset(ctx, 0, sizeof(struct lib_hardsubx_ctx));
+	
+	ctx->tess_handle = TessBaseAPICreate();
+	if(TessBaseAPIInit3(ctx->tess_handle, NULL, "eng") != 0)
+	{
+		//TODO: Give error about not being able to initialize Tesseract
+	}
 
 	//Initialize attributes common to lib_ccx context
 	ctx->basefilename = get_basename(options->output_filename);//TODO: Check validity, add stdin, network

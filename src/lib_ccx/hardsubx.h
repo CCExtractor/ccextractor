@@ -10,6 +10,7 @@
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 #include "allheaders.h"
+#include "capi.h"
 
 
 struct lib_hardsubx_ctx
@@ -42,7 +43,7 @@ struct lib_hardsubx_ctx
 
 	// Leptonica Image and Tesseract Context
 	PIX *im;
-	// TessBaseAPI *handle;
+	TessBaseAPI *tess_handle;
 
 	// Classifier parameters
 
