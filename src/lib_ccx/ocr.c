@@ -7,6 +7,7 @@
 #include <dirent.h>
 #include "spupng_encoder.h"
 #include "ccx_encoders_helpers.h"
+#include "ocr.h"
 #undef OCR_DEBUG
 struct ocrCtx
 {
@@ -17,15 +18,6 @@ struct transIntensity
 {
 	uint8_t *t;
 	png_color *palette;
-};
-
-struct image_copy
-{
-	int nb_colors;
-	png_color *palette;
-	png_byte *alpha;
-	unsigned char *data;
-	int bgcolor;
 };
 
 static int check_trans_tn_intensity(const void *p1, const void *p2, void *arg)
