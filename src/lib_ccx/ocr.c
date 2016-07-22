@@ -380,13 +380,13 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 						char *substr;
 						if(written_tag)
 						{
-							substr = (char*)malloc(sizeof("</font><font color='000000'>"));
-							sprintf(substr,"</font><font color='%02x%02x%02x'>",r_avg,g_avg,b_avg);
+							substr = (char*)malloc(sizeof("</font><font color=\"#000000\">"));
+							sprintf(substr,"</font><font color=\"#%02x%02x%02x\">",r_avg,g_avg,b_avg);
 						}
 						else
 						{
-							substr = (char*)malloc(sizeof("<font color='000000'>"));
-							sprintf(substr,"<font color='%02x%02x%02x'>",r_avg,g_avg,b_avg);
+							substr = (char*)malloc(sizeof("<font color=\"#000000\">"));
+							sprintf(substr,"<font color=\"#%02x%02x%02x\">",r_avg,g_avg,b_avg);
 						}
 						if(strstr(text_out,word))
 						{
@@ -420,15 +420,20 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 				
 			} while (TessPageIteratorNext((TessPageIterator *)ri,level));
 
-			// char *substr = "</font>";
-			// char *text_out_copy = strdup(text_out);
-			// free(text_out);
-			// text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
-			// memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
-			// char *str = strtok(text_out_copy,"\n");
-			// strcpy(text_out,str);
-			// strcpy(text_out+strlen(str),substr);
+			//Write closing </font> at the end of the line
+			if(ccx_options.write_format==CCX_OF_SRT ||
+			   ccx_options.write_format==CCX_OF_WEBVTT)
+			{
+				char *substr = "</font>";
+				char *text_out_copy = strdup(text_out);
+				free(text_out);
+				text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
+				memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
+				char *str = strtok(text_out_copy,"\n");
+				strcpy(text_out,str);
+				strcpy(text_out+strlen(str),substr);
 			// printf("%s\n", text_out);
+			}
 		}
 
 	}
@@ -701,7 +706,7 @@ char *paraof_ocrtext(struct cc_subtitle *sub, const char *crlf, unsigned crlf_le
 		return NULL;
 	else
 	{
-		str = malloc(len+1);
+		str = malloc(len+1+10); //Extra space for possible trailing '/n's at the end of tesseract UTF8 text
 		if(!str)
 			return NULL;
 		*str = '\0';
