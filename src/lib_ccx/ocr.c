@@ -207,7 +207,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	text_out = TessBaseAPIGetUTF8Text(ctx->api);
 
 	// Begin color detection
-	if(ccx_options.dvbcolor)
+	if(ccx_options.dvbcolor && strlen(text_out)>0)
 	{
 		float h0 = -100;
 		int written_tag = 0;
