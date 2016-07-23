@@ -1046,6 +1046,13 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
+
+		if(strcmp(argv[i],"-dvbcolor")==0)
+		{
+			opt->dvbcolor = 1;
+			continue;
+		}
+
 		/* Output file formats */
 		if (strcmp (argv[i],"-srt")==0 ||
 				strcmp (argv[i],"-dvdraw")==0 ||

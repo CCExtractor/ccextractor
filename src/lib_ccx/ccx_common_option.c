@@ -60,6 +60,7 @@ void init_options (struct ccx_s_options *options)
 	options->append_mode = 0; //By default, files are overwritten.
 	options->ucla = 0; // By default, -UCLA not used
 	options->hardsubx = 0; // By default, don't try to extract hard subtitles
+	options->dvbcolor = 0; // By default, only text detected in DVB
 
 	options->transcript_settings = ccx_encoders_default_transcript_settings;
 	options->millis_separator=',';
