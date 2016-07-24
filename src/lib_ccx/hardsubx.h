@@ -64,6 +64,12 @@ int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx);
 void rgb2hsv(float R, float G, float B,float *L, float *a, float *b);
 void rgb2lab(float R, float G, float B,float *L, float *a, float *b);
 
+//hardsubx_classifier.c
+char *get_ocr_text_simple(struct lib_hardsubx_ctx *ctx, PIX *image);
+
+//hardsubx_utility.c
+int edit_distance(char * word1, char * word2, int len1, int len2);
+
 #endif
 
 #endif

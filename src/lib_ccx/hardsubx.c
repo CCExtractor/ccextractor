@@ -92,11 +92,11 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 	// TODO: Add binary search processing mode
 	// hardsubx_process_frames_binary(ctx);
 	
-	for(int i=0;i<10;i++){
-	add_cc_sub_text(ctx->dec_sub, "test", 10000*i, 10000*(i+1) , "", "BURN", CCX_ENC_UTF_8);
-	encode_sub(enc_ctx, ctx->dec_sub);
-	// Whenever you want to output a subtitle line, use these two commands
-	}
+	// for(int i=0;i<10;i++){
+	// add_cc_sub_text(ctx->dec_sub, "test", 10000*i, 10000*(i+1) , "", "BURN", CCX_ENC_UTF_8);
+	// encode_sub(enc_ctx, ctx->dec_sub);
+	// // Whenever you want to output a subtitle line, use these two commands
+	// }
 
 	dinit_encoder(&enc_ctx, 0); //TODO: Replace 0 with end timestamp
 
@@ -150,7 +150,12 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 
 void _dinit_hardsubx(struct lib_hardsubx_ctx **ctx)
 {
+	// struct lib_hardsubx_ctx *lctx = *ctx;
 	// Free all memory allocated to everything in the context
+
+	// Free OCR
+	// TessBaseAPIEnd(*ctx->tess_handle);
+	// TessBaseAPIDelete(*ctx->tess_handle);
 }
 
 void hardsubx(struct ccx_s_options *options)

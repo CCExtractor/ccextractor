@@ -10,10 +10,8 @@
 #include "hardsubx.h"
 #include "capi.h"
 
-void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_im)
+char* _process_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index, PIX *prev_im)
 {
-	if(index%5!=0)
-		return;
 	printf("frame : %04d\n", index);
 	PIX *im;
 	PIX *edge_im;
@@ -103,28 +101,13 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
 		}
 	}
 
+	// TESSERACT OCR FOR THE FRAME HERE
+	subtitle_text = get_ocr_text_simple(ctx, lum_im);
 
+	// printf("Recognized text : \"%s\"\n", subtitle_text);
 
-	
-
-	// // TESSERACT OCR FOR THE FRAME HERE
- //    TessBaseAPISetImage2(handle, lum_im);
- //    if(TessBaseAPIRecognize(handle, NULL) != 0)
- //        printf("Error in Tesseract recognition\n");
-
- //    if((subtitle_text = TessBaseAPIGetUTF8Text(handle)) == NULL)
- //        printf("Error getting text\n");
- //    TessBaseAPIEnd(handle);
- //    TessBaseAPIDelete(handle);
-
-
-
-
-
-    // printf("Recognized text : \"%s\"\n", subtitle_text);
-
-	char write_path[100];
-	sprintf(write_path,"./ffmpeg-examples/frames/temp%04d.jpg",index);
+	// char write_path[100];
+	// sprintf(write_path,"./ffmpeg-examples/frames/temp%04d.jpg",index);
 	// printf("%s\n", write_path);
 	//pixWrite(write_path,feature_img,IFF_JFIF_JPEG);
 
@@ -135,6 +118,8 @@ void _process_frame(AVFrame *frame, int width, int height, int index, PIX *prev_
 	pixDestroy(&mov_im);
 	pixDestroy(&feature_img);
 	pixDestroy(&im);
+
+	return subtitle_text;
 }
 
 void _display_frame(AVFrame *frame, int width, int height, int timestamp)
@@ -166,9 +151,14 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 {
 	// Do an exhaustive linear search over the video
 	int got_frame;
+	int dist;
 	int frame_number = 0;
+	int64_t begin_time = 0,end_time = 0;
+	char *subtitle_text=NULL;
+	char *prev_subtitle_text=NULL;
 	PIX *prev_im;
 	prev_im = pixCreate(ctx->codec_ctx->width,ctx->codec_ctx->height,32);
+
 	while(av_read_frame(ctx->format_ctx, &ctx->packet)>=0)
 	{
 		if(ctx->packet.stream_index == ctx->video_stream_id)
@@ -176,7 +166,7 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 			frame_number++;
 			// printf("%d\n", frame_number);
 			avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
-			if(got_frame)
+			if(got_frame && frame_number % 25 == 0)
 			{
 				// sws_scale is used to convert the pixel format to RGB24 from all other cases
 				sws_scale(
@@ -189,17 +179,38 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 						ctx->rgb_frame->linesize
 					);
 				// Send the frame to other functions for processing
-				_process_frame(ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number,prev_im);
+				subtitle_text = _process_frame(ctx,ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number,prev_im);
+				subtitle_text = strtok(subtitle_text,"\n");
+				// printf("%s\n", subtitle_text);
+				end_time = ctx->packet.pts/100;
+				if(prev_subtitle_text)
+				{
+					//TODO: Encode text with highest confidence
+					dist = edit_distance(subtitle_text, prev_subtitle_text, strlen(subtitle_text), strlen(prev_subtitle_text));
+					// printf("%d\n", dist);
+					if(dist > (0.2 * fmin(strlen(subtitle_text), strlen(prev_subtitle_text))))
+					{
+						add_cc_sub_text(ctx->dec_sub, prev_subtitle_text, begin_time, end_time, "", "BURN", CCX_ENC_UTF_8);
+						encode_sub(enc_ctx, ctx->dec_sub);
+						begin_time = end_time + 1;
+					}
+				}
+
+				prev_subtitle_text = strdup(subtitle_text);
 			}
 		}
 		av_packet_unref(&ctx->packet);
 	}
+
+	add_cc_sub_text(ctx->dec_sub, prev_subtitle_text, begin_time, end_time, "", "BURN", CCX_ENC_UTF_8);
+	encode_sub(enc_ctx, ctx->dec_sub);
+
 }
 
 int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 {
 	// Do a binary search over the input video for faster processing
-	printf("Duration: %d\n", (int)ctx->format_ctx->duration);
+	// printf("Duration: %d\n", (int)ctx->format_ctx->duration);
 	int got_frame;
 	int seconds_time = 0;
 	for(seconds_time=0;seconds_time<20;seconds_time++){
@@ -207,7 +218,7 @@ int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 	seek_time = av_rescale_q(seek_time, AV_TIME_BASE_Q, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 
 	int ret = av_seek_frame(ctx->format_ctx, ctx->video_stream_id, seek_time, AVSEEK_FLAG_BACKWARD);
-	printf("%d\n", ret);
+	// printf("%d\n", ret);
 	// if(ret < 0)
 	// {
 	// 	printf("seeking back\n");
@@ -225,7 +236,7 @@ int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 					// printf("%d\n", seek_time);
 					if(ctx->packet.pts < seek_time)
 						continue;
-					printf("GOT FRAME: %d\n",ctx->packet.pts);
+					// printf("GOT FRAME: %d\n",ctx->packet.pts);
 					// sws_scale is used to convert the pixel format to RGB24 from all other cases
 					sws_scale(
 							ctx->sws_ctx,
