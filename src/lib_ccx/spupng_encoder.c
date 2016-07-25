@@ -538,13 +538,17 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 
 		}
 	}
+	printf("nosegsev1\n");
+	printf("%d\n", rect[0].nb_colors);
 	palette = (png_color*) malloc(rect[0].nb_colors * sizeof(png_color));
+	printf("nosegsev2\n");
 	if(!palette)
 	{
 		ret = -1;
 		goto end;
 	}
         alpha = (png_byte*) malloc(rect[0].nb_colors * sizeof(png_byte));
+    	printf("nosegsev3\n");
         if(!alpha)
         {
                 ret = -1;
@@ -567,5 +571,6 @@ end:
 	freep(&sub->data);
 	freep(&palette);
 	freep(&alpha);
+	printf("nosegsev4\n");
 	return ret;
 }

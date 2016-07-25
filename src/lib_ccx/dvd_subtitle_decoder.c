@@ -7,9 +7,13 @@
 #include "dvd_subtitle_decoder.h"
 #include "ccx_common_common.h"
 #include "ccx_decoders_structs.h"
+#include "ocr.h"
 
 
 #define MAX_BUFFERSIZE 4096 // arbitrary value
+
+#define RGBA(r,g,b,a) (((unsigned)(a) << 24) | ((r) << 16) | ((g) << 8) | (b))
+
 
 struct DVD_Ctx
 {
@@ -20,6 +24,9 @@ struct DVD_Ctx
 	uint16_t size_data; //size of data in the packet, offset to control packet
 	struct ctrl_seq *ctrl;
 	unsigned char *bitmap;
+#ifdef ENABLE_OCR
+	void *ocr_ctx;
+#endif
 };
 
 struct ctrl_seq
@@ -165,16 +172,16 @@ void get_bitmap(struct DVD_Ctx *ctx)
 		}
 	}
 
-	int i,j,c=0;
-	for(i=0; i<h; ++i)
-	{
-		for(j=0;j<w;++j)
-		{
-			printf("%d", ctx->bitmap[c]);
-			++c;
-		}
-		printf("\n");
-	}
+	// int i,j,c=0;
+	// for(i=0; i<h; ++i)
+	// {
+	// 	for(j=0;j<w;++j)
+	// 	{
+	// 		printf("%d", ctx->bitmap[c]);
+	// 		++c;
+	// 	}
+	// 	printf("\n");
+	// }
 }
 
 
@@ -216,18 +223,18 @@ void decode_packet(struct DVD_Ctx *ctx)
 				case 0x02:	control->stop_time = date;
 							break;
 				case 0x03:	// SET_COLOR
-							control->color[0] = (buff[ctx->pos] & 0xf0) >> 4;
-							control->color[1] = buff[ctx->pos] & 0x0f;
-							control->color[2] = (buff[ctx->pos + 1] & 0xf0) >> 4;
-							control->color[3] = buff[ctx->pos + 1] & 0x0f;
+							control->color[3] = (buff[ctx->pos] & 0xf0) >> 4;
+							control->color[2] = buff[ctx->pos] & 0x0f;
+							control->color[1] = (buff[ctx->pos + 1] & 0xf0) >> 4;
+							control->color[0] = buff[ctx->pos + 1] & 0x0f;
 							dbg_print(CCX_DMT_VERBOSE, "col: %x col: %x col: %x col: %x\n", control->color[0], control->color[1], control->color[2], control->color[3]);
 							ctx->pos+=2;
 							break;
 				case 0x04:	//SET_CONTR
-							control->alpha[0] = (buff[ctx->pos] & 0xf0) >> 4;
-							control->alpha[1] = buff[ctx->pos] & 0x0f;
-							control->alpha[2] = (buff[ctx->pos + 1] & 0xf0) >> 4;
-							control->alpha[3] = buff[ctx->pos + 1] & 0x0f;
+							control->alpha[3] = (buff[ctx->pos] & 0xf0) >> 4;
+							control->alpha[2] = buff[ctx->pos] & 0x0f;
+							control->alpha[1] = (buff[ctx->pos + 1] & 0xf0) >> 4;
+							control->alpha[0] = buff[ctx->pos + 1] & 0x0f;
 							dbg_print(CCX_DMT_VERBOSE, "alp: %d alp: %d alp: %d alp: %d\n", control->alpha[0], control->alpha[1], control->alpha[2], control->alpha[3]);
 							ctx->pos+=2;
 							break;
@@ -260,6 +267,58 @@ void decode_packet(struct DVD_Ctx *ctx)
 	
 }
 
+void guess_palette(struct DVD_Ctx* ctx, uint32_t *rgba_palette, uint32_t subtitle_color)
+{
+    static const uint8_t level_map[4][4] = {
+        // this configuration (full range, lowest to highest) in tests
+        // seemed most common, so assume this
+        {0xff},
+        {0x00, 0xff},
+        {0x00, 0x80, 0xff},
+        {0x00, 0x55, 0xaa, 0xff},
+    };
+    uint8_t color_used[16] = { 0 };
+    int nb_opaque_colors, i, level, j, r, g, b;
+    uint8_t *colormap = ctx->ctrl->color, *alpha = ctx->ctrl->alpha;
+
+    for(i = 0; i < 4; i++)
+        rgba_palette[i] = 0;
+
+    nb_opaque_colors = 0;
+    for(i = 0; i < 4; i++) {
+        if (alpha[i] != 0 && !color_used[colormap[i]]) {
+            color_used[colormap[i]] = 1;
+            nb_opaque_colors++;
+        }
+    }
+
+    if (nb_opaque_colors == 0)
+        return;
+
+    j = 0;
+    memset(color_used, 0, 16);
+    for(i = 0; i < 4; i++) {
+        if (alpha[i] != 0) {
+            if (!color_used[colormap[i]])  {
+                level = level_map[nb_opaque_colors][j];
+                r = (((subtitle_color >> 16) & 0xff) * level) >> 8;
+                g = (((subtitle_color >> 8) & 0xff) * level) >> 8;
+                b = (((subtitle_color >> 0) & 0xff) * level) >> 8;
+                rgba_palette[i] = b | (g << 8) | (r << 16) | ((alpha[i] * 17) << 24);
+                printf("rgba %i %x\n", i , rgba_palette[i]);
+                color_used[colormap[i]] = (i + 1);
+                j++;
+            } else {
+                rgba_palette[i] = (rgba_palette[color_used[colormap[i]] - 1] & 0x00ffffff) |
+                                    ((alpha[i] * 17) << 24);
+            }
+        }
+    }
+}
+
+
+
+
 int write_dvd_sub(struct DVD_Ctx *ctx, struct cc_subtitle *sub)
 {
 
@@ -285,8 +344,20 @@ int write_dvd_sub(struct DVD_Ctx *ctx, struct cc_subtitle *sub)
 	
 	rect->data[0] = malloc(sizeof(ctx->bitmap));
 	memcpy(rect->data[0], ctx->bitmap, sizeof(ctx->bitmap));
+
 	rect->data[1] = malloc(1024);
 	memset(rect->data[1], 0, 1024);
+	guess_palette(ctx, (uint32_t*)rect->data[1], 0xffff00);
+	// printf("%d %d %d %d\n", rect->data[1][8], rect->data[1][9], rect->data[1][10], rect->data[1][11]);
+	
+
+	// uint32_t rgba_palette[4];
+	// rgba_palette[0] = (uint32_t)RGBA(0,0,0,0); 
+	// rgba_palette[1] = (uint32_t)RGBA(255,255,255,255); 
+	// rgba_palette[2] = (uint32_t)RGBA(0,0,0,255); 
+	// rgba_palette[3] = (uint32_t)RGBA(127,127,127,255);
+	// memcpy(rect->data[1], rgba_palette, sizeof(uint32_t)*4); 
+	
 	rect->nb_colors = 4;
 
 	rect->x = ctx->ctrl->coord[0];
@@ -294,6 +365,15 @@ int write_dvd_sub(struct DVD_Ctx *ctx, struct cc_subtitle *sub)
 	rect->w = w;
 	rect->h = h;
     rect->linesize[0] = w;
+
+#ifdef ENABLE_OCR
+		char *ocr_str = NULL;
+		// char *text_output = NULL;
+		ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str);
+		// printf("%s\n", text_output);
+		if(ret >= 0)
+			rect->ocr_text = ocr_str;
+#endif
 }
 
 
