@@ -409,6 +409,10 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 				}
 
 				h0=h;
+
+				freep(&histogram);
+				freep(&mcit);
+				freep(&iot);
 				
 			} while (TessPageIteratorNext((TessPageIterator *)ri,level));
 
