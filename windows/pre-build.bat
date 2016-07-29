@@ -37,11 +37,11 @@ set builddate=%ldt:~0,4%-%ldt:~4,2%-%ldt:~6,2%
 echo storing variables in file
 echo commit: %commit%
 echo date: %builddate%
-echo #ifndef CCX_CCEXTRACTOR_COMPILE_H > ../src/lib_ccx/compile_info.h
-echo #define CCX_CCEXTRACTOR_COMPILE_H >> ../src/lib_ccx/compile_info.h
-echo #define GIT_COMMIT "%commit%" >> ../src/lib_ccx/compile_info.h
-echo #define COMPILE_DATE "%builddate%" >> ../src/lib_ccx/compile_info.h
-echo #endif >> ../src/lib_ccx/compile_info.h
-echo stored all in compile_info.h
+echo #ifndef CCX_CCEXTRACTOR_COMPILE_REAL_H > ../src/lib_ccx/compile_info_real.h
+echo #define CCX_CCEXTRACTOR_COMPILE_REAL_H >> ../src/lib_ccx/compile_info_real.h
+echo #define GIT_COMMIT "%commit%" >> ../src/lib_ccx/compile_info_real.h
+echo #define COMPILE_DATE "%builddate%" >> ../src/lib_ccx/compile_info_real.h
+echo #endif >> ../src/lib_ccx/compile_info_real.h
+echo stored all in compile_info_real.h
 del temp.txt
 echo done

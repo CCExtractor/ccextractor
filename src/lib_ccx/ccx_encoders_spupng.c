@@ -318,7 +318,7 @@ int spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
 				sp->pngfile, strerror(errno));
 	}
 	fclose(sp->fppng);
-	write_sputag(sp,ms_start,ms_end);
+	write_sputag_open(sp,ms_start,ms_end);
 	for (row = 0; row < ROWS; row++)
 	{
 		if (data->row_used[row])
@@ -355,6 +355,7 @@ int spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
 	}
 
 	write_spucomment(sp,str);
+	write_sputag_close(sp);
 	return 1;
 }
 
@@ -385,8 +386,9 @@ int spupng_write_string(struct spupng_t *sp, char *string, LLONG start_time, LLO
 				sp->pngfile, strerror(errno));
 	}
 	fclose(sp->fppng);
-	write_sputag(sp,ms_start,ms_end);
+	write_sputag_open(sp,ms_start,ms_end);
 	write_spucomment(sp,str);
+	write_sputag_close(sp);
 	return 1;
 }
 int write_cc_subtitle_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *context)

@@ -444,11 +444,6 @@ void* dvbsub_init_decoder(struct dvb_config* cfg)
 
 #ifdef ENABLE_OCR
 	ctx->ocr_ctx = init_ocr(ctx->lang_index);
-        if(!ctx->ocr_ctx)
-	{
-		freep(&ctx);
-		return NULL;
-	}
 #endif
 	ctx->version = -1;
 
@@ -552,7 +547,8 @@ int dvbsub_close_decoder(void **dvb_ctx)
 	}
 
 #ifdef ENABLE_OCR
-	delete_ocr(&ctx->ocr_ctx);
+	if (ctx->ocr_ctx)
+		delete_ocr(&ctx->ocr_ctx);
 #endif
 	freep(dvb_ctx);
 	return 0;
@@ -1537,9 +1533,18 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		rect->data[0] = malloc(region->buf_size);
 		memcpy(rect->data[0], region->pbuf, region->buf_size);
 #ifdef ENABLE_OCR
-		ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str);
-		if(ret >= 0)
-			rect->ocr_text = ocr_str;
+		if (ctx->ocr_ctx)
+		{
+			ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str,region->bgcolor);
+			if(ret >= 0)
+				rect->ocr_text = ocr_str;
+			else
+				rect->ocr_text = NULL;
+		}
+		else
+		{
+			rect->ocr_text = NULL;
+		}
 #endif
 		rect++;
 

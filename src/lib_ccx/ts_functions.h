@@ -9,6 +9,7 @@ struct ts_payload
 	unsigned pid;         // Stream PID
 	int counter;          // continuity counter
 	int transport_error;  // 0 = packet OK, non-zero damaged
+	int have_pcr;
 	int64_t pcr;
 	unsigned char section_buf[4098];
 	int section_index;
