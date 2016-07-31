@@ -4,7 +4,7 @@
 #include "lib_ccx.h"
 #include "utility.h"
 
-#ifdef ENABLE_OCR
+#ifdef ENABLE_HARDSUBX
 //TODO: Correct FFMpeg integration
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>

@@ -1,4 +1,4 @@
-#ifdef ENABLE_OCR
+#ifdef ENABLE_HARDSUBX
 #include "hardsubx.h"
 #include "capi.h"
 #include "allheaders.h"
@@ -8,6 +8,7 @@
 //TODO: Correct FFMpeg integration
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
 
 int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
@@ -17,18 +18,16 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 	
 	if(avformat_open_input(&ctx->format_ctx, ctx->inputfile[0], NULL, NULL)!=0)
 	{
-		//TODO: Give error about file not opened
-		return -1;
+		fatal (EXIT_READ_ERROR, "Error reading input file!\n");
 	}
 
 	if(avformat_find_stream_info(ctx->format_ctx, NULL)<0)
 	{
-		//TODO: Give error about not finding stream information
-		return -1;
+		fatal (EXIT_READ_ERROR, "Error reading input stream!\n");
 	}
 
-	//TODO: Remove this and handle in params dump?
-	// Need to calculate stuff too in that case
+	// Important call in order to determine media information using ffmpeg
+	// TODO: Handle multiple inputs
 	av_dump_format(ctx->format_ctx, 0, ctx->inputfile[0], 0);
 	
 
@@ -43,33 +42,29 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 	}
 	if(ctx->video_stream_id == -1)
 	{
-		//TODO: give error about not finding video stream
-		return -1;
+		fatal (EXIT_READ_ERROR, "Video Stream not found!\n");
 	}
 
 	ctx->codec_ctx = ctx->format_ctx->streams[ctx->video_stream_id]->codec;
 	ctx->codec = avcodec_find_decoder(ctx->codec_ctx->codec_id);
 	if(ctx->codec == NULL)
 	{
-		//TODO: Give error about unsupported codec
-		return -1;
+		fatal (EXIT_READ_ERROR, "Input codec is not supported!\n");
 	}
 
 	if(avcodec_open2(ctx->codec_ctx, ctx->codec, &ctx->options_dict) < 0)
 	{
-		//TODO: Give error about not opening codec
-		return -1;
+		fatal (EXIT_READ_ERROR, "Error opening input codec!\n");
 	}
 
 	ctx->frame = av_frame_alloc();
 	ctx->rgb_frame = av_frame_alloc();
 	if(!ctx->frame || !ctx->rgb_frame)
 	{
-		//TODO: Give error about not enough memory
-		return -1;
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to initialize frame!");
 	}
 
-	int frame_bytes = avpicture_get_size(AV_PIX_FMT_RGB24, ctx->codec_ctx->width, ctx->codec_ctx->height);
+	int frame_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, ctx->codec_ctx->width, ctx->codec_ctx->height, 16);
 	ctx->rgb_buffer = (uint8_t *)av_malloc(frame_bytes*sizeof(uint8_t));
 	
 	ctx->sws_ctx = sws_getContext(
@@ -83,20 +78,12 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 			NULL,NULL,NULL
 		);
 
-	avpicture_fill((AVPicture *)ctx->rgb_frame, ctx->rgb_buffer, AV_PIX_FMT_RGB24, ctx->codec_ctx->width, ctx->codec_ctx->height);
+	av_image_fill_arrays(ctx->rgb_frame->data, ctx->rgb_frame->linesize, ctx->rgb_buffer, AV_PIX_FMT_RGB24, ctx->codec_ctx->width, ctx->codec_ctx->height, 1);
 
 	// Pass on the processing context to the appropriate functions
 	struct encoder_ctx *enc_ctx;
 	enc_ctx = init_encoder(&ccx_options.enc_cfg);
 	hardsubx_process_frames_linear(ctx, enc_ctx);
-	// TODO: Add binary search processing mode
-	// hardsubx_process_frames_binary(ctx);
-	
-	// for(int i=0;i<10;i++){
-	// add_cc_sub_text(ctx->dec_sub, "test", 10000*i, 10000*(i+1) , "", "BURN", CCX_ENC_UTF_8);
-	// encode_sub(enc_ctx, ctx->dec_sub);
-	// // Whenever you want to output a subtitle line, use these two commands
-	// }
 
 	dinit_encoder(&enc_ctx, 0); //TODO: Replace 0 with end timestamp
 
@@ -119,13 +106,13 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	// Initialize HardsubX data structures
 	struct lib_hardsubx_ctx *ctx = (struct lib_hardsubx_ctx *)malloc(sizeof(struct lib_hardsubx_ctx));
 	if(!ctx)
-		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "lib_hardsubx_ctx");
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "lib_hardsubx_ctx");
 	memset(ctx, 0, sizeof(struct lib_hardsubx_ctx));
 	
 	ctx->tess_handle = TessBaseAPICreate();
 	if(TessBaseAPIInit3(ctx->tess_handle, NULL, "eng") != 0)
 	{
-		//TODO: Give error about not being able to initialize Tesseract
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to initialize Tesseract!");
 	}
 
 	//Initialize attributes common to lib_ccx context

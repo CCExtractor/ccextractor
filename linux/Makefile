@@ -50,10 +50,9 @@ INSTLALL = cp -f -p
 INSTLALL_PROGRAM = $(INSTLALL)
 DESTDIR = /usr/bin
 
-ifeq ($(ENABLE_OCR),yes)
-CFLAGS+=-DENABLE_OCR -DPNG_NO_CONFIG_H
-TESS_LDFLAGS+= $(shell pkg-config --libs tesseract)
-LEPT_LDFLAGS+= $(shell pkg-config --libs lept)
+ifeq ($(ENABLE_HARDSUBX),yes)
+ENABLE_OCR=yes
+CFLAGS+=-DENABLE_HARDSUBX
 CFLAGS+= $(shell pkg-config --cflags libavcodec)
 CFLAGS+= $(shell pkg-config --cflags libavformat)
 CFLAGS+= $(shell pkg-config --cflags libavutil)
@@ -62,6 +61,12 @@ LDFLAGS+= $(shell pkg-config --libs libavcodec )
 LDFLAGS+= $(shell pkg-config --libs libavformat )
 LDFLAGS+= $(shell pkg-config --libs libavutil )
 LDFLAGS+= $(shell pkg-config --libs libswscale )
+endif
+
+ifeq ($(ENABLE_OCR),yes)
+CFLAGS+=-DENABLE_OCR -DPNG_NO_CONFIG_H
+TESS_LDFLAGS+= $(shell pkg-config --libs tesseract)
+LEPT_LDFLAGS+= $(shell pkg-config --libs lept)
 
 #error checking of library are there or not
 ifeq ($(TESS_LDFLAGS),$(EMPTY))

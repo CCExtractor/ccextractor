@@ -1,10 +1,11 @@
 #include "lib_ccx.h"
 #include "utility.h"
 
-#ifdef ENABLE_OCR
+#ifdef ENABLE_HARDSUBX
 //TODO: Correct FFMpeg integration
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
 #include "allheaders.h"
 #include "hardsubx.h"
@@ -14,17 +15,16 @@ char* _process_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, in
 {
 	printf("frame : %04d\n", index);
 	PIX *im;
-	PIX *edge_im;
+	// PIX *edge_im;
 	PIX *lum_im;
-	PIX *feature_img;
-	PIX *mov_im;
-	TessBaseAPI *handle;
+	// PIX *feature_img;
+	// PIX *mov_im;
 	char *subtitle_text;
 	im = pixCreate(width,height,32);
 	lum_im = pixCreate(width,height,32);
-	edge_im = pixCreate(width,height,8);
-	mov_im = pixCreate(width,height,32);
-	feature_img = pixCreate(width,height,32);
+	// edge_im = pixCreate(width,height,8);
+	// mov_im = pixCreate(width,height,32);
+	// feature_img = pixCreate(width,height,32);
 	int i,j;
 	for(i=(3*height)/4;i<height;i++)
 	{
@@ -37,6 +37,9 @@ char* _process_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, in
 			pixSetRGBPixel(im,j,i,r,g,b);
 			float L,A,B;
 			rgb2lab((float)r,(float)g,(float)b,&L,&A,&B);
+			float H,S,V;
+			// rgb2hsv((float)r,(float)g,(float)b,&H,&S,&V);
+			// printf("%f %f %f\n", H,S,V);
 			if(L>95) // TODO: Make this threshold a parameter and also automatically calculate it
 				pixSetRGBPixel(lum_im,j,i,255,255,255);
 			else
@@ -52,10 +55,10 @@ char* _process_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, in
 		}
 	}
 
-	PIX *pixd,*pixs,*edge_im_2;
-	pixd = pixCreate(width,height,1);
-	pixs = pixCreate(width,height,8);
-	edge_im_2 = pixCreate(width,height,8);
+	// PIX *pixd,*pixs,*edge_im_2;
+	// pixd = pixCreate(width,height,1);
+	// pixs = pixCreate(width,height,8);
+	// edge_im_2 = pixCreate(width,height,8);
 
 	// edge_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
 	// pixCopy(pixs,edge_im);
@@ -114,13 +117,13 @@ char* _process_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, in
 	// pixCopy(prev_im,im);
 
 	pixDestroy(&lum_im);
-	pixDestroy(&edge_im);
-	pixDestroy(&mov_im);
-	pixDestroy(&feature_img);
+	// pixDestroy(&edge_im);
+	// pixDestroy(&mov_im);
+	// pixDestroy(&feature_img);
 	pixDestroy(&im);
-	pixDestroy(&edge_im_2);
-	pixDestroy(&pixd);
-	pixDestroy(&pixs);
+	// pixDestroy(&edge_im_2);
+	// pixDestroy(&pixd);
+	// pixDestroy(&pixs);
 
 	return subtitle_text;
 }

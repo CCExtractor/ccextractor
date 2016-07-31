@@ -1,10 +1,11 @@
 #include "lib_ccx.h"
 #include "utility.h"
 
-#ifdef ENABLE_OCR
+#ifdef ENABLE_HARDSUBX
 //TODO: Correct FFMpeg integration
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
 #include "allheaders.h"
 #include "hardsubx.h"
@@ -12,11 +13,6 @@
 int detect_italics()
 {
 	//TODO: Get orientation of the detected subtitles
-}
-
-int detect_subtitle_color()
-{
-	//TODO: Detect the color of detected subtitle line
 }
 
 int edit_distance(char * word1, char * word2, int len1, int len2)

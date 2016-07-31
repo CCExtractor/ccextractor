@@ -1,10 +1,11 @@
 #include "lib_ccx.h"
 #include "utility.h"
 
-#ifdef ENABLE_OCR
+#ifdef ENABLE_HARDSUBX
 //TODO: Correct FFMpeg integration
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
 #include "allheaders.h"
 #include "hardsubx.h"
@@ -53,9 +54,9 @@ void rgb2hsv(float R, float G, float B,float *H, float *S, float *V)
 
 	if (h < 0) h += 360.0f;
 
-	H = (unsigned char)(h / 2);   // dst_h : 0-180
-	S = (unsigned char)(s * 255); // dst_s : 0-255
-	V = (unsigned char)(v * 255); // dst_v : 0-255
+	*H = (unsigned char)(h / 2);   // dst_h : 0-180
+	*S = (unsigned char)(s * 255); // dst_s : 0-255
+	*V = (unsigned char)(v * 255); // dst_v : 0-255
 }
 
 void rgb2lab(float R, float G, float B,float *L, float *a, float *b)
