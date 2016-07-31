@@ -223,8 +223,8 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 		{
 			if (context->sentence_cap)
 			{
-				capitalize (context, i, data);
-				correct_case(i,data);
+				if (clever_capitalize (context, i, data))
+					correct_case_with_dictionary(i, data);
 			}
 			if (context->autodash && context->trim_subs)
 			{

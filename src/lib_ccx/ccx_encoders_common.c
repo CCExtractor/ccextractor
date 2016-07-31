@@ -552,7 +552,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 		if (context->sentence_cap)
 		{
 			//TODO capitalize (context, line_number,data);
-			//TODO correct_case(line_number, data);
+			//TODO correct_case_with_dictionary(line_number, data);
 		}
 
 		if (start_time == -1)
@@ -663,8 +663,8 @@ void write_cc_line_as_simplexml(struct eia608_screen *data, struct encoder_ctx *
 	char *cap1 = "</caption>";
 	if (context->sentence_cap)
 	{
-		capitalize (context, line_number, data);
-		correct_case(line_number, data);
+		if (clever_capitalize (context, line_number, data))
+			correct_case_with_dictionary(line_number, data);
 	}
 	length = get_str_basic (context->subline, data->characters[line_number],
 			context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
@@ -687,8 +687,8 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 	LLONG end_time = data->end_time;
 	if (context->sentence_cap)
 	{
-		capitalize (context, line_number, data);
-		correct_case(line_number, data);
+		if (clever_capitalize (context, line_number, data))
+			correct_case_with_dictionary(line_number, data);
 	}
 	int length = get_str_basic (context->subline, data->characters[line_number],
 			context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
@@ -1122,6 +1122,8 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	{
 		ctx->out[0].fh = STDOUT_FILENO;
 		ctx->out[0].filename = NULL;
+		ctx->out[0].with_semaphore = 0;
+		ctx->out[0].semaphore_filename = NULL;
 		mprint ("Sending captions to stdout.\n");
 	}
 
@@ -1331,7 +1333,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			// Determine context based on channel. This replaces the code that was above, as this was incomplete (for cases where -12 was used for example)
 			out = get_output_ctx(context, data->my_field);
 
-			context->new_sentence = 1;
+			// context->new_sentence = 1; CFS: WHY??? Sentences may appear in different frames
 
 			if(data->format == SFORMAT_XDS)
 			{
