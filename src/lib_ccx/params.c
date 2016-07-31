@@ -913,12 +913,37 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
+
+		// Parse -hardsubx and related parameters
 		if (strcmp(argv[i], "-hardsubx")==0)
 		{
-			//TODO: Initialize other hardsubx options
 			opt->hardsubx = 1;
 			continue;
 		}
+		if (opt->hardsubx == 1)
+		{
+			if (strcmp(argv[i], "-ocr_mode")==0)
+			{
+
+			}
+			if (strcmp(argv[i], "-subcolor")==0)
+			{
+
+			}
+			if (strcmp(argv[i], "-min_sub_duration")==0)
+			{
+
+			}
+			if (strcmp(argv[i], "-detect_italics")==0)
+			{
+
+			}
+			if (strcmp(argv[i], "-conf_thresh")==0)
+			{
+
+			}
+		}
+
 		if (strcmp (argv[i],"-bi")==0 ||
 				strcmp (argv[i],"--bufferinput")==0)
 		{

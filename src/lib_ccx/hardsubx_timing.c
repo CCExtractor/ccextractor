@@ -10,10 +10,9 @@
 #include "allheaders.h"
 #include "hardsubx.h"
 
-int bsearch_frame_neighbourhood(struct lib_hardsubx_ctx *ctx)
+int64_t convert_pts_to_ms()
 {
-	// Searches the neighbourhood of the frame with the detected sub to get exact timing
-
+	
 }
 
 #endif
