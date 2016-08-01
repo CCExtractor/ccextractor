@@ -122,8 +122,11 @@ int is_all_caps(struct encoder_ctx *context, int line_num, struct eia608_screen 
 
 int clever_capitalize(struct encoder_ctx *context, int line_num, struct eia608_screen *data)
 {
-	// First find out if we actually need to do it, don't mess with lines that come OK
-	int doit = is_all_caps(context, line_num, data);
+	// CFS: Tried doing to clever (see below) but some channels do all uppercase except for
+	// notes for deaf people (such as "(narrator)" which messes things up.
+		// First find out if we actually need to do it, don't mess with lines that come OK
+		//int doit = is_all_caps(context, line_num, data);
+	int doit = 1;
 
 	for (int i = 0; i < CCX_DECODER_608_SCREEN_WIDTH; i++)
 	{
