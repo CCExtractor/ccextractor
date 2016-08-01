@@ -84,16 +84,22 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx);
 
 //hardsubx_imgops.c
-void rgb2hsv(float R, float G, float B,float *L, float *a, float *b);
+void rgb2hsv(float R, float G, float B,float *H, float *S, float *V);
 void rgb2lab(float R, float G, float B,float *L, float *a, float *b);
 
 //hardsubx_classifier.c
 char *get_ocr_text_simple(struct lib_hardsubx_ctx *ctx, PIX *image);
+char *get_ocr_text_wordwise(struct lib_hardsubx_ctx *ctx, PIX *image);
+char *get_ocr_text_letterwise(struct lib_hardsubx_ctx *ctx, PIX *image);
+char *get_ocr_text_simple_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold);
+char *get_ocr_text_wordwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold);
+char *get_ocr_text_letterwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold);
 
 //hardsubx_utility.c
 int edit_distance(char * word1, char * word2, int len1, int len2);
 int64_t convert_pts_to_ms(int64_t pts, AVRational time_base);
 int64_t convert_pts_to_ns(int64_t pts, AVRational time_base);
+int64_t convert_pts_to_s(int64_t pts, AVRational time_base);
 
 #endif
 

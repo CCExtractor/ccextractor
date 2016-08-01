@@ -30,24 +30,84 @@ char *get_ocr_text_simple(struct lib_hardsubx_ctx *ctx, PIX *image)
 	return text_out;
 }
 
-char *get_ocr_text_wordwise()
+char *get_ocr_text_wordwise(struct lib_hardsubx_ctx *ctx, PIX *image)
 {
+	char *text_out;
 
+	TessBaseAPISetImage2(ctx->tess_handle, image);
+	if(TessBaseAPIRecognize(ctx->tess_handle, NULL) != 0)
+	{	
+		//TODO: Display error message
+		printf("Error in Tesseract recognition\n");
+		return NULL;
+	}
+
+
+	return text_out;
 }
 
-char *get_ocr_text_simple_threshold()
+char *get_ocr_text_letterwise(struct lib_hardsubx_ctx *ctx, PIX *image)
 {
+	char *text_out;
 
+	TessBaseAPISetImage2(ctx->tess_handle, image);
+	if(TessBaseAPIRecognize(ctx->tess_handle, NULL) != 0)
+	{	
+		//TODO: Display error message
+		printf("Error in Tesseract recognition\n");
+		return NULL;
+	}
+
+
+	return text_out;
 }
 
-char *get_ocr_text_wordwise_threshold()
+char *get_ocr_text_simple_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold)
 {
+	char *text_out;
 
+	TessBaseAPISetImage2(ctx->tess_handle, image);
+	if(TessBaseAPIRecognize(ctx->tess_handle, NULL) != 0)
+	{	
+		//TODO: Display error message
+		printf("Error in Tesseract recognition\n");
+		return NULL;
+	}
+
+
+	return text_out;
 }
 
-char *get_ocr_text_simple_italics()
+char *get_ocr_text_wordwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold)
 {
-	
+	char *text_out;
+
+	TessBaseAPISetImage2(ctx->tess_handle, image);
+	if(TessBaseAPIRecognize(ctx->tess_handle, NULL) != 0)
+	{	
+		//TODO: Display error message
+		printf("Error in Tesseract recognition\n");
+		return NULL;
+	}
+
+
+	return text_out;
+}
+
+char *get_ocr_text_letterwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold)
+{
+	char *text_out;
+
+	TessBaseAPISetImage2(ctx->tess_handle, image);
+	if(TessBaseAPIRecognize(ctx->tess_handle, NULL) != 0)
+	{	
+		//TODO: Display error message
+		printf("Error in Tesseract recognition\n");
+		return NULL;
+	}
+
+
+	return text_out;
 }
 
 #endif
