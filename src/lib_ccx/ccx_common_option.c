@@ -62,6 +62,14 @@ void init_options (struct ccx_s_options *options)
 	options->hardsubx = 0; // By default, don't try to extract hard subtitles
 	options->dvbcolor = 0; // By default, only text detected in DVB
 
+	/*HardsubX related stuff*/
+	options->hardsubx_ocr_mode = 0;
+	options->hardsubx_subcolor = 0;
+	options->hardsubx_min_sub_duration = 0.5;
+	options->hardsubx_detect_italics = 0;
+	options->hardsubx_conf_thresh = 0.0;
+	options->hardsubx_hue = 0.0;
+
 	options->transcript_settings = ccx_encoders_default_transcript_settings;
 	options->millis_separator=',';
 

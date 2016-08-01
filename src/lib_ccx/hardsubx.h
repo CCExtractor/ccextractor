@@ -12,6 +12,24 @@
 #include "allheaders.h"
 #include "capi.h"
 
+enum hardsubx_color_type
+{
+	HARDSUBX_COLOR_WHITE = 0,
+	HARDSUBX_COLOR_YELLOW = 1,
+	HARDSUBX_COLOR_GREEN = 2,
+	HARDSUBX_COLOR_CYAN = 3,
+	HARDSUBX_COLOR_BLUE = 4,
+	HARDSUBX_COLOR_MAGENTA = 5,
+	HARDSUBX_COLOR_RED = 6,
+	HARDSUBX_COLOR_CUSTOM = 7,
+};
+
+enum hardsubx_ocr_mode
+{
+	HARDSUBX_OCRMODE_FRAME = 0,
+	HARDSUBX_OCRMODE_WORD = 1,
+	HARDSUBX_OCRMODE_LETTER = 2,
+};
 
 struct lib_hardsubx_ctx
 {
@@ -49,7 +67,12 @@ struct lib_hardsubx_ctx
 
 	// Subtitle text parameters
 	struct cc_subtitle *dec_sub;
+	int ocr_mode;
+	int subcolor;
 	float min_sub_duration;
+	int detect_italics;
+	float conf_thresh;
+	float hue;
 };
 
 struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options);

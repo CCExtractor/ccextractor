@@ -45,4 +45,9 @@ char *get_ocr_text_wordwise_threshold()
 
 }
 
+char *get_ocr_text_simple_italics()
+{
+	
+}
+
 #endif

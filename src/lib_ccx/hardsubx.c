@@ -126,7 +126,12 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	ctx->cc_to_stdout = options->cc_to_stdout;
 
 	//Initialize subtitle text parameters
-	ctx->min_sub_duration = 0.5;
+	ctx->ocr_mode = options->hardsubx_ocr_mode;
+	ctx->subcolor = options->hardsubx_subcolor;
+	ctx->min_sub_duration = options->hardsubx_min_sub_duration;
+	ctx->detect_italics = options->hardsubx_detect_italics;
+	ctx->conf_thresh = options->hardsubx_conf_thresh;
+	ctx->hue = options->hardsubx_hue;
 
 	//Initialize subtitle structure memory
 	ctx->dec_sub = (struct cc_subtitle *)malloc(sizeof(struct cc_subtitle));

@@ -54,7 +54,7 @@ void rgb2hsv(float R, float G, float B,float *H, float *S, float *V)
 
 	if (h < 0) h += 360.0f;
 
-	*H = (unsigned char)(h / 2);   // dst_h : 0-180
+	*H = (unsigned char)(h);       // dst_h : 0-360
 	*S = (unsigned char)(s * 255); // dst_s : 0-255
 	*V = (unsigned char)(v * 255); // dst_v : 0-255
 }
