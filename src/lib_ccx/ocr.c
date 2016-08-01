@@ -432,6 +432,8 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 			}
 		}
 
+		TessResultIteratorDelete(ri);
+
 	}
 	// End Color Detection
 
