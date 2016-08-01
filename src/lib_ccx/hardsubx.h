@@ -92,6 +92,8 @@ char *get_ocr_text_simple(struct lib_hardsubx_ctx *ctx, PIX *image);
 
 //hardsubx_utility.c
 int edit_distance(char * word1, char * word2, int len1, int len2);
+int64_t convert_pts_to_ms(int64_t pts, AVRational time_base);
+int64_t convert_pts_to_ns(int64_t pts, AVRational time_base);
 
 #endif
 

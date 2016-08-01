@@ -10,9 +10,19 @@
 #include "allheaders.h"
 #include "hardsubx.h"
 
-int detect_italics()
+int64_t convert_pts_to_ms(int64_t pts, AVRational time_base)
 {
-	//TODO: Get orientation of the detected subtitles
+	return av_rescale_q(pts, time_base, AV_TIME_BASE_Q)/1000;
+}
+
+int64_t convert_pts_to_ns(int64_t pts, AVRational time_base)
+{
+	return av_rescale_q(pts, time_base, AV_TIME_BASE_Q);
+}
+
+int64_t convert_pts_to_s(int64_t pts, AVRational time_base)
+{
+	return av_rescale_q(pts, time_base, AV_TIME_BASE_Q)*1000;
 }
 
 int edit_distance(char * word1, char * word2, int len1, int len2)

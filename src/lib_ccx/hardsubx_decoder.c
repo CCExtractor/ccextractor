@@ -190,7 +190,8 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 					continue;
 				subtitle_text = strtok(subtitle_text,"\n");
 				// printf("%s\n", subtitle_text);
-				end_time = ctx->packet.pts/100;
+				// printf("%lld %lld %lld\n", ctx->packet.pts, AV_TIME_BASE, ctx->format_ctx->streams[ctx->video_stream_id]->time_base.den);
+				end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 				if(prev_subtitle_text)
 				{
 					//TODO: Encode text with highest confidence
