@@ -11,20 +11,16 @@
 #include "hardsubx.h"
 #include "capi.h"
 
-char* _process_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)//, PIX *prev_im)
+char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
 {
 	printf("frame : %04d\n", index);
 	PIX *im;
 	// PIX *edge_im;
 	PIX *lum_im;
-	// PIX *feature_img;
-	// PIX *mov_im;
-	char *subtitle_text;
+	char *subtitle_text=NULL;
 	im = pixCreate(width,height,32);
 	lum_im = pixCreate(width,height,32);
 	// edge_im = pixCreate(width,height,8);
-	// mov_im = pixCreate(width,height,32);
-	// feature_img = pixCreate(width,height,32);
 	int i,j;
 	for(i=(3*height)/4;i<height;i++)
 	{
@@ -37,21 +33,10 @@ char* _process_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, in
 			pixSetRGBPixel(im,j,i,r,g,b);
 			float L,A,B;
 			rgb2lab((float)r,(float)g,(float)b,&L,&A,&B);
-			float H,S,V;
-			// rgb2hsv((float)r,(float)g,(float)b,&H,&S,&V);
-			// printf("%f %f %f\n", H,S,V);
 			if(L>95) // TODO: Make this threshold a parameter and also automatically calculate it
 				pixSetRGBPixel(lum_im,j,i,255,255,255);
 			else
 				pixSetRGBPixel(lum_im,j,i,0,0,0);
-			// int r_prev, g_prev, b_prev;
-			// pixGetRGBPixel(prev_im,j,i,&r_prev,&g_prev,&b_prev);
-			// //printf("%d %d %d\n", (int)r_prev,(int)g_prev,(int)b_prev);
-			// if(abs(r-r_prev)<5&&abs(g-g_prev)<5&&abs(b-b_prev)<5)
-			// {
-			// 	//printf("%d %d %d , %d %d %d\n", r,g,b,r_prev,g_prev,b_prev);
-			// 	pixSetRGBPixel(mov_im,j,i,255,255,255);
-			// }
 		}
 	}
 
@@ -105,33 +90,26 @@ char* _process_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, in
 	// }
 
 	// TESSERACT OCR FOR THE FRAME HERE
-	subtitle_text = get_ocr_text_simple(ctx, lum_im);
-
-	// printf("Recognized text : \"%s\"\n", subtitle_text);
-
-	// char write_path[100];
-	// sprintf(write_path,"./ffmpeg-examples/frames/temp%04d.jpg",index);
-	// printf("%s\n", write_path);
-	//pixWrite(write_path,feature_img,IFF_JFIF_JPEG);
-
-	// pixCopy(prev_im,im);
+	// subtitle_text = get_ocr_text_simple(ctx, lum_im);
+	subtitle_text = get_ocr_text_wordwise(ctx, lum_im);
 
 	pixDestroy(&lum_im);
-	// pixDestroy(&edge_im);
-	// pixDestroy(&mov_im);
-	// pixDestroy(&feature_img);
 	pixDestroy(&im);
-	// pixDestroy(&edge_im_2);
-	// pixDestroy(&pixd);
-	// pixDestroy(&pixs);
 
 	return subtitle_text;
 }
 
-void _display_frame(AVFrame *frame, int width, int height, int timestamp)
+char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
 {
 	PIX *im;
+}
+
+void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int timestamp)
+{
+	// Debug: Display the frame after processing
+	PIX *im;
 	im = pixCreate(width,height,32);
+	PIX *hue_im = pixCreate(width,height,32);
 
 	int i,j;
 	for(i=0;i<height;i++)
@@ -143,14 +121,54 @@ void _display_frame(AVFrame *frame, int width, int height, int timestamp)
 			int g=frame->data[0][p+1];
 			int b=frame->data[0][p+2];
 			pixSetRGBPixel(im,j,i,r,g,b);
+			float H,S,V;
+			rgb2lab((float)r,(float)g,(float)b,&H,&S,&V);
+			if(H>95)//if(abs(H-60)<20)
+			{
+				pixSetRGBPixel(hue_im,j,i,255,255,255);
+			}
 		}
 	}
 
+	PIX *edge_im = pixCreate(width,height,8),*edge_im_2 = pixCreate(width,height,8);
+	edge_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
+	pixCopy(edge_im_2,edge_im);
+	edge_im = pixSobelEdgeFilter(edge_im, L_VERTICAL_EDGES);
+	edge_im = pixDilateGray(edge_im, 31, 11);
+	edge_im = pixThresholdToBinary(edge_im,50);
+	PIX *pixd = pixCreate(width,height,1);
+	pixSauvolaBinarize(edge_im_2, 3, 0.01, 1, NULL, NULL, NULL, &pixd);
+
+	PIX *feat_im = pixCreate(width,height,32);
+	for(i=3*(height/4);i<height;i++)
+	{
+		for(j=0;j<width;j++)
+		{
+			unsigned int p1,p2,p3;
+			pixGetPixel(edge_im,j,i,&p1);
+			pixGetPixel(pixd,j,i,&p2);
+			pixGetPixel(hue_im,j,i,&p3);
+			if(p2==0&&p1==0&&p3>0)
+			{
+				pixSetRGBPixel(feat_im,j,i,255,255,255);
+			}
+		}
+	}
+
+	char *txt=NULL;
+	// txt = get_ocr_text_simple(ctx, feat_im);
+	txt=get_ocr_text_wordwise_threshold(ctx, feat_im, 70);
+	if(txt != NULL)printf("%s\n", txt);
 
 	char write_path[100];
 	sprintf(write_path,"./ffmpeg-examples/frames/temp%04d.jpg",timestamp);
 
-	pixWrite(write_path,im,IFF_JFIF_JPEG);
+	pixWrite(write_path,feat_im,IFF_JFIF_JPEG);
+	pixDestroy(&im);
+	pixDestroy(&edge_im);
+	pixDestroy(&feat_im);
+	pixDestroy(&edge_im_2);
+	pixDestroy(&pixd);
 }
 
 int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx)
@@ -159,20 +177,22 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 	int got_frame;
 	int dist;
 	int frame_number = 0;
-	int64_t begin_time = 0,end_time = 0;
+	int64_t begin_time = 0,end_time = 0,prev_packet_pts = 0;
 	char *subtitle_text=NULL;
 	char *prev_subtitle_text=NULL;
-	// PIX *prev_im;
-	// prev_im = pixCreate(ctx->codec_ctx->width,ctx->codec_ctx->height,32);
 
 	while(av_read_frame(ctx->format_ctx, &ctx->packet)>=0)
 	{
 		if(ctx->packet.stream_index == ctx->video_stream_id)
 		{
 			frame_number++;
-			// printf("%d\n", frame_number);
+
+			//Decode the video stream packet
 			avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
-			if(got_frame && frame_number % 25 == 0)// TODO: Create fps parameter
+
+			float diff = (float)convert_pts_to_ms(ctx->packet.pts - prev_packet_pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
+			diff = diff/1000.0; // Converting to seconds
+			if(got_frame && diff >= ctx->min_sub_duration)
 			{
 				// sws_scale is used to convert the pixel format to RGB24 from all other cases
 				sws_scale(
@@ -184,13 +204,16 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 						ctx->rgb_frame->data,
 						ctx->rgb_frame->linesize
 					);
+				
+
 				// Send the frame to other functions for processing
-				subtitle_text = _process_frame(ctx,ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);//,prev_im);
+				subtitle_text = _process_frame_white_basic(ctx,ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);//,prev_im);
+				// _display_frame(ctx, ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
+				if(subtitle_text==NULL)
+					continue;
 				if(!strlen(subtitle_text))
 					continue;
 				subtitle_text = strtok(subtitle_text,"\n");
-				// printf("%s\n", subtitle_text);
-				// printf("%lld %lld %lld\n", ctx->packet.pts, AV_TIME_BASE, ctx->format_ctx->streams[ctx->video_stream_id]->time_base.den);
 				end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 				if(prev_subtitle_text)
 				{
@@ -206,6 +229,7 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 				}
 
 				prev_subtitle_text = strdup(subtitle_text);
+				prev_packet_pts = ctx->packet.pts;
 			}
 		}
 		av_packet_unref(&ctx->packet);
@@ -257,7 +281,7 @@ int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 							ctx->rgb_frame->linesize
 						);
 					// Send the frame to other functions for processing
-					_display_frame(ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,seconds_time);
+					_display_frame(ctx, ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,seconds_time);
 					break;
 				}
 			}

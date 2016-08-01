@@ -22,7 +22,7 @@ int64_t convert_pts_to_ns(int64_t pts, AVRational time_base)
 
 int64_t convert_pts_to_s(int64_t pts, AVRational time_base)
 {
-	return av_rescale_q(pts, time_base, AV_TIME_BASE_Q)*1000;
+	return av_rescale_q(pts, time_base, AV_TIME_BASE_Q)/1000000;
 }
 
 int edit_distance(char * word1, char * word2, int len1, int len2)
