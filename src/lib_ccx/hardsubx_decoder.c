@@ -134,10 +134,10 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 	edge_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
 	pixCopy(edge_im_2,edge_im);
 	edge_im = pixSobelEdgeFilter(edge_im, L_VERTICAL_EDGES);
-	edge_im = pixDilateGray(edge_im, 31, 11);
+	edge_im = pixDilateGray(edge_im, 21, 11);
 	edge_im = pixThresholdToBinary(edge_im,50);
 	PIX *pixd = pixCreate(width,height,1);
-	pixSauvolaBinarize(edge_im_2, 3, 0.01, 1, NULL, NULL, NULL, &pixd);
+	pixSauvolaBinarize(edge_im_2, 11, 0.3, 1, NULL, NULL, NULL, &pixd);
 
 	PIX *feat_im = pixCreate(width,height,32);
 	for(i=3*(height/4);i<height;i++)
@@ -148,7 +148,7 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 			pixGetPixel(edge_im,j,i,&p1);
 			pixGetPixel(pixd,j,i,&p2);
 			pixGetPixel(hue_im,j,i,&p3);
-			if(p2==0&&p1==0&&p3>0)
+			if(p2==0&&p1==0&&p3>0)//if(p2==0&&p1==0&&p3>0)
 			{
 				pixSetRGBPixel(feat_im,j,i,255,255,255);
 			}
@@ -157,8 +157,8 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 
 	char *txt=NULL;
 	// txt = get_ocr_text_simple(ctx, feat_im);
-	txt=get_ocr_text_wordwise_threshold(ctx, feat_im, 70);
-	if(txt != NULL)printf("%s\n", txt);
+	// txt=get_ocr_text_wordwise_threshold(ctx, feat_im, ctx->conf_thresh);
+	// if(txt != NULL)printf("%s\n", txt);
 
 	char write_path[100];
 	sprintf(write_path,"./ffmpeg-examples/frames/temp%04d.jpg",timestamp);
@@ -190,10 +190,12 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 			//Decode the video stream packet
 			avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
 
-			float diff = (float)convert_pts_to_ms(ctx->packet.pts - prev_packet_pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
-			diff = diff/1000.0; // Converting to seconds
-			if(got_frame && diff >= ctx->min_sub_duration)
+			if(got_frame)
 			{
+				float diff = (float)convert_pts_to_ms(ctx->packet.pts - prev_packet_pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
+				if(diff < 1000*ctx->min_sub_duration) //If the minimum duration of a subtitle line is exceeded, process packet
+					continue;
+				
 				// sws_scale is used to convert the pixel format to RGB24 from all other cases
 				sws_scale(
 						ctx->sws_ctx,
@@ -208,7 +210,7 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 
 				// Send the frame to other functions for processing
 				subtitle_text = _process_frame_white_basic(ctx,ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);//,prev_im);
-				// _display_frame(ctx, ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
+				_display_frame(ctx, ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
 				if(subtitle_text==NULL)
 					continue;
 				if(!strlen(subtitle_text))
