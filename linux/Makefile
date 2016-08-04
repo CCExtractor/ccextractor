@@ -57,10 +57,16 @@ CFLAGS+= $(shell pkg-config --cflags libavcodec)
 CFLAGS+= $(shell pkg-config --cflags libavformat)
 CFLAGS+= $(shell pkg-config --cflags libavutil)
 CFLAGS+= $(shell pkg-config --cflags libswscale)
-LDFLAGS+= $(shell pkg-config --libs libavcodec )
-LDFLAGS+= $(shell pkg-config --libs libavformat )
-LDFLAGS+= $(shell pkg-config --libs libavutil )
-LDFLAGS+= $(shell pkg-config --libs libswscale )
+AV_LDFLAGS+= $(shell pkg-config --libs libavcodec )
+AV_LDFLAGS+= $(shell pkg-config --libs libavformat )
+AV_LDFLAGS+= $(shell pkg-config --libs libavutil )
+AV_LDFLAGS+= $(shell pkg-config --libs libswscale )
+ifeq ($(AV_LDFLAGS),$(EMPTY))
+$(error **ERROR** "libav not found")
+else
+$(info "libav found")
+endif
+LDFLAGS+= $(AV_LDFLAGS)
 endif
 
 ifeq ($(ENABLE_OCR),yes)
