@@ -46,12 +46,14 @@ int main(int argc, char *argv[])
 	{
 		exit(ret);
 	}
+#ifdef ENABLE_HARDSUBX
 	if(ccx_options.hardsubx)
 	{
 		// Perform burned in subtitle extraction
 		hardsubx(&ccx_options);
 		return 0;
 	}
+#endif
 	// Initialize libraries
 	ctx = init_libraries(&ccx_options);
 	if (!ctx && errno == ENOMEM)

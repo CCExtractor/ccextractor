@@ -916,7 +916,8 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
-
+		
+#ifdef ENABLE_HARDSUBX
 		// Parse -hardsubx and related parameters
 		if (strcmp(argv[i], "-hardsubx")==0)
 		{
@@ -1075,6 +1076,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 		}
+#endif
 
 		if (strcmp (argv[i],"-bi")==0 ||
 				strcmp (argv[i],"--bufferinput")==0)
