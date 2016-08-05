@@ -33,7 +33,7 @@ char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 			pixSetRGBPixel(im,j,i,r,g,b);
 			float L,A,B;
 			rgb2lab((float)r,(float)g,(float)b,&L,&A,&B);
-			if(L>95) // TODO: Make this threshold a parameter and also automatically calculate it
+			if(L > ctx->lum_thresh)
 				pixSetRGBPixel(lum_im,j,i,255,255,255);
 			else
 				pixSetRGBPixel(lum_im,j,i,0,0,0);
@@ -90,8 +90,29 @@ char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 	// }
 
 	// TESSERACT OCR FOR THE FRAME HERE
-	// subtitle_text = get_ocr_text_simple(ctx, lum_im);
-	subtitle_text = get_ocr_text_wordwise(ctx, lum_im);
+	switch(ctx->ocr_mode)
+	{
+		case HARDSUBX_OCRMODE_WORD:
+			if(ctx->conf_thresh > 0)
+				subtitle_text = get_ocr_text_wordwise_threshold(ctx, lum_im, ctx->conf_thresh);
+			else
+				subtitle_text = get_ocr_text_wordwise(ctx, lum_im);
+			break;
+		case HARDSUBX_OCRMODE_LETTER:
+			if(ctx->conf_thresh > 0)
+				subtitle_text = get_ocr_text_letterwise_threshold(ctx, lum_im, ctx->conf_thresh);
+			else
+				subtitle_text = get_ocr_text_letterwise(ctx, lum_im);
+			break;
+		case HARDSUBX_OCRMODE_FRAME:
+			if(ctx->conf_thresh > 0)
+				subtitle_text = get_ocr_text_simple_threshold(ctx, lum_im, ctx->conf_thresh);
+			else
+				subtitle_text = get_ocr_text_simple(ctx, lum_im);
+			break;
+		default:
+			fatal(EXIT_MALFORMED_PARAMETER,"Invalid OCR Mode");
+	}
 
 	pixDestroy(&lum_im);
 	pixDestroy(&im);
@@ -123,7 +144,7 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 			pixSetRGBPixel(im,j,i,r,g,b);
 			float H,S,V;
 			rgb2lab((float)r,(float)g,(float)b,&H,&S,&V);
-			if(H>95)//if(abs(H-60)<20)
+			if(H>90)//if(abs(H-60)<20)
 			{
 				pixSetRGBPixel(hue_im,j,i,255,255,255);
 			}
@@ -148,7 +169,7 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 			pixGetPixel(edge_im,j,i,&p1);
 			pixGetPixel(pixd,j,i,&p2);
 			pixGetPixel(hue_im,j,i,&p3);
-			if(p2==0&&p1==0&&p3>0)//if(p2==0&&p1==0&&p3>0)
+			if(p2==0&&p1==0&&p3>0)
 			{
 				pixSetRGBPixel(feat_im,j,i,255,255,255);
 			}
@@ -190,12 +211,12 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 			//Decode the video stream packet
 			avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
 
-			if(got_frame)
+			if(got_frame)// && frame_number % 25 == 0)
 			{
 				float diff = (float)convert_pts_to_ms(ctx->packet.pts - prev_packet_pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 				if(diff < 1000*ctx->min_sub_duration) //If the minimum duration of a subtitle line is exceeded, process packet
 					continue;
-				
+
 				// sws_scale is used to convert the pixel format to RGB24 from all other cases
 				sws_scale(
 						ctx->sws_ctx,
@@ -210,7 +231,7 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 
 				// Send the frame to other functions for processing
 				subtitle_text = _process_frame_white_basic(ctx,ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);//,prev_im);
-				_display_frame(ctx, ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
+				//_display_frame(ctx, ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
 				if(subtitle_text==NULL)
 					continue;
 				if(!strlen(subtitle_text))

@@ -80,10 +80,27 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 
 	av_image_fill_arrays(ctx->rgb_frame->data, ctx->rgb_frame->linesize, ctx->rgb_buffer, AV_PIX_FMT_RGB24, ctx->codec_ctx->width, ctx->codec_ctx->height, 1);
 
+	// int frame_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, 1280, 720, 16);
+	// ctx->rgb_buffer = (uint8_t *)av_malloc(frame_bytes*sizeof(uint8_t));
+	
+	// ctx->sws_ctx = sws_getContext(
+	// 		ctx->codec_ctx->width,
+	// 		ctx->codec_ctx->height,
+	// 		ctx->codec_ctx->pix_fmt,
+	// 		1280,
+	// 		720,
+	// 		AV_PIX_FMT_RGB24,
+	// 		SWS_BILINEAR,
+	// 		NULL,NULL,NULL
+	// 	);
+	// avpicture_fill((AVPicture*)ctx->rgb_frame, ctx->rgb_buffer, AV_PIX_FMT_RGB24, 1280, 720);
+	// av_image_fill_arrays(ctx->rgb_frame->data, ctx->rgb_frame->linesize, ctx->rgb_buffer, AV_PIX_FMT_RGB24, 1280, 720, 1);
+
 	// Pass on the processing context to the appropriate functions
 	struct encoder_ctx *enc_ctx;
 	enc_ctx = init_encoder(&ccx_options.enc_cfg);
 	
+	mprint("Beginning burned-in subtitle detection...\n");
 	hardsubx_process_frames_linear(ctx, enc_ctx);
 
 	dinit_encoder(&enc_ctx, 0); //TODO: Replace 0 with end timestamp
@@ -100,6 +117,93 @@ void _hardsubx_params_dump(struct ccx_s_options *options, struct lib_hardsubx_ct
 {
 	// Print the relevant passed parameters onto the screen
 	mprint("Input : %s\n", ctx->inputfile[0]);
+
+	switch(ctx->subcolor)
+	{
+		case HARDSUBX_COLOR_WHITE:
+			mprint("Subtitle Color : White\n");
+			break;
+		case HARDSUBX_COLOR_YELLOW:
+			mprint("Subtitle Color : Yellow\n");
+			break;
+		case HARDSUBX_COLOR_GREEN:
+			mprint("Subtitle Color : Green\n");
+			break;
+		case HARDSUBX_COLOR_CYAN:
+			mprint("Subtitle Color : Cyan\n");
+			break;
+		case HARDSUBX_COLOR_BLUE:
+			mprint("Subtitle Color : Blue\n");
+			break;
+		case HARDSUBX_COLOR_MAGENTA:
+			mprint("Subtitle Color : Magenta\n");
+			break;
+		case HARDSUBX_COLOR_RED:
+			mprint("Subtitle Color : Red\n");
+			break;
+		case HARDSUBX_COLOR_CUSTOM:
+			mprint("Subtitle Color : Custom Hue - %0.2f\n",ctx->hue);
+			break;
+		default:
+			fatal(EXIT_MALFORMED_PARAMETER,"Invalid Subtitle Color");
+	}
+
+	switch(ctx->ocr_mode)
+	{
+		case HARDSUBX_OCRMODE_WORD:
+			mprint("OCR Mode : Word-wise\n");
+			break;
+		case HARDSUBX_OCRMODE_LETTER:
+			mprint("OCR Mode : Letter-wise\n");
+			break;
+		case HARDSUBX_OCRMODE_FRAME:
+			mprint("OCR Mode : Frame-wise (simple)\n");
+			break;
+		default:
+			fatal(EXIT_MALFORMED_PARAMETER,"Invalid OCR Mode");
+	}
+
+	if(ctx->conf_thresh > 0)
+	{
+		mprint("OCR Confidence Threshold : %.2f\n",ctx->conf_thresh);
+	}
+	else
+	{
+		mprint("OCR Confidence Threshold : %.2f (Default)\n",ctx->conf_thresh);
+	}
+
+	if(ctx->subcolor == HARDSUBX_COLOR_WHITE)
+	{
+		if(ctx->lum_thresh != 95.0)
+		{
+			mprint("OCR Luminance Threshold : %.2f\n",ctx->lum_thresh);
+		}
+		else
+		{
+			mprint("OCR Luminance Threshold : %.2f (Default)\n",ctx->lum_thresh);
+		}
+	}
+
+	if(ctx->detect_italics == 1)
+	{
+		mprint("OCR Italic Detection : On\n");
+	}
+	else
+	{
+		mprint("OCR Italic Detection : Off\n");
+	}
+
+	if(ctx->min_sub_duration == 0.5)
+	{
+		mprint("Minimum subtitle duration : 0.5 seconds (Default)\n");
+	}
+	else
+	{
+		mprint("Minimum subtitle duration : %0.2f seconds (Default)\n",ctx->min_sub_duration);
+	}
+
+	mprint("FFMpeg Media Information:-\n");
+
 }
 
 struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
@@ -133,6 +237,7 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	ctx->detect_italics = options->hardsubx_detect_italics;
 	ctx->conf_thresh = options->hardsubx_conf_thresh;
 	ctx->hue = options->hardsubx_hue;
+	ctx->lum_thresh = options->hardsubx_lum_thresh;
 
 	//Initialize subtitle structure memory
 	ctx->dec_sub = (struct cc_subtitle *)malloc(sizeof(struct cc_subtitle));
@@ -167,7 +272,7 @@ void hardsubx(struct ccx_s_options *options)
 	// Dump parameters (Not using params_dump since completely different parameters)
 	_hardsubx_params_dump(options, ctx);
 
-	// Configure output settings (write format, capitalization etc)
+	// Configure output settings
 
 	// Data processing loop
 	time_t start, end;

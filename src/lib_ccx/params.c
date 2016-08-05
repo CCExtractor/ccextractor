@@ -1055,6 +1055,25 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				i++;
 				continue;
 			}
+			if (strcmp(argv[i], "-whiteness_thresh")==0 || strcmp(argv[i], "-lum_thresh")==0)
+			{
+				if(i < argc - 1)
+				{
+					char *str=(char*)malloc(sizeof(argv[i+1]));
+					sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
+					opt->hardsubx_lum_thresh = atof(str);
+					if(opt->hardsubx_lum_thresh <= 0.0 || opt->hardsubx_conf_thresh > 100.0)
+					{
+						fatal (EXIT_MALFORMED_PARAMETER, "-whiteness_thresh has either 0 or an invalid value supplied\nValid values are in (0.0,100.0)");
+					}
+				}
+				else
+				{
+					fatal (EXIT_MALFORMED_PARAMETER, "-whiteness_thresh has no argument.");
+				}
+				i++;
+				continue;
+			}
 		}
 
 		if (strcmp (argv[i],"-bi")==0 ||

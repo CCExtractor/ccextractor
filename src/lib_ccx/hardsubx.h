@@ -73,6 +73,7 @@ struct lib_hardsubx_ctx
 	int detect_italics;
 	float conf_thresh;
 	float hue;
+	float lum_thresh;
 };
 
 struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options);

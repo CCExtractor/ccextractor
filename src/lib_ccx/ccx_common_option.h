@@ -130,6 +130,7 @@ struct ccx_s_options // Options from user parameters
 	int hardsubx_detect_italics;
 	float hardsubx_conf_thresh;
 	float hardsubx_hue;
+	float hardsubx_lum_thresh;
 
 	ccx_encoders_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
 	enum ccx_output_date_format date_format;
