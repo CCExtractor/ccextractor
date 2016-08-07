@@ -102,6 +102,7 @@ void get_bitmap(struct DVD_Ctx *ctx)
 
 	ctx->bitmap = malloc(w*h);
 	buffp = ctx->bitmap;
+	memset(buffp, 0, w*h);
 	x = 0; lineno = 0;
 
 	while(lineno < (h+1)/2)
@@ -305,7 +306,7 @@ void guess_palette(struct DVD_Ctx* ctx, uint32_t *rgba_palette, uint32_t subtitl
                 g = (((subtitle_color >> 8) & 0xff) * level) >> 8;
                 b = (((subtitle_color >> 0) & 0xff) * level) >> 8;
                 rgba_palette[i] = b | (g << 8) | (r << 16) | ((alpha[i] * 17) << 24);
-                printf("rgba %i %x\n", i , rgba_palette[i]);
+                // printf("rgba %i %x\n", i , rgba_palette[i]);
                 color_used[colormap[i]] = (i + 1);
                 j++;
             } else {
@@ -341,9 +342,9 @@ int write_dvd_sub(struct DVD_Ctx *ctx, struct cc_subtitle *sub)
 
 	w = (ctx->ctrl->coord[1] - ctx->ctrl->coord[0]) + 1;
 	h = (ctx->ctrl->coord[3] - ctx->ctrl->coord[2]) + 1;
-	
-	rect->data[0] = malloc(sizeof(ctx->bitmap));
-	memcpy(rect->data[0], ctx->bitmap, sizeof(ctx->bitmap));
+
+	rect->data[0] = malloc(w*h);
+	memcpy(rect->data[0], ctx->bitmap, w*h);
 
 	rect->data[1] = malloc(1024);
 	memset(rect->data[1], 0, 1024);
@@ -370,7 +371,6 @@ int write_dvd_sub(struct DVD_Ctx *ctx, struct cc_subtitle *sub)
 		char *ocr_str = NULL;
 		// char *text_output = NULL;
 		ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str);
-		// printf("%s\n", text_output);
 		if(ret >= 0)
 			rect->ocr_text = ocr_str;
 #endif
@@ -419,6 +419,9 @@ int process_spu(struct lib_cc_decode *dec_ctx, unsigned char *buff, int length, 
 void *init_dvdsub_decode()
 {
 	struct DVD_Ctx *ctx = malloc(sizeof(struct DVD_Ctx));
+#ifdef ENABLE_OCR
+	ctx->ocr_ctx = init_ocr(1);
+#endif
 	ctx->ctrl = malloc(sizeof(struct ctrl_seq));
 	return (void *) ctx;
 }
