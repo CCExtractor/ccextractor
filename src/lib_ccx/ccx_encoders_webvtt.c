@@ -3,7 +3,7 @@
 #include "ccx_encoders_common.h"
 #include "ccx_encoders_helpers.h"
 #include "utility.h"
-
+#include "ocr.h"
 
 
 /* The timing here is not PTS based, but output based, i.e. user delay must be accounted for
@@ -104,7 +104,7 @@ int write_xtimestamp_header(struct encoder_ctx *context)
 		int used;
 		unsigned h1, m1, s1, ms1;
 		mstotime(context->timing->sync_pts2fts_fts, &h1, &m1, &s1, &ms1);
-		sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:%lld, LOCAL %02u:%02u:%02u.%03u\r\n",
+		sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:%ld, LOCAL %02u:%02u:%02u.%03u\r\n",
 			context->timing->sync_pts2fts_pts, 
 			h1, m1, s1, ms1);
 		used = encode_line(context, context->buffer, (unsigned char *)header_string);
