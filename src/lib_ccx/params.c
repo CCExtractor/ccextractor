@@ -7,6 +7,9 @@
 #include "ccx_decoders_708.h"
 #include "compile_info.h"
 #include "../lib_hash/sha2.h"
+#ifdef ENABLE_HARDSUBX
+#include "hardsubx.h"
+#endif
 
 static int inputfile_capacity=0;
 
@@ -919,6 +922,168 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
+		
+#ifdef ENABLE_HARDSUBX
+		// Parse -hardsubx and related parameters
+		if (strcmp(argv[i], "-hardsubx")==0)
+		{
+			opt->hardsubx = 1;
+			continue;
+		}
+		if (opt->hardsubx == 1)
+		{
+			if (strcmp(argv[i], "-ocr_mode")==0)
+			{
+				if(i < argc - 1)
+				{
+					if(strcmp(argv[i+1], "simple")==0 || strcmp(argv[i+1], "frame")==0)
+					{
+						opt->hardsubx_ocr_mode = HARDSUBX_OCRMODE_FRAME;
+					}
+					else if(strcmp(argv[i+1], "word")==0)
+					{
+						opt->hardsubx_ocr_mode = HARDSUBX_OCRMODE_WORD;
+					}
+					else if(strcmp(argv[i+1], "letter")==0 || strcmp(argv[i+1], "symbol")==0)
+					{
+						opt->hardsubx_ocr_mode = HARDSUBX_OCRMODE_LETTER;
+					}
+					else
+					{
+						fatal (EXIT_MALFORMED_PARAMETER, "-ocr_mode has an invalid value.\nValid values are {frame,word,letter}");
+					}
+				}
+				else
+				{
+					fatal (EXIT_MALFORMED_PARAMETER, "-ocr_mode has no argument.\nValid values are {frame,word,letter}");
+				}
+				i++;
+				continue;
+			}
+			if (strcmp(argv[i], "-subcolor")==0 || strcmp(argv[i], "-sub_color")==0)
+			{
+				if(i < argc - 1)
+				{
+					if(strcmp(argv[i+1], "white")==0)
+					{
+						opt->hardsubx_subcolor = HARDSUBX_COLOR_WHITE;
+						opt->hardsubx_hue = 0.0;
+					}
+					else if(strcmp(argv[i+1], "yellow")==0)
+					{
+						opt->hardsubx_subcolor = HARDSUBX_COLOR_YELLOW;
+						opt->hardsubx_hue = 60.0;
+					}
+					else if(strcmp(argv[i+1], "green")==0)
+					{
+						opt->hardsubx_subcolor = HARDSUBX_COLOR_GREEN;
+						opt->hardsubx_hue = 120.0;
+					}
+					else if(strcmp(argv[i+1], "cyan")==0)
+					{
+						opt->hardsubx_subcolor = HARDSUBX_COLOR_CYAN;
+						opt->hardsubx_hue = 180.0;
+					}
+					else if(strcmp(argv[i+1], "blue")==0)
+					{
+						opt->hardsubx_subcolor = HARDSUBX_COLOR_BLUE;
+						opt->hardsubx_hue = 240.0;
+					}
+					else if(strcmp(argv[i+1], "magenta")==0)
+					{
+						opt->hardsubx_subcolor = HARDSUBX_COLOR_MAGENTA;
+						opt->hardsubx_hue = 300.0;
+					}
+					else if(strcmp(argv[i+1], "red")==0)
+					{
+						opt->hardsubx_subcolor = HARDSUBX_COLOR_RED;
+						opt->hardsubx_hue = 0.0;
+					}
+					else
+					{
+						// Take a custom hue from the user
+						opt->hardsubx_subcolor = HARDSUBX_COLOR_CUSTOM;
+						char *str=(char*)malloc(sizeof(argv[i+1]));
+						sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
+						opt->hardsubx_hue = atof(str);
+						if(opt->hardsubx_hue <= 0.0 || opt->hardsubx_hue > 360.0)
+						{
+							fatal (EXIT_MALFORMED_PARAMETER, "-subcolor has either 0 or an invalid hue value supplied.\nIf you want to detect red subtitles, pass '-subcolor red' or a slightly higher hue value (e.g. 0.1)\n");
+						}
+					}
+				}
+				else
+				{
+					fatal (EXIT_MALFORMED_PARAMETER, "-subcolor has no argument.\nValid values are {white,yellow,green,cyan,blue,magenta,red} or a custom hue value between 0 and 360\n");
+				}
+				i++;
+				continue;
+			}
+			if (strcmp(argv[i], "-min_sub_duration")==0)
+			{
+				if(i < argc - 1)
+				{
+					char *str=(char*)malloc(sizeof(argv[i+1]));
+					sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
+					opt->hardsubx_min_sub_duration = atof(str);
+					if(opt->hardsubx_min_sub_duration == 0.0)
+					{
+						fatal (EXIT_MALFORMED_PARAMETER, "-min_sub_duration has either 0 or an invalid value supplied\n");
+					}
+				}
+				else
+				{
+					fatal (EXIT_MALFORMED_PARAMETER, "-min_sub_duration has no argument.");
+				}
+				i++;
+				continue;
+			}
+			if (strcmp(argv[i], "-detect_italics")==0)
+			{
+				opt->hardsubx_detect_italics = 1;
+				continue;
+			}
+			if (strcmp(argv[i], "-conf_thresh")==0)
+			{
+				if(i < argc - 1)
+				{
+					char *str=(char*)malloc(sizeof(argv[i+1]));
+					sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
+					opt->hardsubx_conf_thresh = atof(str);
+					if(opt->hardsubx_conf_thresh <= 0.0 || opt->hardsubx_conf_thresh > 100.0)
+					{
+						fatal (EXIT_MALFORMED_PARAMETER, "-conf_thresh has either 0 or an invalid value supplied\nValid values are in (0.0,100.0)");
+					}
+				}
+				else
+				{
+					fatal (EXIT_MALFORMED_PARAMETER, "-conf_thresh has no argument.");
+				}
+				i++;
+				continue;
+			}
+			if (strcmp(argv[i], "-whiteness_thresh")==0 || strcmp(argv[i], "-lum_thresh")==0)
+			{
+				if(i < argc - 1)
+				{
+					char *str=(char*)malloc(sizeof(argv[i+1]));
+					sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
+					opt->hardsubx_lum_thresh = atof(str);
+					if(opt->hardsubx_lum_thresh <= 0.0 || opt->hardsubx_conf_thresh > 100.0)
+					{
+						fatal (EXIT_MALFORMED_PARAMETER, "-whiteness_thresh has either 0 or an invalid value supplied\nValid values are in (0.0,100.0)");
+					}
+				}
+				else
+				{
+					fatal (EXIT_MALFORMED_PARAMETER, "-whiteness_thresh has no argument.");
+				}
+				i++;
+				continue;
+			}
+		}
+#endif
+
 		if (strcmp (argv[i],"-bi")==0 ||
 				strcmp (argv[i],"--bufferinput")==0)
 		{
