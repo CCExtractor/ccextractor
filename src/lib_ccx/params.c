@@ -322,8 +322,8 @@ void usage (void)
 	mprint ("Options that affect what will be processed:\n");
 	mprint ("          -1, -2, -12: Output Field 1 data, Field 2 data, or both\n");
 	mprint ("                       (DEFAULT is -1)\n");
-	mprint ("Use --append to prevent overwriting of existing files. The output will be appended\n");
-	mprint ("      instead.\n");
+	mprint ("Use --append to prevent overwriting of existing files. The output will be\n");
+	mprint ("      appended instead.\n");
 	mprint ("                 -cc2: When in srt/sami mode, process captions in channel 2\n");
 	mprint ("                       instead of channel 1.\n");
 	mprint ("-svc --service N1[cs1],N2[cs2]...:\n");
@@ -670,8 +670,8 @@ void usage (void)
 	mprint ("    -customtxt format: Use the passed format to customize the (Timed) Transcript\n");
 	mprint ("                       output. The format must be like this: 1100100 (7 digits).\n");
 	mprint ("                       These indicate whether the next things should be\n");
-	mprint ("                       displayed or not in the (timed) transcript. They represent\n");
-	mprint ("                      (in order): \n");
+	mprint ("                       displayed or not in the (timed) transcript. They\n");
+	mprint ("                       represent (in order): \n");
 	mprint ("                           - Display start time\n");
 	mprint ("                           - Display end time\n");
 	mprint ("                           - Display caption mode\n");
@@ -684,7 +684,7 @@ void usage (void)
 	mprint ("                       1110101 is the default for timed transcripts\n");
 	mprint ("                       1111001 is the default setting for -ucla\n");
 	mprint ("                       Make sure you use this parameter after others that might\n");
-	mprint ("                       affect these settings (-out, -ucla, -xds, -txt, -ttxt, ...)\n");
+	mprint ("                       affect these settings (-out, -ucla, -xds, -txt, -ttxt ...)\n");
 
 	mprint ("\n");
 
