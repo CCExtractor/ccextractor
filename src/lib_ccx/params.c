@@ -320,7 +320,7 @@ void usage (void)
 	mprint ("Options that affect what will be processed:\n");
 	mprint ("          -1, -2, -12: Output Field 1 data, Field 2 data, or both\n");
 	mprint ("                       (DEFAULT is -1)\n");
-	mprint ("Use --append to prevent overwriting of existing files. The output will be appended instead.");
+	mprint ("Use --append to prevent overwriting of existing files. The output will be appended instead.\n");
 	mprint ("                 -cc2: When in srt/sami mode, process captions in channel 2\n");
 	mprint ("                       instead of channel 1.\n");
 	mprint ("-svc --service N1[cs1],N2[cs2]...:\n");
@@ -330,11 +330,12 @@ void usage (void)
 	mprint ("                       primary and secondary language services.\n");
 	mprint ("                       Pass \"all\" to process all services found.\n");
 	mprint ("\n");
-	mprint ("                       If captions in a service are stored in 16-bit encoding, you can\n");
-	mprint ("                       specify what charset or encoding was used. Pass its name after\n");
-	mprint ("                       service number (e.g. \"1[EUC-KR],3\" or \"all[EUC-KR]\") and it will\n");
-	mprint ("                       encode specified charset to UTF-8 using iconv. See iconv documentation\n");
-	mprint ("                       to check if required encoding/charset is supported.\n");
+	mprint ("                       If captions in a service are stored in 16-bit encoding, you\n");
+	mprint ("                       can specify what charset or encoding was used. Pass its name\n");
+	mprint ("                       after service number (e.g. \"1[EUC-KR],3\" or \"all[EUC-KR]\")\n");
+	mprint ("                       and it will encode specified charset to UTF-8 using iconv. See\n");
+	mprint ("                       iconv documentation to check if required encoding/charset is\n");
+	mprint ("                       supported.\n");
 	mprint ("\n");
 	mprint ("In general, if you want English subtitles you don't need to use these options\n");
 	mprint ("as they are broadcast in field 1, channel 1. If you want the second language\n");
