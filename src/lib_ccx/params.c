@@ -310,10 +310,11 @@ void usage (void)
 	mprint ("                              hostname or IPv4 address. If host is not specified\n");
 	mprint ("                              then listens on the local host.\n\n");
 	mprint ("            -sendto host[:port]: Sends data in BIN format to the server\n");
-	mprint ("                                 according to the CCExtractor's protocol over TCP.\n");
-	mprint ("                                 For IPv6 use [address]:port\n");
-	mprint ("            -tcp port: Reads the input data in BIN format according to CCExtractor's\n");
-	mprint ("                       protocol, listening specified port on the local host\n");
+	mprint ("                                 according to the CCExtractor's protocol over\n");
+	mprint ("                                 TCP. For IPv6 use [address]:port\n");
+	mprint ("            -tcp port: Reads the input data in BIN format according to\n");
+	mprint ("                        CCExtractor's protocol, listening specified port on the\n");
+	mprint ("                        local host\n");
 	mprint ("            -tcppassword password: Sets server password for new connections to tcp server\n");
 	mprint ("            -tcpdesc description: Sends to the server short description about captions e.g.\n");
 	mprint ("                                  channel name or file name\n");
