@@ -249,7 +249,7 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 void _dinit_hardsubx(struct lib_hardsubx_ctx **ctx)
 {
 	struct lib_hardsubx_ctx *lctx = *ctx;
-	// Free all memoryl allocated to everything in the context
+	// Free all memory allocated to everything in the context
 
 	// Free OCR
 	TessBaseAPIEnd(lctx->tess_handle);

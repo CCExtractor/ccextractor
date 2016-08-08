@@ -40,55 +40,6 @@ char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 		}
 	}
 
-	// PIX *pixd,*pixs,*edge_im_2;
-	// pixd = pixCreate(width,height,1);
-	// pixs = pixCreate(width,height,8);
-	// edge_im_2 = pixCreate(width,height,8);
-
-	// edge_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
-	// pixCopy(pixs,edge_im);
-	// pixCopy(edge_im_2,edge_im);
-	// edge_im = pixSobelEdgeFilter(edge_im, L_VERTICAL_EDGES);
-	// edge_im = pixDilateGray(edge_im, 31, 11);
-	// // edge_im = pixDilateGray(edge_im, 5, 5);
-	// // edge_im = pixDilateGray(edge_im, 3, 1);
-	// edge_im = pixThresholdToBinary(edge_im,50);
-	// //edge_im = pixConvert1To8(NULL,pixThresholdToBinary(edge_im, 50),0,255);
-
-	// // edge_im_2 = pixDilateGray(edge_im_2, 5, 5);
-	// edge_im_2 = pixSobelEdgeFilter(edge_im_2, L_ALL_EDGES);
-	// edge_im_2 = pixDilateGray(edge_im_2, 5, 5);
-	// edge_im_2 = pixThresholdToBinary(edge_im_2,50);
-	// for(i=(3*height)/4;i<height;i++)
-	// {
-	// 	for(j=0;j<width;j++)
-	// 	{
-	// 		unsigned int pixelval;
-	// 		pixGetPixel(edge_im,j,i,&pixelval);
-	// 		if(pixelval > 0)
-	// 		{
-	// 			pixSetPixel(edge_im_2,j,i,1);
-	// 		}
-	// 	}
-	// }
-	
-	// pixSauvolaBinarize(pixs, 3, 0.01, 1, NULL, NULL, NULL, &pixd);
-
-	// for(i=(3*height)/4;i<height;i++)
-	// {
-	// 	for(j=0;j<width;j++)
-	// 	{
-	// 		unsigned int pixelval,pixelval1,pixelval2;
-	// 		pixGetPixel(edge_im,j,i,&pixelval);
-	// 		pixGetPixel(edge_im_2,j,i,&pixelval1);
-	// 		pixGetPixel(pixd,j,i,&pixelval2);
-	// 		if(pixelval2 == 0  && pixelval1 == 0 && pixelval == 0)
-	// 		{
-	// 			pixSetRGBPixel(feature_img,j,i,255,255,255);
-	// 		}
-	// 	}
-	// }
-
 	// TESSERACT OCR FOR THE FRAME HERE
 	switch(ctx->ocr_mode)
 	{
