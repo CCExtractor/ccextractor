@@ -320,7 +320,7 @@ void usage (void)
 	mprint ("Options that affect what will be processed:\n");
 	mprint ("          -1, -2, -12: Output Field 1 data, Field 2 data, or both\n");
 	mprint ("                       (DEFAULT is -1)\n");
-	mprint ("Use --append to prevent overwriting of existing files. The output will be appended instead.");
+	mprint ("Use --append to prevent overwriting of existing files. The output will be appended instead.\n");
 	mprint ("                 -cc2: When in srt/sami mode, process captions in channel 2\n");
 	mprint ("                       instead of channel 1.\n");
 	mprint ("-svc --service N1[cs1],N2[cs2]...:\n");
