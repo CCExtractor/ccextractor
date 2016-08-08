@@ -469,9 +469,9 @@ void usage (void)
 	mprint ("                       Note that most text processing tools in linux will not\n");
 	mprint ("                       like BOM.\n");
 	mprint ("                       This is the default in Windows builds.\n");
-	mprint ("                       -nobom: Do not append a BOM (Byte Order Mark) to output files.\n");
-	mprint ("                       Note that this may break files when using Windows.\n");
-	mprint ("                       This is the default in non-Windows builds.\n");
+	mprint ("                       -nobom: Do not append a BOM (Byte Order Mark) to output\n");
+	mprint ("                       files. Note that this may break files when using\n");
+	mprint ("                       Windows. This is the default in non-Windows builds.\n");
 	mprint ("             -unicode: Encode subtitles in Unicode instead of Latin-1.\n");
 	mprint ("                -utf8: Encode subtitles in UTF-8 (no longer needed.\n");
 	mprint ("                       because UTF-8 is now the default).\n");
@@ -665,27 +665,28 @@ void usage (void)
 	mprint ("                       then CEA-608/708 processing is disabled).\n");
 	mprint ("\n");
 
-	mprint("Transcript customizing options:\n");
+	mprint ("Transcript customizing options:\n");
 
-	mprint("    -customtxt format: Use the passed format to customize the (Timed) Transcript\n");
-	mprint("                       output. The format must be like this: 1100100 (7 digits).\n");
-	mprint("                       These indicate whether the next things should be displayed\n");
-	mprint("                       or not in the (timed) transcript. They represent (in order):\n");
-	mprint("                           - Display start time\n");
-	mprint("                           - Display end time\n");
-	mprint("                           - Display caption mode\n");
-	mprint("                           - Display caption channel\n");
-	mprint("                           - Use a relative timestamp ( relative to the sample)\n");
-	mprint("                           - Display XDS info\n");
-	mprint("                           - Use colors\n");
-	mprint("                       Examples:\n");
-	mprint("                       0000101 is the default setting for transcripts\n");
-	mprint("                       1110101 is the default for timed transcripts\n");
-	mprint("                       1111001 is the default setting for -ucla\n");
-	mprint("                       Make sure you use this parameter after others that might\n");
-	mprint("                       affect these settings (-out, -ucla, -xds, -txt, -ttxt, ...)\n");
+	mprint ("    -customtxt format: Use the passed format to customize the (Timed) Transcript\n");
+	mprint ("                       output. The format must be like this: 1100100 (7 digits).\n");
+	mprint ("                       These indicate whether the next things should be\n");
+	mprint ("                       displayed or not in the (timed) transcript. They represent\n");
+	mprint ("                      (in order): \n");
+	mprint ("                           - Display start time\n");
+	mprint ("                           - Display end time\n");
+	mprint ("                           - Display caption mode\n");
+	mprint ("                           - Display caption channel\n");
+	mprint ("                           - Use a relative timestamp ( relative to the sample)\n");
+	mprint ("                           - Display XDS info\n");
+	mprint ("                           - Use colors\n");
+	mprint ("                       Examples:\n");
+	mprint ("                       0000101 is the default setting for transcripts\n");
+	mprint ("                       1110101 is the default for timed transcripts\n");
+	mprint ("                       1111001 is the default setting for -ucla\n");
+	mprint ("                       Make sure you use this parameter after others that might\n");
+	mprint ("                       affect these settings (-out, -ucla, -xds, -txt, -ttxt, ...)\n");
 
-	mprint("\n");
+	mprint ("\n");
 
 	mprint ("Communication with other programs and console output:\n");
 
