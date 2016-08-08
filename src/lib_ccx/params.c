@@ -684,7 +684,8 @@ void usage (void)
 	mprint ("                       1110101 is the default for timed transcripts\n");
 	mprint ("                       1111001 is the default setting for -ucla\n");
 	mprint ("                       Make sure you use this parameter after others that might\n");
-	mprint ("                       affect these settings (-out, -ucla, -xds, -txt, -ttxt ...)\n");
+	mprint ("                       affect these settings (-out, -ucla, -xds, -txt, \n");
+	mprint ("                       -ttxt ...)\n");
 
 	mprint ("\n");
 
