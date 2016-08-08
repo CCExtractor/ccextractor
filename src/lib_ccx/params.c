@@ -333,12 +333,12 @@ void usage (void)
 	mprint ("                       primary and secondary language services.\n");
 	mprint ("                       Pass \"all\" to process all services found.\n");
 	mprint ("\n");
-	mprint ("                       If captions in a service are stored in 16-bit encoding, you\n");
-	mprint ("                       can specify what charset or encoding was used. Pass its name\n");
-	mprint ("                       after service number (e.g. \"1[EUC-KR],3\" or \"all[EUC-KR]\")\n");
-	mprint ("                       and it will encode specified charset to UTF-8 using iconv. See\n");
-	mprint ("                       iconv documentation to check if required encoding/charset is\n");
-	mprint ("                       supported.\n");
+	mprint ("                       If captions in a service are stored in 16-bit encoding,\n");
+	mprint ("                       you can specify what charset or encoding was used. Pass\n");
+	mprint ("                       its name after service number (e.g. \"1[EUC-KR],3\" or\n");
+	mprint ("                       \"all[EUC-KR]\") and it will encode specified charset to\n");
+	mprint ("                       UTF-8 using iconv. See iconv documentation to check if\n");
+	mprint ("                       required encoding/charset is supported.\n");
 	mprint ("\n");
 	mprint ("In general, if you want English subtitles you don't need to use these options\n");
 	mprint ("as they are broadcast in field 1, channel 1. If you want the second language\n");
