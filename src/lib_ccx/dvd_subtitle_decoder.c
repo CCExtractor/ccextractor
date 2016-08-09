@@ -8,6 +8,7 @@
 #include "ccx_common_common.h"
 #include "ccx_decoders_structs.h"
 #include "ocr.h"
+#include "ccx_decoders_common.h"
 
 
 #define MAX_BUFFERSIZE 4096 // arbitrary value
@@ -320,7 +321,7 @@ void guess_palette(struct DVD_Ctx* ctx, uint32_t *rgba_palette, uint32_t subtitl
 
 
 
-int write_dvd_sub(struct DVD_Ctx *ctx, struct cc_subtitle *sub)
+int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_subtitle *sub)
 {
 
 	struct cc_bitmap *rect = NULL;
@@ -339,6 +340,11 @@ int write_dvd_sub(struct DVD_Ctx *ctx, struct cc_subtitle *sub)
 
 	sub->got_output = 1;
 	sub->data = rect;
+	sub->start_time = get_visible_start(dec_ctx->timing, 1);
+	sub->end_time = sub->start_time + (ctx->ctrl->stop_time * 10);
+	// printf("start%d\n", ctx->ctrl->start_time);
+	// printf("stop%d\n", ctx->ctrl->stop_time);
+
 
 	w = (ctx->ctrl->coord[1] - ctx->ctrl->coord[0]) + 1;
 	h = (ctx->ctrl->coord[3] - ctx->ctrl->coord[2]) + 1;
@@ -348,9 +354,7 @@ int write_dvd_sub(struct DVD_Ctx *ctx, struct cc_subtitle *sub)
 
 	rect->data[1] = malloc(1024);
 	memset(rect->data[1], 0, 1024);
-	guess_palette(ctx, (uint32_t*)rect->data[1], 0xffff00);
-	// printf("%d %d %d %d\n", rect->data[1][8], rect->data[1][9], rect->data[1][10], rect->data[1][11]);
-	
+	guess_palette(ctx, (uint32_t*)rect->data[1], 0xffff00);	
 
 	// uint32_t rgba_palette[4];
 	// rgba_palette[0] = (uint32_t)RGBA(0,0,0,0); 
@@ -369,8 +373,9 @@ int write_dvd_sub(struct DVD_Ctx *ctx, struct cc_subtitle *sub)
 
 #ifdef ENABLE_OCR
 		char *ocr_str = NULL;
-		// char *text_output = NULL;
+		char *text_output = NULL;
 		ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str);
+		// printf("%s\n", text_output);
 		if(ret >= 0)
 			rect->ocr_text = ocr_str;
 #endif
@@ -406,12 +411,15 @@ int process_spu(struct lib_cc_decode *dec_ctx, unsigned char *buff, int length, 
 		return length; //FIXME: not the write thing to return
 	}
 
+	dec_ctx->timing->current_tref = 0;
+	set_fts(dec_ctx->timing);
+
 	decode_packet(ctx);
 
 	// Decode data
 	get_bitmap(ctx);
 
-	write_dvd_sub(ctx, sub);
+	write_dvd_sub(dec_ctx, ctx, sub);
 	// dec_ctx->got_output = 1;
 	return length;
 }
