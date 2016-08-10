@@ -173,6 +173,9 @@ char *get_ocr_text_simple_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, fl
 
 	int conf = TessBaseAPIMeanTextConf(ctx->tess_handle);
 
+	if(conf < threshold)
+		return NULL;
+
 	return text_out;
 }
 
@@ -293,6 +296,8 @@ char *get_ocr_text_letterwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image
 			if(letter==NULL || strlen(letter)==0)
 				continue;
 			float conf = TessResultIteratorConfidence(it,level);
+			if(conf < threshold)
+				continue;
 			if(text_out==NULL)
 			{
 				text_out = strdup(letter);

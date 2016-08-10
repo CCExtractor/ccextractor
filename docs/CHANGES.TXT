@@ -4,7 +4,7 @@
 - New: Color Detection in DVB Subtitles
 - Fix: Corrected sentence capitalization
 - Fix: Skipping redundant bytes at the end of tx3g atom in MP4
-- Fix: Ilegal SRT files being created from DVB subtitles
+- Fix: Illegal SRT files being created from DVB subtitles
 - Fix: Incorrect Progress Display
 
 0.81 (2016-06-13)
