@@ -730,7 +730,7 @@ void usage (void)
 	mprint("    /tmp/output_2.d/sub0000.png\n");
 	mprint("    /tmp/output_2.d/sub0001.png\n");
 	mprint("    ...\n");
-
+	mprint("\n");
 	mprint("Burned-in subtitle extraction:\n");
 	mprint("         -hardsubx : Enable the burned-in subtitle extraction subsystem.\n");
 	mprint("\n");
