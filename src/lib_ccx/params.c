@@ -730,6 +730,41 @@ void usage (void)
 	mprint("    /tmp/output_2.d/sub0000.png\n");
 	mprint("    /tmp/output_2.d/sub0001.png\n");
 	mprint("    ...\n");
+
+	mprint("Burned-in subtitle extraction:\n");
+	mprint("         -hardsubx : Enable the burned-in subtitle extraction subsystem.\n");
+	mprint("\n");
+	mprint("         NOTE: The following options will work only if -hardsubx is specified before them:-\n");
+	mprint("\n");
+	mprint("         -ocr_mode : Set the OCR mode to either frame-wise, word-wise or letter wise.\n");
+	mprint("                     e.g. -ocr_mode frame (default), -ocr_mode word, -ocr_mode letter\n");
+	mprint("\n");
+	mprint("         -subcolor : Specify the color of the subtitles\n");
+	mprint("                     Possible values are in the set {white,yellow,green,cyan,blue,magenta,red}.\n");
+	mprint("                     Alternatively, a custom hue value between 1 and 360 may also be specified.\n");
+	mprint("                     e.g. -subcolor white or -subcolor 270 (for violet).\n");
+	mprint("                     Refer to an HSV color chart for values.\n");
+	mprint("\n");
+	mprint(" -min_sub_duration : Specify the minimum duration that a subtitle line must exist on the screen.\n");
+	mprint("                     The value is specified in seconds.\n");
+	mprint("                     A lower value gives better results, but takes more processing time.\n");
+	mprint("                     The recommended value is 0.5 (default).\n");
+	mprint("                     e.g. -min_sub_duration 1.0 (for a duration of 1 second)\n");
+	mprint("\n");
+	mprint("   -detect_italics : Specify whether italics are to be detected from the OCR text.\n");
+	mprint("\n");
+	mprint("      -conf_thresh : Specify the classifier confidence threshold between 1 and 100.\n");
+	mprint("                     Try and use a threshold which works for you if you get a lot of garbage text.\n");
+	mprint("                     e.g. -conf_thresh 50\n");
+	mprint("\n");
+	mprint(" -whiteness_thresh : For white subtitles only, specify the luminance threshold between 1 and 100\n");
+	mprint("                     This threshold is content dependent, and adjusting values may give you better results\n");
+	mprint("                     Recommended values are in the range 80 to 100.\n");
+	mprint("                     The default value is 95\n");
+	mprint("\n");
+	mprint("An example command is as follows:-\n");
+	mprint("ccextractor video.mp4 -hardsubx -subcolor white -detect_italics -whiteness_thresh 90 -conf_thresh 60\n");
+	mprint("\n");
 }
 
 unsigned char sha256_buf[16384];

@@ -1,0 +1,26 @@
+
+Overview
+========
+
+Dependencies
+============
+Tesseract (OCR library by Google)
+Leptonica (C Image processing library)
+FFMpeg (Video Processing Library)
+
+Compilation
+===========
+
+Linux
+-----
+
+Make sure Tesseract, Leptonica and FFMPeg are installed, and that their libraries can be found using pkg-config.
+Refer to OCR.txt for installation details.
+
+Run:-
+make ENABLE_HARDSUBX=yes
+
+Windows
+-------
+
+Coming Soon
