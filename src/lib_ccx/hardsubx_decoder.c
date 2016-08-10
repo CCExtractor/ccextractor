@@ -40,6 +40,11 @@ char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 		}
 	}
 
+	if(ctx->detect_italics)
+	{
+		ctx->ocr_mode = HARDSUBX_OCRMODE_WORD;
+	}
+
 	// TESSERACT OCR FOR THE FRAME HERE
 	switch(ctx->ocr_mode)
 	{
@@ -115,6 +120,11 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 				pixSetRGBPixel(feat_im,j,i,255,255,255);
 			}
 		}
+	}
+
+	if(ctx->detect_italics)
+	{
+		ctx->ocr_mode = HARDSUBX_OCRMODE_WORD;
 	}
 
 	// TESSERACT OCR FOR THE FRAME HERE

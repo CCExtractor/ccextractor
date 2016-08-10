@@ -45,6 +45,8 @@ char *get_ocr_text_wordwise(struct lib_hardsubx_ctx *ctx, PIX *image)
 	TessResultIterator *it = TessBaseAPIGetIterator(ctx->tess_handle);
 	TessPageIteratorLevel level = RIL_WORD;
 
+	int prev_ital = 0;
+
 	if(it!=0)
 	{
 		do
@@ -54,16 +56,64 @@ char *get_ocr_text_wordwise(struct lib_hardsubx_ctx *ctx, PIX *image)
 				continue;
 			if(text_out == NULL)
 			{
+				if(ctx->detect_italics)
+				{
+					int italic=0;
+					int dummy=0;
+					TessResultIteratorWordFontAttributes(it, &dummy, &italic,&dummy, &dummy, &dummy,&dummy, &dummy, &dummy);
+					if(italic==1 && prev_ital==0)
+					{
+						char *word_copy = strdup(word);
+						word = realloc(word, strlen(word)+strlen("<i>")+2);
+						strcpy(word,"<i>");
+						strcat(word, word_copy);
+						free(word_copy);
+						prev_ital = 1;
+					}
+					else if(italic == 0 && prev_ital == 1)
+					{
+						word = realloc(word, strlen(word)+strlen("</i>")+2);
+						strcat(word, "</i>");
+						prev_ital = 0;
+					}	
+				}
 				text_out = strdup(word);
 				text_out = realloc(text_out, strlen(text_out)+2);
 				strcat(text_out, " ");
 				continue;
+			}
+			if(ctx->detect_italics)
+			{
+				int italic=0;
+				int dummy=0;
+				TessResultIteratorWordFontAttributes(it, &dummy, &italic,&dummy, &dummy, &dummy,&dummy, &dummy, &dummy);
+				if(italic==1 && prev_ital==0)
+				{
+					char *word_copy = strdup(word);
+					word = realloc(word, strlen(word)+strlen("<i>")+2);
+					strcpy(word,"<i>");
+					strcat(word, word_copy);
+					free(word_copy);
+					prev_ital = 1;
+				}
+				else if(italic == 0 && prev_ital == 1)
+				{
+					word = realloc(word, strlen(word)+strlen("</i>")+2);
+					strcat(word, "</i>");
+					prev_ital = 0;
+				}
 			}
 			text_out = realloc(text_out, strlen(text_out)+strlen(word)+2);
 			strcat(text_out, word);
 			strcat(text_out, " ");
 			free(word);
 		} while(TessPageIteratorNext((TessPageIterator *)it, level));
+	}
+
+	if(ctx->detect_italics && prev_ital == 1)
+	{
+		text_out = realloc(text_out, strlen(text_out)+strlen("</i>")+2);
+		strcat(text_out, "</i>");
 	}
 
 	TessResultIteratorDelete(it);
@@ -141,6 +191,8 @@ char *get_ocr_text_wordwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, 
 	TessResultIterator *it = TessBaseAPIGetIterator(ctx->tess_handle);
 	TessPageIteratorLevel level = RIL_WORD;
 
+	int prev_ital = 0;
+
 	if(it!=0)
 	{
 		do
@@ -153,16 +205,64 @@ char *get_ocr_text_wordwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, 
 				continue;
 			if(text_out == NULL)
 			{
+				if(ctx->detect_italics)
+				{
+					int italic=0;
+					int dummy=0;
+					TessResultIteratorWordFontAttributes(it, &dummy, &italic,&dummy, &dummy, &dummy,&dummy, &dummy, &dummy);
+					if(italic==1 && prev_ital==0)
+					{
+						char *word_copy = strdup(word);
+						word = realloc(word, strlen(word)+strlen("<i>")+2);
+						strcpy(word,"<i>");
+						strcat(word, word_copy);
+						free(word_copy);
+						prev_ital = 1;
+					}
+					else if(italic == 0 && prev_ital == 1)
+					{
+						word = realloc(word, strlen(word)+strlen("</i>")+2);
+						strcat(word, "</i>");
+						prev_ital = 0;
+					}	
+				}
 				text_out = strdup(word);
 				text_out = realloc(text_out, strlen(text_out)+2);
 				strcat(text_out, " ");
 				continue;
+			}
+			if(ctx->detect_italics)
+			{
+				int italic=0;
+				int dummy=0;
+				TessResultIteratorWordFontAttributes(it, &dummy, &italic,&dummy, &dummy, &dummy,&dummy, &dummy, &dummy);
+				if(italic==1 && prev_ital==0)
+				{
+					char *word_copy = strdup(word);
+					word = realloc(word, strlen(word)+strlen("<i>")+2);
+					strcpy(word,"<i>");
+					strcat(word, word_copy);
+					free(word_copy);
+					prev_ital = 1;
+				}
+				else if(italic == 0 && prev_ital == 1)
+				{
+					word = realloc(word, strlen(word)+strlen("</i>")+2);
+					strcat(word, "</i>");
+					prev_ital = 0;
+				}
 			}
 			text_out = realloc(text_out, strlen(text_out)+strlen(word)+2);
 			strcat(text_out, word);
 			strcat(text_out, " ");
 			free(word);
 		} while(TessPageIteratorNext((TessPageIterator *)it, level));
+	}
+
+	if(ctx->detect_italics && prev_ital == 1)
+	{
+		text_out = realloc(text_out, strlen(text_out)+strlen("</i>")+2);
+		strcat(text_out, "</i>");
 	}
 
 	TessResultIteratorDelete(it);

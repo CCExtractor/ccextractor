@@ -752,6 +752,7 @@ void usage (void)
 	mprint("                     e.g. -min_sub_duration 1.0 (for a duration of 1 second)\n");
 	mprint("\n");
 	mprint("   -detect_italics : Specify whether italics are to be detected from the OCR text.\n");
+	mprint("                     Italic detection automatically enforces the OCR mode to be word-wise");
 	mprint("\n");
 	mprint("      -conf_thresh : Specify the classifier confidence threshold between 1 and 100.\n");
 	mprint("                     Try and use a threshold which works for you if you get a lot of garbage text.\n");
