@@ -104,9 +104,11 @@ void* init_ocr(int lang_index)
 	}
 
 	/* if langauge pack not found use english */
+	int data_location = 0;
 	ret = search_language_pack("tessdata",language[lang_index]);
 	if(ret < 0) // Try tessdata folder in same dir as executable first, then default path
 	{
+		data_location = 1;
 		ret = search_language_pack("/usr/local/share/tessdata",language[lang_index]);
 	}
 	if(ret < 0 && lang_index != 1)
@@ -116,16 +118,25 @@ void* init_ocr(int lang_index)
 		lang_index = 1;
 	}
 
+	char cur_path[1024];
+	getcwd(cur_path, sizeof(cur_path));
+	strcat(cur_path, "tessdata");
 	// Handle special cases of languages with non-standard traineddata names
 	if(lang_index == 15 || lang_index == 16)
 	{
 		switch(lang_index)
 		{
 			case 15://15 : Chinese (Simplified)
-				ret = TessBaseAPIInit3(ctx->api, NULL, "chi_sim");
+				if(data_location == 1)
+					ret = TessBaseAPIInit3(ctx->api, NULL, "chi_sim");
+				else
+					ret = TessBaseAPIInit3(ctx->api, cur_path, "chi_sim");
 				break;
 			case 16://16 : Chinese (Traditional)
-				ret = TessBaseAPIInit3(ctx->api, NULL, "chi_tra");
+				if(data_location == 1)
+					ret = TessBaseAPIInit3(ctx->api, NULL, "chi_tra");
+				else
+					ret = TessBaseAPIInit3(ctx->api, cur_path, "chi_tra");
 				break;
 			default:
 				mprint("Invalid Language!\n");
@@ -134,7 +145,10 @@ void* init_ocr(int lang_index)
 	}
 	else
 	{
-		ret = TessBaseAPIInit3(ctx->api, NULL, language[lang_index]);
+		if(data_location == 1)
+			ret = TessBaseAPIInit3(ctx->api, NULL, language[lang_index]);
+		else
+			ret = TessBaseAPIInit3(ctx->api, cur_path, language[lang_index]);
 	}
 
 	if(ret < 0)
