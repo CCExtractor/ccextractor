@@ -48,9 +48,9 @@ static int search_language_pack(const char *dirname,const char *lang_name)
 	//First, handle special cases of languages with non-standard traineddata names
 	char *lang = strdup(lang_name);
 	if(strcmp(lang,"chs")==0)//Chinese (Simplified)
-	{		
+	{
 		lang = realloc(lang,8);
-		strcat(lang, "_sim");
+		strcpy(lang, "chi_sim");
 	}
 	else if(strcmp(lang,"chi")==0)//Chinese (Traditional)
 	{
@@ -103,21 +103,15 @@ void* init_ocr(int lang_index)
 		lang_index = 1;
 	}
 
-
-	static int dvb_stream_number = 1;
-	mprint("[Reported DVB Language #%d : %s]\n",dvb_stream_number,language[lang_index]);
-	dvb_stream_number++;
-
-
 	/* if langauge pack not found use english */
 	ret = search_language_pack("tessdata",language[lang_index]);
-	if(ret < 0) // Try  tessdata folder in same dir as executable first, then default path
+	if(ret < 0) // Try tessdata folder in same dir as executable first, then default path
 	{
 		ret = search_language_pack("/usr/local/share/tessdata",language[lang_index]);
 	}
 	if(ret < 0 && lang_index != 1)
 	{
-		mprint("%s.traineddata not found! Switching to English for stream #%d\n",language[lang_index],dvb_stream_number-1);
+		mprint("%s.traineddata not found! Switching to English\n",language[lang_index]);
 		/* select english */
 		lang_index = 1;
 	}
