@@ -1695,9 +1695,15 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 	for (i = 0; i < cfg->n_language; i++, data += i * 8)
 	{
 		/* setting language to undefined if not found in language lkup table */
+		char lang_name[4];
+		for(int char_index = 0; char_index < 3; char_index++)
+		{
+			lang_name[char_index] = cctolower(data[char_index]);
+		}
+
 		for (j = 0, cfg->lang_index[i] = 0; language[j] != NULL; j++)
 		{
-			if (!strncmp((const char*) (data), language[j], 3))
+			if (!strncmp(lang_name, language[j], 3))
 				cfg->lang_index[i] = j;
 		}
 		cfg->sub_type[i] = data[3];
@@ -1705,6 +1711,7 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 		cfg->ancillary_id[i] = RB16(data + 6);
 
 	}
+
 
 	return 0;
 }
