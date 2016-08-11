@@ -43,8 +43,22 @@ static int check_trans_tn_intensity(const void *p1, const void *p2, void *arg)
 	return 1;
 }
 
-static int search_language_pack(const char *dirname,const char *lang)
+static int search_language_pack(const char *dirname,const char *lang_name)
 {
+	//First, handle special cases of languages with non-standard traineddata names
+	char *lang = strdup(lang_name);
+	if(strcmp(lang,"chs")==0)//Chinese (Simplified)
+	{
+		lang = realloc(lang,8);
+		strcpy(lang, "chi_sim");
+	}
+	else if(strcmp(lang,"chi")==0)//Chinese (Traditional)
+	{
+		lang = realloc(lang,8);
+		strcat(lang, "_tra");
+	}
+	
+
 	DIR *dp;
 	struct dirent *dirp;
 	char filename[256];
@@ -90,14 +104,53 @@ void* init_ocr(int lang_index)
 	}
 
 	/* if langauge pack not found use english */
+	int data_location = 0;
 	ret = search_language_pack("tessdata",language[lang_index]);
-	if(ret < 0 )
+	if(ret < 0) // Try tessdata folder in same dir as executable first, then default path
 	{
+		data_location = 1;
+		ret = search_language_pack("/usr/local/share/tessdata",language[lang_index]);
+	}
+	if(ret < 0 && lang_index != 1)
+	{
+		mprint("%s.traineddata not found! Switching to English\n",language[lang_index]);
 		/* select english */
 		lang_index = 1;
 	}
 
-	ret = TessBaseAPIInit3(ctx->api, NULL, language[lang_index]);
+	char cur_path[1024];
+	getcwd(cur_path, sizeof(cur_path));
+	strcat(cur_path, "tessdata");
+	// Handle special cases of languages with non-standard traineddata names
+	if(lang_index == 15 || lang_index == 16)
+	{
+		switch(lang_index)
+		{
+			case 15://15 : Chinese (Simplified)
+				if(data_location == 1)
+					ret = TessBaseAPIInit3(ctx->api, NULL, "chi_sim");
+				else
+					ret = TessBaseAPIInit3(ctx->api, cur_path, "chi_sim");
+				break;
+			case 16://16 : Chinese (Traditional)
+				if(data_location == 1)
+					ret = TessBaseAPIInit3(ctx->api, NULL, "chi_tra");
+				else
+					ret = TessBaseAPIInit3(ctx->api, cur_path, "chi_tra");
+				break;
+			default:
+				mprint("Invalid Language!\n");
+				goto fail;
+		}
+	}
+	else
+	{
+		if(data_location == 1)
+			ret = TessBaseAPIInit3(ctx->api, NULL, language[lang_index]);
+		else
+			ret = TessBaseAPIInit3(ctx->api, cur_path, language[lang_index]);
+	}
+
 	if(ret < 0)
 	{
 		goto fail;
