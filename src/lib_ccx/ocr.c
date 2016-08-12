@@ -43,10 +43,15 @@ static int check_trans_tn_intensity(const void *p1, const void *p2, void *arg)
 	return 1;
 }
 
-static int search_language_pack(const char *dirname,const char *lang_name)
+static int search_language_pack(const char *dir_name,const char *lang_name)
 {
-	//First, handle special cases of languages with non-standard traineddata names
+	//Search for a tessdata folder in the specified directory
 	char *lang = strdup(lang_name);
+	char *dirname = strdup(dir_name);
+	dirname = realloc(dirname,strlen(dirname)+strlen("/tessdata/")+1);
+	strcat(dirname,"/tessdata/");
+
+	//First, handle special cases of languages with non-standard traineddata name
 	if(strcmp(lang,"chs")==0)//Chinese (Simplified)
 	{
 		lang = realloc(lang,8);
@@ -88,7 +93,7 @@ void delete_ocr (void** arg)
 }
 void* init_ocr(int lang_index)
 {
-	int ret;
+	int ret = -1;
 	struct ocrCtx* ctx;
 
 	ctx = (struct ocrCtx*)malloc(sizeof(struct ocrCtx));
@@ -103,24 +108,23 @@ void* init_ocr(int lang_index)
 		lang_index = 1;
 	}
 
-	/* if langauge pack not found use english */
-	char cur_path[1024];
-	if(getcwd(cur_path, sizeof(cur_path))==NULL)
-		printf("Error\n");
-	strcat(cur_path, "/tessdata");
-
 	/*Priority of Tesseract traineddata file search paths:-
-		1. A tessdata folder in the same directory as executable (Works on linux if TESSDATA_PREFIX not set)
-		2. The path pointed to by TESSDATA_PREFIX, if it is set
-		3. The default paths which Tesseract searches for
+		1. tessdata in TESSDATA_PREFIX, if it is specified. Overrides others
+		2. tessdata in current working directory
 	*/
 	int data_location = 0;
-	ret = search_language_pack(cur_path,language[lang_index]);
+	char *tessdata_dir_path=".";
+	if(!getenv("TESSDATA_PREFIX"))
+	{
+		ret = search_language_pack(tessdata_dir_path,language[lang_index]);
+	}
 	if(ret < 0) // Try tessdata folder in same dir as executable first, then default path
 	{
 		data_location = 1;
 		if(getenv("TESSDATA_PREFIX"))
 			ret = search_language_pack(getenv("TESSDATA_PREFIX"), language[lang_index]);
+		else
+			ret = -1;
 	}
 	if(ret < 0 && lang_index != 1)
 	{
@@ -148,13 +152,13 @@ void* init_ocr(int lang_index)
 				if(data_location == 1)
 					ret = TessBaseAPIInit3(ctx->api, NULL, "chi_sim");
 				else
-					ret = TessBaseAPIInit3(ctx->api, cur_path, "chi_sim");
+					ret = TessBaseAPIInit3(ctx->api, tessdata_dir_path, "chi_sim");
 				break;
 			case 16://16 : Chinese (Traditional)
 				if(data_location == 1)
 					ret = TessBaseAPIInit3(ctx->api, NULL, "chi_tra");
 				else
-					ret = TessBaseAPIInit3(ctx->api, cur_path, "chi_tra");
+					ret = TessBaseAPIInit3(ctx->api, tessdata_dir_path, "chi_tra");
 				break;
 			default:
 				mprint("Invalid Language!\n");
@@ -166,7 +170,7 @@ void* init_ocr(int lang_index)
 		if(data_location == 1)
 			ret = TessBaseAPIInit3(ctx->api, NULL, language[lang_index]);
 		else
-			ret = TessBaseAPIInit3(ctx->api, cur_path, language[lang_index]);
+			ret = TessBaseAPIInit3(ctx->api, tessdata_dir_path, language[lang_index]);
 	}
 
 	if(ret < 0)

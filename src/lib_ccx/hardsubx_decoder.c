@@ -275,6 +275,12 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 					subtitle_text = _process_frame_color_basic(ctx, ctx->rgb_frame, ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
 				}
 				//_display_frame(ctx, ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
+
+				cur_sec = (int)convert_pts_to_s(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
+				total_sec = (int)convert_pts_to_s(ctx->format_ctx->duration, AV_TIME_BASE_Q);
+				progress = (cur_sec*100)/total_sec;
+				activity_progress(progress,cur_sec/60,cur_sec%60);
+
 				if(subtitle_text==NULL)
 					continue;
 				if(!strlen(subtitle_text))
@@ -293,11 +299,6 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 						begin_time = end_time + 1;
 					}
 				}
-
-				cur_sec = (int)convert_pts_to_s(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
-				total_sec = (int)convert_pts_to_s(ctx->format_ctx->duration, AV_TIME_BASE_Q);
-				progress = (cur_sec*100)/total_sec;
-				activity_progress(progress,cur_sec/60,cur_sec%60);
 
 				prev_subtitle_text = strdup(subtitle_text);
 				prev_packet_pts = ctx->packet.pts;
