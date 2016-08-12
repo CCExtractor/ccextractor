@@ -130,7 +130,7 @@ enum
  */
 const char *language[NB_LANGUAGE] =
 {
-	/*0*/"und",
+	/*0*/"und", //Undefined
 	/*1*/"eng",
 	/*2*/"afr",
 	/*3*/"amh",

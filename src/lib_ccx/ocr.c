@@ -104,23 +104,41 @@ void* init_ocr(int lang_index)
 	}
 
 	/* if langauge pack not found use english */
+	char cur_path[1024];
+	if(getcwd(cur_path, sizeof(cur_path))==NULL)
+		printf("Error\n");
+	strcat(cur_path, "/tessdata");
+
+	/*Priority of Tesseract traineddata file search paths:-
+		1. A tessdata folder in the same directory as executable (Works on linux if TESSDATA_PREFIX not set)
+		2. The path pointed to by TESSDATA_PREFIX, if it is set
+		3. The default paths which Tesseract searches for
+	*/
 	int data_location = 0;
-	ret = search_language_pack("tessdata",language[lang_index]);
+	ret = search_language_pack(cur_path,language[lang_index]);
 	if(ret < 0) // Try tessdata folder in same dir as executable first, then default path
 	{
 		data_location = 1;
-		ret = search_language_pack("/usr/local/share/tessdata",language[lang_index]);
+		if(getenv("TESSDATA_PREFIX"))
+			ret = search_language_pack(getenv("TESSDATA_PREFIX"), language[lang_index]);
 	}
 	if(ret < 0 && lang_index != 1)
 	{
-		mprint("%s.traineddata not found! Switching to English\n",language[lang_index]);
+		switch(lang_index)
+		{
+			case 15:
+				mprint("%s.traineddata not found! Switching to English\n","chi_sim");
+				break;
+			case 16:
+				mprint("%s.traineddata not found! Switching to English\n","chi_tra");
+				break;
+			default:
+				mprint("%s.traineddata not found! Switching to English\n",language[lang_index]);
+		}
 		/* select english */
 		lang_index = 1;
 	}
 
-	char cur_path[1024];
-	getcwd(cur_path, sizeof(cur_path));
-	strcat(cur_path, "tessdata");
 	// Handle special cases of languages with non-standard traineddata names
 	if(lang_index == 15 || lang_index == 16)
 	{
