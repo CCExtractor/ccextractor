@@ -220,9 +220,9 @@ void decode_packet(struct DVD_Ctx *ctx)
 
 			switch(command)
 			{
-				case 0x01:	control->start_time = date;
+				case 0x01:	control->start_time = (date << 10) / 90;
 							break;
-				case 0x02:	control->stop_time = date;
+				case 0x02:	control->stop_time = (date << 10) / 90;
 							break;
 				case 0x03:	// SET_COLOR
 							control->color[3] = (buff[ctx->pos] & 0xf0) >> 4;
@@ -341,7 +341,7 @@ int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_
 	sub->got_output = 1;
 	sub->data = rect;
 	sub->start_time = get_visible_start(dec_ctx->timing, 1);
-	sub->end_time = sub->start_time + (ctx->ctrl->stop_time * 10);
+	sub->end_time = sub->start_time + (ctx->ctrl->stop_time);
 	// printf("start%d\n", ctx->ctrl->start_time);
 	// printf("stop%d\n", ctx->ctrl->stop_time);
 
