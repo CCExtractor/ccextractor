@@ -252,7 +252,7 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 				float diff = (float)convert_pts_to_ms(ctx->packet.pts - prev_packet_pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 				if(abs(diff) < 1000*ctx->min_sub_duration) //If the minimum duration of a subtitle line is exceeded, process packet
 					continue;
-printf("frame : %d\n", frame_number);
+
 				// sws_scale is used to convert the pixel format to RGB24 from all other cases
 				sws_scale(
 						ctx->sws_ctx,
