@@ -139,6 +139,7 @@ struct lib_cc_decode
 	enum ccx_code_type codec;
 	// Set to true if data is buffered
 	int has_ccdata_buffered;
+	int is_alloc = 0;
 
 	struct avc_ctx *avc_ctx;
 	void *private_data;

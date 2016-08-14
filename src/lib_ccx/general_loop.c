@@ -653,7 +653,12 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		got = process_m2v (dec_ctx, data_node->buffer, data_node->len, dec_sub);
 	}
 	else if (data_node->bufferdatatype = CCX_DVD_SUBTITLE)
-	{		
+	{	
+		if(dec_ctx-> is_alloc == 0)
+		{
+			dec_ctx->private_data = init_dvdsub_decode();
+			dec_ctx->is_alloc = 1;
+		}
 		process_spu (dec_ctx, data_node->buffer, data_node->len, dec_sub);
 		got = data_node->len;
 	}

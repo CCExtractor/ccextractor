@@ -24,6 +24,7 @@ struct DVD_Ctx
 	uint16_t size_spu; //total size of spu packet
 	uint16_t size_data; //size of data in the packet, offset to control packet
 	struct ctrl_seq *ctrl;
+	int append;
 	unsigned char *bitmap;
 #ifdef ENABLE_OCR
 	void *ocr_ctx;
@@ -384,7 +385,8 @@ int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_
 
 int process_spu(struct lib_cc_decode *dec_ctx, unsigned char *buff, int length, struct cc_subtitle *sub)
 {
-	struct DVD_Ctx *ctx = (struct DVD_Ctx *)init_dvdsub_decode();
+	// struct DVD_Ctx *ctx = (struct DVD_Ctx *)init_dvdsub_decode();
+	struct DVD_Ctx *ctx = (struct DVD_Ctx *) dec_ctx->private_data;
 	ctx->buffer = buff;
 	ctx->len = length;
 
@@ -392,7 +394,8 @@ int process_spu(struct lib_cc_decode *dec_ctx, unsigned char *buff, int length, 
 	if(ctx->size_spu > length)
 	{
 		// TODO: Data might be spread over several packets, handle this case to append to one buffer
-		dbg_print(CCX_DMT_VERBOSE, "Data might be spread over several packets\n");
+		ctx->append = 1;
+		// dbg_print(CCX_DMT_VERBOSE, "Data might be spread over several packets\n");
 		return length;
 	}
 
@@ -421,6 +424,10 @@ int process_spu(struct lib_cc_decode *dec_ctx, unsigned char *buff, int length, 
 
 	write_dvd_sub(dec_ctx, ctx, sub);
 	// dec_ctx->got_output = 1;
+	free(ctx);
+// #ifdef ENABLE_OCR
+// 	delete_ocr(&ctx->ocr_ctx);
+// #endif
 	return length;
 }
 
@@ -431,5 +438,6 @@ void *init_dvdsub_decode()
 	ctx->ocr_ctx = init_ocr(1);
 #endif
 	ctx->ctrl = malloc(sizeof(struct ctrl_seq));
+	ctx->append = 0;
 	return (void *) ctx;
 }
