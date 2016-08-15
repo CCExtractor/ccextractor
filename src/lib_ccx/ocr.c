@@ -118,7 +118,7 @@ void* init_ocr(int lang_index)
 	{
 		ret = search_language_pack(tessdata_dir_path,language[lang_index]);
 	}
-	if(ret < 0) // Try tessdata folder in same dir as executable first, then default path
+	if(ret < 0)
 	{
 		data_location = 1;
 		if(getenv("TESSDATA_PREFIX"))
