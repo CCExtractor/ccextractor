@@ -1,17 +1,17 @@
-0.82
+0.82(2016-08-15)
 -----------------
 - New: HardsubX - Burned in subtitle extraction subsystem.
 - New: Color Detection in DVB Subtitles
 - Fix: Corrected sentence capitalization
 - Fix: Skipping redundant bytes at the end of tx3g atom in MP4
-- Fix: Ilegal SRT files being created from DVB subtitles
+- Fix: Illegal SRT files being created from DVB subtitles
 - Fix: Incorrect Progress Display
 
 0.81 (2016-06-13)
 -----------------
 - New: --version parameter for extensive version information (version number, compile date, executable hash, git commit (if appropriate))
 - New: Add -sem (semaphore) to create a .sem file when an output file is open and delete it when it's closed.
-- New: Add --append parameter. This will prevent overwriting of exisiting files.
+- New: Add --append parameter. This will prevent overwriting of existing files.
 - New: File Rotation support added. The user has to send a USR1 signal to rotate.
 - Fix: Issues with files <1 Mb
 - Fix: Preview of generated transcript.

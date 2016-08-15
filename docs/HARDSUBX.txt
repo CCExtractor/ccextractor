@@ -1,0 +1,45 @@
+
+Overview
+========
+Subtitles which are burned into the video (or hard subbed) can be extracted using the -hardsubx flag.
+The system works by processing video frames and extracting only the subtitles from them, followed
+by an OCR recognition using Tesseract.
+
+Dependencies
+============
+Tesseract (OCR library by Google)
+Leptonica (C Image processing library)
+FFMpeg (Video Processing Library)
+
+Compilation
+===========
+
+Linux
+-----
+
+Make sure Tesseract, Leptonica and FFMPeg are installed, and that their libraries can be found using pkg-config.
+Refer to OCR.txt for installation details.
+
+To install FFmpeg (libav), follow the steps at:-
+https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu - For Ubuntu, Debian and Linux Mint
+https://trac.ffmpeg.org/wiki/CompilationGuide/Generic - For generic Linux compilation
+
+To validate your FFMpeg installation, make sure you can run the following commands on your terminal:-
+pkg-config --cflags libavcodec
+pkg-config --cflags libavformat
+pkg-config --cflags libavutil
+pkg-config --cflags libswscale
+pkg-config --libs libavcodec
+pkg-config --libs libavformat
+pkg-config --libs libavutil
+pkg-config --libs libswscale
+
+On success, you should see the correct include directory path and the linker flags.
+
+To build the program with hardsubx support, from the linux directory run:-
+make ENABLE_HARDSUBX=yes
+
+Windows
+-------
+
+Coming Soon

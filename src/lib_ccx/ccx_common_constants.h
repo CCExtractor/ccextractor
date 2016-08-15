@@ -289,7 +289,7 @@ enum cdp_section_type
 #define CCX_TXT_AUTO_NOT_YET_FOUND	1
 #define CCX_TXT_IN_USE			2 // Positive autodetected, or forced, etc
 
-#define NB_LANGUAGE 5
+#define NB_LANGUAGE 100
 extern const char *language[NB_LANGUAGE];
 
 #define DEF_VAL_STARTCREDITSNOTBEFORE 	"0"

@@ -43,8 +43,14 @@ static int check_trans_tn_intensity(const void *p1, const void *p2, void *arg)
 	return 1;
 }
 
-static int search_language_pack(const char *dirname,const char *lang)
+static int search_language_pack(const char *dir_name,const char *lang_name)
 {
+	//Search for a tessdata folder in the specified directory
+	char *lang = strdup(lang_name);
+	char *dirname = strdup(dir_name);
+	dirname = realloc(dirname,strlen(dirname)+strlen("/tessdata/")+1);
+	strcat(dirname,"/tessdata/");
+
 	DIR *dp;
 	struct dirent *dirp;
 	char filename[256];
@@ -74,7 +80,7 @@ void delete_ocr (void** arg)
 }
 void* init_ocr(int lang_index)
 {
-	int ret;
+	int ret = -1;
 	struct ocrCtx* ctx;
 
 	ctx = (struct ocrCtx*)malloc(sizeof(struct ocrCtx));
@@ -89,15 +95,44 @@ void* init_ocr(int lang_index)
 		lang_index = 1;
 	}
 
-	/* if langauge pack not found use english */
-	ret = search_language_pack("tessdata",language[lang_index]);
-	if(ret < 0 )
+	if(ccx_options.dvblang)
 	{
+		if(strcmp(language[lang_index],ccx_options.dvblang)!=0)
+			goto fail;
+	}
+
+	/*Priority of Tesseract traineddata file search paths:-
+		1. tessdata in TESSDATA_PREFIX, if it is specified. Overrides others
+		2. tessdata in current working directory
+	*/
+	int data_location = 0;
+	char *tessdata_dir_path=".";
+	if(!getenv("TESSDATA_PREFIX"))
+	{
+		ret = search_language_pack(tessdata_dir_path,language[lang_index]);
+	}
+	if(ret < 0)
+	{
+		data_location = 1;
+		if(getenv("TESSDATA_PREFIX"))
+			ret = search_language_pack(getenv("TESSDATA_PREFIX"), language[lang_index]);
+		else
+			ret = -1;
+	}
+	if(ret < 0 && lang_index != 1 && ccx_options.ocrlang==NULL)
+	{
+		mprint("%s.traineddata not found! Switching to English\n",language[lang_index]);
 		/* select english */
 		lang_index = 1;
 	}
 
-	ret = TessBaseAPIInit3(ctx->api, NULL, language[lang_index]);
+	if(ccx_options.ocrlang)
+		ret = TessBaseAPIInit3(ctx->api, NULL, ccx_options.ocrlang);
+	else if(data_location == 1)
+		ret = TessBaseAPIInit3(ctx->api, NULL, language[lang_index]);
+	else
+		ret = TessBaseAPIInit3(ctx->api, tessdata_dir_path, language[lang_index]);
+
 	if(ret < 0)
 	{
 		goto fail;

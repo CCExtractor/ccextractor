@@ -730,6 +730,56 @@ void usage (void)
 	mprint("    /tmp/output_2.d/sub0000.png\n");
 	mprint("    /tmp/output_2.d/sub0001.png\n");
 	mprint("    ...\n");
+	mprint("\n");
+	mprint("Burned-in subtitle extraction:\n");
+	mprint("         -hardsubx : Enable the burned-in subtitle extraction subsystem.\n");
+	mprint("\n");
+	mprint("         NOTE: The following options will work only if -hardsubx is \n");
+	mprint("                specified before them:-\n");
+	mprint("\n");
+	mprint("         -ocr_mode : Set the OCR mode to either frame-wise, word-wise\n");
+	mprint("                     or letter wise.\n");
+	mprint("                     e.g. -ocr_mode frame (default), -ocr_mode word, \n");
+	mprint("                     -ocr_mode letter\n");
+	mprint("\n");
+	mprint("         -subcolor : Specify the color of the subtitles\n");
+	mprint("                     Possible values are in the set \n");
+	mprint("                     {white,yellow,green,cyan,blue,magenta,red}.\n");
+	mprint("                     Alternatively, a custom hue value between 1 and 360 \n");
+	mprint("                     may also be specified.\n");
+	mprint("                     e.g. -subcolor white or -subcolor 270 (for violet).\n");
+	mprint("                     Refer to an HSV color chart for values.\n");
+	mprint("\n");
+	mprint(" -min_sub_duration : Specify the minimum duration that a subtitle line \n");
+	mprint("                     must exist on the screen.\n");
+	mprint("                     The value is specified in seconds.\n");
+	mprint("                     A lower value gives better results, but takes more \n");
+	mprint("                     processing time.\n");
+	mprint("                     The recommended value is 0.5 (default).\n");
+	mprint("                     e.g. -min_sub_duration 1.0 (for a duration of 1 second)\n");
+	mprint("\n");
+	mprint("   -detect_italics : Specify whether italics are to be detected from the \n");
+	mprint("                     OCR text.\n");
+	mprint("                     Italic detection automatically enforces the OCR mode \n");
+	mprint("                     to be word-wise");
+	mprint("\n");
+	mprint("      -conf_thresh : Specify the classifier confidence threshold between\n");
+	mprint("                      1 and 100.\n");
+	mprint("                     Try and use a threshold which works for you if you get \n");
+	mprint("                     a lot of garbage text.\n");
+	mprint("                     e.g. -conf_thresh 50\n");
+	mprint("\n");
+	mprint(" -whiteness_thresh : For white subtitles only, specify the luminance \n");
+	mprint("                     threshold between 1 and 100\n");
+	mprint("                     This threshold is content dependent, and adjusting\n");
+	mprint("                     values may give you better results\n");
+	mprint("                     Recommended values are in the range 80 to 100.\n");
+	mprint("                     The default value is 95\n");
+	mprint("\n");
+	mprint("An example command is as follows:-\n");
+	mprint("ccextractor video.mp4 -hardsubx -subcolor white -detect_italics \n");
+	mprint("-whiteness_thresh 90 -conf_thresh 60\n");
+	mprint("\n");
 }
 
 unsigned char sha256_buf[16384];
@@ -1215,6 +1265,26 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if(strcmp(argv[i],"-dvbcolor")==0)
 		{
 			opt->dvbcolor = 1;
+			continue;
+		}
+
+		if(strcmp(argv[i],"-dvblang")==0 && i < argc-1)
+		{
+			i++;
+			opt->dvblang = (char *)malloc(sizeof(argv[i]));
+			sprintf(opt->dvblang,"%s",argv[i]);
+			for(int char_index=0; char_index < strlen(opt->dvblang);char_index++)
+				opt->dvblang[char_index] = cctolower(opt->dvblang[char_index]);
+			continue;
+		}
+
+		if(strcmp(argv[i],"-ocrlang")==0 && i < argc-1)
+		{
+			i++;
+			opt->ocrlang = (char *)malloc(sizeof(argv[i]));
+			sprintf(opt->ocrlang,"%s",argv[i]);
+			for(int char_index=0; char_index < strlen(opt->ocrlang);char_index++)
+				opt->ocrlang[char_index] = cctolower(opt->ocrlang[char_index]);
 			continue;
 		}
 
