@@ -51,19 +51,6 @@ static int search_language_pack(const char *dir_name,const char *lang_name)
 	dirname = realloc(dirname,strlen(dirname)+strlen("/tessdata/")+1);
 	strcat(dirname,"/tessdata/");
 
-	//First, handle special cases of languages with non-standard traineddata name
-	if(strcmp(lang,"chs")==0)//Chinese (Simplified)
-	{
-		lang = realloc(lang,8);
-		strcpy(lang, "chi_sim");
-	}
-	else if(strcmp(lang,"chi")==0)//Chinese (Traditional)
-	{
-		lang = realloc(lang,8);
-		strcat(lang, "_tra");
-	}
-	
-
 	DIR *dp;
 	struct dirent *dirp;
 	char filename[256];
@@ -108,6 +95,12 @@ void* init_ocr(int lang_index)
 		lang_index = 1;
 	}
 
+	if(ccx_options.dvblang)
+	{
+		if(strcmp(language[lang_index],ccx_options.dvblang)!=0)
+			goto fail;
+	}
+
 	/*Priority of Tesseract traineddata file search paths:-
 		1. tessdata in TESSDATA_PREFIX, if it is specified. Overrides others
 		2. tessdata in current working directory
@@ -126,52 +119,19 @@ void* init_ocr(int lang_index)
 		else
 			ret = -1;
 	}
-	if(ret < 0 && lang_index != 1)
+	if(ret < 0 && lang_index != 1 && ccx_options.ocrlang==NULL)
 	{
-		switch(lang_index)
-		{
-			case 15:
-				mprint("%s.traineddata not found! Switching to English\n","chi_sim");
-				break;
-			case 16:
-				mprint("%s.traineddata not found! Switching to English\n","chi_tra");
-				break;
-			default:
-				mprint("%s.traineddata not found! Switching to English\n",language[lang_index]);
-		}
+		mprint("%s.traineddata not found! Switching to English\n",language[lang_index]);
 		/* select english */
 		lang_index = 1;
 	}
 
-	// Handle special cases of languages with non-standard traineddata names
-	if(lang_index == 15 || lang_index == 16)
-	{
-		switch(lang_index)
-		{
-			case 15://15 : Chinese (Simplified)
-				if(data_location == 1)
-					ret = TessBaseAPIInit3(ctx->api, NULL, "chi_sim");
-				else
-					ret = TessBaseAPIInit3(ctx->api, tessdata_dir_path, "chi_sim");
-				break;
-			case 16://16 : Chinese (Traditional)
-				if(data_location == 1)
-					ret = TessBaseAPIInit3(ctx->api, NULL, "chi_tra");
-				else
-					ret = TessBaseAPIInit3(ctx->api, tessdata_dir_path, "chi_tra");
-				break;
-			default:
-				mprint("Invalid Language!\n");
-				goto fail;
-		}
-	}
+	if(ccx_options.ocrlang)
+		ret = TessBaseAPIInit3(ctx->api, NULL, ccx_options.ocrlang);
+	else if(data_location == 1)
+		ret = TessBaseAPIInit3(ctx->api, NULL, language[lang_index]);
 	else
-	{
-		if(data_location == 1)
-			ret = TessBaseAPIInit3(ctx->api, NULL, language[lang_index]);
-		else
-			ret = TessBaseAPIInit3(ctx->api, tessdata_dir_path, language[lang_index]);
-	}
+		ret = TessBaseAPIInit3(ctx->api, tessdata_dir_path, language[lang_index]);
 
 	if(ret < 0)
 	{

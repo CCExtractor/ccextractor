@@ -1268,6 +1268,26 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			continue;
 		}
 
+		if(strcmp(argv[i],"-dvblang")==0 && i < argc-1)
+		{
+			i++;
+			opt->dvblang = (char *)malloc(sizeof(argv[i]));
+			sprintf(opt->dvblang,"%s",argv[i]);
+			for(int char_index=0; char_index < strlen(opt->dvblang);char_index++)
+				opt->dvblang[char_index] = cctolower(opt->dvblang[char_index]);
+			continue;
+		}
+
+		if(strcmp(argv[i],"-ocrlang")==0 && i < argc-1)
+		{
+			i++;
+			opt->ocrlang = (char *)malloc(sizeof(argv[i]));
+			sprintf(opt->ocrlang,"%s",argv[i]);
+			for(int char_index=0; char_index < strlen(opt->ocrlang);char_index++)
+				opt->ocrlang[char_index] = cctolower(opt->ocrlang[char_index]);
+			continue;
+		}
+
 		/* Output file formats */
 		if (strcmp (argv[i],"-srt")==0 ||
 				strcmp (argv[i],"-dvdraw")==0 ||
