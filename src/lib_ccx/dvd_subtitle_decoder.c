@@ -387,29 +387,38 @@ int process_spu(struct lib_cc_decode *dec_ctx, unsigned char *buff, int length, 
 {
 	// struct DVD_Ctx *ctx = (struct DVD_Ctx *)init_dvdsub_decode();
 	struct DVD_Ctx *ctx = (struct DVD_Ctx *) dec_ctx->private_data;
-	ctx->buffer = buff;
-	ctx->len = length;
 
-	ctx->size_spu = (ctx->buffer[0] << 8) | ctx->buffer[1];
-	if(ctx->size_spu > length)
+	if(ctx->append == 1)
 	{
-		// TODO: Data might be spread over several packets, handle this case to append to one buffer
-		ctx->append = 1;
-		// dbg_print(CCX_DMT_VERBOSE, "Data might be spread over several packets\n");
-		return length;
+		memcpy(ctx->buffer + ctx->len, buff, length);
+		ctx->len += length;
+		ctx->append = 0;
+	}
+	else
+	{
+		ctx->buffer = buff;
+		ctx->len = length;
+		ctx->size_spu = (ctx->buffer[0] << 8) | ctx->buffer[1];
+		ctx->size_data = (ctx->buffer[2] << 8) | ctx->buffer[3];
+		if(ctx->size_spu > length)
+		{
+			// TODO: Data might be spread over several packets, handle this case to append to one buffer
+			ctx->append = 1;
+			dbg_print(CCX_DMT_VERBOSE, "Data might be spread over several packets\n");
+			return length;
+		}
+
+		if(ctx->size_data > ctx->size_spu)
+		{
+			dbg_print(CCX_DMT_VERBOSE, "Invalid SPU Packet\n");
+			// return -1;
+			return length; //FIXME: not the write thing to return
+		}
 	}
 
-	if(ctx->size_spu != length)
+	if(ctx->size_spu != ctx->len)
 	{
 		dbg_print(CCX_DMT_VERBOSE, "SPU size mismatch\n");
-		// return -1;
-		return length; //FIXME: not the write thing to return
-	}
-
-	ctx->size_data = (ctx->buffer[2] << 8) | ctx->buffer[3];
-	if(ctx->size_data > ctx->size_spu)
-	{
-		dbg_print(CCX_DMT_VERBOSE, "Invalid SPU Packet\n");
 		// return -1;
 		return length; //FIXME: not the write thing to return
 	}
@@ -424,7 +433,7 @@ int process_spu(struct lib_cc_decode *dec_ctx, unsigned char *buff, int length, 
 
 	write_dvd_sub(dec_ctx, ctx, sub);
 	// dec_ctx->got_output = 1;
-	free(ctx);
+	// free(ctx);
 // #ifdef ENABLE_OCR
 // 	delete_ocr(&ctx->ocr_ctx);
 // #endif
