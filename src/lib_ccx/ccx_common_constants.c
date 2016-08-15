@@ -145,8 +145,8 @@ const char *language[NB_LANGUAGE] =
 	/*12*/"cat",
 	/*13*/"ceb",
 	/*14*/"ces",
-	/*15*/"chs", //Special case : Chinese simplified
-	/*16*/"chi", //Special case : Chinese traditional
+	/*15*/"chs",
+	/*16*/"chi",
 	/*17*/"chr",
 	/*18*/"cym",
 	/*19*/"dan",

@@ -178,8 +178,8 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 			int b=frame->data[0][p+2];
 			pixSetRGBPixel(im,j,i,r,g,b);
 			float H,S,V;
-			rgb2lab((float)r,(float)g,(float)b,&H,&S,&V);
-			if(H>90)//if(abs(H-60)<20)
+			rgb2hsv((float)r,(float)g,(float)b,&H,&S,&V);
+			if(abs(H-60)<20)
 			{
 				pixSetRGBPixel(hue_im,j,i,255,255,255);
 			}
@@ -204,7 +204,7 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 			pixGetPixel(edge_im,j,i,&p1);
 			pixGetPixel(pixd,j,i,&p2);
 			pixGetPixel(hue_im,j,i,&p3);
-			if(p2==0&&p1==0&&p3>0)
+			if(p1==0)//if(p2==0&&p1==0&&p3>0)
 			{
 				pixSetRGBPixel(feat_im,j,i,255,255,255);
 			}
@@ -247,7 +247,7 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 			//Decode the video stream packet
 			avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
 
-			if(got_frame)// && frame_number % 25 == 0)
+			if(got_frame && frame_number % 25 == 0)
 			{
 				float diff = (float)convert_pts_to_ms(ctx->packet.pts - prev_packet_pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 				if(abs(diff) < 1000*ctx->min_sub_duration) //If the minimum duration of a subtitle line is exceeded, process packet
@@ -274,7 +274,7 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 				{
 					subtitle_text = _process_frame_color_basic(ctx, ctx->rgb_frame, ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
 				}
-				//_display_frame(ctx, ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
+				_display_frame(ctx, ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
 
 				cur_sec = (int)convert_pts_to_s(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 				total_sec = (int)convert_pts_to_s(ctx->format_ctx->duration, AV_TIME_BASE_Q);
@@ -291,7 +291,7 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 				{
 					//TODO: Encode text with highest confidence
 					dist = edit_distance(subtitle_text, prev_subtitle_text, strlen(subtitle_text), strlen(prev_subtitle_text));
-					// printf("%d\n", dist);
+
 					if(dist > (0.2 * fmin(strlen(subtitle_text), strlen(prev_subtitle_text))))
 					{
 						add_cc_sub_text(ctx->dec_sub, prev_subtitle_text, begin_time, end_time, "", "BURN", CCX_ENC_UTF_8);

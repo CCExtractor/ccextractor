@@ -122,6 +122,8 @@ struct ccx_s_options // Options from user parameters
 	int ucla; // 1 if UCLA used, 0 if not
 	int hardsubx; // 1 if burned-in subtitles to be extracted
 	int dvbcolor; // 1 if Color to be detected for DVB
+	char *dvblang; // The name of the language stream for DVB
+	char *ocrlang; // The name of the .traineddata file to be loaded with tesseract
 
 	/*HardsubX related stuff*/
 	int hardsubx_ocr_mode;

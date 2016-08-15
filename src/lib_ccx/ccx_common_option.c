@@ -61,6 +61,8 @@ void init_options (struct ccx_s_options *options)
 	options->ucla = 0; // By default, -UCLA not used
 	options->hardsubx = 0; // By default, don't try to extract hard subtitles
 	options->dvbcolor = 0; // By default, only text detected in DVB
+	options->dvblang = NULL; // By default, autodetect DVB language
+	options->ocrlang = NULL; // By default, autodetect .traineddata file
 
 	/*HardsubX related stuff*/
 	options->hardsubx_ocr_mode = 0;
