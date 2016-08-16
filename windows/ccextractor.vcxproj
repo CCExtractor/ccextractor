@@ -286,8 +286,8 @@
     <IntDir>Release-OCR\</IntDir>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>ccextractorwin</TargetName>
-    <IncludePath>$(ProjectDir)libs\tesseract\include\tesseract;$(ProjectDir)libs\leptonica\include\leptonica;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)libs\tesseract\lib;$(ProjectDir)libs\leptonica\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)</LibraryPath>
+    <IncludePath>$(ProjectDir)\libs\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)\libs\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>Release\</OutDir>
