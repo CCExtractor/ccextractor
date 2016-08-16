@@ -278,8 +278,8 @@
     <IntDir>Debug-OCR\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <TargetName>ccextractorwin</TargetName>
-    <IncludePath>$(ProjectDir)libs\tesseract\include\tesseract;$(ProjectDir)libs\leptonica\include\leptonica;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)libs\tesseract\lib;$(ProjectDir)libs\leptonica\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)</LibraryPath>
+    <IncludePath>$(ProjectDir)\libs\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)\libs\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-OCR|Win32'">
     <OutDir>Release-OCR\</OutDir>
@@ -329,15 +329,15 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>WS2_32.Lib;libtesseract302.lib;liblept168.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>WS2_32.Lib;liblept172.lib;libtesseract304d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y $(ProjectDir)libs\leptonica\lib\liblept168.dll $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)libs\tesseract\lib\libtesseract302.dll $(ProjectDir)$(OutDir)</Command>
+      <Command>xcopy /y $(ProjectDir)libs\lib\liblept172.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-OCR|Win32'">
