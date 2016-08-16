@@ -1712,6 +1712,21 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 
 	}
 
+	/*
+		Abhinav95: The way this function is called right now, only cfg->lang_index[0]
+		gets populated. E.g. for 3 stream languages, it will be called 3 times, and
+		set the language index in only the first element each time. This works with the
+		current state of the DVB code.
+	*/
+	if(ccx_options.dvblang)
+	{
+		if(strcmp(ccx_options.dvblang, language[cfg->lang_index[0]])!=0)
+		{
+			mprint("Ignoring stream language '%s' not equal to dvblang '%s'\n",
+				language[cfg->lang_index[0]], ccx_options.dvblang);
+			return -1;
+		}
+	}
 
 	return 0;
 }
