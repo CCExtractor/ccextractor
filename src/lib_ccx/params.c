@@ -651,7 +651,12 @@ void usage (void)
 	mprint ("            -parsePMT: Print Program Map Table dump.\n");
 	mprint("              -dumpdef: Hex-dump defective TS packets.\n");
 	mprint (" -investigate_packets: If no CC packets are detected based on the PMT, try\n");
-	mprint ("                       to find data in all packets by scanning.\n\n");
+	mprint ("                       to find data in all packets by scanning.\n");
+#ifdef ENABLE_SHARING
+	mprint ("       -sharing-debug: Print extracted CC sharing service messages\n");
+#endif //ENABLE_SHARING
+	mprint("\n");
+
 
 	mprint ("Teletext related options:\n");
 
@@ -701,6 +706,19 @@ void usage (void)
 	mprint ("    --no_progress_bar: Suppress the output of the progress bar\n");
 	mprint ("               -quiet: Don't write any message.\n");
 	mprint ("\n");
+#ifdef ENABLE_SHARING
+	mprint ("Sharing extracted captions via TCP:\n");
+	mprint ("      -enable-sharing: Enables real-time sharing of extracted captions\n");
+	mprint ("         -sharing-url: Set url for sharing service in nanomsg format. Default: \"tcp://*:3269\"\n");
+	mprint ("\n");
+
+	mprint ("CCTranslate application integration:\n");
+	mprint ("           -translate: Enable Translation tool and set target languages\n");
+	mprint ("                       in csv format (e.g. -translate ru,fr,it\n");
+	mprint ("      -translate-auth: Set Translation Service authorization data to make translation possible\n");
+	mprint ("                       In case of Google Translate API - API Key\n");
+#endif //ENABLE_SHARING
+
 	mprint ("Notes on the CEA-708 decoder: While it is starting to be useful, it's\n");
 	mprint ("a work in progress. A number of things don't work yet in the decoder\n");
 	mprint ("itself, and many of the auxiliary tools (case conversion to name one)\n");
@@ -1687,6 +1705,13 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			tlt_config.verbose=1;
 			continue;
 		}
+#ifdef ENABLE_SHARING
+		if (strcmp(argv[i], "-sharing-debug") == 0)
+		{
+			opt->debug_mask |= CCX_DMT_SHARE;
+			continue;
+		}
+#endif //ENABLE_SHARING
 		if (strcmp (argv[i],"-fullbin")==0)
 		{
 			opt->fullbin = 1;
@@ -2022,6 +2047,29 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			i++;
 			continue;
 		}
+#ifdef ENABLE_SHARING
+		if (!strcmp(argv[i], "-enable-sharing")) {
+			opt->sharing_enabled = 1;
+			continue;
+		}
+		if (!strcmp(argv[i], "-sharing-url") && i < argc - 1) {
+			opt->sharing_url = argv[i + 1];
+			i++;
+			continue;
+		}
+		if (!strcmp(argv[i], "-translate") && i < argc - 1) {
+			opt->translate_enabled = 1;
+			opt->sharing_enabled = 1;
+			opt->translate_langs = argv[i + 1];
+			i++;
+			continue;
+		}
+		if (!strcmp(argv[i], "-translate-auth") && i < argc - 1) {
+			opt->translate_key = argv[i + 1];
+			i++;
+			continue;
+		}
+#endif //ENABLE_SHARING
 
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "Error: Parameter %s not understood.\n", argv[i]);
 		// Unrecognized switches are silently ignored

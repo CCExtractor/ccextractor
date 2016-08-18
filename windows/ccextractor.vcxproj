@@ -19,6 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\lib_ccx\ccx_common_option.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_share.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.h" />
     <ClInclude Include="..\src\lib_ccx\compile_info.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\avparse.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\base_coding.h" />
@@ -76,6 +79,7 @@
     <ClInclude Include="..\src\lib_ccx\teletext.h" />
     <ClInclude Include="..\src\lib_ccx\utility.h" />
     <ClInclude Include="..\src\lib_hash\sha2.h" />
+    <ClInclude Include="..\src\protobuf-c\protobuf-c.h" />
     <ClInclude Include="..\src\win_iconv\iconv.h" />
     <ClInclude Include="..\src\win_spec_incld\dirent.h" />
     <ClInclude Include="..\src\zlib\crc32.h" />
@@ -187,6 +191,8 @@
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_webvtt.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_xds.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_gxf.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_share.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.c" />
     <ClCompile Include="..\src\lib_ccx\cc_bitstream.c" />
     <ClCompile Include="..\src\lib_ccx\configuration.c" />
     <ClCompile Include="..\src\lib_ccx\dvb_subtitle_decoder.c" />
@@ -212,6 +218,7 @@
     <ClCompile Include="..\src\lib_ccx\utility.c" />
     <ClCompile Include="..\src\lib_ccx\wtv_functions.c" />
     <ClCompile Include="..\src\lib_hash\sha2.c" />
+    <ClCompile Include="..\src\protobuf-c\protobuf-c.c" />
     <ClCompile Include="..\src\win_iconv\win_iconv.c" />
     <ClCompile Include="..\src\zlib\adler32.c" />
     <ClCompile Include="..\src\zlib\crc32.c" />
@@ -225,6 +232,9 @@
     <ClCompile Include="..\src\zvbi\decoder.c" />
     <ClCompile Include="..\src\zvbi\raw_decoder.c" />
     <ClCompile Include="..\src\zvbi\sampling_par.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\lib_ccx\ccx_sub_entry_message.proto" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0F0063C4-BCBC-4379-A6D5-84A5669C940A}</ProjectGuid>
@@ -286,8 +296,8 @@
     <IntDir>Release-OCR\</IntDir>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>ccextractorwin</TargetName>
-    <IncludePath>$(ProjectDir)libs\tesseract\include\tesseract;$(ProjectDir)libs\leptonica\include\leptonica;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)libs\tesseract\lib;$(ProjectDir)libs\leptonica\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)</LibraryPath>
+    <IncludePath>$(ProjectDir)\libs\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)\libs\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>Release\</OutDir>
