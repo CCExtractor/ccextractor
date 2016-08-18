@@ -161,6 +161,16 @@ struct ccx_s_options // Options from user parameters
 	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
 	int multiprogram;
 	int out_interval;
+
+#ifdef ENABLE_SHARING
+	//CC sharing
+	int sharing_enabled;
+	char *sharing_url;
+	//Translating
+	int translate_enabled;
+	char *translate_langs;
+	char *translate_key;
+#endif
 };
 
 extern struct ccx_s_options ccx_options;

@@ -10,6 +10,10 @@
 #include "ccx_encoders_xds.h"
 #include "ccx_encoders_helpers.h"
 
+#ifdef ENABLE_SHARING
+#include "ccx_share.h"
+#endif //ENABLE_SHARING
+
 #ifdef WIN32
 int fsync(int fd)
 {
@@ -1324,6 +1328,11 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		return CCX_OK;
 
 	context = change_filename(context);
+
+#ifdef ENABLE_SHARING
+	if (ccx_options.sharing_enabled)
+		ccx_share_send(sub);
+#endif //ENABLE_SHARING
 
 	if (sub->type == CC_608)
 	{
