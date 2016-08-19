@@ -522,6 +522,20 @@ void usage (void)
 	mprint ("                       2 = live output. 3 = both\n");
 	mprint ("                 -sem: Create a .sem file for each output file that is open\n");
 	mprint ("                       and delete it on file close.\n");
+	mprint ("            -dvbcolor: For DVB subtitles, also output the color of the\n");
+	mprint ("                       subtitles, if the output format is SRT or WebVTT.\n");
+	mprint ("             -dvblang: For DVB subtitles, select which language's caption\n");
+	mprint ("                       stream will be processed. e.g. 'eng' for English.");
+	mprint ("                       If there are multiple languages, only this specified\n");
+	mprint ("                       language stream will be processed\n");
+	mprint ("             -ocrlang: Manually select the name of the Tesseract .traineddata\n");
+	mprint ("                       file. Helpful if you want to OCR a caption stream of\n");
+	mprint ("                       one language with the data of another language.\n");
+	mprint ("                       e.g. '-dvblang chs -ocrlang chi_tra' will decode the\n");
+	mprint ("                       Chinese (Simplified) caption stream but perform OCR\n");
+	mprint ("                       using the Chinese (Traditional) trained data");
+	mprint ("                       This option is also helpful when the traineddata file\n");
+	mprint ("                       has non standard names that don't follow ISO specs\n");
 	mprint ("\n");
 	mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
 

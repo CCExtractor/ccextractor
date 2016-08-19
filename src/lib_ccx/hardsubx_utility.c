@@ -65,4 +65,44 @@ int edit_distance(char * word1, char * word2, int len1, int len2)
 	return matrix[len1][len2];
 }
 
+int is_valid_trailing_char(char c)
+{
+	char *prune_text = ",~`'-_+=‘:;” \n";
+	printf("%c ", c);
+	int ret = 1;
+	size_t len = strlen(prune_text);
+
+	for(int i=0;i<len;i++)
+	{
+		if(prune_text[i] == c)
+		{	
+			ret = -1;
+			break;
+		}
+	}
+	printf("%d\n", ret);
+	return ret;
+}
+
+char *prune_string(char *s)
+{
+	size_t size;
+	char *end;
+
+	size = strlen(s);
+
+	if (!size)
+		return s;
+
+	end = s + size - 1;
+	while (end >= s && is_valid_trailing_char(*end)==-1)
+		end--;
+	*(end + 1) = '\0';
+
+	while (*s && is_valid_trailing_char(*end)==-1)
+		s++;
+	printf("%s\n", s);
+	return s;
+}
+
 #endif
