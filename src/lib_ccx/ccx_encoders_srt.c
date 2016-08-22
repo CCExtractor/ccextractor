@@ -113,7 +113,7 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	if(sub->flags & SUB_EOD_MARKER)
 		context->prev_start =  sub->start_time;
 
-	str = paraof_ocrtext(sub);
+	str = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);
 	if (str)
 	{
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
@@ -159,6 +159,7 @@ int write_cc_subtitle_as_srt(struct cc_subtitle *sub,struct encoder_ctx *context
 			ret = write_stringz_as_srt(sub->data, context, sub->start_time, sub->end_time);
 			freep(&sub->data);
 			sub->nb_data = 0;
+			ret = 1;
 		}
 		lsub = sub;
 		sub = sub->next;
@@ -222,8 +223,8 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 		{
 			if (context->sentence_cap)
 			{
-				capitalize (context, i, data);
-				correct_case(i,data);
+				if (clever_capitalize (context, i, data))
+					correct_case_with_dictionary(i, data);
 			}
 			if (context->autodash && context->trim_subs)
 			{

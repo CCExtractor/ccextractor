@@ -83,18 +83,21 @@ void prepare_for_new_file (struct lib_ccx_ctx *ctx)
 	pts_big_change              = 0;
 	firstcall                   = 1;
 
-	for(int x = 0; x < 0xfff; x++)
+	if(ctx->epg_inited)
 	{
-		ctx->epg_buffers[x].buffer   = NULL;
-		ctx->epg_buffers[x].ccounter = 0;
+		for(int x = 0; x < 0xfff; x++)
+		{
+			ctx->epg_buffers[x].buffer   = NULL;
+			ctx->epg_buffers[x].ccounter = 0;
+		}
+		for (int i = 0; i < TS_PMT_MAP_SIZE; i++)
+		{
+			ctx->eit_programs[i].array_len = 0;
+			ctx->eit_current_events[i] = -1;
+		}
+		ctx->epg_last_output      = -1;
+		ctx->epg_last_live_output = -1;
 	}
-	for (int i = 0; i < TS_PMT_MAP_SIZE; i++)
-	{
-		ctx->eit_programs[i].array_len = 0;
-		ctx->eit_current_events[i] = -1;
-	}
-	ctx->epg_last_output      = -1;
-	ctx->epg_last_live_output = -1;
 }
 
 /* Close input file if there is one and let the GUI know */
@@ -135,6 +138,7 @@ int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 	/* Close current and make sure things are still sane */
 	if (ctx->demux_ctx->is_open(ctx->demux_ctx))
 	{
+		dbg_print(CCX_DMT_708, "[CEA-708] The 708 decoder was reset [%d] times.\n", ctx->freport.data_from_708->reset_count);
 		if (ccx_options.print_file_reports)
 			print_file_report(ctx);
 

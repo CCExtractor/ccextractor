@@ -57,7 +57,10 @@ enum ccx_debug_message_types
 	CCX_DMT_PAT=0x400, // Program Allocation Table dump
 	CCX_DMT_PMT=0x800, // Program Map Table dump
 	CCX_DMT_LEVENSHTEIN=0x1000, // Levenshtein distance calculations
-	CCX_DMT_DUMPDEF=0x2000 // Dump defective TS packets
+#ifdef ENABLE_SHARING
+	CCX_DMT_SHARE = 0x2000, //Extracted captions sharing service
+#endif //ENABLE_SHARING
+	CCX_DMT_DUMPDEF=0x4000, // Dump defective TS packets
 };
 
 // AVC NAL types
@@ -290,7 +293,7 @@ enum cdp_section_type
 #define CCX_TXT_AUTO_NOT_YET_FOUND	1
 #define CCX_TXT_IN_USE			2 // Positive autodetected, or forced, etc
 
-#define NB_LANGUAGE 5
+#define NB_LANGUAGE 100
 extern const char *language[NB_LANGUAGE];
 
 #define DEF_VAL_STARTCREDITSNOTBEFORE 	"0"

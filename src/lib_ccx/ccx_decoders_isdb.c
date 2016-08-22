@@ -373,6 +373,7 @@ static int reserve_buf(struct ISDBText *text, size_t len)
 	text->buf = ptr;
 	text->len = blen;
 	isdb_log ("expanded ctx->text(%lu)\n", blen);
+	return CCX_OK;
 }
 
 static int append_char(ISDBSubContext *ctx, const char ch)

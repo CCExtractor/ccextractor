@@ -56,8 +56,22 @@ void init_options (struct ccx_s_options *options)
 	options->xmltvoutputinterval=0; // interval in seconds between writting xmltv full file output
 	options->xmltvonlycurrent=0; // 0 off 1 on
 	options->keep_output_closed = 0; // By default just keep the file open.
-	options->force_flush = 0; // Don't flush whenever content is writtern.
+	options->force_flush = 0; // Don't flush whenever content is written.
+	options->append_mode = 0; //By default, files are overwritten.
 	options->ucla = 0; // By default, -UCLA not used
+	options->hardsubx = 0; // By default, don't try to extract hard subtitles
+	options->dvbcolor = 0; // By default, only text detected in DVB
+	options->dvblang = NULL; // By default, autodetect DVB language
+	options->ocrlang = NULL; // By default, autodetect .traineddata file
+
+	/*HardsubX related stuff*/
+	options->hardsubx_ocr_mode = 0;
+	options->hardsubx_subcolor = 0;
+	options->hardsubx_min_sub_duration = 0.5;
+	options->hardsubx_detect_italics = 0;
+	options->hardsubx_conf_thresh = 0.0;
+	options->hardsubx_hue = 0.0;
+	options->hardsubx_lum_thresh = 95.0;
 
 	options->transcript_settings = ccx_encoders_default_transcript_settings;
 	options->millis_separator=',';
@@ -108,6 +122,7 @@ void init_options (struct ccx_s_options *options)
 	options->enc_cfg.no_bom = 0; // Use BOM by default.
 	options->enc_cfg.services_charsets = NULL;
 	options->enc_cfg.all_services_charset = NULL;
+	options->enc_cfg.with_semaphore = 0; 
 
 	options->settings_dtvcc.enabled = 0;
 	options->settings_dtvcc.active_services_count = 0;
@@ -115,6 +130,14 @@ void init_options (struct ccx_s_options *options)
 	options->settings_dtvcc.no_rollup = 0;
 	options->settings_dtvcc.report = NULL;
 	memset(options->settings_dtvcc.services_enabled, 0, CCX_DTVCC_MAX_SERVICES);
+
+#ifdef ENABLE_SHARING
+	options->sharing_enabled = 0;
+	options->sharing_url = NULL;
+	options->translate_enabled = 0;
+	options->translate_key = NULL;
+	options->translate_langs = NULL;
+#endif //ENABLE_SHARING
 
 	// Prepare time structures
 	init_boundary_time (&options->extraction_start);

@@ -417,9 +417,18 @@ GF_Err tx3g_Read(GF_Box *s, GF_BitStream *bs)
 	ptr->size -= 18 + GPP_BOX_SIZE + GPP_STYLE_SIZE;
 
 	while (ptr->size) {
+		if (ptr->size < 8) {
+			/* Sometimes there are void atoms at the end of an atom and they are not parsed correctecly */
+			/* So just skip them if we have less than 8 bytes to parse */
+			/* "The actual size of an atom cannot be less than 8 bytes" from QTFF specs */
+			ptr->size = 0;
+			return GF_OK;
+		}
+
 		e = gf_isom_parse_box(&a, bs);
 		if (e) return e;
 		if (ptr->size<a->size) return GF_ISOM_INVALID_FILE;
+
 		ptr->size -= a->size;
 		if (a->type==GF_ISOM_BOX_TYPE_FTAB) {
 			if (ptr->font_table) gf_isom_box_del((GF_Box *) ptr->font_table);

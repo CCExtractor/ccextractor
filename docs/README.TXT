@@ -1,4 +1,4 @@
-ccextractor, 0.79
+ccextractor, 0.81
 -----------------
 Authors: Carlos Fernández (cfsmp3), Volker Quetschke.
 Maintainer: cfsmp3
@@ -14,12 +14,12 @@ You can subscribe to new releases notifications at freshmeat:
 http://freshmeat.net/projects/ccextractor
 
 Google Summer of Code 2014 students
-- Willem van iseghem
+- Willem Van Iseghem
 - Ruslan KuchumoV
 - Anshul Maheshwari
 
 Google Summer of Code 2015 students
-- Willem van iseghem
+- Willem Van Iseghem
 - Ruslan Kuchumov
 - Anshul Maheshwari
 - Nurendra Choudhary

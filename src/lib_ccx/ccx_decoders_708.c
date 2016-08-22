@@ -657,7 +657,8 @@ void _dtvcc_process_character(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_symb
 				window->pen_row--;
 			break;
 		default:
-			ccx_common_logging.log_ftn("[CEA-708] _dtvcc_process_character: unhandled branch\n");
+			ccx_common_logging.log_ftn("[CEA-708] _dtvcc_process_character: unhandled branch (%02d)\n",
+				window->attribs.print_direction);
 			break;
 	}
 }

@@ -1,7 +1,7 @@
 #ifndef CCX_CCEXTRACTOR_H
 #define CCX_CCEXTRACTOR_H
 
-#define VERSION "0.79"
+#define VERSION "0.82"
 
 // Load common includes and constants for library usage
 #include "ccx_common_platform.h"
@@ -115,10 +115,11 @@ struct lib_ccx_ctx
 
 	unsigned teletext_warning_shown; // Did we detect a possible PAL (with teletext subs) and told the user already?
 
-	struct PSI_buffer epg_buffers[0xfff+1];
-	struct EIT_program eit_programs[TS_PMT_MAP_SIZE+1];
-	int32_t eit_current_events[TS_PMT_MAP_SIZE+1];
-	int16_t ATSC_source_pg_map[0xffff];
+	int epg_inited;
+	struct PSI_buffer *epg_buffers;
+	struct EIT_program *eit_programs;
+	int32_t *eit_current_events;
+	int16_t *ATSC_source_pg_map;
 	int epg_last_output; 
 	int epg_last_live_output; 
 	struct file_report freport;
@@ -201,7 +202,7 @@ void print_file_report(struct lib_ccx_ctx *ctx);
 void dinit_write(struct ccx_s_write *wb);
 int temporarily_open_output(struct ccx_s_write *wb);
 int temporarily_close_output(struct ccx_s_write *wb);
-int init_write (struct ccx_s_write *wb,char *filename);
+int init_write(struct ccx_s_write *wb, char *filename, int with_semaphore);
 int writeraw (const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile);
 void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct cc_subtitle *sub);
@@ -240,6 +241,9 @@ void timestamp_to_srttime(uint64_t timestamp, char *buffer);
 void timestamp_to_smptetttime(uint64_t timestamp, char *buffer);
 int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
 void millis_to_date (uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator);
+void create_signal(void);
+void signal_handler(int sig_type);
+struct encoder_ctx* change_filename(struct encoder_ctx*);
 #ifndef _WIN32
 void m_signal(int sig, void (*func)(int));
 #endif

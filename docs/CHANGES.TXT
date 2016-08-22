@@ -1,6 +1,28 @@
-- Fix: Correcting display of sub mode and info in transcripts
-- Fix: Teletext page number displayed in -UCLA
-- Fix: Removal of excessive XDS notices about aspect ratio info
+0.82(2016-08-15)
+-----------------
+- New: HardsubX - Burned in subtitle extraction subsystem.
+- New: Color Detection in DVB Subtitles
+- Fix: Corrected sentence capitalization
+- Fix: Skipping redundant bytes at the end of tx3g atom in MP4
+- Fix: Illegal SRT files being created from DVB subtitles
+- Fix: Incorrect Progress Display
+
+0.81 (2016-06-13)
+-----------------
+- New: --version parameter for extensive version information (version number, compile date, executable hash, git commit (if appropriate))
+- New: Add -sem (semaphore) to create a .sem file when an output file is open and delete it when it's closed.
+- New: Add --append parameter. This will prevent overwriting of existing files.
+- New: File Rotation support added. The user has to send a USR1 signal to rotate.
+- Fix: Issues with files <1 Mb
+- Fix: Preview of generated transcript.
+- Fix: Statistics were not generated anymore.
+- Fix: Correcting display of sub mode and info in transcripts.
+- Fix: Teletext page number displayed in -UCLA.
+- Fix: Removal of excessive XDS notices about aspect ratio info.
+- Fix: Force Flushing of file buffers works for all files now.
+- Fix: mp4 void atoms that was causing some .mp4 files to fail.
+- Fix: Memory usage caused by EPG processing was high due to many non-dynamic buffers.
+- Fix: Project files for Visual Studio now include OCR support in Windows.
 
 0.80 (2016-04-24)
 -----------------

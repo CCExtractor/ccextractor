@@ -10,6 +10,8 @@ License: GPL 2.0
 #include <signal.h>
 #include "ccx_common_option.h"
 #include "ccx_mp4.h"
+#include "hardsubx.h"
+#include "ccx_share.h"
 
 struct lib_ccx_ctx *signal_ctx;
 void sigint_handler()
@@ -45,6 +47,14 @@ int main(int argc, char *argv[])
 	{
 		exit(ret);
 	}
+#ifdef ENABLE_HARDSUBX
+	if(ccx_options.hardsubx)
+	{
+		// Perform burned in subtitle extraction
+		hardsubx(&ccx_options);
+		return 0;
+	}
+#endif
 	// Initialize libraries
 	ctx = init_libraries(&ccx_options);
 	if (!ctx && errno == ENOMEM)
@@ -105,11 +115,31 @@ int main(int argc, char *argv[])
 #ifndef _WIN32
 	signal_ctx = ctx;
 	m_signal(SIGINT, sigint_handler);
+	create_signal();
 #endif
+
+#ifdef ENABLE_SHARING
+	if (ccx_options.translate_enabled && ctx->num_input_files > 1)
+	{
+		mprint("[share] WARNING: simultaneous translation of several input files is not supported yet\n");
+		ccx_options.translate_enabled = 0;
+		ccx_options.sharing_enabled = 0;
+	}
+	if (ccx_options.translate_enabled)
+	{
+		mprint("[share] launching translate service\n");
+		ccx_share_launch_translator(ccx_options.translate_langs, ccx_options.translate_key);
+	}
+#endif //ENABLE_SHARING
 
 	while (switch_to_next_file(ctx, 0))
 	{
 		prepare_for_new_file(ctx);
+#ifdef ENABLE_SHARING
+		if (ccx_options.sharing_enabled)
+			ccx_share_start(ctx->basefilename);
+#endif //ENABLE_SHARING
+
 		stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 		// Disable sync check for raw formats - they have the right timeline.
 		// Also true for bin formats, but -nosync might have created a
@@ -167,7 +197,7 @@ int main(int argc, char *argv[])
 			case CCX_SM_MP4:
 				mprint ("\rAnalyzing data with GPAC (MP4 library)\n");
 				close_input_file(ctx); // No need to have it open. GPAC will do it for us
-				processmp4 (ctx, &ctx->mp4_cfg, ctx->inputfile[0]);
+				processmp4(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
 				if (ccx_options.print_file_reports)
 					print_file_report(ctx);
 				break;
@@ -231,8 +261,13 @@ int main(int argc, char *argv[])
 			dec_ctx->timing->fts_now = 0;
 			dec_ctx->timing->fts_max = 0;
 		
-
-
+#ifdef ENABLE_SHARING
+			if (ccx_options.sharing_enabled)
+			{
+				ccx_share_stream_done(ctx->basefilename);
+				ccx_share_stop();
+			}
+#endif //ENABLE_SHARING
 
 		if (dec_ctx->total_pulldownframes)
 			mprint ("incl. pulldown frames:  %s  (%u frames at %.2ffps)\n",
@@ -322,7 +357,6 @@ int main(int argc, char *argv[])
 			s1, s2);
 	}
 #endif
-	dbg_print(CCX_DMT_708, "[CEA-708] The 708 decoder was reset [%d] times.\n", ctx->freport.data_from_708->reset_count);
 
 	if (is_decoder_processed_enough(ctx) == CCX_TRUE)
 	{

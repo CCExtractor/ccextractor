@@ -10,10 +10,14 @@
 #include "ccx_encoders_xds.h"
 #include "ccx_encoders_helpers.h"
 
+#ifdef ENABLE_SHARING
+#include "ccx_share.h"
+#endif //ENABLE_SHARING
+
 #ifdef WIN32
 int fsync(int fd)
 {
-	FlushFileBuffers(fd);
+	return FlushFileBuffers((HANDLE)_get_osfhandle(fd)) ? 0 : -1;
 }
 #endif
 
@@ -57,7 +61,7 @@ static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
 "  <body>\n"
 "    <div>\n";
 
-static const char *webvtt_header = "WEBVTT\r\n\r\n";
+static const char *webvtt_header = "WEBVTT\r\n";
 
 static const char *simple_xml_header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<captions>\r\n";
 
@@ -552,7 +556,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 		if (context->sentence_cap)
 		{
 			//TODO capitalize (context, line_number,data);
-			//TODO correct_case(line_number, data);
+			//TODO correct_case_with_dictionary(line_number, data);
 		}
 
 		if (start_time == -1)
@@ -663,8 +667,8 @@ void write_cc_line_as_simplexml(struct eia608_screen *data, struct encoder_ctx *
 	char *cap1 = "</caption>";
 	if (context->sentence_cap)
 	{
-		capitalize (context, line_number, data);
-		correct_case(line_number, data);
+		if (clever_capitalize (context, line_number, data))
+			correct_case_with_dictionary(line_number, data);
 	}
 	length = get_str_basic (context->subline, data->characters[line_number],
 			context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
@@ -687,8 +691,8 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 	LLONG end_time = data->end_time;
 	if (context->sentence_cap)
 	{
-		capitalize (context, line_number, data);
-		correct_case(line_number, data);
+		if (clever_capitalize (context, line_number, data))
+			correct_case_with_dictionary(line_number, data);
 	}
 	int length = get_str_basic (context->subline, data->characters[line_number],
 			context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
@@ -912,6 +916,7 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 					fdprintf(context->out->fh,"DVB|");
 				}
 				fdprintf(context->out->fh,"%s",token);
+				write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 				token = strtok(NULL,"\r\n");
 
 			}
@@ -1084,19 +1089,14 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 				basefilename = get_basename(cfg->output_filename);
 				extension = get_file_extension(cfg->write_format);
 
-				ret = init_write(&ctx->out[0], strdup(cfg->output_filename));
+				ret = init_write(&ctx->out[0], strdup(cfg->output_filename), cfg->with_semaphore);
 				check_ret(cfg->output_filename);
-				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension));
+				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
 				check_ret(ctx->out[1].filename);
-			}
-			else if (cfg->extract == 1)
-			{
-				ret = init_write(ctx->out, strdup(cfg->output_filename));
-				check_ret(cfg->output_filename);
 			}
 			else
 			{
-				ret = init_write(ctx->out, strdup(cfg->output_filename));
+				ret = init_write(ctx->out, strdup(cfg->output_filename), cfg->with_semaphore );
 				check_ret(cfg->output_filename);
 			}
 		}
@@ -1107,19 +1107,14 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 
 			if (cfg->extract == 12)
 			{
-				ret = init_write(&ctx->out[0], create_outfilename(basefilename, "_1", extension));
+				ret = init_write(&ctx->out[0], create_outfilename(basefilename, "_1", extension), cfg->with_semaphore);
 				check_ret(ctx->out[0].filename);
-				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension));
+				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
 				check_ret(ctx->out[1].filename);
-			}
-			else if (cfg->extract == 1)
-			{
-				ret = init_write(ctx->out, create_outfilename(basefilename, NULL, extension));
-				check_ret(ctx->out->filename);
 			}
 			else
 			{
-				ret = init_write(ctx->out, create_outfilename(basefilename, NULL, extension));
+				ret = init_write(ctx->out, create_outfilename(basefilename, NULL, extension), cfg->with_semaphore);
 				check_ret(ctx->out->filename);
 			}
 		}
@@ -1132,6 +1127,8 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	{
 		ctx->out[0].fh = STDOUT_FILENO;
 		ctx->out[0].filename = NULL;
+		ctx->out[0].with_semaphore = 0;
+		ctx->out[0].semaphore_filename = NULL;
 		mprint ("Sending captions to stdout.\n");
 	}
 
@@ -1225,6 +1222,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 	ctx->capacity=INITIAL_ENC_BUFFER_CAPACITY;
 	ctx->srt_counter = 0;
+	ctx->wrote_webvtt_sync_header = 0;
 
 	ctx->program_number = opt->program_number;
 	ctx->send_to_srv = opt->send_to_srv;
@@ -1329,6 +1327,13 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	if(!context)
 		return CCX_OK;
 
+	context = change_filename(context);
+
+#ifdef ENABLE_SHARING
+	if (ccx_options.sharing_enabled)
+		ccx_share_send(sub);
+#endif //ENABLE_SHARING
+
 	if (sub->type == CC_608)
 	{
 		struct eia608_screen *data = NULL;
@@ -1338,7 +1343,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			// Determine context based on channel. This replaces the code that was above, as this was incomplete (for cases where -12 was used for example)
 			out = get_output_ctx(context, data->my_field);
 
-			context->new_sentence = 1;
+			// context->new_sentence = 1; CFS: WHY??? Sentences may appear in different frames
 
 			if(data->format == SFORMAT_XDS)
 			{

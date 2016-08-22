@@ -40,7 +40,7 @@ int string_cmp(const void *p1, const void *p2)
 	return string_cmp2(p1, p2, NULL);
 }
 
-void correct_case(int line_num, struct eia608_screen *data)
+void correct_case_with_dictionary(int line_num, struct eia608_screen *data)
 {
 	char delim[64] = {
 		' ', '\n', '\r', 0x89, 0x99,
@@ -106,8 +106,28 @@ void telx_correct_case(char *sub_line)
 	free(line);
 }
 
-void capitalize(struct encoder_ctx *context, int line_num, struct eia608_screen *data)
+int is_all_caps(struct encoder_ctx *context, int line_num, struct eia608_screen *data)
 {
+	int saw_upper = 0, saw_lower = 0;
+
+	for (int i = 0; i < CCX_DECODER_608_SCREEN_WIDTH; i++)
+	{
+		if (islower(data->characters[line_num][i]))
+			saw_lower = 1;
+		else if (isupper(data->characters[line_num][i]))
+			saw_upper = 1;
+	}
+	return (saw_upper && !saw_lower); // 1 if we've seen upper and not lower, 0 otherwise
+}
+
+int clever_capitalize(struct encoder_ctx *context, int line_num, struct eia608_screen *data)
+{
+	// CFS: Tried doing to clever (see below) but some channels do all uppercase except for
+	// notes for deaf people (such as "(narrator)" which messes things up.
+		// First find out if we actually need to do it, don't mess with lines that come OK
+		//int doit = is_all_caps(context, line_num, data);
+	int doit = 1;
+
 	for (int i = 0; i < CCX_DECODER_608_SCREEN_WIDTH; i++)
 	{
 		switch (data->characters[line_num][i])
@@ -123,14 +143,18 @@ void capitalize(struct encoder_ctx *context, int line_num, struct eia608_screen 
 			context->new_sentence = 1;
 			break;
 		default:
-			if (context->new_sentence)
-				data->characters[line_num][i] = cctoupper(data->characters[line_num][i]);
-			else
-				data->characters[line_num][i] = cctolower(data->characters[line_num][i]);
+			if (doit)
+			{
+				if (context->new_sentence)
+					data->characters[line_num][i] = cctoupper(data->characters[line_num][i]);
+				else
+					data->characters[line_num][i] = cctolower(data->characters[line_num][i]);
+			}
 			context->new_sentence = 0;
 			break;
 		}
 	}
+	return doit;
 }
 
 // Encodes a generic string. Note that since we use the encoders for closed caption

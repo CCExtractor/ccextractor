@@ -108,6 +108,12 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 	crc = (*(int32_t*)(sbuf+olen-4));
 	table_id = buf[0];
 
+	/* TO-DO: We're currently parsing the PMT making assumptions that there's only one section with table_id=2,
+	but that doesn't have to be the case. There's a sample (friends_tbs.ts) that shows a previous section with
+	table_id = 0xc0. I can't find any place that says that 0xc0 (Program Information Table) must come before
+	table_id = 2, so we should process sections in any order.
+	Check https://github.com/CCExtractor/ccextractor/issues/385 for more info
+	*/
 	if (table_id == 0xC0)
 	{
 		/*
@@ -116,13 +122,22 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 		 * PROGRAM INFORMATION Table found in PMT
 		 */
 		dbg_print(CCX_DMT_PARSE, "PMT: PROGRAM INFORMATION Table need implementation");
-		return 0;
+		// For now, just parse its length and remove it from the buffer
+		unsigned c0length = (buf[1] << 8 | buf[2]) & 0xFFF; // 12 bytes
+		dbg_print(CCX_DMT_PARSE, "Program information table length: %u", c0length);
+		memmove(buf, buf + c0length + 3, len - c0length -3); // First 3 bytes are for the table_id and the length, don't count
+		table_id = buf[0];
+		// return 0;
 	}
 	else if (table_id == 0xC1)
 	{
                 //SCTE 57 2003
-		dbg_print(CCX_DMT_PARSE, "PMT: PROGRAM Name Table need implementation");
-		return 0;
+		dbg_print(CCX_DMT_PARSE, "PMT: PROGRAM NAME Table need implementation");
+		unsigned c0length = (buf[1] << 8 | buf[2]) & 0xFFF; // 12 bytes
+		dbg_print(CCX_DMT_PARSE, "Program name message length: %u", c0length);
+		memmove(buf, buf + c0length + 3, len - c0length - 3); // First 3 bytes are for the table_id and the length, don't count
+		table_id = buf[0];
+		//return 0;
 	}
 	else if(table_id != 0x2)
 	{

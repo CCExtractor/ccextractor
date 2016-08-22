@@ -444,11 +444,6 @@ void* dvbsub_init_decoder(struct dvb_config* cfg)
 
 #ifdef ENABLE_OCR
 	ctx->ocr_ctx = init_ocr(ctx->lang_index);
-        if(!ctx->ocr_ctx)
-	{
-		freep(&ctx);
-		return NULL;
-	}
 #endif
 	ctx->version = -1;
 
@@ -552,7 +547,8 @@ int dvbsub_close_decoder(void **dvb_ctx)
 	}
 
 #ifdef ENABLE_OCR
-	delete_ocr(&ctx->ocr_ctx);
+	if (ctx->ocr_ctx)
+		delete_ocr(&ctx->ocr_ctx);
 #endif
 	freep(dvb_ctx);
 	return 0;
@@ -1537,9 +1533,18 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		rect->data[0] = malloc(region->buf_size);
 		memcpy(rect->data[0], region->pbuf, region->buf_size);
 #ifdef ENABLE_OCR
-		ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str);
-		if(ret >= 0)
-			rect->ocr_text = ocr_str;
+		if (ctx->ocr_ctx)
+		{
+			ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str,region->bgcolor);
+			if(ret >= 0)
+				rect->ocr_text = ocr_str;
+			else
+				rect->ocr_text = NULL;
+		}
+		else
+		{
+			rect->ocr_text = NULL;
+		}
 #endif
 		rect++;
 
@@ -1690,15 +1695,37 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 	for (i = 0; i < cfg->n_language; i++, data += i * 8)
 	{
 		/* setting language to undefined if not found in language lkup table */
+		char lang_name[4];
+		for(int char_index = 0; char_index < 3; char_index++)
+		{
+			lang_name[char_index] = cctolower(data[char_index]);
+		}
+
 		for (j = 0, cfg->lang_index[i] = 0; language[j] != NULL; j++)
 		{
-			if (!strncmp((const char*) (data), language[j], 3))
+			if (!strncmp(lang_name, language[j], 3))
 				cfg->lang_index[i] = j;
 		}
 		cfg->sub_type[i] = data[3];
 		cfg->composition_id[i] = RB16(data + 4);
 		cfg->ancillary_id[i] = RB16(data + 6);
 
+	}
+
+	/*
+		Abhinav95: The way this function is called right now, only cfg->lang_index[0]
+		gets populated. E.g. for 3 stream languages, it will be called 3 times, and
+		set the language index in only the first element each time. This works with the
+		current state of the DVB code.
+	*/
+	if(ccx_options.dvblang)
+	{
+		if(strcmp(ccx_options.dvblang, language[cfg->lang_index[0]])!=0)
+		{
+			mprint("Ignoring stream language '%s' not equal to dvblang '%s'\n",
+				language[cfg->lang_index[0]], ccx_options.dvblang);
+			return -1;
+		}
 	}
 
 	return 0;

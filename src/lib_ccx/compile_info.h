@@ -1,5 +1,9 @@
 #ifndef CCX_CCEXTRACTOR_COMPILE_H
 #define CCX_CCEXTRACTOR_COMPILE_H
-#define GIT_COMMIT "cd4dfa5f7666a401c2e72afbed2e9377cf8c16df"
-#define COMPILE_DATE "2016-08-15"
+#ifndef VERSION_FILE_PRESENT
+#define GIT_COMMIT "Unknown"
+#define COMPILE_DATE "Unknown"
+#else
+#include "compile_info_real.h"
+#endif
 #endif

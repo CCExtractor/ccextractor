@@ -37,6 +37,9 @@ struct encoder_ctx
 	/* keep count of srt subtitle*/
 	unsigned int srt_counter;
 
+	/* Did we write the WebVTT sync header already? */
+	unsigned int wrote_webvtt_sync_header;
+
 	/* Input outputs */
 	/* Flag giving hint that output is send to server through network */
 	unsigned int send_to_srv;
@@ -56,6 +59,8 @@ struct encoder_ctx
 	int force_flush;
 	/* Keep track of whether -UCLA used */
 	int ucla;
+
+	struct ccx_common_timing_ctx *timing; /* Some encoders need access to PTS, such as WebVTT */
 
 	/* Flag saying BOM to be written in each output file */
 	enum ccx_encoding_type encoding;

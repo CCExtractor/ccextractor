@@ -8,13 +8,19 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
+		Debug-OCR|Win32 = Debug-OCR|Win32
 		Release|Win32 = Release|Win32
+		Release-OCR|Win32 = Release-OCR|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Debug|Win32.ActiveCfg = Debug|Win32
 		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Debug|Win32.Build.0 = Debug|Win32
+		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Debug-OCR|Win32.ActiveCfg = Debug-OCR|Win32
+		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Debug-OCR|Win32.Build.0 = Debug-OCR|Win32
 		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release|Win32.ActiveCfg = Release|Win32
 		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release|Win32.Build.0 = Release|Win32
+		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release-OCR|Win32.ActiveCfg = Release-OCR|Win32
+		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release-OCR|Win32.Build.0 = Release-OCR|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

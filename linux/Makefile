@@ -2,10 +2,10 @@ SHELL = /bin/sh
 
 CC = gcc
 SYS := $(shell gcc -dumpmachine)
-CFLAGS = -O3 -std=gnu99
+CFLAGS = -O3 -std=gnu99 -s
 INCLUDE = -I../src/gpacmp4/ -I../src/libpng -I../src/lib_hash -I../src/zlib -I../src/lib_ccx -I../src/.
 INCLUDE += -I../src/zvbi
-ALL_FLAGS = -Wno-write-strings -D_FILE_OFFSET_BITS=64
+ALL_FLAGS = -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT
 LDFLAGS = -lm
 
 ifneq (, $(findstring linux, $(SYS)))
@@ -49,6 +49,25 @@ OBJS_HASH = $(SRCS_HASH:$(SRCS_HASH_DIR)/%.c=$(OBJS_DIR)/%.o)
 INSTLALL = cp -f -p
 INSTLALL_PROGRAM = $(INSTLALL)
 DESTDIR = /usr/bin
+
+ifeq ($(ENABLE_HARDSUBX),yes)
+ENABLE_OCR=yes
+CFLAGS+=-DENABLE_HARDSUBX
+CFLAGS+= $(shell pkg-config --cflags libavcodec)
+CFLAGS+= $(shell pkg-config --cflags libavformat)
+CFLAGS+= $(shell pkg-config --cflags libavutil)
+CFLAGS+= $(shell pkg-config --cflags libswscale)
+AV_LDFLAGS+= $(shell pkg-config --libs libavcodec )
+AV_LDFLAGS+= $(shell pkg-config --libs libavformat )
+AV_LDFLAGS+= $(shell pkg-config --libs libavutil )
+AV_LDFLAGS+= $(shell pkg-config --libs libswscale )
+ifeq ($(AV_LDFLAGS),$(EMPTY))
+$(error **ERROR** "libav not found")
+else
+$(info "libav found")
+endif
+LDFLAGS+= $(AV_LDFLAGS)
+endif
 
 ifeq ($(ENABLE_OCR),yes)
 CFLAGS+=-DENABLE_OCR -DPNG_NO_CONFIG_H

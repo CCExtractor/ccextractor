@@ -98,6 +98,29 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "lib_ccx_ctx");
 	memset(ctx, 0, sizeof(struct lib_ccx_ctx));
 
+	if(opt->xmltv)
+	{
+		ctx->epg_inited = 1;
+		ctx->epg_buffers = (struct PSI_buffer *)malloc(sizeof(struct PSI_buffer)*(0xfff+1));
+		ctx->eit_programs = (struct EIT_program *)malloc(sizeof(struct EIT_program)*(TS_PMT_MAP_SIZE+1));
+		ctx->eit_current_events = (int32_t *)malloc(sizeof(int32_t)*(TS_PMT_MAP_SIZE+1));
+		ctx->ATSC_source_pg_map = (int16_t *)malloc(sizeof(int16_t)*(0xffff));
+		memset(ctx->epg_buffers, 0, sizeof(struct PSI_buffer)*(0xfff+1));
+		memset(ctx->eit_programs, 0, sizeof(struct EIT_program)*(TS_PMT_MAP_SIZE+1));
+		memset(ctx->eit_current_events, 0, sizeof(int32_t)*(TS_PMT_MAP_SIZE+1));
+		memset(ctx->ATSC_source_pg_map, 0, sizeof(int16_t)*(0xffff));
+		if(!ctx->epg_buffers || !ctx->eit_programs || !ctx->eit_current_events || !ctx->ATSC_source_pg_map)
+			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "lib_ccx_ctx");
+	}
+	else
+	{
+		ctx->epg_inited = 0;
+		ctx->epg_buffers = NULL;
+		ctx->eit_programs = NULL;
+		ctx->eit_current_events = NULL;
+		ctx->ATSC_source_pg_map = NULL;
+	}
+
 	struct ccx_decoder_608_report *report_608 = malloc(sizeof(struct ccx_decoder_608_report));
 	if (!report_608)
 		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "report_608");
