@@ -188,7 +188,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				}
 
 				datalen = packetlength - 4 - nextheader[6];
-				dbg_print(CCX_DMT_VERBOSE, "datalen :%d packetlen :%" PRIu16 " pes header ext :%d\n", datalen, packetlength, nextheader[6]);
+				// dbg_print(CCX_DMT_VERBOSE, "datalen :%d packetlen :%" PRIu16 " pes header ext :%d\n", datalen, packetlength, nextheader[6]);
 
 				//Subtitle substream ID 0x20 - 0x39 (32 possible)		
 				if( nextheader[7] >= 0x20 && nextheader[7] < 0x40)

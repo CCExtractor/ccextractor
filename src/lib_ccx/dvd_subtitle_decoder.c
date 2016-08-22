@@ -45,14 +45,6 @@ struct ctrl_seq
 // Get fisrt 4 or last 4 bits from the byte
 #define next4(x,y) ((y) ? (x & 0x0f) : ((x & 0xf0) >> 4) )
 
-// int get_bits(uint16_t temp, int n)
-// {
-// 	// Get n bits from 16 bits
-// 	unsigned mask;
-// 	mask = ((1 << n) - 1) << (16-n);
-// 	return (temp & mask);
-// }
-
 /**
  * Get 4 bits data from buffer for RLE decoding
  */
@@ -136,7 +128,6 @@ void get_bitmap(struct DVD_Ctx *ctx)
 	}
 
 	// Lines are interlaced, for other half of alternate lines
-	// printf("posnow: %d\n", pos);
 	if(pos > ctx->ctrl->pixoffset[1])
 	{
 		dbg_print(CCX_DMT_VERBOSE, "Error creating bitmap!");
@@ -174,17 +165,6 @@ void get_bitmap(struct DVD_Ctx *ctx)
 			}
 		}
 	}
-
-	// int i,j,c=0;
-	// for(i=0; i<h; ++i)
-	// {
-	// 	for(j=0;j<w;++j)
-	// 	{
-	// 		printf("%d", ctx->bitmap[c]);
-	// 		++c;
-	// 	}
-	// 	printf("\n");
-	// }
 }
 
 
@@ -230,7 +210,7 @@ void decode_packet(struct DVD_Ctx *ctx)
 							control->color[2] = buff[ctx->pos] & 0x0f;
 							control->color[1] = (buff[ctx->pos + 1] & 0xf0) >> 4;
 							control->color[0] = buff[ctx->pos + 1] & 0x0f;
-							dbg_print(CCX_DMT_VERBOSE, "col: %x col: %x col: %x col: %x\n", control->color[0], control->color[1], control->color[2], control->color[3]);
+							// dbg_print(CCX_DMT_VERBOSE, "col: %x col: %x col: %x col: %x\n", control->color[0], control->color[1], control->color[2], control->color[3]);
 							ctx->pos+=2;
 							break;
 				case 0x04:	//SET_CONTR
@@ -238,7 +218,7 @@ void decode_packet(struct DVD_Ctx *ctx)
 							control->alpha[2] = buff[ctx->pos] & 0x0f;
 							control->alpha[1] = (buff[ctx->pos + 1] & 0xf0) >> 4;
 							control->alpha[0] = buff[ctx->pos + 1] & 0x0f;
-							dbg_print(CCX_DMT_VERBOSE, "alp: %d alp: %d alp: %d alp: %d\n", control->alpha[0], control->alpha[1], control->alpha[2], control->alpha[3]);
+							// dbg_print(CCX_DMT_VERBOSE, "alp: %d alp: %d alp: %d alp: %d\n", control->alpha[0], control->alpha[1], control->alpha[2], control->alpha[3]);
 							ctx->pos+=2;
 							break;
 				case 0x05:	//SET_DAREA
@@ -246,14 +226,14 @@ void decode_packet(struct DVD_Ctx *ctx)
 							control->coord[1] = ((buff[ctx->pos + 1] & 0x0f) << 8 ) | buff[ctx->pos + 2] ; //ending x coordinate
 							control->coord[2] = ((buff[ctx->pos + 3] << 8) | (buff[ctx->pos + 4] & 0xf0)) >> 4 ; //starting y coordinate
 							control->coord[3] = ((buff[ctx->pos + 4] & 0x0f) << 8 ) | buff[ctx->pos + 5] ; //ending y coordinate
-							dbg_print(CCX_DMT_VERBOSE, "cord: %d cord: %d cord: %d cord: %d\n", control->coord[0], control->coord[1], control->coord[2], control->coord[3]);
+							// dbg_print(CCX_DMT_VERBOSE, "cord: %d cord: %d cord: %d cord: %d\n", control->coord[0], control->coord[1], control->coord[2], control->coord[3]);
 							ctx->pos+=6;
 							//(x2-x1+1)*(y2-y1+1)
 							break;
 				case 0x06:	//SET_DSPXA - Pixel address
 							control->pixoffset[0] = (buff[ctx->pos] << 8) | buff[ctx->pos + 1];
 							control->pixoffset[1] = (buff[ctx->pos + 2] << 8) | buff[ctx->pos + 3];
-							dbg_print(CCX_DMT_VERBOSE, "off1: %d off2 %d\n", control->pixoffset[0], control->pixoffset[1]);
+							// dbg_print(CCX_DMT_VERBOSE, "off1: %d off2 %d\n", control->pixoffset[0], control->pixoffset[1]);
 							ctx->pos+=4;
 							break;
 				case 0x07:	dbg_print(CCX_DMT_VERBOSE, "Command 0x07 found\n");
@@ -343,9 +323,6 @@ int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_
 	sub->data = rect;
 	sub->start_time = get_visible_start(dec_ctx->timing, 1);
 	sub->end_time = sub->start_time + (ctx->ctrl->stop_time);
-	// printf("start%d\n", ctx->ctrl->start_time);
-	// printf("stop%d\n", ctx->ctrl->stop_time);
-
 
 	w = (ctx->ctrl->coord[1] - ctx->ctrl->coord[0]) + 1;
 	h = (ctx->ctrl->coord[3] - ctx->ctrl->coord[2]) + 1;
@@ -374,9 +351,7 @@ int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_
 
 #ifdef ENABLE_OCR
 		char *ocr_str = NULL;
-		char *text_output = NULL;
 		ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, 0);
-		// printf("%s\n", text_output);
 		if(ret >= 0)
 			rect->ocr_text = ocr_str;
 #endif
