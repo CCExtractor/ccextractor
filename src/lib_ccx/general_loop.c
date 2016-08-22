@@ -749,11 +749,9 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 
 	if (dec_sub->got_output)
 	{
-		// printf("encodesub\n");
 		encode_sub(enc_ctx, dec_sub);
 		dec_sub->got_output = 0;
 	}
-	// printf("EXIT\n");
 	return CCX_OK;
 }
 
