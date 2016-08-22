@@ -196,6 +196,7 @@
     <ClCompile Include="..\src\lib_ccx\cc_bitstream.c" />
     <ClCompile Include="..\src\lib_ccx\configuration.c" />
     <ClCompile Include="..\src\lib_ccx\dvb_subtitle_decoder.c" />
+    <ClCompile Include="..\src\lib_ccx\dvd_subtitle_decoder.c" />
     <ClCompile Include="..\src\lib_ccx\es_functions.c" />
     <ClCompile Include="..\src\lib_ccx\es_userdata.c" />
     <ClCompile Include="..\src\lib_ccx\file_functions.c" />

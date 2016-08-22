@@ -731,6 +731,9 @@
     <ClCompile Include="..\src\protobuf-c\protobuf-c.c">
       <Filter>Source Files\protobuf-c</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\dvd_subtitle_decoder.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\lib_ccx\ccx_sub_entry_message.proto">
