@@ -1,6 +1,6 @@
 #!/bin/bash
 BLD_FLAGS="-g -std=gnu99 -Wno-write-strings -DGPAC_CONFIG_LINUX -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DENABLE_OCR"
-BLD_INCLUDE="-I /usr/include/leptonica/ -I /usr/include/tesseract/ -I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi -I../src/lib_hash"
+BLD_INCLUDE="-I /usr/include/leptonica/ -I /usr/include/tesseract/ -I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi -I../src/lib_hash -I../src/protobuf-c"
 SRC_LIBPNG="$(find ../src/libpng/ -name '*.c')"
 SRC_ZLIB="$(find ../src/zlib/ -name '*.c')"
 SRC_ZVBI="$(find ../src/zvbi/ -name '*.c')"
