@@ -867,8 +867,9 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 		{
 			char *token = NULL;
-			token = strtok(rect[0].ocr_text ,"\r\n");
-			while (token)
+			int first_line_written = 0;
+			token = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);
+			while (token) //Token is the line which we are currently writing
 			{
 
 				if (context->transcript_settings->showStartTime)
@@ -915,10 +916,24 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 				{
 					fdprintf(context->out->fh,"DVB|");
 				}
-				fdprintf(context->out->fh,"%s",token);
-				write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-				token = strtok(NULL,"\r\n");
 
+				char *newline_pos = strstr(token, context->encoded_crlf);
+				if(!newline_pos)
+				{
+					fdprintf(context->out->fh,"%s",token);
+					break;
+				}
+				else
+				{
+					while(token!=newline_pos)
+					{	
+						fdprintf(context->out->fh,"%c", *token);
+						token++;
+					}
+					token+=context->encoded_crlf_length;
+					/*Token now points to the text of the next line*/
+				}
+				write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 			}
 
 		}
