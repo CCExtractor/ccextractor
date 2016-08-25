@@ -867,7 +867,6 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 		{
 			char *token = NULL;
-			int first_line_written = 0;
 			token = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);
 			while (token) //Token is the line which we are currently writing
 			{
