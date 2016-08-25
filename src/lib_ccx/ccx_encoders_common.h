@@ -68,6 +68,7 @@ struct encoder_ctx
 	struct ccx_encoders_transcript_format *transcript_settings; // Keeps the settings for generating transcript output files.
 	int no_bom;
 	int sentence_cap ; // FIX CASE? = Fix case?
+	int splitbysentence; 
 	int trim_subs; // "    Remove spaces at sides?    "
 	int autodash; // Add dashes (-) before each speaker automatically?
 	int no_font_color;
@@ -105,6 +106,9 @@ struct encoder_ctx
 
 	int program_number;
 	struct list_head list;
+
+	/* Buffers for the line-by-line implementation. */
+
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048

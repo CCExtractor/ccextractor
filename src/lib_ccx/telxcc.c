@@ -129,6 +129,8 @@ struct TeletextCtx
 
 	int sentence_cap;//Set to 1 if -sc is passed
 	int new_sentence;
+	int splitbysentence;
+
 };
 typedef enum
 {
@@ -1505,6 +1507,7 @@ void* telxcc_init(void)
 
 	ctx->sentence_cap = 0;
 	ctx->new_sentence = 0;
+	ctx->splitbysentence = 0;
 
 	return ctx;
 }

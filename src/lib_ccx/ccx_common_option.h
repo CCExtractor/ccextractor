@@ -45,6 +45,7 @@ struct encoder_cfg
 	int autodash; // Add dashes (-) before each speaker automatically?
 	int trim_subs; // "    Remove spaces at sides?    "
 	int sentence_cap ; // FIX CASE? = Fix case?
+	int splitbysentence; // Split text into complete sentences and prorate time?
 	int with_semaphore; // Write a .sem file on file open and delete it on close?
 	/* Credit stuff */
 	char *start_credits_text;

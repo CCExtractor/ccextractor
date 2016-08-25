@@ -1250,6 +1250,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->transcript_settings = &opt->transcript_settings;
 	ctx->no_bom = opt->no_bom;
 	ctx->sentence_cap = opt->sentence_cap;
+	ctx->splitbysentence = opt->splitbysentence;
 	ctx->trim_subs = opt->trim_subs;
 	ctx->autodash = opt->autodash;
 	ctx->no_font_color = opt->no_font_color;
@@ -1343,8 +1344,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			// Determine context based on channel. This replaces the code that was above, as this was incomplete (for cases where -12 was used for example)
 			out = get_output_ctx(context, data->my_field);
 
-			// context->new_sentence = 1; CFS: WHY??? Sentences may appear in different frames
-
 			if(data->format == SFORMAT_XDS)
 			{
 				data->end_time = data->end_time + context->subs_delay;
@@ -1365,50 +1364,50 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			data->end_time = data->end_time + context->subs_delay;
 			switch (context->write_format)
 			{
-			case CCX_OF_SRT:
-				if (!context->startcredits_displayed && context->start_credits_text!=NULL)
-					try_to_add_start_credits(context, data->start_time);
-				wrote_something = write_cc_buffer_as_srt(data, context);
-				break;
-			case CCX_OF_G608:
-				wrote_something = write_cc_buffer_as_g608(data, context);
-				break;
-			case CCX_OF_WEBVTT:
-				if (!context->startcredits_displayed && context->start_credits_text != NULL)
-					try_to_add_start_credits(context, data->start_time);
-				wrote_something = write_cc_buffer_as_webvtt(data, context);
-				break;
-			case CCX_OF_SAMI:
-				if (!context->startcredits_displayed && context->start_credits_text!=NULL)
-					try_to_add_start_credits(context, data->start_time);
-				wrote_something = write_cc_buffer_as_sami(data, context);
-				break;
-			case CCX_OF_SMPTETT:
-				if (!context->startcredits_displayed && context->start_credits_text!=NULL)
-					try_to_add_start_credits(context, data->start_time);
-				wrote_something = write_cc_buffer_as_smptett(data, context);
-				break;
-			case CCX_OF_TRANSCRIPT:
-				wrote_something = write_cc_buffer_as_transcript2(data, context);
-				break;
-			case CCX_OF_SPUPNG:
-				wrote_something = write_cc_buffer_as_spupng(data, context);
-				break;
-			case CCX_OF_SIMPLE_XML:
-				if (ccx_options.keep_output_closed && context->out->temporarily_closed)
-				{
-					temporarily_open_output(context->out);
-					write_subtitle_file_header(context, context->out);
-				}
-				wrote_something = write_cc_buffer_as_simplexml(data, context);
-				if (ccx_options.keep_output_closed)
-				{
-					write_subtitle_file_footer(context, context->out);
-					temporarily_close_output(context->out);
-				}
-				break;
-			default:
-				break;
+				case CCX_OF_SRT:
+					if (!context->startcredits_displayed && context->start_credits_text!=NULL)
+						try_to_add_start_credits(context, data->start_time);
+					wrote_something = write_cc_buffer_as_srt(data, context);
+					break;
+				case CCX_OF_G608:
+					wrote_something = write_cc_buffer_as_g608(data, context);
+					break;
+				case CCX_OF_WEBVTT:
+					if (!context->startcredits_displayed && context->start_credits_text != NULL)
+						try_to_add_start_credits(context, data->start_time);
+					wrote_something = write_cc_buffer_as_webvtt(data, context);
+					break;
+				case CCX_OF_SAMI:
+					if (!context->startcredits_displayed && context->start_credits_text!=NULL)
+						try_to_add_start_credits(context, data->start_time);
+					wrote_something = write_cc_buffer_as_sami(data, context);
+					break;
+				case CCX_OF_SMPTETT:
+					if (!context->startcredits_displayed && context->start_credits_text!=NULL)
+						try_to_add_start_credits(context, data->start_time);
+					wrote_something = write_cc_buffer_as_smptett(data, context);
+					break;
+				case CCX_OF_TRANSCRIPT:
+					wrote_something = write_cc_buffer_as_transcript2(data, context);
+					break;
+				case CCX_OF_SPUPNG:
+					wrote_something = write_cc_buffer_as_spupng(data, context);
+					break;
+				case CCX_OF_SIMPLE_XML:
+					if (ccx_options.keep_output_closed && context->out->temporarily_closed)
+					{
+						temporarily_open_output(context->out);
+						write_subtitle_file_header(context, context->out);
+					}
+					wrote_something = write_cc_buffer_as_simplexml(data, context);
+					if (ccx_options.keep_output_closed)
+					{
+						write_subtitle_file_footer(context, context->out);
+						temporarily_close_output(context->out);
+					}
+					break;
+				default:
+					break;
 			}
 			if (wrote_something)
 				context->last_displayed_subs_ms = data->end_time;

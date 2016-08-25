@@ -490,6 +490,9 @@ void usage (void)
 	mprint ("                       -dc #FF0000 for red.\n");
 	mprint ("    -sc --sentencecap: Sentence capitalization. Use if you hate\n");
 	mprint ("                       ALL CAPS in subtitles.\n");
+	mprint ("-sbs --splitbysentence: Split output text so each frame contains a complete");
+	mprint ("                       sentence. Timings are adjusted based on number of");
+	mprint ("                       characters.");
 	mprint ("  --capfile -caf file: Add the contents of 'file' to the list of words\n");
 	mprint ("                       that must be capitalized. For example, if file\n");
 	mprint ("                       is a plain text file that contains\n\n");
@@ -1504,6 +1507,13 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->enc_cfg.sentence_cap=1;
 			continue;
 		}
+		if (strcmp(argv[i], "--splitbysentence") == 0 ||
+			strcmp(argv[i], "-sbs") == 0)
+		{
+			opt->enc_cfg.splitbysentence = 1;
+			continue;
+		}
+		 
 		if ((strcmp (argv[i],"--capfile")==0 ||
 					strcmp (argv[i],"-caf")==0)
 				&& i<argc-1)

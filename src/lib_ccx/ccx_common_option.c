@@ -24,7 +24,6 @@ void init_options (struct ccx_s_options *options)
 	options->settings_608.screens_to_process = -1;
 	options->settings_608.default_color = COL_TRANSPARENT; // Defaults to transparant/no-color.
 
-	/* Credit stuff */
 	options->extract = 1; // Extract 1st field only (primary language)
 	options->cc_channel = 1; // Channel we want to dump in srt mode
 	options->binary_concat=1; // Disabled by -ve or --videoedited
@@ -33,6 +32,7 @@ void init_options (struct ccx_s_options *options)
 	options->gui_mode_reports=0; // If 1, output in stderr progress updates so the GUI can grab them
 	options->no_progress_bar=0; // If 1, suppress the output of the progress to stdout
 	options->enc_cfg.sentence_cap =0 ; // FIX CASE? = Fix case?
+	options->enc_cfg.splitbysentence = 0; // Split text into complete sentences and prorate time?
 	options->sentence_cap_file=NULL; // Extra words file?
 	options->live_stream=0; // 0 -> A regular file
 	options->messages_target=1; // 1=stdout
@@ -142,6 +142,8 @@ void init_options (struct ccx_s_options *options)
 	// Prepare time structures
 	init_boundary_time (&options->extraction_start);
 	init_boundary_time (&options->extraction_end);
+
+	/* Credit stuff */
 	init_boundary_time (&options->enc_cfg.startcreditsnotbefore);
 	init_boundary_time (&options->enc_cfg.startcreditsnotafter);
 	init_boundary_time (&options->enc_cfg.startcreditsforatleast);
