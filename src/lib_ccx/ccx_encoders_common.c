@@ -868,54 +868,53 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 		{
 			char *token = NULL;
 			token = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);
-			while (token) //Token is the line which we are currently writing
+			if (context->transcript_settings->showStartTime)
 			{
+				char buf1[80];
+				if (context->transcript_settings->relativeTimestamp)
+				{
+					millis_to_date(start_time + context->subs_delay, buf1, context->date_format, context->millis_separator);
+					fdprintf(context->out->fh, "%s|", buf1);
+				}
+				else
+				{
+					mstotime(start_time + context->subs_delay, &h1, &m1, &s1, &ms1);
+					time_t start_time_int = (start_time + context->subs_delay) / 1000;
+					int start_time_dec = (start_time + context->subs_delay) % 1000;
+					struct tm *start_time_struct = gmtime(&start_time_int);
+					strftime(buf1, sizeof(buf1), "%Y%m%d%H%M%S", start_time_struct);
+					fdprintf(context->out->fh, "%s%c%03d|", buf1,context->millis_separator,start_time_dec);
+				}
+			}
 
-				if (context->transcript_settings->showStartTime)
+			if (context->transcript_settings->showEndTime)
+			{
+				char buf2[80];
+				if (context->transcript_settings->relativeTimestamp)
 				{
-					char buf1[80];
-					if (context->transcript_settings->relativeTimestamp)
-					{
-						millis_to_date(start_time + context->subs_delay, buf1, context->date_format, context->millis_separator);
-						fdprintf(context->out->fh, "%s|", buf1);
-					}
-					else
-					{
-						mstotime(start_time + context->subs_delay, &h1, &m1, &s1, &ms1);
-						time_t start_time_int = (start_time + context->subs_delay) / 1000;
-						int start_time_dec = (start_time + context->subs_delay) % 1000;
-						struct tm *start_time_struct = gmtime(&start_time_int);
-						strftime(buf1, sizeof(buf1), "%Y%m%d%H%M%S", start_time_struct);
-						fdprintf(context->out->fh, "%s%c%03d|", buf1,context->millis_separator,start_time_dec);
-					}
+					millis_to_date(end_time, buf2, context->date_format, context->millis_separator);
+					fdprintf(context->out->fh, "%s|", buf2);
 				}
+				else
+				{
+					time_t end_time_int = end_time / 1000;
+					int end_time_dec = end_time % 1000;
+					struct tm *end_time_struct = gmtime(&end_time_int);
+					strftime(buf2, sizeof(buf2), "%Y%m%d%H%M%S", end_time_struct);
+					fdprintf(context->out->fh, "%s%c%03d|", buf2,context->millis_separator,end_time_dec);
+				}
+			}
+			if (context->transcript_settings->showCC)
+			{
+				fdprintf(context->out->fh,"%s|",language[sub->lang_index]);
+			}
+			if (context->transcript_settings->showMode)
+			{
+				fdprintf(context->out->fh,"DVB|");
+			}
 
-				if (context->transcript_settings->showEndTime)
-				{
-					char buf2[80];
-					if (context->transcript_settings->relativeTimestamp)
-					{
-						millis_to_date(end_time, buf2, context->date_format, context->millis_separator);
-						fdprintf(context->out->fh, "%s|", buf2);
-					}
-					else
-					{
-						time_t end_time_int = end_time / 1000;
-						int end_time_dec = end_time % 1000;
-						struct tm *end_time_struct = gmtime(&end_time_int);
-						strftime(buf2, sizeof(buf2), "%Y%m%d%H%M%S", end_time_struct);
-						fdprintf(context->out->fh, "%s%c%03d|", buf2,context->millis_separator,end_time_dec);
-					}
-				}
-				if (context->transcript_settings->showCC)
-				{
-					fdprintf(context->out->fh,"%s|",language[sub->lang_index]);
-				}
-				if (context->transcript_settings->showMode)
-				{
-					fdprintf(context->out->fh,"DVB|");
-				}
-
+			while(token)
+			{
 				char *newline_pos = strstr(token, context->encoded_crlf);
 				if(!newline_pos)
 				{
@@ -930,10 +929,11 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 						token++;
 					}
 					token+=context->encoded_crlf_length;
-					/*Token now points to the text of the next line*/
+					fdprintf(context->out->fh,"%c", ' ');
 				}
-				write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 			}
+
+			write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 
 		}
 	}
