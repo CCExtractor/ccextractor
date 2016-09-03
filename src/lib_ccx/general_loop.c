@@ -652,7 +652,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		dec_ctx->in_bufferdatatype = CCX_PES;
 		got = process_m2v (dec_ctx, data_node->buffer, data_node->len, dec_sub);
 	}
-	else if (data_node->bufferdatatype = CCX_DVD_SUBTITLE)
+	else if (data_node->bufferdatatype == CCX_DVD_SUBTITLE)
 	{	
 		if(dec_ctx-> is_alloc == 0)
 		{
