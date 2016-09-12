@@ -8,7 +8,6 @@ SRC_CCX="$(find ../src/lib_ccx/ -name '*.c')"
 SRC_GPAC="$(find ../src/gpacmp4/ -name '*.c')"
 SRC_HASH="$(find ../src/lib_hash/ -name '*.c')"
 SRC_PROTOBUF="$(find ../src/protobuf-c/ -name '*.c')"
-protobuf-c
 BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF"
 BLD_LINKER="-lm -zmuldefs -l tesseract -l lept"
 
