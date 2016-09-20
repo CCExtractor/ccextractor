@@ -734,8 +734,8 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 					ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS Notice: Aspect ratio info, start line=%u, end line=%u\n", ar_start, ar_end);
 					ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS Notice: Aspect ratio info, active picture height=%u, ratio=%f\n", active_picture_height, aspect_ratio);
 				}
-
 			}
+			break;
 		case XDS_TYPE_PROGRAM_DESC_1:
 		case XDS_TYPE_PROGRAM_DESC_2:
 		case XDS_TYPE_PROGRAM_DESC_3:

@@ -24,6 +24,14 @@ typedef struct ccx_dtvcc_writer_ctx
 	iconv_t cd;
 } ccx_dtvcc_writer_ctx;
 
+typedef struct ccx_sbs_utf8_character
+{
+	int32_t ch;
+	LLONG ts;
+	char encoded[4];
+	int enc_len;
+} ccx_sbs_utf8_character;
+
 /**
  * Context of encoder, This structure gives single interface
  * to all encoder
@@ -68,7 +76,7 @@ struct encoder_ctx
 	struct ccx_encoders_transcript_format *transcript_settings; // Keeps the settings for generating transcript output files.
 	int no_bom;
 	int sentence_cap ; // FIX CASE? = Fix case?
-	int splitbysentence; 
+
 	int trim_subs; // "    Remove spaces at sides?    "
 	int autodash; // Add dashes (-) before each speaker automatically?
 	int no_font_color;
@@ -107,7 +115,16 @@ struct encoder_ctx
 	int program_number;
 	struct list_head list;
 
-	/* Buffers for the line-by-line implementation. */
+	/* split-by-sentence stuff */
+	int splitbysentence;
+	LLONG sbs_newblock_start_time; // Used by the split-by-sentence code to know when the current block starts...
+	LLONG sbs_newblock_end_time; // ... and ends
+	ccx_sbs_utf8_character *sbs_newblock;
+	int sbs_newblock_capacity;
+	int sbs_newblock_size;
+	ccx_sbs_utf8_character *sbs_buffer;
+	int sbs_buffer_capacity;
+	int sbs_buffer_size;
 
 };
 

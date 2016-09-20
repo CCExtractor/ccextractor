@@ -1002,8 +1002,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	int bread = 0; // Bytes read
 	LLONG result;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
-
-
+		
 	// As BUFSIZE is a macro this is just a reminder
 	if (BUFSIZE < (3*0xFFFF + 10))
 		fatal (CCX_COMMON_EXIT_BUG_BUG, "BUFSIZE too small for RCWT caption block.\n");
@@ -1037,6 +1036,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	}
 
 	dec_ctx = update_decoder_list(ctx);
+	dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
 	if (parsebuf[6] == 0 && parsebuf[7] == 2)
 	{
 		dec_ctx->codec = CCX_CODEC_TELETEXT;
@@ -1110,7 +1110,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 			set_fts(dec_ctx->timing); // Now set the FTS related variables
 
 			for (int j=0; j<cbcount*3; j=j+3)
-			{
+			{				
 				do_cb(dec_ctx, parsebuf+j, dec_sub);
 			}
 		}
