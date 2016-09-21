@@ -188,6 +188,14 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *context);
 
+int write_cc_bitmap_to_sentence_buffer(struct cc_subtitle *sub, struct encoder_ctx *context);
+
+int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context);
+int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context);
+void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context, int line_number);
+
+
+
 
 void set_encoder_last_displayed_subs_ms(struct encoder_ctx *ctx, LLONG last_displayed_subs_ms);
 void set_encoder_subs_delay(struct encoder_ctx *ctx, LLONG subs_delay);
