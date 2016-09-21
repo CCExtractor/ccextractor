@@ -1,4 +1,6 @@
-enum {false, true};
+//enum {false, true};
+#define true 1
+#define false 0
 
 const utf8proc_uint16_t utf8proc_sequences[] = {
   97, 98, 99, 100, 101, 102, 103, 
