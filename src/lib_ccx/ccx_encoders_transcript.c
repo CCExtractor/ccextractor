@@ -21,7 +21,6 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 	struct cc_bitmap* rect;
 
 	unsigned h1, m1, s1, ms1;
-	unsigned h2, m2, s2, ms2;
 
 	LLONG start_time, end_time;
 

@@ -88,7 +88,7 @@ int write_cc_bitmap_to_sentence_buffer(struct cc_subtitle *sub, struct encoder_c
 				//TODO: Deal with ls < 0
 				if (!uc) // End of string
 					break; 
-				printf("%3d | %08X | %c %c %c %c\n", ls, uc, ((uc & 0xFF000000) >> 24),  ((uc & 0xFF0000) >> 16), 
+				printf("%3ld | %08X | %c %c %c %c\n", ls, uc, ((uc & 0xFF000000) >> 24),  ((uc & 0xFF0000) >> 16), 
 					((uc & 0xFF00) >> 8), ( uc & 0xFF));				
 				sbsc.ch = uc;
 				sbsc.encoded[0] = 0; sbsc.encoded[1] = 0; sbsc.encoded[2] = 0; sbsc.encoded[3] = 0;

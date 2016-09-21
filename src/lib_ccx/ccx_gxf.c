@@ -510,7 +510,7 @@ static int parse_mpeg525_track_desc(struct ccx_demuxer *demux, int len)
 	int ret = CCX_OK;
 
 	/* Auxillary Information */
-	char auxi_info[8];
+	// char auxi_info[8];
 	debug("Mpeg 525 %d\n",len);
 	while (len > 2)
 	{

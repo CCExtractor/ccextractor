@@ -193,7 +193,7 @@ int write_cc_bitmap_to_sentence_buffer(struct cc_subtitle *sub, struct encoder_c
 int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context);
 void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context, int line_number);
-
+int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context);
 
 
 
