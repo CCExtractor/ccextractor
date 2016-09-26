@@ -1125,6 +1125,11 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			case CCX_OF_SIMPLE_XML:
 				wrote_something = write_cc_bitmap_as_simplexml(sub, context);
 				break;
+#ifdef WITH_LIBCURL
+			case CCX_OF_CURL:
+				wrote_something = write_cc_bitmap_as_libcurl(sub, context);
+				break;
+#endif
 			default:
 				break;
 			}

@@ -138,6 +138,9 @@ void init_options (struct ccx_s_options *options)
 	options->translate_key = NULL;
 	options->translate_langs = NULL;
 #endif //ENABLE_SHARING
+#ifdef WITH_LIBCURL
+	options->curlposturl = NULL;
+#endif
 
 	// Prepare time structures
 	init_boundary_time (&options->extraction_start);

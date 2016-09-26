@@ -351,7 +351,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	}
 
 	extension = get_file_extension(ccx_options.enc_cfg.write_format);
-	if(!extension)
+	if (!extension && ccx_options.enc_cfg.write_format != CCX_OF_CURL)
 		return NULL;
 
 	if(ctx->multiprogram == CCX_FALSE)

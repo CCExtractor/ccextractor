@@ -189,6 +189,7 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *context);
 
 int write_cc_bitmap_to_sentence_buffer(struct cc_subtitle *sub, struct encoder_ctx *context);
+int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *context);
 
 int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context);

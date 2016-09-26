@@ -315,7 +315,8 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 		setting->output_format==CCX_OF_SPUPNG ||
 		setting->output_format==CCX_OF_SIMPLE_XML ||
 		setting->output_format==CCX_OF_G608 ||
-		setting->output_format==CCX_OF_NULL)
+		setting->output_format==CCX_OF_NULL ||
+		setting->output_format==CCX_OF_CURL)
 		ctx->writedata = process608;
 	else
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "Invalid Write Format Selected");

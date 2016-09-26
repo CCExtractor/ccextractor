@@ -755,6 +755,9 @@
     <ClCompile Include="..\src\utf8proc\utf8proc.c">
       <Filter>Source Files\utf8proc</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_curl.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\lib_ccx\ccx_sub_entry_message.proto">

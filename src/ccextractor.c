@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 #endif
-	// Initialize libraries
+	// Initialize CCExtractor libraries
 	ctx = init_libraries(&ccx_options);
 	if (!ctx && errno == ENOMEM)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
@@ -67,6 +67,7 @@ int main(int argc, char *argv[])
 		fatal (CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to create Output File\n");
 	else if (!ctx)
 		fatal (EXIT_NOT_CLASSIFIED, "Unable to create Library Context %d\n",errno);
+
 
 	int show_myth_banner = 0;
 

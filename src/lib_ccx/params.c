@@ -221,6 +221,10 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
 		opt->write_format=CCX_OF_SIMPLE_XML;
 	else if (strcmp (format,"g608")==0)
 		opt->write_format=CCX_OF_G608;
+#ifdef WITH_LIBCURL
+	else if (strcmp(format, "curl") == 0)
+		opt->write_format = CCX_OF_CURL;
+#endif
 	else
 		fatal (EXIT_MALFORMED_PARAMETER, "Unknown output file format: %s\n", format);
 }
@@ -2071,6 +2075,15 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			i++;
 			continue;
 		}
+#ifdef WITH_LIBCURL
+		if (strcmp (argv[i],"-curlposturl")==0 && i<argc-1)
+		{
+			opt->curlposturl = argv[i + 1];
+			i++;
+			continue;
+		}
+#endif
+
 #ifdef ENABLE_SHARING
 		if (!strcmp(argv[i], "-enable-sharing")) {
 			opt->sharing_enabled = 1;
@@ -2188,6 +2201,16 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		mprint("Note: Output format is WebVTT, forcing UTF-8");
 		opt->enc_cfg.encoding = CCX_ENC_UTF_8;
 	}
+	if (opt->write_format==CCX_OF_CURL && opt->curlposturl==NULL)
+	{
+		print_error(opt->gui_mode_reports, "You must pass a URL (-curlposturl) if output format is curl");
+		return EXIT_INCOMPATIBLE_PARAMETERS;
+	}
+	if (opt->write_format != CCX_OF_CURL && opt->curlposturl != NULL)
+	{
+		print_error(opt->gui_mode_reports, "-curlposturl requires that the format is curl");
+		return EXIT_INCOMPATIBLE_PARAMETERS;
+	}
 
 	/* Initialize some Encoder Configuration */
 	opt->enc_cfg.extract = opt->extract;
@@ -2213,5 +2236,8 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		opt->enc_cfg.output_filename = strdup(opt->output_filename);
 	else
 		opt->enc_cfg.output_filename = NULL;
+#ifdef WITH_LIBCURL
+	opt->enc_cfg.curlposturl = opt->curlposturl;
+#endif
 	return EXIT_OK;
 }

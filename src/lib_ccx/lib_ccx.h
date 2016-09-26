@@ -19,6 +19,11 @@
 
 #include "networking.h"
 #include "avc_functions.h"
+
+#ifdef WITH_LIBCURL
+// #include <curl/curl.h>
+#endif
+
 //#include "ccx_decoders_708.h"
 
 /* Report information */
