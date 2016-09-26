@@ -73,6 +73,7 @@ struct encoder_ctx
 	/* Flag saying BOM to be written in each output file */
 	enum ccx_encoding_type encoding;
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
+	int generates_file;
 	struct ccx_encoders_transcript_format *transcript_settings; // Keeps the settings for generating transcript output files.
 	int no_bom;
 	int sentence_cap ; // FIX CASE? = Fix case?

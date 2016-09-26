@@ -734,7 +734,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	ctx->force_flush = cfg->force_flush;
 	ctx->ucla = cfg->ucla;
 
-	if(cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE)
+	if(ctx->generates_file && cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE)
 	{
 		if (cfg->output_filename != NULL)
 		{
@@ -885,6 +885,12 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->send_to_srv = opt->send_to_srv;
 	ctx->multiple_files = opt->multiple_files;
 	ctx->first_input_file = opt->first_input_file;
+
+	if (opt->write_format == CCX_OF_NULL || opt->write_format == CCX_OF_CURL)
+		ctx->generates_file = 0;
+	else
+		ctx->generates_file = 1;
+
 	ret = init_output_ctx(ctx, opt);
 	if (ret != EXIT_OK)
 	{
@@ -904,6 +910,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 	ctx->encoding = opt->encoding;
 	ctx->write_format = opt->write_format;
+
 	ctx->transcript_settings = &opt->transcript_settings;
 	ctx->no_bom = opt->no_bom;
 	ctx->sentence_cap = opt->sentence_cap;	
