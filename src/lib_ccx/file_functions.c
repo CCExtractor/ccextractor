@@ -391,6 +391,8 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 					i = net_tcp_read(ctx->infd, (char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep);
 				else
 					i = recvfrom(ctx->infd,(char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, NULL, NULL);
+				if (terminate_asap) /* Looks like receiving a signal here will trigger a -1, so check that first */
+					break;
 				if (i == -1)
 					fatal (EXIT_READ_ERROR, "Error reading input stream!\n");
 				if (i == 0)
