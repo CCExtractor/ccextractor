@@ -13,13 +13,21 @@ License: GPL 2.0
 #include "hardsubx.h"
 #include "ccx_share.h"
 #ifdef WITH_LIBCURL
-
 CURL *curl;
 CURLcode res;
-
 #endif
 
 struct lib_ccx_ctx *signal_ctx;
+
+volatile int terminate_asap = 0;
+
+void sigterm_handle()
+{
+	mprint("Received SIGTERM, terminating as soon as possible.");
+	terminate_asap = 1;
+}
+
+
 void sigint_handler()
 {
 	if (ccx_options.print_file_reports)
