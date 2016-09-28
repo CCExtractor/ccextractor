@@ -12,6 +12,9 @@
 #include "ccx_encoders_helpers.h"
 #include "utf8proc.h"
 
+extern  CURL *curl;
+extern  CURLcode res;
+
 int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
 	int ret = 0;
@@ -56,14 +59,23 @@ int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *cont
 			mstotime(ms_start, &h1, &m1, &s1, &ms1);
 			mstotime(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 			context->srt_counter++;
-			sprintf(timeline, "group_id=ccextractordev&start_time=%llu&end_time=%llu&lang=en", ms_start, ms_end);
+			sprintf(timeline, "group_id=ccextractordev&start_time=%lld&end_time=%lld&lang=en", ms_start, ms_end);
 			char *curlline = NULL;
 			curlline = str_reallocncat(curlline, timeline);
-			curlline = str_reallocncat(curlline, "&payload="); 
-			curlline = str_reallocncat(curlline, str);
+			curlline = str_reallocncat(curlline, "&payload=");
+			char *urlencoded=curl_easy_escape (curl, str, 0);
+			curlline = str_reallocncat(curlline,urlencoded);
+			curl_free (urlencoded);
 			mprint("%s", curlline);
 
+			curl_easy_setopt(curl, CURLOPT_URL, "127.0.0.1:3000/frame/");
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, curlline);
 
+			res = curl_easy_perform(curl);
+			/* Check for errors */
+			if(res != CURLE_OK)
+				mprint("curl_easy_perform() failed: %s\n",
+				curl_easy_strerror(res));
 		}
 		freep(&str);
 	}
