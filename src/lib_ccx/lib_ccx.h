@@ -246,7 +246,7 @@ void timestamp_to_srttime(uint64_t timestamp, char *buffer);
 void timestamp_to_smptetttime(uint64_t timestamp, char *buffer);
 int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
 void millis_to_date (uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator);
-void create_signal(void);
+void create_signal(int sigtype);
 void signal_handler(int sig_type);
 struct encoder_ctx* change_filename(struct encoder_ctx*);
 #ifndef _WIN32
@@ -280,7 +280,7 @@ extern int firstcall;
 extern unsigned char tspacket[188];
 extern unsigned char *last_pat_payload;
 extern unsigned last_pat_length;
-
+extern volatile int terminate_asap;
 
 #define HAUPPAGE_CCPID	1003 // PID for CC's in some Hauppauge recordings
 
