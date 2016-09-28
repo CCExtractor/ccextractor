@@ -21,14 +21,14 @@ struct lib_ccx_ctx *signal_ctx;
 
 volatile int terminate_asap = 0;
 
-void sigterm_handler()
+void sigterm_handler(int sig)
 {
-	mprint("Received SIGTERM, terminating as soon as possible.");
+	printf("Received SIGTERM, terminating as soon as possible.\n");
 	terminate_asap = 1;
 }
 
 
-void sigint_handler()
+void sigint_handler(int sig)
 {
 	if (ccx_options.print_file_reports)
 		print_file_report(signal_ctx);
@@ -143,7 +143,6 @@ int main(int argc, char *argv[])
 	m_signal(SIGINT, sigint_handler);
 	m_signal(SIGTERM, sigterm_handler);
 	create_signal(SIGINT);
-	create_signal(SIGTERM);
 #endif
 	terminate_asap = 0;
 
