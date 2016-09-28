@@ -59,7 +59,7 @@ int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *cont
 			mstotime(ms_start, &h1, &m1, &s1, &ms1);
 			mstotime(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 			context->srt_counter++;
-			sprintf(timeline, "group_id=ccextractordev&start_time=%lld&end_time=%lld&lang=en", ms_start, ms_end);
+			sprintf(timeline, "group_id=ccextractordev&start_time=%" PRIu64 "&end_time=%" PRIu64 "&lang=en", ms_start, ms_end);
 			char *curlline = NULL;
 			curlline = str_reallocncat(curlline, timeline);
 			curlline = str_reallocncat(curlline, "&payload=");
