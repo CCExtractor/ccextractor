@@ -12,21 +12,19 @@ License: GPL 2.0
 #include "ccx_mp4.h"
 #include "hardsubx.h"
 #include "ccx_share.h"
+#ifdef WITH_LIBCURL
+
+CURL *curl;
+CURLcode res;
+
+#endif
 
 struct lib_ccx_ctx *signal_ctx;
-volatile int terminate_asap = 0;
-
-void sigterm_handle()
-{
-	mprint("Received SIGTERM, terminating as soon as possible.");
-	terminate_asap = 1;
-}
-
 void sigint_handler()
 {
 	if (ccx_options.print_file_reports)
 		print_file_report(signal_ctx);
-	
+
 	exit(EXIT_SUCCESS);
 }
 
@@ -76,6 +74,17 @@ int main(int argc, char *argv[])
 	else if (!ctx)
 		fatal (EXIT_NOT_CLASSIFIED, "Unable to create Library Context %d\n",errno);
 
+#ifdef WITH_LIBCURL
+	curl_global_init(CURL_GLOBAL_ALL);
+ 
+  	/* get a curl handle */ 
+  	curl = curl_easy_init();
+	if (!curl)
+	{
+		curl_global_cleanup(); // Must be done even on init fail
+		fatal (EXIT_NOT_CLASSIFIED, "Unable to init curl.");
+	}
+#endif
 
 	int show_myth_banner = 0;
 
@@ -124,7 +133,7 @@ int main(int argc, char *argv[])
 #ifndef _WIN32
 	signal_ctx = ctx;
 	m_signal(SIGINT, sigint_handler);
-	create_signal(SIGINT); // Test our handler
+	create_signal();
 #endif
 
 #ifdef ENABLE_SHARING
@@ -379,6 +388,13 @@ int main(int argc, char *argv[])
 		mprint ("code in the MythTV's branch. Please report results to the address above. If\n");
 		mprint ("something is broken it will be fixed. Thanks\n");		
 	}
+
+#ifdef CURL
+	if (curl)
+		curl_easy_cleanup(curl);
+  	curl_global_cleanup();
+#endif
 	dinit_libraries(&ctx);
+
 	return EXIT_OK;
 }
