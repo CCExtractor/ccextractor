@@ -318,6 +318,8 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 
 		while ((!eof || ccx_options.live_stream) && bytes)
 		{
+			if (terminate_asap)
+				break;
 			if (eof)
 			{
 				// No more data available inmediately, we sleep a while to give time
@@ -426,6 +428,8 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 					((i = read(ctx->infd, buffer, bytes)) != 0 || ccx_options.live_stream ||
 					 (ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied))))
 			{
+				if (terminate_asap)
+					break;
 				if( i == -1)
 					fatal (EXIT_READ_ERROR, "Error reading input file!\n");
 				else if (i == 0)
@@ -442,6 +446,8 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 		while (bytes != 0 && ctx->infd != -1)
 		{
 			LLONG op, np;
+			if (terminate_asap)
+				break;
 			op = LSEEK (ctx->infd, 0, SEEK_CUR); // Get current pos
 			if (op + bytes < 0) // Would mean moving beyond start of file: Not supported
 				return 0;
