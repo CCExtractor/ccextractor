@@ -45,6 +45,9 @@ struct encoder_cfg
 	int autodash; // Add dashes (-) before each speaker automatically?
 	int trim_subs; // "    Remove spaces at sides?    "
 	int sentence_cap ; // FIX CASE? = Fix case?
+	int splitbysentence; // Split text into complete sentences and prorate time?
+	char *curlposturl; // If out=curl, where do we send the data to?
+
 	int with_semaphore; // Write a .sem file on file open and delete it on close?
 	/* Credit stuff */
 	char *start_credits_text;
@@ -83,7 +86,6 @@ struct ccx_s_options // Options from user parameters
 	int notypesetting;
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
 	int print_file_reports;
-
 
 	ccx_decoder_608_settings settings_608; //  Contains the settings for the 608 decoder.
 	ccx_decoder_dtvcc_settings settings_dtvcc; //Same for 708 decoder
@@ -161,6 +163,20 @@ struct ccx_s_options // Options from user parameters
 	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
 	int multiprogram;
 	int out_interval;
+#ifdef WITH_LIBCURL
+	char *curlposturl;
+#endif
+
+
+#ifdef ENABLE_SHARING
+	//CC sharing
+	int sharing_enabled;
+	char *sharing_url;
+	//Translating
+	int translate_enabled;
+	char *translate_langs;
+	char *translate_key;
+#endif
 };
 
 extern struct ccx_s_options ccx_options;

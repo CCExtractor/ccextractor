@@ -17,15 +17,13 @@ char *get_ocr_text_simple(struct lib_hardsubx_ctx *ctx, PIX *image)
 	TessBaseAPISetImage2(ctx->tess_handle, image);
 	if(TessBaseAPIRecognize(ctx->tess_handle, NULL) != 0)
 	{	
-		//TODO: Display error message
-		printf("Error in Tesseract recognition\n");
+		mprint("Error in Tesseract recognition, skipping frame\n");
 		return NULL;
 	}
 
 	if((text_out = TessBaseAPIGetUTF8Text(ctx->tess_handle)) == NULL)
 	{
-		//TODO: Display error message
-		printf("Error getting text\n");
+		mprint("Error getting text, skipping frame\n");
 	}
 	return text_out;
 }
@@ -37,8 +35,7 @@ char *get_ocr_text_wordwise(struct lib_hardsubx_ctx *ctx, PIX *image)
 	TessBaseAPISetImage2(ctx->tess_handle, image);
 	if(TessBaseAPIRecognize(ctx->tess_handle, NULL) != 0)
 	{	
-		//TODO: Display error message
-		printf("Error in Tesseract recognition\n");
+		mprint("Error in Tesseract recognition, skipping word\n");
 		return NULL;
 	}
 
@@ -128,8 +125,7 @@ char *get_ocr_text_letterwise(struct lib_hardsubx_ctx *ctx, PIX *image)
 	TessBaseAPISetImage2(ctx->tess_handle, image);
 	if(TessBaseAPIRecognize(ctx->tess_handle, NULL) != 0)
 	{	
-		//TODO: Display error message
-		printf("Error in Tesseract recognition\n");
+		mprint("Error in Tesseract recognition, skipping symbol\n");
 		return NULL;
 	}
 
@@ -166,15 +162,21 @@ char *get_ocr_text_simple_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, fl
 	TessBaseAPISetImage2(ctx->tess_handle, image);
 	if(TessBaseAPIRecognize(ctx->tess_handle, NULL) != 0)
 	{	
-		//TODO: Display error message
-		printf("Error in Tesseract recognition\n");
+		mprint("Error in Tesseract recognition, skipping frame\n");
 		return NULL;
+	}
+
+	if((text_out = TessBaseAPIGetUTF8Text(ctx->tess_handle)) == NULL)
+	{
+		mprint("Error getting text, skipping frame\n");
 	}
 
 	int conf = TessBaseAPIMeanTextConf(ctx->tess_handle);
 
 	if(conf < threshold)
 		return NULL;
+
+	ctx->cur_conf = (float)conf;
 
 	return text_out;
 }
@@ -186,8 +188,7 @@ char *get_ocr_text_wordwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, 
 	TessBaseAPISetImage2(ctx->tess_handle, image);
 	if(TessBaseAPIRecognize(ctx->tess_handle, NULL) != 0)
 	{	
-		//TODO: Display error message
-		printf("Error in Tesseract recognition\n");
+		mprint("Error in Tesseract recognition, skipping word\n");
 		return NULL;
 	}
 
@@ -195,6 +196,8 @@ char *get_ocr_text_wordwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, 
 	TessPageIteratorLevel level = RIL_WORD;
 
 	int prev_ital = 0;
+	float total_conf = 0.0;
+	int num_words = 0;
 
 	if(it!=0)
 	{
@@ -206,6 +209,8 @@ char *get_ocr_text_wordwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, 
 			float conf = TessResultIteratorConfidence(it,level);
 			if(conf < threshold)
 				continue;
+			total_conf+=conf;
+			num_words++;
 			if(text_out == NULL)
 			{
 				if(ctx->detect_italics)
@@ -268,6 +273,10 @@ char *get_ocr_text_wordwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, 
 		strcat(text_out, "</i>");
 	}
 
+	if(num_words>0)
+		total_conf = total_conf/num_words;
+	ctx->cur_conf = total_conf;
+
 	TessResultIteratorDelete(it);
 
 	return text_out;
@@ -280,13 +289,15 @@ char *get_ocr_text_letterwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image
 	TessBaseAPISetImage2(ctx->tess_handle, image);
 	if(TessBaseAPIRecognize(ctx->tess_handle, NULL) != 0)
 	{	
-		//TODO: Display error message
-		printf("Error in Tesseract recognition\n");
+		mprint("Error in Tesseract recognition, skipping symbol\n");
 		return NULL;
 	}
 
 	TessResultIterator *it = TessBaseAPIGetIterator(ctx->tess_handle);
 	TessPageIteratorLevel level = RIL_SYMBOL;
+
+	float total_conf = 0.0;
+	int num_words = 0;
 
 	if(it!=0)
 	{
@@ -298,6 +309,8 @@ char *get_ocr_text_letterwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image
 			float conf = TessResultIteratorConfidence(it,level);
 			if(conf < threshold)
 				continue;
+			total_conf+=conf;
+			num_words++;
 			if(text_out==NULL)
 			{
 				text_out = strdup(letter);
@@ -308,6 +321,10 @@ char *get_ocr_text_letterwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image
 			free(letter);
 		} while(TessPageIteratorNext((TessPageIterator *)it, level));
 	}
+
+	if(num_words>0)
+		total_conf = total_conf/num_words;
+	ctx->cur_conf = total_conf;
 
 	TessResultIteratorDelete(it);
 

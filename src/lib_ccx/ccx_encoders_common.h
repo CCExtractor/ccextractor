@@ -24,6 +24,14 @@ typedef struct ccx_dtvcc_writer_ctx
 	iconv_t cd;
 } ccx_dtvcc_writer_ctx;
 
+typedef struct ccx_sbs_utf8_character
+{
+	int32_t ch;
+	LLONG ts;
+	char encoded[4];
+	int enc_len;
+} ccx_sbs_utf8_character;
+
 /**
  * Context of encoder, This structure gives single interface
  * to all encoder
@@ -65,9 +73,11 @@ struct encoder_ctx
 	/* Flag saying BOM to be written in each output file */
 	enum ccx_encoding_type encoding;
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
+	int generates_file;
 	struct ccx_encoders_transcript_format *transcript_settings; // Keeps the settings for generating transcript output files.
 	int no_bom;
 	int sentence_cap ; // FIX CASE? = Fix case?
+
 	int trim_subs; // "    Remove spaces at sides?    "
 	int autodash; // Add dashes (-) before each speaker automatically?
 	int no_font_color;
@@ -105,6 +115,18 @@ struct encoder_ctx
 
 	int program_number;
 	struct list_head list;
+
+	/* split-by-sentence stuff */
+	int splitbysentence;
+	LLONG sbs_newblock_start_time; // Used by the split-by-sentence code to know when the current block starts...
+	LLONG sbs_newblock_end_time; // ... and ends
+	ccx_sbs_utf8_character *sbs_newblock;
+	int sbs_newblock_capacity;
+	int sbs_newblock_size;
+	ccx_sbs_utf8_character *sbs_buffer;
+	int sbs_buffer_capacity;
+	int sbs_buffer_size;
+
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048
@@ -166,6 +188,15 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *context);
+
+int write_cc_bitmap_to_sentence_buffer(struct cc_subtitle *sub, struct encoder_ctx *context);
+int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *context);
+
+int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context);
+int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context);
+void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context, int line_number);
+int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context);
+
 
 
 void set_encoder_last_displayed_subs_ms(struct encoder_ctx *ctx, LLONG last_displayed_subs_ms);

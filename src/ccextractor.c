@@ -11,8 +11,23 @@ License: GPL 2.0
 #include "ccx_common_option.h"
 #include "ccx_mp4.h"
 #include "hardsubx.h"
+#include "ccx_share.h"
+#ifdef WITH_LIBCURL
+CURL *curl;
+CURLcode res;
+#endif
 
 struct lib_ccx_ctx *signal_ctx;
+
+volatile int terminate_asap = 0;
+
+void sigterm_handler()
+{
+	mprint("Received SIGTERM, terminating as soon as possible.");
+	terminate_asap = 1;
+}
+
+
 void sigint_handler()
 {
 	if (ccx_options.print_file_reports)
@@ -54,7 +69,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 #endif
-	// Initialize libraries
+	// Initialize CCExtractor libraries
 	ctx = init_libraries(&ccx_options);
 	if (!ctx && errno == ENOMEM)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
@@ -66,6 +81,18 @@ int main(int argc, char *argv[])
 		fatal (CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to create Output File\n");
 	else if (!ctx)
 		fatal (EXIT_NOT_CLASSIFIED, "Unable to create Library Context %d\n",errno);
+
+#ifdef WITH_LIBCURL
+	curl_global_init(CURL_GLOBAL_ALL);
+ 
+  	/* get a curl handle */ 
+  	curl = curl_easy_init();
+	if (!curl)
+	{
+		curl_global_cleanup(); // Must be done even on init fail
+		fatal (EXIT_NOT_CLASSIFIED, "Unable to init curl.");
+	}
+#endif
 
 	int show_myth_banner = 0;
 
@@ -114,11 +141,34 @@ int main(int argc, char *argv[])
 #ifndef _WIN32
 	signal_ctx = ctx;
 	m_signal(SIGINT, sigint_handler);
-	create_signal();
+	m_signal(SIGTERM, sigterm_handler);
+	create_signal(sigint_handler);
+	create_signal(sigterm_handler);
 #endif
+	terminate_asap = 0;
+
+#ifdef ENABLE_SHARING
+	if (ccx_options.translate_enabled && ctx->num_input_files > 1)
+	{
+		mprint("[share] WARNING: simultaneous translation of several input files is not supported yet\n");
+		ccx_options.translate_enabled = 0;
+		ccx_options.sharing_enabled = 0;
+	}
+	if (ccx_options.translate_enabled)
+	{
+		mprint("[share] launching translate service\n");
+		ccx_share_launch_translator(ccx_options.translate_langs, ccx_options.translate_key);
+	}
+#endif //ENABLE_SHARING
+
 	while (switch_to_next_file(ctx, 0))
 	{
 		prepare_for_new_file(ctx);
+#ifdef ENABLE_SHARING
+		if (ccx_options.sharing_enabled)
+			ccx_share_start(ctx->basefilename);
+#endif //ENABLE_SHARING
+
 		stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 		// Disable sync check for raw formats - they have the right timeline.
 		// Also true for bin formats, but -nosync might have created a
@@ -240,8 +290,13 @@ int main(int argc, char *argv[])
 			dec_ctx->timing->fts_now = 0;
 			dec_ctx->timing->fts_max = 0;
 		
-
-
+#ifdef ENABLE_SHARING
+			if (ccx_options.sharing_enabled)
+			{
+				ccx_share_stream_done(ctx->basefilename);
+				ccx_share_stop();
+			}
+#endif //ENABLE_SHARING
 
 		if (dec_ctx->total_pulldownframes)
 			mprint ("incl. pulldown frames:  %s  (%u frames at %.2ffps)\n",
@@ -344,6 +399,13 @@ int main(int argc, char *argv[])
 		mprint ("code in the MythTV's branch. Please report results to the address above. If\n");
 		mprint ("something is broken it will be fixed. Thanks\n");		
 	}
+
+#ifdef CURL
+	if (curl)
+		curl_easy_cleanup(curl);
+  	curl_global_cleanup();
+#endif
 	dinit_libraries(&ctx);
+
 	return EXIT_OK;
 }

@@ -31,3 +31,6 @@ windows/libs/leptonica/**
 windows/libs/tesseract/**
 windows/Release-OCR/**
 windows/Debug-OCR/**
+
+# Ctags
+*.tags*

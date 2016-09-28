@@ -4,7 +4,7 @@ CC = gcc
 SYS := $(shell gcc -dumpmachine)
 CFLAGS = -O3 -std=gnu99 -s
 INCLUDE = -I../src/gpacmp4/ -I../src/libpng -I../src/lib_hash -I../src/zlib -I../src/lib_ccx -I../src/.
-INCLUDE += -I../src/zvbi
+INCLUDE += -I../src/zvbi -I../src/utf8proc
 ALL_FLAGS = -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT
 LDFLAGS = -lm
 

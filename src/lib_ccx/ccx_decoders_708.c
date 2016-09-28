@@ -105,7 +105,8 @@ ccx_dtvcc_pen_attribs ccx_dtvcc_default_pen_attribs =
 };
 
 ccx_dtvcc_window_attribs ccx_dtvcc_predefined_window_styles[] =
-{
+{	
+	{0,0,0,0,0,0,0,0,0,0, 0}, // Dummy, unused (position 0 doesn't use the table)
 	{//1 - NTSC Style PopUp Captions
 		CCX_DTVCC_WINDOW_JUSTIFY_LEFT,
 		CCX_DTVCC_WINDOW_PD_LEFT_RIGHT,
@@ -657,7 +658,8 @@ void _dtvcc_process_character(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_symb
 				window->pen_row--;
 			break;
 		default:
-			ccx_common_logging.log_ftn("[CEA-708] _dtvcc_process_character: unhandled branch\n");
+			ccx_common_logging.log_ftn("[CEA-708] _dtvcc_process_character: unhandled branch (%02d)\n",
+				window->attribs.print_direction);
 			break;
 	}
 }
@@ -847,6 +849,21 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 	int pen_style = data[6] & 0x7;
 	int win_style = (data[6] >> 3) & 0x7;
 
+	int do_clear_window = 0;
+
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Visible: [%s]\n", visible ? "Yes" : "No");
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Priority: [%d]\n", priority);
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Row count: [%d]\n", row_count);
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Column count: [%d]\n", col_count);
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Anchor point: [%d]\n", anchor_point);
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Anchor vertical: [%d]\n", anchor_vertical);
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Anchor horizontal: [%d]\n", anchor_horizontal);
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Relative pos: [%s]\n", relative_pos ? "Yes" : "No");
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Row lock: [%s]\n", row_lock ? "Yes" : "No");
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Column lock: [%s]\n", col_lock ? "Yes" : "No");
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Pen style: [%d]\n", pen_style);
+	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Win style: [%d]\n", win_style);
+
 	/**
 	 * Korean samples have "anchor_vertical" and "anchor_horizontal" mixed up,
 	 * this seems to be an encoder issue, but we can workaround it
@@ -866,27 +883,42 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 	window->row_count = row_count;
 	window->anchor_point = anchor_point;
 	window->col_count = col_count;
-	window->pen_style = pen_style;
-	window->win_style = win_style;
 
-	if (win_style == 0) {
-		window->win_style = 1;
+	// If changing the style of an existing window delete contents
+	if (win_style > 0 && window->is_defined && window->win_style != win_style)
+		do_clear_window = 1;
+
+	/* If the window doesn't exist and win style==0 then default to win_style=1 */
+	if (win_style == 0 && !window->is_defined) {
+		win_style = 1;
 	}
-	//TODO apply static win_style preset
-	//TODO apply static pen_style preset
+	/* If the window doesn't exist and pen style==0 then default to pen_style=1 */
+	if (pen_style == 0 && !window->is_defined) {
+		pen_style = 1;
+	}
 
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Visible: [%s]\n", visible ? "Yes" : "No");
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Priority: [%d]\n", priority);
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Row count: [%d]\n", row_count);
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Column count: [%d]\n", col_count);
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Anchor point: [%d]\n", anchor_point);
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Anchor vertical: [%d]\n", anchor_vertical);
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Anchor horizontal: [%d]\n", anchor_horizontal);
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Relative pos: [%s]\n", relative_pos ? "Yes" : "No");
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Row lock: [%s]\n", row_lock ? "Yes" : "No");
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Column lock: [%s]\n", col_lock ? "Yes" : "No");
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Pen style: [%d]\n", pen_style);
-	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Win style: [%d]\n", win_style);
+	//Apply windows attribute presets 
+	if (win_style > 0 && win_style < 8)
+	
+		window->win_style = win_style; {
+		window->attribs.border_color = ccx_dtvcc_predefined_window_styles[win_style].border_color;
+		window->attribs.border_type = ccx_dtvcc_predefined_window_styles[win_style].border_type;
+		window->attribs.display_effect = ccx_dtvcc_predefined_window_styles[win_style].display_effect;
+		window->attribs.effect_direction = ccx_dtvcc_predefined_window_styles[win_style].effect_direction;
+		window->attribs.effect_speed = ccx_dtvcc_predefined_window_styles[win_style].effect_speed;
+		window->attribs.fill_color = ccx_dtvcc_predefined_window_styles[win_style].fill_color;
+		window->attribs.fill_opacity = ccx_dtvcc_predefined_window_styles[win_style].fill_opacity;
+		window->attribs.justify = ccx_dtvcc_predefined_window_styles[win_style].justify;
+		window->attribs.print_direction = ccx_dtvcc_predefined_window_styles[win_style].print_direction;
+		window->attribs.scroll_direction = ccx_dtvcc_predefined_window_styles[win_style].scroll_direction;
+		window->attribs.word_wrap = ccx_dtvcc_predefined_window_styles[win_style].word_wrap;
+	}
+		
+	if (pen_style > 0)
+	{
+		//TODO apply static pen_style preset
+		window->pen_style = pen_style;
+	}
 
 	if (!window->is_defined)
 	{
@@ -923,11 +955,10 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 			_dtvcc_window_apply_style(window, &ccx_dtvcc_predefined_window_styles[0]);
 		}
 	}
-	else
+	else	
 	{
-		// Specs unclear here: Do we need to delete the text in the existing window?
-		// We do this because one of the sample files demands it.
-		_dtvcc_window_clear_text(window);
+		if (do_clear_window)
+			_dtvcc_window_clear_text(window);
 	}
 	// ...also makes the defined windows the current window
 	dtvcc_handle_CWx_SetCurrentWindow(decoder, window_id);

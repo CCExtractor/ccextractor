@@ -30,6 +30,7 @@ char *create_outfilename(const char *basename, const char *suffix, const char *e
 int verify_crc32(uint8_t *buf, int len);
 size_t utf16_to_utf8(unsigned short utf16_char, unsigned char *out);
 LLONG change_timebase(LLONG val, struct ccx_rational cur_tb, struct ccx_rational dest_tb);
+char *str_reallocncat(char *dst, char *src);
 
 void dump (LLONG mask, unsigned char *start, int l, unsigned long abs_start, unsigned clear_high_bit);
 #ifdef _WIN32

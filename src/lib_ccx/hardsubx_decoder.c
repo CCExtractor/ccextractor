@@ -15,12 +15,13 @@ char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 {
 	//printf("frame : %04d\n", index);
 	PIX *im;
-	// PIX *edge_im;
+	PIX *edge_im;
 	PIX *lum_im;
+	PIX *feat_im;
 	char *subtitle_text=NULL;
 	im = pixCreate(width,height,32);
 	lum_im = pixCreate(width,height,32);
-	// edge_im = pixCreate(width,height,8);
+	feat_im = pixCreate(width,height,32);
 	int i,j;
 	for(i=(3*height)/4;i<height;i++)
 	{
@@ -37,6 +38,28 @@ char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 				pixSetRGBPixel(lum_im,j,i,255,255,255);
 			else
 				pixSetRGBPixel(lum_im,j,i,0,0,0);
+		}
+	}
+
+	//Handle the edge image
+	edge_im = pixCreate(width,height,8);
+	edge_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
+	edge_im = pixSobelEdgeFilter(edge_im, L_VERTICAL_EDGES);
+	edge_im = pixDilateGray(edge_im, 21, 11);
+	edge_im = pixThresholdToBinary(edge_im,50);
+
+	for(i=3*(height/4);i<height;i++)
+	{
+		for(j=0;j<width;j++)
+		{
+			unsigned int p1,p2,p3;
+			pixGetPixel(edge_im,j,i,&p1);
+			// pixGetPixel(pixd,j,i,&p2);
+			pixGetPixel(lum_im,j,i,&p3);
+			if(p1==0&&p3>0)
+				pixSetRGBPixel(feat_im,j,i,255,255,255);
+			else
+				pixSetRGBPixel(feat_im,j,i,0,0,0);
 		}
 	}
 
@@ -72,23 +95,21 @@ char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 
 	pixDestroy(&lum_im);
 	pixDestroy(&im);
+	pixDestroy(&edge_im);
+	pixDestroy(&feat_im);
 
 	return subtitle_text;
 }
 
 char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
 {
-	PIX *im;
-	PIX *edge_im;
-	PIX *hue_im;
-	PIX *feat_im;
 	char *subtitle_text=NULL;
+	PIX *im;
 	im = pixCreate(width,height,32);
-	hue_im = pixCreate(width,height,32);
-	feat_im = pixCreate(width,height,32);
-	edge_im = pixCreate(width,height,8);
+	PIX *hue_im = pixCreate(width,height,32);
+
 	int i,j;
-	for(i=(3*height)/4;i<height;i++)
+	for(i=0;i<height;i++)
 	{
 		for(j=0;j<width;j++)
 		{
@@ -98,29 +119,42 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 			int b=frame->data[0][p+2];
 			pixSetRGBPixel(im,j,i,r,g,b);
 			float H,S,V;
-			rgb2lab((float)r,(float)g,(float)b,&H,&S,&V);
-			if(abs(H - ctx->hue)>20)
-				pixSetRGBPixel(hue_im,j,i,255,255,255);
-			else
-				pixSetRGBPixel(hue_im,j,i,0,0,0);
+			rgb2hsv((float)r,(float)g,(float)b,&H,&S,&V);
+			if(abs(H-ctx->hue)<20)
+			{
+				pixSetRGBPixel(hue_im,j,i,r,g,b);
+			}
 		}
 	}
 
-	// Based on hue image and edge image, create feature image
+	PIX *edge_im = pixCreate(width,height,8),*edge_im_2 = pixCreate(width,height,8);
+	edge_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
+	edge_im = pixSobelEdgeFilter(edge_im, L_VERTICAL_EDGES);
+	edge_im = pixDilateGray(edge_im, 21, 1);
+	edge_im = pixThresholdToBinary(edge_im,50);
+	PIX *pixd = pixCreate(width,height,1);
+	pixSauvolaBinarize(pixConvertRGBToGray(hue_im,0.0,0.0,0.0), 15, 0.3, 1, NULL, NULL, NULL, &pixd);
+
+	edge_im_2 = pixConvertRGBToGray(hue_im,0.0,0.0,0.0);
+	edge_im_2 = pixDilateGray(edge_im_2, 5, 5);
+
+	PIX *feat_im = pixCreate(width,height,32);
 	for(i=3*(height/4);i<height;i++)
 	{
 		for(j=0;j<width;j++)
 		{
-			unsigned int p1,p2,p3;
-			// pixGetPixel(edge_im,j,i,&p1);
-			// pixGetPixel(pixd,j,i,&p2);
-			pixGetPixel(hue_im,j,i,&p3);
-			if(p3>0)//if(p2==0&&p1==0&&p3>0)
+			unsigned int p1,p2,p3,p4;
+			pixGetPixel(edge_im,j,i,&p1);
+			pixGetPixel(pixd,j,i,&p2);
+			// pixGetPixel(hue_im,j,i,&p3);
+			pixGetPixel(edge_im_2,j,i,&p4);
+			if(p1==0&&p2==0&&p4>0)//if(p4>0&&p1==0)//if(p2==0&&p1==0&&p3>0)
 			{
 				pixSetRGBPixel(feat_im,j,i,255,255,255);
 			}
 		}
 	}
+	
 
 	if(ctx->detect_italics)
 	{
@@ -179,32 +213,35 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 			pixSetRGBPixel(im,j,i,r,g,b);
 			float H,S,V;
 			rgb2hsv((float)r,(float)g,(float)b,&H,&S,&V);
-			if(abs(H-60)<20)
+			if(abs(H-ctx->hue)<20)
 			{
-				pixSetRGBPixel(hue_im,j,i,255,255,255);
+				pixSetRGBPixel(hue_im,j,i,r,g,b);
 			}
 		}
 	}
 
 	PIX *edge_im = pixCreate(width,height,8),*edge_im_2 = pixCreate(width,height,8);
 	edge_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
-	pixCopy(edge_im_2,edge_im);
 	edge_im = pixSobelEdgeFilter(edge_im, L_VERTICAL_EDGES);
-	edge_im = pixDilateGray(edge_im, 21, 11);
+	edge_im = pixDilateGray(edge_im, 21, 1);
 	edge_im = pixThresholdToBinary(edge_im,50);
 	PIX *pixd = pixCreate(width,height,1);
-	pixSauvolaBinarize(edge_im_2, 11, 0.3, 1, NULL, NULL, NULL, &pixd);
+	pixSauvolaBinarize(pixConvertRGBToGray(hue_im,0.0,0.0,0.0), 15, 0.3, 1, NULL, NULL, NULL, &pixd);
+
+	edge_im_2 = pixConvertRGBToGray(hue_im,0.0,0.0,0.0);
+	edge_im_2 = pixDilateGray(edge_im_2, 5, 5);
 
 	PIX *feat_im = pixCreate(width,height,32);
 	for(i=3*(height/4);i<height;i++)
 	{
 		for(j=0;j<width;j++)
 		{
-			unsigned int p1,p2,p3;
+			unsigned int p1,p2,p3,p4;
 			pixGetPixel(edge_im,j,i,&p1);
 			pixGetPixel(pixd,j,i,&p2);
-			pixGetPixel(hue_im,j,i,&p3);
-			if(p1==0)//if(p2==0&&p1==0&&p3>0)
+			// pixGetPixel(hue_im,j,i,&p3);
+			pixGetPixel(edge_im_2,j,i,&p4);
+			if(p1==0&&p2==0&&p4>0)//if(p4>0&&p1==0)//if(p2==0&&p1==0&&p3>0)
 			{
 				pixSetRGBPixel(feat_im,j,i,255,255,255);
 			}
@@ -285,7 +322,11 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 					continue;
 				if(!strlen(subtitle_text))
 					continue;
-				subtitle_text = strtok(subtitle_text,"\n");
+				char *double_enter = strstr(subtitle_text,"\n\n");
+				if(double_enter!=NULL)
+					*(double_enter)='\0';
+				//subtitle_text = prune_string(subtitle_text);
+
 				end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 				if(prev_subtitle_text)
 				{
@@ -300,6 +341,18 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 					}
 				}
 
+				// if(ctx->conf_thresh > 0)
+				// {
+				// 	if(ctx->cur_conf >= ctx->prev_conf)
+				// 	{
+				// 		prev_subtitle_text = strdup(subtitle_text);
+				// 		ctx->prev_conf = ctx->cur_conf;
+				// 	}
+				// }
+				// else
+				// {
+				// 	prev_subtitle_text = strdup(subtitle_text);
+				// }
 				prev_subtitle_text = strdup(subtitle_text);
 				prev_packet_pts = ctx->packet.pts;
 			}

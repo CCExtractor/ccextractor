@@ -375,10 +375,10 @@ void m_signal(int sig, void (*func)(int))
 	return;
 }
 
-void create_signal(void)
+void create_signal(int sigtype)
 {
-        if (signal(SIGUSR1, signal_handler) == SIG_ERR)
-		mprint("Can't catch SIGUSR1.\n");
+	if (signal(sigtype, signal_handler) == SIG_ERR)
+		mprint("Can't catch signal %d.\n", sigtype);
 }
 
 void signal_handler(int sig_type)
@@ -513,8 +513,10 @@ char *get_file_extension(enum ccx_output_format write_format)
 			return strdup(".g608");
 		case CCX_OF_NULL:
 			return NULL;
+		case CCX_OF_CURL:
+			return NULL;
 		default:
-			mprint ("write_format doesn't have any legal value, this is a bug.\n");
+			fatal (CCX_COMMON_EXIT_BUG_BUG, "write_format doesn't have any legal value, this is a bug.\n");
 			errno = EINVAL;
 			return NULL;
 	}
@@ -589,6 +591,20 @@ LLONG change_timebase(LLONG val, struct ccx_rational cur_tb, struct ccx_rational
 	val = val * cur_tb.num * dest_tb.den;
 	val = val / ( cur_tb.den * dest_tb.num);
 	return val;
+}
+
+char *str_reallocncat(char *dst, char *src)
+{	
+	int nl = dst==NULL? (strlen (src)+1) : (strlen(dst) + strlen(src) + 1);
+	char *orig = dst;
+	dst = (char *)realloc(dst, nl);
+	if (!dst)
+		return NULL;
+	if (orig == NULL)
+		strcpy(dst, src);
+	else
+		strcat(dst, src);
+	return dst;
 }
 
 #ifdef _WIN32

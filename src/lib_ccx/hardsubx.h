@@ -64,6 +64,8 @@ struct lib_hardsubx_ctx
 	TessBaseAPI *tess_handle;
 
 	// Classifier parameters
+	float cur_conf;
+	float prev_conf;
 
 	// Subtitle text parameters
 	struct cc_subtitle *dec_sub;

@@ -70,6 +70,24 @@
     <Filter Include="Source Files\win_iconv">
       <UniqueIdentifier>{964b0a18-918d-4b08-ba92-5a84e3c48b43}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\lib_ccx">
+      <UniqueIdentifier>{19f7e936-6581-4cd7-a5f9-5c4c3ed159c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\lib_ccx">
+      <UniqueIdentifier>{7ef5506d-d575-4661-84a1-dbbb99780e32}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\protobuf-c">
+      <UniqueIdentifier>{3c0bdb0a-e3f8-4fc4-a27b-b795ed32c965}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\protobuf-c">
+      <UniqueIdentifier>{fce551b0-7304-4677-8e66-61b475fdb924}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\utf8proc">
+      <UniqueIdentifier>{6e23dd8b-166b-4a80-92e2-194e7b6e6c86}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\utf8proc">
+      <UniqueIdentifier>{fcf59c1c-8b84-484a-8fb4-a9a301e23610}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\gpacmp4\gpac\avparse.h">
@@ -311,6 +329,24 @@
     </ClInclude>
     <ClInclude Include="..\src\win_iconv\iconv.h">
       <Filter>Header Files\win_iconv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\ccx_common_option.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\ccx_share.h">
+      <Filter>Header Files\lib_ccx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.h">
+      <Filter>Header Files\lib_ccx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\protobuf-c\protobuf-c.h">
+      <Filter>Header Files\protobuf-c</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\microutf8\microutf8.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utf8proc\utf8proc.h">
+      <Filter>Header Files\utf8proc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -698,5 +734,34 @@
     <ClCompile Include="..\src\win_iconv\win_iconv.c">
       <Filter>Source Files\win_iconv</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_share.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\protobuf-c\protobuf-c.c">
+      <Filter>Source Files\protobuf-c</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\dvd_subtitle_decoder.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_transcript.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_splitbysentence.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utf8proc\utf8proc.c">
+      <Filter>Source Files\utf8proc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_curl.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\lib_ccx\ccx_sub_entry_message.proto">
+      <Filter>Header Files\lib_ccx</Filter>
+    </None>
   </ItemGroup>
 </Project>
