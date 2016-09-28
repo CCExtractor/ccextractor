@@ -375,10 +375,10 @@ void m_signal(int sig, void (*func)(int))
 	return;
 }
 
-void create_signal(void)
+void create_signal(int sigtype)
 {
-        if (signal(SIGUSR1, signal_handler) == SIG_ERR)
-		mprint("Can't catch SIGUSR1.\n");
+	if (signal(sigtype, signal_handler) == SIG_ERR)
+		mprint("Can't catch signal %d.\n", sigtype);
 }
 
 void signal_handler(int sig_type)
