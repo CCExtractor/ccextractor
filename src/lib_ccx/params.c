@@ -2201,6 +2201,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		mprint("Note: Output format is WebVTT, forcing UTF-8");
 		opt->enc_cfg.encoding = CCX_ENC_UTF_8;
 	}
+#ifdef WITH_LIBCURL
 	if (opt->write_format==CCX_OF_CURL && opt->curlposturl==NULL)
 	{
 		print_error(opt->gui_mode_reports, "You must pass a URL (-curlposturl) if output format is curl");
@@ -2211,7 +2212,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		print_error(opt->gui_mode_reports, "-curlposturl requires that the format is curl");
 		return EXIT_INCOMPATIBLE_PARAMETERS;
 	}
-
+#endif
 	/* Initialize some Encoder Configuration */
 	opt->enc_cfg.extract = opt->extract;
 	if (opt->num_input_files > 0)
