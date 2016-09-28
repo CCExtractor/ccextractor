@@ -142,8 +142,8 @@ int main(int argc, char *argv[])
 	signal_ctx = ctx;
 	m_signal(SIGINT, sigint_handler);
 	m_signal(SIGTERM, sigterm_handler);
-	create_signal(sigint_handler);
-	create_signal(sigterm_handler);
+	create_signal(SIGINT);
+	create_signal(SIGTERM);
 #endif
 	terminate_asap = 0;
 
