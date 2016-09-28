@@ -14,11 +14,19 @@ License: GPL 2.0
 #include "ccx_share.h"
 
 struct lib_ccx_ctx *signal_ctx;
+volatile int terminate_asap = 0;
+
+void sigterm_handle()
+{
+	mprint("Received SIGTERM, terminating as soon as possible.");
+	terminate_asap = 1;
+}
+
 void sigint_handler()
 {
 	if (ccx_options.print_file_reports)
 		print_file_report(signal_ctx);
-
+	
 	exit(EXIT_SUCCESS);
 }
 
@@ -116,7 +124,7 @@ int main(int argc, char *argv[])
 #ifndef _WIN32
 	signal_ctx = ctx;
 	m_signal(SIGINT, sigint_handler);
-	create_signal();
+	create_signal(SIGINT); // Test our handler
 #endif
 
 #ifdef ENABLE_SHARING
