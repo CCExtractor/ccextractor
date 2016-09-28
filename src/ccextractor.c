@@ -21,7 +21,7 @@ struct lib_ccx_ctx *signal_ctx;
 
 volatile int terminate_asap = 0;
 
-void sigterm_handle()
+void sigterm_handler()
 {
 	mprint("Received SIGTERM, terminating as soon as possible.");
 	terminate_asap = 1;
@@ -141,8 +141,11 @@ int main(int argc, char *argv[])
 #ifndef _WIN32
 	signal_ctx = ctx;
 	m_signal(SIGINT, sigint_handler);
-	create_signal();
+	m_signal(SIGTERM, sigterm_handler);
+	create_signal(sigint_handler);
+	create_signal(sigterm_handler);
 #endif
+	terminate_asap = 0;
 
 #ifdef ENABLE_SHARING
 	if (ccx_options.translate_enabled && ctx->num_input_files > 1)
