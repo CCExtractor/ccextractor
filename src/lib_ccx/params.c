@@ -494,8 +494,8 @@ void usage (void)
 	mprint ("                       -dc #FF0000 for red.\n");
 	mprint ("    -sc --sentencecap: Sentence capitalization. Use if you hate\n");
 	mprint ("                       ALL CAPS in subtitles.\n");
-	mprint ("-sbs --splitbysentence: Split output text so each frame contains a complete");
-	mprint ("                       sentence. Timings are adjusted based on number of");
+	mprint ("-sbs --splitbysentence: Split output text so each frame contains a complete\n");
+	mprint ("                       sentence. Timings are adjusted based on number of\n");
 	mprint ("                       characters.");
 	mprint ("  --capfile -caf file: Add the contents of 'file' to the list of words\n");
 	mprint ("                       that must be capitalized. For example, if file\n");
@@ -532,7 +532,7 @@ void usage (void)
 	mprint ("            -dvbcolor: For DVB subtitles, also output the color of the\n");
 	mprint ("                       subtitles, if the output format is SRT or WebVTT.\n");
 	mprint ("             -dvblang: For DVB subtitles, select which language's caption\n");
-	mprint ("                       stream will be processed. e.g. 'eng' for English.");
+	mprint ("                       stream will be processed. e.g. 'eng' for English.\n");
 	mprint ("                       If there are multiple languages, only this specified\n");
 	mprint ("                       language stream will be processed\n");
 	mprint ("             -ocrlang: Manually select the name of the Tesseract .traineddata\n");
@@ -540,7 +540,7 @@ void usage (void)
 	mprint ("                       one language with the data of another language.\n");
 	mprint ("                       e.g. '-dvblang chs -ocrlang chi_tra' will decode the\n");
 	mprint ("                       Chinese (Simplified) caption stream but perform OCR\n");
-	mprint ("                       using the Chinese (Traditional) trained data");
+	mprint ("                       using the Chinese (Traditional) trained data\n");
 	mprint ("                       This option is also helpful when the traineddata file\n");
 	mprint ("                       has non standard names that don't follow ISO specs\n");
 	mprint ("\n");
@@ -815,9 +815,9 @@ void usage (void)
 	mprint("                     Recommended values are in the range 80 to 100.\n");
 	mprint("                     The default value is 95\n");
 	mprint("\n");
-	mprint("An example command is as follows:-\n");
-	mprint("ccextractor video.mp4 -hardsubx -subcolor white -detect_italics \n");
-	mprint("-whiteness_thresh 90 -conf_thresh 60\n");
+	mprint("            An example command for burned-in subtitle extraction is as follows:\n");
+	mprint("               ccextractor video.mp4 -hardsubx -subcolor white -detect_italics \n");
+	mprint("                   -whiteness_thresh 90 -conf_thresh 60\n");
 	mprint("\n");
 }
 
