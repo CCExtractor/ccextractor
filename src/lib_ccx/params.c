@@ -496,7 +496,7 @@ void usage (void)
 	mprint ("                       ALL CAPS in subtitles.\n");
 	mprint ("-sbs --splitbysentence: Split output text so each frame contains a complete\n");
 	mprint ("                       sentence. Timings are adjusted based on number of\n");
-	mprint ("                       characters.");
+	mprint ("                       characters\n.");
 	mprint ("  --capfile -caf file: Add the contents of 'file' to the list of words\n");
 	mprint ("                       that must be capitalized. For example, if file\n");
 	mprint ("                       is a plain text file that contains\n\n");
