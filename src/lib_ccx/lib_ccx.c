@@ -31,8 +31,8 @@ static struct ccx_decoders_common_settings_t *init_decoder_setting(
 	setting->cc_channel = opt->cc_channel;
 	setting->send_to_srv = opt->send_to_srv;
 	setting->hauppauge_mode = opt->hauppauge_mode;
-	/* if in transcript setting xds is not selected then set ignore xds flag */
-	setting->ignore_xds = !opt->transcript_settings.xds;
+	setting->xds_write_to_file = opt->transcript_settings.xds;
+	
 	return setting;
 }
 static void dinit_decoder_setting (struct ccx_decoders_common_settings_t **setting)
@@ -98,6 +98,29 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "lib_ccx_ctx");
 	memset(ctx, 0, sizeof(struct lib_ccx_ctx));
 
+	if(opt->xmltv)
+	{
+		ctx->epg_inited = 1;
+		ctx->epg_buffers = (struct PSI_buffer *)malloc(sizeof(struct PSI_buffer)*(0xfff+1));
+		ctx->eit_programs = (struct EIT_program *)malloc(sizeof(struct EIT_program)*(TS_PMT_MAP_SIZE+1));
+		ctx->eit_current_events = (int32_t *)malloc(sizeof(int32_t)*(TS_PMT_MAP_SIZE+1));
+		ctx->ATSC_source_pg_map = (int16_t *)malloc(sizeof(int16_t)*(0xffff));
+		memset(ctx->epg_buffers, 0, sizeof(struct PSI_buffer)*(0xfff+1));
+		memset(ctx->eit_programs, 0, sizeof(struct EIT_program)*(TS_PMT_MAP_SIZE+1));
+		memset(ctx->eit_current_events, 0, sizeof(int32_t)*(TS_PMT_MAP_SIZE+1));
+		memset(ctx->ATSC_source_pg_map, 0, sizeof(int16_t)*(0xffff));
+		if(!ctx->epg_buffers || !ctx->eit_programs || !ctx->eit_current_events || !ctx->ATSC_source_pg_map)
+			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "lib_ccx_ctx");
+	}
+	else
+	{
+		ctx->epg_inited = 0;
+		ctx->epg_buffers = NULL;
+		ctx->eit_programs = NULL;
+		ctx->eit_current_events = NULL;
+		ctx->ATSC_source_pg_map = NULL;
+	}
+
 	struct ccx_decoder_608_report *report_608 = malloc(sizeof(struct ccx_decoder_608_report));
 	if (!report_608)
 		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "report_608");
@@ -139,6 +162,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	if (ret < 0) {
 		goto end;
 	}
+	ctx->extension = get_file_extension(opt->write_format);
 
 	ctx->subs_delay = opt->subs_delay;
 
@@ -327,7 +351,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	}
 
 	extension = get_file_extension(ccx_options.enc_cfg.write_format);
-	if(!extension)
+	if (!extension && ccx_options.enc_cfg.write_format != CCX_OF_CURL)
 		return NULL;
 
 	if(ctx->multiprogram == CCX_FALSE)

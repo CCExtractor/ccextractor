@@ -225,8 +225,7 @@ void print_cc_report(struct lib_ccx_ctx *ctx, struct cap_info* info)
 }
 void print_file_report(struct lib_ccx_ctx *ctx)
 {
-	struct lib_cc_decode *dec_ctx = NULL;
-	enum ccx_stream_mode_enum stream_mode;
+	struct lib_cc_decode *dec_ctx = NULL;	
 	struct ccx_demuxer *demux_ctx = ctx->demux_ctx;
 
 	printf("File: ");

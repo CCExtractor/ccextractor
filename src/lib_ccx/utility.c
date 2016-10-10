@@ -1,10 +1,13 @@
+#include <stdio.h>
 #include <signal.h>
+#include <string.h>
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "activity.h"
+#include "utility.h"
 
 int temp_debug = 0; // This is a convenience variable used to enable/disable debug on variable conditions. Find references to understand.
-
+volatile sig_atomic_t change_filename_requested = 0;
 
 
 static uint32_t crc32_table [] = {
@@ -371,7 +374,91 @@ void m_signal(int sig, void (*func)(int))
 
 	return;
 }
+
+void create_signal(int sigtype)
+{
+	if (signal(sigtype, signal_handler) == SIG_ERR)
+		mprint("Can't catch signal %d.\n", sigtype);
+}
+
+void signal_handler(int sig_type)
+{
+	int ret;
+
+        if (sig_type == SIGUSR1)
+        {
+        	mprint("Caught SIGUSR1. Filename Change Requested\n");
+        	change_filename_requested = 1;
+        }
+}
 #endif
+
+struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
+{
+	if(change_filename_requested == 0)
+	{
+		return enc_ctx;
+	}
+	struct encoder_ctx *temp_encoder = malloc(sizeof(struct encoder_ctx));
+	*temp_encoder = *enc_ctx;
+	if (enc_ctx->out->fh != -1)
+	{
+		if (enc_ctx->out->fh > 0)
+			close(enc_ctx->out->fh);
+		enc_ctx->out->fh=-1;
+		int iter;
+		char str_number[15];
+		char *current_name = malloc(sizeof(char)*(strlen(enc_ctx->out->filename)+10));
+		strcpy(current_name,enc_ctx->out->filename);
+		mprint ("Creating %s\n", enc_ctx->out->filename);
+		if(enc_ctx->out->renaming_extension)
+		{
+			strcat(current_name,".");
+			sprintf(str_number, "%d", enc_ctx->out->renaming_extension);
+			strcat(current_name,str_number);
+		}
+		enc_ctx->out->renaming_extension++;
+		for (iter = enc_ctx->out->renaming_extension; iter >= 1; iter--)
+		{
+			int ret;
+			char new_extension[6];
+			sprintf(new_extension, ".%d", iter); 
+			char *newname = malloc(sizeof(char)*(strlen(enc_ctx->out->filename)+10));
+			strcpy(newname,enc_ctx->out->filename);
+			strcat(newname,new_extension);
+			ret = rename(current_name, newname);
+			if(ret)
+			{
+				mprint("Failed to rename the file\n");
+
+			}
+			mprint ("Creating %s\n", newname);
+			strcpy(current_name,enc_ctx->out->filename);
+			
+			if(iter-2>0)
+			{
+				strcat(current_name,".");
+				sprintf(str_number, "%d", iter-2);
+				strcat(current_name,str_number);
+			}
+			free(newname);
+		
+		}
+
+		enc_ctx->out->fh = open(enc_ctx->out->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+		free(current_name);
+		if (enc_ctx->out->fh == -1)
+		{
+			mprint("Failed to create a new rotation file\n");
+			return temp_encoder;
+		}
+		free(temp_encoder);		
+		change_filename_requested = 0;
+		return enc_ctx;
+		
+	}
+	return temp_encoder;
+}
 char *get_basename(char *filename)
 {
 	char *c;
@@ -426,8 +513,10 @@ char *get_file_extension(enum ccx_output_format write_format)
 			return strdup(".g608");
 		case CCX_OF_NULL:
 			return NULL;
+		case CCX_OF_CURL:
+			return NULL;
 		default:
-			mprint ("write_format doesn't have any legal value, this is a bug.\n");
+			fatal (CCX_COMMON_EXIT_BUG_BUG, "write_format doesn't have any legal value, this is a bug.\n");
 			errno = EINVAL;
 			return NULL;
 	}
@@ -496,6 +585,28 @@ size_t utf16_to_utf8(unsigned short utf16_char, unsigned char *out)
 	return 0;
 }
 
+LLONG change_timebase(LLONG val, struct ccx_rational cur_tb, struct ccx_rational dest_tb)
+{
+	/* val = (value * current timebase) / destination timebase */
+	val = val * cur_tb.num * dest_tb.den;
+	val = val / ( cur_tb.den * dest_tb.num);
+	return val;
+}
+
+char *str_reallocncat(char *dst, char *src)
+{	
+	int nl = dst==NULL? (strlen (src)+1) : (strlen(dst) + strlen(src) + 1);
+	char *orig = dst;
+	dst = (char *)realloc(dst, nl);
+	if (!dst)
+		return NULL;
+	if (orig == NULL)
+		strcpy(dst, src);
+	else
+		strcat(dst, src);
+	return dst;
+}
+
 #ifdef _WIN32
 char *strndup(const char *s, size_t n)
 {
@@ -510,6 +621,6 @@ char *strndup(const char *s, size_t n)
 }
 char *strtok_r(char *str, const char *delim, char **saveptr)
 {
-	strtok_s(str, delim, saveptr);
+	return strtok_s(str, delim, saveptr);
 }
 #endif //_WIN32

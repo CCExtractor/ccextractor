@@ -46,6 +46,9 @@ struct ccx_common_timing_ctx
 	LLONG fts_fc_offset; // Time before first GOP
 	LLONG fts_max; // Remember the maximum fts that we saw in current file
 	LLONG fts_global; // Duration of previous files (-ve mode)
+	int sync_pts2fts_set; //0 = No, 1 = Yes
+	LLONG sync_pts2fts_fts; 
+	LLONG sync_pts2fts_pts;
 };
 // Count 608 (per field) and 708 blocks since last set_fts() call
 extern int cb_field1, cb_field2, cb_708;

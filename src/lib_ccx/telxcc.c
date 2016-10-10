@@ -34,6 +34,7 @@ Werner Brückner -- Teletext in digital television
 #include "teletext.h"
 #include <signal.h>
 #include "activity.h"
+#include "ccx_encoders_helpers.h"
 
 #ifdef __MINGW32__
 // switch stdin and all normal files into binary mode -- needed for Windows
@@ -52,6 +53,7 @@ typedef struct {
 	uint64_t show_timestamp; // show at timestamp (in ms)
 	uint64_t hide_timestamp; // hide at timestamp (in ms)
 	uint16_t text[25][40]; // 25 lines x 40 cols (1 screen/page) of wide chars
+	uint8_t g2_char_present[25][40]; // 0- Supplementary G2 character set NOT used at this position 1-Supplementary G2 character set used at this position
 	uint8_t tainted; // 1 = text variable contains any data
 } teletext_page_t;
 
@@ -124,6 +126,11 @@ struct TeletextCtx
 	uint8_t using_pts;
 	int64_t delta;
 	uint32_t t0;
+
+	int sentence_cap;//Set to 1 if -sc is passed
+	int new_sentence;
+	int splitbysentence;
+
 };
 typedef enum
 {
@@ -196,8 +203,9 @@ typedef enum
 	GREEK,
 	ARABIC,
 	HEBREW
-} g0_charsets_t;
+} g0_charsets_type;
 
+g0_charsets_type default_g0_charset; 
 
 // Note: All characters are encoded in UCS-2
 
@@ -344,7 +352,7 @@ const uint16_t G2[1][96] = {
 //	},
 //	{ // Greek G2 Supplementary Set
 //	},
-//	{ // Arabic G2 Supplementary Set
+//	{ // Arabic G2 Supplementary Set
 //	}
 };
 
@@ -503,6 +511,26 @@ uint32_t unham_24_18(uint32_t a)
 	return (a & 0x000004) >> 2 | (a & 0x000070) >> 3 | (a & 0x007f00) >> 4 | (a & 0x7f0000) >> 5;
 }
 
+//Default G0 Character Set 
+void set_g0_charset(uint32_t triplet)
+{
+	// ETS 300 706, Table 32
+	if((triplet & 0x3c00) == 0x1000)
+	{
+		if((triplet & 0x0380) == 0x0000)
+			default_g0_charset = CYRILLIC1;
+		else if((triplet & 0x0380) == 0x0200)
+			default_g0_charset = CYRILLIC2;
+		else if((triplet & 0x0380) == 0x0280)
+			default_g0_charset = CYRILLIC3;
+		else
+			default_g0_charset = LATIN;	
+	}
+	else
+		default_g0_charset = LATIN;
+}
+
+// Latin National Subset Selection
 void remap_g0_charset(uint8_t c)
 {
 	if (c != primary_charset.current)
@@ -521,7 +549,6 @@ void remap_g0_charset(uint8_t c)
 		}
 	}
 }
-
 
 
 // wide char (16 bits) to utf-8 conversion
@@ -559,13 +586,43 @@ uint16_t telx_to_ucs2(uint8_t c)
 
 	uint16_t r = c & 0x7f;
 	if (r >= 0x20)
-		r = G0[LATIN][r - 0x20];
+		r = G0[default_g0_charset][r - 0x20];
 	return r;
 }
 
 uint16_t bcd_page_to_int (uint16_t bcd)
 {
 	return ((bcd&0xf00)>>8)*100 + ((bcd&0xf0)>>4)*10 + (bcd&0xf);
+}
+
+void telx_case_fix (struct TeletextCtx *context)
+{
+	//Capitalizing first letter of every sentence
+	int line_len = strlen(context->page_buffer_cur);
+	for(int i = 0; i < line_len; i++)
+	{
+		switch(context->page_buffer_cur[i])
+		{
+			case ' ':
+			//case 0x89: // This is a transparent space
+			case '-':
+				break;
+			case '.': // Fallthrough
+			case '?': // Fallthrough
+			case '!':
+			case ':':
+				context->new_sentence = 1;
+				break;
+			default:
+				if (context->new_sentence)
+					context->page_buffer_cur[i] = cctoupper(context->page_buffer_cur[i]);
+				else
+					context->page_buffer_cur[i] = cctolower(context->page_buffer_cur[i]);
+				context->new_sentence = 0;
+				break;
+		}
+	}
+	telx_correct_case(context->page_buffer_cur);
 }
 
 void telxcc_dump_prev_page (struct TeletextCtx *ctx, struct cc_subtitle *sub)
@@ -871,6 +928,8 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 			}
 			break;
 		default:
+			if (ctx->sentence_cap)
+				telx_case_fix(ctx);
 			add_cc_sub_text(sub, ctx->page_buffer_cur, page->show_timestamp,
 				page->hide_timestamp + 1, NULL, "TLT", CCX_ENC_UTF_8);
 	}
@@ -896,6 +955,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 
 	if (y == 0)
 	{
+
 		// CC map
 		uint8_t i = (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
 		uint8_t flag_subtitle = (unham_8_4(packet->data[5]) & 0x08) >> 3;
@@ -953,9 +1013,19 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		if (page_number != tlt_config.page)
 			return;
 
+
 		// Now we have the begining of page transmission; if there is page_buffer pending, process it
 		if (ctx->page_buffer.tainted == YES)
 		{
+			// Convert telx to UCS-2 before processing
+			for(uint8_t yt = 1; yt <= 23; ++yt)
+			{
+				for(uint8_t it = 0; it < 40; it++)
+				{
+					if (ctx->page_buffer.text[yt][it] != 0x00 && ctx->page_buffer.g2_char_present[yt][it] == 0)
+						ctx->page_buffer.text[yt][it] = telx_to_ucs2(ctx->page_buffer.text[yt][it]);
+				}
+			}
 			// it would be nice, if subtitle hides on previous video frame, so we contract 40 ms (1 frame @25 fps)
 			ctx->page_buffer.hide_timestamp = timestamp - 40;
 			if (ctx->page_buffer.hide_timestamp > timestamp)
@@ -963,19 +1033,20 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				ctx->page_buffer.hide_timestamp = 0;
 			}
 			process_page(ctx, &ctx->page_buffer, sub);
-
 		}
 
 		ctx->page_buffer.show_timestamp = timestamp;
 		ctx->page_buffer.hide_timestamp = 0;
 		memset(ctx->page_buffer.text, 0x00, sizeof(ctx->page_buffer.text));
+		memset(ctx->page_buffer.g2_char_present, 0x00, sizeof(ctx->page_buffer.g2_char_present));
 		ctx->page_buffer.tainted = NO;
 		ctx->receiving_data = YES;
-		primary_charset.g0_x28 = UNDEF;
-
-		c = (primary_charset.g0_m29 != UNDEF) ? primary_charset.g0_m29 : charset;
-		remap_g0_charset(c);
-
+		if(default_g0_charset == LATIN) // G0 Character National Option Sub-sets selection required only for Latin Character Sets
+		{
+			primary_charset.g0_x28 = UNDEF;
+			c = (primary_charset.g0_m29 != UNDEF) ? primary_charset.g0_m29 : charset;
+			remap_g0_charset(c);
+		}
 		/*
 		// I know -- not needed; in subtitles we will never need disturbing teletext page status bar
 		// displaying tv station name, current time etc.
@@ -995,7 +1066,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		for (uint8_t i = 0; i < 40; i++)
 		{
 			if (ctx->page_buffer.text[y][i] == 0x00)
-				ctx->page_buffer.text[y][i] = telx_to_ucs2(packet->data[i]);
+				ctx->page_buffer.text[y][i] = packet->data[i];
 		}
 		ctx->page_buffer.tainted = YES;
 	}
@@ -1041,7 +1112,23 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			if ((mode == 0x0f) && (row_address_group == NO))
 			{
 				x26_col = address;
-				if (data > 31) ctx->page_buffer.text[x26_row][x26_col] = G2[0][data - 0x20];
+				if (data > 31) 
+				{
+					ctx->page_buffer.text[x26_row][x26_col] = G2[0][data - 0x20];
+					ctx->page_buffer.g2_char_present[x26_row][x26_col] = 1;
+				}
+			}
+
+			// ETS 300 706 v1.2.1, chapter 12.3.4, Table 29: G0 character without diacritical mark (display '@' instead of '*')
+			if ((mode == 0x10) && (row_address_group == NO))
+			{
+				x26_col = address;
+				if (data == 64) // check for @ symbol
+				{
+					remap_g0_charset(0);
+					ctx->page_buffer.text[x26_row][x26_col] = 0x40;
+				}
+
 			}
 
 			// ETS 300 706, chapter 12.3.1, table 27: G0 character with diacritical mark
@@ -1058,6 +1145,8 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				// other
 				else
 					ctx->page_buffer.text[x26_row][x26_col] = telx_to_ucs2(data);
+				
+				ctx->page_buffer.g2_char_present[x26_row][x26_col] = 1;
 			}
 		}
 	}
@@ -1081,9 +1170,14 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			{
 				// ETS 300 706, chapter 9.4.2: Packet X/28/0 Format 1 only
 				if ((triplet0 & 0x0f) == 0x00)
-				{
-					primary_charset.g0_x28 = (triplet0 & 0x3f80) >> 7;
-					remap_g0_charset(primary_charset.g0_x28);
+				{					
+					// ETS 300 706, Table 32
+					set_g0_charset(triplet0); // Deciding G0 Character Set
+					if(default_g0_charset == LATIN)
+					{
+						primary_charset.g0_x28 = (triplet0 & 0x3f80) >> 7;
+						remap_g0_charset(primary_charset.g0_x28);
+					}
 				}
 			}
 		}
@@ -1098,7 +1192,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			// ETS 300 706, chapter 9.5.1: Packet M/29/0
 			// ETS 300 706, chapter 9.5.3: Packet M/29/4
 			uint32_t triplet0 = unham_24_18((packet->data[3] << 16) | (packet->data[2] << 8) | packet->data[1]);
-
+	
 			if (triplet0 == 0xffffffff)
 			{
 				// invalid data (HAM24/18 uncorrectable error detected), skip group
@@ -1110,11 +1204,15 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				// ETS 300 706, table 13: Coding of Packet M/29/4
 				if ((triplet0 & 0xff) == 0x00)
 				{
-					primary_charset.g0_m29 = (triplet0 & 0x3f80) >> 7;
-					// X/28 takes precedence over M/29
-					if (primary_charset.g0_x28 == UNDEF)
+					set_g0_charset(triplet0);
+					if(default_g0_charset == LATIN)
 					{
-						remap_g0_charset(primary_charset.g0_m29);
+						primary_charset.g0_m29 = (triplet0 & 0x3f80) >> 7;
+						// X/28 takes precedence over M/29
+						if (primary_charset.g0_x28 == UNDEF)
+						{
+							remap_g0_charset(primary_charset.g0_m29);
+						}
 					}
 				}
 			}
@@ -1222,7 +1320,7 @@ int tlt_print_seen_pages(struct lib_cc_decode *dec_ctx)
 	}
 	return CCX_OK;
 }
-int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub)
+int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub, int sentence_cap)
 {
 	uint64_t pes_prefix;
 	uint8_t pes_stream_id;
@@ -1232,6 +1330,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	uint32_t t = 0;
 	uint16_t i;
 	struct TeletextCtx *ctx = dec_ctx->private_data;
+	ctx->sentence_cap = sentence_cap;
 
 	if(!ctx)
 	{
@@ -1406,6 +1505,10 @@ void* telxcc_init(void)
 	ctx->delta = 0;
 	ctx->t0 = 0;
 
+	ctx->sentence_cap = 0;
+	ctx->new_sentence = 0;
+	ctx->splitbysentence = 0;
+
 	return ctx;
 }
 
@@ -1429,6 +1532,15 @@ void telxcc_close(void **ctx, struct cc_subtitle *sub)
 		// output any pending close caption
 		if (ttext->page_buffer.tainted == YES)
 		{
+			// Convert telx to UCS-2 before processing
+			for(uint8_t yt = 1; yt <= 23; ++yt)
+			{
+				for(uint8_t it = 0; it < 40; it++)
+				{
+					if (ttext->page_buffer.text[yt][it] != 0x00 && ttext->page_buffer.g2_char_present[yt][it] == 0)
+						ttext->page_buffer.text[yt][it] = telx_to_ucs2(ttext->page_buffer.text[yt][it]);
+				}
+			}
 			// this time we do not subtract any frames, there will be no more frames
 			ttext->page_buffer.hide_timestamp = ttext->last_timestamp;
 			process_page(ttext, &ttext->page_buffer, sub);

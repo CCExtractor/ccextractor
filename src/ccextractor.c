@@ -10,9 +10,25 @@ License: GPL 2.0
 #include <signal.h>
 #include "ccx_common_option.h"
 #include "ccx_mp4.h"
+#include "hardsubx.h"
+#include "ccx_share.h"
+#ifdef WITH_LIBCURL
+CURL *curl;
+CURLcode res;
+#endif
 
 struct lib_ccx_ctx *signal_ctx;
-void sigint_handler()
+
+volatile int terminate_asap = 0;
+
+void sigterm_handler(int sig)
+{
+	printf("Received SIGTERM, terminating as soon as possible.\n");
+	terminate_asap = 1;
+}
+
+
+void sigint_handler(int sig)
 {
 	if (ccx_options.print_file_reports)
 		print_file_report(signal_ctx);
@@ -45,7 +61,15 @@ int main(int argc, char *argv[])
 	{
 		exit(ret);
 	}
-	// Initialize libraries
+#ifdef ENABLE_HARDSUBX
+	if(ccx_options.hardsubx)
+	{
+		// Perform burned in subtitle extraction
+		hardsubx(&ccx_options);
+		return 0;
+	}
+#endif
+	// Initialize CCExtractor libraries
 	ctx = init_libraries(&ccx_options);
 	if (!ctx && errno == ENOMEM)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
@@ -57,6 +81,18 @@ int main(int argc, char *argv[])
 		fatal (CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to create Output File\n");
 	else if (!ctx)
 		fatal (EXIT_NOT_CLASSIFIED, "Unable to create Library Context %d\n",errno);
+
+#ifdef WITH_LIBCURL
+	curl_global_init(CURL_GLOBAL_ALL);
+ 
+  	/* get a curl handle */ 
+  	curl = curl_easy_init();
+	if (!curl)
+	{
+		curl_global_cleanup(); // Must be done even on init fail
+		fatal (EXIT_NOT_CLASSIFIED, "Unable to init curl.");
+	}
+#endif
 
 	int show_myth_banner = 0;
 
@@ -84,18 +120,54 @@ int main(int argc, char *argv[])
 	if (ccx_options.binary_concat)
 	{
 		ctx->total_inputsize=gettotalfilessize(ctx);
-		if (ctx->total_inputsize==-1)
-			fatal (EXIT_UNABLE_TO_DETERMINE_FILE_SIZE, "Failed to determine total file size.\n");
+		if (ctx->total_inputsize < 0)
+		{
+			switch (ctx->total_inputsize)
+			{
+			case -1*ENOENT:
+				fatal(EXIT_NO_INPUT_FILES, "Failed to open file: File not Exist");
+			case -1*EACCES:
+				fatal(EXIT_READ_ERROR, "Failed to open file: Unable to access");
+			case -1*EINVAL:
+				fatal(EXIT_READ_ERROR, "Failed to open file: Invalid opening flag.");
+			case -1*EMFILE:
+				fatal(EXIT_TOO_MANY_INPUT_FILES, "Failed to open file: Too many files are open.");
+			default:
+				fatal(EXIT_READ_ERROR, "Failed to open file: Reason unknown");
+			}
+		}
 	}
 
 #ifndef _WIN32
 	signal_ctx = ctx;
 	m_signal(SIGINT, sigint_handler);
+	m_signal(SIGTERM, sigterm_handler);
+	create_signal(SIGINT);
 #endif
+	terminate_asap = 0;
+
+#ifdef ENABLE_SHARING
+	if (ccx_options.translate_enabled && ctx->num_input_files > 1)
+	{
+		mprint("[share] WARNING: simultaneous translation of several input files is not supported yet\n");
+		ccx_options.translate_enabled = 0;
+		ccx_options.sharing_enabled = 0;
+	}
+	if (ccx_options.translate_enabled)
+	{
+		mprint("[share] launching translate service\n");
+		ccx_share_launch_translator(ccx_options.translate_langs, ccx_options.translate_key);
+	}
+#endif //ENABLE_SHARING
 
 	while (switch_to_next_file(ctx, 0))
 	{
 		prepare_for_new_file(ctx);
+#ifdef ENABLE_SHARING
+		if (ccx_options.sharing_enabled)
+			ccx_share_start(ctx->basefilename);
+#endif //ENABLE_SHARING
+
 		stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 		// Disable sync check for raw formats - they have the right timeline.
 		// Also true for bin formats, but -nosync might have created a
@@ -128,6 +200,7 @@ int main(int argc, char *argv[])
 			case CCX_SM_PROGRAM:
 			case CCX_SM_ASF:
 			case CCX_SM_WTV:
+			case CCX_SM_GXF:
 #ifdef ENABLE_FFMPEG
 			case CCX_SM_FFMPEG:
 #endif
@@ -152,7 +225,7 @@ int main(int argc, char *argv[])
 			case CCX_SM_MP4:
 				mprint ("\rAnalyzing data with GPAC (MP4 library)\n");
 				close_input_file(ctx); // No need to have it open. GPAC will do it for us
-				processmp4 (ctx, &ctx->mp4_cfg, ctx->inputfile[0]);
+				processmp4(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
 				if (ccx_options.print_file_reports)
 					print_file_report(ctx);
 				break;
@@ -166,68 +239,6 @@ int main(int argc, char *argv[])
 				fatal(CCX_COMMON_EXIT_BUG_BUG, "Cannot be reached!");
 				break;
 		}
-
-#if 0
-		if (ctx->total_pulldownframes)
-			mprint ("incl. pulldown frames:  %s  (%u frames at %.2ffps)\n",
-					print_mstime( (LLONG)(ctx->total_pulldownframes*1000/current_fps) ),
-					ctx->total_pulldownframes, current_fps);
-		if (pts_set >= 1 && min_pts != 0x01FFFFFFFFLL)
-		{
-			LLONG postsyncms = (LLONG) (ctx->frames_since_last_gop*1000/current_fps);
-			mprint ("\nMin PTS:				%s\n",
-					print_mstime( min_pts/(MPEG_CLOCK_FREQ/1000) - fts_offset));
-			if (pts_big_change)
-				mprint ("(Reference clock was reset at some point, Min PTS is approximated)\n");
-			mprint ("Max PTS:				%s\n",
-					print_mstime( sync_pts/(MPEG_CLOCK_FREQ/1000) + postsyncms));
-
-			mprint ("Length:				 %s\n",
-					print_mstime( sync_pts/(MPEG_CLOCK_FREQ/1000) + postsyncms
-								  - min_pts/(MPEG_CLOCK_FREQ/1000) + fts_offset ));
-		}
-		// dvr-ms files have invalid GOPs
-		if (gop_time.inited && first_gop_time.inited && stream_mode != CCX_SM_ASF)
-		{
-			mprint ("\nInitial GOP time:	   %s\n",
-				print_mstime(first_gop_time.ms));
-			mprint ("Final GOP time:		 %s%+3dF\n",
-				print_mstime(gop_time.ms),
-				ctx->frames_since_last_gop);
-			mprint ("Diff. GOP length:	   %s%+3dF",
-				print_mstime(gop_time.ms - first_gop_time.ms),
-				ctx->frames_since_last_gop);
-			mprint ("	(%s)\n",
-				print_mstime(gop_time.ms - first_gop_time.ms
-				+(LLONG) ((ctx->frames_since_last_gop)*1000/29.97)) );
-		}
-
-		if (ctx->false_pict_header)
-			mprint ("\nNumber of likely false picture headers (discarded): %d\n",ctx->false_pict_header);
-
-		if (ctx->stat_numuserheaders)
-			mprint("\nTotal user data fields: %d\n", ctx->stat_numuserheaders);
-		if (ctx->stat_dvdccheaders)
-			mprint("DVD-type user data fields: %d\n", ctx->stat_dvdccheaders);
-		if (ctx->stat_scte20ccheaders)
-			mprint("SCTE-20 type user data fields: %d\n", ctx->stat_scte20ccheaders);
-		if (ctx->stat_replay4000headers)
-			mprint("ReplayTV 4000 user data fields: %d\n", ctx->stat_replay4000headers);
-		if (ctx->stat_replay5000headers)
-			mprint("ReplayTV 5000 user data fields: %d\n", ctx->stat_replay5000headers);
-		if (ctx->stat_hdtv)
-			mprint("HDTV type user data fields: %d\n", ctx->stat_hdtv);
-		if (ctx->stat_dishheaders)
-			mprint("Dish Network user data fields: %d\n", ctx->stat_dishheaders);
-		if (ctx->stat_divicom)
-		{
-			mprint("CEA608/Divicom user data fields: %d\n", ctx->stat_divicom);
-
-			mprint("\n\nNOTE! The CEA 608 / Divicom standard encoding for closed\n");
-			mprint("caption is not well understood!\n\n");
-			mprint("Please submit samples to the developers.\n\n\n");
-		}
-#endif
 
 		list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 		{
@@ -277,7 +288,80 @@ int main(int argc, char *argv[])
 			cb_field1 = 0; cb_field2 = 0; cb_708 = 0;
 			dec_ctx->timing->fts_now = 0;
 			dec_ctx->timing->fts_max = 0;
+		
+#ifdef ENABLE_SHARING
+			if (ccx_options.sharing_enabled)
+			{
+				ccx_share_stream_done(ctx->basefilename);
+				ccx_share_stop();
+			}
+#endif //ENABLE_SHARING
+
+		if (dec_ctx->total_pulldownframes)
+			mprint ("incl. pulldown frames:  %s  (%u frames at %.2ffps)\n",
+					print_mstime( (LLONG)(dec_ctx->total_pulldownframes*1000/current_fps) ),
+					dec_ctx->total_pulldownframes, current_fps);
+		if (dec_ctx->timing->pts_set >= 1 && dec_ctx->timing->min_pts != 0x01FFFFFFFFLL)
+		{
+			LLONG postsyncms = (LLONG) (dec_ctx->frames_since_last_gop*1000/current_fps);
+			mprint ("\nMin PTS:				%s\n",
+					print_mstime( dec_ctx->timing->min_pts/(MPEG_CLOCK_FREQ/1000) - dec_ctx->timing->fts_offset));
+			if (pts_big_change)
+				mprint ("(Reference clock was reset at some point, Min PTS is approximated)\n");
+			mprint ("Max PTS:				%s\n",
+					print_mstime( dec_ctx->timing->sync_pts/(MPEG_CLOCK_FREQ/1000) + postsyncms));
+
+			mprint ("Length:				 %s\n",
+					print_mstime( dec_ctx->timing->sync_pts/(MPEG_CLOCK_FREQ/1000) + postsyncms
+								  - dec_ctx->timing->min_pts/(MPEG_CLOCK_FREQ/1000) + dec_ctx->timing->fts_offset ));
 		}
+
+
+		// dvr-ms files have invalid GOPs
+		if (gop_time.inited && first_gop_time.inited && stream_mode != CCX_SM_ASF)
+		{
+			mprint ("\nInitial GOP time:	   %s\n",
+				print_mstime(first_gop_time.ms));
+			mprint ("Final GOP time:		 %s%+3dF\n",
+				print_mstime(gop_time.ms),
+				dec_ctx->frames_since_last_gop);
+			mprint ("Diff. GOP length:	   %s%+3dF",
+				print_mstime(gop_time.ms - first_gop_time.ms),
+				dec_ctx->frames_since_last_gop);
+			mprint ("	(%s)\n\n",
+				print_mstime(gop_time.ms - first_gop_time.ms
+				+(LLONG) ((dec_ctx->frames_since_last_gop)*1000/29.97)) );
+		}
+
+		if (dec_ctx->false_pict_header)
+			mprint ("\nNumber of likely false picture headers (discarded): %d\n",dec_ctx->false_pict_header);
+
+		if (dec_ctx->stat_numuserheaders)
+			mprint("\nTotal user data fields: %d\n", dec_ctx->stat_numuserheaders);
+		if (dec_ctx->stat_dvdccheaders)
+			mprint("DVD-type user data fields: %d\n", dec_ctx->stat_dvdccheaders);
+		if (dec_ctx->stat_scte20ccheaders)
+			mprint("SCTE-20 type user data fields: %d\n", dec_ctx->stat_scte20ccheaders);
+		if (dec_ctx->stat_replay4000headers)
+			mprint("ReplayTV 4000 user data fields: %d\n", dec_ctx->stat_replay4000headers);
+		if (dec_ctx->stat_replay5000headers)
+			mprint("ReplayTV 5000 user data fields: %d\n", dec_ctx->stat_replay5000headers);
+		if (dec_ctx->stat_hdtv)
+			mprint("HDTV type user data fields: %d\n", dec_ctx->stat_hdtv);
+		if (dec_ctx->stat_dishheaders)
+			mprint("Dish Network user data fields: %d\n", dec_ctx->stat_dishheaders);
+		if (dec_ctx->stat_divicom)
+		{
+			mprint("CEA608/Divicom user data fields: %d\n", dec_ctx->stat_divicom);
+
+			mprint("\n\nNOTE! The CEA 608 / Divicom standard encoding for closed\n");
+			mprint("caption is not well understood!\n\n");
+			mprint("Please submit samples to the developers.\n\n\n");
+		}
+
+		}
+
+		
 
 		if(is_decoder_processed_enough(ctx) == CCX_TRUE)
 			break;
@@ -301,7 +385,6 @@ int main(int argc, char *argv[])
 			s1, s2);
 	}
 #endif
-	dbg_print(CCX_DMT_708, "[CEA-708] The 708 decoder was reset [%d] times.\n", ctx->freport.data_from_708->reset_count);
 
 	if (is_decoder_processed_enough(ctx) == CCX_TRUE)
 	{
@@ -315,6 +398,13 @@ int main(int argc, char *argv[])
 		mprint ("code in the MythTV's branch. Please report results to the address above. If\n");
 		mprint ("something is broken it will be fixed. Thanks\n");		
 	}
+
+#ifdef CURL
+	if (curl)
+		curl_easy_cleanup(curl);
+  	curl_global_cleanup();
+#endif
 	dinit_libraries(&ctx);
+
 	return EXIT_OK;
 }

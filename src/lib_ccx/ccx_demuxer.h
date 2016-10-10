@@ -5,6 +5,7 @@
 #include "ts_functions.h"
 #include "list.h"
 #include "activity.h"
+#include "utility.h"
 
 /* Report information */
 #define SUB_STREAMS_CNT 10
@@ -134,6 +135,9 @@ struct ccx_demuxer
 #endif
 
 	void *parent;
+
+	//Will contain actual Demuxer Context
+	void *private_data;
 	void (*print_cfg)(struct ccx_demuxer *ctx);
 	void (*reset)(struct ccx_demuxer *ctx);
 	void (*close)(struct ccx_demuxer *ctx);
@@ -153,6 +157,7 @@ struct demuxer_data
 	unsigned char *buffer;
 	size_t len;
 	LLONG pts;
+	struct ccx_rational tb;
 	struct demuxer_data *next_stream;
 	struct demuxer_data *next_program;
 };

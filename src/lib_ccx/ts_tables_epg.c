@@ -81,7 +81,7 @@ void EPG_DVB_calc_start_time(struct EPG_event *event, uint64_t time)
 		y = y + k + 1900;
 		m = m - 1 - k*12;
 
-		sprintf(event->start_time_string, "%02ld%02ld%02ld%06llx +0000",y,m,d,time&0xffffff);
+		sprintf(event->start_time_string, "%02ld%02ld%02ld%06"PRIu64 "+0000",y,m,d,time&0xffffff);
 	}
 }
 
@@ -1096,37 +1096,19 @@ void parse_EPG_packet(struct lib_ccx_ctx *ctx)
 
 // Free all memory used for EPG parsing
 void EPG_free(struct lib_ccx_ctx *ctx)
-{
-	int i = 0, j;
-	if(ccx_options.xmltv==2 || ccx_options.xmltv==3 || ccx_options.send_to_srv)
+{	
+	if(ctx->epg_inited)
 	{
-		if (ccx_options.send_to_srv)
-			EPG_output_net(ctx);
-		else
-			EPG_output_live(ctx);
-	}
-	for (i = 0; i < TS_PMT_MAP_SIZE; i++)
-	{
-		for(j = 0; j < ctx->eit_programs[i].array_len; j++)
+		if(ccx_options.xmltv==2 || ccx_options.xmltv==3 || ccx_options.send_to_srv)
 		{
-			if(ctx->eit_programs[i].epg_events[j].has_simple)
-			{
-				free(ctx->eit_programs[i].epg_events[j].event_name);
-				free(ctx->eit_programs[i].epg_events[j].text);
-			}
-			if(ctx->eit_programs[i].epg_events[j].extended_text!=NULL)
-				free(ctx->eit_programs[i].epg_events[j].extended_text);
-			if(ctx->eit_programs[i].epg_events[j].num_ratings>0)
-				free(ctx->eit_programs[i].epg_events[j].ratings);
-			if(ctx->eit_programs[i].epg_events[j].num_categories>0)
-				free(ctx->eit_programs[i].epg_events[j].categories);
+			if (ccx_options.send_to_srv)
+				EPG_output_net(ctx);
+			else
+				EPG_output_live(ctx);
 		}
-		ctx->eit_programs[i].array_len=0;
 	}
-	
-	for (i = 0; i < 0xfff; i++)
-	{
-		if(ctx->epg_buffers[i].buffer!=NULL)
-			free(ctx->epg_buffers[i].buffer);
-	}
+	free(ctx->epg_buffers);
+	free(ctx->eit_programs);
+	free(ctx->eit_current_events);
+	free(ctx->ATSC_source_pg_map);
 }

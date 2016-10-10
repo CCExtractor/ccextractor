@@ -285,7 +285,19 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->max_gop_length = 0;
 	ctx->has_ccdata_buffered = 0;
 	ctx->in_bufferdatatype = CCX_UNKNOWN;
-	ctx->frames_since_last_gop = 0;
+	ctx->frames_since_last_gop  = 0;
+	ctx->total_pulldownfields   = 0;
+	ctx->total_pulldownframes   = 0;
+	ctx->stat_numuserheaders    = 0;
+	ctx->stat_dvdccheaders      = 0;
+	ctx->stat_scte20ccheaders   = 0;
+	ctx->stat_replay5000headers = 0;
+	ctx->stat_replay4000headers = 0;
+	ctx->stat_dishheaders       = 0;
+	ctx->stat_hdtv              = 0;
+	ctx->stat_divicom           = 0;
+	ctx->false_pict_header = 0;
+
 	memcpy(&ctx->extraction_start, &setting->extraction_start,sizeof(struct ccx_boundary_time));
 	memcpy(&ctx->extraction_end, &setting->extraction_end,sizeof(struct ccx_boundary_time));
 
@@ -303,7 +315,8 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 		setting->output_format==CCX_OF_SPUPNG ||
 		setting->output_format==CCX_OF_SIMPLE_XML ||
 		setting->output_format==CCX_OF_G608 ||
-		setting->output_format==CCX_OF_NULL)
+		setting->output_format==CCX_OF_NULL ||
+		setting->output_format==CCX_OF_CURL)
 		ctx->writedata = process608;
 	else
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "Invalid Write Format Selected");
@@ -340,12 +353,13 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 	ctx->anchor_seq_number = -1;
 	// Init XDS buffers
-	if(setting->ignore_xds == CCX_TRUE)
-		ctx->xds_ctx = NULL;
-	else
-		ctx->xds_ctx = ccx_decoders_xds_init_library(ctx->timing);
-	//xds_cea608_test(ctx->xds_ctx);
+	if(setting->output_format!=CCX_OF_TRANSCRIPT)
+	{
+		setting->xds_write_to_file = 0;
+	}
+	ctx->xds_ctx = ccx_decoders_xds_init_library(ctx->timing, setting->xds_write_to_file);
 
+	ctx->vbi_decoder = NULL;
 	return ctx;
 }
 

@@ -9,8 +9,9 @@ CVS
 *.o
 linux/ccextractor
 linux/depend
-windows/debug/**
-windows/release/**
+windows/Debug/**
+windows/Release/**
+build/
 
 ####
 # Visual Studio project Ignored files
@@ -19,3 +20,17 @@ windows/release/**
 *.sdf
 *.opensdf
 *.user
+*.opendb
+
+####
+# Ignore the header file that is updated upon build
+src/lib_ccx/compile_info_real.h
+
+#### Ignore windows OCR libraries and folders
+windows/libs/leptonica/**
+windows/libs/tesseract/**
+windows/Release-OCR/**
+windows/Debug-OCR/**
+
+# Ctags
+*.tags*

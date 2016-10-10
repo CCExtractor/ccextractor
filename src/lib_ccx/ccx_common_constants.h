@@ -57,7 +57,10 @@ enum ccx_debug_message_types
 	CCX_DMT_PAT=0x400, // Program Allocation Table dump
 	CCX_DMT_PMT=0x800, // Program Map Table dump
 	CCX_DMT_LEVENSHTEIN=0x1000, // Levenshtein distance calculations
-	CCX_DMT_DUMPDEF=0x2000 // Dump defective TS packets
+#ifdef ENABLE_SHARING
+	CCX_DMT_SHARE = 0x2000, //Extracted captions sharing service
+#endif //ENABLE_SHARING
+	CCX_DMT_DUMPDEF=0x4000, // Dump defective TS packets
 };
 
 // AVC NAL types
@@ -162,10 +165,11 @@ enum ccx_output_format
 	CCX_OF_NULL = 5,
 	CCX_OF_SMPTETT = 6,
 	CCX_OF_SPUPNG = 7,
-	CCX_OF_DVDRAW = 8, // See -d at http://www.geocities.com/mcpoodle43/SCC_TOOLS/DOCS/SCC_TOOLS.HTML#CCExtract
+	CCX_OF_DVDRAW = 8, // See -d at http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/SCC_TOOLS.HTML#CCExtract
 	CCX_OF_WEBVTT = 9,
 	CCX_OF_SIMPLE_XML = 10,
 	CCX_OF_G608 = 11,
+	CCX_OF_CURL = 12,
 };
 
 enum ccx_output_date_format
@@ -194,6 +198,7 @@ enum ccx_stream_mode_enum
 #ifdef ENABLE_FFMPEG
 	CCX_SM_FFMPEG = 10,
 #endif
+	CCX_SM_GXF = 11,
 	CCX_SM_AUTODETECT = 16
 };
 
@@ -218,6 +223,7 @@ enum ccx_bufferdata_type
 	CCX_ISDB_SUBTITLE = 8,
 	/* BUffer where cc data contain 3 byte cc_valid ccdata 1 ccdata 2 */
 	CCX_RAW_TYPE = 9,
+	CCX_DVD_SUBTITLE =10,
 };
 
 enum ccx_frame_type
@@ -288,7 +294,7 @@ enum cdp_section_type
 #define CCX_TXT_AUTO_NOT_YET_FOUND	1
 #define CCX_TXT_IN_USE			2 // Positive autodetected, or forced, etc
 
-#define NB_LANGUAGE 5
+#define NB_LANGUAGE 100
 extern const char *language[NB_LANGUAGE];
 
 #define DEF_VAL_STARTCREDITSNOTBEFORE 	"0"

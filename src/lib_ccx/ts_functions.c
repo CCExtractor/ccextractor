@@ -140,7 +140,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		if (result != 4)
 		{
 			if (result>0)
-				mprint("Premature end of file!\n");
+				mprint("Premature end of file (incomplete TS packer header, expected 4 bytes, got %lld).\n",result);
 			return CCX_EOF;
 		}
 	}
@@ -150,7 +150,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 	if (result != 188)
 	{
 		if (result > 0)
-			mprint("Premature end of file!\n");
+			mprint("Premature end of file - Transport Stream packet is incomplete (expected 188 bytes, got %lld).\n", result);
 		return CCX_EOF;
 	}
 
@@ -221,8 +221,8 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		// Take the PCR (Program Clock Reference) from here, in case PTS is not available (copied from telxcc).
 		adaptation_field_length = tspacket[4];
 
-		uint8_t af_pcr_exists = (tspacket[5] & 0x10) >> 4;
-		if (af_pcr_exists > 0 )
+		payload->have_pcr = (tspacket[5] & 0x10) >> 4;
+		if (payload->have_pcr)
 		{
 			payload->pcr = 0;
 			payload->pcr |= (tspacket[6] << 25);
@@ -518,8 +518,8 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 		if(payload->start[0] != 0x00 || payload->start[1] != 0x00 || 
 			payload->start[2] != 0x01)
 		{
-			mprint("Missing PES header!\n");
-			dump(CCX_DMT_GENERIC_NOTICES, payload->start, payload->length, 0, 0);
+			mprint("Notice: Missing PES header\n");
+			dump(CCX_DMT_DUMPDEF, payload->start, payload->length, 0, 0);
 			cinfo->saw_pesstart = 0;
 			errno = EINVAL;
 			return -1;
@@ -596,7 +596,9 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 		for (j = 0; j < ctx->nb_program; j++)
 		{
-			if (ctx->pinfo[j].analysed_PMT_once == CCX_TRUE && ctx->pinfo[j].pcr_pid == payload.pid)
+			if (ctx->pinfo[j].analysed_PMT_once == CCX_TRUE &&
+				ctx->pinfo[j].pcr_pid == payload.pid &&
+				payload.have_pcr)
 			{
 				ctx->last_global_timestamp = ctx->global_timestamp;
 				ctx->global_timestamp = (uint32_t) payload.pcr / 90;
@@ -686,15 +688,15 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 		}
 
-                // Skip packets with no payload.  This also fixes the problems
-                // with the continuity counter not being incremented in empty
-                // packets.
-                if ( !payload.length )
-                {   
-                        dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - no payload.\n",
-                                payload.pid);
-                        continue;
-                }   
+        // Skip packets with no payload.  This also fixes the problems
+        // with the continuity counter not being incremented in empty
+        // packets.
+        if ( !payload.length )
+        {   
+                dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - no payload.\n",
+                        payload.pid);
+                continue;
+        }   
 
 
 		cinfo = get_cinfo(ctx, payload.pid);

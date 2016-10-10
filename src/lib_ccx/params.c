@@ -5,6 +5,11 @@
 #include "ccx_encoders_helpers.h"
 #include "ccx_common_common.h"
 #include "ccx_decoders_708.h"
+#include "compile_info.h"
+#include "../lib_hash/sha2.h"
+#ifdef ENABLE_HARDSUBX
+#include "hardsubx.h"
+#endif
 
 static int inputfile_capacity=0;
 
@@ -216,6 +221,10 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
 		opt->write_format=CCX_OF_SIMPLE_XML;
 	else if (strcmp (format,"g608")==0)
 		opt->write_format=CCX_OF_G608;
+#ifdef WITH_LIBCURL
+	else if (strcmp(format, "curl") == 0)
+		opt->write_format = CCX_OF_CURL;
+#endif
 	else
 		fatal (EXIT_MALFORMED_PARAMETER, "Unknown output file format: %s\n", format);
 }
@@ -274,7 +283,7 @@ void usage (void)
 	mprint ("     .mp4, HDHomeRun are known to work).\n\n");
 	mprint ("  Syntax:\n");
 	mprint ("  ccextractor [options] inputfile1 [inputfile2...] [-o outputfilename]\n");
-	mprint ("               [-o1 outputfilename1] [-o2 outputfilename2]\n\n");
+	mprint ("\n");
 	mprint ("To see This Help Message: -h or --help\n\n");
 	mprint ("File name related options:\n");
 	mprint ("            inputfile: file(s) to process\n");
@@ -307,17 +316,21 @@ void usage (void)
 	mprint ("                              port) instead of reading a file. Host can be a\n");
 	mprint ("                              hostname or IPv4 address. If host is not specified\n");
 	mprint ("                              then listens on the local host.\n\n");
-	mprint ("            -sendto host[:port]: Sends data in BIN format to the server according\n");
-	mprint ("                                 to the CCExtractor's protocol over TCP. For IPv6\n");
-	mprint ("                                 use [addres]:port\n");
-	mprint ("            -tcp port: Reads the input data in BIN format according to CCExtractor's\n");
-	mprint ("                       protocol, listening specified port on the local host\n");
-	mprint ("            -tcppassword password: Sets server password for new connections to tcp server\n");
-	mprint ("            -tcpdesc description: Sends to the server short description about captions e.g.\n");
-	mprint ("                                  channel name or file name\n");
+	mprint ("            -sendto host[:port]: Sends data in BIN format to the server\n");
+	mprint ("                                 according to the CCExtractor's protocol over\n");
+	mprint ("                                 TCP. For IPv6 use [address]:port\n");
+	mprint ("            -tcp port: Reads the input data in BIN format according to\n");
+	mprint ("                        CCExtractor's protocol, listening specified port on the\n");
+	mprint ("                        local host\n");
+	mprint ("            -tcppassword password: Sets server password for new connections to\n");
+	mprint ("                                   tcp server\n");
+	mprint ("            -tcpdesc description: Sends to the server short description about\n");
+	mprint ("                                  captions e.g. channel name or file name\n");
 	mprint ("Options that affect what will be processed:\n");
 	mprint ("          -1, -2, -12: Output Field 1 data, Field 2 data, or both\n");
 	mprint ("                       (DEFAULT is -1)\n");
+	mprint ("Use --append to prevent overwriting of existing files. The output will be\n");
+	mprint ("      appended instead.\n");
 	mprint ("                 -cc2: When in srt/sami mode, process captions in channel 2\n");
 	mprint ("                       instead of channel 1.\n");
 	mprint ("-svc --service N1[cs1],N2[cs2]...:\n");
@@ -327,11 +340,12 @@ void usage (void)
 	mprint ("                       primary and secondary language services.\n");
 	mprint ("                       Pass \"all\" to process all services found.\n");
 	mprint ("\n");
-	mprint ("                       If captions in a service are stored in 16-bit encoding, you can\n");
-	mprint ("                       specify what charset or encoding was used. Pass its name after\n");
-	mprint ("                       service number (e.g. \"1[EUC-KR],3\" or \"all[EUC-KR]\") and it will\n");
-	mprint ("                       encode specified charset to UTF-8 using iconv. See iconv documentation\n");
-	mprint ("                       to check if required encoding/charset is supported.\n");
+	mprint ("                       If captions in a service are stored in 16-bit encoding,\n");
+	mprint ("                       you can specify what charset or encoding was used. Pass\n");
+	mprint ("                       its name after service number (e.g. \"1[EUC-KR],3\" or\n");
+	mprint ("                       \"all[EUC-KR]\") and it will encode specified charset to\n");
+	mprint ("                       UTF-8 using iconv. See iconv documentation to check if\n");
+	mprint ("                       required encoding/charset is supported.\n");
 	mprint ("\n");
 	mprint ("In general, if you want English subtitles you don't need to use these options\n");
 	mprint ("as they are broadcast in field 1, channel 1. If you want the second language\n");
@@ -458,13 +472,13 @@ void usage (void)
 	mprint ("           --noscte20: Ignore SCTE-20 data if present.\n");
 	mprint ("\n");
 	mprint ("Options that affect what kind of output will be produced:\n");
-	mprint("				  -bom: Append a BOM (Byte Order Mark) to output files.\n");
-	mprint("						Note that most text processing tools in linux will not\n");
-	mprint("						like BOM.\n");
-	mprint("						This is the default in Windows builds.\n");
-	mprint("				-nobom: Do not append a BOM (Byte Order Mark) to output files.\n");
-	mprint("						Note that this may break files when using Windows.\n");
-	mprint("						This is the default in non-Windows builds.\n");
+	mprint ("                 -bom: Append a BOM (Byte Order Mark) to output files.\n");
+	mprint ("                       Note that most text processing tools in linux will not\n");
+	mprint ("                       like BOM.\n");
+	mprint ("                       This is the default in Windows builds.\n");
+	mprint ("                       -nobom: Do not append a BOM (Byte Order Mark) to output\n");
+	mprint ("                       files. Note that this may break files when using\n");
+	mprint ("                       Windows. This is the default in non-Windows builds.\n");
 	mprint ("             -unicode: Encode subtitles in Unicode instead of Latin-1.\n");
 	mprint ("                -utf8: Encode subtitles in UTF-8 (no longer needed.\n");
 	mprint ("                       because UTF-8 is now the default).\n");
@@ -480,6 +494,9 @@ void usage (void)
 	mprint ("                       -dc #FF0000 for red.\n");
 	mprint ("    -sc --sentencecap: Sentence capitalization. Use if you hate\n");
 	mprint ("                       ALL CAPS in subtitles.\n");
+	mprint ("-sbs --splitbysentence: Split output text so each frame contains a complete\n");
+	mprint ("                       sentence. Timings are adjusted based on number of\n");
+	mprint ("                       characters\n.");
 	mprint ("  --capfile -caf file: Add the contents of 'file' to the list of words\n");
 	mprint ("                       that must be capitalized. For example, if file\n");
 	mprint ("                       is a plain text file that contains\n\n");
@@ -507,16 +524,36 @@ void usage (void)
 	mprint ("            -autodash: Based on position on screen, attempt to determine\n");
 	mprint ("                       the different speakers and a dash (-) when each\n");
 	mprint ("                       of them talks (.srt/.vtt only, -trim required).\n");
-	mprint ("         -xmltv mode:  produce an XMLTV file containing the EPG data from\n");
+	mprint ("          -xmltv mode: produce an XMLTV file containing the EPG data from\n");
 	mprint ("                       the source TS file. Mode: 1 = full output\n");
-	mprint ("                       2 = live output. 3 = both\n\n");
-
+	mprint ("                       2 = live output. 3 = both\n");
+	mprint ("                 -sem: Create a .sem file for each output file that is open\n");
+	mprint ("                       and delete it on file close.\n");
+	mprint ("            -dvbcolor: For DVB subtitles, also output the color of the\n");
+	mprint ("                       subtitles, if the output format is SRT or WebVTT.\n");
+	mprint ("             -dvblang: For DVB subtitles, select which language's caption\n");
+	mprint ("                       stream will be processed. e.g. 'eng' for English.\n");
+	mprint ("                       If there are multiple languages, only this specified\n");
+	mprint ("                       language stream will be processed\n");
+	mprint ("             -ocrlang: Manually select the name of the Tesseract .traineddata\n");
+	mprint ("                       file. Helpful if you want to OCR a caption stream of\n");
+	mprint ("                       one language with the data of another language.\n");
+	mprint ("                       e.g. '-dvblang chs -ocrlang chi_tra' will decode the\n");
+	mprint ("                       Chinese (Simplified) caption stream but perform OCR\n");
+	mprint ("                       using the Chinese (Traditional) trained data\n");
+	mprint ("                       This option is also helpful when the traineddata file\n");
+	mprint ("                       has non standard names that don't follow ISO specs\n");
+	mprint ("\n");
 	mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
 
 	mprint ("    -bi --bufferinput: Forces input buffering.\n");
 	mprint (" -nobi -nobufferinput: Disables input buffering.\n");
 	mprint (" -bs --buffersize val: Specify a size for reading, in bytes (suffix with K or\n");
 	mprint ("                       or M for kilobytes and megabytes). Default is 16M.\n");
+	mprint ("                 -koc: keep-output-close. If used then CCExtractor will close\n"); 
+	mprint ("                       the output file after writing each subtitle frame and\n");
+	mprint ("                       attempt to create it again when needed.\n");
+	mprint ("     -ff --forceflush: Flush the file buffer whenever content is written.\n");
 	mprint ("\n");
 
 	mprint ("Options that affect the built-in closed caption decoder:\n");
@@ -635,7 +672,12 @@ void usage (void)
 	mprint ("            -parsePMT: Print Program Map Table dump.\n");
 	mprint("              -dumpdef: Hex-dump defective TS packets.\n");
 	mprint (" -investigate_packets: If no CC packets are detected based on the PMT, try\n");
-	mprint ("                       to find data in all packets by scanning.\n\n");
+	mprint ("                       to find data in all packets by scanning.\n");
+#ifdef ENABLE_SHARING
+	mprint ("       -sharing-debug: Print extracted CC sharing service messages\n");
+#endif //ENABLE_SHARING
+	mprint("\n");
+
 
 	mprint ("Teletext related options:\n");
 
@@ -652,27 +694,29 @@ void usage (void)
 	mprint ("                       then CEA-608/708 processing is disabled).\n");
 	mprint ("\n");
 
-	mprint("Transcript customizing options:\n");
+	mprint ("Transcript customizing options:\n");
 
-	mprint("    -customtxt format: Use the passed format to customize the (Timed) Transcript\n");
-	mprint("                       output. The format must be like this: 1100100 (7 digits).\n");
-	mprint("                       These indicate whether the next things should be displayed\n");
-	mprint("                       or not in the (timed) transcript. They represent (in order):\n");
-	mprint("                           - Display start time\n");
-	mprint("                           - Display end time\n");
-	mprint("                           - Display caption mode\n");
-	mprint("                           - Display caption channel\n");
-	mprint("                           - Use a relative timestamp ( relative to the sample)\n");
-	mprint("                           - Display XDS info\n");
-	mprint("                           - Use colors\n");
-	mprint("                       Examples:\n");
-	mprint("                       0000101 is the default setting for transcripts\n");
-	mprint("                       1110101 is the default for timed transcripts\n");
-	mprint("                       1111001 is the default setting for -ucla\n");
-	mprint("                       Make sure you use this parameter after others that might\n");
-	mprint("                       affect these settings (-out, -ucla, -xds, -txt, -ttxt, ...)\n");
+	mprint ("    -customtxt format: Use the passed format to customize the (Timed) Transcript\n");
+	mprint ("                       output. The format must be like this: 1100100 (7 digits).\n");
+	mprint ("                       These indicate whether the next things should be\n");
+	mprint ("                       displayed or not in the (timed) transcript. They\n");
+	mprint ("                       represent (in order): \n");
+	mprint ("                           - Display start time\n");
+	mprint ("                           - Display end time\n");
+	mprint ("                           - Display caption mode\n");
+	mprint ("                           - Display caption channel\n");
+	mprint ("                           - Use a relative timestamp ( relative to the sample)\n");
+	mprint ("                           - Display XDS info\n");
+	mprint ("                           - Use colors\n");
+	mprint ("                       Examples:\n");
+	mprint ("                       0000101 is the default setting for transcripts\n");
+	mprint ("                       1110101 is the default for timed transcripts\n");
+	mprint ("                       1111001 is the default setting for -ucla\n");
+	mprint ("                       Make sure you use this parameter after others that might\n");
+	mprint ("                       affect these settings (-out, -ucla, -xds, -txt, \n");
+	mprint ("                       -ttxt ...)\n");
 
-	mprint("\n");
+	mprint ("\n");
 
 	mprint ("Communication with other programs and console output:\n");
 
@@ -683,6 +727,19 @@ void usage (void)
 	mprint ("    --no_progress_bar: Suppress the output of the progress bar\n");
 	mprint ("               -quiet: Don't write any message.\n");
 	mprint ("\n");
+#ifdef ENABLE_SHARING
+	mprint ("Sharing extracted captions via TCP:\n");
+	mprint ("      -enable-sharing: Enables real-time sharing of extracted captions\n");
+	mprint ("         -sharing-url: Set url for sharing service in nanomsg format. Default: \"tcp://*:3269\"\n");
+	mprint ("\n");
+
+	mprint ("CCTranslate application integration:\n");
+	mprint ("           -translate: Enable Translation tool and set target languages\n");
+	mprint ("                       in csv format (e.g. -translate ru,fr,it\n");
+	mprint ("      -translate-auth: Set Translation Service authorization data to make translation possible\n");
+	mprint ("                       In case of Google Translate API - API Key\n");
+#endif //ENABLE_SHARING
+
 	mprint ("Notes on the CEA-708 decoder: While it is starting to be useful, it's\n");
 	mprint ("a work in progress. A number of things don't work yet in the decoder\n");
 	mprint ("itself, and many of the auxiliary tools (case conversion to name one)\n");
@@ -712,6 +769,92 @@ void usage (void)
 	mprint("    /tmp/output_2.d/sub0000.png\n");
 	mprint("    /tmp/output_2.d/sub0001.png\n");
 	mprint("    ...\n");
+	mprint("\n");
+	mprint("Burned-in subtitle extraction:\n");
+	mprint("         -hardsubx : Enable the burned-in subtitle extraction subsystem.\n");
+	mprint("\n");
+	mprint("         NOTE: The following options will work only if -hardsubx is \n");
+	mprint("                specified before them:-\n");
+	mprint("\n");
+	mprint("         -ocr_mode : Set the OCR mode to either frame-wise, word-wise\n");
+	mprint("                     or letter wise.\n");
+	mprint("                     e.g. -ocr_mode frame (default), -ocr_mode word, \n");
+	mprint("                     -ocr_mode letter\n");
+	mprint("\n");
+	mprint("         -subcolor : Specify the color of the subtitles\n");
+	mprint("                     Possible values are in the set \n");
+	mprint("                     {white,yellow,green,cyan,blue,magenta,red}.\n");
+	mprint("                     Alternatively, a custom hue value between 1 and 360 \n");
+	mprint("                     may also be specified.\n");
+	mprint("                     e.g. -subcolor white or -subcolor 270 (for violet).\n");
+	mprint("                     Refer to an HSV color chart for values.\n");
+	mprint("\n");
+	mprint(" -min_sub_duration : Specify the minimum duration that a subtitle line \n");
+	mprint("                     must exist on the screen.\n");
+	mprint("                     The value is specified in seconds.\n");
+	mprint("                     A lower value gives better results, but takes more \n");
+	mprint("                     processing time.\n");
+	mprint("                     The recommended value is 0.5 (default).\n");
+	mprint("                     e.g. -min_sub_duration 1.0 (for a duration of 1 second)\n");
+	mprint("\n");
+	mprint("   -detect_italics : Specify whether italics are to be detected from the \n");
+	mprint("                     OCR text.\n");
+	mprint("                     Italic detection automatically enforces the OCR mode \n");
+	mprint("                     to be word-wise");
+	mprint("\n");
+	mprint("      -conf_thresh : Specify the classifier confidence threshold between\n");
+	mprint("                      1 and 100.\n");
+	mprint("                     Try and use a threshold which works for you if you get \n");
+	mprint("                     a lot of garbage text.\n");
+	mprint("                     e.g. -conf_thresh 50\n");
+	mprint("\n");
+	mprint(" -whiteness_thresh : For white subtitles only, specify the luminance \n");
+	mprint("                     threshold between 1 and 100\n");
+	mprint("                     This threshold is content dependent, and adjusting\n");
+	mprint("                     values may give you better results\n");
+	mprint("                     Recommended values are in the range 80 to 100.\n");
+	mprint("                     The default value is 95\n");
+	mprint("\n");
+	mprint("            An example command for burned-in subtitle extraction is as follows:\n");
+	mprint("               ccextractor video.mp4 -hardsubx -subcolor white -detect_italics \n");
+	mprint("                   -whiteness_thresh 90 -conf_thresh 60\n");
+	mprint("\n");
+}
+
+unsigned char sha256_buf[16384];
+
+char *calculateSHA256(char *location) {
+	int	size_read, bytes_read, fh = 0;
+	SHA256_CTX	ctx256;
+
+	SHA256_Init(&ctx256);
+
+	#ifdef _WIN32
+		fh = OPEN(location, O_RDONLY | O_BINARY);
+	#else
+		fh = OPEN(location, O_RDONLY);
+	#endif
+
+	if (fh < 0) {
+		return "Could not open file";
+	}
+	size_read = 0;
+	while ((bytes_read = read(fh, sha256_buf, 16384)) > 0) {
+		size_read += bytes_read;
+		SHA256_Update(&ctx256, (unsigned char*)sha256_buf, bytes_read);
+	}
+	close(fh);
+	SHA256_End(&ctx256, sha256_buf);
+	return sha256_buf;
+}
+
+void version(char *location) {
+	char *hash = calculateSHA256(location);
+	mprint("CCExtractor detailed version info\n");
+	mprint("	Version: %s\n", VERSION);
+	mprint("	Git commit: %s\n", GIT_COMMIT);
+	mprint("	Compilation date: %s\n", COMPILE_DATE);
+	mprint("	File SHA256: %s\n", hash);
 }
 
 void parse_708_services (struct ccx_s_options *opts, char *s)
@@ -838,6 +981,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			usage();
 			return EXIT_WITH_HELP;
 		}
+		if (!strcmp(argv[i], "--version"))
+		{
+			version(argv[0]);
+			return EXIT_WITH_HELP;
+		}
 		if (strcmp (argv[i], "-")==0 || strcmp(argv[i], "-stdin") == 0)
 		{
 
@@ -863,6 +1011,168 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
+		
+#ifdef ENABLE_HARDSUBX
+		// Parse -hardsubx and related parameters
+		if (strcmp(argv[i], "-hardsubx")==0)
+		{
+			opt->hardsubx = 1;
+			continue;
+		}
+		if (opt->hardsubx == 1)
+		{
+			if (strcmp(argv[i], "-ocr_mode")==0)
+			{
+				if(i < argc - 1)
+				{
+					if(strcmp(argv[i+1], "simple")==0 || strcmp(argv[i+1], "frame")==0)
+					{
+						opt->hardsubx_ocr_mode = HARDSUBX_OCRMODE_FRAME;
+					}
+					else if(strcmp(argv[i+1], "word")==0)
+					{
+						opt->hardsubx_ocr_mode = HARDSUBX_OCRMODE_WORD;
+					}
+					else if(strcmp(argv[i+1], "letter")==0 || strcmp(argv[i+1], "symbol")==0)
+					{
+						opt->hardsubx_ocr_mode = HARDSUBX_OCRMODE_LETTER;
+					}
+					else
+					{
+						fatal (EXIT_MALFORMED_PARAMETER, "-ocr_mode has an invalid value.\nValid values are {frame,word,letter}");
+					}
+				}
+				else
+				{
+					fatal (EXIT_MALFORMED_PARAMETER, "-ocr_mode has no argument.\nValid values are {frame,word,letter}");
+				}
+				i++;
+				continue;
+			}
+			if (strcmp(argv[i], "-subcolor")==0 || strcmp(argv[i], "-sub_color")==0)
+			{
+				if(i < argc - 1)
+				{
+					if(strcmp(argv[i+1], "white")==0)
+					{
+						opt->hardsubx_subcolor = HARDSUBX_COLOR_WHITE;
+						opt->hardsubx_hue = 0.0;
+					}
+					else if(strcmp(argv[i+1], "yellow")==0)
+					{
+						opt->hardsubx_subcolor = HARDSUBX_COLOR_YELLOW;
+						opt->hardsubx_hue = 60.0;
+					}
+					else if(strcmp(argv[i+1], "green")==0)
+					{
+						opt->hardsubx_subcolor = HARDSUBX_COLOR_GREEN;
+						opt->hardsubx_hue = 120.0;
+					}
+					else if(strcmp(argv[i+1], "cyan")==0)
+					{
+						opt->hardsubx_subcolor = HARDSUBX_COLOR_CYAN;
+						opt->hardsubx_hue = 180.0;
+					}
+					else if(strcmp(argv[i+1], "blue")==0)
+					{
+						opt->hardsubx_subcolor = HARDSUBX_COLOR_BLUE;
+						opt->hardsubx_hue = 240.0;
+					}
+					else if(strcmp(argv[i+1], "magenta")==0)
+					{
+						opt->hardsubx_subcolor = HARDSUBX_COLOR_MAGENTA;
+						opt->hardsubx_hue = 300.0;
+					}
+					else if(strcmp(argv[i+1], "red")==0)
+					{
+						opt->hardsubx_subcolor = HARDSUBX_COLOR_RED;
+						opt->hardsubx_hue = 0.0;
+					}
+					else
+					{
+						// Take a custom hue from the user
+						opt->hardsubx_subcolor = HARDSUBX_COLOR_CUSTOM;
+						char *str=(char*)malloc(sizeof(argv[i+1]));
+						sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
+						opt->hardsubx_hue = atof(str);
+						if(opt->hardsubx_hue <= 0.0 || opt->hardsubx_hue > 360.0)
+						{
+							fatal (EXIT_MALFORMED_PARAMETER, "-subcolor has either 0 or an invalid hue value supplied.\nIf you want to detect red subtitles, pass '-subcolor red' or a slightly higher hue value (e.g. 0.1)\n");
+						}
+					}
+				}
+				else
+				{
+					fatal (EXIT_MALFORMED_PARAMETER, "-subcolor has no argument.\nValid values are {white,yellow,green,cyan,blue,magenta,red} or a custom hue value between 0 and 360\n");
+				}
+				i++;
+				continue;
+			}
+			if (strcmp(argv[i], "-min_sub_duration")==0)
+			{
+				if(i < argc - 1)
+				{
+					char *str=(char*)malloc(sizeof(argv[i+1]));
+					sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
+					opt->hardsubx_min_sub_duration = atof(str);
+					if(opt->hardsubx_min_sub_duration == 0.0)
+					{
+						fatal (EXIT_MALFORMED_PARAMETER, "-min_sub_duration has either 0 or an invalid value supplied\n");
+					}
+				}
+				else
+				{
+					fatal (EXIT_MALFORMED_PARAMETER, "-min_sub_duration has no argument.");
+				}
+				i++;
+				continue;
+			}
+			if (strcmp(argv[i], "-detect_italics")==0)
+			{
+				opt->hardsubx_detect_italics = 1;
+				continue;
+			}
+			if (strcmp(argv[i], "-conf_thresh")==0)
+			{
+				if(i < argc - 1)
+				{
+					char *str=(char*)malloc(sizeof(argv[i+1]));
+					sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
+					opt->hardsubx_conf_thresh = atof(str);
+					if(opt->hardsubx_conf_thresh <= 0.0 || opt->hardsubx_conf_thresh > 100.0)
+					{
+						fatal (EXIT_MALFORMED_PARAMETER, "-conf_thresh has either 0 or an invalid value supplied\nValid values are in (0.0,100.0)");
+					}
+				}
+				else
+				{
+					fatal (EXIT_MALFORMED_PARAMETER, "-conf_thresh has no argument.");
+				}
+				i++;
+				continue;
+			}
+			if (strcmp(argv[i], "-whiteness_thresh")==0 || strcmp(argv[i], "-lum_thresh")==0)
+			{
+				if(i < argc - 1)
+				{
+					char *str=(char*)malloc(sizeof(argv[i+1]));
+					sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
+					opt->hardsubx_lum_thresh = atof(str);
+					if(opt->hardsubx_lum_thresh <= 0.0 || opt->hardsubx_conf_thresh > 100.0)
+					{
+						fatal (EXIT_MALFORMED_PARAMETER, "-whiteness_thresh has either 0 or an invalid value supplied\nValid values are in (0.0,100.0)");
+					}
+				}
+				else
+				{
+					fatal (EXIT_MALFORMED_PARAMETER, "-whiteness_thresh has no argument.");
+				}
+				i++;
+				continue;
+			}
+		}
+#endif
+
 		if (strcmp (argv[i],"-bi")==0 ||
 				strcmp (argv[i],"--bufferinput")==0)
 		{
@@ -873,6 +1183,21 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				strcmp (argv[i],"--nobufferinput")==0)
 		{
 			opt->buffer_input = 0;
+			continue;
+		}
+		if (strcmp(argv[i], "-koc") == 0)
+		{
+			opt->keep_output_closed = 1;
+			continue;
+		}
+		if (strcmp(argv[i], "-ff") == 0 || strcmp(argv[i], "--forceflush") == 0)
+		{
+			opt->force_flush = 1;
+			continue;
+		}
+		if (strcmp(argv[i], "--append") == 0)
+		{
+			opt->append_mode = 1;
 			continue;
 		}
 		if ((strcmp (argv[i],"-bs")==0 || strcmp (argv[i],"--buffersize")==0) && i<argc-1)
@@ -907,6 +1232,10 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->enc_cfg.no_bom = 1;
 			continue;
 		}
+		if (strcmp(argv[i], "-sem") == 0){
+			opt->enc_cfg.with_semaphore = 1;
+			continue;		
+		}	
 		if (strcmp (argv[i],"-nots")==0 ||
 				strcmp (argv[i],"--notypesetting")==0)
 		{
@@ -935,7 +1264,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 		/*user specified subtitle to be selected */
 
-		if(!strcmp (argv[i],"-codec"))
+		if(!strcmp (argv[i],"-codec") && i < argc - 1)
 		{
 			i++;
 			if(!strcmp (argv[i],"teletext"))
@@ -954,7 +1283,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		/*user specified subtitle to be selected */
 
-		if(!strcmp (argv[i],"-nocodec"))
+		if(!strcmp (argv[i],"-nocodec") && i < argc - 1)
 		{
 			i++;
 			if(!strcmp (argv[i],"teletext"))
@@ -971,6 +1300,33 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
+
+		if(strcmp(argv[i],"-dvbcolor")==0)
+		{
+			opt->dvbcolor = 1;
+			continue;
+		}
+
+		if(strcmp(argv[i],"-dvblang")==0 && i < argc-1)
+		{
+			i++;
+			opt->dvblang = (char *)malloc(sizeof(argv[i]));
+			sprintf(opt->dvblang,"%s",argv[i]);
+			for(int char_index=0; char_index < strlen(opt->dvblang);char_index++)
+				opt->dvblang[char_index] = cctolower(opt->dvblang[char_index]);
+			continue;
+		}
+
+		if(strcmp(argv[i],"-ocrlang")==0 && i < argc-1)
+		{
+			i++;
+			opt->ocrlang = (char *)malloc(sizeof(argv[i]));
+			sprintf(opt->ocrlang,"%s",argv[i]);
+			for(int char_index=0; char_index < strlen(opt->ocrlang);char_index++)
+				opt->ocrlang[char_index] = cctolower(opt->ocrlang[char_index]);
+			continue;
+		}
+
 		/* Output file formats */
 		if (strcmp (argv[i],"-srt")==0 ||
 				strcmp (argv[i],"-dvdraw")==0 ||
@@ -1133,7 +1489,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->enc_cfg.trim_subs=1;
 			continue;
 		}
-		if (strcmp (argv[i],"-outinterval")==0)
+		if (strcmp (argv[i],"-outinterval")==0 && i<argc-1)
 		{
 			opt->out_interval = atoi(argv[i+1]);
 			i++;
@@ -1155,6 +1511,13 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->enc_cfg.sentence_cap=1;
 			continue;
 		}
+		if (strcmp(argv[i], "--splitbysentence") == 0 ||
+			strcmp(argv[i], "-sbs") == 0)
+		{
+			opt->enc_cfg.splitbysentence = 1;
+			continue;
+		}
+		 
 		if ((strcmp (argv[i],"--capfile")==0 ||
 					strcmp (argv[i],"-caf")==0)
 				&& i<argc-1)
@@ -1330,6 +1693,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-xdsdebug")==0)
 		{
+			opt->transcript_settings.xds = 1;
 			opt->debug_mask |= CCX_DMT_DECODER_XDS;
 			continue;
 		}
@@ -1369,6 +1733,13 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			tlt_config.verbose=1;
 			continue;
 		}
+#ifdef ENABLE_SHARING
+		if (strcmp(argv[i], "-sharing-debug") == 0)
+		{
+			opt->debug_mask |= CCX_DMT_SHARE;
+			continue;
+		}
+#endif //ENABLE_SHARING
 		if (strcmp (argv[i],"-fullbin")==0)
 		{
 			opt->fullbin = 1;
@@ -1477,7 +1848,8 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-UCLA")==0 || strcmp (argv[i],"-ucla")==0)
 		{
-			opt->millis_separator='.';
+			opt->ucla = 1;
+			opt->millis_separator = '.';
 			opt->enc_cfg.no_bom = 1;
 			if (!opt->transcript_settings.isFinal){
 				opt->transcript_settings.showStartTime = 1;
@@ -1500,6 +1872,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			continue;
 		}
 		if (strcmp (argv[i],"-autodash")==0)
+		{
+			opt->enc_cfg.autodash = 1;
+			continue;
+		}
+		if (strcmp(argv[i], "-sem") == 0)
 		{
 			opt->enc_cfg.autodash = 1;
 			continue;
@@ -1698,6 +2075,38 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			i++;
 			continue;
 		}
+#ifdef WITH_LIBCURL
+		if (strcmp (argv[i],"-curlposturl")==0 && i<argc-1)
+		{
+			opt->curlposturl = argv[i + 1];
+			i++;
+			continue;
+		}
+#endif
+
+#ifdef ENABLE_SHARING
+		if (!strcmp(argv[i], "-enable-sharing")) {
+			opt->sharing_enabled = 1;
+			continue;
+		}
+		if (!strcmp(argv[i], "-sharing-url") && i < argc - 1) {
+			opt->sharing_url = argv[i + 1];
+			i++;
+			continue;
+		}
+		if (!strcmp(argv[i], "-translate") && i < argc - 1) {
+			opt->translate_enabled = 1;
+			opt->sharing_enabled = 1;
+			opt->translate_langs = argv[i + 1];
+			i++;
+			continue;
+		}
+		if (!strcmp(argv[i], "-translate-auth") && i < argc - 1) {
+			opt->translate_key = argv[i + 1];
+			i++;
+			continue;
+		}
+#endif //ENABLE_SHARING
 
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "Error: Parameter %s not understood.\n", argv[i]);
 		// Unrecognized switches are silently ignored
@@ -1792,7 +2201,18 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		mprint("Note: Output format is WebVTT, forcing UTF-8");
 		opt->enc_cfg.encoding = CCX_ENC_UTF_8;
 	}
-
+#ifdef WITH_LIBCURL
+	if (opt->write_format==CCX_OF_CURL && opt->curlposturl==NULL)
+	{
+		print_error(opt->gui_mode_reports, "You must pass a URL (-curlposturl) if output format is curl");
+		return EXIT_INCOMPATIBLE_PARAMETERS;
+	}
+	if (opt->write_format != CCX_OF_CURL && opt->curlposturl != NULL)
+	{
+		print_error(opt->gui_mode_reports, "-curlposturl requires that the format is curl");
+		return EXIT_INCOMPATIBLE_PARAMETERS;
+	}
+#endif
 	/* Initialize some Encoder Configuration */
 	opt->enc_cfg.extract = opt->extract;
 	if (opt->num_input_files > 0)
@@ -1807,13 +2227,18 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	opt->enc_cfg.transcript_settings = opt->transcript_settings;
 	opt->enc_cfg.millis_separator = opt->millis_separator;
 	opt->enc_cfg.no_font_color = opt->nofontcolor;
+	opt->enc_cfg.force_flush = opt->force_flush;
+	opt->enc_cfg.append_mode = opt->append_mode;
+	opt->enc_cfg.ucla = opt->ucla;
 	opt->enc_cfg.no_type_setting = opt->notypesetting;
 	opt->enc_cfg.subs_delay = opt->subs_delay;
+	opt->enc_cfg.gui_mode_reports = opt->gui_mode_reports;
 	if(opt->output_filename && opt->multiprogram == CCX_FALSE)
 		opt->enc_cfg.output_filename = strdup(opt->output_filename);
 	else
 		opt->enc_cfg.output_filename = NULL;
+#ifdef WITH_LIBCURL
+	opt->enc_cfg.curlposturl = opt->curlposturl;
+#endif
 	return EXIT_OK;
-
 }
-

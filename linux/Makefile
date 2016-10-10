@@ -2,9 +2,10 @@ SHELL = /bin/sh
 
 CC = gcc
 SYS := $(shell gcc -dumpmachine)
-CFLAGS = -O3 -std=gnu99
-INCLUDE = -I../src/gpacmp4/ -I../src/libpng -I../src/zlib -I../src/lib_ccx -I../src/.
-ALL_FLAGS = -Wno-write-strings -D_FILE_OFFSET_BITS=64
+CFLAGS = -O3 -std=gnu99 -s
+INCLUDE = -I../src/gpacmp4/ -I../src/libpng -I../src/lib_hash -I../src/zlib -I../src/lib_ccx -I../src/.
+INCLUDE += -I../src/zvbi -I../src/utf8proc
+ALL_FLAGS = -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT
 LDFLAGS = -lm
 
 ifneq (, $(findstring linux, $(SYS)))
@@ -13,7 +14,7 @@ endif
 TARGET = ccextractor
 
 OBJS_DIR = objs
-VPATH = ../src:../src/gpacmp4:../src/libpng:../src/zlib:../src/lib_ccx
+VPATH = ../src:../src/gpacmp4:../src/libpng:../src/zlib:../src/lib_ccx:../src/zvbi:../src/lib_hash
 
 SRCS_DIR = ../src
 SRCS_C = $(wildcard $(SRCS_DIR)/*.c)
@@ -27,6 +28,10 @@ SRCS_PNG_DIR = $(SRCS_DIR)/libpng
 SRCS_PNG = $(wildcard $(SRCS_PNG_DIR)/*.c)
 OBJS_PNG = $(SRCS_PNG:$(SRCS_PNG_DIR)/%.c=$(OBJS_DIR)/%.o)
 
+SRCS_ZVBI_DIR = $(SRCS_DIR)/zvbi
+SRCS_ZVBI = $(wildcard $(SRCS_ZVBI_DIR)/*.c)
+OBJS_ZVBI = $(SRCS_ZVBI:$(SRCS_ZVBI_DIR)/%.c=$(OBJS_DIR)/%.o)
+
 SRCS_GPACMP4_DIR = $(SRCS_DIR)/gpacmp4
 SRCS_GPACMP4_C = $(wildcard $(SRCS_GPACMP4_DIR)/*.c)
 SRCS_GPACMP4_CPP = $(wildcard $(SRCS_GPACMP4_DIR)/*.cpp)
@@ -37,9 +42,32 @@ SRCS_ZLIB_DIR = $(SRCS_DIR)/zlib
 SRCS_ZLIB = $(wildcard $(SRCS_ZLIB_DIR)/*.c)
 OBJS_ZLIB = $(SRCS_ZLIB:$(SRCS_ZLIB_DIR)/%.c=$(OBJS_DIR)/%.o)
 
+SRCS_HASH_DIR = $(SRCS_DIR)/lib_hash
+SRCS_HASH = $(wildcard $(SRCS_HASH_DIR)/*.c)
+OBJS_HASH = $(SRCS_HASH:$(SRCS_HASH_DIR)/%.c=$(OBJS_DIR)/%.o)
+
 INSTLALL = cp -f -p
 INSTLALL_PROGRAM = $(INSTLALL)
 DESTDIR = /usr/bin
+
+ifeq ($(ENABLE_HARDSUBX),yes)
+ENABLE_OCR=yes
+CFLAGS+=-DENABLE_HARDSUBX
+CFLAGS+= $(shell pkg-config --cflags libavcodec)
+CFLAGS+= $(shell pkg-config --cflags libavformat)
+CFLAGS+= $(shell pkg-config --cflags libavutil)
+CFLAGS+= $(shell pkg-config --cflags libswscale)
+AV_LDFLAGS+= $(shell pkg-config --libs libavcodec )
+AV_LDFLAGS+= $(shell pkg-config --libs libavformat )
+AV_LDFLAGS+= $(shell pkg-config --libs libavutil )
+AV_LDFLAGS+= $(shell pkg-config --libs libswscale )
+ifeq ($(AV_LDFLAGS),$(EMPTY))
+$(error **ERROR** "libav not found")
+else
+$(info "libav found")
+endif
+LDFLAGS+= $(AV_LDFLAGS)
+endif
 
 ifeq ($(ENABLE_OCR),yes)
 CFLAGS+=-DENABLE_OCR -DPNG_NO_CONFIG_H
@@ -78,14 +106,14 @@ LDFLAGS+= $(shell pkg-config --libs libavutil )
 endif
 
 .PHONY: all
-all: objs_dir $(TARGET) 
+all: pre-build objs_dir $(TARGET) 
 
 .PHONY: objs_dir
 objs_dir: 
 	mkdir -p $(OBJS_DIR)
 
-$(TARGET): $(OBJS) $(OBJS_PNG) $(OBJS_GPACMP4) $(OBJS_ZLIB) $(OBJS_CCX)
-	$(CC) $(ALL_FLAGS) $(CFLAGS) $(OBJS) $(OBJS_CCX) $(OBJS_PNG) $(OBJS_GPACMP4) $(OBJS_ZLIB) $(LDFLAGS) -o $@
+$(TARGET): $(OBJS) $(OBJS_PNG) $(OBJS_GPACMP4) $(OBJS_ZVBI) $(OBJS_ZLIB) $(OBJS_HASH) $(OBJS_CCX)
+	$(CC) $(ALL_FLAGS) $(CFLAGS) $(OBJS) $(OBJS_CCX) $(OBJS_PNG) $(OBJS_ZVBI) $(OBJS_GPACMP4) $(OBJS_ZLIB) $(OBJS_HASH) $(LDFLAGS) -o $@
 
 $(OBJS_DIR)/%.o: %.c
 	$(CC) -c $(ALL_FLAGS) $(INCLUDE) $(CFLAGS) $< -o $@  
@@ -99,7 +127,7 @@ $(OBJS_DIR)/ccextractor.o: ccextractor.c
 .PHONY: clean
 clean:
 	rm -rf $(TARGET) 2>/dev/null || true
-	rm -rf $(OBJS_CCX) $(OBJS_PNG) $(OBJS_ZLIB) $(OBJS_GPACMP4) $(OBJS) 2>/dev/null || true
+	rm -rf $(OBJS_CCX) $(OBJS_PNG) $(OBJS_ZLIB) $(OBJS_GPACMP4) $(OBJS_HASH) $(OBJS) 2>/dev/null || true
 	rm -rdf $(OBJS_DIR) 2>/dev/null || true
 	rm -rf .depend 2>/dev/null || true
 
@@ -113,8 +141,12 @@ uninstall:
 
 .PHONY: depend dep
 depend dep:
-	$(CC) $(CFLAGS) $(INCLUDE) -E -MM $(SRCS_C) $(SRCS_PNG) $(SRCS_ZLIB) $(SRCS_CCX) \
+	$(CC) $(CFLAGS) $(INCLUDE) -E -MM $(SRCS_C) $(SRCS_PNG) $(SRCS_ZVBI) $(SRCS_ZLIB) $(SRCS_HASH) $(SRCS_CCX) \
 		$(SRCS_GPACMP4_C) $(SRCS_GPACMP4_CPP) |\
 		sed 's/^[a-zA-Z_0-9]*.o/$(OBJS_DIR)\/&/' > .depend
+
+.PHONY: pre-build
+pre-build:
+	./pre-build.sh
 
 -include .depend

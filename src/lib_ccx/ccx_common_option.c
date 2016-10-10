@@ -24,7 +24,6 @@ void init_options (struct ccx_s_options *options)
 	options->settings_608.screens_to_process = -1;
 	options->settings_608.default_color = COL_TRANSPARENT; // Defaults to transparant/no-color.
 
-	/* Credit stuff */
 	options->extract = 1; // Extract 1st field only (primary language)
 	options->cc_channel = 1; // Channel we want to dump in srt mode
 	options->binary_concat=1; // Disabled by -ve or --videoedited
@@ -33,6 +32,7 @@ void init_options (struct ccx_s_options *options)
 	options->gui_mode_reports=0; // If 1, output in stderr progress updates so the GUI can grab them
 	options->no_progress_bar=0; // If 1, suppress the output of the progress to stdout
 	options->enc_cfg.sentence_cap =0 ; // FIX CASE? = Fix case?
+	options->enc_cfg.splitbysentence = 0; // Split text into complete sentences and prorate time?
 	options->sentence_cap_file=NULL; // Extra words file?
 	options->live_stream=0; // 0 -> A regular file
 	options->messages_target=1; // 1=stdout
@@ -55,6 +55,23 @@ void init_options (struct ccx_s_options *options)
 	options->xmltvliveinterval=10; // interval in seconds between writting xmltv output files in live mode
 	options->xmltvoutputinterval=0; // interval in seconds between writting xmltv full file output
 	options->xmltvonlycurrent=0; // 0 off 1 on
+	options->keep_output_closed = 0; // By default just keep the file open.
+	options->force_flush = 0; // Don't flush whenever content is written.
+	options->append_mode = 0; //By default, files are overwritten.
+	options->ucla = 0; // By default, -UCLA not used
+	options->hardsubx = 0; // By default, don't try to extract hard subtitles
+	options->dvbcolor = 0; // By default, only text detected in DVB
+	options->dvblang = NULL; // By default, autodetect DVB language
+	options->ocrlang = NULL; // By default, autodetect .traineddata file
+
+	/*HardsubX related stuff*/
+	options->hardsubx_ocr_mode = 0;
+	options->hardsubx_subcolor = 0;
+	options->hardsubx_min_sub_duration = 0.5;
+	options->hardsubx_detect_italics = 0;
+	options->hardsubx_conf_thresh = 0.0;
+	options->hardsubx_hue = 0.0;
+	options->hardsubx_lum_thresh = 95.0;
 
 	options->transcript_settings = ccx_encoders_default_transcript_settings;
 	options->millis_separator=',';
@@ -105,6 +122,7 @@ void init_options (struct ccx_s_options *options)
 	options->enc_cfg.no_bom = 0; // Use BOM by default.
 	options->enc_cfg.services_charsets = NULL;
 	options->enc_cfg.all_services_charset = NULL;
+	options->enc_cfg.with_semaphore = 0; 
 
 	options->settings_dtvcc.enabled = 0;
 	options->settings_dtvcc.active_services_count = 0;
@@ -113,9 +131,22 @@ void init_options (struct ccx_s_options *options)
 	options->settings_dtvcc.report = NULL;
 	memset(options->settings_dtvcc.services_enabled, 0, CCX_DTVCC_MAX_SERVICES);
 
+#ifdef ENABLE_SHARING
+	options->sharing_enabled = 0;
+	options->sharing_url = NULL;
+	options->translate_enabled = 0;
+	options->translate_key = NULL;
+	options->translate_langs = NULL;
+#endif //ENABLE_SHARING
+#ifdef WITH_LIBCURL
+	options->curlposturl = NULL;
+#endif
+
 	// Prepare time structures
 	init_boundary_time (&options->extraction_start);
 	init_boundary_time (&options->extraction_end);
+
+	/* Credit stuff */
 	init_boundary_time (&options->enc_cfg.startcreditsnotbefore);
 	init_boundary_time (&options->enc_cfg.startcreditsnotafter);
 	init_boundary_time (&options->enc_cfg.startcreditsforatleast);

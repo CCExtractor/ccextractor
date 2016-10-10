@@ -3,7 +3,7 @@
 #include "ccx_encoders_common.h"
 #include "ccx_encoders_helpers.h"
 #include "utility.h"
-
+#include "ocr.h"
 
 
 /* The timing here is not PTS based, but output based, i.e. user delay must be accounted for
@@ -94,13 +94,95 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 	return 0;
 }
 
+int write_xtimestamp_header(struct encoder_ctx *context)
+{
+	if (context->wrote_webvtt_sync_header) // Already done
+		return 1;
+	if (context->timing->sync_pts2fts_set)
+	{
+		char header_string[200];
+		int used;
+		unsigned h1, m1, s1, ms1;
+		mstotime(context->timing->sync_pts2fts_fts, &h1, &m1, &s1, &ms1);
+		sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:%ld, LOCAL %02u:%02u:%02u.%03u\r\n",
+			context->timing->sync_pts2fts_pts, 
+			h1, m1, s1, ms1);
+		used = encode_line(context, context->buffer, (unsigned char *)header_string);
+		write(context->out->fh, context->buffer, used);
+
+	}
+	// Add the additional CRLF to finish the header
+	write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+	context->wrote_webvtt_sync_header = 1; // Do it even if couldn't write the header, because it won't be possible anyway
+}
+
+
 int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
-	//TODO
 	int ret = 0;
+#ifdef ENABLE_OCR
+	struct cc_bitmap* rect;
+	LLONG ms_start, ms_end;
+	unsigned h1, m1, s1, ms1;
+	unsigned h2, m2, s2, ms2;
+	char timeline[128];
+	int len = 0;
+	int used;
+	int i = 0;
+	char *str;
+
+	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
+	{
+		ms_start = context->prev_start;
+		ms_end = sub->start_time;
+	}
+	else if (!(sub->flags & SUB_EOD_MARKER))
+	{
+		ms_start = sub->start_time;
+		ms_end = sub->end_time;
+	}
+	else if (context->prev_start == -1 && (sub->flags & SUB_EOD_MARKER))
+	{
+		ms_start = 1;
+		ms_end = sub->start_time;
+	}
+
+	if (sub->nb_data == 0)
+		return 0;
+
+	write_xtimestamp_header(context);
+
+	if (sub->flags & SUB_EOD_MARKER)
+		context->prev_start = sub->start_time;
+
+	str = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);
+	if (str)
+	{
+		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
+		{
+			mstotime(ms_start, &h1, &m1, &s1, &ms1);
+			mstotime(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
+			context->srt_counter++; // Not needed for WebVTT but let's keep it around for now
+			sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
+				h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
+			used = encode_line(context, context->buffer, (unsigned char *)timeline);
+			write(context->out->fh, context->buffer, used);
+			len = strlen(str);
+			write(context->out->fh, str, len);
+			write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+		}
+		freep(&str);
+	}
+	for (i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
+	{
+		freep(rect->data);
+		freep(rect->data + 1);
+	}
+#endif
 	sub->nb_data = 0;
 	freep(&sub->data);
 	return ret;
+
 }
 
 int write_cc_subtitle_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *context)
@@ -158,6 +240,8 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 	if (ms_start<0) // Drop screens that because of subs_delay start too early
 		return 0;
 
+	write_xtimestamp_header(context);
+
 	ms_end = data->end_time;
 
 	mstotime(ms_start, &h1, &m1, &s1, &ms1);
@@ -180,8 +264,8 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 		{
 			if (context->sentence_cap)
 			{
-				capitalize(context, i, data);
-				correct_case(i, data);
+				if (clever_capitalize(context, i, data))
+					correct_case_with_dictionary(i, data);
 			}
 			if (context->autodash && context->trim_subs)
 			{

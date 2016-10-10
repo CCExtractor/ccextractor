@@ -2,6 +2,7 @@
 #include "ccx_common_constants.h"
 #include "ccx_common_timing.h"
 #include "ccx_common_common.h"
+#include "utility.h" 
 
 LLONG ts_start_of_xds = -1; // Time at which we switched to XDS mode, =-1 hasn't happened yet
 
@@ -115,9 +116,14 @@ typedef struct ccx_decoders_xds_context
 	int cur_xds_packet_type;
 	struct ccx_common_timing_ctx *timing;
 
+	unsigned current_ar_start;
+	unsigned current_ar_end;
+
+	int xds_write_to_file; // Set to 1 if XDS data is to be written to file
+
 } ccx_decoders_xds_context_t;
 
-struct ccx_decoders_xds_context *ccx_decoders_xds_init_library(struct ccx_common_timing_ctx *timing)
+struct ccx_decoders_xds_context *ccx_decoders_xds_init_library(struct ccx_common_timing_ctx *timing, int xds_write_to_file)
 {
 	int i;
 	struct ccx_decoders_xds_context *ctx = NULL;
@@ -157,6 +163,8 @@ struct ccx_decoders_xds_context *ccx_decoders_xds_init_library(struct ccx_common
 	ctx->cur_xds_packet_type	= 0;
 	ctx->timing = timing;
 
+	ctx->xds_write_to_file = xds_write_to_file;
+
 	return ctx;
 }
 
@@ -192,6 +200,8 @@ int write_xds_string(struct cc_subtitle *sub, struct ccx_decoders_xds_context *c
 
 void xdsprint (struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, const char *fmt,...)
 {
+	if(!ctx->xds_write_to_file)
+		return;
 	/* Guess we need no more than 100 bytes. */
 	int n, size = 100;
 	char *p, *np;
@@ -697,6 +707,7 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 		case XDS_TYPE_ASPECT_RATIO_INFO:
 			{
 				unsigned ar_start, ar_end;
+				int changed = 0;
 				was_proc = 1;
 				if (ctx->cur_xds_payload_length < 5) // We need 2 data bytes
 					break;
@@ -709,10 +720,22 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 				ar_end = 262 - (ctx->cur_xds_payload[3] & 0x1F);
 				unsigned active_picture_height = ar_end - ar_start;
 				float aspect_ratio = (float) 320 / active_picture_height;
-				ccx_common_logging.log_ftn("\rXDS Notice: Aspect ratio info, start line=%u, end line=%u\n", ar_start,ar_end);
-				ccx_common_logging.log_ftn("\rXDS Notice: Aspect ratio info, active picture height=%u, ratio=%f\n", active_picture_height, aspect_ratio);
 
+				if (ar_start != ctx->current_ar_start)
+				{	
+					ctx->current_ar_start = ar_start;
+					ctx->current_ar_end = ar_end;
+					changed = 1;
+					ccx_common_logging.log_ftn("\rXDS Notice: Aspect ratio info, start line=%u, end line=%u\n", ar_start, ar_end);
+					ccx_common_logging.log_ftn("\rXDS Notice: Aspect ratio info, active picture height=%u, ratio=%f\n", active_picture_height, aspect_ratio);
+				}
+				else
+				{
+					ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS Notice: Aspect ratio info, start line=%u, end line=%u\n", ar_start, ar_end);
+					ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS Notice: Aspect ratio info, active picture height=%u, ratio=%f\n", active_picture_height, aspect_ratio);
+				}
 			}
+			break;
 		case XDS_TYPE_PROGRAM_DESC_1:
 		case XDS_TYPE_PROGRAM_DESC_2:
 		case XDS_TYPE_PROGRAM_DESC_3:
@@ -959,7 +982,8 @@ void do_end_of_xds (struct cc_subtitle *sub, struct ccx_decoders_xds_context *ct
 
 	if (!was_proc)
 	{
-		ccx_common_logging.log_ftn ("Note: We found an currently unsupported XDS packet.\n");
+		ccx_common_logging.log_ftn ("Note: We found a currently unsupported XDS packet.\n");
+		dump (CCX_DMT_DECODER_XDS,ctx->cur_xds_payload,ctx->cur_xds_payload_length,0,0);
 	}
 	clear_xds_buffer (ctx, ctx->cur_xds_buffer_idx);
 

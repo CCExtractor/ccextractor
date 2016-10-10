@@ -37,11 +37,23 @@ LLONG gettotalfilessize (struct lib_ccx_ctx *ctx) // -1 if one or more files fai
 #else
 		h = OPEN (ctx->inputfile[i], O_RDONLY);
 #endif
-		if (h == -1)
-		{
-			mprint ("\rUnable to open %s\r\n", ctx->inputfile[i]);
-			return -1;
+
+		if (h == -1) {
+			switch (errno)
+			{
+			case ENOENT:
+				return -1 * ENOENT;
+			case EACCES:
+				return -1 * EACCES;
+			case EINVAL:
+				return -1 * EINVAL;
+			case EMFILE:
+				return -1 * EMFILE;
+			default:
+				return -1;
+			}
 		}
+
 		if (!ccx_options.live_stream)
 			ts += getfilesize (h);
 		close (h);
@@ -71,18 +83,21 @@ void prepare_for_new_file (struct lib_ccx_ctx *ctx)
 	pts_big_change              = 0;
 	firstcall                   = 1;
 
-	for(int x = 0; x < 0xfff; x++)
+	if(ctx->epg_inited)
 	{
-		ctx->epg_buffers[x].buffer   = NULL;
-		ctx->epg_buffers[x].ccounter = 0;
+		for(int x = 0; x < 0xfff; x++)
+		{
+			ctx->epg_buffers[x].buffer   = NULL;
+			ctx->epg_buffers[x].ccounter = 0;
+		}
+		for (int i = 0; i < TS_PMT_MAP_SIZE; i++)
+		{
+			ctx->eit_programs[i].array_len = 0;
+			ctx->eit_current_events[i] = -1;
+		}
+		ctx->epg_last_output      = -1;
+		ctx->epg_last_live_output = -1;
 	}
-	for (int i = 0; i < TS_PMT_MAP_SIZE; i++)
-	{
-		ctx->eit_programs[i].array_len = 0;
-		ctx->eit_current_events[i] = -1;
-	}
-	ctx->epg_last_output      = -1;
-	ctx->epg_last_live_output = -1;
 }
 
 /* Close input file if there is one and let the GUI know */
@@ -123,6 +138,7 @@ int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 	/* Close current and make sure things are still sane */
 	if (ctx->demux_ctx->is_open(ctx->demux_ctx))
 	{
+		dbg_print(CCX_DMT_708, "[CEA-708] The 708 decoder was reset [%d] times.\n", ctx->freport.data_from_708->reset_count);
 		if (ccx_options.print_file_reports)
 			print_file_report(ctx);
 
@@ -286,6 +302,7 @@ void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned 
  */
 size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t bytes)
 {
+	size_t origin_buffer_size = bytes;
 	size_t copied   = 0;
 	time_t seconds = 0;
 
@@ -301,6 +318,8 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 
 		while ((!eof || ccx_options.live_stream) && bytes)
 		{
+			if (terminate_asap)
+				break;
 			if (eof)
 			{
 				// No more data available inmediately, we sleep a while to give time
@@ -372,13 +391,15 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 					i = net_tcp_read(ctx->infd, (char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep);
 				else
 					i = recvfrom(ctx->infd,(char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, NULL, NULL);
+				if (terminate_asap) /* Looks like receiving a signal here will trigger a -1, so check that first */
+					break;
 				if (i == -1)
 					fatal (EXIT_READ_ERROR, "Error reading input stream!\n");
 				if (i == 0)
 				{
 					/* If live stream, don't try to switch - acknowledge eof here as it won't
 					   cause a loop end */
-					if (ccx_options.live_stream || !(ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied)))
+					if (ccx_options.live_stream || ((struct lib_ccx_ctx *)ctx->parent)->inputsize <= origin_buffer_size || !(ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied)))
 						eof = 1;
 				}
 				ctx->filebuffer_pos = keep;
@@ -409,6 +430,8 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 					((i = read(ctx->infd, buffer, bytes)) != 0 || ccx_options.live_stream ||
 					 (ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied))))
 			{
+				if (terminate_asap)
+					break;
 				if( i == -1)
 					fatal (EXIT_READ_ERROR, "Error reading input file!\n");
 				else if (i == 0)
@@ -425,6 +448,8 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 		while (bytes != 0 && ctx->infd != -1)
 		{
 			LLONG op, np;
+			if (terminate_asap)
+				break;
 			op = LSEEK (ctx->infd, 0, SEEK_CUR); // Get current pos
 			if (op + bytes < 0) // Would mean moving beyond start of file: Not supported
 				return 0;
@@ -482,5 +507,25 @@ unsigned int buffered_get_be32(struct ccx_demuxer *ctx)
 	unsigned int val;
 	val = buffered_get_be16(ctx) << 16;
 	val |= buffered_get_be16(ctx);
+	return val;
+}
+
+unsigned short buffered_get_le16(struct ccx_demuxer *ctx)
+{
+	unsigned char a,b;
+	unsigned char *a_p = &a; // Just to suppress warnings
+	unsigned char *b_p = &b;
+	buffered_read_byte(ctx, a_p);
+	ctx->past++;
+	buffered_read_byte(ctx, b_p);
+	ctx->past++;
+	return ( (unsigned short) (b<<8) )| ( (unsigned short) a);
+}
+
+unsigned int buffered_get_le32(struct ccx_demuxer *ctx)
+{
+	unsigned int val;
+	val = buffered_get_le16(ctx);
+	val |= buffered_get_le16(ctx) << 16;
 	return val;
 }

@@ -98,7 +98,7 @@ struct ccx_decoders_common_settings_t
 	unsigned int hauppauge_mode; // If 1, use PID=1003, process specially and so on
 	int program_number;
 	enum ccx_code_type codec;
-	int ignore_xds;
+	int xds_write_to_file;
 	void *private_data;
 };
 
@@ -139,6 +139,7 @@ struct lib_cc_decode
 	enum ccx_code_type codec;
 	// Set to true if data is buffered
 	int has_ccdata_buffered;
+	int is_alloc;
 
 	struct avc_ctx *avc_ctx;
 	void *private_data;
@@ -166,6 +167,17 @@ struct lib_cc_decode
 	/* Reguired in es_function.c and es_userdata.c */
 	unsigned top_field_first; // Needs to be global
 
+    /* Stats. Modified in es_userdata.c*/
+    int stat_numuserheaders;
+    int stat_dvdccheaders;
+    int stat_scte20ccheaders;
+    int stat_replay5000headers;
+    int stat_replay4000headers;
+    int stat_dishheaders;
+    int stat_hdtv;
+    int stat_divicom;
+    int false_pict_header;
+
 	ccx_dtvcc_ctx *dtvcc;
 	int current_field;
 	// Analyse/use the picture information
@@ -181,6 +193,7 @@ struct lib_cc_decode
 	// B-Frames belong to this I- or P-frame.
 	int anchor_seq_number;
 	struct ccx_decoders_xds_context *xds_ctx;
+	struct ccx_decoder_vbi_ctx *vbi_decoder;
 
 	int (*writedata)(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 };

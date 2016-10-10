@@ -132,6 +132,9 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 			case CCX_SM_MP4:
 				mprint ("\rFile seems to be a MP4\n");
 				break;
+			case CCX_SM_GXF:
+				mprint ("\rFile seems to be a GXF\n");
+				break;
 #ifdef WTV_DEBUG
 			case CCX_SM_HEX_DUMP:
 				mprint ("\rFile seems to be an hexadecimal dump\n");					
@@ -165,7 +168,7 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 			{
 				case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
 				case CCX_SM_PROGRAM:
-					if ( detect_myth(ctx->parent) )
+					if ( detect_myth(ctx) )
 					{
 						ctx->stream_mode=CCX_SM_MYTH;
 					}
@@ -388,6 +391,8 @@ struct demuxer_data* alloc_demuxer_data(void)
 	data->codec = CCX_CODEC_NONE;
 	data->len = 0;
 	data->pts = CCX_NOPTS;
+	data->tb.num = 1;
+	data->tb.den = 90000;
 	data->next_stream = 0;
 	data->next_program = 0;
 	return data;

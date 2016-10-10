@@ -4,6 +4,7 @@ project (CCExtractor)
 
 option (WITH_FFMPEG "Build using FFmpeg demuxer and decoder" OFF)
 option (WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
+option (WITH_SHARING "Build with sharing and translation support" OFF)
 
 #Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
@@ -20,6 +21,8 @@ configure_file (
 include_directories ("${PROJECT_SOURCE_DIR}")
 include_directories ("${PROJECT_SOURCE_DIR}/lib_ccx")
 include_directories ("${PROJECT_SOURCE_DIR}/gpacmp4/")
+include_directories ("${PROJECT_SOURCE_DIR}/zvbi")
+aux_source_directory ("${PROJECT_SOURCE_DIR}/zvbi" SOURCEFILE)
 
 #Adding some platform specific library path
 link_directories (/opt/local/lib)
@@ -32,9 +35,9 @@ aux_source_directory (${PROJECT_SOURCE_DIR} SOURCEFILE)
 set (EXTRA_LIBS ${EXTRA_LIBS} ccx)
 set (EXTRA_LIBS ${EXTRA_LIBS} m)
 
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 set (EXTRA_LIBS ${EXTRA_LIBS} iconv)
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 
 find_package (PkgConfig)
@@ -44,9 +47,15 @@ if(PKG_CONFIG_FOUND)
     set (EXTRA_LIBS ${EXTRA_LIBS} png)
   else (PNG_FOUND)
     include_directories ("${PROJECT_SOURCE_DIR}/libpng/")
+    include_directories ("${PROJEXT_SOURCE_DIR}/zlib/")
     aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
     aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib/" SOURCEFILE)
   endif(PNG_FOUND)
+else(PKG_CONFIG_FOUND)
+    include_directories ("${PROJECT_SOURCE_DIR}/libpng/")
+    include_directories ("${PROJEXT_SOURCE_DIR}/zlib/")
+    aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
+    aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib/" SOURCEFILE)
 endif (PKG_CONFIG_FOUND)
 
 ########################################################
@@ -81,6 +90,23 @@ if (WITH_OCR)
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR ${TESSERACT_CFLAGS} ${LEPTONICA_CFLAGS}")
 endif (WITH_OCR)
+
++########################################################
++# Build with CC sharing and translation support
++########################################################
++
+if (WITH_SHARING)
+  find_package(PkgConfig)
+
+  pkg_check_modules (NANOMSG REQUIRED libnanomsg)
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${NANOMSG_STATIC_LIBRARIES})
+
+  include_directories ("${PROJECT_SOURCE_DIR}/protobuf-c/")
+  aux_source_directory ("${PROJECT_SOURCE_DIR}/protobuf-c/" SOURCEFILE)
+
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_SHARING")
+endif (WITH_SHARING)
+
 
 add_executable (ccextractor ${SOURCEFILE})
 target_link_libraries (ccextractor ${EXTRA_LIBS})

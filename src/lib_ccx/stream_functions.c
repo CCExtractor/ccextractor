@@ -9,6 +9,7 @@
 #include "utility.h"
 #include "ccx_common_timing.h"
 #include "file_buffer.h"
+#include "ccx_gxf.h"
 
 void detect_stream_type (struct ccx_demuxer *ctx)
 {
@@ -26,6 +27,14 @@ void detect_stream_type (struct ccx_demuxer *ctx)
 				ctx->startbytes[2]==0xb2 &&
 				ctx->startbytes[3]==0x75)
 			ctx->stream_mode=CCX_SM_ASF;
+	}
+	if (ctx->stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND)
+	{
+		if (ccx_gxf_probe(ctx->startbytes, ctx->startbytes_avail) == CCX_TRUE)
+		{
+			ctx->stream_mode = CCX_SM_GXF;
+			ctx->private_data = ccx_gxf_init(ctx);
+		}
 	}
 	if (ctx->stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND && ctx->startbytes_avail >= 4)
 	{
@@ -186,7 +195,7 @@ int detect_myth( struct ccx_demuxer *ctx )
 {
 	int vbi_blocks=0;
 	// VBI data? if yes, use myth loop
-	// STARTBTYTESLENGTH is 1MB, if the file is shorter we will never detect
+	// STARTBYTESLENGTH is 1MB, if the file is shorter we will never detect
 	// it as a mythTV file
 	if (ctx->startbytes_avail==STARTBYTESLENGTH)
 	{
@@ -409,18 +418,25 @@ typedef struct ccx_stream_mp4_box
 * An asterisk (*) marks a mandatory box for a regular file.
 * Box types that are on the second level or deeper are omitted.
 */
-ccx_stream_mp4_box ccx_stream_mp4_boxes[11] = {
+ccx_stream_mp4_box ccx_stream_mp4_boxes[16] = {
 		{ "ftyp", 6 }, // File type and compatibility*
 		{ "pdin", 1 }, // Progressive download information
 		{ "moov", 5 }, // Container for all metadata*
 		{ "moof", 4 }, // Movie fragment
-		{ "mfra", 3 }, // Movie fragment random access
+		{ "mfra", 1 }, // Movie fragment random access
 		{ "mdat", 2 }, // Media data container
 		{ "free", 1 }, // Free space
 		{ "skip", 1 }, // Free space
 		{ "meta", 1 }, // Metadata
 		{ "wide", 1 }, // For boxes that are > 2^32 bytes (https://developer.apple.com/library/mac/documentation/QuickTime/QTFF/QTFFChap1/qtff1.html)
-		{ "void", 1 }  // Unknown where this is from/for, assume free space.
+		{ "void", 1 },  // Unknown where this is from/for, assume free space.
+
+		// new ones in standard ISO/IEC 14496-12:2015
+		{ "meco", 1 }, // additional metadata container
+		{ "styp", 1 }, // segment type
+		{ "sidx", 1 }, // segment index
+		{ "ssix", 1 }, // subsegment index
+		{ "prft", 1 }  // producer reference time
 };
 
 /*
@@ -432,7 +448,7 @@ ccx_stream_mp4_box ccx_stream_mp4_boxes[11] = {
  */
 int isValidMP4Box(unsigned char *buffer, size_t position, size_t *nextBoxLocation, int *boxScore)
 {
-	for (int idx = 0; idx < 11; idx++)
+	for (int idx = 0; idx < 16; idx++)
 	{
 		if (buffer[position + 4] == ccx_stream_mp4_boxes[idx].boxType[0] && buffer[position + 5] == ccx_stream_mp4_boxes[idx].boxType[1] &&
 				buffer[position + 6] == ccx_stream_mp4_boxes[idx].boxType[2] && buffer[position + 7] == ccx_stream_mp4_boxes[idx].boxType[3]){

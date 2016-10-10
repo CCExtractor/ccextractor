@@ -10,6 +10,17 @@
 #include "ccx_encoders_xds.h"
 #include "ccx_encoders_helpers.h"
 
+#ifdef ENABLE_SHARING
+#include "ccx_share.h"
+#endif //ENABLE_SHARING
+
+#ifdef WIN32
+int fsync(int fd)
+{
+	return FlushFileBuffers((HANDLE)_get_osfhandle(fd)) ? 0 : -1;
+}
+#endif
+
 // These are the default settings for plain transcripts. No times, no CC or caption mode, and no XDS.
 ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
 {
@@ -50,7 +61,7 @@ static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
 "  <body>\n"
 "    <div>\n";
 
-static const char *webvtt_header = "WEBVTT\r\n\r\n";
+static const char *webvtt_header = "WEBVTT\r\n";
 
 static const char *simple_xml_header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<captions>\r\n";
 
@@ -524,127 +535,6 @@ int write_cc_subtitle_as_simplexml(struct cc_subtitle *sub, struct encoder_ctx *
 	return ret;
 }
 
-int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context)
-{
-	int length;
-	int ret = 0;
-	LLONG start_time = -1;
-	LLONG end_time = -1;
-	char *str;
-	char *save_str;
-	struct cc_subtitle *osub = sub;
-	struct cc_subtitle *lsub = sub;
-
-	while(sub)
-	{
-		if(sub->type == CC_TEXT)
-		{
-			start_time = sub->start_time;
-			end_time = sub->end_time;
-		}
-		if (context->sentence_cap)
-		{
-			//TODO capitalize (context, line_number,data);
-			//TODO correct_case(line_number, data);
-		}
-
-		if (start_time == -1)
-		{
-			// CFS: Means that the line has characters but we don't have a timestamp for the first one. Since the timestamp
-			// is set for example by the write_char function, it possible that we don't have one in empty lines (unclear)
-			// For now, let's not consider this a bug as before and just return.
-			// fatal (EXIT_BUG_BUG, "Bug in timedtranscript (ts_start_of_current_line==-1). Please report.");
-			return 0;
-		}
-
-		str = sub->data;
-
-		str = strtok_r(str, "\r\n", &save_str);
-		do
-		{
-			length = get_str_basic(context->subline, (unsigned char*)str, context->trim_subs, sub->enc_type, context->encoding, strlen(str));
-			if (length <= 0)
-			{
-				continue;
-			}
-
-			if (context->transcript_settings->showStartTime)
-			{
-				char buf[80];
-				if (context->transcript_settings->relativeTimestamp)
-				{
-					millis_to_date(start_time + context->subs_delay, buf, context->date_format, context->millis_separator);
-					fdprintf(context->out->fh, "%s|", buf);
-				}
-				else
-				{
-					time_t start_time_int = (start_time + context->subs_delay) / 1000;
-					int start_time_dec = (start_time + context->subs_delay) % 1000;
-					struct tm *start_time_struct = gmtime(&start_time_int);
-					strftime(buf, sizeof(buf), "%Y%m%d%H%M%S", start_time_struct);
-					fdprintf(context->out->fh, "%s%c%03d|", buf, context->millis_separator, start_time_dec);
-				}
-			}
-
-			if (context->transcript_settings->showEndTime)
-			{
-				char buf[80];
-				if (context->transcript_settings->relativeTimestamp)
-				{
-					millis_to_date(end_time, buf, context->date_format, context->millis_separator);
-					fdprintf(context->out->fh, "%s|", buf);
-				}
-				else
-				{
-					time_t end_time_int = (end_time + context->subs_delay) / 1000;
-					int end_time_dec = (end_time + context->subs_delay) % 1000;
-					struct tm *end_time_struct = gmtime(&end_time_int);
-					strftime(buf, sizeof(buf), "%Y%m%d%H%M%S", end_time_struct);
-					fdprintf(context->out->fh, "%s%c%03d|", buf, context->millis_separator, end_time_dec);
-				}
-			}
-
-			if (context->transcript_settings->showCC)
-			{
-				if(context->in_fileformat == 1)
-					//TODO, data->my_field == 1 ? data->channel : data->channel + 2); // Data from field 2 is CC3 or 4
-					fdprintf(context->out->fh, "CC?|");
-				else
-					fdprintf(context->out->fh, sub->info);
-			}
-			if (context->transcript_settings->showMode)
-			{
-				fdprintf(context->out->fh, "%s|", sub->mode);
-			}
-			ret = write(context->out->fh, context->subline, length);
-			if(ret < length)
-			{
-				mprint("Warning:Loss of data\n");
-			}
-
-			ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-			if(ret <  context->encoded_crlf_length)
-			{
-				mprint("Warning:Loss of data\n");
-			}
-
-		} while ( (str = strtok_r(NULL, "\r\n", &save_str)) );
-
-		freep(&sub->data);
-		lsub = sub;
-		sub = sub->next;
-	}
-
-	while(lsub != osub)
-	{
-		sub = lsub->prev;
-		freep(&lsub);
-		lsub = sub;
-	}
-
-	return ret;
-}
-
 void write_cc_line_as_simplexml(struct eia608_screen *data, struct encoder_ctx *context, int line_number)
 {
 	int ret;
@@ -653,8 +543,8 @@ void write_cc_line_as_simplexml(struct eia608_screen *data, struct encoder_ctx *
 	char *cap1 = "</caption>";
 	if (context->sentence_cap)
 	{
-		capitalize (context, line_number, data);
-		correct_case(line_number, data);
+		if (clever_capitalize (context, line_number, data))
+			correct_case_with_dictionary(line_number, data);
 	}
 	length = get_str_basic (context->subline, data->characters[line_number],
 			context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
@@ -669,112 +559,7 @@ void write_cc_line_as_simplexml(struct eia608_screen *data, struct encoder_ctx *
 	ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 
 }
-//TODO Convert CC line to TEXT format and remove this function
-void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context, int line_number)
-{
-	int ret = 0;
-	LLONG start_time = data->start_time;
-	LLONG end_time = data->end_time;
-	if (context->sentence_cap)
-	{
-		capitalize (context, line_number, data);
-		correct_case(line_number, data);
-	}
-	int length = get_str_basic (context->subline, data->characters[line_number],
-			context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
 
-	if (context->encoding!=CCX_ENC_UNICODE)
-	{
-		dbg_print(CCX_DMT_DECODER_608, "\r");
-		dbg_print(CCX_DMT_DECODER_608, "%s\n",context->subline);
-	}
-	if (length>0)
-	{
-		if (data->start_time == -1)
-		{
-			// CFS: Means that the line has characters but we don't have a timestamp for the first one. Since the timestamp
-			// is set for example by the write_char function, it possible that we don't have one in empty lines (unclear)
-			// For now, let's not consider this a bug as before and just return.
-			// fatal (EXIT_BUG_BUG, "Bug in timedtranscript (ts_start_of_current_line==-1). Please report.");
-			return;
-		}
-
-		if (context->transcript_settings->showStartTime){
-			char buf1[80];
-			if (context->transcript_settings->relativeTimestamp){
-				millis_to_date(start_time + context->subs_delay, buf1, context->date_format, context->millis_separator);
-				fdprintf(context->out->fh, "%s|", buf1);
-			}
-			else {
-				time_t start_time_int = (start_time + context->subs_delay) / 1000;
-				int start_time_dec = (start_time + context->subs_delay) % 1000;
-				struct tm *start_time_struct = gmtime(&start_time_int);
-				strftime(buf1, sizeof(buf1), "%Y%m%d%H%M%S", start_time_struct);
-				fdprintf(context->out->fh, "%s%c%03d|", buf1,context->millis_separator,start_time_dec);
-			}
-		}
-
-		if (context->transcript_settings->showEndTime){
-			char buf2[80];
-			if (context->transcript_settings->relativeTimestamp){
-				millis_to_date(end_time, buf2, context->date_format, context->millis_separator);
-				fdprintf(context->out->fh, "%s|", buf2);
-			}
-			else {
-				time_t end_time_int = (end_time + context->subs_delay) / 1000;
-				int end_time_dec = (end_time + context->subs_delay) % 1000;
-				struct tm *end_time_struct = gmtime(&end_time_int);
-				strftime(buf2, sizeof(buf2), "%Y%m%d%H%M%S", end_time_struct);
-				fdprintf(context->out->fh, "%s%c%03d|", buf2,context->millis_separator,end_time_dec);
-			}
-		}
-
-		if (context->transcript_settings->showCC){
-			fdprintf(context->out->fh, "CC%d|", data->my_field == 1 ? data->channel : data->channel + 2); // Data from field 2 is CC3 or 4
-		}
-		if (context->transcript_settings->showMode){
-			const char *mode = "???";
-			switch (data->mode)
-			{
-			case MODE_POPON:
-				mode = "POP";
-				break;
-			case MODE_FAKE_ROLLUP_1:
-				mode = "RU1";
-				break;
-			case MODE_ROLLUP_2:
-				mode = "RU2";
-				break;
-			case MODE_ROLLUP_3:
-				mode = "RU3";
-				break;
-			case MODE_ROLLUP_4:
-				mode = "RU4";
-				break;
-			case MODE_TEXT:
-				mode = "TXT";
-				break;
-			case MODE_PAINTON:
-				mode = "PAI";
-				break;
-			}
-			fdprintf(context->out->fh, "%s|", mode);
-		}
-
-		ret = write(context->out->fh, context->subline, length);
-		if(ret < length)
-		{
-			mprint("Warning:Loss of data\n");
-		}
-
-		ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-		if(ret < context->encoded_crlf_length)
-		{
-			mprint("Warning:Loss of data\n");
-		}
-	}
-	// fprintf (wb->fh,encoded_crlf);
-}
 
 int write_cc_buffer_as_simplexml(struct eia608_screen *data, struct encoder_ctx *context)
 {
@@ -791,22 +576,6 @@ int write_cc_buffer_as_simplexml(struct eia608_screen *data, struct encoder_ctx 
 	return wrote_something;
 }
 
-int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context)
-{
-	int wrote_something = 0;
-	dbg_print(CCX_DMT_DECODER_608, "\n- - - TRANSCRIPT caption - - -\n");
-
-	for (int i=0;i<15;i++)
-	{
-		if (data->row_used[i])
-		{
-			write_cc_line_as_transcript2 (data, context, i);
-		}
-		wrote_something=1;
-	}
-	dbg_print(CCX_DMT_DECODER_608, "- - - - - - - - - - - -\r\n");
-	return wrote_something;
-}
 
 //Dummy Function for support DVB in simple xml
 int write_cc_bitmap_as_simplexml(struct cc_subtitle *sub, struct encoder_ctx *context)
@@ -818,103 +587,6 @@ int write_cc_bitmap_as_simplexml(struct cc_subtitle *sub, struct encoder_ctx *co
 	return ret;
 }
 
-int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context)
-{
-	int ret = 0;
-#ifdef ENABLE_OCR
-	struct cc_bitmap* rect;
-
-	unsigned h1,m1,s1,ms1;
-	unsigned h2,m2,s2,ms2;
-
-	LLONG start_time, end_time;
-
-	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
-	{
-		start_time = context->prev_start + context->subs_delay;
-		end_time = sub->start_time - 1;
-	}
-	else if ( !(sub->flags & SUB_EOD_MARKER))
-	{
-		start_time = sub->start_time + context->subs_delay;
-		end_time = sub->end_time - 1;
-	}
-
-	if(sub->nb_data == 0 )
-		return ret;
-	rect = sub->data;
-
-	if ( sub->flags & SUB_EOD_MARKER )
-		context->prev_start =  sub->start_time;
-
-
-	if (rect[0].ocr_text && *(rect[0].ocr_text))
-	{
-		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
-		{
-			char *token = NULL;
-			token = strtok(rect[0].ocr_text ,"\r\n");
-			while (token)
-			{
-
-				if (context->transcript_settings->showStartTime)
-				{
-					char buf1[80];
-					if (context->transcript_settings->relativeTimestamp)
-					{
-						millis_to_date(start_time + context->subs_delay, buf1, context->date_format, context->millis_separator);
-						fdprintf(context->out->fh, "%s|", buf1);
-					}
-					else
-					{
-						mstotime(start_time + context->subs_delay, &h1, &m1, &s1, &ms1);
-						time_t start_time_int = (start_time + context->subs_delay) / 1000;
-						int start_time_dec = (start_time + context->subs_delay) % 1000;
-						struct tm *start_time_struct = gmtime(&start_time_int);
-						strftime(buf1, sizeof(buf1), "%Y%m%d%H%M%S", start_time_struct);
-						fdprintf(context->out->fh, "%s%c%03d|", buf1,context->millis_separator,start_time_dec);
-					}
-				}
-
-				if (context->transcript_settings->showEndTime)
-				{
-					char buf2[80];
-					if (context->transcript_settings->relativeTimestamp)
-					{
-						millis_to_date(end_time, buf2, context->date_format, context->millis_separator);
-						fdprintf(context->out->fh, "%s|", buf2);
-					}
-					else
-					{
-						time_t end_time_int = end_time / 1000;
-						int end_time_dec = end_time % 1000;
-						struct tm *end_time_struct = gmtime(&end_time_int);
-						strftime(buf2, sizeof(buf2), "%Y%m%d%H%M%S", end_time_struct);
-						fdprintf(context->out->fh, "%s%c%03d|", buf2,context->millis_separator,end_time_dec);
-					}
-				}
-				if (context->transcript_settings->showCC)
-				{
-					fdprintf(context->out->fh,"%s|",language[sub->lang_index]);
-				}
-				if (context->transcript_settings->showMode)
-				{
-					fdprintf(context->out->fh,"DVB|");
-				}
-				fdprintf(context->out->fh,"%s",token);
-				token = strtok(NULL,"\r\n");
-
-			}
-
-		}
-	}
-#endif
-
-	sub->nb_data = 0;
-	freep(&sub->data);
-	return ret;
-
-}
 
 /**
  * @brief Function to add credits at end of subtitles File
@@ -1058,8 +730,11 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	if(!ctx->out)
 		return -1;
 	ctx->nb_out = nb_lang;
+	ctx->keep_output_closed = cfg->keep_output_closed;
+	ctx->force_flush = cfg->force_flush;
+	ctx->ucla = cfg->ucla;
 
-	if(cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE)
+	if(ctx->generates_file && cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE)
 	{
 		if (cfg->output_filename != NULL)
 		{
@@ -1071,19 +746,14 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 				basefilename = get_basename(cfg->output_filename);
 				extension = get_file_extension(cfg->write_format);
 
-				ret = init_write(&ctx->out[0], strdup(cfg->output_filename));
+				ret = init_write(&ctx->out[0], strdup(cfg->output_filename), cfg->with_semaphore);
 				check_ret(cfg->output_filename);
-				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension));
+				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
 				check_ret(ctx->out[1].filename);
-			}
-			else if (cfg->extract == 1)
-			{
-				ret = init_write(ctx->out, strdup(cfg->output_filename));
-				check_ret(cfg->output_filename);
 			}
 			else
 			{
-				ret = init_write(ctx->out, strdup(cfg->output_filename));
+				ret = init_write(ctx->out, strdup(cfg->output_filename), cfg->with_semaphore );
 				check_ret(cfg->output_filename);
 			}
 		}
@@ -1094,19 +764,14 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 
 			if (cfg->extract == 12)
 			{
-				ret = init_write(&ctx->out[0], create_outfilename(basefilename, "_1", extension));
+				ret = init_write(&ctx->out[0], create_outfilename(basefilename, "_1", extension), cfg->with_semaphore);
 				check_ret(ctx->out[0].filename);
-				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension));
+				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
 				check_ret(ctx->out[1].filename);
-			}
-			else if (cfg->extract == 1)
-			{
-				ret = init_write(ctx->out, create_outfilename(basefilename, NULL, extension));
-				check_ret(ctx->out->filename);
 			}
 			else
 			{
-				ret = init_write(ctx->out, create_outfilename(basefilename, NULL, extension));
+				ret = init_write(ctx->out, create_outfilename(basefilename, NULL, extension), cfg->with_semaphore);
 				check_ret(ctx->out->filename);
 			}
 		}
@@ -1119,6 +784,8 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	{
 		ctx->out[0].fh = STDOUT_FILENO;
 		ctx->out[0].filename = NULL;
+		ctx->out[0].with_semaphore = 0;
+		ctx->out[0].semaphore_filename = NULL;
 		mprint ("Sending captions to stdout.\n");
 	}
 
@@ -1212,11 +879,18 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 	ctx->capacity=INITIAL_ENC_BUFFER_CAPACITY;
 	ctx->srt_counter = 0;
+	ctx->wrote_webvtt_sync_header = 0;
 
 	ctx->program_number = opt->program_number;
 	ctx->send_to_srv = opt->send_to_srv;
 	ctx->multiple_files = opt->multiple_files;
 	ctx->first_input_file = opt->first_input_file;
+
+	if (opt->write_format == CCX_OF_NULL || opt->write_format == CCX_OF_CURL)
+		ctx->generates_file = 0;
+	else
+		ctx->generates_file = 1;
+
 	ret = init_output_ctx(ctx, opt);
 	if (ret != EXIT_OK)
 	{
@@ -1236,15 +910,28 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 	ctx->encoding = opt->encoding;
 	ctx->write_format = opt->write_format;
+
 	ctx->transcript_settings = &opt->transcript_settings;
 	ctx->no_bom = opt->no_bom;
-	ctx->sentence_cap = opt->sentence_cap;
+	ctx->sentence_cap = opt->sentence_cap;	
 	ctx->trim_subs = opt->trim_subs;
 	ctx->autodash = opt->autodash;
 	ctx->no_font_color = opt->no_font_color;
 	ctx->no_type_setting = opt->no_type_setting;
 	ctx->gui_mode_reports = opt->gui_mode_reports;
 	ctx->extract = opt->extract;
+	ctx->keep_output_closed = opt->keep_output_closed;
+	ctx->force_flush = opt->force_flush;
+	ctx->ucla = opt->ucla;
+	ctx->splitbysentence = opt->splitbysentence;
+	ctx->sbs_newblock_start_time = -1;
+	ctx->sbs_newblock_end_time = -1;
+	ctx->sbs_newblock = NULL;
+	ctx->sbs_newblock_capacity = 0;
+	ctx->sbs_newblock_size = 0;
+	ctx->sbs_buffer = NULL;
+	ctx->sbs_buffer_capacity = 0;
+	ctx->sbs_buffer_size = 0;
 
 	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);
 	if(!ctx->subline)
@@ -1313,172 +1000,204 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	if(!context)
 		return CCX_OK;
 
-	if (sub->type == CC_608)
+	context = change_filename(context);
+
+#ifdef ENABLE_SHARING
+	if (ccx_options.sharing_enabled)
+		ccx_share_send(sub);
+#endif //ENABLE_SHARING
+
+	if (context->splitbysentence)
 	{
-		struct eia608_screen *data = NULL;
-		struct ccx_s_write *out;
-		for(data = sub->data; sub->nb_data ; sub->nb_data--,data++)
+		// Write to a buffer that is later s+plit to generate split
+		// in sentences
+		if (sub->type == CC_BITMAP)
+			wrote_something = write_cc_bitmap_to_sentence_buffer(sub, context);
+	}
+	else
+	{
+		// Write subtitles as they come
+		if (sub->type == CC_608)
 		{
-			// Determine context based on channel. This replaces the code that was above, as this was incomplete (for cases where -12 was used for example)
-			out = get_output_ctx(context, data->my_field);
-
-			context->new_sentence = 1;
-
-			if(data->format == SFORMAT_XDS)
+			struct eia608_screen *data = NULL;
+			struct ccx_s_write *out;
+			for (data = sub->data; sub->nb_data; sub->nb_data--, data++)
 			{
-				data->end_time = data->end_time + context->subs_delay;
-				xds_write_transcript_line_prefix (context, out, data->start_time, data->end_time, data->cur_xds_packet_class);
-				if(data->xds_len > 0)
-				{
-					ret = write (out->fh, data->xds_str, data->xds_len);
-					if (ret < data->xds_len)
-					{
-						mprint("WARNING:Loss of data\n");
-					}
-				}
-				freep (&data->xds_str);
-				write_newline(context, 0);
-				continue;
-			}
+				// Determine context based on channel. This replaces the code that was above, as this was incomplete (for cases where -12 was used for example)
+				out = get_output_ctx(context, data->my_field);
 
-			data->end_time = data->end_time + context->subs_delay;
+				if (data->format == SFORMAT_XDS)
+				{
+					data->end_time = data->end_time + context->subs_delay;
+					xds_write_transcript_line_prefix(context, out, data->start_time, data->end_time, data->cur_xds_packet_class);
+					if (data->xds_len > 0)
+					{
+						ret = write(out->fh, data->xds_str, data->xds_len);
+						if (ret < data->xds_len)
+						{
+							mprint("WARNING:Loss of data\n");
+						}
+					}
+					freep(&data->xds_str);
+					write_newline(context, 0);
+					continue;
+				}
+
+				data->end_time = data->end_time + context->subs_delay;
+				switch (context->write_format)
+				{
+					case CCX_OF_SRT:
+						if (!context->startcredits_displayed && context->start_credits_text != NULL)
+							try_to_add_start_credits(context, data->start_time);
+						wrote_something = write_cc_buffer_as_srt(data, context);
+						break;
+					case CCX_OF_G608:
+						wrote_something = write_cc_buffer_as_g608(data, context);
+						break;
+					case CCX_OF_WEBVTT:
+						if (!context->startcredits_displayed && context->start_credits_text != NULL)
+							try_to_add_start_credits(context, data->start_time);
+						wrote_something = write_cc_buffer_as_webvtt(data, context);
+						break;
+					case CCX_OF_SAMI:
+						if (!context->startcredits_displayed && context->start_credits_text != NULL)
+							try_to_add_start_credits(context, data->start_time);
+						wrote_something = write_cc_buffer_as_sami(data, context);
+						break;
+					case CCX_OF_SMPTETT:
+						if (!context->startcredits_displayed && context->start_credits_text != NULL)
+							try_to_add_start_credits(context, data->start_time);
+						wrote_something = write_cc_buffer_as_smptett(data, context);
+						break;
+					case CCX_OF_TRANSCRIPT:
+						wrote_something = write_cc_buffer_as_transcript2(data, context);
+						break;
+					case CCX_OF_SPUPNG:
+						wrote_something = write_cc_buffer_as_spupng(data, context);
+						break;
+					case CCX_OF_SIMPLE_XML:
+						if (ccx_options.keep_output_closed && context->out->temporarily_closed)
+						{
+							temporarily_open_output(context->out);
+							write_subtitle_file_header(context, context->out);
+						}
+						wrote_something = write_cc_buffer_as_simplexml(data, context);
+						if (ccx_options.keep_output_closed)
+						{
+							write_subtitle_file_footer(context, context->out);
+							temporarily_close_output(context->out);
+						}
+						break;
+					default:
+						break;
+				}
+				if (wrote_something)
+					context->last_displayed_subs_ms = data->end_time;
+
+				if (context->gui_mode_reports)
+					write_cc_buffer_to_gui(sub->data, context);
+			}
+			freep(&sub->data);
+		}
+		if (sub->type == CC_BITMAP)
+		{
 			switch (context->write_format)
 			{
 			case CCX_OF_SRT:
-				if (!context->startcredits_displayed && context->start_credits_text!=NULL)
-					try_to_add_start_credits(context, data->start_time);
-				wrote_something = write_cc_buffer_as_srt(data, context);
-				break;
-			case CCX_OF_G608:
-				wrote_something = write_cc_buffer_as_g608(data, context);
+				if (!context->startcredits_displayed && context->start_credits_text != NULL)
+					try_to_add_start_credits(context, sub->start_time);
+				wrote_something = write_cc_bitmap_as_srt(sub, context);
 				break;
 			case CCX_OF_WEBVTT:
 				if (!context->startcredits_displayed && context->start_credits_text != NULL)
-					try_to_add_start_credits(context, data->start_time);
-				wrote_something = write_cc_buffer_as_webvtt(data, context);
+					try_to_add_start_credits(context, sub->start_time);
+				wrote_something = write_cc_bitmap_as_webvtt(sub, context);
 				break;
 			case CCX_OF_SAMI:
-				if (!context->startcredits_displayed && context->start_credits_text!=NULL)
-					try_to_add_start_credits(context, data->start_time);
-				wrote_something = write_cc_buffer_as_sami(data, context);
+				if (!context->startcredits_displayed && context->start_credits_text != NULL)
+					try_to_add_start_credits(context, sub->start_time);
+				wrote_something = write_cc_bitmap_as_sami(sub, context);
 				break;
 			case CCX_OF_SMPTETT:
-				if (!context->startcredits_displayed && context->start_credits_text!=NULL)
-					try_to_add_start_credits(context, data->start_time);
-				wrote_something = write_cc_buffer_as_smptett(data, context);
+				if (!context->startcredits_displayed && context->start_credits_text != NULL)
+					try_to_add_start_credits(context, sub->start_time);
+				wrote_something = write_cc_bitmap_as_smptett(sub, context);
 				break;
 			case CCX_OF_TRANSCRIPT:
-				wrote_something = write_cc_buffer_as_transcript2(data, context);
+				wrote_something = write_cc_bitmap_as_transcript(sub, context);
 				break;
 			case CCX_OF_SPUPNG:
-				wrote_something = write_cc_buffer_as_spupng(data, context);
+				wrote_something = write_cc_bitmap_as_spupng(sub, context);
 				break;
 			case CCX_OF_SIMPLE_XML:
-				wrote_something = write_cc_buffer_as_simplexml(data, context);
+				wrote_something = write_cc_bitmap_as_simplexml(sub, context);
+				break;
+#ifdef WITH_LIBCURL
+			case CCX_OF_CURL:
+				wrote_something = write_cc_bitmap_as_libcurl(sub, context);
+				break;
+#endif
+			default:
+				break;
+			}
+
+		}
+		if (sub->type == CC_RAW)
+		{
+			if (context->send_to_srv)
+				net_send_header(sub->data, sub->nb_data);
+			else
+			{
+				ret = write(context->out->fh, sub->data, sub->nb_data);
+				if (ret < sub->nb_data) {
+					mprint("WARNING: Loss of data\n");
+				}
+			}
+			sub->nb_data = 0;
+		}
+		if (sub->type == CC_TEXT)
+		{
+			switch (context->write_format)
+			{
+			case CCX_OF_SRT:
+				if (!context->startcredits_displayed && context->start_credits_text != NULL)
+					try_to_add_start_credits(context, sub->start_time);
+				wrote_something = write_cc_subtitle_as_srt(sub, context);
+				break;
+			case CCX_OF_WEBVTT:
+				if (!context->startcredits_displayed && context->start_credits_text != NULL)
+					try_to_add_start_credits(context, sub->start_time);
+				wrote_something = write_cc_subtitle_as_webvtt(sub, context);
+				break;
+			case CCX_OF_SAMI:
+				if (!context->startcredits_displayed && context->start_credits_text != NULL)
+					try_to_add_start_credits(context, sub->start_time);
+				wrote_something = write_cc_subtitle_as_sami(sub, context);
+				break;
+			case CCX_OF_SMPTETT:
+				if (!context->startcredits_displayed && context->start_credits_text != NULL)
+					try_to_add_start_credits(context, sub->start_time);
+				wrote_something = write_cc_subtitle_as_smptett(sub, context);
+				break;
+			case CCX_OF_TRANSCRIPT:
+				wrote_something = write_cc_subtitle_as_transcript(sub, context);
+				break;
+			case CCX_OF_SPUPNG:
+				wrote_something = write_cc_subtitle_as_spupng(sub, context);
+				break;
+			case CCX_OF_SIMPLE_XML:
+				wrote_something = write_cc_subtitle_as_simplexml(sub, context);
 				break;
 			default:
 				break;
 			}
-			if (wrote_something)
-				context->last_displayed_subs_ms = data->end_time;
-
-			if (context->gui_mode_reports)
-				write_cc_buffer_to_gui(sub->data, context);
+			sub->nb_data = 0;
 		}
-		freep(&sub->data);
-	}
-	if(sub->type == CC_BITMAP)
-	{
-		switch (context->write_format)
-		{
-		case CCX_OF_SRT:
-			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
-				try_to_add_start_credits(context, sub->start_time);
-			wrote_something = write_cc_bitmap_as_srt(sub, context);
-			break;
-		case CCX_OF_WEBVTT:
-			if (!context->startcredits_displayed && context->start_credits_text != NULL)
-				try_to_add_start_credits(context, sub->start_time);
-			wrote_something = write_cc_bitmap_as_webvtt(sub, context);
-			break;
-		case CCX_OF_SAMI:
-			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
-				try_to_add_start_credits(context, sub->start_time);
-			wrote_something = write_cc_bitmap_as_sami(sub, context);
-			break;
-		case CCX_OF_SMPTETT:
-			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
-				try_to_add_start_credits(context, sub->start_time);
-			wrote_something = write_cc_bitmap_as_smptett(sub, context);
-			break;
-		case CCX_OF_TRANSCRIPT:
-			wrote_something = write_cc_bitmap_as_transcript(sub, context);
-			break;
-		case CCX_OF_SPUPNG:
-			wrote_something = write_cc_bitmap_as_spupng(sub, context);
-			break;
-		case CCX_OF_SIMPLE_XML:
-			wrote_something = write_cc_bitmap_as_simplexml(sub, context);
-			break;
-		default:
-			break;
-		}
-
-	}
-	if (sub->type == CC_RAW)
-	{
-		if (context->send_to_srv)
-			net_send_header(sub->data, sub->nb_data);
-		else
-		{
-			ret = write(context->out->fh, sub->data, sub->nb_data);
-			if ( ret < sub->nb_data) {
-				mprint("WARNING: Loss of data\n");
-			}
-		}
-		sub->nb_data = 0;
-	}
-	if(sub->type == CC_TEXT)
-	{
-		switch (context->write_format)
-		{
-		case CCX_OF_SRT:
-			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
-				try_to_add_start_credits(context, sub->start_time);
-			wrote_something = write_cc_subtitle_as_srt(sub, context);
-			break;
-		case CCX_OF_WEBVTT:
-			if (!context->startcredits_displayed && context->start_credits_text != NULL)
-				try_to_add_start_credits(context, sub->start_time);
-			wrote_something = write_cc_subtitle_as_webvtt(sub, context);
-			break;
-		case CCX_OF_SAMI:
-			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
-				try_to_add_start_credits(context, sub->start_time);
-			wrote_something = write_cc_subtitle_as_sami(sub, context);
-			break;
-		case CCX_OF_SMPTETT:
-			if (!context->startcredits_displayed && context->start_credits_text!=NULL)
-				try_to_add_start_credits(context, sub->start_time);
-			wrote_something = write_cc_subtitle_as_smptett(sub, context);
-			break;
-		case CCX_OF_TRANSCRIPT:
-			wrote_something = write_cc_subtitle_as_transcript(sub, context);
-			break;
-		case CCX_OF_SPUPNG:
-			wrote_something = write_cc_subtitle_as_spupng(sub, context);
-			break;
-		case CCX_OF_SIMPLE_XML:
-			wrote_something = write_cc_subtitle_as_simplexml(sub, context);
-			break;
-		default:
-			break;
-		}
-		sub->nb_data = 0;
-
 	}
 	if (!sub->nb_data)
 		freep(&sub->data);
+	if (wrote_something && context->force_flush)
+		fsync(context->out->fh); // Don't buffer
 	return wrote_something;
 }
 
