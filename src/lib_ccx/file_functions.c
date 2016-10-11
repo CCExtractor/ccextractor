@@ -457,7 +457,14 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 				return 0;
 
 			np     = LSEEK (ctx->infd, bytes, SEEK_CUR); // Pos after moving
-			copied = copied + (np - op);
+			if (op == -1 && np == -1) // Possibly a pipe that doesn't like "skipping"
+			{
+				char c;
+				for (size_t i = 0; i<bytes; i++) read(ctx->infd, &c, 1);
+				copied = bytes;
+			}
+			else
+				copied = copied + (np - op);
 			bytes  = bytes- (unsigned int) copied;
 			if (copied == 0)
 			{
