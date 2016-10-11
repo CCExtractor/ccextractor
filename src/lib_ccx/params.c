@@ -990,7 +990,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		{
 
 			opt->input_source=CCX_DS_STDIN;
-			opt->live_stream=-1;
+			if (!opt->live_stream) opt->live_stream=-1;
 			continue;
 		}
 		if (argv[i][0]!='-')
