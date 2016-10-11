@@ -183,15 +183,15 @@ int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 	return 0;
 }
 
-void position_sanity_check (int in)
+void position_sanity_check(struct ccx_demuxer *ctx)
 {
 #ifdef SANITY_CHECK
-	if (in!=-1)
+	if (ctx->infd!=-1)
 	{
-		LLONG realpos = LSEEK (in,0,SEEK_CUR);
-		if (realpos != ctx->demux_ctx->past - filebuffer_pos + bytesinbuffer)
+		LLONG realpos = LSEEK (ctx->infd,0,SEEK_CUR);
+		if (realpos != ctx->past - ctx->filebuffer_pos + ctx->bytesinbuffer)
 		{
-			fatal (CCX_COMMON_EXIT_BUG_BUG, "Position desync, THIS IS A BUG. Real pos =%lld, past=%lld.\n", realpos, ctx->demux_ctx->past);
+			fatal (CCX_COMMON_EXIT_BUG_BUG, "Position desync, THIS IS A BUG. Real pos =%lld, past=%lld.\n", realpos, ctx->past);
 		}
 	}
 #endif
@@ -216,7 +216,7 @@ int init_file_buffer(struct ccx_demuxer *ctx)
 
 void buffered_seek (struct ccx_demuxer *ctx, int offset)
 {
-	position_sanity_check(ctx->infd);
+	position_sanity_check(ctx);
 	if (offset < 0)
 	{
 		ctx->filebuffer_pos += offset;
@@ -234,7 +234,7 @@ void buffered_seek (struct ccx_demuxer *ctx, int offset)
 	else
 	{
 		buffered_read_opt (ctx, NULL, offset);
-		position_sanity_check(ctx->infd);
+		position_sanity_check(ctx);
 	}
 }
 
@@ -306,7 +306,7 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 	size_t copied   = 0;
 	time_t seconds = 0;
 
-	position_sanity_check(ctx->infd);
+	position_sanity_check(ctx);
 
 	if (ccx_options.live_stream > 0)
 		time (&seconds);

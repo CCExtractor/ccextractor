@@ -813,7 +813,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		if (terminate_asap)
 			break;
 		// GET MORE DATA IN BUFFER
-		position_sanity_check(ctx->demux_ctx->infd);
+		position_sanity_check(ctx->demux_ctx);
 		switch (stream_mode)
 		{
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
@@ -850,7 +850,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		}
 		if (!datalist)
 			continue;
-		position_sanity_check(ctx->demux_ctx->infd);
+		position_sanity_check(ctx->demux_ctx);
 		if(!ctx->multiprogram)
 		{
 			struct cap_info* cinfo = NULL;
