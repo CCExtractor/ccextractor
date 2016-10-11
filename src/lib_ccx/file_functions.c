@@ -189,6 +189,8 @@ void position_sanity_check(struct ccx_demuxer *ctx)
 	if (ctx->infd!=-1)
 	{
 		LLONG realpos = LSEEK (ctx->infd,0,SEEK_CUR);
+		if (realpos == -1) // Happens for example when infd==stdin.
+			return; 
 		if (realpos != ctx->past - ctx->filebuffer_pos + ctx->bytesinbuffer)
 		{
 			fatal (CCX_COMMON_EXIT_BUG_BUG, "Position desync, THIS IS A BUG. Real pos =%lld, past=%lld.\n", realpos, ctx->past);
