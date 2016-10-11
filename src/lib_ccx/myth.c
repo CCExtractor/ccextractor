@@ -787,7 +787,7 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 	memset(&dec_sub, 0, sizeof(dec_sub));
 	while (is_decoder_processed_enough(ctx) == CCX_FALSE && (rc=mpegps_read_packet(ctx->demux_ctx))==0)
 	{
-		position_sanity_check(ctx);
+		position_sanity_check(ctx->demux_ctx);
 		if (av.codec_id==CODEC_ID_MPEG2VBI && av.type==CODEC_TYPE_DATA)
 		{
 			if (!has_vbi)
