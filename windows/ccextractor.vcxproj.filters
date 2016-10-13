@@ -37,9 +37,6 @@
     <Filter Include="Header Files\ccx_common">
       <UniqueIdentifier>{955fdac2-43c6-4968-8fce-7d40bad9c712}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\ccx_encoders">
-      <UniqueIdentifier>{489d2c0b-43e8-4d51-8304-f4e59ee8d253}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\ccx_decoders">
       <UniqueIdentifier>{0e9c939f-a37c-4d06-a611-4c262b620763}</UniqueIdentifier>
     </Filter>
@@ -87,6 +84,9 @@
     </Filter>
     <Filter Include="Header Files\utf8proc">
       <UniqueIdentifier>{fcf59c1c-8b84-484a-8fb4-a9a301e23610}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\lib_ccx\ccx_encoders">
+      <UniqueIdentifier>{489d2c0b-43e8-4d51-8304-f4e59ee8d253}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -256,19 +256,19 @@
       <Filter>Header Files\ccx_decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\608_spupng.h">
-      <Filter>Header Files\ccx_encoders</Filter>
+      <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_common.h">
-      <Filter>Header Files\ccx_encoders</Filter>
+      <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_helpers.h">
-      <Filter>Header Files\ccx_encoders</Filter>
+      <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_structs.h">
-      <Filter>Header Files\ccx_encoders</Filter>
+      <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\spupng_encoder.h">
-      <Filter>Header Files\ccx_encoders</Filter>
+      <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\lib_ccx.h">
       <Filter>Header Files</Filter>

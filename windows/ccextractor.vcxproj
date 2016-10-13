@@ -336,7 +336,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../src/utf8proc;../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WITH_LIBCURL;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -360,7 +360,7 @@ xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Comm
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-OCR|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/utf8proc;../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader />
@@ -368,7 +368,7 @@ xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Comm
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>WS2_32.Lib;libtesseract302.lib;liblept168.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>WS2_32.Lib;liblept172.lib;libtesseract304d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -376,8 +376,8 @@ xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Comm
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y $(ProjectDir)libs\leptonica\lib\liblept168.dll $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)libs\tesseract\lib\libtesseract302.dll $(ProjectDir)$(OutDir)</Command>
+      <Command>xcopy /y $(ProjectDir)libs\lib\liblept172.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
