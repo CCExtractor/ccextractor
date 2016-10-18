@@ -20,9 +20,11 @@ configure_file (
 
 include_directories ("${PROJECT_SOURCE_DIR}")
 include_directories ("${PROJECT_SOURCE_DIR}/lib_ccx")
+include_directories ("${PROJECT_SOURCE_DIR}/utf8proc")
 include_directories ("${PROJECT_SOURCE_DIR}/gpacmp4/")
 include_directories ("${PROJECT_SOURCE_DIR}/zvbi")
 aux_source_directory ("${PROJECT_SOURCE_DIR}/zvbi" SOURCEFILE)
+aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_hash" SOURCEFILE)
 
 #Adding some platform specific library path
 link_directories (/opt/local/lib)
@@ -91,10 +93,10 @@ if (WITH_OCR)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR ${TESSERACT_CFLAGS} ${LEPTONICA_CFLAGS}")
 endif (WITH_OCR)
 
-+########################################################
-+# Build with CC sharing and translation support
-+########################################################
-+
+########################################################
+# Build with CC sharing and translation support
+########################################################
+
 if (WITH_SHARING)
   find_package(PkgConfig)
 
