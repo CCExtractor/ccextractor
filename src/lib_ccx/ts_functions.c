@@ -135,7 +135,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		Arrival_time_stamp 30 unimsbf
 		} */
 		unsigned char tp_extra_header[4];
-		result = buffered_read(ctx, tp_extra_header, 3);
+		result = buffered_read(ctx, tp_extra_header, 4);
 		ctx->past += result;
 		if (result != 4)
 		{
