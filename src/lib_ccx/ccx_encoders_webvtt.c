@@ -19,11 +19,6 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 	mstotime(ms_start, &h1, &m1, &s1, &ms1);
 	mstotime(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 
-
-	used = encode_line(context, context->buffer, (unsigned char *)timeline);
-	written = write(context->out->fh, context->buffer, used);
-	if (written != used)
-		return -1;
 	sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
 		h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
 	used = encode_line(context, context->buffer, (unsigned char *)timeline);
