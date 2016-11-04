@@ -409,6 +409,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				mprint("WARNING: Unable to write complete Buffer \n");
 				return -1;
 			}
+			ret = write(out->fh, ctx->encoded_crlf, ctx->encoded_crlf_length);
 			break;
 		case CCX_OF_SAMI: // This header brought to you by McPoodle's CCASDI
 			//fprintf_encoded (wb->fh, sami_header);

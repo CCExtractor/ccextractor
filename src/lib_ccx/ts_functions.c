@@ -140,7 +140,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		if (result != 4)
 		{
 			if (result>0)
-				mprint("Premature end of file (incomplete TS packer header, expected 4 bytes, got %lld).\n",result);
+				mprint("Premature end of file (incomplete TS packer header, expected 4 bytes to skip M2TS extra bytes, got %lld).\n",result);
 			return CCX_EOF;
 		}
 	}
