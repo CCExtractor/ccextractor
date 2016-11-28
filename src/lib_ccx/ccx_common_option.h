@@ -115,8 +115,8 @@ struct ccx_s_options // Options from user parameters
 	/* General settings */
 	int usepicorder; // Force the use of pic_order_cnt_lsb in AVC/H.264 data streams
 	int xmltv; // 1 = full output. 2 = live output. 3 = both
-	int xmltvliveinterval; // interval in seconds between writting xmltv output files in live mode
-	int xmltvoutputinterval; // interval in seconds between writting xmltv full file output
+	int xmltvliveinterval; // interval in seconds between writing xmltv output files in live mode
+	int xmltvoutputinterval; // interval in seconds between writing xmltv full file output
 	int xmltvonlycurrent; // 0 off 1 on
 	int keep_output_closed;
 	int force_flush; // Force flush on content write

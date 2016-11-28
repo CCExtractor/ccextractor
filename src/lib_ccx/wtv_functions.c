@@ -58,7 +58,7 @@ uint64_t time_to_pes_time(uint64_t time)
 }
 
 // Read the actual values of the passed lookup offset and add them to
-// the list of chunks to skip as nessasary. Returns false on error.
+// the list of chunks to skip as necessary. Returns false on error.
 int add_skip_chunks(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, uint32_t offset, uint32_t flag)
 {
 

@@ -1400,7 +1400,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 		// presentation and decoder timestamps use the 90 KHz clock, hence PTS/90 = [ms]
 		uint64_t pts = 0;
 		// __MUST__ assign value to uint64_t and __THEN__ rotate left by 29 bits
-		// << is defined for signed int (as in "C" spec.) and overflow occures
+		// << is defined for signed int (as in "C" spec.) and overflow occurs
 		pts = (buffer[9] & 0x0e);
 		pts <<= 29;
 		pts |= (buffer[10] << 22);
@@ -1456,7 +1456,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 					tlt_write_rcwt(dec_ctx, data_unit_id, &buffer[i], ctx->last_timestamp, sub);
 				else
 				{
-					// FIXME: This explicit type conversion could be a problem some day -- do not need to be platform independant
+					// FIXME: This explicit type conversion could be a problem some day -- do not need to be platform independent
 					process_telx_packet(ctx, (data_unit_t) data_unit_id, (teletext_packet_payload_t *)&buffer[i], ctx->last_timestamp, sub);
 				}
 			}

@@ -387,7 +387,7 @@ int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, u
 	}
 
 	// This might happen in PES packets in TS stream. It seems that when the
-	// packet length is unkown it is set to 0.
+	// packet length is unknown it is set to 0.
 	if (peslen+6 >= hskip+9)
 	{
 		payloadlength = peslen - (hskip + 3); // for [6], [7] and [8]

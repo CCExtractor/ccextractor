@@ -18,7 +18,7 @@ struct avc_ctx
 	int log2_max_pic_order_cnt_lsb;
 	int frame_mbs_only_flag;
 
-	// Use and throw stats for debug, remove this uglyness soon
+	// Use and throw stats for debug, remove this ugliness soon
 	long num_nal_unit_type_7;
 	long num_vcl_hrd;
 	long num_nal_hrd;

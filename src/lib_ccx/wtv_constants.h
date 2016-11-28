@@ -16,7 +16,7 @@
 
 #define WTV_TABLE_ENTRIES ".entries."
 
-//Maximum size we will try and malloc for chunked_buffer. 100MB
+//Maximum size we will try and alloc for chunked_buffer. 100MB
 #define WTV_MAX_ALLOC 1024*1024*100
 
 #define WTV_CC_TIMESTAMP_MAGIC 1668330

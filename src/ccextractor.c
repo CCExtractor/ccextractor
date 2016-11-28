@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 			switch (ctx->total_inputsize)
 			{
 			case -1*ENOENT:
-				fatal(EXIT_NO_INPUT_FILES, "Failed to open file: File not Exist");
+				fatal(EXIT_NO_INPUT_FILES, "Failed to open file: File does not exist.");
 			case -1*EACCES:
 				fatal(EXIT_READ_ERROR, "Failed to open file: Unable to access");
 			case -1*EINVAL:
@@ -388,7 +388,7 @@ int main(int argc, char *argv[])
 
 	if (is_decoder_processed_enough(ctx) == CCX_TRUE)
 	{
-		mprint ("\rNote: Processing was cancelled before all data was processed because\n");
+		mprint ("\rNote: Processing was canceled before all data was processed because\n");
 		mprint ("\rone or more user-defined limits were reached.\n");
 	} 
 	mprint ("This is beta software. Report issues to carlos at ccextractor org...\n");

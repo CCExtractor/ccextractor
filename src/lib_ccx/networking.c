@@ -67,7 +67,7 @@ ssize_t readn(int fd, void *vptr, size_t n);
 /* Writes n bytes to descriptor */
 ssize_t writen(int fd, const void *vptr, size_t n);
 
-/* Convinence functions */
+/* Convenience functions */
 ssize_t write_byte(int fd, char status);
 ssize_t read_byte(int fd, char *status);
 
@@ -84,7 +84,7 @@ void connect_to_srv(const char *addr, const char *port, const char *cc_desc, con
 {
 	if (NULL == addr)
 	{
-		mprint("Server addres is not set\n");
+		mprint("Server address is not set\n");
 		fatal(EXIT_FAILURE, "Unable to connect\n");
 	}
 
@@ -131,7 +131,7 @@ void net_send_header(const unsigned char *data, size_t len)
 		return;
 
 	if ((srv_header = malloc(len)) == NULL)
-		fatal(EXIT_FAILURE, "Not enought memory");
+		fatal(EXIT_FAILURE, "Not enough memory");
 
 	memcpy(srv_header, data, len);
 	srv_header_len = len;
@@ -176,7 +176,7 @@ void net_check_conn()
 		rc = read_byte(srv_sd, &c);
 		if (c == PING) {
 #if DEBUG_OUT
-			fprintf(stderr, "[S] Recieved PING\n");
+			fprintf(stderr, "[S] Received PING\n");
 #endif
 			last_ping = now;
 		}
@@ -185,7 +185,7 @@ void net_check_conn()
 	if (now - last_ping > NO_RESPONCE_INTERVAL)
 	{
 		fprintf(stderr,
-				"[S] No PING recieved from the server in %u sec, reconnecting\n",
+				"[S] No PING received from the server in %u sec, reconnecting\n",
 				NO_RESPONCE_INTERVAL);
 		close(srv_sd);
 		srv_sd = -1;
@@ -328,8 +328,8 @@ int net_tcp_read(int socket, void *buffer, size_t length)
 }
 
 /*
- * command | lenght        | data         | \r\n
- * 1 byte  | INT_LEN bytes | lenght bytes | 2 bytes
+ * command | length        | data         | \r\n
+ * 1 byte  | INT_LEN bytes | length bytes | 2 bytes
  */
 ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 {
@@ -427,18 +427,18 @@ int tcp_connect(const char *host, const char *port)
 	struct addrinfo *p;
 	int sockfd;
 
-	/* Try each address until we sucessfully connect */
+	/* Try each address until we successfully connect */
 	for (p = ai; p != NULL; p = p->ai_next) {
 		sockfd = socket(p->ai_family, SOCK_STREAM, p->ai_protocol);
 
 		if (-1 == sockfd) {
 #if _WIN32
-			wprintf(L"socket() eror: %ld\n", WSAGetLastError());
+			wprintf(L"socket() error: %ld\n", WSAGetLastError());
 #else
 			mprint("socket() error: %s\n", strerror(errno));
 #endif
 			if (p->ai_next != NULL)
-				mprint("trying next addres ...\n");
+				mprint("trying next address ...\n");
 
 			continue;
 		}
@@ -446,12 +446,12 @@ int tcp_connect(const char *host, const char *port)
 		if (connect(sockfd, p->ai_addr, p->ai_addrlen) == 0)
 			break;
 #if _WIN32
-		wprintf(L"connect() eror: %ld\n", WSAGetLastError());
+		wprintf(L"connect() error: %ld\n", WSAGetLastError());
 #else
 		mprint("connect() error: %s\n", strerror(errno));
 #endif
 		if (p->ai_next != NULL)
-			mprint("trying next addres ...\n");
+			mprint("trying next address ...\n");
 
 #if _WIN32
 		closesocket(sockfd);
@@ -511,7 +511,7 @@ int start_tcp_srv(const char *port, const char *pwd)
 			else
 			{
 #if _WIN32
-				wprintf(L"accept() eror: %ld\n", WSAGetLastError());
+				wprintf(L"accept() error: %ld\n", WSAGetLastError());
 				exit(EXIT_FAILURE);
 #else
 				fatal(EXIT_FAILURE, "accept() error: %s\n", strerror(errno));
@@ -529,7 +529,7 @@ int start_tcp_srv(const char *port, const char *pwd)
 		}
 		else
 		{
-			mprint("%s:%s Connceted\n", host, serv);
+			mprint("%s:%s Connected\n", host, serv);
 		}
 
 		free(cliaddr);
@@ -574,7 +574,7 @@ int check_password(int fd, const char *pwd)
 	}
 
 #if DEBUG_OUT
-	fprintf(stderr, "[C] Wrong passsword\n");
+	fprintf(stderr, "[C] Wrong password\n");
 #endif
 
 #if DEBUG_OUT
@@ -605,7 +605,7 @@ int tcp_bind(const char *port, int *family)
 
 	struct addrinfo *p;
 	int sockfd = -1;
-	/* Try each address until we sucessfully bind */
+	/* Try each address until we successfully bind */
 	for (p = ai; p != NULL; p = p->ai_next)
 	{
 		sockfd = socket(p->ai_family, SOCK_STREAM, p->ai_protocol);
@@ -613,13 +613,13 @@ int tcp_bind(const char *port, int *family)
 		if (-1 == sockfd)
 		{
 #if _WIN32
-			wprintf(L"socket() eror: %ld\n", WSAGetLastError());
+			wprintf(L"socket() error: %ld\n", WSAGetLastError());
 #else
 			mprint("socket() error: %s\n", strerror(errno));
 #endif
 
 			if (p->ai_next != NULL)
-				mprint("trying next addres ...\n");
+				mprint("trying next address ...\n");
 
 			continue;
 		}
@@ -630,13 +630,13 @@ int tcp_bind(const char *port, int *family)
 			if (setsockopt(sockfd, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&no, sizeof(no)) < 0)
 			{
 #if _WIN32
-				wprintf(L"setsockopt() eror: %ld\n", WSAGetLastError());
+				wprintf(L"setsockopt() error: %ld\n", WSAGetLastError());
 #else
 				mprint("setsockopt() error: %s\n", strerror(errno));
 #endif
 
 				if (p->ai_next != NULL)
-					mprint("trying next addres ...\n");
+					mprint("trying next address ...\n");
 
 				continue;
 			}
@@ -652,7 +652,7 @@ int tcp_bind(const char *port, int *family)
 			close(sockfd);
 #endif
 			if (p->ai_next != NULL)
-				mprint("trying next addres ...\n");
+				mprint("trying next address ...\n");
 
 			continue;
 		}
@@ -670,7 +670,7 @@ int tcp_bind(const char *port, int *family)
 	if (listen(sockfd, SOMAXCONN) != 0)
 	{
 #if _WIN32
-		wprintf(L"listen() eror: %ld\n", WSAGetLastError());
+		wprintf(L"listen() error: %ld\n", WSAGetLastError());
 		closesocket(sockfd);
 #else
 		perror("listen() error");
@@ -853,7 +853,7 @@ ssize_t readn(int fd, void *vptr, size_t n)
 			else
 			{
 #if _WIN32
-				wprintf(L"recv() eror: %ld\n", WSAGetLastError());
+				wprintf(L"recv() error: %ld\n", WSAGetLastError());
 #else
 				mprint("recv() error: %s\n", strerror(errno));
 #endif
@@ -953,7 +953,7 @@ int start_upd_srv(const char *addr_str, unsigned port)
 	int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (-1 == sockfd) {
 #if _WIN32
-		wprintf(L"socket() eror: %ld\n", WSAGetLastError());
+		wprintf(L"socket() error: %ld\n", WSAGetLastError());
 		exit(EXIT_FAILURE);
 #else
 		mprint("socket() error: %s\n", strerror(errno));
@@ -1062,7 +1062,7 @@ void handle_write_error()
 		if (rc < 0)
 		{
 #if _WIN32
-			wprintf(L"send() eror: %ld\n", err);
+			wprintf(L"send() error: %ld\n", err);
 #else
 			mprint("send() error: %s\n", err);
 #endif
@@ -1083,7 +1083,7 @@ void handle_write_error()
 			break;
 		default:
 #if _WIN32
-			wprintf(L"send() eror: %ld\n", err);
+			wprintf(L"send() error: %ld\n", err);
 #else
 			mprint("send() error: %s\n", err);
 #endif

@@ -52,7 +52,7 @@ enum cc_modes
 * This structure have fields which need to be ignored according to format,
 * for example if format is SFORMAT_XDS then all fields other then
 * xds related (xds_str, xds_len and  cur_xds_packet_class) should be
-* ignored and not to be derefrenced.
+* ignored and not to be dereferenced.
 *
 * TODO use union inside struct for each kind of fields
 */
@@ -150,7 +150,7 @@ struct lib_cc_decode
 	unsigned int current_aspect_ratio;
 	unsigned int current_frame_rate; // Assume standard fps, 29.97
 
-	/* Reguired in es_function.c */
+	/* Required in es_function.c */
 	int no_bitstream_error;
 	int saw_seqgoppic;
 	int in_pic_data;
@@ -164,7 +164,7 @@ struct lib_cc_decode
 	unsigned repeat_first_field;
 	unsigned progressive_frame;
 	unsigned pulldownfields;
-	/* Reguired in es_function.c and es_userdata.c */
+	/* Required in es_function.c and es_userdata.c */
 	unsigned top_field_first; // Needs to be global
 
     /* Stats. Modified in es_userdata.c*/

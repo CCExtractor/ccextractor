@@ -1,6 +1,6 @@
 /**
  * 
- * Grabed from linux kernel source code and fix it for user space
+ * Grabbed from linux kernel source code and fix it for user space
  * program. Of course, this is a GPL licensed header file.
  *
  *

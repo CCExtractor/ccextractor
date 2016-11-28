@@ -171,7 +171,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 
 		}
 		else if ( (pinfo->version+1)%32 != version_number)
-			mprint("TS PMT:Glitch in version number incremnt");
+			mprint("TS PMT:Glitch in version number increment");
 	}
 	pinfo->version = version_number;
 

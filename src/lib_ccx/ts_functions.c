@@ -120,7 +120,7 @@ void init_ts(struct ccx_demuxer *ctx)
 }
 
 
-// Return 1 for sucessfully read ts packet
+// Return 1 for successfully read ts packet
 int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 {
 	unsigned int adaptation_field_length = 0;
@@ -230,7 +230,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 			payload->pcr |= (tspacket[8] << 9);
 			payload->pcr |= (tspacket[9] << 1);
 			payload->pcr |= (tspacket[10] >> 7);
-			/* Ignore 27 Mhz clock since we dont deal in nano seconds*/
+			/* Ignore 27 Mhz clock since we dont deal in nanoseconds*/
 			//payload->pcr = ((tspacket[10] & 0x01) << 8);
 			//payload->pcr |= tspacket[11];
 		}

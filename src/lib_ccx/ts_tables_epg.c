@@ -451,7 +451,7 @@ void EPG_decode_parental_rating_descriptor(uint8_t *offset, uint32_t descriptor_
 	}
 }
 
-// an ungly function to convert from dvb codepages to UTF-8859-9 using iconv
+// an ugly function to convert from dvb codepages to UTF-8859-9 using iconv
 // returns a null terminated UTF8-strings
 // EN 300 468 V1.7.1 (2006-05)
 // A.2 Selection of Character table
@@ -697,7 +697,7 @@ void EPG_decode_extended_event_descriptor(uint8_t *offset, uint32_t descriptor_l
 }
 
 // decode an ATSC multiple_string
-// extremly basic implementation
+// extremely basic implementation
 // only handles single segment, single language ANSI string!
 void EPG_ATSC_decode_multiple_string(uint8_t *offset, uint32_t length, struct EPG_event *event)
 {
@@ -786,7 +786,7 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 			pmt_map=i;
 	}
 
-	//Don't know how to stroe EPG until we know the programs. Ignore it.
+	//Don't know how to store EPG until we know the programs. Ignore it.
 	if(pmt_map==-1)
 		pmt_map=TS_PMT_MAP_SIZE;
 	
@@ -1004,14 +1004,14 @@ void EPG_handle_output(struct lib_ccx_ctx *ctx)
 	}
 }
 
-//determin table type and call the correct function to handle it
+//determine table type and call the correct function to handle it
 void EPG_parse_table(struct lib_ccx_ctx *ctx, uint8_t *b, uint32_t size)
 {
 	uint8_t pointer_field = b[0];
 	uint8_t *payload_start;
 	uint8_t table_id;
 
-	//XXX hack, should accumalate data
+	//XXX hack, should accumulate data
 	if(pointer_field + 2 > size) {
 		return;
 	}
@@ -1032,7 +1032,7 @@ void EPG_parse_table(struct lib_ccx_ctx *ctx, uint8_t *b, uint32_t size)
 	EPG_handle_output(ctx);
 }
 
-// recounsructs DVB EIT and ATSC tables
+// reconstructs DVB EIT and ATSC tables
 void parse_EPG_packet(struct lib_ccx_ctx *ctx)
 {
 	unsigned char *payload_start = tspacket + 4;

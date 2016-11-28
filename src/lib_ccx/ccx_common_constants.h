@@ -286,13 +286,13 @@ enum cdp_section_type
  *               we give false value if f_sel is equal to n_sel
  *               and vice versa true if ...
  *
- * @param f_sel pass the codec name whom you are tesing to be feasible
+ * @param f_sel pass the codec name whom you are testing to be feasible
  *              to parse.
  */
 #define IS_FEASIBLE(u_sel,u_nsel,f_sel) ( ( (u_sel) == CCX_CODEC_ANY && (u_nsel) != (f_sel) ) || (u_sel) == (f_sel) )
 #define CCX_TXT_FORBIDDEN		0 // Ignore teletext packets
 #define CCX_TXT_AUTO_NOT_YET_FOUND	1
-#define CCX_TXT_IN_USE			2 // Positive autodetected, or forced, etc
+#define CCX_TXT_IN_USE			2 // Positive auto-detected, or forced, etc
 
 #define NB_LANGUAGE 100
 extern const char *language[NB_LANGUAGE];
