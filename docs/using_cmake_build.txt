@@ -1,4 +1,4 @@
-For building ccextractor using cmake folllow below steps..
+For building ccextractor using cmake follow steps below..
 
 Step 1) Check you have right version of cmake installed. ( version >= 3.0.2 )
 	We are using CMP0037 policy of cmake which was introduced in 3.0.0
@@ -6,12 +6,12 @@ Step 1) Check you have right version of cmake installed. ( version >= 3.0.2 )
 	suggest to use 3.0.2 or higher version.
 
 
-Step 2) create a seprate directory where you want to build the target.
-	In Unix you can do it using follwing commands.
+Step 2) create a separate directory where you want to build the target.
+	In Unix you can do it using following commands.
 	~> cd ccextractor
 	~> mkdir build
 
-Step 3) make the build sytem using cmake
+Step 3) make the build system using cmake
 	~> cmake ../src/
 
 Step 4) Compile the code.

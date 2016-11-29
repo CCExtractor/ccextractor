@@ -6,7 +6,7 @@ option (WITH_FFMPEG "Build using FFmpeg demuxer and decoder" OFF)
 option (WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
 option (WITH_SHARING "Build with sharing and translation support" OFF)
 
-#Version number
+# Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
 set (CCEXTRACTOR_VERSION_MINOR 77)
 
@@ -26,7 +26,7 @@ include_directories ("${PROJECT_SOURCE_DIR}/zvbi")
 aux_source_directory ("${PROJECT_SOURCE_DIR}/zvbi" SOURCEFILE)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_hash" SOURCEFILE)
 
-#Adding some platform specific library path
+# Adding some platform specific library path
 link_directories (/opt/local/lib)
 link_directories (/usr/local/lib)
 
