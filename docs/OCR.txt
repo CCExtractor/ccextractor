@@ -1,7 +1,7 @@
 
 Overview
 ========
-OCR (Optical Character Recognization) is a technique used to 
+OCR (Optical Character Recognition) is a technique used to 
 extract text from images. In the World of Subtitle, subtitle stored 
 in bitmap format are common and even necessary for converting subtitle 
 in bitmap format to subtitle in text format ocr is used.
