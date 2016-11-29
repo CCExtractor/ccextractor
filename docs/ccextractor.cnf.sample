@@ -5,9 +5,9 @@
 #
 
 
-# The Input Source tag option give ability to user
-# to take imput from file, standurd input or network
-# This tag take number in its input and there meanings
+# The Input Source tag option gives ability to user
+# to take input from file, standard input or network
+# This tag takes number in its input and their meanings
 # are following
 # 0 = file
 # 1 = stdin
@@ -16,12 +16,12 @@
 INPUT_SOURCE=0
 
 # The Buffer Input tag
-# This tag take number in its input.
+# This tag takes number in its input.
 
 #BUFFER_INPUT=0
 
 # The Direct Rollup tag
-# This tag take number in its input and there meanings
+# This tag takes number in its input and their meanings
 # are following
 # 0 = no
 # 1 = yes
@@ -29,7 +29,7 @@ INPUT_SOURCE=0
 #DIRECT_ROLLUP=
 
 #The No font Color Tag
-# This tag take number in its input and there meanings
+# This tag takes number in its input and their meanings
 # are following
 # 0 = no
 # 1 = yes
@@ -37,16 +37,16 @@ INPUT_SOURCE=0
 #NOFONT_COLOR=
 
 #The No type Setting Tag
-# This tag take number in its input and there meanings
+# This tag takes number in its input and their meanings
 # are following
 # 0 = no
 # 1 = yes
 
 #NOTYPE_SETTING=
 
-# The Codec Tag take the preference of codec
+# The Codec Tag takes the preference of codec
 # tag CCX_CODEC_ANY is by default
-# This tag take number in its input and there meaning
+# This tag takes number in its input and their meanings
 # are following
 # 0 = CCX_CODEC_ANY
 # 1 = CCX_CODEC_TELETEXT
@@ -56,7 +56,7 @@ INPUT_SOURCE=0
 
 # The NO Codec Tag do not use codec specified
 # tag CCX_CODEC_NONE is by default
-# This tag take number in its input and there meaning
+# This tag takes number in its input and their meanings
 # are following
 # 1 = CCX_CODEC_TELETEXT
 # 2 = CCX_CODEC_DVB
@@ -66,7 +66,7 @@ INPUT_SOURCE=0
 
 # OUTPUT_FORMAT tag specify format of output
 # by default output format is srt
-# This tag take number in its input and there meaning
+# This tag takes number in its input and their meanings
 # are following
 # 0 = CCX_OF_RAW
 # 1 = CCX_OF_SRT (default)
@@ -87,7 +87,7 @@ INPUT_SOURCE=0
 
 #START_CREDIT_TEXT=
 
-# Start credit do not start before apecified time in tag
+# Start credit do not start before specified time in tag
 # this tag only accepts SS, MM:SS or HH:MM:SS
 
 #START_CREDIT_NOT_BEFORE=
@@ -124,7 +124,7 @@ INPUT_SOURCE=0
 
 #END_CREDITS_FOR_ATMOST
 
-# Is Video edited or splitted by tool
+# Is Video edited or split by tool
 # By default its 1, ccextractor will process input files in
 # sequence as if they were all one large file i.e
 # split by a generic, non video-aware tool. If you
@@ -140,7 +140,7 @@ INPUT_SOURCE=0
 # overrides the default PTS timing,GOP timing is always
 # used for Elementary Streams.
 #
-# This tag take number in its input and there meaning
+# This tag takes number in its input and their meanings
 # are following
 #  0 = use pts for time (when reasonable)
 #  1 = use gop for time (when reasonable)
@@ -164,7 +164,7 @@ INPUT_SOURCE=0
 # emulation, you can have ccextractor write only one
 # line at a time, getting rid of these repeated lines.
 #
-# This tag take number in its input and there meaning
+# This tag take number in its input and their meanings
 # are following
 # 0 = no (default)
 # 1 = yes
