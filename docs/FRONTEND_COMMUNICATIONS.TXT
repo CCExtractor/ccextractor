@@ -80,7 +80,7 @@ VIDEOINFO - New video information found
 	Horizontal resolution
         Vertical resolution
         Aspect ratio
-        Framerate
+        Frame rate
 
         Example: ###VIDEOINFO#1980#1080#16:9#29.97
 

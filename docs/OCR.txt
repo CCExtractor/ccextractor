@@ -1,17 +1,17 @@
 
 Overview
 ========
-OCR (Optical Character Recognisation ) is an technique used to 
-extract text from images. In the World of Subtile, subtitle stored 
-in bitmap format are common and even neccassary. for converting subtile 
-in bitmap format to subtilte in text format ocr is used.
+OCR (Optical Character Recognition) is a technique used to 
+extract text from images. In the World of Subtitle, subtitle stored 
+in bitmap format are common and even necessary for converting subtitle 
+in bitmap format to subtitle in text format ocr is used.
 
 Dependency
 ==========
-Tesseract (OCR library by google)
+Tesseract (OCR library by Google)
 Leptonica (image processing library)
 
-How to compile ccextractor  on linux with OCR
+How to compile ccextractor on linux with OCR
 =============================================
 
 Download and Install Leptonnica.
@@ -55,7 +55,7 @@ Compile CCextractor passing flags like following
 make ENABLE_OCR=yes
 
 
-How to compile ccextractor  on Windows with OCR
+How to compile ccextractor on Windows with OCR
 ===============================================
 
 Download prebuild library of leptonica and tesseract from following link

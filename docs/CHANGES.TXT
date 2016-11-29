@@ -83,7 +83,7 @@
 -----------------
 - Added basic M2TS support
 - Added EPG support - you can now export the Program Guide to XML
-- Some bugfixes
+- Some bug fixes
 
 0.75 (2015-01-15)
 -----------------
@@ -107,7 +107,7 @@
 0.73 - GSOC (2014-08-19)
 ------------------------
 - Added support of BIN format for Teletext
-- Added start of librarisation. This will allow in the future for other programs to use encoder/decoder functions and more.
+- Added start of librarization. This will allow in the future for other programs to use encoder/decoder functions and more.
 
 0.72 - GSOC (2014-08-12)
 ------------------------
@@ -452,7 +452,7 @@ version of CCExtractor.
 
 0.57 (2010-12-16)
 -----------------
-- Bugfixes in the Windows version. Some debug code was unintentionally
+- Bug fixes in the Windows version. Some debug code was unintentionally
   left in the released version. 
 
 0.56 (2010-12-09)
@@ -480,7 +480,7 @@ version of CCExtractor.
 -----------------
 - Add -nosync and -fullbin switches for debugging purposes.
 - Remove -lg (--largegops) switch.
-- Improve syncronization of captions for source files with
+- Improve synchronization of captions for source files with
   jumps in their time information or gaps in the caption
   information.
 - [R. Abarca] Changed Mac script, it now compiles/link 
@@ -565,7 +565,7 @@ version of CCExtractor.
   is broken please let me know.
 - Added new debug options.
 - [Volker] Added support for DVR-MS NTSC files.
-- Other minor bugfixes and changes.
+- Other minor bug fixes and changes.
 
 0.46 (2008-11-24)
 -----------------
@@ -583,11 +583,11 @@ version of CCExtractor.
 
 0.45 (2008-11-14)
 -----------------
-- Added autodetection of DVR-MS files.
+- Added auto-detection of DVR-MS files.
 - Added -asf to force DVR-MS mode.
 - Added some specific support for DVR-MS
   files. These format used to work
-  correcty in 0.34 (pure luck) but the
+  correctly in 0.34 (pure luck) but the
   MPEG code rework broke it. It should
   work as it used to.
 - Updated Windows GUI to support the
@@ -611,7 +611,7 @@ version of CCExtractor.
   in one go.
 - Added an option to prevent duplicate
   lines in roll-up captions.
-- Several minor bugfixes.
+- Several minor bug fixes.
 - Updated the GUI to add the new options.
 
 0.43 (2008-06-20)
@@ -693,7 +693,7 @@ version of CCExtractor.
   being closed).
 - Displayed memory is now written to disk at end
   of stream even if there is no command requesting
-  so (may prevent losing the last screenful).
+  so (may prevent losing the last screen-full).
 - Important change that could break scripts, but
   that have been added because old behaviour was
   annoying to most people: _1 and _2 at the end

@@ -1,12 +1,12 @@
 Overview
 ========
-FFmpeg Intigration was done to support multiple encapsulator.
+FFmpeg Intigration was done to support multiple encapsulations.
 
 Dependecy
 =========
 FFmpeg library's
 
-Download and Install FFmpeg on your linux pc.
+Download and Install FFmpeg on your Linux pc.
 ---------------------------------------------
 
 Download latest source code from following link
@@ -15,8 +15,8 @@ https://ffmpeg.org/download.html
 then following command to install ffmpeg
 ./configure && make && make install
 
-Note:If you installed ffmpeg on non standurd location, please change/update your
-	 enviorment variable $PATH and $LD_LIBRARY_PATH
+Note:If you installed ffmpeg on non-standard location, please change/update your
+	 environment variable $PATH and $LD_LIBRARY_PATH
 
 Download and Install FFmpeg on your Windows pc.
 ----------------------------------------------
