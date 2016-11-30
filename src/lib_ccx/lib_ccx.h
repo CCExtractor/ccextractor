@@ -242,6 +242,7 @@ void sleep_secs (int secs);
 void dump (LLONG mask, unsigned char *start, int l, unsigned long abs_start, unsigned clear_high_bit);
 bool_t in_array(uint16_t *array, uint16_t length, uint16_t element) ;
 int hex_to_int (char high, char low);
+int hex_string_to_int(char* string, int len);
 void timestamp_to_srttime(uint64_t timestamp, char *buffer);
 void timestamp_to_smptetttime(uint64_t timestamp, char *buffer);
 int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
