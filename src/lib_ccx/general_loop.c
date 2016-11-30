@@ -362,7 +362,7 @@ int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
 }
 #ifdef WTV_DEBUG
 // Hexadecimal dump process
-void processhex (struct lib_ccx_ctx *ctx, char *filename)
+void process_hex (struct lib_ccx_ctx *ctx, char *filename)
 {
 	size_t max=(size_t) ctx->inputsize+1; // Enough for the whole thing. Hex dumps are small so we can be lazy here
 	char *line=(char *) malloc (max);
