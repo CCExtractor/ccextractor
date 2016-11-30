@@ -164,7 +164,7 @@ int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
 void raw_loop (struct lib_ccx_ctx *ctx);
 size_t process_raw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned char *buffer, size_t len);
 void general_loop(struct lib_ccx_ctx *ctx);
-void processhex (char *filename);
+void process_hex (char *filename);
 void rcwt_loop(struct lib_ccx_ctx *ctx);
 
 extern int end_of_file;

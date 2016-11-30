@@ -233,6 +233,8 @@ int main(int argc, char *argv[])
 			case CCX_SM_HEX_DUMP:
 				close_input_file(ctx); // processhex will open it in text mode
 				processhex (ctx, ctx->inputfile[0]);
+				close_input_file(ctx); // process_hex will open it in text mode
+				process_hex (ctx, ctx->inputfile[0]);
 				break;
 #endif
 			case CCX_SM_AUTODETECT:
