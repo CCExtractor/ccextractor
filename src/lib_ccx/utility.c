@@ -343,7 +343,7 @@ void sleep_secs (int secs)
 #endif
 }
 
-int hex2int (char high, char low)
+int hex_to_int (char high, char low)
 {
 	unsigned char h,l;
 	if (high >= '0' && high <= '9')
