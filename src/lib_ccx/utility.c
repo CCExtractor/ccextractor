@@ -360,6 +360,21 @@ int hex_to_int (char high, char low)
 		return -1;
 	return h * 16+l;
 }
+int hex_string_to_int(char* string, int len)
+{
+  int total_return = 0;
+  while(*string && len-- > 0 && total_return >= 0){
+    unsigned char c = *string;
+    if(c >= '0' && c <= '9')
+      total_return = total_return * 16 + (c - '0');
+    else if(*string >= 'a' && *string <= 'f')
+      total_return = total_return * 16 + (c - 'a' + 10);
+    else
+      total_return = -1;
+    string++;
+  }
+  return total_return;
+}
 
 #ifndef _WIN32
 void m_signal(int sig, void (*func)(int))
