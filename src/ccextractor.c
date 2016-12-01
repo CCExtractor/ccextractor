@@ -404,6 +404,30 @@ int main(int argc, char *argv[])
 		curl_easy_cleanup(curl);
   	curl_global_cleanup();
 #endif
+
+	if (ccx_options.no_empty)
+	{
+		char *filename;
+		if (ccx_options.output_filename)
+		{
+			filename = ccx_options.output_filename;
+		}
+		else
+		{
+			int len;
+			char *extension = get_file_extension(ccx_options.enc_cfg.write_format);
+			len = strlen(ctx->basefilename) + 10 + strlen(extension);
+			filename = malloc(len);
+			sprintf(filename, "%s%s", ctx->basefilename, extension);
+			freep(&extension);
+		}
+
+		struct stat st;
+		stat(filename, &st);
+		if (st.st_size <= 3)
+			remove(filename);
+	}
+
 	dinit_libraries(&ctx);
 
 	return EXIT_OK;

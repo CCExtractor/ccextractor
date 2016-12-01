@@ -163,6 +163,7 @@ struct ccx_s_options // Options from user parameters
 	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
 	int multiprogram;
 	int out_interval;
+	int no_empty; // If this is set to 1, it will cause CCExtractor not to generate the output file instead of just generating an empty one
 #ifdef WITH_LIBCURL
 	char *curlposturl;
 #endif

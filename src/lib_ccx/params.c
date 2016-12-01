@@ -309,6 +309,8 @@ void usage (void)
 	mprint ("subtitle file with contiguous timing.\n\n");
 	mprint ("Effect output files\n");
 	mprint ("    -outinterval x output in interval of x seconds\n");
+	mprint ("    --noempty: will cause CCExtractor not to generate the output file instead of just generating an empty one\n");
+	mprint ("\n");
 	mprint ("Network support:\n");
 	mprint ("            -udp port: Read the input via UDP (listening in the specified port)\n");
 	mprint ("                       instead of reading a file.\n\n");
@@ -1493,6 +1495,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		{
 			opt->out_interval = atoi(argv[i+1]);
 			i++;
+			continue;
+		}
+		if (strcmp (argv[i],"--noempty")==0)
+		{
+			opt->no_empty=1;
 			continue;
 		}
 		if (strcmp (argv[i],"--gui_mode_reports")==0)
