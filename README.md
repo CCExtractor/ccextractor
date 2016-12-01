@@ -20,6 +20,7 @@ Extracting subtitles has never been so easy. Just by typing the following comman
 Alternatively, you may use the GUI we have created which guides you through the process easily.
 
 User documentations can be found by clicking [here](http://www.ccextractor.org/doku.php#user_documentation_and_files)
+
 Technical documentations can be found by cicking [here](http://www.ccextractor.org/doku.php#technical_documentation)
 
 
@@ -32,7 +33,7 @@ Technical documentations can be found by cicking [here](http://www.ccextractor.o
 
 You can contribute to the project by Forking it and modifying the code. After which, submit a Pull Request to the project and we will take a look at it!
 
-If you need help read this [Page](http://www.ccextractor.org/doku.php?id=public:general:support) to clarify any doubts!
+If you need help read this [page](http://www.ccextractor.org/doku.php?id=public:general:support) to clarify any doubts!
 
 ## News & Contact
 
