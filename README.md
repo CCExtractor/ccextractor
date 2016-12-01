@@ -10,12 +10,17 @@ Carlos' version (mainstream) is the most stable branch as of date.
 ## Downloads
 [Download page on ccextractor.org](http://www.ccextractor.org/doku.php?id=public:general:downloads)
 
-Or by downloading the zip file from the top of this pagej.
+Or by downloading the zip file from the top of this page.
 
 
-## Quick Useh
+## Quick Use
 
-Extracting subtitles has never been so easy. Just by typing the following command:  ccextractor "name of input"  you'll extract the subtitles
+Extracting subtitles has never been so easy. Just by typing the following command:  ccextractor "name of input"  you'll extract the subtitles.
+
+Alternatively, you may use the GUI we have created which guides you through the process easily.
+
+User documentations can be found by clicking [here](http://www.ccextractor.org/doku.php#user_documentation_and_files)
+Technical documentations can be found by cicking [here](http://www.ccextractor.org/doku.php#technical_documentation)
 
 
 ## Compiling
