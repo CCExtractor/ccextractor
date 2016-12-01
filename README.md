@@ -2,18 +2,18 @@
  
 # CCExtractor
 
-CCExtractor is a tool that everyone that produces subtitles from TV uses. With so many different formats this is always a moving target, and we intend to keep up with all sources and formats. Global accessibility (all users, all contents, all countries) is the goal
+CCExtractor is a free, GPL licensed closed caption tool that everyone who produces subtitles from TV uses. It is a tool that analyzes video files and produces independent subtitle files from the closed captions data. CCExtractor supports Linux, Windows, and OSX platforms. With so many different formats this is always a moving target, and we intend to keep up with all sources and formats. We aim to provide global accessibility (all users, all contents, all countries) for this software package.
 
-Carlos' version (mainstream) is the most stable branch.
+Carlos' version (mainstream) is the most stable branch as of date.
 
 
-## Downloads:
+## Downloads
 [Download page on ccextractor.org](http://www.ccextractor.org/doku.php?id=public:general:downloads)
 
-Or from the top of this page.
+Or by downloading the zip file from the top of this pagej.
 
 
-## Quick Use
+## Quick Useh
 
 Extracting subtitles has never been so easy. Just by typing the following command:  ccextractor "name of input"  you'll extract the subtitles
 
@@ -25,9 +25,9 @@ Extracting subtitles has never been so easy. Just by typing the following comman
     
 ## Contributing
 
-You can contribute to the project by Forking it and  modifying the code and doing a Pull Request to the project!
+You can contribute to the project by Forking it and modifying the code. After which, submit a Pull Request to the project and we will take a look at it!
 
-If you need help read this [Page](http://www.ccextractor.org/doku.php?id=public:general:support) to receive help!
+If you need help read this [Page](http://www.ccextractor.org/doku.php?id=public:general:support) to clarify any doubts!
 
 ## News & Contact
 
