@@ -136,6 +136,9 @@ int main(int argc, char *argv[])
 				fatal(EXIT_READ_ERROR, "Failed to open file: Reason unknown");
 			}
 		}
+		else if(ctx->total_inputsize < 4){
+			error(EXIT_READ_ERROR,"Error: no text found in file");
+		}
 	}
 
 #ifndef _WIN32
