@@ -118,7 +118,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 		switch (cc_type)
 		{
 			case 0:
-				dbg_print(CCX_DMT_CBRAW, "    %s   ..   ..\n",  debug_608toASC( cc_block, 0));
+				dbg_print(CCX_DMT_CBRAW, "    %s   ..   ..\n",  debug_608_to_ASC( cc_block, 0));
 
 				ctx->current_field = 1;
 				ctx->saw_caption_block = 1;
@@ -142,7 +142,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 				cb_field1++;
 				break;
 			case 1:
-				dbg_print(CCX_DMT_CBRAW, "    ..   %s   ..\n",  debug_608toASC( cc_block, 1));
+				dbg_print(CCX_DMT_CBRAW, "    ..   %s   ..\n",  debug_608_to_ASC( cc_block, 1));
 
 				ctx->current_field = 2;
 				ctx->saw_caption_block = 1;
@@ -349,7 +349,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->pulldownfields = 0;
         //es parser related variable ends here
 
-	memset(ctx->cc_stats, 0, 4 * sizeof(int)); 
+	memset(ctx->cc_stats, 0, 4 * sizeof(int));
 
 	ctx->anchor_seq_number = -1;
 	// Init XDS buffers
@@ -369,7 +369,7 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 	{
 		if (ctx->extract != 2)
 		{
-			if (ctx->write_format==CCX_OF_SMPTETT || ctx->write_format==CCX_OF_SAMI || 
+			if (ctx->write_format==CCX_OF_SMPTETT || ctx->write_format==CCX_OF_SAMI ||
 					ctx->write_format==CCX_OF_SRT || ctx->write_format==CCX_OF_TRANSCRIPT ||
 					ctx->write_format == CCX_OF_WEBVTT || ctx->write_format == CCX_OF_SPUPNG)
 			{

@@ -1234,7 +1234,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 
 /* Return a pointer to a string that holds the printable characters
  * of the caption data block. FOR DEBUG PURPOSES ONLY! */
-unsigned char *debug_608toASC (unsigned char *cc_data, int channel)
+unsigned char *debug_608_to_ASC (unsigned char *cc_data, int channel)
 {
 	static unsigned char output[3];
 
