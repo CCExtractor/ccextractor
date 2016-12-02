@@ -156,7 +156,7 @@ version of CCExtractor.
 		- Display end time
 		- Display caption mode
 		- Display caption channel
-		- Use a relative timestamp ( relative to the sample)
+		- Use a relative timestamp (relative to the sample)
 		- Display XDS info
 		- Use colors
 	Examples:
@@ -209,7 +209,7 @@ version of CCExtractor.
   .raw, which depends on padding. Fixed.
 - MythTV's branch had a fixed size buffer that could not be enough
   some times. Made dynamic.
-- Better support for PAT changing mid stream.
+- Better support for PAT changing mid-stream.
 - Removed quotes in Start in .smi (format fix).
 - Added multicast support (Chris Small)
 - Added ability to select IP address to bind in UDP (Chris Small)
@@ -239,10 +239,10 @@ version of CCExtractor.
   their PMT entry.
 - Added -datastreamtype to manually selecting a stream based on
   its type instead of its PID. Useful if your recording program
-  always hides the caption under the stream stream type. 
+  always hides the caption under the stream type. 
 - Added -streamtype so if an elementary stream is selected manually
-  for processing the streamtype can be selected too. This can be 
-  needed if you process for example a stream that is declared as 
+  for processing, the streamtype can be selected too. This can be 
+  needed if you process, for example a stream that is declared as 
   "private MPEG" in the PMT, so CCExtractor can't tell what it is.
   Usually you'll want -streamtype 2 (MPEG video) or -streamtype 6
   (MPEG private data).
@@ -251,10 +251,10 @@ version of CCExtractor.
 - Fixes in roll-up, cursor was being moved to column 1 if a 
   RU2, RU3 or RU4 was received even if already in roll-up mode.
 - Added -autoprogram. If a multiprogram TS is processed and 
-  -autoprogram is used CCExtractor will analyze all PMTs and use
+  -autoprogram is used, CCExtractor will analyze all PMTs and use
   the first program that has a suitable data stream.
 - Timed transcript (ttxt) now also exports the caption mode 
-  (roll-up, paint-on, etc) next to each line, as it's useful to 
+  (roll-up, paint-on, etc.) next to each line, as it's useful to 
   detect things like commercials.
 - Content Advisory information from XDS is now decoded if it's
   transmitted in "US TV parental guidelines" or "MPA". 
@@ -522,12 +522,12 @@ version of CCExtractor.
 - Removed -autopad and -goppad, no longer needed.
 - In preparation to a new binary format we have 
   renamed the current .bin to .raw. Raw files 
-  have only CC data (with no header, timing, etc).
+  have only CC data (with no header, timing, etc.).
 - The input file format (when forced) is now
   specified with 
     	-in=format
   such as -in=ts, -in=raw, -in=ps ...
-  The old switches (-ts, -ps, etc) still work.
+  The old switches (-ts, -ps, etc.) still work.
   The only exception is -bin which has been removed
   (reserved for the new binary format). Use
   -in=raw to process a raw file. 
@@ -569,7 +569,7 @@ version of CCExtractor.
 
 0.46 (2008-11-24)
 -----------------
-- Added support for live streaming, ccextractor
+- Added support for live streaming, CCExtractor
   can now process files that are being recorded
   at the same time.
   
@@ -619,7 +619,7 @@ version of CCExtractor.
 - Fixed a bug in the read loop (no less)
   that caused some files to fail when 
   reading without buffering (which is 
-  the default in the linux build).
+  the default in the Linux build).
 - Several improvements in the GUI, such as
   saving current options as default.
 
@@ -642,7 +642,7 @@ version of CCExtractor.
   deaf people know if the person talking is
   at the left or the right of the screen, i.e.
   there aren't useless. But if they annoy
-  you go ahead...
+  you, go ahead...
 
 0.40 (2008-05-20)
 -----------------
@@ -661,7 +661,7 @@ version of CCExtractor.
 - Fixed a bug in the CC decoder that could cause
   the first line not to be cleared in roll-up
   mode. 
-- ccextractor can now follow number sequences in
+- CCExtractor can now follow number sequences in
   file names, by suffixing the name with +.
   For example,
   
@@ -698,7 +698,7 @@ version of CCExtractor.
   that have been added because old behaviour was
   annoying to most people: _1 and _2 at the end
   of the output file names is now added ONLY if
-  -12 is used (ie when there are two output 
+  -12 is used (i.e. when there are two output 
   files to produce). So
 
   ccextractor -srt sopranos.mpg
@@ -800,7 +800,7 @@ version of CCExtractor.
 
 0.32 (unreleased)
 -----------------
-- Added -delay ms, which adds (or substracts)
+- Added -delay ms, which adds (or subtracts)
   a number of milliseconds to all times in 
   .srt/.sami files. For example,
   
@@ -811,7 +811,7 @@ version of CCExtractor.
 
          -delay -400
 
-  causes all substitles to appear 400 ms before
+  causes all subtitles to appear 400 ms before
   they would normally do.
 - Added -startat at -endat which lets you
   select just a portion of data to be processed,
@@ -837,7 +837,7 @@ version of CCExtractor.
 
 0.29 (unreleased)
 -----------------
-- Minor bugfix.
+- Minor bug fix.
 
 0.28 (unreleased)
 -----------------
@@ -851,7 +851,7 @@ version of CCExtractor.
 
 0.27 (unreleased)
 -----------------
-- Modified sanitizing code, it's less aggresive
+- Modified sanitizing code, it's less aggressive
   now. Ideally it should mean that characters
   won't be missed anymore. We'll see.
 
@@ -906,7 +906,7 @@ version of CCExtractor.
   many others (bttv) with the same closed caption recording 
   format.
   This is the result of hacking MythTV's MPEG parser into
-  ccextractor. Integration is not very good (to put it
+  CCExtractor. Integration is not very good (to put it
   midly) but it seems to work. Depending on the feedback I
   may continue working on this or just leave it 'as it'
   (good enough). 
@@ -923,7 +923,7 @@ version of CCExtractor.
   It's fixed now at least for the samples I have, if it's not
   completely fixed let me know. Credit for this goes to
   Jack Ha who sent me a couple of samples and a first 
-  implementation of a semiworking fix.
+  implementation of a semi working-fix.
 - Added support for several input files (see help screen for
   details).
 - Added Unicode and Latin-1 encoding.
@@ -955,7 +955,7 @@ version of CCExtractor.
 0.07 (2007-04-19)
 -----------------
 - Added MPEG reference clock parsing.
-- Added autopadding in TS. Does miracles with timing.
+- Added auto padding in TS. Does miracles with timing.
 - Added video information (as extracted from sequence header).
 - Some code clean-up.
 - FF sanity check enabled by default.
