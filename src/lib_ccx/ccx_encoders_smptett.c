@@ -46,8 +46,8 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 	if (el == NULL || unescaped == NULL)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_sami() - not enough memory.\n");
 
-	mstotime (ms_start, &h1, &m1, &s1, &ms1);
-	mstotime (ms_end-1, &h2, &m2, &s2, &ms2);
+	millis_to_time (ms_start, &h1, &m1, &s1, &ms1);
+	millis_to_time (ms_end-1, &h2, &m2, &s2, &ms2);
 
 	sprintf ((char *) str, "<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\r\n", h1, m1, s1, ms1, h2, m2, s2, ms2);
 	if (context->encoding!=CCX_ENC_UNICODE)
@@ -149,8 +149,8 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 			char *buf = (char *) context->buffer;
 			unsigned h1, m1, s1, ms1;
 			unsigned h2, m2, s2, ms2;
-			mstotime (ms_start,&h1,&m1,&s1,&ms1);
-			mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+			millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
+			millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 			sprintf ((char *) context->buffer,"<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\n",h1,m1,s1,ms1, h2,m2,s2,ms2);
 			write (context->out->fh, buf,strlen(buf) );
 			len = strlen(rect[0].ocr_text);
@@ -212,8 +212,8 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 
 	endms  = data->end_time;
 	endms--; // To prevent overlapping with next line.
-	mstotime (startms,&h1,&m1,&s1,&ms1);
-	mstotime (endms-1,&h2,&m2,&s2,&ms2);
+	millis_to_time (startms,&h1,&m1,&s1,&ms1);
+	millis_to_time (endms-1,&h2,&m2,&s2,&ms2);
 
 	sprintf ((char *) str,"<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\n",h1,m1,s1,ms1, h2,m2,s2,ms2);
 

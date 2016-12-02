@@ -372,7 +372,7 @@ static int write_bom(struct encoder_ctx *ctx, struct ccx_s_write *out)
 				mprint("WARNING: Unable tp write UTF BOM\n");
 				return -1;
 			}
-				
+
 		}
 		if (ctx->encoding == CCX_ENC_UNICODE){ // Write BOM
 			ret = write(out->fh, LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM));
@@ -914,7 +914,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 	ctx->transcript_settings = &opt->transcript_settings;
 	ctx->no_bom = opt->no_bom;
-	ctx->sentence_cap = opt->sentence_cap;	
+	ctx->sentence_cap = opt->sentence_cap;
 	ctx->trim_subs = opt->trim_subs;
 	ctx->autodash = opt->autodash;
 	ctx->no_font_color = opt->no_font_color;
@@ -1231,8 +1231,8 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *cont
 			if (!time_reported)
 			{
 				LLONG ms_end = data->end_time;
-				mstotime(ms_start, &h1, &m1, &s1, &ms1);
-				mstotime(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
+				millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
+				millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 				// Note, only MM:SS here as we need to save space in the preview window
 				fprintf(stderr, "%02u:%02u#%02u:%02u#",
 					h1 * 60 + m1, s1, h2 * 60 + m2, s2);

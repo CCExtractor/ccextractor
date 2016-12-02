@@ -40,7 +40,7 @@
 
 // Declarations
 void fdprintf(int fd, const char *fmt, ...);
-void mstotime(LLONG milli, unsigned *hours, unsigned *minutes,unsigned *seconds, unsigned *ms);
+void millis_to_time(LLONG milli, unsigned *hours, unsigned *minutes,unsigned *seconds, unsigned *ms);
 void freep(void *arg);
 void dbg_print(LLONG mask, const char *fmt, ...);
 unsigned char *debug_608toASC(unsigned char *ccdata, int channel);
