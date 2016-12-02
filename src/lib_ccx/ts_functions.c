@@ -130,7 +130,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 	{
 		/* M2TS just adds 4 bytes to each packet (so size goes from 188 to 192)
 		   The 4 bytes are not important to us, so just skip
-		// TP_extra_header {   
+		// TP_extra_header {
 		Copy_permission_indicator 2  unimsbf
 		Arrival_time_stamp 30 unimsbf
 		} */
@@ -495,7 +495,7 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 
 void cinfo_cremation(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
-	struct cap_info* iter; 
+	struct cap_info* iter;
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		copy_capbuf_demux_data(ctx, data, iter);
@@ -515,7 +515,7 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 	//Verify PES before copy to capbuf
 	if(cinfo->capbuflen == 0 )
 	{
-		if(payload->start[0] != 0x00 || payload->start[1] != 0x00 || 
+		if(payload->start[0] != 0x00 || payload->start[1] != 0x00 ||
 			payload->start[2] != 0x01)
 		{
 			mprint("Notice: Missing PES header\n");
@@ -581,7 +581,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 				parse_PAT(ctx); // Returns 1 if there was some data in the buffer already
 			continue;
 		}
-		
+
 		if( ccx_options.xmltv >= 1 && payload.pid == 0x11) {// This is SDT (or BAT)
 			ts_buffer_psi_packet(ctx);
 			if(ctx->PID_buffers[payload.pid]!=NULL && ctx->PID_buffers[payload.pid]->buffer_length>0)
@@ -692,11 +692,11 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
         // with the continuity counter not being incremented in empty
         // packets.
         if ( !payload.length )
-        {   
+        {
                 dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - no payload.\n",
                         payload.pid);
                 continue;
-        }   
+        }
 
 
 		cinfo = get_cinfo(ctx, payload.pid);
@@ -728,7 +728,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 				}
 				cinfo->codec_private_data = NULL;
 			}
-			
+
 			if (cinfo->capbuflen > 0)
 			{
 				freep(&cinfo->capbuf);
@@ -793,7 +793,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 
 // TS specific data grabber
-int ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **data)
+int ts_get_more_data(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
 	int ret = CCX_OK;
 
