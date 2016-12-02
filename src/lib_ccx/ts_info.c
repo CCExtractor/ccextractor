@@ -1,7 +1,7 @@
 #include "ccx_demuxer.h"
 #include "ccx_common_common.h"
 #include "lib_ccx.h"
-#include "dvb_subtitle_decoder.h" 
+#include "dvb_subtitle_decoder.h"
 
 /**
     We need stream info from PMT table when any of the following Condition meets:
@@ -9,9 +9,9 @@
     2) Want a streams per program, and program_number has never been registered
     3) We need single stream and its info about codec and buffertype is incomplete
 */
-int need_capInfo(struct ccx_demuxer *ctx, int program_number)
+int need_cap_info(struct ccx_demuxer *ctx, int program_number)
 {
-	struct cap_info* iter; 
+	struct cap_info* iter;
 	if(list_empty(&ctx->cinfo_tree.all_stream))
 	{
 		return CCX_TRUE;
@@ -39,7 +39,7 @@ int need_capInfo(struct ccx_demuxer *ctx, int program_number)
 
 void ignore_other_stream(struct ccx_demuxer *ctx, int pid)
 {
-	struct cap_info* iter; 
+	struct cap_info* iter;
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		if(iter->pid != pid)
@@ -89,7 +89,7 @@ struct cap_info* get_best_sib_stream(struct cap_info* program)
 
 void ignore_other_sib_stream(struct cap_info* head, int pid)
 {
-	struct cap_info* iter; 
+	struct cap_info* iter;
 	list_for_each_entry(iter, &head->sib_head, sib_stream, struct cap_info)
 	{
 		if(iter->pid != pid)
@@ -136,9 +136,9 @@ struct demuxer_data *get_data_stream(struct demuxer_data *data, int pid)
 
 	return NULL;
 }
-int need_capInfo_for_pid(struct ccx_demuxer *ctx, int pid)
+int need_cap_info_for_pid(struct ccx_demuxer *ctx, int pid)
 {
-	struct cap_info* iter; 
+	struct cap_info* iter;
 	if(list_empty(&ctx->cinfo_tree.all_stream))
 	{
 		return CCX_FALSE;
@@ -251,7 +251,7 @@ int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream
 
 void dinit_cap (struct ccx_demuxer *ctx)
 {
-	struct cap_info* iter; 
+	struct cap_info* iter;
 	while(!list_empty(&ctx->cinfo_tree.all_stream))
 	{
 		iter = list_entry(ctx->cinfo_tree.all_stream.next, struct cap_info, all_stream);
@@ -266,7 +266,7 @@ void dinit_cap (struct ccx_demuxer *ctx)
 
 struct cap_info * get_cinfo(struct ccx_demuxer *ctx, int pid)
 {
-	struct cap_info* iter; 
+	struct cap_info* iter;
 
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
@@ -275,4 +275,3 @@ struct cap_info * get_cinfo(struct ccx_demuxer *ctx, int pid)
 	}
 	return NULL;
 }
-
