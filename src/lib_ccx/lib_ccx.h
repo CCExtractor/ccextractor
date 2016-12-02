@@ -151,7 +151,7 @@ void dinit_libraries( struct lib_ccx_ctx **ctx);
 
 //params.c
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[]);
-void usage (void);
+void print_usage (void);
 int detect_input_file_overwrite(struct lib_ccx_ctx *ctx, const char *output_filename);
 int atoi_hex (char *s);
 int stringztoms (const char *s, struct ccx_boundary_time *bt);
