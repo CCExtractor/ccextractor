@@ -1045,10 +1045,10 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		// Write to a buffer that is later s+plit to generate split
 		// in sentences
 		if (sub->type == CC_BITMAP)
-			wrote_something = write_cc_bitmap_to_sentence_buffer(sub, context);
+			sub = reformat_cc_bitmap_through_sentence_buffer(sub, context);
 	}
-	else
-	{
+//	else
+//	{
 		// Write subtitles as they come
 		if (sub->type == CC_608)
 		{
@@ -1241,7 +1241,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			}
 			sub->nb_data = 0;
 		}
-	}
+//	}
 	if (!sub->nb_data)
 		freep(&sub->data);
 	if (wrote_something && context->force_flush)

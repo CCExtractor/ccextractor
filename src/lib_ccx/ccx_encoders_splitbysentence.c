@@ -4,12 +4,12 @@
 #include "ccx_encoders_spupng.h"
 #include "utility.h"
 #include "ocr.h"
-#include "ccx_decoders_608.h"
-#include "ccx_decoders_708.h"
-#include "ccx_decoders_708_output.h"
-#include "ccx_encoders_xds.h"
-#include "ccx_encoders_helpers.h"
-#include "utf8proc.h"
+//#include "ccx_decoders_608.h"
+//#include "ccx_decoders_708.h"
+//#include "ccx_decoders_708_output.h"
+//#include "ccx_encoders_xds.h"
+//#include "ccx_encoders_helpers.h"
+//#include "utf8proc.h"
 
 #ifdef ENABLE_SHARING
 #include "ccx_share.h"
@@ -38,98 +38,127 @@ void lbl_end_block(LLONG end_time, struct encoder_ctx *context)
 	context->sbs_newblock_end_time = end_time;
 }
 
-int write_cc_bitmap_to_sentence_buffer(struct cc_subtitle *sub, struct encoder_ctx *context)
+
+int sb_append_string(unsigned char * str, struct encoder_ctx * context)
 {
-	int ret = 0;
-#ifdef ENABLE_OCR
-	struct cc_bitmap* rect;
+	unsigned char * ssb = context->split_sentence_buffer; // just a shortcut
+	int required_capacity;
+	unsigned char * search;
 
-	LLONG ms_start, ms_end;
-
-	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
+	if (NULL == ssb)
 	{
-		ms_start = context->prev_start;
-		ms_end = sub->start_time;
+		ssb = context->split_sentence_buffer = strdup(str);
 	}
-	else if (!(sub->flags & SUB_EOD_MARKER))
+	else
 	{
+		required_capacity = strlen(str) + strlen(ssb);
+		if (required_capacity < context->split_sentence_buffer_capacity)
+		{
+			while (required_capacity > context->split_sentence_buffer_capacity)
+			{
+				context->split_sentence_buffer_capacity *= 2;
+			}
+			ssb = context->split_sentence_buffer = (unsigned char *) realloc(
+				ssb,
+				context->split_sentence_buffer_capacity * sizeof(ssb[0])
+			);
+		};
+
+		strcat(ssb, str);
+	}
+
+	for (search = ssb; search && *search != '.'; search ++)
+		;
+
+	if (search)
+		return 1;
+	return 0;
+}
+
+struct cc_subtitle * reformat_cc_bitmap_through_sentence_buffer(struct cc_subtitle *sub, struct encoder_ctx *context)
+{
+	struct cc_bitmap* rect;
+	LLONG ms_start, ms_end;
+	int used;
+	int i = 0;
+	char *str;
+
+	// this is a sub with a full sentence (or chain of such subs)
+	struct cc_subtitle * resub = NULL;
+
+#ifdef ENABLE_OCR
+
+	if (sub->flags & SUB_EOD_MARKER)
+	{
+		// the last sub from input
+
+		if (context->prev_start == -1)
+		{
+			ms_start = 1;
+			ms_end = sub->start_time;
+		}
+		else
+		{
+			ms_start = context->prev_start;
+			ms_end = sub->start_time;
+		}
+	}
+	else
+	{
+		// not the last sub from input
 		ms_start = sub->start_time;
 		ms_end = sub->end_time;
 	}
-	else if (context->prev_start == -1 && (sub->flags & SUB_EOD_MARKER))
-	{
-		ms_start = 1;
-		ms_end = sub->start_time;
-	}
 
 	if (sub->nb_data == 0)
-		return ret;
-	rect = sub->data;
+		return 0;
 
 	if (sub->flags & SUB_EOD_MARKER)
 		context->prev_start = sub->start_time;
 
-
-	if (rect[0].ocr_text && *(rect[0].ocr_text))
+	str = paraof_ocrtext(sub, " ", 1);
+	if (str)
 	{
-		lbl_start_block(ms_start, context);
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 		{
-			char *token = NULL;
-			token = paraof_ocrtext(sub, " ", 1); // Get text with spaces instead of newlines
-			uint32_t offset=0;
-			utf8proc_ssize_t ls; // Last size
-			char *s = token;
-			int32_t uc;
-			while ((ls=utf8proc_iterate(s, -1, &uc))) 
-			{
-				ccx_sbs_utf8_character sbsc;
-				// Note: We don't care about uc here, since we will be writing the encoded bytes, not the code points in binary.
-				//TODO: Deal with ls < 0
-				if (!uc) // End of string
-					break; 
-				printf("%3ld | %08X | %c %c %c %c\n", ls, uc, ((uc & 0xFF000000) >> 24),  ((uc & 0xFF0000) >> 16), 
-					((uc & 0xFF00) >> 8), ( uc & 0xFF));				
-				sbsc.ch = uc;
-				sbsc.encoded[0] = 0; sbsc.encoded[1] = 0; sbsc.encoded[2] = 0; sbsc.encoded[3] = 0;
-				memcpy(sbsc.encoded, s, ls);
-				sbsc.enc_len = ls;
-				sbsc.ts = 0; // We don't know yet
-				lbl_add_character(context, sbsc);
-				s += ls;				
-				
-				// TO-DO: Add each of these characters to the buffer, splitting the timestamps. Remember to add character length to the array
-			}
-			printf("-------\n");
-
-			/*
-			while (token)
-			{
-				char *newline_pos = strstr(token, context->encoded_crlf);
-				if (!newline_pos)
-				{
-					fdprintf(context->out->fh, "%s", token);
-					break;
-				}
-				else
-				{
-					while (token != newline_pos)
-					{
-						fdprintf(context->out->fh, "%c", *token);
-						token++;
-					}
-					token += context->encoded_crlf_length;
-					fdprintf(context->out->fh, "%c", ' ');
-				}
-			}*/
-
 		}
-		lbl_end_block(ms_end, context);
+
+if (1) //sub->nb_data)
+{
+	resub = malloc(sizeof(struct cc_subtitle));
+	// for(;sub->next;sub = sub->next);
+	// sub->next = malloc(sizeof(struct cc_subtitle));
+	// if(!sub->next)
+	// 	return -1;
+	// sub->next->prev = sub;
+	// sub = sub->next;
+	resub->prev = NULL;
+	resub->next = NULL;
+}
+
+resub->type = CC_TEXT;
+// resub->enc_type = sub->e_type;
+resub->data = strdup(str);
+resub->nb_data = str? strlen(str): 0;
+resub->start_time = ms_start;
+resub->end_time = ms_end;
+// if(info)
+// 	strncpy(sub->info, info, 4);
+// if(mode)
+// 	strncpy(sub->mode, mode, 4);
+resub->got_output = 1;
+
+		freep(&str);
+	}
+
+	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
+	{
+		freep(rect->data);
+		freep(rect->data+1);
 	}
 #endif
-
 	sub->nb_data = 0;
 	freep(&sub->data);
-	return ret;
+	return resub;
 
 }

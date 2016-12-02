@@ -62,7 +62,7 @@ struct encoder_ctx
 	/* Input file format used in Teletext for exceptional output */
 	unsigned int in_fileformat; //1 =Normal, 2=Teletext
 	/* Keep output file closed when not actually writing to it and start over each time (add headers, etc) */
-	unsigned int keep_output_closed; 
+	unsigned int keep_output_closed;
 	/* Force a flush on the file buffer whenever content is written */
 	int force_flush;
 	/* Keep track of whether -UCLA used */
@@ -85,6 +85,10 @@ struct encoder_ctx
 	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
 	unsigned char *subline; // Temp storage for storing each line
 	int extract;
+
+	unsigned char *split_sentence_buffer; // Storage for sentence-split buffer
+	unsigned int split_sentence_buffer_capacity;
+	ccx_sbs_utf8_character *sbs_newblock;
 
 	int dtvcc_extract; //1 or 0 depending if we have to handle dtvcc
 	ccx_dtvcc_writer_ctx dtvcc_writers[CCX_DTVCC_MAX_SERVICES];
@@ -120,7 +124,6 @@ struct encoder_ctx
 	int splitbysentence;
 	LLONG sbs_newblock_start_time; // Used by the split-by-sentence code to know when the current block starts...
 	LLONG sbs_newblock_end_time; // ... and ends
-	ccx_sbs_utf8_character *sbs_newblock;
 	int sbs_newblock_capacity;
 	int sbs_newblock_size;
 	ccx_sbs_utf8_character *sbs_buffer;
@@ -196,10 +199,9 @@ int write_cc_bitmap_as_sami            (struct cc_subtitle *sub, struct encoder_
 int write_cc_bitmap_as_smptett         (struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_spupng          (struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_transcript      (struct cc_subtitle *sub, struct encoder_ctx *context);
-int write_cc_bitmap_to_sentence_buffer (struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_libcurl         (struct cc_subtitle *sub, struct encoder_ctx *context);
 
-
+struct cc_subtitle * reformat_cc_bitmap_through_sentence_buffer (struct cc_subtitle *sub, struct encoder_ctx *context);
 
 void set_encoder_last_displayed_subs_ms(struct encoder_ctx *ctx, LLONG last_displayed_subs_ms);
 void set_encoder_subs_delay(struct encoder_ctx *ctx, LLONG subs_delay);
