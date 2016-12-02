@@ -85,7 +85,7 @@ typedef struct _avistdindex_chunk {
     u8  bIndexType;             // must be AVI_INDEX_OF_CHUNKS
     u32  nEntriesInUse;         //
     char dwChunkId[4];          // '##dc' or '##db' or '##wb' etc..
-    u64 qwBaseOffset;       	// all dwOffsets in aIndex array are relative to this
+    u64 qwBaseOffset;       	 // all dwOffsets in aIndex array are relative to this
     u32  dwReserved3;           // must be 0
     avistdindex_entry *aIndex;
 } avistdindex_chunk;
