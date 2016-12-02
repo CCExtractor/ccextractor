@@ -836,7 +836,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				break;
 #ifdef ENABLE_FFMPEG
 			case CCX_SM_FFMPEG:
-				ret = ffmpeg_getmoredata(ctx->demux_ctx, &datalist);
+				ret = ffmpeg_get_more_data(ctx->demux_ctx, &datalist);
 				break;
 #endif
 			default:
