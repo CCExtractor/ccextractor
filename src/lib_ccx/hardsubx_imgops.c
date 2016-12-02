@@ -16,7 +16,7 @@
 #define min_f(a, b, c)  (fminf(a, fminf(b, c)))
 #define max_f(a, b, c) (fmaxf(a, fmaxf(b, c)))
 
-void rgb2hsv(float R, float G, float B,float *H, float *S, float *V)
+void rgb_to_hsv(float R, float G, float B,float *H, float *S, float *V)
 {
 	//Conversion into HSV color space to get Hue
 	float r = R / 255.0f;
@@ -59,7 +59,7 @@ void rgb2hsv(float R, float G, float B,float *H, float *S, float *V)
 	*V = (unsigned char)(v * 255); // dst_v : 0-255
 }
 
-void rgb2lab(float R, float G, float B,float *L, float *a, float *b)
+void rgb_to_lab(float R, float G, float B,float *L, float *a, float *b)
 {
 	//Conversion to the CIE-LAB color space to get the Luminance
 	float X, Y, Z, fX, fY, fZ;
