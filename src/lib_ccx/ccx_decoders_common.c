@@ -25,7 +25,7 @@ LLONG get_visible_start (struct ccx_common_timing_ctx *ctx, int current_field)
 	LLONG fts = get_fts(ctx, current_field);
 	if (fts <= ctx->minimum_fts)
 		fts = ctx->minimum_fts + 1;
-	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Visible Start time=%s\n", print_mstime(fts));
+	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Visible Start time=%s\n", print_mstime_static(fts));
 	return fts;
 }
 
@@ -35,7 +35,7 @@ LLONG get_visible_end (struct ccx_common_timing_ctx *ctx, int current_field)
 	LLONG fts = get_fts(ctx, current_field);
 	if (fts > ctx->minimum_fts)
 		ctx->minimum_fts = fts;
-	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Visible End time=%s\n", print_mstime(fts));
+	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Visible End time=%s\n", print_mstime_static(fts));
 	return fts;
 }
 
@@ -102,7 +102,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 		return 1;
 
 	// Print raw data with FTS.
-	dbg_print(CCX_DMT_CBRAW, "%s   %d   %02X:%c%c:%02X", print_mstime(ctx->timing->fts_now + ctx->timing->fts_global),in_xds_mode,
+	dbg_print(CCX_DMT_CBRAW, "%s   %d   %02X:%c%c:%02X", print_mstime_static(ctx->timing->fts_now + ctx->timing->fts_global),in_xds_mode,
 			cc_block[0], cc_block[1]&0x7f,cc_block[2]&0x7f, cc_block[2]);
 
 	/* In theory the writercwtdata() function could return early and not
