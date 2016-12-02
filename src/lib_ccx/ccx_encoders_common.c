@@ -48,6 +48,19 @@ text-align: center; font-size: 18pt; font-family: arial; font-weight: bold; colo
 </HEAD>\n\n\
 <BODY>\n";
 
+static const char *ssa_header=
+"[Script Info]\n\
+Title: Default file\n\
+ScriptType: v4.00+\n\
+\n\
+[V4+ Styles]\n\
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n\
+Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,1,2,10,10,10,0\n\
+\n\
+[Events]\n\
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n\
+\n";
+
 static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
 "<tt xmlns:ttm=\"http://www.w3.org/ns/ttml#metadata\" xmlns:tts=\"http://www.w3.org/ns/ttml#styling\" xmlns=\"http://www.w3.org/ns/ttml\" xml:lang=\"en\">\n"
 "  <head>\n"
@@ -397,6 +410,19 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			if(ret < 0)
 				return -1;
 			break;
+		case CCX_OF_SSA:
+			ret = write_bom(ctx, out);
+			if(ret < 0)
+				return -1;
+			REQUEST_BUFFER_CAPACITY(ctx,strlen (ssa_header)*3);
+			used = encode_line (ctx, ctx->buffer,(unsigned char *) ssa_header);
+			ret = write (out->fh, ctx->buffer, used);
+			if(ret < used)
+			{
+				mprint("WARNING: Unable to write complete Buffer \n");
+				return -1;
+			}
+			break;
 		case CCX_OF_WEBVTT:
 			ret = write_bom(ctx, out);
 			if (ret < 0)
@@ -615,6 +641,9 @@ static void try_to_add_end_credits(struct encoder_ctx *context, struct ccx_s_wri
 		case CCX_OF_SRT:
 			write_stringz_as_srt(context->end_credits_text, context, st, end);
 			break;
+		case CCX_OF_SSA:
+			write_stringz_as_ssa(context->end_credits_text, context, st, end);
+			break;
 		case CCX_OF_WEBVTT:
 			write_stringz_as_webvtt(context->end_credits_text, context, st, end);
 			break;
@@ -674,6 +703,9 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 	{
 		case CCX_OF_SRT:
 			write_stringz_as_srt(context->start_credits_text,context,st,end);
+			break;
+		case CCX_OF_SSA:
+			write_stringz_as_ssa(context->start_credits_text,context,st,end);
 			break;
 		case CCX_OF_WEBVTT:
 			write_stringz_as_webvtt(context->start_credits_text, context, st, end);
@@ -1052,6 +1084,11 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 							try_to_add_start_credits(context, data->start_time);
 						wrote_something = write_cc_buffer_as_srt(data, context);
 						break;
+					case CCX_OF_SSA:
+						if (!context->startcredits_displayed && context->start_credits_text != NULL)
+							try_to_add_start_credits(context, data->start_time);
+						wrote_something = write_cc_buffer_as_ssa(data, context);
+						break;
 					case CCX_OF_G608:
 						wrote_something = write_cc_buffer_as_g608(data, context);
 						break;
@@ -1109,6 +1146,11 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					try_to_add_start_credits(context, sub->start_time);
 				wrote_something = write_cc_bitmap_as_srt(sub, context);
 				break;
+			case CCX_OF_SSA:
+				if (!context->startcredits_displayed && context->start_credits_text != NULL)
+					try_to_add_start_credits(context, sub->start_time);
+					wrote_something = write_cc_bitmap_as_ssa(sub, context);
+				break;
 			case CCX_OF_WEBVTT:
 				if (!context->startcredits_displayed && context->start_credits_text != NULL)
 					try_to_add_start_credits(context, sub->start_time);
@@ -1164,6 +1206,11 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				if (!context->startcredits_displayed && context->start_credits_text != NULL)
 					try_to_add_start_credits(context, sub->start_time);
 				wrote_something = write_cc_subtitle_as_srt(sub, context);
+				break;
+			case CCX_OF_SSA:
+				if (!context->startcredits_displayed && context->start_credits_text != NULL)
+					try_to_add_start_credits(context, sub->start_time);
+				wrote_something = write_cc_subtitle_as_ssa(sub, context);
 				break;
 			case CCX_OF_WEBVTT:
 				if (!context->startcredits_displayed && context->start_credits_text != NULL)
