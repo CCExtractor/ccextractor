@@ -156,7 +156,7 @@ void writeDVDraw (const unsigned char *data1, int length1,
 
 }
 
-void printdata (struct lib_cc_decode *ctx, const unsigned char *data1, int length1,
+void print_data (struct lib_cc_decode *ctx, const unsigned char *data1, int length1,
                 const unsigned char *data2, int length2, struct cc_subtitle *sub)
 {
 	if (ctx->write_format==CCX_OF_DVDRAW)

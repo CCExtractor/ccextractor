@@ -108,7 +108,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 	/* In theory the writercwtdata() function could return early and not
 	 * go through the 608/708 cases below.  We do that to get accurate
 	 * counts for cb_field1, cb_field2 and cb_708.
-	 * Note that printdata() and dtvcc_process_data() must not be called for
+	 * Note that print_data() and dtvcc_process_data() must not be called for
 	 * the CCX_OF_RCWT case. */
 
 	if (cc_valid || cc_type==3)
@@ -135,7 +135,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 				if (timeok)
 				{
 					if(ctx->write_format!=CCX_OF_RCWT)
-						printdata (ctx, cc_block+1,2,0,0, sub);
+						print_data (ctx, cc_block+1,2,0,0, sub);
 					else
 						writercwtdata(ctx, cc_block, sub);
 				}
@@ -159,7 +159,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 				if (timeok)
 				{
 					if(ctx->write_format!=CCX_OF_RCWT)
-						printdata (ctx, 0,0,cc_block+1,2, sub);
+						print_data (ctx, 0,0,cc_block+1,2, sub);
 					else
 						writercwtdata(ctx, cc_block, sub);
 				}
