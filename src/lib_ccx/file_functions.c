@@ -24,7 +24,7 @@ LLONG get_file_size (int in)
 	return length;
 }
 
-LLONG gettotalfilessize (struct lib_ccx_ctx *ctx) // -1 if one or more files failed to open
+LLONG get_total_file_size (struct lib_ccx_ctx *ctx) // -1 if one or more files failed to open
 {
 	LLONG ts=0;
 	int h;
