@@ -25,7 +25,7 @@ const static unsigned char DO_NOTHING[] = {0x80, 0x80};
 
 
 // Program stream specific data grabber
-int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
+int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 {
 	int enough = 0;
 	int payload_read = 0;
@@ -326,7 +326,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 
 
 // Returns number of bytes read, or CCX_OF for EOF
-int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
+int general_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
 {
 	int bytesread = 0;
 	int want;
@@ -542,7 +542,7 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 		if (terminate_asap)
 			break;
 
-		ret = general_getmoredata(ctx, &data);
+		ret = general_get_more_data(ctx, &data);
 		if(ret == CCX_EOF)
 			break;
 
@@ -678,7 +678,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if (data_node->bufferdatatype == CCX_RAW) // Raw two byte 608 data from DVR-MS/ASF
 	{
-		// The asf_getmoredata() loop sets current_pts when possible
+		// The asf_get_more_data() loop sets current_pts when possible
 		if (dec_ctx->timing->pts_set == 0)
 		{
 			mprint("DVR-MS/ASF file without useful time stamps - count blocks.\n");
@@ -817,22 +817,22 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		switch (stream_mode)
 		{
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
-				ret = general_getmoredata(ctx, &datalist);
+				ret = general_get_more_data(ctx, &datalist);
 				break;
 			case CCX_SM_TRANSPORT:
-				ret = ts_getmoredata(ctx->demux_ctx, &datalist);
+				ret = ts_get_more_data(ctx->demux_ctx, &datalist);
 				break;
 			case CCX_SM_PROGRAM:
-				ret = ps_getmoredata(ctx, &datalist);
+				ret = ps_get_more_data(ctx, &datalist);
 				break;
 			case CCX_SM_ASF:
-				ret = asf_getmoredata(ctx, &datalist);
+				ret = asf_get_more_data(ctx, &datalist);
 				break;
 			case CCX_SM_WTV:
-				ret = wtv_getmoredata(ctx, &datalist);
+				ret = wtv_get_more_data(ctx, &datalist);
 				break;
 			case CCX_SM_GXF:
-				ret = ccx_gxf_getmoredata(ctx->demux_ctx, &datalist);
+				ret = ccx_gxf_get_more_data(ctx->demux_ctx, &datalist);
 				break;
 #ifdef ENABLE_FFMPEG
 			case CCX_SM_FFMPEG:

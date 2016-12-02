@@ -125,8 +125,8 @@ struct lib_ccx_ctx
 	struct EIT_program *eit_programs;
 	int32_t *eit_current_events;
 	int16_t *ATSC_source_pg_map;
-	int epg_last_output; 
-	int epg_last_live_output; 
+	int epg_last_output;
+	int epg_last_live_output;
 	struct file_report freport;
 
 	unsigned int hauppauge_mode; // If 1, use PID=1003, process specially and so on
@@ -159,8 +159,8 @@ int stringztoms (const char *s, struct ccx_boundary_time *bt);
 // general_loop.c
 void position_sanity_check(struct ccx_demuxer *ctx);
 int init_file_buffer(struct ccx_demuxer *ctx);
-int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
-int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
+int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
+int general_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
 void raw_loop (struct lib_ccx_ctx *ctx);
 size_t process_raw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned char *buffer, size_t len);
 void general_loop(struct lib_ccx_ctx *ctx);
@@ -170,10 +170,10 @@ void rcwt_loop(struct lib_ccx_ctx *ctx);
 extern int end_of_file;
 
 // asf_functions.c
-int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
+int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 
 // wtv_functions.c
-int wtv_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
+int wtv_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 
 // es_functions.c
 size_t process_m2v(struct lib_cc_decode *ctx, unsigned char *data, size_t length, struct cc_subtitle *sub);
@@ -222,7 +222,7 @@ int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, u
 void init_ts(struct ccx_demuxer *ctx);
 int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload);
 long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data);
-int ts_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **data);
+int ts_get_more_data(struct ccx_demuxer *ctx, struct demuxer_data **data);
 int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char*buf, int size,  struct program_info *pinfo);
 void ts_buffer_psi_packet(struct ccx_demuxer *ctx);
 int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct program_info *pinfo);
