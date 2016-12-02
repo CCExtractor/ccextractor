@@ -46,11 +46,11 @@ The possible color values are:
 	
 And the possible font values are:
     R => Regular
-    I => Italic
+    I => Italics
     U => Underlined
-    B => Underlined + italic
+    B => Underlined + Italics
 
-If a 'E' is found in ether color or font that means a bug in CCExtractor. Should you ever get
+If a 'E' is found in either color or font that means a bug in CCExtractor. Should you ever get
 an E please send us a .bin file that causes it.
 	
 This format is intended for post processing tools that need to represent the output of a 608
