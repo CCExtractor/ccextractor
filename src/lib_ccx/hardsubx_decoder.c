@@ -33,7 +33,7 @@ char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 			int b=frame->data[0][p+2];
 			pixSetRGBPixel(im,j,i,r,g,b);
 			float L,A,B;
-			rgb2lab((float)r,(float)g,(float)b,&L,&A,&B);
+			rgb_to_lab((float)r,(float)g,(float)b,&L,&A,&B);
 			if(L > ctx->lum_thresh)
 				pixSetRGBPixel(lum_im,j,i,255,255,255);
 			else
@@ -119,7 +119,7 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 			int b=frame->data[0][p+2];
 			pixSetRGBPixel(im,j,i,r,g,b);
 			float H,S,V;
-			rgb2hsv((float)r,(float)g,(float)b,&H,&S,&V);
+			rgb_to_hsv((float)r,(float)g,(float)b,&H,&S,&V);
 			if(abs(H-ctx->hue)<20)
 			{
 				pixSetRGBPixel(hue_im,j,i,r,g,b);
@@ -154,7 +154,7 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 			}
 		}
 	}
-	
+
 
 	if(ctx->detect_italics)
 	{
@@ -212,7 +212,7 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 			int b=frame->data[0][p+2];
 			pixSetRGBPixel(im,j,i,r,g,b);
 			float H,S,V;
-			rgb2hsv((float)r,(float)g,(float)b,&H,&S,&V);
+			rgb_to_hsv((float)r,(float)g,(float)b,&H,&S,&V);
 			if(abs(H-ctx->hue)<20)
 			{
 				pixSetRGBPixel(hue_im,j,i,r,g,b);
@@ -300,7 +300,7 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 						ctx->rgb_frame->data,
 						ctx->rgb_frame->linesize
 					);
-				
+
 
 				// Send the frame to other functions for processing
 				if(ctx->subcolor==HARDSUBX_COLOR_WHITE)
