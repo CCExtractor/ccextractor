@@ -36,7 +36,7 @@ pkg-config --libs libswscale
 
 On success, you should see the correct include directory path and the linker flags.
 
-To build the program with hardsubx support, from the linux directory run:-
+To build the program with hardsubx support, from the Linux directory run:-
 make ENABLE_HARDSUBX=yes
 
 NOTE: The build has been tested with FFMpeg version 3.1.0, and Tesseract 3.04.
