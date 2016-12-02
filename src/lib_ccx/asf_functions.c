@@ -4,7 +4,7 @@
 #include "activity.h"
 #include "file_buffer.h"
 
-// Indicate first / subsequent calls to asf_getmoredata()
+// Indicate first / subsequent calls to asf_get_more_data()
 int firstcall;
 
 asf_data asf_data_container;
@@ -63,7 +63,7 @@ char *guidstr(void *val)
  * When the function is called the next time it continues to read
  * where it stopped before, static variables make sure that parameters
  * are remembered between calls. */
-int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
+int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 {
 	int enough = 0;
 	int payload_read = 0;
@@ -723,7 +723,7 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 			// NumberOfPayloads, payloadcur, PayloadLength, PaddingLength
 			// and related variables being kept as static variables to be
 			// able to reenter the loop here.
-			dbg_print(CCX_DMT_PARSE, "\nReentry into asf_getmoredata()\n");
+			dbg_print(CCX_DMT_PARSE, "\nReentry into asf_get_more_data()\n");
 		}
 
 		// The following repeats NumberOfPayloads times
