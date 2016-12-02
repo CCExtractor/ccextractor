@@ -830,11 +830,11 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 
 				// print_mstime uses a static buffer
 				dbg_print(CCX_DMT_PARSE, "Stream #%d PacketTime: %s",
-						asf_data_container.PayloadStreamNumber, print_mstime(SendTime));
+						asf_data_container.PayloadStreamNumber, print_mstime_static(SendTime));
 				dbg_print(CCX_DMT_PARSE,"   PayloadTime: %s",
-						print_mstime(PresentationTimems));
+						print_mstime_static(PresentationTimems));
 				dbg_print(CCX_DMT_PARSE,"   dvr-ms PTS: %s+%lld\n",
-						print_mstime(rtStart/10000), (rtEnd-rtStart)/10000);
+						print_mstime_static(rtStart/10000), (rtEnd-rtStart)/10000);
 
 				datapacketlength+=ReplicatedLength;
 
@@ -964,7 +964,7 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				else
 					dbg_print(CCX_DMT_PARSE, "\nVideo stream object");
 				dbg_print(CCX_DMT_PARSE, " read with PTS: %s\n",
-						print_mstime(asf_data_container.StreamProperties.currDecodeStreamPTS));
+						print_mstime_static(asf_data_container.StreamProperties.currDecodeStreamPTS));
 
 
 				// Enough for now

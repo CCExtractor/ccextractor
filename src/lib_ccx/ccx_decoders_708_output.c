@@ -144,10 +144,10 @@ void ccx_dtvcc_write_srt(ccx_dtvcc_writer_ctx *writer, dtvcc_tv_screen *tv, stru
 	memset(buf, 0, INITIAL_ENC_BUFFER_CAPACITY);
 
 	sprintf(buf, "%u%s", tv->cc_count, encoder->encoded_crlf);
-	mstime_sprintf(tv->time_ms_show + encoder->subs_delay,
+	print_mstime_buff(tv->time_ms_show + encoder->subs_delay,
 				   "%02u:%02u:%02u,%03u", buf + strlen(buf));
 	sprintf(buf + strlen(buf), " --> ");
-	mstime_sprintf(tv->time_ms_hide + encoder->subs_delay,
+	print_mstime_buff(tv->time_ms_hide + encoder->subs_delay,
 				   "%02u:%02u:%02u,%03u", buf + strlen(buf));
 	sprintf(buf + strlen(buf),"%s", (char *) encoder->encoded_crlf);
 
@@ -173,8 +173,8 @@ void ccx_dtvcc_write_debug(dtvcc_tv_screen *tv)
 	char tbuf1[SUBLINESIZE],
 			tbuf2[SUBLINESIZE];
 
-	print_mstime2buf(tv->time_ms_show, tbuf1);
-	print_mstime2buf(tv->time_ms_hide, tbuf2);
+	print_mstime_buff(tv->time_ms_show, "%02u:%02u:%02u:%03u", tbuf1);
+	print_mstime_buff(tv->time_ms_hide, "%02u:%02u:%02u:%03u", tbuf2);
 
 	ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "\r%s --> %s\n", tbuf1, tbuf2);
 	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
@@ -207,11 +207,11 @@ void ccx_dtvcc_write_transcript(ccx_dtvcc_writer_ctx *writer, dtvcc_tv_screen *t
 			buf[0] = 0;
 
 			if (encoder->transcript_settings->showStartTime)
-				mstime_sprintf(tv->time_ms_show + encoder->subs_delay,
+				print_mstime_buff(tv->time_ms_show + encoder->subs_delay,
 							   "%02u:%02u:%02u,%03u|", buf + strlen(buf));
 
 			if (encoder->transcript_settings->showEndTime)
-				mstime_sprintf(tv->time_ms_hide + encoder->subs_delay,
+				print_mstime_buff(tv->time_ms_hide + encoder->subs_delay,
 							   "%02u:%02u:%02u,%03u|", buf + strlen(buf));
 
 			if (encoder->transcript_settings->showCC)

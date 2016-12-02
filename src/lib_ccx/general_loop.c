@@ -159,7 +159,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				continue;
 			}
 			//PES Header
-			//Private Stream 1 (non MPEG audio , subpictures) 
+			//Private Stream 1 (non MPEG audio , subpictures)
 			else if (nextheader[3] == 0xBD)
 			{
 				uint16_t packetlength = (nextheader[4] << 8) | nextheader[5];
@@ -178,19 +178,19 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				buffered_skip(ctx->demux_ctx, (int)nextheader[6]);
 				ctx->demux_ctx->past += (int)nextheader[6];
 
-				//Substream ID 
+				//Substream ID
 				ret = buffered_read(ctx->demux_ctx, nextheader+7, 1);
 				ctx->demux_ctx->past += 1;
 				if(ret != 1)
 				{
 					end_of_file = 1;
-					break;					
+					break;
 				}
 
 				datalen = packetlength - 4 - nextheader[6];
 				// dbg_print(CCX_DMT_VERBOSE, "datalen :%d packetlen :%" PRIu16 " pes header ext :%d\n", datalen, packetlength, nextheader[6]);
 
-				//Subtitle substream ID 0x20 - 0x39 (32 possible)		
+				//Subtitle substream ID 0x20 - 0x39 (32 possible)
 				if( nextheader[7] >= 0x20 && nextheader[7] < 0x40)
 				{
 					dbg_print(CCX_DMT_VERBOSE, "Subtitle found Stream id:%02x\n", nextheader[7]);
@@ -201,7 +201,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 						end_of_file = 1;
 						break;
 					}
-					if (result>0) 
+					if (result>0)
 					{
 						payload_read+=(int) result;
 					}
@@ -291,7 +291,7 @@ int ps_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 				{
 					continue;
 				}
-				
+
 				data->bufferdatatype = CCX_PES;
 
 				result = buffered_read (ctx->demux_ctx, data->buffer+data->len, want);
@@ -655,7 +655,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		got = process_m2v (dec_ctx, data_node->buffer, data_node->len, dec_sub);
 	}
 	else if (data_node->bufferdatatype == CCX_DVD_SUBTITLE)
-	{	
+	{
 		if(dec_ctx-> is_alloc == 0)
 		{
 			dec_ctx->private_data = init_dvdsub_decode();
@@ -708,9 +708,9 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		}
 
 		dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
-				print_mstime(dec_ctx->timing->current_pts/(MPEG_CLOCK_FREQ/1000)),
+				print_mstime_static(dec_ctx->timing->current_pts/(MPEG_CLOCK_FREQ/1000)),
 				(unsigned) (dec_ctx->timing->current_pts));
-		dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts(dec_ctx->timing, dec_ctx->current_field)));
+		dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime_static(get_fts(dec_ctx->timing, dec_ctx->current_field)));
 
 		got = process_raw(dec_ctx, dec_sub, data_node->buffer, data_node->len);
 	}
@@ -873,7 +873,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 			dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
 			enc_ctx->timing = dec_ctx->timing;
-			
+
 			if(data_node->pts != CCX_NOPTS)
 			{
 				struct ccx_rational tb = {1,MPEG_CLOCK_FREQ};
@@ -975,7 +975,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		// Flush remaining HD captions
 		if (dec_ctx->has_ccdata_buffered)
 					process_hdcc(dec_ctx, &dec_ctx->dec_sub);
-		
+
 	mprint ("\nNumber of NAL_type_7: %ld\n",dec_ctx->avc_ctx->num_nal_unit_type_7);
 	mprint ("Number of VCL_HRD: %ld\n",dec_ctx->avc_ctx->num_vcl_hrd);
 	mprint ("Number of NAL HRD: %ld\n",dec_ctx->avc_ctx->num_nal_hrd);
@@ -1005,7 +1005,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	int bread = 0; // Bytes read
 	LLONG result;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
-		
+
 	// As BUFSIZE is a macro this is just a reminder
 	if (BUFSIZE < (3*0xFFFF + 10))
 		fatal (CCX_COMMON_EXIT_BUG_BUG, "BUFSIZE too small for RCWT caption block.\n");
@@ -1088,7 +1088,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 		cbcount = *((uint16_t*)(parsebuf+8));
 
 		dbg_print(CCX_DMT_PARSE, "RCWT data header FTS: %s  blocks: %u\n",
-				print_mstime(currfts), cbcount);
+				print_mstime_static(currfts), cbcount);
 
 		if ( cbcount > 0 )
 		{
@@ -1113,7 +1113,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 			set_fts(dec_ctx->timing); // Now set the FTS related variables
 
 			for (int j=0; j<cbcount*3; j=j+3)
-			{				
+			{
 				do_cb(dec_ctx, parsebuf+j, dec_sub);
 			}
 		}
