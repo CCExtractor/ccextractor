@@ -272,8 +272,10 @@ int main(int argc, char *argv[])
 			}
 			// Add one frame as fts_max marks the beginning of the last frame,
 			// but we need the end.
-			if (fts_max < 0)
+			if (fts_max < 0) 
+			{
 				fatal ("output file does not contain any captions");
+			}
 			dec_ctx->timing->fts_global += dec_ctx->timing->fts_max + (LLONG) (1000.0/current_fps);
 			// CFS: At least in Hauppage mode, cb_field can be responsible for ALL the 
 			// timing (cb_fields having a huge number and fts_now and fts_global being 0 all
