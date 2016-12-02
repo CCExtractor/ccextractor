@@ -186,7 +186,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 // bitstream.c - see bitstream.h
 
 // file_functions.c
-LLONG getfilesize (int in);
+LLONG get_file_size (int in);
 LLONG gettotalfilessize (struct lib_ccx_ctx *ctx);
 void prepare_for_new_file (struct lib_ccx_ctx *ctx);
 void close_input_file (struct lib_ccx_ctx *ctx);
