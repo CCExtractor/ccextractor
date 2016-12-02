@@ -366,6 +366,9 @@ int main(int argc, char *argv[])
 		if(is_decoder_processed_enough(ctx) == CCX_TRUE)
 			break;
 	} // file loop
+		if (dec_ctx->dec_sub.got_output && dec_ctx->dec_sub.data==NULL) 
+		fatal(EXIT_READ_ERROR, "no output in file");
+	
 	close_input_file(ctx);
 
 	prepare_for_new_file (ctx); // To reset counters used by handle_end_of_data()
