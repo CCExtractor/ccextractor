@@ -16,8 +16,8 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 	int written;
 	char timeline[128];
 
-	mstotime(ms_start, &h1, &m1, &s1, &ms1);
-	mstotime(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
+	millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
+	millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 
 	sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
 		h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
@@ -98,9 +98,9 @@ int write_xtimestamp_header(struct encoder_ctx *context)
 		char header_string[200];
 		int used;
 		unsigned h1, m1, s1, ms1;
-		mstotime(context->timing->sync_pts2fts_fts, &h1, &m1, &s1, &ms1);
+		millis_to_time(context->timing->sync_pts2fts_fts, &h1, &m1, &s1, &ms1);
 		sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:%ld, LOCAL %02u:%02u:%02u.%03u\r\n",
-			context->timing->sync_pts2fts_pts, 
+			context->timing->sync_pts2fts_pts,
 			h1, m1, s1, ms1);
 		used = encode_line(context, context->buffer, (unsigned char *)header_string);
 		write(context->out->fh, context->buffer, used);
@@ -155,8 +155,8 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 	{
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 		{
-			mstotime(ms_start, &h1, &m1, &s1, &ms1);
-			mstotime(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
+			millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
+			millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 			context->srt_counter++; // Not needed for WebVTT but let's keep it around for now
 			sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
 				h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
@@ -239,8 +239,8 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 
 	ms_end = data->end_time;
 
-	mstotime(ms_start, &h1, &m1, &s1, &ms1);
-	mstotime(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
+	millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
+	millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 
 	sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
 		h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
@@ -332,7 +332,7 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 			written = write(context->out->fh, context->subline, length);
 			if (written != length)
 				return -1;
-			written = write(context->out->fh, 
+			written = write(context->out->fh,
 				context->encoded_crlf, context->encoded_crlf_length);
 			if (written != context->encoded_crlf_length)
 				return -1;
