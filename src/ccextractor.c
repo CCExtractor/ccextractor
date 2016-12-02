@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 
 	if (ccx_options.binary_concat)
 	{
-		ctx->total_inputsize=gettotalfilessize(ctx);
+		ctx->total_inputsize=get_total_file_size(ctx);
 		if (ctx->total_inputsize < 0)
 		{
 			switch (ctx->total_inputsize)
