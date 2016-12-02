@@ -245,7 +245,7 @@ void set_input_format (struct ccx_s_options *opt, const char *format)
 	{
 		opt->demux_cfg.auto_stream = CCX_SM_TRANSPORT;
 		opt->demux_cfg.m2ts = 0;
-	}	
+	}
 	else if (strcmp(format, "m2ts") == 0)
 	{
 		opt->demux_cfg.auto_stream = CCX_SM_TRANSPORT;
@@ -271,7 +271,7 @@ void set_input_format (struct ccx_s_options *opt, const char *format)
 		fatal (EXIT_MALFORMED_PARAMETER, "Unknown input file format: %s\n", format);
 }
 
-void usage (void)
+void print_usage (void)
 {
 	mprint ("Originally based on McPoodle's tools. Check his page for lots of information\n");
 	mprint ("on closed captions technical details.\n");
@@ -550,7 +550,7 @@ void usage (void)
 	mprint (" -nobi -nobufferinput: Disables input buffering.\n");
 	mprint (" -bs --buffersize val: Specify a size for reading, in bytes (suffix with K or\n");
 	mprint ("                       or M for kilobytes and megabytes). Default is 16M.\n");
-	mprint ("                 -koc: keep-output-close. If used then CCExtractor will close\n"); 
+	mprint ("                 -koc: keep-output-close. If used then CCExtractor will close\n");
 	mprint ("                       the output file after writing each subtitle frame and\n");
 	mprint ("                       attempt to create it again when needed.\n");
 	mprint ("     -ff --forceflush: Flush the file buffer whenever content is written.\n");
@@ -978,7 +978,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	{
 		if (!strcmp (argv[i],"--help") || !strcmp(argv[i], "-h"))
 		{
-			usage();
+			print_usage();
 			return EXIT_WITH_HELP;
 		}
 		if (!strcmp(argv[i], "--version"))
@@ -1011,7 +1011,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
-		
+
 #ifdef ENABLE_HARDSUBX
 		// Parse -hardsubx and related parameters
 		if (strcmp(argv[i], "-hardsubx")==0)
@@ -1234,8 +1234,8 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp(argv[i], "-sem") == 0){
 			opt->enc_cfg.with_semaphore = 1;
-			continue;		
-		}	
+			continue;
+		}
 		if (strcmp (argv[i],"-nots")==0 ||
 				strcmp (argv[i],"--notypesetting")==0)
 		{
@@ -1517,7 +1517,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->enc_cfg.splitbysentence = 1;
 			continue;
 		}
-		 
+
 		if ((strcmp (argv[i],"--capfile")==0 ||
 					strcmp (argv[i],"-caf")==0)
 				&& i<argc-1)
@@ -1893,7 +1893,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
-		
+
 		if (strcmp (argv[i],"-xmltvliveinterval")==0)
 		{
 			if (i==argc-1 // Means no following argument
@@ -1906,7 +1906,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
-		
+
 		if (strcmp (argv[i],"-xmltvoutputinterval")==0)
 		{
 			if (i==argc-1 // Means no following argument
@@ -1925,7 +1925,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			i++;
 			continue;
 		}
-		
+
 		if (strcmp (argv[i],"-unixts")==0 && i<argc-1)
 		{
 			uint64_t t = 0;
@@ -2189,7 +2189,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	{
 		print_error(opt->gui_mode_reports, "You can't extract both fields to stdout at the same time in broadcast mode.");
 		return EXIT_INCOMPATIBLE_PARAMETERS;
-	}		
+	}
 	if (opt->write_format == CCX_OF_SPUPNG && opt->cc_to_stdout)
 	{
 		print_error(opt->gui_mode_reports, "You cannot use -out=spupng with -stdout.");

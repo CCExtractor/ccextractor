@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 	ret = parse_parameters (&ccx_options, argc, argv);
 	if (ret == EXIT_NO_INPUT_FILES)
 	{
-		usage ();
+		print_usage ();
 		fatal (EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");
 	}
 	else if (ret == EXIT_WITH_HELP)
