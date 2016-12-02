@@ -1,4 +1,4 @@
-Starting with version 0.51, ccextractor has a mode
+Starting with version 0.51, CCExtractor has a mode
 that allows frontends and other programs know what
 the current progress is as well as get information
 on interesting events, such as a file being open 

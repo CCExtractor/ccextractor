@@ -1,4 +1,4 @@
-/* CCExtractor, carlos at ccextractor org
+/* CCExtractor, originally by carlos at ccextractor.org, now a lot of people.
 Credits: See CHANGES.TXT
 License: GPL 2.0
 */
