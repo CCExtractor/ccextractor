@@ -83,7 +83,7 @@ struct avc_ctx *init_avc(void)
 	ctx->num_vcl_hrd = 0;
 	ctx->num_nal_hrd = 0;
 	ctx->num_jump_in_frames = 0;
-	ctx->num_unexpected_sei_length = 0;	
+	ctx->num_unexpected_sei_length = 0;
 	return ctx;
 }
 
@@ -605,50 +605,50 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
 	init_bitstream(&q1, seqbuf, seqend);
 
 	dvprint("SEQUENCE PARAMETER SET (bitlen: %lld)\n", q1.bitsleft);
-	tmp=u(&q1,8);
+	tmp=read_int_unsigned(&q1,8);
 	LLONG profile_idc = tmp;
 	dvprint("profile_idc=                                   % 4lld (%#llX)\n",tmp,tmp);
-	tmp=u(&q1,1);
+	tmp=read_int_unsigned(&q1,1);
 	dvprint("constraint_set0_flag=                          % 4lld (%#llX)\n",tmp,tmp);
-	tmp=u(&q1,1);
+	tmp=read_int_unsigned(&q1,1);
 	dvprint("constraint_set1_flag=                          % 4lld (%#llX)\n",tmp,tmp);
-	tmp=u(&q1,1);
+	tmp=read_int_unsigned(&q1,1);
 	dvprint("constraint_set2_flag=                          % 4lld (%#llX)\n",tmp,tmp);
-	tmp = u(&q1, 1);
+	tmp = read_int_unsigned(&q1, 1);
 	dvprint("constraint_set3_flag=                          % 4lld (%#llX)\n",tmp,tmp);
-	tmp = u(&q1, 1);
+	tmp = read_int_unsigned(&q1, 1);
 	dvprint("constraint_set4_flag=                          % 4lld (%#llX)\n",tmp,tmp);
-	tmp = u(&q1, 1);
+	tmp = read_int_unsigned(&q1, 1);
 	dvprint("constraint_set5_flag=                          % 4lld (%#llX)\n",tmp,tmp);
-	tmp=u(&q1,2);
+	tmp=read_int_unsigned(&q1,2);
 	dvprint("reserved=                                      % 4lld (%#llX)\n",tmp,tmp);
-	tmp=u(&q1,8);
+	tmp=read_int_unsigned(&q1,8);
 	dvprint("level_idc=                                     % 4lld (%#llX)\n",tmp,tmp);
-	ctx->seq_parameter_set_id = ue(&q1);
+	ctx->seq_parameter_set_id = read_exp_golomb_unsigned(&q1);
 	dvprint("seq_parameter_set_id=                          % 4lld (%#llX)\n", ctx->seq_parameter_set_id, ctx->seq_parameter_set_id);
 	if (profile_idc == 100 || profile_idc == 110 || profile_idc == 122
 			|| profile_idc == 244 || profile_idc == 44 || profile_idc == 83
 			|| profile_idc == 86 || profile_idc == 118 || profile_idc == 128){
-		LLONG chroma_format_idc = ue(&q1);
+		LLONG chroma_format_idc = read_exp_golomb_unsigned(&q1);
 		dvprint("chroma_format_idc=                             % 4lld (%#llX)\n", chroma_format_idc,chroma_format_idc);
 		if (chroma_format_idc == 3){
-			tmp = u(&q1, 1);
+			tmp = read_int_unsigned(&q1, 1);
 			dvprint("separate_colour_plane_flag=                    % 4lld (%#llX)\n", tmp, tmp);
 		}
-		tmp = ue(&q1);
+		tmp = read_exp_golomb_unsigned(&q1);
 		dvprint("bit_depth_luma_minus8=                         % 4lld (%#llX)\n", tmp, tmp);
-		tmp = ue(&q1);
+		tmp = read_exp_golomb_unsigned(&q1);
 		dvprint("bit_depth_chroma_minus8=                       % 4lld (%#llX)\n", tmp, tmp);
-		tmp = u(&q1,1);
+		tmp = read_int_unsigned(&q1,1);
 		dvprint("qpprime_y_zero_transform_bypass_flag=          % 4lld (%#llX)\n", tmp, tmp);
-		tmp = u(&q1, 1);
+		tmp = read_int_unsigned(&q1, 1);
 		dvprint("seq_scaling_matrix_present_flag=               % 4lld (%#llX)\n", tmp, tmp);
 		if (tmp == 1)
 		{
 			// WVI: untested, just copied from specs.
 			for (int i = 0; i < ((chroma_format_idc != 3) ? 8 : 12); i++)
 			{
-				tmp = u(&q1, 1);
+				tmp = read_int_unsigned(&q1, 1);
 				dvprint("seq_scaling_list_present_flag[%d]=                 % 4lld (%#llX)\n",i,tmp, tmp);
 				if (tmp)
 				{
@@ -663,7 +663,7 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
 						{
 							if (nextScale != 0)
 							{
-								int64_t delta_scale = se(&q1);
+								int64_t delta_scale = read_exp_golomb(&q1);
 								nextScale = (lastScale + delta_scale + 256) % 256;
 							}
 							lastScale = (nextScale == 0) ? lastScale : nextScale;
@@ -680,7 +680,7 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
 						{
 							if (nextScale != 0)
 							{
-								int64_t delta_scale = se(&q1);
+								int64_t delta_scale = read_exp_golomb(&q1);
 								nextScale = (lastScale + delta_scale + 256) % 256;
 							}
 							lastScale = (nextScale == 0) ? lastScale : nextScale;
@@ -691,31 +691,32 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
 			}
 		}
 	}
-	ctx->log2_max_frame_num = (int)ue(&q1);
+	ctx->log2_max_frame_num = (int)read_exp_golomb_unsigned(&q1);
 	dvprint("log2_max_frame_num4_minus4=                    % 4d (%#X)\n", ctx->log2_max_frame_num, ctx->log2_max_frame_num);
 	ctx->log2_max_frame_num += 4; // 4 is added due to the formula.
-	ctx->pic_order_cnt_type = (int)ue(&q1);
+	ctx->pic_order_cnt_type = (int)read_exp_golomb_unsigned(&q1);
 	dvprint("pic_order_cnt_type=                            % 4d (%#X)\n", ctx->pic_order_cnt_type, ctx->pic_order_cnt_type);
 	if( ctx->pic_order_cnt_type == 0 )
 	{
-		ctx->log2_max_pic_order_cnt_lsb = (int)ue(&q1);
+		ctx->log2_max_pic_order_cnt_lsb = (int)read_exp_golomb_unsigned(&q1);
 		dvprint("log2_max_pic_order_cnt_lsb_minus4=             % 4d (%#X)\n", ctx->log2_max_pic_order_cnt_lsb,ctx->log2_max_pic_order_cnt_lsb);
 		ctx->log2_max_pic_order_cnt_lsb += 4; // 4 is added due to formula.
 	}
 	else if( ctx->pic_order_cnt_type == 1 )
 	{
 		// CFS: Untested, just copied from specs.
-		tmp= u(&q1,1);
+		tmp= read_int_unsigned(&q1,1);
 		dvprint("delta_pic_order_always_zero_flag=              % 4lld (%#llX)\n",tmp,tmp);
-		tmp = se(&q1);
+		tmp = read_exp_golomb(&q1);
 		dvprint("offset_for_non_ref_pic=                        % 4lld (%#llX)\n",tmp,tmp);
-		tmp = se(&q1);
+		tmp = read_exp_golomb(&q1);
 		dvprint("offset_for_top_to_bottom_field                 % 4lld (%#llX)\n",tmp,tmp);
-		LLONG num_ref_frame_in_pic_order_cnt_cycle = ue (&q1);
+		LLONG num_ref_frame_in_pic_order_cnt_cycle
+				= read_exp_golomb_unsigned(&q1);
 		dvprint("num_ref_frame_in_pic_order_cnt_cycle           % 4lld (%#llX)\n", num_ref_frame_in_pic_order_cnt_cycle,num_ref_frame_in_pic_order_cnt_cycle);
 		for (int i=0; i<num_ref_frame_in_pic_order_cnt_cycle; i++)
 		{
-			tmp=se(&q1);
+			tmp=read_exp_golomb(&q1);
 			dvprint("offset_for_ref_frame [%d / %d] =               % 4lld (%#llX)\n", i, num_ref_frame_in_pic_order_cnt_cycle, tmp,tmp);
 		}
 	}
@@ -724,102 +725,102 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
 		// Nothing needs to be parsed when pic_order_cnt_type == 2
 	}
 
-	tmp=ue(&q1);
+	tmp=read_exp_golomb_unsigned(&q1);
 	dvprint("max_num_ref_frames=                            % 4lld (%#llX)\n",tmp,tmp);
-	tmp=u(&q1,1);
+	tmp=read_int_unsigned(&q1,1);
 	dvprint("gaps_in_frame_num_value_allowed_flag=          % 4lld (%#llX)\n",tmp,tmp);
-	tmp=ue(&q1);
+	tmp=read_exp_golomb_unsigned(&q1);
 	dvprint("pic_width_in_mbs_minus1=                       % 4lld (%#llX)\n",tmp,tmp);
-	tmp=ue(&q1);
+	tmp=read_exp_golomb_unsigned(&q1);
 	dvprint("pic_height_in_map_units_minus1=                % 4lld (%#llX)\n",tmp,tmp);
-	ctx->frame_mbs_only_flag = (int)u(&q1,1);
+	ctx->frame_mbs_only_flag = (int)read_int_unsigned(&q1,1);
 	dvprint("frame_mbs_only_flag=                           % 4d (%#X)\n", ctx->frame_mbs_only_flag, ctx->frame_mbs_only_flag);
 	if ( !ctx->frame_mbs_only_flag )
 	{
-		tmp=u(&q1,1);
+		tmp=read_int_unsigned(&q1,1);
 		dvprint("mb_adaptive_fr_fi_flag=                        % 4lld (%#llX)\n",tmp,tmp);
 	}
-	tmp=u(&q1,1);
+	tmp=read_int_unsigned(&q1,1);
 	dvprint("direct_8x8_inference_f=                        % 4lld (%#llX)\n",tmp,tmp);
-	tmp=u(&q1,1);
+	tmp=read_int_unsigned(&q1,1);
 	dvprint("frame_cropping_flag=                           % 4lld (%#llX)\n",tmp,tmp);
 	if ( tmp )
 	{
-		tmp=ue(&q1);
+		tmp=read_exp_golomb_unsigned(&q1);
 		dvprint("frame_crop_left_offset=                        % 4lld (%#llX)\n",tmp,tmp);
-		tmp=ue(&q1);
+		tmp=read_exp_golomb_unsigned(&q1);
 		dvprint("frame_crop_right_offset=                       % 4lld (%#llX)\n",tmp,tmp);
-		tmp=ue(&q1);
+		tmp=read_exp_golomb_unsigned(&q1);
 		dvprint("frame_crop_top_offset=                         % 4lld (%#llX)\n",tmp,tmp);
-		tmp=ue(&q1);
+		tmp=read_exp_golomb_unsigned(&q1);
 		dvprint("frame_crop_bottom_offset=                      % 4lld (%#llX)\n",tmp,tmp);
 	}
-	tmp=u(&q1,1);
+	tmp=read_int_unsigned(&q1,1);
 	dvprint("vui_parameters_present=                        % 4lld (%#llX)\n",tmp,tmp);
 	if ( tmp )
 	{
 		dvprint("\nVUI parameters\n");
-		tmp=u(&q1,1);
+		tmp=read_int_unsigned(&q1,1);
 		dvprint("aspect_ratio_info_pres=                        % 4lld (%#llX)\n",tmp,tmp);
 		if ( tmp )
 		{
-			tmp=u(&q1,8);
+			tmp=read_int_unsigned(&q1,8);
 			dvprint("aspect_ratio_idc=                              % 4lld (%#llX)\n",tmp,tmp);
 			if ( tmp == 255 )
 			{
-				tmp=u(&q1,16);
+				tmp=read_int_unsigned(&q1,16);
 				dvprint("sar_width=                                     % 4lld (%#llX)\n",tmp,tmp);
-				tmp=u(&q1,16);
+				tmp=read_int_unsigned(&q1,16);
 				dvprint("sar_height=                                    % 4lld (%#llX)\n",tmp,tmp);
 			}
 		}
-		tmp = u(&q1,1);
+		tmp = read_int_unsigned(&q1,1);
 		dvprint("overscan_info_pres_flag=                       % 4lld (%#llX)\n",tmp,tmp);
 		if ( tmp )
 		{
-			tmp=u(&q1,1);
+			tmp=read_int_unsigned(&q1,1);
 			dvprint("overscan_appropriate_flag=                     % 4lld (%#llX)\n",tmp,tmp);
 		}
-		tmp = u(&q1,1);
+		tmp = read_int_unsigned(&q1,1);
 		dvprint("video_signal_type_present_flag=                % 4lld (%#llX)\n",tmp,tmp);
 		if ( tmp )
 		{
-			tmp=u(&q1,3);
+			tmp=read_int_unsigned(&q1,3);
 			dvprint("video_format=                                  % 4lld (%#llX)\n",tmp,tmp);
-			tmp=u(&q1,1);
+			tmp=read_int_unsigned(&q1,1);
 			dvprint("video_full_range_flag=                         % 4lld (%#llX)\n",tmp,tmp);
-			tmp=u(&q1,1);
+			tmp=read_int_unsigned(&q1,1);
 			dvprint("colour_description_present_flag=               % 4lld (%#llX)\n",tmp,tmp);
 			if ( tmp )
 			{
-				tmp=u(&q1,8);
+				tmp=read_int_unsigned(&q1,8);
 				dvprint("colour_primaries=                              % 4lld (%#llX)\n",tmp,tmp);
-				tmp=u(&q1,8);
+				tmp=read_int_unsigned(&q1,8);
 				dvprint("transfer_characteristics=                      % 4lld (%#llX)\n",tmp,tmp);
-				tmp=u(&q1,8);
+				tmp=read_int_unsigned(&q1,8);
 				dvprint("matrix_coefficients=                           % 4lld (%#llX)\n",tmp,tmp);
 			}
 		}
-		tmp = u(&q1,1);
+		tmp = read_int_unsigned(&q1,1);
 		dvprint("chroma_loc_info_present_flag=                  % 4lld (%#llX)\n",tmp,tmp);
 		if ( tmp )
 		{
-			tmp=ue(&q1);
+			tmp=read_exp_golomb_unsigned(&q1);
 			dvprint("chroma_sample_loc_type_top_field=                  % 4lld (%#llX)\n",tmp,tmp);
-			tmp=ue(&q1);
+			tmp=read_exp_golomb_unsigned(&q1);
 			dvprint("chroma_sample_loc_type_bottom_field=               % 4lld (%#llX)\n",tmp,tmp);
 		}
-		tmp = u(&q1,1);
+		tmp = read_int_unsigned(&q1,1);
 		dvprint("timing_info_present_flag=                      % 4lld (%#llX)\n",tmp,tmp);
 		if ( tmp )
 		{
-			tmp=u(&q1,32);
+			tmp=read_int_unsigned(&q1,32);
 			LLONG num_units_in_tick = tmp;
 			dvprint("num_units_in_tick=                             % 4lld (%#llX)\n",tmp,tmp);
-			tmp=u(&q1,32);
+			tmp=read_int_unsigned(&q1,32);
 			LLONG time_scale = tmp;
 			dvprint("time_scale=                                    % 4lld (%#llX)\n",tmp,tmp);
-			tmp=u(&q1,1);
+			tmp=read_int_unsigned(&q1,1);
 			int fixed_frame_rate_flag = (int) tmp;
 			dvprint("fixed_frame_rate_flag=                         % 4lld (%#llX)\n",tmp,tmp);
 			// Change: use num_units_in_tick and time_scale to calculate FPS. (ISO/IEC 14496-10:2012(E), page 397 & further)
@@ -833,7 +834,7 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
 				}
 			}
 		}
-		tmp = u(&q1,1);
+		tmp = read_int_unsigned(&q1,1);
 		dvprint("nal_hrd_parameters_present_flag=               % 4lld (%#llX)\n",tmp,tmp);
 		if ( tmp )
 		{
@@ -843,7 +844,7 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
 			ctx->num_nal_hrd++;
 			return;
 		}
-		tmp1 = u(&q1,1);
+		tmp1 = read_int_unsigned(&q1,1);
 		dvprint("vcl_hrd_parameters_present_flag=               %llX\n", tmp1);
 		if ( tmp )
 		{
@@ -854,13 +855,13 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
 		}
 		if ( tmp || tmp1 )
 		{
-			tmp = u(&q1,1);
+			tmp = read_int_unsigned(&q1,1);
 			dvprint("low_delay_hrd_flag=                                % 4lld (%#llX)\n",tmp,tmp);
 			return;
 		}
-		tmp = u(&q1,1);
+		tmp = read_int_unsigned(&q1,1);
 		dvprint("pic_struct_present_flag=                       % 4lld (%#llX)\n",tmp,tmp);
-		tmp = u(&q1,1);
+		tmp = read_int_unsigned(&q1,1);
 		dvprint("bitstream_restriction_flag=                    % 4lld (%#llX)\n",tmp,tmp);
 		// ..
 		// The hope was to find the GOP length in max_dec_frame_buffering, but
@@ -895,28 +896,28 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 
 
 	dvprint("\nSLICE HEADER\n");
-	tmp = ue(&q1);
+	tmp = read_exp_golomb_unsigned(&q1);
 	dvprint("first_mb_in_slice=     % 4lld (%#llX)\n",tmp,tmp);
-	slice_type = ue(&q1);
+	slice_type = read_exp_golomb_unsigned(&q1);
 	dvprint("slice_type=            % 4llX\n", slice_type);
-	tmp = ue(&q1);
+	tmp = read_exp_golomb_unsigned(&q1);
 	dvprint("pic_parameter_set_id=  % 4lld (%#llX)\n",tmp,tmp);
 
 	ctx->avc_ctx->lastframe_num = ctx->avc_ctx->frame_num;
 	maxframe_num = (int) ((1<<ctx->avc_ctx->log2_max_frame_num) - 1);
 
 	// Needs log2_max_frame_num_minus4 + 4 bits
-	ctx->avc_ctx->frame_num = u(&q1,ctx->avc_ctx->log2_max_frame_num);
+	ctx->avc_ctx->frame_num = read_int_unsigned(&q1,ctx->avc_ctx->log2_max_frame_num);
 	dvprint("frame_num=             % 4llX\n", ctx->avc_ctx->frame_num);
 
 	if( !ctx->avc_ctx->frame_mbs_only_flag )
 	{
-		field_pic_flag = u(&q1,1);
+		field_pic_flag = read_int_unsigned(&q1,1);
 		dvprint("field_pic_flag=        % 4llX\n", field_pic_flag);
 		if( field_pic_flag )
 		{
 			// bottom_field_flag
-			bottom_field_flag = u(&q1,1);
+			bottom_field_flag = read_int_unsigned(&q1,1);
 			dvprint("bottom_field_flag=     % 4llX\n", bottom_field_flag);
 
 			// TODO - Do this right.
@@ -930,13 +931,13 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 
 	if( nal_unit_type == 5 )
 	{
-		tmp=ue(&q1);
+		tmp=read_exp_golomb_unsigned(&q1);
 		dvprint("idr_pic_id=            % 4lld (%#llX)\n",tmp,tmp);
 		//TODO
 	}
 	if( ctx->avc_ctx->pic_order_cnt_type == 0 )
 	{
-		pic_order_cnt_lsb=u(&q1,ctx->avc_ctx->log2_max_pic_order_cnt_lsb);
+		pic_order_cnt_lsb=read_int_unsigned(&q1,ctx->avc_ctx->log2_max_pic_order_cnt_lsb);
 		dvprint("pic_order_cnt_lsb=     % 4llX\n", pic_order_cnt_lsb);
 	}
 	if( ctx->avc_ctx->pic_order_cnt_type == 1 )
@@ -989,7 +990,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 			TopFieldOrderCnt = tempPicOrderCnt;
 
 		//pic_order_cnt_lsb=tempPicOrderCnt;
-		//pic_order_cnt_lsb=u(&q1,tempPicOrderCnt);
+		//pic_order_cnt_lsb=read_int_unsigned(&q1,tempPicOrderCnt);
 		//fatal(CCX_COMMON_EXIT_BUG_BUG, "AVC: ctx->avc_ctx->pic_order_cnt_type != 0 not yet supported.");
 		//TODO
 		// Calculate picture order count (POC) according to 8.2.1
