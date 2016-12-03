@@ -667,9 +667,11 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	else if (data_node->bufferdatatype == CCX_TELETEXT)
 	{
 		//telxcc_update_gt(dec_ctx->private_data, ctx->demux_ctx->global_timestamp);
-		ret = tlt_process_pes_packet (dec_ctx, data_node->buffer, data_node->len, dec_sub, enc_ctx->sentence_cap);
-		if(ret == CCX_EINVAL)
-			return ret;
+		if (enc_ctx) {
+			ret = tlt_process_pes_packet(dec_ctx, data_node->buffer, data_node->len, dec_sub, enc_ctx->sentence_cap);
+			if (ret == CCX_EINVAL)
+				return ret;
+		}
 		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
@@ -872,7 +874,8 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 			dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
-			enc_ctx->timing = dec_ctx->timing;
+			if (enc_ctx)
+				enc_ctx->timing = dec_ctx->timing;
 			
 			if(data_node->pts != CCX_NOPTS)
 			{
@@ -930,7 +933,8 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 				dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
-				dec_ctx->timing = enc_ctx->timing;
+				if (enc_ctx)
+					dec_ctx->timing = enc_ctx->timing;
 				if(data_node->pts != CCX_NOPTS)
 					set_current_pts(dec_ctx->timing, data_node->pts);
 				process_data(enc_ctx, dec_ctx, data_node);
