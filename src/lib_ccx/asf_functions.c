@@ -422,7 +422,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 			}
 			else if( !memcmp(curpos,ASF_EXTENDED_CONTENT_DESCRIPTION, 16 ) )
 			{
-				dbg_print(CCX_DMT_PARSE, "\nExtended Content Description Object     (size: %lld)\n", hpobjectsize);
+				dbg_print(CCX_DMT_PARSE, "\nExtended Contend Description Object     (size: %lld)\n", hpobjectsize);
 
 				int ContentDescriptorsCount = *((uint16_t*)(curpos+24));
 				unsigned char *econtentpos=curpos+26;
