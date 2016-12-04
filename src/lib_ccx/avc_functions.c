@@ -87,18 +87,18 @@ struct avc_ctx *init_avc(void)
 	return ctx;
 }
 
-void do_NAL (struct lib_cc_decode *ctx, unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub)
+void do_NAL (struct lib_cc_decode *ctx, unsigned char *NAL_start, LLONG NAL_length, struct cc_subtitle *sub)
 {
-	unsigned char *NALstop;
-	enum ccx_avc_nal_types nal_unit_type = *NALstart & 0x1F;
+	unsigned char *NAL_stop;
+	enum ccx_avc_nal_types nal_unit_type = *NAL_start & 0x1F;
 
-	NALstop = NAL_length+NALstart;
-	NALstop = remove_03emu(NALstart+1, NALstop); // Add +1 to NALstop for TS, without it for MP4. Still don't know why
+	NAL_stop = NAL_length+NAL_start;
+	NAL_stop = remove_03emu(NAL_start+1, NAL_stop); // Add +1 to NAL_stop for TS, without it for MP4. Still don't know why
 
 	dvprint("BEGIN NAL unit type: %d length %d ref_idc: %d - Buffered captions before: %d\n",
-				nal_unit_type,  NALstop-NALstart-1, ctx->avc_ctx->nal_ref_idc, !ctx->avc_ctx->cc_buffer_saved);
+				nal_unit_type,  NAL_stop-NAL_start-1, ctx->avc_ctx->nal_ref_idc, !ctx->avc_ctx->cc_buffer_saved);
 
-	if (NALstop==NULL) // remove_03emu failed.
+	if (NAL_stop==NULL) // remove_03emu failed.
 	{
 		mprint ("\rNotice: NAL of type %u had to be skipped because remove_03emu failed.\n", nal_unit_type);
 		return;
@@ -113,7 +113,7 @@ void do_NAL (struct lib_cc_decode *ctx, unsigned char *NALstart, LLONG NAL_lengt
 		// Found sequence parameter set
 		// We need this to parse NAL type 1 (CCX_NAL_TYPE_CODED_SLICE_NON_IDR_PICTURE_1)
 		ctx->avc_ctx->num_nal_unit_type_7++;
-		seq_parameter_set_rbsp(ctx->avc_ctx, NALstart+1, NALstop);
+		seq_parameter_set_rbsp(ctx->avc_ctx, NAL_start+1, NAL_stop);
 		ctx->avc_ctx->got_seq_para = 1;
 	}
 	else if ( ctx->avc_ctx->got_seq_para && (nal_unit_type == CCX_NAL_TYPE_CODED_SLICE_NON_IDR_PICTURE_1 ||
@@ -122,13 +122,13 @@ void do_NAL (struct lib_cc_decode *ctx, unsigned char *NALstart, LLONG NAL_lengt
 		// Found coded slice of a non-IDR picture
 		// We only need the slice header data, no need to implement
 		// slice_layer_without_partitioning_rbsp( );
-		slice_header(ctx, NALstart+1, NALstop, nal_unit_type, sub);
+		slice_header(ctx, NAL_start+1, NAL_stop, nal_unit_type, sub);
 	}
 	else if ( ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_SEI )
 	{
 		// Found SEI (used for subtitles)
 		//set_fts(ctx->timing); // FIXME - check this!!!
-		sei_rbsp(ctx->avc_ctx, NALstart+1, NALstop);
+		sei_rbsp(ctx->avc_ctx, NAL_start+1, NAL_stop);
 	}
 	else if ( ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_PICTURE_PARAMETER_SET )
 	{
@@ -137,12 +137,12 @@ void do_NAL (struct lib_cc_decode *ctx, unsigned char *NALstart, LLONG NAL_lengt
 	if (temp_debug)
 	{
 		mprint ("NAL process failed.\n");
-		mprint ("\n After decoding, the actual thing was (length =%d)\n", NALstop-(NALstart+1));
-		dump (CCX_DMT_GENERIC_NOTICES,NALstart+1, NALstop-(NALstart+1),0, 0);
+		mprint ("\n After decoding, the actual thing was (length =%d)\n", NAL_stop-(NAL_start+1));
+		dump (CCX_DMT_GENERIC_NOTICES,NAL_start+1, NAL_stop-(NAL_start+1),0, 0);
 	}
 
 	dvprint("END   NAL unit type: %d length %d ref_idc: %d - Buffered captions after: %d\n",
-			nal_unit_type,  NALstop-NALstart-1, ctx->avc_ctx->nal_ref_idc, !ctx->avc_ctx->cc_buffer_saved);
+			nal_unit_type,  NAL_stop-NAL_start-1, ctx->avc_ctx->nal_ref_idc, !ctx->avc_ctx->cc_buffer_saved);
 
 }
 
@@ -150,9 +150,9 @@ void do_NAL (struct lib_cc_decode *ctx, unsigned char *NALstart, LLONG NAL_lengt
 // The number of processed bytes is returned.
 size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t avcbuflen ,struct cc_subtitle *sub)
 {
-	unsigned char *bpos = avcbuf;
-	unsigned char *NALstart;
-	unsigned char *NALstop;
+	unsigned char *buffer_position = avcbuf;
+	unsigned char *NAL_start;
+	unsigned char *NAL_stop;
 
 	// At least 5 bytes are needed for a NAL unit
 	if(avcbuflen <= 5)
@@ -162,92 +162,92 @@ size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t av
 	}
 
 	// Warning there should be only leading zeros, nothing else
-	if( !(bpos[0]==0x00 && bpos[1]==0x00) )
+	if( !(buffer_position[0]==0x00 && buffer_position[1]==0x00) )
 	{
 		fatal(CCX_COMMON_EXIT_BUG_BUG,
 				"Broken AVC stream - no 0x0000 ...");
 	}
-	bpos = bpos+2;
+	buffer_position = buffer_position+2;
 
 	int firstloop=1; // Check for valid start code at buffer start
 
 	// Loop over NAL units
-	while(bpos < avcbuf + avcbuflen - 2) // bpos points to 0x01 plus at least two bytes
+	while(buffer_position < avcbuf + avcbuflen - 2) // buffer_position points to 0x01 plus at least two bytes
 	{
 		int zeropad=0; // Count leading zeros
 
-		// Find next NALstart
-		while (bpos < avcbuf + avcbuflen)
+		// Find next NAL_start
+		while (buffer_position < avcbuf + avcbuflen)
 		{
-			if(*bpos == 0x01)
+			if(*buffer_position == 0x01)
 			{
 				// OK, found a start code
 				break;
 			}
-			else if(firstloop && *bpos != 0x00)
+			else if(firstloop && *buffer_position != 0x00)
 			{
 				// Not 0x00 or 0x01
 				fatal(CCX_COMMON_EXIT_BUG_BUG,
 						"Broken AVC stream - no 0x00 ...");
 			}
-			bpos++;
+			buffer_position++;
 			zeropad++;
 		}
 		firstloop=0;
-		if (bpos >= avcbuf + avcbuflen)
+		if (buffer_position >= avcbuf + avcbuflen)
 		{
 			// No new start sequence
 			break;
 		}
-		NALstart = bpos+1;
+		NAL_start = buffer_position+1;
 
 		// Find next start code or buffer end
 		LLONG restlen;
 		do
 		{
 			// Search for next 000000 or 000001
-			bpos++;
-			restlen = avcbuf - bpos + avcbuflen - 2; // leave room for two more bytes
+			buffer_position++;
+			restlen = avcbuf - buffer_position + avcbuflen - 2; // leave room for two more bytes
 
 			// Find the next zero
 			if (restlen > 0)
 			{
-				bpos = (unsigned char *) memchr (bpos, 0x00, (size_t) restlen);
+				buffer_position = (unsigned char *) memchr (buffer_position, 0x00, (size_t) restlen);
 
-				if(!bpos)
+				if(!buffer_position)
 				{
 					// No 0x00 till the end of the buffer
-					NALstop = avcbuf + avcbuflen;
-					bpos = NALstop;
+					NAL_stop = avcbuf + avcbuflen;
+					buffer_position = NAL_stop;
 					break;
 				}
 
-				if(bpos[1]==0x00 && (bpos[2]|0x01)==0x01)
+				if(buffer_position[1]==0x00 && (buffer_position[2]|0x01)==0x01)
 				{
 					// Found new start code
-					NALstop = bpos;
-					bpos = bpos + 2; // Move after the two leading 0x00
+					NAL_stop = buffer_position;
+					buffer_position = buffer_position + 2; // Move after the two leading 0x00
 					break;
 				}
 			}
 			else
 			{
-				NALstop = avcbuf + avcbuflen;
-				bpos = NALstop;
+				NAL_stop = avcbuf + avcbuflen;
+				buffer_position = NAL_stop;
 				break;
 			}
 		} while(restlen); // Should never be true - loop is exited via break
 
-		if(*NALstart & 0x80)
+		if(*NAL_start & 0x80)
 		{
-			dump(CCX_DMT_GENERIC_NOTICES, NALstart-4,10, 0, 0);
+			dump(CCX_DMT_GENERIC_NOTICES, NAL_start-4,10, 0, 0);
 			fatal(CCX_COMMON_EXIT_BUG_BUG,
 					"Broken AVC stream - forbidden_zero_bit not zero ...");
 		}
 
-		ctx->avc_ctx->nal_ref_idc = *NALstart >> 5;
+		ctx->avc_ctx->nal_ref_idc = *NAL_start >> 5;
                 dvprint("process_avc: zeropad %d\n", zeropad);
-		do_NAL (ctx, NALstart, NALstop-NALstart, sub);
+		do_NAL (ctx, NAL_start, NAL_stop-NAL_start, sub);
 	}
 
 	return avcbuflen;
