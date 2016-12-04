@@ -148,14 +148,14 @@ void do_NAL (struct lib_cc_decode *ctx, unsigned char *NAL_start, LLONG NAL_leng
 
 // Process inbuf bytes in buffer holding and AVC (H.264) video stream.
 // The number of processed bytes is returned.
-size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t avcbuflen ,struct cc_subtitle *sub)
+size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avc_buffer, size_t avc_buffer_length ,struct cc_subtitle *sub)
 {
-	unsigned char *buffer_position = avcbuf;
+	unsigned char *buffer_position = avc_buffer;
 	unsigned char *NAL_start;
 	unsigned char *NAL_stop;
 
 	// At least 5 bytes are needed for a NAL unit
-	if(avcbuflen <= 5)
+	if(avc_buffer_length <= 5)
 	{
 		fatal(CCX_COMMON_EXIT_BUG_BUG,
 				"NAL unit need at last 5 bytes ...");
@@ -169,22 +169,22 @@ size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t av
 	}
 	buffer_position = buffer_position+2;
 
-	int firstloop=1; // Check for valid start code at buffer start
+	int first_loop=1; // Check for valid start code at buffer start
 
 	// Loop over NAL units
-	while(buffer_position < avcbuf + avcbuflen - 2) // buffer_position points to 0x01 plus at least two bytes
+	while(buffer_position < avc_buffer + avc_buffer_length - 2) // buffer_position points to 0x01 plus at least two bytes
 	{
 		int zeropad=0; // Count leading zeros
 
 		// Find next NAL_start
-		while (buffer_position < avcbuf + avcbuflen)
+		while (buffer_position < avc_buffer + avc_buffer_length)
 		{
 			if(*buffer_position == 0x01)
 			{
 				// OK, found a start code
 				break;
 			}
-			else if(firstloop && *buffer_position != 0x00)
+			else if(first_loop && *buffer_position != 0x00)
 			{
 				// Not 0x00 or 0x01
 				fatal(CCX_COMMON_EXIT_BUG_BUG,
@@ -193,8 +193,8 @@ size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t av
 			buffer_position++;
 			zeropad++;
 		}
-		firstloop=0;
-		if (buffer_position >= avcbuf + avcbuflen)
+		first_loop=0;
+		if (buffer_position >= avc_buffer + avc_buffer_length)
 		{
 			// No new start sequence
 			break;
@@ -207,7 +207,7 @@ size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t av
 		{
 			// Search for next 000000 or 000001
 			buffer_position++;
-			restlen = avcbuf - buffer_position + avcbuflen - 2; // leave room for two more bytes
+			restlen = avc_buffer - buffer_position + avc_buffer_length - 2; // leave room for two more bytes
 
 			// Find the next zero
 			if (restlen > 0)
@@ -217,7 +217,7 @@ size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t av
 				if(!buffer_position)
 				{
 					// No 0x00 till the end of the buffer
-					NAL_stop = avcbuf + avcbuflen;
+					NAL_stop = avc_buffer + avc_buffer_length;
 					buffer_position = NAL_stop;
 					break;
 				}
@@ -232,7 +232,7 @@ size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t av
 			}
 			else
 			{
-				NAL_stop = avcbuf + avcbuflen;
+				NAL_stop = avc_buffer + avc_buffer_length;
 				buffer_position = NAL_stop;
 				break;
 			}
@@ -250,13 +250,13 @@ size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t av
 		do_NAL (ctx, NAL_start, NAL_stop-NAL_start, sub);
 	}
 
-	return avcbuflen;
+	return avc_buffer_length;
 }
 
 #define ZEROBYTES_SHORTSTARTCODE 2
 
 // Copied for reference decoder, see if it behaves different that Volker's code
-int EBSPtoRBSP(unsigned char *streamBuffer, int end_bytepos, int begin_bytepos)
+int EBSP_to_RBSP(unsigned char *streamBuffer, int end_bytepos, int begin_bytepos)
 {
 	int i, j, count;
 	count = 0;
@@ -303,7 +303,7 @@ u32 avc_remove_emulation_bytes(const unsigned char *buffer_src, unsigned char *b
 unsigned char *remove_03emu(unsigned char *from, unsigned char *to)
 {
 	int num=to-from;
-	int newsize = EBSPtoRBSP (from,num,0); //TODO: Do something if newsize == -1 (broken NAL)
+	int newsize = EBSP_to_RBSP (from,num,0); //TODO: Do something if newsize == -1 (broken NAL)
 	if (newsize==-1)
 		return NULL;
 	return from+newsize;
@@ -342,13 +342,13 @@ void sei_rbsp (struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend
 // This combines sei_message() and sei_payload().
 unsigned char *sei_message (struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend)
 {
-	int payloadType = 0;
+	int payload_type = 0;
 	while (*seibuf==0xff)
 	{
-		payloadType+=255;
+		payload_type+=255;
 		seibuf++;
 	}
-	payloadType += *seibuf;
+	payload_type += *seibuf;
 	seibuf++;
 
 
@@ -365,12 +365,12 @@ unsigned char *sei_message (struct avc_ctx *ctx, unsigned char *seibuf, unsigned
 	unsigned char *paystart = seibuf;
 	seibuf+=payloadSize;
 
-	dvprint("Payload type: %d size: %d - ", payloadType, payloadSize);
+	dvprint("Payload type: %d size: %d - ", payload_type, payloadSize);
 	if(seibuf > seiend )
 	{
 		// TODO: What do we do here?
 		broken=1;
-		if (payloadType==4)
+		if (payload_type==4)
 		{
 			dbg_print(CCX_DMT_VERBOSE, "Warning: Subtitles payload seems incorrect (too long), continuing but it doesn't look good..");
 		}
@@ -381,7 +381,7 @@ unsigned char *sei_message (struct avc_ctx *ctx, unsigned char *seibuf, unsigned
 	}
 	dbg_print(CCX_DMT_VERBOSE, "\n");
 	// Ignore all except user_data_registered_itu_t_t35() payload
-	if(!broken && payloadType == 4)
+	if(!broken && payload_type == 4)
 		user_data_registered_itu_t_t35(ctx, paystart, paystart+payloadSize);
 
 	return seibuf;
