@@ -162,6 +162,7 @@ void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts);
 int encode_sub(struct encoder_ctx *ctx,struct cc_subtitle *sub);
 
 int write_cc_buffer_as_srt            (struct eia608_screen *data, struct encoder_ctx *context);
+int write_cc_buffer_as_ssa            (struct eia608_screen *data, struct encoder_ctx *context);
 int write_cc_buffer_as_webvtt         (struct eia608_screen *data, struct encoder_ctx *context);
 int write_cc_buffer_as_sami           (struct eia608_screen *data, struct encoder_ctx *context);
 int write_cc_buffer_as_smptett        (struct eia608_screen *data, struct encoder_ctx *context);
@@ -173,6 +174,7 @@ int write_cc_buffer_as_transcript2    (struct eia608_screen *data, struct encode
 void write_cc_line_as_transcript2     (struct eia608_screen *data, struct encoder_ctx *context, int line_number);
 
 int write_cc_subtitle_as_srt          (struct cc_subtitle *sub, struct encoder_ctx *context);
+int write_cc_subtitle_as_ssa          (struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_subtitle_as_webvtt       (struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_subtitle_as_sami         (struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_subtitle_as_smptett      (struct cc_subtitle *sub, struct encoder_ctx *context);
@@ -181,12 +183,14 @@ int write_cc_subtitle_as_transcript   (struct cc_subtitle *sub, struct encoder_c
 
 
 int write_stringz_as_srt              (char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
+int write_stringz_as_ssa              (char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
 int write_stringz_as_webvtt           (char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
 int write_stringz_as_sami             (char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
 void write_stringz_as_smptett         (char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
 
 
 int write_cc_bitmap_as_srt             (struct cc_subtitle *sub, struct encoder_ctx *context);
+int write_cc_bitmap_as_ssa             (struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_webvtt          (struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_sami            (struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_smptett         (struct cc_subtitle *sub, struct encoder_ctx *context);

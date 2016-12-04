@@ -1,4 +1,4 @@
-For building ccextractor using cmake follow steps below..
+For building CCExtractor using cmake follow steps below..
 
 Step 1) Check you have right version of cmake installed. ( version >= 3.0.2 )
 	We are using CMP0037 policy of cmake which was introduced in 3.0.0
