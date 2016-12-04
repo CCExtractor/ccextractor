@@ -43,7 +43,7 @@ struct lib_hardsubx_ctx
 	const char *extension;
 	int current_file;
 	char **inputfile;
-	int num_input_files; 
+	int num_input_files;
 	LLONG system_start_time;
 	enum ccx_output_format write_format;
 
@@ -87,8 +87,8 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx);
 
 //hardsubx_imgops.c
-void rgb2hsv(float R, float G, float B,float *H, float *S, float *V);
-void rgb2lab(float R, float G, float B,float *L, float *a, float *b);
+void rgb_to_hsv(float R, float G, float B,float *H, float *S, float *V);
+void rgb_to_lab(float R, float G, float B,float *L, float *a, float *b);
 
 //hardsubx_classifier.c
 char *get_ocr_text_simple(struct lib_hardsubx_ctx *ctx, PIX *image);

@@ -38,14 +38,14 @@ void fdprintf(int fd, const char *fmt, ...)
 			free(p);
 			return;
 		}
-		else 
+		else
 		{
 			p = np;
 		}
 	}
 }
 /* Converts the given milli to separate hours,minutes,seconds and ms variables */
-void mstotime(LLONG milli, unsigned *hours, unsigned *minutes,
+void millis_to_time(LLONG milli, unsigned *hours, unsigned *minutes,
 	unsigned *seconds, unsigned *ms)
 {
 	// LLONG milli = (LLONG) ((ccblock*1000)/29.97);

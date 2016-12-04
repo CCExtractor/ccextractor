@@ -35,7 +35,7 @@ void xds_write_transcript_line_prefix (struct encoder_ctx *context, struct ccx_s
 		{
 			if (utc_refvalue == UINT64_MAX)
 			{
-				mstotime(start_time + context->subs_delay, &h1, &m1, &s1, &ms1);
+				millis_to_time(start_time + context->subs_delay, &h1, &m1, &s1, &ms1);
 				fdprintf(wb->fh, "%02u:%02u:%02u%c%03u|", h1, m1, s1, context->millis_separator, ms1);
 			}
 			else
@@ -46,7 +46,7 @@ void xds_write_transcript_line_prefix (struct encoder_ctx *context, struct ccx_s
 		}
 		else
 		{
-			mstotime(start_time + context->subs_delay, &h1, &m1, &s1, &ms1);
+			millis_to_time(start_time + context->subs_delay, &h1, &m1, &s1, &ms1);
 			time_t start_time_int = (start_time + context->subs_delay) / 1000;
 			int start_time_dec = (start_time + context->subs_delay) % 1000;
 			struct tm *start_time_struct = gmtime(&start_time_int);
@@ -62,7 +62,7 @@ void xds_write_transcript_line_prefix (struct encoder_ctx *context, struct ccx_s
 		{
 			if (utc_refvalue == UINT64_MAX)
 			{
-				mstotime(end_time, &h2, &m2, &s2, &ms2);
+				millis_to_time(end_time, &h2, &m2, &s2, &ms2);
 				fdprintf(wb->fh, "%02u:%02u:%02u%c%03u|", h2, m2, s2, context->millis_separator, ms2);
 			}
 			else
@@ -72,7 +72,7 @@ void xds_write_transcript_line_prefix (struct encoder_ctx *context, struct ccx_s
 		}
 		else
 		{
-			mstotime(end_time, &h2, &m2, &s2, &ms2);
+			millis_to_time(end_time, &h2, &m2, &s2, &ms2);
 			time_t end_time_int = end_time / 1000;
 			int end_time_dec = end_time % 1000;
 			struct tm *end_time_struct = gmtime(&end_time_int);
@@ -92,4 +92,3 @@ void xds_write_transcript_line_prefix (struct encoder_ctx *context, struct ccx_s
 		fdprintf(wb->fh, "%s|", XDSclasses_short[cur_xds_packet_class]);
 	}
 }
-

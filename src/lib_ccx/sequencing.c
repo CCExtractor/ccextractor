@@ -68,7 +68,7 @@ void store_hdcc(struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count,
 	   printf("\nCC blocks, channel 0:\n");
 	   for ( int i=0; i < cc_count*3; i+=3)
 	   {
-	   printf("%s", debug_608toASC( cc_data+i, 0) );
+	   printf("%s", debug_608_to_ASC( cc_data+i, 0) );
 	   }
 	   printf("\n");
 	 */

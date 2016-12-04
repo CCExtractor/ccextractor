@@ -10,7 +10,7 @@ void dinit_write(struct ccx_s_write *wb)
 {
 	if (wb->fh > 0)
 		close(wb->fh);
-	freep(&wb->filename);	
+	freep(&wb->filename);
 	if (wb->with_semaphore && wb->semaphore_filename)
 		unlink(wb->semaphore_filename);
 	freep(&wb->semaphore_filename);
@@ -49,7 +49,7 @@ int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
 {
 	memset(wb, 0, sizeof(struct ccx_s_write));
 	wb->fh=-1;
-	wb->temporarily_closed = 0; 
+	wb->temporarily_closed = 0;
 	wb->filename = filename;
 	wb->with_semaphore = with_semaphore;
 	wb->append_mode = ccx_options.enc_cfg.append_mode;
@@ -156,7 +156,7 @@ void writeDVDraw (const unsigned char *data1, int length1,
 
 }
 
-void printdata (struct lib_cc_decode *ctx, const unsigned char *data1, int length1,
+void print_data (struct lib_cc_decode *ctx, const unsigned char *data1, int length1,
                 const unsigned char *data2, int length2, struct cc_subtitle *sub)
 {
 	if (ctx->write_format==CCX_OF_DVDRAW)
@@ -223,7 +223,7 @@ void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct
 				}
 			}
 			dbg_print(CCX_DMT_CBRAW, "%s Write %d RCWT blocks - skipped %d padding / %d unused blocks.\n",
-					print_mstime(prevfts), cbcount, storecbcount - cbcount, cbempty);
+					print_mstime_static(prevfts), cbcount, storecbcount - cbcount, cbempty);
 		}
 
 		// New FTS, write data header
@@ -287,7 +287,7 @@ void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct
 		cbempty = 0;
 
 		dbg_print(CCX_DMT_CBRAW, "%s Write final padding RCWT blocks.\n",
-				print_mstime(currfts));
+				print_mstime_static(currfts));
 	}
 
 	prevfts = currfts;

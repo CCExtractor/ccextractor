@@ -601,13 +601,13 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 		{
 			mprint("\rWarning: Jump in GOP timing.\n");
 			mprint("  (old) %s",
-					print_mstime(gop_time.ms));
+					print_mstime_static(gop_time.ms));
 			mprint("  +  %s (%uF)",
-					print_mstime((LLONG) (ctx->frames_since_last_gop
+					print_mstime_static((LLONG) (ctx->frames_since_last_gop
 							*1000.0/current_fps)),
 					ctx->frames_since_last_gop);
 			mprint("  !=  (new) %s\n",
-					print_mstime(gtc.ms));
+					print_mstime_static(gtc.ms));
 		}
 
 		if (first_gop_time.inited == 0)
@@ -731,7 +731,7 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 
 	dbg_print(CCX_DMT_VIDES, "  t:%d r:%d p:%d", ctx->top_field_first,
 			ctx->repeat_first_field, ctx->progressive_frame);
-	dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime(get_fts(ctx->timing, ctx->current_field)));
+	dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime_static(get_fts(ctx->timing, ctx->current_field)));
 
 	// Set min_pts/sync_pts according to the current time stamp.
 	// Use fts_at_gop_start as reference when a GOP header was seen

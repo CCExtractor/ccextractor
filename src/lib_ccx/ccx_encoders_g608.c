@@ -76,8 +76,8 @@ int write_cc_buffer_as_g608(struct eia608_screen *data, struct encoder_ctx *cont
 
 	ms_end = data->end_time;
 
-	mstotime (ms_start,&h1,&m1,&s1,&ms1);
-	mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
+	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 	char timeline[128];
 	context->srt_counter++;
 	sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
