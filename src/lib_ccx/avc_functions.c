@@ -87,18 +87,18 @@ struct avc_ctx *init_avc(void)
 	return ctx;
 }
 
-void do_NAL (struct lib_cc_decode *ctx, unsigned char *NAL_start, LLONG NAL_length, struct cc_subtitle *sub)
+void do_NAL (struct lib_cc_decode *ctx, unsigned char *NALstart, LLONG NAL_length, struct cc_subtitle *sub)
 {
-	unsigned char *NAL_stop;
-	enum ccx_avc_nal_types nal_unit_type = *NAL_start & 0x1F;
+	unsigned char *NALstop;
+	enum ccx_avc_nal_types nal_unit_type = *NALstart & 0x1F;
 
-	NAL_stop = NAL_length+NAL_start;
-	NAL_stop = remove_03emu(NAL_start+1, NAL_stop); // Add +1 to NAL_stop for TS, without it for MP4. Still don't know why
+	NALstop = NAL_length+NALstart;
+	NALstop = remove_03emu(NALstart+1, NALstop); // Add +1 to NALstop for TS, without it for MP4. Still don't know why
 
 	dvprint("BEGIN NAL unit type: %d length %d ref_idc: %d - Buffered captions before: %d\n",
-				nal_unit_type,  NAL_stop-NAL_start-1, ctx->avc_ctx->nal_ref_idc, !ctx->avc_ctx->cc_buffer_saved);
+				nal_unit_type,  NALstop-NALstart-1, ctx->avc_ctx->nal_ref_idc, !ctx->avc_ctx->cc_buffer_saved);
 
-	if (NAL_stop==NULL) // remove_03emu failed.
+	if (NALstop==NULL) // remove_03emu failed.
 	{
 		mprint ("\rNotice: NAL of type %u had to be skipped because remove_03emu failed.\n", nal_unit_type);
 		return;
@@ -113,7 +113,7 @@ void do_NAL (struct lib_cc_decode *ctx, unsigned char *NAL_start, LLONG NAL_leng
 		// Found sequence parameter set
 		// We need this to parse NAL type 1 (CCX_NAL_TYPE_CODED_SLICE_NON_IDR_PICTURE_1)
 		ctx->avc_ctx->num_nal_unit_type_7++;
-		seq_parameter_set_rbsp(ctx->avc_ctx, NAL_start+1, NAL_stop);
+		seq_parameter_set_rbsp(ctx->avc_ctx, NALstart+1, NALstop);
 		ctx->avc_ctx->got_seq_para = 1;
 	}
 	else if ( ctx->avc_ctx->got_seq_para && (nal_unit_type == CCX_NAL_TYPE_CODED_SLICE_NON_IDR_PICTURE_1 ||
@@ -122,13 +122,13 @@ void do_NAL (struct lib_cc_decode *ctx, unsigned char *NAL_start, LLONG NAL_leng
 		// Found coded slice of a non-IDR picture
 		// We only need the slice header data, no need to implement
 		// slice_layer_without_partitioning_rbsp( );
-		slice_header(ctx, NAL_start+1, NAL_stop, nal_unit_type, sub);
+		slice_header(ctx, NALstart+1, NALstop, nal_unit_type, sub);
 	}
 	else if ( ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_SEI )
 	{
 		// Found SEI (used for subtitles)
 		//set_fts(ctx->timing); // FIXME - check this!!!
-		sei_rbsp(ctx->avc_ctx, NAL_start+1, NAL_stop);
+		sei_rbsp(ctx->avc_ctx, NALstart+1, NALstop);
 	}
 	else if ( ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_PICTURE_PARAMETER_SET )
 	{
@@ -137,126 +137,126 @@ void do_NAL (struct lib_cc_decode *ctx, unsigned char *NAL_start, LLONG NAL_leng
 	if (temp_debug)
 	{
 		mprint ("NAL process failed.\n");
-		mprint ("\n After decoding, the actual thing was (length =%d)\n", NAL_stop-(NAL_start+1));
-		dump (CCX_DMT_GENERIC_NOTICES,NAL_start+1, NAL_stop-(NAL_start+1),0, 0);
+		mprint ("\n After decoding, the actual thing was (length =%d)\n", NALstop-(NALstart+1));
+		dump (CCX_DMT_GENERIC_NOTICES,NALstart+1, NALstop-(NALstart+1),0, 0);
 	}
 
 	dvprint("END   NAL unit type: %d length %d ref_idc: %d - Buffered captions after: %d\n",
-			nal_unit_type,  NAL_stop-NAL_start-1, ctx->avc_ctx->nal_ref_idc, !ctx->avc_ctx->cc_buffer_saved);
+			nal_unit_type,  NALstop-NALstart-1, ctx->avc_ctx->nal_ref_idc, !ctx->avc_ctx->cc_buffer_saved);
 
 }
 
 // Process inbuf bytes in buffer holding and AVC (H.264) video stream.
 // The number of processed bytes is returned.
-size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avc_buffer, size_t avc_buffer_length ,struct cc_subtitle *sub)
+size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t avcbuflen ,struct cc_subtitle *sub)
 {
-	unsigned char *buffer_position = avc_buffer;
-	unsigned char *NAL_start;
-	unsigned char *NAL_stop;
+	unsigned char *bpos = avcbuf;
+	unsigned char *NALstart;
+	unsigned char *NALstop;
 
 	// At least 5 bytes are needed for a NAL unit
-	if(avc_buffer_length <= 5)
+	if(avcbuflen <= 5)
 	{
 		fatal(CCX_COMMON_EXIT_BUG_BUG,
 				"NAL unit need at last 5 bytes ...");
 	}
 
 	// Warning there should be only leading zeros, nothing else
-	if( !(buffer_position[0]==0x00 && buffer_position[1]==0x00) )
+	if( !(bpos[0]==0x00 && bpos[1]==0x00) )
 	{
 		fatal(CCX_COMMON_EXIT_BUG_BUG,
 				"Broken AVC stream - no 0x0000 ...");
 	}
-	buffer_position = buffer_position+2;
+	bpos = bpos+2;
 
-	int first_loop=1; // Check for valid start code at buffer start
+	int firstloop=1; // Check for valid start code at buffer start
 
 	// Loop over NAL units
-	while(buffer_position < avc_buffer + avc_buffer_length - 2) // buffer_position points to 0x01 plus at least two bytes
+	while(bpos < avcbuf + avcbuflen - 2) // bpos points to 0x01 plus at least two bytes
 	{
 		int zeropad=0; // Count leading zeros
 
-		// Find next NAL_start
-		while (buffer_position < avc_buffer + avc_buffer_length)
+		// Find next NALstart
+		while (bpos < avcbuf + avcbuflen)
 		{
-			if(*buffer_position == 0x01)
+			if(*bpos == 0x01)
 			{
 				// OK, found a start code
 				break;
 			}
-			else if(first_loop && *buffer_position != 0x00)
+			else if(firstloop && *bpos != 0x00)
 			{
 				// Not 0x00 or 0x01
 				fatal(CCX_COMMON_EXIT_BUG_BUG,
 						"Broken AVC stream - no 0x00 ...");
 			}
-			buffer_position++;
+			bpos++;
 			zeropad++;
 		}
-		first_loop=0;
-		if (buffer_position >= avc_buffer + avc_buffer_length)
+		firstloop=0;
+		if (bpos >= avcbuf + avcbuflen)
 		{
 			// No new start sequence
 			break;
 		}
-		NAL_start = buffer_position+1;
+		NALstart = bpos+1;
 
 		// Find next start code or buffer end
 		LLONG restlen;
 		do
 		{
 			// Search for next 000000 or 000001
-			buffer_position++;
-			restlen = avc_buffer - buffer_position + avc_buffer_length - 2; // leave room for two more bytes
+			bpos++;
+			restlen = avcbuf - bpos + avcbuflen - 2; // leave room for two more bytes
 
 			// Find the next zero
 			if (restlen > 0)
 			{
-				buffer_position = (unsigned char *) memchr (buffer_position, 0x00, (size_t) restlen);
+				bpos = (unsigned char *) memchr (bpos, 0x00, (size_t) restlen);
 
-				if(!buffer_position)
+				if(!bpos)
 				{
 					// No 0x00 till the end of the buffer
-					NAL_stop = avc_buffer + avc_buffer_length;
-					buffer_position = NAL_stop;
+					NALstop = avcbuf + avcbuflen;
+					bpos = NALstop;
 					break;
 				}
 
-				if(buffer_position[1]==0x00 && (buffer_position[2]|0x01)==0x01)
+				if(bpos[1]==0x00 && (bpos[2]|0x01)==0x01)
 				{
 					// Found new start code
-					NAL_stop = buffer_position;
-					buffer_position = buffer_position + 2; // Move after the two leading 0x00
+					NALstop = bpos;
+					bpos = bpos + 2; // Move after the two leading 0x00
 					break;
 				}
 			}
 			else
 			{
-				NAL_stop = avc_buffer + avc_buffer_length;
-				buffer_position = NAL_stop;
+				NALstop = avcbuf + avcbuflen;
+				bpos = NALstop;
 				break;
 			}
 		} while(restlen); // Should never be true - loop is exited via break
 
-		if(*NAL_start & 0x80)
+		if(*NALstart & 0x80)
 		{
-			dump(CCX_DMT_GENERIC_NOTICES, NAL_start-4,10, 0, 0);
+			dump(CCX_DMT_GENERIC_NOTICES, NALstart-4,10, 0, 0);
 			fatal(CCX_COMMON_EXIT_BUG_BUG,
 					"Broken AVC stream - forbidden_zero_bit not zero ...");
 		}
 
-		ctx->avc_ctx->nal_ref_idc = *NAL_start >> 5;
+		ctx->avc_ctx->nal_ref_idc = *NALstart >> 5;
                 dvprint("process_avc: zeropad %d\n", zeropad);
-		do_NAL (ctx, NAL_start, NAL_stop-NAL_start, sub);
+		do_NAL (ctx, NALstart, NALstop-NALstart, sub);
 	}
 
-	return avc_buffer_length;
+	return avcbuflen;
 }
 
 #define ZEROBYTES_SHORTSTARTCODE 2
 
 // Copied for reference decoder, see if it behaves different that Volker's code
-int EBSP_to_RBSP(unsigned char *streamBuffer, int end_bytepos, int begin_bytepos)
+int EBSPtoRBSP(unsigned char *streamBuffer, int end_bytepos, int begin_bytepos)
 {
 	int i, j, count;
 	count = 0;
@@ -303,7 +303,7 @@ u32 avc_remove_emulation_bytes(const unsigned char *buffer_src, unsigned char *b
 unsigned char *remove_03emu(unsigned char *from, unsigned char *to)
 {
 	int num=to-from;
-	int newsize = EBSP_to_RBSP (from,num,0); //TODO: Do something if newsize == -1 (broken NAL)
+	int newsize = EBSPtoRBSP (from,num,0); //TODO: Do something if newsize == -1 (broken NAL)
 	if (newsize==-1)
 		return NULL;
 	return from+newsize;
@@ -342,35 +342,35 @@ void sei_rbsp (struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend
 // This combines sei_message() and sei_payload().
 unsigned char *sei_message (struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend)
 {
-	int payload_type = 0;
+	int payloadType = 0;
 	while (*seibuf==0xff)
 	{
-		payload_type+=255;
+		payloadType+=255;
 		seibuf++;
 	}
-	payload_type += *seibuf;
+	payloadType += *seibuf;
 	seibuf++;
 
 
-	int payload_size = 0;
+	int payloadSize = 0;
 	while (*seibuf==0xff)
 	{
-		payload_size+=255;
+		payloadSize+=255;
 		seibuf++;
 	}
-	payload_size += *seibuf;
+	payloadSize += *seibuf;
 	seibuf++;
 
 	int broken=0;
-	unsigned char *payload_start = seibuf;
-	seibuf+=payload_size;
+	unsigned char *paystart = seibuf;
+	seibuf+=payloadSize;
 
-	dvprint("Payload type: %d size: %d - ", payload_type, payload_size);
+	dvprint("Payload type: %d size: %d - ", payloadType, payloadSize);
 	if(seibuf > seiend )
 	{
 		// TODO: What do we do here?
 		broken=1;
-		if (payload_type==4)
+		if (payloadType==4)
 		{
 			dbg_print(CCX_DMT_VERBOSE, "Warning: Subtitles payload seems incorrect (too long), continuing but it doesn't look good..");
 		}
@@ -381,8 +381,8 @@ unsigned char *sei_message (struct avc_ctx *ctx, unsigned char *seibuf, unsigned
 	}
 	dbg_print(CCX_DMT_VERBOSE, "\n");
 	// Ignore all except user_data_registered_itu_t_t35() payload
-	if(!broken && payload_type == 4)
-		user_data_registered_itu_t_t35(ctx, payload_start, payload_start+payload_size);
+	if(!broken && payloadType == 4)
+		user_data_registered_itu_t_t35(ctx, paystart, paystart+payloadSize);
 
 	return seibuf;
 }
@@ -404,7 +404,7 @@ void copy_ccdata_to_buffer (struct avc_ctx *ctx, char *source, int new_cc_count)
 void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf, unsigned char *userend)
 {
 	unsigned char *tbuf = userbuf;
-	unsigned char *cc_tmp_data;
+	unsigned char *cc_tmpdata;
 	unsigned char process_cc_data_flag;
 	int user_data_type_code;
 	int user_data_len;
@@ -489,7 +489,7 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 						   } */
 						// OK, all checks passed!
 						tbuf++;
-						cc_tmp_data = tbuf;
+						cc_tmpdata = tbuf;
 
 						/* TODO: I don't think we have user_data_len here
 						   if (cc_count*3+3 != user_data_len)
@@ -497,10 +497,10 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 						   "Syntax problem: user_data_len != cc_count*3+3."); */
 
 						// Enough room for CC captions?
-						if (cc_tmp_data+local_cc_count*3 >= userend)
+						if (cc_tmpdata+local_cc_count*3 >= userend)
 							fatal(CCX_COMMON_EXIT_BUG_BUG,
 									"Syntax problem: Too many caption blocks.");
-						if (cc_tmp_data[local_cc_count*3]!=0xFF)
+						if (cc_tmpdata[local_cc_count*3]!=0xFF)
 							fatal(CCX_COMMON_EXIT_BUG_BUG,
 									"Syntax problem: Final 0xFF marker missing.");
 
@@ -513,7 +513,7 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 							ctx->cc_databufsize = (long) ( (ctx->cc_count + local_cc_count) * 6) + 1;
 						}
 						// Copy new cc data into cc_data
-						copy_ccdata_to_buffer (ctx, (char *) cc_tmp_data, local_cc_count);
+						copy_ccdata_to_buffer (ctx, (char *) cc_tmpdata, local_cc_count);
 						break;
 					case 0x06:
 						dbg_print(CCX_DMT_VERBOSE, "bar_data (unsupported for now)\n");
@@ -562,17 +562,17 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 				mprint ("process_cc_data_flag == 0, skipping this caption block.\n");
 				break;
 			}
-			cc_tmp_data = tbuf+2;
+			cc_tmpdata = tbuf+2;
 
 			if (local_cc_count*3+3 != user_data_len)
 				fatal(CCX_COMMON_EXIT_BUG_BUG,
 						"Syntax problem: user_data_len != cc_count*3+3.");
 
 			// Enough room for CC captions?
-			if (cc_tmp_data+local_cc_count*3 >= userend)
+			if (cc_tmpdata+local_cc_count*3 >= userend)
 				fatal(CCX_COMMON_EXIT_BUG_BUG,
 						"Syntax problem: Too many caption blocks.");
-			if (cc_tmp_data[local_cc_count*3]!=0xFF)
+			if (cc_tmpdata[local_cc_count*3]!=0xFF)
 				fatal(CCX_COMMON_EXIT_BUG_BUG,
 						"Syntax problem: Final 0xFF marker missing.");
 
@@ -585,7 +585,7 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 				ctx->cc_databufsize = (long) (((local_cc_count + ctx->cc_count) * 6) + 1);
 			}
 			// Copy new cc data into cc_data - replace command below.
-			copy_ccdata_to_buffer (ctx, (char *) cc_tmp_data, local_cc_count);
+			copy_ccdata_to_buffer (ctx, (char *) cc_tmpdata, local_cc_count);
 
 			//dump(tbuf,user_data_len-1,0);
 			break;
@@ -880,10 +880,10 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 {
 	LLONG tmp;
 	struct bitstream q1;
-	int max_frame_num;
+	int maxframe_num;
 	LLONG slice_type, bottom_field_flag=0, pic_order_cnt_lsb=-1;
-	int current_index;
-	int ird_pic_flag;
+	int curridx;
+	int IdrPicFlag;
 	LLONG field_pic_flag = 0; // Moved here because it's needed for ctx->avc_ctx->pic_order_cnt_type==2
 
 	if (init_bitstream(&q1, heabuf, heaend))
@@ -892,7 +892,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 		return;
 	}
 
-	ird_pic_flag = ((nal_unit_type == 5 )?1:0);
+	IdrPicFlag = ((nal_unit_type == 5 )?1:0);
 
 
 	dvprint("\nSLICE HEADER\n");
@@ -904,7 +904,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 	dvprint("pic_parameter_set_id=  % 4lld (%#llX)\n",tmp,tmp);
 
 	ctx->avc_ctx->lastframe_num = ctx->avc_ctx->frame_num;
-	max_frame_num = (int) ((1<<ctx->avc_ctx->log2_max_frame_num) - 1);
+	maxframe_num = (int) ((1<<ctx->avc_ctx->log2_max_frame_num) - 1);
 
 	// Needs log2_max_frame_num_minus4 + 4 bits
 	ctx->avc_ctx->frame_num = read_int_unsigned(&q1,ctx->avc_ctx->log2_max_frame_num);
@@ -927,7 +927,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 		}
 	}
 
-	dvprint("ird_pic_flag=            % 4d\n", ird_pic_flag	);
+	dvprint("IdrPicFlag=            % 4d\n", IdrPicFlag	);
 
 	if( nal_unit_type == 5 )
 	{
@@ -963,15 +963,15 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 	{
 		/* CFS: Warning!!: Untested stuff, copied from specs (8.2.1.3) */
 		LLONG FrameNumOffset = 0;
-		if (ird_pic_flag == 1)
+		if (IdrPicFlag == 1)
 			FrameNumOffset=0;
 		else if (lastframe_num > frame_num)
-			FrameNumOffset = lastframe_num + max_frame_num;
+			FrameNumOffset = lastframe_num + maxframe_num;
 		else
 			FrameNumOffset = lastframe_num;
 
 		LLONG tempPicOrderCnt=0;
-		if (ird_pic_flag == 1)
+		if (IdrPicFlag == 1)
 			tempPicOrderCnt=0;
 		else if (ctx->avc_ctx->nal_ref_idc == 0)
 			tempPicOrderCnt = 2*(FrameNumOffset + frame_num) -1 ;
@@ -1017,7 +1017,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 
 	// If we saw a jump set maxidx, lastmaxidx to -1
 	LLONG dif = ctx->avc_ctx->frame_num - ctx->avc_ctx->lastframe_num;
-	if (dif == -max_frame_num)
+	if (dif == -maxframe_num)
 		dif = 0;
 	if ( ctx->avc_ctx->lastframe_num > -1 && (dif < 0 || dif > 1) )
 	{
@@ -1063,7 +1063,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 		if ( ccx_options.usepicorder ) {
 			// Use pic_order_cnt_lsb
 
-			// Make sure that current_index never wraps for curidx values that
+			// Make sure that curridx never wraps for curidx values that
 			// are smaller than currref
 			ctx->avc_ctx->currref = (int)pic_order_cnt_lsb;
 			if (ctx->avc_ctx->currref < maxrefcnt/3)
@@ -1086,19 +1086,19 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 
 	if ( ccx_options.usepicorder ) {
 		// Use pic_order_cnt_lsb
-		// Wrap (add max index value) current_index if needed.
+		// Wrap (add max index value) curridx if needed.
 		if( ctx->avc_ctx->currref - pic_order_cnt_lsb > maxrefcnt/2 )
-			current_index = (int)pic_order_cnt_lsb + maxrefcnt+1;
+			curridx = (int)pic_order_cnt_lsb + maxrefcnt+1;
 		else
-			current_index = (int)pic_order_cnt_lsb;
+			curridx = (int)pic_order_cnt_lsb;
 
 		// Track maximum index for this GOP
-		if ( current_index > ctx->avc_ctx->maxidx )
-			ctx->avc_ctx->maxidx = current_index;
+		if ( curridx > ctx->avc_ctx->maxidx )
+			ctx->avc_ctx->maxidx = curridx;
 
 		// Calculate tref
 		if ( ctx->avc_ctx->lastmaxidx > 0 ) {
-			ctx->timing->current_tref = current_index - ctx->avc_ctx->lastmaxidx -1;
+			ctx->timing->current_tref = curridx - ctx->avc_ctx->lastmaxidx -1;
 			// Set maxtref
 			if( ctx->timing->current_tref > ctx->avc_ctx->maxtref ) {
 				ctx->avc_ctx->maxtref = ctx->timing->current_tref;
@@ -1121,24 +1121,24 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 		// frame rate
 		// The 2* accounts for a discrepancy between current and actual FPS
 		// seen in some files (CCSample2.mpg)
-		current_index = (int)roundportable(2*(ctx->timing->current_pts - ctx->avc_ctx->currefpts)/(MPEG_CLOCK_FREQ/current_fps));
+		curridx = (int)roundportable(2*(ctx->timing->current_pts - ctx->avc_ctx->currefpts)/(MPEG_CLOCK_FREQ/current_fps));
 
-		if (abs(current_index) >= MAXBFRAMES) {
+		if (abs(curridx) >= MAXBFRAMES) {
 			// Probably a jump in the timeline. Warn and handle gracefully.
-			mprint("\nFound large gap(%d) in PTS! Trying to recover ...\n", current_index);
-			current_index = 0;
+			mprint("\nFound large gap(%d) in PTS! Trying to recover ...\n", curridx);
+			curridx = 0;
 		}
 
 		// Track maximum index for this GOP
-		if ( current_index > ctx->avc_ctx->maxidx )
-			ctx->avc_ctx->maxidx = current_index;
+		if ( curridx > ctx->avc_ctx->maxidx )
+			ctx->avc_ctx->maxidx = curridx;
 
 		// Track minimum index for this GOP
-		if ( current_index < ctx->avc_ctx->minidx )
-			ctx->avc_ctx->minidx = current_index;
+		if ( curridx < ctx->avc_ctx->minidx )
+			ctx->avc_ctx->minidx = curridx;
 
 		ctx->timing->current_tref = 1;
-		if ( current_index == ctx->avc_ctx->lastminidx ) {
+		if ( curridx == ctx->avc_ctx->lastminidx ) {
 			// This implies that the minimal index (assuming its number is
 			// fairly constant) sets the temporal reference to zero - needed to set sync_pts.
 			ctx->timing->current_tref = 0;
@@ -1154,7 +1154,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 
 	dbg_print(CCX_DMT_TIME, "  picordercnt:%3lld tref:%3d idx:%3d refidx:%3d lmaxidx:%3d maxtref:%3d\n",
 			pic_order_cnt_lsb, ctx->timing->current_tref,
-			current_index, ctx->avc_ctx->currref, ctx->avc_ctx->lastmaxidx, ctx->avc_ctx->maxtref);
+			curridx, ctx->avc_ctx->currref, ctx->avc_ctx->lastmaxidx, ctx->avc_ctx->maxtref);
 	dbg_print(CCX_DMT_TIME, "  sync_pts:%s (%8u)",
 			print_mstime_static(ctx->timing->sync_pts/(MPEG_CLOCK_FREQ/1000)),
 			(unsigned) (ctx->timing->sync_pts));
@@ -1176,7 +1176,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 	total_frames_count++;
 	ctx->frames_since_last_gop++;
 
-	store_hdcc(ctx, ctx->avc_ctx->cc_data, ctx->avc_ctx->cc_count, current_index, ctx->timing->fts_now, sub);
+	store_hdcc(ctx, ctx->avc_ctx->cc_data, ctx->avc_ctx->cc_count, curridx, ctx->timing->fts_now, sub);
 	ctx->avc_ctx->cc_buffer_saved = CCX_TRUE; // CFS: store_hdcc supposedly saves the CC buffer to a sequence buffer
 	ctx->avc_ctx->cc_count = 0;
 }

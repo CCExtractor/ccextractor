@@ -75,31 +75,31 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 	int reentry = 1;
 
 	// Variables for Header Object
-	int64_t data_packets_count = 0;
-	int broadcast_flag = 0;
-	int seekable_flag = 0;
-	uint32_t min_packet_size = 0;
-	uint32_t max_packet_size = 0;
+	int64_t DataPacketsCount = 0;
+	int BroadcastFlag = 0;
+	int SeekableFlag = 0;
+	uint32_t MinPacketSize = 0;
+	uint32_t MaxPacketSize = 0;
 
 	// Data Object Loop
-	int data_packet_length = 0; // Collect the read header bytes
+	int datapacketlength = 0; // Collect the read header bytes
 
 	// Payload parsing information
-	int sequence_type = 0; // ASF
-	int padding_l_type = 0; // ASF
-	uint32_t sequence = 0;
-	uint32_t send_time = 0;
+	int SequenceType = 0; // ASF
+	int PaddingLType = 0; // ASF
+	uint32_t Sequence = 0;
+	uint32_t SendTime = 0;
 
-	int payload_parser_size = 0; // Infered (PacketLType + sequence_type + padding_l_type + 6);
+	int payloadparsersize = 0; // Infered (PacketLType + SequenceType + PaddingLType + 6);
 
-	uint32_t offset_media_length = 0; // ASF
-	uint32_t replicated_length = 0; // ASF
+	uint32_t OffsetMediaLength = 0; // ASF
+	uint32_t ReplicatedLength = 0; // ASF
 
 	// Last media number. Used to determine a new PES, mark uninitialized.
-	uint32_t current_media_number = 0xFFFFFFFF;
+	uint32_t curmedianumber = 0xFFFFFFFF;
 
-	unsigned char *current_position;
-	int64_t get_bytes;
+	unsigned char *curpos;
+	int64_t getbytes;
 	size_t result = 0;
 	struct demuxer_data *data;
 
@@ -194,12 +194,12 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 			asf_data_container.parsebufsize = (long)asf_data_container.HeaderObjectSize;
 		}
 
-		current_position = asf_data_container.parsebuf + 30;
-		get_bytes = asf_data_container.HeaderObjectSize - 30;
+		curpos = asf_data_container.parsebuf + 30;
+		getbytes = asf_data_container.HeaderObjectSize - 30;
 
-		result = buffered_read(ctx->demux_ctx, current_position, (int) get_bytes);
+		result = buffered_read(ctx->demux_ctx, curpos, (int) getbytes);
 		ctx->demux_ctx->past += result;
-		if (result!=get_bytes)
+		if (result!=getbytes)
 		{
 			mprint("Premature end of file!\n");
 			end_of_file=1;
@@ -208,174 +208,174 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 
 		dbg_print(CCX_DMT_PARSE, "Reading header objects\n");
 
-		while (current_position < asf_data_container.parsebuf + asf_data_container.HeaderObjectSize)
+		while (curpos < asf_data_container.parsebuf + asf_data_container.HeaderObjectSize)
 		{
-			int64_t hpobjectsize = *((int64_t*)(current_position+16)); // Local
+			int64_t hpobjectsize = *((int64_t*)(curpos+16)); // Local
 
-			if( !memcmp(current_position, ASF_FILE_PROPERTIES, 16 ) )
+			if( !memcmp(curpos, ASF_FILE_PROPERTIES, 16 ) )
 			{
 				// Mandatory Object, only one.
 				dbg_print(CCX_DMT_PARSE, "\nFile Properties Object     (size: %lld)\n", hpobjectsize);
 
-				asf_data_container.FileSize = *((int64_t*)(current_position + 40));
-				data_packets_count = *((int64_t*)(current_position+56));
-				broadcast_flag = 0x1 & current_position[88];
-				seekable_flag = 0x2 & current_position[88];
-				min_packet_size = *((uint32_t*)(current_position+92));
-				max_packet_size = *((uint32_t*)(current_position+96));
+				asf_data_container.FileSize = *((int64_t*)(curpos + 40));
+				DataPacketsCount = *((int64_t*)(curpos+56));
+				BroadcastFlag = 0x1 & curpos[88];
+				SeekableFlag = 0x2 & curpos[88];
+				MinPacketSize = *((uint32_t*)(curpos+92));
+				MaxPacketSize = *((uint32_t*)(curpos+96));
 
-				dbg_print(CCX_DMT_PARSE, "FileSize: %lld   Packet count: %lld\n", asf_data_container.FileSize, data_packets_count);
-				dbg_print(CCX_DMT_PARSE, "Broadcast: %d - Seekable: %d\n", broadcast_flag, seekable_flag);
-				dbg_print(CCX_DMT_PARSE, "MiDPS: %d   MaDPS: %d\n", min_packet_size, max_packet_size);
+				dbg_print(CCX_DMT_PARSE, "FileSize: %lld   Packet count: %lld\n", asf_data_container.FileSize, DataPacketsCount);
+				dbg_print(CCX_DMT_PARSE, "Broadcast: %d - Seekable: %d\n", BroadcastFlag, SeekableFlag);
+				dbg_print(CCX_DMT_PARSE, "MiDPS: %d   MaDPS: %d\n", MinPacketSize, MaxPacketSize);
 
 			}
-			else if( !memcmp(current_position,ASF_STREAM_PROPERTIES, 16 ) )
+			else if( !memcmp(curpos,ASF_STREAM_PROPERTIES, 16 ) )
 			{
 				dbg_print(CCX_DMT_PARSE, "\nStream Properties Object     (size: %lld)\n", hpobjectsize);
-				if( !memcmp(current_position+24, ASF_VIDEO_MEDIA, 16 ) )
+				if( !memcmp(curpos+24, ASF_VIDEO_MEDIA, 16 ) )
 				{
-					asf_data_container.StreamProperties.VideoStreamNumber = *(current_position + 72) & 0x7F;
+					asf_data_container.StreamProperties.VideoStreamNumber = *(curpos + 72) & 0x7F;
 					dbg_print(CCX_DMT_PARSE, "Stream Type: ASF_Video_Media\n");
 					dbg_print(CCX_DMT_PARSE, "Video Stream Number: %d\n", asf_data_container.StreamProperties.VideoStreamNumber);
 
 				}
-				else if( !memcmp(current_position+24, ASF_AUDIO_MEDIA, 16 ) )
+				else if( !memcmp(curpos+24, ASF_AUDIO_MEDIA, 16 ) )
 				{
-					asf_data_container.StreamProperties.AudioStreamNumber = *(current_position + 72) & 0x7F;
+					asf_data_container.StreamProperties.AudioStreamNumber = *(curpos + 72) & 0x7F;
 					dbg_print(CCX_DMT_PARSE, "Stream Type: ASF_Audio_Media\n");
 					dbg_print(CCX_DMT_PARSE, "Audio Stream Number: %d\n", asf_data_container.StreamProperties.AudioStreamNumber);
 				}
 				else
 				{
 					dbg_print(CCX_DMT_PARSE, "Stream Type: %s\n",
-							gui_data_string(current_position+24));
-					dbg_print(CCX_DMT_PARSE, "Stream Number: %d\n", *(current_position+72) & 0x7F );
+							gui_data_string(curpos+24));
+					dbg_print(CCX_DMT_PARSE, "Stream Number: %d\n", *(curpos+72) & 0x7F );
 				}
 			}
-			else if( !memcmp(current_position,ASF_HEADER_EXTENSION, 16 ) )
+			else if( !memcmp(curpos,ASF_HEADER_EXTENSION, 16 ) )
 			{
 				dbg_print(CCX_DMT_PARSE, "\nHeader Extension Object     (size: %lld)\n", hpobjectsize);
 
-				int32_t header_extension_data_size = *((uint32_t*)(current_position+42));
+				int32_t HeaderExtensionDataSize = *((uint32_t*)(curpos+42));
 				// Process Header Extension Data
-				if ( header_extension_data_size )
+				if ( HeaderExtensionDataSize )
 				{
-					unsigned char *header_current_position=current_position+46;
+					unsigned char *hecurpos=curpos+46;
 
-					if ( header_extension_data_size != hpobjectsize - 46 )
-						fatal(EXIT_NOT_CLASSIFIED, "header_extension_data_size size wrong");
+					if ( HeaderExtensionDataSize != hpobjectsize - 46 )
+						fatal(EXIT_NOT_CLASSIFIED, "HeaderExtensionDataSize size wrong");
 
 					dbg_print(CCX_DMT_PARSE, "\nReading Header Extension Sub-Objects\n");
-					while( header_current_position < current_position+46 + header_extension_data_size )
+					while( hecurpos < curpos+46 + HeaderExtensionDataSize )
 					{
-						int64_t header_object_size = *((int64_t*)(header_current_position+16)); // Local
+						int64_t heobjectsize = *((int64_t*)(hecurpos+16)); // Local
 
-						if( !memcmp(header_current_position,ASF_EXTENDED_STREAM_PROPERTIES, 16 ) )
+						if( !memcmp(hecurpos,ASF_EXTENDED_STREAM_PROPERTIES, 16 ) )
 						{
-							dbg_print(CCX_DMT_PARSE, "\nExtended Stream Properties Object     (size: %lld)\n", header_object_size);
-							int stream_number = *((uint16_t*)(header_current_position+72));
-							int stream_name_count = *((uint16_t*)(header_current_position+84));
-							int payload_ext_system_count = *((uint16_t*)(header_current_position+86));
+							dbg_print(CCX_DMT_PARSE, "\nExtended Stream Properties Object     (size: %lld)\n", heobjectsize);
+							int StreamNumber = *((uint16_t*)(hecurpos+72));
+							int StreamNameCount = *((uint16_t*)(hecurpos+84));
+							int PayloadExtensionSystemCount = *((uint16_t*)(hecurpos+86));
 
-							unsigned char *stream_prop_position=header_current_position+88;
+							unsigned char *estreamproppos=hecurpos+88;
 
-							int stream_name_length;
+							int streamnamelength;
 
 							dbg_print(CCX_DMT_PARSE, "Stream Number: %d NameCount: %d  ESCount: %d\n",
-									stream_number, stream_name_count, payload_ext_system_count);
+									StreamNumber, StreamNameCount, PayloadExtensionSystemCount);
 
-							if ( stream_number >= STREAMNUM )
+							if ( StreamNumber >= STREAMNUM )
 								fatal(CCX_COMMON_EXIT_BUG_BUG, "STREAMNUM too small. Send bug report!/n");
 
-							for(int i=0; i<stream_name_count; i++)
+							for(int i=0; i<StreamNameCount; i++)
 							{
 								dbg_print(CCX_DMT_PARSE,"%2d. Stream Name Field\n",i);
-								stream_name_length=*((uint16_t*)(stream_prop_position+2));
-								stream_prop_position+=4+stream_name_length;
+								streamnamelength=*((uint16_t*)(estreamproppos+2));
+								estreamproppos+=4+streamnamelength;
 							}
-							int ext_system_data_size;
-							int ext_system_info_length;
+							int extensionsystemdatasize;
+							int extensionsysteminfolength;
 
-							if ( payload_ext_system_count > PAYEXTNUM )
+							if ( PayloadExtensionSystemCount > PAYEXTNUM )
 								fatal(CCX_COMMON_EXIT_BUG_BUG, "PAYEXTNUM too small. Send bug report!/n");
 
-							for(int i=0; i<payload_ext_system_count; i++)
+							for(int i=0; i<PayloadExtensionSystemCount; i++)
 							{
-								ext_system_data_size = *((uint16_t*)(stream_prop_position+16));
-								ext_system_info_length = *((uint32_t*)(stream_prop_position+18));
+								extensionsystemdatasize = *((uint16_t*)(estreamproppos+16));
+								extensionsysteminfolength = *((uint32_t*)(estreamproppos+18));
 
-								asf_data_container.PayloadExtSize[stream_number][i] = ext_system_data_size;
+								asf_data_container.PayloadExtSize[StreamNumber][i] = extensionsystemdatasize;
 
 								dbg_print(CCX_DMT_PARSE,"%2d. Payload Extension GUID: %s Size %d Info Length %d\n",
-										i,gui_data_string(stream_prop_position+0),
-										ext_system_data_size,
-										ext_system_info_length);
+										i,gui_data_string(estreamproppos+0),
+										extensionsystemdatasize,
+										extensionsysteminfolength);
 
 								// For DVR-MS presentation timestamp
-								if( !memcmp(stream_prop_position, DVRMS_PTS, 16 ) )
+								if( !memcmp(estreamproppos, DVRMS_PTS, 16 ) )
 								{
 									dbg_print(CCX_DMT_PARSE, "Found DVRMS_PTS\n");
-									asf_data_container.PayloadExtPTSEntry[stream_number] = i;
+									asf_data_container.PayloadExtPTSEntry[StreamNumber] = i;
 								}
 
-								stream_prop_position+=22+ext_system_info_length;
+								estreamproppos+=22+extensionsysteminfolength;
 							}
 
 							// Now, there can be a Stream Properties Object.  The only way to
 							// find out is to check if there are bytes left in the current
 							// object.
-							if ( (stream_prop_position - header_current_position) < header_object_size )
+							if ( (estreamproppos - hecurpos) < heobjectsize )
 							{
-								int64_t stream_prop_object_size = *((int64_t*)(stream_prop_position+16)); // Local
-								if( memcmp(stream_prop_position, ASF_STREAM_PROPERTIES, 16 ) )
+								int64_t spobjectsize = *((int64_t*)(estreamproppos+16)); // Local
+								if( memcmp(estreamproppos, ASF_STREAM_PROPERTIES, 16 ) )
 									fatal(EXIT_NOT_CLASSIFIED, "Stream Properties Object expected\n");
 
-								if( !memcmp(stream_prop_position+24, ASF_VIDEO_MEDIA, 16 ) )
+								if( !memcmp(estreamproppos+24, ASF_VIDEO_MEDIA, 16 ) )
 								{
 									dbg_print(CCX_DMT_PARSE, "Stream Type: ASF_Video_Media (size: %lld)\n",
-											stream_prop_object_size);
-									asf_data_container.StreamProperties.VideoStreamNumber = stream_number;
+											spobjectsize);
+									asf_data_container.StreamProperties.VideoStreamNumber = StreamNumber;
 								}
-								else if( !memcmp(stream_prop_position+24, ASF_AUDIO_MEDIA, 16 ) )
+								else if( !memcmp(estreamproppos+24, ASF_AUDIO_MEDIA, 16 ) )
 								{
 									dbg_print(CCX_DMT_PARSE, "Stream Type: ASF_Audio_Media (size: %lld)\n",
-											stream_prop_object_size);
-									asf_data_container.StreamProperties.AudioStreamNumber = stream_number;
+											spobjectsize);
+									asf_data_container.StreamProperties.AudioStreamNumber = StreamNumber;
 								}
-								else if( !memcmp(stream_prop_position+24, ASF_BINARY_MEDIA, 16 ) )
+								else if( !memcmp(estreamproppos+24, ASF_BINARY_MEDIA, 16 ) )
 								{
 									// dvr-ms files identify audio streams as binary streams
 									// but use the "major media type" accordingly to identify
 									// the steam.  (There might be other audio identifiers.)
-									if( !memcmp(stream_prop_position+78, DVRMS_AUDIO, 16 ) ) {
+									if( !memcmp(estreamproppos+78, DVRMS_AUDIO, 16 ) ) {
 										dbg_print(CCX_DMT_PARSE, "Binary media: DVR-MS Audio Stream (size: %lld)\n",
-												stream_prop_object_size);
+												spobjectsize);
 									}
-									else if( !memcmp(stream_prop_position+78, DVRMS_NTSC, 16 ) )
+									else if( !memcmp(estreamproppos+78, DVRMS_NTSC, 16 ) )
 									{
 										dbg_print(CCX_DMT_PARSE, "Binary media: NTSC captions (size: %lld)\n",
-												stream_prop_object_size);
-										asf_data_container.StreamProperties.CaptionStreamNumber = stream_number;
+												spobjectsize);
+										asf_data_container.StreamProperties.CaptionStreamNumber = StreamNumber;
 										asf_data_container.StreamProperties.CaptionStreamStyle = 1;
 
 									}
-									else if( !memcmp(stream_prop_position+78, DVRMS_ATSC, 16 ) )
+									else if( !memcmp(estreamproppos+78, DVRMS_ATSC, 16 ) )
 									{
 										dbg_print(CCX_DMT_PARSE, "Binary media: ATSC captions (size: %lld)\n",
-												stream_prop_object_size);
-										asf_data_container.StreamProperties.CaptionStreamNumber = stream_number;
+												spobjectsize);
+										asf_data_container.StreamProperties.CaptionStreamNumber = StreamNumber;
 										asf_data_container.StreamProperties.CaptionStreamStyle = 2;
 									}
 									else
 									{
 										dbg_print(CCX_DMT_PARSE, "Binary media: Major Media Type GUID: %s (size: %lld)\n",
-												gui_data_string(stream_prop_position+78), stream_prop_object_size);
+												gui_data_string(estreamproppos+78), spobjectsize);
 									}
 								}
 								else
 								{
 									dbg_print(CCX_DMT_PARSE, "Unknown Type GUID: %s (size: %lld)\n",
-											gui_data_string(stream_prop_position+24), stream_prop_object_size);
+											gui_data_string(estreamproppos+24), spobjectsize);
 								}
 							}
 							else
@@ -384,122 +384,122 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 							}
 
 						}
-						else if( !memcmp(header_current_position,ASF_METADATA, 16 ) )
+						else if( !memcmp(hecurpos,ASF_METADATA, 16 ) )
 						{
-							dbg_print(CCX_DMT_PARSE, "\nMetadata Object     (size: %lld)\n", header_object_size);
+							dbg_print(CCX_DMT_PARSE, "\nMetadata Object     (size: %lld)\n", heobjectsize);
 						}
-						else if( !memcmp(header_current_position,ASF_METADATA_LIBRARY, 16 ) )
+						else if( !memcmp(hecurpos,ASF_METADATA_LIBRARY, 16 ) )
 						{
-							dbg_print(CCX_DMT_PARSE, "\nMetadata Library Object     (size: %lld)\n", header_object_size);
+							dbg_print(CCX_DMT_PARSE, "\nMetadata Library Object     (size: %lld)\n", heobjectsize);
 						}
-						else if( !memcmp(header_current_position,ASF_COMPATIBILITY2, 16 ) )
+						else if( !memcmp(hecurpos,ASF_COMPATIBILITY2, 16 ) )
 						{
-							dbg_print(CCX_DMT_PARSE, "\nCompatibility Object 2     (size: %lld)\n", header_object_size);
+							dbg_print(CCX_DMT_PARSE, "\nCompatibility Object 2     (size: %lld)\n", heobjectsize);
 						}
-						else if( !memcmp(header_current_position,ASF_PADDING, 16 ) )
+						else if( !memcmp(hecurpos,ASF_PADDING, 16 ) )
 						{
-							dbg_print(CCX_DMT_PARSE, "\nPadding Object     (size: %lld)\n", header_object_size);
+							dbg_print(CCX_DMT_PARSE, "\nPadding Object     (size: %lld)\n", heobjectsize);
 						}
 						else
 						{
 							dbg_print(CCX_DMT_PARSE, "\nGUID: %s  size: %lld\n",
-									gui_data_string(header_current_position), header_object_size);
-							dump(CCX_DMT_PARSE, header_current_position, 16, 0, 0);
+									gui_data_string(hecurpos), heobjectsize);
+							dump(CCX_DMT_PARSE, hecurpos, 16, 0, 0);
 						}
 
-						header_current_position += header_object_size;
+						hecurpos += heobjectsize;
 					}
-					if (header_current_position - (current_position+46) != header_extension_data_size)
+					if (hecurpos - (curpos+46) != HeaderExtensionDataSize)
 						fatal(EXIT_NOT_CLASSIFIED, "HE Parsing problem: read bytes %ld != header length %lld\nAbort!\n",
-								(long)(header_current_position - (current_position+46)), header_extension_data_size);
+								(long)(hecurpos - (curpos+46)), HeaderExtensionDataSize);
 				}
 				dbg_print(CCX_DMT_PARSE, "\nHeader Extension Object  -  End\n");
 
 			}
-			else if( !memcmp(current_position,ASF_CONTENT_DESCRIPTION, 16 ) )
+			else if( !memcmp(curpos,ASF_CONTENT_DESCRIPTION, 16 ) )
 			{
 				dbg_print(CCX_DMT_PARSE, "\nContend Description Object     (size: %lld)\n", hpobjectsize);
 			}
-			else if( !memcmp(current_position,ASF_EXTENDED_CONTENT_DESCRIPTION, 16 ) )
+			else if( !memcmp(curpos,ASF_EXTENDED_CONTENT_DESCRIPTION, 16 ) )
 			{
 				dbg_print(CCX_DMT_PARSE, "\nExtended Content Description Object     (size: %lld)\n", hpobjectsize);
 
-				int content_descriptor_count = *((uint16_t*)(current_position+24));
-				unsigned char *ext_content_position=current_position+26;
-				int descriptor_name_length;
-				int descriptor_value_data_type;
-				int descriptor_value_length;
-				unsigned char *extended_description_value;
+				int ContentDescriptorsCount = *((uint16_t*)(curpos+24));
+				unsigned char *econtentpos=curpos+26;
+				int DescriptorNameLength;
+				int DescriptorValueDataType;
+				int DescriptorValueLength;
+				unsigned char *edescval;
 
-				for(int i=0; i<content_descriptor_count; i++)
+				for(int i=0; i<ContentDescriptorsCount; i++)
 				{
-					descriptor_name_length = *((uint16_t*)(ext_content_position));
-					descriptor_value_data_type = *((uint16_t*)(ext_content_position+2+descriptor_name_length));
-					descriptor_value_length = *((uint16_t*)(ext_content_position+4+descriptor_name_length));
-					extended_description_value = ext_content_position+6+descriptor_name_length;
+					DescriptorNameLength = *((uint16_t*)(econtentpos));
+					DescriptorValueDataType = *((uint16_t*)(econtentpos+2+DescriptorNameLength));
+					DescriptorValueLength = *((uint16_t*)(econtentpos+4+DescriptorNameLength));
+					edescval = econtentpos+6+DescriptorNameLength;
 
-					dbg_print(CCX_DMT_PARSE, "%3d. %ls = ",i,(wchar_t*)(ext_content_position+2));
-					switch(descriptor_value_data_type)
+					dbg_print(CCX_DMT_PARSE, "%3d. %ls = ",i,(wchar_t*)(econtentpos+2));
+					switch(DescriptorValueDataType)
 					{
 						case 0: // Unicode string
-							dbg_print(CCX_DMT_PARSE, "%ls (Unicode)\n",(wchar_t*)extended_description_value);
+							dbg_print(CCX_DMT_PARSE, "%ls (Unicode)\n",(wchar_t*)edescval);
 							break;
 						case 1: // byte string
 							dbg_print(CCX_DMT_PARSE, ":");
-							for(int ii=0; ii<descriptor_value_length && ii<9; ii++)
+							for(int ii=0; ii<DescriptorValueLength && ii<9; ii++)
 							{
-								dbg_print(CCX_DMT_PARSE, "%02X:",*((unsigned char*)(extended_description_value+ii)));
+								dbg_print(CCX_DMT_PARSE, "%02X:",*((unsigned char*)(edescval+ii)));
 							}
-							if (descriptor_value_length>8)
-								dbg_print(CCX_DMT_PARSE, "skipped %d more",descriptor_value_length-8);
+							if (DescriptorValueLength>8)
+								dbg_print(CCX_DMT_PARSE, "skipped %d more",DescriptorValueLength-8);
 							dbg_print(CCX_DMT_PARSE, " (BYTES)\n");
 							break;
 						case 2: // BOOL
-							dbg_print(CCX_DMT_PARSE, "%d (BOOL)\n",*((int32_t*)extended_description_value));
+							dbg_print(CCX_DMT_PARSE, "%d (BOOL)\n",*((int32_t*)edescval));
 							break;
 						case 3: // DWORD
-							dbg_print(CCX_DMT_PARSE, "%u (DWORD)\n",*((uint32_t*)extended_description_value));
+							dbg_print(CCX_DMT_PARSE, "%u (DWORD)\n",*((uint32_t*)edescval));
 							break;
 						case 4: // QWORD
-							dbg_print(CCX_DMT_PARSE, "%llu (QWORD)\n",*((uint64_t*)extended_description_value));
+							dbg_print(CCX_DMT_PARSE, "%llu (QWORD)\n",*((uint64_t*)edescval));
 							break;
 						case 5: // WORD
-							dbg_print(CCX_DMT_PARSE, "%u (WORD)\n",(int)*((uint16_t*)extended_description_value));
+							dbg_print(CCX_DMT_PARSE, "%u (WORD)\n",(int)*((uint16_t*)edescval));
 							break;
 						default:
 							fatal(CCX_COMMON_EXIT_BUG_BUG, "Wrong type ...\n");
 							break;
 					}
 
-					if(!memcmp(ext_content_position+2, L"WM/VideoClosedCaptioning"
-								,descriptor_name_length))
+					if(!memcmp(econtentpos+2, L"WM/VideoClosedCaptioning"
+								,DescriptorNameLength))
 					{
 						// This flag would be really usefull if it would be
 						// reliable - it isn't.
-						asf_data_container.VideoClosedCaptioningFlag = *((int32_t*)extended_description_value);
+						asf_data_container.VideoClosedCaptioningFlag = *((int32_t*)edescval);
 						dbg_print(CCX_DMT_PARSE, "Found WM/VideoClosedCaptioning flag: %d\n",
 								asf_data_container.VideoClosedCaptioningFlag);
 					}
 
-					ext_content_position+=6+descriptor_name_length+descriptor_value_length;
+					econtentpos+=6+DescriptorNameLength+DescriptorValueLength;
 				}
 			}
-			else if( !memcmp(current_position,ASF_STREAM_BITRATE_PROPERTIES, 16 ) )
+			else if( !memcmp(curpos,ASF_STREAM_BITRATE_PROPERTIES, 16 ) )
 			{
 				dbg_print(CCX_DMT_PARSE, "\nStream Bitrate Properties Object     (size: %lld)\n", hpobjectsize);
 			}
 			else
 			{
 				dbg_print(CCX_DMT_PARSE, "\nGUID: %s  size: %lld\n",
-						gui_data_string(current_position), hpobjectsize);
-				dump(CCX_DMT_PARSE, current_position, 16, 0, 0);
+						gui_data_string(curpos), hpobjectsize);
+				dump(CCX_DMT_PARSE, curpos, 16, 0, 0);
 			}
 
-			current_position += hpobjectsize;
+			curpos += hpobjectsize;
 		}
-		if (current_position - asf_data_container.parsebuf != asf_data_container.HeaderObjectSize)
+		if (curpos - asf_data_container.parsebuf != asf_data_container.HeaderObjectSize)
 			fatal(EXIT_NOT_CLASSIFIED, "Parsing problem: read bytes %ld != header length %lld\nAbort!\n",
-					(long)(current_position - asf_data_container.parsebuf), asf_data_container.HeaderObjectSize);
+					(long)(curpos - asf_data_container.parsebuf), asf_data_container.HeaderObjectSize);
 
 		if (asf_data_container.StreamProperties.VideoStreamNumber == 0)
 			fatal(EXIT_NOT_CLASSIFIED, "No Video Stream Properties Object found.  Unable to continue ...\n");
@@ -541,9 +541,9 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 
 		// When reading "Payload parsing information" it occured that "Packet Lenght"
 		// was not set (Packet Length Type 00) and for "Single Payloads" this means
-		// the Payload Data Length cannot be infered.  Use min_packet_size, max_packet_size instead.
-		if ((min_packet_size > 0) && (min_packet_size == max_packet_size))
-			asf_data_container.PacketSize = min_packet_size;
+		// the Payload Data Length cannot be infered.  Use MinPacketSize, MaxPacketSize instead.
+		if ((MinPacketSize > 0) && (MinPacketSize == MaxPacketSize))
+			asf_data_container.PacketSize = MinPacketSize;
 
 		// Now the Data Object, except for the packages
 		result = buffered_read(ctx->demux_ctx, asf_data_container.parsebuf, 50); // No realloc needed.
@@ -583,7 +583,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		{
 			int ecinfo = 0;
 
-			data_packet_length = 0;
+			datapacketlength = 0;
 
 			dbg_print(CCX_DMT_PARSE, "\nReading packet %d/%d\n", asf_data_container.datapacketcur + 1, asf_data_container.TotalDataPackets);
 
@@ -597,7 +597,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				end_of_file=1;
 				return payload_read;
 			}
-			data_packet_length+=1;
+			datapacketlength+=1;
 			if (*asf_data_container.parsebuf & 0x80)
 			{
 				int ecdatalength = *asf_data_container.parsebuf & 0x0F; // Small, no realloc needed
@@ -614,7 +614,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 					end_of_file=1;
 					return payload_read;
 				}
-				data_packet_length+=ecdatalength;
+				datapacketlength+=ecdatalength;
 				if (asf_data_container.parsebuf[1] & 0x0F)
 					fatal(EXIT_NOT_CLASSIFIED, "Error correction present.  Unable to continue ...\n");
 			}
@@ -635,15 +635,15 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				end_of_file=1;
 				return payload_read;
 			}
-			data_packet_length+=2;
+			datapacketlength+=2;
 
 			asf_data_container.MultiplePayloads = *asf_data_container.parsebuf & 0x01;
 
-			sequence_type = (*asf_data_container.parsebuf >> 1) & 0x03;
-			sequence_type = ASF_TypeLength(sequence_type);
+			SequenceType = (*asf_data_container.parsebuf >> 1) & 0x03;
+			SequenceType = ASF_TypeLength(SequenceType);
 
-			padding_l_type = (*asf_data_container.parsebuf >> 3) & 0x03;
-			padding_l_type = ASF_TypeLength(padding_l_type);
+			PaddingLType = (*asf_data_container.parsebuf >> 3) & 0x03;
+			PaddingLType = ASF_TypeLength(PaddingLType);
 
 			asf_data_container.PacketLType = (*asf_data_container.parsebuf >> 5) & 0x03;
 			asf_data_container.PacketLType = ASF_TypeLength(asf_data_container.PacketLType);
@@ -660,24 +660,24 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 			asf_data_container.StreamNumberLType = (asf_data_container.parsebuf[1] >> 6) & 0x03;
 			asf_data_container.StreamNumberLType = ASF_TypeLength(asf_data_container.StreamNumberLType);
 
-			payload_parser_size = asf_data_container.PacketLType + sequence_type + padding_l_type + 6;
+			payloadparsersize = asf_data_container.PacketLType + SequenceType + PaddingLType + 6;
 
-			result = buffered_read(ctx->demux_ctx, asf_data_container.parsebuf + 2, payload_parser_size); // No realloc needed
+			result = buffered_read(ctx->demux_ctx, asf_data_container.parsebuf + 2, payloadparsersize); // No realloc needed
 			ctx->demux_ctx->past += result;
 			asf_data_container.dobjectread += result;
-			if (result!=payload_parser_size)
+			if (result!=payloadparsersize)
 			{
 				mprint("Premature end of file!\n");
 				end_of_file=1;
 				return payload_read;
 			}
-			data_packet_length+=payload_parser_size;
+			datapacketlength+=payloadparsersize;
 
 			asf_data_container.PacketLength = asf_readval(asf_data_container.parsebuf + 2, asf_data_container.PacketLType);
-			sequence = asf_readval(asf_data_container.parsebuf + 2 + asf_data_container.PacketLType, sequence_type);
-			asf_data_container.PaddingLength = asf_readval(asf_data_container.parsebuf + 2 + asf_data_container.PacketLType + sequence_type, padding_l_type);
+			Sequence = asf_readval(asf_data_container.parsebuf + 2 + asf_data_container.PacketLType, SequenceType);
+			asf_data_container.PaddingLength = asf_readval(asf_data_container.parsebuf + 2 + asf_data_container.PacketLType + SequenceType, PaddingLType);
 			// Data Packet ms time stamp
-			send_time = *((uint32_t*)(asf_data_container.parsebuf + 2 + asf_data_container.PacketLType + sequence_type + padding_l_type));
+			SendTime = *((uint32_t*)(asf_data_container.parsebuf + 2 + asf_data_container.PacketLType + SequenceType + PaddingLType));
 
 			// If Packet Length is not set use global setting if possible
 			if (asf_data_container.PacketLength == 0)
@@ -689,8 +689,8 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 					fatal(EXIT_NOT_CLASSIFIED, "No idea how long the data packet will be. Abort.\n");
 			}
 
-			dbg_print(CCX_DMT_PARSE, "Lengths - Packet: %d / sequence %d / Padding %d\n",
-					asf_data_container.PacketLength, sequence, asf_data_container.PaddingLength);
+			dbg_print(CCX_DMT_PARSE, "Lengths - Packet: %d / Sequence %d / Padding %d\n",
+					asf_data_container.PacketLength, Sequence, asf_data_container.PaddingLength);
 
 			asf_data_container.PayloadLType = 0; // Payload Length Type. <>0 for multiple payloads
 			asf_data_container.PayloadLength = 0; // Payload Length (for multiple payloads)
@@ -709,7 +709,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 					end_of_file=1;
 					return payload_read;
 				}
-				data_packet_length+=1;
+				datapacketlength+=1;
 				asf_data_container.PayloadLType = (*plheader >> 6) & 0x03;
 				asf_data_container.PayloadLType = ASF_TypeLength(asf_data_container.PayloadLType);
 
@@ -737,49 +737,49 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				else
 					dbg_print(CCX_DMT_PARSE, "\nMultiple payloads %d/%d\n", asf_data_container.payloadcur + 1, asf_data_container.NumberOfPayloads);
 
-				int payload_header_size = 1 + asf_data_container.MediaNumberLType + asf_data_container.OffsetMediaLType + asf_data_container.ReplicatedLType;
+				int payloadheadersize = 1 + asf_data_container.MediaNumberLType + asf_data_container.OffsetMediaLType + asf_data_container.ReplicatedLType;
 
-				result = buffered_read(ctx->demux_ctx, asf_data_container.parsebuf, payload_header_size); // No realloc needed
+				result = buffered_read(ctx->demux_ctx, asf_data_container.parsebuf, payloadheadersize); // No realloc needed
 				ctx->demux_ctx->past += result;
 				asf_data_container.dobjectread += result;
-				if (result!=payload_header_size)
+				if (result!=payloadheadersize)
 				{
 					mprint("Premature end of file!\n");
 					end_of_file=1;
 					return payload_read;
 				}
-				data_packet_length+=payload_header_size;
+				datapacketlength+=payloadheadersize;
 
 				asf_data_container.PayloadStreamNumber = *asf_data_container.parsebuf & 0x7F;
 				asf_data_container.KeyFrame = (*asf_data_container.parsebuf & 0x80) && 1;
 
 				asf_data_container.PayloadMediaNumber = asf_readval(asf_data_container.parsebuf + 1, asf_data_container.MediaNumberLType);
-				offset_media_length = asf_readval(asf_data_container.parsebuf + 1 + asf_data_container.MediaNumberLType, asf_data_container.OffsetMediaLType);
-				replicated_length = asf_readval(asf_data_container.parsebuf + 1 + asf_data_container.MediaNumberLType + asf_data_container.OffsetMediaLType, asf_data_container.ReplicatedLType);
+				OffsetMediaLength = asf_readval(asf_data_container.parsebuf + 1 + asf_data_container.MediaNumberLType, asf_data_container.OffsetMediaLType);
+				ReplicatedLength = asf_readval(asf_data_container.parsebuf + 1 + asf_data_container.MediaNumberLType + asf_data_container.OffsetMediaLType, asf_data_container.ReplicatedLType);
 
-				if (replicated_length == 1)
+				if (ReplicatedLength == 1)
 					fatal(EXIT_NOT_CLASSIFIED, "Cannot handle compressed data...\n");
 
-				if ((long)replicated_length > asf_data_container.parsebufsize)
+				if ((long)ReplicatedLength > asf_data_container.parsebufsize)
 				{
-					asf_data_container.parsebuf = (unsigned char*)realloc(asf_data_container.parsebuf, replicated_length);
+					asf_data_container.parsebuf = (unsigned char*)realloc(asf_data_container.parsebuf, ReplicatedLength);
 					if (!asf_data_container.parsebuf)
 						fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
-					asf_data_container.parsebufsize = replicated_length;
+					asf_data_container.parsebufsize = ReplicatedLength;
 				}
-				result = buffered_read(ctx->demux_ctx, asf_data_container.parsebuf, (long)replicated_length);
+				result = buffered_read(ctx->demux_ctx, asf_data_container.parsebuf, (long)ReplicatedLength);
 				ctx->demux_ctx->past += result;
 				asf_data_container.dobjectread += result;
-				if (result!=replicated_length)
+				if (result!=ReplicatedLength)
 				{
 					mprint("Premature end of file!\n");
 					end_of_file=1;
 					return payload_read;
 				}
 				// Parse Replicated data
-				unsigned char *replicate_position = asf_data_container.parsebuf;
-				int media_object_size = 0;
-				int presentation_time_millis = 0; //Payload ms time stamp
+				unsigned char *reppos = asf_data_container.parsebuf;
+				int MediaObjectSize = 0;
+				int PresentationTimems = 0; //Payload ms time stamp
 				int extsize = 0;
 				// int32_t dwVersion = 0;
 				// int32_t unknown = 0;
@@ -787,35 +787,35 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				int64_t rtEnd = 0; // dvr-ms 100ns time stamp end
 
 				// Always at least 8 bytes long, see 7.3.1
-				media_object_size = *((uint16_t*)(asf_data_container.parsebuf));
-				presentation_time_millis = *((uint16_t*)(asf_data_container.parsebuf + 4));
-				replicate_position += 8;
+				MediaObjectSize = *((uint16_t*)(asf_data_container.parsebuf));
+				PresentationTimems = *((uint16_t*)(asf_data_container.parsebuf + 4));
+				reppos += 8;
 
 				dbg_print(CCX_DMT_PARSE, "Stream# %d[%d] Media# %d Offset/Size: %d/%d\n",
 						asf_data_container.PayloadStreamNumber, asf_data_container.KeyFrame, asf_data_container.PayloadMediaNumber,
-						offset_media_length, media_object_size);
+						OffsetMediaLength, MediaObjectSize);
 
 				// Loop over Payload Extension Systems
 				for (int i = 0; i<asf_data_container.PayloadExtPTSEntry[asf_data_container.PayloadStreamNumber]; i++)
 				{
 					if (asf_data_container.PayloadExtSize[asf_data_container.PayloadStreamNumber][i] == 0xffff)
 					{
-						extsize = *((uint16_t*)(replicate_position+0));
-						replicate_position += 2;
+						extsize = *((uint16_t*)(reppos+0));
+						reppos += 2;
 					}
 					else
 					{
 						extsize = asf_data_container.PayloadExtSize[asf_data_container.PayloadStreamNumber][i];
 					}
-					replicate_position += extsize;
+					reppos += extsize;
 					//printf("%2d. Ext. System - size: %d\n", i, extsize);
 				}
 				if (asf_data_container.PayloadExtPTSEntry[asf_data_container.PayloadStreamNumber] > 0)
 				{
-					// dwVersion = *((uint32_t*)(replicate_position+0));
-					// unknown = *((uint32_t*)(replicate_position+4));
-					rtStart = *((int64_t*)(replicate_position+8));
-					rtEnd = *((int64_t*)(replicate_position+16));
+					// dwVersion = *((uint32_t*)(reppos+0));
+					// unknown = *((uint32_t*)(reppos+4));
+					rtStart = *((int64_t*)(reppos+8));
+					rtEnd = *((int64_t*)(reppos+16));
 
 					//printf("dwVersion: %d    unknown: 0x%04X\n", dwVersion, unknown);
 				}
@@ -830,13 +830,13 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 
 				// print_mstime uses a static buffer
 				dbg_print(CCX_DMT_PARSE, "Stream #%d PacketTime: %s",
-						asf_data_container.PayloadStreamNumber, print_mstime_static(send_time));
+						asf_data_container.PayloadStreamNumber, print_mstime_static(SendTime));
 				dbg_print(CCX_DMT_PARSE,"   PayloadTime: %s",
-						print_mstime_static(presentation_time_millis));
+						print_mstime_static(PresentationTimems));
 				dbg_print(CCX_DMT_PARSE,"   dvr-ms PTS: %s+%lld\n",
 						print_mstime_static(rtStart/10000), (rtEnd-rtStart)/10000);
 
-				data_packet_length+=replicated_length;
+				datapacketlength+=ReplicatedLength;
 
 				// Only multiple payload packages have this value
 				if (asf_data_container.MultiplePayloads != 0)
@@ -856,21 +856,21 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				}
 				else
 				{
-					asf_data_container.PayloadLength = asf_data_container.PacketLength - data_packet_length - asf_data_container.PaddingLength;
+					asf_data_container.PayloadLength = asf_data_container.PacketLength - datapacketlength - asf_data_container.PaddingLength;
 				}
 				dbg_print(CCX_DMT_PARSE, "Size - Replicated %d + Payload %d = %d\n",
-						replicated_length, asf_data_container.PayloadLength, replicated_length + asf_data_container.PayloadLength);
+						ReplicatedLength, asf_data_container.PayloadLength, ReplicatedLength + asf_data_container.PayloadLength);
 
 				// Remember the last video time stamp - only when captions are separate
 				// from video stream.
 				if (asf_data_container.PayloadStreamNumber == asf_data_container.StreamProperties.VideoStreamNumber
 						&& asf_data_container.StreamProperties.DecodeStreamNumber != asf_data_container.StreamProperties.VideoStreamNumber
-						&& offset_media_length == 0)
+						&& OffsetMediaLength == 0)
 				{
 					asf_data_container.StreamProperties.prevVideoStreamMS = asf_data_container.StreamProperties.currVideoStreamMS;
 					asf_data_container.StreamProperties.currVideoStreamMS = asf_data_container.StreamProperties.VideoStreamMS;
 
-					// Use presentation_time_millis (send_time might also work) when the
+					// Use PresentationTimems (SendTime might also work) when the
 					// dvr-ms time stamp is not present.
 					if (asf_data_container.PayloadExtPTSEntry[asf_data_container.PayloadStreamNumber] > 0)
 					{
@@ -881,7 +881,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 					else
 					{
 						// Add 1ms to avoid 0ms start times getting rejected
-						asf_data_container.StreamProperties.VideoStreamMS = presentation_time_millis + 1;
+						asf_data_container.StreamProperties.VideoStreamMS = PresentationTimems + 1;
 					}
 					// This checks if there is a video time jump in the timeline
 					// between caption information.
@@ -896,12 +896,12 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 
 				// Remember the PTS values
 				if (asf_data_container.PayloadStreamNumber == asf_data_container.StreamProperties.DecodeStreamNumber
-						&& offset_media_length == 0)
+						&& OffsetMediaLength == 0)
 				{
 					asf_data_container.StreamProperties.prevDecodeStreamPTS = asf_data_container.StreamProperties.currDecodeStreamPTS;
 					asf_data_container.StreamProperties.currDecodeStreamPTS = asf_data_container.StreamProperties.DecodeStreamPTS;
 
-					// Use presentation_time_millis (send_time might also work) when the
+					// Use PresentationTimems (SendTime might also work) when the
 					// dvr-ms time stamp is not present.
 					if (asf_data_container.PayloadExtPTSEntry[asf_data_container.PayloadStreamNumber] > 0)
 					{
@@ -912,7 +912,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 					else
 					{
 						// Add 1ms to avoid 0ms start times getting rejected
-						asf_data_container.StreamProperties.DecodeStreamPTS = presentation_time_millis + 1;
+						asf_data_container.StreamProperties.DecodeStreamPTS = PresentationTimems + 1;
 					}
 
 					// Check the caption stream for jumps in the timeline. This
@@ -955,9 +955,9 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 
 			// Video streams need several packages to complete a PES.  Leave
 			// the loop when the next package starts a new Media Object.
-			if ( current_media_number != 0xFFFFFFFF  // Is initialized
+			if ( curmedianumber != 0xFFFFFFFF  // Is initialized
 					&& asf_data_container.PayloadStreamNumber == asf_data_container.StreamProperties.DecodeStreamNumber
-					&& asf_data_container.PayloadMediaNumber != current_media_number)
+					&& asf_data_container.PayloadMediaNumber != curmedianumber)
 			{
 				if (asf_data_container.StreamProperties.DecodeStreamNumber == asf_data_container.StreamProperties.CaptionStreamNumber)
 					dbg_print(CCX_DMT_PARSE, "\nCaption stream object");
@@ -975,7 +975,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 			// Read it!!
 			if (asf_data_container.PayloadStreamNumber == asf_data_container.StreamProperties.DecodeStreamNumber)
 			{
-				current_media_number = asf_data_container.PayloadMediaNumber; // Remember current value
+				curmedianumber = asf_data_container.PayloadMediaNumber; // Remember current value
 
 				// Read the data
 				dbg_print(CCX_DMT_PARSE, "Reading Stream #%d data ...\n", asf_data_container.PayloadStreamNumber);
