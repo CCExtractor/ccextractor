@@ -39,7 +39,7 @@ uint32_t asf_readval(void *val, int ltype)
 	return rval;
 }
 
-char *guidstr(void *val)
+char *gui_data_string(void *val)
 {
 	static char sbuf[40];
 
@@ -248,7 +248,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				else
 				{
 					dbg_print(CCX_DMT_PARSE, "Stream Type: %s\n",
-							guidstr(curpos+24));
+							gui_data_string(curpos+24));
 					dbg_print(CCX_DMT_PARSE, "Stream Number: %d\n", *(curpos+72) & 0x7F );
 				}
 			}
@@ -307,7 +307,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 								asf_data_container.PayloadExtSize[StreamNumber][i] = extensionsystemdatasize;
 
 								dbg_print(CCX_DMT_PARSE,"%2d. Payload Extension GUID: %s Size %d Info Length %d\n",
-										i,guidstr(estreamproppos+0),
+										i,gui_data_string(estreamproppos+0),
 										extensionsystemdatasize,
 										extensionsysteminfolength);
 
@@ -369,13 +369,13 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 									else
 									{
 										dbg_print(CCX_DMT_PARSE, "Binary media: Major Media Type GUID: %s (size: %lld)\n",
-												guidstr(estreamproppos+78), spobjectsize);
+												gui_data_string(estreamproppos+78), spobjectsize);
 									}
 								}
 								else
 								{
 									dbg_print(CCX_DMT_PARSE, "Unknown Type GUID: %s (size: %lld)\n",
-											guidstr(estreamproppos+24), spobjectsize);
+											gui_data_string(estreamproppos+24), spobjectsize);
 								}
 							}
 							else
@@ -403,7 +403,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 						else
 						{
 							dbg_print(CCX_DMT_PARSE, "\nGUID: %s  size: %lld\n",
-									guidstr(hecurpos), heobjectsize);
+									gui_data_string(hecurpos), heobjectsize);
 							dump(CCX_DMT_PARSE, hecurpos, 16, 0, 0);
 						}
 
@@ -491,7 +491,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 			else
 			{
 				dbg_print(CCX_DMT_PARSE, "\nGUID: %s  size: %lld\n",
-						guidstr(curpos), hpobjectsize);
+						gui_data_string(curpos), hpobjectsize);
 				dump(CCX_DMT_PARSE, curpos, 16, 0, 0);
 			}
 
