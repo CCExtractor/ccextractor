@@ -83,7 +83,7 @@ struct encoder_ctx *get_encoder_by_pn(struct lib_ccx_ctx *ctx, int pn)
 	struct  encoder_ctx *enc_ctx;
 	list_for_each_entry(enc_ctx, &ctx->enc_ctx_head, list, struct encoder_ctx)
 	{
-		if (enc_ctx->program_number == pn)
+		if (enc_ctx && enc_ctx->program_number == pn)
 			return enc_ctx;
 	}
 	return NULL;
