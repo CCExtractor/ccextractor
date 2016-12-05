@@ -73,8 +73,8 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 
 	ms_end = data->end_time;
 
-	mstotime (ms_start,&h1,&m1,&s1,&ms1);
-	mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
+	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 	char timeline[128];
 	sprintf (timeline, "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
 			 h1, m1, s1, ms1 / 10, h2, m2, s2, ms2 / 10);

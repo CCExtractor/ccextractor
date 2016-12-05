@@ -105,7 +105,7 @@ ccx_dtvcc_pen_attribs ccx_dtvcc_default_pen_attribs =
 };
 
 ccx_dtvcc_window_attribs ccx_dtvcc_predefined_window_styles[] =
-{	
+{
 	{0,0,0,0,0,0,0,0,0,0, 0}, // Dummy, unused (position 0 doesn't use the table)
 	{//1 - NTSC Style PopUp Captions
 		CCX_DTVCC_WINDOW_JUSTIFY_LEFT,
@@ -296,8 +296,8 @@ void _dtvcc_window_dump(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *wi
 	char tbuf1[SUBLINESIZE],
 			tbuf2[SUBLINESIZE];
 
-	print_mstime2buf(window->time_ms_show, tbuf1);
-	print_mstime2buf(window->time_ms_hide, tbuf2);
+	print_mstime_buff(window->time_ms_show, "%02u:%02u:%02u:%03u", tbuf1);
+	print_mstime_buff(window->time_ms_hide, "%02u:%02u:%02u:%03u", tbuf2);
 
 	ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "\r%s --> %s\n", tbuf1, tbuf2);
 	for (int i = 0; i < CCX_DTVCC_MAX_ROWS; i++)
@@ -366,7 +366,7 @@ void _dtvcc_window_update_time_show(ccx_dtvcc_window *window, struct ccx_common_
 {
 	char buf[128];
 	window->time_ms_show = get_visible_start(timing, 3);
-	print_mstime2buf(window->time_ms_show, buf);
+	print_mstime_buff(window->time_ms_show, "%02u:%02u:%02u:%03u", buf);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] "
 			"[W-%d] show time updated to %s\n", window->number, buf);
 }
@@ -375,7 +375,7 @@ void _dtvcc_window_update_time_hide(ccx_dtvcc_window *window, struct ccx_common_
 {
 	char buf[128];
 	window->time_ms_hide = get_visible_end(timing, 3);
-	print_mstime2buf(window->time_ms_hide, buf);
+	print_mstime_buff(window->time_ms_hide, "%02u:%02u:%02u:%03u", buf);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] "
 			"[W-%d] hide time updated to %s\n", window->number, buf);
 }
@@ -383,8 +383,8 @@ void _dtvcc_window_update_time_hide(ccx_dtvcc_window *window, struct ccx_common_
 void _dtvcc_screen_update_time_show(dtvcc_tv_screen *tv, LLONG time)
 {
 	char buf1[128], buf2[128];
-	print_mstime2buf(tv->time_ms_show, buf1);
-	print_mstime2buf(time, buf2);
+	print_mstime_buff(tv->time_ms_show, "%02u:%02u:%02u:%03u", buf1);
+	print_mstime_buff(time, "%02u:%02u:%02u:%03u", buf2);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] "
 			"Screen show time: %s -> %s\n", buf1, buf2);
 
@@ -397,8 +397,8 @@ void _dtvcc_screen_update_time_show(dtvcc_tv_screen *tv, LLONG time)
 void _dtvcc_screen_update_time_hide(dtvcc_tv_screen *tv, LLONG time)
 {
 	char buf1[128], buf2[128];
-	print_mstime2buf(tv->time_ms_hide, buf1);
-	print_mstime2buf(time, buf2);
+	print_mstime_buff(tv->time_ms_hide, "%02u:%02u:%02u:%03u", buf1);
+	print_mstime_buff(time, "%02u:%02u:%02u:%03u", buf2);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] "
 			"Screen hide time: %s -> %s\n", buf1, buf2);
 
@@ -897,9 +897,9 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 		pen_style = 1;
 	}
 
-	//Apply windows attribute presets 
+	//Apply windows attribute presets
 	if (win_style > 0 && win_style < 8)
-	
+
 		window->win_style = win_style; {
 		window->attribs.border_color = ccx_dtvcc_predefined_window_styles[win_style].border_color;
 		window->attribs.border_type = ccx_dtvcc_predefined_window_styles[win_style].border_type;
@@ -913,7 +913,7 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 		window->attribs.scroll_direction = ccx_dtvcc_predefined_window_styles[win_style].scroll_direction;
 		window->attribs.word_wrap = ccx_dtvcc_predefined_window_styles[win_style].word_wrap;
 	}
-		
+
 	if (pen_style > 0)
 	{
 		//TODO apply static pen_style preset
@@ -955,7 +955,7 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 			_dtvcc_window_apply_style(window, &ccx_dtvcc_predefined_window_styles[0]);
 		}
 	}
-	else	
+	else
 	{
 		if (do_clear_window)
 			_dtvcc_window_clear_text(window);
@@ -1312,7 +1312,7 @@ int _dtvcc_handle_C1(ccx_dtvcc_ctx *dtvcc,
 {
 	struct CCX_DTVCC_S_COMMANDS_C1 com = DTVCC_COMMANDS_C1[data[0] - 0x80];
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] C1: %s | [%02X]  [%s] [%s] (%d)\n",
-			print_mstime(get_fts(dtvcc->timing, 3)),
+			print_mstime_static(get_fts(dtvcc->timing, 3)),
 			data[0], com.name, com.description, com.length);
 
 	if (com.length > data_length)

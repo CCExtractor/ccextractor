@@ -17,8 +17,8 @@ int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_sta
 	if(!string || !string[0])
 		return 0;
 
-	mstotime (ms_start,&h1,&m1,&s1,&ms1);
-	mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
+	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 	context->srt_counter++;
 	sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
 	used = encode_line(context, context->buffer,(unsigned char *) timeline);
@@ -118,8 +118,8 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	{
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 		{
-			mstotime (ms_start,&h1,&m1,&s1,&ms1);
-			mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+			millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
+			millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 			context->srt_counter++;
 			sprintf(timeline, "%u\r\n", context->srt_counter);
 			used = encode_line(context, context->buffer,(unsigned char *) timeline);
@@ -202,8 +202,8 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 
 	ms_end = data->end_time;
 
-	mstotime (ms_start,&h1,&m1,&s1,&ms1);
-	mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
+	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 	char timeline[128];
 	context->srt_counter++;
 	sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
