@@ -115,6 +115,11 @@ void write_spumux_header(struct encoder_ctx *ctx, struct ccx_s_write *out)
 		out->spupng_data = spunpg_init(out);
 
 	spupng_write_header((struct spupng_t*)out->spupng_data, ctx->multiple_files, ctx->first_input_file);
+
+	if (ctx->write_format == CCX_OF_RAW) {		// WARN: Memory leak with this flag, free by hand. Maybe bug.
+		spupng_write_footer(out->spupng_data);
+		spunpg_free(out->spupng_data);
+	}
 }
 
 void write_spumux_footer(struct ccx_s_write *out)

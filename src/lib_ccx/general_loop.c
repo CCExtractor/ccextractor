@@ -985,6 +985,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 	mprint ("Number of NAL HRD: %ld\n",dec_ctx->avc_ctx->num_nal_hrd);
 	mprint ("Number of jump-in-frames: %ld\n",dec_ctx->avc_ctx->num_jump_in_frames);
 	mprint ("Number of num_unexpected_sei_length: %ld", dec_ctx->avc_ctx->num_unexpected_sei_length);
+		free(dec_ctx->xds_ctx);
 	}
 
 	delete_datalist(datalist);
