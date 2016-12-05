@@ -4,7 +4,7 @@
 
 CCExtractor is a tool that produces subtitles from TV use. Global accessibility (all users, all content, all countries) is the goal. With so many different formats, this is a constantly moving target, but we intend to keep up with all sources and formats.
 
-Carlos's version (mainstream) is the most stable branch.
+Carlos' version (mainstream) is the most stable branch.
 
 ## Installation and Usage
 
@@ -41,9 +41,9 @@ When creating a ticket:
 - Please use English. 
 - It goes without saying, we like polite people.
 
-You can also contact us by email here:
+You can also [contact us by email or chat with the team in Slack](http://www.ccextractor.org/doku.php?id=public:general:support). 
 
-```carlos@ccextractor.org```
+You can also 
     
 ## Contributing
 
