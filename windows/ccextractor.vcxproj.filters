@@ -698,6 +698,9 @@
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_srt.c">
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_ssa.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_webvtt.c">
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>

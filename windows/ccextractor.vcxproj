@@ -192,6 +192,7 @@
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_splitbysentence.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_spupng.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_srt.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_ssa.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_transcript.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_webvtt.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_xds.c" />
