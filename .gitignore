@@ -1,4 +1,8 @@
 ####
+# Ignore tests tmp files and results
+tests/runtest
+
+####
 # Ignore CVS related files
 
 .CVS

@@ -1,21 +1,42 @@
 SHELL = /bin/sh
 
-CC = gcc
+CC=gcc
 # SYS := $(shell gcc -dumpmachine)
-CFLAGS = -O3 -std=gnu99 -s -D ENABLE_OCR
+CFLAGS=-O3 -std=gnu99 -s -D ENABLE_OCR
 #ALL_FLAGS = -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT
-LDFLAGS = -lm
+LDFLAGS=-lm
 
+CFLAGS+=$(shell pkg-config --cflags check)
+LDFLAGS+=$(shell pkg-config --libs check)
 
-CFLAGS+= $(shell pkg-config --cflags check)
-LDFLAGS+= $(shell pkg-config --libs check)
+# TODO: need to rewrite this. Need new way to load sources for testing
+SRC=$(wildcard ../src/lib_ccx/ccx_encoders_splitbysentence.c)
+OBJS=
 
-SRC_TEST=$(shell find ./ -iname '*_test.c')
+SRC_SUITE=$(wildcard *_suite.c)
+OBJ_SUITE=$(patsubst %_suite.c, %_suite.o, $(SRC_SUITE))
 
-# TODO : rewrite...
-SRC=../src/lib_ccx/ccx_encoders_splitbysentence.c
-SRC+=$(SRC_TEST)
+OBJS+=$(OBJ_SUITE)
 
-all:	#$(TARGET)
-	$(CC) $(SRC) $(ALL_FLAGS) $(INCLUDE) $(CFLAGS) $(LDFLAGS) -o runtest	# $< -o $@
+all: clean test
+
+%.o: %.c
+	$(CC) -c $(ALL_FLAGS) $(CFLAGS) $< -o $@
+
+runtest: $(OBJS)
+	@echo "+----------------------------------------------+"
+	@echo "|                 BUILD TESTS                  |"
+	@echo "+----------------------------------------------+"
+	$(CC) $(SRC) $@.c $^ $(ALL_FLAGS) $(CFLAGS) $(LDFLAGS) -o $@
+
+.PHONY: test
+test: runtest
+	@echo "+----------------------------------------------+"
+	@echo "|                 START TESTS                  |"
+	@echo "+----------------------------------------------+"
 	./runtest
+
+.PHONY: clean
+clean:
+	rm runtest || true
+	rm *.o || true
