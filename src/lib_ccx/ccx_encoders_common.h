@@ -86,10 +86,6 @@ struct encoder_ctx
 	unsigned char *subline; // Temp storage for storing each line
 	int extract;
 
-	unsigned char *split_sentence_buffer; // Storage for sentence-split buffer
-	unsigned int split_sentence_buffer_capacity;
-	ccx_sbs_utf8_character *sbs_newblock;
-
 	int dtvcc_extract; //1 or 0 depending if we have to handle dtvcc
 	ccx_dtvcc_writer_ctx dtvcc_writers[CCX_DTVCC_MAX_SERVICES];
 
@@ -122,13 +118,15 @@ struct encoder_ctx
 
 	/* split-by-sentence stuff */
 	int splitbysentence;
-	LLONG sbs_newblock_start_time; // Used by the split-by-sentence code to know when the current block starts...
-	LLONG sbs_newblock_end_time; // ... and ends
-	int sbs_newblock_capacity;
-	int sbs_newblock_size;
-	ccx_sbs_utf8_character *sbs_buffer;
-	int sbs_buffer_capacity;
-	int sbs_buffer_size;
+
+	unsigned char *sbs_buffer; // Storage for sentence-split buffer
+	ccx_sbs_utf8_character *sbs_newblock;
+
+	LLONG sbs_start_time; // Used by the split-by-sentence code to know when the current block starts...
+	LLONG sbs_end_time; // ... and ends
+	int sbs_capacity;
+	int sbs_size;
+	//ccx_sbs_utf8_character *sbs_buffer;
 
 };
 
