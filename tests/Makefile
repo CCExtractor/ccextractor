@@ -3,6 +3,12 @@ SHELL = /bin/sh
 CC=gcc
 # SYS := $(shell gcc -dumpmachine)
 CFLAGS=-O3 -std=gnu99 -s -D ENABLE_OCR
+
+# add debug flag
+ifdef DEBUG
+CFLAGS+=-D DEBUG
+endif
+
 #ALL_FLAGS = -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT
 LDFLAGS=-lm
 

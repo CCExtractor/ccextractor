@@ -122,8 +122,8 @@ struct encoder_ctx
 	unsigned char *sbs_buffer; // Storage for sentence-split buffer
 	ccx_sbs_utf8_character *sbs_newblock;
 
-	LLONG sbs_start_time; // Used by the split-by-sentence code to know when the current block starts...
-	LLONG sbs_end_time; // ... and ends
+	LLONG sbs_time_from; // Used by the split-by-sentence code to know when the current block starts...
+	LLONG sbs_time_trim; // ... and ends
 	int sbs_capacity;
 	int sbs_size;
 	//ccx_sbs_utf8_character *sbs_buffer;

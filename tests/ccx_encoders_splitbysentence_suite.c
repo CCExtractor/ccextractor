@@ -10,7 +10,7 @@ typedef int64_t LLONG;
 // -------------------------------------
 // Private functions (for testing only)
 // -------------------------------------
-struct cc_subtitle * sb_append_string(unsigned char * str, LLONG time_from, LLONG time_trim, struct encoder_ctx * context);
+struct cc_subtitle * sbs_append_string(unsigned char * str, LLONG time_from, LLONG time_trim, struct encoder_ctx * context);
 
 // -------------------------------------
 // Test helpers
@@ -57,7 +57,7 @@ START_TEST(test_sbs_one_simple_sentence)
 	// "a negative amount");
 
 	//struct cc_subtitle * reformat_cc_bitmap_through_sentence_buffer (struct cc_subtitle *sub, struct encoder_ctx *context);
-	// sb_append_string();
+	// sbs_append_string();
 
 	struct cc_subtitle * sub1 = (struct cc_subtitle *)malloc(sizeof(struct cc_subtitle));
 	sub1->type = CC_BITMAP;
@@ -105,20 +105,19 @@ START_TEST(test_sbs_two_sentences_with_rep)
 END_TEST
 
 
-START_TEST(test_sb_append_string_two_separate)
+START_TEST(test_sbs_append_string_two_separate)
 {
-	char * test_strings[] = {
+	unsigned char * test_strings[] = {
 		"First string.",
 		"Second string."
 	};
 	struct cc_subtitle * sub;
-	char * str;
+	unsigned char * str;
 
 	// first string
 	str = strdup(test_strings[0]);
 	sub = NULL;
-	sub = sb_append_string(str, 1, 20, context);
-
+	sub = sbs_append_string(str, 1, 20, context);
 	ck_assert_ptr_ne(sub, NULL);
 	ck_assert_str_eq(sub->data, test_strings[0]);
 	ck_assert_int_eq(sub->start_time, 1);
@@ -127,7 +126,7 @@ START_TEST(test_sb_append_string_two_separate)
 	// second string:
 	str = strdup(test_strings[1]);
 	sub = NULL;
-	sub = sb_append_string(str, 21, 40, context);
+	sub = sbs_append_string(str, 21, 40, context);
 
 	ck_assert_ptr_ne(sub, NULL);
 	ck_assert_str_eq(sub->data, test_strings[1]);
@@ -136,8 +135,33 @@ START_TEST(test_sb_append_string_two_separate)
 }
 END_TEST
 
+START_TEST(test_sbs_append_string_two_with_broken_sentence)
+{
+	char * test_strings[] = {
+		"First string",
+		" ends here."
+	};
+	struct cc_subtitle * sub;
+	char * str;
 
-START_TEST(test_sb_append_string_two_intersecting)
+	// first string
+	str = strdup(test_strings[0]);
+	sub = sbs_append_string(str, 1, 3, context);
+
+	ck_assert_ptr_eq(sub, NULL);
+
+	// second string:
+	str = strdup(test_strings[1]);
+	sub = sbs_append_string(str, 4, 5, context);
+
+	ck_assert_ptr_ne(sub, NULL);
+	ck_assert_str_eq(sub->data, "First string ends here.");
+	ck_assert_int_eq(sub->start_time, 1);
+	ck_assert_int_eq(sub->end_time, 5);
+}
+END_TEST
+
+START_TEST(test_sbs_append_string_two_intersecting)
 {
 	char * test_strings[] = {
 		"First string",
@@ -148,16 +172,18 @@ START_TEST(test_sb_append_string_two_intersecting)
 
 	// first string
 	str = strdup(test_strings[0]);
-	sub = sb_append_string(str, 1, 20, context);
+	sub = sbs_append_string(str, 1, 20, context);
 
 	ck_assert_ptr_eq(sub, NULL);
+	free(sub);
 
 	// second string:
 	str = strdup(test_strings[1]);
-	sub = sb_append_string(str, 21, 40, context);
+	//printf("second string: [%s]\n", str);
+	sub = sbs_append_string(str, 21, 40, context);
 
 	ck_assert_ptr_ne(sub, NULL);
-	ck_assert_str_eq(sub->data, test_strings[1]);
+	ck_assert_str_eq(sub->data, "First string ends here.");
 	ck_assert_int_eq(sub->start_time, 1);
 	ck_assert_int_eq(sub->end_time, 40);
 }
@@ -171,7 +197,7 @@ Suite * ccx_encoders_splitbysentence_suite(void)
 	s = suite_create("Sentence Buffer");
 
 	/* Overall tests */
-	tc_core = tcase_create("Overall");
+	tc_core = tcase_create("SB: Overall");
 
 	tcase_add_checked_fixture(tc_core, setup, teardown);
 	tcase_add_test(tc_core, test_sbs_one_simple_sentence);
@@ -181,9 +207,11 @@ Suite * ccx_encoders_splitbysentence_suite(void)
 	/**/
 	TCase *tc_append_string;
 	tc_append_string = tcase_create("SB: append_string");
+	tcase_add_checked_fixture(tc_append_string, setup, teardown);
 
-	tcase_add_test(tc_append_string, test_sb_append_string_two_separate);
-	tcase_add_test(tc_append_string, test_sb_append_string_two_intersecting);
+	tcase_add_test(tc_append_string, test_sbs_append_string_two_separate);
+	tcase_add_test(tc_append_string, test_sbs_append_string_two_with_broken_sentence);
+	tcase_add_test(tc_append_string, test_sbs_append_string_two_intersecting);
 
 	suite_add_tcase(s, tc_append_string);
 
