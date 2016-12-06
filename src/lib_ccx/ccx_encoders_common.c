@@ -957,14 +957,10 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->force_flush = opt->force_flush;
 	ctx->ucla = opt->ucla;
 	ctx->splitbysentence = opt->splitbysentence;
-	ctx->sbs_newblock_start_time = -1;
-	ctx->sbs_newblock_end_time = -1;
-	ctx->sbs_newblock = NULL;
-	ctx->sbs_newblock_capacity = 0;
-	ctx->sbs_newblock_size = 0;
+	ctx->sbs_time_from = -1;
+	ctx->sbs_time_trim = -1;
+	ctx->sbs_capacity = 0;
 	ctx->sbs_buffer = NULL;
-	ctx->sbs_buffer_capacity = 0;
-	ctx->sbs_buffer_size = 0;
 
 	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);
 	if(!ctx->subline)

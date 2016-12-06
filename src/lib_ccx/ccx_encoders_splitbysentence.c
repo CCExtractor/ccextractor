@@ -1,43 +1,11 @@
-#include "ccx_decoders_common.h"
+#include "ccx_common_platform.h"
 #include "ccx_encoders_common.h"
-#include "spupng_encoder.h"
-#include "ccx_encoders_spupng.h"
-#include "utility.h"
+#include "lib_ccx.h"
 #include "ocr.h"
-//#include "ccx_decoders_608.h"
-//#include "ccx_decoders_708.h"
-//#include "ccx_decoders_708_output.h"
-//#include "ccx_encoders_xds.h"
-//#include "ccx_encoders_helpers.h"
-//#include "utf8proc.h"
 
 #ifdef ENABLE_SHARING
 #include "ccx_share.h"
 #endif //ENABLE_SHARING
-
-// void lbl_start_block(LLONG start_time, struct encoder_ctx *context)
-// {
-// 	context->sbs_start_time = start_time;
-// }
-
-// void lbl_add_character(struct encoder_ctx *context, ccx_sbs_utf8_character ch)
-// {
-// 	if (context->sbs_size >= context->sbs_capacity)
-// 	{
-// 		int newcapacity = (context->sbs_capacity < 512) ? 1024 : context->sbs_capacity * 2;
-// 		context->sbs_newblock = (ccx_sbs_utf8_character *)realloc(context->sbs_newblock, newcapacity*sizeof(ccx_sbs_utf8_character));		
-// 		if (!context->sbs_newblock)
-// 			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory in lbl_add_character");
-// 		context->sbs_capacity = newcapacity;
-// 	}
-// 	memcpy(&context->sbs_newblock[context->sbs_size++], &ch, sizeof ch);
-// }
-
-// void lbl_end_block(LLONG end_time, struct encoder_ctx *context)
-// {
-// 	context->sbs_end_time = end_time;
-// }
-
 
 int sbs_is_pointer_on_sentence_breaker(char * start, char * current)
 {
@@ -168,8 +136,6 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, LLONG time_from, LLO
 	bp_last_break = sbs;
 	for (bp_current = sbs; bp_current && *bp_current; bp_current++)
 	{
-//printf("[%c]\n", *bp_current);
-
 		if (
 			0 < anychar_cur	// skip empty!
 			&& sbs_is_pointer_on_sentence_breaker(bp_last_break, bp_current) )
