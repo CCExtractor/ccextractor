@@ -19,15 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\lib_ccx\ccx_common_option.h" />
-    <ClInclude Include="..\src\lib_ccx\ccx_share.h" />
-    <ClInclude Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.h" />
-    <ClInclude Include="..\src\lib_ccx\compile_info.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\avparse.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\base_coding.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\bitstream.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\configuration.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\config_file.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\constants.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\events_constants.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\ietf.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\internal\avilib.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\internal\isomedia_dev.h" />
@@ -41,11 +39,17 @@
     <ClInclude Include="..\src\gpacmp4\gpac\media_tools.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\mpeg4_odf.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\network.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\os_types.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\revision.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\setup.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\sync_layer.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\tools.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\utf.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\version.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_common_option.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_share.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.h" />
+    <ClInclude Include="..\src\lib_ccx\compile_info.h" />
     <ClInclude Include="..\src\libpng\png.h" />
     <ClInclude Include="..\src\libpng\pngconf.h" />
     <ClInclude Include="..\src\libpng\pngdebug.h" />
@@ -114,14 +118,17 @@
     <ClCompile Include="..\src\gpacmp4\base_encoding.c" />
     <ClCompile Include="..\src\gpacmp4\bitstream.c" />
     <ClCompile Include="..\src\gpacmp4\box_code_3gpp.c" />
+    <ClCompile Include="..\src\gpacmp4\box_code_adobe.c" />
     <ClCompile Include="..\src\gpacmp4\box_code_apple.c" />
     <ClCompile Include="..\src\gpacmp4\box_code_base.c" />
-    <ClCompile Include="..\src\gpacmp4\box_code_isma.c" />
+    <ClCompile Include="..\src\gpacmp4\box_code_drm.c" />
     <ClCompile Include="..\src\gpacmp4\box_code_meta.c" />
     <ClCompile Include="..\src\gpacmp4\box_funcs.c" />
+    <ClCompile Include="..\src\gpacmp4\configfile.c" />
     <ClCompile Include="..\src\gpacmp4\data_map.c" />
     <ClCompile Include="..\src\gpacmp4\descriptors.c" />
     <ClCompile Include="..\src\gpacmp4\desc_private.c" />
+    <ClCompile Include="..\src\gpacmp4\drm_sample.c" />
     <ClCompile Include="..\src\gpacmp4\error.c" />
     <ClCompile Include="..\src\gpacmp4\gpac_ogg.c" />
     <ClCompile Include="..\src\gpacmp4\hinting.c" />
@@ -132,6 +139,7 @@
     <ClCompile Include="..\src\gpacmp4\isom_store.c" />
     <ClCompile Include="..\src\gpacmp4\isom_write.c" />
     <ClCompile Include="..\src\gpacmp4\list.c" />
+    <ClCompile Include="..\src\gpacmp4\math.c" />
     <ClCompile Include="..\src\gpacmp4\media.c" />
     <ClCompile Include="..\src\gpacmp4\media_odf.c" />
     <ClCompile Include="..\src\gpacmp4\meta.c" />
@@ -140,7 +148,9 @@
     <ClCompile Include="..\src\gpacmp4\odf_code.c" />
     <ClCompile Include="..\src\gpacmp4\odf_codec.c" />
     <ClCompile Include="..\src\gpacmp4\odf_command.c" />
+    <ClCompile Include="..\src\gpacmp4\os_config_init.c" />
     <ClCompile Include="..\src\gpacmp4\os_divers.c" />
+    <ClCompile Include="..\src\gpacmp4\os_file.c" />
     <ClCompile Include="..\src\gpacmp4\qos.c" />
     <ClCompile Include="..\src\gpacmp4\sample_descs.c" />
     <ClCompile Include="..\src\gpacmp4\slc.c" />
@@ -252,19 +262,19 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-OCR|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-OCR|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
