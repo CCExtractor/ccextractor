@@ -4,7 +4,7 @@
 // plus some data related helper functions.
 
 
-// Guidelines for all bitsream functions:
+// Guidelines for all bitstream functions:
 // * No function shall advance the pointer past the end marker
 // * If bitstream.bitsleft < 0 do not attempt any read access,
 //   but decrease bitsleft by the number of bits that were
