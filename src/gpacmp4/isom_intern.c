@@ -47,7 +47,7 @@ GF_Err MergeFragment(GF_MovieFragmentBox *moof, GF_ISOFile *mov)
 	
 	MaxDur = 0;
 
-	//we shall have a MOOV and its MVEX BEFORE any MOOF
+	//we shall have a MOOV and its MVEX BEFORE any MOOV
 	if (!mov->moov || !mov->moov->mvex) return GF_ISOM_INVALID_FILE;
 	//and all fragments must be continous
 	if (mov->NextMoofNumber && (mov->NextMoofNumber >= moof->mfhd->sequence_number)) return GF_ISOM_INVALID_FILE;
@@ -69,7 +69,7 @@ GF_Err MergeFragment(GF_MovieFragmentBox *moof, GF_ISOFile *mov)
 
 		MergeTrack(trak, traf, mov->current_top_box_start, !mov->first_moof_merged);
 
-		//update trak duration
+		//update track duration
 		SetTrackDuration(trak);
 		if (trak->Header->duration > MaxDur) 
 			MaxDur = trak->Header->duration;
@@ -113,7 +113,7 @@ GF_Err gf_isom_parse_movie_boxes(GF_ISOFile *mov, u64 *bytesMissing, Bool progre
 		if (e >= 0) {
 			e = GF_OK;
 		} else if (e == GF_ISOM_INCOMPLETE_FILE) {
-			/*our mdat is uncomplete, only valid for READ ONLY files...*/
+			/*our mdat is incomplete, only valid for READ ONLY files...*/
 			if (mov->openMode != GF_ISOM_OPEN_READ) {
 				return GF_ISOM_INVALID_FILE;
 			}
@@ -161,7 +161,7 @@ GF_Err gf_isom_parse_movie_boxes(GF_ISOFile *mov, u64 *bytesMissing, Bool progre
 				else gf_isom_box_del(a);
 			}
 			/*if we don't have any MDAT yet, create one (edit-write mode)
-			We only work with one mdat, but we're puting it at the place
+			We only work with one mdat, but we're putting it at the place
 			of the first mdat found when opening a file for editing*/
 			else if (!mov->mdat && (mov->openMode != GF_ISOM_OPEN_READ) && (mov->openMode != GF_ISOM_OPEN_CAT_FRAGMENTS)) {
 				gf_isom_box_del(a);

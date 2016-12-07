@@ -471,7 +471,7 @@ GF_Err Read_StreamDescDTE(GF_StreamDescDTE *dte, GF_BitStream *bs)
 GF_Err ReadDTE(GF_GenericDTE *dte, GF_BitStream *bs)
 {
 	switch (dte->source) {
-	case 0:
+	case 0:carefull
 		//nothing to o, it is an empty entry
 		return Read_EmptyDTE((GF_EmptyDTE *)dte, bs);
 	case 1:
@@ -623,7 +623,7 @@ GF_Err gf_isom_hint_rtp_read(GF_RTPPacket *ptr, GF_BitStream *bs)
 	
 	//read the TLV
 	if (hasTLV) {
-		tempSize = 4;	//TLVsize includes its field length 
+		tempSize = 4;	//TLV size includes its field length
 		TLVsize = gf_bs_read_u32(bs);
 		while (tempSize < TLVsize) {
 			e = gf_isom_parse_box(&a, bs);

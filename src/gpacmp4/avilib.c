@@ -1,8 +1,8 @@
 /*
  *  avilib.c
  *
- *  Copyright (C) Thomas Östreich - June 2001
- *  multiple audio track support Copyright (C) 2002 Thomas Östreich
+ *  Copyright (C) Thomas ï¿½streich - June 2001
+ *  multiple audio track support Copyright (C) 2002 Thomas ï¿½streich
  *
  *  Original code:
  *  Copyright (C) 1999 Rainer Johanni <Rainer@Johanni.de>
@@ -958,7 +958,7 @@ int avi_update_header(avi_t *AVI)
    OUT4CC ("movi");
 
    /* Output the header, truncate the file to the number of bytes
-      actually written, report an error if someting goes wrong */
+      actually written, report an error if something goes wrong */
 
    if ( (gf_f64_seek(AVI->fdes, 0, SEEK_SET) ==(u64)-1) ||
         avi_write(AVI->fdes,(char *)AVI_header,HEADERBYTES)!=HEADERBYTES ||
@@ -1530,7 +1530,7 @@ static int avi_close_output_file(avi_t *AVI)
 
    Return values:
     0    No error;
-   -1    Error, AVI_errno is set appropriatly;
+   -1    Error, AVI_errno is set appropriately;
 
 */
 
@@ -1820,7 +1820,7 @@ avi_t *AVI_open_fd(FILE *fd, int getIndex)
 
   AVI->mode = AVI_MODE_READ; /* open for reading */
 
-  // file alread open
+  // file already open
   AVI->fdes = fd;
 
   AVI_errno = 0;
@@ -1931,7 +1931,7 @@ int avi_parse_input_file(avi_t *AVI, int getIndex)
 
    for(i=0;i<hdrl_len;)
    {
-      /* List tags are completly ignored */
+      /* List tags are completely ignored */
 
 #ifdef DEBUG_ODML
       GF_LOG(GF_LOG_DEBUG, GF_LOG_CONTAINER, ("[avilib] TAG %c%c%c%c\n", (hdrl_data+i)[0], (hdrl_data+i)[1], (hdrl_data+i)[2], (hdrl_data+i)[3]));

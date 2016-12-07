@@ -244,7 +244,7 @@ Bool gf_isom_has_root_od(GF_ISOFile *movie)
 	return 1;
 }
 
-//this funct is used for exchange files, where the iods contains an OD
+//this function is used for exchange files, where the iods contains an OD
 GF_EXPORT
 GF_Descriptor *gf_isom_get_root_od(GF_ISOFile *movie)
 {

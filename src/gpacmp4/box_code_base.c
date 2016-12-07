@@ -1311,7 +1311,7 @@ GF_Err gnrm_Write(GF_Box *s, GF_BitStream *bs)
 	GF_Err e;
 	GF_GenericSampleEntryBox *ptr = (GF_GenericSampleEntryBox *)s;
 	
-	//carefull we are not writing the box type but the entry type so switch for write
+	//careful! we are not writing the box type but the entry type so switch for write
 	ptr->type = ptr->EntryType;
 	e = gf_isom_box_write_header(s, bs);
 	if (e) return e;
@@ -1362,7 +1362,7 @@ GF_Err gnrv_Write(GF_Box *s, GF_BitStream *bs)
 	GF_Err e;
 	GF_GenericVisualSampleEntryBox *ptr = (GF_GenericVisualSampleEntryBox *)s;
 	
-	//carefull we are not writing the box type but the entry type so switch for write
+	//careful! we are not writing the box type but the entry type so switch for write
 	ptr->type = ptr->EntryType;
 	e = gf_isom_box_write_header(s, bs);
 	if (e) return e;
@@ -1415,7 +1415,7 @@ GF_Err gnra_Write(GF_Box *s, GF_BitStream *bs)
 	GF_Err e;
 	GF_GenericAudioSampleEntryBox *ptr = (GF_GenericAudioSampleEntryBox *)s;
 	
-	//carefull we are not writing the box type but the entry type so switch for write
+	//careful! we are not writing the box type but the entry type so switch for write
 	ptr->type = ptr->EntryType;
 	e = gf_isom_box_write_header(s, bs);
 	if (e) return e;
@@ -2743,7 +2743,7 @@ GF_Err mdat_Write(GF_Box *s, GF_BitStream *bs)
 	if (e) return e;
 
 	//make sure we have some data ...
-	//if not, we handle that independantly (edit files)
+	//if not, we handle that independently (edit files)
 	if (ptr->data) {
 		gf_bs_write_data(bs, ptr->data, (u32) ptr->dataSize);
 	}

@@ -1,0 +1,1 @@
+CMake: 3.6.2@/Volumes/CLion/CLion.app/Contents/bin/cmake/bin/cmake

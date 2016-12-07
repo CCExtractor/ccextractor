@@ -26,7 +26,7 @@
 
 #ifndef GPAC_DISABLE_ISOM
 
-//Add this funct to handle incomplete files...
+//Add this function to handle incomplete files...
 //bytesExpected is 0 most of the time. If the file is incomplete, bytesExpected
 //is the number of bytes missing to parse the box...
 GF_Err gf_isom_parse_root_box(GF_Box **outBox, GF_BitStream *bs, u64 *bytesExpected, Bool progressive_mode)
@@ -72,7 +72,7 @@ GF_Err gf_isom_parse_box_ex(GF_Box **outBox, GF_BitStream *bs, u32 parent_type)
 		size = 4;
 		type = GF_ISOM_BOX_TYPE_VOID;
 	} else {
-		/*now here's a bad thing: some files use size 0 for void atoms, some for "till end of file" indictaion..*/
+		/*now here's a bad thing: some files use size 0 for void atoms, some for "till end of file" indication..*/
 		if (!size) {
 			type = gf_bs_peek_bits(bs, 32, 0);
 			if (!isalnum((type>>24)&0xFF) || !isalnum((type>>16)&0xFF) || !isalnum((type>>8)&0xFF) || !isalnum(type&0xFF)) {
@@ -242,7 +242,7 @@ GF_Err gf_isom_box_get_size(GF_Box *ptr)
 	if (ptr->type == GF_ISOM_BOX_TYPE_UUID) {
 		ptr->size += 16;
 	}
-	//the large size is handled during write, cause at this stage we don't know the size
+	//the large size is handled during write, because at this stage we don't know the size
 	return GF_OK;
 }
 

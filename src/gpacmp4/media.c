@@ -352,7 +352,7 @@ GF_Err Media_GetSample(GF_MediaBox *mdia, u32 sampleNumber, GF_ISOSample **samp,
 	if (mdia->mediaTrack->padding_bytes)
 		memset((*samp)->data + (*samp)->dataLength, 0, sizeof(char) * mdia->mediaTrack->padding_bytes);
 
-	//check if we can get the sample (make sure we have enougth data...)
+	//check if we can get the sample (make sure we have enough data...)
 	new_size = gf_bs_get_size(mdia->information->dataHandler->bs);
 	if (offset + (*samp)->dataLength > new_size) {
 		//always refresh the size to avoid wrong info on http/ftp 
@@ -525,7 +525,7 @@ GF_Err Media_SetDuration(GF_TrackBox *trak)
 		return GF_OK;
 
 //	case 1:
-//		trak->Media->mediaHeader->duration = trak->Media->mediaHeader->timeScale;
+//		trak->Media->mediaHeader->duration = track->Media->mediaHeader->timeScale;
 //		return GF_OK;
 
 	default:
@@ -766,7 +766,7 @@ GF_Err Media_UpdateSample(GF_MediaBox *mdia, u32 sampleNumber, GF_ISOSample *sam
 	stbl = mdia->information->sampleTable;
 
 	if (!data_only) {
-		//check we have the sampe dts
+		//check we have the sample dts
 		e = stbl_GetSampleDTS(stbl->TimeToSample, sampleNumber, &DTS);
 		if (e) return e;
 		if (DTS != sample->DTS) return GF_BAD_PARAM;

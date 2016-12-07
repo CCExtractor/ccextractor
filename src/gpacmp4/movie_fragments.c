@@ -100,9 +100,9 @@ GF_Err gf_isom_finalize_for_fragment(GF_ISOFile *movie, Bool use_segments)
 		//we could also check all our data refs are local but we'll do that at run time
 		//in order to allow a mix of both (remote refs in MOOV and local in MVEX)
 
-		//one thing that MUST be done is OD cross-dependancies. The movie fragment spec 
+		//one thing that MUST be done is OD cross-dependencies. The movie fragment spec 
 		//is broken here, since it cannot allow dynamic insertion of new ESD and their
-		//dependancies
+		//dependencies
 	}
 
 	//ok we are fine - note the data map is created at the begining
@@ -793,7 +793,7 @@ GF_Err gf_isom_close_segment(GF_ISOFile *movie, s32 frags_per_sidx, u32 referenc
 		sidx->first_offset = 0;
 		sidx->earliest_presentation_time = ref_track_decode_time;
 
-		/*we consider that each fragment is a subsegment - this could be controled by another parameter*/
+		/*we consider that each fragment is a subsegment - this could be controlled by another parameter*/
 		if (!frags_per_sidx) {
 			nb_subsegs = 1;
 			frags_per_sidx = count;
@@ -810,10 +810,10 @@ GF_Err gf_isom_close_segment(GF_ISOFile *movie, s32 frags_per_sidx, u32 referenc
 		/*daisy-chain SIDX, reference all fragments plus next */
 		else if (daisy_chain_sidx) {
 			sidx->nb_refs = frags_per_sidx + 1;
-			/*we will have to adjust earliest cpresentation time*/
+			/*we will have to adjust earliest presentation time*/
 			first_sidx = 1;
 		}
-		/*root SIDX referencing all subsegments*/
+		/*root SIDX referencing all sub-segments*/
 		else {
 			sidx->nb_refs = nb_subsegs;
 			is_root_sidx = 1;
@@ -845,7 +845,7 @@ GF_Err gf_isom_close_segment(GF_ISOFile *movie, s32 frags_per_sidx, u32 referenc
 	last_top_box_pos = root_prev_offset = sidx_end;
 	local_sidx_start = local_sidx_end = 0;
 
-	/*cumulated segments duration since start of the sidx */
+	/* cumulated segments duration since start of the sidx */
 	cur_dur = 0;
 	e = GF_OK;
 	while (gf_list_count(movie->moof_list)) {
