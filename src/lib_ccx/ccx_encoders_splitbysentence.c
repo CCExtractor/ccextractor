@@ -2,6 +2,7 @@
 #include "ccx_encoders_common.h"
 #include "lib_ccx.h"
 #include "ocr.h"
+#include "debug_def.h"
 
 #ifdef ENABLE_SHARING
 #include "ccx_share.h"
@@ -37,6 +38,48 @@ int sbs_is_pointer_on_sentence_breaker(char * start, char * current)
 	return 0;
 }
 
+int sbs_fuzzy_strncmp(const char * a, const char * b, size_t n, const size_t maxerr)
+{
+	// TODO: implement fuzzy comparing (allow errors)
+	return strncmp(a, b, n);
+}
+
+void sbs_strcpy_without_dup(unsigned char * str, struct encoder_ctx * context)
+{
+	int intersect_len;
+	unsigned char * sbs;
+	unsigned char * suffix;
+	unsigned char * prefix;
+
+	unsigned long sbs_len;
+	unsigned long str_len;
+
+	sbs = context->sbs_buffer;
+
+	str_len = strlen(str);
+	sbs_len = strlen(sbs);
+
+	intersect_len = str_len;
+	if (sbs_len < intersect_len)
+		intersect_len = sbs_len;
+
+	while (intersect_len>0)
+	{
+		prefix = str;
+		suffix = sbs + sbs_len - intersect_len;
+		if (0 == sbs_fuzzy_strncmp(sbs, str, intersect_len, 1))
+		{
+			break;
+		}
+		intersect_len--;
+	}
+
+	// remove dup from buffer
+	// we will use an appropriate part from the new string
+	sbs[sbs_len-intersect_len] = 0;
+	strcat(sbs, str);
+}
+
 /**
  * Appends the function to the sentence buffer, and returns a list of full sentences (if there are any), or NULL
  *
@@ -57,7 +100,7 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, LLONG time_from, LLO
 	unsigned char * bp_last_break;
 
 	int is_buf_initialized;
-	int required_len;
+	int required_capacity;
 	int new_capacity;
 
 	LLONG alphanum_total;
@@ -82,9 +125,9 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, LLONG time_from, LLO
 	// ===============================
 	// grow sentence buffer
 	// ===============================
-	required_len = (is_buf_initialized ? strlen(sbs) : 0) + strlen(str);
+	required_capacity = (is_buf_initialized ? strlen(sbs) : 0) + strlen(str) + 1;
 
-	if (required_len >= context->sbs_capacity)
+	if (required_capacity >= context->sbs_capacity)
 	{
 		new_capacity = context->sbs_capacity;
 		if (! is_buf_initialized)
@@ -92,7 +135,7 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, LLONG time_from, LLO
 			new_capacity = 16;
 		}
 
-		while (new_capacity < required_len)
+		while (new_capacity < required_capacity)
 		{
 			if (new_capacity > 1048576 * 8) // more than 8 Mb in TEXT buffer. It is weird...
 			{
@@ -108,22 +151,18 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, LLONG time_from, LLO
 		if (!context->sbs_buffer)
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory in sbs_append_string");
 		sbs = context->sbs_buffer;
+
+		if (! is_buf_initialized) sbs[0] = 0;
 	}
 
 	// ===============================
 	// append to buffer
 	// ===============================
-	if (is_buf_initialized)
-	{
-		strcat(sbs, str);
-	}
-	else
-	{
-		context->sbs_time_from = time_from;
-		context->sbs_time_trim = time_trim;
-		strcpy(sbs, str);
-	}
+	sbs_strcpy_without_dup(str, context);
 
+	// ===============================
+	// break to sentences
+	// ===============================
 	resub = NULL;
 	tmpsub = NULL;
 
@@ -199,14 +238,20 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, LLONG time_from, LLO
 		strcpy(sbs, bp_last_break);
 	}
 
-	#ifdef DEBUG
-	printf ("BUFFER:\n\t%s\nSTRING:\n\t%s\nCHARS:\n\tAlphanum Total: %d\n\tOverall chars: %d\n====================\n", sbs, str, alphanum_total, anychar_total);
-	#endif
+	LOG_DEBUG("Sentence Buffer: Alphanum Total: [%4d]  Overall chars: [%4d]  STRING:[%20s]  BUFFER:[%20s]\n", alphanum_total, anychar_total, str, sbs);
+
+	// ===============================
+	// Calculate time spans
+	// ===============================
+	if (!is_buf_initialized)
+	{
+		context->sbs_time_from = time_from;
+		context->sbs_time_trim = time_trim;
+	}
 
 	available_time = time_trim - context->sbs_time_from;
 	use_alphanum_counters = alphanum_total > 0 ? 1 : 0;
 
-	// update time spans
 	tmpsub = resub;
 	while (tmpsub)
 	{
