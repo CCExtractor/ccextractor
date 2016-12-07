@@ -19,9 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\lib_ccx\ccx_common_option.h" />
-    <ClInclude Include="..\src\lib_ccx\ccx_share.h" />
-    <ClInclude Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.h" />
     <ClInclude Include="..\src\lib_ccx\compile_info.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\avparse.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\base_coding.h" />
@@ -79,9 +76,6 @@
     <ClInclude Include="..\src\lib_ccx\teletext.h" />
     <ClInclude Include="..\src\lib_ccx\utility.h" />
     <ClInclude Include="..\src\lib_hash\sha2.h" />
-    <ClInclude Include="..\src\microutf8\microutf8.h" />
-    <ClInclude Include="..\src\protobuf-c\protobuf-c.h" />
-    <ClInclude Include="..\src\utf8proc\utf8proc.h" />
     <ClInclude Include="..\src\win_iconv\iconv.h" />
     <ClInclude Include="..\src\win_spec_incld\dirent.h" />
     <ClInclude Include="..\src\zlib\crc32.h" />
@@ -184,25 +178,18 @@
     <ClCompile Include="..\src\lib_ccx\ccx_demuxer.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_dtvcc.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_common.c" />
-    <ClCompile Include="..\src\lib_ccx\ccx_encoders_curl.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_g608.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_helpers.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_sami.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_smptett.c" />
-    <ClCompile Include="..\src\lib_ccx\ccx_encoders_splitbysentence.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_spupng.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_srt.c" />
-    <ClCompile Include="..\src\lib_ccx\ccx_encoders_ssa.c" />
-    <ClCompile Include="..\src\lib_ccx\ccx_encoders_transcript.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_webvtt.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_xds.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_gxf.c" />
-    <ClCompile Include="..\src\lib_ccx\ccx_share.c" />
-    <ClCompile Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.c" />
     <ClCompile Include="..\src\lib_ccx\cc_bitstream.c" />
     <ClCompile Include="..\src\lib_ccx\configuration.c" />
     <ClCompile Include="..\src\lib_ccx\dvb_subtitle_decoder.c" />
-    <ClCompile Include="..\src\lib_ccx\dvd_subtitle_decoder.c" />
     <ClCompile Include="..\src\lib_ccx\es_functions.c" />
     <ClCompile Include="..\src\lib_ccx\es_userdata.c" />
     <ClCompile Include="..\src\lib_ccx\file_functions.c" />
@@ -225,8 +212,6 @@
     <ClCompile Include="..\src\lib_ccx\utility.c" />
     <ClCompile Include="..\src\lib_ccx\wtv_functions.c" />
     <ClCompile Include="..\src\lib_hash\sha2.c" />
-    <ClCompile Include="..\src\protobuf-c\protobuf-c.c" />
-    <ClCompile Include="..\src\utf8proc\utf8proc.c" />
     <ClCompile Include="..\src\win_iconv\win_iconv.c" />
     <ClCompile Include="..\src\zlib\adler32.c" />
     <ClCompile Include="..\src\zlib\crc32.c" />
@@ -241,9 +226,6 @@
     <ClCompile Include="..\src\zvbi\raw_decoder.c" />
     <ClCompile Include="..\src\zvbi\sampling_par.c" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\src\lib_ccx\ccx_sub_entry_message.proto" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0F0063C4-BCBC-4379-A6D5-84A5669C940A}</ProjectGuid>
     <RootNamespace>ccextractor</RootNamespace>
@@ -252,19 +234,19 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-OCR|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-OCR|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -304,8 +286,8 @@
     <IntDir>Release-OCR\</IntDir>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>ccextractorwin</TargetName>
-    <IncludePath>$(ProjectDir)\libs\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)\libs\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)</LibraryPath>
+    <IncludePath>$(ProjectDir)libs\tesseract\include\tesseract;$(ProjectDir)libs\leptonica\include\leptonica;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)libs\tesseract\lib;$(ProjectDir)libs\leptonica\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>Release\</OutDir>
@@ -316,7 +298,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../src/utf8proc;../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -336,7 +318,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-OCR|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../src/utf8proc;../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -361,7 +343,7 @@ xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Comm
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-OCR|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../src/utf8proc;../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader />
@@ -369,7 +351,7 @@ xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Comm
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>WS2_32.Lib;liblept172.lib;libtesseract304d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>WS2_32.Lib;libtesseract302.lib;liblept168.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -377,13 +359,13 @@ xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Comm
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y $(ProjectDir)libs\lib\liblept172.dll $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Command>
+      <Command>xcopy /y $(ProjectDir)libs\leptonica\lib\liblept168.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\tesseract\lib\libtesseract302.dll $(ProjectDir)$(OutDir)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../src/utf8proc;../src/win_spec_incld;../src/lib_ccx;../src/lib_hash;../src/gpacmp4;../src/libpng;../src/zlib;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/win_spec_incld;../src/lib_ccx;../src/lib_hash;../src/gpacmp4;../src/libpng;../src/zlib;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>VERSION_FILE_PRESENT;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader />
