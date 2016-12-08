@@ -2,7 +2,7 @@ SHELL = /bin/sh
 
 CC=gcc
 # SYS := $(shell gcc -dumpmachine)
-CFLAGS=-O3 -std=gnu99 -s -D ENABLE_OCR
+CFLAGS=-std=gnu99 -s -D ENABLE_OCR -fprofile-arcs -ftest-coverage -g -O0 -Q
 
 # add debug flag
 ifdef DEBUG

@@ -8,22 +8,20 @@ typedef int64_t LLONG;
 #include "../src/lib_ccx/ccx_encoders_common.h"
 
 // -------------------------------------
-// Private functions (for testing only)
+// Private SBS-functions (for testing only)
 // -------------------------------------
 struct cc_subtitle * sbs_append_string(unsigned char * str, LLONG time_from, LLONG time_trim, struct encoder_ctx * context);
 
 // -------------------------------------
-// Test helpers
+// Helpers
 // -------------------------------------
-struct encoder_ctx * context;
-
 struct cc_subtitle * helper_create_sub(char * str, LLONG time_from, LLONG time_trim)
 {
 	struct cc_subtitle * sub = (struct cc_subtitle *)malloc(sizeof(struct cc_subtitle));
 	sub->type = CC_BITMAP;
 	sub->start_time = 1;
 	sub->end_time = 100;
-	sub->data = strdup("asdf");
+	sub->data = strdup(str);
 	sub->nb_data = strlen(sub->data);
 
 	return sub;
@@ -32,6 +30,7 @@ struct cc_subtitle * helper_create_sub(char * str, LLONG time_from, LLONG time_t
 // -------------------------------------
 // MOCKS
 // -------------------------------------
+struct encoder_ctx * context;
 
 void freep(void * obj){
 }
@@ -52,6 +51,8 @@ unsigned char * paraof_ocrtext(void * sub) {
 void setup(void)
 {
 	context = (struct encoder_ctx *)malloc(sizeof(struct encoder_ctx));
+	context->sbs_buffer = NULL;
+	context->sbs_capacity = 0;
 }
 
 void teardown(void)
@@ -64,21 +65,8 @@ void teardown(void)
 // -------------------------------------
 START_TEST(test_sbs_one_simple_sentence)
 {
-	// ck_assert_msg(m == NULL,
-	// "NULL should be returned on attempt to create with "
-	// "a negative amount");
-
-	//struct cc_subtitle * reformat_cc_bitmap_through_sentence_buffer (struct cc_subtitle *sub, struct encoder_ctx *context);
-	// sbs_append_string();
-
-	struct cc_subtitle * sub1 = (struct cc_subtitle *)malloc(sizeof(struct cc_subtitle));
-	sub1->type = CC_BITMAP;
-	sub1->start_time = 1;
-	sub1->end_time = 100;
-	sub1->data = strdup("Simple sentence.");
-	sub1->nb_data = strlen(sub1->data);
-
-	struct cc_subtitle * out = reformat_cc_bitmap_through_sentence_buffer(sub1, context);
+	struct cc_subtitle * sub = helper_create_sub("Simple sentence.", 1, 100);
+	struct cc_subtitle * out = reformat_cc_bitmap_through_sentence_buffer(sub, context);
 
 	ck_assert_ptr_ne(out, NULL);
 	ck_assert_str_eq(out->data, "Simple sentence.");
@@ -90,24 +78,12 @@ END_TEST
 
 START_TEST(test_sbs_two_sentences_with_rep)
 {
-	struct cc_subtitle * sub1 = (struct cc_subtitle *)malloc(sizeof(struct cc_subtitle));
-	sub1->type = CC_BITMAP;
-	sub1->start_time = 1;
-	sub1->end_time = 100;
-	sub1->data = strdup("asdf");
-	sub1->nb_data = strlen(sub1->data);
-
+	struct cc_subtitle * sub1 = helper_create_sub("asdf", 1, 100);
 	struct cc_subtitle * out1 = reformat_cc_bitmap_through_sentence_buffer(sub1, context);
 	ck_assert_ptr_eq(out1, NULL);
 
 	// second sub:
-	struct cc_subtitle * sub2 = (struct cc_subtitle *)malloc(sizeof(struct cc_subtitle));
-	sub2->type = CC_BITMAP;
-	sub2->start_time = 101;
-	sub2->end_time = 200;
-	sub2->data = strdup("asdf Hello.");
-	sub2->nb_data = strlen(sub2->data);
-
+	struct cc_subtitle * sub2 = helper_create_sub("asdf Hello.", 101, 200);
 	struct cc_subtitle * out2 = reformat_cc_bitmap_through_sentence_buffer(sub2, context);
 
 	ck_assert_ptr_ne(out2, NULL);
@@ -206,32 +182,74 @@ END_TEST
 
 START_TEST(test_sbs_append_string_real_data_1)
 {
-	char * test_strings[] = {
-		"First string",
-		"First string ends here."
-	};
 	struct cc_subtitle * sub;
-	char * str;
 
-	// first string
-	str = strdup(test_strings[0]);
-	sub = sbs_append_string(str, 1, 20, context);
-
+	// 1
+	sub = sbs_append_string("Oleon",
+		1, 0, context);
 	ck_assert_ptr_eq(sub, NULL);
-	free(sub);
 
-	// second string:
-	str = strdup(test_strings[1]);
-	//printf("second string: [%s]\n", str);
-	sub = sbs_append_string(str, 21, 40, context);
-
+	// 2
+	sub = sbs_append_string("Oleon costs.",
+		1, 189, context);
 	ck_assert_ptr_ne(sub, NULL);
-	ck_assert_str_eq(sub->data, "First string ends here.");
-	ck_assert_int_eq(sub->start_time, 1);
-	ck_assert_int_eq(sub->end_time, 40);
+	ck_assert_str_eq(sub->data, "Oleon costs.");
+
+	// 3
+	sub = sbs_append_string("buried in the annex, 95 Oleon costs.\
+Didn't",
+		190, 889, context);
+	ck_assert_ptr_ne(sub, NULL);
+	ck_assert_str_eq(sub->data, "buried in the annex, 95 Oleon costs.");
+	ck_assert_int_eq(sub->start_time, 190);    // = <sub start>
+	ck_assert_int_eq(sub->end_time, 783);      // = <sub start>  +  <available time,889-190=699 > * <sentence alphanum, 28>  /  <sub alphanum, 33>
+	ck_assert_ptr_eq(sub->next, NULL);
+
+	// 4
+	sub = sbs_append_string("buried in the annex, 95 Oleon costs.\
+Didn't want",
+		890, 1129, context);
+	ck_assert_ptr_eq(sub, NULL);
+
+	// 5
+	sub = sbs_append_string("buried in the annex, 95 Oleon costs.\
+Didn't want to",
+		1130, 1359, context);
+	printf("\n\n[%s]\n\n", sub->data);
+	ck_assert_ptr_eq(sub, NULL);
+
+	// 6
+	sub = sbs_append_string("buried in the annex, 95 Oleon costs.\
+Didn't want to acknowledge",
+		1360, 2059, context);
+	ck_assert_ptr_eq(sub, NULL);
+
+	// 7
+	sub = sbs_append_string("buried in the annex, 95 Oleon costs.\
+Didn't want to acknowledge the",
+		2060, 2299, context);
+	ck_assert_ptr_eq(sub, NULL);
+
+	// 9
+	sub = sbs_append_string("Didn't want to acknowledge the\
+pressures on hospitals, schools and",
+		2300, 5019, context);
+	ck_assert_ptr_eq(sub, NULL);
+
+	// 13
+	sub = sbs_append_string("pressures on hospitals, schools and\
+infrastructure.",
+		5020, 5159, context);
+	ck_assert_ptr_ne(sub, NULL);
+	ck_assert_str_eq(sub->data, "Didn't want to acknowledge the pressures on hospitals, schools and infrastructure.");
+	ck_assert_int_eq(sub->start_time, 784);
+	ck_assert_int_eq(sub->end_time, 5159);
+	ck_assert_ptr_eq(sub->next, NULL);
+
+	// ck_assert_int_eq(sub->start_time, 1);
+	// ck_assert_int_eq(sub->end_time, 40);
 }
 END_TEST
-
 
 
 Suite * ccx_encoders_splitbysentence_suite(void)
