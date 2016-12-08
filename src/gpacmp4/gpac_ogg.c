@@ -23,7 +23,6 @@ for details.
 
 
 #include <gpac/internal/ogg.h>
-#include <gpac/tools.h>
 
 #ifndef GPAC_DISABLE_OGG
 

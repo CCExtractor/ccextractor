@@ -39,7 +39,6 @@
     <ClInclude Include="..\src\gpacmp4\gpac\media_tools.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\mpeg4_odf.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\network.h" />
-    <ClInclude Include="..\src\gpacmp4\gpac\os_types.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\revision.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\setup.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\sync_layer.h" />

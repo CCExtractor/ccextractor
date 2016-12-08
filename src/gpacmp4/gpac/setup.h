@@ -364,7 +364,7 @@ extern "C" {
 #define gf_calloc calloc
 #define gf_realloc realloc
 #define gf_free free
-#define gf_strdup _strdup
+#define gf_strdup strdup
 
 #endif
 

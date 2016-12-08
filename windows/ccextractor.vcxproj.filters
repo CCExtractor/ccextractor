@@ -291,9 +291,6 @@
     <ClInclude Include="..\src\gpacmp4\gpac\config_file.h">
       <Filter>Header Files\gpacmp4</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\configuration.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\gpacmp4\gpac\constants.h">
       <Filter>Header Files\gpacmp4</Filter>
     </ClInclude>
@@ -319,9 +316,6 @@
       <Filter>Header Files\gpacmp4</Filter>
     </ClInclude>
     <ClInclude Include="..\src\gpacmp4\gpac\network.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\os_types.h">
       <Filter>Header Files\gpacmp4</Filter>
     </ClInclude>
     <ClInclude Include="..\src\gpacmp4\gpac\revision.h">
@@ -355,6 +349,9 @@
       <Filter>Header Files\gpacmp4</Filter>
     </ClInclude>
     <ClInclude Include="..\src\gpacmp4\gpac\internal\odf_parse_common.h">
+      <Filter>Header Files\gpacmp4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gpacmp4\gpac\configuration.h">
       <Filter>Header Files\gpacmp4</Filter>
     </ClInclude>
     <ClInclude Include="..\src\gpacmp4\gpac\internal\ogg.h">
@@ -701,9 +698,6 @@
     <ClCompile Include="..\src\gpacmp4\error.c">
       <Filter>Source Files\gpacmp4</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\gpac_ogg.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gpacmp4\hinting.c">
       <Filter>Source Files\gpacmp4</Filter>
     </ClCompile>
@@ -789,6 +783,9 @@
       <Filter>Source Files\gpacmp4</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gpacmp4\utf.c">
+      <Filter>Source Files\gpacmp4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gpacmp4\gpac_ogg.c">
       <Filter>Source Files\gpacmp4</Filter>
     </ClCompile>
   </ItemGroup>

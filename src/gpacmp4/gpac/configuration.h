@@ -1,8 +1,7 @@
 /*
 *			GPAC - Multimedia Framework C SDK
 *
-*			Authors: Jean Le Feuvre
-*			Copyright (c) Telecom ParisTech 2008-2012
+*			Copyright (c) ENST 2008 -
 *					All rights reserved
 *
 *  This file is part of GPAC
@@ -31,31 +30,57 @@
 
 /*this file defines all common macros for libgpac compilation
 except for symbian32 which uses .mmp directives ... */
+#if defined(WIN32) || defined(_WIN32_WCE) || defined(GPAC_CONFIG_DARWIN) /*visual studio and xcode*/
 
-/*Configuration for visual studio, 32/64 bits */
-#if defined(_WIN32) && !defined(_WIN32_WCE)
+/*enables GPAC fixed point*/
+//#define GPAC_FIXED_POINT
 
-#ifndef GPAC_MP4BOX_MINI
+/*automatic tracking is disabled by default, causes too many problems when reusing parts of gpac*/
+#if 0
+/*enables GPAC memory tracking*/
+#if defined(DEBUG) || defined(_DEBUG)
+#define GPAC_MEMORY_TRACKING
+#endif
+#endif
 
+/*platform is big endian*/
+//#define GPAC_BIG_ENDIAN
+
+/*SSL enabled*/
+#ifdef WIN32
 #define GPAC_HAS_SSL
+#endif
 
+/*spidermonkey enabled*/
 #define GPAC_HAS_SPIDERMONKEY
+#ifdef GPAC_CONFIG_DARWIN
+#define MOZILLA_1_8_BRANCH
+#endif
+
+/*libjpeg enabled*/
 #define GPAC_HAS_JPEG
+
+/*pnj enabled*/
 #define GPAC_HAS_PNG
 
 /*IPv6 enabled - for win32, this is evaluated at compile time, !! do not uncomment !!*/
-
-//#define GPAC_MEMORY_TRACKING
-
-/*Win32 IPv6 is evaluated at compile time, !! do not uncomment !!*/
 //#define GPAC_HAS_IPV6
 
-#define GPAC_HAS_GLU
+/*3D compositor disabled*/
+#ifdef GPAC_CONFIG_DARWIN
+#define GPAC_DISABLE_3D
+#endif
 
-#endif /*GPAC_MP4BOX_MINI*/
+/*use TinyGL instead of OpenGL*/
+//#define GPAC_USE_TINYGL
 
-/*Configuration for WindowsCE 32 bits */
-#elif defined(_WIN32_WCE)
+/*use OpenGL ES instead of OpenGL*/
+#ifdef GPAC_CONFIG_DARWIN
+#define GPAC_USE_OGL_ES
+#endif
+
+
+#if defined(_WIN32_WCE)
 
 #ifndef GPAC_FIXED_POINT
 #define GPAC_FIXED_POINT
@@ -70,115 +95,32 @@ except for symbian32 which uses .mmp directives ... */
 #error "Only one of GPAC_USE_IGPP and GPAC_USE_IGPP_HP can be defined"
 #endif
 
-#if !defined(GPAC_DISABLE_3D) && !defined(GPAC_USE_TINYGL) && !defined(GPAC_USE_GLES1X)
-#define GPAC_USE_GLES1X
+#if !defined(GPAC_DISABLE_3D) && !defined(GPAC_USE_TINYGL) && !defined(GPAC_USE_OGL_ES)
+#define GPAC_USE_OGL_ES
 #endif
 
-
-#define GPAC_HAS_SPIDERMONKEY
-#define GPAC_HAS_JPEG
-#define GPAC_HAS_PNG
-
-/*comment this line if you don't have a GLU32 version for Windows Mobile*/
-//#define GPAC_HAS_GLU
+#endif /*_WIN32_WCE*/
 
 
-/*Configuration for Android */
-#elif defined(GPAC_CONFIG_ANDROID)
 
-#ifndef GPAC_ANDROID
-#define GPAC_ANDROID
-#endif
-
-#define GPAC_HAS_IPV6
-#define GPAC_USE_GLES1X
-/*don't use fixed-point version on Android, not needed*/
-//#define GPAC_FIXED_POINT
-
-#define GPAC_HAS_SPIDERMONKEY
-#define GPAC_HAS_JPEG
-#define GPAC_HAS_PNG
-
-/*Configuration for XCode OSX (not iOS) */
-#elif defined(GPAC_CONFIG_DARWIN) && !defined(GPAC_IPHONE)
-
-#define GPAC_HAS_IPV6
-#define GPAC_HAS_SSL
-
-//64-bits OSX
-#ifdef __LP64__
-#define GPAC_64_BITS
-#endif
-
-#define GPAC_HAS_SPIDERMONKEY
-#define GPAC_HAS_JPEG
-#define GPAC_HAS_PNG
-#define GPAC_HAS_GLU
-
-#define GPAC_MEMORY_TRACKING
-/*Configuration for XCode iOS*/
-#elif defined(GPAC_CONFIG_DARWIN) && defined(GPAC_IPHONE)
-
-//64-bits iOS
-#ifdef __LP64__
-#define GPAC_64_BITS
-#endif
-
-#define GPAC_HAS_SPIDERMONKEY
-#define GPAC_HAS_JPEG
-#define GPAC_HAS_PNG
-
-/*don't use fixed-point version on iOS, not needed*/
-//#define GPAC_FIXED_POINT
-
-//#define GPAC_USE_GLES1X
-#define GPAC_USE_GLES2
-
-// glu port available in gpac extra libs
-#define GPAC_HAS_GLU
-
-/*extra libs supported on iOS*/
-#define GPAC_HAS_FAAD
-#define GPAC_HAS_MAD
-#define GPAC_HAS_FFMPEG
-#define GPAC_HAS_SDL
-#define GPAC_HAS_FREETYPE
-
-#define GPAC_HAS_IPV6
-#define GPAC_HAS_SSL
+#endif /*defined(WIN32) || defined(_WIN32_WCE)*/
 
 
-/*Configuration for Symbian*/
-#elif defined(__SYMBIAN32__)
+#if defined(__SYMBIAN32__)
 
 #ifndef GPAC_FIXED_POINT
 #define GPAC_FIXED_POINT
 #endif
 
-#define GPAC_HAS_SPIDERMONKEY
-#define GPAC_HAS_JPEG
-#define GPAC_HAS_PNG
-
-#else
-#error "Unknown target platform used with static configuration file"
 #endif
 
-
-/*disables player */
-//#define GPAC_DISABLE_PLAYER
-
-/*disables scene manager */
-//#define GPAC_DISABLE_SMGR
-
-/*disables core tools */
-//#define GPAC_DISABLE_CORE_TOOLS
-
-/*disables zlib */
-#ifndef GPAC_MP4BOX_MINI
-//#define GPAC_DISABLE_ZLIB
-#else
-#define GPAC_DISABLE_ZLIB
+#if defined(_WIN32_WCE)
+/*comment this line if you don't have a GLU32 version for Windows Mobile*/
+//#define GPAC_HAS_GLU
+#elif defined(WIN32)
+#define GPAC_HAS_GLU
 #endif
+
 
 /*disables SVG scene graph*/
 //#define GPAC_DISABLE_SVG
@@ -197,7 +139,6 @@ except for symbian32 which uses .mmp directives ... */
 
 /*disables LASeR coder*/
 //#define GPAC_DISABLE_LASER
-//#define GPAC_DISABLE_SAF
 
 /*disables BIFS Engine support - TODO - merge DIMS and LASeR into BENG and rename it*/
 //#define GPAC_DISABLE_SENG
@@ -262,9 +203,6 @@ except for symbian32 which uses .mmp directives ... */
 /*disables ISO FF fragments*/
 //#define GPAC_DISABLE_ISOM_FRAGMENTS
 
-/*disables scene graph */
-//#define GPAC_DISABLE_SCENEGRAPH
-
 /*disables scene graph textual dump*/
 //#define GPAC_DISABLE_SCENE_DUMP
 
@@ -277,27 +215,4 @@ except for symbian32 which uses .mmp directives ... */
 /*disables IETF RTP/SDP/RTSP*/
 //#define GPAC_DISABLE_STREAMING
 
-/*disables dashclient */
-//#define GPAC_DISABLE_DASH_CLIENT
-
-/*disables Timed Text support */
-//#define GPAC_DISABLE_TTXT
-
-/*disables TTML */
-//#define GPAC_DISABLE_TTML
-
-/*disables WebVTT */
-//#define GPAC_DISABLE_VTT
-
-/*disables DASH MPD */
-//#define GPAC_DISABLE_MPD
-
-/*disables HEVC */
-//#define GPAC_DISABLE_HEVC
-
-/*disables VOBSUB */
-//#define GPAC_DISABLE_VOBSUB
-
-
 #endif		/*_GF_CONFIG_H_*/
-
