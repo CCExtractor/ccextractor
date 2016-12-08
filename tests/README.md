@@ -1,4 +1,4 @@
-# UNIT TESTS
+# UNIT TESTING
 
 This folder contains a archetype and several unit-tests for CCExtractor
 
@@ -18,6 +18,25 @@ DEBUG=1 make
 ```
 
 Where `DEBUG` is just an environment variable.
+
+## DEBUGGING
+
+If tests failed after your changes, you could debug them (almost all flags for this are set in the `tests/Makefile`.
+
+Run:
+
+```shell
+# build test runner
+make
+# load test runner to the debgger:
+gdb runner
+
+# run under debugger:
+(gdb) run
+
+# on segfault:
+(gdb) where
+```
 
 ## DEPENDENCIES
 

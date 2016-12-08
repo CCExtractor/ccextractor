@@ -40,24 +40,55 @@ int sbs_is_pointer_on_sentence_breaker(char * start, char * current)
 
 int sbs_fuzzy_strncmp(const char * a, const char * b, size_t n, const size_t maxerr)
 {
-	// TODO: implement fuzzy comparing (allow errors)
-	return strncmp(a, b, n);
+	// TODO: implement fuzzy comparing
+	// Error counter DOES NOT WORK!!!
+
+	int i;
+	//int err;
+	char A, B;
+
+	i = -1;
+	do
+	{
+		i++;
+
+		// Bound check (compare to N)
+		if (i == n) return 0;
+
+		A = a[i];
+		B = b[i];
+
+		// bound check (line endings)
+		if (A == 0)
+		{
+			if (B == 0) return 0;
+			return 1;
+		}
+		else
+		{
+			if (B == 0) return -1;
+		}
+
+		if (A == B) continue;
+		if (isspace(A) && isspace(B)) continue;
+
+		if (A > B) return 1;
+		return -1;
+
+	} while(1);
 }
 
-void sbs_strcpy_without_dup(unsigned char * str, struct encoder_ctx * context)
+void sbs_strcpy_without_dup(const unsigned char * str, struct encoder_ctx * context)
 {
 	int intersect_len;
-	unsigned char * sbs;
 	unsigned char * suffix;
-	unsigned char * prefix;
+	const unsigned char * prefix = str;
 
 	unsigned long sbs_len;
 	unsigned long str_len;
 
-	sbs = context->sbs_buffer;
-
 	str_len = strlen(str);
-	sbs_len = strlen(sbs);
+	sbs_len = strlen(context->sbs_buffer);
 
 	intersect_len = str_len;
 	if (sbs_len < intersect_len)
@@ -65,19 +96,77 @@ void sbs_strcpy_without_dup(unsigned char * str, struct encoder_ctx * context)
 
 	while (intersect_len>0)
 	{
-		prefix = str;
-		suffix = sbs + sbs_len - intersect_len;
-		if (0 == sbs_fuzzy_strncmp(sbs, str, intersect_len, 1))
+		suffix = context->sbs_buffer + sbs_len - intersect_len;
+		if (0 == sbs_fuzzy_strncmp(prefix, suffix, intersect_len, 1))
 		{
 			break;
 		}
 		intersect_len--;
 	}
 
-	// remove dup from buffer
-	// we will use an appropriate part from the new string
-	sbs[sbs_len-intersect_len] = 0;
-	strcat(sbs, str);
+	LOG_DEBUG("Sentence Buffer: sbs_strcpy_without_dup, intersection len [%4d]\n", intersect_len);
+
+	// check, that new string does not contain data, from
+	// already handled sentence:
+	LOG_DEBUG("Sentence Buffer: sbs_strcpy_without_dup, sbslen [%4d] handled len [%4d]\n", sbs_len, context->sbs_handled_len);
+	if ( (sbs_len - intersect_len) >= context->sbs_handled_len)
+	{
+		// there is no intersection.
+		// It is time to clean the buffer. Excepting the last uncomplete sentence
+		strcpy(context->sbs_buffer, context->sbs_buffer + context->sbs_handled_len);
+		context->sbs_handled_len = 0;
+		sbs_len = strlen(context->sbs_buffer);
+
+		LOG_DEBUG("Sentence Buffer: Clean buffer, after BUF [%s]\n\n\n", context->sbs_buffer);
+	}
+
+	if (intersect_len > 0)
+	{
+		// there is a common part (suffix of old sentence equals to prefix of new str)
+		//
+		// remove dup from buffer
+		// we will use an appropriate part from the new string
+		context->sbs_buffer[sbs_len-intersect_len] = 0;
+	}
+
+	sbs_len = strlen(context->sbs_buffer);
+
+	// whitespace control. Add space between subs
+	if (
+		!isspace(str[0])                // not a space char in the beginning of new str
+		&& context->sbs_handled_len >0  // buffer is not empty (there is uncomplete sentence)
+		&& !isspace(context->sbs_buffer[sbs_len-1])  // not a space char at the end of existing buf
+	)
+	{
+		//strcat(context->sbs_buffer, " ");
+	}
+
+	strcat(context->sbs_buffer, str);
+}
+
+void sbs_str_autofix(unsigned char * str)
+{
+	int i;
+
+	// replace all whitespaces with spaces:
+	for (i = 0; str[i] != 0; i++)
+	{
+		if (isspace(str[i]))
+		{
+			str[i] = ' ';
+		}
+
+		if (
+			str[i] == '|'
+			&& (i==0 || isspace(str[i-1]))
+			&& (str[i+1] == 0 || isspace(str[i+1]) || str[i+1]=='\'')
+		)
+		{
+			// try to convert to "I"
+			str[i] = 'I';
+		}
+	}
+
 }
 
 /**
@@ -89,15 +178,14 @@ void sbs_strcpy_without_dup(unsigned char * str, struct encoder_ctx * context)
  * @param  context   Encoder context
  * @return           New <struct cc_subtitle *> subtitle, or NULL, if <str> doesn't contain the ending part of the sentence. If there are more than one sentence, the remaining sentences will be chained using <result->next> reference.
  */
-struct cc_subtitle * sbs_append_string(unsigned char * str, LLONG time_from, LLONG time_trim, struct encoder_ctx * context)
+struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_from, const LLONG time_trim, struct encoder_ctx * context)
 {
 	struct cc_subtitle * resub;
 	struct cc_subtitle * tmpsub;
 
-	unsigned char * sbs;
-
 	unsigned char * bp_current;
 	unsigned char * bp_last_break;
+	unsigned char * sbs_undone_start;
 
 	int is_buf_initialized;
 	int required_capacity;
@@ -116,47 +204,62 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, LLONG time_from, LLO
 	if (! str)
 		return NULL;
 
-	sbs = context->sbs_buffer; // just a shortcut
+	sbs_str_autofix(str);
 
-	is_buf_initialized = (NULL == sbs || context->sbs_capacity == 0)
+	is_buf_initialized = (NULL == context->sbs_buffer || context->sbs_capacity == 0)
 		? 0
 		: 1;
 
 	// ===============================
 	// grow sentence buffer
 	// ===============================
-	required_capacity = (is_buf_initialized ? strlen(sbs) : 0) + strlen(str) + 1;
+	required_capacity =
+		(is_buf_initialized ? strlen(context->sbs_buffer) : 0)    // existing data in buf
+		+ strlen(str)     // length of new string
+		+ 1               // trailing \0
+		+ 1               // space control (will add one space , if required)
+	;
 
 	if (required_capacity >= context->sbs_capacity)
 	{
 		new_capacity = context->sbs_capacity;
-		if (! is_buf_initialized)
-		{
-			new_capacity = 16;
-		}
+		if (! is_buf_initialized) new_capacity = 16;
 
 		while (new_capacity < required_capacity)
 		{
-			if (new_capacity > 1048576 * 8) // more than 8 Mb in TEXT buffer. It is weird...
-			{
-				new_capacity += 1048576 * 8;
-			}
-			else
-			{
-				new_capacity *= 2;
-			}
+			// increase NEW_capacity, and check, that increment
+			// is less than 8 Mb. Because 8Mb - it is a lot
+			// for a TEXT buffer. It is weird...
+			new_capacity += (new_capacity > 1048576 * 8)
+				? 1048576 * 8
+				: new_capacity;
 		}
-		context->sbs_capacity = new_capacity;
-		context->sbs_buffer = (unsigned char *)realloc(context->sbs_buffer, new_capacity * sizeof(unsigned char /*context->sbs_buffer[0]*/ ));
+
+		context->sbs_buffer = (unsigned char *)realloc(
+			context->sbs_buffer,
+			new_capacity * sizeof(/*unsigned char*/ context->sbs_buffer[0] )
+		);
+
 		if (!context->sbs_buffer)
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory in sbs_append_string");
-		sbs = context->sbs_buffer;
 
-		if (! is_buf_initialized) sbs[0] = 0;
+		context->sbs_capacity = new_capacity;
+
+		// if buffer wasn't initialized, we will se trash in buffer.
+		// but we need just empty string, so here we will get it:
+		if (! is_buf_initialized)
+		{
+			// INIT SBS
+			context->sbs_buffer[0] = 0;
+			context->sbs_handled_len = 0;
+		}
+
 	}
 
 	// ===============================
 	// append to buffer
+	//
+	// will update sbs_buffer, sbs_handled_len
 	// ===============================
 	sbs_strcpy_without_dup(str, context);
 
@@ -172,8 +275,14 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, LLONG time_from, LLO
 	anychar_total = 0;
 	anychar_cur = 0;
 
-	bp_last_break = sbs;
-	for (bp_current = sbs; bp_current && *bp_current; bp_current++)
+	sbs_undone_start = context->sbs_buffer + context->sbs_handled_len;
+	bp_last_break = sbs_undone_start;
+
+	LOG_DEBUG("Sentence Buffer: BEFORE sentence break. Last break: [%s]  sbs_undone_start: [%d], sbs_undone: [%s]\n",
+		bp_last_break, context->sbs_handled_len, sbs_undone_start
+	);
+
+	for (bp_current = sbs_undone_start; bp_current && *bp_current; bp_current++)
 	{
 		if (
 			0 < anychar_cur	// skip empty!
@@ -232,13 +341,19 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, LLONG time_from, LLO
 		anychar_cur++;
 	}
 
-	// remove processed data from buffer:
-	if (bp_last_break != sbs)
+	// ===============================
+	// okay, we have extracted several sentences, now we should
+	// save the position of the "remainder" - start of the last
+	// incomplete sentece
+	// ===============================
+	if (bp_last_break != sbs_undone_start)
 	{
-		strcpy(sbs, bp_last_break);
+		context->sbs_handled_len = bp_last_break - sbs_undone_start;
 	}
 
-	LOG_DEBUG("Sentence Buffer: Alphanum Total: [%4d]  Overall chars: [%4d]  STRING:[%20s]  BUFFER:[%20s]\n", alphanum_total, anychar_total, str, sbs);
+	LOG_DEBUG("Sentence Buffer: AFTER sentence break: Handled Len [%4d]\n", context->sbs_handled_len);
+
+	LOG_DEBUG("Sentence Buffer: Alphanum Total: [%4d]  Overall chars: [%4d]  STRING:[%20s]  BUFFER:[%20s]\n", alphanum_total, anychar_total, str, context->sbs_buffer);
 
 	// ===============================
 	// Calculate time spans

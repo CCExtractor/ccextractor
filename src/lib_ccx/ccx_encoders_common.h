@@ -119,15 +119,13 @@ struct encoder_ctx
 	/* split-by-sentence stuff */
 	int splitbysentence;
 
-	unsigned char *sbs_buffer; // Storage for sentence-split buffer
-	ccx_sbs_utf8_character *sbs_newblock;
+	unsigned char * sbs_buffer; /// Storage for sentence-split buffer
+	size_t sbs_handled_len; /// The length of the string in the SBS-buffer, already handled, but preserved for DUP-detection.
 
+	//ccx_sbs_utf8_character *sbs_newblock;
 	LLONG sbs_time_from; // Used by the split-by-sentence code to know when the current block starts...
 	LLONG sbs_time_trim; // ... and ends
-	int sbs_capacity;
-	int sbs_size;
-	//ccx_sbs_utf8_character *sbs_buffer;
-
+	size_t sbs_capacity;
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048

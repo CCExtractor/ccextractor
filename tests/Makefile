@@ -2,15 +2,19 @@ SHELL = /bin/sh
 
 CC=gcc
 # SYS := $(shell gcc -dumpmachine)
-CFLAGS=-std=gnu99 -s -D ENABLE_OCR -fprofile-arcs -ftest-coverage -g -O0 -Q
+CFLAGS=-O0 -std=gnu99 -D ENABLE_OCR -g -ggdb -rdynamic
+#-Q -da -v
+
+# enable COVERAGE
+# CFLAGS+=-fprofile-arcs -ftest-coverage
 
 # add debug flag
 ifdef DEBUG
-CFLAGS+=-D DEBUG
+CFLAGS+=-DDEBUG
 endif
 
 #ALL_FLAGS = -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT
-LDFLAGS=-lm
+LDFLAGS=-lm -g
 
 CFLAGS+=$(shell pkg-config --cflags check)
 LDFLAGS+=$(shell pkg-config --libs check)
@@ -27,13 +31,15 @@ OBJS+=$(OBJ_SUITE)
 all: clean test
 
 %.o: %.c
-	$(CC) -c $(ALL_FLAGS) $(CFLAGS) $< -o $@
+	# explicit output name :  -o $@
+	$(CC) -c $(ALL_FLAGS) $(CFLAGS) $<
 
 runtest: $(OBJS)
 	@echo "+----------------------------------------------+"
 	@echo "|                 BUILD TESTS                  |"
 	@echo "+----------------------------------------------+"
-	$(CC) $(SRC) $@.c $^ $(ALL_FLAGS) $(CFLAGS) $(LDFLAGS) -o $@
+	$(CC) -c $(ALL_FLAGS) $(CFLAGS) $@.c
+	$(CC) $(SRC) $@.o $^ $(ALL_FLAGS) $(CFLAGS) $(LDFLAGS) -o $@
 
 .PHONY: test
 test: runtest
@@ -46,3 +52,8 @@ test: runtest
 clean:
 	rm runtest || true
 	rm *.o || true
+	# coverage info
+	rm *.gcda || true
+	rm *.gcno || true
+	# debug info
+	rm *.c.* || true

@@ -27,6 +27,17 @@ struct cc_subtitle * helper_create_sub(char * str, LLONG time_from, LLONG time_t
 	return sub;
 }
 
+struct cc_subtitle * helper_sbs_append_string(char * str, LLONG time_from, LLONG time_trim, struct encoder_ctx * context)
+{
+	char * str1;
+	struct cc_subtitle * sub;
+
+	str1 = strdup(str);
+	sub = sbs_append_string(str1, time_from, time_trim, context);
+	free(str1);
+	return sub;
+}
+
 // -------------------------------------
 // MOCKS
 // -------------------------------------
@@ -185,18 +196,18 @@ START_TEST(test_sbs_append_string_real_data_1)
 	struct cc_subtitle * sub;
 
 	// 1
-	sub = sbs_append_string("Oleon",
+	sub = helper_sbs_append_string("Oleon",
 		1, 0, context);
 	ck_assert_ptr_eq(sub, NULL);
 
 	// 2
-	sub = sbs_append_string("Oleon costs.",
+	sub = helper_sbs_append_string("Oleon costs.",
 		1, 189, context);
 	ck_assert_ptr_ne(sub, NULL);
 	ck_assert_str_eq(sub->data, "Oleon costs.");
 
 	// 3
-	sub = sbs_append_string("buried in the annex, 95 Oleon costs.\
+	sub = helper_sbs_append_string("buried in the annex, 95 Oleon costs.\n\
 Didn't",
 		190, 889, context);
 	ck_assert_ptr_ne(sub, NULL);
@@ -206,38 +217,37 @@ Didn't",
 	ck_assert_ptr_eq(sub->next, NULL);
 
 	// 4
-	sub = sbs_append_string("buried in the annex, 95 Oleon costs.\
+	sub = helper_sbs_append_string("buried in the annex, 95 Oleon costs.\n\
 Didn't want",
 		890, 1129, context);
 	ck_assert_ptr_eq(sub, NULL);
 
 	// 5
-	sub = sbs_append_string("buried in the annex, 95 Oleon costs.\
+	sub = helper_sbs_append_string("buried in the annex, 95 Oleon costs.\n\
 Didn't want to",
 		1130, 1359, context);
-	printf("\n\n[%s]\n\n", sub->data);
 	ck_assert_ptr_eq(sub, NULL);
 
 	// 6
-	sub = sbs_append_string("buried in the annex, 95 Oleon costs.\
+	sub = helper_sbs_append_string("buried in the annex, 95 Oleon costs.\n\
 Didn't want to acknowledge",
 		1360, 2059, context);
 	ck_assert_ptr_eq(sub, NULL);
 
 	// 7
-	sub = sbs_append_string("buried in the annex, 95 Oleon costs.\
+	sub = helper_sbs_append_string("buried in the annex, 95 Oleon costs.\n\
 Didn't want to acknowledge the",
 		2060, 2299, context);
 	ck_assert_ptr_eq(sub, NULL);
 
 	// 9
-	sub = sbs_append_string("Didn't want to acknowledge the\
+	sub = helper_sbs_append_string("Didn't want to acknowledge the\n\
 pressures on hospitals, schools and",
 		2300, 5019, context);
 	ck_assert_ptr_eq(sub, NULL);
 
 	// 13
-	sub = sbs_append_string("pressures on hospitals, schools and\
+	sub = helper_sbs_append_string("pressures on hospitals, schools and\n\
 infrastructure.",
 		5020, 5159, context);
 	ck_assert_ptr_ne(sub, NULL);
@@ -245,6 +255,18 @@ infrastructure.",
 	ck_assert_int_eq(sub->start_time, 784);
 	ck_assert_int_eq(sub->end_time, 5159);
 	ck_assert_ptr_eq(sub->next, NULL);
+
+	// 14
+	sub = helper_sbs_append_string("pressures on hospitals, schools and\n\
+infrastructure. If",
+		5160, 5529, context);
+	ck_assert_ptr_eq(sub, NULL);
+
+	// 16
+	sub = helper_sbs_append_string("pressures on hospitals, schools and\n\
+infrastructure. If we go",
+		5530, 6559, context);
+	ck_assert_ptr_eq(sub, NULL);
 
 	// ck_assert_int_eq(sub->start_time, 1);
 	// ck_assert_int_eq(sub->end_time, 40);
