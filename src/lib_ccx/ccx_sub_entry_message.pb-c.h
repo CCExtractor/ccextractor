@@ -43,24 +43,12 @@ struct  _CcxSubEntryMessage
 
 
 /* CcxSubEntryMessage methods */
-void   ccx_sub_entry_message__init
-(CcxSubEntryMessage         *message);
-size_t ccx_sub_entry_message__get_packed_size
-(const CcxSubEntryMessage   *message);
-size_t ccx_sub_entry_message__pack
-(const CcxSubEntryMessage   *message,
-uint8_t             *out);
-size_t ccx_sub_entry_message__pack_to_buffer
-(const CcxSubEntryMessage   *message,
-ProtobufCBuffer     *buffer);
-CcxSubEntryMessage *
-ccx_sub_entry_message__unpack
-(ProtobufCAllocator  *allocator,
-size_t               len,
-const uint8_t       *data);
-void   ccx_sub_entry_message__free_unpacked
-(CcxSubEntryMessage *message,
-ProtobufCAllocator *allocator);
+void ccx_sub_entry_message__init(CcxSubEntryMessage *message);
+size_t ccx_sub_entry_message__get_packed_size(const CcxSubEntryMessage *message);
+size_t ccx_sub_entry_message__pack(const CcxSubEntryMessage *message, uint8_t *out);
+size_t ccx_sub_entry_message__pack_to_buffer(const CcxSubEntryMessage *message, ProtobufCBuffer *buffer);
+CcxSubEntryMessage* ccx_sub_entry_message__unpack(ProtobufCAllocator *allocator, size_t len, const uint8_t *data);
+void ccx_sub_entry_message__free_unpacked(CcxSubEntryMessage *message,ProtobufCAllocator *allocator);
 /* --- per-message closures --- */
 
 typedef void(*CcxSubEntryMessage_Closure)
