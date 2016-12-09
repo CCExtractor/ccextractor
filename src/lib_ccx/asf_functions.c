@@ -474,7 +474,7 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 					if(!memcmp(econtentpos+2, L"WM/VideoClosedCaptioning"
 								,DescriptorNameLength))
 					{
-						// This flag would be really usefull if it would be
+						// This flag would be really useful if it would be
 						// reliable - it isn't.
 						asf_data_container.VideoClosedCaptioningFlag = *((int32_t*)edescval);
 						dbg_print(CCX_DMT_PARSE, "Found WM/VideoClosedCaptioning flag: %d\n",

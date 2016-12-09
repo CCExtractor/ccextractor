@@ -252,7 +252,7 @@ s32 oggpack_look(oggpack_buffer *b,s32 bits){
   return(m&ret);
 }
 
-/* Read in bits without advancing the bitptr; bits <= 32 */
+/* Read in bits without advancing the buffer; bits <= 32 */
 s32 oggpackB_look(oggpack_buffer *b,s32 bits){
   u32 ret;
   s32 m=32-bits;
@@ -1015,7 +1015,7 @@ s32 ogg_sync_pageseek(ogg_sync_state *oy,ogg_page *og){
     
     /* Compare */
     if(memcmp(chksum,page+22,4)){
-      /* D'oh.  Mismatch! Corrupt page (or miscapture and not a page
+      /* D'oh.  Mismatch! Corrupt page (or mis-capture and not a page
 	 at all) */
       /* replace the computed checksum with the one actually read in */
       memcpy(page+22,chksum,4);

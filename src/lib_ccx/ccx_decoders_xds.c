@@ -4,7 +4,7 @@
 #include "ccx_common_common.h"
 #include "utility.h" 
 
-LLONG ts_start_of_xds = -1; // Time at which we switched to XDS mode, =-1 hasn't happened yet
+LLONG ts_start_of_xds = -1; // Time at which we switched to XDS mode, = -1 hasn't happened yet
 
 static const char *XDSclasses[]=
 {

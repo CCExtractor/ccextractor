@@ -1,0 +1,10 @@
+prefix=/usr/local
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: ccx
+Description: Closed Caption Extraction library
+Version: 0.75
+Cflags: -I${includedir}/
+Libs: -L${libdir} -lccx -lpng
+Libs.private: -lpng

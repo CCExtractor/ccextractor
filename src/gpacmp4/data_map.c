@@ -10,7 +10,7 @@
  *  it under the terms of the GNU Lesser General Public License as published by
  *  the Free Software Foundation; either version 2, or (at your option)
  *  any later version.
- *   
+ *
  *  GPAC is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -72,7 +72,7 @@ void gf_isom_datamap_close(GF_MediaInformationBox *minf)
 	minf->dataHandler = NULL;
 }
 
-/*cf below, we disable filedatamap since it tricks mem usage on w32*/
+/*cf below, we disable file data map since it tricks mem usage on w32*/
 #if 0
 static Bool IsLargeFile(char *path)
 {
@@ -216,7 +216,7 @@ GF_Err gf_isom_datamap_open(GF_MediaBox *mdia, u32 dataRefIndex, u8 Edit)
 	return GF_OK;
 }
 
-//return the NB of bytes actually read (used for HTTP, ...) in case file is uncomplete
+//return the NB of bytes actually read (used for HTTP, ...) in case file is incomplete
 u32 gf_isom_datamap_get_data(GF_DataMap *map, char *buffer, u32 bufferLength, u64 Offset)
 {
 	if (!map || !buffer) return 0;

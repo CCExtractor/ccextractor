@@ -25,7 +25,7 @@
 #include "disable_warnings.h"
 #include <gpac/internal/isomedia_dev.h>
 
-#if !defined(GPAC_DISABLE_ISOM) && !defined(GPAC_DISABLE_ISOM_WRITE)
+#if !defined(GPAC_DISABLE_ISOM ) && !defined(GPAC_DISABLE_ISOM_WRITE)
 
 #define GPAC_ISOM_CPRT_NOTICE "IsoMedia File Produced with GPAC "GPAC_FULL_VERSION
 
@@ -70,7 +70,7 @@ typedef struct
 	u8 isDone;
 	u64 prev_offset;
 	GF_MediaBox *mdia;
-	/*each writer has a sampleToChunck and ChunkOffset tables
+	/*each writer has a sample To Chunck and ChunkOffset tables
 	these tables are filled during emulation mode and then will	replace the table in the GF_SampleTableBox*/
 	GF_SampleToChunkBox *stsc;
 	/*we don't know if it's a large offset or not*/
@@ -244,7 +244,7 @@ static GF_Err ShiftOffset(GF_ISOFile *file, GF_List *writers, u64 offset)
 				}
 			} else {
 				co64 = (GF_ChunkLargeOffsetBox *) writer->stco;
-				//be carefull for the last entry ...
+				//be careful for the last entry ...
 				last = ent->nextChunk ? ent->nextChunk : co64->nb_entries + 1;
 				for (k = ent->firstChunk; k < last; k++) {
 					co64->offsets[k-1] += offset;
@@ -738,14 +738,14 @@ GF_Err WriteFlat(MovieWriter *mw, u8 moovFirst, GF_BitStream *bs)
 		e = gf_isom_box_write((GF_Box *)movie->brand, bs);
 		if (e) goto exit;
 	}
-	/*then progressive dnload*/
+	/*then progressive download*/
 	if (movie->pdin) {
 		e = gf_isom_box_size((GF_Box *)movie->pdin);
 		if (e) goto exit;
 		e = gf_isom_box_write((GF_Box *)movie->pdin, bs);
 		if (e) goto exit;
 	}
-	//What we will do is first emulate the write from the begining...
+	//What we will do is first emulate the write from the beginning...
 	//note: this will set the size of the mdat
 	e = DoWrite(mw, writers, bs, 1, gf_bs_get_position(bs));
 	if (e) goto exit;

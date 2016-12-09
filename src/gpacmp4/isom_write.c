@@ -481,7 +481,7 @@ u32 gf_isom_new_track(GF_ISOFile *movie, u32 trakID, u32 MediaType, u32 TimeScal
 	now = gf_isom_get_mp4time();
 	tkhd->creationTime = now;
 	tkhd->modificationTime = now;
-	//OK, set up the media trak
+	//OK, set up the media track
 	e = NewMedia(&mdia, MediaType, TimeScale);
 	if (e) {
 		gf_isom_box_del((GF_Box *)mdia);
@@ -774,7 +774,7 @@ GF_Err gf_isom_append_sample_data(GF_ISOFile *movie, u32 trackNumber, char *data
 
 //Add sample reference to a track. The SampleOffset is the offset of the data in the referenced file
 //you must have created a StreamDescription with URL or URN specifying your referenced file
-//the data offset specifies the begining of the chunk
+//the data offset specifies the beginning of the chunk
 //Use streamDescriptionIndex to specify the desired stream (if several)
 GF_Err gf_isom_add_sample_reference(GF_ISOFile *movie, u32 trackNumber, u32 StreamDescriptionIndex, GF_ISOSample *sample, u64 dataOffset)
 {
@@ -1086,7 +1086,7 @@ insertIPI:
 		ipiD->IPI_ES_Id = tmpRef;
 		ipiD->tag = GF_ODF_ISOM_IPI_PTR_TAG;
 	} else {
-		//Watch out! ONLY ONE IPI dependancy is allowed per stream
+		//Watch out! ONLY ONE IPI dependency is allowed per stream
 		dpnd->trackIDCount = 1;
 		dpnd->trackIDs[0] = ipiD->IPI_ES_Id;
 		//and replace the tag and value...
@@ -2014,7 +2014,7 @@ GF_Err gf_isom_modify_alternate_brand(GF_ISOFile *movie, u32 Brand, u8 AddIt)
 		gf_list_add(movie->TopBoxes, movie->brand);
 	}
 
-	//do not mofify major one
+	//do not modify major one
 	if (!AddIt && movie->brand->majorBrand == Brand) return GF_OK;
 
 	if (!AddIt && movie->brand->altCount == 1) {
@@ -2665,7 +2665,7 @@ GF_Err gf_isom_new_generic_sample_description(GF_ISOFile *movie, u32 trackNumber
 	return e;
 }
 
-//use carefully. Very usefull when you made a lot of changes (IPMP, IPI, OCI, ...)
+//use carefully. Very useful when you made a lot of changes (IPMP, IPI, OCI, ...)
 //THIS WILL REPLACE THE WHOLE DESCRIPTOR ...
 GF_Err gf_isom_change_generic_sample_description(GF_ISOFile *movie, u32 trackNumber, u32 StreamDescriptionIndex, GF_GenericSampleDescription *udesc)
 {

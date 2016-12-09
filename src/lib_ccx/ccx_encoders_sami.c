@@ -64,7 +64,7 @@ int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_st
 		pos_w++;
 	}
 	unescaped[pos_w] = 0;
-	// Now read the unescaped string (now several string'z and write them)
+	// Now read the unescaped string (now several string's and write them)
 	unsigned char *begin = unescaped;
 	while (begin < unescaped+len)
 	{

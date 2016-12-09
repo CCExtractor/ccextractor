@@ -56,7 +56,7 @@
  *
  * This function translates from the image format to
  * plain bytes, with linear interpolation of samples.
- * Could be further improved with a lowpass filter.
+ * Could be further improved with a low pass filter.
  */
 static inline unsigned int
 sample(uint8_t *raw, int offs, int bpp, int endian)
