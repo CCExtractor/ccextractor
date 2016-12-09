@@ -46,7 +46,7 @@ static u32 URL_GetProtocolType(const char *pathName)
 	if (!pathName) return GF_URL_TYPE_ANY;
 
 	/* URL with the data scheme are not relative to avoid concatenation */
-	if (!_strnicmp(pathName, "data:", 5)) return GF_URL_TYPE_ANY;
+	if (!strnicmp(pathName, "data:", 5)) return GF_URL_TYPE_ANY;
 
 	if ((pathName[0] == '/') || (pathName[0] == '\\')
 		|| (pathName[1] == ':')
@@ -56,7 +56,7 @@ static u32 URL_GetProtocolType(const char *pathName)
 	begin = strstr(pathName, "://");
 	if (!begin) begin = strstr(pathName, "|//");
 	if (!begin) return GF_URL_TYPE_RELATIVE;
-	if (!_strnicmp(pathName, "file", 4)) return GF_URL_TYPE_FILE;
+	if (!strnicmp(pathName, "file", 4)) return GF_URL_TYPE_FILE;
 	return GF_URL_TYPE_ANY;
 }
 
@@ -142,11 +142,11 @@ char *gf_url_concatenate(const char *parentName, const char *pathName)
 		i = 0;
 		while (1) {
 			if (the_path[i] == 0) break;
-			if (!_strnicmp(the_path + i, "%5c", 3) || !_strnicmp(the_path + i, "%2f", 3)) {
+			if (!strnicmp(the_path + i, "%5c", 3) || !strnicmp(the_path + i, "%2f", 3)) {
 				the_path[i] = '/';
 				memmove(the_path + i + 1, the_path + i + 3, strlen(the_path + i + 3) + 1);
 			}
-			else if (!_strnicmp(the_path + i, "%05c", 4) || !_strnicmp(the_path + i, "%02f", 4)) {
+			else if (!strnicmp(the_path + i, "%05c", 4) || !strnicmp(the_path + i, "%02f", 4)) {
 				the_path[i] = '/';
 				memmove(the_path + i + 1, the_path + i + 4, strlen(the_path + i + 4) + 1);
 			}
@@ -163,16 +163,16 @@ char *gf_url_concatenate(const char *parentName, const char *pathName)
 
 	/*rewrite path to use / not % encoding*/
 	rad = strchr(parentName, '%');
-	if (rad && (!_strnicmp(rad, "%5c", 3) || !_strnicmp(rad, "%05c", 4) || !_strnicmp(rad, "%2f", 3) || !_strnicmp(rad, "%02f", 4))) {
+	if (rad && (!strnicmp(rad, "%5c", 3) || !strnicmp(rad, "%05c", 4) || !strnicmp(rad, "%2f", 3) || !strnicmp(rad, "%02f", 4))) {
 		char *the_path = gf_strdup(parentName);
 		i = 0;
 		while (1) {
 			if (the_path[i] == 0) break;
-			if (!_strnicmp(the_path + i, "%5c", 3) || !_strnicmp(the_path + i, "%2f", 3)) {
+			if (!strnicmp(the_path + i, "%5c", 3) || !strnicmp(the_path + i, "%2f", 3)) {
 				the_path[i] = '/';
 				memmove(the_path + i + 1, the_path + i + 3, strlen(the_path + i + 3) + 1);
 			}
-			else if (!_strnicmp(the_path + i, "%05c", 4) || !_strnicmp(the_path + i, "%02f", 4)) {
+			else if (!strnicmp(the_path + i, "%05c", 4) || !strnicmp(the_path + i, "%02f", 4)) {
 				the_path[i] = '/';
 				memmove(the_path + i + 1, the_path + i + 4, strlen(the_path + i + 4) + 1);
 			}
@@ -269,8 +269,8 @@ check_spaces:
 			i++;
 			continue;
 		}
-		if (!_strnicmp(outPath + i, "%3f", 3)) break;
-		if (!_strnicmp(outPath + i, "%20", 3)) {
+		if (!strnicmp(outPath + i, "%3f", 3)) break;
+		if (!strnicmp(outPath + i, "%20", 3)) {
 			outPath[i] = ' ';
 			memmove(outPath + i + 1, outPath + i + 3, strlen(outPath + i) - 2);
 		}
@@ -282,7 +282,7 @@ check_spaces:
 GF_EXPORT
 void gf_url_to_fs_path(char *sURL)
 {
-	if (!_strnicmp(sURL, "file://", 7)) {
+	if (!strnicmp(sURL, "file://", 7)) {
 		/*file:///C:\ scheme*/
 		if ((sURL[7] == '/') && (sURL[9] == ':')) {
 			memmove(sURL, sURL + 8, strlen(sURL) - 7);

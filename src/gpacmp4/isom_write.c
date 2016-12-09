@@ -4112,7 +4112,7 @@ GF_Err gf_isom_set_handler_name(GF_ISOFile *the_file, u32 trackNumber, const cha
 
 	if (!nameUTF8) return GF_OK;
 
-	if (!_strnicmp(nameUTF8, "file://", 7)) {
+	if (!strnicmp(nameUTF8, "file://", 7)) {
 		u8 BOM[4];
 		FILE *f = gf_fopen(nameUTF8 + 7, "rb");
 		u64 size;

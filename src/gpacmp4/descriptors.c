@@ -1224,23 +1224,23 @@ const char *gf_esd_get_textual_description(GF_ESD *esd)
 			char *ext = strchr(esd->decoderConfig->decoderSpecificInfo->data + 4, '.');
 			if (!ext) return "GPAC Internal Scene Description";
 			ext += 1;
-			if (!_strnicmp(ext, "bt", 2))
+			if (!strnicmp(ext, "bt", 2))
 				return "BT Scene Description";
-			if (!_strnicmp(ext, "xmt", 2))
+			if (!strnicmp(ext, "xmt", 2))
 				return "XMT Scene Description";
-			if (!_strnicmp(ext, "wrl", 3))
+			if (!strnicmp(ext, "wrl", 3))
 				return "VRML Scene Description";
-			if (!_strnicmp(ext, "x3d", 3))
+			if (!strnicmp(ext, "x3d", 3))
 				return "W3D Scene Description";
-			if (!_strnicmp(ext, "x3dv", 4))
+			if (!strnicmp(ext, "x3dv", 4))
 				return "X3D Scene Description";
-			if (!_strnicmp(ext, "swf", 3))
+			if (!strnicmp(ext, "swf", 3))
 				return "Flash (SWF) Scene Description";
-			if (!_strnicmp(ext, "xsr", 3))
+			if (!strnicmp(ext, "xsr", 3))
 				return "LASeR-ML Scene Description";
-			if (!_strnicmp(ext, "wgt", 3))
+			if (!strnicmp(ext, "wgt", 3))
 				return "W3C Widget Package";
-			if (!_strnicmp(ext, "mgt", 3))
+			if (!strnicmp(ext, "mgt", 3))
 				return "MPEG-U Widget Package";
 		}
 		return "GPAC Internal Scene Description";

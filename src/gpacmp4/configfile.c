@@ -245,7 +245,7 @@ GF_Err gf_cfg_save(GF_Config *iniFile)
 	i = 0;
 	while ((sec = (IniSection *)gf_list_enum(iniFile->sections, &i))) {
 		/*Temporary sections are not saved*/
-		if (!_strnicmp(sec->section_name, "Temp", 4)) continue;
+		if (!strnicmp(sec->section_name, "Temp", 4)) continue;
 
 		fprintf(file, "[%s]\n", sec->section_name);
 		j = 0;
@@ -338,7 +338,7 @@ GF_Err gf_cfg_set_key(GF_Config *iniFile, const char *secName, const char *keyNa
 
 	if (!iniFile || !secName || !keyName) return GF_BAD_PARAM;
 
-	if (!_strnicmp(secName, "temp", 4)) has_changed = GF_FALSE;
+	if (!strnicmp(secName, "temp", 4)) has_changed = GF_FALSE;
 
 	i = 0;
 	while ((sec = (IniSection *)gf_list_enum(iniFile->sections, &i))) {

@@ -108,7 +108,7 @@ extern "C" {
 
 #define strdup _strdup
 #define stricmp _stricmp
-#define strnicmp _strnicmp
+#define strnicmp strnicmp
 #define strupr _strupr
 #define mkdir _mkdir
 #define snprintf _snprintf

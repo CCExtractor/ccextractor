@@ -194,7 +194,7 @@ void GF_IPMPX_ParseFileData(char *fileName, char **out_data, u32 *out_data_size)
 
 void GF_IPMPX_ParseBin128(char *val, bin128 *data)
 {
-	if (!_strnicmp(val, "0x", 2)) val += 2;
+	if (!strnicmp(val, "0x", 2)) val += 2;
 
 	if (strlen(val)<16) {
 		GF_BitStream *bs;
@@ -221,7 +221,7 @@ void GF_IPMPX_ParseBin128(char *val, bin128 *data)
 
 void GF_IPMPX_ParseDate(char *val, GF_IPMPX_Date *date)
 {
-	if ((strlen(val)<7) || _strnicmp(val, "0x", 2)) {
+	if ((strlen(val)<7) || strnicmp(val, "0x", 2)) {
 		GF_BitStream *bs;
 		u32 int_val = atoi(val);
 		bs = gf_bs_new((*date), 5, GF_BITSTREAM_WRITE);
@@ -257,7 +257,7 @@ GF_Err GF_IPMPX_ParseEventType(char *val, GF_IPMPX_ListenType *eventType, u8 *ev
 		}
 		if (j) {
 			szVal[j] = 0;
-			if (!_strnicmp(szVal, "0x", 2)) {
+			if (!strnicmp(szVal, "0x", 2)) {
 				sscanf(szVal, "%x", &v);
 				eventType[*eventTypeCount] = v;
 			}
@@ -297,7 +297,7 @@ GF_Err gf_ipmpx_data_parse_16(char *val, u16 **outData, u16 *outDataSize)
 		}
 		if (j) {
 			szVal[j] = 0;
-			if (!_strnicmp(szVal, "0x", 2)) {
+			if (!strnicmp(szVal, "0x", 2)) {
 				sscanf(szVal, "%x", &v);
 				data[count] = v;
 			}
