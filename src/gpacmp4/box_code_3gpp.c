@@ -475,7 +475,7 @@ GF_Err text_Read(GF_Box *s, GF_BitStream *bs)
 			ptr->textName = NULL;
 			return GF_ISOM_INVALID_FILE;
 		}
-		ptr->textName[pSize] = '\0';				/*Font name*/
+		ptr->textName[pSize] = '\0';			 	/*Font name*/
 	}
 	ptr->size -= pSize;
 

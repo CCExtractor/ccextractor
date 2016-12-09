@@ -724,7 +724,7 @@ void AVI_set_audio(avi_t *AVI, int channels, long rate, int bits, int format, lo
    }
 
 
-//ThOe write preliminary AVI file header: 0 frames, max vid/aud size
+ //ThOe write preliminary AVI file header: 0 frames, max vid/aud size
 int avi_update_header(avi_t *AVI)
 {
    int njunk, sampsize, hasIndex, ms_per_frame, frate, flag;
@@ -1118,7 +1118,7 @@ static int avi_close_output_file(avi_t *AVI)
    OUTLONG(56);                 /* # of bytes to follow */
    OUTLONG(ms_per_frame);       /* Microseconds per frame */
    //ThOe ->0
-   //   OUTLONG(10000000);           /* MaxBytesPerSec, I hope this will never be used */
+// OUTLONG(10000000);           /* MaxBytesPerSec, I hope this will never be used */
    OUTLONG(0);
    OUTLONG(0);                  /* PaddingGranularity (whatever that might be) */
                                 /* Other sources call it 'reserved' */
@@ -1131,9 +1131,9 @@ static int avi_close_output_file(avi_t *AVI)
 
    OUTLONG(AVI->anum+1);
 //   if (AVI->track[0].audio_bytes)
-//      { OUTLONG(2); }           /* Streams */
+//    { OUTLONG(2); }           /* Streams */
 //   else
-//      { OUTLONG(1); }           /* Streams */
+//    { OUTLONG(1); }           /* Streams */
 
    OUTLONG(0);                  /* SuggestedBufferSize */
    OUTLONG(AVI->width);         /* Width */
@@ -1329,14 +1329,14 @@ static int avi_close_output_file(avi_t *AVI)
 
 	 } else if (AVI->track[j].a_fmt == 0x55 && !AVI->track[j].a_vbr) {
 
-	     OUTLONG(30);                            /* # of bytes to follow */
-	     OUTSHRT(AVI->track[j].a_fmt);           /* Format */
-	     OUTSHRT(AVI->track[j].a_chans);         /* Number of channels */
-	     OUTLONG(AVI->track[j].a_rate);          /* SamplesPerSec */
+	     OUTLONG(30);                           /* # of bytes to follow */
+	     OUTSHRT(AVI->track[j].a_fmt);          /* Format */
+	     OUTSHRT(AVI->track[j].a_chans);        /* Number of channels */
+	     OUTLONG(AVI->track[j].a_rate);         /* SamplesPerSec */
 	     //ThOe/tibit
 	     OUTLONG(1000*AVI->track[j].mp3rate/8);
-	     OUTSHRT(sampsize/4);                    /* BlockAlign */
-	     OUTSHRT(AVI->track[j].a_bits);          /* BitsPerSample */
+	     OUTSHRT(sampsize/4);                   /* BlockAlign */
+	     OUTSHRT(AVI->track[j].a_bits);         /* BitsPerSample */
 
 	     OUTSHRT(12);                           /* cbSize */
 	     OUTSHRT(1);                            /* wID */
@@ -1347,7 +1347,7 @@ static int avi_close_output_file(avi_t *AVI)
 
 	 } else {
 
-	     OUTLONG(18);                   /* # of bytes to follow */
+	     OUTLONG(18);						     /* # of bytes to follow */
 	     OUTSHRT(AVI->track[j].a_fmt);           /* Format */
 	     OUTSHRT(AVI->track[j].a_chans);         /* Number of channels */
 	     OUTLONG(AVI->track[j].a_rate);          /* SamplesPerSec */
@@ -1355,7 +1355,7 @@ static int avi_close_output_file(avi_t *AVI)
 	     OUTLONG(avgbsec);  /* Avg bytes/sec */
 	     OUTSHRT(sampsize/4);                    /* BlockAlign */
 	     OUTSHRT(AVI->track[j].a_bits);          /* BitsPerSample */
-	     OUTSHRT(0);                           /* cbSize */
+	     OUTSHRT(0);                             /* cbSize */
 
 	 }
        }
@@ -2533,10 +2533,10 @@ multiple_riff:
 	     AVI->video_index[nvi].pos = gf_f64_tell(AVI->fdes);
 	     AVI->video_index[nvi].len = (u32) n;
 
-	     /*
-	     GF_LOG(GF_LOG_DEBUG, GF_LOG_CONTAINER, ("[avilib] Frame %ld pos %"LLD" len %"LLD" key %ld\n",
-		     nvi, AVI->video_index[nvi].pos,  AVI->video_index[nvi].len, (long)AVI->video_index[nvi].key));
-		     */
+	  
+		 /*  GF_LOG(GF_LOG_DEBUG, GF_LOG_CONTAINER, ("[avilib] Frame %ld pos %"LLD" len %"LLD" key %ld\n",
+		     nvi, AVI->video_index[nvi].pos,  AVI->video_index[nvi].len, (long)AVI->video_index[nvi].key));  */
+		    
 	     nvi++;
 	     gf_f64_seek(AVI->fdes,PAD_EVEN(n),SEEK_CUR);
 	 }

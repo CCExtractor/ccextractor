@@ -14,37 +14,37 @@ int in_xds_mode=0;
 
 const unsigned char pac2_attribs[][3] = // Color, font, ident
 {
-	{ COL_WHITE, FONT_REGULAR, 0 },  // 0x40 || 0x60
+	{ COL_WHITE, FONT_REGULAR, 0 },		// 0x40 || 0x60
 	{ COL_WHITE, FONT_UNDERLINED, 0 },  // 0x41 || 0x61
-	{ COL_GREEN, FONT_REGULAR, 0 },  // 0x42 || 0x62
+	{ COL_GREEN, FONT_REGULAR, 0 },	    // 0x42 || 0x62
 	{ COL_GREEN, FONT_UNDERLINED, 0 },  // 0x43 || 0x63
-	{ COL_BLUE, FONT_REGULAR, 0 },  // 0x44 || 0x64
-	{ COL_BLUE, FONT_UNDERLINED, 0 },  // 0x45 || 0x65
-	{ COL_CYAN, FONT_REGULAR, 0 },  // 0x46 || 0x66
-	{ COL_CYAN, FONT_UNDERLINED, 0 },  // 0x47 || 0x67
-	{ COL_RED, FONT_REGULAR, 0 },  // 0x48 || 0x68
-	{ COL_RED, FONT_UNDERLINED, 0 },  // 0x49 || 0x69
-	{ COL_YELLOW, FONT_REGULAR, 0 },  // 0x4a || 0x6a
-	{ COL_YELLOW, FONT_UNDERLINED, 0 },  // 0x4b || 0x6b
-	{ COL_MAGENTA, FONT_REGULAR, 0 },  // 0x4c || 0x6c
-	{ COL_MAGENTA, FONT_UNDERLINED, 0 },  // 0x4d || 0x6d
-	{ COL_WHITE, FONT_ITALICS, 0 },  // 0x4e || 0x6e
+	{ COL_BLUE, FONT_REGULAR, 0 },      // 0x44 || 0x64
+	{ COL_BLUE, FONT_UNDERLINED, 0 },   // 0x45 || 0x65
+	{ COL_CYAN, FONT_REGULAR, 0 },      // 0x46 || 0x66
+	{ COL_CYAN, FONT_UNDERLINED, 0 },   // 0x47 || 0x67
+	{ COL_RED, FONT_REGULAR, 0 },       // 0x48 || 0x68
+	{ COL_RED, FONT_UNDERLINED, 0 },    // 0x49 || 0x69
+	{ COL_YELLOW, FONT_REGULAR, 0 },    // 0x4a || 0x6a
+	{ COL_YELLOW, FONT_UNDERLINED, 0 }, // 0x4b || 0x6b
+	{ COL_MAGENTA, FONT_REGULAR, 0 },   // 0x4c || 0x6c
+	{ COL_MAGENTA, FONT_UNDERLINED, 0 },// 0x4d || 0x6d
+	{ COL_WHITE, FONT_ITALICS, 0 },     // 0x4e || 0x6e
 	{ COL_WHITE, FONT_UNDERLINED_ITALICS, 0 },  // 0x4f || 0x6f
-	{ COL_WHITE, FONT_REGULAR, 0 },  // 0x50 || 0x70
+	{ COL_WHITE, FONT_REGULAR, 0 },     // 0x50 || 0x70
 	{ COL_WHITE, FONT_UNDERLINED, 0 },  // 0x51 || 0x71
-	{ COL_WHITE, FONT_REGULAR, 4 },  // 0x52 || 0x72
+	{ COL_WHITE, FONT_REGULAR, 4 },     // 0x52 || 0x72
 	{ COL_WHITE, FONT_UNDERLINED, 4 },  // 0x53 || 0x73
-	{ COL_WHITE, FONT_REGULAR, 8 },  // 0x54 || 0x74
+	{ COL_WHITE, FONT_REGULAR, 8 },		// 0x54 || 0x74
 	{ COL_WHITE, FONT_UNDERLINED, 8 },  // 0x55 || 0x75
-	{ COL_WHITE, FONT_REGULAR, 12 }, // 0x56 || 0x76
+	{ COL_WHITE, FONT_REGULAR, 12 },    // 0x56 || 0x76
 	{ COL_WHITE, FONT_UNDERLINED, 12 }, // 0x57 || 0x77
-	{ COL_WHITE, FONT_REGULAR, 16 }, // 0x58 || 0x78
+	{ COL_WHITE, FONT_REGULAR, 16 },    // 0x58 || 0x78
 	{ COL_WHITE, FONT_UNDERLINED, 16 }, // 0x59 || 0x79
-	{ COL_WHITE, FONT_REGULAR, 20 }, // 0x5a || 0x7a
+	{ COL_WHITE, FONT_REGULAR, 20 },    // 0x5a || 0x7a
 	{ COL_WHITE, FONT_UNDERLINED, 20 }, // 0x5b || 0x7b
-	{ COL_WHITE, FONT_REGULAR, 24 }, // 0x5c || 0x7c
+	{ COL_WHITE, FONT_REGULAR, 24 },    // 0x5c || 0x7c
 	{ COL_WHITE, FONT_UNDERLINED, 24 }, // 0x5d || 0x7d
-	{ COL_WHITE, FONT_REGULAR, 28 }, // 0x5e || 0x7e
+	{ COL_WHITE, FONT_REGULAR, 28 },    // 0x5e || 0x7e
 	{ COL_WHITE, FONT_UNDERLINED, 28 }  // 0x5f || 0x7f
 };
 
@@ -134,7 +134,7 @@ ccx_decoder_608_context* ccx_decoder_608_init_library(struct ccx_decoder_608_set
 	data->last_c1=0;
 	data->last_c2=0;
 	data->mode=MODE_POPON;
-	// data->current_visible_start_cc=0;
+ // data->current_visible_start_cc=0;
 	data->current_visible_start_ms=0;
 	data->screenfuls_counter=0;
 	data->channel=1;
@@ -170,7 +170,7 @@ struct eia608_screen *get_writing_buffer(ccx_decoder_608_context *context)
 	struct eia608_screen *use_buffer=NULL;
 	switch (context->mode)
 	{
-		case MODE_POPON: // Write on the non-visible buffer
+		case MODE_POPON:		 // Write on the non-visible buffer
 			if (context->visible_buffer == 1)
 				use_buffer = &context->buffer2;
 			else
@@ -182,7 +182,7 @@ struct eia608_screen *get_writing_buffer(ccx_decoder_608_context *context)
 		case MODE_ROLLUP_4:
 		case MODE_PAINTON:
 		case MODE_TEXT:
-			// TODO: Fix this. Text uses a different buffer, and contains non-program information.
+				// TODO: Fix this. Text uses a different buffer, and contains non-program information.
 			if (context->visible_buffer == 1)
 				use_buffer = &context->buffer1;
 			else
@@ -201,8 +201,8 @@ void delete_to_end_of_row(ccx_decoder_608_context *context)
 		struct eia608_screen *use_buffer = get_writing_buffer(context);
 		for (int i = context->cursor_column; i <= CCX_DECODER_608_SCREEN_WIDTH-1; i++)
 		{
-			// TODO: This can change the 'used' situation of a column, so we'd
-			// need to check and correct.
+				// TODO: This can change the 'used' situation of a column, so we'd
+				// need to check and correct.
 			use_buffer->characters[context->cursor_row][i] = ' ';
 			use_buffer->colors[context->cursor_row][i] = context->settings->default_color;
 			use_buffer->fonts[context->cursor_row][i] = context->font;
@@ -215,9 +215,9 @@ void write_char(const unsigned char c, ccx_decoder_608_context *context)
 	if (context->mode != MODE_TEXT)
 	{
 		struct eia608_screen *use_buffer = get_writing_buffer(context);
-		/* printf ("\rWriting char [%c] at %s:%d:%d\n",c,
-		use_buffer == &wb->data608->buffer1?"B1":"B2",
-		wb->data608->cursor_row,wb->data608->cursor_column); */
+			/* printf ("\rWriting char [%c] at %s:%d:%d\n",c,
+			use_buffer == &wb->data608->buffer1?"B1":"B2",
+			wb->data608->cursor_row,wb->data608->cursor_column); */
 		use_buffer->characters[context->cursor_row][context->cursor_column] = c;
 		use_buffer->colors[context->cursor_row][context->cursor_column] = context->current_color;
 		use_buffer->fonts[context->cursor_row][context->cursor_column] = context->font;
@@ -238,10 +238,10 @@ void write_char(const unsigned char c, ccx_decoder_608_context *context)
 	}
 }
 
-/* Handle MID-ROW CODES. */
+	/* Handle MID-ROW CODES. */
 void handle_text_attr(const unsigned char c1, const unsigned char c2, ccx_decoder_608_context *context)
 {
-	// Handle channel change
+		// Handle channel change
 	context->channel = context->new_channel;
 	if (context->channel != context->my_channel)
 		return;
@@ -261,9 +261,9 @@ void handle_text_attr(const unsigned char c1, const unsigned char c2, ccx_decode
 			"  --  Color: %s,  font: %s\n",
 			color_text[context->current_color][0],
 			font_text[context->font]);
-		// Mid-row codes should put a non-transparent space at the current position
-		// and advance the cursor
-		//so use write_char
+			// Mid-row codes should put a non-transparent space at the current position
+			// and advance the cursor
+			//so use write_char
 		write_char(0x20, context);
 	}
 }
@@ -296,7 +296,7 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 
 	data = get_current_visible_buffer(context);
 
-	if (context->mode == MODE_FAKE_ROLLUP_1 && // Use the actual start of data instead of last buffer change
+	if (context->mode == MODE_FAKE_ROLLUP_1 &&  // Use the actual start of data instead of last buffer change
 		context->ts_start_of_current_line != -1)
 		context->current_visible_start_ms = context->ts_start_of_current_line;
 
@@ -410,7 +410,7 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 
 }
 
-// Check if a rollup would cause a line to go off the visible area
+	// Check if a rollup would cause a line to go off the visible area
 int check_roll_up(ccx_decoder_608_context *context)
 {
 	int keep_lines=0;
@@ -436,15 +436,15 @@ int check_roll_up(ccx_decoder_608_context *context)
 			keep_lines=4;
 			break;
 		case MODE_TEXT:
-			keep_lines=7; // CFS: can be 7 to 15 according to the handbook. No idea how this is selected.
+			keep_lines=7;	     // CFS: can be 7 to 15 according to the handbook. No idea how this is selected.
 			break;
-		default: // Shouldn't happen
+		default:				 // Shouldn't happen
 			return 0;
 			break;
 	}
 	if (use_buffer->row_used[0]) // If top line is used it will go off the screen no matter what
 		return 1;
-	int rows_orig=0; // Number of rows in use right now
+	int rows_orig=0;			 // Number of rows in use right now
 	for (int i=0;i<15;i++)
 	{
 		if (use_buffer->row_used[i])
@@ -458,15 +458,15 @@ int check_roll_up(ccx_decoder_608_context *context)
 	if (lastrow==-1) // Empty screen, nothing to rollup
 		return 0;
 	if ((lastrow-firstrow+1)>=keep_lines)
-		return 1; // We have the roll-up area full, so yes
+		return 1;    // We have the roll-up area full, so yes
 
 	if ((firstrow - 1) <= context->cursor_row - keep_lines) // Roll up will delete those lines.
 		return 1;
 	return 0;
 }
 
-// Roll-up: Returns true if a line was rolled over the visible area (it dissapears from screen), false
-// if the rollup didn't delete any line.
+	// Roll-up: Returns true if a line was rolled over the visible area (it dissapears from screen), false
+	// if the rollup didn't delete any line.
 int roll_up(ccx_decoder_608_context *context)
 {
 	struct eia608_screen *use_buffer;
@@ -492,13 +492,13 @@ int roll_up(ccx_decoder_608_context *context)
 		case MODE_TEXT:
 			keep_lines=7; // CFS: can be 7 to 15 according to the handbook. No idea how this is selected.
 			break;
-		default: // Shouldn't happen
+		default:		  // Shouldn't happen
 			keep_lines=0;
 			break;
 	}
 	int firstrow=-1, lastrow=-1;
-	// Look for the last line used
-	int rows_orig=0; // Number of rows in use right now
+		// Look for the last line used
+	int rows_orig=0;	 // Number of rows in use right now
 	for (int i=0;i<15;i++)
 	{
 		if (use_buffer->row_used[i])
@@ -540,7 +540,7 @@ int roll_up(ccx_decoder_608_context *context)
 	use_buffer->characters[lastrow][CCX_DECODER_608_SCREEN_WIDTH] = 0;
 	use_buffer->row_used[lastrow]=0;
 
-	// Sanity check
+		// Sanity check
 	int rows_now=0;
 	for (int i=0;i<15;i++)
 		if (use_buffer->row_used[i])
@@ -549,8 +549,8 @@ int roll_up(ccx_decoder_608_context *context)
 		ccx_common_logging.log_ftn("Bug in roll_up, should have %d lines but I have %d.\n",
 			keep_lines, rows_now);
 
-	// If the buffer is now empty, let's set the flag
-	// This will allow write_char to set visible start time appropriately
+		// If the buffer is now empty, let's set the flag
+		// This will allow write_char to set visible start time appropriately
 	if (0 == rows_now)
 		use_buffer->empty = 1;
 
@@ -592,12 +592,12 @@ int is_current_row_empty(ccx_decoder_608_context *context)
 	return 1;
 }
 
-/* Process GLOBAL CODES */
+	/* Process GLOBAL CODES */
 void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_context *context, struct cc_subtitle *sub)
 {
 	int changes=0;
 
-	// Handle channel change
+		// Handle channel change
 	context->channel = context->new_channel;
 	if (context->channel != context->my_channel)
 		return;
@@ -696,12 +696,12 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			}
 			erase_memory(context, false);
 
-			// If the reception of data for a row is interrupted by data for the alternate
-			// data channel or for text mode, the display of caption text will resume from the same
-			// cursor position if a roll-up caption command is received and no PAC is given [...]
+				// If the reception of data for a row is interrupted by data for the alternate
+				// data channel or for text mode, the display of caption text will resume from the same
+				// cursor position if a roll-up caption command is received and no PAC is given [...]
 			if (context->mode != MODE_TEXT && context->have_cursor_position == 0)
 			{
-				// If no Preamble Address Code  is received, the base row shall default to row 15
+					// If no Preamble Address Code  is received, the base row shall default to row 15
 				context->cursor_row = 14; // Default if the previous mode wasn't roll up already.
 				context->cursor_column = 0;
 				context->have_cursor_position = 1;
@@ -728,7 +728,7 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 		case COM_CARRIAGERETURN:
 			if (context->mode == MODE_PAINTON) // CR has no effect on painton mode according to zvbis' code
 				break;
-			if (context->mode == MODE_POPON) // CFS: Not sure about this. Is there a valid reason for CR in popup?
+			if (context->mode == MODE_POPON)   // CFS: Not sure about this. Is there a valid reason for CR in popup?
 			{
 				context->cursor_column = 0;
 				if (context->cursor_row<15)
@@ -740,8 +740,8 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 				write_cc_line(context,sub);
 			}
 
-			// In transcript mode, CR doesn't write the whole screen, to avoid
-			// repeated lines.
+				// In transcript mode, CR doesn't write the whole screen, to avoid
+				// repeated lines.
 			changes = check_roll_up(context);
 			if (changes)
 			{
@@ -754,7 +754,7 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 						erase_memory(context, true); // Make sure the lines we just wrote aren't written again
 				}
 			}
-			roll_up(context); // The roll must be done anyway of course.
+			roll_up(context);						// The roll must be done anyway of course.
 			context->ts_start_of_current_line = -1; // Unknown.
 			if (changes)
 				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
@@ -788,8 +788,8 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
 			break;
 		case COM_ENDOFCAPTION: // Switch buffers
-			// The currently *visible* buffer is leaving, so now we know its ending
-			// time. Time to actually write it to file.
+				// The currently *visible* buffer is leaving, so now we know its ending
+				// time. Time to actually write it to file.
 			if (write_cc_buffer(context, sub))
 				context->screenfuls_counter++;
 			context->visible_buffer = (context->visible_buffer == 1) ? 2 : 1;
@@ -805,12 +805,12 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			break;
 		case COM_ALARMOFF:
 		case COM_ALARMON:
-			// These two are unused according to Robson's, and we wouldn't be able to do anything useful anyway
+				// These two are unused according to Robson's, and we wouldn't be able to do anything useful anyway
 			break;
 		case COM_RESUMEDIRECTCAPTIONING:
 			context->mode = MODE_PAINTON;
-			//ccx_common_logging.log_ftn ("\nWarning: Received ResumeDirectCaptioning, this mode is almost impossible.\n");
-			//ccx_common_logging.log_ftn ("to transcribe to a text file.\n");
+				//ccx_common_logging.log_ftn ("\nWarning: Received ResumeDirectCaptioning, this mode is almost impossible.\n");
+				//ccx_common_logging.log_ftn ("to transcribe to a text file.\n");
 			break;
 		default:
 			ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\rNot yet implemented.\n");
@@ -824,12 +824,12 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 
 void flush_608_context(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 {
-	// We issue a EraseDisplayedMemory here so if there's any captions pending
-	// they get written to Subtitle.
+		// We issue a EraseDisplayedMemory here so if there's any captions pending
+		// they get written to Subtitle.
 	handle_command (0x14, 0x2c, context, sub); // EDM
 }
 
-// CEA-608, Anex F 1.1.1. - Character Set Table / Special Characters
+	// CEA-608, Anex F 1.1.1. - Character Set Table / Special Characters
 void handle_double(const unsigned char c1, const unsigned char c2, ccx_decoder_608_context *context)
 {
 	unsigned char c;
@@ -837,16 +837,16 @@ void handle_double(const unsigned char c1, const unsigned char c2, ccx_decoder_6
 		return;
 	if (c2>=0x30 && c2<=0x3f)
 	{
-		c=c2 + 0x50; // So if c>=0x80 && c<=0x8f, it comes from here
+		c=c2 + 0x50;  // So if c>=0x80 && c<=0x8f, it comes from here
 		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\rDouble: %02X %02X  -->  %c\n", c1, c2, c);
 		write_char(c, context);
 	}
 }
 
-/* Process EXTENDED CHARACTERS */
+	/* Process EXTENDED CHARACTERS */
 unsigned char handle_extended(unsigned char hi, unsigned char lo, ccx_decoder_608_context *context)
 {
-	// Handle channel change
+		// Handle channel change
 	if (context->new_channel > 2)
 	{
 		context->new_channel -= 2;
@@ -856,7 +856,7 @@ unsigned char handle_extended(unsigned char hi, unsigned char lo, ccx_decoder_60
 	if (context->channel != context->my_channel)
 		return 0;
 
-	// For lo values between 0x20-0x3f
+		// For lo values between 0x20-0x3f
 	unsigned char c=0;
 
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\rExtended: %02X %02X\n", hi, lo);
@@ -871,9 +871,9 @@ unsigned char handle_extended(unsigned char hi, unsigned char lo, ccx_decoder_60
 				c=lo+0x90; // So if c>=0xb0 && c<=0xcf it comes from here
 				break;
 		}
-		// This column change is because extended characters replace
-		// the previous character (which is sent for basic decoders
-		// to show something similar to the real char)
+			// This column change is because extended characters replace
+			// the previous character (which is sent for basic decoders
+			// to show something similar to the real char)
 		if (context->cursor_column>0)
 			context->cursor_column--;
 
@@ -882,10 +882,10 @@ unsigned char handle_extended(unsigned char hi, unsigned char lo, ccx_decoder_60
 	return 1;
 }
 
-/* Process PREAMBLE ACCESS CODES (PAC) */
+	/* Process PREAMBLE ACCESS CODES (PAC) */
 void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *context)
 {
-	// Handle channel change
+		// Handle channel change
 	if (context->new_channel > 2)
 	{
 		context->new_channel -= 2;
@@ -924,8 +924,8 @@ void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *con
 		context->current_color = COL_USERDEFINED;
 	if (context->mode != MODE_TEXT)
 	{
-		// According to Robson, row info is discarded in text mode
-		// but column is accepted
+			// According to Robson, row info is discarded in text mode
+			// but column is accepted
 		context->cursor_row = row - 1; // Since the array is 0 based
 	}
 	context->rollup_base_row = row - 1;
@@ -966,7 +966,7 @@ void handle_single(const unsigned char c1, ccx_decoder_608_context *context)
 void erase_both_memories(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 {
 	erase_memory(context, false);
-	// For the visible memory, we write the contents to disk
+		// For the visible memory, we write the contents to disk
 			// The currently *visible* buffer is leaving, so now we know its ending
 			// time. Time to actually write it to file.
 	if (write_cc_buffer(context, sub))
@@ -1069,7 +1069,7 @@ int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *cont
 	return wrote_to_screen;
 }
 
-/* If private data is NULL, then only XDS will be processed */
+	/* If private data is NULL, then only XDS will be processed */
 int process608(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub)
 {
 	struct ccx_decoder_608_report  *report = NULL;
@@ -1103,10 +1103,10 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 		unsigned char hi, lo;
 		int wrote_to_screen=0;
 
-		hi = data[i] & 0x7F; // Get rid of parity bit
+		hi = data[i] & 0x7F;   // Get rid of parity bit
 		lo = data[i+1] & 0x7F; // Get rid of parity bit
 
-		if (hi==0 && lo==0) // Just padding
+		if (hi==0 && lo==0)    // Just padding
 			continue;
 
 		// printf ("\r[%02X:%02X]\n",hi,lo);
@@ -1159,10 +1159,10 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 
 			if (context->last_c1 == hi && context->last_c2 == lo)
 			{
-				// Duplicate dual code, discard. Correct to do it only in
-				// non-XDS, XDS codes shall not be repeated.
+					// Duplicate dual code, discard. Correct to do it only in
+					// non-XDS, XDS codes shall not be repeated.
 				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Skipping command %02X,%02X Duplicate\n", hi, lo);
-				// Ignore only the first repetition
+					// Ignore only the first repetition
 				context->last_c1=-1;
 				context->last_c2 = -1;
 				continue;
@@ -1206,7 +1206,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 			}
 
 			if (!context->textprinted && context->channel == context->my_channel)
-			{   // Current FTS information after the characters are shown
+			{	 // Current FTS information after the characters are shown
 				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Current FTS: %s\n", print_mstime(get_fts(dec_ctx->timing, context->my_field)));
 				//printf("  N:%u", unsigned(fts_now) );
 				//printf("  G:%u", unsigned(fts_global) );
@@ -1220,7 +1220,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 					 context->mode == MODE_ROLLUP_3 ||
 					 context->mode == MODE_ROLLUP_4))
 			{
-				// We don't increase screenfuls_counter here.
+					// We don't increase screenfuls_counter here.
 				write_cc_buffer(context, sub);
 				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
 			}
@@ -1232,8 +1232,8 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 }
 
 
-/* Return a pointer to a string that holds the printable characters
- * of the caption data block. FOR DEBUG PURPOSES ONLY! */
+	/* Return a pointer to a string that holds the printable characters
+	 * of the caption data block. FOR DEBUG PURPOSES ONLY! */
 unsigned char *debug_608toASC (unsigned char *cc_data, int channel)
 {
 	static unsigned char output[3];

@@ -5071,8 +5071,8 @@ GF_Err stsd_AddBox(GF_SampleDescriptionBox *ptr, GF_Box *a)
 		return gf_list_add(ptr->boxList, a);
 	}
 
-	//unknown sample description: we need a specific box to handle the data ref index
-	//rather than a default box ...
+	 //unknown sample description: we need a specific box to handle the data ref index
+	 //rather than a default box ...
 	default:
 		def = (GF_UnknownBox *)a;
 		/*we need at least 8 bytes for unknown sample entries*/

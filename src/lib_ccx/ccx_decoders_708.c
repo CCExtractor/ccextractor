@@ -884,20 +884,20 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 	window->anchor_point = anchor_point;
 	window->col_count = col_count;
 
-	// If changing the style of an existing window delete contents
+		// If changing the style of an existing window delete contents
 	if (win_style > 0 && window->is_defined && window->win_style != win_style)
 		do_clear_window = 1;
 
-	/* If the window doesn't exist and win style==0 then default to win_style=1 */
+		// If the window doesn't exist and win style==0 then default to win_style=1 
 	if (win_style == 0 && !window->is_defined) {
 		win_style = 1;
 	}
-	/* If the window doesn't exist and pen style==0 then default to pen_style=1 */
+		// If the window doesn't exist and pen style==0 then default to pen_style=1 
 	if (pen_style == 0 && !window->is_defined) {
 		pen_style = 1;
 	}
 
-	//Apply windows attribute presets 
+		// Apply windows attribute presets 
 	if (win_style > 0 && win_style < 8)
 	
 		window->win_style = win_style; {
@@ -916,7 +916,7 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 		
 	if (pen_style > 0)
 	{
-		//TODO apply static pen_style preset
+		// TODO apply static pen_style preset
 		window->pen_style = pen_style;
 	}
 
@@ -939,7 +939,7 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 		window->is_defined = 1;
 		_dtvcc_window_clear_text(window);
 
-		//Accorgind to CEA-708-D if window_style is 0 for newly created window , we have to apply predefined style #1
+			//Accorgind to CEA-708-D if window_style is 0 for newly created window , we have to apply predefined style #1
 		if (window->win_style == 0)
 		{
 			_dtvcc_window_apply_style(window, &ccx_dtvcc_predefined_window_styles[0]);
@@ -960,7 +960,7 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 		if (do_clear_window)
 			_dtvcc_window_clear_text(window);
 	}
-	// ...also makes the defined windows the current window
+		// ...also makes the defined windows the current window
 	dtvcc_handle_CWx_SetCurrentWindow(decoder, window_id);
 	memcpy(window->commands, data + 1, 6);
 
@@ -1213,7 +1213,7 @@ int _dtvcc_handle_C0_P16(ccx_dtvcc_service_decoder *decoder, unsigned char *data
 	return 3;
 }
 
-// G0 - Code Set - ASCII printable characters
+	// G0 - Code Set - ASCII printable characters
 int _dtvcc_handle_G0(ccx_dtvcc_service_decoder *decoder, unsigned char *data, int data_length)
 {
 	if (decoder->current_window == -1)
@@ -1231,7 +1231,7 @@ int _dtvcc_handle_G0(ccx_dtvcc_service_decoder *decoder, unsigned char *data, in
 	return 1;
 }
 
-// G1 Code Set - ISO 8859-1 LATIN-1 Character Set
+	// G1 Code Set - ISO 8859-1 LATIN-1 Character Set
 int _dtvcc_handle_G1(ccx_dtvcc_service_decoder *decoder, unsigned char *data, int data_length)
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] G1: [%02X]  (%c)\n", data[0], data[0]);
@@ -1255,7 +1255,7 @@ int _dtvcc_handle_C0(ccx_dtvcc_ctx *dtvcc,
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] C0: [%02X]  (%d)   [%s]\n", c0, data_length, name);
 
 	int len = -1;
-	// These commands have a known length even if they are reserved.
+		// These commands have a known length even if they are reserved.
 	if (c0 <= 0xF)
 	{
 		switch (c0)
@@ -1304,7 +1304,7 @@ int _dtvcc_handle_C0(ccx_dtvcc_ctx *dtvcc,
 	return len;
 }
 
-// C1 Code Set - Captioning Commands Control Codes
+	// C1 Code Set - Captioning Commands Control Codes
 int _dtvcc_handle_C1(ccx_dtvcc_ctx *dtvcc,
 					 ccx_dtvcc_service_decoder *decoder,
 					 unsigned char *data,
@@ -1323,7 +1323,7 @@ int _dtvcc_handle_C1(ccx_dtvcc_ctx *dtvcc,
 
 	switch (com.code)
 	{
-		case CCX_DTVCC_C1_CW0: /* SetCurrentWindow */
+		case CCX_DTVCC_C1_CW0: // SetCurrentWindow 
 		case CCX_DTVCC_C1_CW1:
 		case CCX_DTVCC_C1_CW2:
 		case CCX_DTVCC_C1_CW3:
@@ -1331,7 +1331,7 @@ int _dtvcc_handle_C1(ccx_dtvcc_ctx *dtvcc,
 		case CCX_DTVCC_C1_CW5:
 		case CCX_DTVCC_C1_CW6:
 		case CCX_DTVCC_C1_CW7:
-			dtvcc_handle_CWx_SetCurrentWindow(decoder, com.code - CCX_DTVCC_C1_CW0); /* Window 0 to 7 */
+			dtvcc_handle_CWx_SetCurrentWindow(decoder, com.code - CCX_DTVCC_C1_CW0); // Window 0 to 7 
 			break;
 		case CCX_DTVCC_C1_CLW:
 			dtvcc_handle_CLW_ClearWindows(decoder, data[1]);
@@ -1383,7 +1383,7 @@ int _dtvcc_handle_C1(ccx_dtvcc_ctx *dtvcc,
 		case CCX_DTVCC_C1_DF5:
 		case CCX_DTVCC_C1_DF6:
 		case CCX_DTVCC_C1_DF7:
-			dtvcc_handle_DFx_DefineWindow(decoder, com.code - CCX_DTVCC_C1_DF0, data, dtvcc->timing); /* Window 0 to 7 */
+			dtvcc_handle_DFx_DefineWindow(decoder, com.code - CCX_DTVCC_C1_DF0, data, dtvcc->timing); // Window 0 to 7 
 			break;
 		default:
 			ccx_common_logging.log_ftn ("[CEA-708] BUG: Unhandled code in _dtvcc_handle_C1.\n");
@@ -1393,20 +1393,21 @@ int _dtvcc_handle_C1(ccx_dtvcc_ctx *dtvcc,
 	return com.length;
 }
 
-/* This function handles future codes. While by definition we can't do any work on them, we must return
-   how many bytes would be consumed if these codes were supported, as defined in the specs.
-Note: EXT1 not included */
-// C2: Extended Miscellaneous Control Codes
-// WARN: This code is completely untested due to lack of samples. Just following specs!
+	/* This function handles future codes. While by definition we can't do any work on them, we must return
+	   how many bytes would be consumed if these codes were supported, as defined in the specs.
+       Note: EXT1 not included */
+
+	// C2: Extended Miscellaneous Control Codes
+	// WARN: This code is completely untested due to lack of samples. Just following specs!
 int _dtvcc_handle_C2(ccx_dtvcc_service_decoder *decoder, unsigned char *data, int data_length)
 {
 	if (data[0] <= 0x07) // 00-07...
-		return 1; // ... Single-byte control bytes (0 additional bytes)
+		return 1;			  // ... Single-byte control bytes (0 additional bytes)
 	else if (data[0] <= 0x0f) // 08-0F ...
-		return 2; // ..two-byte control codes (1 additional byte)
-	else if (data[0] <= 0x17)  // 10-17 ...
-		return 3; // ..three-byte control codes (2 additional bytes)
-	return 4; // 18-1F => four-byte control codes (3 additional bytes)
+		return 2;			  // ..two-byte control codes (1 additional byte)
+	else if (data[0] <= 0x17) // 10-17 ...
+		return 3;			  // ..three-byte control codes (2 additional bytes)
+	return 4;				  // 18-1F => four-byte control codes (3 additional bytes)
 }
 
 int _dtvcc_handle_C3(ccx_dtvcc_service_decoder *decoder, unsigned char *data, int data_length)
@@ -1415,13 +1416,14 @@ int _dtvcc_handle_C3(ccx_dtvcc_service_decoder *decoder, unsigned char *data, in
 		ccx_common_logging.fatal_ftn(
 				CCX_COMMON_EXIT_BUG_BUG, "[CEA-708] Entry in _dtvcc_handle_C3 with an out of range value.");
 	if (data[0] <= 0x87) // 80-87...
-		return 5; // ... Five-byte control bytes (4 additional bytes)
+		return 5;	 // ... Five-byte control bytes (4 additional bytes)
 	else if (data[0] <= 0x8F) // 88-8F ...
 		return 6; // ..Six-byte control codes (5 additional byte)
-	// If here, then 90-9F ...
 
-	// These are variable length commands, that can even span several segments
-	// (they allow even downloading fonts or graphics).
+		// If here, then 90-9F ...
+
+		// These are variable length commands, that can even span several segments
+		// (they allow even downloading fonts or graphics).
 	ccx_common_logging.fatal_ftn(
 			CCX_COMMON_EXIT_UNSUPPORTED, "[CEA-708] This sample contains unsupported 708 data. "
 			"PLEASE help us improve CCExtractor by submitting it.\n");
@@ -1439,7 +1441,7 @@ int _dtvcc_handle_extended_char(ccx_dtvcc_service_decoder *decoder, unsigned cha
 	int used;
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] In _dtvcc_handle_extended_char, "
 			"first data code: [%c], length: [%u]\n", data[0], data_length);
-	unsigned char c = 0x20; // Default to space
+	unsigned char c = 0x20;		// Default to space
 	unsigned char code = data[0];
 	if (/* data[i]>=0x00 && */ code <= 0x1F) // Comment to silence warning
 	{
@@ -1517,7 +1519,7 @@ void ccx_dtvcc_process_service_block(ccx_dtvcc_ctx *dtvcc,
 void ccx_dtvcc_process_current_packet(ccx_dtvcc_ctx *dtvcc)
 {
 	int seq = (dtvcc->current_packet[0] & 0xC0) >> 6; // Two most significants bits
-	int len = dtvcc->current_packet[0] & 0x3F; // 6 least significants bits
+	int len = dtvcc->current_packet[0] & 0x3F;        // 6 least significants bits
 #ifdef DEBUG_708_PACKETS
 	ccx_common_logging.log_ftn("[CEA-708] dtvcc_process_current_packet: length=%d, seq=%d\n",
 							   dtvcc->current_packet_length, seq);
@@ -1556,7 +1558,7 @@ void ccx_dtvcc_process_current_packet(ccx_dtvcc_ctx *dtvcc)
 	while (pos < dtvcc->current_packet + len)
 	{
 		int service_number = (pos[0] & 0xE0) >> 5; // 3 more significant bits
-		int block_length = (pos[0] & 0x1F); // 5 less significant bits
+		int block_length = (pos[0] & 0x1F);        // 5 less significant bits
 
 		ccx_common_logging.debug_ftn(
 				CCX_DMT_708, "[CEA-708] ccx_dtvcc_process_current_packet: Standard header: "
@@ -1566,7 +1568,7 @@ void ccx_dtvcc_process_current_packet(ccx_dtvcc_ctx *dtvcc)
 		{
 			pos++;
 			service_number = (pos[0] & 0x3F); // 6 more significant bits
-			// printf ("Extended header: Service number: [%d]\n",service_number);
+		 // printf ("Extended header: Service number: [%d]\n",service_number);
 			if (service_number < 7)
 			{
 				ccx_common_logging.debug_ftn(

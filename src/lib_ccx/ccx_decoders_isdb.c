@@ -221,19 +221,19 @@ typedef struct
 }ISDBSubLayout;
 
 typedef struct {
-	int auto_display; // bool. forced to be displayed w/o user interaction
-	int rollup_mode;  // bool
+	int auto_display;      // bool. forced to be displayed w/o user interaction
+	int rollup_mode;       // bool
 
-	uint8_t need_init; // bool
+	uint8_t need_init;     // bool
 	uint8_t clut_high_idx; // color = default_clut[high_idx << 4 | low_idx]
 
 	uint32_t fg_color;
 	uint32_t bg_color;
-	/**
-	 * Colour between foreground and background in gradation font is defined that
+
+	/* Colour between foreground and background in gradation font is defined that
 	 * colour near to foreground colour is half foreground colour and colour near to
-	 * background colour is half background colour.
-	 */
+	 * background colour is half background colour.  */
+
 	//Half forground color
 	uint32_t hfg_color;
 	//Half background color
@@ -250,19 +250,18 @@ typedef struct
 	int nb_line;
 	uint64_t timestamp;
 	uint64_t prev_timestamp;
-	/**
-	 * List of string for each row there
-	 * TODO test with vertical string
-         */
+	
+	 /* List of string for each row there
+	 * TODO test with vertical string */
+         
 	struct list_head text_list_head;
-	/**
-	 * Keep second list to confirm that string does not get repeated
+	/* Keep second list to confirm that string does not get repeated
 	 * Used in No Rollup in Configuration and ISDB specs have string in
 	 * rollup mode
-	 * For Second Pass
-	 */
+	 * For Second Pass 	 */
+
 	struct list_head buffered_text;
-	ISDBSubState current_state; //modified default_state[lang_tag]
+	ISDBSubState current_state;	 //modified default_state[lang_tag]
 	enum isdb_tmd tmd;
 	int nb_lang;
 	struct
@@ -279,9 +278,9 @@ typedef struct
 }ISDBSubContext;
 
 
-/**
- * Find way to put remaining data
- */
+
+ // Find way to put remaining data
+
 void delete_isdb_decoder(void **isdb_ctx)
 {
 	ISDBSubContext *ctx = *isdb_ctx;
@@ -332,13 +331,13 @@ void *init_isdb_decoder(void)
 	return ctx;
 }
 
-/**
- * Single Character on screen can take space of 6 byte in UTF-8
- * so size of text buffer should not be on the basis of character
- * that can be placed on screen.
- * And scale and size of font can change any time so knowing 
- * buffer length before allocating is difficult task
- */
+
+   /* Single Character on screen can take space of 6 byte in UTF-8
+	* so size of text buffer should not be on the basis of character
+	* that can be placed on screen.
+	* And scale and size of font can change any time so knowing 
+	* buffer length before allocating is difficult task */
+ 
 static struct ISDBText *allocate_text_node(ISDBSubLayout *ls)
 {
 	struct ISDBText *text = NULL;
@@ -362,7 +361,7 @@ static int reserve_buf(struct ISDBText *text, size_t len)
 	if (text->len >= text->used + len)
 		return CCX_OK;
 
-	// Allocate always in multiple of 128
+		// Allocate always in multiple of 128
 	blen = ((text->used + len + 127) >> 7) << 7;
 	ptr = realloc(text->buf, blen);
 	if (!ptr)
@@ -380,9 +379,9 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 {
 	ISDBSubLayout *ls = &ctx->current_state.layout_state;
 	struct ISDBText *text = NULL;
-	// Current Line Position
+		// Current Line Position
 	int cur_lpos;
-	//Space taken by character
+		//Space taken by character
 	int csp;
 
 	if (IS_HORIZONTAL_LAYOUT(ls->format))
@@ -398,7 +397,7 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 
 	list_for_each_entry(text, &ctx->text_list_head, list, struct ISDBText)
 	{
-		//Text Line Position
+			//Text Line Position
 		int text_lpos;
 		if (IS_HORIZONTAL_LAYOUT(ls->format))
 			text_lpos = text->pos.x;
@@ -412,7 +411,7 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 		else if(text_lpos > cur_lpos)
 		{
 			struct ISDBText *text1 = NULL;
-			//Allocate Text here so that list is always sorted
+				//Allocate Text here so that list is always sorted
 			text1 = allocate_text_node(ls);
 			text1->pos.x = ls->cursor_pos.x;
 			text1->pos.y = ls->cursor_pos.y;
@@ -429,7 +428,7 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 		list_add_tail(&text->list, &ctx->text_list_head);
 	}
 
-	//Check position of character and if moving backword then clean text
+		//Check position of character and if moving backword then clean text
 	if (IS_HORIZONTAL_LAYOUT(ls->format))
 	{
 		if (ls->cursor_pos.y < text->pos.y)
@@ -451,7 +450,7 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 		text->pos.x += csp;
 	}
 
-	reserve_buf(text, 2); //+1 for terminating '\0'
+	reserve_buf(text, 2);  //+1 for terminating '\0'
 	text->buf[text->used] = ch;
 	text->used ++;
 	text->buf[text->used] = '\0';
@@ -472,13 +471,11 @@ static int ccx_strstr_ignorespace(const unsigned char *str1, const unsigned char
 	}
 	return 1;
 }
-/**
- * Copy data not more then len provided
- * User should check for return type to check how much data he has got
- *
- * If ISDB is configured with no rollup then only text which has gone
- * off site should be returned
- */
+
+	/* Copy data not more then len provided
+	* User should check for return type to check how much data he has got
+	* If ISDB is configured with no rollup then only text which has gone
+	* off site should be returned */
 static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 {
 	ISDBSubLayout *ls = &ctx->current_state.layout_state;
@@ -486,7 +483,7 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 	struct ISDBText *sb_text = NULL;
 	struct ISDBText *sb_temp = NULL;
 	struct ISDBText *wtrepeat_text = NULL;
-	//TO keep track we dont over flow in buffer from user
+		//TO keep track we dont over flow in buffer from user
 	int index = 0;
 
 	if (ctx->cfg_no_rollup == ctx->current_state.rollup_mode)
@@ -536,7 +533,7 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 			}
 		}
 
-		//Flush Secondary Buffer if text not in primary buffer
+			//Flush Secondary Buffer if text not in primary buffer
 		list_for_each_entry_safe(sb_text, sb_temp, &ctx->buffered_text, list, struct ISDBText)
 		{
 			int found = CCX_FALSE;
@@ -550,7 +547,7 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 			}
 			if (found == CCX_FALSE)
 			{
-				// Write that buffer in file
+					// Write that buffer in file
 				if (len - index > sb_text->used + 2 && sb_text->used  > 0)
 				{
 					memcpy(buffer+index, sb_text->buf, sb_text->used);
@@ -639,12 +636,12 @@ static void set_writing_format(ISDBSubContext *ctx, uint8_t *arg)
 	return;
 }
 
-/** move pen position to (col, row) relative to display area's top left.
- *  Note 1: In vertical layout, coordinates are rotated 90 deg.
- *          on the display area's top right.
- *  Note 2: the cell includes line/char spacings in both sides.
- *  NOte 3: Lmt) == `gic taken from Mplayer
- */
+	/* move pen position to (col, row) relative to display area's top left.
+	*  Note 1: In vertical layout, coordinates are rotated 90 deg.
+	*  on the display area's top right.
+	*  Note 2: the cell includes line/char spacings in both sides.
+	*  NOte 3: Lmt) == `gic taken from Mplayer */
+
 static void move_penpos(ISDBSubContext *ctx, int col, int row)
 {
 	ISDBSubLayout *ls = &ctx->current_state.layout_state;
@@ -665,7 +662,7 @@ static void set_position(ISDBSubContext *ctx, unsigned int p1, unsigned int p2)
 	{
 		cw = (ls->font_size + ls->cell_spacing.col) * ls->font_scale.fscx / 100;
 		ch = (ls->font_size + ls->cell_spacing.row) * ls->font_scale.fscy / 100;
-		// pen position is at bottom left
+			// pen position is at bottom left
 		col = p2 * cw;
 		row = p1 * ch + ch;
 	}
@@ -673,8 +670,8 @@ static void set_position(ISDBSubContext *ctx, unsigned int p1, unsigned int p2)
 	{
 		cw = (ls->font_size + ls->cell_spacing.col) * ls->font_scale.fscy / 100;
 		ch = (ls->font_size + ls->cell_spacing.row) * ls->font_scale.fscx / 100;
-		// pen position is at upper center,
-		// but in -90deg rotated coordinates, it is at middle left.
+			// pen position is at upper center,
+			// but in -90deg rotated coordinates, it is at middle left.
 		col = p2 * cw;
 		row = p1 * ch + ch / 2;
 	}
@@ -718,7 +715,7 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 	ISDBSubState *state = &ctx->current_state;
 	ISDBSubLayout *ls = &state->layout_state;
 
-	//Copy buf in arg
+		//Copy buf in arg
 	for(i = 0; *buf != 0x20; i++)
 	{
 		if (i >= (sizeof(arg))+ 1)
@@ -729,16 +726,16 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 		arg[i] = *buf;
 		buf++;
 	}
-	/* ignore terminating 0x20 character */
+		/* ignore terminating 0x20 character */
 	arg[i] = *buf++;
 
 	switch(*buf) {
-	/* Set Writing Format */
+	 /* Set Writing Format */
 	case CSI_CMD_SWF:
 		isdb_command_log("Command:CSI: SWF\n");
 		set_writing_format(ctx, arg);
 		break;
-	/* Composite Character Composition */
+	 /* Composite Character Composition */
 	case CSI_CMD_CCC:
 		isdb_command_log("Command:CSI: CCC\n");
 		ret = get_csi_params(arg, &p1, NULL);
@@ -747,7 +744,7 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 			ls->ccc = p1;
 		}
 		break;
-	/* Set Display Format */
+	 /* Set Display Format */
 	case CSI_CMD_SDF:
 		ret = get_csi_params(arg, &p1, &p2);
 		if (ret > 0)
@@ -757,14 +754,14 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 		}
 		isdb_command_log("Command:CSI: SDF (w:%d, h:%d)\n", p1, p2);
 		break;
-	/* Character composition dot designation */
+ 	 /* Character composition dot designation */
 	case CSI_CMD_SSM:
 		ret = get_csi_params(arg, &p1, &p2);
 		if (ret > 0)
 			ls->font_size = p1;
 		isdb_command_log("Command:CSI: SSM (x:%d y:%d)\n", p1, p2);
 		break;
-	/* Set Display Position */
+	 /* Set Display Position */
 	case CSI_CMD_SDP:
 		ret = get_csi_params(arg, &p1, &p2);
 		if (ret > 0)
@@ -774,28 +771,28 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 		}
 		isdb_command_log("Command:CSI: SDP (x:%d, y:%d)\n", p1, p2);
 		break;
-	/* Raster Colour command */
+	 /* Raster Colour command */
 	case CSI_CMD_RCS:
 		ret = get_csi_params(arg, &p1, NULL);
 		if (ret > 0)
 			ctx->current_state.raster_color = Default_clut[ctx->current_state.clut_high_idx << 4 | p1];
 		isdb_command_log("Command:CSI: RCS (%d)\n", p1);
 		break;
-	/* Set Horizontal Spacing */
+	 /* Set Horizontal Spacing */
 	case CSI_CMD_SHS:
 		ret = get_csi_params(arg, &p1, NULL);
 		if (ret > 0)
 			ls->cell_spacing.col = p1;
 		isdb_command_log("Command:CSI: SHS (%d)\n", p1);
 		break;
-	/* Set Vertical Spacing */
+	 /* Set Vertical Spacing */
 	case CSI_CMD_SVS:
 		ret = get_csi_params(arg, &p1, NULL);
 		if (ret > 0)
 			ls->cell_spacing.row = p1;
 		isdb_command_log("Command:CSI: SVS (%d)\n", p1);
 		break;
-	/* Active Coordinate Position Set */
+	 /* Active Coordinate Position Set */
 	case CSI_CMD_ACPS:
 		isdb_command_log("Command:CSI: ACPS\n");
 		ret = get_csi_params(arg, &p1, &p2);
@@ -808,7 +805,7 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 		break;
 	}
 	buf++;
-	/* ACtual CSI command */
+		/* ACtual CSI command */
 	return buf - buf_pivot;
 }
 
@@ -1220,7 +1217,7 @@ static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf
 		isdb_log("CC MGMT DATA: languages: %c%c%c\n", buf[0], buf[1], buf[2]);
 		buf += 3;
 		isdb_log("CC MGMT DATA: Format: 0x%X\n", *buf>>4);
-		/* 8bit code is not used by brazilians Arib they use utf-8*/
+			/* 8bit code is not used by brazilians Arib they use utf-8*/
 		isdb_log("CC MGMT DATA: TCS: 0x%X\n", (*buf>>2)&0x3);
 		ctx->current_state.rollup_mode = !!(*buf&0x3);
 		isdb_log("CC MGMT DATA: Rollup mode: 0x%X\n", ctx->current_state.rollup_mode);
@@ -1239,21 +1236,21 @@ static int parse_statement(ISDBSubContext *ctx, const uint8_t *buf, int size)
 		unsigned char code_lo = *buf & 0x0f;
 		if (code <= 0x1)
 			ret = parse_command(ctx, buf, size);
-		/* Special case *1(SP) */
+		 /* Special case *1(SP) */
 		else if ( code == 0x2 && code_lo == 0x0 )
 			ret = append_char(ctx,buf[0] );
-		/* Special case *3(DEL) */
+		 /* Special case *3(DEL) */
 		else if ( code == 0x7 && code_lo == 0xF )
-			/*TODO DEL should have block in fg color */
+			 /*TODO DEL should have block in fg color */
 			ret = append_char(ctx, buf[0]);
 		else if ( code <= 0x7)
 			ret = append_char(ctx, buf[0]);
 		else if ( code <= 0x9)
 			ret = parse_command(ctx, buf, size);
-		/* Special case *2(10/0) */
+		 /* Special case *2(10/0) */
 		else if ( code == 0xA && code_lo == 0x0 )
 			/*TODO handle */;
-		/* Special case *4(15/15) */
+		 /* Special case *4(15/15) */
 		else if (code == 0x0F && code_lo == 0XF )
 			/*TODO handle */;
 		else
@@ -1269,7 +1266,7 @@ static int parse_data_unit(ISDBSubContext *ctx,const uint8_t *buf, int size)
 {
 	int unit_parameter;
 	int len;
-	/* unit seprator */
+	 /* unit seprator */
 	buf++;
 
 	unit_parameter = *buf++;
@@ -1277,7 +1274,7 @@ static int parse_data_unit(ISDBSubContext *ctx,const uint8_t *buf, int size)
 	buf += 3;
 	switch(unit_parameter)
 	{
-		/* statement body */
+	 	 /* statement body */
 		case 0x20:
 			parse_statement(ctx, buf, len);
 	}
@@ -1293,7 +1290,7 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
 
 	tmd = *buf >> 6;
 	buf++;
-	/* skip timing data */
+	 /* skip timing data */
 	if (tmd == 1 || tmd == 2)
 		buf += 5;
 
@@ -1304,7 +1301,7 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
 		return -1;
 
 	ret = get_text(ctx, buffer, 1024);
-	/* Copy data if there in buffer */
+	 /* Copy data if there in buffer */
 	if (ret < 0 )
 		return CCX_OK;
 
@@ -1318,11 +1315,11 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
 	return 0;
 }
 
-/** Acc to http://www.bocra.org.bw/sites/default/files/documents/Appendix%201%20-%20Operational%20Guideline%20for%20ISDB-Tbw.pdf
- * In table AP8-1 there are modification to ARIB TR-B14 in volume 3 Section 2 4.4.1 character encoding is UTF-8
- * instead of 8 bit character, just now we dont have any means to detect which country this video is
- * therefor we have hardcoded UTF-8 as encoding
- */
+	/* Acc to http://www.bocra.org.bw/sites/default/files/documents/Appendix%201%20-%20Operational%20Guideline%20for%20ISDB-Tbw.pdf
+     * In table AP8-1 there are modification to ARIB TR-B14 in volume 3 Section 2 4.4.1 character encoding is UTF-8
+	 * instead of 8 bit character, just now we dont have any means to detect which country this video is
+	 * therefor we have hardcoded UTF-8 as encoding  */
+
 int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle *sub)
 {
 	ISDBSubContext *ctx = codec_ctx;
@@ -1378,7 +1375,7 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 		return -1;
 	buf += group_size;
 
-	//TODO check CRC
+	 //TODO check CRC
 	buf += 2;
 
 	return buf - buf_pivot;
@@ -1394,13 +1391,13 @@ int isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, size_t buf
 		mprint("\nNot a Syncronised PES\n");
 		return -1;
 	}
-	/* private data stream = 0xFF */
+ 	/* private data stream = 0xFF */
 	buf++;
 	header_end = buf + (*buf & 0x0f);
 	buf++;
 	while (buf < header_end)
 	{
-	/* TODO find in spec what is header */
+	 /* TODO find in spec what is header */
 		buf++;
 	}
 
