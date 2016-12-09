@@ -95,7 +95,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 
 	struct lib_ccx_ctx *ctx = malloc(sizeof(struct lib_ccx_ctx));
 	if(!ctx)
-		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "lib_ccx_ctx");
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Failed to allocate memory to lib_ccx_ctx in lib_ccx");
 	memset(ctx, 0, sizeof(struct lib_ccx_ctx));
 
 	if(opt->xmltv)
@@ -110,7 +110,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 		memset(ctx->eit_current_events, 0, sizeof(int32_t)*(TS_PMT_MAP_SIZE+1));
 		memset(ctx->ATSC_source_pg_map, 0, sizeof(int16_t)*(0xffff));
 		if(!ctx->epg_buffers || !ctx->eit_programs || !ctx->eit_current_events || !ctx->ATSC_source_pg_map)
-			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "lib_ccx_ctx");
+			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Failed to allocate memory in lib_ccx");
 	}
 	else
 	{
@@ -123,13 +123,13 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 
 	struct ccx_decoder_608_report *report_608 = malloc(sizeof(struct ccx_decoder_608_report));
 	if (!report_608)
-		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "report_608");
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Failed to allocate memory to report_608 in lib_ccx");
 	memset(report_608, 0, sizeof(struct ccx_decoder_608_report));
 
 	ccx_decoder_dtvcc_report *report_dtvcc = (ccx_decoder_dtvcc_report *)
 			malloc(sizeof(ccx_decoder_dtvcc_report));
 	if (!report_dtvcc)
-		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "report_dtvcc");
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Failed to allocate memory to report_dtvcc in lib_ccx");
 	memset(report_dtvcc, 0, sizeof(ccx_decoder_dtvcc_report));
 
 	// Initialize some constants
@@ -271,7 +271,7 @@ struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx)
 		ctx->dec_global_setting->program_number = 0;
 		dec_ctx = init_cc_decode(ctx->dec_global_setting);
 		if (!dec_ctx)
-			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "Declaration of ctx does not exist in lib_ccx!");
 		list_add_tail( &(dec_ctx->list), &(ctx->dec_ctx_head) );
 	}
 	return dec_ctx;
@@ -306,7 +306,7 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 		{
 			dec_ctx = init_cc_decode(ctx->dec_global_setting);
 			if (!dec_ctx)
-				fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "Declaration of ctx does not exist in lib_ccx!");
 			list_add_tail( &(dec_ctx->list), &(ctx->dec_ctx_head) );
 		}
 	}
@@ -314,7 +314,7 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 	{
 		dec_ctx = init_cc_decode(ctx->dec_global_setting);
 		if (!dec_ctx)
-			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "Declaration of ctx does not exist in lib_ccx!");
 		list_add_tail( &(dec_ctx->list), &(ctx->dec_ctx_head) );
 	}
 	return dec_ctx;

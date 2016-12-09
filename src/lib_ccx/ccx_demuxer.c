@@ -142,7 +142,7 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 #endif
 			case CCX_SM_MYTH:
 			case CCX_SM_AUTODETECT:
-				fatal(CCX_COMMON_EXIT_BUG_BUG, "Cannot be reached!");
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "CCX stream mode detection failed!");
 				break;
 		}
 	}

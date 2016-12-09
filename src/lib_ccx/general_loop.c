@@ -434,7 +434,7 @@ void processhex (struct lib_ccx_ctx *ctx, char *filename)
 			continue;
 		bytes=(unsigned char *) malloc (byte_count);
 		if (!bytes)
-			fatal (EXIT_NOT_ENOUGH_MEMORY, "Out of memory.\n");
+			fatal (EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failure trying to allocate bytes in general_loop.\n");
 		unsigned char *bytes=(unsigned char *) malloc (byte_count);
 		for (unsigned i=0;i<byte_count;i++)
 		{
@@ -842,7 +842,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				break;
 #endif
 			default:
-				fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible stream_mode");
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "Invalid or no stream_mode!");
 		}
 		if (ret == CCX_EOF)
 		{

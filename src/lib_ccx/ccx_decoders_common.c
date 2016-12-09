@@ -200,7 +200,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 				// printf ("Warning: Losing EIA-708 data!\n");
 				break;
 			default:
-				fatal(CCX_COMMON_EXIT_BUG_BUG, "Cannot be reached!");
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "CC type is invalid or not specified!");
 		} // switch (cc_type)
 	} // cc_valid
 	else

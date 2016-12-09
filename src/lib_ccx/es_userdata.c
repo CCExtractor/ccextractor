@@ -165,7 +165,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 				read_bits(ustream,1); // TODO: Add syntax check */
 
 				if (ustream->bitsleft < 0)
-					fatal(CCX_COMMON_EXIT_BUG_BUG, "Oops!");
+					fatal(CCX_COMMON_EXIT_BUG_BUG, "Less than zero bits left in the ustream!");
 
 				// Field_number is either
 				//  0 .. forbiden
@@ -246,7 +246,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 				int proceed = 1;
 				unsigned char *cc_data = read_bytes(ustream, cc_count*3);
 				if (ustream->bitsleft < 0)
-					fatal(CCX_COMMON_EXIT_BUG_BUG, "Not enough for CC captions!");
+					fatal(CCX_COMMON_EXIT_BUG_BUG, "Not enough bits left in the ustream for CC captions!");
 
 				// Check for proper marker - This read makes sure that
 				// cc_count*3+1 bytes are read and available in cc_data.
