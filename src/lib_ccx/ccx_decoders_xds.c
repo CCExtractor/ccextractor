@@ -50,16 +50,16 @@ static const char *XDSProgramTypes[]=
 #define XDS_CLASS_RESERVED	5
 #define XDS_CLASS_PRIVATE	6
 #define XDS_CLASS_END		7
-#define XDS_CLASS_OUT_OF_BAND 0x40 // Not a real class, a marker for packets for out-of-band data.
+#define XDS_CLASS_OUT_OF_BAND 0x40   // Not a real class, a marker for packets for out-of-band data.
 
-// Types for the classes current and future
+	// Types for the classes current and future
 #define XDS_TYPE_PIN_START_TIME	1
 #define XDS_TYPE_LENGH_AND_CURRENT_TIME	2
 #define XDS_TYPE_PROGRAM_NAME 3
 #define XDS_TYPE_PROGRAM_TYPE 4
 #define XDS_TYPE_CONTENT_ADVISORY 5
 #define XDS_TYPE_AUDIO_SERVICES 6
-#define XDS_TYPE_CGMS 8 // Copy Generation Management System
+#define XDS_TYPE_CGMS 8			     // Copy Generation Management System
 #define XDS_TYPE_ASPECT_RATIO_INFO 9 // Appears in CEA-608-B but in E it's been removed as is "reserved"
 #define XDS_TYPE_PROGRAM_DESC_1 0x10
 #define XDS_TYPE_PROGRAM_DESC_2 0x11
@@ -70,17 +70,17 @@ static const char *XDSProgramTypes[]=
 #define XDS_TYPE_PROGRAM_DESC_7 0x16
 #define XDS_TYPE_PROGRAM_DESC_8 0x17
 
-// Types for the class channel
+	// Types for the class channel
 #define XDS_TYPE_NETWORK_NAME 1
 #define XDS_TYPE_CALL_LETTERS_AND_CHANNEL 2
 #define XDS_TYPE_TSID 4	// Transmission Signal Identifier
 
-// Types for miscellaneous packets
+	// Types for miscellaneous packets
 #define XDS_TYPE_TIME_OF_DAY 1
 #define XDS_TYPE_LOCAL_TIME_ZONE 4
 #define XDS_TYPE_OUT_OF_BAND_CHANNEL_NUMBER 0x40
-#define NUM_XDS_BUFFERS 9  // CEA recommends no more than one level of interleaving. Play it safe
-#define NUM_BYTES_PER_PACKET 35 // Class + type (repeated for convenience) + data + zero
+#define NUM_XDS_BUFFERS 9		     // CEA recommends no more than one level of interleaving. Play it safe
+#define NUM_BYTES_PER_PACKET 35      // Class + type (repeated for convenience) + data + zero
 
 struct xds_buffer
 {
@@ -93,7 +93,7 @@ struct xds_buffer
 
 typedef struct ccx_decoders_xds_context
 {
-	// Program Identification Number (Start Time) for current program
+		// Program Identification Number (Start Time) for current program
 	int current_xds_min;
 	int current_xds_hour;
 	int current_xds_date;
@@ -202,7 +202,7 @@ void xdsprint (struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, co
 {
 	if(!ctx->xds_write_to_file)
 		return;
-	/* Guess we need no more than 100 bytes. */
+	 /* Guess we need no more than 100 bytes. */
 	int n, size = 100;
 	char *p, *np;
 	va_list ap;
@@ -212,20 +212,20 @@ void xdsprint (struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, co
 
 	while (1)
 	{
-		/* Try to print in the allocated space. */
+		 /* Try to print in the allocated space. */
 		va_start(ap, fmt);
 		n = vsnprintf (p, size, fmt, ap);
 		va_end(ap);
-		/* If that worked, return the string. */
+		 /* If that worked, return the string. */
 		if (n > -1 && n < size)
 		{
 			write_xds_string(sub, ctx, p, n);
 			return;
 		}
-		/* Else try again with more space. */
-		if (n > -1)    /* glibc 2.1 */
+		 /* Else try again with more space. */
+		if (n > -1)     /* glibc 2.1 */
 			size = n+1; /* precisely what is needed */
-		else           /* glibc 2.0 */
+		else            /* glibc 2.0 */
 			size *= 2;  /* twice the old size */
 		if ((np = (char *) realloc (p, size)) == NULL)
 		{
@@ -290,7 +290,7 @@ void process_xds_bytes (struct ccx_decoders_xds_context *ctx, const unsigned cha
 	if (hi>=0x01 && hi<=0x0f)
 	{
 		int xds_class=(hi-1)/2; // Start codes 1 and 2 are "class type" 0, 3-4 are 2, and so on.
-		is_new=hi%2; // Start codes are even
+		is_new=hi%2;		    // Start codes are even
 		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "XDS Start: %u.%u  Is new: %d  | Class: %d (%s), Used buffers: %d\n",
 			hi, lo, is_new, xds_class, XDSclasses[xds_class], how_many_used(ctx));
 		int first_free_buf=-1;
@@ -310,8 +310,8 @@ void process_xds_bytes (struct ccx_decoders_xds_context *ctx, const unsigned cha
 		/* Here, 3 possibilities:
 		   1) We already had a buffer for this class/type and matching_buf points to it
 		   2) We didn't have a buffer for this class/type and first_free_buf points to an unused one
-		   3) All buffers are full and we will have to skip this packet.
-		 */
+		   3) All buffers are full and we will have to skip this packet. 	 */
+	
 		if (matching_buf==-1 && first_free_buf==-1)
 		{
 			ccx_common_logging.log_ftn ("Note: All XDS buffers full (bug or suicidal stream). Ignoring this one (%d,%d).\n",xds_class,lo);
@@ -338,7 +338,7 @@ void process_xds_bytes (struct ccx_decoders_xds_context *ctx, const unsigned cha
 	}
 	else
 	{
-		// Informational: 00, or 0x20-0x7F, so 01-0x1f forbidden
+	     // Informational: 00, or 0x20-0x7F, so 01-0x1f forbidden
 		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "XDS: %02X.%02X (%c, %c)\n",hi,lo,hi,lo);
 		if ((hi>0 && hi<=0x1f) || (lo>0 && lo<=0x1f))
 		{
@@ -348,15 +348,15 @@ void process_xds_bytes (struct ccx_decoders_xds_context *ctx, const unsigned cha
 	}
 	if (ctx->xds_buffers[ctx->cur_xds_buffer_idx].used_bytes<=32)
 	{
-		// Should always happen
+		 // Should always happen
 		ctx->xds_buffers[ctx->cur_xds_buffer_idx].bytes[ctx->xds_buffers[ctx->cur_xds_buffer_idx].used_bytes++]=hi;
 		ctx->xds_buffers[ctx->cur_xds_buffer_idx].bytes[ctx->xds_buffers[ctx->cur_xds_buffer_idx].used_bytes++]=lo;
 		ctx->xds_buffers[ctx->cur_xds_buffer_idx].bytes[ctx->xds_buffers[ctx->cur_xds_buffer_idx].used_bytes]=0;
 	}
 }
-/**
- * ctx XDS context can be NULL, if user dont want to write xds in transcript
- */
+
+ // ctx XDS context can be NULL, if user dont want to write xds in transcript
+ 
 void xds_do_copy_generation_management_system (struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, unsigned c1, unsigned c2)
 {
 	static unsigned last_c1=-1, last_c2=-1;
@@ -365,21 +365,21 @@ void xds_do_copy_generation_management_system (struct cc_subtitle *sub, struct c
 	static char rcd[256];
 	int changed=0;
 	unsigned c1_6=(c1&0x40)>>6;
-	/* unsigned unused1=(c1&0x20)>>5; */
+	 /* unsigned unused1=(c1&0x20)>>5; */
 	unsigned cgms_a_b4=(c1&0x10)>>4;
 	unsigned cgms_a_b3=(c1&0x8)>>3;
 	unsigned aps_b2=(c1&0x4)>>2;
 	unsigned aps_b1=(c1&0x2)>>1;
-	/* unsigned asb_0=(c1&0x1); */
+	 /* unsigned asb_0=(c1&0x1); */
 	unsigned c2_6=(c2&0x40)>>6;
-	/* unsigned c2_5=(c2&0x20)>>5; */
-	/* unsigned c2_4=(c2&0x10)>>4; */
-	/* unsigned c2_3=(c2&0x8)>>3; */
-	/* unsigned c2_2=(c2&0x4)>>2; */
-	/* unsigned c2_1=(c2&0x2)>>1; */
+	 /* unsigned c2_5=(c2&0x20)>>5; */
+	 /* unsigned c2_4=(c2&0x10)>>4; */
+	 /* unsigned c2_3=(c2&0x8)>>3; */
+     /* unsigned c2_2=(c2&0x4)>>2; */
+	 /* unsigned c2_1=(c2&0x2)>>1; */
 	unsigned rcd0=(c2&0x1);
 
-	/* User dont need xds */
+	 /* User dont need xds */
 	if(!ctx)
 		return;
 
@@ -449,8 +449,8 @@ void xds_do_content_advisory (struct cc_subtitle *sub, struct ccx_decoders_xds_c
 		changed=1;
 		last_c1=c1;
 		last_c2=c2;
-		// Changed since last time, decode
-		// Bits a1 and a0 determine the encoding. I'll add parsing as more samples become available
+		 // Changed since last time, decode
+		 // Bits a1 and a0 determine the encoding. I'll add parsing as more samples become available
 		if (!a1 && a0) // US TV parental guidelines
 		{
 			const char *agetext[8]={"None", "TV-Y (All Children)", "TV-Y7 (Older Children)",
@@ -501,7 +501,7 @@ void xds_do_content_advisory (struct cc_subtitle *sub, struct ccx_decoders_xds_c
 		}
 
 	}
-	// Bits a1 and a0 determine the encoding. I'll add parsing as more samples become available
+	 // Bits a1 and a0 determine the encoding. I'll add parsing as more samples become available
 	if (!a1 && a0) // US TV parental guidelines
 	{
 		xdsprint(sub, ctx, age);
@@ -516,7 +516,7 @@ void xds_do_content_advisory (struct cc_subtitle *sub, struct ccx_decoders_xds_c
 	}
 	if (!a0 || // MPA
 			(a0 && a1 && !Da2 && !La3) ||  // Canadian English Language Rating
-			(a0 && a1 && Da2 && !La3) // Canadian French Language Rating
+			(a0 && a1 && Da2 && !La3)      // Canadian French Language Rating
 	   )
 	{
 		xdsprint(sub, ctx, rating);
@@ -548,17 +548,17 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 			was_proc=1;
 			if (ctx->cur_xds_payload_length<7) // We need 4 data bytes
 				break;
-			int min=ctx->cur_xds_payload[2] & 0x3f; // 6 bits
+			int min=ctx->cur_xds_payload[2] & 0x3f;    // 6 bits
 			int hour = ctx->cur_xds_payload[3] & 0x1f; // 5 bits
 			int date = ctx->cur_xds_payload[4] & 0x1f; // 5 bits
 			int month = ctx->cur_xds_payload[5] & 0xf; // 4 bits
-			/* int changed=0; */
+			 /* int changed=0; */
 			if (ctx->current_xds_min!=min ||
 					ctx->current_xds_hour!=hour ||
 					ctx->current_xds_date!=date ||
 					ctx->current_xds_month!=month)
 			{
-				/* changed=1; */
+			 	/* changed=1; */
 				ctx->xds_start_time_shown=0;
 				ctx->current_xds_min=min;
 				ctx->current_xds_hour=hour;
@@ -585,9 +585,9 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 		case XDS_TYPE_LENGH_AND_CURRENT_TIME:
 			{
 				was_proc=1;
-				if (ctx->cur_xds_payload_length<5) // We need 2 data bytes
+				if (ctx->cur_xds_payload_length<5)  // We need 2 data bytes
 					break;
-				int min=ctx->cur_xds_payload[2] & 0x3f; // 6 bits
+				int min=ctx->cur_xds_payload[2] & 0x3f;    // 6 bits
 				int hour = ctx->cur_xds_payload[3] & 0x1f; // 5 bits
 				if (!ctx->xds_program_length_shown)
 					ccx_common_logging.log_ftn ("\rXDS: Program length (HH:MM): %02d:%02d  ",hour,min);
@@ -596,9 +596,9 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 
 				xdsprint(sub, ctx, "Program length (HH:MM): %02d:%02d  ",hour,min);
 
-				if (ctx->cur_xds_payload_length>6) // Next two bytes (optional) available
+				if (ctx->cur_xds_payload_length>6)	// Next two bytes (optional) available
 				{
-					int el_min=ctx->cur_xds_payload[4] & 0x3f; // 6 bits
+					int el_min=ctx->cur_xds_payload[4] & 0x3f;    // 6 bits
 					int el_hour = ctx->cur_xds_payload[5] & 0x1f; // 5 bits
 					if (!ctx->xds_program_length_shown)
 						ccx_common_logging.log_ftn ("Elapsed (HH:MM): %02d:%02d",el_hour,el_min);
@@ -607,7 +607,7 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 					xdsprint(sub, ctx, "Elapsed (HH:MM): %02d:%02d",el_hour,el_min);
 
 				}
-				if (ctx->cur_xds_payload_length>8) // Next two bytes (optional) available
+				if (ctx->cur_xds_payload_length>8)	// Next two bytes (optional) available
 				{
 					int el_sec=ctx->cur_xds_payload[6] & 0x3f; // 6 bits
 					if (!ctx->xds_program_length_shown)
@@ -876,7 +876,7 @@ int xds_do_misc (struct ccx_decoders_xds_context *ctx)
 				was_proc=1;
 				if (ctx->cur_xds_payload_length<9) // We need 6 data bytes
 					break;
-				int min=ctx->cur_xds_payload[2] & 0x3f; // 6 bits
+				int min=ctx->cur_xds_payload[2] & 0x3f;    // 6 bits
 				int hour = ctx->cur_xds_payload[3] & 0x1f; // 5 bits
 				int date = ctx->cur_xds_payload[4] & 0x1f; // 5 bits
 				int month = ctx->cur_xds_payload[5] & 0xf; // 4 bits
@@ -893,8 +893,8 @@ int xds_do_misc (struct ccx_decoders_xds_context *ctx)
 				if (ctx->cur_xds_payload_length<5) // We need 2 data bytes
 					break;
 				// int b6 = (ctx->cur_xds_payload[2] & 0x40) >>6; // Bit 6 should always be 1
-				int dst = (ctx->cur_xds_payload[2] & 0x20) >>5; // Daylight Saving Time
-				int hour = ctx->cur_xds_payload[2] & 0x1f; // 5 bits
+				int dst = (ctx->cur_xds_payload[2] & 0x20) >>5;   // Daylight Saving Time
+				int hour = ctx->cur_xds_payload[2] & 0x1f;        // 5 bits
 				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "Local Time Zone: %02d DST: %d\n",
 						hour, dst);
 				break;

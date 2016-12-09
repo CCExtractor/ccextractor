@@ -122,8 +122,8 @@ int is_all_caps(struct encoder_ctx *context, int line_num, struct eia608_screen 
 
 int clever_capitalize(struct encoder_ctx *context, int line_num, struct eia608_screen *data)
 {
-	// CFS: Tried doing to clever (see below) but some channels do all uppercase except for
-	// notes for deaf people (such as "(narrator)" which messes things up.
+	    // CFS: Tried doing to clever (see below) but some channels do all uppercase except for
+	    // notes for deaf people (such as "(narrator)" which messes things up.
 		// First find out if we actually need to do it, don't mess with lines that come OK
 		//int doit = is_all_caps(context, line_num, data);
 	int doit = 1;
@@ -157,9 +157,9 @@ int clever_capitalize(struct encoder_ctx *context, int line_num, struct eia608_s
 	return doit;
 }
 
-// Encodes a generic string. Note that since we use the encoders for closed caption
-// data, text would have to be encoded as CCs... so using special characters here
-// it's a bad idea.
+	// Encodes a generic string. Note that since we use the encoders for closed caption
+	// data, text would have to be encoded as CCs... so using special characters here
+	// it's a bad idea.
 unsigned encode_line(struct encoder_ctx *ctx, unsigned char *buffer, unsigned char *text)
 {
 	unsigned bytes = 0;
@@ -222,7 +222,7 @@ unsigned char *close_tag(struct encoder_ctx *ctx, unsigned char *buffer, char *t
 			(*pitalics)--;
 			break;
 		}
-		tagstack[l] = 0; // Remove from stack
+		tagstack[l] = 0;    // Remove from stack
 		if (cur == tagtype) // We closed up to the required tag, done
 			return buffer;
 	}

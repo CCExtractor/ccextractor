@@ -35,7 +35,7 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_webvtt() - not enough memory.\n");
 	int pos_r = 0;
 	int pos_w = 0;
-	// Scan for \n in the string and replace it with a 0
+	 // Scan for \n in the string and replace it with a 0
 	while (pos_r<len)
 	{
 		if (string[pos_r] == '\\' && string[pos_r + 1] == 'n')
@@ -51,7 +51,7 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 		pos_w++;
 	}
 	unescaped[pos_w] = 0;
-	// Now read the unescaped string (now several string'z and write them)
+	 // Now read the unescaped string (now several string'z and write them)
 	unsigned char *begin = unescaped;
 	while (begin<unescaped + len)
 	{
@@ -106,7 +106,7 @@ int write_xtimestamp_header(struct encoder_ctx *context)
 		write(context->out->fh, context->buffer, used);
 
 	}
-	// Add the additional CRLF to finish the header
+	 // Add the additional CRLF to finish the header
 	write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 	context->wrote_webvtt_sync_header = 1; // Do it even if couldn't write the header, because it won't be possible anyway
 }
@@ -216,7 +216,7 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 	int wrote_something = 0;
 	ms_start = data->start_time;
 
-	int prev_line_start = -1, prev_line_end = -1; // Column in which the previous line started and ended, for autodash
+	int prev_line_start = -1, prev_line_end = -1;		// Column in which the previous line started and ended, for autodash
 	int prev_line_center1 = -1, prev_line_center2 = -1; // Center column of previous line text
 	int empty_buf = 1;
 	char timeline[128] = "";
@@ -270,7 +270,7 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 				find_limit_characters(line, &first, &last, CCX_DECODER_608_SCREEN_WIDTH);
 				if (first == -1 || last == -1)  // Probably a bug somewhere though
 					break;
-				// Is there a speaker named, for example: TOM: What are you doing?
+				 // Is there a speaker named, for example: TOM: What are you doing?
 				for (int j = first; j <= last; j++)
 				{
 					if (line[j] == ':')
@@ -285,9 +285,9 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 					do_dash = 0;
 				if (first == prev_line_start) // Case of left alignment
 					do_dash = 0;
-				if (last == prev_line_end)  // Right align
+				if (last == prev_line_end)    // Right align
 					do_dash = 0;
-				if (first>prev_line_start && last<prev_line_end) // Fully contained
+				if (first>prev_line_start && last<prev_line_end)      // Fully contained
 					do_dash = 0;
 				if ((first>prev_line_start && first<prev_line_end) || // Overlap
 					(last>prev_line_start && last<prev_line_end))

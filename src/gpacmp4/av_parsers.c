@@ -2386,7 +2386,7 @@ s32 AVC_ParseNALU(GF_BitStream *bs, u32 nal_hdr, AVCState *avc)
 				ret = 1;
 				break;
 			}
-			else if (avc->s_info.idr_pic_id != n_state.idr_pic_id) { /*both IDR and idr_pic_id differs*/
+			else if (avc->s_info.idr_pic_id != n_state.idr_pic_id) {  /*both IDR and idr_pic_id differs*/
 				ret = 1;
 				break;
 			}
@@ -2496,12 +2496,12 @@ u32 AVC_ReformatSEI_NALU(char *buffer, u32 nal_size, AVCState *avc)
 			}
 			break;
 
-		case 0: /*buffering period*/
-		case 2: /*pan scan rect*/
-		case 4: /*user registered ITU t35*/
-		case 7: /*def_rec_pic_marking_repetition*/
-		case 8: /*spare_pic*/
-		case 9: /*scene info*/
+		case 0:  /*buffering period*/
+		case 2:  /*pan scan rect*/
+		case 4:  /*user registered ITU t35*/
+		case 7:  /*def_rec_pic_marking_repetition*/
+		case 8:  /*spare_pic*/
+		case 9:  /*scene info*/
 		case 13: /*full frame freeze*/
 		case 14: /*full frame freeze release*/
 		case 15: /*full frame snapshot*/

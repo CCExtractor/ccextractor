@@ -133,7 +133,7 @@ GF_Err gf_isom_datamap_new(const char *location, const char *parentPath, u8 mode
 
 	if (mode == GF_ISOM_DATA_MAP_READ_ONLY) {
 		mode = GF_ISOM_DATA_MAP_READ;
-		/*It seems win32 file mapping is reported in prog mem usage -> large increases of occupancy. Should not be a pb 
+	  /*It seems win32 file mapping is reported in prog mem usage -> large increases of occupancy. Should not be a pb 
 		but unless you want mapping, only regular IO will be used...*/
 #if 0
 		if (IsLargeFile(sPath)) {
