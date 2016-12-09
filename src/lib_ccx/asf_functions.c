@@ -55,23 +55,23 @@ char *guidstr(void *val)
 	return sbuf;
 }
 
-/* ASF container specific data parser
- * The following function reads an ASF file and returns the included
- * video stream.  The function returns after a complete Media Object
- * is read (the Media Object Number increases by one).  A Media Object
- * seems to consist of one frame.
- * When the function is called the next time it continues to read
- * where it stopped before, static variables make sure that parameters
- * are remembered between calls. */
+//* ASF container specific data parser
+ //* The following function reads an ASF file and returns the included
+ //* video stream.  The function returns after a complete Media Object
+ //* is read (the Media Object Number increases by one).  A Media Object
+// * seems to consist of one frame.
+// * When the function is called the next time it continues to read
+// * where it stopped before, static variables make sure that parameters
+// * are remembered between calls. 
 int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 {
 	int enough = 0;
 	int payload_read = 0;
 
-	/*The fist call to this function (per file) is indicated with
-	 firstcall == 1
-	 Except for the first call of this function we will reenter
-	 the Data Packet loop below.*/
+	//The fist call to this function (per file) is indicated with
+	 //firstcall == 1
+	// Except for the first call of this function we will reenter
+	 //the Data Packet loop below.
 	int reentry = 1;
 
 	// Variables for Header Object
@@ -122,8 +122,8 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				.FileSize = 0,
 				.PacketSize = 0,
 				.StreamProperties = {
-					/* Make sure the stream numbers are invalid when a new file begins
-					so that they are only set when detected. */
+					// Make sure the stream numbers are invalid when a new file begins
+					//so that they are only set when detected. 
 					.VideoStreamNumber = 0,
 					.AudioStreamNumber = 0,
 					.CaptionStreamNumber = 0,
@@ -324,9 +324,9 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 								estreamproppos+=22+extensionsysteminfolength;
 							}
 
-							/* Now, there can be a Stream Properties Object.  The only way to
-							   find out is to check if there are bytes left in the current
-							   object.*/
+							// Now, there can be a Stream Properties Object.  The only way to
+							   //find out is to check if there are bytes left in the current
+							  // object.
 							if ( (estreamproppos - hecurpos) < heobjectsize )
 							{
 								int64_t spobjectsize = *((int64_t*)(estreamproppos+16)); 
@@ -348,9 +348,9 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 								}
 								else if( !memcmp(estreamproppos+24, ASF_BINARY_MEDIA, 16 ) )
 								{
-									/* dvr-ms files identify audio streams as binary streams
-									   but use the "major media type" accordingly to identify
-									   the steam.  (There might be other audio identifiers.)*/
+									// dvr-ms files identify audio streams as binary streams
+									  // but use the "major media type" accordingly to identify
+									   //the steam.  (There might be other audio identifiers.)
 									if( !memcmp(estreamproppos+78, DVRMS_AUDIO, 16 ) ) {
 										dbg_print(CCX_DMT_PARSE, "Binary media: DVR-MS Audio Stream (size: %lld)\n",
 												spobjectsize);
@@ -484,8 +484,8 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 					if(!memcmp(econtentpos+2, L"WM/VideoClosedCaptioning"
 								,DescriptorNameLength))
 					{
-						/* This flag would be really usefull if it would be
-						   reliable - it isn't.*/
+						// This flag would be really usefull if it would be
+						  // reliable - it isn't.
 						asf_data_container.VideoClosedCaptioningFlag = *((int32_t*)edescval);
 						dbg_print(CCX_DMT_PARSE, "Found WM/VideoClosedCaptioning flag: %d\n",
 								asf_data_container.VideoClosedCaptioningFlag);
@@ -514,8 +514,8 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		if (asf_data_container.StreamProperties.VideoStreamNumber == 0)
 			fatal(EXIT_NOT_CLASSIFIED, "No Video Stream Properties Object found.  Unable to continue ...\n");
 
-		/* Wouldn't it be nice if  VideoClosedCaptioningFlag  would be usable, unfortunately
-		 it is not reliable.*/
+		// Wouldn't it be nice if  VideoClosedCaptioningFlag  would be usable, unfortunately
+		 //it is not reliable.
 
 		// Now decide where we are going to expect the captions
 		data->bufferdatatype = CCX_PES; 
@@ -550,9 +550,9 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 					asf_data_container.StreamProperties.DecodeStreamNumber);
 		}
 
-		/* When reading "Payload parsing information" it occured that "Packet Lenght"
-		   was not set (Packet Length Type 00) and for "Single Payloads" this means
-		   the Payload Data Length cannot be infered.  Use MinPacketSize, MaxPacketSize instead.*/
+		// When reading "Payload parsing information" it occured that "Packet Lenght"
+		  // was not set (Packet Length Type 00) and for "Single Payloads" this means
+		   //the Payload Data Length cannot be infered.  Use MinPacketSize, MaxPacketSize instead.
 		if ((MinPacketSize > 0) && (MinPacketSize == MaxPacketSize))
 			asf_data_container.PacketSize = MinPacketSize;
 
@@ -633,8 +633,8 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 			}
 			else
 			{
-				/* When no ecinfo is present the byte we just read belongs
-				  to the payload parsing information.*/
+				// When no ecinfo is present the byte we just read belongs
+				 // to the payload parsing information.
 				ecinfo = 1;
 			}
 
@@ -738,9 +738,9 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		}
 		else
 		{   // Rely on
-			/* NumberOfPayloads, payloadcur, PayloadLength, PaddingLength
-			   and related variables being kept as static variables to be
-			   able to reenter the loop here.*/
+			// NumberOfPayloads, payloadcur, PayloadLength, PaddingLength
+			  // and related variables being kept as static variables to be
+			   //able to reenter the loop here.
 			dbg_print(CCX_DMT_PARSE, "\nReentry into asf_getmoredata()\n");
 		}
 
@@ -883,8 +883,8 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				dbg_print(CCX_DMT_PARSE, "Size - Replicated %d + Payload %d = %d\n",
 						ReplicatedLength, asf_data_container.PayloadLength, ReplicatedLength + asf_data_container.PayloadLength);
 
-				/* Remember the last video time stamp - only when captions are separate
-				   from video stream.*/
+				//Remember the last video time stamp - only when captions are separate
+				   //from video stream.
 				if (asf_data_container.PayloadStreamNumber == asf_data_container.StreamProperties.VideoStreamNumber
 						&& asf_data_container.StreamProperties.DecodeStreamNumber != asf_data_container.StreamProperties.VideoStreamNumber
 						&& OffsetMediaLength == 0)
@@ -905,14 +905,14 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 						// Add 1ms to avoid 0ms start times getting rejected
 						asf_data_container.StreamProperties.VideoStreamMS = PresentationTimems + 1;
 					}
-					/* This checks if there is a video time jump in the timeline
-					   between caption information.*/
+					// This checks if there is a video time jump in the timeline
+					  // between caption information.
 					if (abs(asf_data_container.StreamProperties.currVideoStreamMS - asf_data_container.StreamProperties.prevVideoStreamMS) > 500)
 					{
 						// Found a more than 500ms jump in the video timeline
 						asf_data_container.StreamProperties.VideoJump = 1;
-						/* This is remembered until the next caption block is
-						   found.*/
+						// This is remembered until the next caption block is
+						   //found.
 					}
 				}
 
@@ -937,20 +937,20 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 						asf_data_container.StreamProperties.DecodeStreamPTS = PresentationTimems + 1;
 					}
 
-					/* Check the caption stream for jumps in the timeline. This
-					   is needed when caption information is transmitted in a
-					   different stream then the video information. (For example
-					   NTSC recordings.) Otherwise a gap in the caption
-					  information would look like a jump in the timeline.*/
+					// Check the caption stream for jumps in the timeline. This
+					 //  is needed when caption information is transmitted in a
+					 //  different stream then the video information. (For example
+					  // NTSC recordings.) Otherwise a gap in the caption
+					  //information would look like a jump in the timeline.
 					if (asf_data_container.StreamProperties.DecodeStreamNumber != asf_data_container.StreamProperties.VideoStreamNumber)
 					{
 						// Check if there is a gap larger than 500ms.
 						if (asf_data_container.StreamProperties.currDecodeStreamPTS - asf_data_container.StreamProperties.prevDecodeStreamPTS > 500)
 						{
-							/* Found more than 500ms since the previous caption,
-							   now check the video timeline. If there was a also
-							   a jump this needs synchronizing, otherwise it was
-							   just a gap in the captions.*/
+							// Found more than 500ms since the previous caption,
+							  // now check the video timeline. If there was a also
+							   //a jump this needs synchronizing, otherwise it was
+							   //just a gap in the captions.
 							if (!asf_data_container.StreamProperties.VideoJump)
 								ccx_common_timing_settings.disable_sync_check = 1;
 							else
@@ -975,8 +975,8 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 			// Now, the next loop is no reentry anymore:
 			reentry = 0;
 
-			/* Video streams need several packages to complete a PES.  Leave
-			   the loop when the next package starts a new Media Object.*/
+			//Video streams need several packages to complete a PES.  Leave
+			  // the loop when the next package starts a new Media Object.
 			if ( curmedianumber != 0xFFFFFFFF  
 			    // Is initialized
 					&& asf_data_container.PayloadStreamNumber == asf_data_container.StreamProperties.DecodeStreamNumber
@@ -1068,8 +1068,8 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		dbg_print(CCX_DMT_PARSE, "Skip the rest: %d\n", (int)(asf_data_container.FileSize - asf_data_container.HeaderObjectSize - asf_data_container.DataObjectSize));
 		result = buffered_skip(ctx->demux_ctx, (int)(asf_data_container.FileSize - asf_data_container.HeaderObjectSize - asf_data_container.DataObjectSize));
 		ctx->demux_ctx->past += result;
-		/* Don not set end_of_file (although it is true) as this would
-		   produce an premature end error.*/
+		// Don not set end_of_file (although it is true) as this would
+		// produce an premature end error.
 		//end_of_file=1;
 
 		// parsebuf is freed automatically when the program closes.
