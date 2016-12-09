@@ -3,7 +3,6 @@ Credits: See CHANGES.TXT
 License: GPL 2.0
 */
 #include <stdio.h>
-#include <conio.h>
 #include "lib_ccx.h"
 #include "configuration.h"
 #include <sys/types.h>

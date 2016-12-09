@@ -389,7 +389,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../src/lib_hash;../src/protobuf-c;../src/utf8proc;../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/win_iconv;../src/lib_hash;../src/protobuf-c;../src/utf8proc;../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
