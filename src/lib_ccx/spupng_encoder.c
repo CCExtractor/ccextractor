@@ -19,7 +19,7 @@ void spupng_init_font()
 
 	/* de-interleave font image (puts all chars in row 0) */
 	if (!(t = (uint8_t*)malloc(ccfont2_width * ccfont2_height / 8)))
-		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "spupng_init_font: Memory allocation failed");
 
 	for (p = t, i = 0; i < CCH; i++)
 		for (j = 0; j < ccfont2_height; p += ccfont2_width / 8, j += CCH)
@@ -34,7 +34,7 @@ struct spupng_t *spunpg_init(struct ccx_s_write *out)
 {
 	struct spupng_t *sp = (struct spupng_t *) malloc(sizeof(struct spupng_t));
 	if (NULL == sp)
-		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "spunpg_init: Memory allocation failed (sp)");
 
 	if (!initialized)
 	{
@@ -50,7 +50,7 @@ struct spupng_t *spunpg_init(struct ccx_s_write *out)
 	sp->dirname = (char *) malloc(
 			sizeof(char) * (strlen(out->filename) + 3));
 	if (NULL == sp->dirname)
-		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "spunpg_init: Memory allocation failed (sp->dirname)");
 
 	strcpy(sp->dirname, out->filename);
 	char* p = strrchr(sp->dirname, '.');
@@ -72,7 +72,7 @@ struct spupng_t *spunpg_init(struct ccx_s_write *out)
 	// enough to append /subNNNN.png
 	sp->pngfile = (char *) malloc(sizeof(char) * (strlen(sp->dirname) + 13));
 	if (NULL == sp->pngfile)
-		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failed");
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "spunpg_init: Memory allocation failed (sp->pngfile)");
 	sp->fileIndex = 0;
 	sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex);
 

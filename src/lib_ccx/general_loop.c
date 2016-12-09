@@ -434,7 +434,7 @@ void processhex (struct lib_ccx_ctx *ctx, char *filename)
 			continue;
 		bytes=(unsigned char *) malloc (byte_count);
 		if (!bytes)
-			fatal (EXIT_NOT_ENOUGH_MEMORY, "Out of memory.\n");
+			fatal (EXIT_NOT_ENOUGH_MEMORY, "processhex: Out of memory.\n");
 		unsigned char *bytes=(unsigned char *) malloc (byte_count);
 		for (unsigned i=0;i<byte_count;i++)
 		{
@@ -842,7 +842,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				break;
 #endif
 			default:
-				fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible stream_mode");
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "general_loop: Impossible value for stream_mode");
 		}
 		if (ret == CCX_EOF)
 		{
@@ -1100,7 +1100,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 			if ( cbcount*3 > parsebufsize) {
 				parsebuf = (unsigned char*)realloc(parsebuf, cbcount*3);
 				if (!parsebuf)
-					fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "rcwt_loop: Out of memory allocating parsebuf.");
 				parsebufsize = cbcount*3;
 			}
 			result = buffered_read(ctx->demux_ctx, parsebuf, cbcount*3);

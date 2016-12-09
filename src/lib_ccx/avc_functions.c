@@ -509,7 +509,7 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 						{
 							ctx->cc_data = (unsigned char*)realloc(ctx->cc_data, (size_t) ( (ctx->cc_count + local_cc_count) * 6) + 1);
 							if (!ctx->cc_data)
-								fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
+								fatal(EXIT_NOT_ENOUGH_MEMORY, "In user_data_registered_itu_t_t35: Out of memory allocating buffer for CC data.");
 							ctx->cc_databufsize = (long) ( (ctx->cc_count + local_cc_count) * 6) + 1;
 						}
 						// Copy new cc data into cc_data
@@ -581,7 +581,7 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 			{
 				ctx->cc_data = (unsigned char*)realloc(ctx->cc_data, (size_t) (((local_cc_count + ctx->cc_count) * 6) + 1));
 				if (!ctx->cc_data)
-					fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "In user_data_registered_itu_t_t35: Not enough memory trying to allocate buffer for CC data.");
 				ctx->cc_databufsize = (long) (((local_cc_count + ctx->cc_count) * 6) + 1);
 			}
 			// Copy new cc data into cc_data - replace command below.
