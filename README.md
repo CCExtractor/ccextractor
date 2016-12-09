@@ -42,8 +42,6 @@ When creating a ticket:
 - It goes without saying, we like polite people.
 
 You can also [contact us by email or chat with the team in Slack](http://www.ccextractor.org/doku.php?id=public:general:support). 
-
-You can also 
     
 ## Contributing
 
