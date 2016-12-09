@@ -406,6 +406,5 @@ int main(int argc, char *argv[])
   	curl_global_cleanup();
 #endif
 	dinit_libraries(&ctx);
-	getch();
 	return EXIT_OK;
 }
