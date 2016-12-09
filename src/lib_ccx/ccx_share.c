@@ -84,7 +84,7 @@ ccx_share_status ccx_share_start(const char *stream_name) //TODO add stream
 	ccx_share_ctx.nn_sock = nn_socket(AF_SP, NN_PUB);
 	if (ccx_share_ctx.nn_sock < 0) {
 		perror("[share] ccx_share_start: can't nn_socket()\n");
-		fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start");
+		fatal(EXIT_NOT_CLASSIFIED, "ccx share socket number is less than zero!");
 	}
 
 	if (!ccx_options.sharing_url) {
@@ -96,14 +96,14 @@ ccx_share_status ccx_share_start(const char *stream_name) //TODO add stream
 	ccx_share_ctx.nn_binder = nn_bind(ccx_share_ctx.nn_sock, ccx_options.sharing_url);
 	if (ccx_share_ctx.nn_binder < 0) {
 		perror("[share] ccx_share_start: can't nn_bind()\n");
-		fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start");
+		fatal(EXIT_NOT_CLASSIFIED, "ccx share binder number is less than zero!");
 	}
 
 	int linger = -1;
 	int rc = nn_setsockopt(ccx_share_ctx.nn_sock, NN_SOL_SOCKET, NN_LINGER, &linger, sizeof(int));
 	if (rc < 0) {
 		perror("[share] ccx_share_start: can't nn_setsockopt()\n");
-		fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start");
+		fatal(EXIT_NOT_CLASSIFIED, "ccx socket output number is less than zero!");
 	}
 
 	//TODO remove path from stream name to minimize traffic (/?)
@@ -205,7 +205,7 @@ ccx_share_status _ccx_share_sub_to_entries(struct cc_subtitle *sub, ccx_sub_entr
 
 			entries->messages = realloc(entries->messages, ++entries->count * sizeof(CcxSubEntryMessage));
 			if (!entries->messages) {
-				fatal(EXIT_NOT_ENOUGH_MEMORY, "_ccx_share_sub_to_entry\n");
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "Could not allocate memory in ccx_share\n");
 			}
 
 			unsigned int entry_index = entries->count - 1;
@@ -225,7 +225,7 @@ ccx_share_status _ccx_share_sub_to_entries(struct cc_subtitle *sub, ccx_sub_entr
 			}
 			entries->messages[entry_index].lines = (char **)malloc(entries->messages[entry_index].n_lines * sizeof(char *));
 			if (!entries->messages[entry_index].lines) {
-				fatal(EXIT_NOT_ENOUGH_MEMORY, "_ccx_share_sub_to_entry: entries->messages[entry_index].lines\n");
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "Could not allocate memory: _ccx_share_sub_to_entry: entries->messages[entry_index].lines\n");
 			}
 
 			dbg_print(CCX_DMT_SHARE, "[share] Copying %u lines\n", entries->messages[entry_index].n_lines);
@@ -235,7 +235,7 @@ ccx_share_status _ccx_share_sub_to_entries(struct cc_subtitle *sub, ccx_sub_entr
 					entries->messages[entry_index].lines[j] =
 						(char *)malloc((strnlen((char *)data->characters[i], 32) + 1) * sizeof(char));
 					if (!entries->messages[entry_index].lines[j]) {
-						fatal(EXIT_NOT_ENOUGH_MEMORY, "_ccx_share_sub_to_entry: entries->messages[entry_index].lines[j]\n");
+						fatal(EXIT_NOT_ENOUGH_MEMORY, "Could not allocate memory: _ccx_share_sub_to_entry: entries->messages[entry_index].lines[j]\n");
 					}
 					strncpy(entries->messages[entry_index].lines[j], (char *)data->characters[i], 32);
 					entries->messages[entry_index].lines[j][strnlen((char *)data->characters[i], 32)] = '\0';

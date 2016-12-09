@@ -744,7 +744,7 @@ goto skip; */
 	av.data=(unsigned char *) realloc (av.data,av.size);
 	if (av.data==NULL)
 	{
-		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, realloc() failed. Giving up.\n");
+		fatal (EXIT_NOT_ENOUGH_MEMORY, "Could not reallocate memory to av.data in myth.\n");
 	}
 	av.codec_id=codec_id;
 	av.type=type;
@@ -781,7 +781,7 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 	desp_length = 65536;
 	desp = (unsigned char *) malloc (desp_length);
 	if (!desp)
-		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory.\n");
+		fatal (EXIT_NOT_ENOUGH_MEMORY, "Could not allocate memory to desp in myth.\n");
 	saved=0;
 
 	memset(&dec_sub, 0, sizeof(dec_sub));
@@ -807,7 +807,7 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 				desp_length=length*2; // *2, just to reduce possible future reallocs
 				desp=(unsigned char *) realloc (desp,desp_length); // 16, some extra
 				if (!desp)
-					fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory.\n");
+					fatal (EXIT_NOT_ENOUGH_MEMORY, "variable desp does not exist!.\n");
 			}
 			if (av.pts!=AV_NOPTS_VALUE)
 			{

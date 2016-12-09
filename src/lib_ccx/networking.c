@@ -85,7 +85,7 @@ void connect_to_srv(const char *addr, const char *port, const char *cc_desc, con
 	if (NULL == addr)
 	{
 		mprint("Server address is not set\n");
-		fatal(EXIT_FAILURE, "Unable to connect\n");
+		fatal(EXIT_FAILURE, "Unable to connect, null address!\n");
 	}
 
 	if (NULL == port)
@@ -95,10 +95,10 @@ void connect_to_srv(const char *addr, const char *port, const char *cc_desc, con
 	mprint("Connecting to %s:%s\n", addr, port);
 
 	if ((srv_sd = tcp_connect(addr, port)) < 0)
-		fatal(EXIT_FAILURE, "Unable to connect\n");
+		fatal(EXIT_FAILURE, "Unable to connect!\n");
 
 	if (write_block(srv_sd, PASSWORD, pwd, pwd ? strlen(pwd) : 0) < 0)
-		fatal(EXIT_FAILURE, "Unable to connect\n");
+		fatal(EXIT_FAILURE, "Unable to connect, possible password error?\n");
 
 	if (write_block(srv_sd, CC_DESC, cc_desc, cc_desc ? strlen(cc_desc) : 0) < 0)
 		fatal(EXIT_FAILURE, "Unable to connect\n");
@@ -131,7 +131,7 @@ void net_send_header(const unsigned char *data, size_t len)
 		return;
 
 	if ((srv_header = malloc(len)) == NULL)
-		fatal(EXIT_FAILURE, "Not enough memory");
+		fatal(EXIT_FAILURE, "Could not allocate memory to srv_header in networking!");
 
 	memcpy(srv_header, data, len);
 	srv_header_len = len;

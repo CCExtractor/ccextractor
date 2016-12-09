@@ -158,7 +158,7 @@ size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t av
 	if(avcbuflen <= 5)
 	{
 		fatal(CCX_COMMON_EXIT_BUG_BUG,
-				"NAL unit need at last 5 bytes ...");
+				"Length of the NAL unit must be at least 5 bytes.");
 	}
 
 	// Warning there should be only leading zeros, nothing else
@@ -509,7 +509,7 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 						{
 							ctx->cc_data = (unsigned char*)realloc(ctx->cc_data, (size_t) ( (ctx->cc_count + local_cc_count) * 6) + 1);
 							if (!ctx->cc_data)
-								fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
+								fatal(EXIT_NOT_ENOUGH_MEMORY, "Failed to reallocate memory in avc_functions");
 							ctx->cc_databufsize = (long) ( (ctx->cc_count + local_cc_count) * 6) + 1;
 						}
 						// Copy new cc data into cc_data
@@ -581,7 +581,7 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 			{
 				ctx->cc_data = (unsigned char*)realloc(ctx->cc_data, (size_t) (((local_cc_count + ctx->cc_count) * 6) + 1));
 				if (!ctx->cc_data)
-					fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "Failed to reallocate memory in avc_functions");
 				ctx->cc_databufsize = (long) (((local_cc_count + ctx->cc_count) * 6) + 1);
 			}
 			// Copy new cc data into cc_data - replace command below.

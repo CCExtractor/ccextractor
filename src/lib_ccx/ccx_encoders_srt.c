@@ -34,7 +34,7 @@ int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_sta
 	unsigned char *unescaped= (unsigned char *) malloc (len+1);
 	unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
 	if (el==NULL || unescaped==NULL)
-		fatal (EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_srt() - not enough memory.\n");
+		fatal (EXIT_NOT_ENOUGH_MEMORY, "Memory allocation failure in write_stringz_as_srt()\n");
 	int pos_r=0;
 	int pos_w=0;
 	// Scan for \n in the string and replace it with a 0
