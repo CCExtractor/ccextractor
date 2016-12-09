@@ -11,6 +11,10 @@ linux/ccextractor
 linux/depend
 windows/Debug/**
 windows/Release/**
+windows/Release-OCR/**
+windows/Debug-OCR/**
+windows/x64/**
+windows/ccextractor.VC.db
 build/
 
 ####
@@ -29,9 +33,6 @@ src/lib_ccx/compile_info_real.h
 #### Ignore windows OCR libraries and folders
 windows/libs/leptonica/**
 windows/libs/tesseract/**
-windows/Release-OCR/**
-windows/Debug-OCR/**
-windows/x64/**
 
 # Ctags
 *.tags*
