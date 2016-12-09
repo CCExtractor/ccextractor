@@ -188,23 +188,23 @@ GF_Err gf_log_modify_tools_levels(const char *val)
 			return GF_BAD_PARAM;
 		}
 
-		if (!_strnicmp(sep_level + 1, "error", 5)) {
+		if (!strnicmp(sep_level + 1, "error", 5)) {
 			level = GF_LOG_ERROR;
 			next_val = sep_level + 1 + 5;
 		}
-		else if (!_strnicmp(sep_level + 1, "warning", 7)) {
+		else if (!strnicmp(sep_level + 1, "warning", 7)) {
 			level = GF_LOG_WARNING;
 			next_val = sep_level + 1 + 7;
 		}
-		else if (!_strnicmp(sep_level + 1, "info", 4)) {
+		else if (!strnicmp(sep_level + 1, "info", 4)) {
 			level = GF_LOG_INFO;
 			next_val = sep_level + 1 + 4;
 		}
-		else if (!_strnicmp(sep_level + 1, "debug", 5)) {
+		else if (!strnicmp(sep_level + 1, "debug", 5)) {
 			level = GF_LOG_DEBUG;
 			next_val = sep_level + 1 + 5;
 		}
-		else if (!_strnicmp(sep_level + 1, "quiet", 5)) {
+		else if (!strnicmp(sep_level + 1, "quiet", 5)) {
 			level = GF_LOG_QUIET;
 			next_val = sep_level + 1 + 5;
 		}
@@ -1307,10 +1307,10 @@ s32 gf_lang_find(const char *lang_or_rfc_5646_code)
 		if (!strcmp(defined_languages[i].name, lang_or_rfc_5646_code)) {
 			return i;
 		}
-		if ((len == 3) && !_strnicmp(defined_languages[i].three_char_code, lang_or_rfc_5646_code, 3)) {
+		if ((len == 3) && !strnicmp(defined_languages[i].three_char_code, lang_or_rfc_5646_code, 3)) {
 			return i;
 		}
-		if ((len == 2) && !_strnicmp(defined_languages[i].two_char_code, lang_or_rfc_5646_code, 2)) {
+		if ((len == 2) && !strnicmp(defined_languages[i].two_char_code, lang_or_rfc_5646_code, 2)) {
 			return i;
 		}
 	}
