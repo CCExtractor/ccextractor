@@ -303,7 +303,6 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 	if((f = gf_isom_open(file, GF_ISOM_OPEN_READ, NULL)) == NULL)
 	{
 		mprint("failed to open\n");
-		free(dec_ctx->xds_ctx);
 		return -2;
 	}
 
@@ -343,7 +342,6 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 			if(process_xdvb_track(ctx, file, f, i + 1, &dec_sub) != 0)
 			{
 				mprint("error\n");
-				free(dec_ctx->xds_ctx);
 				return -3;
 			}
 			if(dec_sub.got_output)
@@ -370,7 +368,6 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 			if(process_avc_track(ctx, file, f, i + 1, &dec_sub) != 0)
 			{
 				mprint("error\n");
-				free(dec_ctx->xds_ctx);
 				return -3;
 			}
 			if(dec_sub.got_output)
@@ -525,8 +522,6 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 					}
 					atomStart += atomLength;
 				}
-				free(sample->data);
-				free(sample);
 
 				// End of change
 				int progress = (int) ((k*100) / num_samples);
@@ -541,8 +536,6 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 			activity_progress(100, cur_sec/60, cur_sec%60);
 		}
 	}
-
-	free(dec_ctx->xds_ctx);
 
 	mprint("\nclosing media: ");
 
