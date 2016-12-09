@@ -1,8 +1,8 @@
 /*
  *  avilib.h
  *
- *  Copyright (C) Thomas Östreich - June 2001
- *  multiple audio track support Copyright (C) 2002 Thomas Östreich
+ *  Copyright (C) Thomas Ã–streich - June 2001
+ *  multiple audio track support Copyright (C) 2002 Thomas Ã–streich
  *
  *  Original code:
  *  Copyright (C) 1999 Rainer Johanni <Rainer@Johanni.de> 
@@ -78,15 +78,15 @@ typedef struct _avistdindex_entry {
 
 // Standard index 
 typedef struct _avistdindex_chunk {
-    char           fcc[4];                 // ix##
-    u32 dwSize;                 // size of this chunk
-    u16 wLongsPerEntry;         // must be sizeof(aIndex[0])/sizeof(DWORD)
-    u8  bIndexSubType;          // must be 0
-    u8  bIndexType;             // must be AVI_INDEX_OF_CHUNKS
-    u32  nEntriesInUse;          //
-    char           dwChunkId[4];           // '##dc' or '##db' or '##wb' etc..
+    char fcc[4];            // ix##
+    u32 dwSize;             // size of this chunk
+    u16 wLongsPerEntry;     // must be sizeof(aIndex[0])/sizeof(DWORD)
+    u8 bIndexSubType;       // must be 0
+    u8 bIndexType;          // must be AVI_INDEX_OF_CHUNKS
+    u32 nEntriesInUse;      //
+    char dwChunkId[4];      // '##dc' or '##db' or '##wb' etc..
     u64 qwBaseOffset;       // all dwOffsets in aIndex array are relative to this
-    u32  dwReserved3;            // must be 0
+    u32 dwReserved3;        // must be 0
     avistdindex_entry *aIndex;
 } avistdindex_chunk;
     
