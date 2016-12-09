@@ -3,6 +3,7 @@ Credits: See CHANGES.TXT
 License: GPL 2.0
 */
 #include <stdio.h>
+#include <conio.h>
 #include "lib_ccx.h"
 #include "configuration.h"
 #include <sys/types.h>
@@ -406,6 +407,6 @@ int main(int argc, char *argv[])
   	curl_global_cleanup();
 #endif
 	dinit_libraries(&ctx);
-
+	getch();
 	return EXIT_OK;
 }
