@@ -1,0 +1,105 @@
+﻿  utf.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\utf.c(28): fatal error C1083: Cannot open include file: 'gpac/utf.h': No such file or directory
+  url.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\url.c(26): fatal error C1083: Cannot open include file: 'gpac/network.h': No such file or directory
+  tx3g.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\tx3g.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  track.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\track.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  stbl_write.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\stbl_write.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  stbl_read.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\stbl_read.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  slc.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\slc.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/odf_dev.h': No such file or directory
+  sample_descs.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\sample_descs.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  qos.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\qos.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/odf_dev.h': No such file or directory
+  os_file.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\os_file.c(26): fatal error C1083: Cannot open include file: 'gpac/tools.h': No such file or directory
+  os_divers.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\os_divers.c(26): fatal error C1083: Cannot open include file: 'gpac/tools.h': No such file or directory
+  os_config_init.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\os_config_init.c(28): fatal error C1083: Cannot open include file: 'gpac/config_file.h': No such file or directory
+  odf_parse.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\odf_parse.c(27): fatal error C1083: Cannot open include file: 'gpac/internal/odf_dev.h': No such file or directory
+  odf_dump.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\odf_dump.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/odf_dev.h': No such file or directory
+  odf_command.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\odf_command.c(27): fatal error C1083: Cannot open include file: 'gpac/internal/odf_dev.h': No such file or directory
+  odf_codec.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\odf_codec.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/odf_dev.h': No such file or directory
+  odf_code.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\odf_code.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/odf_dev.h': No such file or directory
+  mp4.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\mp4.c(5): fatal error C1083: Cannot open include file: 'gpac/isomedia.h': No such file or directory
+  movie_fragments.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\movie_fragments.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  meta.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\meta.c(27): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  Generating Code...
+  Compiling...
+  media_odf.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\media_odf.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  media.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\media.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  math.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\math.c(32): fatal error C1083: Cannot open include file: 'gpac/math.h': No such file or directory
+  list.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\list.c(26): fatal error C1083: Cannot open include file: 'gpac/list.h': No such file or directory
+  isom_write.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\isom_write.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  isom_store.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\isom_store.c(27): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  isom_read.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\isom_read.c(27): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  isom_intern.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\isom_intern.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  ipmpx_parse.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\ipmpx_parse.c(27): fatal error C1083: Cannot open include file: 'gpac/internal/odf_dev.h': No such file or directory
+  ipmpx_code.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\ipmpx_code.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/odf_dev.h': No such file or directory
+  hinting.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\hinting.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  gpac_ogg.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\gpac_ogg.c(25): fatal error C1083: Cannot open include file: 'gpac/internal/ogg.h': No such file or directory
+  error.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\error.c(26): fatal error C1083: Cannot open include file: 'gpac/tools.h': No such file or directory
+  drm_sample.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\drm_sample.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  desc_private.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\desc_private.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/odf_dev.h': No such file or directory
+  descriptors.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\descriptors.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/odf_dev.h': No such file or directory
+  data_map.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\data_map.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  configfile.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\configfile.c(26): fatal error C1083: Cannot open include file: 'gpac/config_file.h': No such file or directory
+  box_funcs.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\box_funcs.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  box_code_meta.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\box_code_meta.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  Generating Code...
+  Compiling...
+  box_code_drm.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\box_code_drm.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  box_code_base.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\box_code_base.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  box_code_apple.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\box_code_apple.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  box_code_adobe.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\box_code_adobe.c(28): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  box_code_3gpp.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\box_code_3gpp.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  bitstream.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\bitstream.c(26): fatal error C1083: Cannot open include file: 'gpac/bitstream.h': No such file or directory
+  base_encoding.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\base_encoding.c(26): fatal error C1083: Cannot open include file: 'gpac/base_coding.h': No such file or directory
+  av_parsers.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\av_parsers.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/media_dev.h': No such file or directory
+  avilib.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\avilib.c(28): fatal error C1083: Cannot open include file: 'gpac/setup.h': No such file or directory
+  avc_ext.c
+c:\users\alex\desktop\ccextractorupdated\src\gpacmp4\avc_ext.c(26): fatal error C1083: Cannot open include file: 'gpac/internal/isomedia_dev.h': No such file or directory
+  Generating Code...
