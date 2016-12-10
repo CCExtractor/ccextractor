@@ -516,6 +516,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 								if (dec_sub.got_output) {
 									encode_sub(enc_ctx, &dec_sub);
 									dec_sub.got_output = 0;
+									break;
 								}
 							} while (len > 0);
 						}
@@ -557,6 +558,5 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 		mprint ("found no dedicated CC track(s).\n");
 
 	ctx->freport.mp4_cc_track_cnt = cc_track_count;
-
 	return 0;
 }
