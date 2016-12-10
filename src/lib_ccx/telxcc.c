@@ -50,11 +50,11 @@ int _CRT_fmode = _O_BINARY;
 #endif
 
 typedef struct {
-	uint64_t show_timestamp; // show at timestamp (in ms)
-	uint64_t hide_timestamp; // hide at timestamp (in ms)
-	uint16_t text[25][40]; // 25 lines x 40 cols (1 screen/page) of wide chars
+	uint64_t show_timestamp;		 // show at timestamp (in ms)
+	uint64_t hide_timestamp;		 // hide at timestamp (in ms)
+	uint16_t text[25][40];			 // 25 lines x 40 cols (1 screen/page) of wide chars
 	uint8_t g2_char_present[25][40]; // 0- Supplementary G2 character set NOT used at this position 1-Supplementary G2 character set used at this position
-	uint8_t tainted; // 1 = text variable contains any data
+	uint8_t tainted;				 // 1 = text variable contains any data
 } teletext_page_t;
 
 // application states -- flags for notices that should be printed only once
@@ -72,27 +72,27 @@ typedef enum
 struct TeletextCtx
 {
 	short int seen_sub_page[MAX_TLT_PAGES];
-	uint8_t verbose : 1; // should telxcc be verbose?
-	uint16_t page; // teletext page containing cc we want to filter
-	uint16_t tid; // 13-bit packet ID for teletext stream
-	double offset; // time offset in seconds
-	uint8_t bom : 1; // print UTF-8 BOM characters at the beginning of output
-	uint8_t nonempty : 1; // produce at least one (dummy) frame
-	// uint8_t se_mode : 1; // search engine compatible mode => Uses CCExtractor's write_format
-	// uint64_t utc_refvalue; // UTC referential value => Moved to ccx_decoders_common, so can be used for other decoders (608/xds) too
+	uint8_t verbose : 1;			     // should telxcc be verbose?
+	uint16_t page;						 // teletext page containing cc we want to filter
+	uint16_t tid;						 // 13-bit packet ID for teletext stream
+	double offset;						 // time offset in seconds
+	uint8_t bom : 1;				     // print UTF-8 BOM characters at the beginning of output
+	uint8_t nonempty : 1;			     // produce at least one (dummy) frame
+	// uint8_t se_mode : 1;			     // search engine compatible mode => Uses CCExtractor's write_format
+	// uint64_t utc_refvalue;			 // UTC referential value => Moved to ccx_decoders_common, so can be used for other decoders (608/xds) too
 	uint16_t user_page; // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
-	int levdistmincnt, levdistmaxpct; // Means 2 fails or less is "the same", 10% or less is also "the same"
+	int levdistmincnt, levdistmaxpct;    // Means 2 fails or less is "the same", 10% or less is also "the same"
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
-	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
+	int gui_mode_reports;			     // If 1, output in stderr progress updates so the GUI can grab them
 	enum ccx_output_date_format date_format;
-	int noautotimeref; // Do NOT set time automatically?
+	int noautotimeref;			         // Do NOT set time automatically?
 	unsigned send_to_srv;
 	char millis_separator;
 	uint32_t global_timestamp;
 
-	// Current and previous page buffers. This is the output written to file when
-	// the time comes.
+	 // Current and previous page buffers. This is the output written to file when
+	 // the time comes.
 	teletext_page_t page_buffer;
 	char *page_buffer_prev;
 	char *page_buffer_cur;
@@ -100,34 +100,34 @@ struct TeletextCtx
 	unsigned page_buffer_cur_used;
 	unsigned page_buffer_prev_size;
 	unsigned page_buffer_prev_used;
-	// Current and previous page compare strings. This is plain text (no colors,
-	// tags, etc) in UCS2 (fixed length), so we can compare easily.
+	 // Current and previous page compare strings. This is plain text (no colors,
+	 // tags, etc) in UCS2 (fixed length), so we can compare easily.
 	uint64_t *ucs2_buffer_prev;
 	uint64_t *ucs2_buffer_cur;
 	unsigned ucs2_buffer_cur_size;
 	unsigned ucs2_buffer_cur_used;
 	unsigned ucs2_buffer_prev_size;
 	unsigned ucs2_buffer_prev_used;
-	// Buffer timestamp
+	 // Buffer timestamp
 	uint64_t prev_hide_timestamp;
 	uint64_t prev_show_timestamp;
-	// subtitle type pages bitmap, 2048 bits = 2048 possible pages in teletext (excl. subpages)
+	 // subtitle type pages bitmap, 2048 bits = 2048 possible pages in teletext (excl. subpages)
 	uint8_t cc_map[256];
-	// last timestamp computed
+	 // last timestamp computed
 	uint64_t last_timestamp;
 	struct s_states states;
-	// FYI, packet counter
+	 // FYI, packet counter
 	uint32_t tlt_packet_counter;
-	// teletext transmission mode
+	 // teletext transmission mode
 	transmission_mode_t transmission_mode;
-	// flag indicating if incoming data should be processed or ignored
+	 // flag indicating if incoming data should be processed or ignored
 	uint8_t receiving_data;
 
 	uint8_t using_pts;
 	int64_t delta;
 	uint32_t t0;
 
-	int sentence_cap;//Set to 1 if -sc is passed
+	int sentence_cap; //Set to 1 if -sc is passed
 	int new_sentence;
 	int splitbysentence;
 
@@ -149,25 +149,25 @@ static const char* TTXT_COLOURS[8] = {
 #define MAX_TLT_PAGES 1000
 
 
-// 1-byte alignment; just to be sure, this struct is being used for explicit type conversion
-// FIXME: remove explicit type conversion from buffer to structs
+ // 1-byte alignment; just to be sure, this struct is being used for explicit type conversion
+ // FIXME: remove explicit type conversion from buffer to structs
 #pragma pack(push)
 #pragma pack(1)
 typedef struct {
-	uint8_t _clock_in; // clock run in
+	uint8_t _clock_in;	   // clock run in
 	uint8_t _framing_code; // framing code, not needed, ETSI 300 706: const 0xe4
 	uint8_t address[2];
 	uint8_t data[40];
 } teletext_packet_payload_t;
 #pragma pack(pop)
 
-// application config global variable
+ // application config global variable
 struct ccx_s_teletext_config tlt_config = { 0};
 
-// macro -- output only when increased verbosity was turned on
+ // macro -- output only when increased verbosity was turned on
 #define VERBOSE_ONLY if (tlt_config.verbose == YES)
 
-// current charset (charset can be -- and always is -- changed during transmission)
+ // current charset (charset can be -- and always is -- changed during transmission)
 struct s_primary_charset {
 	uint8_t current;
 	uint8_t g0_m29;
@@ -176,7 +176,7 @@ struct s_primary_charset {
 	0x00, UNDEF, UNDEF
 };
 
-// entities, used in colour mode, to replace unsafe HTML tag chars
+ // entities, used in colour mode, to replace unsafe HTML tag chars
 struct {
 	uint16_t character;
 	const char *entity;
@@ -188,10 +188,10 @@ struct {
 
 #define array_length(a) (sizeof(a)/sizeof(a[0]))
 
-// extracts magazine number from teletext page
+ // extracts magazine number from teletext page
 #define MAGAZINE(p) ((p >> 8) & 0xf)
 
-// extracts page number from teletext page
+ // extracts page number from teletext page
 #define PAGE(p) (p & 0xff)
 
 typedef enum
@@ -604,11 +604,11 @@ void telx_case_fix (struct TeletextCtx *context)
 		switch(context->page_buffer_cur[i])
 		{
 			case ' ':
-			//case 0x89: // This is a transparent space
+	      //case 0x89:   // This is a transparent space
 			case '-':
 				break;
-			case '.': // Fallthrough
-			case '?': // Fallthrough
+			case '.':    // Fallthrough
+			case '?':    // Fallthrough
 			case '!':
 			case ':':
 				context->new_sentence = 1;
@@ -788,7 +788,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 				memcpy (timecode_hide_mmss, timecode_hide+3, 5);
 				timecode_show_mmss[5]=0;
 				timecode_hide_mmss[5]=0;
-				// Note, only MM:SS here as we need to save space in the preview window
+				 // Note, only MM:SS here as we need to save space in the preview window
 				fprintf (stderr, "%s#%s#",timecode_show_mmss, timecode_hide_mmss);
 				time_reported=1;
 			}

@@ -60,60 +60,60 @@ static const ProtobufCFieldDescriptor ccx_sub_entry_message__field_descriptors[6
 		1,
 		PROTOBUF_C_LABEL_REQUIRED,
 		PROTOBUF_C_TYPE_INT32,
-		0,   /* quantifier_offset */
+		0,               // quantifier_offset 
 		offsetof(CcxSubEntryMessage, eos),
 		NULL,
 		NULL,
-		0,             /* flags */
-		0, NULL, NULL    /* reserved1,reserved2, etc */
+		0,               // flags 
+		0, NULL, NULL    // reserved1,reserved2, etc 
 	},
 	{
 		"stream_name",
 		2,
 		PROTOBUF_C_LABEL_REQUIRED,
 		PROTOBUF_C_TYPE_STRING,
-		0,   /* quantifier_offset */
+		0,             // quantifier_offset 
 		offsetof(CcxSubEntryMessage, stream_name),
 		NULL,
 		NULL,
-		0,             /* flags */
-		0, NULL, NULL    /* reserved1,reserved2, etc */
+		0,             //flags 
+		0, NULL, NULL  // reserved1,reserved2, etc 
 	},
 	{
 		"counter",
 		3,
 		PROTOBUF_C_LABEL_REQUIRED,
 		PROTOBUF_C_TYPE_INT64,
-		0,   /* quantifier_offset */
+		0,             // quantifier_offset 
 		offsetof(CcxSubEntryMessage, counter),
 		NULL,
 		NULL,
-		0,             /* flags */
-		0, NULL, NULL    /* reserved1,reserved2, etc */
+		0,             //flags 
+		0, NULL, NULL  // reserved1,reserved2, etc 
 	},
 	{
 		"start_time",
 		4,
 		PROTOBUF_C_LABEL_REQUIRED,
 		PROTOBUF_C_TYPE_INT64,
-		0,   /* quantifier_offset */
+		0,             // quantifier_offset 
 		offsetof(CcxSubEntryMessage, start_time),
 		NULL,
 		NULL,
-		0,             /* flags */
-		0, NULL, NULL    /* reserved1,reserved2, etc */
+		0,             //flags 
+		0, NULL, NULL  // reserved1,reserved2, etc 
 	},
 	{
 		"end_time",
 		5,
 		PROTOBUF_C_LABEL_REQUIRED,
 		PROTOBUF_C_TYPE_INT64,
-		0,   /* quantifier_offset */
+		0,             // quantifier_offset 
 		offsetof(CcxSubEntryMessage, end_time),
 		NULL,
 		NULL,
-		0,             /* flags */
-		0, NULL, NULL    /* reserved1,reserved2, etc */
+		0,             //flags 
+		0, NULL, NULL  // reserved1,reserved2, etc 
 	},
 	{
 		"lines",
@@ -124,8 +124,8 @@ static const ProtobufCFieldDescriptor ccx_sub_entry_message__field_descriptors[6
 		offsetof(CcxSubEntryMessage, lines),
 		NULL,
 		NULL,
-		0,             /* flags */
-		0, NULL, NULL    /* reserved1,reserved2, etc */
+		0,             //flags 
+		0, NULL, NULL  // reserved1,reserved2, etc 
 	},
 };
 static const unsigned ccx_sub_entry_message__field_indices_by_name[] = {

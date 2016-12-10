@@ -234,9 +234,9 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 		unsigned char type_code = read_u8(ustream);
 		if (type_code==0x03) // CC data.
 		{
-			skip_bits(ustream,1); // reserved
+			skip_bits(ustream,1);   // reserved
 			unsigned char process_cc_data = (unsigned char) read_bits(ustream,1);
-			skip_bits(ustream,1); // additional_data - unused
+			skip_bits(ustream,1);   // additional_data - unused
 			unsigned char cc_count = (unsigned char) read_bits(ustream,5);
 			read_bytes(ustream, 1); // "FF"
 			if (process_cc_data)

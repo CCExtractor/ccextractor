@@ -709,9 +709,9 @@ int get_char_in_utf_8 (unsigned char *buffer, unsigned char c) // Returns number
 			*(buffer+1)=0x8c;
 			*(buffer+2)=0x9f;
 			return 3;
-		default: //
+		default: 
 			*buffer='?'; // I'll do it eventually, I promise
-			return 1; // This are weird chars anyway
+			return 1; // These are weird chars anyway
 	}
 }
 

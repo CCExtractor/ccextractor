@@ -3,22 +3,20 @@
 #include "ccx_common_structs.h"
 #include "ccx_common_common.h"
 
-/* Provide the current time since the file (or the first file) started
- * in ms using PTS time information.
- * Requires: frames_since_ref_time, current_tref
- */
+   /* Provide the current time since the file (or the first file) started
+	* in ms using PTS time information.
+	* Requires: frames_since_ref_time, current_tref */
+	
 
-// Count 608 (per field) and 708 blocks since last set_fts() call
+	// Count 608 (per field) and 708 blocks since last set_fts() call
 int cb_field1, cb_field2, cb_708;
 
-int MPEG_CLOCK_FREQ = 90000; // This "constant" is part of the standard
+int MPEG_CLOCK_FREQ = 90000;	// This "constant" is part of the standard
 
 int max_dif = 5;
 unsigned pts_big_change;
-
-// PTS timing related stuff
-
-double current_fps = (double) 30000.0 / 1001; /* 29.97 */ // TODO: Get from framerates_values[] instead
+	// PTS timing related stuff
+double current_fps = (double) 30000.0 / 1001;	/* 29.97 */ // TODO: Get from framerates_values[] instead
 
 int frames_since_ref_time = 0;
 unsigned total_frames_count;
@@ -51,7 +49,7 @@ struct ccx_common_timing_ctx *init_timing_ctx(struct ccx_common_timing_settings_
 	ctx->current_tref = 0;
 	ctx->current_pts = 0;
 	ctx->current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
-	ctx->min_pts = 0x01FFFFFFFFLL; // 33 bit
+	ctx->min_pts = 0x01FFFFFFFFLL;	 // 33 bit
 	ctx->max_pts = 0;
 	ctx->sync_pts = 0; 
 	ctx->minimum_fts = 0;
@@ -59,11 +57,11 @@ struct ccx_common_timing_ctx *init_timing_ctx(struct ccx_common_timing_settings_
 	ctx->sync_pts2fts_fts = 0;
 	ctx->sync_pts2fts_pts = 0;
 
-	ctx->fts_now = 0; // Time stamp of current file (w/ fts_offset, w/o fts_global)
-	ctx->fts_offset = 0; // Time before first sync_pts
+	ctx->fts_now = 0;		// Time stamp of current file (w/ fts_offset, w/o fts_global)
+	ctx->fts_offset = 0;    // Time before first sync_pts
 	ctx->fts_fc_offset = 0; // Time before first GOP
-	ctx->fts_max = 0; // Remember the maximum fts that we saw in current file
-	ctx->fts_global = 0; // Duration of previous files (-ve mode), see c1global
+	ctx->fts_max = 0;       // Remember the maximum fts that we saw in current file
+	ctx->fts_global = 0;    // Duration of previous files (-ve mode), see c1global
 
 	return ctx;
 }
@@ -177,7 +175,7 @@ int set_fts(struct ccx_common_timing_ctx *ctx)
 			ctx->fts_max = ctx->fts_offset;
 
 			// Start counting again from here
-			ctx->pts_set = 1; // Force min to be set again
+			ctx->pts_set = 1;		   // Force min to be set again
 			ctx->sync_pts2fts_set = 0; // Make note of the new conversion values
 
 			// Avoid next async test - the gap might have occured on
@@ -265,8 +263,7 @@ LLONG get_fts_max(struct ccx_common_timing_ctx *ctx)
 	return ctx->fts_max + ctx->fts_global;
 }
 
-/* Fill a static buffer with a time string (hh:mm:ss:ms) corresponding
-   to the microsecond value in mstime. */
+// Fill a static buffer with a time string (hh:mm:ss:ms) corresponding to the microsecond value in mstime. 
 char *print_mstime2buf( LLONG mstime , char *buf )
 {
 	unsigned hh,mm,ss,ms;
@@ -285,10 +282,9 @@ char *print_mstime2buf( LLONG mstime , char *buf )
 	return buf;
 }
 
-/**
- * Fill buffer with a time string using specified format
- * @param fmt has to contain 4 format specifiers for h, m, s and ms respectively
- */
+	
+   /* Fill buffer with a time string using specified format
+	* @param fmt has to contain 4 format specifiers for h, m, s and ms respectively	*/
 size_t mstime_sprintf(LLONG mstime, char *fmt, char *buf)
 {
 	unsigned hh, mm, ss, ms;
@@ -307,28 +303,28 @@ size_t mstime_sprintf(LLONG mstime, char *fmt, char *buf)
 }
 
 
-/* Fill a static buffer with a time string (hh:mm:ss:ms) corresponding
-   to the microsecond value in mstime. */
+   /* Fill a static buffer with a time string (hh:mm:ss:ms) corresponding
+      to the microsecond value in mstime. */
 char *print_mstime( LLONG mstime )
 {
 	static char buf[15]; // 14 should be long enough
 	return print_mstime2buf (mstime, buf);
 }
 
-/* Helper function for to display debug timing info. */
+	// Helper function for to display debug timing info.
 void print_debug_timing(struct ccx_common_timing_ctx *ctx)
 {
-	// Avoid wrong "Calc. difference" and "Asynchronous by" numbers
-	// for uninitialized min_pts
+		// Avoid wrong "Calc. difference" and "Asynchronous by" numbers
+		// for uninitialized min_pts
 	LLONG tempmin_pts = (ctx->min_pts==0x01FFFFFFFFLL ? ctx->sync_pts : ctx->min_pts);
 
 	ccx_common_logging.log_ftn("Sync time stamps:  PTS: %s                ",
 			print_mstime((ctx->sync_pts)/(MPEG_CLOCK_FREQ/1000)) );
 	ccx_common_logging.log_ftn("GOP: %s      \n", print_mstime(gop_time.ms));
 
-	// Length first GOP to last GOP
+		// Length first GOP to last GOP
 	LLONG goplenms = (LLONG) (gop_time.ms - first_gop_time.ms);
-	// Length at last sync point
+		// Length at last sync point
 	LLONG ptslenms = (unsigned)((ctx->sync_pts-tempmin_pts)/(MPEG_CLOCK_FREQ/1000)
 			+ ctx->fts_offset);
 
@@ -337,7 +333,7 @@ void print_debug_timing(struct ccx_common_timing_ctx *ctx)
 	ccx_common_logging.log_ftn("      GOP start FTS: %s\n",
 			print_mstime(fts_at_gop_start));
 
-	// Times are based on last GOP and/or sync time
+		// Times are based on last GOP and/or sync time
 	ccx_common_logging.log_ftn("Max FTS diff. to   PTS:       %6lldms              GOP:       %6lldms\n\n",
 			get_fts_max(ctx)+(LLONG)(1000.0/current_fps)-ptslenms,
 			get_fts_max(ctx)+(LLONG)(1000.0/current_fps)-goplenms);
