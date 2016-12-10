@@ -95,13 +95,13 @@ void connect_to_srv(const char *addr, const char *port, const char *cc_desc, con
 	mprint("Connecting to %s:%s\n", addr, port);
 
 	if ((srv_sd = tcp_connect(addr, port)) < 0)
-		fatal(EXIT_FAILURE, "Unable to connect\n");
+		fatal(EXIT_FAILURE, "connect_to_srv: Unable to connect (tcp_connect error).\n");
 
 	if (write_block(srv_sd, PASSWORD, pwd, pwd ? strlen(pwd) : 0) < 0)
-		fatal(EXIT_FAILURE, "Unable to connect\n");
+		fatal(EXIT_FAILURE, "connect_to_srv: Unable to connect (sending password).\n");
 
 	if (write_block(srv_sd, CC_DESC, cc_desc, cc_desc ? strlen(cc_desc) : 0) < 0)
-		fatal(EXIT_FAILURE, "Unable to connect\n");
+		fatal(EXIT_FAILURE, "connect_to_srv: Unable to connect (sending cc_desc).\n");
 
 	srv_addr = addr;
 	srv_port = port;

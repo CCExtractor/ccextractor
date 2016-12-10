@@ -200,7 +200,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 				// printf ("Warning: Losing EIA-708 data!\n");
 				break;
 			default:
-				fatal(CCX_COMMON_EXIT_BUG_BUG, "Cannot be reached!");
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "In do_cb: Impossible value for cc_type, Please file a bug report in GitHub.\n");
 		} // switch (cc_type)
 	} // cc_valid
 	else
@@ -310,6 +310,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	else if (setting->output_format==CCX_OF_SMPTETT ||
 		setting->output_format==CCX_OF_SAMI ||
 		setting->output_format==CCX_OF_SRT ||
+		setting->output_format==CCX_OF_SSA ||
 		setting->output_format == CCX_OF_WEBVTT ||
 		setting->output_format==CCX_OF_TRANSCRIPT ||
 		setting->output_format==CCX_OF_SPUPNG ||
@@ -369,9 +370,10 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 	{
 		if (ctx->extract != 2)
 		{
-			if (ctx->write_format==CCX_OF_SMPTETT || ctx->write_format==CCX_OF_SAMI || 
+			if (ctx->write_format==CCX_OF_SMPTETT || ctx->write_format==CCX_OF_SAMI ||
 					ctx->write_format==CCX_OF_SRT || ctx->write_format==CCX_OF_TRANSCRIPT ||
-					ctx->write_format == CCX_OF_WEBVTT || ctx->write_format == CCX_OF_SPUPNG)
+					ctx->write_format == CCX_OF_WEBVTT || ctx->write_format == CCX_OF_SPUPNG ||
+					ctx->write_format == CCX_OF_SSA)
 			{
 				flush_608_context(ctx->context_cc608_field_1, sub);
 			}
@@ -385,7 +387,8 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 		{
 			if (ctx->write_format == CCX_OF_SMPTETT || ctx->write_format == CCX_OF_SAMI ||
 					ctx->write_format == CCX_OF_SRT || ctx->write_format == CCX_OF_TRANSCRIPT ||
-					ctx->write_format == CCX_OF_WEBVTT || ctx->write_format == CCX_OF_SPUPNG)
+					ctx->write_format == CCX_OF_WEBVTT || ctx->write_format == CCX_OF_SPUPNG ||
+					ctx->write_format == CCX_OF_SSA)
 			{
 				flush_608_context(ctx->context_cc608_field_2, sub);
 			}
