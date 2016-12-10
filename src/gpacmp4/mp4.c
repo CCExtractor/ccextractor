@@ -516,9 +516,8 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 								if (dec_sub.got_output) {
 									encode_sub(enc_ctx, &dec_sub);
 									dec_sub.got_output = 0;
-									break;
 								}
-							} while (len > 0);
+							} while (len > ret);
 						}
 					}
 					atomStart += atomLength;
