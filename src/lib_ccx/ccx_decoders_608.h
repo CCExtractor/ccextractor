@@ -6,10 +6,10 @@
 
 extern LLONG ts_start_of_xds;
 
-/*
-   This variable (ccx_decoder_608_report) holds data on the cc channels & xds packets that are encountered during file parse.
-   This can be interesting if you just want to know what kind of data a file holds that has 608 packets. CCExtractor uses it
-   for the report functionality.
+/**
+ * This variable (ccx_decoder_608_report) holds data on the cc channels & xds packets that are encountered during file parse.
+ * This can be interesting if you just want to know what kind of data a file holds that has 608 packets. CCExtractor uses it
+ * for the report functionality.
  */
 struct ccx_decoder_608_report
 {
@@ -19,11 +19,16 @@ struct ccx_decoder_608_report
 
 typedef struct ccx_decoder_608_settings
 {
-	int direct_rollup; // Write roll-up captions directly instead of line by line?
-	int force_rollup; // 0=Disabled, 1, 2 or 3=max lines in roll-up mode
-	int no_rollup; // If 1, write one line at a time
-	unsigned char default_color; // Default color to use.
-	int screens_to_process; // How many screenfuls we want? Use -1 for unlimited
+	// write roll-up captions directly instead of line by line?
+	int direct_rollup;
+	// 0 = Disabled, 1, 2 or 3 = max lines in roll-up mode
+	int force_rollup;
+	// if 1, write one line at a time
+	int no_rollup;
+	// default color to use
+	unsigned char default_color;
+	// how many screenfuls we want? Use -1 for unlimited
+	int screens_to_process;
 	struct ccx_decoder_608_report *report;
 } ccx_decoder_608_settings;
 
@@ -34,27 +39,42 @@ typedef struct ccx_decoder_608_context
 	eia608_screen buffer2;
 	int cursor_row, cursor_column;
 	int visible_buffer;
-	int screenfuls_counter; // Number of meaningful screenfuls written
-	LLONG current_visible_start_ms; // At what time did the current visible buffer became so?
+	// number of meaningful screenfuls written
+	int screenfuls_counter;
+	// at what time did the current visible buffer became so?
+	LLONG current_visible_start_ms;
 	enum cc_modes mode;
 	unsigned char last_c1, last_c2;
-	int channel; // Currently selected channel
-	unsigned char current_color; // Color we are currently using to write
-	unsigned char font; // Font we are currently using to write
+	// currently selected channel
+	int channel;
+	// color we are currently using to write
+	unsigned char current_color;
+	// font we are currently using to write
+	unsigned char font;
 	int rollup_base_row;
-	LLONG ts_start_of_current_line; /* Time at which the first character for current line was received, =-1 no character received yet */
-	LLONG ts_last_char_received; /* Time at which the last written character was received, =-1 no character received yet */
-	int new_channel; // The new channel after a channel change
-	int my_field; // Used for sanity checks
-	int my_channel; // Used for sanity checks
-	long bytes_processed_608; // To be written ONLY by process_608
+	// time at which the first character for current line was received, =-1 no character received yet
+	LLONG ts_start_of_current_line;
+	// Time at which the last written character was received, =-1 no character received yet
+	LLONG ts_last_char_received;
+	// the new channel after a channel change
+	int new_channel;
+	// used for sanity checks
+	int my_field;
+	// used for sanity checks
+	int my_channel;
+	// to be written ONLY by process_608
+	long bytes_processed_608;
 	int have_cursor_position;
 
-	int *halt; // Can be used to halt the feeding of caption data. Set to 1 if screens_to_progress != -1 && screenfuls_counter >= screens_to_process
-	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
+	// can be used to halt the feeding of caption data. Set to 1 if screens_to_progress != -1 && screenfuls_counter >= screens_to_process
+	int *halt;
+	// if this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call
+	int cc_to_stdout;
 	struct ccx_decoder_608_report *report;
-	LLONG subs_delay; // ms to delay (or advance) subs
-	enum ccx_output_format output_format; // What kind of output format should be used?
+	// ms to delay (or advance) subs
+	LLONG subs_delay;
+	// what kind of output format should be used?
+	enum ccx_output_format output_format;
 	int textprinted;
 	struct ccx_common_timing_ctx *timing;
 
@@ -107,7 +127,7 @@ enum command_code
 	COM_ALARMON = 15,
 	COM_DELETETOENDOFROW = 16,
 	COM_RESUMEDIRECTCAPTIONING = 17,
-	// Non existing commands we insert to have the decoder
+	// non existing commands we insert to have the decoder
 	// special stuff for us.
 	COM_FAKE_RULLUP1 = 18
 };
