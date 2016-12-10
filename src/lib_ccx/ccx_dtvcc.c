@@ -7,12 +7,12 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 							const unsigned char *data,
 							int data_length)
 {
-	/*
-	 * Note: the data has following format:
+	
+	/* Note: the data has following format:
 	 * 1 byte for cc_valid
-	 * 1 byte for cc_type
-	 * 2 bytes for the actual data
-	 */
+	 * 1 byte for cc_type 
+	 * 2 bytes for the actual data */
+	 
 
 	ccx_dtvcc_ctx *dtvcc = ctx->dtvcc;
 

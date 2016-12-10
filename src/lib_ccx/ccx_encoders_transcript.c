@@ -1,4 +1,4 @@
-#include "ccx_decoders_common.h"
+ #include "ccx_decoders_common.h"
 #include "ccx_encoders_common.h"
 #include "spupng_encoder.h"
 #include "ccx_encoders_spupng.h"
@@ -252,7 +252,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 }
 
 
-//TODO Convert CC line to TEXT format and remove this function
+ //TODO Convert CC line to TEXT format and remove this function
 void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context, int line_number)
 {
 	int ret = 0;
