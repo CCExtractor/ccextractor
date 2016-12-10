@@ -918,11 +918,6 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 			// bottom_field_flag
 			bottom_field_flag = u(&q1,1);
 			dvprint("bottom_field_flag=     % 4llX\n", bottom_field_flag);
-
-			// TODO - Do this right.
-			// When bottom_field_flag is set the video is interlaced,
-			// override current_fps.
-			current_fps = framerates_values[7];
 		}
 	}
 
