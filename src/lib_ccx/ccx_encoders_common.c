@@ -1027,9 +1027,9 @@ struct ccx_s_write *get_output_ctx(struct encoder_ctx *ctx, int lan)
 
 int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 {
-	int wrote_something_to_file = 0;
+	int wrote_something_to_file = 0; //to avoid subtitle duplication
 	int wrote_something_to_gui = 0;
-	//int wr
+
 	int ret = 0;
 
 	if(!context)
