@@ -14,7 +14,7 @@ endif
 TARGET = ccextractor
 
 OBJS_DIR = objs
-VPATH = ../src:../src/gpacmp4:../src/libpng:../src/zlib:../src/lib_ccx:../src/zvbi:../src/lib_hash
+VPATH = ../src:../src/gpacmp4:../src/libpng:../src/zlib:../src/lib_ccx:../src/zvbi:../src/lib_hash:../src/utf8proc
 
 SRCS_DIR = ../src
 SRCS_C = $(wildcard $(SRCS_DIR)/*.c)
@@ -46,6 +46,10 @@ SRCS_HASH_DIR = $(SRCS_DIR)/lib_hash
 SRCS_HASH = $(wildcard $(SRCS_HASH_DIR)/*.c)
 OBJS_HASH = $(SRCS_HASH:$(SRCS_HASH_DIR)/%.c=$(OBJS_DIR)/%.o)
 
+SRCS_UTF8_DIR = $(SRCS_DIR)/utf8proc
+SRCS_UTF8 = $(SRCS_UTF8_DIR)/utf8proc.c
+OBJS_UTF8 = $(SRCS_UTF8:$(SRCS_UTF8_DIR)/%.c=$(OBJS_DIR)/%.o)
+
 INSTLALL = cp -f -p
 INSTLALL_PROGRAM = $(INSTLALL)
 DESTDIR = /usr/bin
@@ -71,8 +75,18 @@ endif
 
 ifeq ($(ENABLE_OCR),yes)
 CFLAGS+=-DENABLE_OCR -DPNG_NO_CONFIG_H
-TESS_LDFLAGS+= $(shell pkg-config --libs tesseract)
 LEPT_LDFLAGS+= $(shell pkg-config --libs lept)
+
+ifneq ($(shell pkg-config --exists tesseract), $(EMPTY))
+TESS_LDFLAGS+= $(shell pkg-config --libs tesseract)
+TESS_CFLAGS+= $(shell pkg-config --cflags tesseract)
+else
+#fix for raspberry pi not having a pkgconfig file for tesseract
+ifneq ($(wildcard /usr/include/tesseract/*),$(EMPTY))
+TESS_LDFLAGS+= -ltesseract
+TESS_CFLAGS+= -I/usr/include/tesseract
+endif
+endif
 
 #error checking of library are there or not
 ifeq ($(TESS_LDFLAGS),$(EMPTY))
@@ -81,6 +95,7 @@ else
 #TODO print the version of library found
 $(info  "tesseract found")
 endif
+
 ifeq ($(LEPT_LDFLAGS),$(EMPTY))
 $(error **ERROR** "leptonica not found")
 else
@@ -88,7 +103,7 @@ else
 $(info  "Leptonica found")
 endif
 
-CFLAGS  += $(shell pkg-config --cflags tesseract)
+CFLAGS  += $(TESS_CFLAGS)
 CFLAGS  += $(shell pkg-config --cflags lept)
 LDFLAGS += $(TESS_LDFLAGS)
 LDFLAGS += $(LEPT_LDFLAGS)
@@ -112,8 +127,8 @@ all: pre-build objs_dir $(TARGET)
 objs_dir: 
 	mkdir -p $(OBJS_DIR)
 
-$(TARGET): $(OBJS) $(OBJS_PNG) $(OBJS_GPACMP4) $(OBJS_ZVBI) $(OBJS_ZLIB) $(OBJS_HASH) $(OBJS_CCX)
-	$(CC) $(ALL_FLAGS) $(CFLAGS) $(OBJS) $(OBJS_CCX) $(OBJS_PNG) $(OBJS_ZVBI) $(OBJS_GPACMP4) $(OBJS_ZLIB) $(OBJS_HASH) $(LDFLAGS) -o $@
+$(TARGET): $(OBJS) $(OBJS_PNG) $(OBJS_GPACMP4) $(OBJS_ZVBI) $(OBJS_ZLIB) $(OBJS_HASH) $(OBJS_CCX) $(OBJS_UTF8)
+	$(CC) $(ALL_FLAGS) $(CFLAGS) $(OBJS) $(OBJS_CCX) $(OBJS_PNG) $(OBJS_ZVBI) $(OBJS_GPACMP4) $(OBJS_ZLIB) $(OBJS_HASH) $(OBJS_UTF8) $(LDFLAGS) -o $@
 
 $(OBJS_DIR)/%.o: %.c
 	$(CC) -c $(ALL_FLAGS) $(INCLUDE) $(CFLAGS) $< -o $@  
@@ -127,7 +142,7 @@ $(OBJS_DIR)/ccextractor.o: ccextractor.c
 .PHONY: clean
 clean:
 	rm -rf $(TARGET) 2>/dev/null || true
-	rm -rf $(OBJS_CCX) $(OBJS_PNG) $(OBJS_ZLIB) $(OBJS_GPACMP4) $(OBJS_HASH) $(OBJS) 2>/dev/null || true
+	rm -rf $(OBJS_CCX) $(OBJS_PNG) $(OBJS_ZLIB) $(OBJS_GPACMP4) $(OBJS_HASH) $(OBJS_UTF8) $(OBJS) 2>/dev/null || true
 	rm -rdf $(OBJS_DIR) 2>/dev/null || true
 	rm -rf .depend 2>/dev/null || true
 
@@ -141,7 +156,7 @@ uninstall:
 
 .PHONY: depend dep
 depend dep:
-	$(CC) $(CFLAGS) $(INCLUDE) -E -MM $(SRCS_C) $(SRCS_PNG) $(SRCS_ZVBI) $(SRCS_ZLIB) $(SRCS_HASH) $(SRCS_CCX) \
+	$(CC) $(CFLAGS) $(INCLUDE) -E -MM $(SRCS_C) $(SRCS_PNG) $(SRCS_ZVBI) $(SRCS_ZLIB) $(SRCS_HASH) $(SRCS_UTF8) $(SRCS_CCX) \
 		$(SRCS_GPACMP4_C) $(SRCS_GPACMP4_CPP) |\
 		sed 's/^[a-zA-Z_0-9]*.o/$(OBJS_DIR)\/&/' > .depend
 
