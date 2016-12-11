@@ -23,7 +23,8 @@
 extern "C" {
 #endif
 
-struct dvb_config {
+struct dvb_config
+{
   unsigned char n_language;
   unsigned int lang_index[MAX_LANGUAGE_PER_DESC];
   /* subtitle type */
@@ -40,9 +41,9 @@ struct dvb_config {
  * @return DVB context kept as void* for abstraction
  *
  */
-void *dvbsub_init_decoder(struct dvb_config *cfg);
+void* dvbsub_init_decoder(struct dvb_config* cfg);
 
-int dvbsub_close_decoder(void **dvb_ctx);
+int dvbsub_close_decoder(void** dvb_ctx);
 
 /**
  * @param dvb_ctx    PreInitialized DVB context using DVB
@@ -54,8 +55,8 @@ int dvbsub_close_decoder(void **dvb_ctx);
  *
  * @return           -1 on error
  */
-int dvbsub_decode(struct lib_cc_decode *dec_ctx, const unsigned char *buf,
-                  int buf_size, struct cc_subtitle *sub);
+int dvbsub_decode(struct lib_cc_decode* dec_ctx, const unsigned char* buf,
+                  int buf_size, struct cc_subtitle* sub);
 
 /**
  * @func parse_dvb_description
@@ -69,7 +70,7 @@ int dvbsub_decode(struct lib_cc_decode *dec_ctx, const unsigned char *buf,
  * @return return -1 if invalid data found other wise 0 if everything goes well
  * errno is set is to EINVAL if invalid data is found
  */
-int parse_dvb_description(struct dvb_config *cfg, unsigned char *data,
+int parse_dvb_description(struct dvb_config* cfg, unsigned char* data,
                           unsigned int len);
 
 /*
@@ -81,7 +82,7 @@ int parse_dvb_description(struct dvb_config *cfg, unsigned char *data,
  * @param out output context returned by init_write
  *
  */
-void dvbsub_set_write(void *dvb_ctx, struct ccx_s_write *out);
+void dvbsub_set_write(void* dvb_ctx, struct ccx_s_write* out);
 
 #ifdef __cplusplus
 }
