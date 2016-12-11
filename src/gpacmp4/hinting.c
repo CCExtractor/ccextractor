@@ -1,26 +1,27 @@
 /*
- *			GPAC - Multimedia Framework C SDK
- *
- *			Copyright (c) Jean Le Feuvre 2000-2005 
- *					All rights reserved
- *
- *  This file is part of GPAC / ISO Media File Format sub-project
- *
- *  GPAC is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU Lesser General Public License as published by
- *  the Free Software Foundation; either version 2, or (at your option)
- *  any later version.
- *   
- *  GPAC is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *   
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; see the file COPYING.  If not, write to
- *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. 
- *
- */
+*			GPAC - Multimedia Framework C SDK
+*
+*			Authors: Jean Le Feuvre
+*			Copyright (c) Telecom ParisTech 2000-2012
+*					All rights reserved
+*
+*  This file is part of GPAC / ISO Media File Format sub-project
+*
+*  GPAC is free software; you can redistribute it and/or modify
+*  it under the terms of the GNU Lesser General Public License as published by
+*  the Free Software Foundation; either version 2, or (at your option)
+*  any later version.
+*
+*  GPAC is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU Lesser General Public License for more details.
+*
+*  You should have received a copy of the GNU Lesser General Public
+*  License along with this library; see the file COPYING.  If not, write to
+*  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+*/
 
 #include <gpac/internal/isomedia_dev.h>
 
@@ -47,7 +48,7 @@ GF_Box *ghnt_New()
 void ghnt_del(GF_Box *s)
 {
 	GF_HintSampleEntryBox *ptr;
-	
+
 	ptr = (GF_HintSampleEntryBox *)s;
 	gf_isom_box_array_del(ptr->HintDataTable);
 	if (ptr->hint_sample) gf_isom_hint_sample_del(ptr->hint_sample);
@@ -101,7 +102,7 @@ GF_Err ghnt_Size(GF_Box *s)
 {
 	GF_Err e;
 	GF_HintSampleEntryBox *ptr = (GF_HintSampleEntryBox *)s;
-	
+
 	e = gf_isom_box_get_size(s);
 	if (e) return e;
 	ptr->size += 16;
@@ -127,6 +128,7 @@ GF_HintSample *gf_isom_hint_sample_new(u32 ProtocolType)
 		return NULL;
 	}
 	GF_SAFEALLOC(tmp, GF_HintSample);
+	if (!tmp) return NULL;
 	tmp->packetTable = gf_list_new();
 	tmp->HintType = type;
 	return tmp;
@@ -199,7 +201,7 @@ GF_Err gf_isom_hint_sample_write(GF_HintSample *ptr, GF_BitStream *bs)
 	gf_bs_write_u16(bs, count);
 	gf_bs_write_u16(bs, ptr->reserved);
 	//write the packet table
-	for (i=0; i<count; i++) {
+	for (i = 0; i<count; i++) {
 		pck = (GF_HintPacket *)gf_list_get(ptr->packetTable, i);
 		e = gf_isom_hint_pck_write(ptr->HintType, pck, bs);
 		if (e) return e;
@@ -219,7 +221,7 @@ u32 gf_isom_hint_sample_size(GF_HintSample *ptr)
 
 	size = 4;
 	count = gf_list_count(ptr->packetTable);
-	for (i=0; i<count; i++) {
+	for (i = 0; i<count; i++) {
 		pck = (GF_HintPacket *)gf_list_get(ptr->packetTable, i);
 		size += gf_isom_hint_pck_size(ptr->HintType, pck);
 	}
@@ -234,9 +236,9 @@ u32 gf_isom_hint_sample_size(GF_HintSample *ptr)
 GF_HintPacket *gf_isom_hint_pck_new(u8 HintType)
 {
 	switch (HintType) {
-	case GF_ISMO_HINT_RTP: 
-		return (GF_HintPacket *) gf_isom_hint_rtp_new();
-	default: 
+	case GF_ISMO_HINT_RTP:
+		return (GF_HintPacket *)gf_isom_hint_rtp_new();
+	default:
 		return NULL;
 	}
 }
@@ -299,9 +301,9 @@ GF_Err gf_isom_hint_pck_add_dte(u8 HintType, GF_HintPacket *ptr, GF_GenericDTE *
 	switch (HintType) {
 	case GF_ISMO_HINT_RTP:
 		if (AtBegin)
-			return gf_list_insert( ((GF_RTPPacket *)ptr)->DataTable, dte, 0);
+			return gf_list_insert(((GF_RTPPacket *)ptr)->DataTable, dte, 0);
 		else
-			return gf_list_add( ((GF_RTPPacket *)ptr)->DataTable, dte);
+			return gf_list_add(((GF_RTPPacket *)ptr)->DataTable, dte);
 
 	default:
 		return GF_NOT_SUPPORTED;
@@ -324,7 +326,7 @@ u32 gf_isom_hint_pck_length(u8 HintType, GF_HintPacket *ptr)
 
 
 /********************************************************************
-		Creation of DataTable entries in the RTP sample
+Creation of DataTable entries in the RTP sample
 ********************************************************************/
 
 GF_GenericDTE *New_EmptyDTE()
@@ -350,7 +352,7 @@ GF_GenericDTE *New_SampleDTE()
 	GF_SampleDTE *dte = (GF_SampleDTE *)gf_malloc(sizeof(GF_SampleDTE));
 	dte->source = 2;
 	//can be -1 in QT , so init at -2
-	dte->trackRefIndex = (s8) -2;
+	dte->trackRefIndex = (s8)-2;
 	dte->dataLength = 0;
 	dte->sampleNumber = 0;
 	dte->samplesPerComp = 1;
@@ -368,7 +370,7 @@ GF_GenericDTE *New_StreamDescDTE()
 	dte->reserved = 0;
 	dte->streamDescIndex = 0;
 	//can be -1 in QT , so init at -2
-	dte->trackRefIndex = (s8) -2;
+	dte->trackRefIndex = (s8)-2;
 	return (GF_GenericDTE *)dte;
 }
 
@@ -390,19 +392,27 @@ GF_GenericDTE *NewDTE(u8 type)
 }
 
 /********************************************************************
-		Deletion of DataTable entries in the RTP sample
+Deletion of DataTable entries in the RTP sample
 ********************************************************************/
 void Del_EmptyDTE(GF_EmptyDTE *dte)
-{ gf_free(dte); }
+{
+	gf_free(dte);
+}
 
 void Del_ImmediateDTE(GF_ImmediateDTE *dte)
-{ gf_free(dte); }
+{
+	gf_free(dte);
+}
 
 void Del_SampleDTE(GF_SampleDTE *dte)
-{ gf_free(dte); }
+{
+	gf_free(dte);
+}
 
 void Del_StreamDescDTE(GF_StreamDescDTE *dte)
-{ gf_free(dte); }
+{
+	gf_free(dte);
+}
 
 //deletion of DTEs
 void DelDTE(GF_GenericDTE *dte)
@@ -428,7 +438,7 @@ void DelDTE(GF_GenericDTE *dte)
 
 
 /********************************************************************
-		Reading of DataTable entries in the RTP sample
+Reading of DataTable entries in the RTP sample
 ********************************************************************/
 GF_Err Read_EmptyDTE(GF_EmptyDTE *dte, GF_BitStream *bs)
 {
@@ -486,7 +496,7 @@ GF_Err ReadDTE(GF_GenericDTE *dte, GF_BitStream *bs)
 }
 
 /********************************************************************
-		Writing of DataTable entries in the RTP sample
+Writing of DataTable entries in the RTP sample
 ********************************************************************/
 GF_Err Write_EmptyDTE(GF_EmptyDTE *dte, GF_BitStream *bs)
 {
@@ -560,10 +570,10 @@ GF_Err OffsetDTE(GF_GenericDTE *dte, u32 offset, u32 HintSampleNumber)
 	default:
 		return GF_OK;
 	}
-	
+
 	sDTE = (GF_SampleDTE *)dte;
 	//we only adjust for intra HintTrack reference
-	if (sDTE->trackRefIndex != (s8) -1) return GF_OK;
+	if (sDTE->trackRefIndex != (s8)-1) return GF_OK;
 	//and in the same sample
 	if (sDTE->sampleNumber != HintSampleNumber) return GF_OK;
 	sDTE->byteOffset += offset;
@@ -620,22 +630,22 @@ GF_Err gf_isom_hint_rtp_read(GF_RTPPacket *ptr, GF_BitStream *bs)
 	ptr->B_bit = gf_bs_read_int(bs, 1);
 	ptr->R_bit = gf_bs_read_int(bs, 1);
 	count = gf_bs_read_u16(bs);
-	
+
 	//read the TLV
 	if (hasTLV) {
-		tempSize = 4;	//TLVsize includes its field length 
+		tempSize = 4;	//TLVsize includes its field length
 		TLVsize = gf_bs_read_u32(bs);
 		while (tempSize < TLVsize) {
 			e = gf_isom_parse_box(&a, bs);
 			if (e) return e;
 			gf_list_add(ptr->TLV, a);
-			tempSize += (u32) a->size;
+			tempSize += (u32)a->size;
 		}
 		if (tempSize != TLVsize) return GF_ISOM_INVALID_FILE;
 	}
 
 	//read the DTEs
-	for (i=0; i<count; i++) {
+	for (i = 0; i<count; i++) {
 		Bool add_it = 0;
 		type = gf_bs_read_u8(bs);
 		dte = NewDTE(type);
@@ -644,13 +654,13 @@ GF_Err gf_isom_hint_rtp_read(GF_RTPPacket *ptr, GF_BitStream *bs)
 		/*little opt, remove empty dte*/
 		switch (type) {
 		case 1:
-			if ( ((GF_ImmediateDTE *)dte)->dataLength) add_it = 1;
+			if (((GF_ImmediateDTE *)dte)->dataLength) add_it = 1;
 			break;
 		case 2:
-			if ( ((GF_SampleDTE *)dte)->dataLength) add_it = 1;
+			if (((GF_SampleDTE *)dte)->dataLength) add_it = 1;
 			break;
 		case 3:
-			if ( ((GF_StreamDescDTE *)dte)->dataLength) add_it = 1;
+			if (((GF_StreamDescDTE *)dte)->dataLength) add_it = 1;
 			break;
 		}
 		if (add_it)
@@ -668,7 +678,7 @@ GF_Err gf_isom_hint_rtp_offset(GF_RTPPacket *ptr, u32 offset, u32 HintSampleNumb
 	GF_Err e;
 
 	count = gf_list_count(ptr->DataTable);
-	for (i=0; i<count; i++) {
+	for (i = 0; i<count; i++) {
 		dte = (GF_GenericDTE *)gf_list_get(ptr->DataTable, i);
 		e = OffsetDTE(dte, offset, HintSampleNumber);
 		if (e) return e;
@@ -688,7 +698,7 @@ u32 gf_isom_hint_rtp_length(GF_RTPPacket *ptr)
 	//32 bit SSRC
 	size += 4;
 	count = gf_list_count(ptr->DataTable);
-	for (i=0; i<count; i++) {
+	for (i = 0; i<count; i++) {
 		dte = (GF_GenericDTE *)gf_list_get(ptr->DataTable, i);
 		switch (dte->source) {
 		case 0:
@@ -723,7 +733,7 @@ u32 gf_isom_hint_rtp_size(GF_RTPPacket *ptr)
 		none.type = 0;
 		//REMEMBER THAT TLV ENTRIES ARE 4-BYTES ALIGNED !!!
 		gf_isom_box_array_size(&none, ptr->TLV);
-		size += (u32) none.size;
+		size += (u32)none.size;
 	}
 	//the DTE (each entry is 16 bytes)
 	count = gf_list_count(ptr->DataTable);
@@ -740,7 +750,7 @@ GF_Err gf_isom_hint_rtp_write(GF_RTPPacket *ptr, GF_BitStream *bs)
 
 	gf_bs_write_u32(bs, ptr->relativeTransTime);
 	//RTP Header
-//	gf_bs_write_int(bs, 2, 2);
+	//	gf_bs_write_int(bs, 2, 2);
 	//version is 2
 	gf_bs_write_int(bs, 2, 2);
 	gf_bs_write_int(bs, ptr->P_bit, 1);
@@ -764,7 +774,7 @@ GF_Err gf_isom_hint_rtp_write(GF_RTPPacket *ptr, GF_BitStream *bs)
 		none.size = 4;	//WE INCLUDE THE SIZE FIELD LENGTH
 		none.type = 0;
 		gf_isom_box_array_size(&none, ptr->TLV);
-		gf_bs_write_u32(bs, (u32) none.size);
+		gf_bs_write_u32(bs, (u32)none.size);
 		e = gf_isom_box_array_write(&none, ptr->TLV, bs);
 		if (e) return e;
 	}
@@ -790,9 +800,9 @@ GF_Err gf_isom_reset_hint_reader(GF_ISOFile *the_file, u32 trackNumber, u32 samp
 	if (!trak) return GF_BAD_PARAM;
 
 	if (!sample_start) return GF_BAD_PARAM;
-	if (sample_start>=trak->Media->information->sampleTable->SampleSize->sampleCount) return GF_BAD_PARAM;
+	if (sample_start >= trak->Media->information->sampleTable->SampleSize->sampleCount) return GF_BAD_PARAM;
 
-	e = Media_GetSampleDesc(trak->Media, 1, (GF_SampleEntryBox **) &entry, NULL);
+	e = Media_GetSampleDesc(trak->Media, 1, (GF_SampleEntryBox **)&entry, NULL);
 	if (e) return e;
 	switch (entry->type) {
 	case GF_ISOM_BOX_TYPE_RTP_STSD:
@@ -845,19 +855,20 @@ static GF_ISOSample *gf_isom_get_data_sample(GF_HintSample *hsamp, GF_TrackBox *
 	GF_HintDataCache *hdc;
 	u32 i, count;
 	count = gf_list_count(hsamp->sample_cache);
-	for (i=0; i<count; i++) {
+	for (i = 0; i<count; i++) {
 		hdc = (GF_HintDataCache *)gf_list_get(hsamp->sample_cache, i);
-		if ((hdc->sample_num==sample_num) && (hdc->trak==trak)) return hdc->samp;
+		if ((hdc->sample_num == sample_num) && (hdc->trak == trak)) return hdc->samp;
 	}
 
 	samp = gf_isom_sample_new();
 	Media_GetSample(trak->Media, sample_num, &samp, &i, 0, NULL);
 	if (!samp) return NULL;
 	GF_SAFEALLOC(hdc, GF_HintDataCache);
+	if (!hdc) return NULL;
 	hdc->samp = samp;
 	hdc->sample_num = sample_num;
 	hdc->trak = trak;
-	/*we insert all new samples, since they're more likely to be fetched next (except for audio 
+	/*we insert all new samples, since they're more likely to be fetched next (except for audio
 	interleaving and other multiplex)*/
 	gf_list_insert(hsamp->sample_cache, hdc, 0);
 	return samp;
@@ -883,7 +894,7 @@ GF_Err gf_isom_next_hint_packet(GF_ISOFile *the_file, u32 trackNumber, char **pc
 
 	trak = gf_isom_get_track_from_file(the_file, trackNumber);
 	if (!trak) return GF_BAD_PARAM;
-	e = Media_GetSampleDesc(trak->Media, 1, (GF_SampleEntryBox **) &entry, NULL);
+	e = Media_GetSampleDesc(trak->Media, 1, (GF_SampleEntryBox **)&entry, NULL);
 	if (e) return e;
 	switch (entry->type) {
 	case GF_ISOM_BOX_TYPE_RTP_STSD:
@@ -914,7 +925,7 @@ GF_Err gf_isom_next_hint_packet(GF_ISOFile *the_file, u32 trackNumber, char **pc
 	/*look for CTS offset in TLV*/
 	cts_off = 0;
 	count = gf_list_count(pck->TLV);
-	for (i=0; i<count; i++) {
+	for (i = 0; i<count; i++) {
 		GF_RTPOBox *rtpo = (GF_RTPOBox *)gf_list_get(pck->TLV, i);
 		if (rtpo->type == GF_ISOM_BOX_TYPE_RTPO) {
 			cts_off = rtpo->timeOffset;
@@ -922,36 +933,37 @@ GF_Err gf_isom_next_hint_packet(GF_ISOFile *the_file, u32 trackNumber, char **pc
 		}
 	}
 	/*TS - TODO check TS wrapping*/
-	ts = (u32) (entry->hint_sample->TransmissionTime + pck->relativeTransTime + entry->ts_offset + cts_off);
-	gf_bs_write_u32(bs, ts );
+	ts = (u32)(entry->hint_sample->TransmissionTime + pck->relativeTransTime + entry->ts_offset + cts_off);
+	gf_bs_write_u32(bs, ts);
 	gf_bs_write_u32(bs, entry->ssrc);	/*SSRC*/
-	
-	/*then build all data*/
+
+										/*then build all data*/
 	count = gf_list_count(pck->DataTable);
-	for (i=0; i<count; i++) {
+	for (i = 0; i<count; i++) {
 		GF_GenericDTE *dte = (GF_GenericDTE *)gf_list_get(pck->DataTable, i);
 		switch (dte->source) {
-		/*empty*/
-		case 0: 
+			/*empty*/
+		case 0:
 			break;
-		/*immediate data*/
+			/*immediate data*/
 		case 1:
 			gf_bs_write_data(bs, ((GF_ImmediateDTE *)dte)->data, ((GF_ImmediateDTE *)dte)->dataLength);
 			break;
-		/*sample data*/
-		case 2: 
+			/*sample data*/
+		case 2:
 		{
 			GF_ISOSample *samp;
 			GF_SampleDTE *sdte = (GF_SampleDTE *)dte;
 			/*get track if not this one*/
-			if (sdte->trackRefIndex != (s8) -1) {
+			if (sdte->trackRefIndex != (s8)-1) {
 				if (!entry->hint_ref || !entry->hint_ref->trackIDs) {
 					gf_isom_hint_rtp_del(pck);
 					gf_bs_del(bs);
 					return GF_ISOM_INVALID_FILE;
 				}
 				ref_trak = gf_isom_get_track_from_id(trak->moov, entry->hint_ref->trackIDs[(u32)sdte->trackRefIndex]);
-			} else {
+			}
+			else {
 				ref_trak = trak;
 			}
 			samp = gf_isom_get_data_sample(entry->hint_sample, ref_trak, sdte->sampleNumber);
@@ -962,16 +974,16 @@ GF_Err gf_isom_next_hint_packet(GF_ISOFile *the_file, u32 trackNumber, char **pc
 			}
 			gf_bs_write_data(bs, samp->data + sdte->byteOffset, sdte->dataLength);
 		}
-			break;
+		break;
 		/*sample desc data - currently NOT SUPPORTED !!!*/
-		case 3: 
+		case 3:
 			break;
 		}
 	}
 	if (trans_ts) *trans_ts = ts;
 	if (disposable) *disposable = pck->B_bit;
 	if (repeated) *repeated = pck->R_bit;
-	if (sample_num) *sample_num = entry->cur_sample-1;
+	if (sample_num) *sample_num = entry->cur_sample - 1;
 
 	gf_bs_get_content(bs, pck_data, pck_size);
 	gf_bs_del(bs);
