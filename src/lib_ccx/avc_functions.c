@@ -83,7 +83,7 @@ struct avc_ctx *init_avc(void)
 	ctx->num_vcl_hrd = 0;
 	ctx->num_nal_hrd = 0;
 	ctx->num_jump_in_frames = 0;
-	ctx->num_unexpected_sei_length = 0;	
+	ctx->num_unexpected_sei_length = 0;
 	return ctx;
 }
 
@@ -342,35 +342,35 @@ void sei_rbsp (struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend
 // This combines sei_message() and sei_payload().
 unsigned char *sei_message (struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend)
 {
-	int payloadType = 0;
+	int payload_type = 0;
 	while (*seibuf==0xff)
 	{
-		payloadType+=255;
+		payload_type+=255;
 		seibuf++;
 	}
-	payloadType += *seibuf;
+	payload_type += *seibuf;
 	seibuf++;
 
 
-	int payloadSize = 0;
+	int payload_size = 0;
 	while (*seibuf==0xff)
 	{
-		payloadSize+=255;
+		payload_size+=255;
 		seibuf++;
 	}
-	payloadSize += *seibuf;
+	payload_size += *seibuf;
 	seibuf++;
 
 	int broken=0;
-	unsigned char *paystart = seibuf;
-	seibuf+=payloadSize;
+	unsigned char *payload_start = seibuf;
+	seibuf+=payload_size;
 
-	dvprint("Payload type: %d size: %d - ", payloadType, payloadSize);
+	dvprint("Payload type: %d size: %d - ", payload_type, payload_size);
 	if(seibuf > seiend )
 	{
 		// TODO: What do we do here?
 		broken=1;
-		if (payloadType==4)
+		if (payload_type==4)
 		{
 			dbg_print(CCX_DMT_VERBOSE, "Warning: Subtitles payload seems incorrect (too long), continuing but it doesn't look good..");
 		}
@@ -381,8 +381,8 @@ unsigned char *sei_message (struct avc_ctx *ctx, unsigned char *seibuf, unsigned
 	}
 	dbg_print(CCX_DMT_VERBOSE, "\n");
 	// Ignore all except user_data_registered_itu_t_t35() payload
-	if(!broken && payloadType == 4)
-		user_data_registered_itu_t_t35(ctx, paystart, paystart+payloadSize);
+	if(!broken && payload_type == 4)
+		user_data_registered_itu_t_t35(ctx, payload_start, payload_start+payload_size);
 
 	return seibuf;
 }
@@ -404,7 +404,7 @@ void copy_ccdata_to_buffer (struct avc_ctx *ctx, char *source, int new_cc_count)
 void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf, unsigned char *userend)
 {
 	unsigned char *tbuf = userbuf;
-	unsigned char *cc_tmpdata;
+	unsigned char *cc_tmp_data;
 	unsigned char process_cc_data_flag;
 	int user_data_type_code;
 	int user_data_len;
@@ -489,7 +489,7 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 						   } */
 						// OK, all checks passed!
 						tbuf++;
-						cc_tmpdata = tbuf;
+						cc_tmp_data = tbuf;
 
 						/* TODO: I don't think we have user_data_len here
 						   if (cc_count*3+3 != user_data_len)
@@ -497,10 +497,10 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 						   "Syntax problem: user_data_len != cc_count*3+3."); */
 
 						// Enough room for CC captions?
-						if (cc_tmpdata+local_cc_count*3 >= userend)
+						if (cc_tmp_data+local_cc_count*3 >= userend)
 							fatal(CCX_COMMON_EXIT_BUG_BUG,
 									"Syntax problem: Too many caption blocks.");
-						if (cc_tmpdata[local_cc_count*3]!=0xFF)
+						if (cc_tmp_data[local_cc_count*3]!=0xFF)
 							fatal(CCX_COMMON_EXIT_BUG_BUG,
 									"Syntax problem: Final 0xFF marker missing.");
 
@@ -513,7 +513,7 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 							ctx->cc_databufsize = (long) ( (ctx->cc_count + local_cc_count) * 6) + 1;
 						}
 						// Copy new cc data into cc_data
-						copy_ccdata_to_buffer (ctx, (char *) cc_tmpdata, local_cc_count);
+						copy_ccdata_to_buffer (ctx, (char *) cc_tmp_data, local_cc_count);
 						break;
 					case 0x06:
 						dbg_print(CCX_DMT_VERBOSE, "bar_data (unsupported for now)\n");
@@ -562,17 +562,17 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 				mprint ("process_cc_data_flag == 0, skipping this caption block.\n");
 				break;
 			}
-			cc_tmpdata = tbuf+2;
+			cc_tmp_data = tbuf+2;
 
 			if (local_cc_count*3+3 != user_data_len)
 				fatal(CCX_COMMON_EXIT_BUG_BUG,
 						"Syntax problem: user_data_len != cc_count*3+3.");
 
 			// Enough room for CC captions?
-			if (cc_tmpdata+local_cc_count*3 >= userend)
+			if (cc_tmp_data+local_cc_count*3 >= userend)
 				fatal(CCX_COMMON_EXIT_BUG_BUG,
 						"Syntax problem: Too many caption blocks.");
-			if (cc_tmpdata[local_cc_count*3]!=0xFF)
+			if (cc_tmp_data[local_cc_count*3]!=0xFF)
 				fatal(CCX_COMMON_EXIT_BUG_BUG,
 						"Syntax problem: Final 0xFF marker missing.");
 
@@ -585,7 +585,7 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 				ctx->cc_databufsize = (long) (((local_cc_count + ctx->cc_count) * 6) + 1);
 			}
 			// Copy new cc data into cc_data - replace command below.
-			copy_ccdata_to_buffer (ctx, (char *) cc_tmpdata, local_cc_count);
+			copy_ccdata_to_buffer (ctx, (char *) cc_tmp_data, local_cc_count);
 
 			//dump(tbuf,user_data_len-1,0);
 			break;
@@ -879,10 +879,10 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 {
 	LLONG tmp;
 	struct bitstream q1;
-	int maxframe_num;
+	int max_frame_num;
 	LLONG slice_type, bottom_field_flag=0, pic_order_cnt_lsb=-1;
-	int curridx;
-	int IdrPicFlag;
+	int current_index;
+	int ird_pic_flag;
 	LLONG field_pic_flag = 0; // Moved here because it's needed for ctx->avc_ctx->pic_order_cnt_type==2
 
 	if (init_bitstream(&q1, heabuf, heaend))
@@ -891,7 +891,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 		return;
 	}
 
-	IdrPicFlag = ((nal_unit_type == 5 )?1:0);
+	ird_pic_flag = ((nal_unit_type == 5 )?1:0);
 
 
 	dvprint("\nSLICE HEADER\n");
@@ -903,7 +903,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 	dvprint("pic_parameter_set_id=  % 4lld (%#llX)\n",tmp,tmp);
 
 	ctx->avc_ctx->lastframe_num = ctx->avc_ctx->frame_num;
-	maxframe_num = (int) ((1<<ctx->avc_ctx->log2_max_frame_num) - 1);
+	max_frame_num = (int) ((1<<ctx->avc_ctx->log2_max_frame_num) - 1);
 
 	// Needs log2_max_frame_num_minus4 + 4 bits
 	ctx->avc_ctx->frame_num = u(&q1,ctx->avc_ctx->log2_max_frame_num);
@@ -926,7 +926,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 		}
 	}
 
-	dvprint("IdrPicFlag=            % 4d\n", IdrPicFlag	);
+	dvprint("ird_pic_flag=            % 4d\n", ird_pic_flag	);
 
 	if( nal_unit_type == 5 )
 	{
@@ -962,15 +962,15 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 	{
 		/* CFS: Warning!!: Untested stuff, copied from specs (8.2.1.3) */
 		LLONG FrameNumOffset = 0;
-		if (IdrPicFlag == 1)
+		if (ird_pic_flag == 1)
 			FrameNumOffset=0;
 		else if (lastframe_num > frame_num)
-			FrameNumOffset = lastframe_num + maxframe_num;
+			FrameNumOffset = lastframe_num + max_frame_num;
 		else
 			FrameNumOffset = lastframe_num;
 
 		LLONG tempPicOrderCnt=0;
-		if (IdrPicFlag == 1)
+		if (ird_pic_flag == 1)
 			tempPicOrderCnt=0;
 		else if (ctx->avc_ctx->nal_ref_idc == 0)
 			tempPicOrderCnt = 2*(FrameNumOffset + frame_num) -1 ;
@@ -1016,7 +1016,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 
 	// If we saw a jump set maxidx, lastmaxidx to -1
 	LLONG dif = ctx->avc_ctx->frame_num - ctx->avc_ctx->lastframe_num;
-	if (dif == -maxframe_num)
+	if (dif == -max_frame_num)
 		dif = 0;
 	if ( ctx->avc_ctx->lastframe_num > -1 && (dif < 0 || dif > 1) )
 	{
@@ -1062,7 +1062,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 		if ( ccx_options.usepicorder ) {
 			// Use pic_order_cnt_lsb
 
-			// Make sure that curridx never wraps for curidx values that
+			// Make sure that current_index never wraps for curidx values that
 			// are smaller than currref
 			ctx->avc_ctx->currref = (int)pic_order_cnt_lsb;
 			if (ctx->avc_ctx->currref < maxrefcnt/3)
@@ -1085,19 +1085,19 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 
 	if ( ccx_options.usepicorder ) {
 		// Use pic_order_cnt_lsb
-		// Wrap (add max index value) curridx if needed.
+		// Wrap (add max index value) current_index if needed.
 		if( ctx->avc_ctx->currref - pic_order_cnt_lsb > maxrefcnt/2 )
-			curridx = (int)pic_order_cnt_lsb + maxrefcnt+1;
+			current_index = (int)pic_order_cnt_lsb + maxrefcnt+1;
 		else
-			curridx = (int)pic_order_cnt_lsb;
+			current_index = (int)pic_order_cnt_lsb;
 
 		// Track maximum index for this GOP
-		if ( curridx > ctx->avc_ctx->maxidx )
-			ctx->avc_ctx->maxidx = curridx;
+		if ( current_index > ctx->avc_ctx->maxidx )
+			ctx->avc_ctx->maxidx = current_index;
 
 		// Calculate tref
 		if ( ctx->avc_ctx->lastmaxidx > 0 ) {
-			ctx->timing->current_tref = curridx - ctx->avc_ctx->lastmaxidx -1;
+			ctx->timing->current_tref = current_index - ctx->avc_ctx->lastmaxidx -1;
 			// Set maxtref
 			if( ctx->timing->current_tref > ctx->avc_ctx->maxtref ) {
 				ctx->avc_ctx->maxtref = ctx->timing->current_tref;
@@ -1120,24 +1120,24 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 		// frame rate
 		// The 2* accounts for a discrepancy between current and actual FPS
 		// seen in some files (CCSample2.mpg)
-		curridx = (int)roundportable(2*(ctx->timing->current_pts - ctx->avc_ctx->currefpts)/(MPEG_CLOCK_FREQ/current_fps));
+		current_index = (int)roundportable(2*(ctx->timing->current_pts - ctx->avc_ctx->currefpts)/(MPEG_CLOCK_FREQ/current_fps));
 
-		if (abs(curridx) >= MAXBFRAMES) {
+		if (abs(current_index) >= MAXBFRAMES) {
 			// Probably a jump in the timeline. Warn and handle gracefully.
-			mprint("\nFound large gap(%d) in PTS! Trying to recover ...\n", curridx);
-			curridx = 0;
+			mprint("\nFound large gap(%d) in PTS! Trying to recover ...\n", current_index);
+			current_index = 0;
 		}
 
 		// Track maximum index for this GOP
-		if ( curridx > ctx->avc_ctx->maxidx )
-			ctx->avc_ctx->maxidx = curridx;
+		if ( current_index > ctx->avc_ctx->maxidx )
+			ctx->avc_ctx->maxidx = current_index;
 
 		// Track minimum index for this GOP
-		if ( curridx < ctx->avc_ctx->minidx )
-			ctx->avc_ctx->minidx = curridx;
+		if ( current_index < ctx->avc_ctx->minidx )
+			ctx->avc_ctx->minidx = current_index;
 
 		ctx->timing->current_tref = 1;
-		if ( curridx == ctx->avc_ctx->lastminidx ) {
+		if ( current_index == ctx->avc_ctx->lastminidx ) {
 			// This implies that the minimal index (assuming its number is
 			// fairly constant) sets the temporal reference to zero - needed to set sync_pts.
 			ctx->timing->current_tref = 0;
@@ -1153,7 +1153,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 
 	dbg_print(CCX_DMT_TIME, "  picordercnt:%3lld tref:%3d idx:%3d refidx:%3d lmaxidx:%3d maxtref:%3d\n",
 			pic_order_cnt_lsb, ctx->timing->current_tref,
-			curridx, ctx->avc_ctx->currref, ctx->avc_ctx->lastmaxidx, ctx->avc_ctx->maxtref);
+			current_index, ctx->avc_ctx->currref, ctx->avc_ctx->lastmaxidx, ctx->avc_ctx->maxtref);
 	dbg_print(CCX_DMT_TIME, "  sync_pts:%s (%8u)",
 			print_mstime(ctx->timing->sync_pts/(MPEG_CLOCK_FREQ/1000)),
 			(unsigned) (ctx->timing->sync_pts));
@@ -1175,7 +1175,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 	total_frames_count++;
 	ctx->frames_since_last_gop++;
 
-	store_hdcc(ctx, ctx->avc_ctx->cc_data, ctx->avc_ctx->cc_count, curridx, ctx->timing->fts_now, sub);
+	store_hdcc(ctx, ctx->avc_ctx->cc_data, ctx->avc_ctx->cc_count, current_index, ctx->timing->fts_now, sub);
 	ctx->avc_ctx->cc_buffer_saved = CCX_TRUE; // CFS: store_hdcc supposedly saves the CC buffer to a sequence buffer
 	ctx->avc_ctx->cc_count = 0;
 }
