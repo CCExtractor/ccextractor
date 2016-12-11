@@ -2,35 +2,53 @@
  
 # CCExtractor
 
-CCExtractor is a tool that everyone that produces subtitles from TV uses. With so many different formats this is always a moving target, and we intend to keep up with all sources and formats. Global accessibility (all users, all contents, all countries) is the goal
+CCExtractor is a tool that produces subtitles from TV use. Global accessibility (all users, all content, all countries) is the goal. With so many different formats, this is a constantly moving target, but we intend to keep up with all sources and formats.
 
 Carlos' version (mainstream) is the most stable branch.
 
+## Installation and Usage
 
-## Downloads:
-[Download page on ccextractor.org](http://www.ccextractor.org/doku.php?id=public:general:downloads)
+Downloads for precompiled binaries and source code can be found [on our website](http://www.ccextractor.org/doku.php?id=public:general:downloads).
 
-Or from the top of this page.
+Extracting subtitles is relatively simple. Just run the following command:
 
+```ccextractor <input>```
 
-## Quick Use
+This will extract the subtitles. 
 
-Extracting subtitles has never been so easy. Just by typing the following command:  ccextractor "name of input"  you'll extract the subtitles
+More usage information can be found on our website:
 
+- [Using the command line tool](http://www.ccextractor.org/doku.php?id=public:general:command_line_usage)
+- [Using the Windows GUI](http://www.ccextractor.org/doku.php?id=public:general:win_gui_usage) 
 
 ## Compiling
 
-(Coming soon)
+Compilation instructions are coming soon. 
 
+## Support
+
+By far the best way to get support is by opening a support ticket at our [issue tracker](https://github.com/CCExtractor/ccextractor/issues). 
+
+When creating a ticket:
+
+- Make sure you are using the latest CCExtractor version.
+- If it's a new issue (for example a video file that a previous CCExtractor version processed fine but now causes a crash), mention the last version you know was working.
+- If the issue is about a specific file, make that file available for us. Don't just send us the output from CCExtractor, as we can't do anything about a screenshot that shows a crash. We need the input that actually causes it. You can upload the file to Dropbox, Google Drive, etc, and make it public so you get a download link to add to your ticket.
+- If you cannot make the file public for any (reasonable) reason you can send us a private invitation (both Dropbox and Google Drive allow that). In this case we will download the file and upload it to the private developer repository.
+- Do not upload your file to any location that will require us to sign up or endure a wait list, slow downloads, etc.
+- If your upload expires make sure you keep it active somehow (replace links if needed). Keep in mind that while we go over all tickets some may take a few days, and it's important we have the file available when we actually need it.
+- Make sure you set an alert in GitHub so you get notifications about your ticket. We may need to ask questions and we do everything inside GitHub's system.
+- Please use English. 
+- It goes without saying, we like polite people.
+
+You can also [contact us by email or chat with the team in Slack](http://www.ccextractor.org/doku.php?id=public:general:support). 
     
 ## Contributing
 
-You can contribute to the project by Forking it and  modifying the code and doing a Pull Request to the project!
+You can contribute to the project by forking it, modifying the code, and making a pull request to the repository. 
 
-If you need help read this [Page](http://www.ccextractor.org/doku.php?id=public:general:support) to receive help!
+## News & Other Information
 
-## News & Contact
+News about releases and modifications to the code can be found in the `CHANGES.TXT` file. 
 
-For News about release, modifications to the code please you can read from the `CHANGES.TXT!` file
-
-For More information visit the CCExtractor's website: [http://www.ccextractor.org](http://www.ccextractor.org)
+For more information visit the CCExtractor website: [http://www.ccextractor.org](http://www.ccextractor.org)
