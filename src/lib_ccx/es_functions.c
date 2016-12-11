@@ -335,7 +335,7 @@ static int read_seq_info(struct lib_cc_decode *ctx, struct bitstream *esstream)
 
 	// We only get here after seeing that start code
 	if (next_u32(esstream) != 0xB3010000) // LSB first (0x000001B3)
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "read_seq_info: Impossible!");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "read_seq_info: next_u32(esstream) != 0xB3010000. Please file a bug report in GitHub.\n");
 
 	// If we get here esstream points to the start of a sequence_header_code
 	// should we run out of data in esstream this is where we want to restart
@@ -375,7 +375,7 @@ static int sequence_header(struct lib_cc_decode *ctx, struct bitstream *esstream
 
 	// We only get here after seeing that start code
 	if (read_u32(esstream) != 0xB3010000) // LSB first (0x000001B3)
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible!");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "sequence_header: read_u32(esstream) != 0xB3010000. Please file a bug report in GitHub.\n");
 
 	unsigned hor_size = (unsigned) read_bits(esstream,12);
 	unsigned vert_size = (unsigned) read_bits(esstream,12);
@@ -514,7 +514,7 @@ static int read_gop_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 
 	// We only get here after seeing that start code
 	if (next_u32(esstream) != 0xB8010000) // LSB first (0x000001B8)
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible!");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "read_gop_info: next_u32(esstream) != 0xB8010000. Please file a bug report in GitHub.\n");
 
 	// If we get here esstream points to the start of a group_start_code
 	// should we run out of data in esstream this is where we want to restart
@@ -551,7 +551,7 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 
 	// We only get here after seeing that start code
 	if (read_u32(esstream) != 0xB8010000) // LSB first (0x000001B8)
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible!");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "gop_header: read_u32(esstream) != 0xB8010000. Please file a bug report in GitHub.\n");
 
 	unsigned drop_frame_flag = (unsigned) read_bits(esstream,1);
 	struct gop_time_code gtc;
@@ -683,7 +683,7 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 
 	// We only get here after seeing that start code
 	if (next_u32(esstream) != 0x00010000) // LSB first (0x00000100)
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible!");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In read_pic_info: next_u32(esstream) != 0x00010000. Please file a bug report in GitHub.\n");
 
 	// If we get here esstream points to the start of a group_start_code
 	// should we run out of data in esstream this is where we want to restart
@@ -819,7 +819,7 @@ static int pic_header(struct lib_cc_decode *ctx, struct bitstream *esstream)
 
 	// We only get here after seeing that start code
 	if (read_u32(esstream) != 0x00010000) // LSB first (0x00000100)
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible!");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In pic_header: read_u32(esstream) != 0x00010000. Please file a bug report in GitHub.\n");
 
 	ctx->temporal_reference = (int) read_bits(esstream,10);
 	ctx->picture_coding_type = (enum ccx_frame_type) read_bits(esstream,3);
@@ -923,7 +923,7 @@ static int read_eau_info(struct lib_cc_decode* ctx, struct bitstream *esstream, 
 	unsigned char *tst = next_bytes(esstream, 4);
 	if (!tst || tst[0]!=0x00 || tst[1]!=0x00 || tst[2]!=0x01
 			|| (tst[3]!=0xB2 && tst[3]!=0xB5) ) // (0x000001 B2||B5)
-				fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible!");
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "read_eau_info: Impossible values for tst. Please file a bug report in GitHub.\n");
 
 	// The following extension_and_user_data() function makes sure that
 	// user data is not evaluated twice. Should the function run out of

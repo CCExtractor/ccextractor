@@ -7,14 +7,134 @@
 
 int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
-	// TODO: write it
+	int used;
+	unsigned h1,m1,s1,ms1;
+	unsigned h2,m2,s2,ms2;
+	char timeline[128];
+
+	if(!string || !string[0])
+		return 0;
+
+	mstotime (ms_start,&h1,&m1,&s1,&ms1);
+	mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+
+	sprintf (timeline, "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
+			 h1, m1, s1, ms1 / 10, h2, m2, s2, ms2 / 10);
+	used = encode_line(context, context->buffer,(unsigned char *) timeline);
+	dbg_print(CCX_DMT_DECODER_608, "\n- - - ASS/SSA caption - - -\n");
+	dbg_print(CCX_DMT_DECODER_608, "%s",timeline);
+
+	write(context->out->fh, context->buffer, used);
+	int len=strlen (string);
+	unsigned char *unescaped= (unsigned char *) malloc (len+1);
+	unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
+	if (el==NULL || unescaped==NULL)
+		fatal (EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_ssa() - not enough memory.\n");
+	int pos_r=0;
+	int pos_w=0;
+	// Scan for \n in the string and replace it with a 0
+	while (pos_r<len)
+	{
+		if (string[pos_r]=='\\' && string[pos_r+1]=='n')
+		{
+			unescaped[pos_w]=0;
+			pos_r+=2;
+		}
+		else
+		{
+			unescaped[pos_w]=string[pos_r];
+			pos_r++;
+		}
+		pos_w++;
+	}
+	unescaped[pos_w]=0;
+	// Now read the unescaped string (now several string'z and write them)
+	unsigned char *begin=unescaped;
+	while (begin<unescaped+len)
+	{
+		unsigned int u = encode_line (context, el, begin);
+		if (context->encoding != CCX_ENC_UNICODE)
+		{
+			dbg_print(CCX_DMT_DECODER_608, "\r");
+			dbg_print(CCX_DMT_DECODER_608, "%s\n",context->subline);
+		}
+		write(context->out->fh, el, u);
+		write(context->out->fh, "\\N", 2);
+		begin+= strlen ((const char *) begin)+1;
+	}
+
+	dbg_print(CCX_DMT_DECODER_608, "- - - - - - - - - - - -\r\n");
+
+	write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+	free(el);
+	free(unescaped);
+
 	return 0;
 }
 
 int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
-	// TODO: write it
-	return 0;
+	int ret = 0;
+#ifdef ENABLE_OCR
+	struct cc_bitmap* rect;
+	LLONG ms_start, ms_end;
+	unsigned h1,m1,s1,ms1;
+	unsigned h2,m2,s2,ms2;
+	char timeline[128];
+	int len = 0;
+	int used;
+	int i = 0;
+	char *str;
+
+	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
+	{
+		ms_start = context->prev_start;
+		ms_end = sub->start_time;
+	}
+	else if ( !(sub->flags & SUB_EOD_MARKER))
+	{
+		ms_start = sub->start_time;
+		ms_end = sub->end_time;
+	}
+	else if (context->prev_start == -1 && (sub->flags & SUB_EOD_MARKER))
+	{
+		ms_start = 1;
+		ms_end = sub->start_time;
+	}
+
+	if (sub->nb_data == 0)
+		return 0;
+
+	if(sub->flags & SUB_EOD_MARKER)
+		context->prev_start =  sub->start_time;
+
+	str = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);
+	if (str)
+	{
+		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
+		{
+			mstotime (ms_start,&h1,&m1,&s1,&ms1);
+			mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+
+			sprintf (timeline, "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
+				h1,m1,s1,ms1/10, h2,m2,s2,ms2/10);
+			used = encode_line(context, context->buffer,(unsigned char *) timeline);
+			write (context->out->fh, context->buffer, used);
+			len = strlen(str);
+			write (context->out->fh, str, len);
+			write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+		}
+		freep(&str);
+	}
+	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
+	{
+		freep(rect->data);
+		freep(rect->data+1);
+	}
+#endif
+	sub->nb_data = 0;
+	freep(&sub->data);
+	return ret;
 }
 
 int write_cc_subtitle_as_ssa(struct cc_subtitle *sub,struct encoder_ctx *context)
@@ -171,3 +291,4 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 	return wrote_something;
 }
+
