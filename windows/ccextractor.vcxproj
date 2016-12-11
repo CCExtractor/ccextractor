@@ -5,29 +5,43 @@
       <Configuration>Debug-OCR</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug-OCR|x64">
+      <Configuration>Debug-OCR</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release-OCR|Win32">
       <Configuration>Release-OCR</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Release-OCR|x64">
+      <Configuration>Release-OCR</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\lib_ccx\ccx_common_option.h" />
-    <ClInclude Include="..\src\lib_ccx\ccx_share.h" />
-    <ClInclude Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.h" />
-    <ClInclude Include="..\src\lib_ccx\compile_info.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\avparse.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\base_coding.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\bitstream.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\configuration.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\config_file.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\constants.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\events_constants.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\ietf.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\internal\avilib.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\internal\isomedia_dev.h" />
@@ -41,11 +55,16 @@
     <ClInclude Include="..\src\gpacmp4\gpac\media_tools.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\mpeg4_odf.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\network.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\revision.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\setup.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\sync_layer.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\tools.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\utf.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\version.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_common_option.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_share.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.h" />
+    <ClInclude Include="..\src\lib_ccx\compile_info.h" />
     <ClInclude Include="..\src\libpng\png.h" />
     <ClInclude Include="..\src\libpng\pngconf.h" />
     <ClInclude Include="..\src\libpng\pngdebug.h" />
@@ -114,14 +133,17 @@
     <ClCompile Include="..\src\gpacmp4\base_encoding.c" />
     <ClCompile Include="..\src\gpacmp4\bitstream.c" />
     <ClCompile Include="..\src\gpacmp4\box_code_3gpp.c" />
+    <ClCompile Include="..\src\gpacmp4\box_code_adobe.c" />
     <ClCompile Include="..\src\gpacmp4\box_code_apple.c" />
     <ClCompile Include="..\src\gpacmp4\box_code_base.c" />
-    <ClCompile Include="..\src\gpacmp4\box_code_isma.c" />
+    <ClCompile Include="..\src\gpacmp4\box_code_drm.c" />
     <ClCompile Include="..\src\gpacmp4\box_code_meta.c" />
     <ClCompile Include="..\src\gpacmp4\box_funcs.c" />
+    <ClCompile Include="..\src\gpacmp4\configfile.c" />
     <ClCompile Include="..\src\gpacmp4\data_map.c" />
     <ClCompile Include="..\src\gpacmp4\descriptors.c" />
     <ClCompile Include="..\src\gpacmp4\desc_private.c" />
+    <ClCompile Include="..\src\gpacmp4\drm_sample.c" />
     <ClCompile Include="..\src\gpacmp4\error.c" />
     <ClCompile Include="..\src\gpacmp4\gpac_ogg.c" />
     <ClCompile Include="..\src\gpacmp4\hinting.c" />
@@ -132,6 +154,7 @@
     <ClCompile Include="..\src\gpacmp4\isom_store.c" />
     <ClCompile Include="..\src\gpacmp4\isom_write.c" />
     <ClCompile Include="..\src\gpacmp4\list.c" />
+    <ClCompile Include="..\src\gpacmp4\math.c" />
     <ClCompile Include="..\src\gpacmp4\media.c" />
     <ClCompile Include="..\src\gpacmp4\media_odf.c" />
     <ClCompile Include="..\src\gpacmp4\meta.c" />
@@ -140,7 +163,9 @@
     <ClCompile Include="..\src\gpacmp4\odf_code.c" />
     <ClCompile Include="..\src\gpacmp4\odf_codec.c" />
     <ClCompile Include="..\src\gpacmp4\odf_command.c" />
+    <ClCompile Include="..\src\gpacmp4\os_config_init.c" />
     <ClCompile Include="..\src\gpacmp4\os_divers.c" />
+    <ClCompile Include="..\src\gpacmp4\os_file.c" />
     <ClCompile Include="..\src\gpacmp4\qos.c" />
     <ClCompile Include="..\src\gpacmp4\sample_descs.c" />
     <ClCompile Include="..\src\gpacmp4\slc.c" />
@@ -192,6 +217,7 @@
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_splitbysentence.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_spupng.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_srt.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_ssa.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_transcript.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_webvtt.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_xds.c" />
@@ -251,19 +277,35 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v120_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v120_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-OCR|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v120_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-OCR|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-OCR|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v120_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-OCR|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -271,13 +313,25 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug-OCR|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug-OCR|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release-OCR|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release-OCR|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -290,9 +344,19 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetName>ccextractorwin</TargetName>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>ccextractorwin</TargetName>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-OCR|Win32'">
     <OutDir>Debug-OCR\</OutDir>
     <IntDir>Debug-OCR\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>ccextractorwin</TargetName>
+    <IncludePath>$(ProjectDir)\libs\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)\libs\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-OCR|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>ccextractorwin</TargetName>
     <IncludePath>$(ProjectDir)\libs\include;$(IncludePath)</IncludePath>
@@ -306,16 +370,26 @@
     <IncludePath>$(ProjectDir)\libs\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)\libs\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)</LibraryPath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-OCR|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>ccextractorwin</TargetName>
+    <IncludePath>$(ProjectDir)\libs\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)\libs\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)</LibraryPath>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>Release\</OutDir>
     <IntDir>Release\</IntDir>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>ccextractorwin</TargetName>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>ccextractorwin</TargetName>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../src/utf8proc;../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/win_iconv;../src/lib_hash;../src/protobuf-c;../src/utf8proc;../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -332,10 +406,29 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>C:\Users\Alex\Documents\GitHub\ccextractor\src\protobuf-c;../src/utf8proc;../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>WS2_32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>NotSet</ShowProgress>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-OCR|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../src/utf8proc;../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Alex\Documents\GitHub\ccextractor\src\protobuf-c;../src/utf8proc;../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;../src/protobuf-c;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -357,10 +450,33 @@
 xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-OCR|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>C:\Users\Alex\Documents\GitHub\ccextractor\src\protobuf-c;../src/utf8proc;../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>WS2_32.Lib;liblept172.lib;libtesseract304d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>NotSet</ShowProgress>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y $(ProjectDir)libs\lib\liblept172.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-OCR|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../src/utf8proc;../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/win_iconv;../src/lib_hash;../src/protobuf-c;../src/utf8proc;../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader />
@@ -380,9 +496,32 @@ xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Comm
 xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-OCR|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../src/utf8proc;../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>WS2_32.Lib;liblept172.lib;libtesseract304d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+    </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y $(ProjectDir)libs\lib\liblept172.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../src/utf8proc;../src/win_spec_incld;../src/lib_ccx;../src/lib_hash;../src/gpacmp4;../src/libpng;../src/zlib;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/win_iconv;../src/lib_hash;../src/protobuf-c;../src/utf8proc;../src/win_spec_incld;../src/gpacmp4;../src/libpng;../src/zlib;../src;../src/lib_ccx;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>VERSION_FILE_PRESENT;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader />
@@ -396,6 +535,27 @@ xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Comm
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <PreBuildEvent>
+      <Command>pre-build.bat</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\Alex\Documents\GitHub\ccextractor\src\protobuf-c;../src/utf8proc;../src/win_spec_incld;../src/lib_ccx;../src/lib_hash;../src/gpacmp4;../src/libpng;../src/zlib;../src/zvbi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>VERSION_FILE_PRESENT;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>WS2_32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
     <PreBuildEvent>
       <Command>pre-build.bat</Command>

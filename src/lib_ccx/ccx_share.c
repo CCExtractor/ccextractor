@@ -84,7 +84,7 @@ ccx_share_status ccx_share_start(const char *stream_name) //TODO add stream
 	ccx_share_ctx.nn_sock = nn_socket(AF_SP, NN_PUB);
 	if (ccx_share_ctx.nn_sock < 0) {
 		perror("[share] ccx_share_start: can't nn_socket()\n");
-		fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start");
+		fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start: can't nn_socket().");
 	}
 
 	if (!ccx_options.sharing_url) {
@@ -96,7 +96,7 @@ ccx_share_status ccx_share_start(const char *stream_name) //TODO add stream
 	ccx_share_ctx.nn_binder = nn_bind(ccx_share_ctx.nn_sock, ccx_options.sharing_url);
 	if (ccx_share_ctx.nn_binder < 0) {
 		perror("[share] ccx_share_start: can't nn_bind()\n");
-		fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start");
+		fatal(EXIT_NOT_CLASSIFIED, "ccx_share_start: can't nn_bind()");
 	}
 
 	int linger = -1;

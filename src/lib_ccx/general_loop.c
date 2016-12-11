@@ -434,7 +434,7 @@ void process_hex (struct lib_ccx_ctx *ctx, char *filename)
 			continue;
 		bytes=(unsigned char *) malloc (byte_count);
 		if (!bytes)
-			fatal (EXIT_NOT_ENOUGH_MEMORY, "Out of memory.\n");
+			fatal (EXIT_NOT_ENOUGH_MEMORY, "processhex: Out of memory.\n");
 		unsigned char *bytes=(unsigned char *) malloc (byte_count);
 		for (unsigned i=0;i<byte_count;i++)
 		{
@@ -667,9 +667,11 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	else if (data_node->bufferdatatype == CCX_TELETEXT)
 	{
 		//telxcc_update_gt(dec_ctx->private_data, ctx->demux_ctx->global_timestamp);
-		ret = tlt_process_pes_packet (dec_ctx, data_node->buffer, data_node->len, dec_sub, enc_ctx->sentence_cap);
-		if(ret == CCX_EINVAL)
-			return ret;
+		if (enc_ctx) {
+			ret = tlt_process_pes_packet(dec_ctx, data_node->buffer, data_node->len, dec_sub, enc_ctx->sentence_cap);
+			if (ret == CCX_EINVAL)
+				return ret;
+		}
 		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
@@ -840,7 +842,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				break;
 #endif
 			default:
-				fatal(CCX_COMMON_EXIT_BUG_BUG, "Impossible stream_mode");
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "general_loop: Impossible value for stream_mode");
 		}
 		if (ret == CCX_EOF)
 		{
@@ -872,7 +874,8 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 			dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
-			enc_ctx->timing = dec_ctx->timing;
+			if (enc_ctx)
+				enc_ctx->timing = dec_ctx->timing;
 			
 			if(data_node->pts != CCX_NOPTS)
 			{
@@ -930,7 +933,8 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 				dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
-				dec_ctx->timing = enc_ctx->timing;
+				if (enc_ctx)
+					dec_ctx->timing = enc_ctx->timing;
 				if(data_node->pts != CCX_NOPTS)
 					set_current_pts(dec_ctx->timing, data_node->pts);
 				process_data(enc_ctx, dec_ctx, data_node);
@@ -981,6 +985,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 	mprint ("Number of NAL HRD: %ld\n",dec_ctx->avc_ctx->num_nal_hrd);
 	mprint ("Number of jump-in-frames: %ld\n",dec_ctx->avc_ctx->num_jump_in_frames);
 	mprint ("Number of num_unexpected_sei_length: %ld", dec_ctx->avc_ctx->num_unexpected_sei_length);
+		free(dec_ctx->xds_ctx);
 	}
 
 	delete_datalist(datalist);
@@ -1095,7 +1100,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 			if ( cbcount*3 > parsebufsize) {
 				parsebuf = (unsigned char*)realloc(parsebuf, cbcount*3);
 				if (!parsebuf)
-					fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "rcwt_loop: Out of memory allocating parsebuf.");
 				parsebufsize = cbcount*3;
 			}
 			result = buffered_read(ctx->demux_ctx, parsebuf, cbcount*3);
