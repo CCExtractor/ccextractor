@@ -1,27 +1,28 @@
 /*
- *			GPAC - Multimedia Framework C SDK
- *
- *			Copyright (c) Jean Le Feuvre 2000-2005
- *					All rights reserved
- *
- *  This file is part of GPAC / MPEG-4 ObjectDescriptor sub-project
- *
- *  GPAC is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU Lesser General Public License as published by
- *  the Free Software Foundation; either version 2, or (at your option)
- *  any later version.
- *   
- *  GPAC is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *   
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; see the file COPYING.  If not, write to
- *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. 
- *
- */
-#include "disable_warnings.h"
+*			GPAC - Multimedia Framework C SDK
+*
+*			Authors: Jean Le Feuvre
+*			Copyright (c) Telecom ParisTech 2000-2012
+*					All rights reserved
+*
+*  This file is part of GPAC / MPEG-4 ObjectDescriptor sub-project
+*
+*  GPAC is free software; you can redistribute it and/or modify
+*  it under the terms of the GNU Lesser General Public License as published by
+*  the Free Software Foundation; either version 2, or (at your option)
+*  any later version.
+*
+*  GPAC is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU Lesser General Public License for more details.
+*
+*  You should have received a copy of the GNU Lesser General Public
+*  License along with this library; see the file COPYING.  If not, write to
+*  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+*
+*/
+
 #include <gpac/internal/odf_dev.h>
 #include <gpac/constants.h>
 
@@ -33,19 +34,34 @@ GF_EXPORT
 const char *gf_odf_stream_type_name(u32 streamType)
 {
 	switch (streamType) {
-	case GF_STREAM_OD: return "ObjectDescriptor";
-	case GF_STREAM_OCR: return "ClockReference";
-	case GF_STREAM_SCENE: return "SceneDescription";
-	case GF_STREAM_VISUAL: return "Visual";
-	case GF_STREAM_AUDIO: return "Audio";
-	case GF_STREAM_MPEG7: return "MPEG7";
-	case GF_STREAM_IPMP: return "IPMP";
-	case GF_STREAM_OCI: return "OCI";
-	case GF_STREAM_MPEGJ: return "MPEGJ";
-	case GF_STREAM_INTERACT: return "Interaction";
-	case GF_STREAM_TEXT: return "Text";
-	case GF_STREAM_ND_SUBPIC: return "NeroDigital Subpicture";
-	default: return "Unknown";
+	case GF_STREAM_OD:
+		return "ObjectDescriptor";
+	case GF_STREAM_OCR:
+		return "ClockReference";
+	case GF_STREAM_SCENE:
+		return "SceneDescription";
+	case GF_STREAM_VISUAL:
+		return "Visual";
+	case GF_STREAM_AUDIO:
+		return "Audio";
+	case GF_STREAM_MPEG7:
+		return "MPEG7";
+	case GF_STREAM_IPMP:
+		return "IPMP";
+	case GF_STREAM_OCI:
+		return "OCI";
+	case GF_STREAM_MPEGJ:
+		return "MPEGJ";
+	case GF_STREAM_INTERACT:
+		return "Interaction";
+	case GF_STREAM_FONT:
+		return "Font";
+	case GF_STREAM_TEXT:
+		return "Text";
+	case GF_STREAM_ND_SUBPIC:
+		return "NeroDigital Subpicture";
+	default:
+		return "Unknown";
 	}
 }
 
@@ -72,13 +88,17 @@ s32 gf_odf_size_field_size(u32 size_desc)
 {
 	if (size_desc < 0x00000080) {
 		return 1 + 1;
-	} else if (size_desc < 0x00004000) {
+	}
+	else if (size_desc < 0x00004000) {
 		return 2 + 1;
-	} else if (size_desc < 0x00200000) {
+	}
+	else if (size_desc < 0x00200000) {
 		return 3 + 1;
-	} else if (size_desc < 0x10000000) {
+	}
+	else if (size_desc < 0x10000000) {
 		return 4 + 1;
-	} else {
+	}
+	else {
 		return -1;
 	}
 
@@ -97,9 +117,9 @@ GF_Err gf_odf_parse_descriptor(GF_BitStream *bs, GF_Descriptor **desc, u32 *desc
 	*desc_size = 0;
 
 	//tag
-	tag = (u8) gf_bs_read_int(bs, 8);
+	tag = (u8)gf_bs_read_int(bs, 8);
 	sizeHeader = 1;
-	
+
 	//size
 	size = 0;
 	do {
@@ -107,17 +127,17 @@ GF_Err gf_odf_parse_descriptor(GF_BitStream *bs, GF_Descriptor **desc, u32 *desc
 		sizeHeader++;
 		size <<= 7;
 		size |= val & 0x7F;
-	} while ( val & 0x80);
+	} while (val & 0x80);
 	*desc_size = size;
 
-	GF_LOG(GF_LOG_DEBUG, GF_LOG_CODEC, ("[ODF] Reading descriptor (tag %d size %d)\n", tag, size ));
+	GF_LOG(GF_LOG_DEBUG, GF_LOG_CODEC, ("[ODF] Reading descriptor (tag %d size %d)\n", tag, size));
 
 	newDesc = gf_odf_create_descriptor(tag);
-	if (! newDesc) {
+	if (!newDesc) {
 		*desc = NULL;
 		*desc_size = sizeHeader;
-		if ( (tag >= GF_ODF_ISO_RES_BEGIN_TAG) &&
-			(tag <= GF_ODF_ISO_RES_END_TAG) ) {
+		if ((tag >= GF_ODF_ISO_RES_BEGIN_TAG) &&
+			(tag <= GF_ODF_ISO_RES_END_TAG)) {
 			return GF_ODF_FORBIDDEN_DESCRIPTOR;
 		}
 		else if (!tag || (tag == 0xFF)) {
@@ -136,20 +156,20 @@ GF_Err gf_odf_parse_descriptor(GF_BitStream *bs, GF_Descriptor **desc, u32 *desc
 	err = gf_odf_read_descriptor(bs, newDesc, *desc_size);
 
 	/*FFMPEG fix*/
-	if ((tag==GF_ODF_SLC_TAG) && (((GF_SLConfig*)newDesc)->predefined==2)) {
-		if (*desc_size==3) {
+	if ((tag == GF_ODF_SLC_TAG) && (((GF_SLConfig*)newDesc)->predefined == 2)) {
+		if (*desc_size == 3) {
 			*desc_size = 1;
 			err = GF_OK;
 		}
 	}
 
-	//little trick to handle lazy bitstreams that encode 
+	//little trick to handle lazy bitstreams that encode
 	//SizeOfInstance on a fix number of bytes
 	//This nb of bytes is added in Read methods
 	*desc_size += sizeHeader - gf_odf_size_field_size(*desc_size);
 	*desc = newDesc;
 	if (err) {
-		GF_LOG(GF_LOG_ERROR, GF_LOG_CODEC, ("[ODF] Error reading descriptor (tag %d size %d): %s\n", tag, size, gf_error_to_string(err) ));
+		GF_LOG(GF_LOG_ERROR, GF_LOG_CODEC, ("[ODF] Error reading descriptor (tag %d size %d): %s\n", tag, size, gf_error_to_string(err)));
 		gf_odf_delete_descriptor(newDesc);
 		*desc = NULL;
 	}
@@ -164,8 +184,8 @@ GF_Err gf_odf_delete_descriptor_list(GF_List *descList)
 	GF_Descriptor*tmp;
 	u32 i;
 	//no error if NULL chain...
-	if (! descList) return GF_OK;
-	i=0;
+	if (!descList) return GF_OK;
+	i = 0;
 	while ((tmp = (GF_Descriptor*)gf_list_enum(descList, &i))) {
 		e = gf_odf_delete_descriptor(tmp);
 		if (e) return e;
@@ -179,33 +199,37 @@ GF_Err gf_odf_write_base_descriptor(GF_BitStream *bs, u8 tag, u32 size)
 	u32 length;
 	unsigned char vals[4];
 
-	if (!tag ) return GF_BAD_PARAM;
-	
+	if (!tag) return GF_BAD_PARAM;
+
 	length = size;
-	vals[3] = (unsigned char) (length & 0x7f);
+	vals[3] = (unsigned char)(length & 0x7f);
 	length >>= 7;
-	vals[2] = (unsigned char) ((length & 0x7f) | 0x80); 
+	vals[2] = (unsigned char)((length & 0x7f) | 0x80);
 	length >>= 7;
-	vals[1] = (unsigned char) ((length & 0x7f) | 0x80); 
+	vals[1] = (unsigned char)((length & 0x7f) | 0x80);
 	length >>= 7;
-	vals[0] = (unsigned char) ((length & 0x7f) | 0x80);
-	
+	vals[0] = (unsigned char)((length & 0x7f) | 0x80);
+
 	gf_bs_write_int(bs, tag, 8);
 	if (size < 0x00000080) {
 		gf_bs_write_int(bs, vals[3], 8);
-	} else if (size < 0x00004000) {
+	}
+	else if (size < 0x00004000) {
 		gf_bs_write_int(bs, vals[2], 8);
 		gf_bs_write_int(bs, vals[3], 8);
-	} else if (size < 0x00200000) {
+	}
+	else if (size < 0x00200000) {
 		gf_bs_write_int(bs, vals[1], 8);
 		gf_bs_write_int(bs, vals[2], 8);
 		gf_bs_write_int(bs, vals[3], 8);
-	} else if (size < 0x10000000) {
+	}
+	else if (size < 0x10000000) {
 		gf_bs_write_int(bs, vals[0], 8);
 		gf_bs_write_int(bs, vals[1], 8);
 		gf_bs_write_int(bs, vals[2], 8);
 		gf_bs_write_int(bs, vals[3], 8);
-	} else {
+	}
+	else {
 		return GF_ODF_INVALID_DESCRIPTOR;
 	}
 	return GF_OK;
@@ -217,10 +241,10 @@ GF_Err gf_odf_size_descriptor_list(GF_List *descList, u32 *outSize)
 	GF_Err e;
 	GF_Descriptor *tmp;
 	u32 tmpSize, count, i;
-	if (! descList) return GF_OK;
+	if (!descList) return GF_OK;
 
 	count = gf_list_count(descList);
-	for ( i = 0; i < count; i++ ) {
+	for (i = 0; i < count; i++) {
 		tmp = (GF_Descriptor*)gf_list_get(descList, i);
 		if (tmp) {
 			e = gf_odf_size_descriptor(tmp, &tmpSize);
@@ -237,14 +261,14 @@ GF_Err gf_odf_write_descriptor_list(GF_BitStream *bs, GF_List *descList)
 	u32 count, i;
 	GF_Descriptor *tmp;
 
-	if (! descList) return GF_OK;
+	if (!descList) return GF_OK;
 	count = gf_list_count(descList);
-	for ( i = 0; i < count; i++ ) {
+	for (i = 0; i < count; i++) {
 		tmp = (GF_Descriptor*)gf_list_get(descList, i);
 		if (tmp) {
 			e = gf_odf_write_descriptor(bs, tmp);
 			if (e) return e;
-		} 
+		}
 	}
 	return GF_OK;
 }
@@ -255,14 +279,14 @@ GF_Err gf_odf_write_descriptor_list_filter(GF_BitStream *bs, GF_List *descList, 
 	u32 count, i;
 	GF_Descriptor *tmp;
 
-	if (! descList) return GF_OK;
+	if (!descList) return GF_OK;
 	count = gf_list_count(descList);
-	for ( i = 0; i < count; i++ ) {
+	for (i = 0; i < count; i++) {
 		tmp = (GF_Descriptor*)gf_list_get(descList, i);
-		if (tmp && (tmp->tag==only_tag) ) {
+		if (tmp && (tmp->tag == only_tag)) {
 			e = gf_odf_write_descriptor(bs, tmp);
 			if (e) return e;
-		} 
+		}
 	}
 	return GF_OK;
 }
@@ -276,10 +300,10 @@ u32 gf_ipmpx_array_size(GF_BitStream *bs, u32 *array_size)
 	io_size = size = 0;
 	do {
 		val = gf_bs_read_int(bs, 8);
-		io_size ++;
+		io_size++;
 		size <<= 7;
 		size |= val & 0x7F;
-	} while ( val & 0x80 );
+	} while (val & 0x80);
 	*array_size = size;
 	return io_size;
 }
@@ -290,28 +314,35 @@ void gf_ipmpx_write_array(GF_BitStream *bs, char *data, u32 data_len)
 	unsigned char vals[4];
 
 	if (!data || !data_len) return;
-	
+
 	length = data_len;
-	vals[3] = (unsigned char) (length & 0x7f); length >>= 7;
-	vals[2] = (unsigned char) ((length & 0x7f) | 0x80); length >>= 7;
-	vals[1] = (unsigned char) ((length & 0x7f) | 0x80); length >>= 7;
-	vals[0] = (unsigned char) ((length & 0x7f) | 0x80);
-	
+	vals[3] = (unsigned char)(length & 0x7f);
+	length >>= 7;
+	vals[2] = (unsigned char)((length & 0x7f) | 0x80);
+	length >>= 7;
+	vals[1] = (unsigned char)((length & 0x7f) | 0x80);
+	length >>= 7;
+	vals[0] = (unsigned char)((length & 0x7f) | 0x80);
+
 	if (data_len < 0x00000080) {
 		gf_bs_write_int(bs, vals[3], 8);
-	} else if (data_len < 0x00004000) {
+	}
+	else if (data_len < 0x00004000) {
 		gf_bs_write_int(bs, vals[2], 8);
 		gf_bs_write_int(bs, vals[3], 8);
-	} else if (data_len < 0x00200000) {
+	}
+	else if (data_len < 0x00200000) {
 		gf_bs_write_int(bs, vals[1], 8);
 		gf_bs_write_int(bs, vals[2], 8);
 		gf_bs_write_int(bs, vals[3], 8);
-	} else if (data_len < 0x10000000) {
+	}
+	else if (data_len < 0x10000000) {
 		gf_bs_write_int(bs, vals[0], 8);
 		gf_bs_write_int(bs, vals[1], 8);
 		gf_bs_write_int(bs, vals[2], 8);
 		gf_bs_write_int(bs, vals[3], 8);
-	} else {
+	}
+	else {
 		return;
 	}
 	gf_bs_write_data(bs, data, data_len);
@@ -328,19 +359,19 @@ GF_BIFSConfig *gf_odf_get_bifs_config(GF_DefaultDescriptor *dsi, u8 oti)
 	GF_BitStream *bs;
 	GF_BIFSConfig *cfg;
 
-	if (oti>=GPAC_OTI_SCENE_BIFS_EXTENDED) return NULL;
+	if (oti >= GPAC_OTI_SCENE_BIFS_EXTENDED) return NULL;
 
-	if (!dsi || !dsi->data || !dsi->dataLength ) {
+	if (!dsi || !dsi->data || !dsi->dataLength) {
 		/* Hack for T-DMB non compliant streams (OnTimeTek ?) */
-		cfg = (GF_BIFSConfig *) gf_odf_desc_new(GF_ODF_BIFS_CFG_TAG);	
-		cfg->pixelMetrics = 1;
+		cfg = (GF_BIFSConfig *)gf_odf_desc_new(GF_ODF_BIFS_CFG_TAG);
+		cfg->pixelMetrics = GF_TRUE;
 		cfg->version = 1;
 		return cfg;
 	}
 	bs = gf_bs_new(dsi->data, dsi->dataLength, GF_BITSTREAM_READ);
-	
-	cfg = (GF_BIFSConfig *) gf_odf_desc_new(GF_ODF_BIFS_CFG_TAG);	
-	if (oti==2) {
+
+	cfg = (GF_BIFSConfig *)gf_odf_desc_new(GF_ODF_BIFS_CFG_TAG);
+	if (oti == 2) {
 		/*3D Mesh Coding*/
 		gf_bs_read_int(bs, 1);
 		/*PMF*/
@@ -348,13 +379,13 @@ GF_BIFSConfig *gf_odf_get_bifs_config(GF_DefaultDescriptor *dsi, u8 oti)
 	}
 	cfg->nodeIDbits = gf_bs_read_int(bs, 5);
 	cfg->routeIDbits = gf_bs_read_int(bs, 5);
-	if (oti==2) cfg->protoIDbits = gf_bs_read_int(bs, 5);
-	
-	cmd_stream = gf_bs_read_int(bs, 1);
+	if (oti == 2) cfg->protoIDbits = gf_bs_read_int(bs, 5);
+
+	cmd_stream = (Bool)gf_bs_read_int(bs, 1);
 	if (!cmd_stream) {
 		cfg->elementaryMasks = gf_list_new();
 		while (1) {
-			GF_ElementaryMask* em = (GF_ElementaryMask* ) gf_odf_New_ElemMask();
+			GF_ElementaryMask* em = (GF_ElementaryMask*)gf_odf_New_ElemMask();
 			em->node_id = gf_bs_read_int(bs, cfg->nodeIDbits);
 			gf_list_add(cfg->elementaryMasks, em);
 			/*this assumes only FDP, BDP and IFS2D (no elem mask)*/
@@ -364,9 +395,10 @@ GF_BIFSConfig *gf_odf_get_bifs_config(GF_DefaultDescriptor *dsi, u8 oti)
 		if (gf_bs_get_size(bs) != gf_bs_get_position(bs)) {
 			GF_LOG(GF_LOG_WARNING, GF_LOG_CODEC, ("[ODF] Reading bifs config: shift in sizes (not supported)\n"));
 		}
-	} else {
-		cfg->pixelMetrics = gf_bs_read_int(bs, 1);
-		hasSize = gf_bs_read_int(bs, 1);
+	}
+	else {
+		cfg->pixelMetrics = (Bool)gf_bs_read_int(bs, 1);
+		hasSize = (Bool)gf_bs_read_int(bs, 1);
 		if (hasSize) {
 			cfg->pixelWidth = gf_bs_read_int(bs, 16);
 			cfg->pixelHeight = gf_bs_read_int(bs, 16);
@@ -385,16 +417,20 @@ GF_Err gf_odf_get_laser_config(GF_DefaultDescriptor *dsi, GF_LASERConfig *cfg)
 {
 	u32 to_skip;
 	GF_BitStream *bs;
+
+	if (!cfg) return GF_BAD_PARAM;
+	memset(cfg, 0, sizeof(GF_LASERConfig));
+
 	if (!dsi || !dsi->data || !dsi->dataLength || !cfg) return GF_BAD_PARAM;
 	bs = gf_bs_new(dsi->data, dsi->dataLength, GF_BITSTREAM_READ);
 	memset(cfg, 0, sizeof(GF_LASERConfig));
 	cfg->tag = GF_ODF_LASER_CFG_TAG;
 	cfg->profile = gf_bs_read_int(bs, 8);
 	cfg->level = gf_bs_read_int(bs, 8);
-	/*cfg->reserved = */gf_bs_read_int(bs, 3);	
-	cfg->pointsCodec = gf_bs_read_int(bs, 2);	
-	cfg->pathComponents = gf_bs_read_int(bs, 4);	
-	cfg->fullRequestHost = gf_bs_read_int(bs, 1);	
+	/*cfg->reserved = */gf_bs_read_int(bs, 3);
+	cfg->pointsCodec = gf_bs_read_int(bs, 2);
+	cfg->pathComponents = gf_bs_read_int(bs, 4);
+	cfg->fullRequestHost = gf_bs_read_int(bs, 1);
 	if (gf_bs_read_int(bs, 1)) cfg->time_resolution = gf_bs_read_int(bs, 16);
 	else cfg->time_resolution = 1000;
 	cfg->colorComponentBits = 1 + gf_bs_read_int(bs, 4);
@@ -432,11 +468,11 @@ GF_Err gf_odf_get_ui_config(GF_DefaultDescriptor *dsi, GF_UIConfig *cfg)
 	GF_BitStream *bs;
 	if (!dsi || !dsi->data || !dsi->dataLength || !cfg) return GF_BAD_PARAM;
 	memset(cfg, 0, sizeof(GF_UIConfig));
-	cfg->tag = GF_ODF_UI_CFG_TAG;	
+	cfg->tag = GF_ODF_UI_CFG_TAG;
 	bs = gf_bs_new(dsi->data, dsi->dataLength, GF_BITSTREAM_READ);
 	len = gf_bs_read_int(bs, 8);
-	cfg->deviceName = (char*)gf_malloc(sizeof(char) * (len+1));
-	for (i=0; i<len; i++) cfg->deviceName[i] = gf_bs_read_int(bs, 8);
+	cfg->deviceName = (char*)gf_malloc(sizeof(char) * (len + 1));
+	for (i = 0; i<len; i++) cfg->deviceName[i] = gf_bs_read_int(bs, 8);
 	cfg->deviceName[i] = 0;
 
 	if (!stricmp(cfg->deviceName, "StringSensor") && gf_bs_available(bs)) {
@@ -459,9 +495,9 @@ GF_Err gf_odf_encode_ui_config(GF_UIConfig *cfg, GF_DefaultDescriptor **out_dsi)
 	if (!cfg->deviceName) return GF_OK;
 
 	bs = gf_bs_new(NULL, 0, GF_BITSTREAM_WRITE);
-	len = strlen(cfg->deviceName);
+	len = (u32)strlen(cfg->deviceName);
 	gf_bs_write_int(bs, len, 8);
-	for (i=0; i<len; i++) gf_bs_write_int(bs, cfg->deviceName[i], 8);
+	for (i = 0; i<len; i++) gf_bs_write_int(bs, cfg->deviceName[i], 8);
 	if (!stricmp(cfg->deviceName, "StringSensor")) {
 		/*fixme - this should be UTF-8 chars*/
 		if (cfg->delChar || cfg->termChar) {
@@ -471,7 +507,7 @@ GF_Err gf_odf_encode_ui_config(GF_UIConfig *cfg, GF_DefaultDescriptor **out_dsi)
 	}
 	if (cfg->ui_data) gf_bs_write_data(bs, cfg->ui_data, cfg->ui_data_length);
 
-	dsi = (GF_DefaultDescriptor *) gf_odf_desc_new(GF_ODF_DSI_TAG);
+	dsi = (GF_DefaultDescriptor *)gf_odf_desc_new(GF_ODF_DSI_TAG);
 	gf_bs_get_content(bs, &dsi->data, &dsi->dataLength);
 	gf_bs_del(bs);
 	*out_dsi = dsi;
@@ -487,6 +523,10 @@ GF_AVCConfig *gf_odf_avc_cfg_new()
 	if (!cfg) return NULL;
 	cfg->sequenceParameterSets = gf_list_new();
 	cfg->pictureParameterSets = gf_list_new();
+	cfg->AVCLevelIndication = 1;
+	cfg->chroma_format = 1;
+	cfg->chroma_bit_depth = 8;
+	cfg->luma_bit_depth = 8;
 	return cfg;
 }
 
@@ -508,6 +548,16 @@ void gf_odf_avc_cfg_del(GF_AVCConfig *cfg)
 		gf_free(sl);
 	}
 	gf_list_del(cfg->pictureParameterSets);
+
+	if (cfg->sequenceParameterSetExtensions) {
+		while (gf_list_count(cfg->sequenceParameterSetExtensions)) {
+			GF_AVCConfigSlot *sl = (GF_AVCConfigSlot *)gf_list_get(cfg->sequenceParameterSetExtensions, 0);
+			gf_list_rem(cfg->sequenceParameterSetExtensions, 0);
+			if (sl->data) gf_free(sl->data);
+			gf_free(sl);
+		}
+		gf_list_del(cfg->pictureParameterSets);
+	}
 	gf_free(cfg);
 }
 
@@ -517,7 +567,7 @@ GF_Err gf_odf_avc_cfg_write(GF_AVCConfig *cfg, char **outData, u32 *outSize)
 	u32 i, count;
 	GF_BitStream *bs = gf_bs_new(NULL, 0, GF_BITSTREAM_WRITE);
 	gf_bs_write_int(bs, cfg->configurationVersion, 8);
-	gf_bs_write_int(bs, cfg->AVCProfileIndication , 8);
+	gf_bs_write_int(bs, cfg->AVCProfileIndication, 8);
 	gf_bs_write_int(bs, cfg->profile_compatibility, 8);
 	gf_bs_write_int(bs, cfg->AVCLevelIndication, 8);
 	gf_bs_write_int(bs, 0x3F, 6);
@@ -525,19 +575,34 @@ GF_Err gf_odf_avc_cfg_write(GF_AVCConfig *cfg, char **outData, u32 *outSize)
 	gf_bs_write_int(bs, 0x7, 3);
 	count = gf_list_count(cfg->sequenceParameterSets);
 	gf_bs_write_int(bs, count, 5);
-	for (i=0; i<count; i++) {
+	for (i = 0; i<count; i++) {
 		GF_AVCConfigSlot *sl = (GF_AVCConfigSlot *)gf_list_get(cfg->sequenceParameterSets, i);
 		gf_bs_write_int(bs, sl->size, 16);
 		gf_bs_write_data(bs, sl->data, sl->size);
 	}
 	count = gf_list_count(cfg->pictureParameterSets);
 	gf_bs_write_int(bs, count, 8);
-	for (i=0; i<count; i++) {
+	for (i = 0; i<count; i++) {
 		GF_AVCConfigSlot *sl = (GF_AVCConfigSlot *)gf_list_get(cfg->pictureParameterSets, i);
 		gf_bs_write_int(bs, sl->size, 16);
 		gf_bs_write_data(bs, sl->data, sl->size);
 	}
+	if (gf_avc_is_rext_profile(cfg->AVCProfileIndication)) {
+		gf_bs_write_int(bs, 0xFF, 6);
+		gf_bs_write_int(bs, cfg->chroma_format, 2);
+		gf_bs_write_int(bs, 0xFF, 5);
+		gf_bs_write_int(bs, cfg->luma_bit_depth - 8, 3);
+		gf_bs_write_int(bs, 0xFF, 5);
+		gf_bs_write_int(bs, cfg->chroma_bit_depth - 8, 3);
 
+		count = cfg->sequenceParameterSetExtensions ? gf_list_count(cfg->sequenceParameterSetExtensions) : 0;
+		gf_bs_write_u8(bs, count);
+		for (i = 0; i<count; i++) {
+			GF_AVCConfigSlot *sl = (GF_AVCConfigSlot *)gf_list_get(cfg->sequenceParameterSetExtensions, i);
+			gf_bs_write_u16(bs, sl->size);
+			gf_bs_write_data(bs, sl->data, sl->size);
+		}
+	}
 	*outSize = 0;
 	*outData = NULL;
 	gf_bs_get_content(bs, outData, outSize);
@@ -552,14 +617,14 @@ GF_AVCConfig *gf_odf_avc_cfg_read(char *dsi, u32 dsi_size)
 	GF_AVCConfig *avcc = gf_odf_avc_cfg_new();
 	GF_BitStream *bs = gf_bs_new(dsi, dsi_size, GF_BITSTREAM_READ);
 	avcc->configurationVersion = gf_bs_read_int(bs, 8);
-	avcc->AVCProfileIndication  = gf_bs_read_int(bs, 8);
+	avcc->AVCProfileIndication = gf_bs_read_int(bs, 8);
 	avcc->profile_compatibility = gf_bs_read_int(bs, 8);
-	avcc->AVCLevelIndication  = gf_bs_read_int(bs, 8);
+	avcc->AVCLevelIndication = gf_bs_read_int(bs, 8);
 	gf_bs_read_int(bs, 6);
 	avcc->nal_unit_size = 1 + gf_bs_read_int(bs, 2);
 	gf_bs_read_int(bs, 3);
 	count = gf_bs_read_int(bs, 5);
-	for (i=0; i<count; i++) {
+	for (i = 0; i<count; i++) {
 		GF_AVCConfigSlot *sl = (GF_AVCConfigSlot *)gf_malloc(sizeof(GF_AVCConfigSlot));
 		sl->size = gf_bs_read_int(bs, 16);
 		sl->data = (char*)gf_malloc(sizeof(char)*sl->size);
@@ -567,13 +632,35 @@ GF_AVCConfig *gf_odf_avc_cfg_read(char *dsi, u32 dsi_size)
 		gf_list_add(avcc->sequenceParameterSets, sl);
 	}
 	count = gf_bs_read_int(bs, 8);
-	for (i=0; i<count; i++) {
+	for (i = 0; i<count; i++) {
 		GF_AVCConfigSlot *sl = (GF_AVCConfigSlot *)gf_malloc(sizeof(GF_AVCConfigSlot));
 		sl->size = gf_bs_read_int(bs, 16);
 		sl->data = (char*)gf_malloc(sizeof(char)*sl->size);
 		gf_bs_read_data(bs, sl->data, sl->size);
 		gf_list_add(avcc->pictureParameterSets, sl);
 	}
+	if (gf_avc_is_rext_profile(avcc->AVCProfileIndication)) {
+		gf_bs_read_int(bs, 6);
+		avcc->chroma_format = gf_bs_read_int(bs, 2);
+		gf_bs_read_int(bs, 5);
+		avcc->luma_bit_depth = 8 + gf_bs_read_int(bs, 3);
+		gf_bs_read_int(bs, 5);
+		avcc->chroma_bit_depth = 8 + gf_bs_read_int(bs, 3);
+
+		count = gf_bs_read_int(bs, 8);
+		if (count) {
+			avcc->sequenceParameterSetExtensions = gf_list_new();
+			for (i = 0; i<count; i++) {
+				GF_AVCConfigSlot *sl = (GF_AVCConfigSlot *)gf_malloc(sizeof(GF_AVCConfigSlot));
+				sl->size = gf_bs_read_u16(bs);
+				sl->data = (char *)gf_malloc(sizeof(char) * sl->size);
+				gf_bs_read_data(bs, sl->data, sl->size);
+				gf_list_add(avcc->sequenceParameterSetExtensions, sl);
+			}
+		}
+	}
+
+
 	gf_bs_del(bs);
 	return avcc;
 }
@@ -581,16 +668,16 @@ GF_AVCConfig *gf_odf_avc_cfg_read(char *dsi, u32 dsi_size)
 
 GF_Descriptor *gf_odf_new_tx3g()
 {
-	GF_TextSampleDescriptor *newDesc = (GF_TextSampleDescriptor*) gf_malloc(sizeof(GF_TextSampleDescriptor));
+	GF_TextSampleDescriptor *newDesc = (GF_TextSampleDescriptor*)gf_malloc(sizeof(GF_TextSampleDescriptor));
 	if (!newDesc) return NULL;
 	memset(newDesc, 0, sizeof(GF_TextSampleDescriptor));
 	newDesc->tag = GF_ODF_TX3G_TAG;
-	return (GF_Descriptor *) newDesc;
+	return (GF_Descriptor *)newDesc;
 }
 GF_Err gf_odf_del_tx3g(GF_TextSampleDescriptor *sd)
 {
 	u32 i;
-	for (i=0; i<sd->font_count; i++) 
+	for (i = 0; i<sd->font_count; i++)
 		if (sd->fonts[i].fontName) gf_free(sd->fonts[i].fontName);
 	gf_free(sd->fonts);
 	gf_free(sd);
@@ -600,7 +687,7 @@ GF_Err gf_odf_del_tx3g(GF_TextSampleDescriptor *sd)
 /*TextConfig*/
 GF_Descriptor *gf_odf_new_text_cfg()
 {
-	GF_TextConfig *newDesc = (GF_TextConfig*) gf_malloc(sizeof(GF_TextConfig));
+	GF_TextConfig *newDesc = (GF_TextConfig*)gf_malloc(sizeof(GF_TextConfig));
 	if (!newDesc) return NULL;
 	memset(newDesc, 0, sizeof(GF_TextConfig));
 	newDesc->tag = GF_ODF_TEXT_CFG_TAG;
@@ -609,7 +696,7 @@ GF_Descriptor *gf_odf_new_text_cfg()
 	newDesc->MPEGExtendedFormat = 0x10;
 	newDesc->profileLevel = 0x10;
 	newDesc->timescale = 1000;
-	return (GF_Descriptor *) newDesc;
+	return (GF_Descriptor *)newDesc;
 }
 
 void ResetTextConfig(GF_TextConfig *desc)
@@ -622,7 +709,7 @@ void ResetTextConfig(GF_TextConfig *desc)
 	}
 	bck = desc->sample_descriptions;
 	memset(desc, 0, sizeof(GF_TextConfig));
-	desc->tag = GF_ODF_TEXT_CFG_TAG;	
+	desc->tag = GF_ODF_TEXT_CFG_TAG;
 	desc->sample_descriptions = bck;
 }
 
@@ -639,8 +726,12 @@ GF_Err gf_odf_del_text_cfg(GF_TextConfig *desc)
 GF_EXPORT
 GF_Err gf_odf_get_text_config(GF_DefaultDescriptor *dsi, u8 oti, GF_TextConfig *cfg)
 {
-	u32 i, j;
-	Bool has_alt_format, has_sd;
+	u32 i;
+	Bool has_alt_format;
+#ifndef GPAC_DISABLE_ISOM
+	Bool has_sd;
+	u32 j;
+#endif
 	GF_Err e;
 	GF_BitStream *bs;
 	if (!dsi || !dsi->data || !dsi->dataLength || !cfg) return GF_BAD_PARAM;
@@ -655,17 +746,21 @@ GF_Err gf_odf_get_text_config(GF_DefaultDescriptor *dsi, u8 oti, GF_TextConfig *
 	cfg->MPEGExtendedFormat = gf_bs_read_int(bs, 8);
 	cfg->profileLevel = gf_bs_read_int(bs, 8);
 	cfg->timescale = gf_bs_read_int(bs, 24);
-	has_alt_format = gf_bs_read_int(bs, 1);
+	has_alt_format = (Bool)gf_bs_read_int(bs, 1);
 	cfg->sampleDescriptionFlags = gf_bs_read_int(bs, 2);
-	has_sd = gf_bs_read_int(bs, 1);
-	cfg->has_vid_info = gf_bs_read_int(bs, 1);
+#ifndef GPAC_DISABLE_ISOM
+	has_sd = (Bool)gf_bs_read_int(bs, 1);
+#else
+	gf_bs_read_int(bs, 1);
+#endif
+	cfg->has_vid_info = (Bool)gf_bs_read_int(bs, 1);
 	gf_bs_read_int(bs, 3);
 	cfg->layer = gf_bs_read_int(bs, 8);
 	cfg->text_width = gf_bs_read_int(bs, 16);
 	cfg->text_height = gf_bs_read_int(bs, 16);
 	if (has_alt_format) {
 		cfg->nb_compatible_formats = gf_bs_read_int(bs, 8);
-		for (i=0; i<cfg->nb_compatible_formats; i++) cfg->compatible_formats[i] = gf_bs_read_int(bs, 8);
+		for (i = 0; i<cfg->nb_compatible_formats; i++) cfg->compatible_formats[i] = gf_bs_read_int(bs, 8);
 	}
 #ifndef GPAC_DISABLE_ISOM
 	if (has_sd) {
@@ -676,13 +771,13 @@ GF_Err gf_odf_get_text_config(GF_DefaultDescriptor *dsi, u8 oti, GF_TextConfig *
 		u32 nb_desc = gf_bs_read_int(bs, 8);
 
 		/*parse TTU[5]s*/
-		avail = (s64) gf_bs_available(bs);
-		for (i=0; i<nb_desc; i++) {
+		avail = (s64)gf_bs_available(bs);
+		for (i = 0; i<nb_desc; i++) {
 			sample_index = gf_bs_read_int(bs, 8);
 			avail -= 1;
-			e = gf_isom_parse_box((GF_Box **) &a, bs);
+			e = gf_isom_parse_box((GF_Box **)&a, bs);
 			if (e) goto exit;
-			avail -= (s32) a->size;
+			avail -= (s32)a->size;
 
 			if (avail<0) {
 				e = GF_NON_COMPLIANT_BITSTREAM;
@@ -699,7 +794,7 @@ GF_Err gf_odf_get_text_config(GF_DefaultDescriptor *dsi, u8 oti, GF_TextConfig *
 			txdesc->font_count = a->font_table ? a->font_table->entry_count : 0;
 			if (txdesc->font_count) {
 				txdesc->fonts = (GF_FontRecord*)gf_malloc(sizeof(GF_FontRecord)*txdesc->font_count);
-				for (j=0; j<txdesc->font_count; j++) {
+				for (j = 0; j<txdesc->font_count; j++) {
 					txdesc->fonts[j].fontID = a->font_table->fonts[j].fontID;
 					txdesc->fonts[j].fontName = a->font_table->fonts[j].fontName ? gf_strdup(a->font_table->fonts[j].fontName) : NULL;
 				}
@@ -716,11 +811,221 @@ GF_Err gf_odf_get_text_config(GF_DefaultDescriptor *dsi, u8 oti, GF_TextConfig *
 		cfg->horiz_offset = gf_bs_read_int(bs, 16);
 		cfg->vert_offset = gf_bs_read_int(bs, 16);
 	}
-	
-exit:
+
+#ifndef GPAC_DISABLE_ISOM
+	exit :
+#endif
+		 gf_bs_del(bs);
+		 if (e) ResetTextConfig(cfg);
+		 return e;
+}
+
+
+
+GF_EXPORT
+GF_HEVCConfig *gf_odf_hevc_cfg_new()
+{
+	GF_HEVCConfig *cfg;
+	GF_SAFEALLOC(cfg, GF_HEVCConfig);
+	if (!cfg) return NULL;
+	cfg->param_array = gf_list_new();
+	cfg->nal_unit_size = 4;
+	return cfg;
+}
+
+GF_EXPORT
+void gf_odf_hevc_cfg_del(GF_HEVCConfig *cfg)
+{
+	if (!cfg) return;
+	while (gf_list_count(cfg->param_array)) {
+		GF_HEVCParamArray *pa = (GF_HEVCParamArray*)gf_list_get(cfg->param_array, 0);
+		gf_list_rem(cfg->param_array, 0);
+
+		while (gf_list_count(pa->nalus)) {
+			GF_AVCConfigSlot *n = (GF_AVCConfigSlot*)gf_list_get(pa->nalus, 0);
+			gf_list_rem(pa->nalus, 0);
+			if (n->data) gf_free(n->data);
+			gf_free(n);
+		}
+		gf_list_del(pa->nalus);
+		gf_free(pa);
+	}
+	gf_list_del(cfg->param_array);
+	gf_free(cfg);
+}
+
+GF_EXPORT
+GF_Err gf_odf_hevc_cfg_write_bs(GF_HEVCConfig *cfg, GF_BitStream *bs)
+{
+	u32 i, count;
+
+	gf_bs_write_int(bs, cfg->configurationVersion, 8);
+
+	if (!cfg->is_lhvc) {
+		gf_bs_write_int(bs, cfg->profile_space, 2);
+		gf_bs_write_int(bs, cfg->tier_flag, 1);
+		gf_bs_write_int(bs, cfg->profile_idc, 5);
+		gf_bs_write_int(bs, cfg->general_profile_compatibility_flags, 32);
+		gf_bs_write_int(bs, cfg->progressive_source_flag, 1);
+		gf_bs_write_int(bs, cfg->interlaced_source_flag, 1);
+		gf_bs_write_int(bs, cfg->non_packed_constraint_flag, 1);
+		gf_bs_write_int(bs, cfg->frame_only_constraint_flag, 1);
+		/*only lowest 44 bits used*/
+		gf_bs_write_long_int(bs, cfg->constraint_indicator_flags, 44);
+		gf_bs_write_int(bs, cfg->level_idc, 8);
+	}
+
+	gf_bs_write_int(bs, 0xFF, 4);
+	gf_bs_write_int(bs, cfg->min_spatial_segmentation_idc, 12);
+
+	gf_bs_write_int(bs, 0xFF, 6);
+	gf_bs_write_int(bs, cfg->parallelismType, 2);
+
+	if (!cfg->is_lhvc) {
+		gf_bs_write_int(bs, 0xFF, 6);
+		gf_bs_write_int(bs, cfg->chromaFormat, 2);
+		gf_bs_write_int(bs, 0xFF, 5);
+		gf_bs_write_int(bs, cfg->luma_bit_depth - 8, 3);
+		gf_bs_write_int(bs, 0xFF, 5);
+		gf_bs_write_int(bs, cfg->chroma_bit_depth - 8, 3);
+		gf_bs_write_int(bs, cfg->avgFrameRate, 16);
+	}
+
+	if (!cfg->is_lhvc)
+		gf_bs_write_int(bs, cfg->constantFrameRate, 2);
+	else
+		gf_bs_write_int(bs, 0xFF, 2);
+
+	gf_bs_write_int(bs, cfg->numTemporalLayers, 3);
+	gf_bs_write_int(bs, cfg->temporalIdNested, 1);
+	gf_bs_write_int(bs, cfg->nal_unit_size - 1, 2);
+
+	count = gf_list_count(cfg->param_array);
+	gf_bs_write_int(bs, count, 8);
+	for (i = 0; i<count; i++) {
+		u32 nalucount, j;
+		GF_HEVCParamArray *ar = (GF_HEVCParamArray*)gf_list_get(cfg->param_array, i);
+		gf_bs_write_int(bs, ar->array_completeness, 1);
+		gf_bs_write_int(bs, 0, 1);
+		gf_bs_write_int(bs, ar->type, 6);
+		nalucount = gf_list_count(ar->nalus);
+		gf_bs_write_int(bs, nalucount, 16);
+		for (j = 0; j<nalucount; j++) {
+			GF_AVCConfigSlot *sl = (GF_AVCConfigSlot *)gf_list_get(ar->nalus, j);
+			gf_bs_write_int(bs, sl->size, 16);
+			gf_bs_write_data(bs, sl->data, sl->size);
+		}
+	}
+	return GF_OK;
+}
+
+GF_EXPORT
+GF_Err gf_odf_hevc_cfg_write(GF_HEVCConfig *cfg, char **outData, u32 *outSize)
+{
+	GF_Err e;
+	GF_BitStream *bs = gf_bs_new(NULL, 0, GF_BITSTREAM_WRITE);
+	*outSize = 0;
+	*outData = NULL;
+	e = gf_odf_hevc_cfg_write_bs(cfg, bs);
+	if (e == GF_OK)
+		gf_bs_get_content(bs, outData, outSize);
+
 	gf_bs_del(bs);
-	if (e) ResetTextConfig(cfg);
 	return e;
+}
+
+GF_EXPORT
+GF_HEVCConfig *gf_odf_hevc_cfg_read_bs(GF_BitStream *bs, Bool is_lhvc)
+{
+	u32 i, count;
+	GF_HEVCConfig *cfg = gf_odf_hevc_cfg_new();
+
+	cfg->is_lhvc = is_lhvc;
+
+	cfg->configurationVersion = gf_bs_read_int(bs, 8);
+
+	if (!is_lhvc) {
+		cfg->profile_space = gf_bs_read_int(bs, 2);
+		cfg->tier_flag = gf_bs_read_int(bs, 1);
+		cfg->profile_idc = gf_bs_read_int(bs, 5);
+		cfg->general_profile_compatibility_flags = gf_bs_read_int(bs, 32);
+
+		cfg->progressive_source_flag = gf_bs_read_int(bs, 1);
+		cfg->interlaced_source_flag = gf_bs_read_int(bs, 1);
+		cfg->non_packed_constraint_flag = gf_bs_read_int(bs, 1);
+		cfg->frame_only_constraint_flag = gf_bs_read_int(bs, 1);
+		/*only lowest 44 bits used*/
+		cfg->constraint_indicator_flags = gf_bs_read_long_int(bs, 44);
+		cfg->level_idc = gf_bs_read_int(bs, 8);
+	}
+
+	gf_bs_read_int(bs, 4); //reserved
+	cfg->min_spatial_segmentation_idc = gf_bs_read_int(bs, 12);
+
+	gf_bs_read_int(bs, 6);//reserved
+	cfg->parallelismType = gf_bs_read_int(bs, 2);
+
+	if (!is_lhvc) {
+		gf_bs_read_int(bs, 6);
+		cfg->chromaFormat = gf_bs_read_int(bs, 2);
+		gf_bs_read_int(bs, 5);
+		cfg->luma_bit_depth = gf_bs_read_int(bs, 3) + 8;
+		gf_bs_read_int(bs, 5);
+		cfg->chroma_bit_depth = gf_bs_read_int(bs, 3) + 8;
+		cfg->avgFrameRate = gf_bs_read_int(bs, 16);
+	}
+
+	if (!is_lhvc)
+		cfg->constantFrameRate = gf_bs_read_int(bs, 2);
+	else
+		gf_bs_read_int(bs, 2); //reserved
+
+	cfg->numTemporalLayers = gf_bs_read_int(bs, 3);
+	cfg->temporalIdNested = gf_bs_read_int(bs, 1);
+
+	cfg->nal_unit_size = 1 + gf_bs_read_int(bs, 2);
+
+	count = gf_bs_read_int(bs, 8);
+	for (i = 0; i<count; i++) {
+		u32 nalucount, j;
+		GF_HEVCParamArray *ar;
+		GF_SAFEALLOC(ar, GF_HEVCParamArray);
+		if (!ar) {
+			gf_odf_hevc_cfg_del(cfg);
+			return NULL;
+		}
+		ar->nalus = gf_list_new();
+		gf_list_add(cfg->param_array, ar);
+
+		ar->array_completeness = gf_bs_read_int(bs, 1);
+		gf_bs_read_int(bs, 1);
+		ar->type = gf_bs_read_int(bs, 6);
+		nalucount = gf_bs_read_int(bs, 16);
+		for (j = 0; j<nalucount; j++) {
+			GF_AVCConfigSlot *sl;
+			GF_SAFEALLOC(sl, GF_AVCConfigSlot);
+			if (!sl) {
+				gf_odf_hevc_cfg_del(cfg);
+				return NULL;
+			}
+
+			sl->size = gf_bs_read_int(bs, 16);
+
+			sl->data = (char *)gf_malloc(sizeof(char) * sl->size);
+			gf_bs_read_data(bs, sl->data, sl->size);
+			gf_list_add(ar->nalus, sl);
+		}
+	}
+	return cfg;
+}
+
+GF_EXPORT
+GF_HEVCConfig *gf_odf_hevc_cfg_read(char *dsi, u32 dsi_size, Bool is_lhvc)
+{
+	GF_BitStream *bs = gf_bs_new(dsi, dsi_size, GF_BITSTREAM_READ);
+	GF_HEVCConfig *cfg = gf_odf_hevc_cfg_read_bs(bs, is_lhvc);
+	gf_bs_del(bs);
+	return cfg;
 }
 
 GF_EXPORT
@@ -781,16 +1086,16 @@ const char *gf_esd_get_textual_description(GF_ESD *esd)
 		case GPAC_OTI_SCENE_BIFS_EXTENDED:
 			return "MPEG-4 Extended BIFS Scene Description";
 		case GPAC_OTI_SCENE_AFX:
-			if (!esd->decoderConfig->decoderSpecificInfo || !esd->decoderConfig->decoderSpecificInfo->data) 
+			if (!esd->decoderConfig->decoderSpecificInfo || !esd->decoderConfig->decoderSpecificInfo->data)
 				return "AFX Unknown";
 			return gf_afx_get_type_description(esd->decoderConfig->decoderSpecificInfo->data[0]);
 		case GPAC_OTI_SCENE_LASER:
-			{
-				GF_LASERConfig l_cfg;
-				gf_odf_get_laser_config(esd->decoderConfig->decoderSpecificInfo, &l_cfg);
-				if (! l_cfg.newSceneIndicator ) return "LASeR Scene Segment Description";
-			}
-			return "LASeR Scene Description";
+		{
+			GF_LASERConfig l_cfg;
+			gf_odf_get_laser_config(esd->decoderConfig->decoderSpecificInfo, &l_cfg);
+			if (!l_cfg.newSceneIndicator) return "LASeR Scene Segment Description";
+		}
+		return "LASeR Scene Description";
 		case GPAC_OTI_SCENE_SYNTHESIZED_TEXTURE:
 			return "MPEG-4 Synthesized Texture";
 		case GPAC_OTI_SCENE_SAF:
@@ -827,8 +1132,14 @@ const char *gf_esd_get_textual_description(GF_ESD *esd)
 			return "MPEG-4 Part 2 Video";
 		case GPAC_OTI_VIDEO_AVC:
 			return "MPEG-4 AVC|H264 Video";
+		case GPAC_OTI_VIDEO_SVC:
+			return "MPEG-4 SVC Video";
 		case GPAC_OTI_VIDEO_AVC_PS:
 			return "MPEG-4 AVC|H264 Parameter Set";
+		case GPAC_OTI_VIDEO_HEVC:
+			return "MPEG-H HEVC Video";
+		case GPAC_OTI_VIDEO_LHVC:
+			return "MPEG-H L-HEVC Video";
 		case GPAC_OTI_MEDIA_FFMPEG:
 			return "GPAC FFMPEG Private Video";
 		case GPAC_OTI_VIDEO_SMPTE_VC1:
@@ -852,17 +1163,17 @@ const char *gf_esd_get_textual_description(GF_ESD *esd)
 		case GPAC_OTI_AUDIO_MPEG1:
 			return "MPEG-1 Audio";
 		case GPAC_OTI_AUDIO_AAC_MPEG4:
-			{
+		{
 #ifdef GPAC_DISABLE_AV_PARSERS
-				return "MPEG-4 AAC";
+			return "MPEG-4 AAC";
 #else
-				GF_M4ADecSpecInfo a_cfg;
-				if (!esd->decoderConfig->decoderSpecificInfo) return "MPEG-4 AAC";
-				gf_m4a_get_config(esd->decoderConfig->decoderSpecificInfo->data, esd->decoderConfig->decoderSpecificInfo->dataLength, &a_cfg);
-				return gf_m4a_object_type_name(a_cfg.base_object_type);
+			GF_M4ADecSpecInfo a_cfg;
+			if (!esd->decoderConfig->decoderSpecificInfo) return "MPEG-4 AAC";
+			gf_m4a_get_config(esd->decoderConfig->decoderSpecificInfo->data, esd->decoderConfig->decoderSpecificInfo->dataLength, &a_cfg);
+			return gf_m4a_object_type_name(a_cfg.base_object_type);
 #endif
-			}
-			break;
+		}
+		break;
 		case GPAC_OTI_MEDIA_FFMPEG:
 			return "GPAC FFMPEG Private Audio";
 		case GPAC_OTI_AUDIO_EVRC_VOICE:
@@ -871,7 +1182,7 @@ const char *gf_esd_get_textual_description(GF_ESD *esd)
 			return "SMV Voice";
 		case GPAC_OTI_AUDIO_AC3:
 			return "AC-3 audio";
-		case GPAC_OTI_AUDIO_AC3_ENHANCED:
+		case GPAC_OTI_AUDIO_EAC3:
 			return "Enhanced AC-3 Audio";
 		case GPAC_OTI_AUDIO_DRA:
 			return "DRA Audio";
@@ -909,30 +1220,30 @@ const char *gf_esd_get_textual_description(GF_ESD *esd)
 	case GF_STREAM_PRIVATE_SCENE:
 		switch (esd->decoderConfig->objectTypeIndication) {
 		case GPAC_OTI_PRIVATE_SCENE_GENERIC:
-			{
-				char *ext = strchr(esd->decoderConfig->decoderSpecificInfo->data + 4, '.');
-				if (!ext) return "GPAC Internal Scene Description";
-				ext += 1;
-				if (!strnicmp(ext, "bt", 2))
-					return "BT Scene Description";
-				if (!strnicmp(ext, "xmt", 2))
-					return "XMT Scene Description";
-				if (!strnicmp(ext, "wrl", 3))
-					return "VRML Scene Description";
-				if (!strnicmp(ext, "x3d", 3))
-					return "W3D Scene Description";
-				if (!strnicmp(ext, "x3dv", 4))
-					return "X3D Scene Description";
-				if (!strnicmp(ext, "swf", 3))
-					return "Flash (SWF) Scene Description";
-				if (!strnicmp(ext, "xsr", 3))
-					return "LASeR-ML Scene Description";
-				if (!strnicmp(ext, "wgt", 3))
-					return "W3C Widget Package";
-				if (!strnicmp(ext, "mgt", 3))
-					return "MPEG-U Widget Package";
-			}
-			return "GPAC Internal Scene Description";
+		{
+			char *ext = strchr(esd->decoderConfig->decoderSpecificInfo->data + 4, '.');
+			if (!ext) return "GPAC Internal Scene Description";
+			ext += 1;
+			if (!strnicmp(ext, "bt", 2))
+				return "BT Scene Description";
+			if (!strnicmp(ext, "xmt", 2))
+				return "XMT Scene Description";
+			if (!strnicmp(ext, "wrl", 3))
+				return "VRML Scene Description";
+			if (!strnicmp(ext, "x3d", 3))
+				return "W3D Scene Description";
+			if (!strnicmp(ext, "x3dv", 4))
+				return "X3D Scene Description";
+			if (!strnicmp(ext, "swf", 3))
+				return "Flash (SWF) Scene Description";
+			if (!strnicmp(ext, "xsr", 3))
+				return "LASeR-ML Scene Description";
+			if (!strnicmp(ext, "wgt", 3))
+				return "W3C Widget Package";
+			if (!strnicmp(ext, "mgt", 3))
+				return "MPEG-U Widget Package";
+		}
+		return "GPAC Internal Scene Description";
 		case GPAC_OTI_PRIVATE_SCENE_SVG:
 			return "SVG";
 		case GPAC_OTI_PRIVATE_SCENE_LASER:

@@ -33,7 +33,7 @@ uint32_t asf_readval(void *val, int ltype)
 			rval = *((uint32_t*)val);
 			break;
 		default:
-			fatal (CCX_COMMON_EXIT_BUG_BUG, "Wrong type ...\n");
+			fatal (CCX_COMMON_EXIT_BUG_BUG, "In asf_readval(): Invalid ltype, cannot continue processing this stream.\n");
 			break;
 	}
 	return rval;
@@ -190,7 +190,7 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		if (asf_data_container.HeaderObjectSize > asf_data_container.parsebufsize) {
 			asf_data_container.parsebuf = (unsigned char*)realloc(asf_data_container.parsebuf, (size_t)asf_data_container.HeaderObjectSize);
 			if (!asf_data_container.parsebuf)
-				fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In asf_getmoredata: Out of memory requesting buffer for data container.");
 			asf_data_container.parsebufsize = (long)asf_data_container.HeaderObjectSize;
 		}
 
@@ -263,7 +263,7 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 					unsigned char *header_current_position=current_position+46;
 
 					if ( header_extension_data_size != hpobjectsize - 46 )
-						fatal(EXIT_NOT_CLASSIFIED, "header_extension_data_size size wrong");
+						fatal(EXIT_NOT_CLASSIFIED, "In asf_getmoredata: Incorrect HeaderExtensionDataSize value, cannot continue.");
 
 					dbg_print(CCX_DMT_PARSE, "\nReading Header Extension Sub-Objects\n");
 					while( header_current_position < current_position+46 + header_extension_data_size )
@@ -285,7 +285,7 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 									stream_number, stream_name_count, payload_ext_system_count);
 
 							if ( stream_number >= STREAMNUM )
-								fatal(CCX_COMMON_EXIT_BUG_BUG, "STREAMNUM too small. Send bug report!/n");
+								fatal(CCX_COMMON_EXIT_BUG_BUG, "In asf_getmoredata: STREAMNUM too small. Please file a bug report in GitHub.\n");
 
 							for(int i=0; i<stream_name_count; i++)
 							{
@@ -297,7 +297,7 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 							int ext_system_info_length;
 
 							if ( payload_ext_system_count > PAYEXTNUM )
-								fatal(CCX_COMMON_EXIT_BUG_BUG, "PAYEXTNUM too small. Send bug report!/n");
+								fatal(CCX_COMMON_EXIT_BUG_BUG, "In asf_getmoredata: PAYEXTNUM too small. Please file a bug report in GitHub.\n");
 
 							for(int i=0; i<payload_ext_system_count; i++)
 							{
@@ -467,7 +467,7 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 							dbg_print(CCX_DMT_PARSE, "%u (WORD)\n",(int)*((uint16_t*)extended_description_value));
 							break;
 						default:
-							fatal(CCX_COMMON_EXIT_BUG_BUG, "Wrong type ...\n");
+							fatal(CCX_COMMON_EXIT_BUG_BUG, "In asf_getmoredata: Impossible value for DescriptorValueDataType. Please file a bug report in GitHub.\n");
 							break;
 					}
 
@@ -684,9 +684,9 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 			{
 				asf_data_container.PacketLength = asf_data_container.PacketSize;
 				// For multiple payloads we can get away without a given
-				// Packet Lenght as individual payload length are given
+				// Packet length as individual payload length are given
 				if (asf_data_container.PacketLength == 0 && asf_data_container.MultiplePayloads == 0)
-					fatal(EXIT_NOT_CLASSIFIED, "No idea how long the data packet will be. Abort.\n");
+					fatal(EXIT_NOT_CLASSIFIED, "In asf_getmoredata: Cannot determine packet length. Unable to continue processing this file.\n");
 			}
 
 			dbg_print(CCX_DMT_PARSE, "Lengths - Packet: %d / sequence %d / Padding %d\n",
@@ -764,7 +764,7 @@ int asf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				{
 					asf_data_container.parsebuf = (unsigned char*)realloc(asf_data_container.parsebuf, replicated_length);
 					if (!asf_data_container.parsebuf)
-						fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
+						fatal(EXIT_NOT_ENOUGH_MEMORY, "In asf_getmoredata: Not enough memory for buffer, unable to continue.\n");
 					asf_data_container.parsebufsize = replicated_length;
 				}
 				result = buffered_read(ctx->demux_ctx, asf_data_container.parsebuf, (long)replicated_length);

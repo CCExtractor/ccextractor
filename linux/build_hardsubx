@@ -7,10 +7,11 @@ SRC_ZVBI="$(find ../src/zvbi/ -name '*.c')"
 SRC_CCX="$(find ../src/lib_ccx/ -name '*.c')"
 SRC_GPAC="$(find ../src/gpacmp4/ -name '*.c')"
 SRC_HASH="$(find ../src/lib_hash/ -name '*.c')"
+SRC_UTF8="../src/utf8proc/utf8proc.c"
 SRC_PROTOBUF="$(find ../src/protobuf-c/ -name '*.c')"
 protobuf-c
-BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF"
-BLD_LINKER="-lm -zmuldefs -l tesseract -l lept -L/usr/local/lib -lswscale -lavutil -pthread -lavformat -lavcodec -lxcb-shm -lxcb -lX11 -llzma -lz -lswresample -lavutil"
+BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_UTF8 $SRC_PROTOBUF"
+BLD_LINKER="-lm -zmuldefs -l tesseract -l lept -L/usr/local/lib -lswscale -lavutil -pthread -lavformat -lavcodec -lxcb-shm -lxcb -lX11 -llzma -lz -lswresample"
 
 ./pre-build.sh
 gcc $BLD_FLAGS $BLD_INCLUDE -o ccextractor $BLD_SOURCES $BLD_LINKER
