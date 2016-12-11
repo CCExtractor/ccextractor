@@ -49,10 +49,10 @@
  * generate better code by using them directly rather than
  * using the generic single-entry routines.
  */ 
-  struct list_head
+struct list_head
 {
   struct list_head *next, *prev;
- };
+};
 
 #define LIST_HEAD_INIT(name) \
 {
