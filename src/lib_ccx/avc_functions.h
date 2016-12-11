@@ -1,12 +1,13 @@
 #ifndef AVC_FUNCTION_H
 #define AVC_FUNCTION_H
 
-struct avc_ctx {
+struct avc_ctx
+{
   unsigned char cc_count;
   // buffer to hold cc data
-  unsigned char *cc_data;
+  unsigned char* cc_data;
   long cc_databufsize;
-  int cc_buffer_saved;  // Was the CC buffer saved after it was last updated?
+  int cc_buffer_saved; // Was the CC buffer saved after it was last updated?
 
   int got_seq_para;
   unsigned nal_ref_idc;
@@ -46,10 +47,10 @@ struct avc_ctx {
   LLONG last_slice_pts;
 };
 
-struct avc_ctx *init_avc(void);
-void dinit_avc(struct avc_ctx **ctx);
-void do_NAL(struct lib_cc_decode *ctx, unsigned char *NALstart,
-            LLONG NAL_length, struct cc_subtitle *sub);
-size_t process_avc(struct lib_cc_decode *ctx, unsigned char *avcbuf,
-                   size_t avcbuflen, struct cc_subtitle *sub);
+struct avc_ctx* init_avc(void);
+void dinit_avc(struct avc_ctx** ctx);
+void do_NAL(struct lib_cc_decode* ctx, unsigned char* NALstart,
+            LLONG NAL_length, struct cc_subtitle* sub);
+size_t process_avc(struct lib_cc_decode* ctx, unsigned char* avcbuf,
+                   size_t avcbuflen, struct cc_subtitle* sub);
 #endif
