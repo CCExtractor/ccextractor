@@ -1027,11 +1027,11 @@ name_to_codepage(const char *name)
         return GetACP();
     else if (strcmp(name, "wchar_t") == 0)
         return 1200;
-    else if (_strnicmp(name, "cp", 2) == 0)
+    else if (strnicmp(name, "cp", 2) == 0)
         return atoi(name + 2); /* CP123 */
     else if ('0' <= name[0] && name[0] <= '9')
         return atoi(name);     /* 123 */
-    else if (_strnicmp(name, "xx", 2) == 0)
+    else if (strnicmp(name, "xx", 2) == 0)
         return atoi(name + 2); /* XX123 for debug */
 
     for (i = 0; codepage_alias[i].name != NULL; ++i)

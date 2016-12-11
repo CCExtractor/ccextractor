@@ -253,10 +253,6 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 	// txt=get_ocr_text_wordwise_threshold(ctx, feat_im, ctx->conf_thresh);
 	// if(txt != NULL)printf("%s\n", txt);
 
-	char write_path[100];
-	sprintf(write_path,"./ffmpeg-examples/frames/temp%04d.jpg",timestamp);
-
-	pixWrite(write_path,feat_im,IFF_JFIF_JPEG);
 	pixDestroy(&im);
 	pixDestroy(&edge_im);
 	pixDestroy(&feat_im);

@@ -1,5 +1,5 @@
-Mr. Robot
 Elliot Alderson
+Mr. Robot
 Darlene
 Angela Moss
 Tyrell Wellick
@@ -7,7 +7,28 @@ Joanna Wellick
 Phillip Price
 Federal Bureau of Investigation
 Fun Society
-Dark Army
+Gideon Goddard
+Lloyd Chung
+Ollie Parker
+E Corp
+Evil Corp
+Terry Colby
+Scott Knowles
+Sharon Knowles
+Mr. Sutherland
+Antara Nayar
+Krista Gordon
+Shayla Nico
+Fernando Vera
+Elliot's Mother
+The Hackers
+fsociety
+Romero
+Trenton
+Mobley 
+The Dark Army
+Whiterose
+Cisco
 New York
 Evil Corp Headquarters
 Allsafe Cybersecurity
