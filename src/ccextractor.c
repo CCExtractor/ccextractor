@@ -76,9 +76,9 @@ int main(int argc, char *argv[])
 	else if (!ctx && errno == EINVAL)
 		fatal (CCX_COMMON_EXIT_BUG_BUG, "Invalid option to CCextractor Library\n");
 	else if (!ctx && errno == EPERM)
-		fatal (CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to create Output File\n");
+		fatal (CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to create output file: Operation not permitted.\n");
 	else if (!ctx && errno == EACCES)
-		fatal (CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to create Output File\n");
+		fatal (CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to create output file: Permission denied\n");
 	else if (!ctx)
 		fatal (EXIT_NOT_CLASSIFIED, "Unable to create Library Context %d\n",errno);
 
@@ -367,6 +367,7 @@ int main(int argc, char *argv[])
 			break;
 	} // file loop
 	close_input_file(ctx);
+	free((void *) ctx->extension);
 
 	prepare_for_new_file (ctx); // To reset counters used by handle_end_of_data()
 
