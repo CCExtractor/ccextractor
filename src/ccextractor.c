@@ -85,8 +85,8 @@ int main(int argc, char *argv[])
 #ifdef WITH_LIBCURL
 	curl_global_init(CURL_GLOBAL_ALL);
  
-  	/* get a curl handle */ 
-  	curl = curl_easy_init();
+	/* get a curl handle */ 
+	curl = curl_easy_init();
 	if (!curl)
 	{
 		curl_global_cleanup(); // Must be done even on init fail
@@ -403,7 +403,7 @@ int main(int argc, char *argv[])
 #ifdef CURL
 	if (curl)
 		curl_easy_cleanup(curl);
-  	curl_global_cleanup();
+	curl_global_cleanup();
 #endif
 	dinit_libraries(&ctx);
 

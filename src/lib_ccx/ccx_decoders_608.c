@@ -1098,7 +1098,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 	{
 		return -1;
 	}
-	for (i=0; i < length; i=i+2)
+	for (i=0; i < length; i+=2)
 	{
 		unsigned char hi, lo;
 		int wrote_to_screen=0;
