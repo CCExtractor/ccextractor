@@ -1080,7 +1080,8 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 
 				if (utc_refvalue != UINT64_MAX)
 				{
-					data->start_time += utc_refvalue * 1000;
+					if (data->start_time != -1)
+						data->start_time += utc_refvalue * 1000;
 					data->end_time += utc_refvalue * 1000;
 				}
 
