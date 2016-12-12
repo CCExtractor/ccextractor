@@ -22,8 +22,10 @@ include_directories ("${PROJECT_SOURCE_DIR}")
 include_directories ("${PROJECT_SOURCE_DIR}/lib_ccx")
 include_directories ("${PROJECT_SOURCE_DIR}/utf8proc")
 include_directories ("${PROJECT_SOURCE_DIR}/gpacmp4/")
+include_directories ("${PROJECT_SOURCE_DIR}/protobuf-c/")
 include_directories ("${PROJECT_SOURCE_DIR}/zvbi")
 aux_source_directory ("${PROJECT_SOURCE_DIR}/zvbi" SOURCEFILE)
+aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib" SOURCEFILE)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_hash" SOURCEFILE)
 
 # Adding some platform specific library path
