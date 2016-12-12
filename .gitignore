@@ -1,4 +1,10 @@
 ####
+# Ignore tests tmp files and results
+tests/runtest
+tests/**/*.gcda
+tests/**/*.gcno
+
+####
 # Ignore CVS related files
 
 .CVS
