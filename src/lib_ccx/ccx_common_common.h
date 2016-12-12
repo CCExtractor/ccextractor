@@ -18,6 +18,7 @@
 #define EXIT_MALFORMED_PARAMETER                7
 #define EXIT_READ_ERROR                         8
 #define EXIT_WITH_HELP                          9
+#define EXIT_NO_CAPTIONS                        10
 #define EXIT_NOT_CLASSIFIED                     300
 #define EXIT_ERROR_IN_CAPITALIZATION_FILE       501
 #define EXIT_BUFFER_FULL                        502

@@ -1028,7 +1028,6 @@ struct ccx_s_write *get_output_ctx(struct encoder_ctx *ctx, int lan)
 int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 {
 	int wrote_something = 0;
-	int ret = 0;
 
 	if(!context)
 		return CCX_OK;
@@ -1065,8 +1064,8 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					xds_write_transcript_line_prefix(context, out, data->start_time, data->end_time, data->cur_xds_packet_class);
 					if (data->xds_len > 0)
 					{
-						ret = write(out->fh, data->xds_str, data->xds_len);
-						if (ret < data->xds_len)
+						wrote_something = write(out->fh, data->xds_str, data->xds_len);
+						if (wrote_something < data->xds_len)
 						{
 							mprint("WARNING:Loss of data\n");
 						}
@@ -1191,8 +1190,8 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				net_send_header(sub->data, sub->nb_data);
 			else
 			{
-				ret = write(context->out->fh, sub->data, sub->nb_data);
-				if (ret < sub->nb_data) {
+				wrote_something = write(context->out->fh, sub->data, sub->nb_data);
+				if (wrote_something < sub->nb_data) {
 					mprint("WARNING: Loss of data\n");
 				}
 			}
