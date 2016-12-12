@@ -633,7 +633,7 @@ void delete_datalist(struct demuxer_data *list)
 int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct demuxer_data *data_node)
 {
 	size_t got; // Means 'consumed' from buffer actually
-	int ret = 0;
+	int ret = 0, caps;
 	static LLONG last_pts = 0x01FFFFFFFFLL;
 	struct cc_subtitle *dec_sub = &dec_ctx->dec_sub;
 
@@ -753,10 +753,10 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 
 	if (dec_sub->got_output)
 	{
-		encode_sub(enc_ctx, dec_sub);
+		caps = encode_sub(enc_ctx, dec_sub);
 		dec_sub->got_output = 0;
 	}
-	return CCX_OK;
+	return caps;
 }
 
 void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
@@ -796,13 +796,14 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 		}
 	}
 }
-void general_loop(struct lib_ccx_ctx *ctx)
+int general_loop(struct lib_ccx_ctx *ctx)
 {
 	struct lib_cc_decode *dec_ctx = NULL;
 	enum ccx_stream_mode_enum stream_mode;
 	struct demuxer_data *datalist = NULL;
 	struct demuxer_data *data_node = NULL;
 	int ret;
+	int caps = -1; // Captions found (-1: no)
 
 	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 
@@ -906,8 +907,8 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				}
 				isdb_set_global_time(dec_ctx, tstamp);
 			}
-			ret = process_data(enc_ctx, dec_ctx, data_node);
-			if( ret != CCX_OK)
+			caps = process_data(enc_ctx, dec_ctx, data_node);
+			if (caps == CCX_EINVAL)
 				break;
 		}
 		else
@@ -995,10 +996,11 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		mprint("Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
 				ctx->inputfile[ctx->current_file], ctx->current_file, ctx->demux_ctx->past, ctx->inputsize);
 	}
+	return caps;
 }
 
 // Raw caption with FTS file process
-void rcwt_loop(struct lib_ccx_ctx *ctx)
+int rcwt_loop(struct lib_ccx_ctx *ctx)
 {
 	unsigned char *parsebuf;
 	long parsebufsize = 1024;
@@ -1008,6 +1010,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	LLONG currfts;
 	uint16_t cbcount = 0;
 	int bread = 0; // Bytes read
+	int caps = -1; // Captions found (-1: no)
 	LLONG result;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 		
@@ -1026,7 +1029,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	{
 		mprint("Premature end of file!\n");
 		end_of_file = 1;
-		return;
+		return 0;
 	}
 
 	// Expecting RCWT header
@@ -1124,10 +1127,11 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 		}
 		if (dec_sub->got_output)
 		{
-			encode_sub(enc_ctx, dec_sub);
+			caps = encode_sub(enc_ctx, dec_sub);
 			dec_sub->got_output = 0;
 		}
 	} // end while(1)
 
 	dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
+	return caps;
 }
