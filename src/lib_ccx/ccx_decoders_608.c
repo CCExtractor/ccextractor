@@ -1170,8 +1170,11 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 			context->last_c1 = hi;
 			context->last_c2 = lo;
 			wrote_to_screen = disCommand(hi, lo, context, sub);
-			if(sub->got_output)
+			if (sub->got_output)
+			{
+				i += 2; // Otherwise we woudn't be counting this byte pair
 				break;
+			}
 		}
 		else
 		{

@@ -507,12 +507,12 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 							int ret = 0;
 							int len = atomLength - 8;
 							data += 4;
-
+							char *tdata = data;
 							do {
-								ret = process608((unsigned char *) data, len, dec_ctx,
+								ret = process608((unsigned char *) tdata, len, dec_ctx,
 												 &dec_sub);
 								len -= ret;
-								data += ret;
+								tdata += ret;
 								if (dec_sub.got_output) {
 									encode_sub(enc_ctx, &dec_sub);
 									dec_sub.got_output = 0;
