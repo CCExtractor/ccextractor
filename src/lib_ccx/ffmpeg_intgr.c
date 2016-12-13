@@ -188,7 +188,7 @@ int ff_get_ccframe(void *arg, unsigned char*data, int maxlen)
 	return len;
 }
 
-int ffmpeg_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **ppdata)
+int ffmpeg_get_more_data(struct ccx_demuxer *ctx, struct demuxer_data **ppdata)
 {
 	struct demuxer_data *data;
 	int ret = 0;
