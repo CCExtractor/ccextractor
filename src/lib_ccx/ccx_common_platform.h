@@ -34,7 +34,7 @@
 		#include <direct.h>
 		#define mkdir(path, mode) _mkdir(path)
 		#ifndef snprintf
-			// Added ifndef because VS2013 warns for macro redefinition.
+			// added ifndef because VS2013 warns for macro redefinition.
 			#define snprintf(buf, len, fmt, ...) _snprintf(buf, len, fmt, __VA_ARGS__)
 		#endif
 		#define sleep(sec) Sleep((sec) * 1000)
@@ -57,7 +57,7 @@
 
 	#ifdef _MSC_VER
 		#include "stdintmsc.h"
-		// Don't bug me with strcpy() deprecation warnings
+		// don't bug me with strcpy() deprecation warnings
 		#pragma warning(disable : 4996)
 	#else
 		#include <stdint.h>
@@ -80,7 +80,7 @@
 				#define FSEEK _fseeki64
 				#define FTELL _ftelli64
 			#else
-				// For MinGW
+				// for MinGW
 				#define FSEEK fseeko64
 				#define FTELL ftello64
 			#endif
@@ -107,7 +107,7 @@
 	#endif
 
 	#ifndef O_BINARY
-		#define O_BINARY 0  // Not present in Linux because it's always binary
+		#define O_BINARY 0  // not present in Linux because it's always binary
 	#endif
 
 	typedef int64_t LLONG;
