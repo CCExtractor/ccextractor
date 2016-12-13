@@ -35,3 +35,6 @@ windows/x64/**
 
 # Ctags
 *.tags*
+
+# Vagrant
+.vagrant/
