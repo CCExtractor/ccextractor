@@ -151,7 +151,7 @@ void dinit_libraries( struct lib_ccx_ctx **ctx);
 
 //params.c
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[]);
-void usage (void);
+void print_usage (void);
 int detect_input_file_overwrite(struct lib_ccx_ctx *ctx, const char *output_filename);
 int atoi_hex (char *s);
 int stringztoms (const char *s, struct ccx_boundary_time *bt);
@@ -164,7 +164,7 @@ int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
 void raw_loop (struct lib_ccx_ctx *ctx);
 size_t process_raw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned char *buffer, size_t len);
 void general_loop(struct lib_ccx_ctx *ctx);
-void processhex (char *filename);
+void process_hex (char *filename);
 void rcwt_loop(struct lib_ccx_ctx *ctx);
 
 extern int end_of_file;
@@ -186,8 +186,8 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 // bitstream.c - see bitstream.h
 
 // file_functions.c
-LLONG getfilesize (int in);
-LLONG gettotalfilessize (struct lib_ccx_ctx *ctx);
+LLONG get_file_size (int in);
+LLONG get_total_file_size (struct lib_ccx_ctx *ctx);
 void prepare_for_new_file (struct lib_ccx_ctx *ctx);
 void close_input_file (struct lib_ccx_ctx *ctx);
 int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer);
@@ -241,7 +241,8 @@ void mprint (const char *fmt, ...);
 void sleep_secs (int secs);
 void dump (LLONG mask, unsigned char *start, int l, unsigned long abs_start, unsigned clear_high_bit);
 bool_t in_array(uint16_t *array, uint16_t length, uint16_t element) ;
-int hex2int (char high, char low);
+int hex_to_int (char high, char low);
+int hex_string_to_int(char* string, int len);
 void timestamp_to_srttime(uint64_t timestamp, char *buffer);
 void timestamp_to_smptetttime(uint64_t timestamp, char *buffer);
 int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);

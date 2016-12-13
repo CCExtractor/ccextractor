@@ -362,7 +362,7 @@ int general_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
 }
 #ifdef WTV_DEBUG
 // Hexadecimal dump process
-void processhex (struct lib_ccx_ctx *ctx, char *filename)
+void process_hex (struct lib_ccx_ctx *ctx, char *filename)
 {
 	size_t max=(size_t) ctx->inputsize+1; // Enough for the whole thing. Hex dumps are small so we can be lazy here
 	char *line=(char *) malloc (max);
@@ -397,10 +397,10 @@ void processhex (struct lib_ccx_ctx *ctx, char *filename)
 		{
 			unsigned char high1=c2[1];
 			unsigned char low1=c2[2];
-			int value1=hex2int (high1,low1);
+			int value1=hex_to_int (high1,low1);
 			unsigned char high2=c2[4];
 			unsigned char low2=c2[5];
-			int value2=hex2int (high2,low2);
+			int value2=hex_to_int (high2,low2);
 			buffer[0]=value1;
 			buffer[1]=value2;
 			data->windedx =2;
@@ -440,7 +440,7 @@ void processhex (struct lib_ccx_ctx *ctx, char *filename)
 		{
 			unsigned char high=c2[0];
 			unsigned char low=c2[1];
-			int value=hex2int (high,low);
+			int value=hex_to_int (high,low);
 			if (value==-1)
 				fatal (EXIT_FAILURE, "Incorrect format, unexpected non-hex string.");
 			bytes[i]=value;
