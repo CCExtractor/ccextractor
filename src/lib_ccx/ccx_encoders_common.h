@@ -38,87 +38,98 @@ typedef struct ccx_sbs_utf8_character
  */
 struct encoder_ctx
 {
-	/* common buffer used by all encoder */
+	// common buffer used by all encoder
 	unsigned char *buffer;
-	/* capacity of buffer */
+	// capacity of buffer
 	unsigned int capacity;
-	/* keep count of srt subtitle*/
+	// keep count of srt subtitle
 	unsigned int srt_counter;
 
-	/* Did we write the WebVTT sync header already? */
+	// did we write the WebVTT sync header already?
 	unsigned int wrote_webvtt_sync_header;
 
-	/* Input outputs */
-	/* Flag giving hint that output is send to server through network */
+	// inputs and outputs
+	// flag giving hint that output is send to server through network
 	unsigned int send_to_srv;
-	/* Used only in Spupng output */
+	// used only in Spupng output
 	int multiple_files;
-	/* Used only in Spupng output and creating name of output file*/
+	// used only in Spupng output and creating name of output file
 	char *first_input_file;
-	/* Its array with length of number of languages */
+	// its array with length of number of languages
 	struct ccx_s_write *out;
-	/* number of member in array of write out array */
+	// number of member in array of write out array
 	int nb_out;
-	/* Input file format used in Teletext for exceptional output */
-	unsigned int in_fileformat; //1 =Normal, 2=Teletext
-	/* Keep output file closed when not actually writing to it and start over each time (add headers, etc) */
+	// input file format used in Teletext for exceptional output
+	unsigned int in_fileformat; // 1 =Normal, 2=Teletext
+	// keep output file closed when not actually writing to it and start over each time (add headers, etc)
 	unsigned int keep_output_closed; 
-	/* Force a flush on the file buffer whenever content is written */
+	// force a flush on the file buffer whenever content is written
 	int force_flush;
-	/* Keep track of whether -UCLA used */
+	// keep track of whether -UCLA used
 	int ucla;
 
-	struct ccx_common_timing_ctx *timing; /* Some encoders need access to PTS, such as WebVTT */
+	struct ccx_common_timing_ctx *timing; // some encoders need access to PTS, such as WebVTT
 
-	/* Flag saying BOM to be written in each output file */
+	// flag saying BOM to be written in each output file
 	enum ccx_encoding_type encoding;
-	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
+	enum ccx_output_format write_format; // 0 = Raw, 1 = srt, 2 = SMI
 	int generates_file;
-	struct ccx_encoders_transcript_format *transcript_settings; // Keeps the settings for generating transcript output files.
+	// keeps the settings for generating transcript output files
+	struct ccx_encoders_transcript_format *transcript_settings;
 	int no_bom;
-	int sentence_cap ; // FIX CASE? = Fix case?
+	// FIX CASE? = Fix case?
+	int sentence_cap ;
 
-	int trim_subs; // "    Remove spaces at sides?    "
-	int autodash; // Add dashes (-) before each speaker automatically?
+	// remove spaces at sides?   
+	int trim_subs;
+	// add dashes (-) before each speaker automatically?
+	int autodash;
 	int no_font_color;
 	int no_type_setting;
-	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
-	unsigned char *subline; // Temp storage for storing each line
+	// if 1, output in stderr progress updates so the GUI can grab them
+	int gui_mode_reports;
+	// temp storage for storing each line
+	unsigned char *subline;
 	int extract;
 
-	int dtvcc_extract; //1 or 0 depending if we have to handle dtvcc
+	// 1 or 0 depending if we have to handle dtvcc
+	int dtvcc_extract;
 	ccx_dtvcc_writer_ctx dtvcc_writers[CCX_DTVCC_MAX_SERVICES];
 
-	/* Timing related variables*/
-	/* start time of previous sub */
+	/**
+	 * Timing related variables
+	 */
+	// start time of previous sub
 	LLONG prev_start;
 	LLONG subs_delay;
 	LLONG last_displayed_subs_ms;
 	enum ccx_output_date_format date_format;
 	char millis_separator;
 
-	/* Credit stuff */
+	// credit stuff
 	int startcredits_displayed;
 	char *start_credits_text;
 	char *end_credits_text;
-	struct ccx_boundary_time startcreditsnotbefore, startcreditsnotafter; // Where to insert start credits, if possible
-	struct ccx_boundary_time startcreditsforatleast, startcreditsforatmost; // How long to display them?
+	struct ccx_boundary_time startcreditsnotbefore, startcreditsnotafter; // where to insert start credits, if possible
+	struct ccx_boundary_time startcreditsforatleast, startcreditsforatmost; // how long to display them?
 	struct ccx_boundary_time endcreditsforatleast, endcreditsforatmost;
 
-	// Preencoded strings
+	// preencoded strings
 	unsigned char encoded_crlf[16];
 	unsigned int encoded_crlf_length;
 	unsigned char encoded_br[16];
 	unsigned int encoded_br_length;
 
-	int new_sentence; // Capitalize next letter?
+	// capitalize next letter?
+	int new_sentence;
 
 	int program_number;
 	struct list_head list;
 
-	/* split-by-sentence stuff */
+	// split-by-sentence stuff
 	int splitbysentence;
-	LLONG sbs_newblock_start_time; // Used by the split-by-sentence code to know when the current block starts...
+	// used by the split-by-sentence code to know when the current block starts...
+	LLONG sbs_newblock_start_time;
 	LLONG sbs_newblock_end_time; // ... and ends
 	ccx_sbs_utf8_character *sbs_newblock;
 	int sbs_newblock_capacity;
@@ -202,11 +213,18 @@ int write_cc_bitmap_as_libcurl         (struct cc_subtitle *sub, struct encoder_
 
 
 void set_encoder_last_displayed_subs_ms(struct encoder_ctx *ctx, LLONG last_displayed_subs_ms);
-void set_encoder_subs_delay(struct encoder_ctx *ctx, LLONG subs_delay);
+void set_encoder_subs_delay	       (struct encoder_ctx *ctx, LLONG subs_delay);
 void set_encoder_startcredits_displayed(struct encoder_ctx *ctx, int startcredits_displayed);
-void set_encoder_rcwt_fileformat(struct encoder_ctx *ctx, short int format);
+void set_encoder_rcwt_fileformat       (struct encoder_ctx *ctx, short int format);
 
-void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank, int max_len);
-int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_subs,
-	enum ccx_encoding_type in_enc, enum ccx_encoding_type out_enc, int max_len);
+void find_limit_characters	       (unsigned char *line,
+					int *first_non_blank,
+					int *last_non_blank,
+					int max_len);
+int get_str_basic       	       (unsigned char *out_buffer,
+					unsigned char *in_buffer,
+					int trim_subs,
+					enum ccx_encoding_type in_enc,
+					enum ccx_encoding_type out_enc,
+					int max_len);
 #endif
