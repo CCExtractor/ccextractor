@@ -13,22 +13,22 @@
 #ifdef ENABLE_SHARING
 
 typedef struct _ccx_sub_entries {
-	CcxSubEntryMessage *messages;
-	unsigned int count;
+  CcxSubEntryMessage *messages;
+  unsigned int count;
 } ccx_sub_entries;
 
 typedef struct _ccx_share_service_ctx {
-	LLONG counter;
-	char *stream_name;
-	int nn_sock;
-	int nn_binder;
+  LLONG counter;
+  char *stream_name;
+  int nn_sock;
+  int nn_binder;
 } ccx_share_service_ctx;
 
 extern ccx_share_service_ctx ccx_share_ctx;
 
 typedef enum _ccx_share_status {
-	CCX_SHARE_OK = 0,
-	CCX_SHARE_FAIL
+  CCX_SHARE_OK = 0,
+  CCX_SHARE_FAIL
 } ccx_share_status;
 
 void ccx_sub_entry_message_cleanup(CcxSubEntryMessage *);
@@ -43,9 +43,10 @@ ccx_share_status ccx_share_start(const char *);
 ccx_share_status ccx_share_stop();
 ccx_share_status ccx_share_send(struct cc_subtitle *);
 ccx_share_status ccx_share_stream_done(char *);
-ccx_share_status _ccx_share_sub_to_entries(struct cc_subtitle *, ccx_sub_entries *);
+ccx_share_status _ccx_share_sub_to_entries(struct cc_subtitle *,
+                                           ccx_sub_entries *);
 ccx_share_status _ccx_share_send(CcxSubEntryMessage *);
 
-#endif //ENABLE_SHARING
+#endif  // ENABLE_SHARING
 
-#endif //CCEXTRACTOR_CCX_SHARE_H
+#endif  // CCEXTRACTOR_CCX_SHARE_H
