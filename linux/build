@@ -13,4 +13,31 @@ BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LI
 BLD_LINKER="-lm -zmuldefs -l tesseract -l lept -lcurl"
 
 ./pre-build.sh
-gcc $BLD_FLAGS $BLD_INCLUDE -o ccextractor $BLD_SOURCES $BLD_LINKER
+
+out=$((gcc $BLD_FLAGS $BLD_INCLUDE -o ccextractor $BLD_SOURCES $BLD_LINKER) 2>&1)
+
+if [[ $out == *"gcc: command not found"* ]]
+then
+    echo "Error: please install gcc";
+    exit 1
+fi
+
+if [[ $out == *"curl.h: No such file or directory"* ]]
+then
+    echo "Error: please install curl development library (libcurl4-gnutls-dev for Debian/Ubuntu)";
+    exit 1
+fi
+
+if [[ $out == *"capi.h: No such file or directory"* ]]
+then
+    echo "Error: please install tesseract development library (tesseract-ocr-dev for Debian/Ubuntu)";
+    exit 1
+fi
+
+if [[ $out == *"allheaders.h: No such file or directory"* ]]
+then
+    echo "Error: please install leptonica development library (libleptonica-dev for Debian/Ubuntu)";
+    exit 1
+fi
+
+echo "Compiled successful";
