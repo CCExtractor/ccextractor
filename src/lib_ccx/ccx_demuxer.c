@@ -349,7 +349,7 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	{
 		if ((ctx->fh_out_elementarystream = fopen (cfg->out_elementarystream_filename,"wb"))==NULL)
 		{
-			print_error(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to open clean file: %s\n", cfg->out_elementarystream_filename);
+			print_error(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to open clean file: %s \nDetails : %s .\n", cfg->out_elementarystream_filename,strerror(errno)); //printing specific error - Permission Denied/ Wrong Path etc..
 			return NULL;
 		}
 	}
