@@ -1,4 +1,29 @@
-0.82(2016-08-15)
+0.83 (2016-12-13)
+-----------------
+- Fix: Duplicate lines in mp4 (specifically affects itunes).
+- Fix: Timing in .mp4, timing now calculated for each CC pair instead of per atom.
+- Fix: Typos everywhere in the documentation and source code.
+- Fix: CMakeLists for build in cmake.
+- Fix: -unixts option.
+- Fix: FPS switching messages.
+- Fix: Removed ugly debug statement with local path in HardsubX.
+- Fix: Changed platform target to v120_xp in Visual Studio (so XP is supported again).
+- Fix: Added detail in many error messages.
+- Fix: Memory leaks in videos with XDS.
+- Fix: Makefile compatibility issues with Raspberry pi.
+- Fix: missing separation between WebVTT header and body. 
+- Fix: Stupid bug in M2TS that preventing it from working.
+- Fix: OCR libraries dependencies for the release version in Windows.
+- Fix: non-buffered reading from pipes.
+- Fix: --stream option with stdin.
+- New: terminate_asap to buffered_read_opt
+- New: Added some TV-show specific spelling dictionaries.
+- New: Updated GPAC library.
+- New: ASS/SSA.
+- New: Capture sigterm to do some clean up before terminating.
+- New: Work on 708: Changed DefineWindow behavior, only clear text of an existing window is style has changed.
+
+0.82 (2016-08-15)
 -----------------
 - New: HardsubX - Burned in subtitle extraction subsystem.
 - New: Color Detection in DVB Subtitles

@@ -1,4 +1,4 @@
-ccextractor, 0.81
+ccextractor, 0.83
 -----------------
 Authors: Carlos Fernández (cfsmp3), Volker Quetschke.
 Maintainer: cfsmp3
@@ -8,10 +8,6 @@ McPoodle (author of the original SCC_RIP), Neuron2, and others (see source
 code).
 
 Home: http://www.ccextractor.org
-
-You can subscribe to new releases notifications at freshmeat: 
-
-http://freshmeat.net/projects/ccextractor
 
 Google Summer of Code 2014 students
 - Willem Van Iseghem
@@ -25,6 +21,17 @@ Google Summer of Code 2015 students
 - Nurendra Choudhary
 - Oleg Kiselev
 - Vasanth Kalingeri
+
+Google Summer of Code 2016 students
+- Willem Van Iseghem
+- Ruslan Kuchumov
+- Abhishek Vinjamoori
+- Abhinav Shukla
+- Rishabh Garg
+
+Google Code-in 2016 students
+(to be listed)
+
 
 
 License
