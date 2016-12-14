@@ -38,8 +38,10 @@ struct  _CcxSubEntryMessage
 	char **lines;
 };
 #define CCX_SUB_ENTRY_MESSAGE__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&ccx_sub_entry_message__descriptor) \
-    , 0, NULL, 0, 0, 0, 0,NULL }
+{
+	PROTOBUF_C_MESSAGE_INIT (&ccx_sub_entry_message__descriptor) \
+    , 0, NULL, 0, 0, 0, 0,NULL
+}
 
 
 /* CcxSubEntryMessage methods */

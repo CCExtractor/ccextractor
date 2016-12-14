@@ -62,7 +62,7 @@ struct encoder_ctx
 	/* Input file format used in Teletext for exceptional output */
 	unsigned int in_fileformat; //1 =Normal, 2=Teletext
 	/* Keep output file closed when not actually writing to it and start over each time (add headers, etc) */
-	unsigned int keep_output_closed; 
+	unsigned int keep_output_closed;
 	/* Force a flush on the file buffer whenever content is written */
 	int force_flush;
 	/* Keep track of whether -UCLA used */
@@ -150,7 +150,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt);
  * after deallocating user need to allocate encoder ctx again
  *
  * @oaram arg pointer to initialized encoder ctx using init_encoder
- * 
+ *
  * @param current_fts to calculate window for end credits
  */
 void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts);
