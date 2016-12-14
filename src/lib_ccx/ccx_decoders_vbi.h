@@ -24,5 +24,11 @@ struct ccx_decoder_vbi_ctx
 };
 
 
-int decode_vbi(struct lib_cc_decode *dec_ctx, uint8_t field, unsigned char *buffer, size_t len,  struct cc_subtitle *sub);
+int decode_vbi(
+			struct lib_cc_decode *dec_ctx,
+			uint8_t field,
+			unsigned char *buffer,
+			size_t len,
+			struct cc_subtitle *sub
+);
 #endif

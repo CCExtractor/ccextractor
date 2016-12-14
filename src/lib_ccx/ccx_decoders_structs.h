@@ -24,9 +24,9 @@ struct cc_bitmap
 	int nb_colors;
 	unsigned char *data[2];
 	int linesize[2];
-	#ifdef ENABLE_OCR
+#ifdef ENABLE_OCR
 	char *ocr_text;
-	#endif
+#endif
 };
 
 enum ccx_eia608_format
@@ -180,12 +180,15 @@ struct lib_cc_decode
 
 	ccx_dtvcc_ctx *dtvcc;
 	int current_field;
+
 	// Analyse/use the picture information
 	int maxtref; // Use to remember the temporal reference number
 
 	int cc_data_count[SORTBUF];
+
 	// Store fts;
 	LLONG cc_fts[SORTBUF];
+
 	// Store HD CC packets
 	unsigned char cc_data_pkts[SORTBUF][10*31*3+1]; // *10, because MP4 seems to have different limits
 

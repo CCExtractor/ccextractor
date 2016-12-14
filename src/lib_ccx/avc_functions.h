@@ -1,10 +1,11 @@
 #ifndef AVC_FUNCTION_H
-#define AVC_FUNCTION_H
+			#define AVC_FUNCTION_H
 
 
 struct avc_ctx
 {
 	unsigned char cc_count;
+
 	// buffer to hold cc data
 	unsigned char *cc_data;
 	long cc_databufsize;
@@ -50,6 +51,13 @@ struct avc_ctx
 
 struct avc_ctx *init_avc(void);
 void dinit_avc(struct avc_ctx **ctx);
-void do_NAL (struct lib_cc_decode *ctx, unsigned char *NAL_start, LLONG NAL_length, struct cc_subtitle *sub);
-size_t process_avc(struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t avcbuflen, struct cc_subtitle *sub);
+void do_NAL (
+			struct lib_cc_decode *ctx,
+			unsigned char *NAL_start, LLONG NAL_length,
+			struct cc_subtitle *sub);
+size_t process_avc(
+			struct lib_cc_decode *ctx,
+			unsigned char *avcbuf,
+			size_t avcbuflen,
+			struct cc_subtitle *sub);
 #endif

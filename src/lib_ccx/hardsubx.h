@@ -14,21 +14,21 @@
 
 enum hardsubx_color_type
 {
-	HARDSUBX_COLOR_WHITE = 0,
-	HARDSUBX_COLOR_YELLOW = 1,
-	HARDSUBX_COLOR_GREEN = 2,
-	HARDSUBX_COLOR_CYAN = 3,
-	HARDSUBX_COLOR_BLUE = 4,
-	HARDSUBX_COLOR_MAGENTA = 5,
-	HARDSUBX_COLOR_RED = 6,
-	HARDSUBX_COLOR_CUSTOM = 7,
+			HARDSUBX_COLOR_WHITE = 		0,
+			HARDSUBX_COLOR_YELLOW = 	1,
+			HARDSUBX_COLOR_GREEN = 		2,
+			HARDSUBX_COLOR_CYAN = 		3,
+			HARDSUBX_COLOR_BLUE = 		4,
+			HARDSUBX_COLOR_MAGENTA = 	5,
+			HARDSUBX_COLOR_RED = 			6,
+			HARDSUBX_COLOR_CUSTOM = 	7,
 };
 
 enum hardsubx_ocr_mode
 {
-	HARDSUBX_OCRMODE_FRAME = 0,
-	HARDSUBX_OCRMODE_WORD = 1,
-	HARDSUBX_OCRMODE_LETTER = 2,
+			HARDSUBX_OCRMODE_FRAME = 	0,
+			HARDSUBX_OCRMODE_WORD = 	1,
+			HARDSUBX_OCRMODE_LETTER = 2,
 };
 
 struct lib_hardsubx_ctx
@@ -87,16 +87,23 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx);
 
 //hardsubx_imgops.c
-void rgb_to_hsv(float R, float G, float B,float *H, float *S, float *V);
-void rgb_to_lab(float R, float G, float B,float *L, float *a, float *b);
+void rgb_to_hsv(
+	float R, float G, float B,
+	float *H, float *S, float *V
+);
+void rgb_to_lab(
+	float R, float G, float B,
+	float *L, float *a, float *b
+);
 
 //hardsubx_classifier.c
-char *get_ocr_text_simple(struct lib_hardsubx_ctx *ctx, PIX *image);
-char *get_ocr_text_wordwise(struct lib_hardsubx_ctx *ctx, PIX *image);
-char *get_ocr_text_letterwise(struct lib_hardsubx_ctx *ctx, PIX *image);
-char *get_ocr_text_simple_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold);
-char *get_ocr_text_wordwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold);
-char *get_ocr_text_letterwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold);
+char *get_ocr_text_simple								(struct lib_hardsubx_ctx *ctx, PIX *image);
+char *get_ocr_text_wordwise							(struct lib_hardsubx_ctx *ctx, PIX *image);
+char *get_ocr_text_letterwise						(struct lib_hardsubx_ctx *ctx, PIX *image);
+
+char *get_ocr_text_simple_threshold			(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold);
+char *get_ocr_text_wordwise_threshold		(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold);
+char *get_ocr_text_letterwise_threshold	(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold);
 
 //hardsubx_utility.c
 int edit_distance(char * word1, char * word2, int len1, int len2);

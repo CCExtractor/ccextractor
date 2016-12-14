@@ -48,24 +48,24 @@ struct EPG_rating
 
 struct EPG_event
 {
-	uint32_t id;
+struct EPG_rating *ratings;
 	char start_time_string[21]; //"YYYYMMDDHHMMSS +0000" = 20 chars
 	char end_time_string[21];
-	uint8_t running_status;
-	uint8_t free_ca_mode;
 	char ISO_639_language_code[4];
 	char *event_name;
 	char *text;
 	char extended_ISO_639_language_code[4];
 	char *extended_text;
-	uint8_t has_simple;
-	struct EPG_rating *ratings;
-	uint32_t num_ratings;
-	uint8_t *categories;
-	uint32_t num_categories;
-	uint16_t service_id;
-	long long int count; //incremented by one each time the event is updated
 	uint8_t live_output; //boolean flag, true if this event has been output
+	uint8_t running_status;
+	uint8_t free_ca_mode;
+	uint8_t has_simple;
+	uint8_t *categories;
+	uint16_t service_id;
+	uint32_t id;
+	uint32_t num_ratings;
+	uint32_t num_categories;
+	long long int count; //incremented by one each time the event is updated
 };
 
 #define EPG_MAX_EVENTS 60*24*7

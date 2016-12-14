@@ -15,16 +15,16 @@ extern int spell_capacity;
 extern unsigned char usercolor_rgb[8];
 
 struct ccx_encoders_helpers_settings_t {
-	int trim_subs;
-	int no_font_color;
-	int no_type_setting;
-	enum ccx_encoding_type encoding;
+			int trim_subs;
+			int no_font_color;
+			int no_type_setting;
+			enum ccx_encoding_type encoding;
 };
 
 // Helper functions
 void correct_case_with_dictionary(int line_num, struct eia608_screen *data);
-int is_all_caps(struct encoder_ctx *context, int line_num, struct eia608_screen *data);
-int clever_capitalize(struct encoder_ctx *context, int line_num, struct eia608_screen *data);
+int is_all_caps				(struct encoder_ctx *context, int line_num, struct eia608_screen *data);
+int clever_capitalize	(struct encoder_ctx *context, int line_num, struct eia608_screen *data);
 void telx_correct_case(char *sub_line);
 unsigned get_decoder_line_encoded_for_gui(unsigned char *buffer, int line_num, struct eia608_screen *data);
 unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data);

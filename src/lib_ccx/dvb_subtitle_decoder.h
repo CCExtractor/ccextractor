@@ -55,7 +55,12 @@ int dvbsub_close_decoder(void **dvb_ctx);
  *
  * @return           -1 on error
  */
-int dvbsub_decode(struct lib_cc_decode *dec_ctx, const unsigned char *buf, int buf_size, struct cc_subtitle *sub);
+int dvbsub_decode(
+			struct lib_cc_decode 	*dec_ctx,
+			const unsigned char 	*buf,
+			int 									buf_size,
+			struct cc_subtitle 		*sub
+);
 
 /**
  * @func parse_dvb_description
@@ -67,8 +72,11 @@ int dvbsub_decode(struct lib_cc_decode *dec_ctx, const unsigned char *buf, int b
  * @return return -1 if invalid data found other wise 0 if everything goes well
  * errno is set is to EINVAL if invalid data is found
  */
-int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
-		unsigned int len);
+int parse_dvb_description(
+			struct dvb_config 	*cfg,
+			unsigned char				*data,
+			unsigned int 				len
+);
 
 /*
  * @func dvbsub_set_write the output structure in dvb
@@ -79,7 +87,10 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
  * @param out output context returned by init_write
  *
  */
-void dvbsub_set_write(void *dvb_ctx, struct ccx_s_write *out);
+void dvbsub_set_write(
+			void *dvb_ctx,
+			struct ccx_s_write *out
+);
 
 #ifdef __cplusplus
 }

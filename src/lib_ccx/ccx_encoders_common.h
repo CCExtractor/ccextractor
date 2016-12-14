@@ -12,9 +12,16 @@
 #include "ccx_encoders_structs.h"
 #include "ccx_common_option.h"
 
-#define REQUEST_BUFFER_CAPACITY(ctx,length) if (length>ctx->capacity) \
-{ctx->capacity = length * 2; ctx->buffer = (unsigned char*)realloc(ctx->buffer, ctx->capacity); \
-if (ctx->buffer == NULL) { fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, bailing out\n"); } \
+#define REQUEST_BUFFER_CAPACITY(ctx,length)
+if (length>ctx->capacity) \
+{
+	ctx->capacity = length * 2;
+	ctx->buffer = (unsigned char*)
+	realloc(ctx->buffer, ctx->capacity); \
+	if (ctx->buffer == NULL)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, bailing out\n");
+	} \
 }
 
 typedef struct ccx_dtvcc_writer_ctx
@@ -201,12 +208,23 @@ int write_cc_bitmap_as_libcurl         (struct cc_subtitle *sub, struct encoder_
 
 
 
-void set_encoder_last_displayed_subs_ms(struct encoder_ctx *ctx, LLONG last_displayed_subs_ms);
-void set_encoder_subs_delay(struct encoder_ctx *ctx, LLONG subs_delay);
-void set_encoder_startcredits_displayed(struct encoder_ctx *ctx, int startcredits_displayed);
-void set_encoder_rcwt_fileformat(struct encoder_ctx *ctx, short int format);
+void set_encoder_last_displayed_subs_ms	(struct encoder_ctx *ctx, LLONG last_displayed_subs_ms);
+void set_encoder_subs_delay							(struct encoder_ctx *ctx, LLONG subs_delay);
+void set_encoder_startcredits_displayed	(struct encoder_ctx *ctx, int startcredits_displayed);
+void set_encoder_rcwt_fileformat				(struct encoder_ctx *ctx, short int format);
 
-void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank, int max_len);
-int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_subs,
-	enum ccx_encoding_type in_enc, enum ccx_encoding_type out_enc, int max_len);
+void find_limit_characters(
+			unsigned char *line,
+			int *first_non_blank,
+			int *last_non_blank,
+			int max_len
+);
+int get_str_basic(
+			unsigned char *out_buffer,
+			unsigned char *in_buffer,
+			int trim_subs,
+			enum ccx_encoding_type in_enc,
+			enum ccx_encoding_type out_enc,
+			int max_len
+);
 #endif

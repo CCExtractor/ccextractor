@@ -14,5 +14,8 @@
  */
 void *init_ffmpeg(const char *path);
 
-int ffmpeg_get_more_data(struct ccx_demuxer *ctx, struct demuxer_data **ppdata);
+int ffmpeg_get_more_data(
+  struct ccx_demuxer  *ctx,
+  struct demuxer_data **ppdata
+);
 #endif
