@@ -3,7 +3,7 @@ SHELL = /bin/sh
 CC = gcc
 SYS := $(shell gcc -dumpmachine)
 CFLAGS = -O3 -std=gnu99 -s
-INCLUDE = -I../src/gpacmp4/ -I../src/libpng -I../src/lib_hash -I../src/zlib -I../src/lib_ccx -I../src/.
+INCLUDE = -I../src/gpacmp4/ -I../src/libpng -I../src/lib_hash -I../src/protobuf-c -I../src/zlib -I../src/lib_ccx -I../src/.
 INCLUDE += -I../src/zvbi -I../src/utf8proc
 ALL_FLAGS = -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT
 LDFLAGS = -lm
@@ -14,7 +14,7 @@ endif
 TARGET = ccextractor
 
 OBJS_DIR = objs
-VPATH = ../src:../src/gpacmp4:../src/libpng:../src/zlib:../src/lib_ccx:../src/zvbi:../src/lib_hash:../src/utf8proc
+VPATH = ../src:../src/gpacmp4:../src/libpng:../src/zlib:../src/lib_ccx:../src/zvbi:../src/lib_hash:../src/utf8proc:../src/protobuf-c
 
 SRCS_DIR = ../src
 SRCS_C = $(wildcard $(SRCS_DIR)/*.c)
