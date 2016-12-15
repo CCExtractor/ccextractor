@@ -41,7 +41,7 @@ then
     exit 4
 fi
 
-if [[ $res == 1 ]]  # Unknown error
+if [[ $res -ne 0 ]]  # Unknown error
 then
     echo "Compiled with errors"
     >&2 echo "$out"
