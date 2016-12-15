@@ -2,7 +2,12 @@
 #include "ccx_encoders_common.h"
 #include "lib_ccx.h"
 #include "ocr.h"
-#include "debug_def.h"
+
+#ifdef DEBUG
+#define LOG_DEBUG(...) printf(__VA_ARGS__)
+#else
+#define LOG_DEBUG ;
+#endif
 
 #ifdef ENABLE_SHARING
 #include "ccx_share.h"
