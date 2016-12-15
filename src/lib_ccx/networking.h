@@ -17,7 +17,7 @@ void net_send_epg(
 		const char *desc,
 		const char *lang,
 		const char *category
-		);
+);
 
 int net_tcp_read(int socket, void *buffer, size_t length);
 

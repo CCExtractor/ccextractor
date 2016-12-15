@@ -19,6 +19,7 @@ struct ccx_rational
 	int num;
 	int den;
 };
+
 extern int temp_debug;
 volatile extern sig_atomic_t change_filename_requested;
 void init_boundary_time (struct ccx_boundary_time *bt);

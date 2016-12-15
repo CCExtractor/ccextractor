@@ -9,7 +9,7 @@
    0 means OK as usual,
    <100 means display whatever was output to stderr as a warning
    >=100 means display whatever was output to stdout as an error
-*/
+ */
 #define EXIT_OK                                 0
 #define EXIT_NO_INPUT_FILES                     2
 #define EXIT_TOO_MANY_INPUT_FILES               3
@@ -45,7 +45,7 @@ void freep(void *arg);
 void dbg_print(LLONG mask, const char *fmt, ...);
 unsigned char *debug_608toASC(unsigned char *ccdata, int channel);
 int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time,
-		LLONG end_time, char *info, char *mode, enum ccx_encoding_type);
+                    LLONG end_time, char *info, char *mode, enum ccx_encoding_type);
 
 extern int cc608_parity_table[256]; // From myth
 #endif
