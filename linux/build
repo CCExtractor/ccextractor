@@ -42,4 +42,4 @@ then
     >&2 echo "$out"
     exit 5
 fi
-echo "Compiled successful";
+echo "Compilation successful";
