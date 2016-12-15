@@ -421,7 +421,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 			//	program_number , desc[stream_type], stream_type, elementary_PID);
 		}
 
-		if(need_capInfo_for_pid(ctx, elementary_PID) == CCX_TRUE)
+		if(need_cap_info_for_pid(ctx, elementary_PID) == CCX_TRUE)
 		{
 			// We found the user selected CAPPID in PMT. We make a note of its type and don't
 			// touch anything else
@@ -655,7 +655,7 @@ int parse_PAT (struct ccx_demuxer *ctx)
 		 * is already there in pinfo array and if we have program number
 		 * already in our array we dont need to update our array
 		 * so we break if program_number already exist and make j != ctx->nb_program
-		 * 
+		 *
 		 * Loop without break means j would be equal to ctx->nb_program
 		 */
 		for (j = 0; j < ctx->nb_program; j++)

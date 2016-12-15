@@ -57,10 +57,10 @@ void make_byte_aligned(struct bitstream *bstr);
 unsigned char *next_bytes(struct bitstream *bstr, unsigned bynum);
 unsigned char *read_bytes(struct bitstream *bstr, unsigned bynum);
 uint64_t bitstream_get_num(struct bitstream *bstr, unsigned bytes, int advance);
-uint64_t ue(struct bitstream *bstr);
-int64_t se(struct bitstream *bstr);
-uint64_t u(struct bitstream *bstr, unsigned bnum);
-int64_t i(struct bitstream *bstr, unsigned bnum);
+uint64_t read_exp_golomb_unsigned(struct bitstream *bstr);
+int64_t read_exp_golomb(struct bitstream *bstr);
+uint64_t read_int_unsigned(struct bitstream *bstr, unsigned bnum);
+int64_t read_int(struct bitstream *bstr, unsigned bnum);
 uint8_t reverse8(uint8_t data);
 
 #endif

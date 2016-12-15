@@ -452,7 +452,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 	}
 }
 
-int wtv_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
+int wtv_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 {
 	static struct wtv_chunked_buffer cb;
 	int ret = CCX_OK;

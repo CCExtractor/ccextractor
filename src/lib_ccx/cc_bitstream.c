@@ -309,7 +309,7 @@ uint64_t bitstream_get_num(struct bitstream *bstr, unsigned bytes, int advance)
 
 
 // Read unsigned Exp-Golomb code from bitstream
-uint64_t ue(struct bitstream *bstr)
+uint64_t read_exp_golomb_unsigned(struct bitstream *bstr)
 {
 	uint64_t res = 0;
 	int zeros=0;
@@ -324,11 +324,11 @@ uint64_t ue(struct bitstream *bstr)
 
 
 // Read signed Exp-Golomb code from bitstream
-int64_t se(struct bitstream *bstr)
+int64_t read_exp_golomb(struct bitstream *bstr)
 {
 	int64_t res = 0;
 
-	res = ue(bstr);
+	res = read_exp_golomb_unsigned(bstr);
 
 	// The following function might truncate when res+1 overflows
 	//res = (res+1)/2 * (res % 2 ? 1 : -1);
@@ -341,14 +341,14 @@ int64_t se(struct bitstream *bstr)
 
 // Read unsigned integer with bnum bits length.  Basically an
 // alias for read_bits().
-uint64_t u(struct bitstream *bstr, unsigned bnum)
+uint64_t read_int_unsigned(struct bitstream *bstr, unsigned bnum)
 {
 	return read_bits(bstr, bnum);
 }
 
 
 // Read signed integer with bnum bits length.
-int64_t i(struct bitstream *bstr, unsigned bnum)
+int64_t read_int(struct bitstream *bstr, unsigned bnum)
 {
 	uint64_t res = read_bits(bstr, bnum);
 

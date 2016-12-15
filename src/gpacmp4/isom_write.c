@@ -25,6 +25,10 @@
 
 #include <gpac/internal/isomedia_dev.h>
 
+GF_EXPORT
+const char *gf_lang_get_3cc(u32 idx);
+GF_EXPORT
+s32 gf_lang_find(const char *lang_or_rfc_5646_code);
 
 
 #if !defined(GPAC_DISABLE_ISOM) && !defined(GPAC_DISABLE_ISOM_WRITE)

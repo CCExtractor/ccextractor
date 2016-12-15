@@ -31,13 +31,13 @@ static const char *spell_builtin[] =
 	NULL
 };
 
-int string_cmp2(const void *p1, const void *p2, void *arg)
+int string_cmp_function(const void *p1, const void *p2, void *arg)
 {
 	return strcasecmp(*(char**)p1, *(char**)p2);
 }
 int string_cmp(const void *p1, const void *p2)
 {
-	return string_cmp2(p1, p2, NULL);
+	return string_cmp_function(p1, p2, NULL);
 }
 
 void correct_case_with_dictionary(int line_num, struct eia608_screen *data)
@@ -459,7 +459,6 @@ void shell_sort(void *base, int nb, size_t size, int(*compar)(const void*p1, con
 
 void ccx_encoders_helpers_perform_shellsort_words(void)
 {
-	shell_sort(spell_lower, spell_words, sizeof(*spell_lower), string_cmp2, NULL);
-	shell_sort(spell_correct, spell_words, sizeof(*spell_correct), string_cmp2, NULL);
+	shell_sort(spell_lower, spell_words, sizeof(*spell_lower), string_cmp_function, NULL);
+	shell_sort(spell_correct, spell_words, sizeof(*spell_correct), string_cmp_function, NULL);
 }
-
