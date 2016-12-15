@@ -15,6 +15,7 @@ BLD_LINKER="-lm -zmuldefs -l tesseract -l lept -lcurl"
 ./pre-build.sh
 
 out=$((LC_ALL=C gcc $BLD_FLAGS $BLD_INCLUDE -o ccextractor $BLD_SOURCES $BLD_LINKER) 2>&1)
+res=$?
 
 if [[ $out == *"gcc: command not found"* ]]
 then
@@ -37,6 +38,13 @@ fi
 if [[ $out == *"allheaders.h: No such file or directory"* ]]
 then
     echo "Error: please install leptonica development library (libleptonica-dev for Debian/Ubuntu)";
+    exit 1
+fi
+
+if [[ $res == 1 ]]  # Unknown error
+then
+    echo "Compiled with errors"
+    echo "$out"
     exit 1
 fi
 
