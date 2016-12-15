@@ -1077,6 +1077,14 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				}
 
 				data->end_time = data->end_time + context->subs_delay;
+
+				if (utc_refvalue != UINT64_MAX)
+				{
+					if (data->start_time != -1)
+						data->start_time += utc_refvalue * 1000;
+					data->end_time += utc_refvalue * 1000;
+				}
+
 				switch (context->write_format)
 				{
 					case CCX_OF_SRT:

@@ -201,9 +201,6 @@
     <ClInclude Include="..\src\lib_ccx\spupng_encoder.h">
       <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\lib_ccx\lib_ccx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_708_encoding.h">
       <Filter>Header Files\ccx_decoders</Filter>
     </ClInclude>
@@ -356,6 +353,9 @@
     </ClInclude>
     <ClInclude Include="..\src\gpacmp4\gpac\internal\ogg.h">
       <Filter>Header Files\gpacmp4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\lib_ccx.h">
+      <Filter>Header Files\lib_ccx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

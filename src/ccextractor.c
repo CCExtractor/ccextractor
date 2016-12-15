@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 	ret = parse_parameters (&ccx_options, argc, argv);
 	if (ret == EXIT_NO_INPUT_FILES)
 	{
-		usage ();
+		print_usage ();
 		fatal (EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");
 	}
 	else if (ret == EXIT_WITH_HELP)
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 
 	if (ccx_options.binary_concat)
 	{
-		ctx->total_inputsize=gettotalfilessize(ctx);
+		ctx->total_inputsize=get_total_file_size(ctx);
 		if (ctx->total_inputsize < 0)
 		{
 			switch (ctx->total_inputsize)
@@ -231,8 +231,8 @@ int main(int argc, char *argv[])
 				break;
 #ifdef WTV_DEBUG
 			case CCX_SM_HEX_DUMP:
-				close_input_file(ctx); // processhex will open it in text mode
-				processhex (ctx, ctx->inputfile[0]);
+				close_input_file(ctx); // process_hex will open it in text mode
+				process_hex (ctx, ctx->inputfile[0]);
 				break;
 #endif
 			case CCX_SM_AUTODETECT:

@@ -38,7 +38,7 @@ typedef enum
 	PKT_FLT         = 0xfc,
 	PKT_UMF         = 0xfd,
 } GXFPktType;
-   
+
 typedef enum
 {
 	MAT_NAME        = 0x40,
@@ -48,7 +48,7 @@ typedef enum
 	MAT_MARK_OUT    = 0x44,
 	MAT_SIZE        = 0x45,
 } GXFMatTag;
-   
+
 typedef enum
 {
 	/* Media file name */
@@ -98,7 +98,7 @@ typedef enum
 	 * -2 = Not available
 	 */
 	 TRACK_FPF       = 0x52,
-	 
+
 } GXFTrackTag;
 
 typedef enum
@@ -131,13 +131,13 @@ typedef enum
 	TRACK_TYPE_MPEG2_625 = 12,
 
 	/**
-	 * A video track encoded using SMPTE 314M or ISO/IEC 61834-2 DV 
+	 * A video track encoded using SMPTE 314M or ISO/IEC 61834-2 DV
 	 * encoded at 25 Mb/s for 525/60i
 	*/
 	TRACK_TYPE_DV_BASED_25MB_525 = 13,
 
 	/**
-	 * A video track encoded using SMPTE 314M or ISO/IEC 61834-2 DV encoding at 25 Mb/s 
+	 * A video track encoded using SMPTE 314M or ISO/IEC 61834-2 DV encoding at 25 Mb/s
 	 * for 625/50i.
 	 */
 	TRACK_TYPE_DV_BASED_25MB_625 = 14,
@@ -498,7 +498,7 @@ static void set_track_frame_rate(struct ccx_gxf_video_track *vid_track, int8_t v
 		case -2:
 		/*  Not available */
 		default:
-		/* Do nothing in case of no frame rate */	
+		/* Do nothing in case of no frame rate */
 			break;
 	}
 }
@@ -635,7 +635,7 @@ static int parse_ad_track_desc(struct ccx_demuxer *demux, int len)
 				ad_track->nb_field = auxi_info[3];
 				ad_track->field_size = *((int16_t*)(auxi_info+4));//RB16(auxi_info + 4);
 				ad_track->packet_size = *((int16_t*)(auxi_info+6)) * 256;//RB16(auxi_info + 6);
-				debug("ad_format %d nb_field %d field_size %d packet_size %d track id %d\n", 
+				debug("ad_format %d nb_field %d field_size %d packet_size %d track id %d\n",
 				ad_track->ad_format, ad_track->nb_field, ad_track->field_size, ad_track->packet_size, ad_track->id);
 				break;
 			case TRACK_VER:
@@ -761,7 +761,7 @@ static int parse_track_sec(struct ccx_demuxer *demux, int len, struct demuxer_da
 			}
 			else
 				continue;
-			
+
 		}
 	}
 error:
@@ -775,7 +775,7 @@ error:
 
 /**
  * Parse Caption Distribution Packet
- * General Syntax of cdp 
+ * General Syntax of cdp
  * cdp() {
  *   cdp_header();
  *   time_code_section();
@@ -790,7 +790,7 @@ error:
 
 int parse_ad_cdp (unsigned char*cdp, size_t len, struct demuxer_data *data)
 {
-	
+
 	int ret = CCX_OK;
         uint16_t cdp_length;
         uint16_t cdp_framerate;
@@ -808,7 +808,7 @@ int parse_ad_cdp (unsigned char*cdp, size_t len, struct demuxer_data *data)
 
 	/* Verify cdp header identifier */
 	if ( (cdp[0] != 0x96) || (cdp[1] != 0x69) )
-        {       
+        {
                 log(" could not find CDP identifier of 0x96 0x69\n");
                 return CCX_EINVAL;
         }
@@ -951,7 +951,7 @@ static int parse_ad_pyld(struct ccx_demuxer *demux, int len, struct demuxer_data
 		{
 			unsigned short dat = buffered_get_le16(demux);
 			/**
-			 * check parity for 0xFE and 0x01 they may be converted by GXF 
+			 * check parity for 0xFE and 0x01 they may be converted by GXF
 			 * from 0xFF and 0x00 recpectively and ignoring first 2 bit or byte
 			 * from 10 bit code in 16bit variable and we hope that they have not
 			 * changed its parity otherwise we have lost all 0xFF and 0x00
@@ -969,7 +969,7 @@ static int parse_ad_pyld(struct ccx_demuxer *demux, int len, struct demuxer_data
 	else if (( (d_id & 0xff) == CLOSED_CAP_DID ) && ( (sd_id & 0xff) == CLOSED_C608_SDID ))
 	{
 		log("Need Sample\n");
-		
+
 	}
 	else
 	{
@@ -1034,7 +1034,7 @@ static int parse_ad_field(struct ccx_demuxer *demux, int len, struct demuxer_dat
 	len -= 4;
 	if(buffered_get_le32(demux) != 4)
 		log("Warning: expeccted 4 acc GXF specs\n");
-			
+
 	len -= 4;
 	field_identifier = buffered_get_le32(demux);
 	debug("LOG: field identifier %d\n", field_identifier);
@@ -1049,7 +1049,7 @@ static int parse_ad_field(struct ccx_demuxer *demux, int len, struct demuxer_dat
 	/* Read Byte size of the ancillary data field section vector */
 	if(buffered_get_le32(demux) != len)
 		log("Warning: Unexpected sample size (!=%d)\n", len);
-	 
+
 	len -= 4;
 	result = buffered_read(demux, (unsigned char *)tag, 4);
 	demux->past += result;
@@ -1275,7 +1275,7 @@ static int parse_ad_packet(struct ccx_demuxer *demux, int len, struct demuxer_da
 	len -= 4;
 	if(buffered_get_le32(demux) != 65528)
 		log("Warning: ADT packet with non trivial length\n");
-			
+
 	len -= 4;
 	result = buffered_read(demux, (unsigned char*)tag, 4);
 	demux->past += result;
@@ -1320,7 +1320,7 @@ static int parse_ad_packet(struct ccx_demuxer *demux, int len, struct demuxer_da
 	/* Read byte size of the complete ancillary media packet */
 	if(buffered_get_le32(demux) != 65536)
 		log("Warning: Unexpected buffer size (!=65536)\n");
-	 
+
 	len -= 4;
 	val = buffered_get_le32(demux);
 	set_data_timebase(val, data);
@@ -1335,7 +1335,7 @@ static int parse_ad_packet(struct ccx_demuxer *demux, int len, struct demuxer_da
 	/* Read Byte size of the ancillary data field section vector */
 	if(buffered_get_le32(demux) != len)
 		log("Warning: Unexpected field sec  size (!=%d)\n", len);
-	 
+
 	len -= 4;
 	result = buffered_read(demux, (unsigned char*)tag, 4);
 	demux->past += result;
@@ -1664,11 +1664,11 @@ static int read_packet(struct ccx_demuxer *ctx, struct demuxer_data *data)
 }
 
 /**
- * @param buf buffer with atleast acceptable length atleast 7 byte 
+ * @param buf buffer with atleast acceptable length atleast 7 byte
  *            where we will test only important part of packet header
- *            In GXF packet header is of 16 byte and in header there is 
+ *            In GXF packet header is of 16 byte and in header there is
  *            packet leader of 5 bytes 00 00 00 00 01
- *            Stream Starts with Map packet which is known by looking at offset 0x05 
+ *            Stream Starts with Map packet which is known by looking at offset 0x05
  *            of packet header.
  *            TODO Map packet are sent per 100 packets so search MAP packet, there might be
  *            no MAP header at start if GXF is sliced at unknown region
@@ -1685,7 +1685,7 @@ int ccx_gxf_probe(unsigned char *buf, int len)
 
 }
 
-int ccx_gxf_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data **ppdata)
+int ccx_gxf_get_more_data(struct ccx_demuxer *ctx, struct demuxer_data **ppdata)
 {
 	int ret;
 	struct demuxer_data *data;
