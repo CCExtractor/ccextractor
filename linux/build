@@ -14,7 +14,7 @@ BLD_LINKER="-lm -zmuldefs -l tesseract -l lept -lcurl"
 
 ./pre-build.sh
 
-out=$((gcc $BLD_FLAGS $BLD_INCLUDE -o ccextractor $BLD_SOURCES $BLD_LINKER) 2>&1)
+out=$((LC_ALL=C gcc $BLD_FLAGS $BLD_INCLUDE -o ccextractor $BLD_SOURCES $BLD_LINKER) 2>&1)
 
 if [[ $out == *"gcc: command not found"* ]]
 then
