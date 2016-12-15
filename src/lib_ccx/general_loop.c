@@ -523,13 +523,14 @@ void process_hex (struct lib_ccx_ctx *ctx, char *filename)
 }
 #endif
 // Raw file process
-void raw_loop (struct lib_ccx_ctx *ctx)
+int raw_loop (struct lib_ccx_ctx *ctx)
 {
 	LLONG ret;
 	struct demuxer_data *data = NULL;
 	struct cc_subtitle *dec_sub = NULL;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 	struct lib_cc_decode *dec_ctx = NULL;
+	int caps = 0;
 
 	dec_ctx = update_decoder_list(ctx);
 	dec_sub = &dec_ctx->dec_sub;
@@ -549,6 +550,7 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 		ret = process_raw(dec_ctx, dec_sub, data->buffer, data->len);
 		if (dec_sub->got_output)
 		{
+			caps = 1;
 			encode_sub(enc_ctx, dec_sub);
 			dec_sub->got_output = 0;
 		}
@@ -559,6 +561,7 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 
 
 	} while (data->len);
+	return caps;
 }
 
 /* Process inbuf bytes in buffer holding raw caption data (three byte packets, the first being the field).
@@ -796,13 +799,14 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 		}
 	}
 }
-void general_loop(struct lib_ccx_ctx *ctx)
+int general_loop(struct lib_ccx_ctx *ctx)
 {
 	struct lib_cc_decode *dec_ctx = NULL;
 	enum ccx_stream_mode_enum stream_mode;
 	struct demuxer_data *datalist = NULL;
 	struct demuxer_data *data_node = NULL;
 	int ret;
+	int caps = 0;
 
 	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 
@@ -971,7 +975,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		if (ccx_options.send_to_srv)
 			net_check_conn();
 	}
-
+	caps = dec_ctx->saw_caption_block;
 	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
 		if (dec_ctx->codec == CCX_CODEC_TELETEXT)
@@ -995,10 +999,11 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		mprint("Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
 				ctx->inputfile[ctx->current_file], ctx->current_file, ctx->demux_ctx->past, ctx->inputsize);
 	}
+	return caps;
 }
 
 // Raw caption with FTS file process
-void rcwt_loop(struct lib_ccx_ctx *ctx)
+int rcwt_loop(struct lib_ccx_ctx *ctx)
 {
 	unsigned char *parsebuf;
 	long parsebufsize = 1024;
@@ -1008,6 +1013,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	LLONG currfts;
 	uint16_t cbcount = 0;
 	int bread = 0; // Bytes read
+	int caps = 0;
 	LLONG result;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 		
@@ -1026,7 +1032,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	{
 		mprint("Premature end of file!\n");
 		end_of_file = 1;
-		return;
+		return -1;
 	}
 
 	// Expecting RCWT header
@@ -1124,10 +1130,12 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 		}
 		if (dec_sub->got_output)
 		{
+			caps = 1;
 			encode_sub(enc_ctx, dec_sub);
 			dec_sub->got_output = 0;
 		}
 	} // end while(1)
 
 	dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
+	return caps;
 }

@@ -207,20 +207,24 @@ int main(int argc, char *argv[])
 				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
 					ccx_options.use_gop_as_pts = 0; 
 				mprint ("\rAnalyzing data in general mode\n");
-				general_loop(ctx);
+				if (!general_loop(ctx))
+					fatal(EXIT_NO_CAPTIONS, "No captions found in input file");
 				break;
 			case CCX_SM_MCPOODLESRAW:
 				mprint ("\rAnalyzing data in McPoodle raw mode\n");
-				raw_loop(ctx);
+				if (!raw_loop(ctx))
+					fatal(EXIT_NO_CAPTIONS, "No captions found in input file");
 				break;
 			case CCX_SM_RCWT:
 				mprint ("\rAnalyzing data in CCExtractor's binary format\n");
-				rcwt_loop(ctx);
+				if (!rcwt_loop(ctx))
+					fatal(EXIT_NO_CAPTIONS, "No captions found in input file");
 				break;
 			case CCX_SM_MYTH:
 				mprint ("\rAnalyzing data in MythTV mode\n");
 				show_myth_banner = 1;
-				myth_loop(ctx);
+				if (!myth_loop(ctx))
+					fatal(EXIT_NO_CAPTIONS, "No captions found in input file");
 				break;
 			case CCX_SM_MP4:
 				mprint ("\rAnalyzing data with GPAC (MP4 library)\n");
@@ -228,6 +232,8 @@ int main(int argc, char *argv[])
 				processmp4(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
 				if (ccx_options.print_file_reports)
 					print_file_report(ctx);
+				if (!ctx->freport.mp4_cc_track_cnt)
+					fatal(EXIT_NO_CAPTIONS, "No captions found in input file");
 				break;
 #ifdef WTV_DEBUG
 			case CCX_SM_HEX_DUMP:
