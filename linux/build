@@ -26,26 +26,26 @@ fi
 if [[ $out == *"curl.h: No such file or directory"* ]]
 then
     echo "Error: please install curl development library (libcurl4-gnutls-dev for Debian/Ubuntu)";
-    exit 1
+    exit 2
 fi
 
 if [[ $out == *"capi.h: No such file or directory"* ]]
 then
     echo "Error: please install tesseract development library (tesseract-ocr-dev for Debian/Ubuntu)";
-    exit 1
+    exit 3
 fi
 
 if [[ $out == *"allheaders.h: No such file or directory"* ]]
 then
     echo "Error: please install leptonica development library (libleptonica-dev for Debian/Ubuntu)";
-    exit 1
+    exit 4
 fi
 
 if [[ $res == 1 ]]  # Unknown error
 then
     echo "Compiled with errors"
-    echo "$out"
-    exit 1
+    >&2 echo "$out"
+    exit 5
 fi
 
 echo "Compiled successful";
