@@ -911,7 +911,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 				isdb_set_global_time(dec_ctx, tstamp);
 			}
 			ret = process_data(enc_ctx, dec_ctx, data_node);
-			if (enc_ctx->srt_counter)
+			if (enc_ctx->srt_counter || dec_ctx->saw_caption_block)
 				caps = 1;
 			if( ret != CCX_OK)
 				break;
