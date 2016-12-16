@@ -832,7 +832,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				dbg_print(CCX_DMT_PARSE, "Stream #%d PacketTime: %s",
 						asf_data_container.PayloadStreamNumber, print_mstime_static(send_time));
 				dbg_print(CCX_DMT_PARSE,"   PayloadTime: %s",
-						print_mstime(presentation_time_millis));
+					print_mstime_static(presentation_time_millis));
 				dbg_print(CCX_DMT_PARSE,"   dvr-ms PTS: %s+%lld\n",
 						print_mstime_static(rtStart/10000), (rtEnd-rtStart)/10000);
 

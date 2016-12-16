@@ -352,7 +352,7 @@
     <OutDir>Debug-OCR\</OutDir>
     <IntDir>Debug-OCR\</IntDir>
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>ccextractorwin</TargetName>
+    <TargetName>ccextractorwinocr</TargetName>
     <IncludePath>$(ProjectDir)\libs\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)\libs\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)</LibraryPath>
   </PropertyGroup>
@@ -366,7 +366,7 @@
     <OutDir>Release-OCR\</OutDir>
     <IntDir>Release-OCR\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>ccextractorwin</TargetName>
+    <TargetName>ccextractorwinocr</TargetName>
     <IncludePath>$(ProjectDir)\libs\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)\libs\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)</LibraryPath>
   </PropertyGroup>
@@ -485,7 +485,7 @@ xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Comm
     </ClCompile>
     <Link>
       <AdditionalDependencies>WS2_32.Lib;liblept172.lib;libtesseract304.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
