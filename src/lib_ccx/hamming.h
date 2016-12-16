@@ -4,8 +4,6 @@
 
 #ifndef hamming_h_included
 #define hamming_h_included
-
-
 //#include <inttypes.h>
 
 const uint8_t PARITY_8[256] = {

@@ -89,7 +89,6 @@ struct ccx_demuxer
 	int flag_ts_forced_cappid;
 	int ts_datastreamtype;
 
-
 	struct program_info pinfo[MAX_PROGRAM];
 	int nb_program;
 	/* subtitle codec type */

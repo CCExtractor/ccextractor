@@ -9,8 +9,6 @@
 
 extern uint64_t utc_refvalue; 
 // UTC referential value
-
-
 // Declarations
 LLONG get_visible_start (struct ccx_common_timing_ctx *ctx, int current_field);
 LLONG get_visible_end (struct ccx_common_timing_ctx *ctx, int current_field);

@@ -3,8 +3,6 @@
 
 #include "ccx_common_platform.h"
 #include "ccx_common_structs.h"
-
-
 // Define possible exit codes that will be passed on to the fatal function
 /* Exit codes. Take this seriously as the GUI depends on them.
    0 means OK as usual,
@@ -38,8 +36,6 @@
 #define CCX_EINVAL  -102
 #define CCX_ENOSUPP -103
 #define CCX_ENOMEM  -104
-
-
 // Declarations
 void fdprintf(int fd, const char *fmt, ...);
 void mstotime(LLONG milli, unsigned *hours, unsigned *minutes,unsigned *seconds, unsigned *ms);

@@ -78,7 +78,6 @@ typedef struct ccx_decoder_608_context
 
 } ccx_decoder_608_context;
 
-
 #define MAX_COLOR 10
 extern const char *color_text[MAX_COLOR][2];
 
@@ -95,7 +94,6 @@ typedef enum ccx_decoder_608_color_code
 	COL_BLACK = 8,
 	COL_TRANSPARENT = 9
 } ccx_decoder_608_color_code;
-
 
 enum font_bits
 {
@@ -131,7 +129,6 @@ enum command_code
 // special stuff for us.
 	COM_FAKE_RULLUP1 = 18
 };
-
 
 void ccx_decoder_608_dinit_library(void **ctx);
 /*

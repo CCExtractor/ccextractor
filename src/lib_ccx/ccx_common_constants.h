@@ -82,8 +82,6 @@ enum ccx_debug_message_types
 	CCX_DMT_DUMPDEF=0x4000, 
 // Dump defective TS packets
 };
-
-
 // AVC NAL types
 enum ccx_avc_nal_types
 {
@@ -120,8 +118,6 @@ enum ccx_avc_nal_types
 	CCX_NAL_TYPE_UNSPECIFIED_30 = 30,
 	CCX_NAL_TYPE_UNSPECIFIED_31 = 31
 };
-
-
 // MPEG-2 TS stream types
 enum ccx_stream_type
 {
@@ -160,7 +156,6 @@ enum ccx_mpeg_descriptor
 	CCX_MPEG_DSC_CAPTION_SERVICE = 0x86,
 	CCX_MPEG_DESC_DATA_COMP = 0xfd,
 };
-
 
 enum
 {
@@ -330,7 +325,6 @@ enum cdp_section_type
 extern const char *language[NB_LANGUAGE];
 
 #define DEF_VAL_STARTCREDITSNOTBEFORE 	"0"
-
 // To catch the theme after the teaser in TV shows
 #define DEF_VAL_STARTCREDITSNOTAFTER	"5:00"
 #define DEF_VAL_STARTCREDITSFORATLEAST	"2"

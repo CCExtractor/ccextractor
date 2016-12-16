@@ -1,8 +1,6 @@
 
 //
-
 // Created by Oleg Kisselef (olegkisselef at gmail dot com) on 6/21/15
-
 //
 
 #ifndef CCEXTRACTOR_CCX_SHARE_H

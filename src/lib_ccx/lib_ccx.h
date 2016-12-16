@@ -2,8 +2,6 @@
 #define CCX_CCEXTRACTOR_H
 
 #define VERSION "0.83"
-
-
 // Load common includes and constants for library usage
 #include "ccx_common_platform.h"
 #include "ccx_common_constants.h"
@@ -24,8 +22,6 @@
 #ifdef WITH_LIBCURL
 #include <curl/curl.h>
 #endif
-
-
 //#include "ccx_decoders_708.h"
 
 /* Report information */
@@ -42,8 +38,6 @@ struct file_report
 	struct ccx_decoder_dtvcc_report *data_from_708;
 	unsigned mp4_cc_track_cnt;
 };
-
-
 // Stuff for telxcc.c
 struct ccx_s_teletext_config
 {
@@ -103,7 +97,6 @@ struct lib_ccx_ctx
 
 	int last_reported_progress;
 
-
 	/* Stats */
 	int stat_numuserheaders;
 	int stat_dvdccheaders;
@@ -128,7 +121,6 @@ struct lib_ccx_ctx
 
 	int cc_to_stdout; 
 // If 1, captions go to stdout instead of file
-
 
 	LLONG subs_delay; 
 // ms to delay (or advance) subs
@@ -183,19 +175,14 @@ struct lib_ccx_ctx
 	LLONG system_start_time;
 };
 
-
 struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt);
 void dinit_libraries( struct lib_ccx_ctx **ctx);
-
-
 //params.c
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[]);
 void print_usage (void);
 int detect_input_file_overwrite(struct lib_ccx_ctx *ctx, const char *output_filename);
 int atoi_hex (char *s);
 int stringztoms (const char *s, struct ccx_boundary_time *bt);
-
-
 // general_loop.c
 void position_sanity_check(struct ccx_demuxer *ctx);
 int init_file_buffer(struct ccx_demuxer *ctx);
@@ -208,29 +195,17 @@ void process_hex (char *filename);
 void rcwt_loop(struct lib_ccx_ctx *ctx);
 
 extern int end_of_file;
-
-
 // asf_functions.c
 int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
-
-
 // wtv_functions.c
 int wtv_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
-
-
 // es_functions.c
 size_t process_m2v(struct lib_cc_decode *ctx, unsigned char *data, size_t length, struct cc_subtitle *sub);
 
 extern unsigned top_field_first;
-
-
 // es_userdata.c
 int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, struct cc_subtitle *sub);
-
-
 // bitstream.c - see bitstream.h
-
-
 // file_functions.c
 LLONG get_file_size (int in);
 LLONG get_total_file_size (struct lib_ccx_ctx *ctx);
@@ -238,20 +213,14 @@ void prepare_for_new_file (struct lib_ccx_ctx *ctx);
 void close_input_file (struct lib_ccx_ctx *ctx);
 int switch_to_next_file (struct lib_ccx_ctx *ctx, LLONG bytesinbuffer);
 void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned int bytes);
-
-
 // sequencing.c
 void init_hdcc (struct lib_cc_decode *ctx);
 void store_hdcc(struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now, struct cc_subtitle *sub);
 void anchor_hdcc(struct lib_cc_decode *ctx, int seq);
 void process_hdcc (struct lib_cc_decode *ctx, struct cc_subtitle *sub);
-
-
 // params_dump.c
 void params_dump(struct lib_ccx_ctx *ctx);
 void print_file_report(struct lib_ccx_ctx *ctx);
-
-
 // output.c
 void dinit_write(struct ccx_s_write *wb);
 int temporarily_open_output(struct ccx_s_write *wb);
@@ -260,15 +229,11 @@ int init_write(struct ccx_s_write *wb, char *filename, int with_semaphore);
 int writeraw (const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile);
 void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct cc_subtitle *sub);
-
-
 // stream_functions.c
 int isValidMP4Box(unsigned char *buffer, size_t position, size_t *nextBoxLocation, int *boxScore);
 void detect_stream_type (struct ccx_demuxer *ctx);
 int detect_myth( struct ccx_demuxer *ctx );
 int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, unsigned char *nextheader, int *headerlength, int sbuflen);
-
-
 // ts_functions.c
 void init_ts(struct ccx_demuxer *ctx);
 int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload);
@@ -282,12 +247,8 @@ void parse_EPG_packet (struct lib_ccx_ctx *ctx);
 void EPG_free(struct lib_ccx_ctx *ctx);
 char* EPG_DVB_decode_string(uint8_t *in, size_t size);
 void parse_SDT(struct ccx_demuxer *ctx);
-
-
 // myth.c
 void myth_loop(struct lib_ccx_ctx *ctx);
-
-
 // utility.c
 void fatal(int exit_code, const char *fmt, ...);
 void mprint (const char *fmt, ...);
@@ -307,7 +268,6 @@ struct encoder_ctx* change_filename(struct encoder_ctx*);
 void m_signal(int sig, void (*func)(int));
 #endif
 
-
 void buffered_seek (struct ccx_demuxer *ctx, int offset);
 extern void build_parity_table(void);
 
@@ -324,15 +284,11 @@ extern int strangeheader;
 
 extern const char *desc[256];
 
-
 extern long FILEBUFFERSIZE; 
 // Uppercase because it used to be a define
 
 extern int firstcall;
-
-
 // From ts_functions
-
 //extern struct ts_payload payload;
 extern unsigned char tspacket[188];
 extern unsigned char *last_pat_payload;

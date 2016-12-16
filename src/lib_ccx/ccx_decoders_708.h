@@ -370,7 +370,6 @@ typedef struct ccx_dtvcc_ctx
 	struct ccx_common_timing_ctx *timing;
 } ccx_dtvcc_ctx;
 
-
 void ccx_dtvcc_clear_packet(ccx_dtvcc_ctx *ctx);
 void ccx_dtvcc_windows_reset(ccx_dtvcc_service_decoder *decoder);
 void ccx_dtvcc_decoder_flush(ccx_dtvcc_ctx *dtvcc, ccx_dtvcc_service_decoder *decoder);

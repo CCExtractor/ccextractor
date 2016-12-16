@@ -7,12 +7,10 @@
 #include "ccx_common_structs.h"
 #include "list.h"
 #include "ccx_decoders_708.h"
-
 // Define max width in characters/columns on the screen
 #define CCX_DECODER_608_SCREEN_WIDTH  32
 #define MAXBFRAMES 50
 #define SORTBUF (2*MAXBFRAMES+1)
-
 
 /* flag raised when end of display marker arrives in Dvb Subtitle */
 #define SUB_EOD_MARKER (1 << 0 )

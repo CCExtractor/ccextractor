@@ -196,13 +196,11 @@ int write_cc_subtitle_as_smptett      (struct cc_subtitle *sub, struct encoder_c
 int write_cc_subtitle_as_spupng       (struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_subtitle_as_transcript   (struct cc_subtitle *sub, struct encoder_ctx *context);
 
-
 int write_stringz_as_srt              (char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
 int write_stringz_as_ssa              (char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
 int write_stringz_as_webvtt           (char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
 int write_stringz_as_sami             (char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
 void write_stringz_as_smptett         (char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
-
 
 int write_cc_bitmap_as_srt             (struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_ssa             (struct cc_subtitle *sub, struct encoder_ctx *context);
@@ -213,8 +211,6 @@ int write_cc_bitmap_as_spupng          (struct cc_subtitle *sub, struct encoder_
 int write_cc_bitmap_as_transcript      (struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_to_sentence_buffer (struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_libcurl         (struct cc_subtitle *sub, struct encoder_ctx *context);
-
-
 
 void set_encoder_last_displayed_subs_ms(struct encoder_ctx *ctx, LLONG last_displayed_subs_ms);
 void set_encoder_subs_delay(struct encoder_ctx *ctx, LLONG subs_delay);

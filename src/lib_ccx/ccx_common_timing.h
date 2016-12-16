@@ -63,7 +63,6 @@ struct ccx_common_timing_ctx
 	LLONG sync_pts2fts_fts; 
 	LLONG sync_pts2fts_pts;
 };
-
 // Count 608 (per field) and 708 blocks since last set_fts() call
 extern int cb_field1, cb_field2, cb_708;
 
@@ -72,7 +71,6 @@ extern int MPEG_CLOCK_FREQ;
 
 extern int max_dif;
 extern unsigned pts_big_change;
-
 
 extern enum ccx_frame_type current_picture_coding_type;
 extern double current_fps;

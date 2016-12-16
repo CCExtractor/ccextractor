@@ -240,7 +240,6 @@ struct ccx_s_options
 	char *curlposturl;
 #endif
 
-
 #ifdef ENABLE_SHARING
 	
 //CC sharing
