@@ -30,6 +30,7 @@ Google Summer of Code 2016 students
 - Rishabh Garg
 
 Google Code-in 2016 students
+- Evgeny Shulgin
 (to be listed)
 
 
