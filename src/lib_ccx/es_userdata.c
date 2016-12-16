@@ -154,7 +154,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 			unsigned field_number;
 			unsigned cc_data1;
 			unsigned cc_data2;
-            
+
 			for (unsigned j=0;j<cc_count;j++)
 			{
 				skip_bits(ustream,2); // priority - unused
@@ -327,7 +327,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 				dishdata[1]=dcd[1];
 				dishdata[2]=dcd[2];
 
-				dbg_print(CCX_DMT_PARSE, "%s", debug_608toASC( dishdata, 0) );
+				dbg_print(CCX_DMT_PARSE, "%s", debug_608_to_ASC( dishdata, 0) );
 
 				type=dcd[3];  // repeater (0x02 or 0x04)
 				hi = dishdata[1] & 0x7f; // Get only the 7 low bits
@@ -338,7 +338,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 					dishdata[4]=dishdata[1];
 					dishdata[5]=dishdata[2];
 
-					dbg_print(CCX_DMT_PARSE, "%s:\n", debug_608toASC( dishdata+3, 0) );
+					dbg_print(CCX_DMT_PARSE, "%s:\n", debug_608_to_ASC( dishdata+3, 0) );
 				}
 				else
 				{
@@ -369,8 +369,8 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 				dishdata[5]=dcd[4];
 				dishdata[6] = 0xFF; // Set end marker
 
-				dbg_print(CCX_DMT_PARSE, "%s", debug_608toASC( dishdata, 0) );
-				dbg_print(CCX_DMT_PARSE, "%s:\n", debug_608toASC( dishdata+3, 0) );
+				dbg_print(CCX_DMT_PARSE, "%s", debug_608_to_ASC( dishdata, 0) );
+				dbg_print(CCX_DMT_PARSE, "%s:\n", debug_608_to_ASC( dishdata+3, 0) );
 
 				store_hdcc(ctx, dishdata, cc_count, ctx->timing->current_tref, ctx->timing->fts_now, sub);
 
@@ -406,7 +406,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 					type=dcd[0]; // repeater (0x02 or 0x04)
 					dcd++; // Skip the repeater byte.
 
-					dbg_print(CCX_DMT_PARSE, " - R:%02X :%s", type, debug_608toASC( dishdata, 0) );
+					dbg_print(CCX_DMT_PARSE, " - R:%02X :%s", type, debug_608_to_ASC( dishdata, 0) );
 
 					hi = dishdata[1] & 0x7f; // Get only the 7 low bits
 					if (type==0x04 && hi<32)
@@ -415,7 +415,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 						dishdata[3]=0x04; // Field 1
 						dishdata[4]=dishdata[1];
 						dishdata[5]=dishdata[2];
-						dbg_print(CCX_DMT_PARSE, "%s:\n", debug_608toASC( dishdata+3, 0) );
+						dbg_print(CCX_DMT_PARSE, "%s:\n", debug_608_to_ASC( dishdata+3, 0) );
 					}
 					else
 					{
@@ -433,8 +433,8 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 					dishdata[5]=dcd[1];
 					dishdata[6] = 0xFF; // Set end marker
 
-					dbg_print(CCX_DMT_PARSE, ":%s", debug_608toASC( dishdata, 0) );
-					dbg_print(CCX_DMT_PARSE, "%s:\n", debug_608toASC( dishdata+3, 0) );
+					dbg_print(CCX_DMT_PARSE, ":%s", debug_608_to_ASC( dishdata, 0) );
+					dbg_print(CCX_DMT_PARSE, "%s:\n", debug_608_to_ASC( dishdata+3, 0) );
 				}
 
 				store_hdcc(ctx, dishdata, cc_count, ctx->timing->current_tref, ctx->timing->fts_now, sub);
@@ -474,7 +474,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 		uint8_t line_type;
 		uint8_t field = 1;
 		read_bytes(ustream, 4); //skip header code
-		read_bytes(ustream, 2); //skip data length 
+		read_bytes(ustream, 2); //skip data length
 		line_nb = read_bits(ustream, 16);
 		line_type = read_u8(ustream);
 		field = (line_type & 0x03);
@@ -488,7 +488,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 		if (udatalen < 720)
 			mprint("MPEG:VBI: Minimum 720 bytes in luma line required\n");
 
-		decode_vbi(ctx, field, ustream->pos, 720, sub); 
+		decode_vbi(ctx, field, ustream->pos, 720, sub);
 		dbg_print(CCX_DMT_VERBOSE, "GXF (vbi line %d) user data:\n", line_nb);
 	}
 	else

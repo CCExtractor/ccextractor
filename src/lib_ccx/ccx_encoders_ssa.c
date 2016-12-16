@@ -15,8 +15,8 @@ int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_sta
 	if(!string || !string[0])
 		return 0;
 
-	mstotime (ms_start,&h1,&m1,&s1,&ms1);
-	mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
+	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 
 	sprintf (timeline, "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
 			 h1, m1, s1, ms1 / 10, h2, m2, s2, ms2 / 10);
@@ -113,8 +113,8 @@ int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context)
 	{
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 		{
-			mstotime (ms_start,&h1,&m1,&s1,&ms1);
-			mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+			millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
+			millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 
 			sprintf (timeline, "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
 				h1,m1,s1,ms1/10, h2,m2,s2,ms2/10);
@@ -193,8 +193,8 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 
 	ms_end = data->end_time;
 
-	mstotime (ms_start,&h1,&m1,&s1,&ms1);
-	mstotime (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
+	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 	char timeline[128];
 	sprintf (timeline, "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
 			 h1, m1, s1, ms1 / 10, h2, m2, s2, ms2 / 10);
@@ -291,4 +291,3 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 	return wrote_something;
 }
-
