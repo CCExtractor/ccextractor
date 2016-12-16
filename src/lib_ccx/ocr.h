@@ -2,8 +2,7 @@
 #define OCR_H
 #include <png.h>
 
-struct image_copy 
-//A copy of the original OCR image, used for color detection
+struct image_copy //A copy of the original OCR image, used for color detection
 {
 	int nb_colors;
 	png_color *palette;

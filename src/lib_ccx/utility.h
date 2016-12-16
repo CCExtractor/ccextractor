@@ -36,8 +36,6 @@ void dump (LLONG mask, unsigned char *start, int l, unsigned long abs_start, uns
 #ifdef _WIN32
 char *strndup(const char *s, size_t n);
 char *strtok_r(char *str, const char *delim, char **saveptr);
-#endif 
-//_WIN32
+#endif //_WIN32
 
-#endif 
-//CC_UTILITY_H
+#endif //CC_UTILITY_H

@@ -11,5 +11,4 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 ccx_dtvcc_ctx *ccx_dtvcc_init(ccx_decoder_dtvcc_settings *opts);
 void ccx_dtvcc_free(ccx_dtvcc_ctx **);
 
-#endif 
-//CCEXTRACTOR_CCX_DTVCC_H
+#endif //CCEXTRACTOR_CCX_DTVCC_H

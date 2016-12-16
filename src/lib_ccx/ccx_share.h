@@ -1,4 +1,3 @@
-
 //
 // Created by Oleg Kisselef (olegkisselef at gmail dot com) on 6/21/15
 //
@@ -47,8 +46,6 @@ ccx_share_status ccx_share_stream_done(char *);
 ccx_share_status _ccx_share_sub_to_entries(struct cc_subtitle *, ccx_sub_entries *);
 ccx_share_status _ccx_share_send(CcxSubEntryMessage *);
 
-#endif 
-//ENABLE_SHARING
+#endif //ENABLE_SHARING
 
-#endif 
-//CCEXTRACTOR_CCX_SHARE_H
+#endif //CCEXTRACTOR_CCX_SHARE_H

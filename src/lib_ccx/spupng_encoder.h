@@ -5,6 +5,7 @@
 #include "ccx_encoders_structs.h"
 #include "png.h"
 #include "ccx_encoders_common.h"
+
 // CC page dimensions
 #define ROWS                    15
 #define COLUMNS                 32
