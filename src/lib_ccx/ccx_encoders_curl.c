@@ -68,8 +68,12 @@ int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *cont
 			curl_free (urlencoded);
 			mprint("%s", curlline);
 
-			curl_easy_setopt(curl, CURLOPT_URL, "127.0.0.1:3000/frame/");
+			char *result = malloc(strlen(ccx_options.curlposturl) + strlen("/frame/") + 1);
+			strcpy(result, ccx_options.curlposturl);
+			strcat(result, "/frame/");
+			curl_easy_setopt(curl, CURLOPT_URL, result);
 			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, curlline);
+			free(result);
 
 			res = curl_easy_perform(curl);
 			/* Check for errors */
