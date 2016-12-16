@@ -30,5 +30,5 @@ echo "#define CCX_CCEXTRACTOR_COMPILE_REAL_H" >> ../src/lib_ccx/compile_info_rea
 echo "#define GIT_COMMIT \"$commit\"" >> ../src/lib_ccx/compile_info_real.h
 echo "#define COMPILE_DATE \"$builddate\"" >> ../src/lib_ccx/compile_info_real.h
 echo "#endif" >> ../src/lib_ccx/compile_info_real.h
-echo "Stored all in compile.h"
+echo "Stored all in compile_info_real.h"
 echo "Done."
