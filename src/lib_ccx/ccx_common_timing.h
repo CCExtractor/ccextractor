@@ -47,7 +47,7 @@ struct ccx_common_timing_ctx
 	LLONG fts_max; // Remember the maximum fts that we saw in current file
 	LLONG fts_global; // Duration of previous files (-ve mode)
 	int sync_pts2fts_set; //0 = No, 1 = Yes
-	LLONG sync_pts2fts_fts; 
+	LLONG sync_pts2fts_fts;
 	LLONG sync_pts2fts_pts;
 };
 // Count 608 (per field) and 708 blocks since last set_fts() call
@@ -78,9 +78,8 @@ void add_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts);
 int set_fts(struct ccx_common_timing_ctx *ctx);
 LLONG get_fts(struct ccx_common_timing_ctx *ctx, int current_field);
 LLONG get_fts_max(struct ccx_common_timing_ctx *ctx);
-char *print_mstime(LLONG mstime);
-char *print_mstime2buf(LLONG mstime, char *buf);
-size_t mstime_sprintf(LLONG mstime, char *fmt, char *buf);
+char *print_mstime_static(LLONG mstime);
+size_t print_mstime_buff(LLONG mstime, char *fmt, char *buf);
 void print_debug_timing(struct ccx_common_timing_ctx *ctx);
 int gop_accepted(struct gop_time_code* g);
 void calculate_ms_gop_time(struct gop_time_code *g);

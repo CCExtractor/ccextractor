@@ -1210,7 +1210,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 
 			if (!context->textprinted && context->channel == context->my_channel)
 			{   // Current FTS information after the characters are shown
-				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Current FTS: %s\n", print_mstime(get_fts(dec_ctx->timing, context->my_field)));
+				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Current FTS: %s\n", print_mstime_static(get_fts(dec_ctx->timing, context->my_field)));
 				//printf("  N:%u", unsigned(fts_now) );
 				//printf("  G:%u", unsigned(fts_global) );
 				//printf("  F:%d %d %d %d\n",

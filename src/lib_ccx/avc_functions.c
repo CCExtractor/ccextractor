@@ -1155,7 +1155,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 			pic_order_cnt_lsb, ctx->timing->current_tref,
 			current_index, ctx->avc_ctx->currref, ctx->avc_ctx->lastmaxidx, ctx->avc_ctx->maxtref);
 	dbg_print(CCX_DMT_TIME, "  sync_pts:%s (%8u)",
-			print_mstime(ctx->timing->sync_pts/(MPEG_CLOCK_FREQ/1000)),
+			print_mstime_static(ctx->timing->sync_pts/(MPEG_CLOCK_FREQ/1000)),
 			(unsigned) (ctx->timing->sync_pts));
 	dbg_print(CCX_DMT_TIME, " - %s since GOP: %2u",
 			slice_types[slice_type],
