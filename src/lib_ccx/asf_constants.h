@@ -52,10 +52,12 @@ typedef struct {
 	// Generic buffer to hold data
 	unsigned char *parsebuf;
 	long parsebufsize;
+
 	// Header Object variables
 	int64_t HeaderObjectSize;
 	int64_t FileSize;
 	uint32_t PacketSize;
+
 	// Stream Properties Object variables
 	asf_data_stream_properties StreamProperties;
 	// Extended Stream Properties  - for DVR-MS presentation timestamp
@@ -67,10 +69,12 @@ typedef struct {
 	// 10 entries.
 	int PayloadExtSize[STREAMNUM][PAYEXTNUM];
 	int PayloadExtPTSEntry[STREAMNUM];
+
 	// Data object Header variables
 	int64_t DataObjectSize;
 	uint32_t TotalDataPackets;
 	int VideoClosedCaptioningFlag;
+
 	// Payload data
 	int PayloadLType; // ASF - Payload Length Type. <>0 for multiple payloads
 	uint32_t PayloadLength; // ASF - Payload Length
@@ -79,9 +83,11 @@ typedef struct {
 	int PayloadStreamNumber; // ASF
 	int KeyFrame; // ASF
 	uint32_t PayloadMediaNumber; // ASF
+
 	// Data Object Loop
 	uint32_t datapacketcur; // Current packet number
 	int64_t dobjectread; // Bytes read in Data Object
+
 	// Payload parsing information
 	int MultiplePayloads; // ASF
 	int PacketLType; // ASF

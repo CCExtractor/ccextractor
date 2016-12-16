@@ -37,17 +37,20 @@ struct ccx_common_timing_ctx
 	LLONG current_pts;
 	enum ccx_frame_type current_picture_coding_type;
 	int current_tref; // Store temporal reference of current frame
+
 	LLONG min_pts;
 	LLONG max_pts;
 	LLONG sync_pts;
+
 	LLONG minimum_fts; // No screen should start before this FTS
 	LLONG fts_now; // Time stamp of current file (w/ fts_offset, w/o fts_global)
 	LLONG fts_offset; // Time before first sync_pts
 	LLONG fts_fc_offset; // Time before first GOP
 	LLONG fts_max; // Remember the maximum fts that we saw in current file
 	LLONG fts_global; // Duration of previous files (-ve mode)
+
 	int sync_pts2fts_set; //0 = No, 1 = Yes
-	LLONG sync_pts2fts_fts; 
+	LLONG sync_pts2fts_fts;
 	LLONG sync_pts2fts_pts;
 };
 // Count 608 (per field) and 708 blocks since last set_fts() call
@@ -64,25 +67,55 @@ extern double current_fps;
 extern int frames_since_ref_time;
 extern unsigned total_frames_count;
 
-extern struct gop_time_code gop_time, first_gop_time, printed_gop;
+extern struct gop_time_code
+			gop_time,
+			first_gop_time,
+			printed_gop;
+
 extern LLONG fts_at_gop_start;
 extern int gop_rollover;
 
-void ccx_common_timing_init(LLONG *file_position, int no_sync);
+void ccx_common_timing_init(
+	LLONG *file_position,
+	int no_sync
+);
+void dinit_timing_ctx(
+	struct ccx_common_timing_ctx **arg
+);
+struct ccx_common_timing_ctx *init_timing_ctx(
+	struct ccx_common_timing_settings_t *cfg
+);
 
-void dinit_timing_ctx(struct ccx_common_timing_ctx **arg);
-struct ccx_common_timing_ctx *init_timing_ctx(struct ccx_common_timing_settings_t *cfg);
-
-void set_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts);
-void add_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts);
-int set_fts(struct ccx_common_timing_ctx *ctx);
-LLONG get_fts(struct ccx_common_timing_ctx *ctx, int current_field);
-LLONG get_fts_max(struct ccx_common_timing_ctx *ctx);
+void set_current_pts(
+	struct ccx_common_timing_ctx *ctx,
+	LLONG pts
+);
+void add_current_pts(
+	struct ccx_common_timing_ctx *ctx,
+	LLONG pts
+);
+int set_fts(
+	struct ccx_common_timing_ctx *ctx
+);
+LLONG get_fts(
+	struct ccx_common_timing_ctx *ctx,
+	int current_field
+);
+LLONG get_fts_max(
+	struct ccx_common_timing_ctx *ctx
+);
 char *print_mstime(LLONG mstime);
 char *print_mstime2buf(LLONG mstime, char *buf);
 size_t mstime_sprintf(LLONG mstime, char *fmt, char *buf);
-void print_debug_timing(struct ccx_common_timing_ctx *ctx);
-int gop_accepted(struct gop_time_code* g);
-void calculate_ms_gop_time(struct gop_time_code *g);
+
+void print_debug_timing(
+	struct ccx_common_timing_ctx *ctx
+);
+int gop_accepted(
+	struct gop_time_code* g
+);
+void calculate_ms_gop_time(
+	struct gop_time_code *g
+);
 
 #endif

@@ -147,7 +147,7 @@ struct lib_ccx_ctx
 
 
 struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt);
-void dinit_libraries( struct lib_ccx_ctx **ctx);
+void dinit_libraries(struct lib_ccx_ctx **ctx);
 
 //params.c
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[]);
@@ -157,15 +157,17 @@ int atoi_hex (char *s);
 int stringztoms (const char *s, struct ccx_boundary_time *bt);
 
 // general_loop.c
-void position_sanity_check(struct ccx_demuxer *ctx);
-int init_file_buffer(struct ccx_demuxer *ctx);
-int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
-int general_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
-void raw_loop (struct lib_ccx_ctx *ctx);
-size_t process_raw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned char *buffer, size_t len);
-void general_loop(struct lib_ccx_ctx *ctx);
+void position_sanity_check		(struct ccx_demuxer *ctx);
+int init_file_buffer					(struct ccx_demuxer *ctx);
+int ps_get_more_data					(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
+int general_get_more_data			(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
+void raw_loop 								(struct lib_ccx_ctx *ctx);
+void general_loop							(struct lib_ccx_ctx *ctx);
+void rcwt_loop								(struct lib_ccx_ctx *ctx);
+size_t process_raw						(struct lib_cc_decode *ctx, struct cc_subtitle *sub,
+															unsigned char *buffer, size_t len);
+
 void process_hex (char *filename);
-void rcwt_loop(struct lib_ccx_ctx *ctx);
 
 extern int end_of_file;
 
@@ -195,7 +197,15 @@ void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned 
 
 // sequencing.c
 void init_hdcc (struct lib_cc_decode *ctx);
-void store_hdcc(struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now, struct cc_subtitle *sub);
+void store_hdcc(
+			struct lib_cc_decode *ctx,
+			unsigned char *cc_data,
+			int cc_count,
+			int sequence_number,
+			LLONG current_fts_now,
+			struct cc_subtitle *sub
+);
+
 void anchor_hdcc(struct lib_cc_decode *ctx, int seq);
 void process_hdcc (struct lib_cc_decode *ctx, struct cc_subtitle *sub);
 
@@ -204,66 +214,131 @@ void params_dump(struct lib_ccx_ctx *ctx);
 void print_file_report(struct lib_ccx_ctx *ctx);
 
 // output.c
-void dinit_write(struct ccx_s_write *wb);
-int temporarily_open_output(struct ccx_s_write *wb);
-int temporarily_close_output(struct ccx_s_write *wb);
-int init_write(struct ccx_s_write *wb, char *filename, int with_semaphore);
-int writeraw (const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
-void flushbuffer (struct lib_ccx_ctx *ctx, struct ccx_s_write *wb, int closefile);
-void writercwtdata (struct lib_cc_decode *ctx, const unsigned char *data, struct cc_subtitle *sub);
+void dinit_write							(struct ccx_s_write *wb);
+int temporarily_open_output		(struct ccx_s_write *wb);
+int temporarily_close_output	(struct ccx_s_write *wb);
+int init_write								(struct ccx_s_write *wb, char *filename, int with_semaphore);
+
+int writeraw (
+			const unsigned char *data,
+			int length,
+			void *private_data,
+			struct cc_subtitle *sub
+);
+void flushbuffer(
+			struct lib_ccx_ctx *ctx,
+			struct ccx_s_write *wb,
+			int closefile
+);
+void writercwtdata(
+			struct lib_cc_decode *ctx,
+			const unsigned char *data,
+			struct cc_subtitle *sub
+);
 
 // stream_functions.c
-int isValidMP4Box(unsigned char *buffer, size_t position, size_t *nextBoxLocation, int *boxScore);
+int isValidMP4Box(
+			unsigned char *buffer,
+			size_t position,
+			size_t *nextBoxLocation,
+			int *boxScore
+);
 void detect_stream_type (struct ccx_demuxer *ctx);
 int detect_myth( struct ccx_demuxer *ctx );
-int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, unsigned char *nextheader, int *headerlength, int sbuflen);
+int read_video_pes_header (
+		struct ccx_demuxer *ctx,
+		struct demuxer_data *data,
+		unsigned char *nextheader,
+		int *headerlength,
+		int sbuflen
+);
 
 // ts_functions.c
-void init_ts(struct ccx_demuxer *ctx);
-int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload);
-long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data);
-int ts_get_more_data(struct ccx_demuxer *ctx, struct demuxer_data **data);
-int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char*buf, int size,  struct program_info *pinfo);
-void ts_buffer_psi_packet(struct ccx_demuxer *ctx);
-int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct program_info *pinfo);
-int parse_PAT (struct ccx_demuxer *ctx);
-void parse_EPG_packet (struct lib_ccx_ctx *ctx);
-void EPG_free(struct lib_ccx_ctx *ctx);
+void init_ts							(struct ccx_demuxer *ctx);
+int ts_readpacket					(struct ccx_demuxer* ctx, struct ts_payload *payload);
+long ts_readstream				(struct ccx_demuxer *ctx, struct demuxer_data **data);
+int ts_get_more_data			(struct ccx_demuxer *ctx, struct demuxer_data **data);
+int write_section					(struct ccx_demuxer *ctx, struct ts_payload *payload,
+														unsigned char*buf, int size,  struct program_info *pinfo);
+void ts_buffer_psi_packet	(struct ccx_demuxer *ctx);
+int parse_PMT 						(struct ccx_demuxer *ctx, unsigned char *buf,
+														int len,  struct program_info *pinfo);
+int parse_PAT 						(struct ccx_demuxer *ctx);
+void parse_EPG_packet 		(struct lib_ccx_ctx *ctx);
+void EPG_free							(struct lib_ccx_ctx *ctx);
+void parse_SDT						(struct ccx_demuxer *ctx);
 char* EPG_DVB_decode_string(uint8_t *in, size_t size);
-void parse_SDT(struct ccx_demuxer *ctx);
 
 // myth.c
 void myth_loop(struct lib_ccx_ctx *ctx);
 
 // utility.c
-void fatal(int exit_code, const char *fmt, ...);
-void mprint (const char *fmt, ...);
+void fatal(
+			int exit_code,
+			const char *fmt,
+			...
+);
+void mprint (
+			const char *fmt,
+			...);
+
 void sleep_secs (int secs);
-void dump (LLONG mask, unsigned char *start, int l, unsigned long abs_start, unsigned clear_high_bit);
-bool_t in_array(uint16_t *array, uint16_t length, uint16_t element) ;
+
+void dump (LLONG mask,
+			unsigned char *start,
+			int l,
+			unsigned long abs_start,
+			unsigned clear_high_bit
+);
+bool_t in_array(
+			uint16_t *array,
+			uint16_t length,
+			uint16_t element
+);
+
 int hex_to_int (char high, char low);
 int hex_string_to_int(char* string, int len);
-void timestamp_to_srttime(uint64_t timestamp, char *buffer);
-void timestamp_to_smptetttime(uint64_t timestamp, char *buffer);
-int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
-void millis_to_date (uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator);
+
+void timestamp_to_srttime			(uint64_t timestamp, char *buffer);
+void timestamp_to_smptetttime	(uint64_t timestamp, char *buffer);
+int levenshtein_dist(
+			const uint64_t *s1,
+			const uint64_t *s2,
+			unsigned s1len,
+			unsigned s2len
+);
+void millis_to_date(
+			uint64_t timestamp,
+			char *buffer,
+			enum ccx_output_date_format date_format,
+			char millis_separator
+);
 void create_signal(int sigtype);
 void signal_handler(int sig_type);
+
 struct encoder_ctx* change_filename(struct encoder_ctx*);
 #ifndef _WIN32
-void m_signal(int sig, void (*func)(int));
+	void m_signal(int sig, void (*func)(int));
 #endif
 
 
 void buffered_seek (struct ccx_demuxer *ctx, int offset);
 extern void build_parity_table(void);
 
-int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub, int sentence_cap);
+int tlt_process_pes_packet(
+			struct lib_cc_decode *dec_ctx,
+			uint8_t *buffer,
+			uint16_t size,
+			struct cc_subtitle *sub,
+			int sentence_cap
+);
+
 void* telxcc_init(void);
 void telxcc_close(void **ctx, struct cc_subtitle *sub);
-void tlt_read_rcwt(void *codec, unsigned char *buf, struct cc_subtitle *sub);
-void telxcc_configure (void *codec, struct ccx_s_teletext_config *cfg);
-void telxcc_update_gt(void *codec, uint32_t global_timestamp);
+
+void tlt_read_rcwt				(void *codec, unsigned char *buf, struct cc_subtitle *sub);
+void telxcc_configure 		(void *codec, struct ccx_s_teletext_config *cfg);
+void telxcc_update_gt			(void *codec, uint32_t global_timestamp);
 
 extern unsigned rollover_bits;
 

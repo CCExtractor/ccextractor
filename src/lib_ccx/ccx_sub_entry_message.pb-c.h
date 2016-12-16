@@ -38,34 +38,39 @@ struct  _CcxSubEntryMessage
 	char **lines;
 };
 #define CCX_SUB_ENTRY_MESSAGE__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&ccx_sub_entry_message__descriptor) \
-    , 0, NULL, 0, 0, 0, 0,NULL }
+{
+	PROTOBUF_C_MESSAGE_INIT (&ccx_sub_entry_message__descriptor) \
+    , 0, NULL, 0, 0, 0, 0,NULL
+}
 
 
 /* CcxSubEntryMessage methods */
 void   ccx_sub_entry_message__init
-(CcxSubEntryMessage         *message);
+		(CcxSubEntryMessage         *message);
+
 size_t ccx_sub_entry_message__get_packed_size
-(const CcxSubEntryMessage   *message);
+		(const CcxSubEntryMessage   *message);
+
 size_t ccx_sub_entry_message__pack
-(const CcxSubEntryMessage   *message,
-uint8_t             *out);
+		(const CcxSubEntryMessage   *message,
+		uint8_t             *out);
 size_t ccx_sub_entry_message__pack_to_buffer
-(const CcxSubEntryMessage   *message,
-ProtobufCBuffer     *buffer);
-CcxSubEntryMessage *
-ccx_sub_entry_message__unpack
-(ProtobufCAllocator  *allocator,
-size_t               len,
-const uint8_t       *data);
-void   ccx_sub_entry_message__free_unpacked
-(CcxSubEntryMessage *message,
-ProtobufCAllocator *allocator);
+		(const CcxSubEntryMessage   *message,
+			ProtobufCBuffer     *buffer);
+
+CcxSubEntryMessage
+*ccx_sub_entry_message__unpack
+		(ProtobufCAllocator *allocator,
+		size_t len,
+		const uint8_t *data);
+void ccx_sub_entry_message__free_unpacked
+		(CcxSubEntryMessage *message,
+		ProtobufCAllocator *allocator);
 /* --- per-message closures --- */
 
 typedef void(*CcxSubEntryMessage_Closure)
-(const CcxSubEntryMessage *message,
-void *closure_data);
+		(const CcxSubEntryMessage *message,
+		void *closure_data);
 
 /* --- services --- */
 

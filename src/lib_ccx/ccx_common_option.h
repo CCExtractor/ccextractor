@@ -19,10 +19,13 @@ struct demuxer_cfg
 	unsigned ts_autoprogram; // Try to find a stream with captions automatically (no -pn needed)
 	unsigned ts_allprogram;
 	unsigned ts_cappids[128]; // PID for stream that holds caption information
+
 	int nb_ts_cappid;
 	unsigned ts_forced_cappid ; // If 1, never mess with the selected PID
+
 	int ts_forced_program; // Specific program to process in TS files, if ts_forced_program_selected==1
 	unsigned ts_forced_program_selected;
+
 	int ts_datastreamtype ; // User WANTED stream type (i.e. use the stream that has this type)
 	unsigned ts_forced_streamtype; // User selected (forced) stream type
 };
@@ -38,7 +41,7 @@ struct encoder_cfg
 	int force_flush; // Force flush on content write
 	int append_mode; //Append mode for output files
 	int ucla; // 1 if -UCLA used, 0 if not
-	
+
 	enum ccx_encoding_type encoding;
 	enum ccx_output_date_format date_format;
 	char millis_separator;
@@ -52,9 +55,20 @@ struct encoder_cfg
 	/* Credit stuff */
 	char *start_credits_text;
 	char *end_credits_text;
-	struct ccx_boundary_time startcreditsnotbefore, startcreditsnotafter; // Where to insert start credits, if possible
-	struct ccx_boundary_time startcreditsforatleast, startcreditsforatmost; // How long to display them?
-	struct ccx_boundary_time endcreditsforatleast, endcreditsforatmost;
+
+	// Where to insert start credits, if possible
+	struct ccx_boundary_time
+				startcreditsnotbefore,
+				startcreditsnotafter;
+
+	// How long to display them?
+	struct ccx_boundary_time
+				startcreditsforatleast,
+				startcreditsforatmost;
+
+	struct ccx_boundary_time
+				endcreditsforatleast,
+				endcreditsforatmost;
 
 	ccx_encoders_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
 	unsigned int send_to_srv;
@@ -114,16 +128,19 @@ struct ccx_s_options // Options from user parameters
 	unsigned mp4vidtrack; // Process the video track even if a CC dedicated track exists.
 	/* General settings */
 	int usepicorder; // Force the use of pic_order_cnt_lsb in AVC/H.264 data streams
+
 	int xmltv; // 1 = full output. 2 = live output. 3 = both
 	int xmltvliveinterval; // interval in seconds between writing xmltv output files in live mode
 	int xmltvoutputinterval; // interval in seconds between writing xmltv full file output
 	int xmltvonlycurrent; // 0 off 1 on
+
 	int keep_output_closed;
 	int force_flush; // Force flush on content write
 	int append_mode; //Append mode for output files
 	int ucla; // 1 if UCLA used, 0 if not
 	int hardsubx; // 1 if burned-in subtitles to be extracted
 	int dvbcolor; // 1 if Color to be detected for DVB
+
 	char *dvblang; // The name of the language stream for DVB
 	char *ocrlang; // The name of the .traineddata file to be loaded with tesseract
 
@@ -164,19 +181,20 @@ struct ccx_s_options // Options from user parameters
 	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
 	int multiprogram;
 	int out_interval;
+
 #ifdef WITH_LIBCURL
-	char *curlposturl;
+			char *curlposturl;
 #endif
 
 
 #ifdef ENABLE_SHARING
-	//CC sharing
-	int sharing_enabled;
-	char *sharing_url;
-	//Translating
-	int translate_enabled;
-	char *translate_langs;
-	char *translate_key;
+			//CC sharing
+			int sharing_enabled;
+			char *sharing_url;
+			//Translating
+			int translate_enabled;
+			char *translate_langs;
+			char *translate_key;
 #endif
 };
 
