@@ -1,7 +1,7 @@
 #ifndef CCX_PLATFORM_H
 	#define CCX_PLATFORM_H
 
-	// Default includes (cross-platform)
+//  Default includes (cross-platform)
 	#include <stdio.h>
 	#include <stdlib.h>
 	#include <string.h>
@@ -34,7 +34,7 @@
 		#include <direct.h>
 		#define mkdir(path, mode) _mkdir(path)
 		#ifndef snprintf
-			// Added ifndef because VS2013 warns for macro redefinition.
+		//  Added ifndef because VS2013 warns for macro redefinition.
 			#define snprintf(buf, len, fmt, ...) _snprintf(buf, len, fmt, __VA_ARGS__)
 		#endif
 		#define sleep(sec) Sleep((sec) * 1000)
@@ -57,7 +57,7 @@
 
 	#ifdef _MSC_VER
 		#include "stdintmsc.h"
-		// Don't bug me with strcpy() deprecation warnings
+	//  Don't bug me with strcpy() deprecation warnings
 		#pragma warning(disable : 4996)
 	#else
 		#include <stdint.h>
@@ -73,14 +73,14 @@
 	#else
 		#ifdef _WIN32
 			#define OPEN _open
-			// 64 bit file functions
+		//  64 bit file functions
 			#if defined(MSC_VER)
 				extern "C" int __cdecl _fseeki64(FILE *, __int64, int);
 				extern "C" __int64 __cdecl _ftelli64(FILE *);
 				#define FSEEK _fseeki64
 				#define FTELL _ftelli64
 			#else
-				// For MinGW
+			//  For MinGW
 				#define FSEEK fseeko64
 				#define FTELL ftello64
 			#endif
@@ -88,8 +88,8 @@
 			#define LSEEK _lseeki64
 			typedef struct _stati64 FSTATSTRUCT;
 		#else
-			// Linux internally maps these functions to 64bit usage,
-			// if _FILE_OFFSET_BITS macro is set to 64
+		//  Linux internally maps these functions to 64bit usage,
+		//  if _FILE_OFFSET_BITS macro is set to 64
 			#define FOPEN64 fopen
 			#define OPEN open
 			#define LSEEK lseek

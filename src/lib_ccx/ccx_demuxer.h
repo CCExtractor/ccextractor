@@ -46,7 +46,7 @@ struct cap_info
 	enum ccx_code_type codec;
 	long capbufsize;
 	unsigned char *capbuf;
-	long capbuflen; // Bytes read in capbuf
+	long capbuflen; 			// Bytes read in capbuf
 	int saw_pesstart;
 	int prev_counter;
 	void *codec_private_data;
@@ -74,12 +74,12 @@ struct ccx_demuxer
 	enum ccx_stream_mode_enum stream_mode;
 	enum ccx_stream_mode_enum auto_stream;
 
-	// Small buffer to help us with the initial sync
+//  Small buffer to help us with the initial sync
 	unsigned char startbytes[STARTBYTESLENGTH];
 	unsigned int startbytes_pos;
 	int startbytes_avail;
 
-	// User Specified Param
+//  User Specified Param
 	int ts_autoprogram;
 	int ts_allprogram;
 	int flag_ts_forced_pn;
@@ -96,10 +96,10 @@ struct ccx_demuxer
 
 	/* File handles */
 	FILE *fh_out_elementarystream;
-	int infd; // descriptor number to input.
-	LLONG past; /* Position in file, if in sync same as ftell()  */
+	int infd; 						// descriptor number to input.
+	LLONG past; 					/* Position in file, if in sync same as ftell()  */
 
-	// TODO relates to fts_global
+//  TODO relates to fts_global
 	int64_t global_timestamp;
 	int64_t min_global_timestamp;
 	int64_t offset_global_timestamp;
@@ -113,7 +113,7 @@ struct ccx_demuxer
 	struct ccx_demux_report freport;
 
 	/* Hauppauge support */
-	unsigned hauppauge_warning_shown; // Did we detect a possible Hauppauge capture and told the user already?
+	unsigned hauppauge_warning_shown; 		// Did we detect a possible Hauppauge capture and told the user already?
 
 	int multi_stream_per_prog;
 
@@ -121,14 +121,14 @@ struct ccx_demuxer
 	unsigned last_pat_length;
 
 	unsigned char *filebuffer;
-	LLONG filebuffer_start; // Position of buffer start relative to file
-	unsigned int filebuffer_pos; // Position of pointer relative to buffer start
-	unsigned int bytesinbuffer; // Number of bytes we actually have on buffer
+	LLONG filebuffer_start; 				// Position of buffer start relative to file
+	unsigned int filebuffer_pos; 			// Position of pointer relative to buffer start
+	unsigned int bytesinbuffer; 			// Number of bytes we actually have on buffer
 
 	int warning_program_not_found_shown;
 
-	// Remember if the last header was valid. Used to suppress too much output
-	// and the expected unrecognized first header for TiVo files.
+//  Remember if the last header was valid. Used to suppress too much output
+//  and the expected unrecognized first header for TiVo files.
 	int strangeheader;
 #ifdef ENABLE_FFMPEG
 	void *ffmpeg_ctx;
@@ -136,7 +136,7 @@ struct ccx_demuxer
 
 	void *parent;
 
-	//Will contain actual Demuxer Context
+// Will contain actual Demuxer Context
 	void *private_data;
 	void (*print_cfg)(struct ccx_demuxer *ctx);
 	void (*reset)(struct ccx_demuxer *ctx);
