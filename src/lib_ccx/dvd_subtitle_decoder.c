@@ -19,10 +19,10 @@
 struct DVD_Ctx
 {
 	unsigned char *buffer; // Buffer to store packet data
-	size_t len; //length of buffer required
-	int pos; //position in the buffer
-	uint16_t size_spu; //total size of spu packet
-	uint16_t size_data; //size of data in the packet, offset to control packet
+	size_t len;			   //length of buffer required
+	int pos;			   //position in the buffer
+	uint16_t size_spu;     //total size of spu packet
+	uint16_t size_data;    //size of data in the packet, offset to control packet
 	struct ctrl_seq *ctrl;
 	int append;
 	unsigned char *bitmap;
@@ -34,7 +34,7 @@ struct DVD_Ctx
 struct ctrl_seq
 {
 	uint8_t color[4];
-	uint8_t alpha[4]; // alpha channel
+	uint8_t alpha[4];      // alpha channel
 	uint16_t coord[4];
 	uint16_t pixoffset[2]; // Offset to 1st and 2nd graphic line
 	uint16_t start_time, stop_time;

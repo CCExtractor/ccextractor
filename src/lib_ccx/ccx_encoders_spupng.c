@@ -74,7 +74,7 @@ static png_color palette[10] =
 	{ 0xff, 0x00, 0xff }, // COL_MAGENTA = 6,
 	{ 0xff, 0xff, 0xff }, // COL_USERDEFINED = 7,
 	{ 0x00, 0x00, 0x00 }, // COL_BLACK = 8
-	{ 0x00, 0x00, 0x00 } // COL_TRANSPARENT = 9
+	{ 0x00, 0x00, 0x00 }  // COL_TRANSPARENT = 9
 };
 
 static png_byte alpha[10] =
@@ -218,7 +218,7 @@ int spupng_export_string2png(struct spupng_t *sp, char *str)
 	assert ((sizeof(png_byte) == sizeof(uint8_t))
 			&& (sizeof(*image) == sizeof(uint8_t)));
 
-	// Allow space at beginning and end of each row for a padding space
+	 // Allow space at beginning and end of each row for a padding space
 	ww = CCW * (COLUMNS+2);
 	wh = CCH * ROWS;
 	row_adv = (COLUMNS+2) * CCW * CCH;

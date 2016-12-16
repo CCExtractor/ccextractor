@@ -29,8 +29,8 @@ static int check_trans_tn_intensity(const void *p1, const void *p2, void *arg)
 	unsigned char act_i;
 	/** TODO verify that RGB follow ITU-R BT.709
 	 *  Below formula is valid only for 709 standard
-		 *  Y = 0.2126 R + 0.7152 G + 0.0722 B
-		 */
+	 *  Y = 0.2126 R + 0.7152 G + 0.0722 B
+		*/
 	tmp_i = (0.2126 * ti->palette[*tmp].red) + (0.7152 * ti->palette[*tmp].green) + (0.0722 * ti->palette[*tmp].blue);
 	act_i = (0.2126 * ti->palette[*act].red) + (0.7152 * ti->palette[*act].green) + (0.0722 * ti->palette[*act].blue);;
 

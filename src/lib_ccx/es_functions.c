@@ -1079,12 +1079,12 @@ static int read_pic_data(struct bitstream *esstream)
 
 			return 0;
 		}
-
-		slice_start = esstream->pos; // No need to come back
+		  
+		slice_start = esstream->pos;     // No need to come back
 
 		if ( startcode >= 0x01 && startcode <= 0xAF )
 		{
-			skip_u32(esstream); // Advance bitstream
+			skip_u32(esstream);          // Advance bitstream
 			search_start_code(esstream); // Skip this slice
 		}
 	} while(startcode >= 0x01 && startcode <= 0xAF);

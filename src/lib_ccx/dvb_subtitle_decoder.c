@@ -1305,9 +1305,9 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 		object->display_list = display;
 	}
 }
-/*
- * xxx loose last frame
- */
+
+ // xxx loose last frame
+
 static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 		int buf_size)
 {
@@ -1328,7 +1328,7 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	version = ((*buf) >> 4) & 15;
 	page_state = ((*buf++) >> 2) & 3;
 
-	//if version same mean we are already updated
+		//if version same mean we are already updated
 	if (ctx->version == version)
 	{
 		return;
@@ -1428,7 +1428,7 @@ static void dvbsub_parse_display_definition_segment(void *dvb_ctx,
 		return;
 
 	if (info_byte & 1 << 3)
-	{ // display_window_flag
+	{ //display_window_flag
 		display_def->x = bytestream_get_be16(&buf);
 		display_def->width = bytestream_get_be16(&buf) - display_def->x + 1;
 		display_def->y = bytestream_get_be16(&buf);
@@ -1694,7 +1694,7 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 
 	for (i = 0; i < cfg->n_language; i++, data += i * 8)
 	{
-		/* setting language to undefined if not found in language lkup table */
+		// setting language to undefined if not found in language lkup table 
 		char lang_name[4];
 		for(int char_index = 0; char_index < 3; char_index++)
 		{
@@ -1712,12 +1712,12 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 
 	}
 
-	/*
-		Abhinav95: The way this function is called right now, only cfg->lang_index[0]
+	
+	/*	Abhinav95: The way this function is called right now, only cfg->lang_index[0]
 		gets populated. E.g. for 3 stream languages, it will be called 3 times, and
 		set the language index in only the first element each time. This works with the
-		current state of the DVB code.
-	*/
+		current state of the DVB code. */
+	
 	if(ccx_options.dvblang)
 	{
 		if(strcmp(ccx_options.dvblang, language[cfg->lang_index[0]])!=0)

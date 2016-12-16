@@ -182,7 +182,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 	int wrote_something = 0;
 	ms_start = data->start_time;
 
-	int prev_line_start=-1, prev_line_end=-1; // Column in which the previous line started and ended, for autodash
+	int prev_line_start=-1, prev_line_end=-1;       // Column in which the previous line started and ended, for autodash
 	int prev_line_center1=-1, prev_line_center2=-1; // Center column of previous line text
 	int empty_buf=1;
 	for (int i=0;i<15;i++)
@@ -193,7 +193,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 			break;
 		}
 	}
-	if (empty_buf) // Prevent writing empty screens. Not needed in .srt
+	if (empty_buf)  // Prevent writing empty screens. Not needed in .srt
 		return 0;
 
 	ms_start+=context->subs_delay;
@@ -249,7 +249,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 					do_dash=0;
 				if (first==prev_line_start) // Case of left alignment
 					do_dash=0;
-				if (last==prev_line_end)  // Right align
+				if (last==prev_line_end)    // Right align
 					do_dash=0;
 				if (first>prev_line_start && last<prev_line_end) // Fully contained
 					do_dash=0;

@@ -839,8 +839,8 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
 		if ( tmp )
 		{
 			dvprint ("nal_hrd. Not implemented for now. Hopefully not needed. Skiping rest of NAL\n");
-			//printf("Boom nal_hrd\n");
-			// exit(1);
+	      //printf("Boom nal_hrd\n");
+		 // exit(1);
 			ctx->num_nal_hrd++;
 			return;
 		}

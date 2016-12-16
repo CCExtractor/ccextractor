@@ -1536,7 +1536,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				strcmp (argv[i],"-pn")==0)
 		{
 			if (i==argc-1 // Means no following argument
-					|| !isanumber (argv[i+1])) // Means is not a number
+					|| !isanumber (argv[i+1]))        // Means is not a number
 				opt->demux_cfg.ts_forced_program = -1; // Autodetect
 			else
 			{
@@ -1560,9 +1560,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp (argv[i],"--stream")==0 ||
 				strcmp (argv[i],"-s")==0)
 		{
-			if (i==argc-1 // Means no following argument
+			if (i==argc-1                      // Means no following argument
 					|| !isanumber (argv[i+1])) // Means is not a number
-				opt->live_stream=-1; // Live stream without timeout
+				opt->live_stream=-1;           // Live stream without timeout
 			else
 			{
 				opt->live_stream=atoi_hex (argv[i+1]);

@@ -18,8 +18,8 @@ uint64_t utc_refvalue = UINT64_MAX;  /* _UI64_MAX means don't use UNIX, 0 = use 
 extern int in_xds_mode;
 
 
-/* This function returns a FTS that is guaranteed to be at least 1 ms later than the end of the previous screen. It shouldn't be needed
-   obviously but it guarantees there's no timing overlap */
+	/* This function returns a FTS that is guaranteed to be at least 1 ms later than the end of the previous screen. It shouldn't be needed
+	   obviously but it guarantees there's no timing overlap */
 LLONG get_visible_start (struct ccx_common_timing_ctx *ctx, int current_field)
 {
 	LLONG fts = get_fts(ctx, current_field);
@@ -29,7 +29,7 @@ LLONG get_visible_start (struct ccx_common_timing_ctx *ctx, int current_field)
 	return fts;
 }
 
-/* This function returns the current FTS and saves it so it can be used by ctxget_visible_start */
+	// This function returns the current FTS and saves it so it can be used by ctxget_visible_start 
 LLONG get_visible_end (struct ccx_common_timing_ctx *ctx, int current_field)
 {
 	LLONG fts = get_fts(ctx, current_field);
@@ -95,7 +95,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 		cc_block[2]=0x80;
 	}
 
-	if ( ctx->write_format!=CCX_OF_RAW && // In raw we cannot skip padding because timing depends on it
+	if ( ctx->write_format!=CCX_OF_RAW &&				   // In raw we cannot skip padding because timing depends on it
 		 ctx->write_format!=CCX_OF_DVDRAW &&
 		(cc_block[0]==0xFA || cc_block[0]==0xFC || cc_block[0]==0xFD )
 		&& (cc_block[1]&0x7F)==0 && (cc_block[2]&0x7F)==0) // CFS: Skip non-data, makes debugging harder.
@@ -330,9 +330,9 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->current_hor_size = 0;
 	ctx->current_vert_size = 0;
 	ctx->current_aspect_ratio = 0;
-	ctx->current_frame_rate = 4; // Assume standard fps, 29.97
+	ctx->current_frame_rate = 4;	 // Assume standard fps, 29.97
 
-        //Variables used while parsing elementry stream
+		//Variables used while parsing elementry stream
 	ctx->no_bitstream_error = 0;
 	ctx->saw_seqgoppic = 0;
 	ctx->in_pic_data = 0;

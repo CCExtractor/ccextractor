@@ -105,11 +105,11 @@ unsigned int utf8_to_latin1_map(const unsigned int code)
     switch (code)
 	{
     case 0x0152U:
-		return 188U; /* U+0152 = 0xBC: OE ligature */
+		return 188U;		   /* U+0152 = 0xBC: OE ligature */
     case 0x0153U:
-		return 189U; /* U+0153 = 0xBD: oe ligature */
+		return 189U;		   /* U+0153 = 0xBD: oe ligature */
     case 0x0160U:
-		return 166U; /* U+0160 = 0xA6: S with caron */
+		return 166U;	       /* U+0160 = 0xA6: S with caron */
     case 0x0161U: return 168U; /* U+0161 = 0xA8: s with caron */
     case 0x0178U: return 190U; /* U+0178 = 0xBE: Y with diaresis */
     case 0x017DU: return 180U; /* U+017D = 0xB4: Z with caron */
@@ -121,7 +121,7 @@ unsigned int utf8_to_latin1_map(const unsigned int code)
 
 int change_utf8_encoding(unsigned char* dest, unsigned char* src, int len, enum ccx_encoding_type out_enc)
 {
-	unsigned char *orig = dest; // Keep for calculating length
+	unsigned char *orig = dest;    // Keep for calculating length
 	unsigned char *orig_src = src; // Keep for calculating length
 	for (int i = 0; src < orig_src + len;)
 	{
@@ -290,7 +290,7 @@ int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_
 	}
 
 
-	// change encoding only when required
+	 // change encoding only when required
 	switch (in_enc)
 	{
 	case CCX_ENC_UTF_8:
@@ -309,7 +309,7 @@ int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_
 	if (len < 0)
 		mprint("WARNING: Could not encode in specified format\n");
 	else if (len == CCX_ENOSUPP)
-	// we only support ASCII to other encoding std
+	 // we only support ASCII to other encoding std
 		mprint("WARNING: Encoding is not yet supported\n");
 	else
 		return (unsigned)len; // Return length
@@ -438,7 +438,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			ret = write(out->fh, ctx->encoded_crlf, ctx->encoded_crlf_length);
 			break;
 		case CCX_OF_SAMI: // This header brought to you by McPoodle's CCASDI
-			//fprintf_encoded (wb->fh, sami_header);
+	      //fprintf_encoded (wb->fh, sami_header);
 			ret = write_bom(ctx, out);
 			if(ret < 0)
 				return -1;
@@ -745,7 +745,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	int ret = EXIT_OK;
 	int nb_lang;
 	char *basefilename = NULL; // Input filename without the extension
-	char *extension = NULL; // Input filename without the extension
+	char *extension = NULL;    // Input filename without the extension
 
 
 #define check_ret(filename) 	if (ret != EXIT_OK)							\

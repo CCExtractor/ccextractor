@@ -56,7 +56,7 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 	}
 	used = encode_line(context, context->buffer, (unsigned char *) str);
 	write (context->out->fh, context->buffer, used);
-	// Scan for \n in the string and replace it with a 0
+	 // Scan for \n in the string and replace it with a 0
 	while (pos_r < len)
 	{
 		if (string[pos_r] == '\\' && string[pos_r+1] == 'n')
