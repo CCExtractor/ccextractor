@@ -5,10 +5,12 @@
 struct avc_ctx
 {
 	unsigned char cc_count;
-	// buffer to hold cc data
+	
+// buffer to hold cc data
 	unsigned char *cc_data;
 	long cc_databufsize;
-	int cc_buffer_saved; // Was the CC buffer saved after it was last updated?
+	int cc_buffer_saved; 
+// Was the CC buffer saved after it was last updated?
 
 	int got_seq_para;
 	unsigned nal_ref_idc;
@@ -18,7 +20,8 @@ struct avc_ctx
 	int log2_max_pic_order_cnt_lsb;
 	int frame_mbs_only_flag;
 
-	// Use and throw stats for debug, remove this ugliness soon
+	
+// Use and throw stats for debug, remove this ugliness soon
 	long num_nal_unit_type_7;
 	long num_vcl_hrd;
 	long num_nal_hrd;
@@ -34,15 +37,18 @@ struct avc_ctx
 	int maxidx;
 	int lastmaxidx;
 
-	// Used to find tref zero in PTS mode
+	
+// Used to find tref zero in PTS mode
 	int minidx;
 	int lastminidx;
 
-	// Used to remember the max temporal reference number (poc mode)
+	
+// Used to remember the max temporal reference number (poc mode)
 	int maxtref;
 	int last_gop_maxtref;
 
-	// Used for PTS ordering of CC blocks
+	
+// Used for PTS ordering of CC blocks
 	LLONG currefpts;
 	LLONG last_pic_order_cnt_lsb;
 	LLONG last_slice_pts;

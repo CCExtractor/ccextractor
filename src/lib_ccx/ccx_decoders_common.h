@@ -7,7 +7,9 @@
 #include "ccx_decoders_structs.h"
 #include "ccx_common_option.h"
 
-extern uint64_t utc_refvalue; // UTC referential value
+extern uint64_t utc_refvalue; 
+// UTC referential value
+
 
 // Declarations
 LLONG get_visible_start (struct ccx_common_timing_ctx *ctx, int current_field);

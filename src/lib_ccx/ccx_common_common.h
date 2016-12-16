@@ -4,6 +4,7 @@
 #include "ccx_common_platform.h"
 #include "ccx_common_structs.h"
 
+
 // Define possible exit codes that will be passed on to the fatal function
 /* Exit codes. Take this seriously as the GUI depends on them.
    0 means OK as usual,
@@ -38,6 +39,7 @@
 #define CCX_ENOSUPP -103
 #define CCX_ENOMEM  -104
 
+
 // Declarations
 void fdprintf(int fd, const char *fmt, ...);
 void mstotime(LLONG milli, unsigned *hours, unsigned *minutes,unsigned *seconds, unsigned *ms);
@@ -47,5 +49,6 @@ unsigned char *debug_608toASC(unsigned char *ccdata, int channel);
 int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time,
 		LLONG end_time, char *info, char *mode, enum ccx_encoding_type);
 
-extern int cc608_parity_table[256]; // From myth
+extern int cc608_parity_table[256]; 
+// From myth
 #endif

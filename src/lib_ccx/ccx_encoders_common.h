@@ -60,7 +60,8 @@ struct encoder_ctx
 	/* number of member in array of write out array */
 	int nb_out;
 	/* Input file format used in Teletext for exceptional output */
-	unsigned int in_fileformat; //1 =Normal, 2=Teletext
+	unsigned int in_fileformat; 
+//1 =Normal, 2=Teletext
 	/* Keep output file closed when not actually writing to it and start over each time (add headers, etc) */
 	unsigned int keep_output_closed; 
 	/* Force a flush on the file buffer whenever content is written */
@@ -72,21 +73,29 @@ struct encoder_ctx
 
 	/* Flag saying BOM to be written in each output file */
 	enum ccx_encoding_type encoding;
-	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
+	enum ccx_output_format write_format; 
+// 0=Raw, 1=srt, 2=SMI
 	int generates_file;
-	struct ccx_encoders_transcript_format *transcript_settings; // Keeps the settings for generating transcript output files.
+	struct ccx_encoders_transcript_format *transcript_settings; 
+// Keeps the settings for generating transcript output files.
 	int no_bom;
-	int sentence_cap ; // FIX CASE? = Fix case?
+	int sentence_cap ; 
+// FIX CASE? = Fix case?
 
-	int trim_subs; // "    Remove spaces at sides?    "
-	int autodash; // Add dashes (-) before each speaker automatically?
+	int trim_subs; 
+// "    Remove spaces at sides?    "
+	int autodash; 
+// Add dashes (-) before each speaker automatically?
 	int no_font_color;
 	int no_type_setting;
-	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
-	unsigned char *subline; // Temp storage for storing each line
+	int gui_mode_reports; 
+// If 1, output in stderr progress updates so the GUI can grab them
+	unsigned char *subline; 
+// Temp storage for storing each line
 	int extract;
 
-	int dtvcc_extract; //1 or 0 depending if we have to handle dtvcc
+	int dtvcc_extract; 
+//1 or 0 depending if we have to handle dtvcc
 	ccx_dtvcc_writer_ctx dtvcc_writers[CCX_DTVCC_MAX_SERVICES];
 
 	/* Timing related variables*/
@@ -101,25 +110,31 @@ struct encoder_ctx
 	int startcredits_displayed;
 	char *start_credits_text;
 	char *end_credits_text;
-	struct ccx_boundary_time startcreditsnotbefore, startcreditsnotafter; // Where to insert start credits, if possible
-	struct ccx_boundary_time startcreditsforatleast, startcreditsforatmost; // How long to display them?
+	struct ccx_boundary_time startcreditsnotbefore, startcreditsnotafter; 
+// Where to insert start credits, if possible
+	struct ccx_boundary_time startcreditsforatleast, startcreditsforatmost; 
+// How long to display them?
 	struct ccx_boundary_time endcreditsforatleast, endcreditsforatmost;
 
-	// Preencoded strings
+	
+// Preencoded strings
 	unsigned char encoded_crlf[16];
 	unsigned int encoded_crlf_length;
 	unsigned char encoded_br[16];
 	unsigned int encoded_br_length;
 
-	int new_sentence; // Capitalize next letter?
+	int new_sentence; 
+// Capitalize next letter?
 
 	int program_number;
 	struct list_head list;
 
 	/* split-by-sentence stuff */
 	int splitbysentence;
-	LLONG sbs_newblock_start_time; // Used by the split-by-sentence code to know when the current block starts...
-	LLONG sbs_newblock_end_time; // ... and ends
+	LLONG sbs_newblock_start_time; 
+// Used by the split-by-sentence code to know when the current block starts...
+	LLONG sbs_newblock_end_time; 
+// ... and ends
 	ccx_sbs_utf8_character *sbs_newblock;
 	int sbs_newblock_capacity;
 	int sbs_newblock_size;

@@ -21,6 +21,7 @@ struct ccx_encoders_helpers_settings_t {
 	enum ccx_encoding_type encoding;
 };
 
+
 // Helper functions
 void correct_case_with_dictionary(int line_num, struct eia608_screen *data);
 int is_all_caps(struct encoder_ctx *context, int line_num, struct eia608_screen *data);

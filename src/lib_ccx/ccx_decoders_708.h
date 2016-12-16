@@ -6,7 +6,8 @@
 #include "ccx_common_constants.h"
 #include "ccx_common_structs.h"
 
-#define CCX_DTVCC_MAX_PACKET_LENGTH 128 //According to EIA-708B, part 5
+#define CCX_DTVCC_MAX_PACKET_LENGTH 128 
+//According to EIA-708B, part 5
 #define CCX_DTVCC_MAX_SERVICES 63
 
 #define CCX_DTVCC_MAX_ROWS 15
@@ -89,15 +90,18 @@ enum ccx_dtvcc_window_justify
 	CCX_DTVCC_WINDOW_JUSTIFY_FULL	= 3
 };
 
-enum ccx_dtvcc_window_pd //Print Direction
+enum ccx_dtvcc_window_pd 
+//Print Direction
 {
-	CCX_DTVCC_WINDOW_PD_LEFT_RIGHT = 0, //left -> right
+	CCX_DTVCC_WINDOW_PD_LEFT_RIGHT = 0, 
+//left -> right
 	CCX_DTVCC_WINDOW_PD_RIGHT_LEFT = 1,
 	CCX_DTVCC_WINDOW_PD_TOP_BOTTOM = 2,
 	CCX_DTVCC_WINDOW_PD_BOTTOM_TOP = 3
 };
 
-enum ccx_dtvcc_window_sd //Scroll Direction
+enum ccx_dtvcc_window_sd 
+//Scroll Direction
 {
 	CCX_DTVCC_WINDOW_SD_LEFT_RIGHT = 0,
 	CCX_DTVCC_WINDOW_SD_RIGHT_LEFT = 1,
@@ -105,14 +109,16 @@ enum ccx_dtvcc_window_sd //Scroll Direction
 	CCX_DTVCC_WINDOW_SD_BOTTOM_TOP = 3
 };
 
-enum ccx_dtvcc_window_sde //Scroll Display Effect
+enum ccx_dtvcc_window_sde 
+//Scroll Display Effect
 {
 	CCX_DTVCC_WINDOW_SDE_SNAP = 0,
 	CCX_DTVCC_WINDOW_SDE_FADE = 1,
 	CCX_DTVCC_WINDOW_SDE_WIPE = 2
 };
 
-enum ccx_dtvcc_window_ed //Effect Direction
+enum ccx_dtvcc_window_ed 
+//Effect Direction
 {
 	CCX_DTVCC_WINDOW_ED_LEFT_RIGHT = 0,
 	CCX_DTVCC_WINDOW_ED_RIGHT_LEFT = 1,
@@ -120,7 +126,8 @@ enum ccx_dtvcc_window_ed //Effect Direction
 	CCX_DTVCC_WINDOW_ED_BOTTOM_TOP = 3
 };
 
-enum ccx_dtvcc_window_fo //Fill Opacity
+enum ccx_dtvcc_window_fo 
+//Fill Opacity
 {
 	CCX_DTVCC_WINDOW_FO_SOLID		= 0,
 	CCX_DTVCC_WINDOW_FO_FLASH		= 1,
@@ -249,8 +256,10 @@ typedef struct ccx_dtvcc_window_attribs
  */
 typedef struct ccx_dtvcc_symbol
 {
-	unsigned short sym; //symbol itself, at least 16 bit
-	unsigned char len; //length. could be 1 or 2
+	unsigned short sym; 
+//symbol itself, at least 16 bit
+	unsigned char len; 
+//length. could be 1 or 2
 } ccx_dtvcc_symbol;
 
 #define CCX_DTVCC_SYM_SET(x, c) {x.len = 1; x.sym = c;}
@@ -278,7 +287,8 @@ typedef struct ccx_dtvcc_window
 	int col_count;
 	int pen_style;
 	int win_style;
-	unsigned char commands[6]; // Commands used to create this window
+	unsigned char commands[6]; 
+// Commands used to create this window
 	ccx_dtvcc_window_attribs attribs;
 	int pen_row;
 	int pen_column;
@@ -341,7 +351,8 @@ typedef struct ccx_dtvcc_ctx
 {
 	int is_active;
 	int active_services_count;
-	int services_active[CCX_DTVCC_MAX_SERVICES]; //0 - inactive, 1 - active
+	int services_active[CCX_DTVCC_MAX_SERVICES]; 
+//0 - inactive, 1 - active
 	int report_enabled;
 
 	ccx_decoder_dtvcc_report *report;
@@ -353,7 +364,8 @@ typedef struct ccx_dtvcc_ctx
 
 	int last_sequence;
 
-	void *encoder; //we can't include header, so keeping it this way
+	void *encoder; 
+//we can't include header, so keeping it this way
 	int no_rollup;
 	struct ccx_common_timing_ctx *timing;
 } ccx_dtvcc_ctx;

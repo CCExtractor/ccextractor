@@ -76,6 +76,7 @@ extern const ProtobufCMessageDescriptor ccx_sub_entry_message__descriptor;
 
 PROTOBUF_C__END_DECLS
 
-#endif //ENABLE_SHARING
+#endif 
+//ENABLE_SHARING
 
 #endif  /* PROTOBUF_C_ccx_5fsub_5fentry_5fmessage_2eproto__INCLUDED */

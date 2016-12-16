@@ -5,6 +5,7 @@
 #include "utility.h"
 
 #ifdef ENABLE_HARDSUBX
+
 //TODO: Correct FFMpeg integration
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -33,9 +34,11 @@ enum hardsubx_ocr_mode
 
 struct lib_hardsubx_ctx
 {
-	// The main context for hard subtitle extraction
+	
+// The main context for hard subtitle extraction
 
-	// Attributes common to the lib_ccx context
+	
+// Attributes common to the lib_ccx context
 	int cc_to_stdout;
 	LLONG subs_delay;
 	LLONG last_displayed_subs_ms;
@@ -47,7 +50,8 @@ struct lib_hardsubx_ctx
 	LLONG system_start_time;
 	enum ccx_output_format write_format;
 
-	// Media file context
+	
+// Media file context
 	AVFormatContext *format_ctx;
 	AVCodecContext *codec_ctx;
 	AVCodec *codec;
@@ -59,15 +63,18 @@ struct lib_hardsubx_ctx
 	uint8_t *rgb_buffer;
 	int video_stream_id;
 
-	// Leptonica Image and Tesseract Context
+	
+// Leptonica Image and Tesseract Context
 	PIX *im;
 	TessBaseAPI *tess_handle;
 
-	// Classifier parameters
+	
+// Classifier parameters
 	float cur_conf;
 	float prev_conf;
 
-	// Subtitle text parameters
+	
+// Subtitle text parameters
 	struct cc_subtitle *dec_sub;
 	int ocr_mode;
 	int subcolor;
@@ -82,13 +89,16 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options);
 void _hardsubx_params_dump(struct ccx_s_options *options, struct lib_hardsubx_ctx *ctx);
 void hardsubx(struct ccx_s_options *options);
 
+
 //hardsubx_decoder.c
 int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx);
 int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx);
 
+
 //hardsubx_imgops.c
 void rgb_to_hsv(float R, float G, float B,float *H, float *S, float *V);
 void rgb_to_lab(float R, float G, float B,float *L, float *a, float *b);
+
 
 //hardsubx_classifier.c
 char *get_ocr_text_simple(struct lib_hardsubx_ctx *ctx, PIX *image);
@@ -97,6 +107,7 @@ char *get_ocr_text_letterwise(struct lib_hardsubx_ctx *ctx, PIX *image);
 char *get_ocr_text_simple_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold);
 char *get_ocr_text_wordwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold);
 char *get_ocr_text_letterwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold);
+
 
 //hardsubx_utility.c
 int edit_distance(char * word1, char * word2, int len1, int len2);
