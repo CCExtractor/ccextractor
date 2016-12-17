@@ -33,20 +33,20 @@ struct ccx_boundary_time
 
 struct ccx_common_timing_ctx
 {
-	int pts_set; 										//0 = No, 1 = received, 2 = min_pts set
+	int pts_set; 							//0 = No, 1 = received, 2 = min_pts set
 	LLONG current_pts;
 	enum ccx_frame_type current_picture_coding_type;
-	int current_tref; 									// Store temporal reference of current frame
+	int current_tref; 						// Store temporal reference of current frame
 	LLONG min_pts;
 	LLONG max_pts;
 	LLONG sync_pts;
-	LLONG minimum_fts; 									// No screen should start before this FTS
-	LLONG fts_now; 										// Time stamp of current file (w/ fts_offset, w/o fts_global)
-	LLONG fts_offset; 									// Time before first sync_pts
-	LLONG fts_fc_offset; 									// Time before first GOP
-	LLONG fts_max; 										// Remember the maximum fts that we saw in current file
-	LLONG fts_global; 									// Duration of previous files (-ve mode)
-	int sync_pts2fts_set; 									//0 = No, 1 = Yes
+	LLONG minimum_fts; 						// No screen should start before this FTS
+	LLONG fts_now; 							// Time stamp of current file (w/ fts_offset, w/o fts_global)
+	LLONG fts_offset; 						// Time before first sync_pts
+	LLONG fts_fc_offset; 						// Time before first GOP
+	LLONG fts_max; 							// Remember the maximum fts that we saw in current file
+	LLONG fts_global; 						// Duration of previous files (-ve mode)
+	int sync_pts2fts_set; 						//0 = No, 1 = Yes
 	LLONG sync_pts2fts_fts;
 	LLONG sync_pts2fts_pts;
 };
