@@ -33,9 +33,9 @@ enum hardsubx_ocr_mode
 
 struct lib_hardsubx_ctx
 {
-// The main context for hard subtitle extraction
+	// The main context for hard subtitle extraction
 
-// Attributes common to the lib_ccx context
+	// Attributes common to the lib_ccx context
 	int cc_to_stdout;
 	LLONG subs_delay;
 	LLONG last_displayed_subs_ms;
@@ -47,7 +47,7 @@ struct lib_hardsubx_ctx
 	LLONG system_start_time;
 	enum ccx_output_format write_format;
 
-// Media file context
+	// Media file context
 	AVFormatContext *format_ctx;
 	AVCodecContext *codec_ctx;
 	AVCodec *codec;
@@ -59,15 +59,15 @@ struct lib_hardsubx_ctx
 	uint8_t *rgb_buffer;
 	int video_stream_id;
 
-// Leptonica Image and Tesseract Context
+	// Leptonica Image and Tesseract Context
 	PIX *im;
 	TessBaseAPI *tess_handle;
 
-// Classifier parameters
+	// Classifier parameters
 	float cur_conf;
 	float prev_conf;
 
-// Subtitle text parameters
+	// Subtitle text parameters
 	struct cc_subtitle *dec_sub;
 	int ocr_mode;
 	int subcolor;

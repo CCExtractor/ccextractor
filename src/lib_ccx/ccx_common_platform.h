@@ -1,7 +1,7 @@
 #ifndef CCX_PLATFORM_H
 	#define CCX_PLATFORM_H
 
-// Default includes (cross-platform)
+	// Default includes (cross-platform)
 	#include <stdio.h>
 	#include <stdlib.h>
 	#include <string.h>

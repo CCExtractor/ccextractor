@@ -74,12 +74,12 @@ struct ccx_demuxer
 	enum ccx_stream_mode_enum stream_mode;
 	enum ccx_stream_mode_enum auto_stream;
 
-// Small buffer to help us with the initial sync
+	// Small buffer to help us with the initial sync
 	unsigned char startbytes[STARTBYTESLENGTH];
 	unsigned int startbytes_pos;
 	int startbytes_avail;
 
-// User Specified Param
+	// User Specified Param
 	int ts_autoprogram;
 	int ts_allprogram;
 	int flag_ts_forced_pn;
@@ -99,7 +99,7 @@ struct ccx_demuxer
 	int infd; 							// descriptor number to input.
 	LLONG past; 						/* Position in file, if in sync same as ftell()  */
 
-// TODO relates to fts_global
+	// TODO relates to fts_global
 	int64_t global_timestamp;
 	int64_t min_global_timestamp;
 	int64_t offset_global_timestamp;
@@ -127,8 +127,8 @@ struct ccx_demuxer
 
 	int warning_program_not_found_shown;
 
-// Remember if the last header was valid. Used to suppress too much output
-// and the expected unrecognized first header for TiVo files.
+	// Remember if the last header was valid. Used to suppress too much output
+	// and the expected unrecognized first header for TiVo files.
 	int strangeheader;
 #ifdef ENABLE_FFMPEG
 	void *ffmpeg_ctx;
@@ -136,7 +136,7 @@ struct ccx_demuxer
 
 	void *parent;
 
-//Will contain actual Demuxer Context
+	//Will contain actual Demuxer Context
 	void *private_data;
 	void (*print_cfg)(struct ccx_demuxer *ctx);
 	void (*reset)(struct ccx_demuxer *ctx);
