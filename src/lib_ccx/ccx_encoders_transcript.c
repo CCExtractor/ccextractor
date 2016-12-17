@@ -59,7 +59,7 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 				}
 				else
 				{
-					mstotime(start_time + context->subs_delay, &h1, &m1, &s1, &ms1);
+					millis_to_time(start_time + context->subs_delay, &h1, &m1, &s1, &ms1);
 					time_t start_time_int = (start_time + context->subs_delay) / 1000;
 					int start_time_dec = (start_time + context->subs_delay) % 1000;
 					struct tm *start_time_struct = gmtime(&start_time_int);
@@ -375,4 +375,3 @@ int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ct
 	dbg_print(CCX_DMT_DECODER_608, "- - - - - - - - - - - -\r\n");
 	return wrote_something;
 }
-

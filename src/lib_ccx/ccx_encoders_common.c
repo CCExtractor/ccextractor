@@ -385,7 +385,7 @@ static int write_bom(struct encoder_ctx *ctx, struct ccx_s_write *out)
 				mprint("WARNING: Unable tp write UTF BOM\n");
 				return -1;
 			}
-				
+
 		}
 		if (ctx->encoding == CCX_ENC_UNICODE){ // Write BOM
 			ret = write(out->fh, LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM));
@@ -946,7 +946,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 	ctx->transcript_settings = &opt->transcript_settings;
 	ctx->no_bom = opt->no_bom;
-	ctx->sentence_cap = opt->sentence_cap;	
+	ctx->sentence_cap = opt->sentence_cap;
 	ctx->trim_subs = opt->trim_subs;
 	ctx->autodash = opt->autodash;
 	ctx->no_font_color = opt->no_font_color;
@@ -957,14 +957,10 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->force_flush = opt->force_flush;
 	ctx->ucla = opt->ucla;
 	ctx->splitbysentence = opt->splitbysentence;
-	ctx->sbs_newblock_start_time = -1;
-	ctx->sbs_newblock_end_time = -1;
-	ctx->sbs_newblock = NULL;
-	ctx->sbs_newblock_capacity = 0;
-	ctx->sbs_newblock_size = 0;
+	ctx->sbs_time_from = -1;
+	ctx->sbs_time_trim = -1;
+	ctx->sbs_capacity = 0;
 	ctx->sbs_buffer = NULL;
-	ctx->sbs_buffer_capacity = 0;
-	ctx->sbs_buffer_size = 0;
 
 	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);
 	if(!ctx->subline)
@@ -1045,11 +1041,13 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		// Write to a buffer that is later s+plit to generate split
 		// in sentences
 		if (sub->type == CC_BITMAP)
-			wrote_something = write_cc_bitmap_to_sentence_buffer(sub, context);
+			sub = reformat_cc_bitmap_through_sentence_buffer(sub, context);
+
+		if (NULL==sub)
+			return wrote_something;
 	}
-	else
-	{
-		// Write subtitles as they come
+
+	// Write subtitles as they come
 		if (sub->type == CC_608)
 		{
 			struct eia608_screen *data = NULL;
@@ -1077,6 +1075,14 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				}
 
 				data->end_time = data->end_time + context->subs_delay;
+
+				if (utc_refvalue != UINT64_MAX)
+				{
+					if (data->start_time != -1)
+						data->start_time += utc_refvalue * 1000;
+					data->end_time += utc_refvalue * 1000;
+				}
+
 				switch (context->write_format)
 				{
 					case CCX_OF_SRT:
@@ -1241,7 +1247,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			}
 			sub->nb_data = 0;
 		}
-	}
+
 	if (!sub->nb_data)
 		freep(&sub->data);
 	if (wrote_something && context->force_flush)
@@ -1278,8 +1284,8 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *cont
 			if (!time_reported)
 			{
 				LLONG ms_end = data->end_time;
-				mstotime(ms_start, &h1, &m1, &s1, &ms1);
-				mstotime(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
+				millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
+				millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 				// Note, only MM:SS here as we need to save space in the preview window
 				fprintf(stderr, "%02u:%02u#%02u:%02u#",
 					h1 * 60 + m1, s1, h2 * 60 + m2, s2);

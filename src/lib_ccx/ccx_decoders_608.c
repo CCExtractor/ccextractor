@@ -1170,8 +1170,11 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 			context->last_c1 = hi;
 			context->last_c2 = lo;
 			wrote_to_screen = disCommand(hi, lo, context, sub);
-			if(sub->got_output)
+			if (sub->got_output)
+			{
+				i += 2; // Otherwise we woudn't be counting this byte pair
 				break;
+			}
 		}
 		else
 		{
@@ -1207,7 +1210,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 
 			if (!context->textprinted && context->channel == context->my_channel)
 			{   // Current FTS information after the characters are shown
-				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Current FTS: %s\n", print_mstime(get_fts(dec_ctx->timing, context->my_field)));
+				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Current FTS: %s\n", print_mstime_static(get_fts(dec_ctx->timing, context->my_field)));
 				//printf("  N:%u", unsigned(fts_now) );
 				//printf("  G:%u", unsigned(fts_global) );
 				//printf("  F:%d %d %d %d\n",
@@ -1234,7 +1237,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 
 /* Return a pointer to a string that holds the printable characters
  * of the caption data block. FOR DEBUG PURPOSES ONLY! */
-unsigned char *debug_608toASC (unsigned char *cc_data, int channel)
+unsigned char *debug_608_to_ASC (unsigned char *cc_data, int channel)
 {
 	static unsigned char output[3];
 

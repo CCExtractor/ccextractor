@@ -30,7 +30,7 @@ unsigned get_decoder_line_encoded_for_gui(unsigned char *buffer, int line_num, s
 unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data);
 
 int string_cmp(const void *p1, const void *p2);
-int string_cmp2(const void *p1, const void *p2, void *arg);
+int string_cmp_function(const void *p1, const void *p2, void *arg);
 int add_built_in_words(void);
 int add_word(const char *word);
 unsigned encode_line (struct encoder_ctx *ctx, unsigned char *buffer, unsigned char *text);

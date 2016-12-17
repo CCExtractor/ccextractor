@@ -56,8 +56,8 @@ int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *cont
 	{
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 		{
-			mstotime(ms_start, &h1, &m1, &s1, &ms1);
-			mstotime(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
+			millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
+			millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 			context->srt_counter++;
 			sprintf(timeline, "group_id=ccextractordev&start_time=%" PRIu64 "&end_time=%" PRIu64 "&lang=en", ms_start, ms_end);
 			char *curlline = NULL;
@@ -68,8 +68,12 @@ int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *cont
 			curl_free (urlencoded);
 			mprint("%s", curlline);
 
-			curl_easy_setopt(curl, CURLOPT_URL, "127.0.0.1:3000/frame/");
+			char *result = malloc(strlen(ccx_options.curlposturl) + strlen("/frame/") + 1);
+			strcpy(result, ccx_options.curlposturl);
+			strcat(result, "/frame/");
+			curl_easy_setopt(curl, CURLOPT_URL, result);
 			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, curlline);
+			free(result);
 
 			res = curl_easy_perform(curl);
 			/* Check for errors */

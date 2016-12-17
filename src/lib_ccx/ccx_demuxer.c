@@ -182,7 +182,7 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 
 	return 0;
 }
-LLONG ccx_demuxer_getfilesize (struct ccx_demuxer *ctx)
+LLONG ccx_demuxer_get_file_size (struct ccx_demuxer *ctx)
 {
 	LLONG ret = 0;
 	int in = ctx->infd;
@@ -332,7 +332,7 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	ctx->close = ccx_demuxer_close;
 	ctx->open = ccx_demuxer_open;
 	ctx->is_open = ccx_demuxer_isopen;
-	ctx->get_filesize = ccx_demuxer_getfilesize;
+	ctx->get_filesize = ccx_demuxer_get_file_size;
 	ctx->get_stream_mode = ccx_demuxer_get_stream_mode;
 	ctx->print_cfg = ccx_demuxer_print_cfg;
 	ctx->write_es = ccx_demuxer_write_es;
@@ -349,7 +349,7 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	{
 		if ((ctx->fh_out_elementarystream = fopen (cfg->out_elementarystream_filename,"wb"))==NULL)
 		{
-			print_error(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to open clean file: %s\n", cfg->out_elementarystream_filename);
+			print_error(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to open clean file: %s \nDetails : %s .\n", cfg->out_elementarystream_filename,strerror(errno)); //printing specific error - Permission Denied/ Wrong Path etc..
 			return NULL;
 		}
 	}

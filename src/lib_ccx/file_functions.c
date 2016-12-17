@@ -9,7 +9,7 @@ WSADATA wsaData = {0};
 int iResult = 0;
 #endif
 
-LLONG getfilesize (int in)
+LLONG get_file_size (int in)
 {
 	int ret = 0;
 	LLONG current = LSEEK (in, 0, SEEK_CUR);
@@ -24,7 +24,7 @@ LLONG getfilesize (int in)
 	return length;
 }
 
-LLONG gettotalfilessize (struct lib_ccx_ctx *ctx) // -1 if one or more files failed to open
+LLONG get_total_file_size (struct lib_ccx_ctx *ctx) // -1 if one or more files failed to open
 {
 	LLONG ts=0;
 	int h;
@@ -55,7 +55,7 @@ LLONG gettotalfilessize (struct lib_ccx_ctx *ctx) // -1 if one or more files fai
 		}
 
 		if (!ccx_options.live_stream)
-			ts += getfilesize (h);
+			ts += get_file_size (h);
 		close (h);
 	}
 	return ts;

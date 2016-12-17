@@ -53,7 +53,7 @@ struct ccx_common_timing_ctx *init_timing_ctx(struct ccx_common_timing_settings_
 	ctx->current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
 	ctx->min_pts = 0x01FFFFFFFFLL; // 33 bit
 	ctx->max_pts = 0;
-	ctx->sync_pts = 0; 
+	ctx->sync_pts = 0;
 	ctx->minimum_fts = 0;
 	ctx->sync_pts2fts_set = 0;
 	ctx->sync_pts2fts_fts = 0;
@@ -78,9 +78,9 @@ void set_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts)
 	ctx->current_pts = pts;
 	if(ctx->pts_set == 0)
 		ctx->pts_set = 1;
-	dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)", print_mstime(ctx->current_pts/(MPEG_CLOCK_FREQ/1000)),
+	dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)", print_mstime_static(ctx->current_pts/(MPEG_CLOCK_FREQ/1000)),
 				(unsigned) (ctx->current_pts));
-	dbg_print(CCX_DMT_VIDES, "  FTS: %s \n",print_mstime(ctx->fts_now));
+	dbg_print(CCX_DMT_VIDES, "  FTS: %s \n",print_mstime_static(ctx->fts_now));
 }
 
 int set_fts(struct ccx_common_timing_ctx *ctx)
@@ -159,7 +159,7 @@ int set_fts(struct ccx_common_timing_ctx *ctx)
 						*1000.0/current_fps);
 			}
 			ccx_common_logging.debug_ftn(CCX_DMT_TIME, "\nFirst sync time    PTS: %s %+lldms (time before this PTS)\n",
-					print_mstime(ctx->min_pts/(MPEG_CLOCK_FREQ/1000)),
+					print_mstime_static(ctx->min_pts/(MPEG_CLOCK_FREQ/1000)),
 					ctx->fts_offset );
 			ccx_common_logging.debug_ftn(CCX_DMT_TIME, "Total_frames_count %u frames_since_ref_time %u\n",
 					total_frames_count, frames_since_ref_time);
@@ -189,7 +189,7 @@ int set_fts(struct ccx_common_timing_ctx *ctx)
 			ctx->min_pts = ctx->sync_pts;
 
 			ccx_common_logging.debug_ftn(CCX_DMT_TIME, "\nNew min PTS time: %s %+lldms (time before this PTS)\n",
-					print_mstime(ctx->min_pts/(MPEG_CLOCK_FREQ/1000)),
+					print_mstime_static(ctx->min_pts/(MPEG_CLOCK_FREQ/1000)),
 					ctx->fts_offset );
 		}
 	}
@@ -265,32 +265,11 @@ LLONG get_fts_max(struct ccx_common_timing_ctx *ctx)
 	return ctx->fts_max + ctx->fts_global;
 }
 
-/* Fill a static buffer with a time string (hh:mm:ss:ms) corresponding
-   to the microsecond value in mstime. */
-char *print_mstime2buf( LLONG mstime , char *buf )
-{
-	unsigned hh,mm,ss,ms;
-	int signoffset = (mstime < 0 ? 1 : 0);
-
-	if (mstime<0) // Avoid loss of data warning with abs()
-		mstime=-mstime;
-	hh = (unsigned) (mstime/1000/60/60);
-	mm = (unsigned) (mstime/1000/60 - 60*hh);
-	ss = (unsigned) (mstime/1000 - 60*(mm + 60*hh));
-	ms = (int) (mstime - 1000*(ss + 60*(mm + 60*hh)));
-
-	buf[0]='-';
-	sprintf (buf+signoffset, "%02u:%02u:%02u:%03u",hh,mm,ss,ms);
-
-	return buf;
-}
-
 /**
  * Fill buffer with a time string using specified format
  * @param fmt has to contain 4 format specifiers for h, m, s and ms respectively
  */
-size_t mstime_sprintf(LLONG mstime, char *fmt, char *buf)
-{
+size_t print_mstime_buff(LLONG mstime, char* fmt, char* buf){
 	unsigned hh, mm, ss, ms;
 	int signoffset = (mstime < 0 ? 1 : 0);
 
@@ -303,16 +282,17 @@ size_t mstime_sprintf(LLONG mstime, char *fmt, char *buf)
 	ms = (unsigned) (mstime - 1000 * (ss + 60 * (mm + 60 * hh)));
 
 	buf[0] = '-';
+
 	return (size_t) sprintf(buf + signoffset, fmt, hh, mm, ss, ms);
 }
 
-
 /* Fill a static buffer with a time string (hh:mm:ss:ms) corresponding
    to the microsecond value in mstime. */
-char *print_mstime( LLONG mstime )
+char *print_mstime_static( LLONG mstime )
 {
 	static char buf[15]; // 14 should be long enough
-	return print_mstime2buf (mstime, buf);
+	print_mstime_buff(mstime, "%02u:%02u:%02u:%03u", buf);
+	return buf;
 }
 
 /* Helper function for to display debug timing info. */
@@ -323,8 +303,8 @@ void print_debug_timing(struct ccx_common_timing_ctx *ctx)
 	LLONG tempmin_pts = (ctx->min_pts==0x01FFFFFFFFLL ? ctx->sync_pts : ctx->min_pts);
 
 	ccx_common_logging.log_ftn("Sync time stamps:  PTS: %s                ",
-			print_mstime((ctx->sync_pts)/(MPEG_CLOCK_FREQ/1000)) );
-	ccx_common_logging.log_ftn("GOP: %s      \n", print_mstime(gop_time.ms));
+			print_mstime_static((ctx->sync_pts)/(MPEG_CLOCK_FREQ/1000)) );
+	ccx_common_logging.log_ftn("GOP: %s      \n", print_mstime_static(gop_time.ms));
 
 	// Length first GOP to last GOP
 	LLONG goplenms = (LLONG) (gop_time.ms - first_gop_time.ms);
@@ -333,9 +313,9 @@ void print_debug_timing(struct ccx_common_timing_ctx *ctx)
 			+ ctx->fts_offset);
 
 	ccx_common_logging.log_ftn("Last               FTS: %s",
-			print_mstime(get_fts_max(ctx)));
+			print_mstime_static(get_fts_max(ctx)));
 	ccx_common_logging.log_ftn("      GOP start FTS: %s\n",
-			print_mstime(fts_at_gop_start));
+			print_mstime_static(fts_at_gop_start));
 
 	// Times are based on last GOP and/or sync time
 	ccx_common_logging.log_ftn("Max FTS diff. to   PTS:       %6lldms              GOP:       %6lldms\n\n",
