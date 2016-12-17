@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 {
 	struct lib_ccx_ctx *ctx;
 	struct lib_cc_decode *dec_ctx = NULL;
-	int ret = 0;
+	int ret = 0, tmp;
 	enum ccx_stream_mode_enum stream_mode;
 
 	init_options (&ccx_options);
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
 		ccx_share_launch_translator(ccx_options.translate_langs, ccx_options.translate_key);
 	}
 #endif //ENABLE_SHARING
-
+	ret = 0;
 	while (switch_to_next_file(ctx, 0))
 	{
 		prepare_for_new_file(ctx);
@@ -192,7 +192,6 @@ int main(int argc, char *argv[])
 			default:
 				break;
 		}
-
 		/* -----------------------------------------------------------------
 		MAIN LOOP
 		----------------------------------------------------------------- */
@@ -215,20 +214,24 @@ int main(int argc, char *argv[])
 				if (ccx_options.ignore_pts_jumps)
 					ccx_common_timing_settings.disable_sync_check = 1;
 				mprint ("\rAnalyzing data in general mode\n");
-				general_loop(ctx);
+				tmp = general_loop(ctx);
+				if (!ret) ret = tmp;
 				break;
 			case CCX_SM_MCPOODLESRAW:
 				mprint ("\rAnalyzing data in McPoodle raw mode\n");
-				raw_loop(ctx);
+				tmp = raw_loop(ctx);
+				if (!ret) ret = tmp;
 				break;
 			case CCX_SM_RCWT:
 				mprint ("\rAnalyzing data in CCExtractor's binary format\n");
-				rcwt_loop(ctx);
+				tmp = rcwt_loop(ctx);
+				if (!ret) ret = tmp;
 				break;
 			case CCX_SM_MYTH:
 				mprint ("\rAnalyzing data in MythTV mode\n");
 				show_myth_banner = 1;
-				myth_loop(ctx);
+				tmp = myth_loop(ctx);
+				if (!ret) ret = tmp;
 				break;
 			case CCX_SM_MP4:
 				mprint ("\rAnalyzing data with GPAC (MP4 library)\n");
@@ -236,6 +239,8 @@ int main(int argc, char *argv[])
 				processmp4(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
 				if (ccx_options.print_file_reports)
 					print_file_report(ctx);
+				tmp = ctx->freport.mp4_cc_track_cnt;
+				if (!ret) ret = tmp;
 				break;
 #ifdef WTV_DEBUG
 			case CCX_SM_HEX_DUMP:
@@ -414,6 +419,7 @@ int main(int argc, char *argv[])
   	curl_global_cleanup();
 #endif
 	dinit_libraries(&ctx);
-
+	if (!ret)
+		fatal(EXIT_NO_CAPTIONS, "No captions were found in input.");
 	return EXIT_OK;
 }
