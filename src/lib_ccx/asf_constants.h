@@ -72,10 +72,10 @@ typedef struct {
 	uint32_t TotalDataPackets;
 	int VideoClosedCaptioningFlag;
 // Payload data
-	int PayloadLType; 				// ASF - Payload Length Type. <>0 for multiple payloads
+	int PayloadLType; 			// ASF - Payload Length Type. <>0 for multiple payloads
 	uint32_t PayloadLength; 		// ASF - Payload Length
 	int NumberOfPayloads; 			// ASF - Number of payloads.
-	int payloadcur; 				// local
+	int payloadcur; 			// local
 	int PayloadStreamNumber; 		// ASF
 	int KeyFrame; 				// ASF
 	uint32_t PayloadMediaNumber; 		// ASF
@@ -84,7 +84,7 @@ typedef struct {
 	int64_t dobjectread; 			// Bytes read in Data Object
 // Payload parsing information
 	int MultiplePayloads; 			// ASF
-	int PacketLType; 				// ASF
+	int PacketLType; 			// ASF
 	int ReplicatedLType; 			// ASF
 	int OffsetMediaLType; 			// ASF
 	int MediaNumberLType; 			// ASF
