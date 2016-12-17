@@ -17,7 +17,7 @@ struct ccx_decoder_vbi_ctx
 {
 	int vbi_decoder_inited;
 	vbi_raw_decoder zvbi_decoder;
-	//vbi3_raw_decoder zvbi_decoder;
+//vbi3_raw_decoder zvbi_decoder;
 #ifdef VBI_DEBUG
 	FILE *vbi_debug_dump;
 #endif
