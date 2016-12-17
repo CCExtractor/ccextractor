@@ -27,7 +27,7 @@
 #define DVRMS_NTSC "\x80\xEA\x0A\x67\x82\x3A\xD0\x11\xB7\x9B\x00\xAA\x00\x37\x67\xA7"
 #define DVRMS_ATSC "\x89\x8A\x8B\xB8\x49\xB0\x80\x4C\xAD\xCF\x58\x98\x98\x5E\x22\xC1"
 
-// 10.13 - Undocumented DVR-MS properties
+	// 10.13 - Undocumented DVR-MS properties
 #define DVRMS_PTS "\x2A\xC0\x3C\xFD\xDB\x06\xFA\x4C\x80\x1C\x72\x12\xD3\x87\x45\xE4"
 
 typedef struct {
@@ -72,19 +72,19 @@ typedef struct {
 	uint32_t TotalDataPackets;
 	int VideoClosedCaptioningFlag;
 // Payload data
-	int PayloadLType; 			// ASF - Payload Length Type. <>0 for multiple payloads
+	int PayloadLType; 				// ASF - Payload Length Type. <>0 for multiple payloads
 	uint32_t PayloadLength; 		// ASF - Payload Length
 	int NumberOfPayloads; 			// ASF - Number of payloads.
-	int payloadcur; 			// local
+	int payloadcur; 				// local
 	int PayloadStreamNumber; 		// ASF
 	int KeyFrame; 				// ASF
-	uint32_t PayloadMediaNumber; 	// ASF
+	uint32_t PayloadMediaNumber; 		// ASF
 // Data Object Loop
 	uint32_t datapacketcur; 		// Current packet number
 	int64_t dobjectread; 			// Bytes read in Data Object
 // Payload parsing information
 	int MultiplePayloads; 			// ASF
-	int PacketLType; 			// ASF
+	int PacketLType; 				// ASF
 	int ReplicatedLType; 			// ASF
 	int OffsetMediaLType; 			// ASF
 	int MediaNumberLType; 			// ASF
