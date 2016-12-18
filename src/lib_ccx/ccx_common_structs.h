@@ -4,10 +4,10 @@
 #include "ccx_common_constants.h"
 
 enum ccx_common_logging_gui {
-	CCX_COMMON_LOGGING_GUI_XDS_PROGRAM_NAME, 			// Called with xds_program_name
-	CCX_COMMON_LOGGING_GUI_XDS_PROGRAM_ID_NR, 			// Called with current_xds_min, current_xds_hour, current_xds_date, current_xds_month
-	CCX_COMMON_LOGGING_GUI_XDS_PROGRAM_DESCRIPTION, 		// Called with line_num, xds_desc
-	CCX_COMMON_LOGGING_GUI_XDS_CALL_LETTERS 			// Called with current_xds_call_letters
+	CCX_COMMON_LOGGING_GUI_XDS_PROGRAM_NAME, 			        // Called with xds_program_name
+	CCX_COMMON_LOGGING_GUI_XDS_PROGRAM_ID_NR, 			        // Called with current_xds_min, current_xds_hour, current_xds_date, current_xds_month
+	CCX_COMMON_LOGGING_GUI_XDS_PROGRAM_DESCRIPTION, 		        // Called with line_num, xds_desc
+	CCX_COMMON_LOGGING_GUI_XDS_CALL_LETTERS 		        	// Called with current_xds_call_letters
 };
 
 struct ccx_common_logging_t {

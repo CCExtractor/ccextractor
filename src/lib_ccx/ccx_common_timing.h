@@ -1,4 +1,4 @@
-	#ifndef __Timing_H__
+#ifndef __Timing_H__
 #define __Timing_H__
 
 #include "ccx_common_platform.h"
@@ -17,10 +17,10 @@ struct gop_time_code
 
 struct ccx_common_timing_settings_t
 {
-	int disable_sync_check; 	// If 1, timeline jumps will be ignored. This is important in several input formats that are assumed to have correct timing, no matter what.
-	int no_sync; 			// If 1, there will be no sync at all. Mostly useful for debugging.
-	int is_elementary_stream; 	// Needs to be set, as it's used in set_fts.
-	LLONG *file_position; 		// The position of the file
+	int disable_sync_check; 	                                // If 1, timeline jumps will be ignored. This is important in several input formats that are assumed to have correct timing, no matter what.
+	int no_sync; 			                                // If 1, there will be no sync at all. Mostly useful for debugging.
+	int is_elementary_stream; 	                                // Needs to be set, as it's used in set_fts.
+	LLONG *file_position; 		                                // The position of the file
 };
 extern struct ccx_common_timing_settings_t ccx_common_timing_settings;
 

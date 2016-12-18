@@ -62,16 +62,16 @@ typedef struct eia608_screen // A CC buffer
 	enum ccx_eia608_format format;
 	unsigned char characters[15][33];
 	unsigned char colors[15][33];
-	unsigned char fonts[15][33]; 		 	// Extra char at the end for a 0
-	int row_used[15]; 				// Any data in row?
-	int empty; 					// Buffer completely empty?
+	unsigned char fonts[15][33]; 		 	                // Extra char at the end for a 0
+	int row_used[15]; 				                // Any data in row?
+	int empty; 					                // Buffer completely empty?
 	/** start time of this CC buffer */
 	LLONG start_time;
 	/** end time of this CC buffer */
 	LLONG end_time;
 	enum cc_modes mode;
-	int channel; 					// Currently selected channel
-	int my_field; 					// Used for sanity checks
+	int channel; 				                	// Currently selected channel
+	int my_field; 					                // Used for sanity checks
 	/** XDS string */
 	char *xds_str;
 	/** length of XDS string */
@@ -106,31 +106,31 @@ struct lib_cc_decode
 {
 	int cc_stats[4];
 	int saw_caption_block;
-	int processed_enough; 			                                // If 1, we have enough lines, time, etc.
+	int processed_enough; 			                        // If 1, we have enough lines, time, etc.
 
 	/* 608 contexts - note that this shouldn't be global, they should be
 	per program */
 	void *context_cc608_field_1;
 	void *context_cc608_field_2;
 
-	int no_rollup; 								// If 1, write one line at a time
+	int no_rollup; 							// If 1, write one line at a time
 	int noscte20;
-	int fix_padding; 							// Replace 0000 with 8080 in HDTV (needed for some cards)
-	enum ccx_output_format write_format; 					// 0=Raw, 1=srt, 2=SMI
-	struct ccx_boundary_time extraction_start, extraction_end; 		// Segment we actually process
-	LLONG subs_delay; 							// ms to delay (or advance) subs
-	int extract; 								// Extract 1st, 2nd or both fields
-	int fullbin; 								// Disable pruning of padding cc blocks
+	int fix_padding; 						// Replace 0000 with 8080 in HDTV (needed for some cards)
+	enum ccx_output_format write_format; 				// 0=Raw, 1=srt, 2=SMI
+	struct ccx_boundary_time extraction_start, extraction_end; 	// Segment we actually process
+	LLONG subs_delay; 						// ms to delay (or advance) subs
+	int extract; 							// Extract 1st, 2nd or both fields
+	int fullbin; 							// Disable pruning of padding cc blocks
 	struct cc_subtitle dec_sub;
 	enum ccx_bufferdata_type in_bufferdatatype;
-	unsigned int hauppauge_mode; 						// If 1, use PID=1003, process specially and so on
+	unsigned int hauppauge_mode; 					// If 1, use PID=1003, process specially and so on
 
 	int frames_since_last_gop;
 	/* GOP-based timing */
 	int saw_gop_header;
 	/* Time info for timed-transcript */
-	int max_gop_length; 							// (Maximum) length of a group of pictures
-	int last_gop_length; 							// Length of the previous group of pictures
+	int max_gop_length; 						// (Maximum) length of a group of pictures
+	int last_gop_length; 						// Length of the previous group of pictures
 	unsigned total_pulldownfields;
 	unsigned total_pulldownframes;
 	int program_number;
@@ -148,7 +148,7 @@ struct lib_cc_decode
 	unsigned int current_hor_size;
 	unsigned int current_vert_size;
 	unsigned int current_aspect_ratio;
-	unsigned int current_frame_rate; 			                // Assume standard fps, 29.97
+	unsigned int current_frame_rate; 			        // Assume standard fps, 29.97
 
 	/* Required in es_function.c */
 	int no_bitstream_error;
@@ -181,13 +181,13 @@ struct lib_cc_decode
 	ccx_dtvcc_ctx *dtvcc;
 	int current_field;
 	// Analyse/use the picture information
-	int maxtref; 								// Use to remember the temporal reference number
+	int maxtref; 						        // Use to remember the temporal reference number
 
 	int cc_data_count[SORTBUF];
 	// Store fts;
 	LLONG cc_fts[SORTBUF];
 	// Store HD CC packets
-	unsigned char cc_data_pkts[SORTBUF][10*31*3+1]; 			// *10, because MP4 seems to have different limits
+	unsigned char cc_data_pkts[SORTBUF][10*31*3+1]; 	        // *10, because MP4 seems to have different limits
 
 	// The sequence number of the current anchor frame.  All currently read
 	// B-Frames belong to this I- or P-frame.
