@@ -101,8 +101,8 @@ struct encoder_ctx
 	int startcredits_displayed;
 	char *start_credits_text;
 	char *end_credits_text;
-	struct ccx_boundary_time startcreditsnotbefore, startcreditsnotafter; 	// Where to insert start credits, if possible
-	struct ccx_boundary_time startcreditsforatleast, startcreditsforatmost; // How long to display them?
+	struct ccx_boundary_time startcreditsnotbefore, startcreditsnotafter; 	        // Where to insert start credits, if possible
+	struct ccx_boundary_time startcreditsforatleast, startcreditsforatmost;         // How long to display them?
 	struct ccx_boundary_time endcreditsforatleast, endcreditsforatmost;
 
 	// Preencoded strings
@@ -111,7 +111,7 @@ struct encoder_ctx
 	unsigned char encoded_br[16];
 	unsigned int encoded_br_length;
 
-	int new_sentence; 				// Capitalize next letter?
+	int new_sentence; 				                                // Capitalize next letter?
 
 	int program_number;
 	struct list_head list;
@@ -119,12 +119,12 @@ struct encoder_ctx
 	/* split-by-sentence stuff */
 	int splitbysentence;
 
-	unsigned char * sbs_buffer; 		/// Storage for sentence-split buffer
-	size_t sbs_handled_len; 		/// The length of the string in the SBS-buffer, already handled, but preserved for DUP-detection.
+	unsigned char * sbs_buffer; 		                                        /// Storage for sentence-split buffer
+	size_t sbs_handled_len; 		                                        /// The length of the string in the SBS-buffer, already handled, but preserved for DUP-detection.
 
 	//ccx_sbs_utf8_character *sbs_newblock;
-	LLONG sbs_time_from; 			// Used by the split-by-sentence code to know when the current block starts...
-	LLONG sbs_time_trim; 			// ... and ends
+	LLONG sbs_time_from; 			                                        // Used by the split-by-sentence code to know when the current block starts...
+	LLONG sbs_time_trim; 			                                        // ... and ends
 	size_t sbs_capacity;
 };
 

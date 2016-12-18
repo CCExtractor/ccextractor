@@ -106,7 +106,7 @@ struct lib_cc_decode
 {
 	int cc_stats[4];
 	int saw_caption_block;
-	int processed_enough; 			// If 1, we have enough lines, time, etc.
+	int processed_enough; 			                                // If 1, we have enough lines, time, etc.
 
 	/* 608 contexts - note that this shouldn't be global, they should be
 	per program */
@@ -148,7 +148,7 @@ struct lib_cc_decode
 	unsigned int current_hor_size;
 	unsigned int current_vert_size;
 	unsigned int current_aspect_ratio;
-	unsigned int current_frame_rate; 			// Assume standard fps, 29.97
+	unsigned int current_frame_rate; 			                // Assume standard fps, 29.97
 
 	/* Required in es_function.c */
 	int no_bitstream_error;
@@ -181,7 +181,7 @@ struct lib_cc_decode
 	ccx_dtvcc_ctx *dtvcc;
 	int current_field;
 	// Analyse/use the picture information
-	int maxtref; 												// Use to remember the temporal reference number
+	int maxtref; 								// Use to remember the temporal reference number
 
 	int cc_data_count[SORTBUF];
 	// Store fts;

@@ -96,8 +96,8 @@ struct ccx_demuxer
 
 	/* File handles */
 	FILE *fh_out_elementarystream;
-	int infd; 						// descriptor number to input.
-	LLONG past; 						/* Position in file, if in sync same as ftell()  */
+	int infd; 					// descriptor number to input.
+	LLONG past; 					/* Position in file, if in sync same as ftell()  */
 
 	// TODO relates to fts_global
 	int64_t global_timestamp;
