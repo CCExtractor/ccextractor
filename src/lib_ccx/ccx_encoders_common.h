@@ -33,7 +33,7 @@ typedef struct ccx_sbs_utf8_character
 } ccx_sbs_utf8_character;
 
 /**
- * Context of encoder, This structure gives single interface
+	 * Context of encoder, This structure gives single interface
  * to all encoder
  */
 struct encoder_ctx
@@ -60,7 +60,7 @@ struct encoder_ctx
 	/* number of member in array of write out array */
 	int nb_out;
 	/* Input file format used in Teletext for exceptional output */
-	unsigned int in_fileformat; 						//1 =Normal, 2=Teletext
+	unsigned int in_fileformat; 							//1 =Normal, 2=Teletext
 	/* Keep output file closed when not actually writing to it and start over each time (add headers, etc) */
 	unsigned int keep_output_closed;
 	/* Force a flush on the file buffer whenever content is written */
@@ -68,25 +68,25 @@ struct encoder_ctx
 	/* Keep track of whether -UCLA used */
 	int ucla;
 
-	struct ccx_common_timing_ctx *timing; /* Some encoders need access to PTS, such as WebVTT */
+	struct ccx_common_timing_ctx *timing; 						/* Some encoders need access to PTS, such as WebVTT */
 
 	/* Flag saying BOM to be written in each output file */
 	enum ccx_encoding_type encoding;
 	enum ccx_output_format write_format; 						// 0=Raw, 1=srt, 2=SMI
 	int generates_file;
-	struct ccx_encoders_transcript_format *transcript_settings; // Keeps the settings for generating transcript output files.
+	struct ccx_encoders_transcript_format *transcript_settings; 			// Keeps the settings for generating transcript output files.
 	int no_bom;
-	int sentence_cap ; 											// FIX CASE? = Fix case?
+	int sentence_cap ; 								// FIX CASE? = Fix case?
 
-	int trim_subs; 												// "    Remove spaces at sides?    "
-	int autodash; 												// Add dashes (-) before each speaker automatically?
+	int trim_subs; 									// "    Remove spaces at sides?    "
+	int autodash; 									// Add dashes (-) before each speaker automatically?
 	int no_font_color;
 	int no_type_setting;
-	int gui_mode_reports; 										// If 1, output in stderr progress updates so the GUI can grab them
-	unsigned char *subline; 									// Temp storage for storing each line
+	int gui_mode_reports; 								// If 1, output in stderr progress updates so the GUI can grab them
+	unsigned char *subline; 							// Temp storage for storing each line
 	int extract;
 
-	int dtvcc_extract; 											//1 or 0 depending if we have to handle dtvcc
+	int dtvcc_extract; 								//1 or 0 depending if we have to handle dtvcc
 	ccx_dtvcc_writer_ctx dtvcc_writers[CCX_DTVCC_MAX_SERVICES];
 
 	/* Timing related variables*/
@@ -119,7 +119,7 @@ struct encoder_ctx
 	/* split-by-sentence stuff */
 	int splitbysentence;
 
-	unsigned char * sbs_buffer; 	/// Storage for sentence-split buffer
+	unsigned char * sbs_buffer; 		/// Storage for sentence-split buffer
 	size_t sbs_handled_len; 		/// The length of the string in the SBS-buffer, already handled, but preserved for DUP-detection.
 
 	//ccx_sbs_utf8_character *sbs_newblock;
@@ -137,7 +137,7 @@ struct encoder_ctx
  *
  * @param cfg Option to initilaize encoder cfg params
  *
- * @return Allocated and properly initilaized Encoder Context, NULL on failure
+	 * @return Allocated and properly initilaized Encoder Context, NULL on failure
  */
 struct encoder_ctx *init_encoder(struct encoder_cfg *opt);
 
