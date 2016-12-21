@@ -289,7 +289,7 @@ typedef struct AVPacket
 
 static AVPacket av;
 
-
+extern int noempty; //--noempty flag
 
 static LLONG get_pts(struct ccx_demuxer *ctx, int c)
 {
@@ -846,6 +846,7 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 		}
 		if (dec_sub.got_output)
 		{
+			noempty = 1;
 			encode_sub(enc_ctx,&dec_sub);
 			dec_sub.got_output = 0;
 		}

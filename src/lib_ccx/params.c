@@ -313,6 +313,7 @@ void print_usage (void)
 	mprint ("subtitle file with contiguous timing.\n\n");
 	mprint ("Effect output files\n");
 	mprint ("    -outinterval x output in interval of x seconds\n");
+	mprint ("    --noempty: don't create output file if it's going to be empty\n");
 	mprint ("Network support:\n");
 	mprint ("            -udp port: Read the input via UDP (listening in the specified port)\n");
 	mprint ("                       instead of reading a file.\n\n");
@@ -1427,6 +1428,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 
 		/* More stuff */
+		if(strcmp (argv[i], "--noempty")==0)
+		{
+			opt->noempty=1;
+			continue;
+		}
 		if (strcmp (argv[i],"-ve")==0 ||
 				strcmp (argv[i],"--videoedited")==0)
 		{

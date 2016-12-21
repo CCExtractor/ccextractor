@@ -23,6 +23,7 @@ int end_of_file=0; // End of file?
 
 const static unsigned char DO_NOTHING[] = {0x80, 0x80};
 
+extern int noempty; //--noempty flag
 
 // Program stream specific data grabber
 int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
@@ -549,6 +550,7 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 		ret = process_raw(dec_ctx, dec_sub, data->buffer, data->len);
 		if (dec_sub->got_output)
 		{
+			noempty = 1;
 			encode_sub(enc_ctx, dec_sub);
 			dec_sub->got_output = 0;
 		}
@@ -907,6 +909,10 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				isdb_set_global_time(dec_ctx, tstamp);
 			}
 			ret = process_data(enc_ctx, dec_ctx, data_node);
+			if (enc_ctx->srt_counter || dec_ctx->saw_caption_block || ret)
+			{
+				noempty = 1;
+			}
 			if( ret != CCX_OK)
 				break;
 		}
@@ -1124,6 +1130,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 		}
 		if (dec_sub->got_output)
 		{
+			noempty = 1;
 			encode_sub(enc_ctx, dec_sub);
 			dec_sub->got_output = 0;
 		}
