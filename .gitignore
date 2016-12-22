@@ -16,8 +16,10 @@ CVS
 linux/ccextractor
 linux/depend
 windows/Debug/**
+windows/Debug-OCR/**
 windows/Release/**
 windows/Release-Full/**
+windows/Release-OCR/**
 windows/Debug-Full/**
 windows/x64/**
 windows/ccextractor.VC.db
