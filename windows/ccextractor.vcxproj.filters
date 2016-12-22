@@ -449,69 +449,6 @@
     <ClCompile Include="..\src\lib_ccx\telxcc.c">
       <Filter>Source Files\ccx_decoders</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\activity.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\asf_functions.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\avc_functions.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\cc_bitstream.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\configuration.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\es_functions.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\es_userdata.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\file_functions.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\general_loop.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\myth.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\networking.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\ocr.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\output.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\params.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\params_dump.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\sequencing.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\stream_functions.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\ts_functions.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\ts_tables.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\utility.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\wtv_functions.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_common_char_encoding.c">
       <Filter>Source Files\ccx_common</Filter>
     </ClCompile>
@@ -533,21 +470,9 @@
     <ClCompile Include="..\src\lib_ccx\spupng_encoder.c">
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\lib_ccx.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_common_option.c">
       <Filter>Source Files\ccx_common</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\ts_tables_epg.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\ccx_demuxer.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\ts_info.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_708_encoding.c">
       <Filter>Source Files\ccx_decoders</Filter>
     </ClCompile>
@@ -565,9 +490,6 @@
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_dtvcc.c">
       <Filter>Source Files\ccx_decoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\win_iconv\win_iconv.c">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_sami.c">
       <Filter>Source Files\ccx_encoders</Filter>
@@ -602,9 +524,6 @@
     <ClCompile Include="..\src\zvbi\sampling_par.c">
       <Filter>Source Files\zvbi</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\ccx_gxf.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_vbi.c">
       <Filter>Source Files\ccx_decoders</Filter>
     </ClCompile>
@@ -625,9 +544,6 @@
     </ClCompile>
     <ClCompile Include="..\src\protobuf-c\protobuf-c.c">
       <Filter>Source Files\protobuf-c</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\dvd_subtitle_decoder.c">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_transcript.c">
       <Filter>Source Files\ccx_encoders</Filter>
@@ -788,23 +704,107 @@
     <ClCompile Include="..\src\gpacmp4\gpac_ogg.c">
       <Filter>Source Files\gpacmp4</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\hardsubx.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\hardsubx_decoder.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\hardsubx_classifier.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\hardsubx_imgops.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\hardsubx_utility.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ffmpeg_intgr.c">
       <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\cc_bitstream.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\avc_functions.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\asf_functions.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\activity.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\utility.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ts_tables_epg.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ts_tables.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ts_info.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ts_functions.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\stream_functions.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\sequencing.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\params_dump.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\params.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\output.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ocr.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\networking.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\myth.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\lib_ccx.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\hardsubx_utility.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\hardsubx_imgops.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\hardsubx_decoder.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\hardsubx_classifier.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\hardsubx.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\general_loop.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\file_functions.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\es_userdata.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\es_functions.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\dvd_subtitle_decoder.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\configuration.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_gxf.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_demuxer.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\wtv_functions.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\win_iconv\win_iconv.c">
+      <Filter>Source Files\win_iconv</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
