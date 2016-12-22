@@ -803,6 +803,9 @@
     <ClCompile Include="..\src\lib_ccx\hardsubx_utility.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ffmpeg_intgr.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\lib_ccx\ccx_sub_entry_message.proto">

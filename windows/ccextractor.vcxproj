@@ -230,6 +230,7 @@
     <ClCompile Include="..\src\lib_ccx\dvd_subtitle_decoder.c" />
     <ClCompile Include="..\src\lib_ccx\es_functions.c" />
     <ClCompile Include="..\src\lib_ccx\es_userdata.c" />
+    <ClCompile Include="..\src\lib_ccx\ffmpeg_intgr.c" />
     <ClCompile Include="..\src\lib_ccx\file_functions.c" />
     <ClCompile Include="..\src\lib_ccx\general_loop.c" />
     <ClCompile Include="..\src\lib_ccx\hardsubx.c" />
@@ -501,6 +502,9 @@ xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Comm
       <Command>xcopy /y $(ProjectDir)libs\lib\liblept172.dll $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>pre-build.bat</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-OCR|x64'">
     <ClCompile>
