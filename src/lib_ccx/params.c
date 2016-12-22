@@ -993,7 +993,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i], "-")==0 || strcmp(argv[i], "-stdin") == 0)
 		{
-
+#ifdef WIN32
+			setmode(fileno(stdin), O_BINARY);
+#endif
 			opt->input_source=CCX_DS_STDIN;
 			if (!opt->live_stream) opt->live_stream=-1;
 			continue;
