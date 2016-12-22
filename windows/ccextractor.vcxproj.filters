@@ -788,6 +788,21 @@
     <ClCompile Include="..\src\gpacmp4\gpac_ogg.c">
       <Filter>Source Files\gpacmp4</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\hardsubx.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\hardsubx_decoder.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\hardsubx_classifier.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\hardsubx_imgops.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\hardsubx_utility.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\lib_ccx\ccx_sub_entry_message.proto">
