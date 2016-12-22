@@ -17,8 +17,8 @@ linux/ccextractor
 linux/depend
 windows/Debug/**
 windows/Release/**
-windows/Release-OCR/**
-windows/Debug-OCR/**
+windows/Release-Full/**
+windows/Debug-Full/**
 windows/x64/**
 windows/ccextractor.VC.db
 build/
