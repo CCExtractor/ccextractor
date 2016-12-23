@@ -27,28 +27,46 @@ int64_t convert_pts_to_s(int64_t pts, AVRational time_base)
 
 int edit_distance(char * word1, char * word2, int len1, int len2)
 {
-	int matrix[len1 + 1][len2 + 1];
-	int i,delete,insert,substitute,minimum;
-	for (i = 0; i <= len1; i++)matrix[i][0] = i;
+	// len2 <= len1
+	if (len2 > len1)
+	{
+		int tmp = len1;
+		len1 = len2;
+		len2 = tmp;
+
+		char * tmp_ptr = word1;
+		word1 = word2;
+		word2 = tmp_ptr;
+	}
+
+	int **matrix = (int **)malloc(2 * sizeof(int *));
+	for (int i = 0; i < 2; i++)
+		matrix[i] = (int *)malloc((len2 + 1) * sizeof(int));
+
+	int i, delete, insert, substitute, minimum;
 	for (i = 0; i <= len2; i++)matrix[0][i] = i;
 	for (i = 1; i <= len1; i++)
 	{
 		int j;
+		for (j = 0; j <= len2; j++)
+			matrix[i % 2][j] = 0;
+		matrix[i % 2][0] = i;
+
 		char c1;
-		c1 = word1[i-1];
+		c1 = word1[i - 1];
 		for (j = 1; j <= len2; j++)
 		{
 			char c2;
-			c2 = word2[j-1];
+			c2 = word2[j - 1];
 			if (c1 == c2)
 			{
-				matrix[i][j] = matrix[i-1][j-1];
+				matrix[i % 2][j] = matrix[(i - 1) % 2][j - 1];
 			}
-			else 
+			else
 			{
-				delete = matrix[i-1][j] + 1;
-				insert = matrix[i][j-1] + 1;
-				substitute = matrix[i-1][j-1] + 1;
+				delete = matrix[(i - 1) % 2][j] + 1;
+				insert = matrix[i % 2][j - 1] + 1;
+				substitute = matrix[(i - 1) % 2][j - 1] + 1;
 				minimum = delete;
 				if (insert < minimum)
 				{
@@ -58,11 +76,16 @@ int edit_distance(char * word1, char * word2, int len1, int len2)
 				{
 					minimum = substitute;
 				}
-				matrix[i][j] = minimum;
+				matrix[i % 2][j] = minimum;
 			}
 		}
 	}
-	return matrix[len1][len2];
+
+	int ret = matrix[len1 % 2][len2];
+	for (int i = 0; i < 2; i++)
+		free(matrix[i]);
+	free(matrix);
+	return ret;
 }
 
 int is_valid_trailing_char(char c)
