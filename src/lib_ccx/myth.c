@@ -771,7 +771,7 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 	LLONG saved = 0;
 	struct cc_subtitle dec_sub;
 	struct lib_cc_decode *dec_ctx = NULL;
-	struct encoder_ctx *enc_ctx;
+	struct encoder_ctx *enc_ctx = NULL;
 	if(!ccx_options.noempty) enc_ctx = update_encoder_list(ctx);
 	unsigned long desp_length=65536;
 	unsigned char *desp=(unsigned char *) malloc (desp_length);

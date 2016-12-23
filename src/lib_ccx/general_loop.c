@@ -528,7 +528,7 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 	LLONG ret;
 	struct demuxer_data *data = NULL;
 	struct cc_subtitle *dec_sub = NULL;
-	struct encoder_ctx *enc_ctx;
+	struct encoder_ctx *enc_ctx = NULL;
 	if(!ccx_options.noempty) enc_ctx = update_encoder_list(ctx);
 	struct lib_cc_decode *dec_ctx = NULL;
 
@@ -636,6 +636,7 @@ void delete_datalist(struct demuxer_data *list)
 
 	}
 }
+
 struct cap_info* cinfo;
 struct lib_ccx_ctx *_ctx;
 int wasCreated = 0;
@@ -1025,7 +1026,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	uint16_t cbcount = 0;
 	int bread = 0; // Bytes read
 	LLONG result;
-	struct encoder_ctx *enc_ctx;
+	struct encoder_ctx *enc_ctx = NULL;
 	if(!ccx_options.noempty) enc_ctx = update_encoder_list(ctx);
 
 	// As BUFSIZE is a macro this is just a reminder
