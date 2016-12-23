@@ -22,24 +22,24 @@ unsigned char dtvcc_get_internal_from_G1(unsigned char g1_char)
 	return g1_char;
 }
 
-// TODO: Probably not right
-// G2: Extended Control Code Set 1
+												// TODO: Probably not right
+												// G2: Extended Control Code Set 1
 unsigned char dtvcc_get_internal_from_G2(unsigned char g2_char)
 {
 	if (g2_char >= 0x20 && g2_char <= 0x3F)
 		return g2_char - (unsigned char)0x20;
 	if (g2_char >= 0x60 && g2_char <= 0x7F)
 		return g2_char + (unsigned char)0x20;
-	// Rest unmapped, so we return a blank space
+												// Rest unmapped, so we return a blank space
 	return 0x20;
 }
 
-// TODO: Probably not right
-// G3: Future Characters and Icon Expansion
+												// TODO: Probably not right
+												// G3: Future Characters and Icon Expansion
 unsigned char dtvcc_get_internal_from_G3(unsigned char g3_char)
 {
-	if (g3_char == 0xa0) // The "CC" (closed captions) sign
+	if (g3_char == 0xa0) 									// The "CC" (closed captions) sign
 		return 0x06;
-	// Rest unmapped, so we return a blank space
+												// Rest unmapped, so we return a blank space
 	return 0x20;
 }
