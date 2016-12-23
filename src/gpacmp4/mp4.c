@@ -18,8 +18,8 @@ static short bswap16(short v)
 
 static long bswap32(long v)
 {
-	// For 0x12345678 returns 78563412	
-	long swapped=((v&0xFF)<<24) | ((v&0xFF00)<<8) | ((v&0xFF0000) >>8) | ((v&0xFF000000) >>24);	
+	// For 0x12345678 returns 78563412
+	long swapped=((v&0xFF)<<24) | ((v&0xFF00)<<8) | ((v&0xFF0000) >>8) | ((v&0xFF000000) >>24);
 	return swapped;
 }
 static struct {
@@ -90,7 +90,7 @@ static int process_xdvb_track(struct lib_ccx_ctx *ctx, const char* basename, GF_
 	for(i = 0; i < sample_count; i++)
 	{
 		u32 sdi;
-		
+
 		GF_ISOSample* s = gf_isom_get_sample(f, track, i + 1, &sdi);
 		if (s!=NULL)
 		{
@@ -124,7 +124,7 @@ static int process_avc_track(struct lib_ccx_ctx *ctx, const char* basename, GF_I
 	struct lib_cc_decode *dec_ctx = NULL;
 
 	dec_ctx = update_decoder_list(ctx);
-	
+
 	if((sample_count = gf_isom_get_sample_count(f, track)) < 1)
 	{
 		return 0;
@@ -137,7 +137,7 @@ static int process_avc_track(struct lib_ccx_ctx *ctx, const char* basename, GF_I
 	for(i = 0; i < sample_count; i++)
 	{
 		u32 sdi;
-		
+
 		GF_ISOSample* s = gf_isom_get_sample(f, track, i + 1, &sdi);
 
 		if(s != NULL)
@@ -149,7 +149,7 @@ static int process_avc_track(struct lib_ccx_ctx *ctx, const char* basename, GF_I
 					gf_odf_avc_cfg_del(c);
 					c = NULL;
 				}
-				
+
 				if((c = gf_isom_avc_config_get(f, track, sdi)) == NULL)
 				{
 					gf_isom_sample_del(&s);
@@ -284,13 +284,13 @@ unsigned char * ccdp_find_data(unsigned char * ccdp_atom_content, unsigned int l
 		}
 
 */
-int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
-{	
+int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file){
 	GF_ISOFile* f;
 	u32 i, j, track_count, avc_track_count, cc_track_count;
 	struct cc_subtitle dec_sub;
 	struct lib_cc_decode *dec_ctx = NULL;
-	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
+	struct encoder_ctx *enc_ctx;
+	if(!ccx_options.noempty) enc_ctx = update_encoder_list(ctx);
 
 	dec_ctx = update_decoder_list(ctx);
 
@@ -329,6 +329,14 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 	}
 
 	mprint("mp4: found %u tracks: %u avc and %u cc\n", track_count, avc_track_count, cc_track_count);
+
+	if(ccx_options.noempty)
+	{
+		if(cc_track_count)
+			enc_ctx = update_encoder_list(ctx);
+		else
+			exit(0);
+	}
 
 	for(i = 0; i < track_count; i++)
 	{
@@ -507,7 +515,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 							int ret = 0;
 							int len = atomLength - 8;
 							data += 4;
-							char *tdata = data;							
+							char *tdata = data;
 							do {
 								// Process each pair independently so we can adjust timing
 								ret = process608((unsigned char *) tdata, len>2?2:len, dec_ctx,
