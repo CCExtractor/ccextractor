@@ -27,7 +27,10 @@ int64_t convert_pts_to_s(int64_t pts, AVRational time_base)
 
 int edit_distance(char * word1, char * word2, int len1, int len2)
 {
-	int matrix[len1 + 1][len2 + 1];
+	int **matrix = (int **)malloc((len1 + 1) * sizeof(int *));
+	for (int i = 0; i < len1 + 1; i++)
+		matrix[i] = (int *)malloc((len2 + 1) * sizeof(int));
+
 	int i,delete,insert,substitute,minimum;
 	for (i = 0; i <= len1; i++)matrix[i][0] = i;
 	for (i = 0; i <= len2; i++)matrix[0][i] = i;
@@ -62,7 +65,12 @@ int edit_distance(char * word1, char * word2, int len1, int len2)
 			}
 		}
 	}
-	return matrix[len1][len2];
+
+	int ret = matrix[len1][len2];
+	for (int i = 0; i < len1 + 1; i++)
+		free(matrix[i]);
+	free(matrix);
+	return ret;
 }
 
 int is_valid_trailing_char(char c)

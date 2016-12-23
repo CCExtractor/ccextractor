@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Express 2013 for Windows Desktop
+VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ccextractor", "ccextractor.vcxproj", "{0F0063C4-BCBC-4379-A6D5-84A5669C940A}"
 EndProject
@@ -9,30 +9,30 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
-		Debug-OCR|Win32 = Debug-OCR|Win32
-		Debug-OCR|x64 = Debug-OCR|x64
+		Debug-Full|Win32 = Debug-Full|Win32
+		Debug-Full|x64 = Debug-Full|x64
 		Release|Win32 = Release|Win32
 		Release|x64 = Release|x64
-		Release-OCR|Win32 = Release-OCR|Win32
-		Release-OCR|x64 = Release-OCR|x64
+		Release-Full|Win32 = Release-Full|Win32
+		Release-Full|x64 = Release-Full|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Debug|Win32.ActiveCfg = Debug|Win32
 		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Debug|Win32.Build.0 = Debug|Win32
 		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Debug|x64.ActiveCfg = Debug|x64
 		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Debug|x64.Build.0 = Debug|x64
-		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Debug-OCR|Win32.ActiveCfg = Debug-OCR|Win32
-		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Debug-OCR|Win32.Build.0 = Debug-OCR|Win32
-		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Debug-OCR|x64.ActiveCfg = Debug-OCR|x64
-		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Debug-OCR|x64.Build.0 = Debug-OCR|x64
+		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Debug-Full|Win32.ActiveCfg = Debug-Full|Win32
+		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Debug-Full|Win32.Build.0 = Debug-Full|Win32
+		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Debug-Full|x64.ActiveCfg = Debug-Full|x64
+		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Debug-Full|x64.Build.0 = Debug-Full|x64
 		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release|Win32.ActiveCfg = Release|Win32
 		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release|Win32.Build.0 = Release|Win32
 		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release|x64.ActiveCfg = Release|x64
 		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release|x64.Build.0 = Release|x64
-		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release-OCR|Win32.ActiveCfg = Release-OCR|Win32
-		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release-OCR|Win32.Build.0 = Release-OCR|Win32
-		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release-OCR|x64.ActiveCfg = Release-OCR|x64
-		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release-OCR|x64.Build.0 = Release-OCR|x64
+		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release-Full|Win32.ActiveCfg = Release-Full|Win32
+		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release-Full|Win32.Build.0 = Release-Full|Win32
+		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release-Full|x64.ActiveCfg = Release-Full|x64
+		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release-Full|x64.Build.0 = Release-Full|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
