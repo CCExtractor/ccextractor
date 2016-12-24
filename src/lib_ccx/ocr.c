@@ -139,7 +139,7 @@ void* init_ocr(int lang_index)
 	char* pars_vec = strdup("debug_file");
 	char* pars_values = strdup("/dev/null");
 
-	ret = TessBaseAPIInit4(ctx->api, tessdata_path, lang, OEM_TESSERACT_ONLY, NULL, 0, &pars_vec,
+	ret = TessBaseAPIInit4(ctx->api, tessdata_path, lang, OEM_DEFAULT, NULL, 0, &pars_vec,
 		&pars_values, 1, false);
 
 	free(pars_vec);

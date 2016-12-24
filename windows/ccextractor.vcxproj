@@ -453,8 +453,14 @@
       <AdditionalOptions>/SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y $(ProjectDir)libs\lib\liblept172.dll $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)
+      <Command>xcopy /y $(ProjectDir)libs\lib\debug-dll\pvt.cppan.demo.danbloomberg.leptonica-master.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\debug-dll\pvt.cppan.demo.jpeg-9.2.0.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\debug-dll\pvt.cppan.demo.openjpeg.openjp2-2.1.2.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\debug-dll\pvt.cppan.demo.png-1.6.26.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\debug-dll\pvt.cppan.demo.tiff-4.0.7.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\debug-dll\pvt.cppan.demo.xz_utils.lzma-5.2.2.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\debug-dll\pvt.cppan.demo.zlib-1.2.8.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\debug-dll\tesseract400d.dll $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)libs\lib\avcodec-57.dll $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)libs\lib\avformat-57.dll $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)libs\lib\avutil-55.dll $(ProjectDir)$(OutDir)
@@ -505,8 +511,14 @@ xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Comm
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y $(ProjectDir)libs\lib\liblept172.dll $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)libs\lib\libtesseract304.dll $(ProjectDir)$(OutDir)
+      <Command>xcopy /y $(ProjectDir)libs\lib\release-dll\pvt.cppan.demo.danbloomberg.leptonica-master.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\release-dll\pvt.cppan.demo.jpeg-9.2.0.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\release-dll\pvt.cppan.demo.openjpeg.openjp2-2.1.2.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\release-dll\pvt.cppan.demo.png-1.6.26.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\release-dll\pvt.cppan.demo.tiff-4.0.7.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\release-dll\pvt.cppan.demo.xz_utils.lzma-5.2.2.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\release-dll\pvt.cppan.demo.zlib-1.2.8.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\release-dll\tesseract400.dll $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)libs\lib\avcodec-57.dll $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)libs\lib\avformat-57.dll $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)libs\lib\avutil-55.dll $(ProjectDir)$(OutDir)
