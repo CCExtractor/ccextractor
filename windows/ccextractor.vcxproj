@@ -445,7 +445,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>WS2_32.Lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;lept174d.lib;tesseract400d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>WS2_32.Lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;debug-lib/pvt.cppan.demo.danbloomberg.leptonica-master.lib;debug-lib/pvt.cppan.demo.google.tesseract.tesseract-master.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -454,6 +454,7 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y $(ProjectDir)libs\lib\debug-dll\pvt.cppan.demo.danbloomberg.leptonica-master.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\debug-dll\pvt.cppan.demo.google.tesseract.tesseract-master.dll $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)libs\lib\debug-dll\pvt.cppan.demo.jpeg-9.2.0.dll $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)libs\lib\debug-dll\pvt.cppan.demo.openjpeg.openjp2-2.1.2.dll $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)libs\lib\debug-dll\pvt.cppan.demo.png-1.6.26.dll $(ProjectDir)$(OutDir)
@@ -502,7 +503,7 @@ xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Comm
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>WS2_32.Lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;lept174.lib;tesseract400.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>WS2_32.Lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;release-lib/pvt.cppan.demo.danbloomberg.leptonica-master.lib;release-lib/pvt.cppan.demo.google.tesseract.tesseract-master.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -512,6 +513,7 @@ xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Comm
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y $(ProjectDir)libs\lib\release-dll\pvt.cppan.demo.danbloomberg.leptonica-master.dll $(ProjectDir)$(OutDir)
+xcopy /y $(ProjectDir)libs\lib\debug-dll\pvt.cppan.demo.google.tesseract.tesseract-master.dll $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)libs\lib\release-dll\pvt.cppan.demo.jpeg-9.2.0.dll $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)libs\lib\release-dll\pvt.cppan.demo.openjpeg.openjp2-2.1.2.dll $(ProjectDir)$(OutDir)
 xcopy /y $(ProjectDir)libs\lib\release-dll\pvt.cppan.demo.png-1.6.26.dll $(ProjectDir)$(OutDir)
