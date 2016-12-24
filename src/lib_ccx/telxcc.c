@@ -1148,6 +1148,17 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				
 				ctx->page_buffer.g2_char_present[x26_row][x26_col] = 1;
 			}
+			// ETS 300 706, chapter 12.3.4, Special case when * is addressed using X/26 packet it must be changed to @
+			if(mode == 0x10 && (row_address_group == NO))
+			{
+
+				if(data == 1<<6) //If data is 64.
+				{
+					remap_g0_charset(0);
+					ctx->page_buffer.text[x26_row][address] = 0x40; //0x40 is @.
+				}
+			}
+			//Maybe a better method could be found other than writing absolute values.
 		}
 	}
 	else if ((m == MAGAZINE(tlt_config.page)) && (y == 28) && (ctx->receiving_data == YES))
