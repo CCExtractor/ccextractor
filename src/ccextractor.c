@@ -16,6 +16,9 @@ License: GPL 2.0
 CURL *curl;
 CURLcode res;
 #endif
+#ifdef ENABLE_OCR
+#define LEPT_MSG_SEVERITY L_SEVERITY_NONE
+#endif
 
 struct lib_ccx_ctx *signal_ctx;
 
@@ -61,6 +64,9 @@ int main(int argc, char *argv[])
 	{
 		exit(ret);
 	}
+#ifdef ENABLE_OCR
+	setMsgSeverity(LEPT_MSG_SEVERITY);
+#endif
 #ifdef ENABLE_HARDSUBX
 	if(ccx_options.hardsubx)
 	{

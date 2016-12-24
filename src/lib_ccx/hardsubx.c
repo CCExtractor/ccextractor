@@ -217,7 +217,7 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	ctx->tess_handle = TessBaseAPICreate();
 	char* pars_vec = strdup("debug_file");
 	char* pars_values = strdup("/dev/null");
-	int res = TessBaseAPIInit4(ctx->tess_handle, NULL, "eng", OEM_TESSERACT_ONLY, NULL, 0, &pars_vec,
+	int res = TessBaseAPIInit4(ctx->tess_handle, NULL, "eng", OEM_DEFAULT, NULL, 0, &pars_vec,
 		&pars_values, 1, false);
 	free(pars_vec);
 	free(pars_values);
