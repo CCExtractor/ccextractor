@@ -445,7 +445,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>WS2_32.Lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;lept174d.lib;tesseract305d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>WS2_32.Lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;lept174d.lib;tesseract400d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -496,7 +496,7 @@ xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Comm
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>WS2_32.Lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;lept174.lib;tesseract305.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>WS2_32.Lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;lept174.lib;tesseract400.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
