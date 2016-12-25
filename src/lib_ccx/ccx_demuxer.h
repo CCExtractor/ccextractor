@@ -48,7 +48,7 @@ struct cap_info
 	unsigned char *capbuf;
 	long capbuflen; // Bytes read in capbuf
 	int saw_pesstart;
-	int prev_counter;
+		int prev_counter;
 	void *codec_private_data;
 	int ignore;
 
@@ -96,8 +96,8 @@ struct ccx_demuxer
 
 	/* File handles */
 	FILE *fh_out_elementarystream;
-	int infd; // descriptor number to input.
-	LLONG past; /* Position in file, if in sync same as ftell()  */
+	int infd; 						// descriptor number to input.
+	LLONG past; 						/* Position in file, if in sync same as ftell()  */
 
 	// TODO relates to fts_global
 	int64_t global_timestamp;
@@ -113,7 +113,7 @@ struct ccx_demuxer
 	struct ccx_demux_report freport;
 
 	/* Hauppauge support */
-	unsigned hauppauge_warning_shown; // Did we detect a possible Hauppauge capture and told the user already?
+	unsigned hauppauge_warning_shown; 		// Did we detect a possible Hauppauge capture and told the user already?
 
 	int multi_stream_per_prog;
 
@@ -121,9 +121,9 @@ struct ccx_demuxer
 	unsigned last_pat_length;
 
 	unsigned char *filebuffer;
-	LLONG filebuffer_start; // Position of buffer start relative to file
-	unsigned int filebuffer_pos; // Position of pointer relative to buffer start
-	unsigned int bytesinbuffer; // Number of bytes we actually have on buffer
+	LLONG filebuffer_start; 			// Position of buffer start relative to file
+	unsigned int filebuffer_pos; 			// Position of pointer relative to buffer start
+	unsigned int bytesinbuffer; 			// Number of bytes we actually have on buffer
 
 	int warning_program_not_found_shown;
 
