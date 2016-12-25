@@ -1,6 +1,6 @@
 ccextractor, 0.83
 -----------------
-Authors: Carlos Fern·ndez (cfsmp3), Volker Quetschke.
+Authors: Carlos Fern√°ndez (cfsmp3), Volker Quetschke.
 Maintainer: cfsmp3
 
 Lots of credit goes to other people, though:
@@ -31,6 +31,7 @@ Google Summer of Code 2016 students
 
 Google Code-in 2016 students
 - Evgeny Shulgin
+- Manveer Basra
 (to be listed)
 
 
