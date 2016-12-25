@@ -44,21 +44,21 @@ struct file_report
 // Stuff for telxcc.c
 struct ccx_s_teletext_config
 {
-	uint8_t verbose : 1; // should telxcc be verbose?
-	uint16_t page; // teletext page containing cc we want to filter
-	uint16_t tid; // 13-bit packet ID for teletext stream
-	double offset; // time offset in seconds
-	uint8_t bom : 1; // print UTF-8 BOM characters at the beginning of output
-	uint8_t nonempty : 1; // produce at least one (dummy) frame
-	// uint8_t se_mode : 1; // search engine compatible mode => Uses CCExtractor's write_format
-	// uint64_t utc_refvalue; // UTC referential value => Moved to ccx_decoders_common, so can be used for other decoders (608/xds) too
-	uint16_t user_page; // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
-	int levdistmincnt, levdistmaxpct; // Means 2 fails or less is "the same", 10% or less is also "the same"
-	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
-	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
-	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
+	uint8_t verbose : 1; 						// should telxcc be verbose?
+	uint16_t page; 							// teletext page containing cc we want to filter
+	uint16_t tid; 							// 13-bit packet ID for teletext stream
+	double offset; 							// time offset in seconds
+	uint8_t bom : 1; 						// print UTF-8 BOM characters at the beginning of output
+	uint8_t nonempty : 1; 						// produce at least one (dummy) frame
+	// uint8_t se_mode : 1; 					// search engine compatible mode => Uses CCExtractor's write_format
+	// uint64_t utc_refvalue; 					// UTC referential value => Moved to ccx_decoders_common, so can be used for other decoders (608/xds) too
+	uint16_t user_page; 						// Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
+	int levdistmincnt, levdistmaxpct; 				// Means 2 fails or less is "the same", 10% or less is also "the same"
+	struct ccx_boundary_time extraction_start, extraction_end; 	// Segment we actually process
+	enum ccx_output_format write_format; 				// 0=Raw, 1=srt, 2=SMI
+	int gui_mode_reports; 						// If 1, output in stderr progress updates so the GUI can grab them
 	enum ccx_output_date_format date_format;
-	int noautotimeref; // Do NOT set time automatically?
+	int noautotimeref; 						// Do NOT set time automatically?
 	unsigned send_to_srv;
 	enum ccx_encoding_type encoding;
 	int nofontcolor;
@@ -78,7 +78,7 @@ struct lib_ccx_ctx
 	unsigned char *pesheaderbuf;
 	LLONG inputsize;
 	LLONG total_inputsize;
-	LLONG total_past; // Only in binary concat mode
+	LLONG total_past; 			                        // Only in binary concat mode
 
 	int last_reported_progress;
 
@@ -94,31 +94,31 @@ struct lib_ccx_ctx
 	int stat_divicom;
 	int false_pict_header;
 
-	// int hex_mode=HEX_NONE; // Are we processing an hex file?
+	// int hex_mode=HEX_NONE; 				        // Are we processing an hex file?
 	struct ccx_decoders_common_settings_t *dec_global_setting;
 	struct list_head dec_ctx_head;
 
-	int rawmode; // Broadcast or DVD
+	int rawmode; 						        // Broadcast or DVD
 	// See -d from
 
-	int cc_to_stdout; // If 1, captions go to stdout instead of file
+	int cc_to_stdout; 					        // If 1, captions go to stdout instead of file
 
 
-	LLONG subs_delay; // ms to delay (or advance) subs
+	LLONG subs_delay; 					        // ms to delay (or advance) subs
 
 	int startcredits_displayed;
 	int end_credits_displayed;
-	LLONG last_displayed_subs_ms; // When did the last subs end?
-	LLONG screens_to_process; // How many screenfuls we want?
-	char *basefilename; // Input filename without the extension
+	LLONG last_displayed_subs_ms; 			                // When did the last subs end?
+	LLONG screens_to_process; 			                // How many screenfuls we want?
+	char *basefilename; 				                // Input filename without the extension
 
-	const char *extension; // Output extension
-	int current_file; // If current_file!=1, we are processing *inputfile[current_file]
+	const char *extension; 				                // Output extension
+	int current_file; 				                // If current_file!=1, we are processing *inputfile[current_file]
+ 
+	char **inputfile; 				                // List of files to process
+	int num_input_files; 				                // How many?
 
-	char **inputfile; // List of files to process
-	int num_input_files; // How many?
-
-	unsigned teletext_warning_shown; // Did we detect a possible PAL (with teletext subs) and told the user already?
+	unsigned teletext_warning_shown; 		                // Did we detect a possible PAL (with teletext subs) and told the user already?
 
 	int epg_inited;
 	struct PSI_buffer *epg_buffers;
@@ -129,13 +129,13 @@ struct lib_ccx_ctx
 	int epg_last_live_output;
 	struct file_report freport;
 
-	unsigned int hauppauge_mode; // If 1, use PID=1003, process specially and so on
-	int live_stream; /* -1 -> Not a complete file but a live stream, without timeout
-                       0 -> A regular file
-                      >0 -> Live stream with a timeout of this value in seconds */
-	int binary_concat; // Disabled by -ve or --videoedited
+	unsigned int hauppauge_mode; 		                        // If 1, use PID=1003, process specially and so on
+	int live_stream; 			                        /* -1 -> Not a complete file but a live stream, without timeout
+                                                                            0 -> A regular file
+                                                                           >0 -> Live stream with a timeout of this value in seconds */
+	int binary_concat; 			                        // Disabled by -ve or --videoedited
 	int multiprogram;
-	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
+	enum ccx_output_format write_format; 	                        // 0=Raw, 1=srt, 2=SMI
 
 	struct ccx_demuxer *demux_ctx;
 	struct list_head enc_ctx_head;
@@ -272,7 +272,7 @@ extern int strangeheader;
 extern const char *desc[256];
 
 
-extern long FILEBUFFERSIZE; // Uppercase because it used to be a define
+extern long FILEBUFFERSIZE;                     // Uppercase because it used to be a define
 
 extern int firstcall;
 
@@ -283,7 +283,7 @@ extern unsigned char *last_pat_payload;
 extern unsigned last_pat_length;
 extern volatile int terminate_asap;
 
-#define HAUPPAGE_CCPID	1003 // PID for CC's in some Hauppauge recordings
+#define HAUPPAGE_CCPID	1003                    // PID for CC's in some Hauppauge recordings
 
 extern unsigned teletext_mode;
 
