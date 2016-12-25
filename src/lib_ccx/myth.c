@@ -771,7 +771,8 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 	LLONG saved = 0;
 	struct cc_subtitle dec_sub;
 	struct lib_cc_decode *dec_ctx = NULL;
-	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
+	struct encoder_ctx *enc_ctx = NULL;
+	if(!ccx_options.noempty) enc_ctx = update_encoder_list(ctx);
 	unsigned long desp_length=65536;
 	unsigned char *desp=(unsigned char *) malloc (desp_length);
 
@@ -784,6 +785,7 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory.\n");
 	saved=0;
 
+	int wasCreated = 0;
 	memset(&dec_sub, 0, sizeof(dec_sub));
 	while (is_decoder_processed_enough(ctx) == CCX_FALSE && (rc=mpegps_read_packet(ctx->demux_ctx))==0)
 	{
@@ -846,6 +848,11 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 		}
 		if (dec_sub.got_output)
 		{
+			if(ccx_options.noempty && !wasCreated)
+			{
+				enc_ctx = update_encoder_list(ctx);
+				wasCreated = 1;
+			}
 			encode_sub(enc_ctx,&dec_sub);
 			dec_sub.got_output = 0;
 		}

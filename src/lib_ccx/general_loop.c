@@ -528,7 +528,8 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 	LLONG ret;
 	struct demuxer_data *data = NULL;
 	struct cc_subtitle *dec_sub = NULL;
-	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
+	struct encoder_ctx *enc_ctx = NULL;
+	if(!ccx_options.noempty) enc_ctx = update_encoder_list(ctx);
 	struct lib_cc_decode *dec_ctx = NULL;
 
 	dec_ctx = update_decoder_list(ctx);
@@ -537,6 +538,7 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 	set_current_pts(dec_ctx->timing, 90);
 	set_fts(dec_ctx->timing); // Now set the FTS related variables
 
+	int wasCreated = 0;
 	do
 	{
 		if (terminate_asap)
@@ -549,6 +551,11 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 		ret = process_raw(dec_ctx, dec_sub, data->buffer, data->len);
 		if (dec_sub->got_output)
 		{
+			if(ccx_options.noempty && !wasCreated)
+			{
+				enc_ctx = update_encoder_list(ctx);
+				wasCreated = 1;
+			}
 			encode_sub(enc_ctx, dec_sub);
 			dec_sub->got_output = 0;
 		}
@@ -630,6 +637,9 @@ void delete_datalist(struct demuxer_data *list)
 	}
 }
 
+struct cap_info* cinfo;
+struct lib_ccx_ctx *_ctx;
+int wasCreated = 0;
 int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct demuxer_data *data_node)
 {
 	size_t got; // Means 'consumed' from buffer actually
@@ -753,6 +763,11 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 
 	if (dec_sub->got_output)
 	{
+		if(ccx_options.noempty && !wasCreated)
+		{
+			enc_ctx = update_encoder_list_cinfo(_ctx, cinfo);
+			wasCreated = 0;
+		}
 		encode_sub(enc_ctx, dec_sub);
 		dec_sub->got_output = 0;
 	}
@@ -798,6 +813,8 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 }
 void general_loop(struct lib_ccx_ctx *ctx)
 {
+	_ctx = ctx;
+
 	struct lib_cc_decode *dec_ctx = NULL;
 	enum ccx_stream_mode_enum stream_mode;
 	struct demuxer_data *datalist = NULL;
@@ -855,7 +872,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		position_sanity_check(ctx->demux_ctx);
 		if(!ctx->multiprogram)
 		{
-			struct cap_info* cinfo = NULL;
+			cinfo = NULL;
 			struct encoder_ctx *enc_ctx = NULL;
 			int pid = get_best_stream(ctx->demux_ctx);
 			if(pid < 0)
@@ -871,12 +888,12 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				continue;
 
 			cinfo = get_cinfo(ctx->demux_ctx, pid);
-			enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
+			if(!ccx_options.noempty) enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 			dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
 			if (enc_ctx)
 				enc_ctx->timing = dec_ctx->timing;
-				
+
 			if(data_node->pts != CCX_NOPTS)
 			{
 				struct ccx_rational tb = {1,MPEG_CLOCK_FREQ};
@@ -912,7 +929,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		}
 		else
 		{
-			struct cap_info* cinfo = NULL;
+			cinfo = NULL;
 			struct cap_info* program_iter;
 			struct cap_info *ptr = &ctx->demux_ctx->cinfo_tree;
 			struct encoder_ctx *enc_ctx = NULL;
@@ -930,7 +947,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				}
 				if(!data_node)
 					continue;
-				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
+				if(!ccx_options.noempty) enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 				dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
 				if (enc_ctx)
@@ -1009,7 +1026,8 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	uint16_t cbcount = 0;
 	int bread = 0; // Bytes read
 	LLONG result;
-	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
+	struct encoder_ctx *enc_ctx = NULL;
+	if(!ccx_options.noempty) enc_ctx = update_encoder_list(ctx);
 
 	// As BUFSIZE is a macro this is just a reminder
 	if (BUFSIZE < (3*0xFFFF + 10))
@@ -1056,6 +1074,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	dec_ctx->timing->min_pts = 0;
 	dec_ctx->timing->current_pts = 0;
 
+	int wasCreated = 0;
 	// Loop until no more data is found
 	while(1)
 	{
@@ -1069,6 +1088,11 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 			tlt_read_rcwt(dec_ctx->private_data, buf, dec_sub);
 			if(dec_sub->got_output == CCX_TRUE)
 			{
+				if(ccx_options.noempty && !wasCreated)
+				{
+					enc_ctx = update_encoder_list(ctx);
+					wasCreated = 1;
+				}
 				encode_sub(enc_ctx, dec_sub);
 				dec_sub->got_output = 0;
 			}
@@ -1124,6 +1148,11 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 		}
 		if (dec_sub->got_output)
 		{
+			if(ccx_options.noempty && !wasCreated)
+			{
+				enc_ctx = update_encoder_list(ctx);
+				wasCreated = 1;
+			}
 			encode_sub(enc_ctx, dec_sub);
 			dec_sub->got_output = 0;
 		}
