@@ -111,6 +111,17 @@ int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context)
 	str = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);
 	if (str)
 	{
+		// SSA format - change "\r\n" to "\N"
+		len = strlen(str);
+		for (int i = 0; i < len - 1; i++)
+		{
+			if (str[i] == '\r' && str[i + 1] == '\n')
+			{
+				str[i] = '\\';
+				str[i + 1] = 'N';
+				i++;
+			}
+		}
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 		{
 			millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
@@ -120,7 +131,6 @@ int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context)
 				h1,m1,s1,ms1/10, h2,m2,s2,ms2/10);
 			used = encode_line(context, context->buffer,(unsigned char *) timeline);
 			write (context->out->fh, context->buffer, used);
-			len = strlen(str);
 			write (context->out->fh, str, len);
 			write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		}
