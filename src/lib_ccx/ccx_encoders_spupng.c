@@ -42,7 +42,7 @@ void draw_row(struct eia608_screen* data, int row, uint8_t * canvas, int rowstri
 			draw_char_indexed(cell, rowstride, pen, unicode, (attr & FONT_ITALICS) != 0, (attr & FONT_UNDERLINED) != 0);
 			if (first < 0)
 			{
-				// draw a printable space before the first non-space char
+								// draw a printable space before the first non-space char
 				first = column;
 				if (unicode != 0x20)
 				{
@@ -53,9 +53,9 @@ void draw_row(struct eia608_screen* data, int row, uint8_t * canvas, int rowstri
 			last = column;
 		}
 	}
-	// draw a printable space after the last non-space char
-	// unicode should still contain the last character
-	// check whether it is a space
+								// draw a printable space after the last non-space char
+								// unicode should still contain the last character
+								// check whether it is a space
 	if (unicode != 0x20)
 	{
 		cell = canvas + ((last+2) * CCW);
@@ -74,7 +74,7 @@ static png_color palette[10] =
 	{ 0xff, 0x00, 0xff }, // COL_MAGENTA = 6,
 	{ 0xff, 0xff, 0xff }, // COL_USERDEFINED = 7,
 	{ 0x00, 0x00, 0x00 }, // COL_BLACK = 8
-	{ 0x00, 0x00, 0x00 } // COL_TRANSPARENT = 9
+	{ 0x00, 0x00, 0x00 }  // COL_TRANSPARENT = 9
 };
 
 static png_byte alpha[10] =
