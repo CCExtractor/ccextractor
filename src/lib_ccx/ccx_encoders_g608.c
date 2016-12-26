@@ -4,7 +4,7 @@
 
 static unsigned int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
 {
-	unsigned char *orig = buffer; // Keep for debugging
+	unsigned char *orig = buffer; 				// Keep for debugging
 	unsigned char *line = data->characters[line_num];
 	for (int i = 0; i < 32; i++)
 	{
@@ -28,11 +28,11 @@ static unsigned int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buf
 		}
 		buffer += bytes;
 	}
-	return (unsigned int)(buffer - orig); // Return length
+	return (unsigned int)(buffer - orig); 			// Return length
 }
 static unsigned int get_color_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
 {
-	unsigned char *orig = buffer; // Keep for debugging
+	unsigned char *orig = buffer; 				// Keep for debugging
 	for (int i = 0; i < 32; i++)
 	{
 		if (data->colors[line_num][i] < 10)
@@ -41,11 +41,11 @@ static unsigned int get_color_encoded(struct encoder_ctx *ctx, unsigned char *bu
 			*buffer++ = 'E';
 	}
 	*buffer = 0;
-	return (unsigned)(buffer - orig); // Return length
+	return (unsigned)(buffer - orig); 			// Return length
 }
 static unsigned int get_font_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
 {
-	unsigned char *orig = buffer; // Keep for debugging
+	unsigned char *orig = buffer; 				// Keep for debugging
 	for (int i = 0; i < 32; i++)
 	{
 		if(data->fonts[line_num][i] == FONT_REGULAR)
@@ -59,7 +59,7 @@ static unsigned int get_font_encoded(struct encoder_ctx *ctx, unsigned char *buf
 		else
 			*buffer++ = 'E';
 	}
-	return (unsigned)(buffer - orig); // Return length
+	return (unsigned)(buffer - orig); 			// Return length
 }
 int write_cc_buffer_as_g608(struct eia608_screen *data, struct encoder_ctx *context)
 {
@@ -71,13 +71,13 @@ int write_cc_buffer_as_g608(struct eia608_screen *data, struct encoder_ctx *cont
 	ms_start = data->start_time;
 
 	ms_start+=context->subs_delay;
-	if (ms_start<0) // Drop screens that because of subs_delay start too early
+	if (ms_start<0) 					// Drop screens that because of subs_delay start too early
 		return 0;
 
 	ms_end = data->end_time;
 
 	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
-	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); 		// -1 To prevent overlapping with next line.
 	char timeline[128];
 	context->srt_counter++;
 	sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);

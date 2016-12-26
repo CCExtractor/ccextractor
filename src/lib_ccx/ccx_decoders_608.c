@@ -7,45 +7,45 @@
 #include "ccx_decoders_xds.h"
 
 static const int rowdata[] = {11,-1,1,2,3,4,12,13,14,15,5,6,7,8,9,10};
-// Relationship between the first PAC byte and the row number
+									// Relationship between the first PAC byte and the row number
 int in_xds_mode=0;
 
-//unsigned char str[2048]; // Another generic general purpose buffer
-
-const unsigned char pac2_attribs[][3] = // Color, font, ident
+									//unsigned char str[2048]; // Another generic general purpose buffer
+	
+const unsigned char pac2_attribs[][3] = 				// Color, font, ident
 {
-	{ COL_WHITE, FONT_REGULAR, 0 },  // 0x40 || 0x60
-	{ COL_WHITE, FONT_UNDERLINED, 0 },  // 0x41 || 0x61
-	{ COL_GREEN, FONT_REGULAR, 0 },  // 0x42 || 0x62
-	{ COL_GREEN, FONT_UNDERLINED, 0 },  // 0x43 || 0x63
-	{ COL_BLUE, FONT_REGULAR, 0 },  // 0x44 || 0x64
-	{ COL_BLUE, FONT_UNDERLINED, 0 },  // 0x45 || 0x65
-	{ COL_CYAN, FONT_REGULAR, 0 },  // 0x46 || 0x66
-	{ COL_CYAN, FONT_UNDERLINED, 0 },  // 0x47 || 0x67
-	{ COL_RED, FONT_REGULAR, 0 },  // 0x48 || 0x68
-	{ COL_RED, FONT_UNDERLINED, 0 },  // 0x49 || 0x69
-	{ COL_YELLOW, FONT_REGULAR, 0 },  // 0x4a || 0x6a
-	{ COL_YELLOW, FONT_UNDERLINED, 0 },  // 0x4b || 0x6b
-	{ COL_MAGENTA, FONT_REGULAR, 0 },  // 0x4c || 0x6c
-	{ COL_MAGENTA, FONT_UNDERLINED, 0 },  // 0x4d || 0x6d
-	{ COL_WHITE, FONT_ITALICS, 0 },  // 0x4e || 0x6e
-	{ COL_WHITE, FONT_UNDERLINED_ITALICS, 0 },  // 0x4f || 0x6f
-	{ COL_WHITE, FONT_REGULAR, 0 },  // 0x50 || 0x70
-	{ COL_WHITE, FONT_UNDERLINED, 0 },  // 0x51 || 0x71
-	{ COL_WHITE, FONT_REGULAR, 4 },  // 0x52 || 0x72
-	{ COL_WHITE, FONT_UNDERLINED, 4 },  // 0x53 || 0x73
-	{ COL_WHITE, FONT_REGULAR, 8 },  // 0x54 || 0x74
-	{ COL_WHITE, FONT_UNDERLINED, 8 },  // 0x55 || 0x75
-	{ COL_WHITE, FONT_REGULAR, 12 }, // 0x56 || 0x76
-	{ COL_WHITE, FONT_UNDERLINED, 12 }, // 0x57 || 0x77
-	{ COL_WHITE, FONT_REGULAR, 16 }, // 0x58 || 0x78
-	{ COL_WHITE, FONT_UNDERLINED, 16 }, // 0x59 || 0x79
-	{ COL_WHITE, FONT_REGULAR, 20 }, // 0x5a || 0x7a
-	{ COL_WHITE, FONT_UNDERLINED, 20 }, // 0x5b || 0x7b
-	{ COL_WHITE, FONT_REGULAR, 24 }, // 0x5c || 0x7c
-	{ COL_WHITE, FONT_UNDERLINED, 24 }, // 0x5d || 0x7d
-	{ COL_WHITE, FONT_REGULAR, 28 }, // 0x5e || 0x7e
-	{ COL_WHITE, FONT_UNDERLINED, 28 }  // 0x5f || 0x7f
+	{ COL_WHITE, FONT_REGULAR, 0 },  				// 0x40 || 0x60
+	{ COL_WHITE, FONT_UNDERLINED, 0 },  				// 0x41 || 0x61
+	{ COL_GREEN, FONT_REGULAR, 0 },  				// 0x42 || 0x62
+	{ COL_GREEN, FONT_UNDERLINED, 0 },  				// 0x43 || 0x63
+	{ COL_BLUE, FONT_REGULAR, 0 },  				// 0x44 || 0x64
+	{ COL_BLUE, FONT_UNDERLINED, 0 },  				// 0x45 || 0x65
+	{ COL_CYAN, FONT_REGULAR, 0 },  				// 0x46 || 0x66
+	{ COL_CYAN, FONT_UNDERLINED, 0 },  				// 0x47 || 0x67
+	{ COL_RED, FONT_REGULAR, 0 },  					// 0x48 || 0x68
+	{ COL_RED, FONT_UNDERLINED, 0 },  				// 0x49 || 0x69
+	{ COL_YELLOW, FONT_REGULAR, 0 },  				// 0x4a || 0x6a
+	{ COL_YELLOW, FONT_UNDERLINED, 0 },  				// 0x4b || 0x6b
+	{ COL_MAGENTA, FONT_REGULAR, 0 },  				// 0x4c || 0x6c
+	{ COL_MAGENTA, FONT_UNDERLINED, 0 },  				// 0x4d || 0x6d
+	{ COL_WHITE, FONT_ITALICS, 0 },  				// 0x4e || 0x6e
+	{ COL_WHITE, FONT_UNDERLINED_ITALICS, 0 },  			// 0x4f || 0x6f
+	{ COL_WHITE, FONT_REGULAR, 0 },  				// 0x50 || 0x70
+	{ COL_WHITE, FONT_UNDERLINED, 0 },  				// 0x51 || 0x71
+	{ COL_WHITE, FONT_REGULAR, 4 },  				// 0x52 || 0x72
+	{ COL_WHITE, FONT_UNDERLINED, 4 },  				// 0x53 || 0x73
+	{ COL_WHITE, FONT_REGULAR, 8 },  				// 0x54 || 0x74
+	{ COL_WHITE, FONT_UNDERLINED, 8 },  				// 0x55 || 0x75
+	{ COL_WHITE, FONT_REGULAR, 12 }, 				// 0x56 || 0x76
+	{ COL_WHITE, FONT_UNDERLINED, 12 }, 				// 0x57 || 0x77
+	{ COL_WHITE, FONT_REGULAR, 16 }, 				// 0x58 || 0x78
+	{ COL_WHITE, FONT_UNDERLINED, 16 }, 				// 0x59 || 0x79
+	{ COL_WHITE, FONT_REGULAR, 20 }, 				// 0x5a || 0x7a
+	{ COL_WHITE, FONT_UNDERLINED, 20 }, 				// 0x5b || 0x7b
+	{ COL_WHITE, FONT_REGULAR, 24 }, 				// 0x5c || 0x7c
+	{ COL_WHITE, FONT_UNDERLINED, 24 }, 				// 0x5d || 0x7d
+	{ COL_WHITE, FONT_REGULAR, 28 }, 				// 0x5e || 0x7e
+	{ COL_WHITE, FONT_UNDERLINED, 28 }  				// 0x5f || 0x7f
 };
 
 
