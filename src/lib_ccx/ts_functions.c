@@ -15,6 +15,7 @@ unsigned char tspacket[188]; // Current packet
 static unsigned char *haup_capbuf = NULL;
 static long haup_capbufsize = 0;
 static long haup_capbuflen = 0; // Bytes read in haup_capbuf
+long long int last_pts = 0; // PTS of last PES packet (debug purposes)
 
 // Descriptions for ts ccx_stream_type
 const char *desc[256];
@@ -105,7 +106,10 @@ void pes_header_dump(uint8_t *buffer, long len)
 		pts |= ((buffer[11] & 0xfe) << 14);
 		pts |= (buffer[12] << 7);
 		pts |= ((buffer[13] & 0xfe) >> 1);
-		printf("# Associated PTS: %d \n", pts);
+		//printf("# Associated PTS: %d \n", pts);
+		printf("# Associated PTS: %d # ", pts);
+		printf("Diff: %d \n", pts-last_pts);
+		last_pts = pts;
 	}
 }
 enum ccx_stream_type get_buffer_type(struct cap_info *cinfo)
@@ -545,7 +549,10 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 		ptr->len += databuflen;
 	}
 	if (ccx_options.pes_header_to_stdout)
-		pes_header_dump(cinfo->capbuf, pesheaderlen);
+	{
+		if (strcmp(get_buffer_type_str(cinfo), "DVB subtitle") == 0) //only dump dvbsub packets
+			pes_header_dump(cinfo->capbuf, pesheaderlen);
+	}
 	return CCX_OK;
 }
 
