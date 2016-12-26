@@ -13,9 +13,13 @@ void activity_progress (int percentage, int cur_min, int cur_sec)
 	if (!ccx_options.no_progress_bar)
 	{
 		if (percentage==-1)
-			mprint ("\rStreaming |  %02d:%02d\n", cur_min, cur_sec);
+			mprint ("\rStreaming |  %02d:%02d", cur_min, cur_sec);
 		else
-			mprint ("\r%3d%%  |  %02d:%02d\n",percentage, cur_min, cur_sec);
+			mprint ("\r%3d%%  |  %02d:%02d",percentage, cur_min, cur_sec);
+		if (ccx_options.pes_header_to_stdout) //For PES Header dumping
+		{
+			printf("\n");
+		}
 	}
 	fflush (stdout);
 	if (ccx_options.gui_mode_reports)
