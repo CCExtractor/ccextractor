@@ -1643,8 +1643,6 @@ int dvbsub_decode(struct lib_cc_decode *dec_ctx, const unsigned char *buf, int b
 	if (got_segment == 15)
 	{
 		write_dvb_sub(dec_ctx, sub);
-
-
 	}
 end:
 	if ( ret >= 0 )

@@ -101,8 +101,13 @@ struct lib_ccx_ctx
 	int rawmode;				 		// Broadcast or DVD
 								// See -d from
 
+<<<<<<< HEAD
 	int cc_to_stdout; 					// If 1, captions go to stdout instead of file
 
+=======
+	int cc_to_stdout; // If 1, captions go to stdout instead of file
+	int pes_header_to_stdout; //If 1, PES Header data will be outputted to console
+>>>>>>> 9f2cd33a828482d1a6399c50c1edaaad726985fb
 
 	LLONG subs_delay; 					// ms to delay (or advance) subs
 
