@@ -109,6 +109,7 @@ void pes_header_dump(uint8_t *buffer, long len)
 		//printf("# Associated PTS: %d \n", pts);
 		printf("# Associated PTS: %d # ", pts);
 		printf("Diff: %d \n", pts-last_pts);
+		//printf("Diff: %d # ", pts - last_pts);
 		last_pts = pts;
 	}
 }
@@ -466,6 +467,7 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	if(!cinfo->capbuf || !cinfo->capbuflen)
 		return -1;
 
+	
 	if (ptr->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 	{
 		dump (CCX_DMT_GENERIC_NOTICES, cinfo->capbuf, cinfo->capbuflen, 0, 1);
@@ -482,6 +484,10 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 		return CCX_OK;
 	}
 	vpesdatalen = read_video_pes_header(ctx, ptr, cinfo->capbuf, &pesheaderlen, cinfo->capbuflen);
+	if (ccx_options.pes_header_to_stdout)
+	{
+		pes_header_dump(cinfo->capbuf, pesheaderlen, ptr->bufferdatatype);
+	}
 	if (vpesdatalen < 0)
 	{
 		dbg_print(CCX_DMT_VERBOSE, "Seems to be a broken PES. Terminating file handling.\n");
@@ -548,11 +554,7 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 		memcpy(ptr->buffer+ ptr->len, databuf, databuflen);
 		ptr->len += databuflen;
 	}
-	if (ccx_options.pes_header_to_stdout)
-	{
-		if (strcmp(get_buffer_type_str(cinfo), "DVB subtitle") == 0) //only dump dvbsub packets
-			pes_header_dump(cinfo->capbuf, pesheaderlen);
-	}
+	
 	return CCX_OK;
 }
 
