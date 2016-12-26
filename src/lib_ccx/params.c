@@ -1645,6 +1645,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->cc_to_stdout=1;
 			continue;
 		}
+		if (strcmp(argv[i], "-pesheader") == 0)
+		{
+			opt->pes_header_to_stdout = 1;
+			continue;
+		}
 		if (strcmp (argv[i],"-quiet")==0)
 		{
 			opt->messages_target=0;

@@ -169,6 +169,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->pesheaderbuf = (unsigned char *) malloc (188); // Never larger anyway
 
 	ctx->cc_to_stdout = opt->cc_to_stdout;
+	ctx->pes_header_to_stdout = opt->pes_header_to_stdout;
 
 	ctx->hauppauge_mode = opt->hauppauge_mode;
 	ctx->live_stream = opt->live_stream;
