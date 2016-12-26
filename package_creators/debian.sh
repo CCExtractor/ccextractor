@@ -7,6 +7,21 @@ LICENSE="GPL-2.0"
 MAINTAINER="carlos@ccextractor.org"
 REQUIRES="gcc,libcurl4-gnutls-dev,tesseract-ocr,tesseract-ocr-dev,libleptonica-dev"
 
+out=$((LC_ALL=C dpkg -s checkinstall) 2>&1)
+
+if [[ $out == *"is not installed"* ]]
+then
+    read -r -p "You have not installed the package 'checkinstall'. Would you like to install it? [Y/N] " response
+    if [[ $response =~ ^([yY][eE][sS]|[yY])$ ]]
+    then
+        apt-get install -y checkinstall
+    else
+        exit 0
+    fi
+fi
+
+mkdir -p ../linux/objs
+
 (cd ../linux; checkinstall \
     -y \
     --pkgrelease=$RELEASE \
