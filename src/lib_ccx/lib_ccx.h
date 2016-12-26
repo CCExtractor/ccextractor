@@ -102,7 +102,7 @@ struct lib_ccx_ctx
 	// See -d from
 
 	int cc_to_stdout; // If 1, captions go to stdout instead of file
-
+	int pes_header_to_stdout; //If 1, PES Header data will be outputted to console
 
 	LLONG subs_delay; // ms to delay (or advance) subs
 

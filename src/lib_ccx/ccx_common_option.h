@@ -164,6 +164,7 @@ struct ccx_s_options // Options from user parameters
 	struct encoder_cfg enc_cfg;
 	LLONG subs_delay; // ms to delay (or advance) subs
 	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
+	int pes_header_to_stdout; //If this is set to 1, the PES Header will be printed to console (debugging purposes)
 	int multiprogram;
 	int out_interval;
 #ifdef WITH_LIBCURL
