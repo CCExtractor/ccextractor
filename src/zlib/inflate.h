@@ -88,26 +88,26 @@ struct inflate_state {
     unsigned long check;        /* protected copy of check value */
     unsigned long total;        /* protected copy of output count */
     gz_headerp head;            /* where to save gzip header information */
-        /* sliding window */
+        			/* sliding window */
     unsigned wbits;             /* log base 2 of requested window size */
     unsigned wsize;             /* window size or zero if not using window */
     unsigned whave;             /* valid bytes in the window */
     unsigned wnext;             /* window write index */
     unsigned char FAR *window;  /* allocated sliding window, if needed */
-        /* bit accumulator */
+       				/* bit accumulator */
     unsigned long hold;         /* input bit accumulator */
     unsigned bits;              /* number of bits in "in" */
-        /* for string and stored block copying */
+        			/* for string and stored block copying */
     unsigned length;            /* literal or length of data to copy */
     unsigned offset;            /* distance back to copy string from */
-        /* for table and code decoding */
+        			/* for table and code decoding */
     unsigned extra;             /* extra bits needed */
-        /* fixed and dynamic code tables */
+        			/* fixed and dynamic code tables */
     code const FAR *lencode;    /* starting table for length/literal codes */
     code const FAR *distcode;   /* starting table for distance codes */
     unsigned lenbits;           /* index bits for lencode */
     unsigned distbits;          /* index bits for distcode */
-        /* dynamic table building */
+        			/* dynamic table building */
     unsigned ncode;             /* number of code length code lengths */
     unsigned nlen;              /* number of length code lengths */
     unsigned ndist;             /* number of distance code lengths */
