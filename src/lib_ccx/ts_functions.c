@@ -96,7 +96,7 @@ void pes_header_dump(uint8_t *buffer, long len)
 		optional_pes_header_length = buffer[8];
 	}
 
-	if (optional_pes_header_included == YES && optional_pes_header_length > 0 && (buffer[7] & 0x80) > 0)
+	if (optional_pes_header_included == YES && optional_pes_header_length > 0 && (buffer[7] & 0x80) > 0 && len >= 14)
 	{
 		//get associated PTS as it exists
 		pts = (buffer[9] & 0x0e);
