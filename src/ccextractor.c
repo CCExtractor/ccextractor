@@ -16,7 +16,7 @@ License: GPL 2.0
 CURL *curl;
 CURLcode res;
 #endif
-#ifdef ENABLE_OCR
+#if defined(ENABLE_OCR) && defined(_WIN32)
 #define LEPT_MSG_SEVERITY L_SEVERITY_NONE
 #endif
 
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 	{
 		exit(ret);
 	}
-#ifdef ENABLE_OCR
+#if defined(ENABLE_OCR) && defined(_WIN32)
 	setMsgSeverity(LEPT_MSG_SEVERITY);
 #endif
 #ifdef ENABLE_HARDSUBX
