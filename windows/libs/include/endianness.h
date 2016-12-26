@@ -1,5 +1,5 @@
 #if !defined (L_BIG_ENDIAN) && !defined (L_LITTLE_ENDIAN)
-# if 0
+# if defined (__APPLE_CC__)
 #  ifdef __BIG_ENDIAN__
 #   define L_BIG_ENDIAN
 #  else

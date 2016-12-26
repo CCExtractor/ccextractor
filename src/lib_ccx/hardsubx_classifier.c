@@ -48,7 +48,7 @@ char *get_ocr_text_wordwise(struct lib_hardsubx_ctx *ctx, PIX *image)
 	{
 		do
 		{
-			char* word = TessResultIteratorGetUTF8Text(it, level);
+			char* word = strdup(TessResultIteratorGetUTF8Text(it, level));
 			if(word==NULL || strlen(word)==0)
 				continue;
 			if(text_out == NULL)
@@ -136,7 +136,7 @@ char *get_ocr_text_letterwise(struct lib_hardsubx_ctx *ctx, PIX *image)
 	{
 		do
 		{
-			char* letter = TessResultIteratorGetUTF8Text(it, level);
+			char* letter = strdup(TessResultIteratorGetUTF8Text(it, level));
 			if(letter==NULL || strlen(letter)==0)
 				continue;
 			if(text_out==NULL)
@@ -203,7 +203,7 @@ char *get_ocr_text_wordwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, 
 	{
 		do
 		{
-			char* word = TessResultIteratorGetUTF8Text(it, level);
+			char* word = strdup(TessResultIteratorGetUTF8Text(it, level));
 			if(word==NULL || strlen(word)==0)
 				continue;
 			float conf = TessResultIteratorConfidence(it,level);
@@ -303,7 +303,7 @@ char *get_ocr_text_letterwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image
 	{
 		do
 		{
-			char* letter = TessResultIteratorGetUTF8Text(it, level);
+			char* letter = strdup(TessResultIteratorGetUTF8Text(it, level));
 			if(letter==NULL || strlen(letter)==0)
 				continue;
 			float conf = TessResultIteratorConfidence(it,level);
