@@ -486,7 +486,7 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	vpesdatalen = read_video_pes_header(ctx, ptr, cinfo->capbuf, &pesheaderlen, cinfo->capbuflen);
 	if (ccx_options.pes_header_to_stdout)
 	{
-		pes_header_dump(cinfo->capbuf, pesheaderlen, ptr->bufferdatatype);
+		pes_header_dump(cinfo->capbuf, pesheaderlen);
 	}
 	if (vpesdatalen < 0)
 	{
