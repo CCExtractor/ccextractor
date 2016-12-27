@@ -15,7 +15,7 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 {
 	// Get the required media attributes and initialize structures
 	av_register_all();
-	
+
 	if(avformat_open_input(&ctx->format_ctx, ctx->inputfile[0], NULL, NULL)!=0)
 	{
 		fatal (EXIT_READ_ERROR, "Error reading input file!\n");
@@ -29,7 +29,7 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 	// Important call in order to determine media information using ffmpeg
 	// TODO: Handle multiple inputs
 	av_dump_format(ctx->format_ctx, 0, ctx->inputfile[0], 0);
-	
+
 
 	ctx->video_stream_id = -1;
 	for(int i = 0; i < ctx->format_ctx->nb_streams; i++)
@@ -66,7 +66,7 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 
 	int frame_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, ctx->codec_ctx->width, ctx->codec_ctx->height, 16);
 	ctx->rgb_buffer = (uint8_t *)av_malloc(frame_bytes*sizeof(uint8_t));
-	
+
 	ctx->sws_ctx = sws_getContext(
 			ctx->codec_ctx->width,
 			ctx->codec_ctx->height,
@@ -76,13 +76,13 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 			AV_PIX_FMT_RGB24,
 			SWS_BILINEAR,
 			NULL,NULL,NULL
-		);
+			);
 
 	av_image_fill_arrays(ctx->rgb_frame->data, ctx->rgb_frame->linesize, ctx->rgb_buffer, AV_PIX_FMT_RGB24, ctx->codec_ctx->width, ctx->codec_ctx->height, 1);
 
 	// int frame_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, 1280, 720, 16);
 	// ctx->rgb_buffer = (uint8_t *)av_malloc(frame_bytes*sizeof(uint8_t));
-	
+
 	// ctx->sws_ctx = sws_getContext(
 	// 		ctx->codec_ctx->width,
 	// 		ctx->codec_ctx->height,
@@ -99,7 +99,7 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 	// Pass on the processing context to the appropriate functions
 	struct encoder_ctx *enc_ctx;
 	enc_ctx = init_encoder(&ccx_options.enc_cfg);
-	
+
 	mprint("Beginning burned-in subtitle detection...\n");
 	hardsubx_process_frames_linear(ctx, enc_ctx);
 
@@ -213,7 +213,7 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	if(!ctx)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "lib_hardsubx_ctx");
 	memset(ctx, 0, sizeof(struct lib_hardsubx_ctx));
-	
+
 	ctx->tess_handle = TessBaseAPICreate();
 	char* pars_vec = strdup("debug_file");
 	char* pars_values = strdup("/dev/null");

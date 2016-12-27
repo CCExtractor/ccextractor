@@ -38,7 +38,7 @@ struct encoder_cfg
 	int force_flush; // Force flush on content write
 	int append_mode; //Append mode for output files
 	int ucla; // 1 if -UCLA used, 0 if not
-	
+
 	enum ccx_encoding_type encoding;
 	enum ccx_output_date_format date_format;
 	char millis_separator;
@@ -100,8 +100,8 @@ struct ccx_s_options // Options from user parameters
 	int no_progress_bar; // If 1, suppress the output of the progress to stdout
 	char *sentence_cap_file; // Extra words file?
 	int live_stream; /* -1 -> Not a complete file but a live stream, without timeout
-                       0 -> A regular file
-                      >0 -> Live stream with a timeout of this value in seconds */
+			    0 -> A regular file
+			    >0 -> Live stream with a timeout of this value in seconds */
 	int messages_target; // 0 = nowhere (quiet), 1=stdout, 2=stderr
 	/* Levenshtein's parameters, for string comparison */
 	int levdistmincnt, levdistmaxpct; // Means 2 fails or less is "the same", 10% or less is also "the same"

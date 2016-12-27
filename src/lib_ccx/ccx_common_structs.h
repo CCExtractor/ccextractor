@@ -29,18 +29,18 @@ enum subtype
 };
 
 /**
-* Raw Subtitle struct used as output of decoder (cc608)
-* and input for encoder (sami, srt, transcript or smptett etc)
-*
-* if subtype CC_BITMAP then data contain nb_data numbers of rectangle
-* which have to be displayed at same time.
-*/
+ * Raw Subtitle struct used as output of decoder (cc608)
+ * and input for encoder (sami, srt, transcript or smptett etc)
+ *
+ * if subtype CC_BITMAP then data contain nb_data numbers of rectangle
+ * which have to be displayed at same time.
+ */
 struct cc_subtitle
 {
 	/**
-	* A generic data which contain data according to decoder
-	* @warn decoder cant output multiple types of data
-	*/
+	 * A generic data which contain data according to decoder
+	 * @warn decoder cant output multiple types of data
+	 */
 	void *data;
 
 	/** number of data */
@@ -64,7 +64,7 @@ struct cc_subtitle
 
 	/** flag to tell that decoder has given output */
 	int got_output;
-	
+
 	char mode[5];
 	char info[4];
 
