@@ -47,5 +47,5 @@ unsigned char *debug_608_to_ASC(unsigned char *ccdata, int channel);
 int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time,
 		LLONG end_time, char *info, char *mode, enum ccx_encoding_type);
 
-extern int cc608_parity_table[256]; // From myth
+extern int cc608_parity_table[256];        // From myth
 #endif

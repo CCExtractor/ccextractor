@@ -11,18 +11,18 @@
 #include "ccx_decoders_common.h"
 
 
-#define MAX_BUFFERSIZE 4096 // arbitrary value
+#define MAX_BUFFERSIZE 4096 			// arbitrary value
 
 #define RGBA(r,g,b,a) (((unsigned)(a) << 24) | ((r) << 16) | ((g) << 8) | (b))
 
 
 struct DVD_Ctx
 {
-	unsigned char *buffer; // Buffer to store packet data
-	size_t len; //length of buffer required
-	int pos; //position in the buffer
-	uint16_t size_spu; //total size of spu packet
-	uint16_t size_data; //size of data in the packet, offset to control packet
+	unsigned char *buffer; 			// Buffer to store packet data
+	size_t len; 				//length of buffer required
+	int pos; 				//position in the buffer
+	uint16_t size_spu; 			//total size of spu packet
+	uint16_t size_data; 			//size of data in the packet, offset to control packet
 	struct ctrl_seq *ctrl;
 	int append;
 	unsigned char *bitmap;
@@ -34,15 +34,15 @@ struct DVD_Ctx
 struct ctrl_seq
 {
 	uint8_t color[4];
-	uint8_t alpha[4]; // alpha channel
+	uint8_t alpha[4]; 			// alpha channel
 	uint16_t coord[4];
-	uint16_t pixoffset[2]; // Offset to 1st and 2nd graphic line
+	uint16_t pixoffset[2]; 			// Offset to 1st and 2nd graphic line
 	uint16_t start_time, stop_time;
 };
 
 #define bitoff(x) ((x) ? 0x0f : 0xf0)
 
-// Get fisrt 4 or last 4 bits from the byte
+						// Get fisrt 4 or last 4 bits from the byte
 #define next4(x,y) ((y) ? (x & 0x0f) : ((x & 0xf0) >> 4) )
 
 /**
@@ -84,7 +84,7 @@ void get_bitmap(struct DVD_Ctx *ctx)
 	int pos, color, m;
 	int len;
 	uint8_t nextbyte;
-	unsigned char *buffp; // Copy of pointer to buffer to change
+	unsigned char *buffp; 			// Copy of pointer to buffer to change
 
 	w = (ctx->ctrl->coord[1] - ctx->ctrl->coord[0]) + 1;
 	h = (ctx->ctrl->coord[3] - ctx->ctrl->coord[2]) + 1;
@@ -102,9 +102,9 @@ void get_bitmap(struct DVD_Ctx *ctx)
 	while(lineno < (h+1)/2)
 	{
 		len = rle_decode(ctx, &color, &nextbyte, &pos, &m);
-		// dbg_print(CCX_DMT_VERBOSE, "Len:%d Color:%d ", len, color);
+						// dbg_print(CCX_DMT_VERBOSE, "Len:%d Color:%d ", len, color);
 
-		// len is 0 if data is 0x000* - End of line
+						// len is 0 if data is 0x000* - End of line
 		if(len > (w-x) || len == 0)
 			len = w-x;
 
@@ -112,14 +112,14 @@ void get_bitmap(struct DVD_Ctx *ctx)
 		x+=len;
 		if(x >= w)
 		{
-			// End of line
+						// End of line
 			x = 0;
 			++lineno;
 
-			// Skip 1 line due to interlacing
+						// Skip 1 line due to interlacing
 			buffp += (2*w);
 
-			// Align byte at end of line
+						// Align byte at end of line
 			if(bitoff(m) == 0x0f)
 			{
 				int discard = get_bits(ctx, &nextbyte, &pos, &m);
@@ -127,7 +127,7 @@ void get_bitmap(struct DVD_Ctx *ctx)
 		}
 	}
 
-	// Lines are interlaced, for other half of alternate lines
+						// Lines are interlaced, for other half of alternate lines
 	if(pos > ctx->ctrl->pixoffset[1])
 	{
 		dbg_print(CCX_DMT_VERBOSE, "Error creating bitmap!");
@@ -143,7 +143,7 @@ void get_bitmap(struct DVD_Ctx *ctx)
 	{
 		len = rle_decode(ctx, &color, &nextbyte, &pos, &m);
 
-		// len is 0 if data is 0x000* - End of line
+					// len is 0 if data is 0x000* - End of line
 		if(len > (w-x) || len == 0)
 			len = w-x;
 
@@ -151,14 +151,14 @@ void get_bitmap(struct DVD_Ctx *ctx)
 		x+=len;
 		if(x >= w)
 		{
-			// End of line
+					// End of line
 			x = 0;
 			++lineno;
 
-			// Skip 1 line due to interlacing
+					// Skip 1 line due to interlacing
 			buffp += (2*w);
 
-			// Align byte at end of line
+					// Align byte at end of line
 			if(bitoff(m) == 0x0f)
 			{
 				int discard = get_bits(ctx, &nextbyte, &pos, &m);

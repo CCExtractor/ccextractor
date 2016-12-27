@@ -59,11 +59,11 @@ struct ccx_common_timing_ctx *init_timing_ctx(struct ccx_common_timing_settings_
 	ctx->sync_pts2fts_fts = 0;
 	ctx->sync_pts2fts_pts = 0;
 
-	ctx->fts_now = 0; // Time stamp of current file (w/ fts_offset, w/o fts_global)
-	ctx->fts_offset = 0; // Time before first sync_pts
-	ctx->fts_fc_offset = 0; // Time before first GOP
-	ctx->fts_max = 0; // Remember the maximum fts that we saw in current file
-	ctx->fts_global = 0; // Duration of previous files (-ve mode), see c1global
+	ctx->fts_now = 0; 		// Time stamp of current file (w/ fts_offset, w/o fts_global)
+	ctx->fts_offset = 0; 		// Time before first sync_pts
+	ctx->fts_fc_offset = 0; 	// Time before first GOP
+	ctx->fts_max = 0; 		// Remember the maximum fts that we saw in current file
+	ctx->fts_global = 0; 		// Duration of previous files (-ve mode), see c1global
 
 	return ctx;
 }
@@ -87,31 +87,31 @@ int set_fts(struct ccx_common_timing_ctx *ctx)
 {
 	int pts_jump = 0;
 
-	// ES don't have PTS unless GOP timing is used
+											// ES don't have PTS unless GOP timing is used
 	if (!ctx->pts_set && ccx_common_timing_settings.is_elementary_stream)
 		return CCX_OK;
 
-	// First check for timeline jump (only when min_pts was set (implies sync_pts)).
+											// First check for timeline jump (only when min_pts was set (implies sync_pts)).
 	int dif = 0;
 	if (ctx->pts_set == 2)
 	{
 		dif=(int) (ctx->current_pts - ctx->sync_pts)/MPEG_CLOCK_FREQ;
 
 		if (ccx_common_timing_settings.disable_sync_check){
-			// Disables sync check. Used for several input formats.
+											// Disables sync check. Used for several input formats.
 			dif = 0;
 		}
 
 		if (dif < -0.2 || dif >= max_dif )
 		{
-			// ATSC specs: More than 3501 ms means missing component
+											// ATSC specs: More than 3501 ms means missing component
 			ccx_common_logging.log_ftn ("\nWarning: Reference clock has changed abruptly (%d seconds filepos=%lld), attempting to synchronize\n", (int) dif, *ccx_common_timing_settings.file_position);
 			ccx_common_logging.log_ftn ("Last sync PTS value: %lld\n",ctx->sync_pts);
 			ccx_common_logging.log_ftn ("Current PTS value: %lld\n",ctx->current_pts);
 			pts_jump = 1;
 			pts_big_change = 1;
 
-			// Discard the gap if it is not on an I-frame or temporal reference zero.
+											// Discard the gap if it is not on an I-frame or temporal reference zero.
 			if(ctx->current_tref != 0 && ctx->current_picture_coding_type != CCX_FRAME_TYPE_I_FRAME)
 			{
 				ctx->fts_now = ctx->fts_max;
@@ -121,39 +121,39 @@ int set_fts(struct ccx_common_timing_ctx *ctx)
 		}
 	}
 
-	// Set min_pts, fts_offset
+											// Set min_pts, fts_offset
 	if (ctx->pts_set != 0)
 	{
 		ctx->pts_set = 2;
 
-		// Use this part only the first time min_pts is set. Later treat
-		// it as a reference clock change
+											// Use this part only the first time min_pts is set. Later treat
+											// it as a reference clock change
 		if (ctx->current_pts < ctx->min_pts && !pts_jump)
 		{
-			// If this is the first GOP, and seq 0 was not encountered yet
-			// we might reset min_pts/fts_offset again
+											// If this is the first GOP, and seq 0 was not encountered yet
+											// we might reset min_pts/fts_offset again
 
 			ctx->min_pts = ctx->current_pts;
 
-			// Avoid next async test
+											// Avoid next async test
 			ctx->sync_pts = (LLONG)(ctx->current_pts
 					-ctx->current_tref*1000.0/current_fps
 					*(MPEG_CLOCK_FREQ/1000));
 
 			if(ctx->current_tref == 0)
-			{   // Earliest time in GOP.
+			{   								// Earliest time in GOP.
 				ctx->fts_offset = 0;
 			}
 			else if ( total_frames_count-frames_since_ref_time == 0 )
-			{   // If this is the first frame (PES) there cannot be an offset.
-				// This part is also reached for dvr-ms/NTSC (RAW) as
-				// total_frames_count = frames_since_ref_time = 0 when
-				// this is called for the first time.
+			{  								// If this is the first frame (PES) there cannot be an offset.
+											// This part is also reached for dvr-ms/NTSC (RAW) as
+											// total_frames_count = frames_since_ref_time = 0 when
+											// this is called for the first time.
 				ctx->fts_offset = 0;
 			}
 			else
-			{   // It needs to be "+1" because the current frame is
-				// not yet counted.
+			{   								// It needs to be "+1" because the current frame is
+											// not yet counted.
 				ctx->fts_offset = (LLONG)((total_frames_count
 							-frames_since_ref_time+1)
 						*1000.0/current_fps);
@@ -165,27 +165,27 @@ int set_fts(struct ccx_common_timing_ctx *ctx)
 					total_frames_count, frames_since_ref_time);
 		}
 
-		// -nosync disables syncing
+											// -nosync disables syncing
 		if (pts_jump && !ccx_common_timing_settings.no_sync)
 		{
-			// The current time in the old time base is calculated using
-			// sync_pts (set at the beginning of the last GOP) plus the
-			// time of the frames since then.
+											// The current time in the old time base is calculated using
+											// sync_pts (set at the beginning of the last GOP) plus the
+											// time of the frames since then.
 			ctx->fts_offset = ctx->fts_offset
 				+ (ctx->sync_pts - ctx->min_pts)/(MPEG_CLOCK_FREQ/1000)
 				+ (LLONG) (frames_since_ref_time*1000/current_fps);
 			ctx->fts_max = ctx->fts_offset;
 
-			// Start counting again from here
-			ctx->pts_set = 1; // Force min to be set again
-			ctx->sync_pts2fts_set = 0; // Make note of the new conversion values
+											// Start counting again from here
+			ctx->pts_set = 1; 						// Force min to be set again
+			ctx->sync_pts2fts_set = 0; 					// Make note of the new conversion values
 
-			// Avoid next async test - the gap might have occured on
-			// current_tref != 0.
+											// Avoid next async test - the gap might have occured on
+											// current_tref != 0.
 			ctx->sync_pts = (LLONG) (ctx->current_pts
 					-ctx->current_tref*1000.0/current_fps
 					*(MPEG_CLOCK_FREQ/1000));
-			// Set min_pts = sync_pts as this is used for fts_now
+											// Set min_pts = sync_pts as this is used for fts_now
 			ctx->min_pts = ctx->sync_pts;
 
 			ccx_common_logging.debug_ftn(CCX_DMT_TIME, "\nNew min PTS time: %s %+lldms (time before this PTS)\n",
@@ -194,22 +194,22 @@ int set_fts(struct ccx_common_timing_ctx *ctx)
 		}
 	}
 
-	// Set sync_pts, fts_offset
+											// Set sync_pts, fts_offset
 	if(ctx->current_tref == 0)
 		ctx->sync_pts = ctx->current_pts;
 
-	// Reset counters
+											// Reset counters
 	cb_field1 = 0;
 	cb_field2 = 0;
 	cb_708 = 0;
 
-	// Avoid wrong "Calc. difference" and "Asynchronous by" numbers
-	// for uninitialized min_pts
-	if (1) // CFS: Remove or think decent condition
+											// Avoid wrong "Calc. difference" and "Asynchronous by" numbers
+											// for uninitialized min_pts
+	if (1) 										// CFS: Remove or think decent condition
 	{
 		if ( ctx->pts_set )
 		{
-			// If pts_set is TRUE we have min_pts
+											// If pts_set is TRUE we have min_pts
 			ctx->fts_now = (LLONG)((ctx->current_pts - ctx->min_pts)/(MPEG_CLOCK_FREQ/1000)
 					+ ctx->fts_offset);
 			if (!ctx->sync_pts2fts_set)
@@ -221,7 +221,7 @@ int set_fts(struct ccx_common_timing_ctx *ctx)
 		}
 		else
 		{
-			// No PTS info at all!!
+											// No PTS info at all!!
 			ccx_common_logging.log_ftn("Set PTS called without any global timestamp set\n");
 			return CCX_EINVAL;
 		}
@@ -252,16 +252,16 @@ LLONG get_fts(struct ccx_common_timing_ctx *ctx, int current_field)
 		default:
 			ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "get_fts: unhandled branch");
 	}
-//	ccx_common_logging.debug_ftn(CCX_DMT_TIME, "[FTS] "
-//			"fts: %llu, fts_now: %llu, fts_global: %llu, current_field: %llu, cb_708: %llu\n",
-//								 fts, fts_now, fts_global, current_field, cb_708);
+											//ccx_common_logging.debug_ftn(CCX_DMT_TIME, "[FTS] "
+											//"fts: %llu, fts_now: %llu, fts_global: %llu, current_field: %llu, cb_708: %llu\n",
+											//fts, fts_now, fts_global, current_field, cb_708);
 	return fts;
 }
 
 LLONG get_fts_max(struct ccx_common_timing_ctx *ctx)
 {
-	// This returns the maximum FTS that belonged to a frame.  Caption block
-	// counters are not applicable.
+											// This returns the maximum FTS that belonged to a frame.  Caption block
+											// counters are not applicable.
 	return ctx->fts_max + ctx->fts_global;
 }
 
@@ -273,7 +273,7 @@ size_t print_mstime_buff(LLONG mstime, char* fmt, char* buf){
 	unsigned hh, mm, ss, ms;
 	int signoffset = (mstime < 0 ? 1 : 0);
 
-	if (mstime < 0) // Avoid loss of data warning with abs()
+	if (mstime < 0) 								// Avoid loss of data warning with abs()
 		mstime = -mstime;
 
 	hh = (unsigned) (mstime / 1000 / 60 / 60);
@@ -298,17 +298,17 @@ char *print_mstime_static( LLONG mstime )
 /* Helper function for to display debug timing info. */
 void print_debug_timing(struct ccx_common_timing_ctx *ctx)
 {
-	// Avoid wrong "Calc. difference" and "Asynchronous by" numbers
-	// for uninitialized min_pts
+											// Avoid wrong "Calc. difference" and "Asynchronous by" numbers
+											// for uninitialized min_pts
 	LLONG tempmin_pts = (ctx->min_pts==0x01FFFFFFFFLL ? ctx->sync_pts : ctx->min_pts);
 
 	ccx_common_logging.log_ftn("Sync time stamps:  PTS: %s                ",
 			print_mstime_static((ctx->sync_pts)/(MPEG_CLOCK_FREQ/1000)) );
 	ccx_common_logging.log_ftn("GOP: %s      \n", print_mstime_static(gop_time.ms));
 
-	// Length first GOP to last GOP
+											// Length first GOP to last GOP
 	LLONG goplenms = (LLONG) (gop_time.ms - first_gop_time.ms);
-	// Length at last sync point
+											// Length at last sync point
 	LLONG ptslenms = (unsigned)((ctx->sync_pts-tempmin_pts)/(MPEG_CLOCK_FREQ/1000)
 			+ ctx->fts_offset);
 
@@ -317,7 +317,7 @@ void print_debug_timing(struct ccx_common_timing_ctx *ctx)
 	ccx_common_logging.log_ftn("      GOP start FTS: %s\n",
 			print_mstime_static(fts_at_gop_start));
 
-	// Times are based on last GOP and/or sync time
+											// Times are based on last GOP and/or sync time
 	ccx_common_logging.log_ftn("Max FTS diff. to   PTS:       %6lldms              GOP:       %6lldms\n\n",
 			get_fts_max(ctx)+(LLONG)(1000.0/current_fps)-ptslenms,
 			get_fts_max(ctx)+(LLONG)(1000.0/current_fps)-goplenms);
@@ -349,7 +349,7 @@ int gop_accepted(struct gop_time_code* g )
 	{
 		if (gop_time.ms > g->ms)
 		{
-			// We are going back in time but it's not a complete day rollover
+											// We are going back in time but it's not a complete day rollover
 			return 0;
 		}
 	}

@@ -151,19 +151,19 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 		ctx->stream_mode = ctx->auto_stream;
 	}
 
-	// The myth loop autodetect will only be used with ES or PS streams
+								// The myth loop autodetect will only be used with ES or PS streams
 	switch (ccx_options.auto_myth)
 	{
 		case 0:
-			// Use whatever stream mode says
+								// Use whatever stream mode says
 			break;
 		case 1:
-			// Force stream mode to myth
+								// Force stream mode to myth
 			ctx->stream_mode=CCX_SM_MYTH;
 			break;
 		case 2:
-			// autodetect myth files, but only if it does not conflict with
-			// the current stream mode
+								// autodetect myth files, but only if it does not conflict with
+								// the current stream mode
 			switch (ctx->stream_mode)
 			{
 				case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
@@ -174,7 +174,7 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 					}
 					break;
 				default:
-					// Keep stream_mode
+								// Keep stream_mode
 					break;
 			}
 			break;					
@@ -287,7 +287,7 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	if(!ctx)
 		return NULL;
 
-	ctx->infd = -1;//Set to -1 to indicate no file is open.
+	ctx->infd = -1;						//Set to -1 to indicate no file is open.
 	ctx->m2ts = cfg->m2ts;
 	ctx->auto_stream = cfg->auto_stream;
 	ctx->stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
