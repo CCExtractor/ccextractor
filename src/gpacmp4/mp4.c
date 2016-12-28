@@ -285,7 +285,8 @@ unsigned char * ccdp_find_data(unsigned char * ccdp_atom_content, unsigned int l
 
 */
 int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
-{	
+{
+	int caps = 0;
 	GF_ISOFile* f;
 	u32 i, j, track_count, avc_track_count, cc_track_count;
 	struct cc_subtitle dec_sub;
@@ -348,6 +349,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 			}
 			if(dec_sub.got_output)
 			{
+				caps = 1;
 				encode_sub(enc_ctx, &dec_sub);
 				dec_sub.got_output = 0;
 			}
@@ -375,6 +377,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 			}
 			if(dec_sub.got_output)
 			{
+				caps = 1;
 				encode_sub(enc_ctx, &dec_sub);
 				dec_sub.got_output = 0;
 			}
@@ -519,6 +522,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 								tdata += ret;
 								cb_field1++;
 								if (dec_sub.got_output) {
+									caps = 1;
 									encode_sub(enc_ctx, &dec_sub);
 									dec_sub.got_output = 0;
 								}
@@ -567,5 +571,5 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 
 	ctx->freport.mp4_cc_track_cnt = cc_track_count;
 
-	return 0;
+	return caps;
 }
