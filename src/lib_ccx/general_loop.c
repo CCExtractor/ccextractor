@@ -645,7 +645,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if(data_node->bufferdatatype == CCX_DVB_SUBTITLE)
 	{
-		dvbsub_decode(dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
+		dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
 		set_fts(dec_ctx->timing);
 		got = data_node->len;
 	}
@@ -751,7 +751,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		}
 	}
 
-	if (dec_sub->got_output)
+	if (data_node->bufferdatatype != CCX_DVB_SUBTITLE && dec_sub->got_output)
 	{
 		encode_sub(enc_ctx, dec_sub);
 		dec_sub->got_output = 0;

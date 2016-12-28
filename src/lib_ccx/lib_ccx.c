@@ -170,6 +170,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 
 	ctx->cc_to_stdout = opt->cc_to_stdout;
 	ctx->pes_header_to_stdout = opt->pes_header_to_stdout;
+	ctx->dvb_debug_traces_to_stdout = opt->dvb_debug_traces_to_stdout;
 
 	ctx->hauppauge_mode = opt->hauppauge_mode;
 	ctx->live_stream = opt->live_stream;
@@ -318,6 +319,13 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "update_decoder_list_cinfo: Not enough memory allocating dec_ctx ((multiprogram == true)\n");
 		list_add_tail( &(dec_ctx->list), &(ctx->dec_ctx_head) );
 	}
+	if (cinfo)
+	{
+		if (cinfo->codec == CCX_CODEC_DVB)
+		{
+			dec_ctx->prev = malloc(sizeof(struct lib_cc_decode));
+		}
+	}
 	return dec_ctx;
 }
 
@@ -406,6 +414,14 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		freep(&ccx_options.enc_cfg.output_filename);
 	}
 	freep(&extension);
+	if (cinfo)
+	{
+		if (cinfo->codec == CCX_CODEC_DVB)
+		{
+			enc_ctx->write_previous = 0;
+			enc_ctx->prev = malloc(sizeof(struct encoder_ctx));
+		}
+	}
 	return enc_ctx;
 }
 
