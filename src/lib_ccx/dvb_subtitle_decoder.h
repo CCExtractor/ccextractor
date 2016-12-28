@@ -55,7 +55,7 @@ int dvbsub_close_decoder(void **dvb_ctx);
  *
  * @return           -1 on error
  */
-int dvbsub_decode(struct lib_cc_decode *dec_ctx, const unsigned char *buf, int buf_size, struct cc_subtitle *sub);
+int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, const unsigned char *buf, int buf_size, struct cc_subtitle *sub);
 
 /**
  * @func parse_dvb_description
