@@ -892,7 +892,8 @@ void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts)
 	freep(&ctx->subline);
 	freep(&ctx->buffer);
 	ctx->capacity = 0;
-	freep(arg);
+	freep(&ctx->prev);
+		freep(arg);
 }
 
 struct encoder_ctx *init_encoder(struct encoder_cfg *opt)

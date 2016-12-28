@@ -872,6 +872,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 			dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
+
 			if (enc_ctx)
 				enc_ctx->timing = dec_ctx->timing;
 

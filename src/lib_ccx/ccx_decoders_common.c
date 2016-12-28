@@ -220,6 +220,7 @@ void dinit_cc_decode(struct lib_cc_decode **ctx)
 	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_1);
 	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_2);
 	dinit_timing_ctx(&lctx->timing);
+	freep(&lctx->prev);
 	freep(ctx);
 }
 

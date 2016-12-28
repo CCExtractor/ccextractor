@@ -1639,7 +1639,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 					encode_sub(enc_ctx->prev, sub->prev); //we encode it
 					enc_ctx->srt_counter = enc_ctx->prev->srt_counter; //for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
 					sub->prev->got_output = 0;
-					free(sub->prev); //we free it to avoid memory leak
+					freep(sub->prev); //we free it to avoid memory leak
 					enc_ctx->write_previous = 0;
 
 				}
