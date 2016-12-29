@@ -302,7 +302,13 @@ void print_usage (void)
 	mprint ("                       without TS or PES headers.\n");
 	mprint ("              -stdout: Write output to stdout (console) instead of file. If\n");
 	mprint ("                       stdout is used, then -o, -o1 and -o2 can't be used. Also\n");
-	mprint ("                       -stdout will redirect all messages to stderr (error).\n\n");
+	mprint ("                       -stdout will redirect all messages to stderr (error).\n");
+	mprint ("           -pesheader: Dump the PES Header to stdout (console). This is\n");
+	mprint ("                       used for debugging purposes to see the contents\n");
+	mprint ("                       of each PES packet header.\n");
+	mprint ("         -debugdvbsub: Write the DVB subtitle debug traces to console.\n");
+	mprint ("      -ignoreptsjumps: Ignore PTS jumps. Use this parameter if you\n");
+	mprint ("                       experience timeline resets/jumps in the output.\n\n");
 	mprint ("               -stdin: Reads input from stdin (console) instead of file.\n");
 	mprint ("You can pass as many input files as you need. They will be processed in order.\n");
 	mprint ("If a file name is suffixed by +, ccextractor will try to follow a numerical\n");
@@ -1653,6 +1659,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp(argv[i], "-debugdvbsub") == 0)
 		{
 			opt->dvb_debug_traces_to_stdout = 1;
+			continue;
+		}
+		if (strcmp(argv[i], "-ignoreptsjumps") == 0)
+		{
+			opt->ignore_pts_jumps = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-quiet")==0)

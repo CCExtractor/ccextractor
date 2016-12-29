@@ -166,6 +166,7 @@ struct ccx_s_options // Options from user parameters
 	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
 	int pes_header_to_stdout; //If this is set to 1, the PES Header will be printed to console (debugging purposes)
 	int dvb_debug_traces_to_stdout; // If 1, DVB subtitle debug traces will be outputted to console
+	int ignore_pts_jumps; //If 1, the program will ignore PTS jumps. Sometimes this parameter is required for DVB subs with > 30s pause time
 	int multiprogram;
 	int out_interval;
 #ifdef WITH_LIBCURL

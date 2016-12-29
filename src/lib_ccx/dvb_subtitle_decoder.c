@@ -1223,8 +1223,8 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 
 	if (ccx_options.dvb_debug_traces_to_stdout)
 	{
-		printf(", REGION %d WIDTH: %d, ", region_id, region->width);
-		printf("REGION %d HEIGHT: %d", region_id, region->height);
+		mprint(", REGION %d WIDTH: %d, ", region_id, region->width);
+		mprint("REGION %d HEIGHT: %d", region_id, region->height);
 	}
 
 	if (region->width * region->height != region->buf_size)
@@ -1346,7 +1346,7 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	if (page_state == 1 || page_state == 2)
 	{
 		if (ccx_options.dvb_debug_traces_to_stdout)
-			printf(", PAGE STATE %d", page_state);
+			mprint(", PAGE STATE %d", page_state);
 		delete_regions(ctx);
 		delete_objects(ctx);
 		delete_cluts(ctx);
@@ -1361,7 +1361,7 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 		buf += 1;
 
 		if (ccx_options.dvb_debug_traces_to_stdout)
-			printf(", REGION %d ADDED", region_id);
+			mprint(", REGION %d ADDED", region_id);
 
 		display = tmp_display_list;
 		tmp_ptr = &tmp_display_list;
@@ -1615,10 +1615,10 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 			if (ccx_options.dvb_debug_traces_to_stdout)
 			{
 				//debug traces
-				printf("DVBSUB - PTS: %d, ", dec_ctx->timing->current_pts);
-				printf("FTS: %d, ", dec_ctx->timing->fts_now);
-				printf("SEGMENT TYPE: %d, ", segment_type);
-				printf("SEGMENT LENGTH: %d", segment_length);
+				mprint("DVBSUB - PTS: %d, ", dec_ctx->timing->current_pts);
+				mprint("FTS: %d, ", dec_ctx->timing->fts_now);
+				mprint("SEGMENT TYPE: %d, ", segment_type);
+				mprint("SEGMENT LENGTH: %d", segment_length);
 			}
 			switch (segment_type)
 			{
@@ -1669,7 +1669,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 			}
 		}
 		if (ccx_options.dvb_debug_traces_to_stdout)
-			printf("\n");
+			mprint("\n");
 		p += segment_length;
 	}
 	// Some streams do not send a display segment but if we have all the other
@@ -1730,16 +1730,16 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 		char lang_name[4];
 		if (ccx_options.dvb_debug_traces_to_stdout)
 		{
-			printf("DVBSUB - LANGUAGE \"");
+			mprint("DVBSUB - LANGUAGE \"");
 		}
 		for(int char_index = 0; char_index < 3; char_index++)
 		{
 			lang_name[char_index] = cctolower(data[char_index]);
 			if (ccx_options.dvb_debug_traces_to_stdout)
-				printf("%c", lang_name[char_index]);
+				mprint("%c", lang_name[char_index]);
 		}
 		if (ccx_options.dvb_debug_traces_to_stdout)
-			printf("\" FOUND\n");
+			mprint("\" FOUND\n");
 
 		for (j = 0, cfg->lang_index[i] = 0; language[j] != NULL; j++)
 		{

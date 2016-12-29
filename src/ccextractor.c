@@ -212,6 +212,8 @@ int main(int argc, char *argv[])
 #endif
 				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
 					ccx_options.use_gop_as_pts = 0;
+				if (ccx_options.ignore_pts_jumps)
+					ccx_common_timing_settings.disable_sync_check = 1;
 				mprint ("\rAnalyzing data in general mode\n");
 				general_loop(ctx);
 				break;

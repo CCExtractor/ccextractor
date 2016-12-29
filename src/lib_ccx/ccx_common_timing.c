@@ -108,6 +108,7 @@ int set_fts(struct ccx_common_timing_ctx *ctx)
 			ccx_common_logging.log_ftn ("\nWarning: Reference clock has changed abruptly (%d seconds filepos=%lld), attempting to synchronize\n", (int) dif, *ccx_common_timing_settings.file_position);
 			ccx_common_logging.log_ftn ("Last sync PTS value: %lld\n",ctx->sync_pts);
 			ccx_common_logging.log_ftn ("Current PTS value: %lld\n",ctx->current_pts);
+			ccx_common_logging.log_ftn("Note: You can disable this behavior by adding -ignoreptsjumps to the parameters.\n");
 			pts_jump = 1;
 			pts_big_change = 1;
 
