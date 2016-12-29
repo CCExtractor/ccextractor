@@ -408,6 +408,8 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 				
 				//freep(final);
 				//freep(temp);
+				*final = NULL;
+				*temp = NULL;
 	
 			}
 		}
