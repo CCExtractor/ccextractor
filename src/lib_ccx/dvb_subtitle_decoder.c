@@ -1668,7 +1668,8 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 				break;
 			}
 		}
-		printf("\n");
+		if (ccx_options.dvb_debug_traces_to_stdout)
+			printf("\n");
 		p += segment_length;
 	}
 	// Some streams do not send a display segment but if we have all the other
