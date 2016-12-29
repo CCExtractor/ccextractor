@@ -1221,6 +1221,12 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 	region->height = RB16(buf);
 	buf += 2;
 
+	if (ccx_options.dvb_debug_traces_to_stdout)
+	{
+		printf(", REGION %d WIDTH: %d, ", region_id, region->width);
+		printf("REGION %d HEIGHT: %d", region_id, region->height);
+	}
+
 	if (region->width * region->height != region->buf_size)
 	{
 		free(region->pbuf);
@@ -1339,6 +1345,8 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 
 	if (page_state == 1 || page_state == 2)
 	{
+		if (ccx_options.dvb_debug_traces_to_stdout)
+			printf(", PAGE STATE %d", page_state);
 		delete_regions(ctx);
 		delete_objects(ctx);
 		delete_cluts(ctx);
@@ -1351,6 +1359,9 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	{
 		region_id = *buf++;
 		buf += 1;
+
+		if (ccx_options.dvb_debug_traces_to_stdout)
+			printf(", REGION %d ADDED", region_id);
 
 		display = tmp_display_list;
 		tmp_ptr = &tmp_display_list;
@@ -1606,7 +1617,8 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 				//debug traces
 				printf("DVBSUB - PTS: %d, ", dec_ctx->timing->current_pts);
 				printf("FTS: %d, ", dec_ctx->timing->fts_now);
-				printf("SEGMENT TYPE : %d \n", segment_type);
+				printf("SEGMENT TYPE: %d, ", segment_type);
+				printf("SEGMENT LENGTH: %d", segment_length);
 			}
 			switch (segment_type)
 			{
@@ -1656,7 +1668,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 				break;
 			}
 		}
-
+		printf("\n");
 		p += segment_length;
 	}
 	// Some streams do not send a display segment but if we have all the other
@@ -1715,10 +1727,18 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 	{
 		/* setting language to undefined if not found in language lkup table */
 		char lang_name[4];
+		if (ccx_options.dvb_debug_traces_to_stdout)
+		{
+			printf("DVBSUB - LANGUAGE \"");
+		}
 		for(int char_index = 0; char_index < 3; char_index++)
 		{
 			lang_name[char_index] = cctolower(data[char_index]);
+			if (ccx_options.dvb_debug_traces_to_stdout)
+				printf("%c", lang_name[char_index]);
 		}
+		if (ccx_options.dvb_debug_traces_to_stdout)
+			printf("\" FOUND\n");
 
 		for (j = 0, cfg->lang_index[i] = 0; language[j] != NULL; j++)
 		{
