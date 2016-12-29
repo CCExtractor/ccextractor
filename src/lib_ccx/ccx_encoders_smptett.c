@@ -196,6 +196,7 @@ int write_cc_subtitle_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *co
 
 }
 
+	 
 int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *context)
 {
 	int used;
@@ -215,44 +216,202 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 	millis_to_time (startms,&h1,&m1,&s1,&ms1);
 	millis_to_time (endms-1,&h2,&m2,&s2,&ms2);
 
-	sprintf ((char *) str,"<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\n",h1,m1,s1,ms1, h2,m2,s2,ms2);
-
-	if (context->encoding!=CCX_ENC_UNICODE)
+	for (int row=0; row < 15; row++)
 	{
-		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
-	}
-	used = encode_line(context, context->buffer,(unsigned char *) str);
-	write (context->out->fh, context->buffer, used);
-	for (int i=0; i < 15; i++)
-	{
-		if (data->row_used[i])
+		if (data->row_used[row])
 		{
-			int length = get_decoder_line_encoded (context, context->subline, i, data);
-			if (context->encoding!=CCX_ENC_UNICODE)
+		
+			if (context->sentence_cap)
 			{
-				dbg_print(CCX_DMT_DECODER_608, "\r");
-				dbg_print(CCX_DMT_DECODER_608, "%s\n",context->subline);
+				if (clever_capitalize(context, row, data))
+			correct_case_with_dictionary(row, data);
 			}
-			write(context->out->fh, context->subline, length);
-			wrote_something=1;
+		
+			float row1=0;
+			float col1=0;
+			int firstcol=-1;
+			
+			// ROWS is actually 90% of the screen size
+			// Add +10% because row 0 is at position 10%
+			row1 = ((100*row)/(ROWS/0.8))+10;
+			
+			for (int column = 0; column < COLUMNS ; column++) 
+			{
+				int unicode = 0;
+				get_char_in_unicode((unsigned char*)&unicode, data->characters[row][column]);
+				//if (COL_TRANSPARENT != data->colors[row][column])
+				if (unicode != 0x20)
+				{
 
-			write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+					if (firstcol<0)
+					{
+						firstcol = column;
+					}
+				}
+
+			}
+			// COLUMNS is actually 90% of the screen size
+			// Add +10% because column 0 is at position 10%
+			col1 = ((100*firstcol)/(COLUMNS/0.8))+10;
+		
+			if (firstcol>=0)
+			{
+			
+				wrote_something=1;
+
+			
+				sprintf ((char *) str,"      <p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\" tts:origin=\"%1.3f%% %1.3f%%\">\n        <span>",h1,m1,s1,ms1, h2,m2,s2,ms2,col1,row1);
+				if (context->encoding!=CCX_ENC_UNICODE)
+				{
+					dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
+				}
+				used = encode_line(context, context->buffer,(unsigned char *) str);
+				write (context->out->fh, context->buffer, used);
+
+				// Trimming subs because the position is defined by "tts:origin"
+				int old_trim_subs = context->trim_subs;
+				context->trim_subs=1;
+				if (context->encoding!=CCX_ENC_UNICODE)
+				{
+					dbg_print(CCX_DMT_DECODER_608, "\r");
+					dbg_print(CCX_DMT_DECODER_608, "%s\n",context->subline);
+				}
+				int length = get_decoder_line_encoded (context, context->subline, row, data);
+
+
+				unsigned char *final = malloc ( strlen((context->subline)) + 1000);	//Being overly generous? :P
+				unsigned char *temp = malloc ( strlen((context->subline)) + 1000);	
+				/*
+					final	: stores formatted HTML sentence. This will be written in subtitle file.
+					temp	: stored temporary sentences required while formatting
+					
+					+1000 because huge <span> and <style> tags are added. This will just prevent overflow (hopefully).
+				*/
+			    
+				    int style = 0; 
+
+				    /*
+
+					0 = None or font colour
+					1 = itlics
+					2 = bold
+					3 = underline
+
+				    */
+				
+				//Now, searching for first occurance of <i> OR <u> OR <b>
+			    
+			    unsigned char * start = strstr((context->subline), "<i>"); 
+			    if(start==NULL)
+			    {
+			        start = strstr((context->subline), "<b>");
+			        
+			        if(start==NULL)
+			        {
+			            start = strstr((context->subline), "<u>");
+			            style = 3;   //underline
+			        }
+			            
+			        else
+			            style = 2;   //bold
+			    }
+			    
+			    else
+			        style = 1;      //italics
+			        
+			    if(start!=NULL)		//subtitle has style associated with it, will need formatting.
+			    {
+			        unsigned char *end_tag;
+			        if(style == 1)
+			        {
+			            end_tag ="</i>";
+			        }
+			        
+			        else if(style == 2)
+			        {
+			            end_tag = "</b>";
+			        }
+			            
+			        else
+			        {
+			            end_tag = "</u>";
+			        }
+
+			        unsigned char *end = strstr((context->subline), end_tag);	//occurance of closing tag (</i> OR </b> OR </u>)
+			        
+			        if(end==NULL)
+			        {
+			            //Incorrect styling, writing as it is
+			            strcpy(final,(context->subline));			            
+			        }
+			        
+			        else
+			        {
+			            int start_index = start-(context->subline);
+			            int end_index = end-(context->subline);
+			           			            
+			            strncpy(final,(context->subline),start_index);     // copying content before opening tag e.g. <i> 
+			            			            
+			            strcat(final,"<span>");                 //adding <span> : replacement of <i>
+			           
+			            //The content in italics is between <i> and </i>, i.e. between (start_index + 3) and end_index.
+			            
+			            strncpy(temp, (context->subline) + start_index + 3, end_index - start_index - 3); //the content in italics
+			            
+			            strcat(final,temp);	//attaching to final sentence.
+			            			            
+			            if (style == 1)
+			                strcpy(temp,"<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:fontStyle=\"italic\"/> </span>");
+			                
+			            else if(style == 2)
+			                strcpy(temp,"<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:fontWeight=\"bold\"/> </span>");
+			            
+			            else
+			                strcpy(temp,"<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:textDecoration=\"underline\"/> </span>");
+			                
+			            strcat(final,temp);		// adding appropriate style tag.
+					
+			            sprintf(temp,"%s", (context->subline) + end_index + 4);	//finding remaining sentence.
+		            
+			            strcat (final,temp);	//adding remaining sentence.
+			       
+			        }
+			    }
+
+			    else
+			    {
+		    	 	//NO styling, writing as it is.\n");
+		            	strcpy(final,(context->subline));
+			    }
+
+
+				write(context->out->fh, final, strlen(final));
+
+
+				write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+				context->trim_subs=old_trim_subs;
+				
+				sprintf ((char *) str,"        <style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\"/></span>\n      </p>\n");
+				if (context->encoding!=CCX_ENC_UNICODE)
+				{
+					dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
+				}
+				used = encode_line(context, context->buffer,(unsigned char *) str);
+				write (context->out->fh, context->buffer, used);
+
+				if (context->encoding!=CCX_ENC_UNICODE)
+				{
+					dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
+				}
+				used = encode_line(context, context->buffer,(unsigned char *) str);
+				//write (wb->fh, enc_buffer,enc_buffer_used);
+				
+				//freep(final);
+				//freep(temp);
+	
+			}
 		}
 	}
-	sprintf ((char *) str,"</p>\n");
-	if (context->encoding!=CCX_ENC_UNICODE)
-	{
-		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
-	}
-	used = encode_line(context, context->buffer,(unsigned char *) str);
-	write (context->out->fh, context->buffer, used);
-
-	if (context->encoding!=CCX_ENC_UNICODE)
-	{
-		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
-	}
-	used = encode_line(context, context->buffer,(unsigned char *) str);
-	//write (wb->fh, enc_buffer,enc_buffer_used);
 
 	return wrote_something;
 }
