@@ -365,11 +365,63 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 			        }
 			    }
 
-			    else
-			    {
-		    	 	//NO styling, writing as it is.\n");
-		            	strcpy(final,(context->subline));
-			    }
+			     else	//No style or Font Color
+			     {
+				   
+				    start = strstr((context->subline), "<font color");  //spec : <font color="#xxxxxx"> cc </font>
+				    if(start!=NULL) //font color attribute is present
+				    {
+					unsigned char *end = strstr((context->subline), "</font>");
+					if(end == NULL)
+					{
+					    //Incorrect styling, writing as it is
+					    strcpy(final,(context->subline));
+					}
+
+					else
+					{
+					    int start_index = start-(context->subline);
+					    int end_index = end-(context->subline);
+
+					    strncat(final,(context->subline),start_index);     // copying content before opening tag e.g. <font ..> 
+
+					    strcat(final,"<span>");                 //adding <span> : replacement of <font ..>
+
+
+					    unsigned char *temp_pointer = strchr((context->subline),'#');     //locating color code
+
+					    unsigned char *color_code=malloc(7);
+					    strncat(color_code,(context->subline) + (temp_pointer - (context->subline) + 1),6);     //obtained color code
+
+
+					    temp_pointer = strchr((context->subline), '>');                   //The content is in between <font ..> and </font>
+
+					    strncat(temp, (context->subline) + (temp_pointer - (context->subline) + 1), end_index - (temp_pointer - (context->subline) + 1));
+
+					    strcat(final,temp);	//attaching to final sentence.
+
+					    sprintf(temp,"<style tts:backgroundColor=\"#FFFF00FF\" tts:color=\"%s\" tts:fontSize=\"18px\"/></span>",color_code);
+
+					    strcat(final,temp);	//adding font color tag
+
+					    sprintf(temp,"%s", (context->subline) + end_index + 7);   	//finding remaining sentence.
+
+					    strcat(final,temp);	//adding remaining sentence
+
+					    printf("final is : %s\n",final);
+
+					    freep(&color_code);
+
+					}
+				    }
+
+				    else
+				    {
+					//NO styling, writing as it is
+					strcpy(final,(context->subline));
+				    }
+
+				}
 
 
 				write(context->out->fh, final, strlen(final));
