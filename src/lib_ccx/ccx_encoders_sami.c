@@ -123,21 +123,8 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 	struct cc_bitmap* rect;
 	LLONG ms_start, ms_end;
 
-	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
-	{
-		ms_start = context->prev_start + context->subs_delay;
-		ms_end = sub->start_time - 1;
-	}
-	else if ( !(sub->flags & SUB_EOD_MARKER))
-	{
-		ms_start = sub->start_time + context->subs_delay;
-		ms_end = sub->end_time - 1;
-	}
-	else if ( context->prev_start == -1 && (sub->flags & SUB_EOD_MARKER) )
-	{
-		ms_start = 1 + context->subs_delay;
-		ms_end = sub->start_time - 1;
-	}
+	ms_start = sub->start_time;
+	ms_end = sub->end_time;
 
 	if(sub->nb_data == 0 )
 		return 0;
@@ -146,34 +133,34 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 	if ( sub->flags & SUB_EOD_MARKER )
 		context->prev_start =  sub->start_time;
 
-	if (rect[0].ocr_text && *(rect[0].ocr_text))
+	for (int i = sub->nb_data - 1; i >= 0; i--)
 	{
-		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
+		if (rect[i].ocr_text && *(rect[i].ocr_text))
 		{
-			char *token = NULL;
-			char *buf = (char*)context->buffer;
-			sprintf(buf,
-				"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n"
-				,(unsigned long long)ms_start);
-			write(context->out->fh, buf, strlen(buf));
-			token = strtok(rect[0].ocr_text,"\r\n");
-			while (token)
+			if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 			{
-
-				sprintf(buf, "%s", token);
-				token = strtok(NULL,"\r\n");
-				if(token)
-					strcat(buf, "<br>\n");
-				else
-					strcat(buf, "\n");
+				char *token = NULL;
+				char *buf = (char*)context->buffer;
+				sprintf(buf,
+				"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n"
+				, (unsigned long long)ms_start);
 				write(context->out->fh, buf, strlen(buf));
-
-			}
-			sprintf(buf,
+				token = strtok(rect[i].ocr_text, "\r\n");
+				while (token)
+				{
+					sprintf(buf, "%s", token);
+					token = strtok(NULL, "\r\n");
+					if (token)
+					strcat(buf, "<br>\n");
+					else
+					strcat(buf, "\n");
+					write(context->out->fh, buf, strlen(buf));
+				}
+				sprintf(buf,
 				"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n"
-				,(unsigned long long)ms_end);
-			write(context->out->fh, buf, strlen(buf));
-
+				, (unsigned long long)ms_end);
+				write(context->out->fh, buf, strlen(buf));
+			}
 		}
 	}
 #endif

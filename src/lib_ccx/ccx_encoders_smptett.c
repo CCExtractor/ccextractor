@@ -118,47 +118,37 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 	//char timeline[128];
 	int len = 0;
 
-
-	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
-	{
-		ms_start = context->prev_start + context->subs_delay;
-		ms_end = sub->start_time - 1;
-	}
-	else if ( !(sub->flags & SUB_EOD_MARKER))
-	{
-		ms_start = sub->start_time + context->subs_delay;
-		ms_end = sub->end_time - 1;
-	}
-	else if (context->prev_start == -1 && (sub->flags & SUB_EOD_MARKER))
-	{
-		ms_start = 1 + context->subs_delay;
-		ms_end = sub->start_time - 1;
-	}
+	ms_start = sub->start_time;
+	ms_end = sub->end_time;
 
 	if(sub->nb_data == 0 )
 		return 0;
+
 	rect = sub->data;
 
 	if ( sub->flags & SUB_EOD_MARKER )
 		context->prev_start =  sub->start_time;
 
-	if (rect[0].ocr_text && *(rect[0].ocr_text))
+	for (int i = sub->nb_data - 1; i >= 0; i--)
 	{
-		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
+		if (rect[i].ocr_text && *(rect[i].ocr_text))
 		{
-			char *buf = (char *) context->buffer;
-			unsigned h1, m1, s1, ms1;
-			unsigned h2, m2, s2, ms2;
-			millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
-			millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
-			sprintf ((char *) context->buffer,"<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\n",h1,m1,s1,ms1, h2,m2,s2,ms2);
-			write (context->out->fh, buf,strlen(buf) );
-			len = strlen(rect[0].ocr_text);
-			write (context->out->fh, rect[0].ocr_text, len);
-			write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-			sprintf ( buf,"</p>\n");
-			write (context->out->fh, buf,strlen(buf) );
+			if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
+			{
+				char *buf = (char *)context->buffer;
+				unsigned h1, m1, s1, ms1;
+				unsigned h2, m2, s2, ms2;
+				millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
+				millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
+				sprintf((char *)context->buffer, "<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\n", h1, m1, s1, ms1, h2, m2, s2, ms2);
+				write(context->out->fh, buf, strlen(buf));
+				len = strlen(rect[i].ocr_text);
+				write(context->out->fh, rect[i].ocr_text, len);
+				write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+				sprintf(buf, "</p>\n");
+				write(context->out->fh, buf, strlen(buf));
 
+			}
 		}
 	}
 #endif
@@ -220,7 +210,6 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 	{
 		if (data->row_used[row])
 		{
-		
 			if (context->sentence_cap)
 			{
 				if (clever_capitalize(context, row, data))
@@ -242,13 +231,11 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 				//if (COL_TRANSPARENT != data->colors[row][column])
 				if (unicode != 0x20)
 				{
-
 					if (firstcol<0)
 					{
 						firstcol = column;
 					}
 				}
-
 			}
 			// COLUMNS is actually 90% of the screen size
 			// Add +10% because column 0 is at position 10%
@@ -256,9 +243,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 		
 			if (firstcol>=0)
 			{
-			
 				wrote_something=1;
-
 			
 				sprintf ((char *) str,"      <p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\" tts:origin=\"%1.3f%% %1.3f%%\">\n        <span>",h1,m1,s1,ms1, h2,m2,s2,ms2,col1,row1);
 				if (context->encoding!=CCX_ENC_UNICODE)

@@ -86,21 +86,8 @@ int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context)
 	int i = 0;
 	char *str;
 
-	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
-	{
-		ms_start = context->prev_start;
-		ms_end = sub->start_time;
-	}
-	else if ( !(sub->flags & SUB_EOD_MARKER))
-	{
-		ms_start = sub->start_time;
-		ms_end = sub->end_time;
-	}
-	else if (context->prev_start == -1 && (sub->flags & SUB_EOD_MARKER))
-	{
-		ms_start = 1;
-		ms_end = sub->start_time;
-	}
+	ms_start = sub->start_time;
+	ms_end = sub->end_time;
 
 	if (sub->nb_data == 0)
 		return 0;
