@@ -151,9 +151,9 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 					sprintf(buf, "%s", token);
 					token = strtok(NULL, "\r\n");
 					if (token)
-					strcat(buf, "<br>\n");
+						strcat(buf, "<br>\n");
 					else
-					strcat(buf, "\n");
+						strcat(buf, "\n");
 					write(context->out->fh, buf, strlen(buf));
 				}
 				sprintf(buf,
