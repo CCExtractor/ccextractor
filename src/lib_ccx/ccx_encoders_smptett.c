@@ -337,13 +337,13 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 			            int start_index = start-(context->subline);
 			            int end_index = end-(context->subline);
 			           			            
-			            strncpy(final,(context->subline),start_index);     // copying content before opening tag e.g. <i> 
+			            strncat(final,(context->subline),start_index);     // copying content before opening tag e.g. <i> 
 			            			            
 			            strcat(final,"<span>");                 //adding <span> : replacement of <i>
 			           
 			            //The content in italics is between <i> and </i>, i.e. between (start_index + 3) and end_index.
 			            
-			            strncpy(temp, (context->subline) + start_index + 3, end_index - start_index - 3); //the content in italics
+			            strncat(temp, (context->subline) + start_index + 3, end_index - start_index - 3); //the content in italics
 			            
 			            strcat(final,temp);	//attaching to final sentence.
 			            			            
