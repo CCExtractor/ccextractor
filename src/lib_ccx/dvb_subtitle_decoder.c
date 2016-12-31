@@ -1493,12 +1493,10 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		return -1;
 	}
 
-	/* USE PTS and convert here in required time */
-	sub->start_time = get_visible_start(dec_ctx->timing, 1);
-	sub->end_time = sub->start_time + ( ctx->time_out * 1000 );
 	sub->flags |= SUB_EOD_MARKER;
 	sub->got_output = 1;
 	sub->data = rect;
+
 	for (display = ctx->display_list; display; display = display->next)
 	{
 #ifdef ENABLE_OCR
@@ -1650,8 +1648,8 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 					sub->prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the end time of the previous sub the current pts
 					encode_sub(enc_ctx->prev, sub->prev); //we encode it
 					enc_ctx->srt_counter = enc_ctx->prev->srt_counter; //for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
+					enc_ctx->prev_start = enc_ctx->prev->prev_start;
 					sub->prev->got_output = 0;
-					enc_ctx->write_previous = 0;
 
 				}
 				memcpy(enc_ctx->prev, enc_ctx, sizeof(struct encoder_ctx)); //we save the current encoder context

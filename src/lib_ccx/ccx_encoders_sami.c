@@ -115,7 +115,6 @@ end:
 	return ret;
 }
 
-
 int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
 	int ret = 0;
@@ -123,51 +122,55 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 	struct cc_bitmap* rect;
 	LLONG ms_start, ms_end;
 
- 	ms_start = sub->start_time;
+	ms_start = sub->start_time;
 	ms_end = sub->end_time;
 
-	if(sub->nb_data == 0 )
-		return 0;
 
 	rect = sub->data;
 
-	if ( sub->flags & SUB_EOD_MARKER )
-		context->prev_start =  sub->start_time;
+	if (sub->flags & SUB_EOD_MARKER)
+		context->prev_start = sub->start_time;
 
 	char *token = NULL;
 	char *buf = (char*)context->buffer;
-	sprintf(buf,
-		"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n"
-		, (unsigned long long)ms_start);
-	write(context->out->fh, buf, strlen(buf));
-	for (int i = sub->nb_data - 1; i >= 0; i--)
+
+	if (sub->data != NULL) //then we should write the sub
 	{
-		if (rect[i].ocr_text && *(rect[i].ocr_text))
+		sprintf(buf,
+			"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n"
+			, (unsigned long long)ms_start);
+		write(context->out->fh, buf, strlen(buf));
+		for (int i = sub->nb_data - 1; i >= 0; i--)
 		{
-			if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
+			if (rect[i].ocr_text && *(rect[i].ocr_text))
 			{
-				token = strtok(rect[i].ocr_text, "\r\n");
-				sprintf(buf, "%s", token);
-				token = strtok(NULL, "\r\n");
-				write(context->out->fh, buf, strlen(buf));
-				if (i != 0)
-					write(context->out->fh, context->encoded_br, context->encoded_br_length);
-				write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+				if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
+				{
+					token = strtok(rect[i].ocr_text, "\r\n");
+					sprintf(buf, "%s", token);
+					token = strtok(NULL, "\r\n");
+					write(context->out->fh, buf, strlen(buf));
+					if (i != 0)
+						write(context->out->fh, context->encoded_br, context->encoded_br_length);
+					write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+				}
 			}
 		}
+		sprintf(buf, "</P></SYNC>\r\n");
+		write(context->out->fh, buf, strlen(buf));
 	}
-	sprintf(buf, "</P></SYNC>\r\n");
-	write(context->out->fh, buf, strlen(buf));
-	sprintf(buf,
-		"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n"
-		, (unsigned long long)ms_end);
-	write(context->out->fh, buf, strlen(buf));
+	else //we write an empty subtitle to clear the old one
+	{
+		sprintf(buf,
+			"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n"
+			, (unsigned long long)ms_start);
+		write(context->out->fh, buf, strlen(buf));
+	}
 #endif
 
 	sub->nb_data = 0;
 	freep(&sub->data);
 	return ret;
-
 }
 
 int write_cc_subtitle_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context)
