@@ -128,6 +128,7 @@ struct ccx_s_options // Options from user parameters
 	int dvbcolor; // 1 if Color to be detected for DVB
 	char *dvblang; // The name of the language stream for DVB
 	char *ocrlang; // The name of the .traineddata file to be loaded with tesseract
+	int noempty; //if 1, wont generate output file if it is going to be empty
 
 	/*HardsubX related stuff*/
 	int hardsubx_ocr_mode;

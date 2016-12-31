@@ -24,6 +24,8 @@ struct lib_ccx_ctx *signal_ctx;
 
 volatile int terminate_asap = 0;
 
+int noempty; //--noempty flag
+
 void sigterm_handler(int sig)
 {
 	printf("Received SIGTERM, terminating as soon as possible.\n");
@@ -406,6 +408,26 @@ int main(int argc, char *argv[])
 		mprint ("NOTICE: Due to the major rework in 0.49, we needed to change part of the timing\n");
 		mprint ("code in the MythTV's branch. Please report results to the address above. If\n");
 		mprint ("something is broken it will be fixed. Thanks\n");
+	}
+
+	if(!noempty && ccx_options.noempty)
+	{
+		if(ccx_options.output_filename != NULL)
+		{
+			if(remove(ccx_options.output_filename) != 0)
+			{
+				mprint("--noempty flag: Error deleting file");
+			}
+		}else{
+			char* extension = get_file_extension(ctx->write_format);
+			char* file_to_delete = (char*)malloc(strlen(ctx->basefilename) + strlen(extension) + 1);
+			memcpy(file_to_delete, ctx->basefilename, strlen(ctx->basefilename));
+			memcpy(file_to_delete + strlen(ctx->basefilename), extension, strlen(extension) + 1);
+			if(remove(file_to_delete) != 0)
+			{
+				mprint("--noempty flag: Error deleting file");
+			}
+		}
 	}
 
 #ifdef CURL
