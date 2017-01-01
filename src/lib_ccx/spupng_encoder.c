@@ -486,7 +486,7 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 	if (sub->data == NULL)
 		return 0;
 
-	write_sputag_open(sp, sub->start_time, sub->end_time);
+	write_sputag_open(sp, sub->start_time, sub->end_time - 1);
 
 	if(sub->nb_data == 0 && (sub->flags & SUB_EOD_MARKER))
 	{
