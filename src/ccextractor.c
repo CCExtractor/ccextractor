@@ -2,6 +2,7 @@
 Credits: See CHANGES.TXT
 License: GPL 2.0
 */
+#include <allheaders.h>
 #include <stdio.h>
 #include "lib_ccx.h"
 #include "configuration.h"
