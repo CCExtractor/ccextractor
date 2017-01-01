@@ -250,7 +250,7 @@ typedef struct ccx_dtvcc_window_attribs
 typedef struct ccx_dtvcc_symbol
 {
 	unsigned short sym; //symbol itself, at least 16 bit
-	unsigned char len; //length. could be 1 or 2
+	unsigned char len;  //length. could be 1 or 2
 } ccx_dtvcc_symbol;
 
 #define CCX_DTVCC_SYM_SET(x, c) {x.len = 1; x.sym = c;}
