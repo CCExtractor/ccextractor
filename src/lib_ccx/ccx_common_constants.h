@@ -239,7 +239,7 @@ enum ccx_frame_type
 typedef enum {
 	YES = 1,
 	NO = 0,
-	UNDEF = 0xff
+	UNDEFINED = 0xff
 } bool_t;
 
 enum ccx_code_type

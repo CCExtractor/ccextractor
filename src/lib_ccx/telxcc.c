@@ -173,7 +173,7 @@ struct s_primary_charset {
 	uint8_t g0_m29;
 	uint8_t g0_x28;
 } primary_charset = {
-	0x00, UNDEF, UNDEF
+	0x00, UNDEFINED, UNDEFINED
 };
 
 // entities, used in colour mode, to replace unsafe HTML tag chars
@@ -1043,8 +1043,8 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		ctx->receiving_data = YES;
 		if(default_g0_charset == LATIN) // G0 Character National Option Sub-sets selection required only for Latin Character Sets
 		{
-			primary_charset.g0_x28 = UNDEF;
-			c = (primary_charset.g0_m29 != UNDEF) ? primary_charset.g0_m29 : charset;
+			primary_charset.g0_x28 = UNDEFINED;
+			c = (primary_charset.g0_m29 != UNDEFINED) ? primary_charset.g0_m29 : charset;
 			remap_g0_charset(c);
 		}
 		/*
@@ -1209,7 +1209,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 					{
 						primary_charset.g0_m29 = (triplet0 & 0x3f80) >> 7;
 						// X/28 takes precedence over M/29
-						if (primary_charset.g0_x28 == UNDEF)
+						if (primary_charset.g0_x28 == UNDEFINED)
 						{
 							remap_g0_charset(primary_charset.g0_m29);
 						}
@@ -1374,7 +1374,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	}
 
 	// should we use PTS or PCR?
-	if (ctx->using_pts == UNDEF)
+	if (ctx->using_pts == UNDEFINED)
 	{
 		if ((optional_pes_header_included == YES) && ((buffer[7] & 0x80) > 0))
 		{
@@ -1501,7 +1501,7 @@ void* telxcc_init(void)
 	ctx->transmission_mode = TRANSMISSION_MODE_SERIAL;
 	ctx->receiving_data = NO;
 
-	ctx->using_pts = UNDEF;
+	ctx->using_pts = UNDEFINED;
 	ctx->delta = 0;
 	ctx->t0 = 0;
 
