@@ -61,18 +61,39 @@ Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n\
 \n";
 
-static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
-"<tt xmlns:ttm=\"http://www.w3.org/ns/ttml#metadata\" xmlns:tts=\"http://www.w3.org/ns/ttml#styling\" xmlns=\"http://www.w3.org/ns/ttml\" xml:lang=\"en\">\n"
-"  <head>\n"
-"    <styling>\n"
-"      <style xml:id=\"speakerStyle\" tts:fontFamily=\"proportionalSansSerif\" tts:fontSize=\"150%\" tts:textAlign=\"center\" tts:displayAlign=\"center\" tts:color=\"white\" tts:textOutline=\"black 1px\"/>\n"
-"    </styling>\n"
-"    <layout>\n"
-"      <region xml:id=\"speaker\" tts:origin=\"10% 80%\" tts:extent=\"80% 10%\" style=\"speakerStyle\"/>\n"
-"    </layout>\n"
-"  </head>\n"
-"  <body>\n"
-"    <div>\n";
+/*	
+
+TODO -- Set correct values for "ttp:dropMode", "ttp:frameRate" .Using common for now.
+
+ Extra reference, 
+
+	24 frame/sec (film, ATSC, 2k, 4k, 6k)
+	25 frame/sec (PAL (Europe, Uruguay, Argentina, Australia), SECAM, DVB, ATSC)
+	29.97 (30 ÷ 1.001) frame/sec (NTSC American System (US, Canada, Mexico, Colombia, etc.), ATSC, PAL-M (Brazil))
+	30 frame/sec (ATSC)
+	
+	Find framerate, then use it find dropmode.
+	
+*/
+static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
+			"  <tt xmlns=\"http://www.w3.org/ns/ttml\" xmlns:ttp=\"http://www.w3.org/ns/ttml#parameter\" ttp:dropMode=\"dropNTSC\" ttp:frameRate=\"30\" ttp:frameRateMultiplier=\"1000 1001\" ttp:timeBase=\"smpte\" xmlns:m608=\"http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt#cea608\" xmlns:smpte=\"http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt\" xmlns:ttm=\"http://www.w3.org/ns/ttml#metadata\" xmlns:tts=\"http://www.w3.org/ns/ttml#styling\">\n"
+//			"  <tt xmlns=\"http://www.w3.org/ns/ttml\" xmlns:ttp=\"http://www.w3.org/ns/ttml#parameter\" xmlns:m608=\"http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt#cea608\" xmlns:smpte=\"http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt\" xmlns:ttm=\"http://www.w3.org/ns/ttml#metadata\" xmlns:tts=\"http://www.w3.org/ns/ttml#styling\">\n"
+			"  <head>\n"
+			"    <styling>\n"
+			"      <style tts:color=\"white\" tts:fontFamily=\"monospace\" tts:fontWeight=\"normal\" tts:textAlign=\"left\" xml:id=\"basic\"/>\n"
+			"    </styling>\n"
+			"    <layout>\n"
+			"      <region tts:backgroundColor=\"transparent\" xml:id=\"pop1\"/>\n"
+			"      <region tts:backgroundColor=\"transparent\" xml:id=\"paint\"/>\n"
+			"      <region tts:backgroundColor=\"transparent\" xml:id=\"rollup2\"/>\n"
+			"      <region tts:backgroundColor=\"transparent\" xml:id=\"rollup3\"/>\n"
+			"      <region tts:backgroundColor=\"transparent\" xml:id=\"rollup4\"/>\n"
+			"    </layout>\n"
+			"    <metadata/>\n"
+			"    <smpte:information m608:captionService=\"F1C1CC\" m608:channel=\"cc1\"/>\n"
+			"  </head>\n"
+			"  <body>\n"
+			"    <div>\n";
 
 static const char *webvtt_header = "WEBVTT\r\n";
 
@@ -892,6 +913,7 @@ void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts)
 	freep(&ctx->subline);
 	freep(&ctx->buffer);
 	ctx->capacity = 0;
+	freep(&ctx->prev);
 	freep(arg);
 }
 

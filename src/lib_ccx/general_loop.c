@@ -645,7 +645,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if(data_node->bufferdatatype == CCX_DVB_SUBTITLE)
 	{
-		dvbsub_decode(dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
+		dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
 		set_fts(dec_ctx->timing);
 		got = data_node->len;
 	}
@@ -751,7 +751,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		}
 	}
 
-	if (dec_sub->got_output)
+	if (data_node->bufferdatatype != CCX_DVB_SUBTITLE && dec_sub->got_output)
 	{
 		encode_sub(enc_ctx, dec_sub);
 		dec_sub->got_output = 0;
@@ -867,16 +867,22 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				ignore_other_stream(ctx->demux_ctx, pid);
 				data_node = get_data_stream(datalist, pid);
 			}
-			if(!data_node)
-				continue;
 
 			cinfo = get_cinfo(ctx->demux_ctx, pid);
 			enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 			dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
+
 			if (enc_ctx)
 				enc_ctx->timing = dec_ctx->timing;
-				
+
+			if (!data_node) //If there's no DVB data, we still need to capture the first PTS no matter the buffer data type in order to have the arbitrary value
+			{
+				set_current_pts(dec_ctx->timing, datalist->pts);
+				set_fts(dec_ctx->timing);
+				continue;
+			}
+
 			if(data_node->pts != CCX_NOPTS)
 			{
 				struct ccx_rational tb = {1,MPEG_CLOCK_FREQ};

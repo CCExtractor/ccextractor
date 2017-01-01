@@ -16,7 +16,7 @@ License: GPL 2.0
 CURL *curl;
 CURLcode res;
 #endif
-#ifdef ENABLE_OCR
+#if defined(ENABLE_OCR) && defined(_WIN32)
 #define LEPT_MSG_SEVERITY L_SEVERITY_NONE
 #endif
 
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 	{
 		exit(ret);
 	}
-#ifdef ENABLE_OCR
+#if defined(ENABLE_OCR) && defined(_WIN32)
 	setMsgSeverity(LEPT_MSG_SEVERITY);
 #endif
 #ifdef ENABLE_HARDSUBX
@@ -212,6 +212,8 @@ int main(int argc, char *argv[])
 #endif
 				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
 					ccx_options.use_gop_as_pts = 0;
+				if (ccx_options.ignore_pts_jumps)
+					ccx_common_timing_settings.disable_sync_check = 1;
 				mprint ("\rAnalyzing data in general mode\n");
 				general_loop(ctx);
 				break;

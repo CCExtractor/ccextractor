@@ -126,6 +126,10 @@ struct encoder_ctx
 	LLONG sbs_time_from; // Used by the split-by-sentence code to know when the current block starts...
 	LLONG sbs_time_trim; // ... and ends
 	size_t sbs_capacity;
+
+	//for dvb subs
+	struct encoder_ctx* prev;
+	int write_previous;
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048

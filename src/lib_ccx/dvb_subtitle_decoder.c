@@ -1221,6 +1221,12 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 	region->height = RB16(buf);
 	buf += 2;
 
+	if (ccx_options.dvb_debug_traces_to_stdout)
+	{
+		mprint(", REGION %d WIDTH: %d, ", region_id, region->width);
+		mprint("REGION %d HEIGHT: %d", region_id, region->height);
+	}
+
 	if (region->width * region->height != region->buf_size)
 	{
 		free(region->pbuf);
@@ -1339,6 +1345,8 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 
 	if (page_state == 1 || page_state == 2)
 	{
+		if (ccx_options.dvb_debug_traces_to_stdout)
+			mprint(", PAGE STATE %d", page_state);
 		delete_regions(ctx);
 		delete_objects(ctx);
 		delete_cluts(ctx);
@@ -1351,6 +1359,9 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	{
 		region_id = *buf++;
 		buf += 1;
+
+		if (ccx_options.dvb_debug_traces_to_stdout)
+			mprint(", REGION %d ADDED", region_id);
 
 		display = tmp_display_list;
 		tmp_ptr = &tmp_display_list;
@@ -1561,7 +1572,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
  *
  * @return           -1 on error
  */
-int dvbsub_decode(struct lib_cc_decode *dec_ctx, const unsigned char *buf, int buf_size, struct cc_subtitle *sub)
+int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, const unsigned char *buf, int buf_size, struct cc_subtitle *sub)
 {
 	DVBSubContext *ctx = (DVBSubContext *) dec_ctx->private_data;
 	const uint8_t *p, *p_end;
@@ -1601,6 +1612,14 @@ int dvbsub_decode(struct lib_cc_decode *dec_ctx, const unsigned char *buf, int b
 		if (page_id == ctx->composition_id || page_id == ctx->ancillary_id
 				|| ctx->composition_id == -1 || ctx->ancillary_id == -1)
 		{
+			if (ccx_options.dvb_debug_traces_to_stdout)
+			{
+				//debug traces
+				mprint("DVBSUB - PTS: %d, ", dec_ctx->timing->current_pts);
+				mprint("FTS: %d, ", dec_ctx->timing->fts_now);
+				mprint("SEGMENT TYPE: %d, ", segment_type);
+				mprint("SEGMENT LENGTH: %d", segment_length);
+			}
 			switch (segment_type)
 			{
 			case DVBSUB_PAGE_SEGMENT:
@@ -1625,8 +1644,22 @@ int dvbsub_decode(struct lib_cc_decode *dec_ctx, const unsigned char *buf, int b
 				dvbsub_parse_display_definition_segment(ctx, p,
 						segment_length);
 				break;
-			case DVBSUB_DISPLAY_SEGMENT:
-				write_dvb_sub(dec_ctx, sub);
+			case DVBSUB_DISPLAY_SEGMENT: //when we get a display segment, we save the current page
+				if (enc_ctx->write_previous) //this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
+				{
+					sub->prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the end time of the previous sub the current pts
+					encode_sub(enc_ctx->prev, sub->prev); //we encode it
+					enc_ctx->srt_counter = enc_ctx->prev->srt_counter; //for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
+					sub->prev->got_output = 0;
+					enc_ctx->write_previous = 0;
+
+				}
+				memcpy(enc_ctx->prev, enc_ctx, sizeof(struct encoder_ctx)); //we save the current encoder context
+				memcpy(sub->prev, sub, sizeof(struct cc_subtitle)); //we save the current subtitle
+				memcpy(dec_ctx->prev, dec_ctx, sizeof(struct lib_cc_decode)); //we save the current decoder context
+				sub->prev->start_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the start time of the previous sub the current pts
+				write_dvb_sub(dec_ctx->prev, sub->prev); //we write the current dvb sub to update decoder context
+				enc_ctx->write_previous = 1; //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
 				got_segment |= 16;
 				break;
 			default:
@@ -1635,7 +1668,8 @@ int dvbsub_decode(struct lib_cc_decode *dec_ctx, const unsigned char *buf, int b
 				break;
 			}
 		}
-
+		if (ccx_options.dvb_debug_traces_to_stdout)
+			mprint("\n");
 		p += segment_length;
 	}
 	// Some streams do not send a display segment but if we have all the other
@@ -1643,8 +1677,6 @@ int dvbsub_decode(struct lib_cc_decode *dec_ctx, const unsigned char *buf, int b
 	if (got_segment == 15)
 	{
 		write_dvb_sub(dec_ctx, sub);
-
-
 	}
 end:
 	if ( ret >= 0 )
@@ -1696,10 +1728,18 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 	{
 		/* setting language to undefined if not found in language lkup table */
 		char lang_name[4];
+		if (ccx_options.dvb_debug_traces_to_stdout)
+		{
+			mprint("DVBSUB - LANGUAGE \"");
+		}
 		for(int char_index = 0; char_index < 3; char_index++)
 		{
 			lang_name[char_index] = cctolower(data[char_index]);
+			if (ccx_options.dvb_debug_traces_to_stdout)
+				mprint("%c", lang_name[char_index]);
 		}
+		if (ccx_options.dvb_debug_traces_to_stdout)
+			mprint("\" FOUND\n");
 
 		for (j = 0, cfg->lang_index[i] = 0; language[j] != NULL; j++)
 		{

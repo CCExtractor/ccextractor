@@ -196,6 +196,9 @@ struct lib_cc_decode
 	struct ccx_decoder_vbi_ctx *vbi_decoder;
 
 	int (*writedata)(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
+
+	//dvb subtitle related
+	struct lib_cc_decode *prev;
 };
 
 #endif
