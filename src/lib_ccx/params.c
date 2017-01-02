@@ -180,9 +180,13 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
 		opt->write_format = CCX_OF_SSA;
 		if (strcmp (format,"ass")==0)
 			opt->use_ass_instead_of_ssa = 1;
-	} else if (strcmp(format, "webvtt") == 0)
+	}
+	else if (strcmp(format, "webvtt")==0 || strcmp(format, "webvtt-full")==0) {
 		opt->write_format = CCX_OF_WEBVTT;
-	else if (strcmp (format,"sami")==0 || strcmp (format,"smi")==0)
+		if (strcmp(format, "webvtt-full")==0)
+			opt->use_webvtt_styling = 1;
+	}
+	else if (strcmp(format, "sami") == 0 || strcmp(format, "smi") == 0)
 		opt->write_format=CCX_OF_SAMI;
 	else if (strcmp (format,"transcript")==0 || strcmp (format,"txt")==0)
 	{
@@ -384,6 +388,7 @@ void print_usage (void)
 	mprint ("                      srt     -> SubRip (default, so not actually needed).\n");
 	mprint ("                      ass/ssa -> SubStation Alpha.\n");
 	mprint ("                      webvtt  -> WebVTT format\n");
+	mprint ("                      webvtt-full -> WebVTT format with styling\n");
 	mprint ("                      sami    -> MS Synchronized Accesible Media Interface.\n");
 	mprint ("                      bin     -> CC data in CCExtractor's own binary format.\n");
 	mprint ("                      raw     -> CC data in McPoodle's Broadcast format.\n");
