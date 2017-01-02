@@ -764,10 +764,11 @@ goto skip; */
 	return 0;
 }
 
-void myth_loop(struct lib_ccx_ctx *ctx)
+int myth_loop(struct lib_ccx_ctx *ctx)
 {
 	int rc;
 	int has_vbi=0;
+	int caps = 0;
 	LLONG saved = 0;
 	struct cc_subtitle dec_sub;
 	struct lib_cc_decode *dec_ctx = NULL;
@@ -846,6 +847,7 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 		}
 		if (dec_sub.got_output)
 		{
+			caps = 1;
 			encode_sub(enc_ctx,&dec_sub);
 			dec_sub.got_output = 0;
 		}
@@ -853,4 +855,5 @@ void myth_loop(struct lib_ccx_ctx *ctx)
 	if (desp)
 		free (desp);
 	free (av.data);
+	return caps;
 }

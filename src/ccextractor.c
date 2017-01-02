@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
 			default:
 				break;
 		}
-
+		ret = 0;
 		/* -----------------------------------------------------------------
 		MAIN LOOP
 		----------------------------------------------------------------- */
@@ -216,20 +216,20 @@ int main(int argc, char *argv[])
 				if (ccx_options.ignore_pts_jumps)
 					ccx_common_timing_settings.disable_sync_check = 1;
 				mprint ("\rAnalyzing data in general mode\n");
-				general_loop(ctx);
+				ret = general_loop(ctx);
 				break;
 			case CCX_SM_MCPOODLESRAW:
 				mprint ("\rAnalyzing data in McPoodle raw mode\n");
-				raw_loop(ctx);
+				ret = raw_loop(ctx);
 				break;
 			case CCX_SM_RCWT:
 				mprint ("\rAnalyzing data in CCExtractor's binary format\n");
-				rcwt_loop(ctx);
+				ret = rcwt_loop(ctx);
 				break;
 			case CCX_SM_MYTH:
 				mprint ("\rAnalyzing data in MythTV mode\n");
 				show_myth_banner = 1;
-				myth_loop(ctx);
+				ret = myth_loop(ctx);
 				break;
 			case CCX_SM_MP4:
 				mprint ("\rAnalyzing data with GPAC (MP4 library)\n");
@@ -237,6 +237,7 @@ int main(int argc, char *argv[])
 				processmp4(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
 				if (ccx_options.print_file_reports)
 					print_file_report(ctx);
+				ret = ctx->freport.mp4_cc_track_cnt;
 				break;
 #ifdef WTV_DEBUG
 			case CCX_SM_HEX_DUMP:
@@ -415,6 +416,7 @@ int main(int argc, char *argv[])
   	curl_global_cleanup();
 #endif
 	dinit_libraries(&ctx);
-
+	if (!ret)
+		fatal(EXIT_NO_CAPTIONS, "No captions were found in input.");
 	return EXIT_OK;
 }

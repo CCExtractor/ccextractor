@@ -163,11 +163,11 @@ void position_sanity_check(struct ccx_demuxer *ctx);
 int init_file_buffer(struct ccx_demuxer *ctx);
 int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 int general_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
-void raw_loop (struct lib_ccx_ctx *ctx);
+int raw_loop (struct lib_ccx_ctx *ctx);
 size_t process_raw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned char *buffer, size_t len);
-void general_loop(struct lib_ccx_ctx *ctx);
+int general_loop(struct lib_ccx_ctx *ctx);
 void process_hex (char *filename);
-void rcwt_loop(struct lib_ccx_ctx *ctx);
+int rcwt_loop(struct lib_ccx_ctx *ctx);
 
 extern int end_of_file;
 
@@ -235,7 +235,7 @@ char* EPG_DVB_decode_string(uint8_t *in, size_t size);
 void parse_SDT(struct ccx_demuxer *ctx);
 
 // myth.c
-void myth_loop(struct lib_ccx_ctx *ctx);
+int myth_loop(struct lib_ccx_ctx *ctx);
 
 // utility.c
 void fatal(int exit_code, const char *fmt, ...);
