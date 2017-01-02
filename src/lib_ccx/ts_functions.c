@@ -107,7 +107,7 @@ void pes_header_dump(uint8_t *buffer, long len)
 		pts |= (buffer[12] << 7);
 		pts |= ((buffer[13] & 0xfe) >> 1);
 		//printf("# Associated PTS: %d \n", pts);
-		printf("# Associated PTS: %d # ", pts);
+		printf("# Associated PTS: %" PRId64 " # ", pts);
 		printf("Diff: %d \n", pts-last_pts);
 		//printf("Diff: %d # ", pts - last_pts);
 		last_pts = pts;
