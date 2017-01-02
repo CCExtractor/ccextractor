@@ -290,8 +290,8 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 			payload->pcr |= (tspacket[9] << 1);
 			payload->pcr |= (tspacket[10] >> 7);
 			/* Ignore 27 Mhz clock since we dont deal in nanoseconds*/
-			payload->pcr = ((tspacket[10] & 0x01) << 8);
-			payload->pcr |= tspacket[11];
+			// payload->pcr = ((tspacket[10] & 0x01) << 8);
+			// payload->pcr |= tspacket[11];
 		}
 
 		// Catch bad packages with adaptation_field_length > 184 and
