@@ -1003,7 +1003,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		else if (strcmp (argv[i],"--man")==0)
 		 {
 
-  printf("Writting man page...");
+  printf("Writting man page...\n");
 
   system("cp ccextractor /usr/local/man/man1/ccextractor.1");
   system("gzip /usr/local/man/man1/ccextractor.1");
