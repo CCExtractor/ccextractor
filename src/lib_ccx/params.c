@@ -270,6 +270,30 @@ void set_input_format (struct ccx_s_options *opt, const char *format)
 #ifdef WTV_DEBUG
 	else if (strcmp (format,"hex")==0)
 		opt->demux_cfg.auto_stream = CCX_SM_HEX_DUMP;
+	else if (strcmp (argv[i],"--man")==0)
+ {
+
+/* Made by @MatejMecka for Google Code In 2016. 
+  Task: Create a UNIX Manpage
+  Don't judge btw this is my first time writting in C *rolling eyes*
+  Thanks Alexandru Bratosin and Evgeny Shulgin for helping me with some stuff.
+  For any bugs blame Carlos.
+
+ Time wasted compiling, fixing bugs and stuff: 7 hours
+
+ Thanks for reading.
+*/
+
+  printf("Writting man page...");
+
+  system("cp ccextractor /usr/local/man/man1/ccextractor.1");
+  system("gzip /usr/local/man/man1/ccextractor.1");
+
+  printf("Man Page is complete!\n");
+  printf("Do man ccextractor to get the man page!\n")
+  return EXIT_WITH_HELP;
+          }
+	
 #endif
 	else
 		fatal (EXIT_MALFORMED_PARAMETER, "Unknown input file format: %s\n", format);
