@@ -51,6 +51,7 @@ struct ccx_common_timing_ctx *init_timing_ctx(struct ccx_common_timing_settings_
 	ctx->current_tref = 0;
 	ctx->current_pts = 0;
 	ctx->current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
+	ctx->min_pts_adjusted = 0;
 	ctx->min_pts = 0x01FFFFFFFFLL; // 33 bit
 	ctx->max_pts = 0;
 	ctx->sync_pts = 0;
@@ -122,6 +123,26 @@ int set_fts(struct ccx_common_timing_ctx *ctx)
 		}
 	}
 
+	// If min_pts was set just before a rollover we compensate by "roll-oving" it too
+	if (ctx->pts_set == 2 && !ctx->min_pts_adjusted) // min_pts set
+	{
+		// We want to be aware of the upcoming rollover, not after it happened, so we don't take
+		// the 3 most significant bits but the 3 next ones
+		uint64_t min_pts_big_bits = (ctx->min_pts >> 30) & 7; 
+		uint64_t cur_pts_big_bits = (ctx->current_pts >> 30) & 7;
+		if (cur_pts_big_bits == 7 && !min_pts_big_bits)
+		{
+			// Huge difference possibly means the first min_pts was actually just over the boundary
+			// Take the current_pts (smaller, accounting for the rollover) instead
+			ctx->min_pts = ctx->current_pts;
+			ctx->min_pts_adjusted = 1;
+		}
+		else if (cur_pts_big_bits>=1 && cur_pts_big_bits<=6) // Far enough from the boundary
+		{
+			// Prevent the eventual difference with min_pts to make a bad adjustment
+			ctx->min_pts_adjusted = 1;
+		}
+	}
 	// Set min_pts, fts_offset
 	if (ctx->pts_set != 0)
 	{

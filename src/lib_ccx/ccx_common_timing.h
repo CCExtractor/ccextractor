@@ -34,6 +34,7 @@ struct ccx_boundary_time
 struct ccx_common_timing_ctx
 {
 	int pts_set;          // 0 = No, 1 = received, 2 = min_pts set
+	int min_pts_adjusted; // 0 = No, 1=Yes (don't adjust again)
 	LLONG current_pts;
 	enum ccx_frame_type current_picture_coding_type;
 	int current_tref;     // Store temporal reference of current frame

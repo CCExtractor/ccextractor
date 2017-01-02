@@ -375,8 +375,7 @@ int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, u
 				data->rollover_bits++;
 			if ((bits_9>>30)==7 && ((current_pts_33>>30)&7)==0) // PTS rollback? Rare and if happens it would mean out of order frames
 				data->rollover_bits--;
-		}
-
+		}		
 
 		current_pts_33 = bits_9 | bits_10 | bits_11 | bits_12 | bits_13;
 		data->pts = (LLONG) data->rollover_bits<<33 | current_pts_33;
