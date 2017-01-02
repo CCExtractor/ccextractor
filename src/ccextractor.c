@@ -2,7 +2,9 @@
 Credits: See CHANGES.TXT
 License: GPL 2.0
 */
+#ifdef ENABLE_OCR
 #include <allheaders.h>
+#endif
 #include <stdio.h>
 #include "lib_ccx.h"
 #include "configuration.h"
