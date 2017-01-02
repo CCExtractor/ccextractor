@@ -17,7 +17,7 @@
 #include "ccx_gxf.h"
 #include "dvd_subtitle_decoder.h"
 
-unsigned int rollover_bits = 0; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
+
 int end_of_file=0; // End of file?
 
 

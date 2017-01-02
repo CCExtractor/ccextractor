@@ -156,6 +156,7 @@ struct demuxer_data
 	enum ccx_bufferdata_type bufferdatatype;
 	unsigned char *buffer;
 	size_t len;
+	unsigned int rollover_bits; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
 	LLONG pts;
 	struct ccx_rational tb;
 	struct demuxer_data *next_stream;
