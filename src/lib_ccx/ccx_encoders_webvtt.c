@@ -335,59 +335,73 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 				dbg_print(CCX_DMT_DECODER_608, "%s\n", context->subline);
 			}
 
-			int *color_events = (int *)malloc(sizeof(int) * length);
-			int *font_events = (int *)malloc(sizeof(int) * length);
-			memset(color_events, 0, sizeof(int) * length);
-			memset(font_events, 0, sizeof(int) * length);
+			int *color_events;
+			int *font_events;
+			if (ccx_options.use_webvtt_styling)
+			{
+				color_events = (int *)malloc(sizeof(int) * length);
+				font_events = (int *)malloc(sizeof(int) * length);
+				memset(color_events, 0, sizeof(int) * length);
+				memset(font_events, 0, sizeof(int) * length);
 
-			get_color_events(color_events, i, data);
-			get_font_events(font_events, i, data);
+				get_color_events(color_events, i, data);
+				get_font_events(font_events, i, data);
+			}
 
 			// Write symbol by symbol with events
 			for (int j = 0; j < length; j++)
 			{
-				// opening events for fonts
-				int open_font = font_events[j] & 0xFF;	// Last 16 bytes
-				if (open_font != FONT_REGULAR)
+				if (ccx_options.use_webvtt_styling)
 				{
-					if (open_font & FONT_ITALICS)
-						write(context->out->fh, strdup("<i>"), 3);
-					if (open_font & FONT_UNDERLINED)
-						write(context->out->fh, strdup("<u>"), 3);
-				}
+					// opening events for fonts
+					int open_font = font_events[j] & 0xFF;	// Last 16 bytes
+					if (open_font != FONT_REGULAR)
+					{
+						if (open_font & FONT_ITALICS)
+							write(context->out->fh, strdup("<i>"), 3);
+						if (open_font & FONT_UNDERLINED)
+							write(context->out->fh, strdup("<u>"), 3);
+					}
 
-				// opening events for colors
-				int open_color = color_events[j] & 0xFF;	// Last 16 bytes
-				if (open_color != COL_WHITE)
-				{
-					write(context->out->fh, strdup("<c."), 3);
-					write(context->out->fh, color_text[open_color], strlen(color_text[open_color]));
-					write(context->out->fh, ">", 1);
+					// opening events for colors
+					int open_color = color_events[j] & 0xFF;	// Last 16 bytes
+					if (open_color != COL_WHITE)
+					{
+						write(context->out->fh, strdup("<c."), 3);
+						write(context->out->fh, color_text[open_color][0], strlen(color_text[open_color][0]));
+						write(context->out->fh, ">", 1);
+					}
 				}
 
 				// write current text symbol
 				write(context->out->fh, &(context->subline[j]), 1);
 
-				// closing events for colors
-				int close_color = color_events[j] >> 16;	// First 16 bytes
-				if (close_color != COL_WHITE)
+				if (ccx_options.use_webvtt_styling)
 				{
-					write(context->out->fh, strdup("</c>"), 4);
-				}
+					// closing events for colors
+					int close_color = color_events[j] >> 16;	// First 16 bytes
+					if (close_color != COL_WHITE)
+					{
+						write(context->out->fh, strdup("</c>"), 4);
+					}
 
-				// closing events for fonts
-				int close_font = font_events[j] >> 16;	// First 16 bytes
-				if (close_font != FONT_REGULAR)
-				{
-					if (close_font & FONT_ITALICS)
-						write(context->out->fh, strdup("</i>"), 4);
-					if (close_font & FONT_UNDERLINED)
-						write(context->out->fh, strdup("</u>"), 4);
+					// closing events for fonts
+					int close_font = font_events[j] >> 16;	// First 16 bytes
+					if (close_font != FONT_REGULAR)
+					{
+						if (close_font & FONT_ITALICS)
+							write(context->out->fh, strdup("</i>"), 4);
+						if (close_font & FONT_UNDERLINED)
+							write(context->out->fh, strdup("</u>"), 4);
+					}
 				}
 			}
 
-			free(color_events);
-			free(font_events);
+			if (ccx_options.use_webvtt_styling)
+			{
+				free(color_events);
+				free(font_events);
+			}
 
 			written = write(context->out->fh,
 				context->encoded_crlf, context->encoded_crlf_length);
