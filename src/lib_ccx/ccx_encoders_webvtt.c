@@ -191,6 +191,93 @@ int write_cc_subtitle_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *con
 
 	return ret;
 }
+
+// TODO: move this repeating function from ccx_encoders_g608.c to the files ccx_encoders_helpers.(c|h)
+int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
+{
+	unsigned char *orig = buffer;
+	unsigned char *line = data->characters[line_num];
+	for (int i = 0; i < 32; i++)
+	{
+		int bytes = 0;
+		switch (ctx->encoding)
+		{
+		case CCX_ENC_UTF_8:
+			bytes = get_char_in_utf_8(buffer, line[i]);
+			break;
+		case CCX_ENC_LATIN_1:
+			get_char_in_latin_1(buffer, line[i]);
+			bytes = 1;
+			break;
+		case CCX_ENC_UNICODE:
+			get_char_in_unicode(buffer, line[i]);
+			bytes = 2;
+		case CCX_ENC_ASCII:
+			*buffer = line[i];
+			bytes = 1;
+			break;
+		}
+		buffer += bytes;
+	}
+	return (unsigned int)(buffer - orig); // Return length
+}
+
+void get_color_events(int *color_events, int line_num, struct eia608_screen *data)
+{
+	int first, last;
+	get_sentence_borders(&first, &last, line_num, data);
+
+	int last_color = COL_WHITE;
+	for (int i = first; i <= last; i++)
+	{
+		if (data->colors[line_num][i] != last_color)
+		{
+			// It does not make sense to keep the default white color in the events
+			// WebVTT supports colors only is [COL_WHITE..COL_MAGENTA]
+			if (data->colors[line_num][i] <= COL_MAGENTA)
+				color_events[i] |= data->colors[line_num][i];	// Add this new color
+			
+			if (last_color != COL_WHITE && last_color <= COL_MAGENTA)
+				color_events[i - 1] |= last_color << 16;	// Remove old color (event in the second part of the integer)
+			
+			last_color = data->colors[line_num][i];
+		}
+	}
+
+	if (last_color != COL_WHITE)
+	{
+		color_events[last] |= last_color << 16;
+	}
+}
+
+void get_font_events(int *font_events, int line_num, struct eia608_screen *data)
+{
+	int first, last;
+	get_sentence_borders(&first, &last, line_num, data);
+
+	int last_font = FONT_REGULAR;
+	for (int i = first; i <= last; i++)
+	{
+		if (data->fonts[line_num][i] != last_font)
+		{
+			// It does not make sense to keep the regular font in the events
+			// WebVTT supports all fonts from C608
+			if (data->fonts[line_num][i] != FONT_REGULAR)	// Really can do it without condition because FONT_REGULAR == 0
+				font_events[i] |= data->fonts[line_num][i];		// Add this new font
+
+			if (last_font != FONT_REGULAR)
+				font_events[i] |= last_font << 16;	// Remove old font (event in the second part of the integer)
+
+			last_font = data->fonts[line_num][i];
+		}
+	}
+
+	if (last_font != FONT_REGULAR)
+	{
+		font_events[last] |= last_font << 16;
+	}
+}
+
 int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *context)
 {
 	int used;
@@ -201,8 +288,6 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 	int wrote_something = 0;
 	ms_start = data->start_time;
 
-	int prev_line_start = -1, prev_line_end = -1; // Column in which the previous line started and ended, for autodash
-	int prev_line_center1 = -1, prev_line_center2 = -1; // Center column of previous line text
 	int empty_buf = 1;
 	char timeline[128] = "";
 	for (int i = 0; i<15; i++)
@@ -242,92 +327,78 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 	{
 		if (data->row_used[i])
 		{
-			if (context->sentence_cap)
-			{
-				if (clever_capitalize(context, i, data))
-					correct_case_with_dictionary(i, data);
-			}
-			if (context->autodash && context->trim_subs)
-			{
-				int first = 0, last = 31, center1 = -1, center2 = -1;
-				unsigned char *line = data->characters[i];
-				int do_dash = 1, colon_pos = -1;
-				find_limit_characters(line, &first, &last, CCX_DECODER_608_SCREEN_WIDTH);
-				if (first == -1 || last == -1)  // Probably a bug somewhere though
-					break;
-				// Is there a speaker named, for example: TOM: What are you doing?
-				for (int j = first; j <= last; j++)
-				{
-					if (line[j] == ':')
-					{
-						colon_pos = j;
-						break;
-					}
-					if (!isupper(line[j]))
-						break;
-				}
-				if (prev_line_start == -1)
-					do_dash = 0;
-				if (first == prev_line_start) // Case of left alignment
-					do_dash = 0;
-				if (last == prev_line_end)  // Right align
-					do_dash = 0;
-				if (first>prev_line_start && last<prev_line_end) // Fully contained
-					do_dash = 0;
-				if ((first>prev_line_start && first<prev_line_end) || // Overlap
-					(last>prev_line_start && last<prev_line_end))
-					do_dash = 0;
+			int length = get_line_encoded(context, context->subline, i, data);
 
-				center1 = (first + last) / 2;
-				if (colon_pos != -1)
-				{
-					while (colon_pos<CCX_DECODER_608_SCREEN_WIDTH &&
-						(line[colon_pos] == ':' ||
-						line[colon_pos] == ' ' ||
-						line[colon_pos] == 0x89))
-						colon_pos++; // Find actual text
-					center2 = (colon_pos + last) / 2;
-				}
-				else
-					center2 = center1;
-
-				if (center1 >= prev_line_center1 - 1 && center1 <= prev_line_center1 + 1 && center1 != -1) // Center align
-					do_dash = 0;
-				if (center2 >= prev_line_center2 - 2 && center1 <= prev_line_center2 + 2 && center1 != -1) // Center align
-					do_dash = 0;
-
-				if (do_dash)
-				{
-					written = write(context->out->fh, "- ", 2);
-					if (written != 2)
-						return -1;
-				}
-				prev_line_start = first;
-				prev_line_end = last;
-				prev_line_center1 = center1;
-				prev_line_center2 = center2;
-
-			}
-			int length = get_decoder_line_encoded(context, context->subline, i, data);
 			if (context->encoding != CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r");
 				dbg_print(CCX_DMT_DECODER_608, "%s\n", context->subline);
 			}
-			written = write(context->out->fh, context->subline, length);
-			if (written != length)
-				return -1;
+
+			int *color_events = (int *)malloc(sizeof(int) * length);
+			int *font_events = (int *)malloc(sizeof(int) * length);
+			memset(color_events, 0, sizeof(int) * length);
+			memset(font_events, 0, sizeof(int) * length);
+
+			get_color_events(color_events, i, data);
+			get_font_events(font_events, i, data);
+
+			// Write symbol by symbol with events
+			for (int j = 0; j < length; j++)
+			{
+				// opening events for fonts
+				int open_font = font_events[j] & 0xFF;	// Last 16 bytes
+				if (open_font != FONT_REGULAR)
+				{
+					if (open_font & FONT_ITALICS)
+						write(context->out->fh, strdup("<i>"), 3);
+					if (open_font & FONT_UNDERLINED)
+						write(context->out->fh, strdup("<u>"), 3);
+				}
+
+				// opening events for colors
+				int open_color = color_events[j] & 0xFF;	// Last 16 bytes
+				if (open_color != COL_WHITE)
+				{
+					write(context->out->fh, strdup("<c."), 3);
+					write(context->out->fh, color_text[open_color], strlen(color_text[open_color]));
+					write(context->out->fh, ">", 1);
+				}
+
+				// write current text symbol
+				write(context->out->fh, &(context->subline[j]), 1);
+
+				// closing events for colors
+				int close_color = color_events[j] >> 16;	// First 16 bytes
+				if (close_color != COL_WHITE)
+				{
+					write(context->out->fh, strdup("</c>"), 4);
+				}
+
+				// closing events for fonts
+				int close_font = font_events[j] >> 16;	// First 16 bytes
+				if (close_font != FONT_REGULAR)
+				{
+					if (close_font & FONT_ITALICS)
+						write(context->out->fh, strdup("</i>"), 4);
+					if (close_font & FONT_UNDERLINED)
+						write(context->out->fh, strdup("</u>"), 4);
+				}
+			}
+
+			free(color_events);
+			free(font_events);
+
 			written = write(context->out->fh,
 				context->encoded_crlf, context->encoded_crlf_length);
 			if (written != context->encoded_crlf_length)
 				return -1;
+
 			wrote_something = 1;
-			// fprintf (wb->fh,encoded_crlf);
 		}
 	}
 	dbg_print(CCX_DMT_DECODER_608, "- - - - - - - - - - - -\r\n");
 
-	// fprintf (wb->fh, encoded_crlf);
 	written = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 	if (written != context->encoded_crlf_length)
 		return -1;
