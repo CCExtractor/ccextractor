@@ -106,8 +106,6 @@ int write_xtimestamp_header(struct encoder_ctx *context)
 		write(context->out->fh, context->buffer, used);
 
 	}
-	// Add the additional CRLF to finish the header
-	write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 	context->wrote_webvtt_sync_header = 1; // Do it even if couldn't write the header, because it won't be possible anyway
 }
 
