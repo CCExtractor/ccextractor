@@ -108,7 +108,7 @@ void pes_header_dump(uint8_t *buffer, long len)
 		pts |= ((buffer[13] & 0xfe) >> 1);
 		//printf("# Associated PTS: %d \n", pts);
 		printf("# Associated PTS: %" PRId64 " # ", pts);
-		printf("Diff: %d \n", pts-last_pts);
+		printf("Diff: %" PRId64 "\n", pts-last_pts);
 		//printf("Diff: %d # ", pts - last_pts);
 		last_pts = pts;
 	}
@@ -480,11 +480,11 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	if (cinfo->codec == CCX_CODEC_TELETEXT)
 	{
 		memcpy(ptr->buffer+ ptr->len, cinfo->capbuf, cinfo->capbuflen);
-		ptr->len += cinfo->capbuflen;
+		ptr->len += cinfo->capbuflen; 
 		return CCX_OK;
 	}
 	vpesdatalen = read_video_pes_header(ctx, ptr, cinfo->capbuf, &pesheaderlen, cinfo->capbuflen);
-	if (ccx_options.pes_header_to_stdout)
+	if (ccx_options.pes_header_to_stdout && cinfo->codec == CCX_CODEC_DVB) //for teletext we have its own header dump
 	{
 		pes_header_dump(cinfo->capbuf, pesheaderlen);
 	}
@@ -762,7 +762,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
                         payload.pid);
                 continue;
         }
-
 
 		cinfo = get_cinfo(ctx, payload.pid);
 		if(cinfo == NULL)
