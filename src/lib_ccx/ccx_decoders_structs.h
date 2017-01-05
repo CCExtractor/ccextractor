@@ -167,16 +167,16 @@ struct lib_cc_decode
 	/* Required in es_function.c and es_userdata.c */
 	unsigned top_field_first; // Needs to be global
 
-    /* Stats. Modified in es_userdata.c*/
-    int stat_numuserheaders;
-    int stat_dvdccheaders;
-    int stat_scte20ccheaders;
-    int stat_replay5000headers;
-    int stat_replay4000headers;
-    int stat_dishheaders;
-    int stat_hdtv;
-    int stat_divicom;
-    int false_pict_header;
+	/* Stats. Modified in es_userdata.c*/
+	int stat_numuserheaders;
+	int stat_dvdccheaders;
+	int stat_scte20ccheaders;
+	int stat_replay5000headers;
+	int stat_replay4000headers;
+	int stat_dishheaders;
+	int stat_hdtv;
+	int stat_divicom;
+	int false_pict_header;
 
 	ccx_dtvcc_ctx *dtvcc;
 	int current_field;
