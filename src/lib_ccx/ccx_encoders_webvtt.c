@@ -6,6 +6,118 @@
 #include "ocr.h"
 
 
+static const char *webvtt_outline_css = "@import(%s)\n";
+
+static const char *webvtt_inline_css = "/* default values */\n"
+		"::cue {\n"
+		"  line-height: 5.33vh;\n"
+		"  font-size: 4.1vh;\n"
+		"  font-family: monospace;\n"
+		"  font-style: normal;\n"
+		"  font-weight: normal;\n"
+		"  background-color: black;\n"
+		"  color: white;\n"
+		"}\n"
+		"/* special cue parts */\n"
+		"::cue(c.transparent) {\n"
+		"  color: transparent;\n"
+		"}\n"
+		"/* need to set this before changing color, otherwise the color is lost */\n"
+		"::cue(c.semi-transparent) {\n"
+		"  color: rgba(0, 0, 0, 0.5);\n"
+		"}\n"
+		"/* need to set this before changing color, otherwise the color is lost */\n"
+		"::cue(c.opaque) {\n"
+		"  color: rgba(0, 0, 0, 1);\n"
+		"}\n"
+		"::cue(c.blink) {\n"
+		"  text-decoration: blink;\n"
+		"}\n"
+		"::cue(c.white) {\n"
+		"  color: white;\n"
+		"}\n"
+		"::cue(c.red) {\n"
+		"  color: red;\n"
+		"}\n"
+		"::cue(c.green) {\n"
+		"  color: lime;\n"
+		"}\n"
+		"::cue(c.blue) {\n"
+		"  color: blue;\n"
+		"}\n"
+		"::cue(c.cyan) {\n"
+		"  color: cyan;\n"
+		"}\n"
+		"::cue(c.yellow) {\n"
+		"  color: yellow;\n"
+		"}\n"
+		"::cue(c.magenta) {\n"
+		"  color: magenta;\n"
+		"}\n"
+		"::cue(c.bg_transparent) {\n"
+		"  background-color: transparent;\n"
+		"}\n"
+		"/* need to set this before changing color, otherwise the color is lost */\n"
+		"::cue(c.bg_semi-transparent) {\n"
+		"  background-color: rgba(0, 0, 0, 0.5);\n"
+		"}\n"
+		"/* need to set this before changing color, otherwise the color is lost */\n"
+		"::cue(c.bg_opaque) {\n"
+		"  background-color: rgba(0, 0, 0, 1);\n"
+		"}\n"
+		"::cue(c.bg_white) {\n"
+		"  background-color: white;\n"
+		"}\n"
+		"::cue(c.bg_green) {\n"
+		"  background-color: lime;\n"
+		"}\n"
+		"::cue(c.bg_blue) {\n"
+		"  background-color: blue;\n"
+		"}\n"
+		"::cue(c.bg_cyan) {\n"
+		"  background-color: cyan;\n"
+		"}\n"
+		"::cue(c.bg_red) {\n"
+		"  background-color: red;\n"
+		"}\n"
+		"::cue(c.bg_yellow) {\n"
+		"  background-color: yellow;\n"
+		"}\n"
+		"::cue(c.bg_magenta) {\n"
+		"  background-color: magenta;\n"
+		"}\n"
+		"::cue(c.bg_black) {\n"
+		"  background-color: black;\n"
+		"}\n"
+		"/* Examples of combined colors */\n"
+		"::cue(c.bg_white.bg_semi-transparent) {\n"
+		"  background-color: rgba(255, 255, 255, 0.5);\n"
+		"}\n"
+		"::cue(c.bg_green.bg_semi-transparent) {\n"
+		"  background-color: rgba(0, 256, 0, 0.5);\n"
+		"}\n"
+		"::cue(c.bg_blue.bg_semi-transparent) {\n"
+		"  background-color: rgba(0, 0, 255, 0.5);\n"
+		"}\n"
+		"::cue(c.bg_cyan.bg_semi-transparent) {\n"
+		"  background-color: rgba(0, 255, 255, 0.5);\n"
+		"}\n"
+		"::cue(c.bg_red.bg_semi-transparent) {\n"
+		"  background-color: rgba(255, 0, 0, 0.5);\n"
+		"}\n"
+		"::cue(c.bg_yellow.bg_semi-transparent) {\n"
+		"  background-color: rgba(255, 255, 0, 0.5);\n"
+		"}\n"
+		"::cue(c.bg_magenta.bg_semi-transparent) {\n"
+		"  background-color: rgba(255, 0, 255, 0.5);\n"
+		"}\n"
+		"::cue(c.bg_black.bg_semi-transparent) {\n"
+		"  background-color: rgba(0, 0, 0, 0.5);\n"
+		"}\n";
+
+static const char** webvtt_pac_row_percent[] = { "10", "15.33", "20.66", "26", "31.33", "36.66", "42",
+		"47.33", "52.66", "58", "63.33", "68.66", "74", "79.33", "84.66" };
+
 /* The timing here is not PTS based, but output based, i.e. user delay must be accounted for
 if there is any */
 int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
@@ -89,10 +201,36 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 	return 0;
 }
 
-int write_xtimestamp_header(struct encoder_ctx *context)
+int write_webvtt_header(struct encoder_ctx *context)
 {
-	if (context->wrote_webvtt_sync_header) // Already done
+	if (context->wrote_webvtt_header) // Already done
 		return 1;
+
+	if (ccx_options.webvtt_create_css)
+	{
+		char *basefilename = get_basename(context->first_input_file);
+		char *css_file_name = (char*)malloc((strlen(basefilename) + 4) * sizeof(char));		// strlen(".css") == 4
+		sprintf(css_file_name, "%s.css", basefilename);
+
+		FILE *f = fopen(css_file_name, "wb");
+		if (f == NULL)
+		{
+			mprint("Warning: Error creating the file %s\n", css_file_name);
+			return -1;
+		}
+		fprintf(f, webvtt_inline_css);
+		fclose(f);
+
+		char* outline_css_file = (char*)malloc((strlen(css_file_name) + strlen(webvtt_outline_css)) * sizeof(char));
+		sprintf(outline_css_file, webvtt_outline_css, css_file_name);
+		write (context->out->fh, outline_css_file, strlen(outline_css_file));
+	} else {
+		write(context->out->fh, webvtt_inline_css, strlen(webvtt_inline_css));
+	}
+
+	write(context->out->fh, "##\n", 3);
+	write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+
 	if (context->timing->sync_pts2fts_set)
 	{
 		char header_string[200];
@@ -106,7 +244,8 @@ int write_xtimestamp_header(struct encoder_ctx *context)
 		write(context->out->fh, context->buffer, used);
 
 	}
-	context->wrote_webvtt_sync_header = 1; // Do it even if couldn't write the header, because it won't be possible anyway
+
+	context->wrote_webvtt_header = 1; // Do it even if couldn't write the header, because it won't be possible anyway
 }
 
 
@@ -130,7 +269,7 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 	if (sub->nb_data == 0)
 		return 0;
 
-	write_xtimestamp_header(context);
+	write_webvtt_header(context);
 
 	if (sub->flags & SUB_EOD_MARKER)
 		context->prev_start = sub->start_time;
@@ -289,7 +428,6 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 	ms_start = data->start_time;
 
 	int empty_buf = 1;
-	char timeline[128] = "";
 	for (int i = 0; i<15; i++)
 	{
 		if (data->row_used[i])
@@ -305,28 +443,30 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 	if (ms_start<0) // Drop screens that because of subs_delay start too early
 		return 0;
 
-	write_xtimestamp_header(context);
+	write_webvtt_header(context);
 
 	ms_end = data->end_time;
 
 	millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
 	millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 
-	sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
-		h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
-	used = encode_line(context, context->buffer, (unsigned char *)timeline);
-
-	dbg_print(CCX_DMT_DECODER_608, "\n- - - WEBVTT caption - - -\n");
-	dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
-
-	written = write(context->out->fh, context->buffer, used);
-	if (written != used)
-		return -1;
-
 	for (int i = 0; i<15; i++)
 	{
 		if (data->row_used[i])
 		{
+			char timeline[128] = "";
+
+			sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u line:%s%%%s",
+				h1, m1, s1, ms1, h2, m2, s2, ms2, webvtt_pac_row_percent[i], context->encoded_crlf);
+			used = encode_line(context, context->buffer, (unsigned char *)timeline);
+
+			dbg_print(CCX_DMT_DECODER_608, "\n- - - WEBVTT caption - - -\n");
+			dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
+
+			written = write(context->out->fh, context->buffer, used);
+			if (written != used)
+				return -1;
+
 			int length = get_line_encoded(context, context->subline, i, data);
 
 			if (context->encoding != CCX_ENC_UNICODE)
@@ -408,14 +548,14 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 			if (written != context->encoded_crlf_length)
 				return -1;
 
+			written = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+			if (written != context->encoded_crlf_length)
+				return -1;
+
 			wrote_something = 1;
 		}
 	}
 	dbg_print(CCX_DMT_DECODER_608, "- - - - - - - - - - - -\r\n");
-
-	written = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-	if (written != context->encoded_crlf_length)
-		return -1;
 
 	return wrote_something;
 }

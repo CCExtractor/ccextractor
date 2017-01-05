@@ -486,6 +486,7 @@ void print_usage (void)
 	mprint ("                       you prefer your own reference. Note: Current this only\n");
 	mprint ("                       affects Teletext in timed transcript with -datets.\n");
 	mprint ("           --noscte20: Ignore SCTE-20 data if present.\n");
+	mprint ("  --webvtt-create-css: Create a separate file for CSS instead of inline.\n");
 	mprint ("\n");
 	mprint ("Options that affect what kind of output will be produced:\n");
 	mprint ("                 -bom: Append a BOM (Byte Order Mark) to output files.\n");
@@ -1477,6 +1478,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp (argv[i],"--noscte20")==0)
 		{
 			opt->noscte20 = 1;
+			continue;
+		}
+		if (strcmp (argv[i],"--webvtt-create-css")==0)
+		{
+			opt->webvtt_create_css = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-noru")==0 ||

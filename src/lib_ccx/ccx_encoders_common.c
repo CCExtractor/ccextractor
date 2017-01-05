@@ -95,7 +95,8 @@ static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" st
 			"  <body>\n"
 			"    <div>\n";
 
-static const char *webvtt_header = "WEBVTT\r\n";
+static const char *webvtt_header = "WEBVTT\r\n"
+		"Style:\n";
 
 static const char *simple_xml_header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<captions>\r\n";
 
@@ -456,7 +457,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				mprint("WARNING: Unable to write complete Buffer \n");
 				return -1;
 			}
-			ret = write(out->fh, ctx->encoded_crlf, ctx->encoded_crlf_length);
+
 			break;
 		case CCX_OF_SAMI: // This header brought to you by McPoodle's CCASDI
 			//fprintf_encoded (wb->fh, sami_header);
@@ -934,7 +935,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 	ctx->capacity=INITIAL_ENC_BUFFER_CAPACITY;
 	ctx->srt_counter = 0;
-	ctx->wrote_webvtt_sync_header = 0;
+	ctx->wrote_webvtt_header = 0;
 
 	ctx->program_number = opt->program_number;
 	ctx->send_to_srv = opt->send_to_srv;
