@@ -16,6 +16,7 @@
 #include "ffmpeg_intgr.h"
 #include "ccx_gxf.h"
 #include "dvd_subtitle_decoder.h"
+#include "teletext.h"
 
 
 int end_of_file=0; // End of file?
@@ -872,16 +873,15 @@ void general_loop(struct lib_ccx_ctx *ctx)
 			enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 			dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
-
-			if (enc_ctx)
-				enc_ctx->timing = dec_ctx->timing;
-
 			if (!data_node) //If there's no DVB data, we still need to capture the first PTS no matter the buffer data type in order to have the arbitrary value
 			{
 				set_current_pts(dec_ctx->timing, datalist->pts);
 				set_fts(dec_ctx->timing);
 				continue;
 			}
+
+			if (enc_ctx)
+				enc_ctx->timing = dec_ctx->timing;
 
 			if(data_node->pts != CCX_NOPTS)
 			{

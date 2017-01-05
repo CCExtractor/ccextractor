@@ -49,6 +49,8 @@ int _CRT_fmode = _O_BINARY;
 #include <commctrl.h>
 #endif
 
+long long int last_pes_pts = 0; // PTS of last PES packet (debug purposes)
+
 typedef struct {
 	uint64_t show_timestamp; // show at timestamp (in ms)
 	uint64_t hide_timestamp; // hide at timestamp (in ms)
@@ -1359,8 +1361,21 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	pes_packet_length = 6 + ((buffer[4] << 8) | buffer[5]);
 	// Can be zero. If the "PES packet length" is set to zero, the PES packet can be of any length.
 	// A value of zero for the PES packet length can be used only when the PES packet payload is a video elementary stream.
-	if (pes_packet_length == 6)
-		return CCX_OK;
+
+	if (ccx_options.pes_header_to_stdout)
+	{
+		printf("Packet start code prefix: %04x # ", pes_prefix);
+		printf("Stream ID: %04x # ", pes_stream_id);
+		printf("Packet length: %d ", pes_packet_length);
+	}
+
+	if (pes_packet_length == 6) 
+	{
+		if (ccx_options.pes_header_to_stdout)
+			printf("\n");
+		else
+			return CCX_OK;
+	}
 
 	// truncate incomplete PES packets
 	if (pes_packet_length > size)
@@ -1408,6 +1423,15 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 		pts |= (buffer[12] << 7);
 		pts |= ((buffer[13] & 0xfe) >> 1);
 		t = (uint32_t) (pts / 90);
+
+		if (ccx_options.pes_header_to_stdout)
+		{
+			//printf("# Associated PTS: %d \n", pts);
+			printf("# Associated PTS: %" PRId64 " # ", pts);
+			printf("Diff: %" PRId64 "\n", pts - last_pes_pts);
+			//printf("Diff: %d # ", pts - last_pes_pts);
+			last_pes_pts = pts;
+		}
 	}
 
 	if (ctx->states.pts_initialized == NO)
