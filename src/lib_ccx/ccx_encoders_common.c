@@ -935,7 +935,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 	ctx->capacity=INITIAL_ENC_BUFFER_CAPACITY;
 	ctx->srt_counter = 0;
-	ctx->wrote_webvtt_sync_header = 0;
+	ctx->wrote_webvtt_header = 0;
 
 	ctx->program_number = opt->program_number;
 	ctx->send_to_srv = opt->send_to_srv;

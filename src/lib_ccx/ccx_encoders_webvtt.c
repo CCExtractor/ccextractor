@@ -115,6 +115,9 @@ static const char *webvtt_inline_css = "/* default values */\n"
 		"  background-color: rgba(0, 0, 0, 0.5);\n"
 		"}\n";
 
+static const char** webvtt_pac_row_percent[] = { "10", "15.33", "20.66", "26", "31.33", "36.66", "42",
+		"47.33", "52.66", "58", "63.33", "68.66", "74", "79.33", "84.66" };
+
 /* The timing here is not PTS based, but output based, i.e. user delay must be accounted for
 if there is any */
 int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
@@ -198,9 +201,9 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 	return 0;
 }
 
-int write_xtimestamp_header(struct encoder_ctx *context)
+int write_webvtt_header(struct encoder_ctx *context)
 {
-	if (context->wrote_webvtt_sync_header) // Already done
+	if (context->wrote_webvtt_header) // Already done
 		return 1;
 
 	if (ccx_options.webvtt_create_css)
@@ -242,7 +245,7 @@ int write_xtimestamp_header(struct encoder_ctx *context)
 
 	}
 
-	context->wrote_webvtt_sync_header = 1; // Do it even if couldn't write the header, because it won't be possible anyway
+	context->wrote_webvtt_header = 1; // Do it even if couldn't write the header, because it won't be possible anyway
 }
 
 
@@ -266,7 +269,7 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 	if (sub->nb_data == 0)
 		return 0;
 
-	write_xtimestamp_header(context);
+	write_webvtt_header(context);
 
 	if (sub->flags & SUB_EOD_MARKER)
 		context->prev_start = sub->start_time;
@@ -425,7 +428,6 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 	ms_start = data->start_time;
 
 	int empty_buf = 1;
-	char timeline[128] = "";
 	for (int i = 0; i<15; i++)
 	{
 		if (data->row_used[i])
@@ -441,28 +443,30 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 	if (ms_start<0) // Drop screens that because of subs_delay start too early
 		return 0;
 
-	write_xtimestamp_header(context);
+	write_webvtt_header(context);
 
 	ms_end = data->end_time;
 
 	millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
 	millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 
-	sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
-		h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
-	used = encode_line(context, context->buffer, (unsigned char *)timeline);
-
-	dbg_print(CCX_DMT_DECODER_608, "\n- - - WEBVTT caption - - -\n");
-	dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
-
-	written = write(context->out->fh, context->buffer, used);
-	if (written != used)
-		return -1;
-
 	for (int i = 0; i<15; i++)
 	{
 		if (data->row_used[i])
 		{
+			char timeline[128] = "";
+
+			sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u line:%s%%%s",
+				h1, m1, s1, ms1, h2, m2, s2, ms2, webvtt_pac_row_percent[i], context->encoded_crlf);
+			used = encode_line(context, context->buffer, (unsigned char *)timeline);
+
+			dbg_print(CCX_DMT_DECODER_608, "\n- - - WEBVTT caption - - -\n");
+			dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
+
+			written = write(context->out->fh, context->buffer, used);
+			if (written != used)
+				return -1;
+
 			int length = get_line_encoded(context, context->subline, i, data);
 
 			if (context->encoding != CCX_ENC_UNICODE)
@@ -544,14 +548,14 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 			if (written != context->encoded_crlf_length)
 				return -1;
 
+			written = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+			if (written != context->encoded_crlf_length)
+				return -1;
+
 			wrote_something = 1;
 		}
 	}
 	dbg_print(CCX_DMT_DECODER_608, "- - - - - - - - - - - -\r\n");
-
-	written = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-	if (written != context->encoded_crlf_length)
-		return -1;
 
 	return wrote_something;
 }

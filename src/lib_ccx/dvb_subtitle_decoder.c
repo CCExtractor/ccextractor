@@ -1651,7 +1651,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 					enc_ctx->prev_start = enc_ctx->prev->prev_start;
 					sub->prev->got_output = 0;
 					if (enc_ctx->write_format == CCX_OF_WEBVTT) {	// we already wrote header, but since we encoded last sub, we must prevent multiple headers in future
-						enc_ctx->wrote_webvtt_sync_header = 1;
+						enc_ctx->wrote_webvtt_header = 1;
 					}
 				}
 				memcpy(enc_ctx->prev, enc_ctx, sizeof(struct encoder_ctx)); //we save the current encoder context
