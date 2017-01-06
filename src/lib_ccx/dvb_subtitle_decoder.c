@@ -1613,7 +1613,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 			if (ccx_options.dvb_debug_traces_to_stdout)
 			{
 				//debug traces
-				mprint("DVBSUB - PTS: %d, ", dec_ctx->timing->current_pts);
+				mprint("DVBSUB - PTS: %" PRId64 ", ", dec_ctx->timing->current_pts);
 				mprint("FTS: %d, ", dec_ctx->timing->fts_now);
 				mprint("SEGMENT TYPE: %d, ", segment_type);
 				mprint("SEGMENT LENGTH: %d", segment_length);

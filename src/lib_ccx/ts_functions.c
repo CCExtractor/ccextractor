@@ -607,7 +607,7 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 // Read ts packets until a complete video PES element can be returned.
 // The data is read into capbuf and the function returns the number of
 // bytes read.
-long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
+long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)//, uint64_t *first_pts_of_each_stream, int *nb_of_streams)
 {
 	int gotpes = 0;
 	long pespcount = 0; // count packets in PES with captions
@@ -697,6 +697,70 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			continue;
 		}
 
+		if (ctx->got_first_pts[0] == UINT64_MAX || ctx->got_first_pts[1] == UINT64_MAX || ctx->got_first_pts[2] == UINT64_MAX) //if we didn't already get the first PTS of the important streams
+		{
+			//check for PTS of packet
+			if (payload.pesstart) //if there is PES Header data in the payload and we didn't get the first pts of that stream
+			{
+				//Write the PES Header to console
+				uint64_t pes_prefix;
+				uint8_t pes_stream_id;
+				uint16_t pes_packet_length;
+				uint8_t optional_pes_header_included = NO;
+				uint16_t optional_pes_header_length = 0;
+				uint64_t pts = 0;
+
+				// Packetized Elementary Stream (PES) 32-bit start code
+				pes_prefix = (payload.start[0] << 16) | (payload.start[1] << 8) | payload.start[2];
+				pes_stream_id = payload.start[3];
+
+				// check for PES header
+				if (pes_prefix == 0x000001)
+				{
+					//if we didn't already have this stream id with its first pts then calculate 
+					if (pes_stream_id != ctx->found_stream_ids[pes_stream_id - 0xbd])
+					{
+						pes_packet_length = 6 + ((payload.start[4] << 8) | payload.start[5]); // 5th and 6th byte of the header define the length of the rest of the packet (+6 is for the prefix, stream ID and packet length)
+
+						/*if (pes_packet_length == 6)
+						{
+							// great, there is only a header and no extension + payload
+							return;
+						}*/
+
+						// optional PES header marker bits (10.. ....)
+						if ((payload.start[6] & 0xc0) == 0x80)
+						{
+							optional_pes_header_included = YES;
+							optional_pes_header_length = payload.start[8];
+						}
+
+						if (optional_pes_header_included == YES && optional_pes_header_length > 0 && (payload.start[7] & 0x80) > 0)
+						{
+							//get associated PTS as it exists
+							pts = (payload.start[9] & 0x0e);
+							pts <<= 29;
+							pts |= (payload.start[10] << 22);
+							pts |= ((payload.start[11] & 0xfe) << 14);
+							pts |= (payload.start[12] << 7);
+							pts |= ((payload.start[13] & 0xfe) >> 1);
+
+							//keep in mind we already checked if we have this stream id
+							ctx->found_stream_ids[pes_stream_id - 0xbd] = pes_stream_id; //add it
+							ctx->min_pts[payload.pid] = pts; //and add its packet pts (we still have this array in case someone wants the global PTS for all stream_id not only for pvs1, audio and video)
+
+							//we already checked if we got that packet's pts
+							if (pes_stream_id == 0xbd) //private stream 1 
+								ctx->got_first_pts[0] = pts;
+							if (pes_stream_id >= 0xC0 && pes_stream_id <= 0xDF) //audio
+								ctx->got_first_pts[1] = pts;
+							if (pes_stream_id >= 0xE0 && pes_stream_id <= 0xEF) //video
+								ctx->got_first_pts[2] = pts;
+						}
+					}
+				}
+			}
+		}
 		switch (ctx->PIDs_seen[payload.pid])
 		{
 			case 0: // First time we see this PID
@@ -728,7 +792,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			case 3: // Already seen, reported, and inspected for CC data (and found some)
 				break;
 		}
-
 
 		if (payload.pid==1003 && !ctx->hauppauge_warning_shown && !ccx_options.hauppauge_mode)
 		{
@@ -803,7 +866,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			continue;
 		}
 
-
 		// Video PES start
 		if (payload.pesstart)
 		{
@@ -857,7 +919,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 
 // TS specific data grabber
-int ts_get_more_data(struct ccx_demuxer *ctx, struct demuxer_data **data)
+int ts_get_more_data(struct ccx_demuxer *ctx, struct demuxer_data **data, uint64_t *first_pts_of_each_stream, int *nb_of_streams)
 {
 	int ret = CCX_OK;
 
