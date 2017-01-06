@@ -607,7 +607,7 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 // Read ts packets until a complete video PES element can be returned.
 // The data is read into capbuf and the function returns the number of
 // bytes read.
-long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)//, uint64_t *first_pts_of_each_stream, int *nb_of_streams)
+long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
 	int gotpes = 0;
 	long pespcount = 0; // count packets in PES with captions
@@ -919,7 +919,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)//, uint6
 
 
 // TS specific data grabber
-int ts_get_more_data(struct ccx_demuxer *ctx, struct demuxer_data **data, uint64_t *first_pts_of_each_stream, int *nb_of_streams)
+int ts_get_more_data(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
 	int ret = CCX_OK;
 

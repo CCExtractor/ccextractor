@@ -803,7 +803,7 @@ void general_loop(struct lib_ccx_ctx *ctx)
 	struct demuxer_data *data_node = NULL;
 	int ret;
 
-	uint64_t min_pts = _UI64_MAX;
+	uint64_t min_pts = UINT64_MAX;
 	int got_pts = 0;
 	int set_pts = 0;
 
