@@ -285,7 +285,7 @@ int read_header(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb)
 				{
 					mprint("Premature end of file!\n");
 					free(parsebuf);
-                    free(string);
+					free(string);
 					return CCX_EOF;
 				}
 			}
