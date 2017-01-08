@@ -113,7 +113,7 @@ void sbs_strcpy_without_dup(const unsigned char * str, struct encoder_ctx * cont
 
 	// check, that new string does not contain data, from
 	// already handled sentence:
-	LOG_DEBUG("Sentence Buffer: sbs_strcpy_without_dup, sbslen [%4d] handled len [%4d]\n", sbs_len, context->sbs_handled_len);
+	LOG_DEBUG("Sentence Buffer: sbs_strcpy_without_dup, sbslen [%4ld] handled len [%4zu]\n", sbs_len, context->sbs_handled_len);
 	if ( (sbs_len - intersect_len) >= context->sbs_handled_len)
 	{
 		// there is no intersection.
@@ -283,7 +283,7 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 	sbs_undone_start = context->sbs_buffer + context->sbs_handled_len;
 	bp_last_break = sbs_undone_start;
 
-	LOG_DEBUG("Sentence Buffer: BEFORE sentence break. Last break: [%s]  sbs_undone_start: [%d], sbs_undone: [%s]\n",
+	LOG_DEBUG("Sentence Buffer: BEFORE sentence break. Last break: [%s]  sbs_undone_start: [%zu], sbs_undone: [%s]\n",
 		bp_last_break, context->sbs_handled_len, sbs_undone_start
 	);
 
@@ -356,9 +356,9 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 		context->sbs_handled_len = bp_last_break - sbs_undone_start;
 	}
 
-	LOG_DEBUG("Sentence Buffer: AFTER sentence break: Handled Len [%4d]\n", context->sbs_handled_len);
+	LOG_DEBUG("Sentence Buffer: AFTER sentence break: Handled Len [%4zu]\n", context->sbs_handled_len);
 
-	LOG_DEBUG("Sentence Buffer: Alphanum Total: [%4d]  Overall chars: [%4d]  STRING:[%20s]  BUFFER:[%20s]\n", alphanum_total, anychar_total, str, context->sbs_buffer);
+	LOG_DEBUG("Sentence Buffer: Alphanum Total: [%4ld]  Overall chars: [%4ld]  STRING:[%20s]  BUFFER:[%20s]\n", alphanum_total, anychar_total, str, context->sbs_buffer);
 
 	// ===============================
 	// Calculate time spans
