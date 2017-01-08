@@ -391,6 +391,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 					    unsigned char *temp_pointer = strchr((context->subline),'#');     //locating color code
 
 					    unsigned char *color_code=malloc(7);
+					    *color_code = NULL;
 					    strncat(color_code,(context->subline) + (temp_pointer - (context->subline) + 1),6);     //obtained color code
 
 
