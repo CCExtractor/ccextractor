@@ -1,3 +1,4 @@
+
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "asf_constants.h"
@@ -1054,4 +1055,3 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 	if(!payload_read)
 		return CCX_EOF;
 	return payload_read;
-}
