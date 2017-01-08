@@ -381,6 +381,9 @@ int main(int argc, char *argv[])
 		if(is_decoder_processed_enough(ctx) == CCX_TRUE)
 			break;
 	} // file loop
+		if (dec_ctx->dec_sub.got_output && dec_ctx->dec_sub.data==NULL) 
+		fatal(EXIT_READ_ERROR, "no output in file");
+	
 	close_input_file(ctx);
 	free((void *) ctx->extension);
 
