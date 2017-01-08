@@ -966,6 +966,13 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 
 	if (window->visible)
 		_dtvcc_window_update_time_show(window, timing);
+	if (!window->memory_reserved)
+	{
+		for (int i = 0; i < CCX_DTVCC_MAX_ROWS; i++)
+		{
+			free(window->rows[i]);
+		}
+	}
 }
 
 void dtvcc_handle_SWA_SetWindowAttributes(ccx_dtvcc_service_decoder *decoder, unsigned char *data)
