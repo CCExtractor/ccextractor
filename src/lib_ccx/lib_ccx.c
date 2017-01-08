@@ -146,7 +146,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	// Init shared decoder settings
 	ctx->dec_global_setting = init_decoder_setting(opt);
 	if (!ctx->dec_global_setting){
-                free(report_dtvcc);
+		free(report_dtvcc);
 		return NULL;
     }
 
