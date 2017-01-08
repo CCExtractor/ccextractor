@@ -145,8 +145,10 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 
 	// Init shared decoder settings
 	ctx->dec_global_setting = init_decoder_setting(opt);
-	if (!ctx->dec_global_setting)
+	if (!ctx->dec_global_setting){
+        free(report_dtvcc)
 		return NULL;
+    }
 
 	// Need to set the 608 data for the report to the correct variable.
 	ctx->freport.data_from_608 = report_608;
