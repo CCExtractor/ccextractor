@@ -816,15 +816,15 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 		}
 
-        // Skip packets with no payload.  This also fixes the problems
-        // with the continuity counter not being incremented in empty
-        // packets.
-        if ( !payload.length )
-        {
-                dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - no payload.\n",
-                        payload.pid);
-                continue;
-        }
+		// Skip packets with no payload.  This also fixes the problems
+		// with the continuity counter not being incremented in empty
+		// packets.
+		if ( !payload.length )
+		{
+				dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - no payload.\n",
+						payload.pid);
+				continue;
+		}
 
 		cinfo = get_cinfo(ctx, payload.pid);
 		if(cinfo == NULL)
