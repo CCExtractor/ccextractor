@@ -540,7 +540,7 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 	int str_len = 1024;
 
 	if(!ctx){
-        free(str)
+		free(str);
 		return CCX_EINVAL;
     }
 
