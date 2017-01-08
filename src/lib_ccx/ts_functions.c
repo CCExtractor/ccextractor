@@ -335,7 +335,7 @@ void look_for_caption_data (struct ccx_demuxer *ctx, struct ts_payload *payload)
 		if (payload->start[i]=='G' && payload->start[i+1]=='A' &&
 				payload->start[i+2]=='9' && payload->start[i+3]=='4')
 		{
-			mprint ("PID %u seems to contain captions.\n", payload->pid);
+			mprint ("PID %u seems to contain CEA-608 captions.\n", payload->pid);
 			ctx->PIDs_seen[payload->pid]=3;
 			return;
 		}
