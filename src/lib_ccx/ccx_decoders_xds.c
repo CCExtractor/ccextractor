@@ -539,8 +539,10 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 	char *tstr = NULL;
 	int str_len = 1024;
 
-	if(!ctx)
+	if(!ctx){
+		free(str);
 		return CCX_EINVAL;
+    }
 
 	switch (ctx->cur_xds_packet_type)
 	{
