@@ -90,7 +90,9 @@ int main(int argc, char *argv[])
 		fatal (CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to create output file: Permission denied\n");
 	else if (!ctx)
 		fatal (EXIT_NOT_CLASSIFIED, "Unable to create Library Context %d\n",errno);
-
+	else
+	fatal (CCX_COMMON_EXIT_FILE_CREATION_FAILED,"Unable to create output file due to unknown reasons.",errno);
+	
 #ifdef WITH_LIBCURL
 	curl_global_init(CURL_GLOBAL_ALL);
 
