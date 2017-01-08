@@ -81,6 +81,7 @@ struct ccx_s_options // Options from user parameters
 	int extract;                                               // Extract 1st, 2nd or both fields
 	int no_rollup;
 	int noscte20;
+	int webvtt_create_css;
 	int cc_channel;                                            // Channel we want to dump in srt mode
 	int buffer_input;
 	int nofontcolor;
@@ -143,6 +144,7 @@ struct ccx_s_options // Options from user parameters
 	unsigned send_to_srv;
 	enum ccx_output_format write_format;                // 0=Raw, 1=srt, 2=SMI
 	int use_ass_instead_of_ssa;
+	int use_webvtt_styling;
 	LLONG debug_mask;                                   // dbg_print will use this mask to print or ignore different types
 	LLONG debug_mask_on_debug;                          // If we're using temp_debug to enable/disable debug "live", this is the mask when temp_debug=1
 	/* Networking */
