@@ -90,6 +90,9 @@ void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, dtvcc_tv_screen *tv, int row
 	int first, last;
 
 	_dtvcc_get_write_interval(tv, row_index, &first, &last);
+	ccx_dtvcc_symbol space = { ' ', 1 };
+	for (int j = 0; j < first; j++)
+		buf[buf_len++] = CCX_DTVCC_SYM(space);
 	for (int j = first; j <= last; j++)
 	{
 		if (CCX_DTVCC_SYM_IS_16(tv->chars[row_index][j]))
@@ -102,6 +105,8 @@ void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, dtvcc_tv_screen *tv, int row
 			buf[buf_len++] = CCX_DTVCC_SYM(tv->chars[row_index][j]);
 		}
 	}
+	for (int i = last + 1; i < CCX_DECODER_608_SCREEN_WIDTH; i++)
+		buf[buf_len++] = CCX_DTVCC_SYM(space);
 
 	int fd = encoder->dtvcc_writers[tv->service_number - 1].fd;
 
