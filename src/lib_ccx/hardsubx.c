@@ -215,7 +215,13 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	memset(ctx, 0, sizeof(struct lib_hardsubx_ctx));
 	
 	ctx->tess_handle = TessBaseAPICreate();
-	if(TessBaseAPIInit3(ctx->tess_handle, NULL, "eng") != 0)
+	char* pars_vec = strdup("debug_file");
+	char* pars_values = strdup("/dev/null");
+	int res = TessBaseAPIInit4(ctx->tess_handle, NULL, "eng", OEM_DEFAULT, NULL, 0, &pars_vec,
+		&pars_values, 1, false);
+	free(pars_vec);
+	free(pars_values);
+	if(res != 0)
 	{
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to initialize Tesseract!");
 	}

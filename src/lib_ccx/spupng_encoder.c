@@ -478,19 +478,15 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 	png_byte *alpha = NULL;
 	int wrote_opentag = 1;
 
-        x_pos = -1;
-        y_pos = -1;
-        width = 0;
-        height = 0;
-
+    x_pos = -1;
+    y_pos = -1;
+    width = 0;
+    height = 0;
 	
+	if (sub->data == NULL)
+		return 0;
 
-	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
-		write_sputag_open(sp, context->prev_start, sub->start_time);
-	else if (!(sub->flags & SUB_EOD_MARKER))
-		write_sputag_open(sp, sub->start_time, sub->end_time);
-	else
-		wrote_opentag = 0;
+	write_sputag_open(sp, sub->start_time, sub->end_time - 1);
 
 	if(sub->nb_data == 0 && (sub->flags & SUB_EOD_MARKER))
 	{

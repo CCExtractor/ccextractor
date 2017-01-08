@@ -45,8 +45,8 @@ struct encoder_ctx
 	/* keep count of srt subtitle*/
 	unsigned int srt_counter;
 
-	/* Did we write the WebVTT sync header already? */
-	unsigned int wrote_webvtt_sync_header;
+	/* Did we write the WebVTT header already? */
+	unsigned int wrote_webvtt_header;
 
 	/* Input outputs */
 	/* Flag giving hint that output is send to server through network */
@@ -60,7 +60,7 @@ struct encoder_ctx
 	/* number of member in array of write out array */
 	int nb_out;
 	/* Input file format used in Teletext for exceptional output */
-	unsigned int in_fileformat; //1 =Normal, 2=Teletext
+	unsigned int in_fileformat; //1 = Normal, 2 = Teletext
 	/* Keep output file closed when not actually writing to it and start over each time (add headers, etc) */
 	unsigned int keep_output_closed;
 	/* Force a flush on the file buffer whenever content is written */
@@ -72,21 +72,21 @@ struct encoder_ctx
 
 	/* Flag saying BOM to be written in each output file */
 	enum ccx_encoding_type encoding;
-	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
+	enum ccx_output_format write_format;                        // 0=Raw, 1=srt, 2=SMI
 	int generates_file;
 	struct ccx_encoders_transcript_format *transcript_settings; // Keeps the settings for generating transcript output files.
 	int no_bom;
-	int sentence_cap ; // FIX CASE? = Fix case?
+	int sentence_cap ;                                          // FIX CASE? = Fix case?
 
-	int trim_subs; // "    Remove spaces at sides?    "
-	int autodash; // Add dashes (-) before each speaker automatically?
+	int trim_subs;                                              // "    Remove spaces at sides?    "
+	int autodash;                                               // Add dashes (-) before each speaker automatically?
 	int no_font_color;
 	int no_type_setting;
-	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
-	unsigned char *subline; // Temp storage for storing each line
+	int gui_mode_reports;                                       // If 1, output in stderr progress updates so the GUI can grab them
+	unsigned char *subline;                                     // Temp storage for storing each line
 	int extract;
 
-	int dtvcc_extract; //1 or 0 depending if we have to handle dtvcc
+	int dtvcc_extract;                                          // 1 or 0 depending if we have to handle dtvcc
 	ccx_dtvcc_writer_ctx dtvcc_writers[CCX_DTVCC_MAX_SERVICES];
 
 	/* Timing related variables*/
@@ -101,7 +101,7 @@ struct encoder_ctx
 	int startcredits_displayed;
 	char *start_credits_text;
 	char *end_credits_text;
-	struct ccx_boundary_time startcreditsnotbefore, startcreditsnotafter; // Where to insert start credits, if possible
+	struct ccx_boundary_time startcreditsnotbefore, startcreditsnotafter;   // Where to insert start credits, if possible
 	struct ccx_boundary_time startcreditsforatleast, startcreditsforatmost; // How long to display them?
 	struct ccx_boundary_time endcreditsforatleast, endcreditsforatmost;
 
@@ -126,6 +126,10 @@ struct encoder_ctx
 	LLONG sbs_time_from; // Used by the split-by-sentence code to know when the current block starts...
 	LLONG sbs_time_trim; // ... and ends
 	size_t sbs_capacity;
+
+	//for dvb subs
+	struct encoder_ctx* prev;
+	int write_previous;
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048

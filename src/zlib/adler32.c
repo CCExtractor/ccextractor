@@ -3,7 +3,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: adler32.c,v 1.2 2013/12/18 09:48:32 cfsmp3 Exp $ */
+/* @(#) $Id$ */
 
 #include "zutil.h"
 
@@ -62,7 +62,10 @@ local uLong adler32_combine_ OF((uLong adler1, uLong adler2, z_off64_t len2));
 #endif
 
 /* ========================================================================= */
-uLong ZEXPORT adler32(uLong adler, const Bytef *buf, uInt len)
+uLong ZEXPORT adler32(adler, buf, len)
+    uLong adler;
+    const Bytef *buf;
+    uInt len;
 {
     unsigned long sum2;
     unsigned n;
@@ -130,7 +133,10 @@ uLong ZEXPORT adler32(uLong adler, const Bytef *buf, uInt len)
 }
 
 /* ========================================================================= */
-local uLong adler32_combine_(uLong adler1, uLong adler2, z_off64_t len2)
+local uLong adler32_combine_(adler1, adler2, len2)
+    uLong adler1;
+    uLong adler2;
+    z_off64_t len2;
 {
     unsigned long sum1;
     unsigned long sum2;
@@ -156,12 +162,18 @@ local uLong adler32_combine_(uLong adler1, uLong adler2, z_off64_t len2)
 }
 
 /* ========================================================================= */
-uLong ZEXPORT adler32_combine(uLong adler1, uLong adler2, z_off_t len2)
+uLong ZEXPORT adler32_combine(adler1, adler2, len2)
+    uLong adler1;
+    uLong adler2;
+    z_off_t len2;
 {
     return adler32_combine_(adler1, adler2, len2);
 }
 
-uLong ZEXPORT adler32_combine64(uLong adler1, uLong adler2, z_off64_t len2)
+uLong ZEXPORT adler32_combine64(adler1, adler2, len2)
+    uLong adler1;
+    uLong adler2;
+    z_off64_t len2;
 {
     return adler32_combine_(adler1, adler2, len2);
 }

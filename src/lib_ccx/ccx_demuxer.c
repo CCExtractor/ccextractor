@@ -391,6 +391,7 @@ struct demuxer_data* alloc_demuxer_data(void)
 	data->codec = CCX_CODEC_NONE;
 	data->len = 0;
 	data->pts = CCX_NOPTS;
+	data->rollover_bits = 0;
 	data->tb.num = 1;
 	data->tb.den = 90000;
 	data->next_stream = 0;

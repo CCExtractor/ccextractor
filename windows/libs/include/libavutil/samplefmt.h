@@ -32,6 +32,7 @@
  *
  * Audio sample format enumeration and related convenience functions.
  * @{
+ *
  */
 
 /**
@@ -68,8 +69,6 @@ enum AVSampleFormat {
     AV_SAMPLE_FMT_S32P,        ///< signed 32 bits, planar
     AV_SAMPLE_FMT_FLTP,        ///< float, planar
     AV_SAMPLE_FMT_DBLP,        ///< double, planar
-    AV_SAMPLE_FMT_S64,         ///< signed 64 bits
-    AV_SAMPLE_FMT_S64P,        ///< signed 64 bits, planar
 
     AV_SAMPLE_FMT_NB           ///< Number of sample formats. DO NOT USE if linking dynamically
 };
