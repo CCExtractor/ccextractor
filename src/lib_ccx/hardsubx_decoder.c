@@ -260,6 +260,25 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 	pixDestroy(&pixd);
 }
 
+int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx)
+{
+	// Search for ticker text at the bottom of the screen, such as in Russia TV1 or stock prices
+	int got_frame;
+	while(av_read_frame(ctx->format_ctx, &ctx->packet)>=0)
+	{
+		if(ctx->packet.stream_index == ctx->video_stream_id)
+		{
+			//Decode the video stream packet
+			avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
+			if(got_frame)
+			{
+				// Do something
+			}
+		}
+	}
+	return 0;
+}
+
 int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx)
 {
 	// Do an exhaustive linear search over the video

@@ -101,7 +101,11 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 	enc_ctx = init_encoder(&ccx_options.enc_cfg);
 	
 	mprint("Beginning burned-in subtitle detection...\n");
-	hardsubx_process_frames_linear(ctx, enc_ctx);
+
+	if(ctx->tickertext)
+		hardsubx_process_frames_tickertext(ctx, enc_ctx);
+	else
+		hardsubx_process_frames_linear(ctx, enc_ctx);
 
 	dinit_encoder(&enc_ctx, 0); //TODO: Replace 0 with end timestamp
 
@@ -237,6 +241,7 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	ctx->cc_to_stdout = options->cc_to_stdout;
 
 	//Initialize subtitle text parameters
+	ctx->tickertext = options->tickertext;
 	ctx->cur_conf = 0.0;
 	ctx->prev_conf = 0.0;
 	ctx->ocr_mode = options->hardsubx_ocr_mode;

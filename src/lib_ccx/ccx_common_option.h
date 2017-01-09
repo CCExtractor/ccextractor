@@ -125,6 +125,7 @@ struct ccx_s_options // Options from user parameters
 	int force_flush;                  // Force flush on content write
 	int append_mode;                  // Append mode for output files
 	int ucla;                         // 1 if UCLA used, 0 if not
+	int tickertext;                   // 1 if ticker text style burned in subs, 0 if not
 	int hardsubx;                     // 1 if burned-in subtitles to be extracted
 	int dvbcolor;                     // 1 if Color to be detected for DVB
 	char *dvblang;                    // The name of the language stream for DVB

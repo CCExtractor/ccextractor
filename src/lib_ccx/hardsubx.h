@@ -68,6 +68,7 @@ struct lib_hardsubx_ctx
 	float prev_conf;
 
 	// Subtitle text parameters
+	int tickertext;
 	struct cc_subtitle *dec_sub;
 	int ocr_mode;
 	int subcolor;
