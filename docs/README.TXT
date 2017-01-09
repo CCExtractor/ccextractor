@@ -32,7 +32,8 @@ Google Summer of Code 2016 students
 Google Code-in 2016 students
 - Evgeny Shulgin
 - Manveer Basra
-(to be listed)
+- Alexandru Bratosin
+(more, but they forgot to add themselves...)
 
 
 
