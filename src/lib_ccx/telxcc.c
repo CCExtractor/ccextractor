@@ -890,6 +890,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 	switch (tlt_config.write_format)
 	{
 		case CCX_OF_TRANSCRIPT:
+		case CCX_OF_SRT:
 			if (ctx->page_buffer_prev_used == 0)
 				ctx->prev_show_timestamp = page->show_timestamp;
 			if (ctx->page_buffer_prev_used == 0 ||
@@ -1322,6 +1323,26 @@ int tlt_print_seen_pages(struct lib_cc_decode *dec_ctx)
 	}
 	return CCX_OK;
 }
+void set_tlt_delta(struct lib_cc_decode *dec_ctx, uint64_t pts)
+{
+	struct TeletextCtx *ctx = dec_ctx->private_data;
+	uint32_t t = (uint32_t)(pts / 90);
+	if (ctx->states.pts_initialized == NO)
+	{
+		if (utc_refvalue == UINT64_MAX)
+			ctx->delta = 0 - (uint64_t)t;
+		else
+			ctx->delta = (uint64_t)(1000 * utc_refvalue - t);
+		ctx->t0 = t;
+
+		ctx->states.pts_initialized = YES;
+		if ((ctx->using_pts == NO) && (ctx->global_timestamp == 0))
+		{
+			// We are using global PCR, nevertheless we still have not received valid PCR timestamp yet
+			ctx->states.pts_initialized = NO;
+		}
+	}
+}
 int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint16_t size, struct cc_subtitle *sub, int sentence_cap)
 {
 	uint64_t pes_prefix;
@@ -1434,7 +1455,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 		}
 	}
 
-	if (ctx->states.pts_initialized == NO)
+	/*if (ctx->states.pts_initialized == NO)
 	{
 		if (utc_refvalue == UINT64_MAX)
 			ctx->delta = 0 - (uint64_t)t;
@@ -1448,7 +1469,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 			// We are using global PCR, nevertheless we still have not received valid PCR timestamp yet
 			ctx->states.pts_initialized = NO;
 		}
-	}
+	}*/
 	if (t < ctx->t0)
 		ctx->delta = ctx->last_timestamp;
 	ctx->last_timestamp = t + ctx->delta;
