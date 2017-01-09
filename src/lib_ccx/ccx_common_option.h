@@ -38,7 +38,7 @@ struct encoder_cfg
 	int force_flush; // Force flush on content write
 	int append_mode; //Append mode for output files
 	int ucla; // 1 if -UCLA used, 0 if not
-	
+
 	enum ccx_encoding_type encoding;
 	enum ccx_output_date_format date_format;
 	char millis_separator;
@@ -128,6 +128,7 @@ struct ccx_s_options // Options from user parameters
 	int dvbcolor; // 1 if Color to be detected for DVB
 	char *dvblang; // The name of the language stream for DVB
 	char *ocrlang; // The name of the .traineddata file to be loaded with tesseract
+	int pesheader; // Show PES header
 
 	/*HardsubX related stuff*/
 	int hardsubx_ocr_mode;

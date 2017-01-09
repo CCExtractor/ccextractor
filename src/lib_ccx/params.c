@@ -655,6 +655,7 @@ void print_usage (void)
 	mprint ("Options that affect debug data:\n");
 
 	mprint ("               -debug: Show lots of debugging output.\n");
+	mprint ("               -pesheader: Show PES header.\n");
 	mprint ("                 -608: Print debug traces from the EIA-608 decoder.\n");
 	mprint ("                       If you need to submit a bug report, please send\n");
 	mprint ("                       the output from this option.\n");
@@ -1651,6 +1652,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp (argv[i],"-debug")==0)
 		{
 			opt->debug_mask |= CCX_DMT_VERBOSE;
+			continue;
+		}
+		if (strcmp (argv[i],"-pesheader")==0)
+		{
+			opt->pesheader = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-608")==0)

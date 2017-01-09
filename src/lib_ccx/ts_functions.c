@@ -752,7 +752,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			continue;
 
 
-		if ( (cinfo->prev_counter == 15 ? 0 : cinfo->prev_counter + 1) != payload.counter )
+		if ( (cinfo->prev_counter == 15 ? 0: cinfo->prev_counter + 1) != payload.counter )
 		{
 			mprint("TS continuity counter not incremented prev/curr %u/%u\n",
 					cinfo->prev_counter, payload.counter);
@@ -787,6 +787,49 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	if (ret == CCX_EOF)
 	{
 		cinfo_cremation(ctx, data);
+	}
+	if(ccx_options.pesheader && ret)
+	{
+		mprint("PES: \n");
+
+		//header
+	  mprint("|Stream id: 0x%x| ",
+	    cinfo->capbuf[3]);
+	  mprint("|PES packet length: 0x%x|\n",
+	    (cinfo->capbuf[4] << 8) + cinfo->capbuf[5]);
+		//header
+
+		if(cinfo->capbuf[3] != 0xBE && cinfo->capbuf[3] != 0xBF)
+		{
+			//extension
+			mprint("|PESSC: 0x%x| ",
+		    (unsigned char)(cinfo->capbuf[6] << 2) >> 6);
+		  mprint("|PESP: 0x%x| ",
+		    (unsigned char)(cinfo->capbuf[6] << 4) >> 7);
+		  mprint("|DAI: 0x%x| ",
+		    (unsigned char)(cinfo->capbuf[6] << 5) >> 6);
+		  mprint("|CY: 0x%x|\n",
+		    (unsigned char)(cinfo->capbuf[6] << 7) >> 7);
+		  mprint("|OOC: 0x%x| ",
+		    (unsigned char)(cinfo->capbuf[6] << 8) >> 7);
+		  mprint("|PTSDTS: 0x%x| ",
+		    (unsigned char)cinfo->capbuf[7] >> 6);
+			mprint("|ESCR: 0x%x| ",
+		    (unsigned char)(cinfo->capbuf[7] << 2) >> 7);
+		  mprint("|Rate: 0x%x|\n",
+		    (unsigned char)(cinfo->capbuf[7] << 3) >> 7);
+		  mprint("|DSM: 0x%x|",
+		    (unsigned char)(cinfo->capbuf[7] << 4) >> 7);
+		  mprint("|ACI: 0x%x| ",
+		    (unsigned char)(cinfo->capbuf[7] << 5) >> 7);
+		  mprint("|PESCRC: 0x%x| ",
+		    (unsigned char)(cinfo->capbuf[7] << 6) >> 7);
+			mprint("|EXT: 0x%x|\n",
+		    (unsigned char)(cinfo->capbuf[7] << 7) >> 7);
+			mprint("|PES header data length: 0x%x|\n",
+			  cinfo->capbuf[8]);
+			//extension
+		}
 	}
 	return ret;
 }
