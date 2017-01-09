@@ -791,17 +791,14 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	if(ccx_options.pesheader && ret)
 	{
 		mprint("PES: \n");
-
-		//header
+    
 	  mprint("|Stream id: 0x%x| ",
 	    cinfo->capbuf[3]);
 	  mprint("|PES packet length: 0x%x|\n",
 	    (cinfo->capbuf[4] << 8) + cinfo->capbuf[5]);
-		//header
 
 		if(cinfo->capbuf[3] != 0xBE && cinfo->capbuf[3] != 0xBF)
 		{
-		  //extension
 		  mprint("|PESSC: 0x%x| ",
 		    (unsigned char)(cinfo->capbuf[6] << 2) >> 6);
 		  mprint("|PESP: 0x%x| ",
@@ -828,7 +825,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		    (unsigned char)(cinfo->capbuf[7] << 7) >> 7);
 		  mprint("|PES header data length: 0x%x|\n",
 		    cinfo->capbuf[8]);
-			//extension
 		}
 	}
 	return ret;
