@@ -264,6 +264,10 @@ int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct enco
 {
 	// Search for ticker text at the bottom of the screen, such as in Russia TV1 or stock prices
 	int got_frame;
+	int cur_sec,total_sec,progress;
+	printf("%s\n", language[10]);
+	printf("%s\n", language[11]);
+	printf("%s\n", language[12]);
 	while(av_read_frame(ctx->format_ctx, &ctx->packet)>=0)
 	{
 		if(ctx->packet.stream_index == ctx->video_stream_id)
@@ -272,10 +276,14 @@ int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct enco
 			avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
 			if(got_frame)
 			{
-				// Do something
+				cur_sec = (int)convert_pts_to_s(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
+				total_sec = (int)convert_pts_to_s(ctx->format_ctx->duration, AV_TIME_BASE_Q);
+				progress = (cur_sec*100)/total_sec;
+				activity_progress(progress,cur_sec/60,cur_sec%60);
 			}
 		}
 	}
+	activity_progress(100,cur_sec/60,cur_sec%60);
 	return 0;
 }
 

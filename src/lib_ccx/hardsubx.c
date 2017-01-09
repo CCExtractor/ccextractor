@@ -221,13 +221,28 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	ctx->tess_handle = TessBaseAPICreate();
 	char* pars_vec = strdup("debug_file");
 	char* pars_values = strdup("/dev/null");
-	int res = TessBaseAPIInit4(ctx->tess_handle, NULL, "eng", OEM_DEFAULT, NULL, 0, &pars_vec,
-		&pars_values, 1, false);
+	char *tessdata_dir_path=".";
+
+	int ret = -1;
+	if(options->ocrlang)
+	{
+		ret = TessBaseAPIInit4(ctx->tess_handle, NULL, options->ocrlang, OEM_DEFAULT, NULL, 0, &pars_vec,
+			&pars_values, 1, false);
+		if(ret != 0)
+		{
+			mprint("Failed loading language: %s, trying to load eng\n", options->ocrlang);
+		}
+	}
+	if(ret != 0)
+	{
+		ret = TessBaseAPIInit4(ctx->tess_handle, NULL, "eng", OEM_DEFAULT, NULL, 0, &pars_vec,
+			&pars_values, 1, false);
+	}
 	free(pars_vec);
 	free(pars_values);
-	if(res != 0)
+	if(ret != 0)
 	{
-		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to initialize Tesseract!");
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "Tesseract not initialized!");
 	}
 
 	//Initialize attributes common to lib_ccx context
