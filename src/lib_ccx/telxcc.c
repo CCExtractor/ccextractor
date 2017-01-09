@@ -96,6 +96,7 @@ struct TeletextCtx
 	// Current and previous page buffers. This is the output written to file when
 	// the time comes.
 	teletext_page_t page_buffer;
+	//uint16_t prev_buffer_text[25][40]; // 25 lines x 40 cols (1 screen/page) of wide chars
 	char *page_buffer_prev;
 	char *page_buffer_cur;
 	unsigned page_buffer_cur_size;
@@ -890,6 +891,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 	switch (tlt_config.write_format)
 	{
 		case CCX_OF_TRANSCRIPT:
+		case CCX_OF_SRT:
 			if (ctx->page_buffer_prev_used == 0)
 				ctx->prev_show_timestamp = page->show_timestamp;
 			if (ctx->page_buffer_prev_used == 0 ||
