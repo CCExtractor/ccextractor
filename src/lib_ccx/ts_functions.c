@@ -801,9 +801,9 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 		if(cinfo->capbuf[3] != 0xBE && cinfo->capbuf[3] != 0xBF)
 		{
-		//extension
-		mprint("|PESSC: 0x%x| ",
-		  (unsigned char)(cinfo->capbuf[6] << 2) >> 6);
+			//extension
+			mprint("|PESSC: 0x%x| ",
+		    (unsigned char)(cinfo->capbuf[6] << 2) >> 6);
 		  mprint("|PESP: 0x%x| ",
 		    (unsigned char)(cinfo->capbuf[6] << 4) >> 7);
 		  mprint("|DAI: 0x%x| ",
@@ -814,8 +814,8 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		    (unsigned char)(cinfo->capbuf[6] << 8) >> 7);
 		  mprint("|PTSDTS: 0x%x| ",
 		    (unsigned char)cinfo->capbuf[7] >> 6);
-		mprint("|ESCR: 0x%x| ",
-		  (unsigned char)(cinfo->capbuf[7] << 2) >> 7);
+			mprint("|ESCR: 0x%x| ",
+		    (unsigned char)(cinfo->capbuf[7] << 2) >> 7);
 		  mprint("|Rate: 0x%x|\n",
 		    (unsigned char)(cinfo->capbuf[7] << 3) >> 7);
 		  mprint("|DSM: 0x%x|",
@@ -824,10 +824,10 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		    (unsigned char)(cinfo->capbuf[7] << 5) >> 7);
 		  mprint("|PESCRC: 0x%x| ",
 		    (unsigned char)(cinfo->capbuf[7] << 6) >> 7);
-		mprint("|EXT: 0x%x|\n",
-		  (unsigned char)(cinfo->capbuf[7] << 7) >> 7);
-		mprint("|PES header data length: 0x%x|\n",
-		  cinfo->capbuf[8]);
+			mprint("|EXT: 0x%x|\n",
+		    (unsigned char)(cinfo->capbuf[7] << 7) >> 7);
+			mprint("|PES header data length: 0x%x|\n",
+			  cinfo->capbuf[8]);
 			//extension
 		}
 	}
