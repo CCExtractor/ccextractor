@@ -587,7 +587,7 @@ int parse_PAT (struct ccx_demuxer *ctx)
 		clear_PMT_array(ctx);
 		memset (ctx->PIDs_seen,0,sizeof (int) *65536); // Forget all we saw
 		memset(ctx->min_pts, UINT64_MAX, 65536 * sizeof(uint64_t));
-		memset(ctx->found_stream_ids, 0, 51 * sizeof(uint8_t));
+		memset(ctx->found_stream_ids, 0, MAX_NUM_OF_STREAMIDS * sizeof(uint8_t));
 		memset(ctx->got_first_pts, UINT64_MAX, 3 * sizeof(uint64_t));
 		if (!tlt_config.user_page) // If the user didn't select a page...
 			tlt_config.page=0; // ..forget whatever we detected.
