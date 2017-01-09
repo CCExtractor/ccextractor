@@ -9,6 +9,7 @@
 - New: Updated -debugdvbsub parameter to get the most relevant DVB traces for debugging.
 - New: SMPTE-TT files are now compatible with Adobe Premiere.
 - New: Updated libpng.
+- New: Added 3rd party (Tracy from archive.org) static linux build script.
 - Fix: Teletext duplicate lines in certain cases.
 - Fix: Improved teletext timing.
 - Fix: DVB timing is finally good.
