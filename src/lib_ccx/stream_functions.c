@@ -372,14 +372,13 @@ int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, u
 		if (data->pts != CCX_NOPTS) // Otherwise can't check for rollovers yet
 		{
 			if (!bits_9 && ((current_pts_33>>30)&7)==7) // PTS about to rollover
-				rollover_bits++;
+				data->rollover_bits++;
 			if ((bits_9>>30)==7 && ((current_pts_33>>30)&7)==0) // PTS rollback? Rare and if happens it would mean out of order frames
-				rollover_bits--;
-		}
-
+				data->rollover_bits--;
+		}		
 
 		current_pts_33 = bits_9 | bits_10 | bits_11 | bits_12 | bits_13;
-		data->pts = (LLONG) rollover_bits<<33 | current_pts_33;
+		data->pts = (LLONG) data->rollover_bits<<33 | current_pts_33;
 
 		/* The user data holding the captions seems to come between GOP and
 		 * the first frame. The sync PTS (sync_pts) (set at picture 0)

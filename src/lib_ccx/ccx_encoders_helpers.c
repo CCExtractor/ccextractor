@@ -325,6 +325,15 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 	return (unsigned)(buffer - orig); // Return length
 }
 
+void get_sentence_borders(int *first, int *last, int line_num, struct eia608_screen *data) {
+	*first = 0;
+	*last = 32;
+	while (data->colors[line_num][*first] == COL_TRANSPARENT)
+		(*first)++;
+	while (data->colors[line_num][*last] == COL_TRANSPARENT)
+		(*last)--;
+}
+
 /*void delete_all_lines_but_current(ccx_decoder_608_context *context, struct eia608_screen *data, int row)
 {
 for (int i=0;i<15;i++)

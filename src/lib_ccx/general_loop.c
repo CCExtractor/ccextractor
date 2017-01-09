@@ -16,8 +16,9 @@
 #include "ffmpeg_intgr.h"
 #include "ccx_gxf.h"
 #include "dvd_subtitle_decoder.h"
+#include "teletext.h"
 
-unsigned int rollover_bits = 0; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
+
 int end_of_file=0; // End of file?
 
 
@@ -523,13 +524,14 @@ void process_hex (struct lib_ccx_ctx *ctx, char *filename)
 }
 #endif
 // Raw file process
-void raw_loop (struct lib_ccx_ctx *ctx)
+int raw_loop (struct lib_ccx_ctx *ctx)
 {
 	LLONG ret;
 	struct demuxer_data *data = NULL;
 	struct cc_subtitle *dec_sub = NULL;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 	struct lib_cc_decode *dec_ctx = NULL;
+	int caps = 0;
 
 	dec_ctx = update_decoder_list(ctx);
 	dec_sub = &dec_ctx->dec_sub;
@@ -549,6 +551,7 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 		ret = process_raw(dec_ctx, dec_sub, data->buffer, data->len);
 		if (dec_sub->got_output)
 		{
+			caps = 1;
 			encode_sub(enc_ctx, dec_sub);
 			dec_sub->got_output = 0;
 		}
@@ -559,6 +562,7 @@ void raw_loop (struct lib_ccx_ctx *ctx)
 
 
 	} while (data->len);
+	return caps;
 }
 
 /* Process inbuf bytes in buffer holding raw caption data (three byte packets, the first being the field).
@@ -645,7 +649,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if(data_node->bufferdatatype == CCX_DVB_SUBTITLE)
 	{
-		dvbsub_decode(dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
+		dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
 		set_fts(dec_ctx->timing);
 		got = data_node->len;
 	}
@@ -751,12 +755,13 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		}
 	}
 
-	if (dec_sub->got_output)
+	if (data_node->bufferdatatype != CCX_DVB_SUBTITLE && dec_sub->got_output)
 	{
+		ret = 1;
 		encode_sub(enc_ctx, dec_sub);
 		dec_sub->got_output = 0;
 	}
-	return CCX_OK;
+	return ret;
 }
 
 void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
@@ -796,13 +801,14 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 		}
 	}
 }
-void general_loop(struct lib_ccx_ctx *ctx)
+int general_loop(struct lib_ccx_ctx *ctx)
 {
 	struct lib_cc_decode *dec_ctx = NULL;
 	enum ccx_stream_mode_enum stream_mode;
 	struct demuxer_data *datalist = NULL;
 	struct demuxer_data *data_node = NULL;
 	int ret;
+	int caps = 0;
 
 	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 
@@ -867,16 +873,21 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				ignore_other_stream(ctx->demux_ctx, pid);
 				data_node = get_data_stream(datalist, pid);
 			}
-			if(!data_node)
-				continue;
 
 			cinfo = get_cinfo(ctx->demux_ctx, pid);
 			enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 			dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
+			if (!data_node) //If there's no DVB data, we still need to capture the first PTS no matter the buffer data type in order to have the arbitrary value
+			{
+				set_current_pts(dec_ctx->timing, datalist->pts);
+				set_fts(dec_ctx->timing);
+				continue;
+			}
+
 			if (enc_ctx)
 				enc_ctx->timing = dec_ctx->timing;
-				
+
 			if(data_node->pts != CCX_NOPTS)
 			{
 				struct ccx_rational tb = {1,MPEG_CLOCK_FREQ};
@@ -907,7 +918,9 @@ void general_loop(struct lib_ccx_ctx *ctx)
 				isdb_set_global_time(dec_ctx, tstamp);
 			}
 			ret = process_data(enc_ctx, dec_ctx, data_node);
-			if( ret != CCX_OK)
+			if (enc_ctx->srt_counter || dec_ctx->saw_caption_block || ret == 1)
+				caps = 1;
+			if( ret == CCX_EINVAL)
 				break;
 		}
 		else
@@ -971,7 +984,6 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		if (ccx_options.send_to_srv)
 			net_check_conn();
 	}
-
 	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
 		if (dec_ctx->codec == CCX_CODEC_TELETEXT)
@@ -995,10 +1007,11 @@ void general_loop(struct lib_ccx_ctx *ctx)
 		mprint("Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
 				ctx->inputfile[ctx->current_file], ctx->current_file, ctx->demux_ctx->past, ctx->inputsize);
 	}
+	return caps;
 }
 
 // Raw caption with FTS file process
-void rcwt_loop(struct lib_ccx_ctx *ctx)
+int rcwt_loop(struct lib_ccx_ctx *ctx)
 {
 	unsigned char *parsebuf;
 	long parsebufsize = 1024;
@@ -1008,6 +1021,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	LLONG currfts;
 	uint16_t cbcount = 0;
 	int bread = 0; // Bytes read
+	int caps = 0;
 	LLONG result;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 
@@ -1026,7 +1040,7 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 	{
 		mprint("Premature end of file!\n");
 		end_of_file = 1;
-		return;
+		return -1;
 	}
 
 	// Expecting RCWT header
@@ -1124,10 +1138,12 @@ void rcwt_loop(struct lib_ccx_ctx *ctx)
 		}
 		if (dec_sub->got_output)
 		{
+			caps = 1;
 			encode_sub(enc_ctx, dec_sub);
 			dec_sub->got_output = 0;
 		}
 	} // end while(1)
 
 	dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
+	return caps;
 }

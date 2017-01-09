@@ -180,9 +180,13 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
 		opt->write_format = CCX_OF_SSA;
 		if (strcmp (format,"ass")==0)
 			opt->use_ass_instead_of_ssa = 1;
-	} else if (strcmp(format, "webvtt") == 0)
+	}
+	else if (strcmp(format, "webvtt")==0 || strcmp(format, "webvtt-full")==0) {
 		opt->write_format = CCX_OF_WEBVTT;
-	else if (strcmp (format,"sami")==0 || strcmp (format,"smi")==0)
+		if (strcmp(format, "webvtt-full")==0)
+			opt->use_webvtt_styling = 1;
+	}
+	else if (strcmp(format, "sami") == 0 || strcmp(format, "smi") == 0)
 		opt->write_format=CCX_OF_SAMI;
 	else if (strcmp (format,"transcript")==0 || strcmp (format,"txt")==0)
 	{
@@ -302,7 +306,13 @@ void print_usage (void)
 	mprint ("                       without TS or PES headers.\n");
 	mprint ("              -stdout: Write output to stdout (console) instead of file. If\n");
 	mprint ("                       stdout is used, then -o, -o1 and -o2 can't be used. Also\n");
-	mprint ("                       -stdout will redirect all messages to stderr (error).\n\n");
+	mprint ("                       -stdout will redirect all messages to stderr (error).\n");
+	mprint ("           -pesheader: Dump the PES Header to stdout (console). This is\n");
+	mprint ("                       used for debugging purposes to see the contents\n");
+	mprint ("                       of each PES packet header.\n");
+	mprint ("         -debugdvbsub: Write the DVB subtitle debug traces to console.\n");
+	mprint ("      -ignoreptsjumps: Ignore PTS jumps. Use this parameter if you\n");
+	mprint ("                       experience timeline resets/jumps in the output.\n\n");
 	mprint ("               -stdin: Reads input from stdin (console) instead of file.\n");
 	mprint ("You can pass as many input files as you need. They will be processed in order.\n");
 	mprint ("If a file name is suffixed by +, ccextractor will try to follow a numerical\n");
@@ -378,6 +388,7 @@ void print_usage (void)
 	mprint ("                      srt     -> SubRip (default, so not actually needed).\n");
 	mprint ("                      ass/ssa -> SubStation Alpha.\n");
 	mprint ("                      webvtt  -> WebVTT format\n");
+	mprint ("                      webvtt-full -> WebVTT format with styling\n");
 	mprint ("                      sami    -> MS Synchronized Accesible Media Interface.\n");
 	mprint ("                      bin     -> CC data in CCExtractor's own binary format.\n");
 	mprint ("                      raw     -> CC data in McPoodle's Broadcast format.\n");
@@ -475,6 +486,7 @@ void print_usage (void)
 	mprint ("                       you prefer your own reference. Note: Current this only\n");
 	mprint ("                       affects Teletext in timed transcript with -datets.\n");
 	mprint ("           --noscte20: Ignore SCTE-20 data if present.\n");
+	mprint ("  --webvtt-create-css: Create a separate file for CSS instead of inline.\n");
 	mprint ("\n");
 	mprint ("Options that affect what kind of output will be produced:\n");
 	mprint ("                 -bom: Append a BOM (Byte Order Mark) to output files.\n");
@@ -993,7 +1005,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i], "-")==0 || strcmp(argv[i], "-stdin") == 0)
 		{
-
+#ifdef WIN32
+			setmode(fileno(stdin), O_BINARY);
+#endif
 			opt->input_source=CCX_DS_STDIN;
 			if (!opt->live_stream) opt->live_stream=-1;
 			continue;
@@ -1466,6 +1480,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->noscte20 = 1;
 			continue;
 		}
+		if (strcmp (argv[i],"--webvtt-create-css")==0)
+		{
+			opt->webvtt_create_css = 1;
+			continue;
+		}
 		if (strcmp (argv[i],"-noru")==0 ||
 				strcmp (argv[i],"--norollup")==0)
 		{
@@ -1641,6 +1660,21 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			if (opt->messages_target==1) // Only change this if still stdout. -quiet could set it to 0 for example
 				opt->messages_target=2; // stderr
 			opt->cc_to_stdout=1;
+			continue;
+		}
+		if (strcmp(argv[i], "-pesheader") == 0)
+		{
+			opt->pes_header_to_stdout = 1;
+			continue;
+		}
+		if (strcmp(argv[i], "-debugdvbsub") == 0)
+		{
+			opt->dvb_debug_traces_to_stdout = 1;
+			continue;
+		}
+		if (strcmp(argv[i], "-ignoreptsjumps") == 0)
+		{
+			opt->ignore_pts_jumps = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-quiet")==0)

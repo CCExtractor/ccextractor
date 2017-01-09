@@ -15,6 +15,7 @@ unsigned char tspacket[188]; // Current packet
 static unsigned char *haup_capbuf = NULL;
 static long haup_capbufsize = 0;
 static long haup_capbuflen = 0; // Bytes read in haup_capbuf
+long long int last_pts = 0; // PTS of last PES packet (debug purposes)
 
 // Descriptions for ts ccx_stream_type
 const char *desc[256];
@@ -52,6 +53,64 @@ char *get_buffer_type_str(struct cap_info *cinfo)
 	else
 	{
 		return NULL;
+	}
+}
+void pes_header_dump(uint8_t *buffer, long len)
+{
+	//Write the PES Header to console
+	uint64_t pes_prefix;
+	uint8_t pes_stream_id;
+	uint16_t pes_packet_length;
+	uint8_t optional_pes_header_included = NO;
+	uint16_t optional_pes_header_length = 0;
+	uint64_t pts = 0;
+
+	// check if we have at least some data to work with
+	if (len < 6)
+		return;
+
+	// Packetized Elementary Stream (PES) 32-bit start code
+	pes_prefix = (buffer[0] << 16) | (buffer[1] << 8) | buffer[2];
+	pes_stream_id = buffer[3];
+
+	// check for PES header
+	if (pes_prefix != 0x000001)
+		return;
+
+	pes_packet_length = 6 + ((buffer[4] << 8) | buffer[5]); // 5th and 6th byte of the header define the length of the rest of the packet (+6 is for the prefix, stream ID and packet length)
+
+	printf("Packet start code prefix: %04x # ", pes_prefix);
+	printf("Stream ID: %04x # ", pes_stream_id);
+	printf("Packet length: %d ", pes_packet_length);
+
+	if (pes_packet_length == 6)
+	{
+		// great, there is only a header and no extension + payload
+		printf("\n");
+		return;
+	}
+
+	// optional PES header marker bits (10.. ....)
+	if ((buffer[6] & 0xc0) == 0x80)
+	{
+		optional_pes_header_included = YES;
+		optional_pes_header_length = buffer[8];
+	}
+
+	if (optional_pes_header_included == YES && optional_pes_header_length > 0 && (buffer[7] & 0x80) > 0 && len >= 14)
+	{
+		//get associated PTS as it exists
+		pts = (buffer[9] & 0x0e);
+		pts <<= 29;
+		pts |= (buffer[10] << 22);
+		pts |= ((buffer[11] & 0xfe) << 14);
+		pts |= (buffer[12] << 7);
+		pts |= ((buffer[13] & 0xfe) >> 1);
+		//printf("# Associated PTS: %d \n", pts);
+		printf("# Associated PTS: %" PRId64 " # ", pts);
+		printf("Diff: %" PRId64 "\n", pts-last_pts);
+		//printf("Diff: %d # ", pts - last_pts);
+		last_pts = pts;
 	}
 }
 enum ccx_stream_type get_buffer_type(struct cap_info *cinfo)
@@ -231,8 +290,8 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 			payload->pcr |= (tspacket[9] << 1);
 			payload->pcr |= (tspacket[10] >> 7);
 			/* Ignore 27 Mhz clock since we dont deal in nanoseconds*/
-			//payload->pcr = ((tspacket[10] & 0x01) << 8);
-			//payload->pcr |= tspacket[11];
+			// payload->pcr = ((tspacket[10] & 0x01) << 8);
+			// payload->pcr |= tspacket[11];
 		}
 
 		// Catch bad packages with adaptation_field_length > 184 and
@@ -276,7 +335,7 @@ void look_for_caption_data (struct ccx_demuxer *ctx, struct ts_payload *payload)
 		if (payload->start[i]=='G' && payload->start[i+1]=='A' &&
 				payload->start[i+2]=='9' && payload->start[i+3]=='4')
 		{
-			mprint ("PID %u seems to contain captions.\n", payload->pid);
+			mprint ("PID %u seems to contain CEA-608 captions.\n", payload->pid);
 			ctx->PIDs_seen[payload->pid]=3;
 			return;
 		}
@@ -408,6 +467,7 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	if(!cinfo->capbuf || !cinfo->capbuflen)
 		return -1;
 
+	
 	if (ptr->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 	{
 		dump (CCX_DMT_GENERIC_NOTICES, cinfo->capbuf, cinfo->capbuflen, 0, 1);
@@ -420,10 +480,14 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	if (cinfo->codec == CCX_CODEC_TELETEXT)
 	{
 		memcpy(ptr->buffer+ ptr->len, cinfo->capbuf, cinfo->capbuflen);
-		ptr->len += cinfo->capbuflen;
+		ptr->len += cinfo->capbuflen; 
 		return CCX_OK;
 	}
 	vpesdatalen = read_video_pes_header(ctx, ptr, cinfo->capbuf, &pesheaderlen, cinfo->capbuflen);
+	if (ccx_options.pes_header_to_stdout && cinfo->codec == CCX_CODEC_DVB) //for teletext we have its own header dump
+	{
+		pes_header_dump(cinfo->capbuf, pesheaderlen);
+	}
 	if (vpesdatalen < 0)
 	{
 		dbg_print(CCX_DMT_VERBOSE, "Seems to be a broken PES. Terminating file handling.\n");
@@ -490,6 +554,7 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 		memcpy(ptr->buffer+ ptr->len, databuf, databuflen);
 		ptr->len += databuflen;
 	}
+	
 	return CCX_OK;
 }
 
@@ -697,7 +762,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
                         payload.pid);
                 continue;
         }
-
 
 		cinfo = get_cinfo(ctx, payload.pid);
 		if(cinfo == NULL)

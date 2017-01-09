@@ -126,12 +126,24 @@ void* init_ocr(int lang_index)
 		lang_index = 1;
 	}
 
-	if(ccx_options.ocrlang)
-		ret = TessBaseAPIInit3(ctx->api, NULL, ccx_options.ocrlang);
-	else if(data_location == 1)
-		ret = TessBaseAPIInit3(ctx->api, NULL, language[lang_index]);
-	else
-		ret = TessBaseAPIInit3(ctx->api, tessdata_dir_path, language[lang_index]);
+	char* lang = NULL, *tessdata_path = NULL;
+	if (ccx_options.ocrlang)
+		lang = ccx_options.ocrlang;
+	else if (data_location == 1)
+		lang = language[lang_index];
+	else {
+		lang = language[lang_index];
+		tessdata_path = tessdata_dir_path;
+	}
+
+	char* pars_vec = strdup("debug_file");
+	char* pars_values = strdup("/dev/null");
+
+	ret = TessBaseAPIInit4(ctx->api, tessdata_path, lang, OEM_DEFAULT, NULL, 0, &pars_vec,
+		&pars_values, 1, false);
+
+	free(pars_vec);
+	free(pars_values);
 
 	if(ret < 0)
 	{

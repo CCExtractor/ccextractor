@@ -21,9 +21,23 @@ More usage information can be found on our website:
 - [Using the command line tool](http://www.ccextractor.org/doku.php?id=public:general:command_line_usage)
 - [Using the Windows GUI](http://www.ccextractor.org/doku.php?id=public:general:win_gui_usage) 
 
+
 ## Compiling
 
-Compilation instructions are coming soon. 
+### Debian/Ubuntu
+
+Install these packages in the terminal
+
+    sudo apt-get install -y gcc
+    sudo apt-get install -y libcurl4-gnutls-dev
+    sudo apt-get install -y tesseract-ocr
+    sudo apt-get install -y tesseract-ocr-dev
+    sudo apt-get install -y libleptonica-dev
+Then run script linux/build or linux/builddebug.
+
+### Windows
+
+Open the windows/ccextractor.sln file with Visual Studio (2015 at least), and build it. Configurations "(Debug|Release)-Full" includes dependent libraries which are used for OCR.
 
 ## Support
 

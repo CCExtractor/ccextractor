@@ -278,7 +278,6 @@ void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned 
 		// Non optimal since data is moved later again but we don't care since
 		// we're never here in ccextractor.
 		memmove (ctx->filebuffer, ctx->filebuffer + ctx->filebuffer_pos, ctx->bytesinbuffer-ctx->filebuffer_pos);
-		ctx->bytesinbuffer -= ctx->filebuffer_pos;
 		ctx->bytesinbuffer  = 0;
 		ctx->filebuffer_pos = 0;
 	}

@@ -96,7 +96,7 @@ struct ccx_demuxer
 
 	/* File handles */
 	FILE *fh_out_elementarystream;
-	int infd; // descriptor number to input.
+	int infd;   // descriptor number to input.
 	LLONG past; /* Position in file, if in sync same as ftell()  */
 
 	// TODO relates to fts_global
@@ -121,9 +121,9 @@ struct ccx_demuxer
 	unsigned last_pat_length;
 
 	unsigned char *filebuffer;
-	LLONG filebuffer_start; // Position of buffer start relative to file
+	LLONG filebuffer_start;      // Position of buffer start relative to file
 	unsigned int filebuffer_pos; // Position of pointer relative to buffer start
-	unsigned int bytesinbuffer; // Number of bytes we actually have on buffer
+	unsigned int bytesinbuffer;  // Number of bytes we actually have on buffer
 
 	int warning_program_not_found_shown;
 
@@ -156,6 +156,7 @@ struct demuxer_data
 	enum ccx_bufferdata_type bufferdatatype;
 	unsigned char *buffer;
 	size_t len;
+	unsigned int rollover_bits; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
 	LLONG pts;
 	struct ccx_rational tb;
 	struct demuxer_data *next_stream;

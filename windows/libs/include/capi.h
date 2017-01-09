@@ -1,5 +1,22 @@
-#ifndef TESSERACT_API_CAPI_H__
-#define TESSERACT_API_CAPI_H__
+///////////////////////////////////////////////////////////////////////
+// File:        capi.h
+// Description: C-API TessBaseAPI
+//
+// (C) Copyright 2012, Google Inc.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+///////////////////////////////////////////////////////////////////////
+
+#ifndef API_CAPI_H_
+#define API_CAPI_H_
 
 #ifdef TESS_CAPI_INCLUDE_BASEAPI
 #   include "baseapi.h"
@@ -51,7 +68,6 @@ typedef tesseract::ProbabilityInContextFunc TessProbabilityInContextFunc;
 typedef tesseract::FillLatticeFunc TessFillLatticeFunc;
 typedef tesseract::Dawg TessDawg;
 typedef tesseract::TruthCallback TessTruthCallback;
-typedef tesseract::CubeRecoContext TessCubeRecoContext;
 typedef tesseract::Orientation TessOrientation;
 typedef tesseract::ParagraphJustification TessParagraphJustification;
 typedef tesseract::WritingDirection TessWritingDirection;
@@ -69,7 +85,7 @@ typedef struct TessPageIterator TessPageIterator;
 typedef struct TessResultIterator TessResultIterator;
 typedef struct TessMutableIterator TessMutableIterator;
 typedef struct TessChoiceIterator TessChoiceIterator;
-typedef enum TessOcrEngineMode     { OEM_TESSERACT_ONLY, OEM_CUBE_ONLY, OEM_TESSERACT_CUBE_COMBINED, OEM_DEFAULT } TessOcrEngineMode;
+typedef enum TessOcrEngineMode     { OEM_TESSERACT_ONLY, OEM_LSTM_ONLY, OEM_TESSERACT_LSTM_COMBINED, OEM_DEFAULT } TessOcrEngineMode;
 typedef enum TessPageSegMode       { PSM_OSD_ONLY, PSM_AUTO_OSD, PSM_AUTO_ONLY, PSM_AUTO, PSM_SINGLE_COLUMN, PSM_SINGLE_BLOCK_VERT_TEXT,
                                      PSM_SINGLE_BLOCK, PSM_SINGLE_LINE, PSM_SINGLE_WORD, PSM_CIRCLE_WORD, PSM_SINGLE_CHAR, PSM_SPARSE_TEXT,
                                      PSM_SPARSE_TEXT_OSD, PSM_COUNT } TessPageSegMode;
@@ -266,7 +282,10 @@ TESS_API void  TESS_CALL TessBaseAPIClearPersistentCache(TessBaseAPI* handle);
 TESS_API void  TESS_CALL TessBaseAPISetProbabilityInContextFunc(TessBaseAPI* handle, TessProbabilityInContextFunc f);
 
 TESS_API void  TESS_CALL TessBaseAPISetFillLatticeFunc(TessBaseAPI* handle, TessFillLatticeFunc f);
-TESS_API BOOL  TESS_CALL TessBaseAPIDetectOS(TessBaseAPI* handle, OSResults* results);
+
+// Call TessDeleteText(*best_script_name) to free memory allocated by this function
+TESS_API BOOL  TESS_CALL TessBaseAPIDetectOrientationScript(TessBaseAPI* handle,
+                                                            int* orient_deg, float* orient_conf, const char **script_name, float* script_conf);
 
 TESS_API void  TESS_CALL TessBaseAPIGetFeaturesForBlob(TessBaseAPI* handle, TBLOB* blob, INT_FEATURE_STRUCT* int_features,
                                                        int* num_features, int* FeatureOutlineIndex);
@@ -294,9 +313,6 @@ TESS_API void  TESS_CALL TessNormalizeTBLOB(TBLOB* tblob, ROW* row, BOOL numeric
 TESS_API TessOcrEngineMode
                TESS_CALL TessBaseAPIOem(const TessBaseAPI* handle);
 TESS_API void  TESS_CALL TessBaseAPIInitTruthCallback(TessBaseAPI* handle, TessTruthCallback* cb);
-
-TESS_API TessCubeRecoContext*
-               TESS_CALL TessBaseAPIGetCubeRecoContext(const TessBaseAPI* handle);
 #endif
 
 TESS_API void  TESS_CALL TessBaseAPISetMinOrientationMargin(TessBaseAPI* handle, double margin);
@@ -377,4 +393,4 @@ TESS_API float TESS_CALL TessChoiceIteratorConfidence(const TessChoiceIterator* 
 }
 #endif
 
-#endif /* TESSERACT_API_CAPI_H__ */
+#endif  // API_CAPI_H_

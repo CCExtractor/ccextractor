@@ -556,7 +556,7 @@ void gf_odf_avc_cfg_del(GF_AVCConfig *cfg)
 			if (sl->data) gf_free(sl->data);
 			gf_free(sl);
 		}
-		gf_list_del(cfg->pictureParameterSets);
+        gf_list_del(cfg->sequenceParameterSetExtensions);
 	}
 	gf_free(cfg);
 }

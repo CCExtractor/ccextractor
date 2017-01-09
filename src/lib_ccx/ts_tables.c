@@ -485,6 +485,13 @@ void ts_buffer_psi_packet(struct ccx_demuxer *ctx)
 		ctx->PID_buffers[pid]->prev_ccounter=0xff;
 	}
 
+	//skip the packet if the adaptation field legnth or payload length are out of bounds or broken
+	if (adaptation_field_length > 184 || payload_length > 184) {
+		payload_length = 0;
+		dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Bad packet, adaptation field too long, skipping.\n");
+
+	}
+
 	if(payload_start_indicator)
 	{
 		if(ctx->PID_buffers[pid]->ccounter>0)

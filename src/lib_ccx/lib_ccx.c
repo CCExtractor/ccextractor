@@ -145,8 +145,10 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 
 	// Init shared decoder settings
 	ctx->dec_global_setting = init_decoder_setting(opt);
-	if (!ctx->dec_global_setting)
+	if (!ctx->dec_global_setting){
+		free(report_dtvcc);
 		return NULL;
+    }
 
 	// Need to set the 608 data for the report to the correct variable.
 	ctx->freport.data_from_608 = report_608;
@@ -169,6 +171,9 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->pesheaderbuf = (unsigned char *) malloc (188); // Never larger anyway
 
 	ctx->cc_to_stdout = opt->cc_to_stdout;
+	ctx->pes_header_to_stdout = opt->pes_header_to_stdout;
+	ctx->dvb_debug_traces_to_stdout = opt->dvb_debug_traces_to_stdout;
+	ctx->ignore_pts_jumps = opt->ignore_pts_jumps;
 
 	ctx->hauppauge_mode = opt->hauppauge_mode;
 	ctx->live_stream = opt->live_stream;
@@ -273,6 +278,15 @@ struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx)
 		if (!dec_ctx)
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "update_decoder_list: init_cc_decode failed. Not enough memory.\n");
 		list_add_tail( &(dec_ctx->list), &(ctx->dec_ctx_head) );
+
+		//DVB related
+		dec_ctx->prev = NULL;
+		dec_ctx->dec_sub.prev = NULL;
+		if (dec_ctx->codec == CCX_CODEC_DVB)
+		{
+			dec_ctx->prev = malloc(sizeof(struct lib_cc_decode));
+			dec_ctx->dec_sub.prev = malloc(sizeof(struct cc_subtitle));
+		}
 	}
 	return dec_ctx;
 }
@@ -308,6 +322,15 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 			if (!dec_ctx)
 				fatal(EXIT_NOT_ENOUGH_MEMORY, "update_decoder_list_cinfo: Not enough memory allocating dec_ctx (multiprogram == false)\n");
 			list_add_tail( &(dec_ctx->list), &(ctx->dec_ctx_head) );
+
+			//DVB related
+			dec_ctx->prev = NULL;
+			dec_ctx->dec_sub.prev = NULL;
+			if (dec_ctx->codec == CCX_CODEC_DVB)
+			{
+				dec_ctx->prev = malloc(sizeof(struct lib_cc_decode));
+				dec_ctx->dec_sub.prev = malloc(sizeof(struct cc_subtitle));
+			}
 		}
 	}
 	else
@@ -375,6 +398,17 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 			if (!enc_ctx)
 				return NULL;
 			list_add_tail( &(enc_ctx->list), &(ctx->enc_ctx_head) );
+
+			// DVB related
+			enc_ctx->prev = NULL;
+			if (cinfo)
+			{
+				if (cinfo->codec == CCX_CODEC_DVB)
+				{
+					enc_ctx->write_previous = 0;
+					enc_ctx->prev = malloc(sizeof(struct encoder_ctx));
+				}
+			}
 		}
 	}
 	else

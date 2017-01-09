@@ -23,17 +23,9 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 	unsigned h1, m1, s1, ms1;
 
 	LLONG start_time, end_time;
-
-	if (context->prev_start != -1 && (sub->flags & SUB_EOD_MARKER))
-	{
-		start_time = context->prev_start + context->subs_delay;
-		end_time = sub->start_time - 1;
-	}
-	else if (!(sub->flags & SUB_EOD_MARKER))
-	{
-		start_time = sub->start_time + context->subs_delay;
-		end_time = sub->end_time - 1;
-	}
+	
+	start_time = sub->start_time;
+	end_time = sub->end_time;
 
 	if (sub->nb_data == 0)
 		return ret;
