@@ -392,7 +392,8 @@ int main(int argc, char *argv[])
 		mprint ("\rNote: Processing was canceled before all data was processed because\n");
 		mprint ("\rone or more user-defined limits were reached.\n");
 	}
-	mprint ("This is beta software. Report issues to carlos at ccextractor org...\n");
+	mprint ("Issues? Open a ticket here\n");
+	mprint ("https://github.com/CCExtractor/ccextractor/issues\n");
 	if (show_myth_banner)
 	{
 		mprint ("NOTICE: Due to the major rework in 0.49, we needed to change part of the timing\n");
