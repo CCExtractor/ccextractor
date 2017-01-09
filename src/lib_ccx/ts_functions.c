@@ -790,8 +790,8 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	}
 	if(ccx_options.pesheader && ret)
 	{
-		mprint("PES: \n");
-    
+    mprint("PES: \n");
+
 	  mprint("|Stream id: 0x%x| ",
 	    cinfo->capbuf[3]);
 	  mprint("|PES packet length: 0x%x|\n",
