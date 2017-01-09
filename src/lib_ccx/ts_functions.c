@@ -752,7 +752,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			continue;
 
 
-		if ( (cinfo->prev_counter == 15 ? 0: cinfo->prev_counter + 1) != payload.counter )
+		if ( (cinfo->prev_counter == 15 ? 0 : cinfo->prev_counter + 1) != payload.counter )
 		{
 			mprint("TS continuity counter not incremented prev/curr %u/%u\n",
 					cinfo->prev_counter, payload.counter);
