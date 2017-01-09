@@ -630,288 +630,288 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		if ( ret != CCX_OK)
 			break;
 
-		// Skip damaged packets, they could do more harm than good
-		if (payload.transport_error)
-		{
-			dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - transport error.\n",
-				payload.pid);
-			continue;
-		}
+		//// Skip damaged packets, they could do more harm than good
+		//if (payload.transport_error)
+		//{
+		//	dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - transport error.\n",
+		//		payload.pid);
+		//	continue;
+		//}
 
-		// Check for PAT
-		if( payload.pid == 0) // This is a PAT
-		{
-			ts_buffer_psi_packet(ctx);
-			if(ctx->PID_buffers[payload.pid]!=NULL && ctx->PID_buffers[payload.pid]->buffer_length>0)
-				parse_PAT(ctx); // Returns 1 if there was some data in the buffer already
-			continue;
-		}
+		//// Check for PAT
+		//if( payload.pid == 0) // This is a PAT
+		//{
+		//	ts_buffer_psi_packet(ctx);
+		//	if(ctx->PID_buffers[payload.pid]!=NULL && ctx->PID_buffers[payload.pid]->buffer_length>0)
+		//		parse_PAT(ctx); // Returns 1 if there was some data in the buffer already
+		//	continue;
+		//}
 
-		if( ccx_options.xmltv >= 1 && payload.pid == 0x11) {// This is SDT (or BAT)
-			ts_buffer_psi_packet(ctx);
-			if(ctx->PID_buffers[payload.pid]!=NULL && ctx->PID_buffers[payload.pid]->buffer_length>0)
-				parse_SDT(ctx);
-		}
+		//if( ccx_options.xmltv >= 1 && payload.pid == 0x11) {// This is SDT (or BAT)
+		//	ts_buffer_psi_packet(ctx);
+		//	if(ctx->PID_buffers[payload.pid]!=NULL && ctx->PID_buffers[payload.pid]->buffer_length>0)
+		//		parse_SDT(ctx);
+		//}
 
-		if( ccx_options.xmltv >= 1 && payload.pid == 0x12) // This is DVB EIT
-			parse_EPG_packet(ctx->parent);
-		if( ccx_options.xmltv >= 1 && payload.pid >= 0x1000) // This may be ATSC EPG packet
-			parse_EPG_packet(ctx->parent);
-
-
-		for (j = 0; j < ctx->nb_program; j++)
-		{
-			if (ctx->pinfo[j].analysed_PMT_once == CCX_TRUE &&
-				ctx->pinfo[j].pcr_pid == payload.pid &&
-				payload.have_pcr)
-			{
-				ctx->last_global_timestamp = ctx->global_timestamp;
-				ctx->global_timestamp = (uint32_t) payload.pcr / 90;
-				if (!ctx->global_timestamp_inited)
-				{
-					ctx->min_global_timestamp = ctx->global_timestamp;
-					ctx->global_timestamp_inited = 1;
-				}
-				if (ctx->min_global_timestamp > ctx->global_timestamp)
-				{
-					ctx->offset_global_timestamp = ctx->last_global_timestamp - ctx->min_global_timestamp;
-					ctx->min_global_timestamp = ctx->global_timestamp;
-				}
-
-			}
-			if (ctx->pinfo[j].pid == payload.pid)
-			{
-				if (!ctx->PIDs_seen[payload.pid])
-					dbg_print(CCX_DMT_PAT, "This PID (%u) is a PMT for program %u.\n",payload.pid, ctx->pinfo[j].program_number);
-				pinfo = ctx->pinfo + j;
-				break;
-			}
-		}
-		if (j != ctx->nb_program)
-		{
-			ctx->PIDs_seen[payload.pid]=2;
-			ts_buffer_psi_packet(ctx);
-			if(ctx->PID_buffers[payload.pid]!=NULL && ctx->PID_buffers[payload.pid]->buffer_length>0)
-				if(parse_PMT(ctx, ctx->PID_buffers[payload.pid]->buffer+1, ctx->PID_buffers[payload.pid]->buffer_length-1, pinfo))
-					gotpes=1; // Signals that something changed and that we must flush the buffer
-			continue;
-		}
-
-		//PTS calculation
-		if (ctx->got_first_pts[0] == UINT64_MAX || ctx->got_first_pts[1] == UINT64_MAX || ctx->got_first_pts[2] == UINT64_MAX) //if we didn't already get the first PTS of the important streams
-		{
-			if (payload.pesstart) //if there is PES Header data in the payload and we didn't get the first pts of that stream
-			{
-				if (ctx->min_pts[payload.pid] == UINT64_MAX) //check if we don't have the min_pts of that packet's pid
-				{
-					//Write the PES Header to console
-					uint64_t pes_prefix;
-					uint8_t pes_stream_id;
-					uint16_t pes_packet_length;
-					uint8_t optional_pes_header_included = NO;
-					uint16_t optional_pes_header_length = 0;
-					uint64_t pts = 0;
-
-					// Packetized Elementary Stream (PES) 32-bit start code
-					pes_prefix = (payload.start[0] << 16) | (payload.start[1] << 8) | payload.start[2];
-					pes_stream_id = payload.start[3];
-
-					// check for PES header
-					if (pes_prefix == 0x000001)
-					{
-						//if we didn't already have this stream id with its first pts then calculate 
-						if (pes_stream_id != ctx->found_stream_ids[pes_stream_id - 0xbd])
-						{
-							pes_packet_length = 6 + ((payload.start[4] << 8) | payload.start[5]); // 5th and 6th byte of the header define the length of the rest of the packet (+6 is for the prefix, stream ID and packet length)
-
-							/*if (pes_packet_length == 6)
-							{
-								// great, there is only a header and no extension + payload
-								return;
-							}*/
-
-							// optional PES header marker bits (10.. ....)
-							if ((payload.start[6] & 0xc0) == 0x80)
-							{
-								optional_pes_header_included = YES;
-								optional_pes_header_length = payload.start[8];
-							}
-
-							if (optional_pes_header_included == YES && optional_pes_header_length > 0 && (payload.start[7] & 0x80) > 0)
-							{
-								//get associated PTS as it exists
-								pts = (payload.start[9] & 0x0e);
-								pts <<= 29;
-								pts |= (payload.start[10] << 22);
-								pts |= ((payload.start[11] & 0xfe) << 14);
-								pts |= (payload.start[12] << 7);
-								pts |= ((payload.start[13] & 0xfe) >> 1);
-
-								//keep in mind we already checked if we have this stream id
-								ctx->found_stream_ids[pes_stream_id - 0xbd] = pes_stream_id; //add it
-								ctx->min_pts[payload.pid] = pts; //and add its packet pts (we still have this array in case someone wants the global PTS for all stream_id not only for pvs1, audio and video)
-
-								/*we already checked if we got that packet's pts
-								but we still need to check if we got the min_pts of the stream type
-								because we might have multiple audio streams for example*/
-								if (pes_stream_id == 0xbd && ctx->got_first_pts[0] == UINT64_MAX) //private stream 1 
-									ctx->got_first_pts[0] = pts;
-								if (pes_stream_id >= 0xC0 && pes_stream_id <= 0xDF && ctx->got_first_pts[1] == UINT64_MAX) //audio
-									ctx->got_first_pts[1] = pts;
-								if (pes_stream_id >= 0xE0 && pes_stream_id <= 0xEF && ctx->got_first_pts[2] == UINT64_MAX) //video
-									ctx->got_first_pts[2] = pts;
-							}
-						}
-					}
-				}
-			}
-		}
-		switch (ctx->PIDs_seen[payload.pid])
-		{
-			case 0: // First time we see this PID
-				if (ctx->PIDs_programs[payload.pid])
-				{
-					dbg_print(CCX_DMT_PARSE, "\nNew PID found: %u (%s), belongs to program: %u\n", payload.pid,
-						desc[ctx->PIDs_programs[payload.pid]->printable_stream_type],
-						ctx->PIDs_programs[payload.pid]->program_number);
-					ctx->PIDs_seen[payload.pid]=2;
-				}
-				else
-				{
-					dbg_print(CCX_DMT_PARSE, "\nNew PID found: %u, program number still unknown\n", payload.pid);
-					ctx->PIDs_seen[payload.pid]=1;
-				}
-				break;
-			case 1: // Saw it before but we didn't know what program it belonged to. Luckier now?
-				if (ctx->PIDs_programs[payload.pid])
-				{
-					dbg_print(CCX_DMT_PARSE, "\nProgram for PID: %u (previously unknown) is: %u (%s)\n", payload.pid,
-						ctx->PIDs_programs[payload.pid]->program_number,
-						desc[ctx->PIDs_programs[payload.pid]->printable_stream_type]
-						);
-					ctx->PIDs_seen[payload.pid]=2;
-				}
-				break;
-			case 2: // Already seen and reported with correct program
-				break;
-			case 3: // Already seen, reported, and inspected for CC data (and found some)
-				break;
-		}
-
-		if (payload.pid==1003 && !ctx->hauppauge_warning_shown && !ccx_options.hauppauge_mode)
-		{
-			// TODO: Change this very weak test for something more decent such as size.
-			mprint ("\n\nNote: This TS could be a recording from a Hauppage card. If no captions are detected, try --hauppauge\n\n");
-			ctx->hauppauge_warning_shown=1;
-		}
-
-		if (ccx_options.hauppauge_mode && payload.pid==HAUPPAGE_CCPID)
-		{
-			// Haup packets processed separately, because we can't mix payloads. So they go in their own buffer
-			// copy payload to capbuf
-			int haup_newcapbuflen = haup_capbuflen + payload.length;
-			if ( haup_newcapbuflen > haup_capbufsize) {
-				haup_capbuf = (unsigned char*)realloc(haup_capbuf, haup_newcapbuflen);
-				if (!haup_capbuf)
-					fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
-				haup_capbufsize = haup_newcapbuflen;
-			}
-			memcpy(haup_capbuf+haup_capbuflen, payload.start, payload.length);
-			haup_capbuflen = haup_newcapbuflen;
-
-		}
-
-		// Skip packets with no payload.  This also fixes the problems
-		// with the continuity counter not being incremented in empty
-		// packets.
-		if ( !payload.length )
-		{
-				dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - no payload.\n",
-						payload.pid);
-				continue;
-		}
-
-		cinfo = get_cinfo(ctx, payload.pid);
-		if(cinfo == NULL)
-		{
-			if (!packet_analysis_mode)
-				dbg_print(CCX_DMT_PARSE, "Packet (pid %u) skipped - no stream with captions identified yet.\n",
-					   payload.pid);
-			else
-				look_for_caption_data (ctx, &payload);
-			continue;
-		}
-		else if (cinfo->ignore)
-		{
-			if(cinfo->codec_private_data)
-			{
-				switch(cinfo->codec)
-				{
-				case CCX_CODEC_TELETEXT:
-					telxcc_close(&cinfo->codec_private_data, NULL);
-					break;
-				case CCX_CODEC_DVB:
-					dvbsub_close_decoder(&cinfo->codec_private_data);
-					break;
-				case CCX_CODEC_ISDB_CC:
-					delete_isdb_decoder(&cinfo->codec_private_data);
-				default:
-					break;
-				}
-				cinfo->codec_private_data = NULL;
-			}
-
-			if (cinfo->capbuflen > 0)
-			{
-				freep(&cinfo->capbuf);
-				cinfo->capbufsize = 0;
-				cinfo->capbuflen = 0;
-				delete_demuxer_data_node_by_pid(data, cinfo->pid);
-			}
-			continue;
-		}
-
-		// Video PES start
-		if (payload.pesstart)
-		{
-			cinfo->saw_pesstart = 1;
-			cinfo->prev_counter = payload.counter - 1;
-		}
-
-		// Discard packets when no pesstart was found.
-		if ( !cinfo->saw_pesstart )
-			continue;
+		//if( ccx_options.xmltv >= 1 && payload.pid == 0x12) // This is DVB EIT
+		//	parse_EPG_packet(ctx->parent);
+		//if( ccx_options.xmltv >= 1 && payload.pid >= 0x1000) // This may be ATSC EPG packet
+		//	parse_EPG_packet(ctx->parent);
 
 
-		if ( (cinfo->prev_counter == 15 ? 0 : cinfo->prev_counter + 1) != payload.counter )
-		{
-			mprint("TS continuity counter not incremented prev/curr %u/%u\n",
-					cinfo->prev_counter, payload.counter);
-		}
-		cinfo->prev_counter = payload.counter;
+		//for (j = 0; j < ctx->nb_program; j++)
+		//{
+		//	if (ctx->pinfo[j].analysed_PMT_once == CCX_TRUE &&
+		//		ctx->pinfo[j].pcr_pid == payload.pid &&
+		//		payload.have_pcr)
+		//	{
+		//		ctx->last_global_timestamp = ctx->global_timestamp;
+		//		ctx->global_timestamp = (uint32_t) payload.pcr / 90;
+		//		if (!ctx->global_timestamp_inited)
+		//		{
+		//			ctx->min_global_timestamp = ctx->global_timestamp;
+		//			ctx->global_timestamp_inited = 1;
+		//		}
+		//		if (ctx->min_global_timestamp > ctx->global_timestamp)
+		//		{
+		//			ctx->offset_global_timestamp = ctx->last_global_timestamp - ctx->min_global_timestamp;
+		//			ctx->min_global_timestamp = ctx->global_timestamp;
+		//		}
 
-		// If the buffer is empty we just started this function
-		if (payload.pesstart && cinfo->capbuflen > 0)
-		{
-			dbg_print(CCX_DMT_PARSE, "\nPES finished (%ld bytes/%ld PES packets/%ld total packets)\n",
-					cinfo->capbuflen, pespcount, pcount);
+		//	}
+		//	if (ctx->pinfo[j].pid == payload.pid)
+		//	{
+		//		if (!ctx->PIDs_seen[payload.pid])
+		//			dbg_print(CCX_DMT_PAT, "This PID (%u) is a PMT for program %u.\n",payload.pid, ctx->pinfo[j].program_number);
+		//		pinfo = ctx->pinfo + j;
+		//		break;
+		//	}
+		//}
+		//if (j != ctx->nb_program)
+		//{
+		//	ctx->PIDs_seen[payload.pid]=2;
+		//	ts_buffer_psi_packet(ctx);
+		//	if(ctx->PID_buffers[payload.pid]!=NULL && ctx->PID_buffers[payload.pid]->buffer_length>0)
+		//		if(parse_PMT(ctx, ctx->PID_buffers[payload.pid]->buffer+1, ctx->PID_buffers[payload.pid]->buffer_length-1, pinfo))
+		//			gotpes=1; // Signals that something changed and that we must flush the buffer
+		//	continue;
+		//}
 
-			// Keep the data from capbuf to be worked on
-			ret = copy_capbuf_demux_data(ctx, data, cinfo);
-			cinfo->capbuflen = 0;
-			gotpes = 1;
-		}
+		////PTS calculation
+		//if (ctx->got_first_pts[0] == UINT64_MAX || ctx->got_first_pts[1] == UINT64_MAX || ctx->got_first_pts[2] == UINT64_MAX) //if we didn't already get the first PTS of the important streams
+		//{
+		//	if (payload.pesstart) //if there is PES Header data in the payload and we didn't get the first pts of that stream
+		//	{
+		//		if (ctx->min_pts[payload.pid] == UINT64_MAX) //check if we don't have the min_pts of that packet's pid
+		//		{
+		//			//Write the PES Header to console
+		//			uint64_t pes_prefix;
+		//			uint8_t pes_stream_id;
+		//			uint16_t pes_packet_length;
+		//			uint8_t optional_pes_header_included = NO;
+		//			uint16_t optional_pes_header_length = 0;
+		//			uint64_t pts = 0;
 
-		copy_payload_to_capbuf(cinfo, &payload);
-		if(ret < 0)
-		{
-			if(errno == EINVAL)
-				continue;
-			else
-				break;
-		}
+		//			// Packetized Elementary Stream (PES) 32-bit start code
+		//			pes_prefix = (payload.start[0] << 16) | (payload.start[1] << 8) | payload.start[2];
+		//			pes_stream_id = payload.start[3];
 
-		pespcount++;
+		//			// check for PES header
+		//			if (pes_prefix == 0x000001)
+		//			{
+		//				//if we didn't already have this stream id with its first pts then calculate 
+		//				if (pes_stream_id != ctx->found_stream_ids[pes_stream_id - 0xbd])
+		//				{
+		//					pes_packet_length = 6 + ((payload.start[4] << 8) | payload.start[5]); // 5th and 6th byte of the header define the length of the rest of the packet (+6 is for the prefix, stream ID and packet length)
+
+		//					/*if (pes_packet_length == 6)
+		//					{
+		//						// great, there is only a header and no extension + payload
+		//						return;
+		//					}*/
+
+		//					// optional PES header marker bits (10.. ....)
+		//					if ((payload.start[6] & 0xc0) == 0x80)
+		//					{
+		//						optional_pes_header_included = YES;
+		//						optional_pes_header_length = payload.start[8];
+		//					}
+
+		//					if (optional_pes_header_included == YES && optional_pes_header_length > 0 && (payload.start[7] & 0x80) > 0)
+		//					{
+		//						//get associated PTS as it exists
+		//						pts = (payload.start[9] & 0x0e);
+		//						pts <<= 29;
+		//						pts |= (payload.start[10] << 22);
+		//						pts |= ((payload.start[11] & 0xfe) << 14);
+		//						pts |= (payload.start[12] << 7);
+		//						pts |= ((payload.start[13] & 0xfe) >> 1);
+
+		//						//keep in mind we already checked if we have this stream id
+		//						ctx->found_stream_ids[pes_stream_id - 0xbd] = pes_stream_id; //add it
+		//						ctx->min_pts[payload.pid] = pts; //and add its packet pts (we still have this array in case someone wants the global PTS for all stream_id not only for pvs1, audio and video)
+
+		//						/*we already checked if we got that packet's pts
+		//						but we still need to check if we got the min_pts of the stream type
+		//						because we might have multiple audio streams for example*/
+		//						if (pes_stream_id == 0xbd && ctx->got_first_pts[0] == UINT64_MAX) //private stream 1 
+		//							ctx->got_first_pts[0] = pts;
+		//						if (pes_stream_id >= 0xC0 && pes_stream_id <= 0xDF && ctx->got_first_pts[1] == UINT64_MAX) //audio
+		//							ctx->got_first_pts[1] = pts;
+		//						if (pes_stream_id >= 0xE0 && pes_stream_id <= 0xEF && ctx->got_first_pts[2] == UINT64_MAX) //video
+		//							ctx->got_first_pts[2] = pts;
+		//					}
+		//				}
+		//			}
+		//		}
+		//	}
+		//}
+		//switch (ctx->PIDs_seen[payload.pid])
+		//{
+		//	case 0: // First time we see this PID
+		//		if (ctx->PIDs_programs[payload.pid])
+		//		{
+		//			dbg_print(CCX_DMT_PARSE, "\nNew PID found: %u (%s), belongs to program: %u\n", payload.pid,
+		//				desc[ctx->PIDs_programs[payload.pid]->printable_stream_type],
+		//				ctx->PIDs_programs[payload.pid]->program_number);
+		//			ctx->PIDs_seen[payload.pid]=2;
+		//		}
+		//		else
+		//		{
+		//			dbg_print(CCX_DMT_PARSE, "\nNew PID found: %u, program number still unknown\n", payload.pid);
+		//			ctx->PIDs_seen[payload.pid]=1;
+		//		}
+		//		break;
+		//	case 1: // Saw it before but we didn't know what program it belonged to. Luckier now?
+		//		if (ctx->PIDs_programs[payload.pid])
+		//		{
+		//			dbg_print(CCX_DMT_PARSE, "\nProgram for PID: %u (previously unknown) is: %u (%s)\n", payload.pid,
+		//				ctx->PIDs_programs[payload.pid]->program_number,
+		//				desc[ctx->PIDs_programs[payload.pid]->printable_stream_type]
+		//				);
+		//			ctx->PIDs_seen[payload.pid]=2;
+		//		}
+		//		break;
+		//	case 2: // Already seen and reported with correct program
+		//		break;
+		//	case 3: // Already seen, reported, and inspected for CC data (and found some)
+		//		break;
+		//}
+
+		//if (payload.pid==1003 && !ctx->hauppauge_warning_shown && !ccx_options.hauppauge_mode)
+		//{
+		//	// TODO: Change this very weak test for something more decent such as size.
+		//	mprint ("\n\nNote: This TS could be a recording from a Hauppage card. If no captions are detected, try --hauppauge\n\n");
+		//	ctx->hauppauge_warning_shown=1;
+		//}
+
+		//if (ccx_options.hauppauge_mode && payload.pid==HAUPPAGE_CCPID)
+		//{
+		//	// Haup packets processed separately, because we can't mix payloads. So they go in their own buffer
+		//	// copy payload to capbuf
+		//	int haup_newcapbuflen = haup_capbuflen + payload.length;
+		//	if ( haup_newcapbuflen > haup_capbufsize) {
+		//		haup_capbuf = (unsigned char*)realloc(haup_capbuf, haup_newcapbuflen);
+		//		if (!haup_capbuf)
+		//			fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
+		//		haup_capbufsize = haup_newcapbuflen;
+		//	}
+		//	memcpy(haup_capbuf+haup_capbuflen, payload.start, payload.length);
+		//	haup_capbuflen = haup_newcapbuflen;
+
+		//}
+
+		//// Skip packets with no payload.  This also fixes the problems
+		//// with the continuity counter not being incremented in empty
+		//// packets.
+		//if ( !payload.length )
+		//{
+		//		dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - no payload.\n",
+		//				payload.pid);
+		//		continue;
+		//}
+
+		//cinfo = get_cinfo(ctx, payload.pid);
+		//if(cinfo == NULL)
+		//{
+		//	if (!packet_analysis_mode)
+		//		dbg_print(CCX_DMT_PARSE, "Packet (pid %u) skipped - no stream with captions identified yet.\n",
+		//			   payload.pid);
+		//	else
+		//		look_for_caption_data (ctx, &payload);
+		//	continue;
+		//}
+		//else if (cinfo->ignore)
+		//{
+		//	if(cinfo->codec_private_data)
+		//	{
+		//		switch(cinfo->codec)
+		//		{
+		//		case CCX_CODEC_TELETEXT:
+		//			telxcc_close(&cinfo->codec_private_data, NULL);
+		//			break;
+		//		case CCX_CODEC_DVB:
+		//			dvbsub_close_decoder(&cinfo->codec_private_data);
+		//			break;
+		//		case CCX_CODEC_ISDB_CC:
+		//			delete_isdb_decoder(&cinfo->codec_private_data);
+		//		default:
+		//			break;
+		//		}
+		//		cinfo->codec_private_data = NULL;
+		//	}
+
+		//	if (cinfo->capbuflen > 0)
+		//	{
+		//		freep(&cinfo->capbuf);
+		//		cinfo->capbufsize = 0;
+		//		cinfo->capbuflen = 0;
+		//		delete_demuxer_data_node_by_pid(data, cinfo->pid);
+		//	}
+		//	continue;
+		//}
+
+		//// Video PES start
+		//if (payload.pesstart)
+		//{
+		//	cinfo->saw_pesstart = 1;
+		//	cinfo->prev_counter = payload.counter - 1;
+		//}
+
+		//// Discard packets when no pesstart was found.
+		//if ( !cinfo->saw_pesstart )
+		//	continue;
+
+
+		//if ( (cinfo->prev_counter == 15 ? 0 : cinfo->prev_counter + 1) != payload.counter )
+		//{
+		//	mprint("TS continuity counter not incremented prev/curr %u/%u\n",
+		//			cinfo->prev_counter, payload.counter);
+		//}
+		//cinfo->prev_counter = payload.counter;
+
+		//// If the buffer is empty we just started this function
+		//if (payload.pesstart && cinfo->capbuflen > 0)
+		//{
+		//	dbg_print(CCX_DMT_PARSE, "\nPES finished (%ld bytes/%ld PES packets/%ld total packets)\n",
+		//			cinfo->capbuflen, pespcount, pcount);
+
+		//	// Keep the data from capbuf to be worked on
+		//	ret = copy_capbuf_demux_data(ctx, data, cinfo);
+		//	cinfo->capbuflen = 0;
+		//	gotpes = 1;
+		//}
+
+		//copy_payload_to_capbuf(cinfo, &payload);
+		//if(ret < 0)
+		//{
+		//	if(errno == EINVAL)
+		//		continue;
+		//	else
+		//		break;
+		//}
+
+		//pespcount++;
 	}
 	while( !gotpes ); // gotpes==1 never arrives here because of the breaks
 
