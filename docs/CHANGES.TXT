@@ -10,7 +10,7 @@
 - New: SMPTE-TT files are now compatible with Adobe Premiere.
 - New: Updated libpng.
 - Fix: Teletext duplicate lines in certain cases.
-- Fix: Improved DVB timing.
+- Fix: Improved teletext timing.
 - Fix: DVB timing is finally good.
 - Fix: A few minor memory leaks.
 - Fix: tesseract library file included in mac build command.
