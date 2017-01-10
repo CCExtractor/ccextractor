@@ -1423,7 +1423,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 		printf("PTSDTS: 0x%x ", pts_dts_flag);
 		printf("ESCR: 0x%x ", escr_flag);
 		printf("Rate: 0x%x\n", es_rate);
-		printf("DSM: 0x%x", dsm_flag);
+		printf("DSM: 0x%x ", dsm_flag);
 		printf("ACI: 0x%x ", aci_flag);
 		printf("PESCRC: 0x%x ", pes_crc_flag);
 		printf("EXT: 0x%x\n", pes_ext_flag);
