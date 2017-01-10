@@ -116,8 +116,7 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 	struct cc_bitmap* rect;
 	LLONG ms_start, ms_end;
 	//char timeline[128];
-	int len = 0;
-	int i = 0;
+	int i,len = 0;
 
 	ms_start = sub->start_time;
 	ms_end = sub->end_time;
@@ -158,6 +157,7 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 		freep(rect->data + 1);
 	}
 #endif
+
 	sub->nb_data = 0;
 	freep(&sub->data);
 	return ret;
@@ -279,152 +279,149 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 					
 					+1000 because huge <span> and <style> tags are added. This will just prevent overflow (hopefully).
 				*/
-			    
-				    int style = 0; 
 
-				    /*
+				int style = 0; 
 
-					0 = None or font colour
-					1 = itlics
-					2 = bold
-					3 = underline
+				/*
 
-				    */
-				
+				0 = None or font colour
+				1 = itlics
+				2 = bold
+				3 = underline
+
+				*/
+
 				//Now, searching for first occurance of <i> OR <u> OR <b>
-			    
-			    unsigned char * start = strstr((context->subline), "<i>"); 
-			    if(start==NULL)
-			    {
-			        start = strstr((context->subline), "<b>");
-			        
-			        if(start==NULL)
-			        {
-			            start = strstr((context->subline), "<u>");
-			            style = 3;   //underline
-			        }
-			            
-			        else
-			            style = 2;   //bold
-			    }
-			    
-			    else
-			        style = 1;      //italics
-			        
-			    if(start!=NULL)		//subtitle has style associated with it, will need formatting.
-			    {
-			        unsigned char *end_tag;
-			        if(style == 1)
-			        {
-			            end_tag ="</i>";
-			        }
-			        
-			        else if(style == 2)
-			        {
-			            end_tag = "</b>";
-			        }
-			            
-			        else
-			        {
-			            end_tag = "</u>";
-			        }
 
-			        unsigned char *end = strstr((context->subline), end_tag);	//occurance of closing tag (</i> OR </b> OR </u>)
-			        
-			        if(end==NULL)
-			        {
-			            //Incorrect styling, writing as it is
-			            strcpy(final,(context->subline));			            
-			        }
-			        
-			        else
-			        {
-			            int start_index = start-(context->subline);
-			            int end_index = end-(context->subline);
-			           			            
-			            strncat(final,(context->subline),start_index);     // copying content before opening tag e.g. <i> 
-			            			            
-			            strcat(final,"<span>");                 //adding <span> : replacement of <i>
-			           
-			            //The content in italics is between <i> and </i>, i.e. between (start_index + 3) and end_index.
-			            
-			            strncat(temp, (context->subline) + start_index + 3, end_index - start_index - 3); //the content in italics
-			            
-			            strcat(final,temp);	//attaching to final sentence.
-			            			            
-			            if (style == 1)
-			                strcpy(temp,"<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:fontStyle=\"italic\"/> </span>");
-			                
-			            else if(style == 2)
-			                strcpy(temp,"<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:fontWeight=\"bold\"/> </span>");
-			            
-			            else
-			                strcpy(temp,"<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:textDecoration=\"underline\"/> </span>");
-			                
-			            strcat(final,temp);		// adding appropriate style tag.
-					
-			            sprintf(temp,"%s", (context->subline) + end_index + 4);	//finding remaining sentence.
-		            
-			            strcat (final,temp);	//adding remaining sentence.
-			       
-			        }
-			    }
+				unsigned char * start = strstr((context->subline), "<i>"); 
+				if(start==NULL)
+				{
+					start = strstr((context->subline), "<b>");
 
-			     else	//No style or Font Color
-			     {
-				   
-				    start = strstr((context->subline), "<font color");  //spec : <font color="#xxxxxx"> cc </font>
-				    if(start!=NULL) //font color attribute is present
-				    {
-					unsigned char *end = strstr((context->subline), "</font>");
-					if(end == NULL)
+					if(start==NULL)
 					{
-					    //Incorrect styling, writing as it is
-					    strcpy(final,(context->subline));
+						start = strstr((context->subline), "<u>");
+						style = 3;   //underline
+					}
+
+					else
+					style = 2;   //bold
+				}
+
+				else
+					style = 1;      //italics
+
+				if(start!=NULL)		//subtitle has style associated with it, will need formatting.
+				{
+					unsigned char *end_tag;
+					if(style == 1)
+					{
+						end_tag ="</i>";
+					}
+
+					else if(style == 2)
+					{
+						end_tag = "</b>";
+					}
+					    
+					else
+					{
+					end_tag = "</u>";
+					}
+
+				    unsigned char *end = strstr((context->subline), end_tag);	//occurance of closing tag (</i> OR </b> OR </u>)
+				    
+				    if(end==NULL)
+				    {
+				        //Incorrect styling, writing as it is
+				        strcpy(final,(context->subline));			            
+				    }
+				    
+					else
+					{
+						int start_index = start-(context->subline);
+						int end_index = end-(context->subline);
+									            
+						strncat(final,(context->subline),start_index);     // copying content before opening tag e.g. <i> 
+						
+						strcat(final,"<span>");                 //adding <span> : replacement of <i>
+
+						//The content in italics is between <i> and </i>, i.e. between (start_index + 3) and end_index.
+
+						strncat(temp, (context->subline) + start_index + 3, end_index - start_index - 3); //the content in italics
+
+						strcat(final,temp);	//attaching to final sentence.
+						
+						if (style == 1)
+							strcpy(temp,"<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:fontStyle=\"italic\"/> </span>");
+						
+						else if(style == 2)
+							strcpy(temp,"<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:fontWeight=\"bold\"/> </span>");
+
+						else
+							strcpy(temp,"<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:textDecoration=\"underline\"/> </span>");
+						
+						strcat(final,temp);		// adding appropriate style tag.
+
+						sprintf(temp,"%s", (context->subline) + end_index + 4);	//finding remaining sentence.
+
+						strcat (final,temp);	//adding remaining sentence.
+
+					}
+				}
+
+			    else	//No style or Font Color
+			    {
+				   
+					start = strstr((context->subline), "<font color");  //spec : <font color="#xxxxxx"> cc </font>
+					if(start!=NULL) //font color attribute is present
+					{
+						unsigned char *end = strstr((context->subline), "</font>");
+						if(end == NULL)
+						{
+							//Incorrect styling, writing as it is
+							strcpy(final,(context->subline));
+						}
+
+						else
+						{
+							int start_index = start-(context->subline);
+							int end_index = end-(context->subline);
+
+							strncat(final,(context->subline),start_index);     // copying content before opening tag e.g. <font ..> 
+
+							strcat(final,"<span>");                 //adding <span> : replacement of <font ..>
+
+
+							unsigned char *temp_pointer = strchr((context->subline),'#');     //locating color code
+
+							unsigned char color_code[7];
+							strncpy(color_code, temp_pointer + 1, 6);		//obtained color code
+							color_code[6]='\0';
+							
+
+
+							temp_pointer = strchr((context->subline), '>');                   //The content is in between <font ..> and </font>
+
+							strncat(temp, temp_pointer + 1, end_index - (temp_pointer - (context->subline) + 1));
+
+							strcat(final,temp);	//attaching to final sentence.
+
+							sprintf(temp,"<style tts:backgroundColor=\"#FFFF00FF\" tts:color=\"%s\" tts:fontSize=\"18px\"/></span>",color_code);
+
+							strcat(final,temp);	//adding font color tag
+
+							sprintf(temp,"%s", (context->subline) + end_index + 7);   	//finding remaining sentence.
+
+							strcat(final,temp);	//adding remaining sentence
+						}
 					}
 
 					else
 					{
-					    int start_index = start-(context->subline);
-					    int end_index = end-(context->subline);
-
-					    strncat(final,(context->subline),start_index);     // copying content before opening tag e.g. <font ..> 
-
-					    strcat(final,"<span>");                 //adding <span> : replacement of <font ..>
-
-
-					    unsigned char *temp_pointer = strchr((context->subline),'#');     //locating color code
-
-					    unsigned char *color_code=malloc(7);
-					    strncat(color_code,(context->subline) + (temp_pointer - (context->subline) + 1),6);     //obtained color code
-
-
-					    temp_pointer = strchr((context->subline), '>');                   //The content is in between <font ..> and </font>
-
-					    strncat(temp, (context->subline) + (temp_pointer - (context->subline) + 1), end_index - (temp_pointer - (context->subline) + 1));
-
-					    strcat(final,temp);	//attaching to final sentence.
-
-					    sprintf(temp,"<style tts:backgroundColor=\"#FFFF00FF\" tts:color=\"%s\" tts:fontSize=\"18px\"/></span>",color_code);
-
-					    strcat(final,temp);	//adding font color tag
-
-					    sprintf(temp,"%s", (context->subline) + end_index + 7);   	//finding remaining sentence.
-
-					    strcat(final,temp);	//adding remaining sentence
-
-					    printf("final is : %s\n",final);
-
-					    freep(&color_code);
-
+						//NO styling, writing as it is
+						strcpy(final,(context->subline));
 					}
-				    }
-
-				    else
-				    {
-					//NO styling, writing as it is
-					strcpy(final,(context->subline));
-				    }
 
 				}
 
