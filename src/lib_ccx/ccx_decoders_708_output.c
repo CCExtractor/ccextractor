@@ -95,15 +95,8 @@ void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, dtvcc_tv_screen *tv, int row
 		buf[buf_len++] = CCX_DTVCC_SYM(space);
 	for (int j = first; j <= last; j++)
 	{
-		if (CCX_DTVCC_SYM_IS_16(tv->chars[row_index][j]))
-		{
-			buf[buf_len++] = CCX_DTVCC_SYM_16_FIRST(tv->chars[row_index][j]);
-			buf[buf_len++] = CCX_DTVCC_SYM_16_SECOND(tv->chars[row_index][j]);
-		}
-		else
-		{
-			buf[buf_len++] = CCX_DTVCC_SYM(tv->chars[row_index][j]);
-		}
+		int size = utf16_to_utf8(tv->chars[row_index][j].sym, buf + buf_len);
+		buf_len += size;
 	}
 	for (int i = last + 1; i < CCX_DECODER_608_SCREEN_WIDTH; i++)
 		buf[buf_len++] = CCX_DTVCC_SYM(space);
