@@ -172,6 +172,27 @@ int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, un
 	return v;
 }
 
+int levenshtein_dist_char (const char *s1, const char *s2, unsigned s1len, unsigned s2len)
+{
+	unsigned int x, y, v, lastdiag, olddiag;
+	unsigned int *column = (unsigned *) malloc ((s1len+1)*sizeof (unsigned int));
+	for (y = 1; y <= s1len; y++)
+		column[y] = y;
+	for (x = 1; x <= s2len; x++)
+	{
+		column[0] = x;
+		for (y = 1, lastdiag = x-1; y <= s1len; y++)
+		{
+			olddiag = column[y];
+			column[y] = MIN3(column[y] + 1, column[y-1] + 1, lastdiag + (s1[y-1] == s2[x-1] ? 0 : 1));
+			lastdiag = olddiag;
+		}
+	}
+	v = column[s1len];
+	free (column);
+	return v;
+}
+
 void millis_to_date (uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator)
 {
 	time_t secs;
