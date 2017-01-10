@@ -1356,7 +1356,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	uint8_t data_alignment_indicator;
 	uint8_t copyright;
 	uint8_t original_or_copy;
-	uint8_t pts_dts_flags;
+	uint8_t pts_dts_flag;
 	uint8_t escr_flag;
 	uint8_t es_rate;
 	uint8_t dsm_flag;
@@ -1399,9 +1399,9 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 
 	pes_scrambling_control = (uint8_t)(buffer[6] << 2) >> 6;
 	pes_priority = (uint8_t)(buffer[6] << 4) >> 7;
-	data_alignment_indicator = (uint8_t)(buffer[6] << 5) >> 6;
-	copyright = (uint8_t)(buffer[6] << 7) >> 7;
-	original_or_copy = (uint8_t)(buffer[6] << 8) >> 7;
+	data_alignment_indicator = (uint8_t)(buffer[6] << 5) >> 7;
+	copyright = (uint8_t)(buffer[6] << 6) >> 7;
+	original_or_copy = (uint8_t)(buffer[6] << 7) >> 7;
 	pts_dts_flag = buffer[7] >> 6;
 	escr_flag = (uint8_t)(buffer[7] << 2) >> 7;
 	es_rate = (uint8_t)(buffer[7] << 3) >> 7;
@@ -1415,30 +1415,18 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 		printf("Packet start code prefix: %04x # ", pes_prefix);
 		printf("Stream ID: %04x # ", pes_stream_id);
 		printf("Packet length: %d ", pes_packet_length);
-		printf("PESSC: 0x%x ",
-      pes_scrambling_control;
-    printf("PESP: 0x%x ",
-      pes_priority;
-    printf("DAI: 0x%x ",
-      data_alignment_indicator;
-    printf("CY: 0x%x\n",
-      copyright;
-    printf("OOC: 0x%x ",
-      original_or_copy;
-    printf("PTSDTS: 0x%x ",
-      pts_dts_flag;
-    printf("ESCR: 0x%x ",
-      escr_flag;
-    printf("Rate: 0x%x\n",
-      es_rate;
-    printf("DSM: 0x%x",
-      dsm_flag;
-    printf("ACI: 0x%x ",
-      aci_flag;
-    printf("PESCRC: 0x%x ",
-      pes_crc_flag;
-    printf("EXT: 0x%x\n",
-      pes_ext_flag;
+		printf("PESSC: 0x%x ", pes_scrambling_control);
+		printf("PESP: 0x%x ", pes_priority);
+		printf("DAI: 0x%x ", data_alignment_indicator);
+		printf("CY: 0x%x\n", copyright);
+		printf("OOC: 0x%x ", original_or_copy);
+		printf("PTSDTS: 0x%x ", pts_dts_flag);
+		printf("ESCR: 0x%x ", escr_flag);
+		printf("Rate: 0x%x\n", es_rate);
+		printf("DSM: 0x%x", dsm_flag);
+		printf("ACI: 0x%x ", aci_flag);
+		printf("PESCRC: 0x%x ", pes_crc_flag);
+		printf("EXT: 0x%x\n", pes_ext_flag);
 	}
 
 	if (pes_packet_length == 6)
