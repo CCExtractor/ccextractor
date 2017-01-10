@@ -1,9 +1,26 @@
+/*
+
+  This is an implementation of Sentence Break Buffer
+  It is still in development and could contain bugs
+  If you will find bugs in SBS, you could try to create an
+  issue in the forked repository:
+
+  https://github.com/maxkoryukov/ccextractor/issues
+
+  Only SBS-related bugs!
+
+ */
+
+
 #include "ccx_common_platform.h"
 #include "ccx_encoders_common.h"
 #include "lib_ccx.h"
 #include "ocr.h"
+#include "utility.h"
 
-#ifdef DEBUG
+#define DEBUG_SBS 1
+
+#ifdef DEBUG_SBS
 #define LOG_DEBUG(...) printf(__VA_ARGS__)
 #else
 #define LOG_DEBUG ;
@@ -43,51 +60,169 @@ int sbs_is_pointer_on_sentence_breaker(char * start, char * current)
 	return 0;
 }
 
-int sbs_fuzzy_strncmp(const char * a, const char * b, size_t n, const size_t maxerr)
+int sbs_char_equal_CI(const char A, const char B) {
+	char a = tolower(A);
+	char b = tolower(B);
+	if (a > b) return 1;
+	if (a < b) return -1;
+	return 0;
+}
+
+char * sbs_find_insert_point(char * old_tail, const char * new_start, size_t n, const int maxerr)
 {
-	// TODO: implement fuzzy comparing
-	// Error counter DOES NOT WORK!!!
 
-	int i;
-	//int err;
-	char A, B;
+	const int PARTIAL_CHANGE_LENGTH_MIN = 7;
+	const int FEW_ERRORS_RATE = 10;
 
-	i = -1;
-	do
-	{
-		i++;
+#ifdef DEBUG_SBS
+	char fmtbuf[20000];
+#endif
 
-		// Bound check (compare to N)
-		if (i == n) return 0;
+	int few_errors = maxerr/FEW_ERRORS_RATE;
 
-		A = a[i];
-		B = b[i];
+	size_t len_r = n/2;
+	size_t len_l = n - len_r;
 
-		// bound check (line endings)
-		if (A == 0)
-		{
-			if (B == 0) return 0;
-			return 1;
+	int dist_l = -1;
+	int dist_r = -1;
+	int partial_shift;
+
+	int i; // top level indexer for strings
+
+	dist_l = levenshtein_dist_char(old_tail, new_start, len_l, len_l);
+	dist_r = levenshtein_dist_char(old_tail + len_l, new_start + len_l, len_r, len_r);
+
+	if (dist_l + dist_r > maxerr) {
+#ifdef DEBUG_SBS
+		sprintf(fmtbuf, "SBS: sbs_find_insert_point: compare\n\
+\tnot EQ:          [TRUE]\n\
+\tmaxerr:          [%%d]\n\
+\tL buffer:          [%%.%zus]\n\
+\tL string:          [%%.%zus]\n\
+\tL dist_l:          [%%d]\n\
+\tR buffer:          [%%.%zus]\n\
+\tR string:          [%%.%zus]\n\
+\tR dist_r:          [%%d]\n\
+",
+			len_l,
+			len_l,
+			len_r,
+			len_r
+		);
+		LOG_DEBUG(fmtbuf,
+			maxerr,
+			old_tail,
+			new_start,
+			dist_l,
+			old_tail + len_l,
+			new_start + len_l,
+			dist_r
+		);
+#endif
+		return NULL;
+	};
+
+	if (
+		dist_r <= few_errors               // right part almost the same
+		&& n > PARTIAL_CHANGE_LENGTH_MIN   // the sentense is long enough for analyzis
+	) {
+		LOG_DEBUG("SBS: sbs_find_insert_point: LEFT CHANGED,\n\tbuf:[%s]\n\tstr:[%s]\n\
+\tmaxerr:[%d]\n\
+\tdist_l:[%d]\n\
+\tdist_r:[%d]\n\
+",
+			old_tail,
+			new_start,
+			maxerr,
+			dist_l,
+			dist_r
+		);
+		// searching for first mismatched symbol at the end of buf
+		// This is a naive implementation of error detection
+		//
+		// Will travel from the end of string to the beginning, and
+		// compare OLD value (from buffer) and new value (new STR)
+		partial_shift = 0;
+		while (
+			old_tail[partial_shift] != 0
+			&& old_tail[partial_shift+1] != 0
+			&& (0 != sbs_char_equal_CI(old_tail[partial_shift], new_start[partial_shift]))
+		) {
+			partial_shift += 1;
 		}
-		else
-		{
-			if (B == 0) return -1;
+
+printf("SBS: sbs_find_insert_point: PARTIAL SHIFT, [%d]\n",
+			partial_shift
+		);
+
+		return old_tail + partial_shift;
+	}
+
+	// SHIFT test.
+	// Levenshtein checks for DELETE symbol
+	// And we are moving string samples one along the other
+	// So, when we have 2 equal strings, the Levenshtein will told us
+	// that there is tiny difference (2 chars)
+	// BUT!! It is a gready. On the next step of this algorithm we will get
+	// 0 difference. Lets test for such case
+	//
+	// TODO: implement NON GREADY algorithm, instead of this test
+
+	int non_shift_error = 0;
+	for (i = 1; i < n; i++) {
+
+		if (old_tail[i] == 0) break;
+
+		if (old_tail[i] != new_start[i-1]) {
+			non_shift_error += 1;
 		}
+	}
 
-		if (A == B) continue;
-		if (isspace(A) && isspace(B)) continue;
 
-		if (A > B) return 1;
-		return -1;
+#ifdef DEBUG_SBS
 
-	} while(1);
+		sprintf(fmtbuf, "SBS: sbs_find_insert_point: REPLACE ENTIRE TAIL !![%%d]\n\
+\tmaxerr:          [%%d]\n\
+\tL buffer:        [%%.%zus]\n\
+\tL string:        [%%.%zus]\n\
+\tL dist_l:        [%%d]\n\
+\tR buffer:        [%%.%zus]\n\
+\tR string:        [%%.%zus]\n\
+\tR dist_r:        [%%d]\n\
+\tnon shift err:   [%%d]\n\
+",
+			len_l,
+			len_l,
+			len_r,
+			len_r
+		);
+		LOG_DEBUG(fmtbuf,
+			non_shift_error,
+			maxerr,
+			old_tail,
+			new_start,
+			dist_l,
+			old_tail + len_l,
+			new_start + len_l,
+			dist_r,
+			non_shift_error
+		);
+#endif
+
+	if (non_shift_error <= dist_l + dist_r) {
+		return NULL;
+	}
+
+	return old_tail;
 }
 
 void sbs_strcpy_without_dup(const unsigned char * str, struct encoder_ctx * context)
 {
 	int intersect_len;
-	unsigned char * suffix;
+	int maxerr;
+	unsigned char * buffer_tail;
 	const unsigned char * prefix = str;
+	unsigned char * buffer_insert_point;
 
 	unsigned long sbs_len;
 	unsigned long str_len;
@@ -99,31 +234,40 @@ void sbs_strcpy_without_dup(const unsigned char * str, struct encoder_ctx * cont
 	if (sbs_len < intersect_len)
 		intersect_len = sbs_len;
 
-	while (intersect_len>0)
+	LOG_DEBUG("SBS: sbs_strcpy_without_dup: going to append, looking for common part\n\
+\tbuffer:          [%s]\n\
+\tstring:          [%s]\n\
+",
+		context->sbs_buffer,
+		str
+	);
+
+	while (intersect_len > 0)
 	{
-		suffix = context->sbs_buffer + sbs_len - intersect_len;
-		if (0 == sbs_fuzzy_strncmp(prefix, suffix, intersect_len, 1))
+		maxerr = intersect_len / 5;
+		buffer_tail = context->sbs_buffer + sbs_len - intersect_len;
+
+		buffer_insert_point = sbs_find_insert_point(buffer_tail, prefix, intersect_len, maxerr);
+		if (NULL != buffer_insert_point)
 		{
 			break;
 		}
 		intersect_len--;
 	}
 
-	LOG_DEBUG("Sentence Buffer: sbs_strcpy_without_dup, intersection len [%4d]\n", intersect_len);
-
-	// check, that new string does not contain data, from
-	// already handled sentence:
-	LOG_DEBUG("Sentence Buffer: sbs_strcpy_without_dup, sbslen [%4ld] handled len [%4zu]\n", sbs_len, context->sbs_handled_len);
-	if ( (sbs_len - intersect_len) >= context->sbs_handled_len)
-	{
-		// there is no intersection.
-		// It is time to clean the buffer. Excepting the last uncomplete sentence
-		strcpy(context->sbs_buffer, context->sbs_buffer + context->sbs_handled_len);
-		context->sbs_handled_len = 0;
-		sbs_len = strlen(context->sbs_buffer);
-
-		LOG_DEBUG("Sentence Buffer: Clean buffer, after BUF [%s]\n\n\n", context->sbs_buffer);
-	}
+	LOG_DEBUG("SBS: sbs_strcpy_without_dup: analyze search results\n\
+\tbuffer:          [%s]\n\
+\tstring:          [%s]\n\
+\tintersection len [%4d]\n\
+\tsbslen           [%4ld]\n\
+\thandled len      [%4zu]\n\
+",
+		context->sbs_buffer,
+		str,
+		intersect_len,
+		sbs_len,
+		context->sbs_handled_len
+	);
 
 	if (intersect_len > 0)
 	{
@@ -131,19 +275,47 @@ void sbs_strcpy_without_dup(const unsigned char * str, struct encoder_ctx * cont
 		//
 		// remove dup from buffer
 		// we will use an appropriate part from the new string
-		context->sbs_buffer[sbs_len-intersect_len] = 0;
+
+		//context->sbs_buffer[sbs_len-intersect_len] = 0;
+printf("DROP THE END\n\
+\tend is here: [%s]\n\
+\tminus 1 is : [%s]\n\
+",
+		buffer_insert_point,
+		buffer_insert_point - 1
+);
+
+		*buffer_insert_point = 0;
+
+
+printf("AFTER DROP:\n\
+\tcontext buf : [%s]\n\
+",
+		context->sbs_buffer
+);
+	}
+
+	// check, that new string does not contain data, from
+	// already handled sentence:
+	if ( (sbs_len - intersect_len) >= context->sbs_handled_len)
+	{
+		// there is no intersection.
+		// It is time to clean the buffer. Excepting the last uncomplete sentence
+		strcpy(context->sbs_buffer, context->sbs_buffer + context->sbs_handled_len);
+		context->sbs_handled_len = 0;
+		sbs_len = strlen(context->sbs_buffer);
 	}
 
 	sbs_len = strlen(context->sbs_buffer);
 
-	// whitespace control. Add space between subs
 	if (
 		!isspace(str[0])                // not a space char in the beginning of new str
-		&& context->sbs_handled_len >0  // buffer is not empty (there is uncomplete sentence)
+		//&& context->sbs_handled_len >0  // buffer is not empty (there is uncomplete sentence)
+		&& sbs_len > 0  // buffer is not empty (there is uncomplete sentence)
 		&& !isspace(context->sbs_buffer[sbs_len-1])  // not a space char at the end of existing buf
 	)
 	{
-		//strcat(context->sbs_buffer, " ");
+		strcat(context->sbs_buffer, " ");
 	}
 
 	strcat(context->sbs_buffer, str);
@@ -156,18 +328,27 @@ void sbs_str_autofix(unsigned char * str)
 	// replace all whitespaces with spaces:
 	for (i = 0; str[i] != 0; i++)
 	{
+		// \n
+		// \t
+		// \r
+		// <WHITESPACES>
+		// =>
+		// <SPACE>
 		if (isspace(str[i]))
 		{
 			str[i] = ' ';
 		}
 
+		// <SPACE>|'
+		// <SPACE>|<SPACE>
+		// =>
+		// <SPACE>I'
 		if (
 			str[i] == '|'
 			&& (i==0 || isspace(str[i-1]))
 			&& (str[i+1] == 0 || isspace(str[i+1]) || str[i+1]=='\'')
 		)
 		{
-			// try to convert to "I"
 			str[i] = 'I';
 		}
 	}
@@ -283,7 +464,7 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 	sbs_undone_start = context->sbs_buffer + context->sbs_handled_len;
 	bp_last_break = sbs_undone_start;
 
-	LOG_DEBUG("Sentence Buffer: BEFORE sentence break. Last break: [%s]  sbs_undone_start: [%zu], sbs_undone: [%s]\n",
+	LOG_DEBUG("SBS: BEFORE sentence break.\n\tLast break: [%s]\n\tsbs_undone_start: [%zu]\n\tsbs_undone: [%s]\n",
 		bp_last_break, context->sbs_handled_len, sbs_undone_start
 	);
 
@@ -356,9 +537,19 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 		context->sbs_handled_len = bp_last_break - sbs_undone_start;
 	}
 
-	LOG_DEBUG("Sentence Buffer: AFTER sentence break: Handled Len [%4zu]\n", context->sbs_handled_len);
-
-	LOG_DEBUG("Sentence Buffer: Alphanum Total: [%4ld]  Overall chars: [%4ld]  STRING:[%20s]  BUFFER:[%20s]\n", alphanum_total, anychar_total, str, context->sbs_buffer);
+	LOG_DEBUG("SBS: AFTER sentence break:\
+\n\tHandled Len    [%4zu]\
+\n\tAlphanum Total [%4ld]\
+\n\tOverall chars  [%4ld]\
+\n\tSTRING:[%20s]\
+\n\tBUFFER:[%20s]\
+\n",
+		context->sbs_handled_len,
+		alphanum_total,
+		anychar_total,
+		str,
+		context->sbs_buffer
+	);
 
 	// ===============================
 	// Calculate time spans
