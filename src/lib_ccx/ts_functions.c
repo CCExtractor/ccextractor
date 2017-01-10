@@ -632,10 +632,6 @@ uint64_t get_pts(uint8_t* buffer)
 	{
 		pes_packet_length = 6 + ((buffer[4] << 8) | buffer[5]); // 5th and 6th byte of the header define the length of the rest of the packet (+6 is for the prefix, stream ID and packet length)
 
-		printf("Packet start code prefix: %04x # ", pes_prefix);
-		printf("Stream ID: %04x # ", pes_stream_id);
-		printf("Packet length: %d ", pes_packet_length);
-
 		// optional PES header marker bits (10.. ....)
 		if ((buffer[6] & 0xc0) == 0x80)
 		{
@@ -712,7 +708,7 @@ uint64_t get_video_min_pts(struct ccx_demuxer *context)
 		p++;
 	}
 
-	freep(ctx);
+	freep(&ctx);
 	freep(&pts_array);
 
 	return min_pts;
