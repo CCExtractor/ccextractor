@@ -46,7 +46,6 @@ static int check_trans_tn_intensity(const void *p1, const void *p2, void *arg)
 static int search_language_pack(const char *dir_name,const char *lang_name)
 {
 	//Search for a tessdata folder in the specified directory
-	char *lang = strdup(lang_name);
 	char *dirname = strdup(dir_name);
 	dirname = realloc(dirname,strlen(dirname)+strlen("/tessdata/")+1);
 	strcat(dirname,"/tessdata/");
@@ -56,17 +55,20 @@ static int search_language_pack(const char *dir_name,const char *lang_name)
 	char filename[256];
 	if ((dp = opendir(dirname)) == NULL)
 	{
+		free(dirname);
 		return -1;
 	}
-	snprintf(filename, 256, "%s.traineddata",lang);
+	snprintf(filename, 256, "%s.traineddata",lang_name);
 	while ((dirp = readdir(dp)) != NULL)
 	{
 		if(!strcmp(dirp->d_name, filename))
 		{
 			closedir(dp);
+			free(dirname);
 			return 0;
 		}
 	}
+	free(dirname);
 	closedir(dp);
 	return -1;
 }
@@ -484,6 +486,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	}
 	// End Color Detection
 
+	// boxDestroy(crop_points);
 	pixDestroy(&pix);
 	pixDestroy(&cpix);
 	pixDestroy(&color_pix);

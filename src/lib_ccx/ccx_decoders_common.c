@@ -282,6 +282,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->extract = setting->extract;
 	ctx->fullbin = setting->fullbin;
 	ctx->hauppauge_mode = setting->hauppauge_mode;
+	ctx->saw_caption_block = 0;
 	ctx->program_number = setting->program_number;
 	ctx->processed_enough = 0;
 	ctx->max_gop_length = 0;
