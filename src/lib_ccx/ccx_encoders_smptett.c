@@ -117,6 +117,7 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 	LLONG ms_start, ms_end;
 	//char timeline[128];
 	int len = 0;
+	int i = 0;
 
 	ms_start = sub->start_time;
 	ms_end = sub->end_time;
@@ -129,7 +130,7 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 	if ( sub->flags & SUB_EOD_MARKER )
 		context->prev_start =  sub->start_time;
 
-	for (int i = sub->nb_data - 1; i >= 0; i--)
+	for (i = sub->nb_data - 1; i >= 0; i--)
 	{
 		if (rect[i].ocr_text && *(rect[i].ocr_text))
 		{
