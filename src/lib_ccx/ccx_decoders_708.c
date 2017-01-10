@@ -509,7 +509,7 @@ void _dtvcc_screen_print(ccx_dtvcc_ctx *dtvcc, ccx_dtvcc_service_decoder *decode
 	struct encoder_ctx *encoder = (struct encoder_ctx *) dtvcc->encoder;
 	int sn = decoder->tv->service_number;
 	ccx_dtvcc_writer_ctx *writer = &encoder->dtvcc_writers[sn - 1];
-	ccx_dtvcc_writer_output(writer, decoder->tv, encoder);
+	ccx_dtvcc_writer_output(writer, decoder, encoder);
 
 	_dtvcc_tv_clear(decoder);
 }
