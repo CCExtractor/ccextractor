@@ -223,7 +223,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 			ppixel++;
 		}
 	}
-	boxDestroy(ignore_alpha_at_edge(alpha, indata, w, h, pix, &cpix));
+	ignore_alpha_at_edge(alpha, indata, w, h, pix, &cpix);
 	// For the unquantized bitmap
 	wpl = pixGetWpl(color_pix);
 	data = pixGetData(color_pix);
@@ -486,7 +486,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	}
 	// End Color Detection
 
-	boxDestroy(crop_points);
+	// boxDestroy(crop_points);
 	pixDestroy(&pix);
 	pixDestroy(&cpix);
 	pixDestroy(&color_pix);
