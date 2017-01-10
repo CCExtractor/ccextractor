@@ -509,7 +509,7 @@ void _dtvcc_screen_print(ccx_dtvcc_ctx *dtvcc, ccx_dtvcc_service_decoder *decode
 	struct encoder_ctx *encoder = (struct encoder_ctx *) dtvcc->encoder;
 	int sn = decoder->tv->service_number;
 	ccx_dtvcc_writer_ctx *writer = &encoder->dtvcc_writers[sn - 1];
-	ccx_dtvcc_writer_output(writer, decoder->tv, encoder);
+	ccx_dtvcc_writer_output(writer, decoder, encoder);
 
 	_dtvcc_tv_clear(decoder);
 }
@@ -1068,8 +1068,8 @@ void dtvcc_handle_SPA_SetPenAttributes(ccx_dtvcc_service_decoder *decoder, unsig
 	int text_tag  = (data[1] >> 4) & 0xf;
 	int font_tag  = (data[2]     ) & 0x7;
 	int edge_type = (data[2] >> 3) & 0x7;
-	int underline = (data[2] >> 4) & 0x1;
-	int italic    = (data[2] >> 5) & 0x1;
+	int underline = (data[2] >> 6) & 0x1;
+	int italic    = (data[2] >> 7) & 0x1;
 
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "       Pen size: [%d]     Offset: [%d]  Text tag: [%d]   Font tag: [%d]\n",
 			pen_size, offset, text_tag, font_tag);
