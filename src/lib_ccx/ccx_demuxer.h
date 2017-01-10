@@ -69,7 +69,13 @@ struct cap_info
 	struct list_head pg_stream;
 
 };
-
+enum STREAM_TYPE
+{
+	PRIVATE_STREAM_1 = 0,
+	AUDIO,
+	VIDEO,
+	COUNT
+};
 struct ccx_demuxer
 {
 	int m2ts;
@@ -111,7 +117,7 @@ struct ccx_demuxer
 	struct PSI_buffer *PID_buffers[MAX_PSI_PID];
 	int PIDs_seen[MAX_PID];
 	uint64_t min_pts[MAX_PID];
-	uint64_t got_first_pts[3]; //0 is pvs1 (private stream 1), 1 is audio and 2 is video
+	uint64_t got_important_streams_min_pts[COUNT]; //0 is pvs1 (private stream 1), 1 is audio and 2 is video
 
 	/*51 possible stream ids in total, 0xbd is private stream, 0xbe is padding stream, 
 	0xbf private stream 2, 0xc0 - 0xdf audio, 0xe0 - 0xef video 

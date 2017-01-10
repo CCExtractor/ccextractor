@@ -858,21 +858,6 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			if(!datalist)
 				break;
 		}
-		//this part is for getting the min_pts of every possible stream ID (optional)
-		/*if (!got_pts && (ctx->demux_ctx->got_first_pts[0] || ctx->demux_ctx->got_first_pts[1] || ctx->demux_ctx->got_first_pts[2])) //it means we got the first pts for video, audio and sub :)
-		{
-			for (int i = 0; i < 65536; i++) // we parse the array with the min_pts for each stream
-			{
-				if (ctx->demux_ctx->min_pts[i] != UINT64_MAX) //PTS is 33 bit, array is 64 so we set the default value tu UINT64_MAX instead of 0 because PTS can also be 0
-				{
-					//printf("Got pts: %" PRId64 " for PID %d\n", ctx->demux_ctx->min_pts[i], i);
-					if (ctx->demux_ctx->min_pts[i] < min_pts)
-						min_pts = ctx->demux_ctx->min_pts[i];
-				}
-			}
-			ctx->demux_ctx->pinfo->min_pts = min_pts;
-			got_pts = 1;
-		}*/
 		if (!datalist)
 			continue;
 		position_sanity_check(ctx->demux_ctx);
@@ -898,18 +883,18 @@ int general_loop(struct lib_ccx_ctx *ctx)
 
 			if (!set_pts && dec_ctx->codec == CCX_CODEC_TELETEXT) //even if there's no sub data, we still need to set the min_pts
 			{
-				if (!got_pts && (ctx->demux_ctx->got_first_pts[0] != UINT64_MAX || ctx->demux_ctx->got_first_pts[1] != UINT64_MAX || ctx->demux_ctx->got_first_pts[2] != UINT64_MAX)) //it means we got the first pts for either sub, audio or video :)
+				if (!got_pts && (ctx->demux_ctx->got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX || ctx->demux_ctx->got_important_streams_min_pts[AUDIO] != UINT64_MAX || ctx->demux_ctx->got_important_streams_min_pts[VIDEO] != UINT64_MAX)) //it means we got the first pts for either sub, audio or video :)
 				{
 					/*we don't need to parse the entire min_pts array since 
 					we are only interested in sub, audio and video stream pts
-					and we have got_first_pts array for that*/
-					for (int i = 0; i < 3; i++)
+					and we have got_important_streams_min_pts array for that*/
+					for (int i = 0; i < COUNT; i++)
 					{
-						if (ctx->demux_ctx->got_first_pts[i] != UINT64_MAX) //PTS is 33 bit, array is 64 so we set the default value to UINT64_MAX instead of 0 because a PTS can also be 0
+						if (ctx->demux_ctx->got_important_streams_min_pts[i] != UINT64_MAX) //PTS is 33 bit, array is 64 so we set the default value to UINT64_MAX instead of 0 because a PTS can also be 0
 						{
 							//printf("Got pts: %" PRId64 " for PID %d\n", ctx->demux_ctx->min_pts[i], i);
-							if (ctx->demux_ctx->got_first_pts[i] < min_pts)
-								min_pts = ctx->demux_ctx->got_first_pts[i];
+							if (ctx->demux_ctx->got_important_streams_min_pts[i] < min_pts)
+								min_pts = ctx->demux_ctx->got_important_streams_min_pts[i];
 						}
 					}
 					ctx->demux_ctx->pinfo->min_pts = min_pts; //we set the program's min_pts (not exactly perfect since we would need to parse the entire min_pts array to get the real min_pts for the program, but for now it's a good approximation)
@@ -919,9 +904,9 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			}
 			if (!set_pts && dec_ctx->codec == CCX_CODEC_DVB) //DVB will always have to be in sync with video (no matter the min_pts of the other streams)
 			{
-				if (!got_pts && ctx->demux_ctx->got_first_pts[2] != UINT64_MAX) //it means we got the first pts for video
+				if (!got_pts && ctx->demux_ctx->got_important_streams_min_pts[AUDIO] != UINT64_MAX) //it means we got the first pts for video
 				{
-					min_pts = ctx->demux_ctx->got_first_pts[2];
+					min_pts = ctx->demux_ctx->got_important_streams_min_pts[AUDIO];
 					set_current_pts(dec_ctx->timing, min_pts);
 					set_fts(dec_ctx->timing);
 					got_pts = 1;
@@ -993,18 +978,18 @@ int general_loop(struct lib_ccx_ctx *ctx)
 
 				if (!set_pts && dec_ctx->codec == CCX_CODEC_TELETEXT) //even if there's no sub data, we still need to set the min_pts
 				{
-					if (!got_pts && (ctx->demux_ctx->got_first_pts[0] != UINT64_MAX || ctx->demux_ctx->got_first_pts[1] != UINT64_MAX || ctx->demux_ctx->got_first_pts[2] != UINT64_MAX)) //it means we got the first pts for either sub, audio or video :)
+					if (!got_pts && (ctx->demux_ctx->got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX || ctx->demux_ctx->got_important_streams_min_pts[AUDIO] != UINT64_MAX || ctx->demux_ctx->got_important_streams_min_pts[VIDEO] != UINT64_MAX)) //it means we got the first pts for either sub, audio or video :)
 					{
 						/*we don't need to parse the entire min_pts array since
 						we are only interested in sub, audio and video stream pts
-						and we have got_first_pts array for that*/
-						for (int i = 0; i < 3; i++)
+						and we have got_important_streams_min_pts array for that*/
+						for (int i = 0; i < COUNT; i++)
 						{
-							if (ctx->demux_ctx->got_first_pts[i] != UINT64_MAX) //PTS is 33 bit, array is 64 so we set the default value to UINT64_MAX instead of 0 because a PTS can also be 0
+							if (ctx->demux_ctx->got_important_streams_min_pts[i] != UINT64_MAX) //PTS is 33 bit, array is 64 so we set the default value to UINT64_MAX instead of 0 because a PTS can also be 0
 							{
 								//printf("Got pts: %" PRId64 " for PID %d\n", ctx->demux_ctx->min_pts[i], i);
-								if (ctx->demux_ctx->got_first_pts[i] < min_pts)
-									min_pts = ctx->demux_ctx->got_first_pts[i];
+								if (ctx->demux_ctx->got_important_streams_min_pts[i] < min_pts)
+									min_pts = ctx->demux_ctx->got_important_streams_min_pts[i];
 							}
 						}
 						ctx->demux_ctx->pinfo->min_pts = min_pts; //we set the program's min_pts (not exactly perfect since we would need to parse the entire min_pts array to get the real min_pts for the program, but for now it's a good approximation)
@@ -1014,9 +999,9 @@ int general_loop(struct lib_ccx_ctx *ctx)
 				}
 				if (!set_pts && dec_ctx->codec == CCX_CODEC_DVB) //DVB will always have to be in sync with video (no matter the min_pts of the other streams)
 				{
-					if (!got_pts && ctx->demux_ctx->got_first_pts[2] != UINT64_MAX) //it means we got the first pts for video
+					if (!got_pts && ctx->demux_ctx->got_important_streams_min_pts[AUDIO] != UINT64_MAX) //it means we got the first pts for video
 					{
-						min_pts = ctx->demux_ctx->got_first_pts[2];
+						min_pts = ctx->demux_ctx->got_important_streams_min_pts[AUDIO];
 						set_current_pts(dec_ctx->timing, min_pts);
 						set_fts(dec_ctx->timing);
 						got_pts = 1;

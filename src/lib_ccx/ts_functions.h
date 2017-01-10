@@ -9,6 +9,7 @@ struct ts_payload
 	unsigned pid;         // Stream PID
 	int counter;          // continuity counter
 	int transport_error;  // 0 = packet OK, non-zero damaged
+	int has_random_access_indicator; //1 = start of new GOP (Set when the stream may be decoded without errors from this point)
 	int have_pcr;
 	int64_t pcr;
 	unsigned char section_buf[4098];
