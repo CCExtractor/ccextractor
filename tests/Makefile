@@ -20,8 +20,7 @@ CFLAGS+=$(shell pkg-config --cflags check)
 LDFLAGS+=$(shell pkg-config --libs check)
 
 # TODO: need to rewrite this. Need new way to load sources for testing
-SRC=$(wildcard ../src/lib_ccx/ccx_encoders_splitbysentence.c)
-OBJS=
+OBJS=$(filter-out ../linux/objs/ccextractor.o, $(wildcard ../linux/objs/*.o))
 
 SRC_SUITE=$(wildcard *_suite.c)
 OBJ_SUITE=$(patsubst %_suite.c, %_suite.o, $(SRC_SUITE))
@@ -39,7 +38,7 @@ runtest: $(OBJS)
 	@echo "|                 BUILD TESTS                  |"
 	@echo "+----------------------------------------------+"
 	$(CC) -c $(ALL_FLAGS) $(CFLAGS) $@.c
-	$(CC) $(SRC) $@.o $^ $(ALL_FLAGS) $(CFLAGS) $(LDFLAGS) -o $@
+	$(CC) $@.o $^ $(ALL_FLAGS) $(CFLAGS) $(LDFLAGS) -o $@
 
 .PHONY: test
 test: runtest

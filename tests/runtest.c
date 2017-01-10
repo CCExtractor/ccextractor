@@ -1,8 +1,13 @@
 #include <check.h>
 
+#include "../src/lib_ccx/lib_ccx.h"
+#include "../src/lib_ccx/ccx_common_option.h"
+
 // TESTS:
 #include "ccx_encoders_splitbysentence_suite.h"
 
+struct ccx_s_options ccx_options;
+volatile int terminate_asap = 0;
 
 int main(void)
 {

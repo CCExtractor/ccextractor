@@ -21,20 +21,20 @@ Where `DEBUG` is just an environment variable.
 
 ## DEBUGGING
 
-If tests failed after your changes, you could debug them (almost all flags for this are set in the `tests/Makefile`.
+If tests fail after your changes, you could try to debug the failed tests.
 
-Run:
+Run following commands in the `/tests` directory:
 
 ```shell
-# build test runner
+# build test runner (executable file - runtest)
 make
-# load test runner to the debgger:
-gdb runner
+# load runtest to the debgger:
+gdb runtest
 
-# run under debugger:
+# start under debugger:
 (gdb) run
 
-# on segfault:
+# if segfault occured:
 (gdb) where
 ```
 
