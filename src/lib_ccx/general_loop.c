@@ -900,7 +900,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			{
 				if (!got_pts && (ctx->demux_ctx->got_first_pts[0] != UINT64_MAX || ctx->demux_ctx->got_first_pts[1] != UINT64_MAX || ctx->demux_ctx->got_first_pts[2] != UINT64_MAX)) //it means we got the first pts for either sub, audio or video :)
 				{
-					/*we don't need to parse the entire min_pts array since 
+					/*we don't need to parse the entire min_pts array since
 					we are only interested in sub, audio and video stream pts
 					and we have got_first_pts array for that*/
 					for (int i = 0; i < 3; i++)
@@ -945,7 +945,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 				}
 				else
 					pts = data_node->pts;
-				set_current_pts(dec_ctx->timing, pts); 
+				set_current_pts(dec_ctx->timing, pts);
 				set_fts(dec_ctx->timing);
 			}
 
@@ -1033,7 +1033,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 				dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
-				
+
 				if(data_node->pts != CCX_NOPTS)
 					set_current_pts(dec_ctx->timing, data_node->pts);
 

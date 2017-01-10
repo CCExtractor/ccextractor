@@ -207,7 +207,7 @@ typedef enum
 	HEBREW
 } g0_charsets_type;
 
-g0_charsets_type default_g0_charset; 
+g0_charsets_type default_g0_charset;
 
 // Note: All characters are encoded in UCS-2
 
@@ -513,7 +513,7 @@ uint32_t unham_24_18(uint32_t a)
 	return (a & 0x000004) >> 2 | (a & 0x000070) >> 3 | (a & 0x007f00) >> 4 | (a & 0x7f0000) >> 5;
 }
 
-//Default G0 Character Set 
+//Default G0 Character Set
 void set_g0_charset(uint32_t triplet)
 {
 	// ETS 300 706, Table 32
@@ -526,7 +526,7 @@ void set_g0_charset(uint32_t triplet)
 		else if((triplet & 0x0380) == 0x0280)
 			default_g0_charset = CYRILLIC3;
 		else
-			default_g0_charset = LATIN;	
+			default_g0_charset = LATIN;
 	}
 	else
 		default_g0_charset = LATIN;
@@ -629,7 +629,7 @@ void telx_case_fix (struct TeletextCtx *context)
 
 void telxcc_dump_prev_page (struct TeletextCtx *ctx, struct cc_subtitle *sub)
 {
-	char info[4]; 
+	char info[4];
 	if (!ctx->page_buffer_prev)
 		return;
 
@@ -1115,7 +1115,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			if ((mode == 0x0f) && (row_address_group == NO))
 			{
 				x26_col = address;
-				if (data > 31) 
+				if (data > 31)
 				{
 					ctx->page_buffer.text[x26_row][x26_col] = G2[0][data - 0x20];
 					ctx->page_buffer.g2_char_present[x26_row][x26_col] = 1;
@@ -1148,7 +1148,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				// other
 				else
 					ctx->page_buffer.text[x26_row][x26_col] = telx_to_ucs2(data);
-				
+
 				ctx->page_buffer.g2_char_present[x26_row][x26_col] = 1;
 			}
 		}
@@ -1173,7 +1173,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			{
 				// ETS 300 706, chapter 9.4.2: Packet X/28/0 Format 1 only
 				if ((triplet0 & 0x0f) == 0x00)
-				{					
+				{
 					// ETS 300 706, Table 32
 					set_g0_charset(triplet0); // Deciding G0 Character Set
 					if(default_g0_charset == LATIN)
@@ -1195,7 +1195,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			// ETS 300 706, chapter 9.5.1: Packet M/29/0
 			// ETS 300 706, chapter 9.5.3: Packet M/29/4
 			uint32_t triplet0 = unham_24_18((packet->data[3] << 16) | (packet->data[2] << 8) | packet->data[1]);
-	
+
 			if (triplet0 == 0xffffffff)
 			{
 				// invalid data (HAM24/18 uncorrectable error detected), skip group
@@ -1350,6 +1350,20 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	uint16_t pes_packet_length;
 	uint8_t optional_pes_header_included = NO;
 	uint16_t optional_pes_header_length = 0;
+	//extension
+	uint8_t pes_scrambling_control;
+	uint8_t pes_priority;
+	uint8_t data_alignment_indicator;
+	uint8_t copyright;
+	uint8_t original_or_copy;
+	uint8_t pts_dts_flags;
+	uint8_t escr_flag;
+	uint8_t es_rate;
+	uint8_t dsm_flag;
+	uint8_t aci_flag;
+	uint8_t pes_crc_flag;
+	uint8_t pes_ext_flag;
+	//extension
 	uint32_t t = 0;
 	uint16_t i;
 	struct TeletextCtx *ctx = dec_ctx->private_data;
@@ -1383,14 +1397,51 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	// Can be zero. If the "PES packet length" is set to zero, the PES packet can be of any length.
 	// A value of zero for the PES packet length can be used only when the PES packet payload is a video elementary stream.
 
+	pes_scrambling_control = (uint8_t)(buffer[6] << 2) >> 6;
+	pes_priority = (uint8_t)(buffer[6] << 4) >> 7;
+	data_alignment_indicator = (uint8_t)(buffer[6] << 5) >> 6;
+	copyright = (uint8_t)(buffer[6] << 7) >> 7;
+	original_or_copy = (uint8_t)(buffer[6] << 8) >> 7;
+	pts_dts_flag = buffer[7] >> 6;
+	escr_flag = (uint8_t)(buffer[7] << 2) >> 7;
+	es_rate = (uint8_t)(buffer[7] << 3) >> 7;
+	dsm_flag = (uint8_t)(buffer[7] << 4) >> 7;
+	aci_flag = (uint8_t)(buffer[7] << 5) >> 7;
+	pes_crc_flag = (uint8_t)(buffer[7] << 6) >> 7;
+	pes_ext_flag = (uint8_t)(buffer[7] << 7) >> 7;
+
 	if (ccx_options.pes_header_to_stdout)
 	{
 		printf("Packet start code prefix: %04x # ", pes_prefix);
 		printf("Stream ID: %04x # ", pes_stream_id);
 		printf("Packet length: %d ", pes_packet_length);
+		printf("PESSC: 0x%x ",
+      pes_scrambling_control;
+    printf("PESP: 0x%x ",
+      pes_priority;
+    printf("DAI: 0x%x ",
+      data_alignment_indicator;
+    printf("CY: 0x%x\n",
+      copyright;
+    printf("OOC: 0x%x ",
+      original_or_copy;
+    printf("PTSDTS: 0x%x ",
+      pts_dts_flag;
+    printf("ESCR: 0x%x ",
+      escr_flag;
+    printf("Rate: 0x%x\n",
+      es_rate;
+    printf("DSM: 0x%x",
+      dsm_flag;
+    printf("ACI: 0x%x ",
+      aci_flag;
+    printf("PESCRC: 0x%x ",
+      pes_crc_flag;
+    printf("EXT: 0x%x\n",
+      pes_ext_flag;
 	}
 
-	if (pes_packet_length == 6) 
+	if (pes_packet_length == 6)
 	{
 		if (ccx_options.pes_header_to_stdout)
 			printf("\n");

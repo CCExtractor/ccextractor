@@ -467,7 +467,7 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	if(!cinfo->capbuf || !cinfo->capbuflen)
 		return -1;
 
-	
+
 	if (ptr->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 	{
 		dump (CCX_DMT_GENERIC_NOTICES, cinfo->capbuf, cinfo->capbuflen, 0, 1);
@@ -480,7 +480,7 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	if (cinfo->codec == CCX_CODEC_TELETEXT)
 	{
 		memcpy(ptr->buffer+ ptr->len, cinfo->capbuf, cinfo->capbuflen);
-		ptr->len += cinfo->capbuflen; 
+		ptr->len += cinfo->capbuflen;
 		return CCX_OK;
 	}
 	vpesdatalen = read_video_pes_header(ctx, ptr, cinfo->capbuf, &pesheaderlen, cinfo->capbuflen);
@@ -554,7 +554,7 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 		memcpy(ptr->buffer+ ptr->len, databuf, databuflen);
 		ptr->len += databuflen;
 	}
-	
+
 	return CCX_OK;
 }
 
@@ -719,7 +719,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 					// check for PES header
 					if (pes_prefix == 0x000001)
 					{
-						//if we didn't already have this stream id with its first pts then calculate 
+						//if we didn't already have this stream id with its first pts then calculate
 						if (pes_stream_id != ctx->found_stream_ids[pes_stream_id - 0xbd])
 						{
 							pes_packet_length = 6 + ((payload.start[4] << 8) | payload.start[5]); // 5th and 6th byte of the header define the length of the rest of the packet (+6 is for the prefix, stream ID and packet length)
@@ -754,7 +754,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 								/*we already checked if we got that packet's pts
 								but we still need to check if we got the min_pts of the stream type
 								because we might have multiple audio streams for example*/
-								if (pes_stream_id == 0xbd && ctx->got_first_pts[0] == UINT64_MAX) //private stream 1 
+								if (pes_stream_id == 0xbd && ctx->got_first_pts[0] == UINT64_MAX) //private stream 1
 									ctx->got_first_pts[0] = pts;
 								if (pes_stream_id >= 0xC0 && pes_stream_id <= 0xDF && ctx->got_first_pts[1] == UINT64_MAX) //audio
 									ctx->got_first_pts[1] = pts;
