@@ -239,6 +239,10 @@ int main(int argc, char *argv[])
 			case CCX_SM_MP4:
 				mprint ("\rAnalyzing data with GPAC (MP4 library)\n");
 				close_input_file(ctx); // No need to have it open. GPAC will do it for us
+				if (ctx->current_file == -1) // We don't have a file to open, must be stdin, and GPAC is incompatible with stdin
+				{
+					fatal (EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
+				}
 				tmp = processmp4(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
 				if (ccx_options.print_file_reports)
 					print_file_report(ctx);
