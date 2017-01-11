@@ -5,7 +5,7 @@
 struct avc_ctx
 {
 	unsigned char cc_count;
-	// buffer to hold cc data
+	// Buffer to hold cc data
 	unsigned char *cc_data;
 	long cc_databufsize;
 	int cc_buffer_saved; // Was the CC buffer saved after it was last updated?
