@@ -43,8 +43,9 @@
 #include <limits.h>
 
 // For Visual Studio 6 in C++ mode wrap <wchar.h> include with 'extern "C++" {}'
-// or compiler give many errors like this:
-//   error C2733: second C linkage of overloaded function 'wmemchr' not allowed
+// Or compiler give many errors like this:
+// Error C2733: second C linkage of overloaded function 'wmemchr' not allowed
+
 #if (_MSC_VER < 1300) && defined(__cplusplus)
    extern "C++" {
 #endif
@@ -54,6 +55,7 @@
 #endif
 
 // Define _W64 macros to mark types changing their size, like intptr_t.
+
 #ifndef _W64
 #  if !defined(__midl) && (defined(_X86_) || defined(_M_IX86)) && _MSC_VER >= 1300
 #     define _W64 __w64
@@ -61,7 +63,6 @@
 #     define _W64
 #  endif
 #endif
-
 
 // 7.18.1 Integer types
 
@@ -107,7 +108,6 @@ typedef uint64_t  uint_fast64_t;
 // 7.18.1.5 Greatest-width integer types
 typedef int64_t   intmax_t;
 typedef uint64_t  uintmax_t;
-
 
 // 7.18.2 Limits of specified-width integer types
 
@@ -227,6 +227,5 @@ typedef uint64_t  uintmax_t;
 #define UINTMAX_C  UINT64_C
 
 #endif // __STDC_CONSTANT_MACROS ]
-
 
 #endif // _MSC_STDINT_H_ ]
