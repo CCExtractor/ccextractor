@@ -11,14 +11,13 @@
 
  */
 
-
 #include "ccx_common_platform.h"
 #include "ccx_encoders_common.h"
 #include "lib_ccx.h"
 #include "ocr.h"
 #include "utility.h"
 
-#define DEBUG_SBS 1
+//#define DEBUG_SBS
 
 #ifdef DEBUG_SBS
 #define LOG_DEBUG(...) printf(__VA_ARGS__)
@@ -151,9 +150,11 @@ char * sbs_find_insert_point(char * old_tail, const char * new_start, size_t n, 
 			partial_shift += 1;
 		}
 
-printf("SBS: sbs_find_insert_point: PARTIAL SHIFT, [%d]\n",
+#ifdef DEBUG_SBS
+		printf("SBS: sbs_find_insert_point: PARTIAL SHIFT, [%d]\n",
 			partial_shift
 		);
+#endif
 
 		return old_tail + partial_shift;
 	}
@@ -277,22 +278,7 @@ void sbs_strcpy_without_dup(const unsigned char * str, struct encoder_ctx * cont
 		// we will use an appropriate part from the new string
 
 		//context->sbs_buffer[sbs_len-intersect_len] = 0;
-printf("DROP THE END\n\
-\tend is here: [%s]\n\
-\tminus 1 is : [%s]\n\
-",
-		buffer_insert_point,
-		buffer_insert_point - 1
-);
-
 		*buffer_insert_point = 0;
-
-
-printf("AFTER DROP:\n\
-\tcontext buf : [%s]\n\
-",
-		context->sbs_buffer
-);
 	}
 
 	// check, that new string does not contain data, from
