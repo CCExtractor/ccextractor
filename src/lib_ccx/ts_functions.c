@@ -851,7 +851,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 				{
 					if (ctx->PIDs_programs[payload.pid]->program_number == ctx->pinfo->program_number) //check if the packet's program belongs to our program
 					{
-						printf("\nPID %d belongs to program %d\n", payload.pid, ctx->pinfo->program_number);
 						if (ctx->min_pts[payload.pid] == UINT64_MAX) //check if we don't have the min_pts of that packet's pid
 						{
 							// Packetized Elementary Stream (PES) 32-bit start code
