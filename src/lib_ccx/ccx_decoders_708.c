@@ -1224,9 +1224,13 @@ int _dtvcc_handle_G0(ccx_dtvcc_service_decoder *decoder, unsigned char *data, in
 
 	unsigned char c = data[0];
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] G0: [%02X]  (%c)\n", c, c);
-	unsigned char uc = dtvcc_get_internal_from_G0(c);
 	ccx_dtvcc_symbol sym;
-	CCX_DTVCC_SYM_SET(sym, uc);
+	if (c == 0x7F) {	// musical note replaces the Delete command code in ASCII
+		sym.sym = CCX_DTVCC_MUSICAL_NOTE_CHAR;
+	} else {
+		unsigned char uc = dtvcc_get_internal_from_G0(c);
+		CCX_DTVCC_SYM_SET(sym, uc);
+	}
 	_dtvcc_process_character(decoder, sym);
 	return 1;
 }
