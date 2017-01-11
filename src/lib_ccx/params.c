@@ -2151,7 +2151,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		// Unrecognized switches are silently ignored
 	}
 	
-	if(opt->demux_cfg.auto_stream ==CCX_SM_MP4 && opt->input_source == CX_DS_STDIN)
+	if(opt->demux_cfg.auto_stream ==CCX_SM_MP4 && opt->input_source == CCX_DS_STDIN)
 	{
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
 	}
