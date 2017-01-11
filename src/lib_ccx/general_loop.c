@@ -562,6 +562,7 @@ int raw_loop (struct lib_ccx_ctx *ctx)
 
 
 	} while (data->len);
+	free(data);
 	return caps;
 }
 

@@ -779,8 +779,6 @@ int myth_loop(struct lib_ccx_ctx *ctx)
 	av.data=NULL;
 	ccx_options.buffer_input = 1;
 	dec_ctx = update_decoder_list(ctx);
-	desp_length = 65536;
-	desp = (unsigned char *) malloc (desp_length);
 	if (!desp)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory.\n");
 	saved=0;
