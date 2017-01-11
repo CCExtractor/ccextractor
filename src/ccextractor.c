@@ -423,6 +423,9 @@ int main(int argc, char *argv[])
 #endif
 	dinit_libraries(&ctx);
 	if (!ret)
-		fatal(EXIT_NO_CAPTIONS, "No captions were found in input.");
+	{
+		mprint ("No captions were found in input.\n");
+		return EXIT_NO_CAPTIONS;
+	}
 	return EXIT_OK;
 }

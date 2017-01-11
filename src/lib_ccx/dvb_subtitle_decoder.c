@@ -1458,8 +1458,8 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	DVBSubRegion *region;
 	DVBSubRegionDisplay *display;
 	DVBSubCLUT *clut;
-        DVBSubDisplayDefinition *display_def;
-        struct cc_bitmap *rect = NULL;
+    DVBSubDisplayDefinition *display_def;
+    struct cc_bitmap *rect = NULL;
 	uint32_t *clut_table;
 	int offset_x=0, offset_y=0;
 	int ret = 0;
@@ -1524,15 +1524,15 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 		switch (region->depth)
 		{
-		case 2:
-			clut_table = clut->clut4;
-		case 8:
-			clut_table = clut->clut256;
-			break;
-		case 4:
-		default:
-			clut_table = clut->clut16;
-			break;
+			case 2:
+				clut_table = clut->clut4;
+			case 8:
+				clut_table = clut->clut256;
+				break;
+			case 4:
+			default:
+				clut_table = clut->clut16;
+				break;
 		}
 
 		rect->data[1] = malloc(1024);
