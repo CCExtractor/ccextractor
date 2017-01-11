@@ -1111,7 +1111,7 @@ void dtvcc_handle_SPC_SetPenColor(ccx_dtvcc_service_decoder *decoder, unsigned c
 	int fg_opacity = (data[1] >> 6) & 0x03;
 	int bg_color   = (data[2]     ) & 0x3f;
 	int bg_opacity = (data[2] >> 6) & 0x03;
-	int edge_color = (data[3] >> 6) & 0x3f;
+	int edge_color = (data[3]     ) & 0x3f;
 
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "      Foreground color: [%d]     Foreground opacity: [%d]\n",
 			fg_color, fg_opacity);
