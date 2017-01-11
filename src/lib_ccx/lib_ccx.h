@@ -24,7 +24,7 @@
 #include <curl/curl.h>
 #endif
 
-//#include "ccx_decoders_708.h"
+//Include "ccx_decoders_708.h"
 
 /* Report information */
 #define SUB_STREAMS_CNT 10
@@ -44,13 +44,13 @@ struct file_report
 // Stuff for telxcc.c
 struct ccx_s_teletext_config
 {
-	uint8_t verbose : 1;                                       // should telxcc be verbose?
-	uint16_t page;                                             // teletext page containing cc we want to filter
+	uint8_t verbose : 1;                                       // Should telxcc be verbose?
+	uint16_t page;                                             // Teletext page containing cc we want to filter
 	uint16_t tid;                                              // 13-bit packet ID for teletext stream
-	double offset;                                             // time offset in seconds
-	uint8_t bom : 1;                                           // print UTF-8 BOM characters at the beginning of output
-	uint8_t nonempty : 1;                                      // produce at least one (dummy) frame
-	// uint8_t se_mode : 1;                                    // search engine compatible mode => Uses CCExtractor's write_format
+	double offset;                                             // Time offset in seconds
+	uint8_t bom : 1;                                           // Print UTF-8 BOM characters at the beginning of output
+	uint8_t nonempty : 1;                                      // Produce at least one (dummy) frame
+	// uint8_t se_mode : 1;                                    // Search engine compatible mode => Uses CCExtractor's write_format
 	// uint64_t utc_refvalue;                                  // UTC referential value => Moved to ccx_decoders_common, so can be used for other decoders (608/xds) too
 	uint16_t user_page;                                        // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
 	int levdistmincnt, levdistmaxpct;                          // Means 2 fails or less is "the same", 10% or less is also "the same"
@@ -102,11 +102,11 @@ struct lib_ccx_ctx
 	// See -d from
 
 	int cc_to_stdout; // If 1, captions go to stdout instead of file
-	int pes_header_to_stdout; //If 1, PES Header data will be outputted to console
+	int pes_header_to_stdout; // If 1, PES Header data will be outputted to console
 	int dvb_debug_traces_to_stdout; // If 1, DVB subtitle debug traces will be outputted to console
-	int ignore_pts_jumps; //If 1, the program will ignore PTS jumps. Sometimes this parameter is required for DVB subs with > 30s pause time
+	int ignore_pts_jumps; // If 1, the program will ignore PTS jumps. Sometimes this parameter is required for DVB subs with > 30s pause time
 
-	LLONG subs_delay; // ms to delay (or advance) subs
+	LLONG subs_delay; // MS to delay (or advance) subs
 
 	int startcredits_displayed;
 	int end_credits_displayed;
@@ -133,9 +133,9 @@ struct lib_ccx_ctx
 
 	unsigned int hauppauge_mode;         // If 1, use PID=1003, process specially and so on
 	int live_stream;                     /* -1 -> Not a complete file but a live stream, without timeout
-                                          0 -> A regular file
-                                         >0 -> Live stream with a timeout of this value in seconds */
-	int binary_concat;                   // Disabled by -ve or --videoedited
+                                             0 -> A regular file
+                                            >0 -> Live stream with a timeout of this value in seconds */
+	int binary_concat;                  // Disabled by -ve or --videoedited
 	int multiprogram;
 	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
 
@@ -277,7 +277,7 @@ extern long FILEBUFFERSIZE; // Uppercase because it used to be a define
 extern int firstcall;
 
 // From ts_functions
-//extern struct ts_payload payload;
+// Extern struct ts_payload payload;
 extern unsigned char tspacket[188];
 extern unsigned char *last_pat_payload;
 extern unsigned last_pat_length;
