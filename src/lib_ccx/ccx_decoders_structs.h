@@ -13,7 +13,7 @@
 #define SORTBUF (2*MAXBFRAMES+1)
 
 
-/* flag raised when end of display marker arrives in Dvb Subtitle */
+/* Flag raised when end of display marker arrives in Dvb Subtitle */
 #define SUB_EOD_MARKER (1 << 0 )
 struct cc_bitmap
 {
@@ -56,25 +56,26 @@ enum cc_modes
 *
 * TODO use union inside struct for each kind of fields
 */
+
 typedef struct eia608_screen // A CC buffer
 {
-	/** format of data inside this structure */
+	/** Format of data inside this structure */
 	enum ccx_eia608_format format;
 	unsigned char characters[15][33];
 	unsigned char colors[15][33];
 	unsigned char fonts[15][33]; // Extra char at the end for a 0
 	int row_used[15];            // Any data in row?
 	int empty;                   // Buffer completely empty?
-	/** start time of this CC buffer */
+	/** Start time of this CC buffer */
 	LLONG start_time;
-	/** end time of this CC buffer */
+	/** End time of this CC buffer */
 	LLONG end_time;
 	enum cc_modes mode;
 	int channel;  // Currently selected channel
 	int my_field; // Used for sanity checks
 	/** XDS string */
 	char *xds_str;
-	/** length of XDS string */
+	/** Length of XDS string */
 	size_t xds_len;
 	/** Class of XDS string */
 	int cur_xds_packet_class;
@@ -82,7 +83,7 @@ typedef struct eia608_screen // A CC buffer
 
 struct ccx_decoders_common_settings_t
 {
-	LLONG subs_delay;                                          // ms to delay (or advance) subs
+	LLONG subs_delay;                                          // MS to delay (or advance) subs
 	enum ccx_output_format output_format;                      // What kind of output format should be used?
 	int fix_padding;                                           // Replace 0000 with 8080 in HDTV (needed for some cards)
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
@@ -118,7 +119,7 @@ struct lib_cc_decode
 	int fix_padding;                                           // Replace 0000 with 8080 in HDTV (needed for some cards)
 	enum ccx_output_format write_format;                       // 0 = Raw, 1 = srt, 2 = SMI
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
-	LLONG subs_delay;                                          // ms to delay (or advance) subs
+	LLONG subs_delay;                                          // MS to delay (or advance) subs
 	int extract;                                               // Extract 1st, 2nd or both fields
 	int fullbin;                                               // Disable pruning of padding cc blocks
 	struct cc_subtitle dec_sub;
@@ -197,7 +198,7 @@ struct lib_cc_decode
 
 	int (*writedata)(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 
-	//dvb subtitle related
+	//Dvb subtitle related
 	struct lib_cc_decode *prev;
 };
 
