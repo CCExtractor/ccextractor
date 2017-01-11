@@ -145,6 +145,9 @@ int main(int argc, char *argv[])
 				fatal(EXIT_READ_ERROR, "Failed to open file: Reason unknown");
 			}
 		}
+		else if(ctx->total_inputsize<=3){
+		fatal(EXIT_READ_ERROR,"Failed to read file: Only whitespace characters found.")
+		}
 	}
 
 #ifndef _WIN32
