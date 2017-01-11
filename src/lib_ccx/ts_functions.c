@@ -688,14 +688,18 @@ uint64_t get_video_min_pts(struct ccx_demuxer *context)
 					pts = get_pts(payload.start);
 		}
 		
+		if (num_of_remembered_pts >= 1 && payload.has_random_access_indicator)
+		{
+			got_pts = 1;
+			break;
+		}
+
 		if (pts != UINT64_MAX)
 		{
 			num_of_remembered_pts++;
 			pts_array = realloc(pts_array, num_of_remembered_pts * sizeof(uint64_t));
 			((uint64_t*)pts_array)[num_of_remembered_pts - 1] = pts;
 		}
-		if (num_of_remembered_pts >= 1 && payload.has_random_access_indicator)
-			got_pts = 1;
 
 	} while (!got_pts);
 

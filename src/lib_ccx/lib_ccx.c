@@ -322,15 +322,6 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 			if (!dec_ctx)
 				fatal(EXIT_NOT_ENOUGH_MEMORY, "update_decoder_list_cinfo: Not enough memory allocating dec_ctx (multiprogram == false)\n");
 			list_add_tail( &(dec_ctx->list), &(ctx->dec_ctx_head) );
-
-			//DVB related
-			dec_ctx->prev = NULL;
-			dec_ctx->dec_sub.prev = NULL;
-			if (dec_ctx->codec == CCX_CODEC_DVB)
-			{
-				dec_ctx->prev = malloc(sizeof(struct lib_cc_decode));
-				dec_ctx->dec_sub.prev = malloc(sizeof(struct cc_subtitle));
-			}
 		}
 	}
 	else
@@ -339,6 +330,15 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 		if (!dec_ctx)
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "update_decoder_list_cinfo: Not enough memory allocating dec_ctx ((multiprogram == true)\n");
 		list_add_tail( &(dec_ctx->list), &(ctx->dec_ctx_head) );
+	}
+
+	//DVB related
+	dec_ctx->prev = NULL;
+	dec_ctx->dec_sub.prev = NULL;
+	if (dec_ctx->codec == CCX_CODEC_DVB)
+	{
+		dec_ctx->prev = malloc(sizeof(struct lib_cc_decode));
+		dec_ctx->dec_sub.prev = malloc(sizeof(struct cc_subtitle));
 	}
 	return dec_ctx;
 }
@@ -398,17 +398,6 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 			if (!enc_ctx)
 				return NULL;
 			list_add_tail( &(enc_ctx->list), &(ctx->enc_ctx_head) );
-
-			// DVB related
-			enc_ctx->prev = NULL;
-			if (cinfo)
-			{
-				if (cinfo->codec == CCX_CODEC_DVB)
-				{
-					enc_ctx->write_previous = 0;
-					enc_ctx->prev = malloc(sizeof(struct encoder_ctx));
-				}
-			}
 		}
 	}
 	else
@@ -437,6 +426,16 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		list_add_tail( &(enc_ctx->list), &(ctx->enc_ctx_head) );
 		freep(&extension);
 		freep(&ccx_options.enc_cfg.output_filename);
+	}
+	// DVB related
+	enc_ctx->prev = NULL;
+	if (cinfo)
+	{
+		if (cinfo->codec == CCX_CODEC_DVB)
+		{
+			enc_ctx->write_previous = 0;
+			enc_ctx->prev = malloc(sizeof(struct encoder_ctx));
+		}
 	}
 	freep(&extension);
 	return enc_ctx;

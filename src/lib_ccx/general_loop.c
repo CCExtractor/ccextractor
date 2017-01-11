@@ -976,6 +976,10 @@ int general_loop(struct lib_ccx_ctx *ctx)
 					data_node = get_data_stream(datalist, cinfo->pid);
 				}
 
+				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
+				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
+				dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
+
 				if (!set_pts && dec_ctx->codec == CCX_CODEC_TELETEXT) //even if there's no sub data, we still need to set the min_pts
 				{
 					if (!got_pts && (ctx->demux_ctx->got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX || ctx->demux_ctx->got_important_streams_min_pts[AUDIO] != UINT64_MAX || ctx->demux_ctx->got_important_streams_min_pts[VIDEO] != UINT64_MAX)) //it means we got the first pts for either sub, audio or video :)
@@ -1010,20 +1014,18 @@ int general_loop(struct lib_ccx_ctx *ctx)
 				}
 
 				if (enc_ctx)
-					dec_ctx->timing = enc_ctx->timing;
+					enc_ctx->timing = dec_ctx->timing;
 
-				if(!data_node)
+				if (!data_node)
 					continue;
-
-				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
-				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
-				dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
 				
 				if(data_node->pts != CCX_NOPTS)
 					set_current_pts(dec_ctx->timing, data_node->pts);
 
 				process_data(enc_ctx, dec_ctx, data_node);
 			}
+			if (!data_node)
+				continue;
 		}
 		if (ctx->live_stream)
 		{
