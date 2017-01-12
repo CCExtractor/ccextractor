@@ -990,6 +990,7 @@ int atoi_hex (char *s)
 
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 {
+	int param_stdin = 0, param_mp4 = 0;
 	// Parse parameters
 	for (int i=1; i<argc; i++)
 	{
@@ -1005,6 +1006,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i], "-")==0 || strcmp(argv[i], "-stdin") == 0)
 		{
+			if (param_mp4)
+			{
+				fatal (EXIT_INCOMPATIBLE_PARAMETERS, "-stdin and mp4 cannot be used together.");
+			}
+			param_stdin = 1;
 #ifdef WIN32
 			setmode(fileno(stdin), O_BINARY);
 #endif
@@ -1272,11 +1278,27 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			strcmp (argv[i],"-mp4")==0 ||
 			strcmp (argv[i],"--dvr-ms")==0 )
 		{
+			if (!strcmp (argv[i],"-mp4"))
+			{
+				if (param_stdin)
+				{
+					fatal (EXIT_INCOMPATIBLE_PARAMETERS, "-stdin and mp4 cannot be used together.");
+				}
+				param_mp4 = 1;
+			}
 			set_input_format (opt, argv[i]);
 			continue;
 		}
 		if (strncmp (argv[i],"-in=", 4)==0)
 		{
+			if (!strcmp (argv[i],"-in=mp4"))
+			{
+				if (param_stdin)
+				{
+					fatal (EXIT_INCOMPATIBLE_PARAMETERS, "-stdin and mp4 cannot be used together.");
+				}
+				param_mp4 = 1;
+			}
 			set_input_format (opt, argv[i]+4);
 			continue;
 		}
