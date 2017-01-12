@@ -60,9 +60,10 @@ void init_options (struct ccx_s_options *options)
 	options->append_mode = 0; //By default, files are overwritten.
 	options->ucla = 0; // By default, -UCLA not used
 	options->hardsubx = 0; // By default, don't try to extract hard subtitles
-	options->dvbcolor = 0; // By default, only text detected in DVB
+	options->dvbcolor = 1; // By default, only text detected in DVB
 	options->dvblang = NULL; // By default, autodetect DVB language
 	options->ocrlang = NULL; // By default, autodetect .traineddata file
+	options->ignore_pts_jumps = 1;
 
 	/*HardsubX related stuff*/
 	options->hardsubx_ocr_mode = 0;
@@ -122,7 +123,7 @@ void init_options (struct ccx_s_options *options)
 	options->enc_cfg.no_bom = 0; // Use BOM by default.
 	options->enc_cfg.services_charsets = NULL;
 	options->enc_cfg.all_services_charset = NULL;
-	options->enc_cfg.with_semaphore = 0; 
+	options->enc_cfg.with_semaphore = 0;
 
 	options->settings_dtvcc.enabled = 0;
 	options->settings_dtvcc.active_services_count = 0;
