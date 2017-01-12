@@ -1,14 +1,13 @@
-/*
-
-  This is an implementation of Sentence Break Buffer
-  It is still in development and could contain bugs
-  If you will find bugs in SBS, you could try to create an
-  issue in the forked repository:
-
-  https://github.com/maxkoryukov/ccextractor/issues
-
-  Only SBS-related bugs!
-
+/**
+ *
+ * This is an implementation of Sentence Break Buffer
+ * It is still in development and could contain bugs
+ * If you will find bugs in SBS, you could try to create an
+ * issue in the forked repository:
+ *
+ * https://github.com/maxkoryukov/ccextractor/issues
+ * Only SBS-related bugs!
+ *
  */
 
 #include "ccx_common_platform.h"
@@ -17,8 +16,8 @@
 #include "ocr.h"
 #include "utility.h"
 
-// #define DEBUG_SBS
-// #define ENABLE_OCR
+#define DEBUG_SBS
+#define ENABLE_OCR
 
 #ifdef DEBUG_SBS
 #define LOG_DEBUG(...) printf(__VA_ARGS__)
