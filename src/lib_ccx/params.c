@@ -560,6 +560,8 @@ void print_usage (void)
 	mprint ("                       using the Chinese (Traditional) trained data\n");
 	mprint ("                       This option is also helpful when the traineddata file\n");
 	mprint ("                       has non standard names that don't follow ISO specs\n");
+	mprint ("         -fixptsjumps: fix pts jumps\n");
+	mprint ("          -nodvbcolor: disable colors\n");
 	mprint ("\n");
 	mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
 
@@ -990,6 +992,7 @@ int atoi_hex (char *s)
 
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 {
+
 	// Parse parameters
 	for (int i=1; i<argc; i++)
 	{
@@ -1323,6 +1326,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if(strcmp(argv[i],"-dvbcolor")==0)
 		{
 			opt->dvbcolor = 1;
+			continue;
+		}
+		// -dvbcolor counterpart
+		if (strcmp(argv[i], "-nodvbcolor") == 0)
+		{
+			opt->dvbcolor = 0;
 			continue;
 		}
 
@@ -1675,6 +1684,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp(argv[i], "-ignoreptsjumps") == 0)
 		{
 			opt->ignore_pts_jumps = 1;
+			continue;
+		}
+		// -ignoreptsjumps counterpart
+		if (strcmp(argv[i], "-fixptsjumps") == 0)
+		{
+			opt->ignore_pts_jumps = 0;
 			continue;
 		}
 		if (strcmp (argv[i],"-quiet")==0)
@@ -2150,12 +2165,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "Error: Parameter %s not understood.\n", argv[i]);
 		// Unrecognized switches are silently ignored
 	}
-	
+
 	if(opt->demux_cfg.auto_stream ==CCX_SM_MP4 && opt->input_source == CCX_DS_STDIN)
 	{
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
 	}
-	
+
 	if(opt->gui_mode_reports)
 	{
 		opt->no_progress_bar=1;
