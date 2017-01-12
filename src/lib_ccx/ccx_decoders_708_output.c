@@ -1,4 +1,5 @@
 #include "ccx_decoders_708_output.h"
+#include "ccx_decoders_708.h"
 #include "ccx_encoders_common.h"
 #include "utility.h"
 #include "ccx_common_common.h"
@@ -42,66 +43,114 @@ void _dtvcc_color_to_hex(int color, unsigned *hR, unsigned *hG, unsigned *hB)
 								 color, color, *hR, *hG, *hB);
 }
 
-void _dtvcc_write_tag_open(dtvcc_tv_screen *tv, struct encoder_ctx *encoder, int row_index)
+void _dtvcc_change_pen_colors(dtvcc_tv_screen *tv, ccx_dtvcc_pen_color pen_color, int row_index, int column_index, struct encoder_ctx *encoder, int open)
 {
-	char *buf = (char *) encoder->buffer;
+	if (encoder->no_font_color)
+		return;
+
+	char *buf = (char *)encoder->buffer;
 	size_t buf_len = 0;
 
-	if (tv->pen_attribs[row_index].italic)
-		buf_len += sprintf(buf + buf_len, "<i>");
-
-	if (tv->pen_attribs[row_index].underline)
-		buf_len += sprintf(buf + buf_len, "<u>");
-
-	if (tv->pen_colors[row_index].fg_color != 0x3f && !encoder->no_font_color) //assuming white is default
+	ccx_dtvcc_pen_color new_pen_color;
+	if (column_index >= CCX_DTVCC_SCREENGRID_COLUMNS)
+		new_pen_color = ccx_dtvcc_default_pen_color;
+	else
+		new_pen_color = tv->pen_colors[row_index][column_index];
+	if (pen_color.fg_color != new_pen_color.fg_color)
 	{
-		unsigned red, green, blue;
-		_dtvcc_color_to_hex(tv->pen_colors[row_index].fg_color, &red, &green, &blue);
-		red = (255 / 3) * red;
-		green = (255 / 3) * green;
-		blue = (255 / 3) * blue;
-		buf_len += sprintf(buf + buf_len, "<font color=\"%02x%02x%02x\">", red, green, blue);
+		if (pen_color.fg_color != 0x3f && !open)
+			buf_len += sprintf(buf + buf_len, "</font>");	// should close older non-white color
+
+		if (new_pen_color.fg_color != 0x3f && open)
+		{
+			unsigned red, green, blue;
+			_dtvcc_color_to_hex(new_pen_color.fg_color, &red, &green, &blue);
+			red = (255 / 3) * red;
+			green = (255 / 3) * green;
+			blue = (255 / 3) * blue;
+			buf_len += sprintf(buf + buf_len, "<font color=\"%02x%02x%02x\">", red, green, blue);
+		}
 	}
+
 	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, buf_len);
 }
 
-void _dtvcc_write_tag_close(dtvcc_tv_screen *tv, struct encoder_ctx *encoder, int row_index)
+void _dtvcc_change_pen_attribs(dtvcc_tv_screen *tv, ccx_dtvcc_pen_attribs pen_attribs, int row_index, int column_index, struct encoder_ctx *encoder, int open)
 {
-	char *buf = (char *) encoder->buffer;
+	if (encoder->no_font_color)
+		return;
+
+	char *buf = (char *)encoder->buffer;
 	size_t buf_len = 0;
 
-	if (tv->pen_colors[row_index].fg_color != 0x3f && !encoder->no_font_color)
-		buf_len += sprintf(buf + buf_len, "</font>");
-
-	if (tv->pen_attribs[row_index].underline)
-		buf_len += sprintf(buf + buf_len, "</u>");
-
-	if (tv->pen_attribs[row_index].italic)
-		buf_len += sprintf(buf + buf_len, "</i>");
+	ccx_dtvcc_pen_attribs new_pen_attribs;
+	if (column_index >= CCX_DTVCC_SCREENGRID_COLUMNS)
+		new_pen_attribs = ccx_dtvcc_default_pen_attribs;
+	else
+		new_pen_attribs = tv->pen_attribs[row_index][column_index];
+	if (pen_attribs.italic != new_pen_attribs.italic)
+	{
+		if (pen_attribs.italic && !open)
+			buf_len += sprintf(buf + buf_len, "</i>");
+		if (!pen_attribs.italic && open)
+			buf_len += sprintf(buf + buf_len, "<i>");
+	}
+	if (pen_attribs.underline != new_pen_attribs.underline)
+	{
+		if (pen_attribs.underline && !open)
+			buf_len += sprintf(buf + buf_len, "</u>");
+		if (!pen_attribs.underline && open)
+			buf_len += sprintf(buf + buf_len, "<u>");
+	}
 
 	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, buf_len);
 }
 
 void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *decoder, int row_index, struct encoder_ctx *encoder)
 {
-	char *buf = (char *) encoder->buffer;
+	char *buf = (char *)encoder->buffer;
 	size_t buf_len = 0;
 	memset(buf, 0, INITIAL_ENC_BUFFER_CAPACITY * sizeof(char));
 	int first, last;
 
-	_dtvcc_get_write_interval(decoder->tv, row_index, &first, &last);
-	ccx_dtvcc_symbol space = { ' ', 1 };
-	for (int j = 0; j < first; j++)
-		buf[buf_len++] = CCX_DTVCC_SYM(space);
-	for (int j = first; j <= last; j++)
-	{
-		int size = utf16_to_utf8(decoder->tv->chars[row_index][j].sym, buf + buf_len);
-		buf_len += size;
-	}
-	for (int i = last + 1; i < decoder->windows[decoder->current_window].col_count; i++)
-		buf[buf_len++] = CCX_DTVCC_SYM(space);
-
 	int fd = encoder->dtvcc_writers[decoder->tv->service_number - 1].fd;
+
+	ccx_dtvcc_pen_color pen_color = ccx_dtvcc_default_pen_color;
+	ccx_dtvcc_pen_attribs pen_attribs = ccx_dtvcc_default_pen_attribs;
+	_dtvcc_get_write_interval(decoder->tv, row_index, &first, &last);
+
+	if (decoder->windows[decoder->current_window].col_count <= last)
+	{
+		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_write_row: "
+			"Bug: col_count should be larger than last char, but %d <= %d\n",
+			decoder->windows[decoder->current_window].col_count, last);
+	}
+
+	int length = max(last + 1, decoder->windows[decoder->current_window].col_count);	// Bug - col_count should be always > last
+	for (int i = 0; i < length; i++)
+	{
+		_dtvcc_change_pen_colors(decoder->tv, pen_color, row_index, i, encoder, 0);
+		_dtvcc_change_pen_attribs(decoder->tv, pen_attribs, row_index, i, encoder, 0);
+		_dtvcc_change_pen_attribs(decoder->tv, pen_attribs, row_index, i, encoder, 1);
+		_dtvcc_change_pen_colors(decoder->tv, pen_color, row_index, i, encoder, 1);
+
+		pen_color = decoder->tv->pen_colors[row_index][i];
+		pen_attribs = decoder->tv->pen_attribs[row_index][i];
+		if (i < first || i > last) {
+			int size = utf16_to_utf8(' ', buf);
+			write(fd, buf, size);
+		}
+		else {
+			int size = utf16_to_utf8(decoder->tv->chars[row_index][i].sym, buf);
+			write(fd, buf, size);
+		}
+	}
+
+	// there can be unclosed tags or colors after the last symbol in a row
+	_dtvcc_change_pen_colors(decoder->tv, pen_color, row_index, CCX_DTVCC_SCREENGRID_COLUMNS, encoder, 0);
+	_dtvcc_change_pen_attribs(decoder->tv, pen_attribs, row_index, CCX_DTVCC_SCREENGRID_COLUMNS, encoder, 0);
+	// Tags can still be crossed e.g <f><i>text</f></i>, but testing HTML code has shown that they still are handled correctly.
+	// In case of errors fix it once and for all.
 
 	if (writer->cd != (iconv_t) -1)
 	{
@@ -155,9 +204,7 @@ void ccx_dtvcc_write_srt(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder
 	{
 		if (!_dtvcc_is_row_empty(decoder->tv, i))
 		{
-			_dtvcc_write_tag_open(decoder->tv, encoder, i);
 			_dtvcc_write_row(writer, decoder, i, encoder);
-			_dtvcc_write_tag_close(decoder->tv, encoder, i);
 			write(encoder->dtvcc_writers[decoder->tv->service_number - 1].fd,
 				  encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
@@ -285,9 +332,9 @@ void ccx_dtvcc_write_sami(ccx_dtvcc_writer_ctx *writer, dtvcc_tv_screen *tv, str
 	{
 		if (!_dtvcc_is_row_empty(tv, i))
 		{
-			_dtvcc_write_tag_open(tv, encoder, i);
-			_dtvcc_write_row(writer, tv, i, encoder);
-			_dtvcc_write_tag_close(tv, encoder, i);
+			//_dtvcc_write_tag_open(tv, encoder, i);
+			//_dtvcc_write_row(writer, tv, i, encoder);
+			//_dtvcc_write_tag_close(tv, encoder, i);
 			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
 				  encoder->encoded_br, encoder->encoded_br_length);
 			write(encoder->dtvcc_writers[tv->service_number - 1].fd,

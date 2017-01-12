@@ -230,13 +230,18 @@ void _dtvcc_window_clear_row(ccx_dtvcc_window *window, int row_index)
 	if (window->memory_reserved)
 	{
 		memset(window->rows[row_index], 0, CCX_DTVCC_MAX_COLUMNS * sizeof(ccx_dtvcc_symbol));
-		window->pen_attribs[row_index] = ccx_dtvcc_default_pen_attribs;
-		window->pen_colors[row_index] = ccx_dtvcc_default_pen_color;
+		for (int column_index = 0; column_index < CCX_DTVCC_MAX_COLUMNS; column_index++)
+		{
+			window->pen_attribs[row_index][column_index] = ccx_dtvcc_default_pen_attribs;
+			window->pen_colors[row_index][column_index] = ccx_dtvcc_default_pen_color;
+		}
 	}
 }
 
 void _dtvcc_window_clear_text(ccx_dtvcc_window *window)
 {
+	window->pen_color_pattern = ccx_dtvcc_default_pen_color;
+	window->pen_attribs_pattern = ccx_dtvcc_default_pen_attribs;
 	for (int i = 0; i < CCX_DTVCC_MAX_ROWS; i++)
 		_dtvcc_window_clear_row(window, i);
 	window->is_empty = 1;
@@ -478,8 +483,11 @@ void _dtvcc_window_copy_to_screen(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_
 	for (int j = 0; j < copyrows; j++)
 	{
 		memcpy(decoder->tv->chars[top + j], window->rows[j], copycols * sizeof(ccx_dtvcc_symbol));
-		decoder->tv->pen_attribs[top + j] = window->pen_attribs[j];
-		decoder->tv->pen_colors[top + j] = window->pen_colors[j];
+		for (int col = 0; col < CCX_DTVCC_SCREENGRID_COLUMNS; col++)
+		{
+			decoder->tv->pen_attribs[top + j][col] = window->pen_attribs[j][col];
+			decoder->tv->pen_colors[top + j][col] = window->pen_colors[j][col];
+		}
 	}
 
 	_dtvcc_screen_update_time_show(decoder->tv, window->time_ms_show);
@@ -552,8 +560,11 @@ void _dtvcc_window_rollup(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *
 	for (int i = 0; i < window->row_count - 1; i++)
 	{
 		memcpy(window->rows[i], window->rows[i + 1], CCX_DTVCC_MAX_COLUMNS * sizeof(ccx_dtvcc_symbol));
-		window->pen_colors[i] = window->pen_colors[i + 1];
-		window->pen_attribs[i] = window->pen_attribs[i + 1];
+		for (int z = 0; z < CCX_DTVCC_MAX_COLUMNS; z++)
+		{
+			window->pen_colors[i][z] = window->pen_colors[i + 1][z];
+			window->pen_attribs[i][z] = window->pen_attribs[i + 1][z];
+		}
 	}
 
 	_dtvcc_window_clear_row(window, window->row_count - 1);
@@ -639,6 +650,8 @@ void _dtvcc_process_character(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_symb
 
 	window->is_empty = 0;
 	window->rows[window->pen_row][window->pen_column] = symbol;
+	window->pen_attribs[window->pen_row][window->pen_column] = window->pen_attribs_pattern;		// "Painting" char by pen - attribs
+	window->pen_colors[window->pen_row][window->pen_column] = window->pen_color_pattern;		// "Painting" char by pen - colors
 	switch (window->attribs.print_direction)
 	{
 		case CCX_DTVCC_WINDOW_PD_LEFT_RIGHT:
@@ -1092,7 +1105,7 @@ void dtvcc_handle_SPA_SetPenAttributes(ccx_dtvcc_service_decoder *decoder, unsig
 		return;
 	}
 
-	ccx_dtvcc_pen_attribs *pen = &window->pen_attribs[window->pen_row];
+	ccx_dtvcc_pen_attribs *pen = &window->pen_attribs_pattern;
 
 	pen->pen_size = pen_size;
 	pen->offset = offset;
@@ -1136,7 +1149,7 @@ void dtvcc_handle_SPC_SetPenColor(ccx_dtvcc_service_decoder *decoder, unsigned c
 		return;
 	}
 
-	ccx_dtvcc_pen_color *color = &window->pen_colors[window->pen_row];
+	ccx_dtvcc_pen_color *color = &window->pen_color_pattern;
 
 	color->fg_color = fg_color;
 	color->fg_opacity = fg_opacity;
