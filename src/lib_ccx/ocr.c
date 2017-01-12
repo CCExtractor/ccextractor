@@ -106,6 +106,7 @@ void* init_ocr(int lang_index)
 	/*Priority of Tesseract traineddata file search paths:-
 		1. tessdata in TESSDATA_PREFIX, if it is specified. Overrides others
 		2. tessdata in current working directory
+		3. tessdata in /usr/share
 	*/
 	int data_location = 0;
 	char *tessdata_dir_path=".";
@@ -119,7 +120,7 @@ void* init_ocr(int lang_index)
 		if(getenv("TESSDATA_PREFIX"))
 			ret = search_language_pack(getenv("TESSDATA_PREFIX"), language[lang_index]);
 		else
-			ret = -1;
+			ret = search_language_pack("/usr/share", language[lang_index]);
 	}
 	if(ret < 0 && lang_index != 1 && ccx_options.ocrlang==NULL)
 	{
