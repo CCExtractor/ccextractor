@@ -47,3 +47,8 @@ windows/libs/tesseract/**
 
 # Vagrant
 .vagrant/
+
+# Eclipse stuff
+.cproject
+.project
+.settings/

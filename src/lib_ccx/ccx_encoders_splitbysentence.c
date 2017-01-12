@@ -17,7 +17,8 @@
 #include "ocr.h"
 #include "utility.h"
 
-//#define DEBUG_SBS
+// #define DEBUG_SBS
+// #define ENABLE_OCR
 
 #ifdef DEBUG_SBS
 #define LOG_DEBUG(...) printf(__VA_ARGS__)
@@ -236,9 +237,10 @@ void sbs_strcpy_without_dup(const unsigned char * str, struct encoder_ctx * cont
 		intersect_len = sbs_len;
 
 	LOG_DEBUG("SBS: sbs_strcpy_without_dup: going to append, looking for common part\n\
-\tbuffer:          [%s]\n\
+\tbuffer:          [%p][%s]\n\
 \tstring:          [%s]\n\
 ",
+		context->sbs_buffer,
 		context->sbs_buffer,
 		str
 	);
@@ -278,6 +280,8 @@ void sbs_strcpy_without_dup(const unsigned char * str, struct encoder_ctx * cont
 		// we will use an appropriate part from the new string
 
 		//context->sbs_buffer[sbs_len-intersect_len] = 0;
+
+		LOG_DEBUG("SBS: sbs_strcpy_without_dup: cut buffer by insert point\n");
 		*buffer_insert_point = 0;
 	}
 
@@ -394,6 +398,18 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 
 	if (required_capacity >= context->sbs_capacity)
 	{
+		LOG_DEBUG("SBS: sbs_append_string: REALLOC BUF:\n\
+\tis_init:   [%d]\n\
+\tsbs ptr:   {%p}\n\
+\tcur cap:   [%zu]\n\
+\treq cap:   [%d]\n\
+",
+			is_buf_initialized,
+			context->sbs_buffer,
+			context->sbs_capacity,
+			required_capacity
+		);
+
 		new_capacity = context->sbs_capacity;
 		if (! is_buf_initialized) new_capacity = 16;
 
@@ -426,6 +442,19 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 			context->sbs_handled_len = 0;
 		}
 
+		LOG_DEBUG("SBS: sbs_append_string: REALLOC BUF DONE:\n\
+\tis_init:   [%d]\n\
+\tsbs ptr:   {%p}\n\
+\tcur cap:   [%zu]\n\
+\treq cap:   [%d]\n\
+\tbuf:       [%s]\n\
+",
+			is_buf_initialized,
+			context->sbs_buffer,
+			context->sbs_capacity,
+			required_capacity,
+			context->sbs_buffer
+		);
 	}
 
 	// ===============================
@@ -571,17 +600,26 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 
 		tmpsub = tmpsub->next;
 	}
-
 	return resub;
 }
 
-struct cc_subtitle * reformat_cc_bitmap_through_sentence_buffer(struct cc_subtitle *sub, struct encoder_ctx *context)
+struct cc_subtitle * reformat_cc_bitmap_through_sentence_buffer(struct cc_subtitle *sub, struct encoder_ctx * context)
 {
 	struct cc_bitmap* rect;
 	LLONG ms_start, ms_end;
 	int used;
 	int i = 0;
 	char *str;
+
+	LOG_DEBUG("\n\n");
+	LOG_DEBUG("SBS: reformat_cc_bitmap: START\n\
+\tbuf    :[%p][%s]\n\
+\tbuf cap:[%zu]\n\
+",
+		context->sbs_buffer,
+		context->sbs_buffer,
+		context->sbs_capacity
+	);
 
 	// this is a sub with a full sentence (or chain of such subs)
 	struct cc_subtitle * resub = NULL;
@@ -616,9 +654,23 @@ struct cc_subtitle * reformat_cc_bitmap_through_sentence_buffer(struct cc_subtit
 	if (sub->flags & SUB_EOD_MARKER)
 		context->prev_start = sub->start_time;
 
-	str = paraof_ocrtext(sub, " ", 1);
+	str = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);
+
+	LOG_DEBUG("SBS: reformat_cc_bitmap: got string:\n\
+\tstr    :[%s]\n\
+\tbuf    :[%p][%s]\n\
+\tbuf cap:[%zu]\n\
+",
+		str,
+		context->sbs_buffer,
+		context->sbs_buffer,
+		context->sbs_capacity
+	);
+
 	if (str)
 	{
+		LOG_DEBUG("SBS: reformat_cc_bitmap: string is not empty\n");
+
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 		{
 			resub = sbs_append_string(str, ms_start, ms_end, context);
@@ -634,6 +686,17 @@ struct cc_subtitle * reformat_cc_bitmap_through_sentence_buffer(struct cc_subtit
 #endif
 	sub->nb_data = 0;
 	freep(&sub->data);
-	return resub;
 
+	LOG_DEBUG("SBS: reformat_cc_bitmap: string done:\n\
+\tstr    :[%s]\n\
+\tbuf    :[%p][%s]\n\
+\tbuf cap:[%zu]\n\
+",
+		str,
+		context->sbs_buffer,
+		context->sbs_buffer,
+		context->sbs_capacity
+	);
+
+	return resub;
 }
