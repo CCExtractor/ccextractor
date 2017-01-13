@@ -283,8 +283,10 @@ typedef struct ccx_dtvcc_window
 	int pen_row;
 	int pen_column;
 	ccx_dtvcc_symbol *rows[CCX_DTVCC_MAX_ROWS];
-	ccx_dtvcc_pen_color pen_colors[CCX_DTVCC_MAX_ROWS];
-	ccx_dtvcc_pen_attribs pen_attribs[CCX_DTVCC_MAX_ROWS];
+	ccx_dtvcc_pen_color pen_colors[CCX_DTVCC_MAX_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
+	ccx_dtvcc_pen_attribs pen_attribs[CCX_DTVCC_MAX_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
+	ccx_dtvcc_pen_color pen_color_pattern;
+	ccx_dtvcc_pen_attribs pen_attribs_pattern;
 	int memory_reserved;
 	int is_empty;
 	LLONG time_ms_show;
@@ -294,8 +296,8 @@ typedef struct ccx_dtvcc_window
 typedef struct dtvcc_tv_screen
 {
 	ccx_dtvcc_symbol chars[CCX_DTVCC_SCREENGRID_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
-	ccx_dtvcc_pen_color pen_colors[CCX_DTVCC_SCREENGRID_ROWS];
-	ccx_dtvcc_pen_attribs pen_attribs[CCX_DTVCC_SCREENGRID_ROWS];
+	ccx_dtvcc_pen_color pen_colors[CCX_DTVCC_SCREENGRID_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
+	ccx_dtvcc_pen_attribs pen_attribs[CCX_DTVCC_SCREENGRID_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
 	LLONG time_ms_show;
 	LLONG time_ms_hide;
 	unsigned int cc_count;
@@ -368,5 +370,8 @@ void ccx_dtvcc_process_service_block(ccx_dtvcc_ctx *dtvcc,
 									 ccx_dtvcc_service_decoder *decoder,
 									 unsigned char *data,
 									 int data_length);
+
+ccx_dtvcc_pen_color ccx_dtvcc_default_pen_color;
+ccx_dtvcc_pen_attribs ccx_dtvcc_default_pen_attribs;
 
 #endif

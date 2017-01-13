@@ -16,7 +16,6 @@
 #include "ffmpeg_intgr.h"
 #include "ccx_gxf.h"
 #include "dvd_subtitle_decoder.h"
-#include "teletext.h"
 
 
 int end_of_file=0; // End of file?
@@ -562,6 +561,7 @@ int raw_loop (struct lib_ccx_ctx *ctx)
 
 
 	} while (data->len);
+	free(data);
 	return caps;
 }
 
@@ -633,7 +633,6 @@ void delete_datalist(struct demuxer_data *list)
 
 	}
 }
-
 int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct demuxer_data *data_node)
 {
 	size_t got; // Means 'consumed' from buffer actually
@@ -810,6 +809,10 @@ int general_loop(struct lib_ccx_ctx *ctx)
 	int ret;
 	int caps = 0;
 
+	uint64_t min_pts = UINT64_MAX;
+	int got_pts = 0;
+	int set_pts = 0;
+
 	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 
 	if(stream_mode == CCX_SM_TRANSPORT && ctx->write_format == CCX_OF_NULL)
@@ -878,15 +881,45 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 			dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
-			if (!data_node) //If there's no DVB data, we still need to capture the first PTS no matter the buffer data type in order to have the arbitrary value
+
+			if (!set_pts && dec_ctx->codec == CCX_CODEC_TELETEXT) //even if there's no sub data, we still need to set the min_pts
 			{
-				set_current_pts(dec_ctx->timing, datalist->pts);
-				set_fts(dec_ctx->timing);
-				continue;
+				if (!got_pts && (ctx->demux_ctx->got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX || ctx->demux_ctx->got_important_streams_min_pts[AUDIO] != UINT64_MAX || ctx->demux_ctx->got_important_streams_min_pts[VIDEO] != UINT64_MAX)) //it means we got the first pts for either sub, audio or video :)
+				{
+					/*we don't need to parse the entire min_pts array since 
+					we are only interested in sub, audio and video stream pts
+					and we have got_important_streams_min_pts array for that*/
+					for (int i = 0; i < COUNT; i++)
+					{
+						if (ctx->demux_ctx->got_important_streams_min_pts[i] != UINT64_MAX) //PTS is 33 bit, array is 64 so we set the default value to UINT64_MAX instead of 0 because a PTS can also be 0
+						{
+							//printf("Got pts: %" PRId64 " for PID %d\n", ctx->demux_ctx->min_pts[i], i);
+							if (ctx->demux_ctx->got_important_streams_min_pts[i] < min_pts)
+								min_pts = ctx->demux_ctx->got_important_streams_min_pts[i];
+						}
+					}
+					ctx->demux_ctx->pinfo->min_pts = min_pts; //we set the program's min_pts (not exactly perfect since we would need to parse the entire min_pts array to get the real min_pts for the program, but for now it's a good approximation)
+					got_pts = 1;
+				}
+				set_pts = 1;
+			}
+			if (!set_pts && dec_ctx->codec == CCX_CODEC_DVB) //DVB will always have to be in sync with video (no matter the min_pts of the other streams)
+			{
+				if (!got_pts && ctx->demux_ctx->got_important_streams_min_pts[AUDIO] != UINT64_MAX) //it means we got the first pts for video
+				{
+					min_pts = ctx->demux_ctx->got_important_streams_min_pts[AUDIO];
+					set_current_pts(dec_ctx->timing, min_pts);
+					set_fts(dec_ctx->timing);
+					got_pts = 1;
+				}
+				set_pts = 1;
 			}
 
 			if (enc_ctx)
 				enc_ctx->timing = dec_ctx->timing;
+
+			if (!data_node) //no sub data, no need to process non-existing data
+				continue;
 
 			if(data_node->pts != CCX_NOPTS)
 			{
@@ -898,7 +931,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 				}
 				else
 					pts = data_node->pts;
-				set_current_pts(dec_ctx->timing, pts);
+				set_current_pts(dec_ctx->timing, pts); 
 				set_fts(dec_ctx->timing);
 			}
 
@@ -917,6 +950,8 @@ int general_loop(struct lib_ccx_ctx *ctx)
 				}
 				isdb_set_global_time(dec_ctx, tstamp);
 			}
+			if (data_node->bufferdatatype == CCX_TELETEXT && dec_ctx->private_data) //if we have teletext subs, we set the min_pts here
+				set_tlt_delta(dec_ctx, min_pts);
 			ret = process_data(enc_ctx, dec_ctx, data_node);
 			if (enc_ctx->srt_counter || dec_ctx->saw_caption_block || ret == 1)
 				caps = 1;
@@ -941,15 +976,53 @@ int general_loop(struct lib_ccx_ctx *ctx)
 					ignore_other_sib_stream(program_iter, cinfo->pid);
 					data_node = get_data_stream(datalist, cinfo->pid);
 				}
+
+				if (!set_pts && dec_ctx->codec == CCX_CODEC_TELETEXT) //even if there's no sub data, we still need to set the min_pts
+				{
+					if (!got_pts && (ctx->demux_ctx->got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX || ctx->demux_ctx->got_important_streams_min_pts[AUDIO] != UINT64_MAX || ctx->demux_ctx->got_important_streams_min_pts[VIDEO] != UINT64_MAX)) //it means we got the first pts for either sub, audio or video :)
+					{
+						/*we don't need to parse the entire min_pts array since
+						we are only interested in sub, audio and video stream pts
+						and we have got_important_streams_min_pts array for that*/
+						for (int i = 0; i < COUNT; i++)
+						{
+							if (ctx->demux_ctx->got_important_streams_min_pts[i] != UINT64_MAX) //PTS is 33 bit, array is 64 so we set the default value to UINT64_MAX instead of 0 because a PTS can also be 0
+							{
+								//printf("Got pts: %" PRId64 " for PID %d\n", ctx->demux_ctx->min_pts[i], i);
+								if (ctx->demux_ctx->got_important_streams_min_pts[i] < min_pts)
+									min_pts = ctx->demux_ctx->got_important_streams_min_pts[i];
+							}
+						}
+						ctx->demux_ctx->pinfo->min_pts = min_pts; //we set the program's min_pts (not exactly perfect since we would need to parse the entire min_pts array to get the real min_pts for the program, but for now it's a good approximation)
+						got_pts = 1;
+					}
+					set_pts = 1;
+				}
+				if (!set_pts && dec_ctx->codec == CCX_CODEC_DVB) //DVB will always have to be in sync with video (no matter the min_pts of the other streams)
+				{
+					if (!got_pts && ctx->demux_ctx->got_important_streams_min_pts[AUDIO] != UINT64_MAX) //it means we got the first pts for video
+					{
+						min_pts = ctx->demux_ctx->got_important_streams_min_pts[AUDIO];
+						set_current_pts(dec_ctx->timing, min_pts);
+						set_fts(dec_ctx->timing);
+						got_pts = 1;
+					}
+					set_pts = 1;
+				}
+
+				if (enc_ctx)
+					dec_ctx->timing = enc_ctx->timing;
+
 				if(!data_node)
 					continue;
+
 				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 				dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
-				if (enc_ctx)
-					dec_ctx->timing = enc_ctx->timing;
+				
 				if(data_node->pts != CCX_NOPTS)
 					set_current_pts(dec_ctx->timing, data_node->pts);
+
 				process_data(enc_ctx, dec_ctx, data_node);
 			}
 		}

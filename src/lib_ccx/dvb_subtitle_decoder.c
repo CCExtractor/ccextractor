@@ -1458,8 +1458,8 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	DVBSubRegion *region;
 	DVBSubRegionDisplay *display;
 	DVBSubCLUT *clut;
-        DVBSubDisplayDefinition *display_def;
-        struct cc_bitmap *rect = NULL;
+    DVBSubDisplayDefinition *display_def;
+    struct cc_bitmap *rect = NULL;
 	uint32_t *clut_table;
 	int offset_x=0, offset_y=0;
 	int ret = 0;
@@ -1524,15 +1524,15 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 		switch (region->depth)
 		{
-		case 2:
-			clut_table = clut->clut4;
-		case 8:
-			clut_table = clut->clut256;
-			break;
-		case 4:
-		default:
-			clut_table = clut->clut16;
-			break;
+			case 2:
+				clut_table = clut->clut4;
+			case 8:
+				clut_table = clut->clut256;
+				break;
+			case 4:
+			default:
+				clut_table = clut->clut16;
+				break;
 		}
 
 		rect->data[1] = malloc(1024);
@@ -1613,7 +1613,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 			if (ccx_options.dvb_debug_traces_to_stdout)
 			{
 				//debug traces
-				mprint("DVBSUB - PTS: %d, ", dec_ctx->timing->current_pts);
+				mprint("DVBSUB - PTS: %" PRId64 ", ", dec_ctx->timing->current_pts);
 				mprint("FTS: %d, ", dec_ctx->timing->fts_now);
 				mprint("SEGMENT TYPE: %d, ", segment_type);
 				mprint("SEGMENT LENGTH: %d", segment_length);

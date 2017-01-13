@@ -593,5 +593,6 @@ end:
 	freep(&sub->data);
 	freep(&palette);
 	freep(&alpha);
+	freep(&pbuf);
 	return ret;
 }

@@ -2150,6 +2150,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "Error: Parameter %s not understood.\n", argv[i]);
 		// Unrecognized switches are silently ignored
 	}
+	
+	if(opt->demux_cfg.auto_stream ==CCX_SM_MP4 && opt->input_source == CCX_DS_STDIN)
+	{
+		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
+	}
+	
 	if(opt->gui_mode_reports)
 	{
 		opt->no_progress_bar=1;

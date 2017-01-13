@@ -1,3 +1,31 @@
+0.85 (2017-01-??)
+-----------------
+- New: Added FFMPEG 3.0 to Windows build - last one that is XP compatible.
+- New: Major improvements in CEA-608 to WebVTT (styles, etc).
+- New: Return a non-zero return code if no subtitles are found.
+- New: Windows build files updated to Visual Studio 2015, new target platform is 140_xp.
+- New: Added basic support of Tesseract 4.0.0.
+- New: Added build script for .deb.
+- New: Updated -debugdvbsub parameter to get the most relevant DVB traces for debugging.
+- New: SMPTE-TT files are now compatible with Adobe Premiere.
+- New: Updated libpng.
+- New: Added 3rd party (Tracy from archive.org) static linux build script.
+- Fix: Teletext duplicate lines in certain cases.
+- Fix: Improved teletext timing.
+- Fix: DVB timing is finally good.
+- Fix: A few minor memory leaks.
+- Fix: tesseract library file included in mac build command.
+- Fix: Bad WTV timings in some cases.
+- Fix: Mac build script.
+- Fix: Memory optimization in HARDSUBX edit_distance.
+- Fix: SubStation Alpha subtitles in bitmap.
+- Fix: lept msg severity in linux.
+- Fix: SSA, SPUPNG and VTT timing and skipping of subtitles for SAMI and TTML.
+- Fix: SMPTE-TT : Added support for font color.
+- Fix: SAMI unnecessary empty subtitle when extracting DVB subs.
+- Fix: Skip the packet if the adaptation field length is broken.
+
+
 0.84 (2016-12-16)
 -----------------
 - New: In Windows, both with and without-OCR binaries are bundled, since the OCR one causes problems due to 

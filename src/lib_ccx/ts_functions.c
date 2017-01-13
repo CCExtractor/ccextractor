@@ -7,6 +7,8 @@
 #include "ccx_decoders_isdb.h"
 #include "file_buffer.h"
 
+#define RAI_MASK 0x40 //byte mask to check if RAI bit is set (random access indicator)
+
 unsigned char tspacket[188]; // Current packet
 
 //struct ts_payload payload;
@@ -275,7 +277,7 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 
 	payload->start = tspacket + 4;
 	payload->length = 188 - 4;
-	if ( adaptation_field_control & 2 )
+	if (adaptation_field_control & 2)
 	{
 		// Take the PCR (Program Clock Reference) from here, in case PTS is not available (copied from telxcc).
 		adaptation_field_length = tspacket[4];
@@ -294,9 +296,11 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 			// payload->pcr |= tspacket[11];
 		}
 
+		payload->has_random_access_indicator = (tspacket[5] & RAI_MASK) != 0;
+
 		// Catch bad packages with adaptation_field_length > 184 and
 		// the unsigned nature of payload_length leading to huge numbers.
-		if(adaptation_field_length < payload->length)
+		if (adaptation_field_length < payload->length)
 		{
 			payload->start += adaptation_field_length + 1;
 			payload->length -= adaptation_field_length + 1;
@@ -308,6 +312,8 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 			dbg_print(CCX_DMT_PARSE, "  Reject package - set length to zero.\n");
 		}
 	}
+	else
+		payload->has_random_access_indicator = 0;
 
 	dbg_print(CCX_DMT_PARSE, "TS pid: %d  PES start: %d  counter: %u  payload length: %u  adapt length: %d\n",
 			payload->pid, payload->start, payload->counter, payload->length,
@@ -607,6 +613,106 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 // Read ts packets until a complete video PES element can be returned.
 // The data is read into capbuf and the function returns the number of
 // bytes read.
+
+uint64_t get_pts(uint8_t* buffer)
+{
+	uint64_t pes_prefix;
+	uint8_t pes_stream_id;
+	uint16_t pes_packet_length;
+	uint8_t optional_pes_header_included = NO;
+	uint16_t optional_pes_header_length = 0;
+	uint64_t pts = 0;
+
+	// Packetized Elementary Stream (PES) 32-bit start code
+	pes_prefix = (buffer[0] << 16) | (buffer[1] << 8) | buffer[2];
+	pes_stream_id = buffer[3];
+
+	// check for PES header
+	if (pes_prefix == 0x000001)
+	{
+		pes_packet_length = 6 + ((buffer[4] << 8) | buffer[5]); // 5th and 6th byte of the header define the length of the rest of the packet (+6 is for the prefix, stream ID and packet length)
+
+		// optional PES header marker bits (10.. ....)
+		if ((buffer[6] & 0xc0) == 0x80)
+		{
+			optional_pes_header_included = YES;
+			optional_pes_header_length = buffer[8];
+		}
+
+		if (optional_pes_header_included == YES && optional_pes_header_length > 0 && (buffer[7] & 0x80) > 0)
+		{
+			//get associated PTS as it exists
+			pts = (buffer[9] & 0x0e);
+			pts <<= 29;
+			pts |= (buffer[10] << 22);
+			pts |= ((buffer[11] & 0xfe) << 14);
+			pts |= (buffer[12] << 7);
+			pts |= ((buffer[13] & 0xfe) >> 1);
+			return pts;
+		}
+	}
+	return UINT64_MAX;
+}
+uint64_t get_video_min_pts(struct ccx_demuxer *context)
+{
+	struct ccx_demuxer *ctx = malloc(sizeof(struct ccx_demuxer));
+	memcpy(ctx, context, sizeof(struct ccx_demuxer));
+
+	int ret = CCX_EAGAIN;
+
+	struct ts_payload payload;
+
+	int got_pts = 0;
+
+	uint64_t min_pts = UINT64_MAX;
+	uint64_t *pts_array = NULL;
+	int num_of_remembered_pts = 0;
+	int pcount = 0;
+	uint64_t pts = UINT64_MAX;
+	do
+	{
+		pcount++;
+		// Exit the loop at EOF
+		ret = ts_readpacket(ctx, &payload);
+		if (ret != CCX_OK)
+			break;
+
+		if (payload.pesstart)
+		{
+			// Packetized Elementary Stream (PES) 32-bit start code
+			uint64_t pes_prefix = (payload.start[0] << 16) | (payload.start[1] << 8) | payload.start[2];
+			uint8_t pes_stream_id = payload.start[3];
+			
+			if (pes_prefix == 0x000001)
+				if(pes_stream_id >= 0xe0 && pes_stream_id <= 0xef)
+					pts = get_pts(payload.start);
+		}
+		
+		if (pts != UINT64_MAX)
+		{
+			num_of_remembered_pts++;
+			pts_array = realloc(pts_array, num_of_remembered_pts * sizeof(uint64_t));
+			((uint64_t*)pts_array)[num_of_remembered_pts - 1] = pts;
+		}
+		if (num_of_remembered_pts >= 1 && payload.has_random_access_indicator)
+			got_pts = 1;
+
+	} while (!got_pts);
+
+	//search for smallest pts
+	uint64_t* p = pts_array;
+	for (int i = 0; i < num_of_remembered_pts; i++)
+	{
+		if (*p < min_pts)
+			min_pts = *p;
+		p++;
+	}
+
+	freep(&ctx);
+	freep(&pts_array);
+
+	return min_pts;
+}
 long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
 	int gotpes = 0;
@@ -620,6 +726,9 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	int j;
 
 	memset(&payload, 0, sizeof(payload));
+
+	if (ctx->got_important_streams_min_pts[VIDEO] == UINT64_MAX)
+		ctx->got_important_streams_min_pts[VIDEO] = get_video_min_pts(ctx);
 
 	do
 	{
@@ -697,6 +806,43 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			continue;
 		}
 
+		//PTS calculation
+		if (ctx->got_important_streams_min_pts[PRIVATE_STREAM_1] == UINT64_MAX || ctx->got_important_streams_min_pts[AUDIO] == UINT64_MAX || ctx->got_important_streams_min_pts[VIDEO] == UINT64_MAX) //if we didn't already get the first PTS of the important streams
+		{
+			if (payload.pesstart) //if there is PES Header data in the payload and we didn't get the first pts of that stream
+			{
+				if (ctx->min_pts[payload.pid] == UINT64_MAX) //check if we don't have the min_pts of that packet's pid
+				{
+					// Packetized Elementary Stream (PES) 32-bit start code
+					uint64_t pes_prefix = (payload.start[0] << 16) | (payload.start[1] << 8) | payload.start[2];
+					uint8_t pes_stream_id = payload.start[3];
+
+					uint64_t pts = 0;
+
+					// check for PES header
+					if (pes_prefix == 0x000001)
+					{
+						//if we didn't already have this stream id with its first pts then calculate 
+						if (pes_stream_id != ctx->found_stream_ids[pes_stream_id - 0xbd])
+						{
+							pts = get_pts(payload.start);
+
+							//keep in mind we already checked if we have this stream id
+							ctx->found_stream_ids[pes_stream_id - 0xbd] = pes_stream_id; //add it
+							ctx->min_pts[payload.pid] = pts; //and add its packet pts (we still have this array in case someone wants the global PTS for all stream_id not only for pvs1, audio and video)
+
+							/*we already checked if we got that packet's pts
+							but we still need to check if we got the min_pts of the stream type
+							because we might have multiple audio streams for example (audio and subs are sent in order)*/
+							if (pes_stream_id == 0xbd && ctx->got_important_streams_min_pts[PRIVATE_STREAM_1] == UINT64_MAX) //private stream 1 
+								ctx->got_important_streams_min_pts[PRIVATE_STREAM_1] = pts;
+							if (pes_stream_id >= 0xC0 && pes_stream_id <= 0xDF && ctx->got_important_streams_min_pts[AUDIO] == UINT64_MAX) //audio
+								ctx->got_important_streams_min_pts[AUDIO] = pts;
+						}
+					}
+				}
+			}
+		}
 		switch (ctx->PIDs_seen[payload.pid])
 		{
 			case 0: // First time we see this PID
@@ -729,7 +875,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 				break;
 		}
 
-
 		if (payload.pid==1003 && !ctx->hauppauge_warning_shown && !ccx_options.hauppauge_mode)
 		{
 			// TODO: Change this very weak test for something more decent such as size.
@@ -753,15 +898,15 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 		}
 
-        // Skip packets with no payload.  This also fixes the problems
-        // with the continuity counter not being incremented in empty
-        // packets.
-        if ( !payload.length )
-        {
-                dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - no payload.\n",
-                        payload.pid);
-                continue;
-        }
+		// Skip packets with no payload.  This also fixes the problems
+		// with the continuity counter not being incremented in empty
+		// packets.
+		if ( !payload.length )
+		{
+				dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - no payload.\n",
+						payload.pid);
+				continue;
+		}
 
 		cinfo = get_cinfo(ctx, payload.pid);
 		if(cinfo == NULL)
@@ -802,7 +947,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			}
 			continue;
 		}
-
 
 		// Video PES start
 		if (payload.pesstart)

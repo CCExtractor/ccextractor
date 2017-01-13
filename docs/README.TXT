@@ -1,4 +1,4 @@
-ccextractor, 0.83
+﻿ccextractor, 0.83
 -----------------
 Authors: Carlos Fernández (cfsmp3), Volker Quetschke.
 Maintainer: cfsmp3
@@ -31,8 +31,10 @@ Google Summer of Code 2016 students
 
 Google Code-in 2016 students
 - Evgeny Shulgin
+- Alexandru Bratosin
 - Manveer Basra
-(to be listed)
+- Alexandru Bratosin
+(more, but they forgot to add themselves...)
 
 
 

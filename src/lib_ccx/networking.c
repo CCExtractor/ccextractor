@@ -505,7 +505,8 @@ int start_tcp_srv(const char *port, const char *pwd)
 		if ((sockfd = accept(listen_sd, cliaddr, &clilen)) < 0)
 		{
 			if (EINTR == errno) /* TODO not necessary */
-			{
+			{   
+                		free(cliaddr);
 				continue;
 			}
 			else
