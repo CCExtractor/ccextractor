@@ -14,13 +14,15 @@ int _dtvcc_is_row_empty(dtvcc_tv_screen *tv, int row_index)
 	return 1;
 }
 
-int _dtvcc_is_screen_empty(dtvcc_tv_screen *tv)
+int _dtvcc_is_screen_empty(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 {
 	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
 	{
 		if (!_dtvcc_is_row_empty(tv, i))
 			return 0;
 	}
+	// we will write subtitle 
+	encoder->cea_708_counter++;
 	return 1;
 }
 
@@ -187,7 +189,7 @@ void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *d
 void ccx_dtvcc_write_srt(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
 	dtvcc_tv_screen *tv = decoder->tv;
-	if (_dtvcc_is_screen_empty(tv))
+	if (_dtvcc_is_screen_empty(tv, encoder))
 		return;
 
 	if (tv->time_ms_show + encoder->subs_delay < 0)
@@ -244,7 +246,7 @@ void ccx_dtvcc_write_debug(dtvcc_tv_screen *tv)
 void ccx_dtvcc_write_transcript(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
 	dtvcc_tv_screen *tv = decoder->tv;
-	if (_dtvcc_is_screen_empty(tv))
+	if (_dtvcc_is_screen_empty(tv, encoder))
 		return;
 
 	if (tv->time_ms_show + encoder->subs_delay < 0) // Drop screens that because of subs_delay start too early
@@ -319,7 +321,7 @@ void _dtvcc_write_sami_footer(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 void ccx_dtvcc_write_sami(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
 	dtvcc_tv_screen *tv = decoder->tv;
-	if (_dtvcc_is_screen_empty(tv))
+	if (_dtvcc_is_screen_empty(tv, encoder))
 		return;
 
 	if (tv->time_ms_show + encoder->subs_delay < 0)

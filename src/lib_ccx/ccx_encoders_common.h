@@ -44,6 +44,8 @@ struct encoder_ctx
 	unsigned int capacity;
 	/* keep count of srt subtitle*/
 	unsigned int srt_counter;
+	/* keep count of CEA-708 subtitle*/
+	unsigned int cea_708_counter;
 
 	/* Did we write the WebVTT header already? */
 	unsigned int wrote_webvtt_header;
