@@ -108,16 +108,17 @@ void _dtvcc_change_pen_attribs(dtvcc_tv_screen *tv, ccx_dtvcc_pen_attribs pen_at
 
 void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *decoder, int row_index, struct encoder_ctx *encoder, int use_colors)
 {
+	dtvcc_tv_screen *tv = decoder->tv;
 	char *buf = (char *)encoder->buffer;
 	size_t buf_len = 0;
 	memset(buf, 0, INITIAL_ENC_BUFFER_CAPACITY * sizeof(char));
 	int first, last;
 
-	int fd = encoder->dtvcc_writers[decoder->tv->service_number - 1].fd;
+	int fd = encoder->dtvcc_writers[tv->service_number - 1].fd;
 
 	ccx_dtvcc_pen_color pen_color = ccx_dtvcc_default_pen_color;
 	ccx_dtvcc_pen_attribs pen_attribs = ccx_dtvcc_default_pen_attribs;
-	_dtvcc_get_write_interval(decoder->tv, row_index, &first, &last);
+	_dtvcc_get_write_interval(tv, row_index, &first, &last);
 
 	if (decoder->current_window == -1)
 		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_write_row: Window has to be defined first\n");
@@ -131,28 +132,28 @@ void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *d
 	for (int i = 0; i < length; i++)
 	{
 		if (use_colors)
-			_dtvcc_change_pen_colors(decoder->tv, pen_color, row_index, i, encoder, 0);
-		_dtvcc_change_pen_attribs(decoder->tv, pen_attribs, row_index, i, encoder, 0);
-		_dtvcc_change_pen_attribs(decoder->tv, pen_attribs, row_index, i, encoder, 1);
+			_dtvcc_change_pen_colors(tv, pen_color, row_index, i, encoder, 0);
+		_dtvcc_change_pen_attribs(tv, pen_attribs, row_index, i, encoder, 0);
+		_dtvcc_change_pen_attribs(tv, pen_attribs, row_index, i, encoder, 1);
 		if (use_colors)
-			_dtvcc_change_pen_colors(decoder->tv, pen_color, row_index, i, encoder, 1);
+			_dtvcc_change_pen_colors(tv, pen_color, row_index, i, encoder, 1);
 
-		pen_color = decoder->tv->pen_colors[row_index][i];
-		pen_attribs = decoder->tv->pen_attribs[row_index][i];
+		pen_color = tv->pen_colors[row_index][i];
+		pen_attribs = tv->pen_attribs[row_index][i];
 		if (i < first || i > last) {
 			int size = utf16_to_utf8(' ', buf);
 			write(fd, buf, size);
 		}
 		else {
-			int size = utf16_to_utf8(decoder->tv->chars[row_index][i].sym, buf);
+			int size = utf16_to_utf8(tv->chars[row_index][i].sym, buf);
 			write(fd, buf, size);
 		}
 	}
 
 	// there can be unclosed tags or colors after the last symbol in a row
 	if (use_colors)
-		_dtvcc_change_pen_colors(decoder->tv, pen_color, row_index, CCX_DTVCC_SCREENGRID_COLUMNS, encoder, 0);
-	_dtvcc_change_pen_attribs(decoder->tv, pen_attribs, row_index, CCX_DTVCC_SCREENGRID_COLUMNS, encoder, 0);
+		_dtvcc_change_pen_colors(tv, pen_color, row_index, CCX_DTVCC_SCREENGRID_COLUMNS, encoder, 0);
+	_dtvcc_change_pen_attribs(tv, pen_attribs, row_index, CCX_DTVCC_SCREENGRID_COLUMNS, encoder, 0);
 	// Tags can still be crossed e.g <f><i>text</f></i>, but testing HTML code has shown that they still are handled correctly.
 	// In case of errors fix it once and for all.
 
@@ -185,35 +186,36 @@ void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *d
 
 void ccx_dtvcc_write_srt(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
-	if (_dtvcc_is_screen_empty(decoder->tv))
+	dtvcc_tv_screen *tv = decoder->tv;
+	if (_dtvcc_is_screen_empty(tv))
 		return;
 
-	if (decoder->tv->time_ms_show + encoder->subs_delay < 0)
+	if (tv->time_ms_show + encoder->subs_delay < 0)
 		return;
 
 	char *buf = (char *) encoder->buffer;
 	memset(buf, 0, INITIAL_ENC_BUFFER_CAPACITY);
 
-	sprintf(buf, "%u%s", decoder->tv->cc_count, encoder->encoded_crlf);
-	print_mstime_buff(decoder->tv->time_ms_show + encoder->subs_delay,
+	sprintf(buf, "%u%s", tv->cc_count, encoder->encoded_crlf);
+	print_mstime_buff(tv->time_ms_show + encoder->subs_delay,
 				   "%02u:%02u:%02u,%03u", buf + strlen(buf));
 	sprintf(buf + strlen(buf), " --> ");
-	print_mstime_buff(decoder->tv->time_ms_hide + encoder->subs_delay,
+	print_mstime_buff(tv->time_ms_hide + encoder->subs_delay,
 				   "%02u:%02u:%02u,%03u", buf + strlen(buf));
 	sprintf(buf + strlen(buf),"%s", (char *) encoder->encoded_crlf);
 
-	write(encoder->dtvcc_writers[decoder->tv->service_number - 1].fd, buf, strlen(buf));
+	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 
 	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
 	{
-		if (!_dtvcc_is_row_empty(decoder->tv, i))
+		if (!_dtvcc_is_row_empty(tv, i))
 		{
 			_dtvcc_write_row(writer, decoder, i, encoder, 1);
-			write(encoder->dtvcc_writers[decoder->tv->service_number - 1].fd,
+			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
 				  encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
 	}
-	write(encoder->dtvcc_writers[decoder->tv->service_number - 1].fd,
+	write(encoder->dtvcc_writers[tv->service_number - 1].fd,
 		  encoder->encoded_crlf, encoder->encoded_crlf_length);
 }
 
@@ -241,26 +243,27 @@ void ccx_dtvcc_write_debug(dtvcc_tv_screen *tv)
 
 void ccx_dtvcc_write_transcript(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
-	if (_dtvcc_is_screen_empty(decoder->tv))
+	dtvcc_tv_screen *tv = decoder->tv;
+	if (_dtvcc_is_screen_empty(tv))
 		return;
 
-	if (decoder->tv->time_ms_show + encoder->subs_delay < 0) // Drop screens that because of subs_delay start too early
+	if (tv->time_ms_show + encoder->subs_delay < 0) // Drop screens that because of subs_delay start too early
 		return;
 
 	char *buf = (char *) encoder->buffer;
 
 	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
 	{
-		if (!_dtvcc_is_row_empty(decoder->tv, i))
+		if (!_dtvcc_is_row_empty(tv, i))
 		{
 			buf[0] = 0;
 
 			if (encoder->transcript_settings->showStartTime)
-				print_mstime_buff(decoder->tv->time_ms_show + encoder->subs_delay,
+				print_mstime_buff(tv->time_ms_show + encoder->subs_delay,
 							   "%02u:%02u:%02u,%03u|", buf + strlen(buf));
 
 			if (encoder->transcript_settings->showEndTime)
-				print_mstime_buff(decoder->tv->time_ms_hide + encoder->subs_delay,
+				print_mstime_buff(tv->time_ms_hide + encoder->subs_delay,
 							   "%02u:%02u:%02u,%03u|", buf + strlen(buf));
 
 			if (encoder->transcript_settings->showCC)
@@ -270,10 +273,10 @@ void ccx_dtvcc_write_transcript(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_
 				sprintf(buf + strlen(buf), "POP|"); //TODO caption mode(pop, rollup, etc.)
 
 			if (strlen(buf))
-				write(encoder->dtvcc_writers[decoder->tv->service_number - 1].fd, buf, strlen(buf));
+				write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 
-			_dtvcc_write_row(writer, decoder->tv, i, encoder, 0);
-			write(encoder->dtvcc_writers[decoder->tv->service_number - 1].fd,
+			_dtvcc_write_row(writer, tv, i, encoder, 0);
+			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
 				  encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
 	}
@@ -315,39 +318,40 @@ void _dtvcc_write_sami_footer(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 
 void ccx_dtvcc_write_sami(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
-	if (_dtvcc_is_screen_empty(decoder->tv))
+	dtvcc_tv_screen *tv = decoder->tv;
+	if (_dtvcc_is_screen_empty(tv))
 		return;
 
-	if (decoder->tv->time_ms_show + encoder->subs_delay < 0)
+	if (tv->time_ms_show + encoder->subs_delay < 0)
 		return;
 
-	if (decoder->tv->cc_count == 1)
-		_dtvcc_write_sami_header(decoder->tv, encoder);
+	if (tv->cc_count == 1)
+		_dtvcc_write_sami_header(tv, encoder);
 
 	char *buf = (char *) encoder->buffer;
 
 	buf[0] = 0;
 	sprintf(buf, "<sync start=%llu><p class=\"unknowncc\">%s",
-			(unsigned long long) decoder->tv->time_ms_show + encoder->subs_delay,
+			(unsigned long long) tv->time_ms_show + encoder->subs_delay,
 			encoder->encoded_crlf);
-	write(encoder->dtvcc_writers[decoder->tv->service_number - 1].fd, buf, strlen(buf));
+	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 
 	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
 	{
-		if (!_dtvcc_is_row_empty(decoder->tv, i))
+		if (!_dtvcc_is_row_empty(tv, i))
 		{
 			_dtvcc_write_row(writer, decoder, i, encoder, 1);
-			write(encoder->dtvcc_writers[decoder->tv->service_number - 1].fd,
+			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
 				  encoder->encoded_br, encoder->encoded_br_length);
-			write(encoder->dtvcc_writers[decoder->tv->service_number - 1].fd,
+			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
 				  encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
 	}
 
 	sprintf(buf, "<sync start=%llu><p class=\"unknowncc\">&nbsp;</p></sync>%s%s",
-			(unsigned long long) decoder->tv->time_ms_hide + encoder->subs_delay,
+			(unsigned long long) tv->time_ms_hide + encoder->subs_delay,
 			encoder->encoded_crlf, encoder->encoded_crlf);
-	write(encoder->dtvcc_writers[decoder->tv->service_number - 1].fd, buf, strlen(buf));
+	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 }
 
 void _ccx_dtvcc_write(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
