@@ -119,14 +119,15 @@ void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *d
 	ccx_dtvcc_pen_attribs pen_attribs = ccx_dtvcc_default_pen_attribs;
 	_dtvcc_get_write_interval(decoder->tv, row_index, &first, &last);
 
-	if (decoder->windows[decoder->current_window].col_count <= last)
-	{
-		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_write_row: "
-			"Bug: col_count should be larger than last char, but %d <= %d\n",
-			decoder->windows[decoder->current_window].col_count, last);
-	}
+	if (decoder->current_window == -1)
+		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_write_row: Window has to be defined first\n");
 
-	int length = max(last + 1, decoder->windows[decoder->current_window].col_count);	// Bug - col_count should be always > last
+	int length;
+	if (decoder->current_window == -1)	// Bug - in this case we have broken timing. See issue in GitHub
+		length = last + 1;
+	else
+		length = decoder->windows[decoder->current_window].col_count;
+
 	for (int i = 0; i < length; i++)
 	{
 		_dtvcc_change_pen_colors(decoder->tv, pen_color, row_index, i, encoder, 0);
