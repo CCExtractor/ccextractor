@@ -19,10 +19,12 @@ int _dtvcc_is_screen_empty(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
 	{
 		if (!_dtvcc_is_row_empty(tv, i))
+		{
+			// we will write subtitle 
+			encoder->cea_708_counter++;
 			return 0;
+		}
 	}
-	// we will write subtitle 
-	encoder->cea_708_counter++;
 	return 1;
 }
 
