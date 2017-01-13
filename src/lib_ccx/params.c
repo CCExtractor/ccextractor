@@ -311,8 +311,9 @@ void print_usage (void)
 	mprint ("                       used for debugging purposes to see the contents\n");
 	mprint ("                       of each PES packet header.\n");
 	mprint ("         -debugdvbsub: Write the DVB subtitle debug traces to console.\n");
-	mprint ("      -ignoreptsjumps: Ignore PTS jumps. Use this parameter if you\n");
-	mprint ("                       experience timeline resets/jumps in the output.\n\n");
+	mprint ("      -ignoreptsjumps: Ignore PTS jumps (default).\n");
+	mprint ("         -fixptsjumps: fix pts jumps. Use this parameter if you\n");
+	mprint ("                       experience timeline resets/jumps in the output.\n");
 	mprint ("               -stdin: Reads input from stdin (console) instead of file.\n");
 	mprint ("You can pass as many input files as you need. They will be processed in order.\n");
 	mprint ("If a file name is suffixed by +, ccextractor will try to follow a numerical\n");
@@ -548,10 +549,11 @@ void print_usage (void)
 	mprint ("                       and delete it on file close.\n");
 	mprint ("            -dvbcolor: For DVB subtitles, also output the color of the\n");
 	mprint ("                       subtitles, if the output format is SRT or WebVTT.\n");
+	mprint ("          -nodvbcolor: In DVB subtitles, disable color in output.\n");
 	mprint ("             -dvblang: For DVB subtitles, select which language's caption\n");
 	mprint ("                       stream will be processed. e.g. 'eng' for English.\n");
 	mprint ("                       If there are multiple languages, only this specified\n");
-	mprint ("                       language stream will be processed\n");
+	mprint ("                       language stream will be processed (default).\n");
 	mprint ("             -ocrlang: Manually select the name of the Tesseract .traineddata\n");
 	mprint ("                       file. Helpful if you want to OCR a caption stream of\n");
 	mprint ("                       one language with the data of another language.\n");
@@ -560,6 +562,7 @@ void print_usage (void)
 	mprint ("                       using the Chinese (Traditional) trained data\n");
 	mprint ("                       This option is also helpful when the traineddata file\n");
 	mprint ("                       has non standard names that don't follow ISO specs\n");
+
 	mprint ("\n");
 	mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
 
@@ -573,7 +576,7 @@ void print_usage (void)
 	mprint ("     -ff --forceflush: Flush the file buffer whenever content is written.\n");
 	mprint ("\n");
 
-	mprint ("Options that affect the built-in closed caption decoder:\n");
+	mprint ("Options that affect the built-in 608 closed caption decoder:\n");
 
 	mprint ("                 -dru: Direct Roll-Up. When in roll-up mode, write character by\n");
 	mprint ("                       character instead of line by line. Note that this\n");
@@ -990,6 +993,7 @@ int atoi_hex (char *s)
 
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 {
+
 	// Parse parameters
 	for (int i=1; i<argc; i++)
 	{
@@ -1323,6 +1327,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if(strcmp(argv[i],"-dvbcolor")==0)
 		{
 			opt->dvbcolor = 1;
+			continue;
+		}
+		// -dvbcolor counterpart
+		if (strcmp(argv[i], "-nodvbcolor") == 0)
+		{
+			opt->dvbcolor = 0;
 			continue;
 		}
 
@@ -1675,6 +1685,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp(argv[i], "-ignoreptsjumps") == 0)
 		{
 			opt->ignore_pts_jumps = 1;
+			continue;
+		}
+		// -ignoreptsjumps counterpart
+		if (strcmp(argv[i], "-fixptsjumps") == 0)
+		{
+			opt->ignore_pts_jumps = 0;
 			continue;
 		}
 		if (strcmp (argv[i],"-quiet")==0)
@@ -2150,6 +2166,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "Error: Parameter %s not understood.\n", argv[i]);
 		// Unrecognized switches are silently ignored
 	}
+
+	if(opt->demux_cfg.auto_stream ==CCX_SM_MP4 && opt->input_source == CCX_DS_STDIN)
+	{
+		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
+	}
+
 	if(opt->gui_mode_reports)
 	{
 		opt->no_progress_bar=1;

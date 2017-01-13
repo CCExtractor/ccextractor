@@ -110,6 +110,10 @@
 		#define O_BINARY 0  // Not present in Linux because it's always binary
 	#endif
 
+	#ifndef max
+		#define max(a,b) (((a) > (b)) ? (a) : (b))
+	#endif
+
 	typedef int64_t LLONG;
 
 #endif // CCX_PLATFORM_H
