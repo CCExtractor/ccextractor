@@ -912,7 +912,6 @@ void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts)
 
 	free_encoder_context(ctx->prev);
 	dinit_output_ctx(ctx);
-	freep(&ctx->sbs_buffer);
 	freep(&ctx->subline);
 	freep(&ctx->buffer);
 	ctx->capacity = 0;
@@ -981,12 +980,8 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->keep_output_closed = opt->keep_output_closed;
 	ctx->force_flush = opt->force_flush;
 	ctx->ucla = opt->ucla;
-	ctx->splitbysentence = opt->splitbysentence;
-	ctx->sbs_time_from = 0;
-	ctx->sbs_time_trim = 0;
-	ctx->sbs_capacity = 0;
-	ctx->sbs_buffer = NULL;
-	ctx->sbs_handled_len = 0;
+
+	ctx->sbs_enabled = opt->splitbysentence;
 
 	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);
 	if(!ctx->subline)
@@ -1062,7 +1057,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		ccx_share_send(sub);
 #endif //ENABLE_SHARING
 
-	if (context->splitbysentence)
+	if (context->sbs_enabled)
 	{
 		// Write to a buffer that is later s+plit to generate split
 		// in sentences

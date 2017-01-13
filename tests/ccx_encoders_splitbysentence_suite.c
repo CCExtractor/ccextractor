@@ -7,34 +7,18 @@
 typedef int64_t LLONG;
 #include "../src/lib_ccx/ccx_encoders_common.h"
 
+//#define ENABLE_OCR
+
+
 // -------------------------------------
 // Private SBS-functions (for testing only)
 // -------------------------------------
-struct cc_subtitle * sbs_append_string(unsigned char * str, LLONG time_from, LLONG time_trim, struct encoder_ctx * context);
+void sbs_reset_context();
+struct cc_subtitle * sbs_append_string(unsigned char * str, LLONG time_from, LLONG time_trim, void * sbs_context);
 
 // -------------------------------------
 // Helpers
 // -------------------------------------
-struct cc_subtitle * helper_create_sub(char * str, LLONG time_from, LLONG time_trim) {
-	struct cc_subtitle * sub = (struct cc_subtitle *)malloc(sizeof(struct cc_subtitle));
-	sub->type = CC_BITMAP;
-	sub->start_time = 1;
-	sub->end_time = 100;
-	sub->data = strdup(str);
-	sub->nb_data = strlen(sub->data);
-
-	return sub;
-}
-
-struct cc_subtitle * helper_sbs_append_string(char * str, LLONG time_from, LLONG time_trim, struct encoder_ctx * context) {
-	char * str1;
-	struct cc_subtitle * sub;
-
-	str1 = strdup(str);
-	sub = sbs_append_string(str1, time_from, time_trim, context);
-	free(str1);
-	return sub;
-}
 
 struct cc_subtitle * helper_sbs_append_sub_from_file(FILE * fd, struct encoder_ctx * context) {
 	// TODO : I am not sure about correctness of this line,
@@ -78,8 +62,35 @@ struct cc_subtitle * helper_sbs_append_sub_from_file(FILE * fd, struct encoder_c
 	}
 	//str1 = strdup(str);
 	struct cc_subtitle * sub;
-	sub = sbs_append_string(str, time_from, time_trim, context);
+	sub = sbs_append_string(str, time_from, time_trim, sbs_init_context());
 	//free(str1);
+	return sub;
+}
+
+// struct cc_subtitle * wrapper_sbs_append_string(char * str, LLONG time_from, LLONG time_trim, struct encoder_ctx * context) {
+// 	char * str1;
+// 	struct cc_subtitle * sub;
+
+// 	str1 = strdup(str);
+// 	sub = sbs_append_string(str1, time_from, time_trim, context);
+// 	free(str1);
+// 	return sub;
+// }
+
+struct cc_subtitle * helper_create_sub(char * str, LLONG time_from, LLONG time_trim) {
+	struct cc_bitmap* rect;
+	struct cc_subtitle * sub = (struct cc_subtitle *)malloc(sizeof(struct cc_subtitle));
+	sub->type = CC_BITMAP;
+	sub->start_time = 1;
+	sub->end_time = 100;
+
+	rect = malloc(sizeof(struct cc_bitmap));
+	rect->data[0] = strdup(str);
+	rect->data[1] = NULL;
+
+	sub->data = rect;
+	sub->nb_data = 1;
+
 	return sub;
 }
 
@@ -92,8 +103,15 @@ unsigned char * paraof_ocrtext(void * sub) {
 	// this is OCR -> text converter.
 	// now, in our test cases, we will pass TEXT instead of OCR.
 	// and will return passed text as result
+	struct cc_bitmap* rect;
 
-	return strdup(((struct cc_subtitle *)sub)->data);
+	rect = ((struct cc_subtitle *)sub)->data;
+#ifdef ENABLE_OCR
+	return strdup(rect->data[0]);
+#else
+	return NULL;
+#endif
+
 }
 
 // -------------------------------------
@@ -102,8 +120,7 @@ unsigned char * paraof_ocrtext(void * sub) {
 void setup(void)
 {
 	context = (struct encoder_ctx *)malloc(sizeof(struct encoder_ctx));
-	context->sbs_buffer = NULL;
-	context->sbs_capacity = 0;
+	sbs_reset_context();
 }
 
 void teardown(void)
@@ -172,7 +189,7 @@ test_sbs_append_string_two_separate\n\
 	// first string
 	str = strdup(test_strings[0]);
 	sub = NULL;
-	sub = sbs_append_string(str, 1, 20, context);
+	sub = sbs_append_string(str, 1, 20, sbs_init_context());
 	ck_assert_ptr_ne(sub, NULL);
 	ck_assert_str_eq(sub->data, test_strings[0]);
 	ck_assert_int_eq(sub->start_time, 1);
@@ -181,7 +198,7 @@ test_sbs_append_string_two_separate\n\
 	// second string:
 	str = strdup(test_strings[1]);
 	sub = NULL;
-	sub = sbs_append_string(str, 21, 40, context);
+	sub = sbs_append_string(str, 21, 40, sbs_init_context());
 
 	ck_assert_ptr_ne(sub, NULL);
 	ck_assert_str_eq(sub->data, test_strings[1]);
@@ -203,13 +220,13 @@ START_TEST(test_sbs_append_string_two_with_broken_sentence)
 
 	// first string
 	str = strdup(test_strings[0]);
-	sub = sbs_append_string(str, 1, 3, context);
+	sub = sbs_append_string(str, 1, 3, sbs_init_context());
 
 	ck_assert_ptr_eq(sub, NULL);
 
 	// second string:
 	str = strdup(test_strings[1]);
-	sub = sbs_append_string(str, 4, 5, context);
+	sub = sbs_append_string(str, 4, 5, sbs_init_context());
 
 	ck_assert_ptr_ne(sub, NULL);
 	ck_assert_str_eq(sub->data, "First string ends here, deabbea.");
@@ -229,14 +246,14 @@ START_TEST(test_sbs_append_string_two_intersecting)
 
 	// first string
 	str = strdup(test_strings[0]);
-	sub = sbs_append_string(str, 1, 20, context);
+	sub = sbs_append_string(str, 1, 20, sbs_init_context());
 
 	ck_assert_ptr_eq(sub, NULL);
 	free(sub);
 
 	// second string:
 	str = strdup(test_strings[1]);
-	sub = sbs_append_string(str, 21, 40, context);
+	sub = sbs_append_string(str, 21, 40, sbs_init_context());
 
 	ck_assert_ptr_ne(sub, NULL);
 	ck_assert_str_eq(sub->data, "First string ends here.");
@@ -351,11 +368,18 @@ START_TEST(test_sbs_append_string_01)
 	ck_assert_int_eq(sub->end_time, 5159);
 	ck_assert_ptr_eq(sub->next, NULL);
 
-	skip = 2;
+	skip = 20;
 	while (skip--) {
 		sub = helper_sbs_append_sub_from_file(fsample, context);
 		ck_assert_ptr_eq(sub, NULL);
 	}
+
+	sub = helper_sbs_append_sub_from_file(fsample, context);
+	ck_assert_ptr_ne(sub, NULL);
+	ck_assert_int_eq(sub->start_time, 5160);
+	ck_assert_int_eq(sub->end_time, 16100);
+	ck_assert_ptr_eq(sub->next, NULL);
+	ck_assert_str_eq(sub->data, "If we go to the Australian size system, we can have the migrants who will contribute and not drain the economy.");
 
 	fclose(fsample);
 }
