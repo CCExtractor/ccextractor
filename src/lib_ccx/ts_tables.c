@@ -74,6 +74,7 @@ int update_pinfo(struct ccx_demuxer *ctx, int pid, int program_number)
 	ctx->pinfo[ctx->nb_program].analysed_PMT_once = CCX_FALSE;
 	ctx->pinfo[ctx->nb_program].name[0] = '\0';
 	ctx->pinfo[ctx->nb_program].pcr_pid = -1;
+	memset(ctx->pinfo[ctx->nb_program].got_important_streams_min_pts, UINT64_MAX, 3 * sizeof(uint64_t));
 	ctx->nb_program++;
 
 	return CCX_OK;
@@ -586,9 +587,6 @@ int parse_PAT (struct ccx_demuxer *ctx)
 		dinit_cap(ctx);
 		clear_PMT_array(ctx);
 		memset (ctx->PIDs_seen,0,sizeof (int) *65536); // Forget all we saw
-		memset(ctx->min_pts, UINT64_MAX, 65536 * sizeof(uint64_t));
-		memset(ctx->found_stream_ids, 0, MAX_NUM_OF_STREAMIDS * sizeof(uint8_t));
-		memset(ctx->got_important_streams_min_pts, UINT64_MAX, 3 * sizeof(uint64_t));
 		if (!tlt_config.user_page) // If the user didn't select a page...
 			tlt_config.page=0; // ..forget whatever we detected.
 

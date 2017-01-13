@@ -335,11 +335,7 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 	//DVB related
 	dec_ctx->prev = NULL;
 	dec_ctx->dec_sub.prev = NULL;
-	if (dec_ctx->codec == CCX_CODEC_DVB)
-	{
-		dec_ctx->prev = malloc(sizeof(struct lib_cc_decode));
-		dec_ctx->dec_sub.prev = malloc(sizeof(struct cc_subtitle));
-	}
+
 	return dec_ctx;
 }
 
@@ -430,13 +426,8 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	// DVB related
 	enc_ctx->prev = NULL;
 	if (cinfo)
-	{
 		if (cinfo->codec == CCX_CODEC_DVB)
-		{
 			enc_ctx->write_previous = 0;
-			enc_ctx->prev = malloc(sizeof(struct encoder_ctx));
-		}
-	}
 	freep(&extension);
 	return enc_ctx;
 }

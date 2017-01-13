@@ -9,9 +9,8 @@ static void ccx_demuxer_reset(struct ccx_demuxer *ctx)
 	ctx->startbytes_pos=0;
 	ctx->startbytes_avail=0;
 	memset (ctx->PIDs_seen, 0, 65536*sizeof (int));
-	memset(ctx->min_pts, UINT64_MAX, 65536 * sizeof(uint64_t));
-	memset(ctx->found_stream_ids, 0, MAX_NUM_OF_STREAMIDS * sizeof(uint8_t));
-	memset(ctx->got_important_streams_min_pts, UINT64_MAX, 3 * sizeof(uint64_t));
+	memset(ctx->min_pts, UINT64_MAX, MAX_PID * sizeof(uint64_t));
+	memset(ctx->stream_id_of_each_pid, 0, MAX_PID * sizeof(uint8_t));
 	memset (ctx->PIDs_programs, 0, 65536*sizeof (struct PMT_entry *));
 }
 

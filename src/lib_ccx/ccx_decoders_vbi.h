@@ -5,6 +5,7 @@
 #define VBI_DEBUG
 
 #include "ccx_decoders_structs.h"
+#include "ccx_decoders_common.h"
 
 struct ccx_decoder_vbi_cfg
 {

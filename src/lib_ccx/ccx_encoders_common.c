@@ -910,11 +910,11 @@ void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts)
 		write_subtitle_file_footer(ctx, ctx->out + i);
 	}
 
+	free_encoder_context(ctx->prev);
 	dinit_output_ctx(ctx);
 	freep(&ctx->subline);
 	freep(&ctx->buffer);
 	ctx->capacity = 0;
-	freep(&ctx->prev);
 	freep(arg);
 }
 

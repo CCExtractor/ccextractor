@@ -1654,10 +1654,23 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 						enc_ctx->wrote_webvtt_header = 1;
 					}
 				}
-				memcpy(enc_ctx->prev, enc_ctx, sizeof(struct encoder_ctx)); //we save the current encoder context
-				memcpy(sub->prev, sub, sizeof(struct cc_subtitle)); //we save the current subtitle
-				memcpy(dec_ctx->prev, dec_ctx, sizeof(struct lib_cc_decode)); //we save the current decoder context
+				/* copy previous encoder context*/
+				free_encoder_context(enc_ctx->prev);
+				enc_ctx->prev = NULL;  
+				enc_ctx->prev = copy_encoder_context(enc_ctx); 
+				/* copy previous decoder context */
+				free_decoder_context(dec_ctx->prev);
+				dec_ctx->prev = NULL;
+				dec_ctx->prev = copy_decoder_context(dec_ctx);
+				freep(&dec_ctx->prev->private_data);
+				dec_ctx->prev->private_data = malloc(sizeof(struct DVBSubContext));
+				memcpy(dec_ctx->prev->private_data, dec_ctx->private_data, sizeof(struct DVBSubContext));
+				/* copy previous subtitle */
+				free_subtitle(sub->prev);
+				sub->prev = NULL;
+				sub->prev = copy_subtitle(sub);
 				sub->prev->start_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the start time of the previous sub the current pts
+				
 				write_dvb_sub(dec_ctx->prev, sub->prev); //we write the current dvb sub to update decoder context
 				enc_ctx->write_previous = 1; //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
 				got_segment |= 16;

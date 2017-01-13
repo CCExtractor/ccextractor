@@ -731,8 +731,8 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 	memset(&payload, 0, sizeof(payload));
 
-	if (ctx->got_important_streams_min_pts[VIDEO] == UINT64_MAX)
-		ctx->got_important_streams_min_pts[VIDEO] = get_video_min_pts(ctx);
+	/*if (ctx->got_important_streams_min_pts[VIDEO] == UINT64_MAX)
+		ctx->got_important_streams_min_pts[VIDEO] = get_video_min_pts(ctx);*/
 
 	do
 	{
@@ -805,48 +805,33 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			ctx->PIDs_seen[payload.pid]=2;
 			ts_buffer_psi_packet(ctx);
 			if(ctx->PID_buffers[payload.pid]!=NULL && ctx->PID_buffers[payload.pid]->buffer_length>0)
-				if(parse_PMT(ctx, ctx->PID_buffers[payload.pid]->buffer+1, ctx->PID_buffers[payload.pid]->buffer_length-1, pinfo))
+ 				if(parse_PMT(ctx, ctx->PID_buffers[payload.pid]->buffer+1, ctx->PID_buffers[payload.pid]->buffer_length-1, pinfo))
 					gotpes=1; // Signals that something changed and that we must flush the buffer
 			continue;
 		}
 
 		//PTS calculation
-		if (ctx->got_important_streams_min_pts[PRIVATE_STREAM_1] == UINT64_MAX || ctx->got_important_streams_min_pts[AUDIO] == UINT64_MAX || ctx->got_important_streams_min_pts[VIDEO] == UINT64_MAX) //if we didn't already get the first PTS of the important streams
+		if (payload.pesstart) //if there is PES Header data in the payload and we didn't get the first pts of that stream
 		{
-			if (payload.pesstart) //if there is PES Header data in the payload and we didn't get the first pts of that stream
+			if (ctx->min_pts[payload.pid] == UINT64_MAX) //check if we don't have the min_pts of that packet's pid
 			{
-				if (ctx->min_pts[payload.pid] == UINT64_MAX) //check if we don't have the min_pts of that packet's pid
+				// Packetized Elementary Stream (PES) 32-bit start code
+				uint64_t pes_prefix = (payload.start[0] << 16) | (payload.start[1] << 8) | payload.start[2];
+				uint8_t pes_stream_id = payload.start[3];
+
+				uint64_t pts = 0;
+
+				// check for PES header
+				if (pes_prefix == 0x000001)
 				{
-					// Packetized Elementary Stream (PES) 32-bit start code
-					uint64_t pes_prefix = (payload.start[0] << 16) | (payload.start[1] << 8) | payload.start[2];
-					uint8_t pes_stream_id = payload.start[3];
-
-					uint64_t pts = 0;
-
-					// check for PES header
-					if (pes_prefix == 0x000001)
-					{
-						//if we didn't already have this stream id with its first pts then calculate 
-						if (pes_stream_id != ctx->found_stream_ids[pes_stream_id - 0xbd])
-						{
-							pts = get_pts(payload.start);
-
-							//keep in mind we already checked if we have this stream id
-							ctx->found_stream_ids[pes_stream_id - 0xbd] = pes_stream_id; //add it
-							ctx->min_pts[payload.pid] = pts; //and add its packet pts (we still have this array in case someone wants the global PTS for all stream_id not only for pvs1, audio and video)
-
-							/*we already checked if we got that packet's pts
-							but we still need to check if we got the min_pts of the stream type
-							because we might have multiple audio streams for example (audio and subs are sent in order)*/
-							if (pes_stream_id == 0xbd && ctx->got_important_streams_min_pts[PRIVATE_STREAM_1] == UINT64_MAX) //private stream 1 
-								ctx->got_important_streams_min_pts[PRIVATE_STREAM_1] = pts;
-							if (pes_stream_id >= 0xC0 && pes_stream_id <= 0xDF && ctx->got_important_streams_min_pts[AUDIO] == UINT64_MAX) //audio
-								ctx->got_important_streams_min_pts[AUDIO] = pts;
-						}
-					}
+					pts = get_pts(payload.start);
+					//keep in mind we already checked if we have this stream id
+					ctx->stream_id_of_each_pid[payload.pid] = pes_stream_id;
+					ctx->min_pts[payload.pid] = pts; //and add its packet pts 
 				}
 			}
 		}
+		
 		switch (ctx->PIDs_seen[payload.pid])
 		{
 			case 0: // First time we see this PID
@@ -995,6 +980,32 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		pespcount++;
 	}
 	while( !gotpes ); // gotpes==1 never arrives here because of the breaks
+
+	for (int i = 0; i < ctx->nb_program; i++)
+	{
+		pinfo = &ctx->pinfo[i];
+		for (int j = 0; j < MAX_PID; j++)
+		{
+			if (ctx->PIDs_programs[j])
+			{
+				if (ctx->PIDs_programs[j]->program_number == pinfo->program_number)
+				{
+					if (ctx->min_pts[j] != UINT64_MAX)
+					{
+						if (ctx->stream_id_of_each_pid[j] == 0xbd)
+							if (ctx->min_pts[j] < pinfo->got_important_streams_min_pts[PRIVATE_STREAM_1])
+								pinfo->got_important_streams_min_pts[PRIVATE_STREAM_1] = ctx->min_pts[j];
+						if (ctx->stream_id_of_each_pid[j] >= 0xc0 && ctx->stream_id_of_each_pid[j] <= 0xdf)
+							if (ctx->min_pts[j] < pinfo->got_important_streams_min_pts[AUDIO])
+								pinfo->got_important_streams_min_pts[AUDIO] = ctx->min_pts[j];
+						if (ctx->stream_id_of_each_pid[j] >= 0xe0 && ctx->stream_id_of_each_pid[j] <= 0xef)
+							if (ctx->min_pts[j] < pinfo->got_important_streams_min_pts[VIDEO])
+								pinfo->got_important_streams_min_pts[VIDEO] = ctx->min_pts[j];
+					}
+				}
+			}
+		}
+	}
 
 	if (ret == CCX_EOF)
 	{
