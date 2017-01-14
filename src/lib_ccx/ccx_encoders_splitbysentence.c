@@ -99,6 +99,68 @@ ____sbs_context:   [%p]\n\
 // END of #BUG639
 //---------------------------
 
+void sbs_str_autofix(unsigned char * str)
+{
+	LOG_DEBUG("SBS: sbs_str_autofix\n\
+\t old str:  [%s]\n\
+",
+		str
+	);
+
+	int i;
+	int j;
+
+	i = 0;
+	j = 0;
+
+	// replace all whitespaces with spaces:
+	while (str[i] != 0)
+	{
+
+		if (isspace(str[i])) {
+			// \n
+			// \t
+			// \r
+			// <WHITESPACES>
+			// =>
+			// <SPACE>
+			while (isspace(str[i])) {
+				i++;
+			}
+
+			if (j > 0) {
+				str[j] = ' ';
+				j++;
+			}
+
+		} else if (
+			str[i] == '|'
+			&& (i==0 || isspace(str[i-1]))
+			&& (str[i+1] == 0 || isspace(str[i+1]) || str[i+1]=='\'')
+		) {
+			// <SPACE>|'
+			// <SPACE>|<SPACE>
+			// =>
+			// <SPACE>I'
+			str[j] = 'I';
+			i++;
+			j++;
+		} else {
+			str[j] = str[i];
+			i++;
+			j++;
+		}
+	}
+
+	str[j] = 0;
+
+	LOG_DEBUG("SBS: sbs_str_autofix\n\
+\t old str:  [%s]\n\
+",
+		str
+	);
+}
+
 int sbs_is_pointer_on_sentence_breaker(char * start, char * current)
 {
 	char c = *current;
@@ -163,32 +225,32 @@ char * sbs_find_insert_point_partial(char * old_tail, const char * new_start, si
 	*errcount = dist_r + dist_l;
 
 	if (dist_l + dist_r > maxerr) {
-#ifdef DEBUG_SBS
-		sprintf(fmtbuf, "SBS: sbs_find_insert_point_partial: compare\n\
-\tnot EQ:          [TRUE]\n\
-\tmaxerr:          [%%d]\n\
-\tL buffer:          [%%.%zus]\n\
-\tL string:          [%%.%zus]\n\
-\tL dist_l:          [%%d]\n\
-\tR buffer:          [%%.%zus]\n\
-\tR string:          [%%.%zus]\n\
-\tR dist_r:          [%%d]\n\
-",
-			len_l,
-			len_l,
-			len_r,
-			len_r
-		);
-		LOG_DEBUG(fmtbuf,
-			maxerr,
-			old_tail,
-			new_start,
-			dist_l,
-			old_tail + len_l,
-			new_start + len_l,
-			dist_r
-		);
-#endif
+// #ifdef DEBUG_SBS
+// 		sprintf(fmtbuf, "SBS: sbs_find_insert_point_partial: compare\n\
+// \tnot EQ:          [TRUE]\n\
+// \tmaxerr:          [%%d]\n\
+// \tL buffer:          [%%.%zus]\n\
+// \tL string:          [%%.%zus]\n\
+// \tL dist_l:          [%%d]\n\
+// \tR buffer:          [%%.%zus]\n\
+// \tR string:          [%%.%zus]\n\
+// \tR dist_r:          [%%d]\n\
+// ",
+// 			len_l,
+// 			len_l,
+// 			len_r,
+// 			len_r
+// 		);
+// 		LOG_DEBUG(fmtbuf,
+// 			maxerr,
+// 			old_tail,
+// 			new_start,
+// 			dist_l,
+// 			old_tail + len_l,
+// 			new_start + len_l,
+// 			dist_r
+// 		);
+// #endif
 		return NULL;
 	};
 
@@ -196,17 +258,17 @@ char * sbs_find_insert_point_partial(char * old_tail, const char * new_start, si
 		dist_r <= few_errors               // right part almost the same
 		&& n > PARTIAL_CHANGE_LENGTH_MIN   // the sentense is long enough for analyzis
 	) {
-		LOG_DEBUG("SBS: sbs_find_insert_point_partial: LEFT CHANGED,\n\tbuf:[%s]\n\tstr:[%s]\n\
-\tmaxerr:[%d]\n\
-\tdist_l:[%d]\n\
-\tdist_r:[%d]\n\
-",
-			old_tail,
-			new_start,
-			maxerr,
-			dist_l,
-			dist_r
-		);
+// 		LOG_DEBUG("SBS: sbs_find_insert_point_partial: LEFT CHANGED,\n\tbuf:[%s]\n\tstr:[%s]\n\
+// \tmaxerr:[%d]\n\
+// \tdist_l:[%d]\n\
+// \tdist_r:[%d]\n\
+// ",
+// 			old_tail,
+// 			new_start,
+// 			maxerr,
+// 			dist_l,
+// 			dist_r
+// 		);
 		// searching for first mismatched symbol at the end of buf
 		// This is a naive implementation of error detection
 		//
@@ -221,41 +283,39 @@ char * sbs_find_insert_point_partial(char * old_tail, const char * new_start, si
 			partial_shift += 1;
 		}
 
-#ifdef DEBUG_SBS
-		LOG_DEBUG("SBS: sbs_find_insert_point_partial: PARTIAL SHIFT, [%d]\n",
-			partial_shift
-		);
-#endif
+		// LOG_DEBUG("SBS: sbs_find_insert_point_partial: PARTIAL SHIFT, [%d]\n",
+		// 	partial_shift
+		// );
 
 		return old_tail + partial_shift;
 	}
 
-#ifdef DEBUG_SBS
+// #ifdef DEBUG_SBS
 
-		sprintf(fmtbuf, "SBS: sbs_find_insert_point_partial: REPLACE ENTIRE TAIL !!\n\
-\tmaxerr:          [%%d]\n\
-\tL buffer:        [%%.%zus]\n\
-\tL string:        [%%.%zus]\n\
-\tL dist_l:        [%%d]\n\
-\tR buffer:        [%%.%zus]\n\
-\tR string:        [%%.%zus]\n\
-\tR dist_r:        [%%d]\n\
-",
-			len_l,
-			len_l,
-			len_r,
-			len_r
-		);
-		LOG_DEBUG(fmtbuf,
-			maxerr,
-			old_tail,
-			new_start,
-			dist_l,
-			old_tail + len_l,
-			new_start + len_l,
-			dist_r
-		);
-#endif
+// 		sprintf(fmtbuf, "SBS: sbs_find_insert_point_partial: REPLACE ENTIRE TAIL !!\n\
+// \tmaxerr:          [%%d]\n\
+// \tL buffer:        [%%.%zus]\n\
+// \tL string:        [%%.%zus]\n\
+// \tL dist_l:        [%%d]\n\
+// \tR buffer:        [%%.%zus]\n\
+// \tR string:        [%%.%zus]\n\
+// \tR dist_r:        [%%d]\n\
+// ",
+// 			len_l,
+// 			len_l,
+// 			len_r,
+// 			len_r
+// 		);
+// 		LOG_DEBUG(fmtbuf,
+// 			maxerr,
+// 			old_tail,
+// 			new_start,
+// 			dist_l,
+// 			old_tail + len_l,
+// 			new_start + len_l,
+// 			dist_r
+// 		);
+// #endif
 
 	return old_tail;
 }
@@ -291,9 +351,6 @@ char * sbs_find_insert_point(char * buf, const char * str, int * ilen) {
 		maxerr = cur_len / 5;
 		buffer_tail = buf + buf_len - cur_len;
 
-		LOG_DEBUG("SBS: sbs_find_insert_point: call PARTIAL\n");
-
-//char * sbs_find_insert_point_partial(char * old_tail, const char * new_start, size_t n, const int maxerr, int *errcount) {
 		cur_ptr = sbs_find_insert_point_partial(buffer_tail, prefix, cur_len, maxerr, &cur_err);
 		if (NULL != cur_ptr)
 		{
@@ -376,7 +433,13 @@ void sbs_strcpy_without_dup(const unsigned char * str, sbs_context_t * context)
 			context->buffer + context->handled_len
 		);
 
-		strcpy(context->buffer, context->buffer + context->handled_len);
+		// skip leading whitespaces:
+		int skip_ws = context->handled_len;
+		while (isspace(context->buffer[skip_ws])) {
+			skip_ws ++;
+		}
+
+		strcpy(context->buffer, context->buffer + skip_ws);
 		context->handled_len = 0;
 	}
 
@@ -393,40 +456,6 @@ void sbs_strcpy_without_dup(const unsigned char * str, sbs_context_t * context)
 	}
 
 	strcat(context->buffer, str);
-}
-
-void sbs_str_autofix(unsigned char * str)
-{
-	int i;
-
-	// replace all whitespaces with spaces:
-	for (i = 0; str[i] != 0; i++)
-	{
-		// \n
-		// \t
-		// \r
-		// <WHITESPACES>
-		// =>
-		// <SPACE>
-		if (isspace(str[i]))
-		{
-			str[i] = ' ';
-		}
-
-		// <SPACE>|'
-		// <SPACE>|<SPACE>
-		// =>
-		// <SPACE>I'
-		if (
-			str[i] == '|'
-			&& (i==0 || isspace(str[i-1]))
-			&& (str[i+1] == 0 || isspace(str[i+1]) || str[i+1]=='\'')
-		)
-		{
-			str[i] = 'I';
-		}
-	}
-
 }
 
 /**
