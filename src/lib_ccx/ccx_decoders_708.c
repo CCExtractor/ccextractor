@@ -300,6 +300,7 @@ void _dtvcc_window_dump(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *wi
 
 	char tbuf1[SUBLINESIZE],
 			tbuf2[SUBLINESIZE];
+	char sym_buf[10];
 
 	print_mstime_buff(window->time_ms_show, "%02u:%02u:%02u:%03u", tbuf1);
 	print_mstime_buff(window->time_ms_hide, "%02u:%02u:%02u:%03u", tbuf2);
@@ -315,11 +316,9 @@ void _dtvcc_window_dump(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *wi
 			for (int j = first; j <= last; j++)
 			{
 				sym = window->rows[i][j];
-				if (CCX_DTVCC_SYM_IS_16(sym))
-					ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "%c",CCX_DTVCC_SYM(sym));
-				else
-					ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "[%02X %02X]",
-												 CCX_DTVCC_SYM_16_FIRST(sym), CCX_DTVCC_SYM_16_SECOND(sym));
+				int len = utf16_to_utf8(sym.sym, sym_buf);
+				for (int index = 0; index < len; index++)
+					ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "%c", sym_buf[index]);
 			}
 			ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "\n");
 		}
