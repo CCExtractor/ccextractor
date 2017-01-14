@@ -300,6 +300,7 @@ void _dtvcc_window_dump(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *wi
 
 	char tbuf1[SUBLINESIZE],
 			tbuf2[SUBLINESIZE];
+	char sym_buf[10];
 
 	print_mstime_buff(window->time_ms_show, "%02u:%02u:%02u:%03u", tbuf1);
 	print_mstime_buff(window->time_ms_hide, "%02u:%02u:%02u:%03u", tbuf2);
@@ -315,11 +316,9 @@ void _dtvcc_window_dump(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *wi
 			for (int j = first; j <= last; j++)
 			{
 				sym = window->rows[i][j];
-				if (CCX_DTVCC_SYM_IS_16(sym))
-					ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "%c",CCX_DTVCC_SYM(sym));
-				else
-					ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "[%02X %02X]",
-												 CCX_DTVCC_SYM_16_FIRST(sym), CCX_DTVCC_SYM_16_SECOND(sym));
+				int len = utf16_to_utf8(sym.sym, sym_buf);
+				for (int index = 0; index < len; index++)
+					ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "%c", sym_buf[index]);
 			}
 			ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "\n");
 		}
@@ -553,6 +552,44 @@ void _dtvcc_process_ff(ccx_dtvcc_service_decoder *decoder)
 void _dtvcc_process_etx(ccx_dtvcc_service_decoder *decoder)
 {
 	//it can help decoders with screen output, but could it help us?
+}
+
+void _dtvcc_process_bs(ccx_dtvcc_service_decoder *decoder)
+{
+	if (decoder->current_window == -1)
+	{
+		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_process_bs: Window has to be defined first\n");
+		return;
+	}
+
+	//it looks strange, but in some videos (rarely) we have a backspace command
+	//we just print one character over another
+	int cw = decoder->current_window;
+	ccx_dtvcc_window *window = &decoder->windows[cw];
+
+	switch (window->attribs.print_direction)
+	{
+	case CCX_DTVCC_WINDOW_PD_RIGHT_LEFT:
+		if (window->pen_column + 1 < window->col_count)
+			window->pen_column++;
+		break;
+	case CCX_DTVCC_WINDOW_PD_LEFT_RIGHT:
+		if (decoder->windows->pen_column > 0)
+			window->pen_column--;
+		break;
+	case CCX_DTVCC_WINDOW_PD_BOTTOM_TOP:
+		if (window->pen_row + 1 < window->row_count)
+			window->pen_row++;
+		break;
+	case CCX_DTVCC_WINDOW_PD_TOP_BOTTOM:
+		if (window->pen_row > 0)
+			window->pen_row--;
+		break;
+	default:
+		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_process_character: unhandled branch (%02d)\n",
+			window->attribs.print_direction);
+		break;
+	}
 }
 
 void _dtvcc_window_rollup(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *window)
@@ -1295,6 +1332,9 @@ int _dtvcc_handle_C0(ccx_dtvcc_ctx *dtvcc,
 				break;
 			case CCX_DTVCC_C0_ETX:
 				_dtvcc_process_etx(decoder);
+				break;
+			case CCX_DTVCC_C0_BS:
+				_dtvcc_process_bs(decoder);
 				break;
 			default:
 				ccx_common_logging.log_ftn("[CEA-708] _dtvcc_handle_C0: unhandled branch\n");
