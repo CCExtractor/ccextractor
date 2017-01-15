@@ -8,6 +8,8 @@
  * https://github.com/maxkoryukov/ccextractor/issues
  * Only SBS-related bugs!
  *
+ * IMPORTANT: SBS is color-blind, and color tags mislead SBS.
+ * Please, use `-sbs` option with `-nodvbcolor` (actual for CCE 0.8.5)
  */
 
 #include "ccx_common_platform.h"

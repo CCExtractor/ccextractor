@@ -459,11 +459,6 @@ struct encoder_ctx* copy_encoder_context(struct encoder_ctx *ctx)
 		ctx_copy->end_credits_text = malloc(strlen(ctx->end_credits_text) * sizeof(char));
 		memcpy(ctx_copy->end_credits_text, ctx->end_credits_text, (strlen(ctx->end_credits_text) + 1) * sizeof(char));
 	}
-	if (ctx->sbs_buffer)
-	{
-		ctx_copy->sbs_buffer = malloc((strlen(ctx->sbs_buffer) + 2) * sizeof(unsigned char));
-		memcpy(ctx_copy->sbs_buffer, ctx->sbs_buffer, (strlen(ctx->sbs_buffer) + 2) * sizeof(unsigned char));
-	}
 	return ctx_copy;
 }
 struct lib_cc_decode* copy_decoder_context(struct lib_cc_decode *ctx)
@@ -537,7 +532,6 @@ void free_encoder_context(struct encoder_ctx *ctx)
 	freep(&ctx->subline);
 	freep(&ctx->start_credits_text);
 	freep(&ctx->end_credits_text);
-	freep(&ctx->sbs_buffer);
 	freep(&ctx->prev);
 	freep(&ctx);
 }
