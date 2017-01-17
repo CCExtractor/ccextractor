@@ -1234,5 +1234,6 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	} // end while(1)
 
 	dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
+    	free(parsebuf);
 	return caps;
 }
