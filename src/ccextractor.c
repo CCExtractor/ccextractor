@@ -316,71 +316,69 @@ int main(int argc, char *argv[])
 			}
 #endif //ENABLE_SHARING
 
-		if (dec_ctx->total_pulldownframes)
-			mprint ("incl. pulldown frames:  %s  (%u frames at %.2ffps)\n",
-					print_mstime_static( (LLONG)(dec_ctx->total_pulldownframes*1000/current_fps) ),
-					dec_ctx->total_pulldownframes, current_fps);
-		if (dec_ctx->timing->pts_set >= 1 && dec_ctx->timing->min_pts != 0x01FFFFFFFFLL)
-		{
-			LLONG postsyncms = (LLONG) (dec_ctx->frames_since_last_gop*1000/current_fps);
-			mprint ("\nMin PTS:				%s\n",
-					print_mstime_static( dec_ctx->timing->min_pts/(MPEG_CLOCK_FREQ/1000) - dec_ctx->timing->fts_offset));
-			if (pts_big_change)
-				mprint ("(Reference clock was reset at some point, Min PTS is approximated)\n");
-			mprint ("Max PTS:				%s\n",
-					print_mstime_static( dec_ctx->timing->sync_pts/(MPEG_CLOCK_FREQ/1000) + postsyncms));
+			if (dec_ctx->total_pulldownframes)
+				mprint ("incl. pulldown frames:  %s  (%u frames at %.2ffps)\n",
+						print_mstime_static( (LLONG)(dec_ctx->total_pulldownframes*1000/current_fps) ),
+						dec_ctx->total_pulldownframes, current_fps);
+			if (dec_ctx->timing->pts_set >= 1 && dec_ctx->timing->min_pts != 0x01FFFFFFFFLL)
+			{
+				LLONG postsyncms = (LLONG) (dec_ctx->frames_since_last_gop*1000/current_fps);
+				mprint ("\nMin PTS:				%s\n",
+						print_mstime_static( dec_ctx->timing->min_pts/(MPEG_CLOCK_FREQ/1000) - dec_ctx->timing->fts_offset));
+				if (pts_big_change)
+					mprint ("(Reference clock was reset at some point, Min PTS is approximated)\n");
+				mprint ("Max PTS:				%s\n",
+						print_mstime_static( dec_ctx->timing->sync_pts/(MPEG_CLOCK_FREQ/1000) + postsyncms));
 
-			mprint ("Length:				 %s\n",
-					print_mstime_static( dec_ctx->timing->sync_pts/(MPEG_CLOCK_FREQ/1000) + postsyncms
-								  - dec_ctx->timing->min_pts/(MPEG_CLOCK_FREQ/1000) + dec_ctx->timing->fts_offset ));
+				mprint ("Length:				 %s\n",
+						print_mstime_static( dec_ctx->timing->sync_pts/(MPEG_CLOCK_FREQ/1000) + postsyncms
+									  - dec_ctx->timing->min_pts/(MPEG_CLOCK_FREQ/1000) + dec_ctx->timing->fts_offset ));
+			}
+
+
+			// dvr-ms files have invalid GOPs
+			if (gop_time.inited && first_gop_time.inited && stream_mode != CCX_SM_ASF)
+			{
+				mprint ("\nInitial GOP time:	   %s\n",
+					print_mstime_static(first_gop_time.ms));
+				mprint ("Final GOP time:		 %s%+3dF\n",
+					print_mstime_static(gop_time.ms),
+					dec_ctx->frames_since_last_gop);
+				mprint ("Diff. GOP length:	   %s%+3dF",
+					print_mstime_static(gop_time.ms - first_gop_time.ms),
+					dec_ctx->frames_since_last_gop);
+				mprint ("	(%s)\n\n",
+					print_mstime_static(gop_time.ms - first_gop_time.ms
+					+(LLONG) ((dec_ctx->frames_since_last_gop)*1000/29.97)) );
+			}
+
+			if (dec_ctx->false_pict_header)
+				mprint ("\nNumber of likely false picture headers (discarded): %d\n",dec_ctx->false_pict_header);
+
+			if (dec_ctx->stat_numuserheaders)
+				mprint("\nTotal user data fields: %d\n", dec_ctx->stat_numuserheaders);
+			if (dec_ctx->stat_dvdccheaders)
+				mprint("DVD-type user data fields: %d\n", dec_ctx->stat_dvdccheaders);
+			if (dec_ctx->stat_scte20ccheaders)
+				mprint("SCTE-20 type user data fields: %d\n", dec_ctx->stat_scte20ccheaders);
+			if (dec_ctx->stat_replay4000headers)
+				mprint("ReplayTV 4000 user data fields: %d\n", dec_ctx->stat_replay4000headers);
+			if (dec_ctx->stat_replay5000headers)
+				mprint("ReplayTV 5000 user data fields: %d\n", dec_ctx->stat_replay5000headers);
+			if (dec_ctx->stat_hdtv)
+				mprint("HDTV type user data fields: %d\n", dec_ctx->stat_hdtv);
+			if (dec_ctx->stat_dishheaders)
+				mprint("Dish Network user data fields: %d\n", dec_ctx->stat_dishheaders);
+			if (dec_ctx->stat_divicom)
+			{
+				mprint("CEA608/Divicom user data fields: %d\n", dec_ctx->stat_divicom);
+
+				mprint("\n\nNOTE! The CEA 608 / Divicom standard encoding for closed\n");
+				mprint("caption is not well understood!\n\n");
+				mprint("Please submit samples to the developers.\n\n\n");
+			}
+
 		}
-
-
-		// dvr-ms files have invalid GOPs
-		if (gop_time.inited && first_gop_time.inited && stream_mode != CCX_SM_ASF)
-		{
-			mprint ("\nInitial GOP time:	   %s\n",
-				print_mstime_static(first_gop_time.ms));
-			mprint ("Final GOP time:		 %s%+3dF\n",
-				print_mstime_static(gop_time.ms),
-				dec_ctx->frames_since_last_gop);
-			mprint ("Diff. GOP length:	   %s%+3dF",
-				print_mstime_static(gop_time.ms - first_gop_time.ms),
-				dec_ctx->frames_since_last_gop);
-			mprint ("	(%s)\n\n",
-				print_mstime_static(gop_time.ms - first_gop_time.ms
-				+(LLONG) ((dec_ctx->frames_since_last_gop)*1000/29.97)) );
-		}
-
-		if (dec_ctx->false_pict_header)
-			mprint ("\nNumber of likely false picture headers (discarded): %d\n",dec_ctx->false_pict_header);
-
-		if (dec_ctx->stat_numuserheaders)
-			mprint("\nTotal user data fields: %d\n", dec_ctx->stat_numuserheaders);
-		if (dec_ctx->stat_dvdccheaders)
-			mprint("DVD-type user data fields: %d\n", dec_ctx->stat_dvdccheaders);
-		if (dec_ctx->stat_scte20ccheaders)
-			mprint("SCTE-20 type user data fields: %d\n", dec_ctx->stat_scte20ccheaders);
-		if (dec_ctx->stat_replay4000headers)
-			mprint("ReplayTV 4000 user data fields: %d\n", dec_ctx->stat_replay4000headers);
-		if (dec_ctx->stat_replay5000headers)
-			mprint("ReplayTV 5000 user data fields: %d\n", dec_ctx->stat_replay5000headers);
-		if (dec_ctx->stat_hdtv)
-			mprint("HDTV type user data fields: %d\n", dec_ctx->stat_hdtv);
-		if (dec_ctx->stat_dishheaders)
-			mprint("Dish Network user data fields: %d\n", dec_ctx->stat_dishheaders);
-		if (dec_ctx->stat_divicom)
-		{
-			mprint("CEA608/Divicom user data fields: %d\n", dec_ctx->stat_divicom);
-
-			mprint("\n\nNOTE! The CEA 608 / Divicom standard encoding for closed\n");
-			mprint("caption is not well understood!\n\n");
-			mprint("Please submit samples to the developers.\n\n\n");
-		}
-
-		}
-
-
 
 		if(is_decoder_processed_enough(ctx) == CCX_TRUE)
 			break;

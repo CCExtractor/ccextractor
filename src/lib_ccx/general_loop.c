@@ -23,7 +23,6 @@ int end_of_file=0; // End of file?
 
 const static unsigned char DO_NOTHING[] = {0x80, 0x80};
 
-
 // Program stream specific data grabber
 int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 {
@@ -1037,7 +1036,9 @@ int general_loop(struct lib_ccx_ctx *ctx)
 				if(data_node->pts != CCX_NOPTS)
 					set_current_pts(dec_ctx->timing, data_node->pts);
 
-				process_data(enc_ctx, dec_ctx, data_node);
+				ret = process_data(enc_ctx, dec_ctx, data_node);
+				if (enc_ctx->srt_counter || enc_ctx->cea_708_counter || dec_ctx->saw_caption_block || ret == 1)
+					caps = 1;
 			}
 			if (!data_node)
 				continue;
@@ -1068,6 +1069,8 @@ int general_loop(struct lib_ccx_ctx *ctx)
 				}
 			}
 		}
+		
+		//void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx);
 		segment_output_file(ctx, dec_ctx);
 
 		if (ccx_options.send_to_srv)
@@ -1075,6 +1078,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 	}
 	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
+
 		if (dec_ctx->codec == CCX_CODEC_TELETEXT)
 			telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
 		// Flush remaining HD captions
