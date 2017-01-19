@@ -142,7 +142,7 @@ void* init_ocr(int lang_index)
 	char* pars_vec = strdup("debug_file");
 	char* pars_values = strdup("/dev/null");
 
-	ret = TessBaseAPIInit4(ctx->api, tessdata_path, lang, OEM_DEFAULT, NULL, 0, &pars_vec,
+	ret = TessBaseAPIInit4(ctx->api, tessdata_path, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
 		&pars_values, 1, false);
 
 	free(pars_vec);
@@ -275,7 +275,8 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 				char* word = TessResultIteratorGetUTF8Text(ri,level);
 				float conf = TessResultIteratorConfidence(ri,level);
 				int x1, y1, x2, y2;
-				TessPageIteratorBoundingBox((TessPageIterator *)ri,level, &x1, &y1, &x2, &y2);
+				if (!TessPageIteratorBoundingBox((TessPageIterator *)ri, level, &x1, &y1, &x2, &y2))
+					continue;
 				// printf("word: '%s';  \tconf: %.2f; BoundingBox: %d,%d,%d,%d;",word, conf, x1, y1, x2, y2);
 				// printf("word: '%s';", word);
 				// {

@@ -63,6 +63,7 @@ void init_options (struct ccx_s_options *options)
 	options->dvbcolor = 1; // By default, attempt to detect both text and color
 	options->dvblang = NULL; // By default, autodetect DVB language
 	options->ocrlang = NULL; // By default, autodetect .traineddata file
+	options->ocr_oem = 0; // By default, set Tesseract OEM mode OEM_TESSERACT_ONLY (0)
 	options->ignore_pts_jumps = 1;
 
 	/*HardsubX related stuff*/
