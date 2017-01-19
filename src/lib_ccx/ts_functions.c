@@ -810,28 +810,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			continue;
 		}
 
-		//PTS calculation
-		if (payload.pesstart) //if there is PES Header data in the payload and we didn't get the first pts of that stream
-		{
-			if (ctx->min_pts[payload.pid] == UINT64_MAX) //check if we don't have the min_pts of that packet's pid
-			{
-				// Packetized Elementary Stream (PES) 32-bit start code
-				uint64_t pes_prefix = (payload.start[0] << 16) | (payload.start[1] << 8) | payload.start[2];
-				uint8_t pes_stream_id = payload.start[3];
-
-				uint64_t pts = 0;
-
-				// check for PES header
-				if (pes_prefix == 0x000001)
-				{
-					pts = get_pts(payload.start);
-					//keep in mind we already checked if we have this stream id
-					ctx->stream_id_of_each_pid[payload.pid] = pes_stream_id;
-					ctx->min_pts[payload.pid] = pts; //and add its packet pts 
-				}
-			}
-		}
-		
 		switch (ctx->PIDs_seen[payload.pid])
 		{
 			case 0: // First time we see this PID
@@ -847,6 +825,8 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 					dbg_print(CCX_DMT_PARSE, "\nNew PID found: %u, program number still unknown\n", payload.pid);
 					ctx->PIDs_seen[payload.pid]=1;
 				}
+				ctx->have_PIDs[ctx->num_of_PIDs] = payload.pid;
+				ctx->num_of_PIDs++;
 				break;
 			case 1: // Saw it before but we didn't know what program it belonged to. Luckier now?
 				if (ctx->PIDs_programs[payload.pid])
@@ -862,6 +842,31 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 				break;
 			case 3: // Already seen, reported, and inspected for CC data (and found some)
 				break;
+		}
+
+		//PTS calculation
+		if (payload.pesstart) //if there is PES Header data in the payload and we didn't get the first pts of that stream
+		{
+			// Packetized Elementary Stream (PES) 32-bit start code
+			uint64_t pes_prefix = (payload.start[0] << 16) | (payload.start[1] << 8) | payload.start[2];
+			uint8_t pes_stream_id = payload.start[3];
+
+			uint64_t pts = 0;
+
+			// check for PES header
+			if (pes_prefix == 0x000001)
+			{
+				pts = get_pts(payload.start);
+				//keep in mind we already checked if we have this stream id
+				//we find the index of the packet PID in the have_PIDs array
+				int pid_index;
+				for (int i = 0; i < ctx->num_of_PIDs; i++)
+					if (payload.pid == ctx->have_PIDs[i])
+						pid_index = i;
+				ctx->stream_id_of_each_pid[pid_index] = pes_stream_id;
+				if (pts < ctx->min_pts[pid_index])
+					ctx->min_pts[pid_index] = pts; //and add its packet pts 
+			}
 		}
 
 		if (payload.pid==1003 && !ctx->hauppauge_warning_shown && !ccx_options.hauppauge_mode)
@@ -984,23 +989,30 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	for (int i = 0; i < ctx->nb_program; i++)
 	{
 		pinfo = &ctx->pinfo[i];
-		for (int j = 0; j < MAX_PID; j++)
+		if (!pinfo->has_all_min_pts)
 		{
-			if (ctx->PIDs_programs[j])
+			for (int j = 0; j < ctx->num_of_PIDs; j++)
 			{
-				if (ctx->PIDs_programs[j]->program_number == pinfo->program_number)
+				if (ctx->PIDs_programs[ctx->have_PIDs[j]])
 				{
-					if (ctx->min_pts[j] != UINT64_MAX)
+					if (ctx->PIDs_programs[ctx->have_PIDs[j]]->program_number == pinfo->program_number)
 					{
-						if (ctx->stream_id_of_each_pid[j] == 0xbd)
-							if (ctx->min_pts[j] < pinfo->got_important_streams_min_pts[PRIVATE_STREAM_1])
-								pinfo->got_important_streams_min_pts[PRIVATE_STREAM_1] = ctx->min_pts[j];
-						if (ctx->stream_id_of_each_pid[j] >= 0xc0 && ctx->stream_id_of_each_pid[j] <= 0xdf)
-							if (ctx->min_pts[j] < pinfo->got_important_streams_min_pts[AUDIO])
-								pinfo->got_important_streams_min_pts[AUDIO] = ctx->min_pts[j];
-						if (ctx->stream_id_of_each_pid[j] >= 0xe0 && ctx->stream_id_of_each_pid[j] <= 0xef)
-							if (ctx->min_pts[j] < pinfo->got_important_streams_min_pts[VIDEO])
-								pinfo->got_important_streams_min_pts[VIDEO] = ctx->min_pts[j];
+						if (ctx->min_pts[j] != UINT64_MAX)
+						{
+							if (ctx->stream_id_of_each_pid[j] == 0xbd)
+								if (ctx->min_pts[j] < pinfo->got_important_streams_min_pts[PRIVATE_STREAM_1])
+									pinfo->got_important_streams_min_pts[PRIVATE_STREAM_1] = ctx->min_pts[j];
+							if (ctx->stream_id_of_each_pid[j] >= 0xc0 && ctx->stream_id_of_each_pid[j] <= 0xdf)
+								if (ctx->min_pts[j] < pinfo->got_important_streams_min_pts[AUDIO])
+									pinfo->got_important_streams_min_pts[AUDIO] = ctx->min_pts[j];
+							if (ctx->stream_id_of_each_pid[j] >= 0xe0 && ctx->stream_id_of_each_pid[j] <= 0xef)
+								if (ctx->min_pts[j] < pinfo->got_important_streams_min_pts[VIDEO])
+									pinfo->got_important_streams_min_pts[VIDEO] = ctx->min_pts[j];
+							if (pinfo->got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX &&
+								pinfo->got_important_streams_min_pts[AUDIO] != UINT64_MAX &&
+								pinfo->got_important_streams_min_pts[VIDEO] != UINT64_MAX)
+								pinfo->has_all_min_pts = 1;
+						}
 					}
 				}
 			}

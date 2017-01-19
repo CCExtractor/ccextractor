@@ -46,6 +46,7 @@ struct program_info
 	 */
 	int16_t pcr_pid;
 	uint64_t got_important_streams_min_pts[COUNT];
+	int has_all_min_pts;
 };
 
 struct cap_info
@@ -123,8 +124,10 @@ struct ccx_demuxer
 	(stream ids range from 0xbd to 0xef so 0xef - 0xbd + 1 = 51)*/
 	//uint8_t found_stream_ids[MAX_NUM_OF_STREAMIDS]; 
 
-	uint8_t stream_id_of_each_pid[MAX_PID];
-	uint64_t min_pts[MAX_PID];
+	uint8_t stream_id_of_each_pid[MAX_PSI_PID + 1];
+	uint64_t min_pts[MAX_PSI_PID + 1];
+	int have_PIDs[MAX_PSI_PID + 1];
+	int num_of_PIDs;
 
 	struct PMT_entry *PIDs_programs[MAX_PID];
 	struct ccx_demux_report freport;
