@@ -1321,6 +1321,10 @@ int _dtvcc_handle_C0(ccx_dtvcc_ctx *dtvcc,
 	{
 		switch (c0)
 		{
+			case CCX_DTVCC_C0_NUL:
+				// No idea what they use NUL for, specs say they come from ASCII,
+				// ASCII say it's "do nothing"
+				break;
 			case CCX_DTVCC_C0_CR:
 				_dtvcc_process_cr(dtvcc, decoder);
 				break;
