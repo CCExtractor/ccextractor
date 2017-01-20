@@ -190,6 +190,39 @@ static int process_avc_track(struct lib_ccx_ctx *ctx, const char* basename, GF_I
 	return status;
 }
 
+static char *format_duration(u64 dur, u32 timescale, char *szDur)
+{
+	u32 h, m, s, ms;
+	if ((dur==(u64) -1) || (dur==(u32) -1))  {
+		strcpy(szDur, "Unknown");
+		return szDur;
+	}
+	dur = (u64) (( ((Double) (s64) dur)/timescale)*1000);
+	h = (u32) (dur / 3600000);
+	m = (u32) (dur/ 60000) - h*60;
+	s = (u32) (dur/1000) - h*3600 - m*60;
+	ms = (u32) (dur) - h*3600000 - m*60000 - s*1000;
+	if (h<=24) {
+		sprintf(szDur, "%02d:%02d:%02d.%03d", h, m, s, ms);
+	} else {
+		u32 d = (u32) (dur / 3600000 / 24);
+		h = (u32) (dur/3600000)-24*d;
+		if (d<=365) {
+			sprintf(szDur, "%d Days, %02d:%02d:%02d.%03d", d, h, m, s, ms);
+		} else {
+			u32 y=0;
+			while (d>365) {
+				y++;
+				d-=365;
+				if (y%4) d--;
+			}
+			sprintf(szDur, "%d Years %d Days, %02d:%02d:%02d.%03d", y, d, h, m, s, ms);
+		}
+
+	}
+	return szDur;
+}
+
 unsigned char * ccdp_find_data(unsigned char * ccdp_atom_content, unsigned int len, unsigned int *cc_count)
 {
 	unsigned char *data = ccdp_atom_content;
@@ -286,7 +319,7 @@ unsigned char * ccdp_find_data(unsigned char * ccdp_atom_content, unsigned int l
 */
 int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 {
-	int caps = 0;
+	int mp4_ret = 0;
 	GF_ISOFile* f;
 	u32 i, j, track_count, avc_track_count, cc_track_count;
 	struct cc_subtitle dec_sub;
@@ -296,7 +329,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 	dec_ctx = update_decoder_list(ctx);
 
 	memset(&dec_sub,0,sizeof(dec_sub));
-	mprint("opening \'%s\': ", file);
+	mprint("Opening \'%s\': ", file);
 #ifdef MP4_DEBUG
 	gf_log_set_tool_level(GF_LOG_CONTAINER,GF_LOG_DEBUG);
 #endif
@@ -330,7 +363,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 			avc_track_count++;
 	}
 
-	mprint("mp4: found %u tracks: %u avc and %u cc\n", track_count, avc_track_count, cc_track_count);
+	mprint("MP4: found %u tracks: %u avc and %u cc\n", track_count, avc_track_count, cc_track_count);
 
 	for(i = 0; i < track_count; i++)
 	{
@@ -349,7 +382,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 			}
 			if(dec_sub.got_output)
 			{
-				caps = 1;
+				mp4_ret = 1;
 				encode_sub(enc_ctx, &dec_sub);
 				dec_sub.got_output = 0;
 			}
@@ -377,7 +410,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 			}
 			if(dec_sub.got_output)
 			{
-				caps = 1;
+				mp4_ret = 1;
 				encode_sub(enc_ctx, &dec_sub);
 				dec_sub.got_output = 0;
 			}
@@ -472,14 +505,14 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 
 								if (cc_info == CDP_SECTION_SVC_INFO || cc_info == CDP_SECTION_FOOTER)
 								{
-									dbg_print(CCX_DMT_PARSE, "mp4-708: premature end of sample (0x73 or 0x74)\n");
+									dbg_print(CCX_DMT_PARSE, "MP4-708: premature end of sample (0x73 or 0x74)\n");
 									break;
 								}
 
 								if ((cc_info == 0xFA || cc_info == 0xFC || cc_info == 0xFD)
 									&& (cc_data[1] & 0x7F) == 0 && (cc_data[2] & 0x7F) == 0)
 								{
-									dbg_print(CCX_DMT_PARSE, "mp4-708: skipped (zero cc data)\n");
+									dbg_print(CCX_DMT_PARSE, "MP4-708: skipped (zero cc data)\n");
 									continue;
 								}
 
@@ -490,7 +523,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 
 								if (cc_type < 2)
 								{
-									dbg_print(CCX_DMT_PARSE, "mp4-708: atom skipped (cc_type < 2)\n");
+									dbg_print(CCX_DMT_PARSE, "MP4-708: atom skipped (cc_type < 2)\n");
 									continue;
 								}
 								dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
@@ -522,7 +555,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 								tdata += ret;
 								cb_field1++;
 								if (dec_sub.got_output) {
-									caps = 1;
+									mp4_ret = 1;
 									encode_sub(enc_ctx, &dec_sub);
 									dec_sub.got_output = 0;
 								}
@@ -550,7 +583,7 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 
 	free(dec_ctx->xds_ctx);
 
-	mprint("\nclosing media: ");
+	mprint("\nClosing media: ");
 
 	gf_isom_close(f);
 	f = NULL;
@@ -567,9 +600,66 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 	if (cc_track_count)
 		mprint ("Found %d CC track(s).\n", cc_track_count);
 	else
-		mprint ("found no dedicated CC track(s).\n");
+		mprint ("Found no dedicated CC track(s).\n");
 
 	ctx->freport.mp4_cc_track_cnt = cc_track_count;
 
-	return caps;
+	return mp4_ret;
+}
+
+int dumpchapters (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
+{
+	int mp4_ret = 0;
+	GF_ISOFile* f;
+	mprint("Opening \'%s\': ", file);
+#ifdef MP4_DEBUG
+	gf_log_set_tool_level(GF_LOG_CONTAINER,GF_LOG_DEBUG);
+#endif
+
+	if((f = gf_isom_open(file, GF_ISOM_OPEN_READ, NULL)) == NULL)
+	{
+		mprint("failed to open\n");
+		return 5;
+	}
+
+	mprint("ok\n");
+
+	char szName[1024];
+	FILE *t;
+	u32 i, count;
+	count = gf_isom_get_chapter_count(f, 0);
+	if(count>0)
+	{
+		if (file) 
+		{
+			strcpy(szName, get_basename(file));
+			strcat(szName, ".txt");
+
+			t = gf_fopen(szName, "wt");
+			if (!t) return 5;	
+		} 
+		else {
+			t = stdout;
+		}
+		mp4_ret=1;
+		printf("Writing chapters into %s\n",szName);
+	}
+	else
+	{
+		mprint("No chapters information found!\n");
+	}
+		
+	
+
+	for (i=0; i<count; i++) {
+		u64 chapter_time;
+		const char *name;
+		char szDur[20];
+		gf_isom_get_chapter(f, 0, i+1, &chapter_time, &name);		
+		fprintf(t, "CHAPTER%02d=%s\n", i+1, format_duration(chapter_time, 1000, szDur));
+		fprintf(t, "CHAPTER%02dNAME=%s\n", i+1, name);
+		
+	}
+	if (file) gf_fclose(t);
+	return mp4_ret;
 }
