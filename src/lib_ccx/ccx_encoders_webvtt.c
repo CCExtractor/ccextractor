@@ -184,6 +184,9 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 		if (written != context->encoded_crlf_length)
 		{   
             		free(el);
+            		free(begin);
+                    free(unescaped);
+
 			return -1;
 		}
 		begin += strlen((const char *)begin) + 1;
