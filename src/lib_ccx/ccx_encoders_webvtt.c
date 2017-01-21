@@ -183,10 +183,11 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 		written = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		if (written != context->encoded_crlf_length)
 		{   
-            		free(el);
+			
+			free(el);
             		free(begin);
-                    free(unescaped);
-
+                    	free(unescaped);
+			
 			return -1;
 		}
 		begin += strlen((const char *)begin) + 1;
