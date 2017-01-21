@@ -291,7 +291,7 @@ void net_send_epg(
 	if (write_block(srv_sd, EPG_DATA, epg, len) <= 0)
 		fprintf(stderr, "Can't send EPG data\n");
 
-    free(epg);
+    	free(epg);
 
 	return;
 }
