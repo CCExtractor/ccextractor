@@ -279,7 +279,7 @@ void ccx_dtvcc_write_transcript(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_
 			if (strlen(buf))
 				write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 
-			_dtvcc_write_row(writer, tv, i, encoder, 0);
+			_dtvcc_write_row(writer, decoder, i, encoder, 0);
 			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
 				  encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
