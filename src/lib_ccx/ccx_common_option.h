@@ -115,6 +115,7 @@ struct ccx_s_options // Options from user parameters
 	int auto_myth;                    // Use myth-tv mpeg code? 0=no, 1=yes, 2=auto
 	/* MP4 related stuff */
 	unsigned mp4vidtrack;             // Process the video track even if a CC dedicated track exists.
+	int extract_chapters;		  // If 1, extracts chapters (if present), from MP4 files.
 	/* General settings */
 	int usepicorder;                  // Force the use of pic_order_cnt_lsb in AVC/H.264 data streams
 	int xmltv;                        // 1 = full output. 2 = live output. 3 = both

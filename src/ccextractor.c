@@ -243,7 +243,14 @@ int main(int argc, char *argv[])
 				{
 					fatal (EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
 				}
-				tmp = processmp4(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
+				if(ccx_options.extract_chapters)
+				{
+					tmp = dumpchapters(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
+				}
+				else
+				{
+					tmp = processmp4(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
+				}
 				if (ccx_options.print_file_reports)
 					print_file_report(ctx);
 				if (!ret) ret = tmp;

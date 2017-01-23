@@ -490,6 +490,9 @@ void print_usage (void)
 	mprint ("  --webvtt-create-css: Create a separate file for CSS instead of inline.\n");
 	mprint ("\n");
 	mprint ("Options that affect what kind of output will be produced:\n");
+	mprint ("            -chapters: (Experimental) Produces a chapter file from MP4 files.\n");
+	mprint ("                       Note that this must only be used with MP4 files,\n");
+	mprint ("                       for other files it will simply generate subtitles file.\n");
 	mprint ("                 -bom: Append a BOM (Byte Order Mark) to output files.\n");
 	mprint ("                       Note that most text processing tools in linux will not\n");
 	mprint ("                       like BOM.\n");
@@ -1199,6 +1202,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 		}
 #endif
+		
+		if (strcmp(argv[i], "-chapters") == 0){
+			opt->extract_chapters= 1;
+			continue;
+		}
 
 		if (strcmp (argv[i],"-bi")==0 ||
 				strcmp (argv[i],"--bufferinput")==0)
@@ -2194,6 +2202,13 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	if(opt->demux_cfg.auto_stream ==CCX_SM_MP4 && opt->input_source == CCX_DS_STDIN)
 	{
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
+	}
+	
+	if(opt->extract_chapters)
+	{
+		mprint("Request to extract chapters recieved.\n");
+		mprint("Note that this must only be used with MP4 files,\n");
+		mprint("for other files it will simply generate subtitles file.\n\n");
 	}
 
 	if(opt->gui_mode_reports)
