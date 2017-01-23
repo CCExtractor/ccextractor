@@ -1,4 +1,4 @@
-0.85 (2017-01-??)
+0.85 (2017-01-23)
 -----------------
 - New: Added FFMPEG 3.0 to Windows build - last one that is XP compatible.
 - New: Major improvements in CEA-608 to WebVTT (styles, etc).
@@ -10,6 +10,8 @@
 - New: SMPTE-TT files are now compatible with Adobe Premiere.
 - New: Updated libpng.
 - New: Added 3rd party (Tracy from archive.org) static linux build script.
+- New: Add chapter extraction for MP4 files.
+- New: Return code 10 if no captions are found at all.
 - Fix: Teletext duplicate lines in certain cases.
 - Fix: Improved teletext timing.
 - Fix: DVB timing is finally good.
@@ -24,6 +26,8 @@
 - Fix: SMPTE-TT : Added support for font color.
 - Fix: SAMI unnecessary empty subtitle when extracting DVB subs.
 - Fix: Skip the packet if the adaptation field length is broken.
+- Fix: 708 - lots of work done in the decoder. Implementation of more commands. Better timing.
+
 
 
 0.84 (2016-12-16)
