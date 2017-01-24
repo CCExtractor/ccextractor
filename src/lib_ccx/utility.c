@@ -411,22 +411,6 @@ void m_signal(int sig, void (*func)(int))
 	return;
 }
 
-void create_signal(int sigtype)
-{
-	if (signal(sigtype, signal_handler) == SIG_ERR)
-		mprint("Can't catch signal %d.\n", sigtype);
-}
-
-void signal_handler(int sig_type)
-{
-	int ret;
-
-        if (sig_type == SIGUSR1)
-        {
-        	mprint("Caught SIGUSR1. Filename Change Requested\n");
-        	change_filename_requested = 1;
-        }
-}
 #endif
 
 struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)

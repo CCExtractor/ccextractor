@@ -27,6 +27,13 @@ struct lib_ccx_ctx *signal_ctx;
 
 volatile int terminate_asap = 0;
 
+void sigusr1_handler(int sig)
+{
+	mprint("Caught SIGUSR1. Filename Change Requested\n");
+	change_filename_requested = 1;
+}
+
+
 void sigterm_handler(int sig)
 {
 	printf("Received SIGTERM, terminating as soon as possible.\n");
@@ -151,7 +158,7 @@ int main(int argc, char *argv[])
 	signal_ctx = ctx;
 	m_signal(SIGINT, sigint_handler);
 	m_signal(SIGTERM, sigterm_handler);
-	create_signal(SIGINT);
+	m_signal(SIGUSR1, sigusr1_handler);
 #endif
 	terminate_asap = 0;
 
