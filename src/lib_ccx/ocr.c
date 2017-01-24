@@ -434,7 +434,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 						if(strstr(text_out,word))
 						{
 							char *text_out_copy = strdup(text_out);
-							free(text_out);
+							TessDeleteText(text_out);
 							text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
 							memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
 							int pos = (int)(strstr(text_out_copy,word)-text_out_copy);
@@ -448,7 +448,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 						else if(!written_tag)
 						{
 							char *text_out_copy = strdup(text_out);
-							free(text_out);
+							TessDeleteText(text_out);
 							text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
 							memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
 							strcpy(text_out,substr);
@@ -464,7 +464,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 				freep(&histogram);
 				freep(&mcit);
 				freep(&iot);
-				
+				TessDeleteText(word);
 			} while (TessPageIteratorNext((TessPageIterator *)ri,level));
 
 			//Write closing </font> at the end of the line
@@ -473,7 +473,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 			{
 				char *substr = "</font>";
 				char *text_out_copy = strdup(text_out);
-				free(text_out);
+				TessDeleteText(text_out);
 				text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
 				memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
 				char *str = strtok(text_out_copy,"\n");
