@@ -1277,8 +1277,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	if (wrote_something && context->force_flush)
 		fsync(context->out->fh); // Don't buffer
     
-    	free(context);
-
 	return wrote_something;
 }
 
