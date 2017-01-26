@@ -399,10 +399,11 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <AdditionalDependencies>WS2_32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -555,10 +556,12 @@ xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Comm
     <ClCompile>
       <AdditionalIncludeDirectories>..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\zlib;..\src\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>VERSION_FILE_PRESENT;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <AdditionalDependencies>WS2_32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
