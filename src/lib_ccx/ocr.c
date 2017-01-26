@@ -161,7 +161,7 @@ fail:
 
 BOX* ignore_alpha_at_edge(png_byte *alpha, unsigned char* indata, int w, int h, PIX *in, PIX **out)
 {
-	int i, j, index, start_y, end_y;
+	int i, j, index, start_y=0, end_y=0;
 	int find_end_x = CCX_FALSE;
 	BOX* cropWindow;
 	for (j = 1; j < w-1; j++)
