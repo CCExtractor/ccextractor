@@ -1,3 +1,7 @@
+0.85b (2017-1-26)
+-----------------
+- Fix: Base Windows binary (without OCR) compiled without DLL dependencies.
+
 0.85 (2017-01-23)
 -----------------
 - New: Added FFMPEG 3.0 to Windows build - last one that is XP compatible.
