@@ -307,7 +307,6 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 		ctx->pinfo[i].has_all_min_pts = 0;
 		memset(ctx->pinfo[i].got_important_streams_min_pts, UINT64_MAX, COUNT * sizeof(uint64_t));
 		ctx->pinfo[i].initialized_ocr = 0;
-		memset(ctx->pinfo[i].got_important_streams_min_pts, UINT64_MAX, COUNT * sizeof(uint64_t));
 	}
 
 	if(cfg->ts_forced_program  != -1)
