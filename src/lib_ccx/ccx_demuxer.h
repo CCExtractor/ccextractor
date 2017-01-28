@@ -35,6 +35,7 @@ struct program_info
 {
 	int pid;
 	int program_number;
+	int initialized_ocr; // Avoid initializing the OCR more than once
 	uint8_t analysed_PMT_once:1;
 	uint8_t version;
 	uint8_t saved_section[1021];

@@ -302,6 +302,14 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	ctx->nb_program = 0;
 	ctx->multi_stream_per_prog = 0;
 
+	for (int i = 0; i < MAX_PROGRAM; i++)
+	{
+		ctx->pinfo[i].has_all_min_pts = 0;
+		memset(ctx->pinfo[i].got_important_streams_min_pts, UINT64_MAX, COUNT * sizeof(uint64_t));
+		ctx->pinfo[i].initialized_ocr = 0;
+		memset(ctx->pinfo[i].got_important_streams_min_pts, UINT64_MAX, COUNT * sizeof(uint64_t));
+	}
+
 	if(cfg->ts_forced_program  != -1)
 	{
 		ctx->pinfo[ctx->nb_program].pid = CCX_UNKNOWN;
