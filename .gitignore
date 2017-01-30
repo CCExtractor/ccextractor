@@ -52,3 +52,6 @@ windows/libs/tesseract/**
 .cproject
 .project
 .settings/
+
+# Mac
+.DS_Store
