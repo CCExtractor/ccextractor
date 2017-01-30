@@ -351,7 +351,9 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 					ret = parse_dvb_description(&cnf,es_info,desc_len);
 					if(ret < 0)
 						break;
-					ptr = dvbsub_init_decoder(&cnf);
+					ptr = dvbsub_init_decoder(&cnf, pinfo->initialized_ocr);
+					if(!pinfo->initialized_ocr)
+						pinfo->initialized_ocr = 1;
 					if (ptr == NULL)
 						break;
 					update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_DVB, program_number, ptr);
@@ -574,9 +576,9 @@ int parse_PAT (struct ccx_demuxer *ctx)
 		/* fatal(CCX_COMMON_EXIT_BUG_BUG,
 		   "Sorry, long PATs not yet supported!\n"); */
 	}
-
+	
 	if (ctx->last_pat_payload != NULL && payload_length == ctx->last_pat_length &&
-			!memcmp (payload_start, ctx->last_pat_payload, payload_length))
+		!memcmp(payload_start, ctx->last_pat_payload, payload_length))
 	{
 		// dbg_print(CCX_DMT_PAT, "PAT hasn't changed, skipping.\n");
 		return CCX_OK;

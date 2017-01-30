@@ -86,99 +86,6 @@ const uint8_t crop_tab[256 + 2 * MAX_NEG_CROP] = { times256(0x00), 0x00, 0x01,
 
 #define cm (crop_tab + MAX_NEG_CROP)
 
-
-static __inline unsigned int bytestream_get_byte(const uint8_t **b)
-{
-	(*b) += 1;
-	return ((const uint8_t*) (*b - 1))[0];
-}
-
-static __inline unsigned int bytestream_get_be16(const uint8_t **b)
-{
-	(*b) += 2;
-	return RB16(*b - 2);
-}
-typedef struct GetBitContext
-{
-	const uint8_t *buffer, *buffer_end;
-	int index;
-	int size_in_bits;
-	int size_in_bits_plus8;
-} GetBitContext;
-
-/**
- * Initialize GetBitContext.
- * @param buffer bitstream buffer, must be FF_INPUT_BUFFER_PADDING_SIZE bytes
- *        larger than the actual read bits because some optimized bitstream
- *        readers read 32 or 64 bit at once and could read over the end
- * @param bit_size the size of the buffer in bits
- * @return 0 on success, AVERROR_INVALIDDATA if the buffer_size would overflow.
- */
-static __inline int init_get_bits(GetBitContext *s, const uint8_t *buffer,
-		int bit_size)
-{
-	int buffer_size;
-	int ret = 0;
-
-	if (bit_size >= INT_MAX - 7 || bit_size < 0 || !buffer)
-	{
-		buffer_size = bit_size = 0;
-		buffer = NULL;
-		ret = -1;
-		errno = EINVAL;
-	}
-
-	buffer_size = (bit_size + 7) >> 3;
-
-	s->buffer = buffer;
-	s->size_in_bits = bit_size;
-	s->size_in_bits_plus8 = bit_size + 8;
-	s->buffer_end = buffer + buffer_size;
-	s->index = 0;
-
-	return ret;
-}
-
-static __inline int get_bits_count(const GetBitContext *s)
-{
-	return s->index;
-}
-
-static __inline unsigned int get_bits(GetBitContext *s, int n)
-{
-	register int tmp;
-	unsigned int re_index = s->index;
-	unsigned int re_cache = 0;
-	unsigned int re_size_plus8 = s->size_in_bits_plus8;
-
-	if (n <= 0 || n > 25)
-		return -1;
-	re_cache = RB32( s->buffer + (re_index >> 3 )) << (re_index & 7);
-
-	tmp = ((uint32_t) re_cache) >> (32 - n);
-
-	re_index = (
-			(re_size_plus8 < re_index + (n)) ?
-					(re_size_plus8) : (re_index + (n)));
-
-	s->index = re_index;
-	return tmp;
-}
-static __inline unsigned int get_bits1(GetBitContext *s)
-{
-	unsigned int index = s->index;
-	uint8_t result = s->buffer[index >> 3];
-
-	result <<= index & 7;
-	result >>= 8 - 1;
-
-	if (s->index < s->size_in_bits_plus8)
-		index++;
-	s->index = index;
-
-	return result;
-}
-
 #define RGBA(r,g,b,a) (((unsigned)(a) << 24) | ((r) << 16) | ((g) << 8) | (b))
 
 typedef struct DVBSubCLUT
@@ -283,6 +190,100 @@ typedef struct DVBSubContext
 	DVBSubRegionDisplay *display_list;
 	DVBSubDisplayDefinition *display_definition;
 } DVBSubContext;
+
+static __inline unsigned int bytestream_get_byte(const uint8_t **b)
+{
+	(*b) += 1;
+	return ((const uint8_t*) (*b - 1))[0];
+}
+
+static __inline unsigned int bytestream_get_be16(const uint8_t **b)
+{
+	(*b) += 2;
+	return RB16(*b - 2);
+}
+typedef struct GetBitContext
+{
+	const uint8_t *buffer, *buffer_end;
+	int index;
+	int size_in_bits;
+	int size_in_bits_plus8;
+} GetBitContext;
+
+/**
+ * Initialize GetBitContext.
+ * @param buffer bitstream buffer, must be FF_INPUT_BUFFER_PADDING_SIZE bytes
+ *        larger than the actual read bits because some optimized bitstream
+ *        readers read 32 or 64 bit at once and could read over the end
+ * @param bit_size the size of the buffer in bits
+ * @return 0 on success, AVERROR_INVALIDDATA if the buffer_size would overflow.
+ */
+static __inline int init_get_bits(GetBitContext *s, const uint8_t *buffer,
+		int bit_size)
+{
+	int buffer_size;
+	int ret = 0;
+
+	if (bit_size >= INT_MAX - 7 || bit_size < 0 || !buffer)
+	{
+		buffer_size = bit_size = 0;
+		buffer = NULL;
+		ret = -1;
+		errno = EINVAL;
+	}
+
+	buffer_size = (bit_size + 7) >> 3;
+
+	s->buffer = buffer;
+	s->size_in_bits = bit_size;
+	s->size_in_bits_plus8 = bit_size + 8;
+	s->buffer_end = buffer + buffer_size;
+	s->index = 0;
+
+	return ret;
+}
+
+static __inline int get_bits_count(const GetBitContext *s)
+{
+	return s->index;
+}
+
+static __inline unsigned int get_bits(GetBitContext *s, int n)
+{
+	register int tmp;
+	unsigned int re_index = s->index;
+	unsigned int re_cache = 0;
+	unsigned int re_size_plus8 = s->size_in_bits_plus8;
+
+	if (n <= 0 || n > 25)
+		return -1;
+	re_cache = RB32( s->buffer + (re_index >> 3 )) << (re_index & 7);
+
+	tmp = ((uint32_t) re_cache) >> (32 - n);
+
+	re_index = (
+			(re_size_plus8 < re_index + (n)) ?
+					(re_size_plus8) : (re_index + (n)));
+
+	s->index = re_index;
+	return tmp;
+}
+static __inline unsigned int get_bits1(GetBitContext *s)
+{
+	unsigned int index = s->index;
+	uint8_t result = s->buffer[index >> 3];
+
+	result <<= index & 7;
+	result >>= 8 - 1;
+
+	if (s->index < s->size_in_bits_plus8)
+		index++;
+	s->index = index;
+
+	return result;
+}
+
+
 
 static DVBSubObject* get_object(DVBSubContext *ctx, int object_id)
 {
@@ -423,7 +424,7 @@ static void delete_regions(DVBSubContext *ctx)
  * @return DVB context kept as void* for abstraction
  *
  */
-void* dvbsub_init_decoder(struct dvb_config* cfg)
+void* dvbsub_init_decoder(struct dvb_config* cfg, int initialized_ocr)
 {
 	int i, r, g, b, a = 0;
 	DVBSubContext *ctx = (DVBSubContext*) malloc(sizeof(DVBSubContext));
@@ -443,7 +444,8 @@ void* dvbsub_init_decoder(struct dvb_config* cfg)
 	}
 
 #ifdef ENABLE_OCR
-	ctx->ocr_ctx = init_ocr(ctx->lang_index);
+	if (!initialized_ocr)
+		ctx->ocr_ctx = init_ocr(ctx->lang_index);
 #endif
 	ctx->version = -1;
 
