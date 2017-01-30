@@ -1,3 +1,9 @@
+0.86
+-----------------
+- Fix: Prevent the OCR being initialized more than once (happened on multiprogram and
+  PAT changes)
+  
+
 0.85b (2017-1-26)
 -----------------
 - Fix: Base Windows binary (without OCR) compiled without DLL dependencies.
