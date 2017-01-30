@@ -423,14 +423,6 @@ int main(int argc, char *argv[])
 		mprint ("\rNote: Processing was canceled before all data was processed because\n");
 		mprint ("\rone or more user-defined limits were reached.\n");
 	}
-	mprint ("Issues? Open a ticket here\n");
-	mprint ("https://github.com/CCExtractor/ccextractor/issues\n");
-	if (show_myth_banner)
-	{
-		mprint ("NOTICE: Due to the major rework in 0.49, we needed to change part of the timing\n");
-		mprint ("code in the MythTV's branch. Please report results to the address above. If\n");
-		mprint ("something is broken it will be fixed. Thanks\n");
-	}
 
 #ifdef CURL
 	if (curl)
@@ -438,10 +430,18 @@ int main(int argc, char *argv[])
   	curl_global_cleanup();
 #endif
 	dinit_libraries(&ctx);
+
 	if (!ret)
+		mprint("\nNo captions were found in input.\n");
+
+	mprint("Issues? Open a ticket here\n");
+	mprint("https://github.com/CCExtractor/ccextractor/issues\n");
+	if (show_myth_banner)
 	{
-		mprint ("No captions were found in input.\n");
-		return EXIT_NO_CAPTIONS;
+		mprint("NOTICE: Due to the major rework in 0.49, we needed to change part of the timing\n");
+		mprint("code in the MythTV's branch. Please report results to the address above. If\n");
+		mprint("something is broken it will be fixed. Thanks\n");
 	}
-	return EXIT_OK;
+
+	return ret ? EXIT_OK : EXIT_NO_CAPTIONS;
 }
