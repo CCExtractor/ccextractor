@@ -1128,7 +1128,7 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
 			if (depth == 0)
 			{
 				mprint("Invalid clut depth 0x%x!\n", *buf);
-				return 0;
+				return -1;
 			}
 
 			full_range = (*buf++) & 1;
