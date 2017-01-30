@@ -1037,7 +1037,10 @@ int general_loop(struct lib_ccx_ctx *ctx)
 					set_current_pts(dec_ctx->timing, data_node->pts);
 
 				ret = process_data(enc_ctx, dec_ctx, data_node);
-				if (enc_ctx->srt_counter || enc_ctx->cea_708_counter || dec_ctx->saw_caption_block || ret == 1)
+				if (
+					(enc_ctx && (enc_ctx->srt_counter || enc_ctx->cea_708_counter) ||
+						dec_ctx->saw_caption_block || ret == 1)
+					)
 					caps = 1;
 			}
 			if (!data_node)
