@@ -265,6 +265,7 @@ void fatal(int exit_code, const char *fmt, ...)
 		fprintf(stderr, "\rError: ");
 	vfprintf(stderr, fmt, args);
 	fprintf(stderr, "\n");
+	print_end_msg();
 	va_end(args);
 	exit(exit_code);
 }
