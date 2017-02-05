@@ -817,6 +817,11 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			basefilename = get_basename(ctx->first_input_file);
 			extension = get_file_extension(cfg->write_format);
 
+			if (basefilename == NULL)
+			{
+				basefilename = get_basename("utitled");
+			}
+
 			if (cfg->extract == 12)
 			{
 				ret = init_write(&ctx->out[0], create_outfilename(basefilename, "_1", extension), cfg->with_semaphore);
