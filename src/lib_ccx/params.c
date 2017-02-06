@@ -298,10 +298,6 @@ void print_usage (void)
 	mprint ("    -o outputfilename: Use -o parameters to define output filename if you don't\n");
 	mprint ("                       like the default ones (same as infile plus _1 or _2 when\n");
 	mprint ("                       needed and file extension, e.g. .srt).\n");
-	mprint ("                           -o or -o1 -> Name of the first (maybe only) output\n");
-	mprint ("                                        file.\n");
-	mprint ("                           -o2       -> Name of the second output file, when\n");
-	mprint ("                                        it applies.\n");
 	mprint ("         -cf filename: Write 'clean' data to a file. Cleans means the ES\n");
 	mprint ("                       without TS or PES headers.\n");
 	mprint ("              -stdout: Write output to stdout (console) instead of file. If\n");
@@ -846,6 +842,7 @@ void print_usage (void)
 	mprint("               ccextractor video.mp4 -hardsubx -subcolor white -detect_italics \n");
 	mprint("                   -whiteness_thresh 90 -conf_thresh 60\n");
 	mprint("\n");
+	mprint ("\n         --version : Display current CCExtractor version and detailed information.\n");
 }
 
 unsigned char sha256_buf[16384];

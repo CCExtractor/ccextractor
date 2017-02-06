@@ -770,10 +770,10 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	char *extension = NULL; // Input filename without the extension
 
 
-#define check_ret(filename) 	if (ret != EXIT_OK)							\
+#define check_ret(filename) 	if (ret != EXIT_OK)	\
 				{									\
-					print_error(cfg->gui_mode_reports,"Failed %s\n", filename);	\
-					return ret;							\
+					fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED,"Failed to open output file: %s\nDetails : %s\n", filename, strerror(errno)); \
+					return ret;						\
 				}
 
 	if (cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE && cfg->extract == 12)
@@ -816,6 +816,11 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 		{
 			basefilename = get_basename(ctx->first_input_file);
 			extension = get_file_extension(cfg->write_format);
+
+			if (basefilename == NULL)
+			{
+				basefilename = get_basename("utitled");
+			}
 
 			if (cfg->extract == 12)
 			{

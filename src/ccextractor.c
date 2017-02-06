@@ -49,6 +49,14 @@ void sigint_handler(int sig)
 	exit(EXIT_SUCCESS);
 }
 
+
+void print_end_msg()
+{
+	mprint("Issues? Open a ticket here\n");
+	mprint("https://github.com/CCExtractor/ccextractor/issues\n");
+}
+
+
 struct ccx_s_options ccx_options;
 int main(int argc, char *argv[])
 {
@@ -434,14 +442,13 @@ int main(int argc, char *argv[])
 	if (!ret)
 		mprint("\nNo captions were found in input.\n");
 
-	mprint("Issues? Open a ticket here\n");
-	mprint("https://github.com/CCExtractor/ccextractor/issues\n");
+	print_end_msg();
+
 	if (show_myth_banner)
 	{
 		mprint("NOTICE: Due to the major rework in 0.49, we needed to change part of the timing\n");
 		mprint("code in the MythTV's branch. Please report results to the address above. If\n");
 		mprint("something is broken it will be fixed. Thanks\n");
 	}
-
 	return ret ? EXIT_OK : EXIT_NO_CAPTIONS;
 }
