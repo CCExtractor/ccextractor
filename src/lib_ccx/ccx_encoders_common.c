@@ -819,7 +819,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 
 			if (basefilename == NULL)
 			{
-				basefilename = get_basename("utitled");
+				basefilename = get_basename("untitled");
 			}
 
 			if (cfg->extract == 12)
