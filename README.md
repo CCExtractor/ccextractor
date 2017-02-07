@@ -9,9 +9,9 @@ Carlos' version (mainstream) is the most stable branch.
 ## Google Summer of Code 2017
 CCExtractor has applied for Summer of Code. The list of accepted organizations has not yet been published by Google but we are hopeful to be invited again to participate in this amazing program. 
 
-If you are a student currently enrolled in university most likely you are eligible to participate. Read more at:
-[Google Summer of Code official website ](https://summerofcode.withgoogle.com/)
-[CCExtractor's main GSoc page] (https://www.ccextractor.org/doku.php?id=public:gsoc:ideas_page_for_summer_of_code_2017)
+If you are a student currently enrolled in university most likely you are eligible to participate. Read more at:  
+- [Google Summer of Code official website ](https://summerofcode.withgoogle.com/)
+- [CCExtractor's main GSoc page] (https://www.ccextractor.org/doku.php?id=public:gsoc:ideas_page_for_summer_of_code_2017)
 
 
 ## Installation and Usage
