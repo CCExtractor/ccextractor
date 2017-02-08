@@ -260,6 +260,117 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 	pixDestroy(&pixd);
 }
 
+char* _process_frame_tickertext(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
+{
+	PIX *im;
+	PIX *edge_im;
+	PIX *lum_im;
+	PIX *feat_im;
+	char *subtitle_text=NULL;
+	im = pixCreate(width,height,32);
+	lum_im = pixCreate(width,height,32);
+	feat_im = pixCreate(width,height,32);
+	int i,j;
+	for(i=(92*height)/100;i<height;i++)
+	{
+		for(j=0;j<width;j++)
+		{
+			int p=j*3+i*frame->linesize[0];
+			int r=frame->data[0][p];
+			int g=frame->data[0][p+1];
+			int b=frame->data[0][p+2];
+			pixSetRGBPixel(im,j,i,r,g,b);
+			float L,A,B;
+			rgb_to_lab((float)r,(float)g,(float)b,&L,&A,&B);
+			if(L > ctx->lum_thresh)
+				pixSetRGBPixel(lum_im,j,i,255,255,255);
+			else
+				pixSetRGBPixel(lum_im,j,i,0,0,0);
+		}
+	}
+
+	//Handle the edge image
+	edge_im = pixCreate(width,height,8);
+	edge_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
+	edge_im = pixSobelEdgeFilter(edge_im, L_VERTICAL_EDGES);
+	edge_im = pixDilateGray(edge_im, 21, 11);
+	edge_im = pixThresholdToBinary(edge_im,50);
+
+	for(i=92*(height/100);i<height;i++)
+	{
+		for(j=0;j<width;j++)
+		{
+			unsigned int p1,p2,p3;
+			pixGetPixel(edge_im,j,i,&p1);
+			// pixGetPixel(pixd,j,i,&p2);
+			pixGetPixel(lum_im,j,i,&p3);
+			if(p1==0&&p3>0)
+				pixSetRGBPixel(feat_im,j,i,255,255,255);
+			else
+				pixSetRGBPixel(feat_im,j,i,0,0,0);
+		}
+	}
+
+	// Tesseract OCR for the ticker text here
+	subtitle_text = get_ocr_text_simple(ctx, lum_im);
+	char write_path[100];
+	sprintf(write_path,"./lum_im%04d.jpg",index);
+	pixWrite(write_path,lum_im,IFF_JFIF_JPEG);
+	sprintf(write_path,"./im%04d.jpg",index);
+	pixWrite(write_path,im,IFF_JFIF_JPEG);
+
+	pixDestroy(&lum_im);
+	pixDestroy(&im);
+	pixDestroy(&edge_im);
+	pixDestroy(&feat_im);
+
+	return subtitle_text;
+}
+
+int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx)
+{
+	// Search for ticker text at the bottom of the screen, such as in Russia TV1 or stock prices
+	int got_frame;
+	int cur_sec,total_sec,progress;
+	int frame_number = 0;
+	char *ticker_text = NULL;
+
+	while(av_read_frame(ctx->format_ctx, &ctx->packet)>=0)
+	{
+		if(ctx->packet.stream_index == ctx->video_stream_id)
+		{
+			frame_number++;
+			//Decode the video stream packet
+			avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
+			if(got_frame && frame_number % 1000 == 0)
+			{
+				// sws_scale is used to convert the pixel format to RGB24 from all other cases
+				sws_scale(
+						ctx->sws_ctx,
+						(uint8_t const * const *)ctx->frame->data,
+						ctx->frame->linesize,
+						0,
+						ctx->codec_ctx->height,
+						ctx->rgb_frame->data,
+						ctx->rgb_frame->linesize
+					);
+
+				ticker_text = _process_frame_tickertext(ctx,ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
+				printf("frame_number: %d\n", frame_number);
+
+				if(strlen(ticker_text)>0)printf("%s\n", ticker_text);
+
+				cur_sec = (int)convert_pts_to_s(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
+				total_sec = (int)convert_pts_to_s(ctx->format_ctx->duration, AV_TIME_BASE_Q);
+				progress = (cur_sec*100)/total_sec;
+				activity_progress(progress,cur_sec/60,cur_sec%60);
+			}
+		}
+	}
+	activity_progress(100,cur_sec/60,cur_sec%60);
+	return 0;
+}
+
 int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx)
 {
 	// Do an exhaustive linear search over the video

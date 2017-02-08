@@ -60,6 +60,7 @@ void init_options (struct ccx_s_options *options)
 	options->force_flush = 0; // Don't flush whenever content is written.
 	options->append_mode = 0; //By default, files are overwritten.
 	options->ucla = 0; // By default, -UCLA not used
+	options->tickertext = 0; // By default, do not assume ticker style text
 	options->hardsubx = 0; // By default, don't try to extract hard subtitles
 	options->dvbcolor = 1; // By default, attempt to detect both text and color
 	options->dvblang = NULL; // By default, autodetect DVB language

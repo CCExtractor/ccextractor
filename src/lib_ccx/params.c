@@ -1930,6 +1930,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			i++;
 			continue;
 		}
+		/* Red Hen/ UCLA Specific stuff */
 		if (strcmp (argv[i],"-UCLA")==0 || strcmp (argv[i],"-ucla")==0)
 		{
 			opt->ucla = 1;
@@ -1943,6 +1944,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				opt->transcript_settings.relativeTimestamp = 0;
 				opt->transcript_settings.isFinal = 1;
 			}
+			continue;
+		}
+		if (strcmp (argv[i],"-tickertext")==0 || strcmp (argv[i],"-tickertape")==0)
+		{
+			opt->tickertext = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-lf")==0 || strcmp (argv[i],"-LF")==0)

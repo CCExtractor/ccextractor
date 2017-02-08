@@ -68,6 +68,7 @@ struct lib_hardsubx_ctx
 	float prev_conf;
 
 	// Subtitle text parameters
+	int tickertext;
 	struct cc_subtitle *dec_sub;
 	int ocr_mode;
 	int subcolor;
@@ -84,6 +85,7 @@ void hardsubx(struct ccx_s_options *options);
 
 //hardsubx_decoder.c
 int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx);
+int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx);
 int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx);
 
 //hardsubx_imgops.c
