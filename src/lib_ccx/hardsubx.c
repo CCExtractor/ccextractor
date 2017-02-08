@@ -226,7 +226,7 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	int ret = -1;
 	if(options->ocrlang)
 	{
-		ret = TessBaseAPIInit4(ctx->tess_handle, NULL, options->ocrlang, OEM_DEFAULT, NULL, 0, &pars_vec,
+		ret = TessBaseAPIInit4(ctx->tess_handle, NULL, options->ocrlang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
 			&pars_values, 1, false);
 		if(ret != 0)
 		{
@@ -235,9 +235,10 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	}
 	if(ret != 0)
 	{
-		ret = TessBaseAPIInit4(ctx->tess_handle, NULL, "eng", OEM_DEFAULT, NULL, 0, &pars_vec,
+		ret = TessBaseAPIInit4(ctx->tess_handle, NULL, "eng", ccx_options.ocr_oem, NULL, 0, &pars_vec,
 			&pars_values, 1, false);
 	}
+
 	free(pars_vec);
 	free(pars_values);
 	if(ret != 0)

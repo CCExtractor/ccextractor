@@ -86,99 +86,6 @@ const uint8_t crop_tab[256 + 2 * MAX_NEG_CROP] = { times256(0x00), 0x00, 0x01,
 
 #define cm (crop_tab + MAX_NEG_CROP)
 
-
-static __inline unsigned int bytestream_get_byte(const uint8_t **b)
-{
-	(*b) += 1;
-	return ((const uint8_t*) (*b - 1))[0];
-}
-
-static __inline unsigned int bytestream_get_be16(const uint8_t **b)
-{
-	(*b) += 2;
-	return RB16(*b - 2);
-}
-typedef struct GetBitContext
-{
-	const uint8_t *buffer, *buffer_end;
-	int index;
-	int size_in_bits;
-	int size_in_bits_plus8;
-} GetBitContext;
-
-/**
- * Initialize GetBitContext.
- * @param buffer bitstream buffer, must be FF_INPUT_BUFFER_PADDING_SIZE bytes
- *        larger than the actual read bits because some optimized bitstream
- *        readers read 32 or 64 bit at once and could read over the end
- * @param bit_size the size of the buffer in bits
- * @return 0 on success, AVERROR_INVALIDDATA if the buffer_size would overflow.
- */
-static __inline int init_get_bits(GetBitContext *s, const uint8_t *buffer,
-		int bit_size)
-{
-	int buffer_size;
-	int ret = 0;
-
-	if (bit_size >= INT_MAX - 7 || bit_size < 0 || !buffer)
-	{
-		buffer_size = bit_size = 0;
-		buffer = NULL;
-		ret = -1;
-		errno = EINVAL;
-	}
-
-	buffer_size = (bit_size + 7) >> 3;
-
-	s->buffer = buffer;
-	s->size_in_bits = bit_size;
-	s->size_in_bits_plus8 = bit_size + 8;
-	s->buffer_end = buffer + buffer_size;
-	s->index = 0;
-
-	return ret;
-}
-
-static __inline int get_bits_count(const GetBitContext *s)
-{
-	return s->index;
-}
-
-static __inline unsigned int get_bits(GetBitContext *s, int n)
-{
-	register int tmp;
-	unsigned int re_index = s->index;
-	unsigned int re_cache = 0;
-	unsigned int re_size_plus8 = s->size_in_bits_plus8;
-
-	if (n <= 0 || n > 25)
-		return -1;
-	re_cache = RB32( s->buffer + (re_index >> 3 )) << (re_index & 7);
-
-	tmp = ((uint32_t) re_cache) >> (32 - n);
-
-	re_index = (
-			(re_size_plus8 < re_index + (n)) ?
-					(re_size_plus8) : (re_index + (n)));
-
-	s->index = re_index;
-	return tmp;
-}
-static __inline unsigned int get_bits1(GetBitContext *s)
-{
-	unsigned int index = s->index;
-	uint8_t result = s->buffer[index >> 3];
-
-	result <<= index & 7;
-	result >>= 8 - 1;
-
-	if (s->index < s->size_in_bits_plus8)
-		index++;
-	s->index = index;
-
-	return result;
-}
-
 #define RGBA(r,g,b,a) (((unsigned)(a) << 24) | ((r) << 16) | ((g) << 8) | (b))
 
 typedef struct DVBSubCLUT
@@ -283,6 +190,100 @@ typedef struct DVBSubContext
 	DVBSubRegionDisplay *display_list;
 	DVBSubDisplayDefinition *display_definition;
 } DVBSubContext;
+
+static __inline unsigned int bytestream_get_byte(const uint8_t **b)
+{
+	(*b) += 1;
+	return ((const uint8_t*) (*b - 1))[0];
+}
+
+static __inline unsigned int bytestream_get_be16(const uint8_t **b)
+{
+	(*b) += 2;
+	return RB16(*b - 2);
+}
+typedef struct GetBitContext
+{
+	const uint8_t *buffer, *buffer_end;
+	int index;
+	int size_in_bits;
+	int size_in_bits_plus8;
+} GetBitContext;
+
+/**
+ * Initialize GetBitContext.
+ * @param buffer bitstream buffer, must be FF_INPUT_BUFFER_PADDING_SIZE bytes
+ *        larger than the actual read bits because some optimized bitstream
+ *        readers read 32 or 64 bit at once and could read over the end
+ * @param bit_size the size of the buffer in bits
+ * @return 0 on success, AVERROR_INVALIDDATA if the buffer_size would overflow.
+ */
+static __inline int init_get_bits(GetBitContext *s, const uint8_t *buffer,
+		int bit_size)
+{
+	int buffer_size;
+	int ret = 0;
+
+	if (bit_size >= INT_MAX - 7 || bit_size < 0 || !buffer)
+	{
+		buffer_size = bit_size = 0;
+		buffer = NULL;
+		ret = -1;
+		errno = EINVAL;
+	}
+
+	buffer_size = (bit_size + 7) >> 3;
+
+	s->buffer = buffer;
+	s->size_in_bits = bit_size;
+	s->size_in_bits_plus8 = bit_size + 8;
+	s->buffer_end = buffer + buffer_size;
+	s->index = 0;
+
+	return ret;
+}
+
+static __inline int get_bits_count(const GetBitContext *s)
+{
+	return s->index;
+}
+
+static __inline unsigned int get_bits(GetBitContext *s, int n)
+{
+	register int tmp;
+	unsigned int re_index = s->index;
+	unsigned int re_cache = 0;
+	unsigned int re_size_plus8 = s->size_in_bits_plus8;
+
+	if (n <= 0 || n > 25)
+		return -1;
+	re_cache = RB32( s->buffer + (re_index >> 3 )) << (re_index & 7);
+
+	tmp = ((uint32_t) re_cache) >> (32 - n);
+
+	re_index = (
+			(re_size_plus8 < re_index + (n)) ?
+					(re_size_plus8) : (re_index + (n)));
+
+	s->index = re_index;
+	return tmp;
+}
+static __inline unsigned int get_bits1(GetBitContext *s)
+{
+	unsigned int index = s->index;
+	uint8_t result = s->buffer[index >> 3];
+
+	result <<= index & 7;
+	result >>= 8 - 1;
+
+	if (s->index < s->size_in_bits_plus8)
+		index++;
+	s->index = index;
+
+	return result;
+}
+
+
 
 static DVBSubObject* get_object(DVBSubContext *ctx, int object_id)
 {
@@ -423,7 +424,7 @@ static void delete_regions(DVBSubContext *ctx)
  * @return DVB context kept as void* for abstraction
  *
  */
-void* dvbsub_init_decoder(struct dvb_config* cfg)
+void* dvbsub_init_decoder(struct dvb_config* cfg, int initialized_ocr)
 {
 	int i, r, g, b, a = 0;
 	DVBSubContext *ctx = (DVBSubContext*) malloc(sizeof(DVBSubContext));
@@ -443,7 +444,8 @@ void* dvbsub_init_decoder(struct dvb_config* cfg)
 	}
 
 #ifdef ENABLE_OCR
-	ctx->ocr_ctx = init_ocr(ctx->lang_index);
+	if (!initialized_ocr)
+		ctx->ocr_ctx = init_ocr(ctx->lang_index);
 #endif
 	ctx->version = -1;
 
@@ -1126,7 +1128,7 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
 			if (depth == 0)
 			{
 				mprint("Invalid clut depth 0x%x!\n", *buf);
-				return 0;
+				return -1;
 			}
 
 			full_range = (*buf++) & 1;
@@ -1458,8 +1460,8 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	DVBSubRegion *region;
 	DVBSubRegionDisplay *display;
 	DVBSubCLUT *clut;
-        DVBSubDisplayDefinition *display_def;
-        struct cc_bitmap *rect = NULL;
+    DVBSubDisplayDefinition *display_def;
+    struct cc_bitmap *rect = NULL;
 	uint32_t *clut_table;
 	int offset_x=0, offset_y=0;
 	int ret = 0;
@@ -1524,15 +1526,15 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 		switch (region->depth)
 		{
-		case 2:
-			clut_table = clut->clut4;
-		case 8:
-			clut_table = clut->clut256;
-			break;
-		case 4:
-		default:
-			clut_table = clut->clut16;
-			break;
+			case 2:
+				clut_table = clut->clut4;
+			case 8:
+				clut_table = clut->clut256;
+				break;
+			case 4:
+			default:
+				clut_table = clut->clut16;
+				break;
 		}
 
 		rect->data[1] = malloc(1024);
@@ -1613,7 +1615,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 			if (ccx_options.dvb_debug_traces_to_stdout)
 			{
 				//debug traces
-				mprint("DVBSUB - PTS: %d, ", dec_ctx->timing->current_pts);
+				mprint("DVBSUB - PTS: %" PRId64 ", ", dec_ctx->timing->current_pts);
 				mprint("FTS: %d, ", dec_ctx->timing->fts_now);
 				mprint("SEGMENT TYPE: %d, ", segment_type);
 				mprint("SEGMENT LENGTH: %d", segment_length);
@@ -1654,10 +1656,23 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 						enc_ctx->wrote_webvtt_header = 1;
 					}
 				}
-				memcpy(enc_ctx->prev, enc_ctx, sizeof(struct encoder_ctx)); //we save the current encoder context
-				memcpy(sub->prev, sub, sizeof(struct cc_subtitle)); //we save the current subtitle
-				memcpy(dec_ctx->prev, dec_ctx, sizeof(struct lib_cc_decode)); //we save the current decoder context
+				/* copy previous encoder context*/
+				free_encoder_context(enc_ctx->prev);
+				enc_ctx->prev = NULL;  
+				enc_ctx->prev = copy_encoder_context(enc_ctx); 
+				/* copy previous decoder context */
+				free_decoder_context(dec_ctx->prev);
+				dec_ctx->prev = NULL;
+				dec_ctx->prev = copy_decoder_context(dec_ctx);
+				freep(&dec_ctx->prev->private_data);
+				dec_ctx->prev->private_data = malloc(sizeof(struct DVBSubContext));
+				memcpy(dec_ctx->prev->private_data, dec_ctx->private_data, sizeof(struct DVBSubContext));
+				/* copy previous subtitle */
+				free_subtitle(sub->prev);
+				sub->prev = NULL;
+				sub->prev = copy_subtitle(sub);
 				sub->prev->start_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the start time of the previous sub the current pts
+				
 				write_dvb_sub(dec_ctx->prev, sub->prev); //we write the current dvb sub to update decoder context
 				enc_ctx->write_previous = 1; //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
 				got_segment |= 16;

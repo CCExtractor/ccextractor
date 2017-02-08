@@ -1,7 +1,7 @@
 #ifndef CCX_CCEXTRACTOR_H
 #define CCX_CCEXTRACTOR_H
 
-#define VERSION "0.84"
+#define VERSION "0.85"
 
 // Load common includes and constants for library usage
 #include "ccx_common_platform.h"
@@ -151,6 +151,9 @@ struct lib_ccx_ctx
 struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt);
 void dinit_libraries( struct lib_ccx_ctx **ctx);
 
+//ccextractor.c
+void print_end_msg();
+
 //params.c
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[]);
 void print_usage (void);
@@ -249,7 +252,6 @@ void timestamp_to_srttime(uint64_t timestamp, char *buffer);
 void timestamp_to_smptetttime(uint64_t timestamp, char *buffer);
 int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
 void millis_to_date (uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator);
-void create_signal(int sigtype);
 void signal_handler(int sig_type);
 struct encoder_ctx* change_filename(struct encoder_ctx*);
 #ifndef _WIN32

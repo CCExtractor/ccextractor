@@ -21,6 +21,8 @@ struct ccx_rational
 };
 extern int temp_debug;
 volatile extern sig_atomic_t change_filename_requested;
+
+int levenshtein_dist_char (const char *s1, const char *s2, unsigned s1len, unsigned s2len);
 void init_boundary_time (struct ccx_boundary_time *bt);
 void print_error (int mode, const char *fmt, ...);
 int stringztoms (const char *s, struct ccx_boundary_time *bt);

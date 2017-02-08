@@ -298,10 +298,6 @@ void print_usage (void)
 	mprint ("    -o outputfilename: Use -o parameters to define output filename if you don't\n");
 	mprint ("                       like the default ones (same as infile plus _1 or _2 when\n");
 	mprint ("                       needed and file extension, e.g. .srt).\n");
-	mprint ("                           -o or -o1 -> Name of the first (maybe only) output\n");
-	mprint ("                                        file.\n");
-	mprint ("                           -o2       -> Name of the second output file, when\n");
-	mprint ("                                        it applies.\n");
 	mprint ("         -cf filename: Write 'clean' data to a file. Cleans means the ES\n");
 	mprint ("                       without TS or PES headers.\n");
 	mprint ("              -stdout: Write output to stdout (console) instead of file. If\n");
@@ -311,8 +307,9 @@ void print_usage (void)
 	mprint ("                       used for debugging purposes to see the contents\n");
 	mprint ("                       of each PES packet header.\n");
 	mprint ("         -debugdvbsub: Write the DVB subtitle debug traces to console.\n");
-	mprint ("      -ignoreptsjumps: Ignore PTS jumps. Use this parameter if you\n");
-	mprint ("                       experience timeline resets/jumps in the output.\n\n");
+	mprint ("      -ignoreptsjumps: Ignore PTS jumps (default).\n");
+	mprint ("         -fixptsjumps: fix pts jumps. Use this parameter if you\n");
+	mprint ("                       experience timeline resets/jumps in the output.\n");
 	mprint ("               -stdin: Reads input from stdin (console) instead of file.\n");
 	mprint ("You can pass as many input files as you need. They will be processed in order.\n");
 	mprint ("If a file name is suffixed by +, ccextractor will try to follow a numerical\n");
@@ -489,6 +486,9 @@ void print_usage (void)
 	mprint ("  --webvtt-create-css: Create a separate file for CSS instead of inline.\n");
 	mprint ("\n");
 	mprint ("Options that affect what kind of output will be produced:\n");
+	mprint ("            -chapters: (Experimental) Produces a chapter file from MP4 files.\n");
+	mprint ("                       Note that this must only be used with MP4 files,\n");
+	mprint ("                       for other files it will simply generate subtitles file.\n");
 	mprint ("                 -bom: Append a BOM (Byte Order Mark) to output files.\n");
 	mprint ("                       Note that most text processing tools in linux will not\n");
 	mprint ("                       like BOM.\n");
@@ -548,10 +548,11 @@ void print_usage (void)
 	mprint ("                       and delete it on file close.\n");
 	mprint ("            -dvbcolor: For DVB subtitles, also output the color of the\n");
 	mprint ("                       subtitles, if the output format is SRT or WebVTT.\n");
+	mprint ("          -nodvbcolor: In DVB subtitles, disable color in output.\n");
 	mprint ("             -dvblang: For DVB subtitles, select which language's caption\n");
 	mprint ("                       stream will be processed. e.g. 'eng' for English.\n");
 	mprint ("                       If there are multiple languages, only this specified\n");
-	mprint ("                       language stream will be processed\n");
+	mprint ("                       language stream will be processed (default).\n");
 	mprint ("             -ocrlang: Manually select the name of the Tesseract .traineddata\n");
 	mprint ("                       file. Helpful if you want to OCR a caption stream of\n");
 	mprint ("                       one language with the data of another language.\n");
@@ -560,6 +561,11 @@ void print_usage (void)
 	mprint ("                       using the Chinese (Traditional) trained data\n");
 	mprint ("                       This option is also helpful when the traineddata file\n");
 	mprint ("                       has non standard names that don't follow ISO specs\n");
+	mprint ("                 -oem: Select the OEM mode for Tesseract, could be 0, 1 or 2.\n");
+	mprint ("                       0: OEM_TESSERACT_ONLY - default value, the fastest mode.\n");
+	mprint ("                       1: OEM_LSTM_ONLY - use LSTM algorithm for recognition.\n");
+	mprint ("                       2: OEM_TESSERACT_LSTM_COMBINED - both algorithms.\n");
+
 	mprint ("\n");
 	mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
 
@@ -573,7 +579,7 @@ void print_usage (void)
 	mprint ("     -ff --forceflush: Flush the file buffer whenever content is written.\n");
 	mprint ("\n");
 
-	mprint ("Options that affect the built-in closed caption decoder:\n");
+	mprint ("Options that affect the built-in 608 closed caption decoder:\n");
 
 	mprint ("                 -dru: Direct Roll-Up. When in roll-up mode, write character by\n");
 	mprint ("                       character instead of line by line. Note that this\n");
@@ -836,6 +842,7 @@ void print_usage (void)
 	mprint("               ccextractor video.mp4 -hardsubx -subcolor white -detect_italics \n");
 	mprint("                   -whiteness_thresh 90 -conf_thresh 60\n");
 	mprint("\n");
+	mprint ("\n         --version : Display current CCExtractor version and detailed information.\n");
 }
 
 unsigned char sha256_buf[16384];
@@ -990,6 +997,7 @@ int atoi_hex (char *s)
 
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 {
+
 	// Parse parameters
 	for (int i=1; i<argc; i++)
 	{
@@ -1191,6 +1199,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 		}
 #endif
+		
+		if (strcmp(argv[i], "-chapters") == 0){
+			opt->extract_chapters= 1;
+			continue;
+		}
 
 		if (strcmp (argv[i],"-bi")==0 ||
 				strcmp (argv[i],"--bufferinput")==0)
@@ -1325,6 +1338,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->dvbcolor = 1;
 			continue;
 		}
+		// -dvbcolor counterpart
+		if (strcmp(argv[i], "-nodvbcolor") == 0)
+		{
+			opt->dvbcolor = 0;
+			continue;
+		}
 
 		if(strcmp(argv[i],"-dvblang")==0 && i < argc-1)
 		{
@@ -1343,6 +1362,26 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			sprintf(opt->ocrlang,"%s",argv[i]);
 			for(int char_index=0; char_index < strlen(opt->ocrlang);char_index++)
 				opt->ocrlang[char_index] = cctolower(opt->ocrlang[char_index]);
+			continue;
+		}
+
+		if (strcmp(argv[i], "-oem") == 0)
+		{
+			if (i < argc - 1)
+			{
+				char *str = (char*)malloc(sizeof(argv[i + 1]));
+				sprintf(str, "%s", argv[i + 1]);
+				opt->ocr_oem = atoi(str);
+				if (opt->ocr_oem < 0 || opt->ocr_oem > 2)
+				{
+					fatal(EXIT_MALFORMED_PARAMETER, "-oem must be 0, 1 or 2\n");
+				}
+			}
+			else
+			{
+				fatal(EXIT_MALFORMED_PARAMETER, "-oem has no argument.");
+			}
+			i++;
 			continue;
 		}
 
@@ -1675,6 +1714,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp(argv[i], "-ignoreptsjumps") == 0)
 		{
 			opt->ignore_pts_jumps = 1;
+			continue;
+		}
+		// -ignoreptsjumps counterpart
+		if (strcmp(argv[i], "-fixptsjumps") == 0)
+		{
+			opt->ignore_pts_jumps = 0;
 			continue;
 		}
 		if (strcmp (argv[i],"-quiet")==0)
@@ -2156,6 +2201,19 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "Error: Parameter %s not understood.\n", argv[i]);
 		// Unrecognized switches are silently ignored
 	}
+
+	if(opt->demux_cfg.auto_stream ==CCX_SM_MP4 && opt->input_source == CCX_DS_STDIN)
+	{
+		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
+	}
+	
+	if(opt->extract_chapters)
+	{
+		mprint("Request to extract chapters recieved.\n");
+		mprint("Note that this must only be used with MP4 files,\n");
+		mprint("for other files it will simply generate subtitles file.\n\n");
+	}
+
 	if(opt->gui_mode_reports)
 	{
 		opt->no_progress_bar=1;

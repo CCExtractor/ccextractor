@@ -44,6 +44,8 @@ struct encoder_ctx
 	unsigned int capacity;
 	/* keep count of srt subtitle*/
 	unsigned int srt_counter;
+	/* keep count of CEA-708 subtitle*/
+	unsigned int cea_708_counter;
 
 	/* Did we write the WebVTT header already? */
 	unsigned int wrote_webvtt_header;
@@ -117,15 +119,7 @@ struct encoder_ctx
 	struct list_head list;
 
 	/* split-by-sentence stuff */
-	int splitbysentence;
-
-	unsigned char * sbs_buffer; /// Storage for sentence-split buffer
-	size_t sbs_handled_len; /// The length of the string in the SBS-buffer, already handled, but preserved for DUP-detection.
-
-	//ccx_sbs_utf8_character *sbs_newblock;
-	LLONG sbs_time_from; // Used by the split-by-sentence code to know when the current block starts...
-	LLONG sbs_time_trim; // ... and ends
-	size_t sbs_capacity;
+	int sbs_enabled;
 
 	//for dvb subs
 	struct encoder_ctx* prev;

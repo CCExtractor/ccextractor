@@ -46,7 +46,6 @@ static int check_trans_tn_intensity(const void *p1, const void *p2, void *arg)
 static int search_language_pack(const char *dir_name,const char *lang_name)
 {
 	//Search for a tessdata folder in the specified directory
-	char *lang = strdup(lang_name);
 	char *dirname = strdup(dir_name);
 	dirname = realloc(dirname,strlen(dirname)+strlen("/tessdata/")+1);
 	strcat(dirname,"/tessdata/");
@@ -56,17 +55,20 @@ static int search_language_pack(const char *dir_name,const char *lang_name)
 	char filename[256];
 	if ((dp = opendir(dirname)) == NULL)
 	{
+		free(dirname);
 		return -1;
 	}
-	snprintf(filename, 256, "%s.traineddata",lang);
+	snprintf(filename, 256, "%s.traineddata",lang_name);
 	while ((dirp = readdir(dp)) != NULL)
 	{
 		if(!strcmp(dirp->d_name, filename))
 		{
 			closedir(dp);
+			free(dirname);
 			return 0;
 		}
 	}
+	free(dirname);
 	closedir(dp);
 	return -1;
 }
@@ -104,6 +106,7 @@ void* init_ocr(int lang_index)
 	/*Priority of Tesseract traineddata file search paths:-
 		1. tessdata in TESSDATA_PREFIX, if it is specified. Overrides others
 		2. tessdata in current working directory
+		3. tessdata in /usr/share
 	*/
 	int data_location = 0;
 	char *tessdata_dir_path=".";
@@ -117,7 +120,7 @@ void* init_ocr(int lang_index)
 		if(getenv("TESSDATA_PREFIX"))
 			ret = search_language_pack(getenv("TESSDATA_PREFIX"), language[lang_index]);
 		else
-			ret = -1;
+			ret = search_language_pack("/usr/share", language[lang_index]);
 	}
 	if(ret < 0 && lang_index != 1 && ccx_options.ocrlang==NULL)
 	{
@@ -139,7 +142,7 @@ void* init_ocr(int lang_index)
 	char* pars_vec = strdup("debug_file");
 	char* pars_values = strdup("/dev/null");
 
-	ret = TessBaseAPIInit4(ctx->api, tessdata_path, lang, OEM_DEFAULT, NULL, 0, &pars_vec,
+	ret = TessBaseAPIInit4(ctx->api, tessdata_path, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
 		&pars_values, 1, false);
 
 	free(pars_vec);
@@ -158,7 +161,7 @@ fail:
 
 BOX* ignore_alpha_at_edge(png_byte *alpha, unsigned char* indata, int w, int h, PIX *in, PIX **out)
 {
-	int i, j, index, start_y, end_y;
+	int i, j, index, start_y=0, end_y=0;
 	int find_end_x = CCX_FALSE;
 	BOX* cropWindow;
 	for (j = 1; j < w-1; j++)
@@ -272,7 +275,8 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 				char* word = TessResultIteratorGetUTF8Text(ri,level);
 				float conf = TessResultIteratorConfidence(ri,level);
 				int x1, y1, x2, y2;
-				TessPageIteratorBoundingBox((TessPageIterator *)ri,level, &x1, &y1, &x2, &y2);
+				if (!TessPageIteratorBoundingBox((TessPageIterator *)ri, level, &x1, &y1, &x2, &y2))
+					continue;
 				// printf("word: '%s';  \tconf: %.2f; BoundingBox: %d,%d,%d,%d;",word, conf, x1, y1, x2, y2);
 				// printf("word: '%s';", word);
 				// {
@@ -430,7 +434,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 						if(strstr(text_out,word))
 						{
 							char *text_out_copy = strdup(text_out);
-							free(text_out);
+							TessDeleteText(text_out);
 							text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
 							memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
 							int pos = (int)(strstr(text_out_copy,word)-text_out_copy);
@@ -444,7 +448,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 						else if(!written_tag)
 						{
 							char *text_out_copy = strdup(text_out);
-							free(text_out);
+							TessDeleteText(text_out);
 							text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
 							memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
 							strcpy(text_out,substr);
@@ -460,7 +464,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 				freep(&histogram);
 				freep(&mcit);
 				freep(&iot);
-				
+				TessDeleteText(word);
 			} while (TessPageIteratorNext((TessPageIterator *)ri,level));
 
 			//Write closing </font> at the end of the line
@@ -469,7 +473,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 			{
 				char *substr = "</font>";
 				char *text_out_copy = strdup(text_out);
-				free(text_out);
+				TessDeleteText(text_out);
 				text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
 				memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
 				char *str = strtok(text_out_copy,"\n");
@@ -484,6 +488,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	}
 	// End Color Detection
 
+	// boxDestroy(crop_points);
 	pixDestroy(&pix);
 	pixDestroy(&cpix);
 	pixDestroy(&color_pix);

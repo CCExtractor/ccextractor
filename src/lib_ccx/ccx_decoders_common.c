@@ -11,6 +11,7 @@ made to reuse, not duplicate, as many functions as possible */
 #include "ccx_decoders_608.h"
 #include "ccx_decoders_708.h"
 #include "ccx_decoders_xds.h"
+#include "ccx_decoders_vbi.h"
 #include "ccx_dtvcc.h"
 
 
@@ -220,8 +221,8 @@ void dinit_cc_decode(struct lib_cc_decode **ctx)
 	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_1);
 	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_2);
 	dinit_timing_ctx(&lctx->timing);
-	freep(&lctx->prev);
-	freep(&lctx->dec_sub.prev);
+	free_decoder_context(lctx->prev);
+	free_subtitle(lctx->dec_sub.prev);
 	freep(ctx);
 }
 
@@ -282,6 +283,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->extract = setting->extract;
 	ctx->fullbin = setting->fullbin;
 	ctx->hauppauge_mode = setting->hauppauge_mode;
+	ctx->saw_caption_block = 0;
 	ctx->program_number = setting->program_number;
 	ctx->processed_enough = 0;
 	ctx->max_gop_length = 0;
@@ -410,4 +412,149 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 			}
 		}
 	}
+}
+struct encoder_ctx* copy_encoder_context(struct encoder_ctx *ctx)
+{
+	struct encoder_ctx *ctx_copy = NULL;
+	ctx_copy = malloc(sizeof(struct encoder_ctx));
+	memcpy(ctx_copy, ctx, sizeof(struct encoder_ctx));
+
+	if (ctx->buffer)
+	{
+		ctx_copy->buffer = malloc(ctx->capacity * sizeof(unsigned char));
+		memcpy(ctx_copy->buffer, ctx->buffer, ctx->capacity * sizeof(unsigned char));
+	}
+	if (ctx->first_input_file)
+	{
+		ctx_copy->first_input_file = malloc(strlen(ctx->first_input_file) * sizeof(char));
+		memcpy(ctx_copy->first_input_file, ctx->first_input_file, strlen(ctx->first_input_file) * sizeof(char));
+	}
+	if (ctx->out)
+	{
+		ctx_copy->out = malloc(sizeof(struct ccx_s_write));
+		memcpy(ctx_copy->out, ctx->out, sizeof(struct ccx_s_write));
+	}
+	if (ctx->timing)
+	{
+		ctx_copy->timing = malloc(sizeof(struct ccx_common_timing_ctx));
+		memcpy(ctx_copy->timing, ctx->timing, sizeof(struct ccx_common_timing_ctx));
+	}
+	if (ctx->transcript_settings)
+	{
+		ctx_copy->transcript_settings = malloc(sizeof(struct ccx_encoders_transcript_format));
+		memcpy(ctx_copy->transcript_settings, ctx->transcript_settings, sizeof(struct ccx_encoders_transcript_format));
+	}
+	if (ctx->subline)
+	{
+		ctx_copy->subline = malloc(SUBLINESIZE);
+		memcpy(ctx_copy->subline, ctx->subline, SUBLINESIZE);
+	}
+	if (ctx->start_credits_text)
+	{
+		ctx_copy->start_credits_text = malloc(strlen(ctx->start_credits_text) * sizeof(char));
+		memcpy(ctx_copy->start_credits_text, ctx->start_credits_text, (strlen(ctx->start_credits_text) + 1) * sizeof(char));
+	}
+	if (ctx->end_credits_text)
+	{
+		ctx_copy->end_credits_text = malloc(strlen(ctx->end_credits_text) * sizeof(char));
+		memcpy(ctx_copy->end_credits_text, ctx->end_credits_text, (strlen(ctx->end_credits_text) + 1) * sizeof(char));
+	}
+	return ctx_copy;
+}
+struct lib_cc_decode* copy_decoder_context(struct lib_cc_decode *ctx)
+{
+	struct lib_cc_decode *ctx_copy = NULL;
+	ctx_copy = malloc(sizeof(struct lib_cc_decode));
+	memcpy(ctx_copy, ctx, sizeof(struct lib_cc_decode));
+
+	if (ctx->context_cc608_field_1)
+	{
+		ctx_copy->context_cc608_field_1 = malloc(sizeof(struct ccx_decoder_608_context));
+		memcpy(ctx_copy->context_cc608_field_1, ctx->context_cc608_field_1, sizeof(struct ccx_decoder_608_context));
+	}
+	if (ctx->context_cc608_field_2)
+	{
+		ctx_copy->context_cc608_field_2 = malloc(sizeof(struct ccx_decoder_608_context));
+		memcpy(ctx_copy->context_cc608_field_2, ctx->context_cc608_field_2, sizeof(struct ccx_decoder_608_context));
+	}
+	if (ctx->timing)
+	{
+		ctx_copy->timing = malloc(sizeof(struct ccx_common_timing_ctx));
+		memcpy(ctx_copy->timing, ctx->timing, sizeof(struct ccx_common_timing_ctx));
+	}
+	if (ctx->avc_ctx)
+	{
+		ctx_copy->avc_ctx = malloc(sizeof(struct avc_ctx));
+		memcpy(ctx_copy->avc_ctx, ctx->avc_ctx, sizeof(struct avc_ctx));
+	}
+	ctx_copy->private_data = NULL;
+	if (ctx->dtvcc)
+	{
+		ctx_copy->dtvcc = malloc(sizeof(struct ccx_dtvcc_ctx));
+		memcpy(ctx_copy->dtvcc, ctx->dtvcc, sizeof(struct ccx_dtvcc_ctx));
+	}
+	if (ctx->xds_ctx)
+	{
+		ctx_copy->xds_ctx = malloc(sizeof(struct ccx_decoders_xds_context));
+		memcpy(ctx_copy->xds_ctx, ctx->xds_ctx, sizeof(struct ccx_decoders_xds_context));
+	}
+	if (ctx->vbi_decoder)
+	{
+		ctx_copy->vbi_decoder = malloc(sizeof(struct ccx_decoder_vbi_ctx));
+		memcpy(ctx_copy->vbi_decoder, ctx->vbi_decoder, sizeof(struct ccx_decoder_vbi_ctx));
+	}
+	return ctx_copy;
+}
+struct cc_subtitle* copy_subtitle(struct cc_subtitle *sub)
+{
+	struct cc_subtitle *sub_copy = NULL;
+	sub_copy = malloc(sizeof(struct cc_subtitle));
+	memcpy(sub_copy, sub, sizeof(struct cc_subtitle));
+
+	if (sub->data)
+	{
+		sub_copy->data = malloc(sizeof(struct eia608_screen));
+		sub_copy->data = malloc(sub->nb_data * sizeof(struct eia608_screen));
+		memcpy(sub_copy->data, sub->data, sub->nb_data * sizeof(struct eia608_screen));
+	}
+	return sub_copy;
+}
+void free_encoder_context(struct encoder_ctx *ctx)
+{
+	if (!ctx)
+		return;
+
+	freep(&ctx->first_input_file);
+	freep(&ctx->buffer);
+	freep(&ctx->out);
+	freep(&ctx->timing);
+	freep(&ctx->transcript_settings);
+	freep(&ctx->subline);
+	freep(&ctx->start_credits_text);
+	freep(&ctx->end_credits_text);
+	freep(&ctx->prev);
+	freep(&ctx);
+}
+void free_decoder_context(struct lib_cc_decode *ctx)
+{
+	if (!ctx)
+		return;
+
+	freep(&ctx->context_cc608_field_1);
+	freep(&ctx->context_cc608_field_2);
+	freep(&ctx->timing);
+	freep(&ctx->avc_ctx);
+	freep(&ctx->private_data);
+	freep(&ctx->dtvcc);
+	freep(&ctx->xds_ctx);
+	freep(&ctx->vbi_decoder);
+	freep(&ctx);
+}
+void free_subtitle(struct cc_subtitle* sub)
+{
+	if (!sub)
+		return;
+
+	freep(&sub->data);
+	freep(&sub);
 }

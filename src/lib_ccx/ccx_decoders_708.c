@@ -230,13 +230,18 @@ void _dtvcc_window_clear_row(ccx_dtvcc_window *window, int row_index)
 	if (window->memory_reserved)
 	{
 		memset(window->rows[row_index], 0, CCX_DTVCC_MAX_COLUMNS * sizeof(ccx_dtvcc_symbol));
-		window->pen_attribs[row_index] = ccx_dtvcc_default_pen_attribs;
-		window->pen_colors[row_index] = ccx_dtvcc_default_pen_color;
+		for (int column_index = 0; column_index < CCX_DTVCC_MAX_COLUMNS; column_index++)
+		{
+			window->pen_attribs[row_index][column_index] = ccx_dtvcc_default_pen_attribs;
+			window->pen_colors[row_index][column_index] = ccx_dtvcc_default_pen_color;
+		}
 	}
 }
 
 void _dtvcc_window_clear_text(ccx_dtvcc_window *window)
 {
+	window->pen_color_pattern = ccx_dtvcc_default_pen_color;
+	window->pen_attribs_pattern = ccx_dtvcc_default_pen_attribs;
 	for (int i = 0; i < CCX_DTVCC_MAX_ROWS; i++)
 		_dtvcc_window_clear_row(window, i);
 	window->is_empty = 1;
@@ -295,6 +300,7 @@ void _dtvcc_window_dump(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *wi
 
 	char tbuf1[SUBLINESIZE],
 			tbuf2[SUBLINESIZE];
+	char sym_buf[10];
 
 	print_mstime_buff(window->time_ms_show, "%02u:%02u:%02u:%03u", tbuf1);
 	print_mstime_buff(window->time_ms_hide, "%02u:%02u:%02u:%03u", tbuf2);
@@ -310,11 +316,9 @@ void _dtvcc_window_dump(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *wi
 			for (int j = first; j <= last; j++)
 			{
 				sym = window->rows[i][j];
-				if (CCX_DTVCC_SYM_IS_16(sym))
-					ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "%c",CCX_DTVCC_SYM(sym));
-				else
-					ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "[%02X %02X]",
-												 CCX_DTVCC_SYM_16_FIRST(sym), CCX_DTVCC_SYM_16_SECOND(sym));
+				int len = utf16_to_utf8(sym.sym, sym_buf);
+				for (int index = 0; index < len; index++)
+					ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "%c", sym_buf[index]);
 			}
 			ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "\n");
 		}
@@ -478,8 +482,11 @@ void _dtvcc_window_copy_to_screen(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_
 	for (int j = 0; j < copyrows; j++)
 	{
 		memcpy(decoder->tv->chars[top + j], window->rows[j], copycols * sizeof(ccx_dtvcc_symbol));
-		decoder->tv->pen_attribs[top + j] = window->pen_attribs[j];
-		decoder->tv->pen_colors[top + j] = window->pen_colors[j];
+		for (int col = 0; col < CCX_DTVCC_SCREENGRID_COLUMNS; col++)
+		{
+			decoder->tv->pen_attribs[top + j][col] = window->pen_attribs[j][col];
+			decoder->tv->pen_colors[top + j][col] = window->pen_colors[j][col];
+		}
 	}
 
 	_dtvcc_screen_update_time_show(decoder->tv, window->time_ms_show);
@@ -509,7 +516,7 @@ void _dtvcc_screen_print(ccx_dtvcc_ctx *dtvcc, ccx_dtvcc_service_decoder *decode
 	struct encoder_ctx *encoder = (struct encoder_ctx *) dtvcc->encoder;
 	int sn = decoder->tv->service_number;
 	ccx_dtvcc_writer_ctx *writer = &encoder->dtvcc_writers[sn - 1];
-	ccx_dtvcc_writer_output(writer, decoder->tv, encoder);
+	ccx_dtvcc_writer_output(writer, decoder, encoder);
 
 	_dtvcc_tv_clear(decoder);
 }
@@ -547,13 +554,54 @@ void _dtvcc_process_etx(ccx_dtvcc_service_decoder *decoder)
 	//it can help decoders with screen output, but could it help us?
 }
 
+void _dtvcc_process_bs(ccx_dtvcc_service_decoder *decoder)
+{
+	if (decoder->current_window == -1)
+	{
+		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_process_bs: Window has to be defined first\n");
+		return;
+	}
+
+	//it looks strange, but in some videos (rarely) we have a backspace command
+	//we just print one character over another
+	int cw = decoder->current_window;
+	ccx_dtvcc_window *window = &decoder->windows[cw];
+
+	switch (window->attribs.print_direction)
+	{
+	case CCX_DTVCC_WINDOW_PD_RIGHT_LEFT:
+		if (window->pen_column + 1 < window->col_count)
+			window->pen_column++;
+		break;
+	case CCX_DTVCC_WINDOW_PD_LEFT_RIGHT:
+		if (decoder->windows->pen_column > 0)
+			window->pen_column--;
+		break;
+	case CCX_DTVCC_WINDOW_PD_BOTTOM_TOP:
+		if (window->pen_row + 1 < window->row_count)
+			window->pen_row++;
+		break;
+	case CCX_DTVCC_WINDOW_PD_TOP_BOTTOM:
+		if (window->pen_row > 0)
+			window->pen_row--;
+		break;
+	default:
+		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_process_character: unhandled branch (%02d)\n",
+			window->attribs.print_direction);
+		break;
+	}
+}
+
 void _dtvcc_window_rollup(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *window)
 {
 	for (int i = 0; i < window->row_count - 1; i++)
 	{
 		memcpy(window->rows[i], window->rows[i + 1], CCX_DTVCC_MAX_COLUMNS * sizeof(ccx_dtvcc_symbol));
-		window->pen_colors[i] = window->pen_colors[i + 1];
-		window->pen_attribs[i] = window->pen_attribs[i + 1];
+		for (int z = 0; z < CCX_DTVCC_MAX_COLUMNS; z++)
+		{
+			window->pen_colors[i][z] = window->pen_colors[i + 1][z];
+			window->pen_attribs[i][z] = window->pen_attribs[i + 1][z];
+		}
 	}
 
 	_dtvcc_window_clear_row(window, window->row_count - 1);
@@ -639,6 +687,8 @@ void _dtvcc_process_character(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_symb
 
 	window->is_empty = 0;
 	window->rows[window->pen_row][window->pen_column] = symbol;
+	window->pen_attribs[window->pen_row][window->pen_column] = window->pen_attribs_pattern;		// "Painting" char by pen - attribs
+	window->pen_colors[window->pen_row][window->pen_column] = window->pen_color_pattern;		// "Painting" char by pen - colors
 	switch (window->attribs.print_direction)
 	{
 		case CCX_DTVCC_WINDOW_PD_LEFT_RIGHT:
@@ -966,6 +1016,13 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 
 	if (window->visible)
 		_dtvcc_window_update_time_show(window, timing);
+	if (!window->memory_reserved)
+	{
+		for (int i = 0; i < CCX_DTVCC_MAX_ROWS; i++)
+		{
+			free(window->rows[i]);
+		}
+	}
 }
 
 void dtvcc_handle_SWA_SetWindowAttributes(ccx_dtvcc_service_decoder *decoder, unsigned char *data)
@@ -1068,8 +1125,8 @@ void dtvcc_handle_SPA_SetPenAttributes(ccx_dtvcc_service_decoder *decoder, unsig
 	int text_tag  = (data[1] >> 4) & 0xf;
 	int font_tag  = (data[2]     ) & 0x7;
 	int edge_type = (data[2] >> 3) & 0x7;
-	int underline = (data[2] >> 4) & 0x1;
-	int italic    = (data[2] >> 5) & 0x1;
+	int underline = (data[2] >> 6) & 0x1;
+	int italic    = (data[2] >> 7) & 0x1;
 
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "       Pen size: [%d]     Offset: [%d]  Text tag: [%d]   Font tag: [%d]\n",
 			pen_size, offset, text_tag, font_tag);
@@ -1092,7 +1149,7 @@ void dtvcc_handle_SPA_SetPenAttributes(ccx_dtvcc_service_decoder *decoder, unsig
 		return;
 	}
 
-	ccx_dtvcc_pen_attribs *pen = &window->pen_attribs[window->pen_row];
+	ccx_dtvcc_pen_attribs *pen = &window->pen_attribs_pattern;
 
 	pen->pen_size = pen_size;
 	pen->offset = offset;
@@ -1111,7 +1168,7 @@ void dtvcc_handle_SPC_SetPenColor(ccx_dtvcc_service_decoder *decoder, unsigned c
 	int fg_opacity = (data[1] >> 6) & 0x03;
 	int bg_color   = (data[2]     ) & 0x3f;
 	int bg_opacity = (data[2] >> 6) & 0x03;
-	int edge_color = (data[3] >> 6) & 0x3f;
+	int edge_color = (data[3]     ) & 0x3f;
 
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "      Foreground color: [%d]     Foreground opacity: [%d]\n",
 			fg_color, fg_opacity);
@@ -1136,7 +1193,7 @@ void dtvcc_handle_SPC_SetPenColor(ccx_dtvcc_service_decoder *decoder, unsigned c
 		return;
 	}
 
-	ccx_dtvcc_pen_color *color = &window->pen_colors[window->pen_row];
+	ccx_dtvcc_pen_color *color = &window->pen_color_pattern;
 
 	color->fg_color = fg_color;
 	color->fg_opacity = fg_opacity;
@@ -1224,9 +1281,13 @@ int _dtvcc_handle_G0(ccx_dtvcc_service_decoder *decoder, unsigned char *data, in
 
 	unsigned char c = data[0];
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] G0: [%02X]  (%c)\n", c, c);
-	unsigned char uc = dtvcc_get_internal_from_G0(c);
 	ccx_dtvcc_symbol sym;
-	CCX_DTVCC_SYM_SET(sym, uc);
+	if (c == 0x7F) {	// musical note replaces the Delete command code in ASCII
+		CCX_DTVCC_SYM_SET(sym, CCX_DTVCC_MUSICAL_NOTE_CHAR);
+	} else {
+		unsigned char uc = dtvcc_get_internal_from_G0(c);
+		CCX_DTVCC_SYM_SET(sym, uc);
+	}
 	_dtvcc_process_character(decoder, sym);
 	return 1;
 }
@@ -1260,6 +1321,10 @@ int _dtvcc_handle_C0(ccx_dtvcc_ctx *dtvcc,
 	{
 		switch (c0)
 		{
+			case CCX_DTVCC_C0_NUL:
+				// No idea what they use NUL for, specs say they come from ASCII,
+				// ASCII say it's "do nothing"
+				break;
 			case CCX_DTVCC_C0_CR:
 				_dtvcc_process_cr(dtvcc, decoder);
 				break;
@@ -1271,6 +1336,9 @@ int _dtvcc_handle_C0(ccx_dtvcc_ctx *dtvcc,
 				break;
 			case CCX_DTVCC_C0_ETX:
 				_dtvcc_process_etx(decoder);
+				break;
+			case CCX_DTVCC_C0_BS:
+				_dtvcc_process_bs(decoder);
 				break;
 			default:
 				ccx_common_logging.log_ftn("[CEA-708] _dtvcc_handle_C0: unhandled branch\n");

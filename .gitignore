@@ -47,3 +47,12 @@ windows/libs/tesseract/**
 
 # Vagrant
 .vagrant/
+
+# Eclipse stuff
+.cproject
+.project
+.settings/
+
+# Mac
+.DS_Store
+windows/enc_temp_folder/*

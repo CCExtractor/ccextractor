@@ -10,10 +10,19 @@
 /* Report information */
 #define SUB_STREAMS_CNT 10
 #define MAX_PID 65536
+#define MAX_NUM_OF_STREAMIDS 51
 #define MAX_PSI_PID 8191
 #define TS_PMT_MAP_SIZE 128
 #define MAX_PROGRAM 128
 #define MAX_PROGRAM_NAME_LEN 128
+
+enum STREAM_TYPE
+{
+	PRIVATE_STREAM_1 = 0,
+	AUDIO,
+	VIDEO,
+	COUNT
+};
 struct ccx_demux_report
 {
         unsigned program_cnt;
@@ -26,6 +35,7 @@ struct program_info
 {
 	int pid;
 	int program_number;
+	int initialized_ocr; // Avoid initializing the OCR more than once
 	uint8_t analysed_PMT_once:1;
 	uint8_t version;
 	uint8_t saved_section[1021];
@@ -36,6 +46,8 @@ struct program_info
 	 * -1 pid represent that pcr_pid is not available
 	 */
 	int16_t pcr_pid;
+	uint64_t got_important_streams_min_pts[COUNT];
+	int has_all_min_pts;
 };
 
 struct cap_info
@@ -67,7 +79,6 @@ struct cap_info
 	struct list_head pg_stream;
 
 };
-
 struct ccx_demuxer
 {
 	int m2ts;
@@ -108,6 +119,16 @@ struct ccx_demuxer
 
 	struct PSI_buffer *PID_buffers[MAX_PSI_PID];
 	int PIDs_seen[MAX_PID];
+
+	/*51 possible stream ids in total, 0xbd is private stream, 0xbe is padding stream, 
+	0xbf private stream 2, 0xc0 - 0xdf audio, 0xe0 - 0xef video 
+	(stream ids range from 0xbd to 0xef so 0xef - 0xbd + 1 = 51)*/
+	//uint8_t found_stream_ids[MAX_NUM_OF_STREAMIDS]; 
+
+	uint8_t stream_id_of_each_pid[MAX_PSI_PID + 1];
+	uint64_t min_pts[MAX_PSI_PID + 1];
+	int have_PIDs[MAX_PSI_PID + 1];
+	int num_of_PIDs;
 
 	struct PMT_entry *PIDs_programs[MAX_PID];
 	struct ccx_demux_report freport;

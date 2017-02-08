@@ -250,17 +250,14 @@ typedef struct ccx_dtvcc_window_attribs
 typedef struct ccx_dtvcc_symbol
 {
 	unsigned short sym; //symbol itself, at least 16 bit
-	unsigned char len;  //length. could be 1 or 2
+	unsigned char init; //initialized or not. could be 0 or 1
 } ccx_dtvcc_symbol;
 
-#define CCX_DTVCC_SYM_SET(x, c) {x.len = 1; x.sym = c;}
-#define CCX_DTVCC_SYM_SET_16(x, c1, c2) {x.len = 2; x.sym = (c1 << 8) | c2;}
-#define CCX_DTVCC_SYM_IS_16(x) (x.len == 2)
+#define CCX_DTVCC_SYM_SET(x, c) {x.init = 1; x.sym = c;}
+#define CCX_DTVCC_SYM_SET_16(x, c1, c2) {x.init = 1; x.sym = (c1 << 8) | c2;}
 #define CCX_DTVCC_SYM(x) ((unsigned char)(x.sym))
-#define CCX_DTVCC_SYM_16_FIRST(x) ((unsigned char)(x.sym >> 8))
-#define CCX_DTVCC_SYM_16_SECOND(x) ((unsigned char)(x.sym & 0xff))
-#define CCX_DTVCC_SYM_IS_EMPTY(x) (x.len == 0)
-#define CCX_DTVCC_SYM_IS_SET(x) (x.len > 0)
+#define CCX_DTVCC_SYM_IS_EMPTY(x) (x.init == 0)
+#define CCX_DTVCC_SYM_IS_SET(x) (x.init == 1)
 
 typedef struct ccx_dtvcc_window
 {
@@ -283,8 +280,10 @@ typedef struct ccx_dtvcc_window
 	int pen_row;
 	int pen_column;
 	ccx_dtvcc_symbol *rows[CCX_DTVCC_MAX_ROWS];
-	ccx_dtvcc_pen_color pen_colors[CCX_DTVCC_MAX_ROWS];
-	ccx_dtvcc_pen_attribs pen_attribs[CCX_DTVCC_MAX_ROWS];
+	ccx_dtvcc_pen_color pen_colors[CCX_DTVCC_MAX_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
+	ccx_dtvcc_pen_attribs pen_attribs[CCX_DTVCC_MAX_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
+	ccx_dtvcc_pen_color pen_color_pattern;
+	ccx_dtvcc_pen_attribs pen_attribs_pattern;
 	int memory_reserved;
 	int is_empty;
 	LLONG time_ms_show;
@@ -294,8 +293,8 @@ typedef struct ccx_dtvcc_window
 typedef struct dtvcc_tv_screen
 {
 	ccx_dtvcc_symbol chars[CCX_DTVCC_SCREENGRID_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
-	ccx_dtvcc_pen_color pen_colors[CCX_DTVCC_SCREENGRID_ROWS];
-	ccx_dtvcc_pen_attribs pen_attribs[CCX_DTVCC_SCREENGRID_ROWS];
+	ccx_dtvcc_pen_color pen_colors[CCX_DTVCC_SCREENGRID_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
+	ccx_dtvcc_pen_attribs pen_attribs[CCX_DTVCC_SCREENGRID_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
 	LLONG time_ms_show;
 	LLONG time_ms_hide;
 	unsigned int cc_count;
@@ -368,5 +367,8 @@ void ccx_dtvcc_process_service_block(ccx_dtvcc_ctx *dtvcc,
 									 ccx_dtvcc_service_decoder *decoder,
 									 unsigned char *data,
 									 int data_length);
+
+ccx_dtvcc_pen_color ccx_dtvcc_default_pen_color;
+ccx_dtvcc_pen_attribs ccx_dtvcc_default_pen_attribs;
 
 #endif

@@ -49,6 +49,7 @@ void init_options (struct ccx_s_options *options)
 	options->auto_myth = 2; // 2=auto
 	/* MP4 related stuff */
 	options->mp4vidtrack=0; // Process the video track even if a CC dedicated track exists.
+	options->extract_chapters=0; // By default don't extract chapters.
 	/* General stuff */
 	options->usepicorder = 0; // Force the use of pic_order_cnt_lsb in AVC/H.264 data streams
 	options->xmltv=0; // 1 = full output. 2 = live output. 3 = both
@@ -61,9 +62,11 @@ void init_options (struct ccx_s_options *options)
 	options->ucla = 0; // By default, -UCLA not used
 	options->tickertext = 0; // By default, do not assume ticker style text
 	options->hardsubx = 0; // By default, don't try to extract hard subtitles
-	options->dvbcolor = 0; // By default, only text detected in DVB
+	options->dvbcolor = 1; // By default, attempt to detect both text and color
 	options->dvblang = NULL; // By default, autodetect DVB language
 	options->ocrlang = NULL; // By default, autodetect .traineddata file
+	options->ocr_oem = 0; // By default, set Tesseract OEM mode OEM_TESSERACT_ONLY (0)
+	options->ignore_pts_jumps = 1;
 
 	/*HardsubX related stuff*/
 	options->hardsubx_ocr_mode = 0;
@@ -123,7 +126,7 @@ void init_options (struct ccx_s_options *options)
 	options->enc_cfg.no_bom = 0; // Use BOM by default.
 	options->enc_cfg.services_charsets = NULL;
 	options->enc_cfg.all_services_charset = NULL;
-	options->enc_cfg.with_semaphore = 0; 
+	options->enc_cfg.with_semaphore = 0;
 
 	options->settings_dtvcc.enabled = 0;
 	options->settings_dtvcc.active_services_count = 0;

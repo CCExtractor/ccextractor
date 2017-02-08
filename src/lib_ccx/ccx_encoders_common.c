@@ -770,10 +770,10 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	char *extension = NULL; // Input filename without the extension
 
 
-#define check_ret(filename) 	if (ret != EXIT_OK)							\
+#define check_ret(filename) 	if (ret != EXIT_OK)	\
 				{									\
-					print_error(cfg->gui_mode_reports,"Failed %s\n", filename);	\
-					return ret;							\
+					fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED,"Failed to open output file: %s\nDetails : %s\n", filename, strerror(errno)); \
+					return ret;						\
 				}
 
 	if (cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE && cfg->extract == 12)
@@ -816,6 +816,11 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 		{
 			basefilename = get_basename(ctx->first_input_file);
 			extension = get_file_extension(cfg->write_format);
+
+			if (basefilename == NULL)
+			{
+				basefilename = get_basename("untitled");
+			}
 
 			if (cfg->extract == 12)
 			{
@@ -910,11 +915,11 @@ void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts)
 		write_subtitle_file_footer(ctx, ctx->out + i);
 	}
 
+	free_encoder_context(ctx->prev);
 	dinit_output_ctx(ctx);
 	freep(&ctx->subline);
 	freep(&ctx->buffer);
 	ctx->capacity = 0;
-	freep(&ctx->prev);
 	freep(arg);
 }
 
@@ -935,6 +940,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 	ctx->capacity=INITIAL_ENC_BUFFER_CAPACITY;
 	ctx->srt_counter = 0;
+	ctx->cea_708_counter = 0;
 	ctx->wrote_webvtt_header = 0;
 
 	ctx->program_number = opt->program_number;
@@ -979,11 +985,8 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->keep_output_closed = opt->keep_output_closed;
 	ctx->force_flush = opt->force_flush;
 	ctx->ucla = opt->ucla;
-	ctx->splitbysentence = opt->splitbysentence;
-	ctx->sbs_time_from = -1;
-	ctx->sbs_time_trim = -1;
-	ctx->sbs_capacity = 0;
-	ctx->sbs_buffer = NULL;
+
+	ctx->sbs_enabled = opt->splitbysentence;
 
 	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);
 	if(!ctx->subline)
@@ -1059,7 +1062,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		ccx_share_send(sub);
 #endif //ENABLE_SHARING
 
-	if (context->splitbysentence)
+	if (context->sbs_enabled)
 	{
 		// Write to a buffer that is later s+plit to generate split
 		// in sentences
