@@ -11,7 +11,7 @@ CCExtractor has applied for Summer of Code. The list of accepted organizations h
 
 If you are a student currently enrolled in university most likely you are eligible to participate. Read more at:  
 - [Google Summer of Code official website ](https://summerofcode.withgoogle.com/)
-- [CCExtractor's main GSoC page] (https://www.ccextractor.org/doku.php?id=public:gsoc:ideas_page_for_summer_of_code_2017)
+- [CCExtractor's main GSoC page] (https://www.ccextractor.org?id=public:gsoc:ideas_page_for_summer_of_code_2017)
 
 
 ## Installation and Usage
