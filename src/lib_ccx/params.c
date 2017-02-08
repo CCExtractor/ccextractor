@@ -1901,7 +1901,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
-		if (strcmp (argv[i],"-tickertext")==0)
+		if (strcmp (argv[i],"-tickertext")==0 || strcmp (argv[i],"-tickertape")==0)
 		{
 			opt->tickertext = 1;
 			continue;
