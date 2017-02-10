@@ -96,7 +96,7 @@ static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" st
 			"    <div>\n";
 
 static const char *webvtt_header = "WEBVTT\r\n"
-		"Style:\n";
+		"\r\nSTYLE\r\n";
 
 static const char *simple_xml_header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<captions>\r\n";
 
