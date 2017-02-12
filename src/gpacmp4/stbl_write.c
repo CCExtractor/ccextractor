@@ -143,6 +143,7 @@ GF_Err stbl_AddDTS(GF_SampleTableBox *stbl, u64 DTS, u32 *sampleNumber, u32 Last
 	if (stts->nb_entries + 2 >= stts->alloc_size) {
 		stts->alloc_size += 2;
 		stts->entries = gf_realloc(stts->entries, sizeof(GF_SttsEntry)*stts->alloc_size);
+		gf_free(DTSs);
 		if (!stts->entries) return GF_OUT_OF_MEM;
 		memset(&stts->entries[stts->nb_entries], 0, sizeof(GF_SttsEntry)*(stts->alloc_size - stts->nb_entries));
 	}
