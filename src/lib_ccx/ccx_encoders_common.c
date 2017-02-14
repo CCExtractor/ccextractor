@@ -95,7 +95,7 @@ static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" st
 			"  <body>\n"
 			"    <div>\n";
 
-static const char *webvtt_header[] = {"WEBVTT","\r\n","\r\n","STYLE","\r\n"};
+static const char *webvtt_header[] = {"WEBVTT","\r\n","\r\n","STYLE","\r\n",NULL};
 
 static const char *simple_xml_header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<captions>\r\n";
 
@@ -448,21 +448,17 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			ret = write_bom(ctx, out);
 			if (ret < 0)
 				return -1;
-			for(int i = 0; i < sizeof(webvtt_header)/sizeof(webvtt_header[0]);i++)
+			for(int i = 0; webvtt_header[i]!=NULL ;i++)
 			{
-				header_size += strlen(webvtt_header[i]);
-				if(ccx_options.enc_cfg.line_terminator_lf == 1 && strcmp(webvtt_header[i],"\r\n")==0)
-				{
-					header_size--;
-				}
+				header_size += strlen(webvtt_header[i]); // Find total size of the header
 			}
 			REQUEST_BUFFER_CAPACITY(ctx, header_size*3);
-			for(int i = 0; i < sizeof(webvtt_header)/sizeof(webvtt_header[0]);i++)
+			for(int i = 0; webvtt_header[i]!=NULL;i++)
 			{
-				if(ccx_options.enc_cfg.line_terminator_lf == 1 && strcmp(webvtt_header[i],"\r\n")==0)
+				if(ccx_options.enc_cfg.line_terminator_lf == 1 && strcmp(webvtt_header[i],"\r\n")==0) // If -lf parameter passed, write LF instead of CRLF
 				{
 					used = encode_line (ctx, ctx->buffer,(unsigned char *) "\n");
-				}
+				} 
 				else
 				{
 					used = encode_line (ctx, ctx->buffer,(unsigned char *) webvtt_header[i]);

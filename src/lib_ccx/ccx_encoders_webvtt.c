@@ -227,7 +227,7 @@ int write_webvtt_header(struct encoder_ctx *context)
 		write (context->out->fh, outline_css_file, strlen(outline_css_file));
 	} else {
 		write(context->out->fh, webvtt_inline_css, strlen(webvtt_inline_css));
-		if(ccx_options.enc_cfg.line_terminator_lf == 1)
+		if(ccx_options.enc_cfg.line_terminator_lf == 1) // If -lf parameter is set.
 		{
 			write(context->out->fh, "\n", 1);
 		}
