@@ -9,12 +9,16 @@ endif (WITH_FFMPEG)
 if (WITH_OCR)
   find_package(PkgConfig)
 
-  pkg_check_modules(TESSERACT REQUIRED tesseract)
-  pkg_check_modules(LEPTONICA REQUIRED lept)
+  pkg_check_modules (TESSERACT REQUIRED tesseract)
+  pkg_check_modules (LEPTONICA REQUIRED lept)
+
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${TESSERACT_INCLUDE_DIRS})
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${LEPTONICA_INCLUDE_DIRS})
 
   set (EXTRA_LIBS ${EXTRA_LIBS} ${TESSERACT_STATIC_LIBRARIES})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${LEPTONICA_STATIC_LIBRARIES})
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR ${TESSERACT_CFLAGS} ${LEPTONICA_CFLAGS}")
+
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR")
 endif (WITH_OCR)
 
 if (WITH_SHARING)
@@ -25,6 +29,8 @@ aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_ccx/" SOURCEFILE)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/gpacmp4/" SOURCEFILE)
 
 add_library (ccx ${SOURCEFILE} ccx_dtvcc.h ccx_dtvcc.c)
+target_link_libraries (ccx ${EXTRA_LIBS})
+target_include_directories (ccx PUBLIC ${EXTRA_INCLUDES})
 
 if (MINGW OR CYGWIN)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DGPAC_CONFIG_WIN32")

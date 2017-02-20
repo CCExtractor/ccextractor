@@ -8,7 +8,7 @@ option (WITH_SHARING "Build with sharing and translation support" OFF)
 
 # Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
-set (CCEXTRACTOR_VERSION_MINOR 77)
+set (CCEXTRACTOR_VERSION_MINOR 85)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
@@ -92,7 +92,7 @@ if (WITH_OCR)
   set (EXTRA_LIBS ${EXTRA_LIBS} ${TESSERACT_STATIC_LIBRARIES})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${LEPTONICA_STATIC_LIBRARIES})
 
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR ${TESSERACT_CFLAGS} ${LEPTONICA_CFLAGS}")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR")
 endif (WITH_OCR)
 
 ########################################################
