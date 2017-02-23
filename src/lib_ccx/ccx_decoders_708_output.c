@@ -47,13 +47,12 @@ void _dtvcc_color_to_hex(int color, unsigned *hR, unsigned *hG, unsigned *hB)
 								 color, color, *hR, *hG, *hB);
 }
 
-void _dtvcc_change_pen_colors(dtvcc_tv_screen *tv, ccx_dtvcc_pen_color pen_color, int row_index, int column_index, struct encoder_ctx *encoder, int open)
+void _dtvcc_change_pen_colors(dtvcc_tv_screen *tv, ccx_dtvcc_pen_color pen_color, int row_index, int column_index, struct encoder_ctx *encoder, size_t *buf_len, int open)
 {
 	if (encoder->no_font_color)
 		return;
 
 	char *buf = (char *)encoder->buffer;
-	size_t buf_len = 0;
 
 	ccx_dtvcc_pen_color new_pen_color;
 	if (column_index >= CCX_DTVCC_SCREENGRID_COLUMNS)
@@ -63,7 +62,7 @@ void _dtvcc_change_pen_colors(dtvcc_tv_screen *tv, ccx_dtvcc_pen_color pen_color
 	if (pen_color.fg_color != new_pen_color.fg_color)
 	{
 		if (pen_color.fg_color != 0x3f && !open)
-			buf_len += sprintf(buf + buf_len, "</font>");	// should close older non-white color
+			(*buf_len) += sprintf(buf + (*buf_len), "</font>");	// should close older non-white color
 
 		if (new_pen_color.fg_color != 0x3f && open)
 		{
@@ -72,20 +71,17 @@ void _dtvcc_change_pen_colors(dtvcc_tv_screen *tv, ccx_dtvcc_pen_color pen_color
 			red = (255 / 3) * red;
 			green = (255 / 3) * green;
 			blue = (255 / 3) * blue;
-			buf_len += sprintf(buf + buf_len, "<font color=\"%02x%02x%02x\">", red, green, blue);
+			(*buf_len) += sprintf(buf + (*buf_len), "<font color=\"%02x%02x%02x\">", red, green, blue);
 		}
 	}
-
-	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, buf_len);
 }
 
-void _dtvcc_change_pen_attribs(dtvcc_tv_screen *tv, ccx_dtvcc_pen_attribs pen_attribs, int row_index, int column_index, struct encoder_ctx *encoder, int open)
+void _dtvcc_change_pen_attribs(dtvcc_tv_screen *tv, ccx_dtvcc_pen_attribs pen_attribs, int row_index, int column_index, struct encoder_ctx *encoder, size_t *buf_len, int open)
 {
 	if (encoder->no_font_color)
 		return;
 
 	char *buf = (char *)encoder->buffer;
-	size_t buf_len = 0;
 
 	ccx_dtvcc_pen_attribs new_pen_attribs;
 	if (column_index >= CCX_DTVCC_SCREENGRID_COLUMNS)
@@ -95,19 +91,29 @@ void _dtvcc_change_pen_attribs(dtvcc_tv_screen *tv, ccx_dtvcc_pen_attribs pen_at
 	if (pen_attribs.italic != new_pen_attribs.italic)
 	{
 		if (pen_attribs.italic && !open)
-			buf_len += sprintf(buf + buf_len, "</i>");
+			(*buf_len) += sprintf(buf + (*buf_len), "</i>");
 		if (!pen_attribs.italic && open)
-			buf_len += sprintf(buf + buf_len, "<i>");
+			(*buf_len) += sprintf(buf + (*buf_len), "<i>");
 	}
 	if (pen_attribs.underline != new_pen_attribs.underline)
 	{
 		if (pen_attribs.underline && !open)
-			buf_len += sprintf(buf + buf_len, "</u>");
+			(*buf_len) += sprintf(buf + (*buf_len), "</u>");
 		if (!pen_attribs.underline && open)
-			buf_len += sprintf(buf + buf_len, "<u>");
+			(*buf_len) += sprintf(buf + (*buf_len), "<u>");
 	}
+}
 
-	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, buf_len);
+size_t write_utf16_char(unsigned short utf16_char, char *out)
+{
+	if ((utf16_char >> 8) != 0) {
+		out[0] = (unsigned char)(utf16_char >> 8);
+		out[1] = (unsigned char)(utf16_char & 0xff);
+		return 2;
+	} else {
+		out[0] = (unsigned char)(utf16_char);
+		return 1;
+	}
 }
 
 void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *decoder, int row_index, struct encoder_ctx *encoder, int use_colors)
@@ -135,29 +141,30 @@ void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *d
 
 	for (int i = 0; i < length; i++)
 	{
+
 		if (use_colors)
-			_dtvcc_change_pen_colors(tv, pen_color, row_index, i, encoder, 0);
-		_dtvcc_change_pen_attribs(tv, pen_attribs, row_index, i, encoder, 0);
-		_dtvcc_change_pen_attribs(tv, pen_attribs, row_index, i, encoder, 1);
+			_dtvcc_change_pen_colors(tv, pen_color, row_index, i, encoder, &buf_len, 0);
+		_dtvcc_change_pen_attribs(tv, pen_attribs, row_index, i, encoder, &buf_len, 0);
+		_dtvcc_change_pen_attribs(tv, pen_attribs, row_index, i, encoder, &buf_len, 1);
 		if (use_colors)
-			_dtvcc_change_pen_colors(tv, pen_color, row_index, i, encoder, 1);
+			_dtvcc_change_pen_colors(tv, pen_color, row_index, i, encoder, &buf_len, 1);
 
 		pen_color = tv->pen_colors[row_index][i];
 		pen_attribs = tv->pen_attribs[row_index][i];
 		if (i < first || i > last) {
-			int size = utf16_to_utf8(' ', buf);
-			write(fd, buf, size);
+			size_t size = write_utf16_char(' ', buf + buf_len);
+			buf_len += size;
 		}
 		else {
-			int size = utf16_to_utf8(tv->chars[row_index][i].sym, buf);
-			write(fd, buf, size);
+			size_t size = write_utf16_char(tv->chars[row_index][i].sym, buf + buf_len);
+			buf_len += size;
 		}
 	}
 
 	// there can be unclosed tags or colors after the last symbol in a row
 	if (use_colors)
-		_dtvcc_change_pen_colors(tv, pen_color, row_index, CCX_DTVCC_SCREENGRID_COLUMNS, encoder, 0);
-	_dtvcc_change_pen_attribs(tv, pen_attribs, row_index, CCX_DTVCC_SCREENGRID_COLUMNS, encoder, 0);
+		_dtvcc_change_pen_colors(tv, pen_color, row_index, CCX_DTVCC_SCREENGRID_COLUMNS, encoder, &buf_len, 0);
+	_dtvcc_change_pen_attribs(tv, pen_attribs, row_index, CCX_DTVCC_SCREENGRID_COLUMNS, encoder, &buf_len, 0);
 	// Tags can still be crossed e.g <f><i>text</f></i>, but testing HTML code has shown that they still are handled correctly.
 	// In case of errors fix it once and for all.
 

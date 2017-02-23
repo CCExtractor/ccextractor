@@ -113,7 +113,7 @@ static const char *webvtt_inline_css = "/* default values */\n"
 		"}\n"
 		"::cue(c.bg_black.bg_semi-transparent) {\n"
 		"  background-color: rgba(0, 0, 0, 0.5);\n"
-		"}\n";
+		"}";
 
 static const char** webvtt_pac_row_percent[] = { "10", "15.33", "20.66", "26", "31.33", "36.66", "42",
 		"47.33", "52.66", "58", "63.33", "68.66", "74", "79.33", "84.66" };
@@ -227,6 +227,14 @@ int write_webvtt_header(struct encoder_ctx *context)
 		write (context->out->fh, outline_css_file, strlen(outline_css_file));
 	} else {
 		write(context->out->fh, webvtt_inline_css, strlen(webvtt_inline_css));
+		if(ccx_options.enc_cfg.line_terminator_lf == 1) // If -lf parameter is set.
+		{
+			write(context->out->fh, "\n", 1);
+		}
+		else
+		{
+			write(context->out->fh,"\r\n",2);
+		}
 	}
 
 	write(context->out->fh, "##\n", 3);

@@ -95,8 +95,7 @@ static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" st
 			"  <body>\n"
 			"    <div>\n";
 
-static const char *webvtt_header = "WEBVTT\r\n"
-		"Style:\n";
+static const char *webvtt_header[] = {"WEBVTT","\r\n","\r\n","STYLE","\r\n",NULL};
 
 static const char *simple_xml_header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<captions>\r\n";
 
@@ -423,7 +422,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 {
 	int used;
 	int ret = 0;
-
+	int header_size = 0;
 	switch (ctx->write_format)
 	{
 		case CCX_OF_SRT: // Subrip subtitles have no header
@@ -449,15 +448,28 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			ret = write_bom(ctx, out);
 			if (ret < 0)
 				return -1;
-			REQUEST_BUFFER_CAPACITY(ctx, strlen (webvtt_header)*3);
-			used = encode_line (ctx, ctx->buffer,(unsigned char *) webvtt_header);
-			ret = write (out->fh, ctx->buffer,used);
-			if(ret < used)
+			for(int i = 0; webvtt_header[i]!=NULL ;i++)
 			{
-				mprint("WARNING: Unable to write complete Buffer \n");
-				return -1;
+				header_size += strlen(webvtt_header[i]); // Find total size of the header
 			}
-
+			REQUEST_BUFFER_CAPACITY(ctx, header_size*3);
+			for(int i = 0; webvtt_header[i]!=NULL;i++)
+			{
+				if(ccx_options.enc_cfg.line_terminator_lf == 1 && strcmp(webvtt_header[i],"\r\n")==0) // If -lf parameter passed, write LF instead of CRLF
+				{
+					used = encode_line (ctx, ctx->buffer,(unsigned char *) "\n");
+				} 
+				else
+				{
+					used = encode_line (ctx, ctx->buffer,(unsigned char *) webvtt_header[i]);
+				}
+				ret = write (out->fh, ctx->buffer,used);
+				if(ret < used)
+				{
+					mprint("WARNING: Unable to write complete Buffer \n");
+					return -1;
+				}
+			}
 			break;
 		case CCX_OF_SAMI: // This header brought to you by McPoodle's CCASDI
 			//fprintf_encoded (wb->fh, sami_header);

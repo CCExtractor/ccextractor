@@ -33,15 +33,41 @@ More usage information can be found on our website:
 ## Compiling
 
 ### Debian/Ubuntu
-
-Install these packages in the terminal
-
+    # make sure you have CCExtractor repository forked
+    # clone repository
+    sudo apt-get install -y git
+    git clone https://github.com/%USERNAME%/ccextractor.git # paste your github username
+    
+    # installing dependencies
     sudo apt-get install -y gcc
     sudo apt-get install -y libcurl4-gnutls-dev
     sudo apt-get install -y tesseract-ocr
     sudo apt-get install -y tesseract-ocr-dev
     sudo apt-get install -y libleptonica-dev
-Then run script linux/build or linux/builddebug.
+    
+    # compiling
+    cd ccextractor/linux
+    ./build
+    
+    # test your build
+    ./ccextractor
+
+### Fedora
+    # make sure you have CCExtractor repository forked
+    # clone repository
+    sudo yum install -y git
+    git clone https://github.com/%USERNAME%/ccextractor.git # paste your github username
+    
+    # installing dependencies
+    sudo yum install -y gcc
+    sudo yum install -y tesseract-devel # leptonica will be installed automatically
+    
+    # compiling
+    cd ccextractor/linux
+    ./build
+    
+    # test your build
+    ./ccextractor
 
 ### Windows
 
