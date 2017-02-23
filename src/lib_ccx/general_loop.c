@@ -893,23 +893,14 @@ int general_loop(struct lib_ccx_ctx *ctx)
 
 				if (dec_ctx->codec == CCX_CODEC_TELETEXT) //even if there's no sub data, we still need to set the min_pts
 				{
-					if ((ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX || ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO] != UINT64_MAX || ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[VIDEO] != UINT64_MAX)) //it means we got the first pts for either sub, audio or video :)
-					{
-						/*we don't need to parse the entire min_pts array since
-						we are only interested in sub, audio and video stream pts
-						and we have got_important_streams_min_pts array for that*/
-						for (int i = 0; i < COUNT; i++)
-						{
-							if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[i] != UINT64_MAX) //PTS is 33 bit, array is 64 so we set the default value to UINT64_MAX instead of 0 because a PTS can also be 0
-							{
-								//printf("Got pts: %" PRId64 " for PID %d\n", ctx->demux_ctx->min_pts[i], i);
-								if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[i] < min_pts)
-									min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[i];
-							}
-						}
-					}
+                    if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX) //Teletext is synced with subtitle packet PTS
+                    {
+                        min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1];
+                        set_current_pts(dec_ctx->timing, min_pts);
+                        set_fts(dec_ctx->timing);
+                    }
 				}
-				if (dec_ctx->codec == CCX_CODEC_DVB) //DVB will always have to be in sync with video (no matter the min_pts of the other streams)
+				if (dec_ctx->codec == CCX_CODEC_DVB) //DVB will always have to be in sync with audio (no matter the min_pts of the other streams)
 				{
 					if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO] != UINT64_MAX) //it means we got the first pts for audio
 					{
@@ -998,33 +989,24 @@ int general_loop(struct lib_ccx_ctx *ctx)
 						}
 					}
 
-					if (dec_ctx->codec == CCX_CODEC_TELETEXT) //even if there's no sub data, we still need to set the min_pts
-					{
-						if ((ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX || ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO] != UINT64_MAX || ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[VIDEO] != UINT64_MAX)) //it means we got the first pts for either sub, audio or video :)
-						{
-							/*we don't need to parse the entire min_pts array since
-							we are only interested in sub, audio and video stream pts
-							and we have got_important_streams_min_pts array for that*/
-							for (int i = 0; i < COUNT; i++)
-							{
-								if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[i] != UINT64_MAX) //PTS is 33 bit, array is 64 so we set the default value to UINT64_MAX instead of 0 because a PTS can also be 0
-								{
-									//printf("Got pts: %" PRId64 " for PID %d\n", ctx->demux_ctx->min_pts[i], i);
-									if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[i] < min_pts)
-										min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[i];
-								}
-							}
-						}
-					}
-					if (dec_ctx->codec == CCX_CODEC_DVB) //DVB will always have to be in sync with video (no matter the min_pts of the other streams)
-					{
-						if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO] != UINT64_MAX) //it means we got the first pts for audio
-						{
-							min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO];
-							set_current_pts(dec_ctx->timing, min_pts);
-							set_fts(dec_ctx->timing);
-						}
-					}
+                    if (dec_ctx->codec == CCX_CODEC_TELETEXT) //even if there's no sub data, we still need to set the min_pts
+                    {
+                        if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX) //Teletext is synced with subtitle packet PTS
+                        {
+                            min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1]; //it means we got the first pts for private stream 1
+                            set_current_pts(dec_ctx->timing, min_pts);
+                            set_fts(dec_ctx->timing);
+                        }
+                    }
+                    if (dec_ctx->codec == CCX_CODEC_DVB) //DVB will always have to be in sync with audio (no matter the min_pts of the other streams)
+                    {
+                        if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO] != UINT64_MAX) //it means we got the first pts for audio
+                        {
+                            min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO];
+                            set_current_pts(dec_ctx->timing, min_pts);
+                            set_fts(dec_ctx->timing);
+                        }
+                    }
 				}
 
 				if (enc_ctx)
