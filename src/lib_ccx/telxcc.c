@@ -1293,14 +1293,18 @@ void tlt_read_rcwt(void *codec, unsigned char *buf, struct cc_subtitle *sub)
 	struct TeletextCtx *ctx = codec;
 
 	data_unit_t id = buf[0];
-	uint64_t t;
-	memcpy(&t, &buf[1], sizeof(uint64_t));
+
+	memcpy(&(ctx->last_timestamp), &buf[1], sizeof(uint64_t));
+
+	if(utc_refvalue != UINT64_MAX)
+	{
+		ctx->last_timestamp+= utc_refvalue * 1000;
+	}
+
 	teletext_packet_payload_t *pl = (teletext_packet_payload_t *)&buf[9];
 
-	ctx->last_timestamp = t;
-
 	ctx->tlt_packet_counter++;
-	process_telx_packet(ctx, id, pl, t, sub);
+	process_telx_packet(ctx, id, pl, ctx->last_timestamp, sub);
 }
 
 int tlt_print_seen_pages(struct lib_cc_decode *dec_ctx)
