@@ -139,6 +139,9 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 			case CCX_SM_GXF:
 				mprint ("\rFile seems to be a GXF\n");
 				break;
+			case CCX_SM_MKV:
+				mprint ("\rFile seems to be a Matroska/WebM container\n");
+				break;
 #ifdef WTV_DEBUG
 			case CCX_SM_HEX_DUMP:
 				mprint ("\rFile seems to be an hexadecimal dump\n");					

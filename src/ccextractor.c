@@ -270,6 +270,11 @@ int main(int argc, char *argv[])
 					print_file_report(ctx);
 				if (!ret) ret = tmp;
 				break;
+            case CCX_SM_MKV:
+                mprint ("\rAnalyzing data in Matroska mode\n");
+				tmp = matroska_loop(ctx);
+				if (!ret) ret = tmp;
+                break;
 #ifdef WTV_DEBUG
 			case CCX_SM_HEX_DUMP:
 				close_input_file(ctx); // process_hex will open it in text mode

@@ -199,6 +199,7 @@ enum ccx_stream_mode_enum
 	CCX_SM_FFMPEG = 10,
 #endif
 	CCX_SM_GXF = 11,
+	CCX_SM_MKV = 12,
 	CCX_SM_AUTODETECT = 16
 };
 

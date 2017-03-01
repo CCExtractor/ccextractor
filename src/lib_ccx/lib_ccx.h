@@ -240,6 +240,9 @@ void parse_SDT(struct ccx_demuxer *ctx);
 // myth.c
 int myth_loop(struct lib_ccx_ctx *ctx);
 
+// matroska.c
+int matroska_loop(struct lib_ccx_ctx *ctx);
+
 // utility.c
 void fatal(int exit_code, const char *fmt, ...);
 void mprint (const char *fmt, ...);

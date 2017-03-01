@@ -28,6 +28,24 @@ void detect_stream_type (struct ccx_demuxer *ctx)
 				ctx->startbytes[3]==0x75)
 			ctx->stream_mode=CCX_SM_ASF;
 	}
+
+	// WARNING: Always check containers first (such as Matroska),
+	// because they contain bytes that can be mistaken as a separate video file.
+	if (ctx->stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND && ctx->startbytes_avail >= 4)
+	{
+		// Check for Matroska magic bytes - EBML head
+		if(ctx->startbytes[0]==0x1a &&
+		   ctx->startbytes[1]==0x45 &&
+		   ctx->startbytes[2]==0xdf &&
+		   ctx->startbytes[3]==0xa3)
+			ctx->stream_mode = CCX_SM_MKV;
+		// Check for Matroska magic bytes - Segment
+		if(ctx->startbytes[0]==0x18 &&
+		   ctx->startbytes[1]==0x53 &&
+		   ctx->startbytes[2]==0x80 &&
+		   ctx->startbytes[3]==0x67)
+			ctx->stream_mode = CCX_SM_MKV;
+	}
 	if (ctx->stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND)
 	{
 		if (ccx_gxf_probe(ctx->startbytes, ctx->startbytes_avail) == CCX_TRUE)
