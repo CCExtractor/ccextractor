@@ -56,3 +56,7 @@ windows/libs/tesseract/**
 # Mac
 .DS_Store
 windows/enc_temp_folder/*
+
+#CMake
+src/cmake-build-debug/
+src/.idea

@@ -1163,6 +1163,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 			{
 				encode_sub(enc_ctx, dec_sub);
 				dec_sub->got_output = 0;
+				caps=1;
 			}
 			continue;
 		}

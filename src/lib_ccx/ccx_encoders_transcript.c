@@ -201,11 +201,11 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 
 			if (context->transcript_settings->showCC)
 			{
-				if (context->in_fileformat == 1)
+				if (!context->ucla || !strcmp(sub->mode, "TLT"))
+					fdprintf(context->out->fh, sub->info);				
+				else if (context->in_fileformat == 1)
 					//TODO, data->my_field == 1 ? data->channel : data->channel + 2); // Data from field 2 is CC3 or 4
 					fdprintf(context->out->fh, "CC?|");
-				else if (!context->ucla || !strcmp(sub->mode, "TLT"))
-					fdprintf(context->out->fh, sub->info);
 			}
 			if (context->transcript_settings->showMode)
 			{
