@@ -115,5 +115,6 @@
 	#endif
 
 	typedef int64_t LLONG;
+	typedef uint64_t ULLONG;
 
 #endif // CCX_PLATFORM_H
