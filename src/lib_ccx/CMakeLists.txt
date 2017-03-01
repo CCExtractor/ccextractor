@@ -3,18 +3,40 @@ cmake_policy (SET CMP0037 NEW)
 set (CMAKE_C_FLAGS "-O0 -Wall -g -std=gnu99")
 
 if (WITH_FFMPEG)
+    find_package(PkgConfig)
+
+    pkg_check_modules (AVFORMAT REQUIRED libavformat)
+    pkg_check_modules (AVUTIL REQUIRED libavutil)
+    pkg_check_modules (AVCODEC REQUIRED libavcodec)
+    pkg_check_modules (SWSCALE REQUIRED libswscale)
+
+    set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFORMAT_LIBRARIES})
+    set (EXTRA_LIBS ${EXTRA_LIBS} ${AVUTIL_LIBRARIES})
+    set (EXTRA_LIBS ${EXTRA_LIBS} ${AVCODEC_LIBRARIES})
+    set (EXTRA_LIBS ${EXTRA_LIBS} ${SWSCALE_LIBRARIES})
+
+    set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVFORMAT_INCLUDE_DIRS})
+    set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVUTIL_INCLUDE_DIRS})
+    set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVCODEC_INCLUDE_DIRS})
+    set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${SWSCALE_INCLUDE_DIRS})
+
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_FFMPEG")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_HARDSUBX")
 endif (WITH_FFMPEG)
 
 if (WITH_OCR)
   find_package(PkgConfig)
 
-  pkg_check_modules(TESSERACT REQUIRED tesseract)
-  pkg_check_modules(LEPTONICA REQUIRED lept)
+  pkg_check_modules (TESSERACT REQUIRED tesseract)
+  pkg_check_modules (LEPTONICA REQUIRED lept)
 
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${TESSERACT_STATIC_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${LEPTONICA_STATIC_LIBRARIES})
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR ${TESSERACT_CFLAGS} ${LEPTONICA_CFLAGS}")
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${TESSERACT_INCLUDE_DIRS})
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${LEPTONICA_INCLUDE_DIRS})
+
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${TESSERACT_LIBRARIES})
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${LEPTONICA_LIBRARIES})
+
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR")
 endif (WITH_OCR)
 
 if (WITH_SHARING)
@@ -25,6 +47,8 @@ aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_ccx/" SOURCEFILE)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/gpacmp4/" SOURCEFILE)
 
 add_library (ccx ${SOURCEFILE} ccx_dtvcc.h ccx_dtvcc.c)
+target_link_libraries (ccx ${EXTRA_LIBS})
+target_include_directories (ccx PUBLIC ${EXTRA_INCLUDES})
 
 if (MINGW OR CYGWIN)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DGPAC_CONFIG_WIN32")

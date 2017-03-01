@@ -8,7 +8,7 @@ option (WITH_SHARING "Build with sharing and translation support" OFF)
 
 # Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
-set (CCEXTRACTOR_VERSION_MINOR 77)
+set (CCEXTRACTOR_VERSION_MINOR 85)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
@@ -71,12 +71,20 @@ if (PKG_CONFIG_FOUND AND WITH_FFMPEG)
   pkg_check_modules (AVFORMAT REQUIRED libavformat)
   pkg_check_modules (AVUTIL REQUIRED libavutil)
   pkg_check_modules (AVCODEC REQUIRED libavcodec)
+  pkg_check_modules (SWSCALE REQUIRED libswscale)
 
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFORMAT_STATIC_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVUTIL_STATIC_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVCODEC_STATIC_LIBRARIES})
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFORMAT_LIBRARIES})
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVUTIL_LIBRARIES})
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVCODEC_LIBRARIES})
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${SWSCALE_LIBRARIES})
+
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVFORMAT_INCLUDE_DIRS})
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVUTIL_INCLUDE_DIRS})
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVCODEC_INCLUDE_DIRS})
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${SWSCALE_INCLUDE_DIRS})
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_FFMPEG")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_HARDSUBX")
 endif (PKG_CONFIG_FOUND AND WITH_FFMPEG)
 
 ########################################################
@@ -89,10 +97,10 @@ if (WITH_OCR)
   pkg_check_modules (TESSERACT REQUIRED tesseract)
   pkg_check_modules (LEPTONICA REQUIRED lept)
 
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${TESSERACT_STATIC_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${LEPTONICA_STATIC_LIBRARIES})
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${TESSERACT_LIBRARIES})
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${LEPTONICA_LIBRARIES})
 
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR ${TESSERACT_CFLAGS} ${LEPTONICA_CFLAGS}")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR")
 endif (WITH_OCR)
 
 ########################################################
@@ -114,5 +122,6 @@ endif (WITH_SHARING)
 
 add_executable (ccextractor ${SOURCEFILE})
 target_link_libraries (ccextractor ${EXTRA_LIBS})
+target_include_directories (ccextractor PUBLIC ${EXTRA_INCLUDES})
 
 install (TARGETS ccextractor DESTINATION bin)
