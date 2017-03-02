@@ -7,7 +7,7 @@ CCExtractor is a tool that produces subtitles from TV use. Global accessibility 
 Carlos' version (mainstream) is the most stable branch.
 
 ## Google Summer of Code 2017
-CCExtractor has applied for Summer of Code. The list of accepted organizations has not yet been published by Google but we are hopeful to be invited again to participate in this amazing program. 
+CCExtractor has been invited to Summer of Code 2017! Another summer of coding fun.
 
 If you are a student currently enrolled in university most likely you are eligible to participate. Read more at:  
 - [Google Summer of Code official website ](https://summerofcode.withgoogle.com/)
