@@ -182,6 +182,7 @@ struct matroska_ctx {
     struct lib_ccx_ctx* ctx;
     int sub_tracks_count;
     char* filename;
+    ULLONG current_second;
     FILE* file;
 };
 

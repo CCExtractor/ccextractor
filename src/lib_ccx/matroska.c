@@ -273,7 +273,10 @@ struct matroska_sub_sentence* parse_segment_cluster_block_group_block(struct mat
     track->sentences[track->sentence_count] = sentence;
     track->sentence_count++;
 
-    activity_progress((int) (get_current_byte(file) * 100 / mkv_ctx->ctx->inputsize), 0, 0);
+    mkv_ctx->current_second = max(mkv_ctx->current_second, sentence->time_start / 1000);
+    activity_progress((int) (get_current_byte(file) * 100 / mkv_ctx->ctx->inputsize),
+                      (int) (mkv_ctx->current_second / 60),
+                      (int) (mkv_ctx->current_second % 60));
 
     return sentence;
 }
@@ -423,7 +426,9 @@ void parse_segment_cluster(struct matroska_ctx* mkv_ctx) {
 
     // We already update activity progress in subtitle block, but we also need to show percents
     // in samples without captions
-    activity_progress((int) (get_current_byte(file) * 100 / mkv_ctx->ctx->inputsize), 0, 0);
+    activity_progress((int) (get_current_byte(file) * 100 / mkv_ctx->ctx->inputsize),
+                      (int) (mkv_ctx->current_second / 60),
+                      (int) (mkv_ctx->current_second % 60));
 }
 
 char* get_track_entry_type_description(enum matroska_track_entry_type type) {
@@ -763,7 +768,7 @@ char* ass_ssa_sentence_erase_read_order(char* text)
 void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* track)
 {
     char* filename = generate_filename_from_track(mkv_ctx, track);
-    mprint("Output file: %s\n", filename);
+    mprint("\nOutput file: %s", filename);
 
     int desc;
 #ifdef WIN32
@@ -920,13 +925,15 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
     struct matroska_ctx *mkv_ctx = malloc(sizeof(struct matroska_ctx));
     mkv_ctx->ctx = ctx;
     mkv_ctx->sub_tracks_count = 0;
+    mkv_ctx->current_second = 0;
     mkv_ctx->filename = ctx->inputfile[ctx->current_file];
     mkv_ctx->file = create_file(ctx);
 
     matroska_parse(mkv_ctx);
 
     // 100% done
-    activity_progress(100, 0, 0);
+    activity_progress(100, (int) (mkv_ctx->current_second / 60),
+                      (int) (mkv_ctx->current_second % 60));
 
     matroska_save_all(mkv_ctx);
     matroska_free_all(mkv_ctx);
