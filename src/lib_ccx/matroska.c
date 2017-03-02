@@ -742,7 +742,7 @@ char* generate_filename_from_track(struct matroska_ctx* mkv_ctx, struct matroska
     if (track->lang_index == 0)
         sprintf(buf, "%s_%s.%s", mkv_ctx->filename, track->lang, matroska_track_text_subtitle_id_extensions[track->codec_id]);
     else
-        sprintf(buf, "%s_%s_%ld.%s", mkv_ctx->filename, track->lang, track->lang_index,
+        sprintf(buf, "%s_%s_%llu.%s", mkv_ctx->filename, track->lang, track->lang_index,
                 matroska_track_text_subtitle_id_extensions[track->codec_id]);
     return buf;
 }
@@ -937,6 +937,8 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 
     matroska_save_all(mkv_ctx);
     matroska_free_all(mkv_ctx);
+
+	mprint("\n");
 
     return 1;
 }
