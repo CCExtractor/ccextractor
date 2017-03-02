@@ -151,9 +151,9 @@ char* matroska_track_text_subtitle_id_extensions[] = {
 };
 
 /* Messages */
-#define MATROSKA_INFO "Matroska parser info: "
-#define MATROSKA_WARNING "Matroska parser warning: "
-#define MATROSKA_ERROR "Matroska parser error: "
+#define MATROSKA_INFO "\nMatroska parser info: "
+#define MATROSKA_WARNING "\nMatroska parser warning: "
+#define MATROSKA_ERROR "\nMatroska parser error: "
 
 /* Boilerplate code */
 #define MATROSKA_SWITCH_BREAK(a,b) (a)=0;(b)=0;break
@@ -186,30 +186,42 @@ struct matroska_ctx {
 };
 
 /* Bytestream and parser functions */
-/*void skip_bytes(FILE* file, ULLONG n);
+void skip_bytes(FILE* file, ULLONG n);
 void set_bytes(FILE* file, ULLONG n);
 ULLONG get_current_byte(FILE* file);
 UBYTE* read_byte_block(FILE* file, ULLONG n);
-UBYTE read_byte(FILE* file);
+char* read_bytes_signed(FILE* file, ULLONG n);
+UBYTE mkv_read_byte(FILE* file);
+
 ULLONG read_vint_length(FILE* file);
 UBYTE* read_vint_block(FILE* file);
-UBYTE* read_vint_block_with_len(FILE* file, ULLONG* ptr_len);
+char* read_vint_block_signed(FILE* file);
 ULLONG read_vint_block_int(FILE* file);
-//UBYTE* read_vint_block_string(FILE* file);
+char* read_vint_block_string(FILE* file);
 void read_vint_block_skip(FILE* file);
+
 void parse_ebml(FILE* file);
 void parse_segment_info(FILE* file);
-struct matroska_sub_sentence* parse_segment_cluster_block_group_block(FILE* file, ULLONG cluster_timecode);
-void parse_segment_cluster_block_group(FILE* file, ULLONG cluster_timecode);
-void parse_segment_cluster(FILE* file);
-void parse_segment_track_entry(FILE* file);
-void parse_segment_tracks(FILE* file);
-void parse_segment(FILE* file);
-void matroska_parse(FILE* file);*/
+struct matroska_sub_sentence* parse_segment_cluster_block_group_block(struct matroska_ctx* mkv_ctx, ULLONG cluster_timecode);
+void parse_segment_cluster_block_group(struct matroska_ctx* mkv_ctx, ULLONG cluster_timecode);
+void parse_segment_cluster(struct matroska_ctx* mkv_ctx);
+void parse_segment_track_entry(struct matroska_ctx* mkv_ctx);
+void parse_segment_tracks(struct matroska_ctx* mkv_ctx);
+void parse_segment(struct matroska_ctx* mkv_ctx);
 
 /* Writing and helper functions */
-/*char* get_track_entry_type_description(enum matroska_track_entry_type type);
-int find_sub_track_index(ULLONG track_number);
-char* generate_filename_from_track(struct matroska_sub_track* track);*/
+char* generate_timestamp_utf8(ULLONG milliseconds);
+char* generate_timestamp_ass_ssa(ULLONG milliseconds);
+int find_sub_track_index(struct matroska_ctx* mkv_ctx, ULLONG track_number);
+char* get_track_entry_type_description(enum matroska_track_entry_type type);
+enum matroska_track_subtitle_codec_id get_track_subtitle_codec_id(char* codec_id);
+char* generate_filename_from_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* track);
+char* ass_ssa_sentence_erase_read_order(char* text);
+void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* track);
+void free_sub_track(struct matroska_sub_track* track);
+void matroska_save_all(struct matroska_ctx* mkv_ctx);
+void matroska_free_all(struct matroska_ctx* mkv_ctx);
+void matroska_parse(struct matroska_ctx* mkv_ctx);
+FILE* create_file(struct lib_ccx_ctx *ctx);
 
 #endif // MATROSKA_H

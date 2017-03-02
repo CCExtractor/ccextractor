@@ -146,6 +146,7 @@ struct ccx_s_options // Options from user parameters
 	enum ccx_output_date_format date_format;
 	unsigned send_to_srv;
 	enum ccx_output_format write_format;                // 0=Raw, 1=srt, 2=SMI
+	int write_format_rewritten;
 	int use_ass_instead_of_ssa;
 	int use_webvtt_styling;
 	LLONG debug_mask;                                   // dbg_print will use this mask to print or ignore different types

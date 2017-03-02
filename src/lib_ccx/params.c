@@ -165,6 +165,8 @@ int add_file_sequence (struct ccx_s_options *opt, char *filename)
 
 void set_output_format (struct ccx_s_options *opt, const char *format)
 {
+	opt->write_format_rewritten = 1;
+
 	while (*format=='-')
 		format++;
 

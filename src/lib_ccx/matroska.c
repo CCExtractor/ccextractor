@@ -1,6 +1,4 @@
 #include "lib_ccx.h"
-#include "file_buffer.h"
-#include "ccx_common_platform.h"
 #include "matroska.h"
 #include <limits.h>
 
@@ -85,6 +83,8 @@ void read_vint_block_skip(FILE* file) {
 void parse_ebml(FILE* file) {
     ULLONG len = read_vint_length(file);
     ULLONG pos = get_current_byte(file);
+
+    printf("\n");
 
     int code = 0, code_len = 0;
     while (pos + len > get_current_byte(file)) {
@@ -739,8 +739,6 @@ char* generate_filename_from_track(struct matroska_ctx* mkv_ctx, struct matroska
     else
         sprintf(buf, "%s_%s_%ld.%s", mkv_ctx->filename, track->lang, track->lang_index,
                 matroska_track_text_subtitle_id_extensions[track->codec_id]);
-    write(1, buf, strlen(buf));
-    write(1, "\n", 1);
     return buf;
 }
 
@@ -765,6 +763,8 @@ char* ass_ssa_sentence_erase_read_order(char* text)
 void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* track)
 {
     char* filename = generate_filename_from_track(mkv_ctx, track);
+    mprint("Output file: %s\n", filename);
+
     int desc;
 #ifdef WIN32
     desc = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, S_IREAD | S_IWRITE);
@@ -907,6 +907,12 @@ FILE* create_file(struct lib_ccx_ctx *ctx)
 
 int matroska_loop(struct lib_ccx_ctx *ctx)
 {
+    if (ccx_options.write_format_rewritten)
+    {
+        mprint(MATROSKA_WARNING "You are using -out=<format>, but Matroska parser extract subtitles in a recorded format\n");
+        mprint("-out=<format> will be ignored\n");
+    }
+
     // Don't need generated input file
     // Will read bytes by FILE*
     close_input_file(ctx);
@@ -918,11 +924,12 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
     mkv_ctx->file = create_file(ctx);
 
     matroska_parse(mkv_ctx);
-    matroska_save_all(mkv_ctx);
-    matroska_free_all(mkv_ctx);
 
     // 100% done
     activity_progress(100, 0, 0);
+
+    matroska_save_all(mkv_ctx);
+    matroska_free_all(mkv_ctx);
 
     return 1;
 }
