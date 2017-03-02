@@ -74,9 +74,7 @@
 		#ifdef _WIN32
 			#define OPEN _open
 			// 64 bit file functions
-			#if defined(MSC_VER)
-				extern "C" int __cdecl _fseeki64(FILE *, __int64, int);
-				extern "C" __int64 __cdecl _ftelli64(FILE *);
+			#if defined(_MSC_VER)
 				#define FSEEK _fseeki64
 				#define FTELL _ftelli64
 			#else

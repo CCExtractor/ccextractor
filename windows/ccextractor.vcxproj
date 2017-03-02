@@ -239,6 +239,7 @@
     <ClCompile Include="..\src\lib_ccx\hardsubx_imgops.c" />
     <ClCompile Include="..\src\lib_ccx\hardsubx_utility.c" />
     <ClCompile Include="..\src\lib_ccx\lib_ccx.c" />
+    <ClCompile Include="..\src\lib_ccx\matroska.c" />
     <ClCompile Include="..\src\lib_ccx\myth.c" />
     <ClCompile Include="..\src\lib_ccx\networking.c" />
     <ClCompile Include="..\src\lib_ccx\ocr.c" />

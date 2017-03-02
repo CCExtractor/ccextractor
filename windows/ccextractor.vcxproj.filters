@@ -806,6 +806,9 @@
     <ClCompile Include="..\src\win_iconv\win_iconv.c">
       <Filter>Source Files\win_iconv</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\matroska.c">
+      <Filter>Source Files\lib_ccx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\lib_ccx\ccx_sub_entry_message.proto">
