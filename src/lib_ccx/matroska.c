@@ -784,6 +784,7 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
     for (int i = 0; i < track->sentence_count; i++)
     {
         struct matroska_sub_sentence* sentence = track->sentences[i];
+		mkv_ctx->sentence_count++;
 
         if (track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_UTF8)
         {
@@ -924,7 +925,8 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 
     struct matroska_ctx *mkv_ctx = malloc(sizeof(struct matroska_ctx));
     mkv_ctx->ctx = ctx;
-    mkv_ctx->sub_tracks_count = 0;
+	mkv_ctx->sub_tracks_count = 0;
+	mkv_ctx->sentence_count = 0;
     mkv_ctx->current_second = 0;
     mkv_ctx->filename = ctx->inputfile[ctx->current_file];
     mkv_ctx->file = create_file(ctx);
@@ -936,9 +938,10 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
                       (int) (mkv_ctx->current_second % 60));
 
     matroska_save_all(mkv_ctx);
+	int sentence_count = mkv_ctx->sentence_count;
     matroska_free_all(mkv_ctx);
 
 	mprint("\n");
 
-    return 1;
+    return sentence_count;
 }

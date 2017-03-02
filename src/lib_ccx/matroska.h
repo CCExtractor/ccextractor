@@ -181,6 +181,7 @@ struct matroska_ctx {
     struct matroska_sub_track* sub_tracks[MATROSKA_MAX_TRACKS];
     struct lib_ccx_ctx* ctx;
     int sub_tracks_count;
+    int sentence_count;
     char* filename;
     ULLONG current_second;
     FILE* file;
