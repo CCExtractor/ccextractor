@@ -4,48 +4,44 @@
 #include "matroska.h"
 #include <limits.h>
 
-void skip_bytes(FILE* file, matroska_int n) {
+void skip_bytes(FILE* file, ULLONG n) {
     FSEEK(file, n, SEEK_CUR);
 }
 
-void set_bytes(FILE* file, matroska_int n) {
+void set_bytes(FILE* file, ULLONG n) {
     FSEEK(file, n, SEEK_SET);
 }
 
-void set_byte_at_the_end(FILE* file) {
-    FSEEK(file, 0, SEEK_END);
+ULLONG get_current_byte(FILE* file) {
+    return (ULLONG) FTELL(file);
 }
 
-matroska_int get_current_byte(FILE* file) {
-    return FTELL(file);
-}
-
-matroska_byte* read_byte_block(FILE* file, matroska_int n) {
-    matroska_byte* buffer = malloc((size_t)(sizeof(matroska_byte) * n));
+UBYTE* read_byte_block(FILE* file, ULLONG n) {
+    UBYTE* buffer = malloc((size_t)(sizeof(UBYTE) * n));
     fread(buffer, 1, (size_t)n, file);
     return buffer;
 }
 
-char* read_bytes_signed(FILE* file, matroska_int n) {
-    char* buffer = malloc((size_t)(sizeof(matroska_byte) * (n + 1)));
+char* read_bytes_signed(FILE* file, ULLONG n) {
+    char* buffer = malloc((size_t)(sizeof(UBYTE) * (n + 1)));
     fread(buffer, 1, (size_t)n, file);
     buffer[n] = 0;
     return buffer;
 }
 
-matroska_byte mkv_read_byte(FILE* file) {
-    return (matroska_byte)fgetc(file);
+UBYTE mkv_read_byte(FILE* file) {
+    return (UBYTE)fgetc(file);
 }
 
-matroska_int read_vint_length(FILE* file) {
-    matroska_byte ch = mkv_read_byte(file);
+ULLONG read_vint_length(FILE* file) {
+    UBYTE ch = mkv_read_byte(file);
 #ifdef _WIN32
     int cnt = 8 - __lzcnt16(ch);
 #else
     int cnt = __builtin_clz(ch) - 24 + 1;
 #endif
     ch ^= (1 << (8 - cnt));
-    matroska_int ret = ch;
+    ULLONG ret = ch;
     for (int i = 1; i < cnt; i++) {
         ret <<= 8;
         ret += mkv_read_byte(file);
@@ -53,21 +49,21 @@ matroska_int read_vint_length(FILE* file) {
     return ret;
 }
 
-matroska_byte* read_vint_block(FILE* file) {
-    matroska_int len = read_vint_length(file);
+UBYTE* read_vint_block(FILE* file) {
+    ULLONG len = read_vint_length(file);
     return read_byte_block(file, len);
 }
 
 char* read_vint_block_signed(FILE* file) {
-    matroska_int len = read_vint_length(file);
+    ULLONG len = read_vint_length(file);
     return read_bytes_signed(file, len);
 }
 
-matroska_int read_vint_block_int(FILE* file) {
-    matroska_int len = read_vint_length(file);
-    matroska_byte* s = read_byte_block(file, len);
+ULLONG read_vint_block_int(FILE* file) {
+    ULLONG len = read_vint_length(file);
+    UBYTE* s = read_byte_block(file, len);
 
-    matroska_int res = 0;
+    ULLONG res = 0;
     for (int i = 0; i < len; i++) {
         res <<= 8;
         res += s[i];
@@ -82,13 +78,13 @@ char* read_vint_block_string(FILE* file) {
 }
 
 void read_vint_block_skip(FILE* file) {
-    matroska_int len = read_vint_length(file);
+    ULLONG len = read_vint_length(file);
     skip_bytes(file, len);
 }
 
 void parse_ebml(FILE* file) {
-    matroska_int len = read_vint_length(file);
-    matroska_int pos = get_current_byte(file);
+    ULLONG len = read_vint_length(file);
+    ULLONG pos = get_current_byte(file);
 
     int code = 0, code_len = 0;
     while (pos + len > get_current_byte(file)) {
@@ -140,8 +136,8 @@ void parse_ebml(FILE* file) {
 }
 
 void parse_segment_info(FILE* file) {
-    matroska_int len = read_vint_length(file);
-    matroska_int pos = get_current_byte(file);
+    ULLONG len = read_vint_length(file);
+    ULLONG pos = get_current_byte(file);
 
     int code = 0, code_len = 0;
     while (pos + len > get_current_byte(file)) {
@@ -213,46 +209,46 @@ void parse_segment_info(FILE* file) {
     }
 }
 
-char* generate_timestamp_utf8(matroska_int milliseconds) {
-    matroska_int millis = milliseconds % 1000;
+char* generate_timestamp_utf8(ULLONG milliseconds) {
+    ULLONG millis = milliseconds % 1000;
     milliseconds /= 1000;
-    matroska_int seconds = milliseconds % 60;
+    ULLONG seconds = milliseconds % 60;
     milliseconds /= 60;
-    matroska_int minutes = milliseconds % 60;
+    ULLONG minutes = milliseconds % 60;
     milliseconds /= 60;
-    matroska_int hours = milliseconds;
+    ULLONG hours = milliseconds;
 
     char* buf = malloc(sizeof(char) * 15);
     sprintf(buf, "%02ld:%02ld:%02ld,%03ld", hours, minutes, seconds, millis);
     return buf;
 }
 
-char* generate_timestamp_ass_ssa(matroska_int milliseconds) {
-    matroska_int millis = (milliseconds % 1000) / 10;
+char* generate_timestamp_ass_ssa(ULLONG milliseconds) {
+    ULLONG millis = (milliseconds % 1000) / 10;
     milliseconds /= 1000;
-    matroska_int seconds = milliseconds % 60;
+    ULLONG seconds = milliseconds % 60;
     milliseconds /= 60;
-    matroska_int minutes = milliseconds % 60;
+    ULLONG minutes = milliseconds % 60;
     milliseconds /= 60;
-    matroska_int hours = milliseconds;
+    ULLONG hours = milliseconds;
 
     char* buf = malloc(sizeof(char) * 15);
     sprintf(buf, "%ld:%02ld:%02ld.%02ld", hours, minutes, seconds, millis);
     return buf;
 }
 
-int find_sub_track_index(struct matroska_ctx* mkv_ctx, matroska_int track_number) {
+int find_sub_track_index(struct matroska_ctx* mkv_ctx, ULLONG track_number) {
     for (int i = 0; i < mkv_ctx->sub_tracks_count; i++)
         if (mkv_ctx->sub_tracks[i]->track_number == track_number)
             return i;
     return -1;
 }
 
-struct matroska_sub_sentence* parse_segment_cluster_block_group_block(struct matroska_ctx* mkv_ctx, matroska_int cluster_timecode) {
+struct matroska_sub_sentence* parse_segment_cluster_block_group_block(struct matroska_ctx* mkv_ctx, ULLONG cluster_timecode) {
     FILE* file = mkv_ctx->file;
-    matroska_int len = read_vint_length(file);
-    matroska_int pos = get_current_byte(file);
-    matroska_int track_number = read_vint_length(file);     // track number is length, not int
+    ULLONG len = read_vint_length(file);
+    ULLONG pos = get_current_byte(file);
+    ULLONG track_number = read_vint_length(file);     // track number is length, not int
 
     int sub_track_index = find_sub_track_index(mkv_ctx, track_number);
     if (sub_track_index == -1) {
@@ -260,12 +256,12 @@ struct matroska_sub_sentence* parse_segment_cluster_block_group_block(struct mat
         return NULL;
     }
 
-    matroska_int timecode = mkv_read_byte(file);
+    ULLONG timecode = mkv_read_byte(file);
     timecode <<= 8; timecode += mkv_read_byte(file);
 
     mkv_read_byte(file);    // skip one byte
 
-    matroska_int size = pos + len - get_current_byte(file);
+    ULLONG size = pos + len - get_current_byte(file);
     char* message = read_bytes_signed(file, size);
 
     struct matroska_sub_sentence* sentence = malloc(sizeof(struct matroska_sub_sentence));
@@ -282,12 +278,12 @@ struct matroska_sub_sentence* parse_segment_cluster_block_group_block(struct mat
     return sentence;
 }
 
-void parse_segment_cluster_block_group(struct matroska_ctx* mkv_ctx, matroska_int cluster_timecode) {
+void parse_segment_cluster_block_group(struct matroska_ctx* mkv_ctx, ULLONG cluster_timecode) {
     FILE* file = mkv_ctx->file;
-    matroska_int len = read_vint_length(file);
-    matroska_int pos = get_current_byte(file);
+    ULLONG len = read_vint_length(file);
+    ULLONG pos = get_current_byte(file);
 
-    matroska_int block_duration = ULONG_MAX;
+    ULLONG block_duration = ULONG_MAX;
     struct matroska_sub_sentence* new_sentence;
     struct matroska_sub_sentence** sentence_list = NULL;
     int sentence_count = 0;
@@ -371,10 +367,10 @@ void parse_segment_cluster_block_group(struct matroska_ctx* mkv_ctx, matroska_in
 
 void parse_segment_cluster(struct matroska_ctx* mkv_ctx) {
     FILE* file = mkv_ctx->file;
-    matroska_int len = read_vint_length(file);
-    matroska_int pos = get_current_byte(file);
+    ULLONG len = read_vint_length(file);
+    ULLONG pos = get_current_byte(file);
 
-    matroska_int timecode = 0;
+    ULLONG timecode = 0;
 
     int code = 0, code_len = 0;
     while (pos + len > get_current_byte(file)) {
@@ -462,10 +458,10 @@ void parse_segment_track_entry(struct matroska_ctx* mkv_ctx) {
     FILE* file = mkv_ctx->file;
     mprint("\nTrack entry:\n");
 
-    matroska_int len = read_vint_length(file);
-    matroska_int pos = get_current_byte(file);
+    ULLONG len = read_vint_length(file);
+    ULLONG pos = get_current_byte(file);
 
-    matroska_int track_number = 0;
+    ULLONG track_number = 0;
     enum matroska_track_entry_type track_type = MATROSKA_TRACK_TYPE_VIDEO;
     char* lang = strdup("eng");
     char* header = NULL;
@@ -642,8 +638,8 @@ void parse_segment_track_entry(struct matroska_ctx* mkv_ctx) {
 void parse_segment_tracks(struct matroska_ctx* mkv_ctx)
 {
     FILE* file = mkv_ctx->file;
-    matroska_int len = read_vint_length(file);
-    matroska_int pos = get_current_byte(file);
+    ULLONG len = read_vint_length(file);
+    ULLONG pos = get_current_byte(file);
 
     int code = 0, code_len = 0;
     while (pos + len > get_current_byte(file)) {
@@ -679,8 +675,8 @@ void parse_segment_tracks(struct matroska_ctx* mkv_ctx)
 void parse_segment(struct matroska_ctx* mkv_ctx)
 {
     FILE* file = mkv_ctx->file;
-    matroska_int len = read_vint_length(file);
-    matroska_int pos = get_current_byte(file);
+    ULLONG len = read_vint_length(file);
+    ULLONG pos = get_current_byte(file);
 
     int code = 0, code_len = 0;
     while (pos + len > get_current_byte(file)) {
@@ -790,7 +786,7 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
             sprintf(number, "%d", i + 1);
 
             char *timestamp_start = generate_timestamp_utf8(sentence->time_start);
-            matroska_int time_end = sentence->time_end;
+            ULLONG time_end = sentence->time_end;
             if (i + 1 < track->sentence_count)
                 time_end = MIN(time_end, track->sentences[i + 1]->time_start - 1);
             char *timestamp_end = generate_timestamp_utf8(time_end);
@@ -810,7 +806,7 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
         else if (track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_ASS || track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_SSA)
         {
             char *timestamp_start = generate_timestamp_ass_ssa(sentence->time_start);
-            matroska_int time_end = sentence->time_end;
+            ULLONG time_end = sentence->time_end;
             if (i + 1 < track->sentence_count)
                 time_end = MIN(time_end, track->sentences[i + 1]->time_start - 1);
             char *timestamp_end = generate_timestamp_ass_ssa(time_end);

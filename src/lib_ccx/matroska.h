@@ -158,23 +158,19 @@ char* matroska_track_text_subtitle_id_extensions[] = {
 /* Boilerplate code */
 #define MATROSKA_SWITCH_BREAK(a,b) (a)=0;(b)=0;break
 
-/* Typedefs */
-typedef ULLONG matroska_int;
-typedef unsigned char matroska_byte;
-
 /* Structures */
 struct matroska_sub_sentence {
     char* text;
-    matroska_int text_size;
-    matroska_int time_start;
-    matroska_int time_end;
+    ULLONG text_size;
+    ULLONG time_start;
+    ULLONG time_end;
 };
 
 struct matroska_sub_track {
     char* header;   // Style header for ASS/SSA (and other) subtitles
     char* lang;
-    matroska_int track_number;
-    matroska_int lang_index;
+    ULLONG track_number;
+    ULLONG lang_index;
     enum matroska_track_subtitle_codec_id codec_id;
 
     int sentence_count;
@@ -183,32 +179,28 @@ struct matroska_sub_track {
 
 struct matroska_ctx {
     struct matroska_sub_track* sub_tracks[MATROSKA_MAX_TRACKS];
+    struct lib_ccx_ctx* ctx;
     int sub_tracks_count;
     char* filename;
     FILE* file;
-
-    // Context must be out of this stuff...
-    struct lib_ccx_ctx* ctx;
 };
 
-/* Temporarily closed due to refactoring */
-
 /* Bytestream and parser functions */
-/*void skip_bytes(FILE* file, matroska_int n);
-void set_bytes(FILE* file, matroska_int n);
-matroska_int get_current_byte(FILE* file);
-matroska_byte* read_byte_block(FILE* file, matroska_int n);
-matroska_byte read_byte(FILE* file);
-matroska_int read_vint_length(FILE* file);
-matroska_byte* read_vint_block(FILE* file);
-matroska_byte* read_vint_block_with_len(FILE* file, matroska_int* ptr_len);
-matroska_int read_vint_block_int(FILE* file);
-//matroska_byte* read_vint_block_string(FILE* file);
+/*void skip_bytes(FILE* file, ULLONG n);
+void set_bytes(FILE* file, ULLONG n);
+ULLONG get_current_byte(FILE* file);
+UBYTE* read_byte_block(FILE* file, ULLONG n);
+UBYTE read_byte(FILE* file);
+ULLONG read_vint_length(FILE* file);
+UBYTE* read_vint_block(FILE* file);
+UBYTE* read_vint_block_with_len(FILE* file, ULLONG* ptr_len);
+ULLONG read_vint_block_int(FILE* file);
+//UBYTE* read_vint_block_string(FILE* file);
 void read_vint_block_skip(FILE* file);
 void parse_ebml(FILE* file);
 void parse_segment_info(FILE* file);
-struct matroska_sub_sentence* parse_segment_cluster_block_group_block(FILE* file, matroska_int cluster_timecode);
-void parse_segment_cluster_block_group(FILE* file, matroska_int cluster_timecode);
+struct matroska_sub_sentence* parse_segment_cluster_block_group_block(FILE* file, ULLONG cluster_timecode);
+void parse_segment_cluster_block_group(FILE* file, ULLONG cluster_timecode);
 void parse_segment_cluster(FILE* file);
 void parse_segment_track_entry(FILE* file);
 void parse_segment_tracks(FILE* file);
@@ -217,7 +209,7 @@ void matroska_parse(FILE* file);*/
 
 /* Writing and helper functions */
 /*char* get_track_entry_type_description(enum matroska_track_entry_type type);
-int find_sub_track_index(matroska_int track_number);
+int find_sub_track_index(ULLONG track_number);
 char* generate_filename_from_track(struct matroska_sub_track* track);*/
 
 #endif // MATROSKA_H
