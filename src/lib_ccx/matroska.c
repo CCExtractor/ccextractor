@@ -33,11 +33,13 @@ UBYTE mkv_read_byte(FILE* file) {
 
 ULLONG read_vint_length(FILE* file) {
     UBYTE ch = mkv_read_byte(file);
-#ifdef _WIN32
-    int cnt = 8 - __lzcnt16(ch);
-#else
-    int cnt = __builtin_clz(ch) - 24 + 1;
-#endif
+    int cnt = 0;
+    for (int i = 7; i >= 0; i--) {
+        if ((ch & (1 << i)) != 0) {
+            cnt = 8 - i;
+            break;
+        }
+    }
     ch ^= (1 << (8 - cnt));
     ULLONG ret = ch;
     for (int i = 1; i < cnt; i++) {
