@@ -738,14 +738,35 @@ void parse_segment(struct matroska_ctx* mkv_ctx)
     }
 }
 
+char *filename_without_ext(char* filename) {
+    char *returnname;
+    char *lastdot;
+    if (filename == NULL)
+         return filename;
+    if ((returnname = malloc (strlen (filename) + 1)) == NULL)
+        return filename;
+    strcpy (returnname, filename);
+    lastdot = strrchr (returnname, '.');
+    if (lastdot != NULL)
+        *lastdot = '\0';
+    return returnname;
+}
+
 char* generate_filename_from_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* track)
-{
-    char* buf = malloc(sizeof(char) * 200);
+{ 
+  char* filename = malloc(sizeof(char)*(MAX_FILE_NAME_SIZE-30));
+  char * filename_non_ext;
+  filename[MAX_FILE_NAME_SIZE-31] = '\0';
+  strncpy(filename, mkv_ctx->filename,(MAX_FILE_NAME_SIZE-31));
+  filename_non_ext=filename_without_ext(filename);
+    char* buf = malloc(sizeof(char) * MAX_FILE_NAME_SIZE);
     if (track->lang_index == 0)
-        sprintf(buf, "%s_%s.%s", mkv_ctx->filename, track->lang, matroska_track_text_subtitle_id_extensions[track->codec_id]);
+        sprintf(buf, "%s_%s.%s", filename_non_ext, track->lang, matroska_track_text_subtitle_id_extensions[track->codec_id]);
     else
-        sprintf(buf, "%s_%s_%llu.%s", mkv_ctx->filename, track->lang, track->lang_index,
+        sprintf(buf, "%s_%s_%llu.%s", filename_without_ext, track->lang, track->lang_index,
                 matroska_track_text_subtitle_id_extensions[track->codec_id]);
+free(filename);
+free(filename_non_ext);
     return buf;
 }
 
