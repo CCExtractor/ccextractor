@@ -763,7 +763,7 @@ char* generate_filename_from_track(struct matroska_ctx* mkv_ctx, struct matroska
     if (track->lang_index == 0)
         sprintf(buf, "%s_%s.%s", filename_non_ext, track->lang, matroska_track_text_subtitle_id_extensions[track->codec_id]);
     else
-        sprintf(buf, "%s_%s_" LLD ".%s", filename_without_ext, track->lang, track->lang_index,
+        sprintf(buf, "%s_%s_" LLD ".%s", filename_non_ext, track->lang, track->lang_index,
                 matroska_track_text_subtitle_id_extensions[track->codec_id]);
     free(filename);
     free(filename_non_ext);
