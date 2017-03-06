@@ -1,7 +1,7 @@
 #include "lib_ccx.h"
 #include "matroska.h"
 #include <limits.h>
-
+#include<string.h>
 void skip_bytes(FILE* file, ULLONG n) {
     FSEEK(file, n, SEEK_CUR);
 }
@@ -743,9 +743,11 @@ char *filename_without_ext(char* filename) {
     char *lastdot;
     if (filename == NULL)
          return filename;
-    if ((returnname = malloc (strlen (filename) + 1)) == NULL)
+    //30 char reserved for appending info like language and subtitle extension
+    if ((returnname = malloc (sizeof(char)*(MAX_FILE_NAME_SIZE-29))) == NULL)
         return filename;
-    strcpy (returnname, filename);
+    strncpy (returnname, filename,(MAX_FILE_NAME_SIZE-30));
+    returnname[MAX_FILE_NAME_SIZE-30]='\0';
     lastdot = strrchr (returnname, '.');
     if (lastdot != NULL)
         *lastdot = '\0';
@@ -754,19 +756,16 @@ char *filename_without_ext(char* filename) {
 
 char* generate_filename_from_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* track)
 { 
-  char* filename = malloc(sizeof(char)*(MAX_FILE_NAME_SIZE-30));
-  char * filename_non_ext;
-  filename[MAX_FILE_NAME_SIZE-31] = '\0';
-  strncpy(filename, mkv_ctx->filename,(MAX_FILE_NAME_SIZE-31));
-  filename_non_ext=filename_without_ext(filename);
-    char* buf = malloc(sizeof(char) * MAX_FILE_NAME_SIZE);
+	char * filename_non_ext;
+	char* buf = malloc(sizeof(char) * MAX_FILE_NAME_SIZE);
+	filename_non_ext=filename_without_ext(mkv_ctx->filename);
     if (track->lang_index == 0)
         sprintf(buf, "%s_%s.%s", filename_non_ext, track->lang, matroska_track_text_subtitle_id_extensions[track->codec_id]);
     else
         sprintf(buf, "%s_%s_%llu.%s", filename_without_ext, track->lang, track->lang_index,
                 matroska_track_text_subtitle_id_extensions[track->codec_id]);
-free(filename);
-free(filename_non_ext);
+
+	free(filename_non_ext);
     return buf;
 }
 
