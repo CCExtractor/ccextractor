@@ -3,6 +3,34 @@
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
+/* Output specificators */
+#if (defined (WIN32) || defined (_WIN32_WCE)) && (defined(__MINGW32__) || !defined(__GNUC__))
+#define LLD_M "I64d"
+#define LLU_M "I64u"
+#define LLD "%I64d"
+#define LLU "%I64u"
+#elif defined (__SYMBIAN32__)
+#define LLD_M "d"
+#define LLU_M "u"
+#define LLD "%d"
+#define LLU "%u"
+#elif defined(__DARWIN__) || defined(__APPLE__)
+#define LLD_M "lld"
+#define LLU_M "llu"
+#define LLD "%lld"
+#define LLU "%llu"
+#elif defined(_LP64) /* Unix 64 bits */
+#define LLD_M "ld"
+#define LLU_M "lu"
+#define LLD "%ld"
+#define LLU "%lu"
+#else /* Unix 32 bits */
+#define LLD_M "lld"
+#define LLU_M "llu"
+#define LLD "%lld"
+#define LLU "%llu"
+#endif
+
 /* EBML header ids */
 #define MATROSKA_EBML_HEADER 0x1A45DFA3
 #define MATROSKA_EBML_VERSION 0x4286
@@ -110,6 +138,7 @@
 #define MATROSKA_MAX_ID_LENGTH 4
 #define MATROSKA_MAX_TRACKS 128
 #define MATROSKA_MAX_SENTENCES 8192
+#define MAX_FILE_NAME_SIZE 200
 
 /* Enums */
 enum matroska_track_entry_type {
