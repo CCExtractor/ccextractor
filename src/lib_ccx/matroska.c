@@ -127,7 +127,7 @@ void parse_ebml(FILE* file) {
                 MATROSKA_SWITCH_BREAK(code, code_len);
             default:
                 if (code_len == MATROSKA_MAX_ID_LENGTH) {
-                    mprint(MATROSKA_ERROR "Unknown element 0x%x at position %I64d, skipping EBML block\n", code,
+                    mprint(MATROSKA_ERROR "Unknown element 0x%x at position " LLD ", skipping EBML block\n", code,
                            get_current_byte(file) - MATROSKA_MAX_ID_LENGTH);
                     set_bytes(file, pos + len);
                     return;
@@ -174,7 +174,7 @@ void parse_segment_info(FILE* file) {
                 read_vint_block_skip(file);
                 MATROSKA_SWITCH_BREAK(code, code_len);
             case MATROSKA_SEGMENT_INFO_TIMECODE_SCALE:
-                mprint("Timecode scale: %I64d\n", read_vint_block_int(file));
+                mprint("Timecode scale: " LLD "\n", read_vint_block_int(file));
                 MATROSKA_SWITCH_BREAK(code, code_len);
             case MATROSKA_SEGMENT_INFO_DURATION:
                 read_vint_block_skip(file);
@@ -201,7 +201,7 @@ void parse_segment_info(FILE* file) {
                 MATROSKA_SWITCH_BREAK(code, code_len);
             default:
                 if (code_len == MATROSKA_MAX_ID_LENGTH) {
-                    mprint(MATROSKA_ERROR "Unknown element 0x%x at position %I64d, skipping segment info block\n", code,
+                    mprint(MATROSKA_ERROR "Unknown element 0x%x at position " LLD ", skipping segment info block\n", code,
                            get_current_byte(file) - MATROSKA_MAX_ID_LENGTH);
                     set_bytes(file, pos + len);
                     return;
@@ -221,7 +221,7 @@ char* generate_timestamp_utf8(ULLONG milliseconds) {
     ULLONG hours = milliseconds;
 
     char* buf = malloc(sizeof(char) * 15);
-	sprintf(buf, "%02I64d:%02I64d:%02I64d,%03I64d", hours, minutes, seconds, millis);
+    sprintf(buf, "%02" LLD_M ":%02" LLD_M ":%02" LLD_M ",%03" LLD_M, hours, minutes, seconds, millis);
     return buf;
 }
 
@@ -235,7 +235,7 @@ char* generate_timestamp_ass_ssa(ULLONG milliseconds) {
     ULLONG hours = milliseconds;
 
     char* buf = malloc(sizeof(char) * 15);
-    sprintf(buf, "%I64d:%02I64d:%02I64d.%02I64d", hours, minutes, seconds, millis);
+    sprintf(buf, LLD ":%02" LLD_M ":%02" LLD_M ".%02" LLD_M, hours, minutes, seconds, millis);
     return buf;
 }
 
@@ -348,7 +348,7 @@ void parse_segment_cluster_block_group(struct matroska_ctx* mkv_ctx, ULLONG clus
             default:
                 if (code_len == MATROSKA_MAX_ID_LENGTH)
                 {
-                    mprint(MATROSKA_ERROR "Unknown element 0x%x at position %I64d, skipping segment cluster block group\n", code,
+                    mprint(MATROSKA_ERROR "Unknown element 0x%x at position " LLD ", skipping segment cluster block group\n", code,
                            get_current_byte(file) - MATROSKA_MAX_ID_LENGTH);
                     set_bytes(file, pos + len);
                     return;
@@ -417,7 +417,7 @@ void parse_segment_cluster(struct matroska_ctx* mkv_ctx) {
                 MATROSKA_SWITCH_BREAK(code, code_len);
             default:
                 if (code_len == MATROSKA_MAX_ID_LENGTH) {
-                    mprint(MATROSKA_ERROR "Unknown element 0x%x at position %I64d, skipping segment cluster block\n", code,
+                    mprint(MATROSKA_ERROR "Unknown element 0x%x at position " LLD ", skipping segment cluster block\n", code,
                            get_current_byte(file) - MATROSKA_MAX_ID_LENGTH);
                     set_bytes(file, pos + len);
                     return;
@@ -485,10 +485,10 @@ void parse_segment_track_entry(struct matroska_ctx* mkv_ctx) {
             /* Track entry ids*/
             case MATROSKA_SEGMENT_TRACK_TRACK_NUMBER:
                 track_number = read_vint_block_int(file);
-                mprint("    Track number: %I64d\n", track_number);
+                mprint("    Track number: " LLD "\n", track_number);
                 MATROSKA_SWITCH_BREAK(code, code_len);
             case MATROSKA_SEGMENT_TRACK_TRACK_UID:
-                mprint("    UID: %llu\n", read_vint_block_int(file));
+                mprint("    UID: " LLU "\n", read_vint_block_int(file));
                 MATROSKA_SWITCH_BREAK(code, code_len);
             case MATROSKA_SEGMENT_TRACK_TRACK_TYPE:
                 track_type = (enum matroska_track_entry_type) read_vint_block_int(file);
@@ -576,12 +576,12 @@ void parse_segment_track_entry(struct matroska_ctx* mkv_ctx) {
 
                 /* Deprecated IDs */
             case MATROSKA_SEGMENT_TRACK_TRACK_TIMECODE_SCALE:
-                mprint(MATROSKA_WARNING "Deprecated element 0x%x at position %I64d\n", code,
+                mprint(MATROSKA_WARNING "Deprecated element 0x%x at position " LLD "\n", code,
                        get_current_byte(file) - 3); // minus length of the ID
                 read_vint_block_skip(file);
                 MATROSKA_SWITCH_BREAK(code, code_len);
             case MATROSKA_SEGMENT_TRACK_TRACK_OFFSET:
-                mprint(MATROSKA_WARNING "Deprecated element 0x%x at position %I64d\n", code,
+                mprint(MATROSKA_WARNING "Deprecated element 0x%x at position " LLD "\n", code,
                        get_current_byte(file) - 2); // minus length of the ID
                 read_vint_block_skip(file);
                 MATROSKA_SWITCH_BREAK(code, code_len);
@@ -612,7 +612,7 @@ void parse_segment_track_entry(struct matroska_ctx* mkv_ctx) {
                 MATROSKA_SWITCH_BREAK(code, code_len);
             default:
                 if (code_len == MATROSKA_MAX_ID_LENGTH) {
-                    mprint(MATROSKA_ERROR "Unknown element 0x%x at position %I64d, skipping segment track entry block\n", code,
+                    mprint(MATROSKA_ERROR "Unknown element 0x%x at position " LLD ", skipping segment track entry block\n", code,
                            get_current_byte(file) - MATROSKA_MAX_ID_LENGTH);
                     set_bytes(file, pos + len);
                     return;
@@ -669,7 +669,7 @@ void parse_segment_tracks(struct matroska_ctx* mkv_ctx)
                 MATROSKA_SWITCH_BREAK(code, code_len);
             default:
                 if (code_len == MATROSKA_MAX_ID_LENGTH) {
-                    mprint(MATROSKA_ERROR "Unknown element 0x%x at position %I64d, skipping segment tracks block\n", code,
+                    mprint(MATROSKA_ERROR "Unknown element 0x%x at position " LLD ", skipping segment tracks block\n", code,
                            get_current_byte(file) - MATROSKA_MAX_ID_LENGTH);
                     set_bytes(file, pos + len);
                     return;
@@ -728,7 +728,7 @@ void parse_segment(struct matroska_ctx* mkv_ctx)
                 MATROSKA_SWITCH_BREAK(code, code_len);
             default:
                 if (code_len == MATROSKA_MAX_ID_LENGTH) {
-                    mprint(MATROSKA_ERROR "Unknown element 0x%x at position %I64d, skipping segment block\n", code,
+                    mprint(MATROSKA_ERROR "Unknown element 0x%x at position " LLD ", skipping segment block\n", code,
                            get_current_byte(file) - MATROSKA_MAX_ID_LENGTH);
                     set_bytes(file, pos + len);
                     return;
@@ -742,7 +742,7 @@ char *filename_without_ext(char* filename) {
     char *returnname;
     char *lastdot;
     if (filename == NULL)
-         return filename;
+        return filename;
     if ((returnname = malloc (strlen (filename) + 1)) == NULL)
         return filename;
     strcpy (returnname, filename);
@@ -753,20 +753,20 @@ char *filename_without_ext(char* filename) {
 }
 
 char* generate_filename_from_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* track)
-{ 
-  char* filename = malloc(sizeof(char)*(MAX_FILE_NAME_SIZE-30));
-  char * filename_non_ext;
-  filename[MAX_FILE_NAME_SIZE-31] = '\0';
-  strncpy(filename, mkv_ctx->filename,(MAX_FILE_NAME_SIZE-31));
-  filename_non_ext=filename_without_ext(filename);
+{
+    char* filename = malloc(sizeof(char)*(MAX_FILE_NAME_SIZE-30));
+    char * filename_non_ext;
+    filename[MAX_FILE_NAME_SIZE-31] = '\0';
+    strncpy(filename, mkv_ctx->filename,(MAX_FILE_NAME_SIZE-31));
+    filename_non_ext=filename_without_ext(filename);
     char* buf = malloc(sizeof(char) * MAX_FILE_NAME_SIZE);
     if (track->lang_index == 0)
         sprintf(buf, "%s_%s.%s", filename_non_ext, track->lang, matroska_track_text_subtitle_id_extensions[track->codec_id]);
     else
-        sprintf(buf, "%s_%s_%llu.%s", filename_without_ext, track->lang, track->lang_index,
+        sprintf(buf, "%s_%s_" LLD ".%s", filename_without_ext, track->lang, track->lang_index,
                 matroska_track_text_subtitle_id_extensions[track->codec_id]);
-free(filename);
-free(filename_non_ext);
+    free(filename);
+    free(filename_non_ext);
     return buf;
 }
 
@@ -807,7 +807,7 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
     for (int i = 0; i < track->sentence_count; i++)
     {
         struct matroska_sub_sentence* sentence = track->sentences[i];
-		mkv_ctx->sentence_count++;
+        mkv_ctx->sentence_count++;
 
         if (track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_UTF8)
         {
@@ -913,7 +913,7 @@ void matroska_parse(struct matroska_ctx* mkv_ctx)
                 MATROSKA_SWITCH_BREAK(code, code_len);
             default:
                 if (code_len == MATROSKA_MAX_ID_LENGTH) {
-                    mprint(MATROSKA_ERROR "Unknown element 0x%x at position %I64d, skipping file parsing\n", code,
+                    mprint(MATROSKA_ERROR "Unknown element 0x%x at position " LLD ", skipping file parsing\n", code,
                            get_current_byte(file) - MATROSKA_MAX_ID_LENGTH);
                     return;
                 }
@@ -948,8 +948,8 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 
     struct matroska_ctx *mkv_ctx = malloc(sizeof(struct matroska_ctx));
     mkv_ctx->ctx = ctx;
-	mkv_ctx->sub_tracks_count = 0;
-	mkv_ctx->sentence_count = 0;
+    mkv_ctx->sub_tracks_count = 0;
+    mkv_ctx->sentence_count = 0;
     mkv_ctx->current_second = 0;
     mkv_ctx->filename = ctx->inputfile[ctx->current_file];
     mkv_ctx->file = create_file(ctx);
@@ -961,10 +961,10 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
                       (int) (mkv_ctx->current_second % 60));
 
     matroska_save_all(mkv_ctx);
-	int sentence_count = mkv_ctx->sentence_count;
+    int sentence_count = mkv_ctx->sentence_count;
     matroska_free_all(mkv_ctx);
 
-	mprint("\n");
+    mprint("\n");
 
     return sentence_count;
 }
