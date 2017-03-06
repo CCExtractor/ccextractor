@@ -111,6 +111,7 @@
 #define MATROSKA_MAX_TRACKS 128
 #define MATROSKA_MAX_SENTENCES 8192
 #define MAX_FILE_NAME_SIZE 200
+
 /* Enums */
 enum matroska_track_entry_type {
     MATROSKA_TRACK_TYPE_VIDEO = 1,
