@@ -54,7 +54,6 @@ INSTLALL_PROGRAM = $(INSTLALL)
 DESTDIR = /usr/bin
 
 if HARDSUBX_IS_ENABLED
-ENABLE_OCR=yes
 CFLAGS+=-DENABLE_HARDSUBX
 CFLAGS+= $(shell pkg-config --cflags libavcodec)
 CFLAGS+= $(shell pkg-config --cflags libavformat)
@@ -85,21 +84,6 @@ if TESSERACT_PRESENT_RPI
 TESS_LDFLAGS= -ltesseract
 TESS_CFLAGS= -I/usr/include/tesseract
 endif
-endif
-
-#error checking of library are there or not
-if !TESSERACT_PRESENT
-$(error **ERROR** "tesseract not found")
-else
-#TODO print the version of library found
-$(info  "tesseract found")
-endif
-
-if LEPTONICA_ABSENT
-$(error **ERROR** "leptonica not found")
-else
-#TODO print the version of library found
-$(info  "Leptonica found")
 endif
 
 CFLAGS  += $(TESS_CFLAGS)
