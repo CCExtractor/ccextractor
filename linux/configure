@@ -5614,10 +5614,10 @@ else
   SYS_IS_LINUX_FALSE=
 fi
 
- if  test ! -z  `pkg-config --libs --silence-errors libavcodec` \
-                            || test ! -z  `pkg-config --libs --silence-errors libavformat` \
-                            || test ! -z `pkg-config --libs --silence-errors libavutil` \
-                            || test ! -z `pkg-config --libs --silence-errors libswscale` ; then
+ if  test -z  `pkg-config --libs --silence-errors libavcodec` \
+                            && test -z  `pkg-config --libs --silence-errors libavformat` \
+                            && test -z `pkg-config --libs --silence-errors libavutil` \
+                            && test -z `pkg-config --libs --silence-errors libswscale` ; then
   AVFLAGS_ARE_EMPTY_TRUE=
   AVFLAGS_ARE_EMPTY_FALSE='#'
 else

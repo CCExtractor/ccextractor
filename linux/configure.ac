@@ -68,10 +68,10 @@ AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_LEPT -gt 
 
 AM_CONDITIONAL(SYS_IS_LINUX, [ string=`gcc -dumpmachine` \
                                     && test -z "${string##*$linux*}" ])
-AM_CONDITIONAL(AVFLAGS_ARE_EMPTY, [ test ! -z  `pkg-config --libs --silence-errors libavcodec` \
-                            || test ! -z  `pkg-config --libs --silence-errors libavformat` \
-                            || test ! -z `pkg-config --libs --silence-errors libavutil` \
-                            || test ! -z `pkg-config --libs --silence-errors libswscale` ])
+AM_CONDITIONAL(AVFLAGS_ARE_EMPTY, [ test -z  `pkg-config --libs --silence-errors libavcodec` \
+                            && test -z  `pkg-config --libs --silence-errors libavformat` \
+                            && test -z `pkg-config --libs --silence-errors libavutil` \
+                            && test -z `pkg-config --libs --silence-errors libswscale` ])
 AM_CONDITIONAL(HARDSUBX_IS_ENABLED, [ test x$hardsubx = xtrue ])
 AM_CONDITIONAL(TESSERACT_PRESENT, [ test ! -z  `pkg-config --libs --silence-errors tesseract` ])
 AM_CONDITIONAL(TESSERACT_PRESENT_RPI, [ test -d "/usr/include/tesseract" && test `ls -A /usr/include/tesseract | wc -l` -gt 0 ])
