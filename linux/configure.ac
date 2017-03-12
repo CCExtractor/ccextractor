@@ -1,6 +1,8 @@
 AC_INIT([CCExtractor], [0.85], [carlos@ccextractor.org])
 AM_INIT_AUTOMAKE([foreign])
 
+AC_CONFIG_SRCDIR([../src/ccextractor.c])
+
 AC_ARG_ENABLE([hardsubx],
 [  --enable-hardsubx    Enable extraction of burned in (hard) subtitles],
 [case "${enableval}" in
