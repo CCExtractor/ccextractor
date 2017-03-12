@@ -597,8 +597,10 @@ check-am: all-am
 check: check-am
 all-am: Makefile config.h all-local
 installdirs:
+install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
+uninstall: uninstall-am
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
@@ -652,7 +654,7 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am:
+install-exec-am: install-exec-local
 
 install-html: install-html-am
 
@@ -692,7 +694,7 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am:
+uninstall-am: uninstall-local
 
 .MAKE: all install-am install-strip
 
@@ -704,19 +706,19 @@ uninstall-am:
 	distclean-tags distcleancheck distdir distuninstallcheck dvi \
 	dvi-am html html-am info info-am install install-am \
 	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
-	pdf-am ps ps-am tags tags-am uninstall uninstall-am
+	install-exec install-exec-am install-exec-local install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-generic pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-local
 
 .PRECIOUS: Makefile
 
 @AVFLAGS_ARE_EMPTY_TRUE@@HARDSUBX_IS_ENABLED_TRUE@$(error **ERROR** "libav not found")
 @AVFLAGS_ARE_EMPTY_FALSE@@HARDSUBX_IS_ENABLED_TRUE@$(info "libav found")
 
-.PHONY: all-local
 all-local: pre-build objs_dir $(TARGET)
 
 .PHONY: objs_dir
@@ -735,19 +737,16 @@ $(OBJS_DIR)/%.o: %.cpp
 $(OBJS_DIR)/ccextractor.o: ccextractor.c
 	$(CC) -c $(ALL_FLAGS) $(INCLUDE) $(CFLAGS) -O0 $< -o $@  
 
-.PHONY: clean-local
 clean-local:
 	rm -rf $(TARGET) 2>/dev/null || true
 	rm -rf $(OBJS_CCX) $(OBJS_PNG) $(OBJS_ZLIB) $(OBJS_GPACMP4) $(OBJS_HASH) $(OBJS_UTF8) $(OBJS) 2>/dev/null || true
 	rm -rdf $(OBJS_DIR) 2>/dev/null || true
 	rm -rf .depend 2>/dev/null || true
 
-.PHONY: install
-install: $(TARGET)
+install-exec-local: $(TARGET)
 	$(INSTLALL_PROGRAM) $(TARGET) $(DESTDIR)
 
-.PHONY: uninstall
-uninstall: 
+uninstall-local:
 	rm -iv $(DESTDIR)/$(TARGET) 
 
 .PHONY: depend dep

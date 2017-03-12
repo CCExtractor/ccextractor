@@ -103,7 +103,6 @@ LDFLAGS+= $(shell pkg-config --libs libavformat )
 LDFLAGS+= $(shell pkg-config --libs libavutil )
 endif
 
-.PHONY: all-local
 all-local: pre-build objs_dir $(TARGET)
 
 .PHONY: objs_dir
@@ -122,19 +121,16 @@ $(OBJS_DIR)/%.o: %.cpp
 $(OBJS_DIR)/ccextractor.o: ccextractor.c
 	$(CC) -c $(ALL_FLAGS) $(INCLUDE) $(CFLAGS) -O0 $< -o $@  
 
-.PHONY: clean-local
 clean-local:
 	rm -rf $(TARGET) 2>/dev/null || true
 	rm -rf $(OBJS_CCX) $(OBJS_PNG) $(OBJS_ZLIB) $(OBJS_GPACMP4) $(OBJS_HASH) $(OBJS_UTF8) $(OBJS) 2>/dev/null || true
 	rm -rdf $(OBJS_DIR) 2>/dev/null || true
 	rm -rf .depend 2>/dev/null || true
 
-.PHONY: install
-install: $(TARGET)
+install-exec-local: $(TARGET)
 	$(INSTLALL_PROGRAM) $(TARGET) $(DESTDIR)
 
-.PHONY: uninstall
-uninstall: 
+uninstall-local:
 	rm -iv $(DESTDIR)/$(TARGET) 
 
 .PHONY: depend dep
