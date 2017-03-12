@@ -637,8 +637,6 @@ TESSERACT_PRESENT_FALSE
 TESSERACT_PRESENT_TRUE
 HARDSUBX_IS_ENABLED_FALSE
 HARDSUBX_IS_ENABLED_TRUE
-AVFLAGS_ARE_EMPTY_FALSE
-AVFLAGS_ARE_EMPTY_TRUE
 SYS_IS_LINUX_FALSE
 SYS_IS_LINUX_TRUE
 LIBOBJS
@@ -4224,6 +4222,174 @@ else
   HAS_LEPT=0
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for avcodec_version in -lavcodec" >&5
+$as_echo_n "checking for avcodec_version in -lavcodec... " >&6; }
+if ${ac_cv_lib_avcodec_avcodec_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lavcodec  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char avcodec_version ();
+int
+main ()
+{
+return avcodec_version ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_avcodec_avcodec_version=yes
+else
+  ac_cv_lib_avcodec_avcodec_version=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_avcodec_avcodec_version" >&5
+$as_echo "$ac_cv_lib_avcodec_avcodec_version" >&6; }
+if test "x$ac_cv_lib_avcodec_avcodec_version" = xyes; then :
+  HAS_AVCODEC=1
+else
+  HAS_AVCODEC=0
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for avformat_version in -lavformat" >&5
+$as_echo_n "checking for avformat_version in -lavformat... " >&6; }
+if ${ac_cv_lib_avformat_avformat_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lavformat  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char avformat_version ();
+int
+main ()
+{
+return avformat_version ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_avformat_avformat_version=yes
+else
+  ac_cv_lib_avformat_avformat_version=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_avformat_avformat_version" >&5
+$as_echo "$ac_cv_lib_avformat_avformat_version" >&6; }
+if test "x$ac_cv_lib_avformat_avformat_version" = xyes; then :
+  HAS_AVFORMAT=1
+else
+  HAS_AVFORMAT=0
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for avutil_version in -lavutil" >&5
+$as_echo_n "checking for avutil_version in -lavutil... " >&6; }
+if ${ac_cv_lib_avutil_avutil_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lavutil  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char avutil_version ();
+int
+main ()
+{
+return avutil_version ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_avutil_avutil_version=yes
+else
+  ac_cv_lib_avutil_avutil_version=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_avutil_avutil_version" >&5
+$as_echo "$ac_cv_lib_avutil_avutil_version" >&6; }
+if test "x$ac_cv_lib_avutil_avutil_version" = xyes; then :
+  HAS_AVUTIL=1
+else
+  HAS_AVUTIL=0
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for swscale_version in -lswscale" >&5
+$as_echo_n "checking for swscale_version in -lswscale... " >&6; }
+if ${ac_cv_lib_swscale_swscale_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lswscale  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char swscale_version ();
+int
+main ()
+{
+return swscale_version ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_swscale_swscale_version=yes
+else
+  ac_cv_lib_swscale_swscale_version=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_swscale_swscale_version" >&5
+$as_echo "$ac_cv_lib_swscale_swscale_version" >&6; }
+if test "x$ac_cv_lib_swscale_swscale_version" = xyes; then :
+  HAS_SWSCALE=1
+else
+  HAS_SWSCALE=0
+fi
+
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -5592,6 +5758,30 @@ else
 fi
 
 
+if  test x$hardsubx = xtrue && test $HAS_AVCODEC -gt 0 ; then :
+  echo "avcodec library found..."
+fi
+if  test x$hardsubx = xtrue && test ! $HAS_AVCODEC -gt 0 ; then :
+  echo "avcodec library not found. Please install the avcodec library before proceeding"; exit -1
+fi
+if  test x$hardsubx = xtrue && test $HAS_AVFORMAT -gt 0 ; then :
+  echo "avformat library found..."
+fi
+if  test x$hardsubx = xtrue && test ! $HAS_AVFORMAT -gt 0 ; then :
+  echo "avformat library not found. Please install the avformat library before proceeding"; exit -1
+fi
+if  test x$hardsubx = xtrue && test $HAS_AVUTIL -gt 0 ; then :
+  echo "avutil library found..."
+fi
+if  test x$hardsubx = xtrue && test ! $HAS_AVUTIL -gt 0 ; then :
+  echo "avutil library not found. Please install the avutil library before proceeding"; exit -1
+fi
+if  test x$hardsubx = xtrue && test $HAS_SWSCALE -gt 0 ; then :
+  echo "swscale library found..."
+fi
+if  test x$hardsubx = xtrue && test ! $HAS_SWSCALE -gt 0 ; then :
+  echo "swscale library not found. Please install the swscale library before proceeding"; exit -1
+fi
 if  (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_TESSERACT -gt 0 ; then :
   echo "tesseract library found... "`tesseract --version | grep tesseract`
 fi
@@ -5612,17 +5802,6 @@ fi
 else
   SYS_IS_LINUX_TRUE='#'
   SYS_IS_LINUX_FALSE=
-fi
-
- if  test -z  `pkg-config --libs --silence-errors libavcodec` \
-                            && test -z  `pkg-config --libs --silence-errors libavformat` \
-                            && test -z `pkg-config --libs --silence-errors libavutil` \
-                            && test -z `pkg-config --libs --silence-errors libswscale` ; then
-  AVFLAGS_ARE_EMPTY_TRUE=
-  AVFLAGS_ARE_EMPTY_FALSE='#'
-else
-  AVFLAGS_ARE_EMPTY_TRUE='#'
-  AVFLAGS_ARE_EMPTY_FALSE=
 fi
 
  if  test x$hardsubx = xtrue ; then
@@ -5803,10 +5982,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${SYS_IS_LINUX_TRUE}" && test -z "${SYS_IS_LINUX_FALSE}"; then
   as_fn_error $? "conditional \"SYS_IS_LINUX\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${AVFLAGS_ARE_EMPTY_TRUE}" && test -z "${AVFLAGS_ARE_EMPTY_FALSE}"; then
-  as_fn_error $? "conditional \"AVFLAGS_ARE_EMPTY\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HARDSUBX_IS_ENABLED_TRUE}" && test -z "${HARDSUBX_IS_ENABLED_FALSE}"; then

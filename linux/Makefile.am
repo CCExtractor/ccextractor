@@ -63,11 +63,6 @@ AV_LDFLAGS= $(shell pkg-config --libs libavcodec )
 AV_LDFLAGS+= $(shell pkg-config --libs libavformat )
 AV_LDFLAGS+= $(shell pkg-config --libs libavutil )
 AV_LDFLAGS+= $(shell pkg-config --libs libswscale )
-if AVFLAGS_ARE_EMPTY
-$(error **ERROR** "libav not found")
-else
-$(info "libav found")
-endif
 LDFLAGS+= $(AV_LDFLAGS)
 endif
 

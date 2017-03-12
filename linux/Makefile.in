@@ -716,8 +716,6 @@ uninstall-am: uninstall-local
 
 .PRECIOUS: Makefile
 
-@AVFLAGS_ARE_EMPTY_TRUE@@HARDSUBX_IS_ENABLED_TRUE@$(error **ERROR** "libav not found")
-@AVFLAGS_ARE_EMPTY_FALSE@@HARDSUBX_IS_ENABLED_TRUE@$(info "libav found")
 
 all-local: pre-build objs_dir $(TARGET)
 

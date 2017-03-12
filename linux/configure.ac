@@ -12,6 +12,10 @@ AC_PROG_MAKE_SET
 AC_CHECK_LIB([m], [cos], [], [echo "math library not found. Please install the math library before proceeding"; exit -1])
 AC_CHECK_LIB([tesseract], [TessVersion], [HAS_TESSERACT=1], [HAS_TESSERACT=0])
 AC_CHECK_LIB([lept], [getLeptonicaVersion], [HAS_LEPT=1], [HAS_LEPT=0])
+AC_CHECK_LIB([avcodec], [avcodec_version], [HAS_AVCODEC=1], [HAS_AVCODEC=0])
+AC_CHECK_LIB([avformat], [avformat_version], [HAS_AVFORMAT=1], [HAS_AVFORMAT=0])
+AC_CHECK_LIB([avutil], [avutil_version], [HAS_AVUTIL=1], [HAS_AVUTIL=0])
+AC_CHECK_LIB([swscale], [swscale_version], [HAS_SWSCALE=1], [HAS_SWSCALE=0])
 
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h float.h inttypes.h limits.h locale.h malloc.h netdb.h netinet/in.h stddef.h stdint.h stdlib.h string.h sys/socket.h sys/time.h sys/timeb.h termios.h unistd.h wchar.h])
 
@@ -61,6 +65,14 @@ AC_ARG_ENABLE([ffmpeg],
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-ffmpeg]) ;;
 esac],[ffmpeg=false])
 
+AS_IF([ test x$hardsubx = xtrue && test $HAS_AVCODEC -gt 0 ], [echo "avcodec library found..."])
+AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVCODEC -gt 0 ], [echo "avcodec library not found. Please install the avcodec library before proceeding"; exit -1])
+AS_IF([ test x$hardsubx = xtrue && test $HAS_AVFORMAT -gt 0 ], [echo "avformat library found..."])
+AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVFORMAT -gt 0 ], [echo "avformat library not found. Please install the avformat library before proceeding"; exit -1])
+AS_IF([ test x$hardsubx = xtrue && test $HAS_AVUTIL -gt 0 ], [echo "avutil library found..."])
+AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVUTIL -gt 0 ], [echo "avutil library not found. Please install the avutil library before proceeding"; exit -1])
+AS_IF([ test x$hardsubx = xtrue && test $HAS_SWSCALE -gt 0 ], [echo "swscale library found..."])
+AS_IF([ test x$hardsubx = xtrue && test ! $HAS_SWSCALE -gt 0 ], [echo "swscale library not found. Please install the swscale library before proceeding"; exit -1])
 AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_TESSERACT -gt 0 ], [echo "tesseract library found... "`tesseract --version | grep tesseract`])
 AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_TESSERACT -gt 0 ], [echo "tesseract library not found. Please install the tesseract library before proceeding"; exit -1])
 AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_LEPT -gt 0 ], [echo "leptonica library found... "`tesseract --version | grep leptonica`])
@@ -68,10 +80,6 @@ AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_LEPT -gt 
 
 AM_CONDITIONAL(SYS_IS_LINUX, [ string=`gcc -dumpmachine` \
                                     && test -z "${string##*$linux*}" ])
-AM_CONDITIONAL(AVFLAGS_ARE_EMPTY, [ test -z  `pkg-config --libs --silence-errors libavcodec` \
-                            && test -z  `pkg-config --libs --silence-errors libavformat` \
-                            && test -z `pkg-config --libs --silence-errors libavutil` \
-                            && test -z `pkg-config --libs --silence-errors libswscale` ])
 AM_CONDITIONAL(HARDSUBX_IS_ENABLED, [ test x$hardsubx = xtrue ])
 AM_CONDITIONAL(TESSERACT_PRESENT, [ test ! -z  `pkg-config --libs --silence-errors tesseract` ])
 AM_CONDITIONAL(TESSERACT_PRESENT_RPI, [ test -d "/usr/include/tesseract" && test `ls -A /usr/include/tesseract | wc -l` -gt 0 ])
