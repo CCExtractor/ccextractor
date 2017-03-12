@@ -103,8 +103,8 @@ LDFLAGS+= $(shell pkg-config --libs libavformat )
 LDFLAGS+= $(shell pkg-config --libs libavutil )
 endif
 
-.PHONY: all
-all: pre-build objs_dir $(TARGET) 
+.PHONY: all-local
+all-local: pre-build objs_dir $(TARGET)
 
 .PHONY: objs_dir
 objs_dir: 

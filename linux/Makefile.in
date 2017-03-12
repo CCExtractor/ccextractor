@@ -595,7 +595,7 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-am
-all-am: Makefile config.h
+all-am: Makefile config.h all-local
 installdirs:
 install-exec: install-exec-am
 install-data: install-data-am
@@ -696,28 +696,28 @@ uninstall-am:
 
 .MAKE: all install-am install-strip
 
-.PHONY: CTAGS GTAGS TAGS all all-am am--refresh check check-am clean \
-	clean-cscope clean-generic clean-local cscope cscopelist-am \
-	ctags ctags-am dist dist-all dist-bzip2 dist-gzip dist-lzip \
-	dist-shar dist-tarZ dist-xz dist-zip distcheck distclean \
-	distclean-generic distclean-hdr distclean-tags distcleancheck \
-	distdir distuninstallcheck dvi dvi-am html html-am info \
-	info-am install install-am install-data install-data-am \
-	install-dvi install-dvi-am install-exec install-exec-am \
-	install-html install-html-am install-info install-info-am \
-	install-man install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-generic pdf pdf-am ps ps-am tags \
-	tags-am uninstall uninstall-am
+.PHONY: CTAGS GTAGS TAGS all all-am all-local am--refresh check \
+	check-am clean clean-cscope clean-generic clean-local cscope \
+	cscopelist-am ctags ctags-am dist dist-all dist-bzip2 \
+	dist-gzip dist-lzip dist-shar dist-tarZ dist-xz dist-zip \
+	distcheck distclean distclean-generic distclean-hdr \
+	distclean-tags distcleancheck distdir distuninstallcheck dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
+	pdf-am ps ps-am tags tags-am uninstall uninstall-am
 
 .PRECIOUS: Makefile
 
 @AVFLAGS_ARE_EMPTY_TRUE@@HARDSUBX_IS_ENABLED_TRUE@$(error **ERROR** "libav not found")
 @AVFLAGS_ARE_EMPTY_FALSE@@HARDSUBX_IS_ENABLED_TRUE@$(info "libav found")
 
-.PHONY: all
-all: pre-build objs_dir $(TARGET) 
+.PHONY: all-local
+all-local: pre-build objs_dir $(TARGET)
 
 .PHONY: objs_dir
 objs_dir: 
