@@ -1,5 +1,6 @@
 #!/bin/bash
 
-linux/pre-build.sh
-
+cd linux
+./pre-build.sh
+cd ..
 autoreconf -i
