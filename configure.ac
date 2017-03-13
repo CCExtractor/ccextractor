@@ -6,7 +6,6 @@ AC_INIT(ccextractor, 0.86alpha, https://github.com/CCExtractor/ccextractor/issue
 AC_CONFIG_AUX_DIR([build])
 AC_CONFIG_SRCDIR([src/ccextractor.c])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
-AC_CONFIG_HEADERS([config.h])
 
 
 # Checks for programs.
