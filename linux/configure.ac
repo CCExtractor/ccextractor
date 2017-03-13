@@ -9,7 +9,7 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
-AC_CHECK_LIB([m], [cos], [], [echo "math library not found. Please install the math library before proceeding"; exit -1])
+AC_CHECK_LIB([m], [cos], [], [AC_MSG_ERROR(math library not found. Please install the math library before proceeding)])
 AC_CHECK_LIB([tesseract], [TessVersion], [HAS_TESSERACT=1], [HAS_TESSERACT=0])
 AC_CHECK_LIB([lept], [getLeptonicaVersion], [HAS_LEPT=1], [HAS_LEPT=0])
 AC_CHECK_LIB([avcodec], [avcodec_version], [HAS_AVCODEC=1], [HAS_AVCODEC=0])
@@ -44,39 +44,39 @@ AC_FUNC_STRERROR_R
 AC_CHECK_FUNCS([floor ftruncate gethostbyname gettimeofday inet_ntoa mblen memchr memmove memset mkdir modf pow realpath rmdir select setlocale socket sqrt strcasecmp strchr strdup strerror strndup strrchr strstr strtol])
 
 AC_ARG_ENABLE([hardsubx],
-[  --enable-hardsubx    Enable extraction of burned in (hard) subtitles],
+AC_HELP_STRING([--enable-hardsubx], [Enable extraction of burned in (hard) subtitles]),
 [case "${enableval}" in
   yes) hardsubx=true ;;
   no)  hardsubx=false ;;
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-hardsubx]) ;;
 esac],[hardsubx=false])
 AC_ARG_ENABLE([ocr],
-[  --enable-ocr    Enable OCR],
+AC_HELP_STRING([--enable-ocr], [Enable optical character recognition]),
 [case "${enableval}" in
   yes) ocr=true ;;
   no)  ocr=false ;;
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-ocr]) ;;
 esac],[ocr=false])
 AC_ARG_ENABLE([ffmpeg],
-[  --enable-ffmpeg    Enable FFmpeg integration],
+AC_HELP_STRING([--enable-ffmpeg], [Enable FFmpeg integration]),
 [case "${enableval}" in
   yes) ffmpeg=true ;;
   no)  ffmpeg=false ;;
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-ffmpeg]) ;;
 esac],[ffmpeg=false])
 
-AS_IF([ test x$hardsubx = xtrue && test $HAS_AVCODEC -gt 0 ], [echo "avcodec library found..."])
-AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVCODEC -gt 0 ], [echo "avcodec library not found. Please install the avcodec library before proceeding"; exit -1])
-AS_IF([ test x$hardsubx = xtrue && test $HAS_AVFORMAT -gt 0 ], [echo "avformat library found..."])
-AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVFORMAT -gt 0 ], [echo "avformat library not found. Please install the avformat library before proceeding"; exit -1])
-AS_IF([ test x$hardsubx = xtrue && test $HAS_AVUTIL -gt 0 ], [echo "avutil library found..."])
-AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVUTIL -gt 0 ], [echo "avutil library not found. Please install the avutil library before proceeding"; exit -1])
-AS_IF([ test x$hardsubx = xtrue && test $HAS_SWSCALE -gt 0 ], [echo "swscale library found..."])
-AS_IF([ test x$hardsubx = xtrue && test ! $HAS_SWSCALE -gt 0 ], [echo "swscale library not found. Please install the swscale library before proceeding"; exit -1])
-AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_TESSERACT -gt 0 ], [echo "tesseract library found... "`tesseract --version | grep tesseract`])
-AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_TESSERACT -gt 0 ], [echo "tesseract library not found. Please install the tesseract library before proceeding"; exit -1])
-AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_LEPT -gt 0 ], [echo "leptonica library found... "`tesseract --version | grep leptonica`])
-AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_LEPT -gt 0 ], [echo "leptonica library not found. Please install the leptonica library before proceeding"; exit -1])
+AS_IF([ test x$hardsubx = xtrue && test $HAS_AVCODEC -gt 0 ], [AC_MSG_NOTICE(avcodec library found)])
+AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVCODEC -gt 0 ], [AC_MSG_ERROR(avcodec library not found. Please install the avcodec library before proceeding)])
+AS_IF([ test x$hardsubx = xtrue && test $HAS_AVFORMAT -gt 0 ], [AC_MSG_NOTICE(avformat library found)])
+AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVFORMAT -gt 0 ], [AC_MSG_ERROR(avformat library not found. Please install the avformat library before proceeding)])
+AS_IF([ test x$hardsubx = xtrue && test $HAS_AVUTIL -gt 0 ], [AC_MSG_NOTICE(avutil library found)])
+AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVUTIL -gt 0 ], [AC_MSG_ERROR(avutil library not found. Please install the avutil library before proceeding)])
+AS_IF([ test x$hardsubx = xtrue && test $HAS_SWSCALE -gt 0 ], [AC_MSG_NOTICE(swscale library found)])
+AS_IF([ test x$hardsubx = xtrue && test ! $HAS_SWSCALE -gt 0 ], [AC_MSG_ERROR(swscale library not found. Please install the swscale library before proceeding)])
+AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_TESSERACT -gt 0 ], [TESS_VERSION=`tesseract --version | grep tesseract` && AC_MSG_NOTICE(tesseract library found... $TESS_VERSION)])
+AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_TESSERACT -gt 0 ], [AC_MSG_ERROR(tesseract library not found. Please install the tesseract library before proceeding)])
+AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_LEPT -gt 0 ], [LEPT_VERSION=`tesseract --version | grep leptonica` && AC_MSG_NOTICE(leptonica library found... $LEPT_VERSION)])
+AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_LEPT -gt 0 ], [AC_MSG_ERROR(leptonica library not found. Please install the leptonica library before proceeding)])
 
 AM_CONDITIONAL(SYS_IS_LINUX, [ string=`gcc -dumpmachine` \
                                     && test -z "${string##*$linux*}" ])

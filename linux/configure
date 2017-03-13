@@ -1364,9 +1364,9 @@ Optional Features:
                           do not reject slow dependency extractors
   --disable-dependency-tracking
                           speeds up one-time build
-  --enable-hardsubx    Enable extraction of burned in (hard) subtitles
-  --enable-ocr    Enable OCR
-  --enable-ffmpeg    Enable FFmpeg integration
+  --enable-hardsubx       Enable extraction of burned in (hard) subtitles
+  --enable-ocr            Enable optical character recognition
+  --enable-ffmpeg         Enable FFmpeg integration
 
 Some influential environment variables:
   CC          C compiler command
@@ -4135,7 +4135,7 @@ _ACEOF
   LIBS="-lm $LIBS"
 
 else
-  echo "math library not found. Please install the math library before proceeding"; exit -1
+  as_fn_error $? "math library not found. Please install the math library before proceeding" "$LINENO" 5
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for TessVersion in -ltesseract" >&5
@@ -5759,40 +5759,46 @@ fi
 
 
 if  test x$hardsubx = xtrue && test $HAS_AVCODEC -gt 0 ; then :
-  echo "avcodec library found..."
+  { $as_echo "$as_me:${as_lineno-$LINENO}: avcodec library found" >&5
+$as_echo "$as_me: avcodec library found" >&6;}
 fi
 if  test x$hardsubx = xtrue && test ! $HAS_AVCODEC -gt 0 ; then :
-  echo "avcodec library not found. Please install the avcodec library before proceeding"; exit -1
+  as_fn_error $? "avcodec library not found. Please install the avcodec library before proceeding" "$LINENO" 5
 fi
 if  test x$hardsubx = xtrue && test $HAS_AVFORMAT -gt 0 ; then :
-  echo "avformat library found..."
+  { $as_echo "$as_me:${as_lineno-$LINENO}: avformat library found" >&5
+$as_echo "$as_me: avformat library found" >&6;}
 fi
 if  test x$hardsubx = xtrue && test ! $HAS_AVFORMAT -gt 0 ; then :
-  echo "avformat library not found. Please install the avformat library before proceeding"; exit -1
+  as_fn_error $? "avformat library not found. Please install the avformat library before proceeding" "$LINENO" 5
 fi
 if  test x$hardsubx = xtrue && test $HAS_AVUTIL -gt 0 ; then :
-  echo "avutil library found..."
+  { $as_echo "$as_me:${as_lineno-$LINENO}: avutil library found" >&5
+$as_echo "$as_me: avutil library found" >&6;}
 fi
 if  test x$hardsubx = xtrue && test ! $HAS_AVUTIL -gt 0 ; then :
-  echo "avutil library not found. Please install the avutil library before proceeding"; exit -1
+  as_fn_error $? "avutil library not found. Please install the avutil library before proceeding" "$LINENO" 5
 fi
 if  test x$hardsubx = xtrue && test $HAS_SWSCALE -gt 0 ; then :
-  echo "swscale library found..."
+  { $as_echo "$as_me:${as_lineno-$LINENO}: swscale library found" >&5
+$as_echo "$as_me: swscale library found" >&6;}
 fi
 if  test x$hardsubx = xtrue && test ! $HAS_SWSCALE -gt 0 ; then :
-  echo "swscale library not found. Please install the swscale library before proceeding"; exit -1
+  as_fn_error $? "swscale library not found. Please install the swscale library before proceeding" "$LINENO" 5
 fi
 if  (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_TESSERACT -gt 0 ; then :
-  echo "tesseract library found... "`tesseract --version | grep tesseract`
+  TESS_VERSION=`tesseract --version | grep tesseract` && { $as_echo "$as_me:${as_lineno-$LINENO}: tesseract library found... $TESS_VERSION" >&5
+$as_echo "$as_me: tesseract library found... $TESS_VERSION" >&6;}
 fi
 if  (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_TESSERACT -gt 0 ; then :
-  echo "tesseract library not found. Please install the tesseract library before proceeding"; exit -1
+  as_fn_error $? "tesseract library not found. Please install the tesseract library before proceeding" "$LINENO" 5
 fi
 if  (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_LEPT -gt 0 ; then :
-  echo "leptonica library found... "`tesseract --version | grep leptonica`
+  LEPT_VERSION=`tesseract --version | grep leptonica` && { $as_echo "$as_me:${as_lineno-$LINENO}: leptonica library found... $LEPT_VERSION" >&5
+$as_echo "$as_me: leptonica library found... $LEPT_VERSION" >&6;}
 fi
 if  (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_LEPT -gt 0 ; then :
-  echo "leptonica library not found. Please install the leptonica library before proceeding"; exit -1
+  as_fn_error $? "leptonica library not found. Please install the leptonica library before proceeding" "$LINENO" 5
 fi
 
  if  string=`gcc -dumpmachine` \
