@@ -59,32 +59,32 @@ CFLAGS+= $(shell pkg-config --cflags libavcodec)
 CFLAGS+= $(shell pkg-config --cflags libavformat)
 CFLAGS+= $(shell pkg-config --cflags libavutil)
 CFLAGS+= $(shell pkg-config --cflags libswscale)
-AV_LDFLAGS= $(shell pkg-config --libs libavcodec )
-AV_LDFLAGS+= $(shell pkg-config --libs libavformat )
-AV_LDFLAGS+= $(shell pkg-config --libs libavutil )
-AV_LDFLAGS+= $(shell pkg-config --libs libswscale )
-LDFLAGS+= $(AV_LDFLAGS)
+AV_LDFLAGS1= $(shell pkg-config --libs libavcodec )
+AV_LDFLAGS1+= $(shell pkg-config --libs libavformat )
+AV_LDFLAGS1+= $(shell pkg-config --libs libavutil )
+AV_LDFLAGS1+= $(shell pkg-config --libs libswscale )
+LDFLAGS+= $(AV_LDFLAGS1)
 endif
 
 if OCR_IS_ENABLED
 CFLAGS+=-DENABLE_OCR -DPNG_NO_CONFIG_H
-LEPT_LDFLAGS= $(shell pkg-config --libs lept)
+LEPT_LDFLAGS1= $(shell pkg-config --libs lept)
 
 if TESSERACT_PRESENT
-TESS_LDFLAGS= $(shell pkg-config --libs tesseract)
+TESS_LDFLAGS1= $(shell pkg-config --libs tesseract)
 TESS_CFLAGS= $(shell pkg-config --cflags tesseract)
 else
 #fix for raspberry pi not having a pkgconfig file for tesseract
 if TESSERACT_PRESENT_RPI
-TESS_LDFLAGS= -ltesseract
+TESS_LDFLAGS1= -ltesseract
 TESS_CFLAGS= -I/usr/include/tesseract
 endif
 endif
 
 CFLAGS  += $(TESS_CFLAGS)
 CFLAGS  += $(shell pkg-config --cflags lept)
-LDFLAGS += $(TESS_LDFLAGS)
-LDFLAGS += $(LEPT_LDFLAGS)
+LDFLAGS += $(TESS_LDFLAGS1)
+LDFLAGS += $(LEPT_LDFLAGS1)
 endif
 
 

@@ -91,11 +91,11 @@ POST_UNINSTALL = :
 @HARDSUBX_IS_ENABLED_TRUE@	libavformat) $(shell pkg-config \
 @HARDSUBX_IS_ENABLED_TRUE@	--cflags libavutil) $(shell \
 @HARDSUBX_IS_ENABLED_TRUE@	pkg-config --cflags libswscale)
-@HARDSUBX_IS_ENABLED_TRUE@am__append_3 = $(AV_LDFLAGS)
+@HARDSUBX_IS_ENABLED_TRUE@am__append_3 = $(AV_LDFLAGS1)
 @OCR_IS_ENABLED_TRUE@am__append_4 = -DENABLE_OCR -DPNG_NO_CONFIG_H \
 @OCR_IS_ENABLED_TRUE@	$(TESS_CFLAGS) $(shell pkg-config \
 @OCR_IS_ENABLED_TRUE@	--cflags lept)
-@OCR_IS_ENABLED_TRUE@am__append_5 = $(TESS_LDFLAGS) $(LEPT_LDFLAGS)
+@OCR_IS_ENABLED_TRUE@am__append_5 = $(TESS_LDFLAGS1) $(LEPT_LDFLAGS1)
 @FFMPEG_IS_ENABLED_TRUE@am__append_6 = -DENABLE_FFMPEG $(shell \
 @FFMPEG_IS_ENABLED_TRUE@	pkg-config --cflags libavcodec) \
 @FFMPEG_IS_ENABLED_TRUE@	$(shell pkg-config --cflags \
@@ -306,16 +306,16 @@ OBJS_UTF8 = $(SRCS_UTF8:$(SRCS_UTF8_DIR)/%.c=$(OBJS_DIR)/%.o)
 INSTLALL = cp -f -p
 INSTLALL_PROGRAM = $(INSTLALL)
 DESTDIR = /usr/bin
-@HARDSUBX_IS_ENABLED_TRUE@AV_LDFLAGS = $(shell pkg-config --libs \
+@HARDSUBX_IS_ENABLED_TRUE@AV_LDFLAGS1 = $(shell pkg-config --libs \
 @HARDSUBX_IS_ENABLED_TRUE@	libavcodec ) $(shell pkg-config \
 @HARDSUBX_IS_ENABLED_TRUE@	--libs libavformat ) $(shell \
 @HARDSUBX_IS_ENABLED_TRUE@	pkg-config --libs libavutil ) \
 @HARDSUBX_IS_ENABLED_TRUE@	$(shell pkg-config --libs libswscale \
 @HARDSUBX_IS_ENABLED_TRUE@	)
-@OCR_IS_ENABLED_TRUE@LEPT_LDFLAGS = $(shell pkg-config --libs lept)
+@OCR_IS_ENABLED_TRUE@LEPT_LDFLAGS1 = $(shell pkg-config --libs lept)
 #fix for raspberry pi not having a pkgconfig file for tesseract
-@OCR_IS_ENABLED_TRUE@@TESSERACT_PRESENT_FALSE@@TESSERACT_PRESENT_RPI_TRUE@TESS_LDFLAGS = -ltesseract
-@OCR_IS_ENABLED_TRUE@@TESSERACT_PRESENT_TRUE@TESS_LDFLAGS = $(shell pkg-config --libs tesseract)
+@OCR_IS_ENABLED_TRUE@@TESSERACT_PRESENT_FALSE@@TESSERACT_PRESENT_RPI_TRUE@TESS_LDFLAGS1 = -ltesseract
+@OCR_IS_ENABLED_TRUE@@TESSERACT_PRESENT_TRUE@TESS_LDFLAGS1 = $(shell pkg-config --libs tesseract)
 @OCR_IS_ENABLED_TRUE@@TESSERACT_PRESENT_FALSE@@TESSERACT_PRESENT_RPI_TRUE@TESS_CFLAGS = -I/usr/include/tesseract
 @OCR_IS_ENABLED_TRUE@@TESSERACT_PRESENT_TRUE@TESS_CFLAGS = $(shell pkg-config --cflags tesseract)
 all: config.h
