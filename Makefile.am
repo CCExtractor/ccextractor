@@ -109,7 +109,7 @@ ccextractor_SOURCES = \
 				src/lib_ccx/ccx_common_option.c \
 				src/lib_ccx/ccx_common_common.c \
 				src/lib_ccx/utility.c \
-				src/lib_ccx/activity.c \	
+				src/lib_ccx/activity.c \
 				src/lib_ccx/asf_functions.c \
 				src/lib_ccx/avc_functions.c \
 				src/lib_ccx/cc_bitstream.c \
@@ -270,4 +270,3 @@ ccextractor_CPPFLAGS =-I /usr/include/leptonica/ -I /usr/include/tesseract/ -I$(
 ccextractor_LDADD =-lm -ltesseract -llept
 
 ccextractor_LDFLAGS=-zmuldefs
- 
