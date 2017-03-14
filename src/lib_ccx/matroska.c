@@ -618,11 +618,10 @@ void parse_segment_track_entry(struct matroska_ctx* mkv_ctx) {
         sub_track->codec_id = codec_id;
         sub_track->sentence_count = 0;
 
-        for (int i = 0; i < mkv_ctx->sub_tracks_count; i++)
-            if (strcmp((const char *)mkv_ctx->sub_tracks[i]->lang, (const char *)lang) == 0)
-                sub_track->lang_index++;
-
-        mkv_ctx->sub_tracks[mkv_ctx->sub_tracks_count] = sub_track;
+		for (int i = 0; i < mkv_ctx->sub_tracks_count; i++)
+			if (strcmp((const char *)mkv_ctx->sub_tracks[i]->lang, (const char *)lang) == 0)
+				sub_track->lang_index++;
+		    mkv_ctx->sub_tracks[mkv_ctx->sub_tracks_count] = sub_track;
         mkv_ctx->sub_tracks_count++;
     }
     else
@@ -644,8 +643,10 @@ void parse_segment_tracks(struct matroska_ctx* mkv_ctx)
         switch (code) {
             /* Tracks ids*/
             case MATROSKA_SEGMENT_TRACK_ENTRY:
-                parse_segment_track_entry(mkv_ctx);
-                MATROSKA_SWITCH_BREAK(code, code_len);
+
+
+				    parse_segment_track_entry(mkv_ctx);
+            MATROSKA_SWITCH_BREAK(code, code_len);
 
                 /* Misc ids */
             case MATROSKA_VOID:
@@ -779,8 +780,7 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
         {
             char number[9];
             sprintf(number, "%d", i + 1);
-
-            char *timestamp_start = malloc(sizeof(char) * 80);	//being generous 
+            char *timestamp_start = malloc(sizeof(char) * 80);	//being generous
             timestamp_to_srttime(sentence->time_start, timestamp_start);
             ULLONG time_end = sentence->time_end;
             if (i + 1 < track->sentence_count)
@@ -864,7 +864,7 @@ void matroska_parse(struct matroska_ctx* mkv_ctx)
         code_len++;
 
         switch (code) {
-            /* Header ids*/
+          /* Header ids*/
             case MATROSKA_EBML_HEADER:
                 parse_ebml(file);
                 MATROSKA_SWITCH_BREAK(code, code_len);
@@ -921,6 +921,7 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
     mkv_ctx->current_second = 0;
     mkv_ctx->filename = ctx->inputfile[ctx->current_file];
     mkv_ctx->file = create_file(ctx);
+    mkv_ctx->sub_tracks = malloc(MATROSKA_MAX_TRACKS*sizeof(struct matroska_sub_track*));
 
     matroska_parse(mkv_ctx);
 

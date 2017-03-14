@@ -207,7 +207,7 @@ struct matroska_sub_track {
 };
 
 struct matroska_ctx {
-    struct matroska_sub_track* sub_tracks[MATROSKA_MAX_TRACKS];
+    struct matroska_sub_track** sub_tracks;
     struct lib_ccx_ctx* ctx;
     int sub_tracks_count;
     int sentence_count;
@@ -244,7 +244,7 @@ void parse_segment(struct matroska_ctx* mkv_ctx);
 char* generate_timestamp_utf8(ULLONG milliseconds);
 char* generate_timestamp_ass_ssa(ULLONG milliseconds);
 int find_sub_track_index(struct matroska_ctx* mkv_ctx, ULLONG track_number);
-char* get_track_entry_type_description(enum matroska_track_entry_type type);
+char*   get_track_entry_type_description(enum matroska_track_entry_type type);
 enum matroska_track_subtitle_codec_id get_track_subtitle_codec_id(char* codec_id);
 char* generate_filename_from_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* track);
 char* ass_ssa_sentence_erase_read_order(char* text);
