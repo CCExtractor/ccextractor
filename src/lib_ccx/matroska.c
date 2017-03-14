@@ -1,4 +1,5 @@
 #include "lib_ccx.h"
+#include "utility.h"
 #include "matroska.h"
 #include <limits.h>
 
@@ -209,20 +210,6 @@ void parse_segment_info(FILE* file) {
                 break;
         }
     }
-}
-
-char* generate_timestamp_utf8(ULLONG milliseconds) {
-    ULLONG millis = milliseconds % 1000;
-    milliseconds /= 1000;
-    ULLONG seconds = milliseconds % 60;
-    milliseconds /= 60;
-    ULLONG minutes = milliseconds % 60;
-    milliseconds /= 60;
-    ULLONG hours = milliseconds;
-
-    char* buf = malloc(sizeof(char) * 15);
-    sprintf(buf, "%02" LLD_M ":%02" LLD_M ":%02" LLD_M ",%03" LLD_M, hours, minutes, seconds, millis);
-    return buf;
 }
 
 char* generate_timestamp_ass_ssa(ULLONG milliseconds) {
@@ -738,35 +725,14 @@ void parse_segment(struct matroska_ctx* mkv_ctx)
     }
 }
 
-char *filename_without_ext(char* filename) {
-    char *returnname;
-    char *lastdot;
-    if (filename == NULL)
-        return filename;
-    if ((returnname = malloc (strlen (filename) + 1)) == NULL)
-        return filename;
-    strcpy (returnname, filename);
-    lastdot = strrchr (returnname, '.');
-    if (lastdot != NULL)
-        *lastdot = '\0';
-    return returnname;
-}
-
 char* generate_filename_from_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* track)
 {
-    char* filename = malloc(sizeof(char)*(MAX_FILE_NAME_SIZE-30));
-    char * filename_non_ext;
-    filename[MAX_FILE_NAME_SIZE-31] = '\0';
-    strncpy(filename, mkv_ctx->filename,(MAX_FILE_NAME_SIZE-31));
-    filename_non_ext=filename_without_ext(filename);
-    char* buf = malloc(sizeof(char) * MAX_FILE_NAME_SIZE);
+    char* buf = malloc(sizeof(char) * 200);
     if (track->lang_index == 0)
-        sprintf(buf, "%s_%s.%s", filename_non_ext, track->lang, matroska_track_text_subtitle_id_extensions[track->codec_id]);
+        sprintf(buf, "%s_%s.%s", get_basename(mkv_ctx->filename), track->lang, matroska_track_text_subtitle_id_extensions[track->codec_id]);
     else
-        sprintf(buf, "%s_%s_" LLD ".%s", filename_non_ext, track->lang, track->lang_index,
+        sprintf(buf, "%s_%s_" LLD ".%s", get_basename(mkv_ctx->filename), track->lang, track->lang_index,
                 matroska_track_text_subtitle_id_extensions[track->codec_id]);
-    free(filename);
-    free(filename_non_ext);
     return buf;
 }
 
@@ -814,11 +780,13 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
             char number[9];
             sprintf(number, "%d", i + 1);
 
-            char *timestamp_start = generate_timestamp_utf8(sentence->time_start);
+            char *timestamp_start = malloc(sizeof(char) * 80);	//being generous 
+            timestamp_to_srttime(sentence->time_start, timestamp_start);
             ULLONG time_end = sentence->time_end;
             if (i + 1 < track->sentence_count)
                 time_end = MIN(time_end, track->sentences[i + 1]->time_start - 1);
-            char *timestamp_end = generate_timestamp_utf8(time_end);
+            char *timestamp_end = malloc(sizeof(char) * 80);
+            timestamp_to_srttime(time_end, timestamp_end);
 
             write(desc, number, strlen(number));
             write(desc, "\n", 1);
