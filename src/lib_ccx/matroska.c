@@ -799,7 +799,7 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
             write(desc, " --> ", 5);
             write(desc, timestamp_end, strlen(timestamp_start));
             write(desc, "\n", 1);
-            while (sentence->text[0] == "\n"){
+            while (sentence->text[0] == '\n'){
               size++;
               sentence->text++;
             }
@@ -824,7 +824,7 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
             write(desc, ",", 1);
             char* text = ass_ssa_sentence_erase_read_order(sentence->text);
 
-            while (sentence->text[0] == "\n"){
+            while (sentence->text[0] == '\n' | sentence->text[0] == '\N'){
               sentence->text++;
             }
             write(desc, text, strlen(text));
