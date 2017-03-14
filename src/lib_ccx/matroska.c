@@ -921,7 +921,7 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
     mkv_ctx->current_second = 0;
     mkv_ctx->filename = ctx->inputfile[ctx->current_file];
     mkv_ctx->file = create_file(ctx);
-    mkv_ctx->sub_tracks = malloc(MATROSKA_MAX_TRACKS*sizeof(struct matroska_sub_track*));
+    mkv_ctx->sub_tracks = malloc(sizeof(struct matroska_sub_track*));
 
     matroska_parse(mkv_ctx);
 
