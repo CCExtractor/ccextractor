@@ -252,7 +252,6 @@ bool_t in_array(uint16_t *array, uint16_t length, uint16_t element) ;
 int hex_to_int (char high, char low);
 int hex_string_to_int(char* string, int len);
 void timestamp_to_srttime(uint64_t timestamp, char *buffer);
-void timestamp_to_smptetttime(uint64_t timestamp, char *buffer);
 int levenshtein_dist (const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
 void millis_to_date (uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator);
 void signal_handler(int sig_type);
