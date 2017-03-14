@@ -259,6 +259,11 @@ struct matroska_sub_sentence* parse_segment_cluster_block_group_block(struct mat
     sentence->time_start = timecode + cluster_timecode;
 
     struct matroska_sub_track* track = mkv_ctx->sub_tracks[sub_track_index];
+    if (track->sentence_count==0){
+      track->sentences = malloc(sizeof(struct matroska_sub_sentence*));
+    }
+    else
+      track->sentences = realloc(track->sentences,(track->sentence_count+1)*sizeof(struct matroska_sub_sentence*));
     track->sentences[track->sentence_count] = sentence;
     track->sentence_count++;
 
