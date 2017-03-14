@@ -764,7 +764,7 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
 {
     char* filename = generate_filename_from_track(mkv_ctx, track);
     mprint("\nOutput file: %s", filename);
-
+    int size=0;
     int desc;
 #ifdef WIN32
     desc = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, S_IREAD | S_IWRITE);
@@ -799,7 +799,11 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
             write(desc, " --> ", 5);
             write(desc, timestamp_end, strlen(timestamp_start));
             write(desc, "\n", 1);
-            write(desc, sentence->text, sentence->text_size);
+            while (sentence->text[0] == "\n"){
+              size++;
+              sentence->text++;
+            }
+            write(desc, sentence->text, sentence->text_size-size);
             write(desc, "\n\n", 2);
 
             free(timestamp_start);
@@ -819,6 +823,10 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
             write(desc, timestamp_end, strlen(timestamp_start));
             write(desc, ",", 1);
             char* text = ass_ssa_sentence_erase_read_order(sentence->text);
+
+            while (sentence->text[0] == "\n"){
+              sentence->text++;
+            }
             write(desc, text, strlen(text));
             write(desc, "\n", 1);
 
