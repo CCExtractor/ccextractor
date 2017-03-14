@@ -1,0 +1,956 @@
+.TH CCEXTRACTOR 1
+.SH NAME
+CCExtractor 0.85, Carlos Fernandez Sanz, Volker Quetschke.
+Teletext portions taken from Petr Kutalek's telxcc
+.SH SYNOPSIS
+.B ccextractor
+[\fIOPTIONS\fR] inputfile1 [inputfile2...] [\fB\-o\fR outputfilename]
+.SH DESCRIPTION
+CCextractor extracts closed captions and teletext subtitles from video streams.
+.br
+(DVB, .TS, ReplayTV 4000 and 5000, dvr-ms, bttv, Tivo, Dish Network, .mp4, HDHomeRun are known to work).
+.br
+.sp 12
+CCExtractor home page:
+.br
+\fIhttp://www.ccextractor.org\fR
+.br
+.sp 12
+Originally based on McPoodle's tools. Check his page for lots of information
+on closed captions technical details.
+.br
+\fI(http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/SCC_TOOLS.HTML)\fR
+.br
+.sp 12
+Issues? Open a ticket here
+.br
+\fIhttps://github.com/CCExtractor/ccextractor/issues\fR
+.SH OPTIONS
+.TP
+.I File name related options:
+.RS 4
+\fBinputfile\fR
+.br
+.RS 4
+file(s) to process
+.RE
+.sp 12
+\fB-o outputfilename\fR
+.br
+.RS 4
+Use -o parameters to define output filename if you don't like the default ones (same as infile plus _1 or _2 when needed and file extension, e.g. .srt).
+.RE
+.sp 12
+\fB-cf filename\fR
+.br
+.RS 4
+Write 'clean' data to a file. Cleans means the ES without TS or PES headers.
+.RE
+.sp 12
+\fB-stdout\fR
+.br
+.RS 4
+Write output to stdout (console) instead of file. If stdout is used, then -o, -o1 and -o2 can't be used. Also -stdout will redirect all messages to stderr (error).
+.RE
+.sp 12
+\fB-pesheader\fR
+.br
+.RS 4
+Dump the PES Header to stdout (console). This is used for debugging purposes to see the contents of each PES packet header.
+.RE
+.sp 12
+\fB-debugdvbsub\fR
+.br
+.RS 4
+Write the DVB subtitle debug traces to console.
+.RE
+.sp 12
+\fB-ignoreptsjumps\fR
+.br
+.RS 4
+Ignore PTS jumps (default).
+.RE
+.sp 12
+\fB-fixptsjumps\fR
+.br
+.RS 4
+Fix pts jumps. Use this parameter if you experience timeline resets/jumps in the output.
+.RE
+.sp 12
+\fB-stdin\fR
+.br
+.RS 4
+Reads input from stdin (console) instead of file.
+.RE
+.RE
+.sp 12
+You can pass as many input files as you need. They will be processed in order. If a file name is suffixed by +, ccextractor will try to follow a numerical sequence. For example, DVD001.VOB+ means DVD001.VOB, DVD002.VOB and so on until there are no more files. Output will be one single file (either raw or srt). Use this if you made your recording in several cuts (to skip commercials for example) but you want one subtitle file with contiguous timing.
+.sp 12
+.TP
+.I Effect output files
+.RS 4
+\fB-outinterval x output in interval of x seconds\fR
+.RE
+.br
+.sp 12
+.TP
+.I Network support:
+.RS 4
+\fB-udp port\fR
+.br
+.RS 4
+Read the input via UDP (listening in the specified port) instead of reading a file.
+.RE
+.sp 12
+\fB-udp [host:]port\fR
+.br
+.RS 4
+Read the input via UDP (listening in the specified port) instead of reading a file. Host can be a hostname or IPv4 address. If host is not specified then listens on the local host.
+.RE
+.sp 12
+\fB-sendto host[:port]\fR
+.br
+.RS 4
+Sends data in BIN format to the server according to the CCExtractor's protocol over TCP. For IPv6 use [address]:port
+.RE
+.sp 12
+\fB-tcp port\fR
+.br
+.RS 4
+Reads the input data in BIN format according to CCExtractor's protocol, listening specified port on the local host
+.RE
+.sp 12
+\fB-tcppassword password\fR
+.br
+.RS 4
+Sets server password for new connections to tcp server
+.RE
+.sp 12
+\fB-tcpdesc description\fR
+.br
+.RS 4
+Sends to the server short description about captions e.g. channel name or file name
+.RE
+.sp 12
+.RE
+.br
+.sp 12
+.TP
+.I Options that affect what will be processed:
+.RS 4
+\fB-1\fR, \fB-2\fR, \fB-12\fR
+.br
+.RS 4
+Output Field 1 data, Field 2 data, or both.
+.br
+(DEFAULT is -1)
+.br
+Use --append to prevent overwriting of existing files. The output will be appended instead.
+.RE
+.sp 12
+\fB-cc2\fR
+.br
+.RS 4
+When in srt/sami mode, process captions in channel 2 instead of channel 1.
+.RE
+.sp 12
+\fB-svc --service N1[cs1],N2[cs2]...\fR
+.br
+.RS 4
+Enable CEA-708 (DTVCC) captions processing for the listed services. The parameter is a comma delimited list of services numbers, such as "1,2" to process the primary and secondary language services. Pass "all" to process all services found.
+.sp 12
+If captions in a service are stored in 16-bit encoding, you can specify what charset or encoding was used. Pass its name after service number (e.g. "1[EUC-KR],3" or "all[EUC-KR]") and it will encode specified charset to UTF-8 using iconv. See iconv documentation to check if required encoding/charset is supported.
+.RE
+.sp 12
+.RE
+In general, if you want English subtitles you don't need to use these options as they are broadcast in field 1, channel 1. If you want the second language (usually Spanish) you may need to try -2, or -cc2, or both.
+.br
+.sp 12
+.I Input formats:
+.RS 8
+With the exception of McPoodle's raw format, which is just the closed caption data with no other info, CCExtractor can usually detect the input format correctly. To force a specific format:
+.sp 12
+.RS 8
+-in=\fIformat\fR
+.RE
+.sp 12
+where \fIformat\fR is one of these:
+.sp 12
+.RS 10
+\fBts\fR    For Transport Streams.
+.br
+\fBps\fR    For Program Streams.
+.br
+\fBes\fR    For Elementary Streams.
+.br
+\fBasf\fR   ASF container (such as DVR-MS). 
+.br
+\fBwtv\fR   Windows Television (WTV)
+.br
+\fBbin\fR   CCExtractor's own binary format.
+.br
+\fBraw\fR   For McPoodle's raw files.
+.br
+\fBmp4\fR   MP4/MOV/M4V and similar.
+.br
+\fBmkv\fR   Matroska container and WebM.
+.RE
+-ts, -ps, -es, -mp4, -wtv and -asf (or --dvr-ms) can be used as shorts.
+.sp 12
+.RE
+.TP
+.I Output formats:
+.sp 12
+.RS 16
+-out=\fIformat\fR
+.sp 12
+.RE
+.sp 12
+.RS 8
+where \fIformat\fR is one of these:
+.sp 12
+.RS 10
+\fBsrt\fR            SubRip (default, so not actually needed).
+.br
+\fBass/ssa\fR        SubStation Alpha.
+.br
+\fBwebvtt\fR         WebVTT format.
+.br
+\fBwebvtt-full\fR    WebVTT format with styling.
+.br
+\fBsami\fR           MS Synchronized Accesible Media Interface.
+.br
+\fBbin\fR            CC data in CCExtractor's own binary format.
+.br
+\fBraw\fR            CC data in McPoodle's Broadcast format.
+.br
+\fBdvdraw\fR         CC data in McPoodle's DVD format.
+.br
+\fBtxt\fR            Transcript (no time codes, no roll-up captions, just the plain transcription.
+.br
+\fBttxt\fR           Timed Transcript (transcription with time info)
+.br
+\fBsmptett\fR        SMPTE Timed Text (W3C TTML) format.
+.br
+\fBts\fR             Set of .xml and .png files for use with dvdauthor's spumux.
+.br
+.RS 15
+See "Notes on spupng output format"
+.RE
+.br
+\fBnull\fR           Don't produce any file output.
+.br
+\fBreport\fR         Prints to stdout information about captionsin specified input. Don't produce any file output.
+.br
+.RE
+.RE
+.TP
+.I Options that affect how input files will be processed:
+.RS 4
+\fB-gt --goptime\fR
+.RS 4
+Use GOP for timing instead of PTS. This only applies to Program or Transport Streams with MPEG2 data and overrides the default PTS timing.
+.br
+GOP timing is always used for Elementary Streams.
+.sp 12
+.RE
+\fB-nogt --nogoptime\fR
+.RS 4
+Never use GOP timing (use PTS), even if ccextractor detects GOP timing is the reasonable choice.
+.sp 12
+.RE
+\fB-fp --fixpadding\fR
+.RS 4
+Fix padding - some cards (or providers, or whatever) seem to send 0000 as CC padding instead of 8080. If you get bad timing, this might solve it.
+.sp 12
+.RE
+\fB-90090\fR
+.RS 4
+Use 90090 (instead of 90000) as MPEG clock frequency. (reported to be needed at least by Panasonic DMR-ES15  DVD Recorder)
+.sp 12
+.RE
+\fB-ve --videoedited\fR
+.RS 4
+By default, ccextractor will process input files in sequence as if they were all one large file (i.e. split by a generic, non video-aware tool. If you are processing video hat was split with a editing tool, use -ve so ccextractor doesn't try to rebuild the original timing.
+.sp 12
+.RE
+\fB-s --stream [secs]\fR
+.RS 4
+Consider the file as a continuous stream that is growing as ccextractor processes it, so don't try to figure out its size and don't terminate processing when reaching the current end (i.e. wait for more data to arrive). If the optional parameter secs is present, it means the number of seconds without any new data after which ccextractor should exit. Use this parameter if you want to process a live stream but not kill ccextractor externally.
+.br
+Note: If -s is used then only one input file is allowed.
+.sp 12
+.RE
+\fB-poc  --usepicorder\fR
+.RS 4
+Use the pic_order_cnt_lsb in AVC/H.264 data streams to order the CC information. The default way is to use the PTS information. Use this switch only when needed.
+.sp 12
+.RE
+\fB-myth\fR
+.RS 4
+Force MythTV code branch.
+.sp 12
+.RE
+\fB-nomyth\fR
+.RS 4
+Disable MythTV code branch.
+.br
+The MythTV branch is needed for analog captures where the closed caption data is stored in the VBI, such as those with bttv cards (Hauppage 250 for example). This is detected automatically so you don't need to worry about this unless autodetection doesn't work for you.
+.sp 12
+.RE
+\fB-nogt --nogoptime\fR
+.RS 4
+Never use GOP timing (use PTS), even if ccextractor detects GOP timing is the reasonable choice.
+.sp 12
+.RE
+\fB-nogt --nogoptime\fR
+.RS 4
+Never use GOP timing (use PTS), even if ccextractor detects GOP timing is the reasonable choice.
+.sp 12
+.RE
+\fB-wtvconvertfix\fR
+.RS 4
+This switch works around a bug in Windows 7's built in software to convert *.wtv to *.dvr-ms. For analog NTSC recordings the CC information is marked as digital captions. Use this switch only when needed.
+.sp 12
+.RE
+\fB-wtvmpeg2\fR
+.RS 4
+Read the captions from the MPEG2 video stream rather than the captions stream in WTV files.
+.sp 12
+.RE
+\fB-pn --program-number\fR
+.RS 4
+In TS mode, specifically select a program to process. Not needed if the TS only has one. If this parameter is not specified and CCExtractor detects more than one program in the input, it will list the programs found and terminate without doing anything, unless \fI-autoprogram\fR (see below) is used.
+.sp 12
+.RE
+\fB-autoprogram\fR
+.RS 4
+If there's more than one program in the stream, just use the first one we find that contains a suitable stream.
+.sp 12
+.RE
+\fB-datapid\fR
+.RS 4
+Don't try to find out the stream for caption/teletext data, just use this one instead.
+.sp 12
+.RE
+\fB-datastreamtype\fR
+.RS 4
+Instead of selecting the stream by its PID, select it by its type (pick the stream that has this type in the PMT)
+.sp 12
+.RE
+\fB-streamtype\fR
+.RS 4
+Assume the data is of this type, don't autodetect. This parameter may be needed if -datapid or -datastreamtype is used and CCExtractor cannot determine how to process the stream. The value will usually be 2 (MPEG video) or 6 (MPEG private data).
+.sp 12
+.RE
+\fB-haup --hauppauge\fR
+.RS 4
+If the video was recorder using a Hauppauge card, it might need special processing. This parameter will force the special treatment.
+.sp 12
+.RE
+\fB-mp4vidtrack\fR
+.RS 4
+In MP4 files the closed caption data can be embedded in the video track or in a dedicated CC track. If a dedicated track is detected it will be processed instead of the video track. If you need to force the video track to be processed instead use this option.
+.sp 12
+.RE
+\fB-noautotimeref\fR
+.RS 4
+Some streams come with broadcast date information. When such data is available, CCExtractor will set its time reference to the received data. Use this parameter if you prefer your own reference. Note: Current this only affects Teletext in timed transcript with -datets.
+.sp 12
+.RE
+\fB--noscte20\fR
+.RS 4
+Ignore SCTE-20 data if present.
+.sp 12
+.RE
+\fB--webvtt-create-css\fR
+.RS 4
+Create a separate file for CSS instead of inline.
+.sp 12
+.RE
+\fB-deblev\fR
+.RS 4
+Enable debug so the calculated distance for each two strings is displayed. The output includes both strings, the calculated distance, the maximum allowed distance, and whether the strings are ultimately considered equivalent or not, i.e. the calculated distance is less or equal than the max allowed.
+.sp 12
+.RE
+\fB-levdistmincnt\fR \fIvalue\fR
+.RS 4
+Minimum distance we always allow regardless of the length of the strings.Default 2.
+.br
+This means that if the calculated distance is 0,1 or 2, we consider the strings to be equivalent.
+.sp 12
+.RE
+\fB-levdistmaxpct\fR \fIvalue\fR
+.RS 4
+Maximum distance we allow, as a percentage of the shortest string length. Default 10%.0
+.br
+For example, consider a comparison of one string of 30 characters and one of 60 characters. We want to determine whether the first 30 characters of the longer string are more or less the same as the shortest string, i.e. whether the longest string  is the shortest one plus new characters and maybe some corrections. Since the shortest string is 30 characters and  the default percentage is 10%, we would allow a distance of up to 3 between the first 30 characters.
+.sp 12
+.RE
+.RE
+.I Options that affect what kind of output will be produced:
+.RS 4
+\fB-chapters\fR
+.RS 4
+(Experimental) Produces a chapter file from MP4 files.
+.br
+Note that this must only be used with MP4 files, for other files it will simply generate subtitles file.
+.RE
+.sp 12
+\fB-bom\fR
+.RS 4
+Append a BOM (Byte Order Mark) to output files. 
+.br
+Note that most text processing tools in linux will not like BOM.
+.br
+This is the default in Windows builds.
+.RE
+.sp 12
+\fB-nobom\fR 
+.RS 4
+Do not append a BOM (Byte Order Mark) to output files. 
+.br
+Note that this may break files when using Windows. This is the default in non-Windows builds.
+.RE
+.sp 12
+\fB-unicode\fR
+.RS 4
+Encode subtitles in Unicode instead of Latin-1.
+.RE
+.sp 12
+\fB-utf8\fR
+.RS 4
+Encode subtitles in UTF-8 (no longer needed. because UTF-8 is now the default).
+.RE
+.sp 12
+\fB-latin1\fR
+.RS 4
+Encode subtitles in Latin-1
+.RE
+.sp 12
+\fB-nofc --nofontcolor\fR
+.RS 4
+For .srt/.sami/.vtt, don't add font color tags.
+.RE
+.sp 12
+\fB--nohtmlescape\fR
+.RS 4
+For .srt/.sami/.vtt, don't covert html unsafe character
+.RE
+.sp 12
+\fB-nots --notypesetting\fR
+.RS 4
+For .srt/.sami/.vtt, don't add typesetting tags.
+.RE
+.sp 12
+\fB-trimfR
+.RS 4
+Trim lines.
+.RE
+.sp 12
+\fB-dc --defaultcolor\fR
+.RS 4
+Select a different default color (instead of white). This causes all output in .srt/.smi/.vtt files to have a font tag, which makes the files larger. Add the color you want in RGB, such as,
+.br
+\fI-dc #FF0000\fR for red.
+.RE
+.sp 12
+\fB-sc --sentencecap\fR
+.RS 4
+Sentence capitalization. Use if you hate ALL CAPS in subtitles.
+.RE
+.sp 12
+\fB-sbs --splitbysentence\fR
+.RS 4
+Split output text so each frame contains a complete sentence. Timings are adjusted based on number of characters.
+.RE
+.sp 12
+\fB--capfile -caf file\fR
+.RS 4
+Add the contents of 'file' to the list of words that must be capitalized. For example, if file is a plain text file that contains,
+.br
+.sp 12
+Tony
+.br
+Alan
+.br
+.sp 12
+Whenever those words are found they will be writtenexactly as they appear in the file. Use one line per word. Lines starting with \fI#\fR are considered comments and discarded.
+.RE
+.sp 12
+\fB-unixts REF\fR
+.RS 4
+For timed transcripts that have an absolute date instead of a timestamp relative to the file start), use this time reference (UNIX timestamp). 0 => Use current system time. 
+.br
+ccextractor will automatically switch to transport stream UTC timestamps when available.
+.RE
+.sp 12
+\fB-datets\fR
+.RS 4
+In transcripts, write time as YYYYMMDDHHMMss,ms.
+.RE
+.sp 12
+\fB-sects\fR
+.RS 4
+In transcripts, write time as ss,ms.
+.RE
+.sp 12
+\fB-UCLA\fR
+.RS 4
+Transcripts are generated with a specific format that is convenient for a specific project, feel free to play with it but be aware that this format is really live - don't rely on its output format not changing between versions.
+.RE
+.sp 12
+\fB-lf\fR
+.RS 4
+Use LF (UNIX) instead of CRLF (DOS, Windows) as line terminator.
+.RE
+.sp 12
+\fB-autodash\fR
+.RS 4
+Based on position on screen, attempt to determine the different speakers and a dash (-) when each of them talks (.srt/.vtt only, -trim required).
+.RE
+.sp 12
+\fB-xmltv mode\fR
+.RS 4
+produce an XMLTV file containing the EPG data from the source TS file. Mode: 1 = full output 2 = live output. 3 = both
+.RE
+.sp 12
+\fB-sem\fR
+.RS 4
+Create a .sem file for each output file that is open and delete it on file close.
+.RE
+.sp 12
+\fB-dvbcolor\fR
+.RS 4
+For DVB subtitles, also output the color of the subtitles, if the output format is SRT or WebVTT.
+.RE
+.sp 12
+\fB-nodvbcolor\fR
+.RS 4
+In DVB subtitles, disable color in output.
+.RE
+.sp 12
+\fB-dvblang\fR
+.RS 4
+For DVB subtitles, select which language's caption stream will be processed. e.g. 'eng' for English. If there are multiple languages, only this specified language stream will be processed (default).
+.RE
+.sp 12
+\fB-ocrlang\fR
+.RS 4
+Manually select the name of the Tesseract .traineddata file. Helpful if you want to OCR a caption stream of one language with the data of another language.
+.br
+e.g. '-dvblang chs -ocrlang chi_tra' will decode the Chinese (Simplified) caption stream but perform OCR using the Chinese (Traditional) trained data This option is also helpful when the traineddata file has non standard names that don't follow ISO specs.
+.RE
+.sp 12
+\fB-oem\fR
+.RS 4
+Select the OEM mode for Tesseract, could be 0, 1 or 2.
+.br
+0: OEM_TESSERACT_ONLY - default value, the fastest mode.
+.br
+1: OEM_LSTM_ONLY - use LSTM algorithm for recognition.
+.br
+2: OEM_TESSERACT_LSTM_COMBINED - both algorithms.
+.RE
+.sp 12
+.RE
+.I Options that affect how ccextractor reads and writes (buffering):
+.RS 4
+\fB-bi --bufferinput\fR
+.RS 4
+Forces input buffering.
+.RE
+.sp 12
+\fB-nobi -nobufferinput\fR
+.RS 4
+Disables input buffering.
+.RE
+.sp 12
+\fB-bs --buffersize val\fR
+.RS 4
+Specify a size for reading, in bytes (suffix with K or or M for kilobytes and megabytes). Default is 16M.
+.RE
+.sp 12
+\fB-koc\fR
+.RS 4
+keep-output-close. If used then CCExtractor will close the output file after writing each subtitle frame and attempt to create it again when needed.
+.RE
+.sp 12
+\fB-ff --forceflush\fR
+.RS 4
+Flush the file buffer whenever content is written.
+.RE
+.sp 12
+.RE
+.I Options that affect the built-in 608 closed caption decoder:
+.RS 4
+\fB-dru\fR
+.RS 4
+Direct Roll-Up. When in roll-up mode, write character by character instead of line by line. Note that this produces (much) larger files.
+.RE
+.sp 12
+\fB-noru --norollup\fR
+.RS 4
+If you hate the repeated lines caused by the roll-up emulation, you can have ccextractor write only one line at a time, getting rid of these repeated lines.
+.RE
+.sp 12
+\fB-ru1 / ru2 / ru3\fR
+.RS 4
+roll-up captions can consist of 2, 3 or 4 visible lines at any time (the number of lines is part of the transmission). If having 3 or 4 lines annoys you you can use -ru to force the decoder to always use 1, 2 or 3 lines. Note that 1 line is not a real mode rollup mode, so CCExtractor does what it can.
+.br
+In -ru1 the start timestamp is actually the timestamp of the first character received which is possibly more accurate.
+.RE
+.sp 12
+.RE
+.I Options that affect timing:
+.RS 4
+\fB-delay ms\fR
+.RS 4
+For srt/sami/webvtt, add this number of milliseconds to all times. For example, -delay 400 makes subtitles appear 400ms late. You can also use negative numbers to make subs appear early.
+.RE
+.sp 12
+.RE
+\fBNotes on times:\fR -startat and -endat times are used first, then -delay. So if you use -srt -startat 3:00 -endat 5:00 -delay 120000, ccextractor will generate a .srt file, with only data from 3:00 to 5:00 in the input file(s) and then add that (huge) delay, which would make the final file start at 5:00 and end at 7:00.
+
+.I Options that affect what segment of the input file(s) to process:
+.RS 4
+\fB-startat time\fR
+.RS 4
+Only write caption information that starts after the given time.
+.br
+Time can be seconds, MM:SS or HH:MM:SS.
+.br
+For example, -startat 3:00 means 'start writing from minute 3.
+.RE
+.sp 12
+\fB-endat time\fR
+.RS 4
+Stop processing after the given time (same format as -startat). The -startat and -endat options are honored in all output formats. In all formats with timing information the times are unchanged.
+.RE
+.sp 12
+\fB-scr --screenfuls num\fR
+.RS 4
+Write 'num' screenfuls and terminate processing.
+.RE
+.sp 12
+.RE
+.I Options that affect which codec is to be used have to be searched in input:
+.br
+If codec type is not selected then first elementary stream suitable for subtitle is selected, please consider \fI-teletext\fR \fI-noteletext\fR override this option.
+.br
+.RS 4
+\fB-codec dvbsub\fR
+.RS 4
+select the dvb subtitle from all elementary stream, if stream of dvb subtitle type is not found then nothing is selected and no subtitle is generated.
+.RE
+.sp 12
+\fB-nocodec dvbsub\fR
+.RS 4
+Ignore dvb subtitle and follow default behaviour.
+.RE
+.sp 12
+\fB-codec teletext\fR
+.RS 4
+Select the teletext subtitle from elementary stream.
+.RE
+.sp 12
+\fB-nocodec teletext\fR
+.RS 4
+.sp 12
+Ignore teletext subtitle.
+.RE
+.RE
+.I Adding start and end credits:
+.RS 4
+CCExtractor can _try_ to add a custom message (for credits for example) at the start and end of the file, looking for a window where there are no captions. If there is no such window, then no text will be added. 
+.br
+The start window must be between the times given and must have enough time to display the message for at least the specified time.
+\fB--startcreditstext txt\fR
+.RS 4
+Write this text as start credits. If there are several lines, separate them with the characters \n, for example Line1\nLine 2.
+.RE
+.sp 12
+\fB--startcreditsnotbefore time\fR
+.RS 4
+Don't display the start credits before this time (S, or MM:SS). Default: 0
+.RE
+.sp 12
+\fB--startcreditsnotafter time\fR
+.RS 4
+Don't display the start credits after this time (S, or MM:SS). Default: 5:00
+.RE
+.sp 12
+\fB--startcreditsforatleast time\fR
+.RS 4
+Start credits need to be displayed for at least this time (S, or MM:SS). Default: 2
+.RE
+.sp 12
+\fB--startcreditsforatmost time\fR
+.RS 4
+Start credits should be displayed for at most this time (S, or MM:SS). Default: 5
+.RE
+.sp 12
+\fB--endcreditstext txt\fR
+.RS 4
+Write this text as end credits. If there are several lines, separate them with the characters \n, for example Line1\nLine 2.
+.RE
+.sp 12
+\fB--endcreditsforatleast time\fR
+.RS 4
+End credits need to be displayed for at least this time (S, or MM:SS). Default: 2
+.RE
+.sp 12
+\fB--endcreditsforatmost time\fR
+.RS 4
+End credits should be displayed for at most this time (S, or MM:SS). Default: 5
+.RE
+.sp 12
+.RE
+.I Options that affect debug data:
+.RS 4
+\fB-debug\fR
+.RS 4
+Show lots of debugging output.
+.RE
+.sp 12
+\fB-608\fR
+.RS 4
+Print debug traces from the EIA-608 decoder. If you need to submit a bug report, please send the output from this option.
+.RE
+.sp 12
+\fB-708\fR
+.RS 4
+Print debug information from the (currently in development) EIA-708 (DTV) decoder.
+.RE
+.sp 12
+\fB-goppts\fR
+.RS 4
+Enable lots of time stamp output.
+.RE
+.sp 12
+\fB-xdsdebug\fR
+.RS 4
+Enable XDS debug data (lots of it).
+.RE
+.sp 12
+\fB-vides\fR
+.RS 4
+Print debug info about the analysed elementary video stream.
+.RE
+.sp 12
+\fB-cbraw\fR
+.RS 4
+Print debug trace with the raw 608/708 data with time stamps.
+.RE
+.sp 12
+\fB-nosync\fR
+.RS 4
+Print debug trace with the raw 608/708 data with time stamps.
+.RE
+.sp 12
+\fB-fullbin\fR
+.RS 4
+Disable the removal of trailing padding blocks when exporting to bin format. Only useful for for debugging purposes.
+.RE
+.sp 12
+\fB-parsedebug\fR
+.RS 4
+Print debug info about the parsed container file. (Only for TS/ASF files at the moment.)
+.RE
+.sp 12
+\fB-parsePAT\fR
+.RS 4
+Print Program Association Table dump.
+.RE
+.sp 12
+\fB-parsePMT\fR
+.RS 4
+Print Program Map Table dump.
+.RE
+.sp 12
+\fB-dumpdef\fR
+.RS 4
+Hex-dump defective TS packets.
+.RE
+.sp 12
+\fB-investigate_packets\fR
+.RS 4
+If no CC packets are detected based on the PMT, try to find data in all packets by scanning.
+.RE
+.sp 12
+.RE
+.I Teletext related options:
+.RS 4
+\fB-customtxt format\fR
+.RS 4
+Use the passed format to customize the (Timed) Transcript output. The format must be like this: 1100100 (7 digits). These indicate whether the next things should be displayed or not in the (timed) transcript. They represent (in order):
+.RS 4
+- Display start time
+.br
+- Display end time
+.br
+- Display caption mode
+.br
+- Display caption channel
+.br
+- Use a relative timestamp ( relative to the sample)
+.br
+- Display XDS info
+.br
+- Use colors
+.RE
+Examples:
+.br
+0000101 is the default setting for transcripts
+.br
+1110101 is the default for timed transcripts
+.br
+1111001 is the default setting for \fI-ucla\fR
+.br
+Make sure you use this parameter after others that might affect these settings (-out, -ucla, -xds, -txt, -ttxt ...)
+.RE
+.sp 12
+.RE
+.I Communication with other programs and console output:
+.sp 12
+.RS 4
+\fB--gui_mode_reports\fR
+.RS 4
+Report progress and interesting events to stderr in a easy to parse format. This is intended to be used by other programs. See docs directory for details.
+.RE
+.sp 12
+\fB--no_progress_bar\fR
+.RS 4
+Suppress the output of the progress bar
+.RE
+.sp 12
+\fB-quiet\fR
+.RS 4
+Don't write any message.
+.RE
+.RE
+.sp 12
+\fBNotes on the CEA-708 decoder:\fR While it is starting to be useful, it's a work in progress. A number of things don't work yet in the decoder itself, and many of the auxiliary tools (case conversion to name one) won't do anything yet. Feel free to submit samples that cause problems and feature requests.
+
+\fBNotes on spupng output format:\fR
+.br
+One .xml file is created per output field. A set of .png files are created in a directory with the same base name as the corresponding .xml file(s), but with a .d extension. Each .png file will contain an image representing one caption and named subNNNN.png, starting with sub0000.png.
+.sp 12
+For example, the command:
+.RS 4
+ccextractor -out=spupng input.mpg
+.RE
+will create the files:
+.RS 4
+input.xml
+.br
+input.d/sub0000.png
+.br
+input.d/sub0001.png
+.br
+ ...
+.RE
+The command:
+.RS 4
+ccextractor -out=spupng -o /tmp/output -12 input.mpg
+.RE
+will create the files:
+.RS 4
+/tmp/output_1.xml
+.br
+/tmp/output_1.d/sub0000.png
+.br
+/tmp/output_1.d/sub0001.png
+.br
+ ...
+.br
+/tmp/output_2.xml
+.br
+/tmp/output_2.d/sub0000.png
+.br
+/tmp/output_2.d/sub0001.png
+.br
+ ...
+.sp 12
+.RE
+.I Burned-in subtitle extraction:
+.br
+.RS 4
+\fB-hardsubx\fR
+.RS 4
+Enable the burned-in subtitle extraction subsystem.
+.RE
+.sp 12
+\fINOTE:\fR The following options will work only if -hardsubx is specified before them:-
+.sp 12
+\fB-ocr_mode\fR
+.RS 4
+Set the OCR mode to either frame-wise, word-wise or letter wise. 
+.br
+e.g. -ocr_mode frame (default), -ocr_mode word, -ocr_mode letter
+.RE
+.sp 12
+\fB-subcolor\fR
+.RS 4
+Specify the color of the subtitles Possible values are in the set {white,yellow,green,cyan,blue,magenta,red}.
+.br
+Alternatively, a custom hue value between 1 and 360 may also be specified.
+.br
+e.g. -subcolor white or -subcolor 270 (for violet).
+.br
+Refer to an HSV color chart for values.
+.RE
+.sp 12
+\fB-min_sub_duration\fR
+.RS 4
+Specify the minimum duration that a subtitle line must exist on the screen.
+.br
+The value is specified in seconds.
+.br
+A lower value gives better results, but takes more processing time.
+.br
+The recommended value is 0.5 (default).
+.br
+e.g. -min_sub_duration 1.0 (for a duration of 1 second)
+.RE
+.sp 12
+\fB-detect_italics\fR
+.RS 4
+Specify whether italics are to be detected from the OCR text. 
+.br
+Italic detection automatically enforces the OCR mode to be word-wise.
+.RE
+.sp 12
+\fB-conf_thresh\fR
+.RS 4
+Specify the classifier confidence threshold between 1 and 100.
+.br
+Try and use a threshold which works for you if you get a lot of garbage text.
+.br
+e.g. -conf_thresh 50
+.RE
+.sp 12
+\fB-whiteness_thresh\fR
+.RS 4
+For white subtitles only, specify the luminance threshold between 1 and 100
+.br
+This threshold is content dependent, and adjusting values may give you better results
+.br
+Recommended values are in the range 80 to 100.
+.br
+The default value is 95
+.RE
+.sp 12
+.RS 2
+An example command for burned-in subtitle extraction is as follows:
+.br
+.RS 2
+ccextractor video.mp4 -hardsubx -subcolor white -detect_italics -whiteness_thresh 90 -conf_thresh 60
+.RE
+.RE
+.sp 12
+\fB--version\fR
+.RS 4
+Display current CCExtractor version and detailed information.
+.RE
+.sp 12
