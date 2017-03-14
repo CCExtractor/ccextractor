@@ -67,7 +67,6 @@ ccextractor_SOURCES = \
 				src/gpacmp4/gpac/network.h \
 				src/gpacmp4/gpac/revision.h \
 				src/gpacmp4/gpac/setup.h \
-				src/gpacmp4/gpac/sync_ayer.h \
 				src/gpacmp4/gpac/tools.h \
 				src/gpacmp4/gpac/utf.h \
 				src/gpacmp4/gpac/version.h \
@@ -270,3 +269,5 @@ ccextractor_CPPFLAGS =-I /usr/include/leptonica/ -I /usr/include/tesseract/ -I$(
 ccextractor_LDADD =-lm -ltesseract -llept
 
 ccextractor_LDFLAGS=-zmuldefs
+
+EXTRA_DIST = src/gpacmp4/gpac
