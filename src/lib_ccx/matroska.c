@@ -852,9 +852,11 @@ void free_sub_track(struct matroska_sub_track* track)
 
 void matroska_save_all(struct matroska_ctx* mkv_ctx,char* lang)
 {
+  char* match;
+  mprint("%s\n",lang);
     for (int i = 0; i < mkv_ctx->sub_tracks_count; i++){
       if (lang){
-        if (strcmp(mkv_ctx->sub_tracks[i]->lang,lang)==0)
+        if (match = strstr(lang,mkv_ctx->sub_tracks[i]->lang) != NULL)
           save_sub_track(mkv_ctx, mkv_ctx->sub_tracks[i]);
                 }
       else
