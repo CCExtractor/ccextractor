@@ -743,7 +743,6 @@ char* generate_filename_from_track(struct matroska_ctx* mkv_ctx, struct matroska
 
 char* ass_ssa_sentence_erase_read_order(char* text)
 {
-    return text;
     // crop text after second ','
     int cnt = 0;
     int index = 0;
@@ -823,8 +822,8 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
             write(desc, timestamp_end, strlen(timestamp_start));
             write(desc, ",", 1);
             char* text = ass_ssa_sentence_erase_read_order(sentence->text);
-            while(text[0]=='\n' || text[0]=='\N'){
-              text++;
+            while((text[0]=='') &&  (text[1]=='\n' || text[1]=='\N')){
+              text+=2;
             }
             write(desc, text, strlen(text));
             write(desc, "\n", 1);
