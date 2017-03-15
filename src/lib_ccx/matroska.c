@@ -227,7 +227,7 @@ char* generate_timestamp_ass_ssa(ULLONG milliseconds) {
 }
 
 int find_sub_track_index(struct matroska_ctx* mkv_ctx, ULLONG track_number) {
-    for (int i = 0; i < mkv_ctx->sub_tracks_count; i++)
+    for (int i = mkv_ctx->sub_tracks_count-1; i >=0 ; i--)
         if (mkv_ctx->sub_tracks[i]->track_number == track_number)
             return i;
     return -1;
@@ -683,7 +683,6 @@ void parse_segment(struct matroska_ctx* mkv_ctx)
         code <<= 8;
         code += mkv_read_byte(file);
         code_len++;
-
         switch (code) {
             /* Segment ids */
             case MATROSKA_SEGMENT_SEEK_HEAD:
@@ -744,6 +743,7 @@ char* generate_filename_from_track(struct matroska_ctx* mkv_ctx, struct matroska
 
 char* ass_ssa_sentence_erase_read_order(char* text)
 {
+    return text;
     // crop text after second ','
     int cnt = 0;
     int index = 0;
@@ -900,6 +900,7 @@ void matroska_parse(struct matroska_ctx* mkv_ctx)
                 break;
         }
     }
+
 
     // Close file stream
     fclose(file);
