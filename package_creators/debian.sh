@@ -22,7 +22,7 @@ fi
 
 mkdir -p ../linux/objs
 
-(cd ../linux; checkinstall \
+(cd ..; ./autogen.sh; ./configure; make; sudo checkinstall \
     -y \
     --pkgrelease=$RELEASE \
     --pkggroup="CCExtractor" \
@@ -32,7 +32,7 @@ mkdir -p ../linux/objs
     --pkgname=$PROGRAM_NAME \
     --pkgversion=$VERSION \
     --pkglicense=$LICENSE \
-    --pakdir="../package_creators/build" \
+    --pakdir="package_creators/build" \
     --maintainer=$MAINTAINER \
     --nodoc \
     --requires=$REQUIRES)

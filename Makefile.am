@@ -271,3 +271,5 @@ ccextractor_LDADD =-lm -ltesseract -llept
 ccextractor_LDFLAGS=-zmuldefs
 
 EXTRA_DIST = src/gpacmp4/gpac
+
+dist_man1_MANS = linux/ccextractor.man
