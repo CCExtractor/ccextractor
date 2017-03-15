@@ -270,4 +270,4 @@ ccextractor_LDADD =-lm -ltesseract -llept
 
 ccextractor_LDFLAGS=-zmuldefs
 
-EXTRA_DIST = src/gpacmp4/gpac
+EXTRA_DIST = src/gpacmp4/gpac src/lib_ccx

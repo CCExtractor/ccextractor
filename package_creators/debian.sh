@@ -7,6 +7,8 @@ LICENSE="GPL-2.0"
 MAINTAINER="carlos@ccextractor.org"
 REQUIRES="gcc,libcurl4-gnutls-dev,tesseract-ocr,tesseract-ocr-dev,libleptonica-dev"
 
+../linux/pre-build.sh
+
 out=$((LC_ALL=C dpkg -s checkinstall) 2>&1)
 
 if [[ $out == *"is not installed"* ]]
