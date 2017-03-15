@@ -850,13 +850,16 @@ void free_sub_track(struct matroska_sub_track* track)
     free(track);
 }
 
-void matroska_save_all(struct matroska_ctx* mkv_ctx)
+void matroska_save_all(struct matroska_ctx* mkv_ctx,char* lang)
 {
-    char* opt = "eng";
     for (int i = 0; i < mkv_ctx->sub_tracks_count; i++){
-      if (strcmp(mkv_ctx->sub_tracks[i]->lang,opt)==0)
+      if (lang){
+        if (strcmp(mkv_ctx->sub_tracks[i]->lang,lang)==0)
           save_sub_track(mkv_ctx, mkv_ctx->sub_tracks[i]);
-    }
+                }
+      else
+        save_sub_track(mkv_ctx, mkv_ctx->sub_tracks[i]);
+      }
 }
 
 void matroska_free_all(struct matroska_ctx* mkv_ctx)
@@ -945,7 +948,7 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
     activity_progress(100, (int) (mkv_ctx->current_second / 60),
                       (int) (mkv_ctx->current_second % 60));
 
-    matroska_save_all(mkv_ctx);
+    matroska_save_all(mkv_ctx,ccx_options.mkvlang);
     int sentence_count = mkv_ctx->sentence_count;
     matroska_free_all(mkv_ctx);
 

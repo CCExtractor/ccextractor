@@ -497,7 +497,7 @@ void print_usage (void)
 	mprint ("                       less or equal than the max allowed..\n");
 	mprint (" -levdistmincnt value: Minimum distance we always allow regardless\n");
 	mprint ("                       of the length of the strings.Default 2. \n");
-	mprint ("                       This means that if the calculated distance \n"); 
+	mprint ("                       This means that if the calculated distance \n");
    	mprint ("                       is 0,1 or 2, we consider the strings to be equivalent.\n");
 	mprint (" -levdistmaxpct value: Maximum distance we allow, as a percentage of\n");
 	mprint ("                       the shortest string length. Default 10%.\n");
@@ -591,6 +591,12 @@ void print_usage (void)
 	mprint ("                       0: OEM_TESSERACT_ONLY - default value, the fastest mode.\n");
 	mprint ("                       1: OEM_LSTM_ONLY - use LSTM algorithm for recognition.\n");
 	mprint ("                       2: OEM_TESSERACT_LSTM_COMBINED - both algorithms.\n");
+	mprint ("             -mkvlang: For MKV subtitles, select which language's caption\n");
+	mprint ("                       stream will be processed. e.g. 'eng' for English.\n");
+	mprint ("                       Language codes can be either the 3 letters bibliographic\n");
+	mprint ("                       ISO-639-2 form (like \"fre\" for french) or a language\n");
+	mprint ("                       code followed by a dash and a country code for specialities\n");
+	mprint ("                       in languages (like \"fre-ca\" for Canadian French).\n");
 
 	mprint ("\n");
 	mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
@@ -1225,7 +1231,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 		}
 #endif
-		
+
 		if (strcmp(argv[i], "-chapters") == 0){
 			opt->extract_chapters= 1;
 			continue;
@@ -1409,6 +1415,16 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-oem has no argument.");
 			}
 			i++;
+			continue;
+		}
+
+		if(strcmp(argv[i],"-mkvlang")==0 && i < argc-1)
+		{
+			i++;
+			opt->mkvlang = (char *)malloc(sizeof(argv[i]));
+			sprintf(opt->mkvlang,"%s",argv[i]);
+			for(int char_index=0; char_index < strlen(opt->mkvlang);char_index++)
+				opt->mkvlang[char_index] = cctolower(opt->mkvlang[char_index]);
 			continue;
 		}
 
@@ -2233,7 +2249,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	{
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
 	}
-	
+
 	if(opt->extract_chapters)
 	{
 		mprint("Request to extract chapters recieved.\n");
