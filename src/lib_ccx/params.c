@@ -7,9 +7,10 @@
 #include "ccx_decoders_708.h"
 #include "compile_info.h"
 #include "../lib_hash/sha2.h"
+#include <string.h>
+#include <stdio.h>
 #ifdef ENABLE_HARDSUBX
 #include "hardsubx.h"
-#include <string.h>
 #endif
 
 static int inputfile_capacity=0;
@@ -1028,6 +1029,58 @@ int atoi_hex (char *s)
 	}
 }
 
+void mkvlang_params_check(char* lang){
+	int initial=0, present=0;
+	for(int char_index=0; char_index < strlen(lang);char_index++){
+			lang[char_index] = cctolower(lang[char_index]);
+			if (lang[char_index]==','){
+					present=char_index;
+					if ((present-initial<6)&&(present-initial!=3))
+							fatal(EXIT_MALFORMED_PARAMETER, "language codes should be xxx,xxx,xxx,....\n");
+
+					else if ((present-initial>3)&&(present-initial!=6))
+						fatal(EXIT_MALFORMED_PARAMETER, "language codes should be xxx-xx,xxx-xx,xxx-xx,....\n");
+
+					if ((present-initial>3)&&(present-initial==6)){
+						size_t length = present-initial;
+						char* block=calloc(length+1,sizeof(char));
+						strncpy(block,lang+initial,length);
+						char* hiphen_pointer = strstr(block,"-");
+						if (!hiphen_pointer)
+								fatal(EXIT_MALFORMED_PARAMETER, "language code is not of the form xxx-xx\n");
+						free(block);
+						}
+					initial=present+1;
+				}
+			}
+
+	//Steps to check for the last lang of multiple mkvlangs provided by the user.
+	present = strlen(lang)-1;
+
+	for(int char_index=strlen(lang)-1; char_index >=0 ;char_index--)
+		if (lang[char_index]==','){
+			initial=char_index+1;
+			break;
+		}
+
+	if ((present-initial<5)&&(present-initial!=2))
+		fatal(EXIT_MALFORMED_PARAMETER, "last language code should be xxx.\n");
+
+	else if ((present-initial>2)&&(present-initial!=5))
+		fatal(EXIT_MALFORMED_PARAMETER, "last language code should be xxx-xx.\n");
+
+	if ((present-initial>2)&&(present-initial==5)){
+					size_t length = present-initial;
+					char* block=calloc(length+1,sizeof(char));
+					strncpy(block,lang+initial,length);
+					char* hiphen_pointer = strstr(block,"-");
+					if (!hiphen_pointer)
+							fatal(EXIT_MALFORMED_PARAMETER, "last language code is not of the form xxx-xx\n");
+					free(block);
+					}
+}
+
+
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 {
 
@@ -1422,27 +1475,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if(strcmp(argv[i],"-mkvlang")==0 && i < argc-1)
 		{
 			i++;
-			int initial=0, present=0;
-			char temp;
 			opt->mkvlang = (char *)malloc(sizeof(argv[i]));
 			sprintf(opt->mkvlang,"%s",argv[i]);
-			for(int char_index=0; char_index < strlen(opt->mkvlang);char_index++){
-					opt->mkvlang[char_index] = cctolower(opt->mkvlang[char_index]);
-					if (opt->mkvlang[char_index]==','){
-							present=char_index;
-							if ((present-initial<5)&&(present-initial!=3)){
-								printf("%d %d\n",present,initial);
-									fatal(EXIT_MALFORMED_PARAMETER, "language codes should be xxx,xxx,xxx,....\n");
-							}
-							else if ((present-initial>3)&&(present-initial!=6))
-							{
-								printf("%d %d\n",present,initial);
-								fatal(EXIT_MALFORMED_PARAMETER, "language codes should be xxx-xx,xxx-xx,xxx-xx,....\n");
-							}
-							initial=present+1;
-						}
-					}
-
+			mkvlang_params_check(opt->mkvlang);
 			continue;
 		}
 
