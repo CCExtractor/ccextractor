@@ -9,6 +9,7 @@
 #include "../lib_hash/sha2.h"
 #ifdef ENABLE_HARDSUBX
 #include "hardsubx.h"
+#include <string.h>
 #endif
 
 static int inputfile_capacity=0;
@@ -1421,10 +1422,27 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if(strcmp(argv[i],"-mkvlang")==0 && i < argc-1)
 		{
 			i++;
+			int initial=0, present=0;
+			char temp;
 			opt->mkvlang = (char *)malloc(sizeof(argv[i]));
 			sprintf(opt->mkvlang,"%s",argv[i]);
-			for(int char_index=0; char_index < strlen(opt->mkvlang);char_index++)
-				opt->mkvlang[char_index] = cctolower(opt->mkvlang[char_index]);
+			for(int char_index=0; char_index < strlen(opt->mkvlang);char_index++){
+					opt->mkvlang[char_index] = cctolower(opt->mkvlang[char_index]);
+					if (opt->mkvlang[char_index]==','){
+							present=char_index;
+							if ((present-initial<5)&&(present-initial!=3)){
+								printf("%d %d\n",present,initial);
+									fatal(EXIT_MALFORMED_PARAMETER, "language codes should be xxx,xxx,xxx,....\n");
+							}
+							else if ((present-initial>3)&&(present-initial!=6))
+							{
+								printf("%d %d\n",present,initial);
+								fatal(EXIT_MALFORMED_PARAMETER, "language codes should be xxx-xx,xxx-xx,xxx-xx,....\n");
+							}
+							initial=present+1;
+						}
+					}
+
 			continue;
 		}
 
