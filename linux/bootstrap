@@ -1,0 +1,8 @@
+#!/bin/sh
+
+rm -rf autom4te.cache aclocal.m4 config.h.in configure Makefile.in
+
+aclocal \
+&& autoheader \
+&& automake --add-missing \
+&& autoconf
