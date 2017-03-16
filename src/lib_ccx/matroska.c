@@ -622,11 +622,11 @@ void parse_segment_track_entry(struct matroska_ctx* mkv_ctx) {
         sub_track->lang_index = 0;
         sub_track->codec_id = codec_id;
         sub_track->sentence_count = 0;
-
 		for (int i = 0; i < mkv_ctx->sub_tracks_count; i++)
 			if (strcmp((const char *)mkv_ctx->sub_tracks[i]->lang, (const char *)lang) == 0)
 				sub_track->lang_index++;
-		    mkv_ctx->sub_tracks[mkv_ctx->sub_tracks_count] = sub_track;
+		mkv_ctx->sub_tracks = realloc(mkv_ctx->sub_tracks, sizeof(struct matroska_sub_track*) * (mkv_ctx->sub_tracks_count + 1));
+		mkv_ctx->sub_tracks[mkv_ctx->sub_tracks_count] = sub_track;
         mkv_ctx->sub_tracks_count++;
     }
     else
@@ -763,7 +763,6 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
 {
     char* filename = generate_filename_from_track(mkv_ctx, track);
     mprint("\nOutput file: %s", filename);
-    int size=0;
     int desc;
 #ifdef WIN32
     desc = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, S_IREAD | S_IWRITE);
@@ -798,11 +797,10 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
             write(desc, " --> ", 5);
             write(desc, timestamp_end, strlen(timestamp_start));
             write(desc, "\n", 1);
-            while (sentence->text[0] == '\n'){
+            int size=0;
+            while (sentence->text+size=='\n' || sentence->text+size=='\r' )
               size++;
-              sentence->text++;
-            }
-            write(desc, sentence->text, sentence->text_size-size);
+            write(desc, sentence->text+size, sentence->text_size-size);
             write(desc, "\n\n", 2);
 
             free(timestamp_start);
@@ -939,7 +937,7 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
     mkv_ctx->current_second = 0;
     mkv_ctx->filename = ctx->inputfile[ctx->current_file];
     mkv_ctx->file = create_file(ctx);
-    mkv_ctx->sub_tracks = malloc(sizeof(struct matroska_sub_track*));
+    mkv_ctx->sub_tracks = malloc(sizeof(struct matroska_sub_track**));
 
     matroska_parse(mkv_ctx);
 
