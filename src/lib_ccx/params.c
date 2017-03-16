@@ -7,6 +7,8 @@
 #include "ccx_decoders_708.h"
 #include "compile_info.h"
 #include "../lib_hash/sha2.h"
+#include <string.h>
+#include <stdio.h>
 #ifdef ENABLE_HARDSUBX
 #include "hardsubx.h"
 #endif
@@ -497,7 +499,7 @@ void print_usage (void)
 	mprint ("                       less or equal than the max allowed..\n");
 	mprint (" -levdistmincnt value: Minimum distance we always allow regardless\n");
 	mprint ("                       of the length of the strings.Default 2. \n");
-	mprint ("                       This means that if the calculated distance \n"); 
+	mprint ("                       This means that if the calculated distance \n");
    	mprint ("                       is 0,1 or 2, we consider the strings to be equivalent.\n");
 	mprint (" -levdistmaxpct value: Maximum distance we allow, as a percentage of\n");
 	mprint ("                       the shortest string length. Default 10%.\n");
@@ -591,6 +593,12 @@ void print_usage (void)
 	mprint ("                       0: OEM_TESSERACT_ONLY - default value, the fastest mode.\n");
 	mprint ("                       1: OEM_LSTM_ONLY - use LSTM algorithm for recognition.\n");
 	mprint ("                       2: OEM_TESSERACT_LSTM_COMBINED - both algorithms.\n");
+	mprint ("             -mkvlang: For MKV subtitles, select which language's caption\n");
+	mprint ("                       stream will be processed. e.g. 'eng' for English.\n");
+	mprint ("                       Language codes can be either the 3 letters bibliographic\n");
+	mprint ("                       ISO-639-2 form (like \"fre\" for french) or a language\n");
+	mprint ("                       code followed by a dash and a country code for specialities\n");
+	mprint ("                       in languages (like \"fre-ca\" for Canadian French).\n");
 
 	mprint ("\n");
 	mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
@@ -1021,6 +1029,58 @@ int atoi_hex (char *s)
 	}
 }
 
+void mkvlang_params_check(char* lang){
+	int initial=0, present=0;
+	for(int char_index=0; char_index < strlen(lang);char_index++){
+			lang[char_index] = cctolower(lang[char_index]);
+			if (lang[char_index]==','){
+					present=char_index;
+					if ((present-initial<6)&&(present-initial!=3))
+							fatal(EXIT_MALFORMED_PARAMETER, "language codes should be xxx,xxx,xxx,....\n");
+
+					else if ((present-initial>3)&&(present-initial!=6))
+						fatal(EXIT_MALFORMED_PARAMETER, "language codes should be xxx-xx,xxx-xx,xxx-xx,....\n");
+
+					if ((present-initial>3)&&(present-initial==6)){
+						size_t length = present-initial;
+						char* block=calloc(length+1,sizeof(char));
+						strncpy(block,lang+initial,length);
+						char* hiphen_pointer = strstr(block,"-");
+						if (!hiphen_pointer)
+								fatal(EXIT_MALFORMED_PARAMETER, "language code is not of the form xxx-xx\n");
+						free(block);
+						}
+					initial=present+1;
+				}
+			}
+
+	//Steps to check for the last lang of multiple mkvlangs provided by the user.
+	present = strlen(lang)-1;
+
+	for(int char_index=strlen(lang)-1; char_index >=0 ;char_index--)
+		if (lang[char_index]==','){
+			initial=char_index+1;
+			break;
+		}
+
+	if ((present-initial<5)&&(present-initial!=2))
+		fatal(EXIT_MALFORMED_PARAMETER, "last language code should be xxx.\n");
+
+	else if ((present-initial>2)&&(present-initial!=5))
+		fatal(EXIT_MALFORMED_PARAMETER, "last language code should be xxx-xx.\n");
+
+	if ((present-initial>2)&&(present-initial==5)){
+					size_t length = present-initial;
+					char* block=calloc(length+1,sizeof(char));
+					strncpy(block,lang+initial,length);
+					char* hiphen_pointer = strstr(block,"-");
+					if (!hiphen_pointer)
+							fatal(EXIT_MALFORMED_PARAMETER, "last language code is not of the form xxx-xx\n");
+					free(block);
+					}
+}
+
+
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 {
 
@@ -1225,7 +1285,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 		}
 #endif
-		
+
 		if (strcmp(argv[i], "-chapters") == 0){
 			opt->extract_chapters= 1;
 			continue;
@@ -1409,6 +1469,15 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-oem has no argument.");
 			}
 			i++;
+			continue;
+		}
+
+		if(strcmp(argv[i],"-mkvlang")==0 && i < argc-1)
+		{
+			i++;
+			opt->mkvlang = (char *)malloc(sizeof(argv[i]));
+			sprintf(opt->mkvlang,"%s",argv[i]);
+			mkvlang_params_check(opt->mkvlang);
 			continue;
 		}
 
@@ -2233,7 +2302,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	{
 		fatal (EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
 	}
-	
+
 	if(opt->extract_chapters)
 	{
 		mprint("Request to extract chapters recieved.\n");

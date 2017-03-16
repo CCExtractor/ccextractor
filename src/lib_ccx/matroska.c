@@ -227,7 +227,7 @@ char* generate_timestamp_ass_ssa(ULLONG milliseconds) {
 }
 
 int find_sub_track_index(struct matroska_ctx* mkv_ctx, ULLONG track_number) {
-    for (int i = 0; i < mkv_ctx->sub_tracks_count; i++)
+    for (int i = mkv_ctx->sub_tracks_count-1; i >=0 ; i--)
         if (mkv_ctx->sub_tracks[i]->track_number == track_number)
             return i;
     return -1;
@@ -259,6 +259,11 @@ struct matroska_sub_sentence* parse_segment_cluster_block_group_block(struct mat
     sentence->time_start = timecode + cluster_timecode;
 
     struct matroska_sub_track* track = mkv_ctx->sub_tracks[sub_track_index];
+    if (track->sentence_count==0){
+      track->sentences = malloc(sizeof(struct matroska_sub_sentence*));
+    }
+    else
+      track->sentences = realloc(track->sentences,(track->sentence_count+1)*sizeof(struct matroska_sub_sentence*));
     track->sentences[track->sentence_count] = sentence;
     track->sentence_count++;
 
@@ -617,12 +622,11 @@ void parse_segment_track_entry(struct matroska_ctx* mkv_ctx) {
         sub_track->lang_index = 0;
         sub_track->codec_id = codec_id;
         sub_track->sentence_count = 0;
-
-        for (int i = 0; i < mkv_ctx->sub_tracks_count; i++)
-            if (strcmp((const char *)mkv_ctx->sub_tracks[i]->lang, (const char *)lang) == 0)
-                sub_track->lang_index++;
-
-        mkv_ctx->sub_tracks[mkv_ctx->sub_tracks_count] = sub_track;
+		for (int i = 0; i < mkv_ctx->sub_tracks_count; i++)
+			if (strcmp((const char *)mkv_ctx->sub_tracks[i]->lang, (const char *)lang) == 0)
+				sub_track->lang_index++;
+		mkv_ctx->sub_tracks = realloc(mkv_ctx->sub_tracks, sizeof(struct matroska_sub_track*) * (mkv_ctx->sub_tracks_count + 1));
+		mkv_ctx->sub_tracks[mkv_ctx->sub_tracks_count] = sub_track;
         mkv_ctx->sub_tracks_count++;
     }
     else
@@ -644,8 +648,10 @@ void parse_segment_tracks(struct matroska_ctx* mkv_ctx)
         switch (code) {
             /* Tracks ids*/
             case MATROSKA_SEGMENT_TRACK_ENTRY:
-                parse_segment_track_entry(mkv_ctx);
-                MATROSKA_SWITCH_BREAK(code, code_len);
+
+
+				    parse_segment_track_entry(mkv_ctx);
+            MATROSKA_SWITCH_BREAK(code, code_len);
 
                 /* Misc ids */
             case MATROSKA_VOID:
@@ -677,7 +683,6 @@ void parse_segment(struct matroska_ctx* mkv_ctx)
         code <<= 8;
         code += mkv_read_byte(file);
         code_len++;
-
         switch (code) {
             /* Segment ids */
             case MATROSKA_SEGMENT_SEEK_HEAD:
@@ -758,7 +763,6 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
 {
     char* filename = generate_filename_from_track(mkv_ctx, track);
     mprint("\nOutput file: %s", filename);
-
     int desc;
 #ifdef WIN32
     desc = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, S_IREAD | S_IWRITE);
@@ -779,8 +783,7 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
         {
             char number[9];
             sprintf(number, "%d", i + 1);
-
-            char *timestamp_start = malloc(sizeof(char) * 80);	//being generous 
+            char *timestamp_start = malloc(sizeof(char) * 80);	//being generous
             timestamp_to_srttime(sentence->time_start, timestamp_start);
             ULLONG time_end = sentence->time_end;
             if (i + 1 < track->sentence_count)
@@ -794,7 +797,10 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
             write(desc, " --> ", 5);
             write(desc, timestamp_end, strlen(timestamp_start));
             write(desc, "\n", 1);
-            write(desc, sentence->text, sentence->text_size);
+            int size=0;
+            while (*(sentence->text+size)=='\n' || *(sentence->text+size)=='\r' )
+              size++;
+            write(desc, sentence->text+size, sentence->text_size-size);
             write(desc, "\n\n", 2);
 
             free(timestamp_start);
@@ -814,6 +820,8 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
             write(desc, timestamp_end, strlen(timestamp_start));
             write(desc, ",", 1);
             char* text = ass_ssa_sentence_erase_read_order(sentence->text);
+            while((text[0]=='\\') &&  (text[1]=='n' || text[1]=='N'))
+              text+=2;
             write(desc, text, strlen(text));
             write(desc, "\n", 1);
 
@@ -838,10 +846,17 @@ void free_sub_track(struct matroska_sub_track* track)
     free(track);
 }
 
-void matroska_save_all(struct matroska_ctx* mkv_ctx)
+void matroska_save_all(struct matroska_ctx* mkv_ctx,char* lang)
 {
-    for (int i = 0; i < mkv_ctx->sub_tracks_count; i++)
+  char* match;
+    for (int i = 0; i < mkv_ctx->sub_tracks_count; i++){
+      if (lang){
+        if (match = strstr(lang,mkv_ctx->sub_tracks[i]->lang) != NULL)
+          save_sub_track(mkv_ctx, mkv_ctx->sub_tracks[i]);
+                }
+      else
         save_sub_track(mkv_ctx, mkv_ctx->sub_tracks[i]);
+      }
 }
 
 void matroska_free_all(struct matroska_ctx* mkv_ctx)
@@ -864,7 +879,7 @@ void matroska_parse(struct matroska_ctx* mkv_ctx)
         code_len++;
 
         switch (code) {
-            /* Header ids*/
+          /* Header ids*/
             case MATROSKA_EBML_HEADER:
                 parse_ebml(file);
                 MATROSKA_SWITCH_BREAK(code, code_len);
@@ -888,6 +903,7 @@ void matroska_parse(struct matroska_ctx* mkv_ctx)
                 break;
         }
     }
+
 
     // Close file stream
     fclose(file);
@@ -921,6 +937,7 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
     mkv_ctx->current_second = 0;
     mkv_ctx->filename = ctx->inputfile[ctx->current_file];
     mkv_ctx->file = create_file(ctx);
+    mkv_ctx->sub_tracks = malloc(sizeof(struct matroska_sub_track**));
 
     matroska_parse(mkv_ctx);
 
@@ -928,7 +945,7 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
     activity_progress(100, (int) (mkv_ctx->current_second / 60),
                       (int) (mkv_ctx->current_second % 60));
 
-    matroska_save_all(mkv_ctx);
+    matroska_save_all(mkv_ctx,ccx_options.mkvlang);
     int sentence_count = mkv_ctx->sentence_count;
     matroska_free_all(mkv_ctx);
 

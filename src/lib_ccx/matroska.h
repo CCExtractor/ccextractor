@@ -136,9 +136,7 @@
 
 /* Other defines */
 #define MATROSKA_MAX_ID_LENGTH 4
-#define MATROSKA_MAX_TRACKS 128
-#define MATROSKA_MAX_SENTENCES 8192
-#define MAX_FILE_NAME_SIZE 200
+#define MAX_FILE_NAME_SIZE 260
 
 /* Enums */
 enum matroska_track_entry_type {
@@ -203,11 +201,11 @@ struct matroska_sub_track {
     enum matroska_track_subtitle_codec_id codec_id;
 
     int sentence_count;
-    struct matroska_sub_sentence* sentences[MATROSKA_MAX_SENTENCES];
+    struct matroska_sub_sentence** sentences;
 };
 
 struct matroska_ctx {
-    struct matroska_sub_track* sub_tracks[MATROSKA_MAX_TRACKS];
+    struct matroska_sub_track** sub_tracks;
     struct lib_ccx_ctx* ctx;
     int sub_tracks_count;
     int sentence_count;
@@ -244,13 +242,13 @@ void parse_segment(struct matroska_ctx* mkv_ctx);
 char* generate_timestamp_utf8(ULLONG milliseconds);
 char* generate_timestamp_ass_ssa(ULLONG milliseconds);
 int find_sub_track_index(struct matroska_ctx* mkv_ctx, ULLONG track_number);
-char* get_track_entry_type_description(enum matroska_track_entry_type type);
+char*   get_track_entry_type_description(enum matroska_track_entry_type type);
 enum matroska_track_subtitle_codec_id get_track_subtitle_codec_id(char* codec_id);
 char* generate_filename_from_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* track);
 char* ass_ssa_sentence_erase_read_order(char* text);
 void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* track);
 void free_sub_track(struct matroska_sub_track* track);
-void matroska_save_all(struct matroska_ctx* mkv_ctx);
+void matroska_save_all(struct matroska_ctx* mkv_ctx,char* lang);
 void matroska_free_all(struct matroska_ctx* mkv_ctx);
 void matroska_parse(struct matroska_ctx* mkv_ctx);
 FILE* create_file(struct lib_ccx_ctx *ctx);
