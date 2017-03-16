@@ -798,7 +798,7 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
             write(desc, timestamp_end, strlen(timestamp_start));
             write(desc, "\n", 1);
             int size=0;
-            while (sentence->text+size=='\n' || sentence->text+size=='\r' )
+            while (*(sentence->text+size)=='\n' || *(sentence->text+size)=='\r' )
               size++;
             write(desc, sentence->text+size, sentence->text_size-size);
             write(desc, "\n\n", 2);
