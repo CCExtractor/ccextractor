@@ -45,18 +45,14 @@ More usage information can be found on our website:
     sudo apt-get install -y tesseract-ocr-dev
     sudo apt-get install -y libleptonica-dev
     
-    # compiling (Choose any one of 3 methods)
+    # compiling (Choose any one of 2 methods)
     METHOD 1: If you don't want to obtain object files
     cd ccextractor/linux
     ./build
     
-    METHOD 2: If you want object files
-    cd ccextractor/linux
-    make
-    
-    METHOD 3: Standard linux compilation through Autoconf scripts
+    METHOD 2: Standard linux compilation through Autoconf scripts
     sudo apt-get install autoconf      #Dependency to generate configuration script
-    cd ccextractor
+    cd ccextractor/linux
     ./autogen.sh
     ./configure
     make

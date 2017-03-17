@@ -263,13 +263,52 @@ ccextractor_SOURCES = \
 				../src/zvbi/zvbi_decoder.h
 				
 
-ccextractor_CFLAGS =-std=gnu99 -DGPAC_CONFIG_LINUX -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DENABLE_OCR
+ccextractor_CFLAGS = -O3 -std=gnu99 -s  -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT 
 
-ccextractor_CPPFLAGS =-I /usr/include/leptonica/ -I /usr/include/tesseract/ -I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi/ -I../src/lib_hash/ -I../src/protobuf-c/ -I../src/utf8proc/
+ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi/ -I../src/lib_hash/ -I../src/protobuf-c/ -I../src/utf8proc/
 
-ccextractor_LDADD =-lm -ltesseract -llept
 
-ccextractor_LDFLAGS=-zmuldefs
+ccextractor_LDFLAGS=-lm -zmuldefs
+
+if SYS_IS_LINUX
+ccextractor_CFLAGS += -DGPAC_CONFIG_LINUX
+endif
+
+if HARDSUBX_IS_ENABLED
+ccextractor_CFLAGS += -DENABLE_HARDSUBX
+ccextractor_CPPFLAGS+= $(shell pkg-config --cflags libavcodec)
+ccextractor_CPPFLAGS+= $(shell pkg-config --cflags libavformat)
+ccextractor_CPPFLAGS+= $(shell pkg-config --cflags libavutil)
+ccextractor_CPPFLAGS+= $(shell pkg-config --cflags libswscale)
+AV_LIB = $(shell pkg-config --libs libavcodec )
+AV_LIB += $(shell pkg-config --libs libavformat )
+AV_LIB += $(shell pkg-config --libs libavutil )
+AV_LIB += $(shell pkg-config --libs libswscale )
+ccextractor_LDFLAGS += $(AV_LIB)
+endif
+
+if OCR_IS_ENABLED
+ccextractor_CFLAGS += -DENABLE_OCR -DPNG_NO_CONFIG_H
+LEPT_LIB = $(shell pkg-config --libs lept)
+
+if TESSERACT_PRESENT
+TESS_LIB = $(shell pkg-config --libs tesseract)
+TESS_CPPFLAG = $(shell pkg-config --cflags tesseract)
+else
+
+#fix for raspberry pi not having a pkgconfig file for tesseract
+
+if TESSERACT_PRESENT_RPI
+TESS_LIB = -ltesseract
+TESS_CPPFLAG = -I/usr/include/tesseract
+endif
+endif
+
+ccextractor_CPPFLAGS  += $(TESS_CPPFLAG)
+ccextractor_CPPFLAGS  += $(shell pkg-config --cflags lept)
+ccextractor_LDFLAGS += $(TESS_LIB)
+ccextractor_LDFLAGS += $(LEPT_LIB)
+endif
 
 EXTRA_DIST = ../src/gpacmp4/gpac/sync_layer.h ../src/lib_ccx/ccfont2.xbm ../src/utf8proc/utf8proc_data.c
 

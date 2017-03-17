@@ -2,7 +2,7 @@
 
 rm -rf Makefile
 rm -rf configure
-rm -rf Makefile.in
+rm -rf *.in
 rm -rf config.status
 rm -rf config.log
 rm -rf aclocal.m4

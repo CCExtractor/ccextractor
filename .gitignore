@@ -60,3 +60,15 @@ windows/enc_temp_folder/*
 #CMake
 src/cmake-build-debug/
 src/.idea
+
+
+#Autotools
+linux/config.h
+linux/config.log
+linux/config.status
+linux/Makefile
+linux/autom4te.cache
+linux/aclocal.m4
+linux/*.in
+linux/configure
+linux/buiild-conf
