@@ -54,30 +54,30 @@ AC_CHECK_FUNCS([floor ftruncate gethostbyname gettimeofday inet_ntoa mblen memch
 # Checking arguments with configure and setting Preprocessor args with AM_CONDITIONAL
 AC_ARG_ENABLE([hardsubx],
 AC_HELP_STRING([--enable-hardsubx], [Enables extraction of burnt subtitles (hard subtitles)]),
-[case "${value}" in
+[case "${enableval}" in
   yes) hardsubx=true ;;
   no)  hardsubx=false ;;
-  *) AC_MSG_ERROR([bad value ${value} for --enable-hardsubx]) ;;
+  *) AC_MSG_ERROR([bad enableval ${enableval} for --enable-hardsubx]) ;;
 esac],[hardsubx=false])
 AM_CONDITIONAL(HARDSUBX_IS_ENABLED, [ test x$hardsubx = xtrue ])
 
 
 AC_ARG_ENABLE([ocr],
 AC_HELP_STRING([--enable-ocr], [Enables Optical Character Recognition]),
-[case "${value}" in
+[case "${enableval}" in
   yes) ocr=true ;;
   no)  ocr=false ;;
-  *) AC_MSG_ERROR([bad value ${value} for --enable-ocr]) ;;
+  *) AC_MSG_ERROR([bad enableval ${enableval} for --enable-ocr]) ;;
 esac],[ocr=false])
 AM_CONDITIONAL(OCR_IS_ENABLED, [ test x$ocr = xtrue || test x$hardsubx = xtrue ])
 
 
 AC_ARG_ENABLE([ffmpeg],
 AC_HELP_STRING([--enable-ffmpeg], [Enable FFmpeg integration]),
-[case "${value}" in
+[case "${enableval}" in
   yes) ffmpeg=true ;;
   no)  ffmpeg=false ;;
-  *) AC_MSG_ERROR([bad value ${value} for --enable-ffmpeg]) ;;
+  *) AC_MSG_ERROR([bad enableval ${enableval} for --enable-ffmpeg]) ;;
 esac],[ffmpeg=false])
 AM_CONDITIONAL(FFMPEG_IS_ENABLED, [ test x$ffmpeg = xtrue ])
 
