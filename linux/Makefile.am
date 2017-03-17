@@ -98,6 +98,8 @@ LDFLAGS+= $(shell pkg-config --libs libavformat )
 LDFLAGS+= $(shell pkg-config --libs libavutil )
 endif
 
+EXTRA_DIST=$(SRCS_DIR) $(srcdir)/pre-build.sh
+
 all-local: pre-build objs_dir $(TARGET)
 
 .PHONY: objs_dir
@@ -122,6 +124,12 @@ clean-local:
 	rm -rdf $(OBJS_DIR) 2>/dev/null || true
 	rm -rf .depend 2>/dev/null || true
 
+dist-hook:
+	mv "$(distdir)" "$(distdir)/../linux"
+	mkdir "$(distdir)"
+	mv "$(distdir)/../linux" "$(distdir)"
+	mv "$(distdir)/../src" "$(distdir)"
+
 install-exec-local: $(TARGET)
 	$(INSTLALL_PROGRAM) $(TARGET) $(DESTDIR)
 
@@ -137,5 +145,9 @@ depend dep:
 .PHONY: pre-build
 pre-build:
 	$(srcdir)/pre-build.sh
+
+compile: ;
+install-sh: ;
+missing: ;
 
 -include .depend
