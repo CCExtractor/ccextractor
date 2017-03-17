@@ -72,3 +72,5 @@ linux/aclocal.m4
 linux/*.in
 linux/configure
 linux/buiild-conf
+package_creators/*tar.gz
+package_creators/build/*.deb
