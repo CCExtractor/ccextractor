@@ -69,3 +69,8 @@ linux/configure
 linux/compile
 linux/install-sh
 linux/missing
+config.h
+config.log
+config.status
+Makefile
+stamp-h1
