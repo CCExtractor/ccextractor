@@ -3,8 +3,8 @@
 
 AC_PREREQ([2.69])
 AC_INIT(ccextractor, 0.85, https://github.com/CCExtractor/ccextractor/issues)
-AC_CONFIG_AUX_DIR([build])
-AC_CONFIG_SRCDIR([src/ccextractor.c])
+AC_CONFIG_AUX_DIR([build-conf])
+AC_CONFIG_SRCDIR([../src/ccextractor.c])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 
 
