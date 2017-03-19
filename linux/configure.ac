@@ -51,40 +51,52 @@ AC_FUNC_REALLOC
 AC_FUNC_STRERROR_R
 AC_CHECK_FUNCS([floor ftruncate gethostbyname gettimeofday inet_ntoa mblen memchr memmove memset mkdir modf pow realpath rmdir select setlocale socket sqrt strcasecmp strchr strdup strerror strndup strrchr strstr strtol])
 
-# Checking arguments with configure and setting Preprocessor args with AM_CONDITIONAL
+# Checks for arguments with configure
 AC_ARG_ENABLE([hardsubx],
 AC_HELP_STRING([--enable-hardsubx], [Enables extraction of burnt subtitles (hard subtitles)]),
 [case "${enableval}" in
   yes) hardsubx=true ;;
   no)  hardsubx=false ;;
-  *) AC_MSG_ERROR([bad enableval ${enableval} for --enable-hardsubx]) ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-hardsubx]) ;;
 esac],[hardsubx=false])
-AM_CONDITIONAL(HARDSUBX_IS_ENABLED, [ test x$hardsubx = xtrue ])
-
 
 AC_ARG_ENABLE([ocr],
 AC_HELP_STRING([--enable-ocr], [Enables Optical Character Recognition]),
 [case "${enableval}" in
   yes) ocr=true ;;
   no)  ocr=false ;;
-  *) AC_MSG_ERROR([bad enableval ${enableval} for --enable-ocr]) ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-ocr]) ;;
 esac],[ocr=false])
-AM_CONDITIONAL(OCR_IS_ENABLED, [ test x$ocr = xtrue || test x$hardsubx = xtrue ])
-
 
 AC_ARG_ENABLE([ffmpeg],
 AC_HELP_STRING([--enable-ffmpeg], [Enable FFmpeg integration]),
 [case "${enableval}" in
   yes) ffmpeg=true ;;
   no)  ffmpeg=false ;;
-  *) AC_MSG_ERROR([bad enableval ${enableval} for --enable-ffmpeg]) ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-ffmpeg]) ;;
 esac],[ffmpeg=false])
+
+
+#Checks and prompts if libraries found/not found to avoild failure while building
+AS_IF([ test x$hardsubx = xtrue && test $HAS_AVCODEC -gt 0 ], [AC_MSG_NOTICE(checking for avcodec presence... yes)])
+AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVCODEC -gt 0 ], [AC_MSG_ERROR(checking for avcodec presence... no. Install avcodec library, required to proceed configuration.)])
+AS_IF([ test x$hardsubx = xtrue && test $HAS_AVFORMAT -gt 0 ], [AC_MSG_NOTICE(checking for avformat presence.. yes)])
+AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVFORMAT -gt 0 ], [AC_MSG_ERROR(checking for avformat presence.. no. Install avformat library, required to proceed configuration.)])
+AS_IF([ test x$hardsubx = xtrue && test $HAS_AVUTIL -gt 0 ], [AC_MSG_NOTICE(checking for avutil presence... yes)])
+AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVUTIL -gt 0 ], [AC_MSG_ERROR(checking for avutil presence... no. Please install the avutil library before proceeding)])
+AS_IF([ test x$hardsubx = xtrue && test $HAS_SWSCALE -gt 0 ], [AC_MSG_NOTICE(checking for swscale presence... yes)])
+AS_IF([ test x$hardsubx = xtrue && test ! $HAS_SWSCALE -gt 0 ], [AC_MSG_ERROR(checking for swscale presence... no. Install swscale library, required to proceed configuration.)])
+AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_TESSERACT -gt 0 ], [TESS_VER=`tesseract --version 2>&1 | grep tesseract` && AC_MSG_NOTICE(checking for tesseract...yes $TESS_VER)])
+AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_TESSERACT -gt 0 ], [AC_MSG_ERROR(checking for tesseract... no. Install tesseract library, required to proceed configuration.)])
+AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_LEPT -gt 0 ], [LEPT_VER=`tesseract --version 2>&1 | grep leptonica` && AC_MSG_NOTICE(checking for leptonica... yes $LEPT_VER)])
+AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_LEPT -gt 0 ], [AC_MSG_ERROR(checking for leptonica... no. Install leptonica library, required to proceed configuration.)])
+
+#AM_CONDITIONAL(s) for setting values to enable/disable flags in Makefile.am
+AM_CONDITIONAL(HARDSUBX_IS_ENABLED, [ test x$hardsubx = xtrue ])
+AM_CONDITIONAL(OCR_IS_ENABLED, [ test x$ocr = xtrue || test x$hardsubx = xtrue ])
 AM_CONDITIONAL(FFMPEG_IS_ENABLED, [ test x$ffmpeg = xtrue ])
-
 AM_CONDITIONAL(TESSERACT_PRESENT, [ test ! -z  `pkg-config --libs --silence-errors tesseract` ])
-
 AM_CONDITIONAL(TESSERACT_PRESENT_RPI, [ test -d "/usr/include/tesseract" && test `ls -A /usr/include/tesseract | wc -l` -gt 0 ])
-
 AM_CONDITIONAL(SYS_IS_LINUX, [ string=`gcc -dumpmachine` && test -z "${string##*$linux*}" ])
 
 
