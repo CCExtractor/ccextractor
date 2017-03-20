@@ -1002,18 +1002,19 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		ctx->transmission_mode = (transmission_mode_t) (unham_8_4(packet->data[7]) & 0x01);
 
 		// FIXME: Well, this is not ETS 300 706 kosher, however we are interested in DATA_UNIT_EBU_TELETEXT_SUBTITLE only
-		if ((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (data_unit_id != DATA_UNIT_EBU_TELETEXT_SUBTITLE)) return;
+		if ((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (data_unit_id != DATA_UNIT_EBU_TELETEXT_SUBTITLE)/* && (ctx->page_buffer.tainted == NO)*/) return;
 
 		if ((ctx->receiving_data == YES) && (
 			((ctx->transmission_mode == TRANSMISSION_MODE_SERIAL) && (PAGE(page_number) != PAGE(tlt_config.page))) ||
 			((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (PAGE(page_number) != PAGE(tlt_config.page)) && (m == MAGAZINE(tlt_config.page)))))
 		{
 			ctx->receiving_data = NO;
-			return;
+			if(ctx->page_buffer.tainted == NO)
+			  return;
 		}
 
 		// Page transmission is terminated, however now we are waiting for our new page
-		if (page_number != tlt_config.page)
+		if (page_number != tlt_config.page && ctx->page_buffer.tainted == NO)
 			return;
 
 
