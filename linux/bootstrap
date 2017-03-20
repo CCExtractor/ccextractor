@@ -1,0 +1,14 @@
+#!/bin/sh
+
+EXEC_DIR="$(pwd)"
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+
+cd $SCRIPT_DIR
+rm -rf autom4te.cache aclocal.m4 config.h.in configure Makefile.in
+
+aclocal \
+&& autoheader \
+&& automake --add-missing \
+&& autoconf
+
+cd $EXEC_DIR

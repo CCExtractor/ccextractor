@@ -22,13 +22,14 @@ if [ -z "$commit" ]; then
 	commit="Unknown"
 fi
 builddate=`date +%Y-%m-%d`
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 echo "Storing variables in file"
 echo "Commit: $commit"
 echo "Date: $builddate"
-echo "#ifndef CCX_CCEXTRACTOR_COMPILE_REAL_H" > ../src/lib_ccx/compile_info_real.h
-echo "#define CCX_CCEXTRACTOR_COMPILE_REAL_H" >> ../src/lib_ccx/compile_info_real.h
-echo "#define GIT_COMMIT \"$commit\"" >> ../src/lib_ccx/compile_info_real.h
-echo "#define COMPILE_DATE \"$builddate\"" >> ../src/lib_ccx/compile_info_real.h
-echo "#endif" >> ../src/lib_ccx/compile_info_real.h
+echo "#ifndef CCX_CCEXTRACTOR_COMPILE_REAL_H" > $SCRIPT_DIR/../src/lib_ccx/compile_info_real.h
+echo "#define CCX_CCEXTRACTOR_COMPILE_REAL_H" >> $SCRIPT_DIR/../src/lib_ccx/compile_info_real.h
+echo "#define GIT_COMMIT \"$commit\"" >> $SCRIPT_DIR/../src/lib_ccx/compile_info_real.h
+echo "#define COMPILE_DATE \"$builddate\"" >> $SCRIPT_DIR/../src/lib_ccx/compile_info_real.h
+echo "#endif" >> $SCRIPT_DIR/../src/lib_ccx/compile_info_real.h
 echo "Stored all in compile_info_real.h"
 echo "Done."
