@@ -45,9 +45,21 @@ More usage information can be found on our website:
     sudo apt-get install -y tesseract-ocr-dev
     sudo apt-get install -y libleptonica-dev
     
-    # compiling
+    # compiling (Choose any one of 3 methods)
+    METHOD 1: If you don't want to obtain object files
     cd ccextractor/linux
     ./build
+    
+    METHOD 2: If you want object files
+    cd ccextractor/linux
+    make
+    
+    METHOD 3: Standard linux compilation through Autoconf scripts
+    sudo apt-get install autoconf      #Dependency to generate configuration script
+    cd ccextractor
+    ./autogen.sh
+    ./configure
+    make
     
     # test your build
     ./ccextractor
@@ -62,9 +74,21 @@ More usage information can be found on our website:
     sudo yum install -y gcc
     sudo yum install -y tesseract-devel # leptonica will be installed automatically
     
-    # compiling
+    # compiling (Choose any one of the 3 methods)
+    METHOD 1: If you don't want to obtain object files
     cd ccextractor/linux
     ./build
+    
+    METHOD 2: If you want object files
+    cd ccextractor/linux
+    make
+    
+    METHOD 3: Standard linux compilation through Autoconf scripts
+    sudo dnf install autoconf automake      #Dependency to generate configuration script
+    cd ccextractor
+    ./autogen.sh
+    ./configure
+    make
     
     # test your build
     ./ccextractor
