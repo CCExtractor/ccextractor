@@ -13,6 +13,16 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
+#Checks for "pkg-config" utility
+AC_MSG_CHECKING([pkg-config m4 macros])
+if test m4_ifdef([PKG_CHECK_MODULES], [yes], [no]) == yes; then
+	AC_MSG_RESULT([yes]);
+else
+	AC_MSG_RESULT([no]);
+	AC_MSG_ERROR([
+pkg-config is required.])
+fi
+
 # Checks for libraries.
 AC_CHECK_LIB([m], [sin], [], [AC_MSG_ERROR(Math library not installed. Install it before proceeding.)])
 AC_CHECK_LIB([lept], [getLeptonicaVersion], [HAS_LEPT=1 && PKG_CHECK_MODULES([lept], [lept])], [HAS_LEPT=0])
