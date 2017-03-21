@@ -88,18 +88,18 @@ esac],[ffmpeg=false])
 
 
 #Checks and prompts if libraries found/not found to avoild failure while building
-AS_IF([ test x$hardsubx = xtrue && test $HAS_AVCODEC -gt 0 ], [AC_MSG_NOTICE(checking for avcodec presence... yes)])
-AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVCODEC -gt 0 ], [AC_MSG_ERROR(checking for avcodec presence... no. Install avcodec library, required to proceed configuration.)])
-AS_IF([ test x$hardsubx = xtrue && test $HAS_AVFORMAT -gt 0 ], [AC_MSG_NOTICE(checking for avformat presence.. yes)])
-AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVFORMAT -gt 0 ], [AC_MSG_ERROR(checking for avformat presence.. no. Install avformat library, required to proceed configuration.)])
-AS_IF([ test x$hardsubx = xtrue && test $HAS_AVUTIL -gt 0 ], [AC_MSG_NOTICE(checking for avutil presence... yes)])
-AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVUTIL -gt 0 ], [AC_MSG_ERROR(checking for avutil presence... no. Please install the avutil library before proceeding)])
-AS_IF([ test x$hardsubx = xtrue && test $HAS_SWSCALE -gt 0 ], [AC_MSG_NOTICE(checking for swscale presence... yes)])
-AS_IF([ test x$hardsubx = xtrue && test ! $HAS_SWSCALE -gt 0 ], [AC_MSG_ERROR(checking for swscale presence... no. Install swscale library, required to proceed configuration.)])
+AS_IF([ test x$hardsubx = xtrue && test $HAS_AVCODEC -gt 0 ], [AC_MSG_NOTICE(avcodec library found)])
+AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVCODEC -gt 0 ], [AC_MSG_ERROR(avcodec library not found. Please install the avcodec library before proceeding)])
+AS_IF([ test x$hardsubx = xtrue && test $HAS_AVFORMAT -gt 0 ], [AC_MSG_NOTICE(avformat library found)])
+AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVFORMAT -gt 0 ], [AC_MSG_ERROR(avformat library not found. Please install the avformat library before proceeding)])
+AS_IF([ test x$hardsubx = xtrue && test $HAS_AVUTIL -gt 0 ], [AC_MSG_NOTICE(avutil library found)])
+AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVUTIL -gt 0 ], [AC_MSG_ERROR(avutil library not found. Please install the avutil library before proceeding)])
+AS_IF([ test x$hardsubx = xtrue && test $HAS_SWSCALE -gt 0 ], [AC_MSG_NOTICE(swscale library found)])
+AS_IF([ test x$hardsubx = xtrue && test ! $HAS_SWSCALE -gt 0 ], [AC_MSG_ERROR(swscale library not found. Please install the swscale library before proceeding)])
 AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_TESSERACT -gt 0 ], [TESS_VERSION=`tesseract --version 2>&1 | grep tesseract` && AC_MSG_NOTICE(tesseract library found... $TESS_VERSION)])
-AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_TESSERACT -gt 0 ], [AC_MSG_ERROR(checking for tesseract presence... no. Please install the tesseract library before proceeding)])
+AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_TESSERACT -gt 0 ], [AC_MSG_ERROR(tesserect library not found. Please install the tesseract library before proceeding)])
 AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_LEPT -gt 0 ], [LEPT_VERSION=`tesseract --version 2>&1 | grep leptonica` && AC_MSG_NOTICE(leptonica library found... $LEPT_VERSION)])
-AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_LEPT -gt 0 ], [AC_MSG_ERROR(checking for leptonica presence... no. Please install the leptonica library before proceeding)])
+AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_LEPT -gt 0 ], [AC_MSG_ERROR(leptonica library not found. Please install the leptonica library before proceeding)])
 
 #AM_CONDITIONAL(s) for setting values to enable/disable flags in Makefile.am
 AM_CONDITIONAL(HARDSUBX_IS_ENABLED, [ test x$hardsubx = xtrue ])
