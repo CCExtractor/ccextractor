@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT(ccextractor, 0.85, https://github.com/CCExtractor/ccextractor/issues)
+AC_INIT([CCExtractor], [0.85], [carlos@ccextractor.org])
 AC_CONFIG_AUX_DIR([build-conf])
 AC_CONFIG_SRCDIR([../src/ccextractor.c])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
@@ -19,7 +19,7 @@ AC_CHECK_LIB([lept], [getLeptonicaVersion], [HAS_LEPT=1 && PKG_CHECK_MODULES([le
 AC_CHECK_LIB([tesseract], [TessVersion], [HAS_TESSERACT=1 && PKG_CHECK_MODULES([tesseract], [tesseract])], [HAS_TESSERACT=0])
 AC_CHECK_LIB([avcodec], [avcodec_version], [HAS_AVCODEC=1 && PKG_CHECK_MODULES([libavcodec], [libavcodec])], [HAS_AVCODEC=0])
 AC_CHECK_LIB([avformat], [avformat_version], [HAS_AVFORMAT=1 && PKG_CHECK_MODULES([libavformat], [libavformat])], [HAS_AVFORMAT=0])
-AC_CHECK_LIB([avutil], [avutil_version], [HAS_AVUTIL=1 && PKG_CHECK_MODULES([libavutil], [libavutril])], [HAS_AVUTIL=0])
+AC_CHECK_LIB([avutil], [avutil_version], [HAS_AVUTIL=1 && PKG_CHECK_MODULES([libavutil], [libavutil])], [HAS_AVUTIL=0])
 AC_CHECK_LIB([swscale], [swscale_version], [HAS_SWSCALE=1 && PKG_CHECK_MODULES([libswscale], [libswscale])], [HAS_SWSCALE=0])
 
 # Checks for header files.
@@ -86,10 +86,10 @@ AS_IF([ test x$hardsubx = xtrue && test $HAS_AVUTIL -gt 0 ], [AC_MSG_NOTICE(chec
 AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVUTIL -gt 0 ], [AC_MSG_ERROR(checking for avutil presence... no. Please install the avutil library before proceeding)])
 AS_IF([ test x$hardsubx = xtrue && test $HAS_SWSCALE -gt 0 ], [AC_MSG_NOTICE(checking for swscale presence... yes)])
 AS_IF([ test x$hardsubx = xtrue && test ! $HAS_SWSCALE -gt 0 ], [AC_MSG_ERROR(checking for swscale presence... no. Install swscale library, required to proceed configuration.)])
-AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_TESSERACT -gt 0 ], [TESS_VER=`tesseract --version 2>&1 | grep tesseract` && AC_MSG_NOTICE(checking for tesseract...yes $TESS_VER)])
-AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_TESSERACT -gt 0 ], [AC_MSG_ERROR(checking for tesseract... no. Install tesseract library, required to proceed configuration.)])
-AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_LEPT -gt 0 ], [LEPT_VER=`tesseract --version 2>&1 | grep leptonica` && AC_MSG_NOTICE(checking for leptonica... yes $LEPT_VER)])
-AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_LEPT -gt 0 ], [AC_MSG_ERROR(checking for leptonica... no. Install leptonica library, required to proceed configuration.)])
+AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_TESSERACT -gt 0 ], [TESS_VERSION=`tesseract --version 2>&1 | grep tesseract` && AC_MSG_NOTICE(tesseract library found... $TESS_VERSION)])
+AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_TESSERACT -gt 0 ], [AC_MSG_ERROR(checking for tesseract presence... no. Please install the tesseract library before proceeding)])
+AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_LEPT -gt 0 ], [LEPT_VERSION=`tesseract --version 2>&1 | grep leptonica` && AC_MSG_NOTICE(leptonica library found... $LEPT_VERSION)])
+AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_LEPT -gt 0 ], [AC_MSG_ERROR(checking for leptonica presence... no. Please install the leptonica library before proceeding)])
 
 #AM_CONDITIONAL(s) for setting values to enable/disable flags in Makefile.am
 AM_CONDITIONAL(HARDSUBX_IS_ENABLED, [ test x$hardsubx = xtrue ])
