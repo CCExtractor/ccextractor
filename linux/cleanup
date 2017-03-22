@@ -1,0 +1,4 @@
+#!/bin/bash
+
+make distclean > /dev/null 2>&1 || true
+rm -rf Makefile configure *.in config.status config.log aclocal.m4 build-conf autom4te.cache

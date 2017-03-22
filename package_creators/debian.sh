@@ -1,11 +1,13 @@
 #!/bin/bash
 TYPE="debian"   # can be one of 'slackware', 'debian', 'rpm'
 PROGRAM_NAME="ccextractor"
-VERSION="0.84"
+VERSION="0.85"
 RELEASE="1"
 LICENSE="GPL-2.0"
 MAINTAINER="carlos@ccextractor.org"
 REQUIRES="gcc,libcurl4-gnutls-dev,tesseract-ocr,tesseract-ocr-dev,libleptonica-dev"
+
+../linux/pre-build.sh
 
 out=$((LC_ALL=C dpkg -s checkinstall) 2>&1)
 
@@ -20,9 +22,8 @@ then
     fi
 fi
 
-mkdir -p ../linux/objs
 
-(cd ../linux; checkinstall \
+(cd ../linux; ./autogen.sh; ./configure; make; sudo checkinstall \
     -y \
     --pkgrelease=$RELEASE \
     --pkggroup="CCExtractor" \
@@ -35,4 +36,9 @@ mkdir -p ../linux/objs
     --pakdir="../package_creators/build" \
     --maintainer=$MAINTAINER \
     --nodoc \
-    --requires=$REQUIRES)
+    --requires=$REQUIRES;)
+
+ cd ../linux
+ make distclean
+ ./cleanup
+ cd ../package_creators
