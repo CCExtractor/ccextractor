@@ -11,14 +11,14 @@
 // Count 608 (per field) and 708 blocks since last set_fts() call
 int cb_field1, cb_field2, cb_708;
 
-int MPEG_CLOCK_FREQ = 90000; // This "constant" is part of the standard
+int MPEG_CLOCK_FREQ = 90000; // This "constant" is part of the standard.  Not defined as constant because added "-90090" parameter which changes the clock frequency.
 
 int max_dif = 5;
 unsigned pts_big_change;
 
 // PTS timing related stuff
 
-double current_fps = (double) 30000.0 / 1001; /* 29.97 */ // TODO: Get from framerates_values[] instead
+double current_fps = framerates_values[4]; /* (30000.0 / 1001) = 29.97 */ // Getting from framerates_values[].
 
 int frames_since_ref_time = 0;
 unsigned total_frames_count;
