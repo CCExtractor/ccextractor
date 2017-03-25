@@ -2,6 +2,7 @@
 Credits: See CHANGES.TXT
 License: GPL 2.0
 */
+
 #ifdef ENABLE_OCR
 #include <allheaders.h>
 #endif
@@ -56,9 +57,62 @@ void print_end_msg()
 	mprint("https://github.com/CCExtractor/ccextractor/issues\n");
 }
 
+/////////////////////////////////////////////////////////////////
 
+extern struct ccx_s_options ccx_options;
+
+struct ccx_s_options* api_init_options(){
+    init_options(&ccx_options);
+    return &ccx_options;
+}
+void checking_configuration_file(struct ccx_s_options* options){
+    parse_configuration(&ccx_options);
+}
+
+void api_add_param(int index,char** myarguments,char* arg){
+      myarguments[index] = malloc(strlen(arg)+1);
+      strcpy(myarguments[index], arg);
+}   
+
+int compile_params(int ret){
+    if (ret == EXIT_NO_INPUT_FILES)
+	{
+		print_usage ();
+		fatal (EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");
+	}
+	else if (ret == EXIT_WITH_HELP)
+	{
+		return EXIT_OK;
+	}
+	else if (ret != EXIT_OK)
+	{
+		exit(ret);
+	}
+    printf("possibiility exists");
+    return EXIT_OK;
+}
+
+int main(int argc, char* argv[]){
+    int ret,i;
+    struct ccx_s_options* api_options = api_init_options();
+    printf("Done initiating the options\n");
+    checking_configuration_file(&ccx_options);
+    printf("Done checking the configuration file\n");
+    char** myarguments;
+    myarguments = malloc(argc * sizeof *myarguments);
+    int ii;
+    for(i = 0; i < argc; i++) {
+        api_add_param(i,myarguments,argv[i]);
+         }
+	ret = parse_parameters (&ccx_options, argc, myarguments);
+    int compile_ret = compile_params(ret);
+ return 1;
+}
+
+
+//////////////////////////////////////////////////////////////////
 struct ccx_s_options ccx_options;
-int main(int argc, char *argv[])
+int defined_main(int argc, char *argv[])
 {
 	struct lib_ccx_ctx *ctx;
 	struct lib_cc_decode *dec_ctx = NULL;
