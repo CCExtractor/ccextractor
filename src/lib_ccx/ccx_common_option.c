@@ -169,4 +169,7 @@ void init_options (struct ccx_s_options *options)
 	stringztoms (DEF_VAL_STARTCREDITSFORATMOST, &options->enc_cfg.startcreditsforatmost);
 	stringztoms (DEF_VAL_ENDCREDITSFORATLEAST, &options->enc_cfg.endcreditsforatleast);
 	stringztoms (DEF_VAL_ENDCREDITSFORATMOST, &options->enc_cfg.endcreditsforatmost);
+
+    options->argument_count = 0;
+    options->myarguments = malloc(options->argument_count * sizeof *options->myarguments);
 }
