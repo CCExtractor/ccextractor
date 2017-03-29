@@ -1,0 +1,22 @@
+pkgname=ccextractor
+pkgver=0.85
+pkgrel=1
+pkgdesc="A closed captions and teletext subtitles extractor for video streams."
+arch=('i686' 'x86_64')
+url="http://www.ccextractor.org"
+license=('GPL')
+depends=('gcc-libs' 'tesseract')
+source=(
+   $pkgname-$pkgver.tar.gz
+)
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+  ./configure --prefix="$pkgdir/usr/local" --CC=gcc
+  make -j4
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgver"
+  make install
+}
