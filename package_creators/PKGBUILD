@@ -12,7 +12,7 @@ source=(
 
 build() {
   cd "$srcdir/$pkgname-$pkgver"
-  ./configure --prefix="$pkgdir/usr/local" --CC=gcc
+  CC=gcc ./configure --prefix="$pkgdir/usr/local"
   make -j4
 }
 
