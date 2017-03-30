@@ -244,6 +244,7 @@ struct matroska_sub_sentence* parse_segment_cluster_block_group_block(struct mat
         set_bytes(file, pos + len);
         return NULL;
     }
+	mkv_ctx->block_index = sub_track_index;
 
     ULLONG timecode = mkv_read_byte(file);
     timecode <<= 8; timecode += mkv_read_byte(file);
@@ -257,6 +258,7 @@ struct matroska_sub_sentence* parse_segment_cluster_block_group_block(struct mat
     sentence->text = message;
     sentence->text_size = size;
     sentence->time_start = timecode + cluster_timecode;
+	sentence->blockaddition = NULL;
 
     struct matroska_sub_track* track = mkv_ctx->sub_tracks[sub_track_index];
     if (track->sentence_count==0){
@@ -273,6 +275,64 @@ struct matroska_sub_sentence* parse_segment_cluster_block_group_block(struct mat
                       (int) (mkv_ctx->current_second % 60));
 
     return sentence;
+}
+
+struct matroska_sub_sentence* parse_segment_cluster_block_group_block_additions(struct matroska_ctx* mkv_ctx, ULLONG cluster_timecode) {
+	FILE* file = mkv_ctx->file;
+	ULLONG len = read_vint_length(file);
+	ULLONG pos = get_current_byte(file);
+
+	// gets WebVTT track
+	int sub_track_index = mkv_ctx->block_index;
+	if (sub_track_index == 0) {
+		set_bytes(file, pos + len);
+		return NULL;
+	}
+	struct matroska_sub_track* track = mkv_ctx->sub_tracks[sub_track_index];
+
+	for (int i = 0; i < 4; i++) // skip four bytes
+		mkv_read_byte(file);
+
+	ULLONG size = pos + len - get_current_byte(file);
+	char* message = read_bytes_signed(file, size);
+
+	// parses message into block addition
+	struct block_addition *newBA = calloc(1, sizeof(struct block_addition)); 
+	char* current = message;
+	int lastIndex = 0;
+	int item = 0;
+	int item_size;
+	for(int i=0; i<size && item<2; i++){
+		if (*current == '\n') {
+			*current = '\0';
+			item_size = i - lastIndex;
+			if (item_size != 0) {
+				if (item == 0) {
+					newBA->cue_settings_list = message + lastIndex;
+					newBA->cue_settings_list_size = item_size;
+				}
+				else if (item == 1) {
+					newBA->cue_identifier = message + lastIndex;
+					newBA->cue_identifier_size = item_size;
+				}
+			}
+			item++;
+			lastIndex = i+1;
+		}
+		current++;
+	}
+	if (lastIndex < size) {
+		item_size = size - lastIndex;
+		newBA->comment = message + lastIndex;
+		newBA->comment_size = item_size;
+	}
+
+	// attaching BlockAddition to the cue
+	struct matroska_sub_sentence* sentence = track->sentences[track->sentence_count - 1];
+	sentence->blockaddition = newBA;
+
+	// returns the sentence (cue) that this BlockAddition is attached to
+	return sentence;
 }
 
 void parse_segment_cluster_block_group(struct matroska_ctx* mkv_ctx, ULLONG cluster_timecode) {
@@ -306,7 +366,7 @@ void parse_segment_cluster_block_group(struct matroska_ctx* mkv_ctx, ULLONG clus
                 read_vint_block_skip(file);
                 MATROSKA_SWITCH_BREAK(code, code_len);
             case MATROSKA_SEGMENT_CLUSTER_BLOCK_GROUP_BLOCK_ADDITIONS:
-                read_vint_block_skip(file);
+				parse_segment_cluster_block_group_block_additions(mkv_ctx, cluster_timecode);
                 MATROSKA_SWITCH_BREAK(code, code_len);
             case MATROSKA_SEGMENT_CLUSTER_BLOCK_GROUP_BLOCK_DURATION:
                 block_duration = read_vint_block_int(file);
@@ -779,7 +839,62 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
         struct matroska_sub_sentence* sentence = track->sentences[i];
         mkv_ctx->sentence_count++;
 
-        if (track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_UTF8)
+        if(track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_WEBVTT)
+		{
+			write(desc, "\n\n", 2);
+
+			struct block_addition* blockaddition = sentence->blockaddition;
+
+			// writing comment
+			if (blockaddition!=NULL) {
+				if (blockaddition->comment != NULL) {
+					write(desc, sentence->blockaddition->comment, sentence->blockaddition->comment_size);
+					write(desc, "\n", 1);
+				}
+			}
+
+			// writing cue identifier
+			if (blockaddition != NULL) {
+				if (blockaddition->cue_identifier != NULL) {
+					write(desc, blockaddition->cue_identifier, blockaddition->cue_identifier_size);
+					write(desc, "\n", 1);
+				}
+				else if (blockaddition->comment != NULL) {
+					write(desc, "\n", 1);
+				}
+			}
+
+			// writing cue
+			char *timestamp_start = malloc(sizeof(char) * 80);	//being generous
+			timestamp_to_vtttime(sentence->time_start, timestamp_start);
+			ULLONG time_end = sentence->time_end;
+			if (i + 1 < track->sentence_count)
+				time_end = MIN(time_end, track->sentences[i + 1]->time_start - 1);
+			char *timestamp_end = malloc(sizeof(char) * 80);
+			timestamp_to_vtttime(time_end, timestamp_end);
+
+			write(desc, timestamp_start, strlen(timestamp_start));
+			write(desc, " --> ", 5);
+			write(desc, timestamp_end, strlen(timestamp_start));
+
+			// writing cue settings list
+			if (blockaddition != NULL) {
+				if (blockaddition->cue_settings_list != NULL) {
+					write(desc, " ", 1);
+					write(desc, blockaddition->cue_settings_list, blockaddition->cue_settings_list_size);
+				}
+			}
+			write(desc, "\n", 1);
+
+			int size = 0;
+			while (*(sentence->text + size) == '\n' || *(sentence->text + size) == '\r')
+				size++;
+			write(desc, sentence->text + size, sentence->text_size - size);
+
+			free(timestamp_start);
+			free(timestamp_end);
+		}
+		else if (track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_UTF8)
         {
             char number[9];
             sprintf(number, "%d", i + 1);

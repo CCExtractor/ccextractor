@@ -138,6 +138,15 @@ void timestamp_to_srttime(uint64_t timestamp, char *buffer)
 	uint16_t u = (uint16_t) (p - 3600000 * h - 60000 * m - 1000 * s);
 	sprintf(buffer, "%02"PRIu8":%02"PRIu8":%02"PRIu8",%03"PRIu16, h, m, s, u);
 }
+void timestamp_to_vtttime(uint64_t timestamp, char *buffer)
+{
+	uint64_t p = timestamp;
+	uint8_t h = (uint8_t)(p / 3600000);
+	uint8_t m = (uint8_t)(p / 60000 - 60 * h);
+	uint8_t s = (uint8_t)(p / 1000 - 3600 * h - 60 * m);
+	uint16_t u = (uint16_t)(p - 3600000 * h - 60000 * m - 1000 * s);
+	sprintf(buffer, "%02"PRIu8":%02"PRIu8":%02"PRIu8".%03"PRIu16, h, m, s, u);
+}
 
 #define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
 
