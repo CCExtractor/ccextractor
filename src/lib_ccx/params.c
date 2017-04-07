@@ -288,13 +288,13 @@ void set_input_format (struct ccx_s_options *opt, const char *format)
 void print_usage (void)
 {
 	mprint ("Originally based on McPoodle's tools. Check his page for lots of information\n");
-	mprint ("on closed captions technical details.\n");
+	mprint ("on closed captions technical details.\n\n");
 	mprint ("(http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/SCC_TOOLS.HTML)\n\n");
 	mprint ("This tool home page:\n");
 	mprint ("http://www.ccextractor.org\n");
-	mprint ("  Extracts closed captions and teletext subtitles from video streams.\n");
-	mprint ("    (DVB, .TS, ReplayTV 4000 and 5000, dvr-ms, bttv, Tivo, Dish Network,\n");
-	mprint ("     .mp4, HDHomeRun are known to work).\n\n");
+	mprint ("Extracts closed captions and teletext subtitles from video streams.\n");
+	mprint ("(DVB, .TS, ReplayTV 4000 and 5000, dvr-ms, bttv, Tivo, Dish Network,\n");
+	mprint (".mp4, HDHomeRun are known to work).\n\n");
 	mprint ("  Syntax:\n");
 	mprint ("  ccextractor [options] inputfile1 [inputfile2...] [-o outputfilename]\n");
 	mprint ("\n");

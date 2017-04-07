@@ -29,6 +29,18 @@ More usage information can be found on our website:
 - [Using the command line tool](https://www.ccextractor.org/doku.php?id=public:general:command_line_usage)
 - [Using the Windows GUI](https://www.ccextractor.org/doku.php?id=public:general:win_gui_usage) 
 
+## Updating ManPages
+
+If `ccextractor --help` options are modified, manpages for ccextractor also need to be updated. The manpage generation script `ccextractor/manpage/mangen.sh` automatically generates `ccextractor.man` which is a man page.
+
+Dependencies to run `mangen.sh`
+
+### Debian/Ubuntu
+    sudo apt-get install help2man
+
+### Fedora
+    sudo yum install help2man
+
 
 ## Compiling
 
