@@ -312,5 +312,4 @@ endif
 
 EXTRA_DIST = ../src/gpacmp4/gpac/sync_layer.h ../src/lib_ccx/ccfont2.xbm ../src/utf8proc/utf8proc_data.c
 
-
-
+dist_man1_MANS = ../manpage/ccextractor.man
