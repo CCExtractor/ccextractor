@@ -11,7 +11,7 @@ makepkg -g >> PKGBUILD
 makepkg -sc
 retval=$?
 if [ $retval -ne 0 ]; then
-    echo "Sorry, the package could not be created as the makepkg failed with return code $retval"
+    echo "Sorry, the package could not be created as makepkg failed with return code $retval"
     rm -rf ./*.tar.gz src
     sed -i '$ d' PKGBUILD
     exit $retval
