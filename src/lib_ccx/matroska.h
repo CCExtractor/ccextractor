@@ -186,12 +186,24 @@ char* matroska_track_text_subtitle_id_extensions[] = {
 #define MATROSKA_SWITCH_BREAK(a,b) (a)=0;(b)=0;break
 
 /* Structures */
+
+struct block_addition {
+	char* cue_settings_list;
+	ULLONG cue_settings_list_size;
+	char* cue_identifier;
+	ULLONG cue_identifier_size;
+	char* comment;
+	ULLONG comment_size;
+};
+
 struct matroska_sub_sentence {
     char* text;
     ULLONG text_size;
     ULLONG time_start;
     ULLONG time_end;
+	struct block_addition* blockaddition;
 };
+
 
 struct matroska_sub_track {
     char* header;   // Style header for ASS/SSA (and other) subtitles
@@ -208,6 +220,7 @@ struct matroska_ctx {
     struct matroska_sub_track** sub_tracks;
     struct lib_ccx_ctx* ctx;
     int sub_tracks_count;
+	int block_index;
     int sentence_count;
     char* filename;
     ULLONG current_second;
