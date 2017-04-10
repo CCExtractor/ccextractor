@@ -20,6 +20,11 @@ rm -f ./*.tar.gz
 sed -i '$ d' PKGBUILD
 read -p "Do you wish to install ccextractor? [y/N] " yn
 case $yn in
-    [Yy]* ) su -c "pacman -U ./*.pkg.tar.xz"; rm -f ./*.pkg.tar.xz;;
+    [Yy]* ) if [ -x "$(command -v sudo)" ]; then
+                sudo pacman -U ./*.pkg.tar.xz;
+            else
+                su -c "pacman -U ./*.pkg.tar.xz";
+            fi
+            rm -f ./*.pkg.tar.xz;;
     * ) exit;;
 esac
