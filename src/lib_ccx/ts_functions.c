@@ -869,6 +869,8 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			}
 		}
 
+		if (payload.pid == 8191) // Null packet
+			continue;
 		if (payload.pid==1003 && !ctx->hauppauge_warning_shown && !ccx_options.hauppauge_mode)
 		{
 			// TODO: Change this very weak test for something more decent such as size.

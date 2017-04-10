@@ -158,7 +158,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 
 	current_next_indicator = buf[5] & 0x01;
 	// This table is not active, no need to evaluate
-	if (!current_next_indicator)
+	if (!current_next_indicator && pinfo->version!=0xFF) // 0xFF means we don't have one yet
 		return 0;
 
 	memcpy (pinfo->saved_section, buf, len);
