@@ -50,7 +50,7 @@ int _CRT_fmode = _O_BINARY;
 #endif
 
 long long int last_pes_pts = 0; // PTS of last PES packet (debug purposes)
-
+static int de_ctr = 0; // a keeps count of packets with flag subtitle ON and data packets
 typedef struct {
 	uint64_t show_timestamp; // show at timestamp (in ms)
 	uint64_t hide_timestamp; // hide at timestamp (in ms)
@@ -955,7 +955,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 	if (m == 0) m = 8;
 	y = (address >> 3) & 0x1f;
 	designation_code = (y > 25) ? unham_8_4(packet->data[0]) : 0x00;
-
+	uint8_t flag_subtitle;
 	if (y == 0)
 	{
 
@@ -983,7 +983,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		{
 			tlt_config.page = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
 			mprint ("- No teletext page specified, first received suitable page is %03x, not guaranteed\n", tlt_config.page);
-		}
+			}
 
 		// Page number and control bits
 		page_number = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
@@ -1002,18 +1002,19 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		ctx->transmission_mode = (transmission_mode_t) (unham_8_4(packet->data[7]) & 0x01);
 
 		// FIXME: Well, this is not ETS 300 706 kosher, however we are interested in DATA_UNIT_EBU_TELETEXT_SUBTITLE only
-		if ((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (data_unit_id != DATA_UNIT_EBU_TELETEXT_SUBTITLE)) return;
+		if ((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (data_unit_id != DATA_UNIT_EBU_TELETEXT_SUBTITLE) && !(de_ctr && flag_subtitle && ctx->receiving_data == YES)) return;
 
 		if ((ctx->receiving_data == YES) && (
 			((ctx->transmission_mode == TRANSMISSION_MODE_SERIAL) && (PAGE(page_number) != PAGE(tlt_config.page))) ||
 			((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (PAGE(page_number) != PAGE(tlt_config.page)) && (m == MAGAZINE(tlt_config.page)))))
 		{
 			ctx->receiving_data = NO;
-			return;
+			if(!(de_ctr && flag_subtitle))
+			  return;
 		}
 
 		// Page transmission is terminated, however now we are waiting for our new page
-		if (page_number != tlt_config.page)
+		if (page_number != tlt_config.page && !(de_ctr && flag_subtitle && ctx->receiving_data == YES))
 			return;
 
 
@@ -1036,6 +1037,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				ctx->page_buffer.hide_timestamp = 0;
 			}
 			process_page(ctx, &ctx->page_buffer, sub);
+			de_ctr = 0;
 		}
 
 		ctx->page_buffer.show_timestamp = timestamp;
@@ -1072,6 +1074,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				ctx->page_buffer.text[y][i] = packet->data[i];
 		}
 		ctx->page_buffer.tainted = YES;
+		--de_ctr;
 	}
 	else if ((m == MAGAZINE(tlt_config.page)) && (y == 26) && (ctx->receiving_data == YES))
 	{
