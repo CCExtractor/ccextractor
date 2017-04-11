@@ -136,9 +136,9 @@ void do_NAL (struct lib_cc_decode *ctx, unsigned char *NAL_start, LLONG NAL_leng
 	}
 	if (temp_debug)
 	{
-		mprint ("NAL process failed.\n");
-		mprint ("\n After decoding, the actual thing was (length =%d)\n", NAL_stop-(NAL_start+1));
-		dump (CCX_DMT_GENERIC_NOTICES,NAL_start+1, NAL_stop-(NAL_start+1),0, 0);
+		int len = NAL_stop - (NAL_start + 1);
+		dbg_print(CCX_DMT_VIDES,"\n After decoding, the actual thing was (length =%d)\n", len);
+		dump(CCX_DMT_VIDES, NAL_start + 1, len > 160 ? 160 : len, 0, 0);
 	}
 
 	dvprint("END   NAL unit type: %d length %d ref_idc: %d - Buffered captions after: %d\n",
