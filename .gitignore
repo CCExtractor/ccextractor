@@ -92,3 +92,6 @@ src/zlib/.deps/
 src/zlib/.dirstamp
 src/zvbi/.deps/
 src/zvbi/.dirstamp
+
+# Arch
+package_creators/*.pkg.tar.xz
