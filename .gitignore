@@ -95,3 +95,6 @@ src/zvbi/.dirstamp
 
 # Arch
 package_creators/*.pkg.tar.xz
+
+#RPMs
+package_creators/*.rpm
