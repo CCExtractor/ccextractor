@@ -98,6 +98,16 @@ More usage information can be found on our website:
     # building installation package (.pkg.tar.xz) or installing directly
     cd ccextractor/package_creators
     ./arch.sh
+    
+### Redhat Package Manager (rpm) based Linux Distributions
+    # make sure you have CCExtractor repository forked
+    # clone repository
+    # install git via source
+    git clone https://github.com/%USERNAME%/ccextractor.git # paste your github username
+
+    # building installation package (.rpm)
+    cd ccextractor/package_creators
+    ./rpm.sh
 
 ### Windows
 
