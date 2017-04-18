@@ -61,7 +61,6 @@ windows/enc_temp_folder/*
 src/cmake-build-debug/
 src/.idea
 
-
 #Autotools
 linux/config.h
 linux/config.log
@@ -95,3 +94,6 @@ src/zvbi/.dirstamp
 
 # Arch
 package_creators/*.pkg.tar.xz
+
+# Manual Pager
+manpage/*.1

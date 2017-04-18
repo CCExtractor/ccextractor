@@ -3,7 +3,7 @@
 - Fix: Prevent the OCR being initialized more than once (happened on multiprogram and
   PAT changes)
 - New: Added build/installation script for .pkg.tar.xz (Arch Linux).
-  
+- New: Added Manpage generation script for Linux and Mac.
 
 0.85b (2017-1-26)
 -----------------

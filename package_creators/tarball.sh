@@ -8,6 +8,7 @@ cp linux/pre-build.sh .
 cp linux/configure.ac .
 cp linux/Makefile.am .
 sed -i -e 's:../src:src:g' Makefile.am
+sed -i -e 's:../manpage:manpage:g' Makefile.am
 sed -i -e 's:../src:src:g' configure.ac
 sed -i -e 's:../.git:.git:g' pre-build.sh
 sed -i -e 's:../src:src:g' pre-build.sh
