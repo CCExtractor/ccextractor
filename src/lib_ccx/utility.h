@@ -2,7 +2,7 @@
 #define CC_UTILITY_H
 #include <signal.h>
 #ifndef _WIN32
-	#include <arpa/inet.h>
+#include <arpa/inet.h>
 #endif
 
 #define RL32(x) (*(unsigned int *)(x))
@@ -10,9 +10,9 @@
 #define RL16(x) (*(unsigned short int*)(x))
 #define RB16(x) (ntohs(*(unsigned short int*)(x)))
 
-#define RB24(x) (  ((unsigned char*)(x))[0] << 16 | ((unsigned char*)(x))[1] << 8 | ((unsigned char*)(x))[2]  )
+#define RB24(x) (((unsigned char*)(x))[0] << 16 | ((unsigned char*)(x))[1] << 8 | ((unsigned char*)(x))[2]  )
 
-#define CCX_NOPTS	((int64_t)UINT64_C(0x8000000000000000))
+#define CCX_NOPTS ((int64_t)UINT64_C(0x8000000000000000))
 
 struct ccx_rational
 {
