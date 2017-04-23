@@ -280,6 +280,8 @@ void set_input_format (struct ccx_s_options *opt, const char *format)
 #ifdef WTV_DEBUG
 	else if (strcmp (format,"hex")==0)
 		opt->demux_cfg.auto_stream = CCX_SM_HEX_DUMP;
+	
+	
 #endif
 	else
 		fatal (EXIT_MALFORMED_PARAMETER, "Unknown input file format: %s\n", format);
@@ -1097,7 +1099,21 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			version(argv[0]);
 			return EXIT_WITH_HELP;
 		}
-		if (strcmp (argv[i], "-")==0 || strcmp(argv[i], "-stdin") == 0)
+		
+		else if (strcmp (argv[i],"--man")==0)
+		 {
+
+ 			 printf("Writting man page...\n");
+
+ 			  system("cp ccextractor /usr/local/man/man1/ccextractor.1");
+			  system("gzip /usr/local/man/man1/ccextractor.1");
+
+			  printf("Man Page is complete!\n");
+			  printf("Do man ccextractor to get the man page!\n")
+			  return EXIT_WITH_HELP;
+         	}
+		
+	if (strcmp (argv[i], "-")==0 || strcmp(argv[i], "-stdin") == 0)
 		{
 #ifdef WIN32
 			setmode(fileno(stdin), O_BINARY);
