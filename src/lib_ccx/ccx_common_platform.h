@@ -87,7 +87,7 @@
 			typedef struct _stati64 FSTATSTRUCT;
 		#else
 			// Linux internally maps these functions to 64bit usage,
-			// if _FILE_OFFSET_BITS macro is set to 64
+			// If _FILE_OFFSET_BITS macro is set to 64
 			#define FOPEN64 fopen
 			#define OPEN open
 			#define LSEEK lseek
