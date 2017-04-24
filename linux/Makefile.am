@@ -310,7 +310,14 @@ ccextractor_LDADD += $(TESS_LIB)
 ccextractor_LDADD += $(LEPT_LIB)
 endif
 
-EXTRA_DIST = ../src/gpacmp4/gpac/sync_layer.h ../src/lib_ccx/ccfont2.xbm ../src/utf8proc/utf8proc_data.c
+EXTRA_DIST = ../src/gpacmp4/gpac/sync_layer.h ../src/lib_ccx/ccfont2.xbm ../src/utf8proc/utf8proc_data.c ../manpage/mangen.sh
 
+install-exec-hook:
+	${SHELL} ../manpage/mangen.sh
+	mv ../manpage/ccextractor.1 /usr/local/man/man1
+	gzip -f /usr/local/man/man1/ccextractor.1
+	mandb -q
 
+uninstall-hook:
+	rm /usr/local/man/man1/ccextractor.1.gz
 
