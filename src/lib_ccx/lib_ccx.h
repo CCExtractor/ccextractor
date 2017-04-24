@@ -53,6 +53,7 @@ struct ccx_s_teletext_config
 	// uint8_t se_mode : 1;                                    // search engine compatible mode => Uses CCExtractor's write_format
 	// uint64_t utc_refvalue;                                  // UTC referential value => Moved to ccx_decoders_common, so can be used for other decoders (608/xds) too
 	uint16_t user_page;                                        // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
+	int dolevdist;											   // 0=Don't attempt to correct errors
 	int levdistmincnt, levdistmaxpct;                          // Means 2 fails or less is "the same", 10% or less is also "the same"
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
 	enum ccx_output_format write_format;                       // 0=Raw, 1=srt, 2=SMI

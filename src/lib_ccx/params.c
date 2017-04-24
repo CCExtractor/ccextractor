@@ -497,6 +497,15 @@ void print_usage (void)
 	mprint ("                       and whether the strings are ultimately considered  \n");
 	mprint ("                       equivalent or not, i.e. the calculated distance is \n");
 	mprint ("                       less or equal than the max allowed..\n");
+	mprint ("Levenshtein distance:\n\n");
+	mprint ("  When processing teletext files CCExtractor tries to correct typos by\n");
+	mprint ("  comparing consecutive lines. If line N+1 is almost identical to line N except\n");
+	mprint ("  for minor changes (plus next characters) then it assumes that line N that a\n");
+	mprint ("  typo that was corrected in N+1. This is currently implemented in teletext\n");
+	mprint ("  because it's where samples files that could benefit from this were available.\n");
+	mprint ("  You can adjust, or disable, the algorithm settings with the following\n");
+	mprint ("  parameters.\n\n");
+	mprint ("           -nolevdist: Don't attempt to correct typos with Levenshtein distance.\n");
 	mprint (" -levdistmincnt value: Minimum distance we always allow regardless\n");
 	mprint ("                       of the length of the strings.Default 2. \n");
 	mprint ("                       This means that if the calculated distance \n");
@@ -1838,6 +1847,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->debug_mask |= CCX_DMT_LEVENSHTEIN;
 			continue;
 		}
+		if (strcmp(argv[i], "-nolevdist") == 0)
+		{
+			opt->dolevdist = 0;
+			continue;
+		}
 		if (strcmp (argv[i],"-levdistmincnt")==0 && i<argc-1)
 		{
 			opt->levdistmincnt = atoi_hex(argv[i+1]);
@@ -2330,6 +2344,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		opt->demux_cfg.ts_forced_program_selected = 1;
 
 	// Init telexcc redundant options
+	tlt_config.dolevdist = opt->dolevdist;
 	tlt_config.levdistmincnt = opt->levdistmincnt;
 	tlt_config.levdistmaxpct = opt->levdistmaxpct;
 	tlt_config.extraction_start = opt->extraction_start;

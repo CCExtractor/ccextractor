@@ -105,6 +105,7 @@ struct ccx_s_options // Options from user parameters
                                          >0 -> Live stream with a timeout of this value in seconds */
 	int messages_target;              // 0 = nowhere (quiet), 1=stdout, 2=stderr
 	/* Levenshtein's parameters, for string comparison */
+	int dolevdist;					  // 0 => don't attempt to correct typos with this algorithm
 	int levdistmincnt, levdistmaxpct; // Means 2 fails or less is "the same", 10% or less is also "the same"
 	int investigate_packets;          // Look for captions in all packets when everything else fails
 	int fullbin;                      // Disable pruning of padding cc blocks

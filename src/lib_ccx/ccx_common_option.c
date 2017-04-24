@@ -38,6 +38,7 @@ void init_options (struct ccx_s_options *options)
 	options->messages_target=1; // 1=stdout
 	options->print_file_reports=0;
 	/* Levenshtein's parameters, for string comparison */
+	options->dolevdist = 1; // By default attempt to correct typos
 	options->levdistmincnt=2; // Means 2 fails or less is "the same"...
 	options->levdistmaxpct=10; // ...10% or less is also "the same"
 	options->investigate_packets = 0; // Look for captions in all packets when everything else fails

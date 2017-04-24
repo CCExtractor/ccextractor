@@ -894,10 +894,11 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 			if (ctx->page_buffer_prev_used == 0)
 				ctx->prev_show_timestamp = page->show_timestamp;
 			if (ctx->page_buffer_prev_used == 0 ||
-					fuzzy_memcmp (ctx->page_buffer_prev, ctx->page_buffer_cur,
+				(tlt_config.dolevdist && 
+				fuzzy_memcmp (ctx->page_buffer_prev, ctx->page_buffer_cur,
 						ctx->ucs2_buffer_prev, ctx->ucs2_buffer_prev_used,
 						ctx->ucs2_buffer_cur, ctx->ucs2_buffer_cur_used
-						) == 0)
+						) == 0))
 			{
 				// If empty previous buffer, we just start one with the
 				// current page and do nothing. Wait until we see more.
