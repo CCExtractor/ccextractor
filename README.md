@@ -89,6 +89,16 @@ More usage information can be found on our website:
     # test your build
     ./ccextractor
 
+### Arch Linux
+    # make sure you have CCExtractor repository forked
+    # clone repository
+    sudo pacman -S git
+    git clone https://github.com/%USERNAME%/ccextractor.git # paste your github username
+
+    # building installation package (.pkg.tar.xz) or installing directly
+    cd ccextractor/package_creators
+    ./arch.sh
+
 ### Windows
 
 Open the windows/ccextractor.sln file with Visual Studio (2015 at least), and build it. Configurations "(Debug|Release)-Full" includes dependent libraries which are used for OCR.

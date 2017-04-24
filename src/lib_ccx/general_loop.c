@@ -1102,7 +1102,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	int caps = 0;
 	LLONG result;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
-
+	struct Teletext *telctx;
 	// As BUFSIZE is a macro this is just a reminder
 	if (BUFSIZE < (3*0xFFFF + 10))
 		fatal (CCX_COMMON_EXIT_BUG_BUG, "BUFSIZE too small for RCWT caption block.\n");
@@ -1143,6 +1143,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 		dec_ctx->private_data = telxcc_init();
 	}
 	dec_sub = &dec_ctx->dec_sub;
+	telctx =dec_ctx->private_data;
 
 	/* Set minimum and current pts since rcwt has correct time */
 	dec_ctx->timing->min_pts = 0;
@@ -1155,9 +1156,10 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 		{
 			result = buffered_read(ctx->demux_ctx, buf, TELETEXT_CHUNK_LEN);
 			ctx->demux_ctx->past += result;
-			if (result != TELETEXT_CHUNK_LEN)
+			if (result != TELETEXT_CHUNK_LEN){
+			  telxcc_dump_prev_page(telctx,dec_sub);
 				break;
-
+			}
 			tlt_read_rcwt(dec_ctx->private_data, buf, dec_sub);
 			if(dec_sub->got_output == CCX_TRUE)
 			{

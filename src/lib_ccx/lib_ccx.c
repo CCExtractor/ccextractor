@@ -215,7 +215,7 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 			dvbsub_close_decoder(&dec_ctx->private_data);
 		//Test memory for teletext
 		else if (dec_ctx->codec == CCX_CODEC_TELETEXT)
-			telxcc_close(&dec_ctx->private_data, NULL);
+			telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
 		else if (dec_ctx->codec == CCX_CODEC_ISDB_CC)
 			delete_isdb_decoder(&dec_ctx->private_data);
 
