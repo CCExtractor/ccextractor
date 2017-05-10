@@ -13,6 +13,7 @@ CVS
 ####
 # Linux  Ignored binary and build folder
 *.o
+mac/ccextractor
 linux/ccextractor
 linux/depend
 windows/Debug/**
@@ -72,6 +73,15 @@ linux/aclocal.m4
 linux/*.in
 linux/configure
 linux/build-conf/
+mac/config.h
+mac/config.log
+mac/config.status
+mac/Makefile
+mac/autom4te.cache
+mac/aclocal.m4
+mac/*.in
+mac/configure
+mac/build-conf/
 package_creators/*tar.gz
 package_creators/build/*.deb
 src/.deps/
