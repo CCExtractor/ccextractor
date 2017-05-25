@@ -1,6 +1,6 @@
 #!/bin/bash
 BLD_FLAGS="-std=gnu99 -Wno-write-strings -DGPAC_CONFIG_LINUX -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DENABLE_OCR"
-BLD_INCLUDE="-I /usr/include/python2.7/ -I../src -I /usr/include/leptonica/ -I /usr/include/tesseract/ -I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi -I../src/lib_hash -I../src/protobuf-c -I../src/utf8proc"
+BLD_INCLUDE="-I../src -I /usr/include/leptonica/ -I /usr/include/tesseract/ -I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi -I../src/lib_hash -I../src/protobuf-c -I../src/utf8proc"
 SRC_LIBPNG="$(find ../src/libpng/ -name '*.c')"
 SRC_ZLIB="$(find ../src/zlib/ -name '*.c')"
 SRC_ZVBI="$(find ../src/zvbi/ -name '*.c')"
@@ -10,11 +10,11 @@ SRC_HASH="$(find ../src/lib_hash/ -name '*.c')"
 SRC_PROTOBUF="$(find ../src/protobuf-c/ -name '*.c')"
 SRC_UTF8PROC="../src/utf8proc/utf8proc.c"
 BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC"
-BLD_LINKER="-lm -zmuldefs -l tesseract -l lept -l python2.7"
+BLD_LINKER="-lm -zmuldefs -l tesseract -l lept"
 
 ./pre-build.sh
 
-out=$((LC_ALL=C gcc -fPIC $BLD_FLAGS $BLD_INCLUDE -o ccextractor.o $BLD_SOURCES $BLD_LINKER)2>&1)
+out=$((LC_ALL=C gcc $BLD_FLAGS $BLD_INCLUDE -o ccextractor $BLD_SOURCES $BLD_LINKER)2>&1)
 res=$?
 if [[ $out == *"gcc: command not found"* ]]
 then

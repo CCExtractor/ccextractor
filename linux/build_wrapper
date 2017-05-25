@@ -9,7 +9,7 @@ SRC_GPAC="$(find ../src/gpacmp4/ -name '*.c')"
 SRC_HASH="$(find ../src/lib_hash/ -name '*.c')"
 SRC_PROTOBUF="$(find ../src/protobuf-c/ -name '*.c')"
 SRC_UTF8PROC="../src/utf8proc/utf8proc.c"
-BLD_SOURCES="../src/ccextractor.c ../src/ccextractorapi_wrap.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC"
+BLD_SOURCES="../src/ccextractor.c ccextractorapi_wrap.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC"
 
 ./pre-build.sh
 

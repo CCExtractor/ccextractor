@@ -4,6 +4,7 @@ Credits: See CHANGES.TXT
 License: GPL 2.0
 */
 
+#include "ccextractor.h"
 #ifdef ENABLE_OCR
 #include <allheaders.h>
 #endif
@@ -59,7 +60,7 @@ void print_end_msg()
 }
 
 struct ccx_s_options ccx_options;
-int main(int argc, char *argv[])
+int defined_main(int argc, char *argv[])
 {
 	struct lib_ccx_ctx *ctx;
 	struct lib_cc_decode *dec_ctx = NULL;

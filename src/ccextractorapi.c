@@ -1,38 +1,9 @@
 #include "ccextractorapi.h"
+#include "ccextractor.h"
 #include <stdio.h>
 
 struct ccx_s_options ccx_options;
 struct lib_ccx_ctx *signal_ctx;
-
-void sigusr1_handler(int sig)
-{
-	mprint("Caught SIGUSR1. Filename Change Requested\n");
-	change_filename_requested = 1;
-}
-
-
-void sigterm_handler(int sig)
-{
-	printf("Received SIGTERM, terminating as soon as possible.\n");
-	terminate_asap = 1;
-}
-
-
-void sigint_handler(int sig)
-{
-	if (ccx_options.print_file_reports)
-		print_file_report(signal_ctx);
-
-	exit(EXIT_SUCCESS);
-}
-
-
-void print_end_msg()
-{
-	mprint("Issues? Open a ticket here\n");
-	mprint("https://github.com/CCExtractor/ccextractor/issues\n");
-}
-
 int api_start(struct ccx_s_options api_options){
     struct lib_ccx_ctx *ctx;
 	struct lib_cc_decode *dec_ctx = NULL;
@@ -449,7 +420,7 @@ void api_add_param(struct ccx_s_options* api_options,char* arg){
       strcpy(api_options->myarguments[api_options->argument_count], arg);
       api_options->argument_count++;
 }
-int main(int argc, char* argv[]){
+int def_main(int argc, char* argv[]){
     int ret,i,start_ret;
     struct ccx_s_options* api_options = api_init_options();
     checking_configuration_file(*api_options);

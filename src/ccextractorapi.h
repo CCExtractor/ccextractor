@@ -1,6 +1,7 @@
 #ifndef CCEXTRACTORAPI_H
 #define CCEXTRACTORAPI_H
 
+#include "ccextractor.h"
 #ifdef ENABLE_OCR
 #include <allheaders.h>
 #endif
@@ -25,15 +26,10 @@ CURLcode res;
 extern struct ccx_s_options ccx_options;
 struct lib_ccx_ctx *signal_ctx;
 
-
-void sigusr1_handler(int sig);
-void sigterm_handler(int sig);
-void sigint_handler(int sig);
-void print_end_msg();
 struct ccx_s_options* api_init_options();
 void checking_configuration_file(struct ccx_s_options api_options);
 int compile_params(struct ccx_s_options *api_options,int argc);
 void api_add_param(struct ccx_s_options* api_options,char* arg);
-int main();
+int def_main();
 
 #endif //CCEXTRACTORAPI_H
