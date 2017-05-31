@@ -30,6 +30,9 @@ struct ccx_s_options* api_init_options();
 void checking_configuration_file(struct ccx_s_options api_options);
 int compile_params(struct ccx_s_options *api_options,int argc);
 void api_add_param(struct ccx_s_options* api_options,char* arg);
+int api_start(struct ccx_s_options api_options);
+int api_param_count(struct ccx_s_options* api_options);
+char * api_param(struct ccx_s_options* api_options, int count);
 int def_main();
 
 #endif //CCEXTRACTORAPI_H

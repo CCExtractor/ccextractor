@@ -60,7 +60,7 @@ void print_end_msg()
 }
 
 struct ccx_s_options ccx_options;
-int defined_main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	struct lib_ccx_ctx *ctx;
 	struct lib_cc_decode *dec_ctx = NULL;

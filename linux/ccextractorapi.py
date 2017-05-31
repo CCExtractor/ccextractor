@@ -95,6 +95,89 @@ except __builtin__.Exception:
         pass
     _newclass = 0
 
+EXIT_OK = _ccextractorapi.EXIT_OK
+EXIT_NO_INPUT_FILES = _ccextractorapi.EXIT_NO_INPUT_FILES
+EXIT_TOO_MANY_INPUT_FILES = _ccextractorapi.EXIT_TOO_MANY_INPUT_FILES
+EXIT_INCOMPATIBLE_PARAMETERS = _ccextractorapi.EXIT_INCOMPATIBLE_PARAMETERS
+EXIT_UNABLE_TO_DETERMINE_FILE_SIZE = _ccextractorapi.EXIT_UNABLE_TO_DETERMINE_FILE_SIZE
+EXIT_MALFORMED_PARAMETER = _ccextractorapi.EXIT_MALFORMED_PARAMETER
+EXIT_READ_ERROR = _ccextractorapi.EXIT_READ_ERROR
+EXIT_WITH_HELP = _ccextractorapi.EXIT_WITH_HELP
+EXIT_NO_CAPTIONS = _ccextractorapi.EXIT_NO_CAPTIONS
+EXIT_NOT_CLASSIFIED = _ccextractorapi.EXIT_NOT_CLASSIFIED
+EXIT_ERROR_IN_CAPITALIZATION_FILE = _ccextractorapi.EXIT_ERROR_IN_CAPITALIZATION_FILE
+EXIT_BUFFER_FULL = _ccextractorapi.EXIT_BUFFER_FULL
+EXIT_MISSING_ASF_HEADER = _ccextractorapi.EXIT_MISSING_ASF_HEADER
+EXIT_MISSING_RCWT_HEADER = _ccextractorapi.EXIT_MISSING_RCWT_HEADER
+CCX_COMMON_EXIT_FILE_CREATION_FAILED = _ccextractorapi.CCX_COMMON_EXIT_FILE_CREATION_FAILED
+CCX_COMMON_EXIT_UNSUPPORTED = _ccextractorapi.CCX_COMMON_EXIT_UNSUPPORTED
+EXIT_NOT_ENOUGH_MEMORY = _ccextractorapi.EXIT_NOT_ENOUGH_MEMORY
+CCX_COMMON_EXIT_BUG_BUG = _ccextractorapi.CCX_COMMON_EXIT_BUG_BUG
+CCX_OK = _ccextractorapi.CCX_OK
+CCX_FALSE = _ccextractorapi.CCX_FALSE
+CCX_TRUE = _ccextractorapi.CCX_TRUE
+CCX_EAGAIN = _ccextractorapi.CCX_EAGAIN
+CCX_EOF = _ccextractorapi.CCX_EOF
+CCX_EINVAL = _ccextractorapi.CCX_EINVAL
+CCX_ENOSUPP = _ccextractorapi.CCX_ENOSUPP
+CCX_ENOMEM = _ccextractorapi.CCX_ENOMEM
+
+def fdprintf(fd, fmt):
+    return _ccextractorapi.fdprintf(fd, fmt)
+fdprintf = _ccextractorapi.fdprintf
+
+def millis_to_time(milli, hours, minutes, seconds, ms):
+    return _ccextractorapi.millis_to_time(milli, hours, minutes, seconds, ms)
+millis_to_time = _ccextractorapi.millis_to_time
+
+def freep(arg):
+    return _ccextractorapi.freep(arg)
+freep = _ccextractorapi.freep
+
+def dbg_print(mask, fmt):
+    return _ccextractorapi.dbg_print(mask, fmt)
+dbg_print = _ccextractorapi.dbg_print
+
+def debug_608_to_ASC(ccdata, channel):
+    return _ccextractorapi.debug_608_to_ASC(ccdata, channel)
+debug_608_to_ASC = _ccextractorapi.debug_608_to_ASC
+
+def add_cc_sub_text(sub, str, start_time, end_time, info, mode, arg7):
+    return _ccextractorapi.add_cc_sub_text(sub, str, start_time, end_time, info, mode, arg7)
+add_cc_sub_text = _ccextractorapi.add_cc_sub_text
+
+def api_init_options():
+    return _ccextractorapi.api_init_options()
+api_init_options = _ccextractorapi.api_init_options
+
+def checking_configuration_file(api_options):
+    return _ccextractorapi.checking_configuration_file(api_options)
+checking_configuration_file = _ccextractorapi.checking_configuration_file
+
+def compile_params(api_options, argc):
+    return _ccextractorapi.compile_params(api_options, argc)
+compile_params = _ccextractorapi.compile_params
+
+def api_add_param(api_options, arg):
+    return _ccextractorapi.api_add_param(api_options, arg)
+api_add_param = _ccextractorapi.api_add_param
+
+def api_start(api_options):
+    return _ccextractorapi.api_start(api_options)
+api_start = _ccextractorapi.api_start
+
+def api_param_count(api_options):
+    return _ccextractorapi.api_param_count(api_options)
+api_param_count = _ccextractorapi.api_param_count
+
+def api_param(api_options, count):
+    return _ccextractorapi.api_param(api_options, count)
+api_param = _ccextractorapi.api_param
+
+def def_main():
+    return _ccextractorapi.def_main()
+def_main = _ccextractorapi.def_main
 # This file is compatible with both classic and new-style classes.
 
+cvar = _ccextractorapi.cvar
 

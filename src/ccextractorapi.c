@@ -396,7 +396,22 @@ void checking_configuration_file(struct ccx_s_options api_options){
 }   
 
 int compile_params(struct ccx_s_options *api_options,int argc){
-	int ret = parse_parameters (api_options, argc, api_options->myarguments);
+    api_options->myarguments = realloc(api_options->myarguments, (api_options->argument_count+1) * sizeof *api_options->myarguments);
+      api_options->myarguments[api_options->argument_count] = malloc(strlen("./ccextractor")+1);
+      strcpy(api_options->myarguments[api_options->argument_count], "./ccextractor");
+//api_options->argument_count++;
+    //Cyclic rotation for bringing the ./ccextractor param to the start of the arguments array
+    int i = 0;
+    char* temp = NULL;
+    for(i=0;i<=argc;i++){
+        temp =  realloc(temp,strlen(api_options->myarguments[i])+1);
+        strcpy(temp,api_options->myarguments[i]);
+        api_options->myarguments[i] = realloc(api_options->myarguments[i],strlen(api_options->myarguments[argc])+1);
+        strcpy(api_options->myarguments[i],api_options->myarguments[argc]);
+        api_options->myarguments[argc] = realloc(api_options->myarguments[argc],strlen(temp)+1);
+        strcpy(api_options->myarguments[argc],temp);
+    }
+    int ret = parse_parameters (api_options, argc+1, api_options->myarguments);
     if (ret == EXIT_NO_INPUT_FILES)
 	{
 		print_usage ();
@@ -420,6 +435,15 @@ void api_add_param(struct ccx_s_options* api_options,char* arg){
       strcpy(api_options->myarguments[api_options->argument_count], arg);
       api_options->argument_count++;
 }
+
+char * api_param(struct ccx_s_options* api_options, int count){
+    return api_options->myarguments[count];
+}
+
+int api_param_count(struct ccx_s_options* api_options){
+    return api_options->argument_count;
+}
+
 int def_main(int argc, char* argv[]){
     int ret,i,start_ret;
     struct ccx_s_options* api_options = api_init_options();

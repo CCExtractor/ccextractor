@@ -9,5 +9,5 @@
     #include "../src/lib_ccx/ccx_share.h"
   #include "../src/ccextractorapi.h"    
 %}
-
-  #include "../src/ccextractorapi.h"    
+   %include "../src/lib_ccx/ccx_common_common.h"
+   %include "../src/ccextractorapi.h"    
