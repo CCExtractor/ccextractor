@@ -177,6 +177,7 @@ struct ccx_s_options // Options from user parameters
 	int ignore_pts_jumps;                               // If 1, the program will ignore PTS jumps. Sometimes this parameter is required for DVB subs with > 30s pause time
 	int multiprogram;
 	int out_interval;
+	int no_empty; // If this is set to 1, it will cause CCExtractor not to generate the output file instead of just generating an empty one
 #ifdef WITH_LIBCURL
 	char *curlposturl;
 #endif
