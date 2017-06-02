@@ -109,8 +109,8 @@ int main(int argc, char *argv[])
 #ifdef WITH_LIBCURL
 	curl_global_init(CURL_GLOBAL_ALL);
 
-  	/* get a curl handle */
-  	curl = curl_easy_init();
+	/* get a curl handle */
+	curl = curl_easy_init();
 	if (!curl)
 	{
 		curl_global_cleanup(); // Must be done even on init fail
@@ -270,11 +270,11 @@ int main(int argc, char *argv[])
 					print_file_report(ctx);
 				if (!ret) ret = tmp;
 				break;
-            case CCX_SM_MKV:
-                mprint ("\rAnalyzing data in Matroska mode\n");
+			case CCX_SM_MKV:
+				mprint ("\rAnalyzing data in Matroska mode\n");
 				tmp = matroska_loop(ctx);
 				if (!ret) ret = tmp;
-                break;
+				break;
 #ifdef WTV_DEBUG
 			case CCX_SM_HEX_DUMP:
 				close_input_file(ctx); // process_hex will open it in text mode
@@ -440,7 +440,7 @@ int main(int argc, char *argv[])
 #ifdef CURL
 	if (curl)
 		curl_easy_cleanup(curl);
-  	curl_global_cleanup();
+	curl_global_cleanup();
 #endif
 	dinit_libraries(&ctx);
 

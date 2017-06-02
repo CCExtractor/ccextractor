@@ -679,9 +679,9 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 {
 	if ((tlt_config.extraction_start.set && page->hide_timestamp < tlt_config.extraction_start.time_in_ms) ||
 		(tlt_config.extraction_end.set && page->show_timestamp > tlt_config.extraction_end.time_in_ms) ||
-        	page->hide_timestamp == 0)
+			page->hide_timestamp == 0)
 	{
-        	return;
+			return;
 	}
 #ifdef DEBUG
 	for (uint8_t row = 1; row < 25; row++) {
@@ -1491,6 +1491,9 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 		pts |= (buffer[12] << 7);
 		pts |= ((buffer[13] & 0xfe) >> 1);
 		t = (uint32_t) (pts / 90);
+
+		set_current_pts(dec_ctx->timing, pts);
+		set_fts(dec_ctx->timing);
 
 		if (ccx_options.pes_header_to_stdout)
 		{
