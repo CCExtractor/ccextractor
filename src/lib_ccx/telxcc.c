@@ -1492,6 +1492,9 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 		pts |= ((buffer[13] & 0xfe) >> 1);
 		t = (uint32_t) (pts / 90);
 
+		set_current_pts(dec_ctx->timing, pts);
+		set_fts(dec_ctx->timing);
+
 		if (ccx_options.pes_header_to_stdout)
 		{
 			//printf("# Associated PTS: %d \n", pts);
