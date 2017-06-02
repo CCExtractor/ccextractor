@@ -242,7 +242,7 @@ static int es_video_sequence(struct lib_cc_decode *ctx, struct bitstream *esstre
 			ctx->no_bitstream_error = 0;
 			break;
 		}
-
+		// Sequence header
 		if (!ctx->in_pic_data && startcode == 0xB3)
 		{
 			if (!read_seq_info(ctx, esstream))
@@ -254,7 +254,7 @@ static int es_video_sequence(struct lib_cc_decode *ctx, struct bitstream *esstre
 			ctx->saw_seqgoppic = 1;
 			continue;
 		}
-
+		// Group of pictures
 		if (!ctx->in_pic_data && startcode == 0xB8)
 		{
 			if (!read_gop_info(ctx, esstream,sub))
@@ -266,7 +266,7 @@ static int es_video_sequence(struct lib_cc_decode *ctx, struct bitstream *esstre
 			ctx->saw_seqgoppic = 2;
 			continue;
 		}
-
+		// Picture
 		if (!ctx->in_pic_data && startcode == 0x00)
 		{
 			if (!read_pic_info(ctx, esstream, sub))
@@ -679,6 +679,7 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 // will point to where we want to restart after getting more.
 static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
+	char frame_type_to_char[] = { '?', 'I', 'P','B', 'D', '?', '?','?' };
 	debug("Read PIC Info\n");
 
 	// We only get here after seeing that start code
@@ -728,10 +729,17 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 	{
 		set_fts(ctx->timing); // Initialize fts
 	}
-
-	dbg_print(CCX_DMT_VIDES, "  t:%d r:%d p:%d", ctx->top_field_first,
+	/*
+	dbg_print(CCX_DMT_VIDES, "  frametype: %d (%c) t:%d r:%d p:%d", ctx->picture_coding_type, 
+		frame_type_to_char[ctx->picture_coding_type], ctx->top_field_first,
 			ctx->repeat_first_field, ctx->progressive_frame);
-	dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime_static(get_fts(ctx->timing, ctx->current_field)));
+	dbg_print(CCX_DMT_VIDES, "  FTS: %lld  (%s)\n", ctx->timing->current_pts, 
+		print_mstime_static(get_fts(ctx->timing, ctx->current_field)));
+		*/
+	if (ctx->picture_coding_type == 1) // Write I-Frame in ffprobe format for easy comparison
+	{
+		dbg_print(CCX_DMT_VIDES, "key_frame=1|pkt_pts=%lld|pict_type=I\n", ctx->timing->current_pts);
+	}
 
 	// Set min_pts/sync_pts according to the current time stamp.
 	// Use fts_at_gop_start as reference when a GOP header was seen

@@ -799,6 +799,7 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 		}
 	}
 }
+
 int general_loop(struct lib_ccx_ctx *ctx)
 {
 	struct lib_cc_decode *dec_ctx = NULL;
@@ -863,6 +864,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		{
 			struct cap_info* cinfo = NULL;
 			struct encoder_ctx *enc_ctx = NULL;
+			// Find most promising stream: teletext, DVB, ISDB, ATSC, in that order
 			int pid = get_best_stream(ctx->demux_ctx);
 			if(pid < 0)
 			{
@@ -872,6 +874,39 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			{
 				ignore_other_stream(ctx->demux_ctx, pid);
 				data_node = get_data_stream(datalist, pid);
+			}
+			if (ccx_options.analyze_video_stream)
+			{
+				int video_pid= get_video_stream(ctx->demux_ctx);
+				if (video_pid != pid && video_pid!=-1)
+				{					
+					struct cap_info* cinfo_video = get_cinfo(ctx->demux_ctx, pid); // Must be pid, not video_pid or DVB crashes (possibly buffer consumption?) - TODO
+					struct lib_cc_decode *dec_ctx_video = update_decoder_list_cinfo(ctx, cinfo_video);
+					struct cc_subtitle *dec_sub_video = &dec_ctx_video->dec_sub;
+					struct demuxer_data *data_node_video = get_data_stream(datalist, video_pid);					
+					if (data_node_video)
+					{
+						if (data_node_video->pts != CCX_NOPTS)
+						{
+							struct ccx_rational tb = { 1,MPEG_CLOCK_FREQ };
+							LLONG pts;
+							if (data_node_video->tb.num != 1 || data_node_video->tb.den != MPEG_CLOCK_FREQ)
+							{
+								pts = change_timebase(data_node_video->pts, data_node_video->tb, tb);
+							}
+							else
+								pts = data_node_video->pts;
+							set_current_pts(dec_ctx_video->timing, pts);
+							set_fts(dec_ctx_video->timing);
+						}
+						size_t got = process_m2v(dec_ctx_video, data_node_video->buffer, data_node_video->len, dec_sub_video);
+						if (got > 0)
+						{
+							memmove(data_node_video->buffer, data_node_video->buffer + got, (size_t)(data_node_video->len - got));
+							data_node_video->len -= got;
+						}
+					}
+				}
 			}
 
 			cinfo = get_cinfo(ctx->demux_ctx, pid);

@@ -1877,6 +1877,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp (argv[i],"-vides")==0)
 		{
 			opt->debug_mask |= CCX_DMT_VIDES;
+			opt->analyze_video_stream = 1;
+			continue;
+		}
+		if (strcmp(argv[i], "-anvid") == 0 || strcmp(argv[i], "--analyzevideo") == 0)
+		{
+			opt->analyze_video_stream = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"-xds")==0)

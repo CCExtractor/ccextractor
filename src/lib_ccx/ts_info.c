@@ -97,6 +97,17 @@ void ignore_other_sib_stream(struct cap_info* head, int pid)
 	}
 }
 
+int get_video_stream(struct ccx_demuxer *ctx)
+{
+	struct cap_info* iter;
+	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
+	{
+		if (iter->stream == CCX_STREAM_TYPE_VIDEO_MPEG2)
+			return iter->pid;
+	}
+	return -1;
+}
+
 int get_best_stream(struct ccx_demuxer *ctx)
 {
 	struct cap_info* iter;

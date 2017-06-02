@@ -69,6 +69,7 @@ void init_options (struct ccx_s_options *options)
 	options->ocr_oem = 0; // By default, set Tesseract OEM mode OEM_TESSERACT_ONLY (0)
 	options->mkvlang = NULL; // By default, all the languages are extracted 
 	options->ignore_pts_jumps = 1;
+	options->analyze_video_stream = 0;
 
 	/*HardsubX related stuff*/
 	options->hardsubx_ocr_mode = 0;

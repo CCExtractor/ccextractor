@@ -578,7 +578,8 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 {
 	int newcapbuflen;
 
-	if(cinfo->ignore == CCX_TRUE)
+	if(cinfo->ignore == CCX_TRUE && 
+		(cinfo->stream != CCX_STREAM_TYPE_VIDEO_MPEG2 || !ccx_options.analyze_video_stream))
 	{
 		return CCX_OK;
 	}
@@ -914,7 +915,8 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 				look_for_caption_data (ctx, &payload);
 			continue;
 		}
-		else if (cinfo->ignore)
+		else if (cinfo->ignore == CCX_TRUE &&
+			(cinfo->stream != CCX_STREAM_TYPE_VIDEO_MPEG2 || !ccx_options.analyze_video_stream))
 		{
 			if(cinfo->codec_private_data)
 			{
