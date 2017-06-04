@@ -210,7 +210,7 @@ int write_webvtt_header(struct encoder_ctx *context)
 	if (ccx_options.webvtt_create_css)
 	{
 		char *basefilename = get_basename(context->first_input_file);
-		char *css_file_name = (char*)malloc((strlen(basefilename) + 4) * sizeof(char));		// strlen(".css") == 4
+		char *css_file_name = (char*)malloc((strlen(basefilename) + strlen(".css")) * sizeof(char));
 		sprintf(css_file_name, "%s.css", basefilename);
 
 		FILE *f = fopen(css_file_name, "wb");
