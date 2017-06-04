@@ -11,6 +11,10 @@ Dependency
 Tesseract (OCR library by Google)
 Leptonica (Image processing library)
 
+Ubuntu install Dependency using package manager
+===============================================
+sudo apt-get install libleptonica-dev libtesseract-dev tesseract-ocr-eng
+
 How to compile CCExtractor on Linux with OCR
 =============================================
 
