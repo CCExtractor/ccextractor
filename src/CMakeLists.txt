@@ -19,14 +19,25 @@ configure_file (
 
 
 include_directories ("${PROJECT_SOURCE_DIR}")
-include_directories ("${PROJECT_SOURCE_DIR}/lib_ccx")
-include_directories ("${PROJECT_SOURCE_DIR}/utf8proc")
+include_directories ("${PROJECT_SOURCE_DIR}/lib_ccx/")
+include_directories ("${PROJECT_SOURCE_DIR}/utf8proc/")
 include_directories ("${PROJECT_SOURCE_DIR}/gpacmp4/")
 include_directories ("${PROJECT_SOURCE_DIR}/protobuf-c/")
-include_directories ("${PROJECT_SOURCE_DIR}/zvbi")
-aux_source_directory ("${PROJECT_SOURCE_DIR}/zvbi" SOURCEFILE)
-aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib" SOURCEFILE)
-aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_hash" SOURCEFILE)
+include_directories ("${PROJECT_SOURCE_DIR}/zvbi/")
+include_directories ("${PROJECT_SOURCE_DIR}/lib_hash/")
+aux_source_directory ("${PROJECT_SOURCE_DIR}/protobuf-c/" SOURCEFILE)
+aux_source_directory ("${PROJECT_SOURCE_DIR}/zvbi/" SOURCEFILE)
+aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_hash/" SOURCEFILE)
+
+#Windows specific libraries and linker flags
+if(WIN32)
+    include_directories ("${PROJECT_SOURCE_DIR}/win_iconv/")
+    include_directories ("${PROJECT_SOURCE_DIR}/libpng/")
+    aux_source_directory ("${PROJECT_SOURCE_DIR}/win_iconv/" SOURCEFILE)
+    aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
+    set (EXTRA_LIBS ${EXTRA_LIBS} -lws2_32 -lwinmm)
+endif(WIN32)
+
 
 # Adding some platform specific library path
 link_directories (/opt/local/lib)
@@ -40,7 +51,7 @@ set (EXTRA_LIBS ${EXTRA_LIBS} ccx)
 set (EXTRA_LIBS ${EXTRA_LIBS} m)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-set (EXTRA_LIBS ${EXTRA_LIBS} iconv)
+    set (EXTRA_LIBS ${EXTRA_LIBS} iconv)
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 

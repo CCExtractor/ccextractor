@@ -60,7 +60,7 @@ windows/enc_temp_folder/*
 
 #CMake
 src/cmake-build-debug/
-src/.idea
+src/.idea/
 
 
 #Autotools
