@@ -497,6 +497,8 @@ void print_usage (void)
 	mprint ("                       and whether the strings are ultimately considered  \n");
 	mprint ("                       equivalent or not, i.e. the calculated distance is \n");
 	mprint ("                       less or equal than the max allowed..\n");
+	mprint ("-anvid --analyzevideo  Analyze the video stream even if it's not used for\n");
+	mprint ("                       subtitles. This allows to provide video information.\n");
 	mprint ("Levenshtein distance:\n\n");
 	mprint ("  When processing teletext files CCExtractor tries to correct typos by\n");
 	mprint ("  comparing consecutive lines. If line N+1 is almost identical to line N except\n");
