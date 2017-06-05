@@ -75,13 +75,9 @@ More usage information can be found on our website:
     cd ccextractor/linux
     ./build
     
-    METHOD 2: If you want object files
-    cd ccextractor/linux
-    make
-    
-    METHOD 3: Standard linux compilation through Autoconf scripts
+    METHOD 2: Standard linux compilation through Autoconf scripts
     sudo dnf install autoconf automake      #Dependency to generate configuration script
-    cd ccextractor
+    cd ccextractor/linux
     ./autogen.sh
     ./configure
     make
@@ -108,6 +104,26 @@ More usage information can be found on our website:
     # building installation package (.rpm)
     cd ccextractor/package_creators
     ./rpm.sh
+
+### OSX
+    #PRE-REQUISITES:
+    #Installing required packages via Homebrew
+    brew install pkg-config
+    brew install autoconf automake libtool
+    brew install tesseract
+    brew install leptonica 
+    #After installing Make sure tesseract and leptonica are detected by pkg-config
+
+    METHOD 1: Using build.command script
+    cd ccextractor/mac
+    ./build.command
+    
+    METHOD 2: Using autoconf scripts
+    cd ccextractor/mac
+    ./autogen.sh
+    ./configure
+    make
+
 
 ### Windows
 

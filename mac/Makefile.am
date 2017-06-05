@@ -263,28 +263,30 @@ ccextractor_SOURCES = \
 				../src/zvbi/zvbi_decoder.h
 				
 
-ccextractor_CFLAGS = -std=gnu99 -s  -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT 
+ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT 
 
-ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi/ -I../src/lib_hash/ -I../src/protobuf-c/ -I../src/utf8proc/
+ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi/ -I../src/lib_hash/ -I../src/protobuf-c/ -I../src/utf8proc/ 
 
 
 ccextractor_LDADD=-lm
 
-if SYS_IS_LINUX
-ccextractor_CFLAGS += -O3 -DGPAC_CONFIG_LINUX
+if SYS_IS_MAC
+ccextractor_CFLAGS += -DPAC_CONFIG_DARWIN -Dfopen64=fopen -Dopen64=open -Dlseek64=lseek
+ccextractor_LDADD += -liconv -lz 
 endif
 
 if HARDSUBX_IS_ENABLED
 ccextractor_CFLAGS += -DENABLE_HARDSUBX
-ccextractor_CPPFLAGS+= ${libavcodec_CFLAGS}
-ccextractor_CPPFLAGS+= ${libavformat_CFLAGS}
-ccextractor_CPPFLAGS+= ${libavutil_CFALGS}
-ccextractor_CPPFLAGS+= ${libswscale_CFLAGS}
+AV_CPPFLAG= ${libavcodec_CFLAGS}
+AV_CPPFLAG+= ${libavformat_CFLAGS}
+AV_CPPFLAG+= ${libavutil_CFALGS}
+AV_CPPFLAG+= ${libswscale_CFLAGS}
 AV_LIB = ${libavcodec_LIBS}
 AV_LIB += ${libavformat_LIBS}
 AV_LIB += ${libavutil_LIBS}
 AV_LIB += ${libswscale_LIBS}
 ccextractor_LDADD += $(AV_LIB)
+ccextractor_CPPFLAGS+=$(AV_CPPFLAG)
 endif
 
 if OCR_IS_ENABLED
@@ -300,8 +302,8 @@ else
 #fix for raspberry pi not having a pkgconfig file for tesseract
 
 if TESSERACT_PRESENT_RPI
-TESS_LIB = -ltesseract
-TESS_CPPFLAG = -I/usr/include/tesseract
+ccextractor_LDADD += -ltesseract
+ccextractor_CPPFLAGS += -I/usr/include/tesseract
 endif
 endif
 
@@ -312,6 +314,4 @@ ccextractor_LDADD += $(LEPT_LIB)
 endif
 
 EXTRA_DIST = ../src/gpacmp4/gpac/sync_layer.h ../src/lib_ccx/ccfont2.xbm ../src/utf8proc/utf8proc_data.c
-
-
 

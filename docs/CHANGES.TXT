@@ -2,15 +2,21 @@
 -----------------
 - Fix: Prevent the OCR being initialized more than once (happened on multiprogram and
   PAT changes)
+- New: Added Autoconf build scripts for CCExtractor to generate makefiles (mac).
 - New: Added .rpm package generation script.
 - New: Added build/installation script for .pkg.tar.xz (Arch Linux).
 - New: Added tarball generation script.
+<<<<<<< HEAD
 - New: Added Autoconf build scripts for CCExtractor to generate makefiles.
 - New: Added --analyzevideo. If present the video stream will be processed even if the
   subtitles are in a different stream. This is useful when we want video information
   (resolution, frame type, etc). -vides now implies this option too. 
   [Note: Tentative - some possibly breaking changed were made for this, so if you
   use it validate results]
+=======
+- New: Added Autoconf build scripts for CCExtractor to generate makefiles (linux).
+  
+>>>>>>> pr/n738_techfreakworm
 
 0.85b (2017-1-26)
 -----------------
