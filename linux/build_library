@@ -3,7 +3,7 @@
 OBJ_SOURCES="$(find -name '*.o')"
 BLD_LINKER="-lm -zmuldefs -l tesseract -l lept -l python2.7"
 
-out=$((swig -python ccextractorapi.i && ./build_api && gcc -shared $OBJ_SOURCES -o _ccextractorapi.so ) 2>&1)
+out=$((swig -python ccextractor.i && ./build_api && gcc -shared $OBJ_SOURCES -o _ccextractor.so ) 2>&1)
 res=$?
 if [[ $out == *"gcc: command not found"* ]]
 then

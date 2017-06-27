@@ -9,7 +9,7 @@ License: GPL 2.0
 
 //struct ccx_s_options ccx_options;
 //struct lib_ccx_ctx *signal_ctx;
-//volatile int terminate_asap = 0;
+volatile int terminate_asap = 0;
 
 void sigusr1_handler(int sig)
 {

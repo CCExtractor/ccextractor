@@ -2985,10 +2985,11 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_char swig_types[3]
 #define SWIGTYPE_p_int swig_types[4]
 #define SWIGTYPE_p_lib_ccx_ctx swig_types[5]
-#define SWIGTYPE_p_unsigned_char swig_types[6]
-#define SWIGTYPE_p_unsigned_int swig_types[7]
-static swig_type_info *swig_types[9];
-static swig_module_info swig_module = {swig_types, 8, 0, 0, 0, 0};
+#define SWIGTYPE_p_p_char swig_types[6]
+#define SWIGTYPE_p_unsigned_char swig_types[7]
+#define SWIGTYPE_p_unsigned_int swig_types[8]
+static swig_type_info *swig_types[10];
+static swig_module_info swig_module = {swig_types, 9, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -3001,16 +3002,16 @@ static swig_module_info swig_module = {swig_types, 8, 0, 0, 0, 0};
 #endif
 
 /*-----------------------------------------------
-              @(target):= _ccextractorapi.so
+              @(target):= _ccextractor.so
   ------------------------------------------------*/
 #if PY_VERSION_HEX >= 0x03000000
-#  define SWIG_init    PyInit__ccextractorapi
+#  define SWIG_init    PyInit__ccextractor
 
 #else
-#  define SWIG_init    init_ccextractorapi
+#  define SWIG_init    init_ccextractor
 
 #endif
-#define SWIG_name    "_ccextractorapi"
+#define SWIG_name    "_ccextractor"
 
 #define SWIGVERSION 0x030012 
 #define SWIG_VERSION SWIGVERSION
@@ -3020,14 +3021,14 @@ static swig_module_info swig_module = {swig_types, 8, 0, 0, 0, 0};
 #define SWIG_as_voidptrptr(a) ((void)SWIG_as_voidptr(*a),(void**)(a)) 
 
 
-     #define SWIG_FILE_WITH_INIT
-     #include "../src/lib_ccx/lib_ccx.h"
+    #define SWIG_FILE_WITH_INIT
+    #include "../src/lib_ccx/lib_ccx.h"
     #include "../src/lib_ccx/configuration.h"
     #include "../src/lib_ccx/ccx_common_option.h"
     #include "../src/lib_ccx/ccx_mp4.h"
     #include "../src/lib_ccx/hardsubx.h"
     #include "../src/lib_ccx/ccx_share.h"
-  #include "../src/ccextractorapi.h"    
+  #include "../src/ccextractor.h"    
 
 
 SWIGINTERNINLINE PyObject*
@@ -3929,12 +3930,84 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_def_main(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_sigterm_handler(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
+  int arg1 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:sigterm_handler",&obj0)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "sigterm_handler" "', argument " "1"" of type '" "int""'");
+  } 
+  arg1 = (int)(val1);
+  sigterm_handler(arg1);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_sigint_handler(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  int arg1 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:sigint_handler",&obj0)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "sigint_handler" "', argument " "1"" of type '" "int""'");
+  } 
+  arg1 = (int)(val1);
+  sigint_handler(arg1);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_print_end_msg(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  
+  if (!PyArg_ParseTuple(args,(char *)":print_end_msg")) SWIG_fail;
+  print_end_msg();
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_main(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  int arg1 ;
+  char **arg2 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
   int result;
   
-  if (!PyArg_ParseTuple(args,(char *)":def_main")) SWIG_fail;
-  result = (int)def_main();
+  if (!PyArg_ParseTuple(args,(char *)"OO:main",&obj0,&obj1)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "main" "', argument " "1"" of type '" "int""'");
+  } 
+  arg1 = (int)(val1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_p_char, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "main" "', argument " "2"" of type '" "char *[]""'"); 
+  } 
+  arg2 = (char **)(argp2);
+  result = (int)main(arg1,arg2);
   resultobj = SWIG_From_int((int)(result));
   return resultobj;
 fail:
@@ -3957,7 +4030,10 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"api_start", _wrap_api_start, METH_VARARGS, NULL},
 	 { (char *)"api_param_count", _wrap_api_param_count, METH_VARARGS, NULL},
 	 { (char *)"api_param", _wrap_api_param, METH_VARARGS, NULL},
-	 { (char *)"def_main", _wrap_def_main, METH_VARARGS, NULL},
+	 { (char *)"sigterm_handler", _wrap_sigterm_handler, METH_VARARGS, NULL},
+	 { (char *)"sigint_handler", _wrap_sigint_handler, METH_VARARGS, NULL},
+	 { (char *)"print_end_msg", _wrap_print_end_msg, METH_VARARGS, NULL},
+	 { (char *)"main", _wrap_main, METH_VARARGS, NULL},
 	 { NULL, NULL, 0, NULL }
 };
 
@@ -3970,6 +4046,7 @@ static swig_type_info _swigt__p_ccx_s_options = {"_p_ccx_s_options", "struct ccx
 static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_int = {"_p_int", "int *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_lib_ccx_ctx = {"_p_lib_ccx_ctx", "struct lib_ccx_ctx *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_unsigned_char = {"_p_unsigned_char", "unsigned char *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_unsigned_int = {"_p_unsigned_int", "unsigned int *", 0, 0, (void*)0, 0};
 
@@ -3980,6 +4057,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_char,
   &_swigt__p_int,
   &_swigt__p_lib_ccx_ctx,
+  &_swigt__p_p_char,
   &_swigt__p_unsigned_char,
   &_swigt__p_unsigned_int,
 };
@@ -3990,6 +4068,7 @@ static swig_cast_info _swigc__p_ccx_s_options[] = {  {&_swigt__p_ccx_s_options, 
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_int[] = {  {&_swigt__p_int, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_lib_ccx_ctx[] = {  {&_swigt__p_lib_ccx_ctx, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_p_char[] = {  {&_swigt__p_p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_unsigned_char[] = {  {&_swigt__p_unsigned_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_unsigned_int[] = {  {&_swigt__p_unsigned_int, 0, 0, 0},{0, 0, 0, 0}};
 
@@ -4000,6 +4079,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_char,
   _swigc__p_int,
   _swigc__p_lib_ccx_ctx,
+  _swigc__p_p_char,
   _swigc__p_unsigned_char,
   _swigc__p_unsigned_int,
 };

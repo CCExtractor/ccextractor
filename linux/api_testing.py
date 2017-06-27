@@ -1,4 +1,4 @@
-import ccextractorapi as cc
+import ccextractor as cc
 import os
 import time
 import sys
