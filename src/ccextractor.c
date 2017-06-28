@@ -497,6 +497,5 @@ int main(int argc, char* argv[]){
     
     int compile_ret = compile_params(api_options,argc);
     int start_ret = api_start(*api_options);
-
-	return start_ret ? EXIT_OK : EXIT_NO_CAPTIONS;
+	return start_ret;
 }
