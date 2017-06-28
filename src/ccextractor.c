@@ -434,24 +434,15 @@ void checking_configuration_file(struct ccx_s_options api_options){
 
 int compile_params(struct ccx_s_options *api_options,int argc){
     printf("Inside compile params\n");
-    char** temp = malloc(api_options->argument_count*sizeof(char *));
-    int i=0;
-    while(i<api_options->argument_count){
-        temp[i]=malloc(strlen(api_options->myarguments[i]));
-        strcpy(temp[i],api_options->myarguments[i]);
-        i++;
-    }
     api_options->myarguments = realloc(api_options->myarguments, (api_options->argument_count+1) * sizeof *api_options->myarguments);
-      api_options->myarguments[0] = realloc(api_options->myarguments[0],strlen("./ccextractor")+1);
-      strcpy(api_options->myarguments[0], "./ccextractor");
+      api_options->myarguments[api_options->argument_count] = malloc(strlen("./ccextractor")+1);
+      strcpy(api_options->myarguments[api_options->argument_count], "./ccextractor");
       api_options->argument_count++;
-    i=1;
-    while(i<api_options->argument_count){
-        api_options->myarguments[i] = realloc(api_options->myarguments[i],strlen(temp[i-1]));
-        strcpy(api_options->myarguments[i],temp[i-1]);
-        i++;
-    }
-    free(temp);
+      char* temp = api_options->myarguments[api_options->argument_count-1];
+      int i;
+      for (i = api_options->argument_count-1; i > 0; i--)
+                   api_options->myarguments[i] = api_options->myarguments[i-1];
+      api_options->myarguments[0] = temp;
     int ret = parse_parameters (api_options, api_options->argument_count, api_options->myarguments);
     if (ret == EXIT_NO_INPUT_FILES)
 	{
