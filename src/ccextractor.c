@@ -433,28 +433,25 @@ void checking_configuration_file(struct ccx_s_options api_options){
 }   
 
 int compile_params(struct ccx_s_options *api_options,int argc){
-    
+    printf("Inside compile params\n");
+    char** temp = malloc(api_options->argument_count*sizeof(char *));
+    int i=0;
+    while(i<api_options->argument_count){
+        temp[i]=malloc(strlen(api_options->myarguments[i]));
+        strcpy(temp[i],api_options->myarguments[i]);
+        i++;
+    }
     api_options->myarguments = realloc(api_options->myarguments, (api_options->argument_count+1) * sizeof *api_options->myarguments);
-      api_options->myarguments[api_options->argument_count] = malloc(strlen("./ccextractor")+1);
-      strcpy(api_options->myarguments[api_options->argument_count], "./ccextractor");
+      api_options->myarguments[0] = realloc(api_options->myarguments[0],strlen("./ccextractor")+1);
+      strcpy(api_options->myarguments[0], "./ccextractor");
       api_options->argument_count++;
-   // int i=0;
-   //while(i<api_options->argument_count){
-   //    mprint("argument[%d] = %s",i++,api_options->myarguments[i]);
-   //}
-   //  mprint("argument_count = %d\n",api_options->argument_count); 
-   //Cyclic rotation for bringing the ./ccextractor param to the start of the arguments array
-    int i = 0;
-    char* temp = NULL;
-    temp =  realloc(temp,strlen(api_options->myarguments[0])+1);
-    strcpy(temp,api_options->myarguments[0]);
-    //mprint("Temp = %s \t argument[0] = %s \t argument[count-1] = %s\n",temp,api_options->myarguments[0],api_options->myarguments[api_options->argument_count-1]);
-    api_options->myarguments[0] = realloc(api_options->myarguments[0],strlen(api_options->myarguments[api_options->argument_count-1])+1);
-    strcpy(api_options->myarguments[0],api_options->myarguments[api_options->argument_count-1]);
-    //mprint("Temp = %s \t argument[0] = %s \t argument[count-1] = %s\n",temp,api_options->myarguments[0],api_options->myarguments[api_options->argument_count-1]);
-    api_options->myarguments[api_options->argument_count-1] = realloc(api_options->myarguments[api_options->argument_count-1],strlen(temp)+1);
-    strcpy(api_options->myarguments[api_options->argument_count-1],temp);
-    //mprint("Temp = %s \t argument[0] = %s \t argument[count-1] = %s\n",temp,api_options->myarguments[0],api_options->myarguments[api_options->argument_count-1]);
+    i=1;
+    while(i<api_options->argument_count){
+        api_options->myarguments[i] = realloc(api_options->myarguments[i],strlen(temp[i-1]));
+        strcpy(api_options->myarguments[i],temp[i-1]);
+        i++;
+    }
+    free(temp);
     int ret = parse_parameters (api_options, api_options->argument_count, api_options->myarguments);
     if (ret == EXIT_NO_INPUT_FILES)
 	{
@@ -470,7 +467,7 @@ int compile_params(struct ccx_s_options *api_options,int argc){
 		exit(ret);
 	}
     return EXIT_OK;
-}
+    }
 
 void api_add_param(struct ccx_s_options* api_options,char* arg){
       api_options->myarguments = realloc(api_options->myarguments, (api_options->argument_count+1) * sizeof *api_options->myarguments);
