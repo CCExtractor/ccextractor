@@ -250,7 +250,6 @@ int api_start(struct ccx_s_options api_options){
 				fatal(CCX_COMMON_EXIT_BUG_BUG, "Cannot be reached!");
 				break;
 		}
-
 		list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 		{
 			mprint("\n");
@@ -476,6 +475,13 @@ int api_param_count(struct ccx_s_options* api_options){
     return api_options->python_param_count;
 }
 
+ 
+int __real_write(int file_handle, char* buffer, int nbyte);
+int __wrap_write(int file_handle, char* buffer, int nbyte)
+{
+        printf("file_handle = %d\n",file_handle);
+        return __real_write(file_handle,buffer,nbyte);
+}
 int main(int argc, char* argv[]){
     int i;
     struct ccx_s_options* api_options = api_init_options();

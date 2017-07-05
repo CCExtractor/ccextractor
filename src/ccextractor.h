@@ -22,8 +22,14 @@ CURLcode res;
 #define LEPT_MSG_SEVERITY L_SEVERITY_NONE
 #endif
 
+struct cc_to_python_subs{
+    char** subs;
+    int number_of_lines;
+};
+
 struct ccx_s_options ccx_options;
 struct lib_ccx_ctx *signal_ctx;
+struct cc_to_python_subs python_subs;
 //volatile int terminate_asap = 0;
 
 struct ccx_s_options* api_init_options();
@@ -38,4 +44,6 @@ void sigterm_handler(int sig);
 void sigint_handler(int sig);
 void print_end_msg();
 int main(int argc, char *argv[]);
+int __real_write(int file_handle, char* buffer, int nbyte);
+int __wrap_write(int file_handle, char* buffer, int nbyte);
 #endif //CCEXTRACTOR_H
