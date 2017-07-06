@@ -1,0 +1,6 @@
+#!/bin/bash
+find /vagrant/First\ phase\ evaluation/ -name '*.ts' -exec sh -c '
+  for file do
+    python ../../api/api_testing.py $file
+  done
+' sh {} +

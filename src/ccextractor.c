@@ -433,16 +433,16 @@ void check_configuration_file(struct ccx_s_options api_options){
 }   
 
 int compile_params(struct ccx_s_options *api_options,int argc){
-    api_options->myarguments = realloc(api_options->myarguments, (api_options->argument_count+1) * sizeof *api_options->myarguments);
-      api_options->myarguments[api_options->argument_count] = malloc(strlen("./ccextractor")+1);
-      strcpy(api_options->myarguments[api_options->argument_count], "./ccextractor");
-      api_options->argument_count++;
-      char* temp = api_options->myarguments[api_options->argument_count-1];
+    api_options->python_params = realloc(api_options->python_params, (api_options->python_param_count+1) * sizeof *api_options->python_params);
+      api_options->python_params[api_options->python_param_count] = malloc(strlen("./ccextractor")+1);
+      strcpy(api_options->python_params[api_options->python_param_count], "./ccextractor");
+      api_options->python_param_count++;
+      char* temp = api_options->python_params[api_options->python_param_count-1];
       int i;
-      for (i = api_options->argument_count-1; i > 0; i--)
-                   api_options->myarguments[i] = api_options->myarguments[i-1];
-      api_options->myarguments[0] = temp;
-    int ret = parse_parameters (api_options, api_options->argument_count, api_options->myarguments);
+      for (i = api_options->python_param_count-1; i > 0; i--)
+                   api_options->python_params[i] = api_options->python_params[i-1];
+      api_options->python_params[0] = temp;
+    int ret = parse_parameters (api_options, api_options->python_param_count, api_options->python_params);
     if (ret == EXIT_NO_INPUT_FILES)
 	{
 		print_usage ();
@@ -460,18 +460,18 @@ int compile_params(struct ccx_s_options *api_options,int argc){
     }
 
 void api_add_param(struct ccx_s_options* api_options,char* arg){
-      api_options->myarguments = realloc(api_options->myarguments, (api_options->argument_count+1) * sizeof *api_options->myarguments);
-      api_options->myarguments[api_options->argument_count] = malloc(strlen(arg)+1);
-      strcpy(api_options->myarguments[api_options->argument_count], arg);
-      api_options->argument_count++;
+      api_options->python_params = realloc(api_options->python_params, (api_options->python_param_count+1) * sizeof *api_options->python_params);
+      api_options->python_params[api_options->python_param_count] = malloc(strlen(arg)+1);
+      strcpy(api_options->python_params[api_options->python_param_count], arg);
+      api_options->python_param_count++;
 }
 
 char * api_param(struct ccx_s_options* api_options, int count){
-    return api_options->myarguments[count];
+    return api_options->python_params[count];
 }
 
 int api_param_count(struct ccx_s_options* api_options){
-    return api_options->argument_count;
+    return api_options->python_param_count;
 }
 
 int main(int argc, char* argv[]){

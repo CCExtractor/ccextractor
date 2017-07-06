@@ -150,9 +150,9 @@ def api_init_options():
     return _ccextractor.api_init_options()
 api_init_options = _ccextractor.api_init_options
 
-def checking_configuration_file(api_options):
-    return _ccextractor.checking_configuration_file(api_options)
-checking_configuration_file = _ccextractor.checking_configuration_file
+def check_configuration_file(api_options):
+    return _ccextractor.check_configuration_file(api_options)
+check_configuration_file = _ccextractor.check_configuration_file
 
 def compile_params(api_options, argc):
     return _ccextractor.compile_params(api_options, argc)

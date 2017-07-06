@@ -3758,26 +3758,26 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_checking_configuration_file(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_check_configuration_file(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   struct ccx_s_options arg1 ;
   void *argp1 ;
   int res1 = 0 ;
   PyObject * obj0 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"O:checking_configuration_file",&obj0)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"O:check_configuration_file",&obj0)) SWIG_fail;
   {
     res1 = SWIG_ConvertPtr(obj0, &argp1, SWIGTYPE_p_ccx_s_options,  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "checking_configuration_file" "', argument " "1"" of type '" "struct ccx_s_options""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "check_configuration_file" "', argument " "1"" of type '" "struct ccx_s_options""'"); 
     }  
     if (!argp1) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "checking_configuration_file" "', argument " "1"" of type '" "struct ccx_s_options""'");
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "check_configuration_file" "', argument " "1"" of type '" "struct ccx_s_options""'");
     } else {
       arg1 = *((struct ccx_s_options *)(argp1));
     }
   }
-  checking_configuration_file(arg1);
+  check_configuration_file(arg1);
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -4024,7 +4024,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"debug_608_to_ASC", _wrap_debug_608_to_ASC, METH_VARARGS, NULL},
 	 { (char *)"add_cc_sub_text", _wrap_add_cc_sub_text, METH_VARARGS, NULL},
 	 { (char *)"api_init_options", _wrap_api_init_options, METH_VARARGS, NULL},
-	 { (char *)"checking_configuration_file", _wrap_checking_configuration_file, METH_VARARGS, NULL},
+	 { (char *)"check_configuration_file", _wrap_check_configuration_file, METH_VARARGS, NULL},
 	 { (char *)"compile_params", _wrap_compile_params, METH_VARARGS, NULL},
 	 { (char *)"api_add_param", _wrap_api_add_param, METH_VARARGS, NULL},
 	 { (char *)"api_start", _wrap_api_start, METH_VARARGS, NULL},
