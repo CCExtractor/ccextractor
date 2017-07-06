@@ -475,7 +475,6 @@ int api_param_count(struct ccx_s_options* api_options){
     return api_options->python_param_count;
 }
 
- 
 int __real_write(int file_handle, char* buffer, int nbyte);
 int __wrap_write(int file_handle, char* buffer, int nbyte)
 {
@@ -489,8 +488,11 @@ int __wrap_write(int file_handle, char* buffer, int nbyte)
         
         python_subs.subs[python_subs.number_of_lines-1] = malloc(nbyte*sizeof(char)+1);
         strcpy(python_subs.subs[python_subs.number_of_lines-1],buffer);
+        //printf("%d\t%s\t%s\n",python_subs.number_of_lines,python_subs.subs[python_subs.number_of_lines-1],buffer);
         return __real_write(file_handle,buffer,nbyte);
 }
+
+
 int main(int argc, char* argv[]){
     int i;
     struct ccx_s_options* api_options = api_init_options();
@@ -500,8 +502,9 @@ int main(int argc, char* argv[]){
     
     int compile_ret = compile_params(api_options,argc);
     int start_ret = api_start(*api_options);
+    
     printf("Printing python subs \n \n");
-    for(i=0;i<python_subs.number_of_lines;i++)
-        printf("%s\n",python_subs.subs[i]);
+    //for(i=0;i<python_subs.number_of_lines;i++)
+    //    printf("%s\n",python_subs.subs[i]);
 	return start_ret;
 }
