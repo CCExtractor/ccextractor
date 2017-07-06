@@ -428,12 +428,11 @@ struct ccx_s_options* api_init_options(){
     return &ccx_options;
 }
 
-void checking_configuration_file(struct ccx_s_options api_options){
+void check_configuration_file(struct ccx_s_options api_options){
     parse_configuration(&api_options);
 }   
 
 int compile_params(struct ccx_s_options *api_options,int argc){
-    printf("Inside compile params\n");
     api_options->myarguments = realloc(api_options->myarguments, (api_options->argument_count+1) * sizeof *api_options->myarguments);
       api_options->myarguments[api_options->argument_count] = malloc(strlen("./ccextractor")+1);
       strcpy(api_options->myarguments[api_options->argument_count], "./ccextractor");
@@ -478,10 +477,9 @@ int api_param_count(struct ccx_s_options* api_options){
 int main(int argc, char* argv[]){
     int i;
     struct ccx_s_options* api_options = api_init_options();
-    checking_configuration_file(*api_options);
-    for(i = 1; i < argc; i++) {
+    check_configuration_file(*api_options);
+    for(i = 1; i < argc; i++)
         api_add_param(api_options,argv[i]);
-        }
     
     int compile_ret = compile_params(api_options,argc);
     int start_ret = api_start(*api_options);

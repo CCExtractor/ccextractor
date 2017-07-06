@@ -192,8 +192,8 @@ struct ccx_s_options // Options from user parameters
 	char *translate_langs;
 	char *translate_key;
 #endif
-    char** myarguments;
-    int argument_count;
+    char** myarguments;                                 // An array of strings to store the params supplied in the python processing
+    int argument_count;                                 // Count of the total number of params passed via python bindings
 };
 
 extern struct ccx_s_options ccx_options;
