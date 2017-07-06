@@ -33,6 +33,7 @@ void init_options (struct ccx_s_options *options)
 	options->no_progress_bar=0; // If 1, suppress the output of the progress to stdout
 	options->enc_cfg.sentence_cap =0 ; // FIX CASE? = Fix case?
 	options->enc_cfg.splitbysentence = 0; // Split text into complete sentences and prorate time?
+	options->enc_cfg.nospupngocr = 0;
 	options->sentence_cap_file=NULL; // Extra words file?
 	options->live_stream=0; // 0 -> A regular file
 	options->messages_target=1; // 1=stdout

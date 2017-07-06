@@ -565,7 +565,8 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 
 	/* TODO do rectangle wise, one color table should not be used for all rectangles */
         mapclut_paletee(palette, alpha, (uint32_t *)rect[0].data[1],rect[0].nb_colors);
-#ifdef ENABLE_OCR
+#ifdef ENABLE_OCR	
+	if (!context->nospupngocr)
 	{
 		char *str;
 		str = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);

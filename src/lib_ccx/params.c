@@ -612,7 +612,8 @@ void print_usage (void)
 	mprint ("                       ISO-639-2 form (like \"fre\" for french) or a language\n");
 	mprint ("                       code followed by a dash and a country code for specialities\n");
 	mprint ("                       in languages (like \"fre-ca\" for Canadian French).\n");
-
+	mprint ("          -nospupngocr When processing DVB don't use the OCR to write the text as");
+	mprint ("                       comments in the XML file.\n");
 	mprint ("\n");
 	mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
 
@@ -1464,6 +1465,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				opt->ocrlang[char_index] = cctolower(opt->ocrlang[char_index]);
 			continue;
 		}
+		if (strcmp(argv[i], "-nospupngocr") == 0)
+		{
+			opt->enc_cfg.nospupngocr = 1;
+			continue;
+		}
+
 
 		if (strcmp(argv[i], "-oem") == 0)
 		{

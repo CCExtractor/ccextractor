@@ -128,6 +128,9 @@ struct encoder_ctx
 	// Segmenting
 	int segment_pending;
 	int segment_last_key_frame;
+
+	// OCR in SPUPNG
+	int nospupngocr;
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048
