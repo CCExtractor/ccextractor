@@ -489,7 +489,8 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 	//TO keep track we dont over flow in buffer from user
 	int index = 0;
 
-	if (ctx->cfg_no_rollup == ctx->current_state.rollup_mode)
+	if (ctx->cfg_no_rollup || (ctx->cfg_no_rollup == ctx->current_state.rollup_mode))
+	// Abhinav95: Forcing -noru to perform deduplication even if stream doesn't honor it
 	{
 		wtrepeat_text = NULL;
 		if (list_empty(&ctx->buffered_text))
@@ -1215,12 +1216,12 @@ static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf
 		{
 			ctx->dc = *buf;
 			if(ctx->dc == 0x00)
-				isdb_log("Attinuation Due to Rain\n");
+				isdb_log("Attenuation Due to Rain\n");
 		}
 		isdb_log("CC MGMT DATA: languages: %c%c%c\n", buf[0], buf[1], buf[2]);
 		buf += 3;
 		isdb_log("CC MGMT DATA: Format: 0x%X\n", *buf>>4);
-		/* 8bit code is not used by brazilians Arib they use utf-8*/
+		/* 8bit code is not used by Brazilian ARIB they use utf-8*/
 		isdb_log("CC MGMT DATA: TCS: 0x%X\n", (*buf>>2)&0x3);
 		ctx->current_state.rollup_mode = !!(*buf&0x3);
 		isdb_log("CC MGMT DATA: Rollup mode: 0x%X\n", ctx->current_state.rollup_mode);
@@ -1321,7 +1322,7 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
 /** Acc to http://www.bocra.org.bw/sites/default/files/documents/Appendix%201%20-%20Operational%20Guideline%20for%20ISDB-Tbw.pdf
  * In table AP8-1 there are modification to ARIB TR-B14 in volume 3 Section 2 4.4.1 character encoding is UTF-8
  * instead of 8 bit character, just now we dont have any means to detect which country this video is
- * therefor we have hardcoded UTF-8 as encoding
+ * therefore we have hardcoded UTF-8 as encoding
  */
 int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle *sub)
 {
