@@ -28,6 +28,10 @@ windows/ccextractor.VC.db
 build/
 
 ####
+# Python
+*.pyc
+
+####
 # Visual Studio project Ignored files
 
 *.suo
