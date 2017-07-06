@@ -124,6 +124,10 @@ struct encoder_ctx
 	//for dvb subs
 	struct encoder_ctx* prev;
 	int write_previous;
+
+	// Segmenting
+	int segment_pending;
+	int segment_last_key_frame;
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY	2048
@@ -201,6 +205,8 @@ void set_encoder_last_displayed_subs_ms(struct encoder_ctx *ctx, LLONG last_disp
 void set_encoder_subs_delay(struct encoder_ctx *ctx, LLONG subs_delay);
 void set_encoder_startcredits_displayed(struct encoder_ctx *ctx, int startcredits_displayed);
 void set_encoder_rcwt_fileformat(struct encoder_ctx *ctx, short int format);
+
+int reset_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg);
 
 void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank, int max_len);
 int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_subs,

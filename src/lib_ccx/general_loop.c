@@ -767,6 +767,7 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 	LLONG cur_sec;
 	LLONG t;
 	struct encoder_ctx *enc_ctx;
+	int segment_now = 0;
 
 
 	t = get_fts(dec_ctx->timing, dec_ctx->current_field);
@@ -787,15 +788,50 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 	if (ctx->out_interval < 1)
 		return;
 
-	if (cur_sec/ctx->out_interval > ctx->segment_counter)
+	if (cur_sec / ctx->out_interval > ctx->segment_counter)
 	{
-		ctx->segment_counter++;
-
 		enc_ctx = get_encoder_by_pn(ctx, dec_ctx->program_number);
-		if (enc_ctx)
+		// segment_now = 1;
+		if (!ctx->segment_on_key_frames_only ||	
+			dec_ctx->picture_coding_type == CCX_FRAME_TYPE_I_FRAME) // Segment only when an I-Frame is found
+		{			
+			segment_now = 1;
+			enc_ctx->segment_pending = 0;
+			enc_ctx->segment_last_key_frame = 0;
+		}
+		else
 		{
-			list_del(&enc_ctx->list);
-			dinit_encoder(&enc_ctx, t);
+			if (enc_ctx->segment_pending) // We already knew we had to segment but can we do it?
+			{
+				if (dec_ctx->num_key_frames>enc_ctx->segment_last_key_frame)
+				{
+				    // Yes, there's been a key frame since we last checked
+					segment_now = 1;
+					enc_ctx->segment_pending = 0;
+					enc_ctx->segment_last_key_frame = 0;
+				}
+			}
+			else
+			{
+				// Make a note of current I frame count,
+				enc_ctx->segment_pending=1;
+				enc_ctx->segment_last_key_frame=dec_ctx->num_key_frames;
+			}
+		}
+	}
+
+	if (segment_now)
+	{		
+		{	
+			ctx->segment_counter++;
+			if (enc_ctx)
+			{
+				//list_del(&enc_ctx->list);
+				//dinit_encoder(&enc_ctx, t);
+				char *extension = get_file_extension(ccx_options.enc_cfg.write_format);
+				sprintf(ccx_options.enc_cfg.output_filename, "%s_%06d%s", ctx->basefilename, ctx->segment_counter + 1, extension);
+				reset_output_ctx(enc_ctx, &ccx_options.enc_cfg);
+			}
 		}
 	}
 }

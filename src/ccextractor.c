@@ -50,7 +50,7 @@ void sigint_handler(int sig)
 }
 
 
-void print_end_msg()
+void print_end_msg(void)
 {
 	mprint("Issues? Open a ticket here\n");
 	mprint("https://github.com/CCExtractor/ccextractor/issues\n");
@@ -380,10 +380,12 @@ int main(int argc, char *argv[])
 			}
 
 			if (dec_ctx->false_pict_header)
-				mprint ("\nNumber of likely false picture headers (discarded): %d\n",dec_ctx->false_pict_header);
+				mprint ("Number of likely false picture headers (discarded): %d\n",dec_ctx->false_pict_header);
+			if (dec_ctx->num_key_frames)
+				mprint("Number of key frames: %d\n", dec_ctx->num_key_frames);
 
 			if (dec_ctx->stat_numuserheaders)
-				mprint("\nTotal user data fields: %d\n", dec_ctx->stat_numuserheaders);
+				mprint("Total user data fields: %d\n", dec_ctx->stat_numuserheaders);
 			if (dec_ctx->stat_dvdccheaders)
 				mprint("DVD-type user data fields: %d\n", dec_ctx->stat_dvdccheaders);
 			if (dec_ctx->stat_scte20ccheaders)

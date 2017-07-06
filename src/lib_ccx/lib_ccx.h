@@ -74,7 +74,6 @@ struct ccx_s_mp4Cfg
 
 struct lib_ccx_ctx
 {
-
 	// Stuff common to both loops
 	unsigned char *pesheaderbuf;
 	LLONG inputsize;
@@ -82,7 +81,6 @@ struct lib_ccx_ctx
 	LLONG total_past; // Only in binary concat mode
 
 	int last_reported_progress;
-
 
 	/* Stats */
 	int stat_numuserheaders;
@@ -144,21 +142,21 @@ struct lib_ccx_ctx
 	struct list_head enc_ctx_head;
 	struct ccx_s_mp4Cfg mp4_cfg;
 	int out_interval;
+	int segment_on_key_frames_only;
 	int segment_counter;
 	LLONG system_start_time;
 };
 
 
-struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt);
+struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt);
 void dinit_libraries( struct lib_ccx_ctx **ctx);
 
 //ccextractor.c
-void print_end_msg();
+void print_end_msg(void);
 
 //params.c
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[]);
 void print_usage (void);
-int detect_input_file_overwrite(struct lib_ccx_ctx *ctx, const char *output_filename);
 int atoi_hex (char *s);
 int stringztoms (const char *s, struct ccx_boundary_time *bt);
 
@@ -170,7 +168,7 @@ int general_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
 int raw_loop (struct lib_ccx_ctx *ctx);
 size_t process_raw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned char *buffer, size_t len);
 int general_loop(struct lib_ccx_ctx *ctx);
-void process_hex (char *filename);
+void process_hex(struct lib_ccx_ctx *ctx, char *filename);
 int rcwt_loop(struct lib_ccx_ctx *ctx);
 
 extern int end_of_file;

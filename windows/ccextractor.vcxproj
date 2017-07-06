@@ -437,7 +437,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\zlib;..\src\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ENABLE_HARDSUBX;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SEGMENT_BY_FILE_TIME;ENABLE_HARDSUBX;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>

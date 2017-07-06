@@ -736,10 +736,6 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 	dbg_print(CCX_DMT_VIDES, "  FTS: %lld  (%s)\n", ctx->timing->current_pts, 
 		print_mstime_static(get_fts(ctx->timing, ctx->current_field)));
 		*/
-	if (ctx->picture_coding_type == 1) // Write I-Frame in ffprobe format for easy comparison
-	{
-		dbg_print(CCX_DMT_VIDES, "key_frame=1|pkt_pts=%lld|pict_type=I\n", ctx->timing->current_pts);
-	}
 
 	// Set min_pts/sync_pts according to the current time stamp.
 	// Use fts_at_gop_start as reference when a GOP header was seen
@@ -831,6 +827,12 @@ static int pic_header(struct lib_cc_decode *ctx, struct bitstream *esstream)
 
 	ctx->temporal_reference = (int) read_bits(esstream,10);
 	ctx->picture_coding_type = (enum ccx_frame_type) read_bits(esstream,3);
+
+	if (ctx->picture_coding_type == 1) // Write I-Frame in ffprobe format for easy comparison
+	{
+		ctx->num_key_frames++;
+		dbg_print(CCX_DMT_VIDES, "key_frame=1|pkt_pts=%lld|pict_type=I\n", ctx->timing->current_pts);
+	}
 
 	// Discard vbv_delay
 	skip_bits(esstream, 16);

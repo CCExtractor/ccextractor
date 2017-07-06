@@ -101,6 +101,7 @@ void init_options (struct ccx_s_options *options)
 	options->input_source=CCX_DS_FILE; // Files, stdin or network
 	options->multiprogram = 0;
 	options->out_interval = -1;
+	options->segment_on_key_frames_only = 0;
 
 	options->subs_delay = 0;
 

@@ -324,8 +324,10 @@ void print_usage (void)
 	mprint ("Output will be one single file (either raw or srt). Use this if you made your\n");
 	mprint ("recording in several cuts (to skip commercials for example) but you want one\n");
 	mprint ("subtitle file with contiguous timing.\n\n");
-	mprint ("Effect output files\n");
+	mprint ("Output file segmentation:\n");
 	mprint ("    -outinterval x output in interval of x seconds\n");
+	mprint ("   --segmentonkeyonly -key: When segmenting files, do it only after a I frame\n");
+	mprint ("                            trying to behave like FFmpeg\n\n");
 	mprint ("Network support:\n");
 	mprint ("            -udp port: Read the input via UDP (listening in the specified port)\n");
 	mprint ("                       instead of reading a file.\n\n");
@@ -1663,6 +1665,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		{
 			opt->out_interval = atoi(argv[i+1]);
 			i++;
+			continue;
+		}
+		if (strcmp(argv[i], "--segmentonkeyonly") == 0 || strcmp(argv[i], "-key") == 0)
+		{
+			opt->segment_on_key_frames_only = 1;
+			opt->analyze_video_stream = 1;
 			continue;
 		}
 		if (strcmp (argv[i],"--gui_mode_reports")==0)

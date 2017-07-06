@@ -189,6 +189,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->multiprogram = opt->multiprogram;
 	ctx->write_format = opt->write_format;
 	ctx->out_interval = opt->out_interval;
+	ctx->segment_on_key_frames_only = opt->segment_on_key_frames_only;
 	ctx->segment_counter = 0;
 	ctx->system_start_time = -1;
 

@@ -123,10 +123,10 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 		 * of Digital Television for Cable and MMDS (ANSI/SCTE 57 2003 )
 		 * PROGRAM INFORMATION Table found in PMT
 		 */
-		dbg_print(CCX_DMT_PARSE, "PMT: PROGRAM INFORMATION Table need implementation");
+		dbg_print(CCX_DMT_PMT, "PMT: PROGRAM INFORMATION Table need implementation");
 		// For now, just parse its length and remove it from the buffer
 		unsigned c0length = (buf[1] << 8 | buf[2]) & 0xFFF; // 12 bytes
-		dbg_print(CCX_DMT_PARSE, "Program information table length: %u", c0length);
+		dbg_print(CCX_DMT_PMT, "Program information table length: %u", c0length);
 		memmove(buf, buf + c0length + 3, len - c0length -3); // First 3 bytes are for the table_id and the length, don't count
 		table_id = buf[0];
 		// return 0;
@@ -134,9 +134,9 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 	else if (table_id == 0xC1)
 	{
         //SCTE 57 2003
-		dbg_print(CCX_DMT_PARSE, "PMT: PROGRAM NAME Table need implementation");
+		dbg_print(CCX_DMT_PMT, "PMT: PROGRAM NAME Table need implementation");
 		unsigned c0length = (buf[1] << 8 | buf[2]) & 0xFFF; // 12 bytes
-		dbg_print(CCX_DMT_PARSE, "Program name message length: %u", c0length);
+		dbg_print(CCX_DMT_PMT, "Program name message length: %u", c0length);
 		memmove(buf, buf + c0length + 3, len - c0length - 3); // First 3 bytes are for the table_id and the length, don't count
 		table_id = buf[0];
 		//return 0;
@@ -203,13 +203,13 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 
 	unsigned stream_data = section_length - 9 - pi_length - 4; // prev. bytes and CRC
 
-	dbg_print(CCX_DMT_PARSE, "Read PMT packet  (id: %u) program number: %u\n",
+	dbg_print(CCX_DMT_PMT, "Read PMT packet  (id: %u) program number: %u\n",
 			table_id, program_number);
-	dbg_print(CCX_DMT_PARSE, "  section length: %u  number: %u  last: %u\n",
+	dbg_print(CCX_DMT_PMT, "  section length: %u  number: %u  last: %u\n",
 			section_length, section_number, last_section_number);
-	dbg_print(CCX_DMT_PARSE, "  version_number: %u  current_next_indicator: %u\n",
+	dbg_print(CCX_DMT_PMT, "  version_number: %u  current_next_indicator: %u\n",
 			version_number, current_next_indicator);
-	dbg_print(CCX_DMT_PARSE, "  PCR_PID: %u  data length: %u  payload_length: %u\n",
+	dbg_print(CCX_DMT_PMT, "  PCR_PID: %u  data length: %u  payload_length: %u\n",
 			pinfo->pcr_pid, stream_data, len);
 
 	if (!pmt_warning_shown && stream_data+4 > len )
@@ -235,14 +235,14 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 		ctx->PIDs_programs[elementary_PID]->stream_type = stream_type;
 		ctx->PIDs_programs[elementary_PID]->program_number=program_number;
 		ctx->PIDs_programs[elementary_PID]->printable_stream_type=get_printable_stream_type (stream_type);
-		dbg_print(CCX_DMT_PMT, "%6u | %3X (%3u) | %s\n",elementary_PID,stream_type,stream_type,
+		dbg_print(CCX_DMT_VERBOSE, "%6u | %3X (%3u) | %s\n",elementary_PID,stream_type,stream_type,
 				desc[ctx->PIDs_programs[elementary_PID]->printable_stream_type]);
 		process_ccx_mpeg_descriptor (buf+i+5,ES_info_length);
 		i += ES_info_length;
 	}
-	dbg_print(CCX_DMT_PMT, "---\n");
+	dbg_print(CCX_DMT_VERBOSE, "---\n");
 
-	dbg_print(CCX_DMT_VERBOSE, "\nProgram map section (PMT)\n");
+	dbg_print(CCX_DMT_PMT, "\nProgram map section (PMT)\n");
 
 	for (unsigned i=0; i < stream_data && (i+4)<len; i+=5)
 	{

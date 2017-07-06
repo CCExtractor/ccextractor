@@ -935,6 +935,12 @@ void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts)
 	freep(arg);
 }
 
+int reset_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
+{
+	dinit_output_ctx(ctx);
+	return init_output_ctx(ctx, cfg);
+}
+
 struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 {
 	int ret;
@@ -1030,6 +1036,9 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	 	write_subtitle_file_header(ctx,ctx->out+i);
 
 	ctx->dtvcc_extract = opt->dtvcc_extract;
+
+	ctx->segment_pending = 0;
+	ctx->segment_last_key_frame = 0;
 
 	return ctx;
 }

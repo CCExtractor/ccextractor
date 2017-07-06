@@ -261,14 +261,17 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	{
 		float h0 = -100;
 		int written_tag = 0;
+		TessResultIterator* ri = 0;
+		TessPageIteratorLevel level = RIL_WORD;
 		TessBaseAPISetImage2(ctx->api, color_pix_out);
 		tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
-		if( tess_ret != 0)
-			printf("\nsomething messy\n");
-		TessResultIterator* ri = TessBaseAPIGetIterator(ctx->api);
-		TessPageIteratorLevel level = RIL_WORD;
+		if (tess_ret != 0) {
+			mprint("\nTessBaseAPIRecognize returned %d, skipping this bitmap.\n", tess_ret);
+		}
+		else 
+			ri = TessBaseAPIGetIterator(ctx->api);
 
-		if(ri!=0)
+		if(!tess_ret && ri!=0)
 		{
 			do
 			{
@@ -482,9 +485,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 			// printf("%s\n", text_out);
 			}
 		}
-
 		TessResultIteratorDelete(ri);
-
 	}
 	// End Color Detection
 

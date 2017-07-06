@@ -160,6 +160,7 @@ struct lib_cc_decode
 
 	int temporal_reference;
 	enum ccx_frame_type picture_coding_type;
+	unsigned num_key_frames;
 	unsigned picture_structure;
 	unsigned repeat_first_field;
 	unsigned progressive_frame;

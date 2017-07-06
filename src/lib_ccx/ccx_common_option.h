@@ -76,6 +76,7 @@ struct encoder_cfg
 	char** services_charsets;
 	char* all_services_charset;
 };
+
 struct ccx_s_options // Options from user parameters
 {
 	int extract;                                               // Extract 1st, 2nd or both fields
@@ -178,6 +179,7 @@ struct ccx_s_options // Options from user parameters
 	int ignore_pts_jumps;                               // If 1, the program will ignore PTS jumps. Sometimes this parameter is required for DVB subs with > 30s pause time
 	int multiprogram;
 	int out_interval;
+	int segment_on_key_frames_only;
 #ifdef WITH_LIBCURL
 	char *curlposturl;
 #endif
