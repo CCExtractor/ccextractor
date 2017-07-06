@@ -44,6 +44,8 @@ void sigterm_handler(int sig);
 void sigint_handler(int sig);
 void print_end_msg();
 int main(int argc, char *argv[]);
+int cc_to_python_get_subs_number_of_lines();
+char* cc_to_python_get_sub(int i);
 int __real_write(int file_handle, char* buffer, int nbyte);
 int __wrap_write(int file_handle, char* buffer, int nbyte);
 #endif //CCEXTRACTOR_H

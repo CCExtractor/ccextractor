@@ -475,6 +475,14 @@ int api_param_count(struct ccx_s_options* api_options){
     return api_options->python_param_count;
 }
 
+int cc_to_python_get_subs_number_of_lines(){
+    return python_subs.number_of_lines;
+}
+
+char* cc_to_python_get_sub(int i){
+    return python_subs.subs[i];
+}
+
 int __real_write(int file_handle, char* buffer, int nbyte);
 int __wrap_write(int file_handle, char* buffer, int nbyte)
 {

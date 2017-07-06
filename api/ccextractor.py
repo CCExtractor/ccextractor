@@ -217,6 +217,14 @@ def main(argc, argv):
     return _ccextractor.main(argc, argv)
 main = _ccextractor.main
 
+def cc_to_python_get_subs_number_of_lines():
+    return _ccextractor.cc_to_python_get_subs_number_of_lines()
+cc_to_python_get_subs_number_of_lines = _ccextractor.cc_to_python_get_subs_number_of_lines
+
+def cc_to_python_get_sub(i):
+    return _ccextractor.cc_to_python_get_sub(i)
+cc_to_python_get_sub = _ccextractor.cc_to_python_get_sub
+
 def __real_write(file_handle, buffer, nbyte):
     return _ccextractor.__real_write(file_handle, buffer, nbyte)
 __real_write = _ccextractor.__real_write
