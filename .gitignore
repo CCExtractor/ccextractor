@@ -13,6 +13,7 @@ CVS
 ####
 # Linux  Ignored binary and build folder
 *.o
+*.so
 mac/ccextractor
 linux/ccextractor
 linux/depend

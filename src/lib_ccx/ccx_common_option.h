@@ -195,6 +195,8 @@ struct ccx_s_options // Options from user parameters
 	char *translate_langs;
 	char *translate_key;
 #endif
+    char** myarguments;
+    int argument_count;
 };
 
 extern struct ccx_s_options ccx_options;
