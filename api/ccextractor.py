@@ -155,6 +155,10 @@ class cc_to_python_subs(_object):
     __swig_getmethods__["basefilename"] = _ccextractor.cc_to_python_subs_basefilename_get
     if _newclass:
         basefilename = _swig_property(_ccextractor.cc_to_python_subs_basefilename_get, _ccextractor.cc_to_python_subs_basefilename_set)
+    __swig_setmethods__["extension"] = _ccextractor.cc_to_python_subs_extension_set
+    __swig_getmethods__["extension"] = _ccextractor.cc_to_python_subs_extension_get
+    if _newclass:
+        extension = _swig_property(_ccextractor.cc_to_python_subs_extension_get, _ccextractor.cc_to_python_subs_extension_set)
     __swig_setmethods__["subs"] = _ccextractor.cc_to_python_subs_subs_set
     __swig_getmethods__["subs"] = _ccextractor.cc_to_python_subs_subs_get
     if _newclass:

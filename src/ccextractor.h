@@ -24,6 +24,7 @@ CURLcode res;
 
 struct cc_to_python_subs{
     char* basefilename;
+    char* extension;
     char** subs;
     int number_of_lines;
 };
