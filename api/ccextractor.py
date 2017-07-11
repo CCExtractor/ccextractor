@@ -151,6 +151,10 @@ class cc_to_python_subs(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, cc_to_python_subs, name)
     __repr__ = _swig_repr
+    __swig_setmethods__["basefilename"] = _ccextractor.cc_to_python_subs_basefilename_set
+    __swig_getmethods__["basefilename"] = _ccextractor.cc_to_python_subs_basefilename_get
+    if _newclass:
+        basefilename = _swig_property(_ccextractor.cc_to_python_subs_basefilename_get, _ccextractor.cc_to_python_subs_basefilename_set)
     __swig_setmethods__["subs"] = _ccextractor.cc_to_python_subs_subs_set
     __swig_getmethods__["subs"] = _ccextractor.cc_to_python_subs_subs_get
     if _newclass:

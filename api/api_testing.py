@@ -13,7 +13,7 @@ start_ret = cc.api_start(s);
 
 #print cc.cvar.python_subs.number_of_lines
 #print type(cc.cvar.python_subs.subs)
-for item in xrange(cc.cc_to_python_get_subs_number_of_lines()):
-    print item, cc.cc_to_python_get_sub(item)
+#for item in xrange(cc.cc_to_python_get_subs_number_of_lines()):
+#    print item, cc.cc_to_python_get_sub(item)
 
 #os.system('clear')

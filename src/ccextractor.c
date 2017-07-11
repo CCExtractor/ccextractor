@@ -408,6 +408,8 @@ int api_start(struct ccx_s_options api_options){
 		curl_easy_cleanup(curl);
   	curl_global_cleanup();
 #endif
+    python_subs.basefilename = ctx->basefilename;
+    mprint("extension=%s\n",ctx->extension);
 	dinit_libraries(&ctx);
 
 	if (!ret)
@@ -511,8 +513,5 @@ int main(int argc, char* argv[]){
     int compile_ret = compile_params(api_options,argc);
     int start_ret = api_start(*api_options);
     
-    printf("Printing python subs \n \n");
-    //for(i=0;i<python_subs.number_of_lines;i++)
-    //    printf("%s\n",python_subs.subs[i]);
 	return start_ret;
 }

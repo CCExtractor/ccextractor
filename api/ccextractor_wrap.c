@@ -3696,6 +3696,67 @@ SWIGINTERN PyObject *Swig_var_cc608_parity_table_get(void) {
 }
 
 
+SWIGINTERN PyObject *_wrap_cc_to_python_subs_basefilename_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct cc_to_python_subs *arg1 = (struct cc_to_python_subs *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:cc_to_python_subs_basefilename_set",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_cc_to_python_subs, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "cc_to_python_subs_basefilename_set" "', argument " "1"" of type '" "struct cc_to_python_subs *""'"); 
+  }
+  arg1 = (struct cc_to_python_subs *)(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "cc_to_python_subs_basefilename_set" "', argument " "2"" of type '" "char *""'");
+  }
+  arg2 = (char *)(buf2);
+  if (arg1->basefilename) free((char*)arg1->basefilename);
+  if (arg2) {
+    size_t size = strlen((const char *)(arg2)) + 1;
+    arg1->basefilename = (char *)(char *)memcpy(malloc((size)*sizeof(char)), (const char *)(arg2), sizeof(char)*(size));
+  } else {
+    arg1->basefilename = 0;
+  }
+  resultobj = SWIG_Py_Void();
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_cc_to_python_subs_basefilename_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct cc_to_python_subs *arg1 = (struct cc_to_python_subs *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:cc_to_python_subs_basefilename_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_cc_to_python_subs, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "cc_to_python_subs_basefilename_get" "', argument " "1"" of type '" "struct cc_to_python_subs *""'"); 
+  }
+  arg1 = (struct cc_to_python_subs *)(argp1);
+  result = (char *) ((arg1)->basefilename);
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_cc_to_python_subs_subs_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   struct cc_to_python_subs *arg1 = (struct cc_to_python_subs *) 0 ;
@@ -4317,6 +4378,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"dbg_print", _wrap_dbg_print, METH_VARARGS, NULL},
 	 { (char *)"debug_608_to_ASC", _wrap_debug_608_to_ASC, METH_VARARGS, NULL},
 	 { (char *)"add_cc_sub_text", _wrap_add_cc_sub_text, METH_VARARGS, NULL},
+	 { (char *)"cc_to_python_subs_basefilename_set", _wrap_cc_to_python_subs_basefilename_set, METH_VARARGS, NULL},
+	 { (char *)"cc_to_python_subs_basefilename_get", _wrap_cc_to_python_subs_basefilename_get, METH_VARARGS, NULL},
 	 { (char *)"cc_to_python_subs_subs_set", _wrap_cc_to_python_subs_subs_set, METH_VARARGS, NULL},
 	 { (char *)"cc_to_python_subs_subs_get", _wrap_cc_to_python_subs_subs_get, METH_VARARGS, NULL},
 	 { (char *)"cc_to_python_subs_number_of_lines_set", _wrap_cc_to_python_subs_number_of_lines_set, METH_VARARGS, NULL},
