@@ -1,30 +1,14 @@
+
 /* CCExtractor, originally by carlos at ccextractor.org, now a lot of people.
 Credits: See CHANGES.TXT
 License: GPL 2.0
 */
-#ifdef ENABLE_OCR
-#include <allheaders.h>
-#endif
+
+#include "ccextractor.h"
 #include <stdio.h>
-#include "lib_ccx.h"
-#include "configuration.h"
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <signal.h>
-#include "ccx_common_option.h"
-#include "ccx_mp4.h"
-#include "hardsubx.h"
-#include "ccx_share.h"
-#ifdef WITH_LIBCURL
-CURL *curl;
-CURLcode res;
-#endif
-#if defined(ENABLE_OCR) && defined(_WIN32)
-#define LEPT_MSG_SEVERITY L_SEVERITY_NONE
-#endif
 
-struct lib_ccx_ctx *signal_ctx;
-
+//struct ccx_s_options ccx_options;
+//struct lib_ccx_ctx *signal_ctx;
 volatile int terminate_asap = 0;
 
 void sigusr1_handler(int sig)
@@ -57,44 +41,25 @@ void print_end_msg(void)
 }
 
 
-struct ccx_s_options ccx_options;
-int main(int argc, char *argv[])
-{
-	struct lib_ccx_ctx *ctx;
+int api_start(struct ccx_s_options api_options){
+    struct lib_ccx_ctx *ctx;
 	struct lib_cc_decode *dec_ctx = NULL;
 	int ret = 0, tmp;
 	enum ccx_stream_mode_enum stream_mode;
 
-	init_options (&ccx_options);
-
-	parse_configuration(&ccx_options);
-	ret = parse_parameters (&ccx_options, argc, argv);
-	if (ret == EXIT_NO_INPUT_FILES)
-	{
-		print_usage ();
-		fatal (EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");
-	}
-	else if (ret == EXIT_WITH_HELP)
-	{
-		return EXIT_OK;
-	}
-	else if (ret != EXIT_OK)
-	{
-		exit(ret);
-	}
 #if defined(ENABLE_OCR) && defined(_WIN32)
 	setMsgSeverity(LEPT_MSG_SEVERITY);
 #endif
 #ifdef ENABLE_HARDSUBX
-	if(ccx_options.hardsubx)
+	if(api_options.hardsubx)
 	{
 		// Perform burned in subtitle extraction
-		hardsubx(&ccx_options);
+		hardsubx(&api_options);
 		return 0;
 	}
 #endif
 	// Initialize CCExtractor libraries
-	ctx = init_libraries(&ccx_options);
+	ctx = init_libraries(&api_options);
 	if (!ctx && errno == ENOMEM)
 		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
 	else if (!ctx && errno == EINVAL)
@@ -128,11 +93,11 @@ int main(int argc, char *argv[])
 		tlt_config.page = ((tlt_config.page / 100) << 8) | (((tlt_config.page / 10) % 10) << 4) | (tlt_config.page % 10);
 	}
 
-	if (ccx_options.transcript_settings.xds)
+	if (api_options.transcript_settings.xds)
 	{
-		if (ccx_options.write_format != CCX_OF_TRANSCRIPT)
+		if (api_options.write_format != CCX_OF_TRANSCRIPT)
 		{
-			ccx_options.transcript_settings.xds = 0;
+			api_options.transcript_settings.xds = 0;
 			mprint ("Warning: -xds ignored, XDS can only be exported to transcripts at this time.\n");
 		}
 	}
@@ -141,7 +106,7 @@ int main(int argc, char *argv[])
 	time_t start, final;
 	time(&start);
 
-	if (ccx_options.binary_concat)
+	if (api_options.binary_concat)
 	{
 		ctx->total_inputsize=get_total_file_size(ctx);
 		if (ctx->total_inputsize < 0)
@@ -171,16 +136,16 @@ int main(int argc, char *argv[])
 	terminate_asap = 0;
 
 #ifdef ENABLE_SHARING
-	if (ccx_options.translate_enabled && ctx->num_input_files > 1)
+	if (api_options.translate_enabled && ctx->num_input_files > 1)
 	{
 		mprint("[share] WARNING: simultaneous translation of several input files is not supported yet\n");
-		ccx_options.translate_enabled = 0;
-		ccx_options.sharing_enabled = 0;
+		api_options.translate_enabled = 0;
+	    api_options.sharing_enabled = 0;
 	}
-	if (ccx_options.translate_enabled)
+	if (api_options.translate_enabled)
 	{
 		mprint("[share] launching translate service\n");
-		ccx_share_launch_translator(ccx_options.translate_langs, ccx_options.translate_key);
+		ccx_share_launch_translator(api_options.translate_langs, api_options.translate_key);
 	}
 #endif //ENABLE_SHARING
 	ret = 0;
@@ -188,7 +153,7 @@ int main(int argc, char *argv[])
 	{
 		prepare_for_new_file(ctx);
 #ifdef ENABLE_SHARING
-		if (ccx_options.sharing_enabled)
+		if (api_options.sharing_enabled)
 			ccx_share_start(ctx->basefilename);
 #endif //ENABLE_SHARING
 
@@ -216,8 +181,8 @@ int main(int argc, char *argv[])
 		switch (stream_mode)
 		{
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
-				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
-					ccx_options.use_gop_as_pts = 1; // Force GOP timing for ES
+				if (!api_options.use_gop_as_pts) // If !0 then the user selected something
+					api_options.use_gop_as_pts = 1; // Force GOP timing for ES
 				ccx_common_timing_settings.is_elementary_stream = 1;
 			case CCX_SM_TRANSPORT:
 			case CCX_SM_PROGRAM:
@@ -227,9 +192,9 @@ int main(int argc, char *argv[])
 #ifdef ENABLE_FFMPEG
 			case CCX_SM_FFMPEG:
 #endif
-				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
-					ccx_options.use_gop_as_pts = 0;
-				if (ccx_options.ignore_pts_jumps)
+				if (!api_options.use_gop_as_pts) // If !0 then the user selected something
+					api_options.use_gop_as_pts = 0;
+				if (api_options.ignore_pts_jumps)
 					ccx_common_timing_settings.disable_sync_check = 1;
 				mprint ("\rAnalyzing data in general mode\n");
 				tmp = general_loop(ctx);
@@ -258,7 +223,7 @@ int main(int argc, char *argv[])
 				{
 					fatal (EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
 				}
-				if(ccx_options.extract_chapters)
+				if(api_options.extract_chapters)
 				{
 					tmp = dumpchapters(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
 				}
@@ -266,7 +231,7 @@ int main(int argc, char *argv[])
 				{
 					tmp = processmp4(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
 				}
-				if (ccx_options.print_file_reports)
+				if (api_options.print_file_reports)
 					print_file_report(ctx);
 				if (!ret) ret = tmp;
 				break;
@@ -336,7 +301,7 @@ int main(int argc, char *argv[])
 			dec_ctx->timing->fts_max = 0;
 
 #ifdef ENABLE_SHARING
-			if (ccx_options.sharing_enabled)
+			if (api_options.sharing_enabled)
 			{
 				ccx_share_stream_done(ctx->basefilename);
 				ccx_share_stop();
@@ -458,4 +423,67 @@ int main(int argc, char *argv[])
 		mprint("something is broken it will be fixed. Thanks\n");
 	}
 	return ret ? EXIT_OK : EXIT_NO_CAPTIONS;
+}
+
+struct ccx_s_options* api_init_options(){
+    init_options(&ccx_options);
+    return &ccx_options;
+}
+
+void check_configuration_file(struct ccx_s_options api_options){
+    parse_configuration(&api_options);
+}   
+
+int compile_params(struct ccx_s_options *api_options,int argc){
+    api_options->python_params = realloc(api_options->python_params, (api_options->python_param_count+1) * sizeof *api_options->python_params);
+      api_options->python_params[api_options->python_param_count] = malloc(strlen("./ccextractor")+1);
+      strcpy(api_options->python_params[api_options->python_param_count], "./ccextractor");
+      api_options->python_param_count++;
+      char* temp = api_options->python_params[api_options->python_param_count-1];
+      int i;
+      for (i = api_options->python_param_count-1; i > 0; i--)
+                   api_options->python_params[i] = api_options->python_params[i-1];
+      api_options->python_params[0] = temp;
+    int ret = parse_parameters (api_options, api_options->python_param_count, api_options->python_params);
+    if (ret == EXIT_NO_INPUT_FILES)
+	{
+		print_usage ();
+		fatal (EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");
+	}
+	else if (ret == EXIT_WITH_HELP)
+	{
+		return EXIT_OK;
+	}
+	else if (ret != EXIT_OK)
+	{
+		exit(ret);
+	}
+    return EXIT_OK;
+    }
+
+void api_add_param(struct ccx_s_options* api_options,char* arg){
+      api_options->python_params = realloc(api_options->python_params, (api_options->python_param_count+1) * sizeof *api_options->python_params);
+      api_options->python_params[api_options->python_param_count] = malloc(strlen(arg)+1);
+      strcpy(api_options->python_params[api_options->python_param_count], arg);
+      api_options->python_param_count++;
+}
+
+char * api_param(struct ccx_s_options* api_options, int count){
+    return api_options->python_params[count];
+}
+
+int api_param_count(struct ccx_s_options* api_options){
+    return api_options->python_param_count;
+}
+
+int main(int argc, char* argv[]){
+    int i;
+    struct ccx_s_options* api_options = api_init_options();
+    check_configuration_file(*api_options);
+    for(i = 1; i < argc; i++)
+        api_add_param(api_options,argv[i]);
+    
+    int compile_ret = compile_params(api_options,argc);
+    int start_ret = api_start(*api_options);
+	return start_ret;
 }

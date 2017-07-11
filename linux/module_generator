@@ -1,0 +1,12 @@
+#!/bin/bash
+SRC_LIBPNG="$(find ../src/libpng/ -name '*.c')"
+SRC_ZLIB="$(find ../src/zlib/ -name '*.c')"
+SRC_ZVBI="$(find ../src/zvbi/ -name '*.c')"
+SRC_CCX="$(find ../src/lib_ccx/ -name '*.c')"
+SRC_GPAC="$(find ../src/gpacmp4/ -name '*.c')"
+SRC_HASH="$(find ../src/lib_hash/ -name '*.c')"
+SRC_PROTOBUF="$(find ../src/protobuf-c/ -name '*.c')"
+SRC_UTF8PROC="../src/utf8proc/utf8proc.c"
+BLD_SOURCES="../src/ccextractor.c ../src/ccextractorapi_wrap.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC"
+
+python setup.py $BLD_SOURCES

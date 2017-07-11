@@ -171,4 +171,7 @@ void init_options (struct ccx_s_options *options)
 	stringztoms (DEF_VAL_STARTCREDITSFORATMOST, &options->enc_cfg.startcreditsforatmost);
 	stringztoms (DEF_VAL_ENDCREDITSFORATLEAST, &options->enc_cfg.endcreditsforatleast);
 	stringztoms (DEF_VAL_ENDCREDITSFORATMOST, &options->enc_cfg.endcreditsforatmost);
+
+    options->python_param_count = 0;
+    options->python_params = malloc(options->python_param_count * sizeof *options->python_params);
 }

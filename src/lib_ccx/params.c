@@ -1097,7 +1097,6 @@ void mkvlang_params_check(char* lang){
 
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 {
-
 	// Parse parameters
 	for (int i=1; i<argc; i++)
 	{

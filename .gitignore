@@ -13,6 +13,7 @@ CVS
 ####
 # Linux  Ignored binary and build folder
 *.o
+*.so
 mac/ccextractor
 linux/ccextractor
 linux/depend
@@ -25,6 +26,10 @@ windows/Debug-Full/**
 windows/x64/**
 windows/ccextractor.VC.db
 build/
+
+####
+# Python
+*.pyc
 
 ####
 # Visual Studio project Ignored files
