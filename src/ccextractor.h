@@ -23,6 +23,8 @@ CURLcode res;
 #endif
 
 struct cc_to_python_subs{
+    char **inputfile;                // List of files to process
+	int num_input_files;             // How many input files
     char* basefilename;
     char* extension;
     char** subs;
@@ -46,8 +48,13 @@ void sigterm_handler(int sig);
 void sigint_handler(int sig);
 void print_end_msg();
 int main(int argc, char *argv[]);
+
 int cc_to_python_get_subs_number_of_lines();
 char* cc_to_python_get_sub(int i);
+
+//char* cc_to_python_get_basefilename();
+//char* cc_to_python_get_extension();
+
 int __real_write(int file_handle, char* buffer, int nbyte);
 int __wrap_write(int file_handle, char* buffer, int nbyte);
 #endif //CCEXTRACTOR_H

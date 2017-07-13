@@ -151,6 +151,14 @@ class cc_to_python_subs(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, cc_to_python_subs, name)
     __repr__ = _swig_repr
+    __swig_setmethods__["inputfile"] = _ccextractor.cc_to_python_subs_inputfile_set
+    __swig_getmethods__["inputfile"] = _ccextractor.cc_to_python_subs_inputfile_get
+    if _newclass:
+        inputfile = _swig_property(_ccextractor.cc_to_python_subs_inputfile_get, _ccextractor.cc_to_python_subs_inputfile_set)
+    __swig_setmethods__["num_input_files"] = _ccextractor.cc_to_python_subs_num_input_files_set
+    __swig_getmethods__["num_input_files"] = _ccextractor.cc_to_python_subs_num_input_files_get
+    if _newclass:
+        num_input_files = _swig_property(_ccextractor.cc_to_python_subs_num_input_files_get, _ccextractor.cc_to_python_subs_num_input_files_set)
     __swig_setmethods__["basefilename"] = _ccextractor.cc_to_python_subs_basefilename_set
     __swig_getmethods__["basefilename"] = _ccextractor.cc_to_python_subs_basefilename_get
     if _newclass:
@@ -232,6 +240,14 @@ cc_to_python_get_subs_number_of_lines = _ccextractor.cc_to_python_get_subs_numbe
 def cc_to_python_get_sub(i):
     return _ccextractor.cc_to_python_get_sub(i)
 cc_to_python_get_sub = _ccextractor.cc_to_python_get_sub
+
+def cc_to_python_get_basefilename():
+    return _ccextractor.cc_to_python_get_basefilename()
+cc_to_python_get_basefilename = _ccextractor.cc_to_python_get_basefilename
+
+def cc_to_python_get_extension():
+    return _ccextractor.cc_to_python_get_extension()
+cc_to_python_get_extension = _ccextractor.cc_to_python_get_extension
 
 def __real_write(file_handle, buffer, nbyte):
     return _ccextractor.__real_write(file_handle, buffer, nbyte)
