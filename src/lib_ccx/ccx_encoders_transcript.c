@@ -106,7 +106,7 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 				}
 			}
 
-			write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+			__wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 
 		}
 	}
@@ -214,13 +214,13 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 				else
 					fdprintf(context->out->fh, "%s|", sub->mode);
 			}
-			ret = write(context->out->fh, context->subline, length);
+			ret = __wrap_write(context->out->fh, context->subline, length);
 			if (ret < length)
 			{
 				mprint("Warning:Loss of data\n");
 			}
 
-			ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+			ret = __wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 			if (ret <  context->encoded_crlf_length)
 			{
 				mprint("Warning:Loss of data\n");
@@ -336,13 +336,13 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 			fdprintf(context->out->fh, "%s|", mode);
 		}
 
-		ret = write(context->out->fh, context->subline, length);
+		ret = __wrap_write(context->out->fh, context->subline, length);
 		if (ret < length)
 		{
 			mprint("Warning:Loss of data\n");
 		}
 
-		ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+		ret = __wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		if (ret < context->encoded_crlf_length)
 		{
 			mprint("Warning:Loss of data\n");
