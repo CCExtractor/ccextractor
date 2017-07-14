@@ -328,6 +328,9 @@ int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 
 	dec_ctx = update_decoder_list(ctx);
 
+	if (enc_ctx)
+		enc_ctx->timing = dec_ctx->timing;
+
 	memset(&dec_sub,0,sizeof(dec_sub));
 	mprint("Opening \'%s\': ", file);
 #ifdef MP4_DEBUG
