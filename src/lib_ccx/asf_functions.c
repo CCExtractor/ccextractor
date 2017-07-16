@@ -513,7 +513,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				&& (asf_data_container.StreamProperties.CaptionStreamStyle == 1 ||
 					(asf_data_container.StreamProperties.CaptionStreamStyle == 2 && !ccx_options.wtvconvertfix)))
 		{
-			mprint("\nNote: If you converted a WTV into a DVR-MS and CCEextractor finds no captions,  try passing -wtvconvertfix to work around bug in the conversion process.");
+			mprint("\nNote: If you converted a WTV into a DVR-MS and CCExtractor finds no captions, try passing -wtvconvertfix to work around bug in the conversion process.");
 		}
 		if (asf_data_container.StreamProperties.CaptionStreamNumber > 0
 				&& (asf_data_container.StreamProperties.CaptionStreamStyle == 1 ||
