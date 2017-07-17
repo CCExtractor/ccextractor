@@ -44,6 +44,8 @@ More usage information can be found on our website:
     sudo apt-get install -y tesseract-ocr
     sudo apt-get install -y tesseract-ocr-dev
     sudo apt-get install -y libleptonica-dev
+
+    # Note: On Ubuntu Version 14.04 (Trusty) and earlier, you should build leptonica and tesseract from source 
     
     # compiling (Choose any one of 2 methods)
     METHOD 1: If you don't want to obtain object files
