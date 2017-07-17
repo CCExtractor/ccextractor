@@ -241,18 +241,6 @@ def cc_to_python_get_sub(i):
     return _ccextractor.cc_to_python_get_sub(i)
 cc_to_python_get_sub = _ccextractor.cc_to_python_get_sub
 
-def cc_to_python_get_basefilename():
-    return _ccextractor.cc_to_python_get_basefilename()
-cc_to_python_get_basefilename = _ccextractor.cc_to_python_get_basefilename
-
-def cc_to_python_get_extension():
-    return _ccextractor.cc_to_python_get_extension()
-cc_to_python_get_extension = _ccextractor.cc_to_python_get_extension
-
-def __real_write(file_handle, buffer, nbyte):
-    return _ccextractor.__real_write(file_handle, buffer, nbyte)
-__real_write = _ccextractor.__real_write
-
 def __wrap_write(file_handle, buffer, nbyte):
     return _ccextractor.__wrap_write(file_handle, buffer, nbyte)
 __wrap_write = _ccextractor.__wrap_write

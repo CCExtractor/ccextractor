@@ -496,10 +496,9 @@ char* cc_to_python_get_extension(){
 }
 */
 
-int __real_write(int file_handle, char* buffer, int nbyte);
+//int __real_write(int file_handle, char* buffer, int nbyte);
 int __wrap_write(int file_handle, char* buffer, int nbyte)
 {
-        //printf("file_handle = %d\n",file_handle);
         python_subs.number_of_lines++;
         
         if (python_subs.number_of_lines==1)
@@ -509,8 +508,8 @@ int __wrap_write(int file_handle, char* buffer, int nbyte)
         
         python_subs.subs[python_subs.number_of_lines-1] = malloc(nbyte*sizeof(char)+1);
         strcpy(python_subs.subs[python_subs.number_of_lines-1],buffer);
-        //printf("%d\t%s\t%s\n",python_subs.number_of_lines,python_subs.subs[python_subs.number_of_lines-1],buffer);
-        return __real_write(file_handle,buffer,nbyte);
+        return write(file_handle,buffer,nbyte);
+//      return __real_write(file_handle,buffer,nbyte);
 }
 
 

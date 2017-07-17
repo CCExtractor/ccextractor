@@ -55,6 +55,6 @@ char* cc_to_python_get_sub(int i);
 //char* cc_to_python_get_basefilename();
 //char* cc_to_python_get_extension();
 
-int __real_write(int file_handle, char* buffer, int nbyte);
+//int __real_write(int file_handle, char* buffer, int nbyte);
 int __wrap_write(int file_handle, char* buffer, int nbyte);
 #endif //CCEXTRACTOR_H
