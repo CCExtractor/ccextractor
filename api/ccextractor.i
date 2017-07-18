@@ -8,6 +8,8 @@
     #include "../src/lib_ccx/hardsubx.h"
     #include "../src/lib_ccx/ccx_share.h"
   #include "../src/ccextractor.h"    
+   #include "../api/wrappers/wrapper.h"    
 %}
    %include "../src/lib_ccx/ccx_common_common.h"
    %include "../src/ccextractor.h"    
+   %include "../api//wrappers/wrapper.h"    

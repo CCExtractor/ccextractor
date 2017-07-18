@@ -244,6 +244,14 @@ cc_to_python_get_sub = _ccextractor.cc_to_python_get_sub
 def __wrap_write(file_handle, buffer, nbyte):
     return _ccextractor.__wrap_write(file_handle, buffer, nbyte)
 __wrap_write = _ccextractor.__wrap_write
+
+def setautoprogram(api_options):
+    return _ccextractor.setautoprogram(api_options)
+setautoprogram = _ccextractor.setautoprogram
+
+def setstdout(api_options):
+    return _ccextractor.setstdout(api_options)
+setstdout = _ccextractor.setstdout
 # This file is compatible with both classic and new-style classes.
 
 
