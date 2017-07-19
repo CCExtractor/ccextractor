@@ -250,7 +250,6 @@ int api_start(struct ccx_s_options api_options){
 				fatal(CCX_COMMON_EXIT_BUG_BUG, "Cannot be reached!");
 				break;
 		}
-
 		list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 		{
 			mprint("\n");
@@ -377,6 +376,7 @@ int api_start(struct ccx_s_options api_options){
 		if(is_decoder_processed_enough(ctx) == CCX_TRUE)
 			break;
 	} // file loop
+    python_subs.extension = ctx->extension;
 	close_input_file(ctx);
 	free((void *) ctx->extension);
 
@@ -409,6 +409,7 @@ int api_start(struct ccx_s_options api_options){
 		curl_easy_cleanup(curl);
   	curl_global_cleanup();
 #endif
+    python_subs.basefilename = ctx->basefilename;
 	dinit_libraries(&ctx);
 
 	if (!ret)
@@ -476,6 +477,42 @@ int api_param_count(struct ccx_s_options* api_options){
     return api_options->python_param_count;
 }
 
+/*subs functions*/
+int cc_to_python_get_subs_number_of_lines(){
+    return python_subs.number_of_lines;
+}
+char* cc_to_python_get_sub(int i){
+    return python_subs.subs[i];
+}
+
+
+/*filename functions*/
+/*
+char* cc_to_python_get_basefilename(){
+    return python_subs.basefilename;
+}
+char* cc_to_python_get_extension(){
+    return python_subs.extension;
+}
+*/
+
+//int __real_write(int file_handle, char* buffer, int nbyte);
+int __wrap_write(int file_handle, char* buffer, int nbyte)
+{
+        python_subs.number_of_lines++;
+        
+        if (python_subs.number_of_lines==1)
+            python_subs.subs = malloc(python_subs.number_of_lines*sizeof(char*));
+        else
+            python_subs.subs = realloc(python_subs.subs,python_subs.number_of_lines*sizeof(char*));
+        
+        python_subs.subs[python_subs.number_of_lines-1] = malloc((strlen(buffer)+1)*sizeof(char));
+        strcpy(python_subs.subs[python_subs.number_of_lines-1],buffer);
+        return write(file_handle,buffer,nbyte);
+//      return __real_write(file_handle,buffer,nbyte);
+}
+
+
 int main(int argc, char* argv[]){
     int i;
     struct ccx_s_options* api_options = api_init_options();
@@ -485,5 +522,6 @@ int main(int argc, char* argv[]){
     
     int compile_ret = compile_params(api_options,argc);
     int start_ret = api_start(*api_options);
+    
 	return start_ret;
 }
