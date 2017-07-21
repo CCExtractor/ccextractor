@@ -32,13 +32,12 @@ static int check_trans_tn_intensity(const void *p1, const void *p2, void *arg)
 		 *  Y = 0.2126 R + 0.7152 G + 0.0722 B
 		 */
 	tmp_i = (0.2126 * ti->palette[*tmp].red) + (0.7152 * ti->palette[*tmp].green) + (0.0722 * ti->palette[*tmp].blue);
-	act_i = (0.2126 * ti->palette[*act].red) + (0.7152 * ti->palette[*act].green) + (0.0722 * ti->palette[*act].blue);;
+	act_i = (0.2126 * ti->palette[*act].red) + (0.7152 * ti->palette[*act].green) + (0.0722 * ti->palette[*act].blue);
 
 	if (ti->t[*tmp] < ti->t[*act] || (ti->t[*tmp] == ti->t[*act] &&  tmp_i < act_i))
 		return -1;
 	else if (ti->t[*tmp] == ti->t[*act] &&  tmp_i == act_i)
 		return 0;
-
 
 	return 1;
 }
@@ -80,6 +79,7 @@ void delete_ocr (void** arg)
 	TessBaseAPIDelete(ctx->api);
 	freep(arg);
 }
+
 void* init_ocr(int lang_index)
 {
 	int ret = -1;
@@ -189,6 +189,7 @@ BOX* ignore_alpha_at_edge(png_byte *alpha, unsigned char* indata, int w, int h, 
 
 	return cropWindow;
 }
+
 char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* indata,int w, int h, struct image_copy *copy)
 {
 	PIX	*pix = NULL;
@@ -245,11 +246,14 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	char str[128] = "";
 	static int i = 0;
 	sprintf(str,"temp/file_c_%d.jpg",i);
-	pixWrite(str, color_pix_out, IFF_JFIF_JPEG);
+	printf("Writing file_c_%d.jpg\n", i);
+	pixWrite(str, pixConvertRGBToGray(cpix, 0.0, 0.0, 0.0), IFF_JFIF_JPEG);
 	i++;
 	}
 #endif
+	cpix = pixConvertRGBToGray(cpix, 0.0, 0.0, 0.0); // Abhinav95: Converting image to grayscale for OCR to avoid issues with transparency
 	TessBaseAPISetImage2(ctx->api, cpix);
+	color_pix_out = TessBaseAPIGetThresholdedImage(ctx->api);
 	tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
 	if( tess_ret != 0)
 		printf("\nsomething messy\n");
@@ -497,6 +501,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 
 	return text_out;
 }
+
 /*
  * @param alpha out
  * @param intensity in
