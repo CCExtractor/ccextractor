@@ -478,14 +478,6 @@ int api_param_count(struct ccx_s_options* api_options){
 }
 
 /*subs functions*/
-/*
- * int cc_to_python_get_subs_number_of_lines(){
-    return python_subs.number_of_lines;
-}
-char* cc_to_python_get_sub(int i){
-    return python_subs.subs[i];
-}
-*/
 int cc_to_python_get_number_of_subs(){
     return array.sub_count;
 }
