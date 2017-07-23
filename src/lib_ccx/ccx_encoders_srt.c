@@ -279,6 +279,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 				dbg_print(CCX_DMT_DECODER_608, "%s\n",context->subline);
 			}
 			__wrap_write(context->out->fh, context->subline, length);
+            python_extract (context->srt_counter,h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline);
 			__wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 			wrote_something=1;
 			// fprintf (wb->fh,context->encoded_crlf);

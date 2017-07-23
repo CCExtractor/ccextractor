@@ -22,6 +22,19 @@ CURLcode res;
 #define LEPT_MSG_SEVERITY L_SEVERITY_NONE
 #endif
 
+struct python_subs_modified{
+        int buffer_count;
+        int srt_counter;
+        char *start_time;
+        char* end_time;
+        char** buffer;
+};
+
+struct python_subs_array{
+        int sub_count;
+        struct python_subs_modified* subs;
+};
+
 struct cc_to_python_subs{
     char **inputfile;                // List of files to process
 	int num_input_files;             // How many input files
@@ -34,6 +47,7 @@ struct cc_to_python_subs{
 struct ccx_s_options ccx_options;
 struct lib_ccx_ctx *signal_ctx;
 struct cc_to_python_subs python_subs;
+struct python_subs_array array; 
 //volatile int terminate_asap = 0;
 
 struct ccx_s_options* api_init_options();
@@ -54,6 +68,8 @@ char* cc_to_python_get_sub(int i);
 
 //char* cc_to_python_get_basefilename();
 //char* cc_to_python_get_extension();
+
+void python_extract(int srt_counter, unsigned h1, unsigned m1, unsigned s1, unsigned ms1, unsigned h2, unsigned m2, unsigned s2, unsigned ms2, char* buffer);
 
 //int __real_write(int file_handle, char* buffer, int nbyte);
 int __wrap_write(int file_handle, char* buffer, int nbyte);
