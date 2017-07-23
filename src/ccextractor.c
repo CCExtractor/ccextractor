@@ -496,12 +496,44 @@ char* cc_to_python_get_extension(){
 }
 */
 
+/*asprintf alternative
+ */
+char* make_message(const char *fmt, ...)
+{
+    int n;
+    int size = 10;     /* Guess we need no more than 100 bytes */
+    char *p, *np;
+    va_list ap;
+   if ((p = malloc(size)) == NULL)
+       return NULL;
+    while (1) {
+     /* Try to print in the allocated space */
+         va_start(ap, fmt);
+         n = vsnprintf(p, size, fmt, ap);
+         va_end(ap);
+        /* Check error code */
+         if (n < 0)
+                return NULL;
+        /* If that worked, return the string */
+       if (n < size)
+           return p;
+      /* Else try again with more space */
+      size = n + 1;       /* Precisely what is needed */
+     if ((np = realloc (p, size)) == NULL) {
+             free(p);
+             return NULL;
+     } 
+     else {
+         p = np;
+     }
+}
+}
+ 
 /*WRITE wrapper for extracting \
  * start_time,
  * end_time,
  * captions
  */
-//struct python_subs_modified* subs=NULL; 
 void python_extract(int srt_counter, unsigned h1, unsigned m1, unsigned s1, unsigned ms1, unsigned h2, unsigned m2, unsigned s2, unsigned ms2, char* buffer){
     //check if the srt_counter value already exists
     int i;
@@ -517,6 +549,7 @@ void python_extract(int srt_counter, unsigned h1, unsigned m1, unsigned s1, unsi
     array.sub_count++;
     array.subs = realloc(array.subs,sizeof(struct python_subs_modified)*array.sub_count);
     array.subs[array.sub_count-1].srt_counter= srt_counter;
+   /* 
     if (asprintf (&array.subs[array.sub_count-1].start_time,"%02u:%02u:%02u,%03u",h1, m1, s1, ms1)<0){
         fprintf(stderr,"Error in asprintf for start_time in python_extract()\n");
         return;
@@ -525,6 +558,10 @@ void python_extract(int srt_counter, unsigned h1, unsigned m1, unsigned s1, unsi
         fprintf(stderr,"Error in asprintf for end_time in python_extract()\n");
         return;
     }
+   */
+    array.subs[array.sub_count-1].start_time = make_message("%02u:%02u:%02u,%03u",h1,m1,s1,ms1);
+    array.subs[array.sub_count-1].end_time = make_message("%02u:%02u:%02u,%03u",h2,m2,s2,ms2);
+    
     array.subs[array.sub_count-1].buffer_count=1;
     array.subs[array.sub_count-1].buffer = malloc(sizeof(char*)*array.subs[array.sub_count-1].buffer_count);
     array.subs[array.sub_count-1].buffer[array.subs[array.sub_count-1].buffer_count-1] =  malloc(sizeof(char)*strlen(buffer));
