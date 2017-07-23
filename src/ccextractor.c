@@ -579,15 +579,6 @@ void python_extract(int srt_counter, unsigned h1, unsigned m1, unsigned s1, unsi
 //int __real_write(int file_handle, char* buffer, int nbyte);
 int __wrap_write(int file_handle, char* buffer, int nbyte)
 {
-        python_subs.number_of_lines++;
-        
-        if (python_subs.number_of_lines==1)
-            python_subs.subs = malloc(python_subs.number_of_lines*sizeof(char*));
-        else
-            python_subs.subs = realloc(python_subs.subs,python_subs.number_of_lines*sizeof(char*));
-        
-        python_subs.subs[python_subs.number_of_lines-1] = malloc((strlen(buffer)+1)*sizeof(char));
-        strcpy(python_subs.subs[python_subs.number_of_lines-1],buffer);
         return write(file_handle,buffer,nbyte);
 //      return __real_write(file_handle,buffer,nbyte);
 }
