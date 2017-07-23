@@ -59,9 +59,6 @@ struct python_subs_modified cc_to_python_get_modified_sub(int i);
 int cc_to_python_get_modified_sub_buffer_size(int i);
 char* cc_to_python_get_modified_sub_buffer(int i, int j);
 
-//char* cc_to_python_get_basefilename();
-//char* cc_to_python_get_extension();
-
 void python_extract(int srt_counter, unsigned h1, unsigned m1, unsigned s1, unsigned ms1, unsigned h2, unsigned m2, unsigned s2, unsigned ms2, char* buffer);
 
 //int __real_write(int file_handle, char* buffer, int nbyte);

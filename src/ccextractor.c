@@ -491,18 +491,8 @@ char* cc_to_python_get_modified_sub_buffer(int i, int j){
     return array.subs[i].buffer[j];
 }
 
-
-/*filename functions*/
 /*
-char* cc_to_python_get_basefilename(){
-    return python_subs.basefilename;
-}
-char* cc_to_python_get_extension(){
-    return python_subs.extension;
-}
-*/
-
-/*asprintf alternative
+ * asprintf alternative
  */
 char* make_message(const char *fmt, ...)
 {
