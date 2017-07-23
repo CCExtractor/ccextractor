@@ -494,7 +494,7 @@ char* cc_to_python_get_modified_sub_buffer(int i, int j){
 /*
  * asprintf alternative
  */
-char* make_message(const char *fmt, ...)
+char* time_wrapper(const char *fmt, ...)
 {
     int n;
     int size = 10;     /* Guess we need no more than 100 bytes */
@@ -546,8 +546,8 @@ void python_extract(int srt_counter, unsigned h1, unsigned m1, unsigned s1, unsi
     array.subs = realloc(array.subs,sizeof(struct python_subs_modified)*array.sub_count);
     array.subs[array.sub_count-1].srt_counter= srt_counter;
     
-    array.subs[array.sub_count-1].start_time = make_message("%02u:%02u:%02u,%03u",h1,m1,s1,ms1);
-    array.subs[array.sub_count-1].end_time = make_message("%02u:%02u:%02u,%03u",h2,m2,s2,ms2);
+    array.subs[array.sub_count-1].start_time = time_wrapper("%02u:%02u:%02u,%03u",h1,m1,s1,ms1);
+    array.subs[array.sub_count-1].end_time = time_wrapper("%02u:%02u:%02u,%03u",h2,m2,s2,ms2);
     
     array.subs[array.sub_count-1].buffer_count=1;
     array.subs[array.sub_count-1].buffer = malloc(sizeof(char*)*array.subs[array.sub_count-1].buffer_count);
