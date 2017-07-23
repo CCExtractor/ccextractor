@@ -2987,10 +2987,12 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_int swig_types[5]
 #define SWIGTYPE_p_lib_ccx_ctx swig_types[6]
 #define SWIGTYPE_p_p_char swig_types[7]
-#define SWIGTYPE_p_unsigned_char swig_types[8]
-#define SWIGTYPE_p_unsigned_int swig_types[9]
-static swig_type_info *swig_types[11];
-static swig_module_info swig_module = {swig_types, 10, 0, 0, 0, 0};
+#define SWIGTYPE_p_python_subs_array swig_types[8]
+#define SWIGTYPE_p_python_subs_modified swig_types[9]
+#define SWIGTYPE_p_unsigned_char swig_types[10]
+#define SWIGTYPE_p_unsigned_int swig_types[11]
+static swig_type_info *swig_types[13];
+static swig_module_info swig_module = {swig_types, 12, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -3355,6 +3357,70 @@ SWIG_FromCharPtr(const char *cptr)
   return SWIG_FromCharPtrAndSize(cptr, (cptr ? strlen(cptr) : 0));
 }
 
+
+SWIGINTERN int
+SWIG_AsVal_unsigned_SS_long (PyObject *obj, unsigned long *val) 
+{
+#if PY_VERSION_HEX < 0x03000000
+  if (PyInt_Check(obj)) {
+    long v = PyInt_AsLong(obj);
+    if (v >= 0) {
+      if (val) *val = v;
+      return SWIG_OK;
+    } else {
+      return SWIG_OverflowError;
+    }
+  } else
+#endif
+  if (PyLong_Check(obj)) {
+    unsigned long v = PyLong_AsUnsignedLong(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_OK;
+    } else {
+      PyErr_Clear();
+      return SWIG_OverflowError;
+    }
+  }
+#ifdef SWIG_PYTHON_CAST_MODE
+  {
+    int dispatch = 0;
+    unsigned long v = PyLong_AsUnsignedLong(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_AddCast(SWIG_OK);
+    } else {
+      PyErr_Clear();
+    }
+    if (!dispatch) {
+      double d;
+      int res = SWIG_AddCast(SWIG_AsVal_double (obj,&d));
+      if (SWIG_IsOK(res) && SWIG_CanCastAsInteger(&d, 0, ULONG_MAX)) {
+	if (val) *val = (unsigned long)(d);
+	return res;
+      }
+    }
+  }
+#endif
+  return SWIG_TypeError;
+}
+
+
+SWIGINTERN int
+SWIG_AsVal_unsigned_SS_int (PyObject * obj, unsigned int *val)
+{
+  unsigned long v;
+  int res = SWIG_AsVal_unsigned_SS_long (obj, &v);
+  if (SWIG_IsOK(res)) {
+    if ((v > UINT_MAX)) {
+      return SWIG_OverflowError;
+    } else {
+      if (val) *val = (unsigned int)(v);
+    }
+  }  
+  return res;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -3696,6 +3762,470 @@ SWIGINTERN PyObject *Swig_var_cc608_parity_table_get(void) {
   return pyobj;
 }
 
+
+SWIGINTERN PyObject *_wrap_python_subs_modified_buffer_count_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_modified *arg1 = (struct python_subs_modified *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:python_subs_modified_buffer_count_set",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_modified, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_modified_buffer_count_set" "', argument " "1"" of type '" "struct python_subs_modified *""'"); 
+  }
+  arg1 = (struct python_subs_modified *)(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "python_subs_modified_buffer_count_set" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = (int)(val2);
+  if (arg1) (arg1)->buffer_count = arg2;
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_subs_modified_buffer_count_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_modified *arg1 = (struct python_subs_modified *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:python_subs_modified_buffer_count_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_modified, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_modified_buffer_count_get" "', argument " "1"" of type '" "struct python_subs_modified *""'"); 
+  }
+  arg1 = (struct python_subs_modified *)(argp1);
+  result = (int) ((arg1)->buffer_count);
+  resultobj = SWIG_From_int((int)(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_subs_modified_srt_counter_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_modified *arg1 = (struct python_subs_modified *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:python_subs_modified_srt_counter_set",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_modified, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_modified_srt_counter_set" "', argument " "1"" of type '" "struct python_subs_modified *""'"); 
+  }
+  arg1 = (struct python_subs_modified *)(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "python_subs_modified_srt_counter_set" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = (int)(val2);
+  if (arg1) (arg1)->srt_counter = arg2;
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_subs_modified_srt_counter_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_modified *arg1 = (struct python_subs_modified *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:python_subs_modified_srt_counter_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_modified, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_modified_srt_counter_get" "', argument " "1"" of type '" "struct python_subs_modified *""'"); 
+  }
+  arg1 = (struct python_subs_modified *)(argp1);
+  result = (int) ((arg1)->srt_counter);
+  resultobj = SWIG_From_int((int)(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_subs_modified_start_time_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_modified *arg1 = (struct python_subs_modified *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:python_subs_modified_start_time_set",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_modified, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_modified_start_time_set" "', argument " "1"" of type '" "struct python_subs_modified *""'"); 
+  }
+  arg1 = (struct python_subs_modified *)(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "python_subs_modified_start_time_set" "', argument " "2"" of type '" "char *""'");
+  }
+  arg2 = (char *)(buf2);
+  if (arg1->start_time) free((char*)arg1->start_time);
+  if (arg2) {
+    size_t size = strlen((const char *)(arg2)) + 1;
+    arg1->start_time = (char *)(char *)memcpy(malloc((size)*sizeof(char)), (const char *)(arg2), sizeof(char)*(size));
+  } else {
+    arg1->start_time = 0;
+  }
+  resultobj = SWIG_Py_Void();
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_subs_modified_start_time_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_modified *arg1 = (struct python_subs_modified *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:python_subs_modified_start_time_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_modified, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_modified_start_time_get" "', argument " "1"" of type '" "struct python_subs_modified *""'"); 
+  }
+  arg1 = (struct python_subs_modified *)(argp1);
+  result = (char *) ((arg1)->start_time);
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_subs_modified_end_time_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_modified *arg1 = (struct python_subs_modified *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:python_subs_modified_end_time_set",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_modified, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_modified_end_time_set" "', argument " "1"" of type '" "struct python_subs_modified *""'"); 
+  }
+  arg1 = (struct python_subs_modified *)(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "python_subs_modified_end_time_set" "', argument " "2"" of type '" "char *""'");
+  }
+  arg2 = (char *)(buf2);
+  if (arg1->end_time) free((char*)arg1->end_time);
+  if (arg2) {
+    size_t size = strlen((const char *)(arg2)) + 1;
+    arg1->end_time = (char *)(char *)memcpy(malloc((size)*sizeof(char)), (const char *)(arg2), sizeof(char)*(size));
+  } else {
+    arg1->end_time = 0;
+  }
+  resultobj = SWIG_Py_Void();
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_subs_modified_end_time_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_modified *arg1 = (struct python_subs_modified *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:python_subs_modified_end_time_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_modified, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_modified_end_time_get" "', argument " "1"" of type '" "struct python_subs_modified *""'"); 
+  }
+  arg1 = (struct python_subs_modified *)(argp1);
+  result = (char *) ((arg1)->end_time);
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_subs_modified_buffer_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_modified *arg1 = (struct python_subs_modified *) 0 ;
+  char **arg2 = (char **) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:python_subs_modified_buffer_set",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_modified, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_modified_buffer_set" "', argument " "1"" of type '" "struct python_subs_modified *""'"); 
+  }
+  arg1 = (struct python_subs_modified *)(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_p_char, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "python_subs_modified_buffer_set" "', argument " "2"" of type '" "char **""'"); 
+  }
+  arg2 = (char **)(argp2);
+  if (arg1) (arg1)->buffer = arg2;
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_subs_modified_buffer_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_modified *arg1 = (struct python_subs_modified *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char **result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:python_subs_modified_buffer_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_modified, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_modified_buffer_get" "', argument " "1"" of type '" "struct python_subs_modified *""'"); 
+  }
+  arg1 = (struct python_subs_modified *)(argp1);
+  result = (char **) ((arg1)->buffer);
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_p_char, 0 |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_new_python_subs_modified(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_modified *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)":new_python_subs_modified")) SWIG_fail;
+  result = (struct python_subs_modified *)calloc(1, sizeof(struct python_subs_modified));
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_python_subs_modified, SWIG_POINTER_NEW |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_delete_python_subs_modified(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_modified *arg1 = (struct python_subs_modified *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:delete_python_subs_modified",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_modified, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_python_subs_modified" "', argument " "1"" of type '" "struct python_subs_modified *""'"); 
+  }
+  arg1 = (struct python_subs_modified *)(argp1);
+  free((char *) arg1);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *python_subs_modified_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!PyArg_ParseTuple(args,(char *)"O:swigregister", &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_python_subs_modified, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
+SWIGINTERN PyObject *_wrap_python_subs_array_sub_count_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_array *arg1 = (struct python_subs_array *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:python_subs_array_sub_count_set",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_array, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_array_sub_count_set" "', argument " "1"" of type '" "struct python_subs_array *""'"); 
+  }
+  arg1 = (struct python_subs_array *)(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "python_subs_array_sub_count_set" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = (int)(val2);
+  if (arg1) (arg1)->sub_count = arg2;
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_subs_array_sub_count_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_array *arg1 = (struct python_subs_array *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:python_subs_array_sub_count_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_array, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_array_sub_count_get" "', argument " "1"" of type '" "struct python_subs_array *""'"); 
+  }
+  arg1 = (struct python_subs_array *)(argp1);
+  result = (int) ((arg1)->sub_count);
+  resultobj = SWIG_From_int((int)(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_subs_array_subs_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_array *arg1 = (struct python_subs_array *) 0 ;
+  struct python_subs_modified *arg2 = (struct python_subs_modified *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:python_subs_array_subs_set",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_array, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_array_subs_set" "', argument " "1"" of type '" "struct python_subs_array *""'"); 
+  }
+  arg1 = (struct python_subs_array *)(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_python_subs_modified, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "python_subs_array_subs_set" "', argument " "2"" of type '" "struct python_subs_modified *""'"); 
+  }
+  arg2 = (struct python_subs_modified *)(argp2);
+  if (arg1) (arg1)->subs = arg2;
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_subs_array_subs_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_array *arg1 = (struct python_subs_array *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  struct python_subs_modified *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:python_subs_array_subs_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_array, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_array_subs_get" "', argument " "1"" of type '" "struct python_subs_array *""'"); 
+  }
+  arg1 = (struct python_subs_array *)(argp1);
+  result = (struct python_subs_modified *) ((arg1)->subs);
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_python_subs_modified, 0 |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_new_python_subs_array(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_array *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)":new_python_subs_array")) SWIG_fail;
+  result = (struct python_subs_array *)calloc(1, sizeof(struct python_subs_array));
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_python_subs_array, SWIG_POINTER_NEW |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_delete_python_subs_array(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_array *arg1 = (struct python_subs_array *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:delete_python_subs_array",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_array, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_python_subs_array" "', argument " "1"" of type '" "struct python_subs_array *""'"); 
+  }
+  arg1 = (struct python_subs_array *)(argp1);
+  free((char *) arg1);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *python_subs_array_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!PyArg_ParseTuple(args,(char *)"O:swigregister", &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_python_subs_array, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
 
 SWIGINTERN PyObject *_wrap_cc_to_python_subs_inputfile_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
@@ -4145,6 +4675,33 @@ SWIGINTERN PyObject *Swig_var_python_subs_get(void) {
 }
 
 
+SWIGINTERN int Swig_var_array_set(PyObject *_val) {
+  {
+    void *argp = 0;
+    int res = SWIG_ConvertPtr(_val, &argp, SWIGTYPE_p_python_subs_array,  0 );
+    if (!SWIG_IsOK(res)) {
+      SWIG_exception_fail(SWIG_ArgError(res), "in variable '""array""' of type '""struct python_subs_array""'");
+    }
+    if (!argp) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in variable '""array""' of type '""struct python_subs_array""'");
+    } else {
+      array = *((struct python_subs_array *)(argp));
+    }
+  }
+  return 0;
+fail:
+  return 1;
+}
+
+
+SWIGINTERN PyObject *Swig_var_array_get(void) {
+  PyObject *pyobj = 0;
+  
+  pyobj = SWIG_NewPointerObj(SWIG_as_voidptr(&array), SWIGTYPE_p_python_subs_array,  0 );
+  return pyobj;
+}
+
+
 SWIGINTERN PyObject *_wrap_api_init_options(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   struct ccx_s_options *result = 0 ;
@@ -4415,12 +4972,12 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_cc_to_python_get_subs_number_of_lines(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_cc_to_python_get_number_of_subs(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   int result;
   
-  if (!PyArg_ParseTuple(args,(char *)":cc_to_python_get_subs_number_of_lines")) SWIG_fail;
-  result = (int)cc_to_python_get_subs_number_of_lines();
+  if (!PyArg_ParseTuple(args,(char *)":cc_to_python_get_number_of_subs")) SWIG_fail;
+  result = (int)cc_to_python_get_number_of_subs();
   resultobj = SWIG_From_int((int)(result));
   return resultobj;
 fail:
@@ -4428,24 +4985,182 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_cc_to_python_get_sub(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_cc_to_python_get_modified_sub(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   int arg1 ;
   int val1 ;
   int ecode1 = 0 ;
   PyObject * obj0 = 0 ;
-  char *result = 0 ;
+  struct python_subs_modified result;
   
-  if (!PyArg_ParseTuple(args,(char *)"O:cc_to_python_get_sub",&obj0)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"O:cc_to_python_get_modified_sub",&obj0)) SWIG_fail;
   ecode1 = SWIG_AsVal_int(obj0, &val1);
   if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "cc_to_python_get_sub" "', argument " "1"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "cc_to_python_get_modified_sub" "', argument " "1"" of type '" "int""'");
   } 
   arg1 = (int)(val1);
-  result = (char *)cc_to_python_get_sub(arg1);
+  result = cc_to_python_get_modified_sub(arg1);
+  resultobj = SWIG_NewPointerObj((struct python_subs_modified *)memcpy((struct python_subs_modified *)calloc(1,sizeof(struct python_subs_modified)),&result,sizeof(struct python_subs_modified)), SWIGTYPE_p_python_subs_modified, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_cc_to_python_get_modified_sub_buffer_size(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  int arg1 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  PyObject * obj0 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:cc_to_python_get_modified_sub_buffer_size",&obj0)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "cc_to_python_get_modified_sub_buffer_size" "', argument " "1"" of type '" "int""'");
+  } 
+  arg1 = (int)(val1);
+  result = (int)cc_to_python_get_modified_sub_buffer_size(arg1);
+  resultobj = SWIG_From_int((int)(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_cc_to_python_get_modified_sub_buffer(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  int arg1 ;
+  int arg2 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:cc_to_python_get_modified_sub_buffer",&obj0,&obj1)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "cc_to_python_get_modified_sub_buffer" "', argument " "1"" of type '" "int""'");
+  } 
+  arg1 = (int)(val1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "cc_to_python_get_modified_sub_buffer" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = (int)(val2);
+  result = (char *)cc_to_python_get_modified_sub_buffer(arg1,arg2);
   resultobj = SWIG_FromCharPtr((const char *)result);
   return resultobj;
 fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_extract(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  int arg1 ;
+  unsigned int arg2 ;
+  unsigned int arg3 ;
+  unsigned int arg4 ;
+  unsigned int arg5 ;
+  unsigned int arg6 ;
+  unsigned int arg7 ;
+  unsigned int arg8 ;
+  unsigned int arg9 ;
+  char *arg10 = (char *) 0 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  unsigned int val2 ;
+  int ecode2 = 0 ;
+  unsigned int val3 ;
+  int ecode3 = 0 ;
+  unsigned int val4 ;
+  int ecode4 = 0 ;
+  unsigned int val5 ;
+  int ecode5 = 0 ;
+  unsigned int val6 ;
+  int ecode6 = 0 ;
+  unsigned int val7 ;
+  int ecode7 = 0 ;
+  unsigned int val8 ;
+  int ecode8 = 0 ;
+  unsigned int val9 ;
+  int ecode9 = 0 ;
+  int res10 ;
+  char *buf10 = 0 ;
+  int alloc10 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  PyObject * obj7 = 0 ;
+  PyObject * obj8 = 0 ;
+  PyObject * obj9 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOOOOOO:python_extract",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "python_extract" "', argument " "1"" of type '" "int""'");
+  } 
+  arg1 = (int)(val1);
+  ecode2 = SWIG_AsVal_unsigned_SS_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "python_extract" "', argument " "2"" of type '" "unsigned int""'");
+  } 
+  arg2 = (unsigned int)(val2);
+  ecode3 = SWIG_AsVal_unsigned_SS_int(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "python_extract" "', argument " "3"" of type '" "unsigned int""'");
+  } 
+  arg3 = (unsigned int)(val3);
+  ecode4 = SWIG_AsVal_unsigned_SS_int(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "python_extract" "', argument " "4"" of type '" "unsigned int""'");
+  } 
+  arg4 = (unsigned int)(val4);
+  ecode5 = SWIG_AsVal_unsigned_SS_int(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "python_extract" "', argument " "5"" of type '" "unsigned int""'");
+  } 
+  arg5 = (unsigned int)(val5);
+  ecode6 = SWIG_AsVal_unsigned_SS_int(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "python_extract" "', argument " "6"" of type '" "unsigned int""'");
+  } 
+  arg6 = (unsigned int)(val6);
+  ecode7 = SWIG_AsVal_unsigned_SS_int(obj6, &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "python_extract" "', argument " "7"" of type '" "unsigned int""'");
+  } 
+  arg7 = (unsigned int)(val7);
+  ecode8 = SWIG_AsVal_unsigned_SS_int(obj7, &val8);
+  if (!SWIG_IsOK(ecode8)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "python_extract" "', argument " "8"" of type '" "unsigned int""'");
+  } 
+  arg8 = (unsigned int)(val8);
+  ecode9 = SWIG_AsVal_unsigned_SS_int(obj8, &val9);
+  if (!SWIG_IsOK(ecode9)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "python_extract" "', argument " "9"" of type '" "unsigned int""'");
+  } 
+  arg9 = (unsigned int)(val9);
+  res10 = SWIG_AsCharPtrAndSize(obj9, &buf10, NULL, &alloc10);
+  if (!SWIG_IsOK(res10)) {
+    SWIG_exception_fail(SWIG_ArgError(res10), "in method '" "python_extract" "', argument " "10"" of type '" "char *""'");
+  }
+  arg10 = (char *)(buf10);
+  python_extract(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10);
+  resultobj = SWIG_Py_Void();
+  if (alloc10 == SWIG_NEWOBJ) free((char*)buf10);
+  return resultobj;
+fail:
+  if (alloc10 == SWIG_NEWOBJ) free((char*)buf10);
   return NULL;
 }
 
@@ -4535,6 +5250,48 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_setpesheader(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct ccx_s_options *arg1 = (struct ccx_s_options *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:setpesheader",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_ccx_s_options, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "setpesheader" "', argument " "1"" of type '" "struct ccx_s_options *""'"); 
+  }
+  arg1 = (struct ccx_s_options *)(argp1);
+  setpesheader(arg1);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_setdebugdvbsub(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct ccx_s_options *arg1 = (struct ccx_s_options *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:setdebugdvbsub",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_ccx_s_options, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "setdebugdvbsub" "', argument " "1"" of type '" "struct ccx_s_options *""'"); 
+  }
+  arg1 = (struct ccx_s_options *)(argp1);
+  setdebugdvbsub(arg1);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 static PyMethodDef SwigMethods[] = {
 	 { (char *)"SWIG_PyInstanceMethod_New", (PyCFunction)SWIG_PyInstanceMethod_New, METH_O, NULL},
 	 { (char *)"fdprintf", _wrap_fdprintf, METH_VARARGS, NULL},
@@ -4543,6 +5300,26 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"dbg_print", _wrap_dbg_print, METH_VARARGS, NULL},
 	 { (char *)"debug_608_to_ASC", _wrap_debug_608_to_ASC, METH_VARARGS, NULL},
 	 { (char *)"add_cc_sub_text", _wrap_add_cc_sub_text, METH_VARARGS, NULL},
+	 { (char *)"python_subs_modified_buffer_count_set", _wrap_python_subs_modified_buffer_count_set, METH_VARARGS, NULL},
+	 { (char *)"python_subs_modified_buffer_count_get", _wrap_python_subs_modified_buffer_count_get, METH_VARARGS, NULL},
+	 { (char *)"python_subs_modified_srt_counter_set", _wrap_python_subs_modified_srt_counter_set, METH_VARARGS, NULL},
+	 { (char *)"python_subs_modified_srt_counter_get", _wrap_python_subs_modified_srt_counter_get, METH_VARARGS, NULL},
+	 { (char *)"python_subs_modified_start_time_set", _wrap_python_subs_modified_start_time_set, METH_VARARGS, NULL},
+	 { (char *)"python_subs_modified_start_time_get", _wrap_python_subs_modified_start_time_get, METH_VARARGS, NULL},
+	 { (char *)"python_subs_modified_end_time_set", _wrap_python_subs_modified_end_time_set, METH_VARARGS, NULL},
+	 { (char *)"python_subs_modified_end_time_get", _wrap_python_subs_modified_end_time_get, METH_VARARGS, NULL},
+	 { (char *)"python_subs_modified_buffer_set", _wrap_python_subs_modified_buffer_set, METH_VARARGS, NULL},
+	 { (char *)"python_subs_modified_buffer_get", _wrap_python_subs_modified_buffer_get, METH_VARARGS, NULL},
+	 { (char *)"new_python_subs_modified", _wrap_new_python_subs_modified, METH_VARARGS, NULL},
+	 { (char *)"delete_python_subs_modified", _wrap_delete_python_subs_modified, METH_VARARGS, NULL},
+	 { (char *)"python_subs_modified_swigregister", python_subs_modified_swigregister, METH_VARARGS, NULL},
+	 { (char *)"python_subs_array_sub_count_set", _wrap_python_subs_array_sub_count_set, METH_VARARGS, NULL},
+	 { (char *)"python_subs_array_sub_count_get", _wrap_python_subs_array_sub_count_get, METH_VARARGS, NULL},
+	 { (char *)"python_subs_array_subs_set", _wrap_python_subs_array_subs_set, METH_VARARGS, NULL},
+	 { (char *)"python_subs_array_subs_get", _wrap_python_subs_array_subs_get, METH_VARARGS, NULL},
+	 { (char *)"new_python_subs_array", _wrap_new_python_subs_array, METH_VARARGS, NULL},
+	 { (char *)"delete_python_subs_array", _wrap_delete_python_subs_array, METH_VARARGS, NULL},
+	 { (char *)"python_subs_array_swigregister", python_subs_array_swigregister, METH_VARARGS, NULL},
 	 { (char *)"cc_to_python_subs_inputfile_set", _wrap_cc_to_python_subs_inputfile_set, METH_VARARGS, NULL},
 	 { (char *)"cc_to_python_subs_inputfile_get", _wrap_cc_to_python_subs_inputfile_get, METH_VARARGS, NULL},
 	 { (char *)"cc_to_python_subs_num_input_files_set", _wrap_cc_to_python_subs_num_input_files_set, METH_VARARGS, NULL},
@@ -4569,11 +5346,16 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"sigint_handler", _wrap_sigint_handler, METH_VARARGS, NULL},
 	 { (char *)"print_end_msg", _wrap_print_end_msg, METH_VARARGS, NULL},
 	 { (char *)"main", _wrap_main, METH_VARARGS, NULL},
-	 { (char *)"cc_to_python_get_subs_number_of_lines", _wrap_cc_to_python_get_subs_number_of_lines, METH_VARARGS, NULL},
-	 { (char *)"cc_to_python_get_sub", _wrap_cc_to_python_get_sub, METH_VARARGS, NULL},
+	 { (char *)"cc_to_python_get_number_of_subs", _wrap_cc_to_python_get_number_of_subs, METH_VARARGS, NULL},
+	 { (char *)"cc_to_python_get_modified_sub", _wrap_cc_to_python_get_modified_sub, METH_VARARGS, NULL},
+	 { (char *)"cc_to_python_get_modified_sub_buffer_size", _wrap_cc_to_python_get_modified_sub_buffer_size, METH_VARARGS, NULL},
+	 { (char *)"cc_to_python_get_modified_sub_buffer", _wrap_cc_to_python_get_modified_sub_buffer, METH_VARARGS, NULL},
+	 { (char *)"python_extract", _wrap_python_extract, METH_VARARGS, NULL},
 	 { (char *)"__wrap_write", _wrap___wrap_write, METH_VARARGS, NULL},
 	 { (char *)"setautoprogram", _wrap_setautoprogram, METH_VARARGS, NULL},
 	 { (char *)"setstdout", _wrap_setstdout, METH_VARARGS, NULL},
+	 { (char *)"setpesheader", _wrap_setpesheader, METH_VARARGS, NULL},
+	 { (char *)"setdebugdvbsub", _wrap_setdebugdvbsub, METH_VARARGS, NULL},
 	 { NULL, NULL, 0, NULL }
 };
 
@@ -4588,6 +5370,8 @@ static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_int = {"_p_int", "int *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_lib_ccx_ctx = {"_p_lib_ccx_ctx", "struct lib_ccx_ctx *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_python_subs_array = {"_p_python_subs_array", "struct python_subs_array *|python_subs_array *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_python_subs_modified = {"_p_python_subs_modified", "struct python_subs_modified *|python_subs_modified *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_unsigned_char = {"_p_unsigned_char", "unsigned char *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_unsigned_int = {"_p_unsigned_int", "unsigned int *", 0, 0, (void*)0, 0};
 
@@ -4600,6 +5384,8 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_int,
   &_swigt__p_lib_ccx_ctx,
   &_swigt__p_p_char,
+  &_swigt__p_python_subs_array,
+  &_swigt__p_python_subs_modified,
   &_swigt__p_unsigned_char,
   &_swigt__p_unsigned_int,
 };
@@ -4612,6 +5398,8 @@ static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0,
 static swig_cast_info _swigc__p_int[] = {  {&_swigt__p_int, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_lib_ccx_ctx[] = {  {&_swigt__p_lib_ccx_ctx, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_char[] = {  {&_swigt__p_p_char, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_python_subs_array[] = {  {&_swigt__p_python_subs_array, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_python_subs_modified[] = {  {&_swigt__p_python_subs_modified, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_unsigned_char[] = {  {&_swigt__p_unsigned_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_unsigned_int[] = {  {&_swigt__p_unsigned_int, 0, 0, 0},{0, 0, 0, 0}};
 
@@ -4624,6 +5412,8 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_int,
   _swigc__p_lib_ccx_ctx,
   _swigc__p_p_char,
+  _swigc__p_python_subs_array,
+  _swigc__p_python_subs_modified,
   _swigc__p_unsigned_char,
   _swigc__p_unsigned_int,
 };
@@ -5347,6 +6137,7 @@ SWIG_init(void) {
   SWIG_addvarlink(SWIG_globals(),(char *)"ccx_options",Swig_var_ccx_options_get, Swig_var_ccx_options_set);
   SWIG_addvarlink(SWIG_globals(),(char *)"signal_ctx",Swig_var_signal_ctx_get, Swig_var_signal_ctx_set);
   SWIG_addvarlink(SWIG_globals(),(char *)"python_subs",Swig_var_python_subs_get, Swig_var_python_subs_set);
+  SWIG_addvarlink(SWIG_globals(),(char *)"array",Swig_var_array_get, Swig_var_array_set);
 #if PY_VERSION_HEX >= 0x03000000
   return m;
 #else

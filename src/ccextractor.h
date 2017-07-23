@@ -63,8 +63,12 @@ void sigint_handler(int sig);
 void print_end_msg(void);
 int main(int argc, char *argv[]);
 
-int cc_to_python_get_subs_number_of_lines();
-char* cc_to_python_get_sub(int i);
+//int cc_to_python_get_subs_number_of_lines();
+//char* cc_to_python_get_sub(int i);
+int cc_to_python_get_number_of_subs();
+struct python_subs_modified cc_to_python_get_modified_sub(int i);
+int cc_to_python_get_modified_sub_buffer_size(int i);
+char* cc_to_python_get_modified_sub_buffer(int i, int j);
 
 //char* cc_to_python_get_basefilename();
 //char* cc_to_python_get_extension();

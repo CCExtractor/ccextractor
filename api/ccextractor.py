@@ -145,6 +145,71 @@ debug_608_to_ASC = _ccextractor.debug_608_to_ASC
 def add_cc_sub_text(sub, str, start_time, end_time, info, mode, arg7):
     return _ccextractor.add_cc_sub_text(sub, str, start_time, end_time, info, mode, arg7)
 add_cc_sub_text = _ccextractor.add_cc_sub_text
+class python_subs_modified(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, python_subs_modified, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, python_subs_modified, name)
+    __repr__ = _swig_repr
+    __swig_setmethods__["buffer_count"] = _ccextractor.python_subs_modified_buffer_count_set
+    __swig_getmethods__["buffer_count"] = _ccextractor.python_subs_modified_buffer_count_get
+    if _newclass:
+        buffer_count = _swig_property(_ccextractor.python_subs_modified_buffer_count_get, _ccextractor.python_subs_modified_buffer_count_set)
+    __swig_setmethods__["srt_counter"] = _ccextractor.python_subs_modified_srt_counter_set
+    __swig_getmethods__["srt_counter"] = _ccextractor.python_subs_modified_srt_counter_get
+    if _newclass:
+        srt_counter = _swig_property(_ccextractor.python_subs_modified_srt_counter_get, _ccextractor.python_subs_modified_srt_counter_set)
+    __swig_setmethods__["start_time"] = _ccextractor.python_subs_modified_start_time_set
+    __swig_getmethods__["start_time"] = _ccextractor.python_subs_modified_start_time_get
+    if _newclass:
+        start_time = _swig_property(_ccextractor.python_subs_modified_start_time_get, _ccextractor.python_subs_modified_start_time_set)
+    __swig_setmethods__["end_time"] = _ccextractor.python_subs_modified_end_time_set
+    __swig_getmethods__["end_time"] = _ccextractor.python_subs_modified_end_time_get
+    if _newclass:
+        end_time = _swig_property(_ccextractor.python_subs_modified_end_time_get, _ccextractor.python_subs_modified_end_time_set)
+    __swig_setmethods__["buffer"] = _ccextractor.python_subs_modified_buffer_set
+    __swig_getmethods__["buffer"] = _ccextractor.python_subs_modified_buffer_get
+    if _newclass:
+        buffer = _swig_property(_ccextractor.python_subs_modified_buffer_get, _ccextractor.python_subs_modified_buffer_set)
+
+    def __init__(self):
+        this = _ccextractor.new_python_subs_modified()
+        try:
+            self.this.append(this)
+        except __builtin__.Exception:
+            self.this = this
+    __swig_destroy__ = _ccextractor.delete_python_subs_modified
+    __del__ = lambda self: None
+python_subs_modified_swigregister = _ccextractor.python_subs_modified_swigregister
+python_subs_modified_swigregister(python_subs_modified)
+cvar = _ccextractor.cvar
+
+class python_subs_array(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, python_subs_array, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, python_subs_array, name)
+    __repr__ = _swig_repr
+    __swig_setmethods__["sub_count"] = _ccextractor.python_subs_array_sub_count_set
+    __swig_getmethods__["sub_count"] = _ccextractor.python_subs_array_sub_count_get
+    if _newclass:
+        sub_count = _swig_property(_ccextractor.python_subs_array_sub_count_get, _ccextractor.python_subs_array_sub_count_set)
+    __swig_setmethods__["subs"] = _ccextractor.python_subs_array_subs_set
+    __swig_getmethods__["subs"] = _ccextractor.python_subs_array_subs_get
+    if _newclass:
+        subs = _swig_property(_ccextractor.python_subs_array_subs_get, _ccextractor.python_subs_array_subs_set)
+
+    def __init__(self):
+        this = _ccextractor.new_python_subs_array()
+        try:
+            self.this.append(this)
+        except __builtin__.Exception:
+            self.this = this
+    __swig_destroy__ = _ccextractor.delete_python_subs_array
+    __del__ = lambda self: None
+python_subs_array_swigregister = _ccextractor.python_subs_array_swigregister
+python_subs_array_swigregister(python_subs_array)
+
 class cc_to_python_subs(_object):
     __swig_setmethods__ = {}
     __setattr__ = lambda self, name, value: _swig_setattr(self, cc_to_python_subs, name, value)
@@ -186,7 +251,6 @@ class cc_to_python_subs(_object):
     __del__ = lambda self: None
 cc_to_python_subs_swigregister = _ccextractor.cc_to_python_subs_swigregister
 cc_to_python_subs_swigregister(cc_to_python_subs)
-cvar = _ccextractor.cvar
 
 
 def api_init_options():
@@ -233,13 +297,25 @@ def main(argc, argv):
     return _ccextractor.main(argc, argv)
 main = _ccextractor.main
 
-def cc_to_python_get_subs_number_of_lines():
-    return _ccextractor.cc_to_python_get_subs_number_of_lines()
-cc_to_python_get_subs_number_of_lines = _ccextractor.cc_to_python_get_subs_number_of_lines
+def cc_to_python_get_number_of_subs():
+    return _ccextractor.cc_to_python_get_number_of_subs()
+cc_to_python_get_number_of_subs = _ccextractor.cc_to_python_get_number_of_subs
 
-def cc_to_python_get_sub(i):
-    return _ccextractor.cc_to_python_get_sub(i)
-cc_to_python_get_sub = _ccextractor.cc_to_python_get_sub
+def cc_to_python_get_modified_sub(i):
+    return _ccextractor.cc_to_python_get_modified_sub(i)
+cc_to_python_get_modified_sub = _ccextractor.cc_to_python_get_modified_sub
+
+def cc_to_python_get_modified_sub_buffer_size(i):
+    return _ccextractor.cc_to_python_get_modified_sub_buffer_size(i)
+cc_to_python_get_modified_sub_buffer_size = _ccextractor.cc_to_python_get_modified_sub_buffer_size
+
+def cc_to_python_get_modified_sub_buffer(i, j):
+    return _ccextractor.cc_to_python_get_modified_sub_buffer(i, j)
+cc_to_python_get_modified_sub_buffer = _ccextractor.cc_to_python_get_modified_sub_buffer
+
+def python_extract(srt_counter, h1, m1, s1, ms1, h2, m2, s2, ms2, buffer):
+    return _ccextractor.python_extract(srt_counter, h1, m1, s1, ms1, h2, m2, s2, ms2, buffer)
+python_extract = _ccextractor.python_extract
 
 def __wrap_write(file_handle, buffer, nbyte):
     return _ccextractor.__wrap_write(file_handle, buffer, nbyte)
@@ -252,6 +328,14 @@ setautoprogram = _ccextractor.setautoprogram
 def setstdout(api_options):
     return _ccextractor.setstdout(api_options)
 setstdout = _ccextractor.setstdout
+
+def setpesheader(api_options):
+    return _ccextractor.setpesheader(api_options)
+setpesheader = _ccextractor.setpesheader
+
+def setdebugdvbsub(api_options):
+    return _ccextractor.setdebugdvbsub(api_options)
+setdebugdvbsub = _ccextractor.setdebugdvbsub
 # This file is compatible with both classic and new-style classes.
 
 

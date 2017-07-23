@@ -478,11 +478,27 @@ int api_param_count(struct ccx_s_options* api_options){
 }
 
 /*subs functions*/
-int cc_to_python_get_subs_number_of_lines(){
+/*
+ * int cc_to_python_get_subs_number_of_lines(){
     return python_subs.number_of_lines;
 }
 char* cc_to_python_get_sub(int i){
     return python_subs.subs[i];
+}
+*/
+int cc_to_python_get_number_of_subs(){
+    return array.sub_count;
+}
+
+struct python_subs_modified cc_to_python_get_modified_sub(int i){
+    return array.subs[i];
+}
+
+int cc_to_python_get_modified_sub_buffer_size(int i){
+    return array.subs[i].buffer_count;
+}
+char* cc_to_python_get_modified_sub_buffer(int i, int j){
+    return array.subs[i].buffer[j];
 }
 
 
@@ -549,16 +565,7 @@ void python_extract(int srt_counter, unsigned h1, unsigned m1, unsigned s1, unsi
     array.sub_count++;
     array.subs = realloc(array.subs,sizeof(struct python_subs_modified)*array.sub_count);
     array.subs[array.sub_count-1].srt_counter= srt_counter;
-   /* 
-    if (asprintf (&array.subs[array.sub_count-1].start_time,"%02u:%02u:%02u,%03u",h1, m1, s1, ms1)<0){
-        fprintf(stderr,"Error in asprintf for start_time in python_extract()\n");
-        return;
-    }
-    if (asprintf (&array.subs[array.sub_count-1].end_time, "%02u:%02u:%02u,%03u%s",h2, m2, s2, ms2)<0){
-        fprintf(stderr,"Error in asprintf for end_time in python_extract()\n");
-        return;
-    }
-   */
+    
     array.subs[array.sub_count-1].start_time = make_message("%02u:%02u:%02u,%03u",h1,m1,s1,ms1);
     array.subs[array.sub_count-1].end_time = make_message("%02u:%02u:%02u,%03u",h2,m2,s2,ms2);
     
