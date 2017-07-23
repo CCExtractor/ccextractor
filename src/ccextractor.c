@@ -376,7 +376,6 @@ int api_start(struct ccx_s_options api_options){
 		if(is_decoder_processed_enough(ctx) == CCX_TRUE)
 			break;
 	} // file loop
-    python_subs.extension = ctx->extension;
 	close_input_file(ctx);
 	free((void *) ctx->extension);
 
@@ -409,7 +408,6 @@ int api_start(struct ccx_s_options api_options){
 		curl_easy_cleanup(curl);
   	curl_global_cleanup();
 #endif
-    python_subs.basefilename = ctx->basefilename;
 	dinit_libraries(&ctx);
 
 	if (!ret)

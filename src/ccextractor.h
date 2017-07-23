@@ -35,18 +35,9 @@ struct python_subs_array{
         struct python_subs_modified* subs;
 };
 
-struct cc_to_python_subs{
-    char **inputfile;                // List of files to process
-	int num_input_files;             // How many input files
-    char* basefilename;
-    char* extension;
-    char** subs;
-    int number_of_lines;
-};
 
 struct ccx_s_options ccx_options;
 struct lib_ccx_ctx *signal_ctx;
-struct cc_to_python_subs python_subs;
 struct python_subs_array array; 
 //volatile int terminate_asap = 0;
 
@@ -63,8 +54,6 @@ void sigint_handler(int sig);
 void print_end_msg(void);
 int main(int argc, char *argv[]);
 
-//int cc_to_python_get_subs_number_of_lines();
-//char* cc_to_python_get_sub(int i);
 int cc_to_python_get_number_of_subs();
 struct python_subs_modified cc_to_python_get_modified_sub(int i);
 int cc_to_python_get_modified_sub_buffer_size(int i);

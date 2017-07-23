@@ -210,48 +210,6 @@ class python_subs_array(_object):
 python_subs_array_swigregister = _ccextractor.python_subs_array_swigregister
 python_subs_array_swigregister(python_subs_array)
 
-class cc_to_python_subs(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, cc_to_python_subs, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, cc_to_python_subs, name)
-    __repr__ = _swig_repr
-    __swig_setmethods__["inputfile"] = _ccextractor.cc_to_python_subs_inputfile_set
-    __swig_getmethods__["inputfile"] = _ccextractor.cc_to_python_subs_inputfile_get
-    if _newclass:
-        inputfile = _swig_property(_ccextractor.cc_to_python_subs_inputfile_get, _ccextractor.cc_to_python_subs_inputfile_set)
-    __swig_setmethods__["num_input_files"] = _ccextractor.cc_to_python_subs_num_input_files_set
-    __swig_getmethods__["num_input_files"] = _ccextractor.cc_to_python_subs_num_input_files_get
-    if _newclass:
-        num_input_files = _swig_property(_ccextractor.cc_to_python_subs_num_input_files_get, _ccextractor.cc_to_python_subs_num_input_files_set)
-    __swig_setmethods__["basefilename"] = _ccextractor.cc_to_python_subs_basefilename_set
-    __swig_getmethods__["basefilename"] = _ccextractor.cc_to_python_subs_basefilename_get
-    if _newclass:
-        basefilename = _swig_property(_ccextractor.cc_to_python_subs_basefilename_get, _ccextractor.cc_to_python_subs_basefilename_set)
-    __swig_setmethods__["extension"] = _ccextractor.cc_to_python_subs_extension_set
-    __swig_getmethods__["extension"] = _ccextractor.cc_to_python_subs_extension_get
-    if _newclass:
-        extension = _swig_property(_ccextractor.cc_to_python_subs_extension_get, _ccextractor.cc_to_python_subs_extension_set)
-    __swig_setmethods__["subs"] = _ccextractor.cc_to_python_subs_subs_set
-    __swig_getmethods__["subs"] = _ccextractor.cc_to_python_subs_subs_get
-    if _newclass:
-        subs = _swig_property(_ccextractor.cc_to_python_subs_subs_get, _ccextractor.cc_to_python_subs_subs_set)
-    __swig_setmethods__["number_of_lines"] = _ccextractor.cc_to_python_subs_number_of_lines_set
-    __swig_getmethods__["number_of_lines"] = _ccextractor.cc_to_python_subs_number_of_lines_get
-    if _newclass:
-        number_of_lines = _swig_property(_ccextractor.cc_to_python_subs_number_of_lines_get, _ccextractor.cc_to_python_subs_number_of_lines_set)
-
-    def __init__(self):
-        this = _ccextractor.new_cc_to_python_subs()
-        try:
-            self.this.append(this)
-        except __builtin__.Exception:
-            self.this = this
-    __swig_destroy__ = _ccextractor.delete_cc_to_python_subs
-    __del__ = lambda self: None
-cc_to_python_subs_swigregister = _ccextractor.cc_to_python_subs_swigregister
-cc_to_python_subs_swigregister(cc_to_python_subs)
-
 
 def api_init_options():
     return _ccextractor.api_init_options()
