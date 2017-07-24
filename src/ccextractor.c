@@ -606,7 +606,18 @@ int __wrap_write(int file_handle, char* buffer, int nbyte)
         return write(file_handle,buffer,nbyte);
 //      return __real_write(file_handle,buffer,nbyte);
 }
-
+void show_extracted_captions_with_timings(){
+    int i;
+    for(i=0;i<array.sub_count;i++){
+        if (!array.is_transcript)
+            mprint("start_time = %s\tend_time = %s\n",array.subs[i].start_time,array.subs[i].end_time);
+        int j=0;
+        while(j<array.subs[i].buffer_count){
+            mprint("%s\n",array.subs[i].buffer[j]);
+            j++;
+        }
+    }
+}
 
 int main(int argc, char* argv[]){
     int i;
@@ -617,16 +628,6 @@ int main(int argc, char* argv[]){
     
     int compile_ret = compile_params(api_options,argc);
     int start_ret = api_start(*api_options);
-    
-    /*for(i=0;i<array.sub_count;i++){
-        if (!array.is_transcript)
-            mprint("start_time = %s\tend_time = %s\n",array.subs[i].start_time,array.subs[i].end_time);
-        int j=0;
-        while(j<array.subs[i].buffer_count){
-            mprint("%s\n",array.subs[i].buffer[j]);
-            j++;
-        }
-    }
-    */
-	return start_ret;
+    show_extracted_captions_with_timings();
+    return start_ret;
 }

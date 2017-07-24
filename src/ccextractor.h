@@ -53,6 +53,8 @@ char * api_param(struct ccx_s_options* api_options, int count);
 void sigterm_handler(int sig);
 void sigint_handler(int sig);
 void print_end_msg(void);
+
+void show_extracted_captions_with_timings();
 int main(int argc, char *argv[]);
 
 int cc_to_python_get_number_of_subs();
