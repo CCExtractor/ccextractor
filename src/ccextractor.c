@@ -580,6 +580,17 @@ void python_extract_time_based(unsigned h1, unsigned m1, unsigned s1, unsigned m
     strcpy(array.subs[array.sub_count-1].buffer[array.subs[array.sub_count-1].buffer_count-1], buffer);
 }
 
+/*
+void python_extract_sami(LLONG ms_start,LLONG ms_end,char* buffer){
+    //check if the caption with same start and end time already exists
+    int i;
+    unsigned h1,m1,s1,ms1;
+	unsigned h2,m2,s2,ms2;
+	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
+	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+    python_extract_time_based(h1,m1,s1,ms1,h2,m2,s2,ms2,buffer);
+}
+*/
 
 
 //int __real_write(int file_handle, char* buffer, int nbyte);

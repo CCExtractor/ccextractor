@@ -222,6 +222,7 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 	}
 	used = encode_line(context, context->buffer,(unsigned char *) str);
 	__wrap_write (context->out->fh, context->buffer, used);
+    //python_extract_sami(startms,endms,context->buffer);
 	for (int i=0;i<15;i++)
 	{
 		if (data->row_used[i])
@@ -233,6 +234,7 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 				dbg_print(CCX_DMT_DECODER_608, "%s\n",context->subline);
 			}
 			__wrap_write (context->out->fh, context->subline, length);
+            //python_extract_sami(startms,endms,context->buffer);
 			wrote_something = 1;
 			if (i!=14)
 				__wrap_write (context->out->fh, context->encoded_br, context->encoded_br_length);
