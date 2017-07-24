@@ -198,6 +198,10 @@ class python_subs_array(_object):
     __swig_getmethods__["subs"] = _ccextractor.python_subs_array_subs_get
     if _newclass:
         subs = _swig_property(_ccextractor.python_subs_array_subs_get, _ccextractor.python_subs_array_subs_set)
+    __swig_setmethods__["is_transcript"] = _ccextractor.python_subs_array_is_transcript_set
+    __swig_getmethods__["is_transcript"] = _ccextractor.python_subs_array_is_transcript_get
+    if _newclass:
+        is_transcript = _swig_property(_ccextractor.python_subs_array_is_transcript_get, _ccextractor.python_subs_array_is_transcript_set)
 
     def __init__(self):
         this = _ccextractor.new_python_subs_array()
@@ -251,6 +255,10 @@ def print_end_msg():
     return _ccextractor.print_end_msg()
 print_end_msg = _ccextractor.print_end_msg
 
+def show_extracted_captions_with_timings():
+    return _ccextractor.show_extracted_captions_with_timings()
+show_extracted_captions_with_timings = _ccextractor.show_extracted_captions_with_timings
+
 def main(argc, argv):
     return _ccextractor.main(argc, argv)
 main = _ccextractor.main
@@ -274,6 +282,14 @@ cc_to_python_get_modified_sub_buffer = _ccextractor.cc_to_python_get_modified_su
 def python_extract(srt_counter, h1, m1, s1, ms1, h2, m2, s2, ms2, buffer):
     return _ccextractor.python_extract(srt_counter, h1, m1, s1, ms1, h2, m2, s2, ms2, buffer)
 python_extract = _ccextractor.python_extract
+
+def python_extract_time_based(h1, m1, s1, ms1, h2, m2, s2, ms2, buffer):
+    return _ccextractor.python_extract_time_based(h1, m1, s1, ms1, h2, m2, s2, ms2, buffer)
+python_extract_time_based = _ccextractor.python_extract_time_based
+
+def python_extract_transcript(buffer):
+    return _ccextractor.python_extract_transcript(buffer)
+python_extract_transcript = _ccextractor.python_extract_transcript
 
 def __wrap_write(file_handle, buffer, nbyte):
     return _ccextractor.__wrap_write(file_handle, buffer, nbyte)

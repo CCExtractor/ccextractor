@@ -4185,6 +4185,58 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_python_subs_array_is_transcript_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_array *arg1 = (struct python_subs_array *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:python_subs_array_is_transcript_set",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_array, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_array_is_transcript_set" "', argument " "1"" of type '" "struct python_subs_array *""'"); 
+  }
+  arg1 = (struct python_subs_array *)(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "python_subs_array_is_transcript_set" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = (int)(val2);
+  if (arg1) (arg1)->is_transcript = arg2;
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_subs_array_is_transcript_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_array *arg1 = (struct python_subs_array *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:python_subs_array_is_transcript_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_array, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_array_is_transcript_get" "', argument " "1"" of type '" "struct python_subs_array *""'"); 
+  }
+  arg1 = (struct python_subs_array *)(argp1);
+  result = (int) ((arg1)->is_transcript);
+  resultobj = SWIG_From_int((int)(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_new_python_subs_array(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   struct python_subs_array *result = 0 ;
@@ -4542,6 +4594,18 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_show_extracted_captions_with_timings(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  
+  if (!PyArg_ParseTuple(args,(char *)":show_extracted_captions_with_timings")) SWIG_fail;
+  show_extracted_captions_with_timings();
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_main(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   int arg1 ;
@@ -4766,6 +4830,126 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_python_extract_time_based(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  unsigned int arg1 ;
+  unsigned int arg2 ;
+  unsigned int arg3 ;
+  unsigned int arg4 ;
+  unsigned int arg5 ;
+  unsigned int arg6 ;
+  unsigned int arg7 ;
+  unsigned int arg8 ;
+  char *arg9 = (char *) 0 ;
+  unsigned int val1 ;
+  int ecode1 = 0 ;
+  unsigned int val2 ;
+  int ecode2 = 0 ;
+  unsigned int val3 ;
+  int ecode3 = 0 ;
+  unsigned int val4 ;
+  int ecode4 = 0 ;
+  unsigned int val5 ;
+  int ecode5 = 0 ;
+  unsigned int val6 ;
+  int ecode6 = 0 ;
+  unsigned int val7 ;
+  int ecode7 = 0 ;
+  unsigned int val8 ;
+  int ecode8 = 0 ;
+  int res9 ;
+  char *buf9 = 0 ;
+  int alloc9 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  PyObject * obj7 = 0 ;
+  PyObject * obj8 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOOOOO:python_extract_time_based",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8)) SWIG_fail;
+  ecode1 = SWIG_AsVal_unsigned_SS_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "python_extract_time_based" "', argument " "1"" of type '" "unsigned int""'");
+  } 
+  arg1 = (unsigned int)(val1);
+  ecode2 = SWIG_AsVal_unsigned_SS_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "python_extract_time_based" "', argument " "2"" of type '" "unsigned int""'");
+  } 
+  arg2 = (unsigned int)(val2);
+  ecode3 = SWIG_AsVal_unsigned_SS_int(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "python_extract_time_based" "', argument " "3"" of type '" "unsigned int""'");
+  } 
+  arg3 = (unsigned int)(val3);
+  ecode4 = SWIG_AsVal_unsigned_SS_int(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "python_extract_time_based" "', argument " "4"" of type '" "unsigned int""'");
+  } 
+  arg4 = (unsigned int)(val4);
+  ecode5 = SWIG_AsVal_unsigned_SS_int(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "python_extract_time_based" "', argument " "5"" of type '" "unsigned int""'");
+  } 
+  arg5 = (unsigned int)(val5);
+  ecode6 = SWIG_AsVal_unsigned_SS_int(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "python_extract_time_based" "', argument " "6"" of type '" "unsigned int""'");
+  } 
+  arg6 = (unsigned int)(val6);
+  ecode7 = SWIG_AsVal_unsigned_SS_int(obj6, &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "python_extract_time_based" "', argument " "7"" of type '" "unsigned int""'");
+  } 
+  arg7 = (unsigned int)(val7);
+  ecode8 = SWIG_AsVal_unsigned_SS_int(obj7, &val8);
+  if (!SWIG_IsOK(ecode8)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "python_extract_time_based" "', argument " "8"" of type '" "unsigned int""'");
+  } 
+  arg8 = (unsigned int)(val8);
+  res9 = SWIG_AsCharPtrAndSize(obj8, &buf9, NULL, &alloc9);
+  if (!SWIG_IsOK(res9)) {
+    SWIG_exception_fail(SWIG_ArgError(res9), "in method '" "python_extract_time_based" "', argument " "9"" of type '" "char *""'");
+  }
+  arg9 = (char *)(buf9);
+  python_extract_time_based(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+  resultobj = SWIG_Py_Void();
+  if (alloc9 == SWIG_NEWOBJ) free((char*)buf9);
+  return resultobj;
+fail:
+  if (alloc9 == SWIG_NEWOBJ) free((char*)buf9);
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_extract_transcript(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char *arg1 = (char *) 0 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:python_extract_transcript",&obj0)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_extract_transcript" "', argument " "1"" of type '" "char *""'");
+  }
+  arg1 = (char *)(buf1);
+  python_extract_transcript(arg1);
+  resultobj = SWIG_Py_Void();
+  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap___wrap_write(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   int arg1 ;
@@ -4918,6 +5102,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"python_subs_array_sub_count_get", _wrap_python_subs_array_sub_count_get, METH_VARARGS, NULL},
 	 { (char *)"python_subs_array_subs_set", _wrap_python_subs_array_subs_set, METH_VARARGS, NULL},
 	 { (char *)"python_subs_array_subs_get", _wrap_python_subs_array_subs_get, METH_VARARGS, NULL},
+	 { (char *)"python_subs_array_is_transcript_set", _wrap_python_subs_array_is_transcript_set, METH_VARARGS, NULL},
+	 { (char *)"python_subs_array_is_transcript_get", _wrap_python_subs_array_is_transcript_get, METH_VARARGS, NULL},
 	 { (char *)"new_python_subs_array", _wrap_new_python_subs_array, METH_VARARGS, NULL},
 	 { (char *)"delete_python_subs_array", _wrap_delete_python_subs_array, METH_VARARGS, NULL},
 	 { (char *)"python_subs_array_swigregister", python_subs_array_swigregister, METH_VARARGS, NULL},
@@ -4931,12 +5117,15 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"sigterm_handler", _wrap_sigterm_handler, METH_VARARGS, NULL},
 	 { (char *)"sigint_handler", _wrap_sigint_handler, METH_VARARGS, NULL},
 	 { (char *)"print_end_msg", _wrap_print_end_msg, METH_VARARGS, NULL},
+	 { (char *)"show_extracted_captions_with_timings", _wrap_show_extracted_captions_with_timings, METH_VARARGS, NULL},
 	 { (char *)"main", _wrap_main, METH_VARARGS, NULL},
 	 { (char *)"cc_to_python_get_number_of_subs", _wrap_cc_to_python_get_number_of_subs, METH_VARARGS, NULL},
 	 { (char *)"cc_to_python_get_modified_sub", _wrap_cc_to_python_get_modified_sub, METH_VARARGS, NULL},
 	 { (char *)"cc_to_python_get_modified_sub_buffer_size", _wrap_cc_to_python_get_modified_sub_buffer_size, METH_VARARGS, NULL},
 	 { (char *)"cc_to_python_get_modified_sub_buffer", _wrap_cc_to_python_get_modified_sub_buffer, METH_VARARGS, NULL},
 	 { (char *)"python_extract", _wrap_python_extract, METH_VARARGS, NULL},
+	 { (char *)"python_extract_time_based", _wrap_python_extract_time_based, METH_VARARGS, NULL},
+	 { (char *)"python_extract_transcript", _wrap_python_extract_transcript, METH_VARARGS, NULL},
 	 { (char *)"__wrap_write", _wrap___wrap_write, METH_VARARGS, NULL},
 	 { (char *)"setautoprogram", _wrap_setautoprogram, METH_VARARGS, NULL},
 	 { (char *)"setstdout", _wrap_setstdout, METH_VARARGS, NULL},
