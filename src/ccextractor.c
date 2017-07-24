@@ -554,6 +554,32 @@ void python_extract(int srt_counter, unsigned h1, unsigned m1, unsigned s1, unsi
     array.subs[array.sub_count-1].buffer[array.subs[array.sub_count-1].buffer_count-1] =  malloc(sizeof(char)*strlen(buffer));
     strcpy(array.subs[array.sub_count-1].buffer[array.subs[array.sub_count-1].buffer_count-1], buffer);
 }
+void python_extract_time_based(unsigned h1, unsigned m1, unsigned s1, unsigned ms1, unsigned h2, unsigned m2, unsigned s2, unsigned ms2, char* buffer){
+    //check if the caption with same start and end time already exists
+    int i;
+    char* start_time = time_wrapper("%02u:%02u:%02u,%03u",h1,m1,s1,ms1);
+    char* end_time = time_wrapper("%02u:%02u:%02u,%03u",h2,m2,s2,ms2);
+    for(i=0;i<array.sub_count;i++){
+        if ((strcmp(start_time,array.subs[i].start_time)==0)&&(strcmp(end_time,array.subs[i].end_time)==0)){
+                array.subs[i].buffer_count++;
+                array.subs[i].buffer = realloc(array.subs[i].buffer,sizeof(char*)*array.subs[i].buffer_count);
+                array.subs[i].buffer[array.subs[i].buffer_count-1] =  malloc(sizeof(char)*strlen(buffer));
+                strcpy (array.subs[i].buffer[array.subs[i].buffer_count-1], buffer);
+                return;
+            }
+        }
+    array.sub_count++;
+    array.subs = realloc(array.subs,sizeof(struct python_subs_modified)*array.sub_count);
+    
+    array.subs[array.sub_count-1].start_time = start_time;
+    array.subs[array.sub_count-1].end_time = end_time;
+    
+    array.subs[array.sub_count-1].buffer_count=1;
+    array.subs[array.sub_count-1].buffer = malloc(sizeof(char*)*array.subs[array.sub_count-1].buffer_count);
+    array.subs[array.sub_count-1].buffer[array.subs[array.sub_count-1].buffer_count-1] =  malloc(sizeof(char)*strlen(buffer));
+    strcpy(array.subs[array.sub_count-1].buffer[array.subs[array.sub_count-1].buffer_count-1], buffer);
+}
+
 
 
 //int __real_write(int file_handle, char* buffer, int nbyte);
@@ -574,7 +600,6 @@ int main(int argc, char* argv[]){
     int compile_ret = compile_params(api_options,argc);
     int start_ret = api_start(*api_options);
     for(i=0;i<array.sub_count;i++){
-        mprint("srt_counter = %d\n",array.subs[i].srt_counter);
         mprint("start_time = %s\tend_time = %s\n",array.subs[i].start_time,array.subs[i].end_time);
         int j=0;
         while(j<array.subs[i].buffer_count){
