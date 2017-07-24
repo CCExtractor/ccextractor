@@ -16,6 +16,7 @@ print "The extracted captions with respective timings are as follows:"
 ###just uncomment the next line.
 cc.show_extracted_captions_with_timings()
 
+###THE FOLLOWING LOOP LETS USER USE THE EXTRACTED CAPTIONS ALONG WITH THEIR TIMINGS.
 #for i in xrange(cc.cc_to_python_get_number_of_subs()):
 #    caption = cc.cc_to_python_get_modified_sub(i)
 #    print caption.srt_counter

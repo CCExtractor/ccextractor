@@ -279,18 +279,6 @@ def cc_to_python_get_modified_sub_buffer(i, j):
     return _ccextractor.cc_to_python_get_modified_sub_buffer(i, j)
 cc_to_python_get_modified_sub_buffer = _ccextractor.cc_to_python_get_modified_sub_buffer
 
-def python_extract(srt_counter, h1, m1, s1, ms1, h2, m2, s2, ms2, buffer):
-    return _ccextractor.python_extract(srt_counter, h1, m1, s1, ms1, h2, m2, s2, ms2, buffer)
-python_extract = _ccextractor.python_extract
-
-def python_extract_time_based(h1, m1, s1, ms1, h2, m2, s2, ms2, buffer):
-    return _ccextractor.python_extract_time_based(h1, m1, s1, ms1, h2, m2, s2, ms2, buffer)
-python_extract_time_based = _ccextractor.python_extract_time_based
-
-def python_extract_transcript(buffer):
-    return _ccextractor.python_extract_transcript(buffer)
-python_extract_transcript = _ccextractor.python_extract_transcript
-
 def __wrap_write(file_handle, buffer, nbyte):
     return _ccextractor.__wrap_write(file_handle, buffer, nbyte)
 __wrap_write = _ccextractor.__wrap_write
