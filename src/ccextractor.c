@@ -580,6 +580,13 @@ void python_extract_time_based(unsigned h1, unsigned m1, unsigned s1, unsigned m
     strcpy(array.subs[array.sub_count-1].buffer[array.subs[array.sub_count-1].buffer_count-1], buffer);
 }
 
+void python_extract_transcript(char* buffer){
+    //check if the caption with same start and end time already exists
+    python_extract_time_based(0,0,0,0,0,0,0,0,buffer);
+    array.is_transcript=1; 
+}
+
+
 /*
 void python_extract_sami(LLONG ms_start,LLONG ms_end,char* buffer){
     //check if the caption with same start and end time already exists
@@ -610,13 +617,16 @@ int main(int argc, char* argv[]){
     
     int compile_ret = compile_params(api_options,argc);
     int start_ret = api_start(*api_options);
-    for(i=0;i<array.sub_count;i++){
-        mprint("start_time = %s\tend_time = %s\n",array.subs[i].start_time,array.subs[i].end_time);
+    
+    /*for(i=0;i<array.sub_count;i++){
+        if (!array.is_transcript)
+            mprint("start_time = %s\tend_time = %s\n",array.subs[i].start_time,array.subs[i].end_time);
         int j=0;
         while(j<array.subs[i].buffer_count){
             mprint("%s\n",array.subs[i].buffer[j]);
             j++;
         }
     }
+    */
 	return start_ret;
 }
