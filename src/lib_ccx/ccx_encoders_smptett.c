@@ -30,7 +30,6 @@
 #include "utility.h"
 #include "ccx_encoders_helpers.h"
 
-
 void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
 	int used;

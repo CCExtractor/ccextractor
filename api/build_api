@@ -11,7 +11,8 @@ SRC_HASH="$(find ../src/lib_hash/ -name '*.c')"
 SRC_PROTOBUF="$(find ../src/protobuf-c/ -name '*.c')"
 SRC_UTF8PROC="../src/utf8proc/utf8proc.c"
 API_WRAPPERS="$(find ../api/wrappers/ -name '*.c')"
-BLD_SOURCES="../src/ccextractor.c ccextractor_wrap.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC $API_WRAPPERS"
+API_EXTRACTORS="$(find ../api/extractors/ -name '*.c')"
+BLD_SOURCES="../src/ccextractor.c ccextractor_wrap.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC $API_WRAPPERS $API_EXTRACTORS"
 
 ../linux/pre-build.sh
 
