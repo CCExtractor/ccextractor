@@ -14,6 +14,7 @@ void python_extract(int srt_counter, unsigned h1, unsigned m1, unsigned s1, unsi
                 array.subs[i].buffer = realloc(array.subs[i].buffer,sizeof(char*)*array.subs[i].buffer_count);
                 array.subs[i].buffer[array.subs[i].buffer_count-1] =  malloc(sizeof(char)*strlen(buffer));
                 strcpy (array.subs[i].buffer[array.subs[i].buffer_count-1], buffer);
+                //array.update_status =1;
                 return;
             }
         }
@@ -28,7 +29,9 @@ void python_extract(int srt_counter, unsigned h1, unsigned m1, unsigned s1, unsi
     array.subs[array.sub_count-1].buffer = malloc(sizeof(char*)*array.subs[array.sub_count-1].buffer_count);
     array.subs[array.sub_count-1].buffer[array.subs[array.sub_count-1].buffer_count-1] =  malloc(sizeof(char)*strlen(buffer));
     strcpy(array.subs[array.sub_count-1].buffer[array.subs[array.sub_count-1].buffer_count-1], buffer);
+    //array.update_status =1;
 }
+
 void python_extract_time_based(unsigned h1, unsigned m1, unsigned s1, unsigned ms1, unsigned h2, unsigned m2, unsigned s2, unsigned ms2, char* buffer){
     //check if the caption with same start and end time already exists
     int i;
@@ -40,6 +43,7 @@ void python_extract_time_based(unsigned h1, unsigned m1, unsigned s1, unsigned m
                 array.subs[i].buffer = realloc(array.subs[i].buffer,sizeof(char*)*array.subs[i].buffer_count);
                 array.subs[i].buffer[array.subs[i].buffer_count-1] =  malloc(sizeof(char)*strlen(buffer));
                 strcpy (array.subs[i].buffer[array.subs[i].buffer_count-1], buffer);
+                //array.update_status =1;
                 return;
             }
         }
@@ -53,6 +57,7 @@ void python_extract_time_based(unsigned h1, unsigned m1, unsigned s1, unsigned m
     array.subs[array.sub_count-1].buffer = malloc(sizeof(char*)*array.subs[array.sub_count-1].buffer_count);
     array.subs[array.sub_count-1].buffer[array.subs[array.sub_count-1].buffer_count-1] =  malloc(sizeof(char)*strlen(buffer));
     strcpy(array.subs[array.sub_count-1].buffer[array.subs[array.sub_count-1].buffer_count-1], buffer);
+    //array.update_status =1;
 }
 
 void python_extract_transcript(char* buffer){

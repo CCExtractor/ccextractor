@@ -476,6 +476,13 @@ int api_param_count(struct ccx_s_options* api_options){
 }
 
 /*subs functions*/
+int cc_to_python_get_old_count(){
+    return array.old_sub_count;
+}
+
+void cc_to_python_set_old_count(){
+     array.old_sub_count=array.sub_count;
+}
 int cc_to_python_get_number_of_subs(){
     return array.sub_count;
 }

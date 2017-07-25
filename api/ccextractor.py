@@ -95,6 +95,46 @@ except __builtin__.Exception:
         pass
     _newclass = 0
 
+
+import threading
+import time
+from threading import Thread
+caption_time_tuples = []
+def thread_updater():
+    Thread(target = caption_generator).start()
+def caption_generator():
+    global caption_time_tuples
+    new_count = cvar.array.sub_count
+    old_count = cvar.array.old_sub_count
+    if old_count!=new_count:
+        for i in xrange(old_count,new_count):
+            caption = cc_to_python_get_modified_sub(i)
+#s,e = sub.start_time,sub.end_time
+#if (s,e) not in caption_time_tuples:
+#    caption_time_tuples.append((s,e))
+#    print caption.srt_counter
+            print "start time = {}\t end time = {}".format(caption.start_time,caption.end_time)
+            for j in xrange(cc_to_python_get_modified_sub_buffer_size(i)):
+                print cc_to_python_get_modified_sub_buffer(i,j)
+        old_count=new_count
+    else:
+        if cvar.array.has_api_start_exited:
+            return
+        time.sleep(0.1)
+        caption_generator()
+def caption_updater():
+        new_count = cvar.array.sub_count
+        old_count = cvar.array.sub_count
+        if old_count!=new_count:
+            sub_count = cc_to_python_get_number_of_subs()-1
+            caption = cc_to_python_get_modified_sub(sub_count)
+            print caption.srt_counter
+        else:
+            raise ValueError("TRY_EXCEPT BLOCK.")
+#print "start time = {}\t end time = {}".format(caption.start_time,caption.end_time)
+#for j in xrange(cc_to_python_get_modified_sub_buffer_size(sub_count)):
+#    print cc_to_python_get_modified_sub_buffer(sub_count,j)
+
 EXIT_OK = _ccextractor.EXIT_OK
 EXIT_NO_INPUT_FILES = _ccextractor.EXIT_NO_INPUT_FILES
 EXIT_TOO_MANY_INPUT_FILES = _ccextractor.EXIT_TOO_MANY_INPUT_FILES
@@ -190,6 +230,14 @@ class python_subs_array(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, python_subs_array, name)
     __repr__ = _swig_repr
+    __swig_setmethods__["has_api_start_exited"] = _ccextractor.python_subs_array_has_api_start_exited_set
+    __swig_getmethods__["has_api_start_exited"] = _ccextractor.python_subs_array_has_api_start_exited_get
+    if _newclass:
+        has_api_start_exited = _swig_property(_ccextractor.python_subs_array_has_api_start_exited_get, _ccextractor.python_subs_array_has_api_start_exited_set)
+    __swig_setmethods__["old_sub_count"] = _ccextractor.python_subs_array_old_sub_count_set
+    __swig_getmethods__["old_sub_count"] = _ccextractor.python_subs_array_old_sub_count_get
+    if _newclass:
+        old_sub_count = _swig_property(_ccextractor.python_subs_array_old_sub_count_get, _ccextractor.python_subs_array_old_sub_count_set)
     __swig_setmethods__["sub_count"] = _ccextractor.python_subs_array_sub_count_set
     __swig_getmethods__["sub_count"] = _ccextractor.python_subs_array_sub_count_get
     if _newclass:
@@ -262,6 +310,14 @@ show_extracted_captions_with_timings = _ccextractor.show_extracted_captions_with
 def main(argc, argv):
     return _ccextractor.main(argc, argv)
 main = _ccextractor.main
+
+def cc_to_python_get_old_count():
+    return _ccextractor.cc_to_python_get_old_count()
+cc_to_python_get_old_count = _ccextractor.cc_to_python_get_old_count
+
+def cc_to_python_set_old_count():
+    return _ccextractor.cc_to_python_set_old_count()
+cc_to_python_set_old_count = _ccextractor.cc_to_python_set_old_count
 
 def cc_to_python_get_number_of_subs():
     return _ccextractor.cc_to_python_get_number_of_subs()

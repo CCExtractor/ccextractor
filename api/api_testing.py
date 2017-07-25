@@ -2,19 +2,22 @@ import ccextractor as cc
 import os
 import time
 import sys
+cc.thread_updater()
 s =  cc.api_init_options()
 cc.check_configuration_file(s)
 for i in sys.argv[1:]:
     cc.api_add_param(s,str(i))
 #cc.setstdout(s)
+print "before compile params"
 compile_ret = cc.compile_params(s,len(sys.argv[1:]));
 start_ret = cc.api_start(s);
+cc.cvar.array.has_api_start_exited=1
 
-print "\n"
-print "The extracted captions with respective timings are as follows:"
+#print "\n"
+#print "The extracted captions with respective timings are as follows:"
 ###one line functions to directly check the extracted captions that would be otherwise accessible in python.
 ###just uncomment the next line.
-cc.show_extracted_captions_with_timings()
+#cc.show_extracted_captions_with_timings()
 
 ###THE FOLLOWING LOOP LETS USER USE THE EXTRACTED CAPTIONS ALONG WITH THEIR TIMINGS.
 #for i in xrange(cc.cc_to_python_get_number_of_subs()):

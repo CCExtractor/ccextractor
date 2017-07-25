@@ -31,6 +31,8 @@ struct python_subs_modified{
 };
 
 struct python_subs_array{
+        int has_api_start_exited;
+        int old_sub_count;
         int sub_count;
         struct python_subs_modified* subs;
         int is_transcript;
@@ -57,6 +59,8 @@ void print_end_msg(void);
 void show_extracted_captions_with_timings();
 int main(int argc, char *argv[]);
 
+int cc_to_python_get_old_count();
+void cc_to_python_set_old_count();
 int cc_to_python_get_number_of_subs();
 struct python_subs_modified cc_to_python_get_modified_sub(int i);
 int cc_to_python_get_modified_sub_buffer_size(int i);
