@@ -8,11 +8,12 @@ cc.check_configuration_file(s)
 for i in sys.argv[1:]:
     cc.api_add_param(s,str(i))
 #cc.setstdout(s)
-print "before compile params"
 compile_ret = cc.compile_params(s,len(sys.argv[1:]));
 start_ret = cc.api_start(s);
+#for item in cc.captions_timings_list:
+#    print item(0),item(1)
+#    print item(2)
 cc.cvar.array.has_api_start_exited=1
-
 #print "\n"
 #print "The extracted captions with respective timings are as follows:"
 ###one line functions to directly check the extracted captions that would be otherwise accessible in python.

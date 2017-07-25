@@ -501,66 +501,115 @@ char* cc_to_python_get_modified_sub_buffer(int i, int j){
 /*
  * asprintf alternative
  */
-char* time_wrapper(const char *fmt, ...)
-{
-    int n;
-    int size = 10;     /* Guess we need no more than 100 bytes */
-    char *p, *np;
-    va_list ap;
-   if ((p = malloc(size)) == NULL)
-       return NULL;
-    while (1) {
-     /* Try to print in the allocated space */
-         va_start(ap, fmt);
-         n = vsnprintf(p, size, fmt, ap);
-         va_end(ap);
-        /* Check error code */
-         if (n < 0)
-                return NULL;
-        /* If that worked, return the string */
-       if (n < size)
-           return p;
-      /* Else try again with more space */
-      size = n + 1;       /* Precisely what is needed */
-     if ((np = realloc (p, size)) == NULL) {
-             free(p);
-             return NULL;
-     } 
-     else {
-         p = np;
-     }
+#ifdef _WIN32
+int vasprintf(char **strp, const char *fmt, va_list ap) {
+    _vscprintf tells you how big the buffer needs to be
+    int len = _vscprintf(fmt, ap);
+    if (len == -1) {
+    return -1;
+    }
+    size_t size = (size_t)len + 1;
+    char *str = malloc(size);
+    if (!str) {
+         return -1;
+    }
+    // _vsprintf_s is the "secure" version of vsprintf
+    int r = _vsprintf_s(str, len + 1, fmt, ap);
+    if (r == -1) {
+         free(str);
+         return -1;
+    }
+    *strp = str;
+    return r;
+    }
+
+int asprintf(char **strp, const char *fmt, ...) {
+        va_list ap;
+        va_start(ap, fmt);
+        int r = vasprintf(strp, fmt, ap);
+        va_end(ap);
+        return r;
 }
+#endif
+char* time_wrapper(char* fmt, unsigned h, unsigned m, unsigned s, unsigned ms){
+    char * time;
+    asprintf(&time,fmt, h, m, s, ms);
+    return time;
 }
 
+
+/*
+ * char* time_wrapper(char* fmt, unsigned h, unsigned m, unsigned s, unsigned ms){
+int buf_len = 12;
+char *x = malloc( 10* sizeof(char));
+int size = snprintf(x, 13, fmt, h, m, s, ms);
+if(size >= buf_len) {
+        x = realloc(x,(size) * sizeof(char));
+        snprintf(x, 13, fmt, h, m, s, ms);
+}
+printf("\n%02u:%02u:%02u,%02u\t%s\n",h,m,s,ms,x);
+return x;
+}
+*/
+//char* time_wrapper(const char *fmt, ...)
+//{
+//    int n;
+//    int size = 1000;     // Guess we need no more than 100 bytes */
+//    char *p, *np;
+//    va_list ap;
+//   if ((p = malloc(size)) == NULL)
+//       return NULL;
+//    while (1) {
+//     /* Try to print in the allocated space */
+//         va_start(ap, fmt);
+//         n = vsnprintf(p, size, fmt, ap);
+//         va_end(ap);
+//        /* Check error code */
+//         if (n < 0)
+//                return NULL;
+//        /* If that worked, return the string */
+//       if (n < size)
+//           return p;
+//      /* Else try again with more space */
+//      size = n + 1;       /* Precisely what is needed */
+//     if ((np = realloc (p, size)) == NULL) {
+//             free(p);
+//             return NULL;
+//     } 
+//     else {
+//         p = np;
+//     }
+//}
+//}
 //int __real_write(int file_handle, char* buffer, int nbyte);
 int __wrap_write(int file_handle, char* buffer, int nbyte)
 {
-        return write(file_handle,buffer,nbyte);
+    return write(file_handle,buffer,nbyte);
 //      return __real_write(file_handle,buffer,nbyte);
 }
 void show_extracted_captions_with_timings(){
-    int i;
-    for(i=0;i<array.sub_count;i++){
-        if (!array.is_transcript)
-            mprint("start_time = %s\tend_time = %s\n",array.subs[i].start_time,array.subs[i].end_time);
-        int j=0;
-        while(j<array.subs[i].buffer_count){
-            mprint("%s\n",array.subs[i].buffer[j]);
-            j++;
-        }
+int i;
+for(i=0;i<array.sub_count;i++){
+    if (!array.is_transcript)
+        mprint("start_time = %s\tend_time = %s\n",array.subs[i].start_time,array.subs[i].end_time);
+    int j=0;
+    while(j<array.subs[i].buffer_count){
+        mprint("%s\n",array.subs[i].buffer[j]);
+        j++;
     }
+}
 }
 
 int main(int argc, char* argv[]){
-    int i;
-    struct ccx_s_options* api_options = api_init_options();
-    check_configuration_file(*api_options);
-    for(i = 1; i < argc; i++)
-        api_add_param(api_options,argv[i]);
-    
-    int compile_ret = compile_params(api_options,argc);
-    int start_ret = api_start(*api_options);
-    //uncomment the next line to check the extracted captions along with timings
-    //    show_extracted_captions_with_timings();
-    return start_ret;
+int i;
+struct ccx_s_options* api_options = api_init_options();
+check_configuration_file(*api_options);
+for(i = 1; i < argc; i++)
+    api_add_param(api_options,argv[i]);
+
+int compile_ret = compile_params(api_options,argc);
+int start_ret = api_start(*api_options);
+//uncomment the next line to check the extracted captions along with timings
+//    show_extracted_captions_with_timings();
+return start_ret;
 }
