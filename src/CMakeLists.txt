@@ -8,7 +8,7 @@ option (WITH_SHARING "Build with sharing and translation support" OFF)
 
 # Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
-set (CCEXTRACTOR_VERSION_MINOR 85)
+set (CCEXTRACTOR_VERSION_MINOR 85b)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
@@ -36,12 +36,11 @@ if(WIN32)
     aux_source_directory ("${PROJECT_SOURCE_DIR}/win_iconv/" SOURCEFILE)
     aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
     set (EXTRA_LIBS ${EXTRA_LIBS} -lws2_32 -lwinmm)
+else (WIN32)
+    # Adding some platform specific library path
+    link_directories (/opt/local/lib)
+    link_directories (/usr/local/lib)
 endif(WIN32)
-
-
-# Adding some platform specific library path
-link_directories (/opt/local/lib)
-link_directories (/usr/local/lib)
 
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -Wall -g -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64")
 add_subdirectory (lib_ccx)
@@ -72,6 +71,8 @@ else(PKG_CONFIG_FOUND)
     aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
     aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib/" SOURCEFILE)
 endif (PKG_CONFIG_FOUND)
+
+set (EXTRA_LIBS ${EXTRA_LIBS} -lz)
 
 ########################################################
 # Build using FFmpeg libraries
