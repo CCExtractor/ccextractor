@@ -1,3 +1,4 @@
+
 ![logo](https://avatars3.githubusercontent.com/u/7253637?v=3&s=100)
  
 # CCExtractor
@@ -29,107 +30,172 @@ More usage information can be found on our website:
 - [Using the command line tool](https://www.ccextractor.org/doku.php?id=public:general:command_line_usage)
 - [Using the Windows GUI](https://www.ccextractor.org/doku.php?id=public:general:win_gui_usage) 
 
+You can also find the list of parameters and their brief description by running `ccextractor` without any arguments.
 
 ## Compiling
 
-### Debian/Ubuntu
-    # make sure you have CCExtractor repository forked
-    # clone repository
-    sudo apt-get install -y git
-    git clone https://github.com/%USERNAME%/ccextractor.git # paste your github username
-    
-    # installing dependencies
-    sudo apt-get install -y gcc
-    sudo apt-get install -y libcurl4-gnutls-dev
-    sudo apt-get install -y tesseract-ocr
-    sudo apt-get install -y tesseract-ocr-dev
-    sudo apt-get install -y libleptonica-dev
+You may compile CCExtractor across all major platforms using `CMakeLists.txt` stored under `ccextractor/src/` directory. Simply,
 
-    # Note: On Ubuntu Version 14.04 (Trusty) and earlier, you should build leptonica and tesseract from source 
+1. Create and navigate to directory where you want to store built files
+
+```
+cd ccextractor/src/
+mkdir build
+cd build
+```
+
+2. Generate makefile using cmake and then compile
+
+```
+cmake ../src/
+make
+```
+
+You may also generate `.sln` files for Visual Studio and build using build tools, or open `.sln` files using Visual Studio.
+
+```
+cmake ../src/ -G "Visual Studio 14 2015"
+cmake --build . --config Release --ccextractor
+```
+
+---
+
+CCExtractor can also be compiled without cmake. System specific instructions are listed below :
+
+Clone the latest repository from Github
+
+```
+git clone https://github.com/CCExtractor/ccextractor.git
+```
+
+### Debian/Ubuntu
+   
+1. Make sure all the dependencies are met.
+
+```
+sudo apt-get install -y gcc
+sudo apt-get install -y libcurl4-gnutls-dev
+sudo apt-get install -y tesseract-ocr
+sudo apt-get install -y tesseract-ocr-dev
+sudo apt-get install -y libleptonica-dev
+
+# Note: On Ubuntu Version 14.04 (Trusty) and earlier, you should build leptonica and tesseract from source 
+```
     
-    # compiling (Choose any one of 2 methods)
-    METHOD 1: If you don't want to obtain object files
-    cd ccextractor/linux
-    ./build
+2. Compiling
+
+*Using build script :*
     
-    METHOD 2: Standard linux compilation through Autoconf scripts
-    sudo apt-get install autoconf      #Dependency to generate configuration script
-    cd ccextractor/linux
-    ./autogen.sh
-    ./configure
-    make
-    
-    # test your build
-    ./ccextractor
+```
+#Navigate to linux directory and call the build script
+
+cd ccextractor/linux
+./build
+
+# test your build
+./ccextractor
+```
+   
+*Standard linux compilation through Autoconf scripts :*
+
+```
+sudo apt-get install autoconf      #Dependency to generate configuration script
+cd ccextractor/linux
+./autogen.sh
+./configure
+make
+
+# test your build
+./ccextractor
+```
 
 ### Fedora
-    # make sure you have CCExtractor repository forked
-    # clone repository
-    sudo yum install -y git
-    git clone https://github.com/%USERNAME%/ccextractor.git # paste your github username
-    
-    # installing dependencies
-    sudo yum install -y gcc
-    sudo yum install -y tesseract-devel # leptonica will be installed automatically
-    
-    # compiling (Choose any one of the 3 methods)
-    METHOD 1: If you don't want to obtain object files
-    cd ccextractor/linux
-    ./build
-    
-    METHOD 2: Standard linux compilation through Autoconf scripts
-    sudo dnf install autoconf automake      #Dependency to generate configuration script
-    cd ccextractor/linux
-    ./autogen.sh
-    ./configure
-    make
-    
-    # test your build
-    ./ccextractor
 
-### Arch Linux
-    # make sure you have CCExtractor repository forked
-    # clone repository
-    sudo pacman -S git
-    git clone https://github.com/%USERNAME%/ccextractor.git # paste your github username
+1. Make sure all the dependencies are met.
 
-    # building installation package (.pkg.tar.xz) or installing directly
-    cd ccextractor/package_creators
-    ./arch.sh
+```
+sudo yum install -y gcc
+sudo yum install -y tesseract-devel # leptonica will be installed automatically
+```
     
-### Redhat Package Manager (rpm) based Linux Distributions
-    # make sure you have CCExtractor repository forked
-    # clone repository
-    # install git via source
-    git clone https://github.com/%USERNAME%/ccextractor.git # paste your github username
+2. Compiling
 
-    # building installation package (.rpm)
-    cd ccextractor/package_creators
-    ./rpm.sh
+*Using build script :*
+
+```    
+#Navigate to linux directory and call the build script
+
+cd ccextractor/linux
+./build
+
+# test your build
+./ccextractor
+```
+    
+*Standard linux compilation through Autoconf scripts :*
+
+```
+sudo dnf install autoconf automake      #Dependency to generate configuration script
+cd ccextractor/linux
+./autogen.sh
+./configure
+make
+
+# test your build
+./ccextractor
+```
 
 ### OSX
-    #PRE-REQUISITES:
-    #Installing required packages via Homebrew
-    brew install pkg-config
-    brew install autoconf automake libtool
-    brew install tesseract
-    brew install leptonica 
-    #After installing Make sure tesseract and leptonica are detected by pkg-config
 
-    METHOD 1: Using build.command script
-    cd ccextractor/mac
-    ./build.command
+1. Make sure all the dependencies are met. They can be installed via Homebrew as
+
+```
+brew install pkg-config
+brew install autoconf automake libtool
+brew install tesseract
+brew install leptonica 
+```
+
+Make sure tesseract and leptonica are detected by pkg-config
+
+2. Compiling
+
+*Using build.command script :*
+
+```
+cd ccextractor/mac
+./build.command
+```
     
-    METHOD 2: Using autoconf scripts
-    cd ccextractor/mac
-    ./autogen.sh
-    ./configure
-    make
+*Standard compilation through Autoconf scripts :*
+
+```
+cd ccextractor/mac
+./autogen.sh
+./configure
+make
+```
 
 
 ### Windows
 
 Open the windows/ccextractor.sln file with Visual Studio (2015 at least), and build it. Configurations "(Debug|Release)-Full" includes dependent libraries which are used for OCR.
+
+## Building Installation Packages 
+
+### Arch Linux
+
+*building installation package (.pkg.tar.xz) or installing directly*
+
+    cd ccextractor/package_creators
+    ./arch.sh
+    
+### Redhat Package Manager (rpm) based Linux Distributions
+
+*building installation package (.rpm)*
+
+    cd ccextractor/package_creators
+    ./rpm.sh
 
 ## Support
 
