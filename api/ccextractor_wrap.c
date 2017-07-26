@@ -4499,7 +4499,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_api_start(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_api_start_init(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   struct ccx_s_options arg1 ;
   void *argp1 ;
@@ -4507,20 +4507,32 @@ SWIGINTERN PyObject *_wrap_api_start(PyObject *SWIGUNUSEDPARM(self), PyObject *a
   PyObject * obj0 = 0 ;
   int result;
   
-  if (!PyArg_ParseTuple(args,(char *)"O:api_start",&obj0)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"O:api_start_init",&obj0)) SWIG_fail;
   {
     res1 = SWIG_ConvertPtr(obj0, &argp1, SWIGTYPE_p_ccx_s_options,  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "api_start" "', argument " "1"" of type '" "struct ccx_s_options""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "api_start_init" "', argument " "1"" of type '" "struct ccx_s_options""'"); 
     }  
     if (!argp1) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "api_start" "', argument " "1"" of type '" "struct ccx_s_options""'");
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "api_start_init" "', argument " "1"" of type '" "struct ccx_s_options""'");
     } else {
       arg1 = *((struct ccx_s_options *)(argp1));
     }
   }
-  result = (int)api_start(arg1);
+  result = (int)api_start_init(arg1);
   resultobj = SWIG_From_int((int)(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_temp(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  
+  if (!PyArg_ParseTuple(args,(char *)":temp")) SWIG_fail;
+  temp();
+  resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
   return NULL;
@@ -4955,7 +4967,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"check_configuration_file", _wrap_check_configuration_file, METH_VARARGS, NULL},
 	 { (char *)"compile_params", _wrap_compile_params, METH_VARARGS, NULL},
 	 { (char *)"api_add_param", _wrap_api_add_param, METH_VARARGS, NULL},
-	 { (char *)"api_start", _wrap_api_start, METH_VARARGS, NULL},
+	 { (char *)"api_start_init", _wrap_api_start_init, METH_VARARGS, NULL},
+	 { (char *)"temp", _wrap_temp, METH_VARARGS, NULL},
 	 { (char *)"api_param_count", _wrap_api_param_count, METH_VARARGS, NULL},
 	 { (char *)"api_param", _wrap_api_param, METH_VARARGS, NULL},
 	 { (char *)"sigterm_handler", _wrap_sigterm_handler, METH_VARARGS, NULL},

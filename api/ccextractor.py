@@ -266,9 +266,13 @@ def api_add_param(api_options, arg):
     return _ccextractor.api_add_param(api_options, arg)
 api_add_param = _ccextractor.api_add_param
 
-def api_start(api_options):
-    return _ccextractor.api_start(api_options)
-api_start = _ccextractor.api_start
+def api_start_init(api_options):
+    return _ccextractor.api_start_init(api_options)
+api_start_init = _ccextractor.api_start_init
+
+def temp():
+    return _ccextractor.temp()
+temp = _ccextractor.temp
 
 def api_param_count(api_options):
     return _ccextractor.api_param_count(api_options)
