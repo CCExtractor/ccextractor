@@ -2,14 +2,45 @@ import ccextractor as cc
 import os
 import time
 import sys
-cc.thread_updater()
-s =  cc.api_init_options()
-cc.check_configuration_file(s)
-for i in sys.argv[1:]:
-    cc.api_add_param(s,str(i))
-#cc.setstdout(s)
-compile_ret = cc.compile_params(s,len(sys.argv[1:]));
-start_ret = cc.api_start(s);
+##cc.thread_updater()
+def follow(thefile):
+    thefile.seek(0,2)
+    while True:
+        line = thefile.readline()
+        if not line:
+            time.sleep(0.1)
+            continue
+        yield line
+
+def tail(queue):
+    fn = queue.get()
+    print str(fn)+ "in tail"
+    logfile = open("temp.txt","r")
+    loglines = follow(logfile)
+    for line in loglines:
+            print line
+
+def templer():
+    s =  cc.api_init_options()
+    cc.check_configuration_file(s)
+    for i in sys.argv[1:]:
+        cc.api_add_param(s,str(i))
+    #cc.setstdout(s)
+    compile_ret = cc.compile_params(s,len(sys.argv[1:]));
+    start_ret = cc.api_start(s);
+
+templer()
+
+
+
+
+
+
+
+
+
+
+
 #for item in cc.captions_timings_list:
 #    print item(0),item(1)
 #    print item(2)
