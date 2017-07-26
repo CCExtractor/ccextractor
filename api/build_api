@@ -16,7 +16,7 @@ BLD_SOURCES="../src/ccextractor.c ccextractor_wrap.c $SRC_CCX $SRC_GPAC $SRC_ZLI
 
 ../linux/pre-build.sh
 
-out=$((LC_ALL=C gcc -fPIC -c $BLD_FLAGS $BLD_INCLUDE $BLD_INCLUDE $BLD_SOURCES) 2>&1)
+out=$((LC_ALL=C gcc -fPIC -c $BLD_FLAGS $BLD_INCLUDE $BLD_SOURCES $BLD_LINKER) 2>&1)
 #out=$((LC_ALL=C gcc -fPIC -c -Wl,-wrap,write $BLD_INCLUDE $BLD_SOURCES) 2>&1)
 res=$?
 if [[ $out == *"gcc: command not found"* ]]
