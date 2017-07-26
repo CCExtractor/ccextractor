@@ -217,6 +217,10 @@ class python_subs_array(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, python_subs_array, name)
     __repr__ = _swig_repr
+    __swig_setmethods__["temporary_file"] = _ccextractor.python_subs_array_temporary_file_set
+    __swig_getmethods__["temporary_file"] = _ccextractor.python_subs_array_temporary_file_get
+    if _newclass:
+        temporary_file = _swig_property(_ccextractor.python_subs_array_temporary_file_get, _ccextractor.python_subs_array_temporary_file_set)
     __swig_setmethods__["has_api_start_exited"] = _ccextractor.python_subs_array_has_api_start_exited_set
     __swig_getmethods__["has_api_start_exited"] = _ccextractor.python_subs_array_has_api_start_exited_get
     if _newclass:

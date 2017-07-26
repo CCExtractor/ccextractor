@@ -421,10 +421,12 @@ int api_start(struct ccx_s_options api_options){
 		mprint("code in the MythTV's branch. Please report results to the address above. If\n");
 		mprint("something is broken it will be fixed. Thanks\n");
 	}
-	return ret ? EXIT_OK : EXIT_NO_CAPTIONS;
+	remove(array.temporary_file);
+    return ret ? EXIT_OK : EXIT_NO_CAPTIONS;
 }
 
 struct ccx_s_options* api_init_options(){
+    array.temporary_file = "test.txt";
     init_options(&ccx_options);
     return &ccx_options;
 }
@@ -609,6 +611,7 @@ for(i = 1; i < argc; i++)
 
 int compile_ret = compile_params(api_options,argc);
 int start_ret = api_start(*api_options);
+
 //uncomment the next line to check the extracted captions along with timings
 //    show_extracted_captions_with_timings();
 return start_ret;

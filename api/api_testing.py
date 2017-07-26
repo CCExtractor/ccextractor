@@ -2,7 +2,8 @@ import ccextractor as cc
 import os
 import time
 import sys
-##cc.thread_updater()
+from multiprocessing import Queue,Process
+
 def follow(thefile):
     thefile.seek(0,2)
     while True:
@@ -15,7 +16,7 @@ def follow(thefile):
 def tail(queue):
     fn = queue.get()
     print str(fn)+ "in tail"
-    logfile = open("temp.txt","r")
+    logfile = open("test.txt","r")
     loglines = follow(logfile)
     for line in loglines:
             print line
@@ -25,11 +26,21 @@ def templer():
     cc.check_configuration_file(s)
     for i in sys.argv[1:]:
         cc.api_add_param(s,str(i))
-    #cc.setstdout(s)
+    cc.setstdout(s)
     compile_ret = cc.compile_params(s,len(sys.argv[1:]));
     start_ret = cc.api_start(s);
 
+#queue = Queue()
+#fn = "test.txt"
+
+#queue.put(fn)
+#queue.put(fn)
+#print "file just put"
+#q = Process(target = tail, args = (queue,))
+#q.start()
+#time.sleep(2)
 templer()
+#sys.exit()
 
 
 
