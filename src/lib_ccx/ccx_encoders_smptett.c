@@ -30,7 +30,6 @@
 #include "utility.h"
 #include "ccx_encoders_helpers.h"
 
-
 void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
 	int used;
@@ -257,7 +256,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 				}
 				used = encode_line(context, context->buffer,(unsigned char *) str);
 				__wrap_write (context->out->fh, context->buffer, used);
-
+                python_extract_time_based(h1,m1,s1,ms1,h2,m2,s2,ms2,"");
 				// Trimming subs because the position is defined by "tts:origin"
 				int old_trim_subs = context->trim_subs;
 				context->trim_subs=1;
@@ -427,6 +426,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 
 
 				__wrap_write(context->out->fh, final, strlen(final));
+                python_extract_time_based(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline);
 
 
 				__wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);

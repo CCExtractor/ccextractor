@@ -471,12 +471,12 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 
 			dbg_print(CCX_DMT_DECODER_608, "\n- - - WEBVTT caption - - -\n");
 			dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
-
 			written = __wrap_write(context->out->fh, context->buffer, used);
 			if (written != used)
 				return -1;
 
 			int length = get_line_encoded(context, context->subline, i, data);
+            python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline);
 
 			if (context->encoding != CCX_ENC_UNICODE)
 			{

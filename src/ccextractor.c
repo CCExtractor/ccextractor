@@ -41,7 +41,7 @@ void print_end_msg(void)
 }
 
 
-int api_start(struct ccx_s_options api_options){
+int api_start_init(struct ccx_s_options api_options){
     struct lib_ccx_ctx *ctx;
 	struct lib_cc_decode *dec_ctx = NULL;
 	int ret = 0, tmp;
@@ -83,7 +83,6 @@ int api_start(struct ccx_s_options api_options){
 	}
 #endif
 
-	int show_myth_banner = 0;
 
 	params_dump(ctx);
 
@@ -101,9 +100,16 @@ int api_start(struct ccx_s_options api_options){
 			mprint ("Warning: -xds ignored, XDS can only be exported to transcripts at this time.\n");
 		}
 	}
-
-
-	time_t start, final;
+}
+void temp(){
+	//temporary declarations
+    struct ccx_s_options api_options;
+    struct lib_ccx_ctx *ctx;
+	struct lib_cc_decode *dec_ctx = NULL;
+	int ret = 0, tmp;
+	enum ccx_stream_mode_enum stream_mode;
+	int show_myth_banner = 0;
+time_t start, final;
 	time(&start);
 
 	if (api_options.binary_concat)
@@ -376,7 +382,6 @@ int api_start(struct ccx_s_options api_options){
 		if(is_decoder_processed_enough(ctx) == CCX_TRUE)
 			break;
 	} // file loop
-    python_subs.extension = ctx->extension;
 	close_input_file(ctx);
 	free((void *) ctx->extension);
 
@@ -409,7 +414,6 @@ int api_start(struct ccx_s_options api_options){
 		curl_easy_cleanup(curl);
   	curl_global_cleanup();
 #endif
-    python_subs.basefilename = ctx->basefilename;
 	dinit_libraries(&ctx);
 
 	if (!ret)
@@ -478,50 +482,141 @@ int api_param_count(struct ccx_s_options* api_options){
 }
 
 /*subs functions*/
-int cc_to_python_get_subs_number_of_lines(){
-    return python_subs.number_of_lines;
-}
-char* cc_to_python_get_sub(int i){
-    return python_subs.subs[i];
+int cc_to_python_get_old_count(){
+    return array.old_sub_count;
 }
 
+void cc_to_python_set_old_count(){
+     array.old_sub_count=array.sub_count;
+}
+int cc_to_python_get_number_of_subs(){
+    return array.sub_count;
+}
 
-/*filename functions*/
+struct python_subs_modified cc_to_python_get_modified_sub(int i){
+    return array.subs[i];
+}
+
+int cc_to_python_get_modified_sub_buffer_size(int i){
+    return array.subs[i].buffer_count;
+}
+char* cc_to_python_get_modified_sub_buffer(int i, int j){
+    return array.subs[i].buffer[j];
+}
+
 /*
-char* cc_to_python_get_basefilename(){
-    return python_subs.basefilename;
+ * asprintf alternative
+ */
+#ifdef _WIN32
+int vasprintf(char **strp, const char *fmt, va_list ap) {
+    _vscprintf tells you how big the buffer needs to be
+    int len = _vscprintf(fmt, ap);
+    if (len == -1) {
+    return -1;
+    }
+    size_t size = (size_t)len + 1;
+    char *str = malloc(size);
+    if (!str) {
+         return -1;
+    }
+    // _vsprintf_s is the "secure" version of vsprintf
+    int r = _vsprintf_s(str, len + 1, fmt, ap);
+    if (r == -1) {
+         free(str);
+         return -1;
+    }
+    *strp = str;
+    return r;
+    }
+
+int asprintf(char **strp, const char *fmt, ...) {
+        va_list ap;
+        va_start(ap, fmt);
+        int r = vasprintf(strp, fmt, ap);
+        va_end(ap);
+        return r;
 }
-char* cc_to_python_get_extension(){
-    return python_subs.extension;
+#endif
+char* time_wrapper(char* fmt, unsigned h, unsigned m, unsigned s, unsigned ms){
+    char * time;
+    asprintf(&time,fmt, h, m, s, ms);
+    return time;
+}
+
+
+/*
+ * char* time_wrapper(char* fmt, unsigned h, unsigned m, unsigned s, unsigned ms){
+int buf_len = 12;
+char *x = malloc( 10* sizeof(char));
+int size = snprintf(x, 13, fmt, h, m, s, ms);
+if(size >= buf_len) {
+        x = realloc(x,(size) * sizeof(char));
+        snprintf(x, 13, fmt, h, m, s, ms);
+}
+printf("\n%02u:%02u:%02u,%02u\t%s\n",h,m,s,ms,x);
+return x;
 }
 */
-
+//char* time_wrapper(const char *fmt, ...)
+//{
+//    int n;
+//    int size = 1000;     // Guess we need no more than 100 bytes */
+//    char *p, *np;
+//    va_list ap;
+//   if ((p = malloc(size)) == NULL)
+//       return NULL;
+//    while (1) {
+//     /* Try to print in the allocated space */
+//         va_start(ap, fmt);
+//         n = vsnprintf(p, size, fmt, ap);
+//         va_end(ap);
+//        /* Check error code */
+//         if (n < 0)
+//                return NULL;
+//        /* If that worked, return the string */
+//       if (n < size)
+//           return p;
+//      /* Else try again with more space */
+//      size = n + 1;       /* Precisely what is needed */
+//     if ((np = realloc (p, size)) == NULL) {
+//             free(p);
+//             return NULL;
+//     } 
+//     else {
+//         p = np;
+//     }
+//}
+//}
 //int __real_write(int file_handle, char* buffer, int nbyte);
 int __wrap_write(int file_handle, char* buffer, int nbyte)
 {
-        python_subs.number_of_lines++;
-        
-        if (python_subs.number_of_lines==1)
-            python_subs.subs = malloc(python_subs.number_of_lines*sizeof(char*));
-        else
-            python_subs.subs = realloc(python_subs.subs,python_subs.number_of_lines*sizeof(char*));
-        
-        python_subs.subs[python_subs.number_of_lines-1] = malloc((strlen(buffer)+1)*sizeof(char));
-        strcpy(python_subs.subs[python_subs.number_of_lines-1],buffer);
-        return write(file_handle,buffer,nbyte);
+    return write(file_handle,buffer,nbyte);
 //      return __real_write(file_handle,buffer,nbyte);
 }
-
+void show_extracted_captions_with_timings(){
+int i;
+for(i=0;i<array.sub_count;i++){
+    if (!array.is_transcript)
+        mprint("start_time = %s\tend_time = %s\n",array.subs[i].start_time,array.subs[i].end_time);
+    int j=0;
+    while(j<array.subs[i].buffer_count){
+        mprint("%s\n",array.subs[i].buffer[j]);
+        j++;
+    }
+}
+}
 
 int main(int argc, char* argv[]){
-    int i;
-    struct ccx_s_options* api_options = api_init_options();
-    check_configuration_file(*api_options);
-    for(i = 1; i < argc; i++)
-        api_add_param(api_options,argv[i]);
-    
-    int compile_ret = compile_params(api_options,argc);
-    int start_ret = api_start(*api_options);
-    
-	return start_ret;
+int i;
+struct ccx_s_options* api_options = api_init_options();
+check_configuration_file(*api_options);
+for(i = 1; i < argc; i++)
+    api_add_param(api_options,argv[i]);
+
+int compile_ret = compile_params(api_options,argc);
+int start_ret = api_start_init(*api_options);
+
+//uncomment the next line to check the extracted captions along with timings
+//    show_extracted_captions_with_timings();
+return start_ret;
 }
