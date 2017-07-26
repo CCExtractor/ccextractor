@@ -2,11 +2,10 @@ import ccextractor as cc
 import os
 import time
 import sys
-from multiprocessing import Queue,Process
-
+from multiprocessing import Queue,Process,Event 
 def follow(thefile):
     thefile.seek(0,2)
-    while True:
+    while 1:
         line = thefile.readline()
         if not line:
             time.sleep(0.1)
@@ -15,11 +14,15 @@ def follow(thefile):
 
 def tail(queue):
     fn = queue.get()
-    print str(fn)+ "in tail"
-    logfile = open("test.txt","r")
+    with open(fn,"w") as f:
+        pass
+    logfile = open(fn,"r")
     loglines = follow(logfile)
     for line in loglines:
-            print line
+        user_choice(line)
+
+def user_choice(line):
+    print line
 
 def templer():
     s =  cc.api_init_options()
@@ -30,17 +33,17 @@ def templer():
     compile_ret = cc.compile_params(s,len(sys.argv[1:]));
     start_ret = cc.api_start(s);
 
-#queue = Queue()
-#fn = "test.txt"
-
-#queue.put(fn)
-#queue.put(fn)
-#print "file just put"
-#q = Process(target = tail, args = (queue,))
-#q.start()
-#time.sleep(2)
+queue = Queue()
+fn = "test.txt"
+queue.put(fn)
+queue.put(fn)
+q = Process(target = tail, args = (queue,))
+q.start()
+time.sleep(2)
 templer()
-#sys.exit()
+time.sleep(0.5)
+q.terminate()
+
 
 
 
