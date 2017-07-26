@@ -2979,19 +2979,20 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 
 /* -------- TYPES TABLE (BEGIN) -------- */
 
-#define SWIGTYPE_p_LLONG swig_types[0]
-#define SWIGTYPE_p_cc_subtitle swig_types[1]
-#define SWIGTYPE_p_ccx_s_options swig_types[2]
-#define SWIGTYPE_p_char swig_types[3]
-#define SWIGTYPE_p_int swig_types[4]
-#define SWIGTYPE_p_lib_ccx_ctx swig_types[5]
-#define SWIGTYPE_p_p_char swig_types[6]
-#define SWIGTYPE_p_python_subs_array swig_types[7]
-#define SWIGTYPE_p_python_subs_modified swig_types[8]
-#define SWIGTYPE_p_unsigned_char swig_types[9]
-#define SWIGTYPE_p_unsigned_int swig_types[10]
-static swig_type_info *swig_types[12];
-static swig_module_info swig_module = {swig_types, 11, 0, 0, 0, 0};
+#define SWIGTYPE_p_FILE swig_types[0]
+#define SWIGTYPE_p_LLONG swig_types[1]
+#define SWIGTYPE_p_cc_subtitle swig_types[2]
+#define SWIGTYPE_p_ccx_s_options swig_types[3]
+#define SWIGTYPE_p_char swig_types[4]
+#define SWIGTYPE_p_int swig_types[5]
+#define SWIGTYPE_p_lib_ccx_ctx swig_types[6]
+#define SWIGTYPE_p_p_char swig_types[7]
+#define SWIGTYPE_p_python_subs_array swig_types[8]
+#define SWIGTYPE_p_python_subs_modified swig_types[9]
+#define SWIGTYPE_p_unsigned_char swig_types[10]
+#define SWIGTYPE_p_unsigned_int swig_types[11]
+static swig_type_info *swig_types[13];
+static swig_module_info swig_module = {swig_types, 12, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -4078,6 +4079,58 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_python_subs_array_fp_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_array *arg1 = (struct python_subs_array *) 0 ;
+  FILE *arg2 = (FILE *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:python_subs_array_fp_set",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_array, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_array_fp_set" "', argument " "1"" of type '" "struct python_subs_array *""'"); 
+  }
+  arg1 = (struct python_subs_array *)(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_FILE, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "python_subs_array_fp_set" "', argument " "2"" of type '" "FILE *""'"); 
+  }
+  arg2 = (FILE *)(argp2);
+  if (arg1) (arg1)->fp = arg2;
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_subs_array_fp_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_array *arg1 = (struct python_subs_array *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  FILE *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:python_subs_array_fp_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_array, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_array_fp_get" "', argument " "1"" of type '" "struct python_subs_array *""'"); 
+  }
+  arg1 = (struct python_subs_array *)(argp1);
+  result = (FILE *) ((arg1)->fp);
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_FILE, 0 |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_python_subs_array_has_api_start_exited_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   struct python_subs_array *arg1 = (struct python_subs_array *) 0 ;
@@ -5001,6 +5054,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"python_subs_modified_swigregister", python_subs_modified_swigregister, METH_VARARGS, NULL},
 	 { (char *)"python_subs_array_temporary_file_set", _wrap_python_subs_array_temporary_file_set, METH_VARARGS, NULL},
 	 { (char *)"python_subs_array_temporary_file_get", _wrap_python_subs_array_temporary_file_get, METH_VARARGS, NULL},
+	 { (char *)"python_subs_array_fp_set", _wrap_python_subs_array_fp_set, METH_VARARGS, NULL},
+	 { (char *)"python_subs_array_fp_get", _wrap_python_subs_array_fp_get, METH_VARARGS, NULL},
 	 { (char *)"python_subs_array_has_api_start_exited_set", _wrap_python_subs_array_has_api_start_exited_set, METH_VARARGS, NULL},
 	 { (char *)"python_subs_array_has_api_start_exited_get", _wrap_python_subs_array_has_api_start_exited_get, METH_VARARGS, NULL},
 	 { (char *)"python_subs_array_old_sub_count_set", _wrap_python_subs_array_old_sub_count_set, METH_VARARGS, NULL},
@@ -5043,6 +5098,7 @@ static PyMethodDef SwigMethods[] = {
 
 /* -------- TYPE CONVERSION AND EQUIVALENCE RULES (BEGIN) -------- */
 
+static swig_type_info _swigt__p_FILE = {"_p_FILE", "FILE *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_LLONG = {"_p_LLONG", "LLONG *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_cc_subtitle = {"_p_cc_subtitle", "struct cc_subtitle *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_ccx_s_options = {"_p_ccx_s_options", "struct ccx_s_options *", 0, 0, (void*)0, 0};
@@ -5056,6 +5112,7 @@ static swig_type_info _swigt__p_unsigned_char = {"_p_unsigned_char", "unsigned c
 static swig_type_info _swigt__p_unsigned_int = {"_p_unsigned_int", "unsigned int *", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
+  &_swigt__p_FILE,
   &_swigt__p_LLONG,
   &_swigt__p_cc_subtitle,
   &_swigt__p_ccx_s_options,
@@ -5069,6 +5126,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_unsigned_int,
 };
 
+static swig_cast_info _swigc__p_FILE[] = {  {&_swigt__p_FILE, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_LLONG[] = {  {&_swigt__p_LLONG, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_cc_subtitle[] = {  {&_swigt__p_cc_subtitle, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_ccx_s_options[] = {  {&_swigt__p_ccx_s_options, 0, 0, 0},{0, 0, 0, 0}};
@@ -5082,6 +5140,7 @@ static swig_cast_info _swigc__p_unsigned_char[] = {  {&_swigt__p_unsigned_char, 
 static swig_cast_info _swigc__p_unsigned_int[] = {  {&_swigt__p_unsigned_int, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
+  _swigc__p_FILE,
   _swigc__p_LLONG,
   _swigc__p_cc_subtitle,
   _swigc__p_ccx_s_options,

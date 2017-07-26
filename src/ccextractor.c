@@ -422,11 +422,13 @@ int api_start(struct ccx_s_options api_options){
 		mprint("something is broken it will be fixed. Thanks\n");
 	}
 	remove(array.temporary_file);
+    fclose(array.fp);
     return ret ? EXIT_OK : EXIT_NO_CAPTIONS;
 }
 
 struct ccx_s_options* api_init_options(){
     array.temporary_file = "test.txt";
+    array.fp = fopen("test.txt", "a");
     init_options(&ccx_options);
     return &ccx_options;
 }
@@ -505,7 +507,7 @@ char* cc_to_python_get_modified_sub_buffer(int i, int j){
  */
 #ifdef _WIN32
 int vasprintf(char **strp, const char *fmt, va_list ap) {
-    _vscprintf tells you how big the buffer needs to be
+    //_vscprintf tells you how big the buffer needs to be
     int len = _vscprintf(fmt, ap);
     if (len == -1) {
     return -1;

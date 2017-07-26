@@ -32,6 +32,7 @@ struct python_subs_modified{
 
 struct python_subs_array{
         char* temporary_file;
+        FILE *fp;
         int has_api_start_exited;
         int old_sub_count;
         int sub_count;

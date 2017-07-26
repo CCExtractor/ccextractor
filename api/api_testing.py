@@ -1,30 +1,14 @@
+###
+#MANDATORY UPDATES IN EVERY PYTHON SCRIPT
+###
 import ccextractor as cc
-import os
-import time
-import sys
+import api_support
 from multiprocessing import Queue,Process,Event 
-def follow(thefile):
-    thefile.seek(0,2)
-    while 1:
-        line = thefile.readline()
-        if not line:
-            #time.sleep(0.1)
-            continue
-        yield line
-
-def tail(queue):
-    fn = queue.get()
-    with open(fn,"w") as f:
-        pass
-    logfile = open(fn,"r")
-    loglines = follow(logfile)
-    for line in loglines:
-        user_choice(line)
-
-def user_choice(line):
-    print line
+import sys
+import time
 
 def templer():
+    time.sleep(1)
     s =  cc.api_init_options()
     cc.check_configuration_file(s)
     for i in sys.argv[1:]:
@@ -32,18 +16,19 @@ def templer():
     #cc.setstdout(s)
     compile_ret = cc.compile_params(s,len(sys.argv[1:]));
     start_ret = cc.api_start(s);
-
-queue = Queue()
-fn = "test.txt"
-queue.put(fn)
-queue.put(fn)
-q = Process(target = tail, args = (queue,))
-q.start()
-time.sleep(2)
-templer()
-time.sleep(0.5)
-q.terminate()
-
+    time.sleep(0.5)
+def start_python_extraction():
+    queue = Queue()
+    fn = "test.txt"
+    queue.put(fn)
+    queue.put(fn)
+    q = Process(target = api_support.tail, args = (queue,))
+    q.start()
+    return q
+if __name__=="__main__":
+    process = start_python_extraction()
+    templer()
+    process.terminate()
 
 
 

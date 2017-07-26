@@ -196,6 +196,10 @@ class python_subs_array(_object):
     __swig_getmethods__["temporary_file"] = _ccextractor.python_subs_array_temporary_file_get
     if _newclass:
         temporary_file = _swig_property(_ccextractor.python_subs_array_temporary_file_get, _ccextractor.python_subs_array_temporary_file_set)
+    __swig_setmethods__["fp"] = _ccextractor.python_subs_array_fp_set
+    __swig_getmethods__["fp"] = _ccextractor.python_subs_array_fp_get
+    if _newclass:
+        fp = _swig_property(_ccextractor.python_subs_array_fp_get, _ccextractor.python_subs_array_fp_set)
     __swig_setmethods__["has_api_start_exited"] = _ccextractor.python_subs_array_has_api_start_exited_set
     __swig_getmethods__["has_api_start_exited"] = _ccextractor.python_subs_array_has_api_start_exited_get
     if _newclass:

@@ -35,8 +35,6 @@ void python_extract(int srt_counter, unsigned h1, unsigned m1, unsigned s1, unsi
 void python_extract_time_based(unsigned h1, unsigned m1, unsigned s1, unsigned ms1, unsigned h2, unsigned m2, unsigned s2, unsigned ms2, char* buffer){
     //check if the caption with same start and end time already exists
     int i;
-    FILE *fp;
-    fp = fopen("test.txt", "a");
     char* start_time = time_wrapper("%02u:%02u:%02u,%03u",h1,m1,s1,ms1);
     char* end_time = time_wrapper("%02u:%02u:%02u,%03u",h2,m2,s2,ms2);
     for(i=0;i<array.sub_count;i++){
@@ -46,9 +44,8 @@ void python_extract_time_based(unsigned h1, unsigned m1, unsigned s1, unsigned m
                 //array.subs[i].buffer[array.subs[i].buffer_count-1] =  malloc(sizeof(char)*strlen(buffer));
                 //strcpy (array.subs[i].buffer[array.subs[i].buffer_count-1], buffer);
                 //__wrap_write(fp,buffer, strlen(buffer));
-                fprintf(fp,"%s\n",buffer);
-                fflush(fp);
-                fclose(fp);
+                fprintf(array.fp,"%s\n",buffer);
+                fflush(array.fp);
            //array.update_status =1;
                 return;
             }
@@ -64,13 +61,12 @@ void python_extract_time_based(unsigned h1, unsigned m1, unsigned s1, unsigned m
     //array.subs[array.sub_count-1].buffer[array.subs[array.sub_count-1].buffer_count-1] =  malloc(sizeof(char)*strlen(buffer));
     //strcpy(array.subs[array.sub_count-1].buffer[array.subs[array.sub_count-1].buffer_count-1], buffer);
     
-    fprintf(fp,"start_time:%s\t",start_time);
-    fprintf(fp,"end_time:%s\n",end_time);
-    fprintf(fp,"%s\n",buffer);
-    fflush(fp);
+    fprintf(array.fp,"start_time:%s\t",start_time);
+    fprintf(array.fp,"end_time:%s\n",end_time);
+    fprintf(array.fp,"%s\n",buffer);
+    fflush(array.fp);
     //__wrap_write(fp,buffer, strlen(buffer));
 
-    fclose(fp);
     //array.update_status =1;
 }
 
