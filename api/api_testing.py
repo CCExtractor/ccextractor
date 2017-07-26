@@ -26,7 +26,7 @@ def templer():
     cc.check_configuration_file(s)
     for i in sys.argv[1:]:
         cc.api_add_param(s,str(i))
-    cc.setstdout(s)
+    #cc.setstdout(s)
     compile_ret = cc.compile_params(s,len(sys.argv[1:]));
     start_ret = cc.api_start(s);
 

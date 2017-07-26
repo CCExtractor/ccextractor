@@ -96,31 +96,6 @@ except __builtin__.Exception:
     _newclass = 0
 
 
-import threading
-import time
-from threading import Thread
-#captions_timings_list = []
-def thread_updater():
-    Thread(target = caption_generator).start()
-def caption_generator():
-    global caption_timings_list
-    new_count = cvar.array.sub_count
-    old_count = cvar.array.old_sub_count
-    if old_count!=new_count:
-        for i in xrange(old_count,new_count):
-            caption = cc_to_python_get_modified_sub(i)
-#caption_list = []
-            print "start time = {}\t end time = {}".format(caption.start_time,caption.end_time)
-            for j in xrange(cc_to_python_get_modified_sub_buffer_size(i)):
-                print cc_to_python_get_modified_sub_buffer(i,j)
-#caption_list.append(cc_to_python_get_modified_sub_buffer(i,j))
-#captions_timings_list.append((caption.start_time,caption.end_time,caption_list))
-        old_count=new_count
-    else:
-        if cvar.array.has_api_start_exited:
-            return
-        time.sleep(0.1)
-        caption_generator()
 
 EXIT_OK = _ccextractor.EXIT_OK
 EXIT_NO_INPUT_FILES = _ccextractor.EXIT_NO_INPUT_FILES
