@@ -8,7 +8,7 @@ def follow(thefile):
     while 1:
         line = thefile.readline()
         if not line:
-            time.sleep(0.1)
+            #time.sleep(0.1)
             continue
         yield line
 
