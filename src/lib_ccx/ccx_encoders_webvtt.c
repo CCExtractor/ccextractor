@@ -294,8 +294,9 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 			sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
 				h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
 			used = encode_line(context, context->buffer, (unsigned char *)timeline);
-			__wrap_write(context->out->fh, context->buffer, used);
+            __wrap_write(context->out->fh, context->buffer, used);
 			len = strlen(str);
+            python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,str);
 			__wrap_write(context->out->fh, str, len);
 			__wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		}

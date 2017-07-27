@@ -121,9 +121,8 @@ int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context)
 				h1,m1,s1,ms1/10, h2,m2,s2,ms2/10);
 			used = encode_line(context, context->buffer,(unsigned char *) timeline);
 			__wrap_write (context->out->fh, context->buffer, used);
-            //python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,context->buffer);
+            python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,str);
 			__wrap_write (context->out->fh, str, len);
-            //python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,str);
 			__wrap_write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		}
 		freep(&str);

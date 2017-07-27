@@ -111,13 +111,14 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 			context->srt_counter++;
 			sprintf(timeline, "%u\r\n", context->srt_counter);
 			used = encode_line(context, context->buffer,(unsigned char *) timeline);
+            python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline);
 			__wrap_write(context->out->fh, context->buffer, used);
 			sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u\r\n",
 				h1,m1,s1,ms1, h2,m2,s2,ms2);
 			used = encode_line(context, context->buffer,(unsigned char *) timeline);
-			__wrap_write (context->out->fh, context->buffer, used);
 			len = strlen(str);
-			__wrap_write (context->out->fh, str, len);
+            python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,str);
+            __wrap_write (context->out->fh, str, len);
 			__wrap_write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		}
 		freep(&str);

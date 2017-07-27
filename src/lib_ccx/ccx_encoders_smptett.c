@@ -142,7 +142,8 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 				sprintf((char *)context->buffer, "<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\n", h1, m1, s1, ms1, h2, m2, s2, ms2);
                 __wrap_write(context->out->fh, buf, strlen(buf));
 				len = strlen(rect[i].ocr_text);
-				__wrap_write(context->out->fh, rect[i].ocr_text, len);
+                python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,rect[i].ocr_text);
+                __wrap_write(context->out->fh, rect[i].ocr_text, len);
 				__wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 				sprintf(buf, "</p>\n");
 				__wrap_write(context->out->fh, buf, strlen(buf));
