@@ -1020,6 +1020,10 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			if (data_node->bufferdatatype == CCX_TELETEXT && dec_ctx->private_data) //if we have teletext subs, we set the min_pts here
 				set_tlt_delta(dec_ctx, min_pts);
 			ret = process_data(enc_ctx, dec_ctx, data_node);
+            mprint("**************ret = %d\n",ret);
+            mprint("**************enc_ctx->srt_counter = %d\n",enc_ctx->srt_counter);
+            mprint("**************end_ctx->cea_708_counter = %d\n",enc_ctx->cea_708_counter);
+            mprint("**************dec_ctx->saw_caption_block = %d\n",dec_ctx->saw_caption_block);
 			if (enc_ctx->srt_counter || enc_ctx->cea_708_counter || dec_ctx->saw_caption_block || ret == 1)
 				caps = 1;
 			if( ret == CCX_EINVAL)

@@ -321,6 +321,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 		setting->output_format==CCX_OF_SIMPLE_XML ||
 		setting->output_format==CCX_OF_G608 ||
 		setting->output_format==CCX_OF_NULL ||
+		setting->output_format==CCX_OF_PYTHON_API ||
 		setting->output_format==CCX_OF_CURL)
 		ctx->writedata = process608;
 	else

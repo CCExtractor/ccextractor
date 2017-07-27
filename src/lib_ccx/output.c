@@ -45,7 +45,7 @@ int temporarily_open_output(struct ccx_s_write *wb)
 
 
 
-int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
+int init_write (int python_api_call,struct ccx_s_write *wb, char *filename, int with_semaphore)
 {
 	memset(wb, 0, sizeof(struct ccx_s_write));
 	wb->fh=-1;
@@ -53,7 +53,8 @@ int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
 	wb->filename = filename;
 	wb->with_semaphore = with_semaphore;
 	wb->append_mode = ccx_options.enc_cfg.append_mode;
-	mprint ("Creating %s\n", filename);
+    if (!python_api_call)
+        mprint ("Creating %s\n", filename);
 	if(!(wb->append_mode))
 		wb->fh = open (filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 	else

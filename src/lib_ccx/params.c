@@ -180,6 +180,8 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
 
 	if (strcmp (format,"srt")==0)
 		opt->write_format=CCX_OF_SRT;
+    else if (strcmp (format,"pythonapi")==0)
+		opt->write_format=CCX_OF_PYTHON_API;
 	else if (strcmp (format,"ass")==0 || strcmp (format,"ssa")==0) {
 		opt->write_format = CCX_OF_SSA;
 		if (strcmp (format,"ass")==0)
