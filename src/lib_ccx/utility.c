@@ -534,7 +534,7 @@ char *get_file_extension(enum ccx_output_format write_format)
 		case CCX_OF_G608:
 			return strdup(".g608");
 		case CCX_OF_PYTHON_API:
-			return NULL;
+			return strdup("");
 		case CCX_OF_NULL:
 			return NULL;
 		case CCX_OF_CURL:
