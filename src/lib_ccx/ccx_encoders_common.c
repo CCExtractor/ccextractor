@@ -1216,7 +1216,12 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					try_to_add_start_credits(context, sub->start_time);
 				wrote_something = write_cc_bitmap_as_srt(sub, context);
 				break;
-			case CCX_OF_SSA:
+			case CCX_OF_PYTHON_API:
+				//if (!context->startcredits_displayed && context->start_credits_text != NULL)
+				//	try_to_add_start_credits(context, sub->start_time);
+				wrote_something = write_cc_bitmap_as_srt(sub, context);
+				break;
+            case CCX_OF_SSA:
 				if (!context->startcredits_displayed && context->start_credits_text != NULL)
 					try_to_add_start_credits(context, sub->start_time);
 					wrote_something = write_cc_bitmap_as_ssa(sub, context);
