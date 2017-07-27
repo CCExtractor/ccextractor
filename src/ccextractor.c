@@ -27,7 +27,8 @@ void sigterm_handler(int sig)
 
 void sigint_handler(int sig)
 {
-	if (ccx_options.print_file_reports)
+	remove(array.temporary_file);
+    if (ccx_options.print_file_reports)
 		print_file_report(signal_ctx);
 
 	exit(EXIT_SUCCESS);

@@ -579,7 +579,6 @@ char *create_outfilename(const char *basename, const char *suffix, const char *e
 		strcat(ptr, suffix);
 	if(extension)
 		strcat(ptr, extension);
-
 	return ptr;
 }
 
