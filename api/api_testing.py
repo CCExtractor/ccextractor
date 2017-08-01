@@ -27,9 +27,9 @@ def start_python_extraction():
     q.start()
     return q
 if __name__=="__main__":
-    process = start_python_extraction()
+#    process = start_python_extraction()
     templer()
-    process.terminate()
+#    process.terminate()
 
 
 
