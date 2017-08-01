@@ -439,30 +439,34 @@ void check_configuration_file(struct ccx_s_options api_options){
 }   
 
 int compile_params(struct ccx_s_options *api_options,int argc){
-    api_options->python_params = realloc(api_options->python_params, (api_options->python_param_count+1) * sizeof *api_options->python_params);
+      //adding the parameter ./ccextractor to the list of python_params for further parsing
+      api_options->python_params = realloc(api_options->python_params, (api_options->python_param_count+1) * sizeof *api_options->python_params);
       api_options->python_params[api_options->python_param_count] = malloc(strlen("./ccextractor")+1);
       strcpy(api_options->python_params[api_options->python_param_count], "./ccextractor");
       api_options->python_param_count++;
+
       char* temp = api_options->python_params[api_options->python_param_count-1];
       int i;
       for (i = api_options->python_param_count-1; i > 0; i--)
                    api_options->python_params[i] = api_options->python_params[i-1];
       api_options->python_params[0] = temp;
-    int ret = parse_parameters (api_options, api_options->python_param_count, api_options->python_params);
-    if (ret == EXIT_NO_INPUT_FILES)
-	{
+
+      int ret = parse_parameters (api_options, api_options->python_param_count, api_options->python_params);
+ 
+      if (ret == EXIT_NO_INPUT_FILES)
+    	{
 		print_usage ();
 		fatal (EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");
-	}
-	else if (ret == EXIT_WITH_HELP)
-	{
+	    }
+	  else if (ret == EXIT_WITH_HELP)
+	    {
 		return EXIT_OK;
-	}
-	else if (ret != EXIT_OK)
-	{
+	    }   
+	  else if (ret != EXIT_OK)
+	    {
 		exit(ret);
-	}
-    return EXIT_OK;
+	    }
+      return EXIT_OK;
     }
 
 void api_add_param(struct ccx_s_options* api_options,char* arg){
@@ -613,9 +617,10 @@ for(i = 1; i < argc; i++)
     api_add_param(api_options,argv[i]);
 
 int compile_ret = compile_params(api_options,argc);
+/*
 int start_ret = api_start(*api_options);
-
+*/
 //uncomment the next line to check the extracted captions along with timings
 //    show_extracted_captions_with_timings();
-return start_ret;
+//return start_ret;
 }
