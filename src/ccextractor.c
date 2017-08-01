@@ -617,10 +617,10 @@ for(i = 1; i < argc; i++)
     api_add_param(api_options,argv[i]);
 
 int compile_ret = compile_params(api_options,argc);
-/*
+
 int start_ret = api_start(*api_options);
-*/
+
 //uncomment the next line to check the extracted captions along with timings
 //    show_extracted_captions_with_timings();
-//return start_ret;
+return start_ret;
 }

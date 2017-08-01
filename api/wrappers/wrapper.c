@@ -1,6 +1,13 @@
 #include "wrapper.h"
 
 /*
+output=pythonapi wrapper
+*/
+void setout_pythonapi(struct ccx_s_options *api_options){
+    api_add_param(api_options,"-out=pythonapi");
+}
+
+/*
 autoprogram wrapper
 */
 void setautoprogram(struct ccx_s_options *api_options){
