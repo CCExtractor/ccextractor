@@ -9,7 +9,7 @@
 #include "ccx_decoders_708_output.h"
 #include "ccx_encoders_xds.h"
 #include "ccx_encoders_helpers.h"
-
+#include "../ccextractor.h"
 #ifdef ENABLE_SHARING
 #include "ccx_share.h"
 #endif //ENABLE_SHARING
@@ -780,7 +780,6 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	int nb_lang;
 	char *basefilename = NULL; // Input filename without the extension
 	char *extension = NULL; // Input filename without the extension
-    int python_api_call; //1 if called by python api. Other wise 0.
 
 #define check_ret(filename) 	if (ret != EXIT_OK)	\
 				{									\
@@ -812,28 +811,26 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			{
 				basefilename = get_basename(cfg->output_filename);
 				extension = get_file_extension(cfg->write_format);
-                python_api_call=0;
 
-				ret = init_write(python_api_call,&ctx->out[0], strdup(cfg->output_filename), cfg->with_semaphore);
+				ret = init_write(signal_python_api,&ctx->out[0], strdup(cfg->output_filename), cfg->with_semaphore);
 				check_ret(cfg->output_filename);
-				ret = init_write(python_api_call,&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
+				ret = init_write(signal_python_api,&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
 				check_ret(ctx->out[1].filename);
 			}
 			else
 			{
-				ret = init_write(python_api_call,ctx->out, strdup(cfg->output_filename), cfg->with_semaphore );
+				ret = init_write(signal_python_api,ctx->out, strdup(cfg->output_filename), cfg->with_semaphore );
 				check_ret(cfg->output_filename);
 			}
 		}
 		else if (cfg->write_format != CCX_OF_NULL)
 		{
-            if (cfg->write_format == CCX_OF_PYTHON_API){
+            if (signal_python_api){
                 //Setting the output of the generator to /dev/null for linux
                 basefilename = malloc((strlen("/dev/")+1)*sizeof(char));
                 extension = malloc((strlen("null")+1)*sizeof(char));
                 strcpy(basefilename,"/dev/");
                 strcpy(extension,"null");
-                python_api_call=1;
             }
             else{
                 basefilename = get_basename(ctx->first_input_file);
@@ -847,14 +844,14 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 
 			if (cfg->extract == 12)
 			{
-				ret = init_write(python_api_call,&ctx->out[0], create_outfilename(basefilename, "_1", extension), cfg->with_semaphore);
+				ret = init_write(signal_python_api,&ctx->out[0], create_outfilename(basefilename, "_1", extension), cfg->with_semaphore);
 				check_ret(ctx->out[0].filename);
-				ret = init_write(python_api_call,&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
+				ret = init_write(signal_python_api,&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
 				check_ret(ctx->out[1].filename);
 			}
 			else
 			{
-				ret = init_write(python_api_call,ctx->out, create_outfilename(basefilename, NULL, extension), cfg->with_semaphore);
+				ret = init_write(signal_python_api,ctx->out, create_outfilename(basefilename, NULL, extension), cfg->with_semaphore);
 				check_ret(ctx->out->filename);
 			}
 		}
@@ -1149,11 +1146,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 							try_to_add_start_credits(context, data->start_time);
 						wrote_something = write_cc_buffer_as_srt(data, context);
 						break;
-					case CCX_OF_PYTHON_API:
-						//if (!context->startcredits_displayed && context->start_credits_text != NULL)
-							//try_to_add_start_credits(context, data->start_time);
-						wrote_something = write_cc_buffer_as_srt(data, context);
-						break;
 					case CCX_OF_SSA:
 						if (!context->startcredits_displayed && context->start_credits_text != NULL)
 							try_to_add_start_credits(context, data->start_time);
@@ -1214,11 +1206,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			case CCX_OF_SRT:
 				if (!context->startcredits_displayed && context->start_credits_text != NULL)
 					try_to_add_start_credits(context, sub->start_time);
-				wrote_something = write_cc_bitmap_as_srt(sub, context);
-				break;
-			case CCX_OF_PYTHON_API:
-				//if (!context->startcredits_displayed && context->start_credits_text != NULL)
-				//	try_to_add_start_credits(context, sub->start_time);
 				wrote_something = write_cc_bitmap_as_srt(sub, context);
 				break;
             case CCX_OF_SSA:

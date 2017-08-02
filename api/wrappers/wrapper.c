@@ -3,8 +3,8 @@
 /*
 output=pythonapi wrapper
 */
-void setout_pythonapi(struct ccx_s_options *api_options){
-    api_add_param(api_options,"-out=pythonapi");
+void set_pythonapi(struct ccx_s_options *api_options){
+    api_add_param(api_options,"-pythonapi");
 }
 
 /*

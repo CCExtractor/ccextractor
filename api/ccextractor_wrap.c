@@ -4613,6 +4613,29 @@ SWIGINTERN PyObject *Swig_var_array_get(void) {
 }
 
 
+SWIGINTERN int Swig_var_signal_python_api_set(PyObject *_val) {
+  {
+    int val;
+    int res = SWIG_AsVal_int(_val, &val);
+    if (!SWIG_IsOK(res)) {
+      SWIG_exception_fail(SWIG_ArgError(res), "in variable '""signal_python_api""' of type '""int""'");
+    }
+    signal_python_api = (int)(val);
+  }
+  return 0;
+fail:
+  return 1;
+}
+
+
+SWIGINTERN PyObject *Swig_var_signal_python_api_get(void) {
+  PyObject *pyobj = 0;
+  
+  pyobj = SWIG_From_int((int)(signal_python_api));
+  return pyobj;
+}
+
+
 SWIGINTERN PyObject *_wrap_api_init_options(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   struct ccx_s_options *result = 0 ;
@@ -5051,20 +5074,41 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_setout_pythonapi(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_call_from_python_api(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  int arg1 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:call_from_python_api",&obj0)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "call_from_python_api" "', argument " "1"" of type '" "int""'");
+  } 
+  arg1 = (int)(val1);
+  call_from_python_api(arg1);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_set_pythonapi(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   struct ccx_s_options *arg1 = (struct ccx_s_options *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   PyObject * obj0 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"O:setout_pythonapi",&obj0)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"O:set_pythonapi",&obj0)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_ccx_s_options, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "setout_pythonapi" "', argument " "1"" of type '" "struct ccx_s_options *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "set_pythonapi" "', argument " "1"" of type '" "struct ccx_s_options *""'"); 
   }
   arg1 = (struct ccx_s_options *)(argp1);
-  setout_pythonapi(arg1);
+  set_pythonapi(arg1);
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -5217,7 +5261,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"cc_to_python_get_modified_sub_buffer_size", _wrap_cc_to_python_get_modified_sub_buffer_size, METH_VARARGS, NULL},
 	 { (char *)"cc_to_python_get_modified_sub_buffer", _wrap_cc_to_python_get_modified_sub_buffer, METH_VARARGS, NULL},
 	 { (char *)"__wrap_write", _wrap___wrap_write, METH_VARARGS, NULL},
-	 { (char *)"setout_pythonapi", _wrap_setout_pythonapi, METH_VARARGS, NULL},
+	 { (char *)"call_from_python_api", _wrap_call_from_python_api, METH_VARARGS, NULL},
+	 { (char *)"set_pythonapi", _wrap_set_pythonapi, METH_VARARGS, NULL},
 	 { (char *)"setautoprogram", _wrap_setautoprogram, METH_VARARGS, NULL},
 	 { (char *)"setstdout", _wrap_setstdout, METH_VARARGS, NULL},
 	 { (char *)"setpesheader", _wrap_setpesheader, METH_VARARGS, NULL},
@@ -6003,6 +6048,7 @@ SWIG_init(void) {
   SWIG_addvarlink(SWIG_globals(),(char *)"ccx_options",Swig_var_ccx_options_get, Swig_var_ccx_options_set);
   SWIG_addvarlink(SWIG_globals(),(char *)"signal_ctx",Swig_var_signal_ctx_get, Swig_var_signal_ctx_set);
   SWIG_addvarlink(SWIG_globals(),(char *)"array",Swig_var_array_get, Swig_var_array_set);
+  SWIG_addvarlink(SWIG_globals(),(char *)"signal_python_api",Swig_var_signal_python_api_get, Swig_var_signal_python_api_set);
 #if PY_VERSION_HEX >= 0x03000000
   return m;
 #else

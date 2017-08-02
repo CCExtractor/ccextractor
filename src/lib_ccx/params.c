@@ -180,16 +180,16 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
 
 	if (strcmp (format,"srt")==0)
 		opt->write_format=CCX_OF_SRT;
-    else if (strcmp (format,"pythonapi")==0)
-    {
+    //else if (strcmp (format,"pythonapi")==0)
+    //{
 		// for avoiding the generation of output file
-        opt->write_format=CCX_OF_PYTHON_API;
+    //    opt->write_format=CCX_OF_PYTHON_API;
         // for not letting the api call print to the STDOUT. May be not required. 
         // After this all calls must be printf
         //opt->messages_target=0;
         // as an alternative to -stdout so that output file is not generated.
         //opt->cc_to_stdout=1;
-    }
+    //}
 	else if (strcmp (format,"ass")==0 || strcmp (format,"ssa")==0) {
 		opt->write_format = CCX_OF_SSA;
 		if (strcmp (format,"ass")==0)
@@ -1147,6 +1147,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
+//adding the support for -pythonapi param to indicate that python wrappers have been used
+        if (strcmp(argv[i], "-pythonapi")==0)
+        {
+            opt->signal_python_api =1; 
+            continue;
+        }
 
 #ifdef ENABLE_HARDSUBX
 		// Parse -hardsubx and related parameters

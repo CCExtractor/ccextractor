@@ -604,8 +604,15 @@ for(i=0;i<array.sub_count;i++){
     while(j<array.subs[i].buffer_count){
         mprint("%s\n",array.subs[i].buffer[j]);
         j++;
+     }
     }
 }
+
+void call_from_python_api(int indicator){
+    if (indicator)
+       signal_python_api=1;
+    else
+       signal_python_api=0; 
 }
 
 int main(int argc, char* argv[]){
@@ -616,7 +623,8 @@ for(i = 1; i < argc; i++)
     api_add_param(api_options,argv[i]);
 
 int compile_ret = compile_params(api_options,argc);
-
+call_from_python_api(api_options->signal_python_api);
+//mprint("signal_python_api = %d\n", signal_python_api);
 int start_ret = api_start(*api_options);
 
 //uncomment the next line to check the extracted captions along with timings

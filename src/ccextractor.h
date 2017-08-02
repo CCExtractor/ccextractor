@@ -49,6 +49,7 @@ struct python_subs_array{
 struct ccx_s_options ccx_options;
 struct lib_ccx_ctx *signal_ctx;
 struct python_subs_array array; 
+int signal_python_api;                                // 1 symbolises that python wrapper made the call.
 //volatile int terminate_asap = 0;
 
 struct ccx_s_options* api_init_options();
@@ -75,4 +76,6 @@ char* cc_to_python_get_modified_sub_buffer(int i, int j);
 
 //int __real_write(int file_handle, char* buffer, int nbyte);
 int __wrap_write(int file_handle, char* buffer, int nbyte);
+
+void call_from_python_api(int indicator);
 #endif //CCEXTRACTOR_H

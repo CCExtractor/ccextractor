@@ -317,9 +317,13 @@ def __wrap_write(file_handle, buffer, nbyte):
     return _ccextractor.__wrap_write(file_handle, buffer, nbyte)
 __wrap_write = _ccextractor.__wrap_write
 
-def setout_pythonapi(api_options):
-    return _ccextractor.setout_pythonapi(api_options)
-setout_pythonapi = _ccextractor.setout_pythonapi
+def call_from_python_api(indicator):
+    return _ccextractor.call_from_python_api(indicator)
+call_from_python_api = _ccextractor.call_from_python_api
+
+def set_pythonapi(api_options):
+    return _ccextractor.set_pythonapi(api_options)
+set_pythonapi = _ccextractor.set_pythonapi
 
 def setautoprogram(api_options):
     return _ccextractor.setautoprogram(api_options)
