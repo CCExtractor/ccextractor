@@ -14,7 +14,7 @@ def templer():
     for i in sys.argv[1:]:
         cc.api_add_param(s,str(i))
     #very mandatory for keeping a track of pythonapi call. Always must be set.
-    cc.setout_pythonapi(s)
+#    cc.setout_pythonapi(s)
     compile_ret = cc.compile_params(s,len(sys.argv[1:]));
     start_ret = cc.api_start(s);
     time.sleep(0.5)
@@ -27,9 +27,9 @@ def start_python_extraction():
     q.start()
     return q
 if __name__=="__main__":
-#    process = start_python_extraction()
+    process = start_python_extraction()
     templer()
-#    process.terminate()
+    process.terminate()
 
 
 

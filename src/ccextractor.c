@@ -452,7 +452,6 @@ int compile_params(struct ccx_s_options *api_options,int argc){
       api_options->python_params[0] = temp;
 
       int ret = parse_parameters (api_options, api_options->python_param_count, api_options->python_params);
- 
       if (ret == EXIT_NO_INPUT_FILES)
     	{
 		print_usage ();

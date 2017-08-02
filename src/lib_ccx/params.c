@@ -186,9 +186,9 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
         opt->write_format=CCX_OF_PYTHON_API;
         // for not letting the api call print to the STDOUT. May be not required. 
         // After this all calls must be printf
-        opt->messages_target=0;
+        //opt->messages_target=0;
         // as an alternative to -stdout so that output file is not generated.
-        opt->cc_to_stdout=1;
+        //opt->cc_to_stdout=1;
     }
 	else if (strcmp (format,"ass")==0 || strcmp (format,"ssa")==0) {
 		opt->write_format = CCX_OF_SSA;

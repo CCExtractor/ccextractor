@@ -3977,6 +3977,110 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_python_subs_modified_g608_grid_count_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_modified *arg1 = (struct python_subs_modified *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:python_subs_modified_g608_grid_count_set",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_modified, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_modified_g608_grid_count_set" "', argument " "1"" of type '" "struct python_subs_modified *""'"); 
+  }
+  arg1 = (struct python_subs_modified *)(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "python_subs_modified_g608_grid_count_set" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = (int)(val2);
+  if (arg1) (arg1)->g608_grid_count = arg2;
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_subs_modified_g608_grid_count_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_modified *arg1 = (struct python_subs_modified *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:python_subs_modified_g608_grid_count_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_modified, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_modified_g608_grid_count_get" "', argument " "1"" of type '" "struct python_subs_modified *""'"); 
+  }
+  arg1 = (struct python_subs_modified *)(argp1);
+  result = (int) ((arg1)->g608_grid_count);
+  resultobj = SWIG_From_int((int)(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_subs_modified_g608_grid_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_modified *arg1 = (struct python_subs_modified *) 0 ;
+  char **arg2 = (char **) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:python_subs_modified_g608_grid_set",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_modified, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_modified_g608_grid_set" "', argument " "1"" of type '" "struct python_subs_modified *""'"); 
+  }
+  arg1 = (struct python_subs_modified *)(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_p_char, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "python_subs_modified_g608_grid_set" "', argument " "2"" of type '" "char **""'"); 
+  }
+  arg2 = (char **)(argp2);
+  if (arg1) (arg1)->g608_grid = arg2;
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_python_subs_modified_g608_grid_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct python_subs_modified *arg1 = (struct python_subs_modified *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char **result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:python_subs_modified_g608_grid_get",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_python_subs_modified, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "python_subs_modified_g608_grid_get" "', argument " "1"" of type '" "struct python_subs_modified *""'"); 
+  }
+  arg1 = (struct python_subs_modified *)(argp1);
+  result = (char **) ((arg1)->g608_grid);
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_p_char, 0 |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_new_python_subs_modified(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   struct python_subs_modified *result = 0 ;
@@ -5070,6 +5174,10 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"python_subs_modified_end_time_get", _wrap_python_subs_modified_end_time_get, METH_VARARGS, NULL},
 	 { (char *)"python_subs_modified_buffer_set", _wrap_python_subs_modified_buffer_set, METH_VARARGS, NULL},
 	 { (char *)"python_subs_modified_buffer_get", _wrap_python_subs_modified_buffer_get, METH_VARARGS, NULL},
+	 { (char *)"python_subs_modified_g608_grid_count_set", _wrap_python_subs_modified_g608_grid_count_set, METH_VARARGS, NULL},
+	 { (char *)"python_subs_modified_g608_grid_count_get", _wrap_python_subs_modified_g608_grid_count_get, METH_VARARGS, NULL},
+	 { (char *)"python_subs_modified_g608_grid_set", _wrap_python_subs_modified_g608_grid_set, METH_VARARGS, NULL},
+	 { (char *)"python_subs_modified_g608_grid_get", _wrap_python_subs_modified_g608_grid_get, METH_VARARGS, NULL},
 	 { (char *)"new_python_subs_modified", _wrap_new_python_subs_modified, METH_VARARGS, NULL},
 	 { (char *)"delete_python_subs_modified", _wrap_delete_python_subs_modified, METH_VARARGS, NULL},
 	 { (char *)"python_subs_modified_swigregister", python_subs_modified_swigregister, METH_VARARGS, NULL},

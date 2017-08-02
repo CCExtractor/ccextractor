@@ -32,6 +32,61 @@ void python_extract(int srt_counter, unsigned h1, unsigned m1, unsigned s1, unsi
     //array.update_status =1;
 }
 
+
+void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms1, unsigned h2, unsigned m2, unsigned s2, unsigned ms2, char* buffer, int identifier){
+    /*
+     * identifier = 0 ---> adding start and end time
+     * identifier = 1 ---> subtitle
+     * identifier = 2 ---> rest of the grid
+     */
+    //check if the caption with same start and end time already exists
+    int i;
+    char* start_time = time_wrapper("%02u:%02u:%02u,%03u",h1,m1,s1,ms1);
+    char* end_time = time_wrapper("%02u:%02u:%02u,%03u",h2,m2,s2,ms2);
+    for(i=0;i<array.sub_count;i++){
+        if ((strcmp(start_time,array.subs[i].start_time)==0)&&(strcmp(end_time,array.subs[i].end_time)==0)){
+            if (identifier==1){
+                // adding the subtitle to the buffer of the array 
+                array.subs[i].buffer = realloc(array.subs[i].buffer,sizeof(char*)*array.subs[i].buffer_count);
+                array.subs[i].buffer[array.subs[i].buffer_count-1] =  malloc(sizeof(char)*strlen(buffer));
+                strcpy (array.subs[i].buffer[array.subs[i].buffer_count-1], buffer);
+                fprintf(array.fp,"%s\n",buffer);
+                fflush(array.fp);
+                array.subs[i].buffer_count++;
+                return;
+                }
+            else{
+                if(identifier==2){
+                // forming the g608_grid  
+                    array.subs[i].g608_grid = realloc(array.subs[i].g608_grid,sizeof(char*)*array.subs[i].g608_grid_count);
+                    array.subs[i].g608_grid[array.subs[i].g608_grid_count-1] =  malloc(sizeof(char)*strlen(buffer));
+                    strcpy (array.subs[i].g608_grid[array.subs[i].g608_grid_count-1], buffer);
+                    fprintf(array.fp,"%s\n",buffer);
+                    fflush(array.fp);
+                    array.subs[i].g608_grid_count++;
+                    return;
+                    }
+                }
+            }
+        }
+
+    // if the start time and end time do not match then
+    // we are just initializing a new element in the array and 
+    // initiating its buffer count and grid count
+    array.sub_count++;
+    array.subs = realloc(array.subs,sizeof(struct python_subs_modified)*array.sub_count);
+    
+    array.subs[array.sub_count-1].start_time = start_time;
+    array.subs[array.sub_count-1].end_time = end_time;
+   
+    array.subs[array.sub_count-1].buffer_count=1;
+    array.subs[array.sub_count-1].buffer=NULL;
+    
+    array.subs[array.sub_count-1].g608_grid_count=1;
+    array.subs[array.sub_count-1].g608_grid=NULL;
+}
+
+
 void python_extract_time_based(unsigned h1, unsigned m1, unsigned s1, unsigned ms1, unsigned h2, unsigned m2, unsigned s2, unsigned ms2, char* buffer){
     //check if the caption with same start and end time already exists
     int i;
@@ -75,18 +130,4 @@ void python_extract_transcript(char* buffer){
     python_extract_time_based(0,0,0,0,0,0,0,0,buffer);
     array.is_transcript=1; 
 }
-
-
-/*
-void python_extract_sami(LLONG ms_start,LLONG ms_end,char* buffer){
-    //check if the caption with same start and end time already exists
-    int i;
-    unsigned h1,m1,s1,ms1;
-	unsigned h2,m2,s2,ms2;
-	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
-	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
-    python_extract_time_based(h1,m1,s1,ms1,h2,m2,s2,ms2,buffer);
-}
-*/
-
 

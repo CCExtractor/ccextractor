@@ -23,11 +23,16 @@ CURLcode res;
 #endif
 
 struct python_subs_modified{
+        
         int buffer_count;
         int srt_counter;
         char *start_time;
         char* end_time;
         char** buffer;
+
+        //g608 specific elements
+        int g608_grid_count;
+        char** g608_grid;
 };
 
 struct python_subs_array{
