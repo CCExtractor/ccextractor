@@ -31,8 +31,10 @@ struct python_subs_modified{
         char** buffer;
 
         //g608 specific elements
-        int g608_grid_count;
-        char** g608_grid;
+        int g608_grid_color_count;
+        char** g608_grid_color;
+        int g608_grid_font_count;
+        char** g608_grid_font;
 };
 
 struct python_subs_array{

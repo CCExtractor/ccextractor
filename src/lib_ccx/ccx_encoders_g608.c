@@ -103,7 +103,7 @@ int write_cc_buffer_as_g608(struct eia608_screen *data, struct encoder_ctx *cont
 
 		length = get_font_encoded (context, context->subline, i, data);
 		__wrap_write(context->out->fh, context->subline, length);
-        python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,2);   
+        python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,3);   
 		__wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		wrote_something=1;
 	}

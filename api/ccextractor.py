@@ -173,14 +173,22 @@ class python_subs_modified(_object):
     __swig_getmethods__["buffer"] = _ccextractor.python_subs_modified_buffer_get
     if _newclass:
         buffer = _swig_property(_ccextractor.python_subs_modified_buffer_get, _ccextractor.python_subs_modified_buffer_set)
-    __swig_setmethods__["g608_grid_count"] = _ccextractor.python_subs_modified_g608_grid_count_set
-    __swig_getmethods__["g608_grid_count"] = _ccextractor.python_subs_modified_g608_grid_count_get
+    __swig_setmethods__["g608_grid_color_count"] = _ccextractor.python_subs_modified_g608_grid_color_count_set
+    __swig_getmethods__["g608_grid_color_count"] = _ccextractor.python_subs_modified_g608_grid_color_count_get
     if _newclass:
-        g608_grid_count = _swig_property(_ccextractor.python_subs_modified_g608_grid_count_get, _ccextractor.python_subs_modified_g608_grid_count_set)
-    __swig_setmethods__["g608_grid"] = _ccextractor.python_subs_modified_g608_grid_set
-    __swig_getmethods__["g608_grid"] = _ccextractor.python_subs_modified_g608_grid_get
+        g608_grid_color_count = _swig_property(_ccextractor.python_subs_modified_g608_grid_color_count_get, _ccextractor.python_subs_modified_g608_grid_color_count_set)
+    __swig_setmethods__["g608_grid_color"] = _ccextractor.python_subs_modified_g608_grid_color_set
+    __swig_getmethods__["g608_grid_color"] = _ccextractor.python_subs_modified_g608_grid_color_get
     if _newclass:
-        g608_grid = _swig_property(_ccextractor.python_subs_modified_g608_grid_get, _ccextractor.python_subs_modified_g608_grid_set)
+        g608_grid_color = _swig_property(_ccextractor.python_subs_modified_g608_grid_color_get, _ccextractor.python_subs_modified_g608_grid_color_set)
+    __swig_setmethods__["g608_grid_font_count"] = _ccextractor.python_subs_modified_g608_grid_font_count_set
+    __swig_getmethods__["g608_grid_font_count"] = _ccextractor.python_subs_modified_g608_grid_font_count_get
+    if _newclass:
+        g608_grid_font_count = _swig_property(_ccextractor.python_subs_modified_g608_grid_font_count_get, _ccextractor.python_subs_modified_g608_grid_font_count_set)
+    __swig_setmethods__["g608_grid_font"] = _ccextractor.python_subs_modified_g608_grid_font_set
+    __swig_getmethods__["g608_grid_font"] = _ccextractor.python_subs_modified_g608_grid_font_get
+    if _newclass:
+        g608_grid_font = _swig_property(_ccextractor.python_subs_modified_g608_grid_font_get, _ccextractor.python_subs_modified_g608_grid_font_set)
 
     def __init__(self):
         this = _ccextractor.new_python_subs_modified()

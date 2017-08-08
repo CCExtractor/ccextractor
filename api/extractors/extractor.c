@@ -57,13 +57,23 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
                 }
             else{
                 if(identifier==2){
-                // forming the g608_grid  
-                    array.subs[i].g608_grid = realloc(array.subs[i].g608_grid,sizeof(char*)*array.subs[i].g608_grid_count);
-                    array.subs[i].g608_grid[array.subs[i].g608_grid_count-1] =  malloc(sizeof(char)*strlen(buffer));
-                    strcpy (array.subs[i].g608_grid[array.subs[i].g608_grid_count-1], buffer);
+                // forming the g608_grid_color  
+                    array.subs[i].g608_grid_color = realloc(array.subs[i].g608_grid_color,sizeof(char*)*array.subs[i].g608_grid_color_count);
+                    array.subs[i].g608_grid_color[array.subs[i].g608_grid_color_count-1] =  malloc(sizeof(char)*strlen(buffer));
+                    strcpy (array.subs[i].g608_grid_color[array.subs[i].g608_grid_color_count-1], buffer);
                     fprintf(array.fp,"%s\n",buffer);
                     fflush(array.fp);
-                    array.subs[i].g608_grid_count++;
+                    array.subs[i].g608_grid_color_count++;
+                    return;
+                    }
+                else if(identifier==3){
+                // forming the g608_grid  
+                    array.subs[i].g608_grid_font = realloc(array.subs[i].g608_grid_font,sizeof(char*)*array.subs[i].g608_grid_font_count);
+                    array.subs[i].g608_grid_font[array.subs[i].g608_grid_font_count-1] =  malloc(sizeof(char)*strlen(buffer));
+                    strcpy (array.subs[i].g608_grid_font[array.subs[i].g608_grid_font_count-1], buffer);
+                    fprintf(array.fp,"%s\n",buffer);
+                    fflush(array.fp);
+                    array.subs[i].g608_grid_font_count++;
                     return;
                     }
                 }
@@ -82,8 +92,10 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
     array.subs[array.sub_count-1].buffer_count=1;
     array.subs[array.sub_count-1].buffer=NULL;
     
-    array.subs[array.sub_count-1].g608_grid_count=1;
-    array.subs[array.sub_count-1].g608_grid=NULL;
+    array.subs[array.sub_count-1].g608_grid_color_count=1;
+    array.subs[array.sub_count-1].g608_grid_font_count=1;
+    array.subs[array.sub_count-1].g608_grid_color=NULL;
+    array.subs[array.sub_count-1].g608_grid_font=NULL;
 }
 
 
