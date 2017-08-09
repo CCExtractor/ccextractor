@@ -79,5 +79,5 @@ char* cc_to_python_get_modified_sub_buffer(int i, int j);
 //int __real_write(int file_handle, char* buffer, int nbyte);
 int __wrap_write(int file_handle, char* buffer, int nbyte);
 
-void call_from_python_api(int indicator);
+void call_from_python_api(struct ccx_s_options *api_options);
 #endif //CCEXTRACTOR_H

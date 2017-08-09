@@ -608,7 +608,8 @@ for(i=0;i<array.sub_count;i++){
     }
 }
 
-void call_from_python_api(int indicator){
+void call_from_python_api(struct ccx_s_options *api_options){
+    int indicator = api_options->signal_python_api;
     if (indicator)
        signal_python_api=1;
     else
@@ -623,7 +624,7 @@ for(i = 1; i < argc; i++)
     api_add_param(api_options,argv[i]);
 
 int compile_ret = compile_params(api_options,argc);
-call_from_python_api(api_options->signal_python_api);
+call_from_python_api(api_options);
 //mprint("signal_python_api = %d\n", signal_python_api);
 int start_ret = api_start(*api_options);
 

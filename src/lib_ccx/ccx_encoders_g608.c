@@ -1,4 +1,5 @@
 #include "lib_ccx.h"
+#include "../ccextractor.h"
 #include "ccx_encoders_common.h"
 #include "ccx_encoders_helpers.h"
 
@@ -89,21 +90,24 @@ int write_cc_buffer_as_g608(struct eia608_screen *data, struct encoder_ctx *cont
 
 
 	__wrap_write (context->out->fh, context->buffer, used);
-    
-    python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->buffer,0);
+    if (signal_python_api)
+        python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->buffer,0);
 	for (int i=0;i<15;i++)
 	{
 		int length = get_line_encoded (context, context->subline, i, data);
 		__wrap_write(context->out->fh, context->subline, length);
-        python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,1);
+        if (signal_python_api)
+            python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,1);
 
 		length = get_color_encoded (context, context->subline, i, data);
 		__wrap_write(context->out->fh, context->subline, length);
-        python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,2);    
+        if (signal_python_api)
+            python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,2);    
 
 		length = get_font_encoded (context, context->subline, i, data);
 		__wrap_write(context->out->fh, context->subline, length);
-        python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,3);   
+        if (signal_python_api)
+            python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,3);   
 		__wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		wrote_something=1;
 	}

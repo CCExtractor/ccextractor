@@ -15,7 +15,12 @@ def templer():
         cc.api_add_param(s,str(i))
     #very mandatory for keeping a track of pythonapi call. Always must be set.
     cc.set_pythonapi(s)
+    
     compile_ret = cc.compile_params(s,len(sys.argv[1:]));
+    
+    #very mandatory for keeping a track of pythonapi call. Always must be called so that the program knows that the call is from pythonapi.
+    cc.call_from_python_api(s)
+
     start_ret = cc.api_start(s);
     time.sleep(0.5)
 def start_python_extraction():
