@@ -50,7 +50,7 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
                 array.subs[i].buffer = realloc(array.subs[i].buffer,sizeof(char*)*array.subs[i].buffer_count);
                 array.subs[i].buffer[array.subs[i].buffer_count-1] =  malloc(sizeof(char)*strlen(buffer));
                 strcpy (array.subs[i].buffer[array.subs[i].buffer_count-1], buffer);
-                fprintf(array.fp,"%s\n",buffer);
+                fprintf(array.fp,"text[%d]:%s\n",array.subs[i].buffer_count-1,buffer);
                 fflush(array.fp);
                 array.subs[i].buffer_count++;
                 return;
@@ -61,7 +61,7 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
                     array.subs[i].g608_grid_color = realloc(array.subs[i].g608_grid_color,sizeof(char*)*array.subs[i].g608_grid_color_count);
                     array.subs[i].g608_grid_color[array.subs[i].g608_grid_color_count-1] =  malloc(sizeof(char)*strlen(buffer));
                     strcpy (array.subs[i].g608_grid_color[array.subs[i].g608_grid_color_count-1], buffer);
-                    fprintf(array.fp,"%s\n",buffer);
+                    fprintf(array.fp,"color[%d]:%s\n",array.subs[i].buffer_count-1,buffer);
                     fflush(array.fp);
                     array.subs[i].g608_grid_color_count++;
                     return;
@@ -71,7 +71,7 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
                     array.subs[i].g608_grid_font = realloc(array.subs[i].g608_grid_font,sizeof(char*)*array.subs[i].g608_grid_font_count);
                     array.subs[i].g608_grid_font[array.subs[i].g608_grid_font_count-1] =  malloc(sizeof(char)*strlen(buffer));
                     strcpy (array.subs[i].g608_grid_font[array.subs[i].g608_grid_font_count-1], buffer);
-                    fprintf(array.fp,"%s\n",buffer);
+                    fprintf(array.fp,"font[%d]:%s\n",array.subs[i].buffer_count-1,buffer);
                     fflush(array.fp);
                     array.subs[i].g608_grid_font_count++;
                     return;
@@ -89,6 +89,9 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
     array.subs[array.sub_count-1].start_time = start_time;
     array.subs[array.sub_count-1].end_time = end_time;
    
+    fprintf(array.fp,"start_time:%s\t",start_time);
+    fprintf(array.fp,"end_time:%s\n",end_time);
+
     array.subs[array.sub_count-1].buffer_count=1;
     array.subs[array.sub_count-1].buffer=NULL;
     

@@ -26,19 +26,35 @@ def tail(queue):
 #modify this function according to user necessity
 ###
 import datetime
-def alternator(line):
-    final=""
-    for letter,index in enumerate(line):
-            if index%2==0:
-                final+=letter.upper()
-            else:
-                final+=letter.lower()
-    return final   
+text,font,color = [],[],[]
+def g608_grid_former(line):
+    global text,font,color
+    if "text[" in line:
+        line = str(line.split(":", 1)[1])
+        line = str(line.split("\n")[0])
+        text.append(line)
+    if "color[" in line:
+        line = str(line.split(":", 1)[1])
+        line = str(line.split("\n")[0])
+        color.append(line)
+    if "font[" in line:
+        line = str(line.split(":", 1)[1])
+        line = str(line.split("\n")[0])
+        font.append(line)
+
 def user_choice(line):
+    global text,font,color
     if "start_time" in line:
-        print datetime.datetime.now()
+        if font:
+            print "\n".join(font)
+        text,font,color = [],[],[]
+    g608_grid_former(line)
+
+    #d = {}
+    #    print datetime.datetime.now()
+
     #else:
     #    line = alternator(line)
-    print line
+    #print line
 
 
