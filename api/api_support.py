@@ -1,3 +1,4 @@
+import ccextractor as cc
 ###
 #DO NOT TOUCH THIS FUNCTION
 ###
@@ -26,30 +27,28 @@ def tail(queue):
 #modify this function according to user necessity
 ###
 import datetime
+##
+#help_string to be included in the documentation
+#it is the help string for telling what kind of output the user wants to STDOUT 
+#the redirection of output to STDOUT can be changed easily to whatsoever usage the user wants to put in.
+##
+help_string = """
+    Case is the value that would give the desired output.
+    case = 0 --> print start_time,end_time,text,color,font
+    case = 1 --> print start_time,end_time,text
+    case = 2 --> print start_time,end_time,color
+    case = 3 --> print start_time,end_time,font
+    case = 4 --> print start_time,end_time,text,color
+    case = 5 --> print start_time,end_time,text,font
+    case = 6 --> print start_time,end_time,color,font
+    """
 text,font,color = [],[],[]
-def g608_grid_former(line):
-    global text,font,color
-    if "text[" in line:
-        line = str(line.split(":", 1)[1])
-        line = str(line.split("\n")[0])
-        text.append(line)
-    if "color[" in line:
-        line = str(line.split(":", 1)[1])
-        line = str(line.split("\n")[0])
-        color.append(line)
-    if "font[" in line:
-        line = str(line.split(":", 1)[1])
-        line = str(line.split("\n")[0])
-        font.append(line)
-
 def user_choice(line):
     global text,font,color
     if "start_time" in line:
-        if font:
-            print "\n".join(font)
+        cc.print_g608_grid(2,text,color,font)
         text,font,color = [],[],[]
-    g608_grid_former(line)
-
+    cc.g608_grid_former(line,text,color,font)
     #d = {}
     #    print datetime.datetime.now()
 
