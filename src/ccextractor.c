@@ -446,21 +446,9 @@ int compile_params(struct ccx_s_options *api_options,int argc){
                    api_options->python_params[i] = api_options->python_params[i-1];
       api_options->python_params[0] = temp;
     int ret = parse_parameters (api_options, api_options->python_param_count, api_options->python_params);
-    if (ret == EXIT_NO_INPUT_FILES)
-	{
-		print_usage ();
-		fatal (EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");
-	}
-	else if (ret == EXIT_WITH_HELP)
-	{
-		return EXIT_OK;
-	}
-	else if (ret != EXIT_OK)
-	{
-		exit(ret);
-	}
-    return EXIT_OK;
-    }
+
+    return ret;
+}
 
 void api_add_param(struct ccx_s_options* api_options,char* arg){
       api_options->python_params = realloc(api_options->python_params, (api_options->python_param_count+1) * sizeof *api_options->python_params);
@@ -513,14 +501,28 @@ int __wrap_write(int file_handle, char* buffer, int nbyte)
 }
 
 
-int main(int argc, char* argv[]){
-    int i;
+int main(int argc, char* argv[])
+{
     struct ccx_s_options* api_options = api_init_options();
     check_configuration_file(*api_options);
-    for(i = 1; i < argc; i++)
+    for(int i = 1; i < argc; i++)
         api_add_param(api_options,argv[i]);
     
     int compile_ret = compile_params(api_options,argc);
+    if (compile_ret == EXIT_NO_INPUT_FILES)
+    {
+        print_usage ();
+        fatal (EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");
+    }
+    else if (compile_ret == EXIT_WITH_HELP)
+    {
+        return EXIT_OK;
+    }
+    else if (compile_ret != EXIT_OK)
+    {
+        exit(compile_ret);
+    }
+
     int start_ret = api_start(*api_options);
     
 	return start_ret;
