@@ -109,14 +109,8 @@ void python_extract_time_based(unsigned h1, unsigned m1, unsigned s1, unsigned m
     char* end_time = time_wrapper("%02u:%02u:%02u,%03u",h2,m2,s2,ms2);
     for(i=0;i<array.sub_count;i++){
         if ((strcmp(start_time,array.subs[i].start_time)==0)&&(strcmp(end_time,array.subs[i].end_time)==0)){
-                //array.subs[i].buffer_count++;
-                //array.subs[i].buffer = realloc(array.subs[i].buffer,sizeof(char*)*array.subs[i].buffer_count);
-                //array.subs[i].buffer[array.subs[i].buffer_count-1] =  malloc(sizeof(char)*strlen(buffer));
-                //strcpy (array.subs[i].buffer[array.subs[i].buffer_count-1], buffer);
-                //__wrap_write(fp,buffer, strlen(buffer));
                 fprintf(array.fp,"%s\n",buffer);
                 fflush(array.fp);
-           //array.update_status =1;
                 return;
             }
         }
@@ -135,9 +129,6 @@ void python_extract_time_based(unsigned h1, unsigned m1, unsigned s1, unsigned m
     fprintf(array.fp,"end_time:%s\n",end_time);
     fprintf(array.fp,"%s\n",buffer);
     fflush(array.fp);
-    //__wrap_write(fp,buffer, strlen(buffer));
-
-    //array.update_status =1;
 }
 
 void python_extract_transcript(char* buffer){

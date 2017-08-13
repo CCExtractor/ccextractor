@@ -84,41 +84,41 @@ int write_cc_buffer_as_g608(struct eia608_screen *data, struct encoder_ctx *cont
 	sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
 	used = encode_line(context, context->buffer,(unsigned char *) timeline);
     if (!signal_python_api)
-        __wrap_write(context->out->fh, context->buffer, used);
+        write(context->out->fh, context->buffer, used);
 	sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
 		h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
 	used = encode_line(context, context->buffer,(unsigned char *) timeline);
 
 
     if (!signal_python_api)
-        __wrap_write (context->out->fh, context->buffer, used);
+        write (context->out->fh, context->buffer, used);
     if (signal_python_api)
         python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->buffer,0);
 	for (int i=0;i<15;i++)
 	{
 		int length = get_line_encoded (context, context->subline, i, data);
         if (!signal_python_api)
-            __wrap_write(context->out->fh, context->subline, length);
+            write(context->out->fh, context->subline, length);
         if (signal_python_api)
             python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,1);
 
 		length = get_color_encoded (context, context->subline, i, data);
         if (!signal_python_api)
-            __wrap_write(context->out->fh, context->subline, length);
+            write(context->out->fh, context->subline, length);
         if (signal_python_api)
             python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,2);    
 
 		length = get_font_encoded (context, context->subline, i, data);
         if (!signal_python_api)
-            __wrap_write(context->out->fh, context->subline, length);
+            write(context->out->fh, context->subline, length);
         if (signal_python_api)
             python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,3);   
         if (!signal_python_api)
-            __wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+            write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		wrote_something=1;
 	}
 
     if (!signal_python_api)
-        __wrap_write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+        write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 	return wrote_something;
 }
