@@ -296,7 +296,7 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 			used = encode_line(context, context->buffer, (unsigned char *)timeline);
             __wrap_write(context->out->fh, context->buffer, used);
 			len = strlen(str);
-            python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,str);
+            //python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,str);
 			__wrap_write(context->out->fh, str, len);
 			__wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		}
@@ -477,7 +477,7 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 				return -1;
 
 			int length = get_line_encoded(context, context->subline, i, data);
-            python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline);
+            //python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline);
 
 			if (context->encoding != CCX_ENC_UNICODE)
 			{
