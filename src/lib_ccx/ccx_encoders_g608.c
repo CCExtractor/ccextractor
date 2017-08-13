@@ -3,7 +3,7 @@
 #include "ccx_encoders_common.h"
 #include "ccx_encoders_helpers.h"
 
-static unsigned int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
+unsigned int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
 {
 	unsigned char *orig = buffer; // Keep for debugging
 	unsigned char *line = data->characters[line_num];
@@ -31,7 +31,7 @@ static unsigned int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buf
 	}
 	return (unsigned int)(buffer - orig); // Return length
 }
-static unsigned int get_color_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
+unsigned int get_color_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
 {
 	unsigned char *orig = buffer; // Keep for debugging
 	for (int i = 0; i < 32; i++)
@@ -44,7 +44,7 @@ static unsigned int get_color_encoded(struct encoder_ctx *ctx, unsigned char *bu
 	*buffer = 0;
 	return (unsigned)(buffer - orig); // Return length
 }
-static unsigned int get_font_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
+unsigned int get_font_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
 {
 	unsigned char *orig = buffer; // Keep for debugging
 	for (int i = 0; i < 32; i++)

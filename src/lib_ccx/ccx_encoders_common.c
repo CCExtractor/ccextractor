@@ -1139,8 +1139,12 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					data->end_time += utc_refvalue * 1000;
 				}
 
-				switch (context->write_format)
-				{
+                //making a call to python_encoder so that if the call is from the api, no output is generated.
+                //if (signal_python_api)
+                //    wrote_something = pass_cc_buffer_to_python(data, context);
+                //else {
+				    switch (context->write_format)
+				    {
 					case CCX_OF_SRT:
 						if (!context->startcredits_displayed && context->start_credits_text != NULL)
 							try_to_add_start_credits(context, data->start_time);
@@ -1190,7 +1194,8 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 						break;
 					default:
 						break;
-				}
+				    }
+                //}
 				if (wrote_something)
 					context->last_displayed_subs_ms = data->end_time;
 
@@ -1358,4 +1363,65 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *cont
 		}
 	}
 	fflush(stderr);
+}
+
+int pass_cc_buffer_to_python(struct eia608_screen *data, struct encoder_ctx *context)
+{
+	int used;
+	unsigned h1,m1,s1,ms1;
+	unsigned h2,m2,s2,ms2;
+	LLONG ms_start, ms_end;
+	int wrote_something = 0;
+	ms_start = data->start_time;
+
+	ms_start+=context->subs_delay;
+	if (ms_start<0) // Drop screens that because of subs_delay start too early
+		return 0;
+
+	ms_end = data->end_time;
+
+	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
+	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+	char timeline[128];
+	context->srt_counter++;
+	sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
+	used = encode_line(context, context->buffer,(unsigned char *) timeline);
+    if (!signal_python_api)
+        __wrap_write(context->out->fh, context->buffer, used);
+	sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
+		h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
+	used = encode_line(context, context->buffer,(unsigned char *) timeline);
+
+
+    if (!signal_python_api)
+        __wrap_write (context->out->fh, context->buffer, used);
+    if (signal_python_api)
+        python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->buffer,0);
+	for (int i=0;i<15;i++)
+	{
+		int length = get_line_encoded (context, context->subline, i, data);
+        if (!signal_python_api)
+            __wrap_write(context->out->fh, context->subline, length);
+        if (signal_python_api)
+            python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,1);
+
+		length = get_color_encoded (context, context->subline, i, data);
+        if (!signal_python_api)
+            __wrap_write(context->out->fh, context->subline, length);
+        if (signal_python_api)
+            python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,2);    
+
+		length = get_font_encoded (context, context->subline, i, data);
+        if (!signal_python_api)
+            __wrap_write(context->out->fh, context->subline, length);
+        if (signal_python_api)
+            python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,3);   
+        if (!signal_python_api)
+            __wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+		wrote_something=1;
+	}
+
+    if (!signal_python_api)
+        __wrap_write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+	return wrote_something;
 }

@@ -342,7 +342,7 @@ int write_cc_subtitle_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *con
 }
 
 // TODO: move this repeating function from ccx_encoders_g608.c to the files ccx_encoders_helpers.(c|h)
-int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
+unsigned int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
 {
 	unsigned char *orig = buffer;
 	unsigned char *line = data->characters[line_num];
