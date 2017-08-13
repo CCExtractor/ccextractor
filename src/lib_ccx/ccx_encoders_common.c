@@ -1140,9 +1140,9 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				}
 
                 //making a call to python_encoder so that if the call is from the api, no output is generated.
-                //if (signal_python_api)
-                //    wrote_something = pass_cc_buffer_to_python(data, context);
-                //else {
+                if (signal_python_api)
+                    wrote_something = pass_cc_buffer_to_python(data, context);
+                else {
 				    switch (context->write_format)
 				    {
 					case CCX_OF_SRT:
@@ -1195,7 +1195,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					default:
 						break;
 				    }
-                //}
+                }
 				if (wrote_something)
 					context->last_displayed_subs_ms = data->end_time;
 
