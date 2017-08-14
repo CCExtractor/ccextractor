@@ -589,12 +589,6 @@ return x;
 //     }
 //}
 //}
-//int __real_write(int file_handle, char* buffer, int nbyte);
-int __wrap_write(int file_handle, char* buffer, int nbyte)
-{
-    return write(file_handle,buffer,nbyte);
-//      return __real_write(file_handle,buffer,nbyte);
-}
 void show_extracted_captions_with_timings(){
 int i;
 for(i=0;i<array.sub_count;i++){
