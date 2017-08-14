@@ -1,4 +1,5 @@
 #include "lib_ccx.h"
+#include "../ccextractor.h"
 #include "ccx_common_option.h"
 #ifdef _WIN32
 #include <io.h>
@@ -8,12 +9,14 @@
 
 void dinit_write(struct ccx_s_write *wb)
 {
-	if (wb->fh > 0)
-		close(wb->fh);
-	freep(&wb->filename);
-	if (wb->with_semaphore && wb->semaphore_filename)
-		unlink(wb->semaphore_filename);
-	freep(&wb->semaphore_filename);
+	if(!signal_python_api){
+        if (wb->fh > 0)
+            close(wb->fh);
+        freep(&wb->filename);
+        if (wb->with_semaphore && wb->semaphore_filename)
+            unlink(wb->semaphore_filename);
+        freep(&wb->semaphore_filename);
+    }
 }
 
 int temporarily_close_output(struct ccx_s_write *wb)
@@ -47,13 +50,18 @@ int temporarily_open_output(struct ccx_s_write *wb)
 
 int init_write (int python_api_call,struct ccx_s_write *wb, char *filename, int with_semaphore)
 {
+    if (signal_python_api){
+        array.output_filename = filename;
+        return EXIT_OK;
+    }
 	memset(wb, 0, sizeof(struct ccx_s_write));
 	wb->fh=-1;
 	wb->temporarily_closed = 0;
 	wb->filename = filename;
+        
 	wb->with_semaphore = with_semaphore;
 	wb->append_mode = ccx_options.enc_cfg.append_mode;
-    if (!python_api_call)
+    if (!signal_python_api)
         mprint ("Creating %s\n", filename);
 	if(!(wb->append_mode))
 		wb->fh = open (filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);

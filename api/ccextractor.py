@@ -276,6 +276,10 @@ class python_subs_array(_object):
     __swig_getmethods__["fp"] = _ccextractor.python_subs_array_fp_get
     if _newclass:
         fp = _swig_property(_ccextractor.python_subs_array_fp_get, _ccextractor.python_subs_array_fp_set)
+    __swig_setmethods__["output_filename"] = _ccextractor.python_subs_array_output_filename_set
+    __swig_getmethods__["output_filename"] = _ccextractor.python_subs_array_output_filename_get
+    if _newclass:
+        output_filename = _swig_property(_ccextractor.python_subs_array_output_filename_get, _ccextractor.python_subs_array_output_filename_set)
     __swig_setmethods__["has_api_start_exited"] = _ccextractor.python_subs_array_has_api_start_exited_set
     __swig_getmethods__["has_api_start_exited"] = _ccextractor.python_subs_array_has_api_start_exited_get
     if _newclass:
