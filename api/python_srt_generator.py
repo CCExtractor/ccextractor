@@ -12,7 +12,7 @@ def delete_file_handle(fh):
 # data would be a dictionary containg the following keys:
 # text, color, font
 ##
-def generate_output_srt_time( fh, data):
+def generate_output_srt_time(data):
     data = data.split("-")
     end_time = str(data[-1].split("\n")[0])
     start_time = str(data[1].split("\t")[0])

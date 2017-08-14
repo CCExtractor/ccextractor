@@ -33,34 +33,29 @@ def return_g608_grid(case,text,color,font):
             ret_val['font']=font
         
     elif case==1:
-        #if text:
-            #ret_val['text']="\n".join(text)
+        if text:
             ret_val['text']=text
     elif case==2:
-        #if color:
-            #ret_val['color']="\n".join(color)
+        if color:
             ret_val['color']=color
     elif case==3:
-        #if font:
-            #ret_val['font']="\n".join(font)
+        if font:
             ret_val['font']=font
     elif case==4:
-        #if text:
-            #ret_val['text']="\n".join(text)
+        if text:
             ret_val['text']=text
-        #if color:
+        if color:
             ret_val['color']=color
     elif case==5:
-        #if text:
+        if text:
             ret_val['text']=text
-        #if font:
+        if font:
             ret_val['font']=font
     elif case==6:
-        #if color:
+        if color:
             ret_val['color']=color
-        #if font:
+        if font:
             ret_val['font']=font
     else:
         print help_string
     return ret_val
-    #return [ret_val['text'],ret_val['color'],ret_val['font']]
