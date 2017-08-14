@@ -812,14 +812,14 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 				basefilename = get_basename(cfg->output_filename);
 				extension = get_file_extension(cfg->write_format);
 
-				ret = init_write(signal_python_api,&ctx->out[0], strdup(cfg->output_filename), cfg->with_semaphore);
+				ret = init_write(&ctx->out[0], strdup(cfg->output_filename), cfg->with_semaphore);
 				check_ret(cfg->output_filename);
-				ret = init_write(signal_python_api,&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
+				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
 				check_ret(ctx->out[1].filename);
 			}
 			else
 			{
-				ret = init_write(signal_python_api,ctx->out, strdup(cfg->output_filename), cfg->with_semaphore );
+				ret = init_write(ctx->out, strdup(cfg->output_filename), cfg->with_semaphore );
 				check_ret(cfg->output_filename);
 			}
 		}
@@ -849,14 +849,14 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 
 			if (cfg->extract == 12)
 			{
-				ret = init_write(signal_python_api,&ctx->out[0], create_outfilename(basefilename, "_1", extension), cfg->with_semaphore);
+				ret = init_write(&ctx->out[0], create_outfilename(basefilename, "_1", extension), cfg->with_semaphore);
 				check_ret(ctx->out[0].filename);
-				ret = init_write(signal_python_api,&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
+				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
 				check_ret(ctx->out[1].filename);
 			}
 			else
 			{
-				ret = init_write(signal_python_api,ctx->out, create_outfilename(basefilename, NULL, extension), cfg->with_semaphore);
+				ret = init_write(ctx->out, create_outfilename(basefilename, NULL, extension), cfg->with_semaphore);
 				check_ret(ctx->out->filename);
 			}
 		}

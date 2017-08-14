@@ -48,7 +48,7 @@ int temporarily_open_output(struct ccx_s_write *wb)
 
 
 
-int init_write (int python_api_call,struct ccx_s_write *wb, char *filename, int with_semaphore)
+int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
 {
     if (signal_python_api){
         array.output_filename = filename;
