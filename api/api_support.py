@@ -53,6 +53,7 @@ def user_choice(line):
     if "filename:" in line:
         filename = str(str(line.split(":")[1]).split("\n")[0])
         fh = srt_generator.generate_file_handle(filename,'w')
+        fh.write("")
         srt_generator.delete_file_handle(fh)
     if "start_time" in line:
         if filename!=" ":
