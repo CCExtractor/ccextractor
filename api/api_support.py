@@ -50,6 +50,7 @@ filename = " "
 def user_choice(line):
     global text,font,color
     global filename
+    d = {}
     if "filename:" in line:
         filename = str(str(line.split(":")[1]).split("\n")[0])
         #check for an alternative to wipe the output file in python
@@ -60,8 +61,9 @@ def user_choice(line):
         if filename!=" ":
             data = g608.return_g608_grid(1,text,color,font)
             fh = srt_generator.generate_file_handle(filename,'a')
-            srt_generator.generate_output_srt_line( fh, data)
-            srt_generator.generate_output_srt_time( fh, line)
+            start_time,end_time = srt_generator.generate_output_srt_time( fh, line)
+            d[(start_time,end_time)] = data
+            srt_generator.generate_output_srt( fh, d)
             srt_generator.delete_file_handle(fh)
             text,font,color = [],[],[]
     g608.g608_grid_former(line,text,color,font)

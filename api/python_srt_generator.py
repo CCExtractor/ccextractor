@@ -16,14 +16,25 @@ def generate_output_srt_time( fh, data):
     data = data.split("-")
     end_time = str(data[-1].split("\n")[0])
     start_time = str(data[1].split("\t")[0])
+    return (start_time,end_time)
+    #fh.write(start_time)
+    #fh.write("\t")
+    #fh.write(end_time)
+    #fh.write("\n")
+
+    
+    
+def generate_output_srt( fh, d):
+    start_time = d.keys()[0][0]
+    end_time = d.keys()[0][1]
+    data = d.items()[0][1]
+    if len(data['text'])<1:
+        return    
     fh.write(start_time)
     fh.write("\t")
     fh.write(end_time)
     fh.write("\n")
-
-    
-    
-def generate_output_srt_line( fh, data):
+    print data
     for item in data['text']:
         if "                                " not in item:
             o = item
