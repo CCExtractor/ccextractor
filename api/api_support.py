@@ -1,5 +1,6 @@
 import ccextractor as cc
 import ccx_to_python_g608 as g608
+import python_srt_generator as srt_generator
 ###
 #DO NOT TOUCH THIS FUNCTION
 ###
@@ -44,17 +45,30 @@ help_string = """
     case = 6 --> print start_time,end_time,color,font
     """
 text,font,color = [],[],[]
+filename = " "
+
 def user_choice(line):
     global text,font,color
+    global filename
+    if "filename:" in line:
+        filename = str(str(line.split(":")[1]).split("\n")[0])
+        fh = srt_generator.generate_file_handle(filename,'w')
+        srt_generator.delete_file_handle(fh)
     if "start_time" in line:
-        cc.print_g608_grid(2,text,color,font)
-        text,font,color = [],[],[]
+        if filename!=" ":
+            data = g608.return_g608_grid(1,text,color,font)
+            fh = srt_generator.generate_file_handle(filename,'a')
+            srt_generator.generate_output_srt( fh, data)
+            srt_generator.delete_file_handle(fh)
+            text,font,color = [],[],[]
     g608.g608_grid_former(line,text,color,font)
+
     #d = {}
     #    print datetime.datetime.now()
 
     #else:
     #    line = alternator(line)
     #print line
+
 
 

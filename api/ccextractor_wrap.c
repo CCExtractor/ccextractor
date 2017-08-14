@@ -5196,6 +5196,19 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_cc_to_python_get_output_filename(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)":cc_to_python_get_output_filename")) SWIG_fail;
+  result = (char *)cc_to_python_get_output_filename();
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_call_from_python_api(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   struct ccx_s_options *arg1 = (struct ccx_s_options *) 0 ;
@@ -5388,6 +5401,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"cc_to_python_get_modified_sub", _wrap_cc_to_python_get_modified_sub, METH_VARARGS, NULL},
 	 { (char *)"cc_to_python_get_modified_sub_buffer_size", _wrap_cc_to_python_get_modified_sub_buffer_size, METH_VARARGS, NULL},
 	 { (char *)"cc_to_python_get_modified_sub_buffer", _wrap_cc_to_python_get_modified_sub_buffer, METH_VARARGS, NULL},
+	 { (char *)"cc_to_python_get_output_filename", _wrap_cc_to_python_get_output_filename, METH_VARARGS, NULL},
 	 { (char *)"call_from_python_api", _wrap_call_from_python_api, METH_VARARGS, NULL},
 	 { (char *)"set_pythonapi", _wrap_set_pythonapi, METH_VARARGS, NULL},
 	 { (char *)"setautoprogram", _wrap_setautoprogram, METH_VARARGS, NULL},

@@ -76,6 +76,7 @@ int cc_to_python_get_number_of_subs();
 struct python_subs_modified cc_to_python_get_modified_sub(int i);
 int cc_to_python_get_modified_sub_buffer_size(int i);
 char* cc_to_python_get_modified_sub_buffer(int i, int j);
+char* cc_to_python_get_output_filename();
 
 void call_from_python_api(struct ccx_s_options *api_options);
 #endif //CCEXTRACTOR_H

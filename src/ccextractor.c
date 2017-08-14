@@ -515,6 +515,9 @@ char* cc_to_python_get_modified_sub_buffer(int i, int j){
     return array.subs[i].buffer[j];
 }
 
+char* cc_to_python_get_output_filename(){
+    return array.output_filename;
+}
 /*
  * asprintf alternative
  * Defined only in case of windows users.

@@ -12,7 +12,8 @@ def g608_grid_former(line,text,color,font):
         line = str(line.split("\n")[0])
         font.append(line)
 
-def print_g608_grid(case,text,color,font):
+def return_g608_grid(case,text,color,font):
+    ret_val = {'text':" ",'color':" ",'font':" "}
     help_string = """
     Case is the value that would give the desired output.
     case = 0 --> print start_time,end_time,text,color,font
@@ -25,36 +26,41 @@ def print_g608_grid(case,text,color,font):
     """
     if case==0:
         if text:
-            print "\n".join(text)
+            ret_val['text']=text
         if color:
-            print "\n".join(color)
+            ret_val['color']=color
         if font:
-            print "\n".join(font)
+            ret_val['font']=font
         
     elif case==1:
-        if text:
-            print "\n".join(text)
+        #if text:
+            #ret_val['text']="\n".join(text)
+            ret_val['text']=text
     elif case==2:
-        if color:
-            print "\n".join(color)
+        #if color:
+            #ret_val['color']="\n".join(color)
+            ret_val['color']=color
     elif case==3:
-        if font:
-            print "\n".join(font)
+        #if font:
+            #ret_val['font']="\n".join(font)
+            ret_val['font']=font
     elif case==4:
-        if text:
-            print "\n".join(text)
-        if color:
-            print "\n".join(color)
+        #if text:
+            #ret_val['text']="\n".join(text)
+            ret_val['text']=text
+        #if color:
+            ret_val['color']=color
     elif case==5:
-        if text:
-            print "\n".join(text)
-        if font:
-            print "\n".join(font)
+        #if text:
+            ret_val['text']=text
+        #if font:
+            ret_val['font']=font
     elif case==6:
-        if color:
-            print "\n".join(color)
-        if font:
-            print "\n".join(font)
+        #if color:
+            ret_val['color']=color
+        #if font:
+            ret_val['font']=font
     else:
         print help_string
-
+    return ret_val
+    #return [ret_val['text'],ret_val['color'],ret_val['font']]
