@@ -37,7 +37,8 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
     /*
      * identifier = 0 ---> adding start and end time
      * identifier = 1 ---> subtitle
-     * identifier = 2 ---> rest of the grid
+     * identifier = 2 ---> color
+     * identifier = 3 ---> font
      */
     //check if the caption with same start and end time already exists
     int i;

@@ -31,10 +31,12 @@ def generate_output_srt( fh, d):
     if len(data['text'])<1:
         return    
     fh.write(start_time)
-    fh.write("\t")
+    fh.write(" ")
+    fh.write("-->")
+    fh.write(" ")
     fh.write(end_time)
     fh.write("\n")
-    print data
+    
     for item in data['text']:
         if "                                " not in item:
             o = item
