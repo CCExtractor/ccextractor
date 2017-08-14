@@ -89,8 +89,8 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
     array.subs[array.sub_count-1].start_time = start_time;
     array.subs[array.sub_count-1].end_time = end_time;
    
-    fprintf(array.fp,"start_time:%s\t",start_time);
-    fprintf(array.fp,"end_time:%s\n",end_time);
+    fprintf(array.fp,"start_time-%s\t",start_time);
+    fprintf(array.fp,"end_time-%s\n",end_time);
 
     array.subs[array.sub_count-1].buffer_count=1;
     array.subs[array.sub_count-1].buffer=NULL;
