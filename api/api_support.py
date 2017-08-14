@@ -1,4 +1,5 @@
 import ccextractor as cc
+import ccx_to_python_g608 as g608
 ###
 #DO NOT TOUCH THIS FUNCTION
 ###
@@ -48,7 +49,7 @@ def user_choice(line):
     if "start_time" in line:
         cc.print_g608_grid(2,text,color,font)
         text,font,color = [],[],[]
-    cc.g608_grid_former(line,text,color,font)
+    g608.g608_grid_former(line,text,color,font)
     #d = {}
     #    print datetime.datetime.now()
 

@@ -475,10 +475,18 @@ void api_add_param(struct ccx_s_options* api_options,char* arg){
       api_options->python_param_count++;
 }
 
+/*
+ * Helper function to print the i-th param submitted by the user.
+ * Helpful for debugging
+ */
 char * api_param(struct ccx_s_options* api_options, int count){
     return api_options->python_params[count];
 }
 
+/*
+ * Helper function to get the total number of params provided by the user.
+ * Helpful for debugging
+ */
 int api_param_count(struct ccx_s_options* api_options){
     return api_options->python_param_count;
 }
@@ -491,6 +499,7 @@ int cc_to_python_get_old_count(){
 void cc_to_python_set_old_count(){
      array.old_sub_count=array.sub_count;
 }
+
 int cc_to_python_get_number_of_subs(){
     return array.sub_count;
 }
@@ -508,6 +517,7 @@ char* cc_to_python_get_modified_sub_buffer(int i, int j){
 
 /*
  * asprintf alternative
+ * Defined only in case of windows users.
  */
 #ifdef _WIN32
 int vasprintf(char **strp, const char *fmt, va_list ap) {
