@@ -825,7 +825,9 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 		}
 		else if (cfg->write_format != CCX_OF_NULL)
 		{
+            /*
             if (signal_python_api){
+                printf("**********************\nSetting /dev/null\n************************\n");
                 //Setting the output of the generator to /dev/null for linux
                 basefilename = malloc((strlen("/dev/")+1)*sizeof(char));
                 extension = malloc((strlen("null")+1)*sizeof(char));
@@ -836,7 +838,10 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
                 basefilename = get_basename(ctx->first_input_file);
                 extension = get_file_extension(cfg->write_format);
             }
-                
+              */
+
+            basefilename = get_basename(ctx->first_input_file);
+            extension = get_file_extension(cfg->write_format);
 			if (basefilename == NULL)
 			{
 				basefilename = get_basename("untitled");
