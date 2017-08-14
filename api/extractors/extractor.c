@@ -33,7 +33,7 @@ void python_extract(int srt_counter, unsigned h1, unsigned m1, unsigned s1, unsi
 }
 
 
-void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms1, unsigned h2, unsigned m2, unsigned s2, unsigned ms2, char* buffer, int identifier){
+void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms1, unsigned h2, unsigned m2, unsigned s2, unsigned ms2, char* buffer, int identifier, int srt_counter){
     /*
      * identifier = 0 ---> adding start and end time
      * identifier = 1 ---> subtitle
@@ -90,6 +90,7 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
     array.subs[array.sub_count-1].start_time = start_time;
     array.subs[array.sub_count-1].end_time = end_time;
    
+    fprintf(array.fp,"srt_counter-%d\n",srt_counter);
     fprintf(array.fp,"start_time-%s\t",start_time);
     fprintf(array.fp,"end_time-%s\n",end_time);
 

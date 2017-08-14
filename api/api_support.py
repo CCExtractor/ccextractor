@@ -57,6 +57,8 @@ def user_choice(line):
         fh = srt_generator.generate_file_handle(filename,'w')
         fh.write("")
         srt_generator.delete_file_handle(fh)
+    if "srt_counter-" in line:
+        print line
     if "start_time" in line:
         if filename!=" ":
             data = g608.return_g608_grid(1,text,color,font)
