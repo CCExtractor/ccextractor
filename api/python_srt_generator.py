@@ -25,19 +25,7 @@ def generate_output_srt_time( fh, data):
     
     
 def generate_output_srt( fh, d):
-    start_time = d.keys()[0][0]
-    end_time = d.keys()[0][1]
-    data = d.items()[0][1]
-    if len(data['text'])<1:
-        return    
-    fh.write(start_time)
-    fh.write(" ")
-    fh.write("-->")
-    fh.write(" ")
-    fh.write(end_time)
-    fh.write("\n")
-    
-    for item in data['text']:
+    for item in d:
         if "                                " not in item:
             o = item
             index = item.find("\x11")
@@ -45,3 +33,4 @@ def generate_output_srt( fh, d):
                 o = item[:index]
             fh.write(o)
             fh.write("\n")
+    fh.write("\n")
