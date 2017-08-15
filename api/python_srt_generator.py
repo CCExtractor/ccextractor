@@ -62,12 +62,14 @@ def comparing_text_font_grids(text, font):
                 buff +=  letter[i]
             if buff!=letter:
                 temp.append(buff)
-    print temp
+    return (temp,font)
 
     
 def generate_output_srt( fh, d):
     temp = []
-    comparing_text_font_grids(d['text'],d['font'])
+    a,b = comparing_text_font_grids(d['text'],d['font'])
+    print a
+    """
     for item in d['text']:
         if "                                " not in item:
             o = re.sub(r'[\x00-\x1e]',r'',item)
@@ -77,3 +79,4 @@ def generate_output_srt( fh, d):
             fh.write("\n")
             fh.flush()
     fh.write("\n")
+    """
