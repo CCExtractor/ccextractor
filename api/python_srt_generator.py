@@ -22,15 +22,15 @@ def generate_output_srt_time( fh, data):
     fh.write(end_time)
     fh.write("\n")
 
-    
-    
 def generate_output_srt( fh, d):
+    temp = []
+    print d
     for item in d:
         if "                                " not in item:
-            o = item
-            index = item.find("\x11")
-            if index:
-                o = item[:index]
+            o = re.sub(r'[\x00-\x1e]',r'',item)
+            o = re.sub(r'\x1f[!@#$%^&*()]*', r'', o)
+            temp.append(o)
             fh.write(o)
             fh.write("\n")
     fh.write("\n")
+    print temp
