@@ -52,6 +52,8 @@ int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
 {
     if (signal_python_api){
         array.output_filename = filename;
+        //writing to memory which would be then tailed by python.
+        fprintf(array.fp,"filename:%s\n",array.output_filename);
         return EXIT_OK;
     }
 	memset(wb, 0, sizeof(struct ccx_s_write));

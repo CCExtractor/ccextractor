@@ -385,6 +385,10 @@ def cc_to_python_get_modified_sub_buffer(i, j):
     return _ccextractor.cc_to_python_get_modified_sub_buffer(i, j)
 cc_to_python_get_modified_sub_buffer = _ccextractor.cc_to_python_get_modified_sub_buffer
 
+def cc_to_python_get_output_filename():
+    return _ccextractor.cc_to_python_get_output_filename()
+cc_to_python_get_output_filename = _ccextractor.cc_to_python_get_output_filename
+
 def call_from_python_api(api_options):
     return _ccextractor.call_from_python_api(api_options)
 call_from_python_api = _ccextractor.call_from_python_api

@@ -33,11 +33,12 @@ void python_extract(int srt_counter, unsigned h1, unsigned m1, unsigned s1, unsi
 }
 
 
-void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms1, unsigned h2, unsigned m2, unsigned s2, unsigned ms2, char* buffer, int identifier){
+void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms1, unsigned h2, unsigned m2, unsigned s2, unsigned ms2, char* buffer, int identifier, int srt_counter){
     /*
      * identifier = 0 ---> adding start and end time
      * identifier = 1 ---> subtitle
-     * identifier = 2 ---> rest of the grid
+     * identifier = 2 ---> color
+     * identifier = 3 ---> font
      */
     //check if the caption with same start and end time already exists
     int i;
@@ -50,7 +51,7 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
                 array.subs[i].buffer = realloc(array.subs[i].buffer,sizeof(char*)*array.subs[i].buffer_count);
                 array.subs[i].buffer[array.subs[i].buffer_count-1] =  malloc(sizeof(char)*strlen(buffer));
                 strcpy (array.subs[i].buffer[array.subs[i].buffer_count-1], buffer);
-                fprintf(array.fp,"text[%d]:%s\n",array.subs[i].buffer_count-1,buffer);
+                fprintf(array.fp,"text[%d]:%s\n",srt_counter,buffer);
                 fflush(array.fp);
                 array.subs[i].buffer_count++;
                 return;
@@ -61,7 +62,7 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
                     array.subs[i].g608_grid_color = realloc(array.subs[i].g608_grid_color,sizeof(char*)*array.subs[i].g608_grid_color_count);
                     array.subs[i].g608_grid_color[array.subs[i].g608_grid_color_count-1] =  malloc(sizeof(char)*strlen(buffer));
                     strcpy (array.subs[i].g608_grid_color[array.subs[i].g608_grid_color_count-1], buffer);
-                    fprintf(array.fp,"color[%d]:%s\n",array.subs[i].buffer_count-1,buffer);
+                    fprintf(array.fp,"color[%d]:%s\n",srt_counter,buffer);
                     fflush(array.fp);
                     array.subs[i].g608_grid_color_count++;
                     return;
@@ -71,7 +72,14 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
                     array.subs[i].g608_grid_font = realloc(array.subs[i].g608_grid_font,sizeof(char*)*array.subs[i].g608_grid_font_count);
                     array.subs[i].g608_grid_font[array.subs[i].g608_grid_font_count-1] =  malloc(sizeof(char)*strlen(buffer));
                     strcpy (array.subs[i].g608_grid_font[array.subs[i].g608_grid_font_count-1], buffer);
-                    fprintf(array.fp,"font[%d]:%s\n",array.subs[i].buffer_count-1,buffer);
+                    fprintf(array.fp,"font[%d]:%s\n",srt_counter,buffer);
+                    fflush(array.fp);
+                    array.subs[i].g608_grid_font_count++;
+                    return;
+                    }
+                else if(identifier==4){
+                // writing end of frame 
+                    fprintf(array.fp,"***END OF FRAME***\n",srt_counter,buffer);
                     fflush(array.fp);
                     array.subs[i].g608_grid_font_count++;
                     return;
@@ -89,9 +97,9 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
     array.subs[array.sub_count-1].start_time = start_time;
     array.subs[array.sub_count-1].end_time = end_time;
    
-    fprintf(array.fp,"start_time:%s\t",start_time);
-    fprintf(array.fp,"end_time:%s\n",end_time);
-
+    fprintf(array.fp,"srt_counter-%d\n",srt_counter);
+    fprintf(array.fp,"start_time-%s\t",start_time);
+    fprintf(array.fp,"end_time-%s\n",end_time);
     array.subs[array.sub_count-1].buffer_count=1;
     array.subs[array.sub_count-1].buffer=NULL;
     

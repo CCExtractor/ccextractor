@@ -29,18 +29,19 @@ int pass_cc_buffer_to_python(struct eia608_screen *data, struct encoder_ctx *con
 	used = encode_line(context, context->buffer,(unsigned char *) timeline);
 
 
-    python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->buffer,0);
+    python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->buffer,0,context->srt_counter);
 	for (int i=0;i<15;i++)
 	{
 		int length = get_line_encoded (context, context->subline, i, data);
-        python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,1);
+        python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,1,context->srt_counter);
 
 		length = get_color_encoded (context, context->subline, i, data);
-        python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,2);    
+        python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,2,context->srt_counter);    
 
 		length = get_font_encoded (context, context->subline, i, data);
-        python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,3);   
+        python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,3,context->srt_counter);   
 		wrote_something=1;
 	}
+    python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,4,context->srt_counter);   
 	return wrote_something;
 }
