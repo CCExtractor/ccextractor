@@ -42,5 +42,6 @@ int pass_cc_buffer_to_python(struct eia608_screen *data, struct encoder_ctx *con
         python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,3,context->srt_counter);   
 		wrote_something=1;
 	}
+    python_extract_g608_grid(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline,4,context->srt_counter);   
 	return wrote_something;
 }

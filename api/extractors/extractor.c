@@ -51,7 +51,7 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
                 array.subs[i].buffer = realloc(array.subs[i].buffer,sizeof(char*)*array.subs[i].buffer_count);
                 array.subs[i].buffer[array.subs[i].buffer_count-1] =  malloc(sizeof(char)*strlen(buffer));
                 strcpy (array.subs[i].buffer[array.subs[i].buffer_count-1], buffer);
-                fprintf(array.fp,"text[%d]:%s\n",array.subs[i].buffer_count-1,buffer);
+                fprintf(array.fp,"text[%d]:%s\n",srt_counter,buffer);
                 fflush(array.fp);
                 array.subs[i].buffer_count++;
                 return;
@@ -62,7 +62,7 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
                     array.subs[i].g608_grid_color = realloc(array.subs[i].g608_grid_color,sizeof(char*)*array.subs[i].g608_grid_color_count);
                     array.subs[i].g608_grid_color[array.subs[i].g608_grid_color_count-1] =  malloc(sizeof(char)*strlen(buffer));
                     strcpy (array.subs[i].g608_grid_color[array.subs[i].g608_grid_color_count-1], buffer);
-                    fprintf(array.fp,"color[%d]:%s\n",array.subs[i].buffer_count-1,buffer);
+                    fprintf(array.fp,"color[%d]:%s\n",srt_counter,buffer);
                     fflush(array.fp);
                     array.subs[i].g608_grid_color_count++;
                     return;
@@ -72,7 +72,14 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
                     array.subs[i].g608_grid_font = realloc(array.subs[i].g608_grid_font,sizeof(char*)*array.subs[i].g608_grid_font_count);
                     array.subs[i].g608_grid_font[array.subs[i].g608_grid_font_count-1] =  malloc(sizeof(char)*strlen(buffer));
                     strcpy (array.subs[i].g608_grid_font[array.subs[i].g608_grid_font_count-1], buffer);
-                    fprintf(array.fp,"font[%d]:%s\n",array.subs[i].buffer_count-1,buffer);
+                    fprintf(array.fp,"font[%d]:%s\n",srt_counter,buffer);
+                    fflush(array.fp);
+                    array.subs[i].g608_grid_font_count++;
+                    return;
+                    }
+                else if(identifier==4){
+                // writing end of frame 
+                    fprintf(array.fp,"***END OF FRAME***\n",srt_counter,buffer);
                     fflush(array.fp);
                     array.subs[i].g608_grid_font_count++;
                     return;
