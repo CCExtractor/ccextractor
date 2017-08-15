@@ -21,6 +21,7 @@ def generate_output_srt_time( fh, data):
     fh.write(" --> ")
     fh.write(end_time)
     fh.write("\n")
+    fh.flush()
 
 def generate_output_srt( fh, d):
     temp = []
@@ -32,5 +33,6 @@ def generate_output_srt( fh, d):
             temp.append(o)
             fh.write(o)
             fh.write("\n")
+            fh.flush()
     fh.write("\n")
     print temp
