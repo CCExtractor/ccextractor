@@ -28,9 +28,6 @@ CURLcode res;
 #endif
 
 struct python_subs_modified{
-#if defined(PYTHONAPI)
-        PyObject* reporter;
-#endif
         int buffer_count;
         int srt_counter;
         char *start_time;
@@ -45,6 +42,9 @@ struct python_subs_modified{
 };
 
 struct python_subs_array{
+#if defined(PYTHONAPI)
+        PyObject* reporter;
+#endif
         char* temporary_file;
         FILE *fp;
         char* output_filename;
@@ -86,4 +86,7 @@ char* cc_to_python_get_modified_sub_buffer(int i, int j);
 char* cc_to_python_get_output_filename();
 
 void call_from_python_api(struct ccx_s_options *api_options);
+#if defined(PYTHONAPI)
+void run(PyObject * reporter, char * line);
+#endif
 #endif //CCEXTRACTOR_H

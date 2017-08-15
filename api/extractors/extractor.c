@@ -93,13 +93,26 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
     // initiating its buffer count and grid count
     array.sub_count++;
     array.subs = realloc(array.subs,sizeof(struct python_subs_modified)*array.sub_count);
-    
+ 
     array.subs[array.sub_count-1].start_time = start_time;
     array.subs[array.sub_count-1].end_time = end_time;
-   
-    fprintf(array.fp,"srt_counter-%d\n",srt_counter);
-    fprintf(array.fp,"start_time-%s\t",start_time);
-    fprintf(array.fp,"end_time-%s\n",end_time);
+// following if is not needed though
+#if defined(PYTHONAPI) 
+    char* output = malloc(sizeof(char)*strlen(srt_counter));
+    sprintf(output,"srt_counter-%d\n",srt_counter);
+    run(array.reporter,output);  
+
+    output = realloc(output, sizeof(char)*strlen(start_time));
+    sprintf(output,"start_time-%s\t",start_time);
+    run(array.reporter,output);  
+
+    output = realloc(output, sizeof(char)*strlen(end_time));
+    sprintf(output,"end_time-%s\n",end_time);
+    run(array.reporter,output);  
+#endif
+    //fprintf(array.fp,"srt_counter-%s\t",start_time);
+    //fprintf(array.fp,"start_time-%s\t",start_time);
+    //fprintf(array.fp,"end_time-%s\n",end_time);
     array.subs[array.sub_count-1].buffer_count=1;
     array.subs[array.sub_count-1].buffer=NULL;
     

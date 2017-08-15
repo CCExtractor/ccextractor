@@ -623,6 +623,14 @@ void call_from_python_api(struct ccx_s_options *api_options){
        signal_python_api=0; 
 }
 
+#if defined(PYTHONAPI)
+void run(PyObject * reporter, char * line) {
+       const char * s = line;
+       assert ( PyFunction_Check(reporter) );
+       PyObject* args = PyTuple_Pack(1, PyString_FromString(s));
+       PyObject_CallObject((PyObject*)reporter, args);
+}
+#endif
 int main(int argc, char* argv[]){
 int i;
 struct ccx_s_options* api_options = api_init_options();
