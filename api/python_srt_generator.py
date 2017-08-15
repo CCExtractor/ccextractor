@@ -22,13 +22,7 @@ def generate_output_srt_time( fh, data):
     fh.write("\n")
     fh.flush()
 
-def comparing_text_font_grids(text, font):
-    temp = []
-
-    for letter,font_line in zip(text,font):
-        if "                                " not in letter:
-            buff=""
-            underline,italics = 0,0
+"""
             #Handling underline
             buff = ""
             underline_flag = 0
@@ -48,7 +42,14 @@ def comparing_text_font_grids(text, font):
                 buff+= "\n"
             else:
                 buff=""
+"""
+def comparing_text_font_grids(text, font):
+    temp = []
 
+    for letter,font_line in zip(text,font):
+        if "                                " not in letter:
+            buff=""
+            underline,italics = 0,0
             #Handling italics
             italics_flag = 0
             for i,font_type in enumerate(font_line): 
@@ -58,18 +59,14 @@ def comparing_text_font_grids(text, font):
                 elif font_type =="R" and italics_flag: 
                         buff = buff + '</i>'
                         italics_flag = 0
-                        continue;
                 buff +=  letter[i]
-            if buff!=letter:
-                temp.append(buff)
+            temp.append(buff)
     return (temp,font)
 
     
 def generate_output_srt( fh, d):
     temp = []
-    a,b = comparing_text_font_grids(d['text'],d['font'])
-    print a
-    """
+    d['text'],d['font']= comparing_text_font_grids(d['text'],d['font'])
     for item in d['text']:
         if "                                " not in item:
             o = re.sub(r'[\x00-\x1e]',r'',item)
@@ -79,4 +76,3 @@ def generate_output_srt( fh, d):
             fh.write("\n")
             fh.flush()
     fh.write("\n")
-    """
