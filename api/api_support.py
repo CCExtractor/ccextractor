@@ -47,7 +47,7 @@ help_string = """
 text,font,color = [],[],[]
 filename = " "
 
-def user_choice(line):
+def generate_output_srt(line):
     global text,font,color
     global filename
     if "filename:" in line:
@@ -62,14 +62,8 @@ def user_choice(line):
         fh.write(srt_counter)
         srt_generator.delete_file_handle(fh)
     if "start_time" in line:
-        start_time,end_time = srt_generator.generate_output_srt_time( line)
         fh = srt_generator.generate_file_handle(filename,'a')
-        fh.write(start_time)
-        fh.write(" ")
-        fh.write("-->")
-        fh.write(" ")
-        fh.write(end_time)
-        fh.write("\n")
+        srt_generator.generate_output_srt_time(fh, line)
         srt_generator.delete_file_handle(fh)
     if "text[" in line:
         line = str(line.split(":", 1)[1])
@@ -81,18 +75,9 @@ def user_choice(line):
             fh.write(line)
             fh.write("\n")
             srt_generator.delete_file_handle(fh)
-""" 
-        if filename!=" ":
-            data = g608.return_g608_grid(1,text,color,font)
-            if not data['text']:
-                return
-            fh = srt_generator.generate_file_handle(filename,'a')
-            prev_et,prev_st = end_time,start_time
-            d[(start_time,end_time)] = data
-            srt_generator.generate_output_srt( fh, d)
-            srt_generator.delete_file_handle(fh)
-            text,font,color = [],[],[]
-"""
+
+def user_choice(line):
+    generate_output_srt(line)
 #d = {}
     #    print datetime.datetime.now()
 
