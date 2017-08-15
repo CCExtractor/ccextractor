@@ -46,14 +46,10 @@ help_string = """
     """
 text,font,color = [],[],[]
 filename = " "
-d = {}
 srt_counter = " "
-identifier = ""
-prev_identifier = ""
 def generate_output_srt(line):
     global text,font,color
-    global filename, srt_counter, identifier, prev_identifier
-    global d
+    global filename, srt_counter
     if "filename:" in line:
         filename = str(str(line.split(":")[1]).split("\n")[0])
         #check for an alternative to wipe the output file in python
@@ -79,16 +75,6 @@ def generate_output_srt(line):
         text,font,color = [],[],[]
     else:
         g608.g608_grid_former(line,text,color,font)
-        #print data
-        #line = str(line.split(":", 1)[1])
-        #line = str(line.split("\n")[0])
-        #if "                                " not in line:
-        #    index = line.find("\x11")
-        #    line = line[:index]
-        #    fh = srt_generator.generate_file_handle(filename,'a')
-        #    fh.write(line)
-        #    fh.write("\n")
-        #    srt_generator.delete_file_handle(fh)
 
 def user_choice(line):
     generate_output_srt(line)
