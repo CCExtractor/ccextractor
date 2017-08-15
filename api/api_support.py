@@ -46,35 +46,44 @@ help_string = """
     """
 text,font,color = [],[],[]
 filename = " "
-
+d = {}
+srt_counter = "1\n"
 def generate_output_srt(line):
     global text,font,color
-    global filename
+    global filename, srt_counter
+    global d
     if "filename:" in line:
         filename = str(str(line.split(":")[1]).split("\n")[0])
         #check for an alternative to wipe the output file in python
         fh = srt_generator.generate_file_handle(filename,'w')
         fh.write("")
         srt_generator.delete_file_handle(fh)
-    if "srt_counter-" in line:
+    elif "srt_counter-" in line:
+        data = g608.return_g608_grid(1,text,color,font)
+        d[srt_counter] = data['text']
         srt_counter = str(line.split("-")[1])
+        d[srt_counter] = data['text']
+        print d.items()
         fh = srt_generator.generate_file_handle(filename,'a')
         fh.write(srt_counter)
         srt_generator.delete_file_handle(fh)
-    if "start_time" in line:
+        text,color,font = [],[],[]
+    elif "start_time" in line:
         fh = srt_generator.generate_file_handle(filename,'a')
         srt_generator.generate_output_srt_time(fh, line)
         srt_generator.delete_file_handle(fh)
-    if "text[" in line:
-        line = str(line.split(":", 1)[1])
-        line = str(line.split("\n")[0])
-        if "                                " not in line:
-            index = line.find("\x11")
-            line = line[:index]
-            fh = srt_generator.generate_file_handle(filename,'a')
-            fh.write(line)
-            fh.write("\n")
-            srt_generator.delete_file_handle(fh)
+    else:
+   # "text[" in line:
+        g608.g608_grid_former(line,text,color,font)
+        #line = str(line.split(":", 1)[1])
+        #line = str(line.split("\n")[0])
+        #if "                                " not in line:
+        #    index = line.find("\x11")
+        #    line = line[:index]
+        #    fh = srt_generator.generate_file_handle(filename,'a')
+        #    fh.write(line)
+        #    fh.write("\n")
+        #    srt_generator.delete_file_handle(fh)
 
 def user_choice(line):
     generate_output_srt(line)
