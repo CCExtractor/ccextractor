@@ -4,6 +4,9 @@
 output=pythonapi wrapper
 */
 void set_pythonapi(struct ccx_s_options *api_options){
+#if defined(PYTHONAPI)
+    printf("testing for setting the python callback function in C\n");
+#endif
     api_add_param(api_options,"-pythonapi");
 }
 

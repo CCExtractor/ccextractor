@@ -22,8 +22,15 @@ CURLcode res;
 #define LEPT_MSG_SEVERITY L_SEVERITY_NONE
 #endif
 
+#if defined(PYTHONAPI)
+#include "Python.h"
+#include "funcobject.h"
+#endif
+
 struct python_subs_modified{
-        
+#if defined(PYTHONAPI)
+        PyObject* reporter;
+#endif
         int buffer_count;
         int srt_counter;
         char *start_time;
