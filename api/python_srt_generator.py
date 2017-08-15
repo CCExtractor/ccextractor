@@ -22,10 +22,30 @@ def generate_output_srt_time( fh, data):
     fh.write("\n")
     fh.flush()
 
+def comparing_text_font_grids(text, font):
+    temp = []
+
+    for letter,font_line in zip(text,font):
+        if "                                " not in letter:
+            buff = ""
+            flag = 0
+            for i,font_type in enumerate(font_line): 
+                if font_type == 'I' and not flag:
+                        buff = buff + '<i> '
+                        flag = 1
+                elif font_type =="R" and flag: 
+                        buff = buff + '</i>'
+                        flag = 0
+                        continue;
+                buff +=  letter[i]
+            temp.append(buff)
+    print temp
+
+    
 def generate_output_srt( fh, d):
     temp = []
-    print d
-    for item in d:
+    comparing_text_font_grids(d['text'],d['font'])
+    for item in d['text']:
         if "                                " not in item:
             o = re.sub(r'[\x00-\x1e]',r'',item)
             o = re.sub(r'\x1f[!@#$%^&*()]*', r'', o)
@@ -34,4 +54,3 @@ def generate_output_srt( fh, d):
             fh.write("\n")
             fh.flush()
     fh.write("\n")
-    print temp

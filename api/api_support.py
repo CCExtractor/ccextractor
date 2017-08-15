@@ -68,9 +68,9 @@ def generate_output_srt(line):
         srt_generator.generate_output_srt_time(fh, line)
         srt_generator.delete_file_handle(fh)
     elif "***END OF FRAME***" in line:
-        data = g608.return_g608_grid(1,text,color,font)
+        data = g608.return_g608_grid(0,text,color,font)
         fh = srt_generator.generate_file_handle(filename,'a')
-        srt_generator.generate_output_srt(fh, data['text'])
+        srt_generator.generate_output_srt(fh, data)
         srt_generator.delete_file_handle(fh)
         text,font,color = [],[],[]
     else:
