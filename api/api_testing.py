@@ -36,7 +36,6 @@ def write(s):
     print s
 if __name__=="__main__":
     #process = start_python_extraction()
-    print "Starting templer"
     templer()
     #process.terminate()
 

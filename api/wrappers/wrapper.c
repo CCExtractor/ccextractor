@@ -16,8 +16,8 @@ void set_pythonapi(struct ccx_s_options *api_options){
 }
 #if defined(PYTHONAPI)
 void set_pythonapi_via_python(struct ccx_s_options *api_options, PyObject * func){
-//void set_pythonapi_via_python(struct ccx_s_options *api_options){
-    printf("inside the set_pythonapi_via_python\n"); 
+    //setting the user specified callback function as a array element which would be global in C
+    array.reporter = func;
     api_add_param(api_options,"-pythonapi");
 }
 #endif
