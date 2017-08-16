@@ -8,7 +8,6 @@ import sys
 import time
 
 def templer():
-    time.sleep(1)
     s =  cc.api_init_options()
     cc.check_configuration_file(s)
     for i in sys.argv[1:]:
@@ -23,7 +22,6 @@ def templer():
     cc.call_from_python_api(s)
 
     start_ret = cc.api_start(s);
-    time.sleep(0.5)
 def start_python_extraction():
     queue = Queue()
     fn = "test.txt"
