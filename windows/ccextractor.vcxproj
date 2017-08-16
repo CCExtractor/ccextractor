@@ -35,6 +35,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\api\extractors\extractor.h" />
+    <ClInclude Include="..\api\wrappers\wrapper.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\avparse.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\base_coding.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\bitstream.h" />
@@ -126,6 +128,8 @@
     <ClInclude Include="..\src\win_spec_incld\stdint.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\api\extractors\extractor.c" />
+    <ClCompile Include="..\api\wrappers\wrapper.c" />
     <ClCompile Include="..\src\ccextractor.c" />
     <ClCompile Include="..\src\gpacmp4\avc_ext.c" />
     <ClCompile Include="..\src\gpacmp4\avilib.c" />
@@ -212,6 +216,7 @@
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_curl.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_g608.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_helpers.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_python.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_sami.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_smptett.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_splitbysentence.c" />

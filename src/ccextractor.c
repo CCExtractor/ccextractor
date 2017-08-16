@@ -535,7 +535,7 @@ int vasprintf(char **strp, const char *fmt, va_list ap) {
          return -1;
     }
     // _vsprintf_s is the "secure" version of vsprintf
-    int r = _vsprintf_s(str, len + 1, fmt, ap);
+    int r = vsprintf_s(str, len + 1, fmt, ap);
     if (r == -1) {
          free(str);
          return -1;
