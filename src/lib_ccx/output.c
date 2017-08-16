@@ -51,9 +51,12 @@ int temporarily_open_output(struct ccx_s_write *wb)
 int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
 {
     if (signal_python_api){
-        array.output_filename = filename;
+        char* output;
         //writing to memory which would be then tailed by python.
-        fprintf(array.fp,"filename:%s\n",array.output_filename);
+        asprintf(&output,"filename:%s\n",filename);
+#if defined(PYTHONAPI)
+        run(array.reporter, output);
+#endif
         return EXIT_OK;
     }
 	memset(wb, 0, sizeof(struct ccx_s_write));

@@ -22,17 +22,14 @@ srt_counter = " "
 def generate_output_srt(line):
     global text,font,color
     global filename, srt_counter
-    filename = "temp.srt"
-#    if "filename:" in line:
-#        filename = str(str(line.split(":")[1]).split("\n")[0])
-#        #check for an alternative to wipe the output file in python
-#        fh = srt_generator.generate_file_handle(filename,'w')
-#        fh.write("")
-#        srt_generator.delete_file_handle(fh)
-    if "srt_counter-" in line:
+    if "filename:" in line:
+        filename = str(str(line.split(":")[1]).split("\n")[0])
+        #check for an alternative to wipe the output file in python
+        fh = srt_generator.generate_file_handle(filename,'w')
+        fh.write("")
+        srt_generator.delete_file_handle(fh)
+    elif "srt_counter-" in line:
         srt_counter = str(line.split("-")[1])
-        #d[srt_counter] = data['text']
-        #print d.items()
         fh = srt_generator.generate_file_handle(filename,'a')
         fh.write(srt_counter)
         srt_generator.delete_file_handle(fh)
@@ -48,15 +45,6 @@ def generate_output_srt(line):
         text,font,color = [],[],[]
     else:
         g608.g608_grid_former(line,text,color,font)
-
-def user_choice(line):
-    generate_output_srt(line)
-#d = {}
-    #    print datetime.datetime.now()
-
-    #else:
-    #    line = alternator(line)
-    #print line
 
 
 

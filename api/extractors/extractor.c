@@ -116,15 +116,9 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
     array.subs[array.sub_count-1].start_time = start_time;
     array.subs[array.sub_count-1].end_time = end_time;
 #if defined(PYTHONAPI) 
-    //char* output_a;
     asprintf(&output,"srt_counter-%d\n",srt_counter);
     run(array.reporter,output);
-
-    
-    asprintf(&output,"start_time-%s\t",start_time);
-    run(array.reporter,output);  
-
-    asprintf(&output,"end_time-%s\n",end_time);
+    asprintf(&output,"start_time-%s\t end_time-%s\n",start_time,end_time);
     run(array.reporter,output);  
 #endif
     //fprintf(array.fp,"srt_counter-%s\t",start_time);
