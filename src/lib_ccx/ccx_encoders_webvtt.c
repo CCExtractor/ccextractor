@@ -341,36 +341,6 @@ int write_cc_subtitle_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *con
 	return ret;
 }
 
-// TODO: move this repeating function from ccx_encoders_g608.c to the files ccx_encoders_helpers.(c|h)
-static unsigned int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
-{
-	unsigned char *orig = buffer;
-	unsigned char *line = data->characters[line_num];
-	for (int i = 0; i < 32; i++)
-	{
-		int bytes = 0;
-		switch (ctx->encoding)
-		{
-		case CCX_ENC_UTF_8:
-			bytes = get_char_in_utf_8(buffer, line[i]);
-			break;
-		case CCX_ENC_LATIN_1:
-			get_char_in_latin_1(buffer, line[i]);
-			bytes = 1;
-			break;
-		case CCX_ENC_UNICODE:
-			get_char_in_unicode(buffer, line[i]);
-			bytes = 2;
-		case CCX_ENC_ASCII:
-			*buffer = line[i];
-			bytes = 1;
-			break;
-		}
-		buffer += bytes;
-	}
-	return (unsigned int)(buffer - orig); // Return length
-}
-
 void get_color_events(int *color_events, int line_num, struct eia608_screen *data)
 {
 	int first, last;
