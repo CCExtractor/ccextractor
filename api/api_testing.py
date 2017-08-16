@@ -13,8 +13,7 @@ def templer():
     for i in sys.argv[1:]:
         cc.api_add_param(s,str(i))
     #very mandatory for keeping a track of pythonapi call. Always must be set.
-    #cc.set_pythonapi(s,write)
-    cc.my_pythonapi(s, write)
+    cc.my_pythonapi(s, callback)
     
     compile_ret = cc.compile_params(s,len(sys.argv[1:]));
     
@@ -22,20 +21,11 @@ def templer():
     cc.call_from_python_api(s)
 
     start_ret = cc.api_start(s);
-def start_python_extraction():
-    queue = Queue()
-    fn = "test.txt"
-    queue.put(fn)
-    queue.put(fn)
-    q = Process(target = api_support.tail, args = (queue,))
-    q.start()
-    return q
-def write(s):
-    print s
+
+def callback(line):
+    api_support.generate_output_srt(line)
 if __name__=="__main__":
-    #process = start_python_extraction()
     templer()
-    #process.terminate()
 
 
 

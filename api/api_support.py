@@ -1,34 +1,6 @@
 import ccextractor as cc
 import ccx_to_python_g608 as g608
 import python_srt_generator as srt_generator
-###
-#DO NOT TOUCH THIS FUNCTION
-###
-def follow(thefile):
-    thefile.seek(0,2)
-    while 1:
-        line = thefile.readline()
-        if not line:
-            #time.sleep(0.1)
-            continue
-        yield line
-
-###
-#DO NOT TOUCH THIS FUNCTION
-###
-def tail(queue):
-    fn = queue.get()
-    with open(fn,"w") as f:
-        pass
-    logfile = open(fn,"r")
-    loglines = follow(logfile)
-    for line in loglines:
-        user_choice(line)
-
-###
-#modify this function according to user necessity
-###
-import datetime
 ##
 #help_string to be included in the documentation
 #it is the help string for telling what kind of output the user wants to STDOUT 
@@ -50,13 +22,14 @@ srt_counter = " "
 def generate_output_srt(line):
     global text,font,color
     global filename, srt_counter
-    if "filename:" in line:
-        filename = str(str(line.split(":")[1]).split("\n")[0])
-        #check for an alternative to wipe the output file in python
-        fh = srt_generator.generate_file_handle(filename,'w')
-        fh.write("")
-        srt_generator.delete_file_handle(fh)
-    elif "srt_counter-" in line:
+    filename = "temp.srt"
+#    if "filename:" in line:
+#        filename = str(str(line.split(":")[1]).split("\n")[0])
+#        #check for an alternative to wipe the output file in python
+#        fh = srt_generator.generate_file_handle(filename,'w')
+#        fh.write("")
+#        srt_generator.delete_file_handle(fh)
+    if "srt_counter-" in line:
         srt_counter = str(line.split("-")[1])
         #d[srt_counter] = data['text']
         #print d.items()
