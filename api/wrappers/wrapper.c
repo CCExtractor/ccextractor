@@ -5,13 +5,19 @@
 output=pythonapi wrapper
 */
 
-#if defined(PYTHONAPI)
-void set_pythonapi(struct ccx_s_options *api_options, PyObject * func){
-    array.reporter = func;
+//void set_pythonapi_via_python(struct ccx_s_options *api_options, PyObject * func){
+//    printf("Inside set pythonapi\n");
+//    array.reporter = func;
+//    api_add_param(api_options,"-pythonapi");
+//}
+
+void set_pythonapi(struct ccx_s_options *api_options){ 
     api_add_param(api_options,"-pythonapi");
 }
-#else
-void set_pythonapi(struct ccx_s_options *api_options){
+#if defined(PYTHONAPI)
+void set_pythonapi_via_python(struct ccx_s_options *api_options, PyObject * func){
+//void set_pythonapi_via_python(struct ccx_s_options *api_options){
+    printf("inside the set_pythonapi_via_python\n"); 
     api_add_param(api_options,"-pythonapi");
 }
 #endif

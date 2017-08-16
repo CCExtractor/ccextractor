@@ -14,8 +14,8 @@ def templer():
     for i in sys.argv[1:]:
         cc.api_add_param(s,str(i))
     #very mandatory for keeping a track of pythonapi call. Always must be set.
-    print write
-    cc.set_pythonapi(s,write)
+    #cc.set_pythonapi(s,write)
+    cc.my_pythonapi(s, write)
     
     compile_ret = cc.compile_params(s,len(sys.argv[1:]));
     
@@ -36,6 +36,7 @@ def write(s):
     print s
 if __name__=="__main__":
     #process = start_python_extraction()
+    print "Starting templer"
     templer()
     #process.terminate()
 
@@ -52,7 +53,7 @@ if __name__=="__main__":
 #for item in cc.captions_timings_list:
 #    print item(0),item(1)
 #    print item(2)
-cc.cvar.array.has_api_start_exited=1
+#cc.cvar.array.has_api_start_exited=1
 #print "\n"
 #print "The extracted captions with respective timings are as follows:"
 ###one line functions to directly check the extracted captions that would be otherwise accessible in python.

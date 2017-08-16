@@ -96,6 +96,10 @@ except __builtin__.Exception:
     _newclass = 0
 
 
+def my_pythonapi(api_options, func):
+    return _ccextractor.my_pythonapi(api_options, func)
+my_pythonapi = _ccextractor.my_pythonapi
+
 def g608_grid_former(line,text,color,font):
     if "text[" in line:
         line = str(line.split(":", 1)[1])

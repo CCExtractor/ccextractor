@@ -97,6 +97,7 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
     array.subs[array.sub_count-1].start_time = start_time;
     array.subs[array.sub_count-1].end_time = end_time;
 // following if is not needed though
+/*
 #if defined(PYTHONAPI) 
     char* output = malloc(sizeof(char)*strlen(srt_counter));
     sprintf(output,"srt_counter-%d\n",srt_counter);
@@ -110,6 +111,8 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
     sprintf(output,"end_time-%s\n",end_time);
     run(array.reporter,output);  
 #endif
+*/
+    //run(array.reporter,start_time);
     //fprintf(array.fp,"srt_counter-%s\t",start_time);
     //fprintf(array.fp,"start_time-%s\t",start_time);
     //fprintf(array.fp,"end_time-%s\n",end_time);

@@ -10,6 +10,7 @@
   #include "../src/ccextractor.h"    
    #include "../api/wrappers/wrapper.h"    
 %}
+void my_pythonapi(struct ccx_s_options *api_options, PyObject* func);
 %pythoncode %{
 def g608_grid_former(line,text,color,font):
     if "text[" in line:

@@ -3360,6 +3360,30 @@ SWIG_FromCharPtr(const char *cptr)
 #ifdef __cplusplus
 extern "C" {
 #endif
+SWIGINTERN PyObject *_wrap_my_pythonapi(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  struct ccx_s_options *arg1 = (struct ccx_s_options *) 0 ;
+  PyObject *arg2 = (PyObject *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:my_pythonapi",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_ccx_s_options, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "my_pythonapi" "', argument " "1"" of type '" "struct ccx_s_options *""'"); 
+  }
+  arg1 = (struct ccx_s_options *)(argp1);
+  arg2 = obj1;
+  my_pythonapi(arg1,arg2);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_fdprintf__varargs__(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *varargs) {
   PyObject *resultobj = 0;
   int arg1 ;
@@ -5337,6 +5361,7 @@ fail:
 
 static PyMethodDef SwigMethods[] = {
 	 { (char *)"SWIG_PyInstanceMethod_New", (PyCFunction)SWIG_PyInstanceMethod_New, METH_O, NULL},
+	 { (char *)"my_pythonapi", _wrap_my_pythonapi, METH_VARARGS, NULL},
 	 { (char *)"fdprintf", _wrap_fdprintf, METH_VARARGS, NULL},
 	 { (char *)"millis_to_time", _wrap_millis_to_time, METH_VARARGS, NULL},
 	 { (char *)"freep", _wrap_freep, METH_VARARGS, NULL},
