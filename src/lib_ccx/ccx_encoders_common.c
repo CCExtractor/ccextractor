@@ -1354,3 +1354,63 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *cont
 	}
 	fflush(stderr);
 }
+
+unsigned int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
+{
+	unsigned char *orig = buffer; // Keep for debugging
+	unsigned char *line = data->characters[line_num];
+	for (int i = 0; i < 32; i++)
+	{
+		int bytes = 0;
+		switch (ctx->encoding)
+		{
+		case CCX_ENC_UTF_8:
+			bytes = get_char_in_utf_8(buffer, line[i]);
+			break;
+		case CCX_ENC_LATIN_1:
+			get_char_in_latin_1(buffer, line[i]);
+			bytes = 1;
+			break;
+		case CCX_ENC_UNICODE:
+			get_char_in_unicode(buffer, line[i]);
+			bytes = 2;
+		case CCX_ENC_ASCII:
+		    *buffer = line[i];
+			bytes = 1;
+			break;
+		}
+		buffer += bytes;
+	}
+	return (unsigned int)(buffer - orig); // Return length
+}
+unsigned int get_color_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
+{
+	unsigned char *orig = buffer; // Keep for debugging
+	for (int i = 0; i < 32; i++)
+	{
+		if (data->colors[line_num][i] < 10)
+			*buffer++ = data->colors[line_num][i] + '0';
+		else
+			*buffer++ = 'E';
+	}
+	*buffer = 0;
+	return (unsigned)(buffer - orig); // Return length
+}
+unsigned int get_font_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
+{
+	unsigned char *orig = buffer; // Keep for debugging
+	for (int i = 0; i < 32; i++)
+	{
+		if(data->fonts[line_num][i] == FONT_REGULAR)
+			*buffer++ = 'R';
+		else if(data->fonts[line_num][i] == FONT_UNDERLINED_ITALICS)
+			*buffer++ = 'B';
+		else if(data->fonts[line_num][i] == FONT_UNDERLINED)
+			*buffer++ = 'U';
+		else if(data->fonts[line_num][i] == FONT_ITALICS)
+			*buffer++ = 'I';
+		else
+			*buffer++ = 'E';
+	}
+	return (unsigned)(buffer - orig); // Return length
+}
