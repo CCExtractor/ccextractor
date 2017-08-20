@@ -10,13 +10,36 @@ option (WITH_SHARING "Build with sharing and translation support" OFF)
 set (CCEXTRACTOR_VERSION_MAJOR 0)
 set (CCEXTRACTOR_VERSION_MINOR 85b)
 
+# Get project directory
+get_filename_component(BASE_PROJ_DIR ../ ABSOLUTE)
+
+# Get the latest commit hash of the working branch
+IF(EXISTS "${BASE_PROJ_DIR}/.git")
+    execute_process(
+            COMMAND git rev-parse HEAD
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            OUTPUT_VARIABLE GIT_COMMIT_HASH
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+ELSE(EXISTS "${BASE_PROJ_DIR}/.git")
+    set(GIT_BRANCH "Unknown")
+    set(GIT_COMMIT_HASH "Unknown")
+ENDIF(EXISTS "${BASE_PROJ_DIR}/.git")
+
+#Get the date
+string(TIMESTAMP COMPILATION_DATE %Y-%m-%d)
+
+message(STATUS "Commit : ${GIT_COMMIT_HASH}")
+message(STATUS "Compilation Date: ${COMPILATION_DATE}")
+
 # configure a header file to pass some of the CMake settings
 # to the source code
 configure_file (
   "${PROJECT_SOURCE_DIR}/CCExtractorConfig.h.in"
-  "${PROJECT_BINARY_DIR}/CCExtractorConfig.h"
+  "${PROJECT_SOURCE_DIR}/lib_ccx/compile_info_real.h"
   )
 
+add_definitions(-DVERSION_FILE_PRESENT)
 
 include_directories ("${PROJECT_SOURCE_DIR}")
 include_directories ("${PROJECT_SOURCE_DIR}/lib_ccx/")
@@ -130,7 +153,6 @@ if (WITH_SHARING)
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_SHARING")
 endif (WITH_SHARING)
-
 
 add_executable (ccextractor ${SOURCEFILE})
 target_link_libraries (ccextractor ${EXTRA_LIBS})
