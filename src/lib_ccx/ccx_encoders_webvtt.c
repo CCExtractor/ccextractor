@@ -137,7 +137,7 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 	dbg_print(CCX_DMT_DECODER_608, "\n- - - WEBVTT caption - - -\n");
 	dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
 
-	written = __wrap_write(context->out->fh, context->buffer, used);
+	written = write(context->out->fh, context->buffer, used);
 	if (written != used)
 		return -1;
 	int len = strlen(string);
@@ -173,14 +173,14 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 			dbg_print(CCX_DMT_DECODER_608, "\r");
 			dbg_print(CCX_DMT_DECODER_608, "%s\n", context->subline);
 		}
-		written = __wrap_write(context->out->fh, el, u);
+		written = write(context->out->fh, el, u);
 		if (written != u)
 		{
 			free(el);
 			free(unescaped);
 			return -1;
 		}
-		written = __wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+		written = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		if (written != context->encoded_crlf_length)
 		{   
             		free(el);
@@ -191,7 +191,7 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 
 	dbg_print(CCX_DMT_DECODER_608, "- - - - - - - - - - - -\r\n");
 
-	written = __wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+	written = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 	free(el);
 	free(unescaped);
 	if (written != context->encoded_crlf_length)
@@ -224,21 +224,21 @@ int write_webvtt_header(struct encoder_ctx *context)
 
 		char* outline_css_file = (char*)malloc((strlen(css_file_name) + strlen(webvtt_outline_css)) * sizeof(char));
 		sprintf(outline_css_file, webvtt_outline_css, css_file_name);
-		__wrap_write (context->out->fh, outline_css_file, strlen(outline_css_file));
+		write (context->out->fh, outline_css_file, strlen(outline_css_file));
 	} else {
-		__wrap_write(context->out->fh, webvtt_inline_css, strlen(webvtt_inline_css));
+		write(context->out->fh, webvtt_inline_css, strlen(webvtt_inline_css));
 		if(ccx_options.enc_cfg.line_terminator_lf == 1) // If -lf parameter is set.
 		{
-			__wrap_write(context->out->fh, "\n", 1);
+			write(context->out->fh, "\n", 1);
 		}
 		else
 		{
-			__wrap_write(context->out->fh,"\r\n",2);
+			write(context->out->fh,"\r\n",2);
 		}
 	}
 
-	__wrap_write(context->out->fh, "##\n", 3);
-	__wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+	write(context->out->fh, "##\n", 3);
+	write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 
 	if (context->timing->sync_pts2fts_set)
 	{
@@ -250,7 +250,7 @@ int write_webvtt_header(struct encoder_ctx *context)
 			context->timing->sync_pts2fts_pts,
 			h1, m1, s1, ms1);
 		used = encode_line(context, context->buffer, (unsigned char *)header_string);
-		__wrap_write(context->out->fh, context->buffer, used);
+		write(context->out->fh, context->buffer, used);
 
 	}
 
@@ -294,10 +294,11 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 			sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
 				h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
 			used = encode_line(context, context->buffer, (unsigned char *)timeline);
-			__wrap_write(context->out->fh, context->buffer, used);
+            write(context->out->fh, context->buffer, used);
 			len = strlen(str);
-			__wrap_write(context->out->fh, str, len);
-			__wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+            //python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,str);
+			write(context->out->fh, str, len);
+			write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		}
 		freep(&str);
 	}
@@ -338,36 +339,6 @@ int write_cc_subtitle_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *con
 	}
 
 	return ret;
-}
-
-// TODO: move this repeating function from ccx_encoders_g608.c to the files ccx_encoders_helpers.(c|h)
-int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
-{
-	unsigned char *orig = buffer;
-	unsigned char *line = data->characters[line_num];
-	for (int i = 0; i < 32; i++)
-	{
-		int bytes = 0;
-		switch (ctx->encoding)
-		{
-		case CCX_ENC_UTF_8:
-			bytes = get_char_in_utf_8(buffer, line[i]);
-			break;
-		case CCX_ENC_LATIN_1:
-			get_char_in_latin_1(buffer, line[i]);
-			bytes = 1;
-			break;
-		case CCX_ENC_UNICODE:
-			get_char_in_unicode(buffer, line[i]);
-			bytes = 2;
-		case CCX_ENC_ASCII:
-			*buffer = line[i];
-			bytes = 1;
-			break;
-		}
-		buffer += bytes;
-	}
-	return (unsigned int)(buffer - orig); // Return length
 }
 
 void get_color_events(int *color_events, int line_num, struct eia608_screen *data)
@@ -471,12 +442,12 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 
 			dbg_print(CCX_DMT_DECODER_608, "\n- - - WEBVTT caption - - -\n");
 			dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
-
-			written = __wrap_write(context->out->fh, context->buffer, used);
+			written = write(context->out->fh, context->buffer, used);
 			if (written != used)
 				return -1;
 
 			int length = get_line_encoded(context, context->subline, i, data);
+            //python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline);
 
 			if (context->encoding != CCX_ENC_UNICODE)
 			{
@@ -507,23 +478,23 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 					if (open_font != FONT_REGULAR)
 					{
 						if (open_font & FONT_ITALICS)
-							__wrap_write(context->out->fh, strdup("<i>"), 3);
+							write(context->out->fh, strdup("<i>"), 3);
 						if (open_font & FONT_UNDERLINED)
-							__wrap_write(context->out->fh, strdup("<u>"), 3);
+							write(context->out->fh, strdup("<u>"), 3);
 					}
 
 					// opening events for colors
 					int open_color = color_events[j] & 0xFF;	// Last 16 bytes
 					if (open_color != COL_WHITE)
 					{
-						__wrap_write(context->out->fh, strdup("<c."), 3);
-						__wrap_write(context->out->fh, color_text[open_color][0], strlen(color_text[open_color][0]));
-						__wrap_write(context->out->fh, ">", 1);
+						write(context->out->fh, strdup("<c."), 3);
+						write(context->out->fh, color_text[open_color][0], strlen(color_text[open_color][0]));
+						write(context->out->fh, ">", 1);
 					}
 				}
 
 				// write current text symbol
-				__wrap_write(context->out->fh, &(context->subline[j]), 1);
+				write(context->out->fh, &(context->subline[j]), 1);
 
 				if (ccx_options.use_webvtt_styling)
 				{
@@ -531,7 +502,7 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 					int close_color = color_events[j] >> 16;	// First 16 bytes
 					if (close_color != COL_WHITE)
 					{
-						__wrap_write(context->out->fh, strdup("</c>"), 4);
+						write(context->out->fh, strdup("</c>"), 4);
 					}
 
 					// closing events for fonts
@@ -539,9 +510,9 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 					if (close_font != FONT_REGULAR)
 					{
 						if (close_font & FONT_ITALICS)
-							__wrap_write(context->out->fh, strdup("</i>"), 4);
+							write(context->out->fh, strdup("</i>"), 4);
 						if (close_font & FONT_UNDERLINED)
-							__wrap_write(context->out->fh, strdup("</u>"), 4);
+							write(context->out->fh, strdup("</u>"), 4);
 					}
 				}
 			}
@@ -552,12 +523,12 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 				free(font_events);
 			}
 
-			written = __wrap_write(context->out->fh,
+			written = write(context->out->fh,
 				context->encoded_crlf, context->encoded_crlf_length);
 			if (written != context->encoded_crlf_length)
 				return -1;
 
-			written = __wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+			written = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 			if (written != context->encoded_crlf_length)
 				return -1;
 

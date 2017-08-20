@@ -30,7 +30,6 @@
 #include "utility.h"
 #include "ccx_encoders_helpers.h"
 
-
 void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
 	int used;
@@ -55,7 +54,7 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
 	used = encode_line(context, context->buffer, (unsigned char *) str);
-	__wrap_write (context->out->fh, context->buffer, used);
+	write (context->out->fh, context->buffer, used);
 	// Scan for \n in the string and replace it with a 0
 	while (pos_r < len)
 	{
@@ -82,10 +81,10 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 			dbg_print(CCX_DMT_DECODER_608, "\r");
 			dbg_print(CCX_DMT_DECODER_608, "%s\n", context->subline);
 		}
-		__wrap_write(context->out->fh, el, u);
+		write(context->out->fh, el, u);
 		//write (wb->fh, encoded_br, encoded_br_length);
 
-		__wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+		write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		begin += strlen ((const char *) begin)+1;
 	}
 
@@ -95,14 +94,14 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
 	used = encode_line(context, context->buffer, (unsigned char *) str);
-	__wrap_write(context->out->fh, context->buffer, used);
+	write(context->out->fh, context->buffer, used);
 	sprintf ((char *) str, "<p begin=\"%02u:%02u:%02u.%03u\">\n\n", h2, m2, s2, ms2);
 	if (context->encoding != CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
 	used = encode_line(context, context->buffer, (unsigned char *) str);
-	__wrap_write (context->out->fh, context->buffer, used);
+	write (context->out->fh, context->buffer, used);
 	sprintf ((char *) str, "</p>\n");
 	free(el);
 	free(unescaped);
@@ -141,12 +140,13 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 				millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
 				millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 				sprintf((char *)context->buffer, "<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\n", h1, m1, s1, ms1, h2, m2, s2, ms2);
-                __wrap_write(context->out->fh, buf, strlen(buf));
+                write(context->out->fh, buf, strlen(buf));
 				len = strlen(rect[i].ocr_text);
-				__wrap_write(context->out->fh, rect[i].ocr_text, len);
-				__wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+                //python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,rect[i].ocr_text);
+                write(context->out->fh, rect[i].ocr_text, len);
+				write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 				sprintf(buf, "</p>\n");
-				__wrap_write(context->out->fh, buf, strlen(buf));
+				write(context->out->fh, buf, strlen(buf));
 
 			}
 		}
@@ -256,8 +256,8 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 					dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 				}
 				used = encode_line(context, context->buffer,(unsigned char *) str);
-				__wrap_write (context->out->fh, context->buffer, used);
-
+				write (context->out->fh, context->buffer, used);
+                //python_extract_time_based(h1,m1,s1,ms1,h2,m2,s2,ms2,"");
 				// Trimming subs because the position is defined by "tts:origin"
 				int old_trim_subs = context->trim_subs;
 				context->trim_subs=1;
@@ -426,10 +426,11 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 				}
 
 
-				__wrap_write(context->out->fh, final, strlen(final));
+				write(context->out->fh, final, strlen(final));
+                //python_extract_time_based(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline);
 
 
-				__wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+				write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 				context->trim_subs=old_trim_subs;
 				
 				sprintf ((char *) str,"        <style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\"/></span>\n      </p>\n");
@@ -438,7 +439,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 					dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 				}
 				used = encode_line(context, context->buffer,(unsigned char *) str);
-				__wrap_write (context->out->fh, context->buffer, used);
+				write (context->out->fh, context->buffer, used);
 
 				if (context->encoding!=CCX_ENC_UNICODE)
 				{

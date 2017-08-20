@@ -862,7 +862,7 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
     free(filename);
 
     if (track->header != NULL)
-        __wrap_write(desc, track->header, strlen(track->header));
+        write(desc, track->header, strlen(track->header));
 
     for (int i = 0; i < track->sentence_count; i++)
     {
@@ -871,26 +871,26 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
 
         if(track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_WEBVTT)
 		{
-			__wrap_write(desc, "\n\n", 2);
+			write(desc, "\n\n", 2);
 
 			struct block_addition* blockaddition = sentence->blockaddition;
 
 			// writing comment
 			if (blockaddition!=NULL) {
 				if (blockaddition->comment != NULL) {
-					__wrap_write(desc, sentence->blockaddition->comment, sentence->blockaddition->comment_size);
-					__wrap_write(desc, "\n", 1);
+					write(desc, sentence->blockaddition->comment, sentence->blockaddition->comment_size);
+					write(desc, "\n", 1);
 				}
 			}
 
 			// writing cue identifier
 			if (blockaddition != NULL) {
 				if (blockaddition->cue_identifier != NULL) {
-					__wrap_write(desc, blockaddition->cue_identifier, blockaddition->cue_identifier_size);
-					__wrap_write(desc, "\n", 1);
+					write(desc, blockaddition->cue_identifier, blockaddition->cue_identifier_size);
+					write(desc, "\n", 1);
 				}
 				else if (blockaddition->comment != NULL) {
-					__wrap_write(desc, "\n", 1);
+					write(desc, "\n", 1);
 				}
 			}
 
@@ -903,23 +903,23 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
 			char *timestamp_end = malloc(sizeof(char) * 80);
 			timestamp_to_vtttime(time_end, timestamp_end);
 
-			__wrap_write(desc, timestamp_start, strlen(timestamp_start));
-			__wrap_write(desc, " --> ", 5);
-			__wrap_write(desc, timestamp_end, strlen(timestamp_start));
+			write(desc, timestamp_start, strlen(timestamp_start));
+			write(desc, " --> ", 5);
+			write(desc, timestamp_end, strlen(timestamp_start));
 
 			// writing cue settings list
 			if (blockaddition != NULL) {
 				if (blockaddition->cue_settings_list != NULL) {
-					__wrap_write(desc, " ", 1);
-					__wrap_write(desc, blockaddition->cue_settings_list, blockaddition->cue_settings_list_size);
+					write(desc, " ", 1);
+					write(desc, blockaddition->cue_settings_list, blockaddition->cue_settings_list_size);
 				}
 			}
-			__wrap_write(desc, "\n", 1);
+			write(desc, "\n", 1);
 
 			int size = 0;
 			while (*(sentence->text + size) == '\n' || *(sentence->text + size) == '\r')
 				size++;
-			__wrap_write(desc, sentence->text + size, sentence->text_size - size);
+			write(desc, sentence->text + size, sentence->text_size - size);
 
 			free(timestamp_start);
 			free(timestamp_end);
@@ -936,17 +936,17 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
             char *timestamp_end = malloc(sizeof(char) * 80);
             timestamp_to_srttime(time_end, timestamp_end);
 
-            __wrap_write(desc, number, strlen(number));
-            __wrap_write(desc, "\n", 1);
-            __wrap_write(desc, timestamp_start, strlen(timestamp_start));
-            __wrap_write(desc, " --> ", 5);
-            __wrap_write(desc, timestamp_end, strlen(timestamp_start));
-            __wrap_write(desc, "\n", 1);
+            write(desc, number, strlen(number));
+            write(desc, "\n", 1);
+            write(desc, timestamp_start, strlen(timestamp_start));
+            write(desc, " --> ", 5);
+            write(desc, timestamp_end, strlen(timestamp_start));
+            write(desc, "\n", 1);
             int size=0;
             while (*(sentence->text+size)=='\n' || *(sentence->text+size)=='\r' )
               size++;
-            __wrap_write(desc, sentence->text+size, sentence->text_size-size);
-            __wrap_write(desc, "\n\n", 2);
+            write(desc, sentence->text+size, sentence->text_size-size);
+            write(desc, "\n\n", 2);
 
             free(timestamp_start);
             free(timestamp_end);
@@ -959,16 +959,16 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
                 time_end = MIN(time_end, track->sentences[i + 1]->time_start - 1);
             char *timestamp_end = generate_timestamp_ass_ssa(time_end);
 
-            __wrap_write(desc, "Dialogue: Marked=0,", strlen("Dialogue: Marked=0,"));
-            __wrap_write(desc, timestamp_start, strlen(timestamp_start));
-            __wrap_write(desc, ",", 1);
-            __wrap_write(desc, timestamp_end, strlen(timestamp_start));
-            __wrap_write(desc, ",", 1);
+            write(desc, "Dialogue: Marked=0,", strlen("Dialogue: Marked=0,"));
+            write(desc, timestamp_start, strlen(timestamp_start));
+            write(desc, ",", 1);
+            write(desc, timestamp_end, strlen(timestamp_start));
+            write(desc, ",", 1);
             char* text = ass_ssa_sentence_erase_read_order(sentence->text);
             while((text[0]=='\\') &&  (text[1]=='n' || text[1]=='N'))
               text+=2;
-            __wrap_write(desc, text, strlen(text));
-            __wrap_write(desc, "\n", 1);
+            write(desc, text, strlen(text));
+            write(desc, "\n", 1);
 
             free(timestamp_start);
             free(timestamp_end);

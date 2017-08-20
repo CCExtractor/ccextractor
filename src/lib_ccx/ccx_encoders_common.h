@@ -214,4 +214,10 @@ int reset_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg);
 void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank, int max_len);
 int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_subs,
 	enum ccx_encoding_type in_enc, enum ccx_encoding_type out_enc, int max_len);
+
+
+unsigned int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data);
+unsigned int get_color_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data);
+unsigned int get_font_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data);
+int pass_cc_buffer_to_python(struct eia608_screen *data, struct encoder_ctx *context);
 #endif
