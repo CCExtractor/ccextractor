@@ -1,6 +1,7 @@
 #include "lib_ccx.h"
 #include "utility.h"
 #include "matroska.h"
+#include "ccx_encoders_helpers.h"
 #include <limits.h>
 
 void skip_bytes(FILE* file, ULLONG n) {
@@ -417,6 +418,35 @@ void parse_segment_cluster_block_group(struct matroska_ctx* mkv_ctx, ULLONG clus
             sentence_list[i]->time_end = ULONG_MAX;
         else
             sentence_list[i]->time_end = sentence_list[i]->time_start + block_duration;
+
+        if (ccx_options.gui_mode_reports) {
+            ULLONG h1, m1, s1, ms1;
+            millis_to_time(sentence_list[i]->time_start, &h1, &m1, &s1, &ms1);
+            ULLONG h2, m2, s2, ms2;
+            millis_to_time(sentence_list[i]->time_end, &h2, &m2, &s2, &ms2);
+
+            char *text = sentence_list[i]->text;
+            int length = strlen(text);
+            int pos = 0;
+            while (true) {
+                fprintf(stderr, "###SUBTITLE#");
+                if (pos == 0) {
+                    fprintf(stderr, "%02u:%02u#%02u:%02u#",
+                            h1 * 60 + m1, s1, h2 * 60 + m2, s2);
+                } else {
+                    fprintf(stderr, "##");
+                }
+                int end_pos = pos;
+                while (end_pos < length && text[end_pos] != '\n')
+                    end_pos++;
+                fwrite(text + pos, 1, end_pos - pos, stderr);
+                fwrite("\n", 1, 1, stderr);
+                fflush(stderr);
+                if (end_pos == length)
+                    break;
+                pos = end_pos + 1;
+            }
+        }
     }
 
     free(sentence_list);
