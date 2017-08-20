@@ -4,6 +4,7 @@ AUTOMAKE_OPTIONS = foreign
 bin_PROGRAMS = ccextractor
 ccextractor_SOURCES = \
 				../src/ccextractor.c \
+				../src/ccextractor.h \
 				../src/gpacmp4/avc_ext.c \
 				../src/gpacmp4/avilib.c \
 				../src/gpacmp4/av_parsers.c \
@@ -265,7 +266,7 @@ ccextractor_SOURCES = \
 
 ccextractor_CFLAGS = -std=gnu99 -s  -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT 
 
-ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi/ -I../src/lib_hash/ -I../src/protobuf-c/ -I../src/utf8proc/
+ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi/ -I../src/lib_hash/ -I../src/protobuf-c/ -I../src/utf8proc/ -I../src/
 
 
 ccextractor_LDADD=-lm

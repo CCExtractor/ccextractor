@@ -9,7 +9,7 @@
 #include "ccx_decoders_708_output.h"
 #include "ccx_encoders_xds.h"
 #include "ccx_encoders_helpers.h"
-
+#include "../ccextractor.h"
 #ifdef ENABLE_SHARING
 #include "ccx_share.h"
 #endif //ENABLE_SHARING
@@ -353,7 +353,7 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
 			used = encode_line (ctx, ctx->buffer,(unsigned char *) str);
-			ret = __wrap_write(out->fh, ctx->buffer, used);
+			ret = write(out->fh, ctx->buffer, used);
 			if (ret != used)
 			{
 				mprint("WARNING: loss of data\n");
@@ -366,7 +366,7 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
 			used = encode_line (ctx, ctx->buffer,(unsigned char *) str);
-			ret = __wrap_write (out->fh, ctx->buffer, used);
+			ret = write (out->fh, ctx->buffer, used);
 			if (ret != used)
 			{
 				mprint("WARNING: loss of data\n");
@@ -382,7 +382,7 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
 			used = encode_line (ctx, ctx->buffer,(unsigned char *) str);
-			ret = __wrap_write (out->fh, ctx->buffer, used);
+			ret = write (out->fh, ctx->buffer, used);
 			if (ret != used)
 			{
 				mprint("WARNING: loss of data\n");
@@ -401,7 +401,7 @@ static int write_bom(struct encoder_ctx *ctx, struct ccx_s_write *out)
 	int ret = 0;
 	if (!ctx->no_bom){
 		if (ctx->encoding == CCX_ENC_UTF_8){ // Write BOM
-			ret = __wrap_write(out->fh, UTF8_BOM, sizeof(UTF8_BOM));
+			ret = write(out->fh, UTF8_BOM, sizeof(UTF8_BOM));
 			if ( ret < sizeof(UTF8_BOM)) {
 				mprint("WARNING: Unable tp write UTF BOM\n");
 				return -1;
@@ -409,7 +409,7 @@ static int write_bom(struct encoder_ctx *ctx, struct ccx_s_write *out)
 
 		}
 		if (ctx->encoding == CCX_ENC_UNICODE){ // Write BOM
-			ret = __wrap_write(out->fh, LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM));
+			ret = write(out->fh, LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM));
 			if ( ret < sizeof(LITTLE_ENDIAN_BOM)) {
 				mprint("WARNING: Unable to write LITTLE_ENDIAN_BOM \n");
 				return -1;
@@ -437,7 +437,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				return -1;
 			REQUEST_BUFFER_CAPACITY(ctx,strlen (ssa_header)*3);
 			used = encode_line (ctx, ctx->buffer,(unsigned char *) ssa_header);
-			ret = __wrap_write (out->fh, ctx->buffer, used);
+			ret = write (out->fh, ctx->buffer, used);
 			if(ret < used)
 			{
 				mprint("WARNING: Unable to write complete Buffer \n");
@@ -463,7 +463,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				{
 					used = encode_line (ctx, ctx->buffer,(unsigned char *) webvtt_header[i]);
 				}
-				ret = __wrap_write (out->fh, ctx->buffer,used);
+				ret = write (out->fh, ctx->buffer,used);
 				if(ret < used)
 				{
 					mprint("WARNING: Unable to write complete Buffer \n");
@@ -478,7 +478,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				return -1;
 			REQUEST_BUFFER_CAPACITY(ctx,strlen (sami_header)*3);
 			used = encode_line (ctx, ctx->buffer,(unsigned char *) sami_header);
-			ret = __wrap_write (out->fh, ctx->buffer, used);
+			ret = write (out->fh, ctx->buffer, used);
 			if(ret < used)
 			{
 				mprint("WARNING: Unable to write complete Buffer \n");
@@ -492,7 +492,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				return -1;
 			REQUEST_BUFFER_CAPACITY(ctx,strlen (smptett_header)*3);
 			used=encode_line (ctx, ctx->buffer,(unsigned char *) smptett_header);
-			ret = __wrap_write(out->fh, ctx->buffer, used);
+			ret = write(out->fh, ctx->buffer, used);
 			if(ret < used)
 			{
 				mprint("WARNING: Unable to write complete Buffer \n");
@@ -506,7 +506,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				net_send_header(rcwt_header, sizeof(rcwt_header));
 			else
 			{
-				ret = __wrap_write(out->fh, rcwt_header, sizeof(rcwt_header));
+				ret = write(out->fh, rcwt_header, sizeof(rcwt_header));
 				if(ret < 0)
 				{
 					mprint("Unable to write rcwt header\n");
@@ -516,7 +516,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 
 			break;
 		case CCX_OF_RAW:
-			ret = __wrap_write(out->fh,BROADCAST_HEADER, sizeof(BROADCAST_HEADER));
+			ret = write(out->fh,BROADCAST_HEADER, sizeof(BROADCAST_HEADER));
 			if(ret < sizeof(BROADCAST_HEADER))
 			{
 				mprint("Unable to write Raw header\n");
@@ -539,7 +539,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				return -1;
 			REQUEST_BUFFER_CAPACITY(ctx,strlen (simple_xml_header)*3);
 			used=encode_line (ctx, ctx->buffer,(unsigned char *) simple_xml_header);
-			ret = __wrap_write(out->fh, ctx->buffer, used);
+			ret = write(out->fh, ctx->buffer, used);
 			if(ret < used)
 			{
 				mprint("WARNING: Unable to write complete Buffer \n");
@@ -574,7 +574,7 @@ int write_cc_subtitle_as_simplexml(struct cc_subtitle *sub, struct encoder_ctx *
 			{
 				continue;
 			}
-			ret = __wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+			ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 			if(ret <  context->encoded_crlf_length)
 			{
 				mprint("Warning:Loss of data\n");
@@ -610,14 +610,14 @@ void write_cc_line_as_simplexml(struct eia608_screen *data, struct encoder_ctx *
 	length = get_str_basic (context->subline, data->characters[line_number],
 			context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
 
-	ret = __wrap_write(context->out->fh, cap, strlen(cap));
-	ret = __wrap_write(context->out->fh, context->subline, length);
+	ret = write(context->out->fh, cap, strlen(cap));
+	ret = write(context->out->fh, context->subline, length);
 	if(ret < length)
 	{
 		mprint("Warning:Loss of data\n");
 	}
-	ret = __wrap_write(context->out->fh, cap1, strlen(cap1));
-	ret = __wrap_write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+	ret = write(context->out->fh, cap1, strlen(cap1));
+	ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 
 }
 
@@ -781,7 +781,6 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	char *basefilename = NULL; // Input filename without the extension
 	char *extension = NULL; // Input filename without the extension
 
-
 #define check_ret(filename) 	if (ret != EXIT_OK)	\
 				{									\
 					fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED,"Failed to open output file: %s\nDetails : %s\n", filename, strerror(errno)); \
@@ -826,9 +825,8 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 		}
 		else if (cfg->write_format != CCX_OF_NULL)
 		{
-			basefilename = get_basename(ctx->first_input_file);
-			extension = get_file_extension(cfg->write_format);
-
+            basefilename = get_basename(ctx->first_input_file);
+            extension = get_file_extension(cfg->write_format);
 			if (basefilename == NULL)
 			{
 				basefilename = get_basename("untitled");
@@ -1054,7 +1052,7 @@ void set_encoder_rcwt_fileformat(struct encoder_ctx *ctx, short int format)
 
 static int write_newline(struct encoder_ctx *ctx, int lang)
 {
-	return __wrap_write(ctx->out[lang].fh, ctx->encoded_crlf, ctx->encoded_crlf_length);
+	return write(ctx->out[lang].fh, ctx->encoded_crlf, ctx->encoded_crlf_length);
 }
 
 struct ccx_s_write *get_output_ctx(struct encoder_ctx *ctx, int lan)
@@ -1111,7 +1109,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					xds_write_transcript_line_prefix(context, out, data->start_time, data->end_time, data->cur_xds_packet_class);
 					if (data->xds_len > 0)
 					{
-						ret = __wrap_write(out->fh, data->xds_str, data->xds_len);
+						ret = write(out->fh, data->xds_str, data->xds_len);
 						if (ret < data->xds_len)
 						{
 							mprint("WARNING:Loss of data\n");
@@ -1131,8 +1129,12 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					data->end_time += utc_refvalue * 1000;
 				}
 
-				switch (context->write_format)
-				{
+                //making a call to python_encoder so that if the call is from the api, no output is generated.
+                if (signal_python_api)
+                    wrote_something = pass_cc_buffer_to_python(data, context);
+                else {
+				    switch (context->write_format)
+				    {
 					case CCX_OF_SRT:
 						if (!context->startcredits_displayed && context->start_credits_text != NULL)
 							try_to_add_start_credits(context, data->start_time);
@@ -1182,7 +1184,8 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 						break;
 					default:
 						break;
-				}
+				    }
+                }
 				if (wrote_something)
 					context->last_displayed_subs_ms = data->end_time;
 
@@ -1200,7 +1203,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					try_to_add_start_credits(context, sub->start_time);
 				wrote_something = write_cc_bitmap_as_srt(sub, context);
 				break;
-			case CCX_OF_SSA:
+            case CCX_OF_SSA:
 				if (!context->startcredits_displayed && context->start_credits_text != NULL)
 					try_to_add_start_credits(context, sub->start_time);
 					wrote_something = write_cc_bitmap_as_ssa(sub, context);
@@ -1245,7 +1248,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				net_send_header(sub->data, sub->nb_data);
 			else
 			{
-				ret = __wrap_write(context->out->fh, sub->data, sub->nb_data);
+				ret = write(context->out->fh, sub->data, sub->nb_data);
 				if (ret < sub->nb_data) {
 					mprint("WARNING: Loss of data\n");
 				}
@@ -1350,4 +1353,64 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *cont
 		}
 	}
 	fflush(stderr);
+}
+
+unsigned int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
+{
+	unsigned char *orig = buffer; // Keep for debugging
+	unsigned char *line = data->characters[line_num];
+	for (int i = 0; i < 32; i++)
+	{
+		int bytes = 0;
+		switch (ctx->encoding)
+		{
+		case CCX_ENC_UTF_8:
+			bytes = get_char_in_utf_8(buffer, line[i]);
+			break;
+		case CCX_ENC_LATIN_1:
+			get_char_in_latin_1(buffer, line[i]);
+			bytes = 1;
+			break;
+		case CCX_ENC_UNICODE:
+			get_char_in_unicode(buffer, line[i]);
+			bytes = 2;
+		case CCX_ENC_ASCII:
+		    *buffer = line[i];
+			bytes = 1;
+			break;
+		}
+		buffer += bytes;
+	}
+	return (unsigned int)(buffer - orig); // Return length
+}
+unsigned int get_color_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
+{
+	unsigned char *orig = buffer; // Keep for debugging
+	for (int i = 0; i < 32; i++)
+	{
+		if (data->colors[line_num][i] < 10)
+			*buffer++ = data->colors[line_num][i] + '0';
+		else
+			*buffer++ = 'E';
+	}
+	*buffer = 0;
+	return (unsigned)(buffer - orig); // Return length
+}
+unsigned int get_font_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
+{
+	unsigned char *orig = buffer; // Keep for debugging
+	for (int i = 0; i < 32; i++)
+	{
+		if(data->fonts[line_num][i] == FONT_REGULAR)
+			*buffer++ = 'R';
+		else if(data->fonts[line_num][i] == FONT_UNDERLINED_ITALICS)
+			*buffer++ = 'B';
+		else if(data->fonts[line_num][i] == FONT_UNDERLINED)
+			*buffer++ = 'U';
+		else if(data->fonts[line_num][i] == FONT_ITALICS)
+			*buffer++ = 'I';
+		else
+			*buffer++ = 'E';
+	}
+	return (unsigned)(buffer - orig); // Return length
 }

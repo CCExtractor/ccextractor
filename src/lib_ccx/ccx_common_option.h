@@ -197,6 +197,7 @@ struct ccx_s_options // Options from user parameters
 #endif
     char** python_params;                                 // An array of strings to store the params supplied in the python processing
     int python_param_count;                                 // Count of the total number of params passed via python bindings
+    int signal_python_api;                                // 1 symbolises that python wrapper made the call.
 };
 
 extern struct ccx_s_options ccx_options;

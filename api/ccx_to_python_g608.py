@@ -1,17 +1,3 @@
-%module ccextractor
-%{
-    #define SWIG_FILE_WITH_INIT
-    #include "../src/lib_ccx/lib_ccx.h"
-    #include "../src/lib_ccx/configuration.h"
-    #include "../src/lib_ccx/ccx_common_option.h"
-    #include "../src/lib_ccx/ccx_mp4.h"
-    #include "../src/lib_ccx/hardsubx.h"
-    #include "../src/lib_ccx/ccx_share.h"
-  #include "../src/ccextractor.h"    
-   #include "../api/wrappers/wrapper.h"    
-%}
-void my_pythonapi(struct ccx_s_options *api_options, PyObject* func);
-%pythoncode %{
 def g608_grid_former(line,text,color,font):
     if "text[" in line:
         line = str(line.split(":", 1)[1])
@@ -26,7 +12,8 @@ def g608_grid_former(line,text,color,font):
         line = str(line.split("\n")[0])
         font.append(line)
 
-def print_g608_grid(case,text,color,font):
+def return_g608_grid(case,text,color,font):
+    ret_val = {'text':" ",'color':" ",'font':" "}
     help_string = """
     Case is the value that would give the desired output.
     case = 0 --> print start_time,end_time,text,color,font
@@ -39,40 +26,36 @@ def print_g608_grid(case,text,color,font):
     """
     if case==0:
         if text:
-            print "\n".join(text)
+            ret_val['text']=text
         if color:
-            print "\n".join(color)
+            ret_val['color']=color
         if font:
-            print "\n".join(font)
+            ret_val['font']=font
         
     elif case==1:
         if text:
-            print "\n".join(text)
+            ret_val['text']=text
     elif case==2:
         if color:
-            print "\n".join(color)
+            ret_val['color']=color
     elif case==3:
         if font:
-            print "\n".join(font)
+            ret_val['font']=font
     elif case==4:
         if text:
-            print "\n".join(text)
+            ret_val['text']=text
         if color:
-            print "\n".join(color)
+            ret_val['color']=color
     elif case==5:
         if text:
-            print "\n".join(text)
+            ret_val['text']=text
         if font:
-            print "\n".join(font)
+            ret_val['font']=font
     elif case==6:
         if color:
-            print "\n".join(color)
+            ret_val['color']=color
         if font:
-            print "\n".join(font)
+            ret_val['font']=font
     else:
         print help_string
-
-%}
-   %include "../src/lib_ccx/ccx_common_common.h"
-   %include "../src/ccextractor.h"    
-   %include "../api//wrappers/wrapper.h"    
+    return ret_val
