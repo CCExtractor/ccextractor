@@ -822,7 +822,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_python.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
