@@ -2,7 +2,6 @@
 #include "ccextractor.h"
 
 #if defined(PYTHONAPI)
-//void set_pythonapi_via_python(struct ccx_s_options *api_options);
 void set_pythonapi_via_python(struct ccx_s_options *api_options, PyObject * func);
 #define my_pythonapi(args, func) set_pythonapi_via_python(args, func)
 #else
