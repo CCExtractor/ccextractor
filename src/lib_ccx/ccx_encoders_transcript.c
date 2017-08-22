@@ -334,7 +334,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		}
 
 		ret = write(context->out->fh, context->subline, length);
-        python_extract_transcript(context->subline);
+        //python_extract_transcript(context->subline);
 		if (ret < length)
 		{
 			mprint("Warning:Loss of data\n");
