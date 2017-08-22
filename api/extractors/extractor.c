@@ -14,37 +14,35 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
     //check if the caption with same start and end time already exists
     for(i=0;i<array.sub_count;i++){
         if ((strcmp(start_time,array.subs[i].start_time)==0)&&(strcmp(end_time,array.subs[i].end_time)==0)){
-            if (identifier==1){
+            switch(identifier){
+                case 1:
 #if defined(PYTHONAPI) 
-                asprintf(&output,"text[%d]:%s\n",srt_counter,buffer);
-                run(array.reporter,output);
+                    asprintf(&output,"text[%d]:%s\n",srt_counter,buffer);
+                    run(array.reporter,output);
 #endif
-                return;
-                }
-            else if (identifier==2){
+                    return;
+                 case 2:
 #if defined(PYTHONAPI) 
                     asprintf(&output,"color[%d]:%s\n",srt_counter,buffer);
                     run(array.reporter,output);
 #endif
                     return;
-                    }
-            else if(identifier==3){
+                 case 3:
 #if defined(PYTHONAPI) 
                     asprintf(&output,"font[%d]:%s\n",srt_counter,buffer);
                     run(array.reporter,output);
 #endif
                     return;
-                    }
-                else if(identifier==4){
-                // writing end of frame 
+                 case 4:
+                 // writing end of frame 
 #if defined(PYTHONAPI) 
                     asprintf(&output,"***END OF FRAME***\n",srt_counter,buffer);
                     run(array.reporter,output);
 #endif
                     return;
-                    }
-                }
-        }//end of for loop
+            }// end of switch
+        }
+   }//end of for loop
 
     // if the start time and end time do not match then
     // we are just initializing a new element in the array and 
