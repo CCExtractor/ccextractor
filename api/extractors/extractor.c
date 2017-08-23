@@ -20,17 +20,20 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
                     asprintf(&output,"text[%d]:%s\n",srt_counter,buffer);
                     run(array.reporter,output);
 #endif
+                    free(output);
                     return;
                  case 2:
 #if defined(PYTHONAPI) 
                     asprintf(&output,"color[%d]:%s\n",srt_counter,buffer);
                     run(array.reporter,output);
+                    free(output);
 #endif
                     return;
                  case 3:
 #if defined(PYTHONAPI) 
                     asprintf(&output,"font[%d]:%s\n",srt_counter,buffer);
                     run(array.reporter,output);
+                    free(output);
 #endif
                     return;
                  case 4:
@@ -38,6 +41,7 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
 #if defined(PYTHONAPI) 
                     asprintf(&output,"***END OF FRAME***\n",srt_counter,buffer);
                     run(array.reporter,output);
+                    free(output);
 #endif
                     return;
             }// end of switch
@@ -57,5 +61,6 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
     run(array.reporter,output);
     asprintf(&output,"start_time-%s\t end_time-%s\n",start_time,end_time);
     run(array.reporter,output);  
+    free(output);
 #endif
 }
