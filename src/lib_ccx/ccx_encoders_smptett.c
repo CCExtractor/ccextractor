@@ -142,7 +142,6 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 				sprintf((char *)context->buffer, "<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\n", h1, m1, s1, ms1, h2, m2, s2, ms2);
                 write(context->out->fh, buf, strlen(buf));
 				len = strlen(rect[i].ocr_text);
-                //python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,rect[i].ocr_text);
                 write(context->out->fh, rect[i].ocr_text, len);
 				write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 				sprintf(buf, "</p>\n");
@@ -257,7 +256,6 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 				}
 				used = encode_line(context, context->buffer,(unsigned char *) str);
 				write (context->out->fh, context->buffer, used);
-                //python_extract_time_based(h1,m1,s1,ms1,h2,m2,s2,ms2,"");
 				// Trimming subs because the position is defined by "tts:origin"
 				int old_trim_subs = context->trim_subs;
 				context->trim_subs=1;
@@ -427,7 +425,6 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 
 
 				write(context->out->fh, final, strlen(final));
-                //python_extract_time_based(h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline);
 
 
 				write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
