@@ -1,27 +1,5 @@
 import ccextractor as cc
 import re
-
-def generate_file_handle(filename, mode):
-    fh = open(filename,mode)
-#    print "Creating output file: ", fh.name
-    return fh
-
-def delete_file_handle(fh):
-    fh.close()
-##
-# data would be a dictionary containg the following keys:
-# text, color, font
-##
-def generate_output_srt_time( fh, data):
-    data = data.split("-")
-    end_time = str(data[-1].split("\n")[0])
-    start_time = str(data[1].split("\t")[0])
-    fh.write(start_time)
-    fh.write(" --> ")
-    fh.write(end_time)
-    fh.write("\n")
-    fh.flush()
-
 """
             #Handling underline
             buff = ""
@@ -60,19 +38,26 @@ def comparing_text_font_grids(text, font):
                         buff = buff + '</i>'
                         italics_flag = 0
                 buff +=  letter[i]
+            if italics_flag:
+                buff+='</i>'
             temp.append(buff)
     return (temp,font)
 
     
-def generate_output_srt( fh, d):
-    temp = []
+def generate_output_srt(filename,d):
+    try:
+        d['text'] = [unicode(item,'utf-8') for item in d['text']]
+    except:
+        d['text'] = [unicode(item,'utf-8','ignore')[:32] for item in d['text']]
+        print d['text']
     d['text'],d['font']= comparing_text_font_grids(d['text'],d['font'])
     for item in d['text']:
         if "                                " not in item:
-            o = re.sub(r'[\x00-\x1e]',r'',item)
-            o = re.sub(r'\x1f[!@#$%^&*()]*', r'', o)
-            temp.append(o)
-            fh.write(o)
-            fh.write("\n")
-            fh.flush()
-    fh.write("\n")
+            o=item
+            with open(filename,'ab+') as fh:
+                fh.write(o.encode('utf8'))
+                fh.write("\n")
+                fh.flush()
+    with open(filename,'ab+') as fh:
+        fh.write("\n")
+        fh.flush()

@@ -19,8 +19,8 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
 #if defined(PYTHONAPI) 
                     asprintf(&output,"text[%d]:%s\n",srt_counter,buffer);
                     run(array.reporter,output);
-#endif
                     free(output);
+#endif
                     return;
                  case 2:
 #if defined(PYTHONAPI) 
