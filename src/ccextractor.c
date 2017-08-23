@@ -7,8 +7,6 @@ License: GPL 2.0
 #include "ccextractor.h"
 #include <stdio.h>
 
-//struct ccx_s_options ccx_options;
-//struct lib_ccx_ctx *signal_ctx;
 volatile int terminate_asap = 0;
 
 void sigusr1_handler(int sig)
@@ -27,7 +25,6 @@ void sigterm_handler(int sig)
 
 void sigint_handler(int sig)
 {
-    remove(array.temporary_file);
     if (ccx_options.print_file_reports)
         print_file_report(signal_ctx);
 
@@ -42,7 +39,8 @@ void print_end_msg(void)
 }
 
 
-int api_start(struct ccx_s_options api_options){
+int api_start(struct ccx_s_options api_options)
+{
     struct lib_ccx_ctx *ctx;
     struct lib_cc_decode *dec_ctx = NULL;
     int ret = 0, tmp;
@@ -422,23 +420,22 @@ int api_start(struct ccx_s_options api_options){
         mprint("code in the MythTV's branch. Please report results to the address above. If\n");
         mprint("something is broken it will be fixed. Thanks\n");
     }
-    remove(array.temporary_file);
-    fclose(array.fp);
     return ret ? EXIT_OK : EXIT_NO_CAPTIONS;
 }
 
-struct ccx_s_options* api_init_options(){
-    array.temporary_file = "test.txt";
-    array.fp = fopen("test.txt", "a");
+struct ccx_s_options* api_init_options()
+{
     init_options(&ccx_options);
     return &ccx_options;
 }
 
-void check_configuration_file(struct ccx_s_options api_options){
+void check_configuration_file(struct ccx_s_options api_options)
+{
     parse_configuration(&api_options);
 }
 
-int compile_params(struct ccx_s_options *api_options,int argc){
+int compile_params(struct ccx_s_options *api_options,int argc)
+{
     //adding the parameter ./ccextractor to the list of python_params for further parsing
     api_options->python_params = realloc(api_options->python_params, (api_options->python_param_count+1) * sizeof *api_options->python_params);
     api_options->python_params[api_options->python_param_count] = malloc(strlen("./ccextractor")+1);
@@ -456,7 +453,8 @@ int compile_params(struct ccx_s_options *api_options,int argc){
     return ret;
 }
 
-void api_add_param(struct ccx_s_options* api_options,char* arg){
+void api_add_param(struct ccx_s_options* api_options,char* arg)
+{
     api_options->python_params = realloc(api_options->python_params, (api_options->python_param_count+1) * sizeof *api_options->python_params);
     api_options->python_params[api_options->python_param_count] = malloc(strlen(arg)+1);
     strcpy(api_options->python_params[api_options->python_param_count], arg);
@@ -467,7 +465,8 @@ void api_add_param(struct ccx_s_options* api_options,char* arg){
  * Helper function to print the i-th param submitted by the user.
  * Helpful for debugging
  */
-char * api_param(struct ccx_s_options* api_options, int count){
+char * api_param(struct ccx_s_options* api_options, int count)
+{
     return api_options->python_params[count];
 }
 
@@ -475,43 +474,18 @@ char * api_param(struct ccx_s_options* api_options, int count){
  * Helper function to get the total number of params provided by the user.
  * Helpful for debugging
  */
-int api_param_count(struct ccx_s_options* api_options){
+int api_param_count(struct ccx_s_options* api_options)
+{
     return api_options->python_param_count;
 }
 
-/*subs functions*/
-int cc_to_python_get_old_count(){
-    return array.old_sub_count;
-}
-
-void cc_to_python_set_old_count(){
-    array.old_sub_count=array.sub_count;
-}
-
-int cc_to_python_get_number_of_subs(){
-    return array.sub_count;
-}
-
-struct python_subs_modified cc_to_python_get_modified_sub(int i){
-    return array.subs[i];
-}
-
-int cc_to_python_get_modified_sub_buffer_size(int i){
-    return array.subs[i].buffer_count;
-}
-char* cc_to_python_get_modified_sub_buffer(int i, int j){
-    return array.subs[i].buffer[j];
-}
-
-char* cc_to_python_get_output_filename(){
-    return array.output_filename;
-}
 /*
  * asprintf alternative
  * Defined only in case of windows users.
  */
 #ifdef _WIN32
-int vasprintf(char **strp, const char *fmt, va_list ap) {
+int vasprintf(char **strp, const char *fmt, va_list ap) 
+{
     //_vscprintf tells you how big the buffer needs to be
     int len = _vscprintf(fmt, ap);
     if (len == -1) {
@@ -532,7 +506,8 @@ int vasprintf(char **strp, const char *fmt, va_list ap) {
     return r;
     }
 
-int asprintf(char **strp, const char *fmt, ...) {
+int asprintf(char **strp, const char *fmt, ...) 
+{
         va_list ap;
         va_start(ap, fmt);
         int r = vasprintf(strp, fmt, ap);
@@ -540,70 +515,15 @@ int asprintf(char **strp, const char *fmt, ...) {
         return r;
 }
 #endif
-char* time_wrapper(char* fmt, unsigned h, unsigned m, unsigned s, unsigned ms){
+char* time_wrapper(char* fmt, unsigned h, unsigned m, unsigned s, unsigned ms)
+{
     char * time;
     asprintf(&time,fmt, h, m, s, ms);
     return time;
 }
 
-
-/*
- * char* time_wrapper(char* fmt, unsigned h, unsigned m, unsigned s, unsigned ms){
-int buf_len = 12;
-char *x = malloc( 10* sizeof(char));
-int size = snprintf(x, 13, fmt, h, m, s, ms);
-if(size >= buf_len) {
-        x = realloc(x,(size) * sizeof(char));
-        snprintf(x, 13, fmt, h, m, s, ms);
-}
-printf("\n%02u:%02u:%02u,%02u\t%s\n",h,m,s,ms,x);
-return x;
-}
-*/
-//char* time_wrapper(const char *fmt, ...)
-//{
-//    int n;
-//    int size = 1000;     // Guess we need no more than 100 bytes */
-//    char *p, *np;
-//    va_list ap;
-//   if ((p = malloc(size)) == NULL)
-//       return NULL;
-//    while (1) {
-//     /* Try to print in the allocated space */
-//         va_start(ap, fmt);
-//         n = vsnprintf(p, size, fmt, ap);
-//         va_end(ap);
-//        /* Check error code */
-//         if (n < 0)
-//                return NULL;
-//        /* If that worked, return the string */
-//       if (n < size)
-//           return p;
-//      /* Else try again with more space */
-//      size = n + 1;       /* Precisely what is needed */
-//     if ((np = realloc (p, size)) == NULL) {
-//             free(p);
-//             return NULL;
-//     }
-//     else {
-//         p = np;
-//     }
-//}
-//}
-void show_extracted_captions_with_timings(){
-    int i;
-    for(i=0;i<array.sub_count;i++){
-        if (!array.is_transcript)
-            mprint("start_time = %s\tend_time = %s\n",array.subs[i].start_time,array.subs[i].end_time);
-        int j=0;
-        while(j<array.subs[i].buffer_count){
-            mprint("%s\n",array.subs[i].buffer[j]);
-            j++;
-        }
-    }
-}
-
-void call_from_python_api(struct ccx_s_options *api_options){
+void call_from_python_api(struct ccx_s_options *api_options)
+{
     int indicator = api_options->signal_python_api;
     if (indicator)
         signal_python_api=1;
@@ -612,13 +532,15 @@ void call_from_python_api(struct ccx_s_options *api_options){
 }
 
 #if defined(PYTHONAPI)
-void run(PyObject * reporter, char * line) {
+void run(PyObject * reporter, char * line)
+{
        const char * s = line;
        assert ( PyFunction_Check(reporter) );
        PyObject* args = PyTuple_Pack(1, PyString_FromString(s));
        PyObject_CallObject((PyObject*)reporter, args);
 }
 #endif
+
 int main(int argc, char* argv[])
 {
     struct ccx_s_options* api_options = api_init_options();
@@ -643,10 +565,6 @@ int main(int argc, char* argv[])
     }
 
     call_from_python_api(api_options);
-//mprint("signal_python_api = %d\n", signal_python_api);
     int start_ret = api_start(*api_options);
-
-//uncomment the next line to check the extracted captions along with timings
-//    show_extracted_captions_with_timings();
     return start_ret;
 }

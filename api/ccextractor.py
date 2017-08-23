@@ -217,14 +217,6 @@ class python_subs_modified(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, python_subs_modified, name)
     __repr__ = _swig_repr
-    __swig_setmethods__["buffer_count"] = _ccextractor.python_subs_modified_buffer_count_set
-    __swig_getmethods__["buffer_count"] = _ccextractor.python_subs_modified_buffer_count_get
-    if _newclass:
-        buffer_count = _swig_property(_ccextractor.python_subs_modified_buffer_count_get, _ccextractor.python_subs_modified_buffer_count_set)
-    __swig_setmethods__["srt_counter"] = _ccextractor.python_subs_modified_srt_counter_set
-    __swig_getmethods__["srt_counter"] = _ccextractor.python_subs_modified_srt_counter_get
-    if _newclass:
-        srt_counter = _swig_property(_ccextractor.python_subs_modified_srt_counter_get, _ccextractor.python_subs_modified_srt_counter_set)
     __swig_setmethods__["start_time"] = _ccextractor.python_subs_modified_start_time_set
     __swig_getmethods__["start_time"] = _ccextractor.python_subs_modified_start_time_get
     if _newclass:
@@ -233,26 +225,6 @@ class python_subs_modified(_object):
     __swig_getmethods__["end_time"] = _ccextractor.python_subs_modified_end_time_get
     if _newclass:
         end_time = _swig_property(_ccextractor.python_subs_modified_end_time_get, _ccextractor.python_subs_modified_end_time_set)
-    __swig_setmethods__["buffer"] = _ccextractor.python_subs_modified_buffer_set
-    __swig_getmethods__["buffer"] = _ccextractor.python_subs_modified_buffer_get
-    if _newclass:
-        buffer = _swig_property(_ccextractor.python_subs_modified_buffer_get, _ccextractor.python_subs_modified_buffer_set)
-    __swig_setmethods__["g608_grid_color_count"] = _ccextractor.python_subs_modified_g608_grid_color_count_set
-    __swig_getmethods__["g608_grid_color_count"] = _ccextractor.python_subs_modified_g608_grid_color_count_get
-    if _newclass:
-        g608_grid_color_count = _swig_property(_ccextractor.python_subs_modified_g608_grid_color_count_get, _ccextractor.python_subs_modified_g608_grid_color_count_set)
-    __swig_setmethods__["g608_grid_color"] = _ccextractor.python_subs_modified_g608_grid_color_set
-    __swig_getmethods__["g608_grid_color"] = _ccextractor.python_subs_modified_g608_grid_color_get
-    if _newclass:
-        g608_grid_color = _swig_property(_ccextractor.python_subs_modified_g608_grid_color_get, _ccextractor.python_subs_modified_g608_grid_color_set)
-    __swig_setmethods__["g608_grid_font_count"] = _ccextractor.python_subs_modified_g608_grid_font_count_set
-    __swig_getmethods__["g608_grid_font_count"] = _ccextractor.python_subs_modified_g608_grid_font_count_get
-    if _newclass:
-        g608_grid_font_count = _swig_property(_ccextractor.python_subs_modified_g608_grid_font_count_get, _ccextractor.python_subs_modified_g608_grid_font_count_set)
-    __swig_setmethods__["g608_grid_font"] = _ccextractor.python_subs_modified_g608_grid_font_set
-    __swig_getmethods__["g608_grid_font"] = _ccextractor.python_subs_modified_g608_grid_font_get
-    if _newclass:
-        g608_grid_font = _swig_property(_ccextractor.python_subs_modified_g608_grid_font_get, _ccextractor.python_subs_modified_g608_grid_font_set)
 
     def __init__(self):
         this = _ccextractor.new_python_subs_modified()
@@ -272,26 +244,6 @@ class python_subs_array(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, python_subs_array, name)
     __repr__ = _swig_repr
-    __swig_setmethods__["temporary_file"] = _ccextractor.python_subs_array_temporary_file_set
-    __swig_getmethods__["temporary_file"] = _ccextractor.python_subs_array_temporary_file_get
-    if _newclass:
-        temporary_file = _swig_property(_ccextractor.python_subs_array_temporary_file_get, _ccextractor.python_subs_array_temporary_file_set)
-    __swig_setmethods__["fp"] = _ccextractor.python_subs_array_fp_set
-    __swig_getmethods__["fp"] = _ccextractor.python_subs_array_fp_get
-    if _newclass:
-        fp = _swig_property(_ccextractor.python_subs_array_fp_get, _ccextractor.python_subs_array_fp_set)
-    __swig_setmethods__["output_filename"] = _ccextractor.python_subs_array_output_filename_set
-    __swig_getmethods__["output_filename"] = _ccextractor.python_subs_array_output_filename_get
-    if _newclass:
-        output_filename = _swig_property(_ccextractor.python_subs_array_output_filename_get, _ccextractor.python_subs_array_output_filename_set)
-    __swig_setmethods__["has_api_start_exited"] = _ccextractor.python_subs_array_has_api_start_exited_set
-    __swig_getmethods__["has_api_start_exited"] = _ccextractor.python_subs_array_has_api_start_exited_get
-    if _newclass:
-        has_api_start_exited = _swig_property(_ccextractor.python_subs_array_has_api_start_exited_get, _ccextractor.python_subs_array_has_api_start_exited_set)
-    __swig_setmethods__["old_sub_count"] = _ccextractor.python_subs_array_old_sub_count_set
-    __swig_getmethods__["old_sub_count"] = _ccextractor.python_subs_array_old_sub_count_get
-    if _newclass:
-        old_sub_count = _swig_property(_ccextractor.python_subs_array_old_sub_count_get, _ccextractor.python_subs_array_old_sub_count_set)
     __swig_setmethods__["sub_count"] = _ccextractor.python_subs_array_sub_count_set
     __swig_getmethods__["sub_count"] = _ccextractor.python_subs_array_sub_count_get
     if _newclass:
@@ -300,10 +252,6 @@ class python_subs_array(_object):
     __swig_getmethods__["subs"] = _ccextractor.python_subs_array_subs_get
     if _newclass:
         subs = _swig_property(_ccextractor.python_subs_array_subs_get, _ccextractor.python_subs_array_subs_set)
-    __swig_setmethods__["is_transcript"] = _ccextractor.python_subs_array_is_transcript_set
-    __swig_getmethods__["is_transcript"] = _ccextractor.python_subs_array_is_transcript_get
-    if _newclass:
-        is_transcript = _swig_property(_ccextractor.python_subs_array_is_transcript_get, _ccextractor.python_subs_array_is_transcript_set)
 
     def __init__(self):
         this = _ccextractor.new_python_subs_array()
@@ -357,41 +305,9 @@ def print_end_msg():
     return _ccextractor.print_end_msg()
 print_end_msg = _ccextractor.print_end_msg
 
-def show_extracted_captions_with_timings():
-    return _ccextractor.show_extracted_captions_with_timings()
-show_extracted_captions_with_timings = _ccextractor.show_extracted_captions_with_timings
-
 def main(argc, argv):
     return _ccextractor.main(argc, argv)
 main = _ccextractor.main
-
-def cc_to_python_get_old_count():
-    return _ccextractor.cc_to_python_get_old_count()
-cc_to_python_get_old_count = _ccextractor.cc_to_python_get_old_count
-
-def cc_to_python_set_old_count():
-    return _ccextractor.cc_to_python_set_old_count()
-cc_to_python_set_old_count = _ccextractor.cc_to_python_set_old_count
-
-def cc_to_python_get_number_of_subs():
-    return _ccextractor.cc_to_python_get_number_of_subs()
-cc_to_python_get_number_of_subs = _ccextractor.cc_to_python_get_number_of_subs
-
-def cc_to_python_get_modified_sub(i):
-    return _ccextractor.cc_to_python_get_modified_sub(i)
-cc_to_python_get_modified_sub = _ccextractor.cc_to_python_get_modified_sub
-
-def cc_to_python_get_modified_sub_buffer_size(i):
-    return _ccextractor.cc_to_python_get_modified_sub_buffer_size(i)
-cc_to_python_get_modified_sub_buffer_size = _ccextractor.cc_to_python_get_modified_sub_buffer_size
-
-def cc_to_python_get_modified_sub_buffer(i, j):
-    return _ccextractor.cc_to_python_get_modified_sub_buffer(i, j)
-cc_to_python_get_modified_sub_buffer = _ccextractor.cc_to_python_get_modified_sub_buffer
-
-def cc_to_python_get_output_filename():
-    return _ccextractor.cc_to_python_get_output_filename()
-cc_to_python_get_output_filename = _ccextractor.cc_to_python_get_output_filename
 
 def call_from_python_api(api_options):
     return _ccextractor.call_from_python_api(api_options)
