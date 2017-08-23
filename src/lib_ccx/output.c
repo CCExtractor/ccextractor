@@ -57,6 +57,7 @@ int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
 #if defined(PYTHONAPI)
         run(array.reporter, output);
 #endif
+        free(output);
         return EXIT_OK;
     }
 	memset(wb, 0, sizeof(struct ccx_s_write));
@@ -66,8 +67,6 @@ int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
         
 	wb->with_semaphore = with_semaphore;
 	wb->append_mode = ccx_options.enc_cfg.append_mode;
-    if (!signal_python_api)
-        mprint ("Creating %s\n", filename);
 	if(!(wb->append_mode))
 		wb->fh = open (filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 	else

@@ -1,10 +1,6 @@
 #include "wrapper.h"
 #include "ccextractor.h"
 
-/*
-output=pythonapi wrapper
-*/
-
 void set_pythonapi(struct ccx_s_options *api_options){ 
     api_add_param(api_options,"-pythonapi");
 }
