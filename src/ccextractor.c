@@ -59,6 +59,12 @@ int api_start(struct ccx_s_options api_options)
 #endif
     // Initialize CCExtractor libraries
     ctx = init_libraries(&api_options);
+    int i=0;
+    while(i<api_options.python_param_count)
+    {
+        free(api_options.python_params[i]);
+        i++;
+    }
     if (!ctx && errno == ENOMEM)
         fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
     else if (!ctx && errno == EINVAL)
@@ -408,6 +414,7 @@ int api_start(struct ccx_s_options api_options)
   	curl_global_cleanup();
 #endif
     dinit_libraries(&ctx);
+    free_python_global_vars();
 
     if (!ret)
         mprint("\nNo captions were found in input.\n");
@@ -421,6 +428,17 @@ int api_start(struct ccx_s_options api_options)
         mprint("something is broken it will be fixed. Thanks\n");
     }
     return ret ? EXIT_OK : EXIT_NO_CAPTIONS;
+}
+void free_python_global_vars()
+{
+   int i=0;
+   while(i<array.sub_count)
+   {
+       free(array.subs[i].start_time);
+       free(array.subs[i].end_time);
+       i++;
+   } 
+   free(array.subs);
 }
 
 struct ccx_s_options* api_init_options()

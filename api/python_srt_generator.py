@@ -120,6 +120,7 @@ def generate_output_srt(filename,d):
     try:
         d['text'] = [unicode(item,'utf-8') for item in d['text']]
     except:
+        print d['text']
         d['text'] = [unicode(item,'utf-8','ignore')[:32] for item in d['text']]
     d['text'],d['font'],d['color']= comparing_text_font_grids(d['text'],d['font'],d['color'])
     for item in d['text']:

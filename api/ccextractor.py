@@ -313,6 +313,10 @@ def call_from_python_api(api_options):
     return _ccextractor.call_from_python_api(api_options)
 call_from_python_api = _ccextractor.call_from_python_api
 
+def free_python_global_vars():
+    return _ccextractor.free_python_global_vars()
+free_python_global_vars = _ccextractor.free_python_global_vars
+
 def set_pythonapi(api_options):
     return _ccextractor.set_pythonapi(api_options)
 set_pythonapi = _ccextractor.set_pythonapi

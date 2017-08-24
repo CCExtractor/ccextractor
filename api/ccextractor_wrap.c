@@ -4421,6 +4421,18 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_free_python_global_vars(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  
+  if (!PyArg_ParseTuple(args,(char *)":free_python_global_vars")) SWIG_fail;
+  free_python_global_vars();
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_set_pythonapi(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   struct ccx_s_options *arg1 = (struct ccx_s_options *) 0 ;
@@ -4561,6 +4573,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"print_end_msg", _wrap_print_end_msg, METH_VARARGS, NULL},
 	 { (char *)"main", _wrap_main, METH_VARARGS, NULL},
 	 { (char *)"call_from_python_api", _wrap_call_from_python_api, METH_VARARGS, NULL},
+	 { (char *)"free_python_global_vars", _wrap_free_python_global_vars, METH_VARARGS, NULL},
 	 { (char *)"set_pythonapi", _wrap_set_pythonapi, METH_VARARGS, NULL},
 	 { (char *)"setautoprogram", _wrap_setautoprogram, METH_VARARGS, NULL},
 	 { (char *)"setstdout", _wrap_setstdout, METH_VARARGS, NULL},
