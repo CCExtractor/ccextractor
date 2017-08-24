@@ -550,11 +550,10 @@ void call_from_python_api(struct ccx_s_options *api_options)
 }
 
 #if defined(PYTHONAPI)
-void run(PyObject * reporter, char * line)
+void run(PyObject * reporter, char * line, int encoding)
 {
-       const char * s = line;
        assert ( PyFunction_Check(reporter) );
-       PyObject* args = PyTuple_Pack(1, PyString_FromString(s));
+       PyObject* args = Py_BuildValue("(si)",line,encoding);
        PyObject_CallObject((PyObject*)reporter, args);
 }
 #endif

@@ -21,6 +21,13 @@ import re
             else:
                 buff=""
 """
+encodings_map = {
+        '0':'unicode',
+        '1':'latin1',
+        '2':'utf-8',
+        '3':'ascii',
+}
+
 color_text_start={
         "0":"",
         "1":"<font color=\"#00ff00\">",
@@ -116,17 +123,28 @@ def comparing_text_font_grids(text, font, color):
     return (final,font,color)
 
     
-def generate_output_srt(filename,d):
-    try:
-        d['text'] = [unicode(item,'utf-8') for item in d['text']]
-    except:
-        d['text'] = [unicode(item,'utf-8','ignore')[:32] for item in d['text']]
+def generate_output_srt(filename,d, encoding):
+    if encoding in encodings_map.keys():
+        if  encoding!='0':
+            encoding_format = encodings_map[encoding]
+        else:
+            encoding_format = ""
+    else:
+        print "encoding error in python"
+        return
+    if encoding_format:
+        d['text'] = [unicode(item,encoding_format) for item in d['text']]
+    else:
+        d['text'] = [unicode(item) for item in d['text']]
     d['text'],d['font'],d['color']= comparing_text_font_grids(d['text'],d['font'],d['color'])
     for item in d['text']:
         if item.count(" ")<32:
             o=item
             with open(filename,'ab+') as fh:
-                fh.write(o.encode('utf8'))
+                if encoding_format:
+                    fh.write(o.encode(encoding_format))
+                else:
+                    fh.write(str(o))
                 fh.write("\n")
                 fh.flush()
     with open(filename,'ab+') as fh:

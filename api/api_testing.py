@@ -22,7 +22,7 @@ def templer():
 
     start_ret = cc.api_start(s);
 
-def callback(line):
-    api_support.generate_output_srt(line)
+def callback(line, encoding):
+    api_support.generate_output_srt(line, str(encoding))
 if __name__=="__main__":
     templer()

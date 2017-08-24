@@ -4,7 +4,7 @@ import python_srt_generator as srt_generator
 text,font,color = [],[],[]
 filename = " "
 srt_counter = " "
-def generate_output_srt(line):
+def generate_output_srt(line, encoding):
     global text,font,color
     global filename, srt_counter
     if "filename:" in line:
@@ -30,7 +30,7 @@ def generate_output_srt(line):
         d['text']=text
         d['color']=color
         d['font']=font
-        srt_generator.generate_output_srt(filename,d)
+        srt_generator.generate_output_srt(filename,d, encoding)
         text,font,color = [],[],[]
     else:
         g608.g608_grid_former(line,text,color,font)

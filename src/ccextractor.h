@@ -65,6 +65,6 @@ int main(int argc, char *argv[]);
 void call_from_python_api(struct ccx_s_options *api_options);
 void free_python_global_vars();
 #if defined(PYTHONAPI)
-void run(PyObject * reporter, char * line);
+void run(PyObject * reporter, char * line, int encoding);
 #endif
 #endif //CCEXTRACTOR_H

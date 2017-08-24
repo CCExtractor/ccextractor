@@ -55,7 +55,7 @@ int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
         //writing to memory which would be then tailed by python.
         asprintf(&output,"filename:%s\n",filename);
 #if defined(PYTHONAPI)
-        run(array.reporter, output);
+        run(array.reporter, output, 8);
 #endif
         free(output);
         return EXIT_OK;

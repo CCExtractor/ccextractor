@@ -1,6 +1,6 @@
 #include "extractor.h"
  
-void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms1, unsigned h2, unsigned m2, unsigned s2, unsigned ms2, char* buffer, int identifier, int srt_counter){
+void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms1, unsigned h2, unsigned m2, unsigned s2, unsigned ms2, char* buffer, int identifier, int srt_counter, int encoding){
     /*
      * identifier = 0 ---> adding start and end time
      * identifier = 1 ---> subtitle
@@ -24,7 +24,7 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
                         printf("Error: Some problem with asprintf return value in extractor.c\nExiting.");
                         exit(500);
                     }
-                    run(array.reporter,output);
+                    run(array.reporter,output, encoding);
                     free(output);
 #endif
                     return;
@@ -36,7 +36,7 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
                         printf("Error: Some problem with asprintf return value in extractor.c\nExiting.");
                         exit(500);
                     }
-                    run(array.reporter,output);
+                    run(array.reporter,output, encoding);
                     free(output);
 #endif
                     return;
@@ -48,7 +48,7 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
                         printf("Error: Some problem with asprintf return value in extractor.c\nExiting.");
                         exit(500);
                     }
-                    run(array.reporter,output);
+                    run(array.reporter,output, encoding);
                     free(output);
 #endif
                     return;
@@ -61,7 +61,7 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
                         printf("Error: Some problem with asprintf return value in extractor.c\nExiting.");
                         exit(500);
                     }
-                    run(array.reporter,output);
+                    run(array.reporter,output, encoding);
                     free(output);
 #endif
                     return;
@@ -85,7 +85,7 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
         printf("Error: Some problem with asprintf return value in extractor.c\nExiting.");
         exit(500);
     }
-    run(array.reporter,output);
+    run(array.reporter,output, encoding);
     free(output);
     asprintf_ret = asprintf(&temp,"start_time-%s\t end_time-%s\n",start_time,end_time);
     if (asprintf_ret==-1)
@@ -93,7 +93,7 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
         printf("Error: Some problem with asprintf return value in extractor.c\nExiting.");
         exit(500);
     }
-    run(array.reporter,temp);  
+    run(array.reporter,temp, encoding);  
     free(temp);
 #endif
 }
