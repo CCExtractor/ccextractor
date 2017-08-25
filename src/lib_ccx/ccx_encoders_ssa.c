@@ -25,7 +25,6 @@ int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_sta
 	dbg_print(CCX_DMT_DECODER_608, "%s",timeline);
 
 	write(context->out->fh, context->buffer, used);
-    //python_extract (context->srt_counter,h1,m1,s1,ms1,h2,m2,s2,ms2,context->buffer);
 	int len=strlen (string);
 	unsigned char *unescaped= (unsigned char *) malloc (len+1);
 	unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
@@ -60,9 +59,7 @@ int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_sta
 			dbg_print(CCX_DMT_DECODER_608, "%s\n",context->subline);
 		}
 		write(context->out->fh, el, u);
-        //python_extract (context->srt_counter,h1,m1,s1,ms1,h2,m2,s2,ms2,el);
 		write(context->out->fh, "\\N", 2);
-        //python_extract (context->srt_counter,h1,m1,s1,ms1,h2,m2,s2,ms2,"\\N");
 		begin+= strlen ((const char *) begin)+1;
 	}
 
@@ -121,7 +118,6 @@ int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context)
 				h1,m1,s1,ms1/10, h2,m2,s2,ms2/10);
 			used = encode_line(context, context->buffer,(unsigned char *) timeline);
 			write (context->out->fh, context->buffer, used);
-            //python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,str);
 			write (context->out->fh, str, len);
 			write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		}
@@ -281,10 +277,8 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 			if (line_count)
             {
 				write(context->out->fh, "\\N", 2);
-                //python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,"\\N");
             }
 			write(context->out->fh, context->subline, length);
-            //python_extract_time_based (h1,m1,s1,ms1,h2,m2,s2,ms2,context->subline);
 			line_count++;
 			wrote_something=1;
 		}

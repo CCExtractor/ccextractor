@@ -149,6 +149,7 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/ccx_encoders_g608.c \
 				../src/lib_ccx/ccx_encoders_helpers.c \
 				../src/lib_ccx/ccx_encoders_helpers.h \
+				../src/lib_ccx/ccx_encoders_python.c \
 				../src/lib_ccx/ccx_encoders_sami.c \
 				../src/lib_ccx/ccx_encoders_smptett.c \
 				../src/lib_ccx/ccx_encoders_splitbysentence.c \
@@ -261,7 +262,11 @@ ccextractor_SOURCES = \
 				../src/zvbi/sampling_par.c \
 				../src/zvbi/sampling_par.h \
 				../src/zvbi/sliced.h \
-				../src/zvbi/zvbi_decoder.h
+				../src/zvbi/zvbi_decoder.h \
+				../api/extractors/extractor.c \
+				../api/extractors/extractor.h \
+				../api/wrappers/wrapper.c \
+				../api/extractors/wrapper.h 
 				
 
 ccextractor_CFLAGS = -std=gnu99 -s  -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT 
