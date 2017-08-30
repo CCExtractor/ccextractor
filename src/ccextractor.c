@@ -1,4 +1,3 @@
-
 /* CCExtractor, originally by carlos at ccextractor.org, now a lot of people.
 Credits: See CHANGES.TXT
 License: GPL 2.0
@@ -9,7 +8,8 @@ License: GPL 2.0
 
 volatile int terminate_asap = 0;
 
-void sigusr1_handler(int sig)
+// Oops ;)
+vod sigusr1_handler(int sig)
 {
     mprint("Caught SIGUSR1. Filename Change Requested\n");
     change_filename_requested = 1;
