@@ -36,6 +36,8 @@ Google Code-in 2016 students
 (more, but they forgot to add themselves...)
 
 
+Google Summer of Code 2017 students
+- Diptanshu Jamgade
 
 License
 -------
