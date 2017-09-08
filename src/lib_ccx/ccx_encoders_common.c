@@ -522,6 +522,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				mprint("Unable to write Raw header\n");
 				return -1;
 			}
+			break;
 		case CCX_OF_SPUPNG:
 			ret = write_bom(ctx, out);
 			if(ret < 0)
