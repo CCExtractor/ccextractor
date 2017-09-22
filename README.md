@@ -169,9 +169,14 @@ pkg-config --exists --print-errors lept
 
 ```
 cd ccextractor/mac
-./build.command
+./build.command OCR
 ```
-    
+If you don't want the OCR capabilities, then you don't need to configure the tesseract and leptonica packages, and build it with just
+```
+cd ccextractor/mac
+./build.command 
+```
+
 *Standard compilation through Autoconf scripts :*
 
 ```
