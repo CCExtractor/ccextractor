@@ -39,7 +39,7 @@ You may compile CCExtractor across all major platforms using `CMakeLists.txt` st
 1. Create and navigate to directory where you want to store built files
 
 ```
-cd ccextractor/src/
+cd ccextractor/
 mkdir build
 cd build
 ```
@@ -145,7 +145,7 @@ make
 ./ccextractor
 ```
 
-### OSX
+### MacOS
 
 1. Make sure all the dependencies are met. They can be installed via Homebrew as
 
@@ -156,7 +156,12 @@ brew install tesseract
 brew install leptonica 
 ```
 
-Make sure tesseract and leptonica are detected by pkg-config
+Make sure tesseract and leptonica are detected by pkg-config, e.g.
+
+````
+pkg-config --exists --print-errors tesseract
+pkg-config --exists --print-errors lept
+````
 
 2. Compiling
 
