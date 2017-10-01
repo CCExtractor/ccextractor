@@ -357,10 +357,10 @@
     <ClInclude Include="..\src\lib_ccx\lib_ccx.h">
       <Filter>Header Files\lib_ccx</Filter>
     </ClInclude>
-    <ClInclude Include="..\api\extractors\extractor.h">
+    <ClInclude Include="..\src\extractors\extractor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\api\wrappers\wrapper.h">
+    <ClInclude Include="..\src\wrappers\wrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -815,10 +815,10 @@
     <ClCompile Include="..\src\lib_ccx\matroska.c">
       <Filter>Source Files\lib_ccx</Filter>
     </ClCompile>
-    <ClCompile Include="..\api\extractors\extractor.c">
+    <ClCompile Include="..\src\extractors\extractor.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\api\wrappers\wrapper.c">
+    <ClCompile Include="..\src\wrappers\wrapper.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_python.c">

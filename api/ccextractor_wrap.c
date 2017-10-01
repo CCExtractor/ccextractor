@@ -3031,7 +3031,7 @@ static swig_module_info swig_module = {swig_types, 11, 0, 0, 0, 0};
     #include "../src/lib_ccx/hardsubx.h"
     #include "../src/lib_ccx/ccx_share.h"
   #include "../src/ccextractor.h"    
-   #include "../api/wrappers/wrapper.h"    
+   #include "../src/wrappers/wrapper.h"    
 
 
 SWIGINTERNINLINE PyObject*

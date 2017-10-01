@@ -263,10 +263,10 @@ ccextractor_SOURCES = \
 				../src/zvbi/sampling_par.h \
 				../src/zvbi/sliced.h \
 				../src/zvbi/zvbi_decoder.h \
-				../api/extractors/extractor.c \
-				../api/extractors/extractor.h \
-				../api/wrappers/wrapper.c \
-				../api/extractors/wrapper.h 
+				../src/extractors/extractor.c \
+				../src/extractors/extractor.h \
+				../src/wrappers/wrapper.c \
+				../src/extractors/wrapper.h 
 				
 
 ccextractor_CFLAGS = -std=gnu99 -s  -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT 

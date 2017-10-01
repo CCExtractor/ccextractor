@@ -10,7 +10,9 @@ SRC_PROTOBUF="$(find ../src/protobuf-c -name '*.c')"
 SRC_UTF8="../src/utf8proc/utf8proc.c"
 SRC_ZLIB="$(find ../src/zlib -name '*.c')"
 SRC_ZVBI="$(find ../src/zvbi -name '*.c')"
-BLD_SOURCES="../src/ccextractor.c $SRC_CCX  $SRC_GPAC $SRC_LIB_HASH $SRC_LIBPNG $SRC_PROTOBUF $SRC_UTF8 $SRC_ZLIB $SRC_ZVBI" 
+API_WRAPPERS="$(find ../src/wrappers/ -name '*.c')"
+API_EXTRACTORS="$(find ../src/extractors/ -name '*.c')"
+BLD_SOURCES="../src/ccextractor.c $SRC_CCX  $SRC_GPAC $SRC_LIB_HASH $SRC_LIBPNG $SRC_PROTOBUF $SRC_UTF8 $SRC_ZLIB $SRC_ZVBI $API_WRAPPERS $API_EXTRACTORS" 
 BLD_LINKER="-lm -liconv `pkg-config --libs --silence-errors tesseract` `pkg-config --libs --silence-errors lept`"
 
 ./pre-build.sh
