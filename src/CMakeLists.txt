@@ -48,9 +48,13 @@ include_directories ("${PROJECT_SOURCE_DIR}/gpacmp4/")
 include_directories ("${PROJECT_SOURCE_DIR}/protobuf-c/")
 include_directories ("${PROJECT_SOURCE_DIR}/zvbi/")
 include_directories ("${PROJECT_SOURCE_DIR}/lib_hash/")
+include_directories ("${PROJECT_SOURCE_DIR}/extractors/")
+include_directories ("${PROJECT_SOURCE_DIR}/wrappers/")
 aux_source_directory ("${PROJECT_SOURCE_DIR}/protobuf-c/" SOURCEFILE)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/zvbi/" SOURCEFILE)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_hash/" SOURCEFILE)
+aux_source_directory ("${PROJECT_SOURCE_DIR}/extractors/" SOURCEFILE)
+aux_source_directory ("${PROJECT_SOURCE_DIR}/wrappers/" SOURCEFILE)
 
 #Windows specific libraries and linker flags
 if(WIN32)
