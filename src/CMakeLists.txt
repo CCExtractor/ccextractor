@@ -76,24 +76,12 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set (EXTRA_LIBS ${EXTRA_LIBS} iconv)
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
+include_directories ("${PROJECT_SOURCE_DIR}/libpng/")
+include_directories ("${PROJEXT_SOURCE_DIR}/zlib/")
+aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
+aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib/" SOURCEFILE)
 
 find_package (PkgConfig)
-if(PKG_CONFIG_FOUND)
-  pkg_check_modules(PNG libpng )
-  if(PNG_FOUND)
-    set (EXTRA_LIBS ${EXTRA_LIBS} png)
-  else (PNG_FOUND)
-    include_directories ("${PROJECT_SOURCE_DIR}/libpng/")
-    include_directories ("${PROJEXT_SOURCE_DIR}/zlib/")
-    aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
-    aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib/" SOURCEFILE)
-  endif(PNG_FOUND)
-else(PKG_CONFIG_FOUND)
-    include_directories ("${PROJECT_SOURCE_DIR}/libpng/")
-    include_directories ("${PROJEXT_SOURCE_DIR}/zlib/")
-    aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
-    aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib/" SOURCEFILE)
-endif (PKG_CONFIG_FOUND)
 
 set (EXTRA_LIBS ${EXTRA_LIBS} -lz)
 
@@ -126,8 +114,7 @@ endif (PKG_CONFIG_FOUND AND WITH_FFMPEG)
 # Build with OCR using leptonica and tesseract libraries
 ########################################################
 
-if (WITH_OCR)
-  find_package(PkgConfig)
+if (PKG_CONFIG_FOUND AND WITH_OCR)
 
   pkg_check_modules (TESSERACT REQUIRED tesseract)
   pkg_check_modules (LEPTONICA REQUIRED lept)
@@ -136,14 +123,13 @@ if (WITH_OCR)
   set (EXTRA_LIBS ${EXTRA_LIBS} ${LEPTONICA_LIBRARIES})
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR")
-endif (WITH_OCR)
+endif (PKG_CONFIG_FOUND AND WITH_OCR)
 
 ########################################################
 # Build with CC sharing and translation support
 ########################################################
 
-if (WITH_SHARING)
-  find_package(PkgConfig)
+if (PKG_CONFIG_FOUND AND WITH_SHARING)
 
   pkg_check_modules (NANOMSG REQUIRED libnanomsg)
   set (EXTRA_LIBS ${EXTRA_LIBS} ${NANOMSG_STATIC_LIBRARIES})
@@ -152,7 +138,7 @@ if (WITH_SHARING)
   aux_source_directory ("${PROJECT_SOURCE_DIR}/protobuf-c/" SOURCEFILE)
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_SHARING")
-endif (WITH_SHARING)
+endif (PKG_CONFIG_FOUND AND WITH_SHARING)
 
 add_executable (ccextractor ${SOURCEFILE})
 target_link_libraries (ccextractor ${EXTRA_LIBS})
