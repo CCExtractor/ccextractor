@@ -39,6 +39,7 @@ build/
 *.opensdf
 *.user
 *.opendb
+*.db
 
 ####
 # Ignore the header file that is updated upon build
