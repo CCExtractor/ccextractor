@@ -465,11 +465,11 @@
       <ImageHasSafeExceptionHandlers>true</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y $(ProjectDir)libs\lib\ffmpeg-lib\avcodec-57.dll $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)libs\lib\ffmpeg-lib\avformat-57.dll $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)libs\lib\ffmpeg-lib\avutil-55.dll $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)libs\lib\ffmpeg-lib\swresample-2.dll $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll $(ProjectDir)$(OutDir)</Command>
+      <Command>xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avcodec-57.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avformat-57.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avutil-55.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swresample-2.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
@@ -494,8 +494,8 @@ xcopy /y $(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll $(ProjectDir)$(OutDir)</
       <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y $(ProjectDir)libs\lib\liblept172.dll $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Command>
+      <Command>xcopy /y "$(ProjectDir)libs\lib\liblept172.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|Win32'">
@@ -522,11 +522,11 @@ xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Comm
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y $(ProjectDir)libs\lib\ffmpeg-lib\avcodec-57.dll $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)libs\lib\ffmpeg-lib\avformat-57.dll $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)libs\lib\ffmpeg-lib\avutil-55.dll $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)libs\lib\ffmpeg-lib\swresample-2.dll $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll $(ProjectDir)$(OutDir)</Command>
+      <Command>xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avcodec-57.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avformat-57.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avutil-55.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swresample-2.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>pre-build.bat</Command>
@@ -554,8 +554,8 @@ xcopy /y $(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll $(ProjectDir)$(OutDir)</
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y $(ProjectDir)libs\lib\liblept172.dll $(ProjectDir)$(OutDir)
-xcopy /y $(ProjectDir)libs\lib\libtesseract304d.dll $(ProjectDir)$(OutDir)</Command>
+      <Command>xcopy /y "$(ProjectDir)libs\lib\liblept172.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
