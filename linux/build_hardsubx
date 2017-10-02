@@ -8,9 +8,11 @@ SRC_CCX="$(find ../src/lib_ccx/ -name '*.c')"
 SRC_GPAC="$(find ../src/gpacmp4/ -name '*.c')"
 SRC_HASH="$(find ../src/lib_hash/ -name '*.c')"
 SRC_UTF8="../src/utf8proc/utf8proc.c"
+API_WRAPPERS="$(find ../src/wrappers/ -name '*.c')"
+API_EXTRACTORS="$(find ../src/extractors/ -name '*.c')"
 SRC_PROTOBUF="$(find ../src/protobuf-c/ -name '*.c')"
 protobuf-c
-BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_UTF8 $SRC_PROTOBUF"
+BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_UTF8 $SRC_PROTOBUF $API_WRAPPERS $API_EXTRACTORS"
 BLD_LINKER="-lm -zmuldefs -l tesseract -l lept -L/usr/local/lib -lswscale -lavutil -pthread -lavformat -lavcodec -lxcb-shm -lxcb -lX11 -llzma -lz -lswresample"
 
 ./pre-build.sh

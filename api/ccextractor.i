@@ -8,7 +8,7 @@
     #include "../src/lib_ccx/hardsubx.h"
     #include "../src/lib_ccx/ccx_share.h"
   #include "../src/ccextractor.h"    
-   #include "../api/wrappers/wrapper.h"    
+   #include "../src/wrappers/wrapper.h"    
 %}
 void my_pythonapi(struct ccx_s_options *api_options, PyObject* func);
 %pythoncode %{
@@ -75,4 +75,4 @@ def print_g608_grid(case,text,color,font):
 %}
    %include "../src/lib_ccx/ccx_common_common.h"
    %include "../src/ccextractor.h"    
-   %include "../api//wrappers/wrapper.h"    
+   %include "../src//wrappers/wrapper.h"    

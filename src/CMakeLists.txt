@@ -48,16 +48,22 @@ include_directories ("${PROJECT_SOURCE_DIR}/gpacmp4/")
 include_directories ("${PROJECT_SOURCE_DIR}/protobuf-c/")
 include_directories ("${PROJECT_SOURCE_DIR}/zvbi/")
 include_directories ("${PROJECT_SOURCE_DIR}/lib_hash/")
+include_directories ("${PROJECT_SOURCE_DIR}/extractors/")
+include_directories ("${PROJECT_SOURCE_DIR}/wrappers/")
+include_directories ("${PROJECT_SOURCE_DIR}/libpng/")
+include_directories ("${PROJEXT_SOURCE_DIR}/zlib/")
 aux_source_directory ("${PROJECT_SOURCE_DIR}/protobuf-c/" SOURCEFILE)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/zvbi/" SOURCEFILE)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_hash/" SOURCEFILE)
+aux_source_directory ("${PROJECT_SOURCE_DIR}/extractors/" SOURCEFILE)
+aux_source_directory ("${PROJECT_SOURCE_DIR}/wrappers/" SOURCEFILE)
+aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
+aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib/" SOURCEFILE)
 
 #Windows specific libraries and linker flags
 if(WIN32)
     include_directories ("${PROJECT_SOURCE_DIR}/win_iconv/")
-    include_directories ("${PROJECT_SOURCE_DIR}/libpng/")
     aux_source_directory ("${PROJECT_SOURCE_DIR}/win_iconv/" SOURCEFILE)
-    aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
     set (EXTRA_LIBS ${EXTRA_LIBS} -lws2_32 -lwinmm)
 else (WIN32)
     # Adding some platform specific library path
@@ -76,14 +82,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set (EXTRA_LIBS ${EXTRA_LIBS} iconv)
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
-include_directories ("${PROJECT_SOURCE_DIR}/libpng/")
-include_directories ("${PROJEXT_SOURCE_DIR}/zlib/")
-aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
-aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib/" SOURCEFILE)
-
-find_package (PkgConfig)
 
 set (EXTRA_LIBS ${EXTRA_LIBS} -lz)
+
+find_package (PkgConfig)
 
 ########################################################
 # Build using FFmpeg libraries
