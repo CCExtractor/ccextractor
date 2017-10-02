@@ -109,11 +109,11 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 			millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
 			millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 			context->srt_counter++;
-			sprintf(timeline, "%u\r\n", context->srt_counter);
+			sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
 			used = encode_line(context, context->buffer,(unsigned char *) timeline);
 			write(context->out->fh, context->buffer, used);
-			sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u\r\n",
-				h1,m1,s1,ms1, h2,m2,s2,ms2);
+			sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
+				h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
 			used = encode_line(context, context->buffer,(unsigned char *) timeline);
             write (context->out->fh, context->buffer, used);
 			len = strlen(str);
