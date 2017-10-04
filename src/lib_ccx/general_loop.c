@@ -842,6 +842,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 	enum ccx_stream_mode_enum stream_mode;
 	struct demuxer_data *datalist = NULL;
 	struct demuxer_data *data_node = NULL;
+    int (*get_more_data)(struct lib_ccx_ctx *c, struct demuxer_data **d);
 	int ret;
 	int caps = 0;
 
@@ -852,6 +853,35 @@ int general_loop(struct lib_ccx_ctx *ctx)
 	if(stream_mode == CCX_SM_TRANSPORT && ctx->write_format == CCX_OF_NULL)
 		ctx->multiprogram = 1;
 
+    switch (stream_mode)
+    {
+        case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
+            get_more_data = &general_get_more_data;
+            break;
+        case CCX_SM_TRANSPORT:
+            get_more_data = &ts_get_more_data;
+            break;
+        case CCX_SM_PROGRAM:
+            get_more_data = &ps_get_more_data;
+            break;
+        case CCX_SM_ASF:
+            get_more_data = &asf_get_more_data;
+            break;
+        case CCX_SM_WTV:
+            get_more_data = &wtv_get_more_data;
+            break;
+        case CCX_SM_GXF:
+            get_more_data = &ccx_gxf_get_more_data;
+            break;
+#ifdef ENABLE_FFMPEG
+        case CCX_SM_FFMPEG:
+            get_more_data = &ffmpeg_get_more_data;
+            break;
+#endif
+        default:
+            fatal(CCX_COMMON_EXIT_BUG_BUG, "general_loop: Impossible value for stream_mode");
+    }
+
 	end_of_file = 0;
 	while (!end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE)
 	{
@@ -859,34 +889,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			break;
 		// GET MORE DATA IN BUFFER
 		position_sanity_check(ctx->demux_ctx);
-		switch (stream_mode)
-		{
-			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
-				ret = general_get_more_data(ctx, &datalist);
-				break;
-			case CCX_SM_TRANSPORT:
-				ret = ts_get_more_data(ctx, &datalist);
-				break;
-			case CCX_SM_PROGRAM:
-				ret = ps_get_more_data(ctx, &datalist);
-				break;
-			case CCX_SM_ASF:
-				ret = asf_get_more_data(ctx, &datalist);
-				break;
-			case CCX_SM_WTV:
-				ret = wtv_get_more_data(ctx, &datalist);
-				break;
-			case CCX_SM_GXF:
-				ret = ccx_gxf_get_more_data(ctx, &datalist);
-				break;
-#ifdef ENABLE_FFMPEG
-			case CCX_SM_FFMPEG:
-				ret = ffmpeg_get_more_data(ctx, &datalist);
-				break;
-#endif
-			default:
-				fatal(CCX_COMMON_EXIT_BUG_BUG, "general_loop: Impossible value for stream_mode");
-		}
+		ret = get_more_data(ctx, &datalist);
 		if (ret == CCX_EOF)
 		{
 			end_of_file = 1;
