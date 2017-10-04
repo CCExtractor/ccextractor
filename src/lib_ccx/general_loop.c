@@ -891,8 +891,6 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		if (ret == CCX_EOF)
 		{
 			end_of_file = 1;
-			if(!datalist)
-				break;
 		}
 		if (!datalist)
 			continue;
