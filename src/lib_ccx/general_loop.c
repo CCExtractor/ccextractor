@@ -883,10 +883,8 @@ int general_loop(struct lib_ccx_ctx *ctx)
     }
 
 	end_of_file = 0;
-	while (!end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE)
+	while (!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE)
 	{
-		if (terminate_asap)
-			break;
 		// GET MORE DATA IN BUFFER
 		position_sanity_check(ctx->demux_ctx);
 		ret = get_more_data(ctx, &datalist);
