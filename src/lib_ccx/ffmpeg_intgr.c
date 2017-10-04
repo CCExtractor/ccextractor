@@ -188,7 +188,7 @@ int ff_get_ccframe(void *arg, unsigned char*data, int maxlen)
 	return len;
 }
 
-int ffmpeg_get_more_data(struct ccx_demuxer *ctx, struct demuxer_data **ppdata)
+int ffmpeg_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 {
 	struct demuxer_data *data;
 	int ret = 0;
@@ -211,7 +211,7 @@ int ffmpeg_get_more_data(struct ccx_demuxer *ctx, struct demuxer_data **ppdata)
 
 	do
 	{
-		int len = ff_get_ccframe(ctx->ffmpeg_ctx, data->buffer, BUFSIZE);
+		int len = ff_get_ccframe(ctx->demux_ctx->ffmpeg_ctx, data->buffer, BUFSIZE);
 		if(len == AVERROR(EAGAIN))
 		{
 			continue;

@@ -865,7 +865,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 				ret = general_get_more_data(ctx, &datalist);
 				break;
 			case CCX_SM_TRANSPORT:
-				ret = ts_get_more_data(ctx->demux_ctx, &datalist);
+				ret = ts_get_more_data(ctx, &datalist);
 				break;
 			case CCX_SM_PROGRAM:
 				ret = ps_get_more_data(ctx, &datalist);
@@ -877,11 +877,11 @@ int general_loop(struct lib_ccx_ctx *ctx)
 				ret = wtv_get_more_data(ctx, &datalist);
 				break;
 			case CCX_SM_GXF:
-				ret = ccx_gxf_get_more_data(ctx->demux_ctx, &datalist);
+				ret = ccx_gxf_get_more_data(ctx, &datalist);
 				break;
 #ifdef ENABLE_FFMPEG
 			case CCX_SM_FFMPEG:
-				ret = ffmpeg_get_more_data(ctx->demux_ctx, &datalist);
+				ret = ffmpeg_get_more_data(ctx, &datalist);
 				break;
 #endif
 			default:

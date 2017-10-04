@@ -1685,7 +1685,7 @@ int ccx_gxf_probe(unsigned char *buf, int len)
 
 }
 
-int ccx_gxf_get_more_data(struct ccx_demuxer *ctx, struct demuxer_data **ppdata)
+int ccx_gxf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 {
 	int ret;
 	struct demuxer_data *data;
@@ -1708,7 +1708,7 @@ int ccx_gxf_get_more_data(struct ccx_demuxer *ctx, struct demuxer_data **ppdata)
 		data = *ppdata;
 	}
 
-	ret = read_packet(ctx, data);
+	ret = read_packet(ctx->demux_ctx, data);
 	return ret;
 }
 

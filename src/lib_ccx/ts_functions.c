@@ -1032,12 +1032,12 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 
 // TS specific data grabber
-int ts_get_more_data(struct ccx_demuxer *ctx, struct demuxer_data **data)
+int ts_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
 {
 	int ret = CCX_OK;
 
 	do {
-		ret = ts_readstream(ctx, data);
+		ret = ts_readstream(ctx->demux_ctx, data);
 	} while(ret == CCX_EAGAIN);
 
 	return ret;
