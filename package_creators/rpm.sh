@@ -27,4 +27,5 @@ if [ $retval -ne 0 ]; then
 fi
 cd ../..
 cp RPMBUILD/RPMS/x86_64/*.rpm .
+cp RPMBUILD/SRPMS/*.rpm .
 rm -rf RPMBUILD
