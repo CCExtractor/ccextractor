@@ -17,20 +17,23 @@ CCExtractor is a software that extracts closed captions from videos of various f
 %setup -q
 
 %build
-./configure --enable-ocr --prefix="$pkgdir/usr/local"
+./configure --enable-ocr --prefix="$pkgdir/usr"
 make
 
 %install
-mkdir -p $RPM_BUILD_ROOT/usr/local/bin
-install ccextractor $RPM_BUILD_ROOT/usr/local/bin/ccextractor
+mkdir -p $RPM_BUILD_ROOT/usr/bin
+install ccextractor $RPM_BUILD_ROOT/usr/bin/ccextractor
 
 %files
 %defattr(-,root,root)
-/usr/local/bin/ccextractor
+/usr/bin/ccextractor
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Thu Oct 5 2017 Jason Hancock <jason@jasonhancock.com>
+- Install to /usr/bin instead of /usr/local/bin
+
 * Fri Apr 14 2017 Carlos Fernandez <carlos@ccextractor.org>
 - Initial build
