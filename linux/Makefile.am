@@ -266,7 +266,7 @@ ccextractor_SOURCES = \
 				../src/extractors/extractor.c \
 				../src/extractors/extractor.h \
 				../src/wrappers/wrapper.c \
-				../src/extractors/wrapper.h 
+				../src/wrappers/wrapper.h
 				
 
 ccextractor_CFLAGS = -std=gnu99 -s  -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT 
