@@ -32,7 +32,7 @@ More usage information can be found on our website:
 
 You can also find the list of parameters and their brief description by running `ccextractor` without any arguments.
 
-## Compiling
+## Compiling CCExtractor (without GUI)
 
 You may compile CCExtractor across all major platforms using `CMakeLists.txt` stored under `ccextractor/src/` directory. Simply,
 
@@ -183,6 +183,51 @@ cd ccextractor/mac
 cd ccextractor/mac
 ./autogen.sh
 ./configure
+make
+```
+
+
+### Windows
+
+Open the windows/ccextractor.sln file with Visual Studio (2015 at least), and build it. Configurations "(Debug|Release)-Full" includes dependent libraries which are used for OCR.
+
+## Compiling CCExtractor (with GUI)
+
+### Linux
+   
+1. Make sure all the dependencies are met.</br>
+ * Build GLEW from source, instructions [here](http://glew.sourceforge.net/build.html)
+ * Build GLFW from source, instructions [here](http://www.glfw.org/docs/latest/compile.html)
+    
+2. Compiling
+
+    
+```
+cd ccextractor/linux
+./autogen.sh
+./configure --with-gui
+make
+
+# test your build
+./ccextractorGUI
+```
+
+
+### MacOS
+
+1. Make sure all the dependencies are met. They can be installed via Homebrew as
+
+```
+brew install glfw
+brew install glew
+```
+
+2. Compiling
+
+```
+cd ccextractor/mac
+./autogen.sh
+./configure --with-gui
 make
 ```
 
