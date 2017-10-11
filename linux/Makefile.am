@@ -319,5 +319,50 @@ endif
 
 EXTRA_DIST = ../src/gpacmp4/gpac/sync_layer.h ../src/lib_ccx/ccfont2.xbm ../src/utf8proc/utf8proc_data.c
 
+#For GUI
+if BUILD_WITH_GUI
+bin_PROGRAMS += ccextractorGUI
 
+ccextractorGUI_SOURCES = \
+				../src/GUI/ccextractorGUI.c \
+				../src/GUI/ccextractorGUI.h \
+				../src/GUI/activity.c \
+				../src/GUI/activity.h \
+				../src/GUI/terminal.c \
+				../src/GUI/preview.c \
+				../src/GUI/ccx_cli_thread.c \
+				../src/GUI/ccx_cli_thread.h \
+				../src/GUI/command_builder.c \
+				../src/GUI/command_builder.h \
+				../src/GUI/save_load_data.c \
+				../src/GUI/save_load_data.h \
+				../src/GUI/file_browser.c \
+				../src/GUI/file_browser.h \
+				../src/GUI/popups.c \
+				../src/GUI/popups.h \
+				../src/GUI/tabs.c \
+				../src/GUI/tabs.h \
+				../src/GUI/stb_image.h \
+				../src/GUI/nuklear_lib/nuklear.h \
+				../src/GUI/nuklear_lib/nuklear_glfw_gl2.h
+
+ccextractorGUI_CFLAGS = -std=gnu99
+
+
+ccextractorGUI_LDADD = ${glfw3_LIBS}
+
+
+if SYS_IS_LINUX
+ccextractorGUI_CFLAGS += -s -O3 -DUNIX
+ccextractorGUI_LDADD += ${glew_LIBS}
+ccextractorGUI_LDADD += -lX11 -lXinerama -lXcursor -lXi -lXrandr -lXxf86vm -lm -ldl -lpthread
+endif
+
+if HARDSUBX_IS_ENABLED
+if OCR_IS_ENABLED
+ccextractorGUI_CFLAGS += -DENABLE_OCR 
+endif
+endif
+
+endif
 

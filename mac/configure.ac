@@ -86,6 +86,11 @@ AC_HELP_STRING([--enable-ffmpeg], [Enable FFmpeg integration]),
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-ffmpeg]) ;;
 esac],[ffmpeg=false])
 
+AC_ARG_WITH([gui],
+AC_HELP_STRING([--with-gui], [Builds CCExtractor with GUI (requires GLFW and GLEW)]),
+[PKG_CHECK_MODULES([glfw3], [glfw3])],
+[with_gui=no])
+
 
 #Checks and prompts if libraries found/not found to avoild failure while building
 AS_IF([ test x$hardsubx = xtrue && test $HAS_AVCODEC -gt 0 ], [AC_MSG_NOTICE(avcodec library found)])
@@ -108,6 +113,7 @@ AM_CONDITIONAL(FFMPEG_IS_ENABLED, [ test x$ffmpeg = xtrue ])
 AM_CONDITIONAL(TESSERACT_PRESENT, [ test ! -z  `pkg-config --libs-only-l --silence-errors tesseract`])
 AM_CONDITIONAL(TESSERACT_PRESENT_RPI, [ test -d "/usr/include/tesseract" && test `ls -A /usr/include/tesseract | wc -l` -gt 0 ])
 AM_CONDITIONAL(SYS_IS_MAC, [ test `uname -s` = "Darwin"])
+AM_CONDITIONAL(BUILD_WITH_GUI, [test "x$with_gui" = "xyes"])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

@@ -5,10 +5,9 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ccextractor", "ccextractor.vcxproj", "{0F0063C4-BCBC-4379-A6D5-84A5669C940A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ccextractorGUI", "ccextractorGUI.vcxproj", "{74290DA6-174D-4F4B-A48E-F30B824B7925}"
+EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
@@ -36,6 +35,22 @@ Global
 		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release-Full|Win32.Build.0 = Release-Full|Win32
 		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release-Full|x64.ActiveCfg = Release-Full|x64
 		{0F0063C4-BCBC-4379-A6D5-84A5669C940A}.Release-Full|x64.Build.0 = Release-Full|x64
+		{74290DA6-174D-4F4B-A48E-F30B824B7925}.Debug|Win32.ActiveCfg = Debug|Win32
+		{74290DA6-174D-4F4B-A48E-F30B824B7925}.Debug|Win32.Build.0 = Debug|Win32
+		{74290DA6-174D-4F4B-A48E-F30B824B7925}.Debug|x64.ActiveCfg = Debug|x64
+		{74290DA6-174D-4F4B-A48E-F30B824B7925}.Debug|x64.Build.0 = Debug|x64
+		{74290DA6-174D-4F4B-A48E-F30B824B7925}.Debug-Full|Win32.ActiveCfg = Debug|Win32
+		{74290DA6-174D-4F4B-A48E-F30B824B7925}.Debug-Full|Win32.Build.0 = Debug|Win32
+		{74290DA6-174D-4F4B-A48E-F30B824B7925}.Debug-Full|x64.ActiveCfg = Debug|x64
+		{74290DA6-174D-4F4B-A48E-F30B824B7925}.Debug-Full|x64.Build.0 = Debug|x64
+		{74290DA6-174D-4F4B-A48E-F30B824B7925}.Release|Win32.ActiveCfg = Release|Win32
+		{74290DA6-174D-4F4B-A48E-F30B824B7925}.Release|Win32.Build.0 = Release|Win32
+		{74290DA6-174D-4F4B-A48E-F30B824B7925}.Release|x64.ActiveCfg = Release|x64
+		{74290DA6-174D-4F4B-A48E-F30B824B7925}.Release|x64.Build.0 = Release|x64
+		{74290DA6-174D-4F4B-A48E-F30B824B7925}.Release-Full|Win32.ActiveCfg = Release|Win32
+		{74290DA6-174D-4F4B-A48E-F30B824B7925}.Release-Full|Win32.Build.0 = Release|Win32
+		{74290DA6-174D-4F4B-A48E-F30B824B7925}.Release-Full|x64.ActiveCfg = Release|x64
+		{74290DA6-174D-4F4B-A48E-F30B824B7925}.Release-Full|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
