@@ -226,7 +226,7 @@ int read_video_pes_header (struct ccx_demuxer *ctx, struct demuxer_data *data, u
 void init_ts(struct ccx_demuxer *ctx);
 int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload);
 long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data);
-int ts_get_more_data(struct ccx_demuxer *ctx, struct demuxer_data **data);
+int ts_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
 int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char*buf, int size,  struct program_info *pinfo);
 void ts_buffer_psi_packet(struct ccx_demuxer *ctx);
 int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct program_info *pinfo);
