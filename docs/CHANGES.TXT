@@ -1,7 +1,5 @@
 0.86
 -----------------
-- Fix: Prevent the OCR being initialized more than once (happened on multiprogram and
-  PAT changes)
 - New: Added Autoconf build scripts for CCExtractor to generate makefiles (mac).
 - New: Added Autoconf build scripts for CCExtractor to generate makefiles (linux).
 - New: Added .rpm package generation script.
@@ -12,6 +10,24 @@
   (resolution, frame type, etc). -vides now implies this option too. 
   [Note: Tentative - some possibly breaking changed were made for this, so if you
   use it validate results]
+- New: Added a GUI in the main CCExtractor binary (separate from the external GUIs 
+  such as CCExtractorGUI).
+- New: A Python binding extension so it's possible to use CCExtractor's tools from
+  Python.
+- New: Added -nospupngocr (don't OCR bitmaps when generating spupng, faster)
+- New: Add support for file split on keyframe (-segmentonkeyonly)
+- New: Added WebVTT output from Matroska.
+- Fix: Prevent the OCR being initialized more than once (happened on multiprogram and
+  PAT changes)
+- Fix: Makefiles, build scripts, etc... everything updated and corrected for all
+  platforms.
+ -Fix: Proper line ending for .srt files from bitmaps.  
+- Fix: OCR corrections using grayscale before extracting texts. 
+- Fix: End timestamps in transcripts from DVB.
+- Fix: Forcing -noru to cause deduplication in ISDB
+- Fix: TS: Skip NULL packets 
+- Fix:  When NAL decoding fails, don't dump the whole decoded thing, limit to 160 bytes.
+
 
 
 0.85b (2017-1-26)
