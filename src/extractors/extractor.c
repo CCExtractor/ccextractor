@@ -8,8 +8,6 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
      * identifier = 3 ---> font
      */
     int i;
-    int asprintf_ret;
-    char* output;
     char* start_time = time_wrapper("%02u:%02u:%02u,%03u",h1,m1,s1,ms1);
     char* end_time = time_wrapper("%02u:%02u:%02u,%03u",h2,m2,s2,ms2);
     //check if the caption with same start and end time already exists
@@ -77,7 +75,6 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
  
     array.subs[array.sub_count-1].start_time = start_time;
     array.subs[array.sub_count-1].end_time = end_time;
-    char* temp;
 #if defined(PYTHONAPI) 
     asprintf_ret = asprintf(&output,"srt_counter-%d\n",srt_counter);
     if (asprintf_ret==-1)
