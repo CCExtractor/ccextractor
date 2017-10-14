@@ -29,7 +29,6 @@
 #include "misc.h"
 #include "raw_decoder.h"
 #include "ccx_common_common.h"
-#include "../lib_ccx/ccx_common_common.h"
 
 #ifndef RAW_DECODER_PATTERN_DUMP
 #  define RAW_DECODER_PATTERN_DUMP 0
