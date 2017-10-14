@@ -666,7 +666,6 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 		case XDS_TYPE_ASPECT_RATIO_INFO:
 			{
 				unsigned ar_start, ar_end;
-				int changed = 0;
 				was_proc = 1;
 				if (ctx->cur_xds_payload_length < 5) // We need 2 data bytes
 					break;
@@ -684,7 +683,6 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 				{	
 					ctx->current_ar_start = ar_start;
 					ctx->current_ar_end = ar_end;
-					changed = 1;
 					ccx_common_logging.log_ftn("\rXDS Notice: Aspect ratio info, start line=%u, end line=%u\n", ar_start, ar_end);
 					ccx_common_logging.log_ftn("\rXDS Notice: Aspect ratio info, active picture height=%u, ratio=%f\n", active_picture_height, aspect_ratio);
 				}

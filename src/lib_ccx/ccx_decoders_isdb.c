@@ -485,14 +485,12 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 	struct ISDBText *text = NULL;
 	struct ISDBText *sb_text = NULL;
 	struct ISDBText *sb_temp = NULL;
-	struct ISDBText *wtrepeat_text = NULL;
 	//TO keep track we dont over flow in buffer from user
 	int index = 0;
 
 	if (ctx->cfg_no_rollup || (ctx->cfg_no_rollup == ctx->current_state.rollup_mode))
 	// Abhinav95: Forcing -noru to perform deduplication even if stream doesn't honor it
 	{
-		wtrepeat_text = NULL;
 		if (list_empty(&ctx->buffered_text))
 		{
 			list_for_each_entry(text, &ctx->text_list_head, list, struct ISDBText)
@@ -1329,12 +1327,8 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 	ISDBSubContext *ctx = codec_ctx;
 	const uint8_t *buf_pivot = buf;
 	int id = (*buf >> 2);
-	int version = (*buf & 2);
-	int link_number = 0;
-	int last_link_number = 0;
-	int group_size = 0;
+    int group_size = 0;
 	int ret = 0;
-
 
 	if ( (id >> 4) == 0 )
 	{
@@ -1345,12 +1339,8 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 		isdb_log("ISDB group B\n");
 	}
 
-	isdb_log("ISDB (Data group) version %d\n",version);
-
 	buf++;
-	link_number = *buf++;
-	last_link_number = *buf++;
-	isdb_log("ISDB (Data group) link_number %d last_link_number %d\n", link_number, last_link_number);
+	*buf++;
 
 	group_size = RB16(buf);
 	buf += 2;
