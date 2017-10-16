@@ -1327,6 +1327,7 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 	ISDBSubContext *ctx = codec_ctx;
 	const uint8_t *buf_pivot = buf;
 	int id = (*buf >> 2);
+	int version = (*buf & 2);
 	int group_size = 0;
 	int ret = 0;
 
