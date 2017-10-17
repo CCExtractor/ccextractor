@@ -38,6 +38,7 @@ Google Code-in 2016 students
 
 Google Summer of Code 2017 students
 - Diptanshu Jamgade
+- Mayank Gupta
 
 License
 -------
