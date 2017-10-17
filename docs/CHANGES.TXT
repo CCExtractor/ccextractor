@@ -27,6 +27,8 @@
 - Fix: Forcing -noru to cause deduplication in ISDB
 - Fix: TS: Skip NULL packets 
 - Fix:  When NAL decoding fails, don't dump the whole decoded thing, limit to 160 bytes.
+- Fix: Modify Autoconf scripts to generate tarball for mac from `/package_creators/tarball.sh` 
+  and include GUI files in tarball
 
 
 
