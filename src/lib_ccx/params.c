@@ -1137,6 +1137,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
+#ifdef ENABLE_PYTHON
         //adding the support for -pythonapi param to indicate that python wrappers have been used
         if (strcmp(argv[i], "-pythonapi")==0)
         {
@@ -1144,6 +1145,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
             opt->messages_target=0;
             continue;
         }
+#endif
 
 #ifdef ENABLE_HARDSUBX
 		// Parse -hardsubx and related parameters

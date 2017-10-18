@@ -9,6 +9,7 @@
 
 void dinit_write(struct ccx_s_write *wb)
 {
+#ifdef ENABLE_PYTHON
 	if(!signal_python_api){
         if (wb->fh > 0)
             close(wb->fh);
@@ -17,6 +18,7 @@ void dinit_write(struct ccx_s_write *wb)
             unlink(wb->semaphore_filename);
         freep(&wb->semaphore_filename);
     }
+#endif
 }
 
 int temporarily_close_output(struct ccx_s_write *wb)
@@ -50,6 +52,7 @@ int temporarily_open_output(struct ccx_s_write *wb)
 
 int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
 {
+#ifdef ENABLE_PYTHON
     if (signal_python_api){
         char* output;
         //writing to memory which would be then tailed by python.
@@ -60,6 +63,7 @@ int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
         free(output);
         return EXIT_OK;
     }
+#endif
 	memset(wb, 0, sizeof(struct ccx_s_write));
 	wb->fh=-1;
 	wb->temporarily_closed = 0;

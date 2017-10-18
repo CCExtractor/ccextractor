@@ -27,6 +27,7 @@ CURLcode res;
 #include "funcobject.h"
 #endif
 
+#ifdef ENABLE_PYTHON
 struct python_subs_modified{
         char *start_time;
         char* end_time;
@@ -40,12 +41,15 @@ struct python_subs_array{
         struct python_subs_modified* subs;
 };
 void free_python_global_vars();
+#endif
 
 
 struct ccx_s_options ccx_options;
 struct lib_ccx_ctx *signal_ctx;
+#ifdef ENABLE_PYTHON
 struct python_subs_array array; 
 int signal_python_api;                                // 1 symbolises that python wrapper made the call.
+#endif
 //volatile int terminate_asap = 0;
 
 struct ccx_s_options* api_init_options();
@@ -63,8 +67,11 @@ void print_end_msg(void);
 
 int main(int argc, char *argv[]);
 
+#ifdef ENABLE_PYTHON
 void call_from_python_api(struct ccx_s_options *api_options);
 void free_python_global_vars();
+#endif
+
 #if defined(PYTHONAPI)
 void run(PyObject * reporter, char * line, int encoding);
 #endif

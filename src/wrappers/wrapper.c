@@ -1,6 +1,7 @@
 #include "wrapper.h"
 #include "ccextractor.h"
 
+#ifdef PYTHON_API
 void set_pythonapi(struct ccx_s_options *api_options){ 
     api_add_param(api_options,"-pythonapi");
 }
@@ -38,4 +39,4 @@ debugdvbsub wrapper
 void setdebugdvbsub(struct ccx_s_options *api_options){
     api_add_param(api_options,"-debugdvbsub");
 }
-
+#endif
