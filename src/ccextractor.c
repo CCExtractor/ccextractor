@@ -57,14 +57,17 @@ int api_start(struct ccx_s_options api_options)
 		return 0;
 	}
 #endif
+
     // Initialize CCExtractor libraries
     ctx = init_libraries(&api_options);
+#ifdef ENABLE_PYTHON
     int i=0;
     while(i<api_options.python_param_count)
     {
         free(api_options.python_params[i]);
         i++;
     }
+#endif
     if (!ctx && errno == ENOMEM)
         fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
     else if (!ctx && errno == EINVAL)
@@ -414,7 +417,9 @@ int api_start(struct ccx_s_options api_options)
   	curl_global_cleanup();
 #endif
     dinit_libraries(&ctx);
+#ifdef PYTHON_API
     free_python_global_vars();
+#endif
 
     if (!ret)
         mprint("\nNo captions were found in input.\n");
@@ -429,6 +434,7 @@ int api_start(struct ccx_s_options api_options)
     }
     return ret ? EXIT_OK : EXIT_NO_CAPTIONS;
 }
+#ifdef ENABLE_PYTHON
 void free_python_global_vars()
 {
    int i=0;
@@ -440,6 +446,7 @@ void free_python_global_vars()
    } 
    free(array.subs);
 }
+#endif
 
 struct ccx_s_options* api_init_options()
 {
@@ -452,6 +459,7 @@ void check_configuration_file(struct ccx_s_options api_options)
     parse_configuration(&api_options);
 }
 
+#ifdef ENABLE_PYTHON
 int compile_params(struct ccx_s_options *api_options,int argc)
 {
     //adding the parameter ./ccextractor to the list of python_params for further parsing
@@ -496,6 +504,7 @@ int api_param_count(struct ccx_s_options* api_options)
 {
     return api_options->python_param_count;
 }
+#endif
 
 /*
  * asprintf alternative
@@ -540,6 +549,7 @@ char* time_wrapper(char* fmt, unsigned h, unsigned m, unsigned s, unsigned ms)
     return time;
 }
 
+#ifdef PYTHON_API
 void call_from_python_api(struct ccx_s_options *api_options)
 {
     int indicator = api_options->signal_python_api;
@@ -548,6 +558,7 @@ void call_from_python_api(struct ccx_s_options *api_options)
     else
         signal_python_api=0;
 }
+#endif
 
 #if defined(PYTHONAPI)
 void run(PyObject * reporter, char * line, int encoding)
@@ -562,10 +573,16 @@ int main(int argc, char* argv[])
 {
     struct ccx_s_options* api_options = api_init_options();
     check_configuration_file(*api_options);
+#ifdef ENABLE_PYTHON
     for(int i = 1; i < argc; i++)
         api_add_param(api_options,argv[i]);
+#endif
 
+#ifdef ENABLE_PYTHON
     int compile_ret = compile_params(api_options,argc);
+#else
+    int compile_ret = parse_parameters (api_options, argc, argv);
+#endif
 
     if (compile_ret == EXIT_NO_INPUT_FILES)
     {
@@ -581,7 +598,9 @@ int main(int argc, char* argv[])
         exit(compile_ret);
     }
 
+#ifdef PYTHON_API
     call_from_python_api(api_options);
+#endif
     int start_ret = api_start(*api_options);
     return start_ret;
 }

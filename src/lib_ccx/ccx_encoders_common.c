@@ -1130,10 +1130,12 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					data->end_time += utc_refvalue * 1000;
 				}
 
+#ifdef ENABLE_PYTHON
                 //making a call to python_encoder so that if the call is from the api, no output is generated.
                 if (signal_python_api)
                     wrote_something = pass_cc_buffer_to_python(data, context);
-                else 
+                else
+#endif
                 {
 				    switch (context->write_format)
 				    {

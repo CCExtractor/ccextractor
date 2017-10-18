@@ -7,9 +7,11 @@ void set_pythonapi_via_python(struct ccx_s_options *api_options, PyObject * func
 #else
 #define my_pythonapi(args, func) set_pythonapi(args)
 #endif
+
+#ifdef PYTHON_API
 void set_pythonapi(struct ccx_s_options *api_options);
 void setautoprogram(struct ccx_s_options *api_options);
 void setstdout(struct ccx_s_options *api_options);
 void setpesheader(struct ccx_s_options *api_options);
 void setdebugdvbsub(struct ccx_s_options *api_options);
-
+#endif
