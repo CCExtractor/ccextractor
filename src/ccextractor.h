@@ -40,6 +40,7 @@ struct python_subs_array{
         int sub_count;
         struct python_subs_modified* subs;
 };
+void free_python_global_vars();
 #endif
 
 

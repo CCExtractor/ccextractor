@@ -62,6 +62,7 @@ int api_start(struct ccx_s_options api_options)
     ctx = init_libraries(&api_options);
 #ifdef ENABLE_PYTHON
     int i=0;
+
     while(i<api_options.python_param_count)
     {
         free(api_options.python_params[i]);
