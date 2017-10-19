@@ -75,7 +75,10 @@ int update_pinfo(struct ccx_demuxer *ctx, int pid, int program_number)
 	ctx->pinfo[ctx->nb_program].name[0] = '\0';
 	ctx->pinfo[ctx->nb_program].pcr_pid = -1;
 	ctx->pinfo[ctx->nb_program].has_all_min_pts = 0;
-	memset(ctx->pinfo[ctx->nb_program].got_important_streams_min_pts, UINT64_MAX, COUNT * sizeof(uint64_t));
+	for (int i = 0; i < COUNT; i++)
+	{
+		ctx->pinfo[ctx->nb_program].got_important_streams_min_pts[i] = UINT64_MAX;
+	}
 	ctx->nb_program++;
 
 	return CCX_OK;

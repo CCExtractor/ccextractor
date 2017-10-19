@@ -11,7 +11,10 @@ static void ccx_demuxer_reset(struct ccx_demuxer *ctx)
 	ctx->num_of_PIDs = 0;
 	memset(ctx->have_PIDs, -1, (MAX_PSI_PID + 1) * sizeof(int));
 	memset (ctx->PIDs_seen, 0, 65536*sizeof (int));
-	memset(ctx->min_pts, UINT64_MAX, (MAX_PSI_PID + 1) * sizeof(uint64_t));
+	for (int i = 0; i < (MAX_PSI_PID + 1); i++)
+	{
+		ctx->min_pts[i] = UINT64_MAX;
+	}
 	memset(ctx->stream_id_of_each_pid, 0, (MAX_PSI_PID + 1) * sizeof(uint8_t));
 	memset (ctx->PIDs_programs, 0, 65536*sizeof (struct PMT_entry *));
 }
@@ -308,7 +311,10 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	for (int i = 0; i < MAX_PROGRAM; i++)
 	{
 		ctx->pinfo[i].has_all_min_pts = 0;
-		memset(ctx->pinfo[i].got_important_streams_min_pts, UINT64_MAX, COUNT * sizeof(uint64_t));
+		for (int j = 0; j < COUNT; j++)
+		{
+			ctx->pinfo[i].got_important_streams_min_pts[j] = UINT64_MAX;
+		}
 		ctx->pinfo[i].initialized_ocr = 0;
 		ctx->pinfo[i].version = 0xFF; // Not real in a real stream since it's 5 bits. FF => Not initialized
 	}
