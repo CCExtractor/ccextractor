@@ -269,12 +269,16 @@ ccextractor_SOURCES = \
 				../src/wrappers/wrapper.h
 				
 
-ccextractor_CFLAGS = -std=gnu99 -s  -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT 
+ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT 
 
 ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi/ -I../src/lib_hash/ -I../src/protobuf-c/ -I../src/utf8proc/ -I../src/
 
 
 ccextractor_LDADD=-lm
+
+if SYS_IS_LINUX
+ccextractor_CFLAGS += -O3 -s -DGPAC_CONFIG_LINUX
+endif
 
 if SYS_IS_MAC
 ccextractor_CFLAGS += -DPAC_CONFIG_DARWIN -Dfopen64=fopen -Dopen64=open -Dlseek64=lseek
@@ -283,16 +287,15 @@ endif
 
 if HARDSUBX_IS_ENABLED
 ccextractor_CFLAGS += -DENABLE_HARDSUBX
-AV_CPPFLAG= ${libavcodec_CFLAGS}
-AV_CPPFLAG+= ${libavformat_CFLAGS}
-AV_CPPFLAG+= ${libavutil_CFALGS}
-AV_CPPFLAG+= ${libswscale_CFLAGS}
+ccextractor_CPPFLAGS+= ${libavcodec_CFLAGS}
+ccextractor_CPPFLAGS+= ${libavformat_CFLAGS}
+ccextractor_CPPFLAGS+= ${libavutil_CFALGS}
+ccextractor_CPPFLAGS+= ${libswscale_CFLAGS}
 AV_LIB = ${libavcodec_LIBS}
 AV_LIB += ${libavformat_LIBS}
 AV_LIB += ${libavutil_LIBS}
 AV_LIB += ${libswscale_LIBS}
 ccextractor_LDADD += $(AV_LIB)
-ccextractor_CPPFLAGS+=$(AV_CPPFLAG)
 endif
 
 if OCR_IS_ENABLED
@@ -308,8 +311,8 @@ else
 #fix for raspberry pi not having a pkgconfig file for tesseract
 
 if TESSERACT_PRESENT_RPI
-ccextractor_LDADD += -ltesseract
-ccextractor_CPPFLAGS += -I/usr/include/tesseract
+TESS_LIB = -ltesseract
+TESS_CPPFLAG = -I/usr/include/tesseract
 endif
 endif
 
@@ -319,7 +322,7 @@ ccextractor_LDADD += $(TESS_LIB)
 ccextractor_LDADD += $(LEPT_LIB)
 endif
 
-EXTRA_DIST = ../src/gpacmp4/gpac/sync_layer.h ../src/lib_ccx/ccfont2.xbm ../src/utf8proc/utf8proc_data.c
+EXTRA_DIST = ../src/gpacmp4/gpac/sync_layer.h ../src/lib_ccx/ccfont2.xbm ../src/utf8proc/utf8proc_data.c fonts/ icon/
 
 #For GUI
 if BUILD_WITH_GUI
@@ -332,6 +335,7 @@ ccextractorGUI_SOURCES = \
 				../src/GUI/activity.h \
 				../src/GUI/terminal.c \
 				../src/GUI/preview.c \
+				../src/GUI/preview.h \
 				../src/GUI/ccx_cli_thread.c \
 				../src/GUI/ccx_cli_thread.h \
 				../src/GUI/command_builder.c \
@@ -350,12 +354,23 @@ ccextractorGUI_SOURCES = \
 
 ccextractorGUI_CFLAGS = -std=gnu99
 
+
 ccextractorGUI_LDADD = ${glfw3_LIBS}
+
+
+if SYS_IS_LINUX
+ccextractorGUI_CFLAGS += -s -O3 -DUNIX
+ccextractorGUI_CFLAGS += ${glew_CFLAGS}
+ccextractorGUI_LDADD += ${glew_LIBS}
+ccextractorGUI_LDADD += -lX11 -lXinerama -lXcursor -lXi -lXrandr -lXxf86vm -lm -ldl -lpthread
+endif
 
 if SYS_IS_MAC
 ccextractorGUI_CFLAGS += -O3 -DUNIX
-ccextractorgui_LDFLAGS = -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
-ccextractorgui_LDADD += -lglfw  -lm -L/usr/local/lib -lpthread
+ccextractorGUI_CFLAGS += ${glew_CFLAGS}
+ccextractorGUI_LDADD += ${glew_LIBS}
+ccextractorGUI_LDFLAGS = -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
+ccextractorGUI_LDADD += -lm -L/usr/local/lib -lpthread
 endif
 
 if HARDSUBX_IS_ENABLED
@@ -364,4 +379,7 @@ ccextractorGUI_CFLAGS += -DENABLE_OCR
 endif
 endif
 
+EXTRA_DIST += ../icon/ ../fonts/
+
 endif
+
