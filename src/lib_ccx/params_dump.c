@@ -18,7 +18,9 @@ void params_dump(struct lib_ccx_ctx *ctx)
 			mprint ("stdin");
 			break;
 		case CCX_DS_NETWORK:
-			if (ccx_options.udpaddr == NULL)
+            if (ccx_options.udpsrc != NULL)
+                mprint ("Network, %s@%s:%d", ccx_options.udpsrc, ccx_options.udpaddr, ccx_options.udpport);
+            else if (ccx_options.udpaddr == NULL)
 				mprint ("Network, UDP/%u",ccx_options.udpport);
 			else
 			{
