@@ -1339,7 +1339,7 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 	{
 		isdb_log("ISDB group B\n");
 	}
-
+	isdb_log("ISDB (Data group) version %d\n",version);
 	buf++;
 	*buf++;
 
