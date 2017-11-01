@@ -33,6 +33,9 @@ Google Code-in 2016 students
 - Evgeny Shulgin
 - Manveer Basra
 - Alexandru Bratosin
+- Matej Plavevski
+- Danila Fedorin
+
 (more, but they forgot to add themselves...)
 
 
