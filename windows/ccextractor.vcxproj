@@ -130,6 +130,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\extractors\extractor.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_demuxer_mxf.c" />
     <ClCompile Include="..\src\wrappers\wrapper.c" />
     <ClCompile Include="..\src\ccextractor.c" />
     <ClCompile Include="..\src\gpacmp4\avc_ext.c" />

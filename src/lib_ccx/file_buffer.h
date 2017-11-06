@@ -91,4 +91,5 @@ unsigned char buffered_get_byte (struct ccx_demuxer *ctx);
 unsigned int buffered_get_be32(struct ccx_demuxer *ctx);
 unsigned short buffered_get_le16(struct ccx_demuxer *ctx);
 unsigned int buffered_get_le32(struct ccx_demuxer *ctx);
+uint64_t buffered_get_be64(struct ccx_demuxer *ctx);
 #endif
