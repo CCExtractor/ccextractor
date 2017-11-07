@@ -1,6 +1,7 @@
 Elliot Alderson
 Mr. Robot
 Darlene
+Alderson
 Angela Moss
 Tyrell Wellick
 Joanna Wellick
@@ -34,3 +35,6 @@ Evil Corp Headquarters
 Allsafe Cybersecurity
 Ron’s Coffee
 Python
+Leon
+Steel Mountain
+
