@@ -152,7 +152,7 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 #endif
 			case CCX_SM_MYTH:
 			case CCX_SM_AUTODETECT:
-				fatal(CCX_COMMON_EXIT_BUG_BUG, "In ccx_demuxer_open: Impossible value in stream_mode. Please file a bug report in GitHub.\n");
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "In ccx_demuxer_open: Impossible value in stream_mode. Please file a bug report on GitHub.\n");
 				break;
 		}
 	}

@@ -1133,7 +1133,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			if (rc)
 			{
-				fatal (EXIT_NOT_ENOUGH_MEMORY, "Fatal: Not enough memory.\n");
+				fatal (EXIT_NOT_ENOUGH_MEMORY, "Fatal: Not enough memory to parse parameters.\n");
 			}
 			continue;
 		}

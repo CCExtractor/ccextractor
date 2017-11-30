@@ -285,7 +285,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 									stream_number, stream_name_count, payload_ext_system_count);
 
 							if ( stream_number >= STREAMNUM )
-								fatal(CCX_COMMON_EXIT_BUG_BUG, "In asf_getmoredata: STREAMNUM too small. Please file a bug report in GitHub.\n");
+								fatal(CCX_COMMON_EXIT_BUG_BUG, "In asf_getmoredata: STREAMNUM too small. Please file a bug report on GitHub.\n");
 
 							for(int i=0; i<stream_name_count; i++)
 							{
@@ -297,7 +297,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 							int ext_system_info_length;
 
 							if ( payload_ext_system_count > PAYEXTNUM )
-								fatal(CCX_COMMON_EXIT_BUG_BUG, "In asf_getmoredata: PAYEXTNUM too small. Please file a bug report in GitHub.\n");
+								fatal(CCX_COMMON_EXIT_BUG_BUG, "In asf_getmoredata: PAYEXTNUM too small. Please file a bug report on GitHub.\n");
 
 							for(int i=0; i<payload_ext_system_count; i++)
 							{

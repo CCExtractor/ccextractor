@@ -85,7 +85,7 @@ void connect_to_srv(const char *addr, const char *port, const char *cc_desc, con
 	if (NULL == addr)
 	{
 		mprint("Server address is not set\n");
-		fatal(EXIT_FAILURE, "Unable to connect\n");
+		fatal(EXIT_FAILURE, "Unable to connect, null address\n");
 	}
 
 	if (NULL == port)
@@ -131,7 +131,7 @@ void net_send_header(const unsigned char *data, size_t len)
 		return;
 
 	if ((srv_header = malloc(len)) == NULL)
-		fatal(EXIT_FAILURE, "Not enough memory");
+		fatal(EXIT_FAILURE, "Not enough memory to send header");
 
 	memcpy(srv_header, data, len);
 	srv_header_len = len;

@@ -70,7 +70,7 @@ int api_start(struct ccx_s_options api_options)
     }
 #endif
     if (!ctx && errno == ENOMEM)
-        fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+        fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, could not initialize libraries\n");
     else if (!ctx && errno == EINVAL)
         fatal (CCX_COMMON_EXIT_BUG_BUG, "Invalid option to CCextractor Library\n");
     else if (!ctx && errno == EPERM)
