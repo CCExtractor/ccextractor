@@ -540,7 +540,7 @@ char *get_file_extension(enum ccx_output_format write_format)
 		case CCX_OF_CURL:
 			return NULL;
 		default:
-			fatal (CCX_COMMON_EXIT_BUG_BUG, "write_format doesn't have any legal value, this is a bug.\n");
+			fatal (CCX_COMMON_EXIT_BUG_BUG, "write_format doesn't have any legal value. Please report this bug on Github.com\n");
 			errno = EINVAL;
 			return NULL;
 	}

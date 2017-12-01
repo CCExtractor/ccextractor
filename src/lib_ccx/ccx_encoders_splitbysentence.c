@@ -551,7 +551,7 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 		);
 
 		if (!context->buffer)
-			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory in sbs_append_string");
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In sbs_append_string: Not enough memory to append buffer");
 
 		context->capacity = new_capacity;
 

@@ -14,7 +14,7 @@
 
 #define REQUEST_BUFFER_CAPACITY(ctx,length) if (length>ctx->capacity) \
 {ctx->capacity = length * 2; ctx->buffer = (unsigned char*)realloc(ctx->buffer, ctx->capacity); \
-if (ctx->buffer == NULL) { fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, bailing out\n"); } \
+if (ctx->buffer == NULL) { fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for reallocating buffer, bailing out\n"); } \
 }
 
 typedef struct ccx_dtvcc_writer_ctx

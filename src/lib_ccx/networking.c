@@ -85,7 +85,7 @@ void connect_to_srv(const char *addr, const char *port, const char *cc_desc, con
 	if (NULL == addr)
 	{
 		mprint("Server address is not set\n");
-		fatal(EXIT_FAILURE, "Unable to connect, null address\n");
+		fatal(EXIT_FAILURE, "Unable to connect, address passed is null\n");
 	}
 
 	if (NULL == port)
@@ -502,7 +502,7 @@ int start_tcp_srv(const char *port, const char *pwd)
 			clilen = sizeof(struct sockaddr_in6);
 		struct sockaddr *cliaddr = (struct sockaddr *) malloc(clilen);
 		if (NULL == cliaddr)
-			fatal(EXIT_FAILURE, "malloc() error: %s", strerror(errno));
+			fatal(EXIT_FAILURE, "In start_tcp_srv: Out of memory for client address. malloc() error: %s", strerror(errno));
 
 		if ((sockfd = accept(listen_sd, cliaddr, &clilen)) < 0)
 		{
@@ -517,7 +517,7 @@ int start_tcp_srv(const char *port, const char *pwd)
 				wprintf(L"accept() error: %ld\n", WSAGetLastError());
 				exit(EXIT_FAILURE);
 #else
-				fatal(EXIT_FAILURE, "accept() error: %s\n", strerror(errno));
+				fatal(EXIT_FAILURE, "In start_tcp_srv: accept() error: %s\n", strerror(errno));
 #endif
 			}
 		}
@@ -995,7 +995,7 @@ int start_upd_srv(const char *addr_str, unsigned port)
 		wprintf(L"bind() error: %ld\n", WSAGetLastError());
 		exit(EXIT_FAILURE);
 #else
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "bind() error: %s\n", strerror(errno));
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In start_upd_srv: bind() error: %s\n", strerror(errno));
 #endif
 	}
 

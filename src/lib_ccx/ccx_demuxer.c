@@ -251,7 +251,7 @@ static void ccx_demuxer_print_cfg(struct ccx_demuxer *ctx)
 			break;
 #endif
 		default:
-			fatal(CCX_COMMON_EXIT_BUG_BUG, "BUG: Unknown stream mode.\n");
+			fatal(CCX_COMMON_EXIT_BUG_BUG, "BUG: Unknown stream mode. Please file a bug report on Github.\n");
 			break;
 	}
 }
