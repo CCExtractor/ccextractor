@@ -215,7 +215,7 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	// Initialize HardsubX data structures
 	struct lib_hardsubx_ctx *ctx = (struct lib_hardsubx_ctx *)malloc(sizeof(struct lib_hardsubx_ctx));
 	if(!ctx)
-		fatal(EXIT_NOT_ENOUGH_MEMORY, "lib_hardsubx_ctx");
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for HardsubX data structures.");
 	memset(ctx, 0, sizeof(struct lib_hardsubx_ctx));
 	
 	ctx->tess_handle = TessBaseAPICreate();
@@ -243,7 +243,7 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	free(pars_values);
 	if(ret != 0)
 	{
-		fatal(EXIT_NOT_ENOUGH_MEMORY, "Tesseract not initialized!");
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to intialize Tesseract");
 	}
 
 	//Initialize attributes common to lib_ccx context

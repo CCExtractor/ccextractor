@@ -436,7 +436,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 			{
 				mprint ("I can't tell the stream type of the manually selected PID.\n");
 				mprint ("Please pass -streamtype to select manually.\n");
-				fatal (EXIT_FAILURE, "(user assistance needed)");
+				fatal (EXIT_FAILURE, "-streamtype has to be manually selected.");
 			}
 			update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_NONE, program_number, NULL);
 			continue;

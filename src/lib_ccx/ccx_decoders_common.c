@@ -201,7 +201,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 				// printf ("Warning: Losing EIA-708 data!\n");
 				break;
 			default:
-				fatal(CCX_COMMON_EXIT_BUG_BUG, "In do_cb: Impossible value for cc_type, Please file a bug report in GitHub.\n");
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "In do_cb: Impossible value for cc_type, Please file a bug report on GitHub.\n");
 		} // switch (cc_type)
 	} // cc_valid
 	else

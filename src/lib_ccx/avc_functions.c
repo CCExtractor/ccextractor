@@ -158,14 +158,14 @@ size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t av
 	if(avcbuflen <= 5)
 	{
 		fatal(CCX_COMMON_EXIT_BUG_BUG,
-				"NAL unit need at last 5 bytes ...");
+				"NAL unit needs at last 5 bytes in the buffer to process AVC video stream...");
 	}
 
 	// Warning there should be only leading zeros, nothing else
 	if( !(buffer_position[0]==0x00 && buffer_position[1]==0x00) )
 	{
 		fatal(CCX_COMMON_EXIT_BUG_BUG,
-				"Broken AVC stream - no 0x0000 ...");
+				"Broken AVC stream - Leading bytes are non-zero...");
 	}
 	buffer_position = buffer_position+2;
 
@@ -188,7 +188,7 @@ size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t av
 			{
 				// Not 0x00 or 0x01
 				fatal(CCX_COMMON_EXIT_BUG_BUG,
-						"Broken AVC stream - no 0x00 ...");
+						"Broken AVC stream - Leading bytes are non-zero...");
 			}
 			buffer_position++;
 			zeropad++;
@@ -509,7 +509,7 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 						{
 							ctx->cc_data = (unsigned char*)realloc(ctx->cc_data, (size_t) ( (ctx->cc_count + local_cc_count) * 6) + 1);
 							if (!ctx->cc_data)
-								fatal(EXIT_NOT_ENOUGH_MEMORY, "In user_data_registered_itu_t_t35: Out of memory allocating buffer for CC data.");
+								fatal(EXIT_NOT_ENOUGH_MEMORY, "In user_data_registered_itu_t_t35: Out of memory to allocate buffer for CC data.");
 							ctx->cc_databufsize = (long) ( (ctx->cc_count + local_cc_count) * 6) + 1;
 						}
 						// Copy new cc data into cc_data
@@ -941,7 +941,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 	}
 	if( ctx->avc_ctx->pic_order_cnt_type == 1 )
 	{
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "AVC: ctx->avc_ctx->pic_order_cnt_type == 1 not yet supported.");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In slice_header: AVC: ctx->avc_ctx->pic_order_cnt_type == 1 not yet supported.");
 	}
 
         //Ignore slice with same pic order or pts

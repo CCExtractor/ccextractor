@@ -433,7 +433,7 @@ void process_hex (struct lib_ccx_ctx *ctx, char *filename)
 			continue;
 		bytes=(unsigned char *) malloc (byte_count);
 		if (!bytes)
-			fatal (EXIT_NOT_ENOUGH_MEMORY, "processhex: Out of memory.\n");
+			fatal (EXIT_NOT_ENOUGH_MEMORY, "In process_hex: Out of memory to store processed hex value.\n");
 		unsigned char *bytes=(unsigned char *) malloc (byte_count);
 		for (unsigned i=0;i<byte_count;i++)
 		{
@@ -441,7 +441,7 @@ void process_hex (struct lib_ccx_ctx *ctx, char *filename)
 			unsigned char low=c2[1];
 			int value=hex_to_int (high,low);
 			if (value==-1)
-				fatal (EXIT_FAILURE, "Incorrect format, unexpected non-hex string.");
+				fatal (EXIT_FAILURE, "In process_hex: Incorrect format, unexpected non-hex string.");
 			bytes[i]=value;
 			c2+=3;
 		}
@@ -733,7 +733,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		got = data_node->len;
 	}
 	else
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "Unknown data type!");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In process_data: datanode->buffer is of unknown data type!");
 
 	if (got > data_node->len)
 	{
@@ -879,7 +879,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
             break;
 #endif
         default:
-            fatal(CCX_COMMON_EXIT_BUG_BUG, "general_loop: Impossible value for stream_mode");
+            fatal(CCX_COMMON_EXIT_BUG_BUG, "In general_loop: Impossible value for stream_mode");
     }
 
 	end_of_file = 0;
@@ -1175,7 +1175,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	struct Teletext *telctx;
 	// As BUFSIZE is a macro this is just a reminder
 	if (BUFSIZE < (3*0xFFFF + 10))
-		fatal (CCX_COMMON_EXIT_BUG_BUG, "BUFSIZE too small for RCWT caption block.\n");
+		fatal (CCX_COMMON_EXIT_BUG_BUG, "In rcwt_loop: BUFSIZE too small for RCWT caption block.\n");
 
 	// Generic buffer to hold some data
 	parsebuf = (unsigned char*)malloc(1024);
@@ -1202,7 +1202,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	}
 	else
 	{
-		fatal(EXIT_MISSING_RCWT_HEADER, "Missing RCWT header. Abort.\n");
+		fatal(EXIT_MISSING_RCWT_HEADER, "In rcwt_loop: Missing RCWT header. Abort.\n");
 	}
 
 	dec_ctx = update_decoder_list(ctx);
@@ -1265,7 +1265,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 			if ( cbcount*3 > parsebufsize) {
 				parsebuf = (unsigned char*)realloc(parsebuf, cbcount*3);
 				if (!parsebuf)
-					fatal(EXIT_NOT_ENOUGH_MEMORY, "rcwt_loop: Out of memory allocating parsebuf.");
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "In rcwt_loop: Out of memory allocating parsebuf.");
 				parsebufsize = cbcount*3;
 			}
 			result = buffered_read(ctx->demux_ctx, parsebuf, cbcount*3);

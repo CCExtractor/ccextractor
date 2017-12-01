@@ -70,7 +70,7 @@ int api_start(struct ccx_s_options api_options)
     }
 #endif
     if (!ctx && errno == ENOMEM)
-        fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory\n");
+        fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, could not initialize libraries\n");
     else if (!ctx && errno == EINVAL)
         fatal (CCX_COMMON_EXIT_BUG_BUG, "Invalid option to CCextractor Library\n");
     else if (!ctx && errno == EPERM)
@@ -123,15 +123,15 @@ int api_start(struct ccx_s_options api_options)
             switch (ctx->total_inputsize)
             {
                 case -1*ENOENT:
-                    fatal(EXIT_NO_INPUT_FILES, "Failed to open file: File does not exist.");
+                    fatal(EXIT_NO_INPUT_FILES, "Failed to open input file: File does not exist.");
                 case -1*EACCES:
-                    fatal(EXIT_READ_ERROR, "Failed to open file: Unable to access");
+                    fatal(EXIT_READ_ERROR, "Failed to open input file: Unable to access");
                 case -1*EINVAL:
-                    fatal(EXIT_READ_ERROR, "Failed to open file: Invalid opening flag.");
+                    fatal(EXIT_READ_ERROR, "Failed to open input file: Invalid opening flag.");
                 case -1*EMFILE:
-                    fatal(EXIT_TOO_MANY_INPUT_FILES, "Failed to open file: Too many files are open.");
+                    fatal(EXIT_TOO_MANY_INPUT_FILES, "Failed to open input file: Too many files are open.");
                 default:
-                    fatal(EXIT_READ_ERROR, "Failed to open file: Reason unknown");
+                    fatal(EXIT_READ_ERROR, "Failed to open input file: Reason unknown");
             }
         }
     }

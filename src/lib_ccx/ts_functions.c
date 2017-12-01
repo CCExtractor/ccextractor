@@ -887,7 +887,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			if ( haup_newcapbuflen > haup_capbufsize) {
 				haup_capbuf = (unsigned char*)realloc(haup_capbuf, haup_newcapbuflen);
 				if (!haup_capbuf)
-					fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to store hauppauge packets");
 				haup_capbufsize = haup_newcapbuflen;
 			}
 			memcpy(haup_capbuf+haup_capbuflen, payload.start, payload.length);
