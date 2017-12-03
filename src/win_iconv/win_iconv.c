@@ -165,6 +165,7 @@ static struct {
     {1200, "UTF-16LE"},
     {1200, "UCS2LE"},
     {1200, "UCS-2LE"},
+    {1200, "UCS-2-INTERNAL"},
 
     {1201, "CP1201"},
     {1201, "UTF16BE"},
@@ -952,7 +953,8 @@ make_csconv(const char *_name, csconv_t *cv)
         cv->mbtowc = utf16_mbtowc;
         cv->wctomb = utf16_wctomb;
         if (_stricmp(name, "UTF-16") == 0 || _stricmp(name, "UTF16") == 0 ||
-          _stricmp(name, "UCS-2") == 0 || _stricmp(name, "UCS2") == 0)
+          _stricmp(name, "UCS-2") == 0 || _stricmp(name, "UCS2") == 0 ||
+	  _stricmp(name,"UCS-2-INTERNAL") == 0)
             cv->flags |= FLAG_USE_BOM;
     }
     else if (cv->codepage == 12000 || cv->codepage == 12001)
@@ -1027,11 +1029,11 @@ name_to_codepage(const char *name)
         return GetACP();
     else if (strcmp(name, "wchar_t") == 0)
         return 1200;
-    else if (strnicmp(name, "cp", 2) == 0)
+    else if (_strnicmp(name, "cp", 2) == 0)
         return atoi(name + 2); /* CP123 */
     else if ('0' <= name[0] && name[0] <= '9')
         return atoi(name);     /* 123 */
-    else if (strnicmp(name, "xx", 2) == 0)
+    else if (_strnicmp(name, "xx", 2) == 0)
         return atoi(name + 2); /* XX123 for debug */
 
     for (i = 0; codepage_alias[i].name != NULL; ++i)
@@ -1072,7 +1074,7 @@ ucs4_to_utf16(uint wc, ushort *wbuf, int *wbufsize)
 /*
  * Check if codepage is one of those for which the dwFlags parameter
  * to MultiByteToWideChar() must be zero. Return zero or
- * MB_ERR_INVALID_CHARS.  The docs in Platform SDK for for Windows
+ * MB_ERR_INVALID_CHARS.  The docs in Platform SDK for Windows
  * Server 2003 R2 claims that also codepage 65001 is one of these, but
  * that doesn't seem to be the case. The MSDN docs for MSVS2008 leave
  * out 65001 (UTF-8), and that indeed seems to be the case on XP, it
@@ -1375,6 +1377,12 @@ kernel_mbtowc(csconv_t *cv, const uchar *buf, int bufsize, ushort *wbuf, int *wb
     len = cv->mblen(cv, buf, bufsize);
     if (len == -1)
         return -1;
+    /* If converting from ASCII, reject 8bit
+     * chars. MultiByteToWideChar() doesn't. Note that for ASCII we
+     * know that the mblen function is sbcs_mblen() so len is 1.
+     */
+    if (cv->codepage == 20127 && buf[0] >= 0x80)
+        return seterror(EILSEQ);
     *wbufsize = MultiByteToWideChar(cv->codepage, mbtowc_flags (cv->codepage),
             (const char *)buf, len, (wchar_t *)wbuf, *wbufsize);
     if (*wbufsize == 0)
@@ -1568,7 +1576,7 @@ static int
 utf32_mbtowc(csconv_t *cv, const uchar *buf, int bufsize, ushort *wbuf, int *wbufsize)
 {
     int codepage = cv->codepage;
-    uint wc;
+    uint wc = 0xD800;
 
     /* swap endian: 12000 <-> 12001 */
     if (cv->mode & UNICODE_MODE_SWAPPED)
