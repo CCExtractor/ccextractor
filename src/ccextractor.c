@@ -4,6 +4,7 @@ Credits: See CHANGES.TXT
 License: GPL 2.0
 */
 
+#define _GNU_SOURCE
 #include "ccextractor.h"
 #include <stdio.h>
 
