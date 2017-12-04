@@ -18,5 +18,5 @@ script:
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cd mac; ./build.command; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cd mac; ./autogen.sh; ./configure; make; fi
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd linux; ./build; cd ..; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mkdir build; cd build; cmake ../src/; make; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mkdir build; cd build; cmake ../src/; make; cd ..; fi
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd linux; ./autogen.sh; ./configure; make; fi
