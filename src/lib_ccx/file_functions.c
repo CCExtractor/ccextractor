@@ -482,7 +482,7 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 	return copied;
 }
 
-unsigned short buffered_get_be16(struct ccx_demuxer *ctx)
+uint16_t buffered_get_be16(struct ccx_demuxer *ctx)
 {
 	unsigned char a,b;
 	unsigned char *a_p = &a; // Just to suppress warnings
@@ -510,7 +510,7 @@ unsigned char buffered_get_byte (struct ccx_demuxer *ctx)
 		return 0;
 }
 
-unsigned int buffered_get_be32(struct ccx_demuxer *ctx)
+uint32_t buffered_get_be32(struct ccx_demuxer *ctx)
 {
 	unsigned int val;
 	val = buffered_get_be16(ctx) << 16;
@@ -535,5 +535,13 @@ unsigned int buffered_get_le32(struct ccx_demuxer *ctx)
 	unsigned int val;
 	val = buffered_get_le16(ctx);
 	val |= buffered_get_le16(ctx) << 16;
+	return val;
+}
+
+uint64_t buffered_get_be64(struct ccx_demuxer *ctx)
+{
+	uint64_t val;
+	val = (uint64_t)buffered_get_be32(ctx) << 32;
+	val |= buffered_get_be32(ctx);
 	return val;
 }

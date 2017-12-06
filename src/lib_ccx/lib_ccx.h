@@ -173,6 +173,8 @@ int rcwt_loop(struct lib_ccx_ctx *ctx);
 
 extern int end_of_file;
 
+int ccx_mxf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
+
 // asf_functions.c
 int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 

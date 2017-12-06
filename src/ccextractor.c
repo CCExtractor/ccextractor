@@ -198,6 +198,7 @@ int api_start(struct ccx_s_options api_options)
             case CCX_SM_ASF:
             case CCX_SM_WTV:
             case CCX_SM_GXF:
+            case CCX_SM_MXF:
 #ifdef ENABLE_FFMPEG
                 case CCX_SM_FFMPEG:
 #endif

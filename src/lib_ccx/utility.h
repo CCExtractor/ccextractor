@@ -35,6 +35,7 @@ LLONG change_timebase(LLONG val, struct ccx_rational cur_tb, struct ccx_rational
 char *str_reallocncat(char *dst, char *src);
 
 void dump (LLONG mask, unsigned char *start, int l, unsigned long abs_start, unsigned clear_high_bit);
+LLONG change_timebase(LLONG val, struct ccx_rational cur_tb, struct ccx_rational dest_tb);
 #ifdef _WIN32
 char *strndup(const char *s, size_t n);
 char *strtok_r(char *str, const char *delim, char **saveptr);

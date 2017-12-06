@@ -16,6 +16,7 @@
 #include "ffmpeg_intgr.h"
 #include "ccx_gxf.h"
 #include "dvd_subtitle_decoder.h"
+#include "ccx_demuxer_mxf.h"
 
 
 int end_of_file=0; // End of file?
@@ -878,6 +879,9 @@ int general_loop(struct lib_ccx_ctx *ctx)
             get_more_data = &ffmpeg_get_more_data;
             break;
 #endif
+		case CCX_SM_MXF:
+			get_more_data = ccx_mxf_getmoredata;
+			break;
         default:
             fatal(CCX_COMMON_EXIT_BUG_BUG, "In general_loop: Impossible value for stream_mode");
     }
