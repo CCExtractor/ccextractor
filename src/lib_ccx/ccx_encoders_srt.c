@@ -95,8 +95,11 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	int i = 0;
 	char *str;
 
-	ms_start = sub->start_time;
-	ms_end = sub->end_time;
+	ms_start = sub->start_time + context->subs_delay;
+	ms_end = sub->end_time + context->subs_delay;
+
+    if (ms_start<0) // Drop screens that because of subs_delay start too early
+        return 0;
 
 	if(sub->nb_data == 0 )
 		return 0;
