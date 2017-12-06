@@ -1,0 +1,22 @@
+language: c
+os:
+  - osx
+  - linux
+ 
+sudo:
+  - true
+
+compiler:
+- gcc
+- clang
+
+install:
+- if [[ $TRAVIS_OS_NAME == 'osx' ]]; then brew install pkg-config autoconf automake libtool tesseract leptonica; fi
+- if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo apt-get install -y libcurl4-gnutls-dev tesseract-ocr tesseract-ocr-dev libleptonica-dev; fi
+
+script:
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cd mac; ./build.command; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cd mac; ./autogen.sh; ./configure; make; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd linux; ./build; cd ..; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mkdir build; cd build; cmake ../src/; make; cd ..; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd linux; ./autogen.sh; ./configure; make; fi

@@ -3,17 +3,16 @@
  
 # CCExtractor
 
+[![Build Status](https://travis-ci.org/CCExtractor/ccextractor.svg?branch=master)](https://travis-ci.org/CCExtractor/ccextractor)
+
 CCExtractor is a tool that produces subtitles from TV use. Global accessibility (all users, all content, all countries) is the goal. With so many different formats, this is a constantly moving target, but we intend to keep up with all sources and formats.
 
-Carlos' version (mainstream) is the most stable branch.
+The official repository ([CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor)) is the most stable branch. It is (mainly) maintained by Carlos ([cfsmp3](https://github.com/cfsmp3)).
 
-## Google Summer of Code 2017
-CCExtractor has been invited to Summer of Code 2017! Another summer of coding fun.
+## Google Code-in 2017
+CCExtractor has been invited to Code-in 2017! A second year of challenging tasks for students aged 13-17.
 
-If you are a student currently enrolled in university most likely you are eligible to participate. Read more at:  
-- [Google Summer of Code official website ](https://summerofcode.withgoogle.com/)
-- [CCExtractor's main GSoC page](https://www.ccextractor.org?id=public:gsoc:ideas_page_for_summer_of_code_2017)
-
+If you are a student fitting the age criteria, then you most likely are eligible to participate. Read more at the [Google Code-in website](https://codein.withgoogle.com).
 
 ## Installation and Usage
 
