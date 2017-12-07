@@ -49,7 +49,7 @@ int _CRT_fmode = _O_BINARY;
 #include <commctrl.h>
 #endif
 
-long long int last_pes_pts = 0; // PTS of last PES packet (debug purposes)
+uint64_t last_pes_pts = 0; // PTS of last PES packet (debug purposes)
 static int de_ctr = 0; // a keeps count of packets with flag subtitle ON and data packets
 static const char* TTXT_COLOURS[8] = {
 	//black,   red,       green,     yellow,    blue,      magenta,   cyan,      white
@@ -1326,7 +1326,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 		pes_crc_flag = (uint8_t)(buffer[7] << 6) >> 7;
 		pes_ext_flag = (uint8_t)(buffer[7] << 7) >> 7;
 
-		printf("Packet start code prefix: %04x # ", pes_prefix);
+		printf("Packet start code prefix: %04lx # ", pes_prefix);
 		printf("Stream ID: %04x # ", pes_stream_id);
 		printf("Packet length: %d ", pes_packet_length);
 		printf("PESSC: 0x%x ", pes_scrambling_control);
@@ -1405,7 +1405,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 		{
 			//printf("# Associated PTS: %d \n", pts);
 			printf("# Associated PTS: %" PRId64 " # ", pts);
-			printf("Diff: %" PRId64 "\n", pts - last_pes_pts);
+			printf("Diff: %" PRIu64 "\n", pts - last_pes_pts);
 			//printf("Diff: %d # ", pts - last_pes_pts);
 			last_pes_pts = pts;
 		}

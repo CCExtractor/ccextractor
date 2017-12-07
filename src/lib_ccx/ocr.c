@@ -129,7 +129,7 @@ void* init_ocr(int lang_index)
 		lang_index = 1;
 	}
 
-	char* lang = NULL, *tessdata_path = NULL;
+	const char* lang = NULL, *tessdata_path = NULL;
 	if (ccx_options.ocrlang)
 		lang = ccx_options.ocrlang;
 	else if (data_location == 1)

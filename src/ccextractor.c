@@ -3,7 +3,6 @@
 Credits: See CHANGES.TXT
 License: GPL 2.0
 */
-
 #include "ccextractor.h"
 #include <stdio.h>
 
