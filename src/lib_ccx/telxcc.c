@@ -56,8 +56,6 @@ static const char* TTXT_COLOURS[8] = {
 	"#000000", "#ff0000", "#00ff00", "#ffff00", "#0000ff", "#ff00ff", "#00ffff", "#ffffff"
 };
 
-#define MAX_TLT_PAGES 1000
-
 
 // 1-byte alignment; just to be sure, this struct is being used for explicit type conversion
 // FIXME: remove explicit type conversion from buffer to structs

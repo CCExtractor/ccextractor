@@ -7,6 +7,8 @@
 
 //#include <inttypes.h>
 
+#define MAX_TLT_PAGES 1000
+
 typedef struct {
 	uint64_t show_timestamp; // show at timestamp (in ms)
 	uint64_t hide_timestamp; // hide at timestamp (in ms)
