@@ -71,7 +71,7 @@ else (WIN32)
     link_directories (/usr/local/lib)
 endif(WIN32)
 
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -Wall -g -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -Wall -g -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64 -pthread -l GL -ldl")
 add_subdirectory (lib_ccx)
 
 aux_source_directory (${PROJECT_SOURCE_DIR} SOURCEFILE)
@@ -81,7 +81,6 @@ set (EXTRA_LIBS ${EXTRA_LIBS} m)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set (EXTRA_LIBS ${EXTRA_LIBS} iconv)
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-
 
 set (EXTRA_LIBS ${EXTRA_LIBS} -lz)
 

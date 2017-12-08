@@ -269,7 +269,7 @@ ccextractor_SOURCES = \
 				../src/wrappers/wrapper.h
 				
 
-ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT 
+ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -DGPAC_CONFIG_LINUX -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DENABLE_OCR -Wl,-no-as-needed -pthread -l GL -ldl
 
 ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi/ -I../src/lib_hash/ -I../src/protobuf-c/ -I../src/utf8proc/ -I../src/
 

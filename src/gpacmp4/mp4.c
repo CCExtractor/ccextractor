@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include <gpac/isomedia.h>
+#include <gpac/setup.h>
 #include "lib_ccx.h"
 #include "utility.h"
 #include "ccx_encoders_common.h"
@@ -315,7 +316,6 @@ unsigned char * ccdp_find_data(unsigned char * ccdp_atom_content, unsigned int l
 							send to avc.c for processing
 			close(media)
 		}
-
 */
 int processmp4 (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 {
@@ -666,3 +666,4 @@ int dumpchapters (struct lib_ccx_ctx *ctx,struct ccx_s_mp4Cfg *cfg, char *file)
 	if (file) gf_fclose(t);
 	return mp4_ret;
 }
+
