@@ -24,6 +24,7 @@
 */
 
 #include <gpac/internal/odf_dev.h>
+#include <gpac/setup.h>
 
 
 //

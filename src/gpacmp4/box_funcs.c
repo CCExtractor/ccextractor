@@ -24,6 +24,7 @@
 */
 
 #include <gpac/internal/isomedia_dev.h>
+#include <gpac/setup.h>
 
 #ifndef GPAC_DISABLE_ISOM
 
@@ -1350,8 +1351,8 @@ void gf_isom_box_del(GF_Box *a)
 	case GF_ISOM_BOX_TYPE_ENCV:
 	case GF_ISOM_BOX_TYPE_ENCS:
 	{
-		GF_ProtectionInfoBox *sinf = gf_list_get(((GF_SampleEntryBox *)a)->protections, 0);
-		a->type = sinf->original_format->data_format;
+		GF_ProtectionSchemeInfoBox *sinf = gf_list_get(((GF_SampleEntryBox *)a)->protections, 0);
+		a->type = (sinf->original_format->data_format);
 		gf_isom_box_del(a);
 	}
 	return;

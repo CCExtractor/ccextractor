@@ -1,27 +1,27 @@
 /*
-*			GPAC - Multimedia Framework C SDK
-*
-*			Authors: Jean Le Feuvre
-*			Copyright (c) Telecom ParisTech 2000-2012
-*					All rights reserved
-*
-*  This file is part of GPAC / Media Tools sub-project
-*
-*  GPAC is free software; you can redistribute it and/or modify
-*  it under the terms of the GNU Lesser General Public License as published by
-*  the Free Software Foundation; either version 2, or (at your option)
-*  any later version.
-*
-*  GPAC is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU Lesser General Public License for more details.
-*
-*  You should have received a copy of the GNU Lesser General Public
-*  License along with this library; see the file COPYING.  If not, write to
-*  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-*
-*/
+ *			GPAC - Multimedia Framework C SDK
+ *
+ *			Authors: Jean Le Feuvre
+ *			Copyright (c) Telecom ParisTech 2000-2012
+ *					All rights reserved
+ *
+ *  This file is part of GPAC / Media Tools sub-project
+ *
+ *  GPAC is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  GPAC is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; see the file COPYING.  If not, write to
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
 
 
 #ifndef _GF_MEDIA_DEV_H_
@@ -72,13 +72,13 @@ enum
 	/*SPS has been parsed*/
 	AVC_SPS_PARSED = 1,
 	/*SPS has been declared to the upper layer*/
-	AVC_SPS_DECLARED = 1 << 1,
+	AVC_SPS_DECLARED = 1<<1,
 	/*SUB-SPS has been parsed*/
-	AVC_SUBSPS_PARSED = 1 << 2,
+	AVC_SUBSPS_PARSED = 1<<2,
 	/*SUB-SPS has been declared to the upper layer*/
-	AVC_SUBSPS_DECLARED = 1 << 3,
+	AVC_SUBSPS_DECLARED = 1<<3,
 	/*SPS extension has been parsed*/
-	AVC_SPS_EXT_DECLARED = 1 << 4,
+	AVC_SPS_EXT_DECLARED = 1<<4,
 };
 
 typedef struct
@@ -96,15 +96,38 @@ typedef struct
 	u32 time_scale;
 	s32 fixed_frame_rate_flag;
 
+	Bool aspect_ratio_info_present_flag;
 	u32 par_num, par_den;
+
+	Bool overscan_info_present_flag;
+	Bool video_signal_type_present_flag;
+	u8 video_format;
+	Bool video_full_range_flag;
+
+	Bool colour_description_present_flag;
+	u8 colour_primaries;
+	u8 transfer_characteristics;
+	u8 matrix_coefficients;
 
 	Bool nal_hrd_parameters_present_flag;
 	Bool vcl_hrd_parameters_present_flag;
+	Bool low_delay_hrd_flag;
 	AVC_HRD hrd;
 
 	Bool pic_struct_present_flag;
+
 	/*to be eventually completed by other vui members*/
 } AVC_VUI;
+
+typedef struct 
+{
+	u32 left;
+	u32 right;
+	u32 top;
+	u32 bottom;
+	
+} AVC_CROP;
+
 
 typedef struct
 {
@@ -117,6 +140,9 @@ typedef struct
 	s32 delta_pic_order_always_zero_flag;
 	s32 offset_for_non_ref_pic, offset_for_top_to_bottom_field;
 	Bool frame_mbs_only_flag;
+	Bool mb_adaptive_frame_field_flag;
+	u32 max_num_ref_frames;
+	Bool gaps_in_frame_num_value_allowed_flag;
 	u8 chroma_format;
 	u8 luma_bit_depth_m8;
 	u8 chroma_bit_depth_m8;
@@ -125,7 +151,9 @@ typedef struct
 
 	u32 width, height;
 
+	Bool vui_parameters_present_flag;
 	AVC_VUI vui;
+	AVC_CROP crop;
 
 	/*used to discard repeated SPSs - 0: not parsed, 1 parsed, 2 sent*/
 	u32 state;
@@ -138,10 +166,11 @@ typedef struct
 {
 	s32 id; /* used to compare pps when storing SVC PSS */
 	s32 sps_id;
+	Bool entropy_coding_mode_flag;
 	s32 pic_order_present;			/* pic_order_present_flag*/
 	s32 redundant_pic_cnt_present;	/* redundant_pic_cnt_present_flag */
 	u32 slice_group_count;			/* num_slice_groups_minus1 + 1*/
-									/*used to discard repeated SPSs - 0: not parsed, 1 parsed, 2 sent*/
+	/*used to discard repeated SPSs - 0: not parsed, 1 parsed, 2 sent*/
 	u32 status;
 
 } AVC_PPS;
@@ -226,9 +255,9 @@ Bool gf_media_avc_slice_is_IDR(AVCState *avc);
 /*is slice containing intra MB only*/
 Bool gf_media_avc_slice_is_intra(AVCState *avc);
 /*parses NALU, updates avc state and returns:
-1 if NALU part of new frame
-0 if NALU part of prev frame
--1 if bitstream error
+	1 if NALU part of new frame
+	0 if NALU part of prev frame
+	-1 if bitstream error
 */
 s32 gf_media_avc_parse_nalu(GF_BitStream *bs, u32 nal_hdr, AVCState *avc);
 /*remove SEI messages not allowed in MP4*/
@@ -282,7 +311,7 @@ typedef struct
 	HEVC_ProfileTierLevel ptl;
 
 	u8 chroma_format_idc;
-	Bool cw_flag;
+	Bool cw_flag ;
 	u32 cw_left, cw_right, cw_top, cw_bottom;
 	u8 bit_depth_luma;
 	u8 bit_depth_chroma;
@@ -349,6 +378,7 @@ typedef struct
 	s32 id;
 	/*used to discard repeated SPSs - 0: not parsed, 1 parsed, 2 stored*/
 	u32 state;
+	s32 bit_pos_vps_extensions;
 	u32 crc;
 	Bool vps_extension_found;
 	u32 max_layers, max_sub_layers, max_layer_id, num_layer_sets;
@@ -393,8 +423,6 @@ typedef struct
 typedef struct
 {
 	u8 nal_unit_type;
-	s8 temporal_id;
-
 	u32 frame_num, poc_lsb, slice_type;
 
 	s32 redundant_pic_cnt;
@@ -407,6 +435,11 @@ typedef struct
 	Bool first_slice_segment_in_pic_flag;
 	u32 slice_segment_address;
 	u8 prev_layer_id_plus1;
+
+	//bit offset of the num_entry_point (if present) field
+	s32 entry_point_start_bits;
+	//byte offset of the payload start (after byte alignment)
+	s32 payload_start_offset;
 
 	HEVC_SPS *sps;
 	HEVC_PPS *pps;
@@ -423,8 +456,10 @@ typedef struct _hevc_state
 
 	HEVCSliceInfo s_info;
 	HEVC_SEI sei;
-
-	Bool is_svc;
+	//-1 or the value of the vps/sps/pps ID of the nal just parsed
+	s32 last_parsed_vps_id;
+	s32 last_parsed_sps_id;
+	s32 last_parsed_pps_id;
 } HEVCState;
 
 enum
@@ -436,7 +471,7 @@ enum
 s32 gf_media_hevc_read_vps(char *data, u32 size, HEVCState *hevc);
 s32 gf_media_hevc_read_sps(char *data, u32 size, HEVCState *hevc);
 s32 gf_media_hevc_read_pps(char *data, u32 size, HEVCState *hevc);
-s32 gf_media_hevc_parse_nalu(GF_BitStream *bs, HEVCState *hevc, u8 *nal_unit_type, u8 *temporal_id, u8 *layer_id);
+s32 gf_media_hevc_parse_nalu(char *data, u32 size, HEVCState *hevc, u8 *nal_unit_type, u8 *temporal_id, u8 *layer_id);
 Bool gf_media_hevc_slice_is_intra(HEVCState *hevc);
 Bool gf_media_hevc_slice_is_IDR(HEVCState *hevc);
 //parses VPS and rewrites data buffer after removing VPS extension
@@ -457,20 +492,20 @@ typedef struct
 #if !defined(GPAC_DISABLE_ISOM) && !defined(GPAC_DISABLE_STREAMING)
 
 GP_RTPPacketizer *gf_rtp_packetizer_create_and_init_from_file(GF_ISOFile *file,
-	u32 TrackNum,
-	void *cbk_obj,
-	void(*OnNewPacket)(void *cbk, GF_RTPHeader *header),
-	void(*OnPacketDone)(void *cbk, GF_RTPHeader *header),
-	void(*OnDataReference)(void *cbk, u32 payload_size, u32 offset_from_orig),
-	void(*OnData)(void *cbk, char *data, u32 data_size, Bool is_head),
-	u32 Path_MTU,
-	u32 max_ptime,
-	u32 default_rtp_rate,
-	u32 flags,
-	u8 PayloadID,
-	Bool copy_media,
-	u32 InterleaveGroupID,
-	u8 InterleaveGroupPriority);
+        u32 TrackNum,
+        void *cbk_obj,
+        void (*OnNewPacket)(void *cbk, GF_RTPHeader *header),
+        void (*OnPacketDone)(void *cbk, GF_RTPHeader *header),
+        void (*OnDataReference)(void *cbk, u32 payload_size, u32 offset_from_orig),
+        void (*OnData)(void *cbk, char *data, u32 data_size, Bool is_head),
+        u32 Path_MTU,
+        u32 max_ptime,
+        u32 default_rtp_rate,
+        u32 flags,
+        u8 PayloadID,
+        Bool copy_media,
+        u32 InterleaveGroupID,
+        u8 InterleaveGroupPriority);
 
 void gf_media_format_ttxt_sdp(GP_RTPPacketizer *builder, char *payload_name, char *sdpLine, GF_ISOFile *file, u32 track);
 
@@ -488,6 +523,30 @@ typedef enum
 
 GF_Err gf_media_mpd_format_segment_name(GF_DashTemplateSegmentType seg_type, Bool is_bs_switching, char *segment_name, const char *output_file_name, const char *rep_id, const char *base_url, const char *seg_rad_name, const char *seg_ext, u64 start_time, u32 bandwidth, u32 segment_number, Bool use_segment_timeline);
 
+#ifndef GPAC_DISABLE_VTT
+
+typedef struct _webvtt_parser GF_WebVTTParser;
+typedef struct _webvtt_sample GF_WebVTTSample;
+
+GF_WebVTTParser *gf_webvtt_parser_new();
+GF_Err gf_webvtt_parser_init(GF_WebVTTParser *parser, const char *input_file,
+                             void *user, GF_Err (*report_message)(void *, GF_Err, char *, const char *),
+                             void (*on_sample_parsed)(void *, GF_WebVTTSample *),
+                             void (*on_header_parsed)(void *, const char *));
+GF_Err gf_webvtt_parser_parse(GF_WebVTTParser *parser, u32 duration);
+u64 gf_webvtt_parser_last_duration(GF_WebVTTParser *parser);
+void gf_webvtt_parser_del(GF_WebVTTParser *parser);
+
+void gf_webvtt_sample_del(GF_WebVTTSample * samp);
+u64 gf_webvtt_sample_get_start(GF_WebVTTSample * samp);
+
+#ifndef GPAC_DISABLE_ISOM
+GF_Err gf_webvtt_dump_header(FILE *dump, GF_ISOFile *file, u32 track, Bool box_mode, u32 index);
+GF_Err gf_webvtt_dump_sample(FILE *dump, GF_WebVTTSample *samp);
+GF_Err gf_webvtt_parser_dump_done(GF_WebVTTParser *parser, u32 duration);
+#endif /* GPAC_DISABLE_ISOM */
+
+#endif /* GPAC_DISABLE_VTT */
 
 #endif		/*_GF_MEDIA_DEV_H_*/
 
