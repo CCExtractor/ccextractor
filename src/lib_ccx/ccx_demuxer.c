@@ -150,6 +150,9 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 				mprint ("\rFile seems to be an hexadecimal dump\n");					
 				break;
 #endif
+			case CCX_SM_MXF:
+				mprint ("\rFile seems to be an MXF\n");
+				break;
 			case CCX_SM_MYTH:
 			case CCX_SM_AUTODETECT:
 				fatal(CCX_COMMON_EXIT_BUG_BUG, "In ccx_demuxer_open: Impossible value in stream_mode. Please file a bug report on GitHub.\n");

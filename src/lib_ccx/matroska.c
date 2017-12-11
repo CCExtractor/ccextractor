@@ -420,9 +420,9 @@ void parse_segment_cluster_block_group(struct matroska_ctx* mkv_ctx, ULLONG clus
             sentence_list[i]->time_end = sentence_list[i]->time_start + block_duration;
 
         if (ccx_options.gui_mode_reports) {
-            ULLONG h1, m1, s1, ms1;
+            unsigned h1, m1, s1, ms1;
             millis_to_time(sentence_list[i]->time_start, &h1, &m1, &s1, &ms1);
-            ULLONG h2, m2, s2, ms2;
+            unsigned h2, m2, s2, ms2;
             millis_to_time(sentence_list[i]->time_end, &h2, &m2, &s2, &ms2);
 
             char *text = sentence_list[i]->text;
@@ -996,7 +996,7 @@ void matroska_save_all(struct matroska_ctx* mkv_ctx,char* lang)
   char* match;
     for (int i = 0; i < mkv_ctx->sub_tracks_count; i++){
       if (lang){
-        if (match = strstr(lang,mkv_ctx->sub_tracks[i]->lang) != NULL)
+        if ((match = strstr(lang,mkv_ctx->sub_tracks[i]->lang)) != NULL)
           save_sub_track(mkv_ctx, mkv_ctx->sub_tracks[i]);
                 }
       else

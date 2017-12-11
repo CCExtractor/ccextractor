@@ -11,12 +11,14 @@ void dinit_write(struct ccx_s_write *wb)
 {
 #ifdef ENABLE_PYTHON
 	if(!signal_python_api){
+#endif
         if (wb->fh > 0)
             close(wb->fh);
         freep(&wb->filename);
         if (wb->with_semaphore && wb->semaphore_filename)
             unlink(wb->semaphore_filename);
         freep(&wb->semaphore_filename);
+#ifdef ENABLE_PYTHON
     }
 #endif
 }

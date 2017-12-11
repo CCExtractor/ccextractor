@@ -85,6 +85,7 @@ int verify_crc32(uint8_t *buf, int len)
 		crc = (crc << 8) ^ crc32_table[((crc >> 24) ^ (buf[i] & 0xff)) & 0xff];
 	return crc?CCX_FALSE:CCX_TRUE;
 }
+
 int stringztoms (const char *s, struct ccx_boundary_time *bt)
 {
 	unsigned ss=0, mm=0, hh=0;

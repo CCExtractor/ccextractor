@@ -141,6 +141,8 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/ccx_decoders_xds.h \
 				../src/lib_ccx/ccx_demuxer.c \
 				../src/lib_ccx/ccx_demuxer.h \
+				../src/lib_ccx/ccx_demuxer_mxf.c \
+				../src/lib_ccx/ccx_demuxer_mxf.h \
 				../src/lib_ccx/ccx_dtvcc.c \
 				../src/lib_ccx/ccx_dtvcc.h \
 				../src/lib_ccx/ccx_encoders_common.c \

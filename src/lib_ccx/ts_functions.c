@@ -17,7 +17,7 @@ unsigned char tspacket[188]; // Current packet
 static unsigned char *haup_capbuf = NULL;
 static long haup_capbufsize = 0;
 static long haup_capbuflen = 0; // Bytes read in haup_capbuf
-long long int last_pts = 0; // PTS of last PES packet (debug purposes)
+uint64_t last_pts = 0; // PTS of last PES packet (debug purposes)
 
 // Descriptions for ts ccx_stream_type
 const char *desc[256];
@@ -81,7 +81,7 @@ void pes_header_dump(uint8_t *buffer, long len)
 
 	pes_packet_length = 6 + ((buffer[4] << 8) | buffer[5]); // 5th and 6th byte of the header define the length of the rest of the packet (+6 is for the prefix, stream ID and packet length)
 
-	printf("Packet start code prefix: %04x # ", pes_prefix);
+	printf("Packet start code prefix: %04lx # ", pes_prefix);
 	printf("Stream ID: %04x # ", pes_stream_id);
 	printf("Packet length: %d ", pes_packet_length);
 
@@ -110,7 +110,7 @@ void pes_header_dump(uint8_t *buffer, long len)
 		pts |= ((buffer[13] & 0xfe) >> 1);
 		//printf("# Associated PTS: %d \n", pts);
 		printf("# Associated PTS: %" PRId64 " # ", pts);
-		printf("Diff: %" PRId64 "\n", pts-last_pts);
+		printf("Diff: %" PRIu64 "\n", pts-last_pts);
 		//printf("Diff: %d # ", pts - last_pts);
 		last_pts = pts;
 	}

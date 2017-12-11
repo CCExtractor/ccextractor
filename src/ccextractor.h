@@ -1,9 +1,15 @@
 #ifndef CCEXTRACTOR_H
 #define CCEXTRACTOR_H
 
+// Needed to avoid warning implicit declaration of function ‘asprintf’ on Linux
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE 1
+#endif
+
 #ifdef ENABLE_OCR
 #include <allheaders.h>
 #endif
+
 #include <stdio.h>
 #include "lib_ccx/lib_ccx.h"
 #include "lib_ccx/configuration.h"

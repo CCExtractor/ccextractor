@@ -269,8 +269,8 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 
 				unsigned char *final = malloc ( strlen((context->subline)) + 1000);	//Being overly generous? :P
 				unsigned char *temp = malloc ( strlen((context->subline)) + 1000);
-				*final=NULL;
-				*temp=NULL;
+				*final=0;
+				*temp=0;
 				/*
 					final	: stores formatted HTML sentence. This will be written in subtitle file.
 					temp	: stored temporary sentences required while formatting

@@ -115,7 +115,7 @@ static const char *webvtt_inline_css = "/* default values */\n"
 		"  background-color: rgba(0, 0, 0, 0.5);\n"
 		"}";
 
-static const char** webvtt_pac_row_percent[] = { "10", "15.33", "20.66", "26", "31.33", "36.66", "42",
+static const char* webvtt_pac_row_percent[] = { "10", "15.33", "20.66", "26", "31.33", "36.66", "42",
 		"47.33", "52.66", "58", "63.33", "68.66", "74", "79.33", "84.66" };
 
 /* The timing here is not PTS based, but output based, i.e. user delay must be accounted for
@@ -219,7 +219,7 @@ int write_webvtt_header(struct encoder_ctx *context)
 			mprint("Warning: Error creating the file %s\n", css_file_name);
 			return -1;
 		}
-		fprintf(f, webvtt_inline_css);
+		fprintf(f, "%s",webvtt_inline_css);
 		fclose(f);
 
 		char* outline_css_file = (char*)malloc((strlen(css_file_name) + strlen(webvtt_outline_css)) * sizeof(char));
