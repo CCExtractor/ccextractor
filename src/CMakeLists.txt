@@ -62,21 +62,28 @@ aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib/" SOURCEFILE)
 
 #Windows specific libraries and linker flags
 if(WIN32)
+    include_directories ("${PROJECT_SOURCE_DIR}/win_spec_incld/")
     include_directories ("${PROJECT_SOURCE_DIR}/win_iconv/")
     aux_source_directory ("${PROJECT_SOURCE_DIR}/win_iconv/" SOURCEFILE)
-    set (EXTRA_LIBS ${EXTRA_LIBS} -lws2_32 -lwinmm)
+    set (EXTRA_LIBS ${EXTRA_LIBS} ws2_32 winmm)
 else (WIN32)
     # Adding some platform specific library path
     link_directories (/opt/local/lib)
     link_directories (/usr/local/lib)
 endif(WIN32)
 
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -Wall -g -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64")
+if(MSVC)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W3 /wd4005 /wd4996")
+else (MSVC)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O0 -Wno-write-strings -g -std=gnu99")
+endif(MSVC)
+
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64")
 add_subdirectory (lib_ccx)
 
 aux_source_directory (${PROJECT_SOURCE_DIR} SOURCEFILE)
 set (EXTRA_LIBS ${EXTRA_LIBS} ccx)
-set (EXTRA_LIBS ${EXTRA_LIBS} m)
+# set (EXTRA_LIBS ${EXTRA_LIBS} m)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set (EXTRA_LIBS ${EXTRA_LIBS} iconv)
