@@ -1,5 +1,6 @@
 0.86
 -----------------
+- New: Added a histogram in one-minute increments of the number of lines in a subtitle.
 - New: Added Autoconf build scripts for CCExtractor to generate makefiles (mac).
 - New: Added Autoconf build scripts for CCExtractor to generate makefiles (linux).
 - New: Added .rpm package generation script.
