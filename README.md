@@ -29,7 +29,7 @@ More usage information can be found on our website:
 - [Using the command line tool](https://www.ccextractor.org/doku.php?id=public:general:command_line_usage)
 - [Using the Windows GUI](https://www.ccextractor.org/doku.php?id=public:general:win_gui_usage) 
 
-To learn more about how to install CCExtractor for your platform check the INSTALLATION.MD file or visit the wiki and choose the operating system you want to do so or click [here](https://github.com/MatejMecka/ccextractor/wiki) to go there.
+To learn more about how to install CCExtractor for your platform check the [installation guide](INSTALLATION.MD).
 
 ## Support
 
