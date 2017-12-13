@@ -14,17 +14,19 @@ CCExtractor has been invited to Code-in 2017! A second year of challenging tasks
 
 If you are a student fitting the age criteria, then you most likely are eligible to participate. Read more at the [Google Code-in website](https://codein.withgoogle.com).
 
-## Installation and Usage
+## Installation
+
+To learn more about how to install CCExtractor for your platform check the [installation guide](INSTALLATION.MD).
 
 Downloads for precompiled binaries and source code can be found [on our website](https://www.ccextractor.org?id=public:general:downloads).
+
+## Usage
 
 Extracting subtitles is relatively simple. Just run the following command:
 
 ```ccextractor <input>```
 
 This will extract the subtitles. 
-
-To learn more about how to install CCExtractor for your platform check the [installation guide](INSTALLATION.MD).
 
 ## Support
 
@@ -36,10 +38,10 @@ You can also [contact us by email or chat with the team in Slack](https://www.cc
 
 ## Contributing
 
-You can contribute to the project by forking it, modifying the code, and making a pull request to the repository. We have some rules, outlined in the [contributor's guide](https://github.com/CCExtractor/ccextractor/blob/master/.github/CONTRIBUTING.md).
+You can contribute to the project by forking it, modifying the code, and making a pull request to the repository. We have some rules, outlined in the [contributor's guide](.github/CONTRIBUTING.md).
 
 ## News & Other Information
 
-News about releases and modifications to the code can be found in the `CHANGES.TXT` file. 
+News about releases and modifications to the code can be found in the [CHANGES.TXT](docs/CHANGES.TXT) file. 
 
 For more information visit the CCExtractor website: [https://www.ccextractor.org](https://www.ccextractor.org)
