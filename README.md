@@ -14,19 +14,26 @@ CCExtractor has been invited to Code-in 2017! A second year of challenging tasks
 
 If you are a student fitting the age criteria, then you most likely are eligible to participate. Read more at the [Google Code-in website](https://codein.withgoogle.com).
 
-## Installation
-
-To learn more about how to install CCExtractor for your platform check the [installation guide](INSTALLATION.MD).
+## Installation and Usage
 
 Downloads for precompiled binaries and source code can be found [on our website](https://www.ccextractor.org?id=public:general:downloads).
-
-## Usage
 
 Extracting subtitles is relatively simple. Just run the following command:
 
 ```ccextractor <input>```
 
-This will extract the subtitles. 
+This will extract the subtitles.
+
+More usage information can be found on our website:
+
+- [Using the command line tool](https://www.ccextractor.org/doku.php?id=public:general:command_line_usage)
+- [Using the Windows GUI](https://www.ccextractor.org/doku.php?id=public:general:win_gui_usage)
+
+You can also find the list of parameters and their brief description by running `ccextractor` without any arguments.
+
+## Compiling CCExtractor
+
+To learn more about how to compile and build CCExtractor for your platform check the [compilation guide](docs/COMPILATION.MD).
 
 ## Support
 
