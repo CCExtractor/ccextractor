@@ -85,7 +85,6 @@ make
 ```
 
 Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
-nterface from the terminal `./ccextractorGUI`
 
 ## macOS
 
