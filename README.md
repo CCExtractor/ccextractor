@@ -7,7 +7,7 @@
 
 CCExtractor is a tool that produces subtitles from TV use. Global accessibility (all users, all content, all countries) is the goal. With so many different formats, this is a constantly moving target, but we intend to keep up with all sources and formats.
 
-The official repository is (CCExtractor/ccextractor) and master being the most stable branch. It is (mainly) maintained by Carlos (cfsmp3)
+The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor)) and master being the most stable branch. 
 
 ## Google Code-in 2017
 CCExtractor is participating in Google Code-in 2017! 
