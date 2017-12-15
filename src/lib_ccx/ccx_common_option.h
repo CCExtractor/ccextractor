@@ -157,7 +157,7 @@ struct ccx_s_options // Options from user parameters
 	LLONG debug_mask;                                   // dbg_print will use this mask to print or ignore different types
 	LLONG debug_mask_on_debug;                          // If we're using temp_debug to enable/disable debug "live", this is the mask when temp_debug=1
 	/* Networking */
-    char *udpsrc;
+	char *udpsrc;
 	char *udpaddr;
 	unsigned udpport;                                   // Non-zero => Listen for UDP packets on this port, no files.
 	char *tcpport;
