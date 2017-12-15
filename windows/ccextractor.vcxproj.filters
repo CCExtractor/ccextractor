@@ -303,9 +303,6 @@
     <ClInclude Include="..\src\gpacmp4\gpac\list.h">
       <Filter>Header Files\gpacmp4</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\math.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\gpacmp4\gpac\media_tools.h">
       <Filter>Header Files\gpacmp4</Filter>
     </ClInclude>
@@ -365,6 +362,15 @@
     </ClInclude>
     <ClInclude Include="..\src\ccextractor.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gpacmp4\gpac\color.h">
+      <Filter>Header Files\gpacmp4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gpacmp4\gpac\maths.h">
+      <Filter>Header Files\gpacmp4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gpacmp4\gpac\thread.h">
+      <Filter>Header Files\gpacmp4</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -826,6 +832,15 @@
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_python.c">
       <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_demuxer_mxf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gpacmp4\box_dump.c">
+      <Filter>Source Files\gpacmp4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gpacmp4\alloc.c">
+      <Filter>Source Files\gpacmp4</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
