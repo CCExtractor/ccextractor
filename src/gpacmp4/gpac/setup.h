@@ -106,7 +106,7 @@ void CE_WideToChar(unsigned short *w_str, char *str);
 void CE_CharToWide(char *str, unsigned short *w_str);
 
 
-#define strdup _strdup
+#define strdupi _strdupi
 #define stricmp _stricmp
 #define strnicmp _strnicmp
 #define strupr _strupr
@@ -364,7 +364,7 @@ u64 gf_memory_size(); /*gets memory allocated in bytes*/
 #define gf_calloc calloc
 #define gf_realloc realloc
 #define gf_free free
-#define gf_strdup strdup
+#define gf_strdupi strdupi
 
 #endif
 
