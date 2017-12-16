@@ -1,34 +1,34 @@
 /*
-*			GPAC - Multimedia Framework C SDK
-*
-*			Authors: Jean Le Feuvre
-*			Copyright (c) Telecom ParisTech 2000-2012
-*					All rights reserved
-*
-*  This file is part of GPAC / MPEG-4 ObjectDescriptor sub-project
-*
-*  GPAC is free software; you can redistribute it and/or modify
-*  it under the terms of the GNU Lesser General Public License as published by
-*  the Free Software Foundation; either version 2, or (at your option)
-*  any later version.
-*
-*  GPAC is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU Lesser General Public License for more details.
-*
-*  You should have received a copy of the GNU Lesser General Public
-*  License along with this library; see the file COPYING.  If not, write to
-*  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-*
-*/
+ *			GPAC - Multimedia Framework C SDK
+ *
+ *			Authors: Jean Le Feuvre
+ *			Copyright (c) Telecom ParisTech 2000-2012
+ *					All rights reserved
+ *
+ *  This file is part of GPAC / MPEG-4 ObjectDescriptor sub-project
+ *
+ *  GPAC is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  GPAC is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; see the file COPYING.  If not, write to
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
 
 #include <gpac/internal/odf_dev.h>
 
 #ifndef GPAC_MINIMAL_ODF
 
 /************************************************************
-QoSQualifiers Functions
+		QoSQualifiers Functions
 ************************************************************/
 
 GF_EXPORT
@@ -62,7 +62,7 @@ GF_Err gf_odf_qos_add_qualif(GF_QoS_Descriptor *desc, GF_QoS_Default *qualif)
 	if (desc->tag != GF_ODF_QOS_TAG) return GF_BAD_PARAM;
 	if (desc->predefined) return GF_ODF_FORBIDDEN_DESCRIPTOR;
 
-	i = 0;
+	i=0;
 	while ((def = (GF_QoS_Default *)gf_list_enum(desc->QoS_Qualifiers, &i))) {
 		//if same Qualifier, not allowed...
 		if (def->tag == qualif->tag) return GF_ODF_FORBIDDEN_DESCRIPTOR;
@@ -73,7 +73,7 @@ GF_Err gf_odf_qos_add_qualif(GF_QoS_Descriptor *desc, GF_QoS_Default *qualif)
 void gf_odf_delete_qos_qual(GF_QoS_Default *qos)
 {
 	switch (qos->tag) {
-	case QoSMaxDelayTag:
+	case QoSMaxDelayTag :
 	case QoSPrefMaxDelayTag:
 	case QoSLossProbTag:
 	case QoSMaxGapLossTag:
@@ -84,9 +84,9 @@ void gf_odf_delete_qos_qual(GF_QoS_Default *qos)
 		return;
 
 	default:
-		if (((GF_QoS_Private *)qos)->DataLength)
+		if ( ((GF_QoS_Private *)qos)->DataLength)
 			gf_free(((GF_QoS_Private *)qos)->Data);
-		gf_free((GF_QoS_Private *)qos);
+		gf_free( (GF_QoS_Private *) qos);
 		return;
 	}
 }
@@ -94,7 +94,7 @@ void gf_odf_delete_qos_qual(GF_QoS_Default *qos)
 
 GF_Err gf_odf_size_qos_qual(GF_QoS_Default *qos)
 {
-	if (!qos) return GF_BAD_PARAM;
+	if (! qos) return GF_BAD_PARAM;
 	qos->size = 0;
 
 	switch (qos->tag) {
@@ -112,7 +112,7 @@ GF_Err gf_odf_size_qos_qual(GF_QoS_Default *qos)
 	case 0xFF:
 		return GF_ODF_FORBIDDEN_DESCRIPTOR;
 
-	default:
+	default :
 		qos->size += ((GF_QoS_Private *)qos)->DataLength;
 	}
 	return GF_OK;
@@ -186,51 +186,59 @@ GF_Err gf_odf_parse_qos(GF_BitStream *bs, GF_QoS_Default **qos_qual, u32 *qual_s
 	do {
 		val = gf_bs_read_int(bs, 8);
 		sizeHeader++;
+		if (sizeHeader > 5) {
+			GF_LOG(GF_LOG_ERROR, GF_LOG_CODEC, ("[ODF] Descriptor size on more than 4 bytes\n"));
+			return GF_ODF_INVALID_DESCRIPTOR;
+		}
 		qos_size <<= 7;
 		qos_size |= val & 0x7F;
-	} while (val & 0x80);
+	} while ( val & 0x80 );
+	if (gf_bs_available(bs) < qos_size) {
+		GF_LOG(GF_LOG_ERROR, GF_LOG_CODEC, ("[ODF] Not enough bytes (%d) to read descriptor (size=%d)\n", gf_bs_available(bs), qos_size));
+		return GF_ODF_INVALID_DESCRIPTOR;
+	}
 	bytesParsed += sizeHeader;
 
 	//Payload
 	switch (tag) {
 	case QoSMaxDelayTag:
-		newQoS = (GF_QoS_Default *)gf_malloc(sizeof(GF_QoS_MaxDelay));
+		newQoS = (GF_QoS_Default *) gf_malloc(sizeof(GF_QoS_MaxDelay));
 		((GF_QoS_MaxDelay *)newQoS)->MaxDelay = gf_bs_read_int(bs, 32);
 		bytesParsed += 4;
 		break;
 
 	case QoSPrefMaxDelayTag:
-		newQoS = (GF_QoS_Default *)gf_malloc(sizeof(GF_QoS_PrefMaxDelay));
+		newQoS = (GF_QoS_Default *) gf_malloc(sizeof(GF_QoS_PrefMaxDelay));
 		((GF_QoS_PrefMaxDelay *)newQoS)->PrefMaxDelay = gf_bs_read_int(bs, 32);
 		bytesParsed += 4;
 		break;
 
 	case QoSLossProbTag:
-		newQoS = (GF_QoS_Default *)gf_malloc(sizeof(GF_QoS_LossProb));
+		newQoS = (GF_QoS_Default *) gf_malloc(sizeof(GF_QoS_LossProb));
 		((GF_QoS_LossProb *)newQoS)->LossProb = gf_bs_read_float(bs);
 		bytesParsed += 4;
 		break;
 
 	case QoSMaxGapLossTag:
-		newQoS = (GF_QoS_Default *)gf_malloc(sizeof(GF_QoS_MaxGapLoss));
+		newQoS = (GF_QoS_Default *) gf_malloc(sizeof(GF_QoS_MaxGapLoss));
 		((GF_QoS_MaxGapLoss *)newQoS)->MaxGapLoss = gf_bs_read_int(bs, 32);
 		bytesParsed += 4;
 		break;
 
 	case QoSMaxAUSizeTag:
-		newQoS = (GF_QoS_Default *)gf_malloc(sizeof(GF_QoS_MaxAUSize));
+		newQoS = (GF_QoS_Default *) gf_malloc(sizeof(GF_QoS_MaxAUSize));
 		((GF_QoS_MaxAUSize *)newQoS)->MaxAUSize = gf_bs_read_int(bs, 32);
 		bytesParsed += 4;
 		break;
 
 	case QoSAvgAUSizeTag:
-		newQoS = (GF_QoS_Default *)gf_malloc(sizeof(GF_QoS_AvgAUSize));
+		newQoS = (GF_QoS_Default *) gf_malloc(sizeof(GF_QoS_AvgAUSize));
 		((GF_QoS_AvgAUSize *)newQoS)->AvgAUSize = gf_bs_read_int(bs, 32);
 		bytesParsed += 4;
 		break;
 
 	case QoSMaxAURateTag:
-		newQoS = (GF_QoS_Default *)gf_malloc(sizeof(GF_QoS_MaxAURate));
+		newQoS = (GF_QoS_Default *) gf_malloc(sizeof(GF_QoS_MaxAURate));
 		((GF_QoS_MaxAURate *)newQoS)->MaxAURate = gf_bs_read_int(bs, 32);
 		bytesParsed += 4;
 		break;
@@ -241,7 +249,7 @@ GF_Err gf_odf_parse_qos(GF_BitStream *bs, GF_QoS_Default **qos_qual, u32 *qual_s
 
 	default:
 		//we defined the private qos...
-		newQoS = (GF_QoS_Default *)gf_malloc(sizeof(GF_QoS_Private));
+		newQoS = (GF_QoS_Default *) gf_malloc(sizeof(GF_QoS_Private));
 		((GF_QoS_Private *)newQoS)->DataLength = qos_size;
 		gf_bs_read_data(bs, ((GF_QoS_Private *)newQoS)->Data, ((GF_QoS_Private *)newQoS)->DataLength);
 		bytesParsed += ((GF_QoS_Private *)newQoS)->DataLength;
@@ -265,43 +273,43 @@ GF_QoS_Default *NewQoS(u8 tag)
 
 	switch (tag) {
 	case QoSMaxDelayTag:
-		newQoS = (GF_QoS_Default *)gf_malloc(sizeof(GF_QoS_MaxDelay));
+		newQoS = (GF_QoS_Default *) gf_malloc(sizeof(GF_QoS_MaxDelay));
 		((GF_QoS_MaxDelay *)newQoS)->MaxDelay = 0;
 		((GF_QoS_MaxDelay *)newQoS)->size = 4;
 		break;
 
 	case QoSPrefMaxDelayTag:
-		newQoS = (GF_QoS_Default *)gf_malloc(sizeof(GF_QoS_PrefMaxDelay));
+		newQoS = (GF_QoS_Default *) gf_malloc(sizeof(GF_QoS_PrefMaxDelay));
 		((GF_QoS_PrefMaxDelay *)newQoS)->PrefMaxDelay = 0;
 		((GF_QoS_PrefMaxDelay *)newQoS)->size = 4;
 		break;
 
 	case QoSLossProbTag:
-		newQoS = (GF_QoS_Default *)gf_malloc(sizeof(GF_QoS_LossProb));
+		newQoS = (GF_QoS_Default *) gf_malloc(sizeof(GF_QoS_LossProb));
 		((GF_QoS_LossProb *)newQoS)->LossProb = 0;
 		((GF_QoS_LossProb *)newQoS)->size = 4;
 		break;
 
 	case QoSMaxGapLossTag:
-		newQoS = (GF_QoS_Default *)gf_malloc(sizeof(GF_QoS_MaxGapLoss));
+		newQoS = (GF_QoS_Default *) gf_malloc(sizeof(GF_QoS_MaxGapLoss));
 		((GF_QoS_MaxGapLoss *)newQoS)->MaxGapLoss = 0;
 		((GF_QoS_MaxGapLoss *)newQoS)->size = 4;
 		break;
 
 	case QoSMaxAUSizeTag:
-		newQoS = (GF_QoS_Default *)gf_malloc(sizeof(GF_QoS_MaxAUSize));
+		newQoS = (GF_QoS_Default *) gf_malloc(sizeof(GF_QoS_MaxAUSize));
 		((GF_QoS_MaxAUSize *)newQoS)->MaxAUSize = 0;
 		((GF_QoS_MaxAUSize *)newQoS)->size = 0;
 		break;
 
 	case QoSAvgAUSizeTag:
-		newQoS = (GF_QoS_Default *)gf_malloc(sizeof(GF_QoS_AvgAUSize));
+		newQoS = (GF_QoS_Default *) gf_malloc(sizeof(GF_QoS_AvgAUSize));
 		((GF_QoS_AvgAUSize *)newQoS)->AvgAUSize = 0;
 		((GF_QoS_AvgAUSize *)newQoS)->size = 4;
 		break;
 
 	case QoSMaxAURateTag:
-		newQoS = (GF_QoS_Default *)gf_malloc(sizeof(GF_QoS_MaxAURate));
+		newQoS = (GF_QoS_Default *) gf_malloc(sizeof(GF_QoS_MaxAURate));
 		((GF_QoS_MaxAURate *)newQoS)->MaxAURate = 0;
 		((GF_QoS_MaxAURate *)newQoS)->size = 4;
 		break;
@@ -312,7 +320,7 @@ GF_QoS_Default *NewQoS(u8 tag)
 
 	default:
 		//we defined the private qos...
-		newQoS = (GF_QoS_Default *)gf_malloc(sizeof(GF_QoS_Private));
+		newQoS = (GF_QoS_Default *) gf_malloc(sizeof(GF_QoS_Private));
 		((GF_QoS_Private *)newQoS)->DataLength = 0;
 		((GF_QoS_Private *)newQoS)->Data = NULL;
 		break;
@@ -326,12 +334,12 @@ GF_QoS_Default *NewQoS(u8 tag)
 //
 GF_Descriptor *gf_odf_new_qos()
 {
-	GF_QoS_Descriptor *newDesc = (GF_QoS_Descriptor *)gf_malloc(sizeof(GF_QoS_Descriptor));
+	GF_QoS_Descriptor *newDesc = (GF_QoS_Descriptor *) gf_malloc(sizeof(GF_QoS_Descriptor));
 	if (!newDesc) return NULL;
 	newDesc->QoS_Qualifiers = gf_list_new();
 	newDesc->predefined = 0;
 	newDesc->tag = GF_ODF_QOS_TAG;
-	return (GF_Descriptor *)newDesc;
+	return (GF_Descriptor *) newDesc;
 }
 
 //
@@ -398,7 +406,7 @@ GF_Err gf_odf_size_qos(GF_QoS_Descriptor *qos, u32 *outSize)
 
 	*outSize = 1;
 
-	i = 0;
+	i=0;
 	while ((tmp = (GF_QoS_Default *)gf_list_enum(qos->QoS_Qualifiers, &i))) {
 		e = gf_odf_size_qos_qual(tmp);
 		if (e) return e;
@@ -424,8 +432,8 @@ GF_Err gf_odf_write_qos(GF_BitStream *bs, GF_QoS_Descriptor *qos)
 
 	gf_bs_write_int(bs, qos->predefined, 8);
 
-	if (!qos->predefined) {
-		i = 0;
+	if (! qos->predefined) {
+		i=0;
 		while ((tmp = (GF_QoS_Default *)gf_list_enum(qos->QoS_Qualifiers, &i))) {
 			e = gf_odf_write_qos_qual(bs, tmp);
 			if (e) return e;

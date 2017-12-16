@@ -1,27 +1,27 @@
 /*
-*			GPAC - Multimedia Framework C SDK
-*
-*			Authors: Jean Le Feuvre
-*			Copyright (c) Telecom ParisTech 2000-2012
-*					All rights reserved
-*
-*  This file is part of GPAC / common tools sub-project
-*
-*  GPAC is free software; you can redistribute it and/or modify
-*  it under the terms of the GNU Lesser General Public License as published by
-*  the Free Software Foundation; either version 2, or (at your option)
-*  any later version.
-*
-*  GPAC is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU Lesser General Public License for more details.
-*
-*  You should have received a copy of the GNU Lesser General Public
-*  License along with this library; see the file COPYING.  If not, write to
-*  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-*
-*/
+ *			GPAC - Multimedia Framework C SDK
+ *
+ *			Authors: Jean Le Feuvre
+ *			Copyright (c) Telecom ParisTech 2000-2012
+ *					All rights reserved
+ *
+ *  This file is part of GPAC / common tools sub-project
+ *
+ *  GPAC is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  GPAC is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; see the file COPYING.  If not, write to
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
 
 #include <gpac/tools.h>
 
@@ -41,18 +41,18 @@ const char *gf_4cc_to_str(u32 type)
 {
 	u32 ch, i;
 	char *ptr, *name = (char *)szTYPE;
+	if (!type) return "";
 	ptr = name;
 	for (i = 0; i < 4; i++, name++) {
-		ch = type >> (8 * (3 - i)) & 0xff;
-		if (ch >= 0x20 && ch <= 0x7E) {
+		ch = type >> (8 * (3-i) ) & 0xff;
+		if ( ch >= 0x20 && ch <= 0x7E ) {
 			*name = ch;
-		}
-		else {
+		} else {
 			*name = '.';
 		}
 	}
 	*name = 0;
-	return (const char *)ptr;
+	return (const char *) ptr;
 }
 
 
@@ -88,23 +88,23 @@ static void gf_on_progress_std(const char *_title, u64 done, u64 total)
 	Double prog;
 	u32 pos, pc;
 	const char *szT = _title ? (char *)_title : (char *) "";
-	prog = (double)done;
+	prog = (double) done;
 	prog /= total;
-	pos = MIN((u32)(20 * prog), 20);
+	pos = MIN((u32) (20 * prog), 20);
 
 	if (pos>prev_pos) {
 		prev_pos = 0;
 		prev_pc = 0;
 	}
-	pc = (u32)(100 * prog);
-	if ((pos != prev_pos) || (pc != prev_pc)) {
+	pc = (u32) ( 100 * prog);
+	if ((pos!=prev_pos) || (pc!=prev_pc)) {
 		prev_pos = pos;
 		prev_pc = pc;
 		fprintf(stderr, "%s: |%s| (%02d/100)\r", szT, szProg[pos], pc);
 		fflush(stderr);
 	}
-	if (done == total) {
-		u32 len = (u32)strlen(szT) + 40;
+	if (done==total) {
+		u32 len = (u32) strlen(szT) + 40;
 		while (len) {
 			fprintf(stderr, " ");
 			len--;
@@ -141,7 +141,7 @@ static struct log_tool_info {
 	u32 type;
 	const char *name;
 	GF_LOG_Level level;
-} global_log_tools[] =
+} global_log_tools [] =
 {
 	{ GF_LOG_CORE, "core", GF_LOG_WARNING },
 	{ GF_LOG_CODING, "coding", GF_LOG_WARNING },
@@ -188,28 +188,28 @@ GF_Err gf_log_modify_tools_levels(const char *val)
 			return GF_BAD_PARAM;
 		}
 
-		if (!strnicmp(sep_level + 1, "error", 5)) {
+		if (!strnicmp(sep_level+1, "error", 5)) {
 			level = GF_LOG_ERROR;
-			next_val = sep_level + 1 + 5;
+			next_val = sep_level+1 + 5;
 		}
-		else if (!strnicmp(sep_level + 1, "warning", 7)) {
+		else if (!strnicmp(sep_level+1, "warning", 7)) {
 			level = GF_LOG_WARNING;
-			next_val = sep_level + 1 + 7;
+			next_val = sep_level+1 + 7;
 		}
-		else if (!strnicmp(sep_level + 1, "info", 4)) {
+		else if (!strnicmp(sep_level+1, "info", 4)) {
 			level = GF_LOG_INFO;
-			next_val = sep_level + 1 + 4;
+			next_val = sep_level+1 + 4;
 		}
-		else if (!strnicmp(sep_level + 1, "debug", 5)) {
+		else if (!strnicmp(sep_level+1, "debug", 5)) {
 			level = GF_LOG_DEBUG;
-			next_val = sep_level + 1 + 5;
+			next_val = sep_level+1 + 5;
 		}
-		else if (!strnicmp(sep_level + 1, "quiet", 5)) {
+		else if (!strnicmp(sep_level+1, "quiet", 5)) {
 			level = GF_LOG_QUIET;
-			next_val = sep_level + 1 + 5;
+			next_val = sep_level+1 + 5;
 		}
 		else {
-			fprintf(stderr, "Unknown log level specified: %s\n", sep_level + 1);
+			fprintf(stderr, "Unknown log level specified: %s\n", sep_level+1);
 			return GF_BAD_PARAM;
 		}
 
@@ -222,12 +222,12 @@ GF_Err gf_log_modify_tools_levels(const char *val)
 			if (sep) sep[0] = 0;
 
 			if (!stricmp(tools, "all")) {
-				for (i = 0; i<GF_LOG_TOOL_MAX; i++)
+				for (i=0; i<GF_LOG_TOOL_MAX; i++)
 					global_log_tools[i].level = level;
 			}
 			else {
 				Bool found = GF_FALSE;
-				for (i = 0; i<GF_LOG_TOOL_MAX; i++) {
+				for (i=0; i<GF_LOG_TOOL_MAX; i++) {
 					if (!strcmp(global_log_tools[i].name, tools)) {
 						global_log_tools[i].level = level;
 						found = GF_TRUE;
@@ -243,12 +243,12 @@ GF_Err gf_log_modify_tools_levels(const char *val)
 
 			if (!sep) break;
 			sep[0] = ':';
-			tools = sep + 1;
+			tools = sep+1;
 		}
 
 		sep_level[0] = '@';
 		if (!next_val[0]) break;
-		val = next_val + 1;
+		val = next_val+1;
 	}
 #endif
 	return GF_OK;
@@ -259,7 +259,7 @@ GF_Err gf_log_set_tools_levels(const char *val)
 {
 #ifndef GPAC_DISABLE_LOG
 	u32 i;
-	for (i = 0; i<GF_LOG_TOOL_MAX; i++)
+	for (i=0; i<GF_LOG_TOOL_MAX; i++)
 		global_log_tools[i].level = GF_LOG_WARNING;
 
 	return gf_log_modify_tools_levels(val);
@@ -281,7 +281,7 @@ char *gf_log_get_tools_levels()
 	while (level <= GF_LOG_DEBUG) {
 		u32 nb_tools = 0;
 		strcpy(szLogs, "");
-		for (i = 0; i<GF_LOG_TOOL_MAX; i++) {
+		for (i=0; i<GF_LOG_TOOL_MAX; i++) {
 			if (global_log_tools[i].level == level) {
 				strcat(szLogs, global_log_tools[i].name);
 				strcat(szLogs, ":");
@@ -290,13 +290,13 @@ char *gf_log_get_tools_levels()
 		}
 		if (nb_tools) {
 			char *levelstr = "@warning";
-			if (level == GF_LOG_QUIET) levelstr = "@quiet";
-			else if (level == GF_LOG_ERROR) levelstr = "@error";
-			else if (level == GF_LOG_WARNING) levelstr = "@warning";
-			else if (level == GF_LOG_INFO) levelstr = "@info";
-			else if (level == GF_LOG_DEBUG) levelstr = "@debug";
+			if (level==GF_LOG_QUIET) levelstr = "@quiet";
+			else if (level==GF_LOG_ERROR) levelstr = "@error";
+			else if (level==GF_LOG_WARNING) levelstr = "@warning";
+			else if (level==GF_LOG_INFO) levelstr = "@info";
+			else if (level==GF_LOG_DEBUG) levelstr = "@debug";
 
-			if (nb_tools>GF_LOG_TOOL_MAX / 2) {
+			if (nb_tools>GF_LOG_TOOL_MAX/2) {
 				strcpy(szLogs, szLogTools);
 				strcpy(szLogTools, "all");
 				strcat(szLogTools, levelstr);
@@ -304,23 +304,22 @@ char *gf_log_get_tools_levels()
 					strcat(szLogTools, ":");
 					strcat(szLogTools, szLogs);
 				}
-			}
-			else {
+			} else {
 				if (strlen(szLogTools)) {
 					strcat(szLogTools, ":");
 				}
 				/*remove last ':' from tool*/
-				szLogs[strlen(szLogs) - 1] = 0;
+				szLogs[ strlen(szLogs) - 1 ] = 0;
 				strcat(szLogTools, szLogs);
 				strcat(szLogTools, levelstr);
 			}
 		}
 		level++;
 	}
-	len = (u32)strlen(szLogTools);
+	len = (u32) strlen(szLogTools);
 	if (len) {
 		/*remove last ':' from level*/
-		if (szLogTools[len - 1] == ':') szLogTools[len - 1] = 0;
+		if (szLogTools[ len-1 ] == ':') szLogTools[ len-1 ] = 0;
 		return gf_strdup(szLogTools);
 	}
 #endif
@@ -358,43 +357,43 @@ void default_log_callback(void *cbck, GF_LOG_Level level, GF_LOG_Tool tool, cons
 			console_attr_ori = console_info.wAttributes;
 		}
 	}
-	switch (level) {
-	case GF_LOG_ERROR:
-		SetConsoleTextAttribute(console, FOREGROUND_RED | FOREGROUND_INTENSITY);
-		break;
-	case GF_LOG_WARNING:
-		SetConsoleTextAttribute(console, FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN);
-		break;
-	case GF_LOG_INFO:
-		SetConsoleTextAttribute(console, FOREGROUND_INTENSITY | FOREGROUND_GREEN);
-		break;
-	case GF_LOG_DEBUG:
-		SetConsoleTextAttribute(console, FOREGROUND_GREEN);
-		break;
-	default:
-		SetConsoleTextAttribute(console, FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_BLUE);
-		break;
+	switch(level) {
+		case GF_LOG_ERROR:
+			SetConsoleTextAttribute(console, FOREGROUND_RED | FOREGROUND_INTENSITY);
+			break;
+		case GF_LOG_WARNING:
+			SetConsoleTextAttribute(console, FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN);
+			break;
+		case GF_LOG_INFO:
+			SetConsoleTextAttribute(console, FOREGROUND_INTENSITY | FOREGROUND_GREEN);
+			break;
+		case GF_LOG_DEBUG:
+			SetConsoleTextAttribute(console, FOREGROUND_GREEN);
+			break;
+		default:
+			SetConsoleTextAttribute(console, FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_BLUE);
+			break;
 	}
-
+	
 	vfprintf(stderr, fmt, vlist);
 	SetConsoleTextAttribute(console, console_attr_ori);
 #elif !defined(_WIN32_WCE)
-	switch (level) {
-	case GF_LOG_ERROR:
-		fprintf(stderr, RED);
-		break;
-	case GF_LOG_WARNING:
-		fprintf(stderr, YELLOW);
-		break;
-	case GF_LOG_INFO:
-		fprintf(stderr, GREEN);
-		break;
-	case GF_LOG_DEBUG:
-		fprintf(stderr, CYAN);
-		break;
-	default:
-		fprintf(stderr, WHITE);
-		break;
+	switch(level) {
+		case GF_LOG_ERROR:
+			fprintf(stderr, RED);
+			break;
+		case GF_LOG_WARNING:
+			fprintf(stderr, YELLOW);
+			break;
+		case GF_LOG_INFO:
+			fprintf(stderr, GREEN);
+			break;
+		case GF_LOG_DEBUG:
+			fprintf(stderr, CYAN);
+			break;
+		default:
+			fprintf(stderr, WHITE);
+			break;
 	}
 
 	vfprintf(stderr, fmt, vlist);
@@ -415,7 +414,7 @@ void gf_log(const char *fmt, ...)
 	va_start(vl, fmt);
 	log_cbk(user_log_cbk, call_lev, call_tool, fmt, vl);
 	va_end(vl);
-	if (log_exit_on_error && (call_lev == GF_LOG_ERROR) && (call_tool != GF_LOG_MEMORY)) {
+	if (log_exit_on_error && (call_lev==GF_LOG_ERROR) && (call_tool != GF_LOG_MEMORY)) {
 		exit(1);
 	}
 }
@@ -424,7 +423,7 @@ GF_EXPORT
 void gf_log_va_list(GF_LOG_Level level, GF_LOG_Tool tool, const char *fmt, va_list vl)
 {
 	log_cbk(user_log_cbk, call_lev, call_tool, fmt, vl);
-	if (log_exit_on_error && (call_lev == GF_LOG_ERROR) && (call_tool != GF_LOG_MEMORY)) {
+	if (log_exit_on_error && (call_lev==GF_LOG_ERROR) && (call_tool != GF_LOG_MEMORY)) {
 		exit(1);
 	}
 }
@@ -438,13 +437,12 @@ void gf_log_set_strict_error(Bool strict)
 GF_EXPORT
 void gf_log_set_tool_level(GF_LOG_Tool tool, GF_LOG_Level level)
 {
-	assert(tool <= GF_LOG_TOOL_MAX);
-	if (tool == GF_LOG_ALL) {
+	assert(tool<=GF_LOG_TOOL_MAX);
+	if (tool==GF_LOG_ALL) {
 		u32 i;
-		for (i = 0; i<GF_LOG_TOOL_MAX; i++)
+		for (i=0; i<GF_LOG_TOOL_MAX; i++)
 			global_log_tools[i].level = level;
-	}
-	else {
+	} else {
 		global_log_tools[tool].level = level;
 	}
 }
@@ -498,7 +496,7 @@ const char *gf_error_to_string(GF_Err e)
 	case GF_OK:
 		return "No Error";
 
-		/*General errors */
+	/*General errors */
 	case GF_BAD_PARAM:
 		return "Bad Parameter";
 	case GF_OUT_OF_MEM:
@@ -510,7 +508,7 @@ const char *gf_error_to_string(GF_Err e)
 	case GF_CORRUPTED_DATA:
 		return "Corrupted Data in file/stream";
 
-		/*File Format Errors */
+	/*File Format Errors */
 	case GF_ISOM_INVALID_FILE:
 		return "Invalid IsoMedia File";
 	case GF_ISOM_INCOMPLETE_FILE:
@@ -522,7 +520,7 @@ const char *gf_error_to_string(GF_Err e)
 	case GF_ISOM_UNKNOWN_DATA_REF:
 		return "Media Data Reference not found";
 
-		/*Object Descriptor Errors */
+	/*Object Descriptor Errors */
 	case GF_ODF_INVALID_DESCRIPTOR:
 		return "Invalid MPEG-4 Descriptor";
 	case GF_ODF_FORBIDDEN_DESCRIPTOR:
@@ -530,7 +528,7 @@ const char *gf_error_to_string(GF_Err e)
 	case GF_ODF_INVALID_COMMAND:
 		return "Read OD Command Failed";
 
-		/*BIFS Errors */
+	/*BIFS Errors */
 	case GF_SG_UNKNOWN_NODE:
 		return "Unknown BIFS Node";
 	case GF_SG_INVALID_PROTO:
@@ -540,7 +538,7 @@ const char *gf_error_to_string(GF_Err e)
 	case GF_SCRIPT_ERROR:
 		return "Invalid Script";
 
-		/*MPEG-4 Errors */
+	/*MPEG-4 Errors */
 	case GF_BUFFER_TOO_SMALL:
 		return "Bad Buffer size (too small)";
 	case GF_NON_COMPLIANT_BITSTREAM:
@@ -548,7 +546,7 @@ const char *gf_error_to_string(GF_Err e)
 	case GF_CODEC_NOT_FOUND:
 		return "Media Codec not found";
 
-		/*DMIF errors - local and control plane */
+	/*DMIF errors - local and control plane */
 	case GF_URL_ERROR:
 		return "Requested URL is not valid or cannot be found";
 
@@ -583,10 +581,8 @@ const char *gf_error_to_string(GF_Err e)
 		return "Bad configuration for the current context";
 	case GF_NOT_FOUND:
 		return "At least one required element has not been found";
-	case GF_MISSING_REQUIREMENTS:
-		return "The filter is missing at least one requirement";
-	case GF_WRONG_DATAFORMAT:
-		return "Unexpected data format";
+	case GF_PROFILE_NOT_SUPPORTED:
+		return "Unsupported codec profile";
 	default:
 		sprintf(szErrMsg, "Unknown Error (%d)", e);
 		return szErrMsg;
@@ -645,7 +641,7 @@ u32 gf_crc_32(const char *data, u32 len)
 	register u32 i;
 	u32 crc = 0xffffffff;
 	if (!data) return 0;
-	for (i = 0; i<len; i++)
+	for (i=0; i<len; i++)
 		crc = (crc << 8) ^ gf_crc_table[((crc >> 24) ^ *data++) & 0xff];
 
 	return crc;
@@ -659,127 +655,127 @@ const char *gpac_features()
 {
 	const char *features = ""
 #ifdef GPAC_64_BITS
-		"GPAC_64_BITS "
+	                       "GPAC_64_BITS "
 #endif
 
 #ifdef GPAC_FIXED_POINT
-		"GPAC_FIXED_POINT "
+	                       "GPAC_FIXED_POINT "
 #endif
 #ifdef GPAC_MEMORY_TRACKING
-		"GPAC_MEMORY_TRACKING "
+	                       "GPAC_MEMORY_TRACKING "
 #endif
 #ifdef GPAC_BIG_ENDIAN
-		"GPAC_BIG_ENDIAN "
+	                       "GPAC_BIG_ENDIAN "
 #endif
 #ifdef GPAC_HAS_SSL
-		"GPAC_HAS_SSL "
+	                       "GPAC_HAS_SSL "
 #endif
 #ifdef GPAC_HAS_SPIDERMONKEY
-		"GPAC_HAS_SPIDERMONKEY "
+	                       "GPAC_HAS_SPIDERMONKEY "
 #endif
 #ifdef GPAC_HAS_JPEG
-		"GPAC_HAS_JPEG "
+	                       "GPAC_HAS_JPEG "
 #endif
 #ifdef GPAC_HAS_PNG
-		"GPAC_HAS_PNG "
+	                       "GPAC_HAS_PNG "
 #endif
 #ifdef GPAC_DISABLE_3D
-		"GPAC_DISABLE_3D "
+	                       "GPAC_DISABLE_3D "
 #endif
 #ifdef GPAC_USE_TINYGL
-		"GPAC_USE_TINYGL "
+	                       "GPAC_USE_TINYGL "
 #endif
 #ifdef GPAC_USE_GLES1X
-		"GPAC_USE_GLES1X "
+	                       "GPAC_USE_GLES1X "
 #endif
 #if defined(_WIN32_WCE)
 #ifdef GPAC_USE_IGPP
-		"GPAC_USE_IGPP "
+	                       "GPAC_USE_IGPP "
 #endif
 #ifdef GPAC_USE_IGPP_HP
-		"GPAC_USE_IGPP_HP "
+	                       "GPAC_USE_IGPP_HP "
 #endif
 #endif
 #ifdef GPAC_DISABLE_SVG
-		"GPAC_DISABLE_SVG "
+	                       "GPAC_DISABLE_SVG "
 #endif
 #ifdef GPAC_DISABLE_VRML
-		"GPAC_DISABLE_VRML "
+	                       "GPAC_DISABLE_VRML "
 #endif
 #ifdef GPAC_MINIMAL_ODF
-		"GPAC_MINIMAL_ODF "
+	                       "GPAC_MINIMAL_ODF "
 #endif
 #ifdef GPAC_DISABLE_BIFS
-		"GPAC_DISABLE_BIFS "
+	                       "GPAC_DISABLE_BIFS "
 #endif
 #ifdef GPAC_DISABLE_QTVR
-		"GPAC_DISABLE_QTVR "
+	                       "GPAC_DISABLE_QTVR "
 #endif
 #ifdef GPAC_DISABLE_AVILIB
-		"GPAC_DISABLE_AVILIB "
+	                       "GPAC_DISABLE_AVILIB "
 #endif
 #ifdef GPAC_DISABLE_OGG
-		"GPAC_DISABLE_OGG "
+	                       "GPAC_DISABLE_OGG "
 #endif
 #ifdef GPAC_DISABLE_MPEG2PS
-		"GPAC_DISABLE_MPEG2PS "
+	                       "GPAC_DISABLE_MPEG2PS "
 #endif
 #ifdef GPAC_DISABLE_MPEG2PS
-		"GPAC_DISABLE_MPEG2TS "
+	                       "GPAC_DISABLE_MPEG2TS "
 #endif
 #ifdef GPAC_DISABLE_SENG
-		"GPAC_DISABLE_SENG "
+	                       "GPAC_DISABLE_SENG "
 #endif
 #ifdef GPAC_DISABLE_MEDIA_IMPORT
-		"GPAC_DISABLE_MEDIA_IMPORT "
+	                       "GPAC_DISABLE_MEDIA_IMPORT "
 #endif
 #ifdef GPAC_DISABLE_AV_PARSERS
-		"GPAC_DISABLE_AV_PARSERS "
+	                       "GPAC_DISABLE_AV_PARSERS "
 #endif
 #ifdef GPAC_DISABLE_MEDIA_EXPORT
-		"GPAC_DISABLE_MEDIA_EXPORT "
+	                       "GPAC_DISABLE_MEDIA_EXPORT "
 #endif
 #ifdef GPAC_DISABLE_SWF_IMPORT
-		"GPAC_DISABLE_SWF_IMPORT "
+	                       "GPAC_DISABLE_SWF_IMPORT "
 #endif
 #ifdef GPAC_DISABLE_SCENE_STATS
-		"GPAC_DISABLE_SCENE_STATS "
+	                       "GPAC_DISABLE_SCENE_STATS "
 #endif
 #ifdef GPAC_DISABLE_SCENE_DUMP
-		"GPAC_DISABLE_SCENE_DUMP "
+	                       "GPAC_DISABLE_SCENE_DUMP "
 #endif
 #ifdef GPAC_DISABLE_SCENE_ENCODER
-		"GPAC_DISABLE_SCENE_ENCODER "
+	                       "GPAC_DISABLE_SCENE_ENCODER "
 #endif
 #ifdef GPAC_DISABLE_LOADER_ISOM
-		"GPAC_DISABLE_LOADER_ISOM "
+	                       "GPAC_DISABLE_LOADER_ISOM "
 #endif
 #ifdef GPAC_DISABLE_OD_DUMP
-		"GPAC_DISABLE_OD_DUMP "
+	                       "GPAC_DISABLE_OD_DUMP "
 #endif
 #ifdef GPAC_DISABLE_MCRYPT
-		"GPAC_DISABLE_MCRYPT "
+	                       "GPAC_DISABLE_MCRYPT "
 #endif
 #ifdef GPAC_DISABLE_ISOM
-		"GPAC_DISABLE_MCRYPT "
+	                       "GPAC_DISABLE_MCRYPT "
 #endif
 #ifdef GPAC_DISABLE_ISOM_HINTING
-		"GPAC_DISABLE_ISOM_HINTING "
+	                       "GPAC_DISABLE_ISOM_HINTING "
 #endif
 #ifdef GPAC_DISABLE_ISOM_WRITE
-		"GPAC_DISABLE_ISOM_WRITE "
+	                       "GPAC_DISABLE_ISOM_WRITE "
 #endif
 #ifdef GPAC_DISABLE_ISOM_FRAGMENTS
-		"GPAC_DISABLE_ISOM_FRAGMENTS "
+	                       "GPAC_DISABLE_ISOM_FRAGMENTS "
 #endif
 #ifdef GPAC_DISABLE_LASER
-		"GPAC_DISABLE_LASER "
+	                       "GPAC_DISABLE_LASER "
 #endif
 #ifdef GPAC_DISABLE_STREAMING
-		"GPAC_DISABLE_STREAMING "
+	                       "GPAC_DISABLE_STREAMING "
 #endif
 
-		;
+	                       ;
 	return features;
 }
 
@@ -788,493 +784,493 @@ static const struct lang_def {
 	const char *name;
 	const char *three_char_code;
 	const char *two_char_code;
-} defined_languages[] =
+} defined_languages [] =
 {
-	{ "Abkhazian","abk","ab" } ,
-	{ "Achinese","ace","" } ,
-	{ "Acoli","ach","" } ,
-	{ "Adangme","ada","" } ,
-	{ "Adyghe; Adygei","ady","" } ,
-	{ "Afar","aar","aa" } ,
-	{ "Afrihili","afh","" } ,
-	{ "Afrikaans","afr","af" } ,
-	{ "Afro-Asiatic languages","afa","" } ,
-	{ "Ainu","ain","" } ,
-	{ "Akan","aka","ak" } ,
-	{ "Akkadian","akk","" } ,
-	{ "Albanian","sqi","sq" } ,
-	{ "Aleut","ale","" } ,
-	{ "Algonquian languages","alg","" } ,
-	{ "Altaic languages","tut","" } ,
-	{ "Amharic","amh","am" } ,
-	{ "Angika","anp","" } ,
-	{ "Apache languages","apa","" } ,
-	{ "Arabic","ara","ar" } ,
-	{ "Aragonese","arg","an" } ,
-	{ "Arapaho","arp","" } ,
-	{ "Arawak","arw","" } ,
-	{ "Armenian","hye","hy" } ,
-	{ "Aromanian; Arumanian; Macedo-Romanian","rup","" } ,
-	{ "Artificial languages","art","" } ,
-	{ "Assamese","asm","as" } ,
-	{ "Asturian; Bable; Leonese; Asturleonese","ast","" } ,
-	{ "Athapascan languages","ath","" } ,
-	{ "Australian languages","aus","" } ,
-	{ "Austronesian languages","map","" } ,
-	{ "Avaric","ava","av" } ,
-	{ "Avestan","ave","ae" } ,
-	{ "Awadhi","awa","" } ,
-	{ "Aymara","aym","ay" } ,
-	{ "Azerbaijani","aze","az" } ,
-	{ "Balinese","ban","" } ,
-	{ "Baltic languages","bat","" } ,
-	{ "Baluchi","bal","" } ,
-	{ "Bambara","bam","bm" } ,
-	{ "Bamileke languages","bai","" } ,
-	{ "Banda languages","bad","" } ,
-	{ "Bantu languages","bnt","" } ,
-	{ "Basa","bas","" } ,
-	{ "Bashkir","bak","ba" } ,
-	{ "Basque","eus","eu" } ,
-	{ "Batak languages","btk","" } ,
-	{ "Beja; Bedawiyet","bej","" } ,
-	{ "Belarusian","bel","be" } ,
-	{ "Bemba","bem","" } ,
-	{ "Bengali","ben","bn" } ,
-	{ "Berber languages","ber","" } ,
-	{ "Bhojpuri","bho","" } ,
-	{ "Bihari languages","bih","bh" } ,
-	{ "Bikol","bik","" } ,
-	{ "Bini; Edo","bin","" } ,
-	{ "Bislama","bis","bi" } ,
-	{ "Blin; Bilin","byn","" } ,
-	{ "Blissymbols; Blissymbolics; Bliss","zbl","" } ,
-	{ "Bokmal, Norwegian; Norwegian Bokmal","nob","nb" } ,
-	{ "Bosnian","bos","bs" } ,
-	{ "Braj","bra","" } ,
-	{ "Breton","bre","br" } ,
-	{ "Buginese","bug","" } ,
-	{ "Bulgarian","bul","bg" } ,
-	{ "Buriat","bua","" } ,
-	{ "Burmese","mya","my" } ,
-	{ "Caddo","cad","" } ,
-	{ "Catalan; Valencian","cat","ca" } ,
-	{ "Caucasian languages","cau","" } ,
-	{ "Cebuano","ceb","" } ,
-	{ "Celtic languages","cel","" } ,
-	{ "Central American Indian languages","cai","" } ,
-	{ "Central Khmer","khm","km" } ,
-	{ "Chagatai","chg","" } ,
-	{ "Chamic languages","cmc","" } ,
-	{ "Chamorro","cha","ch" } ,
-	{ "Chechen","che","ce" } ,
-	{ "Cherokee","chr","" } ,
-	{ "Cheyenne","chy","" } ,
-	{ "Chibcha","chb","" } ,
-	{ "Chichewa; Chewa; Nyanja","nya","ny" } ,
-	{ "Chinese","zho","zh" } ,
-	{ "Chinook jargon","chn","" } ,
-	{ "Chipewyan; Dene Suline","chp","" } ,
-	{ "Choctaw","cho","" } ,
-	{ "Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church}  S{ lavonic","chu","cu" } ,
-	{ "Chuukese","chk","" } ,
-	{ "Chuvash","chv","cv" } ,
-	{ "Classical Newari; Old Newari; Classical Nepal Bhasa","nwc","" } ,
-	{ "Classical Syriac","syc","" } ,
-	{ "Coptic","cop","" } ,
-	{ "Cornish","cor","kw" } ,
-	{ "Corsican","cos","co" } ,
-	{ "Cree","cre","cr" } ,
-	{ "Creek","mus","" } ,
-	{ "Creoles and pidgins","crp","" } ,
-	{ "Creoles and pidgins, English based","cpe","" } ,
-	{ "Creoles and pidgins, French-based","cpf","" } ,
-	{ "Creoles and pidgins, Portuguese-based","cpp","" } ,
-	{ "Crimean Tatar; Crimean Turkish","crh","" } ,
-	{ "Croatian","hrv","hr" } ,
-	{ "Cushitic languages","cus","" } ,
-	{ "Czech","ces","cs" } ,
-	{ "Dakota","dak","" } ,
-	{ "Danish","dan","da" } ,
-	{ "Dargwa","dar","" } ,
-	{ "Delaware","del","" } ,
-	{ "Dinka","din","" } ,
-	{ "Divehi; Dhivehi; Maldivian","div","dv" } ,
-	{ "Dogri","doi","" } ,
-	{ "Dogrib","dgr","" } ,
-	{ "Dravidian languages","dra","" } ,
-	{ "Duala","dua","" } ,
-	{ "Dutch, Middle (ca.1050-1350)","dum","" } ,
-	{ "Dutch; Flemish","nld","nl" } ,
-	{ "Dyula","dyu","" } ,
-	{ "Dzongkha","dzo","dz" } ,
-	{ "Eastern Frisian","frs","" } ,
-	{ "Efik","efi","" } ,
-	{ "Egyptian (Ancient)","egy","" } ,
-	{ "Ekajuk","eka","" } ,
-	{ "Elamite","elx","" } ,
-	{ "English","eng","en" } ,
-	{ "English, Middle (1100-1500)","enm","" } ,
-	{ "English, Old (ca.450-1100)","ang","" } ,
-	{ "Erzya","myv","" } ,
-	{ "Esperanto","epo","eo" } ,
-	{ "Estonian","est","et" } ,
-	{ "Ewe","ewe","ee" } ,
-	{ "Ewondo","ewo","" } ,
-	{ "Fang","fan","" } ,
-	{ "Fanti","fat","" } ,
-	{ "Faroese","fao","fo" } ,
-	{ "Fijian","fij","fj" } ,
-	{ "Filipino; Pilipino","fil","" } ,
-	{ "Finnish","fin","fi" } ,
-	{ "Finno-Ugrian languages","fiu","" } ,
-	{ "Fon","fon","" } ,
-	{ "French","fra","fr" } ,
-	{ "French, Middle (ca.1400-1600)","frm","" } ,
-	{ "French, Old (842-ca.1400)","fro","" } ,
-	{ "Friulian","fur","" } ,
-	{ "Fulah","ful","ff" } ,
-	{ "Ga","gaa","" } ,
-	{ "Gaelic; Scottish Gaelic","gla","gd" } ,
-	{ "Galibi Carib","car","" } ,
-	{ "Galician","glg","gl" } ,
-	{ "Ganda","lug","lg" } ,
-	{ "Gayo","gay","" } ,
-	{ "Gbaya","gba","" } ,
-	{ "Geez","gez","" } ,
-	{ "Georgian","kat","ka" } ,
-	{ "German","deu","de" } ,
-	{ "German, Middle High (ca.1050-1500)","gmh","" } ,
-	{ "German, Old High (ca.750-1050)","goh","" } ,
-	{ "Germanic languages","gem","" } ,
-	{ "Gilbertese","gil","" } ,
-	{ "Gondi","gon","" } ,
-	{ "Gorontalo","gor","" } ,
-	{ "Gothic","got","" } ,
-	{ "Grebo","grb","" } ,
-	{ "Greek, Ancient (to 1453)","grc","" } ,
-	{ "Greek, Modern (1453-)","ell","el" } ,
-	{ "Guarani","grn","gn" } ,
-	{ "Gujarati","guj","gu" } ,
-	{ "Gwich'in","gwi","" } ,
-	{ "Haida","hai","" } ,
-	{ "Haitian; Haitian Creole","hat","ht" } ,
-	{ "Hausa","hau","ha" } ,
-	{ "Hawaiian","haw","" } ,
-	{ "Hebrew","heb","he" } ,
-	{ "Herero","her","hz" } ,
-	{ "Hiligaynon","hil","" } ,
-	{ "Himachali languages; Western Pahari languages","him","" } ,
-	{ "Hindi","hin","hi" } ,
-	{ "Hiri Motu","hmo","ho" } ,
-	{ "Hittite","hit","" } ,
-	{ "Hmong; Mong","hmn","" } ,
-	{ "Hungarian","hun","hu" } ,
-	{ "Hupa","hup","" } ,
-	{ "Iban","iba","" } ,
-	{ "Icelandic","isl","is" } ,
-	{ "Ido","ido","io" } ,
-	{ "Igbo","ibo","ig" } ,
-	{ "Ijo languages","ijo","" } ,
-	{ "Iloko","ilo","" } ,
-	{ "Inari Sami","smn","" } ,
-	{ "Indic languages","inc","" } ,
-	{ "Indo-European languages","ine","" } ,
-	{ "Indonesian","ind","id" } ,
-	{ "Ingush","inh","" } ,
-	{ "Interlingua (International Auxiliary Language Association)","ina","ia" } ,
-	{ "Interlingue; Occidental","ile","ie" } ,
-	{ "Inuktitut","iku","iu" } ,
-	{ "Inupiaq","ipk","ik" } ,
-	{ "Iranian languages","ira","" } ,
-	{ "Irish","gle","ga" } ,
-	{ "Irish, Middle (900-1200)","mga","" } ,
-	{ "Irish, Old (to 900)","sga","" } ,
-	{ "Iroquoian languages","iro","" } ,
-	{ "Italian","ita","it" } ,
-	{ "Japanese","jpn","ja" } ,
-	{ "Javanese","jav","jv" } ,
-	{ "Judeo-Arabic","jrb","" } ,
-	{ "Judeo-Persian","jpr","" } ,
-	{ "Kabardian","kbd","" } ,
-	{ "Kabyle","kab","" } ,
-	{ "Kachin; Jingpho","kac","" } ,
-	{ "Kalaallisut; Greenlandic","kal","kl" } ,
-	{ "Kalmyk; Oirat","xal","" } ,
-	{ "Kamba","kam","" } ,
-	{ "Kannada","kan","kn" } ,
-	{ "Kanuri","kau","kr" } ,
-	{ "Kara-Kalpak","kaa","" } ,
-	{ "Karachay-Balkar","krc","" } ,
-	{ "Karelian","krl","" } ,
-	{ "Karen languages","kar","" } ,
-	{ "Kashmiri","kas","ks" } ,
-	{ "Kashubian","csb","" } ,
-	{ "Kawi","kaw","" } ,
-	{ "Kazakh","kaz","kk" } ,
-	{ "Khasi","kha","" } ,
-	{ "Khoisan languages","khi","" } ,
-	{ "Khotanese; Sakan","kho","" } ,
-	{ "Kikuyu; Gikuyu","kik","ki" } ,
-	{ "Kimbundu","kmb","" } ,
-	{ "Kinyarwanda","kin","rw" } ,
-	{ "Kirghiz; Kyrgyz","kir","ky" } ,
-	{ "Klingon; tlhIngan-Hol","tlh","" } ,
-	{ "Komi","kom","kv" } ,
-	{ "Kongo","kon","kg" } ,
-	{ "Konkani","kok","" } ,
-	{ "Korean","kor","ko" } ,
-	{ "Kosraean","kos","" } ,
-	{ "Kpelle","kpe","" } ,
-	{ "Kru languages","kro","" } ,
-	{ "Kuanyama; Kwanyama","kua","kj" } ,
-	{ "Kumyk","kum","" } ,
-	{ "Kurdish","kur","ku" } ,
-	{ "Kurukh","kru","" } ,
-	{ "Kutenai","kut","" } ,
-	{ "Ladino","lad","" } ,
-	{ "Lahnda","lah","" } ,
-	{ "Lamba","lam","" } ,
-	{ "Land Dayak languages","day","" } ,
-	{ "Lao","lao","lo" } ,
-	{ "Latin","lat","la" } ,
-	{ "Latvian","lav","lv" } ,
-	{ "Lezghian","lez","" } ,
-	{ "Limburgan; Limburger; Limburgish","lim","li" } ,
-	{ "Lingala","lin","ln" } ,
-	{ "Lithuanian","lit","lt" } ,
-	{ "Lojban","jbo","" } ,
-	{ "Low German; Low Saxon; German, Low; Saxon, Low","nds","" } ,
-	{ "Lower Sorbian","dsb","" } ,
-	{ "Lozi","loz","" } ,
-	{ "Luba-Katanga","lub","lu" } ,
-	{ "Luba-Lulua","lua","" } ,
-	{ "Luiseno","lui","" } ,
-	{ "Lule Sami","smj","" } ,
-	{ "Lunda","lun","" } ,
-	{ "Luo (Kenya and Tanzania)","luo","" } ,
-	{ "Lushai","lus","" } ,
-	{ "Luxembourgish; Letzeburgesch","ltz","lb" } ,
-	{ "Macedonian","mkd","mk" } ,
-	{ "Madurese","mad","" } ,
-	{ "Magahi","mag","" } ,
-	{ "Maithili","mai","" } ,
-	{ "Makasar","mak","" } ,
-	{ "Malagasy","mlg","mg" } ,
-	{ "Malay","msa","ms" } ,
-	{ "Malayalam","mal","ml" } ,
-	{ "Maltese","mlt","mt" } ,
-	{ "Manchu","mnc","" } ,
-	{ "Mandar","mdr","" } ,
-	{ "Mandingo","man","" } ,
-	{ "Manipuri","mni","" } ,
-	{ "Manobo languages","mno","" } ,
-	{ "Manx","glv","gv" } ,
-	{ "Maori","mri","mi" } ,
-	{ "Mapudungun; Mapuche","arn","" } ,
-	{ "Marathi","mar","mr" } ,
-	{ "Mari","chm","" } ,
-	{ "Marshallese","mah","mh" } ,
-	{ "Marwari","mwr","" } ,
-	{ "Masai","mas","" } ,
-	{ "Mayan languages","myn","" } ,
-	{ "Mende","men","" } ,
-	{ "Mi'kmaq; Micmac","mic","" } ,
-	{ "Minangkabau","min","" } ,
-	{ "Mirandese","mwl","" } ,
-	{ "Mohawk","moh","" } ,
-	{ "Moksha","mdf","" } ,
-	{ "Mon-Khmer languages","mkh","" } ,
-	{ "Mongo","lol","" } ,
-	{ "Mongolian","mon","mn" } ,
-	{ "Mossi","mos","" } ,
-	{ "Multiple languages","mul","" } ,
-	{ "Munda languages","mun","" } ,
-	{ "N'Ko","nqo","" } ,
-	{ "Nahuatl languages","nah","" } ,
-	{ "Nauru","nau","na" } ,
-	{ "Navajo; Navaho","nav","nv" } ,
-	{ "Ndebele, North; North Ndebele","nde","nd" } ,
-	{ "Ndebele, South; South Ndebele","nbl","nr" } ,
-	{ "Ndonga","ndo","ng" } ,
-	{ "Neapolitan","nap","" } ,
-	{ "Nepal Bhasa; Newari","new","" } ,
-	{ "Nepali","nep","ne" } ,
-	{ "Nias","nia","" } ,
-	{ "Niger-Kordofanian languages","nic","" } ,
-	{ "Nilo-Saharan languages","ssa","" } ,
-	{ "Niuean","niu","" } ,
-	{ "No linguistic content; Not applicable","zxx","" } ,
-	{ "Nogai","nog","" } ,
-	{ "Norse, Old","non","" } ,
-	{ "North American Indian languages","nai","" } ,
-	{ "Northern Frisian","frr","" } ,
-	{ "Northern Sami","sme","se" } ,
-	{ "Norwegian","nor","no" } ,
-	{ "Norwegian Nynorsk; Nynorsk, Norwegian","nno","nn" } ,
-	{ "Nubian languages","nub","" } ,
-	{ "Nyamwezi","nym","" } ,
-	{ "Nyankole","nyn","" } ,
-	{ "Nyoro","nyo","" } ,
-	{ "Nzima","nzi","" } ,
-	{ "Occitan (post 1500)","oci","oc" } ,
-	{ "Official Aramaic (700-300 BCE); Imperial Aramaic (700-300 BCE)","arc","" } ,
-	{ "Ojibwa","oji","oj" } ,
-	{ "Oriya","ori","or" } ,
-	{ "Oromo","orm","om" } ,
-	{ "Osage","osa","" } ,
-	{ "Ossetian; Ossetic","oss","os" } ,
-	{ "Otomian languages","oto","" } ,
-	{ "Pahlavi","pal","" } ,
-	{ "Palauan","pau","" } ,
-	{ "Pali","pli","pi" } ,
-	{ "Pampanga; Kapampangan","pam","" } ,
-	{ "Pangasinan","pag","" } ,
-	{ "Panjabi; Punjabi","pan","pa" } ,
-	{ "Papiamento","pap","" } ,
-	{ "Papuan languages","paa","" } ,
-	{ "Pedi; Sepedi; Northern Sotho","nso","" } ,
-	{ "Persian","fas","fa" } ,
-	{ "Persian, Old (ca.600-400 B.C.)","peo","" } ,
-	{ "Philippine languages","phi","" } ,
-	{ "Phoenician","phn","" } ,
-	{ "Pohnpeian","pon","" } ,
-	{ "Polish","pol","pl" } ,
-	{ "Portuguese","por","pt" } ,
-	{ "Prakrit languages","pra","" } ,
+	{ "Abkhazian","abk","ab"} ,
+	{ "Achinese","ace",""} ,
+	{ "Acoli","ach",""} ,
+	{ "Adangme","ada",""} ,
+	{ "Adyghe; Adygei","ady",""} ,
+	{ "Afar","aar","aa"} ,
+	{ "Afrihili","afh",""} ,
+	{ "Afrikaans","afr","af"} ,
+	{ "Afro-Asiatic languages","afa",""} ,
+	{ "Ainu","ain",""} ,
+	{ "Akan","aka","ak"} ,
+	{ "Akkadian","akk",""} ,
+	{ "Albanian","sqi","sq"} ,
+	{ "Aleut","ale",""} ,
+	{ "Algonquian languages","alg",""} ,
+	{ "Altaic languages","tut",""} ,
+	{ "Amharic","amh","am"} ,
+	{ "Angika","anp",""} ,
+	{ "Apache languages","apa",""} ,
+	{ "Arabic","ara","ar"} ,
+	{ "Aragonese","arg","an"} ,
+	{ "Arapaho","arp",""} ,
+	{ "Arawak","arw",""} ,
+	{ "Armenian","hye","hy"} ,
+	{ "Aromanian; Arumanian; Macedo-Romanian","rup",""} ,
+	{ "Artificial languages","art",""} ,
+	{ "Assamese","asm","as"} ,
+	{ "Asturian; Bable; Leonese; Asturleonese","ast",""} ,
+	{ "Athapascan languages","ath",""} ,
+	{ "Australian languages","aus",""} ,
+	{ "Austronesian languages","map",""} ,
+	{ "Avaric","ava","av"} ,
+	{ "Avestan","ave","ae"} ,
+	{ "Awadhi","awa",""} ,
+	{ "Aymara","aym","ay"} ,
+	{ "Azerbaijani","aze","az"} ,
+	{ "Balinese","ban",""} ,
+	{ "Baltic languages","bat",""} ,
+	{ "Baluchi","bal",""} ,
+	{ "Bambara","bam","bm"} ,
+	{ "Bamileke languages","bai",""} ,
+	{ "Banda languages","bad",""} ,
+	{ "Bantu languages","bnt",""} ,
+	{ "Basa","bas",""} ,
+	{ "Bashkir","bak","ba"} ,
+	{ "Basque","eus","eu"} ,
+	{ "Batak languages","btk",""} ,
+	{ "Beja; Bedawiyet","bej",""} ,
+	{ "Belarusian","bel","be"} ,
+	{ "Bemba","bem",""} ,
+	{ "Bengali","ben","bn"} ,
+	{ "Berber languages","ber",""} ,
+	{ "Bhojpuri","bho",""} ,
+	{ "Bihari languages","bih","bh"} ,
+	{ "Bikol","bik",""} ,
+	{ "Bini; Edo","bin",""} ,
+	{ "Bislama","bis","bi"} ,
+	{ "Blin; Bilin","byn",""} ,
+	{ "Blissymbols; Blissymbolics; Bliss","zbl",""} ,
+	{ "Bokmal, Norwegian; Norwegian Bokmal","nob","nb"} ,
+	{ "Bosnian","bos","bs"} ,
+	{ "Braj","bra",""} ,
+	{ "Breton","bre","br"} ,
+	{ "Buginese","bug",""} ,
+	{ "Bulgarian","bul","bg"} ,
+	{ "Buriat","bua",""} ,
+	{ "Burmese","mya","my"} ,
+	{ "Caddo","cad",""} ,
+	{ "Catalan; Valencian","cat","ca"} ,
+	{ "Caucasian languages","cau",""} ,
+	{ "Cebuano","ceb",""} ,
+	{ "Celtic languages","cel",""} ,
+	{ "Central American Indian languages","cai",""} ,
+	{ "Central Khmer","khm","km"} ,
+	{ "Chagatai","chg",""} ,
+	{ "Chamic languages","cmc",""} ,
+	{ "Chamorro","cha","ch"} ,
+	{ "Chechen","che","ce"} ,
+	{ "Cherokee","chr",""} ,
+	{ "Cheyenne","chy",""} ,
+	{ "Chibcha","chb",""} ,
+	{ "Chichewa; Chewa; Nyanja","nya","ny"} ,
+	{ "Chinese","zho","zh"} ,
+	{ "Chinook jargon","chn",""} ,
+	{ "Chipewyan; Dene Suline","chp",""} ,
+	{ "Choctaw","cho",""} ,
+	{ "Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church}  S{ lavonic","chu","cu"} ,
+	{ "Chuukese","chk",""} ,
+	{ "Chuvash","chv","cv"} ,
+	{ "Classical Newari; Old Newari; Classical Nepal Bhasa","nwc",""} ,
+	{ "Classical Syriac","syc",""} ,
+	{ "Coptic","cop",""} ,
+	{ "Cornish","cor","kw"} ,
+	{ "Corsican","cos","co"} ,
+	{ "Cree","cre","cr"} ,
+	{ "Creek","mus",""} ,
+	{ "Creoles and pidgins","crp",""} ,
+	{ "Creoles and pidgins, English based","cpe",""} ,
+	{ "Creoles and pidgins, French-based","cpf",""} ,
+	{ "Creoles and pidgins, Portuguese-based","cpp",""} ,
+	{ "Crimean Tatar; Crimean Turkish","crh",""} ,
+	{ "Croatian","hrv","hr"} ,
+	{ "Cushitic languages","cus",""} ,
+	{ "Czech","ces","cs"} ,
+	{ "Dakota","dak",""} ,
+	{ "Danish","dan","da"} ,
+	{ "Dargwa","dar",""} ,
+	{ "Delaware","del",""} ,
+	{ "Dinka","din",""} ,
+	{ "Divehi; Dhivehi; Maldivian","div","dv"} ,
+	{ "Dogri","doi",""} ,
+	{ "Dogrib","dgr",""} ,
+	{ "Dravidian languages","dra",""} ,
+	{ "Duala","dua",""} ,
+	{ "Dutch, Middle (ca.1050-1350)","dum",""} ,
+	{ "Dutch; Flemish","nld","nl"} ,
+	{ "Dyula","dyu",""} ,
+	{ "Dzongkha","dzo","dz"} ,
+	{ "Eastern Frisian","frs",""} ,
+	{ "Efik","efi",""} ,
+	{ "Egyptian (Ancient)","egy",""} ,
+	{ "Ekajuk","eka",""} ,
+	{ "Elamite","elx",""} ,
+	{ "English","eng","en"} ,
+	{ "English, Middle (1100-1500)","enm",""} ,
+	{ "English, Old (ca.450-1100)","ang",""} ,
+	{ "Erzya","myv",""} ,
+	{ "Esperanto","epo","eo"} ,
+	{ "Estonian","est","et"} ,
+	{ "Ewe","ewe","ee"} ,
+	{ "Ewondo","ewo",""} ,
+	{ "Fang","fan",""} ,
+	{ "Fanti","fat",""} ,
+	{ "Faroese","fao","fo"} ,
+	{ "Fijian","fij","fj"} ,
+	{ "Filipino; Pilipino","fil",""} ,
+	{ "Finnish","fin","fi"} ,
+	{ "Finno-Ugrian languages","fiu",""} ,
+	{ "Fon","fon",""} ,
+	{ "French","fra","fr"} ,
+	{ "French, Middle (ca.1400-1600)","frm",""} ,
+	{ "French, Old (842-ca.1400)","fro",""} ,
+	{ "Friulian","fur",""} ,
+	{ "Fulah","ful","ff"} ,
+	{ "Ga","gaa",""} ,
+	{ "Gaelic; Scottish Gaelic","gla","gd"} ,
+	{ "Galibi Carib","car",""} ,
+	{ "Galician","glg","gl"} ,
+	{ "Ganda","lug","lg"} ,
+	{ "Gayo","gay",""} ,
+	{ "Gbaya","gba",""} ,
+	{ "Geez","gez",""} ,
+	{ "Georgian","kat","ka"} ,
+	{ "German","deu","de"} ,
+	{ "German, Middle High (ca.1050-1500)","gmh",""} ,
+	{ "German, Old High (ca.750-1050)","goh",""} ,
+	{ "Germanic languages","gem",""} ,
+	{ "Gilbertese","gil",""} ,
+	{ "Gondi","gon",""} ,
+	{ "Gorontalo","gor",""} ,
+	{ "Gothic","got",""} ,
+	{ "Grebo","grb",""} ,
+	{ "Greek, Ancient (to 1453)","grc",""} ,
+	{ "Greek, Modern (1453-)","ell","el"} ,
+	{ "Guarani","grn","gn"} ,
+	{ "Gujarati","guj","gu"} ,
+	{ "Gwich'in","gwi",""} ,
+	{ "Haida","hai",""} ,
+	{ "Haitian; Haitian Creole","hat","ht"} ,
+	{ "Hausa","hau","ha"} ,
+	{ "Hawaiian","haw",""} ,
+	{ "Hebrew","heb","he"} ,
+	{ "Herero","her","hz"} ,
+	{ "Hiligaynon","hil",""} ,
+	{ "Himachali languages; Western Pahari languages","him",""} ,
+	{ "Hindi","hin","hi"} ,
+	{ "Hiri Motu","hmo","ho"} ,
+	{ "Hittite","hit",""} ,
+	{ "Hmong; Mong","hmn",""} ,
+	{ "Hungarian","hun","hu"} ,
+	{ "Hupa","hup",""} ,
+	{ "Iban","iba",""} ,
+	{ "Icelandic","isl","is"} ,
+	{ "Ido","ido","io"} ,
+	{ "Igbo","ibo","ig"} ,
+	{ "Ijo languages","ijo",""} ,
+	{ "Iloko","ilo",""} ,
+	{ "Inari Sami","smn",""} ,
+	{ "Indic languages","inc",""} ,
+	{ "Indo-European languages","ine",""} ,
+	{ "Indonesian","ind","id"} ,
+	{ "Ingush","inh",""} ,
+	{ "Interlingua (International Auxiliary Language Association)","ina","ia"} ,
+	{ "Interlingue; Occidental","ile","ie"} ,
+	{ "Inuktitut","iku","iu"} ,
+	{ "Inupiaq","ipk","ik"} ,
+	{ "Iranian languages","ira",""} ,
+	{ "Irish","gle","ga"} ,
+	{ "Irish, Middle (900-1200)","mga",""} ,
+	{ "Irish, Old (to 900)","sga",""} ,
+	{ "Iroquoian languages","iro",""} ,
+	{ "Italian","ita","it"} ,
+	{ "Japanese","jpn","ja"} ,
+	{ "Javanese","jav","jv"} ,
+	{ "Judeo-Arabic","jrb",""} ,
+	{ "Judeo-Persian","jpr",""} ,
+	{ "Kabardian","kbd",""} ,
+	{ "Kabyle","kab",""} ,
+	{ "Kachin; Jingpho","kac",""} ,
+	{ "Kalaallisut; Greenlandic","kal","kl"} ,
+	{ "Kalmyk; Oirat","xal",""} ,
+	{ "Kamba","kam",""} ,
+	{ "Kannada","kan","kn"} ,
+	{ "Kanuri","kau","kr"} ,
+	{ "Kara-Kalpak","kaa",""} ,
+	{ "Karachay-Balkar","krc",""} ,
+	{ "Karelian","krl",""} ,
+	{ "Karen languages","kar",""} ,
+	{ "Kashmiri","kas","ks"} ,
+	{ "Kashubian","csb",""} ,
+	{ "Kawi","kaw",""} ,
+	{ "Kazakh","kaz","kk"} ,
+	{ "Khasi","kha",""} ,
+	{ "Khoisan languages","khi",""} ,
+	{ "Khotanese; Sakan","kho",""} ,
+	{ "Kikuyu; Gikuyu","kik","ki"} ,
+	{ "Kimbundu","kmb",""} ,
+	{ "Kinyarwanda","kin","rw"} ,
+	{ "Kirghiz; Kyrgyz","kir","ky"} ,
+	{ "Klingon; tlhIngan-Hol","tlh",""} ,
+	{ "Komi","kom","kv"} ,
+	{ "Kongo","kon","kg"} ,
+	{ "Konkani","kok",""} ,
+	{ "Korean","kor","ko"} ,
+	{ "Kosraean","kos",""} ,
+	{ "Kpelle","kpe",""} ,
+	{ "Kru languages","kro",""} ,
+	{ "Kuanyama; Kwanyama","kua","kj"} ,
+	{ "Kumyk","kum",""} ,
+	{ "Kurdish","kur","ku"} ,
+	{ "Kurukh","kru",""} ,
+	{ "Kutenai","kut",""} ,
+	{ "Ladino","lad",""} ,
+	{ "Lahnda","lah",""} ,
+	{ "Lamba","lam",""} ,
+	{ "Land Dayak languages","day",""} ,
+	{ "Lao","lao","lo"} ,
+	{ "Latin","lat","la"} ,
+	{ "Latvian","lav","lv"} ,
+	{ "Lezghian","lez",""} ,
+	{ "Limburgan; Limburger; Limburgish","lim","li"} ,
+	{ "Lingala","lin","ln"} ,
+	{ "Lithuanian","lit","lt"} ,
+	{ "Lojban","jbo",""} ,
+	{ "Low German; Low Saxon; German, Low; Saxon, Low","nds",""} ,
+	{ "Lower Sorbian","dsb",""} ,
+	{ "Lozi","loz",""} ,
+	{ "Luba-Katanga","lub","lu"} ,
+	{ "Luba-Lulua","lua",""} ,
+	{ "Luiseno","lui",""} ,
+	{ "Lule Sami","smj",""} ,
+	{ "Lunda","lun",""} ,
+	{ "Luo (Kenya and Tanzania)","luo",""} ,
+	{ "Lushai","lus",""} ,
+	{ "Luxembourgish; Letzeburgesch","ltz","lb"} ,
+	{ "Macedonian","mkd","mk"} ,
+	{ "Madurese","mad",""} ,
+	{ "Magahi","mag",""} ,
+	{ "Maithili","mai",""} ,
+	{ "Makasar","mak",""} ,
+	{ "Malagasy","mlg","mg"} ,
+	{ "Malay","msa","ms"} ,
+	{ "Malayalam","mal","ml"} ,
+	{ "Maltese","mlt","mt"} ,
+	{ "Manchu","mnc",""} ,
+	{ "Mandar","mdr",""} ,
+	{ "Mandingo","man",""} ,
+	{ "Manipuri","mni",""} ,
+	{ "Manobo languages","mno",""} ,
+	{ "Manx","glv","gv"} ,
+	{ "Maori","mri","mi"} ,
+	{ "Mapudungun; Mapuche","arn",""} ,
+	{ "Marathi","mar","mr"} ,
+	{ "Mari","chm",""} ,
+	{ "Marshallese","mah","mh"} ,
+	{ "Marwari","mwr",""} ,
+	{ "Masai","mas",""} ,
+	{ "Mayan languages","myn",""} ,
+	{ "Mende","men",""} ,
+	{ "Mi'kmaq; Micmac","mic",""} ,
+	{ "Minangkabau","min",""} ,
+	{ "Mirandese","mwl",""} ,
+	{ "Mohawk","moh",""} ,
+	{ "Moksha","mdf",""} ,
+	{ "Mon-Khmer languages","mkh",""} ,
+	{ "Mongo","lol",""} ,
+	{ "Mongolian","mon","mn"} ,
+	{ "Mossi","mos",""} ,
+	{ "Multiple languages","mul",""} ,
+	{ "Munda languages","mun",""} ,
+	{ "N'Ko","nqo",""} ,
+	{ "Nahuatl languages","nah",""} ,
+	{ "Nauru","nau","na"} ,
+	{ "Navajo; Navaho","nav","nv"} ,
+	{ "Ndebele, North; North Ndebele","nde","nd"} ,
+	{ "Ndebele, South; South Ndebele","nbl","nr"} ,
+	{ "Ndonga","ndo","ng"} ,
+	{ "Neapolitan","nap",""} ,
+	{ "Nepal Bhasa; Newari","new",""} ,
+	{ "Nepali","nep","ne"} ,
+	{ "Nias","nia",""} ,
+	{ "Niger-Kordofanian languages","nic",""} ,
+	{ "Nilo-Saharan languages","ssa",""} ,
+	{ "Niuean","niu",""} ,
+	{ "No linguistic content; Not applicable","zxx",""} ,
+	{ "Nogai","nog",""} ,
+	{ "Norse, Old","non",""} ,
+	{ "North American Indian languages","nai",""} ,
+	{ "Northern Frisian","frr",""} ,
+	{ "Northern Sami","sme","se"} ,
+	{ "Norwegian","nor","no"} ,
+	{ "Norwegian Nynorsk; Nynorsk, Norwegian","nno","nn"} ,
+	{ "Nubian languages","nub",""} ,
+	{ "Nyamwezi","nym",""} ,
+	{ "Nyankole","nyn",""} ,
+	{ "Nyoro","nyo",""} ,
+	{ "Nzima","nzi",""} ,
+	{ "Occitan (post 1500)","oci","oc"} ,
+	{ "Official Aramaic (700-300 BCE); Imperial Aramaic (700-300 BCE)","arc",""} ,
+	{ "Ojibwa","oji","oj"} ,
+	{ "Oriya","ori","or"} ,
+	{ "Oromo","orm","om"} ,
+	{ "Osage","osa",""} ,
+	{ "Ossetian; Ossetic","oss","os"} ,
+	{ "Otomian languages","oto",""} ,
+	{ "Pahlavi","pal",""} ,
+	{ "Palauan","pau",""} ,
+	{ "Pali","pli","pi"} ,
+	{ "Pampanga; Kapampangan","pam",""} ,
+	{ "Pangasinan","pag",""} ,
+	{ "Panjabi; Punjabi","pan","pa"} ,
+	{ "Papiamento","pap",""} ,
+	{ "Papuan languages","paa",""} ,
+	{ "Pedi; Sepedi; Northern Sotho","nso",""} ,
+	{ "Persian","fas","fa"} ,
+	{ "Persian, Old (ca.600-400 B.C.)","peo",""} ,
+	{ "Philippine languages","phi",""} ,
+	{ "Phoenician","phn",""} ,
+	{ "Pohnpeian","pon",""} ,
+	{ "Polish","pol","pl"} ,
+	{ "Portuguese","por","pt"} ,
+	{ "Prakrit languages","pra",""} ,
 	//{ "Provençal, Old (to 1500);Occitan, Old (to 1500)","pro",""} ,
-	{ "Pushto; Pashto","pus","ps" } ,
-	{ "Quechua","que","qu" } ,
-	{ "Rajasthani","raj","" } ,
-	{ "Rapanui","rap","" } ,
-	{ "Rarotongan; Cook Islands Maori","rar","" } ,
-	{ "Reserved for local use","qaa-qtz","" } ,
-	{ "Romance languages","roa","" } ,
-	{ "Romanian; Moldavian; Moldovan","ron","ro" } ,
-	{ "Romansh","roh","rm" } ,
-	{ "Romany","rom","" } ,
-	{ "Rundi","run","rn" } ,
-	{ "Russian","rus","ru" } ,
-	{ "Salishan languages","sal","" } ,
-	{ "Samaritan Aramaic","sam","" } ,
-	{ "Sami languages","smi","" } ,
-	{ "Samoan","smo","sm" } ,
-	{ "Sandawe","sad","" } ,
-	{ "Sango","sag","sg" } ,
-	{ "Sanskrit","san","sa" } ,
-	{ "Santali","sat","" } ,
-	{ "Sardinian","srd","sc" } ,
-	{ "Sasak","sas","" } ,
-	{ "Scots","sco","" } ,
-	{ "Selkup","sel","" } ,
-	{ "Semitic languages","sem","" } ,
-	{ "Serbian","srp","sr" } ,
-	{ "Serer","srr","" } ,
-	{ "Shan","shn","" } ,
-	{ "Shona","sna","sn" } ,
-	{ "Sichuan Yi; Nuosu","iii","ii" } ,
-	{ "Sicilian","scn","" } ,
-	{ "Sidamo","sid","" } ,
-	{ "Sign Languages","sgn","" } ,
-	{ "Siksika","bla","" } ,
-	{ "Sindhi","snd","sd" } ,
-	{ "Sinhala; Sinhalese","sin","si" } ,
-	{ "Sino-Tibetan languages","sit","" } ,
-	{ "Siouan languages","sio","" } ,
-	{ "Skolt Sami","sms","" } ,
-	{ "Slave (Athapascan)","den","" } ,
-	{ "Slavic languages","sla","" } ,
-	{ "Slovak","slk","sk" } ,
-	{ "Slovenian","slv","sl" } ,
-	{ "Sogdian","sog","" } ,
-	{ "Somali","som","so" } ,
-	{ "Songhai languages","son","" } ,
-	{ "Soninke","snk","" } ,
-	{ "Sorbian languages","wen","" } ,
-	{ "Sotho, Southern","sot","st" } ,
-	{ "South American Indian languages","sai","" } ,
-	{ "Southern Altai","alt","" } ,
-	{ "Southern Sami","sma","" } ,
-	{ "Spanish; Castilian","spa","es" } ,
-	{ "Sranan Tongo","srn","" } ,
-	{ "Sukuma","suk","" } ,
-	{ "Sumerian","sux","" } ,
-	{ "Sundanese","sun","su" } ,
-	{ "Susu","sus","" } ,
-	{ "Swahili","swa","sw" } ,
-	{ "Swati","ssw","ss" } ,
-	{ "Swedish","swe","sv" } ,
-	{ "Swiss German; Alemannic; Alsatian","gsw","" } ,
-	{ "Syriac","syr","" } ,
-	{ "Tagalog","tgl","tl" } ,
-	{ "Tahitian","tah","ty" } ,
-	{ "Tai languages","tai","" } ,
-	{ "Tajik","tgk","tg" } ,
-	{ "Tamashek","tmh","" } ,
-	{ "Tamil","tam","ta" } ,
-	{ "Tatar","tat","tt" } ,
-	{ "Telugu","tel","te" } ,
-	{ "Tereno","ter","" } ,
-	{ "Tetum","tet","" } ,
-	{ "Thai","tha","th" } ,
-	{ "Tibetan","bod","bo" } ,
-	{ "Tigre","tig","" } ,
-	{ "Tigrinya","tir","ti" } ,
-	{ "Timne","tem","" } ,
-	{ "Tiv","tiv","" } ,
-	{ "Tlingit","tli","" } ,
-	{ "Tok Pisin","tpi","" } ,
-	{ "Tokelau","tkl","" } ,
-	{ "Tonga (Nyasa)","tog","" } ,
-	{ "Tonga (Tonga Islands)","ton","to" } ,
-	{ "Tsimshian","tsi","" } ,
-	{ "Tsonga","tso","ts" } ,
-	{ "Tswana","tsn","tn" } ,
-	{ "Tumbuka","tum","" } ,
-	{ "Tupi languages","tup","" } ,
-	{ "Turkish","tur","tr" } ,
-	{ "Turkish, Ottoman (1500-1928)","ota","" } ,
-	{ "Turkmen","tuk","tk" } ,
-	{ "Tuvalu","tvl","" } ,
-	{ "Tuvinian","tyv","" } ,
-	{ "Twi","twi","tw" } ,
-	{ "Udmurt","udm","" } ,
-	{ "Ugaritic","uga","" } ,
-	{ "Uighur; Uyghur","uig","ug" } ,
-	{ "Ukrainian","ukr","uk" } ,
-	{ "Umbundu","umb","" } ,
-	{ "Uncoded languages","mis","" } ,
-	{ "Undetermined","und","" } ,
-	{ "Upper Sorbian","hsb","" } ,
-	{ "Urdu","urd","ur" } ,
-	{ "Uzbek","uzb","uz" } ,
-	{ "Vai","vai","" } ,
-	{ "Venda","ven","ve" } ,
-	{ "Vietnamese","vie","vi" } ,
+	{ "Pushto; Pashto","pus","ps"} ,
+	{ "Quechua","que","qu"} ,
+	{ "Rajasthani","raj",""} ,
+	{ "Rapanui","rap",""} ,
+	{ "Rarotongan; Cook Islands Maori","rar",""} ,
+	{ "Reserved for local use","qaa-qtz",""} ,
+	{ "Romance languages","roa",""} ,
+	{ "Romanian; Moldavian; Moldovan","ron","ro"} ,
+	{ "Romansh","roh","rm"} ,
+	{ "Romany","rom",""} ,
+	{ "Rundi","run","rn"} ,
+	{ "Russian","rus","ru"} ,
+	{ "Salishan languages","sal",""} ,
+	{ "Samaritan Aramaic","sam",""} ,
+	{ "Sami languages","smi",""} ,
+	{ "Samoan","smo","sm"} ,
+	{ "Sandawe","sad",""} ,
+	{ "Sango","sag","sg"} ,
+	{ "Sanskrit","san","sa"} ,
+	{ "Santali","sat",""} ,
+	{ "Sardinian","srd","sc"} ,
+	{ "Sasak","sas",""} ,
+	{ "Scots","sco",""} ,
+	{ "Selkup","sel",""} ,
+	{ "Semitic languages","sem",""} ,
+	{ "Serbian","srp","sr"} ,
+	{ "Serer","srr",""} ,
+	{ "Shan","shn",""} ,
+	{ "Shona","sna","sn"} ,
+	{ "Sichuan Yi; Nuosu","iii","ii"} ,
+	{ "Sicilian","scn",""} ,
+	{ "Sidamo","sid",""} ,
+	{ "Sign Languages","sgn",""} ,
+	{ "Siksika","bla",""} ,
+	{ "Sindhi","snd","sd"} ,
+	{ "Sinhala; Sinhalese","sin","si"} ,
+	{ "Sino-Tibetan languages","sit",""} ,
+	{ "Siouan languages","sio",""} ,
+	{ "Skolt Sami","sms",""} ,
+	{ "Slave (Athapascan)","den",""} ,
+	{ "Slavic languages","sla",""} ,
+	{ "Slovak","slk","sk"} ,
+	{ "Slovenian","slv","sl"} ,
+	{ "Sogdian","sog",""} ,
+	{ "Somali","som","so"} ,
+	{ "Songhai languages","son",""} ,
+	{ "Soninke","snk",""} ,
+	{ "Sorbian languages","wen",""} ,
+	{ "Sotho, Southern","sot","st"} ,
+	{ "South American Indian languages","sai",""} ,
+	{ "Southern Altai","alt",""} ,
+	{ "Southern Sami","sma",""} ,
+	{ "Spanish; Castilian","spa","es"} ,
+	{ "Sranan Tongo","srn",""} ,
+	{ "Sukuma","suk",""} ,
+	{ "Sumerian","sux",""} ,
+	{ "Sundanese","sun","su"} ,
+	{ "Susu","sus",""} ,
+	{ "Swahili","swa","sw"} ,
+	{ "Swati","ssw","ss"} ,
+	{ "Swedish","swe","sv"} ,
+	{ "Swiss German; Alemannic; Alsatian","gsw",""} ,
+	{ "Syriac","syr",""} ,
+	{ "Tagalog","tgl","tl"} ,
+	{ "Tahitian","tah","ty"} ,
+	{ "Tai languages","tai",""} ,
+	{ "Tajik","tgk","tg"} ,
+	{ "Tamashek","tmh",""} ,
+	{ "Tamil","tam","ta"} ,
+	{ "Tatar","tat","tt"} ,
+	{ "Telugu","tel","te"} ,
+	{ "Tereno","ter",""} ,
+	{ "Tetum","tet",""} ,
+	{ "Thai","tha","th"} ,
+	{ "Tibetan","bod","bo"} ,
+	{ "Tigre","tig",""} ,
+	{ "Tigrinya","tir","ti"} ,
+	{ "Timne","tem",""} ,
+	{ "Tiv","tiv",""} ,
+	{ "Tlingit","tli",""} ,
+	{ "Tok Pisin","tpi",""} ,
+	{ "Tokelau","tkl",""} ,
+	{ "Tonga (Nyasa)","tog",""} ,
+	{ "Tonga (Tonga Islands)","ton","to"} ,
+	{ "Tsimshian","tsi",""} ,
+	{ "Tsonga","tso","ts"} ,
+	{ "Tswana","tsn","tn"} ,
+	{ "Tumbuka","tum",""} ,
+	{ "Tupi languages","tup",""} ,
+	{ "Turkish","tur","tr"} ,
+	{ "Turkish, Ottoman (1500-1928)","ota",""} ,
+	{ "Turkmen","tuk","tk"} ,
+	{ "Tuvalu","tvl",""} ,
+	{ "Tuvinian","tyv",""} ,
+	{ "Twi","twi","tw"} ,
+	{ "Udmurt","udm",""} ,
+	{ "Ugaritic","uga",""} ,
+	{ "Uighur; Uyghur","uig","ug"} ,
+	{ "Ukrainian","ukr","uk"} ,
+	{ "Umbundu","umb",""} ,
+	{ "Uncoded languages","mis",""} ,
+	{ "Undetermined","und",""} ,
+	{ "Upper Sorbian","hsb",""} ,
+	{ "Urdu","urd","ur"} ,
+	{ "Uzbek","uzb","uz"} ,
+	{ "Vai","vai",""} ,
+	{ "Venda","ven","ve"} ,
+	{ "Vietnamese","vie","vi"} ,
 	//{ "Volapük","vol","vo"} ,
-	{ "Votic","vot","" } ,
-	{ "Wakashan languages","wak","" } ,
-	{ "Walloon","wln","wa" } ,
-	{ "Waray","war","" } ,
-	{ "Washo","was","" } ,
-	{ "Welsh","cym","cy" } ,
-	{ "Western Frisian","fry","fy" } ,
-	{ "Wolaitta; Wolaytta","wal","" } ,
-	{ "Wolof","wol","wo" } ,
-	{ "Xhosa","xho","xh" } ,
-	{ "Yakut","sah","" } ,
-	{ "Yao","yao","" } ,
-	{ "Yapese","yap","" } ,
-	{ "Yiddish","yid","yi" } ,
-	{ "Yoruba","yor","yo" } ,
-	{ "Yupik languages","ypk","" } ,
-	{ "Zande languages","znd","" } ,
-	{ "Zapotec","zap","" } ,
-	{ "Zaza; Dimili; Dimli; Kirdki; Kirmanjki; Zazaki","zza","" } ,
-	{ "Zenaga","zen","" } ,
-	{ "Zhuang; Chuang","zha","za" } ,
-	{ "Zulu","zul","zu" } ,
-	{ "Zuni","zun","" } ,
+	{ "Votic","vot",""} ,
+	{ "Wakashan languages","wak",""} ,
+	{ "Walloon","wln","wa"} ,
+	{ "Waray","war",""} ,
+	{ "Washo","was",""} ,
+	{ "Welsh","cym","cy"} ,
+	{ "Western Frisian","fry","fy"} ,
+	{ "Wolaitta; Wolaytta","wal",""} ,
+	{ "Wolof","wol","wo"} ,
+	{ "Xhosa","xho","xh"} ,
+	{ "Yakut","sah",""} ,
+	{ "Yao","yao",""} ,
+	{ "Yapese","yap",""} ,
+	{ "Yiddish","yid","yi"} ,
+	{ "Yoruba","yor","yo"} ,
+	{ "Yupik languages","ypk",""} ,
+	{ "Zande languages","znd",""} ,
+	{ "Zapotec","zap",""} ,
+	{ "Zaza; Dimili; Dimli; Kirdki; Kirmanjki; Zazaki","zza",""} ,
+	{ "Zenaga","zen",""} ,
+	{ "Zhuang; Chuang","zha","za"} ,
+	{ "Zulu","zul","zu"} ,
+	{ "Zuni","zun",""} ,
 };
 
 
@@ -1288,29 +1284,29 @@ GF_EXPORT
 s32 gf_lang_find(const char *lang_or_rfc_5646_code)
 {
 	//find the language ISO639 entry for the given code
-	u32 i = 0;
-	u32 len = 0;
+	u32 i=0;
+	u32 len=0;
 	char *sep;
 	u32 count = sizeof(defined_languages) / sizeof(struct lang_def);
 
 	if (!lang_or_rfc_5646_code) return -1;
 
 	len = (u32)strlen(lang_or_rfc_5646_code);
-	sep = (char *)strchr(lang_or_rfc_5646_code, '-');
+	sep = (char *) strchr(lang_or_rfc_5646_code, '-');
 	if (sep) {
 		sep[0] = 0;
-		len = (u32)strlen(lang_or_rfc_5646_code);
+		len = (u32) strlen(lang_or_rfc_5646_code);
 		sep[0] = '-';
 	}
 
-	for (i = 0; i<count; i++) {
+	for (i=0; i<count; i++) {
 		if (!strcmp(defined_languages[i].name, lang_or_rfc_5646_code)) {
 			return i;
 		}
-		if ((len == 3) && !strnicmp(defined_languages[i].three_char_code, lang_or_rfc_5646_code, 3)) {
+		if ((len==3) && !strnicmp(defined_languages[i].three_char_code, lang_or_rfc_5646_code, 3)) {
 			return i;
 		}
-		if ((len == 2) && !strnicmp(defined_languages[i].two_char_code, lang_or_rfc_5646_code, 2)) {
+		if ((len==2) && !strnicmp(defined_languages[i].two_char_code, lang_or_rfc_5646_code, 2)) {
 			return i;
 		}
 	}
@@ -1320,20 +1316,20 @@ s32 gf_lang_find(const char *lang_or_rfc_5646_code)
 GF_EXPORT
 const char *gf_lang_get_name(u32 idx)
 {
-	if (idx >= sizeof(defined_languages) / sizeof(struct lang_def)) return NULL;
+	if (idx>=sizeof(defined_languages) / sizeof(struct lang_def)) return NULL;
 	return defined_languages[idx].name;
 }
 
 GF_EXPORT
 const char *gf_lang_get_2cc(u32 idx)
 {
-	if (idx >= sizeof(defined_languages) / sizeof(struct lang_def)) return NULL;
+	if (idx>=sizeof(defined_languages) / sizeof(struct lang_def)) return NULL;
 	return defined_languages[idx].two_char_code;
 }
 
 GF_EXPORT
 const char *gf_lang_get_3cc(u32 idx)
 {
-	if (idx >= sizeof(defined_languages) / sizeof(struct lang_def)) return NULL;
+	if (idx>=sizeof(defined_languages) / sizeof(struct lang_def)) return NULL;
 	return defined_languages[idx].three_char_code;
 }
