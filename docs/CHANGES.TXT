@@ -1,3 +1,7 @@
+0.87
+-----------------
+- New: Support for source-specific multicast.
+
 0.86
 -----------------
 - New: Added Autoconf build scripts for CCExtractor to generate makefiles (mac).
