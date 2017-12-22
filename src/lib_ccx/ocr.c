@@ -226,6 +226,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 		}
 	}
 	ignore_alpha_at_edge(alpha, indata, w, h, pix, &cpix);
+
 	// For the unquantized bitmap
 	wpl = pixGetWpl(color_pix);
 	data = pixGetData(color_pix);
@@ -254,11 +255,14 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	cpix = pixConvertRGBToGray(cpix, 0.0, 0.0, 0.0); // Abhinav95: Converting image to grayscale for OCR to avoid issues with transparency
 	TessBaseAPISetImage2(ctx->api, cpix);
 	color_pix_out = TessBaseAPIGetThresholdedImage(ctx->api);
-	tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
-	if( tess_ret != 0)
-		printf("\nsomething messy\n");
+	if (tess_ret = TessBaseAPIRecognize(ctx->api, NULL)) {
+		mprint("\nIn ocr_bitmap: Failed to perform OCR. Skipped.\n");
+		goto ocr_failed;
+	}
 
 	text_out = TessBaseAPIGetUTF8Text(ctx->api);
+	if (text_out == NULL)
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In ocr_bitmap: Failed to perform OCR - Failed to get text. Please report.\n", errno);
 
 	// Begin color detection
 	if(ccx_options.dvbcolor && strlen(text_out)>0)
@@ -494,6 +498,8 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	// End Color Detection
 
 	// boxDestroy(crop_points);
+ocr_failed:
+
 	pixDestroy(&pix);
 	pixDestroy(&cpix);
 	pixDestroy(&color_pix);
