@@ -257,7 +257,13 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	color_pix_out = TessBaseAPIGetThresholdedImage(ctx->api);
 	if (tess_ret = TessBaseAPIRecognize(ctx->api, NULL)) {
 		mprint("\nIn ocr_bitmap: Failed to perform OCR. Skipped.\n");
-		goto ocr_failed;
+
+		pixDestroy(&pix);
+		pixDestroy(&cpix);
+		pixDestroy(&color_pix);
+		pixDestroy(&color_pix_out);
+		
+		return NULL;
 	}
 
 	text_out = TessBaseAPIGetUTF8Text(ctx->api);
@@ -498,7 +504,6 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	// End Color Detection
 
 	// boxDestroy(crop_points);
-ocr_failed:
 
 	pixDestroy(&pix);
 	pixDestroy(&cpix);
