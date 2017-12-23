@@ -336,7 +336,7 @@ int api_start(struct ccx_s_options api_options)
             }
 
 
-            // dvr-ms files have invalid GOPs
+            // Microsoft Digital Video Recording (dvr-ms) files have invalid Giga Operations Per Second(GOPs)
             if (gop_time.inited && first_gop_time.inited && stream_mode != CCX_SM_ASF)
             {
                 mprint ("\nInitial GOP time:	   %s\n",
