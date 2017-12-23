@@ -522,10 +522,12 @@ void telx_case_fix (struct TeletextCtx *context)
 				context->new_sentence = 1;
 				break;
 			default:
-				if (context->new_sentence)
+				if (context->new_sentence && i!=0 && context->page_buffer_cur[i-1]!='\n')
 					context->page_buffer_cur[i] = cctoupper(context->page_buffer_cur[i]);
-				else
+
+				else if(!context->new_sentence && i!=0 && context->page_buffer_cur[i-1] != '\n')
 					context->page_buffer_cur[i] = cctolower(context->page_buffer_cur[i]);
+
 				context->new_sentence = 0;
 				break;
 		}
@@ -793,6 +795,9 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 	}
 	time_reported=0;
 
+	if (ctx->sentence_cap)
+		telx_case_fix(ctx);
+
 	switch (tlt_config.write_format)
 	{
 		case CCX_OF_TRANSCRIPT:
@@ -838,8 +843,6 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 			}
 			break;
 		default:
-			if (ctx->sentence_cap)
-				telx_case_fix(ctx);
 			add_cc_sub_text(sub, ctx->page_buffer_cur, page->show_timestamp,
 				page->hide_timestamp + 1, NULL, "TLT", CCX_ENC_UTF_8);
 	}
