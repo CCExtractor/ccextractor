@@ -1,3 +1,7 @@
+0.87
+-----------------
+- New: Support for source-specific multicast.
+
 0.86
 -----------------
 - New: Added a histogram in one-minute increments of the number of lines in a subtitle.

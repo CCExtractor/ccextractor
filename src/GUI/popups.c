@@ -48,7 +48,7 @@ void draw_network_popup(struct nk_context *ctx, struct network_popup *network_se
 			nk_label(ctx, "UDP:", NK_TEXT_CENTERED);
 			nk_layout_row_static(ctx, 20, 200, 2);
 			nk_label(ctx, "Hostname/IPv4 Address:", NK_TEXT_LEFT);
-			nk_edit_string(ctx, NK_EDIT_SIMPLE, network_settings->udp_ipv4, &network_settings->udp_ipv4_len, 25, nk_filter_default);
+			nk_edit_string(ctx, NK_EDIT_SIMPLE, network_settings->udp_ipv4, &network_settings->udp_ipv4_len, 50, nk_filter_default);
 
 			nk_layout_row(ctx, NK_DYNAMIC, 21, 3, udp_tcp_ratio);
 			nk_spacing(ctx, 1);

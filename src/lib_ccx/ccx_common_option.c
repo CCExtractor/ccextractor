@@ -90,6 +90,7 @@ void init_options (struct ccx_s_options *options)
 	options->debug_mask=CCX_DMT_GENERIC_NOTICES; // dbg_print will use this mask to print or ignore different types
 	options->debug_mask_on_debug=CCX_DMT_VERBOSE; // If we're using temp_debug to enable/disable debug "live", this is the mask when temp_debug=1
 	/* Networking */
+	options->udpsrc = NULL;
 	options->udpaddr = NULL;
 	options->udpport=0; // Non-zero => Listen for UDP packets on this port, no files.
 	options->send_to_srv = 0;
