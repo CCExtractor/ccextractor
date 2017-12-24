@@ -6,17 +6,20 @@
 [![Build Status](https://travis-ci.org/CCExtractor/ccextractor.svg?branch=master)](https://travis-ci.org/CCExtractor/ccextractor)
 
 CCExtractor is a tool that produces subtitles from TV use. Global accessibility (all users, all content, all countries) is the goal. With so many different formats, this is a constantly moving target, but we intend to keep up with all sources and formats.
+More information [here](https://ccextractor.org/public:general:about_the_org). 
 
-The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor)) and master being the most stable branch. 
+The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor)) and master being the most stable branch. It is primarily written in C.
 
 ## Google Code-in 2017
-CCExtractor is participating in Google Code-in 2017! 
+CCExtractor is [participating in Google Code-in 2017!](https://ccextractor.org/public:codein:welcome_2017) 
 
-Google Code-In is a competition of encouraging young people to learn more about Open Source and contributing to it. Tasks range from coding, documentation, quality assurance, user interface, outreach and research 
+Google Code-In is a competition of encouraging young people to learn more about Open Source and contributing to it. Tasks range from coding, documentation, quality assurance, user interface, outreach and research.
 
-This is our second year of challenging tasks for students in elementary and high school aged 13-17.
+This is our second year of challenging tasks for pre-university students aged 13-17.
 
 If you are a student fitting the age criteria, interested to contribute to CCExtractor feel free to join us. You can read more at the [Google Code-in website](https://codein.withgoogle.com).
+
+If you're interested in design tasks, you should read [this](https://www.ccextractor.org/public:codein:google_code-in_2017_code-in_for_designers) first. 
 
 ## Installation and Usage
 
@@ -46,6 +49,8 @@ By far the best way to get support is by opening an issue at our [issue tracker]
 When you create a new issue, please fill in the needed details in the provided template. That makes it easier for us to help you more efficiently.
 
 If you have a question or a problem you can also [contact us by email or chat with the team in Slack](https://www.ccextractor.org/doku.php?id=public:general:support). 
+
+If you want to contribute to CCExtractor but can't submit some code patches or issues or video samples, you can also [donate to us](https://www.ccextractor.org/public:general:http:sourceforge.net_donate_index.php?group_id=190832) 
 
 ## Contributing
 
