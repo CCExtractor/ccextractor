@@ -6,27 +6,24 @@
 [![Build Status](https://travis-ci.org/CCExtractor/ccextractor.svg?branch=master)](https://travis-ci.org/CCExtractor/ccextractor)
 
 CCExtractor is a tool that produces subtitles from TV use. Global accessibility (all users, all content, all countries) is the goal. With so many different formats, this is a constantly moving target, but we intend to keep up with all sources and formats.
+More information [here](https://ccextractor.org/public:general:about_the_org). 
 
-The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor)) and master being the most stable branch. 
-
-This tool is written mainly on C.
+The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor)) and master being the most stable branch. It is primarily written in C.
 
 ## Google Code-in 2017
-CCExtractor is participating in Google Code-in 2017! 
+CCExtractor is [participating in Google Code-in 2017!](https://ccextractor.org/public:codein:welcome_2017) 
 
-Google Code-In is a competition of encouraging young people to learn more about Open Source and contributing to it. Tasks are categorized into code, documentation/training, quality assurance, user interface, outreach/research. 
+Google Code-In is a competition of encouraging young people to learn more about Open Source and contributing to it. Tasks range from coding, documentation, quality assurance, user interface, outreach and research.
 
 This is our second year of challenging tasks for pre-university students aged 13-17.
 
 If you are a student fitting the age criteria, interested to contribute to CCExtractor feel free to join us. You can read more at the [Google Code-in website](https://codein.withgoogle.com).
 
-If you're looking forward into design tasks, you should read [this](https://www.ccextractor.org/public:codein:google_code-in_2017_code-in_for_designers) first. 
+If you're interested in design tasks, you should read [this](https://www.ccextractor.org/public:codein:google_code-in_2017_code-in_for_designers) first. 
 
 ## Installation and Usage
 
 Downloads for precompiled binaries and source code can be found [on our website](https://www.ccextractor.org?id=public:general:downloads).
-
-Or you can find our latest stable version at [sourceforge.net](https://sourceforge.net/projects/ccextractor/)
 
 Extracting subtitles is relatively simple. Just run the following command:
 
