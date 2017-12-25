@@ -27,33 +27,33 @@
 #include "ccx_decoders_common.h"
 #include "ocr.h"
 
-#define DVBSUB_PAGE_SEGMENT     0x10
+#define DVBSUB_PAGE_SEGMENT	 0x10
 #define DVBSUB_REGION_SEGMENT   0x11
-#define DVBSUB_CLUT_SEGMENT     0x12
+#define DVBSUB_CLUT_SEGMENT	 0x12
 #define DVBSUB_OBJECT_SEGMENT   0x13
 #define DVBSUB_DISPLAYDEFINITION_SEGMENT 0x14
 #define DVBSUB_DISPLAY_SEGMENT  0x80
 
 #define SCALEBITS 10
 #define ONE_HALF  (1 << (SCALEBITS - 1))
-#define FIX(x)    ((int) ((x) * (1<<SCALEBITS) + 0.5))
+#define FIX(x)	((int) ((x) * (1<<SCALEBITS) + 0.5))
 
 #define YUV_TO_RGB1_CCIR(cb1, cr1)\
 {\
-    cb = (cb1) - 128;\
-    cr = (cr1) - 128;\
-    r_add = FIX(1.40200*255.0/224.0) * cr + ONE_HALF;\
-    g_add = - FIX(0.34414*255.0/224.0) * cb - FIX(0.71414*255.0/224.0) * cr + \
-            ONE_HALF;\
-    b_add = FIX(1.77200*255.0/224.0) * cb + ONE_HALF;\
+	cb = (cb1) - 128;\
+	cr = (cr1) - 128;\
+	r_add = FIX(1.40200*255.0/224.0) * cr + ONE_HALF;\
+	g_add = - FIX(0.34414*255.0/224.0) * cb - FIX(0.71414*255.0/224.0) * cr + \
+			ONE_HALF;\
+	b_add = FIX(1.77200*255.0/224.0) * cb + ONE_HALF;\
 }
 
 #define YUV_TO_RGB2_CCIR(r, g, b, y1)\
 {\
-    y = ((y1) - 16) * FIX(255.0/219.0);\
-    r = cm[(y + r_add) >> SCALEBITS];\
-    g = cm[(y + g_add) >> SCALEBITS];\
-    b = cm[(y + b_add) >> SCALEBITS];\
+	y = ((y1) - 16) * FIX(255.0/219.0);\
+	r = cm[(y + r_add) >> SCALEBITS];\
+	g = cm[(y + g_add) >> SCALEBITS];\
+	b = cm[(y + b_add) >> SCALEBITS];\
 }
 
 #define times4(x) x, x, x, x
@@ -213,8 +213,8 @@ typedef struct GetBitContext
 /**
  * Initialize GetBitContext.
  * @param buffer bitstream buffer, must be FF_INPUT_BUFFER_PADDING_SIZE bytes
- *        larger than the actual read bits because some optimized bitstream
- *        readers read 32 or 64 bit at once and could read over the end
+ *	      larger than the actual read bits because some optimized bitstream
+ *	      readers read 32 or 64 bit at once and could read over the end
  * @param bit_size the size of the buffer in bits
  * @return 0 on success, AVERROR_INVALIDDATA if the buffer_size would overflow.
  */
@@ -415,11 +415,11 @@ static void delete_regions(DVBSubContext *ctx)
 
 /**
  * @param composition_id composition-page_id found in Subtitle descriptors
- *                       associated with     subtitle stream in the    PMT
- *                       it could be -1 if not found in PMT.
+ *					     associated with	 subtitle stream in the	PMT
+ *					     it could be -1 if not found in PMT.
  * @param ancillary_id ancillary-page_id found in Subtitle descriptors
- *                     associated with     subtitle stream in the    PMT.
- *                       it could be -1 if not found in PMT.
+ *					   associated with	 subtitle stream in the	PMT.
+ *					   it could be -1 if not found in PMT.
  *
  * @return DVB context kept as void* for abstraction
  *
@@ -1460,16 +1460,16 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	DVBSubRegion *region;
 	DVBSubRegionDisplay *display;
 	DVBSubCLUT *clut;
-    DVBSubDisplayDefinition *display_def;
-    struct cc_bitmap *rect = NULL;
+	DVBSubDisplayDefinition *display_def;
+	struct cc_bitmap *rect = NULL;
 	uint32_t *clut_table;
 	int offset_x=0, offset_y=0;
 	int ret = 0;
 
 	ctx = (DVBSubContext *) dec_ctx->private_data;
 
-    display_def = ctx->display_definition;
-    sub->type = CC_BITMAP;
+	display_def = ctx->display_definition;
+	sub->type = CC_BITMAP;
 	sub->lang_index = ctx->lang_index;
 
 	if (display_def)
@@ -1551,9 +1551,9 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 				rect->ocr_text = ocr_str;
 			else
 				rect->ocr_text = NULL;
-            if (ccx_options.dvb_debug_traces_to_stdout) {
-                mprint("\nOCR Result: %s\n", rect->ocr_text ? rect->ocr_text : "NULL");
-            }
+			if (ccx_options.dvb_debug_traces_to_stdout) {
+				mprint("\nOCR Result: %s\n", rect->ocr_text ? rect->ocr_text : "NULL");
+			}
 		}
 		else
 		{
@@ -1567,13 +1567,13 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	return 0;
 }
 /**
- * @param dvb_ctx    PreInitialized DVB context using DVB
- * @param buf        buffer containing segment data, first sync byte need to 0x0f.
- *                   does not include data_identifier and subtitle_stream_id.
- * @param buf_size   size of buf buffer
- * @param sub        output subtitle data
+ * @param dvb_ctx   PreInitialized DVB context using DVB
+ * @param buf       buffer containing segment data, first sync byte need to 0x0f.
+ *	                does not include data_identifier and subtitle_stream_id.
+ * @param buf_size  size of buf buffer
+ * @param sub		output subtitle data
  *
- * @return           -1 on error
+ * @return		   -1 on error
  */
 int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, const unsigned char *buf, int buf_size, struct cc_subtitle *sub)
 {
@@ -1652,8 +1652,8 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 				if (enc_ctx->write_previous) //this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
 				{
 					sub->prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the end time of the previous sub the current pts
-                    
-                    encode_sub(enc_ctx->prev, sub->prev); //we encode it
+					
+					encode_sub(enc_ctx->prev, sub->prev); //we encode it
 					enc_ctx->srt_counter = enc_ctx->prev->srt_counter; //for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
 					enc_ctx->prev_start = enc_ctx->prev->prev_start;
 					sub->prev->got_output = 0;
@@ -1662,7 +1662,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 					}
 				}
 
-                //write_dvb_sub(dec_ctx, sub);
+				//write_dvb_sub(dec_ctx, sub);
 				/* copy previous encoder context*/
 				free_encoder_context(enc_ctx->prev);
 				enc_ctx->prev = NULL;  
@@ -1682,7 +1682,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 				
 				write_dvb_sub(dec_ctx->prev, sub->prev); //we write the current dvb sub to update decoder context
 				
-                enc_ctx->write_previous = 1; //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
+				enc_ctx->write_previous = 1; //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
 				got_segment |= 16;
 				break;
 			default:
