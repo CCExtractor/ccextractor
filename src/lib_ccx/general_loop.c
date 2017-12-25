@@ -887,6 +887,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
     }
 
 	end_of_file = 0;
+    struct encoder_ctx *enc_ctx = NULL;
 	while (!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE)
 	{
 		// GET MORE DATA IN BUFFER
@@ -902,7 +903,6 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		if(!ctx->multiprogram)
 		{
 			struct cap_info* cinfo = NULL;
-			struct encoder_ctx *enc_ctx = NULL;
 			// Find most promising stream: teletext, DVB, ISDB, ATSC, in that order
 			int pid = get_best_stream(ctx->demux_ctx);
 			if(pid < 0)
@@ -1135,6 +1135,14 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		if (ccx_options.send_to_srv)
 			net_check_conn();
 	}
+
+    // Process the last subtitle
+    if (data_node->bufferdatatype == CCX_DVB_SUBTITLE && dec_ctx->dec_sub.prev->end_time == 0) {
+        dec_ctx->dec_sub.prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000);
+        encode_sub(enc_ctx->prev, dec_ctx->dec_sub.prev);
+        dec_ctx->dec_sub.prev->got_output = 0;
+    }
+
 	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
 

@@ -1468,8 +1468,8 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 	ctx = (DVBSubContext *) dec_ctx->private_data;
 
-        display_def = ctx->display_definition;
-        sub->type = CC_BITMAP;
+    display_def = ctx->display_definition;
+    sub->type = CC_BITMAP;
 	sub->lang_index = ctx->lang_index;
 
 	if (display_def)
@@ -1551,6 +1551,9 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 				rect->ocr_text = ocr_str;
 			else
 				rect->ocr_text = NULL;
+            if (ccx_options.dvb_debug_traces_to_stdout) {
+                mprint("\nOCR Result: %s\n", rect->ocr_text ? rect->ocr_text : "NULL");
+            }
 		}
 		else
 		{
@@ -1645,10 +1648,12 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 						segment_length);
 				break;
 			case DVBSUB_DISPLAY_SEGMENT: //when we get a display segment, we save the current page
+
 				if (enc_ctx->write_previous) //this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
 				{
 					sub->prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the end time of the previous sub the current pts
-					encode_sub(enc_ctx->prev, sub->prev); //we encode it
+                    
+                    encode_sub(enc_ctx->prev, sub->prev); //we encode it
 					enc_ctx->srt_counter = enc_ctx->prev->srt_counter; //for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
 					enc_ctx->prev_start = enc_ctx->prev->prev_start;
 					sub->prev->got_output = 0;
@@ -1656,6 +1661,8 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 						enc_ctx->wrote_webvtt_header = 1;
 					}
 				}
+
+                //write_dvb_sub(dec_ctx, sub);
 				/* copy previous encoder context*/
 				free_encoder_context(enc_ctx->prev);
 				enc_ctx->prev = NULL;  
@@ -1674,7 +1681,8 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 				sub->prev->start_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the start time of the previous sub the current pts
 				
 				write_dvb_sub(dec_ctx->prev, sub->prev); //we write the current dvb sub to update decoder context
-				enc_ctx->write_previous = 1; //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
+				
+                enc_ctx->write_previous = 1; //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
 				got_segment |= 16;
 				break;
 			default:
