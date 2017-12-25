@@ -37,6 +37,8 @@
   <ItemGroup>
     <ClInclude Include="..\src\ccextractor.h" />
     <ClInclude Include="..\src\extractors\extractor.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\color.h" />
+    <ClInclude Include="..\src\gpacmp4\gpac\thread.h" />
     <ClInclude Include="..\src\wrappers\wrapper.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\avparse.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\base_coding.h" />
@@ -130,6 +132,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\extractors\extractor.c" />
+    <ClCompile Include="..\src\gpacmp4\alloc.c" />
+    <ClCompile Include="..\src\gpacmp4\box_dump.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_demuxer_mxf.c" />
     <ClCompile Include="..\src\wrappers\wrapper.c" />
     <ClCompile Include="..\src\ccextractor.c" />
