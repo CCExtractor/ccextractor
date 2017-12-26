@@ -55,47 +55,47 @@ ScriptType: v4.00+\n\
 \n\
 [V4+ Styles]\n\
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n\
-Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,1,2,10,10,10,0\n\
+Style: Default, Arial, 20, &H00FFFFFF, &H000000FF, &H00000000, &H00000000, 0, 0, 0, 0, 100, 100, 0, 0, 1, 1, 1, 2, 10, 10, 10, 0\n\
 \n\
 [Events]\n\
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n\
 \n";
 
-/*	
+/*
 
 TODO -- Set correct values for "ttp:dropMode", "ttp:frameRate" .Using common for now.
 
- Extra reference, 
+ Extra reference,
 
 	24 frame/sec (film, ATSC, 2k, 4k, 6k)
 	25 frame/sec (PAL (Europe, Uruguay, Argentina, Australia), SECAM, DVB, ATSC)
-	29.97 (30 ÷ 1.001) frame/sec (NTSC American System (US, Canada, Mexico, Colombia, etc.), ATSC, PAL-M (Brazil))
+	29.97 (30 รท 1.001) frame/sec (NTSC American System (US, Canada, Mexico, Colombia, etc.), ATSC, PAL-M (Brazil))
 	30 frame/sec (ATSC)
-	
+
 	Find framerate, then use it find dropmode.
-	
+
 */
 static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
 			"  <tt xmlns=\"http://www.w3.org/ns/ttml\" xmlns:ttp=\"http://www.w3.org/ns/ttml#parameter\" ttp:dropMode=\"dropNTSC\" ttp:frameRate=\"30\" ttp:frameRateMultiplier=\"1000 1001\" ttp:timeBase=\"smpte\" xmlns:m608=\"http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt#cea608\" xmlns:smpte=\"http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt\" xmlns:ttm=\"http://www.w3.org/ns/ttml#metadata\" xmlns:tts=\"http://www.w3.org/ns/ttml#styling\">\n"
 //			"  <tt xmlns=\"http://www.w3.org/ns/ttml\" xmlns:ttp=\"http://www.w3.org/ns/ttml#parameter\" xmlns:m608=\"http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt#cea608\" xmlns:smpte=\"http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt\" xmlns:ttm=\"http://www.w3.org/ns/ttml#metadata\" xmlns:tts=\"http://www.w3.org/ns/ttml#styling\">\n"
 			"  <head>\n"
-			"    <styling>\n"
-			"      <style tts:color=\"white\" tts:fontFamily=\"monospace\" tts:fontWeight=\"normal\" tts:textAlign=\"left\" xml:id=\"basic\"/>\n"
-			"    </styling>\n"
-			"    <layout>\n"
-			"      <region tts:backgroundColor=\"transparent\" xml:id=\"pop1\"/>\n"
-			"      <region tts:backgroundColor=\"transparent\" xml:id=\"paint\"/>\n"
-			"      <region tts:backgroundColor=\"transparent\" xml:id=\"rollup2\"/>\n"
-			"      <region tts:backgroundColor=\"transparent\" xml:id=\"rollup3\"/>\n"
-			"      <region tts:backgroundColor=\"transparent\" xml:id=\"rollup4\"/>\n"
-			"    </layout>\n"
-			"    <metadata/>\n"
-			"    <smpte:information m608:captionService=\"F1C1CC\" m608:channel=\"cc1\"/>\n"
+			"	<styling>\n"
+			"	<style tts:color=\"white\" tts:fontFamily=\"monospace\" tts:fontWeight=\"normal\" tts:textAlign=\"left\" xml:id=\"basic\"/>\n"
+			"	</styling>\n"
+			"	<layout>\n"
+			"	<region tts:backgroundColor=\"transparent\" xml:id=\"pop1\"/>\n"
+			"	<region tts:backgroundColor=\"transparent\" xml:id=\"paint\"/>\n"
+			"	<region tts:backgroundColor=\"transparent\" xml:id=\"rollup2\"/>\n"
+			"	<region tts:backgroundColor=\"transparent\" xml:id=\"rollup3\"/>\n"
+			"	<region tts:backgroundColor=\"transparent\" xml:id=\"rollup4\"/>\n"
+			"	</layout>\n"
+			"	<metadata/>\n"
+			"	<smpte:information m608:captionService=\"F1C1CC\" m608:channel=\"cc1\"/>\n"
 			"  </head>\n"
 			"  <body>\n"
-			"    <div>\n";
+			"	<div>\n";
 
-static const char *webvtt_header[] = {"WEBVTT","\r\n","\r\n","STYLE","\r\n","\r\n",NULL};
+static const char *webvtt_header[] = {"WEBVTT", "\r\n", "\r\n", "STYLE", "\r\n", "\r\n", NULL};
 
 static const char *simple_xml_header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<captions>\r\n";
 
@@ -119,25 +119,25 @@ void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_
 
 unsigned int utf8_to_latin1_map(const unsigned int code)
 {
-    /* Code points 0 to U+00FF are the same in both. */
-    if (code < 256U)
-        return code;
+	/* Code points 0 to U+00FF are the same in both. */
+	if (code < 256U)
+		return code;
 
-    switch (code)
+	switch (code)
 	{
-    case 0x0152U:
+	case 0x0152U:
 		return 188U; /* U+0152 = 0xBC: OE ligature */
-    case 0x0153U:
+	case 0x0153U:
 		return 189U; /* U+0153 = 0xBD: oe ligature */
-    case 0x0160U:
+	case 0x0160U:
 		return 166U; /* U+0160 = 0xA6: S with caron */
-    case 0x0161U: return 168U; /* U+0161 = 0xA8: s with caron */
-    case 0x0178U: return 190U; /* U+0178 = 0xBE: Y with diaresis */
-    case 0x017DU: return 180U; /* U+017D = 0xB4: Z with caron */
-    case 0x017EU: return 184U; /* U+017E = 0xB8: z with caron */
-    case 0x20ACU: return 164U; /* U+20AC = 0xA4: Euro */
-    default:      return 256U;
-    }
+	case 0x0161U: return 168U; /* U+0161 = 0xA8: s with caron */
+	case 0x0178U: return 190U; /* U+0178 = 0xBE: Y with diaresis */
+	case 0x017DU: return 180U; /* U+017D = 0xB4: Z with caron */
+	case 0x017EU: return 184U; /* U+017E = 0xB8: z with caron */
+	case 0x20ACU: return 164U; /* U+20AC = 0xA4: Euro */
+	default:	return 256U;
+	}
 }
 
 int change_utf8_encoding(unsigned char* dest, unsigned char* src, int len, enum ccx_encoding_type out_enc)
@@ -338,7 +338,7 @@ int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_
 	return 0; // Return length
 }
 
-int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
+int write_subtitle_file_footer(struct encoder_ctx *ctx, struct ccx_s_write *out)
 {
 	int used;
 	int ret = 0;
@@ -347,12 +347,12 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 	switch (ctx->write_format)
 	{
 		case CCX_OF_SAMI:
-			sprintf ((char *) str,"</BODY></SAMI>\n");
+			sprintf ((char *) str, "</BODY></SAMI>\n");
 			if (ctx->encoding != CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
-			used = encode_line (ctx, ctx->buffer,(unsigned char *) str);
+			used = encode_line (ctx, ctx->buffer, (unsigned char *) str);
 			ret = write(out->fh, ctx->buffer, used);
 			if (ret != used)
 			{
@@ -360,12 +360,12 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			}
 			break;
 		case CCX_OF_SMPTETT:
-			sprintf ((char *) str,"    </div>\n  </body>\n</tt>\n");
+			sprintf ((char *) str, "	</div>\n  </body>\n</tt>\n");
 			if (ctx->encoding != CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
-			used = encode_line (ctx, ctx->buffer,(unsigned char *) str);
+			used = encode_line (ctx, ctx->buffer, (unsigned char *) str);
 			ret = write (out->fh, ctx->buffer, used);
 			if (ret != used)
 			{
@@ -376,12 +376,12 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			write_spumux_footer(out);
 			break;
 		case CCX_OF_SIMPLE_XML:
-			sprintf ((char *) str,"</captions>\n");
+			sprintf ((char *) str, "</captions>\n");
 			if (ctx->encoding != CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 			}
-			used = encode_line (ctx, ctx->buffer,(unsigned char *) str);
+			used = encode_line (ctx, ctx->buffer, (unsigned char *) str);
 			ret = write (out->fh, ctx->buffer, used);
 			if (ret != used)
 			{
@@ -435,8 +435,8 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			ret = write_bom(ctx, out);
 			if(ret < 0)
 				return -1;
-			REQUEST_BUFFER_CAPACITY(ctx,strlen (ssa_header)*3);
-			used = encode_line (ctx, ctx->buffer,(unsigned char *) ssa_header);
+			REQUEST_BUFFER_CAPACITY(ctx, strlen (ssa_header)*3);
+			used = encode_line (ctx, ctx->buffer, (unsigned char *) ssa_header);
 			ret = write (out->fh, ctx->buffer, used);
 			if(ret < used)
 			{
@@ -455,15 +455,15 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			REQUEST_BUFFER_CAPACITY(ctx, header_size*3);
 			for(int i = 0; webvtt_header[i]!=NULL;i++)
 			{
-				if(ccx_options.enc_cfg.line_terminator_lf == 1 && strcmp(webvtt_header[i],"\r\n")==0) // If -lf parameter passed, write LF instead of CRLF
+				if(ccx_options.enc_cfg.line_terminator_lf == 1 && strcmp(webvtt_header[i], "\r\n")==0) // If -lf parameter passed, write LF instead of CRLF
 				{
-					used = encode_line (ctx, ctx->buffer,(unsigned char *) "\n");
-				} 
+					used = encode_line (ctx, ctx->buffer, (unsigned char *) "\n");
+				}
 				else
 				{
-					used = encode_line (ctx, ctx->buffer,(unsigned char *) webvtt_header[i]);
+					used = encode_line (ctx, ctx->buffer, (unsigned char *) webvtt_header[i]);
 				}
-				ret = write (out->fh, ctx->buffer,used);
+				ret = write (out->fh, ctx->buffer, used);
 				if(ret < used)
 				{
 					mprint("WARNING: Unable to write complete Buffer \n");
@@ -476,8 +476,8 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			ret = write_bom(ctx, out);
 			if(ret < 0)
 				return -1;
-			REQUEST_BUFFER_CAPACITY(ctx,strlen (sami_header)*3);
-			used = encode_line (ctx, ctx->buffer,(unsigned char *) sami_header);
+			REQUEST_BUFFER_CAPACITY(ctx, strlen (sami_header)*3);
+			used = encode_line (ctx, ctx->buffer, (unsigned char *) sami_header);
 			ret = write (out->fh, ctx->buffer, used);
 			if(ret < used)
 			{
@@ -490,8 +490,8 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			ret = write_bom(ctx, out);
 			if(ret < 0)
 				return -1;
-			REQUEST_BUFFER_CAPACITY(ctx,strlen (smptett_header)*3);
-			used=encode_line (ctx, ctx->buffer,(unsigned char *) smptett_header);
+			REQUEST_BUFFER_CAPACITY(ctx, strlen (smptett_header)*3);
+			used=encode_line (ctx, ctx->buffer, (unsigned char *) smptett_header);
 			ret = write(out->fh, ctx->buffer, used);
 			if(ret < used)
 			{
@@ -516,7 +516,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 
 			break;
 		case CCX_OF_RAW:
-			ret = write(out->fh,BROADCAST_HEADER, sizeof(BROADCAST_HEADER));
+			ret = write(out->fh, BROADCAST_HEADER, sizeof(BROADCAST_HEADER));
 			if(ret < sizeof(BROADCAST_HEADER))
 			{
 				mprint("Unable to write Raw header\n");
@@ -538,8 +538,8 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			ret = write_bom(ctx, out);
 			if(ret < 0)
 				return -1;
-			REQUEST_BUFFER_CAPACITY(ctx,strlen (simple_xml_header)*3);
-			used=encode_line (ctx, ctx->buffer,(unsigned char *) simple_xml_header);
+			REQUEST_BUFFER_CAPACITY(ctx, strlen (simple_xml_header)*3);
+			used=encode_line (ctx, ctx->buffer, (unsigned char *) simple_xml_header);
 			ret = write(out->fh, ctx->buffer, used);
 			if(ret < used)
 			{
@@ -694,7 +694,7 @@ static void try_to_add_end_credits(struct encoder_ctx *context, struct ccx_s_wri
 	}
 }
 
-void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
+void try_to_add_start_credits(struct encoder_ctx *context, LLONG start_ms)
 {
 	LLONG st, end, window, length;
 	LLONG l = start_ms + context->subs_delay;
@@ -725,7 +725,7 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 	dbg_print(CCX_DMT_VERBOSE, "Not before: %lld   Not after: %lld\n",
 			context->startcreditsnotbefore.time_in_ms,
 			context->startcreditsnotafter.time_in_ms);
-	dbg_print(CCX_DMT_VERBOSE, "Start of window: %lld   End of window: %lld\n",st,end);
+	dbg_print(CCX_DMT_VERBOSE, "Start of window: %lld   End of window: %lld\n", st, end);
 
 	if (window>length+2)
 	{
@@ -737,10 +737,10 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 	switch (context->write_format)
 	{
 		case CCX_OF_SRT:
-			write_stringz_as_srt(context->start_credits_text,context,st,end);
+			write_stringz_as_srt(context->start_credits_text, context, st, end);
 			break;
 		case CCX_OF_SSA:
-			write_stringz_as_ssa(context->start_credits_text,context,st,end);
+			write_stringz_as_ssa(context->start_credits_text, context, st, end);
 			break;
 		case CCX_OF_WEBVTT:
 			write_stringz_as_webvtt(context->start_credits_text, context, st, end);
@@ -782,9 +782,9 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	char *basefilename = NULL; // Input filename without the extension
 	char *extension = NULL; // Input filename without the extension
 
-#define check_ret(filename) 	if (ret != EXIT_OK)	\
+#define check_ret(filename)	if (ret != EXIT_OK)	\
 				{									\
-					fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED,"Failed to open output file: %s\nDetails : %s\n", filename, strerror(errno)); \
+					fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Failed to open output file: %s\nDetails : %s\n", filename, strerror(errno)); \
 					return ret;						\
 				}
 
@@ -826,8 +826,8 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 		}
 		else if (cfg->write_format != CCX_OF_NULL)
 		{
-            basefilename = get_basename(ctx->first_input_file);
-            extension = get_file_extension(cfg->write_format);
+			basefilename = get_basename(ctx->first_input_file);
+			extension = get_file_extension(cfg->write_format);
 			if (basefilename == NULL)
 			{
 				basefilename = get_basename("untitled");
@@ -894,7 +894,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 					basefilename = get_basename(ctx->first_input_file);
 
 				ccx_dtvcc_writer_init(&ctx->dtvcc_writers[i], basefilename,
-									  ctx->program_number, i + 1, cfg->write_format, cfg);
+									ctx->program_number, i + 1, cfg->write_format, cfg);
 				free(basefilename);
 			}
 		}
@@ -1032,7 +1032,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->encoded_br_length = encode_line(ctx, ctx->encoded_br, (unsigned char *) "<br>");
 
 	for (i = 0; i < ctx->nb_out; i++)
-	 	write_subtitle_file_header(ctx,ctx->out+i);
+		write_subtitle_file_header(ctx, ctx->out+i);
 
 	ctx->dtvcc_extract = opt->dtvcc_extract;
 
@@ -1131,14 +1131,14 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				}
 
 #ifdef ENABLE_PYTHON
-                //making a call to python_encoder so that if the call is from the api, no output is generated.
-                if (signal_python_api)
-                    wrote_something = pass_cc_buffer_to_python(data, context);
-                else
+				//making a call to python_encoder so that if the call is from the api, no output is generated.
+				if (signal_python_api)
+					wrote_something = pass_cc_buffer_to_python(data, context);
+				else
 #endif
-                {
-				    switch (context->write_format)
-				    {
+				{
+					switch (context->write_format)
+					{
 					case CCX_OF_SRT:
 						if (!context->startcredits_displayed && context->start_credits_text != NULL)
 							try_to_add_start_credits(context, data->start_time);
@@ -1188,8 +1188,8 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 						break;
 					default:
 						break;
-				    }
-                }
+					}
+				}
 				if (wrote_something)
 					context->last_displayed_subs_ms = data->end_time;
 
@@ -1207,7 +1207,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					try_to_add_start_credits(context, sub->start_time);
 				wrote_something = write_cc_bitmap_as_srt(sub, context);
 				break;
-            case CCX_OF_SSA:
+			case CCX_OF_SSA:
 				if (!context->startcredits_displayed && context->start_credits_text != NULL)
 					try_to_add_start_credits(context, sub->start_time);
 					wrote_something = write_cc_bitmap_as_ssa(sub, context);
@@ -1379,7 +1379,7 @@ unsigned int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, in
 			get_char_in_unicode(buffer, line[i]);
 			bytes = 2;
 		case CCX_ENC_ASCII:
-		    *buffer = line[i];
+			*buffer = line[i];
 			bytes = 1;
 			break;
 		}
