@@ -859,6 +859,7 @@ char *paraof_ocrtext(struct cc_subtitle *sub, const char *crlf, unsigned crlf_le
 
 	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
+		if (!rect->ocr_text) continue;
 		add_ocrtext2str(str, rect->ocr_text, crlf, crlf_length);
 		TessDeleteText(rect->ocr_text);
 	}
