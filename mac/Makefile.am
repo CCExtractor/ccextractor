@@ -5,7 +5,6 @@ bin_PROGRAMS = ccextractor
 ccextractor_SOURCES = \
 				../src/ccextractor.c \
 				../src/ccextractor.h \
-				../src/gpacmp4/alloc.c \
 				../src/gpacmp4/avc_ext.c \
 				../src/gpacmp4/avilib.c \
 				../src/gpacmp4/av_parsers.c \

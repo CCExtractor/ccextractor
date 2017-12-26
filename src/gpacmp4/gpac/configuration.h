@@ -45,8 +45,6 @@
 
 /*IPv6 enabled - for win32, this is evaluated at compile time, !! do not uncomment !!*/
 
-#define GPAC_MEMORY_TRACKING
-
 /*Win32 IPv6 is evaluated at compile time, !! do not uncomment !!*/
 //#define GPAC_HAS_IPV6
 
@@ -115,7 +113,6 @@
 #define GPAC_HAS_PNG
 #define GPAC_HAS_GLU
 
-#define GPAC_MEMORY_TRACKING
 /*Configuration for XCode iOS*/
 #elif defined(GPAC_CONFIG_DARWIN) && defined(GPAC_IPHONE)
 
