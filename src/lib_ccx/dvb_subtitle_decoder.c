@@ -419,7 +419,7 @@ static void delete_regions(DVBSubContext *ctx)
  *                       it could be -1 if not found in PMT.
  * @param ancillary_id ancillary-page_id found in Subtitle descriptors
  *                     associated with     subtitle stream in the    PMT.
- *                       it could be -1 if not found in PMT.
+ *                       it could be -1 if not found in PMT.		
  *
  * @return DVB context kept as void* for abstraction
  *
@@ -1460,16 +1460,16 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	DVBSubRegion *region;
 	DVBSubRegionDisplay *display;
 	DVBSubCLUT *clut;
-    DVBSubDisplayDefinition *display_def;
-    struct cc_bitmap *rect = NULL;
+	DVBSubDisplayDefinition *display_def;
+	struct cc_bitmap *rect = NULL;
 	uint32_t *clut_table;
 	int offset_x=0, offset_y=0;
 	int ret = 0;
 
 	ctx = (DVBSubContext *) dec_ctx->private_data;
 
-        display_def = ctx->display_definition;
-        sub->type = CC_BITMAP;
+	display_def = ctx->display_definition;
+	sub->type = CC_BITMAP;
 	sub->lang_index = ctx->lang_index;
 
 	if (display_def)
@@ -1551,6 +1551,9 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 				rect->ocr_text = ocr_str;
 			else
 				rect->ocr_text = NULL;
+			if (ccx_options.dvb_debug_traces_to_stdout) {
+				mprint("\nOCR Result: %s\n", rect->ocr_text ? rect->ocr_text : "NULL");
+			}
 		}
 		else
 		{
