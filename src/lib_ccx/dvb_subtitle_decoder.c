@@ -1680,21 +1680,6 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 				enc_ctx->write_previous = 1; //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
 				got_segment |= 16;
 
-				if (ccx_options.dvb_debug_traces_to_stdout) {
-					if (sub->prev) {
-						struct cc_bitmap* content_prev = sub->prev->data;
-						mprint("\nPrevious subtitle %x (%s)\nStart time: %lld; End time: %lld",
-							sub->prev, content_prev ?
-							(content_prev->ocr_text ? content_prev->ocr_text : "NULL OCR") : "NULL DATA",
-							sub->prev->start_time, sub->prev->end_time);
-					}
-					struct cc_bitmap* content = sub->data;
-					mprint("\nCurrent subtitle %x (%s)\nStart time: %lld; End time: %lld\n",
-						sub, content ?
-						(content->ocr_text ? content->ocr_text : "NULL OCR") : "NULL DATA",
-						sub->start_time, sub->end_time);
-				}
-
 				break;
 			default:
 				mprint("Subtitling segment type 0x%x, page id %d, length %d\n",
