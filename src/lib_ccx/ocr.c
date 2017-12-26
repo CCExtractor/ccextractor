@@ -810,20 +810,39 @@ int compare_rect_by_ypos(const void*p1, const void *p2, void*arg)
 
 void add_ocrtext2str(char *dest, char *src, const char *crlf, unsigned crlf_length)
 {
+	char *line_scan;
+	int char_found;
 	while (*dest != '\0')
-		dest++;
-	char *end = src;
-	for (char* c = src; *c; c++) {
-		if (c != '\n') end = c;
-	}
-	while(src != end + 1)
+			dest++;
+	while (*src != '\0')
 	{
+		//checks if a line has actual content in it before adding it
+		if (*src == '\n') {
+			char_found = 0;
+			line_scan = src + 1;
+			//multiple blocks of newlines
+			while (*(line_scan) == '\n') {
+				line_scan++;
+				src++;
+			}
+			//empty lines
+			while (*line_scan != '\n' && *line_scan != '\0') {
+				if (*line_scan > 32) {
+					char_found = 1;
+					break;
+				}
+				line_scan++;
+			}
+			if (!char_found) {
+				src = line_scan;
+			}
+		}
 		*dest = *src;
 		src++;
 		dest++;
 	}
 	memcpy(dest, crlf, crlf_length);
-	dest[crlf_length] = 0;	
+	dest[crlf_length] = 0;
 	/*
 	*dest++ = '\n';
 	*dest = '\0'; */
