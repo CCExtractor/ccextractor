@@ -839,9 +839,6 @@
     <ClCompile Include="..\src\gpacmp4\box_dump.c">
       <Filter>Source Files\gpacmp4</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\alloc.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\lib_ccx\ccx_sub_entry_message.proto">

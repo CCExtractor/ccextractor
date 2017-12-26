@@ -132,7 +132,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\extractors\extractor.c" />
-    <ClCompile Include="..\src\gpacmp4\alloc.c" />
     <ClCompile Include="..\src\gpacmp4\box_dump.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_demuxer_mxf.c" />
     <ClCompile Include="..\src\wrappers\wrapper.c" />
