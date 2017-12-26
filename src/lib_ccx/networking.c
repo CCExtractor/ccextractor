@@ -927,9 +927,27 @@ ssize_t read_byte(int fd, char *ch)
 	return readn(fd, ch, 1);
 }
 
-int start_upd_srv(const char *addr_str, unsigned port)
+int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 {
 	init_sockets();
+
+	in_addr_t src;
+	if (src_str != NULL)
+	{
+		struct hostent *host = gethostbyname(src_str);
+		if (NULL == host)
+		{
+			fatal(EXIT_MALFORMED_PARAMETER, "Cannot look up udp network address: %s\n",
+					src_str);
+		}
+		else if (host->h_addrtype != AF_INET)
+		{
+			fatal(EXIT_MALFORMED_PARAMETER, "No support for non-IPv4 network addresses: %s\n",
+					src_str);
+		}
+
+		src = ntohl(((struct in_addr *)host->h_addr_list[0])->s_addr);
+	}
 
 	in_addr_t addr;
 	if (addr_str != NULL)
@@ -1000,10 +1018,23 @@ int start_upd_srv(const char *addr_str, unsigned port)
 	}
 
 	if (IN_MULTICAST(addr)) {
-		struct ip_mreq group;
-		group.imr_multiaddr.s_addr = htonl(addr);
-		group.imr_interface.s_addr = htonl(INADDR_ANY);
-		if (setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&group, sizeof(group)) < 0)
+		int setsockopt_return = 0;
+		if (src_str != NULL) {
+			struct ip_mreq_source multicast_req;
+			multicast_req.imr_sourceaddr.s_addr = htonl(src);
+			multicast_req.imr_multiaddr.s_addr = htonl(addr);
+			multicast_req.imr_interface.s_addr = htonl(INADDR_ANY);
+			setsockopt_return = setsockopt(sockfd, IPPROTO_IP, IP_ADD_SOURCE_MEMBERSHIP, (char *)&multicast_req, sizeof(multicast_req));
+		}
+		else
+		{
+			struct ip_mreq multicast_req;
+			multicast_req.imr_multiaddr.s_addr = htonl(addr);
+			multicast_req.imr_interface.s_addr = htonl(INADDR_ANY);
+			setsockopt_return = setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&multicast_req, sizeof(multicast_req));
+		}
+
+		if (setsockopt_return < 0)
 		{
 #if _WIN32
 			wprintf(L"setsockopt() error: %ld\n", WSAGetLastError());
@@ -1018,6 +1049,21 @@ int start_upd_srv(const char *addr_str, unsigned port)
 	if (addr == INADDR_ANY)
 	{
 		mprint("\rReading from UDP socket %u\n", port);
+	}
+	else if (src_str != NULL)
+	{
+		struct in_addr source;
+		struct in_addr group;
+		char src_ip[15];
+		char addr_ip[15];
+		source.s_addr = htonl(src);
+		memset(src_ip, 0, sizeof(char) * 15);
+		memcpy(src_ip, inet_ntoa(source), sizeof(src_ip));
+		group.s_addr = htonl(addr);
+		memset(addr_ip, 0, sizeof(char) * 15);
+		memcpy(addr_ip, inet_ntoa(group), sizeof(addr_ip));
+
+		mprint("\rReading from UDP socket %s@%s:%u\n", src_ip, addr_ip, port);
 	}
 	else
 	{

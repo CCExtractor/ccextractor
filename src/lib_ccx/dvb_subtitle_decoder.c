@@ -419,7 +419,7 @@ static void delete_regions(DVBSubContext *ctx)
  *                       it could be -1 if not found in PMT.
  * @param ancillary_id ancillary-page_id found in Subtitle descriptors
  *                     associated with     subtitle stream in the    PMT.
- *                       it could be -1 if not found in PMT.
+ *                       it could be -1 if not found in PMT.		
  *
  * @return DVB context kept as void* for abstraction
  *
@@ -1460,16 +1460,16 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	DVBSubRegion *region;
 	DVBSubRegionDisplay *display;
 	DVBSubCLUT *clut;
-    DVBSubDisplayDefinition *display_def;
-    struct cc_bitmap *rect = NULL;
+	DVBSubDisplayDefinition *display_def;
+	struct cc_bitmap *rect = NULL;
 	uint32_t *clut_table;
 	int offset_x=0, offset_y=0;
 	int ret = 0;
 
 	ctx = (DVBSubContext *) dec_ctx->private_data;
 
-        display_def = ctx->display_definition;
-        sub->type = CC_BITMAP;
+	display_def = ctx->display_definition;
+	sub->type = CC_BITMAP;
 	sub->lang_index = ctx->lang_index;
 
 	if (display_def)
@@ -1551,6 +1551,9 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 				rect->ocr_text = ocr_str;
 			else
 				rect->ocr_text = NULL;
+			if (ccx_options.dvb_debug_traces_to_stdout) {
+				mprint("\nOCR Result: %s\n", rect->ocr_text ? rect->ocr_text : "NULL");
+			}
 		}
 		else
 		{
@@ -1676,6 +1679,22 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 				write_dvb_sub(dec_ctx->prev, sub->prev); //we write the current dvb sub to update decoder context
 				enc_ctx->write_previous = 1; //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
 				got_segment |= 16;
+
+				if (ccx_options.dvb_debug_traces_to_stdout) {
+					if (sub->prev) {
+						struct cc_bitmap* content_prev = sub->prev->data;
+						mprint("\nPrevious subtitle %x (%s)\nStart time: %lld; End time: %lld",
+							sub->prev, content_prev ?
+							(content_prev->ocr_text ? content_prev->ocr_text : "NULL OCR") : "NULL DATA",
+							sub->prev->start_time, sub->prev->end_time);
+					}
+					struct cc_bitmap* content = sub->data;
+					mprint("\nCurrent subtitle %x (%s)\nStart time: %lld; End time: %lld\n",
+						sub, content ?
+						(content->ocr_text ? content->ocr_text : "NULL OCR") : "NULL DATA",
+						sub->start_time, sub->end_time);
+				}
+
 				break;
 			default:
 				mprint("Subtitling segment type 0x%x, page id %d, length %d\n",

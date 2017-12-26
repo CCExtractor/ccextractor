@@ -1,6 +1,14 @@
 cmake_policy (SET CMP0037 NEW)
 
-set (CMAKE_C_FLAGS "-O0 -Wall -g -std=gnu99")
+if(MSVC)
+    set (CMAKE_C_FLAGS "-W3 /wd4005 /wd4996")
+else (MSVC)
+    set (CMAKE_C_FLAGS "-Wall -g -std=gnu99")
+endif(MSVC)
+
+if(WIN32)
+    add_definitions(-DWIN32)
+endif(WIN32)
 
 if (WITH_FFMPEG)
     find_package(PkgConfig)

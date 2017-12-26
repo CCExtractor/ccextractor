@@ -28,7 +28,7 @@
  * utf8proc is a free/open-source (MIT/expat licensed) C library
  * providing Unicode normalization, case-folding, and other operations
  * for strings in the UTF-8 encoding, supporting Unicode version
- * 8.0.0.  See the utf8proc home page (http://julialang.org/utf8proc/)
+ * 9.0.0.  See the utf8proc home page (http://julialang.org/utf8proc/)
  * for downloads and other information, or the source code on github
  * (https://github.com/JuliaLang/utf8proc).
  *
@@ -71,14 +71,15 @@
 /** The MAJOR version number (increased when backwards API compatibility is broken). */
 #define UTF8PROC_VERSION_MAJOR 2
 /** The MINOR version number (increased when new functionality is added in a backwards-compatible manner). */
-#define UTF8PROC_VERSION_MINOR 0
+#define UTF8PROC_VERSION_MINOR 1
 /** The PATCH version (increased for fixes that do not change the API). */
-#define UTF8PROC_VERSION_PATCH 2
+#define UTF8PROC_VERSION_PATCH 0
 /** @} */
 
 #include <stdlib.h>
-#include <sys/types.h>
-#ifdef _MSC_VER
+
+#if defined(_MSC_VER) && _MSC_VER < 1800
+// MSVC prior to 2013 lacked stdbool.h and inttypes.h
 typedef signed char utf8proc_int8_t;
 typedef unsigned char utf8proc_uint8_t;
 typedef short utf8proc_int16_t;
@@ -93,12 +94,18 @@ typedef int utf8proc_ssize_t;
 typedef unsigned int utf8proc_size_t;
 #  endif
 #  ifndef __cplusplus
+// emulate C99 bool
 typedef unsigned char utf8proc_bool;
-//enum {false, true};
+#    ifndef __bool_true_false_are_defined
+#      define false 0
+#      define true 1
+#      define __bool_true_false_are_defined 1
+#    endif
 #  else
 typedef bool utf8proc_bool;
 #  endif
 #else
+#  include <stddef.h>
 #  include <stdbool.h>
 #  include <inttypes.h>
 typedef int8_t utf8proc_int8_t;
@@ -108,18 +115,21 @@ typedef uint16_t utf8proc_uint16_t;
 typedef int32_t utf8proc_int32_t;
 typedef uint32_t utf8proc_uint32_t;
 typedef size_t utf8proc_size_t;
-typedef ssize_t utf8proc_ssize_t;
+typedef ptrdiff_t utf8proc_ssize_t;
 typedef bool utf8proc_bool;
 #endif
 #include <limits.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifndef SSIZE_MAX
 #define SSIZE_MAX ((size_t)SIZE_MAX/2)
 #endif
 
 #ifndef UINT16_MAX
-#  define UINT16_MAX ~(utf8proc_uint16_t)0
+#  define UINT16_MAX 65535U
 #endif
 
 /**
@@ -359,6 +369,13 @@ typedef enum {
 } utf8proc_boundclass_t;
 
 /**
+ * Function pointer type passed to @ref utf8proc_map_custom and
+ * @ref utf8proc_decompose_custom, which is used to specify a user-defined
+ * mapping of codepoints to be applied in conjunction with other mappings.
+ */
+typedef utf8proc_int32_t (*utf8proc_custom_func)(utf8proc_int32_t codepoint, void *data);
+
+/**
  * Array containing the byte lengths of a UTF-8 encoded codepoint based
  * on the first byte.
  */
@@ -406,7 +423,7 @@ utf8proc_bool utf8proc_codepoint_valid(utf8proc_int32_t codepoint);
  *
  * This function does not check whether `codepoint` is valid Unicode.
  */
-utf8proc_ssize_t utf8proc_encode_char(utf8proc_int32_t codepoint, utf8proc_uint8_t *dst);
+ utf8proc_ssize_t utf8proc_encode_char(utf8proc_int32_t codepoint, utf8proc_uint8_t *dst);
 
 /**
  * Look up the properties for a given codepoint.
@@ -420,7 +437,7 @@ utf8proc_ssize_t utf8proc_encode_char(utf8proc_int32_t codepoint, utf8proc_uint8
  * If the codepoint is unassigned or invalid, a pointer to a special struct is
  * returned in which `category` is 0 (@ref UTF8PROC_CATEGORY_CN).
  */
-const utf8proc_property_t *utf8proc_get_property(utf8proc_int32_t codepoint);
+ const utf8proc_property_t *utf8proc_get_property(utf8proc_int32_t codepoint);
 
 /** Decompose a codepoint into an array of codepoints.
  *
@@ -465,19 +482,32 @@ utf8proc_ssize_t utf8proc_decompose_char(
  * `buffer` (which must contain at least `bufsize` entries).  In case of
  * success, the number of codepoints written is returned; in case of an
  * error, a negative error code is returned (@ref utf8proc_errmsg).
+ * See @ref utf8proc_decompose_custom to supply additional transformations.
  *
  * If the number of written codepoints would be bigger than `bufsize`, the
  * required buffer size is returned, while the buffer will be overwritten with
  * undefined data.
  */
-utf8proc_ssize_t utf8proc_decompose(
+ utf8proc_ssize_t utf8proc_decompose(
   const utf8proc_uint8_t *str, utf8proc_ssize_t strlen,
   utf8proc_int32_t *buffer, utf8proc_ssize_t bufsize, utf8proc_option_t options
 );
 
 /**
- * Reencodes the sequence of `length` codepoints pointed to by `buffer`
- * UTF-8 data in-place (i.e., the result is also stored in `buffer`).
+ * The same as @ref utf8proc_decompose, but also takes a `custom_func` mapping function
+ * that is called on each codepoint in `str` before any other transformations
+ * (along with a `custom_data` pointer that is passed through to `custom_func`).
+ * The `custom_func` argument is ignored if it is `NULL`.  See also @ref utf8proc_map_custom.
+ */
+utf8proc_ssize_t utf8proc_decompose_custom(
+  const utf8proc_uint8_t *str, utf8proc_ssize_t strlen,
+  utf8proc_int32_t *buffer, utf8proc_ssize_t bufsize, utf8proc_option_t options,
+  utf8proc_custom_func custom_func, void *custom_data
+);
+
+/**
+ * Normalizes the sequence of `length` codepoints pointed to by `buffer`
+ * in-place (i.e., the result is also stored in `buffer`).
  *
  * @param buffer the (native-endian UTF-32) unicode codepoints to re-encode.
  * @param length the length (in codepoints) of the buffer.
@@ -492,15 +522,43 @@ utf8proc_ssize_t utf8proc_decompose(
  *                           the unicode versioning stability
  *
  * @return
- * In case of success, the length (in bytes) of the resulting UTF-8 string is
+ * In case of success, the length (in codepoints) of the normalized UTF-32 string is
  * returned; otherwise, a negative error code is returned (@ref utf8proc_errmsg).
+ *
+ * @warning The entries of the array pointed to by `str` have to be in the
+ *          range `0x0000` to `0x10FFFF`. Otherwise, the program might crash!
+ */
+ utf8proc_ssize_t utf8proc_normalize_utf32(utf8proc_int32_t *buffer, utf8proc_ssize_t length, utf8proc_option_t options);
+
+/**
+ * Reencodes the sequence of `length` codepoints pointed to by `buffer`
+ * UTF-8 data in-place (i.e., the result is also stored in `buffer`).
+ * Can optionally normalize the UTF-32 sequence prior to UTF-8 conversion.
+ *
+ * @param buffer the (native-endian UTF-32) unicode codepoints to re-encode.
+ * @param length the length (in codepoints) of the buffer.
+ * @param options a bitwise or (`|`) of one or more of the following flags:
+ * - @ref UTF8PROC_NLF2LS  - convert LF, CRLF, CR and NEL into LS
+ * - @ref UTF8PROC_NLF2PS  - convert LF, CRLF, CR and NEL into PS
+ * - @ref UTF8PROC_NLF2LF  - convert LF, CRLF, CR and NEL into LF
+ * - @ref UTF8PROC_STRIPCC - strip or convert all non-affected control characters
+ * - @ref UTF8PROC_COMPOSE - try to combine decomposed codepoints into composite
+ *                           codepoints
+ * - @ref UTF8PROC_STABLE  - prohibit combining characters that would violate
+ *                           the unicode versioning stability
+ * - @ref UTF8PROC_CHARBOUND - insert 0xFF bytes before each grapheme cluster
+ *
+ * @return
+ * In case of success, the length (in bytes) of the resulting nul-terminated
+ * UTF-8 string is returned; otherwise, a negative error code is returned
+ * (@ref utf8proc_errmsg).
  *
  * @warning The amount of free space pointed to by `buffer` must
  *          exceed the amount of the input data by one byte, and the
  *          entries of the array pointed to by `str` have to be in the
  *          range `0x0000` to `0x10FFFF`. Otherwise, the program might crash!
  */
-utf8proc_ssize_t utf8proc_reencode(utf8proc_int32_t *buffer, utf8proc_ssize_t length, utf8proc_option_t options);
+ utf8proc_ssize_t utf8proc_reencode(utf8proc_int32_t *buffer, utf8proc_ssize_t length, utf8proc_option_t options);
 
 /**
  * Given a pair of consecutive codepoints, return whether a grapheme break is
@@ -532,7 +590,7 @@ utf8proc_bool utf8proc_grapheme_break(
  * lower-case character, if any; otherwise (if there is no lower-case
  * variant, or if `c` is not a valid codepoint) return `c`.
  */
- utf8proc_int32_t utf8proc_tolower(utf8proc_int32_t c);
+utf8proc_int32_t utf8proc_tolower(utf8proc_int32_t c);
 
 /**
  * Given a codepoint `c`, return the codepoint of the corresponding
@@ -552,7 +610,7 @@ utf8proc_int32_t utf8proc_totitle(utf8proc_int32_t c);
  * Given a codepoint, return a character width analogous to `wcwidth(codepoint)`,
  * except that a width of 0 is returned for non-printable codepoints
  * instead of -1 as in `wcwidth`.
- * 
+ *
  * @note
  * If you want to check for particular types of non-printable characters,
  * (analogous to `isprint` or `iscntrl`), use @ref utf8proc_category. */
@@ -580,7 +638,8 @@ const char *utf8proc_category_string(utf8proc_int32_t codepoint);
  * in any case the result will be NULL terminated (though it might
  * contain NULL characters with the string if `str` contained NULL
  * characters). Other flags in the `options` field are passed to the
- * functions defined above, and regarded as described.
+ * functions defined above, and regarded as described.  See also
+ * @ref utfproc_map_custom to supply a custom codepoint transformation.
  *
  * In case of success the length of the new string is returned,
  * otherwise a negative error code is returned.
@@ -590,6 +649,17 @@ const char *utf8proc_category_string(utf8proc_int32_t codepoint);
  */
 utf8proc_ssize_t utf8proc_map(
   const utf8proc_uint8_t *str, utf8proc_ssize_t strlen, utf8proc_uint8_t **dstptr, utf8proc_option_t options
+);
+
+/**
+ * Like @ref utf8proc_map, but also takes a `custom_func` mapping function
+ * that is called on each codepoint in `str` before any other transformations
+ * (along with a `custom_data` pointer that is passed through to `custom_func`).
+ * The `custom_func` argument is ignored if it is `NULL`.
+ */
+utf8proc_ssize_t utf8proc_map_custom(
+  const utf8proc_uint8_t *str, utf8proc_ssize_t strlen, utf8proc_uint8_t **dstptr, utf8proc_option_t options,
+  utf8proc_custom_func custom_func, void *custom_data
 );
 
 /** @name Unicode normalization
@@ -604,9 +674,9 @@ utf8proc_ssize_t utf8proc_map(
 utf8proc_uint8_t *utf8proc_NFD(const utf8proc_uint8_t *str);
 /** NFC normalization (@ref UTF8PROC_COMPOSE). */
 utf8proc_uint8_t *utf8proc_NFC(const utf8proc_uint8_t *str);
-/** NFD normalization (@ref UTF8PROC_DECOMPOSE and @ref UTF8PROC_COMPAT). */
+/** NFKD normalization (@ref UTF8PROC_DECOMPOSE and @ref UTF8PROC_COMPAT). */
 utf8proc_uint8_t *utf8proc_NFKD(const utf8proc_uint8_t *str);
-/** NFD normalization (@ref UTF8PROC_COMPOSE and @ref UTF8PROC_COMPAT). */
+/** NFKC normalization (@ref UTF8PROC_COMPOSE and @ref UTF8PROC_COMPAT). */
 utf8proc_uint8_t *utf8proc_NFKC(const utf8proc_uint8_t *str);
 /** @} */
 

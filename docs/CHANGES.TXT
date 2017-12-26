@@ -18,6 +18,7 @@
 - New: Added -nospupngocr (don't OCR bitmaps when generating spupng, faster)
 - New: Add support for file split on keyframe (-segmentonkeyonly)
 - New: Added WebVTT output from Matroska.
+- New: Support for source-specific multicast.
 - Fix: Prevent the OCR being initialized more than once (happened on multiprogram and
   PAT changes)
 - Fix: Makefiles, build scripts, etc... everything updated and corrected for all
@@ -30,7 +31,6 @@
 - Fix:  When NAL decoding fails, don't dump the whole decoded thing, limit to 160 bytes.
 - Fix: Modify Autoconf scripts to generate tarball for mac from `/package_creators/tarball.sh` 
   and include GUI files in tarball
-
 
 
 0.85b (2017-1-26)
