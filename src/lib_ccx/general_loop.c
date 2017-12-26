@@ -902,6 +902,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		if(!ctx->multiprogram)
 		{
 			struct cap_info* cinfo = NULL;
+			struct encoder_ctx *enc_ctx = NULL;
 			// Find most promising stream: teletext, DVB, ISDB, ATSC, in that order
 			int pid = get_best_stream(ctx->demux_ctx);
 			if(pid < 0)
@@ -948,7 +949,6 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			}
 
 			cinfo = get_cinfo(ctx->demux_ctx, pid);
-			struct encoder_ctx *enc_ctx = NULL;
 			enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 			dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
@@ -1318,6 +1318,6 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	} // end while(1)
 
 	dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
-		free(parsebuf);
+	free(parsebuf);
 	return caps;
 }

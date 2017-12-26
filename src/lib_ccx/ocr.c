@@ -583,6 +583,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	pixDestroy(&cpix);
 	pixDestroy(&color_pix);
 	pixDestroy(&color_pix_out);
+    
 	return text_out;
 }
 
