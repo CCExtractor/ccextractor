@@ -1726,7 +1726,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 				write_dvb_sub(dec_ctx->prev, sub->prev); //we write the current dvb sub to update decoder context
 				enc_ctx->write_previous = 1; //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
 				got_segment |= 16;
-
+#ifdef ENABLE_OCR
 				if (ccx_options.dvb_debug_traces_to_stdout) {
 					if (sub->prev) {
 						struct cc_bitmap* content_prev = sub->prev->data;
@@ -1741,7 +1741,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 						(content->ocr_text ? content->ocr_text : "NULL OCR") : "NULL DATA",
 						sub->start_time, sub->end_time);
 				}
-
+#endif
 				break;
 			default:
 				mprint("Subtitling segment type 0x%x, page id %d, length %d\n",
