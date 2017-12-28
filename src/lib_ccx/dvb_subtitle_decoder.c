@@ -1465,6 +1465,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	uint32_t *clut_table;
 	int offset_x=0, offset_y=0;
 	int ret = 0;
+	int x_pos=-1, y_pos=-1, width=0, height=0;
 
 	ctx = (DVBSubContext *) dec_ctx->private_data;
 
@@ -1489,21 +1490,21 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		return 0;
 	}
 
-	rect = malloc( sizeof(struct cc_bitmap) * sub->nb_data);
+	rect = malloc(sizeof(struct cc_bitmap));
 	if(!rect)
-	{
 		return -1;
-	}
 
 	sub->flags |= SUB_EOD_MARKER;
 	sub->got_output = 1;
 	sub->data = rect;
 
+	// TODO: if different regions have different cluts, only the last one will be saved.
+	// Don't know if it will affect anything.
+
+	// The first loop, to determine the size of the whole subtitle (made up of different display/regions)
+
 	for (display = ctx->display_list; display; display = display->next)
 	{
-#ifdef ENABLE_OCR
-		char *ocr_str = NULL;
-#endif
 		region = get_region(ctx, display->region_id);
 
 		if (!region)
@@ -1512,13 +1513,35 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		if (!region->dirty)
 			continue;
 
-		rect->x = display->x_pos + offset_x;
-		rect->y = display->y_pos + offset_y;
-		rect->w = region->width;
-		rect->h = region->height;
-		rect->nb_colors = (1 << region->depth);
-		rect->linesize[0] = region->width;
+		if (x_pos == -1) {
+			x_pos = display->x_pos;
+			y_pos = display->y_pos;
+			width = region->width;
+			height = region->height;
+		}
+		else {
+			if (x_pos > display->x_pos) {
+				width += (x_pos - display->x_pos);
+				x_pos = display->x_pos;
+			}
 
+			if (display->y_pos < y_pos) {
+				height += (y_pos - display->y_pos);
+				y_pos = display->y_pos;
+			}
+
+			if (display->x_pos + region->width > x_pos + width) {
+				width = display->x_pos + region->width - x_pos;
+			}
+
+			if (display->y_pos + region->height > y_pos + height) {
+				height = display->y_pos + region->height - y_pos;
+			}
+
+		}
+		rect->nb_colors = (1 << region->depth);
+
+		// Process CLUT
 		clut = get_clut(ctx, region->clut);
 
 		if (!clut)
@@ -1541,29 +1564,53 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		memset(rect->data[1], 0, 1024);
 		memcpy(rect->data[1], clut_table, (1 << region->depth) * sizeof(uint32_t));
 
-		rect->data[0] = malloc(region->buf_size);
-		memcpy(rect->data[0], region->pbuf, region->buf_size);
-#ifdef ENABLE_OCR
-		if (ctx->ocr_ctx)
-		{
-			ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str,region->bgcolor);
-			if(ret >= 0)
-				rect->ocr_text = ocr_str;
-			else
-				rect->ocr_text = NULL;
-			if (ccx_options.dvb_debug_traces_to_stdout) {
-				mprint("\nOCR Result: %s\n", rect->ocr_text ? rect->ocr_text : "NULL");
-			}
-		}
-		else
-		{
-			rect->ocr_text = NULL;
-		}
-#endif
-		rect++;
-
 	}
 
+	rect->x = x_pos + offset_x;
+	rect->y = y_pos + offset_y;
+	rect->w = width;
+	rect->h = height;
+	rect->linesize[0] = width;
+
+	// The second loop, to generate the merged image
+
+	rect->data[0] = (uint8_t*)malloc(width * height);
+	if (!rect->data[0]) {
+		mprint("write_dvb_sub: failed to alloc memory, need %d * %d = %d bytes\n", width, height, width*height);
+		return -1;
+	}
+	memset(rect->data[0], 0x0, width * height);
+
+	for (display = ctx->display_list; display; display = display->next) {
+		region = get_region(ctx, display->region_id);
+
+		int x_off = display->x_pos - x_pos;
+		int y_off = display->y_pos - y_pos;
+		for (int y = 0; y < region->height; y++) {
+			for (int x = 0; x < region->width; x++)
+				rect->data[0][((y + y_off) * width) + x_off + x] = region->pbuf[y * region->width + x];
+		}
+	}
+
+	sub->nb_data = 1; // Set nb_data to 1 since we have merged the images into one image.
+
+	// Perform OCR
+#ifdef ENABLE_OCR
+	char *ocr_str = NULL;
+	if (ctx->ocr_ctx) {
+		ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, region->bgcolor);
+		if (ret >= 0)
+			rect->ocr_text = ocr_str;
+		else
+			rect->ocr_text = NULL;
+		if (ccx_options.dvb_debug_traces_to_stdout) {
+			mprint("\nOCR Result: %s\n", rect->ocr_text ? rect->ocr_text : "NULL");
+		}
+	}
+	else {
+		rect->ocr_text = NULL;
+	}
+#endif
 	return 0;
 }
 /**
