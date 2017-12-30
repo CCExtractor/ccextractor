@@ -1,63 +1,1 @@
-
-![logo](https://avatars3.githubusercontent.com/u/7253637?v=3&s=100)
- 
-# CCExtractor 
-
-[![Build Status](https://travis-ci.org/CCExtractor/ccextractor.svg?branch=master)](https://travis-ci.org/CCExtractor/ccextractor)
-
-CCExtractor is a tool that produces subtitles from TV use. Global accessibility (all users, all content, all countries) is the goal. With so many different formats, this is a constantly moving target, but we intend to keep up with all sources and formats.
-More information [here](https://ccextractor.org/public:general:about_the_org). 
-
-The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor)) and master being the most stable branch. It is primarily written in C.
-
-## Google Code-in 2017
-CCExtractor is [participating in Google Code-in 2017!](https://ccextractor.org/public:codein:welcome_2017) 
-
-Google Code-In is a competition of encouraging young people to learn more about Open Source and contributing to it. Tasks range from coding, documentation, quality assurance, user interface, outreach and research.
-
-This is our second year of challenging tasks for pre-university students aged 13-17.
-
-If you are a student fitting the age criteria, interested to contribute to CCExtractor feel free to join us. You can read more at the [Google Code-in website](https://codein.withgoogle.com).
-
-If you're interested in design tasks, you should read [this](https://www.ccextractor.org/public:codein:google_code-in_2017_code-in_for_designers) first. 
-
-## Installation and Usage
-
-Downloads for precompiled binaries and source code can be found [on our website](https://www.ccextractor.org?id=public:general:downloads).
-
-Extracting subtitles is relatively simple. Just run the following command:
-
-```ccextractor <input>```
-
-This will extract the subtitles.
-
-More usage information can be found on our website:
-
-- [Using the command line tool](https://www.ccextractor.org/doku.php?id=public:general:command_line_usage)
-- [Using the Windows GUI](https://www.ccextractor.org/doku.php?id=public:general:win_gui_usage)
-
-You can also find the list of parameters and their brief description by running `ccextractor` without any arguments.
-
-## Compiling CCExtractor
-
-To learn more about how to compile and build CCExtractor for your platform check the [compilation guide](docs/COMPILATION.MD).
-
-## Support
-
-By far the best way to get support is by opening an issue at our [issue tracker](https://github.com/CCExtractor/ccextractor/issues). 
-
-When you create a new issue, please fill in the needed details in the provided template. That makes it easier for us to help you more efficiently.
-
-If you have a question or a problem you can also [contact us by email or chat with the team in Slack](https://www.ccextractor.org/doku.php?id=public:general:support). 
-
-If you want to contribute to CCExtractor but can't submit some code patches or issues or video samples, you can also [donate to us](https://www.ccextractor.org/public:general:http:sourceforge.net_donate_index.php?group_id=190832) 
-
-## Contributing
-
-You can contribute to the project by reporting issues, forking it, modifying the code and making a pull request to the repository. We have some rules, outlined in the [contributor's guide](.github/CONTRIBUTING.md).
-
-## News & Other Information
-
-News about releases and modifications to the code can be found in the [CHANGES.TXT](docs/CHANGES.TXT) file. 
-
-For more information visit the CCExtractor website: [https://www.ccextractor.org](https://www.ccextractor.org)
+ HYPERLINK "https://www.google.co.in/url?sa=i&rct=j&q=&esrc=s&source=images&cd=&cad=rja&uact=8&ved=0ahUKEwjzyLWc5a7YAhXIpI8KHdodDX8QjRwIBw&url=https://boingboing.net/2017/08/03/no-private-laws.html&psig=AOvVaw1LXc4QQmr9R-JHMKaEAGa8&ust=1514622114936329" CCEXTRACTORWHAT DO WE DO?Our work is to make subtitles for your favorite shows. Our goal is to make this facility accessible for all. Our software has many tools that would make your work easy to use. Our code is purely written in C. For more information click here.OUR PATICIPATION IN GOOGLE CODE-IN.Every year we participate in the competition google code in organized by google. This competition is for pre-university (13 -14 years) students who are looking forward to making their bright future in computer science.Every year we provide participants with numerous and interesting tasks that contribute in open source. According to the number of tasks you do get prizes (certificate, T-Shirt, Hoddie, Grand trip to America). For more information click here.ABOUT INSTALLATION AND USAGEInstallation and usage of CCEXTRATOR is quite easy.You can get our downloads for precompiled binaries and source code at our website.Extracting the subtitles our also quite easy. Just you need to do is run this code:ccextractor <input>ccextractor <input>To get more information of how to use it you can follow these links: HYPERLINK "https://www.ccextractor.org/doku.php?id=public:general:command_line_usage" Using the command line tool HYPERLINK "https://www.ccextractor.org/doku.php?id=public:general:win_gui_usage" Using the Windows GUIYou can also find the list of parameters and their brief description by running      ccextractor          without any arguments.HOW TO COMPILE CCEXTRACTORIf want to get more information about compiling build CCEXTRACTOR of your platform just visit this link:  Compilation guide  SUPPORTIf you have any problem, while using or installing CCXTRACTOR we would be happy to solve it. The best way to get our support is by opening an issue at our  HYPERLINK "https://github.com/CCExtractor/ccextractor/issues" issue tracker.While you are creating a new Issue please fill all the details given in the template provided. This will make us help you as efficiently and fast as we can.Further, if you have a question or a problem you can also  HYPERLINK "https://www.ccextractor.org/doku.php?id=public:general:support" contact us by email or chat with the team in Slack.If you want to contribute to CCExtractor but can't submit some code patches or issues or video samples, you can also donate to us. This could be very helpful for us.CONTRIBUTIONWe would be very grateful if you contribute any report issues, Forking forking it, modifying the code and making a pull request to the repository. We have some rules, outlined in the  HYPERLINK "https://github.com/CCExtractor/ccextractor/blob/master/.github/CONTRIBUTING.md" contributor's guide.NEWS AND OTHER INFORMATIONTo get the latest news about releases and modifications just click at this  HYPERLINK "https://github.com/CCExtractor/ccextractor/blob/master/docs/CHANGES.TXT" CHANGES.TXT file.In case if you need to get more information about CCEXTRACTER visit our website:  HYPERLINK "https://www.ccextractor.org/" https://www.ccextractor.orgTHANK YOU!
