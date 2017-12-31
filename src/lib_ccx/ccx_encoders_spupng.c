@@ -11,7 +11,7 @@ void draw_str(char *str, uint8_t * canvas, int rowstride)
 	int i = 0;
 	pen[0] = COL_BLACK;
 	pen[1] = COL_WHITE;
-	for(ptr = str; ptr != '\0';ptr++)
+	for (ptr = str; *ptr != '\0'; ptr++)
 	{
 		cell = canvas + ((i+1) * CCW);
 		draw_char_indexed(cell, rowstride, pen, 0, 0, 0);
