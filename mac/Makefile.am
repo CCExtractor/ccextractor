@@ -15,6 +15,7 @@ ccextractor_SOURCES = \
 				../src/gpacmp4/box_code_apple.c \
 				../src/gpacmp4/box_code_base.c \
 				../src/gpacmp4/box_code_drm.c \
+				../src/gpacmp4/box_dump.c \
 				../src/gpacmp4/box_code_meta.c \
 				../src/gpacmp4/box_funcs.c \
 				../src/gpacmp4/configfile.c \
@@ -56,6 +57,7 @@ ccextractor_SOURCES = \
 				../src/gpacmp4/gpac/avparse.h \
 				../src/gpacmp4/gpac/base_coding.h \
 				../src/gpacmp4/gpac/bitstream.h \
+				../src/gpacmp4/gpac/color.h \
 				../src/gpacmp4/gpac/config_file.h \
 				../src/gpacmp4/gpac/configuration.h \
 				../src/gpacmp4/gpac/constants.h \
@@ -63,7 +65,7 @@ ccextractor_SOURCES = \
 				../src/gpacmp4/gpac/ietf.h \
 				../src/gpacmp4/gpac/isomedia.h \
 				../src/gpacmp4/gpac/list.h \
-				../src/gpacmp4/gpac/math.h \
+				../src/gpacmp4/gpac/maths.h \
 				../src/gpacmp4/gpac/media_tools.h \
 				../src/gpacmp4/gpac/mpeg4_odf.h \
 				../src/gpacmp4/gpac/network.h \

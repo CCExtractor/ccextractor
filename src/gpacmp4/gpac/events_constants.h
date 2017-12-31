@@ -1,51 +1,51 @@
 /*
-*			GPAC - Multimedia Framework C SDK
-*
-*			Authors: Jean Le Feuvre
-*			Copyright (c) Telecom ParisTech 2000-2012
-*					All rights reserved
-*
-*  This file is part of GPAC / Events management
-*
-*  GPAC is free software; you can redistribute it and/or modify
-*  it under the terms of the GNU Lesser General Public License as published by
-*  the Free Software Foundation; either version 2, or (at your option)
-*  any later version.
-*
-*  GPAC is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU Lesser General Public License for more details.
-*
-*  You should have received a copy of the GNU Lesser General Public
-*  License along with this library; see the file COPYING.  If not, write to
-*  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-*
-*/
+ *			GPAC - Multimedia Framework C SDK
+ *
+ *			Authors: Jean Le Feuvre
+ *			Copyright (c) Telecom ParisTech 2000-2012
+ *					All rights reserved
+ *
+ *  This file is part of GPAC / Events management
+ *
+ *  GPAC is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  GPAC is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; see the file COPYING.  If not, write to
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
 
 
 #ifndef _GF_EVENTS_CONSTANTS_H_
 #define _GF_EVENTS_CONSTANTS_H_
 
 /*!
-*	\file <gpac/events_constants.h>
-*	\brief Constants for event system used by GPAC playback.
-*/
-
+ *	\file <gpac/events_constants.h>
+ *	\brief Constants for event system used by GPAC playback.
+ */
+	
 /*!
-*	\addtogroup evt_grp
-*	\ingroup playback_grp
-*	\brief Constants for event system used by GPAC playback.
-*
-*This section documents the event types used by the terminal, the compositor, input modules and output rendering modules for communication.
-*	@{
-*/
+ *	\addtogroup evt_grp
+ *	\ingroup playback_grp
+ *	\brief Constants for event system used by GPAC playback.
+ *
+ *This section documents the event types used by the terminal, the compositor, input modules and output rendering modules for communication.
+ *	@{
+ */
 
 
 /*
-minimal event system
+		minimal event system
 
-DO NOT CHANGE THEIR POSITION IN THE LIST, USED TO SPEED UP FILTERING OF USER INPUT EVENTS
+	DO NOT CHANGE THEIR POSITION IN THE LIST, USED TO SPEED UP FILTERING OF USER INPUT EVENTS
 */
 
 /*events*/
@@ -53,7 +53,7 @@ typedef enum {
 
 	/******************************************************
 
-	Events used for both GPAC internals and DOM Events
+		Events used for both GPAC internals and DOM Events
 
 	*******************************************************/
 	/*MouseEvents*/
@@ -77,7 +77,7 @@ typedef enum {
 
 	/******************************************************
 
-	Events used for DOM Events only
+		Events used for DOM Events only
 
 	*******************************************************/
 	GF_EVENT_TEXTSELECT,
@@ -170,7 +170,7 @@ typedef enum {
 
 	/******************************************************
 
-	Events used for GPAC internals only
+		Events used for GPAC internals only
 
 	*******************************************************/
 
@@ -194,7 +194,7 @@ typedef enum {
 	*/
 	GF_EVENT_SIZE,
 	/*signals the scene size (if indicated in scene) upon connection (sent to the user event proc only)
-	if scene size hasn't changed (seeking or other) this event is not sent
+		if scene size hasn't changed (seeking or other) this event is not sent
 	*/
 	GF_EVENT_SCENE_SIZE,
 	GF_EVENT_SHOWHIDE,	/*window show/hide (minimized or other). */
@@ -205,15 +205,15 @@ typedef enum {
 	GF_EVENT_MOVE_NOTIF,		/*move window*/
 	GF_EVENT_REFRESH, /*window needs repaint (whenever needed, eg restore, hide->show, background refresh, paint)*/
 	GF_EVENT_QUIT,	/*app is being closed - associated structure is evt.message to carry any potential reason for quiting*/
-					/*video hw setup message:
-					- when sent from gpac to plugin, indicates that the plugin should re-setup hardware context due to a window resize:
-					* for 2D output, this means resizing the backbuffer if needed (depending on HW constraints)
-					* for 3D output, this means re-setup of OpenGL context (depending on HW constraints). Depending on windowing systems
-					and implementations, it could be possible to resize a window without destroying the GL context.
+	/*video hw setup message:
+		- when sent from gpac to plugin, indicates that the plugin should re-setup hardware context due to a window resize:
+			* for 2D output, this means resizing the backbuffer if needed (depending on HW constraints)
+			* for 3D output, this means re-setup of OpenGL context (depending on HW constraints). Depending on windowing systems
+			and implementations, it could be possible to resize a window without destroying the GL context.
 
-					- when sent from plugin to gpac, indicates that hardware has been setup.
-					- when sent from gpac to user, indicate aspect ratio has been modified and video output is ready
-					*/
+		- when sent from plugin to gpac, indicates that hardware has been setup.
+		- when sent from gpac to user, indicate aspect ratio has been modified and video output is ready
+	*/
 	GF_EVENT_VIDEO_SETUP,
 	/*queries the list of system colors - only exchanged between compositor and video output*/
 	GF_EVENT_SYS_COLORS,
@@ -295,7 +295,7 @@ typedef enum {
 	GF_KEY_DOWN, /*"Down"    The Down Arrow key.*/
 	GF_KEY_END, /*"End"    The End key.*/
 	GF_KEY_ENTER, /*"Enter"    The Enter key.
-				  Note: This key identifier is also used for the Return (Macintosh numpad) key.*/
+                   Note: This key identifier is also used for the Return (Macintosh numpad) key.*/
 	GF_KEY_ERASEEOF, /*"EraseEof"    The Erase EOF key.*/
 	GF_KEY_EXECUTE, /*"Execute"    The Execute key.*/
 	GF_KEY_EXSEL, /*"Exsel"    The Exsel key.*/
@@ -465,22 +465,22 @@ typedef enum {
 	GF_KEY_EURO, /*"U+20AC"    The Euro Currency Sign key (�).*/
 	GF_KEY_DEADVOICESOUND, /*"U+3099"    The Combining Katakana-Hiragana Voiced Sound Mark (Dead Voiced Sound) key.*/
 	GF_KEY_DEADSEMIVOICESOUND, /*"U+309A"    The Combining Katakana-Hiragana Semi-Voiced Sound Mark (Dead Semivoiced Sound) key. */
-							   /* STB */
-							   GF_KEY_CHANNELUP, /*ChannelUp*/
-							   GF_KEY_CHANNELDOWN, /*ChannelDown*/
-							   GF_KEY_TEXT, /*Text*/
-							   GF_KEY_INFO, /*Info*/
-							   GF_KEY_EPG, /*EPG*/
-							   GF_KEY_RECORD, /*Record*/
-							   GF_KEY_BEGINPAGE, /*BeginPage*/
-												 /* end STB */
+	/* STB */
+	GF_KEY_CHANNELUP, /*ChannelUp*/
+	GF_KEY_CHANNELDOWN, /*ChannelDown*/
+	GF_KEY_TEXT, /*Text*/
+	GF_KEY_INFO, /*Info*/
+	GF_KEY_EPG, /*EPG*/
+	GF_KEY_RECORD, /*Record*/
+	GF_KEY_BEGINPAGE, /*BeginPage*/
+	/* end STB */
 
-												 /*non-dom keys, used in LASeR*/
-												 GF_KEY_CELL_SOFT1,	/*soft1 key of cell phones*/
-												 GF_KEY_CELL_SOFT2,	/*soft2 key of cell phones*/
+	/*non-dom keys, used in LASeR*/
+	GF_KEY_CELL_SOFT1,	/*soft1 key of cell phones*/
+	GF_KEY_CELL_SOFT2,	/*soft2 key of cell phones*/
 
-																	/*for joystick handling*/
-																	GF_KEY_JOYSTICK
+	/*for joystick handling*/
+	GF_KEY_JOYSTICK
 } GF_KeyCode;
 
 
@@ -488,12 +488,12 @@ typedef enum {
 typedef enum
 {
 	GF_KEY_MOD_SHIFT = (1),
-	GF_KEY_MOD_CTRL = (1 << 2),
-	GF_KEY_MOD_ALT = (1 << 3),
+	GF_KEY_MOD_CTRL = (1<<2),
+	GF_KEY_MOD_ALT = (1<<3),
 
-	GF_KEY_EXT_NUMPAD = (1 << 4),
-	GF_KEY_EXT_LEFT = (1 << 5),
-	GF_KEY_EXT_RIGHT = (1 << 6)
+	GF_KEY_EXT_NUMPAD = (1<<4),
+	GF_KEY_EXT_LEFT = (1<<5),
+	GF_KEY_EXT_RIGHT = (1<<6)
 } GF_KeyModifier;
 
 /*sensor signaling*/
