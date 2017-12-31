@@ -119,31 +119,31 @@ void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_
 
 unsigned int utf8_to_latin1_map(const unsigned int code)
 {
-    /* Code points 0 to U+00FF are the same in both. */
-    if (code < 256U)
-        return code;
+	/*Code points 0 to U+00FF are the same in both. */
+	if (code < 256U)
+		return code;
 
-    switch (code)
+	switch (code)
 	{
-    case 0x0152U:
-		return 188U; /* U+0152 = 0xBC: OE ligature */
-    case 0x0153U:
-		return 189U; /* U+0153 = 0xBD: oe ligature */
-    case 0x0160U:
-		return 166U; /* U+0160 = 0xA6: S with caron */
-    case 0x0161U: return 168U; /* U+0161 = 0xA8: s with caron */
-    case 0x0178U: return 190U; /* U+0178 = 0xBE: Y with diaresis */
-    case 0x017DU: return 180U; /* U+017D = 0xB4: Z with caron */
-    case 0x017EU: return 184U; /* U+017E = 0xB8: z with caron */
-    case 0x20ACU: return 164U; /* U+20AC = 0xA4: Euro */
-    default:      return 256U;
-    }
+	case 0x0152U:
+		return 188U; /*U+0152 = 0xBC: OE ligature */
+	case 0x0153U:
+		return 189U; /*U+0153 = 0xBD: oe ligature */
+	case 0x0160U:
+		return 166U; /*U+0160 = 0xA6: S with caron */
+	case 0x0161U: return 168U; /*U+0161 = 0xA8: s with caron */
+	case 0x0178U: return 190U; /*U+0178 = 0xBE: Y with diaresis */
+	case 0x017DU: return 180U; /*U+017D = 0xB4: Z with caron */
+	case 0x017EU: return 184U; /*U+017E = 0xB8: z with caron */
+	case 0x20ACU: return 164U; /*U+20AC = 0xA4: Euro */
+	default:		return 256U;
+	}
 }
 
 int change_utf8_encoding(unsigned char* dest, unsigned char* src, int len, enum ccx_encoding_type out_enc)
 {
-	unsigned char *orig = dest; // Keep for calculating length
-	unsigned char *orig_src = src; // Keep for calculating length
+	unsigned char *orig = dest; //Keep for calculating length
+	unsigned char *orig_src = src; //Keep for calculating length
 	for (int i = 0; src < orig_src + len;)
 	{
 		unsigned char c = src[i];
@@ -249,7 +249,7 @@ int change_utf8_encoding(unsigned char* dest, unsigned char* src, int len, enum 
 		src += c_len;
 	}
 	*dest = 0;
-	return (dest - orig); // Return length
+	return (dest - orig); //Return length
 }
 
 int change_latin1_encoding(unsigned char* dest, unsigned char* src, int len, enum ccx_encoding_type out_enc)
@@ -264,7 +264,7 @@ int change_unicode_encoding(unsigned char* dest, unsigned char* src, int len, en
 
 int change_ascii_encoding(unsigned char* dest, unsigned char* src, int len, enum ccx_encoding_type out_enc)
 {
-	unsigned char *orig = dest; // Keep for calculating length
+	unsigned char *orig = dest; //Keep for calculating length
 	int bytes = 0;
 	for (int i = 0; i < len; i++)
 	{
@@ -291,7 +291,7 @@ int change_ascii_encoding(unsigned char* dest, unsigned char* src, int len, enum
 		dest += bytes;
 	}
 	*dest = 0;
-	return (dest - orig); // Return length
+	return (dest - orig); //Return length
 }
 
 int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_subs,
@@ -311,7 +311,7 @@ int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_
 	}
 
 
-	// change encoding only when required
+	//change encoding only when required
 	switch (in_enc)
 	{
 	case CCX_ENC_UTF_8:
@@ -330,12 +330,12 @@ int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_
 	if (len < 0)
 		mprint("WARNING: Could not encode in specified format\n");
 	else if (len == CCX_ENOSUPP)
-	// we only support ASCII to other encoding std
+	//we only support ASCII to other encoding std
 		mprint("WARNING: Encoding is not yet supported\n");
 	else
-		return (unsigned)len; // Return length
+		return (unsigned)len; //Return length
 
-	return 0; // Return length
+	return 0; //Return length
 }
 
 int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
@@ -388,7 +388,7 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 				mprint("WARNING: loss of data\n");
 			}
 			break;
-		default: // Nothing to do, no footer on this format
+		default: //Nothing to do, no footer on this format
 			break;
 	}
 
@@ -400,7 +400,7 @@ static int write_bom(struct encoder_ctx *ctx, struct ccx_s_write *out)
 {
 	int ret = 0;
 	if (!ctx->no_bom){
-		if (ctx->encoding == CCX_ENC_UTF_8){ // Write BOM
+		if (ctx->encoding == CCX_ENC_UTF_8){ //Write BOM
 			ret = write(out->fh, UTF8_BOM, sizeof(UTF8_BOM));
 			if ( ret < sizeof(UTF8_BOM)) {
 				mprint("WARNING: Unable tp write UTF BOM\n");
@@ -408,7 +408,7 @@ static int write_bom(struct encoder_ctx *ctx, struct ccx_s_write *out)
 			}
 
 		}
-		if (ctx->encoding == CCX_ENC_UNICODE){ // Write BOM
+		if (ctx->encoding == CCX_ENC_UNICODE){ //Write BOM
 			ret = write(out->fh, LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM));
 			if ( ret < sizeof(LITTLE_ENDIAN_BOM)) {
 				mprint("WARNING: Unable to write LITTLE_ENDIAN_BOM \n");
@@ -425,7 +425,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 	int header_size = 0;
 	switch (ctx->write_format)
 	{
-		case CCX_OF_SRT: // Subrip subtitles have no header
+		case CCX_OF_SRT: //Subrip subtitles have no header
 		case CCX_OF_G608:
 			ret = write_bom(ctx, out);
 			if(ret < 0)
@@ -450,7 +450,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				return -1;
 			for(int i = 0; webvtt_header[i]!=NULL ;i++)
 			{
-				header_size += strlen(webvtt_header[i]); // Find total size of the header
+				header_size += strlen(webvtt_header[i]); //Find total size of the header
 			}
 			REQUEST_BUFFER_CAPACITY(ctx, header_size*3);
 			for(int i = 0; webvtt_header[i]!=NULL;i++)
@@ -471,7 +471,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				}
 			}
 			break;
-		case CCX_OF_SAMI: // This header brought to you by McPoodle's CCASDI
+		case CCX_OF_SAMI: //This header brought to you by McPoodle's CCASDI
 			//fprintf_encoded (wb->fh, sami_header);
 			ret = write_bom(ctx, out);
 			if(ret < 0)
@@ -485,7 +485,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				return -1;
 			}
 			break;
-		case CCX_OF_SMPTETT: // This header brought to you by McPoodle's CCASDI
+		case CCX_OF_SMPTETT: //This header brought to you by McPoodle's CCASDI
 			//fprintf_encoded (wb->fh, sami_header);
 			ret = write_bom(ctx, out);
 			if(ret < 0)
@@ -499,8 +499,8 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				return -1;
 			}
 			break;
-		case CCX_OF_RCWT: // Write header
-			rcwt_header[7] = ctx->in_fileformat; // sets file format version
+		case CCX_OF_RCWT: //Write header
+			rcwt_header[7] = ctx->in_fileformat; //sets file format version
 
 			if (ctx->send_to_srv)
 				net_send_header(rcwt_header, sizeof(rcwt_header));
@@ -651,19 +651,19 @@ int write_cc_bitmap_as_simplexml(struct cc_subtitle *sub, struct encoder_ctx *co
 
 
 /**
- * @brief Function to add credits at end of subtitles File
- *
- * @param context encoder context in which you want to add credits at end
- *
- * @param out output context which usually keeps file handler
- */
+*@brief Function to add credits at end of subtitles File
+*
+*@param context encoder context in which you want to add credits at end
+*
+*@param out output context which usually keeps file handler
+*/
 static void try_to_add_end_credits(struct encoder_ctx *context, struct ccx_s_write *out, LLONG current_fts)
 {
 	LLONG window, length, st, end;
 	if (out->fh == -1)
 		return;
 	window = current_fts - context->last_displayed_subs_ms - 1;
-	if (window < context->endcreditsforatleast.time_in_ms) // Won't happen, window is too short
+	if (window < context->endcreditsforatleast.time_in_ms) //Won't happen, window is too short
 		return;
 	length = context->endcreditsforatmost.time_in_ms > window ?
 		window : context->endcreditsforatmost.time_in_ms;
@@ -689,7 +689,7 @@ static void try_to_add_end_credits(struct encoder_ctx *context, struct ccx_s_wri
 			write_stringz_as_smptett(context->end_credits_text, context, st, end);
 			break ;
 		default:
-			// Do nothing for the rest
+			//Do nothing for the rest
 			break;
 	}
 }
@@ -698,23 +698,23 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 {
 	LLONG st, end, window, length;
 	LLONG l = start_ms + context->subs_delay;
-	// We have a windows from last_displayed_subs_ms to l - we need to see if it fits
+	//We have a windows from last_displayed_subs_ms to l - we need to see if it fits
 
-	if (l < context->startcreditsnotbefore.time_in_ms) // Too early
+	if (l < context->startcreditsnotbefore.time_in_ms) //Too early
 		return;
 
-	if (context->last_displayed_subs_ms+1 > context->startcreditsnotafter.time_in_ms) // Too late
+	if (context->last_displayed_subs_ms+1 > context->startcreditsnotafter.time_in_ms) //Too late
 		return;
 
 	st = context->startcreditsnotbefore.time_in_ms>(context->last_displayed_subs_ms+1) ?
-		context->startcreditsnotbefore.time_in_ms : (context->last_displayed_subs_ms+1); // When would credits actually start
+		context->startcreditsnotbefore.time_in_ms : (context->last_displayed_subs_ms+1); //When would credits actually start
 
 	end = context->startcreditsnotafter.time_in_ms<(l-1) ?
 		context->startcreditsnotafter.time_in_ms : (l-1);
 
-	window = end-st; // Allowable time in MS
+	window = end-st; //Allowable time in MS
 
-	if (context->startcreditsforatleast.time_in_ms>window) // Window is too short
+	if (context->startcreditsforatleast.time_in_ms>window) //Window is too short
 		return;
 
 	length=context->startcreditsforatmost.time_in_ms > window ?
@@ -729,7 +729,7 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 
 	if (window>length+2)
 	{
-		// Center in time window
+		//Center in time window
 		LLONG pad=window-length;
 		st+=(pad/2);
 	}
@@ -752,7 +752,7 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 			write_stringz_as_smptett(context->start_credits_text, context, st, end);
 			break;
 		default:
-			// Do nothing for the rest
+			//Do nothing for the rest
 			break;
 	}
 	context->startcredits_displayed=1;
@@ -779,8 +779,8 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 {
 	int ret = EXIT_OK;
 	int nb_lang;
-	char *basefilename = NULL; // Input filename without the extension
-	char *extension = NULL; // Input filename without the extension
+	char *basefilename = NULL; //Input filename without the extension
+	char *extension = NULL; //Input filename without the extension
 
 #define check_ret(filename) 	if (ret != EXIT_OK)	\
 				{									\
@@ -805,9 +805,9 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	{
 		if (cfg->output_filename != NULL)
 		{
-			// Use the given output file name for the field specified by
-			// the -1, -2 switch. If -12 is used, the filename is used for
-			// field 1.
+			//Use the given output file name for the field specified by
+			//the -1, -2 switch. If -12 is used, the filename is used for
+			//field 1.
 			if (cfg->extract == 12)
 			{
 				basefilename = get_basename(cfg->output_filename);
@@ -826,8 +826,8 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 		}
 		else if (cfg->write_format != CCX_OF_NULL)
 		{
-            basefilename = get_basename(ctx->first_input_file);
-            extension = get_file_extension(cfg->write_format);
+			basefilename = get_basename(ctx->first_input_file);
+			extension = get_file_extension(cfg->write_format);
 			if (basefilename == NULL)
 			{
 				basefilename = get_basename("untitled");
@@ -911,8 +911,8 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 }
 
 /**
- * @param current_fts used while calculating window for end credits
- */
+*@param current_fts used while calculating window for end credits
+*/
 void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts)
 {
 	struct encoder_ctx *ctx = *arg;
@@ -979,7 +979,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	}
 	ctx->in_fileformat = opt->in_format;
 
-	/** used in case of SUB_EOD_MARKER */
+	/**used in case of SUB_EOD_MARKER*/
 	ctx->prev_start = -1;
 	ctx->subs_delay = opt->subs_delay;
 	ctx->last_displayed_subs_ms = 0;
@@ -1094,16 +1094,15 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			return wrote_something;
 	}
 
-	// Write subtitles as they come
+	//Write subtitles as they come
 		if (sub->type == CC_608)
 		{
 			struct eia608_screen *data = NULL;
 			struct ccx_s_write *out;
 			for (data = sub->data; sub->nb_data; sub->nb_data--, data++)
 			{
-				// Determine context based on channel. This replaces the code that was above, as this was incomplete (for cases where -12 was used for example)
+				//Determine context based on channel. This replaces the code that was above, as this was incomplete (for cases where -12 was used for example)
 				out = get_output_ctx(context, data->my_field);
-
 				if (data->format == SFORMAT_XDS)
 				{
 					data->end_time = data->end_time + context->subs_delay;
@@ -1131,14 +1130,14 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				}
 
 #ifdef ENABLE_PYTHON
-                //making a call to python_encoder so that if the call is from the api, no output is generated.
-                if (signal_python_api)
-                    wrote_something = pass_cc_buffer_to_python(data, context);
-                else
+				//making a call to python_encoder so that if the call is from the api, no output is generated.
+				if (signal_python_api)
+					wrote_something = pass_cc_buffer_to_python(data, context);
+				else
 #endif
-                {
-				    switch (context->write_format)
-				    {
+				{
+					switch (context->write_format)
+					{
 					case CCX_OF_SRT:
 						if (!context->startcredits_displayed && context->start_credits_text != NULL)
 							try_to_add_start_credits(context, data->start_time);
@@ -1188,8 +1187,8 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 						break;
 					default:
 						break;
-				    }
-                }
+					}
+				}
 				if (wrote_something)
 					context->last_displayed_subs_ms = data->end_time;
 
@@ -1207,7 +1206,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					try_to_add_start_credits(context, sub->start_time);
 				wrote_something = write_cc_bitmap_as_srt(sub, context);
 				break;
-            case CCX_OF_SSA:
+			case CCX_OF_SSA:
 				if (!context->startcredits_displayed && context->start_credits_text != NULL)
 					try_to_add_start_credits(context, sub->start_time);
 					wrote_something = write_cc_bitmap_as_ssa(sub, context);
@@ -1328,7 +1327,7 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *cont
 	ms_start = data->start_time;
 
 	ms_start += context->subs_delay;
-	if (ms_start<0) // Drop screens that because of subs_delay start too early
+	if (ms_start<0) //Drop screens that because of subs_delay start too early
 		return;
 	int time_reported = 0;
 	for (int i = 0; i<15; i++)
@@ -1340,8 +1339,8 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *cont
 			{
 				LLONG ms_end = data->end_time;
 				millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
-				millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
-				// Note, only MM:SS here as we need to save space in the preview window
+				millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); //-1 To prevent overlapping with next line.
+				//Note, only MM:SS here as we need to save space in the preview window
 				fprintf(stderr, "%02u:%02u#%02u:%02u#",
 					h1 * 60 + m1, s1, h2 * 60 + m2, s2);
 				time_reported = 1;
@@ -1349,8 +1348,8 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *cont
 			else
 				fprintf(stderr, "##");
 
-			// We don't capitalize here because whatever function that was used
-			// before to write to file already took care of it.
+			//We don't capitalize here because whatever function that was used
+			//before to write to file already took care of it.
 			int length = get_decoder_line_encoded_for_gui(context->subline, i, data);
 			fwrite(context->subline, 1, length, stderr);
 			fwrite("\n", 1, 1, stderr);
@@ -1379,7 +1378,7 @@ unsigned int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, in
 			get_char_in_unicode(buffer, line[i]);
 			bytes = 2;
 		case CCX_ENC_ASCII:
-		    *buffer = line[i];
+			*buffer = line[i];
 			bytes = 1;
 			break;
 		}
