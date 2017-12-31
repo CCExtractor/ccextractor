@@ -1,27 +1,27 @@
 /*
-*			GPAC - Multimedia Framework C SDK
-*
-*			Authors: Jean Le Feuvre
-*			Copyright (c) Telecom ParisTech 2000-2012
-*					All rights reserved
-*
-*  This file is part of GPAC / common tools sub-project
-*
-*  GPAC is free software; you can redistribute it and/or modify
-*  it under the terms of the GNU Lesser General Public License as published by
-*  the Free Software Foundation; either version 2, or (at your option)
-*  any later version.
-*
-*  GPAC is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU Lesser General Public License for more details.
-*
-*  You should have received a copy of the GNU Lesser General Public
-*  License along with this library; see the file COPYING.  If not, write to
-*  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-*
-*/
+ *			GPAC - Multimedia Framework C SDK
+ *
+ *			Authors: Jean Le Feuvre
+ *			Copyright (c) Telecom ParisTech 2000-2012
+ *					All rights reserved
+ *
+ *  This file is part of GPAC / common tools sub-project
+ *
+ *  GPAC is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  GPAC is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; see the file COPYING.  If not, write to
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
 
 #include <gpac/tools.h>
 #include <gpac/network.h>
@@ -83,7 +83,7 @@ u32 gf_sys_clock()
 {
 	struct timeval now;
 	gettimeofday(&now, NULL);
-	return (u32)(((now.tv_sec) * 1000 + (now.tv_usec) / 1000) - sys_start_time);
+	return (u32) ( ( (now.tv_sec)*1000 + (now.tv_usec) / 1000) - sys_start_time );
 }
 
 GF_EXPORT
@@ -91,7 +91,7 @@ u64 gf_sys_clock_high_res()
 {
 	struct timeval now;
 	gettimeofday(&now, NULL);
-	return (now.tv_sec) * 1000000 + (now.tv_usec) - sys_start_time_hr;
+	return (now.tv_sec)*1000000 + (now.tv_usec) - sys_start_time_hr;
 }
 
 #endif
@@ -112,8 +112,8 @@ void gf_sleep(u32 ms)
 #endif
 
 #ifdef SLEEP_ABS_SELECT
-	tv.tv_sec = ms / 1000;
-	tv.tv_usec = (ms % 1000) * 1000;
+	tv.tv_sec = ms/1000;
+	tv.tv_usec = (ms%1000)*1000;
 #else
 	prev = gf_sys_clock();
 #endif
@@ -124,17 +124,17 @@ void gf_sleep(u32 ms)
 #ifndef SLEEP_ABS_SELECT
 		now = gf_sys_clock();
 		elapsed = (now - prev);
-		if (elapsed >= ms) {
+		if ( elapsed >= ms ) {
 			break;
 		}
 		prev = now;
 		ms -= elapsed;
-		tv.tv_sec = ms / 1000;
-		tv.tv_usec = (ms % 1000) * 1000;
+		tv.tv_sec = ms/1000;
+		tv.tv_usec = (ms%1000)*1000;
 #endif
 
 		sel_err = select(0, NULL, NULL, NULL, &tv);
-	} while (sel_err && (errno == EINTR));
+	} while ( sel_err && (errno == EINTR) );
 #endif
 }
 
@@ -145,16 +145,16 @@ void gf_sleep(u32 ms)
 //#include <wce_time.h>
 
 /*
-* Author of first version (timeval.h): by Wu Yongwei
-* Author of Windows CE version: Mateusz Loskot (mateusz@loskot.net)
-*
-* All code here is considered in the public domain though we do wish our names
-* could be retained if anyone uses them.
-*/
+ * Author of first version (timeval.h): by Wu Yongwei
+ * Author of Windows CE version: Mateusz Loskot (mateusz@loskot.net)
+ *
+ * All code here is considered in the public domain though we do wish our names
+ * could be retained if anyone uses them.
+ */
 
 /*
-* Constants used internally by time functions.
-*/
+ * Constants used internally by time functions.
+ */
 
 #ifndef _TM_DEFINED
 struct tm
@@ -201,12 +201,12 @@ int gettimeofday(struct timeval *tp, struct timezone *tzp)
 	{
 		GetSystemTime(&st);
 		SystemTimeToFileTime(&st, &ft);
-		li.LowPart = ft.dwLowDateTime;
+		li.LowPart  = ft.dwLowDateTime;
 		li.HighPart = ft.dwHighDateTime;
-		t = li.QuadPart;       /* In 100-nanosecond intervals */
+		t  = li.QuadPart;       /* In 100-nanosecond intervals */
 		t -= EPOCHFILETIME;     /* Offset to the Epoch time */
 		t /= 10;                /* In microseconds */
-		tp->tv_sec = (long)(t / 1000000);
+		tp->tv_sec  = (long)(t / 1000000);
 		tp->tv_usec = (long)(t % 1000000);
 	}
 
@@ -236,8 +236,8 @@ int gettimeofday(struct timeval *tp, struct timezone *tzp)
 
 #if _GPAC_UNUSED
 /*
-time between jan 1, 1601 and jan 1, 1970 in units of 100 nanoseconds
-FILETIME in Win32 is from jan 1, 1601
+	time between jan 1, 1601 and jan 1, 1970 in units of 100 nanoseconds
+	FILETIME in Win32 is from jan 1, 1601
 */
 
 s32 __gettimeofday(struct timeval *tp, void *tz)
@@ -249,9 +249,9 @@ s32 __gettimeofday(struct timeval *tp, void *tz)
 	GetSystemTime(&st);
 	SystemTimeToFileTime(&st, &ft);
 
-	val = (s32)((*(LONGLONG *)&ft - TIMESPEC_TO_FILETIME_OFFSET) / 10000000);
-	tp->tv_sec = (u32)val;
-	val = (s32)((*(LONGLONG *)&ft - TIMESPEC_TO_FILETIME_OFFSET - ((LONGLONG)val * (LONGLONG)10000000)) * 100);
+	val = (s32) ((*(LONGLONG *) &ft - TIMESPEC_TO_FILETIME_OFFSET) / 10000000);
+	tp->tv_sec = (u32) val;
+	val = (s32 ) ((*(LONGLONG *) &ft - TIMESPEC_TO_FILETIME_OFFSET - ((LONGLONG) val * (LONGLONG) 10000000)) * 100);
 	tp->tv_usec = val;
 	return 0;
 }
@@ -264,8 +264,8 @@ static s32 gettimeofday(struct timeval *tp, void *tz)
 {
 	struct _timeb timebuffer;
 
-	_ftime(&timebuffer);
-	tp->tv_sec = (long)(timebuffer.time);
+	_ftime( &timebuffer );
+	tp->tv_sec  = (long) (timebuffer.time);
 	tp->tv_usec = timebuffer.millitm * 1000;
 	return 0;
 }
@@ -305,12 +305,11 @@ void gf_rand_init(Bool Reset)
 {
 	if (Reset) {
 		srand(1);
-	}
-	else {
+	} else {
 #if defined(_WIN32_WCE)
-		srand((u32)GetTickCount());
+		srand( (u32) GetTickCount() );
 #else
-		srand((u32)time(NULL));
+		srand( (u32) time(NULL) );
 #endif
 	}
 }
@@ -330,14 +329,14 @@ void gf_utc_time_since_1970(u32 *sec, u32 *msec)
 {
 #if defined (WIN32) && !defined(_WIN32_WCE)
 	struct _timeb	tb;
-	_ftime(&tb);
-	*sec = (u32)tb.time;
+	_ftime( &tb );
+	*sec = (u32) tb.time;
 	*msec = tb.millitm;
 #else
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
-	*sec = (u32)tv.tv_sec;
-	*msec = tv.tv_usec / 1000;
+	*sec = (u32) tv.tv_sec;
+	*msec = tv.tv_usec/1000;
 #endif
 }
 
@@ -370,7 +369,7 @@ GF_EXPORT
 char * my_str_upr(char *str)
 {
 	u32 i;
-	for (i = 0; i<strlen(str); i++) {
+	for (i=0; i<strlen(str); i++) {
 		str[i] = toupper(str[i]);
 	}
 	return str;
@@ -380,7 +379,7 @@ GF_EXPORT
 char * my_str_lwr(char *str)
 {
 	u32 i;
-	for (i = 0; i<strlen(str); i++) {
+	for (i=0; i<strlen(str); i++) {
 		str[i] = tolower(str[i]);
 	}
 	return str;
@@ -451,7 +450,7 @@ static void init_keyboard()
 }
 static void close_keyboard(Bool new_line)
 {
-	tcsetattr(0, TCSANOW, &t_orig);
+	tcsetattr(0,TCSANOW, &t_orig);
 	if (new_line) fprintf(stderr, "\n");
 }
 
@@ -471,17 +470,17 @@ Bool gf_prompt_has_input()
 	pid_t fg = tcgetpgrp(STDIN_FILENO);
 
 	//we are not foreground nor piped (used for IDEs), can't read stdin
-	if ((fg != -1) && (fg != getpgrp())) {
+	if ((fg!=-1) && (fg != getpgrp())) {
 		return 0;
 	}
 	init_keyboard();
 	if (ch_peek != -1) return 1;
-	t_new.c_cc[VMIN] = 0;
+	t_new.c_cc[VMIN]=0;
 	tcsetattr(0, TCSANOW, &t_new);
-	nread = (s32)read(0, &ch, 1);
-	t_new.c_cc[VMIN] = 1;
+	nread = (s32) read(0, &ch, 1);
+	t_new.c_cc[VMIN]=1;
 	tcsetattr(0, TCSANOW, &t_new);
-	if (nread == 1) {
+	if(nread == 1) {
 		ch_peek = ch;
 		return 1;
 	}
@@ -499,7 +498,7 @@ char gf_prompt_get_char()
 		close_keyboard(1);
 		return ch;
 	}
-	if (0 == read(0, &ch, 1))
+	if (0==read(0,&ch,1))
 		ch = 0;
 	close_keyboard(1);
 	return ch;
@@ -515,7 +514,7 @@ GF_SystemRTInfo the_rti;
 
 
 #if defined(_WIN32_WCE)
-static LARGE_INTEGER frequency, init_counter;
+static LARGE_INTEGER frequency , init_counter;
 static u64 last_total_k_u_time = 0;
 static u32 mem_usage_at_startup = 0;
 
@@ -524,20 +523,20 @@ static u32 mem_usage_at_startup = 0;
 DWORD GetCurrentPermissions();
 #endif
 #ifndef SetProcPermissions
-void SetProcPermissions(DWORD);
+void SetProcPermissions(DWORD );
 #endif
 
 #elif defined(WIN32)
-static LARGE_INTEGER frequency, init_counter;
+static LARGE_INTEGER frequency , init_counter;
 static u64 last_proc_idle_time = 0;
 static u64 last_proc_k_u_time = 0;
 
 static HINSTANCE psapi_hinst = NULL;
-typedef BOOL(WINAPI* NTGetSystemTimes)(VOID *, VOID *, VOID *);
+typedef BOOL(WINAPI* NTGetSystemTimes)(VOID *,VOID *,VOID *);
 NTGetSystemTimes MyGetSystemTimes = NULL;
-typedef BOOL(WINAPI* NTGetProcessMemoryInfo)(HANDLE, VOID *, DWORD);
+typedef BOOL(WINAPI* NTGetProcessMemoryInfo)(HANDLE,VOID *,DWORD);
 NTGetProcessMemoryInfo MyGetProcessMemoryInfo = NULL;
-typedef int(WINAPI* NTQuerySystemInfo)(ULONG, PVOID, ULONG, PULONG);
+typedef int(WINAPI* NTQuerySystemInfo)(ULONG,PVOID,ULONG,PULONG);
 NTQuerySystemInfo MyQuerySystemInfo = NULL;
 
 #ifndef PROCESS_MEMORY_COUNTERS
@@ -577,7 +576,7 @@ static u64 mem_at_startup = 0;
 #endif
 
 #ifdef WIN32
-static u32(*OS_GetSysClock)();
+static u32 (*OS_GetSysClock)();
 
 u32 gf_sys_clock()
 {
@@ -585,7 +584,7 @@ u32 gf_sys_clock()
 }
 
 
-static u64(*OS_GetSysClockHR)();
+static u64 (*OS_GetSysClockHR)();
 u64 gf_sys_clock_high_res()
 {
 	return OS_GetSysClockHR();
@@ -600,7 +599,7 @@ static u32 OS_GetSysClockHIGHRES()
 	LARGE_INTEGER now;
 	QueryPerformanceCounter(&now);
 	now.QuadPart -= init_counter.QuadPart;
-	return (u32)((now.QuadPart * 1000) / frequency.QuadPart);
+	return (u32) ((now.QuadPart * 1000) / frequency.QuadPart);
 }
 
 static u64 OS_GetSysClockHIGHRES_FULL()
@@ -608,7 +607,7 @@ static u64 OS_GetSysClockHIGHRES_FULL()
 	LARGE_INTEGER now;
 	QueryPerformanceCounter(&now);
 	now.QuadPart -= init_counter.QuadPart;
-	return (u64)((now.QuadPart * 1000000) / frequency.QuadPart);
+	return (u64) ((now.QuadPart * 1000000) / frequency.QuadPart);
 }
 
 static u32 OS_GetSysClockNORMAL()
@@ -623,7 +622,7 @@ static u32 OS_GetSysClockNORMAL()
 static u64 OS_GetSysClockNORMAL_FULL()
 {
 	u64 res = OS_GetSysClockNORMAL();
-	return res * 1000;
+	return res*1000;
 }
 
 #endif /* WIN32 */
@@ -659,8 +658,8 @@ sh4_change_fpscr(int off, int on)
 {
 	int b = sh4_get_fpscr();
 	off = ~off;
-	off |= 0x00180000;
-	on &= ~0x00180000;
+	off |=   0x00180000;
+	on  &= ~ 0x00180000;
 	b &= off;
 	b |= on;
 	sh4_put_fpscr(b);
@@ -686,10 +685,10 @@ void gf_sys_set_args(s32 argc, const char **argv)
 {
 	//for OSX we allow overwrite of argc/argv due to different behavior between console-mode apps and GUI
 #if !defined(__DARWIN__) && !defined(__APPLE__)
-	if (!gpac_argc && (argc >= 0))
+	if (!gpac_argc && (argc>=0) )
 #endif
 	{
-		gpac_argc = (u32)argc;
+		gpac_argc = (u32) argc;
 		gpac_argv = argv;
 	}
 }
@@ -703,7 +702,7 @@ GF_EXPORT
 const char *gf_sys_get_arg(u32 arg)
 {
 	if (!gpac_argc || !gpac_argv) return NULL;
-	if (arg >= gpac_argc) return NULL;
+	if (arg>=gpac_argc) return NULL;
 	return gpac_argv[arg];
 }
 
@@ -720,9 +719,9 @@ void gf_sys_init(GF_MemTrackerType mem_tracker_type)
 #endif
 #endif
 
-		if (mem_tracker_type != GF_MemTrackerNone) {
+		if (mem_tracker_type!=GF_MemTrackerNone) {
 #ifdef GPAC_MEMORY_TRACKING
-			gf_mem_enable_tracker((mem_tracker_type == GF_MemTrackerBackTrace) ? GF_TRUE : GF_FALSE);
+            gf_mem_enable_tracker( (mem_tracker_type==GF_MemTrackerBackTrace) ? GF_TRUE : GF_FALSE);
 #endif
 		}
 #ifndef GPAC_DISABLE_LOG
@@ -734,7 +733,7 @@ void gf_sys_init(GF_MemTrackerType mem_tracker_type)
 
 #if defined(__sh__)
 		/* Round all denormalized floatting point number to 0.0 */
-		sh4_change_fpscr(0, SH4_FPSCR_DN);
+		sh4_change_fpscr(0,SH4_FPSCR_DN) ;
 #endif
 
 #if defined(WIN32)
@@ -745,8 +744,7 @@ void gf_sys_init(GF_MemTrackerType mem_tracker_type)
 			OS_GetSysClock = OS_GetSysClockHIGHRES;
 			OS_GetSysClockHR = OS_GetSysClockHIGHRES_FULL;
 			GF_LOG(GF_LOG_INFO, GF_LOG_CORE, ("[core] using WIN32 performance timer\n"));
-		}
-		else {
+		} else {
 			OS_GetSysClock = OS_GetSysClockNORMAL;
 			OS_GetSysClockHR = OS_GetSysClockNORMAL_FULL;
 			GF_LOG(GF_LOG_INFO, GF_LOG_CORE, ("[core] using WIN32 regular timer\n"));
@@ -767,18 +765,17 @@ void gf_sys_init(GF_MemTrackerType mem_tracker_type)
 		mem_usage_at_startup = ms.dwAvailPhys;
 #else
 		/*cpu usage tools are buried in win32 dlls...*/
-		MyGetSystemTimes = (NTGetSystemTimes)GetProcAddress(GetModuleHandle("kernel32.dll"), "GetSystemTimes");
+		MyGetSystemTimes = (NTGetSystemTimes) GetProcAddress(GetModuleHandle("kernel32.dll"), "GetSystemTimes");
 		if (!MyGetSystemTimes) {
-			MyQuerySystemInfo = (NTQuerySystemInfo)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtQuerySystemInformation");
+			MyQuerySystemInfo = (NTQuerySystemInfo) GetProcAddress(GetModuleHandle("ntdll.dll"), "NtQuerySystemInformation");
 			if (MyQuerySystemInfo) {
 				GF_LOG(GF_LOG_INFO, GF_LOG_CORE, (" - CPU: QuerySystemInformation"));
 			}
-		}
-		else {
+		} else {
 			GF_LOG(GF_LOG_INFO, GF_LOG_CORE, (" - CPU: GetSystemsTimes"));
 		}
 		psapi_hinst = LoadLibrary("psapi.dll");
-		MyGetProcessMemoryInfo = (NTGetProcessMemoryInfo)GetProcAddress(psapi_hinst, "GetProcessMemoryInfo");
+		MyGetProcessMemoryInfo = (NTGetProcessMemoryInfo) GetProcAddress(psapi_hinst, "GetProcessMemoryInfo");
 		if (MyGetProcessMemoryInfo) {
 			GF_LOG(GF_LOG_INFO, GF_LOG_CORE, (" - memory: GetProcessMemoryInfo"));
 		}
@@ -787,7 +784,7 @@ void gf_sys_init(GF_MemTrackerType mem_tracker_type)
 		memset(&the_rti, 0, sizeof(GF_SystemRTInfo));
 		the_rti.pid = GetCurrentProcessId();
 
-		GetSystemInfo(&sysinfo);
+		GetSystemInfo( &sysinfo );
 		the_rti.nb_cores = sysinfo.dwNumberOfProcessors;
 #endif
 		GF_LOG(GF_LOG_INFO, GF_LOG_CORE, ("\n"));
@@ -799,14 +796,14 @@ void gf_sys_init(GF_MemTrackerType mem_tracker_type)
 		last_update_time = 0;
 		memset(&the_rti, 0, sizeof(GF_SystemRTInfo));
 		the_rti.pid = getpid();
-		the_rti.nb_cores = (u32)sysconf(_SC_NPROCESSORS_ONLN);
+		the_rti.nb_cores = (u32) sysconf( _SC_NPROCESSORS_ONLN );
 		sys_start_time = gf_sys_clock();
 		sys_start_time_hr = gf_sys_clock_high_res();
 #endif
 		GF_LOG(GF_LOG_INFO, GF_LOG_CORE, ("[core] process id %d\n", the_rti.pid));
 
 #ifndef _WIN32_WCE
-		setlocale(LC_NUMERIC, "C");
+		setlocale( LC_NUMERIC, "C" );
 #endif
 	}
 	sys_init += 1;
@@ -817,9 +814,8 @@ void gf_sys_init(GF_MemTrackerType mem_tracker_type)
 		GF_SystemRTInfo rti;
 		if (gf_sys_get_rti(500, &rti, GF_RTI_SYSTEM_MEMORY_ONLY)) {
 			memory_at_gpac_startup = rti.physical_memory_avail;
-			GF_LOG(GF_LOG_INFO, GF_LOG_CORE, ("[core] System init OK - process id %d - %d MB physical RAM - %d cores\n", rti.pid, (u32)(rti.physical_memory / 1024 / 1024), rti.nb_cores));
-		}
-		else {
+			GF_LOG(GF_LOG_INFO, GF_LOG_CORE, ("[core] System init OK - process id %d - %d MB physical RAM - %d cores\n", rti.pid, (u32) (rti.physical_memory/1024/1024), rti.nb_cores));
+		} else {
 			memory_at_gpac_startup = 0;
 		}
 	}
@@ -829,7 +825,7 @@ GF_EXPORT
 void gf_sys_close()
 {
 	if (sys_init > 0) {
-		sys_init--;
+		sys_init --;
 		if (sys_init) return;
 		/*prevent any call*/
 		last_update_time = 0xFFFFFFFF;
@@ -885,7 +881,7 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 		rti->physical_memory = ms.dwTotalPhys;
 		rti->physical_memory_avail = ms.dwAvailPhys;
 #ifdef GPAC_MEMORY_TRACKING
-		rti->gpac_memory = (u64)gpac_allocated_memory;
+		rti->gpac_memory = (u64) gpac_allocated_memory;
 #endif
 		return GF_TRUE;
 	}
@@ -906,11 +902,11 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 		if (Thread32First(hSnapShot, &tentry)) {
 			do {
 				/*get thread times*/
-				if (GetThreadTimes((HANDLE)tentry.th32ThreadID, (FILETIME *)&creation, (FILETIME *)&exit, (FILETIME *)&kernel, (FILETIME *)&user)) {
+				if (GetThreadTimes( (HANDLE) tentry.th32ThreadID, (FILETIME *) &creation, (FILETIME *) &exit, (FILETIME *) &kernel, (FILETIME *) &user)) {
 					total_cpu_time += user + kernel;
-					if (tentry.th32OwnerProcessID == the_rti.pid) {
+					if (tentry.th32OwnerProcessID==the_rti.pid) {
 						process_cpu_time += user + kernel;
-						the_rti.thread_count++;
+						the_rti.thread_count ++;
 					}
 				}
 			} while (Thread32Next(hSnapShot, &tentry));
@@ -955,7 +951,7 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 		DWORD ret;
 		SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION info;
 		MyQuerySystemInfo(0x8 /*SystemProcessorPerformanceInformation*/, &info, sizeof(info), &ret);
-		if (ret && (ret <= sizeof(info))) {
+		if (ret && (ret<=sizeof(info))) {
 			proc_idle_time = info.IdleTime.QuadPart / 10;
 			proc_k_u_time = (info.KernelTime.QuadPart + info.UserTime.QuadPart) / 10;
 		}
@@ -971,10 +967,10 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 			do {
 				HANDLE procH = NULL;
 				if (pentry.th32ProcessID) procH = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pentry.th32ProcessID);
-				if (procH && GetProcessTimes(procH, (FILETIME *)&creation, (FILETIME *)&exit, (FILETIME *)&kernel, (FILETIME *)&user)) {
+				if (procH && GetProcessTimes(procH, (FILETIME *) &creation, (FILETIME *) &exit, (FILETIME *) &kernel, (FILETIME *) &user) ) {
 					user += kernel;
 					proc_k_u_time += user;
-					if (pentry.th32ProcessID == the_rti.pid) {
+					if (pentry.th32ProcessID==the_rti.pid) {
 						process_k_u_time = user;
 						//nb_threads = pentry.cntThreads;
 					}
@@ -989,7 +985,7 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 
 	if (!process_k_u_time) {
 		HANDLE procH = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, the_rti.pid);
-		if (procH && GetProcessTimes(procH, (FILETIME *)&creation, (FILETIME *)&exit, (FILETIME *)&kernel, (FILETIME *)&user)) {
+		if (procH && GetProcessTimes(procH, (FILETIME *) &creation, (FILETIME *) &exit, (FILETIME *) &kernel, (FILETIME *) &user) ) {
 			process_k_u_time = user + kernel;
 		}
 		if (procH) CloseHandle(procH);
@@ -1001,7 +997,7 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 	if (MyGetProcessMemoryInfo) {
 		PROCESS_MEMORY_COUNTERS pmc;
 		HANDLE procH = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, the_rti.pid);
-		MyGetProcessMemoryInfo(procH, &pmc, sizeof(pmc));
+		MyGetProcessMemoryInfo(procH, &pmc, sizeof (pmc));
 		the_rti.process_memory = pmc.WorkingSetSize;
 		if (procH) CloseHandle(procH);
 	}
@@ -1030,20 +1026,20 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 
 	if (last_update_time) {
 		the_rti.sampling_period_duration = entry_time - last_update_time;
-		the_rti.process_cpu_time_diff = (u32)((process_k_u_time - last_process_k_u_time) / 1000);
+		the_rti.process_cpu_time_diff = (u32) ((process_k_u_time - last_process_k_u_time)/1000);
 
 #if defined(_WIN32_WCE)
-		the_rti.total_cpu_time_diff = (u32)((total_cpu_time - last_total_k_u_time) / 1000);
+		the_rti.total_cpu_time_diff = (u32) ((total_cpu_time - last_total_k_u_time)/1000);
 		/*we're not that accurate....*/
 		if (the_rti.total_cpu_time_diff > the_rti.sampling_period_duration)
 			the_rti.sampling_period_duration = the_rti.total_cpu_time_diff;
 
 		/*rough values*/
 		the_rti.cpu_idle_time = the_rti.sampling_period_duration - the_rti.total_cpu_time_diff;
-		if (!the_rti.sampling_period_duration) the_rti.sampling_period_duration = 1;
-		the_rti.total_cpu_usage = (u32)(100 * the_rti.total_cpu_time_diff / the_rti.sampling_period_duration);
-		if (the_rti.total_cpu_time_diff + the_rti.cpu_idle_time == 0) the_rti.total_cpu_time_diff++;
-		the_rti.process_cpu_usage = (u32)(100 * the_rti.process_cpu_time_diff / (the_rti.total_cpu_time_diff + the_rti.cpu_idle_time));
+		if (!the_rti.sampling_period_duration) the_rti.sampling_period_duration=1;
+		the_rti.total_cpu_usage = (u32) (100 * the_rti.total_cpu_time_diff / the_rti.sampling_period_duration);
+		if (the_rti.total_cpu_time_diff + the_rti.cpu_idle_time==0) the_rti.total_cpu_time_diff ++;
+		the_rti.process_cpu_usage = (u32) (100*the_rti.process_cpu_time_diff / (the_rti.total_cpu_time_diff + the_rti.cpu_idle_time) );
 
 #else
 		/*oops, we have no choice but to assume 100% cpu usage during this period*/
@@ -1053,11 +1049,10 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 			the_rti.cpu_idle_time = 0;
 			the_rti.total_cpu_usage = 100;
 			if (the_rti.sampling_period_duration)
-				the_rti.process_cpu_usage = (u32)(100 * the_rti.process_cpu_time_diff / the_rti.sampling_period_duration);
-		}
-		else {
+				the_rti.process_cpu_usage = (u32) (100*the_rti.process_cpu_time_diff / the_rti.sampling_period_duration);
+		} else {
 			u64 samp_sys_time, idle;
-			the_rti.total_cpu_time_diff = (u32)((proc_k_u_time - last_proc_k_u_time) / 1000);
+			the_rti.total_cpu_time_diff = (u32) ((proc_k_u_time - last_proc_k_u_time)/1000);
 
 			/*we're not that accurate....*/
 			if (the_rti.total_cpu_time_diff > the_rti.sampling_period_duration) {
@@ -1069,10 +1064,10 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 
 			samp_sys_time = proc_k_u_time - last_proc_k_u_time;
 			idle = proc_idle_time - last_proc_idle_time;
-			the_rti.cpu_idle_time = (u32)(idle / 1000);
+			the_rti.cpu_idle_time = (u32) (idle/1000);
 			if (samp_sys_time) {
-				the_rti.total_cpu_usage = (u32)((samp_sys_time - idle) / (samp_sys_time / 100));
-				the_rti.process_cpu_usage = (u32)(100 * the_rti.process_cpu_time_diff / (samp_sys_time / 1000));
+				the_rti.total_cpu_usage = (u32) ( (samp_sys_time - idle) / (samp_sys_time / 100) );
+				the_rti.process_cpu_usage = (u32) (100*the_rti.process_cpu_time_diff / (samp_sys_time/1000));
 			}
 		}
 #endif
@@ -1083,7 +1078,7 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 	GlobalMemoryStatus(&ms);
 	the_rti.physical_memory = ms.dwTotalPhys;
 #ifdef GPAC_MEMORY_TRACKING
-	the_rti.gpac_memory = (u64)gpac_allocated_memory;
+	the_rti.gpac_memory = (u64) gpac_allocated_memory;
 #endif
 	the_rti.physical_memory_avail = ms.dwAvailPhys;
 
@@ -1207,7 +1202,7 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 		if ((thi->flags & TH_FLAGS_IDLE) == 0) {
 			utime += thi->user_time.seconds + thi->user_time.microseconds * 1e-6;
 			stime += thi->system_time.seconds + thi->system_time.microseconds * 1e-6;
-			percent += (u32)(100 * (double)thi->cpu_usage / TH_USAGE_SCALE);
+			percent +=  (u32) (100 * (double)thi->cpu_usage / TH_USAGE_SCALE);
 		}
 	}
 	vm_deallocate(mach_task_self(), (vm_offset_t)thread_table, table_size * sizeof(thread_array_t));
@@ -1228,8 +1223,7 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 		if (!the_rti.process_cpu_time_diff) the_rti.process_cpu_time_diff = the_rti.total_cpu_time_diff;
 
 		the_rti.process_cpu_usage = percent;
-	}
-	else {
+	} else {
 		mem_at_startup = the_rti.physical_memory_avail;
 	}
 	the_rti.process_memory = mem_at_startup - the_rti.physical_memory_avail;
@@ -1294,34 +1288,32 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 			char *start;
 			long cutime, cstime, priority, nice, itrealvalue, rss;
 			int exit_signal, processor;
-			unsigned long flags, minflt, cminflt, majflt, cmajflt, utime, stime, starttime, vsize, rlim, startcode, endcode, startstack, kstkesp, kstkeip, signal, blocked, sigignore, sigcatch, wchan, nswap, cnswap, rem;
-			int ppid, pgrp, session, tty_nr, tty_pgrp, res;
+			unsigned long flags, minflt, cminflt, majflt, cmajflt, utime, stime,starttime, vsize, rlim, startcode, endcode, startstack, kstkesp, kstkeip, signal, blocked, sigignore, sigcatch, wchan, nswap, cnswap, rem;
+			int ppid, pgrp ,session, tty_nr, tty_pgrp, res;
 			start = strchr(line, ')');
 			if (start) start += 2;
 			else {
 				start = strchr(line, ' ');
 				start++;
 			}
-			res = sscanf(start, "%c %d %d %d %d %d %lu %lu %lu %lu \
+			res = sscanf(start,"%c %d %d %d %d %d %lu %lu %lu %lu \
 %lu %lu %lu %ld %ld %ld %ld %ld %ld %lu \
 %lu %ld %lu %lu %lu %lu %lu %lu %lu %lu \
 %lu %lu %lu %lu %lu %d %d",
-&state, &ppid, &pgrp, &session, &tty_nr, &tty_pgrp, &flags, &minflt, &cminflt, &majflt,
-&cmajflt, &utime, &stime, &cutime, &cstime, &priority, &nice, &itrealvalue, &rem, &starttime,
-&vsize, &rss, &rlim, &startcode, &endcode, &startstack, &kstkesp, &kstkeip, &signal, &blocked,
-&sigignore, &sigcatch, &wchan, &nswap, &cnswap, &exit_signal, &processor);
+			             &state, &ppid, &pgrp, &session, &tty_nr, &tty_pgrp, &flags, &minflt, &cminflt, &majflt,
+			             &cmajflt, &utime, &stime, &cutime, &cstime, &priority, &nice, &itrealvalue, &rem, &starttime,
+			             &vsize, &rss, &rlim, &startcode, &endcode, &startstack, &kstkesp, &kstkeip, &signal, &blocked,
+			             &sigignore, &sigcatch, &wchan, &nswap, &cnswap, &exit_signal, &processor);
 
-			if (res) process_u_k_time = (u64)(cutime + cstime);
+			if (res) process_u_k_time = (u64) (cutime + cstime);
 			else {
 				GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[RTI] PROC %s parse error\n", szProc));
 			}
-		}
-		else {
+		} else {
 			GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[RTI] error reading pid/stat\n\n", szProc));
 		}
 		gf_fclose(f);
-	}
-	else {
+	} else {
 		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[RTI] cannot open %s\n", szProc));
 	}
 	sprintf(szProc, "/proc/%d/status", the_rti.pid);
@@ -1329,13 +1321,12 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 	if (f) {
 		while (fgets(line, 1024, f) != NULL) {
 			if (!strnicmp(line, "VmSize:", 7)) {
-				sscanf(line, "VmSize: %"LLD" kB", &the_rti.process_memory);
+				sscanf(line, "VmSize: %"LLD" kB",  &the_rti.process_memory);
 				the_rti.process_memory *= 1024;
 			}
 		}
 		gf_fclose(f);
-	}
-	else {
+	} else {
 		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[RTI] cannot open %s\n", szProc));
 	}
 #endif
@@ -1347,18 +1338,16 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 	if (f) {
 		while (fgets(line, 1024, f) != NULL) {
 			if (!strnicmp(line, "MemTotal:", 9)) {
-				sscanf(line, "MemTotal: "LLU" kB", &the_rti.physical_memory);
+				sscanf(line, "MemTotal: "LLU" kB",  &the_rti.physical_memory);
 				the_rti.physical_memory *= 1024;
-			}
-			else if (!strnicmp(line, "MemFree:", 8)) {
-				sscanf(line, "MemFree: "LLU" kB", &the_rti.physical_memory_avail);
+			} else if (!strnicmp(line, "MemFree:", 8)) {
+				sscanf(line, "MemFree: "LLU" kB",  &the_rti.physical_memory_avail);
 				the_rti.physical_memory_avail *= 1024;
 				break;
 			}
 		}
 		gf_fclose(f);
-	}
-	else {
+	} else {
 		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[RTI] cannot open /proc/meminfo\n"));
 	}
 #endif
@@ -1368,38 +1357,36 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 
 	if (last_update_time) {
 		the_rti.sampling_period_duration = (entry_time - last_update_time);
-		the_rti.process_cpu_time_diff = (u32)(process_u_k_time - last_process_k_u_time) * 10;
+		the_rti.process_cpu_time_diff = (u32) (process_u_k_time - last_process_k_u_time) * 10;
 
 		/*oops, we have no choice but to assume 100% cpu usage during this period*/
 		if (!u_k_time) {
 			the_rti.total_cpu_time_diff = the_rti.sampling_period_duration;
-			u_k_time = (u32)(last_cpu_u_k_time + the_rti.sampling_period_duration);
+			u_k_time = (u32) (last_cpu_u_k_time + the_rti.sampling_period_duration);
 			the_rti.cpu_idle_time = 0;
 			the_rti.total_cpu_usage = 100;
 			if (!the_rti.process_cpu_time_diff) the_rti.process_cpu_time_diff = the_rti.total_cpu_time_diff;
-			the_rti.process_cpu_usage = (u32)(100 * the_rti.process_cpu_time_diff / the_rti.sampling_period_duration);
-		}
-		else {
+			the_rti.process_cpu_usage = (u32) ( 100 *  the_rti.process_cpu_time_diff / the_rti.sampling_period_duration);
+		} else {
 			u64 samp_sys_time;
 			/*move to ms (/proc/stat gives times in 100 ms unit*/
-			the_rti.total_cpu_time_diff = (u32)(u_k_time - last_cpu_u_k_time) * 10;
+			the_rti.total_cpu_time_diff = (u32) (u_k_time - last_cpu_u_k_time)*10;
 
 			/*we're not that accurate....*/
 			if (the_rti.total_cpu_time_diff > the_rti.sampling_period_duration)
 				the_rti.sampling_period_duration = the_rti.total_cpu_time_diff;
 
 
-			if (!idle_time) idle_time = (the_rti.sampling_period_duration - the_rti.total_cpu_time_diff) / 10;
+			if (!idle_time) idle_time = (the_rti.sampling_period_duration - the_rti.total_cpu_time_diff)/10;
 			samp_sys_time = u_k_time - last_cpu_u_k_time;
-			the_rti.cpu_idle_time = (u32)(idle_time - last_cpu_idle_time);
-			the_rti.total_cpu_usage = (u32)(100 * samp_sys_time / (the_rti.cpu_idle_time + samp_sys_time));
+			the_rti.cpu_idle_time = (u32) (idle_time - last_cpu_idle_time);
+			the_rti.total_cpu_usage = (u32) ( 100 * samp_sys_time / (the_rti.cpu_idle_time + samp_sys_time ) );
 			/*move to ms (/proc/stat gives times in 100 ms unit*/
 			the_rti.cpu_idle_time *= 10;
 			if (!the_rti.process_cpu_time_diff) the_rti.process_cpu_time_diff = the_rti.total_cpu_time_diff;
-			the_rti.process_cpu_usage = (u32)(100 * the_rti.process_cpu_time_diff / (the_rti.cpu_idle_time + 10 * samp_sys_time));
+			the_rti.process_cpu_usage = (u32) ( 100 *  the_rti.process_cpu_time_diff / (the_rti.cpu_idle_time + 10*samp_sys_time ) );
 		}
-	}
-	else {
+	} else {
 		mem_at_startup = the_rti.physical_memory_avail;
 	}
 	the_rti.process_memory = mem_at_startup - the_rti.physical_memory_avail;
@@ -1431,12 +1418,12 @@ Bool gf_sys_get_rti(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 
 char * gf_get_default_cache_directory() {
 #ifdef _WIN32_WCE
-	return gf_strdup("\\windows\\temp");
+	return gf_strdup( "\\windows\\temp" );
 #elif defined(WIN32)
 	char szPath[MAX_PATH];
 	/*ivica patch*/
 	GetTempPath(MAX_PATH, szPath);
-	return gf_strdup(szPath);
+	return gf_strdup( szPath );
 #else
 	return gf_strdup("/tmp");
 #endif
@@ -1485,23 +1472,23 @@ struct _GF_GlobalLock_opaque {
 	int fd;
 };
 
-GF_GlobalLock * gf_create_PID_file(const char * resourceName)
+GF_GlobalLock * gf_create_PID_file( const char * resourceName )
 {
 	const char * prefix = "/gpac_lock_";
 	const char * dir = gf_get_default_cache_directory();
 	char * pidfile;
 	int flags;
 	int status;
-	pidfile = gf_malloc(strlen(dir) + strlen(prefix) + strlen(resourceName) + 1);
+	pidfile = gf_malloc(strlen(dir)+strlen(prefix)+strlen(resourceName)+1);
 	strcpy(pidfile, dir);
 	strcat(pidfile, prefix);
 	/* Use only valid names for file */
 	{
 		const char *res;
 		char * pid = &(pidfile[strlen(pidfile)]);
-		for (res = resourceName; *res; res++) {
+		for (res = resourceName; *res ; res++) {
 			if (*res >= 'A' && *res <= 'z')
-				*pid = *res;
+				*pid = * res;
 			else
 				*pid = '_';
 			pid++;
@@ -1543,8 +1530,8 @@ GF_GlobalLock * gf_create_PID_file(const char * resourceName)
 	/* Write the PID */
 	{
 		int sz = 100;
-		char * buf = gf_malloc(sz);
-		sz = snprintf(buf, sz, "%ld\n", (long)getpid());
+		char * buf = gf_malloc( sz );
+		sz = snprintf(buf, sz, "%ld\n", (long) getpid());
 		if (write(fd, buf, sz) != sz) {
 			gf_free(buf);
 			goto exit;
@@ -1552,7 +1539,7 @@ GF_GlobalLock * gf_create_PID_file(const char * resourceName)
 	}
 	sync();
 	{
-		GF_GlobalLock * lock = gf_malloc(sizeof(GF_GlobalLock));
+		GF_GlobalLock * lock = gf_malloc( sizeof(GF_GlobalLock));
 		lock->resourceName = gf_strdup(resourceName);
 		lock->pidFile = pidfile;
 		lock->fd = fd;
@@ -1613,16 +1600,16 @@ GF_GlobalLock * gf_global_resource_lock(const char * resourceName) {
 }
 
 /*!
-* Unlock a previouly locked resource
-* \param lock The resource to unlock
-* \return GF_OK if evertything went fine
-*/
+ * Unlock a previouly locked resource
+ * \param lock The resource to unlock
+ * \return GF_OK if evertything went fine
+ */
 GF_EXPORT
 GF_Err gf_global_resource_unlock(GF_GlobalLock * lock) {
 	if (!lock)
 		return GF_BAD_PARAM;
 #ifndef WIN32
-	assert(lock->pidFile);
+	assert( lock->pidFile);
 	close(lock->fd);
 	if (unlink(lock->pidFile))
 		perror("Failed to unlink lock file");
@@ -1683,7 +1670,7 @@ void gf_net_set_ntp_shift(s32 shift)
 }
 
 /*
-NTP tools
+		NTP tools
 */
 GF_EXPORT
 void gf_net_get_ntp(u32 *sec, u32 *frac)
@@ -1692,13 +1679,13 @@ void gf_net_get_ntp(u32 *sec, u32 *frac)
 	struct timeval now;
 	gettimeofday(&now, NULL);
 	if (sec) {
-		*sec = (u32)(now.tv_sec) + ntp_shift;
+		*sec = (u32) (now.tv_sec) + ntp_shift;
 	}
-
+	
 	if (frac) {
 		frac_part = now.tv_usec * 0xFFFFFFFFULL;
 		frac_part /= 1000000;
-		*frac = (u32)(frac_part);
+		*frac = (u32) ( frac_part );
 	}
 }
 
@@ -1709,7 +1696,7 @@ u64 gf_net_get_ntp_ts()
 	u32 sec, frac;
 	gf_net_get_ntp(&sec, &frac);
 	res = sec;
-	res <<= 32;
+	res<<= 32;
 	res |= frac;
 	return res;
 }
@@ -1721,18 +1708,18 @@ s32 gf_net_get_ntp_diff_ms(u64 ntp)
 	s64 local, remote;
 
 	remote_s = (ntp >> 32);
-	remote_f = (u32)(ntp & 0xFFFFFFFFULL);
+	remote_f = (u32) (ntp & 0xFFFFFFFFULL);
 	gf_net_get_ntp(&local_s, &local_f);
 
 	local = local_s;
 	local *= 1000;
-	local += ((u64)local_f) * 1000 / 0xFFFFFFFFULL;
+	local += ((u64) local_f)*1000 / 0xFFFFFFFFULL;
 
 	remote = remote_s;
 	remote *= 1000;
-	remote += ((u64)remote_f) * 1000 / 0xFFFFFFFFULL;
+	remote += ((u64) remote_f)*1000 / 0xFFFFFFFFULL;
 
-	return (s32)(local - remote);
+	return (s32) (local - remote);
 }
 
 
@@ -1772,17 +1759,17 @@ static Bool leap_year(u32 year) {
 static time_t gf_mktime_utc(struct tm *tm)
 {
 	static const u32 days_per_month[2][12] = {
-		{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
-		{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+		{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
+		{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
 	};
-	time_t time = 0;
+	time_t time=0;
 	int i;
 
-	for (i = 70; i<tm->tm_year; i++) {
+	for (i=70; i<tm->tm_year; i++) {
 		time += leap_year(i) ? 366 : 365;
 	}
 
-	for (i = 0; i<tm->tm_mon; ++i) {
+	for (i=0; i<tm->tm_mon; ++i) {
 		time += days_per_month[leap_year(tm->tm_year)][i];
 	}
 	time += tm->tm_mday - 1;
@@ -1859,14 +1846,14 @@ u64 gf_net_parse_date(const char *val)
 	}
 	else if (sscanf(val, "%d-%d-%dT%d:%d:%g+%d:%d", &year, &month, &day, &h, &m, &secs, &oh, &om) == 8) {
 	}
-	else if (sscanf(val, "%3s, %d %3s %d %d:%d:%d", szDay, &day, szMonth, &year, &h, &m, &s) == 7) {
-		secs = (Float)s;
+	else if (sscanf(val, "%3s, %d %3s %d %d:%d:%d", szDay, &day, szMonth, &year, &h, &m, &s)==7) {
+		secs  = (Float) s;
 	}
-	else if (sscanf(val, "%9s, %d-%3s-%d %02d:%02d:%02d GMT", szDay, &day, szMonth, &year, &h, &m, &s) == 7) {
-		secs = (Float)s;
+	else if (sscanf(val, "%9s, %d-%3s-%d %02d:%02d:%02d GMT", szDay, &day, szMonth, &year, &h, &m, &s)==7) {
+		secs  = (Float) s;
 	}
-	else if (sscanf(val, "%3s %3s %d %02d:%02d:%02d %d", szDay, szMonth, &day, &year, &h, &m, &s) == 7) {
-		secs = (Float)s;
+	else if (sscanf(val, "%3s %3s %d %02d:%02d:%02d %d", szDay, szMonth, &day, &year, &h, &m, &s)==7) {
+		secs  = (Float) s;
 	}
 	else {
 		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[Core] Cannot parse date string %s\n", val));
@@ -1875,8 +1862,7 @@ u64 gf_net_parse_date(const char *val)
 
 	if (month) {
 		month -= 1;
-	}
-	else {
+	} else {
 		if (!strcmp(szMonth, "Jan")) month = 0;
 		else if (!strcmp(szMonth, "Feb")) month = 1;
 		else if (!strcmp(szMonth, "Mar")) month = 2;
@@ -1898,20 +1884,20 @@ u64 gf_net_parse_date(const char *val)
 	syst.wDay = day;
 	syst.wHour = h;
 	syst.wMinute = m;
-	syst.wSecond = (u32)secs;
+	syst.wSecond = (u32) secs;
 	SystemTimeToFileTime(&syst, &filet);
-	current_time = (u64)((*(LONGLONG *)&filet - TIMESPEC_TO_FILETIME_OFFSET) / 10000000);
+	current_time = (u64) ((*(LONGLONG *) &filet - TIMESPEC_TO_FILETIME_OFFSET) / 10000000);
 
 #else
 
-	t.tm_year = year>1000 ? year - 1900 : year;
+	t.tm_year = year>1000 ? year-1900 : year;
 	t.tm_mday = day;
 	t.tm_hour = h;
 	t.tm_min = m;
-	t.tm_sec = (u32)secs;
+	t.tm_sec = (u32) secs;
 	t.tm_mon = month;
 
-	if (strlen(szDay)) {
+	if (strlen(szDay) ) {
 		if (!strcmp(szDay, "Mon") || !strcmp(szDay, "Monday")) t.tm_wday = 0;
 		else if (!strcmp(szDay, "Tue") || !strcmp(szDay, "Tuesday")) t.tm_wday = 1;
 		else if (!strcmp(szDay, "Wed") || !strcmp(szDay, "Wednesday")) t.tm_wday = 2;
@@ -1923,7 +1909,7 @@ u64 gf_net_parse_date(const char *val)
 
 	current_time = gf_mktime_utc(&t);
 
-	if ((s64)current_time == -1) {
+	if ((s64) current_time == -1) {
 		//use 1 ms
 		return 1;
 	}
@@ -1935,12 +1921,12 @@ u64 gf_net_parse_date(const char *val)
 #endif
 
 	if (om || oh) {
-		s32 diff = (60 * oh + om) * 60;
+		s32 diff = (60*oh + om)*60;
 		if (neg_time_zone) diff = -diff;
 		current_time = current_time + diff;
 	}
 	current_time *= 1000;
-	ms = (u32)((secs - (u32)secs) * 1000);
+	ms = (u32) ( (secs - (u32) secs) * 1000);
 	return current_time + ms;
 }
 
@@ -1956,7 +1942,7 @@ u64 gf_net_get_utc()
 	current_time *= 1000;
 	msec = frac*1000.0;
 	msec /= 0xFFFFFFFF;
-	current_time += (u64)msec;
+	current_time += (u64) msec;
 	return current_time;
 }
 
@@ -1966,12 +1952,12 @@ GF_EXPORT
 GF_Err gf_bin128_parse(char *string, bin128 value)
 {
 	u32 len;
-	u32	i = 0;
+	u32	i=0;
 	if (!strnicmp(string, "0x", 2)) string += 2;
-	len = (u32)strlen(string);
+	len = (u32) strlen(string);
 	if (len >= 32) {
 		u32 j;
-		for (j = 0; j<len; j += 2) {
+		for (j=0; j<len; j+=2) {
 			u32 v;
 			char szV[5];
 
@@ -1979,7 +1965,7 @@ GF_Err gf_bin128_parse(char *string, bin128 value)
 				j++;
 			if (!string[j])
 				break;
-			sprintf(szV, "%c%c", string[j], string[j + 1]);
+			sprintf(szV, "%c%c", string[j], string[j+1]);
 			sscanf(szV, "%x", &v);
 			value[i] = v;
 			i++;
