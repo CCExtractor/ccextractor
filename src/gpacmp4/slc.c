@@ -1,27 +1,27 @@
 /*
-*			GPAC - Multimedia Framework C SDK
-*
-*			Authors: Jean Le Feuvre
-*			Copyright (c) Telecom ParisTech 2000-2012
-*					All rights reserved
-*
-*  This file is part of GPAC / MPEG-4 ObjectDescriptor sub-project
-*
-*  GPAC is free software; you can redistribute it and/or modify
-*  it under the terms of the GNU Lesser General Public License as published by
-*  the Free Software Foundation; either version 2, or (at your option)
-*  any later version.
-*
-*  GPAC is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU Lesser General Public License for more details.
-*
-*  You should have received a copy of the GNU Lesser General Public
-*  License along with this library; see the file COPYING.  If not, write to
-*  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-*
-*/
+ *			GPAC - Multimedia Framework C SDK
+ *
+ *			Authors: Jean Le Feuvre
+ *			Copyright (c) Telecom ParisTech 2000-2012
+ *					All rights reserved
+ *
+ *  This file is part of GPAC / MPEG-4 ObjectDescriptor sub-project
+ *
+ *  GPAC is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  GPAC is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; see the file COPYING.  If not, write to
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
 
 #include <gpac/internal/odf_dev.h>
 
@@ -31,7 +31,7 @@
 //
 GF_Descriptor *gf_odf_new_slc(u8 predef)
 {
-	GF_SLConfig *newDesc = (GF_SLConfig *)gf_malloc(sizeof(GF_SLConfig));
+	GF_SLConfig *newDesc = (GF_SLConfig *) gf_malloc(sizeof(GF_SLConfig));
 	if (!newDesc) return NULL;
 	memset(newDesc, 0, sizeof(GF_SLConfig));
 	newDesc->tag = GF_ODF_SLC_TAG;
@@ -58,7 +58,7 @@ GF_Err gf_odf_del_slc(GF_SLConfig *sl)
 GF_EXPORT
 GF_Err gf_odf_slc_set_pref(GF_SLConfig *sl)
 {
-	if (!sl) return GF_BAD_PARAM;
+	if (! sl) return GF_BAD_PARAM;
 
 	switch (sl->predefined) {
 
@@ -102,7 +102,7 @@ GF_Err gf_odf_slc_set_pref(GF_SLConfig *sl)
 	case SLPredef_SkipSL:
 		sl->predefined = SLPredef_SkipSL;
 		break;
-		/*handle all unknown predefined as predef-null*/
+	/*handle all unknown predefined as predef-null*/
 	default:
 		sl->useAccessUnitStartFlag = 0;
 		sl->useAccessUnitEndFlag = 0;
@@ -130,18 +130,18 @@ u32 SLIsPredefined(GF_SLConfig *sl)
 	if (sl->predefined) return sl->predefined;
 
 	if (!sl->useAccessUnitStartFlag
-		&& !sl->useAccessUnitEndFlag
-		&& !sl->usePaddingFlag
-		&& sl->useTimestampsFlag
-		&& !sl->useIdleFlag
-		&& !sl->durationFlag
-		&& !sl->timestampLength
-		&& !sl->OCRLength
-		&& !sl->AULength
-		&& !sl->instantBitrateLength
-		&& !sl->degradationPriorityLength
-		&& !sl->AUSeqNumLength
-		&& !sl->packetSeqNumLength)
+	        &&  !sl->useAccessUnitEndFlag
+	        && !sl->usePaddingFlag
+	        && sl->useTimestampsFlag
+	        && !sl->useIdleFlag
+	        && !sl->durationFlag
+	        && !sl->timestampLength
+	        && !sl->OCRLength
+	        && !sl->AULength
+	        && !sl->instantBitrateLength
+	        && !sl->degradationPriorityLength
+	        && !sl->AUSeqNumLength
+	        && !sl->packetSeqNumLength)
 		return SLPredef_MP4;
 
 	return 0;
@@ -151,7 +151,7 @@ u32 SLIsPredefined(GF_SLConfig *sl)
 static u32 GetTSbytesLen(GF_SLConfig *sl)
 {
 	u32 TSlen, TSbytes;
-	if (!sl) return 0;
+	if (! sl) return 0;
 
 	TSlen = sl->timestampLength * 2;
 	TSbytes = TSlen / 8;
@@ -180,7 +180,7 @@ GF_Err gf_odf_read_slc(GF_BitStream *bs, GF_SLConfig *sl, u32 DescSize)
 	nbBytes += 1;
 
 	/*MPEG4 IP fix*/
-	if (!sl->predefined && nbBytes == DescSize) {
+	if (!sl->predefined && nbBytes==DescSize) {
 		sl->predefined = SLPredef_Null;
 		gf_odf_slc_set_pref(sl);
 		return GF_OK;
@@ -190,8 +190,7 @@ GF_Err gf_odf_read_slc(GF_BitStream *bs, GF_SLConfig *sl, u32 DescSize)
 		//predefined configuration
 		e = gf_odf_slc_set_pref(sl);
 		if (e) return e;
-	}
-	else {
+	} else {
 		sl->useAccessUnitStartFlag = gf_bs_read_int(bs, 1);
 		sl->useAccessUnitEndFlag = gf_bs_read_int(bs, 1);
 		sl->useRandomAccessPointFlag = gf_bs_read_int(bs, 1);
@@ -229,7 +228,7 @@ GF_Err gf_odf_read_slc(GF_BitStream *bs, GF_SLConfig *sl, u32 DescSize)
 		sl->CUDuration = gf_bs_read_int(bs, 16);
 		nbBytes += 8;
 	}
-	if (!sl->useTimestampsFlag) {
+	if (! sl->useTimestampsFlag) {
 		sl->startDTS = gf_bs_read_long_int(bs, sl->timestampLength);
 		sl->startCTS = gf_bs_read_long_int(bs, sl->timestampLength);
 		nbBytes += GetTSbytesLen(sl);
@@ -245,12 +244,12 @@ GF_Err gf_odf_read_slc(GF_BitStream *bs, GF_SLConfig *sl, u32 DescSize)
 //
 GF_Err gf_odf_size_slc(GF_SLConfig *sl, u32 *outSize)
 {
-	if (!sl) return GF_BAD_PARAM;
+	if (! sl) return GF_BAD_PARAM;
 
 	*outSize = 1;
-	if (!sl->predefined)	*outSize += 15;
+	if (! sl->predefined)	*outSize += 15;
 	if (sl->durationFlag)	*outSize += 8;
-	if (!sl->useTimestampsFlag) *outSize += GetTSbytesLen(sl);
+	if (! sl->useTimestampsFlag) *outSize += GetTSbytesLen(sl);
 	return GF_OK;
 }
 
@@ -261,7 +260,7 @@ GF_Err gf_odf_write_slc(GF_BitStream *bs, GF_SLConfig *sl)
 {
 	GF_Err e;
 	u32 size;
-	if (!sl) return GF_BAD_PARAM;
+	if (! sl) return GF_BAD_PARAM;
 
 	e = gf_odf_size_descriptor((GF_Descriptor *)sl, &size);
 	if (e) return e;
@@ -269,7 +268,7 @@ GF_Err gf_odf_write_slc(GF_BitStream *bs, GF_SLConfig *sl)
 	if (e) return e;
 
 	gf_bs_write_int(bs, sl->predefined, 8);
-	if (!sl->predefined) {
+	if (! sl->predefined) {
 		gf_bs_write_int(bs, sl->useAccessUnitStartFlag, 1);
 		gf_bs_write_int(bs, sl->useAccessUnitEndFlag, 1);
 		gf_bs_write_int(bs, sl->useRandomAccessPointFlag, 1);
@@ -294,7 +293,7 @@ GF_Err gf_odf_write_slc(GF_BitStream *bs, GF_SLConfig *sl)
 		gf_bs_write_int(bs, sl->AUDuration, 16);
 		gf_bs_write_int(bs, sl->CUDuration, 16);
 	}
-	if (!sl->useTimestampsFlag) {
+	if (! sl->useTimestampsFlag) {
 		gf_bs_write_long_int(bs, sl->startDTS, sl->timestampLength);
 		gf_bs_write_long_int(bs, sl->startCTS, sl->timestampLength);
 	}
@@ -307,11 +306,11 @@ GF_Err gf_odf_write_slc(GF_BitStream *bs, GF_SLConfig *sl)
 for this PDU. AUs must be split in PDUs by another process if needed (packetizer).*/
 GF_EXPORT
 void gf_sl_packetize(GF_SLConfig* slConfig,
-	GF_SLHeader *Header,
-	char *PDU,
-	u32 size,
-	char **outPacket,
-	u32 *OutSize)
+                     GF_SLHeader *Header,
+                     char *PDU,
+                     u32 size,
+                     char **outPacket,
+                     u32 *OutSize)
 {
 	GF_BitStream *bs = gf_bs_new(NULL, 0, GF_BITSTREAM_WRITE);
 	*OutSize = 0;
@@ -325,7 +324,7 @@ void gf_sl_packetize(GF_SLConfig* slConfig,
 		gf_bs_write_int(bs, Header->paddingFlag, 1);
 		if (Header->paddingFlag) gf_bs_write_int(bs, Header->paddingBits, 3);
 	}
-	if (!Header->idleFlag && (!Header->paddingFlag || Header->paddingBits != 0)) {
+	if (! Header->idleFlag && (! Header->paddingFlag || Header->paddingBits != 0)) {
 		if (slConfig->packetSeqNumLength > 0) gf_bs_write_int(bs, Header->packetSequenceNumber, slConfig->packetSeqNumLength);
 		if (slConfig->degradationPriorityLength > 0) {
 			gf_bs_write_int(bs, Header->degradationPriorityFlag, 1);
@@ -371,9 +370,9 @@ u32 gf_sl_get_header_size(GF_SLConfig* slConfig, GF_SLHeader *Header)
 	if (slConfig->useIdleFlag) nb_bits++;
 	if (slConfig->usePaddingFlag) {
 		nb_bits++;
-		if (Header->paddingFlag) nb_bits += 3;
+		if (Header->paddingFlag) nb_bits+=3;
 	}
-	if (!Header->idleFlag && (!Header->paddingFlag || Header->paddingBits != 0)) {
+	if (!Header->idleFlag && (! Header->paddingFlag || Header->paddingBits != 0)) {
 		if (slConfig->packetSeqNumLength > 0) nb_bits += slConfig->packetSeqNumLength;
 		if (slConfig->degradationPriorityLength > 0) {
 			nb_bits++;
@@ -394,13 +393,13 @@ u32 gf_sl_get_header_size(GF_SLConfig* slConfig, GF_SLHeader *Header)
 			if (Header->instantBitrateFlag) nb_bits += slConfig->instantBitrateLength;
 		}
 	}
-	while (nb_bits % 8) nb_bits++;
-	return nb_bits / 8;
+	while (nb_bits%8) nb_bits++;
+	return nb_bits/8;
 }
 
 
 GF_EXPORT
-void gf_sl_depacketize(GF_SLConfig *slConfig, GF_SLHeader *Header, const char *PDU, u32 PDULength, u32 *HeaderLen)
+void gf_sl_depacketize (GF_SLConfig *slConfig, GF_SLHeader *Header, const char *PDU, u32 PDULength, u32 *HeaderLen)
 {
 	GF_BitStream *bs;
 	*HeaderLen = 0;
@@ -413,7 +412,7 @@ void gf_sl_depacketize(GF_SLConfig *slConfig, GF_SLHeader *Header, const char *P
 
 	if (slConfig->useAccessUnitStartFlag) Header->accessUnitStartFlag = gf_bs_read_int(bs, 1);
 	if (slConfig->useAccessUnitEndFlag) Header->accessUnitEndFlag = gf_bs_read_int(bs, 1);
-	if (!slConfig->useAccessUnitStartFlag && !slConfig->useAccessUnitEndFlag) {
+	if ( !slConfig->useAccessUnitStartFlag && !slConfig->useAccessUnitEndFlag) {
 		Header->accessUnitStartFlag = 1;
 		Header->accessUnitEndFlag = 1;
 	}
@@ -446,6 +445,6 @@ void gf_sl_depacketize(GF_SLConfig *slConfig, GF_SLHeader *Header, const char *P
 		}
 	}
 	gf_bs_align(bs);
-	*HeaderLen = (u32)gf_bs_get_position(bs);
+	*HeaderLen = (u32) gf_bs_get_position(bs);
 	gf_bs_del(bs);
 }

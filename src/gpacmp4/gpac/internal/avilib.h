@@ -1,29 +1,29 @@
 /*
-*  avilib.h
-*
-*  Copyright (C) Thomas Östreich - June 2001
-*  multiple audio track support Copyright (C) 2002 Thomas Östreich
-*
-*  Original code:
-*  Copyright (C) 1999 Rainer Johanni <Rainer@Johanni.de>
-*
-*  This file is part of transcode, a linux video stream processing tool
-*
-*  transcode is free software; you can redistribute it and/or modify
-*  it under the terms of the GNU Lesser General Public License as published by
-*  the Free Software Foundation; either version 2, or (at your option)
-*  any later version.
-*
-*  transcode is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU Lesser General Public License for more details.
-*
-*  You should have received a copy of the GNU Lesser General Public
-*  License along with this library; see the file COPYING.  If not, write to
-*  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-*
-*/
+ *  avilib.h
+ *
+ *  Copyright (C) Thomas Östreich - June 2001
+ *  multiple audio track support Copyright (C) 2002 Thomas Östreich
+ *
+ *  Original code:
+ *  Copyright (C) 1999 Rainer Johanni <Rainer@Johanni.de>
+ *
+ *  This file is part of transcode, a linux video stream processing tool
+ *
+ *  transcode is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  transcode is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; see the file COPYING.  If not, write to
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
 
 #ifndef _GF_AVILIB_H_
 #define _GF_AVILIB_H_
@@ -101,7 +101,7 @@ typedef struct _avisuperindex_chunk {
 	u32 nEntriesInUse;          // index of first unused member in aIndex array
 	char           dwChunkId[4];           // fcc of what is indexed
 	u32 dwReserved[3];          // meaning differs for each index type/subtype.
-								// 0 if unused
+	// 0 if unused
 	avisuperindex_entry *aIndex;           // where are the ix## chunks
 	avistdindex_chunk **stdindex;          // the ix## chunks itself (array)
 } avisuperindex_chunk;
@@ -198,7 +198,7 @@ typedef struct
 	int   video_frames;      /* Number of video frames */
 	char   video_tag[4];      /* Tag of video data */
 	int   video_pos;         /* Number of next frame to be read
-							 (if index present) */
+			       (if index present) */
 	alAVISTREAMHEADER video_stream_header;
 
 	u32 max_len;    /* maximum video chunk present */
@@ -212,7 +212,7 @@ typedef struct
 	s64  v_codech_off;      /* absolut offset of video codec (strh) info */
 	s64  v_codecf_off;      /* absolut offset of video codec (strf) info */
 
-	u8(*idx)[16]; /* index entries (AVI idx1 tag) */
+	u8 (*idx)[16]; /* index entries (AVI idx1 tag) */
 
 	video_index_entry *video_index;
 	avisuperindex_chunk *video_superindex;  /* index of indices */
@@ -242,45 +242,45 @@ typedef struct
 /* The error codes delivered by avi_open_input_file */
 
 #define AVI_ERR_SIZELIM      1     /* The write of the data would exceed
-the maximum size of the AVI file.
-This is more a warning than an error
-since the file may be closed safely */
+                                      the maximum size of the AVI file.
+                                      This is more a warning than an error
+                                      since the file may be closed safely */
 
 #define AVI_ERR_OPEN         2     /* Error opening the AVI file - wrong path
-name or file nor readable/writable */
+                                      name or file nor readable/writable */
 
 #define AVI_ERR_READ         3     /* Error reading from AVI File */
 
 #define AVI_ERR_WRITE        4     /* Error writing to AVI File,
-disk full ??? */
+                                      disk full ??? */
 
 #define AVI_ERR_WRITE_INDEX  5     /* Could not write index to AVI file
-during close, file may still be
-usable */
+                                      during close, file may still be
+                                      usable */
 
 #define AVI_ERR_CLOSE        6     /* Could not write header to AVI file
-or not truncate the file during close,
-file is most probably corrupted */
+                                      or not truncate the file during close,
+                                      file is most probably corrupted */
 
 #define AVI_ERR_NOT_PERM     7     /* Operation not permitted:
-trying to read from a file open
-for writing or vice versa */
+                                      trying to read from a file open
+                                      for writing or vice versa */
 
 #define AVI_ERR_NO_MEM       8     /* malloc failed */
 
 #define AVI_ERR_NO_AVI       9     /* Not an AVI file */
 
 #define AVI_ERR_NO_HDRL     10     /* AVI file has no has no header list,
-corrupted ??? */
+                                      corrupted ??? */
 
 #define AVI_ERR_NO_MOVI     11     /* AVI file has no has no MOVI list,
-corrupted ??? */
+                                      corrupted ??? */
 
 #define AVI_ERR_NO_VIDS     12     /* AVI file contains no video data */
 
 #define AVI_ERR_NO_IDX      13     /* The file has been opened with
-getIndex==0, but an operation has been
-performed that needs an index */
+                                      getIndex==0, but an operation has been
+                                      performed that needs an index */
 
 /* Possible Audio formats */
 
@@ -356,8 +356,8 @@ int  AVI_set_audio_position_index(avi_t *AVI, int indexpos);
 int AVI_read_audio(avi_t *AVI, char *audbuf, int bytes, int *continuous);
 
 int  AVI_read_data(avi_t *AVI, char *vidbuf, int max_vidbuf,
-	char *audbuf, int max_audbuf,
-	int *len);
+                   char *audbuf, int max_audbuf,
+                   int *len);
 
 int AVI_scan(char *name);
 int AVI_dump(char *name, int mode);
@@ -412,10 +412,10 @@ struct wave_header
 };
 
 // Simple WAV IO
-int AVI_read_wave_header(int fd, struct wave_header * wave);
-int AVI_write_wave_header(int fd, const struct wave_header * wave);
-size_t AVI_read_wave_pcm_data(int fd, void * buffer, size_t buflen);
-size_t AVI_write_wave_pcm_data(int fd, const void * buffer, size_t buflen);
+int AVI_read_wave_header( int fd, struct wave_header * wave );
+int AVI_write_wave_header( int fd, const struct wave_header * wave );
+size_t AVI_read_wave_pcm_data( int fd, void * buffer, size_t buflen );
+size_t AVI_write_wave_pcm_data( int fd, const void * buffer, size_t buflen );
 
 
 struct AVIStreamHeader {

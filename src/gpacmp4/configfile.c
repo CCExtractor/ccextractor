@@ -1,27 +1,27 @@
 /*
-*			GPAC - Multimedia Framework C SDK
-*
-*			Authors: Jean Le Feuvre
-*			Copyright (c) Telecom ParisTech 2000-2012
-*					All rights reserved
-*
-*  This file is part of GPAC / common tools sub-project
-*
-*  GPAC is free software; you can redistribute it and/or modify
-*  it under the terms of the GNU Lesser General Public License as published by
-*  the Free Software Foundation; either version 2, or (at your option)
-*  any later version.
-*
-*  GPAC is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU Lesser General Public License for more details.
-*
-*  You should have received a copy of the GNU Lesser General Public
-*  License along with this library; see the file COPYING.  If not, write to
-*  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-*
-*/
+ *			GPAC - Multimedia Framework C SDK
+ *
+ *			Authors: Jean Le Feuvre
+ *			Copyright (c) Telecom ParisTech 2000-2012
+ *					All rights reserved
+ *
+ *  This file is part of GPAC / common tools sub-project
+ *
+ *  GPAC is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  GPAC is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; see the file COPYING.  If not, write to
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
 
 #include <gpac/config_file.h>
 #include <gpac/list.h>
@@ -54,7 +54,7 @@ static void DelSection(IniSection *ptr)
 	if (!ptr) return;
 	if (ptr->keys) {
 		while (gf_list_count(ptr->keys)) {
-			k = (IniKey *)gf_list_get(ptr->keys, 0);
+			k = (IniKey *) gf_list_get(ptr->keys, 0);
 			if (k->value) gf_free(k->value);
 			if (k->name) gf_free(k->name);
 			gf_free(k);
@@ -67,15 +67,15 @@ static void DelSection(IniSection *ptr)
 }
 
 /*!
-* \brief Clear the structure
-* \param iniFile The structure to clear
-*/
+ * \brief Clear the structure
+ * \param iniFile The structure to clear
+ */
 static void gf_cfg_clear(GF_Config * iniFile) {
 	IniSection *p;
 	if (!iniFile) return;
 	if (iniFile->sections) {
 		while (gf_list_count(iniFile->sections)) {
-			p = (IniSection *)gf_list_get(iniFile->sections, 0);
+			p = (IniSection *) gf_list_get(iniFile->sections, 0);
 			DelSection(p);
 			gf_list_rem(iniFile->sections, 0);
 		}
@@ -87,8 +87,8 @@ static void gf_cfg_clear(GF_Config * iniFile) {
 }
 
 /*!
-* \brief Parses the config file if any and clears the existing structure
-*/
+ * \brief Parses the config file if any and clears the existing structure
+ */
 GF_Err gf_cfg_parse_config_file(GF_Config * tmp, const char * filePath, const char * file_name)
 {
 	IniSection *p;
@@ -101,14 +101,12 @@ GF_Err gf_cfg_parse_config_file(GF_Config * tmp, const char * filePath, const ch
 
 	gf_cfg_clear(tmp);
 
-	if (filePath && ((filePath[strlen(filePath) - 1] == '/') || (filePath[strlen(filePath) - 1] == '\\'))) {
+	if (filePath && ((filePath[strlen(filePath)-1] == '/') || (filePath[strlen(filePath)-1] == '\\')) ) {
 		strcpy(fileName, filePath);
 		strcat(fileName, file_name);
-	}
-	else if (filePath) {
+	} else if (filePath) {
 		sprintf(fileName, "%s%c%s", filePath, GF_PATH_SEPARATOR, file_name);
-	}
-	else {
+	} else {
 		strcpy(fileName, file_name);
 	}
 
@@ -125,23 +123,23 @@ GF_Err gf_cfg_parse_config_file(GF_Config * tmp, const char * filePath, const ch
 	while (!feof(file)) {
 		u32 read, nb_pass;
 		ret = fgets(line, line_alloc, file);
-		read = (u32)strlen(line);
+		read = (u32) strlen(line);
 		nb_pass = 1;
 		while (read + nb_pass == line_alloc) {
 			line_alloc += MAX_INI_LINE;
 			line = (char*)gf_realloc(line, sizeof(char)*line_alloc);
-			ret = fgets(line + read, MAX_INI_LINE, file);
-			read = (u32)strlen(line);
+			ret = fgets(line+read, MAX_INI_LINE, file);
+			read = (u32) strlen(line);
 			nb_pass++;
 		}
 		if (!ret) continue;
 
 		/* get rid of the end of line stuff */
 		while (1) {
-			u32 len = (u32)strlen(line);
+			u32 len = (u32) strlen(line);
 			if (!len) break;
-			if ((line[len - 1] != '\n') && (line[len - 1] != '\r')) break;
-			line[len - 1] = 0;
+			if ((line[len-1] != '\n') && (line[len-1] != '\r')) break;
+			line[len-1] = 0;
 		}
 		if (!strlen(line)) continue;
 		if (line[0] == '#') continue;
@@ -149,14 +147,14 @@ GF_Err gf_cfg_parse_config_file(GF_Config * tmp, const char * filePath, const ch
 
 		/* new section */
 		if (line[0] == '[') {
-			p = (IniSection *)gf_malloc(sizeof(IniSection));
+			p = (IniSection *) gf_malloc(sizeof(IniSection));
 			p->keys = gf_list_new();
 			p->section_name = gf_strdup(line + 1);
 			p->section_name[strlen(line) - 2] = 0;
 			while (p->section_name[strlen(p->section_name) - 1] == ']' || p->section_name[strlen(p->section_name) - 1] == ' ') p->section_name[strlen(p->section_name) - 1] = 0;
 			gf_list_add(tmp->sections, p);
 		}
-		else if (strlen(line) && (strchr(line, '=') != NULL)) {
+		else if (strlen(line) && (strchr(line, '=') != NULL) ) {
 			if (!p) {
 				gf_list_del(tmp->sections);
 				gf_free(tmp->fileName);
@@ -166,7 +164,7 @@ GF_Err gf_cfg_parse_config_file(GF_Config * tmp, const char * filePath, const ch
 				return GF_IO_ERR;
 			}
 
-			k = (IniKey *)gf_malloc(sizeof(IniKey));
+			k = (IniKey *) gf_malloc(sizeof(IniKey));
 			memset((void *)k, 0, sizeof(IniKey));
 			ret = strchr(line, '=');
 			if (ret) {
@@ -176,11 +174,10 @@ GF_Err gf_cfg_parse_config_file(GF_Config * tmp, const char * filePath, const ch
 				ret[0] = '=';
 				ret += 1;
 				while (ret[0] == ' ') ret++;
-				if (ret[0] != 0) {
+				if ( ret[0] != 0) {
 					k->value = gf_strdup(ret);
 					while (k->value[strlen(k->value) - 1] == ' ') k->value[strlen(k->value) - 1] = 0;
-				}
-				else {
+				} else {
 					k->value = gf_strdup("");
 				}
 			}
@@ -242,14 +239,14 @@ GF_Err gf_cfg_save(GF_Config *iniFile)
 	file = gf_fopen(iniFile->fileName, "wt");
 	if (!file) return GF_IO_ERR;
 
-	i = 0;
-	while ((sec = (IniSection *)gf_list_enum(iniFile->sections, &i))) {
+	i=0;
+	while ( (sec = (IniSection *) gf_list_enum(iniFile->sections, &i)) ) {
 		/*Temporary sections are not saved*/
 		if (!strnicmp(sec->section_name, "Temp", 4)) continue;
 
 		fprintf(file, "[%s]\n", sec->section_name);
-		j = 0;
-		while ((key = (IniKey *)gf_list_enum(sec->keys, &j))) {
+		j=0;
+		while ( (key = (IniKey *) gf_list_enum(sec->keys, &j)) ) {
 			fprintf(file, "%s=%s\n", key->name, key->value);
 		}
 		/* end of section */
@@ -292,15 +289,15 @@ const char *gf_cfg_get_key(GF_Config *iniFile, const char *secName, const char *
 	IniSection *sec;
 	IniKey *key;
 
-	i = 0;
-	while ((sec = (IniSection *)gf_list_enum(iniFile->sections, &i))) {
+	i=0;
+	while ( (sec = (IniSection *) gf_list_enum(iniFile->sections, &i)) ) {
 		if (!strcmp(secName, sec->section_name)) goto get_key;
 	}
 	return NULL;
 
 get_key:
-	i = 0;
-	while ((key = (IniKey *)gf_list_enum(sec->keys, &i))) {
+	i=0;
+	while ( (key = (IniKey *) gf_list_enum(sec->keys, &i)) ) {
 		if (!strcmp(key->name, keyName)) return key->value;
 	}
 	return NULL;
@@ -313,15 +310,15 @@ const char *gf_cfg_get_ikey(GF_Config *iniFile, const char *secName, const char 
 	IniSection *sec;
 	IniKey *key;
 
-	i = 0;
-	while ((sec = (IniSection *)gf_list_enum(iniFile->sections, &i))) {
+	i=0;
+	while ( (sec = (IniSection *) gf_list_enum(iniFile->sections, &i)) ) {
 		if (!stricmp(secName, sec->section_name)) goto get_key;
 	}
 	return NULL;
 
 get_key:
-	i = 0;
-	while ((key = (IniKey *)gf_list_enum(sec->keys, &i))) {
+	i=0;
+	while ( (key = (IniKey *) gf_list_enum(sec->keys, &i)) ) {
 		if (!stricmp(key->name, keyName)) return key->value;
 	}
 	return NULL;
@@ -340,25 +337,25 @@ GF_Err gf_cfg_set_key(GF_Config *iniFile, const char *secName, const char *keyNa
 
 	if (!strnicmp(secName, "temp", 4)) has_changed = GF_FALSE;
 
-	i = 0;
-	while ((sec = (IniSection *)gf_list_enum(iniFile->sections, &i))) {
+	i=0;
+	while ((sec = (IniSection *) gf_list_enum(iniFile->sections, &i)) ) {
 		if (!strcmp(secName, sec->section_name)) goto get_key;
 	}
 	/* need a new key */
-	sec = (IniSection *)gf_malloc(sizeof(IniSection));
+	sec = (IniSection *) gf_malloc(sizeof(IniSection));
 	sec->section_name = gf_strdup(secName);
 	sec->keys = gf_list_new();
 	if (has_changed) iniFile->hasChanged = GF_TRUE;
 	gf_list_add(iniFile->sections, sec);
 
 get_key:
-	i = 0;
-	while ((key = (IniKey *)gf_list_enum(sec->keys, &i))) {
+	i=0;
+	while ( (key = (IniKey *) gf_list_enum(sec->keys, &i) ) ) {
 		if (!strcmp(key->name, keyName)) goto set_value;
 	}
 	if (!keyValue) return GF_OK;
 	/* need a new key */
-	key = (IniKey *)gf_malloc(sizeof(IniKey));
+	key = (IniKey *) gf_malloc(sizeof(IniKey));
 	key->name = gf_strdup(keyName);
 	key->value = gf_strdup("");
 	if (has_changed) iniFile->hasChanged = GF_TRUE;
@@ -391,7 +388,7 @@ u32 gf_cfg_get_section_count(GF_Config *iniFile)
 GF_EXPORT
 const char *gf_cfg_get_section_name(GF_Config *iniFile, u32 secIndex)
 {
-	IniSection *is = (IniSection *)gf_list_get(iniFile->sections, secIndex);
+	IniSection *is = (IniSection *) gf_list_get(iniFile->sections, secIndex);
 	if (!is) return NULL;
 	return is->section_name;
 }
@@ -401,7 +398,7 @@ u32 gf_cfg_get_key_count(GF_Config *iniFile, const char *secName)
 {
 	u32 i = 0;
 	IniSection *sec;
-	while ((sec = (IniSection *)gf_list_enum(iniFile->sections, &i))) {
+	while ( (sec = (IniSection *) gf_list_enum(iniFile->sections, &i)) ) {
 		if (!strcmp(secName, sec->section_name)) return gf_list_count(sec->keys);
 	}
 	return 0;
@@ -412,9 +409,9 @@ const char *gf_cfg_get_key_name(GF_Config *iniFile, const char *secName, u32 key
 {
 	u32 i = 0;
 	IniSection *sec;
-	while ((sec = (IniSection *)gf_list_enum(iniFile->sections, &i))) {
+	while ( (sec = (IniSection *) gf_list_enum(iniFile->sections, &i) ) ) {
 		if (!strcmp(secName, sec->section_name)) {
-			IniKey *key = (IniKey *)gf_list_get(sec->keys, keyIndex);
+			IniKey *key = (IniKey *) gf_list_get(sec->keys, keyIndex);
 			return key ? key->name : NULL;
 		}
 	}
@@ -432,7 +429,7 @@ void gf_cfg_del_section(GF_Config *iniFile, const char *secName)
 	while ((p = (IniSection*)gf_list_enum(iniFile->sections, &i))) {
 		if (!strcmp(secName, p->section_name)) {
 			DelSection(p);
-			gf_list_rem(iniFile->sections, i - 1);
+			gf_list_rem(iniFile->sections, i-1);
 			iniFile->hasChanged = GF_TRUE;
 			return;
 		}
@@ -446,20 +443,20 @@ GF_Err gf_cfg_insert_key(GF_Config *iniFile, const char *secName, const char *ke
 	IniSection *sec;
 	IniKey *key;
 
-	if (!iniFile || !secName || !keyName || !keyValue) return GF_BAD_PARAM;
+	if (!iniFile || !secName || !keyName|| !keyValue) return GF_BAD_PARAM;
 
-	i = 0;
-	while ((sec = (IniSection *)gf_list_enum(iniFile->sections, &i))) {
+	i=0;
+	while ( (sec = (IniSection *) gf_list_enum(iniFile->sections, &i) ) ) {
 		if (!strcmp(secName, sec->section_name)) break;
 	}
 	if (!sec) return GF_BAD_PARAM;
 
-	i = 0;
-	while ((key = (IniKey *)gf_list_enum(sec->keys, &i))) {
+	i=0;
+	while ( (key = (IniKey *) gf_list_enum(sec->keys, &i) ) ) {
 		if (!strcmp(key->name, keyName)) return GF_BAD_PARAM;
 	}
 
-	key = (IniKey *)gf_malloc(sizeof(IniKey));
+	key = (IniKey *) gf_malloc(sizeof(IniKey));
 	key->name = gf_strdup(keyName);
 	key->value = gf_strdup(keyValue);
 	gf_list_insert(sec->keys, key, index);
@@ -481,15 +478,15 @@ const char *gf_cfg_get_sub_key(GF_Config *iniFile, const char *secName, const ch
 	}
 
 	j = 0;
-	subKeyValue = strtok((char*)keyValue, ";");
-	while (subKeyValue != NULL) {
-		if (j == sub_index) {
+	subKeyValue = strtok((char*)keyValue,";");
+	while (subKeyValue!=NULL) {
+		if (j==sub_index) {
 			returnKey = gf_strdup(subKeyValue);
 			gf_free(keyValue);
 			return returnKey;
 		}
 		j++;
-		subKeyValue = strtok(NULL, ";");
+		subKeyValue = strtok (NULL, ";");
 	}
 	gf_free(keyValue);
 	return NULL;
