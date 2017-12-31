@@ -836,6 +836,7 @@ void add_ocrtext2str(char *dest, char *src, const char *crlf, unsigned crlf_leng
 			if (!char_found) {
 				src = line_scan;
 			}
+			if (*src == '\0') break;
 		}
 		*dest = *src;
 		src++;
