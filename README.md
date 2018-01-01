@@ -1,16 +1,28 @@
-
 ![logo](https://avatars3.githubusercontent.com/u/7253637?v=3&s=100)
- 
-# CCExtractor 
+
+# CCExtractor
 
 [![Build Status](https://travis-ci.org/CCExtractor/ccextractor.svg?branch=master)](https://travis-ci.org/CCExtractor/ccextractor)
 
-CCExtractor is a tool that produces subtitles from TV use. Global accessibility (all users, all content, all countries) is the goal. With so many different formats, this is a constantly moving target, but we intend to keep up with all sources and formats.
-More information [here](https://ccextractor.org/public:general:about_the_org). 
+CCExtractor is a tool used to produce subtitles for TV recordings from almost anywhere in the world. We intend to keep up with all sources and formats.
 
-The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor)) and master being the most stable branch. It is primarily written in C.
+Subtitles are important for many people. If you're learning a new language, subtitles are a great way to learn it from movies or TV shows. If you are hard of hearing, subtitles can help you better understand what's happening on the screen. We aim to make it easy to generate subtitles by using the command line tool or Windows GUI.
+
+The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor)) and master being the most stable branch.
+
+### **Features**
+
+- Extract subtitles in real-time
+- Translate subtitles
+- Extract closed captions from DVDs
+- Convert closed captions to subtitles
+
+### Programming Languages & Technologies
+
+The core functionality is written in C. Other languages used include C++ and Python.
 
 ## Google Code-in 2017
+
 CCExtractor is [participating in Google Code-in 2017!](https://ccextractor.org/public:codein:welcome_2017) 
 
 Google Code-In is a competition of encouraging young people to learn more about Open Source and contributing to it. Tasks range from coding, documentation, quality assurance, user interface, outreach and research.
@@ -27,7 +39,7 @@ Downloads for precompiled binaries and source code can be found [on our website]
 
 Extracting subtitles is relatively simple. Just run the following command:
 
-```ccextractor <input>```
+`ccextractor <input>`
 
 This will extract the subtitles.
 
@@ -40,7 +52,7 @@ You can also find the list of parameters and their brief description by running 
 
 ## Compiling CCExtractor
 
-To learn more about how to compile and build CCExtractor for your platform check the [compilation guide](docs/COMPILATION.MD).
+To learn more about how to compile and build CCExtractor for your platform check the [compilation guide](https://github.com/CCExtractor/ccextractor/blob/master/docs/COMPILATION.MD).
 
 ## Support
 
@@ -61,3 +73,7 @@ You can contribute to the project by reporting issues, forking it, modifying the
 News about releases and modifications to the code can be found in the [CHANGES.TXT](docs/CHANGES.TXT) file. 
 
 For more information visit the CCExtractor website: [https://www.ccextractor.org](https://www.ccextractor.org)
+
+## License
+
+GNU General Public License version 2.0 (GPL-2.0)
