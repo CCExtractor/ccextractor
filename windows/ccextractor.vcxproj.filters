@@ -369,9 +369,6 @@
     <ClInclude Include="..\src\gpacmp4\gpac\maths.h">
       <Filter>Header Files\gpacmp4</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\thread.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\ccextractor.c">

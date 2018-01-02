@@ -39,7 +39,6 @@
     <ClInclude Include="..\src\extractors\extractor.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\color.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\maths.h" />
-    <ClInclude Include="..\src\gpacmp4\gpac\thread.h" />
     <ClInclude Include="..\src\wrappers\wrapper.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\avparse.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\base_coding.h" />
