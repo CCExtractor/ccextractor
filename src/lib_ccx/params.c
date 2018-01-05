@@ -2232,8 +2232,21 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		/* Network stuff */
 		if (strcmp (argv[i],"-udp")==0 && i<argc-1)
 		{
+			char *at = strchr(argv[i + 1], '@');
 			char *colon = strchr(argv[i + 1], ':');
-			if (colon)
+			if (at && !colon)
+			{
+				fatal(EXIT_MALFORMED_PARAMETER, "If -udp contains an '@', it must also contain a ':'");
+			}
+			else if (at && colon)
+			{
+				*at = '\0';
+				*colon = '\0';
+				opt->udpsrc = argv[i + 1];
+				opt->udpaddr = at + 1;
+				opt->udpport = atoi_hex(colon + 1);
+			}
+			else if (colon)
 			{
 				*colon = '\0';
 				opt->udpaddr = argv[i + 1];
