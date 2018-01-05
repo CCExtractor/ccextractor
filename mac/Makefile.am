@@ -156,7 +156,6 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/ccx_encoders_smptett.c \
 				../src/lib_ccx/ccx_encoders_splitbysentence.c \
 				../src/lib_ccx/ccx_encoders_spupng.c \
-				../src/lib_ccx/ccx_encoders_spupng.h \
 				../src/lib_ccx/ccx_encoders_srt.c \
 				../src/lib_ccx/ccx_encoders_ssa.c \
 				../src/lib_ccx/ccx_encoders_structs.h \
@@ -208,8 +207,6 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/params.c \
 				../src/lib_ccx/params_dump.c \
 				../src/lib_ccx/sequencing.c \
-				../src/lib_ccx/spupng_encoder.c \
-				../src/lib_ccx/spupng_encoder.h \
 				../src/lib_ccx/stdintmsc.h \
 				../src/lib_ccx/stream_functions.c \
 				../src/lib_ccx/teletext.h \
@@ -268,12 +265,53 @@ ccextractor_SOURCES = \
 				../src/extractors/extractor.c \
 				../src/extractors/extractor.h \
 				../src/wrappers/wrapper.c \
-				../src/wrappers/wrapper.h
+				../src/wrappers/wrapper.h \
+				../src/freetype/autofit/autofit.c \
+				../src/freetype/base/ftbase.c \
+				../src/freetype/base/ftbbox.c \
+				../src/freetype/base/ftbdf.c \
+				../src/freetype/base/ftbitmap.c \
+				../src/freetype/base/ftcid.c \
+				../src/freetype/base/ftfntfmt.c \
+				../src/freetype/base/ftfstype.c \
+				../src/freetype/base/ftgasp.c \
+				../src/freetype/base/ftglyph.c \
+				../src/freetype/base/ftgxval.c \
+				../src/freetype/base/ftinit.c \
+				../src/freetype/base/ftlcdfil.c \
+				../src/freetype/base/ftmm.c \
+				../src/freetype/base/ftotval.c \
+				../src/freetype/base/ftpatent.c \
+				../src/freetype/base/ftpfr.c \
+				../src/freetype/base/ftstroke.c \
+				../src/freetype/base/ftsynth.c \
+				../src/freetype/base/ftsystem.c \
+				../src/freetype/base/fttype1.c \
+				../src/freetype/base/ftwinfnt.c \
+				../src/freetype/bdf/bdf.c \
+				../src/freetype/bzip2/ftbzip2.c \
+				../src/freetype/cache/ftcache.c \
+				../src/freetype/cff/cff.c \
+				../src/freetype/cid/type1cid.c \
+				../src/freetype/gzip/ftgzip.c \
+				../src/freetype/lzw/ftlzw.c \
+				../src/freetype/pcf/pcf.c \
+				../src/freetype/pfr/pfr.c \
+				../src/freetype/psaux/psaux.c \
+				../src/freetype/pshinter/pshinter.c \
+				../src/freetype/psnames/psnames.c \
+				../src/freetype/raster/raster.c \
+				../src/freetype/sfnt/sfnt.c \
+				../src/freetype/smooth/smooth.c \
+				../src/freetype/truetype/truetype.c \
+				../src/freetype/type1/type1.c \
+				../src/freetype/type42/type42.c \
+				../src/freetype/winfonts/winfnt.c
 				
 
-ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT 
+ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY
 
-ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi/ -I../src/lib_hash/ -I../src/protobuf-c/ -I../src/utf8proc/ -I../src/
+ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi/ -I../src/lib_hash/ -I../src/protobuf-c/ -I../src/utf8proc/ -I../src/  -I../src/freetype/include/
 
 
 ccextractor_LDADD=-lm

@@ -37,6 +37,7 @@
   <ItemGroup>
     <ClInclude Include="..\src\ccextractor.h" />
     <ClInclude Include="..\src\extractors\extractor.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_encoders_structs.h" />
     <ClInclude Include="..\src\wrappers\wrapper.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\avparse.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\base_coding.h" />
@@ -75,7 +76,6 @@
     <ClInclude Include="..\src\libpng\pnglibconf.h" />
     <ClInclude Include="..\src\libpng\pngpriv.h" />
     <ClInclude Include="..\src\libpng\pngstruct.h" />
-    <ClInclude Include="..\src\lib_ccx\608_spupng.h" />
     <ClInclude Include="..\src\lib_ccx\avc_functions.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_common_char_encoding.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_common_common.h" />
@@ -93,11 +93,9 @@
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_xds.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_common.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_helpers.h" />
-    <ClInclude Include="..\src\lib_ccx\ccx_encoders_structs.h" />
     <ClInclude Include="..\src\lib_ccx\disable_warnings.h" />
     <ClInclude Include="..\src\lib_ccx\dvb_subtitle_decoder.h" />
     <ClInclude Include="..\src\lib_ccx\lib_ccx.h" />
-    <ClInclude Include="..\src\lib_ccx\spupng_encoder.h" />
     <ClInclude Include="..\src\lib_ccx\teletext.h" />
     <ClInclude Include="..\src\lib_ccx\utility.h" />
     <ClInclude Include="..\src\lib_hash\sha2.h" />
@@ -127,10 +125,18 @@
     <ClInclude Include="..\src\zvbi\zvbi_decoder.h" />
     <ClInclude Include="..\src\win_spec_incld\inttypes.h" />
     <ClInclude Include="..\src\win_spec_incld\stdint.h" />
+    <ClInclude Include="..\src\freetype\include\ft2build.h" />
+    <ClInclude Include="..\src\freetype\include\freetype\config\ftconfig.h" />
+    <ClInclude Include="..\src\freetype\include\freetype\config\ftheader.h" />
+    <ClInclude Include="..\src\freetype\include\freetype\config\ftmodule.h" />
+    <ClInclude Include="..\src\freetype\include\freetype\config\ftoption.h" />
+    <ClInclude Include="..\src\freetype\include\freetype\config\ftstdlib.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\extractors\extractor.c" />
+    <ClCompile Include="..\src\freetype\gzip\ftgzip.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_demuxer_mxf.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_spupng.c" />
     <ClCompile Include="..\src\wrappers\wrapper.c" />
     <ClCompile Include="..\src\ccextractor.c" />
     <ClCompile Include="..\src\gpacmp4\avc_ext.c" />
@@ -222,7 +228,6 @@
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_sami.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_smptett.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_splitbysentence.c" />
-    <ClCompile Include="..\src\lib_ccx\ccx_encoders_spupng.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_srt.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_ssa.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_transcript.c" />
@@ -254,7 +259,6 @@
     <ClCompile Include="..\src\lib_ccx\params.c" />
     <ClCompile Include="..\src\lib_ccx\params_dump.c" />
     <ClCompile Include="..\src\lib_ccx\sequencing.c" />
-    <ClCompile Include="..\src\lib_ccx\spupng_encoder.c" />
     <ClCompile Include="..\src\lib_ccx\stream_functions.c" />
     <ClCompile Include="..\src\lib_ccx\telxcc.c" />
     <ClCompile Include="..\src\lib_ccx\ts_functions.c" />
@@ -279,6 +283,43 @@
     <ClCompile Include="..\src\zvbi\decoder.c" />
     <ClCompile Include="..\src\zvbi\raw_decoder.c" />
     <ClCompile Include="..\src\zvbi\sampling_par.c" />
+    <ClCompile Include="..\src\freetype\autofit\autofit.c" />
+    <ClCompile Include="..\src\freetype\bdf\bdf.c" />
+    <ClCompile Include="..\src\freetype\cff\cff.c" />
+    <ClCompile Include="..\src\freetype\base\ftbase.c" />
+    <ClCompile Include="..\src\freetype\base\ftbitmap.c" />
+    <ClCompile Include="..\src\freetype\cache\ftcache.c" />
+    <ClCompile Include="..\src\freetype\base\ftfstype.c" />
+    <ClCompile Include="..\src\freetype\base\ftgasp.c" />
+    <ClCompile Include="..\src\freetype\base\ftglyph.c" />
+    <ClCompile Include="..\src\freetype\base\ftinit.c" />
+    <ClCompile Include="..\src\freetype\lzw\ftlzw.c" />
+    <ClCompile Include="..\src\freetype\base\ftstroke.c" />
+    <ClCompile Include="..\src\freetype\base\ftsystem.c" />
+    <ClCompile Include="..\src\freetype\smooth\smooth.c" />
+    <ClCompile Include="..\src\freetype\base\ftbbox.c" />
+    <ClCompile Include="..\src\freetype\base\ftfntfmt.c" />
+    <ClCompile Include="..\src\freetype\base\ftmm.c" />
+    <ClCompile Include="..\src\freetype\base\ftpfr.c" />
+    <ClCompile Include="..\src\freetype\base\ftsynth.c" />
+    <ClCompile Include="..\src\freetype\base\fttype1.c" />
+    <ClCompile Include="..\src\freetype\base\ftwinfnt.c" />
+    <ClCompile Include="..\src\freetype\base\ftlcdfil.c" />
+    <ClCompile Include="..\src\freetype\base\ftgxval.c" />
+    <ClCompile Include="..\src\freetype\base\ftotval.c" />
+    <ClCompile Include="..\src\freetype\base\ftpatent.c" />
+    <ClCompile Include="..\src\freetype\pcf\pcf.c" />
+    <ClCompile Include="..\src\freetype\pfr\pfr.c" />
+    <ClCompile Include="..\src\freetype\psaux\psaux.c" />
+    <ClCompile Include="..\src\freetype\pshinter\pshinter.c" />
+    <ClCompile Include="..\src\freetype\psnames\psmodule.c" />
+    <ClCompile Include="..\src\freetype\raster\raster.c" />
+    <ClCompile Include="..\src\freetype\sfnt\sfnt.c" />
+    <ClCompile Include="..\src\freetype\truetype\truetype.c" />
+    <ClCompile Include="..\src\freetype\type1\type1.c" />
+    <ClCompile Include="..\src\freetype\cid\type1cid.c" />
+    <ClCompile Include="..\src\freetype\type42\type42.c" />
+    <ClCompile Include="..\src\freetype\winfonts\winfnt.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\lib_ccx\ccx_sub_entry_message.proto" />
@@ -403,8 +444,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\zlib;..\src\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\src\freetype\include;..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\zlib;..\src\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;FT2_BUILD_LIBRARY;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -443,7 +484,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\zlib;..\src\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\freetype\include;..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\zlib;..\src\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SEGMENT_BY_FILE_TIME;ENABLE_HARDSUBX;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -503,7 +544,7 @@ xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|Win32'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\libpng;..\src\zlib;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\freetype\include;..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\libpng;..\src\zlib;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ENABLE_HARDSUBX;VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -562,7 +603,7 @@ xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\zlib;..\src\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\freetype\include;..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\zlib;..\src\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>VERSION_FILE_PRESENT;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />

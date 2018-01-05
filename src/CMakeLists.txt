@@ -39,7 +39,7 @@ configure_file (
   "${PROJECT_SOURCE_DIR}/lib_ccx/compile_info_real.h"
   )
 
-add_definitions(-DVERSION_FILE_PRESENT)
+add_definitions(-DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY)
 
 include_directories ("${PROJECT_SOURCE_DIR}")
 include_directories ("${PROJECT_SOURCE_DIR}/lib_ccx/")
@@ -52,6 +52,7 @@ include_directories ("${PROJECT_SOURCE_DIR}/extractors/")
 include_directories ("${PROJECT_SOURCE_DIR}/wrappers/")
 include_directories ("${PROJECT_SOURCE_DIR}/libpng/")
 include_directories ("${PROJECT_SOURCE_DIR}/zlib/")
+include_directories ("${PROJECT_SOURCE_DIR}/freetype/include")
 aux_source_directory ("${PROJECT_SOURCE_DIR}/protobuf-c/" SOURCEFILE)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/zvbi/" SOURCEFILE)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_hash/" SOURCEFILE)
@@ -60,6 +61,49 @@ aux_source_directory ("${PROJECT_SOURCE_DIR}/wrappers/" SOURCEFILE)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib/" SOURCEFILE)
 
+set(FREETYPE_SOURCE
+        ${PROJECT_SOURCE_DIR}/freetype/autofit/autofit.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftbase.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftbbox.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftbdf.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftbitmap.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftcid.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftfntfmt.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftfstype.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftgasp.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftglyph.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftgxval.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftinit.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftlcdfil.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftmm.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftotval.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftpatent.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftpfr.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftstroke.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftsynth.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftsystem.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/fttype1.c
+        ${PROJECT_SOURCE_DIR}/freetype/base/ftwinfnt.c
+        ${PROJECT_SOURCE_DIR}/freetype/bdf/bdf.c
+        ${PROJECT_SOURCE_DIR}/freetype/bzip2/ftbzip2.c
+        ${PROJECT_SOURCE_DIR}/freetype/cache/ftcache.c
+        ${PROJECT_SOURCE_DIR}/freetype/cff/cff.c
+        ${PROJECT_SOURCE_DIR}/freetype/cid/type1cid.c
+        ${PROJECT_SOURCE_DIR}/freetype/gzip/ftgzip.c
+        ${PROJECT_SOURCE_DIR}/freetype/lzw/ftlzw.c
+        ${PROJECT_SOURCE_DIR}/freetype/pcf/pcf.c
+        ${PROJECT_SOURCE_DIR}/freetype/pfr/pfr.c
+        ${PROJECT_SOURCE_DIR}/freetype/psaux/psaux.c
+        ${PROJECT_SOURCE_DIR}/freetype/pshinter/pshinter.c
+        ${PROJECT_SOURCE_DIR}/freetype/psnames/psnames.c
+        ${PROJECT_SOURCE_DIR}/freetype/raster/raster.c
+        ${PROJECT_SOURCE_DIR}/freetype/sfnt/sfnt.c
+        ${PROJECT_SOURCE_DIR}/freetype/smooth/smooth.c
+        ${PROJECT_SOURCE_DIR}/freetype/truetype/truetype.c
+        ${PROJECT_SOURCE_DIR}/freetype/type1/type1.c
+        ${PROJECT_SOURCE_DIR}/freetype/type42/type42.c
+        ${PROJECT_SOURCE_DIR}/freetype/winfonts/winfnt.c
+        )
 #Windows specific libraries and linker flags
 if(WIN32)
     include_directories ("${PROJECT_SOURCE_DIR}/win_spec_incld/")
@@ -90,7 +134,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 
-set (EXTRA_LIBS ${EXTRA_LIBS} -lz)
+set (EXTRA_LIBS ${EXTRA_LIBS} -lz -lm)
 
 find_package (PkgConfig)
 
@@ -149,7 +193,7 @@ if (PKG_CONFIG_FOUND AND WITH_SHARING)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_SHARING")
 endif (PKG_CONFIG_FOUND AND WITH_SHARING)
 
-add_executable (ccextractor ${SOURCEFILE})
+add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE})
 target_link_libraries (ccextractor ${EXTRA_LIBS})
 target_include_directories (ccextractor PUBLIC ${EXTRA_INCLUDES})
 
