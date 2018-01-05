@@ -53,7 +53,7 @@ make
 ./ccextractor
 ```
 
-**Using Cmake**
+**Using CMake**
 
 ```
 #Create and navigate to directory where you want to store built files
@@ -126,7 +126,7 @@ cd ccextractor/mac
 ./ccextractor
 ```
 
-**Using Cmake**
+**Using CMake**
 
 ```
 #Create and navigate to directory where you want to store built files
@@ -183,7 +183,7 @@ Configurations options are: `(Debug|Release)-Full`
 
 Configurations options include dependent libraries which are used for OCR.
 
-**Using Cmake**
+**Using CMake**
 
 You may also generate `.sln` files for Visual Studio and build using build tools, or open `.sln` files using Visual Studio.
 

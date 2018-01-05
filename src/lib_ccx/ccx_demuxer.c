@@ -78,7 +78,7 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 			return -1;
 		}
 
-		ctx->infd = start_upd_srv(ccx_options.udpaddr, ccx_options.udpport);
+		ctx->infd = start_upd_srv(ccx_options.udpsrc, ccx_options.udpaddr, ccx_options.udpport);
 		if(ctx->infd < 0)
 		{
 			print_error(ccx_options.gui_mode_reports,"socket() failed.");

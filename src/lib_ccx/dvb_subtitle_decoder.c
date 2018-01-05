@@ -419,7 +419,7 @@ static void delete_regions(DVBSubContext *ctx)
  *                       it could be -1 if not found in PMT.
  * @param ancillary_id ancillary-page_id found in Subtitle descriptors
  *                     associated with     subtitle stream in the    PMT.
- *                       it could be -1 if not found in PMT.
+ *                       it could be -1 if not found in PMT.		
  *
  * @return DVB context kept as void* for abstraction
  *
@@ -1460,16 +1460,17 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	DVBSubRegion *region;
 	DVBSubRegionDisplay *display;
 	DVBSubCLUT *clut;
-    DVBSubDisplayDefinition *display_def;
-    struct cc_bitmap *rect = NULL;
+	DVBSubDisplayDefinition *display_def;
+	struct cc_bitmap *rect = NULL;
 	uint32_t *clut_table;
 	int offset_x=0, offset_y=0;
 	int ret = 0;
+	int x_pos=-1, y_pos=-1, width=0, height=0;
 
 	ctx = (DVBSubContext *) dec_ctx->private_data;
 
-        display_def = ctx->display_definition;
-        sub->type = CC_BITMAP;
+	display_def = ctx->display_definition;
+	sub->type = CC_BITMAP;
 	sub->lang_index = ctx->lang_index;
 
 	if (display_def)
@@ -1489,21 +1490,21 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		return 0;
 	}
 
-	rect = malloc( sizeof(struct cc_bitmap) * sub->nb_data);
+	rect = malloc(sizeof(struct cc_bitmap));
 	if(!rect)
-	{
 		return -1;
-	}
 
 	sub->flags |= SUB_EOD_MARKER;
 	sub->got_output = 1;
 	sub->data = rect;
 
+	// TODO: if different regions have different cluts, only the last one will be saved.
+	// Don't know if it will affect anything.
+
+	// The first loop, to determine the size of the whole subtitle (made up of different display/regions)
+
 	for (display = ctx->display_list; display; display = display->next)
 	{
-#ifdef ENABLE_OCR
-		char *ocr_str = NULL;
-#endif
 		region = get_region(ctx, display->region_id);
 
 		if (!region)
@@ -1512,13 +1513,35 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		if (!region->dirty)
 			continue;
 
-		rect->x = display->x_pos + offset_x;
-		rect->y = display->y_pos + offset_y;
-		rect->w = region->width;
-		rect->h = region->height;
-		rect->nb_colors = (1 << region->depth);
-		rect->linesize[0] = region->width;
+		if (x_pos == -1) {
+			x_pos = display->x_pos;
+			y_pos = display->y_pos;
+			width = region->width;
+			height = region->height;
+		}
+		else {
+			if (x_pos > display->x_pos) {
+				width += (x_pos - display->x_pos);
+				x_pos = display->x_pos;
+			}
 
+			if (display->y_pos < y_pos) {
+				height += (y_pos - display->y_pos);
+				y_pos = display->y_pos;
+			}
+
+			if (display->x_pos + region->width > x_pos + width) {
+				width = display->x_pos + region->width - x_pos;
+			}
+
+			if (display->y_pos + region->height > y_pos + height) {
+				height = display->y_pos + region->height - y_pos;
+			}
+
+		}
+		rect->nb_colors = (1 << region->depth);
+
+		// Process CLUT
 		clut = get_clut(ctx, region->clut);
 
 		if (!clut)
@@ -1541,28 +1564,107 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		memset(rect->data[1], 0, 1024);
 		memcpy(rect->data[1], clut_table, (1 << region->depth) * sizeof(uint32_t));
 
-		rect->data[0] = malloc(region->buf_size);
-		memcpy(rect->data[0], region->pbuf, region->buf_size);
-#ifdef ENABLE_OCR
-		if (ctx->ocr_ctx)
-		{
-			ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str,region->bgcolor);
-			if(ret >= 0)
-				rect->ocr_text = ocr_str;
-			else
-				rect->ocr_text = NULL;
-		}
-		else
-		{
-			rect->ocr_text = NULL;
-		}
-#endif
-		rect++;
-
 	}
 
+	rect->x = x_pos + offset_x;
+	rect->y = y_pos + offset_y;
+	rect->w = width;
+	rect->h = height;
+	rect->linesize[0] = width;
+
+	// The second loop, to generate the merged image
+
+	rect->data[0] = (uint8_t*)malloc(width * height);
+	if (!rect->data[0]) {
+		mprint("write_dvb_sub: failed to alloc memory, need %d * %d = %d bytes\n", width, height, width*height);
+		return -1;
+	}
+	memset(rect->data[0], 0x0, width * height);
+
+	for (display = ctx->display_list; display; display = display->next) {
+		region = get_region(ctx, display->region_id);
+
+		int x_off = display->x_pos - x_pos;
+		int y_off = display->y_pos - y_pos;
+		for (int y = 0; y < region->height; y++) {
+			for (int x = 0; x < region->width; x++)
+				rect->data[0][((y + y_off) * width) + x_off + x] = region->pbuf[y * region->width + x];
+		}
+	}
+
+	sub->nb_data = 1; // Set nb_data to 1 since we have merged the images into one image.
+
+	// Perform OCR
+#ifdef ENABLE_OCR
+	char *ocr_str = NULL;
+	if (ctx->ocr_ctx) {
+		ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, region->bgcolor);
+		if (ret >= 0)
+			rect->ocr_text = ocr_str;
+		else
+			rect->ocr_text = NULL;
+		if (ccx_options.dvb_debug_traces_to_stdout) {
+			mprint("\nOCR Result: %s\n", rect->ocr_text ? rect->ocr_text : "NULL");
+		}
+	}
+	else {
+		rect->ocr_text = NULL;
+	}
+#endif
 	return 0;
 }
+
+void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
+								   struct lib_cc_decode *dec_ctx,
+								   struct cc_subtitle *sub) {
+	if (enc_ctx->write_previous) //this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
+	{
+		sub->prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the end time of the previous sub the current pts
+		encode_sub(enc_ctx->prev, sub->prev); //we encode it
+		enc_ctx->srt_counter = enc_ctx->prev->srt_counter; //for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
+		enc_ctx->prev_start = enc_ctx->prev->prev_start;
+		sub->prev->got_output = 0;
+		if (enc_ctx->write_format == CCX_OF_WEBVTT) {	// we already wrote header, but since we encoded last sub, we must prevent multiple headers in future
+			enc_ctx->wrote_webvtt_header = 1;
+		}
+	}
+	/* copy previous encoder context*/
+	free_encoder_context(enc_ctx->prev);
+	enc_ctx->prev = NULL;
+	enc_ctx->prev = copy_encoder_context(enc_ctx);
+	/* copy previous decoder context */
+	free_decoder_context(dec_ctx->prev);
+	dec_ctx->prev = NULL;
+	dec_ctx->prev = copy_decoder_context(dec_ctx);
+	freep(&dec_ctx->prev->private_data);
+	dec_ctx->prev->private_data = malloc(sizeof(struct DVBSubContext));
+	memcpy(dec_ctx->prev->private_data, dec_ctx->private_data, sizeof(struct DVBSubContext));
+	/* copy previous subtitle */
+	free_subtitle(sub->prev);
+	sub->prev = NULL;
+	sub->prev = copy_subtitle(sub);
+	sub->prev->start_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the start time of the previous sub the current pts
+
+	write_dvb_sub(dec_ctx->prev, sub->prev); //we write the current dvb sub to update decoder context
+	enc_ctx->write_previous = 1; //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
+#ifdef ENABLE_OCR
+	if (ccx_options.dvb_debug_traces_to_stdout) {
+		if (sub->prev) {
+			struct cc_bitmap* content_prev = sub->prev->data;
+			mprint("\nPrevious subtitle %x (%s)\nStart time: %lld; End time: %lld",
+				sub->prev, content_prev ?
+				(content_prev->ocr_text ? content_prev->ocr_text : "NULL OCR") : "NULL DATA",
+				sub->prev->start_time, sub->prev->end_time);
+		}
+		struct cc_bitmap* content = sub->data;
+		mprint("\nCurrent subtitle %x (%s)\nStart time: %lld; End time: %lld\n",
+			sub, content ?
+			(content->ocr_text ? content->ocr_text : "NULL OCR") : "NULL DATA",
+			sub->start_time, sub->end_time);
+	}
+#endif
+}
+
 /**
  * @param dvb_ctx    PreInitialized DVB context using DVB
  * @param buf        buffer containing segment data, first sync byte need to 0x0f.
@@ -1645,36 +1747,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 						segment_length);
 				break;
 			case DVBSUB_DISPLAY_SEGMENT: //when we get a display segment, we save the current page
-				if (enc_ctx->write_previous) //this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
-				{
-					sub->prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the end time of the previous sub the current pts
-					encode_sub(enc_ctx->prev, sub->prev); //we encode it
-					enc_ctx->srt_counter = enc_ctx->prev->srt_counter; //for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
-					enc_ctx->prev_start = enc_ctx->prev->prev_start;
-					sub->prev->got_output = 0;
-					if (enc_ctx->write_format == CCX_OF_WEBVTT) {	// we already wrote header, but since we encoded last sub, we must prevent multiple headers in future
-						enc_ctx->wrote_webvtt_header = 1;
-					}
-				}
-				/* copy previous encoder context*/
-				free_encoder_context(enc_ctx->prev);
-				enc_ctx->prev = NULL;  
-				enc_ctx->prev = copy_encoder_context(enc_ctx); 
-				/* copy previous decoder context */
-				free_decoder_context(dec_ctx->prev);
-				dec_ctx->prev = NULL;
-				dec_ctx->prev = copy_decoder_context(dec_ctx);
-				freep(&dec_ctx->prev->private_data);
-				dec_ctx->prev->private_data = malloc(sizeof(struct DVBSubContext));
-				memcpy(dec_ctx->prev->private_data, dec_ctx->private_data, sizeof(struct DVBSubContext));
-				/* copy previous subtitle */
-				free_subtitle(sub->prev);
-				sub->prev = NULL;
-				sub->prev = copy_subtitle(sub);
-				sub->prev->start_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the start time of the previous sub the current pts
-				
-				write_dvb_sub(dec_ctx->prev, sub->prev); //we write the current dvb sub to update decoder context
-				enc_ctx->write_previous = 1; //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
+				dvbsub_handle_display_segment(enc_ctx, dec_ctx, sub);
 				got_segment |= 16;
 				break;
 			default:
@@ -1691,7 +1764,8 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 	// segments then we need no further data.
 	if (got_segment == 15)
 	{
-		write_dvb_sub(dec_ctx, sub);
+		dvbsub_handle_display_segment(enc_ctx, dec_ctx, sub);
+		got_segment |= 16;
 	}
 end:
 	if ( ret >= 0 )

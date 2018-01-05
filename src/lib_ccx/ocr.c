@@ -226,6 +226,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 		}
 	}
 	ignore_alpha_at_edge(alpha, indata, w, h, pix, &cpix);
+
 	// For the unquantized bitmap
 	wpl = pixGetWpl(color_pix);
 	data = pixGetData(color_pix);
@@ -240,6 +241,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 			ppixel++;
 		}
 	}
+	
 	BOX *crop_points = ignore_alpha_at_edge(copy->alpha, copy->data, w, h, color_pix, &color_pix_out);
 #ifdef OCR_DEBUG
 	{
@@ -251,14 +253,24 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	i++;
 	}
 #endif
+
 	cpix = pixConvertRGBToGray(cpix, 0.0, 0.0, 0.0); // Abhinav95: Converting image to grayscale for OCR to avoid issues with transparency
 	TessBaseAPISetImage2(ctx->api, cpix);
 	color_pix_out = TessBaseAPIGetThresholdedImage(ctx->api);
-	tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
-	if( tess_ret != 0)
-		printf("\nsomething messy\n");
+	if (tess_ret = TessBaseAPIRecognize(ctx->api, NULL)) {
+		mprint("\nIn ocr_bitmap: Failed to perform OCR. Skipped.\n");
+
+		pixDestroy(&pix);
+		pixDestroy(&cpix);
+		pixDestroy(&color_pix);
+		pixDestroy(&color_pix_out);
+		
+		return NULL;
+	}
 
 	text_out = TessBaseAPIGetUTF8Text(ctx->api);
+	if (text_out == NULL)
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In ocr_bitmap: Failed to perform OCR - Failed to get text. Please report.\n", errno);
 
 	// Begin color detection
 	if(ccx_options.dvbcolor && strlen(text_out)>0)
@@ -474,19 +486,91 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 				TessDeleteText(word);
 			} while (TessPageIteratorNext((TessPageIterator *)ri,level));
 
-			//Write closing </font> at the end of the line
+			// Write missing <font> or </font> for each line
 			if(ccx_options.write_format==CCX_OF_SRT ||
 			   ccx_options.write_format==CCX_OF_WEBVTT)
 			{
-				char *substr = "</font>";
-				char *text_out_copy = strdup(text_out);
+				const char *closing_font = "</font>";
+				int length_closing_font = 7; // exclude '\0'
+
+				char *line_start = text_out;
+				int length = strlen(text_out) + length_closing_font * 10;  // usually enough
+				char *new_text_out = malloc(length);
+				char *new_text_out_iter = new_text_out;
+
+				char *last_valid_char = text_out; // last character that is not '\n' or '\0'
+
+				for (char *iter = text_out; *iter; iter++)
+					if (*iter != '\n') last_valid_char = iter;
+
+				char *last_font_tag = text_out; // Last <font> in this line
+				char *last_font_tag_end = NULL;
+
+				while (1) {
+
+					char *line_end = line_start;
+					while (*line_end && *line_end != '\n') line_end++; // find the line end
+
+					if (new_text_out_iter != new_text_out) {
+						memcpy(new_text_out_iter, "\n", 1);
+						new_text_out_iter += 1;
+					}
+
+					// realloc if memory allocated may be not enough
+					int length_needed = (new_text_out_iter - new_text_out) +
+						(line_end - line_start) +
+						length_closing_font + 32;
+
+					if (length_needed > length) {
+
+						length = max(length * 1.5, length_needed);
+						long diff = new_text_out_iter - new_text_out;
+						new_text_out = realloc(new_text_out, length);
+						new_text_out_iter = new_text_out + diff;
+						
+					}
+
+					// Add <font> to the beginning of the line if it is missing
+					// Assume there is always a <font> at the beginning of the first line
+					if (last_font_tag_end && strstr(line_start, "<font color=\"#") != line_start) {
+						if ((new_text_out_iter - new_text_out) +
+							(last_font_tag_end - last_font_tag) > length) {
+							fatal(CCX_COMMON_EXIT_BUG_BUG, "In ocr_bitmap: Running out of memory. It shouldn't happen. Please report.\n", errno);
+						}
+						memcpy(new_text_out_iter, last_font_tag, last_font_tag_end - last_font_tag);
+						new_text_out_iter += last_font_tag_end - last_font_tag;
+					}
+
+					// Find the last <font> tag
+					char *font_tag = line_start;
+					while (1) {
+
+						font_tag = strstr(font_tag + 1, "<font color=\"#");
+						if (font_tag == NULL || font_tag > line_end) break;
+						last_font_tag = font_tag;
+
+					}
+					last_font_tag_end = strstr(last_font_tag, ">") + 1;
+
+					// Copy the content of the subtitle
+					memcpy(new_text_out_iter, line_start, line_end - line_start);
+					new_text_out_iter += line_end - line_start;
+
+					// Add </font> if it is indeed missing
+					if (line_end - line_start < length_closing_font ||
+						strncmp(line_start, closing_font, length_closing_font)) {
+						
+						memcpy(new_text_out_iter, closing_font, length_closing_font);
+						new_text_out_iter += length_closing_font;
+
+					}
+
+					if (line_end - 1 == last_valid_char) break;
+					line_start = line_end + 1;
+				}
+				*new_text_out_iter = '\0';
 				TessDeleteText(text_out);
-				text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
-				memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
-				char *str = strtok(text_out_copy,"\n");
-				strcpy(text_out,str);
-				strcpy(text_out+strlen(str),substr);
-			// printf("%s\n", text_out);
+				text_out = new_text_out;
 			}
 		}
 		TessResultIteratorDelete(ri);
@@ -494,11 +578,12 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	// End Color Detection
 
 	// boxDestroy(crop_points);
+
 	pixDestroy(&pix);
 	pixDestroy(&cpix);
 	pixDestroy(&color_pix);
 	pixDestroy(&color_pix_out);
-
+    
 	return text_out;
 }
 
@@ -725,16 +810,40 @@ int compare_rect_by_ypos(const void*p1, const void *p2, void*arg)
 
 void add_ocrtext2str(char *dest, char *src, const char *crlf, unsigned crlf_length)
 {
+	char *line_scan;
+	int char_found;
 	while (*dest != '\0')
-		dest++;
-	while(*src != '\0' && *src != '\n')
+			dest++;
+	while (*src != '\0')
 	{
+		//checks if a line has actual content in it before adding it
+		if (*src == '\n') {
+			char_found = 0;
+			line_scan = src + 1;
+			//multiple blocks of newlines
+			while (*(line_scan) == '\n') {
+				line_scan++;
+				src++;
+			}
+			//empty lines
+			while (*line_scan != '\n' && *line_scan != '\0') {
+				if (*line_scan > 32) {
+					char_found = 1;
+					break;
+				}
+				line_scan++;
+			}
+			if (!char_found) {
+				src = line_scan;
+			}
+			if (*src == '\0') break;
+		}
 		*dest = *src;
 		src++;
 		dest++;
 	}
 	memcpy(dest, crlf, crlf_length);
-	dest[crlf_length] = 0;	
+	dest[crlf_length] = 0;
 	/*
 	*dest++ = '\n';
 	*dest = '\0'; */
@@ -770,6 +879,7 @@ char *paraof_ocrtext(struct cc_subtitle *sub, const char *crlf, unsigned crlf_le
 
 	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
+		if (!rect->ocr_text) continue;
 		add_ocrtext2str(str, rect->ocr_text, crlf, crlf_length);
 		TessDeleteText(rect->ocr_text);
 	}

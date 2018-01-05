@@ -1,6 +1,6 @@
 # Contributors Guide
 
-Please read and understand the contribution guide before creating an issue or pull request. We would like to thank [udemy](https://github.com/nishad/udemy-dl/blob/master/.github/CONTRIBUTING.md) for their contributor's guide, upon which we based ours.
+Please read and understand the contribution guide before creating an issue or pull request. We would like to thank [Nishad TR](https://github.com/nishad) for their contributor's guide, upon which we based ours.
 
 ## Etiquette
 

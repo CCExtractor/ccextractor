@@ -1,27 +1,27 @@
 /*
-*			GPAC - Multimedia Framework C SDK
-*
-*			Authors: Jean Le Feuvre
-*			Copyright (c) Telecom ParisTech 2000-2012
-*					All rights reserved
-*
-*  This file is part of GPAC / MPEG-4 ObjectDescriptor sub-project
-*
-*  GPAC is free software; you can redistribute it and/or modify
-*  it under the terms of the GNU Lesser General Public License as published by
-*  the Free Software Foundation; either version 2, or (at your option)
-*  any later version.
-*
-*  GPAC is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU Lesser General Public License for more details.
-*
-*  You should have received a copy of the GNU Lesser General Public
-*  License along with this library; see the file COPYING.  If not, write to
-*  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-*
-*/
+ *			GPAC - Multimedia Framework C SDK
+ *
+ *			Authors: Jean Le Feuvre
+ *			Copyright (c) Telecom ParisTech 2000-2012
+ *					All rights reserved
+ *
+ *  This file is part of GPAC / MPEG-4 ObjectDescriptor sub-project
+ *
+ *  GPAC is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  GPAC is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; see the file COPYING.  If not, write to
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
 
 #include <gpac/internal/odf_dev.h>
 
@@ -74,7 +74,7 @@ GF_Descriptor *gf_odf_create_descriptor(u8 tag)
 	case GF_ODF_MEDIATIME_TAG:
 		return gf_odf_new_mediatime();
 
-		//File Format Specific
+	//File Format Specific
 	case GF_ODF_ISOM_IOD_TAG:
 		return gf_odf_new_isom_iod();
 	case GF_ODF_ISOM_OD_TAG:
@@ -94,7 +94,7 @@ GF_Descriptor *gf_odf_create_descriptor(u8 tag)
 		return gf_odf_new_sup_cid();
 	case GF_ODF_IPI_PTR_TAG:
 		return gf_odf_new_ipi_ptr();
-		//special case for the file format
+	//special case for the file format
 	case GF_ODF_ISOM_IPI_PTR_TAG:
 		desc = gf_odf_new_ipi_ptr();
 		if (!desc) return desc;
@@ -145,8 +145,8 @@ GF_Descriptor *gf_odf_create_descriptor(u8 tag)
 #endif /*GPAC_MINIMAL_ODF*/
 	default:
 		//ISO Reserved
-		if ((tag >= GF_ODF_ISO_RES_BEGIN_TAG) &&
-			(tag <= GF_ODF_ISO_RES_END_TAG)) {
+		if ( (tag >= GF_ODF_ISO_RES_BEGIN_TAG) &&
+		        (tag <= GF_ODF_ISO_RES_END_TAG) ) {
 			return NULL;
 		}
 		desc = gf_odf_new_default();
@@ -162,13 +162,13 @@ GF_Descriptor *gf_odf_create_descriptor(u8 tag)
 GF_Err gf_odf_delete_descriptor(GF_Descriptor *desc)
 {
 	switch (desc->tag) {
-	case GF_ODF_IOD_TAG:
+	case GF_ODF_IOD_TAG :
 		return gf_odf_del_iod((GF_InitialObjectDescriptor *)desc);
 	case GF_ODF_OD_TAG:
 		return gf_odf_del_od((GF_ObjectDescriptor *)desc);
-	case GF_ODF_ESD_TAG:
+	case GF_ODF_ESD_TAG :
 		return gf_odf_del_esd((GF_ESD *)desc);
-	case GF_ODF_DCD_TAG:
+	case GF_ODF_DCD_TAG :
 		return gf_odf_del_dcd((GF_DecoderConfig *)desc);
 	case GF_ODF_SLC_TAG:
 		return gf_odf_del_slc((GF_SLConfig *)desc);
@@ -179,9 +179,9 @@ GF_Err gf_odf_delete_descriptor(GF_Descriptor *desc)
 		return gf_odf_del_isom_od((GF_IsomObjectDescriptor *)desc);
 
 	case GF_ODF_SEGMENT_TAG:
-		return gf_odf_del_segment((GF_Segment *)desc);
+		return gf_odf_del_segment((GF_Segment *) desc);
 	case GF_ODF_MEDIATIME_TAG:
-		return gf_odf_del_mediatime((GF_MediaTime *)desc);
+		return gf_odf_del_mediatime((GF_MediaTime *) desc);
 
 	case GF_ODF_MUXINFO_TAG:
 		return gf_odf_del_muxinfo((GF_MuxInfo *)desc);
@@ -271,18 +271,18 @@ GF_Err gf_odf_delete_descriptor(GF_Descriptor *desc)
 GF_Err gf_odf_read_descriptor(GF_BitStream *bs, GF_Descriptor *desc, u32 DescSize)
 {
 	switch (desc->tag) {
-	case GF_ODF_IOD_TAG:
+	case GF_ODF_IOD_TAG :
 		return gf_odf_read_iod(bs, (GF_InitialObjectDescriptor *)desc, DescSize);
-	case GF_ODF_ESD_TAG:
+	case GF_ODF_ESD_TAG :
 		return gf_odf_read_esd(bs, (GF_ESD *)desc, DescSize);
-	case GF_ODF_DCD_TAG:
+	case GF_ODF_DCD_TAG :
 		return gf_odf_read_dcd(bs, (GF_DecoderConfig *)desc, DescSize);
-	case GF_ODF_SLC_TAG:
+	case GF_ODF_SLC_TAG :
 		return gf_odf_read_slc(bs, (GF_SLConfig *)desc, DescSize);
 	case GF_ODF_OD_TAG:
 		return gf_odf_read_od(bs, (GF_ObjectDescriptor *)desc, DescSize);
 
-		//MP4 File Format
+	//MP4 File Format
 	case GF_ODF_ISOM_IOD_TAG:
 		return gf_odf_read_isom_iod(bs, (GF_IsomInitialObjectDescriptor *)desc, DescSize);
 	case GF_ODF_ISOM_OD_TAG:
@@ -293,11 +293,11 @@ GF_Err gf_odf_read_descriptor(GF_BitStream *bs, GF_Descriptor *desc, u32 DescSiz
 		return gf_odf_read_esd_ref(bs, (GF_ES_ID_Ref *)desc, DescSize);
 
 	case GF_ODF_SEGMENT_TAG:
-		return gf_odf_read_segment(bs, (GF_Segment *)desc, DescSize);
+		return gf_odf_read_segment(bs, (GF_Segment *) desc, DescSize);
 	case GF_ODF_MEDIATIME_TAG:
-		return gf_odf_read_mediatime(bs, (GF_MediaTime *)desc, DescSize);
+		return gf_odf_read_mediatime(bs, (GF_MediaTime *) desc, DescSize);
 	case GF_ODF_MUXINFO_TAG:
-		return gf_odf_read_muxinfo(bs, (GF_MuxInfo *)desc, DescSize);
+		return gf_odf_read_muxinfo(bs, (GF_MuxInfo *) desc, DescSize);
 
 	case GF_ODF_AUX_VIDEO_DATA:
 		return gf_odf_read_auxvid(bs, (GF_AuxVideoDescriptor *)desc, DescSize);
@@ -353,7 +353,7 @@ GF_Err gf_odf_read_descriptor(GF_BitStream *bs, GF_Descriptor *desc, u32 DescSiz
 		return gf_odf_read_ipmp_tool(bs, (GF_IPMP_Tool *)desc, DescSize);
 
 #endif /*GPAC_MINIMAL_ODF*/
-		//default:
+	//default:
 	case GF_ODF_DSI_TAG:
 	default:
 		return gf_odf_read_default(bs, (GF_DefaultDescriptor *)desc, DescSize);
@@ -370,14 +370,14 @@ GF_Err gf_odf_read_descriptor(GF_BitStream *bs, GF_Descriptor *desc, u32 DescSiz
 //
 GF_Err gf_odf_size_descriptor(GF_Descriptor *desc, u32 *outSize)
 {
-	switch (desc->tag) {
-	case GF_ODF_IOD_TAG:
+	switch(desc->tag) {
+	case GF_ODF_IOD_TAG :
 		return gf_odf_size_iod((GF_InitialObjectDescriptor *)desc, outSize);
-	case GF_ODF_ESD_TAG:
+	case GF_ODF_ESD_TAG :
 		return gf_odf_size_esd((GF_ESD *)desc, outSize);
-	case GF_ODF_DCD_TAG:
+	case GF_ODF_DCD_TAG :
 		return gf_odf_size_dcd((GF_DecoderConfig *)desc, outSize);
-	case GF_ODF_SLC_TAG:
+	case GF_ODF_SLC_TAG :
 		return gf_odf_size_slc((GF_SLConfig *)desc, outSize);
 
 	case GF_ODF_OD_TAG:
@@ -392,11 +392,11 @@ GF_Err gf_odf_size_descriptor(GF_Descriptor *desc, u32 *outSize)
 		return gf_odf_size_esd_ref((GF_ES_ID_Ref *)desc, outSize);
 
 	case GF_ODF_SEGMENT_TAG:
-		return gf_odf_size_segment((GF_Segment *)desc, outSize);
+		return gf_odf_size_segment((GF_Segment *) desc, outSize);
 	case GF_ODF_MEDIATIME_TAG:
-		return gf_odf_size_mediatime((GF_MediaTime *)desc, outSize);
+		return gf_odf_size_mediatime((GF_MediaTime *) desc, outSize);
 	case GF_ODF_MUXINFO_TAG:
-		return gf_odf_size_muxinfo((GF_MuxInfo *)desc, outSize);
+		return gf_odf_size_muxinfo((GF_MuxInfo *) desc, outSize);
 
 	case GF_ODF_AUX_VIDEO_DATA:
 		return gf_odf_size_auxvid((GF_AuxVideoDescriptor *)desc, outSize);
@@ -454,7 +454,7 @@ GF_Err gf_odf_size_descriptor(GF_Descriptor *desc, u32 *outSize)
 #endif /*GPAC_MINIMAL_ODF*/
 	default:
 		/*don't write out l descriptors*/
-		if ((desc->tag >= GF_ODF_MUXINFO_TAG) && (desc->tag <= GF_ODF_LASER_CFG_TAG)) {
+		if ((desc->tag>=GF_ODF_MUXINFO_TAG) && (desc->tag<=GF_ODF_LASER_CFG_TAG)) {
 			*outSize = 0;
 			return GF_OK;
 		}
@@ -469,14 +469,14 @@ GF_Err gf_odf_size_descriptor(GF_Descriptor *desc, u32 *outSize)
 //
 GF_Err gf_odf_write_descriptor(GF_BitStream *bs, GF_Descriptor *desc)
 {
-	switch (desc->tag) {
-	case GF_ODF_IOD_TAG:
+	switch(desc->tag) {
+	case GF_ODF_IOD_TAG :
 		return gf_odf_write_iod(bs, (GF_InitialObjectDescriptor *)desc);
-	case GF_ODF_ESD_TAG:
+	case GF_ODF_ESD_TAG :
 		return gf_odf_write_esd(bs, (GF_ESD *)desc);
-	case GF_ODF_DCD_TAG:
+	case GF_ODF_DCD_TAG :
 		return gf_odf_write_dcd(bs, (GF_DecoderConfig *)desc);
-	case GF_ODF_SLC_TAG:
+	case GF_ODF_SLC_TAG :
 		return gf_odf_write_slc(bs, (GF_SLConfig *)desc);
 	case GF_ODF_ESD_INC_TAG:
 		return gf_odf_write_esd_inc(bs, (GF_ES_ID_Inc *)desc);
@@ -491,11 +491,11 @@ GF_Err gf_odf_write_descriptor(GF_BitStream *bs, GF_Descriptor *desc)
 	case GF_ODF_OD_TAG:
 		return gf_odf_write_od(bs, (GF_ObjectDescriptor *)desc);
 	case GF_ODF_SEGMENT_TAG:
-		return gf_odf_write_segment(bs, (GF_Segment *)desc);
+		return gf_odf_write_segment(bs, (GF_Segment *) desc);
 	case GF_ODF_MEDIATIME_TAG:
-		return gf_odf_write_mediatime(bs, (GF_MediaTime *)desc);
+		return gf_odf_write_mediatime(bs, (GF_MediaTime *) desc);
 	case GF_ODF_MUXINFO_TAG:
-		return gf_odf_write_muxinfo(bs, (GF_MuxInfo *)desc);
+		return gf_odf_write_muxinfo(bs, (GF_MuxInfo *) desc);
 
 	case GF_ODF_AUX_VIDEO_DATA:
 		return gf_odf_write_auxvid(bs, (GF_AuxVideoDescriptor *)desc);
@@ -552,7 +552,7 @@ GF_Err gf_odf_write_descriptor(GF_BitStream *bs, GF_Descriptor *desc)
 #endif /*GPAC_MINIMAL_ODF*/
 	default:
 		/*don't write out internal descriptors*/
-		if ((desc->tag >= GF_ODF_MUXINFO_TAG) && (desc->tag <= GF_ODF_LASER_CFG_TAG))
+		if ((desc->tag>=GF_ODF_MUXINFO_TAG) && (desc->tag<=GF_ODF_LASER_CFG_TAG))
 			return GF_OK;
 		return gf_odf_write_default(bs, (GF_DefaultDescriptor *)desc);
 	}
@@ -574,7 +574,7 @@ GF_ODCom *gf_odf_create_command(u8 tag)
 		return gf_odf_new_esd_update();
 	case GF_ODF_ESD_REMOVE_TAG:
 		return gf_odf_new_esd_remove();
-		//special case for ESDRemove in the file format...
+	//special case for ESDRemove in the file format...
 	case GF_ODF_ESD_REMOVE_REF_TAG:
 		com = gf_odf_new_esd_remove();
 		if (!com) return com;
@@ -587,8 +587,8 @@ GF_ODCom *gf_odf_create_command(u8 tag)
 		return gf_odf_new_ipmp_remove();
 
 	default:
-		if ((tag >= GF_ODF_COM_ISO_BEGIN_TAG) &&
-			(tag <= GF_ODF_COM_ISO_END_TAG)) {
+		if ( (tag >= GF_ODF_COM_ISO_BEGIN_TAG) &&
+		        ( tag <= GF_ODF_COM_ISO_END_TAG) ) {
 			return NULL;
 		}
 		com = gf_odf_new_base_command();
