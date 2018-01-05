@@ -1,0 +1,23 @@
+[name]
+CCExtractor
+[synopsis]
+ccextractor [options]... inputfile1 [inputfile2...] [-o outputfilename]
+[description]
+
+[license]
+GNU General Public License, version 2
+[bugs]
+-All the known bugs are present at:  
+      https://github.com/CCExtractor/ccextractor/issues
+.PP
+-Report bugs at:
+
+      our issue 
+      tracker:  https://github.com/CCExtractor/ccextractor/issues
+                or
+      mailto:   carlos [at] ccextractor [dot] org
+.PP
+[see also]
+-The Continuous Integration(CI) for CCExtractor:  
+      https://github.com/CCExtractor/sample-platform/
+

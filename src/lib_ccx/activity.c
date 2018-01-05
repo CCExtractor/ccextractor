@@ -135,6 +135,6 @@ void activity_header (void)
 		credits_shown = 1;
 		mprint ("CCExtractor %s, Carlos Fernandez Sanz, Volker Quetschke.\n", VERSION);
 		mprint ("Teletext portions taken from Petr Kutalek's telxcc\n");
-		mprint ("--------------------------------------------------------------------------\n");
+		// mprint ("--------------------------------------------------------------------------\n");
 	}
 }
