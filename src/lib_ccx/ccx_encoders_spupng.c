@@ -219,7 +219,6 @@ int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
 	if (!w)
 		w = 1;
 
-
 	f = fopen(filename, "wb");
 	if (!f)
 	{
@@ -574,10 +573,17 @@ void center_justify(struct pixel_t *target, int target_w,
 	free(temp_buffer);
 }
 
-// Generate PNG file from a string (str)
+// Convert big-endian and little-endian
+#define BigtoLittle32(A)   ((( (uint32_t)(A) & 0xff000000) >> 24)\
+ | (((uint32_t)(A) & 0x00ff0000) >> 8)\
+ | (((uint32_t)(A) & 0x0000ff00) << 8)\
+ | (((uint32_t)(A) & 0x000000ff) << 24))
+
+// Generate PNG file from an UTF-32 string (str)
+// Convert first if it is UTF-8 string!
 // PNG file will be stored at output
 // Return 1 on success.
-int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
+int spupng_export_string2png(struct spupng_t *sp, uint32_t *str, FILE* output)
 {
 	// Init FreeType if it hasn't been inited yet.
 	if (ft_library==NULL){
@@ -598,9 +604,9 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 			return 0;
 		}
 	}
-   
+
 	int canvas_width = CANVAS_WIDTH;
-	int canvas_height = FONT_SIZE * 3;
+	int canvas_height = FONT_SIZE * 3.5;
 	int line_height = FONT_SIZE * 1.5;
 	int extender = FONT_SIZE * 0.1; // to prevent characters like $ (exceed baseline) from being cut
 
@@ -627,16 +633,17 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 	}
 	*/
 
-//	mprint("\nDrawing [%s]\n", str);
-
 	// Render characters to image
-	for (char *iter = str; *iter; ++iter)
+	for (uint32_t *iter = str; ; ++iter)
 	{
-		if (FT_Load_Char(face, *iter, FT_LOAD_RENDER)) continue; // ignore errors
+		uint32_t current_char_code = BigtoLittle32(*iter); // Convert big-endian and little-endian
+		if (current_char_code == 0) break;
+
+		if (FT_Load_Char(face, current_char_code, FT_LOAD_RENDER)) continue; // ignore errors
 		unsigned char* bitmap = slot->bitmap.buffer;
 
 		// Handle '\n'
-		if (*iter == '\n') {
+		if (current_char_code == '\n') {
 //			mprint("\n'\\n' line break");
 			center_justify(buffer, canvas_width, cursor_y - line_height + extender*2, cursor_x, line_height + extender);
 			cursor_x = 0;
@@ -680,8 +687,10 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 
 		}
 
-//		mprint("\nDrawing [%c], advance %d,%d, at %d,%d. bitmap_top=%d",
-//			*iter, slot->advance.x >> 6, slot->advance.y >> 6, cursor_x, cursor_y, slot->bitmap_top);
+		/*
+		mprint("\nDrawing [%c] (%d), advance %d,%d, at %d,%d. bitmap_top=%d",
+			current_char_code, current_char_code, slot->advance.x >> 6, slot->advance.y >> 6, cursor_x, cursor_y, slot->bitmap_top);
+		*/
 
 		// Increase pen position
 		cursor_x += slot->advance.x >> 6;
@@ -700,15 +709,18 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 // Convert EIA608 Data(buffer) to string
 // out must have at least 256 characters' space
 // Return value is the length of the output string
-int eia608_to_str(struct encoder_ctx *context, struct eia608_screen* data, char* out) {
+int eia608_to_str(struct encoder_ctx *context, struct eia608_screen *data, char *out) {
 
 	int str_len = 0;
+	int first = 1;
 	for (int row = 0; row < ROWS; row++)
 	{
 		if (data->row_used[row])
 		{
 			size_t len = get_decoder_line_encoded(context, context->subline, row, data);
+
 			unsigned char* start = context->subline;
+
 			if (start!=NULL) {
 				// Remove the space at the beginning of the subtitle
 				while ((*start == ' ' || *start == '\n') && len-->0)
@@ -734,22 +746,52 @@ int eia608_to_str(struct encoder_ctx *context, struct eia608_screen* data, char*
 					break;
 				}
 			}
-
+			
 			// Remove the space at the end of the subtitle
 			if (start != NULL) {
 				unsigned char *end = start;
-				while (*end && end - start < len && end - start > 0) end++; // Find the end
-				while ((*end == ' '||*end=='\n')&&len-->0) end--; // `len` is changed
+				while (*end && end - start < len && end - start >= 0) end++; // Find the end
+				while ((*end==' '||*end=='\n'||*end=='\0')&&len-->0) end--; // `len` is changed
+				len++;
 			}
 
+			if (!first) { // Add '\n' if it is not the first line.
+				strcat(out, "\n");
+				str_len += 2;
+				first = 0;
+			}
 			strncat(out, start, len);
-			strcat(out, "\n");
-			str_len += len + 2;
+			str_len += len;
 		}
 	}
 	return str_len;
 }
 
+// The function will NOT free src.
+// You need to free the src and return value yourself!
+uint32_t* utf8_to_utf32(char* src) {
+	// Convert UTF-8 to UTF-32 for generating bitmap.
+	size_t len_src, len_dst;
+
+	len_src = strlen(src);
+	len_dst = (len_src + 2) * 4; // one for FEFF and one for \0
+
+	char* string_utf32 = (char *)calloc(len_dst, 1);
+	size_t inbufbytesleft = len_src;
+	size_t outbufbytesleft = len_dst;
+	char* inbuf = src;
+	char* outbuf = string_utf32;
+
+	iconv_t cd = iconv_open("UTF-32", "UTF-8");
+	int result = iconv(cd, &inbuf, &inbufbytesleft, &outbuf, &outbufbytesleft);
+	if (result == -1) mprint("iconv failed to convert UTF-8 to UTF-32. errno is %d\n", errno);
+	iconv_close(cd);
+
+	return string_utf32;
+}
+
+// string needs to be in UTF-8 encoding.
+// This function will take care of encoding.
 int spupng_write_string(struct spupng_t *sp, char *string, LLONG start_time, LLONG end_time,
 	struct encoder_ctx *context)
 {
@@ -768,11 +810,15 @@ int spupng_write_string(struct spupng_t *sp, char *string, LLONG start_time, LLO
 		fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n",
 			sp->pngfile, strerror(errno));
 	}
-	if (!spupng_export_string2png(sp, string, sp->fppng))
+
+	uint32_t* string_utf32 = utf8_to_utf32(string);
+	if (!spupng_export_string2png(sp, string_utf32, sp->fppng))
 	{
+		free(string_utf32);
 		fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot write %s: %s\n",
 			sp->pngfile, strerror(errno));
 	}
+	free(string_utf32);
 	fclose(sp->fppng);
 	write_sputag_open(sp, ms_start, ms_end);
 	write_spucomment(sp, string);
