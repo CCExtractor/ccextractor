@@ -23,8 +23,8 @@
 #define FONT_PATH "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"
 #endif
 
-#define FONT_SIZE 32
-#define CANVAS_WIDTH 1920
+#define FONT_SIZE 20
+#define CANVAS_WIDTH 400
 
 FT_Library  ft_library = NULL;
 FT_Face	 face = NULL;
@@ -620,8 +620,9 @@ int spupng_export_string2png(struct spupng_t *sp, uint32_t *str, FILE* output)
 
 	int canvas_width = CANVAS_WIDTH;
 	int canvas_height = FONT_SIZE * 3.5;
-	int line_height = FONT_SIZE * 1.2;
+	int line_height = FONT_SIZE * 1.0;
 	int extender = FONT_SIZE * 0.2; // to prevent characters like $ (exceed baseline) from being cut
+	int line_spacing = FONT_SIZE * 0.3;
 
 	int cursor_x = 0;
 	int cursor_y = line_height * 2;
@@ -651,21 +652,21 @@ int spupng_export_string2png(struct spupng_t *sp, uint32_t *str, FILE* output)
 			black_background(buffer, canvas_width, 0, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
 			center_justify(buffer, canvas_width, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
 			cursor_x = 0;
-			cursor_y += line_height;
+			cursor_y += line_height + line_spacing;
 			continue;
 		}
 
 		// Expand canvas if needed
-		while (cursor_y - slot->bitmap_top + line_height >= canvas_height) {
-			
-			canvas_height += line_height;
+		while (cursor_y - slot->bitmap_top + line_height + line_spacing + extender * 2 >= canvas_height) {
+			int old_height = canvas_height;
+			canvas_height += line_height + line_spacing + extender * 2;
 			struct pixel_t* new_buffer = realloc(buffer, canvas_width * canvas_height * sizeof(struct pixel_t));
 			if (new_buffer == NULL) {
 				mprint("\nFailed to alloc memory for buffer. Need %d bytes.\n",
 					canvas_width * canvas_height * sizeof(struct pixel_t));
 				return 0;
 			}
-			memset(new_buffer + (canvas_height-line_height) * canvas_width, 0, line_height * canvas_width * sizeof(struct pixel_t));
+			memset(new_buffer + old_height * canvas_width, 0, (canvas_height-old_height) * canvas_width * sizeof(struct pixel_t));
 			buffer = new_buffer;
 			
 		}
@@ -685,7 +686,7 @@ int spupng_export_string2png(struct spupng_t *sp, uint32_t *str, FILE* output)
 				
 				// Set the cursor
 				cursor_x = 0;
-				cursor_y += line_height;
+				cursor_y += line_height + line_spacing;
 			}
 			
 			draw_to_buffer(buffer, canvas_width, slot->bitmap, cursor_x, cursor_y - slot->bitmap_top);
@@ -774,8 +775,8 @@ int eia608_to_str(struct encoder_ctx *context, struct eia608_screen *data, char 
 			if (!first) { // Add '\n' if it is not the first line.
 				strcat(out, "\n");
 				str_len += 2;
-				first = 0;
 			}
+			first = 0;
 			strncat(out, start, len);
 			str_len += len;
 		}
