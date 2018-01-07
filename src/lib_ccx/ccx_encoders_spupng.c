@@ -466,7 +466,7 @@ struct pixel_t {
 
 // Write the buffer to a file named filename
 // Return 1 on success.
-int writeImage(struct pixel_t *buffer, FILE* fp, int width, int height)
+int write_image(struct pixel_t *buffer, FILE* fp, int width, int height)
 {
 	int ret_code = 1;
 	png_structp png_ptr = NULL;
@@ -573,6 +573,19 @@ void center_justify(struct pixel_t *target, int target_w,
 	free(temp_buffer);
 }
 
+// Draw black background for the subtitle
+// Will not override the text
+// target_w is the width of the canvas
+void black_background(struct pixel_t *target, int target_w, int x, int y, int w, int h) {
+	for (int _x = x; _x < x + w; ++_x) {
+		for (int _y = y; _y < y + h; ++_y) {
+			struct pixel_t p = target[_x + _y * target_w];
+			if (p.a == 0) p.a = 255;
+			target[_x + _y * target_w] = p;
+		}
+	}
+}
+
 // Convert big-endian and little-endian
 #define BigtoLittle32(A)   ((( (uint32_t)(A) & 0xff000000) >> 24)\
  | (((uint32_t)(A) & 0x00ff0000) >> 8)\
@@ -607,8 +620,8 @@ int spupng_export_string2png(struct spupng_t *sp, uint32_t *str, FILE* output)
 
 	int canvas_width = CANVAS_WIDTH;
 	int canvas_height = FONT_SIZE * 3.5;
-	int line_height = FONT_SIZE * 1.5;
-	int extender = FONT_SIZE * 0.1; // to prevent characters like $ (exceed baseline) from being cut
+	int line_height = FONT_SIZE * 1.2;
+	int extender = FONT_SIZE * 0.2; // to prevent characters like $ (exceed baseline) from being cut
 
 	int cursor_x = 0;
 	int cursor_y = line_height * 2;
@@ -624,20 +637,10 @@ int spupng_export_string2png(struct spupng_t *sp, uint32_t *str, FILE* output)
 	
 	FT_GlyphSlot slot = face->glyph;
 
-	/*
-	// Draw a blue bar at the beginning of every line.
-	// Debug purpose only
-	for (int x = 0; x < 10; x++) for (int y = 0; y < canvas_height; y++) {
-		struct pixel_t p; p.b = (y / line_height) * 25;p.a = 255;p.g = p.r = 0;
-		buffer[x + y * canvas_width] = p;
-	}
-	*/
-
 	// Render characters to image
-	for (uint32_t *iter = str; ; ++iter)
+	for (uint32_t *iter = str; *iter; ++iter)
 	{
 		uint32_t current_char_code = BigtoLittle32(*iter); // Convert big-endian and little-endian
-		if (current_char_code == 0) break;
 
 		if (FT_Load_Char(face, current_char_code, FT_LOAD_RENDER)) continue; // ignore errors
 		unsigned char* bitmap = slot->bitmap.buffer;
@@ -645,7 +648,8 @@ int spupng_export_string2png(struct spupng_t *sp, uint32_t *str, FILE* output)
 		// Handle '\n'
 		if (current_char_code == '\n') {
 //			mprint("\n'\\n' line break");
-			center_justify(buffer, canvas_width, cursor_y - line_height + extender*2, cursor_x, line_height + extender);
+			black_background(buffer, canvas_width, 0, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
+			center_justify(buffer, canvas_width, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
 			cursor_x = 0;
 			cursor_y += line_height;
 			continue;
@@ -676,8 +680,9 @@ int spupng_export_string2png(struct spupng_t *sp, uint32_t *str, FILE* output)
 			if ((cursor_x + (slot->advance.x >> 6)) > canvas_width) { // Time for a line-break!
 				// But before that, let's center justify the subtitle.
 				// Valid subtitle area: (0, cursor_y) to (cursor_x, cursor_y + line_height)
-				center_justify(buffer, canvas_width, cursor_y - line_height + extender * 2, cursor_x, line_height + extender);
-
+				black_background(buffer, canvas_width, 0, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
+				center_justify(buffer, canvas_width, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
+				
 				// Set the cursor
 				cursor_x = 0;
 				cursor_y += line_height;
@@ -696,11 +701,22 @@ int spupng_export_string2png(struct spupng_t *sp, uint32_t *str, FILE* output)
 		cursor_x += slot->advance.x >> 6;
 		cursor_y += slot->advance.y >> 6;
 	}
+	// Draw black background
+	black_background(buffer, canvas_width, 0, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
 	// Center justify the last line.
-	center_justify(buffer, canvas_width, cursor_y - line_height + extender * 2, cursor_x, line_height + extender);
+	center_justify(buffer, canvas_width, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
+
+	/*
+	// Draw a blue bar at the beginning of every line.
+	// Debug purpose only
+	for (int x = 0; x < 10; x++) for (int y = 0; y < canvas_height; y++) {
+		struct pixel_t p; p.b = (y / line_height) * 25; p.a = 255; p.g = p.r = 0;
+		buffer[x + y * canvas_width] = p;
+	}
+	*/
 
 	// Save image
-	writeImage(buffer, output, canvas_width, canvas_height);
+	write_image(buffer, output, canvas_width, canvas_height);
 
 	free(buffer);
 	return 1;
