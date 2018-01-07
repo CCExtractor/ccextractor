@@ -602,9 +602,10 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 	int canvas_width = CANVAS_WIDTH;
 	int canvas_height = FONT_SIZE * 3;
 	int line_height = FONT_SIZE * 1.5;
+	int extender = FONT_SIZE * 0.1; // to prevent characters like $ (exceed baseline) from being cut
 
 	int cursor_x = 0;
-	int cursor_y = line_height* 2;
+	int cursor_y = line_height * 2;
 
 	// Allocate buffer
 	// Note: (0, 0) of buffer is at the top left corner.
@@ -637,7 +638,7 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 		// Handle '\n'
 		if (*iter == '\n') {
 //			mprint("\n'\\n' line break");
-			center_justify(buffer, canvas_width, cursor_y - line_height, cursor_x, line_height);
+			center_justify(buffer, canvas_width, cursor_y - line_height + extender*2, cursor_x, line_height + extender);
 			cursor_x = 0;
 			cursor_y += line_height;
 			continue;
@@ -668,7 +669,7 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 			if ((cursor_x + (slot->advance.x >> 6)) > canvas_width) { // Time for a line-break!
 				// But before that, let's center justify the subtitle.
 				// Valid subtitle area: (0, cursor_y) to (cursor_x, cursor_y + line_height)
-				center_justify(buffer, canvas_width, cursor_y - line_height, cursor_x, line_height);
+				center_justify(buffer, canvas_width, cursor_y - line_height + extender * 2, cursor_x, line_height + extender);
 
 				// Set the cursor
 				cursor_x = 0;
@@ -687,7 +688,7 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 		cursor_y += slot->advance.y >> 6;
 	}
 	// Center justify the last line.
-	center_justify(buffer, canvas_width, cursor_y - line_height, cursor_x, line_height);
+	center_justify(buffer, canvas_width, cursor_y - line_height + extender * 2, cursor_x, line_height + extender);
 
 	// Save image
 	writeImage(buffer, output, canvas_width, canvas_height);
