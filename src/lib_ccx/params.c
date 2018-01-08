@@ -624,8 +624,9 @@ void print_usage (void)
 	mprint ("                       ISO-639-2 form (like \"fre\" for french) or a language\n");
 	mprint ("                       code followed by a dash and a country code for specialities\n");
 	mprint ("                       in languages (like \"fre-ca\" for Canadian French).\n");
-	mprint ("          -nospupngocr When processing DVB don't use the OCR to write the text as");
+	mprint ("          -nospupngocr When processing DVB don't use the OCR to write the text as\n");
 	mprint ("                       comments in the XML file.\n");
+	mprint ("                -font: Specify the font that is used when generating png files\n");
 	mprint ("\n");
 	mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
 

@@ -18,7 +18,7 @@
 
 // TODO: To make them customizable
 #define FONT_SIZE 20
-#define CANVAS_WIDTH 400
+#define CANVAS_WIDTH 600
 
 FT_Library  ft_library = NULL;
 FT_Face	 face = NULL;
