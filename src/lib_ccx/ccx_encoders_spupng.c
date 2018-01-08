@@ -35,6 +35,7 @@ struct spupng_t
 	FILE* fppng;
 	char* dirname;
 	char* pngfile;
+	char* relative_path_png;
 	int fileIndex;
 	int xOffset;
 	int yOffset;
@@ -103,10 +104,20 @@ struct spupng_t *spunpg_init(struct ccx_s_write *out)
 
 	// enough to append /subNNNN.png
 	sp->pngfile = (char *)malloc(sizeof(char) * (strlen(sp->dirname) + 13));
-	if (NULL == sp->pngfile)
+	sp->relative_path_png = (char *)malloc(sizeof(char) * (strlen(sp->dirname) + 13));
+
+	if (NULL == sp->pngfile || NULL == sp->relative_path_png)
 		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "spunpg_init: Memory allocation failed (sp->pngfile)");
 	sp->fileIndex = 0;
 	sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex);
+
+	// Make relative path
+	char* last_slash = strrchr(sp->dirname, '/');
+	if (last_slash == NULL) last_slash = strrchr(sp->dirname, '\\');
+	if (last_slash != NULL)
+		sprintf(sp->relative_path_png, "%s/sub%04d.png", last_slash + 1, sp->fileIndex);
+	else // do NOT do sp->relative_path_png = sp->pngfile (to avoid double free).
+		strcpy(sp->relative_path_png, sp->pngfile);
 
 	// For NTSC closed captions and 720x480 DVD subtitle resolution:
 	// Each character is 16x26.
@@ -125,6 +136,7 @@ void spunpg_free(struct spupng_t *sp)
 {
 	free(sp->dirname);
 	free(sp->pngfile);
+	free(sp->relative_path_png);
 	free(sp);
 }
 
@@ -173,7 +185,7 @@ void write_sputag_open(struct spupng_t *sp, LLONG ms_start, LLONG ms_end)
 {
 	fprintf(sp->fpxml, "<spu start=\"%.3f\"", ((double)ms_start) / 1000);
 	fprintf(sp->fpxml, " end=\"%.3f\"", ((double)ms_end) / 1000);
-	fprintf(sp->fpxml, " image=\"%s\"", sp->pngfile);
+	fprintf(sp->fpxml, " image=\"%s\"", sp->relative_path_png);
 	fprintf(sp->fpxml, " xoffset=\"%d\"", sp->xOffset);
 	fprintf(sp->fpxml, " yoffset=\"%d\"", sp->yOffset);
 	fprintf(sp->fpxml, ">\n");
