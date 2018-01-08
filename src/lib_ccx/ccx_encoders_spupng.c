@@ -17,12 +17,6 @@
 #define CCH 26 /* line doubled */
 
 // TODO: To make them customizable
-#ifdef _WIN32
-#define FONT_PATH "C:\\Windows\\Fonts\\calibri.ttf"
-#else
-#define FONT_PATH "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"
-#endif
-
 #define FONT_SIZE 20
 #define CANVAS_WIDTH 400
 
@@ -591,9 +585,7 @@ void center_justify(struct pixel_t *target, int target_w,
 void black_background(struct pixel_t *target, int target_w, int x, int y, int w, int h) {
 	for (int _x = x; _x < x + w; ++_x) {
 		for (int _y = y; _y < y + h; ++_y) {
-			struct pixel_t p = target[_x + _y * target_w];
-			if (p.a == 0) p.a = 255;
-			target[_x + _y * target_w] = p;
+			target[_x + _y * target_w].a = 255;
 		}
 	}
 }
@@ -618,9 +610,11 @@ int spupng_export_string2png(struct spupng_t *sp, uint32_t *str, FILE* output)
 			mprint("\nFailed to init freetype, error code: %d\n", error);
 			return 0;
 		}
-		if (error = FT_New_Face(ft_library, FONT_PATH, 0, &face))
+		if (error = FT_New_Face(ft_library, ccx_options.enc_cfg.render_font, 0, &face))
 		{
-			mprint("\nFailed to init freetype when trying to init face, error code: %d\n", error);
+			mprint("\n\nFailed to init freetype when trying to init face, error code: %d\n", error);
+			mprint("It's usually caused by the specified font is not found: %s \n", ccx_options.enc_cfg.render_font);
+			mprint("If this is the case, please use -font to manually specify a font that exists. \n\n");
 			return 0;
 		}
 		if (error = FT_Set_Pixel_Sizes(face, 0, FONT_SIZE))
