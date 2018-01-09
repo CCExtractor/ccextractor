@@ -50,8 +50,8 @@
 - Fix: DVB bug (Multiple-line subtitle; Missing last line)
 - Fix: --sentencecap for teletext samples
 - Fix: Crash when image passed into OCR is empty
-- Fix: -delay option in DVB
 - Fix: Temporarily wrapped the Python API, not production ready yet
+- Fix: -delay option in DVB
 
 
 0.85b (2017-01-26)

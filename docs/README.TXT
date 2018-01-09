@@ -61,7 +61,6 @@ one might add) and support for most subtitle formats around the world has
 been added (teletext, DVB, CEA-708, ISDB...)
 
 
-
 Basic Usage 
 -----------
 (please run ccextractor with no parameters for the complete manual -
