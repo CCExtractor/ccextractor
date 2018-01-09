@@ -485,7 +485,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\src\freetype\include;..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\zlib;..\src\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SEGMENT_BY_FILE_TIME;ENABLE_HARDSUBX;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SEGMENT_BY_FILE_TIME;ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -545,7 +545,7 @@ xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <AdditionalIncludeDirectories>..\src\freetype\include;..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\libpng;..\src\zlib;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ENABLE_HARDSUBX;VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ENABLE_HARDSUBX;VERSION_FILE_PRESENT;FT2_BUILD_LIBRARY;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
@@ -604,7 +604,7 @@ xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\src\freetype\include;..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\zlib;..\src\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>VERSION_FILE_PRESENT;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>VERSION_FILE_PRESENT;FT2_BUILD_LIBRARY;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
