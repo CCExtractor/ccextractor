@@ -1,4 +1,4 @@
-0.86
+0.86 (2017-01-09)
 -----------------
 - New: Preliminary MXF support
 - New: Added a histogram in one-minute increments of the number of lines in a subtitle.
