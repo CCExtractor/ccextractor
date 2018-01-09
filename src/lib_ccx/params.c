@@ -626,7 +626,8 @@ void print_usage (void)
 	mprint ("                       in languages (like \"fre-ca\" for Canadian French).\n");
 	mprint ("          -nospupngocr When processing DVB don't use the OCR to write the text as\n");
 	mprint ("                       comments in the XML file.\n");
-	mprint ("                -font: Specify the font that is used when generating png files\n");
+	mprint ("                -font: Specify the full path of the font that is to be used when\n");
+	mprint ("                       generating SPUPNG files.\n");
 	mprint ("\n");
 	mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
 
