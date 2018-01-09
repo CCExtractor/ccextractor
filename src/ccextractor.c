@@ -569,7 +569,6 @@ void run(PyObject * reporter, char * line, int encoding)
        PyObject_CallObject((PyObject*)reporter, args);
 }
 #endif
-
 int main(int argc, char* argv[])
 {
     struct ccx_s_options* api_options = api_init_options();
