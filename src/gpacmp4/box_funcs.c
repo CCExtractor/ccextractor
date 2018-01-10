@@ -119,8 +119,8 @@ GF_Err gf_isom_box_parse_ex(GF_Box **outBox, GF_BitStream *bs, u32 parent_type, 
 				GF_LOG(GF_LOG_DEBUG, GF_LOG_CONTAINER, ("[iso file] Warning Read Box type %s (0x%08X) size 0 reading till the end of file\n", gf_4cc_to_str(type), type));
 				size = gf_bs_available(bs) + 8;
 			} else {
-				GF_LOG(GF_LOG_ERROR, GF_LOG_CONTAINER, ("[iso file] Read Box type %s (0x%08X) has size 0 but is not at root/file level, skipping\n", gf_4cc_to_str(type), type));
-				return GF_ISOM_INVALID_FILE;
+				GF_LOG(GF_LOG_DEBUG, GF_LOG_CONTAINER, ("[iso file] Warning Read Box type %s (0x%08X) size 0 - patching to size=8 ...\n", gf_4cc_to_str(type), type));
+				size = 8;
 			}
 		}
 	}
@@ -193,6 +193,7 @@ GF_Err gf_isom_box_parse_ex(GF_Box **outBox, GF_BitStream *bs, u32 parent_type, 
 		end = gf_bs_get_position(bs);
 	} else {
 		//empty box
+		newBox->size = size;
 		e = GF_OK;
 		end = gf_bs_get_position(bs);
 	}
