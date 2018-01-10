@@ -1,5 +1,6 @@
-0.86
+0.86 (2018-01-09)
 -----------------
+- New: Preliminary MXF support
 - New: Added a histogram in one-minute increments of the number of lines in a subtitle.
 - New: Added Autoconf build scripts for CCExtractor to generate makefiles (mac).
 - New: Added Autoconf build scripts for CCExtractor to generate makefiles (linux).
@@ -19,6 +20,14 @@
 - New: Add support for file split on keyframe (-segmentonkeyonly)
 - New: Added WebVTT output from Matroska.
 - New: Support for source-specific multicast.
+- New: FreeType-based text renderer (-out=spupng with teletext/EIA608).
+- New: Upgrade library UTF8proc
+- New: Upgrade library win_iconv
+- New: Upgrade library zlib 
+- New: Upgrade library LibPNG 
+- New: Support for Source-Specific Multicast
+- New: Added Travis CI support 
+- New: Made error messages clearer, less ambiguous
 - Fix: Prevent the OCR being initialized more than once (happened on multiprogram and
   PAT changes)
 - Fix: Makefiles, build scripts, etc... everything updated and corrected for all
@@ -31,10 +40,22 @@
 - Fix:  When NAL decoding fails, don't dump the whole decoded thing, limit to 160 bytes.
 - Fix: Modify Autoconf scripts to generate tarball for mac from `/package_creators/tarball.sh` 
   and include GUI files in tarball
+- Fix: Started work on libGPAC upgrade.
+- Fix: DVB subtitle not extracted if there's no display segment
+- Fix: Heap corruption in add_ocrtext2str
+- Fix: bug that caused -out=spupng sometimes crashes
+- Fix: Checks for text before newlines on DVB subtitles 
+- Fix: OCR issue caused by separated dvb subtitle regions 
+- Fix: DVB crash on specific condition (!rect->ocr_text)
+- Fix: DVB bug (Multiple-line subtitle; Missing last line)
+- Fix: --sentencecap for teletext samples
+- Fix: Crash when image passed into OCR is empty
+- Fix: Temporarily wrapped the Python API, not production ready yet
+- Fix: -delay option in DVB
 
 
-0.85b (2017-1-26)
------------------
+0.85b (2017-01-26)
+------------------
 - Fix: Base Windows binary (without OCR) compiled without DLL dependencies.
 
 0.85 (2017-01-23)
