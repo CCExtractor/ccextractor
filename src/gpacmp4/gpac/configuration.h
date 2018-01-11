@@ -159,8 +159,6 @@
 #define GPAC_HAS_JPEG
 #define GPAC_HAS_PNG
 
-#else
-#error "Unknown target platform used with static configuration file"
 #endif
 
 
