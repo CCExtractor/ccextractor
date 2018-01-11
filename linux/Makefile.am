@@ -18,6 +18,7 @@ ccextractor_SOURCES = \
 				../src/gpacmp4/box_dump.c \
 				../src/gpacmp4/box_code_meta.c \
 				../src/gpacmp4/box_funcs.c \
+				../src/gpacmp4/color.c \
 				../src/gpacmp4/configfile.c \
 				../src/gpacmp4/data_map.c \
 				../src/gpacmp4/desc_private.c \
