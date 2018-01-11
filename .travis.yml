@@ -19,8 +19,20 @@ install:
 - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then git clone https://github.com/tesseract-ocr/tesseract.git; cd tesseract; ./autogen.sh; ./configure --enable-debug; LDFLAGS="-L/usr/local/lib" CFLAGS="-I/usr/local/include" make; sudo make install; sudo ldconfig; cd ..; fi
 
 script:
+- pwd
+- ls
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cd mac; ./build.command; fi
+
+- pwd
+- ls
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cd mac; ./autogen.sh; ./configure; make; fi
+- pwd
+- ls
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd linux; ./build; cd ..; fi
+- pwd
+- ls
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mkdir build; cd build; cmake ../src/; make; cd ..; fi
+
+- pwd
+- ls
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd linux; ./autogen.sh; ./configure; make; fi
