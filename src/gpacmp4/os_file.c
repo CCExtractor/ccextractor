@@ -1,27 +1,27 @@
 /*
-*			GPAC - Multimedia Framework C SDK
-*
-*			Authors: Jean Le Feuvre - Copyright (c) Telecom ParisTech 2000-2012
-*			         Romain Bouqueau - Copyright (c) Romain Bouqueau 2015
-*					All rights reserved
-*
-*  This file is part of GPAC / common tools sub-project
-*
-*  GPAC is free software; you can redistribute it and/or modify
-*  it under the terms of the GNU Lesser General Public License as published by
-*  the Free Software Foundation; either version 2, or (at your option)
-*  any later version.
-*
-*  GPAC is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU Lesser General Public License for more details.
-*
-*  You should have received a copy of the GNU Lesser General Public
-*  License along with this library; see the file COPYING.  If not, write to
-*  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-*
-*/
+ *			GPAC - Multimedia Framework C SDK
+ *
+ *			Authors: Jean Le Feuvre - Copyright (c) Telecom ParisTech 2000-2012
+ *			         Romain Bouqueau - Copyright (c) Romain Bouqueau 2015
+ *					All rights reserved
+ *
+ *  This file is part of GPAC / common tools sub-project
+ *
+ *  GPAC is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  GPAC is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; see the file COPYING.  If not, write to
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
 
 #include <gpac/tools.h>
 #include <gpac/utf.h>
@@ -60,21 +60,21 @@ GF_Err gf_rmdir(char *DirPathName)
 	BOOL res;
 	CE_CharToWide(DirPathName, swzName);
 	res = RemoveDirectory(swzName);
-	if (!res) {
+	if (! res) {
 		int err = GetLastError();
-		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("Cannot delete directory %s: last error %d\n", DirPathName, err));
+		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("Cannot delete directory %s: last error %d\n", DirPathName, err ));
 	}
 #elif defined (WIN32)
 	int res = rmdir(DirPathName);
-	if (res == -1) {
+	if (res==-1) {
 		int err = GetLastError();
-		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("Cannot delete directory %s: last error %d\n", DirPathName, err));
+		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("Cannot delete directory %s: last error %d\n", DirPathName, err ));
 		return GF_IO_ERR;
 	}
 #else
 	int res = rmdir(DirPathName);
-	if (res == -1) {
-		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("Cannot delete directory %s: last error %d\n", DirPathName, errno));
+	if (res==-1) {
+		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("Cannot delete directory %s: last error %d\n", DirPathName, errno  ));
 		return GF_IO_ERR;
 	}
 #endif
@@ -89,25 +89,24 @@ GF_Err gf_mkdir(char* DirPathName)
 	BOOL res;
 	CE_CharToWide(DirPathName, swzName);
 	res = CreateDirectory(swzName, NULL);
-	if (!res) {
+	if (! res) {
 		int err = GetLastError();
-		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("Cannot create directory %s: last error %d\n", DirPathName, err));
+		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("Cannot create directory %s: last error %d\n", DirPathName, err ));
 	}
 #elif defined (WIN32)
 	int res = mkdir(DirPathName);
-	if (res == -1) {
+	if (res==-1) {
 		int err = GetLastError();
-		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("Cannot create directory %s: last error %d\n", DirPathName, err));
+		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("Cannot create directory %s: last error %d\n", DirPathName, err ));
 	}
 #else
 	int res = mkdir(DirPathName, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-	if (res == -1) {
-		if (errno == 17) {
-			GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("Cannot create directory %s, it already exists: last error %d \n", DirPathName, errno));
+	if (res==-1) {
+		if(errno == 17) {
+			GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("Cannot create directory %s, it already exists: last error %d \n", DirPathName, errno ));
 			return GF_BAD_PARAM;
-		}
-		else {
-			GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("Cannot create directory %s: last error %d\n", DirPathName, errno));
+		} else {
+			GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("Cannot create directory %s: last error %d\n", DirPathName, errno ));
 			return GF_IO_ERR;
 		}
 	}
@@ -141,11 +140,10 @@ static Bool delete_dir(void *cbck, char *item_name, char *item_path, GF_FileEnum
 {
 	Bool directory_clean_mode = *(Bool*)cbck;
 
-	if (directory_clean_mode) {
+	if(directory_clean_mode) {
 		gf_cleanup_dir(item_path);
 		gf_rmdir(item_path);
-	}
-	else {
+	} else {
 		gf_delete_file(item_path);
 	}
 	return GF_FALSE;
@@ -173,30 +171,30 @@ GF_Err gf_delete_file(const char *fileName)
 #if defined(_WIN32_WCE)
 	TCHAR swzName[MAX_PATH];
 	CE_CharToWide((char*)fileName, swzName);
-	return (DeleteFile(swzName) == 0) ? GF_IO_ERR : GF_OK;
+	return (DeleteFile(swzName)==0) ? GF_IO_ERR : GF_OK;
 #elif defined(WIN32)
 	/* success if != 0 */
-	return (DeleteFile(fileName) == 0) ? GF_IO_ERR : GF_OK;
+	return (DeleteFile(fileName)==0) ? GF_IO_ERR : GF_OK;
 #else
 	/* success is == 0 */
-	return (remove(fileName) == 0) ? GF_OK : GF_IO_ERR;
+	return ( remove(fileName) == 0) ? GF_OK : GF_IO_ERR;
 #endif
 }
 
 #ifndef WIN32
 /**
-* Remove existing single-quote from a single-quoted string.
-* The caller is responsible for deallocating the returns string with gf_free()
-*/
+ * Remove existing single-quote from a single-quoted string.
+ * The caller is responsible for deallocating the returns string with gf_free()
+ */
 static char* gf_sanetize_single_quoted_string(const char *src) {
 	int i, j;
-	char *out = (char*)gf_malloc(4 * strlen(src) + 3);
+	char *out = (char*)gf_malloc(4*strlen(src)+3);
 	out[0] = '\'';
-	for (i = 0, j = 1; (out[j] = src[i]); ++i, ++j) {
-		if (src[i] == '\'') {
-			out[++j] = '\\';
-			out[++j] = '\'';
-			out[++j] = '\'';
+	for (i=0, j=1; (out[j]=src[i]); ++i, ++j) {
+		if (src[i]=='\'') {
+			out[++j]='\\';
+			out[++j]='\'';
+			out[++j]='\'';
 		}
 	}
 	out[j++] = '\'';
@@ -229,10 +227,10 @@ GF_Err gf_move_file(const char *fileName, const char *newFileName)
 	TCHAR swzNewName[MAX_PATH];
 	CE_CharToWide((char*)fileName, swzName);
 	CE_CharToWide((char*)newFileName, swzNewName);
-	return (MoveFile(swzName, swzNewName) == 0) ? GF_IO_ERR : GF_OK;
+	return (MoveFile(swzName, swzNewName) == 0 ) ? GF_IO_ERR : GF_OK;
 #elif defined(WIN32)
 	/* success if != 0 */
-	return (MoveFile(fileName, newFileName) == 0) ? GF_IO_ERR : GF_OK;
+	return (MoveFile(fileName, newFileName) == 0 ) ? GF_IO_ERR : GF_OK;
 #else
 	GF_Err e = GF_IO_ERR;
 	char cmd[1024], *arg1, *arg2;
@@ -273,7 +271,7 @@ u64 gf_file_modification_time(const char *filename)
 	ULARGE_INTEGER uli;
 	ULONGLONG time_ms;
 	BOOL ret;
-	CE_CharToWide((char *)filename, _file);
+	CE_CharToWide((char *) filename, _file);
 	fh = FindFirstFile(_file, &FindData);
 	if (fh == INVALID_HANDLE_VALUE) return 0;
 	uli.LowPart = FindData.ftLastWriteTime.dwLowDateTime;
@@ -283,7 +281,7 @@ u64 gf_file_modification_time(const char *filename)
 		DWORD err = GetLastError();
 		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[core] FindClose() in gf_file_modification_time() returned the following error code: %d\n", err));
 	}
-	time_ms = uli.QuadPart / 10000;
+	time_ms = uli.QuadPart/10000;
 	return time_ms;
 #elif defined(WIN32) && !defined(__GNUC__)
 	struct _stat64 sb;
@@ -309,8 +307,8 @@ FILE *gf_temp_file_new(char ** const fileName)
 {
 	FILE *res = NULL;
 #if defined(_WIN32_WCE)
-	TCHAR pPath[MAX_PATH + 1];
-	TCHAR pTemp[MAX_PATH + 1];
+	TCHAR pPath[MAX_PATH+1];
+	TCHAR pTemp[MAX_PATH+1];
 	if (!GetTempPath(MAX_PATH, pPath)) {
 		pPath[0] = '.';
 		pPath[1] = '.';
@@ -334,8 +332,7 @@ FILE *gf_temp_file_new(char ** const fileName)
 				gpac_file_handles--;
 				if (fileName) {
 					*fileName = gf_strdup(t_file);
-				}
-				else {
+				} else {
 					GF_LOG(GF_LOG_WARNING, GF_LOG_CORE, ("[Win32] temporary file %s won't be deleted - contact the GPAC team\n", t_file));
 				}
 			}
@@ -379,26 +376,26 @@ GF_Err gf_enum_directory(const char *dir, Bool enum_directory, gf_enum_dir_item 
 
 	if (!dir || !enum_dir_fct) return GF_BAD_PARAM;
 
-	if (filter && (!strcmp(filter, "*") || !filter[0])) filter = NULL;
+	if (filter && (!strcmp(filter, "*") || !filter[0])) filter=NULL;
 
-	memset(&file_info, 0, sizeof(GF_FileEnumInfo));
+	memset(&file_info, 0, sizeof(GF_FileEnumInfo) );
 
 	if (!strcmp(dir, "/")) {
 #if defined(WIN32) && !defined(_WIN32_WCE)
 		u32 len;
 		char *drives, *volume;
 		len = GetLogicalDriveStrings(0, NULL);
-		drives = (char*)gf_malloc(sizeof(char)*(len + 1));
-		drives[0] = 0;
+		drives = (char*)gf_malloc(sizeof(char)*(len+1));
+		drives[0]=0;
 		GetLogicalDriveStrings(len, drives);
-		len = (u32)strlen(drives);
+		len = (u32) strlen(drives);
 		volume = drives;
 		file_info.directory = GF_TRUE;
 		file_info.drive = GF_TRUE;
 		while (len) {
 			enum_dir_fct(cbck, volume, "", &file_info);
-			volume += len + 1;
-			len = (u32)strlen(volume);
+			volume += len+1;
+			len = (u32) strlen(volume);
 		}
 		gf_free(drives);
 		return GF_OK;
@@ -407,7 +404,7 @@ GF_Err gf_enum_directory(const char *dir, Bool enum_directory, gf_enum_dir_item 
 		TDriveList aList;
 		iFs.Connect();
 		iFs.DriveList(aList);
-		for (TInt i = 0; i<KMaxDrives; i++) {
+		for (TInt i=0; i<KMaxDrives; i++) {
 			if (aList[i]) {
 				char szDrive[10];
 				TChar aDrive;
@@ -447,17 +444,17 @@ GF_Err gf_enum_directory(const char *dir, Bool enum_directory, gf_enum_dir_item 
 	}
 #else
 	strcpy(path, dir);
-	if (path[strlen(path) - 1] != '/') strcat(path, "/");
+	if (path[strlen(path)-1] != '/') strcat(path, "/");
 #endif
 
 #ifdef WIN32
-	SearchH = FindFirstFile(path, &FindData);
+	SearchH= FindFirstFile(path, &FindData);
 	if (SearchH == INVALID_HANDLE_VALUE) return GF_IO_ERR;
 
 #if defined (_WIN32_WCE)
-	_path[strlen(_path) - 1] = 0;
+	_path[strlen(_path)-1] = 0;
 #else
-	path[strlen(path) - 1] = 0;
+	path[strlen(path)-1] = 0;
 #endif
 
 	while (SearchH != INVALID_HANDLE_VALUE) {
@@ -474,12 +471,12 @@ GF_Err gf_enum_directory(const char *dir, Bool enum_directory, gf_enum_dir_item 
 
 #endif
 
-		memset(&file_info, 0, sizeof(GF_FileEnumInfo));
+		memset(&file_info, 0, sizeof(GF_FileEnumInfo) );
 
 
 #if defined (_WIN32_WCE)
-		if (!wcscmp(FindData.cFileName, _T("."))) goto next;
-		if (!wcscmp(FindData.cFileName, _T(".."))) goto next;
+		if (!wcscmp(FindData.cFileName, _T(".") )) goto next;
+		if (!wcscmp(FindData.cFileName, _T("..") )) goto next;
 #elif defined(WIN32)
 		if (!strcmp(FindData.cFileName, ".")) goto next;
 		if (!strcmp(FindData.cFileName, "..")) goto next;
@@ -499,23 +496,23 @@ GF_Err gf_enum_directory(const char *dir, Bool enum_directory, gf_enum_dir_item 
 			short ext[30];
 			short *sep = wcsrchr(FindData.cFileName, (wchar_t) '.');
 			if (!sep) goto next;
-			wcscpy(ext, sep + 1);
+			wcscpy(ext, sep+1);
 			wcslwr(ext);
 			if (!wcsstr(w_filter, ext)) goto next;
 #elif defined(WIN32)
 			char ext[30];
 			char *sep = strrchr(FindData.cFileName, '.');
 			if (!sep) goto next;
-			strcpy(ext, sep + 1);
+			strcpy(ext, sep+1);
 			strlwr(ext);
 			if (!strstr(filter, ext)) goto next;
 #else
 			char ext[30];
 			char *sep = strrchr(the_file->d_name, '.');
 			if (!sep) goto next;
-			strcpy(ext, sep + 1);
+			strcpy(ext, sep+1);
 			strlwr(ext);
-			if (!strstr(filter, sep + 1)) goto next;
+			if (!strstr(filter, sep+1)) goto next;
 #endif
 		}
 
@@ -526,7 +523,7 @@ GF_Err gf_enum_directory(const char *dir, Bool enum_directory, gf_enum_dir_item 
 		file_info.size += 1;
 		file_info.size *= FindData.nFileSizeHigh;
 		file_info.size += FindData.nFileSizeLow;
-		file_info.last_modified = (u64)((*(LONGLONG *)&FindData.ftLastWriteTime - TIMESPEC_TO_FILETIME_OFFSET) / 10000000);
+		file_info.last_modified = (u64) ((*(LONGLONG *) &FindData.ftLastWriteTime - TIMESPEC_TO_FILETIME_OFFSET) / 10000000);
 #endif
 
 #if defined (_WIN32_WCE)
@@ -542,7 +539,7 @@ GF_Err gf_enum_directory(const char *dir, Bool enum_directory, gf_enum_dir_item 
 		strcat(item_path, the_file->d_name);
 		GF_LOG(GF_LOG_DEBUG, GF_LOG_CORE, ("[Core] Checking file %s for enum\n", item_path));
 
-		if (stat(item_path, &st) != 0) goto next;
+		if (stat( item_path, &st ) != 0) goto next;
 
 		file_info.directory = ((st.st_mode & S_IFMT) == S_IFDIR) ? GF_TRUE : GF_FALSE;
 		if (enum_directory && !file_info.directory) goto next;
@@ -551,21 +548,20 @@ GF_Err gf_enum_directory(const char *dir, Bool enum_directory, gf_enum_dir_item 
 		file_info.size = st.st_size;
 
 		{
-			struct tm _t = *gmtime(&st.st_mtime);
+			struct tm _t = * gmtime(& st.st_mtime);
 			file_info.last_modified = mktime(&_t);
 		}
 		file = the_file->d_name;
-		if (file && file[0] == '.') file_info.hidden = 1;
+		if (file && file[0]=='.') file_info.hidden = 1;
 
 		if (file_info.directory) {
 			char * parent_name = strrchr(item_path, '/');
 			if (!parent_name) {
 				file_info.drive = GF_TRUE;
-			}
-			else {
+			} else {
 				struct stat st_parent;
 				parent_name[0] = 0;
-				if (stat(item_path, &st_parent) == 0) {
+				if (stat(item_path, &st_parent) == 0)  {
 					if ((st.st_dev != st_parent.st_dev) || ((st.st_dev == st_parent.st_dev) && (st.st_ino == st_parent.st_ino))) {
 						file_info.drive = GF_TRUE;
 					}
@@ -585,7 +581,7 @@ GF_Err gf_enum_directory(const char *dir, Bool enum_directory, gf_enum_dir_item 
 			break;
 		}
 
-	next:
+next:
 #ifdef WIN32
 		if (!FindNextFile(SearchH, &FindData)) {
 			BOOL ret = FindClose(SearchH);
@@ -603,27 +599,27 @@ GF_Err gf_enum_directory(const char *dir, Bool enum_directory, gf_enum_dir_item 
 	closedir(the_dir);
 #endif
 	return GF_OK;
-	}
+}
 
 GF_EXPORT
 u64 gf_ftell(FILE *fp)
 {
 #if defined(_WIN32_WCE)
-	return (u64)ftell(fp);
+	return (u64) ftell(fp);
 #elif defined(GPAC_CONFIG_WIN32) && !defined(__CYGWIN__)	/* mingw or cygwin */
 #if (_FILE_OFFSET_BITS >= 64)
-	return (u64)ftello64(fp);
+	return (u64) ftello64(fp);
 #else
-	return (u64)ftell(fp);
+	return (u64) ftell(fp);
 #endif
 #elif defined(WIN32)
-	return (u64)_ftelli64(fp);
+	return (u64) _ftelli64(fp);
 #elif defined(GPAC_CONFIG_LINUX) && !defined(GPAC_ANDROID)
-	return (u64)ftello64(fp);
+	return (u64) ftello64(fp);
 #elif (defined(GPAC_CONFIG_FREEBSD) || defined(GPAC_CONFIG_DARWIN))
-	return (u64)ftello(fp);
+	return (u64) ftello(fp);
 #else
-	return (u64)ftell(fp);
+	return (u64) ftell(fp);
 #endif
 }
 
@@ -631,21 +627,21 @@ GF_EXPORT
 u64 gf_fseek(FILE *fp, s64 offset, s32 whence)
 {
 #if defined(_WIN32_WCE)
-	return (u64)fseek(fp, (s32)offset, whence);
+	return (u64) fseek(fp, (s32) offset, whence);
 #elif defined(GPAC_CONFIG_WIN32) && !defined(__CYGWIN__)	/* mingw or cygwin */
 #if (_FILE_OFFSET_BITS >= 64)
-	return (u64)fseeko64(fp, offset, whence);
+	return (u64) fseeko64(fp, offset, whence);
 #else
-	return (u64)fseek(fp, (s32)offset, whence);
+	return (u64) fseek(fp, (s32) offset, whence);
 #endif
 #elif defined(WIN32)
-	return (u64)_fseeki64(fp, offset, whence);
+	return (u64) _fseeki64(fp, offset, whence);
 #elif defined(GPAC_CONFIG_LINUX) && !defined(GPAC_ANDROID)
-	return fseeko64(fp, (off64_t)offset, whence);
+	return fseeko64(fp, (off64_t) offset, whence);
 #elif (defined(GPAC_CONFIG_FREEBSD) || defined(GPAC_CONFIG_DARWIN))
-	return fseeko(fp, (off_t)offset, whence);
+	return fseeko(fp, (off_t) offset, whence);
 #else
-	return fseek(fp, (s32)offset, whence);
+	return fseek(fp, (s32) offset, whence);
 #endif
 }
 
@@ -664,8 +660,7 @@ FILE *gf_fopen(const char *file_name, const char *mode)
 				fclose(res);
 				res = fopen(file_name, mode);
 			}
-		}
-		else {
+		} else {
 			res = fopen(file_name, mode);
 		}
 	}
@@ -678,14 +673,14 @@ FILE *gf_fopen(const char *file_name, const char *mode)
 		if (!is_create) {
 			GF_LOG(GF_LOG_INFO, GF_LOG_CORE, ("[Core] Could not open file %s mode %s in UTF-8 mode, trying UTF-16\n", file_name, mode));
 		}
-		len = (strlen(file_name) + 1) * sizeof(wchar_t);
+		len = (strlen(file_name) + 1)*sizeof(wchar_t);
 		wname = (wchar_t *)gf_malloc(len);
 		str_src = file_name;
 		len_res = gf_utf8_mbstowcs(wname, len, &str_src);
 		if (len_res == -1) {
 			return NULL;
 		}
-		len = (strlen(mode) + 1) * sizeof(wchar_t);
+		len = (strlen(mode) + 1)*sizeof(wchar_t);
 		wmode = (wchar_t *)gf_malloc(len);
 		str_src = mode;
 		len_res = gf_utf8_mbstowcs(wmode, len, &str_src);
@@ -708,8 +703,7 @@ FILE *gf_fopen(const char *file_name, const char *mode)
 	if (res) {
 		gpac_file_handles++;
 		GF_LOG(GF_LOG_DEBUG, GF_LOG_CORE, ("[Core] file %s opened in mode %s - %d file handles\n", file_name, mode, gpac_file_handles));
-	}
-	else {
+	} else {
 		if (strchr(mode, 'w') || strchr(mode, 'a')) {
 #if defined(WIN32)
 			u32 err = GetLastError();
@@ -743,7 +737,7 @@ size_t gf_fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
 
 GF_EXPORT
 size_t gf_fwrite(const void *ptr, size_t size, size_t nmemb,
-	FILE *stream)
+                 FILE *stream)
 {
 	size_t result = fwrite(ptr, size, nmemb, stream);
 	if (result != nmemb) {
@@ -761,7 +755,7 @@ size_t gf_fwrite(const void *ptr, size_t size, size_t nmemb,
 #ifdef HAVE_STRERROR_R
 #define ERRSTR_BUF_SIZE 256
 			char errstr[ERRSTR_BUF_SIZE];
-			if (strerror_r(errno_save, errstr, ERRSTR_BUF_SIZE) != 0)
+			if(strerror_r(errno_save, errstr, ERRSTR_BUF_SIZE) != 0)
 			{
 				strerror_r(0, errstr, ERRSTR_BUF_SIZE);
 			}
@@ -775,3 +769,51 @@ size_t gf_fwrite(const void *ptr, size_t size, size_t nmemb,
 	return result;
 }
 
+
+/**
+  * Returns a pointer to the start of a filepath basename
+ **/
+GF_EXPORT
+char* gf_file_basename(const char* filename)
+{
+	char* lastPathPart = NULL;
+	if (filename) {
+
+		lastPathPart = strrchr(filename , GF_PATH_SEPARATOR);
+		if (GF_PATH_SEPARATOR != '/')
+		{
+			// windows paths can mix slashes and backslashes
+			// so we search for the last slash that occurs after the last backslash
+			// if it occurs before it's not relevant
+			// if there's no backslashes we search in the whole file path
+
+			char* trailingSlash = strrchr(lastPathPart?lastPathPart:filename, '/');
+			if (trailingSlash)
+				lastPathPart = trailingSlash;
+		}
+		if (!lastPathPart)
+			lastPathPart = (char *)filename;
+		else
+			lastPathPart++;
+
+
+
+	}
+	return lastPathPart;
+}
+
+/**
+  * Returns a pointer to the start of a filepath extension or null
+ **/
+GF_EXPORT
+char* gf_file_ext_start(const char* filename)
+{
+	char* res = NULL;
+	char* basename = gf_file_basename(filename);
+	if (basename) {
+
+		res = strrchr(basename, '.');
+
+	}
+	return res;
+}

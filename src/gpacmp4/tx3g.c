@@ -1,27 +1,27 @@
 /*
-*			GPAC - Multimedia Framework C SDK
-*
-*			Authors: Jean Le Feuvre
-*			Copyright (c) Telecom ParisTech 2000-2012
-*					All rights reserved
-*
-*  This file is part of GPAC / ISO Media File Format sub-project
-*
-*  GPAC is free software; you can redistribute it and/or modify
-*  it under the terms of the GNU Lesser General Public License as published by
-*  the Free Software Foundation; either version 2, or (at your option)
-*  any later version.
-*
-*  GPAC is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU Lesser General Public License for more details.
-*
-*  You should have received a copy of the GNU Lesser General Public
-*  License along with this library; see the file COPYING.  If not, write to
-*  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-*
-*/
+ *			GPAC - Multimedia Framework C SDK
+ *
+ *			Authors: Jean Le Feuvre
+ *			Copyright (c) Telecom ParisTech 2000-2012
+ *					All rights reserved
+ *
+ *  This file is part of GPAC / ISO Media File Format sub-project
+ *
+ *  GPAC is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  GPAC is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; see the file COPYING.  If not, write to
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
 
 #include <gpac/internal/isomedia_dev.h>
 #include <gpac/constants.h>
@@ -75,8 +75,8 @@ GF_Err gf_isom_update_text_description(GF_ISOFile *movie, u32 trackNumber, u32 d
 
 	txt->font_table = (GF_FontTableBox *)gf_isom_box_new(GF_ISOM_BOX_TYPE_FTAB);
 	txt->font_table->entry_count = desc->font_count;
-	txt->font_table->fonts = (GF_FontRecord *)gf_malloc(sizeof(GF_FontRecord) * desc->font_count);
-	for (i = 0; i<desc->font_count; i++) {
+	txt->font_table->fonts = (GF_FontRecord *) gf_malloc(sizeof(GF_FontRecord) * desc->font_count);
+	for (i=0; i<desc->font_count; i++) {
 		txt->font_table->fonts[i].fontID = desc->fonts[i].fontID;
 		if (desc->fonts[i].fontName) txt->font_table->fonts[i].fontName = gf_strdup(desc->fonts[i].fontName);
 	}
@@ -114,7 +114,7 @@ GF_Err gf_isom_new_text_description(GF_ISOFile *movie, u32 trackNumber, GF_TextS
 	if (!movie->keep_utc)
 		trak->Media->mediaHeader->modificationTime = gf_isom_get_mp4time();
 
-	txt = (GF_Tx3gSampleEntryBox *)gf_isom_box_new(GF_ISOM_BOX_TYPE_TX3G);
+	txt = (GF_Tx3gSampleEntryBox *) gf_isom_box_new(GF_ISOM_BOX_TYPE_TX3G);
 	txt->dataReferenceIndex = dataRefIndex;
 	gf_list_add(trak->Media->information->sampleTable->SampleDescription->other_boxes, txt);
 	if (outDescriptionIndex) *outDescriptionIndex = gf_list_count(trak->Media->information->sampleTable->SampleDescription->other_boxes);
@@ -128,8 +128,8 @@ GF_Err gf_isom_new_text_description(GF_ISOFile *movie, u32 trackNumber, GF_TextS
 	txt->font_table = (GF_FontTableBox *)gf_isom_box_new(GF_ISOM_BOX_TYPE_FTAB);
 	txt->font_table->entry_count = desc->font_count;
 
-	txt->font_table->fonts = (GF_FontRecord *)gf_malloc(sizeof(GF_FontRecord) * desc->font_count);
-	for (i = 0; i<desc->font_count; i++) {
+	txt->font_table->fonts = (GF_FontRecord *) gf_malloc(sizeof(GF_FontRecord) * desc->font_count);
+	for (i=0; i<desc->font_count; i++) {
 		txt->font_table->fonts[i].fontID = desc->fonts[i].fontID;
 		if (desc->fonts[i].fontName) txt->font_table->fonts[i].fontName = gf_strdup(desc->fonts[i].fontName);
 	}
@@ -143,7 +143,7 @@ GF_Err gf_isom_text_add_text(GF_TextSample *samp, char *text_data, u32 text_len)
 {
 	if (!samp) return GF_BAD_PARAM;
 	if (!text_len) return GF_OK;
-	samp->text = (char*)gf_realloc(samp->text, sizeof(char) * (samp->len + text_len));
+	samp->text = (char*)gf_realloc(samp->text, sizeof(char) * (samp->len + text_len) );
 	memcpy(samp->text + samp->len, text_data, sizeof(char) * text_len);
 	samp->len += text_len;
 	return GF_OK;
@@ -154,8 +154,8 @@ GF_Err gf_isom_text_set_utf16_marker(GF_TextSample *samp)
 	/*we MUST have an empty sample*/
 	if (!samp || samp->text) return GF_BAD_PARAM;
 	samp->text = (char*)gf_malloc(sizeof(char) * 2);
-	samp->text[0] = (char)0xFE;
-	samp->text[1] = (char)0xFF;
+	samp->text[0] = (char) 0xFE;
+	samp->text[1] = (char) 0xFF;
 	samp->len = 2;
 	return GF_OK;
 }
@@ -165,10 +165,10 @@ GF_Err gf_isom_text_add_style(GF_TextSample *samp, GF_StyleRecord *rec)
 	if (!samp || !rec) return GF_BAD_PARAM;
 
 	if (!samp->styles) {
-		samp->styles = (GF_TextStyleBox *)gf_isom_box_new(GF_ISOM_BOX_TYPE_STYL);
+		samp->styles = (GF_TextStyleBox *) gf_isom_box_new(GF_ISOM_BOX_TYPE_STYL);
 		if (!samp->styles) return GF_OUT_OF_MEM;
 	}
-	samp->styles->styles = (GF_StyleRecord*)gf_realloc(samp->styles->styles, sizeof(GF_StyleRecord)*(samp->styles->entry_count + 1));
+	samp->styles->styles = (GF_StyleRecord*)gf_realloc(samp->styles->styles, sizeof(GF_StyleRecord)*(samp->styles->entry_count+1));
 	if (!samp->styles->styles) return GF_OUT_OF_MEM;
 	samp->styles->styles[samp->styles->entry_count] = *rec;
 	samp->styles->entry_count++;
@@ -181,7 +181,7 @@ GF_Err gf_isom_text_add_highlight(GF_TextSample *samp, u16 start_char, u16 end_c
 	if (!samp) return GF_BAD_PARAM;
 	if (start_char == end_char) return GF_BAD_PARAM;
 
-	a = (GF_TextHighlightBox *)gf_isom_box_new(GF_ISOM_BOX_TYPE_HLIT);
+	a = (GF_TextHighlightBox *) gf_isom_box_new(GF_ISOM_BOX_TYPE_HLIT);
 	if (!a) return GF_OUT_OF_MEM;
 	a->startcharoffset = start_char;
 	a->endcharoffset = end_char;
@@ -193,7 +193,7 @@ GF_Err gf_isom_text_set_highlight_color(GF_TextSample *samp, u8 r, u8 g, u8 b, u
 	if (!samp) return GF_BAD_PARAM;
 
 	if (!samp->highlight_color) {
-		samp->highlight_color = (GF_TextHighlightColorBox *)gf_isom_box_new(GF_ISOM_BOX_TYPE_HCLR);
+		samp->highlight_color = (GF_TextHighlightColorBox *) gf_isom_box_new(GF_ISOM_BOX_TYPE_HCLR);
 		if (!samp->highlight_color) return GF_OUT_OF_MEM;
 	}
 	samp->highlight_color->hil_color = a;
@@ -211,7 +211,7 @@ GF_Err gf_isom_text_set_highlight_color_argb(GF_TextSample *samp, u32 argb)
 	if (!samp) return GF_BAD_PARAM;
 
 	if (!samp->highlight_color) {
-		samp->highlight_color = (GF_TextHighlightColorBox *)gf_isom_box_new(GF_ISOM_BOX_TYPE_HCLR);
+		samp->highlight_color = (GF_TextHighlightColorBox *) gf_isom_box_new(GF_ISOM_BOX_TYPE_HCLR);
 		if (!samp->highlight_color) return GF_OUT_OF_MEM;
 	}
 	samp->highlight_color->hil_color = argb;
@@ -222,7 +222,7 @@ GF_Err gf_isom_text_set_highlight_color_argb(GF_TextSample *samp, u32 argb)
 GF_Err gf_isom_text_add_karaoke(GF_TextSample *samp, u32 start_time)
 {
 	if (!samp) return GF_BAD_PARAM;
-	samp->cur_karaoke = (GF_TextKaraokeBox *)gf_isom_box_new(GF_ISOM_BOX_TYPE_KROK);
+	samp->cur_karaoke = (GF_TextKaraokeBox *) gf_isom_box_new(GF_ISOM_BOX_TYPE_KROK);
 	if (!samp->cur_karaoke) return GF_OUT_OF_MEM;
 	samp->cur_karaoke->highlight_starttime = start_time;
 	return gf_list_add(samp->others, samp->cur_karaoke);
@@ -231,7 +231,7 @@ GF_Err gf_isom_text_add_karaoke(GF_TextSample *samp, u32 start_time)
 GF_Err gf_isom_text_set_karaoke_segment(GF_TextSample *samp, u32 end_time, u16 start_char, u16 end_char)
 {
 	if (!samp || !samp->cur_karaoke) return GF_BAD_PARAM;
-	samp->cur_karaoke->records = (KaraokeRecord*)gf_realloc(samp->cur_karaoke->records, sizeof(KaraokeRecord)*(samp->cur_karaoke->nb_entries + 1));
+	samp->cur_karaoke->records = (KaraokeRecord*)gf_realloc(samp->cur_karaoke->records, sizeof(KaraokeRecord)*(samp->cur_karaoke->nb_entries+1));
 	if (!samp->cur_karaoke->records) return GF_OUT_OF_MEM;
 	samp->cur_karaoke->records[samp->cur_karaoke->nb_entries].end_charoffset = end_char;
 	samp->cur_karaoke->records[samp->cur_karaoke->nb_entries].start_charoffset = start_char;
@@ -245,7 +245,7 @@ GF_Err gf_isom_text_set_scroll_delay(GF_TextSample *samp, u32 scroll_delay)
 {
 	if (!samp) return GF_BAD_PARAM;
 	if (!samp->scroll_delay) {
-		samp->scroll_delay = (GF_TextScrollDelayBox*)gf_isom_box_new(GF_ISOM_BOX_TYPE_DLAY);
+		samp->scroll_delay = (GF_TextScrollDelayBox*) gf_isom_box_new(GF_ISOM_BOX_TYPE_DLAY);
 		if (!samp->scroll_delay) return GF_OUT_OF_MEM;
 	}
 	samp->scroll_delay->scroll_delay = scroll_delay;
@@ -256,7 +256,7 @@ GF_Err gf_isom_text_add_hyperlink(GF_TextSample *samp, char *URL, char *altStrin
 {
 	GF_TextHyperTextBox*a;
 	if (!samp) return GF_BAD_PARAM;
-	a = (GF_TextHyperTextBox*)gf_isom_box_new(GF_ISOM_BOX_TYPE_HREF);
+	a = (GF_TextHyperTextBox*) gf_isom_box_new(GF_ISOM_BOX_TYPE_HREF);
 	if (!a) return GF_OUT_OF_MEM;
 	a->startcharoffset = start_char;
 	a->endcharoffset = end_char;
@@ -269,7 +269,7 @@ GF_Err gf_isom_text_set_box(GF_TextSample *samp, s16 top, s16 left, s16 bottom, 
 {
 	if (!samp) return GF_BAD_PARAM;
 	if (!samp->box) {
-		samp->box = (GF_TextBoxBox*)gf_isom_box_new(GF_ISOM_BOX_TYPE_TBOX);
+		samp->box = (GF_TextBoxBox*) gf_isom_box_new(GF_ISOM_BOX_TYPE_TBOX);
 		if (!samp->box) return GF_OUT_OF_MEM;
 	}
 	samp->box->box.top = top;
@@ -283,7 +283,7 @@ GF_Err gf_isom_text_add_blink(GF_TextSample *samp, u16 start_char, u16 end_char)
 {
 	GF_TextBlinkBox *a;
 	if (!samp) return GF_BAD_PARAM;
-	a = (GF_TextBlinkBox*)gf_isom_box_new(GF_ISOM_BOX_TYPE_BLNK);
+	a = (GF_TextBlinkBox*) gf_isom_box_new(GF_ISOM_BOX_TYPE_BLNK);
 	if (!a) return GF_OUT_OF_MEM;
 	a->startcharoffset = start_char;
 	a->endcharoffset = end_char;
@@ -294,7 +294,7 @@ GF_Err gf_isom_text_set_wrap(GF_TextSample *samp, u8 wrap_flags)
 {
 	if (!samp) return GF_BAD_PARAM;
 	if (!samp->wrap) {
-		samp->wrap = (GF_TextWrapBox*)gf_isom_box_new(GF_ISOM_BOX_TYPE_TWRP);
+		samp->wrap = (GF_TextWrapBox*) gf_isom_box_new(GF_ISOM_BOX_TYPE_TWRP);
 		if (!samp->wrap) return GF_OUT_OF_MEM;
 	}
 	samp->wrap->wrap_flag = wrap_flags;
@@ -330,7 +330,7 @@ GF_ISOSample *gf_isom_text_to_sample(GF_TextSample *samp)
 
 	if (!e) {
 		GF_Box *a;
-		i = 0;
+		i=0;
 		while ((a = (GF_Box*)gf_list_enum(samp->others, &i))) {
 			e = gpp_write_modifier(bs, a);
 			if (e) break;
@@ -377,7 +377,7 @@ GF_Err gf_isom_text_has_similar_description(GF_ISOFile *movie, u32 trackNumber, 
 	}
 
 	count = gf_list_count(trak->Media->information->sampleTable->SampleDescription->other_boxes);
-	for (i = 0; i<count; i++) {
+	for (i=0; i<count; i++) {
 		Bool same_fonts;
 		txt = (GF_Tx3gSampleEntryBox*)gf_list_get(trak->Media->information->sampleTable->SampleDescription->other_boxes, i);
 		if (!txt) continue;
@@ -389,12 +389,12 @@ GF_Err gf_isom_text_has_similar_description(GF_ISOFile *movie, u32 trackNumber, 
 		if (txt->font_table->entry_count != desc->font_count) continue;
 
 		same_fonts = 1;
-		for (j = 0; j<desc->font_count; j++) {
+		for (j=0; j<desc->font_count; j++) {
 			if (txt->font_table->fonts[j].fontID != desc->fonts[j].fontID) same_fonts = 0;
 			else if (strcmp(desc->fonts[j].fontName, txt->font_table->fonts[j].fontName)) same_fonts = 0;
 		}
 		if (same_fonts) {
-			*outDescIdx = i + 1;
+			*outDescIdx = i+1;
 			if (!memcmp(&txt->default_box, &desc->default_pos, sizeof(GF_BoxRecord))) *same_box = 1;
 			if (!memcmp(&txt->default_style, &desc->default_style, sizeof(GF_StyleRecord))) *same_styles = 1;
 			return GF_OK;
@@ -465,15 +465,15 @@ GF_TextSample *gf_isom_parse_texte_sample(GF_BitStream *bs)
 	if (s->len) {
 		/*2 extra bytes for UTF-16 term char just in case (we don't know if a BOM marker is present or
 		not since this may be a sample carried over RTP*/
-		s->text = (char *)gf_malloc(sizeof(char)*(s->len + 2));
+		s->text = (char *) gf_malloc(sizeof(char)*(s->len+2) );
 		s->text[s->len] = 0;
-		s->text[s->len + 1] = 0;
+		s->text[s->len+1] = 0;
 		gf_bs_read_data(bs, s->text, s->len);
 	}
 
 	while (gf_bs_available(bs)) {
 		GF_Box *a;
-		GF_Err e = gf_isom_parse_box(&a, bs);
+		GF_Err e = gf_isom_box_parse(&a, bs);
 		if (!e) {
 			switch (a->type) {
 			case GF_ISOM_BOX_TYPE_STYL:
@@ -482,15 +482,13 @@ GF_TextSample *gf_isom_parse_texte_sample(GF_BitStream *bs)
 					if (!s->styles->entry_count) {
 						gf_isom_box_del((GF_Box*)s->styles);
 						s->styles = st2;
-					}
-					else {
+					} else {
 						s->styles->styles = (GF_StyleRecord*)gf_realloc(s->styles->styles, sizeof(GF_StyleRecord) * (s->styles->entry_count + st2->entry_count));
 						memcpy(&s->styles->styles[s->styles->entry_count], st2->styles, sizeof(GF_StyleRecord) * st2->entry_count);
 						s->styles->entry_count += st2->entry_count;
 						gf_isom_box_del(a);
 					}
-				}
-				else {
+				} else {
 					s->styles = (GF_TextStyleBox*)a;
 				}
 				break;
@@ -503,19 +501,19 @@ GF_TextSample *gf_isom_parse_texte_sample(GF_BitStream *bs)
 				break;
 			case GF_ISOM_BOX_TYPE_HCLR:
 				if (s->highlight_color) gf_isom_box_del(a);
-				else s->highlight_color = (GF_TextHighlightColorBox *)a;
+				else s->highlight_color = (GF_TextHighlightColorBox *) a;
 				break;
 			case GF_ISOM_BOX_TYPE_DLAY:
 				if (s->scroll_delay) gf_isom_box_del(a);
-				else s->scroll_delay = (GF_TextScrollDelayBox*)a;
+				else s->scroll_delay= (GF_TextScrollDelayBox*) a;
 				break;
 			case GF_ISOM_BOX_TYPE_TBOX:
 				if (s->box) gf_isom_box_del(a);
-				else s->box = (GF_TextBoxBox *)a;
+				else s->box= (GF_TextBoxBox *) a;
 				break;
 			case GF_ISOM_BOX_TYPE_TWRP:
 				if (s->wrap) gf_isom_box_del(a);
-				else s->wrap = (GF_TextWrapBox*)a;
+				else s->wrap= (GF_TextWrapBox*) a;
 				break;
 			default:
 				gf_isom_box_del(a);
@@ -562,9 +560,9 @@ static void gf_isom_write_tx3g(GF_Tx3gSampleEntryBox *a, GF_BitStream *bs, u32 s
 	fount_count = 0;
 	if (a->font_table) {
 		fount_count = a->font_table->entry_count;
-		for (j = 0; j<fount_count; j++) {
+		for (j=0; j<fount_count; j++) {
 			size += 3;
-			if (a->font_table->fonts[j].fontName) size += (u32)strlen(a->font_table->fonts[j].fontName);
+			if (a->font_table->fonts[j].fontName) size += (u32) strlen(a->font_table->fonts[j].fontName);
 		}
 	}
 	/*write TextSampleEntry box*/
@@ -584,14 +582,13 @@ static void gf_isom_write_tx3g(GF_Tx3gSampleEntryBox *a, GF_BitStream *bs, u32 s
 	gf_bs_write_u32(bs, GF_ISOM_BOX_TYPE_FTAB);
 
 	gf_bs_write_u16(bs, fount_count);
-	for (j = 0; j<fount_count; j++) {
+	for (j=0; j<fount_count; j++) {
 		gf_bs_write_u16(bs, a->font_table->fonts[j].fontID);
 		if (a->font_table->fonts[j].fontName) {
-			u32 len = (u32)strlen(a->font_table->fonts[j].fontName);
+			u32 len = (u32) strlen(a->font_table->fonts[j].fontName);
 			gf_bs_write_u8(bs, len);
 			gf_bs_write_data(bs, a->font_table->fonts[j].fontName, len);
-		}
-		else {
+		} else {
 			gf_bs_write_u8(bs, 0);
 		}
 	}
@@ -629,9 +626,9 @@ GF_Err gf_isom_get_ttxt_esd(GF_MediaBox *mdia, GF_ESD **out_esd)
 	gf_bs_write_int(bs, 2, 2);	/*only out-of-band-band sample desc*/
 	gf_bs_write_int(bs, 1, 1);	/*we will write sample desc*/
 
-								/*write v info if any visual track in this movie*/
+	/*write v info if any visual track in this movie*/
 	has_v_info = 0;
-	i = 0;
+	i=0;
 	while ((tk = (GF_TrackBox*)gf_list_enum(mdia->mediaTrack->moov->trackList, &i))) {
 		if (tk->Media->handler && (tk->Media->handler->handlerType == GF_ISOM_MEDIA_VISUAL)) {
 			has_v_info = 1;
@@ -641,16 +638,16 @@ GF_Err gf_isom_get_ttxt_esd(GF_MediaBox *mdia, GF_ESD **out_esd)
 
 	gf_bs_write_int(bs, 0, 3);	/*reserved, spec doesn't say the values*/
 	gf_bs_write_u8(bs, mdia->mediaTrack->Header->layer);
-	gf_bs_write_u16(bs, mdia->mediaTrack->Header->width >> 16);
-	gf_bs_write_u16(bs, mdia->mediaTrack->Header->height >> 16);
+	gf_bs_write_u16(bs, mdia->mediaTrack->Header->width>>16);
+	gf_bs_write_u16(bs, mdia->mediaTrack->Header->height>>16);
 
 	/*write desc*/
 	gf_bs_write_u8(bs, count);
-	for (i = 0; i<count; i++) {
+	for (i=0; i<count; i++) {
 		GF_Tx3gSampleEntryBox *a;
-		a = (GF_Tx3gSampleEntryBox *)gf_list_get(sampleDesc, i);
-		if ((a->type != GF_ISOM_BOX_TYPE_TX3G) && (a->type != GF_ISOM_BOX_TYPE_TEXT)) continue;
-		gf_isom_write_tx3g(a, bs, i + 1, SAMPLE_INDEX_OFFSET);
+		a = (GF_Tx3gSampleEntryBox *) gf_list_get(sampleDesc, i);
+		if ((a->type != GF_ISOM_BOX_TYPE_TX3G) && (a->type != GF_ISOM_BOX_TYPE_TEXT) ) continue;
+		gf_isom_write_tx3g(a, bs, i+1, SAMPLE_INDEX_OFFSET);
 	}
 	if (has_v_info) {
 		u32 trans;
@@ -686,7 +683,7 @@ GF_Err gf_isom_rewrite_text_sample(GF_ISOSample *samp, u32 sampleDescriptionInde
 	pay_start = 2;
 	if (txt_size>2) {
 		/*seems 3GP only accepts BE UTF-16 (no LE, no UTF32)*/
-		if (((u8)samp->data[2] == (u8)0xFE) && ((u8)samp->data[3] == (u8)0xFF)) {
+		if (((u8) samp->data[2]==(u8) 0xFE) && ((u8)samp->data[3]==(u8) 0xFF)) {
 			is_utf_16 = 1;
 			pay_start = 4;
 			txt_size -= 2;
@@ -722,7 +719,7 @@ GF_Err gf_isom_text_get_encoded_tx3g(GF_ISOFile *file, u32 track, u32 sidx, u32 
 	trak = gf_isom_get_track_from_file(file, track);
 	if (!trak) return GF_BAD_PARAM;
 
-	a = (GF_Tx3gSampleEntryBox *)gf_list_get(trak->Media->information->sampleTable->SampleDescription->other_boxes, sidx - 1);
+	a = (GF_Tx3gSampleEntryBox *) gf_list_get(trak->Media->information->sampleTable->SampleDescription->other_boxes, sidx-1);
 	if (!a) return GF_BAD_PARAM;
 	if ((a->type != GF_ISOM_BOX_TYPE_TX3G) && (a->type != GF_ISOM_BOX_TYPE_TEXT)) return GF_BAD_PARAM;
 

@@ -300,9 +300,6 @@
     <ClInclude Include="..\src\gpacmp4\gpac\list.h">
       <Filter>Header Files\gpacmp4</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\math.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\gpacmp4\gpac\media_tools.h">
       <Filter>Header Files\gpacmp4</Filter>
     </ClInclude>
@@ -362,6 +359,12 @@
     </ClInclude>
     <ClInclude Include="..\src\ccextractor.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gpacmp4\gpac\color.h">
+      <Filter>Header Files\gpacmp4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gpacmp4\gpac\maths.h">
+      <Filter>Header Files\gpacmp4</Filter>
     </ClInclude>
     <ClInclude Include="..\src\freetype\include\ft2build.h">
       <Filter>Header Files\freetype</Filter>
@@ -842,6 +845,15 @@
     <ClCompile Include="..\src\lib_ccx\ccx_demuxer_mxf.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gpacmp4\box_dump.c">
+      <Filter>Source Files\gpacmp4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gpacmp4\color.c">
+      <Filter>Source Files\gpacmp4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gpacmp4\hint_track.c">
+      <Filter>Source Files\gpacmp4</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\freetype\autofit\autofit.c">
       <Filter>Source Files\freetype</Filter>
     </ClCompile>
@@ -958,6 +970,9 @@
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_spupng.c">
       <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gpacmp4\box_dump.c">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

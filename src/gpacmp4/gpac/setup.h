@@ -1,27 +1,27 @@
 /*
-*			GPAC - Multimedia Framework C SDK
-*
-*			Authors: Jean Le Feuvre
-*			Copyright (c) Telecom ParisTech 2000-2012
-*					All rights reserved
-*
-*  This file is part of GPAC / general OS configuration file
-*
-*  GPAC is free software; you can redistribute it and/or modify
-*  it under the terms of the GNU Lesser General Public License as published by
-*  the Free Software Foundation; either version 2, or (at your option)
-*  any later version.
-*
-*  GPAC is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU Lesser General Public License for more details.
-*
-*  You should have received a copy of the GNU Lesser General Public
-*  License along with this library; see the file COPYING.  If not, write to
-*  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-*
-*/
+ *			GPAC - Multimedia Framework C SDK
+ *
+ *			Authors: Jean Le Feuvre
+ *			Copyright (c) Telecom ParisTech 2000-2012
+ *					All rights reserved
+ *
+ *  This file is part of GPAC / general OS configuration file
+ *
+ *  GPAC is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  GPAC is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; see the file COPYING.  If not, write to
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
 
 #ifndef _GF_SETUP_H_
 #define _GF_SETUP_H_
@@ -31,23 +31,23 @@ extern "C" {
 #endif
 
 
-	/*! \file "gpac/setup.h"
-	*	\brief base data types of GPAC.
-	*
-	* This file contains the base data types of GPAC, depending on the platform.
-	*/
+/*! \file "gpac/setup.h"
+ *	\brief base data types of GPAC.
+ *
+ * This file contains the base data types of GPAC, depending on the platform.
+*/
 
-	/*! \addtogroup setup_grp base data types
-	*	\ingroup utils_grp
-	*	\brief Base data types of GPAC.
-	*
-	*	This section documents the base data types of GPAC.
-	*	@{
-	*/
+/*! \addtogroup setup_grp base data types
+ *	\ingroup utils_grp
+ *	\brief Base data types of GPAC.
+ *
+ *	This section documents the base data types of GPAC.
+ *	@{
+ */
 
 
-	/*This is to handle cases where config.h is generated at the root of the gpac build tree (./configure)
-	This is only needed when building libgpac and modules when libgpac is not installed*/
+/*This is to handle cases where config.h is generated at the root of the gpac build tree (./configure)
+This is only needed when building libgpac and modules when libgpac is not installed*/
 #ifdef GPAC_HAVE_CONFIG_H
 # include "config.h"
 #else
@@ -55,10 +55,10 @@ extern "C" {
 #endif
 
 
-	/*WIN32 and WinCE config*/
+/*WIN32 and WinCE config*/
 #if defined(WIN32) || defined(_WIN32_WCE)
 
-	/*common win32 parts*/
+/*common win32 parts*/
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -66,14 +66,14 @@ extern "C" {
 #define GPAC_64_BITS
 #endif
 
-	typedef unsigned __int64 u64;
-	typedef unsigned int u32;
-	typedef unsigned short u16;
-	typedef unsigned char u8;
-	typedef __int64 s64;
-	typedef int s32;
-	typedef short s16;
-	typedef char s8;
+typedef unsigned __int64 u64;
+typedef unsigned int u32;
+typedef unsigned short u16;
+typedef unsigned char u8;
+typedef __int64 s64;
+typedef int s32;
+typedef short s16;
+typedef char s8;
 
 #if defined(__GNUC__)
 #define GFINLINE inline
@@ -84,13 +84,13 @@ extern "C" {
 #define GF_PATH_SEPARATOR	'\\'
 #define GF_MAX_PATH	1024
 
-	/*WINCE config*/
+/*WINCE config*/
 #if defined(_WIN32_WCE)
 
-	/*win32 assert*/
+/*win32 assert*/
 #ifndef assert
 
-	void CE_Assert(u32 valid, char *file, u32 line);
+void CE_Assert(u32 valid, char *file, u32 line);
 
 #ifndef NDEBUG
 #define assert( t )	CE_Assert((unsigned int) (t), __FILE__, __LINE__ )
@@ -101,14 +101,14 @@ extern "C" {
 #endif
 
 
-	/*performs wide->char and char->wide conversion on a buffer GF_MAX_PATH long*/
-	void CE_WideToChar(unsigned short *w_str, char *str);
-	void CE_CharToWide(char *str, unsigned short *w_str);
+/*performs wide->char and char->wide conversion on a buffer GF_MAX_PATH long*/
+void CE_WideToChar(unsigned short *w_str, char *str);
+void CE_CharToWide(char *str, unsigned short *w_str);
 
 
 #define strdup _strdup
 #define stricmp _stricmp
-#define strnicmp strnicmp
+#define strnicmp _strnicmp
 #define strupr _strupr
 #define mkdir _mkdir
 #define snprintf _snprintf
@@ -116,13 +116,13 @@ extern "C" {
 
 
 #ifndef _PTRDIFF_T_DEFINED
-	typedef int ptrdiff_t;
+typedef int ptrdiff_t;
 #define PTRDIFF(p1, p2, type)	((p1) - (p2))
 #define _PTRDIFF_T_DEFINED
 #endif
 
 #ifndef _SIZE_T_DEFINED
-	typedef unsigned int size_t;
+typedef unsigned int size_t;
 #define _SIZE_T_DEFINED
 #endif
 
@@ -137,12 +137,12 @@ extern "C" {
 #define strupr _strupr
 #define strlwr _strlwr
 
-	/*
-	#define GPAC_DISABLE_LOG
-	*/
+/*
+#define GPAC_DISABLE_LOG
+*/
 #else	/*END WINCE*/
 
-	/*WIN32 not-WinCE*/
+/*WIN32 not-WinCE*/
 #include <ctype.h>
 #include <string.h>
 #include <float.h>
@@ -153,15 +153,15 @@ extern "C" {
 #define snprintf _snprintf
 
 #endif	/*END WIN32 non win-ce*/
-	/*end WIN32 config*/
+/*end WIN32 config*/
 
-	/*start SYMBIAN config*/
+/*start SYMBIAN config*/
 #elif defined(__SYMBIAN32__)
 
 #define GFINLINE inline
 #define GF_PATH_SEPARATOR	'\\'
 
-	/*we must explicitely export our functions...*/
+/*we must explicitely export our functions...*/
 #define GF_EXPORT EXPORT_C
 
 #include <stdio.h>
@@ -174,45 +174,45 @@ extern "C" {
 
 #ifdef __SERIES60_3X__
 
-	typedef unsigned __int64 u64;
-	typedef __int64 s64;
+typedef unsigned __int64 u64;
+typedef __int64 s64;
 
 #else
 
-	/*FIXME - we don't have 64bit support here we should get rid of all 64bits divisions*/
-	/*
-	typedef unsigned long long u64;
-	typedef long long s64;
-	*/
+/*FIXME - we don't have 64bit support here we should get rid of all 64bits divisions*/
+/*
+typedef unsigned long long u64;
+typedef long long s64;
+*/
 
-	typedef unsigned int u64;
-	typedef signed int s64;
+typedef unsigned int u64;
+typedef signed int s64;
 
 #endif	/*symbian 8*/
 
 
-	typedef unsigned int u32;
-	typedef unsigned short u16;
-	typedef unsigned char u8;
-	typedef int s32;
-	typedef short s16;
-	typedef signed char s8;
+typedef unsigned int u32;
+typedef unsigned short u16;
+typedef unsigned char u8;
+typedef int s32;
+typedef short s16;
+typedef signed char s8;
 
 #pragma mpwc_relax on
 
 #define GF_MAX_PATH	260
 
-	/*sorry this was developed under w32 :)*/
+/*sorry this was developed under w32 :)*/
 #define stricmp		strcasecmp
 #define strnicmp	strncasecmp
 
 #ifndef strupr
-	char * my_str_upr(char *str);
+char * my_str_upr(char *str);
 #define strupr my_str_upr
 #endif
 
 #ifndef strlwr
-	char * my_str_lwr(char *str);
+char * my_str_lwr(char *str);
 #define strlwr my_str_lwr
 #endif
 
@@ -230,13 +230,13 @@ extern "C" {
 #define FLT_EPSILON 1
 #endif
 
-	/*end SYMBIAN config*/
+/*end SYMBIAN config*/
 
 #else
 
-	/*UNIX likes*/
+/*UNIX likes*/
 
-	/*force large file support*/
+/*force large file support*/
 #ifndef _FILE_OFFSET_BITS
 #define _FILE_OFFSET_BITS 64
 #endif
@@ -261,28 +261,28 @@ extern "C" {
 #include <TargetConditionals.h>
 #endif
 
-	typedef uint64_t u64;
-	typedef uint32_t u32;
-	typedef uint16_t u16;
-	typedef uint8_t u8;
-	typedef int64_t s64;
-	typedef int32_t s32;
-	typedef int16_t s16;
-	typedef int8_t s8;
+typedef uint64_t u64;
+typedef uint32_t u32;
+typedef uint16_t u16;
+typedef uint8_t u8;
+typedef int64_t s64;
+typedef int32_t s32;
+typedef int16_t s16;
+typedef int8_t s8;
 
 #define GFINLINE	inline
 
-	/*sorry this was developed under w32 :)*/
+/*sorry this was developed under w32 :)*/
 #define stricmp		strcasecmp
 #define strnicmp	strncasecmp
 
 #ifndef strupr
-	char * my_str_upr(char *str);
+char * my_str_upr(char *str);
 #define strupr my_str_upr
 #endif
 
 #ifndef strlwr
-	char * my_str_lwr(char *str);
+char * my_str_lwr(char *str);
 #define strlwr my_str_lwr
 #endif
 
@@ -291,23 +291,23 @@ extern "C" {
 #ifdef PATH_MAX
 #define GF_MAX_PATH	PATH_MAX
 #else
-	/*PATH_MAX not defined*/
+/*PATH_MAX not defined*/
 #define GF_MAX_PATH	1023
 #endif
 
 
 #endif /* end platform specific Win32/WinCE/UNIX*/
 
-	/*define what's missing*/
+/*define what's missing*/
 #ifndef NULL
 #define NULL 0
 #endif
 
 
-	typedef double Double;
-	typedef float Float;
-	/* 128 bit IDs */
-	typedef u8 bin128[16];
+typedef double Double;
+typedef float Float;
+/* 128 bit IDs */
+typedef u8 bin128[16];
 
 #define GF_MAX_DOUBLE		DBL_MAX
 #define GF_MIN_DOUBLE		-GF_MAX_DOUBLE
@@ -334,23 +334,27 @@ extern "C" {
 #endif
 
 #ifndef Bool
-	typedef enum {
-		GF_FALSE = 0,
-		GF_TRUE
-	} Bool;
+typedef enum {
+	GF_FALSE = 0,
+	GF_TRUE
+} Bool;
 #endif
 
+typedef struct {
+	s32 num;
+	u32 den;
+} GF_Fraction;
 
-	/*GPAC memory tracking*/
+/*GPAC memory tracking*/
 #if defined(GPAC_MEMORY_TRACKING)
 
-	void *gf_mem_malloc(size_t size, const char *filename, int line);
-	void *gf_mem_calloc(size_t num, size_t size_of, const char *filename, int line);
-	void *gf_mem_realloc(void *ptr, size_t size, const char *filename, int line);
-	void gf_mem_free(void *ptr, const char *filename, int line);
-	char *gf_mem_strdup(const char *str, const char *filename, int line);
-	void gf_memory_print(void); /*prints the state of current allocations*/
-	u64 gf_memory_size(); /*gets memory allocated in bytes*/
+void *gf_mem_malloc(size_t size, const char *filename, int line);
+void *gf_mem_calloc(size_t num, size_t size_of, const char *filename, int line);
+void *gf_mem_realloc(void *ptr, size_t size, const char *filename, int line);
+void gf_mem_free(void *ptr, const char *filename, int line);
+char *gf_mem_strdup(const char *str, const char *filename, int line);
+void gf_memory_print(void); /*prints the state of current allocations*/
+u64 gf_memory_size(); /*gets memory allocated in bytes*/
 
 #define gf_free(ptr) gf_mem_free(ptr, __FILE__, __LINE__)
 #define gf_malloc(size) gf_mem_malloc(size, __FILE__, __LINE__)
@@ -369,7 +373,7 @@ extern "C" {
 #endif
 
 
-	/*end GPAC memory tracking*/
+/*end GPAC memory tracking*/
 
 #if (defined (WIN32) || defined (_WIN32_WCE)) && (defined(__MINGW32__) || !defined(__GNUC__))
 
@@ -395,7 +399,7 @@ extern "C" {
 #define LLU_CAST (s32)
 #define PTR_TO_U_CAST (u32)
 
-	/*seems that even though _LP64 is defined in OSX, %ll modifiers are still needed*/
+/*seems that even though _LP64 is defined in OSX, %ll modifiers are still needed*/
 #elif defined(__DARWIN__) || defined(__APPLE__)
 
 #define LLD "%lld"
@@ -443,7 +447,7 @@ extern "C" {
 #if defined(__GNUC__) && __GNUC__ >= 4 && !defined(GPAC_IPHONE)
 #define GF_EXPORT __attribute__((visibility("default")))
 #else
-	/*use def files for windows or let compiler decide*/
+/*use def files for windows or let compiler decide*/
 #define GF_EXPORT
 #endif
 #endif
@@ -452,7 +456,7 @@ extern "C" {
 #define GPAC_STATIC_MODULES
 #endif
 
-	/*safety checks on macros*/
+/*safety checks on macros*/
 
 #ifdef GPAC_DISABLE_ZLIB
 # define GPAC_DISABLE_LOADER_BT
@@ -565,7 +569,7 @@ extern "C" {
 # endif
 #endif
 
-	/*! @} */
+/*! @} */
 
 #ifdef __cplusplus
 }

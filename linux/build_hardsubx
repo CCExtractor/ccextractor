@@ -1,5 +1,5 @@
 #!/bin/bash
-BLD_FLAGS="-g -std=gnu99 -Wno-write-strings -DGPAC_CONFIG_LINUX -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DENABLE_OCR -DENABLE_HARDSUBX -DFT2_BUILD_LIBRARY"
+BLD_FLAGS="-g -std=gnu99 -Wno-write-strings -DGPAC_CONFIG_LINUX -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DENABLE_OCR -DENABLE_HARDSUBX -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP"
 BLD_INCLUDE="-I../src -I /usr/local/include -I /usr/include/leptonica/ -I /usr/include/tesseract/ -I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi -I../src/lib_hash -I../src/protobuf-c -I../src/freetype/include"
 SRC_LIBPNG="$(find ../src/libpng/ -name '*.c')"
 SRC_ZLIB="$(find ../src/zlib/ -name '*.c')"
