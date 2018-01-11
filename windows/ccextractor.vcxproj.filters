@@ -31,9 +31,6 @@
     <Filter Include="Header Files\zlib">
       <UniqueIdentifier>{e76a99a9-8a06-4ffb-afa1-f87c057f8448}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\ccx_decoders">
-      <UniqueIdentifier>{5af060a0-c719-4d1b-913f-71c4452fbe10}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\ccx_common">
       <UniqueIdentifier>{955fdac2-43c6-4968-8fce-7d40bad9c712}</UniqueIdentifier>
     </Filter>
@@ -87,6 +84,15 @@
     </Filter>
     <Filter Include="Header Files\lib_ccx\ccx_encoders">
       <UniqueIdentifier>{489d2c0b-43e8-4d51-8304-f4e59ee8d253}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\freetype">
+      <UniqueIdentifier>{c08646ce-ae7b-4747-a1e9-9fad759d9ad2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\freetype">
+      <UniqueIdentifier>{2c6ca4e0-5f31-46b1-8714-93fb2c28c174}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\lib_ccx\ccx_decoders">
+      <UniqueIdentifier>{5af060a0-c719-4d1b-913f-71c4452fbe10}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -166,28 +172,25 @@
       <Filter>Header Files\ccx_common</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_608.h">
-      <Filter>Header Files\ccx_decoders</Filter>
+      <Filter>Header Files\lib_ccx\ccx_decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_708.h">
-      <Filter>Header Files\ccx_decoders</Filter>
+      <Filter>Header Files\lib_ccx\ccx_decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_common.h">
-      <Filter>Header Files\ccx_decoders</Filter>
+      <Filter>Header Files\lib_ccx\ccx_decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_structs.h">
-      <Filter>Header Files\ccx_decoders</Filter>
+      <Filter>Header Files\lib_ccx\ccx_decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_xds.h">
-      <Filter>Header Files\ccx_decoders</Filter>
+      <Filter>Header Files\lib_ccx\ccx_decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\dvb_subtitle_decoder.h">
-      <Filter>Header Files\ccx_decoders</Filter>
+      <Filter>Header Files\lib_ccx\ccx_decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\teletext.h">
-      <Filter>Header Files\ccx_decoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\lib_ccx\608_spupng.h">
-      <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
+      <Filter>Header Files\lib_ccx\ccx_decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_common.h">
       <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
@@ -195,20 +198,14 @@
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_helpers.h">
       <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\lib_ccx\ccx_encoders_structs.h">
-      <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\lib_ccx\spupng_encoder.h">
-      <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_708_encoding.h">
-      <Filter>Header Files\ccx_decoders</Filter>
+      <Filter>Header Files\lib_ccx\ccx_decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_708_output.h">
-      <Filter>Header Files\ccx_decoders</Filter>
+      <Filter>Header Files\lib_ccx\ccx_decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_isdb.h">
-      <Filter>Header Files\ccx_decoders</Filter>
+      <Filter>Header Files\lib_ccx\ccx_decoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\avc_functions.h">
       <Filter>Header Files</Filter>
@@ -369,6 +366,27 @@
     <ClInclude Include="..\src\gpacmp4\gpac\maths.h">
       <Filter>Header Files\gpacmp4</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\freetype\include\ft2build.h">
+      <Filter>Header Files\freetype</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\freetype\include\freetype\config\ftstdlib.h">
+      <Filter>Header Files\freetype</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\freetype\include\freetype\config\ftheader.h">
+      <Filter>Header Files\freetype</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\freetype\include\freetype\config\ftmodule.h">
+      <Filter>Header Files\freetype</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\freetype\include\freetype\config\ftoption.h">
+      <Filter>Header Files\freetype</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\freetype\include\freetype\config\ftconfig.h">
+      <Filter>Header Files\freetype</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\ccx_encoders_structs.h">
+      <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\ccextractor.c">
@@ -479,9 +497,6 @@
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_helpers.c">
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\spupng_encoder.c">
-      <Filter>Source Files\ccx_encoders</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_common_option.c">
       <Filter>Source Files\ccx_common</Filter>
     </ClCompile>
@@ -507,9 +522,6 @@
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_smptett.c">
-      <Filter>Source Files\ccx_encoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\ccx_encoders_spupng.c">
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_srt.c">
@@ -841,6 +853,126 @@
     </ClCompile>
     <ClCompile Include="..\src\gpacmp4\hint_track.c">
       <Filter>Source Files\gpacmp4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\autofit\autofit.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\bdf\bdf.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\cff\cff.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftbase.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftbbox.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftbitmap.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\cache\ftcache.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftfntfmt.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftfstype.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftgasp.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftglyph.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftgxval.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftinit.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftlcdfil.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\lzw\ftlzw.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftmm.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftotval.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftpatent.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftpfr.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftstroke.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftsynth.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftsystem.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\fttype1.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\base\ftwinfnt.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\pcf\pcf.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\pfr\pfr.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\psaux\psaux.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\pshinter\pshinter.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\psnames\psmodule.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\raster\raster.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\sfnt\sfnt.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\smooth\smooth.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\truetype\truetype.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\type1\type1.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\cid\type1cid.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\type42\type42.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\winfonts\winfnt.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\freetype\gzip\ftgzip.c">
+      <Filter>Source Files\freetype</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_spupng.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gpacmp4\box_dump.c">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

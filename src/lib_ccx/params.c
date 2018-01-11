@@ -13,6 +13,14 @@
 #include "hardsubx.h"
 #endif
 
+#ifdef _WIN32
+#define DEFAULT_FONT_PATH "C:\\Windows\\Fonts\\calibri.ttf"
+#elif __APPLE__ // MacOS
+#define DEFAULT_FONT_PATH "/System/Library/Fonts/Helvetica.ttc"
+#else // Assume linux
+#define DEFAULT_FONT_PATH "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"
+#endif
+
 static int inputfile_capacity=0;
 
 int process_cap_file (char *filename)
@@ -616,8 +624,10 @@ void print_usage (void)
 	mprint ("                       ISO-639-2 form (like \"fre\" for french) or a language\n");
 	mprint ("                       code followed by a dash and a country code for specialities\n");
 	mprint ("                       in languages (like \"fre-ca\" for Canadian French).\n");
-	mprint ("          -nospupngocr When processing DVB don't use the OCR to write the text as");
+	mprint ("          -nospupngocr When processing DVB don't use the OCR to write the text as\n");
 	mprint ("                       comments in the XML file.\n");
+	mprint ("                -font: Specify the full path of the font that is to be used when\n");
+	mprint ("                       generating SPUPNG files.\n");
 	mprint ("\n");
 	mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
 
@@ -2323,6 +2333,13 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			i++;
 			continue;
 		}
+
+		if (strcmp(argv[i], "-font") == 0 && i<argc - 1)
+		{
+			opt->enc_cfg.render_font = argv[i + 1];
+			i++;
+			continue;
+		}
 #ifdef WITH_LIBCURL
 		if (strcmp (argv[i],"-curlposturl")==0 && i<argc-1)
 		{
@@ -2495,6 +2512,8 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	opt->enc_cfg.no_type_setting = opt->notypesetting;
 	opt->enc_cfg.subs_delay = opt->subs_delay;
 	opt->enc_cfg.gui_mode_reports = opt->gui_mode_reports;
+	if(opt->enc_cfg.render_font==NULL)
+		opt->enc_cfg.render_font = DEFAULT_FONT_PATH;
 	if(opt->output_filename && opt->multiprogram == CCX_FALSE)
 		opt->enc_cfg.output_filename = strdup(opt->output_filename);
 	else

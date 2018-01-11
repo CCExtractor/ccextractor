@@ -17,6 +17,10 @@
 if (ctx->buffer == NULL) { fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for reallocating buffer, bailing out\n"); } \
 }
 
+// CC page dimensions
+#define ROWS                    15
+#define COLUMNS                 32
+
 typedef struct ccx_dtvcc_writer_ctx
 {
 	int fd;
@@ -170,6 +174,7 @@ int write_cc_buffer_as_ssa            (struct eia608_screen *data, struct encode
 int write_cc_buffer_as_webvtt         (struct eia608_screen *data, struct encoder_ctx *context);
 int write_cc_buffer_as_sami           (struct eia608_screen *data, struct encoder_ctx *context);
 int write_cc_buffer_as_smptett        (struct eia608_screen *data, struct encoder_ctx *context);
+int write_cc_buffer_as_spupng         (struct eia608_screen *data, struct encoder_ctx *context);
 void write_cc_buffer_to_gui           (struct eia608_screen *data, struct encoder_ctx *context);
 
 int write_cc_buffer_as_g608           (struct eia608_screen *data, struct encoder_ctx *context);
