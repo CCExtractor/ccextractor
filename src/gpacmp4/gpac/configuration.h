@@ -45,7 +45,7 @@
 
 /*IPv6 enabled - for win32, this is evaluated at compile time, !! do not uncomment !!*/
 
-#define GPAC_MEMORY_TRACKING
+//#define GPAC_MEMORY_TRACKING
 
 /*Win32 IPv6 is evaluated at compile time, !! do not uncomment !!*/
 //#define GPAC_HAS_IPV6

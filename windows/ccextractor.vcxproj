@@ -132,6 +132,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\extractors\extractor.c" />
     <ClCompile Include="..\src\gpacmp4\box_dump.c" />
+    <ClCompile Include="..\src\gpacmp4\hint_track.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_demuxer_mxf.c" />
     <ClCompile Include="..\src\wrappers\wrapper.c" />
     <ClCompile Include="..\src\ccextractor.c" />
@@ -183,6 +184,7 @@
     <ClCompile Include="..\src\gpacmp4\tx3g.c" />
     <ClCompile Include="..\src\gpacmp4\url.c" />
     <ClCompile Include="..\src\gpacmp4\utf.c" />
+    <ClCompile Include="..\src\gpacmp4\color.c" />
     <ClCompile Include="..\src\libpng\png.c" />
     <ClCompile Include="..\src\libpng\pngerror.c" />
     <ClCompile Include="..\src\libpng\pngget.c" />
@@ -406,7 +408,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\zlib;..\src\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -446,7 +448,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\zlib;..\src\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SEGMENT_BY_FILE_TIME;ENABLE_HARDSUBX;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SEGMENT_BY_FILE_TIME;ENABLE_HARDSUBX;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -506,7 +508,7 @@ xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <AdditionalIncludeDirectories>..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\libpng;..\src\zlib;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ENABLE_HARDSUBX;VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ENABLE_HARDSUBX;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
@@ -565,7 +567,7 @@ xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\zlib;..\src\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>VERSION_FILE_PRESENT;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>VERSION_FILE_PRESENT;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
