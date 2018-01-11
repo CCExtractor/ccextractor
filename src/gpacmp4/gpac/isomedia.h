@@ -233,10 +233,7 @@ enum
 	/*DIMS media type (same as scene but with a different mediaInfo)*/
 	GF_ISOM_MEDIA_DIMS		= GF_4CC( 'd', 'i', 'm', 's' ),
 
-	GF_ISOM_MEDIA_FLASH		= GF_4CC( 'f', 'l', 's', 'h' ),
-	
-	/* CFS: Seen this in an itunes sample */
-	GF_ISOM_MEDIA_CAPTIONS = GF_4CC('c', 'l', 'c', 'p')
+	GF_ISOM_MEDIA_FLASH		= GF_4CC( 'f', 'l', 's', 'h' )
 };
 
 
@@ -323,13 +320,6 @@ enum
 	GF_ISOM_SUBTYPE_RRTP		= GF_4CC( 'r', 'r', 't', 'p' ),
 	GF_ISOM_SUBTYPE_RTCP		= GF_4CC( 'r', 't', 'c', 'p' ),
 	GF_ISOM_SUBTYPE_FLUTE		= GF_4CC( 'f', 'd', 'p', ' ' ),
-	
-	/* CAPTIONS */
-	GF_ISOM_SUBTYPE_C608        = GF_4CC( 'c', '6', '0', '8' ),
-	GF_ISOM_SUBTYPE_C708        = GF_4CC( 'c', '7', '0', '8' ),
-
-	/* xdvb, seems MPEG-2, needed by some US TV stations so I'm doing my best */
-	GF_ISOM_SUBTYPE_XDVB        = GF_4CC( 'x', 'd', 'v', 'b' )
 };
 
 

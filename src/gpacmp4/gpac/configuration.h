@@ -45,6 +45,8 @@
 
 /*IPv6 enabled - for win32, this is evaluated at compile time, !! do not uncomment !!*/
 
+#define GPAC_MEMORY_TRACKING
+
 /*Win32 IPv6 is evaluated at compile time, !! do not uncomment !!*/
 //#define GPAC_HAS_IPV6
 
@@ -113,6 +115,7 @@
 #define GPAC_HAS_PNG
 #define GPAC_HAS_GLU
 
+#define GPAC_MEMORY_TRACKING
 /*Configuration for XCode iOS*/
 #elif defined(GPAC_CONFIG_DARWIN) && defined(GPAC_IPHONE)
 
@@ -156,6 +159,8 @@
 #define GPAC_HAS_JPEG
 #define GPAC_HAS_PNG
 
+#else
+#error "Unknown target platform used with static configuration file"
 #endif
 
 
@@ -261,10 +266,10 @@
 //#define GPAC_DISABLE_SCENEGRAPH
 
 /*disables scene graph textual dump*/
-#define GPAC_DISABLE_SCENE_DUMP
+//#define GPAC_DISABLE_SCENE_DUMP
 
 /*disables OD graph textual dump*/
-#define GPAC_DISABLE_OD_DUMP
+//#define GPAC_DISABLE_OD_DUMP
 
 /*disables OD graph textual dump*/
 //#define GPAC_DISABLE_ISOM_DUMP

@@ -2444,6 +2444,7 @@ GF_Err gf_isom_dump_hint_sample(GF_ISOFile *the_file, u32 trackNumber, u32 Sampl
 	char *szName;
 
 	trak = gf_isom_get_track_from_file(the_file, trackNumber);
+	if (!trak || !IsHintTrack(trak)) return GF_BAD_PARAM;
 
 	tmp = gf_isom_get_sample(the_file, trackNumber, SampleNum, &descIndex);
 	if (!tmp) return GF_BAD_PARAM;
@@ -3043,7 +3044,15 @@ static GF_Err gf_isom_dump_srt_track(GF_ISOFile *the_file, u32 track, FILE *dump
 
 					styles = new_styles;
 				}
-				
+				if (new_color != color) {
+					if (new_color ==txtd->default_style.text_color) {
+						fprintf(dump, "</font>");
+					} else {
+						fprintf(dump, "<font color=\"%s\">", gf_color_get_name(new_color) );
+					}
+					color = new_color;
+				}
+
 				/*not sure if styles must be reseted at line breaks in srt...*/
 				is_new_line = GF_FALSE;
 				if ((utf16Line[j]=='\n') || (utf16Line[j]=='\r') ) {
@@ -3972,7 +3981,8 @@ GF_Err stsg_dump(GF_Box *a, FILE * trace)
 	gf_isom_box_dump_start(a, "SubTrackSampleGroupBox", trace);
 
 	if (p->grouping_type)
-		fprintf(trace, "grouping_type=\"%s\">\n", gf_4cc_to_str(p->grouping_type) );
+		fprintf(trace, "grouping_type=\"%s\"", gf_4cc_to_str(p->grouping_type) );
+	fprintf(trace, ">\n");
 
 	for (i = 0; i < p->nb_groups; i++) {
 		fprintf(trace, "<SubTrackSampleGroupBoxEntry group_description_index=\"%d\"/>\n", p->group_description_index[i]);

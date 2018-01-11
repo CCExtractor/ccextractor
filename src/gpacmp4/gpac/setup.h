@@ -340,6 +340,10 @@ typedef enum {
 } Bool;
 #endif
 
+typedef struct {
+	s32 num;
+	u32 den;
+} GF_Fraction;
 
 /*GPAC memory tracking*/
 #if defined(GPAC_MEMORY_TRACKING)
@@ -360,11 +364,11 @@ u64 gf_memory_size(); /*gets memory allocated in bytes*/
 
 #else
 
-#define gf_malloc malloc
-#define gf_calloc calloc
-#define gf_realloc realloc
-#define gf_free free
-#define gf_strdup strdup
+void* gf_malloc(size_t size);
+void* gf_calloc(size_t num, size_t size_of);
+void* gf_realloc(void *ptr, size_t size);
+void gf_free(void *ptr);
+char* gf_strdup(const char *str);
 
 #endif
 
