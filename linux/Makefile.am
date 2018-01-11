@@ -25,6 +25,7 @@ ccextractor_SOURCES = \
 				../src/gpacmp4/drm_sample.c \
 				../src/gpacmp4/error.c \
 				../src/gpacmp4/gpac_ogg.c \
+				../src/gpacmp4/hint_track.c \
 				../src/gpacmp4/hinting.c \
 				../src/gpacmp4/ipmpx_code.c \
 				../src/gpacmp4/ipmpx_parse.c \
@@ -310,7 +311,7 @@ ccextractor_SOURCES = \
 				../src/freetype/type42/type42.c \
 				../src/freetype/winfonts/winfnt.c
 
-ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY
+ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP
 
 ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi/ -I../src/lib_hash/ -I../src/protobuf-c/ -I../src/utf8proc/ -I../src/ -I../src/freetype/include/
 
