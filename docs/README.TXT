@@ -39,7 +39,15 @@ Google Code-in 2016 students
 - Matej Plavevski
 - Danila Fedorin
 
-(more, but they forgot to add themselves...)
+Google Code-in 2017 students
+- Matej Plavevski
+- Harry Yu
+- Theodore Fabian
+- Nikunj Taneja
+- John Chew
+- Aadi Bajpai
+- Wiliam(Hori75)
+
 
 Google Summer of Code 2017 students
 - Diptanshu Jamgade
