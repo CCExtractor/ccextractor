@@ -1,3 +1,7 @@
+0.87 (target: 2018-01-18)
+-------------------------
+- New: Upgrade libGPAC to 0.7.1
+
 0.86 (2018-01-09)
 -----------------
 - New: Preliminary MXF support

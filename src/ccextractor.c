@@ -1,6 +1,6 @@
 
 /* CCExtractor, originally by carlos at ccextractor.org, now a lot of people.
-Credits: See CHANGES.TXT
+Credits: See AUTHORS.TXT
 License: GPL 2.0
 */
 #include "ccextractor.h"

@@ -1,0 +1,85 @@
+﻿ccextractor was originally a mildly optimized C port of McPoodle's excellent
+but painfully slow Perl script SCC_RIP. That port (ccextractor 0.01) was
+written by Carlos Fernández (cfsmp3).
+
+After a number of versions that did something semiuseful Volker Quetschke
+joined the effort and together Carlos and Volker to CCExtractor a point in
+which it was actually really usable, at least for the cases that interested
+them.
+
+Unfortunately Volker moved on once CCExtractor did what he needed to do for
+him.
+
+At some point David Liontooth from UCLA started to use CCExtractor as a 
+replacement for libzvbi because libzvbi wasn't working for some specific
+streams. UCLA became the primary key user as they were using CCExtractor
+24x7 to process a huge amount of stream from several countries, and was 
+therefore able to provide samples, proper bug reports, etc.
+
+At that time CCEXtractor was still US-centric, because it was originally
+written so Carlos could get subtitles for US TV shows. But UCLA wanted
+European subtitles too, and they already had recording nodes in Denmark
+(which use teletext) and Spain (which uses DVB).
+
+For teletext a good solution existed already: Petr Kutalek's telxcc. 
+We contacted Petr and asked for permission to integrate his code into
+CCExtractor. Petr's absolutely brilliantly clean code was easy to 
+integrate and build upon - and with it, we added support for the first
+kind of European subtitles.
+
+Around that time, we decided to apply for Google Summer of Code. That
+was also a game changer, with Willem, Ruslan and Anshul being the first
+3 students. They are still around, now as mentors and year round 
+contributors.
+
+Since them, many more people have been involved: More than 10 as 
+Google Summer of Code students, Code-In students, companies that
+sponsored development by hiring team members to do custom development
+(Comcast was the first one, and we'll always be grateful for the 
+opportunity). 
+
+List of students is below (if they added themselves). For a complete
+list, just check the pull requests at GitHub.
+
+Home: https://www.ccextractor.org
+
+Google Summer of Code 2014 students
+- Willem Van Iseghem
+- Ruslan Kuchumov
+- Anshul Maheshwari
+
+Google Summer of Code 2015 students
+- Willem Van Iseghem
+- Ruslan Kuchumov
+- Anshul Maheshwari
+- Nurendra Choudhary
+- Oleg Kiselev
+- Vasanth Kalingeri
+
+Google Summer of Code 2016 students
+- Willem Van Iseghem
+- Ruslan Kuchumov
+- Abhishek Vinjamoori
+- Abhinav Shukla
+- Rishabh Garg
+
+Google Code-in 2016 students
+- Evgeny Shulgin
+- Manveer Basra
+- Alexandru Bratosin
+- Matej Plavevski
+- Danila Fedorin
+
+Google Code-in 2017 students
+- Matej Plavevski
+- Harry Yu
+- Theodore Fabian
+- Nikunj Taneja
+- John Chew
+- Aadi Bajpai
+- Wiliam(Hori75)
+
+Google Summer of Code 2017 students
+- Diptanshu Jamgade
+- Mayank Gupta
+
