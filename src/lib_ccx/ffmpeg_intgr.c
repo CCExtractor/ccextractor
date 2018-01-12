@@ -13,9 +13,6 @@
 #include <libavutil/log.h>
 #include <libavutil/error.h>
 
-#include "lib_ccx.h"
-#include "ccx_demuxer.h"
-
 struct ffmpeg_ctx
 {
 	AVFormatContext *ifmt;
