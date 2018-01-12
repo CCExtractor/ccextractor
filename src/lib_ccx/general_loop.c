@@ -1194,7 +1194,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	int caps = 0;
 	LLONG result;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
-	struct Teletext *telctx;
+	struct TeletextCtx *telctx;
 	// As BUFSIZE is a macro this is just a reminder
 	if (BUFSIZE < (3*0xFFFF + 10))
 		fatal (CCX_COMMON_EXIT_BUG_BUG, "In rcwt_loop: BUFSIZE too small for RCWT caption block.\n");
