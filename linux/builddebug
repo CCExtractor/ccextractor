@@ -55,5 +55,8 @@ API_EXTRACTORS="$(find ../src/extractors/ -name '*.c')"
 BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC $API_WRAPPERS $API_EXTRACTORS $SRC_FREETYPE"
 BLD_LINKER="-lm -zmuldefs -l tesseract -l lept"
 
+echo "Running pre-build script..."
 ./pre-build.sh
+echo "Trying to compile..."
+
 gcc -g $BLD_FLAGS $BLD_INCLUDE -o ccextractor $BLD_SOURCES $BLD_LINKER
