@@ -207,6 +207,9 @@ int write_cc_bitmap_as_spupng          (struct cc_subtitle *sub, struct encoder_
 int write_cc_bitmap_as_transcript      (struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_libcurl         (struct cc_subtitle *sub, struct encoder_ctx *context);
 
+void write_spumux_header(struct encoder_ctx *ctx, struct ccx_s_write *out);
+void write_spumux_footer(struct ccx_s_write *out);
+
 struct cc_subtitle * reformat_cc_bitmap_through_sentence_buffer (struct cc_subtitle *sub, struct encoder_ctx *context);
 
 void set_encoder_last_displayed_subs_ms(struct encoder_ctx *ctx, LLONG last_displayed_subs_ms);

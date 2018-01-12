@@ -799,11 +799,11 @@ uint32_t* utf8_to_utf32(char* src) {
 	len_src = strlen(src);
 	len_dst = (len_src + 2) * 4; // one for FEFF and one for \0
 
-	char* string_utf32 = (char *)calloc(len_dst, 1);
+	uint32_t* string_utf32 = (char *)calloc(len_dst, 1);
 	size_t inbufbytesleft = len_src;
 	size_t outbufbytesleft = len_dst;
 	char* inbuf = src;
-	char* outbuf = string_utf32;
+	uint32_t* outbuf = string_utf32;
 
 	iconv_t cd = iconv_open("UTF-32", "UTF-8");
 	int result = iconv(cd, &inbuf, &inbufbytesleft, &outbuf, &outbufbytesleft);
