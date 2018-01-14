@@ -11,6 +11,8 @@
 #include "activity.h"
 #include "ccx_dtvcc.h"
 
+#define MEDIA_TYPE(type, subtype) (((u64)(type)<<32)+(subtype))
+
 static short bswap16(short v)
 {
 	return ((v >> 8) & 0x00FF) | ((v << 8) & 0xFF00);
@@ -326,7 +328,7 @@ static int process_clcp(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 		if (sub_type == GF_ISOM_SUBTYPE_C708) {
 			if (!is_ccdp) {
 				mprint("Your video file seems to be an interesting sample for us (%4.4s)\n", data);
-				mprint("We haven't met c708 subtitle not in a \'ccdp\' atom before\n");
+				mprint("We haven't seen a c708 subtitle outside a ccdp atom before\n");
 				mprint("Please, report\n");
 				return -1;
 			}
@@ -377,7 +379,7 @@ static int process_clcp(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 		{
 			if (is_ccdp) {
 				mprint("Your video file seems to be an interesting sample for us\n");
-				mprint("We haven't met c608 subtitle in a \'ccdp\' atom before\n");
+				mprint("We haven't seen a c608 subtitle inside a ccdp atom before\n");
 				mprint("Please, report\n");
 				return -1;
 			}
@@ -458,30 +460,12 @@ static int process_tx3g(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 	return -1;
 }
 
-#define MEDIA_TYPE(type, subtype) (((u64)(type)<<32)+(subtype))
-
-void switch_output_file(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, int track_id) {
-	if (enc_ctx->out->filename != NULL) { // Close and release the previous handle
-		free(enc_ctx->out->filename);
-		close(enc_ctx->out->fh);
-	}
-	char *ext = get_file_extension(ctx->write_format);
-	char suffix[32];
-	sprintf(suffix, "_%d", track_id);
-	enc_ctx->out->filename = create_outfilename(get_basename(enc_ctx->first_input_file), suffix, ext);
-	enc_ctx->out->fh = open(enc_ctx->out->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
-
-	// Reset counters as we switch output file.
-	enc_ctx->cea_708_counter = 0;
-	enc_ctx->srt_counter = 0;
-}
-
 /*
 	Here is application algorithm described in some C-like pseudo code:
 		main(){
 			media = open()
 			for each track in media
-				swtich track
+				switch track
 				AVC track:
 					for each sample in track
 						for each NALU in sample
@@ -515,7 +499,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 
 	if((f = gf_isom_open(file, GF_ISOM_OPEN_READ, NULL)) == NULL)
 	{
-		mprint("Failed to open\n");
+		mprint("Failed to open input file (gf_isom_open() returned error)\n");
 		free(dec_ctx->xds_ctx);
 		return -2;
 	}
@@ -563,7 +547,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 				switch_output_file(ctx, enc_ctx, i);
 			}
 			if (process_xdvb_track(ctx, file, f, i + 1, &dec_sub) != 0) {
-				mprint("Error\n");
+				mprint("Error on process_xdvb_track()\n");
 				free(dec_ctx->xds_ctx);
 				return -3;
 			}
@@ -589,7 +573,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 				}
 			}
 			if (process_avc_track(ctx, file, f, i + 1, &dec_sub) != 0) {
-				mprint("Error\n");
+				mprint("Error on process_avc_track()\n");
 				free(dec_ctx->xds_ctx);
 				return -3;
 			}
@@ -666,10 +650,8 @@ int processmp4 (struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 							(unsigned char)((type >> 8) % 0x100), (unsigned char)(type % 0x100),
 							(unsigned char)(subtype >> 24 % 0x100), (unsigned char)((subtype >> 16) % 0x100),
 							(unsigned char)((subtype >> 8) % 0x100), (unsigned char)(subtype % 0x100));
-
-						mprint("", track_type);
 					}
-					if (atom_length == -1) break; // error happened
+					if (atom_length == -1) break; // error happened or process of the sample is finished
 					atomStart += atom_length;
 				}
 				free(sample->data);
@@ -707,7 +689,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 	if(avc_track_count)
 		mprint("Found %d AVC track(s). ", avc_track_count);
 	else
-		mprint("Found no AVC track(s). ", file);
+		mprint("Found no AVC track(s). ");
 
 	if (cc_track_count)
 		mprint ("Found %d CC track(s).\n", cc_track_count);
