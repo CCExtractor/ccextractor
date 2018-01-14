@@ -457,7 +457,7 @@ static int process_tx3g(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 	*mp4_ret = 1;
 	has_previous_sub = 1;
 
-	return -1;
+	return -1; // Assume there's only one subtitle in one atom.
 }
 
 /*
