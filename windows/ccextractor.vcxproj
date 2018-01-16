@@ -153,7 +153,6 @@
     <ClCompile Include="..\src\gpacmp4\box_code_base.c" />
     <ClCompile Include="..\src\gpacmp4\box_code_drm.c" />
     <ClCompile Include="..\src\gpacmp4\box_code_meta.c" />
-    <ClCompile Include="..\src\gpacmp4\box_dump.c" />
     <ClCompile Include="..\src\gpacmp4\box_funcs.c" />
     <ClCompile Include="..\src\gpacmp4\configfile.c" />
     <ClCompile Include="..\src\gpacmp4\data_map.c" />

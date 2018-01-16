@@ -667,7 +667,7 @@ int tcp_bind(const char *port, int *family)
 
 	freeaddrinfo(ai);
 
-	if (NULL == p)
+	if (NULL == p) // Went over all addresses, couldn't bind any
 		return -1;
 
 	if (listen(sockfd, SOMAXCONN) != 0)
