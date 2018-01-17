@@ -1,6 +1,7 @@
 0.87 (target: 2018-01-18)
 -------------------------
 - New: Upgrade libGPAC to 0.7.1
+- New: mp4 tx3g & multitrack subtitles
 
 0.86 (2018-01-09)
 -----------------
