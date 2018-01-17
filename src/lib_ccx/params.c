@@ -627,7 +627,10 @@ void print_usage (void)
 	mprint ("          -nospupngocr When processing DVB don't use the OCR to write the text as\n");
 	mprint ("                       comments in the XML file.\n");
 	mprint ("                -font: Specify the full path of the font that is to be used when\n");
-	mprint ("                       generating SPUPNG files.\n");
+	mprint ("                       generating SPUPNG files. If not specified, you need to\n");
+	mprint ("                       have the default font installed (Helvetica for macOS, Calibri\n");
+	mprint ("                       for Windows, and Noto for other operating systems at their\n)");
+	mprint ("                       default location\n)");
 	mprint ("\n");
 	mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
 
