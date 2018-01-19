@@ -56,7 +56,6 @@ void spupng_init_font()
 	memcpy(ccfont2_bits, t, ccfont2_width * ccfont2_height / 8);
 	free(t);
 }
-
 struct spupng_t *spunpg_init(struct ccx_s_write *out)
 {
 	struct spupng_t *sp = (struct spupng_t *) malloc(sizeof(struct spupng_t));
@@ -199,11 +198,18 @@ char* get_spupng_filename(void *ctx)
 	struct spupng_t *sp = (struct spupng_t *)ctx;
 	return sp->pngfile;
 }
-void inc_spupng_fileindex(void *ctx)
+void inc_spupng_fileindex(struct spupng_t *sp)
 {
-	struct spupng_t *sp = (struct spupng_t *)ctx;
 	sp->fileIndex++;
 	sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex);
+
+	// Make relative path
+	char* last_slash = strrchr(sp->dirname, '/');
+	if (last_slash == NULL) last_slash = strrchr(sp->dirname, '\\');
+	if (last_slash != NULL)
+		sprintf(sp->relative_path_png, "%s/sub%04d.png", last_slash + 1, sp->fileIndex);
+	else // do NOT do sp->relative_path_png = sp->pngfile (to avoid double free).
+		strcpy(sp->relative_path_png, sp->pngfile);
 }
 void set_spupng_offset(void *ctx, int x, int y)
 {
@@ -354,6 +360,7 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 	if (sub->data == NULL)
 		return 0;
 
+	inc_spupng_fileindex(sp);
 	write_sputag_open(sp, sub->start_time, sub->end_time - 1);
 
 	if (sub->nb_data == 0 && (sub->flags & SUB_EOD_MARKER))
@@ -399,7 +406,6 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 
 		}
 	}
-	inc_spupng_fileindex(sp);
 	filename = get_spupng_filename(sp);
 	set_spupng_offset(sp, x_pos, y_pos);
 	if (sub->flags & SUB_EOD_MARKER)
@@ -827,7 +833,7 @@ int spupng_write_string(struct spupng_t *sp, char *string, LLONG start_time, LLO
 
 	LLONG ms_end = end_time + context->subs_delay;
 
-	sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex++);
+	inc_spupng_fileindex(sp);
 	if ((sp->fppng = fopen(sp->pngfile, "wb")) == NULL)
 	{
 		fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n",
