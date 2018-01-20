@@ -51,6 +51,7 @@ windows/libs/tesseract/**
 
 # Ctags
 *.tags*
+tags
 
 # Vagrant
 .vagrant/
