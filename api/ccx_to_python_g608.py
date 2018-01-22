@@ -31,7 +31,7 @@ def return_g608_grid(case,text,color,font):
             ret_val['color']=color
         if font:
             ret_val['font']=font
-        
+
     elif case==1:
         if text:
             ret_val['text']=text
