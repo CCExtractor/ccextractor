@@ -496,80 +496,20 @@ int api_param_count(struct ccx_s_options* api_options)
 {
     return api_options->python_param_count;
 }
-#endif
+#endif // PYTHON_API
 
-/*
- * asprintf alternative
- * Defined only in case of windows users.
- */
-#ifdef _WIN32
-int vasprintf(char **strp, const char *fmt, va_list ap) 
-{
-    //_vscprintf tells you how big the buffer needs to be
-    int len = _vscprintf(fmt, ap);
-    if (len == -1) {
-    return -1;
-    }
-    size_t size = (size_t)len + 1;
-    char *str = malloc(size);
-    if (!str) {
-         return -1;
-    }
-    // _vsprintf_s is the "secure" version of vsprintf
-    int r = vsprintf_s(str, len + 1, fmt, ap);
-    if (r == -1) {
-         free(str);
-         return -1;
-    }
-    *strp = str;
-    return r;
-    }
 
-int asprintf(char **strp, const char *fmt, ...) 
-{
-        va_list ap;
-        va_start(ap, fmt);
-        int r = vasprintf(strp, fmt, ap);
-        va_end(ap);
-        return r;
-}
-#endif
-char* time_wrapper(char* fmt, unsigned h, unsigned m, unsigned s, unsigned ms)
-{
-    char * time;
-    asprintf(&time,fmt, h, m, s, ms);
-    return time;
-}
 
-#ifdef PYTHON_API
-void call_from_python_api(struct ccx_s_options *api_options)
-{
-    int indicator = api_options->signal_python_api;
-    if (indicator)
-        signal_python_api=1;
-    else
-        signal_python_api=0;
-}
-#endif
-
-#if defined(PYTHONAPI)
-void run(PyObject * reporter, char * line, int encoding)
-{
-       assert ( PyFunction_Check(reporter) );
-       PyObject* args = Py_BuildValue("(si)",line,encoding);
-       PyObject_CallObject((PyObject*)reporter, args);
-}
-#endif
 int main(int argc, char* argv[])
 {
     struct ccx_s_options* api_options = api_init_options();
     check_configuration_file(*api_options);
-#ifdef ENABLE_PYTHON
+#ifdef PYTHON_API
     for(int i = 1; i < argc; i++)
         api_add_param(api_options,argv[i]);
 #endif
 
-#ifdef ENABLE_PYTHON
+#ifdef PYTHON_API
     int compile_ret = compile_params(api_options,argc);
 #else
     int compile_ret = parse_parameters (api_options, argc, argv);
