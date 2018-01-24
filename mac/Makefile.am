@@ -266,8 +266,6 @@ ccextractor_SOURCES = \
 				../src/zvbi/sampling_par.h \
 				../src/zvbi/sliced.h \
 				../src/zvbi/zvbi_decoder.h \
-				../src/extractors/extractor.c \
-				../src/extractors/extractor.h \
 				../src/wrappers/wrapper.c \
 				../src/wrappers/wrapper.h \
 				../src/freetype/autofit/autofit.c \
