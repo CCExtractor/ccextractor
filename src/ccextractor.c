@@ -418,9 +418,6 @@ int api_start(struct ccx_s_options api_options)
   	curl_global_cleanup();
 #endif
     dinit_libraries(&ctx);
-#ifdef PYTHON_API
-    free_python_global_vars();
-#endif
 
     if (!ret)
         mprint("\nNo captions were found in input.\n");
@@ -435,19 +432,6 @@ int api_start(struct ccx_s_options api_options)
     }
     return ret ? EXIT_OK : EXIT_NO_CAPTIONS;
 }
-#ifdef ENABLE_PYTHON
-void free_python_global_vars()
-{
-   int i=0;
-   while(i<array.sub_count)
-   {
-       free(array.subs[i].start_time);
-       free(array.subs[i].end_time);
-       i++;
-   } 
-   free(array.subs);
-}
-#endif
 
 struct ccx_s_options* api_init_options()
 {
