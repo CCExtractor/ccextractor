@@ -1,28 +1,37 @@
 ###
 #MANDATORY UPDATES IN EVERY PYTHON SCRIPT
 ###
-import ccextractor as cc
-import api_support
-from multiprocessing import Queue,Process,Event 
 import sys
-import time
 
-def templer():
-    s =  cc.api_init_options()
-    cc.check_configuration_file(s)
-    for i in sys.argv[1:]:
-        cc.api_add_param(s,str(i))
-    #very mandatory for keeping a track of pythonapi call. Always must be set.
-    cc.my_pythonapi(s, callback)
-    
-    compile_ret = cc.compile_params(s,len(sys.argv[1:]));
-    
-    #very mandatory for keeping a track of pythonapi call. Always must be called so that the program knows that the call is from pythonapi.
-    cc.call_from_python_api(s)
+import ccextractor as cc
 
-    start_ret = cc.api_start(s);
 
 def callback(line, encoding):
-    api_support.generate_output_srt(line, str(encoding))
+    print line
+
+
+def init_ccextractor(callback):
+    """
+    :param callback: The callback which we use to handle
+                     the extracted subtitle info
+    :return return the initialized options
+    """
+    optionos = cc.api_init_options()
+    cc.check_configuration_file(optionos)
+    for arg in sys.argv[1:]:
+        cc.api_add_param(optionos, arg)
+    compile_ret = cc.compile_params(optionos, len(sys.argv[1:]))
+
+    # use my_pythonapi to add callback in C source code
+    cc.my_pythonapi(optionos, callback)
+
+    return optionos
+
+
+def main():
+    options = init_ccextractor(callback)
+    cc.api_start(options)
+
+
 if __name__=="__main__":
-    templer()
+    main()
