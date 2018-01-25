@@ -51,7 +51,7 @@ windows/libs/leptonica/**
 windows/libs/tesseract/**
 
 # Ctags
-*.tags
+*.tags*
 tags
 
 # Vagrant
