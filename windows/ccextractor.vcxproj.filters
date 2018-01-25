@@ -351,9 +351,6 @@
     <ClInclude Include="..\src\lib_ccx\lib_ccx.h">
       <Filter>Header Files\lib_ccx</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\extractors\extractor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\wrappers\wrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
