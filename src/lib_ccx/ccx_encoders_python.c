@@ -14,7 +14,7 @@ void Asprintf(char **strp, const char *fmt, ...) {
 
 	if (ret == -1) {
 		printf("Error: Some problem with asprintf return value in extractor.c\nExiting.");
-		exit(500);
+		exit(CCX_COMMON_EXIT_BUG_BUG);
 	}
 }
 
