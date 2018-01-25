@@ -248,6 +248,12 @@ static void ccx_demuxer_print_cfg(struct ccx_demuxer *ctx)
 		case CCX_SM_MP4:
 			mprint ("MP4");
 			break;
+		case CCX_SM_MKV:
+			mprint("MKV");
+			break;
+		case CCX_SM_MXF:
+			mprint("MXF");
+			break;
 #ifdef WTV_DEBUG
 		case CCX_SM_HEX_DUMP:
 			mprint ("Hex");
