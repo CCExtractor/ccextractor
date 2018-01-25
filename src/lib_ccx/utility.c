@@ -654,7 +654,7 @@ int vasprintf(char **strp, const char *fmt, va_list ap)
 
 	va_copy(tmp_va, ap);
 #ifdef _WIN32
-	len = _vscprintf(fmt, ap);
+	len = _vscprintf(fmt, tmp_va);
 #else
 	len = vsnprintf(NULL, 0, fmt, tmp_va);
 #endif
