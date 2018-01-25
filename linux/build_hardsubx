@@ -50,10 +50,9 @@ SRC_FREETYPE="../src/freetype/autofit/autofit.c
         ../src/freetype/type42/type42.c
         ../src/freetype/winfonts/winfnt.c"
 API_WRAPPERS="$(find ../src/wrappers/ -name '*.c')"
-API_EXTRACTORS="$(find ../src/extractors/ -name '*.c')"
 SRC_PROTOBUF="$(find ../src/protobuf-c/ -name '*.c')"
 protobuf-c
-BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_UTF8 $SRC_PROTOBUF $API_WRAPPERS $API_EXTRACTORS $SRC_FREETYPE"
+BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_UTF8 $SRC_PROTOBUF $API_WRAPPERS $SRC_FREETYPE"
 BLD_LINKER="-lm -zmuldefs -l tesseract -l lept -L/usr/local/lib -lswscale -lavutil -pthread -lavformat -lavcodec -lxcb-shm -lxcb -lX11 -llzma -lz -lswresample"
 
 ./pre-build.sh

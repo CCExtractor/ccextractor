@@ -13,7 +13,6 @@ SRC_UTF8="../src/utf8proc/utf8proc.c"
 SRC_ZLIB="$(find ../src/zlib -name '*.c')"
 SRC_ZVBI="$(find ../src/zvbi -name '*.c')"
 API_WRAPPERS="$(find ../src/wrappers/ -name '*.c')"
-API_EXTRACTORS="$(find ../src/extractors/ -name '*.c')"
 SRC_FREETYPE="../src/freetype/autofit/autofit.c \
 		../src/freetype/base/ftbase.c \
 		../src/freetype/base/ftbbox.c \
@@ -55,7 +54,7 @@ SRC_FREETYPE="../src/freetype/autofit/autofit.c \
 		../src/freetype/type1/type1.c \
 		../src/freetype/type42/type42.c \
 		../src/freetype/winfonts/winfnt.c"
-BLD_SOURCES="../src/ccextractor.c $SRC_API $SRC_CCX  $SRC_GPAC $SRC_LIB_HASH $SRC_LIBPNG $SRC_PROTOBUF $SRC_UTF8 $SRC_ZLIB $SRC_ZVBI $SRC_FREETYPE $API_WRAPPERS $API_EXTRACTORS" 
+BLD_SOURCES="../src/ccextractor.c $SRC_API $SRC_CCX  $SRC_GPAC $SRC_LIB_HASH $SRC_LIBPNG $SRC_PROTOBUF $SRC_UTF8 $SRC_ZLIB $SRC_ZVBI $SRC_FREETYPE $API_WRAPPERS"
 BLD_LINKER="-lm -liconv"
 [[ $1 = "OCR" ]] && BLD_LINKER="$BLD_LINKER `pkg-config --libs --silence-errors tesseract` `pkg-config --libs --silence-errors lept`"
 

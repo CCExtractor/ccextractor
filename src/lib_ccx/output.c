@@ -9,17 +9,15 @@
 
 void dinit_write(struct ccx_s_write *wb)
 {
-#ifdef ENABLE_PYTHON
-	if(!signal_python_api){
-#endif
+#ifdef PYTHON_API
+	return;
+#else
         if (wb->fh > 0)
             close(wb->fh);
         freep(&wb->filename);
         if (wb->with_semaphore && wb->semaphore_filename)
             unlink(wb->semaphore_filename);
         freep(&wb->semaphore_filename);
-#ifdef ENABLE_PYTHON
-    }
 #endif
 }
 
@@ -54,18 +52,9 @@ int temporarily_open_output(struct ccx_s_write *wb)
 
 int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
 {
-#ifdef ENABLE_PYTHON
-    if (signal_python_api){
-        char* output;
-        //writing to memory which would be then tailed by python.
-        asprintf(&output,"filename:%s\n",filename);
-#if defined(PYTHONAPI)
-        run(array.reporter, output, 8);
-#endif
-        free(output);
-        return EXIT_OK;
-    }
-#endif
+#ifdef PYTHON_API
+    return EXIT_OK;
+#else
 	memset(wb, 0, sizeof(struct ccx_s_write));
 	wb->fh=-1;
 	wb->temporarily_closed = 0;
@@ -97,6 +86,7 @@ int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
 		close(t);
 	}
 	return EXIT_OK;
+#endif
 }
 
 int writeraw (const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub)

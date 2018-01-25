@@ -833,9 +833,6 @@
     <ClCompile Include="..\src\lib_ccx\matroska.c">
       <Filter>Source Files\lib_ccx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\extractors\extractor.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\wrappers\wrapper.c">
       <Filter>Source Files</Filter>
     </ClCompile>

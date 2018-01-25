@@ -418,9 +418,6 @@ int api_start(struct ccx_s_options api_options)
   	curl_global_cleanup();
 #endif
     dinit_libraries(&ctx);
-#ifdef PYTHON_API
-    free_python_global_vars();
-#endif
 
     if (!ret)
         mprint("\nNo captions were found in input.\n");
@@ -435,19 +432,6 @@ int api_start(struct ccx_s_options api_options)
     }
     return ret ? EXIT_OK : EXIT_NO_CAPTIONS;
 }
-#ifdef ENABLE_PYTHON
-void free_python_global_vars()
-{
-   int i=0;
-   while(i<array.sub_count)
-   {
-       free(array.subs[i].start_time);
-       free(array.subs[i].end_time);
-       i++;
-   } 
-   free(array.subs);
-}
-#endif
 
 struct ccx_s_options* api_init_options()
 {
@@ -460,7 +444,7 @@ void check_configuration_file(struct ccx_s_options api_options)
     parse_configuration(&api_options);
 }
 
-#ifdef ENABLE_PYTHON
+#ifdef PYTHON_API
 int compile_params(struct ccx_s_options *api_options,int argc)
 {
     //adding the parameter ./ccextractor to the list of python_params for further parsing
@@ -470,12 +454,12 @@ int compile_params(struct ccx_s_options *api_options,int argc)
     api_options->python_param_count++;
 
     char* temp = api_options->python_params[api_options->python_param_count-1];
-    int i;
-    for (i = api_options->python_param_count-1; i > 0; i--)
+    for (int i = api_options->python_param_count-1; i > 0; i--)
         api_options->python_params[i] = api_options->python_params[i-1];
     api_options->python_params[0] = temp;
 
     int ret = parse_parameters (api_options, api_options->python_param_count, api_options->python_params);
+    api_options->messages_target = CCX_MESSAGES_QUIET;
 
     return ret;
 }
@@ -486,6 +470,13 @@ void api_add_param(struct ccx_s_options* api_options,char* arg)
     api_options->python_params[api_options->python_param_count] = malloc(strlen(arg)+1);
     strcpy(api_options->python_params[api_options->python_param_count], arg);
     api_options->python_param_count++;
+}
+
+void py_callback(char *line, int encoding)
+{
+       assert ( PyFunction_Check(py_callback_func) );
+       PyObject* args = Py_BuildValue("(si)",line,encoding);
+       PyObject_CallObject((PyObject*)py_callback_func, args);
 }
 
 /*
@@ -505,80 +496,20 @@ int api_param_count(struct ccx_s_options* api_options)
 {
     return api_options->python_param_count;
 }
-#endif
+#endif // PYTHON_API
 
-/*
- * asprintf alternative
- * Defined only in case of windows users.
- */
-#ifdef _WIN32
-int vasprintf(char **strp, const char *fmt, va_list ap) 
-{
-    //_vscprintf tells you how big the buffer needs to be
-    int len = _vscprintf(fmt, ap);
-    if (len == -1) {
-    return -1;
-    }
-    size_t size = (size_t)len + 1;
-    char *str = malloc(size);
-    if (!str) {
-         return -1;
-    }
-    // _vsprintf_s is the "secure" version of vsprintf
-    int r = vsprintf_s(str, len + 1, fmt, ap);
-    if (r == -1) {
-         free(str);
-         return -1;
-    }
-    *strp = str;
-    return r;
-    }
 
-int asprintf(char **strp, const char *fmt, ...) 
-{
-        va_list ap;
-        va_start(ap, fmt);
-        int r = vasprintf(strp, fmt, ap);
-        va_end(ap);
-        return r;
-}
-#endif
-char* time_wrapper(char* fmt, unsigned h, unsigned m, unsigned s, unsigned ms)
-{
-    char * time;
-    asprintf(&time,fmt, h, m, s, ms);
-    return time;
-}
 
-#ifdef PYTHON_API
-void call_from_python_api(struct ccx_s_options *api_options)
-{
-    int indicator = api_options->signal_python_api;
-    if (indicator)
-        signal_python_api=1;
-    else
-        signal_python_api=0;
-}
-#endif
-
-#if defined(PYTHONAPI)
-void run(PyObject * reporter, char * line, int encoding)
-{
-       assert ( PyFunction_Check(reporter) );
-       PyObject* args = Py_BuildValue("(si)",line,encoding);
-       PyObject_CallObject((PyObject*)reporter, args);
-}
-#endif
 int main(int argc, char* argv[])
 {
     struct ccx_s_options* api_options = api_init_options();
     check_configuration_file(*api_options);
-#ifdef ENABLE_PYTHON
+#ifdef PYTHON_API
     for(int i = 1; i < argc; i++)
         api_add_param(api_options,argv[i]);
 #endif
 
-#ifdef ENABLE_PYTHON
+#ifdef PYTHON_API
     int compile_ret = compile_params(api_options,argc);
 #else
     int compile_ret = parse_parameters (api_options, argc, argv);
@@ -598,9 +529,6 @@ int main(int argc, char* argv[])
         exit(compile_ret);
     }
 
-#ifdef PYTHON_API
-    call_from_python_api(api_options);
-#endif
     int start_ret = api_start(*api_options);
     return start_ret;
 }

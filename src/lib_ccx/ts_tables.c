@@ -528,8 +528,8 @@ void ts_buffer_psi_packet(struct ccx_demuxer *ctx)
 	}
 	else if(ctx->PID_buffers[pid]->prev_ccounter<= 0x0f)
 	{
-		dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Out of order packets detected for PID:.\n\
-       ctx->PID_buffers[pid]->prev_ccounter:%i, ctx->ctx->PID_buffers[pid]->ccounter:%i\n",pid, ctx->PID_buffers[pid]->prev_ccounter, ctx->PID_buffers[pid]->ccounter);
+		dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Out of order packets detected for PID: %u.\n\
+       ctx->PID_buffers[pid]->prev_ccounter:%" PRIu32 " ctx->ctx->PID_buffers[pid]->ccounter:%" PRIu32 "\n",pid, ctx->PID_buffers[pid]->prev_ccounter, ctx->PID_buffers[pid]->ccounter);
 	}
 }
 
