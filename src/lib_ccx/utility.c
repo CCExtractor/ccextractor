@@ -534,8 +534,6 @@ char *get_file_extension(enum ccx_output_format write_format)
 			return strdup(".xml");
 		case CCX_OF_G608:
 			return strdup(".g608");
-		//case CCX_OF_PYTHON_API:
-		//	return strdup("");
 		case CCX_OF_NULL:
 			return NULL;
 		case CCX_OF_CURL:
@@ -648,3 +646,47 @@ char *strtok_r(char *str, const char *delim, char **saveptr)
 	return strtok_s(str, delim, saveptr);
 }
 #endif //_WIN32
+
+int vasprintf(char **strp, const char *fmt, va_list ap)
+{
+	int len, ret;
+	va_list tmp_va;
+
+	va_copy(tmp_va, ap);
+#ifdef _WIN32
+	len = _vscprintf(fmt, ap1);
+#else
+	len = vsnprintf(NULL, 0, fmt, tmp_va);
+#endif
+	va_end(tmp_va);
+	if (len == -1)
+		return -1;
+	size_t size = (size_t)len + 1;
+	*strp = malloc(size);
+	if (*strp == NULL)
+		return -1;
+
+#ifdef _WIN32
+	ret = vsprintf_s(*strp, size, fmt, ap);
+#else
+	ret = vsnprintf(*strp, size, fmt, ap);
+#endif
+	if (ret == -1) {
+		free(*strp);
+		return -1;
+	}
+
+	return ret;
+}
+
+int asprintf(char **strp, const char *fmt, ...)
+{
+	int ret;
+	va_list ap;
+
+	va_start(ap, fmt);
+	ret = vasprintf(strp, fmt, ap);
+	va_end(ap);
+
+	return ret;
+}

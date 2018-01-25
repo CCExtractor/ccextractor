@@ -51,8 +51,7 @@ SRC_FREETYPE="../src/freetype/autofit/autofit.c
         ../src/freetype/type42/type42.c
         ../src/freetype/winfonts/winfnt.c"
 API_WRAPPERS="$(find ../src/wrappers/ -name '*.c')"
-API_EXTRACTORS="$(find ../src/extractors/ -name '*.c')"
-BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC $API_WRAPPERS $API_EXTRACTORS $SRC_FREETYPE"
+BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC $API_WRAPPERS $SRC_FREETYPE"
 BLD_LINKER="-lm -zmuldefs -l tesseract -l lept"
 
 echo "Running pre-build script..."

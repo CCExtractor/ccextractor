@@ -2,8 +2,7 @@
 BLD_LINKER="-lm -zmuldefs -l tesseract -l lept -l python2.7"
 WRAPPER_FLAGS="-Wl,-wrap,write"
 
-out=$((swig -python ccextractor.i && ./build_api && gcc -shared $(find -name '*.o') -o _ccextractor.so $BLD_LINKER) 2>&1)
-#out=$((swig -python ccextractor.i && ./build_api && gcc -shared $WRAPPER_FLAGS $(find -name '*.o') -o _ccextractor.so ) 2>&1)
+out=$((./build_api && gcc -shared $(find -name '*.o') -o _ccextractor.so $BLD_LINKER)2>&1)
 res=$?
 if [[ $out == *"gcc: command not found"* ]]
 then
