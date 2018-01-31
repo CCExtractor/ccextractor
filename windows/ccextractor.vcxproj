@@ -36,7 +36,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\ccextractor.h" />
-    <ClInclude Include="..\src\extractors\extractor.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_structs.h" />
     <ClInclude Include="..\src\wrappers\wrapper.h" />
     <ClInclude Include="..\src\gpacmp4\gpac\avparse.h" />
