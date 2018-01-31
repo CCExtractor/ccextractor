@@ -405,7 +405,7 @@ static int process_clcp(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 	return atom_length;
 }
 
-// Rrocess tx3g type atom
+// Process tx3g type atom
 // Return the length of the atom
 // Return -1 if unrecoverable error happened or process of the atom is finished.
 // In this case, the sample will be skipped.
@@ -428,7 +428,7 @@ static int process_tx3g(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 		encode_sub(enc_ctx, dec_sub); // encode the previous subtitle
 		has_previous_sub = 0;
 	}
-	if (encode_last_only) return;
+	if (encode_last_only) return 0; // Caller in this case doesn't care about the value
 
 	unsigned int atom_length = RB16(data);
 	data += 2;
