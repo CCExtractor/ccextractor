@@ -306,7 +306,7 @@ unsigned char * ccdp_find_data(unsigned char * ccdp_atom_content, unsigned int l
 	return data;
 }
 
-// Rrocess clcp type atom
+// Process clcp type atom
 // Return the length of the atom
 // Return -1 if unrecoverable error happened. In this case, the sample will be skipped.
 static int process_clcp(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
