@@ -600,7 +600,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 	fprintf(stdout, "\n");
 #endif
 	char u[4] = {0, 0, 0, 0};
-
+    
 	// optimization: slicing column by column -- higher probability we could find boxed area start mark sooner
 	uint8_t page_is_empty = YES;
 	for (uint8_t col = 0; col < 40; col++)
@@ -630,7 +630,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 	timecode_show[12] = 0;
 	timestamp_to_srttime(page->hide_timestamp, timecode_hide);
 	timecode_hide[12] = 0;
-
+    
 	// process data
 	for (uint8_t row = 1; row < 25; row++)
 	{
@@ -641,10 +641,30 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 		for (int8_t col = 39; col >= 0; col--)
 		{
 			if (page->text[row][col] == 0xb)
-			{
-				col_start = col;
-				line_count++;
-				break;
+			{   
+                // check for double 0/B
+                if (col > 1 && page->text[row][col-1] == 0xb) //
+                {
+                    // check for 0/A, to cancel the action of the Start Box code 0/B
+                    for (int8_t temp = col-1; temp >= 0; temp--)
+                    {
+                        // replace 0/A and 0/B with space
+                        if (page->text[row][temp] == 0xa)
+                        {
+                            page->text[row][temp] = 0x20;
+                            page->text[row][col] = 0x20;
+                            page->text[row][col-1] = 0x20;
+                            break;
+                        }
+                    }
+                    continue;
+                }//
+                else
+                {
+                    col_start = col;
+                    line_count++;
+                    break;
+                }
 			}
 		}
 		// line is empty
