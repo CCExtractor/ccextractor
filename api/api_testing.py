@@ -1,3 +1,4 @@
+from __future__ import print_function
 ###
 #MANDATORY UPDATES IN EVERY PYTHON SCRIPT
 ###
@@ -7,7 +8,7 @@ import ccextractor as cc
 
 
 def callback(line, encoding):
-    print line
+    print(line)
 
 
 def init_ccextractor(callback):

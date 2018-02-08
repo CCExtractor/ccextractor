@@ -3,6 +3,9 @@
 # Email    : harryyunull@gmail.com
 # Link     : https://github.com/harrynull
 
+from __future__ import print_function
+from builtins import range
+from builtins import object
 Version = "1.0.0"
 
 import sys
@@ -10,7 +13,7 @@ import time
 import datetime
 from io import open
 
-class Line:
+class Line(object):
     def __init__(self, lines):
         lines = [line.replace("\n", "").strip() for line in lines]
         self.id = int(lines[0]) # the first line is the number of the subtile
