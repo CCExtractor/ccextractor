@@ -1,3 +1,6 @@
+from __future__ import print_function
+from builtins import zip
+from builtins import str
 import ccextractor as cc
 import re
 """
@@ -119,23 +122,23 @@ def comparing_text_font_grids(text, font, color):
             if not i[1]:
                 final.append(i[0])
             else:
-                print "error"
+                print("error")
     return (final,font,color)
 
     
 def generate_output_srt(filename,d, encoding):
-    if encoding in encodings_map.keys():
+    if encoding in list(encodings_map.keys()):
         if  encoding!='0':
             encoding_format = encodings_map[encoding]
         else:
             encoding_format = ""
     else:
-        print "encoding error in python"
+        print("encoding error in python")
         return
     if encoding_format:
-        d['text'] = [unicode(item,encoding_format) for item in d['text']]
+        d['text'] = [str(item,encoding_format) for item in d['text']]
     else:
-        d['text'] = [unicode(item) for item in d['text']]
+        d['text'] = [str(item) for item in d['text']]
     d['text'],d['font'],d['color']= comparing_text_font_grids(d['text'],d['font'],d['color'])
     for item in d['text']:
         if item.count(" ")<32:

@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import str
 def g608_grid_former(line,text,color,font):
     if "text[" in line:
         line = str(line.split(":", 1)[1])
@@ -57,5 +59,5 @@ def return_g608_grid(case,text,color,font):
         if font:
             ret_val['font']=font
     else:
-        print help_string
+        print(help_string)
     return ret_val

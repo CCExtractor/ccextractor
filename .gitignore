@@ -130,3 +130,4 @@ mac/install_manifest.txt
 mac/cmake_install.cmake
 mac/CMakeFiles/
 mac/CMakeCache.txt
+*.py.bak
