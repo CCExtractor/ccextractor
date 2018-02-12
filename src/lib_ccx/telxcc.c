@@ -646,18 +646,22 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
                 if (col > 1 && page->text[row][col-1] == 0xb) //
                 {
                     // check for 0/A, to cancel the action of the Start Box code 0/B
+                    int a_detected = 0; // is 0/A detected in front of 0/B?
                     for (int8_t temp = col-1; temp >= 0; temp--)
                     {
-                        // replace 0/A and 0/B with space
+                        // replace 0/A with space
                         if (page->text[row][temp] == 0xa)
                         {
                             page->text[row][temp] = 0x20;
-                            page->text[row][col] = 0x20;
-                            page->text[row][col-1] = 0x20;
-                            break;
+                            a_detected = 1;
                         }
                     }
-                    continue;
+
+                    if (a_detected)
+                    {
+                        page->text[row][col] = 0x20;
+                        page->text[row][col-1] = 0x20;
+                    }
                 }//
                 else
                 {
@@ -913,7 +917,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		{
 			tlt_config.page = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
 			mprint ("- No teletext page specified, first received suitable page is %03x, not guaranteed\n", tlt_config.page);
-			}
+        }
 
 		// Page number and control bits
 		page_number = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
