@@ -637,6 +637,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
         // anchors for string trimming purpose
         uint8_t col_start = 40;
         uint8_t col_stop = 40;
+        uint8_t last_replacement_index = 0;
 
         for (int8_t col = 0; col < 40; col++)
         {
@@ -651,7 +652,13 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
                 // 'Unless operating in "Hold Mosaics" mode, each character space occupied by a
                 // spacing attribute is displayed as a SPACE
                 page->text[row][col] = 0x20;
+                last_replacement_index = col; // remember the last index of replacement
             }
+        }
+        // change the value of last position to 0xa to indicate end of subtitle
+        if (last_replacement_index)
+        {
+            page->text[row][last_replacement_index] = 0xa;
         }
 		// line is empty
 		if (col_start > 39)
