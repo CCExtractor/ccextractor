@@ -637,25 +637,39 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
         // anchors for string trimming purpose
         uint8_t col_start = 40;
         uint8_t col_stop = 40;
-        uint8_t last_replacement_index = 0;
 
+        uint8_t last_replacement_index = 0;
+        int box_open = 0;
         for (int8_t col = 0; col < 40; col++)
         {
-            if (col_start == 40 && page->text[row][col] == 0xb)
+            // replace all 0/B and 0/A characters with 0/20, as specified in ETS 300 706:
+            // Unless operating in "Hold Mosaics" mode, each character space occupied by a
+            // spacing attribute is displayed as a SPACE
+            if (page->text[row][col] == 0xb) // open the box
             {
-                col_start = col;
-                line_count++;
+                if (col_start == 40)
+                {
+                    col_start = col;
+                    line_count++;
+                }
+                else
+                {
+                    page->text[row][col] = 0x20;
+                }
+                box_open = 1;
             }
-            else if (page->text[row][col] == 0xb || page->text[row][col] == 0xa)
             {
-                // replace all 0/B and 0/A characters with 0/20, as specified in ETS 300 706:
-                // 'Unless operating in "Hold Mosaics" mode, each character space occupied by a
-                // spacing attribute is displayed as a SPACE
                 page->text[row][col] = 0x20;
                 last_replacement_index = col; // remember the last index of replacement
+                box_open = 0;
+            }
+            // characters between 0xA and 0xB shouldn't be displayed
+            else if (!box_open && col_start < 40)
+            {
+                page->text[row][col] = 0x20;
             }
         }
-        // change the value of last position to 0xa to indicate end of subtitle
+        // put 0xa back to last_replacement_index
         if (last_replacement_index)
         {
             page->text[row][last_replacement_index] = 0xa;
