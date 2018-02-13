@@ -634,43 +634,25 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 	// process data
 	for (uint8_t row = 1; row < 25; row++)
 	{
-		// anchors for string trimming purpose
-		uint8_t col_start = 40;
-		uint8_t col_stop = 40;
+        // anchors for string trimming purpose
+        uint8_t col_start = 40;
+        uint8_t col_stop = 40;
 
-		for (int8_t col = 39; col >= 0; col--)
-		{
-			if (page->text[row][col] == 0xb)
-			{   
-                // check for double 0/B
-                if (col > 1 && page->text[row][col-1] == 0xb) //
-                {
-                    // check for 0/A, to cancel the action of the Start Box code 0/B
-                    int a_detected = 0; // is 0/A detected in front of 0/B?
-                    for (int8_t temp = col-1; temp >= 0; temp--)
-                    {
-                        // replace 0/A with space
-                        if (page->text[row][temp] == 0xa)
-                        {
-                            page->text[row][temp] = 0x20;
-                            a_detected = 1;
-                        }
-                    }
-
-                    if (a_detected)
-                    {
-                        page->text[row][col] = 0x20;
-                        page->text[row][col-1] = 0x20;
-                    }
-                }//
-                else
-                {
-                    col_start = col;
-                    line_count++;
-                    break;
-                }
-			}
-		}
+        for (int8_t col = 0; col < 40; col++)
+        {
+            if (col_start == 40 && page->text[row][col] == 0xb)
+            {
+                col_start = col;
+                line_count++;
+            }
+            else if (page->text[row][col] == 0xb || page->text[row][col] == 0xa)
+            {
+                // replace all 0/B and 0/A characters with 0/20, as specified in ETS 300 706:
+                // 'Unless operating in "Hold Mosaics" mode, each character space occupied by a
+                // spacing attribute is displayed as a SPACE
+                page->text[row][col] = 0x20;
+            }
+        }
 		// line is empty
 		if (col_start > 39)
 			continue;
