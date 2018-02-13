@@ -638,8 +638,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
         uint8_t col_start = 40;
         uint8_t col_stop = 40;
 
-        uint8_t last_replacement_index = 0;
-        int box_open = 0;
+        uint8_t box_open = NO;
         for (int8_t col = 0; col < 40; col++)
         {
             // replace all 0/B and 0/A characters with 0/20, as specified in ETS 300 706:
@@ -656,13 +655,12 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
                 {
                     page->text[row][col] = 0x20;
                 }
-                box_open = 1;
+                box_open = YES;
             }
             else if (page->text[row][col] == 0xa) // close the box
             {
                 page->text[row][col] = 0x20;
-                last_replacement_index = col; // remember the last index of replacement
-                box_open = 0;
+                box_open = NO;
             }
             // characters between 0xA and 0xB shouldn't be displayed
             // page->text[row][col] > 0x20 added to preserve color information
@@ -670,11 +668,6 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
             {
                 page->text[row][col] = 0x20;
             }
-        }
-        // put 0xa back to last_replacement_index
-        if (last_replacement_index)
-        {
-            page->text[row][last_replacement_index] = 0xa;
         }
 		// line is empty
 		if (col_start > 39)
@@ -688,8 +681,6 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 					col_start = col;
 				col_stop = col;
 			}
-			if (page->text[row][col] == 0xa)
-				break;
 		}
 		// line is empty
 		if (col_stop > 39)
