@@ -658,13 +658,15 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
                 }
                 box_open = 1;
             }
+            else if (page->text[row][col] == 0xa) // close the box
             {
                 page->text[row][col] = 0x20;
                 last_replacement_index = col; // remember the last index of replacement
                 box_open = 0;
             }
             // characters between 0xA and 0xB shouldn't be displayed
-            else if (!box_open && col_start < 40)
+            // page->text[row][col] > 0x20 added to preserve color information
+            else if (!box_open && col_start < 40 && page->text[row][col] > 0x20)
             {
                 page->text[row][col] = 0x20;
             }
