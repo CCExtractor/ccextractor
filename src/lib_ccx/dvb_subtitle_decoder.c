@@ -1583,6 +1583,8 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 	for (display = ctx->display_list; display; display = display->next) {
 		region = get_region(ctx, display->region_id);
+		if (!region)
+			continue;
 
 		int x_off = display->x_pos - x_pos;
 		int y_off = display->y_pos - y_pos;
