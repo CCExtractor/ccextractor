@@ -739,7 +739,8 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 							page_buffer_add_string (ctx, "</font>");
 							font_tag_opened = NO;
 						}
-
+                                                
+						page_buffer_add_string(ctx, " ");
 						// black is considered as white for telxcc purpose
 						// telxcc writes <font/> tags only when needed
 						if ((v > 0x0) && (v < 0x7))
