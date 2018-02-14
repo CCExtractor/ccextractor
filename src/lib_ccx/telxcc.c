@@ -634,41 +634,41 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 	// process data
 	for (uint8_t row = 1; row < 25; row++)
 	{
-        // anchors for string trimming purpose
-        uint8_t col_start = 40;
-        uint8_t col_stop = 40;
+        	// anchors for string trimming purpose
+        	uint8_t col_start = 40;
+        	uint8_t col_stop = 40;
 
-        uint8_t box_open = NO;
-        for (int8_t col = 0; col < 40; col++)
-        {
-            // replace all 0/B and 0/A characters with 0/20, as specified in ETS 300 706:
-            // Unless operating in "Hold Mosaics" mode, each character space occupied by a
-            // spacing attribute is displayed as a SPACE
-            if (page->text[row][col] == 0xb) // open the box
-            {
-                if (col_start == 40)
-                {
-                    col_start = col;
-                    line_count++;
-                }
-                else
-                {
-                    page->text[row][col] = 0x20;
-                }
-                box_open = YES;
-            }
-            else if (page->text[row][col] == 0xa) // close the box
-            {
-                page->text[row][col] = 0x20;
-                box_open = NO;
-            }
-            // characters between 0xA and 0xB shouldn't be displayed
-            // page->text[row][col] > 0x20 added to preserve color information
-            else if (!box_open && col_start < 40 && page->text[row][col] > 0x20)
-            {
-                page->text[row][col] = 0x20;
-            }
-        }
+        	uint8_t box_open = NO;
+        	for (int8_t col = 0; col < 40; col++)
+        	{
+            		// replace all 0/B and 0/A characters with 0/20, as specified in ETS 300 706:
+            		// Unless operating in "Hold Mosaics" mode, each character space occupied by a
+            		// spacing attribute is displayed as a SPACE
+            		if (page->text[row][col] == 0xb) // open the box
+            		{
+                		if (col_start == 40)
+                		{
+                    			col_start = col;
+                    			line_count++;
+                		}
+                		else
+                		{
+                    			page->text[row][col] = 0x20;
+                		}
+                		box_open = YES;
+            		}
+            		else if (page->text[row][col] == 0xa) // close the box
+            		{
+                		page->text[row][col] = 0x20;
+                		box_open = NO;
+            		}
+            		// characters between 0xA and 0xB shouldn't be displayed
+            		// page->text[row][col] > 0x20 added to preserve color information
+            		else if (!box_open && col_start < 40 && page->text[row][col] > 0x20)
+            		{
+                		page->text[row][col] = 0x20;
+            		}
+        	}
 		// line is empty
 		if (col_start > 39)
 			continue;
