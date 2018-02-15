@@ -681,7 +681,10 @@ static int dvbsub_read_2bit_string(uint8_t *destbuf, int dbuf_len,
 	}
 
 	if (get_bits(&gb, 6))
-		mprint("DVBSub error: line overflow\n");
+	{
+		mprint("DVBSub error: line overflow at dvbsub_read_2bit_string()\n");
+		return -1;
+	}
 
 	(*srcbuf) += (get_bits_count(&gb) + 7) >> 3;
 
@@ -831,7 +834,10 @@ static int dvbsub_read_4bit_string(uint8_t *destbuf, int dbuf_len,
 	}
 
 	if (get_bits(&gb, 8))
-		mprint("DVBSub error: line overflow\n");
+	{
+		mprint("DVBSub error: line overflow at dvbsub_read_4bit_string()\n");
+		return -1;
+	}
 
 	(*srcbuf) += (get_bits_count(&gb) + 7) >> 3;
 
@@ -904,12 +910,15 @@ static int dvbsub_read_8bit_string(uint8_t *destbuf, int dbuf_len,
 	}
 
 	if (*(*srcbuf)++)
-		mprint("DVBSub error: line overflow\n");
+	{
+		mprint("DVBSub error: line overflow at dvbsub_read_8bit_string()\n");
+		return -1;
+	}
 
 	return pixels_read;
 }
 
-static void dvbsub_parse_pixel_data_block(void *dvb_ctx,
+static int dvbsub_parse_pixel_data_block(void *dvb_ctx,
 		DVBSubObjectDisplay *display, const uint8_t *buf, int buf_size,
 		int top_bottom, int non_mod)
 {
@@ -920,6 +929,7 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx,
 	uint8_t *pbuf;
 	int x_pos, y_pos;
 	int i;
+	int parseerror=0;
 
 	uint8_t map2to4[] = { 0x0, 0x7, 0x8, 0xf };
 	uint8_t map2to8[] = { 0x00, 0x77, 0x88, 0xff };
@@ -928,7 +938,7 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx,
 	uint8_t *map_table;
 
 	if (region == 0)
-		return;
+		return 0;
 
 	pbuf = region->pbuf;
 	region->dirty = 1;
@@ -938,13 +948,14 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx,
 
 	y_pos += top_bottom;
 
-	while (buf < buf_end)
+	while (!parseerror && buf < buf_end)
 	{
 		if ((*buf != 0xf0 && x_pos >= region->width) || y_pos >= region->height)
 		{
 			mprint("Invalid object location! %d-%d %d-%d %02x\n", x_pos,
 					region->width, y_pos, region->height, *buf);
-			return;
+			parseerror=1;
+			break;
 		}
 
 		switch (*buf++)
@@ -960,12 +971,19 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx,
 			x_pos = dvbsub_read_2bit_string(pbuf + (y_pos * region->width),
 					region->width, &buf, buf_end - buf, non_mod, map_table,
 					x_pos);
+			if (x_pos<0)
+			{
+				mprint ("dvbsub_read_2bit_string() returned error.");
+				parseerror=1;
+				goto exitfunc;
+			}
 			break;
 		case 0x11:
 			if (region->depth < 4)
 			{
 				mprint("4-bit pixel string in %d-bit region!\n", region->depth);
-				return;
+				parseerror=1;
+				goto exitfunc;
 			}
 
 			if (region->depth == 8)
@@ -976,16 +994,28 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx,
 			x_pos = dvbsub_read_4bit_string(pbuf + (y_pos * region->width),
 					region->width, &buf, buf_end - buf, non_mod, map_table,
 					x_pos);
+			if (x_pos<0)
+			{
+				mprint ("dvbsub_read_4bit_string() returned error.");
+				parseerror=1;
+				goto exitfunc;
+			}
 			break;
 		case 0x12:
 			if (region->depth < 8)
 			{
 				mprint("8-bit pixel string in %d-bit region!\n", region->depth);
-				return;
+				return -1;
 			}
 
 			x_pos = dvbsub_read_8bit_string(pbuf + (y_pos * region->width),
 					region->width, &buf, buf_end - buf, non_mod, NULL, x_pos);
+			if (x_pos<0)
+			{
+				mprint ("dvbsub_read_8bit_string() returned error.");
+				parseerror=1;
+				goto exitfunc;
+			}
 			break;
 
 		case 0x20:
@@ -1012,10 +1042,11 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx,
 			/* no break */
 		}
 	}
-
+exitfunc:
+	return parseerror?-1:0;
 }
 
-static void dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
+static int dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 		int buf_size)
 {
 	DVBSubContext *ctx = (DVBSubContext*) dvb_ctx;
@@ -1034,7 +1065,7 @@ static void dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 	object = get_object(ctx, object_id);
 
 	if (!object)
-		return;
+		return 0; // Unsure if we should return error
 
 	coding_method = ((*buf) >> 2) & 3;
 	non_modifying_color = ((*buf++) >> 1) & 1;
@@ -1049,7 +1080,7 @@ static void dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 		if (buf + top_field_len + bottom_field_len > buf_end)
 		{
 			mprint("Field data size too large\n");
-			return;
+			return -1;
 		}
 
 		for (display = object->display_list; display;
@@ -1058,16 +1089,27 @@ static void dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 			const uint8_t *block = buf;
 			int bfl = bottom_field_len;
 
-			dvbsub_parse_pixel_data_block(dvb_ctx, display, block,
-					top_field_len, 0, non_modifying_color);
+			if (dvbsub_parse_pixel_data_block(dvb_ctx, display, block,
+					top_field_len, 0, non_modifying_color))
+			{
+				mprint ("dvbsub_parse_object_segment: Something went wrong. Giving up on block (1).\n");
+				// Something went wrong, get out and hope we can
+				// recover
+				return -1;
+			}
 
 			if (bottom_field_len > 0)
 				block = buf + top_field_len;
 			else
 				bfl = top_field_len;
 
-			dvbsub_parse_pixel_data_block(dvb_ctx, display, block, bfl, 1,
-					non_modifying_color);
+			if (dvbsub_parse_pixel_data_block(dvb_ctx, display, block, bfl, 1,
+					non_modifying_color))
+			{
+				// Problems. Hope for the best.
+				mprint ("dvbsub_parse_object_segment: Something went wrong. Giving up on block (2).\n");
+				return -1;
+			}
 		}
 
 	}
@@ -1079,6 +1121,7 @@ static void dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 	{
 		mprint("Unknown object coding %d\n", coding_method);
 	}
+	return 0;
 
 }
 
@@ -1583,6 +1626,8 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 	for (display = ctx->display_list; display; display = display->next) {
 		region = get_region(ctx, display->region_id);
+		if (!region)
+			continue;
 
 		int x_off = display->x_pos - x_pos;
 		int y_off = display->y_pos - y_pos;
@@ -1686,7 +1731,8 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 
 	if (buf_size <= 6 || *buf != 0x0f)
 	{
-		mprint("dvbsub_decode: incomplete, broken or empty packet\n");
+		mprint("dvbsub_decode: incomplete, broken or empty packet (size = %d, first byte=%02X)\n",
+			buf_size, *buf);
 		return -1;
 	}
 
@@ -1707,7 +1753,8 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 
 		if (p_end - p < segment_length)
 		{
-			mprint("dvbsub_decode: incomplete, broken or empty packet\n");
+			mprint("dvbsub_decode: incomplete, broken or empty packet, remaining bytes=%d, segment_length=%d\n",
+				p_end - p, segment_length);
 			return -1;
 		}
 
@@ -1739,7 +1786,9 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 				got_segment |= 4;
 				break;
 			case DVBSUB_OBJECT_SEGMENT:
-				dvbsub_parse_object_segment(ctx, p, segment_length);
+				ret = dvbsub_parse_object_segment(ctx, p, segment_length);
+				if (ret < 0)
+					goto end;
 				got_segment |= 8;
 				break;
 			case DVBSUB_DISPLAYDEFINITION_SEGMENT:
