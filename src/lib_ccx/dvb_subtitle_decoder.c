@@ -952,7 +952,7 @@ static int dvbsub_parse_pixel_data_block(void *dvb_ctx,
 	{
 		if ((*buf != 0xf0 && x_pos >= region->width) || y_pos >= region->height)
 		{
-			mprint("Invalid object location! %d-%d %d-%d %02x\n", x_pos,
+			mprint("In dvbsub_parse_pixel_data_block(): Invalid object location. %d-%d %d-%d %02x\n", x_pos,
 					region->width, y_pos, region->height, *buf);
 			parseerror=1;
 			break;
@@ -973,7 +973,7 @@ static int dvbsub_parse_pixel_data_block(void *dvb_ctx,
 					x_pos);
 			if (x_pos<0)
 			{
-				mprint ("dvbsub_read_2bit_string() returned error.");
+				mprint ("In dvbsub_parse_pixel_data_block(): dvbsub_read_2bit_string() returned error.\n");
 				parseerror=1;
 				goto exitfunc;
 			}
@@ -981,7 +981,7 @@ static int dvbsub_parse_pixel_data_block(void *dvb_ctx,
 		case 0x11:
 			if (region->depth < 4)
 			{
-				mprint("4-bit pixel string in %d-bit region!\n", region->depth);
+				mprint("In dvbsub_parse_pixel_data_block(): 4-bit pixel string in %d-bit region.\n", region->depth);
 				parseerror=1;
 				goto exitfunc;
 			}
@@ -996,7 +996,7 @@ static int dvbsub_parse_pixel_data_block(void *dvb_ctx,
 					x_pos);
 			if (x_pos<0)
 			{
-				mprint ("dvbsub_read_4bit_string() returned error.");
+				mprint ("In dvbsub_parse_pixel_data_block(): dvbsub_read_4bit_string() returned error.\n");
 				parseerror=1;
 				goto exitfunc;
 			}
@@ -1004,7 +1004,7 @@ static int dvbsub_parse_pixel_data_block(void *dvb_ctx,
 		case 0x12:
 			if (region->depth < 8)
 			{
-				mprint("8-bit pixel string in %d-bit region!\n", region->depth);
+				mprint("In dvbsub_parse_pixel_data_block(): 8-bit pixel string in %d-bit region.\n", region->depth);
 				return -1;
 			}
 
@@ -1012,7 +1012,7 @@ static int dvbsub_parse_pixel_data_block(void *dvb_ctx,
 					region->width, &buf, buf_end - buf, non_mod, NULL, x_pos);
 			if (x_pos<0)
 			{
-				mprint ("dvbsub_read_8bit_string() returned error.");
+				mprint ("In dvbsub_parse_pixel_data_block(): dvbsub_read_8bit_string() returned error.\n");
 				parseerror=1;
 				goto exitfunc;
 			}
@@ -1038,7 +1038,7 @@ static int dvbsub_parse_pixel_data_block(void *dvb_ctx,
 			y_pos += 2;
 			break;
 		default:
-			mprint("Unknown/unsupported pixel block 0x%x\n", *(buf - 1));
+			mprint("In dvbsub_parse_pixel_data_block(): Unknown/unsupported pixel block 0x%x\n", *(buf - 1));
 			/* no break */
 		}
 	}
