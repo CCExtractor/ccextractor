@@ -366,6 +366,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->xds_ctx = ccx_decoders_xds_init_library(ctx->timing, setting->xds_write_to_file);
 
 	ctx->vbi_decoder = NULL;
+	ctx->ocr_quantmode = setting->ocr_quantmode;
 	return ctx;
 }
 

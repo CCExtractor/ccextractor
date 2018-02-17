@@ -733,7 +733,7 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 	return ret;
 }
 
-int ocr_rect(void* arg, struct cc_bitmap *rect, char **str, int bgcolor)
+int ocr_rect(void* arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr_quantmode)
 {
 	int ret = 0;
 	png_color *palette = NULL;
@@ -769,8 +769,12 @@ int ocr_rect(void* arg, struct cc_bitmap *rect, char **str, int bgcolor)
 			copy->data[i] = rect->data[0][i];
 		}
 
-
-		quantize_map(alpha, palette, rect->data[0], size, 3, rect->nb_colors);
+		switch (ocr_quantmode)
+		{
+			case 1:
+				quantize_map(alpha, palette, rect->data[0], size, 3, rect->nb_colors);
+				break;
+		}		
 		*str = ocr_bitmap(arg, palette, alpha, rect->data[0], rect->w, rect->h, copy);
 
 end:

@@ -618,6 +618,10 @@ void print_usage (void)
 	mprint ("                       using the Chinese (Traditional) trained data\n");
 	mprint ("                       This option is also helpful when the traineddata file\n");
 	mprint ("                       has non standard names that don't follow ISO specs\n");
+	mprint ("          -quant mode: How to quantize the bitmap before passing it to tesseract");
+	mprint ("                       for OCR'ing.");
+	mprint ("                              0 = Don't quantize at all.");
+	mprint ("                              1 = Use CCExtractor's internal function (default).");
 	mprint ("                 -oem: Select the OEM mode for Tesseract, could be 0, 1 or 2.\n");
 	mprint ("                       0: OEM_TESSERACT_ONLY - default value, the fastest mode.\n");
 	mprint ("                       1: OEM_LSTM_ONLY - use LSTM algorithm for recognition.\n");
@@ -1483,6 +1487,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			sprintf(opt->ocrlang,"%s",argv[i]);
 			for(int char_index=0; char_index < strlen(opt->ocrlang);char_index++)
 				opt->ocrlang[char_index] = cctolower(opt->ocrlang[char_index]);
+			continue;
+		}
+		if (strcmp(argv[i], "-quant") == 0 && i < argc - 1)
+		{
+			i++;
+			opt->ocr_quantmode = atoi(argv[i]);
 			continue;
 		}
 		if (strcmp(argv[i], "-nospupngocr") == 0)

@@ -100,6 +100,7 @@ struct ccx_decoders_common_settings_t
 	enum ccx_code_type codec;
 	int xds_write_to_file;
 	void *private_data;
+	int ocr_quantmode;
 };
 
 struct lib_cc_decode
@@ -199,6 +200,7 @@ struct lib_cc_decode
 	int (*writedata)(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 
 	//dvb subtitle related
+	int ocr_quantmode;
 	struct lib_cc_decode *prev;
 };
 

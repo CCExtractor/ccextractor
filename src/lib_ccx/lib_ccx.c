@@ -32,6 +32,7 @@ static struct ccx_decoders_common_settings_t *init_decoder_setting(
 	setting->send_to_srv = opt->send_to_srv;
 	setting->hauppauge_mode = opt->hauppauge_mode;
 	setting->xds_write_to_file = opt->transcript_settings.xds;
+	setting->ocr_quantmode = opt->ocr_quantmode;
 	
 	return setting;
 }
