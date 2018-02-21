@@ -1536,6 +1536,8 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	rect = malloc(sizeof(struct cc_bitmap));
 	if(!rect)
 		return -1;
+	rect->data[0]=NULL;
+	rect->data[1]=NULL;
 
 	sub->flags |= SUB_EOD_MARKER;
 	sub->got_output = 1;

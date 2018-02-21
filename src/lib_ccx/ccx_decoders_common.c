@@ -515,7 +515,6 @@ struct cc_subtitle* copy_subtitle(struct cc_subtitle *sub)
 
 	if (sub->data)
 	{
-		sub_copy->data = malloc(sizeof(struct eia608_screen));
 		sub_copy->data = malloc(sub->nb_data * sizeof(struct eia608_screen));
 		memcpy(sub_copy->data, sub->data, sub->nb_data * sizeof(struct eia608_screen));
 	}

@@ -288,6 +288,7 @@ struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx)
 		{
 			dec_ctx->prev = malloc(sizeof(struct lib_cc_decode));
 			dec_ctx->dec_sub.prev = malloc(sizeof(struct cc_subtitle));
+			memset (dec_ctx->dec_sub.prev, 0,sizeof(struct cc_subtitle));
 		}
 	}
 	return dec_ctx;
