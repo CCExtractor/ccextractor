@@ -1,17 +1,9 @@
-A mailing list is now available from sourceforge:
+A mailing list is now available from google groups:
+
+https://groups.google.com/forum/#!forum/ccextractor-dev
+
+The old one, hosted in sourceforge, is discontinued, but here is the link just in case:
 
 https://lists.sourceforge.net/lists/listinfo/ccextractor-users
-
-I expect it to be very low traffic (right now there's around 10
-people actively helping with CCExtractor in one way or
-another), so almost everything goes here:
-
-- Bug reports
-- Feature requests
-- Announcements
-
-NOT here:
-
-- Samples 
 
 
