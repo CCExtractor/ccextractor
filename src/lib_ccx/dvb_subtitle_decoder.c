@@ -1620,6 +1620,8 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	// The second loop, to generate the merged image
 
 	rect->data[0] = (uint8_t*)malloc(width * height);
+	if (ccx_options.dvb_debug_traces_to_stdout)
+		mprint ("Creating a data[0] of %d\n", width * height);
 	if (!rect->data[0]) {
 		mprint("write_dvb_sub: failed to alloc memory, need %d * %d = %d bytes\n", width, height, width*height);
 		return -1;
@@ -1635,7 +1637,21 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		int y_off = display->y_pos - y_pos;
 		for (int y = 0; y < region->height; y++) {
 			for (int x = 0; x < region->width; x++)
-				rect->data[0][((y + y_off) * width) + x_off + x] = region->pbuf[y * region->width + x];
+			{
+				int offset=((y + y_off) * width) + x_off + x;
+				if (offset >= (width * height))
+				{
+					mprint ("write_dvb_sub(): Offset %d (out of bounds!) ignored.\n",
+						offset);
+					mprint ("  Formula: offset=((y + y_off) * width) + x_off + x\n");
+					mprint ("  y=%d, y_off=%d, width=%d, x_off=%d, x=%d\n",
+						y,y_off, width, x_off,x);
+				}
+				else
+				{
+					rect->data[0][((y + y_off) * width) + x_off + x] = region->pbuf[y * region->width + x];
+				}
+			}
 		}
 	}
 

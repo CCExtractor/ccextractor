@@ -267,9 +267,13 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 		return NULL;
 	}
 
-	text_out = TessBaseAPIGetUTF8Text(ctx->api);
-	if (text_out == NULL)
+	char *text_out_from_tes=TessBaseAPIGetUTF8Text(ctx->api);
+	if (text_out_from_tes == NULL)
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "In ocr_bitmap: Failed to perform OCR - Failed to get text. Please report.\n", errno);
+	// Make a copy and get rid of the one from Tesseract since we're going to be operating on it
+	// and using it directly causes new/free() warnings.
+	text_out=strdup (text_out_from_tes);
+	TessDeleteText(text_out_from_tes);
 
 	// Begin color detection
 	if(ccx_options.dvbcolor && strlen(text_out)>0)
@@ -452,7 +456,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 						if(strstr(text_out,word))
 						{
 							char *text_out_copy = strdup(text_out);
-							TessDeleteText(text_out);
+							free(text_out);
 							text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
 							memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
 							int pos = (int)(strstr(text_out_copy,word)-text_out_copy);
@@ -466,7 +470,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 						else if(!written_tag)
 						{
 							char *text_out_copy = strdup(text_out);
-							TessDeleteText(text_out);
+							free(text_out);
 							text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
 							memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
 							strcpy(text_out,substr);
@@ -568,7 +572,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 					line_start = line_end + 1;
 				}
 				*new_text_out_iter = '\0';
-				TessDeleteText(text_out);
+				free(text_out);
 				text_out = new_text_out;
 			}
 		}
@@ -763,6 +767,11 @@ int ocr_rect(void* arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr
 		mapclut_paletee(copy->palette, copy->alpha, (uint32_t *)rect->data[1],rect->nb_colors);
 
 		int size = rect->w * rect->h;
+		if (ccx_options.dvb_debug_traces_to_stdout)
+		{
+			mprint ("Trying W*H (%d * %d) so size = %d\n",
+				rect->w, rect->h, size);
+		}
 		copy->data = (unsigned char *)malloc(sizeof(unsigned char)*size);
 		for(int i = 0; i < size; i++)
 		{
@@ -884,7 +893,7 @@ char *paraof_ocrtext(struct cc_subtitle *sub, const char *crlf, unsigned crlf_le
 	{
 		if (!rect->ocr_text) continue;
 		add_ocrtext2str(str, rect->ocr_text, crlf, crlf_length);
-		TessDeleteText(rect->ocr_text);
+		free(rect->ocr_text);
 	}
 	return str;
 }
