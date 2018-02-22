@@ -13,6 +13,7 @@ Subtitles are important for many people. If you're learning a new language, subt
 
 The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor)) and master being the most stable branch.
 
+A more detailed understanding of what CCExtractor does can be [found here](http://ccextractor.sourceforge.net/about-ccextractor.html)
 ### **Features**
 
 - Extract subtitles in real-time
