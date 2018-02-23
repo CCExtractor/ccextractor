@@ -619,9 +619,10 @@ void print_usage (void)
 	mprint ("                       This option is also helpful when the traineddata file\n");
 	mprint ("                       has non standard names that don't follow ISO specs\n");
 	mprint ("          -quant mode: How to quantize the bitmap before passing it to tesseract");
-	mprint ("                       for OCR'ing.");
-	mprint ("                              0 = Don't quantize at all.");
-	mprint ("                              1 = Use CCExtractor's internal function (default).");
+	mprint ("                       for OCR'ing.\n");
+	mprint ("                       0: Don't quantize at all.\n");
+	mprint ("                       1: Use CCExtractor's internal function (default).\n");
+	mprint ("                       2: Reduce distinct color count in image for faster results.\n");
 	mprint ("                 -oem: Select the OEM mode for Tesseract, could be 0, 1 or 2.\n");
 	mprint ("                       0: OEM_TESSERACT_ONLY - default value, the fastest mode.\n");
 	mprint ("                       1: OEM_LSTM_ONLY - use LSTM algorithm for recognition.\n");

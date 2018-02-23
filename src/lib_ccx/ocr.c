@@ -191,6 +191,9 @@ BOX* ignore_alpha_at_edge(png_byte *alpha, unsigned char* indata, int w, int h, 
 
 char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* indata,int w, int h, struct image_copy *copy)
 {
+	// uncomment the below lines to output raw image as debug.png iteratively
+	//save_spupng("debug.png", indata, w, h, palette, alpha, 16);
+
 	PIX	*pix = NULL;
 	PIX	*cpix = NULL;
 	PIX *color_pix = NULL;
@@ -664,7 +667,7 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 #endif
 	/**
 	 * using selection  sort since need to find only max_color
-	 * Hostogram becomes invalid in this loop
+	 * Histogram becomes invalid in this loop
 	 */
 	for (int i = 0; i < max_color; i++)
 	{
@@ -783,7 +786,24 @@ int ocr_rect(void* arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr
 			case 1:
 				quantize_map(alpha, palette, rect->data[0], size, 3, rect->nb_colors);
 				break;
-		}		
+
+			// Case 2 reduces the color set of the image
+			case 2:
+				for(int i=0; i<(rect->nb_colors); i++)
+				{
+					// Taking the quotient of the palette color with 8 shades in each RGB 
+					palette[i].red=(int)((palette[i].red+1)/32);
+					palette[i].blue=(int)((palette[i].blue+1)/32);
+					palette[i].green=(int)((palette[i].green+1)/32);
+
+					// Making the palette color value closest to original, from among the 8 set colors
+					palette[i].red*=32;
+					palette[i].blue*=32;
+					palette[i].green*=32;
+				}
+				break;
+		}
+
 		*str = ocr_bitmap(arg, palette, alpha, rect->data[0], rect->w, rect->h, copy);
 
 end:
