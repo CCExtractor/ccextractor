@@ -618,7 +618,7 @@ void print_usage (void)
 	mprint ("                       using the Chinese (Traditional) trained data\n");
 	mprint ("                       This option is also helpful when the traineddata file\n");
 	mprint ("                       has non standard names that don't follow ISO specs\n");
-	mprint ("          -quant mode: How to quantize the bitmap before passing it to tesseract");
+	mprint ("          -quant mode: How to quantize the bitmap before passing it to tesseract\n");
 	mprint ("                       for OCR'ing.\n");
 	mprint ("                       0: Don't quantize at all.\n");
 	mprint ("                       1: Use CCExtractor's internal function (default).\n");
