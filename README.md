@@ -30,7 +30,7 @@ CCExtractor is [participating in Google Summer of Code (GSoC) 2018!](https://cce
 
 Google Summer of Code is an amazing program sponsored by Google in which university students get to spend their summer working with open source organizations and get paid for their work.
 
-You can read all about it on [GSoC's website](summerofcode.withgoogle.com/)
+You can read all about it on [GSoC's website](https://summerofcode.withgoogle.com/)
 
 ## Installation and Usage
 
