@@ -1,3 +1,10 @@
+#include "png.h"
+#include "protobuf-c.h"
+#include "utf8proc.h"
+#include "zlib.h"
+#include "gpac/version.h"
+#include "capi.h"
+#include "allheaders.h"
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "utility.h"
@@ -948,6 +955,21 @@ void version(char *location) {
 	mprint("	Git commit: %s\n", GIT_COMMIT);
 	mprint("	Compilation date: %s\n", COMPILE_DATE);
 	mprint("	File SHA256: %s\n", hash);
+
+	mprint("Libraries used by CCExtractor\n");
+	mprint("	Tesseract Version: %s\n", (const char*)TessVersion());
+	mprint("	Leptonica Version: %s\n", getLeptonicaVersion());
+	mprint("	libpac Version: %s\n", GPAC_VERSION);
+	mprint("	zlib: %s\n", ZLIB_VERSION);
+	mprint("	utf8proc Version: %s\n", (const char*) utf8proc_version());
+	mprint("	protobuf-c Version: %s\n", (const char*) protobuf_c_version());
+	mprint("	libpng Version: %s\n", PNG_LIBPNG_VER_STRING);
+	mprint("	FreeType \n");
+	mprint("	libhash\n");
+	mprint("	nuklear\n");
+	mprint("	libzvbi\n");
+
+
 }
 
 void parse_708_services (struct ccx_s_options *opts, char *s)
