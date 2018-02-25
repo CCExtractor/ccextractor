@@ -191,6 +191,9 @@ BOX* ignore_alpha_at_edge(png_byte *alpha, unsigned char* indata, int w, int h, 
 
 char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* indata,int w, int h, struct image_copy *copy)
 {
+	// uncomment the below lines to output raw image as debug.png iteratively
+	//save_spupng("debug.png", indata, w, h, palette, alpha, 16);
+
 	PIX	*pix = NULL;
 	PIX	*cpix = NULL;
 	PIX *color_pix = NULL;
@@ -267,9 +270,13 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 		return NULL;
 	}
 
-	text_out = TessBaseAPIGetUTF8Text(ctx->api);
-	if (text_out == NULL)
+	char *text_out_from_tes=TessBaseAPIGetUTF8Text(ctx->api);
+	if (text_out_from_tes == NULL)
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "In ocr_bitmap: Failed to perform OCR - Failed to get text. Please report.\n", errno);
+	// Make a copy and get rid of the one from Tesseract since we're going to be operating on it
+	// and using it directly causes new/free() warnings.
+	text_out=strdup (text_out_from_tes);
+	TessDeleteText(text_out_from_tes);
 
 	// Begin color detection
 	if(ccx_options.dvbcolor && strlen(text_out)>0)
@@ -452,7 +459,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 						if(strstr(text_out,word))
 						{
 							char *text_out_copy = strdup(text_out);
-							TessDeleteText(text_out);
+							free(text_out);
 							text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
 							memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
 							int pos = (int)(strstr(text_out_copy,word)-text_out_copy);
@@ -466,7 +473,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 						else if(!written_tag)
 						{
 							char *text_out_copy = strdup(text_out);
-							TessDeleteText(text_out);
+							free(text_out);
 							text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
 							memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
 							strcpy(text_out,substr);
@@ -568,7 +575,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 					line_start = line_end + 1;
 				}
 				*new_text_out_iter = '\0';
-				TessDeleteText(text_out);
+				free(text_out);
 				text_out = new_text_out;
 			}
 		}
@@ -660,7 +667,7 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 #endif
 	/**
 	 * using selection  sort since need to find only max_color
-	 * Hostogram becomes invalid in this loop
+	 * Histogram becomes invalid in this loop
 	 */
 	for (int i = 0; i < max_color; i++)
 	{
@@ -733,7 +740,7 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 	return ret;
 }
 
-int ocr_rect(void* arg, struct cc_bitmap *rect, char **str, int bgcolor)
+int ocr_rect(void* arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr_quantmode)
 {
 	int ret = 0;
 	png_color *palette = NULL;
@@ -763,14 +770,40 @@ int ocr_rect(void* arg, struct cc_bitmap *rect, char **str, int bgcolor)
 		mapclut_paletee(copy->palette, copy->alpha, (uint32_t *)rect->data[1],rect->nb_colors);
 
 		int size = rect->w * rect->h;
+		if (ccx_options.dvb_debug_traces_to_stdout)
+		{
+			mprint ("Trying W*H (%d * %d) so size = %d\n",
+				rect->w, rect->h, size);
+		}
 		copy->data = (unsigned char *)malloc(sizeof(unsigned char)*size);
 		for(int i = 0; i < size; i++)
 		{
 			copy->data[i] = rect->data[0][i];
 		}
 
+		switch (ocr_quantmode)
+		{
+			case 1:
+				quantize_map(alpha, palette, rect->data[0], size, 3, rect->nb_colors);
+				break;
 
-		quantize_map(alpha, palette, rect->data[0], size, 3, rect->nb_colors);
+			// Case 2 reduces the color set of the image
+			case 2:
+				for(int i=0; i<(rect->nb_colors); i++)
+				{
+					// Taking the quotient of the palette color with 8 shades in each RGB 
+					palette[i].red=(int)((palette[i].red+1)/32);
+					palette[i].blue=(int)((palette[i].blue+1)/32);
+					palette[i].green=(int)((palette[i].green+1)/32);
+
+					// Making the palette color value closest to original, from among the 8 set colors
+					palette[i].red*=32;
+					palette[i].blue*=32;
+					palette[i].green*=32;
+				}
+				break;
+		}
+
 		*str = ocr_bitmap(arg, palette, alpha, rect->data[0], rect->w, rect->h, copy);
 
 end:
@@ -880,7 +913,7 @@ char *paraof_ocrtext(struct cc_subtitle *sub, const char *crlf, unsigned crlf_le
 	{
 		if (!rect->ocr_text) continue;
 		add_ocrtext2str(str, rect->ocr_text, crlf, crlf_length);
-		TessDeleteText(rect->ocr_text);
+		free(rect->ocr_text);
 	}
 	return str;
 }

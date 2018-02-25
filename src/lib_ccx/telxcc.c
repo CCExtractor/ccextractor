@@ -600,7 +600,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 	fprintf(stdout, "\n");
 #endif
 	char u[4] = {0, 0, 0, 0};
-
+    
 	// optimization: slicing column by column -- higher probability we could find boxed area start mark sooner
 	uint8_t page_is_empty = YES;
 	for (uint8_t col = 0; col < 40; col++)
@@ -630,23 +630,45 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 	timecode_show[12] = 0;
 	timestamp_to_srttime(page->hide_timestamp, timecode_hide);
 	timecode_hide[12] = 0;
-
+    
 	// process data
 	for (uint8_t row = 1; row < 25; row++)
 	{
-		// anchors for string trimming purpose
-		uint8_t col_start = 40;
-		uint8_t col_stop = 40;
+        	// anchors for string trimming purpose
+        	uint8_t col_start = 40;
+        	uint8_t col_stop = 40;
 
-		for (int8_t col = 39; col >= 0; col--)
-		{
-			if (page->text[row][col] == 0xb)
-			{
-				col_start = col;
-				line_count++;
-				break;
-			}
-		}
+        	uint8_t box_open = NO;
+        	for (int8_t col = 0; col < 40; col++)
+        	{
+            		// replace all 0/B and 0/A characters with 0/20, as specified in ETS 300 706:
+            		// Unless operating in "Hold Mosaics" mode, each character space occupied by a
+            		// spacing attribute is displayed as a SPACE
+            		if (page->text[row][col] == 0xb) // open the box
+            		{
+                		if (col_start == 40)
+                		{
+                    			col_start = col;
+                    			line_count++;
+                		}
+                		else
+                		{
+                    			page->text[row][col] = 0x20;
+                		}
+                		box_open = YES;
+            		}
+            		else if (page->text[row][col] == 0xa) // close the box
+            		{
+                		page->text[row][col] = 0x20;
+                		box_open = NO;
+            		}
+            		// characters between 0xA and 0xB shouldn't be displayed
+            		// page->text[row][col] > 0x20 added to preserve color information
+            		else if (!box_open && col_start < 40 && page->text[row][col] > 0x20)
+            		{
+                		page->text[row][col] = 0x20;
+            		}
+        	}
 		// line is empty
 		if (col_start > 39)
 			continue;
@@ -659,8 +681,6 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 					col_start = col;
 				col_stop = col;
 			}
-			if (page->text[row][col] == 0xa)
-				break;
 		}
 		// line is empty
 		if (col_stop > 39)
@@ -739,7 +759,8 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 							page_buffer_add_string (ctx, "</font>");
 							font_tag_opened = NO;
 						}
-
+                                                
+						page_buffer_add_string(ctx, " ");
 						// black is considered as white for telxcc purpose
 						// telxcc writes <font/> tags only when needed
 						if ((v > 0x0) && (v < 0x7))
@@ -893,7 +914,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		{
 			tlt_config.page = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
 			mprint ("- No teletext page specified, first received suitable page is %03x, not guaranteed\n", tlt_config.page);
-			}
+        }
 
 		// Page number and control bits
 		page_number = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);

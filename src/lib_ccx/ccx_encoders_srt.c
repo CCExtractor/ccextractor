@@ -130,8 +130,11 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	}
 	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
-		freep(rect->data);
-		freep(rect->data+1);
+		if (rect)
+		{
+			freep(rect->data);
+			freep(rect->data+1);
+		}
 	}
 #endif
 	sub->nb_data = 0;

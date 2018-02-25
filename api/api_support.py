@@ -1,3 +1,4 @@
+from builtins import str
 import ccextractor as cc
 import ccx_to_python_g608 as g608
 import python_srt_generator as srt_generator

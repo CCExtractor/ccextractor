@@ -366,6 +366,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->xds_ctx = ccx_decoders_xds_init_library(ctx->timing, setting->xds_write_to_file);
 
 	ctx->vbi_decoder = NULL;
+	ctx->ocr_quantmode = setting->ocr_quantmode;
 	return ctx;
 }
 
@@ -514,7 +515,6 @@ struct cc_subtitle* copy_subtitle(struct cc_subtitle *sub)
 
 	if (sub->data)
 	{
-		sub_copy->data = malloc(sizeof(struct eia608_screen));
 		sub_copy->data = malloc(sub->nb_data * sizeof(struct eia608_screen));
 		memcpy(sub_copy->data, sub->data, sub->nb_data * sizeof(struct eia608_screen));
 	}

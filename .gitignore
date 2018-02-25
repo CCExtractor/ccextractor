@@ -40,6 +40,7 @@ build/
 *.user
 *.opendb
 *.db
+*.vscode
 
 ####
 # Ignore the header file that is updated upon build
@@ -51,6 +52,7 @@ windows/libs/tesseract/**
 
 # Ctags
 *.tags*
+tags
 
 # Vagrant
 .vagrant/
@@ -130,3 +132,4 @@ mac/install_manifest.txt
 mac/cmake_install.cmake
 mac/CMakeFiles/
 mac/CMakeCache.txt
+*.py.bak

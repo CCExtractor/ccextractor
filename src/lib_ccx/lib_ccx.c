@@ -32,6 +32,7 @@ static struct ccx_decoders_common_settings_t *init_decoder_setting(
 	setting->send_to_srv = opt->send_to_srv;
 	setting->hauppauge_mode = opt->hauppauge_mode;
 	setting->xds_write_to_file = opt->transcript_settings.xds;
+	setting->ocr_quantmode = opt->ocr_quantmode;
 	
 	return setting;
 }
@@ -287,6 +288,7 @@ struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx)
 		{
 			dec_ctx->prev = malloc(sizeof(struct lib_cc_decode));
 			dec_ctx->dec_sub.prev = malloc(sizeof(struct cc_subtitle));
+			memset (dec_ctx->dec_sub.prev, 0,sizeof(struct cc_subtitle));
 		}
 	}
 	return dec_ctx;

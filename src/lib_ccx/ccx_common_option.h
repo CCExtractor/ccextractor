@@ -138,6 +138,7 @@ struct ccx_s_options // Options from user parameters
 	char *dvblang;                    // The name of the language stream for DVB
 	char *ocrlang;                    // The name of the .traineddata file to be loaded with tesseract
 	int ocr_oem;                      // The Tesseract OEM mode, could be 0 (default), 1 or 2
+	int ocr_quantmode;				  // How to quantize the bitmap before passing to to tesseract (0=no quantization at all, 1=CCExtractor's internal)
 	char *mkvlang;                    // The name of the language stream for MKV
 	int analyze_video_stream;         // If 1, the video stream will be processed even if we're using a different one for subtitles.
 

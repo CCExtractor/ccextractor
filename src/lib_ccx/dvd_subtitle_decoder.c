@@ -351,7 +351,7 @@ int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_
 
 #ifdef ENABLE_OCR
 		char *ocr_str = NULL;
-		ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, 0);
+		ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, 0, dec_ctx->ocr_quantmode);
 		if(ret >= 0)
 			rect->ocr_text = ocr_str;
 #endif
