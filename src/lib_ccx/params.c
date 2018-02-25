@@ -962,8 +962,10 @@ void version(char *location) {
 	mprint("	File SHA256: %s\n", hash);
 
 	mprint("Libraries used by CCExtractor\n");
+#ifdef ENABLE_OCR
 	mprint("	Tesseract Version: %s\n", (const char*)TessVersion());
 	mprint("	Leptonica Version: %s\n", getLeptonicaVersion());
+#endif
 	mprint("	libpac Version: %s\n", GPAC_VERSION);
 	mprint("	zlib: %s\n", ZLIB_VERSION);
 	mprint("	utf8proc Version: %s\n", (const char*) utf8proc_version());
@@ -973,7 +975,6 @@ void version(char *location) {
 	mprint("	libhash\n");
 	mprint("	nuklear\n");
 	mprint("	libzvbi\n");
-
 
 }
 
