@@ -966,7 +966,7 @@ void version(char *location) {
 	mprint("	Tesseract Version: %s\n", (const char*)TessVersion());
 	mprint("	Leptonica Version: %s\n", getLeptonicaVersion());
 #endif
-	mprint("	libpac Version: %s\n", GPAC_VERSION);
+	mprint("	libGPAC Version: %s\n", GPAC_VERSION);
 	mprint("	zlib: %s\n", ZLIB_VERSION);
 	mprint("	utf8proc Version: %s\n", (const char*) utf8proc_version());
 	mprint("	protobuf-c Version: %s\n", (const char*) protobuf_c_version());
