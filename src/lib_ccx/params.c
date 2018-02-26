@@ -3,8 +3,6 @@
 #include "utf8proc.h"
 #include "zlib.h"
 #include "gpac/version.h"
-#include "capi.h"
-#include "allheaders.h"
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "utility.h"
@@ -16,6 +14,12 @@
 #include "../lib_hash/sha2.h"
 #include <string.h>
 #include <stdio.h>
+
+#ifdef ENABLE_OCR
+#include "capi.h"
+#include "allheaders.h"
+#endif
+
 #ifdef ENABLE_HARDSUBX
 #include "hardsubx.h"
 #endif
@@ -968,7 +972,7 @@ void version(char *location) {
 #endif
 	mprint("	libGPAC Version: %s\n", GPAC_VERSION);
 	mprint("	zlib: %s\n", ZLIB_VERSION);
-	mprint("	utf8proc Version: %s\n", (const char*) utf8proc_version());
+//	mprint("	utf8proc Version: %s\n", (const char*) utf8proc_version());
 	mprint("	protobuf-c Version: %s\n", (const char*) protobuf_c_version());
 	mprint("	libpng Version: %s\n", PNG_LIBPNG_VER_STRING);
 	mprint("	FreeType \n");
