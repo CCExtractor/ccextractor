@@ -1,6 +1,5 @@
 #include "png.h"
 #include "protobuf-c.h"
-#include "utf8proc.h"
 #include "zlib.h"
 #include "gpac/version.h"
 #include "lib_ccx.h"
@@ -972,9 +971,9 @@ void version(char *location) {
 #endif
 	mprint("	libGPAC Version: %s\n", GPAC_VERSION);
 	mprint("	zlib: %s\n", ZLIB_VERSION);
-//	mprint("	utf8proc Version: %s\n", (const char*) utf8proc_version());
 	mprint("	protobuf-c Version: %s\n", (const char*) protobuf_c_version());
 	mprint("	libpng Version: %s\n", PNG_LIBPNG_VER_STRING);
+	mprint("	utf8proc \n");
 	mprint("	FreeType \n");
 	mprint("	libhash\n");
 	mprint("	nuklear\n");
