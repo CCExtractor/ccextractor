@@ -173,7 +173,6 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 
 	ctx->cc_to_stdout = opt->cc_to_stdout;
 	ctx->pes_header_to_stdout = opt->pes_header_to_stdout;
-	ctx->dvb_debug_traces_to_stdout = opt->dvb_debug_traces_to_stdout;
 	ctx->ignore_pts_jumps = opt->ignore_pts_jumps;
 
 	ctx->hauppauge_mode = opt->hauppauge_mode;

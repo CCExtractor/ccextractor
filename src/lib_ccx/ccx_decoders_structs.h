@@ -22,8 +22,10 @@ struct cc_bitmap
 	int w;
 	int h;
 	int nb_colors;
-	unsigned char *data[2];
-	int linesize[2];
+	unsigned char *data0;
+	unsigned char *data1;
+	int linesize0;
+	int linesize1;
 #ifdef ENABLE_OCR
 	char *ocr_text;
 #endif

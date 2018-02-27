@@ -420,7 +420,7 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 		for (y = 0; y < rect[i].h; y++)
 		{
 			for (x = 0; x < rect[i].w; x++)
-				pbuf[((y + y_off) * width) + x_off + x] = rect[i].data[0][y * rect[i].w + x];
+				pbuf[((y + y_off) * width) + x_off + x] = rect[i].data0[y * rect[i].w + x];
 
 		}
 	}
@@ -438,7 +438,7 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 	}
 
 	/* TODO do rectangle wise, one color table should not be used for all rectangles */
-	mapclut_paletee(palette, alpha, (uint32_t *)rect[0].data[1], rect[0].nb_colors);
+	mapclut_paletee(palette, alpha, (uint32_t *)rect[0].data1, rect[0].nb_colors);
 #ifdef ENABLE_OCR	
 	if (!context->nospupngocr)
 	{
@@ -461,8 +461,8 @@ end:
 
 	for (i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
-		freep(rect->data);
-		freep(rect->data + 1);
+		freep(rect->data0);
+		freep(rect->data1);
 	}
 	sub->nb_data = 0;
 	freep(&sub->data);

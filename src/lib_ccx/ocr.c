@@ -775,25 +775,23 @@ int ocr_rect(void* arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr
 				goto end;
 		}
 
-		mapclut_paletee(palette, alpha, (uint32_t *)rect->data[1],rect->nb_colors);
-		mapclut_paletee(copy->palette, copy->alpha, (uint32_t *)rect->data[1],rect->nb_colors);
+		mapclut_paletee(palette, alpha, (uint32_t *)rect->data1,rect->nb_colors);
+		mapclut_paletee(copy->palette, copy->alpha, (uint32_t *)rect->data1,rect->nb_colors);
 
 		int size = rect->w * rect->h;
-		if (ccx_options.dvb_debug_traces_to_stdout)
-		{
-			mprint ("Trying W*H (%d * %d) so size = %d\n",
+		dbg_print(CCX_DMT_DVB, "ocr_rect(): Trying W*H (%d * %d) so size = %d\n",
 				rect->w, rect->h, size);
-		}
+
 		copy->data = (unsigned char *)malloc(sizeof(unsigned char)*size);
 		for(int i = 0; i < size; i++)
 		{
-			copy->data[i] = rect->data[0][i];
+			copy->data[i] = rect->data0[i];
 		}
 
 		switch (ocr_quantmode)
 		{
 			case 1:
-				quantize_map(alpha, palette, rect->data[0], size, 3, rect->nb_colors);
+				quantize_map(alpha, palette, rect->data0, size, 3, rect->nb_colors);
 				break;
 
 			// Case 2 reduces the color set of the image
@@ -813,7 +811,7 @@ int ocr_rect(void* arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr
 				break;
 		}
 
-		*str = ocr_bitmap(arg, palette, alpha, rect->data[0], rect->w, rect->h, copy);
+		*str = ocr_bitmap(arg, palette, alpha, rect->data0, rect->w, rect->h, copy);
 
 end:
 	freep(&palette);

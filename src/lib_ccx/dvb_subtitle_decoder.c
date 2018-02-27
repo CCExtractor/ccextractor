@@ -1273,12 +1273,9 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 	region->height = RB16(buf);
 	buf += 2;
 
-	if (ccx_options.dvb_debug_traces_to_stdout)
-	{
-		mprint(", REGION %d WIDTH: %d, ", region_id, region->width);
-		mprint("REGION %d HEIGHT: %d", region_id, region->height);
-	}
-
+	dbg_print(CCX_DMT_DVB, ", REGION %d WIDTH: %d, ", region_id, region->width);
+	dbg_print(CCX_DMT_DVB, "REGION %d HEIGHT: %d", region_id, region->height);
+	
 	if (region->width * region->height != region->buf_size)
 	{
 		freep(&region->pbuf);
@@ -1394,8 +1391,7 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 
 	if (page_state == 1 || page_state == 2)
 	{
-		if (ccx_options.dvb_debug_traces_to_stdout)
-			mprint(", PAGE STATE %d", page_state);
+		dbg_print(CCX_DMT_DVB, ", PAGE STATE %d", page_state);
 		delete_regions(ctx);
 		delete_objects(ctx);
 		delete_cluts(ctx);
@@ -1409,8 +1405,7 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 		region_id = *buf++;
 		buf += 1;
 
-		if (ccx_options.dvb_debug_traces_to_stdout)
-			mprint(", REGION %d ADDED", region_id);
+		dbg_print(CCX_DMT_DVB, ", REGION %d ADDED", region_id);
 
 		display = tmp_display_list;
 		tmp_ptr = &tmp_display_list;
@@ -1540,8 +1535,8 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	rect = malloc(sizeof(struct cc_bitmap));
 	if(!rect)
 		return -1;
-	rect->data[0]=NULL;
-	rect->data[1]=NULL;
+	rect->data0=NULL;
+	rect->data1=NULL;
 
 	sub->flags |= SUB_EOD_MARKER;
 	sub->got_output = 1;
@@ -1609,28 +1604,27 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 				break;
 		}
 
-		rect->data[1] = malloc(1024);
-		memset(rect->data[1], 0, 1024);
-		memcpy(rect->data[1], clut_table, (1 << region->depth) * sizeof(uint32_t));
-
+		rect->data1 = malloc(1024);
+		memset(rect->data1, 0, 1024);
+		memcpy(rect->data1, clut_table, (1 << region->depth) * sizeof(uint32_t));
+		assert(((1 << region->depth) * sizeof(uint32_t)) <= 1024);
 	}
 
 	rect->x = x_pos + offset_x;
 	rect->y = y_pos + offset_y;
 	rect->w = width;
 	rect->h = height;
-	rect->linesize[0] = width;
+	rect->linesize0 = width;
 
 	// The second loop, to generate the merged image
 
-	if (ccx_options.dvb_debug_traces_to_stdout)
-		mprint ("\nCreating a data[0] of %d bytes (%d x %d)\n", width * height, width, height);
-	rect->data[0] = (uint8_t*)malloc(width * height);
-	if (!rect->data[0]) {
+	dbg_print(CCX_DMT_DVB, "\nCreating a data[0] of %d bytes (%d x %d)\n", width * height, width, height);
+	rect->data0 = (uint8_t*)malloc(width * height);
+	if (!rect->data0) {
 		mprint("write_dvb_sub: failed to alloc memory, need %d * %d = %d bytes\n", width, height, width*height);
 		return -1;
 	}
-	memset(rect->data[0], 0x0, width * height);
+	memset(rect->data0, 0x0, width * height);
 
 	for (display = ctx->display_list; display; display = display->next) {
 		region = get_region(ctx, display->region_id);
@@ -1654,7 +1648,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 				else
 				{
 					uint8_t c=(uint8_t) region->pbuf[y * region->width + x];
-					rect->data[0][offset] = c;
+					rect->data0[offset] = c;
 				}
 			}
 		}
@@ -1671,9 +1665,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 			rect->ocr_text = ocr_str;
 		else
 			rect->ocr_text = NULL;
-		if (ccx_options.dvb_debug_traces_to_stdout) {
-			mprint("\nOCR Result: %s\n", rect->ocr_text ? rect->ocr_text : "NULL");
-		}
+		dbg_print(CCX_DMT_DVB, "\nOCR Result: %s\n", rect->ocr_text ? rect->ocr_text : "NULL");
 	}
 	else {
 		rect->ocr_text = NULL;
@@ -1718,20 +1710,19 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	write_dvb_sub(dec_ctx->prev, sub->prev); //we write the current dvb sub to update decoder context
 	enc_ctx->write_previous = 1; //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
 #ifdef ENABLE_OCR
-	if (ccx_options.dvb_debug_traces_to_stdout) {
 		if (sub->prev) {
 			struct cc_bitmap* content_prev = sub->prev->data;
-			mprint("\nPrevious subtitle %x (%s)\nStart time: %lld; End time: %lld",
+			dbg_print(CCX_DMT_DVB, "\nPrevious subtitle %x (%s)\nStart time: %lld; End time: %lld",
 				sub->prev, content_prev ?
 				(content_prev->ocr_text ? content_prev->ocr_text : "NULL OCR") : "NULL DATA",
 				sub->prev->start_time, sub->prev->end_time);
 		}
 		struct cc_bitmap* content = sub->data;
-		mprint("\nCurrent subtitle %x (%s)\nStart time: %lld; End time: %lld\n",
+		dbg_print(CCX_DMT_DVB, "\nCurrent subtitle %x (%s)\nStart time: %lld; End time: %lld\n",
 			sub, content ?
 			(content->ocr_text ? content->ocr_text : "NULL OCR") : "NULL DATA",
 			sub->start_time, sub->end_time);
-	}
+	
 #endif
 }
 
@@ -1786,57 +1777,54 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 		if (page_id == ctx->composition_id || page_id == ctx->ancillary_id
 				|| ctx->composition_id == -1 || ctx->ancillary_id == -1)
 		{
-			if (ccx_options.dvb_debug_traces_to_stdout)
-			{
-				//debug traces
-				mprint("DVBSUB - PTS: %" PRId64 ", ", dec_ctx->timing->current_pts);
-				mprint("FTS: %d, ", dec_ctx->timing->fts_now);
-				mprint("SEGMENT TYPE: %2X, ", segment_type);
-			}
+			//debug traces
+			dbg_print(CCX_DMT_DVB, "DVBSUB - PTS: %" PRId64 ", ", dec_ctx->timing->current_pts);
+			dbg_print(CCX_DMT_DVB, "FTS: %d, ", dec_ctx->timing->fts_now);
+			dbg_print(CCX_DMT_DVB, "SEGMENT TYPE: %2X, ", segment_type);
+
 			switch (segment_type)
 			{
 			case DVBSUB_PAGE_SEGMENT:
-				mprint ("(DVBSUB_PAGE_SEGMENT), SEGMENT LENGTH: %d", segment_length);
+				dbg_print(CCX_DMT_DVB, "(DVBSUB_PAGE_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 				dvbsub_parse_page_segment(ctx, p, segment_length);
 				got_segment |= 1;
 				break;
 			case DVBSUB_REGION_SEGMENT:
-				mprint ("(DVBSUB_REGION_SEGMENT), SEGMENT LENGTH: %d", segment_length);
+				dbg_print(CCX_DMT_DVB, "(DVBSUB_REGION_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 				dvbsub_parse_region_segment(ctx, p, segment_length);
 				got_segment |= 2;
 				break;
 			case DVBSUB_CLUT_SEGMENT:
-				mprint ("(DVBSUB_CLUT_SEGMENT), SEGMENT LENGTH: %d", segment_length);
+				dbg_print(CCX_DMT_DVB, "(DVBSUB_CLUT_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 				ret = dvbsub_parse_clut_segment(ctx, p, segment_length);
 				if (ret < 0)
 					goto end;
 				got_segment |= 4;
 				break;
 			case DVBSUB_OBJECT_SEGMENT:
-				mprint ("(DVBSUB_OBJECT_SEGMENT), SEGMENT LENGTH: %d", segment_length);
+				dbg_print(CCX_DMT_DVB, "(DVBSUB_OBJECT_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 				ret = dvbsub_parse_object_segment(ctx, p, segment_length);
 				if (ret < 0)
 					goto end;
 				got_segment |= 8;
 				break;
 			case DVBSUB_DISPLAYDEFINITION_SEGMENT:
-				mprint ("(DVBSUB_DISPLAYDEFINITION_SEGMENT), SEGMENT LENGTH: %d", segment_length);
+				dbg_print(CCX_DMT_DVB, "(DVBSUB_DISPLAYDEFINITION_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 				dvbsub_parse_display_definition_segment(ctx, p,
 						segment_length);
 				break;
 			case DVBSUB_DISPLAY_SEGMENT: //when we get a display segment, we save the current page
-				mprint ("(DVBSUB_DISPLAY_SEGMENT), SEGMENT LENGTH: %d", segment_length);
+				dbg_print(CCX_DMT_DVB, "(DVBSUB_DISPLAY_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 				dvbsub_handle_display_segment(enc_ctx, dec_ctx, sub);
 				got_segment |= 16;
 				break;
 			default:
-				mprint("Subtitling segment type 0x%x, page id %d, length %d\n",
+				dbg_print(CCX_DMT_DVB, "Subtitling segment type 0x%x, page id %d, length %d\n",
 						segment_type, page_id, segment_length);
 				break;
 			}
 		}
-		if (ccx_options.dvb_debug_traces_to_stdout)
-			mprint("\n");
+		dbg_print(CCX_DMT_DVB, "\n");
 		p += segment_length;
 	}
 	// Some streams do not send a display segment but if we have all the other
@@ -1896,18 +1884,14 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 	{
 		/* setting language to undefined if not found in language lkup table */
 		char lang_name[4];
-		if (ccx_options.dvb_debug_traces_to_stdout)
-		{
-			mprint("DVBSUB - LANGUAGE \"");
-		}
+		dbg_print(CCX_DMT_DVB, "DVBSUB - LANGUAGE \"");
+		
 		for(int char_index = 0; char_index < 3; char_index++)
 		{
 			lang_name[char_index] = cctolower(data[char_index]);
-			if (ccx_options.dvb_debug_traces_to_stdout)
-				mprint("%c", lang_name[char_index]);
+			dbg_print(CCX_DMT_DVB, "%c", lang_name[char_index]);
 		}
-		if (ccx_options.dvb_debug_traces_to_stdout)
-			mprint("\" FOUND\n");
+		dbg_print(CCX_DMT_DVB, "\" FOUND\n");
 
 		for (j = 0, cfg->lang_index[i] = 0; language[j] != NULL; j++)
 		{

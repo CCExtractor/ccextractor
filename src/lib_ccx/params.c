@@ -1891,7 +1891,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp(argv[i], "-debugdvbsub") == 0)
 		{
-			opt->dvb_debug_traces_to_stdout = 1;
+			opt->debug_mask |= CCX_DMT_DVB;
 			continue;
 		}
 		if (strcmp(argv[i], "-ignoreptsjumps") == 0)
