@@ -1,6 +1,6 @@
 #include "png.h"
 #include "protobuf-c.h"
-#include "utf8proc/utf8proc.h"
+#include "utf8proc.h"
 #include "zlib.h"
 #include "gpac/version.h"
 #include "lib_ccx.h"
