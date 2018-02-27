@@ -559,8 +559,12 @@ void free_subtitle(struct cc_subtitle* sub)
 
 	if (sub->datatype == CC_DATATYPE_DVB)
 	{
-		freep(&((struct cc_bitmap *) sub->data)->data0);
-		freep(&((struct cc_bitmap *) sub->data)->data1);
+		struct cc_bitmap *bitmap=(struct cc_bitmap *) sub->data;
+		if (bitmap)
+		{
+			freep(&bitmap->data0);
+			freep(&bitmap->data1);
+		}
 	}
 	freep(&sub->data);
 	freep(&sub);
