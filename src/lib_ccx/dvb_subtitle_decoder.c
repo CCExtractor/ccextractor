@@ -1637,7 +1637,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 			for (int x = 0; x < region->width; x++)
 			{
 				int offset=((y + y_off) * width) + x_off + x;
-				if (offset >= (width * height))
+				if (offset >= (width * height) || offset<0)
 				{
 					mprint ("write_dvb_sub(): Offset %d (out of bounds!) ignored.\n",
 						offset);

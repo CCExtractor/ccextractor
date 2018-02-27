@@ -7,6 +7,11 @@
 #include "ccx_decoders_isdb.h"
 #include "file_buffer.h"
 
+#ifdef DEBUG_SAVE_TS_PACKETS
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
 #define RAI_MASK 0x40 //byte mask to check if RAI bit is set (random access indicator)
 
 unsigned char tspacket[188]; // Current packet
@@ -260,6 +265,21 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		}
 	}
 
+#ifdef DEBUG_SAVE_TS_PACKETS
+	// quick & dirty way to save packets so we reproduce issues that only
+	// seem to happen when there's packet loss when processing a network
+	// stream. 
+	FILE *savepacket;
+	pid_t mypid=getpid();
+	char spfn[1024];
+	sprintf (spfn,"/tmp/packets_%u.ts",(unsigned) mypid);
+	savepacket=fopen (spfn, "ab");
+	if (savepacket)
+	{
+		fwrite (tspacket,188,1,savepacket);
+		fclose (savepacket);
+	}
+#endif
 
 	payload->transport_error = (tspacket[1]&0x80)>>7;
 	payload->pesstart =  (tspacket[1] & 0x40) >> 6;
