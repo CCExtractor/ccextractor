@@ -125,8 +125,8 @@ int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context)
 	}
 	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
-		freep(rect->data0);
-		freep(rect->data1);
+		freep(&rect->data0);
+		freep(&rect->data1);
 	}
 #endif
 	sub->nb_data = 0;

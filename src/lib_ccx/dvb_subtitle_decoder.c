@@ -1079,7 +1079,7 @@ static int dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 
 		if (buf + top_field_len + bottom_field_len > buf_end)
 		{
-			mprint("Field data size too large\n");
+			mprint("dvbsub_parse_object_segment(): Field data size too large\n");
 			return -1;
 		}
 
@@ -1092,7 +1092,7 @@ static int dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 			if (dvbsub_parse_pixel_data_block(dvb_ctx, display, block,
 					top_field_len, 0, non_modifying_color))
 			{
-				mprint ("dvbsub_parse_object_segment: Something went wrong. Giving up on block (1).\n");
+				mprint ("dvbsub_parse_object_segment(): Something went wrong. Giving up on block (1).\n");
 				// Something went wrong, get out and hope we can
 				// recover
 				return -1;
@@ -1107,7 +1107,7 @@ static int dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 					non_modifying_color))
 			{
 				// Problems. Hope for the best.
-				mprint ("dvbsub_parse_object_segment: Something went wrong. Giving up on block (2).\n");
+				mprint ("dvbsub_parse_object_segment(): Something went wrong. Giving up on block (2).\n");
 				return -1;
 			}
 		}
@@ -1170,7 +1170,7 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
 
 			if (depth == 0)
 			{
-				mprint("Invalid clut depth 0x%x!\n", *buf);
+				mprint("dvbsub_parse_clut_segment(): Invalid clut depth 0x%x.\n", *buf);
 				return -1;
 			}
 
@@ -1201,7 +1201,7 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
 
 			if (!!(depth & 0x80) + !!(depth & 0x40) + !!(depth & 0x20) > 1)
 			{
-				mprint("More than one bit level marked: %x\n", depth);
+				mprint("dvbsub_parse_clut_segment(): More than one bit level marked: %x\n", depth);
 			}
 
 			if (depth & 0x80)
@@ -1240,7 +1240,7 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 
 	if (buf_size < 10)
 	{
-		mprint (" [buf_size < 10, leaving region] ");
+		mprint (" dvbsub_parse_region_segment(): [buf_size < 10, leaving region] ");
 		return;
 	}
 
@@ -1251,7 +1251,7 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 
 	if (!region)
 	{
-		mprint (" [new region allocated] ");
+		dbg_print (CCX_DMT_DVB, " [new region allocated] ");
 		region = (struct DVBSubRegion*) malloc(sizeof(struct DVBSubRegion));
 		memset(region, 0, sizeof(struct DVBSubRegion));
 
@@ -1263,7 +1263,7 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 	}
 	else if (version == region->version)
 	{
-		mprint (" [already had this region and version] ");
+		dbg_print (CCX_DMT_DVB, " [already had this region and version] ");
 		return;
 	}
 	fill = ((*buf++) >> 3) & 1;
@@ -1288,7 +1288,7 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 	region->depth = 1 << (((*buf++) >> 2) & 7);
 	if (region->depth < 2 || region->depth > 8)
 	{
-		mprint("region depth %d is invalid\n", region->depth);
+		mprint("dvbsub_parse_region_segment(): region depth %d is invalid\n", region->depth);
 		region->depth = 4;
 	}
 	region->clut = *buf++;

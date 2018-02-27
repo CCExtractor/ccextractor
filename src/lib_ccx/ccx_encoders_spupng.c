@@ -461,8 +461,8 @@ end:
 
 	for (i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
-		freep(rect->data0);
-		freep(rect->data1);
+		freep(&rect->data0);
+		freep(&rect->data1);
 	}
 	sub->nb_data = 0;
 	freep(&sub->data);
