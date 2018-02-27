@@ -59,6 +59,10 @@ aux_source_directory ("${PROJECT_SOURCE_DIR}/wrappers/" SOURCEFILE)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib/" SOURCEFILE)
 
+set(UTF8PROC_SOURCE
+        ${PROJECT_SOURCE_DIR}/utf8proc/utf8proc.c
+        )
+
 set(FREETYPE_SOURCE
         ${PROJECT_SOURCE_DIR}/freetype/autofit/autofit.c
         ${PROJECT_SOURCE_DIR}/freetype/base/ftbase.c
@@ -191,7 +195,7 @@ if (PKG_CONFIG_FOUND AND WITH_SHARING)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_SHARING")
 endif (PKG_CONFIG_FOUND AND WITH_SHARING)
 
-add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE})
+add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 target_link_libraries (ccextractor ${EXTRA_LIBS})
 target_include_directories (ccextractor PUBLIC ${EXTRA_INCLUDES})
 
