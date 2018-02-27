@@ -958,6 +958,7 @@ char *calculateSHA256(char *location) {
 }
 
 void version(char *location) {
+	char *leptversion;
 	char *hash = calculateSHA256(location);
 	mprint("CCExtractor detailed version info\n");
 	mprint("	Version: %s\n", VERSION);
@@ -968,7 +969,9 @@ void version(char *location) {
 	mprint("Libraries used by CCExtractor\n");
 #ifdef ENABLE_OCR
 	mprint("	Tesseract Version: %s\n", (const char*)TessVersion());
-	mprint("	Leptonica Version: %s\n", getLeptonicaVersion());
+	leptversion = getLeptonicaVersion();
+	mprint("	Leptonica Version: %s\n", leptversion);
+	lept_free(leptversion);
 #endif
 	mprint("	libGPAC Version: %s\n", GPAC_VERSION);
 	mprint("	zlib: %s\n", ZLIB_VERSION);

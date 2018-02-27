@@ -196,6 +196,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 
 	PIX	*pix = NULL;
 	PIX	*cpix = NULL;
+	PIX	*cpix_gs = NULL; // Grayscale version
 	PIX *color_pix = NULL;
 	PIX *color_pix_out = NULL;
 	char*text_out= NULL;
@@ -256,18 +257,25 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	}
 #endif
 
-	cpix = pixConvertRGBToGray(cpix, 0.0, 0.0, 0.0); // Abhinav95: Converting image to grayscale for OCR to avoid issues with transparency
-	TessBaseAPISetImage2(ctx->api, cpix);
-	color_pix_out = TessBaseAPIGetThresholdedImage(ctx->api);
-	if (tess_ret = TessBaseAPIRecognize(ctx->api, NULL)) {
-		mprint("\nIn ocr_bitmap: Failed to perform OCR. Skipped.\n");
+	cpix_gs = pixConvertRGBToGray(cpix, 0.0, 0.0, 0.0); // Abhinav95: Converting image to grayscale for OCR to avoid issues with transparency
+	if (cpix_gs==NULL)
+		tess_ret=-1;
+	else
+	{
+		TessBaseAPISetImage2(ctx->api, cpix_gs);
+		color_pix_out = TessBaseAPIGetThresholdedImage(ctx->api);
+		tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
+		if (tess_ret) {
+			mprint("\nIn ocr_bitmap: Failed to perform OCR. Skipped.\n");
 
-		pixDestroy(&pix);
-		pixDestroy(&cpix);
-		pixDestroy(&color_pix);
-		pixDestroy(&color_pix_out);
+			pixDestroy(&pix);
+			pixDestroy(&cpix);
+			pixDestroy(&cpix_gs);
+			pixDestroy(&color_pix);
+			pixDestroy(&color_pix_out);
 		
-		return NULL;
+			return NULL;
+		}
 	}
 
 	char *text_out_from_tes=TessBaseAPIGetUTF8Text(ctx->api);
@@ -587,6 +595,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 
 	pixDestroy(&pix);
 	pixDestroy(&cpix);
+	pixDestroy(&cpix_gs);
 	pixDestroy(&color_pix);
 	pixDestroy(&color_pix_out);
     

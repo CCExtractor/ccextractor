@@ -1239,7 +1239,10 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 	int fill;
 
 	if (buf_size < 10)
+	{
+		mprint (" [buf_size < 10, leaving region] ");
 		return;
+	}
 
 	region_id = *buf++;
 	version = ((*buf) >> 4) & 15;
@@ -1248,6 +1251,7 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 
 	if (!region)
 	{
+		mprint (" [new region allocated] ");
 		region = (struct DVBSubRegion*) malloc(sizeof(struct DVBSubRegion));
 		memset(region, 0, sizeof(struct DVBSubRegion));
 
@@ -1258,7 +1262,10 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 		ctx->region_list = region;
 	}
 	else if (version == region->version)
+	{
+		mprint (" [already had this region and version] ");
 		return;
+	}
 	fill = ((*buf++) >> 3) & 1;
 
 	region->width = RB16(buf);
@@ -1274,12 +1281,9 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 
 	if (region->width * region->height != region->buf_size)
 	{
-		free(region->pbuf);
-
+		freep(&region->pbuf);
 		region->buf_size = region->width * region->height;
-
 		region->pbuf = (uint8_t*) malloc(region->buf_size);
-
 		fill = 1;
 		region->dirty = 0;
 	}
@@ -1300,7 +1304,6 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 	else
 	{
 		buf += 1;
-
 		if (region->depth == 4)
 			region->bgcolor = (((*buf++) >> 4) & 15);
 		else
@@ -1355,6 +1358,7 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 		display->object_list_next = object->display_list;
 		object->display_list = display;
 	}
+	assert (buf<=buf_end);
 }
 /*
  * xxx loose last frame
@@ -1372,7 +1376,7 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	int timeout;
 	int version;
 
-	if (buf_size < 1)
+	if (buf_size < 2)
 		return;
 
 	timeout = *buf++;
@@ -1446,7 +1450,7 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 
 		free(display);
 	}
-
+	assert (buf<=buf_end);
 }
 
 static void dvbsub_parse_display_definition_segment(void *dvb_ctx,
@@ -1619,9 +1623,9 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 	// The second loop, to generate the merged image
 
-	rect->data[0] = (uint8_t*)malloc(width * height);
 	if (ccx_options.dvb_debug_traces_to_stdout)
-		mprint ("Creating a data[0] of %d\n", width * height);
+		mprint ("\nCreating a data[0] of %d bytes (%d x %d)\n", width * height, width, height);
+	rect->data[0] = (uint8_t*)malloc(width * height);
 	if (!rect->data[0]) {
 		mprint("write_dvb_sub: failed to alloc memory, need %d * %d = %d bytes\n", width, height, width*height);
 		return -1;
@@ -1649,7 +1653,8 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 				}
 				else
 				{
-					rect->data[0][((y + y_off) * width) + x_off + x] = region->pbuf[y * region->width + x];
+					uint8_t c=(uint8_t) region->pbuf[y * region->width + x];
+					rect->data[0][offset] = c;
 				}
 			}
 		}
@@ -1695,10 +1700,12 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	free_encoder_context(enc_ctx->prev);
 	enc_ctx->prev = NULL;
 	enc_ctx->prev = copy_encoder_context(enc_ctx);
+
 	/* copy previous decoder context */
 	free_decoder_context(dec_ctx->prev);
 	dec_ctx->prev = NULL;
 	dec_ctx->prev = copy_decoder_context(dec_ctx);
+
 	freep(&dec_ctx->prev->private_data);
 	dec_ctx->prev->private_data = malloc(sizeof(struct DVBSubContext));
 	memcpy(dec_ctx->prev->private_data, dec_ctx->private_data, sizeof(struct DVBSubContext));
@@ -1784,36 +1791,41 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 				//debug traces
 				mprint("DVBSUB - PTS: %" PRId64 ", ", dec_ctx->timing->current_pts);
 				mprint("FTS: %d, ", dec_ctx->timing->fts_now);
-				mprint("SEGMENT TYPE: %d, ", segment_type);
-				mprint("SEGMENT LENGTH: %d", segment_length);
+				mprint("SEGMENT TYPE: %2X, ", segment_type);
 			}
 			switch (segment_type)
 			{
 			case DVBSUB_PAGE_SEGMENT:
+				mprint ("(DVBSUB_PAGE_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 				dvbsub_parse_page_segment(ctx, p, segment_length);
 				got_segment |= 1;
 				break;
 			case DVBSUB_REGION_SEGMENT:
+				mprint ("(DVBSUB_REGION_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 				dvbsub_parse_region_segment(ctx, p, segment_length);
 				got_segment |= 2;
 				break;
 			case DVBSUB_CLUT_SEGMENT:
+				mprint ("(DVBSUB_CLUT_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 				ret = dvbsub_parse_clut_segment(ctx, p, segment_length);
 				if (ret < 0)
 					goto end;
 				got_segment |= 4;
 				break;
 			case DVBSUB_OBJECT_SEGMENT:
+				mprint ("(DVBSUB_OBJECT_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 				ret = dvbsub_parse_object_segment(ctx, p, segment_length);
 				if (ret < 0)
 					goto end;
 				got_segment |= 8;
 				break;
 			case DVBSUB_DISPLAYDEFINITION_SEGMENT:
+				mprint ("(DVBSUB_DISPLAYDEFINITION_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 				dvbsub_parse_display_definition_segment(ctx, p,
 						segment_length);
 				break;
 			case DVBSUB_DISPLAY_SEGMENT: //when we get a display segment, we save the current page
+				mprint ("(DVBSUB_DISPLAY_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 				dvbsub_handle_display_segment(enc_ctx, dec_ctx, sub);
 				got_segment |= 16;
 				break;
