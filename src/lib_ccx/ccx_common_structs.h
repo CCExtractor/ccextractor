@@ -19,6 +19,12 @@ struct ccx_common_logging_t {
 };
 extern struct ccx_common_logging_t ccx_common_logging;
 
+enum subdatatype
+{
+	CC_DATATYPE_GENERIC=0,
+	CC_DATATYPE_DVB=1
+};
+
 enum subtype
 {
 	CC_BITMAP,
@@ -42,6 +48,7 @@ struct cc_subtitle
 	* @warn decoder cant output multiple types of data
 	*/
 	void *data;
+	enum subdatatype datatype;
 
 	/** number of data */
 	unsigned int nb_data;

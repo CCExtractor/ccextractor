@@ -139,6 +139,7 @@ int write_xds_string(struct cc_subtitle *sub, struct ccx_decoders_xds_context *c
 	else
 	{
 		sub->data = data;
+		sub->datatype = CC_DATATYPE_GENERIC;
 		data = (struct eia608_screen *)sub->data + sub->nb_data;
 		data->format = SFORMAT_XDS;
 		data->start_time = ts_start_of_xds;

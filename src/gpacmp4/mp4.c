@@ -451,6 +451,7 @@ static int process_tx3g(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 	dec_sub->start_time = dec_ctx->timing->fts_now;
 	if (dec_sub->data != NULL) free(dec_sub->data);
 	dec_sub->data = malloc(atom_length + 1);
+	dec_sub->datatype = CC_DATATYPE_GENERIC;
 	memcpy(dec_sub->data, data, atom_length);
 	*((char*)dec_sub->data + atom_length) = '\0';
 

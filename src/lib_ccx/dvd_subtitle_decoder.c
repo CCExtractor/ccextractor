@@ -322,6 +322,7 @@ int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_
 
 	sub->got_output = 1;
 	sub->data = rect;
+	sub->datatype = CC_DATATYPE_GENERIC;
 	sub->start_time = get_visible_start(dec_ctx->timing, 1);
 	sub->end_time = sub->start_time + (ctx->ctrl->stop_time);
 

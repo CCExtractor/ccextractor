@@ -517,6 +517,7 @@ struct cc_subtitle* copy_subtitle(struct cc_subtitle *sub)
 	{
 		sub_copy->data = malloc(sub->nb_data * sizeof(struct eia608_screen));
 		memcpy(sub_copy->data, sub->data, sub->nb_data * sizeof(struct eia608_screen));
+		sub_copy->datatype = sub->datatype;
 	}
 	return sub_copy;
 }
@@ -556,6 +557,11 @@ void free_subtitle(struct cc_subtitle* sub)
 	if (!sub)
 		return;
 
+	if (sub->datatype == CC_DATATYPE_DVB)
+	{
+		freep(&((struct cc_bitmap *) sub->data)->data0);
+		freep(&((struct cc_bitmap *) sub->data)->data1);
+	}
 	freep(&sub->data);
 	freep(&sub);
 }

@@ -1541,6 +1541,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	sub->flags |= SUB_EOD_MARKER;
 	sub->got_output = 1;
 	sub->data = rect;
+	sub->datatype = CC_DATATYPE_DVB;
 
 	// TODO: if different regions have different cluts, only the last one will be saved.
 	// Don't know if it will affect anything.

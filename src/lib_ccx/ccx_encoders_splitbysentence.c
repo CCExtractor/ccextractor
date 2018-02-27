@@ -617,6 +617,7 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 				+ 1  // skip '.'
 			;
 			tmpsub->data = strndup(bp_last_break, tmpsub->nb_data - 1);
+			tmpsub->datatype = CC_DATATYPE_GENERIC;
 			tmpsub->got_output = 1;
 
 			tmpsub->start_time = alphanum_cur;
