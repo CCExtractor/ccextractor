@@ -512,12 +512,12 @@ struct cc_subtitle* copy_subtitle(struct cc_subtitle *sub)
 	struct cc_subtitle *sub_copy = NULL;
 	sub_copy = malloc(sizeof(struct cc_subtitle));
 	memcpy(sub_copy, sub, sizeof(struct cc_subtitle));
+	sub_copy->datatype = sub->datatype;
 
 	if (sub->data)
 	{
 		sub_copy->data = malloc(sub->nb_data * sizeof(struct eia608_screen));
 		memcpy(sub_copy->data, sub->data, sub->nb_data * sizeof(struct eia608_screen));
-		sub_copy->datatype = sub->datatype;
 	}
 	return sub_copy;
 }
