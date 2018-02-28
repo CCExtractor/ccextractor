@@ -40,6 +40,8 @@ GF_Err CanAccessMovie(GF_ISOFile *movie, u32 Mode)
 }
 
 s32 gf_lang_find(const char *);
+const char *gf_lang_get_3cc(u32);
+
 
 static GF_Err unpack_track(GF_TrackBox *trak)
 {
