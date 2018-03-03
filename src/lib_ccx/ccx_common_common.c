@@ -70,6 +70,8 @@ void freep(void *arg)
 int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time,
 		LLONG end_time, char *info, char *mode, enum ccx_encoding_type e_type)
 {
+	if (str == NULL || strlen(str) == 0)
+		return 0;
 	if (sub->nb_data)
 	{
 		for(;sub->next;sub = sub->next);
