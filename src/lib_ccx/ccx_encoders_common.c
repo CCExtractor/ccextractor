@@ -1038,6 +1038,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->segment_last_key_frame = 0;
 	ctx->nospupngocr = opt->nospupngocr;
 
+	ctx->prev = NULL;
 	return ctx;
 }
 
