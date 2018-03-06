@@ -614,9 +614,6 @@ void print_usage (void)
 	mprint ("                       2 = live output. 3 = both\n");
 	mprint ("                 -sem: Create a .sem file for each output file that is open\n");
 	mprint ("                       and delete it on file close.\n");
-	mprint ("            -dvbcolor: For DVB subtitles, also output the color of the\n");
-	mprint ("                       subtitles, if the output format is SRT or WebVTT.\n");
-	mprint ("          -nodvbcolor: In DVB subtitles, disable color in output.\n");
 	mprint ("             -dvblang: For DVB subtitles, select which language's caption\n");
 	mprint ("                       stream will be processed. e.g. 'eng' for English.\n");
 	mprint ("                       If there are multiple languages, only this specified\n");
@@ -1486,18 +1483,6 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			{
 				mprint("Invalid option for codec %s\n",argv[i]);
 			}
-			continue;
-		}
-
-		if(strcmp(argv[i],"-dvbcolor")==0)
-		{
-			opt->dvbcolor = 1;
-			continue;
-		}
-		// -dvbcolor counterpart
-		if (strcmp(argv[i], "-nodvbcolor") == 0)
-		{
-			opt->dvbcolor = 0;
 			continue;
 		}
 
