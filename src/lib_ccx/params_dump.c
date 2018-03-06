@@ -188,6 +188,23 @@ void params_dump(struct lib_ccx_ctx *ctx)
 				(long) (ccx_options.enc_cfg.endcreditsforatmost.time_in_ms/1000)
 		       );
 	}
+	// print quantisation mode used
+	mprint("[Quantisation-mode: ");
+	switch(ccx_options.ocr_quantmode)
+	{
+		case 0:
+			// when no quantisation
+			mprint("None]\n");
+			break;
+		case 1:
+			// default mode, CCExtractor's internal function
+			mprint("CCExtractor's internal function]\n");
+			break;
+		case 2:
+			// reduced color palette quantisation
+			mprint("Reduced color palette]\n");
+			break;
+	}
 }
 
 #define Y_N(cond) ((cond) ? "Yes" : "No")
