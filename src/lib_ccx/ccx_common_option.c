@@ -64,7 +64,6 @@ void init_options (struct ccx_s_options *options)
 	options->ucla = 0; // By default, -UCLA not used
 	options->tickertext = 0; // By default, do not assume ticker style text
 	options->hardsubx = 0; // By default, don't try to extract hard subtitles
-	options->dvbcolor = 1; // By default, attempt to detect both text and color
 	options->dvblang = NULL; // By default, autodetect DVB language
 	options->ocrlang = NULL; // By default, autodetect .traineddata file
 	options->ocr_oem = 0; // By default, set Tesseract OEM mode OEM_TESSERACT_ONLY (0)

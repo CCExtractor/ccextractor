@@ -134,7 +134,6 @@ struct ccx_s_options // Options from user parameters
 	int ucla;                         // 1 if UCLA used, 0 if not
 	int tickertext;                   // 1 if ticker text style burned in subs, 0 if not
 	int hardsubx;                     // 1 if burned-in subtitles to be extracted
-	int dvbcolor;                     // 1 if Color to be detected for DVB
 	char *dvblang;                    // The name of the language stream for DVB
 	char *ocrlang;                    // The name of the .traineddata file to be loaded with tesseract
 	int ocr_oem;                      // The Tesseract OEM mode, could be 0 (default), 1 or 2
