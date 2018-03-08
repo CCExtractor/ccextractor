@@ -1111,7 +1111,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 					caps = 1;
 				// Process the last subtitle for DVB
 				if (!(!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE)) {
-					if (data_node->bufferdatatype == CCX_DVB_SUBTITLE && dec_ctx->dec_sub.prev->end_time == 0) {
+					if (data_node->bufferdatatype == CCX_DVB_SUBTITLE && dec_ctx && dec_ctx->dec_sub.prev && dec_ctx->dec_sub.prev->end_time == 0) {
 						dec_ctx->dec_sub.prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000);
 						encode_sub(enc_ctx->prev, dec_ctx->dec_sub.prev);
 						dec_ctx->dec_sub.prev->got_output = 0;
