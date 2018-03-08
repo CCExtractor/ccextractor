@@ -51,6 +51,9 @@ make
 
 # test your build
 ./ccextractor
+
+# make build systemwide
+sudo make install
 ```
 
 **Using CMake**
@@ -69,6 +72,9 @@ make
 
 # test your build
 ./ccextractor
+
+# make build systemwide
+sudo make install
 ```
 
 
@@ -82,6 +88,9 @@ In order to compile it you'll need to configure it using autoconf by passing the
 ./autogen.sh
 ./configure --with-gui
 make
+
+# make build systemwide
+sudo make install
 ```
 
 Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
