@@ -48,9 +48,12 @@ char *get_ocr_text_wordwise(struct lib_hardsubx_ctx *ctx, PIX *image)
 	{
 		do
 		{
-			char* word = strdup(TessResultIteratorGetUTF8Text(it, level));
-			if(word==NULL || strlen(word)==0)
+			char* word;
+			char* ts_word = TessResultIteratorGetUTF8Text(it, level);
+			if(ts_word==NULL || strlen(ts_word)==0)
 				continue;
+			word = strdup(ts_word);
+			TessDeleteText(ts_word);
 			if(text_out == NULL)
 			{
 				if(ctx->detect_italics)
@@ -136,9 +139,12 @@ char *get_ocr_text_letterwise(struct lib_hardsubx_ctx *ctx, PIX *image)
 	{
 		do
 		{
-			char* letter = strdup(TessResultIteratorGetUTF8Text(it, level));
-			if(letter==NULL || strlen(letter)==0)
+			char* letter;
+			char* ts_letter = TessResultIteratorGetUTF8Text(it, level);
+			if(ts_letter==NULL || strlen(ts_letter)==0)
 				continue;
+			letter = strdup(ts_letter);
+			TessDeleteText(ts_letter);
 			if(text_out==NULL)
 			{
 				text_out = strdup(letter);
@@ -203,9 +209,12 @@ char *get_ocr_text_wordwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, 
 	{
 		do
 		{
-			char* word = strdup(TessResultIteratorGetUTF8Text(it, level));
-			if(word==NULL || strlen(word)==0)
+			char* word;
+			char* ts_word = TessResultIteratorGetUTF8Text(it, level);
+			if(ts_word ==NULL || strlen(ts_word)==0)
 				continue;
+			word = strdup(ts_word);
+			TessDeleteText(ts_word);
 			float conf = TessResultIteratorConfidence(it,level);
 			if(conf < threshold)
 				continue;
@@ -303,9 +312,12 @@ char *get_ocr_text_letterwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image
 	{
 		do
 		{
-			char* letter = strdup(TessResultIteratorGetUTF8Text(it, level));
-			if(letter==NULL || strlen(letter)==0)
+			char* letter;
+			char* ts_letter = TessResultIteratorGetUTF8Text(it, level);
+			if(ts_letter==NULL || strlen(ts_letter)==0)
 				continue;
+			letter = strdup(ts_letter);
+			TessDeleteText(ts_letter);
 			float conf = TessResultIteratorConfidence(it,level);
 			if(conf < threshold)
 				continue;
