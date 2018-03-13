@@ -5,6 +5,7 @@ project (CCExtractor)
 option (WITH_FFMPEG "Build using FFmpeg demuxer and decoder" OFF)
 option (WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
 option (WITH_SHARING "Build with sharing and translation support" OFF)
+option (WITH_HARDSUBX "Build with support for burned-in subtitles" OFF)
 
 # Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
@@ -149,16 +150,19 @@ if (PKG_CONFIG_FOUND AND WITH_FFMPEG)
   pkg_check_modules (AVFORMAT REQUIRED libavformat)
   pkg_check_modules (AVUTIL REQUIRED libavutil)
   pkg_check_modules (AVCODEC REQUIRED libavcodec)
+  pkg_check_modules (AVFILTER REQUIRED libavfilter)
   pkg_check_modules (SWSCALE REQUIRED libswscale)
 
   set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFORMAT_LIBRARIES})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${AVUTIL_LIBRARIES})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${AVCODEC_LIBRARIES})
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFILTER_LIBRARIES})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${SWSCALE_LIBRARIES})
 
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVFORMAT_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVUTIL_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVCODEC_INCLUDE_DIRS})
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVFILTER_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${SWSCALE_INCLUDE_DIRS})
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_FFMPEG")
@@ -194,6 +198,31 @@ if (PKG_CONFIG_FOUND AND WITH_SHARING)
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_SHARING")
 endif (PKG_CONFIG_FOUND AND WITH_SHARING)
+
+########################################################
+# Build for hardsubx using avformat, avutil, avcodec and
+# swscale
+########################################################
+
+if (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
+
+  pkg_check_modules (AVFORMAT REQUIRED libavformat)
+  pkg_check_modules (AVUTIL REQUIRED libavutil)
+  pkg_check_modules (AVCODEC REQUIRED libavcodec)
+  pkg_check_modules (SWSCALE REQUIRED libswscale)
+
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFORMAT_LIBRARIES})
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVUTIL_LIBRARIES})
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVCODEC_LIBRARIES})
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${SWSCALE_LIBRARIES})
+
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVFORMAT_INCLUDE_DIRS})
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVUTIL_INCLUDE_DIRS})
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVCODEC_INCLUDE_DIRS})
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${SWSCALE_INCLUDE_DIRS})
+
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_HARDSUBX")
+endif (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
 
 add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 target_link_libraries (ccextractor ${EXTRA_LIBS})
