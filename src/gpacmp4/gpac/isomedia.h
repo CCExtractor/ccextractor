@@ -244,7 +244,9 @@ enum
 	GF_ISOM_MEDIA_JPEG		= GF_4CC( 'j', 'p', 'e', 'g' ),
 	GF_ISOM_MEDIA_JP2		= GF_4CC( 'j', 'p', '2', ' ' ),
 	GF_ISOM_MEDIA_PNG		= GF_4CC( 'p', 'n', 'g', ' ' ),
-
+	
+	/* CFS: Seen this in an itunes sample */
+	GF_ISOM_MEDIA_CAPTIONS  = GF_4CC('c', 'l', 'c', 'p')
 };
 
 
@@ -334,6 +336,10 @@ enum
 	GF_ISOM_SUBTYPE_RRTP		= GF_4CC( 'r', 'r', 't', 'p' ),
 	GF_ISOM_SUBTYPE_RTCP		= GF_4CC( 'r', 't', 'c', 'p' ),
 	GF_ISOM_SUBTYPE_FLUTE		= GF_4CC( 'f', 'd', 'p', ' ' ),
+
+	/* CAPTIONS */
+	GF_ISOM_SUBTYPE_C608		= GF_4CC('c', '6', '0', '8'),
+	GF_ISOM_SUBTYPE_C708		= GF_4CC('c', '7', '0', '8'),
 
 	/* Apple XDCAM */
 	GF_ISOM_SUBTYPE_XDVB		= GF_4CC( 'x', 'd', 'v', 'b' ),
