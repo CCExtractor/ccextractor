@@ -1,0 +1,27 @@
+﻿A guide to how dependencies should be updated in CCExtractor.
+
+Author: thealphadollar
+======================
+
+CCExtractor depends on multiple dependencies and they are updated from time to time. On every major revision of the dependencies, the changes need to be incorporated into our repository.
+
+It is not straightforward since we make minor (or sometimes major) changes into the library to use it and these changes are lost in case of direct file replacement. To overcome this issue, we should follow the below pathway.
+
+*) Create a duplicate copy of the CCExtractor's folder of the library, to be updated (we will be calling this folder lib(copy) in steps and original one as lib).
+*) Download the latest files of the library from official source (the folder is called as lib(orig) in further steps).
+*) Look for files with the same name in lib and lib(orig). It can be done manually in case of small libraries (libpng), otherwise a script can be written utilising the grep command to find out files from the library which we use.
+*) In lib, replace all the files (found in previous step) with their updated versions from lib(orig). A copy command can be used in the script written for the previous step to accomplish this step.
+
+Now, the files in our repository have been updated. In steps to follow, we will try to grab lost changes using lib(copy).
+
+*) Run diff command between lib(copy) and lib for all files and store the output in a text document. Here files from lib(copy) should be given as first argument to notice deletions clearly.
+*) Look for deletions in an updated file and manually inspect (or ask mentor) whether that part is to be restored or not. In most cases, it is to be restored but it's better to ask than to break.
+
+Once the changes have been restored, try to compile CCExtractor. It is very much likely that the compilation will fail. The most probably reason for this could be inclusion of unnecessary lines of code and their accompanying dependencies.
+e.g "X is not defined" can be an error when we don't include the file in which X is defined nor remove the unnecessary line using X. 
+CCExtractor doesn't use a library fully, we use only the code and files necessary. This requires manual removal of extra lines and dependencies.
+
+*) Output the compilation erros in a text document while compiling.
+*) Use inspection and comparison with lib(copy) to decide whether the line causing error is to be removed.
+
+Compile again, debug and push the change for the Continuous Integration tests on samples.
