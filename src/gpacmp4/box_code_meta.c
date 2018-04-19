@@ -24,6 +24,7 @@
  */
 
 #include <gpac/internal/isomedia_dev.h>
+#include <gpac/constants.h>
 
 #ifndef GPAC_DISABLE_ISOM
 
@@ -702,7 +703,7 @@ GF_Err infe_Write(GF_Box *s, GF_BitStream *bs)
 	} else {
 		gf_bs_write_byte(bs, 0, 1);
 	}
-	if (ptr->item_type == GF_4CC('m', 'i', 'm', 'e') || ptr->item_type == GF_4CC('u', 'r', 'i', ' ')) {
+	if (ptr->item_type == GF_META_ITEM_TYPE_MIME || ptr->item_type == GF_META_ITEM_TYPE_URI) {
 		if (ptr->content_type) {
 			len = (u32)strlen(ptr->content_type) + 1;
 			gf_bs_write_data(bs, ptr->content_type, len);
@@ -711,7 +712,7 @@ GF_Err infe_Write(GF_Box *s, GF_BitStream *bs)
 			gf_bs_write_byte(bs, 0, 1);
 		}
 	}
-	if (ptr->item_type == GF_4CC('m', 'i', 'm', 'e')) {
+	if (ptr->item_type == GF_META_ITEM_TYPE_MIME) {
 		if (ptr->content_encoding) {
 			len = (u32)strlen(ptr->content_encoding) + 1;
 			gf_bs_write_data(bs, ptr->content_encoding, len);
@@ -745,11 +746,11 @@ GF_Err infe_Size(GF_Box *s)
 	}
 	if (ptr->item_name) ptr->size += strlen(ptr->item_name)+1;
 	else ptr->size += 1;
-	if (ptr->item_type == GF_4CC('m', 'i', 'm', 'e') || ptr->item_type == GF_4CC('u', 'r', 'i', ' ')) {
+	if (ptr->item_type == GF_META_ITEM_TYPE_MIME || ptr->item_type == GF_META_ITEM_TYPE_URI) {
 		if (ptr->content_type) ptr->size += strlen(ptr->content_type) + 1;
 		else ptr->size += 1;
 	}
-	if (ptr->item_type == GF_4CC('m','i','m','e')) {
+	if (ptr->item_type == GF_META_ITEM_TYPE_MIME) {
 		if (ptr->content_encoding) ptr->size += strlen(ptr->content_encoding) + 1;
 		else ptr->size += 1;
 	}
@@ -813,8 +814,11 @@ GF_Err iinf_Write(GF_Box *s, GF_BitStream *bs)
 	e = gf_isom_full_box_write(s, bs);
 	if (e) return e;
 	count = gf_list_count(ptr->item_infos);
-	gf_bs_write_u16(bs, count);
-
+	if (ptr->version == 0)
+		gf_bs_write_u16(bs, count);
+	else
+		gf_bs_write_u32(bs, count);
+		
 	if (count) {
 		gf_isom_box_array_write(s, ptr->item_infos, bs);
 	}
@@ -826,7 +830,7 @@ GF_Err iinf_Size(GF_Box *s)
 	u32 count;
 	GF_ItemInfoBox *ptr = (GF_ItemInfoBox *)s;
 	if (!s) return GF_BAD_PARAM;
-	ptr->size += 2;
+	ptr->size += (ptr->version == 0) ? 2 : 4;
 	if ((count = gf_list_count(ptr->item_infos))) {
 		gf_isom_box_array_size(s, ptr->item_infos);
 	}
@@ -888,14 +892,14 @@ GF_Err iref_Write(GF_Box *s, GF_BitStream *bs)
 
 GF_Err iref_Size(GF_Box *s)
 {
-	GF_Err e;
+	GF_Err e = GF_OK;
 	u32 count, i;
 	GF_ItemReferenceBox *ptr = (GF_ItemReferenceBox *)s;
 	if (!s) return GF_BAD_PARAM;
 	count = gf_list_count(ptr->references);
 	for (i = 0; i < count; i++) {
 		GF_Box *a = (GF_Box *)gf_list_get(ptr->references, i);
-		e = gf_isom_box_size(a);		
+		e = gf_isom_box_size(a);
 		if (e) return e;
 		s->size += a->size;
 	}

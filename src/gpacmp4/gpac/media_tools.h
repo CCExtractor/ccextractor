@@ -68,10 +68,19 @@ only, since the OTI used when emulated is not standard...
 GF_ESD *gf_media_map_esd(GF_ISOFile *mp4, u32 track);
 
 /*!
+Creates (if needed) a GF_ESD for the given image item - THIS IS RESERVED for local playback
+only, since the OTI used when emulated is not standard...
+* \param mp4 source file
+* \param item_id item for which the esd is to be emulated
+* \return rebuilt ESD. It is the caller responsibility to delete it.
+*/
+GF_ESD *gf_media_map_item_esd(GF_ISOFile *mp4, u32 item_id);
+
+/*!
  * Get RFC 6381 description for a given track.
  * \param movie source movie
  * \param track track to check
- * \param szCodec a pointer to an already allocated string of size 20 bytes (to refine).
+ * \param szCodec a pointer to an already allocated string of size RFC6381_CODEC_NAME_SIZE_MAX bytes.
  * \param force_inband_xps force inband signaling of parameter sets.
  * \param force_sbr forces using explicit signaling for SBR.
  * \return error if any.
@@ -127,7 +136,7 @@ GF_Err gf_media_remove_non_rap(GF_ISOFile *file, u32 track);
 	NOTE: if an ESD is specified, its decoderSpecificInfo is also updated
 
 */
-	
+
 /*!
  * Track importer flags
  *	\hideinitializer
@@ -192,6 +201,8 @@ enum
 	GF_IMPORT_NO_VPS_EXTENSIONS = 1<<25,
 	/*! when set no SEI messages are imported*/
 	GF_IMPORT_NO_SEI = 1<<26,
+	/*! keeps track references when importing a single track*/
+	GF_IMPORT_KEEP_REFS = 1<<27,
 
 	/*! when set by user during import, will abort*/
 	GF_IMPORT_DO_ABORT = 1<<31
@@ -349,7 +360,7 @@ typedef struct __track_import
 	GF_Err last_error;
 } GF_MediaImporter;
 
-/*! 
+/*!
  * Imports a media file
  \param importer the importer object
  \return error if any
@@ -360,7 +371,7 @@ GF_Err gf_media_import(GF_MediaImporter *importer);
 /*!
  Adds chapter info contained in file
  \param file target movie
- \param chap_file target chapter file 
+ \param chap_file target chapter file
  \param import_fps specifies the chapter frame rate (optional, ignored if 0 - defaults to 25). Most formats don't use this feature
  \return error if any
  */
@@ -377,7 +388,7 @@ the file should not contain more than one audio and one video track
 */
 GF_Err gf_media_make_isma(GF_ISOFile *file, Bool keepESIDs, Bool keepImage, Bool no_ocr);
 
-/*! 
+/*!
  Make the file 3GP compliant && sets profile
  \param file the target movie
  \return error if any
@@ -412,7 +423,7 @@ GF_Err gf_media_make_psp(GF_ISOFile *file);
  */
 GF_Err gf_media_change_pl(GF_ISOFile *file, u32 track, u32 profile, u32 level);
 
-/*! 
+/*!
  Rewrite AVC samples if nalu size_length has to be changed
  \param file the target movie
  \param track the target track
@@ -423,7 +434,7 @@ GF_Err gf_media_change_pl(GF_ISOFile *file, u32 track, u32 profile, u32 level);
 GF_Err gf_media_avc_rewrite_samples(GF_ISOFile *file, u32 track, u32 prev_size_in_bits, u32 new_size_in_bits);
 
 /*!
- Split SVC layers 
+ Split SVC layers
  \param file the target movie
  \param track the target track
  \param splitAll if set each layers will be in a single track, otherwise all non-base layers will be in the same track
@@ -440,6 +451,17 @@ GF_Err gf_media_split_svc(GF_ISOFile *file, u32 track, Bool splitAll);
 */
 GF_Err gf_media_merge_svc(GF_ISOFile *file, u32 track, Bool mergeAll);
 
+
+typedef enum
+{
+	//use extractors
+	GF_LHVC_EXTRACTORS_ON,
+	//don't use extractors and keep base track inband/outofband param set signaling
+	GF_LHVC_EXTRACTORS_OFF,
+	//don't use extractors and force inband signaling in enhancement layer (for ATSC3)
+	GF_LHVC_EXTRACTORS_OFF_FORCE_INBAND,
+} GF_LHVCExtractoreMode;
+
 /* !
  Split L-HEVC layers
  \param file the target movie
@@ -449,7 +471,7 @@ GF_Err gf_media_merge_svc(GF_ISOFile *file, u32 track, Bool mergeAll);
  \param use_extractors if set, extractors are used in the enhancement layers.
  \return error if any
  */
-GF_Err gf_media_split_lhvc(GF_ISOFile *file, u32 track, Bool for_temporal_sublayers, Bool splitAll, Bool use_extractors);
+GF_Err gf_media_split_lhvc(GF_ISOFile *file, u32 track, Bool for_temporal_sublayers, Bool splitAll, GF_LHVCExtractoreMode extractor_mode);
 
 /* !
  Split HEVC tiles into different tracks
@@ -459,7 +481,7 @@ GF_Err gf_media_split_lhvc(GF_ISOFile *file, u32 track, Bool for_temporal_sublay
  */
 GF_Err gf_media_split_hevc_tiles(GF_ISOFile *file, u32 signal_only);
 
-	
+
 /* !
  Filter HEVC/L-HEVC NALUs by temporal IDs and layer IDs, removing all NALUs above the desired levels.
  \param file the target movie
@@ -528,6 +550,8 @@ typedef struct
 	u32 bandwidth;
 	/*! forced period duration (used when using empty periods or xlink periods without content)*/
 	Double period_duration;
+	/*! if true, the dasher inputs will open each time the segmentation function is called */
+	Bool no_cache;
 } GF_DashSegmenterInput;
 
 /*!
@@ -610,7 +634,7 @@ typedef enum
 
 typedef struct __gf_dash_segmenter GF_DASHSegmenter;
 
-/*! 
+/*!
  Create a new DASH segmenter
  *	\param mpdName target MPD file name, cannot be changed
  *	\param profile target DASH profile, cannot be changed
@@ -666,7 +690,7 @@ GF_Err gf_dasher_add_base_url(GF_DASHSegmenter *dasher, const char *base_url);
  *	\param default_extension extension for the segment name
  *	\return error code if any
 */
-	
+
 GF_Err gf_dasher_enable_url_template(GF_DASHSegmenter *dasher, Bool enable, const char *default_template, const char *default_extension);
 
 /*!
@@ -686,7 +710,7 @@ GF_Err gf_dasher_enable_segment_timeline(GF_DASHSegmenter *dasher, Bool enable);
 
 GF_Err gf_dasher_enable_single_segment(GF_DASHSegmenter *dasher, Bool enable);
 
-/*! 
+/*!
  Enable single file (with multiple segments) - may be overriden by the current profile
  *	\param dasher the DASH segmenter object
  *	\param enable enable or disable
@@ -706,11 +730,10 @@ GF_Err gf_dasher_set_switch_mode(GF_DASHSegmenter *dasher, GF_DashSwitchingMode 
  Sets segment and fragment durations.
  *	\param dasher the DASH segmenter object
  *	\param default_segment_duration the duration of a dash segment
- *	\param segment_duration_strict indicated is the duration is strict (otherwise we consider the mean duration)
  *	\param default_fragment_duration the duration of a dash fragment - if 0, same as default_segment_duration
  *	\return error code if any
 */
-GF_Err gf_dasher_set_durations(GF_DASHSegmenter *dasher, Double default_segment_duration, Bool segment_duration_strict, Double default_fragment_duration);
+GF_Err gf_dasher_set_durations(GF_DASHSegmenter *dasher, Double default_segment_duration, Double default_fragment_duration);
 
 /*!
  Enables spliting at RAP boundaries
@@ -828,6 +851,45 @@ GF_Err gf_dasher_set_content_protection_location_mode(GF_DASHSegmenter *dasher, 
 */
 GF_Err gf_dasher_set_profile_extension(GF_DASHSegmenter *dasher, const char *dash_profile_extension);
 
+/*! Sets Dasher debug mode
+ *	\param dasher the DASH segmenter object
+ *	\param forceTestMode If true, disable generation date print in mpd
+ *	\return error code if any
+*/
+GF_Err gf_dasher_set_test_mode(GF_DASHSegmenter *dasher, Bool forceTestMode);
+
+/*!
+ Enable/Disable cached inputs .
+ *	\param dasher the DASH segmenter object
+ *	\param no_cache if true, input file will be reopen each time the dasher process function is called .
+ *	\return error code if any
+*/
+GF_Err gf_dasher_enable_cached_inputs(GF_DASHSegmenter *dasher, Bool no_cache);
+
+/*!
+ Enable/Disable loop inputs .
+ *	\param dasher the DASH segmenter object
+ *	\param do_loop if true, input files will be looped at the end of the file in a live simulation. Otherwise a new period will be created.
+ *	\return error code if any
+*/
+GF_Err gf_dasher_enable_loop_inputs(GF_DASHSegmenter *dasher, Bool do_loop);
+
+/*!
+ Enable/Disable split on bound mode.
+ *	\param dasher the DASH segmenter object
+ *	\param split_on_bound if true, video streams are segmented with the same method as audio streams
+ *	\return error code if any
+*/
+GF_Err gf_dasher_set_split_on_bound(GF_DASHSegmenter *dasher, Bool split_on_bound);
+
+/*!
+ Enable/Disable split on closest mode.
+ *	\param dasher the DASH segmenter object
+ *	\param split_on_bound if true, video streams are segmented as close to the segment boundary as possible
+ *	\return error code if any
+*/
+GF_Err gf_dasher_set_split_on_closest(GF_DASHSegmenter *dasher, Bool split_on_closest);
+
 /*!
  Adds a media input to the DASHer
  *	\param dasher the DASH segmenter object
@@ -844,7 +906,7 @@ GF_Err gf_dasher_add_input(GF_DASHSegmenter *dasher, GF_DashSegmenterInput *inpu
 */
 GF_Err gf_dasher_process(GF_DASHSegmenter *dasher, Double sub_duration);
 
-/*! 
+/*!
  Returns time to wait until end of currently generated segments
  *	\param dasher the DASH segmenter object
  *  \param ms_ins_session if set, retrives the number of ms since the start of the dash session
@@ -853,7 +915,7 @@ GF_Err gf_dasher_process(GF_DASHSegmenter *dasher, Double sub_duration);
 u32 gf_dasher_next_update_time(GF_DASHSegmenter *dasher, u64 *ms_ins_session);
 
 
-/*! 
+/*!
  Sets dasher start date, rather than use current time. Used for debugging purposes, such as simulating long lasting sessions.
  *	\param dasher the DASH segmenter object
  *  \param dash_utc_start_date start date as UTC timstamp. If 0, current time is used
@@ -1023,14 +1085,14 @@ GF_RTPHinter *gf_hinter_track_new(GF_ISOFile *file, u32 track,
 */
 void gf_hinter_track_del(GF_RTPHinter *tkHinter);
 
-/*! 
+/*!
  hints all samples in the media track
  \param tkHinter track hinter object
  \return error if any
  */
 GF_Err gf_hinter_track_process(GF_RTPHinter *tkHinter);
 
-/*! 
+/*!
  Gets media bandwidth in kbps
  \param tkHinter track hinter object
  \return media bandwidth in kbps
@@ -1044,7 +1106,7 @@ u32 gf_hinter_track_get_bandwidth(GF_RTPHinter *tkHinter);
  */
 u32 gf_hinter_track_get_flags(GF_RTPHinter *tkHinter);
 
-/*! 
+/*!
  Gets rtp payload name
  \param tkHinter track hinter object
  \param payloadName static buffer for retrieval, minimum 30 bytes
@@ -1116,7 +1178,7 @@ typedef struct __saf_muxer GF_SAFMuxer;
  */
 GF_SAFMuxer *gf_saf_mux_new();
 
-/*! 
+/*!
 	SAF Multiplexer destructor
  \param mux the SAF multiplexer object
  */
@@ -1138,7 +1200,7 @@ void gf_saf_mux_del(GF_SAFMuxer *mux);
  */
 GF_Err gf_saf_mux_stream_add(GF_SAFMuxer *mux, u32 stream_id, u32 ts_res, u32 buffersize_db, u8 stream_type, u8 object_type, char *mime_type, char *dsi, u32 dsi_len, char *remote_url);
 
-/*! 
+/*!
  Removes a stream from the SAF multiplex
  \param mux the SAF multiplexer object
  \param stream_id ID of the SAF stream to remove
@@ -1146,7 +1208,7 @@ GF_Err gf_saf_mux_stream_add(GF_SAFMuxer *mux, u32 stream_id, u32 ts_res, u32 bu
  */
 GF_Err gf_saf_mux_stream_rem(GF_SAFMuxer *mux, u32 stream_id);
 
-/*! 
+/*!
  adds an AU to the given Warning, AU data will be freed by the multiplexer. AUs are NOT re-sorted by CTS, in order to enable audio interleaving.
  \param mux the SAF multiplexer object
  \param stream_id ID of the SAF stream to remove
