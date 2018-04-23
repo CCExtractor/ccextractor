@@ -34,7 +34,7 @@
 GF_Err gf_isom_parse_root_box(GF_Box **outBox, GF_BitStream *bs, u64 *bytesExpected, Bool progressive_mode);
 
 #ifndef	GPAC_DISABLE_ISOM_FRAGMENTS
-GF_Err MergeTrack(GF_TrackBox *trak, GF_TrackFragmentBox *traf, u64 moof_offset, Bool is_first_merge);
+GF_Err MergeTrack(GF_TrackBox *trak, GF_TrackFragmentBox *traf, u64 moof_offset, u64 *cumulated_offset, Bool is_first_merge);
 
 GF_Err MergeFragment(GF_MovieFragmentBox *moof, GF_ISOFile *mov)
 {
@@ -43,6 +43,7 @@ GF_Err MergeFragment(GF_MovieFragmentBox *moof, GF_ISOFile *mov)
 	u64 MaxDur;
 	GF_TrackFragmentBox *traf;
 	GF_TrackBox *trak;
+	u64 base_data_offset;
 
 	MaxDur = 0;
 
@@ -58,6 +59,7 @@ GF_Err MergeFragment(GF_MovieFragmentBox *moof, GF_ISOFile *mov)
 //		return GF_ISOM_INVALID_FILE;
 	}
 
+	base_data_offset = mov->current_top_box_start;
 	i=0;
 	while ((traf = (GF_TrackFragmentBox*)gf_list_enum(moof->TrackList, &i))) {
 		if (!traf->tfhd) {
@@ -82,7 +84,7 @@ GF_Err MergeFragment(GF_MovieFragmentBox *moof, GF_ISOFile *mov)
 			return GF_ISOM_INVALID_FILE;
 		}
 
-		e = MergeTrack(trak, traf, mov->current_top_box_start, !trak->first_traf_merged);
+		e = MergeTrack(trak, traf, mov->current_top_box_start, &base_data_offset, !trak->first_traf_merged);
 		if (e) return e;
 
 		trak->present_in_scalable_segment = 1;
@@ -211,7 +213,7 @@ GF_Err gf_isom_parse_movie_boxes(GF_ISOFile *mov, u64 *bytesMissing, Bool progre
 				GF_LOG(GF_LOG_ERROR, GF_LOG_CONTAINER, ("[iso file] Incomplete MDAT while file is not read-only\n"));
 				return GF_ISOM_INVALID_FILE;
 			}
-			if (mov->openMode == GF_ISOM_OPEN_READ) {
+			if ((mov->openMode == GF_ISOM_OPEN_READ) && !progressive_mode) {
 				GF_LOG(GF_LOG_ERROR, GF_LOG_CONTAINER, ("[iso file] Incomplete file while reading for dump - aborting parsing\n"));
 				break;
 			}
@@ -235,7 +237,7 @@ GF_Err gf_isom_parse_movie_boxes(GF_ISOFile *mov, u64 *bytesMissing, Bool progre
 #endif
 			e = gf_list_add(mov->TopBoxes, a);
 			if (e) return e;
-			
+
 			totSize += a->size;
 
 			//dump senc info in dump mode
@@ -328,9 +330,9 @@ GF_Err gf_isom_parse_movie_boxes(GF_ISOFile *mov, u64 *bytesMissing, Bool progre
 		{
 			u32 brand = ((GF_SegmentTypeBox *)a)->majorBrand;
 			switch (brand) {
-			case GF_4CC('s', 'i', 's', 'x'):
-			case GF_4CC('r', 'i', 's', 'x'):
-			case GF_4CC('s', 's', 's', 's'):
+			case GF_ISOM_BRAND_SISX:
+			case GF_ISOM_BRAND_RISX:
+			case GF_ISOM_BRAND_SSSS:
 				mov->is_index_segment = GF_TRUE;
 				break;
 			default:
@@ -398,6 +400,15 @@ GF_Err gf_isom_parse_movie_boxes(GF_ISOFile *mov, u64 *bytesMissing, Bool progre
 							if (e) return e;
 						}
 					}
+				} else {
+					for (k=0; k<gf_list_count(mov->moof->TrackList); k++) {
+						GF_TrackFragmentBox *traf = gf_list_get(mov->moof->TrackList, k);
+						if (traf->sample_encryption) {
+							e = senc_Parse(mov->movieFileMap->bs, NULL, traf, traf->sample_encryption);
+							if (e) return e;
+						}
+					}
+
 				}
 			} else if (mov->openMode==GF_ISOM_OPEN_CAT_FRAGMENTS) {
 				mov->NextMoofNumber = mov->moof->mfhd->sequence_number+1;
@@ -414,7 +425,7 @@ GF_Err gf_isom_parse_movie_boxes(GF_ISOFile *mov, u64 *bytesMissing, Bool progre
 		case GF_ISOM_BOX_TYPE_UNKNOWN:
 		{
 			GF_UnknownBox *box = (GF_UnknownBox*)a;
-			if (box->original_4cc == GF_4CC('j','P',' ',' ')) {
+			if (box->original_4cc == GF_ISOM_BOX_TYPE_JP) {
 				u8 *c = (u8 *) box->data;
 				if ((box->dataSize==4) && (GF_4CC(c[0],c[1],c[2],c[3])==(u32)0x0D0A870A))
 					mov->is_jp2 = 1;
@@ -529,7 +540,7 @@ GF_ISOFile *gf_isom_open_file(const char *fileName, u32 OpenMode, const char *tm
 	GF_Err e;
 	u64 bytes;
 	GF_ISOFile *mov = gf_isom_new_movie();
-	if (! mov) return NULL;
+	if (!mov || !fileName) return NULL;
 
 	mov->fileName = gf_strdup(fileName);
 	mov->openMode = OpenMode;
@@ -955,17 +966,16 @@ GF_ISOFile *gf_isom_create_movie(const char *fileName, u32 OpenMode, const char 
 	if (OpenMode == GF_ISOM_OPEN_WRITE) {
 		//THIS IS NOT A TEMP FILE, WRITE mode is used for "live capture"
 		//this file will be the final file...
-		mov->fileName = gf_strdup(fileName);
-		e = gf_isom_datamap_new(fileName, NULL, GF_ISOM_DATA_MAP_WRITE, & mov->editFileMap);
+		mov->fileName = fileName ? gf_strdup(fileName) : NULL;
+		e = gf_isom_datamap_new(fileName, NULL, GF_ISOM_DATA_MAP_WRITE, &mov->editFileMap);
 		if (e) goto err_exit;
 
 		/*brand is set to ISOM by default - it may be touched until sample data is added to track*/
 		gf_isom_set_brand_info( (GF_ISOFile *) mov, GF_ISOM_BRAND_ISOM, 1);
 	} else {
 		//we are in EDIT mode but we are creating the file -> temp file
-		mov->finalName = (char*)gf_malloc(strlen(fileName) + 1);
-		strcpy(mov->finalName, fileName);
-		e = gf_isom_datamap_new("mp4_tmp_edit", tmp_dir, GF_ISOM_DATA_MAP_WRITE, & mov->editFileMap);
+		mov->finalName = fileName ? gf_strdup(fileName) : NULL;
+		e = gf_isom_datamap_new("mp4_tmp_edit", tmp_dir, GF_ISOM_DATA_MAP_WRITE, &mov->editFileMap);
 		if (e) {
 			gf_isom_set_last_error(NULL, e);
 			gf_isom_delete_movie(mov);
@@ -1108,7 +1118,7 @@ u32 gf_isom_sample_get_subsample_entry(GF_ISOFile *movie, u32 track, u32 sampleN
 		sub_samples = NULL;
 	}
 	if (!sub_samples) return 0;
-	
+
 	last_sample = 0;
 	count = gf_list_count(sub_samples->Samples);
 	for (i=0; i<count; i++) {

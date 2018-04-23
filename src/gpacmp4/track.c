@@ -95,14 +95,14 @@ GF_Err GetESD(GF_MovieBox *moov, u32 trackID, u32 StreamDescIndex, GF_ESD **outE
 	//find stream dependencies: dpnd, sbas and scal
 	for (k=0; k<3; k++) {
 		u32 ref = GF_ISOM_BOX_TYPE_DPND;
-		if (k==1) ref = GF_4CC('s', 'b', 'a', 's');
-		else if (k==2) ref = GF_4CC('s', 'c', 'a', 'l');
+		if (k==1) ref = GF_ISOM_REF_BASE;
+		else if (k==2) ref = GF_ISOM_REF_SCAL;
 
 		e = Track_FindRef(trak, ref , &dpnd);
 		if (e) return e;
 		if (dpnd) {
 			//ONLY ONE STREAM DEPENDENCY IS ALLOWED
-			if (dpnd->trackIDCount != 1) return GF_ISOM_INVALID_MEDIA;
+			if (!k && (dpnd->trackIDCount != 1)) return GF_ISOM_INVALID_MEDIA;
 			//fix the spec: where is the index located ??
 			esd->dependsOnESID = dpnd->trackIDs[0];
 			break;
@@ -115,7 +115,7 @@ GF_Err GetESD(GF_MovieBox *moov, u32 trackID, u32 StreamDescIndex, GF_ESD **outE
 		GF_UserDataMap *map;
 		u32 i = 0;
 		while ((map = (GF_UserDataMap*)gf_list_enum(trak->udta->recordList, &i))) {
-			if (map->boxType == GF_4CC('A','U','X','V')) {
+			if (map->boxType == GF_ISOM_BOX_TYPE_AUXV) {
 				GF_Descriptor *d = gf_odf_desc_new(GF_ODF_AUX_VIDEO_DATA);
 				gf_list_add(esd->extensionDescriptors, d);
 				break;
@@ -413,7 +413,7 @@ GF_Err SetTrackDuration(GF_TrackBox *trak)
 
 #ifndef	GPAC_DISABLE_ISOM_FRAGMENTS
 
-GF_Err MergeTrack(GF_TrackBox *trak, GF_TrackFragmentBox *traf, u64 moof_offset, Bool is_first_merge)
+GF_Err MergeTrack(GF_TrackBox *trak, GF_TrackFragmentBox *traf, u64 moof_offset, u64 *cumulated_offset, Bool is_first_merge)
 {
 	u32 i, j, chunk_size;
 	u64 base_offset, data_offset;
@@ -441,8 +441,15 @@ GF_Err MergeTrack(GF_TrackBox *trak, GF_TrackFragmentBox *traf, u64 moof_offset,
 	def_size = (traf->tfhd->flags & GF_ISOM_TRAF_SAMPLE_SIZE) ? traf->tfhd->def_sample_size : traf->trex->def_sample_size;
 	def_flags = (traf->tfhd->flags & GF_ISOM_TRAF_SAMPLE_FLAGS) ? traf->tfhd->def_sample_flags : traf->trex->def_sample_flags;
 
-	//locate base offset
-	base_offset = (traf->tfhd->flags & GF_ISOM_TRAF_BASE_OFFSET) ? traf->tfhd->base_data_offset : moof_offset;
+	//locate base offset, by default use moof (dash-like)
+	base_offset = moof_offset;
+	//explicit base offset, use it
+	if (traf->tfhd->flags & GF_ISOM_TRAF_BASE_OFFSET)
+		base_offset = traf->tfhd->base_data_offset;
+	//no moof offset and no explicit offset, the offset is the end of the last written chunk of
+	//the previous traf. For the first traf, *cumulated_offset is actually moof offset
+	else if (!(traf->tfhd->flags & GF_ISOM_MOOF_BASE_OFFSET))
+		base_offset = *cumulated_offset;
 
 	chunk_size = 0;
 	prev_trun_data_offset = 0;
@@ -487,19 +494,22 @@ GF_Err MergeTrack(GF_TrackBox *trak, GF_TrackFragmentBox *traf, u64 moof_offset,
 			//add chunk on first sample
 			if (!j) {
 				data_offset = base_offset;
-				//aggregated offset if base-data-offset-present is not set AND if default-base-is-moof is not set
-				if (!(traf->tfhd->flags & GF_ISOM_TRAF_BASE_OFFSET) && !(traf->tfhd->flags & GF_ISOM_MOOF_BASE_OFFSET) )
-					data_offset += chunk_size;
-
+				//we have an explicit data offset for this trun
 				if (trun->flags & GF_ISOM_TRUN_DATA_OFFSET) {
 					data_offset += trun->data_offset;
 					/*reset chunk size since data is now relative to this trun*/
 					chunk_size = 0;
 					/*remember this data offset for following trun*/
 					prev_trun_data_offset = trun->data_offset;
-				} else {
+				}
+				//we had an explicit data offset for the previous trun, use it + chunk size
+				else if (prev_trun_data_offset) {
 					/*data offset is previous chunk size plus previous offset of the trun*/
-					data_offset += prev_trun_data_offset;
+					data_offset += prev_trun_data_offset + chunk_size;
+				}
+				//no explicit data offset, continuous data after last data in previous chunk
+				else {
+					data_offset += chunk_size;
 				}
 				stbl_AppendChunk(trak->Media->information->sampleTable, data_offset);
 				//then sampleToChunk
@@ -527,6 +537,10 @@ GF_Err MergeTrack(GF_TrackBox *trak, GF_TrackFragmentBox *traf, u64 moof_offset,
 			stbl_AppendDependencyType(trak->Media->information->sampleTable, GF_ISOM_GET_FRAG_LEAD(flags), GF_ISOM_GET_FRAG_DEPENDS(flags), GF_ISOM_GET_FRAG_DEPENDED(flags), GF_ISOM_GET_FRAG_REDUNDANT(flags));
 		}
 	}
+	//in any case, update the cumulated offset
+	//this will handle hypothetical files mixing MOOF offset and implicit non-moof offset
+	*cumulated_offset = data_offset + chunk_size;
+
 	/*merge sample groups*/
 	if (traf->sampleGroups) {
 		GF_List *groups;
@@ -663,6 +677,9 @@ GF_Err MergeTrack(GF_TrackBox *trak, GF_TrackFragmentBox *traf, u64 moof_offset,
 					break;
 				}
 			}
+			if (!senc && trak->sample_encryption)
+				senc = trak->sample_encryption;
+				
 			if (!senc) {
 				if (traf->sample_encryption->is_piff) {
 					senc = (GF_SampleEncryptionBox *)gf_isom_create_piff_psec_box(1, 0x2, 0, 0, NULL);
@@ -671,8 +688,6 @@ GF_Err MergeTrack(GF_TrackBox *trak, GF_TrackFragmentBox *traf, u64 moof_offset,
 				}
 
 				if (!trak->Media->information->sampleTable->other_boxes) trak->Media->information->sampleTable->other_boxes = gf_list_new();
-
-				assert(trak->sample_encryption == NULL);
 
 				trak->sample_encryption = senc;
 				gf_isom_box_add_default((GF_Box *)trak, (GF_Box *)senc);
@@ -695,7 +710,7 @@ GF_Err MergeTrack(GF_TrackBox *trak, GF_TrackFragmentBox *traf, u64 moof_offset,
 			for (i = 0; i < gf_list_count(traf->sai_offsets); i++) {
 				saio = (GF_SampleAuxiliaryInfoOffsetBox *)gf_list_get(traf->sai_offsets, i);
 				/*if we have only 1 sai_offsets, assume that its type is cenc*/
-				if ((saio->aux_info_type == GF_4CC('c', 'e', 'n', 'c')) || (gf_list_count(traf->sai_offsets) == 1)) {
+				if ((saio->aux_info_type == GF_ISOM_CENC_SCHEME) || (gf_list_count(traf->sai_offsets) == 1)) {
 					offset = (saio->version ? saio->offsets_large[0] : saio->offsets[0]) + moof_offset;
 					nb_saio = saio->entry_count;
 					break;
@@ -704,7 +719,7 @@ GF_Err MergeTrack(GF_TrackBox *trak, GF_TrackFragmentBox *traf, u64 moof_offset,
 			for (i = 0; i < gf_list_count(traf->sai_sizes); i++) {
 				saiz = (GF_SampleAuxiliaryInfoSizeBox *)gf_list_get(traf->sai_sizes, i);
 				/*if we have only 1 sai_sizes, assume that its type is cenc*/
-				if ((saiz->aux_info_type == GF_4CC('c', 'e', 'n', 'c'))  || (gf_list_count(traf->sai_sizes) == 1)) {
+				if ((saiz->aux_info_type == GF_ISOM_CENC_SCHEME)  || (gf_list_count(traf->sai_sizes) == 1)) {
 					break;
 				}
 			}
@@ -1079,9 +1094,11 @@ GF_Err Track_SetStreamDescriptor(GF_TrackBox *trak, u32 StreamDescriptionIndex, 
 			break;
 		case GF_ISOM_BOX_TYPE_MP4A:
 			entry_a = (GF_MPEGAudioSampleEntryBox*) entry;
-			//OK, delete the previous ESD
-			gf_odf_desc_del((GF_Descriptor *) entry_a->esd->desc);
-			entry_a->esd->desc = esd;
+            if (entry_a->esd) { // some non-conformant files may not have an ESD ...
+                //OK, delete the previous ESD
+                gf_odf_desc_del((GF_Descriptor *) entry_a->esd->desc);
+                entry_a->esd->desc = esd;
+            }
 			break;
 		case GF_ISOM_BOX_TYPE_AVC1:
 		case GF_ISOM_BOX_TYPE_AVC2:

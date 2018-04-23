@@ -977,7 +977,7 @@ void dref_del(GF_Box *s)
 
 GF_Err dref_AddDataEntry(GF_Box *ptr, GF_Box *entry)
 {
-	if (entry->type==GF_4CC('a','l','i','s')) {
+	if (entry->type==GF_ISOM_BOX_TYPE_ALIS) {
 		GF_DataEntryURLBox *urle = (GF_DataEntryURLBox *) gf_isom_box_new(GF_ISOM_BOX_TYPE_URL);
 		urle->flags = 1;
 		gf_isom_box_del(entry);
@@ -1120,9 +1120,6 @@ void elst_del(GF_Box *s)
 	gf_free(ptr);
 }
 
-
-
-
 GF_Err elst_Read(GF_Box *s, GF_BitStream *bs)
 {
 	u32 entries;
@@ -1147,7 +1144,7 @@ GF_Err elst_Read(GF_Box *s, GF_BitStream *bs)
 	}
 
 
-	for (entries = 0; entries < nb_entries; entries++ ) {
+	for (entries = 0; entries < nb_entries; entries++) {
 		p = (GF_EdtsEntry *) gf_malloc(sizeof(GF_EdtsEntry));
 		if (!p) return GF_OUT_OF_MEM;
 		if (ptr->version == 1) {
@@ -2846,6 +2843,8 @@ GF_Err mdat_Read(GF_Box *s, GF_BitStream *bs)
 	if (ptr == NULL) return GF_BAD_PARAM;
 
 	ptr->dataSize = s->size;
+	ptr->bsOffset = gf_bs_get_position(bs);
+
 	//then skip these bytes
 	gf_bs_skip_bytes(bs, ptr->dataSize);
 	return GF_OK;
@@ -3894,7 +3893,7 @@ GF_Err audio_sample_entry_AddBox(GF_Box *s, GF_Box *a)
 			/*HACK for QT files: get the esds box from the track*/
 		{
 			GF_UnknownBox *wave = (GF_UnknownBox *)a;
- 			if (wave->original_4cc == GF_4CC('w','a','v','e')) {
+ 			if (wave->original_4cc == GF_ISOM_BOX_TYPE_WAVE) {
 				u32 offset = 0;
 				while ((wave->data[offset + 4] != 'e') && (wave->data[offset + 5] != 's')) {
 					offset++;
@@ -3913,7 +3912,9 @@ GF_Err audio_sample_entry_AddBox(GF_Box *s, GF_Box *a)
 				}
 			}
 			else {
-				GF_LOG(GF_LOG_WARNING, GF_LOG_CONTAINER, ("[iso file] Cannot process box %s\n!", gf_4cc_to_str(a->type)));
+				GF_LOG(GF_LOG_WARNING, GF_LOG_CONTAINER, ("[iso file] Cannot process box %s\n!", gf_4cc_to_str(wave->original_4cc)));
+				
+				return gf_isom_box_add_default(s, a);
 			}
 			gf_isom_box_del(a);
 			return GF_ISOM_INVALID_MEDIA;
@@ -5570,6 +5571,9 @@ GF_Err stsd_AddBox(GF_Box *s, GF_Box *a)
 	case GF_ISOM_BOX_TYPE_SBTT:
 	case GF_ISOM_BOX_TYPE_ELNG:
 	case GF_ISOM_BOX_TYPE_MP3:
+	case GF_ISOM_BOX_TYPE_JPEG:
+	case GF_ISOM_BOX_TYPE_JP2K:
+	case GF_ISOM_BOX_TYPE_PNG:
 	case GF_ISOM_SUBTYPE_3GP_AMR:
 	case GF_ISOM_SUBTYPE_3GP_AMR_WB:
 	case GF_ISOM_SUBTYPE_3GP_EVRC:
@@ -5601,7 +5605,7 @@ GF_Err stsd_Read(GF_Box *s, GF_BitStream *bs)
 	gf_bs_read_u32(bs);
 	ISOM_DECREASE_SIZE(s, 4)
 
-	return gf_isom_box_array_read(s, bs, stsd_AddBox);
+	return gf_isom_box_array_read_ex(s, bs, stsd_AddBox, GF_ISOM_BOX_TYPE_STSD);
 }
 
 GF_Box *stsd_New()
@@ -6147,7 +6151,7 @@ GF_Err stts_Read(GF_Box *s, GF_BitStream *bs)
 		ptr->entries[i].sampleDelta = gf_bs_read_u32(bs);
 #ifndef GPAC_DISABLE_ISOM_WRITE
 		ptr->w_currentSampleNum += ptr->entries[i].sampleCount;
-		ptr->w_LastDTS += ptr->entries[i].sampleCount * ptr->entries[i].sampleDelta;
+		ptr->w_LastDTS += (u64)ptr->entries[i].sampleCount * ptr->entries[i].sampleDelta;
 #endif
 
 		if (!ptr->entries[i].sampleDelta) {
@@ -6816,6 +6820,9 @@ static void gf_isom_check_sample_desc(GF_TrackBox *trak)
 		case GF_ISOM_BOX_TYPE_STPP:
 		case GF_ISOM_BOX_TYPE_SBTT:
 		case GF_ISOM_BOX_TYPE_MP3:
+		case GF_ISOM_BOX_TYPE_JPEG:
+		case GF_ISOM_BOX_TYPE_PNG:
+		case GF_ISOM_BOX_TYPE_JP2K:
 			continue;
 		case GF_ISOM_BOX_TYPE_UNKNOWN:
 			break;
@@ -7015,6 +7022,7 @@ GF_Err trak_AddBox(GF_Box *s, GF_Box *a)
 GF_Err trak_Read(GF_Box *s, GF_BitStream *bs)
 {
 	GF_Err e;
+	u32 i;
 	GF_TrackBox *ptr = (GF_TrackBox *)s;
 	e = gf_isom_box_array_read(s, bs, trak_AddBox);
 	if (e) return e;
@@ -7028,7 +7036,17 @@ GF_Err trak_Read(GF_Box *s, GF_BitStream *bs)
 		GF_LOG(GF_LOG_ERROR, GF_LOG_CONTAINER, ("[iso file] Missing MediaBox\n"));
 		return GF_ISOM_INVALID_FILE;
 	}
-
+	for (i=0; i<gf_list_count(ptr->Media->information->sampleTable->other_boxes); i++) {
+		GF_Box *a = gf_list_get(ptr->Media->information->sampleTable->other_boxes, i);
+		if ((a->type ==GF_ISOM_BOX_TYPE_UUID) && (((GF_UUIDBox *)a)->internal_4cc == GF_ISOM_BOX_UUID_PSEC)) {
+			ptr->sample_encryption = (struct __sample_encryption_box *) a;
+			break;
+		}
+		else if (a->type == GF_ISOM_BOX_TYPE_SENC) {
+			ptr->sample_encryption = (struct __sample_encryption_box *)a;
+			break;
+		}
+	}
 	return e;
 }
 
@@ -9435,6 +9453,8 @@ GF_Err sbgp_Size(GF_Box *s)
 
 static void *sgpd_parse_entry(u32 grouping_type, GF_BitStream *bs, u32 entry_size, u32 *total_bytes)
 {
+	Bool null_size_ok = GF_FALSE;
+
 	GF_DefaultSampleGroupDescriptionEntry *ptr;
 	switch (grouping_type) {
 	case GF_ISOM_SAMPLE_GROUP_ROLL:
@@ -9465,6 +9485,16 @@ static void *sgpd_parse_entry(u32 grouping_type, GF_BitStream *bs, u32 entry_siz
 		ptr->dependent_flag = gf_bs_read_int(bs, 1);
 		gf_bs_read_int(bs, 3);
 		ptr->SAP_type = gf_bs_read_int(bs, 4);
+		*total_bytes = 1;
+		return ptr;
+	}
+	case GF_ISOM_SAMPLE_GROUP_SYNC:
+	{
+		GF_SYNCEntry *ptr;
+		GF_SAFEALLOC(ptr, GF_SYNCEntry);
+		if (!ptr) return NULL;
+		gf_bs_read_int(bs, 2);
+		ptr->NALU_type = gf_bs_read_int(bs, 6);
 		*total_bytes = 1;
 		return ptr;
 	}
@@ -9556,26 +9586,41 @@ static void *sgpd_parse_entry(u32 grouping_type, GF_BitStream *bs, u32 entry_siz
 			GF_LOG(GF_LOG_WARNING, GF_LOG_CONTAINER, ("[iso file] nalm sample group does not indicate entry size, deprecated in spec\n"));
 		}
 		break;
+
+	case GF_ISOM_SAMPLE_GROUP_TSAS:
+	case GF_ISOM_SAMPLE_GROUP_STSA:
+		null_size_ok = GF_TRUE;
+		break;
+	//TODO, add support for these ones ?
+	case GF_ISOM_SAMPLE_GROUP_TSCL:
+		entry_size = 20;
+		break;
+	case GF_ISOM_SAMPLE_GROUP_LBLI:
+		entry_size = 2;
+		break;
 	default:
 		break;
 	}
 
-	if (!entry_size) {
-		GF_LOG(GF_LOG_WARNING, GF_LOG_CONTAINER, ("[iso file] %s sample group does not indicate entry size, cannot parse!\n", gf_4cc_to_str( grouping_type) ));
+	if (!entry_size && !null_size_ok) {
+		GF_LOG(GF_LOG_WARNING, GF_LOG_CONTAINER, ("[iso file] %s sample group does not indicate entry size and is not implemented, cannot parse!\n", gf_4cc_to_str( grouping_type) ));
 		return NULL;
 	}
 	GF_SAFEALLOC(ptr, GF_DefaultSampleGroupDescriptionEntry);
 	if (!ptr) return NULL;
-	ptr->length = entry_size;
-	ptr->data = (u8 *) gf_malloc(sizeof(u8)*ptr->length);
-	gf_bs_read_data(bs, (char *) ptr->data, ptr->length);
-	*total_bytes = entry_size;
+	if (entry_size) {
+		ptr->length = entry_size;
+		ptr->data = (u8 *) gf_malloc(sizeof(u8)*ptr->length);
+		gf_bs_read_data(bs, (char *) ptr->data, ptr->length);
+		*total_bytes = entry_size;
+	}
 	return ptr;
 }
 
 static void	sgpd_del_entry(u32 grouping_type, void *entry)
 {
 	switch (grouping_type) {
+	case GF_ISOM_SAMPLE_GROUP_SYNC:
 	case GF_ISOM_SAMPLE_GROUP_ROLL:
 	case GF_ISOM_SAMPLE_GROUP_PROL:
 	case GF_ISOM_SAMPLE_GROUP_RAP:
@@ -9615,6 +9660,10 @@ void sgpd_write_entry(u32 grouping_type, void *entry, GF_BitStream *bs)
 		gf_bs_write_int(bs, 0, 3);
 		gf_bs_write_int(bs, ((GF_SAPEntry*)entry)->SAP_type, 4);
 		return;
+	case GF_ISOM_SAMPLE_GROUP_SYNC:
+		gf_bs_write_int(bs, 0, 2);
+		gf_bs_write_int(bs, ((GF_SYNCEntry*)entry)->NALU_type, 6);
+		return;
 	case GF_ISOM_SAMPLE_GROUP_TELE:
 		gf_bs_write_int(bs, ((GF_TemporalLevelEntry*)entry)->level_independently_decodable, 1);
 		gf_bs_write_int(bs, 0, 7);
@@ -9640,7 +9689,8 @@ void sgpd_write_entry(u32 grouping_type, void *entry, GF_BitStream *bs)
 	default:
 	{
 		GF_DefaultSampleGroupDescriptionEntry *ptr = (GF_DefaultSampleGroupDescriptionEntry *)entry;
-		gf_bs_write_data(bs, (char *) ptr->data, ptr->length);
+		if (ptr->length)
+			gf_bs_write_data(bs, (char *) ptr->data, ptr->length);
 	}
 	}
 }
@@ -9655,7 +9705,15 @@ static u32 sgpd_size_entry(u32 grouping_type, void *entry)
 	case GF_ISOM_SAMPLE_GROUP_TELE:
 	case GF_ISOM_SAMPLE_GROUP_RAP:
 	case GF_ISOM_SAMPLE_GROUP_SAP:
+	case GF_ISOM_SAMPLE_GROUP_SYNC:
 		return 1;
+	case GF_ISOM_SAMPLE_GROUP_TSCL:
+		return 20;
+	case GF_ISOM_SAMPLE_GROUP_LBLI:
+		return 2;
+	case GF_ISOM_SAMPLE_GROUP_TSAS:
+	case GF_ISOM_SAMPLE_GROUP_STSA:
+		return 0;
 	case GF_ISOM_SAMPLE_GROUP_SEIG:
 		return ((((GF_CENCSampleEncryptionGroupEntry *)entry)->IsProtected == 1) && !((GF_CENCSampleEncryptionGroupEntry *)entry)->Per_Sample_IV_size) ? 21 + ((GF_CENCSampleEncryptionGroupEntry *)entry)->constant_IV_size : 20;
 	case GF_ISOM_SAMPLE_GROUP_OINF:
@@ -9713,14 +9771,15 @@ GF_Err sgpd_Read(GF_Box *s, GF_BitStream *bs)
 
 	while (entry_count) {
 		void *ptr;
-		u32 parsed_bytes;
+		u32 parsed_bytes=0;
 		u32 size = p->default_length;
 		if ((p->version>=1) && !size) {
 			size = gf_bs_read_u32(bs);
 			ISOM_DECREASE_SIZE(p, 4);
 		}
 		ptr = sgpd_parse_entry(p->grouping_type, bs, size, &parsed_bytes);
-		if (!ptr) return GF_ISOM_INVALID_FILE;
+		//don't return an error, just stop parsing so that we skip over the sgpd box
+		if (!ptr) return GF_OK;
 
 		ISOM_DECREASE_SIZE(p, parsed_bytes);
 
@@ -9960,7 +10019,7 @@ GF_Err saio_Size(GF_Box *s)
 	if (ptr->flags & 1) ptr->size += 8;
 	ptr->size += 4;
 	//a little optim here: in cenc, the saio always points to a single data block, only one entry is needed
-	if (ptr->aux_info_type == GF_4CC('c', 'e', 'n', 'c')) {
+	if (ptr->aux_info_type == GF_ISOM_CENC_SCHEME) {
 		if (ptr->offsets_large) gf_free(ptr->offsets_large);
 		if (ptr->offsets) gf_free(ptr->offsets);
 		ptr->offsets_large = NULL;
@@ -10397,7 +10456,7 @@ void fpar_del(GF_Box *s)
 	gf_free(ptr);
 }
 
-GF_Err gf_isom_read_null_terminated_string(GF_Box *s, GF_BitStream *bs, u32 size, char **out_str)
+GF_Err gf_isom_read_null_terminated_string(GF_Box *s, GF_BitStream *bs, u64 size, char **out_str)
 {
 	u32 len=10;
 	u32 i=0;
