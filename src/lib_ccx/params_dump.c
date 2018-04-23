@@ -242,6 +242,7 @@ void print_cc_report(struct lib_ccx_ctx *ctx, struct cap_info* info)
 		printf("Secondary Language Present: %s\n", Y_N(ctx->freport.data_from_708->services[2]));
 	}
 }
+
 void print_file_report(struct lib_ccx_ctx *ctx)
 {
 	struct lib_cc_decode *dec_ctx = NULL;	
