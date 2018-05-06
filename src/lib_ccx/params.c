@@ -328,7 +328,7 @@ void print_usage (void)
 	mprint ("         -cf filename: Write 'clean' data to a file. Cleans means the ES\n");
 	mprint ("                       without TS or PES headers.\n");
 	mprint ("              -stdout: Write output to stdout (console) instead of file. If\n");
-	mprint ("                       stdout is used, then -o, -o1 and -o2 can't be used. Also\n");
+	mprint ("                       stdout is used, then -o can't be used. Also\n");
 	mprint ("                       -stdout will redirect all messages to stderr (error).\n");
 	mprint ("           -pesheader: Dump the PES Header to stdout (console). This is\n");
 	mprint ("                       used for debugging purposes to see the contents\n");
