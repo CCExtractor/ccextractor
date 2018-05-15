@@ -11,8 +11,10 @@ Step 2) create a separate directory where you want to build the target.
 	~> cd ccextractor
 	~> mkdir build
 
-Step 3) make the build system using cmake
-	~> cmake ../src/
+Step 3) make the build system using cmake. Params in [] are optional and have
+been explained later in the document.
+	~> cmake [-DWITH_FFMPEG=ON] [-DWITH_OCR=ON] [-DWITH_SHARING=ON]
+    [-DWITH_HARDSUBX=ON] ../src/
 
 Step 4) Compile the code.
 	~> make
@@ -29,6 +31,9 @@ cmake -DWITH_OCR=ON ../src/
 
 If you want to build CCExtractor with Sharing and Translating service:
 cmake -DWITH_SHARING ../src/
+
+If you want to build CCExtractor with HARDSUBX support
+cmake -DWITH_OCR=ON ../src/
 
 Hint for looking all the things you want to set from outside
 cmake -LAH ../src/
