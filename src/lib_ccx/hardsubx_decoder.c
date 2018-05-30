@@ -190,6 +190,8 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 	pixDestroy(&im);
 	pixDestroy(&edge_im);
 	pixDestroy(&hue_im);
+	pixDestroy(&edge_im_2);
+	pixDestroy(&pixd);
 
 	return subtitle_text;
 }
@@ -258,6 +260,7 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 	pixDestroy(&feat_im);
 	pixDestroy(&edge_im_2);
 	pixDestroy(&pixd);
+	pixDestroy(&hue_im);
 }
 
 char* _process_frame_tickertext(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
