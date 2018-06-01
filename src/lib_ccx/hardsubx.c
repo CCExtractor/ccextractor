@@ -111,8 +111,8 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 
 	// Free the allocated memory for frame processing
 	av_free(ctx->rgb_buffer);
-	av_free(ctx->rgb_frame);
-	av_free(ctx->frame);
+	av_frame_free(ctx->rgb_frame);
+	av_frame_free(ctx->frame);
 	avcodec_close(ctx->codec_ctx);
 	avformat_close_input(&ctx->format_ctx);
 }
