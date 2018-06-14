@@ -203,7 +203,7 @@ void _hardsubx_params_dump(struct ccx_s_options *options, struct lib_hardsubx_ct
 	}
 	else
 	{
-		mprint("Minimum subtitle duration : %0.2f seconds (Default)\n",ctx->min_sub_duration);
+		mprint("Minimum subtitle duration : %0.2f seconds\n",ctx->min_sub_duration);
 	}
 
 	mprint("FFMpeg Media Information:-\n");
