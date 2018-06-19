@@ -1596,6 +1596,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		{
 			case 2:
 				clut_table = clut->clut4;
+				break;
 			case 8:
 				clut_table = clut->clut256;
 				break;
