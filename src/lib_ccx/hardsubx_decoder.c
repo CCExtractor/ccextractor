@@ -369,6 +369,7 @@ int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct enco
 				activity_progress(progress,cur_sec/60,cur_sec%60);
 			}
 		}
+		av_packet_unref(&ctx->packet);
 	}
 	activity_progress(100,cur_sec/60,cur_sec%60);
 	return 0;
@@ -548,6 +549,7 @@ int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 					break;
 				}
 			}
+			av_packet_unref(&ctx->packet);
 		}
 	}
 	else
