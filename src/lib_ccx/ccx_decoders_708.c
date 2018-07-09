@@ -412,8 +412,116 @@ void _dtvcc_screen_update_time_hide(dtvcc_tv_screen *tv, LLONG time)
 		tv->time_ms_hide = time;
 }
 
-void _dtvcc_window_copy_to_screen(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *window)
+void _get_window_dimensions(ccx_dtvcc_window *window, int* x1, int* x2, int* y1, int*y2)
 {
+	int a_x1,a_x2,a_y1,a_y2;
+	switch (window->anchor_point)
+	{
+		case CCX_DTVCC_ANCHOR_POINT_TOP_LEFT:
+			a_x1 = window->anchor_vertical;
+			a_x2 = window->anchor_vertical+window->row_count;
+			a_y1= window->anchor_horizontal;
+			a_y2 = window->anchor_horizontal+window->col_count;
+			break;
+		case CCX_DTVCC_ANCHOR_POINT_TOP_CENTER:
+			a_x1 = window->anchor_vertical;
+			a_x2 = window->anchor_vertical+window->row_count;
+			a_y1= window->anchor_horizontal - window->col_count;
+			a_y2 = window->anchor_horizontal + window->col_count/2;
+			break;
+		case CCX_DTVCC_ANCHOR_POINT_TOP_RIGHT:
+			a_x1 = window->anchor_vertical;
+			a_x2 = window->anchor_vertical+window->row_count ;
+			a_y1= window->anchor_horizontal - window->col_count;
+			a_y2 = window->anchor_horizontal ;
+			break;
+		case CCX_DTVCC_ANCHOR_POINT_MIDDLE_LEFT:
+			a_x1 = window->anchor_vertical - window->row_count / 2;
+			a_x2 = window->anchor_vertical + window->row_count / 2 ;
+			a_y1= window->anchor_horizontal ;
+			a_y2 = window->anchor_horizontal + window->col_count ;
+			break;
+		case CCX_DTVCC_ANCHOR_POINT_MIDDLE_CENTER:
+			a_x1 = window->anchor_vertical - window->row_count / 2;
+			a_x2 = window->anchor_vertical + window->row_count / 2 ;
+			a_y1= window->anchor_horizontal - window->col_count / 2;
+			a_y2 = window->anchor_horizontal + window->col_count / 2 ;
+			break;
+		case CCX_DTVCC_ANCHOR_POINT_MIDDLE_RIGHT:
+			a_x1 = window->anchor_vertical - window->row_count / 2;
+			a_x2 = window->anchor_vertical + window->row_count / 2 ;
+			a_y1= window->anchor_horizontal - window->col_count;
+			a_y2 = window->anchor_horizontal;
+			break;
+		case CCX_DTVCC_ANCHOR_POINT_BOTTOM_LEFT:
+			a_x1 = window->anchor_vertical - window->row_count ;
+			a_x2 = window->anchor_vertical ;
+			a_y1= window->anchor_horizontal ;
+			a_y2 = window->anchor_horizontal + window->col_count ;
+			break;
+		case CCX_DTVCC_ANCHOR_POINT_BOTTOM_CENTER:
+			a_x1 = window->anchor_vertical - window->row_count ;
+			a_x2 = window->anchor_vertical ;
+			a_y1= window->anchor_horizontal - window->col_count / 2;
+			a_y2 = window->anchor_horizontal + window->col_count / 2 ;
+			break;
+		case CCX_DTVCC_ANCHOR_POINT_BOTTOM_RIGHT:
+			a_x1 = window->anchor_vertical - window->row_count ;
+			a_x2 = window->anchor_vertical  ;
+			a_y1= window->anchor_horizontal - window->col_count ;
+			a_y2 = window->anchor_horizontal ;
+			break;
+		default: // Shouldn't happen, but skip the window just in case
+			return ;
+			break;
+	}
+
+	*x1 = a_x1 < 0 ? 0:a_x1;
+	*x2 = a_x2 > CCX_DTVCC_SCREENGRID_ROWS ? CCX_DTVCC_SCREENGRID_ROWS : a_x2;
+	*y1 = a_y1 < 0 ? 0:a_y1;
+	*y2 = a_y2 > CCX_DTVCC_SCREENGRID_COLUMNS ? CCX_DTVCC_SCREENGRID_COLUMNS : a_y2 ;
+
+	return ;
+}
+
+int _is_window_overlapping(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *window){
+	int a_x1,a_x2,a_y1,a_y2,b_x1,b_x2,b_y1,b_y2,flag;
+	_get_window_dimensions(window,&a_x1,&a_x2,&a_y1,&a_y2);
+ccx_dtvcc_window *windcompare = &decoder->windows[0];
+	for (int i=0; i< CCX_DTVCC_MAX_WINDOWS; i++,windcompare++){
+
+		_get_window_dimensions(windcompare,&b_x1,&b_x2,&b_y1,&b_y2);
+		if(a_x1==b_x1 && a_x2==b_x2 && a_y1==b_y1 && a_y2==b_y2)
+			{continue;}
+		else {
+			if ((a_x1 < b_x2)&&(a_x2 > b_x1)&&(a_y1 < b_y2) &&(a_y2>b_y1) && decoder->windows[i].visible )
+				 {  if (decoder->windows[i].priority < window->priority)
+				 		{flag = OVERLAPPED_BY_HIGH_PRIORITY;}
+				 	else
+				 		{flag = OVERLAPPING_WITH_HIGH_PRIORITY;} 
+				  //priority is either higher or equals for *window , hence overlaps decoder->windows[i]
+				 } 
+				  
+				  }
+		
+	}
+	if (flag==1){
+		return 1;
+	}
+	return 0;
+}
+
+void _dtvcc_window_copy_to_screen(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *window)
+{	
+	switch(_is_window_overlapping(decoder,window)){
+		case OVERLAPPING_WITH_HIGH_PRIORITY:
+			ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_window_copy_to_screen : no handling required \n");
+			break;
+		case OVERLAPPED_BY_HIGH_PRIORITY:
+			ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_window_copy_to_screen : window needs to be skipped \n");
+			return;
+			}
+
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_window_copy_to_screen: W-%d\n", window->number);
 	int top, left;
 	// For each window we calculate the top, left position depending on the
