@@ -1186,7 +1186,7 @@ void dtvcc_handle_DLW_DeleteWindows(ccx_dtvcc_ctx *dtvcc,
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_handle_DLW_DeleteWindows: windows: ");
 
 	int screen_content_changed = 0,
-		window_had_content;
+		window_had_content,current_win_deleted=0;
 	if (windows_bitmap == 0)
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "none\n");
 	else
@@ -1203,6 +1203,9 @@ void dtvcc_handle_DLW_DeleteWindows(ccx_dtvcc_ctx *dtvcc,
 					screen_content_changed = 1;
 					_dtvcc_window_update_time_hide(window, dtvcc->timing);
 					_dtvcc_window_copy_to_screen(decoder, &decoder->windows[i]);
+					if (i == decoder->current_window){
+					_dtvcc_screen_print(dtvcc, decoder);
+					}
 				}
 				decoder->windows[i].is_defined = 0;
 				decoder->windows[i].visible = 0;
