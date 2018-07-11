@@ -485,7 +485,7 @@ void _get_window_dimensions(ccx_dtvcc_window *window, int* x1, int* x2, int* y1,
 }
 
 int _is_window_overlapping(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *window){
-	int a_x1,a_x2,a_y1,a_y2,b_x1,b_x2,b_y1,b_y2,flag;
+	int a_x1,a_x2,a_y1,a_y2,b_x1,b_x2,b_y1,b_y2,flag=0;
 	_get_window_dimensions(window,&a_x1,&a_x2,&a_y1,&a_y2);
 ccx_dtvcc_window *windcompare = &decoder->windows[0];
 	for (int i=0; i< CCX_DTVCC_MAX_WINDOWS; i++,windcompare++){
