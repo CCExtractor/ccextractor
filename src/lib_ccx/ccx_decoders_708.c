@@ -761,9 +761,9 @@ void dtvcc_handle_CLW_ClearWindows(ccx_dtvcc_ctx *dtvcc,ccx_dtvcc_service_decode
 		{
 			if (windows_bitmap & 1)
 			{
-				
+				ccx_dtvcc_window *window = &decoder->windows[i];
 				ccx_common_logging.debug_ftn(CCX_DMT_708, "[W%d] ", i);
-				window_had_content = &decoder->windows[i]->is_defined && &decoder->windows[i]->visible && !&decoder->windows[i]->is_empty;
+				window_had_content = window->is_defined && window->visible && !window->is_empty;
 				if (window_had_content)
 				{
 					screen_content_changed = 1;
@@ -776,7 +776,7 @@ void dtvcc_handle_CLW_ClearWindows(ccx_dtvcc_ctx *dtvcc,ccx_dtvcc_service_decode
 		}
 	}
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "\n");
-	if (screen_content_changed && !_dtvcc_decoder_has_visible_windows(decoder))
+	if (screen_content_changed )
 		_dtvcc_screen_print(dtvcc, decoder);
 	
 }
