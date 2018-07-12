@@ -761,12 +761,13 @@ void dtvcc_handle_CLW_ClearWindows(ccx_dtvcc_ctx *dtvcc,ccx_dtvcc_service_decode
 		{
 			if (windows_bitmap & 1)
 			{
+				
 				ccx_common_logging.debug_ftn(CCX_DMT_708, "[W%d] ", i);
-				window_had_content = window->is_defined && window->visible && !window->is_empty;
+				window_had_content = &decoder->windows[i]->is_defined && &decoder->windows[i]->visible && !&decoder->windows[i]->is_empty;
 				if (window_had_content)
 				{
 					screen_content_changed = 1;
-					_dtvcc_window_update_time_hide(window, dtvcc->timing);
+					_dtvcc_window_update_time_hide(&decoder->windows[i], dtvcc->timing);
 					_dtvcc_window_copy_to_screen(decoder, &decoder->windows[i]);
 				}
 				_dtvcc_window_clear(decoder, i);
