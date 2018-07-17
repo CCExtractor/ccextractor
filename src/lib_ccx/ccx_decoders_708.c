@@ -748,9 +748,11 @@ void dtvcc_handle_CWx_SetCurrentWindow(ccx_dtvcc_service_decoder *decoder, int w
 										   "window [%d] is not defined\n", window_id);
 }
 
-void dtvcc_handle_CLW_ClearWindows(ccx_dtvcc_service_decoder *decoder, int windows_bitmap)
+void dtvcc_handle_CLW_ClearWindows(ccx_dtvcc_ctx *dtvcc,ccx_dtvcc_service_decoder *decoder, int windows_bitmap)
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_handle_CLW_ClearWindows: windows: ");
+	int screen_content_changed = 0,
+		window_had_content;
 	if (windows_bitmap == 0)
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "none\n");
 	else
@@ -759,13 +761,24 @@ void dtvcc_handle_CLW_ClearWindows(ccx_dtvcc_service_decoder *decoder, int windo
 		{
 			if (windows_bitmap & 1)
 			{
+				ccx_dtvcc_window *window = &decoder->windows[i];
 				ccx_common_logging.debug_ftn(CCX_DMT_708, "[W%d] ", i);
+				window_had_content = window->is_defined && window->visible && !window->is_empty;
+				if (window_had_content)
+				{
+					screen_content_changed = 1;
+					_dtvcc_window_update_time_hide(&decoder->windows[i], dtvcc->timing);
+					_dtvcc_window_copy_to_screen(decoder, &decoder->windows[i]);
+				}
 				_dtvcc_window_clear(decoder, i);
 			}
 			windows_bitmap >>= 1;
 		}
 	}
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "\n");
+	if (screen_content_changed )
+		_dtvcc_screen_print(dtvcc, decoder);
+	
 }
 
 void dtvcc_handle_DSW_DisplayWindows(ccx_dtvcc_service_decoder *decoder, int windows_bitmap, struct ccx_common_timing_ctx *timing)
@@ -1402,7 +1415,7 @@ int _dtvcc_handle_C1(ccx_dtvcc_ctx *dtvcc,
 			dtvcc_handle_CWx_SetCurrentWindow(decoder, com.code - CCX_DTVCC_C1_CW0); /* Window 0 to 7 */
 			break;
 		case CCX_DTVCC_C1_CLW:
-			dtvcc_handle_CLW_ClearWindows(decoder, data[1]);
+			dtvcc_handle_CLW_ClearWindows(dtvcc,decoder, data[1]);
 			break;
 		case CCX_DTVCC_C1_DSW:
 			dtvcc_handle_DSW_DisplayWindows(decoder, data[1], dtvcc->timing);
