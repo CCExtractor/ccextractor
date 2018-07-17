@@ -1,4 +1,4 @@
-![logo](https://avatars3.githubusercontent.com/u/7253637?v=3&s=100)
+<img src ="https://github.com/CCExtractor/ccextractor-org-media/blob/master/static/ccx_logo_transparent_800x600.png" width="200px" alt="logo" />
 
 # CCExtractor
 
