@@ -111,8 +111,8 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 
 	// Free the allocated memory for frame processing
 	av_free(ctx->rgb_buffer);
-	av_free(ctx->rgb_frame);
-	av_free(ctx->frame);
+	av_frame_free(ctx->rgb_frame);
+	av_frame_free(ctx->frame);
 	avcodec_close(ctx->codec_ctx);
 	avformat_close_input(&ctx->format_ctx);
 }
@@ -203,7 +203,7 @@ void _hardsubx_params_dump(struct ccx_s_options *options, struct lib_hardsubx_ct
 	}
 	else
 	{
-		mprint("Minimum subtitle duration : %0.2f seconds (Default)\n",ctx->min_sub_duration);
+		mprint("Minimum subtitle duration : %0.2f seconds\n",ctx->min_sub_duration);
 	}
 
 	mprint("FFMpeg Media Information:-\n");

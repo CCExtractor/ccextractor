@@ -190,6 +190,8 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 	pixDestroy(&im);
 	pixDestroy(&edge_im);
 	pixDestroy(&hue_im);
+	pixDestroy(&edge_im_2);
+	pixDestroy(&pixd);
 
 	return subtitle_text;
 }
@@ -258,6 +260,7 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 	pixDestroy(&feat_im);
 	pixDestroy(&edge_im_2);
 	pixDestroy(&pixd);
+	pixDestroy(&hue_im);
 }
 
 char* _process_frame_tickertext(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
@@ -366,6 +369,7 @@ int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct enco
 				activity_progress(progress,cur_sec/60,cur_sec%60);
 			}
 		}
+		av_packet_unref(&ctx->packet);
 	}
 	activity_progress(100,cur_sec/60,cur_sec%60);
 	return 0;
@@ -545,6 +549,7 @@ int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 					break;
 				}
 			}
+			av_packet_unref(&ctx->packet);
 		}
 	}
 	else
