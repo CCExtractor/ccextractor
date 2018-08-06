@@ -27,8 +27,10 @@ int offset = 5;
 
 PIX *pix_temp, pix_temp_a;
 PIX *pixa, *pix1, *second_pix;
-//For Width and Height of the ticker
+
+//Width and Height Values
 l_int32      w, d;
+
 
 //For Late Fusion
 char *temptext = "";
@@ -77,6 +79,8 @@ char *get_ocr_text_letterwise_russian(struct lib_hardsubx_ctx *ctx, PIX *image)
 
 	return text_out;
 }
+
+
 
 //Simple Russian OCR with Tesseract
 char* russian_ocr(PIX* img, int index){
@@ -144,6 +148,7 @@ char *get_ocr_text_russian_simple_threshold(struct lib_hardsubx_ctx *ctx, PIX *i
 
 	return text_out;
 }
+
 
 
 //Writing File for Late Fusion
@@ -301,6 +306,7 @@ char* _process_frame_tickertext_russian_latefusion(struct lib_hardsubx_ctx *ctx,
 
 }
 
+
 //Detecting Color
 
 int detect_stopper_color(int r, int g, int b,struct lib_hardsubx_ctx *ctx){
@@ -321,6 +327,7 @@ void die(const char *errstr) {
 	fputs(errstr, stderr);
 	exit(1);
 }
+
 
 float check_frames(PIX* im1, PIX* im2){
   l_int32  type, comptype, d1, d2, same, first, last;
@@ -358,6 +365,8 @@ float check_frames(PIX* im1, PIX* im2){
             }
        }
   }
+
+
 
 
 char* stitch_images(PIX* im1, PIX* im2, int index, int endpoint){
@@ -424,12 +433,12 @@ char* stitch_images(PIX* im1, PIX* im2, int index, int endpoint){
               if (na1->array[250] < 10){
                
               printf("%20.10f\n", na1->array[250]);
-               }
+              }
 
-             }
-         }
+            }
+       }
     }
-
+  
 return subtitle_text;
 
 }
@@ -516,6 +525,10 @@ char* _process_frame_tickertext_russian(struct lib_hardsubx_ctx *ctx, AVFrame *f
          subtitle_text = russian_ocr(pixd, index);
          pixGetDimensions(pixd, &w, NULL, &d);
          pre_index = index;
+
+
+
+
          //sprintf(write_path,"im%04d.jpg",index);
          //pixWrite(write_path,pixd,IFF_JFIF_JPEG);
          boxDestroy(&box);
@@ -597,7 +610,9 @@ char* _process_frame_tickertext_russian(struct lib_hardsubx_ctx *ctx, AVFrame *f
      }
 }
 
+
 	// Tesseract OCR for the ticker text here
+
 
 	pixDestroy(&lum_im);
 	pixDestroy(&im);
@@ -843,6 +858,9 @@ char *_process_frame_color_basic_russian(struct lib_hardsubx_ctx *ctx, AVFrame *
 	return subtitle_text;
 }
 
+
+
+
 int hardsubx_process_frames_linear_russian(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx)
 {
 	// Do an exhaustive linear search over the video
@@ -971,6 +989,7 @@ int hardsubx_process_frames_linear_russian(struct lib_hardsubx_ctx *ctx, struct 
 
 }
 
-#endif
 
+
+#endif
 
