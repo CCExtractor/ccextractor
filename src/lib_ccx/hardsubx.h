@@ -68,18 +68,18 @@ struct lib_hardsubx_ctx
 	float prev_conf;
 
 	// Subtitle text parameters
-	 int tickertext;
-        int russian;
-        int frame_skip;
-        int start_frame;
-        int late_fusion;
-        int upper_red;
-        int lower_red;
-        int upper_blue;
-        int lower_blue;
-        int upper_green;
-        int lower_green;
-        int letter_russian;
+	int tickertext;
+	int russian;
+	int frame_skip;
+	int start_frame;
+	int late_fusion;
+	int upper_red;
+	int lower_red;
+	int upper_blue;
+	int lower_blue;
+	int upper_green;
+	int lower_green;
+	int letter_russian;
 
 	struct cc_subtitle *dec_sub;
 	int ocr_mode;
