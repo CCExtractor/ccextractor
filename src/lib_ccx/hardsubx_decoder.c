@@ -11,6 +11,19 @@
 #include "hardsubx.h"
 #include "capi.h"
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
 {
 	//printf("frame : %04d\n", index);
@@ -33,8 +46,8 @@ char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 			int b=frame->data[0][p+2];
 			pixSetRGBPixel(im,j,i,r,g,b);
 			float L,A,B;
-			rgb_to_lab((float)r,(float)g,(float)b,&L,&A,&B);
-			if(L > ctx->lum_thresh)
+			rgb2lab((float)r,(float)g,(float)b,&L,&A,&B);
+			if(L > 85)
 				pixSetRGBPixel(lum_im,j,i,255,255,255);
 			else
 				pixSetRGBPixel(lum_im,j,i,0,0,0);
@@ -262,6 +275,7 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 	pixDestroy(&pixd);
 	pixDestroy(&hue_im);
 }
+
 
 char* _process_frame_tickertext(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
 {

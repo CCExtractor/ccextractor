@@ -150,6 +150,20 @@ struct ccx_s_options // Options from user parameters
 	float hardsubx_hue;
 	float hardsubx_lum_thresh;
 
+        /*HardSubX Russian and Scrolling Ticker*/
+        int russian;   //1 if using russian language
+        int frame_skip;  //Default 230
+        int start_frame; //Default 15
+        int late_fusion;
+        int upper_red;
+        int lower_red;
+        int upper_green;
+        int lower_green;
+        int upper_blue;
+        int lower_blue;
+        int letter_russian;
+
+
 	ccx_encoders_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
 	enum ccx_output_date_format date_format;
 	unsigned send_to_srv;

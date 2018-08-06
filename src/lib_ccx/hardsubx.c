@@ -102,11 +102,16 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 	
 	mprint("Beginning burned-in subtitle detection...\n");
 
-	if(ctx->tickertext)
+	if(ctx->tickertext && ctx->russian)
+		hardsubx_process_frames_tickertext_russian(ctx, enc_ctx);
+        else if(ctx->tickertext)
 		hardsubx_process_frames_tickertext(ctx, enc_ctx);
-	else
+	else if(ctx->russian)
+		hardsubx_process_frames_linear_russian(ctx, enc_ctx);
+        else if (ctx->russian && ctx->late_fusion)
+                hardsubx_process_frames_tickertext_russian_latefusion(ctx, enc_ctx);
+        else
 		hardsubx_process_frames_linear(ctx, enc_ctx);
-
 	dinit_encoder(&enc_ctx, 0); //TODO: Replace 0 with end timestamp
 
 	// Free the allocated memory for frame processing
@@ -255,6 +260,17 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	ctx->write_format = options->write_format;
 	ctx->subs_delay = options->subs_delay;
 	ctx->cc_to_stdout = options->cc_to_stdout;
+        ctx->russian = options->russian;
+        ctx->frame_skip = options->frame_skip;
+        ctx->start_frame = options->start_frame;
+        ctx->upper_red = options->upper_red;
+        ctx->upper_green = options->upper_green;
+        ctx->upper_blue = options->upper_blue;
+        ctx->lower_red = options->lower_red;
+        ctx->lower_green = options->lower_green;
+        ctx->lower_blue = options->lower_blue;
+        ctx->letter_russian = options->letter_russian;
+
 
 	//Initialize subtitle text parameters
 	ctx->tickertext = options->tickertext;
@@ -267,6 +283,7 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	ctx->conf_thresh = options->hardsubx_conf_thresh;
 	ctx->hue = options->hardsubx_hue;
 	ctx->lum_thresh = options->hardsubx_lum_thresh;
+        ctx->late_fusion = options->late_fusion;
 
 	//Initialize subtitle structure memory
 	ctx->dec_sub = (struct cc_subtitle *)malloc(sizeof(struct cc_subtitle));

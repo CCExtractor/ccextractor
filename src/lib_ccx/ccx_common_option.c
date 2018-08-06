@@ -81,6 +81,19 @@ void init_options (struct ccx_s_options *options)
 	options->hardsubx_hue = 0.0;
 	options->hardsubx_lum_thresh = 95.0;
 
+        //HardSubX Russian Only
+	options->russian = 0; // By default, don't try to extract hard subtitles
+        options->frame_skip = 230;
+        options->start_frame = 15;
+        options->late_fusion = 0;
+        options->upper_red = 35;
+        options->lower_red = 20;
+        options->upper_green = 135;
+        options->lower_green = 75;
+        options->upper_blue = 180;
+        options->lower_blue = 130;
+        options->letter_russian = 0;
+
 	options->transcript_settings = ccx_encoders_default_transcript_settings;
 	options->millis_separator=',';
 

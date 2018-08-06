@@ -1198,6 +1198,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->hardsubx = 1;
 			continue;
 		}
+		if (strcmp(argv[i], "-letterwise_russian")==0)
+		{
+			opt->letter_russian = 1;
+			continue;
+		}
 		if (opt->hardsubx == 1)
 		{
 			if (strcmp(argv[i], "-ocr_mode")==0)
@@ -2130,6 +2135,174 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->tickertext = 1;
 			continue;
 		}
+		if (strcmp (argv[i],"-russian")==0 || strcmp (argv[i],"-russian_ocr")==0)
+		{
+			opt->russian = 1;
+			continue;
+		}
+
+		if (strcmp (argv[i],"-late_fusion")==0 || strcmp (argv[i],"-latefusion")==0)
+		{
+			opt->late_fusion = 1;
+			continue;
+		}
+
+		if (strcmp (argv[i],"-frame_skip")==0 || strcmp (argv[i],"-frame_skip")==0)
+		{
+			if(i < argc - 1)
+			{
+				char *str=(char*)malloc(sizeof(argv[i+1]));
+				sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
+				opt->frame_skip = atof(str);
+				if(opt->frame_skip <= 0.0 || opt->frame_skip > 1000.0)
+				{
+						fatal (EXIT_MALFORMED_PARAMETER, "-frame_skip has either 0 or an invalid value supplied\nValid values are in (0.0,1000.0)");
+				}
+			}
+			else
+			{
+				fatal (EXIT_MALFORMED_PARAMETER, "-frame_skip has no argument.");
+			}
+				i++;
+			continue;
+		}
+		if (strcmp (argv[i],"-upper_red")==0 || strcmp (argv[i],"-upper_red_color")==0)
+		{
+			if(i < argc - 1)
+			{
+				char *str=(char*)malloc(sizeof(argv[i+1]));
+				sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
+				opt->upper_red = atof(str);
+				if(opt->upper_red < 0.0 || opt->upper_red > 255.0)
+				{
+						fatal (EXIT_MALFORMED_PARAMETER, "-upper_red has either 0 or an invalid value supplied\nValid values are in (0.0,255.0)");
+				}
+			}
+			else
+			{
+				fatal (EXIT_MALFORMED_PARAMETER, "-upper_red has no argument.");
+			}
+				i++;
+			continue;
+		}
+		if (strcmp (argv[i],"-lower_red")==0 || strcmp (argv[i],"-lower_red_color")==0)
+		{
+			if(i < argc - 1)
+			{
+				char *str=(char*)malloc(sizeof(argv[i+1]));
+				sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
+				opt->lower_red = atof(str);
+				if(opt->lower_red < 0.0 || opt->lower_red > 255.0)
+				{
+						fatal (EXIT_MALFORMED_PARAMETER, "-lower_red has either 0 or an invalid value supplied\nValid values are in (0.0,255.0)");
+				}
+			}
+			else
+			{
+				fatal (EXIT_MALFORMED_PARAMETER, "-lower_red has no argument.");
+			}
+				i++;
+			continue;
+		}
+
+		if (strcmp (argv[i],"-upper_green")==0 || strcmp (argv[i],"-upper_green_color")==0)
+		{
+			if(i < argc - 1)
+			{
+				char *str=(char*)malloc(sizeof(argv[i+1]));
+				sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
+				opt->upper_green = atof(str);
+				if(opt->upper_green < 0.0 || opt->upper_green > 255.0)
+				{
+						fatal (EXIT_MALFORMED_PARAMETER, "-upper_green has either 0 or an invalid value supplied\nValid values are in (0.0,255.0)");
+				}
+			}
+			else
+			{
+				fatal (EXIT_MALFORMED_PARAMETER, "-upper_green has no argument.");
+			}
+				i++;
+			continue;
+		}
+		if (strcmp (argv[i],"-lower_green")==0 || strcmp (argv[i],"-lower_green_color")==0)
+		{
+			if(i < argc - 1)
+			{
+				char *str=(char*)malloc(sizeof(argv[i+1]));
+				sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
+				opt->lower_green = atof(str);
+				if(opt->lower_green < 0.0 || opt->lower_green > 255.0)
+				{
+						fatal (EXIT_MALFORMED_PARAMETER, "-lower_green has either 0 or an invalid value supplied\nValid values are in (0.0,255.0)");
+				}
+			}
+			else
+			{
+				fatal (EXIT_MALFORMED_PARAMETER, "-lower_green has no argument.");
+			}
+				i++;
+			continue;
+		}
+		if (strcmp (argv[i],"-upper_blue")==0 || strcmp (argv[i],"-upper_blue_color")==0)
+		{
+			if(i < argc - 1)
+			{
+				char *str=(char*)malloc(sizeof(argv[i+1]));
+				sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
+				opt->upper_blue = atof(str);
+				if(opt->upper_blue < 0.0 || opt->upper_blue > 255.0)
+				{
+						fatal (EXIT_MALFORMED_PARAMETER, "-upper_blue has either 0 or an invalid value supplied\nValid values are in (0.0,255.0)");
+				}
+			}
+			else
+			{
+				fatal (EXIT_MALFORMED_PARAMETER, "-upper_blue has no argument.");
+			}
+				i++;
+			continue;
+		}
+
+		if (strcmp (argv[i],"-lower_blue")==0 || strcmp (argv[i],"-lower_blue_color")==0)
+		{
+			if(i < argc - 1)
+			{
+				char *str=(char*)malloc(sizeof(argv[i+1]));
+				sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
+				opt->lower_blue = atof(str);
+				if(opt->lower_blue < 0.0 || opt->lower_blue > 255.0)
+				{
+						fatal (EXIT_MALFORMED_PARAMETER, "-lower_blue has either 0 or an invalid value supplied\nValid values are in (0.0,255.0)");
+				}
+			}
+			else
+			{
+				fatal (EXIT_MALFORMED_PARAMETER, "-lower_blue has no argument.");
+			}
+				i++;
+			continue;
+		}
+
+		if (strcmp (argv[i],"-start_frame")==0 || strcmp (argv[i],"-first_frame")==0)
+		{
+			if(i < argc - 1)
+			{
+				char *str=(char*)malloc(sizeof(argv[i+1]));
+				sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
+				opt->start_frame = atof(str);
+				if(opt->start_frame < 0.0)
+				{
+						fatal (EXIT_MALFORMED_PARAMETER, "-start_frame has  an invalid value supplied\nValid values are greater than zero");
+				}
+			}
+				else
+				{
+					fatal (EXIT_MALFORMED_PARAMETER, "-frame_skip has no argument.");
+				}
+				i++;
+				continue;
+		}
+
 		if (strcmp (argv[i],"-lf")==0 || strcmp (argv[i],"-LF")==0)
 		{
 			opt->enc_cfg.line_terminator_lf = 1;

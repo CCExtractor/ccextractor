@@ -69,6 +69,18 @@ struct lib_hardsubx_ctx
 
 	// Subtitle text parameters
 	int tickertext;
+        int russian;
+        int frame_skip;
+        int start_frame;
+        int late_fusion;
+        int upper_red;
+        int lower_red;
+        int upper_blue;
+        int lower_blue;
+        int upper_green;
+        int lower_green;
+        int letter_russian;
+
 	struct cc_subtitle *dec_sub;
 	int ocr_mode;
 	int subcolor;
@@ -94,9 +106,21 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int timestamp);
 char* _process_frame_tickertext(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index);
 
+//hardsubx_russian.c
+char* _process_frame_tickertext_russian(struct lib_hardsubx_ctx *ctx,AVFrame *frame, int width, int height, int index);
+float check_frames(PIX* im1, PIX* im2);
+char* stitch_images(PIX* im1, PIX* im2, int index, int endpoint);
+int detect_stopper_color(int r, int g, int b,struct lib_hardsubx_ctx *ctx);
+int hardsubx_process_frames_tickertext_russian(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx);
+int hardsubx_process_frames_linear_russian(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx);
+char* _process_frame_tickertext_russian_latefusion(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index);
+int hardsubx_process_frames_tickertext_russian_latefusion(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx);
+char* _process_frame_color_basic_russian(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index);
+
 //hardsubx_imgops.c
 void rgb_to_hsv(float R, float G, float B,float *H, float *S, float *V);
 void rgb_to_lab(float R, float G, float B,float *L, float *a, float *b);
+void rgb2lab(float R, float G, float B,float *L, float *a, float *b);
 
 //hardsubx_classifier.c
 char *get_ocr_text_simple(struct lib_hardsubx_ctx *ctx, PIX *image);
