@@ -68,7 +68,7 @@ struct lib_hardsubx_ctx
 	float prev_conf;
 
 	// Subtitle text parameters
-	int tickertext;
+	 int tickertext;
         int russian;
         int frame_skip;
         int start_frame;
