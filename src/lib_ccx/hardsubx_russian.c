@@ -11,24 +11,25 @@
 #include "hardsubx.h"
 #include "capi.h"
 
-//Global Flags
+//Flag used for Checking Tickers in Early Fusion
 int xflag = 0;
+//Flag used for last index in Early Fusion
 int last_index =0;
-int skip_frames = 12;
-
+//Flag used for deciding the stoppers
 int continue_flag = 0;
+//Flag used for avoding repitition in Early Fusion
 int count_frame = 0;
+//Previous Frame Number in Early Fusion
 int pre_index;
+//Previous Flag Value in Early Fusion
 int pre_flag;
+//Flag Deciding the decisions in Early Fusion
 int t_flag = 0;
 
-//Global Offset for Stitching
-int offset = 5;
-
+//Used to stitch the frames
 PIX *pix_temp, pix_temp_a;
 PIX *pixa, *pix1, *second_pix;
 
-//Width and Height Values
 l_int32      w, d;
 
 
@@ -102,14 +103,16 @@ char* russian_ocr(PIX* img, int index){
 	if((text = TessBaseAPIGetUTF8Text(handle)) == NULL)
 		die("Error getting text\n");
 
-        //Writing to a File
+        //Writing to a File in case of Debugging
+        #ifdef DEBUG
         sprintf(write_path,"txt%04d.txt",index);
         fp = fopen(write_path, "w");
         fprintf(fp, "%s", text);
         fclose(fp);
+        #endif
 
         //Displaying it
-	fputs(text, stdout);
+	//fputs(text, stdout);
 
 
 	//TessDeleteText(text);
@@ -191,7 +194,7 @@ char* late_fusion(PIX* img, int index){
   char write_path[500];
   text = russian_ocr(img,index);
   writetext = russian_ocr(img,index);
-  printf("%s", text);
+  //printf("%s", text);
   if(xcounter == 0){
   temptext = text;
   xcounter++;
@@ -204,10 +207,12 @@ char* late_fusion(PIX* img, int index){
 
    while (word != NULL) {
     if (searchword(word, temptext)) {
-         printf("Match: %s\n", word);
+         //printf("Match: %s\n", word);
+         #ifdef DEBUG
          sprintf(write_path,"im%04d.jpg",index);
          pixWrite(write_path,img,IFF_JFIF_JPEG);
          writetofile(writetext, index);
+         #endif
          return writetext;
     }
     else{
@@ -219,7 +224,7 @@ char* late_fusion(PIX* img, int index){
 
 //Late Fusion Process
 char* _process_frame_tickertext_russian_latefusion(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index){
-      printf("index%d\n", index);    
+	//printf("index%d\n", index);    
 	PIX *im;
 	PIX *edge_im;
 	PIX *lum_im;
@@ -242,7 +247,7 @@ char* _process_frame_tickertext_russian_latefusion(struct lib_hardsubx_ctx *ctx,
 			int b=frame->data[0][p+2];
 			pixSetRGBPixel(im,j,i,r,g,b);
 			float L,A,B;
-			rgb2lab((float)r,(float)g,(float)b,&L,&A,&B);
+			rgb_to_lab((float)r,(float)g,(float)b,&L,&A,&B);
 			if(L > 85)
 				pixSetRGBPixel(lum_im,j,i,255,255,255);
 			else
@@ -290,6 +295,7 @@ char* _process_frame_tickertext_russian_latefusion(struct lib_hardsubx_ctx *ctx,
          PIX* pixd= pixClipRectangle(feat_im, box, NULL);
          last_index = index;
          subtitle_text = late_fusion(pixd, index);
+         //printf("%s", subtitle_text);
          //writetofile(russian_ocr(pixd, index), index);
          boxDestroy(&box);
 	 pixDestroy(&pixd);
@@ -313,9 +319,9 @@ int detect_stopper_color(int r, int g, int b,struct lib_hardsubx_ctx *ctx){
 
 //For Detecting Blue Color
 //Upper and Lower Limit
-  if (r>=ctx->lower_red && r<=ctx->upper_red){
-            if(g >=ctx->lower_green && g<=ctx->upper_green){
-              if(b>=ctx->lower_blue && b<=ctx->upper_blue){
+  if (r>=ctx->russian->lower_red && r<=ctx->russian->upper_red){
+            if(g >=ctx->russian->lower_green && g<=ctx->russian->upper_green){
+              if(b>=ctx->russian->lower_blue && b<=ctx->russian->upper_blue){
                   return 1;
        }
 }
@@ -329,12 +335,17 @@ void die(const char *errstr) {
 }
 
 
+
+
 float check_frames(PIX* im1, PIX* im2){
   l_int32  type, comptype, d1, d2, same, first, last;
   l_float32    fract, diff, rmsdiff;
   NUMA *na1;
   PIX *pixd, *pix1;
        char write_path[100];
+
+  if (!im1 || !im2)
+        return 1;
 
   d1 = pixGetDepth(im1);
   d2 = pixGetDepth(im2);
@@ -360,7 +371,7 @@ float check_frames(PIX* im1, PIX* im2){
             }
 
             else {
-                fprintf(stderr, "Images differ: <diff> = %10.6f\n", diff);
+                //fprintf(stderr, "Images differ: <diff> = %10.6f\n", diff);
                 return diff;
             }
        }
@@ -370,77 +381,75 @@ float check_frames(PIX* im1, PIX* im2){
 
 
 char* stitch_images(PIX* im1, PIX* im2, int index, int endpoint){
-  l_int32  type, comptype, d1, d2, same, first, last;
-  l_float32    fract, diff, rmsdiff;
+	l_int32  type, comptype, d1, d2, same, first, last;
+	l_float32    fract, diff, rmsdiff;
+	l_int32 a_same;
+	NUMA *na1;
+	PIX *pixd, *pix1;
+	char write_path[100];	
+	char *subtitle_text=NULL;
 
-  l_int32 a_same;
-  NUMA *na1;
-  PIX *pixd, *pix1;
-  char write_path[100];	
-  char *subtitle_text=NULL;
+	d1 = pixGetDepth(im1);
+	d2 = pixGetDepth(im2);
 
-  d1 = pixGetDepth(im1);
-  d2 = pixGetDepth(im2);
+        
+	//pixEqual(im1, second_pix, &a_same);
+        if (!im1 || !im2)
+            return NULL; 
 
-  //printf("%s","MMuna");
-  pixEqual(im1, second_pix, &a_same);
+	if (d1 == 1 && d2 == 1) {
+		pixEqual(im1, im2, &same);
+		if (same) {
+			//fprintf(stderr, "Images are identical\n");
+			pixd = pixCreateTemplate(im1);  /* write empty pix for diff */
+        	}
+		else{
+			comptype = L_COMPARE_XOR;
+			pixCompareBinary(im1, im2, comptype, &fract, &pixd);
+		}
+  	}
 
+	else {
+		//comptype = L_COMPARE_ABS_DIFF;
+		comptype = L_COMPARE_SUBTRACT;
+		pixCompareGrayOrRGB(im1, im2, comptype, GPLOT_PNG, &same, &diff, &rmsdiff, &pixd);
+		if (same){
+			//fprintf(stderr, "Images are identical\n");
+		}
 
-  if (d1 == 1 && d2 == 1) {
-   pixEqual(im1, im2, &same);
-        if (same) {
-            fprintf(stderr, "Images are identical\n");
-            pixd = pixCreateTemplate(im1);  /* write empty pix for diff */
-        }
-        else {
-                comptype = L_COMPARE_XOR;
-                pixCompareBinary(im1, im2, comptype, &fract, &pixd);
-        }
-  }
+		else {
+			//fprintf(stderr, "Images differ: <diff> = %10.6f\n", diff);
+			//fprintf(stderr, "               <rmsdiff> = %10.6f\n", rmsdiff);
+			if (diff >= 20){
+				pixSaveTiled(im1, pixa, 1.0, 0, 1,1);
+				pixSaveTiled(im2, pixa, 1.0, 0, 1,1);
+				pix1 = pixaDisplay(pixa, w*2, 0.80*d);
+				sprintf(write_path,"im%04d.jpg",index);
+				if (count_frame % 2 == 0){
+					#ifdef DEBUG
+					pixWrite(write_path,pix1,IFF_JFIF_JPEG);
+					#endif
+					subtitle_text = russian_ocr(pix1,index);
+				}
+				count_frame++;
+				pixa = pixaCreate(5);
+			}
+		}
+		#ifdef DEBUG
+		if (d1 != 16 && !same) {
+		na1 = pixCompareRankDifference(im1, im2, 1);
+		/*
+		if (na1) {
+			if (na1->array[250] < 10){
+			//printf("%20.10f\n", na1->array[250]);
+			}
+		}
+		*/
+		}
+                #endif
+	}
 
-  else {
-           //comptype = L_COMPARE_ABS_DIFF;
-           comptype = L_COMPARE_SUBTRACT;
-           pixCompareGrayOrRGB(im1, im2, comptype, GPLOT_PNG, &same, &diff, &rmsdiff, &pixd);
-            if (same){
-                fprintf(stderr, "Images are identical\n");
-            }
-
-            else {
-                //fprintf(stderr, "Images differ: <diff> = %10.6f\n", diff);
-                //fprintf(stderr, "               <rmsdiff> = %10.6f\n", rmsdiff);
-
-                 if (diff >= 20){
-                    pixSaveTiled(im1, pixa, 1.0, 0, 1,1);
-                    pixSaveTiled(im2, pixa, 1.0, 0, 1,1);
-                    pix1 = pixaDisplay(pixa, w*2, 0.80*d);
-                    sprintf(write_path,"im%04d.jpg",index);
-                    if (count_frame % 2 == 0){
-                    pixWrite(write_path,pix1,IFF_JFIF_JPEG);
-                    subtitle_text = russian_ocr(pix1,index);
-                    }
-                    count_frame++;
-                    pixa = pixaCreate(5);
-                    
-                }
-            }
-
-       if (d1 != 16 && !same) {
-
-            na1 = pixCompareRankDifference(im1, im2, 1);
-            if (na1) {
-
-              if (na1->array[250] < 10){
-               
-              printf("%20.10f\n", na1->array[250]);
-              }
-
-            }
-       }
-    }
-  
-return subtitle_text;
-
+	return subtitle_text;
 }
 
 char* _process_frame_tickertext_russian(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
@@ -454,7 +463,6 @@ char* _process_frame_tickertext_russian(struct lib_hardsubx_ctx *ctx, AVFrame *f
 	lum_im = pixCreate(width,height,32);
 	feat_im = pixCreate(width,height,32);
 	int i,j;
-        //printf("Governmenty Muna and Tuna and Chunna for the Luna and Tuna: %d", t_flag);
 	for(i=(92*height)/100;i<height;i++)
 	{
 		for(j=0;j<width;j++)
@@ -465,7 +473,7 @@ char* _process_frame_tickertext_russian(struct lib_hardsubx_ctx *ctx, AVFrame *f
 			int b=frame->data[0][p+2];
 			pixSetRGBPixel(im,j,i,r,g,b);
 			float L,A,B;
-			rgb2lab((float)r,(float)g,(float)b,&L,&A,&B);
+			rgb_to_lab((float)r,(float)g,(float)b,&L,&A,&B);
 			if(L > 85)
 				pixSetRGBPixel(lum_im,j,i,255,255,255);
 			else
@@ -497,9 +505,6 @@ char* _process_frame_tickertext_russian(struct lib_hardsubx_ctx *ctx, AVFrame *f
 	}
 
 
-
-
-
        int num_of_occr = 0;
        int stop = 0;
        char write_path[500];
@@ -512,7 +517,7 @@ char* _process_frame_tickertext_russian(struct lib_hardsubx_ctx *ctx, AVFrame *f
 			int b=frame->data[0][p+2];
 
 
-        if (detect_stopper_color(r,g,b,ctx) == 1 && (index == ctx->start_frame ||index % ctx->frame_skip == 0) && t_flag == 0){
+        if (detect_stopper_color(r,g,b,ctx) == 1 && (index == ctx->russian->start_frame ||index % ctx->russian->frame_skip == 0) && t_flag == 0){
          //printf("%s\n", "Stopper Detected");  
          xflag = 1;
          t_flag = 1;
@@ -525,10 +530,6 @@ char* _process_frame_tickertext_russian(struct lib_hardsubx_ctx *ctx, AVFrame *f
          subtitle_text = russian_ocr(pixd, index);
          pixGetDimensions(pixd, &w, NULL, &d);
          pre_index = index;
-
-
-
-
          //sprintf(write_path,"im%04d.jpg",index);
          //pixWrite(write_path,pixd,IFF_JFIF_JPEG);
          boxDestroy(&box);
@@ -537,23 +538,23 @@ char* _process_frame_tickertext_russian(struct lib_hardsubx_ctx *ctx, AVFrame *f
          }
 
          else if (detect_stopper_color(r,g,b,ctx) == 1 && (index > (pre_index + 15)) && t_flag == 1){
-         //printf("%s\n", "Stopper Detected");  
-
          if (continue_flag == 0){
          t_flag = 0;
-         printf("%s", "Here");
          //Hardcoded Bouding Box Locations
          BOX* box = boxCreate(100, 525, 615, 25);
          PIX* pixd= pixClipRectangle(feat_im, box, NULL);
          last_index = index;
          //subtitle_text = russian_ocr(pixd, index);
-         printf("%f", check_frames(pixd, pix_temp));
+
+
 
          if (check_frames(pixd, pix_temp) <= 30){
          t_flag = 0;
          sprintf(write_path,"im%04d.jpg",pre_index);
          if (count_frame % 2 == 0) {
+         #ifdef DEBUG
          pixWrite(write_path,pix_temp,IFF_JFIF_JPEG);
+         #endif
          subtitle_text = russian_ocr(pixd, index);
               }
          count_frame++;
@@ -563,9 +564,11 @@ char* _process_frame_tickertext_russian(struct lib_hardsubx_ctx *ctx, AVFrame *f
          t_flag = 0;
          sprintf(write_path,"im%04d.jpg",pre_index);
          if (count_frame % 2 == 0) {
+         #ifdef DEBUG
          pixWrite(write_path,pix_temp,IFF_JFIF_JPEG);
          sprintf(write_path,"im%04d.jpg",index);
          pixWrite(write_path,pixd,IFF_JFIF_JPEG);
+         #endif
          subtitle_text = russian_ocr(pixd, index);
          }
          count_frame++;
@@ -591,7 +594,7 @@ char* _process_frame_tickertext_russian(struct lib_hardsubx_ctx *ctx, AVFrame *f
 
        }
          //Checking of text after blue stopper
-         else if(detect_stopper_color(r,g,b,ctx) == 0 && index % (ctx->frame_skip) == 0 && xflag == 1){
+         else if(detect_stopper_color(r,g,b,ctx) == 0 && index % (ctx->russian->frame_skip) == 0 && xflag == 1){
          continue_flag = 1;
          BOX* box = boxCreate(100, 525, 615, 25);
          PIX* pixd= pixClipRectangle(feat_im, box, NULL);
@@ -599,6 +602,7 @@ char* _process_frame_tickertext_russian(struct lib_hardsubx_ctx *ctx, AVFrame *f
          subtitle_text = stitch_images(pix_temp, pixd, index,0);
          //subtitle_text = russian_ocr(pixd, index);
          pre_index = index;
+
          pix_temp = pixCopy(NULL, pixd);
          //pixSaveTiled(pixd, pixa, 1.0, 0, 1,1);
          //sprintf(write_path,"im%04d.jpg",index);
@@ -610,10 +614,7 @@ char* _process_frame_tickertext_russian(struct lib_hardsubx_ctx *ctx, AVFrame *f
      }
 }
 
-
 	// Tesseract OCR for the ticker text here
-
-
 	pixDestroy(&lum_im);
 	pixDestroy(&im);
 	pixDestroy(&edge_im);
@@ -629,6 +630,7 @@ int hardsubx_process_frames_tickertext_russian_latefusion(struct lib_hardsubx_ct
 	int cur_sec,total_sec,progress;
 	int frame_number = 0;
 	char *ticker_text = NULL;
+        int pre_x_frame = 0;
 
 	while(av_read_frame(ctx->format_ctx, &ctx->packet)>=0)
 	{
@@ -637,7 +639,7 @@ int hardsubx_process_frames_tickertext_russian_latefusion(struct lib_hardsubx_ct
 			frame_number++;
 			//Decode the video stream packet
 			avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
-			if(got_frame && (frame_number == ctx->start_frame || frame_number % ctx->frame_skip == 0))
+			if(got_frame && (frame_number == ctx->russian->start_frame || frame_number > pre_x_frame + ((ctx->russian->frame_skip)/2)))
 			{
 				// sws_scale is used to convert the pixel format to RGB24 from all other cases
 				sws_scale(
@@ -653,7 +655,10 @@ int hardsubx_process_frames_tickertext_russian_latefusion(struct lib_hardsubx_ct
 				ticker_text = _process_frame_tickertext_russian_latefusion(ctx,ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
 				//printf("frame_number: %d\n", frame_number);
 
-				if(ticker_text != NULL)printf("%s\n", ticker_text);
+				if(ticker_text != NULL){
+					mprint("%s\n", ticker_text);
+					pre_x_frame = frame_number;
+				}
 
 				cur_sec = (int)convert_pts_to_s(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 				total_sec = (int)convert_pts_to_s(ctx->format_ctx->duration, AV_TIME_BASE_Q);
@@ -677,6 +682,7 @@ int hardsubx_process_frames_tickertext_russian(struct lib_hardsubx_ctx *ctx, str
 	int cur_sec,total_sec,progress;
 	int frame_number = 0;
 	char *ticker_text = NULL;
+	pixa = pixaCreate(5);
 
 	while(av_read_frame(ctx->format_ctx, &ctx->packet)>=0)
 	{
@@ -728,7 +734,7 @@ char* _process_frame_white_basic_russian(struct lib_hardsubx_ctx *ctx, AVFrame *
 	lum_im = pixCreate(width,height,32);
 	feat_im = pixCreate(width,height,32);
 	int i,j;
-        char write_path[500];
+	char write_path[500];
 	for(i=(3*height)/4;i<height;i++)
 	{
 		for(j=0;j<width;j++)
@@ -739,7 +745,7 @@ char* _process_frame_white_basic_russian(struct lib_hardsubx_ctx *ctx, AVFrame *
 			int b=frame->data[0][p+2];
 			pixSetRGBPixel(im,j,i,r,g,b);
 			float L,A,B;
-			rgb2lab((float)r,(float)g,(float)b,&L,&A,&B);
+			rgb_to_lab((float)r,(float)g,(float)b,&L,&A,&B);
 			if(L > 85)
 				pixSetRGBPixel(lum_im,j,i,255,255,255);
 			else
@@ -770,15 +776,15 @@ char* _process_frame_white_basic_russian(struct lib_hardsubx_ctx *ctx, AVFrame *
 	}
 
 	if(ctx->conf_thresh > 0)
-              subtitle_text = get_ocr_text_russian_simple_threshold(ctx,feat_im, 45);
-        else if(ctx->letter_russian)
-              subtitle_text = get_ocr_text_letterwise_russian(ctx,feat_im);
-              //subtitle_text = russian_ocr(feat_im,index);
-        else
-              subtitle_text = russian_ocr(feat_im,index);
-              //subtitle_text = get_ocr_text_letterwise_russian(ctx,feat_im);
-        //sprintf(write_path,"im%04d.jpg",index);
-        //pixWrite(write_path,feat_im,IFF_JFIF_JPEG);
+		subtitle_text = get_ocr_text_russian_simple_threshold(ctx,feat_im, 45);
+	else if(ctx->russian->letter_russian)
+		subtitle_text = get_ocr_text_letterwise_russian(ctx,feat_im);
+		//subtitle_text = russian_ocr(feat_im,index);
+	else
+		subtitle_text = russian_ocr(feat_im,index);
+		//subtitle_text = get_ocr_text_letterwise_russian(ctx,feat_im);
+	//sprintf(write_path,"im%04d.jpg",index);
+	//pixWrite(write_path,feat_im,IFF_JFIF_JPEG);
 	
 
 	pixDestroy(&lum_im);
@@ -861,6 +867,8 @@ char *_process_frame_color_basic_russian(struct lib_hardsubx_ctx *ctx, AVFrame *
 
 
 
+
+
 int hardsubx_process_frames_linear_russian(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx)
 {
 	// Do an exhaustive linear search over the video
@@ -884,7 +892,7 @@ int hardsubx_process_frames_linear_russian(struct lib_hardsubx_ctx *ctx, struct 
 			//Decode the video stream packet
 			avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
 
-			if(got_frame && (frame_number == ctx->start_frame || frame_number % ctx->frame_skip == 0))
+			if(got_frame && (frame_number == ctx->russian->start_frame || frame_number % ctx->russian->frame_skip == 0))
 			{
 				float diff = (float)convert_pts_to_ms(ctx->packet.pts - prev_packet_pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 				if(abs(diff) < 1000*ctx->min_sub_duration) //If the minimum duration of a subtitle line is exceeded, process packet
@@ -912,6 +920,128 @@ int hardsubx_process_frames_linear_russian(struct lib_hardsubx_ctx *ctx, struct 
  				}
 				_display_frame(ctx, ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
 
+				cur_sec = (int)convert_pts_to_s(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
+				total_sec = (int)convert_pts_to_s(ctx->format_ctx->duration, AV_TIME_BASE_Q);
+				progress = (cur_sec*100)/total_sec;
+				activity_progress(progress,cur_sec/60,cur_sec%60);
+
+				if((!subtitle_text && !prev_subtitle_text) || (subtitle_text && !strlen(subtitle_text) && !prev_subtitle_text)) {
+					prev_end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
+				}
+
+				if(subtitle_text) {
+					char *double_enter = strstr(subtitle_text,"\n\n");
+					if(double_enter!=NULL)
+						*(double_enter)='\0';
+				}
+
+				if(!prev_sub_encoded && prev_subtitle_text)
+				{
+					if(subtitle_text)
+					{
+						dist = edit_distance(subtitle_text, prev_subtitle_text, strlen(subtitle_text), strlen(prev_subtitle_text));
+						if(dist < (0.2 * fmin(strlen(subtitle_text), strlen(prev_subtitle_text))))
+						{
+							dist = -1;
+							subtitle_text = NULL;
+							prev_end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
+						}
+					}
+					if(dist != -1)
+					{
+						add_cc_sub_text(ctx->dec_sub, prev_subtitle_text, prev_begin_time, prev_end_time, "", "BURN", CCX_ENC_UTF_8);
+						encode_sub(enc_ctx, ctx->dec_sub);
+						prev_begin_time = prev_end_time + 1;
+						prev_subtitle_text = NULL;
+						prev_sub_encoded = 1;
+						prev_end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
+						if(subtitle_text) {
+							prev_subtitle_text = strdup(subtitle_text);
+							prev_sub_encoded = 0;
+						}
+					}
+					dist = 0;
+				}
+
+				// if(ctx->conf_thresh > 0)
+				// {
+				// 	if(ctx->cur_conf >= ctx->prev_conf)
+				// 	{
+				// 		prev_subtitle_text = strdup(subtitle_text);
+				// 		ctx->prev_conf = ctx->cur_conf;
+				// 	}
+				// }
+				// else
+				// {
+				// 	prev_subtitle_text = strdup(subtitle_text);
+				// }
+
+				if(!prev_subtitle_text && subtitle_text) {
+					prev_begin_time = prev_end_time + 1;
+					prev_end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
+					prev_subtitle_text = strdup(subtitle_text);
+					prev_sub_encoded = 0;
+				}
+				prev_packet_pts = ctx->packet.pts;
+			}
+		}
+		av_packet_unref(&ctx->packet);
+	}
+
+	if(!prev_sub_encoded) {
+		add_cc_sub_text(ctx->dec_sub, prev_subtitle_text, prev_begin_time, prev_end_time, "", "BURN", CCX_ENC_UTF_8);
+		encode_sub(enc_ctx, ctx->dec_sub);
+		prev_sub_encoded = 1;
+	}
+	activity_progress(100,cur_sec/60,cur_sec%60);
+
+}
+
+int hardsubx_process_frames_linear_russian_earlyfusion(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx)
+{
+	// Do an exhaustive linear search over the video
+
+	int prev_sub_encoded = 1; // Previous seen subtitle encoded or not
+	int got_frame;
+	int dist = 0;
+	int cur_sec,total_sec,progress;
+	int frame_number = 0;
+	int64_t prev_begin_time = 0, prev_end_time = 0; // Begin and end time of previous seen subtitle
+	int64_t prev_packet_pts = 0;
+	char *subtitle_text=NULL; // Subtitle text of current frame
+	char *prev_subtitle_text=NULL; // Previously seen subtitle text
+	pixa = pixaCreate(5);
+
+	while(av_read_frame(ctx->format_ctx, &ctx->packet)>=0)
+	{
+		if(ctx->packet.stream_index == ctx->video_stream_id)
+		{
+			frame_number++;
+
+			//Decode the video stream packet
+			avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
+
+			if(got_frame && (frame_number == ctx->russian->start_frame || frame_number % ctx->russian->frame_skip == 0))
+			{
+				float diff = (float)convert_pts_to_ms(ctx->packet.pts - prev_packet_pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
+				if(abs(diff) < 1000*ctx->min_sub_duration) //If the minimum duration of a subtitle line is exceeded, process packet
+					continue;
+
+				// sws_scale is used to convert the pixel format to RGB24 from all other cases
+				sws_scale(
+						ctx->sws_ctx,
+						(uint8_t const * const *)ctx->frame->data,
+						ctx->frame->linesize,
+						0,
+						ctx->codec_ctx->height,
+						ctx->rgb_frame->data,
+						ctx->rgb_frame->linesize
+					);
+
+
+				// Send the frame to other functions for processing
+	                         subtitle_text = _process_frame_tickertext_russian(ctx,ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number); 
+				_display_frame(ctx, ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
 				cur_sec = (int)convert_pts_to_s(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 				total_sec = (int)convert_pts_to_s(ctx->format_ctx->duration, AV_TIME_BASE_Q);
 				progress = (cur_sec*100)/total_sec;
