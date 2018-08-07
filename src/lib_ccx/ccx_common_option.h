@@ -162,6 +162,8 @@ struct ccx_s_options // Options from user parameters
         int upper_blue;
         int lower_blue;
         int letter_russian;
+        int simple_skip;
+	int save_srt;
 
 
 	ccx_encoders_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
