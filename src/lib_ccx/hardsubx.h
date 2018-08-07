@@ -68,8 +68,27 @@ struct lib_hardsubx_ctx
 	float prev_conf;
 
 	// Subtitle text parameters
-	int tickertext;
-	int russian;
+
+        
+ 	int tickertext;
+        char* ocrlang;
+        /*
+  	int frame_skip;
+        int start_frame;
+        int late_fusion;
+        int upper_red;
+        int lower_red;
+        int upper_blue;
+        int lower_blue;
+        int upper_green;
+        int lower_green;
+        int letter_russian;
+
+        */
+        
+	int russian_lang;
+	struct russianx{
+	int ocrlang;
 	int frame_skip;
 	int start_frame;
 	int late_fusion;
@@ -80,6 +99,10 @@ struct lib_hardsubx_ctx
 	int upper_green;
 	int lower_green;
 	int letter_russian;
+	int tickertext;
+        int simple_skip;
+	int save_srt;
+        }*russian;
 
 	struct cc_subtitle *dec_sub;
 	int ocr_mode;
@@ -120,7 +143,6 @@ char* _process_frame_color_basic_russian(struct lib_hardsubx_ctx *ctx, AVFrame *
 //hardsubx_imgops.c
 void rgb_to_hsv(float R, float G, float B,float *H, float *S, float *V);
 void rgb_to_lab(float R, float G, float B,float *L, float *a, float *b);
-void rgb2lab(float R, float G, float B,float *L, float *a, float *b);
 
 //hardsubx_classifier.c
 char *get_ocr_text_simple(struct lib_hardsubx_ctx *ctx, PIX *image);
