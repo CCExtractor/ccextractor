@@ -920,6 +920,23 @@ void print_usage (void)
 	mprint("                     Recommended values are in the range 80 to 100.\n");
 	mprint("                     The default value is 95\n");
 	mprint("\n");
+	mprint("   -ocrlang rus    : For using HardSubX on other languages than English\n");
+	mprint("                     currently only Russian Supported\n");
+	mprint("   -save_srt       : For Using Early Fusion Algorithm for Scrolling Tickers, makes an srt file\n");
+	mprint("   -late_fusion    : For using Late Fusion Algorithm for Scrolling Tickers, a bit slow than Early Fusion\n");
+	mprint("   -frame_skip     : Tells to skip n frames after each recognition\n");
+	mprint("                     The default value is 230\n");
+	mprint("   -start_frame    : Tells where to start the first frame\n");
+	mprint("                     The default value is 15\n");
+	mprint("   -upper_red      : For specifing the upper value of Red (R,G,B) for detecting stopper\n");
+	mprint("   -upper_blue     : For specifing the upper value of Blue (R,G,B) for detecting stopper\n");
+	mprint("   -upper_green    : For specifing the upper value of Green (R,G,B) for detecting stopper\n");
+	mprint("   -lower_red      : For specifing the lower value of Red (R,G,B) for detecting stopper\n");
+	mprint("   -lower_blue     : For specifing the lower value of Blue (R,G,B) for detecting stopper\n");
+	mprint("   -lower_green    : For specifing the lower value of Green (R,G,B) for detecting stopper\n");
+	mprint("   -letter_russian : For Doing OCR Letter by Letter for HardSubX Russian\n");
+	mprint("   -simple_skip    : For using a Simple Skip Function for Scrolling Tickers\n");
+	mprint("                     The default value is 0, calling it would enable it\n");
 	mprint("            An example command for burned-in subtitle extraction is as follows:\n");
 	mprint("               ccextractor video.mp4 -hardsubx -subcolor white -detect_italics \n");
 	mprint("                   -whiteness_thresh 90 -conf_thresh 60\n");
@@ -1198,6 +1215,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->hardsubx = 1;
 			continue;
 		}
+		//Used to OCR the tickers word by word
 		if (strcmp(argv[i], "-letterwise_russian")==0)
 		{
 			opt->letter_russian = 1;
@@ -2130,23 +2148,31 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
+
 		if (strcmp (argv[i],"-tickertext")==0 || strcmp (argv[i],"-tickertape")==0)
 		{
 			opt->tickertext = 1;
 			continue;
 		}
-		if (strcmp (argv[i],"-russian")==0 || strcmp (argv[i],"-russian_ocr")==0)
+		//For using the Simple Skip Function rather than Early or Late Fusion
+		if (strcmp (argv[i],"-simple_skip")==0 || strcmp (argv[i],"-simple_frame_skip")==0)
 		{
-			opt->russian = 1;
+			opt->simple_skip = 1;
 			continue;
 		}
-
+		//For Saving the results in SRT File
+		if (strcmp (argv[i],"-save_srt")==0 || strcmp (argv[i],"-save_subtitles")==0)
+		{
+			opt->save_srt = 1;
+			continue;
+		}
+		//For Enabling Late Fusion
 		if (strcmp (argv[i],"-late_fusion")==0 || strcmp (argv[i],"-latefusion")==0)
 		{
 			opt->late_fusion = 1;
 			continue;
 		}
-
+		//For Telling how many frames need to be skipped
 		if (strcmp (argv[i],"-frame_skip")==0 || strcmp (argv[i],"-frame_skip")==0)
 		{
 			if(i < argc - 1)
@@ -2166,6 +2192,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				i++;
 			continue;
 		}
+		//Detecting Upper Red Value (R,G,B) of the news stopper
 		if (strcmp (argv[i],"-upper_red")==0 || strcmp (argv[i],"-upper_red_color")==0)
 		{
 			if(i < argc - 1)
@@ -2185,6 +2212,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				i++;
 			continue;
 		}
+		//Detecting Lower Red value (R,G,B) of the news stopper
 		if (strcmp (argv[i],"-lower_red")==0 || strcmp (argv[i],"-lower_red_color")==0)
 		{
 			if(i < argc - 1)
@@ -2204,7 +2232,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				i++;
 			continue;
 		}
-
+		//Detecting Upper Green value (R,G,B) of the news stopper
 		if (strcmp (argv[i],"-upper_green")==0 || strcmp (argv[i],"-upper_green_color")==0)
 		{
 			if(i < argc - 1)
@@ -2224,6 +2252,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				i++;
 			continue;
 		}
+		//Detecting Lower Green value (R,G,B) of the news stopper
 		if (strcmp (argv[i],"-lower_green")==0 || strcmp (argv[i],"-lower_green_color")==0)
 		{
 			if(i < argc - 1)
@@ -2243,6 +2272,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				i++;
 			continue;
 		}
+		//Detecting Upper Blue value (R,G,B) of the news stopper
 		if (strcmp (argv[i],"-upper_blue")==0 || strcmp (argv[i],"-upper_blue_color")==0)
 		{
 			if(i < argc - 1)
@@ -2263,6 +2293,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			continue;
 		}
 
+		//Detecting Lower Blue value (R,G,B) of the news stopper
 		if (strcmp (argv[i],"-lower_blue")==0 || strcmp (argv[i],"-lower_blue_color")==0)
 		{
 			if(i < argc - 1)
@@ -2282,7 +2313,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				i++;
 			continue;
 		}
-
+		//Tells the number of first frame
 		if (strcmp (argv[i],"-start_frame")==0 || strcmp (argv[i],"-first_frame")==0)
 		{
 			if(i < argc - 1)
