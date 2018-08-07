@@ -101,17 +101,28 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 	enc_ctx = init_encoder(&ccx_options.enc_cfg);
 	
 	mprint("Beginning burned-in subtitle detection...\n");
+ 
+        
+	if(ctx->tickertext)
+		if (ctx->ocrlang != NULL && (strcmp(ctx->ocrlang, "rus") == 0)){
+			hardsubx_process_frames_tickertext_russian(ctx, enc_ctx);
+		}
+		else{
+			hardsubx_process_frames_tickertext(ctx, enc_ctx);
+		}
 
-	if(ctx->tickertext && ctx->russian)
-		hardsubx_process_frames_tickertext_russian(ctx, enc_ctx);
-	else if(ctx->tickertext)
-		hardsubx_process_frames_tickertext(ctx, enc_ctx);
-	else if(ctx->russian)
+	else if(ctx->russian_lang && ctx->russian->simple_skip)
 		hardsubx_process_frames_linear_russian(ctx, enc_ctx);
-	else if (ctx->russian && ctx->late_fusion)
-		hardsubx_process_frames_tickertext_russian_latefusion(ctx, enc_ctx);
+
+        else if (ctx-> russian_lang && ctx->russian->late_fusion)
+                hardsubx_process_frames_tickertext_russian_latefusion(ctx, enc_ctx);
+	
+        else if (ctx->russian_lang && ctx->russian->save_srt)
+		hardsubx_process_frames_linear_russian_earlyfusion(ctx, enc_ctx);
+
 	else
 		hardsubx_process_frames_linear(ctx, enc_ctx);
+
 	dinit_encoder(&enc_ctx, 0); //TODO: Replace 0 with end timestamp
 
 	// Free the allocated memory for frame processing
@@ -260,17 +271,20 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	ctx->write_format = options->write_format;
 	ctx->subs_delay = options->subs_delay;
 	ctx->cc_to_stdout = options->cc_to_stdout;
-	ctx->russian = options->russian;
-	ctx->frame_skip = options->frame_skip;
-	ctx->start_frame = options->start_frame;
-	ctx->upper_red = options->upper_red;
-	ctx->upper_green = options->upper_green;
-	ctx->upper_blue = options->upper_blue;
-	ctx->lower_red = options->lower_red;
-	ctx->lower_green = options->lower_green;
-	ctx->lower_blue = options->lower_blue;
-	ctx->letter_russian = options->letter_russian;
 
+        /*
+        ctx->russian = options->russian;
+        ctx->frame_skip = options->frame_skip;
+        ctx->start_frame = options->start_frame;
+        ctx->upper_red = options->upper_red;
+        ctx->upper_green = options->upper_green;
+        ctx->upper_blue = options->upper_blue;
+        ctx->lower_red = options->lower_red;
+        ctx->lower_green = options->lower_green;
+        ctx->lower_blue = options->lower_blue;
+        ctx->letter_russian = options->letter_russian;
+
+        */
 
 	//Initialize subtitle text parameters
 	ctx->tickertext = options->tickertext;
@@ -283,11 +297,32 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	ctx->conf_thresh = options->hardsubx_conf_thresh;
 	ctx->hue = options->hardsubx_hue;
 	ctx->lum_thresh = options->hardsubx_lum_thresh;
-        ctx->late_fusion = options->late_fusion;
+        //ctx->late_fusion = options->late_fusion;
+        ctx->ocrlang = options->ocrlang;
 
 	//Initialize subtitle structure memory
 	ctx->dec_sub = (struct cc_subtitle *)malloc(sizeof(struct cc_subtitle));
 	memset (ctx->dec_sub, 0,sizeof(struct cc_subtitle));
+
+        //Initialized Russian Structure Memory
+	if (options->ocrlang != NULL && (strcmp(options->ocrlang, "rus") == 0)){
+
+	ctx->russian = (struct russianx *)malloc(sizeof(struct russianx));
+	memset (ctx->russian, 0,sizeof(struct russianx));     
+        ctx->russian_lang = 1;
+	ctx->russian->frame_skip = options->frame_skip;
+	ctx->russian->start_frame = options->start_frame;
+	ctx->russian->upper_red = options->upper_red;
+	ctx->russian->upper_green = options->upper_green;
+	ctx->russian->upper_blue = options->upper_blue;
+	ctx->russian->lower_red = options->lower_red;
+	ctx->russian->lower_green = options->lower_green;
+	ctx->russian->lower_blue = options->lower_blue;
+	ctx->russian->letter_russian = options->letter_russian;
+        ctx->russian->simple_skip = options->simple_skip;
+        ctx->russian->late_fusion = options->late_fusion;
+	ctx->russian->save_srt = options->save_srt;
+        }
 
 	return ctx;
 }
