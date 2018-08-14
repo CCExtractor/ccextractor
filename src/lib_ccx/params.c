@@ -907,19 +907,6 @@ void print_usage (void)
 	mprint("                     Italic detection automatically enforces the OCR mode \n");
 	mprint("                     to be word-wise");
 	mprint("\n");
-	mprint("      -conf_thresh : Specify the classifier confidence threshold between\n");
-	mprint("                      1 and 100.\n");
-	mprint("                     Try and use a threshold which works for you if you get \n");
-	mprint("                     a lot of garbage text.\n");
-	mprint("                     e.g. -conf_thresh 50\n");
-	mprint("\n");
-	mprint(" -whiteness_thresh : For white subtitles only, specify the luminance \n");
-	mprint("                     threshold between 1 and 100\n");
-	mprint("                     This threshold is content dependent, and adjusting\n");
-	mprint("                     values may give you better results\n");
-	mprint("                     Recommended values are in the range 80 to 100.\n");
-	mprint("                     The default value is 95\n");
-	mprint("\n");
 	mprint("            An example command for burned-in subtitle extraction is as follows:\n");
 	mprint("               ccextractor video.mp4 -hardsubx -subcolor white -detect_italics \n");
 	mprint("                   -whiteness_thresh 90 -conf_thresh 60\n");
@@ -1228,65 +1215,6 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				i++;
 				continue;
 			}
-			if (strcmp(argv[i], "-subcolor")==0 || strcmp(argv[i], "-sub_color")==0)
-			{
-				if(i < argc - 1)
-				{
-					if(strcmp(argv[i+1], "white")==0)
-					{
-						opt->hardsubx_subcolor = HARDSUBX_COLOR_WHITE;
-						opt->hardsubx_hue = 0.0;
-					}
-					else if(strcmp(argv[i+1], "yellow")==0)
-					{
-						opt->hardsubx_subcolor = HARDSUBX_COLOR_YELLOW;
-						opt->hardsubx_hue = 60.0;
-					}
-					else if(strcmp(argv[i+1], "green")==0)
-					{
-						opt->hardsubx_subcolor = HARDSUBX_COLOR_GREEN;
-						opt->hardsubx_hue = 120.0;
-					}
-					else if(strcmp(argv[i+1], "cyan")==0)
-					{
-						opt->hardsubx_subcolor = HARDSUBX_COLOR_CYAN;
-						opt->hardsubx_hue = 180.0;
-					}
-					else if(strcmp(argv[i+1], "blue")==0)
-					{
-						opt->hardsubx_subcolor = HARDSUBX_COLOR_BLUE;
-						opt->hardsubx_hue = 240.0;
-					}
-					else if(strcmp(argv[i+1], "magenta")==0)
-					{
-						opt->hardsubx_subcolor = HARDSUBX_COLOR_MAGENTA;
-						opt->hardsubx_hue = 300.0;
-					}
-					else if(strcmp(argv[i+1], "red")==0)
-					{
-						opt->hardsubx_subcolor = HARDSUBX_COLOR_RED;
-						opt->hardsubx_hue = 0.0;
-					}
-					else
-					{
-						// Take a custom hue from the user
-						opt->hardsubx_subcolor = HARDSUBX_COLOR_CUSTOM;
-						char *str=(char*)malloc(sizeof(argv[i+1]));
-						sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
-						opt->hardsubx_hue = atof(str);
-						if(opt->hardsubx_hue <= 0.0 || opt->hardsubx_hue > 360.0)
-						{
-							fatal (EXIT_MALFORMED_PARAMETER, "-subcolor has either 0 or an invalid hue value supplied.\nIf you want to detect red subtitles, pass '-subcolor red' or a slightly higher hue value (e.g. 0.1)\n");
-						}
-					}
-				}
-				else
-				{
-					fatal (EXIT_MALFORMED_PARAMETER, "-subcolor has no argument.\nValid values are {white,yellow,green,cyan,blue,magenta,red} or a custom hue value between 0 and 360\n");
-				}
-				i++;
-				continue;
-			}
 			if (strcmp(argv[i], "-min_sub_duration")==0)
 			{
 				if(i < argc - 1)
@@ -1309,44 +1237,6 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			if (strcmp(argv[i], "-detect_italics")==0)
 			{
 				opt->hardsubx_detect_italics = 1;
-				continue;
-			}
-			if (strcmp(argv[i], "-conf_thresh")==0)
-			{
-				if(i < argc - 1)
-				{
-					char *str=(char*)malloc(sizeof(argv[i+1]));
-					sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
-					opt->hardsubx_conf_thresh = atof(str);
-					if(opt->hardsubx_conf_thresh <= 0.0 || opt->hardsubx_conf_thresh > 100.0)
-					{
-						fatal (EXIT_MALFORMED_PARAMETER, "-conf_thresh has either 0 or an invalid value supplied\nValid values are in (0.0,100.0)");
-					}
-				}
-				else
-				{
-					fatal (EXIT_MALFORMED_PARAMETER, "-conf_thresh has no argument.");
-				}
-				i++;
-				continue;
-			}
-			if (strcmp(argv[i], "-whiteness_thresh")==0 || strcmp(argv[i], "-lum_thresh")==0)
-			{
-				if(i < argc - 1)
-				{
-					char *str=(char*)malloc(sizeof(argv[i+1]));
-					sprintf(str,"%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
-					opt->hardsubx_lum_thresh = atof(str);
-					if(opt->hardsubx_lum_thresh <= 0.0 || opt->hardsubx_conf_thresh > 100.0)
-					{
-						fatal (EXIT_MALFORMED_PARAMETER, "-whiteness_thresh has either 0 or an invalid value supplied\nValid values are in (0.0,100.0)");
-					}
-				}
-				else
-				{
-					fatal (EXIT_MALFORMED_PARAMETER, "-whiteness_thresh has no argument.");
-				}
-				i++;
 				continue;
 			}
 		}

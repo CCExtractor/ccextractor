@@ -121,37 +121,6 @@ void _hardsubx_params_dump(struct ccx_s_options *options, struct lib_hardsubx_ct
 {
 	// Print the relevant passed parameters onto the screen
 	mprint("Input : %s\n", ctx->inputfile[0]);
-
-	switch(ctx->subcolor)
-	{
-		case HARDSUBX_COLOR_WHITE:
-			mprint("Subtitle Color : White\n");
-			break;
-		case HARDSUBX_COLOR_YELLOW:
-			mprint("Subtitle Color : Yellow\n");
-			break;
-		case HARDSUBX_COLOR_GREEN:
-			mprint("Subtitle Color : Green\n");
-			break;
-		case HARDSUBX_COLOR_CYAN:
-			mprint("Subtitle Color : Cyan\n");
-			break;
-		case HARDSUBX_COLOR_BLUE:
-			mprint("Subtitle Color : Blue\n");
-			break;
-		case HARDSUBX_COLOR_MAGENTA:
-			mprint("Subtitle Color : Magenta\n");
-			break;
-		case HARDSUBX_COLOR_RED:
-			mprint("Subtitle Color : Red\n");
-			break;
-		case HARDSUBX_COLOR_CUSTOM:
-			mprint("Subtitle Color : Custom Hue - %0.2f\n",ctx->hue);
-			break;
-		default:
-			fatal(EXIT_MALFORMED_PARAMETER,"Invalid Subtitle Color");
-	}
-
 	switch(ctx->ocr_mode)
 	{
 		case HARDSUBX_OCRMODE_WORD:
@@ -165,36 +134,6 @@ void _hardsubx_params_dump(struct ccx_s_options *options, struct lib_hardsubx_ct
 			break;
 		default:
 			fatal(EXIT_MALFORMED_PARAMETER,"Invalid OCR Mode");
-	}
-
-	if(ctx->conf_thresh > 0)
-	{
-		mprint("OCR Confidence Threshold : %.2f\n",ctx->conf_thresh);
-	}
-	else
-	{
-		mprint("OCR Confidence Threshold : %.2f (Default)\n",ctx->conf_thresh);
-	}
-
-	if(ctx->subcolor == HARDSUBX_COLOR_WHITE)
-	{
-		if(ctx->lum_thresh != 95.0)
-		{
-			mprint("OCR Luminance Threshold : %.2f\n",ctx->lum_thresh);
-		}
-		else
-		{
-			mprint("OCR Luminance Threshold : %.2f (Default)\n",ctx->lum_thresh);
-		}
-	}
-
-	if(ctx->detect_italics == 1)
-	{
-		mprint("OCR Italic Detection : On\n");
-	}
-	else
-	{
-		mprint("OCR Italic Detection : Off\n");
 	}
 
 	if(ctx->min_sub_duration == 0.5)
@@ -260,13 +199,8 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	ctx->tickertext = options->tickertext;
 	ctx->cur_conf = 0.0;
 	ctx->prev_conf = 0.0;
-	ctx->ocr_mode = options->hardsubx_ocr_mode;
-	ctx->subcolor = options->hardsubx_subcolor;
 	ctx->min_sub_duration = options->hardsubx_min_sub_duration;
 	ctx->detect_italics = options->hardsubx_detect_italics;
-	ctx->conf_thresh = options->hardsubx_conf_thresh;
-	ctx->hue = options->hardsubx_hue;
-	ctx->lum_thresh = options->hardsubx_lum_thresh;
 
 	//Initialize subtitle structure memory
 	ctx->dec_sub = (struct cc_subtitle *)malloc(sizeof(struct cc_subtitle));

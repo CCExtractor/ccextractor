@@ -11,64 +11,37 @@
 #include "hardsubx.h"
 #include "capi.h"
 
-char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
+char* _process_frame_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
 {
 	//printf("frame : %04d\n", index);
-	PIX *im;
-	PIX *edge_im;
-	PIX *lum_im;
-	PIX *feat_im;
 	char *subtitle_text=NULL;
-	im = pixCreate(width,height,32);
-	lum_im = pixCreate(width,height,32);
-	feat_im = pixCreate(width,height,32);
-	int i,j;
-	for(i=(3*height)/4;i<height;i++)
-	{
-		for(j=0;j<width;j++)
-		{
-			int p=j*3+i*frame->linesize[0];
-			int r=frame->data[0][p];
-			int g=frame->data[0][p+1];
-			int b=frame->data[0][p+2];
-			pixSetRGBPixel(im,j,i,r,g,b);
-			float L,A,B;
-			rgb_to_lab((float)r,(float)g,(float)b,&L,&A,&B);
-			if(L > ctx->lum_thresh)
-				pixSetRGBPixel(lum_im,j,i,255,255,255);
-			else
-				pixSetRGBPixel(lum_im,j,i,0,0,0);
-		}
-	}
+	Mat src = createMat(ctx->sws_ctx->height, ctx->sws_ctx->width, 16, ctx->rgb_frame->data[0], ctx->rgb_frame->linesize[0]);
 
-	//Handle the edge image
-	edge_im = pixCreate(width,height,8);
-	edge_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
-	edge_im = pixSobelEdgeFilter(edge_im, L_VERTICAL_EDGES);
-	edge_im = pixDilateGray(edge_im, 21, 11);
-	edge_im = pixThresholdToBinary(edge_im,50);
-
-	for(i=3*(height/4);i<height;i++)
-	{
-		for(j=0;j<width;j++)
-		{
-			unsigned int p1,p2,p3;
-			pixGetPixel(edge_im,j,i,&p1);
-			// pixGetPixel(pixd,j,i,&p2);
-			pixGetPixel(lum_im,j,i,&p3);
-			if(p1==0&&p3>0)
-				pixSetRGBPixel(feat_im,j,i,255,255,255);
-			else
-				pixSetRGBPixel(feat_im,j,i,0,0,0);
-		}
-	}
+	//Detect character groups
+	vector* channels = (vector*)malloc(sizeof(vector));
+	vector* nm_regions_groups = (vector*)malloc(sizeof(vector));
+	vector* nm_boxes = (vector*)malloc(sizeof(vector));
+	detect_regions(src, channels, nm_regions_groups, nm_boxes);
 
 	if(ctx->detect_italics)
 	{
 		ctx->ocr_mode = HARDSUBX_OCRMODE_WORD;
 	}
 
+	ctx->tess_handle = init_OCRTesseract(NULL, NULL, 3, 3);
+	char* subtitle_text;
 	// TESSERACT OCR FOR THE FRAME HERE
+	for(int i = 0; i < vector_size(nm_boxes);i++)
+	{
+		Mat group_img = zeros(src.rows+2, src.cols+2, 0);
+		er_draw(channels, regions, nm_region_groups[i], group_img);
+		copyTo(createusingRect(group_img, *(Rect*)vector_get(nm_boxes, i)), group_img);
+		copyMakeBorder(group_img, &group_img, 15, 15, 15, 15, 0, init_Scalar(0, 0, 0, 0));
+		run_ocr(group_img, output, ctx->ocr_mode);
+		strcat(subtitle_text, output);
+		strcat(subtitle_text, "\n");
+	}
+	/*
 	switch(ctx->ocr_mode)
 	{
 		case HARDSUBX_OCRMODE_WORD:
@@ -97,10 +70,10 @@ char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 	pixDestroy(&im);
 	pixDestroy(&edge_im);
 	pixDestroy(&feat_im);
-
+	*/
 	return subtitle_text;
 }
-
+/*
 char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
 {
 	char *subtitle_text=NULL;
@@ -195,7 +168,7 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 
 	return subtitle_text;
 }
-
+*/
 void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int timestamp)
 {
 	// Debug: Display the frame after processing
@@ -417,14 +390,7 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 
 
 				// Send the frame to other functions for processing
-				if(ctx->subcolor==HARDSUBX_COLOR_WHITE)
-				{
-					subtitle_text = _process_frame_white_basic(ctx,ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
-				}
-				else
-				{
-					subtitle_text = _process_frame_color_basic(ctx, ctx->rgb_frame, ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
-				}
+				subtitle_text = _process_frame_basic(ctx, ctx->rgb_frame, ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
 				_display_frame(ctx, ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,frame_number);
 
 				cur_sec = (int)convert_pts_to_s(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
