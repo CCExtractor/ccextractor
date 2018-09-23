@@ -122,7 +122,7 @@ int api_start(struct ccx_s_options api_options)
             switch (ctx->total_inputsize)
             {
                 case -1*ENOENT:
-                    fatal(EXIT_NO_INPUT_FILES, "Failed to open input file: File does not exist.");
+                    fatal(EXIT_NO_INPUT_FILES, "Failed to open one of the input file(s): File does not exist.");
                 case -1*EACCES:
                     fatal(EXIT_READ_ERROR, "Failed to open input file: Unable to access");
                 case -1*EINVAL:
