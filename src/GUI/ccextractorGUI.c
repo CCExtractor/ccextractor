@@ -9,6 +9,7 @@
 #include <math.h>
 #include <limits.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -87,7 +88,7 @@ static void error_callback(int e, const char *d)
 void drop_callback(GLFWwindow* window, int count, const char **paths)
 {
 	int i,j,k,z,copycount, prefix_length, slash_length, fileNameTruncated_index;
-	
+
 	printf("Number of selected paths:%d\n", count);
 
 	if(main_settings.filename_count == 0 && main_settings.filenames == NULL)
@@ -109,6 +110,14 @@ void drop_callback(GLFWwindow* window, int count, const char **paths)
 
 }
 
+char* formpath(const char *s1, const char *s2) // concatenates 2 paths
+{
+    char *result = malloc(strlen(s1) + strlen(s2) + 1); // +1 for the null-terminator
+    // in real code you would check for errors in malloc here
+    strcpy(result, s1);
+    strcat(result, s2);
+    return result;
+}
 
 /*Rectangle to hold file names*/
 //void draw_file_rectangle_widget(struct nk_context *ctx, struct nk_font *font)
@@ -137,7 +146,7 @@ void drop_callback(GLFWwindow* window, int count, const char **paths)
 //			space.y = space.y + 20;
 //		}
 //	}
-//	
+//
 //}
 
 /*Rectangle to hold extraction info*/
@@ -260,16 +269,34 @@ int main(void)
 	media.icons.img_file = icon_load("../../icon/img.png");
 	media.icons.movie_file = icon_load("../../icon/movie.png");
 #else
-    media.icons.home = icon_load("../icon/home.png");
-    media.icons.directory = icon_load("../icon/directory.png");
-    media.icons.computer = icon_load("../icon/computer.png");
-    media.icons.desktop = icon_load("../icon/desktop.png");
-    media.icons.default_file = icon_load("../icon/default.png");
-    media.icons.text_file = icon_load("../icon/text.png");
-    media.icons.music_file = icon_load("../icon/music.png");
-    media.icons.font_file =  icon_load("../icon/font.png");
-    media.icons.img_file = icon_load("../icon/img.png");
-    media.icons.movie_file = icon_load("../icon/movie.png");
+	// forming a relative path to ccextractor/linux folder
+	char path_to_ccx[PATH_MAX];
+	int ind = 0;
+	char cwd[PATH_MAX];
+	getcwd(cwd,sizeof(cwd));
+	for(int i = 0; cwd[i] != NULL; i ++){
+		if(cwd[i] == '/'){
+			path_to_ccx[ind] = path_to_ccx[ind+1] = '.';
+			path_to_ccx[ind+2] = '/';
+			ind += 3;
+		}
+	}
+	for(int i = 1; CURRENT_DIR[i] != NULL; i ++){
+		path_to_ccx[ind] = CURRENT_DIR[i];
+		ind ++;
+	}
+	// -----------------------------------------------
+
+    media.icons.home = icon_load(formpath(path_to_ccx,"/../icon/home.png"));
+	media.icons.directory = icon_load(formpath(path_to_ccx,"/../icon/directory.png"));
+    media.icons.computer = icon_load(formpath(path_to_ccx,"/../icon/computer.png"));
+    media.icons.desktop = icon_load(formpath(path_to_ccx,"/../icon/desktop.png"));
+    media.icons.default_file = icon_load(formpath(path_to_ccx,"/../icon/default.png"));
+    media.icons.text_file = icon_load(formpath(path_to_ccx,"/../icon/text.png"));
+    media.icons.music_file = icon_load(formpath(path_to_ccx,"/../icon/music.png"));
+    media.icons.font_file =  icon_load(formpath(path_to_ccx,"/../icon/font.png"));
+    media.icons.img_file = icon_load(formpath(path_to_ccx,"/../icon/img.png"));
+    media.icons.movie_file = icon_load(formpath(path_to_ccx,"/../icon/movie.png"));
 #endif
 
     media_init(&media);
@@ -313,7 +340,7 @@ int main(void)
 		if (nk_begin(ctx, "CCExtractor", nk_rect(0, 0, WIDTH_mainPanelAndWindow, HEIGHT_mainPanelandWindow),
 			NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BACKGROUND))
 		{
-			
+
 
 		//MENUBAR
 			nk_menubar_begin(ctx);
@@ -358,7 +385,7 @@ int main(void)
 					show_about_ccx = nk_true;
 				nk_menu_end(ctx);
 			}
-			
+
 		//Network Settings
 			if (network_settings.show_network_settings)
 				draw_network_popup(ctx, &network_settings);
@@ -397,7 +424,7 @@ int main(void)
 			nk_layout_space_begin(ctx, NK_STATIC, 15, 1);
 			nk_layout_space_end(ctx);
 
-		
+
 
 			/*TABS TRIGGERED IN ADVANCED MODE FLAG*/
 			if (advanced_mode_check)
@@ -482,7 +509,7 @@ int main(void)
 			nk_spacing(ctx, 1);
 			nk_checkbox_label(ctx, "Advanced Mode", &advanced_mode_check);
 
-		//RADIO BUTTON 1 
+		//RADIO BUTTON 1
 			static const float ratio_button[] = { .10f, .90f };
 			static const float check_extension_ratio[] = { .10f, .53f, .12f, .15f, .10f };
 			//static int op = FILES;
@@ -526,7 +553,7 @@ int main(void)
 
 							}
 					}
-						
+
 				}
 
 				else
@@ -617,7 +644,7 @@ int main(void)
                     else
                         nk_label(ctx, "Hardsubtitles extraction: No", NK_TEXT_LEFT);
 
-				
+
 				}
 				nk_group_end(ctx);
 
@@ -641,7 +668,7 @@ int main(void)
 			{
 
 				setup_and_create_thread(&main_settings, &command);
-				
+
 			}
 
 
@@ -667,13 +694,13 @@ int main(void)
 			//build command string
 			command_builder(&command, &main_settings, &network_settings, &input, &advanced_input, &output, &decoders, &credits, &debug, &burned_subs);
 
-			
+
 
 		}
 		nk_end(ctx);
 
 		glfwGetWindowSize(win, &screenWidth, &screenHeight);
-		
+
 		if (!main_settings.scaleWindowForFileBrowser)
 		{
 			if (show_activity_check && show_preview_check && show_terminal_check)
@@ -793,7 +820,7 @@ int main(void)
 
 void setup_main_settings(struct main_tab *main_settings)
 {
-	
+
 	main_settings->is_check_common_extension = nk_false;
 	main_settings->port_num_len = 0;
 	main_settings->port_or_files = FILES;
@@ -867,7 +894,7 @@ char* truncate_path_string(char *filePath)
 		}
 		return file_path;
 	}
-	else 
+	else
 		return filePath;
 }
 
@@ -889,12 +916,12 @@ void remove_path_entry(struct main_tab *main_settings, int indexToRemove)
 			temp + indexToRemove,
 			(main_settings->filenames) + (indexToRemove + 1),
 			(main_settings->filename_count - indexToRemove) * sizeof(char *)); // copy everything AFTER the index
-																		
+
 		free(main_settings->filenames);
 		main_settings->filenames = temp;
 		main_settings->filename_count--;
         main_settings->filenames[main_settings->filename_count] = NULL;
-	
+
 
 }
 

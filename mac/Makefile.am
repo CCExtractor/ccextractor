@@ -309,7 +309,7 @@ ccextractor_SOURCES = \
 				../src/freetype/type1/type1.c \
 				../src/freetype/type42/type42.c \
 				../src/freetype/winfonts/winfnt.c
-				
+
 
 ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP
 
@@ -324,7 +324,7 @@ endif
 
 if SYS_IS_MAC
 ccextractor_CFLAGS += -DPAC_CONFIG_DARWIN -Dfopen64=fopen -Dopen64=open -Dlseek64=lseek
-ccextractor_LDADD += -liconv -lz 
+ccextractor_LDADD += -liconv -lz
 endif
 
 if HARDSUBX_IS_ENABLED
@@ -395,6 +395,7 @@ ccextractorGUI_SOURCES = \
 				../src/GUI/nuklear_lib/nuklear_glfw_gl2.h
 
 ccextractorGUI_CFLAGS = -std=gnu99
+ccextractorGUI_CFLAGS += -DCURRENT_DIR=\"$(shell pwd)\"
 
 
 ccextractorGUI_LDADD = ${glfw3_LIBS}
@@ -417,11 +418,10 @@ endif
 
 if HARDSUBX_IS_ENABLED
 if OCR_IS_ENABLED
-ccextractorGUI_CFLAGS += -DENABLE_OCR 
+ccextractorGUI_CFLAGS += -DENABLE_OCR
 endif
 endif
 
 EXTRA_DIST += ../icon/ ../fonts/
 
 endif
-
