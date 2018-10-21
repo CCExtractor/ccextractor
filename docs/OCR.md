@@ -20,7 +20,7 @@ How to compile CCExtractor on Linux with OCR
 
 Download and Install Leptonnica.
 -------------------------------
-This package is available, you need liblept-devel library.
+This package is available in your distro, you need liblept-devel library.
 
 If Leptonica isn't available for your distribution, or you want to use a newer version
  than they offer, you can compile your own.
@@ -62,37 +62,35 @@ make ENABLE_OCR=yes
 How to compile CCExtractor on Windows with OCR
 ===============================================
 
-Download prebuild library of leptonica and tesseract from following link
-https://drive.google.com/file/d/0B2ou7ZfB-2nZOTRtc3hJMHBtUFk/view?usp=sharing
+Download prebuild library of leptonica and tesseract from following link  
+https://drive.google.com/file/d/0B2ou7ZfB-2nZOTRtc3hJMHBtUFk/view?usp=sharing  
 
-put the path of libs/include of leptonica and tesseract in library paths.
-step 1) In visual studio 2013 right click <Project> and select property.
-step 2) Select Configuration properties in left panel(column) of property.
-step 3) Select VC++ Directory.
-step 4) In the right pane, in the right-hand column of the VC++ Directory property,
-	open the drop-down menu and choose Edit.
-Step 5) Add path of Directory where you have kept uncompressed library of leptonica
-	and tesseract.
+put the path of libs/include of leptonica and tesseract in library paths.  
+step 1) In visual studio 2013 right click <Project> and select property.  
+step 2) Select Configuration properties in left panel(column) of property.  
+step 3) Select VC++ Directory.  
+step 4) In the right pane, in the right-hand column of the VC++ Directory property, open the drop-down menu and choose Edit.  
+Step 5) Add path of Directory where you have kept uncompressed library of leptonica and tesseract.  
 
 
-Set preprocessor flag ENABLE_OCR=1
-Step 1) In visual studio 2013 right click <Project> and select property.
-Step 2) In the left panel, select Configuration Properties, C/C++, Preprocessor.
-Step 3) In the right panel, in the right-hand column of the Preprocessor Definitions property, open the drop-down menu and choose Edit.
-Step 4) In the Preprocessor Definitions dialog box, add ENABLE_OCR=1. Choose OK to save your changes.
+Set preprocessor flag ENABLE_OCR=1  
+Step 1) In visual studio 2013 right click <Project> and select property.  
+Step 2) In the left panel, select Configuration Properties, C/C++, Preprocessor.  
+Step 3) In the right panel, in the right-hand column of the Preprocessor Definitions property, open the drop-down menu and choose Edit. 
+Step 4) In the Preprocessor Definitions dialog box, add ENABLE_OCR=1. Choose OK to save your changes.  
 
-Add library in linker
-step 1) Open property of project
-Step 2) Select Configuration properties
-Step 3) Select Linker in left panel(column)
-Step 4) Select Input
-Step 5) Select Additional dependencies in right panel
-Step 6) Add libtesseract304d.lib in new line
-Step 7) Add liblept172.lib in new line
+Add library in linker  
+step 1) Open property of project  
+Step 2) Select Configuration properties  
+Step 3) Select Linker in left panel(column)  
+Step 4) Select Input  
+Step 5) Select Additional dependencies in right panel  
+Step 6) Add libtesseract304d.lib in new line  
+Step 7) Add liblept172.lib in new line  
 
-Download language data from following link
-https://code.google.com/p/tesseract-ocr/downloads/list
-after downloading the tesseract-ocr-3.02.eng.tar.gz extract the tar file and put
-tessdata folder where you have kept CCExtractor executable
+Download language data from following link  
+https://code.google.com/p/tesseract-ocr/downloads/list  
+after downloading the tesseract-ocr-3.02.eng.tar.gz extract the tar file and put  
+tessdata folder where you have kept CCExtractor executable  
 
-Copy the tesseract and leptonica dll from lib folder downloaded from above link to folder of executable or in system32.
+Copy the tesseract and leptonica dll from lib folder downloaded from above link to folder of executable or in system32.  
