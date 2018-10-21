@@ -40,11 +40,13 @@ If Tesseract isn't available for your distribution, or you want to use a newer v
  than they offer, you can compile your own.
 
 If you compile Tesseract then following command in its source code are enough
+```
 ./autogen.sh
 ./configure
 make
 sudo make install
 sudo ldconfig
+```
 
  Note: 
 1) CCExtractor is tested with Tesseract 3.04 version but it works with older versions. 
@@ -56,7 +58,9 @@ you can download tesseract training data from https://github.com/tesseract-ocr/t
 
 Compile CCExtractor passing flags like following
 -------------------------------------------------
+```
 make ENABLE_OCR=yes
+```
 
 
 How to compile CCExtractor on Windows with OCR
@@ -76,7 +80,7 @@ Step 5) Add path of Directory where you have kept uncompressed library of lepton
 Set preprocessor flag ENABLE_OCR=1  
 Step 1) In visual studio 2013 right click <Project> and select property.  
 Step 2) In the left panel, select Configuration Properties, C/C++, Preprocessor.  
-Step 3) In the right panel, in the right-hand column of the Preprocessor Definitions property, open the drop-down menu and choose Edit. 
+Step 3) In the right panel, in the right-hand column of the Preprocessor Definitions property, open the drop-down menu and choose Edit.   
 Step 4) In the Preprocessor Definitions dialog box, add ENABLE_OCR=1. Choose OK to save your changes.  
 
 Add library in linker  
