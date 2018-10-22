@@ -24,15 +24,19 @@ The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtra
 
 The core functionality is written in C. Other languages used include C++ and Python.
 
-## Google Code-in 2018
+---
+[![Google Code-In 2018](https://raw.githubusercontent.com/CCExtractor/ccextractor-org-media/master/ext/google-code-In-2018.gif)](https://codein.withgoogle.com/)
+<p align="center">
+  CCExtractor is participating in Google Code-in 2018!
+</p>
 
-CCExtractor is participating in Google Code-in 2018!
+Google Code-In is a global, online open source development & outreach contest for pre-university students aged between 13-17. Participants complete “tasks” ranging from coding, documentation, quality assurance, design, outreach and research to earn t-shirts, digital certificates, and hooded sweatshirts for their work. Grand prize winners receive a four day trip to Google in Mountain View, CA, USA the following summer!
 
-Google Code-in is a competition of encouraging young people to learn more about Open Source and contributing to it. Tasks range from coding, documentation, quality assurance, design, outreach and research.
+We have a long and proud history of taking part in the Google Summer of Code with university students, and are excited to participate in GCI again for 3rd year with pre-university students!
 
-This is our third year of participating and creating challenging tasks for pre-university students aged 13-17.
+Sounds interesting? Read more about it on our website [here](https://ccextractor.org/public:codein:google_code-in_2018) and on the official website [here](https://codein.withgoogle.com/).
 
-If you are a student fitting the age criteria, interested to contribute to CCExtractor feel free to join us. You can read more at the [Google Code-in website](https://codein.withgoogle.com).
+---
 
 ## Installation and Usage
 
