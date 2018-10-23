@@ -7,6 +7,7 @@ Please prefix your pull request with one of the following: **[FEATURE]** **[FIX]
 - [ ] I have considered, and confirmed that this submission will be valuable to others.
 - [ ] I accept that this submission may not be used, and the pull request closed at the will of the maintainer.
 - [ ] I give this submission freely, and claim no ownership to its content.
+- [ ] **I have mentioned this change in the [changelog](https://github.com/CCExtractor/ccextractor/blob/master/docs/CHANGES.TXT).**
 
 **My familiarity with the project is as follows (check one):**
 
