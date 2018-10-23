@@ -1,7 +1,69 @@
 0.87 (2018-10-23)
 -----------------
-- New: Upgrade libGPAC to 0.7.1
-- New: mp4 tx3g & multitrack subtitles
+- New: Upgrade libGPAC to 0.7.1.
+- New: mp4 tx3g & multitrack subtitles.
+- New: Guide to update dependencies (docs/Updating_Dependencies.txt).
+- New: Add LICENSE File (#959).
+- New: Display quantisation mode in info box (#954).
+- New: Add instruction required to build ccextractor with HARDSUBX support (#946).
+- New: Added version no. of libraries to --version.
+- New: Added -quant (OCR quantization function).
+- New: Python API now compatible with Python 3.
+- Fix: linux/builddebug: Added non-local directories to the incluye search path so we don't
+       require a locally compiled tesseract or leptonica.
+- Fix: Correct -HARDSUBX Bug In CMake, allow build with hardsubx using cmake (#966).
+- Fix: possible segfaults in hardsubx_classifier.c due to strdup (#963).
+- Fix: Improve the start and end timestamps of extracted burned in captions (#962).
+- Fix: Update COMPILATION.md (#960).
+- Fix: Fixed crash with "-out=report" and "-out=null".
+- Fix: -nocf not working with OCR'ing (#958).
+- Fix: segfault in add_cc_sub_text and initialize to NULL in init_encoder (#950).
+- Fix: ccx_decoders_common.c: Copy data type when creating a copy of the subtitle structure.
+- Fix: Implicit declaration of these functions throws warning during build (#948).
+- Fix: ccx_decoders_common.c: Properly release allocated resources on free_subtitle().
+- Fix: Added a datatype member to struct cc_subtitle - needed so we can properly free all
+       memory when void *data points to a structure that has its own pointers.
+- Fix: dvb_subtitle_decoder.c: When combining image regions verify that the offset is
+       never negative.
+- Fix: Updated traivis.yml to fix osx build (#947).
+- Fix: Add utf8proc src file to cmake, updated header file (#944).
+- Fix: Added required pointers on freep() calls.
+- Fix: Removed dvb_debug_traces_to_stdout and used the usual dbg_print instead.
+- Fix: Additional debug traces for DVB.
+- Fix: Fix minor memory leak in ocr.c.
+- Fix: Fix issue with displaying utf8proc version.
+- Fix: Fix failing cmake due to liblept/tesseract header files.
+- Fix: Added missing \n in params.c.
+- Fix: builddebug: Use -fsanitize=address -fno-omit-frame-pointer.
+- Fix: ccx_decoders_common.c: Removed trivial memory leak.
+- Fix: ccx_encoders_srt.c: Made sure a pointer is non-NULL before dereferencing.
+- Fix: dvb_subtitle_decoder.c: Initialize pointer members to NULL when creating a structure.
+- Fix: lib_ccx.c: Initialize (memset 0) structure cc_subtitle after memory allocation.
+- Fix: Added verboseness to error/warnings in dvb_subtitle_decoder.c.
+- Fix: dvb_subtitle_decoder.c: Work on passing invalid streams errors upstream (plus some
+       warning messages) so we can eventually recover from this situation instead of crashing.
+- Fix: telxcc.c: Currently setting a colour doesn't necessarily add a space even though the
+       specifications mandate it. (#930).
+- Fix: dvb_subtitle_decoder.c: Fix null pointer derefence when region==NULL in write_dvb_sub.
+- Fix: DVB Teletext subtitle incomplete.
+- Fix: replace all 0xA characters within startbox with 0x20.
+- Fix: DVB Teletext subtitle incomplete (#922).
+- Fix: Add missing return value to one of the returns in process_tx3g().
+- Fix: Typos and other minor bugs.
+- Fix: Tidy CMakeLists & vcxproj (#920).
+- Fix: Added m2ts and -mxf to help screen.
+- Fix: Added MKV to demuxer_print_cfg.
+- Fix: Added MXF to demuxer_print_cfg.
+- Fix: "Out of order packets" error had wrong print() parameters.
+- Fix: Updated Python documentation.
+- Fix: Fix incorrect path in XML (#904).
+- Fix: linux build script (non-debug): Don't hide warnings from compiler.
+- Fix: linux build script (debug): Display what's step of the build script we're in.
+- Fix: Make the build reproducible (#976).
+- Fix: Remove instance of o1 and o2 from help.
+- Fix: Colors of DVB subtitles with depth 2 broken due to a missing break.
+- Fix: CEA-708: Caption loss due to CW command (#991).
+- Fix: CEA-708: Update patch for windows priority with functions (#990).
 
 0.86 (2018-01-09)
 -----------------
