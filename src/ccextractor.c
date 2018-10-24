@@ -33,6 +33,25 @@ void sigint_handler(int sig)
 
 void print_end_msg(void)
 {
+    //When all work is done we can check whether file with subtitles is empty.
+    int mode;
+    char path[256];
+    FILE *f = fopen("noempty.txt", "r");
+    fscanf(f, "%d", &mode);
+    fscanf(f, "%s", path);
+    fclose(f);
+    // if noempty mode is active
+    if (mode == 1){
+      FILE *f = fopen(path, "r");
+      fseek(f, 0, SEEK_END);
+      unsigned int size = ftell(f);
+      // size of an empty file is 3 but we put 8 to omit possible spaces and endlines
+      if (size < 8)
+          remove(path);  // if file is empty remove it
+      remove("noempty.txt");
+      fclose(f);
+    }
+	
     mprint("Issues? Open a ticket here\n");
     mprint("https://github.com/CCExtractor/ccextractor/issues\n");
 }
