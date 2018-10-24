@@ -34,6 +34,8 @@
 
 static int inputfile_capacity=0;
 
+int noempty = 0;
+
 int process_cap_file (char *filename)
 {
 	int ret = 0;
@@ -1153,6 +1155,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	// Parse parameters
 	for (int i=1; i<argc; i++)
 	{
+		if (!strcmp (argv[i],"--noempty")){
+		        // changing mode to --noempty
+			noempty = 1;
+			i++;
+		}
 		if (!strcmp (argv[i],"--help") || !strcmp(argv[i], "-h"))
 		{
 			print_usage();
@@ -2066,6 +2073,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp (argv[i],"-o")==0 && i<argc-1)
 		{
 			opt->output_filename = argv[i+1];
+			// creating temporary file for storing data
+			FILE *f = fopen("noempty.txt", "w");
+			fprintf(f, "%d\n", noempty);
+			fprintf(f, "%s", argv[i+1]);
+			fclose(f);
 			i++;
 			continue;
 		}
