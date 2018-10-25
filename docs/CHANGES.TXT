@@ -1,3 +1,7 @@
+0.88(2018-10-24) (unreleased)
+-----------------
+- Fix: Update UTF8Proc to 2.2.0
+
 0.87 (2018-10-23)
 -----------------
 - New: Upgrade libGPAC to 0.7.1.
@@ -64,7 +68,6 @@
 - Fix: Colors of DVB subtitles with depth 2 broken due to a missing break.
 - Fix: CEA-708: Caption loss due to CW command (#991).
 - Fix: CEA-708: Update patch for windows priority with functions (#990).
-- Fix: Update UTF8Proc to 2.2.0
 
 0.86 (2018-01-09)
 -----------------
