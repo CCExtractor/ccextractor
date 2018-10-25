@@ -75,7 +75,7 @@
 /** The PATCH version (increased for fixes that do not change the API). */
 #define UTF8PROC_VERSION_PATCH 0
 /** @} */
-#define UTF8PROC_DLLEXPORT static
+//#define UTF8PROC_DLLEXPORT static
 
 #include <stdlib.h>
 
@@ -121,9 +121,7 @@ typedef bool utf8proc_bool;
 #endif
 #include <limits.h>
 
-#ifdef UTF8PROC_STATIC
-#  define UTF8PROC_DLLEXPORT
-#else
+#ifndef UTF8PROC_DLLEXPORT
 #  ifdef _WIN32
 #    ifdef UTF8PROC_EXPORTS
 #      define UTF8PROC_DLLEXPORT __declspec(dllexport)
