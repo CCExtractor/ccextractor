@@ -35,8 +35,6 @@ void print_end_msg(void)
 {
     mprint("Issues? Open a ticket here\n");
     mprint("https://github.com/CCExtractor/ccextractor/issues\n");
-	char s[256];
-	scanf("%s", s);
 }
 
 
