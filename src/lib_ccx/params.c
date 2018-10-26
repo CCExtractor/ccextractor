@@ -1,8 +1,5 @@
 #include "png.h"
 #include "protobuf-c.h"
-#define UTF8PROC_STATIC
-#define UTF8PROC_DLLEXPORT
-#include "utf8proc/utf8proc.h"
 #include "zlib.h"
 #include "gpac/version.h"
 #include "lib_ccx.h"
@@ -16,6 +13,7 @@
 #include "../lib_hash/sha2.h"
 #include <string.h>
 #include <stdio.h>
+#include "utf8proc/utf8proc.h"
 
 #ifdef ENABLE_OCR
 #include "capi.h"
