@@ -8,6 +8,8 @@
 #include "ccx_decoders_708_output.h"
 #include "ccx_encoders_xds.h"
 #include "ccx_encoders_helpers.h"
+#define UTF8PROC_STATIC
+#define UTF8PROC_DLLEXPORT
 #include "utf8proc.h"
 
 extern  CURL *curl;
