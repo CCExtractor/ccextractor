@@ -75,7 +75,6 @@
 /** The PATCH version (increased for fixes that do not change the API). */
 #define UTF8PROC_VERSION_PATCH 0
 /** @} */
-#define UTF8PROC_DLLEXPORT static
 
 #include <stdlib.h>
 
@@ -121,7 +120,27 @@ typedef bool utf8proc_bool;
 #endif
 #include <limits.h>
 
+#define UTF8PROC_STATIC
 
+#ifdef UTF8PROC_STATIC
+#  define UTF8PROC_DLLEXPORT
+#else
+#  ifdef _WIN32
+#    ifdef UTF8PROC_EXPORTS
+#      define UTF8PROC_DLLEXPORT __declspec(dllexport)
+#    else
+#      define UTF8PROC_DLLEXPORT __declspec(dllimport)
+#    endif
+#  elif __GNUC__ >= 4
+#    define UTF8PROC_DLLEXPORT __attribute__ ((visibility("default")))
+#  else
+#    define UTF8PROC_DLLEXPORT
+#  endif
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Option flags used by several functions in the library.
