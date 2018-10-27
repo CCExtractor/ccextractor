@@ -11,10 +11,15 @@
 
 <br>
 
-<p>You have to open .sln if you want to build both non Gui and Gui ccextractor or you can build them seperately opening .vcxproj files one by one.</p>
+<p>You have to open .sln if you want to build both non GUI and GUI ccextractor or you can build them seperately opening .vcxproj files one by one.</p>
 
 <br>
 
 <h4>Further, if you receive a confirmation request about downloading from unsafe resource just click OK and go forward</h4>
 <br>
 <img src="img/2.png">
+
+<br>
+<h4>Then if you opened .sln file you will have 2 projects on the right pannel GUI and non GUI and you can also open them separetely by opening .vcxproj files.</h4>
+
+<img src="img/3.png">
