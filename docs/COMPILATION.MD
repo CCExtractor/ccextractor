@@ -15,6 +15,9 @@ git clone https://github.com/CCExtractor/ccextractor.git
 1. Make sure all the dependencies are met.
 
 ```
+sudo apt-get install -y libglew-dev
+sudo apt-get install -y libglfw3-dev
+sudo apt-get install -y cmake
 sudo apt-get install -y gcc
 sudo apt-get install -y libcurl4-gnutls-dev
 sudo apt-get install -y tesseract-ocr
