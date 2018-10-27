@@ -17,4 +17,4 @@
 
 <h4>Further, if you receive a confirmation request about downloading from unsafe resource just click OK and go forward</h4>
 <br>
-<img src="img/2.png>
+<img src="img/2.png">
