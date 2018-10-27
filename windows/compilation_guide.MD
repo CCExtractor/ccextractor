@@ -36,4 +36,4 @@
 
 <h4>Finally you will get your exe pojects in folder called debug which will be created in folder windows if you complete all points above</h4>
 
-<img src="img/5.png"
+<img src="img/6.png">
