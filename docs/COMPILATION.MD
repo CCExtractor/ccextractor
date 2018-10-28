@@ -191,11 +191,11 @@ Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
 
 **Using Visual Studio**
 
-Here you can see two files .vcxproj(marked with blue arrows) and one .sln project(marked with a red arrow)
+#### Here you can see two files .vcxproj(marked with blue arrows) and one .sln project(marked with a red arrow)
+Open `windows/` directory to locate `ccextractor.vcxproj`,  `ccextractorGUI.vcxproj` (blue arrows) and `ccextractor.sln` (red arrow).
 
 ![Project Files](img/projectFiles.png)
 
-You have to open .sln if you want to build both non GUI and GUI ccextractor or you can build them seperately opening .vcxproj files one by one.
 
 
 Further, if you receive a confirmation request about downloading from unsafe resource just click OK and go forward</h4>
