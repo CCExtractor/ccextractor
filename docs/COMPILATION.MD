@@ -186,7 +186,6 @@ Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
 
 ## Windows
 
-# Compilation guide
 #### *First of all you have to have your visual studio installed on your computer.
 
 When you already have visual studio you have to download ccextractor code  [CCExtractor](https://github.com/CCExtractor/ccextractor/)
