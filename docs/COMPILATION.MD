@@ -189,32 +189,31 @@ Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
 
 ## Windows
 
-**Using Visual Studio**
+Place a note: Following screenshots and steps are written on basis of visualstudio version:
 
-#### Here you can see two files .vcxproj(marked with blue arrows) and one .sln project(marked with a red arrow)
-Open `windows/` directory to locate `ccextractor.vcxproj`,  `ccextractorGUI.vcxproj` (blue arrows) and `ccextractor.sln` (red arrow).
+1.Open `windows/` directory to locate `ccextractor.vcxproj`,  `ccextractorGUI.vcxproj` (blue arrows) and `ccextractor.sln` (red arrow).
 
 ![Project Files](img/projectFiles.png)
 
 
 
-Accept the security prompt (if any), to proceed with compilation.
+2.Accept the security prompt (if any), to proceed with compilation.
 ![A warning you can receive](img/Warning.png)
 
-Then if you opened .sln file you will have 2 projects on the right pannel GUI and non GUI and you can also open them separetely by opening .vcxproj files.
+3.Using Visual Studio (2015 or above), open ccextractor.sln. This will build both CCExtractor and its GUI. To build them separately, open the respective .vcxproj file.
 
 
-In Solution Explorer, you'll see two projects with the VS version and Windows release version in parenthesis.  Change them to parameters which are true for you by clicking right mouse button on project and selecting properties.
+4.In Solution Explorer, you'll see two projects with the VS version and Windows release version in parenthesis.  Change them to parameters which are true for you by clicking right mouse button on project and selecting properties.
 
 ![Project Section](img/ProjectSection.png)
 
 ![Properties, that you have to change](img/Properties.png)
 
-Right click and select `build` to compile the project and generate executable file.
+5.Right click and select `build` to compile the project and generate executable file.
 
 ![Building button](img/Building.png)
 
-Find the executable file in `Debug` or `Release` folder, based on selected configuration.
+6.Find the executable file in `Debug` or `Release` folder, based on selected configuration.
 
 ![Path to Binaries](img/Binaries.png)
 
