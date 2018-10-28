@@ -188,8 +188,7 @@ make
 Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
 
 ## Windows
-
-Place a note: Following screenshots and steps are written on basis of visualstudio version: 2017
+Note: Following screenshots and steps are written on basis of visualstudio version: 2017
 
 1.Open `windows/` directory to locate `ccextractor.vcxproj`,  `ccextractorGUI.vcxproj` (blue arrows) and `ccextractor.sln` (red arrow).
 
