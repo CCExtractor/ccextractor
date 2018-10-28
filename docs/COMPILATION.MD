@@ -186,28 +186,28 @@ Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
 
 ## Windows
 
-#Compilation guide
-####*First of all you have to have your visual studio installed on your computer.
+# Compilation guide
+#### *First of all you have to have your visual studio installed on your computer.
 
 When you already have visual studio you have to download ccextractor code  [CCExtractor](https://github.com/CCExtractor/ccextractor/)
   
 After downloading open your CCExtractor folder and then open windows folder.
 
-####Here you can see two files .vcxproj(marked with blue arrows) and one .sln project(marked with a red arrow)
+#### Here you can see two files .vcxproj(marked with blue arrows) and one .sln project(marked with a red arrow)
 
 ![alt text](img/projectFiles.png)
 
 You have to open .sln if you want to build both non GUI and GUI ccextractor or you can build them seperately opening .vcxproj files one by one.
 
 
-####Further, if you receive a confirmation request about downloading from unsafe resource just click OK and go forward</h4>
+#### Further, if you receive a confirmation request about downloading from unsafe resource just click OK and go forward</h4>
 ![alt text](img/Warning.png)
 
-####Then if you opened .sln file you will have 2 projects on the right pannel GUI and non GUI and you can also open them separetely by opening .vcxproj files.</h4>
+#### Then if you opened .sln file you will have 2 projects on the right pannel GUI and non GUI and you can also open them separetely by opening .vcxproj files.</h4>
 
 ![alt text](img/projectSection.png)
 
-####Also there are 2 parameters in curly braces near each project(Visual studio version and Windows release version) you have to change them to parameters which are true for you by clicking right mouse button on project and selectin properties. You can see this on the photo.
+#### Also there are 2 parameters in curly braces near each project(Visual studio version and Windows release version) you have to change them to parameters which are true for you by clicking right mouse button on project and selectin properties. You can see this on the photo.
 
 ![alt text](img/Properties.png)
 
@@ -215,7 +215,7 @@ You have to open .sln if you want to build both non GUI and GUI ccextractor or y
 
 ![alt text](img/Building.png)
 
-####Finally you will get your exe pojects in folder called debug which will be created in folder windows if you complete all points above
+#### Finally you will get your exe pojects in folder called debug which will be created in folder windows if you complete all points above
 
 ![alt text](img/Binaries.png)
 
