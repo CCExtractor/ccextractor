@@ -24,6 +24,7 @@
  */
 
 
+
 #include <gpac/tools.h>
 #include <gpac/constants.h>
 #include <gpac/color.h>
@@ -35,6 +36,25 @@
 #define col_clip(a) MAX(0, MIN(255, a))
 #define SCALEBITS_OUT	13
 #define FIX_OUT(x)		((unsigned short) ((x) * (1L<<SCALEBITS_OUT) + 0.5))
+#if __linux__   //  or #if __GNUC__
+    #if __x86_64__ || __ppc64__
+        #define ENVIRONMENT64
+    #else
+        #define ENVIRONMENT32
+    #endif
+#else
+    #if _WIN32
+        #define ENVIRONMENT32
+    #else
+        #define ENVIRONMENT64
+    #endif
+#endif // __linux__
+
+#ifdef ENVIRONMENT64
+    #define MAX_BLOCK_SIZE unsigned long long int
+#else
+    #define MAX_BLOCK_SIZE unsigned long int
+#endif // ENVIRONMENT64
 
 static s32 RGB_Y[256];
 static s32 B_U[256];
@@ -2308,7 +2328,7 @@ GF_Err gf_color_write_yv12_10_to_yuv(GF_VideoSurface *vs_dst,  unsigned char *pY
 #ifdef GPAC_64_BITS
 #define GFINTCAST  (u64)
 #else
-#define GFINTCAST  (u32)
+#define GFINTCAST  (MAX_BLOCK_SIZE)
 #endif
 
 	if ( (w%32 == 0)
@@ -2398,7 +2418,7 @@ GF_Err gf_color_write_yuv422_10_to_yuv422(GF_VideoSurface *vs_dst,  unsigned cha
 #ifdef GPAC_64_BITS
 #define GFINTCAST  (u64)
 #else
-#define GFINTCAST  (u32)
+#define GFINTCAST  (MAX_BLOCK_SIZE)
 #endif
 
 	if ( (w%32 == 0)
@@ -2481,7 +2501,7 @@ GF_Err gf_color_write_yuv444_10_to_yuv444(GF_VideoSurface *vs_dst,  unsigned cha
 #ifdef GPAC_64_BITS
 #define GFINTCAST  (u64)
 #else
-#define GFINTCAST  (u32)
+#define GFINTCAST  (MAX_BLOCK_SIZE)
 #endif
 
 	if ( (w%32 == 0)
@@ -2564,7 +2584,7 @@ GF_Err gf_color_write_yuv422_10_to_yuv(GF_VideoSurface *vs_dst, unsigned char *p
 #ifdef GPAC_64_BITS
 #define GFINTCAST  (u64)
 #else
-#define GFINTCAST  (u32)
+#define GFINTCAST  (MAX_BLOCK_SIZE)
 #endif
 
 	if ((w % 32 == 0)
@@ -2655,7 +2675,7 @@ GF_Err gf_color_write_yuv444_10_to_yuv(GF_VideoSurface *vs_dst, unsigned char *p
 #ifdef GPAC_64_BITS
 #define GFINTCAST  (u64)
 #else
-#define GFINTCAST  (u32)
+#define GFINTCAST  (MAX_BLOCK_SIZE)
 #endif
 
 	if ((w % 32 == 0)
