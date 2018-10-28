@@ -198,23 +198,23 @@ Open `windows/` directory to locate `ccextractor.vcxproj`,  `ccextractorGUI.vcxp
 
 
 
-Further, if you receive a confirmation request about downloading from unsafe resource just click OK and go forward</h4>
+Accept the security prompt (if any), to proceed with compilation.
 ![A warning you can receive](img/Warning.png)
 
-Then if you opened .sln file you will have 2 projects on the right pannel GUI and non GUI and you can also open them separetely by opening .vcxproj files.</h4>
+Then if you opened .sln file you will have 2 projects on the right pannel GUI and non GUI and you can also open them separetely by opening .vcxproj files.
 
 
-Also there are 2 parameters in parentheses near each project(Visual studio version and Windows release version) you have to change them to parameters which are true for you by clicking right mouse button on project and selecting properties. You can see this on the photo.
+In Solution Explorer, you'll see two projects with the VS version and Windows release version in parenthesis.  Change them to parameters which are true for you by clicking right mouse button on project and selecting properties.
 
 ![Project Section](img/ProjectSection.png)
 
 ![Properties, that you have to change](img/Properties.png)
 
-After that you can build these projects by clicking on each of them by mouse right button and selecting "build"
+Right click and select `build` to compile the project and generate executable file.
 
 ![Building button](img/Building.png)
 
-Finally you will get your exe files in folder called debug which will be created in folder windows if you complete all points above
+Find the executable file in `Debug` or `Release` folder, based on selected configuration.
 
 ![Path to Binaries](img/Binaries.png)
 
