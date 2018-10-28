@@ -209,9 +209,9 @@ size_t foo__bar__baz_bah__pack_to_buffer
 # define PROTOBUF_C__END_DECLS
 #endif
 
-PROTOBUF_C__BEGIN_DECLS
-
 #define PROTOBUF_C__API
+
+PROTOBUF_C__BEGIN_DECLS
 
 #if defined(_WIN32) && defined(PROTOBUF_C_USE_SHARED_LIB)
 # ifdef PROTOBUF_C_EXPORT
