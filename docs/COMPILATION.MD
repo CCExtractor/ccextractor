@@ -195,7 +195,7 @@ Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
 <br>
 <h4>Here you can see two files .vcxproj(marked with blue arrows) and one .sln project(marked with a red arrow)</h4>
 
-<img src="img/1.png">
+<img src="img/projectFiles.png">
 
 <br>
 
@@ -205,26 +205,26 @@ Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
 
 <h4>Further, if you receive a confirmation request about downloading from unsafe resource just click OK and go forward</h4>
 <br>
-<img src="img/2.png">
+<img src="img/Warning.png">
 
 <br>
 <h4>Then if you opened .sln file you will have 2 projects on the right pannel GUI and non GUI and you can also open them separetely by opening .vcxproj files.</h4>
 
-<img src="img/3.png">
+<img src="img/projectSection.png">
 
 <br>
 <h4>Also there are 2 parameters in curly braces near each project(Visual studio version and Windows release version) you have to change them to parameters which are true for you by clicking right mouse button on project and selectin properties. You can see this on the photo.
 </h4>
 
-<img src="img/4.png">
+<img src="img/Properties.png">
 
 <h4>After that you can build these projects by clicking on each of them by mouse right button and selecting "build"</h4>
 
-<img src="img/5.png">
+<img src="img/Building.png">
 
 <h4>Finally you will get your exe pojects in folder called debug which will be created in folder windows if you complete all points above</h4>
 
-<img src="img/6.png">
+<img src="img/Binaries.png">
 
 Configurations options are: `(Debug|Release)-Full`
 
