@@ -188,19 +188,16 @@ make
 Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
 
 ## Windows
-Note: Following screenshots and steps are written on basis of visualstudio version: 2017
+Note: Following screenshots and steps are based on Visual Studio 2017, but they should be more or less same for other versions.
 
 1.Open `windows/` directory to locate `ccextractor.vcxproj`,  `ccextractorGUI.vcxproj` (blue arrows) and `ccextractor.sln` (red arrow).
 
 ![Project Files](img/projectFiles.png)
 
-
-
 2.Accept the security prompt (if any), to proceed with compilation.
 ![A warning you can receive](img/Warning.png)
 
 3.Using Visual Studio (2015 or above), open ccextractor.sln. This will build both CCExtractor and its GUI. To build them separately, open the respective .vcxproj file.
-
 
 4.In Solution Explorer, you'll see two projects with the VS version and Windows release version in parenthesis.  Change them to parameters which are true for you by clicking right mouse button on project and selecting properties.
 
