@@ -191,30 +191,30 @@ Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
 
 **Using Visual Studio**
 
-#### Here you can see two files .vcxproj(marked with blue arrows) and one .sln project(marked with a red arrow)
+Here you can see two files .vcxproj(marked with blue arrows) and one .sln project(marked with a red arrow)
 
 ![Project Files](img/projectFiles.png)
 
 You have to open .sln if you want to build both non GUI and GUI ccextractor or you can build them seperately opening .vcxproj files one by one.
 
 
-#### Further, if you receive a confirmation request about downloading from unsafe resource just click OK and go forward</h4>
+Further, if you receive a confirmation request about downloading from unsafe resource just click OK and go forward</h4>
 ![A warning you can receive](img/Warning.png)
 
-#### Then if you opened .sln file you will have 2 projects on the right pannel GUI and non GUI and you can also open them separetely by opening .vcxproj files.</h4>
+Then if you opened .sln file you will have 2 projects on the right pannel GUI and non GUI and you can also open them separetely by opening .vcxproj files.</h4>
 
 
-#### Also there are 2 parameters in parentheses near each project(Visual studio version and Windows release version) you have to change them to parameters which are true for you by clicking right mouse button on project and selecting properties. You can see this on the photo.
+Also there are 2 parameters in parentheses near each project(Visual studio version and Windows release version) you have to change them to parameters which are true for you by clicking right mouse button on project and selecting properties. You can see this on the photo.
 
 ![Project Section](img/ProjectSection.png)
 
 ![Properties, that you have to change](img/Properties.png)
 
-#### After that you can build these projects by clicking on each of them by mouse right button and selecting "build"
+After that you can build these projects by clicking on each of them by mouse right button and selecting "build"
 
 ![Building button](img/Building.png)
 
-#### Finally you will get your exe files in folder called debug which will be created in folder windows if you complete all points above
+Finally you will get your exe files in folder called debug which will be created in folder windows if you complete all points above
 
 ![Path to Binaries](img/Binaries.png)
 
