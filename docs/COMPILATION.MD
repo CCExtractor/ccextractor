@@ -186,45 +186,38 @@ Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
 
 ## Windows
 
-<h1>Compilation guide</h1>
-<h4>*First of all you have to have your visual studio installed on your computer.</h4>
+#Compilation guide
+####*First of all you have to have your visual studio installed on your computer.
 
-<p>When you already have visual studio you have to download ccextractor code <a href="https://github.com/CCExtractor/ccextractor/">CCExtractor</a></p>
+When you already have visual studio you have to download ccextractor code  [CCExtractor](https://github.com/CCExtractor/ccextractor/)
   
-<p>After downloading open your CCExtractor folder and then open windows folder.</p>
-<br>
-<h4>Here you can see two files .vcxproj(marked with blue arrows) and one .sln project(marked with a red arrow)</h4>
+After downloading open your CCExtractor folder and then open windows folder.
 
-<img src="img/projectFiles.png">
+####Here you can see two files .vcxproj(marked with blue arrows) and one .sln project(marked with a red arrow)
 
-<br>
+![alt text](img/projectFiles.png)
 
-<p>You have to open .sln if you want to build both non GUI and GUI ccextractor or you can build them seperately opening .vcxproj files one by one.</p>
+You have to open .sln if you want to build both non GUI and GUI ccextractor or you can build them seperately opening .vcxproj files one by one.
 
-<br>
 
-<h4>Further, if you receive a confirmation request about downloading from unsafe resource just click OK and go forward</h4>
-<br>
-<img src="img/Warning.png">
+####Further, if you receive a confirmation request about downloading from unsafe resource just click OK and go forward</h4>
+![alt text](img/Warning.png)
 
-<br>
-<h4>Then if you opened .sln file you will have 2 projects on the right pannel GUI and non GUI and you can also open them separetely by opening .vcxproj files.</h4>
+####Then if you opened .sln file you will have 2 projects on the right pannel GUI and non GUI and you can also open them separetely by opening .vcxproj files.</h4>
 
-<img src="img/projectSection.png">
+![alt text](img/projectSection.png)
 
-<br>
-<h4>Also there are 2 parameters in curly braces near each project(Visual studio version and Windows release version) you have to change them to parameters which are true for you by clicking right mouse button on project and selectin properties. You can see this on the photo.
-</h4>
+####Also there are 2 parameters in curly braces near each project(Visual studio version and Windows release version) you have to change them to parameters which are true for you by clicking right mouse button on project and selectin properties. You can see this on the photo.
 
-<img src="img/Properties.png">
+![alt text](img/Properties.png)
 
-<h4>After that you can build these projects by clicking on each of them by mouse right button and selecting "build"</h4>
+####After that you can build these projects by clicking on each of them by mouse right button and selecting "build"</h4>
 
-<img src="img/Building.png">
+![alt text](img/Building.png)
 
-<h4>Finally you will get your exe pojects in folder called debug which will be created in folder windows if you complete all points above</h4>
+####Finally you will get your exe pojects in folder called debug which will be created in folder windows if you complete all points above
 
-<img src="img/Binaries.png">
+![alt text](img/Binaries.png)
 
 Configurations options are: `(Debug|Release)-Full`
 
