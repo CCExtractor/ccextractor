@@ -122,6 +122,7 @@ src/**/.deps
 src/**/.dirstamp
 mac/ccextractorGUI
 linux/ccextractorGUI
+linux/ccxGUI.ini
 linux/CMakeCache.txt
 linux/CMakeFiles/
 linux/cmake_install.cmake
