@@ -137,7 +137,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 
-set (EXTRA_LIBS ${EXTRA_LIBS} -lz -lm)
+set (EXTRA_LIBS ${EXTRA_LIBS} -lz -lm -lpthread)
 
 find_package (PkgConfig)
 

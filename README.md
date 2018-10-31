@@ -24,13 +24,19 @@ The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtra
 
 The core functionality is written in C. Other languages used include C++ and Python.
 
-## Google Summer of Code 2018
+---
+[![Google Code-In 2018](https://raw.githubusercontent.com/CCExtractor/ccextractor-org-media/master/ext/google-code-In-2018.gif)](https://codein.withgoogle.com/)
+<p align="center">
+  CCExtractor is participating in Google Code-in 2018!
+</p>
 
-CCExtractor is [participating in Google Summer of Code (GSoC) 2018!](https://ccextractor.org/public:gsoc:ideas_page_for_summer_of_code_2018)
+Google Code-In is a global, online open source development & outreach contest for pre-university students aged between 13-17. Participants complete “tasks” ranging from coding, documentation, quality assurance, design, outreach and research to earn t-shirts, digital certificates, and hooded sweatshirts for their work. Grand prize winners receive a four day trip to Google in Mountain View, CA, USA the following summer!
 
-Google Summer of Code is an amazing program sponsored by Google in which university students get to spend their summer working with open source organizations and get paid for their work.
+We have a long and proud history of taking part in the Google Summer of Code with university students, and are excited to participate in GCI again for 3rd year with pre-university students!
 
-You can read all about it on [GSoC's website](https://summerofcode.withgoogle.com/)
+Sounds interesting? Read more about it on our website [here](https://ccextractor.org/public:codein:google_code-in_2018) and on the official website [here](https://codein.withgoogle.com/).
+
+---
 
 ## Installation and Usage
 
