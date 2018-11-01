@@ -115,6 +115,7 @@ AM_CONDITIONAL(TESSERACT_PRESENT_RPI, [ test -d "/usr/include/tesseract" && test
 AM_CONDITIONAL(SYS_IS_LINUX, [ test `uname -s` = "Linux"])
 AM_CONDITIONAL(SYS_IS_MAC, [ test `uname -s` = "Darwin"])
 AM_CONDITIONAL(BUILD_WITH_GUI, [test "x$with_gui" = "xyes"])
+AM_CONDITIONAL(SYS_IS_64_BIT,[test `getconf LONG_BIT` = "64"])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
