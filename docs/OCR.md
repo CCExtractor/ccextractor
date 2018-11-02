@@ -1,36 +1,38 @@
-
-Overview
-========
+# Overview
 OCR (Optical Character Recognition) is a technique used to 
 extract text from images. In the World of Subtitle, subtitle stored 
-in bitmap format are common and even necessary for converting subtitle 
+in bitmap format are common and even necessary. For converting subtitle 
 in bitmap format to subtitle in text format OCR is used.
 
-Dependency
-==========
+# Dependency
 1. Tesseract (OCR library by Google)
 2. Leptonica (Image processing library)
 
-Ubuntu install Dependency using package manager
-===============================================
+# How to compile CCExtractor on Linux with OCR
+
+## Install Dependency
+
+### Using package manager 
+#### Ubuntu, Debian
 ```
 sudo apt-get install libleptonica-dev libtesseract-dev tesseract-ocr-eng
 ```
+#### Suse
+```
+zypper install leptonica-devel
+```
 
-How to compile CCExtractor on Linux with OCR
-=============================================
+### Downloading source code and compiling it.
 
-Download and Install Leptonnica.
--------------------------------
+#### Leptonnica.
 This package is available in your distro, you need liblept-devel library.
 
 If Leptonica isn't available for your distribution, or you want to use a newer version
  than they offer, you can compile your own.
 
-you can download lib leptonica from  http://www.leptonica.com/download.html
+you can download lib leptonica source code from  http://www.leptonica.com/download.html
 
-Download and Install Tesseract.
--------------------------------
+#### Tesseract.
 Tesseract is available directly from many Linux distributions. The package is generally
  called 'tesseract' or 'tesseract-ocr' - search your distribution's repositories to
  find it. Packages are also generally available for language training data (search the
@@ -57,12 +59,31 @@ Note:
     2. *Tesseract training data* https://github.com/tesseract-ocr/tessdata/archive/3.04.00.tar.gz
 
 
+##Compilation
 
-Compile CCExtractor passing flags like following
--------------------------------------------------
+###using Build script
 ```
-make ENABLE_OCR=yes
+cd ccextractor/linux
+./build
 ```
+
+### Passing flags to configure
+```
+cd ccextractor/linux
+./autogen.sh
+./configure --with-gui --enable-oc
+make
+```
+
+### Passing flags to cmake
+```
+cd <CCExrtactor cloned code>
+mkdir build
+cd build
+cmake -DWITH_OCR=ON ../src
+make
+```
+
 
 
 How to compile CCExtractor on Windows with OCR
@@ -72,7 +93,7 @@ Download prebuild library of leptonica and tesseract from following link
 https://drive.google.com/file/d/0B2ou7ZfB-2nZOTRtc3hJMHBtUFk/view?usp=sharing  
 
 put the path of libs/include of leptonica and tesseract in library paths.  
-1. In visual studio 2013 right click <Project> and select property. 
+1. In visual studio 2013 right click <Project> and select property.
 2. Select Configuration properties in left panel(column) of property.
 3. Select VC++ Directory.
 4. In the right pane, in the right-hand column of the VC++ Directory property, open the drop-down menu and choose Edit.
@@ -99,4 +120,4 @@ https://code.google.com/p/tesseract-ocr/downloads/list
 after downloading the tesseract-ocr-3.02.eng.tar.gz extract the tar file and put  
 tessdata folder where you have kept CCExtractor executable  
 
-Copy the tesseract and leptonica dll from lib folder downloaded from above link to folder of executable or in system32.  
+Copy the tesseract and leptonica dll from lib folder downloaded from above link to folder of executable or in system32.

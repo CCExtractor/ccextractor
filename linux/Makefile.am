@@ -326,6 +326,10 @@ ccextractor_CFLAGS += -DPAC_CONFIG_DARWIN -Dfopen64=fopen -Dopen64=open -Dlseek6
 ccextractor_LDADD += -liconv -lz 
 endif
 
+if SYS_IS_64_BIT
+ccextractor_CFLAGS += -DGPAC_64_BITS
+endif
+
 if HARDSUBX_IS_ENABLED
 ccextractor_CFLAGS += -DENABLE_HARDSUBX
 ccextractor_CPPFLAGS+= ${libavcodec_CFLAGS}

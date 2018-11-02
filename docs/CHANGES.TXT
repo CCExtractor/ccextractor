@@ -3,6 +3,7 @@
 - Fix: Update UTF8Proc to 2.2.0
 - Fix: Update LibPNG to 1.6.35
 - Fix: Update Protobuf-c to 1.3.1
+- Fix: Warn instead of fatal when a 0xFF marker is missing
 
 0.87 (2018-10-23)
 -----------------

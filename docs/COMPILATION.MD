@@ -15,6 +15,9 @@ git clone https://github.com/CCExtractor/ccextractor.git
 1. Make sure all the dependencies are met.
 
 ```
+sudo apt-get install -y libglew-dev
+sudo apt-get install -y libglfw3-dev
+sudo apt-get install -y cmake
 sudo apt-get install -y gcc
 sudo apt-get install -y libcurl4-gnutls-dev
 sudo apt-get install -y tesseract-ocr
@@ -185,8 +188,30 @@ make
 Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
 
 ## Windows
+Note: Following screenshots and steps are based on Visual Studio 2017, but they should be more or less same for other versions.
 
-Open the windows/ccextractor.sln file with Visual Studio (2015 at least), and build it.
+1.Open `windows/` directory to locate `ccextractor.vcxproj`,  `ccextractorGUI.vcxproj` (blue arrows) and `ccextractor.sln` (red arrow).
+
+![Project Files](img/projectFiles.png)
+
+2.Accept the security prompt (if any), to proceed with compilation.
+![A warning you can receive](img/Warning.png)
+
+3.Using Visual Studio (2015 or above), open ccextractor.sln. This will build both CCExtractor and its GUI. To build them separately, open the respective .vcxproj file.
+
+4.In Solution Explorer, you'll see two projects with the VS version and Windows release version in parenthesis.  Change them to parameters which are true for you by clicking right mouse button on project and selecting properties.
+
+![Project Section](img/ProjectSection.png)
+
+![Properties, that you have to change](img/Properties.png)
+
+5.Right click and select `build` to compile the project and generate executable file.
+
+![Building button](img/Building.png)
+
+6.Find the executable file in `Debug` or `Release` folder, based on selected configuration.
+
+![Path to Binaries](img/Binaries.png)
 
 Configurations options are: `(Debug|Release)-Full`
 
