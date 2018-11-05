@@ -192,7 +192,7 @@ BOX* ignore_alpha_at_edge(png_byte *alpha, unsigned char* indata, int w, int h, 
 char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* indata,int w, int h, struct image_copy *copy)
 {
 	// uncomment the below lines to output raw image as debug.png iteratively
-	//save_spupng("debug.png", indata, w, h, palette, alpha, 16);
+	// save_spupng("debug.png", indata, w, h, palette, alpha, 16);
 
 	PIX	*pix = NULL;
 	PIX	*cpix = NULL;
@@ -244,20 +244,21 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 			ppixel++;
 		}
 	}
-	
+
 	BOX *crop_points = ignore_alpha_at_edge(copy->alpha, copy->data, w, h, color_pix, &color_pix_out);
+	// Converting image to grayscale for OCR to avoid issues with transparency
+	cpix_gs = pixConvertRGBToGray(cpix, 0.0, 0.0, 0.0);
 #ifdef OCR_DEBUG
 	{
 	char str[128] = "";
 	static int i = 0;
 	sprintf(str,"temp/file_c_%d.jpg",i);
 	printf("Writing file_c_%d.jpg\n", i);
-	pixWrite(str, pixConvertRGBToGray(cpix, 0.0, 0.0, 0.0), IFF_JFIF_JPEG);
+	pixWrite(str, cpix_gs, IFF_JFIF_JPEG);
 	i++;
 	}
 #endif
 
-	cpix_gs = pixConvertRGBToGray(cpix, 0.0, 0.0, 0.0); // Abhinav95: Converting image to grayscale for OCR to avoid issues with transparency
 	if (cpix_gs==NULL)
 		tess_ret=-1;
 	else
@@ -273,7 +274,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 			pixDestroy(&cpix_gs);
 			pixDestroy(&color_pix);
 			pixDestroy(&color_pix_out);
-		
+
 			return NULL;
 		}
 	}
