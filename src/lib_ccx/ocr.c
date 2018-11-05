@@ -192,7 +192,7 @@ BOX* ignore_alpha_at_edge(png_byte *alpha, unsigned char* indata, int w, int h, 
 char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* indata,int w, int h, struct image_copy *copy)
 {
 	// uncomment the below lines to output raw image as debug.png iteratively
-	//save_spupng("debug.png", indata, w, h, palette, alpha, 16);
+	// save_spupng("debug.png", indata, w, h, palette, alpha, 16);
 
 	PIX	*pix = NULL;
 	PIX	*cpix = NULL;
@@ -246,7 +246,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	}
 
 	BOX *crop_points = ignore_alpha_at_edge(copy->alpha, copy->data, w, h, color_pix, &color_pix_out);
-	//Converting image to grayscale for OCR to avoid issues with transparency
+	// Converting image to grayscale for OCR to avoid issues with transparency
 	cpix_gs = pixConvertRGBToGray(cpix, 0.0, 0.0, 0.0);
 #ifdef OCR_DEBUG
 	{
