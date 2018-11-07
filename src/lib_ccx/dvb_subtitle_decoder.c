@@ -1661,7 +1661,8 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	// Perform OCR
 #ifdef ENABLE_OCR
 	char *ocr_str = NULL;
-	if (ctx->ocr_ctx) {
+	if (ctx->ocr_ctx)
+	{
 		ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, region->bgcolor, dec_ctx->ocr_quantmode);
 		if (ret >= 0)
 			rect->ocr_text = ocr_str;
@@ -1669,7 +1670,8 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 			rect->ocr_text = NULL;
 		dbg_print(CCX_DMT_DVB, "\nOCR Result: %s\n", rect->ocr_text ? rect->ocr_text : "NULL");
 	}
-	else {
+	else
+	{
 		rect->ocr_text = NULL;
 	}
 #endif
@@ -1889,7 +1891,7 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 		/* setting language to undefined if not found in language lkup table */
 		char lang_name[4];
 		dbg_print(CCX_DMT_DVB, "DVBSUB - LANGUAGE \"");
-		
+
 		for(int char_index = 0; char_index < 3; char_index++)
 		{
 			lang_name[char_index] = cctolower(data[char_index]);

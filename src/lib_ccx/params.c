@@ -16,7 +16,7 @@
 #include "utf8proc/utf8proc.h"
 
 #ifdef ENABLE_OCR
-#include "capi.h"
+#include "tesseract/capi.h"
 #include "allheaders.h"
 #endif
 
