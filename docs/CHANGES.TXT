@@ -1,5 +1,7 @@
 0.88(2018-10-24) (unreleased)
 -----------------
+- New: Add support for tesseract 4.0
+- Optimize: Remove multiple RGB to grey conversion in OCR.
 - Fix: Update UTF8Proc to 2.2.0
 - Fix: Update LibPNG to 1.6.35
 - Fix: Update Protobuf-c to 1.3.1
