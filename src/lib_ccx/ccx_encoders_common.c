@@ -971,7 +971,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	// If captions are going to be empty
 	if (!ctx->program_number && ctx->noempty) {
 		printf("No captions were found in input.\n");
-		printf("Issues ? Open a ticket here\n");
+		printf("Issues? Open a ticket here\n");
 		printf("https ://github.com/CCExtractor/ccextractor/issues");
 		exit(0);
 	}
