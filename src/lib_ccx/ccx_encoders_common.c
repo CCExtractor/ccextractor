@@ -972,7 +972,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	if (!ctx->program_number && ctx->noempty) {
 		printf("No captions were found in input.\n");
 		printf("Issues? Open a ticket here\n");
-		printf("https ://github.com/CCExtractor/ccextractor/issues");
+		printf("https://github.com/CCExtractor/ccextractor/issues");
 		exit(0);
 	}
 	ret = init_output_ctx(ctx, opt);
