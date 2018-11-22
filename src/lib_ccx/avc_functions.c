@@ -500,11 +500,10 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 						if (cc_tmp_data+local_cc_count*3 >= userend)
 							fatal(CCX_COMMON_EXIT_BUG_BUG,
 									"Syntax problem: Too many caption blocks.");
-						if (cc_tmp_data[local_cc_count*3]!=0xFF){
-							// See GitHub Issue #1001 for the related change
-							mprint ("\rWarning! Syntax problem: Final 0xFF marker missing. Continuing...\n");
-							break; // Skip Block
-						}
+						if (cc_tmp_data[local_cc_count*3]!=0xFF)
+							fatal(CCX_COMMON_EXIT_BUG_BUG,
+									"Syntax problem: Final 0xFF marker missing.");
+
 						// Save the data and process once we know the sequence number
 						if ( ( (ctx->cc_count + local_cc_count) * 3) + 1 > ctx->cc_databufsize)
 						{

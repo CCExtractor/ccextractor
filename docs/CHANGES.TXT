@@ -1,9 +1,6 @@
 0.88(2018-10-24) (unreleased)
 -----------------
-- New: Add support for tesseract 4.0
-- Optimize: Remove multiple RGB to grey conversion in OCR.
 - Fix: Update UTF8Proc to 2.2.0
-- Fix: Warn instead of fatal when a 0xFF marker is missing
 
 0.87 (2018-10-23)
 -----------------

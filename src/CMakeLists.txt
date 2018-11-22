@@ -42,10 +42,6 @@ configure_file (
 
 add_definitions(-DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP)
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-  add_definitions(-DGPAC_64_BITS)
-endif()
-
 include_directories ("${PROJECT_SOURCE_DIR}")
 include_directories ("${PROJECT_SOURCE_DIR}/lib_ccx/")
 include_directories ("${PROJECT_SOURCE_DIR}/utf8proc/")

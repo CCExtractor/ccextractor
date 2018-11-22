@@ -46,6 +46,8 @@ static int init_ctx_outbase(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx)
 {
 	char *file;
 
+	ctx->noempty = opt->noempty;
+
 	if (opt->output_filename)
 	{
 		ctx->basefilename = get_basename(opt->output_filename);

@@ -86,6 +86,7 @@ struct ccx_s_options // Options from user parameters
 	int extract;                                               // Extract 1st, 2nd or both fields
 	int no_rollup;
 	int noscte20;
+	int noempty;
 	int webvtt_create_css;
 	int cc_channel;                                            // Channel we want to dump in srt mode
 	int buffer_input;
