@@ -45,7 +45,8 @@ static void dinit_decoder_setting (struct ccx_decoders_common_settings_t **setti
 static int init_ctx_outbase(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx)
 {
 	char *file;
-
+	
+	ctx->noempty = opt->noempty;
 	if (opt->output_filename)
 	{
 		ctx->basefilename = get_basename(opt->output_filename);
