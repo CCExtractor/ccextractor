@@ -417,7 +417,11 @@ int api_start(struct ccx_s_options api_options)
 		curl_easy_cleanup(curl);
   	curl_global_cleanup();
 #endif
-    dinit_libraries(&ctx);
+	
+    if (!ret && noempty)
+        ;
+    else
+        dinit_libraries(&ctx);
 
     if (!ret)
         mprint("\nNo captions were found in input.\n");
