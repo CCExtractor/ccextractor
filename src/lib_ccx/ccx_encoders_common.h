@@ -48,6 +48,8 @@ struct encoder_ctx
 	unsigned int capacity;
 	/* keep count of srt subtitle*/
 	unsigned int srt_counter;
+	
+	int noempty;
 	/* keep count of CEA-708 subtitle*/
 	unsigned int cea_708_counter;
 
