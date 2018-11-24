@@ -1408,6 +1408,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			i++;
 			continue;
 		}
+		if (strcmp(argv[i], "--noempty") == 0)
+		{
+			opt->noempty = 1;
+			continue;
+		}
 		if (strcmp (argv[i],"-dru")==0)
 		{
 			opt->settings_608.direct_rollup = 1;
