@@ -2,6 +2,7 @@
 #include "ccx_encoders_common.h"
 #include "utility.h"
 #include "ocr.h"
+#include "lib_ccx/lib_ccx.h"
 #include "ccx_decoders_608.h"
 #include "ccx_decoders_708.h"
 #include "ccx_decoders_708_output.h"
@@ -11,6 +12,10 @@
 #ifdef ENABLE_SHARING
 #include "ccx_share.h"
 #endif //ENABLE_SHARING
+
+int out_file_init = 0;
+struct encoder_ctx *ct;
+struct encoder_cfg *cf;
 
 #ifdef WIN32
 int fsync(int fd)
@@ -968,15 +973,24 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	else
 		ctx->generates_file = 1;
 
-	ret = init_output_ctx(ctx, opt);
-	if (ret != EXIT_OK)
-	{
-		freep(&ctx->buffer);
-		free(ctx);
-		return NULL;
+	
+	ctx->noempty = noempty;
+	if (ctx->noempty != 1){
+		out_file_init = 1;
+		ret = init_output_ctx(ctx, opt);
+		if (ret != EXIT_OK)
+	        {
+		    freep(&ctx->buffer);
+		    free(ctx);
+		    return NULL;
+	        }
+	}
+	else {
+		ct = ctx;
+		cf = opt;
 	}
 	ctx->in_fileformat = opt->in_format;
-
+	
 	/** used in case of SUB_EOD_MARKER */
 	ctx->prev_start = -1;
 	ctx->subs_delay = opt->subs_delay;
@@ -1069,6 +1083,17 @@ struct ccx_s_write *get_output_ctx(struct encoder_ctx *ctx, int lan)
 
 int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 {
+	int file_open;
+	if (!out_file_init) {
+		file_open = init_output_ctx(ct, cf);
+		if (file_open != EXIT_OK)
+		{
+			freep(&ct->buffer);
+			free(ct);
+			return NULL;
+		}
+		out_file_init = 1;
+	}
 	int wrote_something = 0;
 	int ret = 0;
 
