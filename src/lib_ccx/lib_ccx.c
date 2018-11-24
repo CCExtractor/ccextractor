@@ -6,6 +6,8 @@
 #include "ccx_decoders_708.h"
 #include "ccx_decoders_isdb.h"
 
+int noempty = 0;
+
 struct ccx_common_logging_t ccx_common_logging;
 static struct ccx_decoders_common_settings_t *init_decoder_setting(
 		struct ccx_s_options *opt)
@@ -45,6 +47,8 @@ static void dinit_decoder_setting (struct ccx_decoders_common_settings_t **setti
 static int init_ctx_outbase(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx)
 {
 	char *file;
+	
+	ctx->noempty = opt->noempty;
 
 	if (opt->output_filename)
 	{
@@ -392,6 +396,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		{
 			ccx_options.enc_cfg.program_number = pn;
 			ccx_options.enc_cfg.in_format = in_format;
+			noempty = ctx->noempty;
 			enc_ctx = init_encoder(&ccx_options.enc_cfg);
 			if (!enc_ctx)
 				return NULL;
