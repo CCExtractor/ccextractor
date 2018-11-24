@@ -27,6 +27,8 @@
 
 //#include "ccx_decoders_708.h"
 
+int noempty;
+
 /* Report information */
 #define SUB_STREAMS_CNT 10
 
@@ -93,6 +95,8 @@ struct lib_ccx_ctx
 	int stat_hdtv;
 	int stat_divicom;
 	int false_pict_header;
+	
+	int noempty;
 
 	// int hex_mode=HEX_NONE; // Are we processing an hex file?
 	struct ccx_decoders_common_settings_t *dec_global_setting;
