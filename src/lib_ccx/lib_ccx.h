@@ -95,7 +95,6 @@ struct lib_ccx_ctx
 	int stat_hdtv;
 	int stat_divicom;
 	int false_pict_header;
-	
 	int noempty;
 
 	// int hex_mode=HEX_NONE; // Are we processing an hex file?
