@@ -998,11 +998,7 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons(port);
 #if _WIN32
-	// Doesn't seem correct, if there's more than one multicast stream with the same
-	// port number we get corruption - IP address needs to be specified, but 
-	// in Windows we get an error 10049 (cannot bind).
-	// http ://stackoverflow.com/questions/6140734/cannot-bind-to-multicast-address-windows
-	servaddr.sin_addr.s_addr = htonl(IN_MULTICAST(addr) ? INADDR_ANY : addr);
+	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 #else
 	servaddr.sin_addr.s_addr = htonl(addr);
 #endif
