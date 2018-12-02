@@ -9,6 +9,7 @@
 #include <math.h>
 #include <limits.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -98,14 +99,14 @@ void drop_callback(GLFWwindow* window, int count, const char **paths)
 	{
 		printf("\n%d", main_settings.filename_count);
 
-        main_settings.filenames[main_settings.filename_count] = (char*)calloc((strlen(paths[i])+5), sizeof(char));
+		main_settings.filenames[main_settings.filename_count] = (char*)calloc((strlen(paths[i])+5), sizeof(char));
 		main_settings.filenames[main_settings.filename_count][0] = '\"';
 		strcat(main_settings.filenames[main_settings.filename_count], paths[i]);
 		strcat(main_settings.filenames[main_settings.filename_count], "\"");
-        puts(main_settings.filenames[main_settings.filename_count]);
+		puts(main_settings.filenames[main_settings.filename_count]);
 		main_settings.filename_count++;
 	}
-    main_settings.filenames[main_settings.filename_count] = NULL;
+	main_settings.filenames[main_settings.filename_count] = NULL;
 
 }
 
@@ -164,6 +165,24 @@ void drop_callback(GLFWwindow* window, int count, const char **paths)
 //	space.y = space.y + 20;
 //	nk_draw_text(canvas, space, "Hardsubs Extraction: Yes", 24, &font->handle, nk_rgb(88, 81, 96), nk_rgb(0, 0, 0));
 //}
+
+char* get_executable_path(){
+    // https://stackoverflow.com/questions/5525668/how-to-implement-readlink-to-find-the-path
+    #ifdef __linux__
+        char buf[1024];
+        char *resp = (char *) malloc(sizeof(char) * 3);
+        ssize_t len = readlink("/proc/self/exe", buf, sizeof(buf));
+        buf[len]='\0';
+        resp = buf;
+        return resp;
+    #elif __APPLE__
+        char buf[256];
+        uint32_t size = sizeof(buf);
+        if (_NSGetExecutablePath(buf, &size) == 0){
+            return buf;
+        }
+    #endif
+}
 
 int main(void)
 {
@@ -260,31 +279,35 @@ int main(void)
 	media.icons.img_file = icon_load("../../icon/img.png");
 	media.icons.movie_file = icon_load("../../icon/movie.png");
 #else
-    media.icons.home = icon_load("../icon/home.png");
-    media.icons.directory = icon_load("../icon/directory.png");
-    media.icons.computer = icon_load("../icon/computer.png");
-    media.icons.desktop = icon_load("../icon/desktop.png");
-    media.icons.default_file = icon_load("../icon/default.png");
-    media.icons.text_file = icon_load("../icon/text.png");
-    media.icons.music_file = icon_load("../icon/music.png");
-    media.icons.font_file =  icon_load("../icon/font.png");
-    media.icons.img_file = icon_load("../icon/img.png");
-    media.icons.movie_file = icon_load("../icon/movie.png");
+	const char* path_of_executable = get_executable_path();
+	char path_of_ccextractor[strlen(path_of_executable)-20]; // This is the size of: mac/./ccextractorGUI and linux/ccextractorGUI
+	strncpy(path_of_ccextractor, path_of_executable, strlen(path_of_executable));
+	path_of_ccextractor[strlen(path_of_ccextractor)-20]='\0'; // Fails without null pointer
+	media.icons.home = icon_load(concat(path_of_ccextractor,"icon/home.png"));
+	media.icons.directory = icon_load(concat(path_of_ccextractor, "icon/directory.png"));
+	media.icons.computer = icon_load(concat(path_of_ccextractor, "icon/computer.png"));
+	media.icons.desktop = icon_load(concat(path_of_ccextractor, "icon/desktop.png"));
+	media.icons.default_file = icon_load(concat(path_of_ccextractor, "icon/default.png"));
+	media.icons.text_file = icon_load(concat(path_of_ccextractor, "icon/text.png"));
+	media.icons.music_file = icon_load(concat(path_of_ccextractor, "icon/music.png"));
+	media.icons.font_file =  icon_load(concat(path_of_ccextractor, "icon/font.png"));
+	media.icons.img_file = icon_load(concat(path_of_ccextractor,"icon/img.png"));
+	media.icons.movie_file = icon_load(concat(path_of_ccextractor,"icon/movie.png"));
 #endif
 
-    media_init(&media);
+	media_init(&media);
 
-    file_browser_init(&browser, &media);
+	file_browser_init(&browser, &media);
 
-    /*Read Last run state*/
-    FILE *loadFile;
-    loadFile = fopen("ccxGUI.ini", "r");
-    if(loadFile != NULL)
-    {
-    	printf("File found and reading it!\n");
-    	load_data(loadFile, &main_settings, &input, &advanced_input, &output, &decoders, &credits, &debug, &hd_homerun, &burned_subs, &network_settings);
-    	fclose(loadFile);
-    }
+	/*Read Last run state*/
+	FILE *loadFile;
+	loadFile = fopen("ccxGUI.ini", "r");
+	if(loadFile != NULL)
+	{
+		printf("File found and reading it!\n");
+		load_data(loadFile, &main_settings, &input, &advanced_input, &output, &decoders, &credits, &debug, &hd_homerun, &burned_subs, &network_settings);
+		fclose(loadFile);
+	}
 
 	/*Main GUI loop*/
 	while (nk_true)
@@ -606,16 +629,16 @@ int main(void)
 				if (main_settings.filename_count != 0)
 				{
 					nk_layout_row_static(ctx, 18, 380, 1);
-                    nk_label(ctx, concat("Input type: ", input.type[input.type_select]), NK_TEXT_LEFT);
-                    nk_label(ctx, concat("Output type: ", output.type[output.type_select]), NK_TEXT_LEFT);
-                    if(output.is_filename)
-                        nk_label(ctx, concat("Output path: ", output.filename), NK_TEXT_LEFT);
-                    else
-                        nk_label(ctx, "Output path: Default", NK_TEXT_LEFT);
-                    if(burned_subs.is_burned_subs)
-                        nk_label(ctx, "Hardsubtitles extraction: Yes", NK_TEXT_LEFT);
-                    else
-                        nk_label(ctx, "Hardsubtitles extraction: No", NK_TEXT_LEFT);
+					nk_label(ctx, concat("Input type: ", input.type[input.type_select]), NK_TEXT_LEFT);
+					nk_label(ctx, concat("Output type: ", output.type[output.type_select]), NK_TEXT_LEFT);
+					if(output.is_filename)
+						nk_label(ctx, concat("Output path: ", output.filename), NK_TEXT_LEFT);
+					else
+						nk_label(ctx, "Output path: Default", NK_TEXT_LEFT);
+					if(burned_subs.is_burned_subs)
+						nk_label(ctx, "Hardsubtitles extraction: Yes", NK_TEXT_LEFT);
+					else
+						nk_label(ctx, "Hardsubtitles extraction: No", NK_TEXT_LEFT);
 
 				
 				}
@@ -769,18 +792,18 @@ int main(void)
 	}
 
 	glDeleteTextures(1,(const GLuint*)&media.icons.home.handle.id);
-    glDeleteTextures(1,(const GLuint*)&media.icons.directory.handle.id);
-    glDeleteTextures(1,(const GLuint*)&media.icons.computer.handle.id);
+	glDeleteTextures(1,(const GLuint*)&media.icons.directory.handle.id);
+	glDeleteTextures(1,(const GLuint*)&media.icons.computer.handle.id);
 #ifdef _WIN32
 	glDeleteTextures(1, (const GLuint*)&media.icons.drives.handle.id);
 #endif
-    glDeleteTextures(1,(const GLuint*)&media.icons.desktop.handle.id);
-    glDeleteTextures(1,(const GLuint*)&media.icons.default_file.handle.id);
-    glDeleteTextures(1,(const GLuint*)&media.icons.text_file.handle.id);
-    glDeleteTextures(1,(const GLuint*)&media.icons.music_file.handle.id);
-    glDeleteTextures(1,(const GLuint*)&media.icons.font_file.handle.id);
-    glDeleteTextures(1,(const GLuint*)&media.icons.img_file.handle.id);
-    glDeleteTextures(1,(const GLuint*)&media.icons.movie_file.handle.id);
+	glDeleteTextures(1,(const GLuint*)&media.icons.desktop.handle.id);
+	glDeleteTextures(1,(const GLuint*)&media.icons.default_file.handle.id);
+	glDeleteTextures(1,(const GLuint*)&media.icons.text_file.handle.id);
+	glDeleteTextures(1,(const GLuint*)&media.icons.music_file.handle.id);
+	glDeleteTextures(1,(const GLuint*)&media.icons.font_file.handle.id);
+	glDeleteTextures(1,(const GLuint*)&media.icons.img_file.handle.id);
+	glDeleteTextures(1,(const GLuint*)&media.icons.movie_file.handle.id);
 
 	file_browser_free(&browser);
 	//free(main_settings.filenames);
@@ -893,7 +916,7 @@ void remove_path_entry(struct main_tab *main_settings, int indexToRemove)
 		free(main_settings->filenames);
 		main_settings->filenames = temp;
 		main_settings->filename_count--;
-        main_settings->filenames[main_settings->filename_count] = NULL;
+		main_settings->filenames[main_settings->filename_count] = NULL;
 	
 
 }
@@ -901,29 +924,31 @@ void remove_path_entry(struct main_tab *main_settings, int indexToRemove)
 struct nk_image
 icon_load(const char *filename)
 {
-    int x,y,n;
-    GLuint tex;
-    unsigned char *data = stbi_load(filename, &x, &y, &n, 0);
-    if (!data) die("[SDL]: failed to load image: %s", filename);
+	int x,y,n;
+	GLuint tex;
+	unsigned char *data = stbi_load(filename, &x, &y, &n, 0);
+	if (!data){
+		char* result_string_pointer = stbi_failure_reason();
+		die("[SDL]: failed to load image: %s ERRROR: %s", filename, result_string_pointer);
+	}
 
-    glGenTextures(1, &tex);
-    glBindTexture(GL_TEXTURE_2D, tex);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(data);
-    return nk_image_id((int)tex);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
+	return nk_image_id((int)tex);
 }
 
 
-char* concat(char* string1, char *string2)
-{
-    static char prefix[300], suffix[300];
-    strcpy(prefix, string1);
-    strcpy(suffix, string2);
-    return strcat(prefix, suffix);
+char* concat(char* string1, char *string2){
+	char *result = malloc(strlen(string1) + strlen(string2) + 1);
+	strcpy(result, string1);
+	strcat(result, string2);
+	return result;
 }
