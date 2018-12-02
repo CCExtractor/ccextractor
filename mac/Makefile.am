@@ -395,7 +395,6 @@ ccextractorGUI_SOURCES = \
 				../src/GUI/nuklear_lib/nuklear_glfw_gl2.h
 
 ccextractorGUI_CFLAGS = -std=gnu99
-ccextractorGUI_CFLAGS += -DCURRENT_DIR=\"$(shell pwd)\"
 
 ccextractorGUI_LDADD = ${glfw3_LIBS}
 
@@ -425,10 +424,3 @@ EXTRA_DIST += ../icon/ ../fonts/
 
 endif
 
-if DEBUG
-AM_CFLAGS = -g3 -O0
-AM_CXXFLAGS = -g3 -O0
-else
-AM_CFLAGS = -O2
-AM_CXXFLAGS = -O2
-endif
