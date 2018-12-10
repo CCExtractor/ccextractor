@@ -34,6 +34,9 @@ build/
 ####
 # Visual Studio project Ignored files
 
+.vs/**
+windows/.vs/**
+!windows/.vs/config/applicationhost.config
 *.suo
 *.sdf
 *.opensdf
