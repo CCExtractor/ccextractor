@@ -125,7 +125,7 @@ uint64_t read_bits(struct bitstream *bstr, unsigned bnum)
 
 // This function will advance the bitstream by bnum bits, if possible.
 // Advancing of more than 64 bits is possible.
-// Return TRUE when successfull, otherwise FALSE
+// Return TRUE when successful, otherwise FALSE
 int skip_bits(struct bitstream *bstr, unsigned bnum)
 {
 	// Sanity check

@@ -336,7 +336,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->current_aspect_ratio = 0;
 	ctx->current_frame_rate = 4; // Assume standard fps, 29.97
 
-        //Variables used while parsing elementry stream
+        //Variables used while parsing elementary stream
 	ctx->no_bitstream_error = 0;
 	ctx->saw_seqgoppic = 0;
 	ctx->in_pic_data = 0;

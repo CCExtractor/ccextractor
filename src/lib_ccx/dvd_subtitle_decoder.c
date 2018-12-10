@@ -42,7 +42,7 @@ struct ctrl_seq
 
 #define bitoff(x) ((x) ? 0x0f : 0xf0)
 
-// Get fisrt 4 or last 4 bits from the byte
+// Get first 4 or last 4 bits from the byte
 #define next4(x,y) ((y) ? (x & 0x0f) : ((x & 0xf0) >> 4) )
 
 /**

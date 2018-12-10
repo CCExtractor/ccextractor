@@ -1110,7 +1110,7 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 		window->is_defined = 1;
 		_dtvcc_window_clear_text(window);
 
-		//Accorgind to CEA-708-D if window_style is 0 for newly created window , we have to apply predefined style #1
+		// According to CEA-708-D if window_style is 0 for newly created window, we have to apply predefined style #1
 		if (window->win_style == 0)
 		{
 			_dtvcc_window_apply_style(window, &ccx_dtvcc_predefined_window_styles[0]);

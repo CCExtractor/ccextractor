@@ -1844,7 +1844,7 @@ GF_Err adaf_Read(GF_Box *s, GF_BitStream *bs)
 	GF_AdobeDRMAUFormatBox *ptr = (GF_AdobeDRMAUFormatBox*)s;
 
 	ptr->selective_enc = gf_bs_read_u8(bs);
-	gf_bs_read_u8(bs);//resersed
+	gf_bs_read_u8(bs);//reserved
 	ptr->IV_length = gf_bs_read_u8(bs);
 	ISOM_DECREASE_SIZE(ptr, 3);
 	return GF_OK;

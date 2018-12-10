@@ -3154,7 +3154,7 @@ u32 gf_media_avc_reformat_sei(char *buffer, u32 nal_size, AVCState *avc)
 
 		if (start+psize >= nal_size) {
 			if (written == 1) written = 0;
-			GF_LOG(GF_LOG_WARNING, GF_LOG_CODING, ("[avc-h264] SEI user message type %d size error (%d but %d remain), skiping %sSEI message\n", ptype, psize, nal_size-start, written ? "end of " : ""));
+			GF_LOG(GF_LOG_WARNING, GF_LOG_CODING, ("[avc-h264] SEI user message type %d size error (%d but %d remain), skipping %sSEI message\n", ptype, psize, nal_size-start, written ? "end of " : ""));
 			break;
 		}
 

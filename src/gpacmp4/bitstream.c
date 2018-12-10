@@ -945,7 +945,7 @@ static GF_Err BS_SeekIntern(GF_BitStream *bs, u64 offset)
 
 	bs->position = offset;
 	bs->current = 0;
-	/*setup NbBits so that next acccess to the buffer will trigger read/write*/
+	/*setup NbBits so that next access to the buffer will trigger read/write*/
 	bs->nbBits = (bs->bsmode == GF_BITSTREAM_FILE_READ) ? 8 : 0;
 	return GF_OK;
 }

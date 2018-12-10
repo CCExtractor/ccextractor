@@ -466,7 +466,7 @@ int check_roll_up(ccx_decoder_608_context *context)
 	return 0;
 }
 
-// Roll-up: Returns true if a line was rolled over the visible area (it dissapears from screen), false
+// Roll-up: Returns true if a line was rolled over the visible area (it disappears from screen), false
 // if the rollup didn't delete any line.
 int roll_up(ccx_decoder_608_context *context)
 {
@@ -1173,7 +1173,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 			wrote_to_screen = disCommand(hi, lo, context, sub);
 			if (sub->got_output)
 			{
-				i += 2; // Otherwise we woudn't be counting this byte pair
+				i += 2; // Otherwise we wouldn't be counting this byte pair
 				break;
 			}
 		}

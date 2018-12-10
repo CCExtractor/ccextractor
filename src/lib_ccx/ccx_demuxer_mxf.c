@@ -66,7 +66,7 @@ typedef struct MXFLocalTAGS
 	int length;
 } MXFLocalTAGS;
 
-//S337 table 4 says 14 bytes can determine parttion pack type
+//S337 table 4 says 14 bytes can determine partition pack type
 static const uint8_t mxf_header_partition_pack_key[] = { 0x06,0x0e,0x2b,0x34,0x02,0x05,0x01,0x01,0x0d,0x01,0x02,0x01,0x01,0x02 };
 static const uint8_t mxf_essence_element_key[]       = { 0x06,0x0e,0x2b,0x34,0x01,0x02,0x01,0x01,0x0d,0x01,0x03,0x01 };
 static const uint8_t mxf_klv_key[]                   = { 0x06,0x0e,0x2b,0x34 };
@@ -147,7 +147,7 @@ static int mxf_read_header_partition_pack(struct ccx_demuxer *demux, uint64_t si
 
 	if (size < 88)
 	{
-		log("Mimimum Length of Partition pack is 88 but found %d\n", size);
+		log("Minimum Length of Partition pack is 88 but found %d\n", size);
 		return CCX_EINVAL;
 	}
 
@@ -301,7 +301,7 @@ static int mxf_read_cdp_data(struct ccx_demuxer *demux, int size, struct demuxer
 
 	ret = buffered_get_byte(demux);
 	len ++;
-	if(ret != 0x72) // Skip if its not cdata identitfier
+	if(ret != 0x72) // Skip if its not cdata identifier
 		goto error;
 
 	cc_count = buffered_get_byte(demux) & 0x1F;
