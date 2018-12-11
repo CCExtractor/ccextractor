@@ -2498,7 +2498,7 @@ GF_Err gf_isom_oinf_write_entry(void *entry, GF_BitStream *bs)
 		gf_bs_write_u16(bs, op->maxPicHeight);
 		gf_bs_write_int(bs, op->maxChromaFormat, 2);
 		gf_bs_write_int(bs, op->maxBitDepth - 8, 3);
-		gf_bs_write_int(bs, 0x1, 1);//resereved
+		gf_bs_write_int(bs, 0x1, 1);//reserved
 		op->frame_rate_info_flag ? gf_bs_write_int(bs, 0x1, 1)  : gf_bs_write_int(bs, 0x0, 1);
 		op->bit_rate_info_flag ? gf_bs_write_int(bs, 0x1, 1)  : gf_bs_write_int(bs, 0x0, 1);
 		if (op->frame_rate_info_flag) {

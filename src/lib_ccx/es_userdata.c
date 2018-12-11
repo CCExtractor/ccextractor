@@ -63,7 +63,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 		// This data comes before the first frame header, so
 		// in order to get the correct timing we need to set the
 		// current time to one frame after the maximum time of the
-		// last GOP.  Only usefull when there are frames before
+		// last GOP.  Only useful when there are frames before
 		// the GOP.
 		if (ctx->timing->fts_max > 0)
 			ctx->timing->fts_now = ctx->timing->fts_max + (LLONG) (1000.0/current_fps);
@@ -168,7 +168,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 					fatal(CCX_COMMON_EXIT_BUG_BUG, "In user_data: ustream->bitsleft < 0. Cannot continue.");
 
 				// Field_number is either
-				//  0 .. forbiden
+				//  0 .. forbidden
 				//  1 .. field 1 (odd)
 				//  2 .. field 2 (even)
 				//  3 .. repeated, from repeat_first_field, effectively field 1

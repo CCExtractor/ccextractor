@@ -10,7 +10,7 @@ void init_options (struct ccx_s_options *options)
 #ifdef _WIN32
 	options->buffer_input = 1; // In Windows buffering seems to help
 #else
-	options->buffer_input = 0; // In linux, not so much.
+	options->buffer_input = 0; // In Linux, not so much.
 #endif
 	options->nofontcolor=0; // 1 = don't put <font color> tags
 	options->notypesetting=0; // 1 = Don't put <i>, <u>, etc typesetting tags
@@ -22,7 +22,7 @@ void init_options (struct ccx_s_options *options)
 	options->settings_608.no_rollup = 0;
 	options->settings_608.force_rollup = 0;
 	options->settings_608.screens_to_process = -1;
-	options->settings_608.default_color = COL_TRANSPARENT; // Defaults to transparant/no-color.
+	options->settings_608.default_color = COL_TRANSPARENT; // Defaults to transparent/no-color.
 
 	options->extract = 1; // Extract 1st field only (primary language)
 	options->cc_channel = 1; // Channel we want to dump in srt mode
@@ -55,8 +55,8 @@ void init_options (struct ccx_s_options *options)
 	/* General stuff */
 	options->usepicorder = 0; // Force the use of pic_order_cnt_lsb in AVC/H.264 data streams
 	options->xmltv=0; // 1 = full output. 2 = live output. 3 = both
-	options->xmltvliveinterval=10; // interval in seconds between writting xmltv output files in live mode
-	options->xmltvoutputinterval=0; // interval in seconds between writting xmltv full file output
+	options->xmltvliveinterval=10; // interval in seconds between writing xmltv output files in live mode
+	options->xmltvoutputinterval=0; // interval in seconds between writing xmltv full file output
 	options->xmltvonlycurrent=0; // 0 off 1 on
 	options->keep_output_closed = 0; // By default just keep the file open.
 	options->force_flush = 0; // Don't flush whenever content is written.

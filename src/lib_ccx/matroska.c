@@ -668,7 +668,7 @@ void parse_segment_track_entry(struct matroska_ctx* mkv_ctx) {
                 read_vint_block_skip(file);
                 MATROSKA_SWITCH_BREAK(code, code_len);
 
-                /* DivX trick track extenstions */
+                /* DivX trick track extensions */
             case MATROSKA_SEGMENT_TRACK_TRICK_TRACK_UID:
                 read_vint_block_skip(file);
                 MATROSKA_SWITCH_BREAK(code, code_len);

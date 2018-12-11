@@ -173,7 +173,7 @@ static rgba Default_clut[128] =
 	RGBA(255,170,85,255), RGBA(255,170,170,255), RGBA(255,170,255,255), RGBA(255,255,85,255),
 	//64
 	RGBA(255,255,170,255),
-	// 65-127 are caliculated later.
+	// 65-127 are calculated later.
 };
 
 struct ISDBPos{
@@ -187,7 +187,7 @@ struct ISDBText
 	size_t used;
 	struct ISDBPos pos;
 	size_t txt_tail; // tail of the text, excluding trailing control sequences.
-	//Time Stamp when first string is recieved
+	//Time Stamp when first string is received
 	uint64_t timestamp;
 	int refcount;
 	struct list_head list;
@@ -234,7 +234,7 @@ typedef struct {
 	 * colour near to foreground colour is half foreground colour and colour near to
 	 * background colour is half background colour.
 	 */
-	//Half forground color
+	//Half foreground color
 	uint32_t hfg_color;
 	//Half background color
 	uint32_t hbg_color;
@@ -429,7 +429,7 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 		list_add_tail(&text->list, &ctx->text_list_head);
 	}
 
-	//Check position of character and if moving backword then clean text
+	//Check position of character and if moving backward then clean text
 	if (IS_HORIZONTAL_LAYOUT(ls->format))
 	{
 		if (ls->cursor_pos.y < text->pos.y)
@@ -486,7 +486,7 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 	struct ISDBText *sb_text = NULL;
 	struct ISDBText *sb_temp = NULL;
 	struct ISDBText *wtrepeat_text = NULL;
-	//TO keep track we dont over flow in buffer from user
+	//TO keep track we don't over flow in buffer from user
 	int index = 0;
 
 	if (ctx->cfg_no_rollup || (ctx->cfg_no_rollup == ctx->current_state.rollup_mode))
@@ -504,7 +504,7 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 				sb_text->buf[text->used] = '\0';
 				sb_text->used = text->used;
 			}
-			//Dont do anything else, other then copy buffer in start state
+			// Don't do anything else, other then copy buffer in start state
 			return 0;
 		}
 
@@ -1046,7 +1046,7 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 		switch(code_lo) {
 		/* COL */
 		case 0x0:
-			/* Pallete Col */
+			/* Palette Col */
 			if(*buf == 0x20)
 			{
 				isdb_command_log("Command: COL: Set Clut %d\n",(buf[0] & 0x0F));
@@ -1270,7 +1270,7 @@ static int parse_data_unit(ISDBSubContext *ctx,const uint8_t *buf, int size)
 {
 	int unit_parameter;
 	int len;
-	/* unit seprator */
+	/* unit separator */
 	buf++;
 
 	unit_parameter = *buf++;
@@ -1321,7 +1321,7 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
 
 /** Acc to http://www.bocra.org.bw/sites/default/files/documents/Appendix%201%20-%20Operational%20Guideline%20for%20ISDB-Tbw.pdf
  * In table AP8-1 there are modification to ARIB TR-B14 in volume 3 Section 2 4.4.1 character encoding is UTF-8
- * instead of 8 bit character, just now we dont have any means to detect which country this video is
+ * instead of 8 bit character, just now we don't have any means to detect which country this video is
  * therefore we have hardcoded UTF-8 as encoding
  */
 int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle *sub)

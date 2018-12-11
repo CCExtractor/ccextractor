@@ -44,7 +44,7 @@ unsigned char *srv_header;
 size_t srv_header_len;
 
 /*
- * Established connection to speciefied addres.
+ * Established connection to specified address.
  * Returns socked id
  */
 int tcp_connect(const char *addr, const char *port);
@@ -55,8 +55,8 @@ int tcp_bind(const char *port, int *family);
 
 /*
  * Writes/reads data according to protocol to descriptor
- * block format: * command | lenght        | data         | \r\n
- * 1 byte  | INT_LEN bytes | lenght bytes | 2 bytes
+ * block format: * command | length        | data         | \r\n
+ * 1 byte  | INT_LEN bytes | length bytes | 2 bytes
  */
 ssize_t write_block(int fd, char command, const char *buf, size_t buf_len);
 ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len);

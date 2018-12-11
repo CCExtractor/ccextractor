@@ -266,13 +266,13 @@ struct ccx_gxf_ancillary_data_track
 
 	/**
 	 * Frame Rate XXX AD track do have vaild but this field may
-	 * be ignored since realted to only video
+	 * be ignored since related to only video
 	 */
 	uint32_t frame_rate;
 
 	/**
 	 * Lines per frame (valid value for AD tracks)
-	 * XXX may be ignored since realted to raw video frame
+	 * XXX may be ignored since related to raw video frame
 	 */
 	uint32_t line_per_frame;
 
@@ -509,7 +509,7 @@ static int parse_mpeg525_track_desc(struct ccx_demuxer *demux, int len)
 	int result;
 	int ret = CCX_OK;
 
-	/* Auxillary Information */
+	/* Auxiliary Information */
 	// char auxi_info[8];
 	debug("Mpeg 525 %d\n",len);
 	while (len > 2)
@@ -579,7 +579,7 @@ static int parse_ad_track_desc(struct ccx_demuxer *demux, int len)
 	struct ccx_gxf_ancillary_data_track *ad_track = ctx->ad_track;
 	int result;
 	int ret = CCX_OK;
-	/* Auxillary Information */
+	/* Auxiliary Information */
 	char auxi_info[8];
 	debug("Ancillary Data %d\n",len);
 
@@ -783,7 +783,7 @@ error:
  *   ccsvcinfo_section();
  *   cdp_footer();
  * }
- * function does not parse cdp in chunk, user should prvoide complete cdp
+ * function does not parse cdp in chunk, user should provide complete cdp
  * with header and footer inclusive of checksum
  * @return CCX_EINVAL if cdp data fields are not valid
  */
@@ -882,7 +882,7 @@ int parse_ad_cdp (unsigned char*cdp, size_t len, struct demuxer_data *data)
 	}
 	else if (*cdp >= 0x75 && *cdp <= 0xEF)
 	{
-                log(" Please share sample, newer version of SMPTE-334 specifiaction are followed\n"
+                log(" Please share sample, newer version of SMPTE-334 specification are followed\n"
 			"New section id 0x%x\n", *cdp);
 		cdp++;
                 return -1;
@@ -952,7 +952,7 @@ static int parse_ad_pyld(struct ccx_demuxer *demux, int len, struct demuxer_data
 			unsigned short dat = buffered_get_le16(demux);
 			/**
 			 * check parity for 0xFE and 0x01 they may be converted by GXF
-			 * from 0xFF and 0x00 recpectively and ignoring first 2 bit or byte
+			 * from 0xFF and 0x00 respectively and ignoring first 2 bit or byte
 			 * from 10 bit code in 16bit variable and we hope that they have not
 			 * changed its parity otherwise we have lost all 0xFF and 0x00
 			 */
@@ -1033,7 +1033,7 @@ static int parse_ad_field(struct ccx_demuxer *demux, int len, struct demuxer_dat
 
 	len -= 4;
 	if(buffered_get_le32(demux) != 4)
-		log("Warning: expeccted 4 acc GXF specs\n");
+		log("Warning: expected 4 acc GXF specs\n");
 
 	len -= 4;
 	field_identifier = buffered_get_le32(demux);
@@ -1075,7 +1075,7 @@ static int parse_ad_field(struct ccx_demuxer *demux, int len, struct demuxer_dat
 		/**
 		 * IN GXF video there are 2 pad but if I ignore first pad tag then there is data inside it
 		 * There must be data that time but it was not there
-		 * or it may be the consiquence of pad tag inserted later and data is still present
+		 * or it may be the consequence of pad tag inserted later and data is still present
 		 */
 		if(!strncmp(tag, "pad ", 4))
 		{

@@ -313,7 +313,7 @@ void process_xds_bytes (struct ccx_decoders_xds_context *ctx, const unsigned cha
 	}
 }
 /**
- * ctx XDS context can be NULL, if user dont want to write xds in transcript
+ * ctx XDS context can be NULL, if user don't want to write xds in transcript
  */
 void xds_do_copy_generation_management_system (struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, unsigned c1, unsigned c2)
 {
@@ -337,7 +337,7 @@ void xds_do_copy_generation_management_system (struct cc_subtitle *sub, struct c
 	/* unsigned c2_1=(c2&0x2)>>1; */
 	unsigned rcd0=(c2&0x1);
 
-	/* User dont need xds */
+	/* User don't need xds */
 	if(!ctx)
 		return;
 
@@ -350,8 +350,8 @@ void xds_do_copy_generation_management_system (struct cc_subtitle *sub, struct c
 		last_c2=c2;
 		// Changed since last time, decode
 
-		const char *copytext[4]={"Copy permited (no restrictions)", "No more copies (one generation copy has been made)",
-			"One generation of copies can be made", "No copying is permited"};
+		const char *copytext[4]={"Copy permitted (no restrictions)", "No more copies (one generation copy has been made)",
+			"One generation of copies can be made", "No copying is permitted"};
 		const char *apstext[4]={"No APS", "PSP On; Split Burst Off", "PSP On; 2 line Split Burst On", "PSP On; 4 line Split Burst On"};
 		sprintf (copy_permited,"CGMS: %s", copytext[cgms_a_b4*2+cgms_a_b3]);
 		sprintf (aps,"APS: %s", apstext[aps_b2*2+aps_b1]);
@@ -416,7 +416,7 @@ void xds_do_content_advisory (struct cc_subtitle *sub, struct ccx_decoders_xds_c
 				"TV-14 (Parents Strongly Cautioned)", "TV-MA (Mature Audience Only)", "None"};
 			sprintf (age,"ContentAdvisory: US TV Parental Guidelines. Age Rating: %s", agetext[g2*4+g1*2+g0]);
 			content[0]=0;
-			if (!g2 && g1 && !g0) // For TV-Y7 (Older chidren), the Violence bit is "fantasy violence"
+			if (!g2 && g1 && !g0) // For TV-Y7 (Older children), the Violence bit is "fantasy violence"
 			{
 				if (FV)
 					strcpy (content, "[Fantasy Violence] ");
@@ -674,7 +674,7 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 				if (!ctx->cur_xds_payload[2] & 20 || !ctx->cur_xds_payload[3] & 20) // Bit 6 must be 1
 					break;
 				/* CEA-608-B: The starting line is computed by adding 22 to the decimal number
-				   represented by bits S0 to S5. The ending line is computing by substracting
+				   represented by bits S0 to S5. The ending line is computing by subtracting
 				   the decimal number represented by bits E0 to E5 from 262 */
 				ar_start = (ctx->cur_xds_payload[2] & 0x1F) + 22;
 				ar_end = 262 - (ctx->cur_xds_payload[3] & 0x1F);

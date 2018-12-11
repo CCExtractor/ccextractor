@@ -704,7 +704,7 @@ void draw_decoders_tab(struct nk_context *ctx, int *tab_screen_height, struct de
 		nk_spacing(ctx, 1);
 		nk_edit_string(ctx, NK_EDIT_SIMPLE, decoders->services, &decoders->services_len, 15, nk_filter_ascii);
 		nk_layout_row_dynamic(ctx, 45, 1);
-		nk_label_wrap(ctx, "The service list is a comma seperated list of services to process. "
+		nk_label_wrap(ctx, "The service list is a comma separated list of services to process. "
 				"Valid values: 1 to 63. Ranges are NOT supported.");
 
 		nk_group_end(ctx);

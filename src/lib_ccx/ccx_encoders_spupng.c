@@ -552,7 +552,7 @@ void draw_to_buffer(struct pixel_t *target, int target_width, FT_Bitmap bitmap, 
 // The area of the subtitle is (0, valid_y) to (valid_w, valid_y + valid_h)
 // NOTE: valid_x is assumed to be 0
 // The function will move the subtitle to (target_w/2 + valid_w/2, valid_y),
-//   and earse anything else in the line.
+//   and erase anything else in the line.
 void center_justify(struct pixel_t *target, int target_w,
 					int valid_y, int valid_w, int valid_h) {
 	// 1. Make a copy of the line, to avoid overriding.
