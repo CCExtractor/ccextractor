@@ -282,7 +282,7 @@ int api_start(struct ccx_s_options api_options)
                         total_frames_count, current_fps);
             }
 
-            if (ctx->stat_hdtv)
+            if (dec_ctx->stat_hdtv)
             {
                 mprint ("\rCC type 0: %d (%s)\n", dec_ctx->cc_stats[0], cc_types[0]);
                 mprint ("CC type 1: %d (%s)\n", dec_ctx->cc_stats[1], cc_types[1]);
