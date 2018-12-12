@@ -282,13 +282,13 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 				/*
 
 				0 = None or font colour
-				1 = itlics
+				1 = italics
 				2 = bold
 				3 = underline
 
 				*/
 
-				//Now, searching for first occurance of <i> OR <u> OR <b>
+				//Now, searching for first occurrence of <i> OR <u> OR <b>
 
 				unsigned char * start = strstr((context->subline), "<i>"); 
 				if(start==NULL)
@@ -326,7 +326,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 					end_tag = "</u>";
 					}
 
-				    unsigned char *end = strstr((context->subline), end_tag);	//occurance of closing tag (</i> OR </b> OR </u>)
+				    unsigned char *end = strstr((context->subline), end_tag);	//occurrence of closing tag (</i> OR </b> OR </u>)
 				    
 				    if(end==NULL)
 				    {

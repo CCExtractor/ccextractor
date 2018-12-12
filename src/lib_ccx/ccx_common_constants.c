@@ -83,14 +83,14 @@ const char *aspect_ratio_types[16]=
 
 const char *pict_types[8]=
 {
-	"00 - ilegal (0)",
+	"00 - illegal (0)",
 	"01 - I",
 	"02 - P",
 	"03 - B",
-	"04 - ilegal (D)",
-	"05 - ilegal (5)",
-	"06 - ilegal (6)",
-	"07 - ilegal (7)"
+	"04 - illegal (D)",
+	"05 - illegal (5)",
+	"06 - illegal (6)",
+	"07 - illegal (7)"
 };
 
 
@@ -125,7 +125,7 @@ enum
 };
 
 /**
- * After Adding a new language here, dont forget
+ * After Adding a new language here, don't forget
  * to increase NB_LANGUAGE define ccx_common_constants.h
  */
 const char *language[NB_LANGUAGE] =

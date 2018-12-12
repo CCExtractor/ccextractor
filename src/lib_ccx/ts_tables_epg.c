@@ -199,7 +199,7 @@ void EPG_output_net(struct lib_ccx_ctx *ctx)
 	unsigned j;
 	struct EPG_event *event;
 
-	/* TODO: don't remove untill someone fixes segfault with -xmltv 2 */
+	/* TODO: don't remove until someone fixes segfault with -xmltv 2 */
 	if (ctx->demux_ctx == NULL)
 		return;
 
@@ -422,7 +422,7 @@ void EPG_decode_content_descriptor(uint8_t *offset, uint32_t descriptor_length, 
 }
 
 //EN 300 468 V1.3.1 (1998-02)
-//6.2.20 Parental rating descripto
+//6.2.20 Parental rating description
 void EPG_decode_parental_rating_descriptor(uint8_t *offset, uint32_t descriptor_length, struct EPG_event *event)
 {
 	int i;
@@ -980,12 +980,12 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 	if((ccx_options.xmltv==1 || ccx_options.xmltv==3) && ccx_options.xmltvoutputinterval==0 && hasnew)
 		EPG_output(ctx);
 }
-	//handle outputing to xml files
+	//handle outputting to xml files
 void EPG_handle_output(struct lib_ccx_ctx *ctx)
 {
 	int cur_sec = (int) ((ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp) / 1000);
 	if(ccx_options.xmltv==1 || ccx_options.xmltv==3)
-	{ //full outout
+	{ //full output
 		if(ccx_options.xmltvoutputinterval!=0 && cur_sec>ctx->epg_last_output+ccx_options.xmltvliveinterval)
 		{
 			ctx->epg_last_output=cur_sec;

@@ -28,7 +28,7 @@
 #define DEFAULT_FONT_PATH "C:\\Windows\\Fonts\\calibri.ttf"
 #elif __APPLE__ // MacOS
 #define DEFAULT_FONT_PATH "/System/Library/Fonts/Helvetica.ttc"
-#else // Assume linux
+#else // Assume Linux
 #define DEFAULT_FONT_PATH "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"
 #endif
 

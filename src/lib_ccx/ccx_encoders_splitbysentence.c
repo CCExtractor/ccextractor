@@ -34,7 +34,7 @@
 
 //---------------------------
 // BEGIN of #BUG639
-// HACK: this is workaroud for https://github.com/CCExtractor/ccextractor/issues/639
+// HACK: this is workaround for https://github.com/CCExtractor/ccextractor/issues/639
 // short: the outside function, called encode_sub changes ENCODER_CONTEXT when it required..
 // as result SBS loses it internal state...
 
@@ -258,7 +258,7 @@ char * sbs_find_insert_point_partial(char * old_tail, const char * new_start, si
 
 	if (
 		dist_r <= few_errors               // right part almost the same
-		&& n > PARTIAL_CHANGE_LENGTH_MIN   // the sentense is long enough for analyzis
+		&& n > PARTIAL_CHANGE_LENGTH_MIN   // the sentence is long enough for analysis
 	) {
 // 		LOG_DEBUG("SBS: sbs_find_insert_point_partial: LEFT CHANGED,\n\tbuf:[%s]\n\tstr:[%s]\n\
 // \tmaxerr:[%d]\n\
@@ -663,7 +663,7 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 	// ===============================
 	// okay, we have extracted several sentences, now we should
 	// save the position of the "remainder" - start of the last
-	// incomplete sentece
+	// incomplete sentence
 	// ===============================
 	if (bp_last_break != sbs_undone_start)
 	{

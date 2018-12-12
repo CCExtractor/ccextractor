@@ -223,7 +223,7 @@ int main(void)
 	static int advanced_mode_check = nk_false;
 	static int file_extension_check = nk_true;
 
-	/*Settigs and tab options*/
+	/*Settings and tab options*/
 	setup_main_settings(&main_settings);
 	static struct network_popup network_settings;
 	setup_network_settings(&network_settings);
@@ -593,7 +593,7 @@ int main(void)
 			nk_layout_space_begin(ctx, NK_STATIC, 10, 1);
 			nk_layout_space_end(ctx);
 
-			//Extraction Info`rmation
+			//Extraction Information
 			nk_layout_row_dynamic(ctx, 10, 1);
 			nk_text(ctx, "Extraction Info:", 16, NK_TEXT_CENTERED);
 

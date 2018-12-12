@@ -484,7 +484,7 @@ void ts_buffer_psi_packet(struct ccx_demuxer *ctx)
 	}
 
 	if(ctx->PID_buffers[pid]==NULL)
-	{//First packet for this pid. Creat a buffer
+	{//First packet for this pid. Create a buffer
 		ctx->PID_buffers[pid] = malloc(sizeof(struct PSI_buffer));
 		ctx->PID_buffers[pid]->buffer=NULL;
 		ctx->PID_buffers[pid]->buffer_length=0;
@@ -492,7 +492,7 @@ void ts_buffer_psi_packet(struct ccx_demuxer *ctx)
 		ctx->PID_buffers[pid]->prev_ccounter=0xff;
 	}
 
-	//skip the packet if the adaptation field legnth or payload length are out of bounds or broken
+	//skip the packet if the adaptation field length or payload length are out of bounds or broken
 	if (adaptation_field_length > 184 || payload_length > 184) {
 		payload_length = 0;
 		dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Bad packet, adaptation field too long, skipping.\n");
@@ -667,7 +667,7 @@ int parse_PAT (struct ccx_demuxer *ctx)
 		/**
 		 * loop never break at j == ctx->nb_program when program_number
 		 * is already there in pinfo array and if we have program number
-		 * already in our array we dont need to update our array
+		 * already in our array we don't need to update our array
 		 * so we break if program_number already exist and make j != ctx->nb_program
 		 *
 		 * Loop without break means j would be equal to ctx->nb_program

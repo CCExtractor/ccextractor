@@ -839,7 +839,7 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
 		dvprint("nal_hrd_parameters_present_flag=               % 4lld (%#llX)\n",tmp,tmp);
 		if ( tmp )
 		{
-			dvprint ("nal_hrd. Not implemented for now. Hopefully not needed. Skiping rest of NAL\n");
+			dvprint ("nal_hrd. Not implemented for now. Hopefully not needed. Skipping rest of NAL\n");
 			//printf("Boom nal_hrd\n");
 			// exit(1);
 			ctx->num_nal_hrd++;
@@ -850,7 +850,7 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
 		if ( tmp )
 		{
 			// TODO.
-			mprint ("vcl_hrd. Not implemented for now. Hopefully not needed. Skiping rest of NAL\n");
+			mprint ("vcl_hrd. Not implemented for now. Hopefully not needed. Skipping rest of NAL\n");
 			ctx->num_vcl_hrd++;
 			// exit(1);
 		}
@@ -1071,7 +1071,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 				ctx->avc_ctx->currref += maxrefcnt+1;
 			}
 
-			// If we wrapped arround lastmaxidx might be larger than
+			// If we wrapped around lastmaxidx might be larger than
 			// the current index - fix this.
 			if (ctx->avc_ctx->lastmaxidx > ctx->avc_ctx->currref + maxrefcnt/2) // implies lastmaxidx > 0
 				ctx->avc_ctx->lastmaxidx -=maxrefcnt+1;

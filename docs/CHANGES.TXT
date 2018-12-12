@@ -6,6 +6,8 @@
 - Fix: Warn instead of fatal when a 0xFF marker is missing
 - Fix: Segfault in general_loop.c due to null pointer dereference (case of no encoder)
 - Fix: Enable printing hdtv stats to console.
+- Fix: Many typos in comments and output messages
+- Fix: Ignore Visual Studio temporary project files
 
 0.87 (2018-10-23)
 -----------------

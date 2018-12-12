@@ -376,7 +376,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 		}
 		if( !memcmp(guid, WTV_STREAM2, 16 ) )
 		{
-			// The WTV_STREAM2 GUID appares near the start of the data dir
+			// The WTV_STREAM2 GUID appears near the start of the data dir
 			// It maps stream_ids to the type of stream
 			dbg_print(CCX_DMT_PARSE, "WTV STREAM2\n");
 			get_sized_buffer(ctx->demux_ctx, cb, 0xc+16);

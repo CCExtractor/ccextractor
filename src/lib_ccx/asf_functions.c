@@ -90,7 +90,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 	uint32_t sequence = 0;
 	uint32_t send_time = 0;
 
-	int payload_parser_size = 0; // Infered (PacketLType + sequence_type + padding_l_type + 6);
+	int payload_parser_size = 0; // Inferred (PacketLType + sequence_type + padding_l_type + 6);
 
 	uint32_t offset_media_length = 0; // ASF
 	uint32_t replicated_length = 0; // ASF
@@ -474,7 +474,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 					if(!memcmp(ext_content_position+2, L"WM/VideoClosedCaptioning"
 								,descriptor_name_length))
 					{
-						// This flag would be really usefull if it would be
+						// This flag would be really useful if it would be
 						// reliable - it isn't.
 						asf_data_container.VideoClosedCaptioningFlag = *((int32_t*)extended_description_value);
 						dbg_print(CCX_DMT_PARSE, "Found WM/VideoClosedCaptioning flag: %d\n",

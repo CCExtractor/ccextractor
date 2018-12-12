@@ -243,7 +243,7 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	free(pars_values);
 	if(ret != 0)
 	{
-		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to intialize Tesseract");
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to initialize Tesseract");
 	}
 
 	//Initialize attributes common to lib_ccx context

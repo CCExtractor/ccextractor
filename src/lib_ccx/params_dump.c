@@ -254,7 +254,7 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 		case CCX_DS_FILE:
 			if (ctx->current_file < 0)
 			{
-				printf("file is not openened yet\n");
+				printf("file is not opened yet\n");
 				return;
 			}
 
