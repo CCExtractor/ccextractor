@@ -5,6 +5,7 @@ License: GPL 2.0
 */
 #include "ccextractor.h"
 #include <stdio.h>
+#include <locale.h>
 
 volatile int terminate_asap = 0;
 
@@ -502,6 +503,7 @@ int api_param_count(struct ccx_s_options* api_options)
 
 int main(int argc, char* argv[])
 {
+    setlocale(LC_ALL, "");
     struct ccx_s_options* api_options = api_init_options();
     check_configuration_file(*api_options);
 #ifdef PYTHON_API
