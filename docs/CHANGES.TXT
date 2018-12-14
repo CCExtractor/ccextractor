@@ -8,6 +8,7 @@
 - Fix: Enable printing hdtv stats to console.
 - Fix: Many typos in comments and output messages
 - Fix: Ignore Visual Studio temporary project files
+- New: Add support for non-Latin characters in stdout
 
 0.87 (2018-10-23)
 -----------------
