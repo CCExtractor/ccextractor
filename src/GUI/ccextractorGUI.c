@@ -14,10 +14,18 @@
 #include <GLFW/glfw3.h>
 
 
+#ifdef _WIN32
+	#include <Windows.h>
+#elif __linux__
+	#include <unistd.h>
+	#include <libgen.h>
+#endif
+
 
 #define PATH_LENGTH 66
 #define NAME_LENGTH 56
 #define PREFIX_LENGTH_TRUNCATED 10
+#define MAXPATHLEN 500            /* make this larger if you need to. */
 
 #define NK_INCLUDE_FIXED_TYPES
 #define NK_INCLUDE_STANDARD_IO
@@ -78,6 +86,11 @@ static int tab_screen_height;
 /*Parameter Constants*/
 static int modifiedParams = 0;
 
+int length_path;
+char fullpath[MAXPATHLEN];
+char dir[MAXPATHLEN];
+char temp_resource_path[MAXPATHLEN];
+
 
 static void error_callback(int e, const char *d)
 {
@@ -87,7 +100,7 @@ static void error_callback(int e, const char *d)
 void drop_callback(GLFWwindow* window, int count, const char **paths)
 {
 	int i,j,k,z,copycount, prefix_length, slash_length, fileNameTruncated_index;
-	
+
 	printf("Number of selected paths:%d\n", count);
 
 	if(main_settings.filename_count == 0 && main_settings.filenames == NULL)
@@ -137,7 +150,7 @@ void drop_callback(GLFWwindow* window, int count, const char **paths)
 //			space.y = space.y + 20;
 //		}
 //	}
-//	
+//
 //}
 
 /*Rectangle to hold extraction info*/
@@ -167,6 +180,48 @@ void drop_callback(GLFWwindow* window, int count, const char **paths)
 
 int main(void)
 {
+
+	/* Get directory of current executable file */
+	#ifdef _WIN32
+		GetModuleFileName(NULL, fullpath, MAXPATHLEN);
+		_splitpath_s(fullpath,
+		NULL, 0,             // Don't need drive
+		dir, sizeof(dir),    // Just the directory
+		NULL, 0,             // Don't need filename
+		NULL, 0);
+		if(strcmp(dir,"") != 0)       //In case GetModuleFileName is run on a 64 bit OS, it returns empty string.
+			strcat(dir,"/");
+
+	#elif __APPLE__
+		strcpy(dir,"");
+	#else
+
+	    /*
+	     * /proc/self is a symbolic link to the process-ID subdir of /proc.
+	     * Inside /proc/<pid> there is a symbolic link to the executable that is
+	     * running as this <pid>.  This symbolic link is called "exe". So if we
+	     * read the path where the symlink /proc/self/exe points to we have the
+	     * full path of the executable.
+	     */
+
+	    length_path = readlink("/proc/self/exe", fullpath, sizeof(fullpath));
+
+	    /*
+	     * Catch some errors:
+	     */
+	    if (length_path < 0) {
+	        perror("resolving symlink /proc/self/exe.");
+	        exit(1);
+	    }
+	    if (length_path >= sizeof(fullpath)) {
+	        fprintf(stderr, "Path too long.\n");
+	        exit(1);
+	    }
+
+	    fullpath[length_path] = '\0';
+		strcpy(dir,dirname(fullpath));
+		strcat(dir,"/");
+	#endif
 
 	//Platform
 	static GLFWwindow *win;
@@ -202,14 +257,17 @@ int main(void)
 	ctx = nk_glfw3_init(win, NK_GLFW3_INSTALL_CALLBACKS);
 	struct nk_font_atlas *font_atlas;
 	nk_glfw3_font_stash_begin(&font_atlas);
+	strcpy(temp_resource_path, dir);
 #ifdef _WIN32
-	struct nk_font *droid = nk_font_atlas_add_from_file(font_atlas, "../../fonts/Roboto-Regular.ttf", 16, 0);
-	struct nk_font *droid_big = nk_font_atlas_add_from_file(font_atlas, "../../fonts/Roboto-Regular.ttf", 25, 0);
-	struct nk_font *droid_head = nk_font_atlas_add_from_file(font_atlas, "../../fonts/Roboto-Regular.ttf", 20, 0);
+	strcat(temp_resource_path, "/../../fonts/Roboto-Regular.ttf");
+	struct nk_font *droid = nk_font_atlas_add_from_file(font_atlas, temp_resource_path, 16, 0);
+	struct nk_font *droid_big = nk_font_atlas_add_from_file(font_atlas, temp_resource_path, 25, 0);
+	struct nk_font *droid_head = nk_font_atlas_add_from_file(font_atlas, temp_resource_path, 20, 0);
 #else
-	struct nk_font *droid = nk_font_atlas_add_from_file(font_atlas, "../fonts/Roboto-Regular.ttf", 16, 0);
-	struct nk_font *droid_big = nk_font_atlas_add_from_file(font_atlas, "../fonts/Roboto-Regular.ttf", 25, 0);
-	struct nk_font *droid_head = nk_font_atlas_add_from_file(font_atlas, "../fonts/Roboto-Regular.ttf", 20, 0);
+	strcat(temp_resource_path, "/../fonts/Roboto-Regular.ttf");
+	struct nk_font *droid = nk_font_atlas_add_from_file(font_atlas, temp_resource_path, 16, 0);
+	struct nk_font *droid_big = nk_font_atlas_add_from_file(font_atlas, temp_resource_path, 25, 0);
+	struct nk_font *droid_head = nk_font_atlas_add_from_file(font_atlas, temp_resource_path, 20, 0);
 #endif
 	nk_glfw3_font_stash_end();
 	nk_style_set_font(ctx, &droid->handle);
@@ -223,7 +281,7 @@ int main(void)
 	static int advanced_mode_check = nk_false;
 	static int file_extension_check = nk_true;
 
-	/*Settings and tab options*/
+	/*Settigs and tab options*/
 	setup_main_settings(&main_settings);
 	static struct network_popup network_settings;
 	setup_network_settings(&network_settings);
@@ -246,31 +304,21 @@ int main(void)
 	static struct built_string command;
 
 	/* icons */
+	media.icons.home = icon_load("home.png");
+	media.icons.directory = icon_load("directory.png");
+	media.icons.computer = icon_load("computer.png");
 
-#ifdef _WIN32
-	media.icons.home = icon_load("../../icon/home.png");
-	media.icons.directory = icon_load("../../icon/directory.png");
-	media.icons.computer = icon_load("../../icon/computer.png");
-	media.icons.drives = icon_load("../../icon/drive.png");
-	media.icons.desktop = icon_load("../../icon/desktop.png");
-	media.icons.default_file = icon_load("../../icon/default.png");
-	media.icons.text_file = icon_load("../../icon/text.png");
-	media.icons.music_file = icon_load("../../icon/music.png");
-	media.icons.font_file = icon_load("../../icon/font.png");
-	media.icons.img_file = icon_load("../../icon/img.png");
-	media.icons.movie_file = icon_load("../../icon/movie.png");
-#else
-    media.icons.home = icon_load("../icon/home.png");
-    media.icons.directory = icon_load("../icon/directory.png");
-    media.icons.computer = icon_load("../icon/computer.png");
-    media.icons.desktop = icon_load("../icon/desktop.png");
-    media.icons.default_file = icon_load("../icon/default.png");
-    media.icons.text_file = icon_load("../icon/text.png");
-    media.icons.music_file = icon_load("../icon/music.png");
-    media.icons.font_file =  icon_load("../icon/font.png");
-    media.icons.img_file = icon_load("../icon/img.png");
-    media.icons.movie_file = icon_load("../icon/movie.png");
-#endif
+	#ifdef _WIN32
+	media.icons.drives = icon_load("drive.png");
+	#endif
+
+	media.icons.desktop = icon_load("desktop.png");
+	media.icons.default_file = icon_load("default.png");
+	media.icons.text_file = icon_load("text.png");
+	media.icons.music_file = icon_load("music.png");
+	media.icons.font_file = icon_load("font.png");
+	media.icons.img_file = icon_load("img.png");
+	media.icons.movie_file = icon_load("movie.png");
 
     media_init(&media);
 
@@ -278,7 +326,9 @@ int main(void)
 
     /*Read Last run state*/
     FILE *loadFile;
-    loadFile = fopen("ccxGUI.ini", "r");
+    strcpy(temp_resource_path, dir);
+	strcat(temp_resource_path, "ccxGUI.ini");
+    loadFile = fopen(temp_resource_path, "r");
     if(loadFile != NULL)
     {
     	printf("File found and reading it!\n");
@@ -292,7 +342,9 @@ int main(void)
 		if(glfwWindowShouldClose(win))
 		{
 			FILE *saveFile;
-			saveFile = fopen("ccxGUI.ini", "w");
+			strcpy(temp_resource_path, dir);
+			strcat(temp_resource_path, "ccxGUI.ini");
+			saveFile = fopen(temp_resource_path, "w");
 			save_data(saveFile, &main_settings, &input, &advanced_input, &output, &decoders, &credits, &debug, &hd_homerun, &burned_subs, &network_settings);
 			fclose(saveFile);
 			break;
@@ -313,7 +365,7 @@ int main(void)
 		if (nk_begin(ctx, "CCExtractor", nk_rect(0, 0, WIDTH_mainPanelAndWindow, HEIGHT_mainPanelandWindow),
 			NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BACKGROUND))
 		{
-			
+
 
 		//MENUBAR
 			nk_menubar_begin(ctx);
@@ -323,7 +375,7 @@ int main(void)
 				nk_layout_row_dynamic(ctx, 30, 1);
 				if(nk_menu_item_label(ctx, "Reset Defaults", NK_TEXT_LEFT))
 				{
-					remove("ccxGUI.ini");
+					remove(temp_resource_path);
 					setup_main_settings(&main_settings);
 					setup_network_settings(&network_settings);
 					setup_output_tab(&output);
@@ -358,7 +410,7 @@ int main(void)
 					show_about_ccx = nk_true;
 				nk_menu_end(ctx);
 			}
-			
+
 		//Network Settings
 			if (network_settings.show_network_settings)
 				draw_network_popup(ctx, &network_settings);
@@ -397,7 +449,7 @@ int main(void)
 			nk_layout_space_begin(ctx, NK_STATIC, 15, 1);
 			nk_layout_space_end(ctx);
 
-		
+
 
 			/*TABS TRIGGERED IN ADVANCED MODE FLAG*/
 			if (advanced_mode_check)
@@ -482,7 +534,7 @@ int main(void)
 			nk_spacing(ctx, 1);
 			nk_checkbox_label(ctx, "Advanced Mode", &advanced_mode_check);
 
-		//RADIO BUTTON 1 
+		//RADIO BUTTON 1
 			static const float ratio_button[] = { .10f, .90f };
 			static const float check_extension_ratio[] = { .10f, .53f, .12f, .15f, .10f };
 			//static int op = FILES;
@@ -526,7 +578,7 @@ int main(void)
 
 							}
 					}
-						
+
 				}
 
 				else
@@ -593,7 +645,7 @@ int main(void)
 			nk_layout_space_begin(ctx, NK_STATIC, 10, 1);
 			nk_layout_space_end(ctx);
 
-			//Extraction Information
+			//Extraction Info`rmation
 			nk_layout_row_dynamic(ctx, 10, 1);
 			nk_text(ctx, "Extraction Info:", 16, NK_TEXT_CENTERED);
 
@@ -617,7 +669,7 @@ int main(void)
                     else
                         nk_label(ctx, "Hardsubtitles extraction: No", NK_TEXT_LEFT);
 
-				
+
 				}
 				nk_group_end(ctx);
 
@@ -641,7 +693,7 @@ int main(void)
 			{
 
 				setup_and_create_thread(&main_settings, &command);
-				
+
 			}
 
 
@@ -667,13 +719,13 @@ int main(void)
 			//build command string
 			command_builder(&command, &main_settings, &network_settings, &input, &advanced_input, &output, &decoders, &credits, &debug, &burned_subs);
 
-			
+
 
 		}
 		nk_end(ctx);
 
 		glfwGetWindowSize(win, &screenWidth, &screenHeight);
-		
+
 		if (!main_settings.scaleWindowForFileBrowser)
 		{
 			if (show_activity_check && show_preview_check && show_terminal_check)
@@ -793,7 +845,7 @@ int main(void)
 
 void setup_main_settings(struct main_tab *main_settings)
 {
-	
+
 	main_settings->is_check_common_extension = nk_false;
 	main_settings->port_num_len = 0;
 	main_settings->port_or_files = FILES;
@@ -867,7 +919,7 @@ char* truncate_path_string(char *filePath)
 		}
 		return file_path;
 	}
-	else 
+	else
 		return filePath;
 }
 
@@ -889,21 +941,31 @@ void remove_path_entry(struct main_tab *main_settings, int indexToRemove)
 			temp + indexToRemove,
 			(main_settings->filenames) + (indexToRemove + 1),
 			(main_settings->filename_count - indexToRemove) * sizeof(char *)); // copy everything AFTER the index
-																		
+
 		free(main_settings->filenames);
 		main_settings->filenames = temp;
 		main_settings->filename_count--;
         main_settings->filenames[main_settings->filename_count] = NULL;
-	
+
 
 }
 
 struct nk_image
-icon_load(const char *filename)
+icon_load(const char *icon_file)
 {
+	char filename[MAXPATHLEN];
+	strcpy(filename, dir);
+	#ifdef _WIN32
+		strcat(filename, "../..");
+	#else
+		strcat(filename, "..");
+	#endif
+	strcat(filename, "/icon/");
+	strcat(filename, icon_file);
+
     int x,y,n;
     GLuint tex;
-    unsigned char *data = stbi_load(filename, &x, &y, &n, 0);
+    unsigned char *data = stbi_load(&filename, &x, &y, &n, 0);
     if (!data) die("[SDL]: failed to load image: %s", filename);
 
     glGenTextures(1, &tex);
