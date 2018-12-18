@@ -114,6 +114,8 @@ int parsedelay (struct ccx_s_options *opt, char *par)
 
 int append_file_to_queue (struct ccx_s_options *opt,char *filename)
 {
+	if(filename[0] == '\0') //skip files with empty file name (ex : ./ccextractor "")
+		return 0;
 	char *c=(char *) malloc (strlen (filename)+1);
 	if (c==NULL)
 		return -1;

@@ -11,8 +11,9 @@ void params_dump(struct lib_ccx_ctx *ctx)
 	switch (ccx_options.input_source)
 	{
 		case CCX_DS_FILE:
+			dbg_print(CCX_DMT_VERBOSE, "Files (%d): ", ctx->num_input_files);
 			for (int i=0;i<ctx->num_input_files;i++)
-				mprint ("%s%s",ctx->inputfile[i],i==(ctx->num_input_files-1)?"":",");
+				mprint ("%s%s",ctx->inputfile[i],i==(ctx->num_input_files-1)?"":", ");
 			break;
 		case CCX_DS_STDIN:
 			mprint ("stdin");
