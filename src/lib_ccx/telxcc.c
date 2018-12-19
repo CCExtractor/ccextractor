@@ -907,13 +907,13 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			if (!ctx->seen_sub_page[thisp])
 			{
 				ctx->seen_sub_page[thisp]=1;
-				mprint ("\rNotice: Teletext page with possible subtitles detected: %03d\n",thisp);
+				printf ("\rNotice: Teletext page with possible subtitles detected: %03d\n",thisp);
 			}
 		}
 		if ((tlt_config.page == 0) && (flag_subtitle == YES) && (i < 0xff))
 		{
 			tlt_config.page = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
-			mprint ("- No teletext page specified, first received suitable page is %03x, not guaranteed\n", tlt_config.page);
+			printf ("- No teletext page specified, first received suitable page is %03x, not guaranteed\n", tlt_config.page);
         }
 
 		// Page number and control bits
