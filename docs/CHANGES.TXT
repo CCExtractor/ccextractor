@@ -9,6 +9,7 @@
 - Fix: Many typos in comments and output messages
 - Fix: Ignore Visual Studio temporary project files
 - New: Add support for non-Latin characters in stdout
+- New: Display possible teletext pages without actual extracting(-out=report)
 
 0.87 (2018-10-23)
 -----------------
