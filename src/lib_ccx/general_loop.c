@@ -677,6 +677,10 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 			if (ret == CCX_EINVAL)
 				return ret;
 		}
+		else {
+			tlt_process_pes_packet(dec_ctx, data_node->buffer, data_node->len, dec_sub, 0);
+		}
+		
 		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
