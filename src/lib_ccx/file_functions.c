@@ -7,6 +7,9 @@ long FILEBUFFERSIZE = 1024*1024*16; // 16 Mbytes no less. Minimize number of rea
 #ifdef _WIN32
 WSADATA wsaData = {0};
 int iResult = 0;
+int isWin = 1;
+#else
+int isWin = 0;
 #endif
 
 LLONG get_file_size (int in)
@@ -190,7 +193,7 @@ void position_sanity_check(struct ccx_demuxer *ctx)
 	{
 		LLONG realpos = LSEEK (ctx->infd,0,SEEK_CUR);
 		if (realpos == -1) // Happens for example when infd==stdin.
-			return; 
+			return;
 		if (realpos != ctx->past - ctx->filebuffer_pos + ctx->bytesinbuffer)
 		{
 			fatal (CCX_COMMON_EXIT_BUG_BUG, "Position desync, THIS IS A BUG. Real pos =%lld, past=%lld.\n", realpos, ctx->past);
@@ -303,6 +306,7 @@ void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned 
  */
 size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t bytes)
 {
+	char ip[50] = "";
 	size_t origin_buffer_size = bytes;
 	size_t copied   = 0;
 	time_t seconds = 0;
@@ -386,12 +390,35 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 				int keep = ctx->bytesinbuffer > 8 ? 8 : ctx->bytesinbuffer;
 				memmove (ctx->filebuffer, ctx->filebuffer+(FILEBUFFERSIZE-keep),keep);
 				int i;
+				struct sockaddr_in source_addr;
+				socklen_t len = sizeof(source_addr);
+				/* Get address of host to check for udp network mutlicasting */
+				in_addr_t addr;
+				if (ccx_options.udpaddr != NULL)
+				{
+					struct hostent *host = gethostbyname(ccx_options.udpaddr);
+					addr = ntohl(((struct in_addr *)host->h_addr_list[0])->s_addr);
+				}
+				else
+				{
+					addr = INADDR_ANY;
+				}
+
 				if (ccx_options.input_source == CCX_DS_FILE || ccx_options.input_source == CCX_DS_STDIN)
 					i = read (ctx->infd, ctx->filebuffer + keep, FILEBUFFERSIZE-keep);
 				else if (ccx_options.input_source == CCX_DS_TCP)
 					i = net_tcp_read(ctx->infd, (char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep);
-				else
-					i = recvfrom(ctx->infd,(char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, NULL, NULL);
+				else {
+					if (IN_MULTICAST(addr) && isWin && ccx_options.udpsrc != NULL)						  /* We check if the case is of source multicast and we are in windowsOS */
+					{
+						do {
+							i = recvfrom(ctx->infd,(char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, (struct sockaddr*)&source_addr, &len); /* only peek at the data*/
+							inet_ntop(AF_INET, &(source_addr.sin_addr), ip, 50);
+						} while (strcmp(ip, ccx_options.udpsrc)!=0);									/* Loop till we find intended source */
+					}
+					else
+						i = recvfrom(ctx->infd,(char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, NULL, NULL); /*read normally if not windows or not mutlicast*/
+				}
 				if (terminate_asap) /* Looks like receiving a signal here will trigger a -1, so check that first */
 					break;
 				if (i == -1)
