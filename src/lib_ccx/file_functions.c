@@ -7,9 +7,6 @@ long FILEBUFFERSIZE = 1024*1024*16; // 16 Mbytes no less. Minimize number of rea
 #ifdef _WIN32
 WSADATA wsaData = {0};
 int iResult = 0;
-int isWin = 1;
-#else
-int isWin = 0;
 #endif
 
 LLONG get_file_size (int in)
@@ -409,15 +406,19 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 				else if (ccx_options.input_source == CCX_DS_TCP)
 					i = net_tcp_read(ctx->infd, (char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep);
 				else {
-					if (IN_MULTICAST(addr) && isWin && ccx_options.udpsrc != NULL)						  /* We check if the case is of source multicast and we are in windowsOS */
+					#ifdef _WIN32
+					if (IN_MULTICAST(addr) && ccx_options.udpsrc != NULL)						  /* We check if the case is of source multicast and we are in windowsOS */
 					{
 						do {
-							i = recvfrom(ctx->infd,(char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, (struct sockaddr*)&source_addr, &len); /* only peek at the data*/
+							i = recvfrom(ctx->infd,(char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, (struct sockaddr*)&source_addr, &len); /* peek at the data*/
 							inet_ntop(AF_INET, &(source_addr.sin_addr), ip, 50);
 						} while (strcmp(ip, ccx_options.udpsrc)!=0);									/* Loop till we find intended source */
 					}
 					else
-						i = recvfrom(ctx->infd,(char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, NULL, NULL); /*read normally if not windows or not mutlicast*/
+						i = recvfrom(ctx->infd,(char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, NULL, NULL); /*read normally if not source mutlicast case*/
+					#else
+					i = recvfrom(ctx->infd,(char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, NULL, NULL); /*read normally if not windows*/
+					#endif
 				}
 				if (terminate_asap) /* Looks like receiving a signal here will trigger a -1, so check that first */
 					break;
