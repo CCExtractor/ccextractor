@@ -303,7 +303,6 @@ void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned 
  */
 size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t bytes)
 {
-	char ip[50] = "";
 	size_t origin_buffer_size = bytes;
 	size_t copied   = 0;
 	time_t seconds = 0;
@@ -387,39 +386,12 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 				int keep = ctx->bytesinbuffer > 8 ? 8 : ctx->bytesinbuffer;
 				memmove (ctx->filebuffer, ctx->filebuffer+(FILEBUFFERSIZE-keep),keep);
 				int i;
-				struct sockaddr_in source_addr;
-				socklen_t len = sizeof(source_addr);
-				/* Get address of host to check for udp network mutlicasting */
-				in_addr_t addr;
-				if (ccx_options.udpaddr != NULL)
-				{
-					struct hostent *host = gethostbyname(ccx_options.udpaddr);
-					addr = ntohl(((struct in_addr *)host->h_addr_list[0])->s_addr);
-				}
-				else
-				{
-					addr = INADDR_ANY;
-				}
-
 				if (ccx_options.input_source == CCX_DS_FILE || ccx_options.input_source == CCX_DS_STDIN)
 					i = read (ctx->infd, ctx->filebuffer + keep, FILEBUFFERSIZE-keep);
 				else if (ccx_options.input_source == CCX_DS_TCP)
 					i = net_tcp_read(ctx->infd, (char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep);
-				else {
-					#ifdef _WIN32
-					if (IN_MULTICAST(addr) && ccx_options.udpsrc != NULL)						  /* We check if the case is of source multicast and we are in windowsOS */
-					{
-						do {
-							i = recvfrom(ctx->infd,(char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, (struct sockaddr*)&source_addr, &len); /* peek at the data*/
-							inet_ntop(AF_INET, &(source_addr.sin_addr), ip, 50);
-						} while (strcmp(ip, ccx_options.udpsrc)!=0);									/* Loop till we find intended source */
-					}
-					else
-						i = recvfrom(ctx->infd,(char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, NULL, NULL); /*read normally if not source mutlicast case*/
-					#else
-					i = recvfrom(ctx->infd,(char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, NULL, NULL); /*read normally if not windows*/
-					#endif
-				}
+				else
+					i = net_udp_read(ctx->infd, (char*) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, ccx_options.udpsrc, ccx_options.udpaddr);
 				if (terminate_asap) /* Looks like receiving a signal here will trigger a -1, so check that first */
 					break;
 				if (i == -1)
