@@ -1,5 +1,6 @@
 0.88(2018-10-24) (unreleased)
 -----------------
+- New: More tapping points for debug image in ccextractor.
 - New: Add support for tesseract 4.0
 - Optimize: Remove multiple RGB to grey conversion in OCR.
 - Fix: Update UTF8Proc to 2.2.0
