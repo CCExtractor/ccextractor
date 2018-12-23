@@ -154,6 +154,6 @@ file_browser_run(struct file_browser *browser,
 		struct hd_homerun_tab *hd_homerun);
 
 struct nk_image
-icon_load(char icon_data[]);
+icon_load(char icon_data[], int len);
 
 #endif

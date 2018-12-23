@@ -204,15 +204,11 @@ int main(void)
 	ctx = nk_glfw3_init(win, NK_GLFW3_INSTALL_CALLBACKS);
 	struct nk_font_atlas *font_atlas;
 	nk_glfw3_font_stash_begin(&font_atlas);
-	FILE *image_file = fopen("temp_font.ttf", "wb+");
-	fwrite(roboto_regular_font, sizeof(char), sizeof(roboto_regular_font), image_file);
-	fclose(image_file);
-	struct nk_font *droid = nk_font_atlas_add_from_file(font_atlas, "temp_font.ttf", 16, 0);
-	struct nk_font *droid_big = nk_font_atlas_add_from_file(font_atlas, "temp_font.ttf", 25, 0);
-	struct nk_font *droid_head = nk_font_atlas_add_from_file(font_atlas, "temp_font.ttf", 20, 0);
+	struct nk_font *droid = nk_font_atlas_add_from_memory(font_atlas, roboto_regular_font, sizeof(roboto_regular_font), 16, 0);
+	struct nk_font *droid_big = nk_font_atlas_add_from_memory(font_atlas, roboto_regular_font, sizeof(roboto_regular_font), 25, 0);
+	struct nk_font *droid_head = nk_font_atlas_add_from_memory(font_atlas, roboto_regular_font, sizeof(roboto_regular_font), 20, 0);
 	nk_glfw3_font_stash_end();
 	nk_style_set_font(ctx, &droid->handle);
-	remove("temp_font.ttf");
 
 
 
@@ -247,19 +243,19 @@ int main(void)
 
 	/* icons */
 
-	media.icons.home = icon_load(home_icon_data);
-	media.icons.directory = icon_load(directory_icon_data);
-	media.icons.computer = icon_load(computer_icon_data);
+	media.icons.home = icon_load(home_icon_data, sizeof(home_icon_data));
+	media.icons.directory = icon_load(directory_icon_data, sizeof(directory_icon_data));
+	media.icons.computer = icon_load(computer_icon_data, sizeof(computer_icon_data));
 	#ifdef _WIN32	
-	media.icons.drives = icon_load(drive_icon_data);
+	media.icons.drives = icon_load(drive_icon_data, sizeof(drive_icon_data));
 	#endif
-	media.icons.desktop = icon_load(desktop_icon_data);
-	media.icons.default_file = icon_load(default_icon_data);
-	media.icons.text_file = icon_load(text_icon_data);
-	media.icons.music_file = icon_load(music_icon_data);
-	media.icons.font_file = icon_load(font_icon_data);
-	media.icons.img_file = icon_load(img_icon_data);
-	media.icons.movie_file = icon_load(movie_icon_data);
+	media.icons.desktop = icon_load(desktop_icon_data, sizeof(desktop_icon_data));
+	media.icons.default_file = icon_load(default_icon_data, sizeof(default_icon_data));
+	media.icons.text_file = icon_load(text_icon_data, sizeof(text_icon_data));
+	media.icons.music_file = icon_load(music_icon_data, sizeof(music_icon_data));
+	media.icons.font_file = icon_load(font_icon_data, sizeof(font_icon_data));
+	media.icons.img_file = icon_load(img_icon_data, sizeof(img_icon_data));
+	media.icons.movie_file = icon_load(movie_icon_data, sizeof(movie_icon_data));
 
 
     media_init(&media);
@@ -890,16 +886,12 @@ void remove_path_entry(struct main_tab *main_settings, int indexToRemove)
 
 
 struct nk_image
-icon_load(char icon_data[])
+icon_load(char icon_data[], int len)
 {
-	FILE *image_file = fopen("temp_image.png", "wb+");
-	fwrite(icon_data, sizeof(char), MAX_ICON_ARRAY_SIZE, image_file);
-	fclose(image_file);
-
     int x,y,n;
     GLuint tex;
 
-    unsigned char *data = stbi_load("temp_image.png", &x, &y, &n, 0);
+    unsigned char *data = stbi_load_from_memory(icon_data, len, &x, &y, &n, 0);
     if (!data) die("[SDL]: failed to load icons");
 
     glGenTextures(1, &tex);
@@ -912,7 +904,6 @@ icon_load(char icon_data[])
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(data);
-    remove("temp_image.png");
     return nk_image_id((int)tex);
 }
 
