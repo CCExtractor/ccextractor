@@ -56,6 +56,7 @@ int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
     #define tmp "nul"
 #else
     #define tmp "/dev/null"
+#endif
 #ifdef PYTHON_API
     return EXIT_OK;
 #else
