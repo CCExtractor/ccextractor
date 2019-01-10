@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "ccx_decoders_common.h"
 #include "ccx_encoders_common.h"
 #include "utility.h"
