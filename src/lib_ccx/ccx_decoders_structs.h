@@ -103,6 +103,7 @@ struct ccx_decoders_common_settings_t
 	int xds_write_to_file;
 	void *private_data;
 	int ocr_quantmode;
+	int noempty;
 };
 
 struct lib_cc_decode
@@ -116,6 +117,7 @@ struct lib_cc_decode
 	void *context_cc608_field_1;
 	void *context_cc608_field_2;
 
+	int noempty;
 	int no_rollup;                                             // If 1, write one line at a time
 	int noscte20;
 	int fix_padding;                                           // Replace 0000 with 8080 in HDTV (needed for some cards)
