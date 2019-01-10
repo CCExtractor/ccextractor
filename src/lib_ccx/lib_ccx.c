@@ -33,6 +33,7 @@ static struct ccx_decoders_common_settings_t *init_decoder_setting(
 	setting->hauppauge_mode = opt->hauppauge_mode;
 	setting->xds_write_to_file = opt->transcript_settings.xds;
 	setting->ocr_quantmode = opt->ocr_quantmode;
+	setting->noempty = opt->noempty;
 	
 	return setting;
 }
@@ -175,6 +176,7 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 	ctx->pes_header_to_stdout = opt->pes_header_to_stdout;
 	ctx->ignore_pts_jumps = opt->ignore_pts_jumps;
 
+	ctx->noempty = opt->noempty;
 	ctx->hauppauge_mode = opt->hauppauge_mode;
 	ctx->live_stream = opt->live_stream;
 	ctx->binary_concat = opt->binary_concat;
@@ -392,6 +394,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		{
 			ccx_options.enc_cfg.program_number = pn;
 			ccx_options.enc_cfg.in_format = in_format;
+			ccx_options.enc_cfg.noempty = ctx->noempty;
 			enc_ctx = init_encoder(&ccx_options.enc_cfg);
 			if (!enc_ctx)
 				return NULL;
