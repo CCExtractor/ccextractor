@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "ccx_decoders_common.h"
 #include "ccx_encoders_common.h"
 #include "utility.h"
@@ -986,7 +985,11 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	}
 
 	if (!opt->append_mode) 
-		remove(opt->output_filename);
+	{
+		FILE *file;
+		if (file = fopen(opt->output_filename, "r"))
+			open(opt->output_filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+	}
 	
 	ctx->in_fileformat = opt->in_format;
 
