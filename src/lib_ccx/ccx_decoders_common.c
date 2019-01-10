@@ -367,6 +367,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 	ctx->vbi_decoder = NULL;
 	ctx->ocr_quantmode = setting->ocr_quantmode;
+	ctx->noempty = setting->noempty;
 	return ctx;
 }
 
