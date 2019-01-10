@@ -986,8 +986,8 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 	if (!opt->append_mode) 
 	{
-		FILE *file;
-		if (file = fopen(opt->output_filename, "r"))
+		FILE *file_exists;
+		if (file_exists = fopen(opt->output_filename, "r"))
 			open(opt->output_filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 	}
 	
