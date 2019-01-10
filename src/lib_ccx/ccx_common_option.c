@@ -12,6 +12,7 @@ void init_options (struct ccx_s_options *options)
 #else
 	options->buffer_input = 0; // In Linux, not so much.
 #endif
+	options->noempty = 0;
 	options->nofontcolor=0; // 1 = don't put <font color> tags
 	options->notypesetting=0; // 1 = Don't put <i>, <u>, etc typesetting tags
 	options->no_rollup = 0;
