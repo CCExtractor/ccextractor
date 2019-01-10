@@ -377,6 +377,7 @@ void print_usage (void)
 	mprint ("                       (DEFAULT is -1)\n");
 	mprint ("Use --append to prevent overwriting of existing files. The output will be\n");
 	mprint ("      appended instead.\n");
+	mprint ("Use --noempty parameter to prevent creating empty output files.\n");
 	mprint ("                 -cc2: When in srt/sami mode, process captions in channel 2\n");
 	mprint ("                       instead of channel 1.\n");
 	mprint ("-svc --service N1[cs1],N2[cs2]...:\n");
@@ -1408,6 +1409,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			if (FILEBUFFERSIZE<8)
 				FILEBUFFERSIZE=8; // Otherwise crashes are guaranteed at least in MythTV
 			i++;
+			continue;
+		}
+		if (strcmp(argv[i], "--noempty") == 0)
+		{
+			opt->noempty=1;
 			continue;
 		}
 		if (strcmp (argv[i],"-dru")==0)
