@@ -38,6 +38,7 @@ struct encoder_cfg
 	int force_flush;                     // Force flush on content write
 	int append_mode;                     // Append mode for output files
 	int ucla;                            // 1 if -UCLA used, 0 if not
+	int noempty;
 
 	enum ccx_encoding_type encoding;
 	enum ccx_output_date_format date_format;
@@ -84,6 +85,7 @@ struct encoder_cfg
 struct ccx_s_options // Options from user parameters
 {
 	int extract;                                               // Extract 1st, 2nd or both fields
+	int noempty;
 	int no_rollup;
 	int noscte20;
 	int webvtt_create_css;
