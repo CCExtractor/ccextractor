@@ -2,7 +2,7 @@
 
 # CCExtractor
 
-[![Build Status](https://travis-ci.org/CCExtractor/ccextractor.svg?branch=master)](https://travis-ci.org/CCExtractor/ccextractor)
+<img src="https://raw.githubusercontent.com/CCExtractor/ccextractor-org-media/master/static/macOS-build-badge-logo.png" width="20"> [![Build Status](https://travis-ci.org/CCExtractor/ccextractor.svg?branch=master)](https://travis-ci.org/CCExtractor/ccextractor)
 [![Sample-Platform Build Status Windows](https://sampleplatform.ccextractor.org/static/img/status/build-windows.svg?maxAge=1800)](https://sampleplatform.ccextractor.org/test/master/windows)
 [![Sample-Platform Build Status Linux](https://sampleplatform.ccextractor.org/static/img/status/build-linux.svg?maxAge=1800)](https://sampleplatform.ccextractor.org/test/master/linux)
 [![SourceForge](https://img.shields.io/badge/SourceForge%20downloads-213k%2Ftotal-brightgreen.svg)](https://sourceforge.net/projects/ccextractor/)
