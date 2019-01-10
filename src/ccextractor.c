@@ -418,6 +418,7 @@ int api_start(struct ccx_s_options api_options)
 		curl_easy_cleanup(curl);
   	curl_global_cleanup();
 #endif
+	
     if (!ctx->noempty || ret)
         dinit_libraries(&ctx);
 
