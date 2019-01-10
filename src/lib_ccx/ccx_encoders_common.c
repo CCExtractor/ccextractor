@@ -975,6 +975,18 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 		free(ctx);
 		return NULL;
 	}
+	
+	if (!opt->noempty) 
+	{
+		if (!opt->append_mode)
+			ctx->out->fh = open(ctx->out->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+		else
+			ctx->out->fh = open(ctx->out->filename, O_RDWR | O_CREAT | O_APPEND | O_BINARY, S_IREAD | S_IWRITE);
+	}
+
+	if (!opt->append_mode) 
+		remove(opt->output_filename);
+	
 	ctx->in_fileformat = opt->in_format;
 
 	/** used in case of SUB_EOD_MARKER */
@@ -1069,6 +1081,7 @@ struct ccx_s_write *get_output_ctx(struct encoder_ctx *ctx, int lan)
 
 int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 {
+	context->out->fh = open(context->out->filename, O_RDWR | O_CREAT | O_APPEND | O_BINARY, S_IREAD | S_IWRITE);
 	int wrote_something = 0;
 	int ret = 0;
 
