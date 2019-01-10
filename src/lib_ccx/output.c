@@ -52,6 +52,10 @@ int temporarily_open_output(struct ccx_s_write *wb)
 
 int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
 {
+#ifdef _WIN32
+    #define tmp "nul"
+#else
+    #define tmp "/dev/null"
 #ifdef PYTHON_API
     return EXIT_OK;
 #else
@@ -63,9 +67,9 @@ int init_write (struct ccx_s_write *wb, char *filename, int with_semaphore)
 	wb->with_semaphore = with_semaphore;
 	wb->append_mode = ccx_options.enc_cfg.append_mode;
 	if(!(wb->append_mode))
-		wb->fh = open (filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+		wb->fh = open (tmp, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 	else
-		wb->fh = open (filename, O_RDWR | O_CREAT | O_APPEND | O_BINARY, S_IREAD | S_IWRITE);
+		wb->fh = open (tmp, O_RDWR | O_CREAT | O_APPEND | O_BINARY, S_IREAD | S_IWRITE);
 	wb->renaming_extension = 0;
 	if (wb->fh == -1)
 	{
