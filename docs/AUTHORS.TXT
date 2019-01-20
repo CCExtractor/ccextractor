@@ -83,3 +83,10 @@ Google Summer of Code 2017 students
 - Diptanshu Jamgade
 - Mayank Gupta
 
+Google Code-in 2018 students
+- Matej Plavevski
+- Ivan Makarov
+- Albert (alufers)
+- Brian M 
+- John Chew
+- T1duS 
