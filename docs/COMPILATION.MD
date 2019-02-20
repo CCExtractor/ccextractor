@@ -24,6 +24,7 @@ sudo apt-get install -y tesseract-ocr
 sudo apt-get install -y tesseract-ocr-dev
 sudo apt-get install -y libleptonica-dev
 ```
+**Note:** On Ubuntu Version 18.04 (Bionic) and (probably) later, install `libtesseract-dev` rather than `tesseract-ocr-dev`, which does not exist anymore.
 
 **Note:** On Ubuntu Version 14.04 (Trusty) and earlier, you should build leptonica and tesseract from source
 
