@@ -1,4 +1,4 @@
-﻿#include "lib_ccx.h"
+#include "lib_ccx.h"
 #include "utility.h"
 #include "matroska.h"
 #include "ccx_encoders_helpers.h"
@@ -517,36 +517,32 @@ void parse_segment_cluster(struct matroska_ctx* mkv_ctx) {
                       (int) (mkv_ctx->current_second % 60));
 }
 
-void parse_simple_block(struct matroska_ctx* mkv_ctx, ULLONG timecode) {
+void parse_simple_block(struct matroska_ctx* mkv_ctx, ULLONG frame_timestamp) {
     FILE* file = mkv_ctx->file;
 
     struct matroska_avc_frame frame;
     ULLONG len = read_vint_length(file);
+    ULLONG pos = get_current_byte(file);
 
-    // Parse frame info. Change it to proper parsing of size
-    ULLONG info_len = 4;
-    UBYTE* info = read_byte_block(file, info_len);
-    UBYTE track = info[0];
-    if(track != 0x81) {
-        // Skip audio. Temporary
-        skip_bytes(file, len - info_len);
-        free(info);
+    ULLONG track = read_vint_length(file);
+
+    if(track != mkv_ctx->avc_track_number) {
+        // Skip everything except AVC track
+        skip_bytes(file, len - 1); // 1 byte for track
         return;
     }
 
-    int timestamp = info[1];
-    timestamp <<= 8;
-    timestamp += info[2];
-    UBYTE keyframe = info[3];
+    ULLONG timecode = mkv_read_byte(file);
+    timecode <<= 8; timecode += mkv_read_byte(file);
+    mkv_read_byte(file);    // skip flags byte
 
     // Construct the frame
-    frame.len = len - info_len;
+    frame.len = pos + len - get_current_byte(file);
     frame.data = read_byte_block(file, frame.len);
-    frame.FTS = timestamp + timecode;
+    frame.FTS = frame_timestamp + timecode;
 
     process_avc_frame_mkv(mkv_ctx, frame);
 
-    free(info);
     free(frame.data);
 }
 
@@ -564,7 +560,7 @@ int process_avc_frame_mkv(struct matroska_ctx* mkv_ctx, struct matroska_avc_fram
     struct lib_cc_decode *dec_ctx = update_decoder_list(mkv_ctx->ctx);
 
     // Delete
-    // Inspired by int set_fts(struct ccx_common_timing_ctx *ctx)
+    // Inspired by set_fts(struct ccx_common_timing_ctx *ctx)
     set_current_pts(dec_ctx->timing, frame.FTS*(MPEG_CLOCK_FREQ/1000));
     set_fts(dec_ctx->timing);
 
@@ -583,6 +579,8 @@ int process_avc_frame_mkv(struct matroska_ctx* mkv_ctx, struct matroska_avc_fram
         i += nal_length;
     } // outer for
     assert(i == frame.len);
+
+    mkv_ctx->current_second = (int) (get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
 
     return status;
 }
@@ -686,11 +684,15 @@ void parse_segment_track_entry(struct matroska_ctx* mkv_ctx) {
                 codec_id_string = read_vint_block_string(file);
                 codec_id = get_track_subtitle_codec_id(codec_id_string);
                 mprint("    Codec ID: %s\n", codec_id_string);
-                free(codec_id_string);
+                //We only support AVC by now
+                if( *codec_id_string == *avc_codec_id) mkv_ctx->avc_track_number = track_number;
+                else free(codec_id_string);
                 MATROSKA_SWITCH_BREAK(code, code_len);
             case MATROSKA_SEGMENT_TRACK_CODEC_PRIVATE:
                 if (track_type == MATROSKA_TRACK_TYPE_SUBTITLE)
                     header = read_vint_block_string(file);
+                else if( *codec_id_string == *avc_codec_id && mkv_ctx->avc_track_number == track_number)
+                    parse_private_codec_data(mkv_ctx);
                 else
                     read_vint_block_skip(file);
                 MATROSKA_SWITCH_BREAK(code, code_len);
@@ -795,6 +797,24 @@ void parse_segment_track_entry(struct matroska_ctx* mkv_ctx) {
         free(lang);
 }
 
+// Read sequence parameter set for AVC
+void parse_private_codec_data(struct matroska_ctx* mkv_ctx)
+{
+    FILE* file = mkv_ctx->file;
+    ULLONG len = read_vint_length(file);
+    // Skip reserved data
+    ULLONG reserved_len = 8;
+    skip_bytes(file, reserved_len);
+
+    struct lib_cc_decode *dec_ctx = update_decoder_list(mkv_ctx->ctx);
+    ULLONG size = len - reserved_len;
+
+    unsigned char* data = read_byte_block(file, size);
+    do_NAL(dec_ctx, data, size, &mkv_ctx->dec_sub);
+
+    free(data);
+}
+
 void parse_segment_tracks(struct matroska_ctx* mkv_ctx)
 {
     FILE* file = mkv_ctx->file;
@@ -812,7 +832,7 @@ void parse_segment_tracks(struct matroska_ctx* mkv_ctx)
             case MATROSKA_SEGMENT_TRACK_ENTRY:
 
 
-				    parse_segment_track_entry(mkv_ctx);
+                    parse_segment_track_entry(mkv_ctx);
             MATROSKA_SWITCH_BREAK(code, code_len);
 
                 /* Misc ids */
@@ -1162,7 +1182,9 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
     mkv_ctx->filename = ctx->inputfile[ctx->current_file];
     mkv_ctx->file = create_file(ctx);
     mkv_ctx->sub_tracks = malloc(sizeof(struct matroska_sub_track**));
+    //EIA-608
     memset(&mkv_ctx->dec_sub,0,sizeof(mkv_ctx->dec_sub));
+    mkv_ctx->avc_track_number = -1;
 
     matroska_parse(mkv_ctx);
 
@@ -1174,7 +1196,13 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
     int sentence_count = mkv_ctx->sentence_count;
     matroska_free_all(mkv_ctx);
 
-    mprint("\n");
+    mprint("\n\n");
+
+    // Support only one AVC track by now
+    if(mkv_ctx->avc_track_number > -1)
+        mprint("Found AVC track. ");
+    else
+        mprint("Found no AVC track. ");
 
     if(mkv_ctx->dec_sub.got_output) return 1;
     return sentence_count;
