@@ -1,8 +1,10 @@
-#include "lib_ccx.h"
+﻿#include "lib_ccx.h"
 #include "utility.h"
 #include "matroska.h"
 #include "ccx_encoders_helpers.h"
+#include "ccx_common_timing.h"
 #include <limits.h>
+#include <assert.h>
 
 void skip_bytes(FILE* file, ULLONG n) {
     FSEEK(file, n, SEEK_CUR);
@@ -480,8 +482,8 @@ void parse_segment_cluster(struct matroska_ctx* mkv_ctx) {
                 read_vint_block_skip(file);
                 MATROSKA_SWITCH_BREAK(code, code_len);
             case MATROSKA_SEGMENT_CLUSTER_SIMPLE_BLOCK:
-                // Same as Block inside the Block Group, but we can't save subs in this structure
-                read_vint_block_skip(file);
+                // Same as Block inside the Block Group
+                parse_simple_block(mkv_ctx, timecode);
                 MATROSKA_SWITCH_BREAK(code, code_len);
             case MATROSKA_SEGMENT_CLUSTER_BLOCK_GROUP:
                 parse_segment_cluster_block_group(mkv_ctx, timecode);
@@ -513,6 +515,76 @@ void parse_segment_cluster(struct matroska_ctx* mkv_ctx) {
     activity_progress((int) (get_current_byte(file) * 100 / mkv_ctx->ctx->inputsize),
                       (int) (mkv_ctx->current_second / 60),
                       (int) (mkv_ctx->current_second % 60));
+}
+
+void parse_simple_block(struct matroska_ctx* mkv_ctx, ULLONG timecode) {
+    FILE* file = mkv_ctx->file;
+
+    struct matroska_avc_frame frame;
+    ULLONG len = read_vint_length(file);
+
+    // Parse frame info. Change it to proper parsing of size
+    ULLONG info_len = 4;
+    UBYTE* info = read_byte_block(file, info_len);
+    UBYTE track = info[0];
+    if(track != 0x81) {
+        // Skip audio. Temporary
+        skip_bytes(file, len - info_len);
+        free(info);
+        return;
+    }
+
+    int timestamp = info[1];
+    timestamp <<= 8;
+    timestamp += info[2];
+    UBYTE keyframe = info[3];
+
+    // Construct the frame
+    frame.len = len - info_len;
+    frame.data = read_byte_block(file, frame.len);
+    frame.FTS = timestamp + timecode;
+
+    process_avc_frame_mkv(mkv_ctx, frame);
+
+    free(info);
+    free(frame.data);
+}
+
+static long bswap32(long v)
+{
+    // For 0x12345678 returns 78563412
+    long swapped=((v&0xFF)<<24) | ((v&0xFF00)<<8) | ((v&0xFF0000) >>8) | ((v&0xFF000000) >>24);
+    return swapped;
+}
+
+int process_avc_frame_mkv(struct matroska_ctx* mkv_ctx, struct matroska_avc_frame frame)
+{
+    int status = 0;
+    uint32_t i;
+    struct lib_cc_decode *dec_ctx = update_decoder_list(mkv_ctx->ctx);
+
+    // Delete
+    // Inspired by int set_fts(struct ccx_common_timing_ctx *ctx)
+    set_current_pts(dec_ctx->timing, frame.FTS*(MPEG_CLOCK_FREQ/1000));
+    set_fts(dec_ctx->timing);
+
+    // NAL unit length is assumed to be 4
+    uint8_t nal_unit_size = 4;
+
+    for(i = 0; i < frame.len; )
+    {
+        uint32_t nal_length;
+
+        nal_length = bswap32(*(long* ) &frame.data[i]);
+        i += nal_unit_size;
+
+        if (nal_length>0)
+            do_NAL (dec_ctx, (unsigned char *) &( frame.data[i]), nal_length, &mkv_ctx->dec_sub);
+        i += nal_length;
+    } // outer for
+    assert(i == frame.len);
+
+    return status;
 }
 
 char* get_track_entry_type_description(enum matroska_track_entry_type type) {
@@ -1002,6 +1074,13 @@ void matroska_save_all(struct matroska_ctx* mkv_ctx,char* lang)
       else
         save_sub_track(mkv_ctx, mkv_ctx->sub_tracks[i]);
       }
+
+    //EIA-608
+    struct lib_cc_decode *dec_ctx = update_decoder_list(mkv_ctx->ctx);
+    if(mkv_ctx->dec_sub.got_output) {
+        struct encoder_ctx *enc_ctx = update_encoder_list(mkv_ctx->ctx);
+        encode_sub(enc_ctx, &mkv_ctx->dec_sub);
+    }
 }
 
 void matroska_free_all(struct matroska_ctx* mkv_ctx)
@@ -1083,6 +1162,7 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
     mkv_ctx->filename = ctx->inputfile[ctx->current_file];
     mkv_ctx->file = create_file(ctx);
     mkv_ctx->sub_tracks = malloc(sizeof(struct matroska_sub_track**));
+    memset(&mkv_ctx->dec_sub,0,sizeof(mkv_ctx->dec_sub));
 
     matroska_parse(mkv_ctx);
 
@@ -1096,5 +1176,6 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 
     mprint("\n");
 
+    if(mkv_ctx->dec_sub.got_output) return 1;
     return sentence_count;
 }

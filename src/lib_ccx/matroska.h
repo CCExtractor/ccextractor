@@ -204,6 +204,11 @@ struct matroska_sub_sentence {
 	struct block_addition* blockaddition;
 };
 
+struct matroska_avc_frame {
+    char *data;
+    ULLONG len;
+    LLONG FTS;
+};
 
 struct matroska_sub_track {
     char* header;   // Style header for ASS/SSA (and other) subtitles
@@ -219,6 +224,7 @@ struct matroska_sub_track {
 struct matroska_ctx {
     struct matroska_sub_track** sub_tracks;
     struct lib_ccx_ctx* ctx;
+    struct cc_subtitle dec_sub;
     int sub_tracks_count;
 	int block_index;
     int sentence_count;
@@ -247,6 +253,8 @@ void parse_segment_info(FILE* file);
 struct matroska_sub_sentence* parse_segment_cluster_block_group_block(struct matroska_ctx* mkv_ctx, ULLONG cluster_timecode);
 void parse_segment_cluster_block_group(struct matroska_ctx* mkv_ctx, ULLONG cluster_timecode);
 void parse_segment_cluster(struct matroska_ctx* mkv_ctx);
+void parse_simple_block(struct matroska_ctx* mkv_ctx, ULLONG timecode);
+int process_avc_frame_mkv(struct matroska_ctx* mkv_ctx, struct matroska_avc_frame frame);
 void parse_segment_track_entry(struct matroska_ctx* mkv_ctx);
 void parse_segment_tracks(struct matroska_ctx* mkv_ctx);
 void parse_segment(struct matroska_ctx* mkv_ctx);
