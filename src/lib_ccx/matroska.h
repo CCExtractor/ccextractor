@@ -219,6 +219,8 @@ struct matroska_sub_track {
     ULLONG track_number;
     ULLONG lang_index;
     enum matroska_track_subtitle_codec_id codec_id;
+    char* codec_id_string;
+    ULLONG last_timestamp;
 
     int sentence_count;
     struct matroska_sub_sentence** sentences;

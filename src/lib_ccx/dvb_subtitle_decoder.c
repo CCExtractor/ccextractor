@@ -1685,9 +1685,14 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 		return;
 	if (enc_ctx->write_previous) //this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
 	{
+        enc_ctx->prev->last_string = NULL; // Reset last recognized sub text
 		sub->prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the end time of the previous sub the current pts
 		encode_sub(enc_ctx->prev, sub->prev); //we encode it
-		enc_ctx->srt_counter = enc_ctx->prev->srt_counter; //for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
+
+        enc_ctx->last_string = enc_ctx->prev->last_string; // Update last recognized string (used in Matroska)
+        enc_ctx->prev->last_string = NULL;
+
+        enc_ctx->srt_counter = enc_ctx->prev->srt_counter; //for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
 		enc_ctx->prev_start = enc_ctx->prev->prev_start;
 		sub->prev->got_output = 0;
 		if (enc_ctx->write_format == CCX_OF_WEBVTT) {	// we already wrote header, but since we encoded last sub, we must prevent multiple headers in future

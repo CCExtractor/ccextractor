@@ -535,6 +535,7 @@ void free_encoder_context(struct encoder_ctx *ctx)
 	freep(&ctx->start_credits_text);
 	freep(&ctx->end_credits_text);
 	freep(&ctx->prev);
+    freep(&ctx->last_string);
 	freep(&ctx);
 }
 void free_decoder_context(struct lib_cc_decode *ctx)
