@@ -1,25 +1,101 @@
 language: c
-os:
-  - osx
-  - linux
- 
-sudo:
-  - true
 
-compiler:
-- gcc
-- clang
+matrix:
+  include:
+    - os: osx
+      osx_image: xcode10.1
+      compiler: gcc
+      addons:
+        homebrew:
+          packages:
+            autoconf
+            libtool
+            tesseract
+            leptonica
+      script:
+        - cd mac
+        - ./build.command
+        - ./ccextractor --version
 
-before_install:
-- if [[ $TRAVIS_OS_NAME == 'osx' ]]; then brew upgrade automake; brew install pkg-config autoconf automake libtool tesseract leptonica; fi
-- if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo apt-get install -y libcurl4-gnutls-dev tesseract-ocr tesseract-ocr-dev libleptonica-dev autoconf-archive; fi
-- if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo apt-get install python-distutils-extra tesseract-ocr tesseract-ocr-eng libopencv-dev libtesseract-dev libleptonica-dev python-all-dev swig libcv-dev python-opencv python-numpy python-setuptools build-essential subversion; fi
-- if [[ $TRAVIS_OS_NAME == 'linux' ]]; then wget https://github.com/DanBloomberg/leptonica/releases/download/1.74.4/leptonica-1.74.4.tar.gz && tar xvf leptonica-1.74.4.tar.gz; cd leptonica-1.74.4; ./configure && make && sudo make install; cd ..; fi
-- if [[ $TRAVIS_OS_NAME == 'linux' ]]; then git clone https://github.com/tesseract-ocr/tesseract.git; cd tesseract; ./autogen.sh; ./configure --enable-debug; LDFLAGS="-L/usr/local/lib" CFLAGS="-I/usr/local/include" make; sudo make install; sudo ldconfig; cd ..; fi
+    - os: osx
+      osx_image: xcode10.1
+      compiler: clang
+      addons:
+        homebrew:
+          packages:
+            autoconf
+            libtool
+            tesseract
+            leptonica
+      script:
+        - cd mac
+        - ./build.command
+        - ./ccextractor --version
 
-script:
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cd mac; ./build.command; cd ..; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cd mac; ./autogen.sh; ./configure; make; cd ..; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd linux; ./build; cd ..; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mkdir build; cd build; cmake ../src/; make; cd ..; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd linux; ./autogen.sh; ./configure; make; cd ..; fi
+    - os: osx
+      osx_image: xcode10.1
+      compiler: gcc
+      addons:
+        homebrew:
+          packages:
+            autoconf
+            libtool
+            tesseract
+            leptonica
+      script:
+        - cd mac
+        - ./autogen.sh
+        - ./configure
+        - make
+        - ./ccextractor --version
+
+    - os: osx
+      osx_image: xcode10.1
+      compiler: clang
+      addons:
+        homebrew:
+          packages:
+            autoconf
+            libtool
+            tesseract
+            leptonica
+      script:
+        - cd mac
+        - ./autogen.sh
+        - ./configure
+        - make
+        - ./ccextractor --version
+
+    - os: osx
+      osx_image: xcode10.1
+      compiler: gcc
+      addons:
+        homebrew:
+          packages:
+            autoconf
+            libtool
+            tesseract
+            leptonica
+      script:
+        - mkdir build
+        - cd build
+        - cmake ../src/
+        - make
+        - ./ccextractor --version
+
+    - os: osx
+      osx_image: xcode10.1
+      compiler: clang
+      addons:
+        homebrew:
+          packages:
+            autoconf
+            libtool
+            tesseract
+            leptonica
+      script:
+        - mkdir build
+        - cd build
+        - cmake ../src/
+        - make
+        - ./ccextractor --version
