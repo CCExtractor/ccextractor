@@ -685,8 +685,7 @@ void parse_segment_track_entry(struct matroska_ctx* mkv_ctx) {
                 codec_id = get_track_subtitle_codec_id(codec_id_string);
                 mprint("    Codec ID: %s\n", codec_id_string);
                 //We only support AVC by now
-                if( *codec_id_string == *avc_codec_id) mkv_ctx->avc_track_number = track_number;
-                else free(codec_id_string);
+                if( strcmp((const char *)codec_id_string, (const char *)avc_codec_id) == 0 ) mkv_ctx->avc_track_number = track_number;
                 MATROSKA_SWITCH_BREAK(code, code_len);
             case MATROSKA_SEGMENT_TRACK_CODEC_PRIVATE:
                 if (track_type == MATROSKA_TRACK_TYPE_SUBTITLE)
@@ -695,6 +694,7 @@ void parse_segment_track_entry(struct matroska_ctx* mkv_ctx) {
                     parse_private_codec_data(mkv_ctx);
                 else
                     read_vint_block_skip(file);
+                free(codec_id_string);
                 MATROSKA_SWITCH_BREAK(code, code_len);
             case MATROSKA_SEGMENT_TRACK_CODEC_NAME:
                 read_vint_block_skip(file);
