@@ -178,6 +178,7 @@ char* matroska_track_text_subtitle_id_extensions[] = {
 };
 
 char* avc_codec_id = "V_MPEG4/ISO/AVC";
+char* dvb_codec_id = "S_DVBSUB";
 
 /* Messages */
 #define MATROSKA_INFO "\nMatroska parser info: "
@@ -259,7 +260,7 @@ void parse_segment_cluster(struct matroska_ctx* mkv_ctx);
 void parse_simple_block(struct matroska_ctx* mkv_ctx, ULLONG frame_timestamp);
 int process_avc_frame_mkv(struct matroska_ctx* mkv_ctx, struct matroska_avc_frame frame);
 void parse_segment_track_entry(struct matroska_ctx* mkv_ctx);
-void parse_private_codec_data(struct matroska_ctx* mkv_ctx);
+void parse_private_codec_data(struct matroska_ctx* mkv_ctx, char* codec_id_string, ULLONG track_number, char* lang);
 void parse_segment_tracks(struct matroska_ctx* mkv_ctx);
 void parse_segment(struct matroska_ctx* mkv_ctx);
 
