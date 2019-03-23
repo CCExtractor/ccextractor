@@ -128,6 +128,9 @@ struct encoder_ctx
 	//for dvb subs
 	struct encoder_ctx* prev;
 	int write_previous;
+    //for dvb in .mkv
+    int is_mkv; //are we working with .mkv file
+    char* last_string; //last recognized DVB sub
 
 	// Segmenting
 	int segment_pending;

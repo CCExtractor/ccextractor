@@ -10,6 +10,9 @@
 - Fix: Many typos in comments and output messages
 - Fix: Ignore Visual Studio temporary project files
 - New: Add support for non-Latin characters in stdout
+- Fix: Check whether stream is empty
+- New: Add support for EIA-608 inside .mkv
+- New: Add support for DVB inside .mkv
 
 0.87 (2018-10-23)
 -----------------

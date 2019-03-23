@@ -988,6 +988,9 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->encoding = opt->encoding;
 	ctx->write_format = opt->write_format;
 
+    ctx->is_mkv = 0;
+    ctx->last_string = NULL;
+
 	ctx->transcript_settings = &opt->transcript_settings;
 	ctx->no_bom = opt->no_bom;
 	ctx->sentence_cap = opt->sentence_cap;
