@@ -129,6 +129,25 @@ char* probe_tessdata_location(int lang_index)
 	return NULL;
 }
 
+/**
+ * probe_tessdata_location_string
+ *
+ * This function returns tesseract data location given language string
+ */
+char* probe_tessdata_location_string(char* lang)
+{
+    int lang_index = -1;
+    for(int i = 0; i < NB_LANGUAGE; i++) {
+        if(language[i]) {
+            if(strcmp(lang, language[i]) == 0) lang_index = i;
+        }
+    }
+
+    if(lang_index == -1) return NULL; // No such language found
+
+    return probe_tessdata_location(lang_index);
+}
+
 void* init_ocr(int lang_index)
 {
 	int ret = -1;
