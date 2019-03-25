@@ -110,10 +110,10 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 	dinit_encoder(&enc_ctx, 0); //TODO: Replace 0 with end timestamp
 
 	// Free the allocated memory for frame processing
-	av_free(ctx->rgb_buffer);
-	av_frame_free(ctx->rgb_frame);
-	av_frame_free(ctx->frame);
-	avcodec_close(ctx->codec_ctx);
+    av_free(ctx->rgb_buffer);
+    if(ctx->frame) av_frame_free(&ctx->frame);
+    if(ctx->rgb_frame) av_frame_free(&ctx->rgb_frame);
+    avcodec_close(ctx->codec_ctx);
 	avformat_close_input(&ctx->format_ctx);
 }
 
@@ -221,23 +221,44 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	ctx->tess_handle = TessBaseAPICreate();
 	char* pars_vec = strdup("debug_file");
 	char* pars_values = strdup("/dev/null");
-	char *tessdata_dir_path=".";
+    char* tessdata_path = NULL;
 
-	int ret = -1;
-	if(options->ocrlang)
-	{
-		ret = TessBaseAPIInit4(ctx->tess_handle, NULL, options->ocrlang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
-			&pars_values, 1, false);
-		if(ret != 0)
-		{
-			mprint("Failed loading language: %s, trying to load eng\n", options->ocrlang);
-		}
-	}
-	if(ret != 0)
-	{
-		ret = TessBaseAPIInit4(ctx->tess_handle, NULL, "eng", ccx_options.ocr_oem, NULL, 0, &pars_vec,
-			&pars_values, 1, false);
-	}
+    char* lang = options->ocrlang;
+    if(!lang) lang = "eng"; // English is default language
+
+    tessdata_path = probe_tessdata_location_string(lang);
+    if(!tessdata_path)
+    {
+        if (strcmp(lang, "eng") == 0)
+        {
+            mprint("eng.traineddata not found! No Switching Possible\n");
+            return NULL;
+        }
+        mprint("%s.traineddata not found! Switching to English\n", lang);
+        lang = "eng";
+        tessdata_path = probe_tessdata_location_string("eng");
+        if(!tessdata_path)
+        {
+            mprint("eng.traineddata not found! No Switching Possible\n");
+            return NULL;
+        }
+    }
+
+    int ret = -1;
+
+    if (!strncmp("4.", TessVersion(), 2))
+    {
+        char tess_path [1024];
+        snprintf(tess_path, 1024, "%s%s%s", tessdata_path, "/", "tessdata");
+        //ccx_options.ocr_oem are deprecated and only supported mode is OEM_LSTM_ONLY
+        ret = TessBaseAPIInit4(ctx->tess_handle, tess_path, lang, 1, NULL, 0, &pars_vec,
+            &pars_values, 1, false);
+    }
+    else
+    {
+        ret = TessBaseAPIInit4(ctx->tess_handle, tessdata_path, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
+            &pars_values, 1, false);
+    }
 
 	free(pars_vec);
 	free(pars_values);
