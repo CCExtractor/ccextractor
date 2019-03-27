@@ -190,7 +190,7 @@ void position_sanity_check(struct ccx_demuxer *ctx)
 	{
 		LLONG realpos = LSEEK (ctx->infd,0,SEEK_CUR);
 		if (realpos == -1) // Happens for example when infd==stdin.
-			return; 
+			return;
 		if (realpos != ctx->past - ctx->filebuffer_pos + ctx->bytesinbuffer)
 		{
 			fatal (CCX_COMMON_EXIT_BUG_BUG, "Position desync, THIS IS A BUG. Real pos =%lld, past=%lld.\n", realpos, ctx->past);
@@ -391,7 +391,7 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 				else if (ccx_options.input_source == CCX_DS_TCP)
 					i = net_tcp_read(ctx->infd, (char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep);
 				else
-					i = recvfrom(ctx->infd,(char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, NULL, NULL);
+					i = net_udp_read(ctx->infd, (char*) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, ccx_options.udpsrc, ccx_options.udpaddr);
 				if (terminate_asap) /* Looks like receiving a signal here will trigger a -1, so check that first */
 					break;
 				if (i == -1)

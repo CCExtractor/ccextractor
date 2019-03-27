@@ -129,6 +129,25 @@ char* probe_tessdata_location(int lang_index)
 	return NULL;
 }
 
+/**
+ * probe_tessdata_location_string
+ *
+ * This function returns tesseract data location given language string
+ */
+char* probe_tessdata_location_string(char* lang)
+{
+    int lang_index = -1;
+    for(int i = 0; i < NB_LANGUAGE; i++) {
+        if(language[i]) {
+            if(strcmp(lang, language[i]) == 0) lang_index = i;
+        }
+    }
+
+    if(lang_index == -1) return NULL; // No such language found
+
+    return probe_tessdata_location(lang_index);
+}
+
 void* init_ocr(int lang_index)
 {
 	int ret = -1;
@@ -239,17 +258,50 @@ BOX* ignore_alpha_at_edge(png_byte *alpha, unsigned char* indata, int w, int h, 
 	return cropWindow;
 }
 
+void debug_tesseract(struct ocrCtx* ctx, char *dump_path)
+{
+#ifdef OCR_DEBUG
+	char       str[1024] = "";
+	static int i        = 0;
+	PIX*       pix      = NULL;
+	PIXA*      pixa     = NULL;
+
+	pix = TessBaseAPIGetInputImage(ctx->api);
+	sprintf(str,"%sinput_%d.jpg", dump_path, i);
+	pixWrite(str, pix, IFF_JFIF_JPEG);
+
+	pix = TessBaseAPIGetThresholdedImage(ctx->api);
+	sprintf(str,"%sthresholded_%d.jpg", dump_path, i);
+	pixWrite(str, pix, IFF_JFIF_JPEG);
+
+
+	TessBaseAPIGetRegions(ctx->api, &pixa);
+	sprintf(str,"%sregion_%d", dump_path, i);
+        pixaWriteFiles(str, pixa, IFF_JFIF_JPEG);
+
+
+	TessBaseAPIGetTextlines(ctx->api, &pixa, NULL);
+	sprintf(str,"%slines_%d", dump_path, i);
+        pixaWriteFiles(str, pixa, IFF_JFIF_JPEG);
+
+	TessBaseAPIGetWords(ctx->api, &pixa);
+	sprintf(str,"%swords_%d", dump_path, i);
+        pixaWriteFiles(str, pixa, IFF_JFIF_JPEG);
+
+	i++;
+#endif
+}
 char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* indata,int w, int h, struct image_copy *copy)
 {
 	// uncomment the below lines to output raw image as debug.png iteratively
 	// save_spupng("debug.png", indata, w, h, palette, alpha, 16);
 
-	PIX	*pix = NULL;
-	PIX	*cpix = NULL;
-	PIX	*cpix_gs = NULL; // Grayscale version
-	PIX *color_pix = NULL;
-	PIX *color_pix_out = NULL;
-	char*text_out= NULL;
+	PIX*  pix           = NULL;
+	PIX*  cpix          = NULL;
+	PIX*  cpix_gs       = NULL; // Grayscale version
+	PIX*  color_pix     = NULL;
+	PIX*  color_pix_out = NULL;
+	char* text_out      = NULL;
 	int i,j,index;
 	unsigned int wpl;
 	unsigned int *data,*ppixel;
@@ -298,24 +350,14 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	BOX *crop_points = ignore_alpha_at_edge(copy->alpha, copy->data, w, h, color_pix, &color_pix_out);
 	// Converting image to grayscale for OCR to avoid issues with transparency
 	cpix_gs = pixConvertRGBToGray(cpix, 0.0, 0.0, 0.0);
-#ifdef OCR_DEBUG
-	{
-	char str[128] = "";
-	static int i = 0;
-	sprintf(str,"temp/file_c_%d.jpg",i);
-	printf("Writing file_c_%d.jpg\n", i);
-	pixWrite(str, cpix_gs, IFF_JFIF_JPEG);
-	i++;
-	}
-#endif
 
 	if (cpix_gs==NULL)
 		tess_ret=-1;
 	else
 	{
 		TessBaseAPISetImage2(ctx->api, cpix_gs);
-		color_pix_out = TessBaseAPIGetThresholdedImage(ctx->api);
 		tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
+		debug_tesseract(ctx, "./temp/");
 		if (tess_ret) {
 			mprint("\nIn ocr_bitmap: Failed to perform OCR. Skipped.\n");
 

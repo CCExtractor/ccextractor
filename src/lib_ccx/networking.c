@@ -329,6 +329,44 @@ int net_tcp_read(int socket, void *buffer, size_t length)
 	return l;
 }
 
+int net_udp_read(int socket, void *buffer, size_t length, const char *src_str, const char *addr_str)
+{
+	assert(buffer != NULL);
+	assert(length > 0);
+
+	int i;
+	char ip[50] = "";
+	struct sockaddr_in source_addr;
+	socklen_t len = sizeof(source_addr);
+	/* Get address of host to check for udp network mutlicasting */
+	in_addr_t addr;
+	if (addr_str != NULL)
+	{
+		struct hostent *host = gethostbyname(addr_str);
+		addr = ntohl(((struct in_addr *)host->h_addr_list[0])->s_addr);
+	}
+	else
+	{
+		addr = INADDR_ANY;
+	}
+	#ifdef _WIN32
+	if (IN_MULTICAST(addr) && src_str != NULL)						  					/* We check if the case is of source multicast and we are in windowsOS */
+	{
+		do {
+			i = recvfrom(socket, (char *) buffer, length, 0, (struct sockaddr*)&source_addr, &len); /* peek at the data*/
+			inet_ntop(AF_INET, &(source_addr.sin_addr), ip, 50);
+		} while (strcmp(ip, src_str)!=0);												/* Loop till we find intended source */
+	}
+	else
+		i = recvfrom(socket, (char *) buffer, length, 0, NULL, NULL); 								/*read normally if not source mutlicast case*/
+	#else
+	i = recvfrom(socket, (char *) buffer, length, 0, NULL, NULL); 									/*read normally if not windows*/
+	#endif
+
+	return i;
+}
+
+
 /*
  * command | length        | data         | \r\n
  * 1 byte  | INT_LEN bytes | length bytes | 2 bytes
@@ -507,7 +545,7 @@ int start_tcp_srv(const char *port, const char *pwd)
 		if ((sockfd = accept(listen_sd, cliaddr, &clilen)) < 0)
 		{
 			if (EINTR == errno) /* TODO not necessary */
-			{   
+			{
                 		free(cliaddr);
 				continue;
 			}
@@ -999,7 +1037,7 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 	servaddr.sin_port = htons(port);
 #if _WIN32
 	// Doesn't seem correct, if there's more than one multicast stream with the same
-	// port number we get corruption - IP address needs to be specified, but 
+	// port number we get corruption - IP address needs to be specified, but
 	// in Windows we get an error 10049 (cannot bind).
 	// http ://stackoverflow.com/questions/6140734/cannot-bind-to-multicast-address-windows
 	servaddr.sin_addr.s_addr = htonl(IN_MULTICAST(addr) ? INADDR_ANY : addr);

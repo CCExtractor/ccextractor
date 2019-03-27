@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2008-2014, Dave Benson and the protobuf-c authors.
+* Copyright (c) 2008-2018, Dave Benson and the protobuf-c authors.
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -139,7 +139,7 @@ const uint8_t       *data);
 ~~~
 *
 * - `free_unpacked()`. Frees a message object obtained with the `unpack()`
-*   method.
+*   method. Freeing `NULL` is allowed (the same as with `free()`).
 *
 ~~~{.c}
 void   foo__bar__baz_bah__free_unpacked
@@ -209,6 +209,8 @@ ProtobufCBuffer     *buffer);
 # define PROTOBUF_C__END_DECLS
 #endif
 
+#define PROTOBUF_C__API
+
 PROTOBUF_C__BEGIN_DECLS
 
 #if defined(_WIN32) && defined(PROTOBUF_C_USE_SHARED_LIB)
@@ -230,12 +232,15 @@ PROTOBUF_C__BEGIN_DECLS
 
 #ifndef PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE
 #define PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(enum_name) \
-  , _##enum_name##_IS_INT_SIZE = INT_MAX
+, _##enum_name##_IS_INT_SIZE = INT_MAX
 #endif
 
 #define PROTOBUF_C__SERVICE_DESCRIPTOR_MAGIC    0x14159bc3
 #define PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC    0x28aaeef9
 #define PROTOBUF_C__ENUM_DESCRIPTOR_MAGIC       0x114315af
+
+/* Empty string used for initializers */
+extern const char protobuf_c_empty_string[];
 
 /**
 * \defgroup api Public API
@@ -251,13 +256,13 @@ PROTOBUF_C__BEGIN_DECLS
 */
 typedef enum {
 	/** Set if the field is repeated and marked with the `packed` option. */
-	PROTOBUF_C_FIELD_FLAG_PACKED = (1 << 0),
+	PROTOBUF_C_FIELD_FLAG_PACKED		= (1 << 0),
 
 	/** Set if the field is marked with the `deprecated` option. */
-	PROTOBUF_C_FIELD_FLAG_DEPRECATED = (1 << 1),
+	PROTOBUF_C_FIELD_FLAG_DEPRECATED	= (1 << 1),
 
 	/** Set if the field is a member of a oneof (union). */
-	PROTOBUF_C_FIELD_FLAG_ONEOF = (1 << 2),
+	PROTOBUF_C_FIELD_FLAG_ONEOF		= (1 << 2),
 } ProtobufCFieldFlag;
 
 /**
@@ -273,17 +278,23 @@ typedef enum {
 	PROTOBUF_C_LABEL_REQUIRED,
 
 	/**
-	* A well-formed message can have zero or one of this field (but not
-	* more than one).
-	*/
+	 * A well-formed message can have zero or one of this field (but not
+	 * more than one).
+	 */
 	PROTOBUF_C_LABEL_OPTIONAL,
 
 	/**
-	* This field can be repeated any number of times (including zero) in a
-	* well-formed message. The order of the repeated values will be
-	* preserved.
-	*/
+	 * This field can be repeated any number of times (including zero) in a
+	 * well-formed message. The order of the repeated values will be
+	 * preserved.
+	 */
 	PROTOBUF_C_LABEL_REPEATED,
+
+	/**
+	 * This field has no label. This is valid only in proto3 and is
+	 * equivalent to OPTIONAL but no "has" quantifier will be consulted.
+	 */
+	PROTOBUF_C_LABEL_NONE,
 } ProtobufCLabel;
 
 /**
@@ -365,9 +376,9 @@ typedef struct ProtobufCServiceDescriptor ProtobufCServiceDescriptor;
 /** Boolean type. */
 typedef int protobuf_c_boolean;
 
-typedef void(*ProtobufCClosure)(const ProtobufCMessage *, void *closure_data);
-typedef void(*ProtobufCMessageInit)(ProtobufCMessage *);
-typedef void(*ProtobufCServiceDestroy)(ProtobufCService *);
+typedef void (*ProtobufCClosure)(const ProtobufCMessage *, void *closure_data);
+typedef void (*ProtobufCMessageInit)(ProtobufCMessage *);
+typedef void (*ProtobufCServiceDestroy)(ProtobufCService *);
 
 /**
 * Structure for defining a custom memory allocator.
@@ -377,7 +388,7 @@ struct ProtobufCAllocator {
 	void		*(*alloc)(void *allocator_data, size_t size);
 
 	/** Function to free memory. */
-	void(*free)(void *allocator_data, void *pointer);
+	void		(*free)(void *allocator_data, void *pointer);
 
 	/** Opaque pointer passed to `alloc` and `free` functions. */
 	void		*allocator_data;
@@ -432,9 +443,9 @@ protobuf_c_message_pack_to_buffer(&message, &tmp);
 */
 struct ProtobufCBuffer {
 	/** Append function. Consumes the `len` bytes stored at `data`. */
-	void(*append)(ProtobufCBuffer *buffer,
-		size_t len,
-		const uint8_t *data);
+	void		(*append)(ProtobufCBuffer *buffer,
+				  size_t len,
+				  const uint8_t *data);
 };
 
 /**
@@ -562,38 +573,38 @@ struct ProtobufCFieldDescriptor {
 	ProtobufCType		type;
 
 	/**
-	* The offset in bytes of the message's C structure's quantifier field
-	* (the `has_MEMBER` field for optional members or the `n_MEMBER` field
-	* for repeated members or the case enum for oneofs).
-	*/
+	 * The offset in bytes of the message's C structure's quantifier field
+	 * (the `has_MEMBER` field for optional members or the `n_MEMBER` field
+	 * for repeated members or the case enum for oneofs).
+	 */
 	unsigned		quantifier_offset;
 
 	/**
-	* The offset in bytes into the message's C structure for the member
-	* itself.
-	*/
+	 * The offset in bytes into the message's C structure for the member
+	 * itself.
+	 */
 	unsigned		offset;
 
 	/**
-	* A type-specific descriptor.
-	*
-	* If `type` is `PROTOBUF_C_TYPE_ENUM`, then `descriptor` points to the
-	* corresponding `ProtobufCEnumDescriptor`.
-	*
-	* If `type` is `PROTOBUF_C_TYPE_MESSAGE`, then `descriptor` points to
-	* the corresponding `ProtobufCMessageDescriptor`.
-	*
-	* Otherwise this field is NULL.
-	*/
+	 * A type-specific descriptor.
+	 *
+	 * If `type` is `PROTOBUF_C_TYPE_ENUM`, then `descriptor` points to the
+	 * corresponding `ProtobufCEnumDescriptor`.
+	 *
+	 * If `type` is `PROTOBUF_C_TYPE_MESSAGE`, then `descriptor` points to
+	 * the corresponding `ProtobufCMessageDescriptor`.
+	 *
+	 * Otherwise this field is NULL.
+	 */
 	const void		*descriptor; /* for MESSAGE and ENUM types */
 
 	/** The default value for this field, if defined. May be NULL. */
 	const void		*default_value;
 
 	/**
-	* A flag word. Zero or more of the bits defined in the
-	* `ProtobufCFieldFlag` enum may be set.
-	*/
+	 * A flag word. Zero or more of the bits defined in the
+	 * `ProtobufCFieldFlag` enum may be set.
+	 */
 	uint32_t		flags;
 
 	/** Reserved for future use. */
@@ -616,10 +627,10 @@ struct ProtobufCIntRange {
 	int             start_value;
 	unsigned        orig_index;
 	/*
-	* NOTE: the number of values in the range can be inferred by looking
-	* at the next element's orig_index. A dummy element is added to make
-	* this simple.
-	*/
+	 * NOTE: the number of values in the range can be inferred by looking
+	 * at the next element's orig_index. A dummy element is added to make
+	 * this simple.
+	 */
 };
 
 /**
@@ -663,9 +674,9 @@ struct ProtobufCMessageDescriptor {
 	const char			*package_name;
 
 	/**
-	* Size in bytes of the C structure representing an instance of this
-	* type of message.
-	*/
+	 * Size in bytes of the C structure representing an instance of this
+	 * type of message.
+	 */
 	size_t				sizeof_message;
 
 	/** Number of elements in `fields`. */
@@ -724,13 +735,13 @@ struct ProtobufCService {
 	/** Service descriptor. */
 	const ProtobufCServiceDescriptor *descriptor;
 	/** Function to invoke the service. */
-	void(*invoke)(ProtobufCService *service,
-		unsigned method_index,
-		const ProtobufCMessage *input,
-		ProtobufCClosure closure,
-		void *closure_data);
+	void (*invoke)(ProtobufCService *service,
+		       unsigned method_index,
+		       const ProtobufCMessage *input,
+		       ProtobufCClosure closure,
+		       void *closure_data);
 	/** Function to destroy the service. */
-	void(*destroy)(ProtobufCService *service);
+	void (*destroy)(ProtobufCService *service);
 };
 
 /**
@@ -781,13 +792,13 @@ protobuf_c_version_number(void);
 * The version of the protobuf-c headers, represented as a string using the same
 * format as protobuf_c_version().
 */
-#define PROTOBUF_C_VERSION		"1.1.1"
+#define PROTOBUF_C_VERSION		"1.3.1"
 
 /**
 * The version of the protobuf-c headers, represented as an integer using the
 * same format as protobuf_c_version_number().
 */
-#define PROTOBUF_C_VERSION_NUMBER	1001001
+#define PROTOBUF_C_VERSION_NUMBER	1003001
 
 /**
 * The minimum protoc-c version which works with the current version of the
@@ -806,13 +817,13 @@ protobuf_c_version_number(void);
 * \return
 *      A `ProtobufCEnumValue` object.
 * \retval NULL
-*      If not found.
+*      If not found or if the optimize_for = CODE_SIZE option was set.
 */
 PROTOBUF_C__API
 const ProtobufCEnumValue *
 protobuf_c_enum_descriptor_get_value_by_name(
-const ProtobufCEnumDescriptor *desc,
-const char *name);
+	const ProtobufCEnumDescriptor *desc,
+	const char *name);
 
 /**
 * Look up a `ProtobufCEnumValue` from a `ProtobufCEnumDescriptor` by numeric
@@ -832,8 +843,8 @@ const char *name);
 PROTOBUF_C__API
 const ProtobufCEnumValue *
 protobuf_c_enum_descriptor_get_value(
-const ProtobufCEnumDescriptor *desc,
-int value);
+	const ProtobufCEnumDescriptor *desc,
+	int value);
 
 /**
 * Look up a `ProtobufCFieldDescriptor` from a `ProtobufCMessageDescriptor` by
@@ -846,13 +857,13 @@ int value);
 * \return
 *      A `ProtobufCFieldDescriptor` object.
 * \retval NULL
-*      If not found.
+*      If not found or if the optimize_for = CODE_SIZE option was set.
 */
 PROTOBUF_C__API
 const ProtobufCFieldDescriptor *
 protobuf_c_message_descriptor_get_field_by_name(
-const ProtobufCMessageDescriptor *desc,
-const char *name);
+	const ProtobufCMessageDescriptor *desc,
+	const char *name);
 
 /**
 * Look up a `ProtobufCFieldDescriptor` from a `ProtobufCMessageDescriptor` by
@@ -870,8 +881,8 @@ const char *name);
 PROTOBUF_C__API
 const ProtobufCFieldDescriptor *
 protobuf_c_message_descriptor_get_field(
-const ProtobufCMessageDescriptor *desc,
-unsigned value);
+	const ProtobufCMessageDescriptor *desc,
+	unsigned value);
 
 /**
 * Determine the number of bytes required to store the serialised message.
@@ -921,8 +932,8 @@ protobuf_c_message_pack(const ProtobufCMessage *message, uint8_t *out);
 PROTOBUF_C__API
 size_t
 protobuf_c_message_pack_to_buffer(
-const ProtobufCMessage *message,
-ProtobufCBuffer *buffer);
+	const ProtobufCMessage *message,
+	ProtobufCBuffer *buffer);
 
 /**
 * Unpack a serialised message into an in-memory representation.
@@ -944,10 +955,10 @@ ProtobufCBuffer *buffer);
 PROTOBUF_C__API
 ProtobufCMessage *
 protobuf_c_message_unpack(
-const ProtobufCMessageDescriptor *descriptor,
-ProtobufCAllocator *allocator,
-size_t len,
-const uint8_t *data);
+	const ProtobufCMessageDescriptor *descriptor,
+	ProtobufCAllocator *allocator,
+	size_t len,
+	const uint8_t *data);
 
 /**
 * Free an unpacked message object.
@@ -956,7 +967,7 @@ const uint8_t *data);
 * protobuf_c_message_unpack().
 *
 * \param message
-*      The message object to free.
+*      The message object to free. May be NULL.
 * \param allocator
 *      `ProtobufCAllocator` to use for memory deallocation. May be NULL to
 *      specify the default allocator.
@@ -964,8 +975,8 @@ const uint8_t *data);
 PROTOBUF_C__API
 void
 protobuf_c_message_free_unpacked(
-ProtobufCMessage *message,
-ProtobufCAllocator *allocator);
+	ProtobufCMessage *message,
+	ProtobufCAllocator *allocator);
 
 /**
 * Check the validity of a message object.
@@ -996,8 +1007,8 @@ protobuf_c_message_check(const ProtobufCMessage *);
 PROTOBUF_C__API
 void
 protobuf_c_message_init(
-const ProtobufCMessageDescriptor *descriptor,
-void *message);
+	const ProtobufCMessageDescriptor *descriptor,
+	void *message);
 
 /**
 * Free a service.
@@ -1020,13 +1031,13 @@ protobuf_c_service_destroy(ProtobufCService *service);
 * \return
 *      A `ProtobufCMethodDescriptor` object.
 * \retval NULL
-*      If not found.
+*      If not found or if the optimize_for = CODE_SIZE option was set.
 */
 PROTOBUF_C__API
 const ProtobufCMethodDescriptor *
 protobuf_c_service_descriptor_get_method_by_name(
-const ProtobufCServiceDescriptor *desc,
-const char *name);
+	const ProtobufCServiceDescriptor *desc,
+	const char *name);
 
 /**
 * Initialise a `ProtobufCBufferSimple` object.
@@ -1051,9 +1062,9 @@ do {                                                                    \
 			(simp_buf)->allocator->free(                    \
 				(simp_buf)->allocator,                  \
 				(simp_buf)->data);			\
-				else                                                    \
+		else                                                    \
 			free((simp_buf)->data);                         \
-		}                                                               \
+	}                                                               \
 } while (0)
 
 /**
@@ -1070,25 +1081,25 @@ do {                                                                    \
 PROTOBUF_C__API
 void
 protobuf_c_buffer_simple_append(
-ProtobufCBuffer *buffer,
-size_t len,
-const unsigned char *data);
+	ProtobufCBuffer *buffer,
+	size_t len,
+	const unsigned char *data);
 
 PROTOBUF_C__API
 void
 protobuf_c_service_generated_init(
-ProtobufCService *service,
-const ProtobufCServiceDescriptor *descriptor,
-ProtobufCServiceDestroy destroy);
+	ProtobufCService *service,
+	const ProtobufCServiceDescriptor *descriptor,
+	ProtobufCServiceDestroy destroy);
 
 PROTOBUF_C__API
 void
 protobuf_c_service_invoke_internal(
-ProtobufCService *service,
-unsigned method_index,
-const ProtobufCMessage *input,
-ProtobufCClosure closure,
-void *closure_data);
+	ProtobufCService *service,
+	unsigned method_index,
+	const ProtobufCMessage *input,
+	ProtobufCClosure closure,
+	void *closure_data);
 
 /**@}*/
 
