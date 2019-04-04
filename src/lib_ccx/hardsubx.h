@@ -10,7 +10,7 @@
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 #include "allheaders.h"
-#include "capi.h"
+#include "tesseract/capi.h"
 
 enum hardsubx_color_type
 {

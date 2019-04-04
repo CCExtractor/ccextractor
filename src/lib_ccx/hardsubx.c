@@ -1,6 +1,6 @@
 #ifdef ENABLE_HARDSUBX
 #include "hardsubx.h"
-#include "capi.h"
+#include "tesseract/capi.h"
 #include "allheaders.h"
 #include "ocr.h"
 #include "utility.h"
