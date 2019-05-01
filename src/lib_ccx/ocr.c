@@ -659,7 +659,8 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 						last_font_tag = font_tag;
 
 					}
-					last_font_tag_end = strstr(last_font_tag, ">") + 1;
+                    last_font_tag_end = strstr(last_font_tag, ">");
+                    if(last_font_tag_end) last_font_tag_end += 1; // move string to the "right" if ">" was found, otherwise leave empty string (solves #1084)
 
 					// Copy the content of the subtitle
 					memcpy(new_text_out_iter, line_start, line_end - line_start);
