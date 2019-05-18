@@ -614,7 +614,9 @@ void print_usage (void)
 	mprint ("                       free to play with it but be aware that this format\n");
 	mprint ("                       is really live - don't rely on its output format\n");
 	mprint ("                       not changing between versions.\n");
-	mprint ("                 -xds: In timed transcripts, all XDS information will be saved\n");
+    mprint ("            -latrusmap Map Latin symbols to Cyrillic ones in special cases\n");
+    mprint ("                       of Russian Teletext files (issue #1086)\n");
+    mprint ("                 -xds: In timed transcripts, all XDS information will be saved\n");
 	mprint ("                       to the output file.\n");
 	mprint ("                  -lf: Use LF (UNIX) instead of CRLF (DOS, Windows) as line\n");
 	mprint ("                       terminator.\n");
@@ -1968,7 +1970,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp (argv[i],"-xds")==0)
 		{
-			// XDS can be set regardless of -UCLA (isFinal) usage.
+            // XDS can be set regardless of -UCLA (isFinal) usage.
 			opt->transcript_settings.xds = 1;
 			continue;
 		}
@@ -2143,6 +2145,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
+        if (strcmp (argv[i],"-latrusmap")==0 )
+        {
+            tlt_config.latrusmap = 1;
+            continue;
+        }
 		if (strcmp (argv[i],"-tickertext")==0 || strcmp (argv[i],"-tickertape")==0)
 		{
 			opt->tickertext = 1;

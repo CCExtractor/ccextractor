@@ -94,6 +94,29 @@ struct {
 	{ '&', "&amp;" }
 };
 
+// Latin-Russian characters mapping, issue #1086
+struct {
+    uint16_t lat_char;
+    const char * rus_char;
+} const LAT_RUS[] = {
+    {65, "А"}, {66, "Б"}, {87, "В"}, {71, "Г"},
+    {68, "Д"}, {69, "Е"}, {86, "Ж"}, {90, "З"},
+    {73, "И"}, {74, "Й"}, {75, "К"}, {76, "Л"},
+    {77, "М"}, {78, "Н"}, {79, "О"}, {80, "П"},
+    {82, "Р"}, {83, "С"}, {84, "Т"}, {85, "У"},
+    {70, "Ф"}, {72, "Х"}, {67, "Ц"}, {238, "Ч"},
+    {235, "Ш"},{249, "Щ"},{35, "Ы"}, {88, "Ь"},
+    {234, "Э"},{224, "Ю"},{81, "Я"}, {97, "а"},
+    {98, "б"}, {119, "в"},{103, "г"},{100, "д"},
+    {101, "е"},{118, "ж"},{122, "з"},{105, "и"},
+    {106, "й"},{107, "к"},{108, "л"},{109, "м"},
+    {110, "н"},{111, "о"},{112, "п"},{114, "р"},
+    {115, "с"},{116, "т"},{117, "у"},{102, "ф"},
+    {104, "х"},{99, "ц"}, {231, "ч"},{226, "ш"},
+    {251, "щ"},{121, "ъ"},{38, "ы"}, {120, "ь"},
+    {244, "э"},{232, "ю"},{113, "я"}
+};
+
 #define array_length(a) (sizeof(a)/sizeof(a[0]))
 
 // extracts magazine number from teletext page
@@ -778,7 +801,20 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 				{
 					ucs2_to_utf8(u, v);
 					uint64_t ucs2_char=(u[0]<<24) | (u[1]<<16) | (u[2]<<8) | u[3];
-					ucs2_buffer_add_char(ctx, ucs2_char);
+                    ucs2_buffer_add_char(ctx, ucs2_char);
+
+
+                    if (font_tag_opened == NO && tlt_config.latrusmap) {
+                        for (uint8_t i = 0; i < array_length(LAT_RUS); i++) {
+                            if (v == LAT_RUS[i].lat_char)
+                            {
+                                page_buffer_add_string (ctx, LAT_RUS[i].rus_char);
+                                // already processed char
+                                v = 0;
+                                break;
+                            }
+                        }
+                    }
 
 					// translate some chars into entities, if in colour mode
 					if (!tlt_config.nofontcolor && !tlt_config.nohtmlescape)
@@ -788,10 +824,10 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 							{
 								page_buffer_add_string (ctx, ENTITIES[i].entity);
 								// v < 0x20 won't be printed in next block
-								v = 0;
+                                v = 0;
 								break;
 							}
-					}
+                    }
 				}
 				if (v >= 0x20)
 				{
