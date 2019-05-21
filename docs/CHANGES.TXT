@@ -1,4 +1,4 @@
-0.88(2018-10-24) (unreleased)
+0.88 (2019-05-21)
 -----------------
 - New: More tapping points for debug image in ccextractor.
 - New: Add support for tesseract 4.0
@@ -15,6 +15,9 @@
 - Fix: Check whether stream is empty
 - New: Add support for EIA-608 inside .mkv
 - New: Add support for DVB inside .mkv
+- Fix: Added -latrusmap Map Latin symbols to Cyrillic ones in special cases
+       of Russian Teletext files (issue #1086)
+- Fix: Several OCR crashes 
 
 0.87 (2018-10-23)
 -----------------
