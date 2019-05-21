@@ -77,7 +77,7 @@ then
 fi
 if [[ $out == *"capi.h: No such file or directory"* ]]
 then
-    echo "Error: please install tesseract development library (tesseract-ocr-dev for Debian/Ubuntu)";
+    echo "Error: please install tesseract development library (libtesseract-dev for Debian/Ubuntu)";
     exit 3
 fi
 if [[ $out == *"allheaders.h: No such file or directory"* ]]
