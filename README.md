@@ -6,7 +6,7 @@
 [![Sample-Platform Build Status Windows](https://sampleplatform.ccextractor.org/static/img/status/build-windows.svg?maxAge=1800)](https://sampleplatform.ccextractor.org/test/master/windows)
 [![Sample-Platform Build Status Linux](https://sampleplatform.ccextractor.org/static/img/status/build-linux.svg?maxAge=1800)](https://sampleplatform.ccextractor.org/test/master/linux)
 [![SourceForge](https://img.shields.io/badge/SourceForge%20downloads-213k%2Ftotal-brightgreen.svg)](https://sourceforge.net/projects/ccextractor/)
-![GitHub Releases (by Release)](https://img.shields.io/github/downloads/ccextractor/ccextractor/v0.87/total.svg)
+[![GitHub All Releases](https://img.shields.io/github/downloads/CCExtractor/CCExtractor/total.svg)](https://github.com/CCExtractor/ccextractor/releases/latest)
 
 CCExtractor is a tool used to produce subtitles for TV recordings from almost anywhere in the world. We intend to keep up with all sources and formats.
 
