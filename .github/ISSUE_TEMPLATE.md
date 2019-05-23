@@ -23,7 +23,7 @@ CCExtractor version (using the --version parameter preferably) : **X.X**
 - What platform did you use? [ ] Windows - [ ] Linux - [ ] Mac
 - What were the used arguments? `-autoprogram`
 
-**Video links (replace text below with your links) **
+**Video links (replace text below with your links)**
 
 Please make the affected input file available for us (no screenshots, those don't help!). Public links to Dropbox, Google Drive, etc, are all fine. If it is not possible to make it available publicly, send us a private invitation (both Dropbox and Google Drive allow that). In this case we will download the file and upload it to the private developer repository.
 
