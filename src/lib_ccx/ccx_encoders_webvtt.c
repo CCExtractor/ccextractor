@@ -252,8 +252,6 @@ int write_webvtt_header(struct encoder_ctx *context)
 		}
 		write(context->out->fh, "##\n", 3);
 	}
-	
-	write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 
 	context->wrote_webvtt_header = 1; // Do it even if couldn't write the header, because it won't be possible anyway
 }
@@ -295,7 +293,7 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 			sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
 				h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
 			used = encode_line(context, context->buffer, (unsigned char *)timeline);
-            write(context->out->fh, context->buffer, used);
+			write(context->out->fh, context->buffer, used);
 			len = strlen(str);
 			write(context->out->fh, str, len);
 			write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
