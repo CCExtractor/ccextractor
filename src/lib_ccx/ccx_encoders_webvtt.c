@@ -8,7 +8,8 @@
 
 static const char *webvtt_outline_css = "@import(%s)\n";
 
-static const char *webvtt_inline_css = "/* default values */\n"
+static const char *webvtt_inline_css = "STYLE\n\n"
+		"/* default values */\n"
 		"::cue {\n"
 		"  line-height: 5.33vh;\n"
 		"  font-size: 4.1vh;\n"
