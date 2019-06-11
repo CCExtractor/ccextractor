@@ -14,6 +14,7 @@ git clone https://github.com/CCExtractor/ccextractor.git
 
 1. Make sure all the dependencies are met.
 
+Debian:
 ```
 sudo apt-get install -y libglew-dev
 sudo apt-get install -y libglfw3-dev
@@ -24,6 +25,18 @@ sudo apt-get install -y tesseract-ocr
 sudo apt-get install -y tesseract-ocr-dev
 sudo apt-get install -y libleptonica-dev
 ```
+
+RHEL:
+```
+yum install -y glew-devel
+yum install -y glfw-devel
+yum install -y cmake
+yum install -y gcc
+yum install -y libcurl-devel
+yum install -y tesseract-devel
+yum install -y leptonica-devel
+```
+
 **Note:** On Ubuntu Version 18.04 (Bionic) and (probably) later, install `libtesseract-dev` rather than `tesseract-ocr-dev`, which does not exist anymore.
 
 **Note:** On Ubuntu Version 14.04 (Trusty) and earlier, you should build leptonica and tesseract from source
