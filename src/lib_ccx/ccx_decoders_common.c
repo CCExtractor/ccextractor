@@ -12,8 +12,8 @@ made to reuse, not duplicate, as many functions as possible */
 #include "ccx_decoders_708.h"
 #include "ccx_decoders_xds.h"
 #include "ccx_decoders_vbi.h"
+#include "ccx_encoders_mcc.h"
 #include "ccx_dtvcc.h"
-
 
 uint64_t utc_refvalue = UINT64_MAX;  /* _UI64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
 extern int in_xds_mode;
@@ -40,14 +40,20 @@ LLONG get_visible_end (struct ccx_common_timing_ctx *ctx, int current_field)
 	return fts;
 }
 
-int process_cc_data (struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count, struct cc_subtitle *sub)
+int process_cc_data (struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count, struct cc_subtitle *sub)
 {
 	int ret = -1;
+
+	if( dec_ctx->write_format == CCX_OF_MCC ) {
+        mcc_encode_cc_data(enc_ctx, dec_ctx, cc_data, cc_count);
+        return 0;
+    }
+
 	for (int j = 0; j < cc_count * 3; j = j + 3)
 	{
 		if (validate_cc_data_pair( cc_data + j ) )
 			continue;
-		ret = do_cb(ctx, cc_data + j, sub);
+		ret = do_cb(dec_ctx, cc_data + j, sub);
 		if (ret == 1) //1 means success here
 			ret = 0;
 	}
@@ -321,6 +327,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 		setting->output_format==CCX_OF_SIMPLE_XML ||
 		setting->output_format==CCX_OF_G608 ||
 		setting->output_format==CCX_OF_NULL ||
+        setting->output_format==CCX_OF_MCC ||
 		setting->output_format==CCX_OF_CURL)
 		ctx->writedata = process608;
 	else
@@ -379,7 +386,7 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 			if (ctx->write_format==CCX_OF_SMPTETT || ctx->write_format==CCX_OF_SAMI ||
 					ctx->write_format==CCX_OF_SRT || ctx->write_format==CCX_OF_TRANSCRIPT ||
 					ctx->write_format == CCX_OF_WEBVTT || ctx->write_format == CCX_OF_SPUPNG ||
-					ctx->write_format == CCX_OF_SSA)
+					ctx->write_format == CCX_OF_SSA || ctx->write_format == CCX_OF_MCC)
 			{
 				flush_608_context(ctx->context_cc608_field_1, sub);
 			}
@@ -394,7 +401,7 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 			if (ctx->write_format == CCX_OF_SMPTETT || ctx->write_format == CCX_OF_SAMI ||
 					ctx->write_format == CCX_OF_SRT || ctx->write_format == CCX_OF_TRANSCRIPT ||
 					ctx->write_format == CCX_OF_WEBVTT || ctx->write_format == CCX_OF_SPUPNG ||
-					ctx->write_format == CCX_OF_SSA)
+					ctx->write_format == CCX_OF_SSA || ctx->write_format == CCX_OF_MCC)
 			{
 				flush_608_context(ctx->context_cc608_field_2, sub);
 			}

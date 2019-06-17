@@ -13,7 +13,7 @@ static void sei_rbsp (struct avc_ctx *ctx, unsigned char *seibuf, unsigned char 
 static unsigned char *sei_message (struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend);
 static void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf, unsigned char *userend);
 static void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigned char *seqend);
-static void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub);
+static void slice_header (struct encoder_ctx *enc_ctx, struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub);
 
 double roundportable(double x) { return floor(x + 0.5); }
 
@@ -87,7 +87,7 @@ struct avc_ctx *init_avc(void)
 	return ctx;
 }
 
-void do_NAL (struct lib_cc_decode *ctx, unsigned char *NAL_start, LLONG NAL_length, struct cc_subtitle *sub)
+void do_NAL (struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *NAL_start, LLONG NAL_length, struct cc_subtitle *sub)
 {
 	unsigned char *NAL_stop;
 	enum ccx_avc_nal_types nal_unit_type = *NAL_start & 0x1F;
@@ -96,7 +96,7 @@ void do_NAL (struct lib_cc_decode *ctx, unsigned char *NAL_start, LLONG NAL_leng
 	NAL_stop = remove_03emu(NAL_start+1, NAL_stop); // Add +1 to NAL_stop for TS, without it for MP4. Still don't know why
 
 	dvprint("BEGIN NAL unit type: %d length %d ref_idc: %d - Buffered captions before: %d\n",
-				nal_unit_type,  NAL_stop-NAL_start-1, ctx->avc_ctx->nal_ref_idc, !ctx->avc_ctx->cc_buffer_saved);
+				nal_unit_type,  NAL_stop-NAL_start-1, dec_ctx->avc_ctx->nal_ref_idc, !dec_ctx->avc_ctx->cc_buffer_saved);
 
 	if (NAL_stop==NULL) // remove_03emu failed.
 	{
@@ -112,25 +112,25 @@ void do_NAL (struct lib_cc_decode *ctx, unsigned char *NAL_start, LLONG NAL_leng
 	{
 		// Found sequence parameter set
 		// We need this to parse NAL type 1 (CCX_NAL_TYPE_CODED_SLICE_NON_IDR_PICTURE_1)
-		ctx->avc_ctx->num_nal_unit_type_7++;
-		seq_parameter_set_rbsp(ctx->avc_ctx, NAL_start+1, NAL_stop);
-		ctx->avc_ctx->got_seq_para = 1;
+        dec_ctx->avc_ctx->num_nal_unit_type_7++;
+		seq_parameter_set_rbsp(dec_ctx->avc_ctx, NAL_start+1, NAL_stop);
+        dec_ctx->avc_ctx->got_seq_para = 1;
 	}
-	else if ( ctx->avc_ctx->got_seq_para && (nal_unit_type == CCX_NAL_TYPE_CODED_SLICE_NON_IDR_PICTURE_1 ||
+	else if ( dec_ctx->avc_ctx->got_seq_para && (nal_unit_type == CCX_NAL_TYPE_CODED_SLICE_NON_IDR_PICTURE_1 ||
 				nal_unit_type == CCX_NAL_TYPE_CODED_SLICE_IDR_PICTURE)) // Only if nal_unit_type=1
 	{
 		// Found coded slice of a non-IDR picture
 		// We only need the slice header data, no need to implement
 		// slice_layer_without_partitioning_rbsp( );
-		slice_header(ctx, NAL_start+1, NAL_stop, nal_unit_type, sub);
+		slice_header(enc_ctx, dec_ctx, NAL_start+1, NAL_stop, nal_unit_type, sub);
 	}
-	else if ( ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_SEI )
+	else if ( dec_ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_SEI )
 	{
 		// Found SEI (used for subtitles)
 		//set_fts(ctx->timing); // FIXME - check this!!!
-		sei_rbsp(ctx->avc_ctx, NAL_start+1, NAL_stop);
+		sei_rbsp(dec_ctx->avc_ctx, NAL_start+1, NAL_stop);
 	}
-	else if ( ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_PICTURE_PARAMETER_SET )
+	else if ( dec_ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_PICTURE_PARAMETER_SET )
 	{
 		// Found Picture parameter set
 	}
@@ -142,13 +142,13 @@ void do_NAL (struct lib_cc_decode *ctx, unsigned char *NAL_start, LLONG NAL_leng
 	}
 
 	dvprint("END   NAL unit type: %d length %d ref_idc: %d - Buffered captions after: %d\n",
-			nal_unit_type,  NAL_stop-NAL_start-1, ctx->avc_ctx->nal_ref_idc, !ctx->avc_ctx->cc_buffer_saved);
+			nal_unit_type,  NAL_stop-NAL_start-1, dec_ctx->avc_ctx->nal_ref_idc, !dec_ctx->avc_ctx->cc_buffer_saved);
 
 }
 
 // Process inbuf bytes in buffer holding and AVC (H.264) video stream.
 // The number of processed bytes is returned.
-size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t avcbuflen ,struct cc_subtitle *sub)
+size_t process_avc (struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *avcbuf, size_t avcbuflen ,struct cc_subtitle *sub)
 {
 	unsigned char *buffer_position = avcbuf;
 	unsigned char *NAL_start;
@@ -245,9 +245,9 @@ size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t av
 					"Broken AVC stream - forbidden_zero_bit not zero ...");
 		}
 
-		ctx->avc_ctx->nal_ref_idc = *NAL_start >> 5;
+		dec_ctx->avc_ctx->nal_ref_idc = *NAL_start >> 5;
                 dvprint("process_avc: zeropad %d\n", zeropad);
-		do_NAL (ctx, NAL_start, NAL_stop-NAL_start, sub);
+		do_NAL (enc_ctx, dec_ctx, NAL_start, NAL_stop-NAL_start, sub);
 	}
 
 	return avcbuflen;
@@ -877,7 +877,7 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
     Process slice header in AVC data.
     Slice Header is parsed to get sequence of frames
 */
-void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub)
+void slice_header (struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub)
 {
 	LLONG tmp;
 	struct bitstream q1;
@@ -904,14 +904,14 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 	tmp = read_exp_golomb_unsigned(&q1);
 	dvprint("pic_parameter_set_id=  % 4lld (%#llX)\n",tmp,tmp);
 
-	ctx->avc_ctx->lastframe_num = ctx->avc_ctx->frame_num;
-	max_frame_num = (int) ((1<<ctx->avc_ctx->log2_max_frame_num) - 1);
+    dec_ctx->avc_ctx->lastframe_num = dec_ctx->avc_ctx->frame_num;
+	max_frame_num = (int) ((1<<dec_ctx->avc_ctx->log2_max_frame_num) - 1);
 
 	// Needs log2_max_frame_num_minus4 + 4 bits
-	ctx->avc_ctx->frame_num = read_int_unsigned(&q1,ctx->avc_ctx->log2_max_frame_num);
-	dvprint("frame_num=             % 4llX\n", ctx->avc_ctx->frame_num);
+    dec_ctx->avc_ctx->frame_num = read_int_unsigned(&q1,dec_ctx->avc_ctx->log2_max_frame_num);
+	dvprint("frame_num=             % 4llX\n", dec_ctx->avc_ctx->frame_num);
 
-	if( !ctx->avc_ctx->frame_mbs_only_flag )
+	if( !dec_ctx->avc_ctx->frame_mbs_only_flag )
 	{
 		field_pic_flag = read_int_unsigned(&q1,1);
 		dvprint("field_pic_flag=        % 4llX\n", field_pic_flag);
@@ -923,7 +923,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 
 			// When bottom_field_flag is set the video is interlaced,
 			// override current_fps.
-			current_fps = framerates_values[ctx->current_frame_rate];
+			current_fps = framerates_values[dec_ctx->current_frame_rate];
 		}
 	}
 
@@ -935,12 +935,12 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 		dvprint("idr_pic_id=            % 4lld (%#llX)\n",tmp,tmp);
 		//TODO
 	}
-	if( ctx->avc_ctx->pic_order_cnt_type == 0 )
+	if( dec_ctx->avc_ctx->pic_order_cnt_type == 0 )
 	{
-		pic_order_cnt_lsb=read_int_unsigned(&q1,ctx->avc_ctx->log2_max_pic_order_cnt_lsb);
+		pic_order_cnt_lsb=read_int_unsigned(&q1,dec_ctx->avc_ctx->log2_max_pic_order_cnt_lsb);
 		dvprint("pic_order_cnt_lsb=     % 4llX\n", pic_order_cnt_lsb);
 	}
-	if( ctx->avc_ctx->pic_order_cnt_type == 1 )
+	if( dec_ctx->avc_ctx->pic_order_cnt_type == 1 )
 	{
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "In slice_header: AVC: ctx->avc_ctx->pic_order_cnt_type == 1 not yet supported.");
 	}
@@ -948,15 +948,15 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
         //Ignore slice with same pic order or pts
 	if ( ccx_options.usepicorder )
 	{
-		if ( ctx->avc_ctx->last_pic_order_cnt_lsb == pic_order_cnt_lsb)
+		if ( dec_ctx->avc_ctx->last_pic_order_cnt_lsb == pic_order_cnt_lsb)
 			return;
-		ctx->avc_ctx->last_pic_order_cnt_lsb = pic_order_cnt_lsb;
+        dec_ctx->avc_ctx->last_pic_order_cnt_lsb = pic_order_cnt_lsb;
 	}
 	else
 	{
-		if (ctx->timing->current_pts == ctx->avc_ctx->last_slice_pts)
+		if (dec_ctx->timing->current_pts == dec_ctx->avc_ctx->last_slice_pts)
 			return;
-		ctx->avc_ctx->last_slice_pts = ctx->timing->current_pts;
+        dec_ctx->avc_ctx->last_slice_pts = dec_ctx->timing->current_pts;
 	}
 #if 0
 	else
@@ -1013,26 +1013,26 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 			break;
 	}
 
-	int maxrefcnt = (int) ((1<<ctx->avc_ctx->log2_max_pic_order_cnt_lsb) - 1);
+	int maxrefcnt = (int) ((1<<dec_ctx->avc_ctx->log2_max_pic_order_cnt_lsb) - 1);
 
 	// If we saw a jump set maxidx, lastmaxidx to -1
-	LLONG dif = ctx->avc_ctx->frame_num - ctx->avc_ctx->lastframe_num;
+	LLONG dif = dec_ctx->avc_ctx->frame_num - dec_ctx->avc_ctx->lastframe_num;
 	if (dif == -max_frame_num)
 		dif = 0;
-	if ( ctx->avc_ctx->lastframe_num > -1 && (dif < 0 || dif > 1) )
+	if ( dec_ctx->avc_ctx->lastframe_num > -1 && (dif < 0 || dif > 1) )
 	{
-		ctx->avc_ctx->num_jump_in_frames++;
-		dvprint("\nJump in frame numbers (%lld/%lld)\n", ctx->avc_ctx->frame_num, ctx->avc_ctx->lastframe_num);
+        dec_ctx->avc_ctx->num_jump_in_frames++;
+		dvprint("\nJump in frame numbers (%lld/%lld)\n", dec_ctx->avc_ctx->frame_num, dec_ctx->avc_ctx->lastframe_num);
 		// This will prohibit setting current_tref on potential
 		// jumps.
-		ctx->avc_ctx->maxidx = -1;
-		ctx->avc_ctx->lastmaxidx = -1;
+        dec_ctx->avc_ctx->maxidx = -1;
+        dec_ctx->avc_ctx->lastmaxidx = -1;
 	}
 
 
 	// Sometimes two P-slices follow each other, see garbled_dishHD.mpg,
 	// in this case we only treat the first as a reference pic
-	if (isref && ctx->frames_since_last_gop <= 3) // Used to be == 1, but the sample file
+	if (isref && dec_ctx->frames_since_last_gop <= 3) // Used to be == 1, but the sample file
 	{ // 2014 SugarHouse Casino Mummers Parade Fancy Brigades_new.ts was garbled
 		// Probably doing a proper PTS sort would be a better solution.
 		isref = 0;
@@ -1047,73 +1047,73 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 				slice_types[slice_type], maxrefcnt);
 
 		// Flush buffered cc blocks before doing the housekeeping
-		if (ctx->has_ccdata_buffered)
+		if (dec_ctx->has_ccdata_buffered)
 		{
-			process_hdcc(ctx, sub);
+			process_hdcc(enc_ctx, dec_ctx, sub);
 		}
-		ctx->last_gop_length = ctx->frames_since_last_gop;
-		ctx->frames_since_last_gop = 0;
-		ctx->avc_ctx->last_gop_maxtref = ctx->avc_ctx->maxtref;
-		ctx->avc_ctx->maxtref = 0;
-		ctx->avc_ctx->lastmaxidx = ctx->avc_ctx->maxidx;
-		ctx->avc_ctx->maxidx = 0;
-		ctx->avc_ctx->lastminidx = ctx->avc_ctx->minidx;
-		ctx->avc_ctx->minidx = 10000;
+        dec_ctx->last_gop_length = dec_ctx->frames_since_last_gop;
+        dec_ctx->frames_since_last_gop = 0;
+        dec_ctx->avc_ctx->last_gop_maxtref = dec_ctx->avc_ctx->maxtref;
+        dec_ctx->avc_ctx->maxtref = 0;
+        dec_ctx->avc_ctx->lastmaxidx = dec_ctx->avc_ctx->maxidx;
+        dec_ctx->avc_ctx->maxidx = 0;
+        dec_ctx->avc_ctx->lastminidx = dec_ctx->avc_ctx->minidx;
+        dec_ctx->avc_ctx->minidx = 10000;
 
 		if ( ccx_options.usepicorder ) {
 			// Use pic_order_cnt_lsb
 
 			// Make sure that current_index never wraps for curidx values that
 			// are smaller than currref
-			ctx->avc_ctx->currref = (int)pic_order_cnt_lsb;
-			if (ctx->avc_ctx->currref < maxrefcnt/3)
+            dec_ctx->avc_ctx->currref = (int)pic_order_cnt_lsb;
+			if (dec_ctx->avc_ctx->currref < maxrefcnt/3)
 			{
-				ctx->avc_ctx->currref += maxrefcnt+1;
+                dec_ctx->avc_ctx->currref += maxrefcnt+1;
 			}
 
 			// If we wrapped around lastmaxidx might be larger than
 			// the current index - fix this.
-			if (ctx->avc_ctx->lastmaxidx > ctx->avc_ctx->currref + maxrefcnt/2) // implies lastmaxidx > 0
-				ctx->avc_ctx->lastmaxidx -=maxrefcnt+1;
+			if (dec_ctx->avc_ctx->lastmaxidx > dec_ctx->avc_ctx->currref + maxrefcnt/2) // implies lastmaxidx > 0
+                dec_ctx->avc_ctx->lastmaxidx -=maxrefcnt+1;
 		} else {
 			// Use PTS ordering
-			ctx->avc_ctx->currefpts = ctx->timing->current_pts;
-			ctx->avc_ctx->currref = 0;
+            dec_ctx->avc_ctx->currefpts = dec_ctx->timing->current_pts;
+            dec_ctx->avc_ctx->currref = 0;
 		}
 
-		anchor_hdcc( ctx, ctx->avc_ctx->currref );
+		anchor_hdcc( dec_ctx, dec_ctx->avc_ctx->currref );
 	}
 
 	if ( ccx_options.usepicorder ) {
 		// Use pic_order_cnt_lsb
 		// Wrap (add max index value) current_index if needed.
-		if( ctx->avc_ctx->currref - pic_order_cnt_lsb > maxrefcnt/2 )
+		if( dec_ctx->avc_ctx->currref - pic_order_cnt_lsb > maxrefcnt/2 )
 			current_index = (int)pic_order_cnt_lsb + maxrefcnt+1;
 		else
 			current_index = (int)pic_order_cnt_lsb;
 
 		// Track maximum index for this GOP
-		if ( current_index > ctx->avc_ctx->maxidx )
-			ctx->avc_ctx->maxidx = current_index;
+		if ( current_index > dec_ctx->avc_ctx->maxidx )
+            dec_ctx->avc_ctx->maxidx = current_index;
 
 		// Calculate tref
-		if ( ctx->avc_ctx->lastmaxidx > 0 ) {
-			ctx->timing->current_tref = current_index - ctx->avc_ctx->lastmaxidx -1;
+		if ( dec_ctx->avc_ctx->lastmaxidx > 0 ) {
+            dec_ctx->timing->current_tref = current_index - dec_ctx->avc_ctx->lastmaxidx -1;
 			// Set maxtref
-			if( ctx->timing->current_tref > ctx->avc_ctx->maxtref ) {
-				ctx->avc_ctx->maxtref = ctx->timing->current_tref;
+			if( dec_ctx->timing->current_tref > dec_ctx->avc_ctx->maxtref ) {
+                dec_ctx->avc_ctx->maxtref = dec_ctx->timing->current_tref;
 			}
 			// Now an ugly workaround where pic_order_cnt_lsb increases in
 			// steps of two. The 1.5 is an approximation, it should be:
 			// last_gop_maxtref+1 == last_gop_length*2
-			if ( ctx->avc_ctx->last_gop_maxtref > ctx->last_gop_length*1.5 ) {
-				ctx->timing->current_tref = ctx->timing->current_tref/2;
+			if ( dec_ctx->avc_ctx->last_gop_maxtref > dec_ctx->last_gop_length*1.5 ) {
+                dec_ctx->timing->current_tref = dec_ctx->timing->current_tref/2;
 			}
 		}
 		else
-			ctx->timing->current_tref = 0;
+            dec_ctx->timing->current_tref = 0;
 
-		if ( ctx->timing->current_tref < 0 ) {
+		if ( dec_ctx->timing->current_tref < 0 ) {
 			mprint("current_tref is negative!?\n");
 		}
 	} else {
@@ -1121,7 +1121,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 		// frame rate
 		// The 2* accounts for a discrepancy between current and actual FPS
 		// seen in some files (CCSample2.mpg)
-		current_index = (int)roundportable(2*(ctx->timing->current_pts - ctx->avc_ctx->currefpts)/(MPEG_CLOCK_FREQ/current_fps));
+		current_index = (int)roundportable(2*(dec_ctx->timing->current_pts - dec_ctx->avc_ctx->currefpts)/(MPEG_CLOCK_FREQ/current_fps));
 
 		if (abs(current_index) >= MAXBFRAMES) {
 			// Probably a jump in the timeline. Warn and handle gracefully.
@@ -1130,55 +1130,55 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 		}
 
 		// Track maximum index for this GOP
-		if ( current_index > ctx->avc_ctx->maxidx )
-			ctx->avc_ctx->maxidx = current_index;
+		if ( current_index > dec_ctx->avc_ctx->maxidx )
+            dec_ctx->avc_ctx->maxidx = current_index;
 
 		// Track minimum index for this GOP
-		if ( current_index < ctx->avc_ctx->minidx )
-			ctx->avc_ctx->minidx = current_index;
+		if ( current_index < dec_ctx->avc_ctx->minidx )
+            dec_ctx->avc_ctx->minidx = current_index;
 
-		ctx->timing->current_tref = 1;
-		if ( current_index == ctx->avc_ctx->lastminidx ) {
+        dec_ctx->timing->current_tref = 1;
+		if ( current_index == dec_ctx->avc_ctx->lastminidx ) {
 			// This implies that the minimal index (assuming its number is
 			// fairly constant) sets the temporal reference to zero - needed to set sync_pts.
-			ctx->timing->current_tref = 0;
+            dec_ctx->timing->current_tref = 0;
 		}
-		if ( ctx->avc_ctx->lastmaxidx == -1) {
+		if ( dec_ctx->avc_ctx->lastmaxidx == -1) {
 			// Set temporal reference to zero on minimal index and in the first GOP
 			// to avoid setting a wrong fts_offset
-			ctx->timing->current_tref = 0;
+            dec_ctx->timing->current_tref = 0;
 		}
 	}
 
-	set_fts(ctx->timing); // Keep frames_since_ref_time==0, use current_tref
+	set_fts(dec_ctx->timing); // Keep frames_since_ref_time==0, use current_tref
 
 	dbg_print(CCX_DMT_TIME, "  picordercnt:%3lld tref:%3d idx:%3d refidx:%3d lmaxidx:%3d maxtref:%3d\n",
-			pic_order_cnt_lsb, ctx->timing->current_tref,
-			current_index, ctx->avc_ctx->currref, ctx->avc_ctx->lastmaxidx, ctx->avc_ctx->maxtref);
+			pic_order_cnt_lsb, dec_ctx->timing->current_tref,
+			current_index, dec_ctx->avc_ctx->currref, dec_ctx->avc_ctx->lastmaxidx, dec_ctx->avc_ctx->maxtref);
 	dbg_print(CCX_DMT_TIME, "  sync_pts:%s (%8u)",
-			print_mstime_static(ctx->timing->sync_pts/(MPEG_CLOCK_FREQ/1000)),
-			(unsigned) (ctx->timing->sync_pts));
+			print_mstime_static(dec_ctx->timing->sync_pts/(MPEG_CLOCK_FREQ/1000)),
+			(unsigned) (dec_ctx->timing->sync_pts));
 	dbg_print(CCX_DMT_TIME, " - %s since GOP: %2u",
 			slice_types[slice_type],
-			(unsigned) (ctx->frames_since_last_gop));
-	dbg_print(CCX_DMT_TIME, "  b:%lld  frame# %lld\n", bottom_field_flag, ctx->avc_ctx->frame_num);
+			(unsigned) (dec_ctx->frames_since_last_gop));
+	dbg_print(CCX_DMT_TIME, "  b:%lld  frame# %lld\n", bottom_field_flag, dec_ctx->avc_ctx->frame_num);
 
 	// sync_pts is (was) set when current_tref was zero
-	if ( ctx->avc_ctx->lastmaxidx > -1 && ctx->timing->current_tref == 0 )
+	if ( dec_ctx->avc_ctx->lastmaxidx > -1 && dec_ctx->timing->current_tref == 0 )
 	{
 		if (ccx_options.debug_mask & CCX_DMT_TIME )
 		{
 			dbg_print(CCX_DMT_TIME, "\nNew temporal reference:\n");
-			print_debug_timing(ctx->timing);
+			print_debug_timing(dec_ctx->timing);
 		}
 	}
 
 	total_frames_count++;
-	ctx->frames_since_last_gop++;
+    dec_ctx->frames_since_last_gop++;
 
-	store_hdcc(ctx, ctx->avc_ctx->cc_data, ctx->avc_ctx->cc_count, current_index, ctx->timing->fts_now, sub);
-	ctx->avc_ctx->cc_buffer_saved = CCX_TRUE; // CFS: store_hdcc supposedly saves the CC buffer to a sequence buffer
-	ctx->avc_ctx->cc_count = 0;
+	store_hdcc(enc_ctx, dec_ctx, dec_ctx->avc_ctx->cc_data, dec_ctx->avc_ctx->cc_count, current_index, dec_ctx->timing->fts_now, sub);
+    dec_ctx->avc_ctx->cc_buffer_saved = CCX_TRUE; // CFS: store_hdcc supposedly saves the CC buffer to a sequence buffer
+    dec_ctx->avc_ctx->cc_count = 0;
 }
 
 // max_dec_frame_buffering .. Max frames in buffer

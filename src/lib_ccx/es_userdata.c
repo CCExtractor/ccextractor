@@ -10,7 +10,7 @@
 // Return TRUE if the data parsing finished, FALSE otherwise.
 // estream->pos is advanced. Data is only processed if ustream->error
 // is FALSE, parsing can set ustream->error to TRUE.
-int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
+int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct bitstream *ustream, int udtype, struct cc_subtitle *sub)
 {
 	dbg_print(CCX_DMT_VERBOSE, "user_data(%d)\n", udtype);
 
@@ -24,7 +24,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 	}
 
 	// Do something
-	ctx->stat_numuserheaders++;
+	dec_ctx->stat_numuserheaders++;
 	//header+=4;
 
 	unsigned char *ud_header = next_bytes(ustream, 4);
@@ -39,7 +39,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 	// <http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/SCC_FORMAT.HTML>
 	if ( !memcmp(ud_header,"\x43\x43", 2 ) )
 	{
-		ctx->stat_dvdccheaders++;
+		dec_ctx->stat_dvdccheaders++;
 
 		// Probably unneeded, but keep looking for extra caption blocks
 		int maybeextracb = 1;
@@ -65,8 +65,8 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 		// current time to one frame after the maximum time of the
 		// last GOP.  Only useful when there are frames before
 		// the GOP.
-		if (ctx->timing->fts_max > 0)
-			ctx->timing->fts_now = ctx->timing->fts_max + (LLONG) (1000.0/current_fps);
+		if (dec_ctx->timing->fts_max > 0)
+			dec_ctx->timing->fts_now = dec_ctx->timing->fts_max + (LLONG) (1000.0/current_fps);
 
 		int rcbcount = 0;
 		for (int i=0; i<capcount; i++)
@@ -93,7 +93,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 						data[0]=0x04; // Field 1
 					else
 						data[0]=0x05; // Field 2
-					do_cb(ctx, data, sub);
+					do_cb(dec_ctx, data, sub);
 					rcbcount++;
 				}
 				else
@@ -124,7 +124,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 						data[0]=0x04; // Field 1
 					else
 						data[0]=0x05; // Field 2
-					do_cb(ctx, data, sub);
+					do_cb(dec_ctx, data, sub);
 					ecbcount++;
 				}
 				else
@@ -139,13 +139,13 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 		dbg_print(CCX_DMT_VERBOSE, "Read %d/%d DVD CC blocks\n", rcbcount, ecbcount);
 	}
 	// SCTE 20 user data
-	else if (!ctx->noscte20 && ud_header[0] == 0x03)
+	else if (!dec_ctx->noscte20 && ud_header[0] == 0x03)
 	{
 		if ((ud_header[1]&0x7F) == 0x01)
 		{
 			unsigned char cc_data[3*31+1]; // Maximum cc_count is 31
 
-			ctx->stat_scte20ccheaders++;
+			dec_ctx->stat_scte20ccheaders++;
 			read_bytes(ustream, 2); // "03 01"
 
 			unsigned cc_count = (unsigned int) read_bits(ustream,5);
@@ -185,7 +185,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 					field_number = (field_number - 1) & 0x01;
 					// top_field_first also affects to which field the caption
 					// belongs.
-					if(!ctx->top_field_first)
+					if(!dec_ctx->top_field_first)
 						field_number ^= 0x01;
 					cc_data[j*3]=0x04|(field_number);
 					cc_data[j*3+1]=reverse8(cc_data1);
@@ -193,7 +193,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 				}
 			}
 			cc_data[cc_count*3]=0xFF;
-			store_hdcc(ctx, cc_data, cc_count, ctx->timing->current_tref, ctx->timing->fts_now, sub);
+			store_hdcc(enc_ctx, dec_ctx, cc_data, cc_count, dec_ctx->timing->current_tref, dec_ctx->timing->fts_now, sub);
 
 			dbg_print(CCX_DMT_VERBOSE, "Reading SCTE 20 CC blocks - done\n");
 		}
@@ -208,26 +208,26 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 		unsigned char data[3];
 
 		if (ud_header[0]==0xbb)
-			ctx->stat_replay4000headers++;
+			dec_ctx->stat_replay4000headers++;
 		else
-			ctx->stat_replay5000headers++;
+			dec_ctx->stat_replay5000headers++;
 
 
 		read_bytes(ustream, 2); // "BB 02" or "99 02"
 		data[0]=0x05; // Field 2
 		data[1]=read_u8(ustream);
 		data[2]=read_u8(ustream);
-		do_cb(ctx, data, sub);
+		do_cb(dec_ctx, data, sub);
 		read_bytes(ustream, 2); // Skip "CC 02" for R4000 or "AA 02" for R5000
 		data[0]=0x04; // Field 1
 		data[1]=read_u8(ustream);
 		data[2]=read_u8(ustream);
-		do_cb(ctx, data, sub);
+		do_cb(dec_ctx, data, sub);
 	}
 	// HDTV - see A/53 Part 4 (Video)
 	else if ( !memcmp(ud_header,"\x47\x41\x39\x34", 4 ) )
 	{
-		ctx->stat_hdtv++;
+		dec_ctx->stat_hdtv++;
 
 		read_bytes(ustream, 4); // "47 41 39 34"
 
@@ -267,7 +267,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 				// Please note we store the current value of the global
 				// fts_now variable (and not get_fts()) as we are going to
 				// re-create the timeline in process_hdcc() (Slightly ugly).
-				store_hdcc(ctx, cc_data, cc_count, ctx->timing->current_tref, ctx->timing->fts_now, sub);
+				store_hdcc(enc_ctx, dec_ctx, cc_data, cc_count, dec_ctx->timing->current_tref, dec_ctx->timing->fts_now, sub);
 
 				dbg_print(CCX_DMT_VERBOSE, "Reading HDTV blocks - done\n");
 			}
@@ -288,7 +288,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 
 		dbg_print(CCX_DMT_VERBOSE, "Reading Dish Network user data\n");
 
-		ctx->stat_dishheaders++;
+		dec_ctx->stat_dishheaders++;
 
 		read_bytes(ustream, 2); // "05 02"
 
@@ -347,7 +347,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 
 				dishdata[cc_count*3] = 0xFF; // Set end marker
 
-				store_hdcc(ctx, dishdata, cc_count, ctx->timing->current_tref, ctx->timing->fts_now, sub);
+				store_hdcc(enc_ctx, dec_ctx, dishdata, cc_count, dec_ctx->timing->current_tref, dec_ctx->timing->fts_now, sub);
 
 				// Ignore 3 (0x0A, followed by two unknown) bytes.
 				break;
@@ -372,7 +372,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 				dbg_print(CCX_DMT_PARSE, "%s", debug_608_to_ASC( dishdata, 0) );
 				dbg_print(CCX_DMT_PARSE, "%s:\n", debug_608_to_ASC( dishdata+3, 0) );
 
-				store_hdcc(ctx, dishdata, cc_count, ctx->timing->current_tref, ctx->timing->fts_now, sub);
+				store_hdcc(enc_ctx, dec_ctx, dishdata, cc_count, dec_ctx->timing->current_tref, dec_ctx->timing->fts_now, sub);
 
 				// Ignore 4 (0x020A, followed by two unknown) bytes.
 				break;
@@ -437,7 +437,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 					dbg_print(CCX_DMT_PARSE, "%s:\n", debug_608_to_ASC( dishdata+3, 0) );
 				}
 
-				store_hdcc(ctx, dishdata, cc_count, ctx->timing->current_tref, ctx->timing->fts_now, sub);
+				store_hdcc(enc_ctx, dec_ctx, dishdata, cc_count, dec_ctx->timing->current_tref, dec_ctx->timing->fts_now, sub);
 
 				// Ignore 3 (0x0A, followed by 2 unknown) bytes.
 				break;
@@ -453,7 +453,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 	else if ( !memcmp(ud_header,"\x02\x09", 2 ) )
 	{
 		// Either a documentation or more examples are needed.
-		ctx->stat_divicom++;
+		dec_ctx->stat_divicom++;
 
 		unsigned char data[3];
 
@@ -463,7 +463,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 		data[0]=0x04; // Field 1
 		data[1]=read_u8(ustream);
 		data[2]=read_u8(ustream);
-		do_cb(ctx, data, sub);
+		do_cb(dec_ctx, data, sub);
 		// This is probably incomplete!
 	}
 	// GXF vbi OEM code
@@ -488,7 +488,7 @@ int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, 
 		if (udatalen < 720)
 			mprint("MPEG:VBI: Minimum 720 bytes in luma line required\n");
 
-		decode_vbi(ctx, field, ustream->pos, 720, sub);
+		decode_vbi(dec_ctx, field, ustream->pos, 720, sub);
 		dbg_print(CCX_DMT_VERBOSE, "GXF (vbi line %d) user data:\n", line_nb);
 	}
 	else

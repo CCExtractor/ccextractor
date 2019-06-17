@@ -50,6 +50,6 @@ struct avc_ctx
 
 struct avc_ctx *init_avc(void);
 void dinit_avc(struct avc_ctx **ctx);
-void do_NAL (struct lib_cc_decode *ctx, unsigned char *NAL_start, LLONG NAL_length, struct cc_subtitle *sub);
-size_t process_avc(struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t avcbuflen, struct cc_subtitle *sub);
+void do_NAL (struct encoder_ctx *enc_ctx, struct lib_cc_decode *ctx, unsigned char *NAL_start, LLONG NAL_length, struct cc_subtitle *sub);
+size_t process_avc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t avcbuflen, struct cc_subtitle *sub);
 #endif

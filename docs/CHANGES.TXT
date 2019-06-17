@@ -1,3 +1,7 @@
+0.89 (TBD)
+----------
+- New: Added support to output captions to MCC file (#733).
+
 0.88 (2019-05-21)
 -----------------
 - New: More tapping points for debug image in ccextractor.

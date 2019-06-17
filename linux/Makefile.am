@@ -155,6 +155,8 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/ccx_encoders_g608.c \
 				../src/lib_ccx/ccx_encoders_helpers.c \
 				../src/lib_ccx/ccx_encoders_helpers.h \
+				../src/lib_ccx/ccx_encoders_mcc.c \
+				../src/lib_ccx/ccx_encoders_mcc.h \
 				../src/lib_ccx/ccx_encoders_python.c \
 				../src/lib_ccx/ccx_encoders_sami.c \
 				../src/lib_ccx/ccx_encoders_smptett.c \

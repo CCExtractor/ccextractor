@@ -71,6 +71,9 @@ struct encoder_cfg
 	int program_number;
 	unsigned char in_format;
 	int nospupngocr;				                    // 1 if we don't want to OCR bitmaps to add the text as comments in the XML file in spupng
+
+	// MCC File
+	int force_dropframe;                                // 1 if dropframe frame count should be used. defaults to no drop frame.
 	
 	// text -> png (text render)
 	char *render_font;                                  // The font used to render text if needed (e.g. teletext->spupng)

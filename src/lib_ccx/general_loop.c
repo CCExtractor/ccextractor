@@ -657,7 +657,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	else if (data_node->bufferdatatype == CCX_PES)
 	{
 		dec_ctx->in_bufferdatatype = CCX_PES;
-		got = process_m2v (dec_ctx, data_node->buffer, data_node->len, dec_sub);
+		got = process_m2v (enc_ctx, dec_ctx, data_node->buffer, data_node->len, dec_sub);
 	}
 	else if (data_node->bufferdatatype == CCX_DVD_SUBTITLE)
 	{
@@ -724,7 +724,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	else if (data_node->bufferdatatype == CCX_H264) // H.264 data from TS file
 	{
 		dec_ctx->in_bufferdatatype = CCX_H264;
-		got = process_avc(dec_ctx, data_node->buffer, data_node->len, dec_sub);
+		got = process_avc(enc_ctx, dec_ctx, data_node->buffer, data_node->len, dec_sub);
 	}
 	else if (data_node->bufferdatatype == CCX_RAW_TYPE)
 	{
@@ -920,9 +920,10 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			{
 				int video_pid= get_video_stream(ctx->demux_ctx);
 				if (video_pid != pid && video_pid!=-1)
-				{					
+				{
 					struct cap_info* cinfo_video = get_cinfo(ctx->demux_ctx, pid); // Must be pid, not video_pid or DVB crashes (possibly buffer consumption?) - TODO
 					struct lib_cc_decode *dec_ctx_video = update_decoder_list_cinfo(ctx, cinfo_video);
+                    enc_ctx = update_encoder_list_cinfo(ctx, cinfo_video);
 					struct cc_subtitle *dec_sub_video = &dec_ctx_video->dec_sub;
 					struct demuxer_data *data_node_video = get_data_stream(datalist, video_pid);					
 					if (data_node_video)
@@ -940,7 +941,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 							set_current_pts(dec_ctx_video->timing, pts);
 							set_fts(dec_ctx_video->timing);
 						}
-						size_t got = process_m2v(dec_ctx_video, data_node_video->buffer, data_node_video->len, dec_sub_video);
+						size_t got = process_m2v(enc_ctx, dec_ctx_video, data_node_video->buffer, data_node_video->len, dec_sub_video);
 						if (got > 0)
 						{
 							memmove(data_node_video->buffer, data_node_video->buffer + got, (size_t)(data_node_video->len - got));
@@ -1161,6 +1162,8 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			net_check_conn();
 	}
 
+    struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
+
 	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
 
@@ -1168,7 +1171,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
 		// Flush remaining HD captions
 		if (dec_ctx->has_ccdata_buffered)
-					process_hdcc(dec_ctx, &dec_ctx->dec_sub);
+					process_hdcc(enc_ctx, dec_ctx, &dec_ctx->dec_sub);
 
 		mprint ("\nNumber of NAL_type_7: %ld\n",dec_ctx->avc_ctx->num_nal_unit_type_7);
 		mprint ("Number of VCL_HRD: %ld\n",dec_ctx->avc_ctx->num_vcl_hrd);
