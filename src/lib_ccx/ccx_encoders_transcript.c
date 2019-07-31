@@ -1,7 +1,5 @@
 #include "ccx_decoders_common.h"
 #include "ccx_encoders_common.h"
-#include "spupng_encoder.h"
-#include "ccx_encoders_spupng.h"
 #include "utility.h"
 #include "ocr.h"
 #include "ccx_decoders_608.h"
@@ -9,6 +7,7 @@
 #include "ccx_decoders_708_output.h"
 #include "ccx_encoders_xds.h"
 #include "ccx_encoders_helpers.h"
+#include "lib_ccx.h"
 
 #ifdef ENABLE_SHARING
 #include "ccx_share.h"

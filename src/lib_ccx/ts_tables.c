@@ -75,7 +75,10 @@ int update_pinfo(struct ccx_demuxer *ctx, int pid, int program_number)
 	ctx->pinfo[ctx->nb_program].name[0] = '\0';
 	ctx->pinfo[ctx->nb_program].pcr_pid = -1;
 	ctx->pinfo[ctx->nb_program].has_all_min_pts = 0;
-	memset(ctx->pinfo[ctx->nb_program].got_important_streams_min_pts, UINT64_MAX, COUNT * sizeof(uint64_t));
+	for (int i = 0; i < COUNT; i++)
+	{
+		ctx->pinfo[ctx->nb_program].got_important_streams_min_pts[i] = UINT64_MAX;
+	}
 	ctx->nb_program++;
 
 	return CCX_OK;
@@ -433,7 +436,7 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 			{
 				mprint ("I can't tell the stream type of the manually selected PID.\n");
 				mprint ("Please pass -streamtype to select manually.\n");
-				fatal (EXIT_FAILURE, "(user assistance needed)");
+				fatal (EXIT_FAILURE, "-streamtype has to be manually selected.");
 			}
 			update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_NONE, program_number, NULL);
 			continue;
@@ -481,7 +484,7 @@ void ts_buffer_psi_packet(struct ccx_demuxer *ctx)
 	}
 
 	if(ctx->PID_buffers[pid]==NULL)
-	{//First packet for this pid. Creat a buffer
+	{//First packet for this pid. Create a buffer
 		ctx->PID_buffers[pid] = malloc(sizeof(struct PSI_buffer));
 		ctx->PID_buffers[pid]->buffer=NULL;
 		ctx->PID_buffers[pid]->buffer_length=0;
@@ -489,7 +492,7 @@ void ts_buffer_psi_packet(struct ccx_demuxer *ctx)
 		ctx->PID_buffers[pid]->prev_ccounter=0xff;
 	}
 
-	//skip the packet if the adaptation field legnth or payload length are out of bounds or broken
+	//skip the packet if the adaptation field length or payload length are out of bounds or broken
 	if (adaptation_field_length > 184 || payload_length > 184) {
 		payload_length = 0;
 		dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Bad packet, adaptation field too long, skipping.\n");
@@ -525,8 +528,8 @@ void ts_buffer_psi_packet(struct ccx_demuxer *ctx)
 	}
 	else if(ctx->PID_buffers[pid]->prev_ccounter<= 0x0f)
 	{
-		dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Out of order packets detected for PID:.\n\
-       ctx->PID_buffers[pid]->prev_ccounter:%i, ctx->ctx->PID_buffers[pid]->ccounter:%i\n",pid, ctx->PID_buffers[pid]->prev_ccounter, ctx->PID_buffers[pid]->ccounter);
+		dbg_print (CCX_DMT_GENERIC_NOTICES, "\rWarning: Out of order packets detected for PID: %u.\n\
+       ctx->PID_buffers[pid]->prev_ccounter:%" PRIu32 " ctx->ctx->PID_buffers[pid]->ccounter:%" PRIu32 "\n",pid, ctx->PID_buffers[pid]->prev_ccounter, ctx->PID_buffers[pid]->ccounter);
 	}
 }
 
@@ -664,7 +667,7 @@ int parse_PAT (struct ccx_demuxer *ctx)
 		/**
 		 * loop never break at j == ctx->nb_program when program_number
 		 * is already there in pinfo array and if we have program number
-		 * already in our array we dont need to update our array
+		 * already in our array we don't need to update our array
 		 * so we break if program_number already exist and make j != ctx->nb_program
 		 *
 		 * Loop without break means j would be equal to ctx->nb_program

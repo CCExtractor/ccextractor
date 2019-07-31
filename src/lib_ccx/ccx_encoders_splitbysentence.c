@@ -9,7 +9,7 @@
  * Only SBS-related bugs!
  *
  * IMPORTANT: SBS is color-blind, and color tags mislead SBS.
- * Please, use `-sbs` option with `-nodvbcolor` (actual for CCE 0.8.5)
+ * Please, use `-sbs` option with `-nofc` (actual for CCE 0.8.5)
  */
 
 #include "ccx_common_platform.h"
@@ -34,7 +34,7 @@
 
 //---------------------------
 // BEGIN of #BUG639
-// HACK: this is workaroud for https://github.com/CCExtractor/ccextractor/issues/639
+// HACK: this is workaround for https://github.com/CCExtractor/ccextractor/issues/639
 // short: the outside function, called encode_sub changes ENCODER_CONTEXT when it required..
 // as result SBS loses it internal state...
 
@@ -258,7 +258,7 @@ char * sbs_find_insert_point_partial(char * old_tail, const char * new_start, si
 
 	if (
 		dist_r <= few_errors               // right part almost the same
-		&& n > PARTIAL_CHANGE_LENGTH_MIN   // the sentense is long enough for analyzis
+		&& n > PARTIAL_CHANGE_LENGTH_MIN   // the sentence is long enough for analysis
 	) {
 // 		LOG_DEBUG("SBS: sbs_find_insert_point_partial: LEFT CHANGED,\n\tbuf:[%s]\n\tstr:[%s]\n\
 // \tmaxerr:[%d]\n\
@@ -551,7 +551,7 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 		);
 
 		if (!context->buffer)
-			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory in sbs_append_string");
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In sbs_append_string: Not enough memory to append buffer");
 
 		context->capacity = new_capacity;
 
@@ -617,6 +617,7 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 				+ 1  // skip '.'
 			;
 			tmpsub->data = strndup(bp_last_break, tmpsub->nb_data - 1);
+			tmpsub->datatype = CC_DATATYPE_GENERIC;
 			tmpsub->got_output = 1;
 
 			tmpsub->start_time = alphanum_cur;
@@ -662,7 +663,7 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 	// ===============================
 	// okay, we have extracted several sentences, now we should
 	// save the position of the "remainder" - start of the last
-	// incomplete sentece
+	// incomplete sentence
 	// ===============================
 	if (bp_last_break != sbs_undone_start)
 	{
@@ -776,8 +777,8 @@ struct cc_subtitle * reformat_cc_bitmap_through_sentence_buffer(struct cc_subtit
 
 	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
-		freep(rect->data);
-		freep(rect->data+1);
+		freep(&rect->data0);
+		freep(&rect->data1);
 	}
 #endif
 	sub->nb_data = 0;

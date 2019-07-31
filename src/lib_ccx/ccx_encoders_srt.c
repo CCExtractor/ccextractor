@@ -18,6 +18,9 @@ int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_sta
 	if(!string || !string[0])
 		return 0;
 
+	if (ms_start<0) // Drop screens that because of subs_delay start too early
+		return 0;
+
 	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
 	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 	context->srt_counter++;
@@ -92,8 +95,11 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	int i = 0;
 	char *str;
 
-	ms_start = sub->start_time;
-	ms_end = sub->end_time;
+	ms_start = sub->start_time + context->subs_delay;
+	ms_end = sub->end_time + context->subs_delay;
+
+    if (ms_start<0) // Drop screens that because of subs_delay start too early
+        return 0;
 
 	if(sub->nb_data == 0 )
 		return 0;
@@ -104,28 +110,36 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	str = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);
 	if (str)
 	{
-		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
-		{
-			millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
-			millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
-			context->srt_counter++;
-			sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
-			used = encode_line(context, context->buffer,(unsigned char *) timeline);
-			write(context->out->fh, context->buffer, used);
-			sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
-				h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
-			used = encode_line(context, context->buffer,(unsigned char *) timeline);
-            write (context->out->fh, context->buffer, used);
-			len = strlen(str);
-            write (context->out->fh, str, len);
-			write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-		}
-		freep(&str);
+        if(context->is_mkv == 1) {
+            // Save recognized string for later use in matroska.c
+            context->last_string = str;
+        } else {
+            if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
+            {
+                millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
+                millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+                context->srt_counter++;
+                sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
+                used = encode_line(context, context->buffer,(unsigned char *) timeline);
+                write(context->out->fh, context->buffer, used);
+                sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
+                         h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
+                used = encode_line(context, context->buffer,(unsigned char *) timeline);
+                write (context->out->fh, context->buffer, used);
+                len = strlen(str);
+                write (context->out->fh, str, len);
+                write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+            }
+            freep(&str);
+        }
 	}
 	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
-		freep(rect->data);
-		freep(rect->data+1);
+		if (rect)
+		{
+			freep(&rect->data0);
+			freep(&rect->data1);
+		}
 	}
 #endif
 	sub->nb_data = 0;
@@ -144,7 +158,7 @@ int write_cc_subtitle_as_srt(struct cc_subtitle *sub,struct encoder_ctx *context
 	{
 		if(sub->type == CC_TEXT)
 		{
-			ret = write_stringz_as_srt(sub->data, context, sub->start_time, sub->end_time);
+			ret = write_stringz_as_srt(sub->data, context, sub->start_time + context->subs_delay, sub->end_time + context->subs_delay);
 			freep(&sub->data);
 			sub->nb_data = 0;
 			ret = 1;

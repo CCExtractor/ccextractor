@@ -8,7 +8,8 @@
 
 static const char *webvtt_outline_css = "@import(%s)\n";
 
-static const char *webvtt_inline_css = "/* default values */\n"
+static const char *webvtt_inline_css = "\r\nSTYLE\n\n"
+		"/* default values */\n"
 		"::cue {\n"
 		"  line-height: 5.33vh;\n"
 		"  font-size: 4.1vh;\n"
@@ -115,7 +116,7 @@ static const char *webvtt_inline_css = "/* default values */\n"
 		"  background-color: rgba(0, 0, 0, 0.5);\n"
 		"}";
 
-static const char** webvtt_pac_row_percent[] = { "10", "15.33", "20.66", "26", "31.33", "36.66", "42",
+static const char* webvtt_pac_row_percent[] = { "10", "15.33", "20.66", "26", "31.33", "36.66", "42",
 		"47.33", "52.66", "58", "63.33", "68.66", "74", "79.33", "84.66" };
 
 /* The timing here is not PTS based, but output based, i.e. user delay must be accounted for
@@ -207,39 +208,6 @@ int write_webvtt_header(struct encoder_ctx *context)
 	if (context->wrote_webvtt_header) // Already done
 		return 1;
 
-	if (ccx_options.webvtt_create_css)
-	{
-		char *basefilename = get_basename(context->first_input_file);
-		char *css_file_name = (char*)malloc((strlen(basefilename) + 4) * sizeof(char));		// strlen(".css") == 4
-		sprintf(css_file_name, "%s.css", basefilename);
-
-		FILE *f = fopen(css_file_name, "wb");
-		if (f == NULL)
-		{
-			mprint("Warning: Error creating the file %s\n", css_file_name);
-			return -1;
-		}
-		fprintf(f, webvtt_inline_css);
-		fclose(f);
-
-		char* outline_css_file = (char*)malloc((strlen(css_file_name) + strlen(webvtt_outline_css)) * sizeof(char));
-		sprintf(outline_css_file, webvtt_outline_css, css_file_name);
-		write (context->out->fh, outline_css_file, strlen(outline_css_file));
-	} else {
-		write(context->out->fh, webvtt_inline_css, strlen(webvtt_inline_css));
-		if(ccx_options.enc_cfg.line_terminator_lf == 1) // If -lf parameter is set.
-		{
-			write(context->out->fh, "\n", 1);
-		}
-		else
-		{
-			write(context->out->fh,"\r\n",2);
-		}
-	}
-
-	write(context->out->fh, "##\n", 3);
-	write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-
 	if (context->timing->sync_pts2fts_set)
 	{
 		char header_string[200];
@@ -252,6 +220,38 @@ int write_webvtt_header(struct encoder_ctx *context)
 		used = encode_line(context, context->buffer, (unsigned char *)header_string);
 		write(context->out->fh, context->buffer, used);
 
+	}
+	
+	if (ccx_options.webvtt_create_css)
+	{
+		char *basefilename = get_basename(context->first_input_file);
+		char *css_file_name = (char*)malloc((strlen(basefilename) + 4) * sizeof(char));		// strlen(".css") == 4
+		sprintf(css_file_name, "%s.css", basefilename);
+
+		FILE *f = fopen(css_file_name, "wb");
+		if (f == NULL)
+		{
+			mprint("Warning: Error creating the file %s\n", css_file_name);
+			return -1;
+		}
+		fprintf(f, "%s",webvtt_inline_css);
+		fclose(f);
+
+		char* outline_css_file = (char*)malloc((strlen(css_file_name) + strlen(webvtt_outline_css)) * sizeof(char));
+		sprintf(outline_css_file, webvtt_outline_css, css_file_name);
+		write (context->out->fh, outline_css_file, strlen(outline_css_file));
+	} else if (ccx_options.use_webvtt_styling) {
+		write(context->out->fh, webvtt_inline_css, strlen(webvtt_inline_css));
+		if(ccx_options.enc_cfg.line_terminator_lf == 1) // If -lf parameter is set.
+		{
+			write(context->out->fh, "\n", 1);
+		}
+		else
+		{
+			write(context->out->fh,"\r\n",2);
+		}
+		write(context->out->fh, "##\n", 3);
+		write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 	}
 
 	context->wrote_webvtt_header = 1; // Do it even if couldn't write the header, because it won't be possible anyway
@@ -294,7 +294,7 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 			sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
 				h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
 			used = encode_line(context, context->buffer, (unsigned char *)timeline);
-            write(context->out->fh, context->buffer, used);
+			write(context->out->fh, context->buffer, used);
 			len = strlen(str);
 			write(context->out->fh, str, len);
 			write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
@@ -303,8 +303,8 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 	}
 	for (i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
-		freep(rect->data);
-		freep(rect->data + 1);
+		freep(&rect->data0);
+		freep(&rect->data1);
 	}
 #endif
 	sub->nb_data = 0;
@@ -492,7 +492,8 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 				}
 
 				// write current text symbol
-				write(context->out->fh, &(context->subline[j]), 1);
+				if (context->subline[j] != '\0')
+					write(context->out->fh, &(context->subline[j]), 1);
 
 				if (ccx_options.use_webvtt_styling)
 				{

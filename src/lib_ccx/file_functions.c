@@ -24,7 +24,7 @@ LLONG get_file_size (int in)
 	return length;
 }
 
-LLONG get_total_file_size (struct lib_ccx_ctx *ctx) // -1 if one or more files failed to open
+LLONG get_total_file_size (struct lib_ccx_ctx *ctx) // -1 if one of the file(s) failed to open
 {
 	LLONG ts=0;
 	int h;
@@ -190,7 +190,7 @@ void position_sanity_check(struct ccx_demuxer *ctx)
 	{
 		LLONG realpos = LSEEK (ctx->infd,0,SEEK_CUR);
 		if (realpos == -1) // Happens for example when infd==stdin.
-			return; 
+			return;
 		if (realpos != ctx->past - ctx->filebuffer_pos + ctx->bytesinbuffer)
 		{
 			fatal (CCX_COMMON_EXIT_BUG_BUG, "Position desync, THIS IS A BUG. Real pos =%lld, past=%lld.\n", realpos, ctx->past);
@@ -293,7 +293,7 @@ void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned 
 /**
  * @param buffer can be NULL, in case when user want to just buffer it or skip some data.
  *
- * Global options that have efffect on this function are following
+ * Global options that have effect on this function are following
  * 1) ccx_options.live_stream
  * 2) ccx_options.buffer_input
  * 3) ccx_options.input_source
@@ -323,7 +323,7 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 				break;
 			if (eof)
 			{
-				// No more data available inmediately, we sleep a while to give time
+				// No more data available immediately, we sleep a while to give time
 				// for the data to come up
 				sleepandchecktimeout (seconds);
 			}
@@ -391,7 +391,7 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 				else if (ccx_options.input_source == CCX_DS_TCP)
 					i = net_tcp_read(ctx->infd, (char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep);
 				else
-					i = recvfrom(ctx->infd,(char *) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, 0, NULL, NULL);
+					i = net_udp_read(ctx->infd, (char*) ctx->filebuffer + keep, FILEBUFFERSIZE - keep, ccx_options.udpsrc, ccx_options.udpaddr);
 				if (terminate_asap) /* Looks like receiving a signal here will trigger a -1, so check that first */
 					break;
 				if (i == -1)
@@ -482,7 +482,7 @@ size_t buffered_read_opt (struct ccx_demuxer *ctx, unsigned char *buffer, size_t
 	return copied;
 }
 
-unsigned short buffered_get_be16(struct ccx_demuxer *ctx)
+uint16_t buffered_get_be16(struct ccx_demuxer *ctx)
 {
 	unsigned char a,b;
 	unsigned char *a_p = &a; // Just to suppress warnings
@@ -510,7 +510,7 @@ unsigned char buffered_get_byte (struct ccx_demuxer *ctx)
 		return 0;
 }
 
-unsigned int buffered_get_be32(struct ccx_demuxer *ctx)
+uint32_t buffered_get_be32(struct ccx_demuxer *ctx)
 {
 	unsigned int val;
 	val = buffered_get_be16(ctx) << 16;
@@ -535,5 +535,13 @@ unsigned int buffered_get_le32(struct ccx_demuxer *ctx)
 	unsigned int val;
 	val = buffered_get_le16(ctx);
 	val |= buffered_get_le16(ctx) << 16;
+	return val;
+}
+
+uint64_t buffered_get_be64(struct ccx_demuxer *ctx)
+{
+	uint64_t val;
+	val = (uint64_t)buffered_get_be32(ctx) << 32;
+	val |= buffered_get_be32(ctx);
 	return val;
 }

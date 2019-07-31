@@ -71,6 +71,9 @@ struct encoder_cfg
 	int program_number;
 	unsigned char in_format;
 	int nospupngocr;				                    // 1 if we don't want to OCR bitmaps to add the text as comments in the XML file in spupng
+	
+	// text -> png (text render)
+	char *render_font;                                  // The font used to render text if needed (e.g. teletext->spupng)
 
 	//CEA-708
 	int services_enabled[CCX_DTVCC_MAX_SERVICES];
@@ -131,10 +134,10 @@ struct ccx_s_options // Options from user parameters
 	int ucla;                         // 1 if UCLA used, 0 if not
 	int tickertext;                   // 1 if ticker text style burned in subs, 0 if not
 	int hardsubx;                     // 1 if burned-in subtitles to be extracted
-	int dvbcolor;                     // 1 if Color to be detected for DVB
 	char *dvblang;                    // The name of the language stream for DVB
 	char *ocrlang;                    // The name of the .traineddata file to be loaded with tesseract
 	int ocr_oem;                      // The Tesseract OEM mode, could be 0 (default), 1 or 2
+	int ocr_quantmode;				  // How to quantize the bitmap before passing to to tesseract (0=no quantization at all, 1=CCExtractor's internal)
 	char *mkvlang;                    // The name of the language stream for MKV
 	int analyze_video_stream;         // If 1, the video stream will be processed even if we're using a different one for subtitles.
 
@@ -157,6 +160,7 @@ struct ccx_s_options // Options from user parameters
 	LLONG debug_mask;                                   // dbg_print will use this mask to print or ignore different types
 	LLONG debug_mask_on_debug;                          // If we're using temp_debug to enable/disable debug "live", this is the mask when temp_debug=1
 	/* Networking */
+	char *udpsrc;
 	char *udpaddr;
 	unsigned udpport;                                   // Non-zero => Listen for UDP packets on this port, no files.
 	char *tcpport;
@@ -176,7 +180,6 @@ struct ccx_s_options // Options from user parameters
 	LLONG subs_delay;                                   // ms to delay (or advance) subs
 	int cc_to_stdout;                                   // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
 	int pes_header_to_stdout;                           // If this is set to 1, the PES Header will be printed to console (debugging purposes)
-	int dvb_debug_traces_to_stdout;                     // If 1, DVB subtitle debug traces will be outputted to console
 	int ignore_pts_jumps;                               // If 1, the program will ignore PTS jumps. Sometimes this parameter is required for DVB subs with > 30s pause time
 	int multiprogram;
 	int out_interval;
@@ -196,10 +199,9 @@ struct ccx_s_options // Options from user parameters
 	char *translate_key;
 #endif
 
-#ifdef ENABLE_PYTHON
+#ifdef PYTHON_API
     char** python_params;                                 // An array of strings to store the params supplied in the python processing
     int python_param_count;                                 // Count of the total number of params passed via python bindings
-    int signal_python_api;                                // 1 symbolises that python wrapper made the call.
 #endif
 };
 

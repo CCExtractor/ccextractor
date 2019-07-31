@@ -8,7 +8,7 @@
 #include <assert.h>
 #include <math.h>
 #include <limits.h>
-#include <time.h>
+#include <time.h> 
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -30,6 +30,8 @@
 #define NK_GLFW_GL2_IMPLEMENTATION
 #include "nuklear_lib/nuklear.h"
 #include "nuklear_lib/nuklear_glfw_gl2.h"
+
+#include "icon_data.c"
 
 
 //#define WINDOW_WIDTH 1200
@@ -202,15 +204,9 @@ int main(void)
 	ctx = nk_glfw3_init(win, NK_GLFW3_INSTALL_CALLBACKS);
 	struct nk_font_atlas *font_atlas;
 	nk_glfw3_font_stash_begin(&font_atlas);
-#ifdef _WIN32
-	struct nk_font *droid = nk_font_atlas_add_from_file(font_atlas, "../../fonts/Roboto-Regular.ttf", 16, 0);
-	struct nk_font *droid_big = nk_font_atlas_add_from_file(font_atlas, "../../fonts/Roboto-Regular.ttf", 25, 0);
-	struct nk_font *droid_head = nk_font_atlas_add_from_file(font_atlas, "../../fonts/Roboto-Regular.ttf", 20, 0);
-#else
-	struct nk_font *droid = nk_font_atlas_add_from_file(font_atlas, "../fonts/Roboto-Regular.ttf", 16, 0);
-	struct nk_font *droid_big = nk_font_atlas_add_from_file(font_atlas, "../fonts/Roboto-Regular.ttf", 25, 0);
-	struct nk_font *droid_head = nk_font_atlas_add_from_file(font_atlas, "../fonts/Roboto-Regular.ttf", 20, 0);
-#endif
+	struct nk_font *droid = nk_font_atlas_add_from_memory(font_atlas, roboto_regular_font, sizeof(roboto_regular_font), 16, 0);
+	struct nk_font *droid_big = nk_font_atlas_add_from_memory(font_atlas, roboto_regular_font, sizeof(roboto_regular_font), 25, 0);
+	struct nk_font *droid_head = nk_font_atlas_add_from_memory(font_atlas, roboto_regular_font, sizeof(roboto_regular_font), 20, 0);
 	nk_glfw3_font_stash_end();
 	nk_style_set_font(ctx, &droid->handle);
 
@@ -223,7 +219,7 @@ int main(void)
 	static int advanced_mode_check = nk_false;
 	static int file_extension_check = nk_true;
 
-	/*Settigs and tab options*/
+	/*Settings and tab options*/
 	setup_main_settings(&main_settings);
 	static struct network_popup network_settings;
 	setup_network_settings(&network_settings);
@@ -247,30 +243,20 @@ int main(void)
 
 	/* icons */
 
-#ifdef _WIN32
-	media.icons.home = icon_load("../../icon/home.png");
-	media.icons.directory = icon_load("../../icon/directory.png");
-	media.icons.computer = icon_load("../../icon/computer.png");
-	media.icons.drives = icon_load("../../icon/drive.png");
-	media.icons.desktop = icon_load("../../icon/desktop.png");
-	media.icons.default_file = icon_load("../../icon/default.png");
-	media.icons.text_file = icon_load("../../icon/text.png");
-	media.icons.music_file = icon_load("../../icon/music.png");
-	media.icons.font_file = icon_load("../../icon/font.png");
-	media.icons.img_file = icon_load("../../icon/img.png");
-	media.icons.movie_file = icon_load("../../icon/movie.png");
-#else
-    media.icons.home = icon_load("../icon/home.png");
-    media.icons.directory = icon_load("../icon/directory.png");
-    media.icons.computer = icon_load("../icon/computer.png");
-    media.icons.desktop = icon_load("../icon/desktop.png");
-    media.icons.default_file = icon_load("../icon/default.png");
-    media.icons.text_file = icon_load("../icon/text.png");
-    media.icons.music_file = icon_load("../icon/music.png");
-    media.icons.font_file =  icon_load("../icon/font.png");
-    media.icons.img_file = icon_load("../icon/img.png");
-    media.icons.movie_file = icon_load("../icon/movie.png");
-#endif
+	media.icons.home = icon_load(home_icon_data, sizeof(home_icon_data));
+	media.icons.directory = icon_load(directory_icon_data, sizeof(directory_icon_data));
+	media.icons.computer = icon_load(computer_icon_data, sizeof(computer_icon_data));
+	#ifdef _WIN32	
+	media.icons.drives = icon_load(drive_icon_data, sizeof(drive_icon_data));
+	#endif
+	media.icons.desktop = icon_load(desktop_icon_data, sizeof(desktop_icon_data));
+	media.icons.default_file = icon_load(default_icon_data, sizeof(default_icon_data));
+	media.icons.text_file = icon_load(text_icon_data, sizeof(text_icon_data));
+	media.icons.music_file = icon_load(music_icon_data, sizeof(music_icon_data));
+	media.icons.font_file = icon_load(font_icon_data, sizeof(font_icon_data));
+	media.icons.img_file = icon_load(img_icon_data, sizeof(img_icon_data));
+	media.icons.movie_file = icon_load(movie_icon_data, sizeof(movie_icon_data));
+
 
     media_init(&media);
 
@@ -593,7 +579,7 @@ int main(void)
 			nk_layout_space_begin(ctx, NK_STATIC, 10, 1);
 			nk_layout_space_end(ctx);
 
-			//Extraction Info`rmation
+			//Extraction Information
 			nk_layout_row_dynamic(ctx, 10, 1);
 			nk_text(ctx, "Extraction Info:", 16, NK_TEXT_CENTERED);
 
@@ -898,13 +884,15 @@ void remove_path_entry(struct main_tab *main_settings, int indexToRemove)
 
 }
 
+
 struct nk_image
-icon_load(const char *filename)
+icon_load(char icon_data[], int len)
 {
     int x,y,n;
     GLuint tex;
-    unsigned char *data = stbi_load(filename, &x, &y, &n, 0);
-    if (!data) die("[SDL]: failed to load image: %s", filename);
+
+    unsigned char *data = stbi_load_from_memory(icon_data, len, &x, &y, &n, 0);
+    if (!data) die("[SDL]: failed to load icons");
 
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);

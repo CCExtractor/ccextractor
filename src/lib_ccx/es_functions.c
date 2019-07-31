@@ -19,7 +19,7 @@ static int extension_and_user_data(struct lib_cc_decode *ctx, struct bitstream *
 static int read_pic_data(struct bitstream *esstream);
 
 #define debug( ... ) ccx_common_logging.debug_ftn( CCX_DMT_VERBOSE, __VA_ARGS__)
-/* Process a mpeg-2 data stream with "lenght" bytes in buffer "data".
+/* Process a mpeg-2 data stream with "length" bytes in buffer "data".
  * The number of processed bytes is returned.
  * Defined in ISO/IEC 13818-2 6.2 */
 size_t process_m2v (struct lib_cc_decode *ctx, unsigned char *data, size_t length, struct cc_subtitle *sub)
@@ -325,8 +325,8 @@ static int es_video_sequence(struct lib_cc_decode *ctx, struct bitstream *esstre
 }
 
 
-// Return TRUE if all was read.  FALSE if a problem occured:
-// If a bitstream syntax problem occured the bitstream will
+// Return TRUE if all was read.  FALSE if a problem occurred:
+// If a bitstream syntax problem occurred the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
 static int read_seq_info(struct lib_cc_decode *ctx, struct bitstream *esstream)
@@ -335,7 +335,7 @@ static int read_seq_info(struct lib_cc_decode *ctx, struct bitstream *esstream)
 
 	// We only get here after seeing that start code
 	if (next_u32(esstream) != 0xB3010000) // LSB first (0x000001B3)
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "read_seq_info: next_u32(esstream) != 0xB3010000. Please file a bug report in GitHub.\n");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In read_seq_info: next_u32(esstream) != 0xB3010000. Please file a bug report on GitHub.\n");
 
 	// If we get here esstream points to the start of a sequence_header_code
 	// should we run out of data in esstream this is where we want to restart
@@ -375,7 +375,7 @@ static int sequence_header(struct lib_cc_decode *ctx, struct bitstream *esstream
 
 	// We only get here after seeing that start code
 	if (read_u32(esstream) != 0xB3010000) // LSB first (0x000001B3)
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "sequence_header: read_u32(esstream) != 0xB3010000. Please file a bug report in GitHub.\n");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In sequence_header: read_u32(esstream) != 0xB3010000. Please file a bug report on GitHub.\n");
 
 	unsigned hor_size = (unsigned) read_bits(esstream,12);
 	unsigned vert_size = (unsigned) read_bits(esstream,12);
@@ -409,7 +409,7 @@ static int sequence_header(struct lib_cc_decode *ctx, struct bitstream *esstream
 		frame_rate!= ctx->current_frame_rate)
 	{
 		// If horizontal/vertical size, framerate and/or aspect
-		// ratio are ilegal, we discard the
+		// ratio are illegal, we discard the
 		// whole sequence info.
 		if (vert_size >= 288 && vert_size <= 1088 &&
 				hor_size >= 352 && hor_size <= 1920 &&
@@ -504,8 +504,8 @@ static int sequence_ext(struct lib_cc_decode *ctx, struct bitstream *esstream)
 }
 
 
-// Return TRUE if all was read.  FALSE if a problem occured:
-// If a bitstream syntax problem occured the bitstream will
+// Return TRUE if all was read.  FALSE if a problem occurred:
+// If a bitstream syntax problem occurred the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
 static int read_gop_info(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
@@ -514,7 +514,7 @@ static int read_gop_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 
 	// We only get here after seeing that start code
 	if (next_u32(esstream) != 0xB8010000) // LSB first (0x000001B8)
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "read_gop_info: next_u32(esstream) != 0xB8010000. Please file a bug report in GitHub.\n");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In read_gop_info: next_u32(esstream) != 0xB8010000. Please file a bug report on GitHub.\n");
 
 	// If we get here esstream points to the start of a group_start_code
 	// should we run out of data in esstream this is where we want to restart
@@ -551,7 +551,7 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 
 	// We only get here after seeing that start code
 	if (read_u32(esstream) != 0xB8010000) // LSB first (0x000001B8)
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "gop_header: read_u32(esstream) != 0xB8010000. Please file a bug report in GitHub.\n");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In gop_header: read_u32(esstream) != 0xB8010000. Please file a bug report on GitHub.\n");
 
 	unsigned drop_frame_flag = (unsigned) read_bits(esstream,1);
 	struct gop_time_code gtc;
@@ -654,7 +654,7 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 		else
 		{
 			// FIXME: Wrong when PTS are not increasing but are identical
-			// troughout the GOP and then jump to the next time for the
+			// throughout the GOP and then jump to the next time for the
 			// next GOP.
 			// This effect will also lead to captions being one GOP early
 			// for DVD captions.
@@ -673,8 +673,8 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 }
 
 
-// Return TRUE if all was read.  FALSE if a problem occured:
-// If a bitstream syntax problem occured the bitstream will
+// Return TRUE if all was read.  FALSE if a problem occurred:
+// If a bitstream syntax problem occurred the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
 static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
@@ -684,7 +684,7 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 
 	// We only get here after seeing that start code
 	if (next_u32(esstream) != 0x00010000) // LSB first (0x00000100)
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "In read_pic_info: next_u32(esstream) != 0x00010000. Please file a bug report in GitHub.\n");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In read_pic_info: next_u32(esstream) != 0x00010000. Please file a bug report on GitHub.\n");
 
 	// If we get here esstream points to the start of a group_start_code
 	// should we run out of data in esstream this is where we want to restart
@@ -775,7 +775,7 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 
 	if ( !ctx->saw_gop_header && ctx->picture_coding_type==CCX_FRAME_TYPE_I_FRAME )
 	{
-		// A new GOP beginns with an I-frame. Lets hope there are
+		// A new GOP begins with an I-frame. Lets hope there are
 		// never more than one per GOP
 		ctx->frames_since_last_gop = 0;
 	}
@@ -823,7 +823,7 @@ static int pic_header(struct lib_cc_decode *ctx, struct bitstream *esstream)
 
 	// We only get here after seeing that start code
 	if (read_u32(esstream) != 0x00010000) // LSB first (0x00000100)
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "In pic_header: read_u32(esstream) != 0x00010000. Please file a bug report in GitHub.\n");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In pic_header: read_u32(esstream) != 0x00010000. Please file a bug report on GitHub.\n");
 
 	ctx->temporal_reference = (int) read_bits(esstream,10);
 	ctx->picture_coding_type = (enum ccx_frame_type) read_bits(esstream,3);
@@ -921,8 +921,8 @@ static int pic_coding_ext(struct lib_cc_decode *ctx, struct bitstream *esstream)
 }
 
 
-// Return TRUE if all was read.  FALSE if a problem occured:
-// If a bitstream syntax problem occured the bitstream will
+// Return TRUE if all was read.  FALSE if a problem occurred:
+// If a bitstream syntax problem occurred the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
 static int read_eau_info(struct lib_cc_decode* ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
@@ -933,7 +933,7 @@ static int read_eau_info(struct lib_cc_decode* ctx, struct bitstream *esstream, 
 	unsigned char *tst = next_bytes(esstream, 4);
 	if (!tst || tst[0]!=0x00 || tst[1]!=0x00 || tst[2]!=0x01
 			|| (tst[3]!=0xB2 && tst[3]!=0xB5) ) // (0x000001 B2||B5)
-				fatal(CCX_COMMON_EXIT_BUG_BUG, "read_eau_info: Impossible values for tst. Please file a bug report in GitHub.\n");
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "In read_eau_info: Impossible values for tst. Please file a bug report on GitHub.\n");
 
 	// The following extension_and_user_data() function makes sure that
 	// user data is not evaluated twice. Should the function run out of
@@ -979,7 +979,7 @@ static int extension_and_user_data(struct lib_cc_decode *ctx, struct bitstream *
 			skip_u32(esstream); // Advance bitstream
 			unsigned char *dstart = esstream->pos;
 
-			// Advanve esstream to the next startcode.  Verify that
+			// Advance esstream to the next startcode.  Verify that
 			// the whole extension was available and discard blocks
 			// followed by PACK headers.  The latter usually indicates
 			// a PS treated as an ES.
@@ -999,7 +999,7 @@ static int extension_and_user_data(struct lib_cc_decode *ctx, struct bitstream *
 
 			if (esstream->bitsleft < 0)
 			{
-				debug("Extension and user data - inclomplete\n");
+				debug("Extension and user data - incomplete\n");
 				// Restore to where we need to continue
 				init_bitstream(esstream, eau_start, esstream->end);
 				esstream->bitsleft = -1; // Redundant
@@ -1032,7 +1032,7 @@ static int extension_and_user_data(struct lib_cc_decode *ctx, struct bitstream *
 	}
 	if (esstream->bitsleft < 0)
 	{
-		debug("Extension and user data - inclomplete\n");
+		debug("Extension and user data - incomplete\n");
 		// Restore to where we need to continue
 		init_bitstream(esstream, eau_start, esstream->end);
 		esstream->bitsleft = -1; // Redundant
@@ -1046,8 +1046,8 @@ static int extension_and_user_data(struct lib_cc_decode *ctx, struct bitstream *
 }
 
 
-// Return TRUE if all was read.  FALSE if a problem occured:
-// If a bitstream syntax problem occured the bitstream will
+// Return TRUE if all was read.  FALSE if a problem occurred:
+// If a bitstream syntax problem occurred the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
 static int read_pic_data(struct bitstream *esstream)

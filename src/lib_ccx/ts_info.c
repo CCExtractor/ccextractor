@@ -131,7 +131,8 @@ int get_best_stream(struct ccx_demuxer *ctx)
 
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
-		if(iter->codec == CCX_CODEC_ATSC_CC)
+		// If saw_pesstart is 0 then stream doesn't have payload. Helps against empty streams
+        if(iter->codec == CCX_CODEC_ATSC_CC && iter->saw_pesstart)
 			return iter->pid;
 	}
 

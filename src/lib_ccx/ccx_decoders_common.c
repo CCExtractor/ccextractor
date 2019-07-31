@@ -201,7 +201,7 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 				// printf ("Warning: Losing EIA-708 data!\n");
 				break;
 			default:
-				fatal(CCX_COMMON_EXIT_BUG_BUG, "In do_cb: Impossible value for cc_type, Please file a bug report in GitHub.\n");
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "In do_cb: Impossible value for cc_type, Please file a bug report on GitHub.\n");
 		} // switch (cc_type)
 	} // cc_valid
 	else
@@ -336,7 +336,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->current_aspect_ratio = 0;
 	ctx->current_frame_rate = 4; // Assume standard fps, 29.97
 
-        //Variables used while parsing elementry stream
+        //Variables used while parsing elementary stream
 	ctx->no_bitstream_error = 0;
 	ctx->saw_seqgoppic = 0;
 	ctx->in_pic_data = 0;
@@ -366,6 +366,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->xds_ctx = ccx_decoders_xds_init_library(ctx->timing, setting->xds_write_to_file);
 
 	ctx->vbi_decoder = NULL;
+	ctx->ocr_quantmode = setting->ocr_quantmode;
 	return ctx;
 }
 
@@ -511,10 +512,10 @@ struct cc_subtitle* copy_subtitle(struct cc_subtitle *sub)
 	struct cc_subtitle *sub_copy = NULL;
 	sub_copy = malloc(sizeof(struct cc_subtitle));
 	memcpy(sub_copy, sub, sizeof(struct cc_subtitle));
+	sub_copy->datatype = sub->datatype;
 
 	if (sub->data)
 	{
-		sub_copy->data = malloc(sizeof(struct eia608_screen));
 		sub_copy->data = malloc(sub->nb_data * sizeof(struct eia608_screen));
 		memcpy(sub_copy->data, sub->data, sub->nb_data * sizeof(struct eia608_screen));
 	}
@@ -534,6 +535,7 @@ void free_encoder_context(struct encoder_ctx *ctx)
 	freep(&ctx->start_credits_text);
 	freep(&ctx->end_credits_text);
 	freep(&ctx->prev);
+    freep(&ctx->last_string);
 	freep(&ctx);
 }
 void free_decoder_context(struct lib_cc_decode *ctx)
@@ -556,6 +558,15 @@ void free_subtitle(struct cc_subtitle* sub)
 	if (!sub)
 		return;
 
+	if (sub->datatype == CC_DATATYPE_DVB)
+	{
+		struct cc_bitmap *bitmap=(struct cc_bitmap *) sub->data;
+		if (bitmap)
+		{
+			freep(&bitmap->data0);
+			freep(&bitmap->data1);
+		}
+	}
 	freep(&sub->data);
 	freep(&sub);
 }

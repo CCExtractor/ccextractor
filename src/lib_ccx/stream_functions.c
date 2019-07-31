@@ -10,6 +10,7 @@
 #include "ccx_common_timing.h"
 #include "file_buffer.h"
 #include "ccx_gxf.h"
+#include "ccx_demuxer_mxf.h"
 
 void detect_stream_type (struct ccx_demuxer *ctx)
 {
@@ -116,6 +117,15 @@ void detect_stream_type (struct ccx_demuxer *ctx)
 		{
 			// We had at least one box (or multiple) at the end to "claim" this is MP4. A single valid box at the end is doubtful...
 			ctx->stream_mode = CCX_SM_MP4;
+		}
+	}
+
+	if (ctx->stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND) // Search for MXF header
+	{
+		if (ccx_probe_mxf(ctx) == CCX_TRUE )
+		{
+			ctx->stream_mode = CCX_SM_MXF;
+			ctx->private_data = ccx_mxf_init(ctx);
 		}
 	}
 	if (ctx->stream_mode==CCX_SM_ELEMENTARY_OR_NOT_FOUND) // Still not found

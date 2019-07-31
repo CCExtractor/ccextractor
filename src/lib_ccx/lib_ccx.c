@@ -32,6 +32,7 @@ static struct ccx_decoders_common_settings_t *init_decoder_setting(
 	setting->send_to_srv = opt->send_to_srv;
 	setting->hauppauge_mode = opt->hauppauge_mode;
 	setting->xds_write_to_file = opt->transcript_settings.xds;
+	setting->ocr_quantmode = opt->ocr_quantmode;
 	
 	return setting;
 }
@@ -172,7 +173,6 @@ struct lib_ccx_ctx* init_libraries(struct ccx_s_options *opt)
 
 	ctx->cc_to_stdout = opt->cc_to_stdout;
 	ctx->pes_header_to_stdout = opt->pes_header_to_stdout;
-	ctx->dvb_debug_traces_to_stdout = opt->dvb_debug_traces_to_stdout;
 	ctx->ignore_pts_jumps = opt->ignore_pts_jumps;
 
 	ctx->hauppauge_mode = opt->hauppauge_mode;
@@ -277,7 +277,7 @@ struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx)
 		ctx->dec_global_setting->program_number = 0;
 		dec_ctx = init_cc_decode(ctx->dec_global_setting);
 		if (!dec_ctx)
-			fatal(EXIT_NOT_ENOUGH_MEMORY, "update_decoder_list: init_cc_decode failed. Not enough memory.\n");
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In update_decoder_list: Not enough memory to init_cc_decode.\n");
 		list_add_tail( &(dec_ctx->list), &(ctx->dec_ctx_head) );
 
 		//DVB related
@@ -287,6 +287,7 @@ struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx)
 		{
 			dec_ctx->prev = malloc(sizeof(struct lib_cc_decode));
 			dec_ctx->dec_sub.prev = malloc(sizeof(struct cc_subtitle));
+			memset (dec_ctx->dec_sub.prev, 0,sizeof(struct cc_subtitle));
 		}
 	}
 	return dec_ctx;
@@ -321,7 +322,7 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 		{
 			dec_ctx = init_cc_decode(ctx->dec_global_setting);
 			if (!dec_ctx)
-				fatal(EXIT_NOT_ENOUGH_MEMORY, "update_decoder_list_cinfo: Not enough memory allocating dec_ctx (multiprogram == false)\n");
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In update_decoder_list_cinfo: Not enough memory allocating dec_ctx (multiprogram == false)\n");
 			list_add_tail( &(dec_ctx->list), &(ctx->dec_ctx_head) );
 		}
 	}
@@ -329,7 +330,7 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 	{
 		dec_ctx = init_cc_decode(ctx->dec_global_setting);
 		if (!dec_ctx)
-			fatal(EXIT_NOT_ENOUGH_MEMORY, "update_decoder_list_cinfo: Not enough memory allocating dec_ctx ((multiprogram == true)\n");
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In update_decoder_list_cinfo: Not enough memory allocating dec_ctx ((multiprogram == true)\n");
 		list_add_tail( &(dec_ctx->list), &(ctx->dec_ctx_head) );
 	}
 

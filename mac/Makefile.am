@@ -15,8 +15,10 @@ ccextractor_SOURCES = \
 				../src/gpacmp4/box_code_apple.c \
 				../src/gpacmp4/box_code_base.c \
 				../src/gpacmp4/box_code_drm.c \
+				../src/gpacmp4/box_dump.c \
 				../src/gpacmp4/box_code_meta.c \
 				../src/gpacmp4/box_funcs.c \
+				../src/gpacmp4/color.c \
 				../src/gpacmp4/configfile.c \
 				../src/gpacmp4/data_map.c \
 				../src/gpacmp4/desc_private.c \
@@ -24,6 +26,7 @@ ccextractor_SOURCES = \
 				../src/gpacmp4/drm_sample.c \
 				../src/gpacmp4/error.c \
 				../src/gpacmp4/gpac_ogg.c \
+				../src/gpacmp4/hint_track.c \
 				../src/gpacmp4/hinting.c \
 				../src/gpacmp4/ipmpx_code.c \
 				../src/gpacmp4/ipmpx_parse.c \
@@ -56,6 +59,7 @@ ccextractor_SOURCES = \
 				../src/gpacmp4/gpac/avparse.h \
 				../src/gpacmp4/gpac/base_coding.h \
 				../src/gpacmp4/gpac/bitstream.h \
+				../src/gpacmp4/gpac/color.h \
 				../src/gpacmp4/gpac/config_file.h \
 				../src/gpacmp4/gpac/configuration.h \
 				../src/gpacmp4/gpac/constants.h \
@@ -63,7 +67,7 @@ ccextractor_SOURCES = \
 				../src/gpacmp4/gpac/ietf.h \
 				../src/gpacmp4/gpac/isomedia.h \
 				../src/gpacmp4/gpac/list.h \
-				../src/gpacmp4/gpac/math.h \
+				../src/gpacmp4/gpac/maths.h \
 				../src/gpacmp4/gpac/media_tools.h \
 				../src/gpacmp4/gpac/mpeg4_odf.h \
 				../src/gpacmp4/gpac/network.h \
@@ -141,6 +145,8 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/ccx_decoders_xds.h \
 				../src/lib_ccx/ccx_demuxer.c \
 				../src/lib_ccx/ccx_demuxer.h \
+				../src/lib_ccx/ccx_demuxer_mxf.c \
+				../src/lib_ccx/ccx_demuxer_mxf.h \
 				../src/lib_ccx/ccx_dtvcc.c \
 				../src/lib_ccx/ccx_dtvcc.h \
 				../src/lib_ccx/ccx_encoders_common.c \
@@ -154,7 +160,6 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/ccx_encoders_smptett.c \
 				../src/lib_ccx/ccx_encoders_splitbysentence.c \
 				../src/lib_ccx/ccx_encoders_spupng.c \
-				../src/lib_ccx/ccx_encoders_spupng.h \
 				../src/lib_ccx/ccx_encoders_srt.c \
 				../src/lib_ccx/ccx_encoders_ssa.c \
 				../src/lib_ccx/ccx_encoders_structs.h \
@@ -206,8 +211,6 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/params.c \
 				../src/lib_ccx/params_dump.c \
 				../src/lib_ccx/sequencing.c \
-				../src/lib_ccx/spupng_encoder.c \
-				../src/lib_ccx/spupng_encoder.h \
 				../src/lib_ccx/stdintmsc.h \
 				../src/lib_ccx/stream_functions.c \
 				../src/lib_ccx/teletext.h \
@@ -263,15 +266,54 @@ ccextractor_SOURCES = \
 				../src/zvbi/sampling_par.h \
 				../src/zvbi/sliced.h \
 				../src/zvbi/zvbi_decoder.h \
-				../src/extractors/extractor.c \
-				../src/extractors/extractor.h \
 				../src/wrappers/wrapper.c \
-				../src/wrappers/wrapper.h
+				../src/wrappers/wrapper.h \
+				../src/freetype/autofit/autofit.c \
+				../src/freetype/base/ftbase.c \
+				../src/freetype/base/ftbbox.c \
+				../src/freetype/base/ftbdf.c \
+				../src/freetype/base/ftbitmap.c \
+				../src/freetype/base/ftcid.c \
+				../src/freetype/base/ftfntfmt.c \
+				../src/freetype/base/ftfstype.c \
+				../src/freetype/base/ftgasp.c \
+				../src/freetype/base/ftglyph.c \
+				../src/freetype/base/ftgxval.c \
+				../src/freetype/base/ftinit.c \
+				../src/freetype/base/ftlcdfil.c \
+				../src/freetype/base/ftmm.c \
+				../src/freetype/base/ftotval.c \
+				../src/freetype/base/ftpatent.c \
+				../src/freetype/base/ftpfr.c \
+				../src/freetype/base/ftstroke.c \
+				../src/freetype/base/ftsynth.c \
+				../src/freetype/base/ftsystem.c \
+				../src/freetype/base/fttype1.c \
+				../src/freetype/base/ftwinfnt.c \
+				../src/freetype/bdf/bdf.c \
+				../src/freetype/bzip2/ftbzip2.c \
+				../src/freetype/cache/ftcache.c \
+				../src/freetype/cff/cff.c \
+				../src/freetype/cid/type1cid.c \
+				../src/freetype/gzip/ftgzip.c \
+				../src/freetype/lzw/ftlzw.c \
+				../src/freetype/pcf/pcf.c \
+				../src/freetype/pfr/pfr.c \
+				../src/freetype/psaux/psaux.c \
+				../src/freetype/pshinter/pshinter.c \
+				../src/freetype/psnames/psnames.c \
+				../src/freetype/raster/raster.c \
+				../src/freetype/sfnt/sfnt.c \
+				../src/freetype/smooth/smooth.c \
+				../src/freetype/truetype/truetype.c \
+				../src/freetype/type1/type1.c \
+				../src/freetype/type42/type42.c \
+				../src/freetype/winfonts/winfnt.c
 				
 
-ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT 
+ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP
 
-ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi/ -I../src/lib_hash/ -I../src/protobuf-c/ -I../src/utf8proc/ -I../src/
+ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/gpacmp4/ -I../src/libpng/ -I../src/zlib/ -I../src/zvbi/ -I../src/lib_hash/ -I../src/protobuf-c/ -I../src/utf8proc/ -I../src/  -I../src/freetype/include/
 
 
 ccextractor_LDADD=-lm

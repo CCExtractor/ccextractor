@@ -1,0 +1,101 @@
+language: c
+
+matrix:
+  include:
+    - os: osx
+      osx_image: xcode10.1
+      compiler: gcc
+      addons:
+        homebrew:
+          packages:
+            autoconf
+            libtool
+            tesseract
+            leptonica
+      script:
+        - cd mac
+        - ./build.command
+        - ./ccextractor --version
+
+    - os: osx
+      osx_image: xcode10.1
+      compiler: clang
+      addons:
+        homebrew:
+          packages:
+            autoconf
+            libtool
+            tesseract
+            leptonica
+      script:
+        - cd mac
+        - ./build.command
+        - ./ccextractor --version
+
+    - os: osx
+      osx_image: xcode10.1
+      compiler: gcc
+      addons:
+        homebrew:
+          packages:
+            autoconf
+            libtool
+            tesseract
+            leptonica
+      script:
+        - cd mac
+        - ./autogen.sh
+        - ./configure
+        - make
+        - ./ccextractor --version
+
+    - os: osx
+      osx_image: xcode10.1
+      compiler: clang
+      addons:
+        homebrew:
+          packages:
+            autoconf
+            libtool
+            tesseract
+            leptonica
+      script:
+        - cd mac
+        - ./autogen.sh
+        - ./configure
+        - make
+        - ./ccextractor --version
+
+    - os: osx
+      osx_image: xcode10.1
+      compiler: gcc
+      addons:
+        homebrew:
+          packages:
+            autoconf
+            libtool
+            tesseract
+            leptonica
+      script:
+        - mkdir build
+        - cd build
+        - cmake ../src/
+        - make
+        - ./ccextractor --version
+
+    - os: osx
+      osx_image: xcode10.1
+      compiler: clang
+      addons:
+        homebrew:
+          packages:
+            autoconf
+            libtool
+            tesseract
+            leptonica
+      script:
+        - mkdir build
+        - cd build
+        - cmake ../src/
+        - make
+        - ./ccextractor --version

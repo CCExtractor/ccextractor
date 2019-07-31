@@ -25,7 +25,6 @@
 #include "ccx_common_option.h"
 #include "ccx_encoders_common.h"
 #include "png.h"
-#include "spupng_encoder.h"
 #include "ocr.h"
 #include "utility.h"
 #include "ccx_encoders_helpers.h"
@@ -152,8 +151,8 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 	}
 	for (i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
-		freep(rect->data);
-		freep(rect->data + 1);
+		freep(&rect->data0);
+		freep(&rect->data1);
 	}
 #endif
 
@@ -269,8 +268,8 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 
 				unsigned char *final = malloc ( strlen((context->subline)) + 1000);	//Being overly generous? :P
 				unsigned char *temp = malloc ( strlen((context->subline)) + 1000);
-				*final=NULL;
-				*temp=NULL;
+				*final=0;
+				*temp=0;
 				/*
 					final	: stores formatted HTML sentence. This will be written in subtitle file.
 					temp	: stored temporary sentences required while formatting
@@ -283,13 +282,13 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 				/*
 
 				0 = None or font colour
-				1 = itlics
+				1 = italics
 				2 = bold
 				3 = underline
 
 				*/
 
-				//Now, searching for first occurance of <i> OR <u> OR <b>
+				//Now, searching for first occurrence of <i> OR <u> OR <b>
 
 				unsigned char * start = strstr((context->subline), "<i>"); 
 				if(start==NULL)
@@ -327,7 +326,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 					end_tag = "</u>";
 					}
 
-				    unsigned char *end = strstr((context->subline), end_tag);	//occurance of closing tag (</i> OR </b> OR </u>)
+				    unsigned char *end = strstr((context->subline), end_tag);	//occurrence of closing tag (</i> OR </b> OR </u>)
 				    
 				    if(end==NULL)
 				    {

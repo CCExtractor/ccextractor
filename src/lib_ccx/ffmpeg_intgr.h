@@ -1,6 +1,7 @@
 #ifndef _FFMPEG_INTIGRATION
 #define _FFMPEG_INTIGRATION
 
+#include "lib_ccx.h"
 #ifdef ENABLE_FFMPEG
 #include "libavutil/common.h"
 #include "libavutil/error.h"

@@ -84,6 +84,8 @@
 # define PROTOBUF_C_UNPACK_ERROR(...)
 #endif
 
+const char protobuf_c_empty_string[] = "";
+
 /**
 * Internal `ProtobufCMessage` manipulation macro.
 *
@@ -91,7 +93,7 @@
 * STRUCT_MEMBER_PTR().
 */
 #define STRUCT_MEMBER_P(struct_p, struct_offset) \
-    ((void *) ((uint8_t *) (struct_p) + (struct_offset)))
+((void *) ((uint8_t *) (struct_p) + (struct_offset)))
 
 /**
 * Return field in a `ProtobufCMessage` based on offset.
@@ -100,7 +102,7 @@
 * Cast it to the passed type.
 */
 #define STRUCT_MEMBER(member_type, struct_p, struct_offset) \
-    (*(member_type *) STRUCT_MEMBER_P((struct_p), (struct_offset)))
+(*(member_type *) STRUCT_MEMBER_P((struct_p), (struct_offset)))
 
 /**
 * Return field in a `ProtobufCMessage` based on offset.
@@ -109,7 +111,7 @@
 * it to a pointer to the passed type.
 */
 #define STRUCT_MEMBER_PTR(member_type, struct_p, struct_offset) \
-    ((member_type *) STRUCT_MEMBER_P((struct_p), (struct_offset)))
+((member_type *) STRUCT_MEMBER_P((struct_p), (struct_offset)))
 
 /* Assertions for magic numbers. */
 
@@ -183,9 +185,9 @@ static ProtobufCAllocator protobuf_c__allocator = {
 
 void
 protobuf_c_buffer_simple_append(ProtobufCBuffer *buffer,
-size_t len, const uint8_t *data)
+				size_t len, const uint8_t *data)
 {
-	ProtobufCBufferSimple *simp = (ProtobufCBufferSimple *)buffer;
+	ProtobufCBufferSimple *simp = (ProtobufCBufferSimple *) buffer;
 	size_t new_len = simp->len + len;
 
 	if (new_len > simp->alloced) {
@@ -231,21 +233,17 @@ size_t len, const uint8_t *data)
 *      Number of bytes required.
 */
 static inline size_t
-get_tag_size(unsigned number)
+get_tag_size(uint32_t number)
 {
-	if (number < (1 << 4)) {
+	if (number < (1UL << 4)) {
 		return 1;
-	}
-	else if (number < (1 << 11)) {
+	} else if (number < (1UL << 11)) {
 		return 2;
-	}
-	else if (number < (1 << 18)) {
+	} else if (number < (1UL << 18)) {
 		return 3;
-	}
-	else if (number < (1 << 25)) {
+	} else if (number < (1UL << 25)) {
 		return 4;
-	}
-	else {
+	} else {
 		return 5;
 	}
 }
@@ -262,19 +260,15 @@ get_tag_size(unsigned number)
 static inline size_t
 uint32_size(uint32_t v)
 {
-	if (v < (1 << 7)) {
+	if (v < (1UL << 7)) {
 		return 1;
-	}
-	else if (v < (1 << 14)) {
+	} else if (v < (1UL << 14)) {
 		return 2;
-	}
-	else if (v < (1 << 21)) {
+	} else if (v < (1UL << 21)) {
 		return 3;
-	}
-	else if (v < (1 << 28)) {
+	} else if (v < (1UL << 28)) {
 		return 4;
-	}
-	else {
+	} else {
 		return 5;
 	}
 }
@@ -293,20 +287,15 @@ int32_size(int32_t v)
 {
 	if (v < 0) {
 		return 10;
-	}
-	else if (v < (1 << 7)) {
+	} else if (v < (1L << 7)) {
 		return 1;
-	}
-	else if (v < (1 << 14)) {
+	} else if (v < (1L << 14)) {
 		return 2;
-	}
-	else if (v < (1 << 21)) {
+	} else if (v < (1L << 21)) {
 		return 3;
-	}
-	else if (v < (1 << 28)) {
+	} else if (v < (1L << 28)) {
 		return 4;
-	}
-	else {
+	} else {
 		return 5;
 	}
 }
@@ -324,9 +313,9 @@ static inline uint32_t
 zigzag32(int32_t v)
 {
 	if (v < 0)
-		return ((uint32_t)(-v)) * 2 - 1;
+		return (-(uint32_t)v) * 2 - 1;
 	else
-		return v * 2;
+		return (uint32_t)(v) * 2;
 }
 
 /**
@@ -357,27 +346,21 @@ sint32_size(int32_t v)
 static inline size_t
 uint64_size(uint64_t v)
 {
-	uint32_t upper_v = (uint32_t)(v >> 32);
+	uint32_t upper_v = (uint32_t) (v >> 32);
 
 	if (upper_v == 0) {
-		return uint32_size((uint32_t)v);
-	}
-	else if (upper_v < (1 << 3)) {
+		return uint32_size((uint32_t) v);
+	} else if (upper_v < (1UL << 3)) {
 		return 5;
-	}
-	else if (upper_v < (1 << 10)) {
+	} else if (upper_v < (1UL << 10)) {
 		return 6;
-	}
-	else if (upper_v < (1 << 17)) {
+	} else if (upper_v < (1UL << 17)) {
 		return 7;
-	}
-	else if (upper_v < (1 << 24)) {
+	} else if (upper_v < (1UL << 24)) {
 		return 8;
-	}
-	else if (upper_v < (1U << 31)) {
+	} else if (upper_v < (1UL << 31)) {
 		return 9;
-	}
-	else {
+	} else {
 		return 10;
 	}
 }
@@ -395,9 +378,9 @@ static inline uint64_t
 zigzag64(int64_t v)
 {
 	if (v < 0)
-		return ((uint64_t)(-v)) * 2 - 1;
+		return (-(uint64_t)v) * 2 - 1;
 	else
-		return v * 2;
+		return (uint64_t)(v) * 2;
 }
 
 /**
@@ -429,22 +412,23 @@ sint64_size(int64_t v)
 */
 static size_t
 required_field_get_packed_size(const ProtobufCFieldDescriptor *field,
-const void *member)
+			       const void *member)
 {
 	size_t rv = get_tag_size(field->id);
 
 	switch (field->type) {
 	case PROTOBUF_C_TYPE_SINT32:
-		return rv + sint32_size(*(const int32_t *)member);
+		return rv + sint32_size(*(const int32_t *) member);
+	case PROTOBUF_C_TYPE_ENUM:
 	case PROTOBUF_C_TYPE_INT32:
-		return rv + int32_size(*(const uint32_t *)member);
+		return rv + int32_size(*(const int32_t *) member);
 	case PROTOBUF_C_TYPE_UINT32:
-		return rv + uint32_size(*(const uint32_t *)member);
+		return rv + uint32_size(*(const uint32_t *) member);
 	case PROTOBUF_C_TYPE_SINT64:
-		return rv + sint64_size(*(const int64_t *)member);
+		return rv + sint64_size(*(const int64_t *) member);
 	case PROTOBUF_C_TYPE_INT64:
 	case PROTOBUF_C_TYPE_UINT64:
-		return rv + uint64_size(*(const uint64_t *)member);
+		return rv + uint64_size(*(const uint64_t *) member);
 	case PROTOBUF_C_TYPE_SFIXED32:
 	case PROTOBUF_C_TYPE_FIXED32:
 		return rv + 4;
@@ -457,20 +441,17 @@ const void *member)
 		return rv + 4;
 	case PROTOBUF_C_TYPE_DOUBLE:
 		return rv + 8;
-	case PROTOBUF_C_TYPE_ENUM:
-		/* \todo Is this correct for negative-valued enums? */
-		return rv + uint32_size(*(const uint32_t *)member);
 	case PROTOBUF_C_TYPE_STRING: {
-		const char *str = *(char * const *)member;
+		const char *str = *(char * const *) member;
 		size_t len = str ? strlen(str) : 0;
 		return rv + uint32_size(len) + len;
 	}
 	case PROTOBUF_C_TYPE_BYTES: {
-		size_t len = ((const ProtobufCBinaryData *)member)->len;
+		size_t len = ((const ProtobufCBinaryData *) member)->len;
 		return rv + uint32_size(len) + len;
 	}
 	case PROTOBUF_C_TYPE_MESSAGE: {
-		const ProtobufCMessage *msg = *(ProtobufCMessage * const *)member;
+		const ProtobufCMessage *msg = *(ProtobufCMessage * const *) member;
 		size_t subrv = msg ? protobuf_c_message_get_packed_size(msg) : 0;
 		return rv + uint32_size(subrv) + subrv;
 	}
@@ -487,7 +468,7 @@ const void *member)
 * \param field
 *      Field descriptor for member.
 * \param oneof_case
-*      A pointer to the case enum that selects the field in the oneof.
+*      Enum value that selects the field in the oneof.
 * \param member
 *      Field to encode.
 * \return
@@ -495,20 +476,18 @@ const void *member)
 */
 static size_t
 oneof_field_get_packed_size(const ProtobufCFieldDescriptor *field,
-const uint32_t *oneof_case,
-const void *member)
+			    uint32_t oneof_case,
+			    const void *member)
 {
-	if (*oneof_case == field->id) {
-		if (field->type == PROTOBUF_C_TYPE_MESSAGE ||
-			field->type == PROTOBUF_C_TYPE_STRING)
-		{
-			const void *ptr = *(const void * const *)member;
-			if (ptr == NULL || ptr == field->default_value)
-				return 0;
-		}
-	}
-	else {
+	if (oneof_case != field->id) {
 		return 0;
+	}
+	if (field->type == PROTOBUF_C_TYPE_MESSAGE ||
+	    field->type == PROTOBUF_C_TYPE_STRING)
+	{
+		const void *ptr = *(const void * const *) member;
+		if (ptr == NULL || ptr == field->default_value)
+			return 0;
 	}
 	return required_field_get_packed_size(field, member);
 }
@@ -529,20 +508,88 @@ const void *member)
 */
 static size_t
 optional_field_get_packed_size(const ProtobufCFieldDescriptor *field,
-const protobuf_c_boolean *has,
-const void *member)
+			       const protobuf_c_boolean has,
+			       const void *member)
 {
 	if (field->type == PROTOBUF_C_TYPE_MESSAGE ||
-		field->type == PROTOBUF_C_TYPE_STRING)
+	    field->type == PROTOBUF_C_TYPE_STRING)
 	{
-		const void *ptr = *(const void * const *)member;
+		const void *ptr = *(const void * const *) member;
 		if (ptr == NULL || ptr == field->default_value)
 			return 0;
-	}
-	else {
-		if (!*has)
+	} else {
+		if (!has)
 			return 0;
 	}
+	return required_field_get_packed_size(field, member);
+}
+
+static protobuf_c_boolean
+field_is_zeroish(const ProtobufCFieldDescriptor *field,
+		 const void *member)
+{
+	protobuf_c_boolean ret = FALSE;
+
+	switch (field->type) {
+	case PROTOBUF_C_TYPE_BOOL:
+		ret = (0 == *(const protobuf_c_boolean *) member);
+		break;
+	case PROTOBUF_C_TYPE_ENUM:
+	case PROTOBUF_C_TYPE_SINT32:
+	case PROTOBUF_C_TYPE_INT32:
+	case PROTOBUF_C_TYPE_UINT32:
+	case PROTOBUF_C_TYPE_SFIXED32:
+	case PROTOBUF_C_TYPE_FIXED32:
+		ret = (0 == *(const uint32_t *) member);
+		break;
+	case PROTOBUF_C_TYPE_SINT64:
+	case PROTOBUF_C_TYPE_INT64:
+	case PROTOBUF_C_TYPE_UINT64:
+	case PROTOBUF_C_TYPE_SFIXED64:
+	case PROTOBUF_C_TYPE_FIXED64:
+		ret = (0 == *(const uint64_t *) member);
+		break;
+	case PROTOBUF_C_TYPE_FLOAT:
+		ret = (0 == *(const float *) member);
+		break;
+	case PROTOBUF_C_TYPE_DOUBLE:
+		ret = (0 == *(const double *) member);
+		break;
+	case PROTOBUF_C_TYPE_STRING:
+		ret = (NULL == *(const char * const *) member) ||
+		      ('\0' == **(const char * const *) member);
+		break;
+	case PROTOBUF_C_TYPE_BYTES:
+	case PROTOBUF_C_TYPE_MESSAGE:
+		ret = (NULL == *(const void * const *) member);
+		break;
+	default:
+		ret = TRUE;
+		break;
+	}
+
+	return ret;
+}
+
+/**
+* Calculate the serialized size of a single unlabeled message field, including
+* the space needed by the preceding tag. Returns 0 if the field isn't set or
+* if it is set to a "zeroish" value (null pointer or 0 for numerical values).
+* Unlabeled fields are supported only in proto3.
+*
+* \param field
+*      Field descriptor for member.
+* \param member
+*      Field to encode.
+* \return
+*      Number of bytes required.
+*/
+static size_t
+unlabeled_field_get_packed_size(const ProtobufCFieldDescriptor *field,
+				const void *member)
+{
+	if (field_is_zeroish(field, member))
+		return 0;
 	return required_field_get_packed_size(field, member);
 }
 
@@ -562,12 +609,12 @@ const void *member)
 */
 static size_t
 repeated_field_get_packed_size(const ProtobufCFieldDescriptor *field,
-size_t count, const void *member)
+			       size_t count, const void *member)
 {
 	size_t header_size;
 	size_t rv = 0;
 	unsigned i;
-	void *array = *(void * const *)member;
+	void *array = *(void * const *) member;
 
 	if (count == 0)
 		return 0;
@@ -578,25 +625,25 @@ size_t count, const void *member)
 	switch (field->type) {
 	case PROTOBUF_C_TYPE_SINT32:
 		for (i = 0; i < count; i++)
-			rv += sint32_size(((int32_t *)array)[i]);
+			rv += sint32_size(((int32_t *) array)[i]);
 		break;
+	case PROTOBUF_C_TYPE_ENUM:
 	case PROTOBUF_C_TYPE_INT32:
 		for (i = 0; i < count; i++)
-			rv += int32_size(((uint32_t *)array)[i]);
+			rv += int32_size(((int32_t *) array)[i]);
 		break;
 	case PROTOBUF_C_TYPE_UINT32:
-	case PROTOBUF_C_TYPE_ENUM:
 		for (i = 0; i < count; i++)
-			rv += uint32_size(((uint32_t *)array)[i]);
+			rv += uint32_size(((uint32_t *) array)[i]);
 		break;
 	case PROTOBUF_C_TYPE_SINT64:
 		for (i = 0; i < count; i++)
-			rv += sint64_size(((int64_t *)array)[i]);
+			rv += sint64_size(((int64_t *) array)[i]);
 		break;
 	case PROTOBUF_C_TYPE_INT64:
 	case PROTOBUF_C_TYPE_UINT64:
 		for (i = 0; i < count; i++)
-			rv += uint64_size(((uint64_t *)array)[i]);
+			rv += uint64_size(((uint64_t *) array)[i]);
 		break;
 	case PROTOBUF_C_TYPE_SFIXED32:
 	case PROTOBUF_C_TYPE_FIXED32:
@@ -613,20 +660,20 @@ size_t count, const void *member)
 		break;
 	case PROTOBUF_C_TYPE_STRING:
 		for (i = 0; i < count; i++) {
-			size_t len = strlen(((char **)array)[i]);
+			size_t len = strlen(((char **) array)[i]);
 			rv += uint32_size(len) + len;
 		}
 		break;
 	case PROTOBUF_C_TYPE_BYTES:
 		for (i = 0; i < count; i++) {
-			size_t len = ((ProtobufCBinaryData *)array)[i].len;
+			size_t len = ((ProtobufCBinaryData *) array)[i].len;
 			rv += uint32_size(len) + len;
 		}
 		break;
 	case PROTOBUF_C_TYPE_MESSAGE:
 		for (i = 0; i < count; i++) {
 			size_t len = protobuf_c_message_get_packed_size(
-				((ProtobufCMessage **)array)[i]);
+				((ProtobufCMessage **) array)[i]);
 			rv += uint32_size(len) + len;
 		}
 		break;
@@ -668,25 +715,37 @@ size_t protobuf_c_message_get_packed_size(const ProtobufCMessage *message)
 		const ProtobufCFieldDescriptor *field =
 			message->descriptor->fields + i;
 		const void *member =
-			((const char *)message) + field->offset;
+			((const char *) message) + field->offset;
 		const void *qmember =
-			((const char *)message) + field->quantifier_offset;
+			((const char *) message) + field->quantifier_offset;
 
 		if (field->label == PROTOBUF_C_LABEL_REQUIRED) {
 			rv += required_field_get_packed_size(field, member);
-		}
-		else if (field->label == PROTOBUF_C_LABEL_OPTIONAL) {
-			if (0 != (field->flags & PROTOBUF_C_FIELD_FLAG_ONEOF))
-				rv += oneof_field_get_packed_size(field, qmember, member);
-			else
-				rv += optional_field_get_packed_size(field, qmember, member);
-		}
-		else {
+		} else if ((field->label == PROTOBUF_C_LABEL_OPTIONAL ||
+			    field->label == PROTOBUF_C_LABEL_NONE) &&
+			   (0 != (field->flags & PROTOBUF_C_FIELD_FLAG_ONEOF))) {
+			rv += oneof_field_get_packed_size(
+				field,
+				*(const uint32_t *) qmember,
+				member
+			);
+		} else if (field->label == PROTOBUF_C_LABEL_OPTIONAL) {
+			rv += optional_field_get_packed_size(
+				field,
+				*(protobuf_c_boolean *) qmember,
+				member
+			);
+		} else if (field->label == PROTOBUF_C_LABEL_NONE) {
+			rv += unlabeled_field_get_packed_size(
+				field,
+				member
+			);
+		} else {
 			rv += repeated_field_get_packed_size(
 				field,
-				*(const size_t *)qmember,
+				*(const size_t *) qmember,
 				member
-				);
+			);
 		}
 	}
 	for (i = 0; i < message->n_unknown_fields; i++)
@@ -763,8 +822,7 @@ int32_pack(int32_t value, uint8_t *out)
 		out[5] = out[6] = out[7] = out[8] = 0xff;
 		out[9] = 0x01;
 		return 10;
-	}
-	else {
+	} else {
 		return uint32_pack(value, out);
 	}
 }
@@ -800,12 +858,12 @@ sint32_pack(int32_t value, uint8_t *out)
 static size_t
 uint64_pack(uint64_t value, uint8_t *out)
 {
-	uint32_t hi = (uint32_t)(value >> 32);
-	uint32_t lo = (uint32_t)value;
+	uint32_t hi = (uint32_t) (value >> 32);
+	uint32_t lo = (uint32_t) value;
 	unsigned rv;
 
 	if (hi == 0)
-		return uint32_pack((uint32_t)lo, out);
+		return uint32_pack((uint32_t) lo, out);
 	out[0] = (lo) | 0x80;
 	out[1] = (lo >> 7) | 0x80;
 	out[2] = (lo >> 14) | 0x80;
@@ -813,8 +871,7 @@ uint64_pack(uint64_t value, uint8_t *out)
 	if (hi < 8) {
 		out[4] = (hi << 4) | (lo >> 28);
 		return 5;
-	}
-	else {
+	} else {
 		out[4] = ((hi & 7) << 4) | (lo >> 28) | 0x80;
 		hi >>= 3;
 	}
@@ -893,7 +950,7 @@ fixed64_pack(uint64_t value, void *out)
 	memcpy(out, &value, 8);
 #else
 	fixed32_pack(value, out);
-	fixed32_pack(value >> 32, ((char *)out) + 4);
+	fixed32_pack(value >> 32, ((char *) out) + 4);
 #endif
 	return 8;
 }
@@ -939,8 +996,7 @@ string_pack(const char *str, uint8_t *out)
 	if (str == NULL) {
 		out[0] = 0;
 		return 1;
-	}
-	else {
+	} else {
 		size_t len = strlen(str);
 		size_t rv = uint32_pack(len, out);
 		memcpy(out + rv, str, len);
@@ -985,8 +1041,7 @@ prefixed_message_pack(const ProtobufCMessage *message, uint8_t *out)
 	if (message == NULL) {
 		out[0] = 0;
 		return 1;
-	}
-	else {
+	} else {
 		size_t rv = protobuf_c_message_pack(message, out + 1);
 		uint32_t rv_packed_size = uint32_size(rv);
 		if (rv_packed_size != 1)
@@ -1012,10 +1067,10 @@ prefixed_message_pack(const ProtobufCMessage *message, uint8_t *out)
 static size_t
 tag_pack(uint32_t id, uint8_t *out)
 {
-	if (id < (1 << (32 - 3)))
+	if (id < (1UL << (32 - 3)))
 		return uint32_pack(id << 3, out);
 	else
-		return uint64_pack(((uint64_t)id) << 3, out);
+		return uint64_pack(((uint64_t) id) << 3, out);
 }
 
 /**
@@ -1032,50 +1087,50 @@ tag_pack(uint32_t id, uint8_t *out)
 */
 static size_t
 required_field_pack(const ProtobufCFieldDescriptor *field,
-const void *member, uint8_t *out)
+		    const void *member, uint8_t *out)
 {
 	size_t rv = tag_pack(field->id, out);
 
 	switch (field->type) {
 	case PROTOBUF_C_TYPE_SINT32:
 		out[0] |= PROTOBUF_C_WIRE_TYPE_VARINT;
-		return rv + sint32_pack(*(const int32_t *)member, out + rv);
+		return rv + sint32_pack(*(const int32_t *) member, out + rv);
+	case PROTOBUF_C_TYPE_ENUM:
 	case PROTOBUF_C_TYPE_INT32:
 		out[0] |= PROTOBUF_C_WIRE_TYPE_VARINT;
-		return rv + int32_pack(*(const uint32_t *)member, out + rv);
+		return rv + int32_pack(*(const int32_t *) member, out + rv);
 	case PROTOBUF_C_TYPE_UINT32:
-	case PROTOBUF_C_TYPE_ENUM:
 		out[0] |= PROTOBUF_C_WIRE_TYPE_VARINT;
-		return rv + uint32_pack(*(const uint32_t *)member, out + rv);
+		return rv + uint32_pack(*(const uint32_t *) member, out + rv);
 	case PROTOBUF_C_TYPE_SINT64:
 		out[0] |= PROTOBUF_C_WIRE_TYPE_VARINT;
-		return rv + sint64_pack(*(const int64_t *)member, out + rv);
+		return rv + sint64_pack(*(const int64_t *) member, out + rv);
 	case PROTOBUF_C_TYPE_INT64:
 	case PROTOBUF_C_TYPE_UINT64:
 		out[0] |= PROTOBUF_C_WIRE_TYPE_VARINT;
-		return rv + uint64_pack(*(const uint64_t *)member, out + rv);
+		return rv + uint64_pack(*(const uint64_t *) member, out + rv);
 	case PROTOBUF_C_TYPE_SFIXED32:
 	case PROTOBUF_C_TYPE_FIXED32:
 	case PROTOBUF_C_TYPE_FLOAT:
 		out[0] |= PROTOBUF_C_WIRE_TYPE_32BIT;
-		return rv + fixed32_pack(*(const uint32_t *)member, out + rv);
+		return rv + fixed32_pack(*(const uint32_t *) member, out + rv);
 	case PROTOBUF_C_TYPE_SFIXED64:
 	case PROTOBUF_C_TYPE_FIXED64:
 	case PROTOBUF_C_TYPE_DOUBLE:
 		out[0] |= PROTOBUF_C_WIRE_TYPE_64BIT;
-		return rv + fixed64_pack(*(const uint64_t *)member, out + rv);
+		return rv + fixed64_pack(*(const uint64_t *) member, out + rv);
 	case PROTOBUF_C_TYPE_BOOL:
 		out[0] |= PROTOBUF_C_WIRE_TYPE_VARINT;
-		return rv + boolean_pack(*(const protobuf_c_boolean *)member, out + rv);
+		return rv + boolean_pack(*(const protobuf_c_boolean *) member, out + rv);
 	case PROTOBUF_C_TYPE_STRING:
 		out[0] |= PROTOBUF_C_WIRE_TYPE_LENGTH_PREFIXED;
-		return rv + string_pack(*(char *const *)member, out + rv);
+		return rv + string_pack(*(char *const *) member, out + rv);
 	case PROTOBUF_C_TYPE_BYTES:
 		out[0] |= PROTOBUF_C_WIRE_TYPE_LENGTH_PREFIXED;
-		return rv + binary_data_pack((const ProtobufCBinaryData *)member, out + rv);
+		return rv + binary_data_pack((const ProtobufCBinaryData *) member, out + rv);
 	case PROTOBUF_C_TYPE_MESSAGE:
 		out[0] |= PROTOBUF_C_WIRE_TYPE_LENGTH_PREFIXED;
-		return rv + prefixed_message_pack(*(ProtobufCMessage * const *)member, out + rv);
+		return rv + prefixed_message_pack(*(ProtobufCMessage * const *) member, out + rv);
 	}
 	PROTOBUF_C__ASSERT_NOT_REACHED();
 	return 0;
@@ -1088,7 +1143,7 @@ const void *member, uint8_t *out)
 * \param field
 *      Field descriptor.
 * \param oneof_case
-*      A pointer to the case enum that selects the field in the oneof.
+*      Enum value that selects the field in the oneof.
 * \param member
 *      The field member.
 * \param[out] out
@@ -1098,20 +1153,18 @@ const void *member, uint8_t *out)
 */
 static size_t
 oneof_field_pack(const ProtobufCFieldDescriptor *field,
-const uint32_t *oneof_case,
-const void *member, uint8_t *out)
+		 uint32_t oneof_case,
+		 const void *member, uint8_t *out)
 {
-	if (*oneof_case == field->id) {
-		if (field->type == PROTOBUF_C_TYPE_MESSAGE ||
-			field->type == PROTOBUF_C_TYPE_STRING)
-		{
-			const void *ptr = *(const void * const *)member;
-			if (ptr == NULL || ptr == field->default_value)
-				return 0;
-		}
-	}
-	else {
+	if (oneof_case != field->id) {
 		return 0;
+	}
+	if (field->type == PROTOBUF_C_TYPE_MESSAGE ||
+	    field->type == PROTOBUF_C_TYPE_STRING)
+	{
+		const void *ptr = *(const void * const *) member;
+		if (ptr == NULL || ptr == field->default_value)
+			return 0;
 	}
 	return required_field_pack(field, member, out);
 }
@@ -1132,20 +1185,40 @@ const void *member, uint8_t *out)
 */
 static size_t
 optional_field_pack(const ProtobufCFieldDescriptor *field,
-const protobuf_c_boolean *has,
-const void *member, uint8_t *out)
+		    const protobuf_c_boolean has,
+		    const void *member, uint8_t *out)
 {
 	if (field->type == PROTOBUF_C_TYPE_MESSAGE ||
-		field->type == PROTOBUF_C_TYPE_STRING)
+	    field->type == PROTOBUF_C_TYPE_STRING)
 	{
-		const void *ptr = *(const void * const *)member;
+		const void *ptr = *(const void * const *) member;
 		if (ptr == NULL || ptr == field->default_value)
 			return 0;
-	}
-	else {
-		if (!*has)
+	} else {
+		if (!has)
 			return 0;
 	}
+	return required_field_pack(field, member, out);
+}
+
+/**
+* Pack an unlabeled field and return the number of bytes written.
+*
+* \param field
+*      Field descriptor.
+* \param member
+*      The field member.
+* \param[out] out
+*      Packed value.
+* \return
+*      Number of bytes written to `out`.
+*/
+static size_t
+unlabeled_field_pack(const ProtobufCFieldDescriptor *field,
+		     const void *member, uint8_t *out)
+{
+	if (field_is_zeroish(field, member))
+		return 0;
 	return required_field_pack(field, member, out);
 }
 
@@ -1209,7 +1282,7 @@ copy_to_little_endian_32(void *out, const void *in, const unsigned n)
 	unsigned i;
 	const uint32_t *ini = in;
 	for (i = 0; i < n; i++)
-		fixed32_pack(ini[i], (uint32_t *)out + i);
+		fixed32_pack(ini[i], (uint32_t *) out + i);
 #endif
 }
 
@@ -1232,7 +1305,7 @@ copy_to_little_endian_64(void *out, const void *in, const unsigned n)
 	unsigned i;
 	const uint64_t *ini = in;
 	for (i = 0; i < n; i++)
-		fixed64_pack(ini[i], (uint64_t *)out + i);
+		fixed64_pack(ini[i], (uint64_t *) out + i);
 #endif
 }
 
@@ -1249,14 +1322,14 @@ static unsigned
 get_type_min_size(ProtobufCType type)
 {
 	if (type == PROTOBUF_C_TYPE_SFIXED32 ||
-		type == PROTOBUF_C_TYPE_FIXED32 ||
-		type == PROTOBUF_C_TYPE_FLOAT)
+	    type == PROTOBUF_C_TYPE_FIXED32 ||
+	    type == PROTOBUF_C_TYPE_FLOAT)
 	{
 		return 4;
 	}
 	if (type == PROTOBUF_C_TYPE_SFIXED64 ||
-		type == PROTOBUF_C_TYPE_FIXED64 ||
-		type == PROTOBUF_C_TYPE_DOUBLE)
+	    type == PROTOBUF_C_TYPE_FIXED64 ||
+	    type == PROTOBUF_C_TYPE_DOUBLE)
 	{
 		return 8;
 	}
@@ -1280,9 +1353,9 @@ get_type_min_size(ProtobufCType type)
 */
 static size_t
 repeated_field_pack(const ProtobufCFieldDescriptor *field,
-size_t count, const void *member, uint8_t *out)
+		    size_t count, const void *member, uint8_t *out)
 {
-	void *array = *(void * const *)member;
+	void *array = *(void * const *) member;
 	unsigned i;
 
 	if (0 != (field->flags & PROTOBUF_C_FIELD_FLAG_PACKED)) {
@@ -1317,40 +1390,40 @@ size_t count, const void *member, uint8_t *out)
 			copy_to_little_endian_64(payload_at, array, count);
 			payload_at += count * 8;
 			break;
+		case PROTOBUF_C_TYPE_ENUM:
 		case PROTOBUF_C_TYPE_INT32: {
-			const int32_t *arr = (const int32_t *)array;
+			const int32_t *arr = (const int32_t *) array;
 			for (i = 0; i < count; i++)
 				payload_at += int32_pack(arr[i], payload_at);
 			break;
 		}
 		case PROTOBUF_C_TYPE_SINT32: {
-			const int32_t *arr = (const int32_t *)array;
+			const int32_t *arr = (const int32_t *) array;
 			for (i = 0; i < count; i++)
 				payload_at += sint32_pack(arr[i], payload_at);
 			break;
 		}
 		case PROTOBUF_C_TYPE_SINT64: {
-			const int64_t *arr = (const int64_t *)array;
+			const int64_t *arr = (const int64_t *) array;
 			for (i = 0; i < count; i++)
 				payload_at += sint64_pack(arr[i], payload_at);
 			break;
 		}
-		case PROTOBUF_C_TYPE_ENUM:
 		case PROTOBUF_C_TYPE_UINT32: {
-			const uint32_t *arr = (const uint32_t *)array;
+			const uint32_t *arr = (const uint32_t *) array;
 			for (i = 0; i < count; i++)
 				payload_at += uint32_pack(arr[i], payload_at);
 			break;
 		}
 		case PROTOBUF_C_TYPE_INT64:
 		case PROTOBUF_C_TYPE_UINT64: {
-			const uint64_t *arr = (const uint64_t *)array;
+			const uint64_t *arr = (const uint64_t *) array;
 			for (i = 0; i < count; i++)
 				payload_at += uint64_pack(arr[i], payload_at);
 			break;
 		}
 		case PROTOBUF_C_TYPE_BOOL: {
-			const protobuf_c_boolean *arr = (const protobuf_c_boolean *)array;
+			const protobuf_c_boolean *arr = (const protobuf_c_boolean *) array;
 			for (i = 0; i < count; i++)
 				payload_at += boolean_pack(arr[i], payload_at);
 			break;
@@ -1369,8 +1442,7 @@ size_t count, const void *member, uint8_t *out)
 		}
 		uint32_pack(payload_len, out + len_start);
 		return header_len + payload_len;
-	}
-	else {
+	} else {
 		/* not "packed" cased */
 		/* CONSIDER: optimize this case a bit (by putting the loop inside the switch) */
 		size_t rv = 0;
@@ -1405,31 +1477,42 @@ protobuf_c_message_pack(const ProtobufCMessage *message, uint8_t *out)
 	for (i = 0; i < message->descriptor->n_fields; i++) {
 		const ProtobufCFieldDescriptor *field =
 			message->descriptor->fields + i;
-		const void *member = ((const char *)message) + field->offset;
+		const void *member = ((const char *) message) + field->offset;
 
 		/*
-		* It doesn't hurt to compute qmember (a pointer to the
-		* quantifier field of the structure), but the pointer is only
-		* valid if the field is:
-		*  - a repeated field, or
-		*  - a field that is part of a oneof
-		*  - an optional field that isn't a pointer type
-		* (Meaning: not a message or a string).
-		*/
+		 * It doesn't hurt to compute qmember (a pointer to the
+		 * quantifier field of the structure), but the pointer is only
+		 * valid if the field is:
+		 *  - a repeated field, or
+		 *  - a field that is part of a oneof
+		 *  - an optional field that isn't a pointer type
+		 * (Meaning: not a message or a string).
+		 */
 		const void *qmember =
-			((const char *)message) + field->quantifier_offset;
+			((const char *) message) + field->quantifier_offset;
 
 		if (field->label == PROTOBUF_C_LABEL_REQUIRED) {
 			rv += required_field_pack(field, member, out + rv);
-		}
-		else if (field->label == PROTOBUF_C_LABEL_OPTIONAL) {
-			if (0 != (field->flags & PROTOBUF_C_FIELD_FLAG_ONEOF))
-				rv += oneof_field_pack(field, qmember, member, out + rv);
-			else
-				rv += optional_field_pack(field, qmember, member, out + rv);
-		}
-		else {
-			rv += repeated_field_pack(field, *(const size_t *)qmember,
+		} else if ((field->label == PROTOBUF_C_LABEL_OPTIONAL ||
+			    field->label == PROTOBUF_C_LABEL_NONE) &&
+			   (0 != (field->flags & PROTOBUF_C_FIELD_FLAG_ONEOF))) {
+			rv += oneof_field_pack(
+				field,
+				*(const uint32_t *) qmember,
+				member,
+				out + rv
+			);
+		} else if (field->label == PROTOBUF_C_LABEL_OPTIONAL) {
+			rv += optional_field_pack(
+				field,
+				*(const protobuf_c_boolean *) qmember,
+				member,
+				out + rv
+			);
+		} else if (field->label == PROTOBUF_C_LABEL_NONE) {
+			rv += unlabeled_field_pack(field, member, out + rv);
+		} else {
+			rv += repeated_field_pack(field, *(const size_t *) qmember,
 				member, out + rv);
 		}
 	}
@@ -1461,7 +1544,7 @@ protobuf_c_message_pack(const ProtobufCMessage *message, uint8_t *out)
 */
 static size_t
 required_field_pack_to_buffer(const ProtobufCFieldDescriptor *field,
-const void *member, ProtobufCBuffer *buffer)
+			      const void *member, ProtobufCBuffer *buffer)
 {
 	size_t rv;
 	uint8_t scratch[MAX_UINT64_ENCODED_SIZE * 2];
@@ -1470,63 +1553,63 @@ const void *member, ProtobufCBuffer *buffer)
 	switch (field->type) {
 	case PROTOBUF_C_TYPE_SINT32:
 		scratch[0] |= PROTOBUF_C_WIRE_TYPE_VARINT;
-		rv += sint32_pack(*(const int32_t *)member, scratch + rv);
+		rv += sint32_pack(*(const int32_t *) member, scratch + rv);
 		buffer->append(buffer, rv, scratch);
 		break;
+	case PROTOBUF_C_TYPE_ENUM:
 	case PROTOBUF_C_TYPE_INT32:
 		scratch[0] |= PROTOBUF_C_WIRE_TYPE_VARINT;
-		rv += int32_pack(*(const uint32_t *)member, scratch + rv);
+		rv += int32_pack(*(const int32_t *) member, scratch + rv);
 		buffer->append(buffer, rv, scratch);
 		break;
 	case PROTOBUF_C_TYPE_UINT32:
-	case PROTOBUF_C_TYPE_ENUM:
 		scratch[0] |= PROTOBUF_C_WIRE_TYPE_VARINT;
-		rv += uint32_pack(*(const uint32_t *)member, scratch + rv);
+		rv += uint32_pack(*(const uint32_t *) member, scratch + rv);
 		buffer->append(buffer, rv, scratch);
 		break;
 	case PROTOBUF_C_TYPE_SINT64:
 		scratch[0] |= PROTOBUF_C_WIRE_TYPE_VARINT;
-		rv += sint64_pack(*(const int64_t *)member, scratch + rv);
+		rv += sint64_pack(*(const int64_t *) member, scratch + rv);
 		buffer->append(buffer, rv, scratch);
 		break;
 	case PROTOBUF_C_TYPE_INT64:
 	case PROTOBUF_C_TYPE_UINT64:
 		scratch[0] |= PROTOBUF_C_WIRE_TYPE_VARINT;
-		rv += uint64_pack(*(const uint64_t *)member, scratch + rv);
+		rv += uint64_pack(*(const uint64_t *) member, scratch + rv);
 		buffer->append(buffer, rv, scratch);
 		break;
 	case PROTOBUF_C_TYPE_SFIXED32:
 	case PROTOBUF_C_TYPE_FIXED32:
 	case PROTOBUF_C_TYPE_FLOAT:
 		scratch[0] |= PROTOBUF_C_WIRE_TYPE_32BIT;
-		rv += fixed32_pack(*(const uint32_t *)member, scratch + rv);
+		rv += fixed32_pack(*(const uint32_t *) member, scratch + rv);
 		buffer->append(buffer, rv, scratch);
 		break;
 	case PROTOBUF_C_TYPE_SFIXED64:
 	case PROTOBUF_C_TYPE_FIXED64:
 	case PROTOBUF_C_TYPE_DOUBLE:
 		scratch[0] |= PROTOBUF_C_WIRE_TYPE_64BIT;
-		rv += fixed64_pack(*(const uint64_t *)member, scratch + rv);
+		rv += fixed64_pack(*(const uint64_t *) member, scratch + rv);
 		buffer->append(buffer, rv, scratch);
 		break;
 	case PROTOBUF_C_TYPE_BOOL:
 		scratch[0] |= PROTOBUF_C_WIRE_TYPE_VARINT;
-		rv += boolean_pack(*(const protobuf_c_boolean *)member, scratch + rv);
+		rv += boolean_pack(*(const protobuf_c_boolean *) member, scratch + rv);
 		buffer->append(buffer, rv, scratch);
 		break;
 	case PROTOBUF_C_TYPE_STRING: {
-		const char *str = *(char *const *)member;
+		const char *str = *(char *const *) member;
 		size_t sublen = str ? strlen(str) : 0;
 
 		scratch[0] |= PROTOBUF_C_WIRE_TYPE_LENGTH_PREFIXED;
 		rv += uint32_pack(sublen, scratch + rv);
 		buffer->append(buffer, rv, scratch);
-		buffer->append(buffer, sublen, (const uint8_t *)str);
+		buffer->append(buffer, sublen, (const uint8_t *) str);
 		rv += sublen;
 		break;
 	}
 	case PROTOBUF_C_TYPE_BYTES: {
-		const ProtobufCBinaryData *bd = ((const ProtobufCBinaryData *)member);
+		const ProtobufCBinaryData *bd = ((const ProtobufCBinaryData *) member);
 		size_t sublen = bd->len;
 
 		scratch[0] |= PROTOBUF_C_WIRE_TYPE_LENGTH_PREFIXED;
@@ -1539,7 +1622,7 @@ const void *member, ProtobufCBuffer *buffer)
 	case PROTOBUF_C_TYPE_MESSAGE: {
 		uint8_t simple_buffer_scratch[256];
 		size_t sublen;
-		const ProtobufCMessage *msg = *(ProtobufCMessage * const *)member;
+		const ProtobufCMessage *msg = *(ProtobufCMessage * const *) member;
 		ProtobufCBufferSimple simple_buffer =
 			PROTOBUF_C_BUFFER_SIMPLE_INIT(simple_buffer_scratch);
 
@@ -1567,7 +1650,7 @@ const void *member, ProtobufCBuffer *buffer)
 * \param field
 *      Field descriptor.
 * \param oneof_case
-*      A pointer to the case enum that selects the field in the oneof.
+*      Enum value that selects the field in the oneof.
 * \param member
 *      The element to be packed.
 * \param[out] buffer
@@ -1577,20 +1660,18 @@ const void *member, ProtobufCBuffer *buffer)
 */
 static size_t
 oneof_field_pack_to_buffer(const ProtobufCFieldDescriptor *field,
-const uint32_t *oneof_case,
-const void *member, ProtobufCBuffer *buffer)
+			   uint32_t oneof_case,
+			   const void *member, ProtobufCBuffer *buffer)
 {
-	if (*oneof_case == field->id) {
-		if (field->type == PROTOBUF_C_TYPE_MESSAGE ||
-			field->type == PROTOBUF_C_TYPE_STRING)
-		{
-			const void *ptr = *(const void *const *)member;
-			if (ptr == NULL || ptr == field->default_value)
-				return 0;
-		}
-	}
-	else {
+	if (oneof_case != field->id) {
 		return 0;
+	}
+	if (field->type == PROTOBUF_C_TYPE_MESSAGE ||
+	    field->type == PROTOBUF_C_TYPE_STRING)
+	{
+		const void *ptr = *(const void *const *) member;
+		if (ptr == NULL || ptr == field->default_value)
+			return 0;
 	}
 	return required_field_pack_to_buffer(field, member, buffer);
 }
@@ -1611,20 +1692,40 @@ const void *member, ProtobufCBuffer *buffer)
 */
 static size_t
 optional_field_pack_to_buffer(const ProtobufCFieldDescriptor *field,
-const protobuf_c_boolean *has,
-const void *member, ProtobufCBuffer *buffer)
+			      const protobuf_c_boolean has,
+			      const void *member, ProtobufCBuffer *buffer)
 {
 	if (field->type == PROTOBUF_C_TYPE_MESSAGE ||
-		field->type == PROTOBUF_C_TYPE_STRING)
+	    field->type == PROTOBUF_C_TYPE_STRING)
 	{
-		const void *ptr = *(const void *const *)member;
+		const void *ptr = *(const void *const *) member;
 		if (ptr == NULL || ptr == field->default_value)
 			return 0;
-	}
-	else {
-		if (!*has)
+	} else {
+		if (!has)
 			return 0;
 	}
+	return required_field_pack_to_buffer(field, member, buffer);
+}
+
+/**
+* Pack an unlabeled field to a buffer.
+*
+* \param field
+*      Field descriptor.
+* \param member
+*      The element to be packed.
+* \param[out] buffer
+*      Virtual buffer to append data to.
+* \return
+*      Number of bytes serialised to `buffer`.
+*/
+static size_t
+unlabeled_field_pack_to_buffer(const ProtobufCFieldDescriptor *field,
+			       const void *member, ProtobufCBuffer *buffer)
+{
+	if (field_is_zeroish(field, member))
+		return 0;
 	return required_field_pack_to_buffer(field, member, buffer);
 }
 
@@ -1642,7 +1743,7 @@ const void *member, ProtobufCBuffer *buffer)
 */
 static size_t
 get_packed_payload_length(const ProtobufCFieldDescriptor *field,
-unsigned count, const void *array)
+			  unsigned count, const void *array)
 {
 	unsigned rv = 0;
 	unsigned i;
@@ -1656,34 +1757,34 @@ unsigned count, const void *array)
 	case PROTOBUF_C_TYPE_FIXED64:
 	case PROTOBUF_C_TYPE_DOUBLE:
 		return count * 8;
+	case PROTOBUF_C_TYPE_ENUM:
 	case PROTOBUF_C_TYPE_INT32: {
-		const int32_t *arr = (const int32_t *)array;
+		const int32_t *arr = (const int32_t *) array;
 		for (i = 0; i < count; i++)
 			rv += int32_size(arr[i]);
 		break;
 	}
 	case PROTOBUF_C_TYPE_SINT32: {
-		const int32_t *arr = (const int32_t *)array;
+		const int32_t *arr = (const int32_t *) array;
 		for (i = 0; i < count; i++)
 			rv += sint32_size(arr[i]);
 		break;
 	}
-	case PROTOBUF_C_TYPE_ENUM:
 	case PROTOBUF_C_TYPE_UINT32: {
-		const uint32_t *arr = (const uint32_t *)array;
+		const uint32_t *arr = (const uint32_t *) array;
 		for (i = 0; i < count; i++)
 			rv += uint32_size(arr[i]);
 		break;
 	}
 	case PROTOBUF_C_TYPE_SINT64: {
-		const int64_t *arr = (const int64_t *)array;
+		const int64_t *arr = (const int64_t *) array;
 		for (i = 0; i < count; i++)
 			rv += sint64_size(arr[i]);
 		break;
 	}
 	case PROTOBUF_C_TYPE_INT64:
 	case PROTOBUF_C_TYPE_UINT64: {
-		const uint64_t *arr = (const uint64_t *)array;
+		const uint64_t *arr = (const uint64_t *) array;
 		for (i = 0; i < count; i++)
 			rv += uint64_size(arr[i]);
 		break;
@@ -1712,8 +1813,8 @@ unsigned count, const void *array)
 */
 static size_t
 pack_buffer_packed_payload(const ProtobufCFieldDescriptor *field,
-unsigned count, const void *array,
-ProtobufCBuffer *buffer)
+			   unsigned count, const void *array,
+			   ProtobufCBuffer *buffer)
 {
 	uint8_t scratch[16];
 	size_t rv = 0;
@@ -1728,7 +1829,7 @@ ProtobufCBuffer *buffer)
 		goto no_packing_needed;
 #else
 		for (i = 0; i < count; i++) {
-			unsigned len = fixed32_pack(((uint32_t *)array)[i], scratch);
+			unsigned len = fixed32_pack(((uint32_t *) array)[i], scratch);
 			buffer->append(buffer, len, scratch);
 			rv += len;
 		}
@@ -1742,37 +1843,37 @@ ProtobufCBuffer *buffer)
 		goto no_packing_needed;
 #else
 		for (i = 0; i < count; i++) {
-			unsigned len = fixed64_pack(((uint64_t *)array)[i], scratch);
+			unsigned len = fixed64_pack(((uint64_t *) array)[i], scratch);
 			buffer->append(buffer, len, scratch);
 			rv += len;
 		}
 		break;
 #endif
+	case PROTOBUF_C_TYPE_ENUM:
 	case PROTOBUF_C_TYPE_INT32:
 		for (i = 0; i < count; i++) {
-			unsigned len = int32_pack(((int32_t *)array)[i], scratch);
+			unsigned len = int32_pack(((int32_t *) array)[i], scratch);
 			buffer->append(buffer, len, scratch);
 			rv += len;
 		}
 		break;
 	case PROTOBUF_C_TYPE_SINT32:
 		for (i = 0; i < count; i++) {
-			unsigned len = sint32_pack(((int32_t *)array)[i], scratch);
+			unsigned len = sint32_pack(((int32_t *) array)[i], scratch);
 			buffer->append(buffer, len, scratch);
 			rv += len;
 		}
 		break;
-	case PROTOBUF_C_TYPE_ENUM:
 	case PROTOBUF_C_TYPE_UINT32:
 		for (i = 0; i < count; i++) {
-			unsigned len = uint32_pack(((uint32_t *)array)[i], scratch);
+			unsigned len = uint32_pack(((uint32_t *) array)[i], scratch);
 			buffer->append(buffer, len, scratch);
 			rv += len;
 		}
 		break;
 	case PROTOBUF_C_TYPE_SINT64:
 		for (i = 0; i < count; i++) {
-			unsigned len = sint64_pack(((int64_t *)array)[i], scratch);
+			unsigned len = sint64_pack(((int64_t *) array)[i], scratch);
 			buffer->append(buffer, len, scratch);
 			rv += len;
 		}
@@ -1780,14 +1881,14 @@ ProtobufCBuffer *buffer)
 	case PROTOBUF_C_TYPE_INT64:
 	case PROTOBUF_C_TYPE_UINT64:
 		for (i = 0; i < count; i++) {
-			unsigned len = uint64_pack(((uint64_t *)array)[i], scratch);
+			unsigned len = uint64_pack(((uint64_t *) array)[i], scratch);
 			buffer->append(buffer, len, scratch);
 			rv += len;
 		}
 		break;
 	case PROTOBUF_C_TYPE_BOOL:
 		for (i = 0; i < count; i++) {
-			unsigned len = boolean_pack(((protobuf_c_boolean *)array)[i], scratch);
+			unsigned len = boolean_pack(((protobuf_c_boolean *) array)[i], scratch);
 			buffer->append(buffer, len, scratch);
 			rv += len;
 		}
@@ -1797,17 +1898,19 @@ ProtobufCBuffer *buffer)
 	}
 	return rv;
 
+#if !defined(WORDS_BIGENDIAN)
 no_packing_needed:
 	buffer->append(buffer, rv, array);
 	return rv;
+#endif
 }
 
 static size_t
 repeated_field_pack_to_buffer(const ProtobufCFieldDescriptor *field,
-unsigned count, const void *member,
-ProtobufCBuffer *buffer)
+			      unsigned count, const void *member,
+			      ProtobufCBuffer *buffer)
 {
-	char *array = *(char * const *)member;
+	char *array = *(char * const *) member;
 
 	if (count == 0)
 		return 0;
@@ -1823,8 +1926,7 @@ ProtobufCBuffer *buffer)
 		tmp = pack_buffer_packed_payload(field, count, array, buffer);
 		assert(tmp == payload_len);
 		return rv + payload_len;
-	}
-	else {
+	} else {
 		size_t siz;
 		unsigned i;
 		/* CONSIDER: optimize this case a bit (by putting the loop inside the switch) */
@@ -1841,7 +1943,7 @@ ProtobufCBuffer *buffer)
 
 static size_t
 unknown_field_pack_to_buffer(const ProtobufCMessageUnknownField *field,
-ProtobufCBuffer *buffer)
+			     ProtobufCBuffer *buffer)
 {
 	uint8_t header[MAX_UINT64_ENCODED_SIZE];
 	size_t rv = tag_pack(field->tag, header);
@@ -1856,7 +1958,7 @@ ProtobufCBuffer *buffer)
 
 size_t
 protobuf_c_message_pack_to_buffer(const ProtobufCMessage *message,
-ProtobufCBuffer *buffer)
+				  ProtobufCBuffer *buffer)
 {
 	unsigned i;
 	size_t rv = 0;
@@ -1866,38 +1968,41 @@ ProtobufCBuffer *buffer)
 		const ProtobufCFieldDescriptor *field =
 			message->descriptor->fields + i;
 		const void *member =
-			((const char *)message) + field->offset;
+			((const char *) message) + field->offset;
 		const void *qmember =
-			((const char *)message) + field->quantifier_offset;
+			((const char *) message) + field->quantifier_offset;
 
 		if (field->label == PROTOBUF_C_LABEL_REQUIRED) {
 			rv += required_field_pack_to_buffer(field, member, buffer);
-		}
-		else if (field->label == PROTOBUF_C_LABEL_OPTIONAL) {
-			if (0 != (field->flags & PROTOBUF_C_FIELD_FLAG_ONEOF)) {
-				rv += oneof_field_pack_to_buffer(
-					field,
-					qmember,
-					member,
-					buffer
-					);
-			}
-			else {
-				rv += optional_field_pack_to_buffer(
-					field,
-					qmember,
-					member,
-					buffer
-					);
-			}
-		}
-		else {
-			rv += repeated_field_pack_to_buffer(
+		} else if ((field->label == PROTOBUF_C_LABEL_OPTIONAL ||
+			    field->label == PROTOBUF_C_LABEL_NONE) &&
+			   (0 != (field->flags & PROTOBUF_C_FIELD_FLAG_ONEOF))) {
+			rv += oneof_field_pack_to_buffer(
 				field,
-				*(const size_t *)qmember,
+				*(const uint32_t *) qmember,
 				member,
 				buffer
-				);
+			);
+		} else if (field->label == PROTOBUF_C_LABEL_OPTIONAL) {
+			rv += optional_field_pack_to_buffer(
+				field,
+				*(const protobuf_c_boolean *) qmember,
+				member,
+				buffer
+			);
+		} else if (field->label == PROTOBUF_C_LABEL_NONE) {
+			rv += unlabeled_field_pack_to_buffer(
+				field,
+				member,
+				buffer
+			);
+		} else {
+			rv += repeated_field_pack_to_buffer(
+				field,
+				*(const size_t *) qmember,
+				member,
+				buffer
+			);
 		}
 	}
 	for (i = 0; i < message->n_unknown_fields; i++)
@@ -1930,18 +2035,16 @@ int_range_lookup(unsigned n_ranges, const ProtobufCIntRange *ranges, int value)
 
 		if (value < ranges[mid].start_value) {
 			n = mid - start;
-		}
-		else if (value >= ranges[mid].start_value +
-			(int)(ranges[mid + 1].orig_index -
-			ranges[mid].orig_index))
+		} else if (value >= ranges[mid].start_value +
+			   (int) (ranges[mid + 1].orig_index -
+				  ranges[mid].orig_index))
 		{
 			unsigned new_start = mid + 1;
 			n = start + n - new_start;
 			start = new_start;
-		}
-		else
+		} else
 			return (value - ranges[mid].start_value) +
-			ranges[mid].orig_index;
+			    ranges[mid].orig_index;
 	}
 	if (n > 0) {
 		unsigned start_orig_index = ranges[start].orig_index;
@@ -1949,10 +2052,10 @@ int_range_lookup(unsigned n_ranges, const ProtobufCIntRange *ranges, int value)
 			ranges[start + 1].orig_index - start_orig_index;
 
 		if (ranges[start].start_value <= value &&
-			value < (int)(ranges[start].start_value + range_size))
+		    value < (int) (ranges[start].start_value + range_size))
 		{
 			return (value - ranges[start].start_value) +
-				start_orig_index;
+			    start_orig_index;
 		}
 	}
 	return -1;
@@ -1960,9 +2063,9 @@ int_range_lookup(unsigned n_ranges, const ProtobufCIntRange *ranges, int value)
 
 static size_t
 parse_tag_and_wiretype(size_t len,
-const uint8_t *data,
-uint32_t *tag_out,
-ProtobufCWireType *wiretype_out)
+		       const uint8_t *data,
+		       uint32_t *tag_out,
+		       ProtobufCWireType *wiretype_out)
 {
 	unsigned max_rv = len > 5 ? 5 : len;
 	uint32_t tag = (data[0] & 0x7f) >> 3;
@@ -1978,8 +2081,7 @@ ProtobufCWireType *wiretype_out)
 		if (data[rv] & 0x80) {
 			tag |= (data[rv] & 0x7f) << shift;
 			shift += 7;
-		}
-		else {
+		} else {
 			tag |= data[rv] << shift;
 			*tag_out = tag;
 			return rv + 1;
@@ -1988,7 +2090,7 @@ ProtobufCWireType *wiretype_out)
 	return 0; /* error: bad header */
 }
 
-/* sizeof(ScannedMember) must be <= (1<<BOUND_SIZEOF_SCANNED_MEMBER_LOG2) */
+/* sizeof(ScannedMember) must be <= (1UL<<BOUND_SIZEOF_SCANNED_MEMBER_LOG2) */
 #define BOUND_SIZEOF_SCANNED_MEMBER_LOG2 5
 typedef struct _ScannedMember ScannedMember;
 /** Field as it's being read. */
@@ -2003,7 +2105,7 @@ struct _ScannedMember {
 
 static inline uint32_t
 scan_length_prefixed_data(size_t len, const uint8_t *data,
-size_t *prefix_len_out)
+			  size_t *prefix_len_out)
 {
 	unsigned hdr_max = len < 5 ? len : 5;
 	unsigned hdr_len;
@@ -2058,8 +2160,8 @@ max_b128_numbers(size_t len, const uint8_t *data)
 */
 static protobuf_c_boolean
 merge_messages(ProtobufCMessage *earlier_msg,
-ProtobufCMessage *latter_msg,
-ProtobufCAllocator *allocator)
+	       ProtobufCMessage *latter_msg,
+	       ProtobufCAllocator *allocator)
 {
 	unsigned i;
 	const ProtobufCFieldDescriptor *fields =
@@ -2068,16 +2170,16 @@ ProtobufCAllocator *allocator)
 		if (fields[i].label == PROTOBUF_C_LABEL_REPEATED) {
 			size_t *n_earlier =
 				STRUCT_MEMBER_PTR(size_t, earlier_msg,
-				fields[i].quantifier_offset);
+						  fields[i].quantifier_offset);
 			uint8_t **p_earlier =
 				STRUCT_MEMBER_PTR(uint8_t *, earlier_msg,
-				fields[i].offset);
+						  fields[i].offset);
 			size_t *n_latter =
 				STRUCT_MEMBER_PTR(size_t, latter_msg,
-				fields[i].quantifier_offset);
+						  fields[i].quantifier_offset);
 			uint8_t **p_latter =
 				STRUCT_MEMBER_PTR(uint8_t *, latter_msg,
-				fields[i].offset);
+						  fields[i].offset);
 
 			if (*n_earlier > 0) {
 				if (*n_latter > 0) {
@@ -2092,18 +2194,17 @@ ProtobufCAllocator *allocator)
 						return FALSE;
 
 					memcpy(new_field, *p_earlier,
-						*n_earlier * el_size);
+					       *n_earlier * el_size);
 					memcpy(new_field +
-						*n_earlier * el_size,
-						*p_latter,
-						*n_latter * el_size);
+					       *n_earlier * el_size,
+					       *p_latter,
+					       *n_latter * el_size);
 
 					do_free(allocator, *p_latter);
 					do_free(allocator, *p_earlier);
 					*p_latter = new_field;
 					*n_latter = *n_earlier + *n_latter;
-				}
-				else {
+				} else {
 					/* Zero copy the repeated field from the earlier message */
 					*n_latter = *n_earlier;
 					*p_latter = *p_earlier;
@@ -2112,59 +2213,59 @@ ProtobufCAllocator *allocator)
 				*n_earlier = 0;
 				*p_earlier = 0;
 			}
-		}
-		else if (fields[i].label == PROTOBUF_C_LABEL_OPTIONAL) {
+		} else if (fields[i].label == PROTOBUF_C_LABEL_OPTIONAL ||
+			   fields[i].label == PROTOBUF_C_LABEL_NONE) {
 			const ProtobufCFieldDescriptor *field;
 			uint32_t *earlier_case_p = STRUCT_MEMBER_PTR(uint32_t,
-				earlier_msg,
-				fields[i].
-				quantifier_offset);
+								     earlier_msg,
+								     fields[i].
+								     quantifier_offset);
 			uint32_t *latter_case_p = STRUCT_MEMBER_PTR(uint32_t,
-				latter_msg,
-				fields[i].
-				quantifier_offset);
+								    latter_msg,
+								    fields[i].
+								    quantifier_offset);
+			protobuf_c_boolean need_to_merge = FALSE;
+			void *earlier_elem;
+			void *latter_elem;
+			const void *def_val;
 
 			if (fields[i].flags & PROTOBUF_C_FIELD_FLAG_ONEOF) {
 				if (*latter_case_p == 0) {
 					/* lookup correct oneof field */
 					int field_index =
 						int_range_lookup(
-						latter_msg->descriptor
-						->n_field_ranges,
-						latter_msg->descriptor
-						->field_ranges,
-						*earlier_case_p);
+							latter_msg->descriptor
+							->n_field_ranges,
+							latter_msg->descriptor
+							->field_ranges,
+							*earlier_case_p);
+					if (field_index < 0)
+						return FALSE;
 					field = latter_msg->descriptor->fields +
 						field_index;
-				}
-				else {
+				} else {
 					/* Oneof is present in the latter message, move on */
 					continue;
 				}
-			}
-			else {
+			} else {
 				field = &fields[i];
 			}
 
-			protobuf_c_boolean need_to_merge = FALSE;
-			void *earlier_elem =
-				STRUCT_MEMBER_P(earlier_msg, field->offset);
-			void *latter_elem =
-				STRUCT_MEMBER_P(latter_msg, field->offset);
-			const void *def_val = field->default_value;
+			earlier_elem = STRUCT_MEMBER_P(earlier_msg, field->offset);
+			latter_elem = STRUCT_MEMBER_P(latter_msg, field->offset);
+			def_val = field->default_value;
 
 			switch (field->type) {
 			case PROTOBUF_C_TYPE_MESSAGE: {
-				ProtobufCMessage *em = *(ProtobufCMessage **)earlier_elem;
-				ProtobufCMessage *lm = *(ProtobufCMessage **)latter_elem;
+				ProtobufCMessage *em = *(ProtobufCMessage **) earlier_elem;
+				ProtobufCMessage *lm = *(ProtobufCMessage **) latter_elem;
 				if (em != NULL) {
 					if (lm != NULL) {
 						if (!merge_messages(em, lm, allocator))
 							return FALSE;
 						/* Already merged */
 						need_to_merge = FALSE;
-					}
-					else {
+					} else {
 						/* Zero copy the message */
 						need_to_merge = TRUE;
 					}
@@ -2173,24 +2274,24 @@ ProtobufCAllocator *allocator)
 			}
 			case PROTOBUF_C_TYPE_BYTES: {
 				uint8_t *e_data =
-					((ProtobufCBinaryData *)earlier_elem)->data;
+					((ProtobufCBinaryData *) earlier_elem)->data;
 				uint8_t *l_data =
-					((ProtobufCBinaryData *)latter_elem)->data;
+					((ProtobufCBinaryData *) latter_elem)->data;
 				const ProtobufCBinaryData *d_bd =
-					(ProtobufCBinaryData *)def_val;
+					(ProtobufCBinaryData *) def_val;
 
 				need_to_merge =
 					(e_data != NULL &&
-					(d_bd == NULL ||
-					e_data != d_bd->data)) &&
+					 (d_bd == NULL ||
+					  e_data != d_bd->data)) &&
 					(l_data == NULL ||
-					(d_bd != NULL &&
-					l_data == d_bd->data));
+					 (d_bd != NULL &&
+					  l_data == d_bd->data));
 				break;
 			}
 			case PROTOBUF_C_TYPE_STRING: {
-				char *e_str = *(char **)earlier_elem;
-				char *l_str = *(char **)latter_elem;
+				char *e_str = *(char **) earlier_elem;
+				char *l_str = *(char **) latter_elem;
 				const char *d_str = def_val;
 
 				need_to_merge = e_str != d_str && l_str == d_str;
@@ -2198,10 +2299,10 @@ ProtobufCAllocator *allocator)
 			}
 			default: {
 				/* Could be has field or case enum, the logic is
-				* equivalent, since 0 (FALSE) means not set for
-				* oneof */
+				 * equivalent, since 0 (FALSE) means not set for
+				 * oneof */
 				need_to_merge = (*earlier_case_p != 0) &&
-					(*latter_case_p == 0);
+						(*latter_case_p == 0);
 				break;
 			}
 			}
@@ -2211,17 +2312,17 @@ ProtobufCAllocator *allocator)
 					sizeof_elt_in_repeated_array(field->type);
 				memcpy(latter_elem, earlier_elem, el_size);
 				/*
-				* Reset the element from the old message to 0
-				* to make sure earlier message deallocation
-				* doesn't corrupt zero-copied data in the new
-				* message, earlier message will be freed after
-				* this function is called anyway
-				*/
+				 * Reset the element from the old message to 0
+				 * to make sure earlier message deallocation
+				 * doesn't corrupt zero-copied data in the new
+				 * message, earlier message will be freed after
+				 * this function is called anyway
+				 */
 				memset(earlier_elem, 0, el_size);
 
 				if (field->quantifier_offset != 0) {
 					/* Set the has field or the case enum,
-					* if applicable */
+					 * if applicable */
 					*latter_case_p = *earlier_case_p;
 					*earlier_case_p = 0;
 				}
@@ -2241,7 +2342,7 @@ ProtobufCAllocator *allocator)
 */
 static protobuf_c_boolean
 count_packed_elements(ProtobufCType type,
-size_t len, const uint8_t *data, size_t *count_out)
+		      size_t len, const uint8_t *data, size_t *count_out)
 {
 	switch (type) {
 	case PROTOBUF_C_TYPE_SFIXED32:
@@ -2262,9 +2363,9 @@ size_t len, const uint8_t *data, size_t *count_out)
 		}
 		*count_out = len / 8;
 		return TRUE;
+	case PROTOBUF_C_TYPE_ENUM:
 	case PROTOBUF_C_TYPE_INT32:
 	case PROTOBUF_C_TYPE_SINT32:
-	case PROTOBUF_C_TYPE_ENUM:
 	case PROTOBUF_C_TYPE_UINT32:
 	case PROTOBUF_C_TYPE_INT64:
 	case PROTOBUF_C_TYPE_SINT64:
@@ -2288,13 +2389,13 @@ parse_uint32(unsigned len, const uint8_t *data)
 {
 	uint32_t rv = data[0] & 0x7f;
 	if (len > 1) {
-		rv |= ((uint32_t)(data[1] & 0x7f) << 7);
+		rv |= ((uint32_t) (data[1] & 0x7f) << 7);
 		if (len > 2) {
-			rv |= ((uint32_t)(data[2] & 0x7f) << 14);
+			rv |= ((uint32_t) (data[2] & 0x7f) << 14);
 			if (len > 3) {
-				rv |= ((uint32_t)(data[3] & 0x7f) << 21);
+				rv |= ((uint32_t) (data[3] & 0x7f) << 21);
 				if (len > 4)
-					rv |= ((uint32_t)(data[4]) << 28);
+					rv |= ((uint32_t) (data[4]) << 28);
 			}
 		}
 	}
@@ -2325,9 +2426,9 @@ parse_fixed_uint32(const uint8_t *data)
 	return t;
 #else
 	return data[0] |
-		((uint32_t)(data[1]) << 8) |
-		((uint32_t)(data[2]) << 16) |
-		((uint32_t)(data[3]) << 24);
+		((uint32_t) (data[1]) << 8) |
+		((uint32_t) (data[2]) << 16) |
+		((uint32_t) (data[3]) << 24);
 #endif
 }
 
@@ -2339,13 +2440,13 @@ parse_uint64(unsigned len, const uint8_t *data)
 
 	if (len < 5)
 		return parse_uint32(len, data);
-	rv = ((uint64_t)(data[0] & 0x7f)) |
-		((uint64_t)(data[1] & 0x7f) << 7) |
-		((uint64_t)(data[2] & 0x7f) << 14) |
-		((uint64_t)(data[3] & 0x7f) << 21);
+	rv = ((uint64_t) (data[0] & 0x7f)) |
+		((uint64_t) (data[1] & 0x7f) << 7) |
+		((uint64_t) (data[2] & 0x7f) << 14) |
+		((uint64_t) (data[3] & 0x7f) << 21);
 	shift = 28;
 	for (i = 4; i < len; i++) {
-		rv |= (((uint64_t)(data[i] & 0x7f)) << shift);
+		rv |= (((uint64_t) (data[i] & 0x7f)) << shift);
 		shift += 7;
 	}
 	return rv;
@@ -2368,8 +2469,8 @@ parse_fixed_uint64(const uint8_t *data)
 	memcpy(&t, data, 8);
 	return t;
 #else
-	return (uint64_t)parse_fixed_uint32(data) |
-		(((uint64_t)parse_fixed_uint32(data + 4)) << 32);
+	return (uint64_t) parse_fixed_uint32(data) |
+		(((uint64_t) parse_fixed_uint32(data + 4)) << 32);
 #endif
 }
 
@@ -2385,62 +2486,58 @@ parse_boolean(unsigned len, const uint8_t *data)
 
 static protobuf_c_boolean
 parse_required_member(ScannedMember *scanned_member,
-void *member,
-ProtobufCAllocator *allocator,
-protobuf_c_boolean maybe_clear)
+		      void *member,
+		      ProtobufCAllocator *allocator,
+		      protobuf_c_boolean maybe_clear)
 {
 	unsigned len = scanned_member->len;
 	const uint8_t *data = scanned_member->data;
 	ProtobufCWireType wire_type = scanned_member->wire_type;
 
 	switch (scanned_member->field->type) {
+	case PROTOBUF_C_TYPE_ENUM:
 	case PROTOBUF_C_TYPE_INT32:
 		if (wire_type != PROTOBUF_C_WIRE_TYPE_VARINT)
 			return FALSE;
-		*(uint32_t *)member = parse_int32(len, data);
+		*(int32_t *) member = parse_int32(len, data);
 		return TRUE;
 	case PROTOBUF_C_TYPE_UINT32:
 		if (wire_type != PROTOBUF_C_WIRE_TYPE_VARINT)
 			return FALSE;
-		*(uint32_t *)member = parse_uint32(len, data);
+		*(uint32_t *) member = parse_uint32(len, data);
 		return TRUE;
 	case PROTOBUF_C_TYPE_SINT32:
 		if (wire_type != PROTOBUF_C_WIRE_TYPE_VARINT)
 			return FALSE;
-		*(int32_t *)member = unzigzag32(parse_uint32(len, data));
+		*(int32_t *) member = unzigzag32(parse_uint32(len, data));
 		return TRUE;
 	case PROTOBUF_C_TYPE_SFIXED32:
 	case PROTOBUF_C_TYPE_FIXED32:
 	case PROTOBUF_C_TYPE_FLOAT:
 		if (wire_type != PROTOBUF_C_WIRE_TYPE_32BIT)
 			return FALSE;
-		*(uint32_t *)member = parse_fixed_uint32(data);
+		*(uint32_t *) member = parse_fixed_uint32(data);
 		return TRUE;
 	case PROTOBUF_C_TYPE_INT64:
 	case PROTOBUF_C_TYPE_UINT64:
 		if (wire_type != PROTOBUF_C_WIRE_TYPE_VARINT)
 			return FALSE;
-		*(uint64_t *)member = parse_uint64(len, data);
+		*(uint64_t *) member = parse_uint64(len, data);
 		return TRUE;
 	case PROTOBUF_C_TYPE_SINT64:
 		if (wire_type != PROTOBUF_C_WIRE_TYPE_VARINT)
 			return FALSE;
-		*(int64_t *)member = unzigzag64(parse_uint64(len, data));
+		*(int64_t *) member = unzigzag64(parse_uint64(len, data));
 		return TRUE;
 	case PROTOBUF_C_TYPE_SFIXED64:
 	case PROTOBUF_C_TYPE_FIXED64:
 	case PROTOBUF_C_TYPE_DOUBLE:
 		if (wire_type != PROTOBUF_C_WIRE_TYPE_64BIT)
 			return FALSE;
-		*(uint64_t *)member = parse_fixed_uint64(data);
+		*(uint64_t *) member = parse_fixed_uint64(data);
 		return TRUE;
 	case PROTOBUF_C_TYPE_BOOL:
-		*(protobuf_c_boolean *)member = parse_boolean(len, data);
-		return TRUE;
-	case PROTOBUF_C_TYPE_ENUM:
-		if (wire_type != PROTOBUF_C_WIRE_TYPE_VARINT)
-			return FALSE;
-		*(uint32_t *)member = parse_uint32(len, data);
+		*(protobuf_c_boolean *) member = parse_boolean(len, data);
 		return TRUE;
 	case PROTOBUF_C_TYPE_STRING: {
 		char **pstr = member;
@@ -2471,8 +2568,8 @@ protobuf_c_boolean maybe_clear)
 
 		def_bd = scanned_member->field->default_value;
 		if (maybe_clear &&
-			bd->data != NULL &&
-			(def_bd == NULL || bd->data != def_bd->data))
+		    bd->data != NULL &&
+		    (def_bd == NULL || bd->data != def_bd->data))
 		{
 			do_free(allocator, bd->data);
 		}
@@ -2481,8 +2578,7 @@ protobuf_c_boolean maybe_clear)
 			if (bd->data == NULL)
 				return FALSE;
 			memcpy(bd->data, data + pref_len, len - pref_len);
-		}
-		else {
+		} else {
 			bd->data = NULL;
 		}
 		bd->len = len - pref_len;
@@ -2500,13 +2596,13 @@ protobuf_c_boolean maybe_clear)
 
 		def_mess = scanned_member->field->default_value;
 		subm = protobuf_c_message_unpack(scanned_member->field->descriptor,
-			allocator,
-			len - pref_len,
-			data + pref_len);
+						 allocator,
+						 len - pref_len,
+						 data + pref_len);
 
 		if (maybe_clear &&
-			*pmessage != NULL &&
-			*pmessage != def_mess)
+		    *pmessage != NULL &&
+		    *pmessage != def_mess)
 		{
 			if (subm != NULL)
 				merge_successful = merge_messages(*pmessage, subm, allocator);
@@ -2523,56 +2619,59 @@ protobuf_c_boolean maybe_clear)
 }
 
 static protobuf_c_boolean
-parse_oneof_member(ScannedMember *scanned_member,
-void *member,
-ProtobufCMessage *message,
-ProtobufCAllocator *allocator)
+parse_oneof_member (ScannedMember *scanned_member,
+		    void *member,
+		    ProtobufCMessage *message,
+		    ProtobufCAllocator *allocator)
 {
 	uint32_t *oneof_case = STRUCT_MEMBER_PTR(uint32_t, message,
-		scanned_member->field->quantifier_offset);
+					       scanned_member->field->quantifier_offset);
 
 	/* If we have already parsed a member of this oneof, free it. */
 	if (*oneof_case != 0) {
 		/* lookup field */
 		int field_index =
 			int_range_lookup(message->descriptor->n_field_ranges,
-			message->descriptor->field_ranges,
-			*oneof_case);
+					 message->descriptor->field_ranges,
+					 *oneof_case);
+		if (field_index < 0)
+			return FALSE;
 		const ProtobufCFieldDescriptor *old_field =
 			message->descriptor->fields + field_index;
+		size_t el_size = sizeof_elt_in_repeated_array(old_field->type);
+
 		switch (old_field->type) {
-		case PROTOBUF_C_TYPE_STRING: {
+	        case PROTOBUF_C_TYPE_STRING: {
 			char **pstr = member;
 			const char *def = old_field->default_value;
 			if (*pstr != NULL && *pstr != def)
 				do_free(allocator, *pstr);
 			break;
-		}
+	        }
 		case PROTOBUF_C_TYPE_BYTES: {
 			ProtobufCBinaryData *bd = member;
 			const ProtobufCBinaryData *def_bd = old_field->default_value;
 			if (bd->data != NULL &&
-				(def_bd == NULL || bd->data != def_bd->data))
+			   (def_bd == NULL || bd->data != def_bd->data))
 			{
 				do_free(allocator, bd->data);
 			}
 			break;
-		}
+	        }
 		case PROTOBUF_C_TYPE_MESSAGE: {
 			ProtobufCMessage **pmessage = member;
 			const ProtobufCMessage *def_mess = old_field->default_value;
 			if (*pmessage != NULL && *pmessage != def_mess)
 				protobuf_c_message_free_unpacked(*pmessage, allocator);
 			break;
-		}
+	        }
 		default:
 			break;
 		}
 
-		size_t el_size = sizeof_elt_in_repeated_array(old_field->type);
-		memset(member, 0, el_size);
+		memset (member, 0, el_size);
 	}
-	if (!parse_required_member(scanned_member, member, allocator, TRUE))
+	if (!parse_required_member (scanned_member, member, allocator, TRUE))
 		return FALSE;
 
 	*oneof_case = scanned_member->tag;
@@ -2582,32 +2681,32 @@ ProtobufCAllocator *allocator)
 
 static protobuf_c_boolean
 parse_optional_member(ScannedMember *scanned_member,
-void *member,
-ProtobufCMessage *message,
-ProtobufCAllocator *allocator)
+		      void *member,
+		      ProtobufCMessage *message,
+		      ProtobufCAllocator *allocator)
 {
 	if (!parse_required_member(scanned_member, member, allocator, TRUE))
 		return FALSE;
 	if (scanned_member->field->quantifier_offset != 0)
 		STRUCT_MEMBER(protobuf_c_boolean,
-		message,
-		scanned_member->field->quantifier_offset) = TRUE;
+			      message,
+			      scanned_member->field->quantifier_offset) = TRUE;
 	return TRUE;
 }
 
 static protobuf_c_boolean
 parse_repeated_member(ScannedMember *scanned_member,
-void *member,
-ProtobufCMessage *message,
-ProtobufCAllocator *allocator)
+		      void *member,
+		      ProtobufCMessage *message,
+		      ProtobufCAllocator *allocator)
 {
 	const ProtobufCFieldDescriptor *field = scanned_member->field;
 	size_t *p_n = STRUCT_MEMBER_PTR(size_t, message, field->quantifier_offset);
 	size_t siz = sizeof_elt_in_repeated_array(field->type);
-	char *array = *(char **)member;
+	char *array = *(char **) member;
 
 	if (!parse_required_member(scanned_member, array + siz * (*p_n),
-		allocator, FALSE))
+				   allocator, FALSE))
 	{
 		return FALSE;
 	}
@@ -2631,13 +2730,13 @@ scan_varint(unsigned len, const uint8_t *data)
 
 static protobuf_c_boolean
 parse_packed_repeated_member(ScannedMember *scanned_member,
-void *member,
-ProtobufCMessage *message)
+			     void *member,
+			     ProtobufCMessage *message)
 {
 	const ProtobufCFieldDescriptor *field = scanned_member->field;
 	size_t *p_n = STRUCT_MEMBER_PTR(size_t, message, field->quantifier_offset);
 	size_t siz = sizeof_elt_in_repeated_array(field->type);
-	void *array = *(char **)member + siz * (*p_n);
+	void *array = *(char **) member + siz * (*p_n);
 	const uint8_t *at = scanned_member->data + scanned_member->length_prefix_len;
 	size_t rem = scanned_member->len - scanned_member->length_prefix_len;
 	size_t count = 0;
@@ -2652,7 +2751,7 @@ ProtobufCMessage *message)
 		goto no_unpacking_needed;
 #else
 		for (i = 0; i < count; i++) {
-			((uint32_t *)array)[i] = parse_fixed_uint32(at);
+			((uint32_t *) array)[i] = parse_fixed_uint32(at);
 			at += 4;
 		}
 		break;
@@ -2665,11 +2764,12 @@ ProtobufCMessage *message)
 		goto no_unpacking_needed;
 #else
 		for (i = 0; i < count; i++) {
-			((uint64_t *)array)[i] = parse_fixed_uint64(at);
+			((uint64_t *) array)[i] = parse_fixed_uint64(at);
 			at += 8;
 		}
 		break;
 #endif
+	case PROTOBUF_C_TYPE_ENUM:
 	case PROTOBUF_C_TYPE_INT32:
 		while (rem > 0) {
 			unsigned s = scan_varint(rem, at);
@@ -2677,7 +2777,7 @@ ProtobufCMessage *message)
 				PROTOBUF_C_UNPACK_ERROR("bad packed-repeated int32 value");
 				return FALSE;
 			}
-			((int32_t *)array)[count++] = parse_int32(s, at);
+			((int32_t *) array)[count++] = parse_int32(s, at);
 			at += s;
 			rem -= s;
 		}
@@ -2689,12 +2789,11 @@ ProtobufCMessage *message)
 				PROTOBUF_C_UNPACK_ERROR("bad packed-repeated sint32 value");
 				return FALSE;
 			}
-			((int32_t *)array)[count++] = unzigzag32(parse_uint32(s, at));
+			((int32_t *) array)[count++] = unzigzag32(parse_uint32(s, at));
 			at += s;
 			rem -= s;
 		}
 		break;
-	case PROTOBUF_C_TYPE_ENUM:
 	case PROTOBUF_C_TYPE_UINT32:
 		while (rem > 0) {
 			unsigned s = scan_varint(rem, at);
@@ -2702,7 +2801,7 @@ ProtobufCMessage *message)
 				PROTOBUF_C_UNPACK_ERROR("bad packed-repeated enum or uint32 value");
 				return FALSE;
 			}
-			((uint32_t *)array)[count++] = parse_uint32(s, at);
+			((uint32_t *) array)[count++] = parse_uint32(s, at);
 			at += s;
 			rem -= s;
 		}
@@ -2715,7 +2814,7 @@ ProtobufCMessage *message)
 				PROTOBUF_C_UNPACK_ERROR("bad packed-repeated sint64 value");
 				return FALSE;
 			}
-			((int64_t *)array)[count++] = unzigzag64(parse_uint64(s, at));
+			((int64_t *) array)[count++] = unzigzag64(parse_uint64(s, at));
 			at += s;
 			rem -= s;
 		}
@@ -2728,7 +2827,7 @@ ProtobufCMessage *message)
 				PROTOBUF_C_UNPACK_ERROR("bad packed-repeated int64/uint64 value");
 				return FALSE;
 			}
-			((int64_t *)array)[count++] = parse_uint64(s, at);
+			((int64_t *) array)[count++] = parse_uint64(s, at);
 			at += s;
 			rem -= s;
 		}
@@ -2740,7 +2839,7 @@ ProtobufCMessage *message)
 				PROTOBUF_C_UNPACK_ERROR("bad packed-repeated boolean value");
 				return FALSE;
 			}
-			((protobuf_c_boolean *)array)[i] = at[i];
+			((protobuf_c_boolean *) array)[i] = at[i];
 		}
 		break;
 	default:
@@ -2768,8 +2867,8 @@ is_packable_type(ProtobufCType type)
 
 static protobuf_c_boolean
 parse_member(ScannedMember *scanned_member,
-ProtobufCMessage *message,
-ProtobufCAllocator *allocator)
+	     ProtobufCMessage *message,
+	     ProtobufCAllocator *allocator)
 {
 	const ProtobufCFieldDescriptor *field = scanned_member->field;
 	void *member;
@@ -2787,33 +2886,32 @@ ProtobufCAllocator *allocator)
 		memcpy(ufield->data, scanned_member->data, ufield->len);
 		return TRUE;
 	}
-	member = (char *)message + field->offset;
+	member = (char *) message + field->offset;
 	switch (field->label) {
 	case PROTOBUF_C_LABEL_REQUIRED:
 		return parse_required_member(scanned_member, member,
-			allocator, TRUE);
+					     allocator, TRUE);
 	case PROTOBUF_C_LABEL_OPTIONAL:
+	case PROTOBUF_C_LABEL_NONE:
 		if (0 != (field->flags & PROTOBUF_C_FIELD_FLAG_ONEOF)) {
 			return parse_oneof_member(scanned_member, member,
-				message, allocator);
-		}
-		else {
+						  message, allocator);
+		} else {
 			return parse_optional_member(scanned_member, member,
-				message, allocator);
+						     message, allocator);
 		}
 	case PROTOBUF_C_LABEL_REPEATED:
 		if (scanned_member->wire_type ==
-			PROTOBUF_C_WIRE_TYPE_LENGTH_PREFIXED &&
-			(0 != (field->flags & PROTOBUF_C_FIELD_FLAG_PACKED) ||
-			is_packable_type(field->type)))
+		    PROTOBUF_C_WIRE_TYPE_LENGTH_PREFIXED &&
+		    (0 != (field->flags & PROTOBUF_C_FIELD_FLAG_PACKED) ||
+		     is_packable_type(field->type)))
 		{
 			return parse_packed_repeated_member(scanned_member,
-				member, message);
-		}
-		else {
+							    member, message);
+		} else {
 			return parse_repeated_member(scanned_member,
-				member, message,
-				allocator);
+						     member, message,
+						     allocator);
 		}
 	}
 	PROTOBUF_C__ASSERT_NOT_REACHED();
@@ -2829,7 +2927,7 @@ ProtobufCAllocator *allocator)
 */
 static void
 message_init_generic(const ProtobufCMessageDescriptor *desc,
-ProtobufCMessage *message)
+		     ProtobufCMessage *message)
 {
 	unsigned i;
 
@@ -2837,7 +2935,7 @@ ProtobufCMessage *message)
 	message->descriptor = desc;
 	for (i = 0; i < desc->n_fields; i++) {
 		if (desc->fields[i].default_value != NULL &&
-			desc->fields[i].label != PROTOBUF_C_LABEL_REPEATED)
+		    desc->fields[i].label != PROTOBUF_C_LABEL_REPEATED)
 		{
 			void *field =
 				STRUCT_MEMBER_P(message, desc->fields[i].offset);
@@ -2871,10 +2969,10 @@ ProtobufCMessage *message)
 			case PROTOBUF_C_TYPE_STRING:
 			case PROTOBUF_C_TYPE_MESSAGE:
 				/*
-				* The next line essentially implements a cast
-				* from const, which is totally unavoidable.
-				*/
-				*(const void **)field = dv;
+				 * The next line essentially implements a cast
+				 * from const, which is totally unavoidable.
+				 */
+				*(const void **) field = dv;
 				break;
 			}
 		}
@@ -2900,34 +2998,34 @@ ProtobufCMessage *message)
 * that we would overflow if we needed a slab larger than provided.
 */
 #define MAX_SCANNED_MEMBER_SLAB			\
-  (sizeof(unsigned int)*8 - 1			\
-   - BOUND_SIZEOF_SCANNED_MEMBER_LOG2		\
-   - FIRST_SCANNED_MEMBER_SLAB_SIZE_LOG2)
+(sizeof(unsigned int)*8 - 1			\
+- BOUND_SIZEOF_SCANNED_MEMBER_LOG2		\
+- FIRST_SCANNED_MEMBER_SLAB_SIZE_LOG2)
 
 #define REQUIRED_FIELD_BITMAP_SET(index)	\
-	(required_fields_bitmap[(index)/8] |= (1<<((index)%8)))
+	(required_fields_bitmap[(index)/8] |= (1UL<<((index)%8)))
 
 #define REQUIRED_FIELD_BITMAP_IS_SET(index)	\
-	(required_fields_bitmap[(index)/8] & (1<<((index)%8)))
+	(required_fields_bitmap[(index)/8] & (1UL<<((index)%8)))
 
 ProtobufCMessage *
 protobuf_c_message_unpack(const ProtobufCMessageDescriptor *desc,
-ProtobufCAllocator *allocator,
-size_t len, const uint8_t *data)
+			  ProtobufCAllocator *allocator,
+			  size_t len, const uint8_t *data)
 {
 	ProtobufCMessage *rv;
 	size_t rem = len;
 	const uint8_t *at = data;
 	const ProtobufCFieldDescriptor *last_field = desc->fields + 0;
-	ScannedMember first_member_slab[1 <<
-		FIRST_SCANNED_MEMBER_SLAB_SIZE_LOG2];
+	ScannedMember first_member_slab[1UL <<
+					FIRST_SCANNED_MEMBER_SLAB_SIZE_LOG2];
 
 	/*
-	* scanned_member_slabs[i] is an array of arrays of ScannedMember.
-	* The first slab (scanned_member_slabs[0] is just a pointer to
-	* first_member_slab), above. All subsequent slabs will be allocated
-	* using the allocator.
-	*/
+	 * scanned_member_slabs[i] is an array of arrays of ScannedMember.
+	 * The first slab (scanned_member_slabs[0] is just a pointer to
+	 * first_member_slab), above. All subsequent slabs will be allocated
+	 * using the allocator.
+	 */
 	ScannedMember *scanned_member_slabs[MAX_SCANNED_MEMBER_SLAB + 1];
 	unsigned which_slab = 0; /* the slab we are currently populating */
 	unsigned in_slab_index = 0; /* number of members in the slab */
@@ -2963,11 +3061,11 @@ size_t len, const uint8_t *data)
 	memset(required_fields_bitmap, 0, required_fields_bitmap_len);
 
 	/*
-	* Generated code always defines "message_init". However, we provide a
-	* fallback for (1) users of old protobuf-c generated-code that do not
-	* provide the function, and (2) descriptors constructed from some other
-	* source (most likely, direct construction from the .proto file).
-	*/
+	 * Generated code always defines "message_init". However, we provide a
+	 * fallback for (1) users of old protobuf-c generated-code that do not
+	 * provide the function, and (2) descriptors constructed from some other
+	 * source (most likely, direct construction from the .proto file).
+	 */
 	if (desc->message_init != NULL)
 		protobuf_c_message_init(desc, rv);
 	else
@@ -2982,30 +3080,28 @@ size_t len, const uint8_t *data)
 
 		if (used == 0) {
 			PROTOBUF_C_UNPACK_ERROR("error parsing tag/wiretype at offset %u",
-				(unsigned)(at - data));
+						(unsigned) (at - data));
 			goto error_cleanup_during_scan;
 		}
 		/*
-		* \todo Consider optimizing for field[1].id == tag, if field[1]
-		* exists!
-		*/
+		 * \todo Consider optimizing for field[1].id == tag, if field[1]
+		 * exists!
+		 */
 		if (last_field == NULL || last_field->id != tag) {
 			/* lookup field */
 			int field_index =
-				int_range_lookup(desc->n_field_ranges,
-				desc->field_ranges,
-				tag);
+			    int_range_lookup(desc->n_field_ranges,
+					     desc->field_ranges,
+					     tag);
 			if (field_index < 0) {
 				field = NULL;
 				n_unknown++;
-			}
-			else {
+			} else {
 				field = desc->fields + field_index;
 				last_field = field;
 				last_field_index = field_index;
 			}
-		}
-		else {
+		} else {
 			field = last_field;
 		}
 
@@ -3030,7 +3126,7 @@ size_t len, const uint8_t *data)
 					break;
 			if (i == max_len) {
 				PROTOBUF_C_UNPACK_ERROR("unterminated varint at offset %u",
-					(unsigned)(at - data));
+							(unsigned) (at - data));
 				goto error_cleanup_during_scan;
 			}
 			tmp.len = i + 1;
@@ -3039,7 +3135,7 @@ size_t len, const uint8_t *data)
 		case PROTOBUF_C_WIRE_TYPE_64BIT:
 			if (rem < 8) {
 				PROTOBUF_C_UNPACK_ERROR("too short after 64bit wiretype at offset %u",
-					(unsigned)(at - data));
+							(unsigned) (at - data));
 				goto error_cleanup_during_scan;
 			}
 			tmp.len = 8;
@@ -3058,18 +3154,18 @@ size_t len, const uint8_t *data)
 		case PROTOBUF_C_WIRE_TYPE_32BIT:
 			if (rem < 4) {
 				PROTOBUF_C_UNPACK_ERROR("too short after 32bit wiretype at offset %u",
-					(unsigned)(at - data));
+					      (unsigned) (at - data));
 				goto error_cleanup_during_scan;
 			}
 			tmp.len = 4;
 			break;
 		default:
 			PROTOBUF_C_UNPACK_ERROR("unsupported tag %u at offset %u",
-				wire_type, (unsigned)(at - data));
+						wire_type, (unsigned) (at - data));
 			goto error_cleanup_during_scan;
 		}
 
-		if (in_slab_index == (1U <<
+		if (in_slab_index == (1UL <<
 			(which_slab + FIRST_SCANNED_MEMBER_SLAB_SIZE_LOG2)))
 		{
 			size_t size;
@@ -3090,25 +3186,24 @@ size_t len, const uint8_t *data)
 
 		if (field != NULL && field->label == PROTOBUF_C_LABEL_REPEATED) {
 			size_t *n = STRUCT_MEMBER_PTR(size_t, rv,
-				field->quantifier_offset);
+						      field->quantifier_offset);
 			if (wire_type == PROTOBUF_C_WIRE_TYPE_LENGTH_PREFIXED &&
-				(0 != (field->flags & PROTOBUF_C_FIELD_FLAG_PACKED) ||
-				is_packable_type(field->type)))
+			    (0 != (field->flags & PROTOBUF_C_FIELD_FLAG_PACKED) ||
+			     is_packable_type(field->type)))
 			{
 				size_t count;
 				if (!count_packed_elements(field->type,
-					tmp.len -
-					tmp.length_prefix_len,
-					tmp.data +
-					tmp.length_prefix_len,
-					&count))
+							   tmp.len -
+							   tmp.length_prefix_len,
+							   tmp.data +
+							   tmp.length_prefix_len,
+							   &count))
 				{
 					PROTOBUF_C_UNPACK_ERROR("counting packed elements");
 					goto error_cleanup_during_scan;
 				}
 				*n += count;
-			}
-			else {
+			} else {
 				*n += 1;
 			}
 		}
@@ -3122,36 +3217,36 @@ size_t len, const uint8_t *data)
 		const ProtobufCFieldDescriptor *field = desc->fields + f;
 		if (field->label == PROTOBUF_C_LABEL_REPEATED) {
 			size_t siz =
-				sizeof_elt_in_repeated_array(field->type);
+			    sizeof_elt_in_repeated_array(field->type);
 			size_t *n_ptr =
-				STRUCT_MEMBER_PTR(size_t, rv,
-				field->quantifier_offset);
+			    STRUCT_MEMBER_PTR(size_t, rv,
+					      field->quantifier_offset);
 			if (*n_ptr != 0) {
 				unsigned n = *n_ptr;
+				void *a;
 				*n_ptr = 0;
 				assert(rv->descriptor != NULL);
 #define CLEAR_REMAINING_N_PTRS()                                              \
-              for(f++;f < desc->n_fields; f++)                                \
-			                  {                                                             \
-                  field = desc->fields + f;                                   \
-                  if (field->label == PROTOBUF_C_LABEL_REPEATED)              \
-                    STRUCT_MEMBER (size_t, rv, field->quantifier_offset) = 0; \
-			                  }
-				void *a = do_alloc(allocator, siz * n);
+for(f++;f < desc->n_fields; f++)                                \
+{                                                             \
+field = desc->fields + f;                                   \
+if (field->label == PROTOBUF_C_LABEL_REPEATED)              \
+STRUCT_MEMBER (size_t, rv, field->quantifier_offset) = 0; \
+}
+				a = do_alloc(allocator, siz * n);
 				if (!a) {
 					CLEAR_REMAINING_N_PTRS();
 					goto error_cleanup;
 				}
 				STRUCT_MEMBER(void *, rv, field->offset) = a;
 			}
-		}
-		else if (field->label == PROTOBUF_C_LABEL_REQUIRED) {
+		} else if (field->label == PROTOBUF_C_LABEL_REQUIRED) {
 			if (field->default_value == NULL &&
-				!REQUIRED_FIELD_BITMAP_IS_SET(f))
+			    !REQUIRED_FIELD_BITMAP_IS_SET(f))
 			{
 				CLEAR_REMAINING_N_PTRS();
 				PROTOBUF_C_UNPACK_ERROR("message '%s': missing required field '%s'",
-					desc->name, field->name);
+							desc->name, field->name);
 				goto error_cleanup;
 			}
 		}
@@ -3161,7 +3256,7 @@ size_t len, const uint8_t *data)
 	/* allocate space for unknown fields */
 	if (n_unknown) {
 		rv->unknown_fields = do_alloc(allocator,
-			n_unknown * sizeof(ProtobufCMessageUnknownField));
+					      n_unknown * sizeof(ProtobufCMessageUnknownField));
 		if (rv->unknown_fields == NULL)
 			goto error_cleanup;
 	}
@@ -3169,14 +3264,13 @@ size_t len, const uint8_t *data)
 	/* do real parsing */
 	for (i_slab = 0; i_slab <= which_slab; i_slab++) {
 		unsigned max = (i_slab == which_slab) ?
-		in_slab_index : (1U << (i_slab + 4));
+			in_slab_index : (1UL << (i_slab + 4));
 		ScannedMember *slab = scanned_member_slabs[i_slab];
-		unsigned j;
 
 		for (j = 0; j < max; j++) {
 			if (!parse_member(slab + j, rv, allocator)) {
 				PROTOBUF_C_UNPACK_ERROR("error parsing member %s of %s",
-					slab->field ? slab->field->name : "*unknown-field*",
+							slab->field ? slab->field->name : "*unknown-field*",
 					desc->name);
 				goto error_cleanup;
 			}
@@ -3209,13 +3303,15 @@ error_cleanup_during_scan:
 
 void
 protobuf_c_message_free_unpacked(ProtobufCMessage *message,
-ProtobufCAllocator *allocator)
+				 ProtobufCAllocator *allocator)
 {
+	const ProtobufCMessageDescriptor *desc;
+	unsigned f;
+
 	if (message == NULL)
 		return;
 
-	const ProtobufCMessageDescriptor *desc = message->descriptor;
-	unsigned f;
+	desc = message->descriptor;
 
 	ASSERT_IS_MESSAGE(message);
 
@@ -3224,8 +3320,8 @@ ProtobufCAllocator *allocator)
 	message->descriptor = NULL;
 	for (f = 0; f < desc->n_fields; f++) {
 		if (0 != (desc->fields[f].flags & PROTOBUF_C_FIELD_FLAG_ONEOF) &&
-			desc->fields[f].id !=
-			STRUCT_MEMBER(uint32_t, message, desc->fields[f].quantifier_offset))
+		    desc->fields[f].id !=
+		    STRUCT_MEMBER(uint32_t, message, desc->fields[f].quantifier_offset))
 		{
 			/* This is not the selected oneof, skip it */
 			continue;
@@ -3233,59 +3329,54 @@ ProtobufCAllocator *allocator)
 
 		if (desc->fields[f].label == PROTOBUF_C_LABEL_REPEATED) {
 			size_t n = STRUCT_MEMBER(size_t,
-				message,
-				desc->fields[f].quantifier_offset);
+						 message,
+						 desc->fields[f].quantifier_offset);
 			void *arr = STRUCT_MEMBER(void *,
-				message,
-				desc->fields[f].offset);
+						  message,
+						  desc->fields[f].offset);
 
 			if (arr != NULL) {
 				if (desc->fields[f].type == PROTOBUF_C_TYPE_STRING) {
 					unsigned i;
 					for (i = 0; i < n; i++)
-						do_free(allocator, ((char **)arr)[i]);
-				}
-				else if (desc->fields[f].type == PROTOBUF_C_TYPE_BYTES) {
+						do_free(allocator, ((char **) arr)[i]);
+				} else if (desc->fields[f].type == PROTOBUF_C_TYPE_BYTES) {
 					unsigned i;
 					for (i = 0; i < n; i++)
-						do_free(allocator, ((ProtobufCBinaryData *)arr)[i].data);
-				}
-				else if (desc->fields[f].type == PROTOBUF_C_TYPE_MESSAGE) {
+						do_free(allocator, ((ProtobufCBinaryData *) arr)[i].data);
+				} else if (desc->fields[f].type == PROTOBUF_C_TYPE_MESSAGE) {
 					unsigned i;
 					for (i = 0; i < n; i++)
 						protobuf_c_message_free_unpacked(
-						((ProtobufCMessage **)arr)[i],
-						allocator
+							((ProtobufCMessage **) arr)[i],
+							allocator
 						);
 				}
 				do_free(allocator, arr);
 			}
-		}
-		else if (desc->fields[f].type == PROTOBUF_C_TYPE_STRING) {
+		} else if (desc->fields[f].type == PROTOBUF_C_TYPE_STRING) {
 			char *str = STRUCT_MEMBER(char *, message,
-				desc->fields[f].offset);
+						  desc->fields[f].offset);
 
 			if (str && str != desc->fields[f].default_value)
 				do_free(allocator, str);
-		}
-		else if (desc->fields[f].type == PROTOBUF_C_TYPE_BYTES) {
+		} else if (desc->fields[f].type == PROTOBUF_C_TYPE_BYTES) {
 			void *data = STRUCT_MEMBER(ProtobufCBinaryData, message,
-				desc->fields[f].offset).data;
+						   desc->fields[f].offset).data;
 			const ProtobufCBinaryData *default_bd;
 
 			default_bd = desc->fields[f].default_value;
 			if (data != NULL &&
-				(default_bd == NULL ||
-				default_bd->data != data))
+			    (default_bd == NULL ||
+			     default_bd->data != data))
 			{
 				do_free(allocator, data);
 			}
-		}
-		else if (desc->fields[f].type == PROTOBUF_C_TYPE_MESSAGE) {
+		} else if (desc->fields[f].type == PROTOBUF_C_TYPE_MESSAGE) {
 			ProtobufCMessage *sm;
 
 			sm = STRUCT_MEMBER(ProtobufCMessage *, message,
-				desc->fields[f].offset);
+					   desc->fields[f].offset);
 			if (sm && sm != desc->fields[f].default_value)
 				protobuf_c_message_free_unpacked(sm, allocator);
 		}
@@ -3301,53 +3392,52 @@ ProtobufCAllocator *allocator)
 
 void
 protobuf_c_message_init(const ProtobufCMessageDescriptor * descriptor,
-void *message)
+			void *message)
 {
-	descriptor->message_init((ProtobufCMessage *)(message));
+	descriptor->message_init((ProtobufCMessage *) (message));
 }
 
 protobuf_c_boolean
 protobuf_c_message_check(const ProtobufCMessage *message)
 {
+	unsigned i;
+
 	if (!message ||
-		!message->descriptor ||
-		message->descriptor->magic != PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC)
+	    !message->descriptor ||
+	    message->descriptor->magic != PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC)
 	{
 		return FALSE;
 	}
 
-	unsigned i;
 	for (i = 0; i < message->descriptor->n_fields; i++) {
 		const ProtobufCFieldDescriptor *f = message->descriptor->fields + i;
 		ProtobufCType type = f->type;
 		ProtobufCLabel label = f->label;
-		void *field = STRUCT_MEMBER_P(message, f->offset);
+		void *field = STRUCT_MEMBER_P (message, f->offset);
 
 		if (label == PROTOBUF_C_LABEL_REPEATED) {
-			size_t *quantity = STRUCT_MEMBER_P(message, f->quantifier_offset);
+			size_t *quantity = STRUCT_MEMBER_P (message, f->quantifier_offset);
 
-			if (*quantity > 0 && *(void **)field == NULL) {
+			if (*quantity > 0 && *(void **) field == NULL) {
 				return FALSE;
 			}
 
 			if (type == PROTOBUF_C_TYPE_MESSAGE) {
-				ProtobufCMessage **submessage = *(ProtobufCMessage ***)field;
+				ProtobufCMessage **submessage = *(ProtobufCMessage ***) field;
 				unsigned j;
 				for (j = 0; j < *quantity; j++) {
 					if (!protobuf_c_message_check(submessage[j]))
 						return FALSE;
 				}
-			}
-			else if (type == PROTOBUF_C_TYPE_STRING) {
-				char **string = *(char ***)field;
+			} else if (type == PROTOBUF_C_TYPE_STRING) {
+				char **string = *(char ***) field;
 				unsigned j;
 				for (j = 0; j < *quantity; j++) {
 					if (!string[j])
 						return FALSE;
 				}
-			}
-			else if (type == PROTOBUF_C_TYPE_BYTES) {
-				ProtobufCBinaryData *bd = *(ProtobufCBinaryData **)field;
+			} else if (type == PROTOBUF_C_TYPE_BYTES) {
+				ProtobufCBinaryData *bd = *(ProtobufCBinaryData **) field;
 				unsigned j;
 				for (j = 0; j < *quantity; j++) {
 					if (bd[j].len > 0 && bd[j].data == NULL)
@@ -3355,23 +3445,20 @@ protobuf_c_message_check(const ProtobufCMessage *message)
 				}
 			}
 
-		}
-		else { /* PROTOBUF_C_LABEL_REQUIRED or PROTOBUF_C_LABEL_OPTIONAL */
+		} else { /* PROTOBUF_C_LABEL_REQUIRED or PROTOBUF_C_LABEL_OPTIONAL */
 
 			if (type == PROTOBUF_C_TYPE_MESSAGE) {
-				ProtobufCMessage *submessage = *(ProtobufCMessage **)field;
+				ProtobufCMessage *submessage = *(ProtobufCMessage **) field;
 				if (label == PROTOBUF_C_LABEL_REQUIRED || submessage != NULL) {
 					if (!protobuf_c_message_check(submessage))
 						return FALSE;
 				}
-			}
-			else if (type == PROTOBUF_C_TYPE_STRING) {
-				char *string = *(char **)field;
+			} else if (type == PROTOBUF_C_TYPE_STRING) {
+				char *string = *(char **) field;
 				if (label == PROTOBUF_C_LABEL_REQUIRED && string == NULL)
 					return FALSE;
-			}
-			else if (type == PROTOBUF_C_TYPE_BYTES) {
-				protobuf_c_boolean *has = STRUCT_MEMBER_P(message, f->quantifier_offset);
+			} else if (type == PROTOBUF_C_TYPE_BYTES) {
+				protobuf_c_boolean *has = STRUCT_MEMBER_P (message, f->quantifier_offset);
 				ProtobufCBinaryData *bd = field;
 				if (label == PROTOBUF_C_LABEL_REQUIRED || *has == TRUE) {
 					if (bd->len > 0 && bd->data == NULL)
@@ -3386,45 +3473,45 @@ protobuf_c_message_check(const ProtobufCMessage *message)
 
 /* === services === */
 
-typedef void(*GenericHandler) (void *service,
-	const ProtobufCMessage *input,
-	ProtobufCClosure closure,
-	void *closure_data);
+typedef void (*GenericHandler) (void *service,
+				const ProtobufCMessage *input,
+				ProtobufCClosure closure,
+				void *closure_data);
 void
 protobuf_c_service_invoke_internal(ProtobufCService *service,
-unsigned method_index,
-const ProtobufCMessage *input,
-ProtobufCClosure closure,
-void *closure_data)
+				   unsigned method_index,
+				   const ProtobufCMessage *input,
+				   ProtobufCClosure closure,
+				   void *closure_data)
 {
 	GenericHandler *handlers;
 	GenericHandler handler;
 
 	/*
-	* Verify that method_index is within range. If this fails, you are
-	* likely invoking a newly added method on an old service. (Although
-	* other memory corruption bugs can cause this assertion too.)
-	*/
+	 * Verify that method_index is within range. If this fails, you are
+	 * likely invoking a newly added method on an old service. (Although
+	 * other memory corruption bugs can cause this assertion too.)
+	 */
 	assert(method_index < service->descriptor->n_methods);
 
 	/*
-	* Get the array of virtual methods (which are enumerated by the
-	* generated code).
-	*/
-	handlers = (GenericHandler *)(service + 1);
+	 * Get the array of virtual methods (which are enumerated by the
+	 * generated code).
+	 */
+	handlers = (GenericHandler *) (service + 1);
 
 	/*
-	* Get our method and invoke it.
-	* \todo Seems like handler == NULL is a situation that needs handling.
-	*/
+	 * Get our method and invoke it.
+	 * \todo Seems like handler == NULL is a situation that needs handling.
+	 */
 	handler = handlers[method_index];
 	(*handler)(service, input, closure, closure_data);
 }
 
 void
 protobuf_c_service_generated_init(ProtobufCService *service,
-const ProtobufCServiceDescriptor *descriptor,
-ProtobufCServiceDestroy destroy)
+				  const ProtobufCServiceDescriptor *descriptor,
+				  ProtobufCServiceDestroy destroy)
 {
 	ASSERT_IS_SERVICE_DESCRIPTOR(descriptor);
 	service->descriptor = descriptor;
@@ -3442,10 +3529,15 @@ void protobuf_c_service_destroy(ProtobufCService *service)
 
 const ProtobufCEnumValue *
 protobuf_c_enum_descriptor_get_value_by_name(const ProtobufCEnumDescriptor *desc,
-const char *name)
+					     const char *name)
 {
 	unsigned start = 0;
-	unsigned count = desc->n_value_names;
+	unsigned count;
+
+	if (desc == NULL || desc->values_by_name == NULL)
+		return NULL;
+
+	count = desc->n_value_names;
 
 	while (count > 1) {
 		unsigned mid = start + count / 2;
@@ -3455,8 +3547,7 @@ const char *name)
 		else if (rv < 0) {
 			count = start + count - (mid + 1);
 			start = mid + 1;
-		}
-		else
+		} else
 			count = mid - start;
 	}
 	if (count == 0)
@@ -3468,7 +3559,7 @@ const char *name)
 
 const ProtobufCEnumValue *
 protobuf_c_enum_descriptor_get_value(const ProtobufCEnumDescriptor *desc,
-int value)
+				     int value)
 {
 	int rv = int_range_lookup(desc->n_value_ranges, desc->value_ranges, value);
 	if (rv < 0)
@@ -3478,11 +3569,16 @@ int value)
 
 const ProtobufCFieldDescriptor *
 protobuf_c_message_descriptor_get_field_by_name(const ProtobufCMessageDescriptor *desc,
-const char *name)
+						const char *name)
 {
 	unsigned start = 0;
-	unsigned count = desc->n_fields;
+	unsigned count;
 	const ProtobufCFieldDescriptor *field;
+
+	if (desc == NULL || desc->fields_sorted_by_name == NULL)
+		return NULL;
+
+	count = desc->n_fields;
 
 	while (count > 1) {
 		unsigned mid = start + count / 2;
@@ -3494,8 +3590,7 @@ const char *name)
 		else if (rv < 0) {
 			count = start + count - (mid + 1);
 			start = mid + 1;
-		}
-		else
+		} else
 			count = mid - start;
 	}
 	if (count == 0)
@@ -3508,9 +3603,9 @@ const char *name)
 
 const ProtobufCFieldDescriptor *
 protobuf_c_message_descriptor_get_field(const ProtobufCMessageDescriptor *desc,
-unsigned value)
+					unsigned value)
 {
-	int rv = int_range_lookup(desc->n_field_ranges, desc->field_ranges, value);
+	int rv = int_range_lookup(desc->n_field_ranges,desc->field_ranges, value);
 	if (rv < 0)
 		return NULL;
 	return desc->fields + rv;
@@ -3518,10 +3613,15 @@ unsigned value)
 
 const ProtobufCMethodDescriptor *
 protobuf_c_service_descriptor_get_method_by_name(const ProtobufCServiceDescriptor *desc,
-const char *name)
+						 const char *name)
 {
 	unsigned start = 0;
-	unsigned count = desc->n_methods;
+	unsigned count;
+
+	if (desc == NULL || desc->method_indices_by_name == NULL)
+		return NULL;
+
+	count = desc->n_methods;
 
 	while (count > 1) {
 		unsigned mid = start + count / 2;
@@ -3534,8 +3634,7 @@ const char *name)
 		if (rv < 0) {
 			count = start + count - (mid + 1);
 			start = mid + 1;
-		}
-		else {
+		} else {
 			count = mid - start;
 		}
 	}

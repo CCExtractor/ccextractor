@@ -419,7 +419,7 @@ static void delete_regions(DVBSubContext *ctx)
  *                       it could be -1 if not found in PMT.
  * @param ancillary_id ancillary-page_id found in Subtitle descriptors
  *                     associated with     subtitle stream in the    PMT.
- *                       it could be -1 if not found in PMT.
+ *                       it could be -1 if not found in PMT.		
  *
  * @return DVB context kept as void* for abstraction
  *
@@ -681,7 +681,10 @@ static int dvbsub_read_2bit_string(uint8_t *destbuf, int dbuf_len,
 	}
 
 	if (get_bits(&gb, 6))
-		mprint("DVBSub error: line overflow\n");
+	{
+		mprint("DVBSub error: line overflow at dvbsub_read_2bit_string()\n");
+		return -1;
+	}
 
 	(*srcbuf) += (get_bits_count(&gb) + 7) >> 3;
 
@@ -831,7 +834,10 @@ static int dvbsub_read_4bit_string(uint8_t *destbuf, int dbuf_len,
 	}
 
 	if (get_bits(&gb, 8))
-		mprint("DVBSub error: line overflow\n");
+	{
+		mprint("DVBSub error: line overflow at dvbsub_read_4bit_string()\n");
+		return -1;
+	}
 
 	(*srcbuf) += (get_bits_count(&gb) + 7) >> 3;
 
@@ -904,12 +910,15 @@ static int dvbsub_read_8bit_string(uint8_t *destbuf, int dbuf_len,
 	}
 
 	if (*(*srcbuf)++)
-		mprint("DVBSub error: line overflow\n");
+	{
+		mprint("DVBSub error: line overflow at dvbsub_read_8bit_string()\n");
+		return -1;
+	}
 
 	return pixels_read;
 }
 
-static void dvbsub_parse_pixel_data_block(void *dvb_ctx,
+static int dvbsub_parse_pixel_data_block(void *dvb_ctx,
 		DVBSubObjectDisplay *display, const uint8_t *buf, int buf_size,
 		int top_bottom, int non_mod)
 {
@@ -920,6 +929,7 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx,
 	uint8_t *pbuf;
 	int x_pos, y_pos;
 	int i;
+	int parseerror=0;
 
 	uint8_t map2to4[] = { 0x0, 0x7, 0x8, 0xf };
 	uint8_t map2to8[] = { 0x00, 0x77, 0x88, 0xff };
@@ -928,7 +938,7 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx,
 	uint8_t *map_table;
 
 	if (region == 0)
-		return;
+		return 0;
 
 	pbuf = region->pbuf;
 	region->dirty = 1;
@@ -938,13 +948,14 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx,
 
 	y_pos += top_bottom;
 
-	while (buf < buf_end)
+	while (!parseerror && buf < buf_end)
 	{
 		if ((*buf != 0xf0 && x_pos >= region->width) || y_pos >= region->height)
 		{
-			mprint("Invalid object location! %d-%d %d-%d %02x\n", x_pos,
+			mprint("In dvbsub_parse_pixel_data_block(): Invalid object location. %d-%d %d-%d %02x\n", x_pos,
 					region->width, y_pos, region->height, *buf);
-			return;
+			parseerror=1;
+			break;
 		}
 
 		switch (*buf++)
@@ -960,12 +971,19 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx,
 			x_pos = dvbsub_read_2bit_string(pbuf + (y_pos * region->width),
 					region->width, &buf, buf_end - buf, non_mod, map_table,
 					x_pos);
+			if (x_pos<0)
+			{
+				mprint ("In dvbsub_parse_pixel_data_block(): dvbsub_read_2bit_string() returned error.\n");
+				parseerror=1;
+				goto exitfunc;
+			}
 			break;
 		case 0x11:
 			if (region->depth < 4)
 			{
-				mprint("4-bit pixel string in %d-bit region!\n", region->depth);
-				return;
+				mprint("In dvbsub_parse_pixel_data_block(): 4-bit pixel string in %d-bit region.\n", region->depth);
+				parseerror=1;
+				goto exitfunc;
 			}
 
 			if (region->depth == 8)
@@ -976,16 +994,28 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx,
 			x_pos = dvbsub_read_4bit_string(pbuf + (y_pos * region->width),
 					region->width, &buf, buf_end - buf, non_mod, map_table,
 					x_pos);
+			if (x_pos<0)
+			{
+				mprint ("In dvbsub_parse_pixel_data_block(): dvbsub_read_4bit_string() returned error.\n");
+				parseerror=1;
+				goto exitfunc;
+			}
 			break;
 		case 0x12:
 			if (region->depth < 8)
 			{
-				mprint("8-bit pixel string in %d-bit region!\n", region->depth);
-				return;
+				mprint("In dvbsub_parse_pixel_data_block(): 8-bit pixel string in %d-bit region.\n", region->depth);
+				return -1;
 			}
 
 			x_pos = dvbsub_read_8bit_string(pbuf + (y_pos * region->width),
 					region->width, &buf, buf_end - buf, non_mod, NULL, x_pos);
+			if (x_pos<0)
+			{
+				mprint ("In dvbsub_parse_pixel_data_block(): dvbsub_read_8bit_string() returned error.\n");
+				parseerror=1;
+				goto exitfunc;
+			}
 			break;
 
 		case 0x20:
@@ -1008,14 +1038,15 @@ static void dvbsub_parse_pixel_data_block(void *dvb_ctx,
 			y_pos += 2;
 			break;
 		default:
-			mprint("Unknown/unsupported pixel block 0x%x\n", *(buf - 1));
+			mprint("In dvbsub_parse_pixel_data_block(): Unknown/unsupported pixel block 0x%x\n", *(buf - 1));
 			/* no break */
 		}
 	}
-
+exitfunc:
+	return parseerror?-1:0;
 }
 
-static void dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
+static int dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 		int buf_size)
 {
 	DVBSubContext *ctx = (DVBSubContext*) dvb_ctx;
@@ -1034,7 +1065,7 @@ static void dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 	object = get_object(ctx, object_id);
 
 	if (!object)
-		return;
+		return 0; // Unsure if we should return error
 
 	coding_method = ((*buf) >> 2) & 3;
 	non_modifying_color = ((*buf++) >> 1) & 1;
@@ -1048,8 +1079,8 @@ static void dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 
 		if (buf + top_field_len + bottom_field_len > buf_end)
 		{
-			mprint("Field data size too large\n");
-			return;
+			mprint("dvbsub_parse_object_segment(): Field data size too large\n");
+			return -1;
 		}
 
 		for (display = object->display_list; display;
@@ -1058,16 +1089,27 @@ static void dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 			const uint8_t *block = buf;
 			int bfl = bottom_field_len;
 
-			dvbsub_parse_pixel_data_block(dvb_ctx, display, block,
-					top_field_len, 0, non_modifying_color);
+			if (dvbsub_parse_pixel_data_block(dvb_ctx, display, block,
+					top_field_len, 0, non_modifying_color))
+			{
+				mprint ("dvbsub_parse_object_segment(): Something went wrong. Giving up on block (1).\n");
+				// Something went wrong, get out and hope we can
+				// recover
+				return -1;
+			}
 
 			if (bottom_field_len > 0)
 				block = buf + top_field_len;
 			else
 				bfl = top_field_len;
 
-			dvbsub_parse_pixel_data_block(dvb_ctx, display, block, bfl, 1,
-					non_modifying_color);
+			if (dvbsub_parse_pixel_data_block(dvb_ctx, display, block, bfl, 1,
+					non_modifying_color))
+			{
+				// Problems. Hope for the best.
+				mprint ("dvbsub_parse_object_segment(): Something went wrong. Giving up on block (2).\n");
+				return -1;
+			}
 		}
 
 	}
@@ -1079,6 +1121,7 @@ static void dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 	{
 		mprint("Unknown object coding %d\n", coding_method);
 	}
+	return 0;
 
 }
 
@@ -1127,7 +1170,7 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
 
 			if (depth == 0)
 			{
-				mprint("Invalid clut depth 0x%x!\n", *buf);
+				mprint("dvbsub_parse_clut_segment(): Invalid clut depth 0x%x.\n", *buf);
 				return -1;
 			}
 
@@ -1158,7 +1201,7 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
 
 			if (!!(depth & 0x80) + !!(depth & 0x40) + !!(depth & 0x20) > 1)
 			{
-				mprint("More than one bit level marked: %x\n", depth);
+				mprint("dvbsub_parse_clut_segment(): More than one bit level marked: %x\n", depth);
 			}
 
 			if (depth & 0x80)
@@ -1196,7 +1239,10 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 	int fill;
 
 	if (buf_size < 10)
+	{
+		mprint (" dvbsub_parse_region_segment(): [buf_size < 10, leaving region] ");
 		return;
+	}
 
 	region_id = *buf++;
 	version = ((*buf) >> 4) & 15;
@@ -1205,6 +1251,7 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 
 	if (!region)
 	{
+		dbg_print (CCX_DMT_DVB, " [new region allocated] ");
 		region = (struct DVBSubRegion*) malloc(sizeof(struct DVBSubRegion));
 		memset(region, 0, sizeof(struct DVBSubRegion));
 
@@ -1215,7 +1262,10 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 		ctx->region_list = region;
 	}
 	else if (version == region->version)
+	{
+		dbg_print (CCX_DMT_DVB, " [already had this region and version] ");
 		return;
+	}
 	fill = ((*buf++) >> 3) & 1;
 
 	region->width = RB16(buf);
@@ -1223,20 +1273,14 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 	region->height = RB16(buf);
 	buf += 2;
 
-	if (ccx_options.dvb_debug_traces_to_stdout)
-	{
-		mprint(", REGION %d WIDTH: %d, ", region_id, region->width);
-		mprint("REGION %d HEIGHT: %d", region_id, region->height);
-	}
-
+	dbg_print(CCX_DMT_DVB, ", REGION %d WIDTH: %d, ", region_id, region->width);
+	dbg_print(CCX_DMT_DVB, "REGION %d HEIGHT: %d", region_id, region->height);
+	
 	if (region->width * region->height != region->buf_size)
 	{
-		free(region->pbuf);
-
+		freep(&region->pbuf);
 		region->buf_size = region->width * region->height;
-
 		region->pbuf = (uint8_t*) malloc(region->buf_size);
-
 		fill = 1;
 		region->dirty = 0;
 	}
@@ -1244,7 +1288,7 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 	region->depth = 1 << (((*buf++) >> 2) & 7);
 	if (region->depth < 2 || region->depth > 8)
 	{
-		mprint("region depth %d is invalid\n", region->depth);
+		mprint("dvbsub_parse_region_segment(): region depth %d is invalid\n", region->depth);
 		region->depth = 4;
 	}
 	region->clut = *buf++;
@@ -1257,7 +1301,6 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 	else
 	{
 		buf += 1;
-
 		if (region->depth == 4)
 			region->bgcolor = (((*buf++) >> 4) & 15);
 		else
@@ -1312,6 +1355,7 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 		display->object_list_next = object->display_list;
 		object->display_list = display;
 	}
+	assert (buf<=buf_end);
 }
 /*
  * xxx loose last frame
@@ -1329,7 +1373,7 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	int timeout;
 	int version;
 
-	if (buf_size < 1)
+	if (buf_size < 2)
 		return;
 
 	timeout = *buf++;
@@ -1347,8 +1391,7 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 
 	if (page_state == 1 || page_state == 2)
 	{
-		if (ccx_options.dvb_debug_traces_to_stdout)
-			mprint(", PAGE STATE %d", page_state);
+		dbg_print(CCX_DMT_DVB, ", PAGE STATE %d", page_state);
 		delete_regions(ctx);
 		delete_objects(ctx);
 		delete_cluts(ctx);
@@ -1362,8 +1405,7 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 		region_id = *buf++;
 		buf += 1;
 
-		if (ccx_options.dvb_debug_traces_to_stdout)
-			mprint(", REGION %d ADDED", region_id);
+		dbg_print(CCX_DMT_DVB, ", REGION %d ADDED", region_id);
 
 		display = tmp_display_list;
 		tmp_ptr = &tmp_display_list;
@@ -1403,7 +1445,7 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 
 		free(display);
 	}
-
+	assert (buf<=buf_end);
 }
 
 static void dvbsub_parse_display_definition_segment(void *dvb_ctx,
@@ -1460,16 +1502,17 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	DVBSubRegion *region;
 	DVBSubRegionDisplay *display;
 	DVBSubCLUT *clut;
-    DVBSubDisplayDefinition *display_def;
-    struct cc_bitmap *rect = NULL;
+	DVBSubDisplayDefinition *display_def;
+	struct cc_bitmap *rect = NULL;
 	uint32_t *clut_table;
 	int offset_x=0, offset_y=0;
 	int ret = 0;
+	int x_pos=-1, y_pos=-1, width=0, height=0;
 
 	ctx = (DVBSubContext *) dec_ctx->private_data;
 
-        display_def = ctx->display_definition;
-        sub->type = CC_BITMAP;
+	display_def = ctx->display_definition;
+	sub->type = CC_BITMAP;
 	sub->lang_index = ctx->lang_index;
 
 	if (display_def)
@@ -1489,21 +1532,24 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		return 0;
 	}
 
-	rect = malloc( sizeof(struct cc_bitmap) * sub->nb_data);
+	rect = malloc(sizeof(struct cc_bitmap));
 	if(!rect)
-	{
 		return -1;
-	}
+	rect->data0=NULL;
+	rect->data1=NULL;
 
 	sub->flags |= SUB_EOD_MARKER;
 	sub->got_output = 1;
 	sub->data = rect;
+	sub->datatype = CC_DATATYPE_DVB;
+
+	// TODO: if different regions have different cluts, only the last one will be saved.
+	// Don't know if it will affect anything.
+
+	// The first loop, to determine the size of the whole subtitle (made up of different display/regions)
 
 	for (display = ctx->display_list; display; display = display->next)
 	{
-#ifdef ENABLE_OCR
-		char *ocr_str = NULL;
-#endif
 		region = get_region(ctx, display->region_id);
 
 		if (!region)
@@ -1512,13 +1558,35 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		if (!region->dirty)
 			continue;
 
-		rect->x = display->x_pos + offset_x;
-		rect->y = display->y_pos + offset_y;
-		rect->w = region->width;
-		rect->h = region->height;
-		rect->nb_colors = (1 << region->depth);
-		rect->linesize[0] = region->width;
+		if (x_pos == -1) {
+			x_pos = display->x_pos;
+			y_pos = display->y_pos;
+			width = region->width;
+			height = region->height;
+		}
+		else {
+			if (x_pos > display->x_pos) {
+				width += (x_pos - display->x_pos);
+				x_pos = display->x_pos;
+			}
 
+			if (display->y_pos < y_pos) {
+				height += (y_pos - display->y_pos);
+				y_pos = display->y_pos;
+			}
+
+			if (display->x_pos + region->width > x_pos + width) {
+				width = display->x_pos + region->width - x_pos;
+			}
+
+			if (display->y_pos + region->height > y_pos + height) {
+				height = display->y_pos + region->height - y_pos;
+			}
+
+		}
+		rect->nb_colors = (1 << region->depth);
+
+		// Process CLUT
 		clut = get_clut(ctx, region->clut);
 
 		if (!clut)
@@ -1528,6 +1596,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		{
 			case 2:
 				clut_table = clut->clut4;
+				break;
 			case 8:
 				clut_table = clut->clut256;
 				break;
@@ -1537,32 +1606,137 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 				break;
 		}
 
-		rect->data[1] = malloc(1024);
-		memset(rect->data[1], 0, 1024);
-		memcpy(rect->data[1], clut_table, (1 << region->depth) * sizeof(uint32_t));
-
-		rect->data[0] = malloc(region->buf_size);
-		memcpy(rect->data[0], region->pbuf, region->buf_size);
-#ifdef ENABLE_OCR
-		if (ctx->ocr_ctx)
-		{
-			ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str,region->bgcolor);
-			if(ret >= 0)
-				rect->ocr_text = ocr_str;
-			else
-				rect->ocr_text = NULL;
-		}
-		else
-		{
-			rect->ocr_text = NULL;
-		}
-#endif
-		rect++;
-
+		rect->data1 = malloc(1024);
+		memset(rect->data1, 0, 1024);
+		memcpy(rect->data1, clut_table, (1 << region->depth) * sizeof(uint32_t));
+		assert(((1 << region->depth) * sizeof(uint32_t)) <= 1024);
 	}
 
+	rect->x = x_pos + offset_x;
+	rect->y = y_pos + offset_y;
+	rect->w = width;
+	rect->h = height;
+	rect->linesize0 = width;
+
+	// The second loop, to generate the merged image
+
+	dbg_print(CCX_DMT_DVB, "\nCreating a data[0] of %d bytes (%d x %d)\n", width * height, width, height);
+	rect->data0 = (uint8_t*)malloc(width * height);
+	if (!rect->data0) {
+		mprint("write_dvb_sub: failed to alloc memory, need %d * %d = %d bytes\n", width, height, width*height);
+		return -1;
+	}
+	memset(rect->data0, 0x0, width * height);
+
+	for (display = ctx->display_list; display; display = display->next) {
+		region = get_region(ctx, display->region_id);
+		if (!region)
+			continue;
+
+		int x_off = display->x_pos - x_pos;
+		int y_off = display->y_pos - y_pos;
+		for (int y = 0; y < region->height; y++) {
+			for (int x = 0; x < region->width; x++)
+			{
+				int offset=((y + y_off) * width) + x_off + x;
+				if (offset >= (width * height) || offset<0)
+				{
+					mprint ("write_dvb_sub(): Offset %d (out of bounds!) ignored.\n",
+						offset);
+					mprint ("  Formula: offset=((y + y_off) * width) + x_off + x\n");
+					mprint ("  y=%d, y_off=%d, width=%d, x_off=%d, x=%d\n",
+						y,y_off, width, x_off,x);
+				}
+				else
+				{
+					uint8_t c=(uint8_t) region->pbuf[y * region->width + x];
+					rect->data0[offset] = c;
+				}
+			}
+		}
+	}
+
+	sub->nb_data = 1; // Set nb_data to 1 since we have merged the images into one image.
+
+	// Perform OCR
+#ifdef ENABLE_OCR
+	char *ocr_str = NULL;
+	if (ctx->ocr_ctx)
+	{
+		ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, region->bgcolor, dec_ctx->ocr_quantmode);
+		if (ret >= 0)
+			rect->ocr_text = ocr_str;
+		else
+			rect->ocr_text = NULL;
+		dbg_print(CCX_DMT_DVB, "\nOCR Result: %s\n", rect->ocr_text ? rect->ocr_text : "NULL");
+	}
+	else
+	{
+		rect->ocr_text = NULL;
+	}
+#endif
 	return 0;
 }
+
+void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
+								   struct lib_cc_decode *dec_ctx,
+								   struct cc_subtitle *sub) {
+	if (!enc_ctx)
+		return;
+	if (enc_ctx->write_previous) //this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
+	{
+        enc_ctx->prev->last_string = NULL; // Reset last recognized sub text
+		sub->prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the end time of the previous sub the current pts
+		encode_sub(enc_ctx->prev, sub->prev); //we encode it
+
+        enc_ctx->last_string = enc_ctx->prev->last_string; // Update last recognized string (used in Matroska)
+        enc_ctx->prev->last_string = NULL;
+
+        enc_ctx->srt_counter = enc_ctx->prev->srt_counter; //for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
+		enc_ctx->prev_start = enc_ctx->prev->prev_start;
+		sub->prev->got_output = 0;
+		if (enc_ctx->write_format == CCX_OF_WEBVTT) {	// we already wrote header, but since we encoded last sub, we must prevent multiple headers in future
+			enc_ctx->wrote_webvtt_header = 1;
+		}
+	}
+	/* copy previous encoder context*/
+	free_encoder_context(enc_ctx->prev);
+	enc_ctx->prev = NULL;
+	enc_ctx->prev = copy_encoder_context(enc_ctx);
+
+	/* copy previous decoder context */
+	free_decoder_context(dec_ctx->prev);
+	dec_ctx->prev = NULL;
+	dec_ctx->prev = copy_decoder_context(dec_ctx);
+
+	freep(&dec_ctx->prev->private_data);
+	dec_ctx->prev->private_data = malloc(sizeof(struct DVBSubContext));
+	memcpy(dec_ctx->prev->private_data, dec_ctx->private_data, sizeof(struct DVBSubContext));
+	/* copy previous subtitle */
+	free_subtitle(sub->prev);
+	sub->prev = NULL;
+	sub->prev = copy_subtitle(sub);
+	sub->prev->start_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the start time of the previous sub the current pts
+
+	write_dvb_sub(dec_ctx->prev, sub->prev); //we write the current dvb sub to update decoder context
+	enc_ctx->write_previous = 1; //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
+#ifdef ENABLE_OCR
+		if (sub->prev) {
+			struct cc_bitmap* content_prev = sub->prev->data;
+			dbg_print(CCX_DMT_DVB, "\nPrevious subtitle %x (%s)\nStart time: %lld; End time: %lld",
+				sub->prev, content_prev ?
+				(content_prev->ocr_text ? content_prev->ocr_text : "NULL OCR") : "NULL DATA",
+				sub->prev->start_time, sub->prev->end_time);
+		}
+		struct cc_bitmap* content = sub->data;
+		dbg_print(CCX_DMT_DVB, "\nCurrent subtitle %x (%s)\nStart time: %lld; End time: %lld\n",
+			sub, content ?
+			(content->ocr_text ? content->ocr_text : "NULL OCR") : "NULL DATA",
+			sub->start_time, sub->end_time);
+	
+#endif
+}
+
 /**
  * @param dvb_ctx    PreInitialized DVB context using DVB
  * @param buf        buffer containing segment data, first sync byte need to 0x0f.
@@ -1584,7 +1758,8 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 
 	if (buf_size <= 6 || *buf != 0x0f)
 	{
-		mprint("dvbsub_decode: incomplete, broken or empty packet\n");
+		mprint("dvbsub_decode: incomplete, broken or empty packet (size = %d, first byte=%02X)\n",
+			buf_size, *buf);
 		return -1;
 	}
 
@@ -1605,93 +1780,70 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 
 		if (p_end - p < segment_length)
 		{
-			mprint("dvbsub_decode: incomplete, broken or empty packet\n");
+			mprint("dvbsub_decode: incomplete, broken or empty packet, remaining bytes=%d, segment_length=%d\n",
+				p_end - p, segment_length);
 			return -1;
 		}
 
 		if (page_id == ctx->composition_id || page_id == ctx->ancillary_id
 				|| ctx->composition_id == -1 || ctx->ancillary_id == -1)
 		{
-			if (ccx_options.dvb_debug_traces_to_stdout)
-			{
-				//debug traces
-				mprint("DVBSUB - PTS: %" PRId64 ", ", dec_ctx->timing->current_pts);
-				mprint("FTS: %d, ", dec_ctx->timing->fts_now);
-				mprint("SEGMENT TYPE: %d, ", segment_type);
-				mprint("SEGMENT LENGTH: %d", segment_length);
-			}
+			//debug traces
+			dbg_print(CCX_DMT_DVB, "DVBSUB - PTS: %" PRId64 ", ", dec_ctx->timing->current_pts);
+			dbg_print(CCX_DMT_DVB, "FTS: %d, ", dec_ctx->timing->fts_now);
+			dbg_print(CCX_DMT_DVB, "SEGMENT TYPE: %2X, ", segment_type);
+
 			switch (segment_type)
 			{
 			case DVBSUB_PAGE_SEGMENT:
+				dbg_print(CCX_DMT_DVB, "(DVBSUB_PAGE_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 				dvbsub_parse_page_segment(ctx, p, segment_length);
 				got_segment |= 1;
 				break;
 			case DVBSUB_REGION_SEGMENT:
+				dbg_print(CCX_DMT_DVB, "(DVBSUB_REGION_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 				dvbsub_parse_region_segment(ctx, p, segment_length);
 				got_segment |= 2;
 				break;
 			case DVBSUB_CLUT_SEGMENT:
+				dbg_print(CCX_DMT_DVB, "(DVBSUB_CLUT_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 				ret = dvbsub_parse_clut_segment(ctx, p, segment_length);
 				if (ret < 0)
 					goto end;
 				got_segment |= 4;
 				break;
 			case DVBSUB_OBJECT_SEGMENT:
-				dvbsub_parse_object_segment(ctx, p, segment_length);
+				dbg_print(CCX_DMT_DVB, "(DVBSUB_OBJECT_SEGMENT), SEGMENT LENGTH: %d", segment_length);
+				ret = dvbsub_parse_object_segment(ctx, p, segment_length);
+				if (ret < 0)
+					goto end;
 				got_segment |= 8;
 				break;
 			case DVBSUB_DISPLAYDEFINITION_SEGMENT:
+				dbg_print(CCX_DMT_DVB, "(DVBSUB_DISPLAYDEFINITION_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 				dvbsub_parse_display_definition_segment(ctx, p,
 						segment_length);
 				break;
 			case DVBSUB_DISPLAY_SEGMENT: //when we get a display segment, we save the current page
-				if (enc_ctx->write_previous) //this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
-				{
-					sub->prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the end time of the previous sub the current pts
-					encode_sub(enc_ctx->prev, sub->prev); //we encode it
-					enc_ctx->srt_counter = enc_ctx->prev->srt_counter; //for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
-					enc_ctx->prev_start = enc_ctx->prev->prev_start;
-					sub->prev->got_output = 0;
-					if (enc_ctx->write_format == CCX_OF_WEBVTT) {	// we already wrote header, but since we encoded last sub, we must prevent multiple headers in future
-						enc_ctx->wrote_webvtt_header = 1;
-					}
-				}
-				/* copy previous encoder context*/
-				free_encoder_context(enc_ctx->prev);
-				enc_ctx->prev = NULL;  
-				enc_ctx->prev = copy_encoder_context(enc_ctx); 
-				/* copy previous decoder context */
-				free_decoder_context(dec_ctx->prev);
-				dec_ctx->prev = NULL;
-				dec_ctx->prev = copy_decoder_context(dec_ctx);
-				freep(&dec_ctx->prev->private_data);
-				dec_ctx->prev->private_data = malloc(sizeof(struct DVBSubContext));
-				memcpy(dec_ctx->prev->private_data, dec_ctx->private_data, sizeof(struct DVBSubContext));
-				/* copy previous subtitle */
-				free_subtitle(sub->prev);
-				sub->prev = NULL;
-				sub->prev = copy_subtitle(sub);
-				sub->prev->start_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the start time of the previous sub the current pts
-				
-				write_dvb_sub(dec_ctx->prev, sub->prev); //we write the current dvb sub to update decoder context
-				enc_ctx->write_previous = 1; //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
+				dbg_print(CCX_DMT_DVB, "(DVBSUB_DISPLAY_SEGMENT), SEGMENT LENGTH: %d", segment_length);
+				dvbsub_handle_display_segment(enc_ctx, dec_ctx, sub);
 				got_segment |= 16;
 				break;
 			default:
-				mprint("Subtitling segment type 0x%x, page id %d, length %d\n",
+				dbg_print(CCX_DMT_DVB, "Subtitling segment type 0x%x, page id %d, length %d\n",
 						segment_type, page_id, segment_length);
 				break;
 			}
 		}
-		if (ccx_options.dvb_debug_traces_to_stdout)
-			mprint("\n");
+		dbg_print(CCX_DMT_DVB, "\n");
 		p += segment_length;
 	}
 	// Some streams do not send a display segment but if we have all the other
 	// segments then we need no further data.
 	if (got_segment == 15)
 	{
-		write_dvb_sub(dec_ctx, sub);
+		dvbsub_handle_display_segment(enc_ctx, dec_ctx, sub);
+		got_segment |= 16;
 	}
 end:
 	if ( ret >= 0 )
@@ -1743,18 +1895,14 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 	{
 		/* setting language to undefined if not found in language lkup table */
 		char lang_name[4];
-		if (ccx_options.dvb_debug_traces_to_stdout)
-		{
-			mprint("DVBSUB - LANGUAGE \"");
-		}
+		dbg_print(CCX_DMT_DVB, "DVBSUB - LANGUAGE \"");
+
 		for(int char_index = 0; char_index < 3; char_index++)
 		{
 			lang_name[char_index] = cctolower(data[char_index]);
-			if (ccx_options.dvb_debug_traces_to_stdout)
-				mprint("%c", lang_name[char_index]);
+			dbg_print(CCX_DMT_DVB, "%c", lang_name[char_index]);
 		}
-		if (ccx_options.dvb_debug_traces_to_stdout)
-			mprint("\" FOUND\n");
+		dbg_print(CCX_DMT_DVB, "\" FOUND\n");
 
 		for (j = 0, cfg->lang_index[i] = 0; language[j] != NULL; j++)
 		{

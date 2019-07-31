@@ -49,106 +49,12 @@ int _CRT_fmode = _O_BINARY;
 #include <commctrl.h>
 #endif
 
-long long int last_pes_pts = 0; // PTS of last PES packet (debug purposes)
+uint64_t last_pes_pts = 0; // PTS of last PES packet (debug purposes)
 static int de_ctr = 0; // a keeps count of packets with flag subtitle ON and data packets
-typedef struct {
-	uint64_t show_timestamp; // show at timestamp (in ms)
-	uint64_t hide_timestamp; // hide at timestamp (in ms)
-	uint16_t text[25][40]; // 25 lines x 40 cols (1 screen/page) of wide chars
-	uint8_t g2_char_present[25][40]; // 0- Supplementary G2 character set NOT used at this position 1-Supplementary G2 character set used at this position
-	uint8_t tainted; // 1 = text variable contains any data
-} teletext_page_t;
-
-// application states -- flags for notices that should be printed only once
-struct s_states {
-	uint8_t programme_info_processed;
-	uint8_t pts_initialized;
-};
-
-typedef enum
-{
-	TRANSMISSION_MODE_PARALLEL = 0,
-	TRANSMISSION_MODE_SERIAL = 1
-} transmission_mode_t;
-
-struct TeletextCtx
-{
-	short int seen_sub_page[MAX_TLT_PAGES];
-	uint8_t verbose : 1; // should telxcc be verbose?
-	uint16_t page; // teletext page containing cc we want to filter
-	uint16_t tid; // 13-bit packet ID for teletext stream
-	double offset; // time offset in seconds
-	uint8_t bom : 1; // print UTF-8 BOM characters at the beginning of output
-	uint8_t nonempty : 1; // produce at least one (dummy) frame
-	// uint8_t se_mode : 1; // search engine compatible mode => Uses CCExtractor's write_format
-	// uint64_t utc_refvalue; // UTC referential value => Moved to ccx_decoders_common, so can be used for other decoders (608/xds) too
-	uint16_t user_page; // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
-	int levdistmincnt, levdistmaxpct; // Means 2 fails or less is "the same", 10% or less is also "the same"
-	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
-	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
-	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
-	enum ccx_output_date_format date_format;
-	int noautotimeref; // Do NOT set time automatically?
-	unsigned send_to_srv;
-	char millis_separator;
-	uint32_t global_timestamp;
-
-	// Current and previous page buffers. This is the output written to file when
-	// the time comes.
-	teletext_page_t page_buffer;
-	char *page_buffer_prev;
-	char *page_buffer_cur;
-	unsigned page_buffer_cur_size;
-	unsigned page_buffer_cur_used;
-	unsigned page_buffer_prev_size;
-	unsigned page_buffer_prev_used;
-	// Current and previous page compare strings. This is plain text (no colors,
-	// tags, etc) in UCS2 (fixed length), so we can compare easily.
-	uint64_t *ucs2_buffer_prev;
-	uint64_t *ucs2_buffer_cur;
-	unsigned ucs2_buffer_cur_size;
-	unsigned ucs2_buffer_cur_used;
-	unsigned ucs2_buffer_prev_size;
-	unsigned ucs2_buffer_prev_used;
-	// Buffer timestamp
-	uint64_t prev_hide_timestamp;
-	uint64_t prev_show_timestamp;
-	// subtitle type pages bitmap, 2048 bits = 2048 possible pages in teletext (excl. subpages)
-	uint8_t cc_map[256];
-	// last timestamp computed
-	uint64_t last_timestamp;
-	struct s_states states;
-	// FYI, packet counter
-	uint32_t tlt_packet_counter;
-	// teletext transmission mode
-	transmission_mode_t transmission_mode;
-	// flag indicating if incoming data should be processed or ignored
-	uint8_t receiving_data;
-
-	uint8_t using_pts;
-	int64_t delta;
-	uint32_t t0;
-
-	int sentence_cap;//Set to 1 if -sc is passed
-	int new_sentence;
-	int splitbysentence;
-
-};
-typedef enum
-{
-	DATA_UNIT_EBU_TELETEXT_NONSUBTITLE = 0x02,
-	DATA_UNIT_EBU_TELETEXT_SUBTITLE = 0x03,
-	DATA_UNIT_EBU_TELETEXT_INVERTED = 0x0c,
-	DATA_UNIT_VPS = 0xc3,
-	DATA_UNIT_CLOSED_CAPTIONS = 0xc5
-} data_unit_t;
-
 static const char* TTXT_COLOURS[8] = {
 	//black,   red,       green,     yellow,    blue,      magenta,   cyan,      white
 	"#000000", "#ff0000", "#00ff00", "#ffff00", "#0000ff", "#ff00ff", "#00ffff", "#ffffff"
 };
-
-#define MAX_TLT_PAGES 1000
 
 
 // 1-byte alignment; just to be sure, this struct is being used for explicit type conversion
@@ -186,6 +92,29 @@ struct {
 	{ '<', "&lt;" },
 	{ '>', "&gt;" },
 	{ '&', "&amp;" }
+};
+
+// Latin-Russian characters mapping, issue #1086
+struct {
+    uint16_t lat_char;
+    const char * rus_char;
+} const LAT_RUS[] = {
+    {65, "А"}, {66, "Б"}, {87, "В"}, {71, "Г"},
+    {68, "Д"}, {69, "Е"}, {86, "Ж"}, {90, "З"},
+    {73, "И"}, {74, "Й"}, {75, "К"}, {76, "Л"},
+    {77, "М"}, {78, "Н"}, {79, "О"}, {80, "П"},
+    {82, "Р"}, {83, "С"}, {84, "Т"}, {85, "У"},
+    {70, "Ф"}, {72, "Х"}, {67, "Ц"}, {238, "Ч"},
+    {235, "Ш"},{249, "Щ"},{35, "Ы"}, {88, "Ь"},
+    {234, "Э"},{224, "Ю"},{81, "Я"}, {97, "а"},
+    {98, "б"}, {119, "в"},{103, "г"},{100, "д"},
+    {101, "е"},{118, "ж"},{122, "з"},{105, "и"},
+    {106, "й"},{107, "к"},{108, "л"},{109, "м"},
+    {110, "н"},{111, "о"},{112, "п"},{114, "р"},
+    {115, "с"},{116, "т"},{117, "у"},{102, "ф"},
+    {104, "х"},{99, "ц"}, {231, "ч"},{226, "ш"},
+    {251, "щ"},{121, "ъ"},{38, "ы"}, {120, "ь"},
+    {244, "э"},{232, "ю"},{113, "я"}
 };
 
 #define array_length(a) (sizeof(a)/sizeof(a[0]))
@@ -616,10 +545,12 @@ void telx_case_fix (struct TeletextCtx *context)
 				context->new_sentence = 1;
 				break;
 			default:
-				if (context->new_sentence)
+				if (context->new_sentence && i!=0 && context->page_buffer_cur[i-1]!='\n')
 					context->page_buffer_cur[i] = cctoupper(context->page_buffer_cur[i]);
-				else
+
+				else if(!context->new_sentence && i!=0 && context->page_buffer_cur[i-1] != '\n')
 					context->page_buffer_cur[i] = cctolower(context->page_buffer_cur[i]);
+
 				context->new_sentence = 0;
 				break;
 		}
@@ -692,7 +623,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 	fprintf(stdout, "\n");
 #endif
 	char u[4] = {0, 0, 0, 0};
-
+    
 	// optimization: slicing column by column -- higher probability we could find boxed area start mark sooner
 	uint8_t page_is_empty = YES;
 	for (uint8_t col = 0; col < 40; col++)
@@ -722,23 +653,45 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 	timecode_show[12] = 0;
 	timestamp_to_srttime(page->hide_timestamp, timecode_hide);
 	timecode_hide[12] = 0;
-
+    
 	// process data
 	for (uint8_t row = 1; row < 25; row++)
 	{
-		// anchors for string trimming purpose
-		uint8_t col_start = 40;
-		uint8_t col_stop = 40;
+        	// anchors for string trimming purpose
+        	uint8_t col_start = 40;
+        	uint8_t col_stop = 40;
 
-		for (int8_t col = 39; col >= 0; col--)
-		{
-			if (page->text[row][col] == 0xb)
-			{
-				col_start = col;
-				line_count++;
-				break;
-			}
-		}
+        	uint8_t box_open = NO;
+        	for (int8_t col = 0; col < 40; col++)
+        	{
+            		// replace all 0/B and 0/A characters with 0/20, as specified in ETS 300 706:
+            		// Unless operating in "Hold Mosaics" mode, each character space occupied by a
+            		// spacing attribute is displayed as a SPACE
+            		if (page->text[row][col] == 0xb) // open the box
+            		{
+                		if (col_start == 40)
+                		{
+                    			col_start = col;
+                    			line_count++;
+                		}
+                		else
+                		{
+                    			page->text[row][col] = 0x20;
+                		}
+                		box_open = YES;
+            		}
+            		else if (page->text[row][col] == 0xa) // close the box
+            		{
+                		page->text[row][col] = 0x20;
+                		box_open = NO;
+            		}
+            		// characters between 0xA and 0xB shouldn't be displayed
+            		// page->text[row][col] > 0x20 added to preserve color information
+            		else if (!box_open && col_start < 40 && page->text[row][col] > 0x20)
+            		{
+                		page->text[row][col] = 0x20;
+            		}
+        	}
 		// line is empty
 		if (col_start > 39)
 			continue;
@@ -751,8 +704,6 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 					col_start = col;
 				col_stop = col;
 			}
-			if (page->text[row][col] == 0xa)
-				break;
 		}
 		// line is empty
 		if (col_stop > 39)
@@ -831,7 +782,8 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 							page_buffer_add_string (ctx, "</font>");
 							font_tag_opened = NO;
 						}
-
+                                                
+						page_buffer_add_string(ctx, " ");
 						// black is considered as white for telxcc purpose
 						// telxcc writes <font/> tags only when needed
 						if ((v > 0x0) && (v < 0x7))
@@ -849,7 +801,20 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 				{
 					ucs2_to_utf8(u, v);
 					uint64_t ucs2_char=(u[0]<<24) | (u[1]<<16) | (u[2]<<8) | u[3];
-					ucs2_buffer_add_char(ctx, ucs2_char);
+                    ucs2_buffer_add_char(ctx, ucs2_char);
+
+
+                    if (font_tag_opened == NO && tlt_config.latrusmap) {
+                        for (uint8_t i = 0; i < array_length(LAT_RUS); i++) {
+                            if (v == LAT_RUS[i].lat_char)
+                            {
+                                page_buffer_add_string (ctx, LAT_RUS[i].rus_char);
+                                // already processed char
+                                v = 0;
+                                break;
+                            }
+                        }
+                    }
 
 					// translate some chars into entities, if in colour mode
 					if (!tlt_config.nofontcolor && !tlt_config.nohtmlescape)
@@ -859,10 +824,10 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 							{
 								page_buffer_add_string (ctx, ENTITIES[i].entity);
 								// v < 0x20 won't be printed in next block
-								v = 0;
+                                v = 0;
 								break;
 							}
-					}
+                    }
 				}
 				if (v >= 0x20)
 				{
@@ -886,6 +851,9 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 		}
 	}
 	time_reported=0;
+
+	if (ctx->sentence_cap)
+		telx_case_fix(ctx);
 
 	switch (tlt_config.write_format)
 	{
@@ -932,8 +900,6 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 			}
 			break;
 		default:
-			if (ctx->sentence_cap)
-				telx_case_fix(ctx);
 			add_cc_sub_text(sub, ctx->page_buffer_cur, page->show_timestamp,
 				page->hide_timestamp + 1, NULL, "TLT", CCX_ENC_UTF_8);
 	}
@@ -984,7 +950,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		{
 			tlt_config.page = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
 			mprint ("- No teletext page specified, first received suitable page is %03x, not guaranteed\n", tlt_config.page);
-			}
+        }
 
 		// Page number and control bits
 		page_number = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
@@ -1420,7 +1386,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 		pes_crc_flag = (uint8_t)(buffer[7] << 6) >> 7;
 		pes_ext_flag = (uint8_t)(buffer[7] << 7) >> 7;
 
-		printf("Packet start code prefix: %04x # ", pes_prefix);
+		printf("Packet start code prefix: %04lx # ", pes_prefix);
 		printf("Stream ID: %04x # ", pes_stream_id);
 		printf("Packet length: %d ", pes_packet_length);
 		printf("PESSC: 0x%x ", pes_scrambling_control);
@@ -1499,7 +1465,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 		{
 			//printf("# Associated PTS: %d \n", pts);
 			printf("# Associated PTS: %" PRId64 " # ", pts);
-			printf("Diff: %" PRId64 "\n", pts - last_pes_pts);
+			printf("Diff: %" PRIu64 "\n", pts - last_pes_pts);
 			//printf("Diff: %d # ", pts - last_pes_pts);
 			last_pes_pts = pts;
 		}

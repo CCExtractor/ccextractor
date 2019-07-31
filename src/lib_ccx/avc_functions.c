@@ -158,14 +158,14 @@ size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t av
 	if(avcbuflen <= 5)
 	{
 		fatal(CCX_COMMON_EXIT_BUG_BUG,
-				"NAL unit need at last 5 bytes ...");
+				"NAL unit needs at last 5 bytes in the buffer to process AVC video stream...");
 	}
 
 	// Warning there should be only leading zeros, nothing else
 	if( !(buffer_position[0]==0x00 && buffer_position[1]==0x00) )
 	{
 		fatal(CCX_COMMON_EXIT_BUG_BUG,
-				"Broken AVC stream - no 0x0000 ...");
+				"Broken AVC stream - Leading bytes are non-zero...");
 	}
 	buffer_position = buffer_position+2;
 
@@ -188,7 +188,7 @@ size_t process_avc ( struct lib_cc_decode *ctx, unsigned char *avcbuf, size_t av
 			{
 				// Not 0x00 or 0x01
 				fatal(CCX_COMMON_EXIT_BUG_BUG,
-						"Broken AVC stream - no 0x00 ...");
+						"Broken AVC stream - Leading bytes are non-zero...");
 			}
 			buffer_position++;
 			zeropad++;
@@ -500,16 +500,17 @@ void user_data_registered_itu_t_t35 (struct avc_ctx *ctx, unsigned char *userbuf
 						if (cc_tmp_data+local_cc_count*3 >= userend)
 							fatal(CCX_COMMON_EXIT_BUG_BUG,
 									"Syntax problem: Too many caption blocks.");
-						if (cc_tmp_data[local_cc_count*3]!=0xFF)
-							fatal(CCX_COMMON_EXIT_BUG_BUG,
-									"Syntax problem: Final 0xFF marker missing.");
-
+						if (cc_tmp_data[local_cc_count*3]!=0xFF){
+							// See GitHub Issue #1001 for the related change
+							mprint ("\rWarning! Syntax problem: Final 0xFF marker missing. Continuing...\n");
+							break; // Skip Block
+						}
 						// Save the data and process once we know the sequence number
 						if ( ( (ctx->cc_count + local_cc_count) * 3) + 1 > ctx->cc_databufsize)
 						{
 							ctx->cc_data = (unsigned char*)realloc(ctx->cc_data, (size_t) ( (ctx->cc_count + local_cc_count) * 6) + 1);
 							if (!ctx->cc_data)
-								fatal(EXIT_NOT_ENOUGH_MEMORY, "In user_data_registered_itu_t_t35: Out of memory allocating buffer for CC data.");
+								fatal(EXIT_NOT_ENOUGH_MEMORY, "In user_data_registered_itu_t_t35: Out of memory to allocate buffer for CC data.");
 							ctx->cc_databufsize = (long) ( (ctx->cc_count + local_cc_count) * 6) + 1;
 						}
 						// Copy new cc data into cc_data
@@ -838,7 +839,7 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
 		dvprint("nal_hrd_parameters_present_flag=               % 4lld (%#llX)\n",tmp,tmp);
 		if ( tmp )
 		{
-			dvprint ("nal_hrd. Not implemented for now. Hopefully not needed. Skiping rest of NAL\n");
+			dvprint ("nal_hrd. Not implemented for now. Hopefully not needed. Skipping rest of NAL\n");
 			//printf("Boom nal_hrd\n");
 			// exit(1);
 			ctx->num_nal_hrd++;
@@ -849,7 +850,7 @@ void seq_parameter_set_rbsp (struct avc_ctx *ctx, unsigned char *seqbuf, unsigne
 		if ( tmp )
 		{
 			// TODO.
-			mprint ("vcl_hrd. Not implemented for now. Hopefully not needed. Skiping rest of NAL\n");
+			mprint ("vcl_hrd. Not implemented for now. Hopefully not needed. Skipping rest of NAL\n");
 			ctx->num_vcl_hrd++;
 			// exit(1);
 		}
@@ -941,7 +942,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 	}
 	if( ctx->avc_ctx->pic_order_cnt_type == 1 )
 	{
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "AVC: ctx->avc_ctx->pic_order_cnt_type == 1 not yet supported.");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In slice_header: AVC: ctx->avc_ctx->pic_order_cnt_type == 1 not yet supported.");
 	}
 
         //Ignore slice with same pic order or pts
@@ -1070,7 +1071,7 @@ void slice_header (struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned ch
 				ctx->avc_ctx->currref += maxrefcnt+1;
 			}
 
-			// If we wrapped arround lastmaxidx might be larger than
+			// If we wrapped around lastmaxidx might be larger than
 			// the current index - fix this.
 			if (ctx->avc_ctx->lastmaxidx > ctx->avc_ctx->currref + maxrefcnt/2) // implies lastmaxidx > 0
 				ctx->avc_ctx->lastmaxidx -=maxrefcnt+1;

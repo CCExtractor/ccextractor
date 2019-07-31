@@ -22,8 +22,10 @@ struct cc_bitmap
 	int w;
 	int h;
 	int nb_colors;
-	unsigned char *data[2];
-	int linesize[2];
+	unsigned char *data0;
+	unsigned char *data1;
+	int linesize0;
+	int linesize1;
 #ifdef ENABLE_OCR
 	char *ocr_text;
 #endif
@@ -100,6 +102,7 @@ struct ccx_decoders_common_settings_t
 	enum ccx_code_type codec;
 	int xds_write_to_file;
 	void *private_data;
+	int ocr_quantmode;
 };
 
 struct lib_cc_decode
@@ -199,6 +202,7 @@ struct lib_cc_decode
 	int (*writedata)(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
 
 	//dvb subtitle related
+	int ocr_quantmode;
 	struct lib_cc_decode *prev;
 };
 

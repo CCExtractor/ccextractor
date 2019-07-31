@@ -34,12 +34,16 @@ build/
 ####
 # Visual Studio project Ignored files
 
+.vs/**
+windows/.vs/**
+!windows/.vs/config/applicationhost.config
 *.suo
 *.sdf
 *.opensdf
 *.user
 *.opendb
 *.db
+*.vscode
 
 ####
 # Ignore the header file that is updated upon build
@@ -51,6 +55,7 @@ windows/libs/tesseract/**
 
 # Ctags
 *.tags*
+tags
 
 # Vagrant
 .vagrant/
@@ -120,3 +125,15 @@ src/**/.deps
 src/**/.dirstamp
 mac/ccextractorGUI
 linux/ccextractorGUI
+linux/ccxGUI.ini
+linux/CMakeCache.txt
+linux/CMakeFiles/
+linux/cmake_install.cmake
+linux/install_manifest.txt
+linux/lib_ccx/
+mac/lib_ccx/
+mac/install_manifest.txt
+mac/cmake_install.cmake
+mac/CMakeFiles/
+mac/CMakeCache.txt
+*.py.bak

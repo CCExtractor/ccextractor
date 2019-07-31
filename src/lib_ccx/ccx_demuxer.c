@@ -11,7 +11,10 @@ static void ccx_demuxer_reset(struct ccx_demuxer *ctx)
 	ctx->num_of_PIDs = 0;
 	memset(ctx->have_PIDs, -1, (MAX_PSI_PID + 1) * sizeof(int));
 	memset (ctx->PIDs_seen, 0, 65536*sizeof (int));
-	memset(ctx->min_pts, UINT64_MAX, (MAX_PSI_PID + 1) * sizeof(uint64_t));
+	for (int i = 0; i < (MAX_PSI_PID + 1); i++)
+	{
+		ctx->min_pts[i] = UINT64_MAX;
+	}
 	memset(ctx->stream_id_of_each_pid, 0, (MAX_PSI_PID + 1) * sizeof(uint8_t));
 	memset (ctx->PIDs_programs, 0, 65536*sizeof (struct PMT_entry *));
 }
@@ -75,7 +78,7 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 			return -1;
 		}
 
-		ctx->infd = start_upd_srv(ccx_options.udpaddr, ccx_options.udpport);
+		ctx->infd = start_upd_srv(ccx_options.udpsrc, ccx_options.udpaddr, ccx_options.udpport);
 		if(ctx->infd < 0)
 		{
 			print_error(ccx_options.gui_mode_reports,"socket() failed.");
@@ -147,9 +150,12 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 				mprint ("\rFile seems to be an hexadecimal dump\n");					
 				break;
 #endif
+			case CCX_SM_MXF:
+				mprint ("\rFile seems to be an MXF\n");
+				break;
 			case CCX_SM_MYTH:
 			case CCX_SM_AUTODETECT:
-				fatal(CCX_COMMON_EXIT_BUG_BUG, "In ccx_demuxer_open: Impossible value in stream_mode. Please file a bug report in GitHub.\n");
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "In ccx_demuxer_open: Impossible value in stream_mode. Please file a bug report on GitHub.\n");
 				break;
 		}
 	}
@@ -242,13 +248,19 @@ static void ccx_demuxer_print_cfg(struct ccx_demuxer *ctx)
 		case CCX_SM_MP4:
 			mprint ("MP4");
 			break;
+		case CCX_SM_MKV:
+			mprint("MKV");
+			break;
+		case CCX_SM_MXF:
+			mprint("MXF");
+			break;
 #ifdef WTV_DEBUG
 		case CCX_SM_HEX_DUMP:
 			mprint ("Hex");
 			break;
 #endif
 		default:
-			fatal(CCX_COMMON_EXIT_BUG_BUG, "BUG: Unknown stream mode.\n");
+			fatal(CCX_COMMON_EXIT_BUG_BUG, "BUG: Unknown stream mode. Please file a bug report on Github.\n");
 			break;
 	}
 }
@@ -308,7 +320,10 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	for (int i = 0; i < MAX_PROGRAM; i++)
 	{
 		ctx->pinfo[i].has_all_min_pts = 0;
-		memset(ctx->pinfo[i].got_important_streams_min_pts, UINT64_MAX, COUNT * sizeof(uint64_t));
+		for (int j = 0; j < COUNT; j++)
+		{
+			ctx->pinfo[i].got_important_streams_min_pts[j] = UINT64_MAX;
+		}
 		ctx->pinfo[i].initialized_ocr = 0;
 		ctx->pinfo[i].version = 0xFF; // Not real in a real stream since it's 5 bits. FF => Not initialized
 	}

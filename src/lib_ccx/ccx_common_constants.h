@@ -43,19 +43,20 @@ enum ccx_debug_message_types
 {
 	/* Each debug message now belongs to one of these types. Use bitmaps in case
 	   we want one message to belong to more than one type. */
-	CCX_DMT_PARSE=1,               // Show information related to parsing the container
-	CCX_DMT_VIDES=2,               // Show video stream related information
-	CCX_DMT_TIME=4,                // Show GOP and PTS timing information
-	CCX_DMT_VERBOSE=8,             // Show lots of debugging output
-	CCX_DMT_DECODER_608=0x10,      // Show CC-608 decoder debug?
-	CCX_DMT_708=0x20,              // Show CC-708 decoder debug?
-	CCX_DMT_DECODER_XDS=0x40,      // Show XDS decoder debug?
-	CCX_DMT_CBRAW=0x80,            // Caption blocks with FTS timing
-	CCX_DMT_GENERIC_NOTICES=0x100, // Generic, always displayed even if no debug is selected
-	CCX_DMT_TELETEXT=0x200,        // Show teletext debug?
-	CCX_DMT_PAT=0x400,             // Program Allocation Table dump
-	CCX_DMT_PMT=0x800,             // Program Map Table dump
-	CCX_DMT_LEVENSHTEIN=0x1000,    // Levenshtein distance calculations
+	CCX_DMT_PARSE = 1,               // Show information related to parsing the container
+	CCX_DMT_VIDES = 2,               // Show video stream related information
+	CCX_DMT_TIME = 4,                // Show GOP and PTS timing information
+	CCX_DMT_VERBOSE = 8,             // Show lots of debugging output
+	CCX_DMT_DECODER_608 = 0x10,      // Show CC-608 decoder debug?
+	CCX_DMT_708 = 0x20,              // Show CC-708 decoder debug?
+	CCX_DMT_DECODER_XDS = 0x40,      // Show XDS decoder debug?
+	CCX_DMT_CBRAW = 0x80,            // Caption blocks with FTS timing
+	CCX_DMT_GENERIC_NOTICES = 0x100, // Generic, always displayed even if no debug is selected
+	CCX_DMT_TELETEXT = 0x200,        // Show teletext debug?
+	CCX_DMT_PAT = 0x400,             // Program Allocation Table dump
+	CCX_DMT_PMT = 0x800,             // Program Map Table dump
+	CCX_DMT_LEVENSHTEIN = 0x1000,    // Levenshtein distance calculations
+	CCX_DMT_DVB = 0x2000,			 // DVB 
 #ifdef ENABLE_SHARING
 	CCX_DMT_SHARE = 0x2000,        // Extracted captions sharing service
 #endif //ENABLE_SHARING
@@ -200,6 +201,8 @@ enum ccx_stream_mode_enum
 #endif
 	CCX_SM_GXF = 11,
 	CCX_SM_MKV = 12,
+	CCX_SM_MXF = 13,
+
 	CCX_SM_AUTODETECT = 16
 };
 

@@ -20,9 +20,10 @@ void net_send_epg(
 		);
 
 int net_tcp_read(int socket, void *buffer, size_t length);
+int net_udp_read(int socket, void *buffer, size_t length, const char *src_str, const char *addr_str);
 
 int start_tcp_srv(const char *port, const char *pwd);
 
-int start_upd_srv(const char *addr, unsigned port);
+int start_upd_srv(const char *src, const char *addr, unsigned port);
 
 #endif /* end of include guard: NETWORKING_H */

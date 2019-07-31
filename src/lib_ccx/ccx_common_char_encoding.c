@@ -107,7 +107,7 @@ void get_char_in_latin_1 (unsigned char *buffer, unsigned char c)
 		case 0x93: // capital letter U with acute
 			c1=0xda;
 			break;
-		case 0x94: // capital letter U with diaresis
+		case 0x94: // capital letter U with diaeresis
 			c1=0xdc;
 			break;
 		case 0x95: // lowercase letter U with diaeresis
@@ -136,10 +136,10 @@ void get_char_in_latin_1 (unsigned char *buffer, unsigned char c)
 		case 0x9d: // Full stop (.)
 			c1=0x2e;
 			break;
-		case 0x9e: // Quoatation mark
+		case 0x9e: // Quotation mark
 			c1=0x22;
 			break;
-		case 0x9f: // Quoatation mark
+		case 0x9f: // Quotation mark
 			c1=0x22;
 			break;
 		case 0xa0: // uppercase A, grave accent
@@ -157,19 +157,19 @@ void get_char_in_latin_1 (unsigned char *buffer, unsigned char c)
 		case 0xa4: // uppercase E, circumflex
 			c1=0xca;
 			break;
-		case 0xa5: // capital letter E with diaresis
+		case 0xa5: // capital letter E with diaeresis
 			c1=0xcb;
 			break;
-		case 0xa6: // lowercase letter e with diaresis
+		case 0xa6: // lowercase letter e with diaeresis
 			c1=0xeb;
 			break;
 		case 0xa7: // uppercase I, circumflex
 			c1=0xce;
 			break;
-		case 0xa8: // uppercase I, with diaresis
+		case 0xa8: // uppercase I, with diaeresis
 			c1=0xcf;
 			break;
-		case 0xa9: // lowercase i, with diaresis
+		case 0xa9: // lowercase i, with diaeresis
 			c1=0xef;
 			break;
 		case 0xaa: // uppercase O, circumflex
@@ -252,7 +252,7 @@ void get_char_in_latin_1 (unsigned char *buffer, unsigned char c)
 		case 0xc3: // Lowercase o, umlaut
 			c1=0xf6;
 			break;
-		case 0xc4: // Esszett (sharp S)
+		case 0xc4: // Eszett (sharp S)
 			c1=0xdf;
 			break;
 		case 0xc5: // Yen symbol
@@ -468,7 +468,7 @@ int get_char_in_utf_8 (unsigned char *buffer, unsigned char c) // Returns number
 			*buffer=0xc3;
 			*(buffer+1)=0x9a;
 			return 2;
-		case 0x94: // capital letter U with diaresis
+		case 0x94: // capital letter U with diaeresis
 			*buffer=0xc3;
 			*(buffer+1)=0x9c;
 			return 2;
@@ -538,11 +538,11 @@ int get_char_in_utf_8 (unsigned char *buffer, unsigned char c) // Returns number
 			*buffer=0xc3;
 			*(buffer+1)=0x8a;
 			return 2;
-		case 0xa5: // capital letter E with diaresis
+		case 0xa5: // capital letter E with diaeresis
 			*buffer=0xc3;
 			*(buffer+1)=0x8b;
 			return 2;
-		case 0xa6: // lowercase letter e with diaresis
+		case 0xa6: // lowercase letter e with diaeresis
 			*buffer=0xc3;
 			*(buffer+1)=0xab;
 			return 2;
@@ -550,11 +550,11 @@ int get_char_in_utf_8 (unsigned char *buffer, unsigned char c) // Returns number
 			*buffer=0xc3;
 			*(buffer+1)=0x8e;
 			return 2;
-		case 0xa8: // uppercase I, with diaresis
+		case 0xa8: // uppercase I, with diaeresis
 			*buffer=0xc3;
 			*(buffer+1)=0x8f;
 			return 2;
-		case 0xa9: // lowercase i, with diaresis
+		case 0xa9: // lowercase i, with diaeresis
 			*buffer=0xc3;
 			*(buffer+1)=0xaf;
 			return 2;
@@ -747,11 +747,11 @@ unsigned char cctolower (unsigned char c)
 			return 0x8e;
 		case 0xad: // uppercase U, circumflex
 			return 0x8f;
-		case 0x94: // capital letter U with diaresis
+		case 0x94: // capital letter U with diaeresis
 			return 0x95;
-		case 0xa5: // capital letter E with diaresis
+		case 0xa5: // capital letter E with diaeresis
 			return 0xa6;
-		case 0xa8: // uppercase I, with diaresis
+		case 0xa8: // uppercase I, with diaeresis
 			return 0xa9;
 		case 0xab: // uppercase U, grave accent
 			return 0xac;
@@ -813,9 +813,9 @@ unsigned char cctoupper (unsigned char c)
 			return 0xad;
 		case 0x95: // lowercase letter U with diaeresis
 			return 0x94;
-		case 0xa6: // lowercase letter e with diaresis
+		case 0xa6: // lowercase letter e with diaeresis
 			return 0xa5;
-		case 0xa9: // lowercase i, with diaresis
+		case 0xa9: // lowercase i, with diaeresis
 			return 0xa8;
 		case 0xac: // lowercase u, grave accent
 			return 0xab;

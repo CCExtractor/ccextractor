@@ -1,59 +1,17 @@
-﻿ccextractor, 0.85
------------------
-Authors: Carlos Fernández (cfsmp3), Volker Quetschke.
-Maintainer: cfsmp3
-
-Lots of credit goes to other people, though:
-McPoodle (author of the original SCC_RIP), Neuron2, and others (see source
-code).
-
-Home: http://www.ccextractor.org
-
-Google Summer of Code 2014 students
-- Willem Van Iseghem
-- Ruslan KuchumoV
-- Anshul Maheshwari
-
-Google Summer of Code 2015 students
-- Willem Van Iseghem
-- Ruslan Kuchumov
-- Anshul Maheshwari
-- Nurendra Choudhary
-- Oleg Kiselev
-- Vasanth Kalingeri
-
-Google Summer of Code 2016 students
-- Willem Van Iseghem
-- Ruslan Kuchumov
-- Abhishek Vinjamoori
-- Abhinav Shukla
-- Rishabh Garg
-
-Google Code-in 2016 students
-- Evgeny Shulgin
-- Manveer Basra
-- Alexandru Bratosin
-(more, but they forgot to add themselves...)
-
-
-Google Summer of Code 2017 students
-- Diptanshu Jamgade
-- Mayank Gupta
+﻿CCExtractor
+(check AUTHORS.TXT for history and developers)
+----------------------------------------------
 
 License
 -------
 GPL 2.0. 
 
+
 Description
 -----------
-ccextractor was originally a mildly optimized C port of McPoodle's excellent
-but painfully slow Perl script SCC_RIP. It lets you rip the raw closed
-captions (read: subtitles) data from a number of sources, such as DVD or
-ATSC (digital TV) streams.
-
-Since the original port, lots of changes have been made, such as HDTV
-support, analog captures support (via bttv cards), direct .srt/.smi
-generation, time adjusting, and more.
+Since the original port, the whole code has been rewritten (more than once,
+one might add) and support for most subtitle formats around the world has
+been added (teletext, DVB, CEA-708, ISDB...)
 
 Basic Usage 
 -----------

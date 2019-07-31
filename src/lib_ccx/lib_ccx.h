@@ -1,7 +1,7 @@
 #ifndef CCX_CCEXTRACTOR_H
 #define CCX_CCEXTRACTOR_H
 
-#define VERSION "0.85"
+#define VERSION "0.88"
 
 // Load common includes and constants for library usage
 #include "ccx_common_platform.h"
@@ -19,6 +19,7 @@
 
 #include "networking.h"
 #include "avc_functions.h"
+#include "teletext.h"
 
 #ifdef WITH_LIBCURL
 #include <curl/curl.h>
@@ -65,6 +66,7 @@ struct ccx_s_teletext_config
 	int nofontcolor;
 	int nohtmlescape;
 	char millis_separator;
+    int latrusmap;
 };
 
 struct ccx_s_mp4Cfg
@@ -173,6 +175,8 @@ int rcwt_loop(struct lib_ccx_ctx *ctx);
 
 extern int end_of_file;
 
+int ccx_mxf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
+
 // asf_functions.c
 int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 
@@ -235,6 +239,9 @@ void parse_EPG_packet (struct lib_ccx_ctx *ctx);
 void EPG_free(struct lib_ccx_ctx *ctx);
 char* EPG_DVB_decode_string(uint8_t *in, size_t size);
 void parse_SDT(struct ccx_demuxer *ctx);
+
+// ts_info.c
+int get_video_stream(struct ccx_demuxer *ctx);
 
 // myth.c
 int myth_loop(struct lib_ccx_ctx *ctx);

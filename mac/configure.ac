@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([CCExtractor], [0.86], [carlos@ccextractor.org])
+AC_INIT([CCExtractor], [0.88], [carlos@ccextractor.org])
 AC_CONFIG_AUX_DIR([build-conf])
 AC_CONFIG_SRCDIR([../src/ccextractor.c])
 AM_INIT_AUTOMAKE([foreign subdir-objects])

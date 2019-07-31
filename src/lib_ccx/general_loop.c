@@ -16,6 +16,7 @@
 #include "ffmpeg_intgr.h"
 #include "ccx_gxf.h"
 #include "dvd_subtitle_decoder.h"
+#include "ccx_demuxer_mxf.h"
 
 
 int end_of_file=0; // End of file?
@@ -433,7 +434,7 @@ void process_hex (struct lib_ccx_ctx *ctx, char *filename)
 			continue;
 		bytes=(unsigned char *) malloc (byte_count);
 		if (!bytes)
-			fatal (EXIT_NOT_ENOUGH_MEMORY, "processhex: Out of memory.\n");
+			fatal (EXIT_NOT_ENOUGH_MEMORY, "In process_hex: Out of memory to store processed hex value.\n");
 		unsigned char *bytes=(unsigned char *) malloc (byte_count);
 		for (unsigned i=0;i<byte_count;i++)
 		{
@@ -441,7 +442,7 @@ void process_hex (struct lib_ccx_ctx *ctx, char *filename)
 			unsigned char low=c2[1];
 			int value=hex_to_int (high,low);
 			if (value==-1)
-				fatal (EXIT_FAILURE, "Incorrect format, unexpected non-hex string.");
+				fatal (EXIT_FAILURE, "In process_hex: Incorrect format, unexpected non-hex string.");
 			bytes[i]=value;
 			c2+=3;
 		}
@@ -647,7 +648,9 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if(data_node->bufferdatatype == CCX_DVB_SUBTITLE)
 	{
-		dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
+		ret=dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
+		if (ret<0)
+			mprint ("Return from dvbsub_decode: %d\n", ret);
 		set_fts(dec_ctx->timing);
 		got = data_node->len;
 	}
@@ -733,7 +736,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		got = data_node->len;
 	}
 	else
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "Unknown data type!");
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In process_data: datanode->buffer is of unknown data type!");
 
 	if (got > data_node->len)
 	{
@@ -805,7 +808,7 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 			{
 				if (dec_ctx->num_key_frames>enc_ctx->segment_last_key_frame)
 				{
-				    // Yes, there's been a key frame since we last checked
+					// Yes, there's been a key frame since we last checked
 					segment_now = 1;
 					enc_ctx->segment_pending = 0;
 					enc_ctx->segment_last_key_frame = 0;
@@ -842,7 +845,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 	enum ccx_stream_mode_enum stream_mode;
 	struct demuxer_data *datalist = NULL;
 	struct demuxer_data *data_node = NULL;
-    int (*get_more_data)(struct lib_ccx_ctx *c, struct demuxer_data **d);
+	int (*get_more_data)(struct lib_ccx_ctx *c, struct demuxer_data **d);
 	int ret;
 	int caps = 0;
 
@@ -853,34 +856,37 @@ int general_loop(struct lib_ccx_ctx *ctx)
 	if(stream_mode == CCX_SM_TRANSPORT && ctx->write_format == CCX_OF_NULL)
 		ctx->multiprogram = 1;
 
-    switch (stream_mode)
-    {
-        case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
-            get_more_data = &general_get_more_data;
-            break;
-        case CCX_SM_TRANSPORT:
-            get_more_data = &ts_get_more_data;
-            break;
-        case CCX_SM_PROGRAM:
-            get_more_data = &ps_get_more_data;
-            break;
-        case CCX_SM_ASF:
-            get_more_data = &asf_get_more_data;
-            break;
-        case CCX_SM_WTV:
-            get_more_data = &wtv_get_more_data;
-            break;
-        case CCX_SM_GXF:
-            get_more_data = &ccx_gxf_get_more_data;
-            break;
+	switch (stream_mode)
+	{
+		case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
+			get_more_data = &general_get_more_data;
+			break;
+		case CCX_SM_TRANSPORT:
+			get_more_data = &ts_get_more_data;
+			break;
+		case CCX_SM_PROGRAM:
+			get_more_data = &ps_get_more_data;
+			break;
+		case CCX_SM_ASF:
+			get_more_data = &asf_get_more_data;
+			break;
+		case CCX_SM_WTV:
+			get_more_data = &wtv_get_more_data;
+			break;
+		case CCX_SM_GXF:
+			get_more_data = &ccx_gxf_get_more_data;
+			break;
 #ifdef ENABLE_FFMPEG
-        case CCX_SM_FFMPEG:
-            get_more_data = &ffmpeg_get_more_data;
-            break;
+		case CCX_SM_FFMPEG:
+			get_more_data = &ffmpeg_get_more_data;
+			break;
 #endif
-        default:
-            fatal(CCX_COMMON_EXIT_BUG_BUG, "general_loop: Impossible value for stream_mode");
-    }
+		case CCX_SM_MXF:
+			get_more_data = ccx_mxf_getmoredata;
+			break;
+		default:
+			fatal(CCX_COMMON_EXIT_BUG_BUG, "In general_loop: Impossible value for stream_mode");
+	}
 
 	end_of_file = 0;
 	while (!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE)
@@ -963,12 +969,12 @@ int general_loop(struct lib_ccx_ctx *ctx)
 
 				if (dec_ctx->codec == CCX_CODEC_TELETEXT) //even if there's no sub data, we still need to set the min_pts
 				{
-                    if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX) //Teletext is synced with subtitle packet PTS
-                    {
-                        min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1];
-                        set_current_pts(dec_ctx->timing, min_pts);
-                        set_fts(dec_ctx->timing);
-                    }
+					if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX) //Teletext is synced with subtitle packet PTS
+					{
+						min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1];
+						set_current_pts(dec_ctx->timing, min_pts);
+						set_fts(dec_ctx->timing);
+					}
 				}
 				if (dec_ctx->codec == CCX_CODEC_DVB) //DVB will always have to be in sync with audio (no matter the min_pts of the other streams)
 				{
@@ -1019,8 +1025,20 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			if (data_node->bufferdatatype == CCX_TELETEXT && dec_ctx->private_data) //if we have teletext subs, we set the min_pts here
 				set_tlt_delta(dec_ctx, min_pts);
 			ret = process_data(enc_ctx, dec_ctx, data_node);
-			if (enc_ctx->srt_counter || enc_ctx->cea_708_counter || dec_ctx->saw_caption_block || ret == 1)
-				caps = 1;
+			if (enc_ctx != NULL) {
+			        if (enc_ctx->srt_counter || enc_ctx->cea_708_counter || dec_ctx->saw_caption_block || ret == 1)
+				        caps = 1;
+			}
+
+			// Process the last subtitle for DVB
+			if (!(!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE)) {
+				if (data_node->bufferdatatype == CCX_DVB_SUBTITLE && dec_ctx->dec_sub.prev->end_time == 0) {
+					dec_ctx->dec_sub.prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000);
+					if (enc_ctx != NULL)
+					        encode_sub(enc_ctx->prev, dec_ctx->dec_sub.prev);
+					dec_ctx->dec_sub.prev->got_output = 0;
+				}
+			}
 			if( ret == CCX_EINVAL)
 				break;
 		}
@@ -1059,24 +1077,24 @@ int general_loop(struct lib_ccx_ctx *ctx)
 						}
 					}
 
-                    if (dec_ctx->codec == CCX_CODEC_TELETEXT) //even if there's no sub data, we still need to set the min_pts
-                    {
-                        if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX) //Teletext is synced with subtitle packet PTS
-                        {
-                            min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1]; //it means we got the first pts for private stream 1
-                            set_current_pts(dec_ctx->timing, min_pts);
-                            set_fts(dec_ctx->timing);
-                        }
-                    }
-                    if (dec_ctx->codec == CCX_CODEC_DVB) //DVB will always have to be in sync with audio (no matter the min_pts of the other streams)
-                    {
-                        if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO] != UINT64_MAX) //it means we got the first pts for audio
-                        {
-                            min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO];
-                            set_current_pts(dec_ctx->timing, min_pts);
-                            set_fts(dec_ctx->timing);
-                        }
-                    }
+					if (dec_ctx->codec == CCX_CODEC_TELETEXT) //even if there's no sub data, we still need to set the min_pts
+					{
+						if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX) //Teletext is synced with subtitle packet PTS
+						{
+							min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1]; //it means we got the first pts for private stream 1
+							set_current_pts(dec_ctx->timing, min_pts);
+							set_fts(dec_ctx->timing);
+						}
+					}
+					if (dec_ctx->codec == CCX_CODEC_DVB) //DVB will always have to be in sync with audio (no matter the min_pts of the other streams)
+					{
+						if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO] != UINT64_MAX) //it means we got the first pts for audio
+						{
+							min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO];
+							set_current_pts(dec_ctx->timing, min_pts);
+							set_fts(dec_ctx->timing);
+						}
+					}
 				}
 
 				if (enc_ctx)
@@ -1089,11 +1107,22 @@ int general_loop(struct lib_ccx_ctx *ctx)
 					set_current_pts(dec_ctx->timing, data_node->pts);
 
 				ret = process_data(enc_ctx, dec_ctx, data_node);
-				if (
+				if (enc_ctx != NULL){
+				     if (
 					(enc_ctx && (enc_ctx->srt_counter || enc_ctx->cea_708_counter) ||
 						dec_ctx->saw_caption_block || ret == 1)
 					)
 					caps = 1;
+				}
+				// Process the last subtitle for DVB
+				if (!(!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE)) {
+					if (data_node->bufferdatatype == CCX_DVB_SUBTITLE && dec_ctx && dec_ctx->dec_sub.prev && dec_ctx->dec_sub.prev->end_time == 0) {
+						dec_ctx->dec_sub.prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000);
+						if (enc_ctx != NULL)
+						    encode_sub(enc_ctx->prev, dec_ctx->dec_sub.prev);
+						dec_ctx->dec_sub.prev->got_output = 0;
+					}
+				}
 			}
 			if (!data_node)
 				continue;
@@ -1131,6 +1160,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		if (ccx_options.send_to_srv)
 			net_check_conn();
 	}
+
 	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
 
@@ -1140,11 +1170,11 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		if (dec_ctx->has_ccdata_buffered)
 					process_hdcc(dec_ctx, &dec_ctx->dec_sub);
 
-	mprint ("\nNumber of NAL_type_7: %ld\n",dec_ctx->avc_ctx->num_nal_unit_type_7);
-	mprint ("Number of VCL_HRD: %ld\n",dec_ctx->avc_ctx->num_vcl_hrd);
-	mprint ("Number of NAL HRD: %ld\n",dec_ctx->avc_ctx->num_nal_hrd);
-	mprint ("Number of jump-in-frames: %ld\n",dec_ctx->avc_ctx->num_jump_in_frames);
-	mprint ("Number of num_unexpected_sei_length: %ld", dec_ctx->avc_ctx->num_unexpected_sei_length);
+		mprint ("\nNumber of NAL_type_7: %ld\n",dec_ctx->avc_ctx->num_nal_unit_type_7);
+		mprint ("Number of VCL_HRD: %ld\n",dec_ctx->avc_ctx->num_vcl_hrd);
+		mprint ("Number of NAL HRD: %ld\n",dec_ctx->avc_ctx->num_nal_hrd);
+		mprint ("Number of jump-in-frames: %ld\n",dec_ctx->avc_ctx->num_jump_in_frames);
+		mprint ("Number of num_unexpected_sei_length: %ld", dec_ctx->avc_ctx->num_unexpected_sei_length);
 		free(dec_ctx->xds_ctx);
 	}
 
@@ -1172,10 +1202,10 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	int caps = 0;
 	LLONG result;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
-	struct Teletext *telctx;
+	struct TeletextCtx *telctx;
 	// As BUFSIZE is a macro this is just a reminder
 	if (BUFSIZE < (3*0xFFFF + 10))
-		fatal (CCX_COMMON_EXIT_BUG_BUG, "BUFSIZE too small for RCWT caption block.\n");
+		fatal (CCX_COMMON_EXIT_BUG_BUG, "In rcwt_loop: BUFSIZE too small for RCWT caption block.\n");
 
 	// Generic buffer to hold some data
 	parsebuf = (unsigned char*)malloc(1024);
@@ -1202,7 +1232,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	}
 	else
 	{
-		fatal(EXIT_MISSING_RCWT_HEADER, "Missing RCWT header. Abort.\n");
+		fatal(EXIT_MISSING_RCWT_HEADER, "In rcwt_loop: Missing RCWT header. Abort.\n");
 	}
 
 	dec_ctx = update_decoder_list(ctx);
@@ -1265,7 +1295,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 			if ( cbcount*3 > parsebufsize) {
 				parsebuf = (unsigned char*)realloc(parsebuf, cbcount*3);
 				if (!parsebuf)
-					fatal(EXIT_NOT_ENOUGH_MEMORY, "rcwt_loop: Out of memory allocating parsebuf.");
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "In rcwt_loop: Out of memory allocating parsebuf.");
 				parsebufsize = cbcount*3;
 			}
 			result = buffered_read(ctx->demux_ctx, parsebuf, cbcount*3);
@@ -1296,6 +1326,6 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	} // end while(1)
 
 	dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
-    	free(parsebuf);
+	free(parsebuf);
 	return caps;
 }

@@ -44,7 +44,7 @@ unsigned char *srv_header;
 size_t srv_header_len;
 
 /*
- * Established connection to speciefied addres.
+ * Established connection to specified address.
  * Returns socked id
  */
 int tcp_connect(const char *addr, const char *port);
@@ -55,8 +55,8 @@ int tcp_bind(const char *port, int *family);
 
 /*
  * Writes/reads data according to protocol to descriptor
- * block format: * command | lenght        | data         | \r\n
- * 1 byte  | INT_LEN bytes | lenght bytes | 2 bytes
+ * block format: * command | length        | data         | \r\n
+ * 1 byte  | INT_LEN bytes | length bytes | 2 bytes
  */
 ssize_t write_block(int fd, char command, const char *buf, size_t buf_len);
 ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len);
@@ -85,7 +85,7 @@ void connect_to_srv(const char *addr, const char *port, const char *cc_desc, con
 	if (NULL == addr)
 	{
 		mprint("Server address is not set\n");
-		fatal(EXIT_FAILURE, "Unable to connect\n");
+		fatal(EXIT_FAILURE, "Unable to connect, address passed is null\n");
 	}
 
 	if (NULL == port)
@@ -131,7 +131,7 @@ void net_send_header(const unsigned char *data, size_t len)
 		return;
 
 	if ((srv_header = malloc(len)) == NULL)
-		fatal(EXIT_FAILURE, "Not enough memory");
+		fatal(EXIT_FAILURE, "Not enough memory to send header");
 
 	memcpy(srv_header, data, len);
 	srv_header_len = len;
@@ -329,6 +329,44 @@ int net_tcp_read(int socket, void *buffer, size_t length)
 	return l;
 }
 
+int net_udp_read(int socket, void *buffer, size_t length, const char *src_str, const char *addr_str)
+{
+	assert(buffer != NULL);
+	assert(length > 0);
+
+	int i;
+	char ip[50] = "";
+	struct sockaddr_in source_addr;
+	socklen_t len = sizeof(source_addr);
+	/* Get address of host to check for udp network mutlicasting */
+	in_addr_t addr;
+	if (addr_str != NULL)
+	{
+		struct hostent *host = gethostbyname(addr_str);
+		addr = ntohl(((struct in_addr *)host->h_addr_list[0])->s_addr);
+	}
+	else
+	{
+		addr = INADDR_ANY;
+	}
+	#ifdef _WIN32
+	if (IN_MULTICAST(addr) && src_str != NULL)						  					/* We check if the case is of source multicast and we are in windowsOS */
+	{
+		do {
+			i = recvfrom(socket, (char *) buffer, length, 0, (struct sockaddr*)&source_addr, &len); /* peek at the data*/
+			inet_ntop(AF_INET, &(source_addr.sin_addr), ip, 50);
+		} while (strcmp(ip, src_str)!=0);												/* Loop till we find intended source */
+	}
+	else
+		i = recvfrom(socket, (char *) buffer, length, 0, NULL, NULL); 								/*read normally if not source mutlicast case*/
+	#else
+	i = recvfrom(socket, (char *) buffer, length, 0, NULL, NULL); 									/*read normally if not windows*/
+	#endif
+
+	return i;
+}
+
+
 /*
  * command | length        | data         | \r\n
  * 1 byte  | INT_LEN bytes | length bytes | 2 bytes
@@ -502,12 +540,12 @@ int start_tcp_srv(const char *port, const char *pwd)
 			clilen = sizeof(struct sockaddr_in6);
 		struct sockaddr *cliaddr = (struct sockaddr *) malloc(clilen);
 		if (NULL == cliaddr)
-			fatal(EXIT_FAILURE, "malloc() error: %s", strerror(errno));
+			fatal(EXIT_FAILURE, "In start_tcp_srv: Out of memory for client address. malloc() error: %s", strerror(errno));
 
 		if ((sockfd = accept(listen_sd, cliaddr, &clilen)) < 0)
 		{
 			if (EINTR == errno) /* TODO not necessary */
-			{   
+			{
                 		free(cliaddr);
 				continue;
 			}
@@ -517,7 +555,7 @@ int start_tcp_srv(const char *port, const char *pwd)
 				wprintf(L"accept() error: %ld\n", WSAGetLastError());
 				exit(EXIT_FAILURE);
 #else
-				fatal(EXIT_FAILURE, "accept() error: %s\n", strerror(errno));
+				fatal(EXIT_FAILURE, "In start_tcp_srv: accept() error: %s\n", strerror(errno));
 #endif
 			}
 		}
@@ -667,7 +705,7 @@ int tcp_bind(const char *port, int *family)
 
 	freeaddrinfo(ai);
 
-	if (NULL == p)
+	if (NULL == p) // Went over all addresses, couldn't bind any
 		return -1;
 
 	if (listen(sockfd, SOMAXCONN) != 0)
@@ -927,9 +965,27 @@ ssize_t read_byte(int fd, char *ch)
 	return readn(fd, ch, 1);
 }
 
-int start_upd_srv(const char *addr_str, unsigned port)
+int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 {
 	init_sockets();
+
+	in_addr_t src;
+	if (src_str != NULL)
+	{
+		struct hostent *host = gethostbyname(src_str);
+		if (NULL == host)
+		{
+			fatal(EXIT_MALFORMED_PARAMETER, "Cannot look up udp network address: %s\n",
+					src_str);
+		}
+		else if (host->h_addrtype != AF_INET)
+		{
+			fatal(EXIT_MALFORMED_PARAMETER, "No support for non-IPv4 network addresses: %s\n",
+					src_str);
+		}
+
+		src = ntohl(((struct in_addr *)host->h_addr_list[0])->s_addr);
+	}
 
 	in_addr_t addr;
 	if (addr_str != NULL)
@@ -981,7 +1037,7 @@ int start_upd_srv(const char *addr_str, unsigned port)
 	servaddr.sin_port = htons(port);
 #if _WIN32
 	// Doesn't seem correct, if there's more than one multicast stream with the same
-	// port number we get corruption - IP address needs to be specified, but 
+	// port number we get corruption - IP address needs to be specified, but
 	// in Windows we get an error 10049 (cannot bind).
 	// http ://stackoverflow.com/questions/6140734/cannot-bind-to-multicast-address-windows
 	servaddr.sin_addr.s_addr = htonl(IN_MULTICAST(addr) ? INADDR_ANY : addr);
@@ -995,15 +1051,28 @@ int start_upd_srv(const char *addr_str, unsigned port)
 		wprintf(L"bind() error: %ld\n", WSAGetLastError());
 		exit(EXIT_FAILURE);
 #else
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "bind() error: %s\n", strerror(errno));
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In start_upd_srv: bind() error: %s\n", strerror(errno));
 #endif
 	}
 
 	if (IN_MULTICAST(addr)) {
-		struct ip_mreq group;
-		group.imr_multiaddr.s_addr = htonl(addr);
-		group.imr_interface.s_addr = htonl(INADDR_ANY);
-		if (setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&group, sizeof(group)) < 0)
+		int setsockopt_return = 0;
+		if (src_str != NULL) {
+			struct ip_mreq_source multicast_req;
+			multicast_req.imr_sourceaddr.s_addr = htonl(src);
+			multicast_req.imr_multiaddr.s_addr = htonl(addr);
+			multicast_req.imr_interface.s_addr = htonl(INADDR_ANY);
+			setsockopt_return = setsockopt(sockfd, IPPROTO_IP, IP_ADD_SOURCE_MEMBERSHIP, (char *)&multicast_req, sizeof(multicast_req));
+		}
+		else
+		{
+			struct ip_mreq multicast_req;
+			multicast_req.imr_multiaddr.s_addr = htonl(addr);
+			multicast_req.imr_interface.s_addr = htonl(INADDR_ANY);
+			setsockopt_return = setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&multicast_req, sizeof(multicast_req));
+		}
+
+		if (setsockopt_return < 0)
 		{
 #if _WIN32
 			wprintf(L"setsockopt() error: %ld\n", WSAGetLastError());
@@ -1018,6 +1087,21 @@ int start_upd_srv(const char *addr_str, unsigned port)
 	if (addr == INADDR_ANY)
 	{
 		mprint("\rReading from UDP socket %u\n", port);
+	}
+	else if (src_str != NULL)
+	{
+		struct in_addr source;
+		struct in_addr group;
+		char src_ip[15];
+		char addr_ip[15];
+		source.s_addr = htonl(src);
+		memset(src_ip, 0, sizeof(char) * 15);
+		memcpy(src_ip, inet_ntoa(source), sizeof(src_ip));
+		group.s_addr = htonl(addr);
+		memset(addr_ip, 0, sizeof(char) * 15);
+		memcpy(addr_ip, inet_ntoa(group), sizeof(addr_ip));
+
+		mprint("\rReading from UDP socket %s@%s:%u\n", src_ip, addr_ip, port);
 	}
 	else
 	{

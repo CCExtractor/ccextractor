@@ -7,6 +7,11 @@
 #include "ccx_decoders_isdb.h"
 #include "file_buffer.h"
 
+#ifdef DEBUG_SAVE_TS_PACKETS
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
 #define RAI_MASK 0x40 //byte mask to check if RAI bit is set (random access indicator)
 
 unsigned char tspacket[188]; // Current packet
@@ -17,7 +22,7 @@ unsigned char tspacket[188]; // Current packet
 static unsigned char *haup_capbuf = NULL;
 static long haup_capbufsize = 0;
 static long haup_capbuflen = 0; // Bytes read in haup_capbuf
-long long int last_pts = 0; // PTS of last PES packet (debug purposes)
+uint64_t last_pts = 0; // PTS of last PES packet (debug purposes)
 
 // Descriptions for ts ccx_stream_type
 const char *desc[256];
@@ -81,7 +86,7 @@ void pes_header_dump(uint8_t *buffer, long len)
 
 	pes_packet_length = 6 + ((buffer[4] << 8) | buffer[5]); // 5th and 6th byte of the header define the length of the rest of the packet (+6 is for the prefix, stream ID and packet length)
 
-	printf("Packet start code prefix: %04x # ", pes_prefix);
+	printf("Packet start code prefix: %04lx # ", pes_prefix);
 	printf("Stream ID: %04x # ", pes_stream_id);
 	printf("Packet length: %d ", pes_packet_length);
 
@@ -110,7 +115,7 @@ void pes_header_dump(uint8_t *buffer, long len)
 		pts |= ((buffer[13] & 0xfe) >> 1);
 		//printf("# Associated PTS: %d \n", pts);
 		printf("# Associated PTS: %" PRId64 " # ", pts);
-		printf("Diff: %" PRId64 "\n", pts-last_pts);
+		printf("Diff: %" PRIu64 "\n", pts-last_pts);
 		//printf("Diff: %d # ", pts - last_pts);
 		last_pts = pts;
 	}
@@ -260,6 +265,21 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		}
 	}
 
+#ifdef DEBUG_SAVE_TS_PACKETS
+	// quick & dirty way to save packets so we reproduce issues that only
+	// seem to happen when there's packet loss when processing a network
+	// stream. 
+	FILE *savepacket;
+	pid_t mypid=getpid();
+	char spfn[1024];
+	sprintf (spfn,"/tmp/packets_%u.ts",(unsigned) mypid);
+	savepacket=fopen (spfn, "ab");
+	if (savepacket)
+	{
+		fwrite (tspacket,188,1,savepacket);
+		fclose (savepacket);
+	}
+#endif
 
 	payload->transport_error = (tspacket[1]&0x80)>>7;
 	payload->pesstart =  (tspacket[1] & 0x40) >> 6;
@@ -887,7 +907,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			if ( haup_newcapbuflen > haup_capbufsize) {
 				haup_capbuf = (unsigned char*)realloc(haup_capbuf, haup_newcapbuflen);
 				if (!haup_capbuf)
-					fatal(EXIT_NOT_ENOUGH_MEMORY, "Out of memory");
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to store hauppauge packets");
 				haup_capbufsize = haup_newcapbuflen;
 			}
 			memcpy(haup_capbuf+haup_capbuflen, payload.start, payload.length);

@@ -1,9 +1,15 @@
 #ifndef CCEXTRACTOR_H
 #define CCEXTRACTOR_H
 
+// Needed to avoid warning implicit declaration of function ‘asprintf’ on Linux
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE 1
+#endif
+
 #ifdef ENABLE_OCR
 #include <allheaders.h>
 #endif
+
 #include <stdio.h>
 #include "lib_ccx/lib_ccx.h"
 #include "lib_ccx/configuration.h"
@@ -22,44 +28,27 @@ CURLcode res;
 #define LEPT_MSG_SEVERITY L_SEVERITY_NONE
 #endif
 
-#if defined(PYTHONAPI)
+#ifdef PYTHON_API
 #include "Python.h"
 #include "funcobject.h"
-#endif
 
-#ifdef ENABLE_PYTHON
-struct python_subs_modified{
-        char *start_time;
-        char* end_time;
-};
-
-struct python_subs_array{
-#if defined(PYTHONAPI)
-        PyObject* reporter;
-#endif
-        int sub_count;
-        struct python_subs_modified* subs;
-};
-void free_python_global_vars();
+PyObject* py_callback_func;
+void api_add_param(struct ccx_s_options* api_options,char* arg);
+int compile_params(struct ccx_s_options *api_options,int argc);
+void py_callback(char *line, int encoding);
+int api_param_count(struct ccx_s_options* api_options);
+char * api_param(struct ccx_s_options* api_options, int count);
 #endif
 
 
 struct ccx_s_options ccx_options;
 struct lib_ccx_ctx *signal_ctx;
-#ifdef ENABLE_PYTHON
-struct python_subs_array array; 
-int signal_python_api;                                // 1 symbolises that python wrapper made the call.
-#endif
 //volatile int terminate_asap = 0;
 
 struct ccx_s_options* api_init_options();
 void check_configuration_file(struct ccx_s_options api_options);
-int compile_params(struct ccx_s_options *api_options,int argc);
-void api_add_param(struct ccx_s_options* api_options,char* arg);
 int api_start(struct ccx_s_options api_options);
 
-int api_param_count(struct ccx_s_options* api_options);
-char * api_param(struct ccx_s_options* api_options, int count);
 
 void sigterm_handler(int sig);
 void sigint_handler(int sig);
@@ -67,12 +56,4 @@ void print_end_msg(void);
 
 int main(int argc, char *argv[]);
 
-#ifdef ENABLE_PYTHON
-void call_from_python_api(struct ccx_s_options *api_options);
-void free_python_global_vars();
-#endif
-
-#if defined(PYTHONAPI)
-void run(PyObject * reporter, char * line, int encoding);
-#endif
 #endif //CCEXTRACTOR_H

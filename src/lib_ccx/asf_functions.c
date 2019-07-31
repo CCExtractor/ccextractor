@@ -90,7 +90,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 	uint32_t sequence = 0;
 	uint32_t send_time = 0;
 
-	int payload_parser_size = 0; // Infered (PacketLType + sequence_type + padding_l_type + 6);
+	int payload_parser_size = 0; // Inferred (PacketLType + sequence_type + padding_l_type + 6);
 
 	uint32_t offset_media_length = 0; // ASF
 	uint32_t replicated_length = 0; // ASF
@@ -179,7 +179,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		}
 		else
 		{
-			fatal(EXIT_MISSING_ASF_HEADER, "Missing ASF header. Abort.\n");
+			fatal(EXIT_MISSING_ASF_HEADER, "Missing ASF header. Could not read ASF file. Abort.\n");
 		}
 		asf_data_container.HeaderObjectSize = *((int64_t*)(asf_data_container.parsebuf + 16));
 		dbg_print(CCX_DMT_PARSE, "Length: %lld\n", asf_data_container.HeaderObjectSize);
@@ -285,7 +285,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 									stream_number, stream_name_count, payload_ext_system_count);
 
 							if ( stream_number >= STREAMNUM )
-								fatal(CCX_COMMON_EXIT_BUG_BUG, "In asf_getmoredata: STREAMNUM too small. Please file a bug report in GitHub.\n");
+								fatal(CCX_COMMON_EXIT_BUG_BUG, "In asf_getmoredata: STREAMNUM too small. Please file a bug report on GitHub.\n");
 
 							for(int i=0; i<stream_name_count; i++)
 							{
@@ -297,7 +297,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 							int ext_system_info_length;
 
 							if ( payload_ext_system_count > PAYEXTNUM )
-								fatal(CCX_COMMON_EXIT_BUG_BUG, "In asf_getmoredata: PAYEXTNUM too small. Please file a bug report in GitHub.\n");
+								fatal(CCX_COMMON_EXIT_BUG_BUG, "In asf_getmoredata: PAYEXTNUM too small. Please file a bug report on GitHub.\n");
 
 							for(int i=0; i<payload_ext_system_count; i++)
 							{
@@ -410,7 +410,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 						header_current_position += header_object_size;
 					}
 					if (header_current_position - (current_position+46) != header_extension_data_size)
-						fatal(EXIT_NOT_CLASSIFIED, "HE Parsing problem: read bytes %ld != header length %lld\nAbort!\n",
+						fatal(EXIT_NOT_CLASSIFIED, "Header Extension Parsing problem: read bytes %ld != header length %lld\nAbort!\n",
 								(long)(header_current_position - (current_position+46)), header_extension_data_size);
 				}
 				dbg_print(CCX_DMT_PARSE, "\nHeader Extension Object  -  End\n");
@@ -474,7 +474,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 					if(!memcmp(ext_content_position+2, L"WM/VideoClosedCaptioning"
 								,descriptor_name_length))
 					{
-						// This flag would be really usefull if it would be
+						// This flag would be really useful if it would be
 						// reliable - it isn't.
 						asf_data_container.VideoClosedCaptioningFlag = *((int32_t*)extended_description_value);
 						dbg_print(CCX_DMT_PARSE, "Found WM/VideoClosedCaptioning flag: %d\n",
@@ -498,7 +498,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 			current_position += hpobjectsize;
 		}
 		if (current_position - asf_data_container.parsebuf != asf_data_container.HeaderObjectSize)
-			fatal(EXIT_NOT_CLASSIFIED, "Parsing problem: read bytes %ld != header length %lld\nAbort!\n",
+			fatal(EXIT_NOT_CLASSIFIED, "Header Object Parsing problem: read bytes %ld != header length %lld\nAbort!\n",
 					(long)(current_position - asf_data_container.parsebuf), asf_data_container.HeaderObjectSize);
 
 		if (asf_data_container.StreamProperties.VideoStreamNumber == 0)
@@ -562,7 +562,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		}
 		else
 		{
-			fatal(EXIT_NOT_CLASSIFIED, "Missing ASF Data Object. Abort.\n");
+			fatal(EXIT_NOT_CLASSIFIED, "In asf_getmoredata: Missing ASF Data Object. Abort.\n");
 		}
 
 		asf_data_container.DataObjectSize = *((int64_t*)(asf_data_container.parsebuf + 16));
@@ -987,7 +987,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				int want = (long)((BUFSIZE - data->len)>asf_data_container.PayloadLength ?
 						asf_data_container.PayloadLength : (BUFSIZE - data->len));
 				if (want < (long)asf_data_container.PayloadLength)
-					fatal(CCX_COMMON_EXIT_BUG_BUG, "Buffer size to small for ASF payload!\nPlease file a bug report!\n");
+					fatal(CCX_COMMON_EXIT_BUG_BUG, "Buffer size too small for ASF payload!\nPlease file a bug report!\n");
 				result = buffered_read (ctx->demux_ctx, data->buffer+data->len,want);
 				payload_read += (int) result;
 				data->len += result;

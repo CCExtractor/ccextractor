@@ -42,7 +42,7 @@ struct ctrl_seq
 
 #define bitoff(x) ((x) ? 0x0f : 0xf0)
 
-// Get fisrt 4 or last 4 bits from the byte
+// Get first 4 or last 4 bits from the byte
 #define next4(x,y) ((y) ? (x & 0x0f) : ((x & 0xf0) >> 4) )
 
 /**
@@ -314,6 +314,7 @@ int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_
 	sub->nb_data = 1;
 
 	rect = malloc( sizeof(struct cc_bitmap) * sub->nb_data);
+	memset(rect, 0, sizeof(struct cc_bitmap) * sub->nb_data);
 	if(!rect)
 	{
 		return -1;
@@ -321,18 +322,19 @@ int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_
 
 	sub->got_output = 1;
 	sub->data = rect;
+	sub->datatype = CC_DATATYPE_GENERIC;
 	sub->start_time = get_visible_start(dec_ctx->timing, 1);
 	sub->end_time = sub->start_time + (ctx->ctrl->stop_time);
 
 	w = (ctx->ctrl->coord[1] - ctx->ctrl->coord[0]) + 1;
 	h = (ctx->ctrl->coord[3] - ctx->ctrl->coord[2]) + 1;
 
-	rect->data[0] = malloc(w*h);
-	memcpy(rect->data[0], ctx->bitmap, w*h);
+	rect->data0 = malloc(w*h);
+	memcpy(rect->data0, ctx->bitmap, w*h);
 
-	rect->data[1] = malloc(1024);
-	memset(rect->data[1], 0, 1024);
-	guess_palette(ctx, (uint32_t*)rect->data[1], 0xffff00);	
+	rect->data1 = malloc(1024);
+	memset(rect->data1, 0, 1024);
+	guess_palette(ctx, (uint32_t*)rect->data1, 0xffff00);	
 
 	// uint32_t rgba_palette[4];
 	// rgba_palette[0] = (uint32_t)RGBA(0,0,0,0); 
@@ -347,11 +349,11 @@ int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_
 	rect->y = ctx->ctrl->coord[2];
 	rect->w = w;
 	rect->h = h;
-    rect->linesize[0] = w;
+    rect->linesize0 = w;
 
 #ifdef ENABLE_OCR
 		char *ocr_str = NULL;
-		ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, 0);
+		ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, 0, dec_ctx->ocr_quantmode);
 		if(ret >= 0)
 			rect->ocr_text = ocr_str;
 #endif

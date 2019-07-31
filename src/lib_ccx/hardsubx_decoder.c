@@ -190,6 +190,8 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 	pixDestroy(&im);
 	pixDestroy(&edge_im);
 	pixDestroy(&hue_im);
+	pixDestroy(&edge_im_2);
+	pixDestroy(&pixd);
 
 	return subtitle_text;
 }
@@ -258,6 +260,7 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 	pixDestroy(&feat_im);
 	pixDestroy(&edge_im_2);
 	pixDestroy(&pixd);
+	pixDestroy(&hue_im);
 }
 
 char* _process_frame_tickertext(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
@@ -366,6 +369,7 @@ int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct enco
 				activity_progress(progress,cur_sec/60,cur_sec%60);
 			}
 		}
+		av_packet_unref(&ctx->packet);
 	}
 	activity_progress(100,cur_sec/60,cur_sec%60);
 	return 0;
@@ -374,13 +378,16 @@ int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct enco
 int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx)
 {
 	// Do an exhaustive linear search over the video
+
+	int prev_sub_encoded = 1; // Previous seen subtitle encoded or not
 	int got_frame;
-	int dist;
+	int dist = 0;
 	int cur_sec,total_sec,progress;
 	int frame_number = 0;
-	int64_t begin_time = 0,end_time = 0,prev_packet_pts = 0;
-	char *subtitle_text=NULL;
-	char *prev_subtitle_text=NULL;
+	int64_t prev_begin_time = 0, prev_end_time = 0; // Begin and end time of previous seen subtitle
+	int64_t prev_packet_pts = 0;
+	char *subtitle_text=NULL; // Subtitle text of current frame
+	char *prev_subtitle_text=NULL; // Previously seen subtitle text
 
 	while(av_read_frame(ctx->format_ctx, &ctx->packet)>=0)
 	{
@@ -425,27 +432,42 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 				progress = (cur_sec*100)/total_sec;
 				activity_progress(progress,cur_sec/60,cur_sec%60);
 
-				if(subtitle_text==NULL)
-					continue;
-				if(!strlen(subtitle_text))
-					continue;
-				char *double_enter = strstr(subtitle_text,"\n\n");
-				if(double_enter!=NULL)
-					*(double_enter)='\0';
-				//subtitle_text = prune_string(subtitle_text);
+				if((!subtitle_text && !prev_subtitle_text) || (subtitle_text && !strlen(subtitle_text) && !prev_subtitle_text)) {
+					prev_end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
+				}
 
-				end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
-				if(prev_subtitle_text)
+				if(subtitle_text) {
+					char *double_enter = strstr(subtitle_text,"\n\n");
+					if(double_enter!=NULL)
+						*(double_enter)='\0';
+				}
+
+				if(!prev_sub_encoded && prev_subtitle_text)
 				{
-					//TODO: Encode text with highest confidence
-					dist = edit_distance(subtitle_text, prev_subtitle_text, strlen(subtitle_text), strlen(prev_subtitle_text));
-
-					if(dist > (0.2 * fmin(strlen(subtitle_text), strlen(prev_subtitle_text))))
+					if(subtitle_text)
 					{
-						add_cc_sub_text(ctx->dec_sub, prev_subtitle_text, begin_time, end_time, "", "BURN", CCX_ENC_UTF_8);
-						encode_sub(enc_ctx, ctx->dec_sub);
-						begin_time = end_time + 1;
+						dist = edit_distance(subtitle_text, prev_subtitle_text, strlen(subtitle_text), strlen(prev_subtitle_text));
+						if(dist < (0.2 * fmin(strlen(subtitle_text), strlen(prev_subtitle_text))))
+						{
+							dist = -1;
+							subtitle_text = NULL;
+							prev_end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
+						}
 					}
+					if(dist != -1)
+					{
+						add_cc_sub_text(ctx->dec_sub, prev_subtitle_text, prev_begin_time, prev_end_time, "", "BURN", CCX_ENC_UTF_8);
+						encode_sub(enc_ctx, ctx->dec_sub);
+						prev_begin_time = prev_end_time + 1;
+						prev_subtitle_text = NULL;
+						prev_sub_encoded = 1;
+						prev_end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
+						if(subtitle_text) {
+							prev_subtitle_text = strdup(subtitle_text);
+							prev_sub_encoded = 0;
+						}
+					}
+					dist = 0;
 				}
 
 				// if(ctx->conf_thresh > 0)
@@ -460,15 +482,24 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 				// {
 				// 	prev_subtitle_text = strdup(subtitle_text);
 				// }
-				prev_subtitle_text = strdup(subtitle_text);
+
+				if(!prev_subtitle_text && subtitle_text) {
+					prev_begin_time = prev_end_time + 1;
+					prev_end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
+					prev_subtitle_text = strdup(subtitle_text);
+					prev_sub_encoded = 0;
+				}
 				prev_packet_pts = ctx->packet.pts;
 			}
 		}
 		av_packet_unref(&ctx->packet);
 	}
 
-	add_cc_sub_text(ctx->dec_sub, prev_subtitle_text, begin_time, end_time, "", "BURN", CCX_ENC_UTF_8);
-	encode_sub(enc_ctx, ctx->dec_sub);
+	if(!prev_sub_encoded) {
+		add_cc_sub_text(ctx->dec_sub, prev_subtitle_text, prev_begin_time, prev_end_time, "", "BURN", CCX_ENC_UTF_8);
+		encode_sub(enc_ctx, ctx->dec_sub);
+		prev_sub_encoded = 1;
+	}
 	activity_progress(100,cur_sec/60,cur_sec%60);
 
 }
@@ -518,6 +549,7 @@ int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 					break;
 				}
 			}
+			av_packet_unref(&ctx->packet);
 		}
 	}
 	else

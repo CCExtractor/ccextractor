@@ -2,7 +2,7 @@ Please prefix your issue with one of the following: [BUG], [PROPOSAL], [QUESTION
 
 CCExtractor version (using the --version parameter preferably) : **X.X**
 
-**In raising this issue, I confirm the following (please check boxes, eg [X]):**
+**In raising this issue, I confirm the following (please check boxes, eg [X] - and delete unchecked ones):**
 
 - [ ] I have read and understood the [contributors guide](https://github.com/CCExtractor/ccextractor/blob/master/.github/CONTRIBUTING.md).
 - [ ] I have checked that the bug-fix I am reporting can be replicated, or that the feature I am suggesting isn't already present.
@@ -11,7 +11,7 @@ CCExtractor version (using the --version parameter preferably) : **X.X**
 - [ ] I have checked the pull requests tab for existing solutions/implementations to my issue/suggestion.
 - [ ] I have used the latest available version of CCExtractor to verify this issue exists.
 
-**My familiarity with the project is as follows (check one, eg [X]):**
+**My familiarity with the project is as follows (check one, eg [X] - and delete unchecked ones):**
 
 - [ ] I have never used CCExtractor.
 - [ ] I have used CCExtractor just a couple of times.
@@ -21,9 +21,9 @@ CCExtractor version (using the --version parameter preferably) : **X.X**
 **Necessary information**
 - Is this a regression (did it work before)? [ ] NO | [ ] YES - *please specify the last known working version*
 - What platform did you use? [ ] Windows - [ ] Linux - [ ] Mac
-- What where the used arguments? `-autoprogram`
+- What were the used arguments? `-autoprogram`
 
-**Video links**
+**Video links (replace text below with your links)**
 
 Please make the affected input file available for us (no screenshots, those don't help!). Public links to Dropbox, Google Drive, etc, are all fine. If it is not possible to make it available publicly, send us a private invitation (both Dropbox and Google Drive allow that). In this case we will download the file and upload it to the private developer repository.
 

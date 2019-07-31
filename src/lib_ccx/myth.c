@@ -744,7 +744,7 @@ goto skip; */
 	av.data=(unsigned char *) realloc (av.data,av.size);
 	if (av.data==NULL)
 	{
-		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, realloc() failed. Giving up.\n");
+		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, realloc() failed while reading mpeg packets. Giving up.\n");
 	}
 	av.codec_id=codec_id;
 	av.type=type;
@@ -780,7 +780,7 @@ int myth_loop(struct lib_ccx_ctx *ctx)
 	ccx_options.buffer_input = 1;
 	dec_ctx = update_decoder_list(ctx);
 	if (!desp)
-		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory.\n");
+		fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory. Failed to allocate: %d bytes. \n", desp_length);
 	saved=0;
 
 	memset(&dec_sub, 0, sizeof(dec_sub));

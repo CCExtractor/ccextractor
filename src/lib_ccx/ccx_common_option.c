@@ -10,7 +10,7 @@ void init_options (struct ccx_s_options *options)
 #ifdef _WIN32
 	options->buffer_input = 1; // In Windows buffering seems to help
 #else
-	options->buffer_input = 0; // In linux, not so much.
+	options->buffer_input = 0; // In Linux, not so much.
 #endif
 	options->nofontcolor=0; // 1 = don't put <font color> tags
 	options->notypesetting=0; // 1 = Don't put <i>, <u>, etc typesetting tags
@@ -22,7 +22,7 @@ void init_options (struct ccx_s_options *options)
 	options->settings_608.no_rollup = 0;
 	options->settings_608.force_rollup = 0;
 	options->settings_608.screens_to_process = -1;
-	options->settings_608.default_color = COL_TRANSPARENT; // Defaults to transparant/no-color.
+	options->settings_608.default_color = COL_TRANSPARENT; // Defaults to transparent/no-color.
 
 	options->extract = 1; // Extract 1st field only (primary language)
 	options->cc_channel = 1; // Channel we want to dump in srt mode
@@ -55,8 +55,8 @@ void init_options (struct ccx_s_options *options)
 	/* General stuff */
 	options->usepicorder = 0; // Force the use of pic_order_cnt_lsb in AVC/H.264 data streams
 	options->xmltv=0; // 1 = full output. 2 = live output. 3 = both
-	options->xmltvliveinterval=10; // interval in seconds between writting xmltv output files in live mode
-	options->xmltvoutputinterval=0; // interval in seconds between writting xmltv full file output
+	options->xmltvliveinterval=10; // interval in seconds between writing xmltv output files in live mode
+	options->xmltvoutputinterval=0; // interval in seconds between writing xmltv full file output
 	options->xmltvonlycurrent=0; // 0 off 1 on
 	options->keep_output_closed = 0; // By default just keep the file open.
 	options->force_flush = 0; // Don't flush whenever content is written.
@@ -64,10 +64,10 @@ void init_options (struct ccx_s_options *options)
 	options->ucla = 0; // By default, -UCLA not used
 	options->tickertext = 0; // By default, do not assume ticker style text
 	options->hardsubx = 0; // By default, don't try to extract hard subtitles
-	options->dvbcolor = 1; // By default, attempt to detect both text and color
 	options->dvblang = NULL; // By default, autodetect DVB language
 	options->ocrlang = NULL; // By default, autodetect .traineddata file
 	options->ocr_oem = 0; // By default, set Tesseract OEM mode OEM_TESSERACT_ONLY (0)
+	options->ocr_quantmode = 1; // CCExtractor's internal
 	options->mkvlang = NULL; // By default, all the languages are extracted 
 	options->ignore_pts_jumps = 1;
 	options->analyze_video_stream = 0;
@@ -90,6 +90,7 @@ void init_options (struct ccx_s_options *options)
 	options->debug_mask=CCX_DMT_GENERIC_NOTICES; // dbg_print will use this mask to print or ignore different types
 	options->debug_mask_on_debug=CCX_DMT_VERBOSE; // If we're using temp_debug to enable/disable debug "live", this is the mask when temp_debug=1
 	/* Networking */
+	options->udpsrc = NULL;
 	options->udpaddr = NULL;
 	options->udpport=0; // Non-zero => Listen for UDP packets on this port, no files.
 	options->send_to_srv = 0;
@@ -172,7 +173,7 @@ void init_options (struct ccx_s_options *options)
 	stringztoms (DEF_VAL_ENDCREDITSFORATLEAST, &options->enc_cfg.endcreditsforatleast);
 	stringztoms (DEF_VAL_ENDCREDITSFORATMOST, &options->enc_cfg.endcreditsforatmost);
 
-#ifdef ENABLE_PYTHON
+#ifdef PYTHON_API
     options->python_param_count = 0;
     options->python_params = malloc(options->python_param_count * sizeof *options->python_params);
 #endif

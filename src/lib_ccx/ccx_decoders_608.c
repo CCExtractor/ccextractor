@@ -318,7 +318,7 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 			ccx_common_logging.log_ftn("No Memory left");
 			return 0;
 		}
-
+		sub->datatype = CC_DATATYPE_GENERIC;
 		memcpy(((struct eia608_screen *)sub->data) + sub->nb_data, data, sizeof(*data));
 		sub->nb_data++;
 		wrote_something = 1;
@@ -376,6 +376,7 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 		}
 		memcpy(((struct eia608_screen *)sub->data) + sub->nb_data, data, sizeof(*data));
 		data = (struct eia608_screen *)sub->data + sub->nb_data;
+		sub->datatype = CC_DATATYPE_GENERIC;
 		sub->nb_data++;
 
 		for(i = 0; i < 15; i++)
@@ -465,7 +466,7 @@ int check_roll_up(ccx_decoder_608_context *context)
 	return 0;
 }
 
-// Roll-up: Returns true if a line was rolled over the visible area (it dissapears from screen), false
+// Roll-up: Returns true if a line was rolled over the visible area (it disappears from screen), false
 // if the rollup didn't delete any line.
 int roll_up(ccx_decoder_608_context *context)
 {
@@ -1172,7 +1173,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 			wrote_to_screen = disCommand(hi, lo, context, sub);
 			if (sub->got_output)
 			{
-				i += 2; // Otherwise we woudn't be counting this byte pair
+				i += 2; // Otherwise we wouldn't be counting this byte pair
 				break;
 			}
 		}

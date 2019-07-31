@@ -11,14 +11,17 @@ void params_dump(struct lib_ccx_ctx *ctx)
 	switch (ccx_options.input_source)
 	{
 		case CCX_DS_FILE:
+			dbg_print(CCX_DMT_VERBOSE, "Files (%d): ", ctx->num_input_files);
 			for (int i=0;i<ctx->num_input_files;i++)
-				mprint ("%s%s",ctx->inputfile[i],i==(ctx->num_input_files-1)?"":",");
+				mprint ("%s%s",ctx->inputfile[i],i==(ctx->num_input_files-1)?"":", ");
 			break;
 		case CCX_DS_STDIN:
 			mprint ("stdin");
 			break;
 		case CCX_DS_NETWORK:
-			if (ccx_options.udpaddr == NULL)
+			if (ccx_options.udpsrc != NULL)
+				mprint ("Network, %s@%s:%d", ccx_options.udpsrc, ccx_options.udpaddr, ccx_options.udpport);
+			else if (ccx_options.udpaddr == NULL)
 				mprint ("Network, UDP/%u",ccx_options.udpport);
 			else
 			{
@@ -186,6 +189,23 @@ void params_dump(struct lib_ccx_ctx *ctx)
 				(long) (ccx_options.enc_cfg.endcreditsforatmost.time_in_ms/1000)
 		       );
 	}
+	// print quantisation mode used
+	mprint("[Quantisation-mode: ");
+	switch(ccx_options.ocr_quantmode)
+	{
+		case 0:
+			// when no quantisation
+			mprint("None]\n");
+			break;
+		case 1:
+			// default mode, CCExtractor's internal function
+			mprint("CCExtractor's internal function]\n");
+			break;
+		case 2:
+			// reduced color palette quantisation
+			mprint("Reduced color palette]\n");
+			break;
+	}
 }
 
 #define Y_N(cond) ((cond) ? "Yes" : "No")
@@ -223,6 +243,7 @@ void print_cc_report(struct lib_ccx_ctx *ctx, struct cap_info* info)
 		printf("Secondary Language Present: %s\n", Y_N(ctx->freport.data_from_708->services[2]));
 	}
 }
+
 void print_file_report(struct lib_ccx_ctx *ctx)
 {
 	struct lib_cc_decode *dec_ctx = NULL;	
@@ -234,7 +255,7 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 		case CCX_DS_FILE:
 			if (ctx->current_file < 0)
 			{
-				printf("file is not openened yet\n");
+				printf("file is not opened yet\n");
 				return;
 			}
 

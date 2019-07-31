@@ -1,19 +1,29 @@
+<img src ="https://github.com/CCExtractor/ccextractor-org-media/blob/master/static/ccx_logo_transparent_800x600.png" width="200px" alt="logo" />
 
-![logo](https://avatars3.githubusercontent.com/u/7253637?v=3&s=100)
- 
 # CCExtractor
 
-CCExtractor is a tool that produces subtitles from TV use. Global accessibility (all users, all content, all countries) is the goal. With so many different formats, this is a constantly moving target, but we intend to keep up with all sources and formats.
+<a href="https://travis-ci.org/CCExtractor/ccextractor"><img src="https://raw.githubusercontent.com/CCExtractor/ccextractor-org-media/master/static/macOS-build-badge-logo.png" width="20"></a> [![Build Status](https://travis-ci.org/CCExtractor/ccextractor.svg?branch=master)](https://travis-ci.org/CCExtractor/ccextractor)
+[![Sample-Platform Build Status Windows](https://sampleplatform.ccextractor.org/static/img/status/build-windows.svg?maxAge=1800)](https://sampleplatform.ccextractor.org/test/master/windows)
+[![Sample-Platform Build Status Linux](https://sampleplatform.ccextractor.org/static/img/status/build-linux.svg?maxAge=1800)](https://sampleplatform.ccextractor.org/test/master/linux)
+[![SourceForge](https://img.shields.io/badge/SourceForge%20downloads-213k%2Ftotal-brightgreen.svg)](https://sourceforge.net/projects/ccextractor/)
+[![GitHub All Releases](https://img.shields.io/github/downloads/CCExtractor/CCExtractor/total.svg)](https://github.com/CCExtractor/ccextractor/releases/latest)
 
-Carlos' version (mainstream) is the most stable branch.
+CCExtractor is a tool used to produce subtitles for TV recordings from almost anywhere in the world. We intend to keep up with all sources and formats.
 
-## Google Summer of Code 2017
-CCExtractor has been invited to Summer of Code 2017! Another summer of coding fun.
+Subtitles are important for many people. If you're learning a new language, subtitles are a great way to learn it from movies or TV shows. If you are hard of hearing, subtitles can help you better understand what's happening on the screen. We aim to make it easy to generate subtitles by using the command line tool or Windows GUI.
 
-If you are a student currently enrolled in university most likely you are eligible to participate. Read more at:  
-- [Google Summer of Code official website ](https://summerofcode.withgoogle.com/)
-- [CCExtractor's main GSoC page](https://www.ccextractor.org?id=public:gsoc:ideas_page_for_summer_of_code_2017)
+The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor)) and master being the most stable branch.
 
+### **Features**
+
+- Extract subtitles in real-time
+- Translate subtitles
+- Extract closed captions from DVDs
+- Convert closed captions to subtitles
+
+### Programming Languages & Technologies
+
+The core functionality is written in C. Other languages used include C++ and Python.
 
 ## Installation and Usage
 
@@ -21,251 +31,41 @@ Downloads for precompiled binaries and source code can be found [on our website]
 
 Extracting subtitles is relatively simple. Just run the following command:
 
-```ccextractor <input>```
+`ccextractor <input>`
 
-This will extract the subtitles. 
+This will extract the subtitles.
 
 More usage information can be found on our website:
 
 - [Using the command line tool](https://www.ccextractor.org/doku.php?id=public:general:command_line_usage)
-- [Using the Windows GUI](https://www.ccextractor.org/doku.php?id=public:general:win_gui_usage) 
+- [Using the Windows GUI](https://www.ccextractor.org/doku.php?id=public:general:win_gui_usage)
 
 You can also find the list of parameters and their brief description by running `ccextractor` without any arguments.
 
-## Compiling CCExtractor (without GUI)
+## Compiling CCExtractor
 
-You may compile CCExtractor across all major platforms using `CMakeLists.txt` stored under `ccextractor/src/` directory. Simply,
-
-1. Create and navigate to directory where you want to store built files
-
-```
-cd ccextractor/
-mkdir build
-cd build
-```
-
-2. Generate makefile using cmake and then compile
-
-```
-cmake ../src/
-make
-```
-
-You may also generate `.sln` files for Visual Studio and build using build tools, or open `.sln` files using Visual Studio.
-
-```
-cmake ../src/ -G "Visual Studio 14 2015"
-cmake --build . --config Release --ccextractor
-```
-
----
-
-CCExtractor can also be compiled without cmake. System specific instructions are listed below :
-
-Clone the latest repository from Github
-
-```
-git clone https://github.com/CCExtractor/ccextractor.git
-```
-
-### Debian/Ubuntu
-   
-1. Make sure all the dependencies are met.
-
-```
-sudo apt-get install -y gcc
-sudo apt-get install -y libcurl4-gnutls-dev
-sudo apt-get install -y tesseract-ocr
-sudo apt-get install -y tesseract-ocr-dev
-sudo apt-get install -y libleptonica-dev
-
-# Note: On Ubuntu Version 14.04 (Trusty) and earlier, you should build leptonica and tesseract from source 
-```
-    
-2. Compiling
-
-*Using build script :*
-    
-```
-#Navigate to linux directory and call the build script
-
-cd ccextractor/linux
-./build
-
-# test your build
-./ccextractor
-```
-   
-*Standard linux compilation through Autoconf scripts :*
-
-```
-sudo apt-get install autoconf      #Dependency to generate configuration script
-cd ccextractor/linux
-./autogen.sh
-./configure
-make
-
-# test your build
-./ccextractor
-```
-
-### Fedora
-
-1. Make sure all the dependencies are met.
-
-```
-sudo yum install -y gcc
-sudo yum install -y tesseract-devel # leptonica will be installed automatically
-```
-    
-2. Compiling
-
-*Using build script :*
-
-```    
-#Navigate to linux directory and call the build script
-
-cd ccextractor/linux
-./build
-
-# test your build
-./ccextractor
-```
-    
-*Standard linux compilation through Autoconf scripts :*
-
-```
-sudo dnf install autoconf automake      #Dependency to generate configuration script
-cd ccextractor/linux
-./autogen.sh
-./configure
-make
-
-# test your build
-./ccextractor
-```
-
-### MacOS
-
-1. Make sure all the dependencies are met. They can be installed via Homebrew as
-
-```
-brew install pkg-config
-brew install autoconf automake libtool
-brew install tesseract
-brew install leptonica 
-```
-
-Make sure tesseract and leptonica are detected by pkg-config, e.g.
-
-````
-pkg-config --exists --print-errors tesseract
-pkg-config --exists --print-errors lept
-````
-
-2. Compiling
-
-*Using build.command script :*
-
-```
-cd ccextractor/mac
-./build.command OCR
-```
-If you don't want the OCR capabilities, then you don't need to configure the tesseract and leptonica packages, and build it with just
-```
-cd ccextractor/mac
-./build.command 
-```
-
-*Standard compilation through Autoconf scripts :*
-
-```
-cd ccextractor/mac
-./autogen.sh
-./configure
-make
-```
-
-
-### Windows
-
-Open the windows/ccextractor.sln file with Visual Studio (2015 at least), and build it. Configurations "(Debug|Release)-Full" includes dependent libraries which are used for OCR.
-
-## Compiling CCExtractor (with GUI)
-
-### Linux
-   
-1. Make sure all the dependencies are met.</br>
- * Build GLEW from source, instructions [here](http://glew.sourceforge.net/build.html)
- * Build GLFW from source, instructions [here](http://www.glfw.org/docs/latest/compile.html)
-    
-2. Compiling
-
-    
-```
-cd ccextractor/linux
-./autogen.sh
-./configure --with-gui
-make
-
-# test your build
-./ccextractorGUI
-```
-
-
-### MacOS
-
-1. Make sure all the dependencies are met. They can be installed via Homebrew as
-
-```
-brew install glfw
-brew install glew
-```
-
-2. Compiling
-
-```
-cd ccextractor/mac
-./autogen.sh
-./configure --with-gui
-make
-```
-
-
-### Windows
-
-Open the windows/ccextractor.sln file with Visual Studio (2015 at least), and build it. Configurations "(Debug|Release)-Full" includes dependent libraries which are used for OCR.
-
-## Building Installation Packages 
-
-### Arch Linux
-
-*building installation package (.pkg.tar.xz) or installing directly*
-
-    cd ccextractor/package_creators
-    ./arch.sh
-    
-### Redhat Package Manager (rpm) based Linux Distributions
-
-*building installation package (.rpm)*
-
-    cd ccextractor/package_creators
-    ./rpm.sh
+To learn more about how to compile and build CCExtractor for your platform check the [compilation guide](https://github.com/CCExtractor/ccextractor/blob/master/docs/COMPILATION.MD).
 
 ## Support
 
-By far the best way to get support is by opening an issue at our [issue tracker](https://github.com/CCExtractor/ccextractor/issues). 
+By far the best way to get support is by opening an issue at our [issue tracker](https://github.com/CCExtractor/ccextractor/issues).
 
 When you create a new issue, please fill in the needed details in the provided template. That makes it easier for us to help you more efficiently.
 
-You can also [contact us by email or chat with the team in Slack](https://www.ccextractor.org/doku.php?id=public:general:support). 
+If you have a question or a problem you can also [contact us by email or chat with the team in Slack](https://www.ccextractor.org/doku.php?id=public:general:support).
+
+If you want to contribute to CCExtractor but can't submit some code patches or issues or video samples, you can also [donate to us](https://www.ccextractor.org/public:general:http:sourceforge.net_donate_index.php?group_id=190832)
 
 ## Contributing
 
-You can contribute to the project by forking it, modifying the code, and making a pull request to the repository. We have some rules, outlined in the [contributor's guide](https://github.com/CCExtractor/ccextractor/blob/master/.github/CONTRIBUTING.md).
+You can contribute to the project by reporting issues, forking it, modifying the code and making a pull request to the repository. We have some rules, outlined in the [contributor's guide](.github/CONTRIBUTING.md).
 
 ## News & Other Information
 
-News about releases and modifications to the code can be found in the `CHANGES.TXT` file. 
+News about releases and modifications to the code can be found in the [CHANGES.TXT](docs/CHANGES.TXT) file.
 
 For more information visit the CCExtractor website: [https://www.ccextractor.org](https://www.ccextractor.org)
+
+## License
+
+GNU General Public License version 2.0 (GPL-2.0)
