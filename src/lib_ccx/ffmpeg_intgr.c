@@ -2,7 +2,7 @@
 
 #ifdef ENABLE_FFMPEG
 #include <libavformat/avformat.h>
-#include <libavfilter/avfiltergraph.h>
+#include <libavfilter/avfilter.h>
 #include <libavcodec/avcodec.h>
 #include <libavfilter/buffersink.h>
 #include <libavfilter/buffersrc.h>
