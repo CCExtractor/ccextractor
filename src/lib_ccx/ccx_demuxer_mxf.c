@@ -76,6 +76,19 @@ static const MXFCodecUL mxf_caption_essence_container[] = {
 { {0x6,0xE,0x2B,0x34,0x04,0x01,0x01,0x09,0xD,0x1,0x3,0x1,0x2,0xE,0x0,0x0}, MXF_CT_ANC },
 };
 
+static const struct ccx_rational framerate_rationals[16] = {
+	{0, 0},
+	{1001, 24000},
+	{1, 24},
+	{1, 25},
+	{1001, 30000},
+	{1, 30},
+	{1, 50},
+	{1001, 60000},
+	{1, 60},
+	{0, 0}
+};
+
 /* Only Used Tags defined in enum */
 enum MXFLocalTag
 {
@@ -294,10 +307,16 @@ static int mxf_read_cdp_data(struct ccx_demuxer *demux, int size, struct demuxer
 		log("Incomplete CDP packet\n");
 		goto error;
 	}
-	//skip framerate, flag and hdr_seq_cntr
-	buffered_skip(demux, 4);
-	demux->past += 4;
-	len += 4;
+
+	// framerate - top 4 bits are cdp_framing_rate
+	ret = buffered_get_byte(demux);
+	len++;
+	data->tb = framerate_rationals[ret >> 4];
+
+	//skip flag and hdr_seq_cntr
+	buffered_skip(demux, 3);
+	demux->past += 3;
+	len += 3;
 
 	ret = buffered_get_byte(demux);
 	len ++;
@@ -307,7 +326,7 @@ static int mxf_read_cdp_data(struct ccx_demuxer *demux, int size, struct demuxer
 	cc_count = buffered_get_byte(demux) & 0x1F;
 	len++;
 	// -4 for cdp footer length
-	if ( (cc_count * 3) != (size - len - 4))
+	if ( (cc_count * 3) > (size - len - 4))
 		log("Incomplete CDP packet\n");
 
 	ret = buffered_read(demux, data->buffer+data->len, cc_count*3);

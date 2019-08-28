@@ -71,7 +71,7 @@ cd ccextractor/linux
 ```
 cd ccextractor/linux
 ./autogen.sh
-./configure --with-gui --enable-oc
+./configure --with-gui --enable-ocr
 make
 ```
 
