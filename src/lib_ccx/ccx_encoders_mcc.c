@@ -97,7 +97,6 @@ boolean mcc_encode_cc_data( struct encoder_ctx *enc_ctx, struct lib_cc_decode *d
 }  // mcc_encode_cc_data()
 
 static void generate_mcc_header( int fh, int fr_code, int dropframe_flag ) {
-    uuid_t binuuid;
     char uuid_str[50];
     char date_str[50];
     char time_str[30];
