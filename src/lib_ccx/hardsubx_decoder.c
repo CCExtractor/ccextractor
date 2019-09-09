@@ -15,17 +15,22 @@ char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 {
 	//printf("frame : %04d\n", index);
 	PIX *im;
+    PIX *gray_im;
+    PIX *sobel_edge_im;
+    PIX *dilate_gray_im;
 	PIX *edge_im;
 	PIX *lum_im;
 	PIX *feat_im;
-	char *subtitle_text=NULL;
+    char *subtitle_text;
+
+	subtitle_text = NULL;
 	im = pixCreate(width,height,32);
 	lum_im = pixCreate(width,height,32);
 	feat_im = pixCreate(width,height,32);
-	int i,j;
-	for(i=(3*height)/4;i<height;i++)
+
+	for(int i=(3*height)/4;i<height;i++)
 	{
-		for(j=0;j<width;j++)
+		for(int j=0;j<width;j++)
 		{
 			int p=j*3+i*frame->linesize[0];
 			int r=frame->data[0][p];
@@ -42,15 +47,14 @@ char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 	}
 
 	//Handle the edge image
-	edge_im = pixCreate(width,height,8);
-	edge_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
-	edge_im = pixSobelEdgeFilter(edge_im, L_VERTICAL_EDGES);
-	edge_im = pixDilateGray(edge_im, 21, 11);
-	edge_im = pixThresholdToBinary(edge_im,50);
+	gray_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
+	sobel_edge_im = pixSobelEdgeFilter(gray_im, L_VERTICAL_EDGES);
+	dilate_gray_im = pixDilateGray(sobel_edge_im, 21, 11);
+	edge_im = pixThresholdToBinary(dilate_gray_im,50);
 
-	for(i=3*(height/4);i<height;i++)
+	for(int i=3*(height/4);i<height;i++)
 	{
-		for(j=0;j<width;j++)
+		for(int j=0;j<width;j++)
 		{
 			unsigned int p1,p2,p3;
 			pixGetPixel(edge_im,j,i,&p1);
@@ -93,25 +97,38 @@ char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 			fatal(EXIT_MALFORMED_PARAMETER,"Invalid OCR Mode");
 	}
 
-	pixDestroy(&lum_im);
-	pixDestroy(&im);
-	pixDestroy(&edge_im);
-	pixDestroy(&feat_im);
+    pixDestroy(&im);
+    pixDestroy(&gray_im);
+    pixDestroy(&sobel_edge_im);
+    pixDestroy(&dilate_gray_im);
+    pixDestroy(&edge_im);
+    pixDestroy(&lum_im);
+    pixDestroy(&feat_im);
 
 	return subtitle_text;
 }
 
 char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
 {
+    PIX *im;
+    PIX *hue_im;
+    PIX *gray_im;
+    PIX *sobel_edge_im;
+    PIX *dilate_gray_im;
+    PIX *edge_im;
+    PIX *gray_im_2;
+    PIX *edge_im_2;
+    PIX *pixd;
+    PIX *feat_im;
 	char *subtitle_text=NULL;
-	PIX *im;
-	im = pixCreate(width,height,32);
-	PIX *hue_im = pixCreate(width,height,32);
 
-	int i,j;
-	for(i=0;i<height;i++)
+	im = pixCreate(width,height,32);
+    hue_im = pixCreate(width,height,32);
+    subtitle_text=NULL;
+
+	for(int i=0;i<height;i++)
 	{
-		for(j=0;j<width;j++)
+		for(int j=0;j<width;j++)
 		{
 			int p=j*3+i*frame->linesize[0];
 			int r=frame->data[0][p];
@@ -127,21 +144,21 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 		}
 	}
 
-	PIX *edge_im = pixCreate(width,height,8),*edge_im_2 = pixCreate(width,height,8);
-	edge_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
-	edge_im = pixSobelEdgeFilter(edge_im, L_VERTICAL_EDGES);
-	edge_im = pixDilateGray(edge_im, 21, 1);
-	edge_im = pixThresholdToBinary(edge_im,50);
-	PIX *pixd = pixCreate(width,height,1);
-	pixSauvolaBinarize(pixConvertRGBToGray(hue_im,0.0,0.0,0.0), 15, 0.3, 1, NULL, NULL, NULL, &pixd);
+	gray_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
+    sobel_edge_im = pixSobelEdgeFilter(gray_im, L_VERTICAL_EDGES);
+	dilate_gray_im = pixDilateGray(sobel_edge_im, 21, 1);
+    edge_im = pixThresholdToBinary(dilate_gray_im,50);
 
-	edge_im_2 = pixConvertRGBToGray(hue_im,0.0,0.0,0.0);
-	edge_im_2 = pixDilateGray(edge_im_2, 5, 5);
+    gray_im_2 = pixConvertRGBToGray(hue_im,0.0,0.0,0.0);
+    edge_im_2 = pixDilateGray(gray_im_2, 5, 5);
 
-	PIX *feat_im = pixCreate(width,height,32);
-	for(i=3*(height/4);i<height;i++)
+	pixd = pixCreate(width,height,1);
+	pixSauvolaBinarize(gray_im_2, 15, 0.3, 1, NULL, NULL, NULL, &pixd);
+
+	feat_im = pixCreate(width,height,32);
+	for(int i=3*(height/4);i<height;i++)
 	{
-		for(j=0;j<width;j++)
+		for(int j=0;j<width;j++)
 		{
 			unsigned int p1,p2,p3,p4;
 			pixGetPixel(edge_im,j,i,&p1);
@@ -186,12 +203,16 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 			fatal(EXIT_MALFORMED_PARAMETER,"Invalid OCR Mode");
 	}
 
-	pixDestroy(&feat_im);
-	pixDestroy(&im);
-	pixDestroy(&edge_im);
-	pixDestroy(&hue_im);
-	pixDestroy(&edge_im_2);
-	pixDestroy(&pixd);
+    pixDestroy(&im);
+    pixDestroy(&hue_im);
+    pixDestroy(&gray_im);
+    pixDestroy(&sobel_edge_im);
+    pixDestroy(&dilate_gray_im);
+    pixDestroy(&edge_im);
+    pixDestroy(&gray_im_2);
+    pixDestroy(&edge_im_2);
+    pixDestroy(&pixd);
+    pixDestroy(&feat_im);
 
 	return subtitle_text;
 }
@@ -199,14 +220,23 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int timestamp)
 {
 	// Debug: Display the frame after processing
-	PIX *im;
-	im = pixCreate(width,height,32);
-	PIX *hue_im = pixCreate(width,height,32);
+    PIX *im;
+    PIX *hue_im;
+    PIX *gray_im;
+    PIX *sobel_edge_im;
+    PIX *dilate_gray_im;
+    PIX *edge_im;
+    PIX *gray_im_2;
+    PIX *edge_im_2;
+    PIX *pixd;
+    PIX *feat_im;
 
-	int i,j;
-	for(i=0;i<height;i++)
+	im = pixCreate(width,height,32);
+	hue_im = pixCreate(width,height,32);
+
+	for(int i=0;i<height;i++)
 	{
-		for(j=0;j<width;j++)
+		for(int j=0;j<width;j++)
 		{
 			int p=j*3+i*frame->linesize[0];
 			int r=frame->data[0][p];
@@ -215,28 +245,28 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 			pixSetRGBPixel(im,j,i,r,g,b);
 			float H,S,V;
 			rgb_to_hsv((float)r,(float)g,(float)b,&H,&S,&V);
-			if(abs(H-ctx->hue)<20)
+			if(fabsf(H-ctx->hue)<20)
 			{
 				pixSetRGBPixel(hue_im,j,i,r,g,b);
 			}
 		}
 	}
 
-	PIX *edge_im = pixCreate(width,height,8),*edge_im_2 = pixCreate(width,height,8);
-	edge_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
-	edge_im = pixSobelEdgeFilter(edge_im, L_VERTICAL_EDGES);
-	edge_im = pixDilateGray(edge_im, 21, 1);
-	edge_im = pixThresholdToBinary(edge_im,50);
-	PIX *pixd = pixCreate(width,height,1);
-	pixSauvolaBinarize(pixConvertRGBToGray(hue_im,0.0,0.0,0.0), 15, 0.3, 1, NULL, NULL, NULL, &pixd);
+	gray_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
+    sobel_edge_im = pixSobelEdgeFilter(gray_im, L_VERTICAL_EDGES);
+	dilate_gray_im = pixDilateGray(sobel_edge_im, 21, 1);
+	edge_im = pixThresholdToBinary(dilate_gray_im,50);
 
-	edge_im_2 = pixConvertRGBToGray(hue_im,0.0,0.0,0.0);
-	edge_im_2 = pixDilateGray(edge_im_2, 5, 5);
+	gray_im_2 = pixConvertRGBToGray(hue_im,0.0,0.0,0.0);
+	edge_im_2 = pixDilateGray(gray_im_2, 5, 5);
 
-	PIX *feat_im = pixCreate(width,height,32);
-	for(i=3*(height/4);i<height;i++)
+    pixd = pixCreate(width,height,1);
+    pixSauvolaBinarize(gray_im_2, 15, 0.3, 1, NULL, NULL, NULL, &pixd);
+
+	feat_im = pixCreate(width,height,32);
+	for(int i=3*(height/4);i<height;i++)
 	{
-		for(j=0;j<width;j++)
+		for(int j=0;j<width;j++)
 		{
 			unsigned int p1,p2,p3,p4;
 			pixGetPixel(edge_im,j,i,&p1);
@@ -250,33 +280,42 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 		}
 	}
 
-	char *txt=NULL;
+	// char *txt=NULL;
 	// txt = get_ocr_text_simple(ctx, feat_im);
 	// txt=get_ocr_text_wordwise_threshold(ctx, feat_im, ctx->conf_thresh);
 	// if(txt != NULL)printf("%s\n", txt);
 
-	pixDestroy(&im);
-	pixDestroy(&edge_im);
-	pixDestroy(&feat_im);
-	pixDestroy(&edge_im_2);
-	pixDestroy(&pixd);
-	pixDestroy(&hue_im);
+    pixDestroy(&im);
+    pixDestroy(&hue_im);
+    pixDestroy(&gray_im);
+    pixDestroy(&sobel_edge_im);
+    pixDestroy(&dilate_gray_im);
+    pixDestroy(&edge_im);
+    pixDestroy(&gray_im_2);
+    pixDestroy(&edge_im_2);
+    pixDestroy(&pixd);
+    pixDestroy(&feat_im);
 }
 
 char* _process_frame_tickertext(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
 {
 	PIX *im;
+    PIX *gray_im;
+    PIX *sobel_edge_im;
+    PIX *dilate_gray_im;
 	PIX *edge_im;
 	PIX *lum_im;
 	PIX *feat_im;
-	char *subtitle_text=NULL;
+	char *subtitle_text;
+
+    subtitle_text = NULL;
 	im = pixCreate(width,height,32);
 	lum_im = pixCreate(width,height,32);
 	feat_im = pixCreate(width,height,32);
-	int i,j;
-	for(i=(92*height)/100;i<height;i++)
+
+	for(int i=(92*height)/100;i<height;i++)
 	{
-		for(j=0;j<width;j++)
+		for(int j=0;j<width;j++)
 		{
 			int p=j*3+i*frame->linesize[0];
 			int r=frame->data[0][p];
@@ -293,15 +332,14 @@ char* _process_frame_tickertext(struct lib_hardsubx_ctx *ctx, AVFrame *frame, in
 	}
 
 	//Handle the edge image
-	edge_im = pixCreate(width,height,8);
-	edge_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
-	edge_im = pixSobelEdgeFilter(edge_im, L_VERTICAL_EDGES);
-	edge_im = pixDilateGray(edge_im, 21, 11);
-	edge_im = pixThresholdToBinary(edge_im,50);
+	gray_im = pixConvertRGBToGray(im,0.0,0.0,0.0);
+    sobel_edge_im = pixSobelEdgeFilter(gray_im, L_VERTICAL_EDGES);
+	dilate_gray_im = pixDilateGray(sobel_edge_im, 21, 11);
+	edge_im = pixThresholdToBinary(dilate_gray_im,50);
 
-	for(i=92*(height/100);i<height;i++)
+	for(int i=92*(height/100);i<height;i++)
 	{
-		for(j=0;j<width;j++)
+		for(int j=0;j<width;j++)
 		{
 			unsigned int p1,p2,p3;
 			pixGetPixel(edge_im,j,i,&p1);
@@ -322,10 +360,13 @@ char* _process_frame_tickertext(struct lib_hardsubx_ctx *ctx, AVFrame *frame, in
 	sprintf(write_path,"./im%04d.jpg",index);
 	pixWrite(write_path,im,IFF_JFIF_JPEG);
 
-	pixDestroy(&lum_im);
-	pixDestroy(&im);
-	pixDestroy(&edge_im);
-	pixDestroy(&feat_im);
+    pixDestroy(&im);
+    pixDestroy(&gray_im);
+    pixDestroy(&sobel_edge_im);
+    pixDestroy(&dilate_gray_im);
+    pixDestroy(&edge_im);
+    pixDestroy(&lum_im);
+    pixDestroy(&feat_im);
 
 	return subtitle_text;
 }
