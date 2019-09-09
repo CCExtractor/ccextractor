@@ -86,9 +86,9 @@ void _dinit_hardsubx(struct lib_hardsubx_ctx **ctx);
 int hardsubx_process_data(struct lib_hardsubx_ctx *ctx);
 
 //hardsubx_decoder.c
-int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx);
+void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx);
 int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx);
-int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx);
+void hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx);
 char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index);
 char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index);
 void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int timestamp);

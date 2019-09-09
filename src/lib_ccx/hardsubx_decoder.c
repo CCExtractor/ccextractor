@@ -137,7 +137,7 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 			pixSetRGBPixel(im,j,i,r,g,b);
 			float H,S,V;
 			rgb_to_hsv((float)r,(float)g,(float)b,&H,&S,&V);
-			if(abs(H-ctx->hue)<20)
+			if(fabsf(H-ctx->hue)<20)
 			{
 				pixSetRGBPixel(hue_im,j,i,r,g,b);
 			}
@@ -375,7 +375,7 @@ int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct enco
 {
 	// Search for ticker text at the bottom of the screen, such as in Russia TV1 or stock prices
 	int got_frame;
-	int cur_sec,total_sec,progress;
+	int cur_sec = 0,total_sec,progress;
 	int frame_number = 0;
 	char *ticker_text = NULL;
 
@@ -416,14 +416,14 @@ int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct enco
 	return 0;
 }
 
-int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx)
+void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx)
 {
 	// Do an exhaustive linear search over the video
 
 	int prev_sub_encoded = 1; // Previous seen subtitle encoded or not
 	int got_frame;
 	int dist = 0;
-	int cur_sec,total_sec,progress;
+	int cur_sec = 0,total_sec,progress;
 	int frame_number = 0;
 	int64_t prev_begin_time = 0, prev_end_time = 0; // Begin and end time of previous seen subtitle
 	int64_t prev_packet_pts = 0;
@@ -442,7 +442,7 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 			if(got_frame && frame_number % 25 == 0)
 			{
 				float diff = (float)convert_pts_to_ms(ctx->packet.pts - prev_packet_pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
-				if(abs(diff) < 1000*ctx->min_sub_duration) //If the minimum duration of a subtitle line is exceeded, process packet
+				if(fabsf(diff) < 1000*ctx->min_sub_duration) //If the minimum duration of a subtitle line is exceeded, process packet
 					continue;
 
 				// sws_scale is used to convert the pixel format to RGB24 from all other cases
@@ -487,8 +487,8 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 				{
 					if(subtitle_text)
 					{
-						dist = edit_distance(subtitle_text, prev_subtitle_text, strlen(subtitle_text), strlen(prev_subtitle_text));
-						if(dist < (0.2 * fmin(strlen(subtitle_text), strlen(prev_subtitle_text))))
+						dist = edit_distance(subtitle_text, prev_subtitle_text, (int) strlen(subtitle_text), (int) strlen(prev_subtitle_text));
+						if(dist < (0.2 * MIN(strlen(subtitle_text), strlen(prev_subtitle_text))))
 						{
 							dist = -1;
 							subtitle_text = NULL;
@@ -545,58 +545,58 @@ int hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_
 
 }
 
-int hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
+void hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 {
 	// Do a binary search over the input video for faster processing
 	// printf("Duration: %d\n", (int)ctx->format_ctx->duration);
 	int got_frame;
 	int seconds_time = 0;
 	for(seconds_time=0;seconds_time<20;seconds_time++){
-	int64_t seek_time = (int64_t)(seconds_time*AV_TIME_BASE);
-	seek_time = av_rescale_q(seek_time, AV_TIME_BASE_Q, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
+        int64_t seek_time = seconds_time*AV_TIME_BASE;
+        seek_time = av_rescale_q(seek_time, AV_TIME_BASE_Q, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 
-	int ret = av_seek_frame(ctx->format_ctx, ctx->video_stream_id, seek_time, AVSEEK_FLAG_BACKWARD);
-	// printf("%d\n", ret);
-	// if(ret < 0)
-	// {
-	// 	printf("seeking back\n");
-	// 	ret = av_seek_frame(ctx->format_ctx, -1, seek_time, AVSEEK_FLAG_BACKWARD);
-	// }
-	if(ret >= 0)
-	{
-		while(av_read_frame(ctx->format_ctx, &ctx->packet)>=0)
-		{
-			if(ctx->packet.stream_index == ctx->video_stream_id)
-			{
-				avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
-				if(got_frame)
-				{
-					// printf("%d\n", seek_time);
-					if(ctx->packet.pts < seek_time)
-						continue;
-					// printf("GOT FRAME: %d\n",ctx->packet.pts);
-					// sws_scale is used to convert the pixel format to RGB24 from all other cases
-					sws_scale(
-							ctx->sws_ctx,
-							(uint8_t const * const *)ctx->frame->data,
-							ctx->frame->linesize,
-							0,
-							ctx->codec_ctx->height,
-							ctx->rgb_frame->data,
-							ctx->rgb_frame->linesize
-						);
-					// Send the frame to other functions for processing
-					_display_frame(ctx, ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,seconds_time);
-					break;
-				}
-			}
-			av_packet_unref(&ctx->packet);
-		}
-	}
-	else
-	{
-		printf("Seeking to timestamp failed\n");
-	}
+        int ret = av_seek_frame(ctx->format_ctx, ctx->video_stream_id, seek_time, AVSEEK_FLAG_BACKWARD);
+        // printf("%d\n", ret);
+        // if(ret < 0)
+        // {
+        // 	printf("seeking back\n");
+        // 	ret = av_seek_frame(ctx->format_ctx, -1, seek_time, AVSEEK_FLAG_BACKWARD);
+        // }
+        if(ret >= 0)
+        {
+            while(av_read_frame(ctx->format_ctx, &ctx->packet)>=0)
+            {
+                if(ctx->packet.stream_index == ctx->video_stream_id)
+                {
+                    avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
+                    if(got_frame)
+                    {
+                        // printf("%d\n", seek_time);
+                        if(ctx->packet.pts < seek_time)
+                            continue;
+                        // printf("GOT FRAME: %d\n",ctx->packet.pts);
+                        // sws_scale is used to convert the pixel format to RGB24 from all other cases
+                        sws_scale(
+                                ctx->sws_ctx,
+                                (uint8_t const * const *)ctx->frame->data,
+                                ctx->frame->linesize,
+                                0,
+                                ctx->codec_ctx->height,
+                                ctx->rgb_frame->data,
+                                ctx->rgb_frame->linesize
+                            );
+                        // Send the frame to other functions for processing
+                        _display_frame(ctx, ctx->rgb_frame,ctx->codec_ctx->width,ctx->codec_ctx->height,seconds_time);
+                        break;
+                    }
+                }
+                av_packet_unref(&ctx->packet);
+            }
+        }
+        else
+        {
+            printf("Seeking to timestamp failed\n");
+        }
 	}
 }
 
