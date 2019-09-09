@@ -152,7 +152,6 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
     gray_im_2 = pixConvertRGBToGray(hue_im,0.0,0.0,0.0);
     edge_im_2 = pixDilateGray(gray_im_2, 5, 5);
 
-	pixd = pixCreate(width,height,1);
 	pixSauvolaBinarize(gray_im_2, 15, 0.3, 1, NULL, NULL, NULL, &pixd);
 
 	feat_im = pixCreate(width,height,32);
@@ -260,7 +259,6 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 	gray_im_2 = pixConvertRGBToGray(hue_im,0.0,0.0,0.0);
 	edge_im_2 = pixDilateGray(gray_im_2, 5, 5);
 
-    pixd = pixCreate(width,height,1);
     pixSauvolaBinarize(gray_im_2, 15, 0.3, 1, NULL, NULL, NULL, &pixd);
 
 	feat_im = pixCreate(width,height,32);
