@@ -1,9 +1,9 @@
 #include "png.h"
 #include "lib_ccx.h"
 #ifdef ENABLE_OCR
-#include "tesseract/capi.h"
+#include <tesseract/capi.h>
 #include "ccx_common_constants.h"
-#include "allheaders.h"
+#include <leptonica/allheaders.h>
 #include <dirent.h>
 #include "ccx_encoders_helpers.h"
 #include "ocr.h"

@@ -16,8 +16,8 @@
 #include "utf8proc/utf8proc.h"
 
 #ifdef ENABLE_OCR
-#include "tesseract/capi.h"
-#include "allheaders.h"
+#include <tesseract/capi.h>
+#include <leptonica/allheaders.h>
 #endif
 
 #ifdef ENABLE_HARDSUBX

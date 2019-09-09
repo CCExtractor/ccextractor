@@ -7,9 +7,9 @@
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
-#include "allheaders.h"
+#include <leptonica/allheaders.h>
+#include <tesseract/capi.h>
 #include "hardsubx.h"
-#include "capi.h"
 
 char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
 {
