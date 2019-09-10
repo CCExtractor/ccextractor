@@ -76,6 +76,7 @@ ccextractor_SOURCES = \
 				../src/gpacmp4/gpac/tools.h \
 				../src/gpacmp4/gpac/utf.h \
 				../src/gpacmp4/gpac/version.h \
+                                ../src/gpacmp4/gpac/iso639.h \
 				../src/gpacmp4/gpac/internal/avilib.h \
 				../src/gpacmp4/gpac/internal/isomedia_dev.h \
 				../src/gpacmp4/gpac/internal/media_dev.h \
@@ -268,6 +269,7 @@ ccextractor_SOURCES = \
 				../src/zvbi/zvbi_decoder.h \
 				../src/wrappers/wrapper.c \
 				../src/wrappers/wrapper.h \
+                                ../src/freetype/* \
 				../src/freetype/autofit/autofit.c \
 				../src/freetype/base/ftbase.c \
 				../src/freetype/base/ftbbox.c \
@@ -296,6 +298,7 @@ ccextractor_SOURCES = \
 				../src/freetype/cff/cff.c \
 				../src/freetype/cid/type1cid.c \
 				../src/freetype/gzip/ftgzip.c \
+                                ../src/freetype/include/ft2build.h \
 				../src/freetype/lzw/ftlzw.c \
 				../src/freetype/pcf/pcf.c \
 				../src/freetype/pfr/pfr.c \
