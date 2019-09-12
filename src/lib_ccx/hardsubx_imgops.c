@@ -7,7 +7,7 @@
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
-#include "allheaders.h"
+#include <leptonica/allheaders.h>
 #include "hardsubx.h"
 
 #define BLACK 20.0
