@@ -36,6 +36,15 @@ typedef struct ccx_sbs_utf8_character
 	int enc_len;
 } ccx_sbs_utf8_character;
 
+typedef struct ccx_mcc_caption_time
+{
+    unsigned int hour;
+    unsigned int minute;
+    unsigned int second;
+    unsigned int millisecond;
+    unsigned int frame;
+} ccx_mcc_caption_time;
+
 /**
  * Context of encoder, This structure gives single interface
  * to all encoder
@@ -116,6 +125,12 @@ struct encoder_ctx
 	unsigned int encoded_crlf_length;
 	unsigned char encoded_br[16];
 	unsigned int encoded_br_length;
+
+	// MCC File
+	int header_printed_flag;
+    ccx_mcc_caption_time next_caption_time;
+    unsigned int cdp_hdr_seq;
+    int force_dropframe;
 
 	int new_sentence; // Capitalize next letter?
 

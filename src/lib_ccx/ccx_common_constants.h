@@ -171,6 +171,7 @@ enum ccx_output_format
 	CCX_OF_G608 = 11,
 	CCX_OF_CURL = 12,
 	CCX_OF_SSA = 13,
+    CCX_OF_MCC = 14,
 };
 
 enum ccx_output_date_format

@@ -258,6 +258,8 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
 	else if (strcmp(format, "curl") == 0)
 		opt->write_format = CCX_OF_CURL;
 #endif
+    else if (strcmp (format,"mcc")==0)
+        opt->write_format=CCX_OF_MCC;
 	else
 		fatal (EXIT_MALFORMED_PARAMETER, "Unknown output file format: %s\n", format);
 }
@@ -428,6 +430,7 @@ void print_usage (void)
 	mprint ("                      bin     -> CC data in CCExtractor's own binary format.\n");
 	mprint ("                      raw     -> CC data in McPoodle's Broadcast format.\n");
 	mprint ("                      dvdraw  -> CC data in McPoodle's DVD format.\n");
+    mprint ("                      mcc     -> CC data compressed using MacCaption Format.\n");
 	mprint ("                      txt     -> Transcript (no time codes, no roll-up\n");
 	mprint ("                                 captions, just the plain transcription.\n");
 	mprint ("                      ttxt    -> Timed Transcript (transcription with time\n");
@@ -620,6 +623,7 @@ void print_usage (void)
 	mprint ("                       to the output file.\n");
 	mprint ("                  -lf: Use LF (UNIX) instead of CRLF (DOS, Windows) as line\n");
 	mprint ("                       terminator.\n");
+    mprint ("                  -df: For MCC Files, force dropframe frame count.\n");
 	mprint ("            -autodash: Based on position on screen, attempt to determine\n");
 	mprint ("                       the different speakers and a dash (-) when each\n");
 	mprint ("                       of them talks (.srt/.vtt only, -trim required).\n");
@@ -1569,7 +1573,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 		/* Output file formats */
 		if (strcmp (argv[i],"-srt")==0 ||
-				strcmp (argv[i],"-dvdraw")==0 ||
+				strcmp (argv[i],"-dvdraw")==0 || strcmp(argv[1], "-mcc") == 0 ||
 				strcmp(argv[i], "-sami") == 0 || strcmp(argv[i], "-smi") == 0 || strcmp(argv[i], "-webvtt") == 0 ||
 				strcmp (argv[i],"--transcript")==0 || strcmp (argv[i],"-txt")==0 ||
 				strcmp (argv[i],"--timedtranscript")==0 || strcmp (argv[i],"-ttxt")==0 ||
@@ -2160,6 +2164,11 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->enc_cfg.line_terminator_lf = 1;
 			continue;
 		}
+        if (strcmp (argv[i],"-df")==0 || strcmp (argv[i],"-DF")==0)
+        {
+            opt->enc_cfg.force_dropframe = 1;
+            continue;
+        }
 		if (strcmp (argv[i],"-noautotimeref")==0)
 		{
 			opt->noautotimeref = 1;

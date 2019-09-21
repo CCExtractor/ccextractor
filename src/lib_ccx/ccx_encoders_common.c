@@ -545,6 +545,9 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				return -1;
 			}
 			break;
+        case CCX_OF_MCC:
+            ctx->header_printed_flag = CCX_FALSE;
+            break;
 		default:
 			break;
 	}
@@ -786,7 +789,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 					return ret;						\
 				}
 
-	if (cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE && cfg->extract == 12)
+	if (cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE && cfg->extract == 12 && cfg->write_format != CCX_OF_MCC )
 		nb_lang = 2;
 	else
 		nb_lang = 1;
@@ -798,6 +801,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	ctx->keep_output_closed = cfg->keep_output_closed;
 	ctx->force_flush = cfg->force_flush;
 	ctx->ucla = cfg->ucla;
+	ctx->force_dropframe = cfg->force_dropframe;
 
 	if(ctx->generates_file && cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE)
 	{
@@ -806,7 +810,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			// Use the given output file name for the field specified by
 			// the -1, -2 switch. If -12 is used, the filename is used for
 			// field 1.
-			if (cfg->extract == 12)
+			if( (cfg->extract == 12) && (cfg->write_format != CCX_OF_MCC) )
 			{
 				basefilename = get_basename(cfg->output_filename);
 				extension = get_file_extension(cfg->write_format);
@@ -831,7 +835,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 				basefilename = get_basename("untitled");
 			}
 
-			if (cfg->extract == 12)
+			if( (cfg->extract == 12) && (cfg->write_format != CCX_OF_MCC) )
 			{
 				ret = init_write(&ctx->out[0], create_outfilename(basefilename, "_1", extension), cfg->with_semaphore);
 				check_ret(ctx->out[0].filename);

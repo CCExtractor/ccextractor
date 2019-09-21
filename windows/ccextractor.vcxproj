@@ -93,6 +93,7 @@
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_xds.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_common.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_helpers.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_encoders_mcc.h" />
     <ClInclude Include="..\src\lib_ccx\disable_warnings.h" />
     <ClInclude Include="..\src\lib_ccx\dvb_subtitle_decoder.h" />
     <ClInclude Include="..\src\lib_ccx\lib_ccx.h" />
@@ -226,6 +227,7 @@
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_curl.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_g608.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_helpers.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_mcc.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_python.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_sami.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_smptett.c" />

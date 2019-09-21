@@ -133,6 +133,7 @@ void init_options (struct ccx_s_options *options)
 	options->enc_cfg.services_charsets = NULL;
 	options->enc_cfg.all_services_charset = NULL;
 	options->enc_cfg.with_semaphore = 0;
+    options->enc_cfg.force_dropframe = 0;  // Assume No Drop Frame for MCC Encode.
 
 	options->settings_dtvcc.enabled = 0;
 	options->settings_dtvcc.active_services_count = 0;
