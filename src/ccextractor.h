@@ -7,7 +7,7 @@
 #endif
 
 #ifdef ENABLE_OCR
-#include <allheaders.h>
+#include <leptonica/allheaders.h>
 #endif
 
 #include <stdio.h>
