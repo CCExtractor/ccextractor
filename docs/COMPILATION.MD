@@ -15,26 +15,15 @@ git clone https://github.com/CCExtractor/ccextractor.git
 1. Make sure all the dependencies are met.
 
 Debian:
-```
-sudo apt-get install -y libglew-dev
-sudo apt-get install -y libglfw3-dev
-sudo apt-get install -y cmake
-sudo apt-get install -y gcc
-sudo apt-get install -y libcurl4-gnutls-dev
-sudo apt-get install -y tesseract-ocr
-sudo apt-get install -y tesseract-ocr-dev
-sudo apt-get install -y libleptonica-dev
+
+```bash
+sudo apt-get install -y libglew-dev libglfw3-dev cmake gcc libcurl4-gnutls-dev tesseract-ocr tesseract-ocr-dev libleptonica-dev
 ```
 
 RHEL:
-```
-yum install -y glew-devel
-yum install -y glfw-devel
-yum install -y cmake
-yum install -y gcc
-yum install -y libcurl-devel
-yum install -y tesseract-devel
-yum install -y leptonica-devel
+
+```bash
+yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel leptonica-devel
 ```
 
 **Note:** On Ubuntu Version 18.04 (Bionic) and (probably) later, install `libtesseract-dev` rather than `tesseract-ocr-dev`, which does not exist anymore.
@@ -43,11 +32,10 @@ yum install -y leptonica-devel
 
 2. Compiling
 
-
 **Using the build script**
 
 
-```
+```bash
 #Navigate to linux directory and call the build script
 
 cd ccextractor/linux
@@ -59,7 +47,7 @@ cd ccextractor/linux
 
 **Standard linux compilation through Autoconf scripts**
 
-```
+```bash
 sudo apt-get install autoconf      #Dependency to generate configuration script
 cd ccextractor/linux
 ./autogen.sh
@@ -75,7 +63,7 @@ sudo make install
 
 **Using CMake**
 
-```
+```bash
 #Create and navigate to directory where you want to store built files
 
 cd ccextractor/
@@ -101,7 +89,7 @@ To build CCExtractor with a gui you will additionally need to install [GLEW](htt
 
 In order to compile it you'll need to configure it using autoconf by passing the `-with-gui` option.
 
-```
+```bash
 ./autogen.sh
 ./configure --with-gui
 make
@@ -116,7 +104,7 @@ Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
 
 1. Make sure all the dependencies are met. They can be installed via Homebrew as
 
-```
+```bash
 brew install pkg-config
 brew install autoconf automake libtool
 brew install tesseract
@@ -125,16 +113,16 @@ brew install leptonica
 
 To verify tesseract and leptonica are detected by pkg-config, e.g.
 
-````
+```bash
 pkg-config --exists --print-errors tesseract
 pkg-config --exists --print-errors lept
-````
+```
 
 2. Compiling
 
 **Using build.command script:**
 
-```
+```bash
 cd ccextractor/mac
 ./build.command OCR
 
@@ -144,7 +132,7 @@ cd ccextractor/mac
 
 If you don't want the OCR capabilities, then you don't need to configure the tesseract and leptonica packages, and build it with just
 
-```
+```bash
 cd ccextractor/mac
 ./build.command
 
@@ -154,7 +142,7 @@ cd ccextractor/mac
 
 **Using CMake**
 
-```
+```bash
 #Create and navigate to directory where you want to store built files
 
 cd ccextractor/
@@ -172,7 +160,7 @@ make
 
 **Standard compilation through Autoconf scripts :**
 
-```
+```bash
 cd ccextractor/mac
 ./autogen.sh
 ./configure
@@ -186,14 +174,14 @@ make
 
 To use CCExtractor with a gui you will additionally need to install GLEW and GLFW. You can do that by installing it via homebrew using:
 
-```
+```bash
 brew install glfw
 brew install glew
 ```
 
 In order to compile it you'll need to configure it using autoconf by passing the `-with-gui` option.
 
-```
+```bash
 ./autogen.sh
 ./configure --with-gui
 make
@@ -235,7 +223,7 @@ Configurations options include dependent libraries which are used for OCR.
 
 You may also generate `.sln` files for Visual Studio and build using build tools, or open `.sln` files using Visual Studio.
 
-```
+```bash
 cmake ../src/ -G "Visual Studio 14 2015"
 cmake --build . --config Release --ccextractor
 ```
@@ -249,4 +237,3 @@ Go to the package_creators folder using `cd` and run the `./arch.sh`
 ### Redhat Package Manager (rpm) based Linux Distributions
 
 Go to the package_creators folder using `cd` and run the `./rpm.sh`
-
