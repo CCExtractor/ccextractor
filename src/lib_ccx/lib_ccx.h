@@ -184,12 +184,12 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 int wtv_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 
 // es_functions.c
-size_t process_m2v(struct lib_cc_decode *ctx, unsigned char *data, size_t length, struct cc_subtitle *sub);
+size_t process_m2v(struct encoder_ctx *enc_ctx, struct lib_cc_decode *ctx, unsigned char *data, size_t length, struct cc_subtitle *sub);
 
 extern unsigned top_field_first;
 
 // es_userdata.c
-int user_data(struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, struct cc_subtitle *sub);
+int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *ctx, struct bitstream *ustream, int udtype, struct cc_subtitle *sub);
 
 // bitstream.c - see bitstream.h
 
@@ -203,9 +203,9 @@ void return_to_buffer (struct ccx_demuxer *ctx, unsigned char *buffer, unsigned 
 
 // sequencing.c
 void init_hdcc (struct lib_cc_decode *ctx);
-void store_hdcc(struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now, struct cc_subtitle *sub);
+void store_hdcc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now, struct cc_subtitle *sub);
 void anchor_hdcc(struct lib_cc_decode *ctx, int seq);
-void process_hdcc (struct lib_cc_decode *ctx, struct cc_subtitle *sub);
+void process_hdcc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *ctx, struct cc_subtitle *sub);
 
 // params_dump.c
 void params_dump(struct lib_ccx_ctx *ctx);

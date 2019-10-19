@@ -6,6 +6,7 @@
 #include "lib_ccx.h"
 #include "utility.h"
 #include "ccx_encoders_common.h"
+#include "ccx_encoders_mcc.h"
 #include "ccx_common_option.h"
 #include "ccx_mp4.h"
 #include "activity.h"
@@ -35,8 +36,10 @@ static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConf
 	u32 i;
 	s32 signed_cts=(s32) s->CTS_Offset; // Convert from unsigned to signed. GPAC uses u32 but unsigned values are legal.
 	struct lib_cc_decode *dec_ctx = NULL;
+    struct encoder_ctx *enc_ctx = NULL;
 
 	dec_ctx = update_decoder_list(ctx);
+	enc_ctx = update_encoder_list(ctx);
 
 	set_current_pts(dec_ctx->timing, (s->DTS + signed_cts)*MPEG_CLOCK_FREQ/timescale);
 	set_fts(dec_ctx->timing);
@@ -65,7 +68,7 @@ static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConf
 		temp_debug=0;
 
 		if (nal_length>0)
-			do_NAL (dec_ctx, (unsigned char *) &(s->data[i]) ,nal_length, sub);
+			do_NAL (enc_ctx, dec_ctx, (unsigned char *) &(s->data[i]) ,nal_length, sub);
 		i += nal_length;
 	} // outer for
 	assert(i == s->dataLength);
@@ -78,8 +81,10 @@ static int process_xdvb_track(struct lib_ccx_ctx *ctx, const char* basename, GF_
 	int status;
 
 	struct lib_cc_decode *dec_ctx = NULL;
+    struct encoder_ctx *enc_ctx = NULL;
 
 	dec_ctx = update_decoder_list(ctx);
+    enc_ctx = update_encoder_list(ctx);
 	if((sample_count = gf_isom_get_sample_count(f, track)) < 1)
 	{
 		return 0;
@@ -100,7 +105,7 @@ static int process_xdvb_track(struct lib_ccx_ctx *ctx, const char* basename, GF_
 			set_current_pts(dec_ctx->timing, (s->DTS + signed_cts)*MPEG_CLOCK_FREQ/timescale);
 			set_fts(dec_ctx->timing);
 
-			process_m2v (dec_ctx, (unsigned char *) s->data,s->dataLength, sub);
+			process_m2v (enc_ctx, dec_ctx, (unsigned char *) s->data,s->dataLength, sub);
 			gf_isom_sample_del(&s);
 		}
 
@@ -374,6 +379,9 @@ static int process_clcp(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 				ccx_dtvcc_process_data(dec_ctx, (unsigned char *)temp, 4);
 				cb_708++;
 			}
+			if( ctx->write_format == CCX_OF_MCC ) {
+                mcc_encode_cc_data(enc_ctx, dec_ctx, cc_data, cc_count);
+            }
 		}
 		else //subtype == GF_ISOM_SUBTYPE_C608
 		{
@@ -570,7 +578,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 			if (cnf != NULL) {
 				for (j = 0; j < gf_list_count(cnf->sequenceParameterSets); j++) {
 					GF_AVCConfigSlot* seqcnf = (GF_AVCConfigSlot*)gf_list_get(cnf->sequenceParameterSets, j);
-					do_NAL(dec_ctx, (unsigned char *)seqcnf->data, seqcnf->size, &dec_sub);
+					do_NAL(enc_ctx, dec_ctx, (unsigned char *)seqcnf->data, seqcnf->size, &dec_sub);
 				}
 			}
 			if (process_avc_track(ctx, file, f, i + 1, &dec_sub) != 0) {
@@ -698,6 +706,10 @@ int processmp4 (struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 		mprint ("Found no dedicated CC track(s).\n");
 
 	ctx->freport.mp4_cc_track_cnt = cc_track_count;
+
+	if( (dec_ctx->write_format == CCX_OF_MCC) && (dec_ctx->saw_caption_block == CCX_TRUE) ) {
+	    mp4_ret = 1;
+	}
 
 	return mp4_ret;
 }

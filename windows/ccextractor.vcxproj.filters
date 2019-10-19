@@ -384,6 +384,9 @@
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_structs.h">
       <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\ccx_encoders_mcc.h">
+      <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\ccextractor.c">
@@ -497,13 +500,7 @@
     <ClCompile Include="..\src\lib_ccx\ccx_common_option.c">
       <Filter>Source Files\ccx_common</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\ccx_decoders_708_encoding.c">
-      <Filter>Source Files\ccx_decoders</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_dtvcc.c">
-      <Filter>Source Files\ccx_decoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\ccx_decoders_708_output.c">
       <Filter>Source Files\ccx_decoders</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_708_encoding.c">
@@ -967,6 +964,15 @@
     </ClCompile>
     <ClCompile Include="..\src\gpacmp4\box_dump.c">
       <Filter>Source Files\gpacmp4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_mcc.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_decoders_708_encoding.c">
+      <Filter>Source Files\ccx_decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_decoders_708_output.c">
+      <Filter>Source Files\ccx_decoders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

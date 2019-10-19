@@ -597,6 +597,7 @@ int process_avc_frame_mkv(struct matroska_ctx* mkv_ctx, struct matroska_avc_fram
     int status = 0;
     uint32_t i;
     struct lib_cc_decode *dec_ctx = update_decoder_list(mkv_ctx->ctx);
+    struct encoder_ctx *enc_ctx = update_encoder_list(mkv_ctx->ctx);
 
     // Delete
     // Inspired by set_fts(struct ccx_common_timing_ctx *ctx)
@@ -614,7 +615,7 @@ int process_avc_frame_mkv(struct matroska_ctx* mkv_ctx, struct matroska_avc_fram
         i += nal_unit_size;
 
         if (nal_length>0)
-            do_NAL (dec_ctx, (unsigned char *) &( frame.data[i]), nal_length, &mkv_ctx->dec_sub);
+            do_NAL (enc_ctx, dec_ctx, (unsigned char *) &( frame.data[i]), nal_length, &mkv_ctx->dec_sub);
         i += nal_length;
     } // outer for
     assert(i == frame.len);
@@ -846,6 +847,7 @@ void parse_private_codec_data(struct matroska_ctx* mkv_ctx, char* codec_id_strin
     unsigned char* data = NULL;
 
     struct lib_cc_decode *dec_ctx = update_decoder_list(mkv_ctx->ctx);
+    struct encoder_ctx *enc_ctx = update_encoder_list(mkv_ctx->ctx);
 
     if( (strcmp((const char *)codec_id_string, (const char *)avc_codec_id) == 0) && mkv_ctx->avc_track_number == track_number) {
         // Skip reserved data
@@ -855,9 +857,8 @@ void parse_private_codec_data(struct matroska_ctx* mkv_ctx, char* codec_id_strin
         ULLONG size = len - reserved_len;
 
         data = read_byte_block(file, size);
-        do_NAL(dec_ctx, data, size, &mkv_ctx->dec_sub);
+        do_NAL(enc_ctx, dec_ctx, data, size, &mkv_ctx->dec_sub);
     } else if (strcmp((const char *)codec_id_string, (const char *)dvb_codec_id) == 0) {
-        struct encoder_ctx *enc_ctx = update_encoder_list(mkv_ctx->ctx);
         enc_ctx->write_previous = 0;
         enc_ctx->is_mkv = 1;
 

@@ -380,6 +380,9 @@ void _ccx_dtvcc_write(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *d
 		case CCX_OF_SAMI:
 			ccx_dtvcc_write_sami(writer, decoder, encoder);
 			break;
+        case CCX_OF_MCC:
+            printf("REALLY BAD... [%s:%d]\n", __FILE__, __LINE__);
+            break;
 		default:
 			ccx_dtvcc_write_debug(decoder->tv);
 			break;
@@ -410,7 +413,7 @@ void ccx_dtvcc_writer_init(ccx_dtvcc_writer_ctx *writer,
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_writer_init\n");
 	writer->fd = -1;
 	writer->cd = (iconv_t) -1;
-	if (write_format == CCX_OF_NULL)
+	if( (write_format == CCX_OF_NULL) || (write_format == CCX_OF_MCC) )
 	{
 		writer->filename = NULL;
 		return;

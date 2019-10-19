@@ -7,7 +7,7 @@
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
-#include "allheaders.h"
+#include <leptonica/allheaders.h>
 #include "hardsubx.h"
 
 char *get_ocr_text_simple(struct lib_hardsubx_ctx *ctx, PIX *image)

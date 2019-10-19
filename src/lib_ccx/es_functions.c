@@ -5,24 +5,24 @@
 // Functions to parse a mpeg-2 data stream, see ISO/IEC 13818-2 6.2
 static uint8_t search_start_code(struct bitstream *esstream);
 static uint8_t next_start_code(struct bitstream *esstream);
-static int es_video_sequence(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
+static int es_video_sequence(struct encoder_ctx *enc_ctx, struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
 static int read_seq_info(struct lib_cc_decode *ctx, struct bitstream *esstream);
 static int sequence_header(struct lib_cc_decode *ctx, struct bitstream *esstream);
 static int sequence_ext(struct lib_cc_decode *ctx, struct bitstream *esstream);
-static int read_gop_info(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
-static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
-static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
+static int read_gop_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
+static int gop_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
+static int read_pic_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub);
 static int pic_header(struct lib_cc_decode *ctx, struct bitstream *esstream);
 static int pic_coding_ext(struct lib_cc_decode *ctx, struct bitstream *esstream);
-static int read_eau_info(struct lib_cc_decode* ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub);
-static int extension_and_user_data(struct lib_cc_decode *ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub);
+static int read_eau_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode* ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub);
+static int extension_and_user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub);
 static int read_pic_data(struct bitstream *esstream);
 
 #define debug( ... ) ccx_common_logging.debug_ftn( CCX_DMT_VERBOSE, __VA_ARGS__)
 /* Process a mpeg-2 data stream with "length" bytes in buffer "data".
  * The number of processed bytes is returned.
  * Defined in ISO/IEC 13818-2 6.2 */
-size_t process_m2v (struct lib_cc_decode *ctx, unsigned char *data, size_t length, struct cc_subtitle *sub)
+size_t process_m2v (struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *data, size_t length, struct cc_subtitle *sub)
 {
 	if (length<8) // Need to look ahead 8 bytes
 		return length;
@@ -33,7 +33,7 @@ size_t process_m2v (struct lib_cc_decode *ctx, unsigned char *data, size_t lengt
 
 	// Process data. The return value is ignored as esstream.pos holds
 	// the information how far the parsing progressed.
-	es_video_sequence(ctx, &esstream, sub);
+	es_video_sequence(enc_ctx, dec_ctx, &esstream, sub);
 
 	// This returns how many bytes were processed and can therefore
 	// be discarded from "buffer". "esstream.pos" points to the next byte
@@ -170,7 +170,7 @@ static uint8_t next_start_code(struct bitstream *esstream)
 // Otherwise.  estream->pos shall point to the position where
 // the next call will continue, i.e. the possible begin of an
 // unfinished video sequence or after the finished sequence.
-static int es_video_sequence(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
+static int es_video_sequence(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
 	// Avoid "Skip forward" message on first call and later only
 	// once per search.
@@ -182,7 +182,7 @@ static int es_video_sequence(struct lib_cc_decode *ctx, struct bitstream *esstre
 	esstream->error = 0;
 
 	// Analyze sequence header ...
-	if (!ctx->no_bitstream_error)
+	if (!dec_ctx->no_bitstream_error)
 	{
 		// We might start here because of a syntax error. Discard
 		// all data until a new sequence_header_code or group_start_code
@@ -210,23 +210,23 @@ static int es_video_sequence(struct lib_cc_decode *ctx, struct bitstream *esstre
 			skip_bits(esstream, 4*8);
 		}
 
-		ctx->no_bitstream_error = 1;
-		ctx->saw_seqgoppic = 0;
-		ctx->in_pic_data = 0;
+		dec_ctx->no_bitstream_error = 1;
+		dec_ctx->saw_seqgoppic = 0;
+		dec_ctx->in_pic_data = 0;
 	}
 
 	do
 	{
 		startcode = next_start_code(esstream);
 
-		debug("\nM2V - next start code %02X %d\n", startcode, ctx->in_pic_data);
+		debug("\nM2V - next start code %02X %d\n", startcode, dec_ctx->in_pic_data);
 
 		// Syntax check - also returns on bitsleft < 0
 		if (startcode == 0xB4)
 		{
 			if (esstream->error)
 			{
-				ctx->no_bitstream_error = 0;
+				dec_ctx->no_bitstream_error = 0;
 				debug("es_video_sequence: syntax problem.\n");
 			}
 
@@ -239,72 +239,72 @@ static int es_video_sequence(struct lib_cc_decode *ctx, struct bitstream *esstre
 		if (startcode == 0xB7)
 		{
 			skip_u32(esstream); // Advance bitstream
-			ctx->no_bitstream_error = 0;
+			dec_ctx->no_bitstream_error = 0;
 			break;
 		}
 		// Sequence header
-		if (!ctx->in_pic_data && startcode == 0xB3)
+		if (!dec_ctx->in_pic_data && startcode == 0xB3)
 		{
-			if (!read_seq_info(ctx, esstream))
+			if (!read_seq_info(dec_ctx, esstream))
 			{
 				if (esstream->error)
-					ctx->no_bitstream_error = 0;
+					dec_ctx->no_bitstream_error = 0;
 				return 0;
 			}
-			ctx->saw_seqgoppic = 1;
+			dec_ctx->saw_seqgoppic = 1;
 			continue;
 		}
 		// Group of pictures
-		if (!ctx->in_pic_data && startcode == 0xB8)
+		if (!dec_ctx->in_pic_data && startcode == 0xB8)
 		{
-			if (!read_gop_info(ctx, esstream,sub))
+			if (!read_gop_info(enc_ctx, dec_ctx, esstream,sub))
 			{
 				if (esstream->error)
-					ctx->no_bitstream_error = 0;
+					dec_ctx->no_bitstream_error = 0;
 				return 0;
 			}
-			ctx->saw_seqgoppic = 2;
+			dec_ctx->saw_seqgoppic = 2;
 			continue;
 		}
 		// Picture
-		if (!ctx->in_pic_data && startcode == 0x00)
+		if (!dec_ctx->in_pic_data && startcode == 0x00)
 		{
-			if (!read_pic_info(ctx, esstream, sub))
+			if (!read_pic_info(enc_ctx, dec_ctx, esstream, sub))
 			{
 				if (esstream->error)
-					ctx->no_bitstream_error = 0;
+					dec_ctx->no_bitstream_error = 0;
 				return 0;
 			}
-			ctx->saw_seqgoppic = 3;
-			ctx->in_pic_data = 1;
+			dec_ctx->saw_seqgoppic = 3;
+			dec_ctx->in_pic_data = 1;
 			continue;
 		}
 
 		// Only looks for extension and user data if we saw sequence, gop
 		// or picture info before.
-		// This check needs to be before the "ctx->in_pic_data" part.
-		if ( ctx->saw_seqgoppic && (startcode == 0xB2 || startcode == 0xB5))
+		// This check needs to be before the "dec_ctx->in_pic_data" part.
+		if ( dec_ctx->saw_seqgoppic && (startcode == 0xB2 || startcode == 0xB5))
 		{
-			if (!read_eau_info(ctx, esstream, ctx->saw_seqgoppic-1, sub))
+			if (!read_eau_info(enc_ctx, dec_ctx, esstream, dec_ctx->saw_seqgoppic-1, sub))
 			{
 				if (esstream->error)
-					ctx->no_bitstream_error = 0;
+					dec_ctx->no_bitstream_error = 0;
 				return 0;
 			}
-			ctx->saw_seqgoppic = 0;
+			dec_ctx->saw_seqgoppic = 0;
 			continue;
 		}
 
-		if (ctx->in_pic_data) // See comment in read_pic_data()
+		if (dec_ctx->in_pic_data) // See comment in read_pic_data()
 		{
 			if (!read_pic_data(esstream))
 			{
 				if (esstream->error)
-					ctx->no_bitstream_error = 0;
+					dec_ctx->no_bitstream_error = 0;
 				return 0;
 			}
-			ctx->saw_seqgoppic = 0;
-			ctx->in_pic_data = 0;
+			dec_ctx->saw_seqgoppic = 0;
+			dec_ctx->in_pic_data = 0;
 			continue;
 		}
 
@@ -317,7 +317,7 @@ static int es_video_sequence(struct lib_cc_decode *ctx, struct bitstream *esstre
 		{
 			mprint("\nUnexpected startcode: %02X\n", startcode);
 		}
-		ctx->no_bitstream_error = 0;
+		dec_ctx->no_bitstream_error = 0;
 		return 0;
 	} while(1);
 
@@ -508,7 +508,7 @@ static int sequence_ext(struct lib_cc_decode *ctx, struct bitstream *esstream)
 // If a bitstream syntax problem occurred the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
-static int read_gop_info(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
+static int read_gop_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
 	debug("Read GOP Info\n");
 
@@ -521,7 +521,7 @@ static int read_gop_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 	// after getting more.
 	unsigned char *gop_info_start = esstream->pos;
 
-	gop_header(ctx, esstream, sub);
+	gop_header(enc_ctx, dec_ctx, esstream, sub);
 	//extension_and_user_data(esstream);
 
 	if (esstream->error)
@@ -542,7 +542,7 @@ static int read_gop_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 // Return TRUE if the data parsing finished, FALSE otherwise.
 // estream->pos is advanced. Data is only processed if esstream->error
 // is FALSE, parsing can set esstream->error to TRUE.
-static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
+static int gop_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
 	debug("GOP header\n");
 
@@ -573,39 +573,39 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 		// do the padding.
 
 		// Flush buffered cc blocks before doing the housekeeping
-		if (ctx->has_ccdata_buffered)
+		if (dec_ctx->has_ccdata_buffered)
 		{
-			process_hdcc(ctx, sub);
+			process_hdcc(enc_ctx, dec_ctx, sub);
 		}
 
 		// Last GOPs pulldown frames
-		if ((ctx->current_pulldownfields>0) != (ctx->pulldownfields>0))
+		if ((dec_ctx->current_pulldownfields>0) != (dec_ctx->pulldownfields>0))
 		{
-			ctx->current_pulldownfields = ctx->pulldownfields;
-			debug("Pulldown: %s", (ctx->pulldownfields ? "on" : "off"));
-			if (ctx->pulldownfields)
-				debug(" - %u fields in last GOP", ctx->pulldownfields);
+			dec_ctx->current_pulldownfields = dec_ctx->pulldownfields;
+			debug("Pulldown: %s", (dec_ctx->pulldownfields ? "on" : "off"));
+			if (dec_ctx->pulldownfields)
+				debug(" - %u fields in last GOP", dec_ctx->pulldownfields);
 			debug("\n");
 		}
-		ctx->pulldownfields = 0;
+		dec_ctx->pulldownfields = 0;
 
 		// Report synchronization jumps between GOPs. Warn if there
 		// are 20% or more deviation.
 		if ( (ccx_options.debug_mask & CCX_DMT_TIME)
 				&& ((gtc.ms - gop_time.ms // more than 20% longer
-						> ctx->frames_since_last_gop*1000.0/current_fps*1.2)
+						> dec_ctx->frames_since_last_gop*1000.0/current_fps*1.2)
 					||
 					(gtc.ms - gop_time.ms // or 20% shorter
-					 < ctx->frames_since_last_gop*1000.0/current_fps*0.8))
+					 < dec_ctx->frames_since_last_gop*1000.0/current_fps*0.8))
 				&& first_gop_time.inited )
 		{
 			mprint("\rWarning: Jump in GOP timing.\n");
 			mprint("  (old) %s",
 					print_mstime_static(gop_time.ms));
 			mprint("  +  %s (%uF)",
-					print_mstime_static((LLONG) (ctx->frames_since_last_gop
+					print_mstime_static((LLONG) (dec_ctx->frames_since_last_gop
 							*1000.0/current_fps)),
-					ctx->frames_since_last_gop);
+					dec_ctx->frames_since_last_gop);
 			mprint("  !=  (new) %s\n",
 					print_mstime_static(gtc.ms));
 		}
@@ -618,38 +618,38 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 			// need the length of all frames.
 			if ( total_frames_count == 0 )
 			{   // If this is the first frame there cannot be an offset
-				ctx->timing->fts_fc_offset = 0;
+				dec_ctx->timing->fts_fc_offset = 0;
 				// first_gop_time.ms stays unchanged
 			}
 			else
 			{
-				ctx->timing->fts_fc_offset = (LLONG) ((total_frames_count+1)
+				dec_ctx->timing->fts_fc_offset = (LLONG) ((total_frames_count+1)
 						*1000.0/current_fps);
 				// Compensate for those written before
-				first_gop_time.ms -= ctx->timing->fts_fc_offset;
+				first_gop_time.ms -= dec_ctx->timing->fts_fc_offset;
 			}
 
 			dbg_print(CCX_DMT_TIME, "\nFirst GOP time: %02u:%02u:%02u:%03u %+lldms\n",
 					gtc.time_code_hours,
 					gtc.time_code_minutes, gtc.time_code_seconds,
 					(unsigned) (1000.0*gtc.time_code_pictures/current_fps),
-					ctx->timing->fts_fc_offset);
+					dec_ctx->timing->fts_fc_offset);
 		}
 
 		gop_time = gtc;
 
-		ctx->frames_since_last_gop=0;
+		dec_ctx->frames_since_last_gop=0;
 		// Indicate that we read a gop header (since last frame number 0)
-		ctx->saw_gop_header = 1;
+		dec_ctx->saw_gop_header = 1;
 
 		// If we use GOP timing, reconstruct the PTS from the GOP
 		if (ccx_options.use_gop_as_pts==1)
 		{
-			set_current_pts(ctx->timing, gtc.ms*(MPEG_CLOCK_FREQ/1000));
-			ctx->timing->current_tref = 0;
+			set_current_pts(dec_ctx->timing, gtc.ms*(MPEG_CLOCK_FREQ/1000));
+			dec_ctx->timing->current_tref = 0;
 			frames_since_ref_time = 0;
-			set_fts(ctx->timing);
-			fts_at_gop_start = get_fts_max(ctx->timing);
+			set_fts(dec_ctx->timing);
+			fts_at_gop_start = get_fts_max(dec_ctx->timing);
 		}
 		else
 		{
@@ -658,14 +658,14 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 			// next GOP.
 			// This effect will also lead to captions being one GOP early
 			// for DVD captions.
-			fts_at_gop_start = get_fts_max(ctx->timing) + (LLONG) (1000.0/current_fps);
+			fts_at_gop_start = get_fts_max(dec_ctx->timing) + (LLONG) (1000.0/current_fps);
 		}
 
 		if (ccx_options.debug_mask & CCX_DMT_TIME)
 		{
 			dbg_print(CCX_DMT_TIME, "\nNew GOP:\n");
 			dbg_print(CCX_DMT_TIME, "\nDrop frame flag: %u:\n", drop_frame_flag);
-			print_debug_timing(ctx->timing);
+			print_debug_timing(dec_ctx->timing);
 		}
 	}
 
@@ -677,7 +677,7 @@ static int gop_header(struct lib_cc_decode *ctx, struct bitstream *esstream, str
 // If a bitstream syntax problem occurred the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
-static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, struct cc_subtitle *sub)
+static int read_pic_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
 	char frame_type_to_char[] = { '?', 'I', 'P','B', 'D', '?', '?','?' };
 	debug("Read PIC Info\n");
@@ -691,8 +691,8 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 	// after getting more.
 	unsigned char *pic_info_start = esstream->pos;
 
-	pic_header(ctx, esstream);
-	pic_coding_ext(ctx, esstream);
+	pic_header(dec_ctx, esstream);
+	pic_coding_ext(dec_ctx, esstream);
 
 	if (esstream->error)
 		return 0;
@@ -705,36 +705,36 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 
 	// A new anchor frame - flush buffered caption data. Might be flushed
 	// in GOP header already.
-	if (ctx->picture_coding_type==CCX_FRAME_TYPE_I_FRAME || ctx->picture_coding_type==CCX_FRAME_TYPE_P_FRAME)
+	if (dec_ctx->picture_coding_type==CCX_FRAME_TYPE_I_FRAME || dec_ctx->picture_coding_type==CCX_FRAME_TYPE_P_FRAME)
 	{
-		if (((ctx->picture_structure != 0x1) && (ctx->picture_structure != 0x2)) ||
-				(ctx->temporal_reference != ctx->timing->current_tref))
+		if (((dec_ctx->picture_structure != 0x1) && (dec_ctx->picture_structure != 0x2)) ||
+				(dec_ctx->temporal_reference != dec_ctx->timing->current_tref))
 		{
 			// NOTE: process_hdcc() needs to be called before set_fts() as it
 			// uses fts_now to re-create the timeline !!!!!
-			if (ctx->has_ccdata_buffered)
+			if (dec_ctx->has_ccdata_buffered)
 			{
-				process_hdcc(ctx, sub);
+				process_hdcc(enc_ctx, dec_ctx, sub);
 			}
-			anchor_hdcc(ctx, ctx->temporal_reference);
+			anchor_hdcc(dec_ctx, dec_ctx->temporal_reference);
 		}
 	}
 
-	ctx->timing->current_tref = ctx->temporal_reference;
-	ctx->timing->current_picture_coding_type = ctx->picture_coding_type;
+	dec_ctx->timing->current_tref = dec_ctx->temporal_reference;
+	dec_ctx->timing->current_picture_coding_type = dec_ctx->picture_coding_type;
 
 	// We mostly use PTS, but when the GOP mode is enabled do not set
 	// the FTS time here.
 	if (ccx_options.use_gop_as_pts!=1)
 	{
-		set_fts(ctx->timing); // Initialize fts
+		set_fts(dec_ctx->timing); // Initialize fts
 	}
 	/*
-	dbg_print(CCX_DMT_VIDES, "  frametype: %d (%c) t:%d r:%d p:%d", ctx->picture_coding_type, 
-		frame_type_to_char[ctx->picture_coding_type], ctx->top_field_first,
-			ctx->repeat_first_field, ctx->progressive_frame);
-	dbg_print(CCX_DMT_VIDES, "  FTS: %lld  (%s)\n", ctx->timing->current_pts, 
-		print_mstime_static(get_fts(ctx->timing, ctx->current_field)));
+	dbg_print(CCX_DMT_VIDES, "  frametype: %d (%c) t:%d r:%d p:%d", dec_ctx->picture_coding_type,
+		frame_type_to_char[dec_ctx->picture_coding_type], dec_ctx->top_field_first,
+			dec_ctx->repeat_first_field, dec_ctx->progressive_frame);
+	dbg_print(CCX_DMT_VIDES, "  FTS: %lld  (%s)\n", dec_ctx->timing->current_pts,
+		print_mstime_static(get_fts(dec_ctx->timing, dec_ctx->current_field)));
 		*/
 
 	// Set min_pts/sync_pts according to the current time stamp.
@@ -744,65 +744,65 @@ static int read_pic_info(struct lib_cc_decode *ctx, struct bitstream *esstream, 
 	// header. Use the current FTS values as reference.
 	// Note: If a GOP header was present the reference time is from
 	// the beginning of the GOP, otherwise it is now.
-	if(ctx->temporal_reference == 0)
+	if(dec_ctx->temporal_reference == 0)
 	{
-		ctx->last_gop_length = ctx->maxtref + 1;
-		ctx->maxtref = ctx->temporal_reference;
+		dec_ctx->last_gop_length = dec_ctx->maxtref + 1;
+		dec_ctx->maxtref = dec_ctx->temporal_reference;
 
 		// frames_since_ref_time is used in set_fts()
 
-		if( ctx->saw_gop_header )
+		if( dec_ctx->saw_gop_header )
 		{
 			// This time (fts_at_gop_start) that was set in the
 			// GOP header and it might be off by one GOP. See the comment there.
-			frames_since_ref_time = ctx->frames_since_last_gop; // Should this be 0?
+			frames_since_ref_time = dec_ctx->frames_since_last_gop; // Should this be 0?
 		}
 		else
 		{
 			// No GOP header, use the current values
-			fts_at_gop_start = get_fts(ctx->timing, ctx->current_field);
+			fts_at_gop_start = get_fts(dec_ctx->timing, dec_ctx->current_field);
 			frames_since_ref_time = 0;
 		}
 
 		if (ccx_options.debug_mask & CCX_DMT_TIME)
 		{
 			dbg_print(CCX_DMT_TIME, "\nNew temporal reference:\n");
-			print_debug_timing(ctx->timing);
+			print_debug_timing(dec_ctx->timing);
 		}
 
-		ctx->saw_gop_header = 0; // Reset the value
+		dec_ctx->saw_gop_header = 0; // Reset the value
 	}
 
-	if ( !ctx->saw_gop_header && ctx->picture_coding_type==CCX_FRAME_TYPE_I_FRAME )
+	if ( !dec_ctx->saw_gop_header && dec_ctx->picture_coding_type==CCX_FRAME_TYPE_I_FRAME )
 	{
 		// A new GOP begins with an I-frame. Lets hope there are
 		// never more than one per GOP
-		ctx->frames_since_last_gop = 0;
+		dec_ctx->frames_since_last_gop = 0;
 	}
 
 	// Set maxtref
-	if( ctx->temporal_reference > ctx->maxtref ) {
-		ctx->maxtref = ctx->temporal_reference;
-		if (ctx->maxtref + 1 > ctx->max_gop_length)
-			ctx->max_gop_length = ctx->maxtref + 1;
+	if( dec_ctx->temporal_reference > dec_ctx->maxtref ) {
+		dec_ctx->maxtref = dec_ctx->temporal_reference;
+		if (dec_ctx->maxtref + 1 > dec_ctx->max_gop_length)
+			dec_ctx->max_gop_length = dec_ctx->maxtref + 1;
 	}
 
 	unsigned extraframe = 0;
-	if (ctx->repeat_first_field)
+	if (dec_ctx->repeat_first_field)
 	{
-		ctx->pulldownfields++;
-		ctx->total_pulldownfields++;
-		if ( ctx->current_progressive_sequence || !(ctx->total_pulldownfields%2) )
+		dec_ctx->pulldownfields++;
+		dec_ctx->total_pulldownfields++;
+		if ( dec_ctx->current_progressive_sequence || !(dec_ctx->total_pulldownfields%2) )
 			extraframe = 1;
-		if ( ctx->current_progressive_sequence && ctx->top_field_first )
+		if ( dec_ctx->current_progressive_sequence && dec_ctx->top_field_first )
 			extraframe = 2;
 		dbg_print(CCX_DMT_VIDES, "Pulldown: total pd fields: %d - %d extra frames\n",
-				ctx->total_pulldownfields, extraframe);
+				dec_ctx->total_pulldownfields, extraframe);
 	}
 
-	ctx->total_pulldownframes += extraframe;
+	dec_ctx->total_pulldownframes += extraframe;
 	total_frames_count += 1+extraframe;
-	ctx->frames_since_last_gop += 1+extraframe;
+	dec_ctx->frames_since_last_gop += 1+extraframe;
 	frames_since_ref_time += 1+extraframe;
 
 	debug("Read PIC Info - processed\n\n");
@@ -925,7 +925,7 @@ static int pic_coding_ext(struct lib_cc_decode *ctx, struct bitstream *esstream)
 // If a bitstream syntax problem occurred the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
-static int read_eau_info(struct lib_cc_decode* ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
+static int read_eau_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode* dec_ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
 {
 	debug("Read Extension and User Info\n");
 
@@ -939,7 +939,7 @@ static int read_eau_info(struct lib_cc_decode* ctx, struct bitstream *esstream, 
 	// user data is not evaluated twice. Should the function run out of
 	// data it will make sure that esstream points to where we want to
 	// continue after getting more.
-	if( !extension_and_user_data(ctx, esstream, udtype, sub) )
+	if( !extension_and_user_data(enc_ctx, dec_ctx, esstream, udtype, sub) )
 	{
 		if (esstream->error)
 			debug("\nWarning: Retry while reading Extension and User Data!\n");
@@ -958,7 +958,7 @@ static int read_eau_info(struct lib_cc_decode* ctx, struct bitstream *esstream, 
 // Return TRUE if the data parsing finished, FALSE otherwise.
 // estream->pos is advanced. Data is only processed if esstream->error
 // is FALSE, parsing can set esstream->error to TRUE.
-static int extension_and_user_data(struct lib_cc_decode *ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
+static int extension_and_user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
 {
 	debug("Extension and user data(%d)\n", udtype);
 
@@ -1010,7 +1010,7 @@ static int extension_and_user_data(struct lib_cc_decode *ctx, struct bitstream *
 			{
 				struct bitstream ustream;
 				init_bitstream(&ustream, dstart, esstream->pos);
-				user_data(ctx, &ustream, udtype, sub);
+				user_data(enc_ctx, dec_ctx, &ustream, udtype, sub);
 			}
 			else
 			{

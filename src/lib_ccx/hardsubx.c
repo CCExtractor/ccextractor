@@ -1,7 +1,6 @@
 #ifdef ENABLE_HARDSUBX
+#include <leptonica/allheaders.h>
 #include "hardsubx.h"
-#include "tesseract/capi.h"
-#include "allheaders.h"
 #include "ocr.h"
 #include "utility.h"
 

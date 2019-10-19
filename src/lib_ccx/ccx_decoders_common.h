@@ -6,6 +6,7 @@
 #include "ccx_common_structs.h"
 #include "ccx_decoders_structs.h"
 #include "ccx_common_option.h"
+#include "ccx_encoders_common.h"
 
 extern uint64_t utc_refvalue; // UTC referential value
 
@@ -18,7 +19,7 @@ unsigned int get_decoder_str_basic(unsigned char *buffer, unsigned char *line, i
 void ccx_decoders_common_settings_init(LLONG subs_delay, enum ccx_output_format output_format);
 
 int validate_cc_data_pair (unsigned char *cc_data_pair);
-int process_cc_data (struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count, struct cc_subtitle *sub);
+int process_cc_data (struct encoder_ctx *enc_ctx, struct lib_cc_decode *ctx, unsigned char *cc_data, int cc_count, struct cc_subtitle *sub);
 int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle *sub);
 void printdata (struct lib_cc_decode *ctx, const unsigned char *data1, int length1,
                 const unsigned char *data2, int length2, struct cc_subtitle *sub);

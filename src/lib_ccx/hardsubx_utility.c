@@ -7,7 +7,7 @@
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
-#include "allheaders.h"
+#include <leptonica/allheaders.h>
 #include "hardsubx.h"
 
 int64_t convert_pts_to_ms(int64_t pts, AVRational time_base)

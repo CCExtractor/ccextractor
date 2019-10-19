@@ -93,6 +93,7 @@
     <ClInclude Include="..\src\lib_ccx\ccx_decoders_xds.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_common.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_helpers.h" />
+    <ClInclude Include="..\src\lib_ccx\ccx_encoders_mcc.h" />
     <ClInclude Include="..\src\lib_ccx\disable_warnings.h" />
     <ClInclude Include="..\src\lib_ccx\dvb_subtitle_decoder.h" />
     <ClInclude Include="..\src\lib_ccx\lib_ccx.h" />
@@ -226,6 +227,7 @@
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_curl.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_g608.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_helpers.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_mcc.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_python.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_sami.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_smptett.c" />
@@ -546,7 +548,7 @@ xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|Win32'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>..\src\freetype\include;..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\libpng;..\src\zlib;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\freetype\include;..\src\win_spec_incld;..\src\lib_ccx;..\src\lib_hash;..\src\zvbi;..\src\protobuf-c;..\src\gpacmp4;..\src\win_iconv;..\src\libpng;..\src\zlib;..\src;..\src\windows\libs\include;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
