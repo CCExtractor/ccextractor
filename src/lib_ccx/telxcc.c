@@ -528,6 +528,9 @@ uint16_t bcd_page_to_int (uint16_t bcd)
 
 void telx_case_fix (struct TeletextCtx *context)
 {
+	if (context->page_buffer_cur == NULL)
+		return;
+
 	//Capitalizing first letter of every sentence
 	int line_len = strlen(context->page_buffer_cur);
 	for(int i = 0; i < line_len; i++)
