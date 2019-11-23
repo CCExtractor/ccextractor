@@ -214,7 +214,7 @@ int write_webvtt_header(struct encoder_ctx *context)
 		int used;
 		unsigned h1, m1, s1, ms1;
 		millis_to_time(context->timing->sync_pts2fts_fts, &h1, &m1, &s1, &ms1);
-		sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:%ld, LOCAL %02u:%02u:%02u.%03u\r\n\n",
+		sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:%ld,LOCAL:%02u:%02u:%02u.%03u\r\n\n",
 			context->timing->sync_pts2fts_pts,
 			h1, m1, s1, ms1);
 		used = encode_line(context, context->buffer, (unsigned char *)header_string);
