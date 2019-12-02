@@ -42,6 +42,8 @@ More usage information can be found on our website:
 
 You can also find the list of parameters and their brief description by running `ccextractor` without any arguments.
 
+You can find sample files on [our website](https://www.ccextractor.org/public:general:tvsamples) website to test the software.
+
 ## Compiling CCExtractor
 
 To learn more about how to compile and build CCExtractor for your platform check the [compilation guide](https://github.com/CCExtractor/ccextractor/blob/master/docs/COMPILATION.MD).
