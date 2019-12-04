@@ -206,8 +206,6 @@ int api_start(struct ccx_s_options api_options)
 #ifdef ENABLE_FFMPEG
             case CCX_SM_FFMPEG:
 #endif
-                if (!api_options.use_gop_as_pts) // If !0 then the user selected something
-                    api_options.use_gop_as_pts = 0;
                 if (api_options.ignore_pts_jumps)
                     ccx_common_timing_settings.disable_sync_check = 1;
                 mprint("\rAnalyzing data in general mode\n");
