@@ -462,7 +462,7 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 	return 1;
 }
 
-static int ccx_strstr_ignorespace(const unsigned char *str1, const unsigned char *str2)
+static int ccx_strstr_ignorespace(const char *str1, const char *str2)
 {
 	int i;
 	for( i = 0; str2[i] != '\0'; i++)
@@ -481,7 +481,7 @@ static int ccx_strstr_ignorespace(const unsigned char *str1, const unsigned char
  * If ISDB is configured with no rollup then only text which has gone
  * off site should be returned
  */
-static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
+static int get_text(ISDBSubContext *ctx, char *buffer, int len)
 {
 	ISDBSubLayout *ls = &ctx->current_state.layout_state;
 	struct ISDBText *text = NULL;
@@ -1294,7 +1294,7 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
 	int tmd;
 	int len;
 	int ret;
-	unsigned char buffer[1024] = "";
+	char buffer[1024] = "";
 
 	tmd = *buf >> 6;
 	buf++;
@@ -1349,12 +1349,21 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 		isdb_log("ISDB group B\n");
 	}
 
-	isdb_log("ISDB (Data group) version %d\n",version);
+	// Cmake gives a warning that version is unused, though it isn't.
+	// Probably happens due to isdb_log taking arguments and doing nothing with it
+	// (When DEBUG is not defined) 
+	//
+	// Always true check helps to resolve it
+	if (version || 1) 
+		isdb_log("ISDB (Data group) version %d\n",version);
 
 	buf++;
 	link_number = *buf++;
 	last_link_number = *buf++;
-	isdb_log("ISDB (Data group) link_number %d last_link_number %d\n", link_number, last_link_number);
+
+	// The same problem
+	if (link_number || last_link_number || 1)
+		isdb_log("ISDB (Data group) link_number %d last_link_number %d\n", link_number, last_link_number);
 
 	group_size = RB16(buf);
 	buf += 2;
