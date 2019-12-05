@@ -1,3 +1,10 @@
+0.90 (2019-12-05)
+-----------------
+- New: Add a few comments.
+- Fix: Correct if-clauses (missing or misplaced brackets).
+- Fix: Comment out some unused code.
+- Fix: Resolve bunch of compilation's warnings.
+
 0.89 (TBD)
 - New: Added support to output captions to MCC file (#733).
 - Fix: ccx_demuxer_mxf.c: Parse framerate from MXF captions to fix caption timings.
