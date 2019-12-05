@@ -671,8 +671,8 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 				was_proc = 1;
 				if (ctx->cur_xds_payload_length < 5) // We need 2 data bytes
 					break;
-				if (~ctx->cur_xds_payload[2] & 20 || ~ctx->cur_xds_payload[3] & 20) // Bit 6 must be 1 
-					break; // How do you check for bit 6 being 1 with 20? I feel so stupid not getting it -_-
+				if (~ctx->cur_xds_payload[2] & 0x20 || ~ctx->cur_xds_payload[3] & 0x20) // Bit 6 must be 1 
+					break; // Should it be inverted? 
 
 				/* CEA-608-B: The starting line is computed by adding 22 to the decimal number
 				   represented by bits S0 to S5. The ending line is computing by subtracting

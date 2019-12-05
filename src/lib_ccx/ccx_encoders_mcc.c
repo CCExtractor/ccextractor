@@ -29,7 +29,7 @@ static void write_string( int fh, char* string );
 static void random_chars(char buffer[], int len);
 static void uuid4(char* buffer);
 
-void mcc_encode_cc_data( struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count ) {
+boolean mcc_encode_cc_data( struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count ) {
     ASSERT(cc_data);
     ASSERT(enc_ctx);
     ASSERT(dec_ctx);
@@ -94,6 +94,8 @@ void mcc_encode_cc_data( struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_
 
     free(compressed_data_buffer);
 
+    return true; // Needed to avoid warning 
+    // With void function type - throws an error
 }  // mcc_encode_cc_data()
 
 static void generate_mcc_header( int fh, int fr_code, int dropframe_flag ) {

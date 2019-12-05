@@ -1331,9 +1331,11 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 	ISDBSubContext *ctx = codec_ctx;
 	const uint8_t *buf_pivot = buf;
 	int id = (*buf >> 2);
+#ifdef DEBUG // Fixex unused variables waring
 	int version = (*buf & 2);
 	int link_number = 0;
 	int last_link_number = 0;
+#endif
 	int group_size = 0;
 	int ret = 0;
 
@@ -1347,21 +1349,19 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 		isdb_log("ISDB group B\n");
 	}
 
-	// Cmake gives a warning that version is unused, though it isn't.
-	// Probably happens due to isdb_log taking arguments and doing nothing with it
-	// (When DEBUG is not defined) 
-	//
-	// Always true check helps to resolve it
-	if (version || 1) 
-		isdb_log("ISDB (Data group) version %d\n",version);
-
 	buf++;
+
+#ifdef DEBUG
+	isdb_log("ISDB (Data group) version %d\n",version);
+
 	link_number = *buf++;
 	last_link_number = *buf++;
 
-	// The same problem
-	if (link_number || last_link_number || 1)
-		isdb_log("ISDB (Data group) link_number %d last_link_number %d\n", link_number, last_link_number);
+	isdb_log("ISDB (Data group) link_number %d last_link_number %d\n", link_number, last_link_number);
+#else
+	buf++;
+	buf++;
+#endif
 
 	group_size = RB16(buf);
 	buf += 2;
