@@ -6,6 +6,7 @@
 - Fix: Resolve bunch of compilation's warnings.
 
 0.89 (TBD)
+-----------------
 - New: Added support to output captions to MCC file (#733).
 - Fix: ccx_demuxer_mxf.c: Parse framerate from MXF captions to fix caption timings.
 - Fix: hardsubx_decoder.c: Fix memory leaks using Leptonica API.
