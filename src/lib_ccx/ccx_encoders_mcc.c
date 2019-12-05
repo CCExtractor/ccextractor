@@ -29,7 +29,7 @@ static void write_string( int fh, char* string );
 static void random_chars(char buffer[], int len);
 static void uuid4(char* buffer);
 
-boolean mcc_encode_cc_data( struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count ) {
+void mcc_encode_cc_data( struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count ) {
     ASSERT(cc_data);
     ASSERT(enc_ctx);
     ASSERT(dec_ctx);
@@ -576,7 +576,6 @@ static void random_chars(char buffer[], int len) {
 }
 
 static void uuid4(char* buffer) {
-    char* c = buffer;
     int i = 0;
     random_chars(buffer + i, 8);
     i+=8;
