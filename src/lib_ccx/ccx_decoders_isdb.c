@@ -182,7 +182,7 @@ struct ISDBPos{
 
 struct ISDBText
 {
-	char *buf;
+	unsigned char *buf; // All the buffers in the project are usigned but it. Why?
 	size_t len;
 	size_t used;
 	struct ISDBPos pos;
@@ -357,9 +357,7 @@ static struct ISDBText *allocate_text_node(ISDBSubLayout *ls)
 static int reserve_buf(struct ISDBText *text, size_t len)
 {
 	size_t blen;
-	char *ptr; 
-	// What is the reason for using unsigned char *ptr with char *buffer?
-	// Should a buffer be unsigned or a ptr be signed ?
+	unsigned char *ptr; 
 
 	if (text->len >= text->used + len)
 		return CCX_OK;
@@ -462,7 +460,7 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 	return 1;
 }
 
-static int ccx_strstr_ignorespace(const char *str1, const char *str2)
+static int ccx_strstr_ignorespace(const unsigned char *str1, const unsigned char *str2)
 {
 	int i;
 	for( i = 0; str2[i] != '\0'; i++)
@@ -481,7 +479,7 @@ static int ccx_strstr_ignorespace(const char *str1, const char *str2)
  * If ISDB is configured with no rollup then only text which has gone
  * off site should be returned
  */
-static int get_text(ISDBSubContext *ctx, char *buffer, int len)
+static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 {
 	ISDBSubLayout *ls = &ctx->current_state.layout_state;
 	struct ISDBText *text = NULL;
