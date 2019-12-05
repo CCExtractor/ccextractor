@@ -21,7 +21,13 @@
 #define CANVAS_WIDTH 600
 
 FT_Library  ft_library = NULL;
+
+// The FT_Face object handles typographical information
+// The different face variables are for the regular, bold, italic, etc. fonts
 FT_Face	 face = NULL;
+FT_Face	 faceb = NULL;
+FT_Face	 facei = NULL;
+FT_Face	 facez = NULL;
 
 struct spupng_t
 {
@@ -608,26 +614,71 @@ void black_background(struct pixel_t *target, int target_w, int x, int y, int w,
 // Return 1 on success.
 int spupng_export_string2png(struct spupng_t *sp, uint32_t *str, FILE* output)
 {
+	int error;
 	// Init FreeType if it hasn't been inited yet.
 	if (ft_library==NULL){
-		int error;
+
 		if (error = FT_Init_FreeType(&ft_library))
 		{
 			mprint("\nFailed to init freetype, error code: %d\n", error);
 			return 0;
 		}
-		if (error = FT_New_Face(ft_library, ccx_options.enc_cfg.render_font, 0, &face))
-		{
-			mprint("\n\nFailed to init freetype when trying to init face, error code: %d\n", error);
-			mprint("It's usually caused by the specified font is not found: %s \n", ccx_options.enc_cfg.render_font);
-			mprint("If this is the case, please use -font to manually specify a font that exists. \n\n");
-			return 0;
-		}
-		if (error = FT_Set_Pixel_Sizes(face, 0, FONT_SIZE))
-		{
-			mprint("\nFailed to init freetype when trying to set size, error code: %d\n", error);
-			return 0;
-		}
+	}
+
+	// Init regular font
+	if (error = FT_New_Face(ft_library, ccx_options.enc_cfg.render_font, 0, &face))
+	{
+		mprint("\n\nFailed to init freetype when trying to init face, error code: %d\n", error);
+		mprint("It's usually caused by the specified font is not found: %s \n", ccx_options.enc_cfg.render_font);
+		mprint("If this is the case, please use -font to manually specify a font that exists. \n\n");
+		return 0;
+	}
+	if (error = FT_Set_Pixel_Sizes(face, 0, FONT_SIZE))
+	{
+		mprint("\nFailed to init freetype when trying to set size, error code: %d\n", error);
+		return 0;
+	}
+
+	// Init bold font
+	if (error = FT_New_Face(ft_library, ccx_options.enc_cfg.render_font_bold, 0, &faceb))
+	{
+		mprint("\n\nFailed to init freetype when trying to init face, error code: %d\n", error);
+		mprint("It's usually caused by the specified font is not found: %s \n", ccx_options.enc_cfg.render_font_bold);
+		mprint("If this is the case, please use -font to manually specify a font that exists. \n\n");
+		return 0;
+	}
+	if (error = FT_Set_Pixel_Sizes(faceb, 0, FONT_SIZE))
+	{
+		mprint("\nFailed to init freetype when trying to set size, error code: %d\n", error);
+		return 0;
+	}
+
+	// Init italics font
+	if (error = FT_New_Face(ft_library, ccx_options.enc_cfg.render_font_italics, 0, &facei))
+	{
+		mprint("\n\nFailed to init freetype when trying to init face, error code: %d\n", error);
+		mprint("It's usually caused by the specified font is not found: %s \n", ccx_options.enc_cfg.render_font_italics);
+		mprint("If this is the case, please use -font to manually specify a font that exists. \n\n");
+		return 0;
+	}
+	if (error = FT_Set_Pixel_Sizes(facei, 0, FONT_SIZE))
+	{
+		mprint("\nFailed to init freetype when trying to set size, error code: %d\n", error);
+		return 0;
+	}
+
+	// Init italics and bold font
+	if (error = FT_New_Face(ft_library, ccx_options.enc_cfg.render_font_italics_bold, 0, &facez))
+	{
+		mprint("\n\nFailed to init freetype when trying to init face, error code: %d\n", error);
+		mprint("It's usually caused by the specified font is not found: %s \n", ccx_options.enc_cfg.render_font_italics_bold);
+		mprint("If this is the case, please use -font to manually specify a font that exists. \n\n");
+		return 0;
+	}
+	if (error = FT_Set_Pixel_Sizes(facez, 0, FONT_SIZE))
+	{
+		mprint("\nFailed to init freetype when trying to set size, error code: %d\n", error);
+		return 0;
 	}
 
 	int canvas_width = CANVAS_WIDTH;
@@ -650,13 +701,74 @@ int spupng_export_string2png(struct spupng_t *sp, uint32_t *str, FILE* output)
 	
 	FT_GlyphSlot slot = face->glyph;
 
+	// For parsing tags
+	int bracket = 0;
+	int end = 0;
+	int bold = 0;
+	int italics = 0;
+	FT_Face current_face = face;
+
 	// Render characters to image
 	for (uint32_t *iter = str; *iter; ++iter)
 	{
 		uint32_t current_char_code = BigtoLittle32(*iter); // Convert big-endian and little-endian
 
-		if (FT_Load_Char(face, current_char_code, FT_LOAD_RENDER)) continue; // ignore errors
+		// Parse tags like <i> and <b>
+		if (end) {
+			if (current_char_code == '>') {
+				end = 0;
+				bold = 0;
+				italics = 0;
+				bracket = 0;
+				current_face = face;
+			}
+			continue;
+		}
+		if (bracket) {
+			switch (current_char_code)
+			{
+			case 'i':
+				italics = 1;
+
+				// Set to bold and italics
+				if (bold) {
+					current_face = facez;
+				}
+
+				// Set only to italics
+				else {
+					current_face = facei;
+				}
+				break;
+			case 'b':
+				bold = 1;
+
+				// Set to both bold and italics
+				if (italics)
+					current_face = facez;
+				// Set only to bold
+				else
+					current_face = faceb;
+				break;
+			case '/':
+				end = 1;
+				break;
+			case '>':
+				bracket = 0;
+				break;
+			}
+			continue;
+		}
+
+		if (current_char_code == '<') {
+			bracket = 1;
+			continue;
+		}
+
+		slot = current_face->glyph;
+		if (FT_Load_Char(current_face, current_char_code, FT_LOAD_RENDER)) continue; // ignore errors
 		unsigned char* bitmap = slot->bitmap.buffer;
+
 
 		// Handle '\n'
 		if (current_char_code == '\n') {

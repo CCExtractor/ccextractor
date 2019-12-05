@@ -26,10 +26,20 @@
 
 #ifdef _WIN32
 #define DEFAULT_FONT_PATH "C:\\Windows\\Fonts\\calibri.ttf"
+#define DEFAULT_FONT_PATH_ITALICS "C:\\Windows\\Fonts\\calibrii.ttf"
+#define DEFAULT_FONT_PATH_BOLD "C:\\Windows\\Fonts\\calibrib.ttf"
+#define DEFAULT_FONT_PATH_ITALICS_BOLD "C:\\Windows\\Fonts\\calibriz.ttf"
 #elif __APPLE__ // MacOS
 #define DEFAULT_FONT_PATH "/System/Library/Fonts/Helvetica.ttc"
+#define DEFAULT_FONT_PATH_ITALICS "/System/Library/Fonts/Helvetica-Oblique.ttf"
+#define DEFAULT_FONT_PATH_BOLD "/System/Library/Fonts/Helvetica-Bold.ttf"
+#define DEFAULT_FONT_PATH_ITALICS_BOLD "/System/Library/Fonts/Helvetica-BoldOblique.ttf"
 #else // Assume Linux
 #define DEFAULT_FONT_PATH "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"
+#define DEFAULT_FONT_PATH_ITALICS "/usr/share/fonts/truetype/noto/NotoSans-Italic.ttf"
+#define DEFAULT_FONT_PATH_BOLD "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf"
+#define DEFAULT_FONT_PATH_ITALICS_BOLD "/usr/share/fonts/truetype/noto/NotoSans-BoldItalic.ttf"
+
 #endif
 
 static int inputfile_capacity=0;
@@ -2572,6 +2582,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	opt->enc_cfg.gui_mode_reports = opt->gui_mode_reports;
 	if(opt->enc_cfg.render_font==NULL)
 		opt->enc_cfg.render_font = DEFAULT_FONT_PATH;
+	if (opt->enc_cfg.render_font_italics == NULL)
+		opt->enc_cfg.render_font_italics = DEFAULT_FONT_PATH_ITALICS;
+	if (opt->enc_cfg.render_font_bold == NULL)
+		opt->enc_cfg.render_font_bold = DEFAULT_FONT_PATH_BOLD;
+	if (opt->enc_cfg.render_font_italics_bold == NULL)
+		opt->enc_cfg.render_font_italics_bold = DEFAULT_FONT_PATH_ITALICS_BOLD;
 	if(opt->output_filename && opt->multiprogram == CCX_FALSE)
 		opt->enc_cfg.output_filename = strdup(opt->output_filename);
 	else
