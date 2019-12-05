@@ -1089,13 +1089,12 @@ vbi_bool
 vbi3_raw_decoder_debug		(vbi3_raw_decoder *	rd,
 				 vbi_bool		enable)
 {
-	_vbi3_raw_decoder_sp_line *sp_lines;
 	unsigned int n_lines;
 	vbi_bool r;
 
 	assert (NULL != rd);
-
-	sp_lines = NULL;
+	
+	// _vbi3_raw_decoder_sp_line *sp_lines = NULL; /* Currently unused */
 	r = CCX_TRUE;
 
 	rd->debug = !!enable;

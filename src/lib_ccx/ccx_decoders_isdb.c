@@ -357,7 +357,9 @@ static struct ISDBText *allocate_text_node(ISDBSubLayout *ls)
 static int reserve_buf(struct ISDBText *text, size_t len)
 {
 	size_t blen;
-	unsigned char *ptr;
+	char *ptr; 
+	// What is the reason for using unsigned char *ptr with char *buffer?
+	// Should a buffer be unsigned or a ptr be signed ?
 
 	if (text->len >= text->used + len)
 		return CCX_OK;
@@ -485,14 +487,15 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 	struct ISDBText *text = NULL;
 	struct ISDBText *sb_text = NULL;
 	struct ISDBText *sb_temp = NULL;
-	struct ISDBText *wtrepeat_text = NULL;
+
 	//TO keep track we don't over flow in buffer from user
 	int index = 0;
 
 	if (ctx->cfg_no_rollup || (ctx->cfg_no_rollup == ctx->current_state.rollup_mode))
 	// Abhinav95: Forcing -noru to perform deduplication even if stream doesn't honor it
 	{
-		wtrepeat_text = NULL;
+		/* Currently unused */
+		//struct ISDBText *wtrepeat_text = NULL;
 		if (list_empty(&ctx->buffered_text))
 		{
 			list_for_each_entry(text, &ctx->text_list_head, list, struct ISDBText)
@@ -800,9 +803,10 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 	case CSI_CMD_ACPS:
 		isdb_command_log("Command:CSI: ACPS\n");
 		ret = get_csi_params(arg, &p1, &p2);
-		if (ret > 0)
+		if (ret > 0) {
 			ls->acps[0] = p1;
 			ls->acps[1] = p1;
+		}
 		break;
 	default:
 		isdb_log("Command:CSI: Unknown command 0x%x\n", *buf);

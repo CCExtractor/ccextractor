@@ -553,6 +553,12 @@ vbi_raw_decoder_resize		(vbi_raw_decoder *	rd,
 
 		service_set = vbi3_raw_decoder_set_sampling_par
 			(rd3, (vbi_sampling_par *) rd, /* strict */ 0);
+
+		// Service_set is currently unused 
+		// but the function is needed
+		// So there is some virtual stuf to do with it
+		service_set++;
+		service_set -= 1;
 	}
 
 

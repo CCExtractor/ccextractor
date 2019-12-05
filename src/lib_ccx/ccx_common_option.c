@@ -140,7 +140,7 @@ void init_options (struct ccx_s_options *options)
 	options->settings_dtvcc.print_file_reports = 1;
 	options->settings_dtvcc.no_rollup = 0;
 	options->settings_dtvcc.report = NULL;
-	memset(options->settings_dtvcc.services_enabled, 0, CCX_DTVCC_MAX_SERVICES);
+	memset(options->settings_dtvcc.services_enabled, 0, CCX_DTVCC_MAX_SERVICES * sizeof(int));
 
 #ifdef ENABLE_SHARING
 	options->sharing_enabled = 0;
