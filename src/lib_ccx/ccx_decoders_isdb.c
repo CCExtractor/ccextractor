@@ -1292,7 +1292,7 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
 	int tmd;
 	int len;
 	int ret;
-	char buffer[1024] = "";
+	unsigned char buffer[1024] = "";
 
 	tmd = *buf >> 6;
 	buf++;
@@ -1313,7 +1313,7 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
 
 	if (ret > 0)
 	{
-		add_cc_sub_text(sub, buffer, ctx->prev_timestamp, ctx->timestamp, "NA", "ISDB", CCX_ENC_UTF_8);
+		add_cc_sub_text(sub, (char *) buffer, ctx->prev_timestamp, ctx->timestamp, "NA", "ISDB", CCX_ENC_UTF_8);
 		if (sub->start_time == sub->end_time)
 			sub->end_time += 2;
 		ctx->prev_timestamp = ctx->timestamp;
