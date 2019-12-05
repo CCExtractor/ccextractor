@@ -1212,7 +1212,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
             case CCX_OF_SSA:
 				if (!context->startcredits_displayed && context->start_credits_text != NULL)
 					try_to_add_start_credits(context, sub->start_time);
-					wrote_something = write_cc_bitmap_as_ssa(sub, context);
+				wrote_something = write_cc_bitmap_as_ssa(sub, context);
 				break;
 			case CCX_OF_WEBVTT:
 				if (!context->startcredits_displayed && context->start_credits_text != NULL)
