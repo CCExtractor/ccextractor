@@ -44,7 +44,7 @@ struct encoder_cfg
 	char millis_separator;
 	int autodash;        // Add dashes (-) before each speaker automatically?
 	int trim_subs;       // "    Remove spaces at sides?    "
-	int sentence_cap ;   // FIX CASE? = Fix case?
+	int sentence_cap;    // FIX CASE? = Fix case?
 	int splitbysentence; // Split text into complete sentences and prorate time?
 #ifdef WITH_LIBCURL
 	char *curlposturl;   // If out=curl, where do we send the data to?
