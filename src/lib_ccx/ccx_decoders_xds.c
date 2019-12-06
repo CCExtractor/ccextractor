@@ -672,7 +672,7 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 				if (ctx->cur_xds_payload_length < 5) // We need 2 data bytes
 					break;
 				if (~ctx->cur_xds_payload[2] & 0x20 || ~ctx->cur_xds_payload[3] & 0x20) // Bit 6 must be 1 
-					break; // Should it be inverted? 
+					break; // if bit 6 is not 1 - skip invalid data.
 
 				/* CEA-608-B: The starting line is computed by adding 22 to the decimal number
 				   represented by bits S0 to S5. The ending line is computing by subtracting
