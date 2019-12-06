@@ -182,7 +182,7 @@ struct ISDBPos{
 
 struct ISDBText
 {
-	unsigned char *buf; // All the buffers in the project are usigned but it. Why?
+	unsigned char *buf;
 	size_t len;
 	size_t used;
 	struct ISDBPos pos;
@@ -356,8 +356,8 @@ static struct ISDBText *allocate_text_node(ISDBSubLayout *ls)
 
 static int reserve_buf(struct ISDBText *text, size_t len)
 {
-	size_t blen;
-	unsigned char *ptr; 
+	size_t blen = 0;
+	unsigned char *ptr = NULL; 
 
 	if (text->len >= text->used + len)
 		return CCX_OK;
@@ -1331,7 +1331,7 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 	ISDBSubContext *ctx = codec_ctx;
 	const uint8_t *buf_pivot = buf;
 	int id = (*buf >> 2);
-#ifdef DEBUG // Fixex unused variables waring
+#ifdef DEBUG // Fix [-Wunused-variable] when no debug
 	int version = (*buf & 2);
 	int link_number = 0;
 	int last_link_number = 0;
