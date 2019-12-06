@@ -242,7 +242,14 @@ int write_webvtt_header(struct encoder_ctx *context)
 		write (context->out->fh, outline_css_file, strlen(outline_css_file));
 	} else if (ccx_options.use_webvtt_styling) {
 		write(context->out->fh, webvtt_inline_css, strlen(webvtt_inline_css));
-		write(context->out->fh, ccx_options.enc_cfg.line_terminator_lf ? "\n" : "\r\n" , 1);
+		if(ccx_options.enc_cfg.line_terminator_lf == 1) // If -lf parameter is set.
+		{
+			write(context->out->fh, "\n", 1);
+		}
+		else
+		{
+			write(context->out->fh,"\r\n",2);
+		}
 		write(context->out->fh, "##\n", 3);
 		write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 	}
