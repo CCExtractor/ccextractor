@@ -214,11 +214,9 @@ int write_webvtt_header(struct encoder_ctx *context)
 		int used;
 		unsigned h1, m1, s1, ms1;
 		millis_to_time(context->timing->sync_pts2fts_fts, &h1, &m1, &s1, &ms1);
-		sprintf(header_string,
-				ccx_options.enc_cfg.line_terminator_lf ?
-				"X-TIMESTAMP-MAP=MPEGTS:%ld,LOCAL:%02u:%02u:%02u.%03u\n\n" :
-				"X-TIMESTAMP-MAP=MPEGTS:%ld,LOCAL:%02u:%02u:%02u.%03u\r\n\r\n",
-			context->timing->sync_pts2fts_pts, h1, m1, s1, ms1);
+		sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:%ld,LOCAL:%02u:%02u:%02u.%03u%s",
+			context->timing->sync_pts2fts_pts, h1, m1, s1, ms1,
+			ccx_options.enc_cfg.line_terminator_lf ? "\n\n" : "\r\n\r\n");
 		used = encode_line(context, context->buffer, (unsigned char *)header_string);
 		write(context->out->fh, context->buffer, used);
 
@@ -244,14 +242,7 @@ int write_webvtt_header(struct encoder_ctx *context)
 		write (context->out->fh, outline_css_file, strlen(outline_css_file));
 	} else if (ccx_options.use_webvtt_styling) {
 		write(context->out->fh, webvtt_inline_css, strlen(webvtt_inline_css));
-		if(ccx_options.enc_cfg.line_terminator_lf == 1) // If -lf parameter is set.
-		{
-			write(context->out->fh, "\n", 1);
-		}
-		else
-		{
-			write(context->out->fh,"\r\n",2);
-		}
+		write(context->out->fh, ccx_options.enc_cfg.line_terminator_lf ? "\n" : "\r\n" , 1);
 		write(context->out->fh, "##\n", 3);
 		write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 	}
