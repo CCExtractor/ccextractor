@@ -425,7 +425,7 @@ static int write_bom(struct encoder_ctx *ctx, struct ccx_s_write *out)
 }
 
 // Returns -1 on error and 0 on success
-static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_write *out)
+static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_write *out, struct ccx_common_timing_ctx *timing)
 {
 	int used;
 	int header_size = 0;
@@ -485,6 +485,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 					return -1;
 				}
 			}
+			write_webvtt_header(ctx, timing);
 			break;
 		case CCX_OF_SAMI: // This header brought to you by McPoodle's CCASDI
 			//fprintf_encoded (wb->fh, sami_header);
@@ -944,7 +945,7 @@ int reset_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	return init_output_ctx(ctx, cfg);
 }
 
-struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
+struct encoder_ctx *init_encoder(struct encoder_cfg *opt, struct ccx_common_timing_ctx *timing)
 {
 	int ret;
 	int i;
@@ -1042,7 +1043,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->encoded_br_length = encode_line(ctx, ctx->encoded_br, (unsigned char *)"<br>");
 
 	for (i = 0; i < ctx->nb_out; i++)
-		write_subtitle_file_header(ctx, ctx->out + i);
+		write_subtitle_file_header(ctx, ctx->out + i, timing);
 
 	ctx->dtvcc_extract = opt->dtvcc_extract;
 
@@ -1204,7 +1205,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 						if (ccx_options.keep_output_closed && context->out->temporarily_closed)
 						{
 							temporarily_open_output(context->out);
-							write_subtitle_file_header(context, context->out);
+							write_subtitle_file_header(context, context->out, context->timing);
 						}
 						wrote_something = write_cc_buffer_as_simplexml(data, context);
 						if (ccx_options.keep_output_closed)

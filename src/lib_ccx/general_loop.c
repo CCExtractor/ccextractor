@@ -920,7 +920,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 				{
 					struct cap_info *cinfo_video = get_cinfo(ctx->demux_ctx, pid); // Must be pid, not video_pid or DVB crashes (possibly buffer consumption?) - TODO
 					struct lib_cc_decode *dec_ctx_video = update_decoder_list_cinfo(ctx, cinfo_video);
-					enc_ctx = update_encoder_list_cinfo(ctx, cinfo_video);
+					enc_ctx = update_encoder_list_cinfo(ctx, cinfo_video, NULL);
 					struct cc_subtitle *dec_sub_video = &dec_ctx_video->dec_sub;
 					struct demuxer_data *data_node_video = get_data_stream(datalist, video_pid);
 					if (data_node_video)
@@ -949,9 +949,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			}
 
 			cinfo = get_cinfo(ctx->demux_ctx, pid);
-			enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 			dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
-			dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
 
 			if (dec_ctx->timing->min_pts == 0x01FFFFFFFFLL) //if we didn't set the min_pts of the program
 			{
@@ -1022,6 +1020,10 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			}
 			if (data_node->bufferdatatype == CCX_TELETEXT && dec_ctx->private_data) //if we have teletext subs, we set the min_pts here
 				set_tlt_delta(dec_ctx, min_pts);
+
+			enc_ctx = update_encoder_list_cinfo(ctx, cinfo, dec_ctx->timing);
+			dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
+
 			ret = process_data(enc_ctx, dec_ctx, data_node);
 			if (enc_ctx != NULL) {
 				if (enc_ctx->srt_counter || enc_ctx->cea_708_counter || dec_ctx->saw_caption_block || ret == 1)
@@ -1059,7 +1061,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 					data_node = get_data_stream(datalist, cinfo->pid);
 				}
 
-				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
+				enc_ctx = update_encoder_list_cinfo(ctx, cinfo, NULL);
 				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 				dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
 

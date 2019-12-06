@@ -97,7 +97,7 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 
 	// Pass on the processing context to the appropriate functions
 	struct encoder_ctx *enc_ctx;
-	enc_ctx = init_encoder(&ccx_options.enc_cfg);
+	enc_ctx = init_encoder(&ccx_options.enc_cfg, NULL);
 
 	mprint("Beginning burned-in subtitle detection...\n");
 

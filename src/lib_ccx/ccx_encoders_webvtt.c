@@ -203,28 +203,27 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 	return 0;
 }
 
-void write_webvtt_header(struct encoder_ctx *context)
+void write_webvtt_header(struct encoder_ctx *context, struct ccx_common_timing_ctx *timing)
 {
 	if (context->wrote_webvtt_header) // Already done
 		return;
 
-	if (context->timing->sync_pts2fts_set)
+	if (timing)
 	{
 		char header_string[200];
 		int used;
 		unsigned h1, m1, s1, ms1;
-		millis_to_time(context->timing->sync_pts2fts_fts, &h1, &m1, &s1, &ms1);
+		millis_to_time(timing->sync_pts2fts_fts, &h1, &m1, &s1, &ms1);
 
 		// If the user has not disabled X-TIMESTAMP-MAP
 		if (!context->no_timestamp_map)
 		{
 			sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:%ld,LOCAL:%02u:%02u:%02u.%03u%s",
-				context->timing->sync_pts2fts_pts, h1, m1, s1, ms1,
+				timing->sync_pts2fts_pts, h1, m1, s1, ms1,
 				ccx_options.enc_cfg.line_terminator_lf ? "\n\n" : "\r\n\r\n");
 		}
 		used = encode_line(context, context->buffer, (unsigned char *)header_string);
 		write(context->out->fh, context->buffer, used);
-
 	}
 
 	if (ccx_options.webvtt_create_css)
@@ -279,8 +278,6 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 
 	if (sub->nb_data == 0)
 		return 0;
-
-	write_webvtt_header(context);
 
 	if (sub->flags & SUB_EOD_MARKER)
 		context->prev_start = sub->start_time;
@@ -417,8 +414,6 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 	}
 	if (empty_buf) // Prevent writing empty screens. Not needed in .vtt
 		return 0;
-
-	write_webvtt_header(context);
 
 	millis_to_time(data->start_time, &h1, &m1, &s1, &ms1);
 	millis_to_time(data->end_time - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.

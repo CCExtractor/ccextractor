@@ -341,7 +341,7 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 	return dec_ctx;
 }
 
-struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct cap_info *cinfo)
+struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct cap_info *cinfo, struct ccx_common_timing_ctx *timing)
 {
 	struct encoder_ctx *enc_ctx;
 	unsigned int pn = 0;
@@ -390,7 +390,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		{
 			ccx_options.enc_cfg.program_number = pn;
 			ccx_options.enc_cfg.in_format = in_format;
-			enc_ctx = init_encoder(&ccx_options.enc_cfg);
+			enc_ctx = init_encoder(&ccx_options.enc_cfg, timing);
 			if (!enc_ctx)
 				return NULL;
 			list_add_tail(&(enc_ctx->list), &(ctx->enc_ctx_head));
@@ -410,7 +410,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		}
 
 		sprintf(ccx_options.enc_cfg.output_filename, "%s_%d%s", ctx->basefilename, pn, extension);
-		enc_ctx = init_encoder(&ccx_options.enc_cfg);
+		enc_ctx = init_encoder(&ccx_options.enc_cfg, timing);
 		if (!enc_ctx)
 		{
 			freep(&ccx_options.enc_cfg.output_filename);
@@ -430,5 +430,5 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 
 struct encoder_ctx *update_encoder_list(struct lib_ccx_ctx *ctx)
 {
-	return update_encoder_list_cinfo(ctx, NULL);
+	return update_encoder_list_cinfo(ctx, NULL, NULL);
 }

@@ -170,7 +170,8 @@ struct encoder_ctx
  *
  * @return Allocated and properly initilaized Encoder Context, NULL on failure
  */
-struct encoder_ctx *init_encoder(struct encoder_cfg *opt);
+struct encoder_ctx *init_encoder(struct encoder_cfg *opt,
+								 struct ccx_common_timing_ctx *timing);
 
 /**
  * try to add end credits in subtitle file and then write subtitle

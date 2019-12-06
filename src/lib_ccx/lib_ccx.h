@@ -310,7 +310,7 @@ int is_decoder_processed_enough(struct lib_ccx_ctx *ctx);
 struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct cap_info* cinfo);
 struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx);
 
-struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct cap_info* cinfo);
+struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct cap_info* cinfo, struct ccx_common_timing_ctx *timing);
 struct encoder_ctx * update_encoder_list(struct lib_ccx_ctx *ctx);
 struct encoder_ctx *get_encoder_by_pn(struct lib_ccx_ctx *ctx, int pn);
 #endif
