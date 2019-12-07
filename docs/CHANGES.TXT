@@ -1,17 +1,14 @@
-0.90 (2019-12-05)
------------------
-- New: Add a few comments.
-- Fix: Correct if-clauses (missing or misplaced brackets).
-- Fix: Comment out some unused code.
-- Fix: Resolve bunch of compilation's warnings.
-
 0.89 (TBD)
 -----------------
 - New: Added support to output captions to MCC file (#733).
+- New: Added a few comments.
 - Fix: ccx_demuxer_mxf.c: Parse framerate from MXF captions to fix caption timings.
 - Fix: hardsubx_decoder.c: Fix memory leaks using Leptonica API.
 - Fix: linux/Makefile.am: added some sources to enable rpms to be created.
 - Fix: Crash when using -sc (sentence case) option (#1115)
+- Fix: Correct if-clauses (missing or misplaced brackets).
+- Fix: Comment out some unused code.
+- Fix: Resolve bunch of compilation's warnings.
 
 0.88 (2019-05-21)
 -----------------

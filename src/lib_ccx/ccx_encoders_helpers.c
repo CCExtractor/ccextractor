@@ -179,7 +179,7 @@ unsigned encode_line(struct encoder_ctx *ctx, unsigned char *buffer, unsigned ch
 			bytes += 2;
 			buffer += 2;
 			break;
-		case CCX_ENC_ASCII: // TODO: encode ASCII text
+		case CCX_ENC_ASCII: // Consider to remove ASCII encoding or write some code here
 			break;
 		}
 		text++;
@@ -317,7 +317,7 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 			get_char_in_unicode(buffer, line[i]);
 			bytes = 2;
 			break;
-		case CCX_ENC_ASCII: // TODO: get_char_in_ascii
+		case CCX_ENC_ASCII: // Consider to remove ASCII encoding or write get_char_in_ascii(...)
 			break;
 		}
 		buffer += bytes;

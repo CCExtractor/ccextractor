@@ -263,8 +263,8 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 					dbg_print(CCX_DMT_DECODER_608, "\r");
 					dbg_print(CCX_DMT_DECODER_608, "%s\n",context->subline);
 				}
-				#pragma GCC diagnostic ignored "-Wunused-variable" /* length is currently unused */
-				int length = get_decoder_line_encoded (context, context->subline, row, data);
+
+				get_decoder_line_encoded (context, context->subline, row, data);
 
 				char *final = malloc ( strlen((const char*)(context->subline)) + 1000);	//Being overly generous? :P
 				char *temp = malloc ( strlen((const char*)(context->subline)) + 1000);

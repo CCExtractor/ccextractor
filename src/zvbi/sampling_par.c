@@ -429,6 +429,7 @@ _vbi_sampling_par_from_services_log
 	rate = 0;
 
 	for (par = _vbi_service_table; par->id; ++par) {
+		double margin;
 		double signal;
 		int offset;
 		unsigned int samples;
@@ -447,11 +448,10 @@ _vbi_sampling_par_from_services_log
 				videostd_set |= par->videostd_set;
 		}
 
-		// double margin; /* Currently unused */
-		// if (VBI_VIDEOSTD_SET_525_60 & videostd_set)
-		// 	margin = 1.0e-6;
-		// else
-		// 	margin = 2.0e-6;
+		if (VBI_VIDEOSTD_SET_525_60 & videostd_set)
+			margin = 1.0e-6;
+		else
+			margin = 2.0e-6;
 
 		if (0 == (par->videostd_set & videostd_set)) {
 			info (log,

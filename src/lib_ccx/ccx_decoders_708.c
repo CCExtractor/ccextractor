@@ -1198,7 +1198,7 @@ void dtvcc_handle_DLW_DeleteWindows(ccx_dtvcc_ctx *dtvcc,
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_handle_DLW_DeleteWindows: windows: ");
 
-	int screen_content_changed = 0, window_had_content;
+	int screen_content_changed = 0, window_had_content = 0;
 	// int current_win_deleted = 0; /* currently unused */
 	
 	if (windows_bitmap == 0)

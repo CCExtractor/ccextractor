@@ -528,9 +528,6 @@ vbi_raw_decoder_resize		(vbi_raw_decoder *	rd,
 				 int *			start,
 				 unsigned int *		count)
 {
-// Currently no actions are taken on variable
-// Ignores warning about it 
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 	vbi_service_set service_set;
 	vbi3_raw_decoder *rd3;
 
@@ -554,7 +551,6 @@ vbi_raw_decoder_resize		(vbi_raw_decoder *	rd,
 		rd->count[0] = count[0];
 		rd->count[1] = count[1];
 
-		/* Currently no actions are taken on variable */
 		service_set = vbi3_raw_decoder_set_sampling_par
 			(rd3, (vbi_sampling_par *) rd, /* strict */ 0);
 	}
