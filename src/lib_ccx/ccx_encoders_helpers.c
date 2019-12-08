@@ -19,12 +19,6 @@ struct word_list {
 	size_t capacity;
 };
 
-struct word_list spell_lower = {
-	.words = NULL,
-	.len = 0,
-	.capacity = 0,
-};
-
 struct word_list spell_correct = {
 	.words = NULL,
 	.len = 0,
@@ -142,7 +136,7 @@ void call_function_if_match(int line_num, struct eia608_screen *data, struct wor
 
 void correct_case_with_dictionary(int line_num, struct eia608_screen *data)
 {
-	call_function_if_match(line_num, data, &spell_lower, capitalize_word);
+	call_function_if_match(line_num, data, &spell_correct, capitalize_word);
 }
 
 void censor_word_with_dictionary(int line_num, struct eia608_screen *data)
@@ -171,11 +165,11 @@ void telx_correct_case(char *sub_line)
 	}
 	do
 	{
-		char **index = bsearch(&c, spell_lower.words, spell_lower.len, sizeof(*spell_lower.words), string_cmp);
+		char **index = bsearch(&c, spell_correct.words, spell_correct.len, sizeof(*spell_correct.words), string_cmp);
 
 		if (index)
 		{
-			char *correct_c = *(spell_correct.words + (index - spell_lower.words));
+			char *correct_c = spell_correct.words[index - spell_correct.words];
 			size_t len = strlen(correct_c);
 			memcpy(oline + (c - line), correct_c, len);
 		}
@@ -472,26 +466,10 @@ int add_profane_word(const char *word) {
 // Wrapper around add_word to add both the correct and lowercase version of
 // word.
 int add_capitalized_word(const char *word) {
-	size_t word_len;
-	if ((word_len = add_word(&spell_correct, word)) == -1)
+	if (add_word(&spell_correct, word) == -1)
 	{
 		return -1;
 	}
-
-	char *lower_word = malloc(word_len + 1);
-	for (size_t i = 0; i < word_len; ++i)
-	{
-		lower_word[i] = tolower(spell_correct.words[spell_lower.len][i]); // The spell_lower array hasn't been increase yet
-	}
-
-	if (add_word(&spell_lower, lower_word) == -1)
-	{
-		return -1;
-	}
-	free(lower_word);
-
-	assert(spell_lower.len == spell_correct.len);
-
 	return 0;
 }
 
@@ -574,6 +552,5 @@ void shell_sort(void *base, int nb, size_t size, int(*compar)(const void*p1, con
 
 void ccx_encoders_helpers_perform_shellsort_words(void)
 {
-	shell_sort(spell_lower.words,   spell_lower.len,   sizeof(*spell_lower.words),   string_cmp_function, NULL);
 	shell_sort(spell_correct.words, spell_correct.len, sizeof(*spell_correct.words), string_cmp_function, NULL);
 }
