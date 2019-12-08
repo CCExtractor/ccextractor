@@ -246,11 +246,9 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 	int ret = 0;
 	LLONG start_time = data->start_time;
 	LLONG end_time = data->end_time;
-	if (context->sentence_cap)
-	{
-		if (clever_capitalize(context, line_number, data))
-			correct_case_with_dictionary(line_number, data);
-	}
+
+	fix_subtitles(context, line_number, data);
+
 	int length = get_str_basic(context->subline, data->characters[line_number],
 		context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
 
