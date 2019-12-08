@@ -63,6 +63,7 @@ void freep(void **arg)
 {
 	if (*arg)
 		free(*arg);
+	*arg = NULL;
 }
 
 int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time,
