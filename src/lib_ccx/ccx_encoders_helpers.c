@@ -52,6 +52,7 @@ static const char *capitalized_builtin[] =
 
 static const char *profane_builtin[] =
 {
+	"freezing",
 	"arse",
 	"ass",
 	"asshole",
@@ -525,6 +526,20 @@ int add_builtin_profane_words()
 		function_already_ran = 1;
 	}
 	return 0;
+}
+
+void fix_subtitles(struct encoder_ctx *context, int line_number, struct eia608_screen *data)
+{
+	if (context->sentence_cap)
+	{
+		if (clever_capitalize(context, line_number, data))
+			correct_case_with_dictionary(line_number, data);
+	}
+
+	if (context->filter_profanity)
+	{
+		censor_word_with_dictionary(line_number, data);
+	}
 }
 
 /**

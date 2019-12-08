@@ -224,11 +224,8 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 	{
 		if (data->row_used[i])
 		{
-			if (context->sentence_cap)
-			{
-				if (clever_capitalize (context, i, data))
-					correct_case_with_dictionary(i, data);
-			}
+			fix_subtitles(context, i, data);
+
 			if (context->autodash && context->trim_subs)
 			{
 				int first=0, last=31, center1=-1, center2=-1;
