@@ -1935,6 +1935,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			// Issue also applies to --capfile
 			opt->enc_cfg.filter_profanity = 1;
 			opt->filter_profanity_file = argv[++i];
+			continue;
 		}
 
 		if (strcmp(argv[i], "--program-number") == 0 || strcmp(argv[i], "-pn") == 0)
