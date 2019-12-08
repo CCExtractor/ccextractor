@@ -61,9 +61,11 @@ void millis_to_time(LLONG milli, unsigned *hours, unsigned *minutes,
 /* Frees the given pointer */
 void freep(void **arg)
 {
-	if (*arg)
+	if (arg)
+	{
 		free(*arg);
-	*arg = NULL;
+		*arg = NULL;
+	}
 }
 
 int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time,

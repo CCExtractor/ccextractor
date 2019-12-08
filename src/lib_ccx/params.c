@@ -37,8 +37,6 @@
 
 static int inputfile_capacity = 0;
 
-#define MAX_WORD_LENGTH 50
-
 size_t remove_trailing_whitespace(char *line)
 {
 	char *c = line + strlen(line) - 1;
@@ -58,18 +56,19 @@ int process_word_file(const char *filename, struct word_list *list)
 		return -1;
 	}
 
-	char line[MAX_WORD_LENGTH]; // For screen width (32)+CRLF+0
+	char line[CCX_DECODER_608_SCREEN_WIDTH + 3]; // For screen width (CR)LF + '\0' == 3
 	int num = 0;
-	while (fgets(line, MAX_WORD_LENGTH, fi))
+	while (fgets(line, CCX_DECODER_608_SCREEN_WIDTH + 3, fi))
 	{
 		num++;
 		if (line[0] == '#') // Treat lines starting with '#' as comments
 			continue;
 
 		size_t new_len = remove_trailing_whitespace(line);
-		if (new_len > MAX_WORD_LENGTH - 3)
+
+		if (new_len > CCX_DECODER_608_SCREEN_WIDTH)
 		{
-			mprint("Word in line %d too long, max = %d characters.\n", num, MAX_WORD_LENGTH);
+			mprint("Word in line %d too long, max = %d characters.\n", num, CCX_DECODER_608_SCREEN_WIDTH);
 			continue;
 		}
 

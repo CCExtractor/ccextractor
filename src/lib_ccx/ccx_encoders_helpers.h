@@ -32,8 +32,8 @@ void get_sentence_borders(int *first, int *last, int line_num, struct eia608_scr
 int string_cmp(const void *p1, const void *p2);
 int string_cmp_function(const void *p1, const void *p2, void *arg);
 
-int add_builtin_profane_words();
-int add_builtin_capitalized_words();
+int add_builtin_profane_words(void);
+int add_builtin_capitalized_words(void);
 void fix_subtitles(struct encoder_ctx *context, int line_number, struct eia608_screen *data);
 
 unsigned encode_line (struct encoder_ctx *ctx, unsigned char *buffer, unsigned char *text);

@@ -454,7 +454,7 @@ int add_word(struct word_list *list, const char *word)
 	return word_len;
 }
 
-int add_builtin_capitalized_words()
+int add_builtin_capitalized_words(void)
 {
 	static int function_already_ran = 0; // so we don't do it twice
 	if (!function_already_ran)
@@ -470,7 +470,7 @@ int add_builtin_capitalized_words()
 	return 0;
 }
 
-int add_builtin_profane_words()
+int add_builtin_profane_words(void)
 {
 	static int function_already_ran = 0; // so we don't do it twice
 	if (!function_already_ran)
