@@ -57,14 +57,12 @@ void millis_to_time(LLONG milli, unsigned *hours, unsigned *minutes,
 	milli = (milli - *minutes) / 60; // Remainder, in hours
 	*hours = (int)milli;
 }
-/* Frees the given pointer */
-void freep(void *arg)
-{
-	void **ptr = (void **)arg;
-	if (*ptr)
-		free(*ptr);
-	*ptr = NULL;
 
+/* Frees the given pointer */
+void freep(void **arg)
+{
+	if (*arg)
+		free(*arg);
 }
 
 int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time,

@@ -49,6 +49,7 @@ struct encoder_cfg
 #ifdef WITH_LIBCURL
 	char *curlposturl;   // If out=curl, where do we send the data to?
 #endif
+	int filter_profanity; // Censors profane words from subtitles
 
 	int with_semaphore; // Write a .sem file on file open and delete it on close?
 	/* Credit stuff */
@@ -108,10 +109,11 @@ struct ccx_s_options // Options from user parameters
 	int fix_padding;                  // Replace 0000 with 8080 in HDTV (needed for some cards)
 	int gui_mode_reports;             // If 1, output in stderr progress updates so the GUI can grab them
 	int no_progress_bar;              // If 1, suppress the output of the progress to stdout
-	char *sentence_cap_file;          // Extra words file?
+	char *sentence_cap_file;          // Extra capitalization word file
 	int live_stream;                  /* -1 -> Not a complete file but a live stream, without timeout
                                           0 -> A regular file
                                          >0 -> Live stream with a timeout of this value in seconds */
+	char *profanity_file;         // Extra profanity word file
 	int messages_target;              // 0 = nowhere (quiet), 1=stdout, 2=stderr
 	/* Levenshtein's parameters, for string comparison */
 	int dolevdist;					  // 0 => don't attempt to correct typos with this algorithm

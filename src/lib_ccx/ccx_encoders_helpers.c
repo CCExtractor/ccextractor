@@ -3,7 +3,8 @@
 #include "ccx_common_constants.h"
 #include "ccx_common_structs.h"
 #include "ccx_decoders_common.h"
-#include "ccx_encoders_common.h"
+
+#include <assert.h>
 
 #ifdef _MSC_VER
 #define strcasecmp stricmp
@@ -12,15 +13,33 @@
 // userdefined rgb color
 unsigned char usercolor_rgb[8] = "";
 
-static int spell_builtin_added = 0; // so we don't do it twice
-// Case arrays
-char **spell_lower = NULL;
-char **spell_correct = NULL;
-int spell_words = 0;
-int spell_capacity = 0;
+struct word_list {
+	char **words;
+	size_t len;
+	size_t capacity;
+};
+
+struct word_list spell_lower = {
+	.words = NULL,
+	.len = 0,
+	.capacity = 0,
+};
+
+struct word_list spell_correct = {
+	.words = NULL,
+	.len = 0,
+	.capacity = 0,
+};
+
+struct word_list profane = {
+	.words = NULL,
+	.len = 0,
+	.capacity = 0,
+};
+
 // Some basic English words, so user-defined doesn't have to
 // include the common stuff
-static const char *spell_builtin[] =
+static const char *capitalized_builtin[] =
 {
 	"I", "I'd", "I've", "I'd", "I'll",
 	"January", "February", "March", "April", // May skipped intentionally
@@ -28,6 +47,47 @@ static const char *spell_builtin[] =
 	"December", "Monday", "Tuesday", "Wednesday", "Thursday",
 	"Friday", "Saturday", "Sunday", "Halloween", "United States",
 	"Spain", "France", "Italy", "England",
+	NULL
+};
+
+static const char *profane_builtin[] =
+{
+	"arse",
+	"ass",
+	"asshole",
+	"bastard",
+	"bitch",
+	"bollocks",
+	"child-fucker",
+	"Christ on a bike",
+	"Christ on a cracker",
+	"crap",
+	"cunt",
+	"damn",
+	"frigger",
+	"fuck",
+	"goddamn",
+	"godsdamn",
+	"hell",
+	"holy shit",
+	"horseshit",
+	"Jesus fuck",
+	"Jesus Harold Christ",
+	"Jesus wept",
+	"Judas Priest",
+	"motherfucker",
+	"nigga",
+	"nigger",
+	"prick",
+	"shit",
+	"shit ass",
+	"shitass",
+	"slut",
+	"son of a bitch",
+	"son of a motherless goat",
+	"son of a whore",
+	"sweet Jesus",
+	"twat",
 	NULL
 };
 
@@ -61,11 +121,11 @@ void correct_case_with_dictionary(int line_num, struct eia608_screen *data)
 	}
 	do
 	{
-		char **index = bsearch(&c, spell_lower, spell_words, sizeof(*spell_lower), string_cmp);
+		char **index = bsearch(&c, spell_lower.words, spell_lower.len, sizeof(*spell_lower.words), string_cmp);
 
 		if (index)
 		{
-			char *correct_c = *(spell_correct + (index - spell_lower));
+			char *correct_c = *(spell_correct.words + (index - spell_lower.words));
 			size_t len = strlen(correct_c);
 			memcpy(oline + (c - line), correct_c, len);
 		}
@@ -94,11 +154,11 @@ void telx_correct_case(char *sub_line)
 	}
 	do
 	{
-		char **index = bsearch(&c, spell_lower, spell_words, sizeof(*spell_lower), string_cmp);
+		char **index = bsearch(&c, spell_lower.words, spell_lower.len, sizeof(*spell_lower.words), string_cmp);
 
 		if (index)
 		{
-			char *correct_c = *(spell_correct + (index - spell_lower));
+			char *correct_c = *(spell_correct.words + (index - spell_lower.words));
 			size_t len = strlen(correct_c);
 			memcpy(oline + (c - line), correct_c, len);
 		}
@@ -361,80 +421,92 @@ used=encode_line (ctx->buffer,(unsigned char *) string);
 fwrite (ctx->buffer,used,1,fh);
 }*/
 
-int add_word(const char *word)
-{
-	char *new_lower;
-	char *new_correct;
-	char **ptr_lower;
-	char **ptr_correct;
-	int i;
-	if (spell_words == spell_capacity)
+// Wrapper around add_word to add profane a word
+int add_profane_word(const char *word) {
+	if (add_word(&profane, word) == -1)
 	{
-		// Time to grow
-		spell_capacity += 50;
-		ptr_lower = (char **)realloc(spell_lower, sizeof (char *)*
-			spell_capacity);
-		ptr_correct = (char **)realloc(spell_correct, sizeof (char *)*
-			spell_capacity);
-	}
-	else
-	{
-		ptr_lower = spell_lower;
-		ptr_correct = spell_correct;
-	}
-	size_t len = strlen(word);
-	new_lower = (char *)malloc(len + 1);
-	new_correct = (char *)malloc(len + 1);
-	if (ptr_lower == NULL || ptr_correct == NULL ||
-		new_lower == NULL || new_correct == NULL)
-	{
-		spell_capacity = 0;
-		for (i = 0; i < spell_words; i++)
-		{
-			freep(&spell_lower[spell_words]);
-			freep(&spell_correct[spell_words]);
-		}
-		freep(&spell_lower);
-		freep(&spell_correct);
-		freep(&ptr_lower);
-		freep(&ptr_correct);
-		freep(&new_lower);
-		freep(&new_correct);
-		spell_words = 0;
 		return -1;
 	}
-	else
-	{
-		spell_lower = ptr_lower;
-		spell_correct = ptr_correct;
-	}
-	strcpy(new_correct, word);
-	for (size_t i = 0; i<len; i++)
-	{
-		char c = new_correct[i];
-		c = tolower(c); // TO-DO: Add Spanish characters
-		new_lower[i] = c;
-	}
-	new_lower[len] = 0;
-	spell_lower[spell_words] = new_lower;
-	spell_correct[spell_words] = new_correct;
-	spell_words++;
 	return 0;
 }
 
+// Wrapper around add_word to add both the correct and lowercase version of
+// word.
+int add_capitalized_word(const char *word) {
+	size_t word_len;
+	if ((word_len = add_word(&spell_correct, word)) == -1)
+	{
+		return -1;
+	}
 
-int add_built_in_words(void)
+	char *lower_word = malloc(word_len + 1);
+	for (size_t i = 0; i < word_len; ++i)
+	{
+		lower_word[i] = tolower(spell_correct.words[spell_lower.len][i]); // The spell_lower array hasn't been increase yet
+	}
+
+	if (add_word(&spell_lower, lower_word) == -1)
+	{
+		return -1;
+	}
+	free(lower_word);
+
+	assert(spell_lower.len == spell_correct.len);
+
+	return 0;
+}
+
+// Add the word the `struct word_list` list
+int add_word(struct word_list *list, const char *word)
 {
-	if (!spell_builtin_added)
+	if (list->len == list->capacity)
+	{
+		list->capacity += 50;
+		if ((list->words = realloc(list->words, list->capacity * sizeof(char *))) == NULL)
+		{
+			return -1;
+		}
+	}
+
+	size_t word_len = strlen(word);
+	if ((list->words[list->len] = malloc(word_len + 1)) == NULL)
+	{
+		return -1;
+	}
+
+	strcpy(list->words[list->len++], word);
+	return word_len;
+}
+
+
+int add_builtin_capitalized_words()
+{
+	static int function_already_ran = 0; // so we don't do it twice
+	if (!function_already_ran)
 	{
 		int i = 0;
-		while (spell_builtin[i] != NULL)
+		while (capitalized_builtin[i] != NULL)
 		{
-			if (add_word(spell_builtin[i]))
+			if (add_capitalized_word(capitalized_builtin[i++]))
 				return -1;
-			i++;
 		}
-		spell_builtin_added = 1;
+		function_already_ran = 1;
+	}
+	return 0;
+}
+
+int add_builtin_profane_words()
+{
+	static int function_already_ran = 0; // so we don't do it twice
+	if (!function_already_ran)
+	{
+		int i = 0;
+		while (profane_builtin[i] != NULL)
+		{
+			if (add_profane_word(profane_builtin[i++]))
+				return -1;
+		}
+		function_already_ran = 1;
 	}
 	return 0;
 }
@@ -472,6 +544,6 @@ void shell_sort(void *base, int nb, size_t size, int(*compar)(const void*p1, con
 
 void ccx_encoders_helpers_perform_shellsort_words(void)
 {
-	shell_sort(spell_lower, spell_words, sizeof(*spell_lower), string_cmp_function, NULL);
-	shell_sort(spell_correct, spell_words, sizeof(*spell_correct), string_cmp_function, NULL);
+	shell_sort(spell_lower.words,   spell_lower.len,   sizeof(*spell_lower.words),   string_cmp_function, NULL);
+	shell_sort(spell_correct.words, spell_correct.len, sizeof(*spell_correct.words), string_cmp_function, NULL);
 }

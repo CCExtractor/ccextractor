@@ -37,47 +37,55 @@
 
 static int inputfile_capacity = 0;
 
-int process_cap_file (char *filename)
+#define MAX_WORD_LENGTH 50
+
+size_t remove_trailing_whitespace(char *line)
+{
+	char *c = line + strlen(line) - 1;
+	while (c >= line && isspace(*c))
+		c--;
+	c[1] = '\0';
+	return c - line;
+}
+
+int process_word_file(const char *filename, int (*add_word_to_list)(const char *))
 {
 	int ret = 0;
-	FILE *fi = fopen(filename, "rt");
-	if (fi == NULL)
+	FILE *fi;
+	if ((fi = fopen(filename, "r")) == NULL)
 	{
-		mprint("\rUnable to open capitalization file: %s\n", filename);
+		mprint("\rUnable to open word list file: %s\n", filename);
 		return -1;
 	}
-	char line[35]; // For screen width (32)+CRLF+0
+
+	char line[MAX_WORD_LENGTH]; // For screen width (32)+CRLF+0
 	int num = 0;
-	while (fgets(line,35,fi))
+	while (fgets(line, MAX_WORD_LENGTH, fi))
 	{
 		num++;
-		if (line[0] == '#') // Comment
+		if (line[0] == '#') // Treat lines starting with '#' as comments
 			continue;
-		char *c = line+strlen(line)-1;
-		while (c >= line && (*c == 0xd || *c == 0xa))
+
+		size_t new_len = remove_trailing_whitespace(line);
+		if (new_len > MAX_WORD_LENGTH - 3)
 		{
-			*c = 0;
-			c--;
+			mprint("Word in line %d too long, max = %d characters.\n", num, MAX_WORD_LENGTH);
+			continue;
 		}
-		if (strlen(line)>32)
+
+		if (new_len > 0)
 		{
-			mprint("Word in line %d too long, max = 32 characters.\n",num);
-			ret = -1;
-			goto end;
-		}
-		if (strlen(line)>0)
-		{
-			if (add_word (line))
+			if (add_word_to_list(line))
 			{
 				ret = -1;
-				goto end;
+				break;
 			}
 		}
 	}
-end:
 	fclose(fi);
 	return ret;
 }
+
 int isanumber (char *s)
 {
 	while (*s)
@@ -595,9 +603,6 @@ void print_usage (void)
 	mprint("                       -dc #FF0000 for red.\n");
 	mprint("    -sc --sentencecap: Sentence capitalization. Use if you hate\n");
 	mprint("                       ALL CAPS in subtitles.\n");
-	mprint("-sbs --splitbysentence: Split output text so each frame contains a complete\n");
-	mprint("                       sentence. Timings are adjusted based on number of\n");
-	mprint("                       characters\n.");
 	mprint("  --capfile -caf file: Add the contents of 'file' to the list of words\n");
 	mprint("                       that must be capitalized. For example, if file\n");
 	mprint("                       is a plain text file that contains\n\n");
@@ -607,6 +612,13 @@ void print_usage (void)
 	mprint("                       exactly as they appear in the file.\n");
 	mprint("                       Use one line per word. Lines starting with # are\n");
 	mprint("                       considered comments and discarded.\n\n");
+	mprint("                 --kf: Censors profane words from subtitles.\n");
+	mprint("--profanity_file <file>: Add the contents of <file> to the list of words that.\n");
+	mprint("                         must be censored. The content of <file>, follows the\n");
+	mprint("                         same syntax as for the capitalization file\n");
+	mprint("-sbs --splitbysentence: Split output text so each frame contains a complete\n");
+	mprint("                       sentence. Timings are adjusted based on number of\n");
+	mprint("                       characters\n.");
 	mprint("          -unixts REF: For timed transcripts that have an absolute date\n");
 	mprint("                       instead of a timestamp relative to the file start), use\n");
 	mprint("                       this time reference (UNIX timestamp). 0 => Use current\n");
@@ -620,13 +632,13 @@ void print_usage (void)
 	mprint("                       free to play with it but be aware that this format\n");
 	mprint("                       is really live - don't rely on its output format\n");
 	mprint("                       not changing between versions.\n");
-    mprint("            -latrusmap Map Latin symbols to Cyrillic ones in special cases\n");
-    mprint("                       of Russian Teletext files (issue #1086)\n");
-    mprint("                 -xds: In timed transcripts, all XDS information will be saved\n");
+	mprint("            -latrusmap Map Latin symbols to Cyrillic ones in special cases\n");
+	mprint("                       of Russian Teletext files (issue #1086)\n");
+	mprint("                 -xds: In timed transcripts, all XDS information will be saved\n");
 	mprint("                       to the output file.\n");
 	mprint("                  -lf: Use LF (UNIX) instead of CRLF (DOS, Windows) as line\n");
 	mprint("                       terminator.\n");
-    mprint("                  -df: For MCC Files, force dropframe frame count.\n");
+	mprint("                  -df: For MCC Files, force dropframe frame count.\n");
 	mprint("            -autodash: Based on position on screen, attempt to determine\n");
 	mprint("                       the different speakers and a dash (-) when each\n");
 	mprint("                       of them talks (.srt/.vtt only, -trim required).\n");
@@ -667,11 +679,11 @@ void print_usage (void)
 	mprint("                       in languages (like \"fre-ca\" for Canadian French).\n");
 	mprint("          -nospupngocr When processing DVB don't use the OCR to write the text as\n");
 	mprint("                       comments in the XML file.\n");
-	mprint ("                -font: Specify the full path of the font that is to be used when\n");
-	mprint ("                       generating SPUPNG files. If not specified, you need to\n");
-	mprint ("                       have the default font installed (Helvetica for macOS, Calibri\n");
-	mprint ("                       for Windows, and Noto for other operating systems at their\n)");
-	mprint ("                       default location\n)");
+	mprint("                -font: Specify the full path of the font that is to be used when\n");
+	mprint("                       generating SPUPNG files. If not specified, you need to\n");
+	mprint("                       have the default font installed (Helvetica for macOS, Calibri\n");
+	mprint("                       for Windows, and Noto for other operating systems at their\n)");
+	mprint("                       default location\n)");
 	mprint("                -italics: Specify the full path of the italics font that is to be used when\n");
 	mprint("                       generating SPUPNG files. If not specified, you need to\n");
 	mprint("                       have the default font installed (Helvetica Oblique for macOS, Calibri Italic\n");
@@ -1890,30 +1902,41 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->no_progress_bar = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "--sentencecap") == 0 || strcmp(argv[i], "-sc") == 0)
-		{
-			opt->enc_cfg.sentence_cap = 1;
-			continue;
-		}
 		if (strcmp(argv[i], "--splitbysentence") == 0 || strcmp(argv[i], "-sbs") == 0)
 		{
 			opt->enc_cfg.splitbysentence = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "--capfile") == 0 || strcmp(argv[i], "-caf") == 0)
+
+		if (strcmp(argv[i], "--sentencecap") == 0 || strcmp(argv[i], "-sc") == 0)
 		{
-			if (i < argc - 1)
-			{
-				i++;
-				opt->enc_cfg.sentence_cap = 1;
-				opt->sentence_cap_file = argv[i];
-				continue;
-			}
-			else
-			{
-				fatal(EXIT_MALFORMED_PARAMETER, "--capfile has no argument.\n");
-			}
+			opt->enc_cfg.sentence_cap=1;
+			continue;
 		}
+
+		if ((strcmp(argv[i], "--capfile") == 0 || strcmp(argv[i], "-caf") == 0) && i < argc - 1)
+		{
+			opt->enc_cfg.sentence_cap = 1;
+			opt->sentence_cap_file=argv[i + 1];
+			i++;
+			continue;
+		}
+
+		if (strcmp(argv[i], "--kf") == 0) // Kid friendly (removes profanity)
+		{
+			opt->enc_cfg.filter_profanity = 1;
+			continue;
+		}
+
+		if (strcmp(argv[i], "--profanity-file") == 0)
+		{
+			// TODO: decide whether this is really wanted. A script running ccextractor
+			// could want to pass this argument at all time and only use it with --kf
+			// Issue also applies to --capfile
+			opt->enc_cfg.filter_profanity = 1;
+			opt->profanity_file = argv[++i];
+		}
+
 		if (strcmp(argv[i], "--program-number") == 0 || strcmp(argv[i], "-pn") == 0)
 		{
 			if (i < argc - 1 && isanumber(argv[i+1]))
@@ -2797,19 +2820,23 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 	if (opt->enc_cfg.sentence_cap)
 	{
-		if (add_built_in_words())
-		{
-			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for word list\n");
-		}
-		if (opt->sentence_cap_file && process_cap_file(opt->sentence_cap_file))
-		{
+		if (add_builtin_capitalized_words())
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for capitalized word list");
+		if (opt->sentence_cap_file && process_word_file(opt->sentence_cap_file, add_capitalized_word))
 			fatal(EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the capitalization file.\n");
-		}
 
 		ccx_encoders_helpers_perform_shellsort_words();
 	}
-	if (opt->demux_cfg.ts_forced_program != -1)
+
+	if (opt->enc_cfg.filter_profanity)
 	{
+		if (add_builtin_capitalized_words())
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for profane word list");
+		if (opt->profanity_file && process_word_file(opt->profanity_file, add_profane_word))
+			fatal(EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the profanity file.\n");
+	}
+
+	if(opt->demux_cfg.ts_forced_program != -1)
 		opt->demux_cfg.ts_forced_program_selected = 1;
 	}
 

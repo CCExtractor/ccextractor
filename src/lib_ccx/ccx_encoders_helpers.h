@@ -8,8 +8,8 @@
 #include "ccx_encoders_common.h"
 #include "png.h"
 
-extern char **spell_lower;
-extern char **spell_correct;
+extern struct word_list spell_lower;
+extern struct word_list spell_correct;
 extern int spell_words;
 extern int spell_capacity;
 
@@ -33,8 +33,12 @@ void get_sentence_borders(int *first, int *last, int line_num, struct eia608_scr
 
 int string_cmp(const void *p1, const void *p2);
 int string_cmp_function(const void *p1, const void *p2, void *arg);
-int add_built_in_words(void);
-int add_word(const char *word);
+
+int add_builtin_profane_words();
+int add_builtin_capitalized_words();
+int add_profane_word(const char *word);
+int add_capitalized_word(const char *word);
+
 unsigned encode_line (struct encoder_ctx *ctx, unsigned char *buffer, unsigned char *text);
 
 void shell_sort(void *base, int nb, size_t size, int(*compar)(const void*p1, const void *p2, void*arg), void *arg);
