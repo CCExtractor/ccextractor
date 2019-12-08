@@ -52,7 +52,6 @@ static const char *capitalized_builtin[] =
 
 static const char *profane_builtin[] =
 {
-	"freezing",
 	"arse",
 	"ass",
 	"asshole",
@@ -109,7 +108,7 @@ void capitalize_word(size_t index, char *word)
 
 void censor_word(size_t index, char *word)
 {
-	memset(word, '*', strlen(profane.words[index]));
+	memset(word, 0x98, strlen(profane.words[index])); // 0x98 is the asterisk in EIA-608
 }
 
 void call_function_if_match(int line_num, struct eia608_screen *data, struct word_list *list, void (*modification)(size_t, char *))
@@ -148,7 +147,7 @@ void correct_case_with_dictionary(int line_num, struct eia608_screen *data)
 
 void censor_word_with_dictionary(int line_num, struct eia608_screen *data)
 {
-	call_function_if_match(line_num, data, &spell_lower, censor_word);
+	call_function_if_match(line_num, data, &profane, censor_word);
 }
 
 void telx_correct_case(char *sub_line)

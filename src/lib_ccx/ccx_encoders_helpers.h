@@ -38,6 +38,7 @@ int add_builtin_profane_words();
 int add_builtin_capitalized_words();
 int add_profane_word(const char *word);
 int add_capitalized_word(const char *word);
+void fix_subtitles(struct encoder_ctx *context, int line_number, struct eia608_screen *data);
 
 unsigned encode_line (struct encoder_ctx *ctx, unsigned char *buffer, unsigned char *text);
 
