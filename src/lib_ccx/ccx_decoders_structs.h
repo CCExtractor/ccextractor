@@ -62,7 +62,7 @@ typedef struct eia608_screen // A CC buffer
 {
 	/** format of data inside this structure */
 	enum ccx_eia608_format format;
-	unsigned char characters[15][33];
+	char characters[15][33];
 	unsigned char colors[15][33];
 	unsigned char fonts[15][33]; // Extra char at the end for a 0
 	int row_used[15];            // Any data in row?

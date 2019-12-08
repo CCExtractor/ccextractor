@@ -95,12 +95,23 @@ int string_cmp_function(const void *p1, const void *p2, void *arg)
 {
 	return strcasecmp(*(char**)p1, *(char**)p2);
 }
+
 int string_cmp(const void *p1, const void *p2)
 {
 	return string_cmp_function(p1, p2, NULL);
 }
 
-void correct_case_with_dictionary(int line_num, struct eia608_screen *data)
+void capitalize_word(size_t index, char *word)
+{
+	strcpy(word, spell_correct.words[index]);
+}
+
+void censor_word(size_t index, char *word)
+{
+	memset(word, '*', strlen(profane.words[index]));
+}
+
+void call_function_if_match(int line_num, struct eia608_screen *data, struct word_list *list, void (*modification)(size_t, char *))
 {
 	char delim[64] = {
 		' ', '\n', '\r', 0x89, 0x99,
@@ -111,26 +122,32 @@ void correct_case_with_dictionary(int line_num, struct eia608_screen *data)
 		'.', '/', ':', '^', '_',
 		'{', '|', '}', '~', '\0' };
 
-	char *line = strdup(((char*)data->characters[line_num]));
-	char *oline = (char*)data->characters[line_num];
+	char *line = strdup(data->characters[line_num]);
 	char *c = strtok(line, delim);
-	if (c == NULL)
-	{
-		free(line);
-		return;
-	}
-	do
-	{
-		char **index = bsearch(&c, spell_lower.words, spell_lower.len, sizeof(*spell_lower.words), string_cmp);
 
-		if (index)
+	if (c != NULL)
+	{
+		do
 		{
-			char *correct_c = *(spell_correct.words + (index - spell_lower.words));
-			size_t len = strlen(correct_c);
-			memcpy(oline + (c - line), correct_c, len);
-		}
-	} while ((c = strtok(NULL, delim)) != NULL);
+			char **index = bsearch(&c, list->words, list->len, sizeof(*list->words), string_cmp);
+
+			if (index)
+			{
+				modification(index - list->words, data->characters[line_num] + (c - line));
+			}
+		} while ((c = strtok(NULL, delim)) != NULL);
+	}
 	free(line);
+}
+
+void correct_case_with_dictionary(int line_num, struct eia608_screen *data)
+{
+	call_function_if_match(line_num, data, &spell_lower, capitalize_word);
+}
+
+void censor_word_with_dictionary(int line_num, struct eia608_screen *data)
+{
+	call_function_if_match(line_num, data, &spell_lower, censor_word);
 }
 
 void telx_correct_case(char *sub_line)
@@ -184,8 +201,8 @@ int clever_capitalize(struct encoder_ctx *context, int line_num, struct eia608_s
 {
 	// CFS: Tried doing to clever (see below) but some channels do all uppercase except for
 	// notes for deaf people (such as "(narrator)" which messes things up.
-		// First find out if we actually need to do it, don't mess with lines that come OK
-		//int doit = is_all_caps(context, line_num, data);
+	// First find out if we actually need to do it, don't mess with lines that come OK
+	//int doit = is_all_caps(context, line_num, data);
 	int doit = 1;
 
 	for (int i = 0; i < CCX_DECODER_608_SCREEN_WIDTH; i++)
@@ -421,6 +438,28 @@ used=encode_line (ctx->buffer,(unsigned char *) string);
 fwrite (ctx->buffer,used,1,fh);
 }*/
 
+// Add the word the `struct word_list` list
+int add_word(struct word_list *list, const char *word)
+{
+	if (list->len == list->capacity)
+	{
+		list->capacity += 50;
+		if ((list->words = realloc(list->words, list->capacity * sizeof(char *))) == NULL)
+		{
+			return -1;
+		}
+	}
+
+	size_t word_len = strlen(word);
+	if ((list->words[list->len] = malloc(word_len + 1)) == NULL)
+	{
+		return -1;
+	}
+
+	strcpy(list->words[list->len++], word);
+	return word_len;
+}
+
 // Wrapper around add_word to add profane a word
 int add_profane_word(const char *word) {
 	if (add_word(&profane, word) == -1)
@@ -455,29 +494,6 @@ int add_capitalized_word(const char *word) {
 
 	return 0;
 }
-
-// Add the word the `struct word_list` list
-int add_word(struct word_list *list, const char *word)
-{
-	if (list->len == list->capacity)
-	{
-		list->capacity += 50;
-		if ((list->words = realloc(list->words, list->capacity * sizeof(char *))) == NULL)
-		{
-			return -1;
-		}
-	}
-
-	size_t word_len = strlen(word);
-	if ((list->words[list->len] = malloc(word_len + 1)) == NULL)
-	{
-		return -1;
-	}
-
-	strcpy(list->words[list->len++], word);
-	return word_len;
-}
-
 
 int add_builtin_capitalized_words()
 {
