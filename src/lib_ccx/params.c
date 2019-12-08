@@ -2830,7 +2830,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 	if (opt->enc_cfg.filter_profanity)
 	{
-		if (add_builtin_capitalized_words())
+		if (add_builtin_profane_words())
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for profane word list");
 		if (opt->filter_profanity_file && process_word_file(opt->filter_profanity_file, add_profane_word))
 			fatal(EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the profanity file.\n");
