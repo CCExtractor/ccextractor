@@ -8,10 +8,8 @@
 #include "ccx_encoders_common.h"
 #include "png.h"
 
-extern struct word_list spell_lower;
 extern struct word_list spell_correct;
-extern int spell_words;
-extern int spell_capacity;
+extern struct word_list profane;
 
 extern unsigned char usercolor_rgb[8];
 
@@ -36,8 +34,6 @@ int string_cmp_function(const void *p1, const void *p2, void *arg);
 
 int add_builtin_profane_words();
 int add_builtin_capitalized_words();
-int add_profane_word(const char *word);
-int add_capitalized_word(const char *word);
 void fix_subtitles(struct encoder_ctx *context, int line_number, struct eia608_screen *data);
 
 unsigned encode_line (struct encoder_ctx *ctx, unsigned char *buffer, unsigned char *text);

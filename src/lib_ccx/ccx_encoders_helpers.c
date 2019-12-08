@@ -454,25 +454,6 @@ int add_word(struct word_list *list, const char *word)
 	return word_len;
 }
 
-// Wrapper around add_word to add profane a word
-int add_profane_word(const char *word) {
-	if (add_word(&profane, word) == -1)
-	{
-		return -1;
-	}
-	return 0;
-}
-
-// Wrapper around add_word to add both the correct and lowercase version of
-// word.
-int add_capitalized_word(const char *word) {
-	if (add_word(&spell_correct, word) == -1)
-	{
-		return -1;
-	}
-	return 0;
-}
-
 int add_builtin_capitalized_words()
 {
 	static int function_already_ran = 0; // so we don't do it twice
@@ -481,7 +462,7 @@ int add_builtin_capitalized_words()
 		int i = 0;
 		while (capitalized_builtin[i] != NULL)
 		{
-			if (add_capitalized_word(capitalized_builtin[i++]))
+			if (add_word(&spell_correct, capitalized_builtin[i++]))
 				return -1;
 		}
 		function_already_ran = 1;
@@ -497,7 +478,7 @@ int add_builtin_profane_words()
 		int i = 0;
 		while (profane_builtin[i] != NULL)
 		{
-			if (add_profane_word(profane_builtin[i++]))
+			if (add_word(&profane, profane_builtin[i++]))
 				return -1;
 		}
 		function_already_ran = 1;

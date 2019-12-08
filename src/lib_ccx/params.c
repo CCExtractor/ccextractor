@@ -48,7 +48,7 @@ size_t remove_trailing_whitespace(char *line)
 	return c - line;
 }
 
-int process_word_file(const char *filename, int (*add_word_to_list)(const char *))
+int process_word_file(const char *filename, struct word_list *list)
 {
 	int ret = 0;
 	FILE *fi;
@@ -75,7 +75,7 @@ int process_word_file(const char *filename, int (*add_word_to_list)(const char *
 
 		if (new_len > 0)
 		{
-			if (add_word_to_list(line))
+			if (add_word(list, line))
 			{
 				ret = -1;
 				break;
@@ -2823,7 +2823,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	{
 		if (add_builtin_capitalized_words())
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for capitalized word list");
-		if (opt->sentence_cap_file && process_word_file(opt->sentence_cap_file, add_capitalized_word))
+		if (opt->sentence_cap_file && process_word_file(opt->sentence_cap_file, &spell_correct))
 			fatal(EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the capitalization file.\n");
 
 		ccx_encoders_helpers_perform_shellsort_words();
@@ -2833,7 +2833,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	{
 		if (add_builtin_profane_words())
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for profane word list");
-		if (opt->filter_profanity_file && process_word_file(opt->filter_profanity_file, add_profane_word))
+		if (opt->filter_profanity_file && process_word_file(opt->filter_profanity_file, &profane))
 			fatal(EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the profanity file.\n");
 	}
 
