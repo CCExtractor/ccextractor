@@ -103,7 +103,7 @@ int string_cmp(const void *p1, const void *p2)
 
 void capitalize_word(size_t index, char *word)
 {
-	strcpy(word, spell_correct.words[index]);
+	memcpy(word, spell_correct.words[index], strlen(spell_correct.words[index]));
 }
 
 void censor_word(size_t index, char *word)
