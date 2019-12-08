@@ -605,7 +605,7 @@ void write_cc_line_as_simplexml(struct eia608_screen *data, struct encoder_ctx *
 	char *cap = "<caption>";
 	char *cap1 = "</caption>";
 
-	fix_subtitles(context, line_number, data);
+	correct_spelling_and_censor_words_608(context, line_number, data);
 
 	length = get_str_basic(context->subline, data->characters[line_number],
 			context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);

@@ -486,7 +486,7 @@ int add_builtin_profane_words(void)
 	return 0;
 }
 
-void fix_subtitles(struct encoder_ctx *context, int line_number, struct eia608_screen *data)
+void correct_spelling_and_censor_words_608(struct encoder_ctx *context, int line_number, struct eia608_screen *data)
 {
 	if (context->sentence_cap)
 	{

@@ -206,7 +206,7 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	{
 		if (data->row_used[i])
 		{
-			fix_subtitles(context, i, data);
+			correct_spelling_and_censor_words_608(context, i, data);
 
 			if (context->autodash && context->trim_subs)
 			{
