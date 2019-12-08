@@ -1934,7 +1934,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			// could want to pass this argument at all time and only use it with --kf
 			// Issue also applies to --capfile
 			opt->enc_cfg.filter_profanity = 1;
-			opt->profanity_file = argv[++i];
+			opt->filter_profanity_file = argv[++i];
 		}
 
 		if (strcmp(argv[i], "--program-number") == 0 || strcmp(argv[i], "-pn") == 0)
@@ -2832,7 +2832,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	{
 		if (add_builtin_capitalized_words())
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for profane word list");
-		if (opt->profanity_file && process_word_file(opt->profanity_file, add_profane_word))
+		if (opt->filter_profanity_file && process_word_file(opt->filter_profanity_file, add_profane_word))
 			fatal(EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the profanity file.\n");
 	}
 

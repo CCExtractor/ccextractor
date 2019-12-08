@@ -34,7 +34,7 @@ void init_options (struct ccx_s_options *options)
 	options->enc_cfg.sentence_cap = 0; // FIX CASE? = Fix case?
 	options->sentence_cap_file=NULL; // Extra words file?
 	options->enc_cfg.filter_profanity = 0;
-	options->profanity_file = NULL;
+	options->filter_profanity_file = NULL;
 	options->enc_cfg.splitbysentence = 0; // Split text into complete sentences and prorate time?
 	options->enc_cfg.nospupngocr = 0;
 	options->live_stream=0; // 0 -> A regular file

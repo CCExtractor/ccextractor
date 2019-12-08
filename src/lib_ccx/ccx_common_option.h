@@ -113,7 +113,7 @@ struct ccx_s_options // Options from user parameters
 	int live_stream;                  /* -1 -> Not a complete file but a live stream, without timeout
                                           0 -> A regular file
                                          >0 -> Live stream with a timeout of this value in seconds */
-	char *profanity_file;         // Extra profanity word file
+	char *filter_profanity_file;         // Extra profanity word file
 	int messages_target;              // 0 = nowhere (quiet), 1=stdout, 2=stderr
 	/* Levenshtein's parameters, for string comparison */
 	int dolevdist;					  // 0 => don't attempt to correct typos with this algorithm

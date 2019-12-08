@@ -92,6 +92,7 @@ struct encoder_ctx
 	struct ccx_encoders_transcript_format *transcript_settings; // Keeps the settings for generating transcript output files.
 	int no_bom;
 	int sentence_cap;                                           // FIX CASE? = Fix case?
+	int filter_profanity;
 
 	int trim_subs;                                              // "    Remove spaces at sides?    "
 	int autodash;                                               // Add dashes (-) before each speaker automatically?

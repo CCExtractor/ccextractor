@@ -54,7 +54,7 @@ struct conf_map configuration_map[] = {
 	{"GUI_MODE_REPORTS",offsetof(struct ccx_s_options,gui_mode_reports),set_int},
 	{"NO_PROGRESS_BAR",offsetof(struct ccx_s_options,no_progress_bar),set_int},
 	{"CAP_FILE",offsetof(struct ccx_s_options,sentence_cap_file),set_string},
-	{"PROFANITY_FILE", offsetof(struct ccx_s_options,profanity_file),set_string},
+	{"PROFANITY_FILE", offsetof(struct ccx_s_options,filter_profanity_file),set_string},
 	{"START_AT",offsetof(struct ccx_s_options,extraction_start),set_time},
 	{"END_AT",offsetof(struct ccx_s_options,extraction_end),set_time},
 	{"INVASTIGATE_PACKET",offsetof(struct ccx_s_options,investigate_packets),set_int},
