@@ -512,18 +512,18 @@ int main(int argc, char* argv[])
 
 #ifdef PYTHON_API
     for(int i = 1; i < argc; i++)
-        api_add_param(api_options,argv[i]);
+        api_add_param(api_options, argv[i]);
 #endif
 
 #ifdef PYTHON_API
     int compile_ret = compile_params(api_options,argc);
 #else
-    int compile_ret = parse_parameters (api_options, argc, argv);
+    int compile_ret = parse_parameters(api_options, argc, argv);
 #endif
 
     if (compile_ret == EXIT_NO_INPUT_FILES)
     {
-        print_usage ();
+        print_usage();
         fatal (EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");
     }
     else if (compile_ret == EXIT_WITH_HELP)
