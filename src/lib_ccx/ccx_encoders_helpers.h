@@ -8,7 +8,7 @@
 #include "ccx_encoders_common.h"
 #include "png.h"
 
-extern struct word_list spell_correct;
+extern struct word_list capitalization_list;
 extern struct word_list profane;
 extern const char *capitalized_builtin[];
 extern const char *profane_builtin[];

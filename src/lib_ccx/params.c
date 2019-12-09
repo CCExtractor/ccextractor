@@ -2820,9 +2820,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 	if (opt->enc_cfg.sentence_cap)
 	{
-		if (add_builtin_words(capitalized_builtin, &spell_correct))
+		if (add_builtin_words(capitalized_builtin, &capitalization_list))
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for capitalized word list");
-		if (opt->sentence_cap_file && process_word_file(opt->sentence_cap_file, &spell_correct))
+		if (opt->sentence_cap_file && process_word_file(opt->sentence_cap_file, &capitalization_list))
 			fatal(EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the capitalization file.\n");
 	}
 

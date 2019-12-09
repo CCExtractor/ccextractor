@@ -19,7 +19,7 @@ struct word_list {
 	size_t capacity;
 };
 
-struct word_list spell_correct = {
+struct word_list capitalization_list = {
 	.words = NULL,
 	.len = 0,
 	.capacity = 0,
@@ -97,7 +97,7 @@ int string_cmp(const void *p1, const void *p2)
 
 void capitalize_word(size_t index, char *word)
 {
-	memcpy(word, spell_correct.words[index], strlen(spell_correct.words[index]));
+	memcpy(word, capitalization_list.words[index], strlen(capitalization_list.words[index]));
 }
 
 void censor_word(size_t index, char *word)
@@ -136,7 +136,7 @@ void call_function_if_match(int line_num, struct eia608_screen *data, struct wor
 
 void correct_case_with_dictionary(int line_num, struct eia608_screen *data)
 {
-	call_function_if_match(line_num, data, &spell_correct, capitalize_word);
+	call_function_if_match(line_num, data, &capitalization_list, capitalize_word);
 }
 
 void censor_word_with_dictionary(int line_num, struct eia608_screen *data)
@@ -165,11 +165,11 @@ void telx_correct_case(char *sub_line)
 	}
 	do
 	{
-		char **index = bsearch(&c, spell_correct.words, spell_correct.len, sizeof(*spell_correct.words), string_cmp);
+		char **index = bsearch(&c, capitalization_list.words, capitalization_list.len, sizeof(*capitalization_list.words), string_cmp);
 
 		if (index)
 		{
-			char *correct_c = spell_correct.words[index - spell_correct.words];
+			char *correct_c = capitalization_list.words[index - capitalization_list.words];
 			size_t len = strlen(correct_c);
 			memcpy(oline + (c - line), correct_c, len);
 		}
@@ -512,6 +512,6 @@ void shell_sort(void *base, int nb, size_t size, int(*compar)(const void*p1, con
 
 void ccx_encoders_helpers_perform_shellsort_words(void)
 {
-	shell_sort(spell_correct.words, spell_correct.len, sizeof(*spell_correct.words), string_cmp_function, NULL);
+	shell_sort(capitalization_list.words, capitalization_list.len, sizeof(*capitalization_list.words), string_cmp_function, NULL);
 	shell_sort(profane.words, profane.len, sizeof(*profane.words), string_cmp_function, NULL);
 }
