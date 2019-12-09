@@ -9,6 +9,7 @@
 - Fix: Correct if-clauses (missing or misplaced brackets).
 - Fix: Comment out some unused code.
 - Fix: Resolve bunch of compilation's warnings.
+- Fix: Updated zlib to 1.2.11
 
 0.88 (2019-05-21)
 -----------------
