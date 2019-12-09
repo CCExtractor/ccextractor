@@ -58,9 +58,9 @@ enum ccx_debug_message_types
 	CCX_DMT_LEVENSHTEIN = 0x1000,    // Levenshtein distance calculations
 	CCX_DMT_DVB = 0x2000,			 // DVB 
 #ifdef ENABLE_SHARING
-	CCX_DMT_SHARE = 0x2000,        // Extracted captions sharing service
+	CCX_DMT_SHARE = 0x2000,          // Extracted captions sharing service
 #endif //ENABLE_SHARING
-	CCX_DMT_DUMPDEF=0x4000,        // Dump defective TS packets
+	CCX_DMT_DUMPDEF = 0x4000         // Dump defective TS packets
 };
 
 // AVC NAL types
@@ -117,18 +117,18 @@ enum ccx_stream_type
 	CCX_STREAM_TYPE_ISO_IEC_13818_6_TYPE_B = 0x0B,
 	CCX_STREAM_TYPE_ISO_IEC_13818_6_TYPE_C = 0x0C,
 	CCX_STREAM_TYPE_ISO_IEC_13818_6_TYPE_D = 0x0D,
-	CCX_STREAM_TYPE_AUDIO_AAC   = 0x0f,
-	CCX_STREAM_TYPE_VIDEO_MPEG4 = 0x10,
-	CCX_STREAM_TYPE_VIDEO_H264  = 0x1b,
-	CCX_STREAM_TYPE_PRIVATE_USER_MPEG2=0x80,
+	CCX_STREAM_TYPE_AUDIO_AAC   = 0x0f, // Should there really be 0x0f?
+	CCX_STREAM_TYPE_VIDEO_MPEG4 = 0x10, // Should there really be 0x10?
+	CCX_STREAM_TYPE_VIDEO_H264  = 0x1b, // Should there really be 0x1b?
+	CCX_STREAM_TYPE_PRIVATE_USER_MPEG2 = 0x80,
 	CCX_STREAM_TYPE_AUDIO_AC3   = 0x81,
 	CCX_STREAM_TYPE_AUDIO_HDMV_DTS = 0x82,
-	CCX_STREAM_TYPE_AUDIO_DTS   = 0x8a,
+	CCX_STREAM_TYPE_AUDIO_DTS   = 0x8a // Should there really be 0x8a?
 };
 
 enum ccx_mpeg_descriptor
 {
-	CCX_MPEG_DSC_REGISTRATION = 0x05,
+	CCX_MPEG_DSC_REGISTRATION = 0x05, // And what's with all these random numbers?
 	CCX_MPEG_DSC_DATA_STREAM_ALIGNMENT = 0x06,
 	CCX_MPEG_DSC_ISO639_LANGUAGE = 0x0A,
 	CCX_MPEG_DSC_VBI_DATA_DESCRIPTOR = 0x45,
@@ -136,23 +136,23 @@ enum ccx_mpeg_descriptor
 	CCX_MPEG_DSC_TELETEXT_DESCRIPTOR = 0x56,
 	CCX_MPEG_DSC_DVB_SUBTITLE = 0x59,
 	CCX_MPEG_DSC_CAPTION_SERVICE = 0x86,
-	CCX_MPEG_DESC_DATA_COMP = 0xfd,
+	CCX_MPEG_DESC_DATA_COMP = 0xfd
 };
 
 
 enum
 {
-	CCX_MESSAGES_QUIET = 0,
-	CCX_MESSAGES_STDOUT =1,
-	CCX_MESSAGES_STDERR =2
+	CCX_MESSAGES_QUIET  = 0,
+	CCX_MESSAGES_STDOUT = 1,
+	CCX_MESSAGES_STDERR = 2
 };
 
 enum ccx_datasource
 {
-	CCX_DS_FILE=0,
-	CCX_DS_STDIN=1,
-	CCX_DS_NETWORK=2,
-	CCX_DS_TCP=3
+	CCX_DS_FILE    = 0,
+	CCX_DS_STDIN   = 1,
+	CCX_DS_NETWORK = 2,
+	CCX_DS_TCP     = 3
 };
 
 enum ccx_output_format
@@ -171,7 +171,7 @@ enum ccx_output_format
 	CCX_OF_G608 = 11,
 	CCX_OF_CURL = 12,
 	CCX_OF_SSA = 13,
-    CCX_OF_MCC = 14,
+    CCX_OF_MCC = 14
 };
 
 enum ccx_output_date_format
@@ -179,16 +179,16 @@ enum ccx_output_date_format
 	ODF_NONE = 0,
 	ODF_HHMMSS = 1,
 	ODF_SECONDS = 2,
-	ODF_DATE =3,
-	ODF_HHMMSSMS = 4,    // HH:MM:SS,MILIS (.srt style)
+	ODF_DATE = 3,
+	ODF_HHMMSSMS = 4    // HH:MM:SS,MILIS (.srt style)
 };
 
 enum ccx_stream_mode_enum
 {
-	CCX_SM_ELEMENTARY_OR_NOT_FOUND=0,
-	CCX_SM_TRANSPORT=1,
-	CCX_SM_PROGRAM=2,
-	CCX_SM_ASF=3,
+	CCX_SM_ELEMENTARY_OR_NOT_FOUND = 0,
+	CCX_SM_TRANSPORT = 1,
+	CCX_SM_PROGRAM = 2,
+	CCX_SM_ASF = 3,
 	CCX_SM_MCPOODLESRAW = 4,
 	CCX_SM_RCWT = 5,     // Raw Captions With Time, not used yet.
 	CCX_SM_MYTH = 6,     // Use the myth loop
@@ -204,7 +204,7 @@ enum ccx_stream_mode_enum
 	CCX_SM_MKV = 12,
 	CCX_SM_MXF = 13,
 
-	CCX_SM_AUTODETECT = 16
+	CCX_SM_AUTODETECT = 16 // Why 16 ???
 };
 
 enum ccx_encoding_type
@@ -228,7 +228,7 @@ enum ccx_bufferdata_type
 	CCX_ISDB_SUBTITLE = 8,
 	/* BUffer where cc data contain 3 byte cc_valid ccdata 1 ccdata 2 */
 	CCX_RAW_TYPE = 9,
-	CCX_DVD_SUBTITLE =10,
+	CCX_DVD_SUBTITLE = 10
 };
 
 enum ccx_frame_type
@@ -248,19 +248,19 @@ typedef enum {
 
 enum ccx_code_type
 {
-	CCX_CODEC_ANY,
-	CCX_CODEC_TELETEXT,
-	CCX_CODEC_DVB,
-	CCX_CODEC_ISDB_CC,
-	CCX_CODEC_ATSC_CC,
-	CCX_CODEC_NONE,
+	CCX_CODEC_ANY = 0,
+	CCX_CODEC_TELETEXT = 1,
+	CCX_CODEC_DVB = 2,
+	CCX_CODEC_ISDB_CC = 3,
+	CCX_CODEC_ATSC_CC = 4,
+	CCX_CODEC_NONE = 5
 };
 
 enum cdp_section_type
 {
-	CDP_SECTION_DATA = 0x72,
-	CDP_SECTION_SVC_INFO = 0x73,
-	CDP_SECTION_FOOTER = 0x74
+	CDP_SECTION_DATA = 0x72, // If these numbers realy mean something
+	CDP_SECTION_SVC_INFO = 0x73, // write WHAT do they mean.
+	CDP_SECTION_FOOTER = 0x74 // It's magic now, as I see.
 };
 
 /*
