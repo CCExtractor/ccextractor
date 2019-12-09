@@ -24,16 +24,9 @@
 #ifndef DECODER_H
 #define DECODER_H
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif
-
 #include "bcd.h"
 #include "sliced.h"
 
-/* Public */
-
-#include <pthread.h>
 
 /* Bit slicer */
 
@@ -241,7 +234,7 @@ typedef enum {
  * use vbi_bit_slicer_init() to initialize.
  */
 typedef struct vbi_bit_slicer {
-	vbi_bool	(* func)(struct vbi_bit_slicer *slicer,
+	int	(* func)(struct vbi_bit_slicer *slicer,
 				 uint8_t *raw, uint8_t *buf);
 	unsigned int	cri;
 	unsigned int	cri_mask;
@@ -290,7 +283,7 @@ extern void		vbi_bit_slicer_init(vbi_bit_slicer *slicer,
  * result from a too weak or noisy signal. Error correction must be
  * implemented at a higher layer.
  */
-_vbi_inline vbi_bool
+inline int
 vbi_bit_slice(vbi_bit_slicer *slicer, uint8_t *raw, uint8_t *buf)
 {
 	return slicer->func(slicer, raw, buf);
@@ -357,7 +350,7 @@ typedef struct vbi_raw_decoder {
 	 * will be interleaved in memory. This implies @a count[0] and @a count[1]
 	 * are equal.
 	 */
-	vbi_bool		interlaced;
+	int		interlaced;
 	/**
 	 * Fields must be stored in temporal order, i. e. as the
 	 * lines have been captured. It is assumed that the first field is
@@ -365,11 +358,7 @@ typedef struct vbi_raw_decoder {
 	 * distinguish fields this flag shall be cleared, which disables
 	 * decoding of data services depending on the field number.
 	 */
-	vbi_bool		synchronous;
-
-	/*< private >*/
-
-	pthread_mutex_t		mutex;
+	int		synchronous;
 
 	unsigned int		services;
 	int			num_jobs;
