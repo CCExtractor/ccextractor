@@ -24,7 +24,7 @@
 #ifndef __SAMPLING_PAR_H__
 #define __SAMPLING_PAR_H__
 
-#include "zvbi_decoder.h"
+#include "decoder.h"
 
 VBI_BEGIN_DECLS
 

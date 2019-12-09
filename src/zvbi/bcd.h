@@ -24,7 +24,8 @@
 #ifndef BCD_H
 #define BCD_H
 
-#include "ccx_common_platform.h"
+#include "misc.h"
+
 /**
  * @addtogroup BCD BCD arithmetic for Teletext page numbers
  * @ingroup HiDec
@@ -104,7 +105,8 @@ typedef int vbi_subno;
  * @return
  * BCD number.
  */
-inline unsigned int vbi_dec2bcd(unsigned int dec)
+_vbi_inline unsigned int
+vbi_dec2bcd(unsigned int dec)
 {
 	return (dec % 10) + ((dec / 10) % 10) * 16 + ((dec / 100) % 10) * 256;
 }
@@ -127,7 +129,8 @@ inline unsigned int vbi_dec2bcd(unsigned int dec)
  * Decimal number. The result is undefined when the bcd number contains
  * hex digits 0xA ... 0xF.
  **/
-inline unsigned int vbi_bcd2dec(unsigned int bcd)
+_vbi_inline unsigned int
+vbi_bcd2dec(unsigned int bcd)
 {
 	return (bcd & 15) + ((bcd >> 4) & 15) * 10 + ((bcd >> 8) & 15) * 100;
 }
@@ -152,7 +155,8 @@ inline unsigned int vbi_bcd2dec(unsigned int bcd)
  * Packed bcd number. The result is undefined when any of the arguments
  * contain hex digits 0xA ... 0xF.
  */
-inline unsigned int vbi_add_bcd(unsigned int a, unsigned int b)
+_vbi_inline unsigned int
+vbi_add_bcd(unsigned int a, unsigned int b)
 {
 	unsigned int t;
 
@@ -175,7 +179,8 @@ inline unsigned int vbi_add_bcd(unsigned int a, unsigned int b)
  * @return
  * @c FALSE if @a bcd contains hex digits 0xA ... 0xF.
  */
-inline int vbi_is_bcd(unsigned int bcd)
+_vbi_inline vbi_bool
+vbi_is_bcd(unsigned int bcd)
 {
 	static const unsigned int x = 0x06666666;
 
@@ -197,7 +202,9 @@ inline int vbi_is_bcd(unsigned int bcd)
  *
  * @since 0.2.28
  */
-inline int vbi_bcd_digits_greater (unsigned int	bcd, unsigned int maximum)
+_vbi_inline vbi_bool
+vbi_bcd_digits_greater		(unsigned int		bcd,
+				 unsigned int		maximum)
 {
 	maximum ^= ~0;
 

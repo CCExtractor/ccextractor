@@ -21,6 +21,10 @@
 
 /* $Id: raw_decoder.c,v 1.24 2008/08/19 10:04:46 mschimek Exp $ */
 
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
+
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,12 +32,16 @@
 
 #include "misc.h"
 #include "raw_decoder.h"
-#include "ccx_common_common.h"
+
 #ifndef RAW_DECODER_PATTERN_DUMP
 #  define RAW_DECODER_PATTERN_DUMP 0
 #endif
 
-#define sp_sample_format sampling_format
+#if 2 == VBI_VERSION_MINOR
+#  define sp_sample_format sampling_format
+#else
+#  define sp_sample_format sample_format
+#endif
 
 /**
  * $addtogroup RawDecoder Raw VBI decoder
@@ -791,7 +799,7 @@ add_job_to_pattern		(vbi3_raw_decoder *	rd,
 				*dst++ = 0;
 
 			if (free <= 1) /* reserve a NULL way */
-				return CCX_FALSE;
+				return FALSE;
 
 			pattern = end;
 		}
@@ -819,7 +827,7 @@ add_job_to_pattern		(vbi3_raw_decoder *	rd,
                 }
 	}
 
-	return CCX_TRUE;
+	return TRUE;
 }
 
 static void
@@ -934,7 +942,11 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 		memset (rd->pattern, 0, scan_ways * sizeof (rd->pattern[0]));
 	}
 
+#if 2 == VBI_VERSION_MINOR
 	if (525 == rd->sampling.scanning) {
+#else
+	if (VBI3_VIDEOSTD_SET_525_60 & rd->sampling.videostd_set) {
+#endif
 		min_offset = 7.9e-6;
 	} else {
 		min_offset = 8.0e-6;
@@ -1013,8 +1025,12 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 			cri_end = ~0;
 		}
 
-		//amples_per_line = sp->bytes_per_line / VBI_PIXFMT_BPP (sp->sp_sample_format);
-		samples_per_line =  sp->bytes_per_line;
+#if 2 == VBI_VERSION_MINOR
+		samples_per_line = sp->bytes_per_line
+			/ VBI_PIXFMT_BPP (sp->sp_sample_format);
+#else
+		samples_per_line = sp->samples_per_line;
+#endif
 
 		if (!_vbi3_bit_slicer_init (&job->slicer)) {
 			assert (!"bit_slicer_init");
@@ -1039,10 +1055,10 @@ vbi3_raw_decoder_add_services	(vbi3_raw_decoder *	rd,
 			assert (!"bit_slicer_set_params");
 		}
 
-		//vbi3_bit_slicer_set_log_fn (&job->slicer,
-		//			    rd->log.mask,
-		//			    rd->log.fn,
-		//			    rd->log.user_data);
+		vbi3_bit_slicer_set_log_fn (&job->slicer,
+					    rd->log.mask,
+					    rd->log.fn,
+					    rd->log.user_data);
 
 		lines_containing_data (start, count, sp, par);
 
@@ -1075,14 +1091,14 @@ vbi3_raw_decoder_sampling_point	(vbi3_raw_decoder *	rd,
 	assert (NULL != point);
 
 	if (row >= rd->n_sp_lines)
-		return CCX_FALSE;
+		return FALSE;
 
 	if (nth_bit >= rd->sp_lines[row].n_points)
-		return CCX_FALSE;
+		return FALSE;
 
 	*point = rd->sp_lines[row].points[nth_bit];
 
-	return CCX_TRUE;
+	return TRUE;
 }
 
 vbi_bool
@@ -1094,9 +1110,9 @@ vbi3_raw_decoder_debug		(vbi3_raw_decoder *	rd,
 	vbi_bool r;
 
 	assert (NULL != rd);
-	
+
 	sp_lines = NULL;
-	r = CCX_TRUE;
+	r = TRUE;
 
 	rd->debug = !!enable;
 
@@ -1106,13 +1122,26 @@ vbi3_raw_decoder_debug		(vbi3_raw_decoder *	rd,
 	}
 
 	switch (rd->sampling.sp_sample_format) {
+#if 3 == VBI_VERSION_MINOR
+	case VBI_PIXFMT_YUV444:
+	case VBI_PIXFMT_YVU444:
+	case VBI_PIXFMT_YUV422:
+	case VBI_PIXFMT_YVU422:
+	case VBI_PIXFMT_YUV411:
+	case VBI_PIXFMT_YVU411:
+	case VBI_PIXFMT_YVU420:
+	case VBI_PIXFMT_YUV410:
+	case VBI_PIXFMT_YVU410:
+	case VBI_PIXFMT_Y8:
+	case VBI_PIXFMT_UNKNOWN:
+#endif
 	case VBI_PIXFMT_YUV420:
 		break;
 
 	default:
 		/* Not implemented. */
 		n_lines = 0;
-		r = CCX_FALSE;
+		r = FALSE;
 		break;
 	}
 
@@ -1126,7 +1155,7 @@ vbi3_raw_decoder_debug		(vbi3_raw_decoder *	rd,
 	if (n_lines > 0) {
 		rd->sp_lines = calloc (n_lines, sizeof (*rd->sp_lines));
 		if (NULL == rd->sp_lines)
-			return CCX_FALSE;
+			return FALSE;
 
 		rd->n_sp_lines = n_lines;
 	}
@@ -1211,6 +1240,8 @@ vbi3_raw_decoder_set_log_fn	(vbi3_raw_decoder *	rd,
 				 void *			user_data,
 				 vbi_log_mask		mask)
 {
+	unsigned int i;
+
 	assert (NULL != rd);
 
 	if (NULL == log_fn)
@@ -1220,10 +1251,10 @@ vbi3_raw_decoder_set_log_fn	(vbi3_raw_decoder *	rd,
 	rd->log.fn = log_fn;
 	rd->log.user_data = user_data;
 
-//	for (i = 0; i < _VBI3_RAW_DECODER_MAX_JOBS; ++i) {
-//		vbi3_bit_slicer_set_log_fn (&rd->jobs[i].slicer,
-//					    mask, log_fn, user_data);
-//	}
+	for (i = 0; i < _VBI3_RAW_DECODER_MAX_JOBS; ++i) {
+		vbi3_bit_slicer_set_log_fn (&rd->jobs[i].slicer,
+					    mask, log_fn, user_data);
+	}
 }
 
 /**
@@ -1236,7 +1267,7 @@ _vbi3_raw_decoder_destroy	(vbi3_raw_decoder *	rd)
 {
 	vbi3_raw_decoder_reset (rd);
 
-	vbi3_raw_decoder_debug (rd, CCX_FALSE);
+	vbi3_raw_decoder_debug (rd, FALSE);
 
 	/* Make unusable. */
 	CLEAR (*rd);
@@ -1257,12 +1288,12 @@ _vbi3_raw_decoder_init		(vbi3_raw_decoder *	rd,
 
 	if (NULL != sp) {
 		if (!_vbi_sampling_par_valid_log (sp, &rd->log))
-			return CCX_FALSE;
+			return FALSE;
 
 		rd->sampling = *sp;
 	}
 
-	return CCX_TRUE;
+	return TRUE;
 }
 
 /**

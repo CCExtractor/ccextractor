@@ -37,9 +37,7 @@
 #include <assert.h>
 
 #include "macros.h"
-#include "ccx_common_platform.h"
-#include "ccx_common_constants.h"
-#include "ccx_common_structs.h"
+#include "version.h"
 
 #define N_ELEMENTS(array) (sizeof (array) / sizeof (*(array)))
 
@@ -247,10 +245,26 @@ do {									\
 
 /* For applications, debugging and fault injection during unit tests. */
 
-#define vbi_malloc malloc
-#define vbi_realloc realloc
-#define vbi_strdup strdup
-#define vbi_free free
+#if 2 == VBI_VERSION_MINOR
+#  define vbi_malloc malloc
+#  define vbi_realloc realloc
+#  define vbi_strdup strdup
+#  define vbi_free free
+#else
+
+extern void *
+(* vbi_malloc)			(size_t);
+extern void *
+(* vbi_realloc)		(void *,
+				 size_t)
+  _vbi_nonnull ((1));
+extern char *
+(* vbi_strdup)			(const char *)
+  _vbi_nonnull ((1));
+extern void
+(* vbi_free)			(void *);
+
+#endif
 
 #define vbi_cache_malloc vbi_malloc
 #define vbi_cache_free vbi_free
@@ -296,17 +310,65 @@ _vbi_grow_vector_capacity	(void **		vector,
 				 size_t			element_size)
   _vbi_nonnull ((1, 2));
 
-#define debug1 debug
-#define debug2 debug
-#define debug3 debug
-#define warning log
-#define error log
-#define info debug
+/* Logging stuff. */
 
-#define debug(a, fmt, ...)							\
-	ccx_common_logging.debug_ftn(CCX_DMT_PARSE, "VBI:%s:%d: "fmt , __FUNCTION__ ,__LINE__ , ##__VA_ARGS__)
-#define log(a, fmt, ...)							\
-	ccx_common_logging.log_ftn("VBI:%d: "fmt , __LINE__ , ##__VA_ARGS__)
+extern _vbi_log_hook		_vbi_global_log;
+
+extern void
+_vbi_log_vprintf		(vbi_log_fn *		log_fn,
+				 void *			user_data,
+				 vbi_log_mask		level,
+				 const char *		source_file,
+				 const char *		context,
+				 const char *		templ,
+				 va_list		ap)
+  _vbi_nonnull ((1, 4, 5, 6));
+extern void
+_vbi_log_printf		(vbi_log_fn *		log_fn,
+				 void *			user_data,
+				 vbi_log_mask		level,
+				 const char *		source_file,
+				 const char *		context,
+				 const char *		templ,
+				 ...)
+  _vbi_nonnull ((1, 4, 5, 6)) _vbi_format ((printf, 6, 7));
+
+#define _vbi_log(hook, level, templ, args...)				\
+do {									\
+	_vbi_log_hook *_h = hook;					\
+									\
+	if ((NULL != _h && 0 != (_h->mask & level))			\
+	    || (_h = &_vbi_global_log, 0 != (_h->mask & level)))	\
+		_vbi_log_printf (_h->fn, _h->user_data,		\
+				  level, __FILE__, __FUNCTION__,	\
+				  templ , ##args);			\
+} while (0)
+
+#define _vbi_vlog(hook, level, templ, ap)				\
+do {									\
+	_vbi_log_hook *_h = hook;					\
+									\
+	if ((NULL != _h && 0 != (_h->mask & level))			\
+	    || (_h = &_vbi_global_log, 0 != (_h->mask & level)))	\
+		_vbi_log_vprintf (_h->fn, _h->user_data,		\
+				  level, __FILE__, __FUNCTION__,	\
+				  templ, ap);				\
+} while (0)
+
+#define error(hook, templ, args...)					\
+	_vbi_log (hook, VBI_LOG_ERROR, templ , ##args)
+#define warning(hook, templ, args...)					\
+	_vbi_log (hook, VBI_LOG_ERROR, templ , ##args)
+#define notice(hook, templ, args...)					\
+	_vbi_log (hook, VBI_LOG_NOTICE, templ , ##args)
+#define info(hook, templ, args...)					\
+	_vbi_log (hook, VBI_LOG_INFO, templ , ##args)
+#define debug1(hook, templ, args...)					\
+	_vbi_log (hook, VBI_LOG_DEBUG, templ , ##args)
+#define debug2(hook, templ, args...)					\
+	_vbi_log (hook, VBI_LOG_DEBUG2, templ , ##args)
+#define debug3(hook, templ, args...)					\
+	_vbi_log (hook, VBI_LOG_DEBUG3, templ , ##args)
 
 /* Portability stuff. */
 

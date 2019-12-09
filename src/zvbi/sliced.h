@@ -343,8 +343,12 @@ typedef struct {
  * @addtogroup Sliced
  * @{
  */
-extern const char *vbi_sliced_name (vbi_service_set service);
-extern unsigned int vbi_sliced_payload_bits (vbi_service_set service);
+extern const char *
+vbi_sliced_name			(vbi_service_set	service)
+  _vbi_const;
+extern unsigned int
+vbi_sliced_payload_bits		(vbi_service_set	service)
+  _vbi_const;
 /** @} */
 
 /* Private */

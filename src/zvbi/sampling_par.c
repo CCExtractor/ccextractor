@@ -21,16 +21,24 @@
 
 /* $Id: sampling_par.c,v 1.11 2009/02/18 15:37:11 mschimek Exp $ */
 
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
+
 #include <errno.h>
 
 #include "misc.h"
 #include "raw_decoder.h"
 #include "sampling_par.h"
 #include "sliced.h"
-#include "ccx_common_common.h" 
+#include "version.h"
 
-#define vbi_pixfmt_bytes_per_pixel VBI_PIXFMT_BPP
-#define sp_sample_format sampling_format
+#if 2 == VBI_VERSION_MINOR
+#  define vbi_pixfmt_bytes_per_pixel VBI_PIXFMT_BPP
+#  define sp_sample_format sampling_format
+#else
+#  define sp_sample_format sample_format
+#endif
 
 /**
  * @addtogroup Sampling Raw VBI sampling
@@ -77,7 +85,7 @@ range_check			(unsigned int		start,
  * @param sp Sampling parameters to verify.
  * 
  * @return
- * CCX_TRUE if the sampling parameters are valid (as far as we can tell).
+ * TRUE if the sampling parameters are valid (as far as we can tell).
  */
 vbi_bool
 _vbi_sampling_par_valid_log	(const vbi_sampling_par *sp,
@@ -90,26 +98,51 @@ _vbi_sampling_par_valid_log	(const vbi_sampling_par *sp,
 
 	switch (sp->sp_sample_format) {
 	case VBI_PIXFMT_YUV420:
+#if 2 == VBI_VERSION_MINOR
 		/* This conflicts with the ivtv driver, which returns an
 		   odd number of bytes per line.  The driver format is
 		   _GREY but libzvbi 0.2 has no VBI_PIXFMT_Y8. */
+#else
+		if (sp->samples_per_line & 1)
+			goto bad_samples;
+
+		/* fall through */
+
+	case VBI3_PIXFMT_Y8: /* very common */
+		if (sp->samples_per_line > sp->bytes_per_line)
+			goto too_many_samples;
+#endif
 		break;
 
 	default:
 		bpp = vbi_pixfmt_bytes_per_pixel (sp->sp_sample_format);
+#if 2 == VBI_VERSION_MINOR
 		if (0 != (sp->bytes_per_line % bpp))
 			goto bad_samples;
+#else
+		if (sp->samples_per_line * bpp > sp->bytes_per_line)
+			goto too_many_samples;
+#endif
 		break;
 	}
 
+#if 2 == VBI_VERSION_MINOR
 	if (0 == sp->bytes_per_line)
 		goto no_samples;
+#else
+	if (0 == sp->samples_per_line)
+		goto no_samples;
+#endif
 
 	if (0 == sp->count[0]
 	    && 0 == sp->count[1])
 		goto bad_range;
 
+#if 2 == VBI_VERSION_MINOR
 	videostd_set = _vbi_videostd_set_from_scanning (sp->scanning);
+#else
+	videostd_set = sp->videostd_set;
+#endif
 
 	if (VBI_VIDEOSTD_SET_525_60 & videostd_set) {
 		if (VBI_VIDEOSTD_SET_625_50 & videostd_set)
@@ -135,7 +168,7 @@ _vbi_sampling_par_valid_log	(const vbi_sampling_par *sp,
 		info (log,
 		      "Ambiguous videostd_set 0x%lx.",
 		      (unsigned long) videostd_set);
-		return CCX_FALSE;
+		return FALSE;
 	}
 
 	if (sp->interlaced
@@ -145,14 +178,25 @@ _vbi_sampling_par_valid_log	(const vbi_sampling_par *sp,
 			"Line counts %u, %u must be equal and "
 			"non-zero when raw VBI data is interlaced.",
 			sp->count[0], sp->count[1]);
-		return CCX_FALSE;
+		return FALSE;
 	}
 
-	return CCX_TRUE;
+	return TRUE;
 
  no_samples:
 	info (log, "samples_per_line is zero.");
-	return CCX_FALSE;
+	return FALSE;
+
+#if 3 == VBI_VERSION_MINOR
+ too_many_samples:
+	info (log,
+		"samples_per_line %u times bytes per samples %u is "
+		"greater than bytes_per_line %u.",
+		sp->samples_per_line,
+		vbi3_pixfmt_bytes_per_pixel (sp->sp_sample_format),
+		sp->bytes_per_line);
+	return FALSE;
+#endif
 
  bad_samples:
 	info (log,
@@ -160,7 +204,7 @@ _vbi_sampling_par_valid_log	(const vbi_sampling_par *sp,
 		"the sample size %u.",
 		sp->bytes_per_line,
 		vbi_pixfmt_bytes_per_pixel (sp->sp_sample_format));
-	return CCX_FALSE;
+	return FALSE;
 
  bad_range:
 	info (log,
@@ -170,7 +214,7 @@ _vbi_sampling_par_valid_log	(const vbi_sampling_par *sp,
 		sp->count[0],
 		sp->start[1], sp->start[1] + sp->count[1] - 1,
 		sp->count[1]);
-	return CCX_FALSE;
+	return FALSE;
 }
 
 static vbi_bool
@@ -189,7 +233,11 @@ _vbi_sampling_par_permit_service
 	assert (NULL != sp);
 	assert (NULL != par);
 
+#if 2 == VBI_VERSION_MINOR
 	videostd_set = _vbi_videostd_set_from_scanning (sp->scanning);
+#else
+	videostd_set = sp->videostd_set;
+#endif
 	if (0 == (par->videostd_set & videostd_set)) {
 		info (log,
 		      "Service 0x%08x (%s) requires "
@@ -198,7 +246,7 @@ _vbi_sampling_par_permit_service
 		      par->id, par->label,
 		      (unsigned long) par->videostd_set,
 		      (unsigned long) videostd_set);
-		return CCX_FALSE;
+		return FALSE;
 	}
 
 	if (par->flags & _VBI_SP_LINE_NUM) {
@@ -210,7 +258,7 @@ _vbi_sampling_par_permit_service
 				"Service 0x%08x (%s) requires known "
 				"line numbers.",
 				par->id, par->label);
-			return CCX_FALSE;
+			return FALSE;
 		}
 	}
 
@@ -236,15 +284,19 @@ _vbi_sampling_par_permit_service
 				"for service 0x%08x (%s).",
 				sp->sampling_rate / 1e6,
 				par->id, par->label);
-			return CCX_FALSE;
+			return FALSE;
 		}
 	}
 
 	signal = par->cri_bits / (double) par->cri_rate
 		+ (par->frc_bits + par->payload) / (double) par->bit_rate;
 
+#if 2 == VBI_VERSION_MINOR
 	samples_per_line = sp->bytes_per_line
 		/ VBI_PIXFMT_BPP (sp->sampling_format);
+#else
+	samples_per_line = sp->samples_per_line;
+#endif
 
 	if (0 && sp->offset > 0 && strict > 0) {
 		double sampling_rate;
@@ -264,7 +316,7 @@ _vbi_sampling_par_permit_service
 				offset * 1e6,
 				par->id, par->label,
 				par->offset / 1e3);
-			return CCX_FALSE;
+			return FALSE;
 		}
 
 		if (end < (par->offset / 1e9 + signal + 0.5e-6)) {
@@ -276,7 +328,7 @@ _vbi_sampling_par_permit_service
 				par->id, par->label,
 				par->offset / 1e3
 				+ signal * 1e6 + 0.5);
-			return CCX_FALSE;
+			return FALSE;
 		}
 	} else {
 		double samples;
@@ -292,7 +344,7 @@ _vbi_sampling_par_permit_service
 				"%f us exceeds %f us sampling length.",
 				par->id, par->label,
 				signal * 1e6, samples * 1e6);
-			return CCX_FALSE;
+			return FALSE;
 		}
 	}
 
@@ -302,7 +354,7 @@ _vbi_sampling_par_permit_service
 			"Service 0x%08x (%s) requires "
 			"synchronous field order.",
 			par->id, par->label);
-		return CCX_FALSE;
+		return FALSE;
 	}
 
 	for (field = 0; field < 2; ++field) {
@@ -323,7 +375,7 @@ _vbi_sampling_par_permit_service
 				"Service 0x%08x (%s) requires "
 				"data from field %u",
 				par->id, par->label, field + 1);
-			return CCX_FALSE;
+			return FALSE;
 		}
 
 		/* (int) <= 0 for compatibility with libzvbi 0.2.x */
@@ -345,11 +397,11 @@ _vbi_sampling_par_permit_service
 				par->first[field],
 				par->last[field],
 				start, end);
-			return CCX_FALSE;
+			return FALSE;
 		}
 	}
 
-	return CCX_TRUE;
+	return TRUE;
 }
 
 /**
@@ -422,8 +474,8 @@ _vbi_sampling_par_from_services_log
 	sp->count[0]		= 0;
 	sp->start[1]		= 30000;
 	sp->count[1]		= 0;
-	sp->interlaced		= CCX_FALSE;
-	sp->synchronous		= CCX_TRUE;
+	sp->interlaced		= FALSE;
+	sp->synchronous		= TRUE;
 
 	rservices = 0;
 	rate = 0;
@@ -510,9 +562,15 @@ _vbi_sampling_par_from_services_log
 		sp->start[0] = 0;
 	}
 
+#if 3 == VBI_VERSION_MINOR
+	sp->videostd_set	= videostd_set;
+	sp->sp_sample_format	= VBI_PIXFMT_Y8;
+	sp->samples_per_line	= samples_per_line;
+#else
 	sp->scanning		= (videostd_set & VBI_VIDEOSTD_SET_525_60)
 		? 525 : 625;
 	sp->sp_sample_format	= VBI_PIXFMT_YUV420;
+#endif
 
 	/* Note bpp is 1. */
 	sp->bytes_per_line = MAX (1440U, samples_per_line);
@@ -580,6 +638,58 @@ vbi_sampling_par_from_services	(vbi_sampling_par *	sp,
 						     /* log_hook */ NULL);
 }
 
+#if 3 == VBI_VERSION_MINOR
+
+/**
+ * @param videostd A video standard number.
+ *
+ * Returns the name of a video standard like VBI_VIDEOSTD_PAL_B ->
+ * "PAL_B". This is mainly intended for debugging.
+ * 
+ * @return
+ * Static ASCII string, NULL if @a videostd is a custom standard
+ * or invalid.
+ */
+const char *
+_vbi_videostd_name		(vbi_videostd		videostd)
+{
+	switch (videostd) {
+
+#undef CASE
+#define CASE(std) case VBI_VIDEOSTD_##std : return #std ;
+
+     	CASE (NONE)
+     	CASE (PAL_B)
+	CASE (PAL_B1)
+	CASE (PAL_G)
+	CASE (PAL_H)
+	CASE (PAL_I)
+	CASE (PAL_D)
+	CASE (PAL_D1)
+	CASE (PAL_K)
+	CASE (PAL_M)
+	CASE (PAL_N)
+	CASE (PAL_NC)
+	CASE (PAL_60)
+	CASE (NTSC_M)
+	CASE (NTSC_M_JP)
+	CASE (NTSC_M_KR)
+	CASE (NTSC_443)
+	CASE (SECAM_B)
+	CASE (SECAM_D)
+	CASE (SECAM_G)
+	CASE (SECAM_H)
+	CASE (SECAM_K)
+	CASE (SECAM_K1)
+	CASE (SECAM_L)
+	CASE (SECAM_LC)
+
+	}
+
+	return NULL;
+}
+
+#endif /* 3 == VBI_VERSION_MINOR */
 
 /*
 Local variables:

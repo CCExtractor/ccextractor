@@ -26,7 +26,7 @@
 
 #include <stdio.h>
 
-#include "zvbi_decoder.h"
+#include "decoder.h"
 #include "sampling_par.h"
 #include "bit_slicer.h"
 

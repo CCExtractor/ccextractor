@@ -71,6 +71,18 @@ VBI_BEGIN_DECLS
 #  define _vbi_inline static
 #endif
 
+/**
+ * @ingroup Basic
+ * @name Boolean type
+ * @{
+ */
+#ifndef TRUE
+#  define TRUE 1
+#endif
+#ifndef FALSE
+#  define FALSE 0
+#endif
+
 typedef int vbi_bool;
 /** @} */
 
