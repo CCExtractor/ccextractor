@@ -1094,7 +1094,7 @@ vbi3_raw_decoder_debug		(vbi3_raw_decoder *	rd,
 	vbi_bool r;
 
 	assert (NULL != rd);
-
+	
 	sp_lines = NULL;
 	r = CCX_TRUE;
 

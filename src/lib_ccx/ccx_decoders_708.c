@@ -1070,8 +1070,8 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 
 	//Apply windows attribute presets
 	if (win_style > 0 && win_style < 8)
-
-		window->win_style = win_style; {
+	{
+		window->win_style = win_style; 
 		window->attribs.border_color = ccx_dtvcc_predefined_window_styles[win_style].border_color;
 		window->attribs.border_type = ccx_dtvcc_predefined_window_styles[win_style].border_type;
 		window->attribs.display_effect = ccx_dtvcc_predefined_window_styles[win_style].display_effect;
@@ -1198,8 +1198,9 @@ void dtvcc_handle_DLW_DeleteWindows(ccx_dtvcc_ctx *dtvcc,
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_handle_DLW_DeleteWindows: windows: ");
 
-	int screen_content_changed = 0,
-		window_had_content,current_win_deleted=0;
+	int screen_content_changed = 0, window_had_content = 0;
+	// int current_win_deleted = 0; /* currently unused */
+	
 	if (windows_bitmap == 0)
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "none\n");
 	else
