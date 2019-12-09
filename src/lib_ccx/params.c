@@ -2820,7 +2820,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 	if (opt->enc_cfg.sentence_cap)
 	{
-		if (add_builtin_capitalized_words())
+		if (add_builtin_words(capitalized_builtin, &spell_correct))
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for capitalized word list");
 		if (opt->sentence_cap_file && process_word_file(opt->sentence_cap_file, &spell_correct))
 			fatal(EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the capitalization file.\n");
@@ -2828,7 +2828,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 	if (opt->enc_cfg.filter_profanity)
 	{
-		if (add_builtin_profane_words())
+		if (add_builtin_words(profane_builtin, &profane))
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for profane word list");
 		if (opt->filter_profanity_file && process_word_file(opt->filter_profanity_file, &profane))
 			fatal(EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the profanity file.\n");

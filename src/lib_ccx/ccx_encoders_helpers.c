@@ -33,7 +33,7 @@ struct word_list profane = {
 
 // Some basic English words, so user-defined doesn't have to
 // include the common stuff
-static const char *capitalized_builtin[] =
+const char *capitalized_builtin[] =
 {
 	"I", "I'd", "I've", "I'd", "I'll",
 	"January", "February", "March", "April", // May skipped intentionally
@@ -44,7 +44,7 @@ static const char *capitalized_builtin[] =
 	NULL
 };
 
-static const char *profane_builtin[] =
+const char *profane_builtin[] =
 {
 	"arse",
 	"ass",
@@ -454,23 +454,12 @@ int add_word(struct word_list *list, const char *word)
 	return word_len;
 }
 
-int add_builtin_capitalized_words(void)
+int add_builtin_words(const char *builtin[], struct word_list *list)
 {
 	int i = 0;
-	while (capitalized_builtin[i] != NULL)
+	while (builtin[i] != NULL)
 	{
-		if (add_word(&spell_correct, capitalized_builtin[i++]))
-			return -1;
-	}
-	return 0;
-}
-
-int add_builtin_profane_words(void)
-{
-	int i = 0;
-	while (profane_builtin[i] != NULL)
-	{
-		if (add_word(&profane, profane_builtin[i++]))
+		if (add_word(list, builtin[i++]) == -1)
 			return -1;
 	}
 	return 0;
