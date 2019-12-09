@@ -2824,8 +2824,6 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for capitalized word list");
 		if (opt->sentence_cap_file && process_word_file(opt->sentence_cap_file, &spell_correct))
 			fatal(EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the capitalization file.\n");
-
-		ccx_encoders_helpers_perform_shellsort_words();
 	}
 
 	if (opt->enc_cfg.filter_profanity)
@@ -2835,6 +2833,8 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (opt->filter_profanity_file && process_word_file(opt->filter_profanity_file, &profane))
 			fatal(EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the profanity file.\n");
 	}
+
+	ccx_encoders_helpers_perform_shellsort_words(); // Sort the words for binary search for capitalization and profanity censorship
 
 	if(opt->demux_cfg.ts_forced_program != -1)
 		opt->demux_cfg.ts_forced_program_selected = 1;

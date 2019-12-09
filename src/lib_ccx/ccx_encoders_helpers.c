@@ -524,4 +524,5 @@ void shell_sort(void *base, int nb, size_t size, int(*compar)(const void*p1, con
 void ccx_encoders_helpers_perform_shellsort_words(void)
 {
 	shell_sort(spell_correct.words, spell_correct.len, sizeof(*spell_correct.words), string_cmp_function, NULL);
+	shell_sort(profane.words, profane.len, sizeof(*profane.words), string_cmp_function, NULL);
 }
