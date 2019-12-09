@@ -456,32 +456,22 @@ int add_word(struct word_list *list, const char *word)
 
 int add_builtin_capitalized_words(void)
 {
-	static int function_already_ran = 0; // so we don't do it twice
-	if (!function_already_ran)
+	int i = 0;
+	while (capitalized_builtin[i] != NULL)
 	{
-		int i = 0;
-		while (capitalized_builtin[i] != NULL)
-		{
-			if (add_word(&spell_correct, capitalized_builtin[i++]))
-				return -1;
-		}
-		function_already_ran = 1;
+		if (add_word(&spell_correct, capitalized_builtin[i++]))
+			return -1;
 	}
 	return 0;
 }
 
 int add_builtin_profane_words(void)
 {
-	static int function_already_ran = 0; // so we don't do it twice
-	if (!function_already_ran)
+	int i = 0;
+	while (profane_builtin[i] != NULL)
 	{
-		int i = 0;
-		while (profane_builtin[i] != NULL)
-		{
-			if (add_word(&profane, profane_builtin[i++]))
-				return -1;
-		}
-		function_already_ran = 1;
+		if (add_word(&profane, profane_builtin[i++]))
+			return -1;
 	}
 	return 0;
 }
