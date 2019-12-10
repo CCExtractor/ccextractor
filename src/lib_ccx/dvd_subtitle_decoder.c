@@ -90,12 +90,20 @@ void get_bitmap(struct DVD_Ctx *ctx)
 	h = (ctx->ctrl->coord[3] - ctx->ctrl->coord[2]) + 1;
 	dbg_print(CCX_DMT_VERBOSE, "w:%d h:%d\n", w, h);
 
+	if(w<0 || h<0)
+	{
+		dbg_print(CCX_DMT_VERBOSE, "Width or height has a negative value");
+		return;
+	}
+
 	pos = ctx->ctrl->pixoffset[0];
 	m = 0;
 	nextbyte = ctx->buffer[pos];
 
 	ctx->bitmap = malloc(w*h);
 	buffp = ctx->bitmap;
+	if(!buffp)
+		return;
 	memset(buffp, 0, w*h);
 	x = 0; lineno = 0;
 
@@ -196,6 +204,8 @@ void decode_packet(struct DVD_Ctx *ctx)
 
 		while(seq_end == 0)
 		{
+			if(ctx->pos > ctx->len)
+				break;
 			command = buff[ctx->pos];
 			ctx->pos += 1;
 
@@ -328,7 +338,11 @@ int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_
 
 	w = (ctx->ctrl->coord[1] - ctx->ctrl->coord[0]) + 1;
 	h = (ctx->ctrl->coord[3] - ctx->ctrl->coord[2]) + 1;
-
+	if(w<0 || h<0)
+	{
+		dbg_print(CCX_DMT_VERBOSE, "Width or height has a negative value");
+		return -1;
+	}
 	rect->data0 = malloc(w*h);
 	memcpy(rect->data0, ctx->bitmap, w*h);
 

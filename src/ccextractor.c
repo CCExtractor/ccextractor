@@ -41,10 +41,10 @@ void print_end_msg(void)
 
 int api_start(struct ccx_s_options api_options)
 {
-    struct lib_ccx_ctx *ctx;
-    struct lib_cc_decode *dec_ctx = NULL;
-    int ret = 0, tmp;
-    enum ccx_stream_mode_enum stream_mode;
+    struct lib_ccx_ctx *ctx       = NULL; // Context for libs
+    struct lib_cc_decode *dec_ctx = NULL; // Context for decoder
+    int ret = 0, tmp = 0;
+    enum ccx_stream_mode_enum stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
 
 #if defined(ENABLE_OCR) && defined(_WIN32)
     setMsgSeverity(LEPT_MSG_SEVERITY);
@@ -503,23 +503,27 @@ int api_param_count(struct ccx_s_options* api_options)
 
 int main(int argc, char* argv[])
 {
-    setlocale(LC_ALL, "");
+    setlocale(LC_ALL, ""); // Supports non-English CCs
+
     struct ccx_s_options* api_options = api_init_options();
-    check_configuration_file(*api_options);
+    check_configuration_file(*api_options); 
+    // If "ccextractor.cnf" is present, takes options from it.
+    // See docs/ccextractor.cnf.sample for more info.
+
 #ifdef PYTHON_API
     for(int i = 1; i < argc; i++)
-        api_add_param(api_options,argv[i]);
+        api_add_param(api_options, argv[i]);
 #endif
 
 #ifdef PYTHON_API
     int compile_ret = compile_params(api_options,argc);
 #else
-    int compile_ret = parse_parameters (api_options, argc, argv);
+    int compile_ret = parse_parameters(api_options, argc, argv);
 #endif
 
     if (compile_ret == EXIT_NO_INPUT_FILES)
     {
-        print_usage ();
+        print_usage();
         fatal (EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");
     }
     else if (compile_ret == EXIT_WITH_HELP)

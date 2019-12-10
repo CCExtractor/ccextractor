@@ -307,6 +307,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->stat_hdtv              = 0;
 	ctx->stat_divicom           = 0;
 	ctx->false_pict_header = 0;
+	ctx->is_alloc=0;
 
 	memcpy(&ctx->extraction_start, &setting->extraction_start,sizeof(struct ccx_boundary_time));
 	memcpy(&ctx->extraction_end, &setting->extraction_end,sizeof(struct ccx_boundary_time));
