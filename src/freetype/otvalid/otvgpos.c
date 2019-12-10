@@ -1,19 +1,19 @@
-/****************************************************************************
- *
- * otvgpos.c
- *
- *   OpenType GPOS table validation (body).
- *
- * Copyright (C) 2002-2019 by
- * David Turner, Robert Wilhelm, and Werner Lemberg.
- *
- * This file is part of the FreeType project, and may only be used,
- * modified, and distributed under the terms of the FreeType project
- * license, LICENSE.TXT.  By continuing to use, modify, or distribute
- * this file you indicate that you have read the license and
- * understand and accept it fully.
- *
- */
+/***************************************************************************/
+/*                                                                         */
+/*  otvgpos.c                                                              */
+/*                                                                         */
+/*    OpenType GPOS table validation (body).                               */
+/*                                                                         */
+/*  Copyright 2002-2017 by                                                 */
+/*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
+/*                                                                         */
+/*  This file is part of the FreeType project, and may only be used,       */
+/*  modified, and distributed under the terms of the FreeType project      */
+/*  license, LICENSE.TXT.  By continuing to use, modify, or distribute     */
+/*  this file you indicate that you have read the license and              */
+/*  understand and accept it fully.                                        */
+/*                                                                         */
+/***************************************************************************/
 
 
 #include "otvalid.h"
@@ -21,14 +21,14 @@
 #include "otvgpos.h"
 
 
-  /**************************************************************************
-   *
-   * The macro FT_COMPONENT is used in trace mode.  It is an implicit
-   * parameter of the FT_TRACE() and FT_ERROR() macros, used to print/log
-   * messages during execution.
-   */
+  /*************************************************************************/
+  /*                                                                       */
+  /* The macro FT_COMPONENT is used in trace mode.  It is an implicit      */
+  /* parameter of the FT_TRACE() and FT_ERROR() macros, used to print/log  */
+  /* messages during execution.                                            */
+  /*                                                                       */
 #undef  FT_COMPONENT
-#define FT_COMPONENT  otvgpos
+#define FT_COMPONENT  trace_otvgpos
 
 
   static void
@@ -130,7 +130,7 @@
     otv_MarkArray_validate( table + Array1, otvalid );
 
     otvalid->nesting_level++;
-    func            = otvalid->func[otvalid->nesting_level];
+    func          = otvalid->func[otvalid->nesting_level];
     otvalid->extra1 = ClassCount;
 
     func( table + Array2, otvalid );
@@ -218,6 +218,10 @@
         OTV_LIMIT_CHECK( 2 );
         OTV_OPTIONAL_OFFSET( device );
 
+        /* XXX: this value is usually too small, especially if the current */
+        /* ValueRecord is part of an array -- getting the correct table    */
+        /* size is probably not worth the trouble                          */
+
         table_size = p - otvalid->extra3;
 
         OTV_SIZE_CHECK( device );
@@ -267,7 +271,7 @@
 
     case 3:
       {
-        FT_UInt  table_size;
+        FT_UInt   table_size;
 
         OTV_OPTIONAL_TABLE( XDeviceTable );
         OTV_OPTIONAL_TABLE( YDeviceTable );
@@ -422,8 +426,6 @@
   /*************************************************************************/
   /*************************************************************************/
 
-  /* sets otvalid->extra3 (pointer to base table) */
-
   static void
   otv_PairSet_validate( FT_Bytes       table,
                         FT_UInt        format1,
@@ -435,8 +437,6 @@
 
 
     OTV_NAME_ENTER( "PairSet" );
-
-    otvalid->extra3 = table;
 
     OTV_LIMIT_CHECK( 2 );
     PairValueCount = FT_NEXT_USHORT( p );
@@ -482,6 +482,8 @@
     PosFormat = FT_NEXT_USHORT( p );
 
     OTV_TRACE(( " (format %d)\n", PosFormat ));
+
+    otvalid->extra3 = table;
 
     switch ( PosFormat )
     {
@@ -535,9 +537,7 @@
         otv_ClassDef_validate( table + ClassDef2, otvalid );
 
         OTV_LIMIT_CHECK( ClassCount1 * ClassCount2 *
-                         ( len_value1 + len_value2 ) );
-
-        otvalid->extra3 = table;
+                     ( len_value1 + len_value2 ) );
 
         /* Class1Record */
         for ( ; ClassCount1 > 0; ClassCount1-- )
@@ -985,12 +985,8 @@
   {
     OTV_ValidatorRec  validrec;
     OTV_Validator     otvalid = &validrec;
-    FT_Bytes          p       = table;
-    FT_UInt           table_size;
-    FT_UShort         version;
+    FT_Bytes          p     = table;
     FT_UInt           ScriptList, FeatureList, LookupList;
-
-    OTV_OPTIONAL_TABLE32( featureVariations );
 
 
     otvalid->root = ftvalid;
@@ -998,28 +994,10 @@
     FT_TRACE3(( "validating GPOS table\n" ));
     OTV_INIT;
 
-    OTV_LIMIT_CHECK( 4 );
+    OTV_LIMIT_CHECK( 10 );
 
-    if ( FT_NEXT_USHORT( p ) != 1 )  /* majorVersion */
+    if ( FT_NEXT_ULONG( p ) != 0x10000UL )      /* Version */
       FT_INVALID_FORMAT;
-
-    version = FT_NEXT_USHORT( p );   /* minorVersion */
-
-    table_size = 10;
-    switch ( version )
-    {
-    case 0:
-      OTV_LIMIT_CHECK( 6 );
-      break;
-
-    case 1:
-      OTV_LIMIT_CHECK( 10 );
-      table_size += 4;
-      break;
-
-    default:
-      FT_INVALID_FORMAT;
-    }
 
     ScriptList  = FT_NEXT_USHORT( p );
     FeatureList = FT_NEXT_USHORT( p );
@@ -1035,14 +1013,6 @@
                               otvalid );
     otv_ScriptList_validate( table + ScriptList, table + FeatureList,
                              otvalid );
-
-    if ( version > 0 )
-    {
-      OTV_OPTIONAL_OFFSET32( featureVariations );
-      OTV_SIZE_CHECK32( featureVariations );
-      if ( featureVariations )
-        OTV_TRACE(( "  [omitting featureVariations validation]\n" )); /* XXX */
-    }
 
     FT_TRACE4(( "\n" ));
   }

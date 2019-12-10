@@ -22,7 +22,7 @@
 #include <ctype.h>
 
 #define  PROGRAM_NAME     "apinames"
-#define  PROGRAM_VERSION  "0.3"
+#define  PROGRAM_VERSION  "0.2"
 
 #define  LINEBUFF_SIZE  1024
 
@@ -32,8 +32,7 @@ typedef enum  OutputFormat_
   OUTPUT_WINDOWS_DEF,   /* output a Windows .DEF file for Visual C++ or Mingw */
   OUTPUT_BORLAND_DEF,   /* output a Windows .DEF file for Borland C++         */
   OUTPUT_WATCOM_LBC,    /* output a Watcom Linker Command File                */
-  OUTPUT_NETWARE_IMP,   /* output a NetWare ImportFile                        */
-  OUTPUT_GNU_VERMAP     /* output a version map for GNU or Solaris linker     */
+  OUTPUT_NETWARE_IMP    /* output a NetWare ImportFile                        */
 
 } OutputFormat;
 
@@ -199,15 +198,6 @@ names_dump( FILE*         out,
       }
       break;
 
-    case OUTPUT_GNU_VERMAP:
-      {
-        fprintf( out, "{\n\tglobal:\n" );
-        for ( nn = 0; nn < num_names; nn++ )
-          fprintf( out, "\t\t%s;\n", the_names[nn].name );
-        fprintf( out, "\tlocal:\n\t\t*;\n};\n" );
-      }
-      break;
-
     default:  /* LIST */
       for ( nn = 0; nn < num_names; nn++ )
         fprintf( out, "%s\n", the_names[nn].name );
@@ -333,7 +323,6 @@ usage( void )
    "           -wB    : output .DEF file for Borland C++\n"
    "           -wW    : output Watcom Linker Response File\n"
    "           -wN    : output NetWare Import File\n"
-   "           -wL    : output version map for GNU or Solaris linker\n"
    "\n";
 
   fprintf( stderr,
@@ -419,10 +408,6 @@ int  main( int argc, const char* const*  argv )
 
           case 'N':
             format = OUTPUT_NETWARE_IMP;
-            break;
-
-          case 'L':
-            format = OUTPUT_GNU_VERMAP;
             break;
 
           case 0:
