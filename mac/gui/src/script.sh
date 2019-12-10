@@ -1,1 +1,0 @@
-/usr/local/bin/ccextractor $1
