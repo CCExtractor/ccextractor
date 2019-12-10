@@ -673,6 +673,11 @@ void print_usage (void)
 	mprint ("                       have the default font installed (Helvetica for macOS, Calibri\n");
 	mprint ("                       for Windows, and Noto for other operating systems at their\n)");
 	mprint ("                       default location\n)");
+	mprint("                -italics: Specify the full path of the italics font that is to be used when\n");
+	mprint("                       generating SPUPNG files. If not specified, you need to\n");
+	mprint("                       have the default font installed (Helvetica Oblique for macOS, Calibri Italic\n");
+	mprint("                       for Windows, and NotoSans Italic for other operating systems at their\n)");
+	mprint("                       default location\n)");
 	mprint ("\n");
 	mprint ("Options that affect how ccextractor reads and writes (buffering):\n");
 
@@ -2399,6 +2404,13 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp(argv[i], "-font") == 0 && i<argc - 1)
 		{
 			opt->enc_cfg.render_font = argv[i + 1];
+			i++;
+			continue;
+		}
+
+		if (strcmp(argv[i], "-italics") == 0 && i < argc - 1)
+		{
+			opt->enc_cfg.render_font_italics = argv[i + 1];
 			i++;
 			continue;
 		}

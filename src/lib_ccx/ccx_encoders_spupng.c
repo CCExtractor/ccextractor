@@ -643,7 +643,7 @@ int spupng_export_string2png(struct spupng_t *sp, uint32_t *str, FILE* output)
 	{
 		mprint("\n\nFailed to init freetype when trying to init face, error code: %d\n", error);
 		mprint("It's usually caused by the specified font is not found: %s \n", ccx_options.enc_cfg.render_font_italics);
-		mprint("If this is the case, please use -font to manually specify a font that exists. \n\n");
+		mprint("If this is the case, please use -italics to manually specify a font that exists. \n\n");
 		return 0;
 	}
 	if (error = FT_Set_Pixel_Sizes(face_italics, 0, FONT_SIZE))
