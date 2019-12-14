@@ -251,8 +251,8 @@ enum ccx_frame_type
 };
 
 typedef enum {
-	YES = 1,
 	NO  = 0,
+	YES = 1,
 	UNDEFINED = 0xff
 } bool_t;
 
