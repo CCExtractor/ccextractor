@@ -117,25 +117,25 @@ void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_
 
 unsigned int utf8_to_latin1_map(const unsigned int code)
 {
-    /* Code points 0 to U+00FF are the same in both. */
-    if (code < 256U)
-        return code;
+	/* Code points 0 to U+00FF are the same in both. */
+	if (code < 256U)
+		return code;
 
-    switch (code)
+	switch (code)
 	{
-    case 0x0152U:
-		return 188U; /* U+0152 = 0xBC: OE ligature */
-    case 0x0153U:
-		return 189U; /* U+0153 = 0xBD: oe ligature */
-    case 0x0160U:
-		return 166U; /* U+0160 = 0xA6: S with caron */
-    case 0x0161U: return 168U; /* U+0161 = 0xA8: s with caron */
-    case 0x0178U: return 190U; /* U+0178 = 0xBE: Y with diaresis */
-    case 0x017DU: return 180U; /* U+017D = 0xB4: Z with caron */
-    case 0x017EU: return 184U; /* U+017E = 0xB8: z with caron */
-    case 0x20ACU: return 164U; /* U+20AC = 0xA4: Euro */
-    default:      return 256U;
-    }
+		case 0x0152U:
+			return 188U; /* U+0152 = 0xBC: OE ligature */
+		case 0x0153U:
+			return 189U; /* U+0153 = 0xBD: oe ligature */
+		case 0x0160U:
+			return 166U; /* U+0160 = 0xA6: S with caron */
+		case 0x0161U: return 168U; /* U+0161 = 0xA8: s with caron */
+		case 0x0178U: return 190U; /* U+0178 = 0xBE: Y with diaresis */
+		case 0x017DU: return 180U; /* U+017D = 0xB4: Z with caron */
+		case 0x017EU: return 184U; /* U+017E = 0xB8: z with caron */
+		case 0x20ACU: return 164U; /* U+20AC = 0xA4: Euro */
+		default:      return 256U;
+	}
 }
 
 int change_utf8_encoding(unsigned char* dest, unsigned char* src, int len, enum ccx_encoding_type out_enc)
@@ -545,9 +545,9 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				return -1;
 			}
 			break;
-        case CCX_OF_MCC:
-            ctx->header_printed_flag = CCX_FALSE;
-            break;
+		case CCX_OF_MCC:
+			ctx->header_printed_flag = CCX_FALSE;
+			break;
 		default:
 			break;
 	}
@@ -825,8 +825,8 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 		}
 		else if (cfg->write_format != CCX_OF_NULL)
 		{
-            basefilename = get_basename(ctx->first_input_file);
-            extension = get_file_extension(cfg->write_format);
+			basefilename = get_basename(ctx->first_input_file);
+			extension = get_file_extension(cfg->write_format);
 			if (basefilename == NULL)
 			{
 				basefilename = get_basename("untitled");
@@ -990,8 +990,8 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->encoding = opt->encoding;
 	ctx->write_format = opt->write_format;
 
-    ctx->is_mkv = 0;
-    ctx->last_string = NULL;
+	ctx->is_mkv = 0;
+	ctx->last_string = NULL;
 
 	ctx->transcript_settings = &opt->transcript_settings;
 	ctx->no_bom = opt->no_bom;
@@ -1095,7 +1095,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		if (sub->type == CC_BITMAP)
 			sub = reformat_cc_bitmap_through_sentence_buffer(sub, context);
 
-		if (NULL==sub)
+		if (NULL == sub)
 			return wrote_something;
 	}
 
@@ -1105,8 +1105,9 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		return 0;
 
 	// Write subtitles as they come
-		if (sub->type == CC_608)
-		{
+	switch (sub->type)
+	{
+		case CC_608:;
 			struct eia608_screen *data = NULL;
 			struct ccx_s_write *out;
 			for (data = sub->data; sub->nb_data; sub->nb_data--, data++)
@@ -1142,60 +1143,60 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				}
 
 #ifdef PYTHON_API
-                pass_cc_buffer_to_python(data, context);
+				pass_cc_buffer_to_python(data, context);
 #else
-                switch (context->write_format)
-                {
-                    case CCX_OF_SRT:
-                        if (!context->startcredits_displayed && context->start_credits_text != NULL)
-                            try_to_add_start_credits(context, data->start_time);
-                        wrote_something = write_cc_buffer_as_srt(data, context);
-                        break;
-                    case CCX_OF_SSA:
-                        if (!context->startcredits_displayed && context->start_credits_text != NULL)
-                            try_to_add_start_credits(context, data->start_time);
-                        wrote_something = write_cc_buffer_as_ssa(data, context);
-                        break;
-                    case CCX_OF_G608:
-                        wrote_something = write_cc_buffer_as_g608(data, context);
-                        break;
-                    case CCX_OF_WEBVTT:
-                        if (!context->startcredits_displayed && context->start_credits_text != NULL)
-                            try_to_add_start_credits(context, data->start_time);
-                        wrote_something = write_cc_buffer_as_webvtt(data, context);
-                        break;
-                    case CCX_OF_SAMI:
-                        if (!context->startcredits_displayed && context->start_credits_text != NULL)
-                            try_to_add_start_credits(context, data->start_time);
-                        wrote_something = write_cc_buffer_as_sami(data, context);
-                        break;
-                    case CCX_OF_SMPTETT:
-                        if (!context->startcredits_displayed && context->start_credits_text != NULL)
-                            try_to_add_start_credits(context, data->start_time);
-                        wrote_something = write_cc_buffer_as_smptett(data, context);
-                        break;
-                    case CCX_OF_TRANSCRIPT:
-                        wrote_something = write_cc_buffer_as_transcript2(data, context);
-                        break;
-                    case CCX_OF_SPUPNG:
-                        wrote_something = write_cc_buffer_as_spupng(data, context);
-                        break;
-                    case CCX_OF_SIMPLE_XML:
-                        if (ccx_options.keep_output_closed && context->out->temporarily_closed)
-                        {
-                            temporarily_open_output(context->out);
-                            write_subtitle_file_header(context, context->out);
-                        }
-                        wrote_something = write_cc_buffer_as_simplexml(data, context);
-                        if (ccx_options.keep_output_closed)
-                        {
-                            write_subtitle_file_footer(context, context->out);
-                            temporarily_close_output(context->out);
-                        }
-                        break;
-                    default:
-                        break;
-                }
+				switch (context->write_format)
+				{
+					case CCX_OF_SRT:
+						if (!context->startcredits_displayed && context->start_credits_text != NULL)
+							try_to_add_start_credits(context, data->start_time);
+						wrote_something = write_cc_buffer_as_srt(data, context);
+						break;
+					case CCX_OF_SSA:
+						if (!context->startcredits_displayed && context->start_credits_text != NULL)
+							try_to_add_start_credits(context, data->start_time);
+						wrote_something = write_cc_buffer_as_ssa(data, context);
+						break;
+					case CCX_OF_G608:
+						wrote_something = write_cc_buffer_as_g608(data, context);
+						break;
+					case CCX_OF_WEBVTT:
+						if (!context->startcredits_displayed && context->start_credits_text != NULL)
+							try_to_add_start_credits(context, data->start_time);
+						wrote_something = write_cc_buffer_as_webvtt(data, context);
+						break;
+					case CCX_OF_SAMI:
+						if (!context->startcredits_displayed && context->start_credits_text != NULL)
+							try_to_add_start_credits(context, data->start_time);
+						wrote_something = write_cc_buffer_as_sami(data, context);
+						break;
+					case CCX_OF_SMPTETT:
+						if (!context->startcredits_displayed && context->start_credits_text != NULL)
+							try_to_add_start_credits(context, data->start_time);
+						wrote_something = write_cc_buffer_as_smptett(data, context);
+						break;
+					case CCX_OF_TRANSCRIPT:
+						wrote_something = write_cc_buffer_as_transcript2(data, context);
+						break;
+					case CCX_OF_SPUPNG:
+						wrote_something = write_cc_buffer_as_spupng(data, context);
+						break;
+					case CCX_OF_SIMPLE_XML:
+						if (ccx_options.keep_output_closed && context->out->temporarily_closed)
+						{
+							temporarily_open_output(context->out);
+							write_subtitle_file_header(context, context->out);
+						}
+						wrote_something = write_cc_buffer_as_simplexml(data, context);
+						if (ccx_options.keep_output_closed)
+						{
+							write_subtitle_file_footer(context, context->out);
+							temporarily_close_output(context->out);
+						}
+						break;
+					default:
+						break;
+				}
 				if (wrote_something)
 					context->last_displayed_subs_ms = data->end_time;
 
@@ -1203,58 +1204,56 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					write_cc_buffer_to_gui(sub->data, context);
 #endif // PYTHON_API
 			}
-			freep(&sub->data);
-		}
-		if (sub->type == CC_BITMAP)
-		{
+			freep(sub->data);
+			break;
+		case CC_BITMAP:
 			switch (context->write_format)
 			{
-			case CCX_OF_SRT:
-				if (!context->startcredits_displayed && context->start_credits_text != NULL)
-					try_to_add_start_credits(context, sub->start_time);
-				wrote_something = write_cc_bitmap_as_srt(sub, context);
-				break;
-            case CCX_OF_SSA:
-				if (!context->startcredits_displayed && context->start_credits_text != NULL)
-					try_to_add_start_credits(context, sub->start_time);
-				wrote_something = write_cc_bitmap_as_ssa(sub, context);
-				break;
-			case CCX_OF_WEBVTT:
-				if (!context->startcredits_displayed && context->start_credits_text != NULL)
-					try_to_add_start_credits(context, sub->start_time);
-				wrote_something = write_cc_bitmap_as_webvtt(sub, context);
-				break;
-			case CCX_OF_SAMI:
-				if (!context->startcredits_displayed && context->start_credits_text != NULL)
-					try_to_add_start_credits(context, sub->start_time);
-				wrote_something = write_cc_bitmap_as_sami(sub, context);
-				break;
-			case CCX_OF_SMPTETT:
-				if (!context->startcredits_displayed && context->start_credits_text != NULL)
-					try_to_add_start_credits(context, sub->start_time);
-				wrote_something = write_cc_bitmap_as_smptett(sub, context);
-				break;
-			case CCX_OF_TRANSCRIPT:
-				wrote_something = write_cc_bitmap_as_transcript(sub, context);
-				break;
-			case CCX_OF_SPUPNG:
-				wrote_something = write_cc_bitmap_as_spupng(sub, context);
-				break;
-			case CCX_OF_SIMPLE_XML:
-				wrote_something = write_cc_bitmap_as_simplexml(sub, context);
-				break;
+				case CCX_OF_SRT:
+					if (!context->startcredits_displayed && context->start_credits_text != NULL)
+						try_to_add_start_credits(context, sub->start_time);
+					wrote_something = write_cc_bitmap_as_srt(sub, context);
+					break;
+				case CCX_OF_SSA:
+					if (!context->startcredits_displayed && context->start_credits_text != NULL)
+						try_to_add_start_credits(context, sub->start_time);
+					wrote_something = write_cc_bitmap_as_ssa(sub, context);
+					break;
+				case CCX_OF_WEBVTT:
+					if (!context->startcredits_displayed && context->start_credits_text != NULL)
+						try_to_add_start_credits(context, sub->start_time);
+					wrote_something = write_cc_bitmap_as_webvtt(sub, context);
+					break;
+				case CCX_OF_SAMI:
+					if (!context->startcredits_displayed && context->start_credits_text != NULL)
+						try_to_add_start_credits(context, sub->start_time);
+					wrote_something = write_cc_bitmap_as_sami(sub, context);
+					break;
+				case CCX_OF_SMPTETT:
+					if (!context->startcredits_displayed && context->start_credits_text != NULL)
+						try_to_add_start_credits(context, sub->start_time);
+					wrote_something = write_cc_bitmap_as_smptett(sub, context);
+					break;
+				case CCX_OF_TRANSCRIPT:
+					wrote_something = write_cc_bitmap_as_transcript(sub, context);
+					break;
+				case CCX_OF_SPUPNG:
+					wrote_something = write_cc_bitmap_as_spupng(sub, context);
+					break;
+				case CCX_OF_SIMPLE_XML:
+					wrote_something = write_cc_bitmap_as_simplexml(sub, context);
+					break;
 #ifdef WITH_LIBCURL
-			case CCX_OF_CURL:
-				wrote_something = write_cc_bitmap_as_libcurl(sub, context);
-				break;
+				case CCX_OF_CURL:
+					wrote_something = write_cc_bitmap_as_libcurl(sub, context);
+					break;
 #endif
-			default:
-				break;
+				default:
+					break;
 			}
 
-		}
-		if (sub->type == CC_RAW)
-		{
+			break;
+		case CC_RAW:
 			if (context->send_to_srv)
 				net_send_header(sub->data, sub->nb_data);
 			else
@@ -1265,50 +1264,50 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				}
 			}
 			sub->nb_data = 0;
-		}
-		if (sub->type == CC_TEXT)
-		{
+			break;
+		case CC_TEXT:
 			switch (context->write_format)
 			{
-			case CCX_OF_SRT:
-				if (!context->startcredits_displayed && context->start_credits_text != NULL)
-					try_to_add_start_credits(context, sub->start_time);
-				wrote_something = write_cc_subtitle_as_srt(sub, context);
-				break;
-			case CCX_OF_SSA:
-				if (!context->startcredits_displayed && context->start_credits_text != NULL)
-					try_to_add_start_credits(context, sub->start_time);
-				wrote_something = write_cc_subtitle_as_ssa(sub, context);
-				break;
-			case CCX_OF_WEBVTT:
-				if (!context->startcredits_displayed && context->start_credits_text != NULL)
-					try_to_add_start_credits(context, sub->start_time);
-				wrote_something = write_cc_subtitle_as_webvtt(sub, context);
-				break;
-			case CCX_OF_SAMI:
-				if (!context->startcredits_displayed && context->start_credits_text != NULL)
-					try_to_add_start_credits(context, sub->start_time);
-				wrote_something = write_cc_subtitle_as_sami(sub, context);
-				break;
-			case CCX_OF_SMPTETT:
-				if (!context->startcredits_displayed && context->start_credits_text != NULL)
-					try_to_add_start_credits(context, sub->start_time);
-				wrote_something = write_cc_subtitle_as_smptett(sub, context);
-				break;
-			case CCX_OF_TRANSCRIPT:
-				wrote_something = write_cc_subtitle_as_transcript(sub, context);
-				break;
-			case CCX_OF_SPUPNG:
-				wrote_something = write_cc_subtitle_as_spupng(sub, context);
-				break;
-			case CCX_OF_SIMPLE_XML:
-				wrote_something = write_cc_subtitle_as_simplexml(sub, context);
-				break;
-			default:
-				break;
+				case CCX_OF_SRT:
+					if (!context->startcredits_displayed && context->start_credits_text != NULL)
+						try_to_add_start_credits(context, sub->start_time);
+					wrote_something = write_cc_subtitle_as_srt(sub, context);
+					break;
+				case CCX_OF_SSA:
+					if (!context->startcredits_displayed && context->start_credits_text != NULL)
+						try_to_add_start_credits(context, sub->start_time);
+					wrote_something = write_cc_subtitle_as_ssa(sub, context);
+					break;
+				case CCX_OF_WEBVTT:
+					if (!context->startcredits_displayed && context->start_credits_text != NULL)
+						try_to_add_start_credits(context, sub->start_time);
+					wrote_something = write_cc_subtitle_as_webvtt(sub, context);
+					break;
+				case CCX_OF_SAMI:
+					if (!context->startcredits_displayed && context->start_credits_text != NULL)
+						try_to_add_start_credits(context, sub->start_time);
+					wrote_something = write_cc_subtitle_as_sami(sub, context);
+					break;
+				case CCX_OF_SMPTETT:
+					if (!context->startcredits_displayed && context->start_credits_text != NULL)
+						try_to_add_start_credits(context, sub->start_time);
+					wrote_something = write_cc_subtitle_as_smptett(sub, context);
+					break;
+				case CCX_OF_TRANSCRIPT:
+					wrote_something = write_cc_subtitle_as_transcript(sub, context);
+					break;
+				case CCX_OF_SPUPNG:
+					wrote_something = write_cc_subtitle_as_spupng(sub, context);
+					break;
+				case CCX_OF_SIMPLE_XML:
+					wrote_something = write_cc_subtitle_as_simplexml(sub, context);
+					break;
+				default:
+					break;
 			}
 			sub->nb_data = 0;
-		}
+			break;
+	}
 
 	if (!sub->nb_data)
 		freep(&sub->data);
@@ -1379,7 +1378,7 @@ unsigned int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, in
 			get_char_in_unicode(buffer, line[i]);
 			bytes = 2;
 		case CCX_ENC_ASCII:
-		    *buffer = line[i];
+			*buffer = line[i];
 			bytes = 1;
 			break;
 		}
