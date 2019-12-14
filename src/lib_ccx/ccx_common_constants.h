@@ -214,7 +214,7 @@ enum ccx_stream_mode_enum
 	CCX_SM_MKV = 12,
 	CCX_SM_MXF = 13,
 
-	CCX_SM_AUTODETECT = 16 // Why 16 ???
+	CCX_SM_AUTODETECT = 16
 };
 
 enum ccx_encoding_type
