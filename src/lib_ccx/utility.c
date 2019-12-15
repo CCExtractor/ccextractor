@@ -506,36 +506,36 @@ char *get_basename(char *filename)
 	return basefilename;
 }
 
-char *get_file_extension(enum ccx_output_format write_format)
+const char *get_file_extension(const enum ccx_output_format write_format)
 {
 	switch (write_format)
 	{
 		case CCX_OF_RAW:
-			return strdup(".raw");
+			return ".raw";
 		case CCX_OF_SRT:
-			return strdup(".srt");
+			return ".srt";
 		case CCX_OF_SSA:
-			return strdup(".ass");
+			return ".ass";
 		case CCX_OF_WEBVTT:
-			return strdup (".vtt");
+			return ".vtt";
 		case CCX_OF_SAMI:
-			return strdup(".smi");
+			return ".smi";
 		case CCX_OF_SMPTETT:
-			return strdup(".ttml");
+			return ".ttml";
 		case CCX_OF_TRANSCRIPT:
-			return strdup(".txt");
+			return ".txt";
 		case CCX_OF_RCWT:
-			return strdup(".bin");
+			return ".bin";
 		case CCX_OF_SPUPNG:
-			return strdup(".xml");
+			return ".xml";
 		case CCX_OF_DVDRAW:
-			return strdup(".dvdraw");
+			return ".dvdraw";
 		case CCX_OF_SIMPLE_XML:
-			return strdup(".xml");
+			return ".xml";
 		case CCX_OF_G608:
-			return strdup(".g608");
+			return ".g608";
         case CCX_OF_MCC:
-            return strdup(".mcc");
+            return ".mcc";
 		case CCX_OF_NULL:
 			return NULL;
 		case CCX_OF_CURL:

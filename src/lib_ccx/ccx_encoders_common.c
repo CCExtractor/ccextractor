@@ -846,8 +846,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			}
 		}
 
-		freep(&basefilename);
-		freep(&extension);
+		freep(basefilename);
 	}
 
 	if (cfg->cc_to_stdout == CCX_TRUE)

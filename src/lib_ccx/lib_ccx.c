@@ -408,7 +408,6 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		ccx_options.enc_cfg.output_filename = malloc(len);
 		if (!ccx_options.enc_cfg.output_filename)
 		{
-			freep(&extension);
 			return NULL;
 		}
 
@@ -416,21 +415,18 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		enc_ctx = init_encoder(&ccx_options.enc_cfg);
 		if (!enc_ctx)
 		{
-			freep(&extension);
-			freep(&ccx_options.enc_cfg.output_filename);
+			freep(ccx_options.enc_cfg.output_filename);
 			return NULL;
 		}
 
 		list_add_tail( &(enc_ctx->list), &(ctx->enc_ctx_head) );
-		freep(&extension);
-		freep(&ccx_options.enc_cfg.output_filename);
+		freep(ccx_options.enc_cfg.output_filename);
 	}
 	// DVB related
 	enc_ctx->prev = NULL;
 	if (cinfo)
 		if (cinfo->codec == CCX_CODEC_DVB)
 			enc_ctx->write_previous = 0;
-	freep(&extension);
 	return enc_ctx;
 }
 

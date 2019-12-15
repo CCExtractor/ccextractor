@@ -447,8 +447,6 @@ void ccx_dtvcc_writer_init(ccx_dtvcc_writer_ctx *writer,
 										 charset, strerror(errno));
 		}
 	}
-
-	free(ext);
 }
 
 void ccx_dtvcc_writer_cleanup(ccx_dtvcc_writer_ctx *writer)
