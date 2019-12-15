@@ -425,13 +425,11 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 	{
 		case CCX_OF_SRT: // Subrip subtitles have no header
 		case CCX_OF_G608:
-			ret = write_bom(ctx, out);
-			if(ret < 0)
+			if ((ret = write_bom(ctx, out)) < 0)
 				return -1;
 			break;
 		case CCX_OF_SSA:
-			ret = write_bom(ctx, out);
-			if(ret < 0)
+			if ((ret = write_bom(ctx, out)) < 0)
 				return -1;
 			REQUEST_BUFFER_CAPACITY(ctx,strlen (ssa_header)*3);
 			used = encode_line (ctx, ctx->buffer,(unsigned char *) ssa_header);
@@ -443,8 +441,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			}
 			break;
 		case CCX_OF_WEBVTT:
-			ret = write_bom(ctx, out);
-			if (ret < 0)
+			if ((ret = write_bom(ctx, out)) < 0)
 				return -1;
 			for(int i = 0; webvtt_header[i]!=NULL ;i++)
 			{
@@ -461,8 +458,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				{
 					used = encode_line (ctx, ctx->buffer,(unsigned char *) webvtt_header[i]);
 				}
-				ret = write (out->fh, ctx->buffer,used);
-				if(ret < used)
+				if ((ret = write(out->fh, ctx->buffer,used)) < used)
 				{
 					mprint("WARNING: Unable to write complete Buffer \n");
 					return -1;
@@ -471,13 +467,11 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			break;
 		case CCX_OF_SAMI: // This header brought to you by McPoodle's CCASDI
 			//fprintf_encoded (wb->fh, sami_header);
-			ret = write_bom(ctx, out);
-			if(ret < 0)
+			if ((ret = write_bom(ctx, out)) < 0)
 				return -1;
 			REQUEST_BUFFER_CAPACITY(ctx,strlen (sami_header)*3);
 			used = encode_line (ctx, ctx->buffer,(unsigned char *) sami_header);
-			ret = write (out->fh, ctx->buffer, used);
-			if(ret < used)
+			if ((ret = write(out->fh, ctx->buffer, used)) < used)
 			{
 				mprint("WARNING: Unable to write complete Buffer \n");
 				return -1;
@@ -485,13 +479,11 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			break;
 		case CCX_OF_SMPTETT: // This header brought to you by McPoodle's CCASDI
 			//fprintf_encoded (wb->fh, sami_header);
-			ret = write_bom(ctx, out);
-			if(ret < 0)
+			if ((ret = write_bom(ctx, out)) < 0)
 				return -1;
 			REQUEST_BUFFER_CAPACITY(ctx,strlen (smptett_header)*3);
 			used=encode_line (ctx, ctx->buffer,(unsigned char *) smptett_header);
-			ret = write(out->fh, ctx->buffer, used);
-			if(ret < used)
+			if ((ret = write(out->fh, ctx->buffer, used)) < used)
 			{
 				mprint("WARNING: Unable to write complete Buffer \n");
 				return -1;
