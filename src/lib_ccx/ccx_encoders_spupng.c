@@ -26,6 +26,7 @@ FT_Library  ft_library = NULL;
 // The different face variables are for the regular and italics
 FT_Face	 face_regular = NULL;
 FT_Face face_italics = NULL;
+FT_Face face = NULL;
 
 struct spupng_t
 {
@@ -538,7 +539,7 @@ finalise:
 // Draw a FT_Bitmap to the target surface
 // Dest: target - an array which stores image data (ARGB), row by row.
 // Src: bitmap.buffer - 8bit grayscale image, row by row, with the size of bitmap.rows*bitmap.width
-void draw_to_buffer(struct pixel_t *target, int target_width, FT_Bitmap bitmap, int x_pos, int y_pos) {
+void draw_to_buffer(struct pixel_t *target, int target_width, FT_Bitmap bitmap, int x_pos, int y_pos, int color) {
 	int height = bitmap.rows;
 	int width = bitmap.width;
 
@@ -546,7 +547,16 @@ void draw_to_buffer(struct pixel_t *target, int target_width, FT_Bitmap bitmap, 
 	for (int y = 0; y < height; ++y) {
 		for (int x = 0; x < width; ++x) {
 			struct pixel_t p;
-			p.a = p.r = p.g = p.b = bitmap.buffer[x + y * width];
+			unsigned char shade_factor = bitmap.buffer[x + y * width];
+			p.a = shade_factor;
+			p.r = (unsigned char)(((color >> (8 * 2)) & 0xff) * (shade_factor/255.0));
+			p.g = (unsigned char)(((color >> (8 * 1)) & 0xff)* (shade_factor/255.0));
+			p.b = (unsigned char)(((color >> (8 * 0)) & 0xff)* (shade_factor/255.0));
+
+			//mprint("Red: %d\n", p.r);
+			//mprint("Green: %d\n", p.g);
+			//mprint("Blue: %d\n", p.b);
+
 			target[(x_pos+x) + (y_pos+y) * target_width] = p;
 		}
 	}
@@ -602,7 +612,7 @@ void black_background(struct pixel_t *target, int target_w, int x, int y, int w,
 
 // Initialize face object for typographical fonts
 // Return 0 for success
-int init_font(FT_Face *face, char * font)
+int init_face(FT_Face *face, char * font)
 {
 	int error;
 
@@ -623,17 +633,39 @@ int init_font(FT_Face *face, char * font)
 	return 0;
 }
 
+// The function will NOT free src.
+// You need to free the src and return value yourself!
+uint32_t* utf8_to_utf32(char* src) {
+	// Convert UTF-8 to UTF-32 for generating bitmap.
+	size_t len_src, len_dst;
+
+	len_src = strlen(src);
+	len_dst = (len_src + 2) * 4; // one for FEFF and one for \0
+
+	uint32_t* string_utf32 = (uint32_t*)calloc(len_dst, 1);
+	size_t inbufbytesleft = len_src;
+	size_t outbufbytesleft = len_dst;
+	char* inbuf = src;
+	char* outbuf = (char*)string_utf32;
+
+	iconv_t cd = iconv_open("UTF-32", "UTF-8");
+	int result = iconv(cd, &inbuf, &inbufbytesleft, &outbuf, &outbufbytesleft);
+	if (result == -1) mprint("iconv failed to convert UTF-8 to UTF-32. errno is %d\n", errno);
+	iconv_close(cd);
+
+	return string_utf32;
+}
+
 // Convert big-endian and little-endian
 #define BigtoLittle32(A)   ((( (uint32_t)(A) & 0xff000000) >> 24)\
  | (((uint32_t)(A) & 0x00ff0000) >> 8)\
  | (((uint32_t)(A) & 0x0000ff00) << 8)\
  | (((uint32_t)(A) & 0x000000ff) << 24))
 
-// Generate PNG file from an UTF-32 string (str)
-// Convert first if it is UTF-8 string!
+// Generate PNG file from an UTF-8 string (str)
 // PNG file will be stored at output
 // Return 1 on success.
-int spupng_export_string2png(struct spupng_t *sp, uint32_t *str, FILE* output)
+int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 {
 	int error;
 	// Init FreeType if it hasn't been inited yet.
@@ -647,9 +679,9 @@ int spupng_export_string2png(struct spupng_t *sp, uint32_t *str, FILE* output)
 	}
 
 	// Init FreeType typographical face objects
-	if (error = init_font(&face_regular, ccx_options.enc_cfg.render_font))
+	if (error = init_face(&face_regular, ccx_options.enc_cfg.render_font))
 		return 0;
-	if (error = init_font(&face_italics, ccx_options.enc_cfg.render_font_italics))
+	if (error = init_face(&face_italics, ccx_options.enc_cfg.render_font_italics))
 		return 0;
 
 	int canvas_width = CANVAS_WIDTH;
@@ -663,121 +695,154 @@ int spupng_export_string2png(struct spupng_t *sp, uint32_t *str, FILE* output)
 
 	// Allocate buffer
 	// Note: (0, 0) of buffer is at the top left corner.
-	struct pixel_t *buffer = malloc(canvas_width * canvas_height * sizeof(struct pixel_t));
+	struct pixel_t* buffer = malloc(canvas_width * canvas_height * sizeof(struct pixel_t));
 	if (buffer == NULL) {
 		mprint("\nFailed to alloc memory for buffer. Need %d bytes.\n",
 			canvas_width * canvas_height * sizeof(struct pixel_t));
 	}
-	memset(buffer, 0, canvas_width*canvas_height * sizeof(struct pixel_t));
-	
-	FT_GlyphSlot slot = face_regular->glyph;
+	memset(buffer, 0, canvas_width * canvas_height * sizeof(struct pixel_t));
 
-	// For parsing tags
-	int bracket = 0;
-	int end = 0;
+	//str = "<font color=\"#66CDAA\"> This should be aquamarine </font> Regular <i> Italics font</i> <font color=\"#00ff00\">This should be green.</font>"; // Test string
+	char *tmp = (char*)malloc((strlen(str) + 1) * sizeof(char));
+	if (!tmp)
+		return -1;
+	strncpy(tmp, str, strlen(str)+1);
+
+	char* token = strtok(tmp, "<>");
+
+	int color = 0xffffff;
+	int prev_color = 0xffffff;
 	int italics = 0;
-	FT_Face current_face = face_regular;
+	int font = 0;
+	face = face_regular;
 
-	// Render characters to image
-	for (uint32_t *iter = str; *iter; ++iter)
+	while (token != NULL)
 	{
-		uint32_t current_char_code = BigtoLittle32(*iter); // Convert big-endian and little-endian
-
-		// Parse tags like <i> 
-		if (end) {
-			if (current_char_code == '>') {
-				end = 0;
-				italics = 0;
-				bracket = 0;
-				current_face = face_regular;
-			}
+		if (strlen(token) == 1 && strncmp("i", token, 1) == 0)
+		{
+			italics = 1;
+			token = strtok(NULL, "<>");
+			face = face_italics;
 			continue;
 		}
-		if (bracket) {
-			switch (current_char_code)
+		else if (strlen(token) == 2 && strncmp("/i", token, 2) == 0)
+		{
+			italics = 0;
+			face = face_regular;
+			token = strtok(NULL, "<>");
+			continue;
+		}
+		else if (strlen(token) > 9 && strncmp("font color", token, 10) == 0)
+		{
+			// If the font element is already nested in another font element
+			if (font)
 			{
-			case 'i':
-				italics = 1;
-
-				// Set only to italics
-				current_face = face_italics;
-				break;
-			case '/':
-				end = 1;
-				break;
-			case '>':
-				bracket = 0;
-				break;
+				prev_color = color;
 			}
-			continue;
-		}
 
-		if (current_char_code == '<') {
-			bracket = 1;
-			continue;
-		}
-
-		slot = current_face->glyph;
-		if (FT_Load_Char(current_face, current_char_code, FT_LOAD_RENDER)) continue; // ignore errors
-		unsigned char* bitmap = slot->bitmap.buffer;
-
-
-		// Handle '\n'
-		if (current_char_code == '\n') {
-//			mprint("\n'\\n' line break");
-			black_background(buffer, canvas_width, 0, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
-			center_justify(buffer, canvas_width, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
-			cursor_x = 0;
-			cursor_y += line_height + line_spacing;
-			continue;
-		}
-
-		// Expand canvas if needed
-		while (cursor_y - slot->bitmap_top + line_height + line_spacing + extender * 2 >= canvas_height) {
-			int old_height = canvas_height;
-			canvas_height += line_height + line_spacing + extender * 2;
-			struct pixel_t* new_buffer = realloc(buffer, canvas_width * canvas_height * sizeof(struct pixel_t));
-			if (new_buffer == NULL) {
-				mprint("\nFailed to alloc memory for buffer. Need %d bytes.\n",
-					canvas_width * canvas_height * sizeof(struct pixel_t));
-				return 0;
-			}
-			memset(new_buffer + old_height * canvas_width, 0, (canvas_height-old_height) * canvas_width * sizeof(struct pixel_t));
-			buffer = new_buffer;
+			font = 1;
+			char color_value[7];
 			
+			// Isolate the hex color value
+			int start = 0;
+			for (int i = 0; i < strlen(token); i++)
+			{
+				if (token[i] == '#')
+				{
+					start = i + 1;
+					break;
+				}
+			}
+			strncpy(color_value, &token[start], 6);
+			color_value[6] = 0; // For null termination of string
+			color = (int)strtol(color_value, NULL, 16);
+			
+			//mprint("Color: 0x%x\n", color);
+			token = strtok(NULL, "<>");
+			continue;
 		}
+		else if (strlen(token) > 4 && strncmp("/font", token, 5) == 0)
+		{
+			font = 0;
+			token = strtok(NULL, "<>");
+			color = prev_color;
+			continue;
+		}
+		//mprint("%s\n", token);
+		
+		FT_GlyphSlot slot = face->glyph;;
 
-		// Characters such as ' ' don't have bitmap.
-		if (bitmap != NULL) {
+		uint32_t* string_utf32 = utf8_to_utf32(token);
 
-			int width = slot->bitmap.width;
-			int height = slot->bitmap.rows;
+		// Render characters to image
+		for (uint32_t* iter = string_utf32; *iter; ++iter)
+		{
+			uint32_t current_char_code = BigtoLittle32(*iter); // Convert big-endian and little-endian
 
-			// TODO: this kind of line break may break characters in the middle!
-			if ((cursor_x + (slot->advance.x >> 6)) > canvas_width) { // Time for a line-break!
-				// But before that, let's center justify the subtitle.
-				// Valid subtitle area: (0, cursor_y) to (cursor_x, cursor_y + line_height)
+			if (FT_Load_Char(face, current_char_code, FT_LOAD_RENDER)) continue; // ignore errors
+			
+			unsigned char* bitmap = slot->bitmap.buffer;
+
+			// Handle '\n'
+			if (current_char_code == '\n') {
+				//			mprint("\n'\\n' line break");
 				black_background(buffer, canvas_width, 0, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
 				center_justify(buffer, canvas_width, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
-				
-				// Set the cursor
 				cursor_x = 0;
 				cursor_y += line_height + line_spacing;
+				continue;
 			}
-			
-			draw_to_buffer(buffer, canvas_width, slot->bitmap, cursor_x, cursor_y - slot->bitmap_top);
 
+			// Expand canvas if needed
+			while (cursor_y - slot->bitmap_top + line_height + line_spacing + extender * 2 >= canvas_height) {
+				int old_height = canvas_height;
+				canvas_height += line_height + line_spacing + extender * 2;
+				struct pixel_t* new_buffer = realloc(buffer, canvas_width * canvas_height * sizeof(struct pixel_t));
+				if (new_buffer == NULL) {
+					mprint("\nFailed to alloc memory for buffer. Need %d bytes.\n",
+						canvas_width * canvas_height * sizeof(struct pixel_t));
+					return 0;
+				}
+				memset(new_buffer + old_height * canvas_width, 0, (canvas_height - old_height) * canvas_width * sizeof(struct pixel_t));
+				buffer = new_buffer;
+
+			}
+
+			// Characters such as ' ' don't have bitmap.
+			if (bitmap != NULL) {
+
+				int width = slot->bitmap.width;
+				int height = slot->bitmap.rows;
+
+				// TODO: this kind of line break may break characters in the middle!
+				if ((cursor_x + (slot->advance.x >> 6)) > canvas_width) { // Time for a line-break!
+					// But before that, let's center justify the subtitle.
+					// Valid subtitle area: (0, cursor_y) to (cursor_x, cursor_y + line_height)
+					black_background(buffer, canvas_width, 0, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
+					center_justify(buffer, canvas_width, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
+
+					// Set the cursor
+					cursor_x = 0;
+					cursor_y += line_height + line_spacing;
+				}
+
+				draw_to_buffer(buffer, canvas_width, slot->bitmap, cursor_x, cursor_y - slot->bitmap_top, color);
+
+			}
+
+			/*
+			mprint("\nDrawing [%c] (%d), advance %d,%d, at %d,%d. bitmap_top=%d",
+				current_char_code, current_char_code, slot->advance.x >> 6, slot->advance.y >> 6, cursor_x, cursor_y, slot->bitmap_top);
+			*/
+
+			// Increase pen position
+			cursor_x += slot->advance.x >> 6;
+			cursor_y += slot->advance.y >> 6;
 		}
-
-		/*
-		mprint("\nDrawing [%c] (%d), advance %d,%d, at %d,%d. bitmap_top=%d",
-			current_char_code, current_char_code, slot->advance.x >> 6, slot->advance.y >> 6, cursor_x, cursor_y, slot->bitmap_top);
-		*/
-
-		// Increase pen position
-		cursor_x += slot->advance.x >> 6;
-		cursor_y += slot->advance.y >> 6;
+		token = strtok(NULL, "<>");
+		free(string_utf32);
 	}
+
 	// Draw black background
 	black_background(buffer, canvas_width, 0, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
 	// Center justify the last line.
@@ -794,7 +859,7 @@ int spupng_export_string2png(struct spupng_t *sp, uint32_t *str, FILE* output)
 
 	// Save image
 	write_image(buffer, output, canvas_width, canvas_height);
-
+	free(tmp);
 	free(buffer);
 	return 1;
 }
@@ -860,29 +925,6 @@ int eia608_to_str(struct encoder_ctx *context, struct eia608_screen *data, char 
 	return str_len;
 }
 
-// The function will NOT free src.
-// You need to free the src and return value yourself!
-uint32_t* utf8_to_utf32(char* src) {
-	// Convert UTF-8 to UTF-32 for generating bitmap.
-	size_t len_src, len_dst;
-
-	len_src = strlen(src);
-	len_dst = (len_src + 2) * 4; // one for FEFF and one for \0
-
-	uint32_t* string_utf32 = (uint32_t *) calloc(len_dst, 1);
-	size_t inbufbytesleft = len_src;
-	size_t outbufbytesleft = len_dst;
-	char* inbuf = src;
-	char* outbuf = (char*) string_utf32;
-
-	iconv_t cd = iconv_open("UTF-32", "UTF-8");
-	int result = iconv(cd, &inbuf, &inbufbytesleft, &outbuf, &outbufbytesleft);
-	if (result == -1) mprint("iconv failed to convert UTF-8 to UTF-32. errno is %d\n", errno);
-	iconv_close(cd);
-
-	return string_utf32;
-}
-
 // string needs to be in UTF-8 encoding.
 // This function will take care of encoding.
 int spupng_write_string(struct spupng_t *sp, char *string, LLONG start_time, LLONG end_time,
@@ -904,14 +946,13 @@ int spupng_write_string(struct spupng_t *sp, char *string, LLONG start_time, LLO
 			sp->pngfile, strerror(errno));
 	}
 
-	uint32_t* string_utf32 = utf8_to_utf32(string);
-	if (!spupng_export_string2png(sp, string_utf32, sp->fppng))
+	if (!spupng_export_string2png(sp, string, sp->fppng))
 	{
-		free(string_utf32);
+		//free(string_utf32);
 		fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot write %s: %s\n",
 			sp->pngfile, strerror(errno));
 	}
-	free(string_utf32);
+	//free(string_utf32);
 	fclose(sp->fppng);
 	write_sputag_open(sp, ms_start, ms_end);
 	write_spucomment(sp, string);
