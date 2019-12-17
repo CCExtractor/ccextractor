@@ -100,10 +100,6 @@ UTF8PROC_DLLEXPORT const char *utf8proc_version(void) {
   return STRINGIZE(UTF8PROC_VERSION_MAJOR) "." STRINGIZE(UTF8PROC_VERSION_MINOR) "." STRINGIZE(UTF8PROC_VERSION_PATCH) "";
 }
 
-UTF8PROC_DLLEXPORT const char *utf8proc_unicode_version(void) {
-  return "12.1.0";
-}
-
 UTF8PROC_DLLEXPORT const char *utf8proc_errmsg(utf8proc_ssize_t errcode) {
   switch (errcode) {
     case UTF8PROC_ERROR_NOMEM:
@@ -200,13 +196,9 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_encode_char(utf8proc_int32_t uc, ut
   } else return 0;
 }
 
-/* internal version used for inserting 0xff bytes between graphemes */
-static utf8proc_ssize_t charbound_encode_char(utf8proc_int32_t uc, utf8proc_uint8_t *dst) {
+/* internal "unsafe" version that does not check whether uc is in range */
+static utf8proc_ssize_t unsafe_encode_char(utf8proc_int32_t uc, utf8proc_uint8_t *dst) {
    if (uc < 0x00) {
-      if (uc == -1) { /* internal value used for grapheme breaks */
-        dst[0] = (utf8proc_uint8_t)0xFF;
-        return 1;
-      }
       return 0;
    } else if (uc < 0x80) {
       dst[0] = (utf8proc_uint8_t)uc;
@@ -215,6 +207,12 @@ static utf8proc_ssize_t charbound_encode_char(utf8proc_int32_t uc, utf8proc_uint
       dst[0] = (utf8proc_uint8_t)(0xC0 + (uc >> 6));
       dst[1] = (utf8proc_uint8_t)(0x80 + (uc & 0x3F));
       return 2;
+   } else if (uc == 0xFFFF) {
+       dst[0] = (utf8proc_uint8_t)0xFF;
+       return 1;
+   } else if (uc == 0xFFFE) {
+       dst[0] = (utf8proc_uint8_t)0xFE;
+       return 1;
    } else if (uc < 0x10000) {
       dst[0] = (utf8proc_uint8_t)(0xE0 + (uc >> 12));
       dst[1] = (utf8proc_uint8_t)(0x80 + ((uc >> 6) & 0x3F));
@@ -482,7 +480,7 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_decompose_char(utf8proc_int32_t uc,
     int tbc = property->boundclass;
     boundary = grapheme_break_extended(*last_boundclass, tbc, last_boundclass);
     if (boundary) {
-      if (bufsize >= 1) dst[0] = -1; /* sentinel value for grapheme break */
+      if (bufsize >= 1) dst[0] = 0xFFFF;
       if (bufsize >= 2) dst[1] = uc;
       return 2;
     }
@@ -688,7 +686,7 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_reencode(utf8proc_int32_t *buffer, 
     if (options & UTF8PROC_CHARBOUND) {
         for (rpos = 0; rpos < length; rpos++) {
             uc = buffer[rpos];
-            wpos += charbound_encode_char(uc, ((utf8proc_uint8_t *)buffer) + wpos);
+            wpos += unsafe_encode_char(uc, ((utf8proc_uint8_t *)buffer) + wpos);
         }
     } else {
         for (rpos = 0; rpos < length; rpos++) {
