@@ -120,6 +120,8 @@ typedef bool utf8proc_bool;
 #endif
 #include <limits.h>
 
+#define UTF8PROC_STATIC
+
 #ifdef UTF8PROC_STATIC
 #  define UTF8PROC_DLLEXPORT
 #else
