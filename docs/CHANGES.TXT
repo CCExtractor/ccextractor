@@ -2,6 +2,8 @@
 -----------------
 - New: Added support to output captions to MCC file (#733).
 - New: Added a few comments.
+- New: Added more fatals on no arguments errors.
+- New: Updated ccextractor.cnf.sample.
 - Fix: ccx_demuxer_mxf.c: Parse framerate from MXF captions to fix caption timings.
 - Fix: hardsubx_decoder.c: Fix memory leaks using Leptonica API.
 - Fix: linux/Makefile.am: added some sources to enable rpms to be created.
