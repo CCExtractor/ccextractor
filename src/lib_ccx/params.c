@@ -1199,15 +1199,18 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		{
 			int rc;
 			if (argv[i][strlen(argv[i])-1] != '+')
+			{
 				rc = append_file_to_queue(opt, argv[i]);
+			}
 			else
 			{
 				argv[i][strlen(argv[i])-1] = 0;
 				rc = add_file_sequence(opt, argv[i]);
 			}
 			if (rc)
+			{
 				fatal(EXIT_NOT_ENOUGH_MEMORY, "Fatal: Not enough memory to parse parameters.\n");
-			
+			}
 			continue;
 		}
 
@@ -1227,18 +1230,28 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 					i++;
 
 					if (strcmp(argv[i], "simple") == 0 || strcmp(argv[i], "frame") == 0)
+					{
 						opt->hardsubx_ocr_mode = HARDSUBX_OCRMODE_FRAME;
+					}
 					else if (strcmp(argv[i], "word") == 0)
+					{
 						opt->hardsubx_ocr_mode = HARDSUBX_OCRMODE_WORD;
+					}
 					else if (strcmp(argv[i], "letter") == 0 || strcmp(argv[i], "symbol") == 0)
+					{
 						opt->hardsubx_ocr_mode = HARDSUBX_OCRMODE_LETTER;
+					}
 					else
+					{
 						fatal(EXIT_MALFORMED_PARAMETER, "-ocr_mode has an invalid value.\nValid values are {frame,word,letter}\n");
-					
+					}
+
 					continue;
 				}
 				else
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "-ocr_mode has no argument.\nValid values are {frame,word,letter}\n");
+				}
 			}
 			if (strcmp(argv[i], "-subcolor") == 0 || strcmp(argv[i], "-sub_color") == 0)
 			{
@@ -1289,13 +1302,17 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 						sprintf(str, "%s", argv[i]); // Done this way to avoid error with getting (i+1)th env variable
 						opt->hardsubx_hue = atof(str);
 						if (opt->hardsubx_hue <= 0.0 || opt->hardsubx_hue > 360.0)
+						{
 							fatal(EXIT_MALFORMED_PARAMETER, "-subcolor has either 0 or an invalid hue value supplied.\nIf you want to detect red subtitles, pass '-subcolor red' or a slightly higher hue value (e.g. 0.1)\n");
+						}
 					}
 
 					continue;
 				}
 				else
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "-subcolor has no argument.\nValid values are {white,yellow,green,cyan,blue,magenta,red} or a custom hue value between 0 and 360\n");
+				}
 			}
 			if (strcmp(argv[i], "-min_sub_duration") == 0)
 			{
@@ -1307,12 +1324,16 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 					sprintf(str, "%s", argv[i]); // Done this way to avoid error with getting (i+1)th env variable
 					opt->hardsubx_min_sub_duration = atof(str);
 					if (opt->hardsubx_min_sub_duration == 0.0)
+					{
 						fatal(EXIT_MALFORMED_PARAMETER, "-min_sub_duration has either 0 or an invalid value supplied\n");
-					
+					}
+
 					continue;
 				}
 				else
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "-min_sub_duration has no argument.\n");
+				}
 			}
 			if (strcmp(argv[i], "-detect_italics") == 0)
 			{
@@ -1329,12 +1350,16 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 					sprintf(str, "%s", argv[i]); // Done this way to avoid error with getting (i+1)th env variable
 					opt->hardsubx_conf_thresh = atof(str);
 					if (opt->hardsubx_conf_thresh <= 0.0 || opt->hardsubx_conf_thresh > 100.0)
+					{
 						fatal(EXIT_MALFORMED_PARAMETER, "-conf_thresh has either 0 or an invalid value supplied\nValid values are in (0.0,100.0)\n");
+					}
 
 					continue;
 				}
 				else
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "-conf_thresh has no argument.\n");
+				}
 			}
 			if (strcmp(argv[i], "-whiteness_thresh") == 0 || strcmp(argv[i], "-lum_thresh") == 0)
 			{
@@ -1346,28 +1371,31 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 					sprintf(str, "%s", argv[i]); // Done this way to avoid error with getting (i+1)th env variable
 					opt->hardsubx_lum_thresh = atof(str);
 					if (opt->hardsubx_lum_thresh <= 0.0 || opt->hardsubx_conf_thresh > 100.0)
+					{
 						fatal(EXIT_MALFORMED_PARAMETER, "-whiteness_thresh has either 0 or an invalid value supplied\nValid values are in (0.0,100.0)\n");
+					}
 					
 					continue;
 				}
 				else
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "-whiteness_thresh has no argument.\n");
+				}
 			}
 		}
 #endif // ENABLE_HARDSUBX
 
-		if (strcmp(argv[i], "-chapters") == 0){
+		if (strcmp(argv[i], "-chapters") == 0)
+		{
 			opt->extract_chapters = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-bi") == 0 ||
-				strcmp(argv[i], "--bufferinput") == 0)
+		if (strcmp(argv[i], "-bi") == 0 || strcmp(argv[i], "--bufferinput") == 0)
 		{
 			opt->buffer_input = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-nobi") == 0 ||
-				strcmp(argv[i], "--nobufferinput") == 0)
+		if (strcmp(argv[i], "-nobi") == 0 || strcmp(argv[i], "--nobufferinput") == 0)
 		{
 			opt->buffer_input = 0;
 			continue;
@@ -1395,20 +1423,23 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 				FILEBUFFERSIZE = atol_size(argv[i]);
 				if (FILEBUFFERSIZE < 8)
+				{
 					FILEBUFFERSIZE = 8; // Otherwise crashes are guaranteed at least in MythTV
+				}
 
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--buffersize has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-dru") == 0)
 		{
 			opt->settings_608.direct_rollup = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-nofc") == 0 ||
-				strcmp(argv[i], "--nofontcolor") == 0)
+		if (strcmp(argv[i], "-nofc") == 0 || strcmp(argv[i], "--nofontcolor") == 0)
 		{
 			opt->nofontcolor = 1;
 			continue;
@@ -1418,20 +1449,22 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->nohtmlescape = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-bom") == 0){
+		if (strcmp(argv[i], "-bom") == 0)
+		{
 			opt->enc_cfg.no_bom = 0;
 			continue;
 		}
-		if (strcmp(argv[i], "-nobom") == 0){
+		if (strcmp(argv[i], "-nobom") == 0)
+		{
 			opt->enc_cfg.no_bom = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-sem") == 0){
+		if (strcmp(argv[i], "-sem") == 0)
+		{
 			opt->enc_cfg.with_semaphore = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-nots") == 0 ||
-				strcmp(argv[i], "--notypesetting") == 0)
+		if (strcmp(argv[i], "-nots") == 0 || strcmp(argv[i], "--notypesetting") == 0)
 		{
 			opt->notypesetting = 1;
 			continue;
@@ -1446,7 +1479,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			strcmp(argv[i], "-wtv")  == 0 ||
 			strcmp(argv[i], "-mp4")  == 0 ||
 			strcmp(argv[i], "-mkv")  == 0 ||
-			strcmp(argv[i], "--dvr-ms") == 0 )
+			strcmp(argv[i], "--dvr-ms") == 0)
 		{
 			set_input_format(opt, argv[i]);
 			continue;
@@ -1465,16 +1498,24 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				i++;
 
 				if (strcmp(argv[i], "teletext") == 0)
+				{
 					opt->demux_cfg.codec = CCX_CODEC_TELETEXT;
+				}
 				else if (strcmp(argv[i], "dvbsub") == 0)
+				{
 					opt->demux_cfg.codec = CCX_CODEC_DVB;
+				}
 				else
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "Invalid option for codec.\n");
+				}
 
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-codec has no argument.\n");
+			}
 		}
 
 		/*user specified subtitle to be selected */
@@ -1485,13 +1526,23 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				i++;
 
 				if (strcmp(argv[i], "teletext") == 0)
+				{
 					opt->demux_cfg.nocodec = CCX_CODEC_TELETEXT;
+				}
 				else if (strcmp(argv[i], "dvbsub") == 0)
+				{
 					opt->demux_cfg.nocodec = CCX_CODEC_DVB;
+				}
 				else
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "Invalid option for nocodec.\n");
+				}
 
 				continue;
+			}
+			else
+			{
+				fatal(EXIT_MALFORMED_PARAMETER, "-nocodec has no argument.\n");
 			}
 		}
 
@@ -1504,12 +1555,16 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				opt->dvblang = (char *)malloc(sizeof(argv[i]));
 				sprintf(opt->dvblang, "%s",argv[i]);
 				for (int char_index = 0; char_index < strlen(opt->dvblang); char_index++)
+				{
 					opt->dvblang[char_index] = cctolower(opt->dvblang[char_index]);
+				}
 
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-dvblang has no argument.\n");
+			}
 		}
 
 		if (strcmp(argv[i], "-ocrlang") == 0)
@@ -1521,12 +1576,16 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				opt->ocrlang = (char *)malloc(sizeof(argv[i]));
 				sprintf(opt->ocrlang, "%s", argv[i]);
 				for (int char_index = 0; char_index < strlen(opt->ocrlang); char_index++)
+				{
 					opt->ocrlang[char_index] = cctolower(opt->ocrlang[char_index]);
+				}
 
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-ocrlang has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-quant") == 0)
 		{
@@ -1537,7 +1596,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-quant has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-nospupngocr") == 0)
 		{
@@ -1554,12 +1615,16 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				sprintf(str, "%s", argv[i]);
 				opt->ocr_oem = atoi(str);
 				if (opt->ocr_oem < 0 || opt->ocr_oem > 2)
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "-oem must be 0, 1 or 2\n");
+				}
 
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-oem has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-mkvlang") == 0)
 		{
@@ -1574,7 +1639,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-mkvlang has no argument.\n");
+			}
 		}
 
 		/* Output file formats */
@@ -1604,7 +1671,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--startcreditstext has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "--startcreditsnotbefore") == 0)
 		{
@@ -1612,11 +1681,15 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			{
 				i++;
 				if (stringztoms(argv[i], &opt->enc_cfg.startcreditsnotbefore) == -1)
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "--startcreditsnotbefore only accepts SS, MM:SS or HH:MM:SS\n");
+				}
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--startcreditsnotbefore has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "--startcreditsnotafter") == 0)
 		{
@@ -1624,11 +1697,15 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			{
 				i++;
 				if (stringztoms(argv[i], &opt->enc_cfg.startcreditsnotafter) == -1)
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "--startcreditsnotafter only accepts SS, MM:SS or HH:MM:SS\n");
+				}
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--startcreditsnotafter has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "--startcreditsforatleast") == 0)
 		{
@@ -1636,11 +1713,15 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			{
 				i++;
 				if (stringztoms(argv[i], &opt->enc_cfg.startcreditsforatleast) == -1)
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "--startcreditsforatleast only accepts SS, MM:SS or HH:MM:SS\n");
+				}
 				continue;
 			}
-			else 
+			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--startcreditsforatleast has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "--startcreditsforatmost") == 0)
 		{
@@ -1648,11 +1729,15 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			{
 				i++;
 				if (stringztoms(argv[i], &opt->enc_cfg.startcreditsforatmost) == -1)
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "--startcreditsforatmost only accepts SS, MM:SS or HH:MM:SS\n");
+				}
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--startcreditsforatmost has no argument.\n");
+			}
 		}
 		if  (strcmp(argv[i], "--endcreditstext") == 0 )
 		{
@@ -1663,7 +1748,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--endcreditstext has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "--endcreditsforatleast") == 0)
 		{
@@ -1671,11 +1758,15 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			{
 				i++;
 				if (stringztoms(argv[i], &opt->enc_cfg.endcreditsforatleast) == -1)
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "--endcreditsforatleast only accepts SS, MM:SS or HH:MM:SS\n");
+				}
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--endcreditsforatleast has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "--endcreditsforatmost") == 0)
 		{
@@ -1683,11 +1774,15 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			{
 				i++;
 				if (stringztoms(argv[i], &opt->enc_cfg.endcreditsforatmost) == -1)
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "--startcreditsforatmost only accepts SS, MM:SS or HH:MM:SS\n");
+				}
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--endcreditsforatmost has no argument.\n");
+			}
 		}
 
 		/* More stuff */
@@ -1767,7 +1862,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-outinterval has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "--segmentonkeyonly") == 0 || strcmp(argv[i], "-key") == 0)
 		{
@@ -1805,7 +1902,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--capfile has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "--program-number") == 0 || strcmp(argv[i], "-pn") == 0)
 		{
@@ -1853,13 +1952,17 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			{
 				i++;
 				if (strlen(argv[i]) != 7 || argv[i][0] != '#')
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "--defaultcolor expects a 7 character parameter that starts with #\n");
+				}
 				strcpy((char *)usercolor_rgb,argv[i]);
 				opt->settings_608.default_color = COL_USERDEFINED;
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--defaultcolor has no argument.\n");
+			}
 
 		}
 		if (strcmp(argv[i], "-delay") == 0)
@@ -1868,11 +1971,15 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			{
 				i++;
 				if (parsedelay(opt, argv[i]))
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "-delay only accept integers (such as -300 or 300)\n");
+				}
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-delay has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-scr") == 0 || strcmp(argv[i], "--screenfuls") == 0)
 		{
@@ -1881,11 +1988,15 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				i++;
 				opt->settings_608.screens_to_process = atoi_hex(argv[i]);
 				if (opt->settings_608.screens_to_process < 0)
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "--screenfuls only accepts non-negative integers.\n");
+				}
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--screenfuls has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-startat") == 0)
 		{
@@ -1893,11 +2004,15 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			{
 				i++;
 				if (stringztoms(argv[i], &opt->extraction_start) == -1)
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "-startat only accepts SS, MM:SS or HH:MM:SS\n");
+				}
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-startat has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-endat") == 0)
 		{
@@ -1905,11 +2020,15 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			{
 				i++;
 				if (stringztoms(argv[i], &opt->extraction_end) == -1)
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "-endat only accepts SS, MM:SS or HH:MM:SS\n");
+				}
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-endat has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-1") == 0)
 		{
@@ -1929,7 +2048,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp(argv[i], "-stdout") == 0)
 		{
 			if (opt->messages_target == 1) // Only change this if still stdout. -quiet could set it to 0 for example
+			{
 				opt->messages_target = 2; // stderr
+			}
 			opt->cc_to_stdout = 1;
 			continue;
 		}
@@ -1988,8 +2109,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-levdistmincnt has no argument.\n");
-
+			}
 		}
 		if (strcmp(argv[i], "-levdistmaxpct") == 0)
 		{
@@ -2000,7 +2122,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-levdistmaxpct has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-708") == 0)
 		{
@@ -2147,7 +2271,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-o has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-cf") == 0)
 		{
@@ -2158,7 +2284,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-cf has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-svc") == 0 || strcmp(argv[i], "--service") == 0)
 		{
@@ -2169,7 +2297,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--service has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-datapid") == 0)
 		{
@@ -2181,7 +2311,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-datapid has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-datastreamtype") == 0)
 		{
@@ -2192,7 +2324,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-datastreamtype has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-streamtype") == 0)
 		{
@@ -2203,7 +2337,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-streamtype has no argument.\n");
+			}
 		}
 
 		/* Teletext stuff */
@@ -2217,7 +2353,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-tpage has no argument.\n");
+			}
 		}
 
 		/* Red Hen/ UCLA Specific stuff */
@@ -2338,7 +2476,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-unixts has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-sects") == 0)
 		{
@@ -2371,7 +2511,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				if (strlen(format) == 7)
 				{
 					if (opt->date_format == ODF_NONE)
+					{
 						opt->date_format = ODF_HHMMSSMS; // Necessary for displaying times, if any would be used.
+					}
 					if (!opt->transcript_settings.isFinal)
 					{
 						opt->transcript_settings.showStartTime = format[0] - '0';
@@ -2383,15 +2525,21 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 						opt->transcript_settings.useColors = format[6] - '0';
 					} 
 					else 
+					{
 						fatal(EXIT_INCOMPATIBLE_PARAMETERS, "customtxt cannot be set after -UCLA is used!\n");
+					}
 				}
 				else
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "Custom TXT format not OK: %s, expected 7 bits string\n", format);
+				}
 
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-customtxt has no argument.\n");
+			}
 		}
 
 		/* Network stuff */
@@ -2404,7 +2552,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				char *at = strchr(argv[i], '@');
 				char *colon = strchr(argv[i], ':');
 				if (at && !colon)
+				{
 					fatal(EXIT_MALFORMED_PARAMETER, "If -udp contains an '@', it must also contain a ':'\n");
+				}
 				else if (at && colon)
 				{
 					*at = '\0';
@@ -2429,7 +2579,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-udp has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-sendto") == 0)
 		{
@@ -2453,12 +2605,16 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 					char *br = strchr(addr, ']');
 					if (br == NULL)
+					{
 						fatal(EXIT_INCOMPATIBLE_PARAMETERS, "Wrong address format, for IPv6 use [address]:port\n");
+					}
 					*br = '\0';
 
 					br++; /* Colon */
 					if (*br != '\0')
+					{
 						opt->srv_port = br + 1;
+					}
 
 					continue;
 				}
@@ -2475,7 +2631,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-sendto has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-tcp") == 0)
 		{
@@ -2491,7 +2649,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-tcp has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-tcppassword") == 0)
 		{
@@ -2502,9 +2662,10 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-tcppassword has no argument.\n");
+			}
 		}
-
 		if (strcmp(argv[i], "-tcpdesc") == 0)
 		{
 			if (i < argc - 1)
@@ -2514,7 +2675,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-tcpdesc has no argument.\n");
+			}
 		}
 
 		if (strcmp(argv[i], "-font") == 0)
@@ -2526,7 +2689,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-font has no argument.\n");
+			}
 		}
 #ifdef WITH_LIBCURL
 		if (strcmp(argv[i], "-curlposturl") == 0)
@@ -2538,7 +2703,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-curlposturl has no argument.\n");
+			}
 		}
 #endif
 
@@ -2557,7 +2724,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-sharing-url has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-translate") == 0)
 		{
@@ -2570,7 +2739,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-translate has no argument.\n");
+			}
 		}
 		if (strcmp(argv[i], "-translate-auth") == 0) 
 		{
@@ -2581,7 +2752,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 			else
+			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-translate-auth has no argument.\n");
+			}
 		}
 #endif //ENABLE_SHARING
 
@@ -2589,7 +2762,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	}
 
 	if (opt->demux_cfg.auto_stream == CCX_SM_MP4 && opt->input_source == CCX_DS_STDIN)
+	{
 		fatal(EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
+	}
 
 	if (opt->extract_chapters)
 	{
@@ -2608,14 +2783,20 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	if (opt->enc_cfg.sentence_cap)
 	{
 		if (add_built_in_words())
+		{
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for word list\n");
+		}
 		if (opt->sentence_cap_file && process_cap_file(opt->sentence_cap_file))
+		{
 			fatal(EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the capitalization file.\n");
+		}
 
 		ccx_encoders_helpers_perform_shellsort_words();
 	}
 	if (opt->demux_cfg.ts_forced_program != -1)
+	{
 		opt->demux_cfg.ts_forced_program_selected = 1;
+	}
 
 	// Init telexcc redundant options
 	tlt_config.dolevdist = opt->dolevdist;
@@ -2723,11 +2904,17 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	opt->enc_cfg.subs_delay = opt->subs_delay;
 	opt->enc_cfg.gui_mode_reports = opt->gui_mode_reports;
 	if (opt->enc_cfg.render_font == NULL)
+	{
 		opt->enc_cfg.render_font = DEFAULT_FONT_PATH;
+	}
 	if (opt->output_filename && opt->multiprogram == CCX_FALSE)
+	{
 		opt->enc_cfg.output_filename = strdup(opt->output_filename);
+	}
 	else
+	{
 		opt->enc_cfg.output_filename = NULL;
+	}
 #ifdef WITH_LIBCURL
 	opt->enc_cfg.curlposturl = opt->curlposturl;
 #endif
