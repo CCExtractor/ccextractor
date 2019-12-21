@@ -33,15 +33,14 @@
 #else // Assume Linux
 #define DEFAULT_FONT_PATH "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"
 #define DEFAULT_FONT_PATH_ITALICS "/usr/share/fonts/truetype/noto/NotoSans-Italic.ttf"
-
 #endif
 
 static int inputfile_capacity = 0;
 
-int process_cap_file(char* filename)
+int process_cap_file (char *filename)
 {
 	int ret = 0;
-	FILE* fi = fopen(filename, "rt");
+	FILE *fi = fopen(filename, "rt");
 	if (fi == NULL)
 	{
 		mprint("\rUnable to open capitalization file: %s\n", filename);
@@ -49,26 +48,26 @@ int process_cap_file(char* filename)
 	}
 	char line[35]; // For screen width (32)+CRLF+0
 	int num = 0;
-	while (fgets(line, 35, fi))
+	while (fgets(line,35,fi))
 	{
 		num++;
 		if (line[0] == '#') // Comment
 			continue;
-		char* c = line + strlen(line) - 1;
+		char *c = line+strlen(line)-1;
 		while (c >= line && (*c == 0xd || *c == 0xa))
 		{
 			*c = 0;
 			c--;
 		}
-		if (strlen(line) > 32)
+		if (strlen(line)>32)
 		{
-			mprint("Word in line %d too long, max = 32 characters.\n", num);
+			mprint("Word in line %d too long, max = 32 characters.\n",num);
 			ret = -1;
 			goto end;
 		}
-		if (strlen(line) > 0)
+		if (strlen(line)>0)
 		{
-			if (add_word(line))
+			if (add_word (line))
 			{
 				ret = -1;
 				goto end;
@@ -79,7 +78,7 @@ end:
 	fclose(fi);
 	return ret;
 }
-int isanumber(char* s)
+int isanumber (char *s)
 {
 	while (*s)
 	{
@@ -90,10 +89,10 @@ int isanumber(char* s)
 	return 1;
 }
 
-int parsedelay(struct ccx_s_options* opt, char* par)
+int parsedelay (struct ccx_s_options *opt, char *par)
 {
 	int sign = 0;
-	char* c = par;
+	char *c = par;
 	while (*c)
 	{
 		if (*c == '-' || *c == '+')
@@ -107,7 +106,7 @@ int parsedelay(struct ccx_s_options* opt, char* par)
 		{
 			if (!isdigit(*c))
 				return 1;
-			opt->subs_delay = opt->subs_delay * 10 + (*c - '0');
+			opt->subs_delay = opt->subs_delay*10 + (*c-'0');
 		}
 		c++;
 	}
@@ -116,18 +115,18 @@ int parsedelay(struct ccx_s_options* opt, char* par)
 	return 0;
 }
 
-int append_file_to_queue(struct ccx_s_options* opt, char* filename)
+int append_file_to_queue (struct ccx_s_options *opt,char *filename)
 {
 	if (filename[0] == '\0') //skip files with empty file name (ex : ./ccextractor "")
 		return 0;
-	char* c = (char*)malloc(strlen(filename) + 1);
+	char *c = (char *)malloc(strlen(filename)+1);
 	if (c == NULL)
 		return -1;
-	strcpy(c, filename);
+	strcpy(c,filename);
 	if (inputfile_capacity <= opt->num_input_files)
 	{
 		inputfile_capacity += 10;
-		opt->inputfile = (char**)realloc(opt->inputfile, sizeof(char*) * inputfile_capacity);
+		opt->inputfile = (char **)realloc(opt->inputfile, sizeof(char *) * inputfile_capacity);
 		if (opt->inputfile == NULL)
 		{
 			free(c);
@@ -139,10 +138,10 @@ int append_file_to_queue(struct ccx_s_options* opt, char* filename)
 	return 0;
 }
 
-int add_file_sequence(struct ccx_s_options* opt, char* filename)
+int add_file_sequence (struct ccx_s_options *opt, char *filename)
 {
-	int m, n;
-	n = strlen(filename) - 1;
+	int m,n;
+	n = strlen(filename)-1;
 	// Look for the last digit in filename
 	while (n >= 0 && !isdigit(filename[n]))
 		n--;
@@ -153,13 +152,13 @@ int add_file_sequence(struct ccx_s_options* opt, char* filename)
 		m--;
 	m++;
 	// Here: Significant digits go from filename[m] to filename[n]
-	char* num = (char*)malloc(n - m + 2);
+	char *num = (char *)malloc(n-m+2);
 	if (!num)
 		return -1;
-	strncpy(num, filename + m, n - m + 1);
-	num[n - m + 1] = 0;
+	strncpy(num,filename+m, n-m+1);
+	num[n-m+1] = 0;
 	int i = atoi(num);
-	char* temp = (char*)malloc(n - m + 3); // For overflows
+	char *temp = (char *)malloc(n-m+3); // For overflows
 	if (!temp)
 	{
 		free(num);
@@ -168,7 +167,7 @@ int add_file_sequence(struct ccx_s_options* opt, char* filename)
 	// printf ("Expanding %d to %d, initial value=%d\n",m,n,i);
 	for (;;)
 	{
-		FILE* f = fopen(filename, "r");
+		FILE *f = fopen(filename, "r");
 		if (f == NULL) // Doesn't exist or we can't read it. We're done
 			break;
 		fclose(f);
@@ -179,18 +178,18 @@ int add_file_sequence(struct ccx_s_options* opt, char* filename)
 			return -1;
 		}
 		i++;
-		sprintf(temp, "%d", i);
+		sprintf(temp, "%d",i);
 		if (strlen(temp) > strlen(num)) // From 999 to 1000, etc.
 			break;
-		strncpy(filename + m + (strlen(num) - strlen(temp)), temp, strlen(temp));
-		memset(filename + m, '0', strlen(num) - strlen(temp));
+		strncpy(filename+m+(strlen(num)-strlen(temp)),temp,strlen(temp));
+		memset(filename+m,'0',strlen(num)-strlen(temp));
 	}
 	free(num);
 	free(temp);
 	return 0;
 }
 
-void set_output_format(struct ccx_s_options* opt, const char* format)
+void set_output_format (struct ccx_s_options *opt, const char *format)
 {
 	opt->write_format_rewritten = 1;
 
@@ -228,7 +227,7 @@ void set_output_format(struct ccx_s_options* opt, const char* format)
 		if (opt->date_format == ODF_NONE)
 			opt->date_format = ODF_HHMMSSMS;
 		// Sets the right things so that timestamps and the mode are printed.
-		if (!opt->transcript_settings.isFinal) {
+		if (!opt->transcript_settings.isFinal){
 			opt->transcript_settings.showStartTime = 1;
 			opt->transcript_settings.showEndTime = 1;
 			opt->transcript_settings.showCC = 0;
@@ -237,15 +236,15 @@ void set_output_format(struct ccx_s_options* opt, const char* format)
 	}
 	else if (strcmp(format, "report") == 0)
 	{
-		opt->write_format = CCX_OF_NULL;
-		opt->messages_target = 0;
-		opt->print_file_reports = 1;
+		opt->write_format            = CCX_OF_NULL;
+		opt->messages_target         = 0;
+		opt->print_file_reports      = 1;
 		opt->demux_cfg.ts_allprogram = CCX_TRUE;
 	}
 	else if (strcmp(format, "raw") == 0)
 		opt->write_format = CCX_OF_RAW;
 	else if (strcmp(format, "smptett") == 0)
-		opt->write_format = CCX_OF_SMPTETT;
+		opt->write_format = CCX_OF_SMPTETT ;
 	else if (strcmp(format, "bin") == 0)
 		opt->write_format = CCX_OF_RCWT;
 	else if (strcmp(format, "null") == 0)
@@ -262,13 +261,13 @@ void set_output_format(struct ccx_s_options* opt, const char* format)
 	else if (strcmp(format, "curl") == 0)
 		opt->write_format = CCX_OF_CURL;
 #endif
-	else if (strcmp(format, "mcc") == 0)
-		opt->write_format = CCX_OF_MCC;
+    else if (strcmp(format, "mcc") == 0)
+        opt->write_format = CCX_OF_MCC;
 	else
 		fatal(EXIT_MALFORMED_PARAMETER, "Unknown output file format: %s\n", format);
 }
 
-void set_input_format(struct ccx_s_options* opt, const char* format)
+void set_input_format (struct ccx_s_options *opt, const char *format)
 {
 	if (opt->input_source == CCX_DS_TCP && strcmp(format, "bin") != 0)
 	{
@@ -314,7 +313,7 @@ void set_input_format(struct ccx_s_options* opt, const char* format)
 		fatal(EXIT_MALFORMED_PARAMETER, "Unknown input file format: %s\n", format);
 }
 
-void print_usage(void)
+void print_usage (void)
 {
 	mprint("Originally based on McPoodle's tools. Check his page for lots of information\n");
 	mprint("on closed captions technical details.\n");
@@ -416,7 +415,7 @@ void print_usage(void)
 	mprint("                       bin  -> CCExtractor's own binary format.\n");
 	mprint("                       raw  -> For McPoodle's raw files.\n");
 	mprint("                       mp4  -> MP4/MOV/M4V and similar.\n");
-	mprint("                       m2ts -> BDAV MPEG-2 Transport Stream\n");
+	mprint("                       m2ts -> BDAV MPEG-2 Transport Stream\n"); 
 	mprint("                       mkv  -> Matroska container and WebM.\n");
 	mprint("                       mxf  -> Material Exchange Format (MXF).\n");
 #ifdef WTV_DEBUG
@@ -434,7 +433,7 @@ void print_usage(void)
 	mprint("                      bin     -> CC data in CCExtractor's own binary format.\n");
 	mprint("                      raw     -> CC data in McPoodle's Broadcast format.\n");
 	mprint("                      dvdraw  -> CC data in McPoodle's DVD format.\n");
-	mprint("                      mcc     -> CC data compressed using MacCaption Format.\n");
+    mprint("                      mcc     -> CC data compressed using MacCaption Format.\n");
 	mprint("                      txt     -> Transcript (no time codes, no roll-up\n");
 	mprint("                                 captions, just the plain transcription.\n");
 	mprint("                      ttxt    -> Timed Transcript (transcription with time\n");
@@ -557,7 +556,7 @@ void print_usage(void)
 	mprint(" -levdistmincnt value: Minimum distance we always allow regardless\n");
 	mprint("                       of the length of the strings.Default 2. \n");
 	mprint("                       This means that if the calculated distance \n");
-	mprint("                       is 0,1 or 2, we consider the strings to be equivalent.\n");
+   	mprint("                       is 0,1 or 2, we consider the strings to be equivalent.\n");
 	mprint(" -levdistmaxpct value: Maximum distance we allow, as a percentage of\n");
 	mprint("                       the shortest string length. Default 10%.\n");
 	mprint("                       For example, consider a comparison of one string of \n");
@@ -621,13 +620,13 @@ void print_usage(void)
 	mprint("                       free to play with it but be aware that this format\n");
 	mprint("                       is really live - don't rely on its output format\n");
 	mprint("                       not changing between versions.\n");
-	mprint("            -latrusmap Map Latin symbols to Cyrillic ones in special cases\n");
-	mprint("                       of Russian Teletext files (issue #1086)\n");
-	mprint("                 -xds: In timed transcripts, all XDS information will be saved\n");
+    mprint("            -latrusmap Map Latin symbols to Cyrillic ones in special cases\n");
+    mprint("                       of Russian Teletext files (issue #1086)\n");
+    mprint("                 -xds: In timed transcripts, all XDS information will be saved\n");
 	mprint("                       to the output file.\n");
 	mprint("                  -lf: Use LF (UNIX) instead of CRLF (DOS, Windows) as line\n");
 	mprint("                       terminator.\n");
-	mprint("                  -df: For MCC Files, force dropframe frame count.\n");
+    mprint("                  -df: For MCC Files, force dropframe frame count.\n");
 	mprint("            -autodash: Based on position on screen, attempt to determine\n");
 	mprint("                       the different speakers and a dash (-) when each\n");
 	mprint("                       of them talks (.srt/.vtt only, -trim required).\n");
@@ -668,11 +667,11 @@ void print_usage(void)
 	mprint("                       in languages (like \"fre-ca\" for Canadian French).\n");
 	mprint("          -nospupngocr When processing DVB don't use the OCR to write the text as\n");
 	mprint("                       comments in the XML file.\n");
-	mprint("                -font: Specify the full path of the font that is to be used when\n");
-	mprint("                       generating SPUPNG files. If not specified, you need to\n");
-	mprint("                       have the default font installed (Helvetica for macOS, Calibri\n");
-	mprint("                       for Windows, and Noto for other operating systems at their\n)");
-	mprint("                       default location\n)");
+	mprint ("                -font: Specify the full path of the font that is to be used when\n");
+	mprint ("                       generating SPUPNG files. If not specified, you need to\n");
+	mprint ("                       have the default font installed (Helvetica for macOS, Calibri\n");
+	mprint ("                       for Windows, and Noto for other operating systems at their\n)");
+	mprint ("                       default location\n)");
 	mprint("                -italics: Specify the full path of the italics font that is to be used when\n");
 	mprint("                       generating SPUPNG files. If not specified, you need to\n");
 	mprint("                       have the default font installed (Helvetica Oblique for macOS, Calibri Italic\n");
@@ -740,20 +739,20 @@ void print_usage(void)
 	mprint("Options that affect which codec is to be used have to be searched in input\n");
 
 	mprint("  If codec type is not selected then first elementary stream suitable for \n"
-		"  subtitle is selected, please consider -teletext -noteletext override this\n"
-		"  option.\n"
-		"      -codec dvbsub    select the dvb subtitle from all elementary stream,\n"
-		"                        if stream of dvb subtitle type is not found then \n"
-		"                        nothing is selected and no subtitle is generated\n"
-		"      -nocodec dvbsub   ignore dvb subtitle and follow default behaviour\n"
-		"      -codec teletext   select the teletext subtitle from elementary stream\n"
-		"      -nocodec teletext ignore teletext subtitle\n"
-		"  NOTE: option given in form -foo=bar ,-foo = bar and --foo=bar are invalid\n"
-		"        valid option are only in form -foo bar\n"
-		"        nocodec and codec parameter must not be same if found to be same \n"
-		"        then parameter of nocodec is ignored, this flag should be passed \n"
-		"        once, more then one are not supported yet and last parameter would \n"
-		"        taken in consideration\n");
+			"  subtitle is selected, please consider -teletext -noteletext override this\n"
+			"  option.\n"
+			"      -codec dvbsub    select the dvb subtitle from all elementary stream,\n"
+			"                        if stream of dvb subtitle type is not found then \n"
+			"                        nothing is selected and no subtitle is generated\n"
+			"      -nocodec dvbsub   ignore dvb subtitle and follow default behaviour\n"
+			"      -codec teletext   select the teletext subtitle from elementary stream\n"
+			"      -nocodec teletext ignore teletext subtitle\n"
+			"  NOTE: option given in form -foo=bar ,-foo = bar and --foo=bar are invalid\n"
+			"        valid option are only in form -foo bar\n"
+			"        nocodec and codec parameter must not be same if found to be same \n"
+			"        then parameter of nocodec is ignored, this flag should be passed \n"
+			"        once, more then one are not supported yet and last parameter would \n"
+			"        taken in consideration\n");
 
 	mprint("Adding start and end credits:\n");
 
@@ -962,17 +961,17 @@ void print_usage(void)
 
 unsigned char sha256_buf[16384];
 
-char* calculateSHA256(char* location) {
+char *calculateSHA256(char *location) {
 	int	size_read, bytes_read, fh = 0;
 	SHA256_CTX	ctx256;
 
 	SHA256_Init(&ctx256);
 
-#ifdef _WIN32
-	fh = OPEN(location, O_RDONLY | O_BINARY);
-#else
-	fh = OPEN(location, O_RDONLY);
-#endif
+	#ifdef _WIN32
+		fh = OPEN(location, O_RDONLY | O_BINARY);
+	#else
+		fh = OPEN(location, O_RDONLY);
+	#endif
 
 	if (fh < 0) {
 		return "Could not open file";
@@ -987,9 +986,9 @@ char* calculateSHA256(char* location) {
 	return sha256_buf;
 }
 
-void version(char* location) {
-	char* leptversion;
-	char* hash = calculateSHA256(location);
+void version(char *location) {
+	char *leptversion;
+	char *hash = calculateSHA256(location);
 	mprint("CCExtractor detailed version info\n");
 	mprint("	Version: %s\n", VERSION);
 	mprint("	Git commit: %s\n", GIT_COMMIT);
@@ -1005,8 +1004,8 @@ void version(char* location) {
 #endif
 	mprint("	libGPAC Version: %s\n", GPAC_VERSION);
 	mprint("	zlib: %s\n", ZLIB_VERSION);
-	mprint("	utf8proc Version: %s\n", (const char*)utf8proc_version());
-	mprint("	protobuf-c Version: %s\n", (const char*)protobuf_c_version());
+	mprint("	utf8proc Version: %s\n", (const char*) utf8proc_version());
+	mprint("	protobuf-c Version: %s\n", (const char*) protobuf_c_version());
 	mprint("	libpng Version: %s\n", PNG_LIBPNG_VER_STRING);
 	mprint("	FreeType \n");
 	mprint("	libhash\n");
@@ -1015,15 +1014,15 @@ void version(char* location) {
 
 }
 
-void parse_708_services(struct ccx_s_options* opts, char* s)
+void parse_708_services (struct ccx_s_options *opts, char *s)
 {
-	const char* all = "all";
+	const char *all = "all";
 	size_t all_len = strlen(all);
 	int diff = strncmp(s, all, all_len);
-	if (diff == 0)
+	if (diff == 0) 
 	{
 		size_t s_len = strlen(s);
-		char* charset = NULL;
+		char *charset = NULL;
 		if (s_len > all_len + 2) // '[' and ']'
 			charset = strndup(s + all_len + 1, s_len - all_len - 2);
 
@@ -1031,10 +1030,10 @@ void parse_708_services(struct ccx_s_options* opts, char* s)
 		opts->enc_cfg.dtvcc_extract = 1;
 		opts->enc_cfg.all_services_charset = charset;
 
-		opts->enc_cfg.services_charsets = (char**)calloc(sizeof(char*), CCX_DTVCC_MAX_SERVICES);
+		opts->enc_cfg.services_charsets = (char **)calloc(sizeof(char *), CCX_DTVCC_MAX_SERVICES);
 		if (!opts->enc_cfg.services_charsets)
 			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "parse_708_services");
-		memset(opts->enc_cfg.services_charsets, 0, CCX_DTVCC_MAX_SERVICES * sizeof(char*));
+		memset(opts->enc_cfg.services_charsets, 0, CCX_DTVCC_MAX_SERVICES * sizeof(char *));
 
 		for (int i = 0; i < CCX_DTVCC_MAX_SERVICES; i++)
 		{
@@ -1046,7 +1045,7 @@ void parse_708_services(struct ccx_s_options* opts, char* s)
 		return;
 	}
 
-	char* c, * e, * l;
+	char *c, *e, *l;
 	if (s == NULL)
 		return;
 	l = s + strlen(s);
@@ -1065,7 +1064,7 @@ void parse_708_services(struct ccx_s_options* opts, char* s)
 		svc = atoi(c);
 		if (svc < 1 || svc > CCX_DTVCC_MAX_SERVICES)
 			fatal(EXIT_MALFORMED_PARAMETER,
-				"[CEA-708] Malformed parameter: Invalid service number (%d), valid range is 1-%d.\n", svc, CCX_DTVCC_MAX_SERVICES);
+				   "[CEA-708] Malformed parameter: Invalid service number (%d), valid range is 1-%d.\n", svc, CCX_DTVCC_MAX_SERVICES);
 		opts->settings_dtvcc.services_enabled[svc - 1] = 1;
 		opts->enc_cfg.services_enabled[svc - 1] = 1;
 		opts->settings_dtvcc.enabled = 1;
@@ -1074,10 +1073,10 @@ void parse_708_services(struct ccx_s_options* opts, char* s)
 
 		if (!opts->enc_cfg.services_charsets)
 		{
-			opts->enc_cfg.services_charsets = (char**)calloc(sizeof(char*), CCX_DTVCC_MAX_SERVICES);
+			opts->enc_cfg.services_charsets = (char **)calloc(sizeof(char *), CCX_DTVCC_MAX_SERVICES);
 			if (!opts->enc_cfg.services_charsets)
 				ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "parse_708_services\n");
-			memset(opts->enc_cfg.services_charsets, 0, CCX_DTVCC_MAX_SERVICES * sizeof(char*));
+			memset(opts->enc_cfg.services_charsets, 0, CCX_DTVCC_MAX_SERVICES * sizeof(char *));
 		}
 
 		e = e + 1;
@@ -1090,7 +1089,7 @@ void parse_708_services(struct ccx_s_options* opts, char* s)
 			e++;
 		if (*e == ']')
 		{
-			char* charset = strndup(c, e - c);
+			char *charset = strndup(c, e - c);
 			if (strlen(charset))
 				opts->enc_cfg.services_charsets[svc - 1] = charset;
 			c = e + 1;
@@ -1104,22 +1103,22 @@ void parse_708_services(struct ccx_s_options* opts, char* s)
 		fatal(EXIT_MALFORMED_PARAMETER, "[CEA-708] Malformed parameter: no services\n");
 }
 
-long atol_size(char* s)
+long atol_size (char *s)
 {
 	long val = atoi(s);
-	if (toupper(s[strlen(s) - 1]) == 'M')
-		val *= 1024 * 1024;
-	else if (toupper(s[strlen(s) - 1]) == 'K')
+	if (toupper(s[strlen(s)-1]) == 'M')
+		val *= 1024*1024;
+	else if (toupper(s[strlen(s)-1]) == 'K')
 		val *= 1024;
 	return val;
 }
 
-int atoi_hex(char* s)
+int atoi_hex (char *s)
 {
 	if (strlen(s) > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X'))
 	{
 		// Hexadecimal
-		return strtol(s + 2, NULL, 16);
+		return strtol(s+2, NULL, 16);
 	}
 	else
 	{
@@ -1127,53 +1126,53 @@ int atoi_hex(char* s)
 	}
 }
 
-void mkvlang_params_check(char* lang) {
+void mkvlang_params_check(char *lang){
 	int initial = 0, present = 0;
-	for (int char_index = 0; char_index < strlen(lang); char_index++) {
-		lang[char_index] = cctolower(lang[char_index]);
-		if (lang[char_index] == ',') {
-			present = char_index;
-			if ((present - initial < 6) && (present - initial != 3))
-				fatal(EXIT_MALFORMED_PARAMETER, "language codes should be xxx,xxx,xxx,....\n");
+	for (int char_index = 0; char_index < strlen(lang); char_index++){
+			lang[char_index] = cctolower(lang[char_index]);
+			if (lang[char_index] == ','){
+					present = char_index;
+					if ((present-initial < 6) && (present-initial != 3))
+							fatal(EXIT_MALFORMED_PARAMETER, "language codes should be xxx,xxx,xxx,....\n");
 
-			else if ((present - initial > 3) && (present - initial != 6))
-				fatal(EXIT_MALFORMED_PARAMETER, "language codes should be xxx-xx,xxx-xx,xxx-xx,....\n");
+					else if ((present-initial > 3) && (present-initial != 6))
+						fatal(EXIT_MALFORMED_PARAMETER, "language codes should be xxx-xx,xxx-xx,xxx-xx,....\n");
 
-			if ((present - initial > 3) && (present - initial == 6))
-			{
-				size_t length = present - initial;
-				char* block = calloc(length + 1, sizeof(char));
-				strncpy(block, lang + initial, length);
-				char* hiphen_pointer = strstr(block, "-");
-				if (!hiphen_pointer)
-					fatal(EXIT_MALFORMED_PARAMETER, "language code is not of the form xxx-xx\n");
-				free(block);
+					if ((present-initial > 3) && (present-initial == 6))
+					{
+						size_t length = present-initial;
+						char *block =calloc(length+1, sizeof(char));
+						strncpy(block, lang+initial, length);
+						char *hiphen_pointer = strstr(block, "-");
+						if (!hiphen_pointer)
+							fatal(EXIT_MALFORMED_PARAMETER, "language code is not of the form xxx-xx\n");
+						free(block);
+					}
+					initial = present+1;
+				}
 			}
-			initial = present + 1;
-		}
-	}
 
 	//Steps to check for the last lang of multiple mkvlangs provided by the user.
-	present = strlen(lang) - 1;
+	present = strlen(lang)-1;
 
-	for (int char_index = strlen(lang) - 1; char_index >= 0; char_index--)
-		if (lang[char_index] == ',') {
-			initial = char_index + 1;
+	for (int char_index = strlen(lang)-1; char_index >= 0; char_index--)
+		if (lang[char_index] == ','){
+			initial = char_index+1;
 			break;
 		}
 
-	if ((present - initial < 5) && (present - initial != 2))
+	if ((present-initial < 5) && (present-initial != 2))
 		fatal(EXIT_MALFORMED_PARAMETER, "last language code should be xxx.\n");
 
-	else if ((present - initial > 2) && (present - initial != 5))
+	else if ((present-initial > 2) && (present-initial != 5))
 		fatal(EXIT_MALFORMED_PARAMETER, "last language code should be xxx-xx.\n");
 
-	if ((present - initial > 2) && (present - initial == 5))
+	if ((present-initial>2)&&(present-initial == 5))
 	{
-		size_t length = present - initial;
-		char* block = calloc(length + 1, sizeof(char));
-		strncpy(block, lang + initial, length);
-		char* hiphen_pointer = strstr(block, "-");
+		size_t length = present-initial;
+		char *block = calloc(length+1, sizeof(char));
+		strncpy(block, lang+initial, length);
+		char *hiphen_pointer = strstr(block, "-");
 		if (!hiphen_pointer)
 			fatal(EXIT_MALFORMED_PARAMETER, "last language code is not of the form xxx-xx\n");
 		free(block);
@@ -1181,7 +1180,7 @@ void mkvlang_params_check(char* lang) {
 }
 
 
-int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
+int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 {
 	for (int i = 1; i < argc; i++)
 	{
@@ -1207,14 +1206,14 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 		if (argv[i][0] != '-')
 		{
 			int rc;
-			if (argv[i][strlen(argv[i]) - 1] != '+')
+			if (argv[i][strlen(argv[i])-1] != '+')
 			{
-				rc = append_file_to_queue(opt, argv[i]);
+				rc = append_file_to_queue (opt, argv[i]);
 			}
 			else
 			{
-				argv[i][strlen(argv[i]) - 1] = 0;
-				rc = add_file_sequence(opt, argv[i]);
+				argv[i][strlen(argv[i])-1] = 0;
+				rc = add_file_sequence (opt, argv[i]);
 			}
 			if (rc)
 			{
@@ -1236,15 +1235,15 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			{
 				if (i < argc - 1)
 				{
-					if (strcmp(argv[i + 1], "simple") == 0 || strcmp(argv[i + 1], "frame") == 0)
+					if (strcmp(argv[i+1], "simple") == 0 || strcmp(argv[i+1], "frame") == 0)
 					{
 						opt->hardsubx_ocr_mode = HARDSUBX_OCRMODE_FRAME;
 					}
-					else if (strcmp(argv[i + 1], "word") == 0)
+					else if (strcmp(argv[i+1], "word") == 0)
 					{
 						opt->hardsubx_ocr_mode = HARDSUBX_OCRMODE_WORD;
 					}
-					else if (strcmp(argv[i + 1], "letter") == 0 || strcmp(argv[i + 1], "symbol") == 0)
+					else if (strcmp(argv[i+1], "letter") == 0 || strcmp(argv[i+1], "symbol") == 0)
 					{
 						opt->hardsubx_ocr_mode = HARDSUBX_OCRMODE_LETTER;
 					}
@@ -1264,37 +1263,37 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			{
 				if (i < argc - 1)
 				{
-					if (strcmp(argv[i + 1], "white") == 0)
+					if (strcmp(argv[i+1], "white") == 0)
 					{
 						opt->hardsubx_subcolor = HARDSUBX_COLOR_WHITE;
 						opt->hardsubx_hue = 0.0;
 					}
-					else if (strcmp(argv[i + 1], "yellow") == 0)
+					else if (strcmp(argv[i+1], "yellow") == 0)
 					{
 						opt->hardsubx_subcolor = HARDSUBX_COLOR_YELLOW;
 						opt->hardsubx_hue = 60.0;
 					}
-					else if (strcmp(argv[i + 1], "green") == 0)
+					else if (strcmp(argv[i+1], "green") == 0)
 					{
 						opt->hardsubx_subcolor = HARDSUBX_COLOR_GREEN;
 						opt->hardsubx_hue = 120.0;
 					}
-					else if (strcmp(argv[i + 1], "cyan") == 0)
+					else if (strcmp(argv[i+1], "cyan") == 0)
 					{
 						opt->hardsubx_subcolor = HARDSUBX_COLOR_CYAN;
 						opt->hardsubx_hue = 180.0;
 					}
-					else if (strcmp(argv[i + 1], "blue") == 0)
+					else if (strcmp(argv[i+1], "blue") == 0)
 					{
 						opt->hardsubx_subcolor = HARDSUBX_COLOR_BLUE;
 						opt->hardsubx_hue = 240.0;
 					}
-					else if (strcmp(argv[i + 1], "magenta") == 0)
+					else if (strcmp(argv[i+1], "magenta") == 0)
 					{
 						opt->hardsubx_subcolor = HARDSUBX_COLOR_MAGENTA;
 						opt->hardsubx_hue = 300.0;
 					}
-					else if (strcmp(argv[i + 1], "red") == 0)
+					else if (strcmp(argv[i+1], "red") == 0)
 					{
 						opt->hardsubx_subcolor = HARDSUBX_COLOR_RED;
 						opt->hardsubx_hue = 0.0;
@@ -1303,8 +1302,8 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 					{
 						// Take a custom hue from the user
 						opt->hardsubx_subcolor = HARDSUBX_COLOR_CUSTOM;
-						char* str = (char*)malloc(sizeof(argv[i + 1]));
-						sprintf(str, "%s", argv[i + 1]); // Done this way to avoid error with getting (i+1)th env variable
+						char *str = (char*)malloc(sizeof(argv[i+1]));
+						sprintf(str, "%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
 						opt->hardsubx_hue = atof(str);
 						if (opt->hardsubx_hue <= 0.0 || opt->hardsubx_hue > 360.0)
 						{
@@ -1323,8 +1322,8 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			{
 				if (i < argc - 1)
 				{
-					char* str = (char*)malloc(sizeof(argv[i + 1]));
-					sprintf(str, "%s", argv[i + 1]); // Done this way to avoid error with getting (i+1)th env variable
+					char *str = (char*)malloc(sizeof(argv[i+1]));
+					sprintf(str, "%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
 					opt->hardsubx_min_sub_duration = atof(str);
 					if (opt->hardsubx_min_sub_duration == 0.0)
 					{
@@ -1347,8 +1346,8 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			{
 				if (i < argc - 1)
 				{
-					char* str = (char*)malloc(sizeof(argv[i + 1]));
-					sprintf(str, "%s", argv[i + 1]); // Done this way to avoid error with getting (i+1)th env variable
+					char *str = (char*)malloc(sizeof(argv[i+1]));
+					sprintf(str, "%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
 					opt->hardsubx_conf_thresh = atof(str);
 					if (opt->hardsubx_conf_thresh <= 0.0 || opt->hardsubx_conf_thresh > 100.0)
 					{
@@ -1366,8 +1365,8 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			{
 				if (i < argc - 1)
 				{
-					char* str = (char*)malloc(sizeof(argv[i + 1]));
-					sprintf(str, "%s", argv[i + 1]); // Done this way to avoid error with getting (i+1)th env variable
+					char *str = (char*)malloc(sizeof(argv[i+1]));
+					sprintf(str, "%s", argv[i+1]); // Done this way to avoid error with getting (i+1)th env variable
 					opt->hardsubx_lum_thresh = atof(str);
 					if (opt->hardsubx_lum_thresh <= 0.0 || opt->hardsubx_conf_thresh > 100.0)
 					{
@@ -1384,19 +1383,19 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 		}
 #endif
 
-		if (strcmp(argv[i], "-chapters") == 0) {
+		if (strcmp(argv[i], "-chapters") == 0){
 			opt->extract_chapters = 1;
 			continue;
 		}
 
 		if (strcmp(argv[i], "-bi") == 0 ||
-			strcmp(argv[i], "--bufferinput") == 0)
+				strcmp(argv[i], "--bufferinput") == 0)
 		{
 			opt->buffer_input = 1;
 			continue;
 		}
 		if (strcmp(argv[i], "-nobi") == 0 ||
-			strcmp(argv[i], "--nobufferinput") == 0)
+				strcmp(argv[i], "--nobufferinput") == 0)
 		{
 			opt->buffer_input = 0;
 			continue;
@@ -1418,7 +1417,7 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 		}
 		if ((strcmp(argv[i], "-bs") == 0 || strcmp(argv[i], "--buffersize") == 0) && i < argc - 1)
 		{
-			FILEBUFFERSIZE = atol_size(argv[i + 1]);
+			FILEBUFFERSIZE = atol_size(argv[i+1]);
 			if (FILEBUFFERSIZE < 8)
 				FILEBUFFERSIZE = 8; // Otherwise crashes are guaranteed at least in MythTV
 			i++;
@@ -1430,7 +1429,7 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			continue;
 		}
 		if (strcmp(argv[i], "-nofc") == 0 ||
-			strcmp(argv[i], "--nofontcolor") == 0)
+				strcmp(argv[i], "--nofontcolor") == 0)
 		{
 			opt->nofontcolor = 1;
 			continue;
@@ -1440,20 +1439,20 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			opt->nohtmlescape = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-bom") == 0) {
+		if (strcmp(argv[i], "-bom") == 0){
 			opt->enc_cfg.no_bom = 0;
 			continue;
 		}
-		if (strcmp(argv[i], "-nobom") == 0) {
+		if (strcmp(argv[i], "-nobom") == 0){
 			opt->enc_cfg.no_bom = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-sem") == 0) {
+		if (strcmp(argv[i], "-sem") == 0){
 			opt->enc_cfg.with_semaphore = 1;
 			continue;
 		}
 		if (strcmp(argv[i], "-nots") == 0 ||
-			strcmp(argv[i], "--notypesetting") == 0)
+				strcmp(argv[i], "--notypesetting") == 0)
 		{
 			opt->notypesetting = 1;
 			continue;
@@ -1468,14 +1467,14 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			strcmp(argv[i], "-wtv") == 0 ||
 			strcmp(argv[i], "-mp4") == 0 ||
 			strcmp(argv[i], "-mkv") == 0 ||
-			strcmp(argv[i], "--dvr-ms") == 0)
+			strcmp(argv[i], "--dvr-ms") == 0 )
 		{
 			set_input_format(opt, argv[i]);
 			continue;
 		}
 		if (strncmp(argv[i], "-in=", 4) == 0)
 		{
-			set_input_format(opt, argv[i] + 4);
+			set_input_format(opt, argv[i]+4);
 			continue;
 		}
 
@@ -1494,7 +1493,7 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			}
 			else
 			{
-				mprint("Invalid option for codec %s\n", argv[i]);
+				mprint("Invalid option for codec %s\n",argv[i]);
 			}
 			continue;
 		}
@@ -1513,27 +1512,27 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			}
 			else
 			{
-				mprint("Invalid option for codec %s\n", argv[i]);
+				mprint("Invalid option for codec %s\n",argv[i]);
 			}
 			continue;
 		}
 
-		if (strcmp(argv[i], "-dvblang") == 0 && i < argc - 1)
+		if (strcmp(argv[i], "-dvblang") == 0 && i < argc-1)
 		{
 			i++;
-			opt->dvblang = (char*)malloc(sizeof(argv[i]));
-			sprintf(opt->dvblang, "%s", argv[i]);
-			for (int char_index = 0; char_index < strlen(opt->dvblang); char_index++)
+			opt->dvblang = (char *)malloc(sizeof(argv[i]));
+			sprintf(opt->dvblang, "%s",argv[i]);
+			for (int char_index = 0; char_index < strlen(opt->dvblang);char_index++)
 				opt->dvblang[char_index] = cctolower(opt->dvblang[char_index]);
 			continue;
 		}
 
-		if (strcmp(argv[i], "-ocrlang") == 0 && i < argc - 1)
+		if (strcmp(argv[i], "-ocrlang") == 0 && i < argc-1)
 		{
 			i++;
-			opt->ocrlang = (char*)malloc(sizeof(argv[i]));
-			sprintf(opt->ocrlang, "%s", argv[i]);
-			for (int char_index = 0; char_index < strlen(opt->ocrlang); char_index++)
+			opt->ocrlang = (char *)malloc(sizeof(argv[i]));
+			sprintf(opt->ocrlang, "%s",argv[i]);
+			for (int char_index = 0; char_index < strlen(opt->ocrlang);char_index++)
 				opt->ocrlang[char_index] = cctolower(opt->ocrlang[char_index]);
 			continue;
 		}
@@ -1554,7 +1553,7 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 		{
 			if (i < argc - 1)
 			{
-				char* str = (char*)malloc(sizeof(argv[i + 1]));
+				char *str = (char*)malloc(sizeof(argv[i + 1]));
 				sprintf(str, "%s", argv[i + 1]);
 				opt->ocr_oem = atoi(str);
 				if (opt->ocr_oem < 0 || opt->ocr_oem > 2)
@@ -1570,20 +1569,20 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			continue;
 		}
 
-		if (strcmp(argv[i], "-mkvlang") == 0 && i < argc - 1)
+		if (strcmp(argv[i], "-mkvlang") == 0 && i < argc-1)
 		{
 			i++;
-			opt->mkvlang = (char*)malloc(sizeof(argv[i]));
-			sprintf(opt->mkvlang, "%s", argv[i]);
+			opt->mkvlang = (char *)malloc(sizeof(argv[i]));
+			sprintf(opt->mkvlang, "%s",argv[i]);
 			mkvlang_params_check(opt->mkvlang);
 			continue;
 		}
 
 		/* Output file formats */
-		if (strcmp(argv[i], "-srt") == 0 ||
-			strcmp(argv[i], "-mcc") == 0 || strcmp(argv[i], "-dvdraw") == 0 ||
-			strcmp(argv[i], "-smi") == 0 || strcmp(argv[i], "-sami") == 0 ||
-			strcmp(argv[i], "-txt") == 0 || strcmp(argv[i], "--transcript") == 0 ||
+		if (strcmp(argv[i], "-srt")  == 0 ||
+			strcmp(argv[i], "-mcc")  == 0 || strcmp(argv[i], "-dvdraw") == 0 ||
+			strcmp(argv[i], "-smi")  == 0 || strcmp(argv[i], "-sami") == 0 || 
+			strcmp(argv[i], "-txt")  == 0 || strcmp(argv[i], "--transcript") == 0 ||
 			strcmp(argv[i], "-ttxt") == 0 || strcmp(argv[i], "--timedtranscript") == 0 ||
 			strcmp(argv[i], "-webvtt") == 0 || strcmp(argv[i], "-null") == 0)
 		{
@@ -1592,22 +1591,22 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 		}
 		if (strncmp(argv[i], "-out=", 5) == 0)
 		{
-			set_output_format(opt, argv[i] + 5);
+			set_output_format(opt, argv[i]+5);
 			continue;
 		}
 
 		/* Credit stuff */
 		if ((strcmp(argv[i], "--startcreditstext") == 0)
-			&& i < argc - 1)
+				&& i < argc - 1)
 		{
-			opt->enc_cfg.start_credits_text = argv[i + 1];
+			opt->enc_cfg.start_credits_text = argv[i+1];
 			i++;
 			continue;
 		}
 		if ((strcmp(argv[i], "--startcreditsnotbefore") == 0)
-			&& i < argc - 1)
+				&& i < argc - 1)
 		{
-			if (stringztoms(argv[i + 1], &opt->enc_cfg.startcreditsnotbefore) == -1)
+			if (stringztoms(argv[i+1], &opt->enc_cfg.startcreditsnotbefore) == -1)
 			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--startcreditsnotbefore only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -1615,9 +1614,9 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			continue;
 		}
 		if ((strcmp(argv[i], "--startcreditsnotafter") == 0)
-			&& i < argc - 1)
+				&& i < argc - 1)
 		{
-			if (stringztoms(argv[i + 1], &opt->enc_cfg.startcreditsnotafter) == -1)
+			if (stringztoms(argv[i+1],&opt->enc_cfg.startcreditsnotafter) == -1)
 			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--startcreditsnotafter only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -1625,9 +1624,9 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			continue;
 		}
 		if ((strcmp(argv[i], "--startcreditsforatleast") == 0)
-			&& i < argc - 1)
+				&& i < argc - 1)
 		{
-			if (stringztoms(argv[i + 1], &opt->enc_cfg.startcreditsforatleast) == -1)
+			if (stringztoms(argv[i+1],&opt->enc_cfg.startcreditsforatleast) == -1)
 			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--startcreditsforatleast only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -1635,9 +1634,9 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			continue;
 		}
 		if ((strcmp(argv[i], "--startcreditsforatmost") == 0)
-			&& i < argc - 1)
+				&& i < argc - 1)
 		{
-			if (stringztoms(argv[i + 1], &opt->enc_cfg.startcreditsforatmost) == -1)
+			if (stringztoms(argv[i+1],&opt->enc_cfg.startcreditsforatmost) == -1)
 			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--startcreditsforatmost only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -1645,17 +1644,17 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			continue;
 		}
 
-		if ((strcmp(argv[i], "--endcreditstext") == 0)
-			&& i < argc - 1)
+		if  ((strcmp(argv[i], "--endcreditstext") == 0 )
+				&& i < argc - 1)
 		{
-			opt->enc_cfg.end_credits_text = argv[i + 1];
+			opt->enc_cfg.end_credits_text = argv[i+1];
 			i++;
 			continue;
 		}
 		if ((strcmp(argv[i], "--endcreditsforatleast") == 0)
-			&& i < argc - 1)
+				&& i < argc - 1)
 		{
-			if (stringztoms(argv[i + 1], &opt->enc_cfg.endcreditsforatleast) == -1)
+			if (stringztoms(argv[i+1], &opt->enc_cfg.endcreditsforatleast) == -1)
 			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--endcreditsforatleast only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -1663,9 +1662,9 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			continue;
 		}
 		if ((strcmp(argv[i], "--endcreditsforatmost") == 0)
-			&& i < argc - 1)
+				&& i < argc - 1)
 		{
-			if (stringztoms(argv[i + 1], &opt->enc_cfg.endcreditsforatmost) == -1)
+			if (stringztoms(argv[i+1],&opt->enc_cfg.endcreditsforatmost) == -1)
 			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--startcreditsforatmost only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -1675,7 +1674,7 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 
 		/* More stuff */
 		if (strcmp(argv[i], "-ve") == 0 ||
-			strcmp(argv[i], "--videoedited") == 0)
+				strcmp(argv[i], "--videoedited") == 0)
 		{
 			opt->binary_concat = 0;
 			continue;
@@ -1686,19 +1685,19 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			continue;
 		}
 		if (strcmp(argv[i], "-gt") == 0 ||
-			strcmp(argv[i], "--goptime") == 0)
+				strcmp(argv[i], "--goptime") == 0)
 		{
 			opt->use_gop_as_pts = 1;
 			continue;
 		}
 		if (strcmp(argv[i], "-nogt") == 0 ||
-			strcmp(argv[i], "--nogoptime") == 0)
+				strcmp(argv[i], "--nogoptime") == 0)
 		{
 			opt->use_gop_as_pts = -1; // Don't use even if we would want to
 			continue;
 		}
 		if (strcmp(argv[i], "-fp") == 0 ||
-			strcmp(argv[i], "--fixpadding") == 0)
+				strcmp(argv[i], "--fixpadding") == 0)
 		{
 			opt->fix_padding = 1;
 			continue;
@@ -1719,7 +1718,7 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			continue;
 		}
 		if (strcmp(argv[i], "-noru") == 0 ||
-			strcmp(argv[i], "--norollup") == 0)
+				strcmp(argv[i], "--norollup") == 0)
 		{
 			opt->no_rollup = 1;
 			opt->settings_608.no_rollup = 1;
@@ -1748,7 +1747,7 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 		}
 		if (strcmp(argv[i], "-outinterval") == 0 && i < argc - 1)
 		{
-			opt->out_interval = atoi(argv[i + 1]);
+			opt->out_interval = atoi(argv[i+1]);
 			i++;
 			continue;
 		}
@@ -1769,7 +1768,7 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			continue;
 		}
 		if (strcmp(argv[i], "--sentencecap") == 0 ||
-			strcmp(argv[i], "-sc") == 0)
+				strcmp(argv[i], "-sc") == 0)
 		{
 			opt->enc_cfg.sentence_cap = 1;
 			continue;
@@ -1782,23 +1781,23 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 		}
 
 		if ((strcmp(argv[i], "--capfile") == 0 ||
-			strcmp(argv[i], "-caf") == 0)
-			&& i < argc - 1)
+					strcmp(argv[i], "-caf") == 0)
+				&& i < argc - 1)
 		{
 			opt->enc_cfg.sentence_cap = 1;
-			opt->sentence_cap_file = argv[i + 1];
+			opt->sentence_cap_file = argv[i+1];
 			i++;
 			continue;
 		}
 		if (strcmp(argv[i], "--program-number") == 0 ||
-			strcmp(argv[i], "-pn") == 0)
+				strcmp(argv[i], "-pn") == 0)
 		{
-			if (i == argc - 1 // Means no following argument
-				|| !isanumber(argv[i + 1])) // Means is not a number
+			if (i == argc-1 // Means no following argument
+					|| !isanumber(argv[i+1])) // Means is not a number
 				opt->demux_cfg.ts_forced_program = -1; // Autodetect
 			else
 			{
-				opt->demux_cfg.ts_forced_program = atoi_hex(argv[i + 1]);
+				opt->demux_cfg.ts_forced_program = atoi_hex(argv[i+1]);
 				opt->demux_cfg.ts_forced_program_selected = 1;
 				i++;
 			}
@@ -1816,34 +1815,34 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			continue;
 		}
 		if (strcmp(argv[i], "--stream") == 0 ||
-			strcmp(argv[i], "-s") == 0)
+				strcmp(argv[i], "-s") == 0)
 		{
-			if (i == argc - 1 // Means no following argument
-				|| !isanumber(argv[i + 1])) // Means is not a number
+			if (i==argc-1 // Means no following argument
+					|| !isanumber (argv[i+1])) // Means is not a number
 				opt->live_stream = -1; // Live stream without timeout
 			else
 			{
-				opt->live_stream = atoi_hex(argv[i + 1]);
+				opt->live_stream = atoi_hex(argv[i+1]);
 				i++;
 			}
 			continue;
 		}
 		if ((strcmp(argv[i], "--defaultcolor") == 0 ||
-			strcmp(argv[i], "-dc") == 0)
-			&& i < argc - 1)
+					strcmp(argv[i], "-dc") == 0)
+				&& i < argc - 1)
 		{
-			if (strlen(argv[i + 1]) != 7 || argv[i + 1][0] != '#')
+			if (strlen(argv[i+1]) != 7 || argv[i+1][0]!='#')
 			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--defaultcolor expects a 7 character parameter that starts with #\n");
 			}
-			strcpy((char*)usercolor_rgb, argv[i + 1]);
+			strcpy((char *) usercolor_rgb,argv[i+1]);
 			opt->settings_608.default_color = COL_USERDEFINED;
 			i++;
 			continue;
 		}
 		if (strcmp(argv[i], "-delay") == 0 && i < argc - 1)
 		{
-			if (parsedelay(opt, argv[i + 1]))
+			if (parsedelay (opt, argv[i+1]))
 			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-delay only accept integers (such as -300 or 300)\n");
 			}
@@ -1851,10 +1850,10 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			continue;
 		}
 		if ((strcmp(argv[i], "-scr") == 0 ||
-			strcmp(argv[i], "--screenfuls") == 0) && i < argc - 1)
+					strcmp(argv[i], "--screenfuls") == 0) && i < argc - 1)
 		{
 			opt->settings_608.screens_to_process = atoi_hex(argv[i + 1]);
-			if (opt->settings_608.screens_to_process < 0)
+			if (opt->settings_608.screens_to_process<0)
 			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--screenfuls only accepts positive integers.\n");
 			}
@@ -1863,7 +1862,7 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 		}
 		if (strcmp(argv[i], "-startat") == 0 && i < argc - 1)
 		{
-			if (stringztoms(argv[i + 1], &opt->extraction_start) == -1)
+			if (stringztoms(argv[i+1],&opt->extraction_start) == -1)
 			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-startat only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -1872,7 +1871,7 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 		}
 		if (strcmp(argv[i], "-endat") == 0 && i < argc - 1)
 		{
-			if (stringztoms(argv[i + 1], &opt->extraction_end) == -1)
+			if (stringztoms(argv[i+1],&opt->extraction_end) == -1)
 			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-endat only accepts SS, MM:SS or HH:MM:SS\n");
 			}
@@ -1949,13 +1948,13 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 		}
 		if (strcmp(argv[i], "-levdistmincnt") == 0 && i < argc - 1)
 		{
-			opt->levdistmincnt = atoi_hex(argv[i + 1]);
+			opt->levdistmincnt = atoi_hex(argv[i+1]);
 			i++;
 			continue;
 		}
 		if (strcmp(argv[i], "-levdistmaxpct") == 0 && i < argc - 1)
 		{
-			opt->levdistmaxpct = atoi_hex(argv[i + 1]);
+			opt->levdistmaxpct = atoi_hex(argv[i+1]);
 			i++;
 			continue;
 		}
@@ -1982,7 +1981,7 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 		}
 		if (strcmp(argv[i], "-xds") == 0)
 		{
-			// XDS can be set regardless of -UCLA (isFinal) usage.
+            // XDS can be set regardless of -UCLA (isFinal) usage.
 			opt->transcript_settings.xds = 1;
 			continue;
 		}
@@ -2097,18 +2096,18 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 		}
 		if (strcmp(argv[i], "-o") == 0 && i < argc - 1)
 		{
-			opt->output_filename = argv[i + 1];
+			opt->output_filename = argv[i+1];
 			i++;
 			continue;
 		}
 		if (strcmp(argv[i], "-cf") == 0 && i < argc - 1)
 		{
-			opt->demux_cfg.out_elementarystream_filename = argv[i + 1];
+			opt->demux_cfg.out_elementarystream_filename = argv[i+1];
 			i++;
 			continue;
 		}
-		if ((strcmp(argv[i], "-svc") == 0 || strcmp(argv[i], "--service") == 0) &&
-			i < argc - 1)
+		if ( (strcmp(argv[i], "-svc") == 0 || strcmp(argv[i], "--service") == 0) &&
+				i < argc - 1)
 		{
 			parse_708_services(opt, argv[i + 1]);
 			i++;
@@ -2116,27 +2115,27 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 		}
 		if (strcmp(argv[i], "-datapid") == 0 && i < argc - 1)
 		{
-			opt->demux_cfg.ts_cappids[opt->demux_cfg.nb_ts_cappid] = atoi_hex(argv[i + 1]);
+			opt->demux_cfg.ts_cappids[opt->demux_cfg.nb_ts_cappid] = atoi_hex(argv[i+1]);
 			opt->demux_cfg.nb_ts_cappid++;
 			i++;
 			continue;
 		}
 		if (strcmp(argv[i], "-datastreamtype") == 0 && i < argc - 1)
 		{
-			opt->demux_cfg.ts_datastreamtype = atoi_hex(argv[i + 1]);
+			opt->demux_cfg.ts_datastreamtype = atoi_hex(argv[i+1]);
 			i++;
 			continue;
 		}
 		if (strcmp(argv[i], "-streamtype") == 0 && i < argc - 1)
 		{
-			opt->demux_cfg.ts_forced_streamtype = atoi_hex(argv[i + 1]);
+			opt->demux_cfg.ts_forced_streamtype = atoi_hex(argv[i+1]);
 			i++;
 			continue;
 		}
 		/* Teletext stuff */
 		if (strcmp(argv[i], "-tpage") == 0 && i < argc - 1)
 		{
-			tlt_config.page = atoi_hex(argv[i + 1]);
+			tlt_config.page = atoi_hex(argv[i+1]);
 			tlt_config.user_page = tlt_config.page;
 			i++;
 			continue;
@@ -2147,7 +2146,7 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			opt->ucla = 1;
 			opt->millis_separator = '.';
 			opt->enc_cfg.no_bom = 1;
-			if (!opt->transcript_settings.isFinal) {
+			if (!opt->transcript_settings.isFinal){
 				opt->transcript_settings.showStartTime = 1;
 				opt->transcript_settings.showEndTime = 1;
 				opt->transcript_settings.showCC = 1;
@@ -2157,11 +2156,11 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			}
 			continue;
 		}
-		if (strcmp(argv[i], "-latrusmap") == 0)
-		{
-			tlt_config.latrusmap = 1;
-			continue;
-		}
+        if (strcmp(argv[i], "-latrusmap") == 0 )
+        {
+            tlt_config.latrusmap = 1;
+            continue;
+        }
 		if (strcmp(argv[i], "-tickertext") == 0 || strcmp(argv[i], "-tickertape") == 0)
 		{
 			opt->tickertext = 1;
@@ -2172,11 +2171,11 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			opt->enc_cfg.line_terminator_lf = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-df") == 0 || strcmp(argv[i], "-DF") == 0)
-		{
-			opt->enc_cfg.force_dropframe = 1;
-			continue;
-		}
+        if (strcmp(argv[i], "-df") == 0 || strcmp(argv[i], "-DF") == 0)
+        {
+            opt->enc_cfg.force_dropframe = 1;
+            continue;
+        }
 		if (strcmp(argv[i], "-noautotimeref") == 0)
 		{
 			opt->noautotimeref = 1;
@@ -2194,12 +2193,12 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 		}
 		if (strcmp(argv[i], "-xmltv") == 0)
 		{
-			if (i == argc - 1 // Means no following argument
-				|| !isanumber(argv[i + 1])) // Means is not a number
-				opt->xmltv = 1;
+			if (i == argc-1 // Means no following argument
+					|| !isanumber(argv[i+1])) // Means is not a number
+			opt->xmltv = 1;
 			else
 			{
-				opt->xmltv = atoi_hex(argv[i + 1]);
+				opt->xmltv = atoi_hex(argv[i+1]);
 				i++;
 			}
 			continue;
@@ -2207,12 +2206,12 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 
 		if (strcmp(argv[i], "-xmltvliveinterval") == 0)
 		{
-			if (i == argc - 1 // Means no following argument
-				|| !isanumber(argv[i + 1])) // Means is not a number
-				opt->xmltvliveinterval = 10;
+			if (i == argc-1 // Means no following argument
+					|| !isanumber(argv[i+1])) // Means is not a number
+			opt->xmltvliveinterval = 10;
 			else
 			{
-				opt->xmltvliveinterval = atoi_hex(argv[i + 1]);
+				opt->xmltvliveinterval = atoi_hex(argv[i+1]);
 				i++;
 			}
 			continue;
@@ -2220,12 +2219,12 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 
 		if (strcmp(argv[i], "-xmltvoutputinterval") == 0)
 		{
-			if (i == argc - 1 // Means no following argument
-				|| !isanumber(argv[i + 1])) // Means is not a number
-				opt->xmltvoutputinterval = 0;
+			if (i == argc-1 // Means no following argument
+					|| !isanumber(argv[i+1])) // Means is not a number
+			opt->xmltvoutputinterval = 0;
 			else
 			{
-				opt->xmltvoutputinterval = atoi_hex(argv[i + 1]);
+				opt->xmltvoutputinterval = atoi_hex(argv[i+1]);
 				i++;
 			}
 			continue;
@@ -2272,12 +2271,12 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			continue;
 		}
 		/* Custom transcript */
-		if (strcmp(argv[i], "-customtxt") == 0 && i < argc - 1) {
-			char* format = argv[i + 1];
-			if (strlen(format) == 7) {
+		if (strcmp(argv[i], "-customtxt") == 0 && i < argc - 1){
+			char *format = argv[i + 1];
+			if (strlen(format) == 7){
 				if (opt->date_format == ODF_NONE)
 					opt->date_format = ODF_HHMMSSMS; // Necessary for displaying times, if any would be used.
-				if (!opt->transcript_settings.isFinal) {
+				if (!opt->transcript_settings.isFinal){
 					opt->transcript_settings.showStartTime = format[0] - '0';
 					opt->transcript_settings.showEndTime = format[1] - '0';
 					opt->transcript_settings.showMode = format[2] - '0';
@@ -2285,8 +2284,7 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 					opt->transcript_settings.relativeTimestamp = format[4] - '0';
 					opt->transcript_settings.xds = format[5] - '0';
 					opt->transcript_settings.useColors = format[6] - '0';
-				}
-				else {
+				} else {
 					// Throw exception
 					fatal(EXIT_INCOMPATIBLE_PARAMETERS, "customtxt cannot be set after -UCLA is used!");
 				}
@@ -2294,15 +2292,15 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			}
 			else {
 				fatal(EXIT_MALFORMED_PARAMETER, "Custom TXT format not OK: %s, expected 7 bits string\n",
-					format);
+						format);
 			}
 			continue;
 		}
 		/* Network stuff */
 		if (strcmp(argv[i], "-udp") == 0 && i < argc - 1)
 		{
-			char* at = strchr(argv[i + 1], '@');
-			char* colon = strchr(argv[i + 1], ':');
+			char *at = strchr(argv[i + 1], '@');
+			char *colon = strchr(argv[i + 1], ':');
 			if (at && !colon)
 			{
 				fatal(EXIT_MALFORMED_PARAMETER, "If -udp contains an '@', it must also contain a ':'");
@@ -2341,14 +2339,14 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			opt->xmltv = 2;
 			opt->xmltvliveinterval = 2;
 
-			char* addr = argv[i + 1];
+			char *addr = argv[i + 1];
 			if (*addr == '[')
 			{
 				addr++;
 
 				opt->srv_addr = addr;
 
-				char* br = strchr(addr, ']');
+				char *br = strchr(addr, ']');
 				if (br == NULL)
 					fatal(EXIT_INCOMPATIBLE_PARAMETERS, "Wrong address format, for IPv6 use [address]:port\n");
 				*br = '\0';
@@ -2363,7 +2361,7 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 
 			opt->srv_addr = argv[i + 1];
 
-			char* colon = strchr(argv[i + 1], ':');
+			char *colon = strchr(argv[i + 1], ':');
 			if (colon != NULL)
 			{
 				*colon = '\0';
@@ -2407,13 +2405,13 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 			i++;
 			continue;
 		}
-
 		if (strcmp(argv[i], "-italics") == 0 && i < argc - 1)
 		{
 			opt->enc_cfg.render_font_italics = argv[i + 1];
 			i++;
 			continue;
 		}
+
 #ifdef WITH_LIBCURL
 		if (strcmp(argv[i], "-curlposturl") == 0 && i < argc - 1)
 		{
@@ -2474,7 +2472,7 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 	{
 		if (add_built_in_words())
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for word list");
-		if (opt->sentence_cap_file && process_cap_file(opt->sentence_cap_file))
+		if (opt->sentence_cap_file && process_cap_file (opt->sentence_cap_file))
 			fatal(EXIT_ERROR_IN_CAPITALIZATION_FILE, "There was an error processing the capitalization file.\n");
 
 		ccx_encoders_helpers_perform_shellsort_words();
@@ -2503,7 +2501,7 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 		return EXIT_NOT_CLASSIFIED;
 	}
 
-	if (opt->num_input_files == 0 && opt->input_source == CCX_DS_FILE)
+	if (opt->num_input_files == 0 && opt->input_source  == CCX_DS_FILE)
 	{
 		return EXIT_NO_INPUT_FILES;
 	}
@@ -2535,7 +2533,7 @@ int parse_parameters(struct ccx_s_options* opt, int argc, char* argv[])
 	if (opt->demux_cfg.auto_stream == CCX_SM_RCWT && opt->write_format == CCX_OF_RCWT && opt->output_filename == NULL)
 	{
 		print_error(opt->gui_mode_reports,
-			"CCExtractor's binary format can only be used simultaneously for input and\noutput if the output file name is specified given with -o.\n");
+			   "CCExtractor's binary format can only be used simultaneously for input and\noutput if the output file name is specified given with -o.\n");
 		return EXIT_INCOMPATIBLE_PARAMETERS;
 	}
 	if (opt->write_format != CCX_OF_DVDRAW && opt->cc_to_stdout && opt->extract == 12)

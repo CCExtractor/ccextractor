@@ -94,6 +94,8 @@ boolean mcc_encode_cc_data( struct encoder_ctx *enc_ctx, struct lib_cc_decode *d
 
     free(compressed_data_buffer);
 
+    return true; // Needed to avoid warning 
+    // With void function type - throws an error
 }  // mcc_encode_cc_data()
 
 static void generate_mcc_header( int fh, int fr_code, int dropframe_flag ) {
@@ -576,7 +578,6 @@ static void random_chars(char buffer[], int len) {
 }
 
 static void uuid4(char* buffer) {
-    char* c = buffer;
     int i = 0;
     random_chars(buffer + i, 8);
     i+=8;

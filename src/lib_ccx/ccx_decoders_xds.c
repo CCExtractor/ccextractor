@@ -667,12 +667,13 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 		case XDS_TYPE_ASPECT_RATIO_INFO:
 			{
 				unsigned ar_start, ar_end;
-				int changed = 0;
+				// int changed = 0; /* Currently unused */
 				was_proc = 1;
 				if (ctx->cur_xds_payload_length < 5) // We need 2 data bytes
 					break;
-				if (!ctx->cur_xds_payload[2] & 20 || !ctx->cur_xds_payload[3] & 20) // Bit 6 must be 1
-					break;
+				if (!(ctx->cur_xds_payload[2] & 0x20) || !(ctx->cur_xds_payload[3] & 0x20)) // Bit 6 must be 1 
+					break; // if bit 6 is not 1 - skip invalid data.
+
 				/* CEA-608-B: The starting line is computed by adding 22 to the decimal number
 				   represented by bits S0 to S5. The ending line is computing by subtracting
 				   the decimal number represented by bits E0 to E5 from 262 */
@@ -685,7 +686,7 @@ int xds_do_current_and_future (struct cc_subtitle *sub, struct ccx_decoders_xds_
 				{	
 					ctx->current_ar_start = ar_start;
 					ctx->current_ar_end = ar_end;
-					changed = 1;
+					// changed = 1; /* Currently unused */
 					ccx_common_logging.log_ftn("\rXDS Notice: Aspect ratio info, start line=%u, end line=%u\n", ar_start, ar_end);
 					ccx_common_logging.log_ftn("\rXDS Notice: Aspect ratio info, active picture height=%u, ratio=%f\n", active_picture_height, aspect_ratio);
 				}

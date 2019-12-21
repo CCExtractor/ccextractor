@@ -159,7 +159,7 @@ int clever_capitalize(struct encoder_ctx *context, int line_num, struct eia608_s
 
 // Encodes a generic string. Note that since we use the encoders for closed caption
 // data, text would have to be encoded as CCs... so using special characters here
-// it's a bad idea.
+// is a bad idea.
 unsigned encode_line(struct encoder_ctx *ctx, unsigned char *buffer, unsigned char *text)
 {
 	unsigned bytes = 0;
@@ -178,6 +178,8 @@ unsigned encode_line(struct encoder_ctx *ctx, unsigned char *buffer, unsigned ch
 			*(buffer + 1) = 0;
 			bytes += 2;
 			buffer += 2;
+			break;
+		case CCX_ENC_ASCII: // Consider to remove ASCII encoding or write some code here
 			break;
 		}
 		text++;
@@ -314,6 +316,8 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 		case CCX_ENC_UNICODE:
 			get_char_in_unicode(buffer, line[i]);
 			bytes = 2;
+			break;
+		case CCX_ENC_ASCII: // Consider to remove ASCII encoding or write get_char_in_ascii(...)
 			break;
 		}
 		buffer += bytes;

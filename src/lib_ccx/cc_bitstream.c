@@ -314,7 +314,7 @@ uint64_t read_exp_golomb_unsigned(struct bitstream *bstr)
 	uint64_t res = 0;
 	int zeros=0;
 
-	while(!read_bits(bstr,1))
+	while(!read_bits(bstr,1) && bstr->bitsleft >= 0)
 		zeros++;
 
 	res = (0x01 << zeros) - 1 + read_bits(bstr,zeros);

@@ -88,7 +88,7 @@ struct encoder_cfg
 struct ccx_s_options // Options from user parameters
 {
 	int extract;                                               // Extract 1st, 2nd or both fields
-	int no_rollup;
+	int no_rollup;											   // Disable roll-up emulation (no duplicate output in generated file)
 	int noscte20;
 	int webvtt_create_css;
 	int cc_channel;                                            // Channel we want to dump in srt mode
