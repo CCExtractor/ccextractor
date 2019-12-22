@@ -49,7 +49,7 @@ void millis_to_time(LLONG milli, unsigned *hours, unsigned *minutes,
 	unsigned *seconds, unsigned *ms)
 {
 	// LLONG milli = (LLONG) ((ccblock*1000)/29.97);
-	*ms = (unsigned) milli % 1000; // milliseconds
+	*ms = (unsigned)(milli % 1000); // milliseconds
 	milli = (milli - *ms) / 1000;  // Remainder, in seconds
 	*seconds = (int) milli % 60;
 	milli = (milli - *seconds) / 60; // Remainder, in minutes
