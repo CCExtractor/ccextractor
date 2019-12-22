@@ -7,6 +7,7 @@
 	#include "iconv.h"
 #endif
 
+#include <stdbool.h>
 #include "ccx_common_structs.h"
 #include "ccx_decoders_structs.h"
 #include "ccx_encoders_structs.h"
@@ -62,6 +63,7 @@ struct encoder_ctx
 
 	/* Did we write the WebVTT header already? */
 	unsigned int wrote_webvtt_header;
+	bool wrote_ccd_channel_header;
 
 	/* Input outputs */
 	/* Flag giving hint that output is send to server through network */

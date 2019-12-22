@@ -356,6 +356,11 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 
 int write_cc_buffer_as_ccd(const struct eia608_screen *data, struct encoder_ctx *context)
 {
+	if (!context->wrote_ccd_channel_header)
+	{
+		dprintf(context->out->fh, "CHANNEL %d\n\n", data->channel);
+		context->wrote_ccd_channel_header = true;
+	}
 	return write_cc_buffer_as_scenarist(data, context, true);
 }
 
