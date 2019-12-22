@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 echo "Obtaining Git commit"
 commit=(`git rev-parse HEAD 2>/dev/null`)
 if [ -z "$commit" ]; then
