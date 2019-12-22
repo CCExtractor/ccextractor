@@ -102,8 +102,8 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 		cc_block[2]=0x80;
 	}
 
-	if ( ctx->write_format!=CCX_OF_RAW && // In raw we cannot skip padding because timing depends on it
-		 ctx->write_format!=CCX_OF_DVDRAW &&
+	if (ctx->write_format!=CCX_OF_RAW && // In raw we cannot skip padding because timing depends on it
+		ctx->write_format!=CCX_OF_DVDRAW &&
 		(cc_block[0]==0xFA || cc_block[0]==0xFC || cc_block[0]==0xFD )
 		&& (cc_block[1]&0x7F)==0 && (cc_block[2]&0x7F)==0) // CFS: Skip non-data, makes debugging harder.
 		return 1;
@@ -324,6 +324,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 			case CCX_OF_RCWT:
 				ctx->writedata = writeraw;
 				break;
+			case CCX_OF_CCD:
 			case CCX_OF_SCC:
 			case CCX_OF_SMPTETT:
 			case CCX_OF_SAMI:
@@ -395,7 +396,8 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 	{
 		if (ctx->extract != 2)
 		{
-			if (ctx->write_format == CCX_OF_SCC ||
+			if (ctx->write_format == CCX_OF_CCD ||
+				ctx->write_format == CCX_OF_SCC ||
 				ctx->write_format == CCX_OF_SMPTETT ||
 				ctx->write_format == CCX_OF_SAMI ||
 				ctx->write_format == CCX_OF_SRT ||
@@ -416,7 +418,8 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 		if (ctx->extract != 1)
 		{
 			// TODO: Use a function to prevent repeating these lines
-			if (ctx->write_format == CCX_OF_SCC ||
+			if (ctx->write_format == CCX_OF_CCD ||
+				ctx->write_format == CCX_OF_SCC ||
 				ctx->write_format == CCX_OF_SMPTETT ||
 				ctx->write_format == CCX_OF_SAMI ||
 				ctx->write_format == CCX_OF_SRT ||

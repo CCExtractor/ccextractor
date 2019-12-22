@@ -510,6 +510,8 @@ char *get_file_extension(const enum ccx_output_format write_format)
 {
 	switch (write_format)
 	{
+		case CCX_OF_CCD:
+			return ".ccd";
 		case CCX_OF_RAW:
 			return ".raw";
 		case CCX_OF_SCC:

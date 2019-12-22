@@ -93,10 +93,11 @@ static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" st
 			"  <body>\n"
 			"    <div>\n";
 
-static const char *webvtt_header[] = {"WEBVTT","\r\n",NULL};
+static const char *webvtt_header[] = {"WEBVTT", "\r\n", NULL};
 
 static const char *simple_xml_header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<captions>\r\n";
 
+static const char CCD_HEADER[] = "SCC_disassembly V1.2\n";
 static const char SCC_HEADER[]= "Scenarist_SCC V1.0\n\n";
 
 void find_limit_characters(const unsigned char *line, int *first_non_blank, int *last_non_blank, int max_len)
@@ -423,34 +424,43 @@ static int write_bom(struct encoder_ctx *ctx, struct ccx_s_write *out)
 static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_write *out)
 {
 	int used;
-	int ret = 0;
 	int header_size = 0;
 	switch (ctx->write_format)
 	{
+		case CCX_OF_CCD:
+			// TODO: use CRLF on Windows
+			if (write(out->fh, CCD_HEADER, sizeof(CCD_HEADER) - 1) == -1)
+			{
+				mprint("Unable to write CCD header to file\n");
+				return -1;
+			}
+			break;
 		case CCX_OF_SCC:
 			// TODO: use CRLF on Windows
-			if ((ret = write(out->fh, SCC_HEADER, sizeof(SCC_HEADER) - 1)) == -1)
+			if (write(out->fh, SCC_HEADER, sizeof(SCC_HEADER) - 1) == -1)
+			{
 				mprint("Unable to write SCC header to file\n");
+				return -1;
+			}
 			break;
 		case CCX_OF_SRT: // Subrip subtitles have no header
 		case CCX_OF_G608:
-			if ((ret = write_bom(ctx, out)) < 0)
+			if (write_bom(ctx, out) < 0)
 				return -1;
 			break;
 		case CCX_OF_SSA:
-			if ((ret = write_bom(ctx, out)) < 0)
+			if (write_bom(ctx, out) < 0)
 				return -1;
-			REQUEST_BUFFER_CAPACITY(ctx,strlen (ssa_header)*3);
+			REQUEST_BUFFER_CAPACITY(ctx, strlen(ssa_header) * 3);
 			used = encode_line (ctx, ctx->buffer,(unsigned char *) ssa_header);
-			ret = write (out->fh, ctx->buffer, used);
-			if(ret < used)
+			if(write(out->fh, ctx->buffer, used) < used)
 			{
 				mprint("WARNING: Unable to write complete Buffer \n");
 				return -1;
 			}
 			break;
 		case CCX_OF_WEBVTT:
-			if ((ret = write_bom(ctx, out)) < 0)
+			if (write_bom(ctx, out) < 0)
 				return -1;
 			for(int i = 0; webvtt_header[i]!=NULL ;i++)
 			{
@@ -467,7 +477,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				{
 					used = encode_line(ctx, ctx->buffer,(unsigned char *) webvtt_header[i]);
 				}
-				if ((ret = write(out->fh, ctx->buffer, used)) < used)
+				if (write(out->fh, ctx->buffer, used) < used)
 				{
 					mprint("WARNING: Unable to write complete Buffer \n");
 					return -1;
@@ -476,11 +486,11 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			break;
 		case CCX_OF_SAMI: // This header brought to you by McPoodle's CCASDI
 			//fprintf_encoded (wb->fh, sami_header);
-			if ((ret = write_bom(ctx, out)) < 0)
+			if (write_bom(ctx, out) < 0)
 				return -1;
 			REQUEST_BUFFER_CAPACITY(ctx,strlen (sami_header)*3);
 			used = encode_line (ctx, ctx->buffer,(unsigned char *) sami_header);
-			if ((ret = write(out->fh, ctx->buffer, used)) < used)
+			if (write(out->fh, ctx->buffer, used) < used)
 			{
 				mprint("WARNING: Unable to write complete Buffer \n");
 				return -1;
@@ -488,11 +498,11 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			break;
 		case CCX_OF_SMPTETT: // This header brought to you by McPoodle's CCASDI
 			//fprintf_encoded (wb->fh, sami_header);
-			if ((ret = write_bom(ctx, out)) < 0)
+			if (write_bom(ctx, out) < 0)
 				return -1;
 			REQUEST_BUFFER_CAPACITY(ctx,strlen (smptett_header)*3);
 			used=encode_line (ctx, ctx->buffer,(unsigned char *) smptett_header);
-			if ((ret = write(out->fh, ctx->buffer, used)) < used)
+			if (write(out->fh, ctx->buffer, used) < used)
 			{
 				mprint("WARNING: Unable to write complete Buffer \n");
 				return -1;
@@ -505,8 +515,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				net_send_header(rcwt_header, sizeof(rcwt_header));
 			else
 			{
-				ret = write(out->fh, rcwt_header, sizeof(rcwt_header));
-				if(ret < 0)
+				if(write(out->fh, rcwt_header, sizeof(rcwt_header)) < 0)
 				{
 					mprint("Unable to write rcwt header\n");
 					return -1;
@@ -515,32 +524,27 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 
 			break;
 		case CCX_OF_RAW:
-			ret = write(out->fh,BROADCAST_HEADER, sizeof(BROADCAST_HEADER));
-			if(ret < sizeof(BROADCAST_HEADER))
+			if(write(out->fh,BROADCAST_HEADER, sizeof(BROADCAST_HEADER)) < sizeof(BROADCAST_HEADER))
 			{
 				mprint("Unable to write Raw header\n");
 				return -1;
 			}
 			break;
 		case CCX_OF_SPUPNG:
-			ret = write_bom(ctx, out);
-			if(ret < 0)
+			if(write_bom(ctx, out) < 0)
 				return -1;
 			write_spumux_header(ctx, out);
 			break;
 		case CCX_OF_TRANSCRIPT: // No header. Fall thru
-			ret = write_bom(ctx, out);
-			if(ret < 0)
+			if(write_bom(ctx, out) < 0)
 				return -1;
 			break;
 		case CCX_OF_SIMPLE_XML: // No header. Fall thru
-			ret = write_bom(ctx, out);
-			if(ret < 0)
+			if(write_bom(ctx, out) < 0)
 				return -1;
-			REQUEST_BUFFER_CAPACITY(ctx,strlen (simple_xml_header)*3);
+			REQUEST_BUFFER_CAPACITY(ctx, strlen(simple_xml_header) * 3);
 			used=encode_line (ctx, ctx->buffer,(unsigned char *) simple_xml_header);
-			ret = write(out->fh, ctx->buffer, used);
-			if(ret < used)
+			if(write(out->fh, ctx->buffer, used) < used)
 			{
 				mprint("WARNING: Unable to write complete Buffer \n");
 				return -1;
@@ -553,7 +557,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			break;
 	}
 
-	return ret;
+	return 0;
 }
 
 int write_cc_subtitle_as_simplexml(struct cc_subtitle *sub, struct encoder_ctx *context)
@@ -1150,8 +1154,12 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 #else
 				switch (context->write_format)
 				{
+					case CCX_OF_CCD:
+						// TODO: credits
+						wrote_something = write_cc_buffer_as_ccd(data, context);
+						break;
 					case CCX_OF_SCC:
-						// TODO
+						// TODO: credits
 						wrote_something = write_cc_buffer_as_scc(data, context);
 						break;
 					case CCX_OF_SRT:
@@ -1217,8 +1225,13 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		case CC_BITMAP:
 			switch (context->write_format)
 			{
+				case CCX_OF_CCD:
+					// TODO
+					fatal(1, "CC_BITMAP not implemented for CCX_OF_CCD.");
+					break;
 				case CCX_OF_SCC:
 					// TODO
+					fatal(1, "CC_BITMAP not implemented for CCX_OF_SCC.");
 					break;
 				case CCX_OF_SRT:
 					if (!context->startcredits_displayed && context->start_credits_text != NULL)

@@ -217,6 +217,8 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
 		opt->write_format = CCX_OF_SSA;
 		opt->use_ass_instead_of_ssa = 1;
 	}
+	else if (strcmp(format, "ccd") == 0)
+		opt->write_format = CCX_OF_CCD;
 	else if (strcmp(format, "scc") == 0)
 		opt->write_format = CCX_OF_SCC;
 	else if (strcmp(format, "srt") == 0)

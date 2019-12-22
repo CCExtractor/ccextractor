@@ -190,6 +190,7 @@ void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts);
  */
 int encode_sub(struct encoder_ctx *ctx,struct cc_subtitle *sub);
 
+int write_cc_buffer_as_ccd            (const struct eia608_screen *data, struct encoder_ctx *context);
 int write_cc_buffer_as_scc            (const struct eia608_screen *data, struct encoder_ctx *context);
 int write_cc_buffer_as_srt            (struct eia608_screen *data, struct encoder_ctx *context);
 int write_cc_buffer_as_ssa            (struct eia608_screen *data, struct encoder_ctx *context);
