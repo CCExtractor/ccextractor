@@ -36,14 +36,14 @@ typedef struct ccx_sbs_utf8_character
 	int enc_len;
 } ccx_sbs_utf8_character;
 
-typedef struct ccx_mcc_caption_time
+struct ccx_mcc_caption_time
 {
     unsigned int hour;
     unsigned int minute;
     unsigned int second;
     unsigned int millisecond;
     unsigned int frame;
-} ccx_mcc_caption_time;
+};
 
 /**
  * Context of encoder, This structure gives single interface
@@ -131,7 +131,7 @@ struct encoder_ctx
 
 	// MCC File
 	int header_printed_flag;
-    ccx_mcc_caption_time next_caption_time;
+    struct ccx_mcc_caption_time next_caption_time;
     unsigned int cdp_hdr_seq;
     int force_dropframe;
 
@@ -190,6 +190,7 @@ void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts);
  */
 int encode_sub(struct encoder_ctx *ctx,struct cc_subtitle *sub);
 
+int write_cc_buffer_as_scc            (const struct eia608_screen *data, struct encoder_ctx *context);
 int write_cc_buffer_as_srt            (struct eia608_screen *data, struct encoder_ctx *context);
 int write_cc_buffer_as_ssa            (struct eia608_screen *data, struct encoder_ctx *context);
 int write_cc_buffer_as_webvtt         (struct eia608_screen *data, struct encoder_ctx *context);
@@ -240,7 +241,7 @@ void set_encoder_rcwt_fileformat(struct encoder_ctx *ctx, short int format);
 
 int reset_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg);
 
-void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank, int max_len);
+void find_limit_characters(const unsigned char *line, int *first_non_blank, int *last_non_blank, int max_len);
 int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_subs,
 	enum ccx_encoding_type in_enc, enum ccx_encoding_type out_enc, int max_len);
 

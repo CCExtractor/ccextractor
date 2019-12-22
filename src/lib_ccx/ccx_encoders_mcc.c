@@ -17,9 +17,8 @@ static const char* DayOfWeekStr[7] = { "Sunday", "Monday", "Tuesday", "Wednesday
 static const uint32 framerate_translation[16] = { 0, 2397, 2400, 2500, 2997, 3000, 5000, 5994, 6000, 0, 0, 0, 0, 0 };
 
 static void debug_log( char* file, int line, ... );
-static ccx_mcc_caption_time convert_to_caption_time( LLONG mstime );
+static struct ccx_mcc_caption_time convert_to_caption_time( LLONG mstime );
 static void generate_mcc_header( int fh, int fr_code, int dropframe_flag );
-static void ms_to_frame( struct encoder_ctx *ctx, ccx_mcc_caption_time* caption_time_ptr, int fr_code, int dropframe_flag );
 static uint8* add_boilerplate( struct encoder_ctx *ctx, unsigned char *cc_data, int cc_count, int fr_code );
 static uint16 count_compressed_chars( uint8* data_ptr, uint16 num_elements );
 static void compress_data( uint8* data_ptr, uint16 num_elements, uint8* out_data_ptr );
@@ -29,14 +28,67 @@ static void write_string( int fh, char* string );
 static void random_chars(char buffer[], int len);
 static void uuid4(char* buffer);
 
-boolean mcc_encode_cc_data( struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count ) {
+static void ms_to_frame(struct encoder_ctx *ctx, struct ccx_mcc_caption_time* caption_time_ptr, int fr_code, int dropframe_flag)
+{
+    int64 actual_time_in_ms = (((caption_time_ptr->hour * 3600) + (caption_time_ptr->minute * 60) +
+                                (caption_time_ptr->second)) * 1000) + caption_time_ptr->millisecond;
+
+    caption_time_ptr->hour = ctx->next_caption_time.hour;
+    caption_time_ptr->minute = ctx->next_caption_time.minute;
+    caption_time_ptr->second = ctx->next_caption_time.second;
+    caption_time_ptr->frame = ctx->next_caption_time.frame;
+    caption_time_ptr->millisecond = 0;
+
+    ctx->next_caption_time.frame = ctx->next_caption_time.frame + 1;
+
+    uint8 frame_roll_over = framerate_translation[fr_code] / 100;
+    if ((framerate_translation[fr_code] % 100) > 75) frame_roll_over++;
+
+    if (ctx->next_caption_time.frame >= frame_roll_over) {
+        ctx->next_caption_time.frame = 0;
+        ctx->next_caption_time.second = ctx->next_caption_time.second + 1;
+    }
+
+    if( (dropframe_flag == CCX_TRUE) && (ctx->next_caption_time.second == 0) &&
+        (ctx->next_caption_time.frame == 0) && ((ctx->next_caption_time.minute % 10) != 0) ){
+        ctx->next_caption_time.frame = 2;
+    }
+
+    if (ctx->next_caption_time.second >= 60) {
+        ctx->next_caption_time.second = 0;
+        ctx->next_caption_time.minute = ctx->next_caption_time.minute + 1;
+    }
+
+    if (ctx->next_caption_time.minute >= 60) {
+        ctx->next_caption_time.minute = 0;
+        ctx->next_caption_time.hour = ctx->next_caption_time.hour + 1;
+    }
+
+    int64 frame_time_in_ms = (((caption_time_ptr->hour * 3600) + (caption_time_ptr->minute * 60) + (caption_time_ptr->second)) * 1000) +
+                               ((caption_time_ptr->frame * 100000) / framerate_translation[fr_code]);
+
+    int64 delta_in_ms;
+
+    if( actual_time_in_ms > frame_time_in_ms ) {
+        delta_in_ms = actual_time_in_ms - frame_time_in_ms;
+    } else {
+        delta_in_ms = frame_time_in_ms - actual_time_in_ms;
+    }
+
+    if( delta_in_ms > 1000 ) {
+        LOG("ERROR: Larger than expected delta in Caption Time Conversion: %lld, DF%d, %dfps",
+            delta_in_ms, dropframe_flag, framerate_translation[fr_code]);
+    }
+}
+
+boolean mcc_encode_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count) {
     ASSERT(cc_data);
     ASSERT(enc_ctx);
     ASSERT(dec_ctx);
 
-    ccx_mcc_caption_time caption_time = convert_to_caption_time(enc_ctx->timing->fts_now + enc_ctx->timing->fts_global);
+    struct ccx_mcc_caption_time caption_time = convert_to_caption_time(enc_ctx->timing->fts_now + enc_ctx->timing->fts_global);
 
-    if( enc_ctx->header_printed_flag == CCX_FALSE ) {
+    if(enc_ctx->header_printed_flag == CCX_FALSE) {
         dec_ctx->saw_caption_block = CCX_TRUE;
         enc_ctx->header_printed_flag = CCX_TRUE;
         enc_ctx->cdp_hdr_seq = 0;
@@ -46,7 +98,7 @@ boolean mcc_encode_cc_data( struct encoder_ctx *enc_ctx, struct lib_cc_decode *d
         enc_ctx->next_caption_time.minute = caption_time.minute;
         enc_ctx->next_caption_time.second = caption_time.second;
         uint64 frame_number = caption_time.millisecond * framerate_translation[dec_ctx->current_frame_rate];
-        frame_number = frame_number / 100000;
+        frame_number /= 100000;
         if( frame_number > (framerate_translation[dec_ctx->current_frame_rate] / 100) ) {
             LOG("WARN: Normalized Frame Number %d to %d", frame_number, (framerate_translation[dec_ctx->current_frame_rate] / 100));
             frame_number = framerate_translation[dec_ctx->current_frame_rate] / 100;
@@ -188,58 +240,6 @@ static void generate_mcc_header( int fh, int fr_code, int dropframe_flag ) {
     write_string(fh, time_str);
     write_string(fh, tcr_str);
 } // generate_mcc_header()
-
-static void ms_to_frame( struct encoder_ctx *ctx, ccx_mcc_caption_time* caption_time_ptr, int fr_code, int dropframe_flag ) {
-    int64 actual_time_in_ms = (((caption_time_ptr->hour * 3600) + (caption_time_ptr->minute * 60) +
-                                (caption_time_ptr->second)) * 1000) + caption_time_ptr->millisecond;
-
-    caption_time_ptr->hour = ctx->next_caption_time.hour;
-    caption_time_ptr->minute = ctx->next_caption_time.minute;
-    caption_time_ptr->second = ctx->next_caption_time.second;
-    caption_time_ptr->frame = ctx->next_caption_time.frame;
-    caption_time_ptr->millisecond = 0;
-
-    ctx->next_caption_time.frame = ctx->next_caption_time.frame + 1;
-
-    uint8 frame_roll_over = framerate_translation[fr_code] / 100;
-    if ((framerate_translation[fr_code] % 100) > 75) frame_roll_over++;
-
-    if (ctx->next_caption_time.frame >= frame_roll_over) {
-        ctx->next_caption_time.frame = 0;
-        ctx->next_caption_time.second = ctx->next_caption_time.second + 1;
-    }
-
-    if( (dropframe_flag == CCX_TRUE) && (ctx->next_caption_time.second == 0) &&
-        (ctx->next_caption_time.frame == 0) && ((ctx->next_caption_time.minute % 10) != 0) ){
-        ctx->next_caption_time.frame = 2;
-    }
-
-    if (ctx->next_caption_time.second >= 60) {
-        ctx->next_caption_time.second = 0;
-        ctx->next_caption_time.minute = ctx->next_caption_time.minute + 1;
-    }
-
-    if (ctx->next_caption_time.minute >= 60) {
-        ctx->next_caption_time.minute = 0;
-        ctx->next_caption_time.hour = ctx->next_caption_time.hour + 1;
-    }
-
-    int64 frame_time_in_ms = (((caption_time_ptr->hour * 3600) + (caption_time_ptr->minute * 60) + (caption_time_ptr->second)) * 1000) +
-                               ((caption_time_ptr->frame * 100000) / framerate_translation[fr_code]);
-
-    int64 delta_in_ms;
-
-    if( actual_time_in_ms > frame_time_in_ms ) {
-        delta_in_ms = actual_time_in_ms - frame_time_in_ms;
-    } else {
-        delta_in_ms = frame_time_in_ms - actual_time_in_ms;
-    }
-
-    if( delta_in_ms > 1000 ) {
-        LOG("ERROR: Larger than expected delta in Caption Time Conversion: %lld, DF%d, %dfps",
-            delta_in_ms, dropframe_flag, framerate_translation[fr_code]);
-    }
-}  // ms_to_frame()
 
 static uint8* add_boilerplate( struct encoder_ctx *ctx, unsigned char *cc_data, int cc_count, int fr_code ) {
     ASSERT(cc_data);
@@ -615,8 +615,8 @@ static void debug_log( char* file, int line, ... ) {
     dbg_print( CCX_DMT_VERBOSE, "[%s:%d] - %s\n", basename, line, message );
 }  // debug_log()
 
-static ccx_mcc_caption_time convert_to_caption_time( LLONG mstime ) {
-    ccx_mcc_caption_time retval;
+static struct ccx_mcc_caption_time convert_to_caption_time(LLONG mstime) {
+    struct ccx_mcc_caption_time retval;
 
     if (mstime < 0) // Avoid loss of data warning with abs()
         mstime = -mstime;
@@ -645,4 +645,4 @@ static void byte_to_ascii( uint8 hex_byte, uint8* msn, uint8* lsn ) {
 
 static void write_string( int fh, char* string ) {
     write(fh, string, strlen(string));
-}  // write_string()
+}

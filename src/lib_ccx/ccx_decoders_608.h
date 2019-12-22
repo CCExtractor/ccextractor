@@ -22,7 +22,7 @@ typedef struct ccx_decoder_608_settings
 	int direct_rollup;           // Write roll-up captions directly instead of line by line?
 	int force_rollup;            // 0=Disabled, 1, 2 or 3=max lines in roll-up mode
 	int no_rollup;               // If 1, write one line at a time
-	unsigned char default_color; // Default color to use.
+	enum ccx_decoder_608_color_code default_color; // Default color to use.
 	int screens_to_process;      // How many screenfuls we want? Use -1 for unlimited
 	struct ccx_decoder_608_report *report;
 } ccx_decoder_608_settings;
@@ -30,8 +30,8 @@ typedef struct ccx_decoder_608_settings
 typedef struct ccx_decoder_608_context
 {
 	ccx_decoder_608_settings *settings;
-	eia608_screen buffer1;
-	eia608_screen buffer2;
+	struct eia608_screen buffer1;
+	struct eia608_screen buffer2;
 	int cursor_row, cursor_column;
 	int visible_buffer;
 	int screenfuls_counter;         // Number of meaningful screenfuls written
@@ -39,8 +39,8 @@ typedef struct ccx_decoder_608_context
 	enum cc_modes mode;
 	unsigned char last_c1, last_c2;
 	int channel;                    // Currently selected channel
-	unsigned char current_color;    // Color we are currently using to write
-	unsigned char font;             // Font we are currently using to write
+	enum ccx_decoder_608_color_code current_color;    // Color we are currently using to write
+	enum font_bits font;             // Font we are currently using to write
 	int rollup_base_row;
 	LLONG ts_start_of_current_line; /* Time at which the first character for current line was received, =-1 no character received yet */
 	LLONG ts_last_char_received;    /* Time at which the last written character was received, =-1 no character received yet */
@@ -63,29 +63,6 @@ typedef struct ccx_decoder_608_context
 
 #define MAX_COLOR 10
 extern const char *color_text[MAX_COLOR][2];
-
-typedef enum ccx_decoder_608_color_code
-{
-	COL_WHITE = 0,
-	COL_GREEN = 1,
-	COL_BLUE = 2,
-	COL_CYAN = 3,
-	COL_RED = 4,
-	COL_YELLOW = 5,
-	COL_MAGENTA = 6,
-	COL_USERDEFINED = 7,
-	COL_BLACK = 8,
-	COL_TRANSPARENT = 9
-} ccx_decoder_608_color_code;
-
-
-enum font_bits
-{
-	FONT_REGULAR = 0,
-	FONT_ITALICS = 1,
-	FONT_UNDERLINED = 2,
-	FONT_UNDERLINED_ITALICS = 3
-};
 
 enum command_code
 {

@@ -104,7 +104,7 @@ const char *color_text[MAX_COLOR][2]=
 
 void clear_eia608_cc_buffer(ccx_decoder_608_context *context, struct eia608_screen *data)
 {
-	for (int i=0;i<15;i++)
+	for (int i = 0;i<15;i++)
 	{
 		memset(data->characters[i], ' ', CCX_DECODER_608_SCREEN_WIDTH);
 		data->characters[i][CCX_DECODER_608_SCREEN_WIDTH] = 0;
@@ -138,7 +138,7 @@ ccx_decoder_608_context* ccx_decoder_608_init_library(struct ccx_decoder_608_set
 	data->current_visible_start_ms=0;
 	data->screenfuls_counter=0;
 	data->channel=1;
-	data->font=FONT_REGULAR;
+	data->font = FONT_REGULAR;
 	data->rollup_base_row=14;
 	data->ts_start_of_current_line=-1;
 	data->ts_last_char_received=-1;
@@ -246,8 +246,8 @@ void handle_text_attr(const unsigned char c1, const unsigned char c2, ccx_decode
 	if (context->channel != context->my_channel)
 		return;
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\r608: text_attr: %02X %02X", c1, c2);
-	if ( ((c1!=0x11 && c1!=0x19) ||
-		(c2<0x20 || c2>0x2f)))
+	if (((c1 != 0x11 && c1 != 0x19) ||
+		(c2 < 0x20 || c2 > 0x2f)))
 	{
 		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\rThis is not a text attribute!\n");
 	}
@@ -312,7 +312,7 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 
 	if (!data->empty && context->output_format != CCX_OF_NULL)
 	{
-		sub->data = (struct eia608_screen *) realloc(sub->data,( sub->nb_data + 1 ) * sizeof(*data));
+		sub->data = (struct eia608_screen *) realloc(sub->data, (sub->nb_data + 1) * sizeof(*data));
 		if (!sub->data)
 		{
 			ccx_common_logging.log_ftn("No Memory left");

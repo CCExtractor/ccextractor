@@ -31,7 +31,7 @@ int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_sta
 	dbg_print(CCX_DMT_DECODER_608, "%s",timeline);
 
 	write(context->out->fh, context->buffer, used);
-	int len=strlen (string);
+	int len = strlen(string);
 	unsigned char *unescaped= (unsigned char *) malloc (len+1);
 	unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
 	if (el==NULL || unescaped==NULL)
@@ -165,6 +165,7 @@ int write_cc_subtitle_as_srt(struct cc_subtitle *sub,struct encoder_ctx *context
 
 	return ret;
 }
+
 int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *context)
 {
 	int used;
@@ -174,12 +175,13 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 
 	int prev_line_start=-1, prev_line_end=-1; // Column in which the previous line started and ended, for autodash
 	int prev_line_center1=-1, prev_line_center2=-1; // Center column of previous line text
-	int empty_buf=1;
+
+	int empty_buf = 1;
 	for (int i=0;i<15;i++)
 	{
 		if (data->row_used[i])
 		{
-			empty_buf=0;
+			empty_buf = 0;
 			break;
 		}
 	}
@@ -188,20 +190,21 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 
 	millis_to_time (data->start_time,&h1,&m1,&s1,&ms1);
 	millis_to_time (data->end_time - 1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+
 	char timeline[128];
-	context->srt_counter++;
-	sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
-	used = encode_line(context, context->buffer,(unsigned char *) timeline);
+
+	sprintf(timeline, "%u%s", ++context->srt_counter, context->encoded_crlf);
+	used = encode_line(context, context->buffer, (unsigned char *) timeline);
 	write(context->out->fh, context->buffer, used);
 
-	sprintf (timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
+	sprintf(timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
 		h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
-	used = encode_line(context, context->buffer,(unsigned char *) timeline);
+	used = encode_line(context, context->buffer, (unsigned char *) timeline);
+	write(context->out->fh, context->buffer, used);
 
 	dbg_print(CCX_DMT_DECODER_608, "\n- - - SRT caption ( %d) - - -\n", context->srt_counter);
-	dbg_print(CCX_DMT_DECODER_608, "%s",timeline);
+	dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
 
-	write(context->out->fh, context->buffer, used);
 	for (int i=0;i<15;i++)
 	{
 		if (data->row_used[i])
@@ -266,7 +269,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 
 			}
 			int length = get_decoder_line_encoded(context, context->subline, i, data);
-			if (context->encoding!=CCX_ENC_UNICODE)
+			if (context->encoding != CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r");
 				dbg_print(CCX_DMT_DECODER_608, "%s\n",context->subline);

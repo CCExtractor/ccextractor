@@ -506,12 +506,14 @@ char *get_basename(char *filename)
 	return basefilename;
 }
 
-const char *get_file_extension(const enum ccx_output_format write_format)
+char *get_file_extension(const enum ccx_output_format write_format)
 {
 	switch (write_format)
 	{
 		case CCX_OF_RAW:
 			return ".raw";
+		case CCX_OF_SCC:
+			return ".scc";
 		case CCX_OF_SRT:
 			return ".srt";
 		case CCX_OF_SSA:

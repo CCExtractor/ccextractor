@@ -295,7 +295,7 @@ unsigned char *close_tag(struct encoder_ctx *ctx, unsigned char *buffer, char *t
 
 unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
 {
-	int col = COL_WHITE;
+	int colour = COL_WHITE;
 	int underlined = 0;
 	int italics = 0;
 	int changed_font = 0;
@@ -303,41 +303,42 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 
 	unsigned char *line = data->characters[line_num];
 	unsigned char *orig = buffer; // Keep for debugging
-	int first = 0, last = 31;
+	int first, last;
 	if (ctx->trim_subs)
 		find_limit_characters(line, &first, &last, CCX_DECODER_608_SCREEN_WIDTH);
 	for (int i = first; i <= last; i++)
 	{
 		// Handle color
-		int its_col = data->colors[line_num][i];
-		if (its_col != col  && !ctx->no_font_color &&
-			!(col == COL_USERDEFINED && its_col == COL_WHITE)) // Don't replace user defined with white
+		int its_colour = data->colors[line_num][i];
+		// Check if the colour has changed
+		if (its_colour != colour && !ctx->no_font_color &&
+			!(colour == COL_USERDEFINED && its_colour == COL_WHITE)) // Don't replace user defined with white
 		{
 			if (changed_font)
 				buffer = close_tag(ctx, buffer, tagstack, 'F', &underlined, &italics, &changed_font);
 
 			// Add new font tag
-			if ( MAX_COLOR > its_col)
-				buffer += encode_line(ctx, buffer, (unsigned char*)color_text[its_col][1]);
+			if (MAX_COLOR > its_colour)
+				buffer += encode_line(ctx, buffer, (unsigned char*)color_text[its_colour][1]);
 			else
 			{
-				ccx_common_logging.log_ftn("WARNING:get_decoder_line_encoded:Invalid Color index Selected %d\n", its_col);
-				its_col = COL_WHITE;
+				ccx_common_logging.log_ftn("WARNING:get_decoder_line_encoded:Invalid Color index Selected %d\n", its_colour);
+				its_colour = COL_WHITE;
 			}
 
-			if (its_col == COL_USERDEFINED)
+			if (its_colour == COL_USERDEFINED)
 			{
 				// The previous sentence doesn't copy the whole
 				// <font> tag, just up to the quote before the color
 				buffer += encode_line(ctx, buffer, (unsigned char*)usercolor_rgb);
 				buffer += encode_line(ctx, buffer, (unsigned char*) "\">");
 			}
-			if (color_text[its_col][1][0]) // That means a <font> was added to the buffer
+			if (color_text[its_colour][1][0]) // That means a <font> was added to the buffer
 			{
 				strcat(tagstack, "F");
 				changed_font++;
 			}
-			col = its_col;
+			colour = its_colour;
 		}
 		// Handle underlined
 		int is_underlined = data->fonts[line_num][i] & FONT_UNDERLINED;

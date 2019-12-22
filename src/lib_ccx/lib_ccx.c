@@ -364,7 +364,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	}
 	list_for_each_entry(enc_ctx, &ctx->enc_ctx_head, list, struct encoder_ctx)
 	{
-		if ( ctx->multiprogram == CCX_FALSE)
+		if (ctx->multiprogram == CCX_FALSE)
 			return enc_ctx;
 
 		if (enc_ctx->program_number == pn)

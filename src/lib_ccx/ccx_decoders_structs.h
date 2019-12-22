@@ -8,7 +8,7 @@
 #include "list.h"
 #include "ccx_decoders_708.h"
 // Define max width in characters/columns on the screen
-#define CCX_DECODER_608_SCREEN_WIDTH  32
+#define CCX_DECODER_608_SCREEN_WIDTH 32
 #define MAXBFRAMES 50
 #define SORTBUF (2*MAXBFRAMES+1)
 
@@ -50,6 +50,28 @@ enum cc_modes
 	MODE_FAKE_ROLLUP_1 = 100
 };
 
+enum font_bits
+{
+	FONT_REGULAR = 0,
+	FONT_ITALICS = 1,
+	FONT_UNDERLINED = 2,
+	FONT_UNDERLINED_ITALICS = 3
+};
+
+enum ccx_decoder_608_color_code
+{
+	COL_WHITE = 0,
+	COL_GREEN = 1,
+	COL_BLUE = 2,
+	COL_CYAN = 3,
+	COL_RED = 4,
+	COL_YELLOW = 5,
+	COL_MAGENTA = 6,
+	COL_USERDEFINED = 7,
+	COL_BLACK = 8,
+	COL_TRANSPARENT = 9
+};
+
 /**
 * This structure have fields which need to be ignored according to format,
 * for example if format is SFORMAT_XDS then all fields other then
@@ -58,13 +80,13 @@ enum cc_modes
 *
 * TODO use union inside struct for each kind of fields
 */
-typedef struct eia608_screen // A CC buffer
+struct eia608_screen // A CC buffer
 {
 	/** format of data inside this structure */
 	enum ccx_eia608_format format;
 	unsigned char characters[15][33];
-	unsigned char colors[15][33];
-	unsigned char fonts[15][33]; // Extra char at the end for a 0
+	enum ccx_decoder_608_color_code colors[15][33];
+	enum font_bits fonts[15][33]; // Extra char at the end for a 0
 	int row_used[15];            // Any data in row?
 	int empty;                   // Buffer completely empty?
 	/** start time of this CC buffer */
@@ -80,7 +102,7 @@ typedef struct eia608_screen // A CC buffer
 	size_t xds_len;
 	/** Class of XDS string */
 	int cur_xds_packet_class;
-} eia608_screen;
+};
 
 struct ccx_decoders_common_settings_t
 {

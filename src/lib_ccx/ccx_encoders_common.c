@@ -97,14 +97,16 @@ static const char *webvtt_header[] = {"WEBVTT","\r\n",NULL};
 
 static const char *simple_xml_header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<captions>\r\n";
 
-void find_limit_characters(unsigned char *line, int *first_non_blank, int *last_non_blank, int max_len)
+static const char SCC_HEADER[]= "Scenarist_SCC V1.0\n\n";
+
+void find_limit_characters(const unsigned char *line, int *first_non_blank, int *last_non_blank, int max_len)
 {
 	*last_non_blank = -1;
 	*first_non_blank = -1;
 	for (int i = 0; i < max_len; i++)
 	{
 		unsigned char c = line[i];
-		if (c != ' ' && c != 0x89 )
+		if (c != ' ' && c != 0x89)
 		{
 			if (*first_non_blank == -1)
 				*first_non_blank = i;
@@ -149,13 +151,13 @@ int change_utf8_encoding(unsigned char* dest, unsigned char* src, int len, enum 
 
 		if ( c < 0x80 )
 			c_len = 1;
-		else if ( ( c & 0x20 ) == 0 )
+		else if ((c & 0x20) == 0)
 			c_len = 2;
-		else if ( ( c & 0x10 ) == 0 )
+		else if ((c & 0x10) == 0)
 			c_len = 3;
-		else if ( ( c & 0x08 ) == 0 )
+		else if ((c & 0x08) == 0)
 			c_len = 4;
-		else if ( ( c & 0x04 ) == 0 )
+		else if ((c & 0x04) == 0)
 			c_len = 5;
 
 		switch (out_enc)
@@ -416,6 +418,8 @@ static int write_bom(struct encoder_ctx *ctx, struct ccx_s_write *out)
 	}
 	return ret;
 }
+
+// Returns the number of bytes written
 static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_write *out)
 {
 	int used;
@@ -423,6 +427,11 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 	int header_size = 0;
 	switch (ctx->write_format)
 	{
+		case CCX_OF_SCC:
+			// TODO: use CRLF on Windows
+			if ((ret = write(out->fh, SCC_HEADER, sizeof(SCC_HEADER) - 1)) == -1)
+				mprint("Unable to write SCC header to file\n");
+			break;
 		case CCX_OF_SRT: // Subrip subtitles have no header
 		case CCX_OF_G608:
 			if ((ret = write_bom(ctx, out)) < 0)
@@ -447,18 +456,18 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			{
 				header_size += strlen(webvtt_header[i]); // Find total size of the header
 			}
-			REQUEST_BUFFER_CAPACITY(ctx, header_size*3);
+			REQUEST_BUFFER_CAPACITY(ctx, header_size * 3);
 			for(int i = 0; webvtt_header[i]!=NULL;i++)
 			{
 				if(ccx_options.enc_cfg.line_terminator_lf == 1 && strcmp(webvtt_header[i],"\r\n")==0) // If -lf parameter passed, write LF instead of CRLF
 				{
-					used = encode_line (ctx, ctx->buffer,(unsigned char *) "\n");
+					used = encode_line(ctx, ctx->buffer,(unsigned char *) "\n");
 				} 
 				else
 				{
-					used = encode_line (ctx, ctx->buffer,(unsigned char *) webvtt_header[i]);
+					used = encode_line(ctx, ctx->buffer,(unsigned char *) webvtt_header[i]);
 				}
-				if ((ret = write(out->fh, ctx->buffer,used)) < used)
+				if ((ret = write(out->fh, ctx->buffer, used)) < used)
 				{
 					mprint("WARNING: Unable to write complete Buffer \n");
 					return -1;
@@ -727,10 +736,10 @@ void try_to_add_start_credits(struct encoder_ctx *context, LLONG start_ms)
 	switch (context->write_format)
 	{
 		case CCX_OF_SRT:
-			write_stringz_as_srt(context->start_credits_text,context,st,end);
+			write_stringz_as_srt(context->start_credits_text, context, st, end);
 			break;
 		case CCX_OF_SSA:
-			write_stringz_as_ssa(context->start_credits_text,context,st,end);
+			write_stringz_as_ssa(context->start_credits_text, context, st, end);
 			break;
 		case CCX_OF_WEBVTT:
 			write_stringz_as_webvtt(context->start_credits_text, context, st, end);
@@ -743,6 +752,7 @@ void try_to_add_start_credits(struct encoder_ctx *context, LLONG start_ms)
 			break;
 		default:
 			// Do nothing for the rest
+			mprint("Format doesn't support credits");
 			break;
 	}
 	context->startcredits_displayed=1;
@@ -1027,7 +1037,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->encoded_br_length = encode_line(ctx, ctx->encoded_br, (unsigned char *) "<br>");
 
 	for (i = 0; i < ctx->nb_out; i++)
-	 	write_subtitle_file_header(ctx,ctx->out+i);
+		write_subtitle_file_header(ctx, ctx->out + i);
 
 	ctx->dtvcc_extract = opt->dtvcc_extract;
 
@@ -1056,7 +1066,7 @@ struct ccx_s_write *get_output_ctx(struct encoder_ctx *ctx, int lan)
 {
 	if (ctx->extract == 12 && lan == 2)
 	{
-		return ctx->out+1;
+		return ctx->out + 1;
 	}
 	else
 	{
@@ -1101,9 +1111,11 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		case CC_608:;
 			struct eia608_screen *data = NULL;
 			struct ccx_s_write *out;
-			for (data = sub->data; sub->nb_data; sub->nb_data--, data++)
+			for (data = sub->data; sub->nb_data; --sub->nb_data, ++data)
 			{
-				// Determine context based on channel. This replaces the code that was above, as this was incomplete (for cases where -12 was used for example)
+				// Determine context based on channel. This replaces the code
+				// that was above, as this was incomplete (for cases where -12
+				// was used for example)
 				out = get_output_ctx(context, data->my_field);
 
 				data->end_time += context->subs_delay;
@@ -1138,6 +1150,10 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 #else
 				switch (context->write_format)
 				{
+					case CCX_OF_SCC:
+						// TODO
+						wrote_something = write_cc_buffer_as_scc(data, context);
+						break;
 					case CCX_OF_SRT:
 						if (!context->startcredits_displayed && context->start_credits_text != NULL)
 							try_to_add_start_credits(context, data->start_time);
@@ -1186,6 +1202,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 						}
 						break;
 					default:
+						mprint("Output format not supported\n");
 						break;
 				}
 				if (wrote_something)
@@ -1200,6 +1217,9 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		case CC_BITMAP:
 			switch (context->write_format)
 			{
+				case CCX_OF_SCC:
+					// TODO
+					break;
 				case CCX_OF_SRT:
 					if (!context->startcredits_displayed && context->start_credits_text != NULL)
 						try_to_add_start_credits(context, sub->start_time);

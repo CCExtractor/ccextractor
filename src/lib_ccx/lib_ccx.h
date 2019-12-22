@@ -138,7 +138,7 @@ struct lib_ccx_ctx
                                          >0 -> Live stream with a timeout of this value in seconds */
 	int binary_concat;                   // Disabled by -ve or --videoedited
 	int multiprogram;
-	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
+	enum ccx_output_format write_format;
 
 	struct ccx_demuxer *demux_ctx;
 	struct list_head enc_ctx_head;
