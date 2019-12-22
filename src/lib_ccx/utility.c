@@ -506,7 +506,7 @@ char *get_basename(char *filename)
 	return basefilename;
 }
 
-char *get_file_extension(const enum ccx_output_format write_format)
+const char *get_file_extension(const enum ccx_output_format write_format)
 {
 	switch (write_format)
 	{
