@@ -14,6 +14,7 @@
 - Fix: Segmentation fault on VOB #1128
 - Fix: Hang while processing video #1121
 - Fix: Removed redundant check_configuration_file function
+- Fix: lib_ccx.c: Initialize fatal error logging function before first usage in init_libraries
 
 0.88 (2019-05-21)
 -----------------
