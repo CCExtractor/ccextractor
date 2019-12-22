@@ -295,7 +295,7 @@ unsigned char *close_tag(struct encoder_ctx *ctx, unsigned char *buffer, char *t
 
 unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
 {
-	int colour = COL_WHITE;
+	int color = COL_WHITE;
 	int underlined = 0;
 	int italics = 0;
 	int changed_font = 0;
@@ -309,36 +309,36 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 	for (int i = first; i <= last; i++)
 	{
 		// Handle color
-		int its_colour = data->colors[line_num][i];
+		int its_color = data->colors[line_num][i];
 		// Check if the colour has changed
-		if (its_colour != colour && !ctx->no_font_color &&
-			!(colour == COL_USERDEFINED && its_colour == COL_WHITE)) // Don't replace user defined with white
+		if (its_color != color && !ctx->no_font_color &&
+			!(color == COL_USERDEFINED && its_color == COL_WHITE)) // Don't replace user defined with white
 		{
 			if (changed_font)
 				buffer = close_tag(ctx, buffer, tagstack, 'F', &underlined, &italics, &changed_font);
 
 			// Add new font tag
-			if (MAX_COLOR > its_colour)
-				buffer += encode_line(ctx, buffer, (unsigned char*)color_text[its_colour][1]);
+			if (MAX_COLOR > its_color)
+				buffer += encode_line(ctx, buffer, (unsigned char*)color_text[its_color][1]);
 			else
 			{
-				ccx_common_logging.log_ftn("WARNING:get_decoder_line_encoded:Invalid Color index Selected %d\n", its_colour);
-				its_colour = COL_WHITE;
+				ccx_common_logging.log_ftn("WARNING:get_decoder_line_encoded:Invalid Color index Selected %d\n", its_color);
+				its_color = COL_WHITE;
 			}
 
-			if (its_colour == COL_USERDEFINED)
+			if (its_color == COL_USERDEFINED)
 			{
 				// The previous sentence doesn't copy the whole
 				// <font> tag, just up to the quote before the color
 				buffer += encode_line(ctx, buffer, (unsigned char*)usercolor_rgb);
 				buffer += encode_line(ctx, buffer, (unsigned char*) "\">");
 			}
-			if (color_text[its_colour][1][0]) // That means a <font> was added to the buffer
+			if (color_text[its_color][1][0]) // That means a <font> was added to the buffer
 			{
 				strcat(tagstack, "F");
 				changed_font++;
 			}
-			colour = its_colour;
+			color = its_color;
 		}
 		// Handle underlined
 		int is_underlined = data->fonts[line_num][i] & FONT_UNDERLINED;
