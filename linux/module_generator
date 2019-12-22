@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 SRC_LIBPNG="$(find ../src/libpng/ -name '*.c')"
 SRC_ZLIB="$(find ../src/zlib/ -name '*.c')"
 SRC_ZVBI="$(find ../src/zvbi/ -name '*.c')"
