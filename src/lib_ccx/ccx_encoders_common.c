@@ -420,7 +420,7 @@ static int write_bom(struct encoder_ctx *ctx, struct ccx_s_write *out)
 	return ret;
 }
 
-// Returns the number of bytes written
+// Returns -1 on error and 0 on success
 static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_write *out)
 {
 	int used;
