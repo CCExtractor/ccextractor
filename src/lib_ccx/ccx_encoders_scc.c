@@ -57,13 +57,13 @@ const unsigned char FIRST_BYTE_CODE_PAIR_CHANNEL_1[] = {
 // than preamble codes as preamble codes can only be precise by 4 columns
 // e.g.
 // indent * 4 + tab_offset
-// where tab_offset can be 1 to 3. If no offset wants to be used tab_offset disappears
+// where tab_offset can be 1 to 3. If the offset isn't within 1 to 3, it is
+// unneeded and disappears, as the indent is enough.
 
 const unsigned char TO_CHANNEL_1 = 0x17;
 const unsigned char TO_CHANNEL_2 = 0x1f;
+// The second byte for tab offsets, is the column + 0x20
 const unsigned char TO_OFFSET = 0x20;
-
-// The second byte for tab offsets, is the 0x20 + column
 
 // First bytes of Control Codes
 const unsigned char MISCELLANEOUS_CHANNEL_1 = 0x14;
