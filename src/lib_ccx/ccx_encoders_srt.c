@@ -18,7 +18,7 @@ int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_sta
 	if(!string || !string[0])
 		return 0;
 
-	if (ms_start<0) // Drop screens that because of subs_delay start too early
+	if (ms_start < 0) // Drop screens that because of subs_delay start too early
 		return 0;
 
 	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
@@ -98,10 +98,10 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	ms_start = sub->start_time + context->subs_delay;
 	ms_end = sub->end_time + context->subs_delay;
 
-    if (ms_start<0) // Drop screens that because of subs_delay start too early
-        return 0;
+	if (ms_start<0) // Drop screens that because of subs_delay start too early
+		return 0;
 
-	if(sub->nb_data == 0 )
+	if(sub->nb_data == 0)
 		return 0;
 
 	if(sub->flags & SUB_EOD_MARKER)
