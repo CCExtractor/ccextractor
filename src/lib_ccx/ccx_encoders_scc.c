@@ -7,7 +7,7 @@
 // Adds a parity bit if needed
 unsigned char odd_parity(const unsigned char byte)
 {
-	return byte | !(__builtin_parity(byte) % 2) << 7;
+	return byte | !(cc608_parity(byte) % 2) << 7;
 }
 
 // Rows, 2, 4, 6, 8, 10, 13 and 15 need 0x20 to be added to them to give the
