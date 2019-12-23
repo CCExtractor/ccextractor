@@ -193,7 +193,8 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 
 	char timeline[128];
 
-	sprintf(timeline, "%u%s", ++context->srt_counter, context->encoded_crlf);
+	++context->srt_counter;
+	sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
 	used = encode_line(context, context->buffer, (unsigned char *) timeline);
 	write(context->out->fh, context->buffer, used);
 
