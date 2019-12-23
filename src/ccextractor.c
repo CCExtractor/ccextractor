@@ -444,11 +444,6 @@ struct ccx_s_options* api_init_options()
     return &ccx_options;
 }
 
-void check_configuration_file(struct ccx_s_options api_options)
-{
-    parse_configuration(&api_options);
-}
-
 #ifdef PYTHON_API
 int compile_params(struct ccx_s_options *api_options,int argc)
 {
@@ -510,7 +505,7 @@ int main(int argc, char* argv[])
     setlocale(LC_ALL, ""); // Supports non-English CCs
 
     struct ccx_s_options* api_options = api_init_options();
-    check_configuration_file(*api_options); 
+    parse_configuration(api_options);
     // If "ccextractor.cnf" is present, takes options from it.
     // See docs/ccextractor.cnf.sample for more info.
 
