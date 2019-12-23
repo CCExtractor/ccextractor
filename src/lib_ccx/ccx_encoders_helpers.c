@@ -295,7 +295,7 @@ unsigned char *close_tag(struct encoder_ctx *ctx, unsigned char *buffer, char *t
 
 unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
 {
-	int color = COL_WHITE;
+	enum ccx_decoder_608_color_code color = COL_WHITE;
 	int underlined = 0;
 	int italics = 0;
 	int changed_font = 0;
@@ -309,7 +309,7 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 	for (int i = first; i <= last; i++)
 	{
 		// Handle color
-		int its_color = data->colors[line_num][i];
+		enum ccx_decoder_608_color_code its_color = data->colors[line_num][i];
 		// Check if the colour has changed
 		if (its_color != color && !ctx->no_font_color &&
 			!(color == COL_USERDEFINED && its_color == COL_WHITE)) // Don't replace user defined with white
