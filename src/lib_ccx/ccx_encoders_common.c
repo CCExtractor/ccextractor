@@ -98,7 +98,7 @@ static const char *webvtt_header[] = {"WEBVTT", "\r\n", NULL};
 static const char *simple_xml_header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<captions>\r\n";
 
 static const char CCD_HEADER[] = "SCC_disassembly V1.2\n";
-static const char SCC_HEADER[]= "Scenarist_SCC V1.0\n\n";
+static const char SCC_HEADER[] = "Scenarist_SCC V1.0\n\n";
 
 void find_limit_characters(const unsigned char *line, int *first_non_blank, int *last_non_blank, int max_len)
 {
