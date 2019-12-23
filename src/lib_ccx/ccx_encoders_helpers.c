@@ -303,7 +303,7 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 
 	unsigned char *line = data->characters[line_num];
 	unsigned char *orig = buffer; // Keep for debugging
-	int first, last;
+	int first = 0, last = 31;
 	if (ctx->trim_subs)
 		find_limit_characters(line, &first, &last, CCX_DECODER_608_SCREEN_WIDTH);
 	for (int i = first; i <= last; i++)
