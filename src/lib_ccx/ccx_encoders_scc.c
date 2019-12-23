@@ -30,25 +30,44 @@ const unsigned char ROW_OFFSET[] = {
 	0x20
 };
 
-const unsigned char FIRST_BYTE_CODE_PAIR_CHANNEL_1[] = {
-	0x11,
-	0x11,
-	0x12,
-	0x12,
-	0x15,
-	0x15,
-	0x16,
-	0x16,
-	0x17,
-	0x17,
-	0x10,
-	0x13,
-	0x13,
-	0x14,
-	0x14
+// First byte of preamble for each channel (2 possible) and each row (15 possible)
+const unsigned char FIRST_BYTE_CODE_PAIR[2][15] = {
+	{
+		0x11,
+		0x11,
+		0x12,
+		0x12,
+		0x15,
+		0x15,
+		0x16,
+		0x16,
+		0x17,
+		0x17,
+		0x10,
+		0x13,
+		0x13,
+		0x14,
+		0x14
+	},
+	{
+		0x19,
+		0x19,
+		0x1a,
+		0x1a,
+		0x1d,
+		0x1d,
+		0x1e,
+		0x1e,
+		0x1f,
+		0x1f,
+		0x18,
+		0x1b,
+		0x1b,
+		0x1c,
+		0x1c
+	}
 };
 
-// TODO: CHANNEL_2 has been disabled, because I am not sure of the reliability of data->channel
 // TODO: deal with "\n" vs "\r\n"
 // TODO: colors. I don't have example files to work with and double check what I do
 
@@ -68,6 +87,9 @@ const unsigned char TO_OFFSET = 0x20;
 // First bytes of Control Codes
 const unsigned char MISCELLANEOUS_CHANNEL_1 = 0x14;
 const unsigned char MISCELLANEOUS_CHANNEL_2 = 0x1c;
+
+const unsigned char MIDROW_CHANNEL_1 = 0x11;
+const unsigned char MIDROW_CHANNEL_2 = 0x19;
 
 // These are all the second bytes of the Control Codes
 // TODO: use an enum for all the control codes
@@ -156,7 +178,7 @@ void disassemble_preamble_code(const unsigned char row, const unsigned char colu
 }
 
 // row and column start at 0
-void add_preamble_code(const int fd, const unsigned char row, const unsigned char column, bool disassemble)
+void add_preamble_code(const int fd, const unsigned char first_byte_code_pair[15], const unsigned char row, const unsigned char column, bool disassemble)
 {
 	if (disassemble)
 	{
@@ -167,18 +189,20 @@ void add_preamble_code(const int fd, const unsigned char row, const unsigned cha
 	else
 	{
 		dprintf(fd, "%02x%02x",
-				odd_parity(FIRST_BYTE_CODE_PAIR_CHANNEL_1[row]),
+				odd_parity(first_byte_code_pair[row]),
 				odd_parity(0x50 + column / 4 * 2 + ROW_OFFSET[row]));
 	}
-	unsigned char offset = column % 4;
-	if (offset)
+
+	// Add Tab Offset if needed
+	unsigned char tab_offset = column % 4;
+	if (tab_offset)
 	{
 		// TODO: channels
 		if (!disassemble)
 		{
 			write(fd, " ", 1);
 		}
-		write_control_code(fd, TO_CHANNEL_1, 0x20 + offset, disassemble);
+		write_control_code(fd, TO_CHANNEL_1, TO_OFFSET + tab_offset, disassemble);
 	}
 }
 
@@ -190,12 +214,8 @@ void add_timestamp(int fd, LLONG time)
 	dprintf(fd, "%02d:%02d:%02d:%02.f\t", hour, minute, second, (float) frame / 30);
 }
 
-#define MIDROW_CHANNEL_1 0x11
-
-void write_font(int fd, /* unsigned char channel, */ enum font_bits font, bool disassemble)
+void write_font(int fd, unsigned char channel, enum font_bits font, bool disassemble)
 {
-	// TODO: Dependant on channel
-	unsigned char channel = MIDROW_CHANNEL_1;
 	switch (font)
 	{
 		case FONT_REGULAR:
@@ -205,7 +225,7 @@ void write_font(int fd, /* unsigned char channel, */ enum font_bits font, bool d
 			}
 			else
 			{
-				dprintf(fd, "%02x%02x", odd_parity(MIDROW_CHANNEL_1), odd_parity(0x20));
+				dprintf(fd, "%02x%02x", odd_parity(channel), odd_parity(0x20));
 			}
 			break;
 		case FONT_UNDERLINED:
@@ -215,7 +235,7 @@ void write_font(int fd, /* unsigned char channel, */ enum font_bits font, bool d
 			}
 			else
 			{
-				dprintf(fd, "%02x%02x", odd_parity(MIDROW_CHANNEL_1), odd_parity(0x21));
+				dprintf(fd, "%02x%02x", odd_parity(channel), odd_parity(0x21));
 			}
 			break;
 		case FONT_ITALICS:
@@ -225,7 +245,7 @@ void write_font(int fd, /* unsigned char channel, */ enum font_bits font, bool d
 			}
 			else
 			{
-				dprintf(fd, "%02x%02x", odd_parity(MIDROW_CHANNEL_1), odd_parity(0x2e));
+				dprintf(fd, "%02x%02x", odd_parity(channel), odd_parity(0x2e));
 			}
 			break;
 		case FONT_UNDERLINED_ITALICS:
@@ -235,7 +255,7 @@ void write_font(int fd, /* unsigned char channel, */ enum font_bits font, bool d
 			}
 			else
 			{
-				dprintf(fd, "%02x%02x", odd_parity(MIDROW_CHANNEL_1), odd_parity(0x2f));
+				dprintf(fd, "%02x%02x", odd_parity(channel), odd_parity(0x2f));
 			}
 			break;
 		default:
@@ -244,16 +264,16 @@ void write_font(int fd, /* unsigned char channel, */ enum font_bits font, bool d
 	}
 }
 
-void clear_screen(int fd, LLONG end_time, bool disassemble)
+void clear_screen(int fd, LLONG end_time, const unsigned char channel_byte, const bool disassemble)
 {
 	add_timestamp(fd, end_time);
-	write_control_code(fd, MISCELLANEOUS_CHANNEL_1, RCL, disassemble);
+	write_control_code(fd, channel_byte, RCL, disassemble);
 	if (!disassemble)
 		write(fd, " ", 1);
-	write_control_code(fd, MISCELLANEOUS_CHANNEL_1, EOC, disassemble);
+	write_control_code(fd, channel_byte, EOC, disassemble);
 	if (!disassemble)
 		write(fd, " ", 1);
-	write_control_code(fd, MISCELLANEOUS_CHANNEL_1, ENM, disassemble);
+	write_control_code(fd, channel_byte, ENM, disassemble);
 	if (disassemble)
 	{
 		write(fd, "\n", 1);
@@ -282,6 +302,7 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 	add_timestamp(context->out->fh, data->start_time);
 	bool first_row = true;
 	enum font_bits current_font = FONT_REGULAR;
+	unsigned char miscellaneous_channel = data->channel == 1 ? MISCELLANEOUS_CHANNEL_1 : MISCELLANEOUS_CHANNEL_2;
 	for (uint8_t row = 0; row < 15; ++row)
 	{
 		if (data->row_used[row])
@@ -289,7 +310,7 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 			bool initial_preamble_code_added = false;
 			if (first_row)
 			{
-				write_control_code(context->out->fh, MISCELLANEOUS_CHANNEL_1, RCL, disassemble);
+				write_control_code(context->out->fh, miscellaneous_channel, RCL, disassemble);
 			}
 			if (!disassemble)
 			{
@@ -307,26 +328,28 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 					{
 						add_padding(context->out->fh, disassemble);
 					}
+
+					// The MID-ROW code is going to move the cursor to the
+					// right so if the next character is a space, skip it
 					if (data->characters[row][column] == ' ')
 					{
-						// The MID-ROW code is going to move the cursor to the
-						// right so there is no need to have a space
-						add_preamble_code(context->out->fh, row, column, disassemble);
-						++column;
+						add_preamble_code(context->out->fh, FIRST_BYTE_CODE_PAIR[data->channel - 1], row, column++, disassemble);
 					}
 					else
 					{
-						add_preamble_code(context->out->fh, row, column - 1, disassemble);
+						// Column - 1 because the preamble code is going to
+						// move the cursor to the right
+						add_preamble_code(context->out->fh, FIRST_BYTE_CODE_PAIR[data->channel - 1], row, column - 1, disassemble);
 					}
 					initial_preamble_code_added = true;
 					if (!disassemble)
 						write(context->out->fh, " ", 1);
-					write_font(context->out->fh, data->fonts[row][column], disassemble);
+					write_font(context->out->fh, data->channel == 1 ? MIDROW_CHANNEL_1 : MIDROW_CHANNEL_2, data->fonts[row][column], disassemble);
 					current_font = data->fonts[row][column];
 				}
 				if (!initial_preamble_code_added)
 				{
-					add_preamble_code(context->out->fh, row, first, disassemble);
+					add_preamble_code(context->out->fh, FIRST_BYTE_CODE_PAIR[data->channel - 1], row, first, disassemble);
 					initial_preamble_code_added = true;
 				}
 				if ((column - first) % 2 == 0 && !disassemble)
@@ -350,7 +373,7 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 		}
 	}
 	write(context->out->fh, "\n\n", disassemble ? 1 : 2);
-	clear_screen(context->out->fh, data->end_time, disassemble);
+	clear_screen(context->out->fh, data->end_time, data->channel == 1 ? MISCELLANEOUS_CHANNEL_1 : MISCELLANEOUS_CHANNEL_2, disassemble);
 	return 1;
 }
 
