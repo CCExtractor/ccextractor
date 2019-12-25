@@ -346,8 +346,6 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	struct encoder_ctx *enc_ctx;
 	unsigned int pn = 0;
 	unsigned char in_format = 1;
-	char *extension;
-
 
 	if (ctx->write_format == CCX_OF_NULL)
 		return NULL;
@@ -371,7 +369,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 			return enc_ctx;
 	}
 
-	extension = get_file_extension(ccx_options.enc_cfg.write_format);
+	const char *extension = get_file_extension(ccx_options.enc_cfg.write_format);
 	if (!extension && ccx_options.enc_cfg.write_format != CCX_OF_CURL)
 		return NULL;
 

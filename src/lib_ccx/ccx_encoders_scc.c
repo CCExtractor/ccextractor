@@ -113,49 +113,48 @@ const char WHITE_UNDERLINE_DIS[] = "{I}";
 
 const char *disassemble_code(const unsigned char first, const unsigned char second)
 {
-	switch (first)
+	if (first == TO_CHANNEL_1 || first == TO_CHANNEL_2)
 	{
-		case TO_CHANNEL_1:
-		case TO_CHANNEL_2:
-			switch (second - TO_OFFSET)
-			{
-				case 1:
-					return "{TO1}";
-					break;
-				case 2:
-					return "{TO2}";
-					break;
-				case 3:
-					return "{TO3}";
-					break;
-				default:
-					fatal(1, "Tab offsets should only be 1 to 3");
-					return NULL;
-					break;
-			}
-			break;
-		case MISCELLANEOUS_CHANNEL_1:
-		case MISCELLANEOUS_CHANNEL_2:
-			switch (second)
-			{
-				case RCL:
-					return "{RCL}";
-					break;
-				case EOC:
-					return "{EOC}";
-					break;
-				case ENM:
-					return "{ENM}";
-					break;
-				default:
-					fatal(1, "Unknown miscellaneous control codes (second byte)");
-					return NULL;
-					break;
-			}
-			break;
-		default:
-			fatal(1, "Invalid channel byte (first byte).");
-			return NULL;
+		switch (second - TO_OFFSET)
+		{
+			case 1:
+				return "{TO1}";
+				break;
+			case 2:
+				return "{TO2}";
+				break;
+			case 3:
+				return "{TO3}";
+				break;
+			default:
+				fatal(1, "Tab offsets should only be 1 to 3");
+				return NULL;
+				break;
+		}
+	}
+	else if (first == MISCELLANEOUS_CHANNEL_1 || first == MISCELLANEOUS_CHANNEL_2)
+	{
+		switch (second)
+		{
+			case RCL:
+				return "{RCL}";
+				break;
+			case EOC:
+				return "{EOC}";
+				break;
+			case ENM:
+				return "{ENM}";
+				break;
+			default:
+				fatal(1, "Unknown miscellaneous control codes (second byte)");
+				return NULL;
+				break;
+		}
+	}
+	else
+	{
+		fatal(1, "Invalid channel byte (first byte).");
+		return NULL;
 	}
 }
 

@@ -831,7 +831,7 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 			{
 				//list_del(&enc_ctx->list);
 				//dinit_encoder(&enc_ctx, t);
-				char *extension = get_file_extension(ccx_options.enc_cfg.write_format);
+				const char *extension = get_file_extension(ccx_options.enc_cfg.write_format);
 				sprintf(ccx_options.enc_cfg.output_filename, "%s_%06d%s", ctx->basefilename, ctx->segment_counter + 1, extension);
 				reset_output_ctx(enc_ctx, &ccx_options.enc_cfg);
 			}

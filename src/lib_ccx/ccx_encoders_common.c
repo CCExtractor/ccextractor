@@ -784,7 +784,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	int ret = EXIT_OK;
 	int nb_lang;
 	char *basefilename = NULL; // Input filename without the extension
-	char *extension = NULL; // Input filename without the extension
+	const char *extension; // Input filename without the extension
 
 #define check_ret(filename) 	if (ret != EXIT_OK)	\
 				{									\
@@ -1448,7 +1448,7 @@ void switch_output_file(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, in
 		free(enc_ctx->out->filename);
 		close(enc_ctx->out->fh);
 	}
-	char *ext = get_file_extension(ctx->write_format);
+	const char *ext = get_file_extension(ctx->write_format);
 	char suffix[32];
 	sprintf(suffix, "_%d", track_id);
 	enc_ctx->out->filename = create_outfilename(get_basename(enc_ctx->first_input_file), suffix, ext);
