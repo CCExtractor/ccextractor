@@ -134,21 +134,22 @@ const char *disassemble_code(const unsigned char first, const unsigned char seco
 	}
 	else if (first == MISCELLANEOUS_CHANNEL_1 || first == MISCELLANEOUS_CHANNEL_2)
 	{
-		switch (second)
+		if (second == RCL)
 		{
-			case RCL:
-				return "{RCL}";
-				break;
-			case EOC:
-				return "{EOC}";
-				break;
-			case ENM:
-				return "{ENM}";
-				break;
-			default:
-				fatal(1, "Unknown miscellaneous control codes (second byte)");
-				return NULL;
-				break;
+			return "{RCL}";
+		}
+		else if (second == EOC)
+		{
+			return "{EOC}";
+		}
+		else if (second == ENM)
+		{
+			return "{ENM}";
+		}
+		else
+		{
+			fatal(1, "Unknown miscellaneous control codes (second byte)");
+			return NULL;
 		}
 	}
 	else
