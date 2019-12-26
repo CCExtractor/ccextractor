@@ -653,4 +653,4 @@ xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-</Projec
+</Project>
