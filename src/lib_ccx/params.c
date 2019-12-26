@@ -445,6 +445,8 @@ void print_usage (void)
 	mprint("       where format is one of these:\n");
 	mprint("                      srt     -> SubRip (default, so not actually needed).\n");
 	mprint("                      ass/ssa -> SubStation Alpha.\n");
+	mprint("                      ccd     -> Scenarist Closed Caption Disassembly format\n");
+	mprint("                      scc     -> Scenarist Closed Caption format\n");
 	mprint("                      webvtt  -> WebVTT format\n");
 	mprint("                      webvtt-full -> WebVTT format with styling\n");
 	mprint("                      sami    -> MS Synchronized Accesible Media Interface.\n");
