@@ -3,6 +3,7 @@
 #include "ccx_encoders_common.h"
 #include "png.h"
 #include <ft2build.h>
+#include <math.h>
 #include FT_FREETYPE_H
 #include "lib_ccx.h"
 #include "ccx_encoders_helpers.h"
@@ -610,6 +611,29 @@ void black_background(struct pixel_t *target, int target_w, int x, int y, int w,
 	}
 }
 
+// Draws an underline starting at x and y
+void underline_text(struct pixel_t* target, int target_w, int x, int y, int w, int h, int color) {
+	for (int _x = x; _x < x + w; ++_x) {
+		for (int _y = y; _y < y + h; ++_y) {
+			struct pixel_t p;
+			p.a = 255;
+			p.r = (unsigned char)((color >> (8 * 2)) & 0xff);
+			p.g = (unsigned char)((color >> (8 * 1)) & 0xff);
+			p.b = (unsigned char)((color >> (8 * 0)) & 0xff);
+
+			target[_x + _y * target_w] = p;
+		}
+	}
+}
+
+// Converts font units to pixels
+// Uses the y PPEM for conversions
+int fu_to_ypixels(FT_Face face, int fu)
+{
+	return round(fu * face->size->metrics.y_ppem / (double)face->units_per_EM);
+}
+
+
 // Initialize face object for typographical fonts
 // Return 0 for success
 int init_face(FT_Face *face, char * font)
@@ -687,8 +711,8 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 	int canvas_width = CANVAS_WIDTH;
 	int canvas_height = FONT_SIZE * 3.5;
 	int line_height = FONT_SIZE * 1.0;
-	int extender = FONT_SIZE * 0.2; // to prevent characters like $ (exceed baseline) from being cut
-	int line_spacing = FONT_SIZE * 0.3;
+	int extender = FONT_SIZE * 0.4; // to prevent characters like $ and _ (exceed baseline) from being cut and to add room for underlining
+	int line_spacing = FONT_SIZE * 0.8;
 
 	int cursor_x = 0;
 	int cursor_y = line_height * 2;
@@ -702,7 +726,7 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 	}
 	memset(buffer, 0, canvas_width * canvas_height * sizeof(struct pixel_t));
 
-	//str = "<font color=\"#66CDAA\"> This should be aquamarine </font> Regular <i> Italics font</i> <font color=\"#00ff00\">This should be green.</font>"; // Test string
+	//str = "<font color=\"#66CDAA\"> __ This should be aquamarine </font> Regular <i> Italics font</i> <font color=\"#00ff00\">This should be green.</font> <u> Underlining __ testing </u> Regular text. Even more text. Random text. More text."; // Test string
 	char *tmp = (char*)malloc((strlen(str) + 1) * sizeof(char));
 	if (!tmp)
 		return -1;
@@ -712,7 +736,7 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 
 	int color = 0xffffff;
 	int prev_color = 0xffffff;
-	int italics = 0;
+	int underline = 0;
 	int font = 0;
 	face = face_regular;
 
@@ -720,18 +744,29 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 	{
 		if (strlen(token) == 1 && strncmp("i", token, 1) == 0)
 		{
-			italics = 1;
 			token = strtok(NULL, "<>");
 			face = face_italics;
 			continue;
 		}
 		else if (strlen(token) == 2 && strncmp("/i", token, 2) == 0)
 		{
-			italics = 0;
 			face = face_regular;
 			token = strtok(NULL, "<>");
 			continue;
 		}
+		if (strlen(token) == 1 && strncmp("u", token, 1) == 0)
+		{
+			underline = 1;
+			token = strtok(NULL, "<>");
+			continue;
+		}
+		else if (strlen(token) == 2 && strncmp("/u", token, 2) == 0)
+		{
+			underline = 0;
+			token = strtok(NULL, "<>");
+			continue;
+		}
+
 		else if (strlen(token) > 9 && strncmp("font color", token, 10) == 0)
 		{
 			// If the font element is already nested in another font element
@@ -827,6 +862,34 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 				}
 
 				draw_to_buffer(buffer, canvas_width, slot->bitmap, cursor_x, cursor_y - slot->bitmap_top, color);
+
+				if (underline)
+				{
+					// Converts underline offset from font units to pixels
+					int pixel_offset = fu_to_ypixels(face, face->underline_position);
+
+					// Calculates how wide a character is
+					int glyph_width = slot->advance.x >> 6;
+					//mprint("Glyph Width: %d\n", glyph_width);
+
+					int underline_thickness = fu_to_ypixels(face, face->underline_thickness);
+					underline_text(buffer, canvas_width, cursor_x, cursor_y - pixel_offset, glyph_width, underline_thickness, color);
+				}
+			}
+			// For all the characters without bitmaps like spaces ' '
+			else {
+
+				if (underline)
+				{
+					// Converts underline offset from font units to pixels
+					int pixel_offset = fu_to_ypixels(face, face->underline_position);
+					// Calculates how wide a character is
+					int glyph_width = (slot->advance.x >> 6);
+
+					//mprint("Glyph Width: %d\n", glyph_width);
+					int underline_thickness = fu_to_ypixels(face, face->underline_thickness);
+					underline_text(buffer, canvas_width, cursor_x, cursor_y - pixel_offset, glyph_width, underline_thickness, color);
+				}
 
 			}
 
