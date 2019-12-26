@@ -14,8 +14,6 @@
 - Fix: Segmentation fault on VOB #1128
 - Fix: Hang while processing video #1121
 - Fix: Removed redundant check_configuration_file function
-- Fix: Added italics, underline, and color rendering support for -out=spupng
-  with EIA608/teletext
 
 0.88 (2019-05-21)
 -----------------
