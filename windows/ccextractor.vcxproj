@@ -230,6 +230,7 @@
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_mcc.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_python.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_sami.c" />
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_scc.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_smptett.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_splitbysentence.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_srt.c" />
@@ -652,4 +653,4 @@ xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-</Project>
+</Projec
