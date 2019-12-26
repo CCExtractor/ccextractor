@@ -1,5 +1,6 @@
 0.89 (TBD)
 -----------------
+- New: Added support for SCC and CCD encoder formats
 - New: Added support to output captions to MCC file (#733).
 - New: Added a few comments.
 - New: Added more fatals on no arguments errors.
