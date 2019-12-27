@@ -26,10 +26,13 @@
 
 #ifdef _WIN32
 #define DEFAULT_FONT_PATH "C:\\Windows\\Fonts\\calibri.ttf"
+#define DEFAULT_FONT_PATH_ITALICS "C:\\Windows\\Fonts\\calibrii.ttf"
 #elif __APPLE__ // MacOS
 #define DEFAULT_FONT_PATH "/System/Library/Fonts/Helvetica.ttc"
+#define DEFAULT_FONT_PATH_ITALICS "/System/Library/Fonts/Helvetica-Oblique.ttf"
 #else // Assume Linux
 #define DEFAULT_FONT_PATH "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"
+#define DEFAULT_FONT_PATH_ITALICS "/usr/share/fonts/truetype/noto/NotoSans-Italic.ttf"
 #endif
 
 static int inputfile_capacity = 0;
@@ -664,10 +667,15 @@ void print_usage (void)
 	mprint("                       in languages (like \"fre-ca\" for Canadian French).\n");
 	mprint("          -nospupngocr When processing DVB don't use the OCR to write the text as\n");
 	mprint("                       comments in the XML file.\n");
-	mprint("                -font: Specify the full path of the font that is to be used when\n");
+	mprint ("                -font: Specify the full path of the font that is to be used when\n");
+	mprint ("                       generating SPUPNG files. If not specified, you need to\n");
+	mprint ("                       have the default font installed (Helvetica for macOS, Calibri\n");
+	mprint ("                       for Windows, and Noto for other operating systems at their\n)");
+	mprint ("                       default location\n)");
+	mprint("                -italics: Specify the full path of the italics font that is to be used when\n");
 	mprint("                       generating SPUPNG files. If not specified, you need to\n");
-	mprint("                       have the default font installed (Helvetica for macOS, Calibri\n");
-	mprint("                       for Windows, and Noto for other operating systems at their\n)");
+	mprint("                       have the default font installed (Helvetica Oblique for macOS, Calibri Italic\n");
+	mprint("                       for Windows, and NotoSans Italic for other operating systems at their\n)");
 	mprint("                       default location\n)");
 	mprint("\n");
 	mprint("Options that affect how ccextractor reads and writes (buffering):\n");
@@ -2693,6 +2701,13 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-font has no argument.\n");
 			}
 		}
+		if (strcmp(argv[i], "-italics") == 0 && i < argc - 1)
+		{
+			opt->enc_cfg.render_font_italics = argv[i + 1];
+			i++;
+			continue;
+		}
+
 #ifdef WITH_LIBCURL
 		if (strcmp(argv[i], "-curlposturl") == 0)
 		{
@@ -2906,8 +2921,12 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 	if (opt->enc_cfg.render_font == NULL)
 	{
 		opt->enc_cfg.render_font = DEFAULT_FONT_PATH;
-	}
-	if (opt->output_filename && opt->multiprogram == CCX_FALSE)
+  }
+	if (opt->enc_cfg.render_font_italics == NULL)
+  {
+		opt->enc_cfg.render_font_italics = DEFAULT_FONT_PATH_ITALICS;
+  }
+  if (opt->output_filename && opt->multiprogram == CCX_FALSE)
 	{
 		opt->enc_cfg.output_filename = strdup(opt->output_filename);
 	}

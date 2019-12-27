@@ -77,6 +77,7 @@ struct encoder_cfg
 	
 	// text -> png (text render)
 	char *render_font;                                  // The font used to render text if needed (e.g. teletext->spupng)
+	char *render_font_italics;
 
 	//CEA-708
 	int services_enabled[CCX_DTVCC_MAX_SERVICES];
