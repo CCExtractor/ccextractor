@@ -2,7 +2,6 @@
 // Implementatin issue: https://github.com/CCExtractor/ccextractor/issues/1120
 
 #include "lib_ccx.h"
-#include <stdbool.h>
 
 // Adds a parity bit if needed
 unsigned char odd_parity(const unsigned char byte)
@@ -159,7 +158,7 @@ const char *disassemble_code(const unsigned char first, const unsigned char seco
 	}
 }
 
-void write_control_code(const int fd, const unsigned char first, const unsigned char second, bool disassemble)
+void write_control_code(const int fd, const unsigned char first, const unsigned char second, const char disassemble)
 {
 	if (disassemble)
 	{
@@ -178,7 +177,7 @@ void disassemble_preamble_code(const unsigned char row, const unsigned char colu
 }
 
 // row and column start at 0
-void add_preamble_code(const int fd, const unsigned char first_byte_code_pair[15], const unsigned char row, const unsigned char column, bool disassemble)
+void add_preamble_code(const int fd, const unsigned char first_byte_code_pair[15], const unsigned char row, const unsigned char column, const char disassemble)
 {
 	if (disassemble)
 	{
@@ -214,7 +213,7 @@ void add_timestamp(int fd, LLONG time)
 	dprintf(fd, "%02d:%02d:%02d:%02.f\t", hour, minute, second, (float) frame / 30);
 }
 
-void write_font(int fd, unsigned char channel, enum font_bits font, bool disassemble)
+void write_font(int fd, unsigned char channel, enum font_bits font, const char disassemble)
 {
 	switch (font)
 	{
@@ -264,7 +263,7 @@ void write_font(int fd, unsigned char channel, enum font_bits font, bool disasse
 	}
 }
 
-void clear_screen(int fd, LLONG end_time, const unsigned char channel_byte, const bool disassemble)
+void clear_screen(int fd, LLONG end_time, const unsigned char channel_byte, const char disassemble)
 {
 	add_timestamp(fd, end_time);
 	write_control_code(fd, channel_byte, RCL, disassemble);
@@ -284,7 +283,7 @@ void clear_screen(int fd, LLONG end_time, const unsigned char channel_byte, cons
 	}
 }
 
-void add_padding(int fd, bool disassemble)
+void add_padding(int fd, const char disassemble)
 {
 
 	if (disassemble)
@@ -297,17 +296,17 @@ void add_padding(int fd, bool disassemble)
 	}
 }
 
-int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encoder_ctx *context, bool disassemble)
+int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encoder_ctx *context, const char disassemble)
 {
 	add_timestamp(context->out->fh, data->start_time);
-	bool first_row = true;
+	char first_row = true;
 	enum font_bits current_font = FONT_REGULAR;
 	unsigned char miscellaneous_channel = data->channel == 1 ? MISCELLANEOUS_CHANNEL_1 : MISCELLANEOUS_CHANNEL_2;
 	for (uint8_t row = 0; row < 15; ++row)
 	{
 		if (data->row_used[row])
 		{
-			bool initial_preamble_code_added = false;
+			char initial_preamble_code_added = false;
 			if (first_row)
 			{
 				write_control_code(context->out->fh, miscellaneous_channel, RCL, disassemble);
