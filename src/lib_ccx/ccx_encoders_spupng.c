@@ -727,10 +727,12 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 	memset(buffer, 0, canvas_width * canvas_height * sizeof(struct pixel_t));
 
 	//str = "<font color=\"#66CDAA\"> __ This should be aquamarine </font> Regular <i> Italics font</i> <font color=\"#00ff00\">This should be green.</font> <u> Underlining __ testing </u> Regular text. Even more text. Random text. More text."; // Test string
-	char *tmp = (char*)malloc((strlen(str) + 1) * sizeof(char));
+	int len = strlen(str);
+	char *tmp = (char*)malloc((len + 1) * sizeof(char));
 	if (!tmp)
 		return -1;
-	strncpy(tmp, str, strlen(str)+1);
+	memcpy(tmp, str, len);
+	tmp[len] = '\0';
 
 	char* token = strtok(tmp, "<>");
 
