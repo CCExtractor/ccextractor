@@ -2838,7 +2838,6 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 	if(opt->demux_cfg.ts_forced_program != -1)
 		opt->demux_cfg.ts_forced_program_selected = 1;
-	}
 
 	// Init telexcc redundant options
 	tlt_config.dolevdist = opt->dolevdist;
