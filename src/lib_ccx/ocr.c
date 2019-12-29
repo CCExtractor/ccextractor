@@ -8,6 +8,7 @@
 #include "ccx_encoders_helpers.h"
 #include "ocr.h"
 #undef OCR_DEBUG
+
 struct ocrCtx
 {
 	TessBaseAPI* api;
@@ -1025,6 +1026,9 @@ char *paraof_ocrtext(struct cc_subtitle *sub, const char *crlf, unsigned crlf_le
 	return str;
 }
 #else
+
+struct image_copy;
+
 char* ocr_bitmap(png_color *palette,png_byte *alpha, unsigned char* indata,unsigned char d,int w, int h, struct image_copy *copy)
 {
 	mprint("ocr not supported without tesseract\n");

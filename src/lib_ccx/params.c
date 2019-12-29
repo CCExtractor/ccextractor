@@ -179,10 +179,13 @@ int add_file_sequence (struct ccx_s_options *opt, char *filename)
 		}
 		i++;
 		sprintf(temp, "%d",i);
-		if (strlen(temp) > strlen(num)) // From 999 to 1000, etc.
+
+		int temp_len = strlen(temp);
+		int num_len = strlen(num);
+		if (temp_len > num_len) // From 999 to 1000, etc.
 			break;
-		strncpy(filename+m+(strlen(num)-strlen(temp)),temp,strlen(temp));
-		memset(filename+m,'0',strlen(num)-strlen(temp));
+		memcpy(filename+m+(num_len-temp_len),temp,temp_len);
+		memset(filename+m,'0', num_len-temp_len);
 	}
 	free(num);
 	free(temp);
