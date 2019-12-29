@@ -729,6 +729,9 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 	//str = "<font color=\"#66CDAA\"> __ This should be aquamarine </font> Regular <i> Italics font</i> <font color=\"#00ff00\">This should be green.</font> <u> Underlining __ testing </u> Regular text. Even more text. Random text. More text."; // Test string
 	char* tmp = strdup(str);
 
+	if (!tmp)
+		return -1;
+
 	char* token = strtok(tmp, "<>");
 
 	int color = 0xffffff;
