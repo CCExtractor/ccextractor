@@ -16,6 +16,7 @@
 - Fix: Removed redundant check_configuration_file function
 - Fix: lib_ccx.c: Initialize fatal error logging function before first usage in init_libraries
 - Fix: Added italics, underline, and color rendering support for -out=spupng with EIA608/teletext
+- Fix: Change inet_ntop to inet_ntoa for Windows XP compatibility
 
 0.88 (2019-05-21)
 -----------------

@@ -335,7 +335,7 @@ int net_udp_read(int socket, void *buffer, size_t length, const char *src_str, c
 	assert(length > 0);
 
 	int i;
-	char ip[50] = "";
+	char ip[15];
 	struct sockaddr_in source_addr;
 	socklen_t len = sizeof(source_addr);
 	/* Get address of host to check for udp network mutlicasting */
@@ -354,7 +354,8 @@ int net_udp_read(int socket, void *buffer, size_t length, const char *src_str, c
 	{
 		do {
 			i = recvfrom(socket, (char *) buffer, length, 0, (struct sockaddr*)&source_addr, &len); /* peek at the data*/
-			inet_ntop(AF_INET, &(source_addr.sin_addr), ip, 50);
+			memset(ip, 0, sizeof(char) * 15);
+			memcpy(ip, inet_ntoa(source_addr.sin_addr), sizeof(ip));
 		} while (strcmp(ip, src_str)!=0);												/* Loop till we find intended source */
 	}
 	else
