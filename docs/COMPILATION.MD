@@ -32,7 +32,7 @@ yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel lep
 
 2. Compiling
 
-**Using the build script**
+### Using the build script
 
 
 ```bash
@@ -45,7 +45,7 @@ cd ccextractor/linux
 ./ccextractor
 ```
 
-**Standard linux compilation through Autoconf scripts**
+### Standard linux compilation through Autoconf scripts
 
 ```bash
 sudo apt-get install autoconf      #Dependency to generate configuration script
@@ -61,7 +61,7 @@ make
 sudo make install
 ```
 
-**Using CMake**
+### Using CMake
 
 ```bash
 #Create and navigate to directory where you want to store built files
@@ -82,8 +82,9 @@ make
 sudo make install
 ```
 
+`cmake` also accepts the argument `-DWITH_OCR=ON` to enable OCR.
 
-**Compiling with GUI:**
+### Compiling with GUI:
 
 To build CCExtractor with a gui you will additionally need to install [GLEW](http://glew.sourceforge.net/build.html) and [GLFW](http://www.glfw.org/docs/latest/compile.html)
 
@@ -118,9 +119,9 @@ pkg-config --exists --print-errors tesseract
 pkg-config --exists --print-errors lept
 ```
 
-2. Compiling
+### Compiling
 
-**Using build.command script:**
+#### Using build.command script:
 
 ```bash
 cd ccextractor/mac
@@ -140,7 +141,7 @@ cd ccextractor/mac
 ./ccextractor
 ```
 
-**Using CMake**
+#### Using CMake
 
 ```bash
 #Create and navigate to directory where you want to store built files
@@ -158,7 +159,7 @@ make
 ./ccextractor
 ```
 
-**Standard compilation through Autoconf scripts :**
+#### Standard compilation through Autoconf scripts:
 
 ```bash
 cd ccextractor/mac
@@ -170,7 +171,7 @@ make
 ./ccextractor
 ```
 
-**Compiling with GUI:**
+#### Compiling with GUI:
 
 To use CCExtractor with a gui you will additionally need to install GLEW and GLFW. You can do that by installing it via homebrew using:
 
@@ -219,7 +220,7 @@ Configurations options are: `(Debug|Release)-Full`
 
 Configurations options include dependent libraries which are used for OCR.
 
-**Using CMake**
+### Using CMake
 
 You may also generate `.sln` files for Visual Studio and build using build tools, or open `.sln` files using Visual Studio.
 
