@@ -98,7 +98,7 @@ static const char *webvtt_header[] = {"WEBVTT", "\r\n", NULL};
 static const char *simple_xml_header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<captions>\r\n";
 
 static const char CCD_HEADER[] = "SCC_disassembly V1.2\n";
-static const char SCC_HEADER[] = "Scenarist_SCC V1.0\n\n";
+static const char SCC_HEADER[] = "Scenarist_SCC V1.0";
 
 void find_limit_characters(const unsigned char *line, int *first_non_blank, int *last_non_blank, int max_len)
 {
@@ -339,7 +339,7 @@ int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_
 	return 0; // Return length
 }
 
-int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
+int write_subtitle_file_footer(struct encoder_ctx *ctx, struct ccx_s_write *out)
 {
 	int used;
 	int ret = 0;
@@ -388,6 +388,11 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx,struct ccx_s_write *out)
 			{
 				mprint("WARNING: loss of data\n");
 			}
+			break;
+		case CCX_OF_SCC:
+		case CCX_OF_CCD:
+			// TODO \n vs \r\n
+			ret = write(out->fh, "\n", 1);
 			break;
 		default: // Nothing to do, no footer on this format
 			break;
