@@ -43,7 +43,7 @@ size_t remove_trailing_whitespace(char *line)
 	while (c >= line && isspace(*c))
 		c--;
 	c[1] = '\0';
-	return c - line;
+	return c - line + 1;
 }
 
 int process_word_file(const char *filename, struct word_list *list)
@@ -56,7 +56,7 @@ int process_word_file(const char *filename, struct word_list *list)
 		return -1;
 	}
 
-	char line[CCX_DECODER_608_SCREEN_WIDTH + 3]; // For screen width (CR)LF + '\0' == 3
+	char line[CCX_DECODER_608_SCREEN_WIDTH + 3]; // For screen width + (CR)LF + '\0' == screewdith + 3
 	int num = 0;
 	while (fgets(line, CCX_DECODER_608_SCREEN_WIDTH + 3, fi))
 	{
@@ -74,7 +74,7 @@ int process_word_file(const char *filename, struct word_list *list)
 
 		if (new_len > 0)
 		{
-			if (add_word(list, line))
+			if (add_word(list, line) == -1)
 			{
 				ret = -1;
 				break;
