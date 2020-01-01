@@ -15,7 +15,7 @@ made to reuse, not duplicate, as many functions as possible */
 #include "ccx_encoders_mcc.h"
 #include "ccx_dtvcc.h"
 
-uint64_t utc_refvalue = UINT64_MAX;  /* _UI64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
+uint64_t utc_refvalue = UINT64_MAX;  /* _UI64_MAX/UINT64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
 extern int in_xds_mode;
 
 

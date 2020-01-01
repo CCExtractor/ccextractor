@@ -170,9 +170,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 	int used;
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
-	LLONG ms_start, ms_end;
 	int wrote_something = 0;
-	ms_start = data->start_time;
 
 	int prev_line_start=-1, prev_line_end=-1; // Column in which the previous line started and ended, for autodash
 	int prev_line_center1=-1, prev_line_center2=-1; // Center column of previous line text
@@ -188,14 +186,8 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 	if (empty_buf) // Prevent writing empty screens. Not needed in .srt
 		return 0;
 
-	ms_start+=context->subs_delay;
-	if (ms_start<0) // Drop screens that because of subs_delay start too early
-		return 0;
-
-	ms_end = data->end_time;
-
-	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
-	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+	millis_to_time (data->start_time,&h1,&m1,&s1,&ms1);
+	millis_to_time (data->end_time - 1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 	char timeline[128];
 	context->srt_counter++;
 	sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);

@@ -35,20 +35,20 @@ void xds_write_transcript_line_prefix (struct encoder_ctx *context, struct ccx_s
 		{
 			if (utc_refvalue == UINT64_MAX)
 			{
-				millis_to_time(start_time + context->subs_delay, &h1, &m1, &s1, &ms1);
+				millis_to_time(start_time, &h1, &m1, &s1, &ms1);
 				fdprintf(wb->fh, "%02u:%02u:%02u%c%03u|", h1, m1, s1, context->millis_separator, ms1);
 			}
 			else
 			{
-				fdprintf(wb->fh, "%lld%c%03d|", (start_time + context->subs_delay) / 1000,
-				context->millis_separator, (start_time + context->subs_delay) % 1000);
+				fdprintf(wb->fh, "%lld%c%03d|", start_time / 1000,
+				context->millis_separator, start_time % 1000);
 			}
 		}
 		else
 		{
-			millis_to_time(start_time + context->subs_delay, &h1, &m1, &s1, &ms1);
-			time_t start_time_int = (start_time + context->subs_delay) / 1000;
-			int start_time_dec = (start_time + context->subs_delay) % 1000;
+			millis_to_time(start_time, &h1, &m1, &s1, &ms1);
+			time_t start_time_int = start_time / 1000;
+			int start_time_dec = start_time % 1000;
 			struct tm *start_time_struct = gmtime(&start_time_int);
 			strftime(buffer, sizeof(buffer), "%Y%m%d%H%M%S", start_time_struct);
 			fdprintf(wb->fh, "%s%c%03d|", buffer, context->millis_separator, start_time_dec);

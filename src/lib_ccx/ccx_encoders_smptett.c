@@ -191,19 +191,11 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 	int used;
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
-	LLONG endms;
 	int wrote_something=0;
-	LLONG startms = data->start_time;
 	char str[1024];
 
-	startms+=context->subs_delay;
-	if (startms<0) // Drop screens that because of subs_delay start too early
-		return 0;
-
-	endms  = data->end_time;
-	endms--; // To prevent overlapping with next line.
-	millis_to_time (startms,&h1,&m1,&s1,&ms1);
-	millis_to_time (endms-1,&h2,&m2,&s2,&ms2);
+	millis_to_time (data->start_time,&h1,&m1,&s1,&ms1);
+	millis_to_time (data->end_time-1,&h2,&m2,&s2,&ms2);
 
 	for (int row=0; row < 15; row++)
 	{

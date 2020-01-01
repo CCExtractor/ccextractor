@@ -63,19 +63,11 @@ int pass_cc_buffer_to_python(struct eia608_screen *data, struct encoder_ctx *con
 {
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
-	LLONG ms_start, ms_end;
 	int wrote_something = 0;
-	ms_start = data->start_time;
 	char *timeline;
 
-	ms_start+=context->subs_delay;
-	if (ms_start<0) // Drop screens that because of subs_delay start too early
-		return 0;
-
-	ms_end = data->end_time;
-
-	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
-	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+	millis_to_time (data->start_time,&h1,&m1,&s1,&ms1);
+	millis_to_time (data->end_time-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 
 	context->srt_counter++;
     Asprintf(&timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",

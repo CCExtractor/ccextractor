@@ -1036,14 +1036,6 @@ int spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
 	int empty_buf = 1;
 	char str[512] = "";
 
-	// Check if it has negative start.
-	LLONG ms_start = data->start_time + context->subs_delay;
-	if (ms_start < 0)
-	{
-		dbg_print(CCX_DMT_VERBOSE, "Negative start\n");
-		return 0;
-	}
-
 	// Check if it is blank page.
 	for (row = 0; row < 15; row++)
 	{

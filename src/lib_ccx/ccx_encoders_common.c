@@ -1113,9 +1113,11 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				// Determine context based on channel. This replaces the code that was above, as this was incomplete (for cases where -12 was used for example)
 				out = get_output_ctx(context, data->my_field);
 
+				data->end_time += context->subs_delay;
+				data->start_time += context->subs_delay;
+
 				if (data->format == SFORMAT_XDS)
 				{
-					data->end_time = data->end_time + context->subs_delay;
 					xds_write_transcript_line_prefix(context, out, data->start_time, data->end_time, data->cur_xds_packet_class);
 					if (data->xds_len > 0)
 					{
@@ -1130,7 +1132,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					continue;
 				}
 
-				data->end_time = data->end_time + context->subs_delay;
 
 				if (utc_refvalue != UINT64_MAX)
 				{
@@ -1319,7 +1320,6 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *cont
 {
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;
-	LLONG ms_start;
 	int with_data = 0;
 
 	for (int i = 0; i<15; i++)
@@ -1330,11 +1330,6 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *cont
 	if (!with_data)
 		return;
 
-	ms_start = data->start_time;
-
-	ms_start += context->subs_delay;
-	if (ms_start<0) // Drop screens that because of subs_delay start too early
-		return;
 	int time_reported = 0;
 	for (int i = 0; i<15; i++)
 	{
@@ -1343,9 +1338,8 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *cont
 			fprintf(stderr, "###SUBTITLE#");
 			if (!time_reported)
 			{
-				LLONG ms_end = data->end_time;
-				millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
-				millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
+				millis_to_time(data->start_time, &h1, &m1, &s1, &ms1);
+				millis_to_time(data->end_time - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 				// Note, only MM:SS here as we need to save space in the preview window
 				fprintf(stderr, "%02u:%02u#%02u:%02u#",
 					h1 * 60 + m1, s1, h2 * 60 + m2, s2);
