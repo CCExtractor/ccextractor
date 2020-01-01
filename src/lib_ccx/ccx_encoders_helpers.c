@@ -20,20 +20,17 @@ int spell_words = 0;
 int spell_capacity = 0;
 // Some basic English words, so user-defined doesn't have to
 // include the common stuff
-static const char *spell_builtin[] =
-{
-	"I", "I'd", "I've", "I'd", "I'll",
-	"January", "February", "March", "April", // May skipped intentionally
-	"June", "July", "August", "September", "October", "November",
-	"December", "Monday", "Tuesday", "Wednesday", "Thursday",
-	"Friday", "Saturday", "Sunday", "Halloween", "United States",
-	"Spain", "France", "Italy", "England",
-	NULL
-};
+static const char *spell_builtin[] = {
+	"I",		"I'd",	   "I've",		"I'd",			 "I'll",	 "January",
+	"February", "March",   "April", // May skipped intentionally
+	"June",		"July",	   "August",	"September",	 "October",	 "November",
+	"December", "Monday",  "Tuesday",	"Wednesday",	 "Thursday", "Friday",
+	"Saturday", "Sunday",  "Halloween", "United States", "Spain",	 "France",
+	"Italy",	"England", NULL};
 
 int string_cmp_function(const void *p1, const void *p2, void *arg)
 {
-	return strcasecmp(*(char**)p1, *(char**)p2);
+	return strcasecmp(*(char **)p1, *(char **)p2);
 }
 int string_cmp(const void *p1, const void *p2)
 {
@@ -42,17 +39,13 @@ int string_cmp(const void *p1, const void *p2)
 
 void correct_case_with_dictionary(int line_num, struct eia608_screen *data)
 {
-	char delim[64] = {
-		' ', '\n', '\r', 0x89, 0x99,
-		'!', '"', '#', '%', '&',
-		'\'', '(', ')', ';', '<',
-		'=', '>', '?', '[', '\\',
-		']', '*', '+', ',', '-',
-		'.', '/', ':', '^', '_',
-		'{', '|', '}', '~', '\0' };
+	char delim[64] = {' ', '\n', '\r', 0x89, 0x99, '!', '"', '#', '%',
+					  '&', '\'', '(',  ')',	 ';',  '<', '=', '>', '?',
+					  '[', '\\', ']',  '*',	 '+',  ',', '-', '.', '/',
+					  ':', '^',	 '_',  '{',	 '|',  '}', '~', '\0'};
 
-	char *line = strdup(((char*)data->characters[line_num]));
-	char *oline = (char*)data->characters[line_num];
+	char *line = strdup(((char *)data->characters[line_num]));
+	char *oline = (char *)data->characters[line_num];
 	char *c = strtok(line, delim);
 	if (c == NULL)
 	{
@@ -61,7 +54,8 @@ void correct_case_with_dictionary(int line_num, struct eia608_screen *data)
 	}
 	do
 	{
-		char **index = bsearch(&c, spell_lower, spell_words, sizeof(*spell_lower), string_cmp);
+		char **index = bsearch(&c, spell_lower, spell_words,
+							   sizeof(*spell_lower), string_cmp);
 
 		if (index)
 		{
@@ -75,17 +69,13 @@ void correct_case_with_dictionary(int line_num, struct eia608_screen *data)
 
 void telx_correct_case(char *sub_line)
 {
-	char delim[64] = {
-		' ', '\n', '\r', 0x89, 0x99,
-		'!', '"', '#', '%', '&',
-		'\'', '(', ')', ';', '<',
-		'=', '>', '?', '[', '\\',
-		']', '*', '+', ',', '-',
-		'.', '/', ':', '^', '_',
-		'{', '|', '}', '~', '\0' };
+	char delim[64] = {' ', '\n', '\r', 0x89, 0x99, '!', '"', '#', '%',
+					  '&', '\'', '(',  ')',	 ';',  '<', '=', '>', '?',
+					  '[', '\\', ']',  '*',	 '+',  ',', '-', '.', '/',
+					  ':', '^',	 '_',  '{',	 '|',  '}', '~', '\0'};
 
-	char *line = strdup(((char*)sub_line));
-	char *oline = (char*)sub_line;
+	char *line = strdup(((char *)sub_line));
+	char *oline = (char *)sub_line;
 	char *c = strtok(line, delim);
 	if (c == NULL)
 	{
@@ -94,7 +84,8 @@ void telx_correct_case(char *sub_line)
 	}
 	do
 	{
-		char **index = bsearch(&c, spell_lower, spell_words, sizeof(*spell_lower), string_cmp);
+		char **index = bsearch(&c, spell_lower, spell_words,
+							   sizeof(*spell_lower), string_cmp);
 
 		if (index)
 		{
@@ -106,7 +97,8 @@ void telx_correct_case(char *sub_line)
 	free(line);
 }
 
-int is_all_caps(struct encoder_ctx *context, int line_num, struct eia608_screen *data)
+int is_all_caps(struct encoder_ctx *context, int line_num,
+				struct eia608_screen *data)
 {
 	int saw_upper = 0, saw_lower = 0;
 
@@ -117,15 +109,18 @@ int is_all_caps(struct encoder_ctx *context, int line_num, struct eia608_screen 
 		else if (isupper(data->characters[line_num][i]))
 			saw_upper = 1;
 	}
-	return (saw_upper && !saw_lower); // 1 if we've seen upper and not lower, 0 otherwise
+	return (saw_upper &&
+			!saw_lower); // 1 if we've seen upper and not lower, 0 otherwise
 }
 
-int clever_capitalize(struct encoder_ctx *context, int line_num, struct eia608_screen *data)
+int clever_capitalize(struct encoder_ctx *context, int line_num,
+					  struct eia608_screen *data)
 {
-	// CFS: Tried doing to clever (see below) but some channels do all uppercase except for
-	// notes for deaf people (such as "(narrator)" which messes things up.
-		// First find out if we actually need to do it, don't mess with lines that come OK
-		//int doit = is_all_caps(context, line_num, data);
+	// CFS: Tried doing to clever (see below) but some channels do all uppercase
+	// except for notes for deaf people (such as "(narrator)" which messes
+	// things up. First find out if we actually need to do it, don't mess with
+	// lines that come OK
+	// int doit = is_all_caps(context, line_num, data);
 	int doit = 1;
 
 	for (int i = 0; i < CCX_DECODER_608_SCREEN_WIDTH; i++)
@@ -146,9 +141,11 @@ int clever_capitalize(struct encoder_ctx *context, int line_num, struct eia608_s
 			if (doit)
 			{
 				if (context->new_sentence)
-					data->characters[line_num][i] = cctoupper(data->characters[line_num][i]);
+					data->characters[line_num][i] =
+						cctoupper(data->characters[line_num][i]);
 				else
-					data->characters[line_num][i] = cctolower(data->characters[line_num][i]);
+					data->characters[line_num][i] =
+						cctolower(data->characters[line_num][i]);
 			}
 			context->new_sentence = 0;
 			break;
@@ -157,10 +154,11 @@ int clever_capitalize(struct encoder_ctx *context, int line_num, struct eia608_s
 	return doit;
 }
 
-// Encodes a generic string. Note that since we use the encoders for closed caption
-// data, text would have to be encoded as CCs... so using special characters here
-// is a bad idea.
-unsigned encode_line(struct encoder_ctx *ctx, unsigned char *buffer, unsigned char *text)
+// Encodes a generic string. Note that since we use the encoders for closed
+// caption data, text would have to be encoded as CCs... so using special
+// characters here is a bad idea.
+unsigned encode_line(struct encoder_ctx *ctx, unsigned char *buffer,
+					 unsigned char *text)
 {
 	unsigned bytes = 0;
 	while (*text)
@@ -179,7 +177,8 @@ unsigned encode_line(struct encoder_ctx *ctx, unsigned char *buffer, unsigned ch
 			bytes += 2;
 			buffer += 2;
 			break;
-		case CCX_ENC_ASCII: // Consider to remove ASCII encoding or write some code here
+		case CCX_ENC_ASCII: // Consider to remove ASCII encoding or write some
+							// code here
 			break;
 		}
 		text++;
@@ -188,7 +187,8 @@ unsigned encode_line(struct encoder_ctx *ctx, unsigned char *buffer, unsigned ch
 	return bytes;
 }
 
-unsigned get_decoder_line_encoded_for_gui(unsigned char *buffer, int line_num, struct eia608_screen *data)
+unsigned get_decoder_line_encoded_for_gui(unsigned char *buffer, int line_num,
+										  struct eia608_screen *data)
 {
 	unsigned char *line = data->characters[line_num];
 	unsigned char *orig = buffer; // Keep for debugging
@@ -201,10 +201,11 @@ unsigned get_decoder_line_encoded_for_gui(unsigned char *buffer, int line_num, s
 	}
 	*buffer = 0;
 	return (unsigned)(buffer - orig); // Return length
-
 }
 
-unsigned char *close_tag(struct encoder_ctx *ctx, unsigned char *buffer, char *tagstack, char tagtype, int *punderlined, int *pitalics, int *pchanged_font)
+unsigned char *close_tag(struct encoder_ctx *ctx, unsigned char *buffer,
+						 char *tagstack, char tagtype, int *punderlined,
+						 int *pitalics, int *pchanged_font)
 {
 	for (int l = strlen(tagstack) - 1; l >= 0; l--)
 	{
@@ -212,28 +213,32 @@ unsigned char *close_tag(struct encoder_ctx *ctx, unsigned char *buffer, char *t
 		switch (cur)
 		{
 		case 'F':
-			buffer += encode_line(ctx, buffer, (unsigned char *) "</font>");
+			buffer += encode_line(ctx, buffer, (unsigned char *)"</font>");
 			(*pchanged_font)--;
 			break;
 		case 'U':
-			buffer += encode_line(ctx, buffer, (unsigned char *) "</u>");
+			buffer += encode_line(ctx, buffer, (unsigned char *)"</u>");
 			(*punderlined)--;
 			break;
 		case 'I':
-			buffer += encode_line(ctx, buffer, (unsigned char *) "</i>");
+			buffer += encode_line(ctx, buffer, (unsigned char *)"</i>");
 			(*pitalics)--;
 			break;
 		}
-		tagstack[l] = 0; // Remove from stack
+		tagstack[l] = 0;	// Remove from stack
 		if (cur == tagtype) // We closed up to the required tag, done
 			return buffer;
 	}
 	if (tagtype != 'A') // All
-		ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "Mismatched tags in encoding, this is a bug, please report");
+		ccx_common_logging.fatal_ftn(
+			CCX_COMMON_EXIT_BUG_BUG,
+			"Mismatched tags in encoding, this is a bug, please report");
 	return buffer;
 }
 
-unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
+unsigned get_decoder_line_encoded(struct encoder_ctx *ctx,
+								  unsigned char *buffer, int line_num,
+								  struct eia608_screen *data)
 {
 	int col = COL_WHITE;
 	int underlined = 0;
@@ -245,23 +250,29 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 	unsigned char *orig = buffer; // Keep for debugging
 	int first = 0, last = 31;
 	if (ctx->trim_subs)
-		find_limit_characters(line, &first, &last, CCX_DECODER_608_SCREEN_WIDTH);
+		find_limit_characters(line, &first, &last,
+							  CCX_DECODER_608_SCREEN_WIDTH);
 	for (int i = first; i <= last; i++)
 	{
 		// Handle color
 		int its_col = data->colors[line_num][i];
-		if (its_col != col  && !ctx->no_font_color &&
-			!(col == COL_USERDEFINED && its_col == COL_WHITE)) // Don't replace user defined with white
+		if (its_col != col && !ctx->no_font_color &&
+			!(col == COL_USERDEFINED &&
+			  its_col == COL_WHITE)) // Don't replace user defined with white
 		{
 			if (changed_font)
-				buffer = close_tag(ctx, buffer, tagstack, 'F', &underlined, &italics, &changed_font);
+				buffer = close_tag(ctx, buffer, tagstack, 'F', &underlined,
+								   &italics, &changed_font);
 
 			// Add new font tag
-			if ( MAX_COLOR > its_col)
-				buffer += encode_line(ctx, buffer, (unsigned char*)color_text[its_col][1]);
+			if (MAX_COLOR > its_col)
+				buffer += encode_line(ctx, buffer,
+									  (unsigned char *)color_text[its_col][1]);
 			else
 			{
-				ccx_common_logging.log_ftn("WARNING:get_decoder_line_encoded:Invalid Color index Selected %d\n", its_col);
+				ccx_common_logging.log_ftn("WARNING:get_decoder_line_encoded:"
+										   "Invalid Color index Selected %d\n",
+										   its_col);
 				its_col = COL_WHITE;
 			}
 
@@ -269,10 +280,12 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 			{
 				// The previous sentence doesn't copy the whole
 				// <font> tag, just up to the quote before the color
-				buffer += encode_line(ctx, buffer, (unsigned char*)usercolor_rgb);
-				buffer += encode_line(ctx, buffer, (unsigned char*) "\">");
+				buffer +=
+					encode_line(ctx, buffer, (unsigned char *)usercolor_rgb);
+				buffer += encode_line(ctx, buffer, (unsigned char *)"\">");
 			}
-			if (color_text[its_col][1][0]) // That means a <font> was added to the buffer
+			if (color_text[its_col][1]
+						  [0]) // That means a <font> was added to the buffer
 			{
 				strcat(tagstack, "F");
 				changed_font++;
@@ -281,27 +294,31 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 		}
 		// Handle underlined
 		int is_underlined = data->fonts[line_num][i] & FONT_UNDERLINED;
-		if (is_underlined && underlined == 0 && !ctx->no_type_setting) // Open underline
+		if (is_underlined && underlined == 0 &&
+			!ctx->no_type_setting) // Open underline
 		{
-			buffer += encode_line(ctx, buffer, (unsigned char *) "<u>");
+			buffer += encode_line(ctx, buffer, (unsigned char *)"<u>");
 			strcat(tagstack, "U");
 			underlined++;
 		}
-		if (is_underlined == 0 && underlined && !ctx->no_type_setting) // Close underline
+		if (is_underlined == 0 && underlined &&
+			!ctx->no_type_setting) // Close underline
 		{
-			buffer = close_tag(ctx, buffer, tagstack, 'U', &underlined, &italics, &changed_font);
+			buffer = close_tag(ctx, buffer, tagstack, 'U', &underlined,
+							   &italics, &changed_font);
 		}
 		// Handle italics
 		int has_ita = data->fonts[line_num][i] & FONT_ITALICS;
 		if (has_ita && italics == 0 && !ctx->no_type_setting) // Open italics
 		{
-			buffer += encode_line(ctx, buffer, (unsigned char *) "<i>");
+			buffer += encode_line(ctx, buffer, (unsigned char *)"<i>");
 			strcat(tagstack, "I");
 			italics++;
 		}
 		if (has_ita == 0 && italics && !ctx->no_type_setting) // Close italics
 		{
-			buffer = close_tag(ctx, buffer, tagstack, 'I', &underlined, &italics, &changed_font);
+			buffer = close_tag(ctx, buffer, tagstack, 'I', &underlined,
+							   &italics, &changed_font);
 		}
 		int bytes = 0;
 		switch (ctx->encoding)
@@ -317,19 +334,25 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 			get_char_in_unicode(buffer, line[i]);
 			bytes = 2;
 			break;
-		case CCX_ENC_ASCII: // Consider to remove ASCII encoding or write get_char_in_ascii(...)
+		case CCX_ENC_ASCII: // Consider to remove ASCII encoding or write
+							// get_char_in_ascii(...)
 			break;
 		}
 		buffer += bytes;
 	}
-	buffer = close_tag(ctx, buffer, tagstack, 'A', &underlined, &italics, &changed_font);
+	buffer = close_tag(ctx, buffer, tagstack, 'A', &underlined, &italics,
+					   &changed_font);
 	if (underlined || italics || changed_font)
-		ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "Not all tags closed in encoding, this is a bug, please report.\n");
+		ccx_common_logging.fatal_ftn(
+			CCX_COMMON_EXIT_BUG_BUG,
+			"Not all tags closed in encoding, this is a bug, please report.\n");
 	*buffer = 0;
 	return (unsigned)(buffer - orig); // Return length
 }
 
-void get_sentence_borders(int *first, int *last, int line_num, struct eia608_screen *data) {
+void get_sentence_borders(int *first, int *last, int line_num,
+						  struct eia608_screen *data)
+{
 	*first = 0;
 	*last = 32;
 	while (data->colors[line_num][*first] == COL_TRANSPARENT)
@@ -338,7 +361,8 @@ void get_sentence_borders(int *first, int *last, int line_num, struct eia608_scr
 		(*last)--;
 }
 
-/*void delete_all_lines_but_current(ccx_decoder_608_context *context, struct eia608_screen *data, int row)
+/*void delete_all_lines_but_current(ccx_decoder_608_context *context, struct
+eia608_screen *data, int row)
 {
 for (int i=0;i<15;i++)
 {
@@ -346,9 +370,9 @@ if (i!=row)
 {
 memset(data->characters[i], ' ', CCX_DECODER_608_SCREEN_WIDTH);
 data->characters[i][CCX_DECODER_608_SCREEN_WIDTH] = 0;
-memset(data->colors[i], context->settings.default_color, CCX_DECODER_608_SCREEN_WIDTH + 1);
-memset(data->fonts[i], FONT_REGULAR, CCX_DECODER_608_SCREEN_WIDTH + 1);
-data->row_used[i]=0;
+memset(data->colors[i], context->settings.default_color,
+CCX_DECODER_608_SCREEN_WIDTH + 1); memset(data->fonts[i], FONT_REGULAR,
+CCX_DECODER_608_SCREEN_WIDTH + 1); data->row_used[i]=0;
 }
 }
 }*/
@@ -372,10 +396,10 @@ int add_word(const char *word)
 	{
 		// Time to grow
 		spell_capacity += 50;
-		ptr_lower = (char **)realloc(spell_lower, sizeof (char *)*
-			spell_capacity);
-		ptr_correct = (char **)realloc(spell_correct, sizeof (char *)*
-			spell_capacity);
+		ptr_lower =
+			(char **)realloc(spell_lower, sizeof(char *) * spell_capacity);
+		ptr_correct =
+			(char **)realloc(spell_correct, sizeof(char *) * spell_capacity);
 	}
 	else
 	{
@@ -385,8 +409,8 @@ int add_word(const char *word)
 	size_t len = strlen(word);
 	new_lower = (char *)malloc(len + 1);
 	new_correct = (char *)malloc(len + 1);
-	if (ptr_lower == NULL || ptr_correct == NULL ||
-		new_lower == NULL || new_correct == NULL)
+	if (ptr_lower == NULL || ptr_correct == NULL || new_lower == NULL ||
+		new_correct == NULL)
 	{
 		spell_capacity = 0;
 		for (i = 0; i < spell_words; i++)
@@ -409,7 +433,7 @@ int add_word(const char *word)
 		spell_correct = ptr_correct;
 	}
 	strcpy(new_correct, word);
-	for (size_t i = 0; i<len; i++)
+	for (size_t i = 0; i < len; i++)
 	{
 		char c = new_correct[i];
 		c = tolower(c); // TO-DO: Add Spanish characters
@@ -421,7 +445,6 @@ int add_word(const char *word)
 	spell_words++;
 	return 0;
 }
-
 
 int add_built_in_words(void)
 {
@@ -440,31 +463,35 @@ int add_built_in_words(void)
 }
 
 /**
-* @param base points to the start of the array
-* @param nb   number of element in array
-* @param size size of each element
-* @param compar Comparison function, which is called with three argument
-*               that point to the objects being compared and arg.
-*		compare Function should return an integer less than, equal to,
-*		or greater than zero if p1 is found, respectively, to be less than,
-*		to match, or be greater than p2.
-* @param arg argument passed as it is, to compare function
-*/
-void shell_sort(void *base, int nb, size_t size, int(*compar)(const void*p1, const void *p2, void*arg), void *arg)
+ * @param base points to the start of the array
+ * @param nb   number of element in array
+ * @param size size of each element
+ * @param compar Comparison function, which is called with three argument
+ *               that point to the objects being compared and arg.
+ *		compare Function should return an integer less than, equal to,
+ *		or greater than zero if p1 is found, respectively, to be less than,
+ *		to match, or be greater than p2.
+ * @param arg argument passed as it is, to compare function
+ */
+void shell_sort(void *base, int nb, size_t size,
+				int (*compar)(const void *p1, const void *p2, void *arg),
+				void *arg)
 {
-	unsigned char *lbase = (unsigned char*)base;
-	unsigned char *tmp = (unsigned char*)malloc(size);
+	unsigned char *lbase = (unsigned char *)base;
+	unsigned char *tmp = (unsigned char *)malloc(size);
 	for (int gap = nb / 2; gap > 0; gap = gap / 2)
 	{
 		int p, j;
 		for (p = gap; p < nb; p++)
 		{
-			memcpy(tmp, lbase + (p *size), size);
-			for (j = p; j >= gap && (compar(tmp, lbase + ((j - gap) * size), arg) < 0); j -= gap)
+			memcpy(tmp, lbase + (p * size), size);
+			for (j = p;
+				 j >= gap && (compar(tmp, lbase + ((j - gap) * size), arg) < 0);
+				 j -= gap)
 			{
-				memcpy(lbase + (j*size), lbase + ((j - gap) * size), size);
+				memcpy(lbase + (j * size), lbase + ((j - gap) * size), size);
 			}
-			memcpy(lbase + (j *size), tmp, size);
+			memcpy(lbase + (j * size), tmp, size);
 		}
 	}
 	free(tmp);
@@ -472,6 +499,8 @@ void shell_sort(void *base, int nb, size_t size, int(*compar)(const void*p1, con
 
 void ccx_encoders_helpers_perform_shellsort_words(void)
 {
-	shell_sort(spell_lower, spell_words, sizeof(*spell_lower), string_cmp_function, NULL);
-	shell_sort(spell_correct, spell_words, sizeof(*spell_correct), string_cmp_function, NULL);
+	shell_sort(spell_lower, spell_words, sizeof(*spell_lower),
+			   string_cmp_function, NULL);
+	shell_sort(spell_correct, spell_words, sizeof(*spell_correct),
+			   string_cmp_function, NULL);
 }

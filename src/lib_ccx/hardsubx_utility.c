@@ -2,17 +2,17 @@
 #include "utility.h"
 
 #ifdef ENABLE_HARDSUBX
-//TODO: Correct FFMpeg integration
+// TODO: Correct FFMpeg integration
+#include "hardsubx.h"
+#include <leptonica/allheaders.h>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
-#include <leptonica/allheaders.h>
-#include "hardsubx.h"
 
 int64_t convert_pts_to_ms(int64_t pts, AVRational time_base)
 {
-	return av_rescale_q(pts, time_base, AV_TIME_BASE_Q)/1000;
+	return av_rescale_q(pts, time_base, AV_TIME_BASE_Q) / 1000;
 }
 
 int64_t convert_pts_to_ns(int64_t pts, AVRational time_base)
@@ -22,10 +22,10 @@ int64_t convert_pts_to_ns(int64_t pts, AVRational time_base)
 
 int64_t convert_pts_to_s(int64_t pts, AVRational time_base)
 {
-	return av_rescale_q(pts, time_base, AV_TIME_BASE_Q)/1000000;
+	return av_rescale_q(pts, time_base, AV_TIME_BASE_Q) / 1000000;
 }
 
-int edit_distance(char * word1, char * word2, int len1, int len2)
+int edit_distance(char *word1, char *word2, int len1, int len2)
 {
 	// len2 <= len1
 	if (len2 > len1)
@@ -34,7 +34,7 @@ int edit_distance(char * word1, char * word2, int len1, int len2)
 		len1 = len2;
 		len2 = tmp;
 
-		char * tmp_ptr = word1;
+		char *tmp_ptr = word1;
 		word1 = word2;
 		word2 = tmp_ptr;
 	}
@@ -44,7 +44,8 @@ int edit_distance(char * word1, char * word2, int len1, int len2)
 		matrix[i] = (int *)malloc((len2 + 1) * sizeof(int));
 
 	int i, delete, insert, substitute, minimum;
-	for (i = 0; i <= len2; i++)matrix[0][i] = i;
+	for (i = 0; i <= len2; i++)
+		matrix[0][i] = i;
 	for (i = 1; i <= len1; i++)
 	{
 		int j;
@@ -95,10 +96,10 @@ int is_valid_trailing_char(char c)
 	int ret = 1;
 	size_t len = strlen(prune_text);
 
-	for(int i=0;i<len;i++)
+	for (int i = 0; i < len; i++)
 	{
-		if(prune_text[i] == c)
-		{	
+		if (prune_text[i] == c)
+		{
 			ret = -1;
 			break;
 		}
@@ -118,11 +119,11 @@ char *prune_string(char *s)
 		return s;
 
 	end = s + size - 1;
-	while (end >= s && is_valid_trailing_char(*end)==-1)
+	while (end >= s && is_valid_trailing_char(*end) == -1)
 		end--;
 	*(end + 1) = '\0';
 
-	while (*s && is_valid_trailing_char(*end)==-1)
+	while (*s && is_valid_trailing_char(*end) == -1)
 		s++;
 	printf("%s\n", s);
 	return s;

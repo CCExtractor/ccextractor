@@ -3,13 +3,15 @@
 
 struct ts_payload
 {
-	unsigned char *start; // Payload start
-	unsigned length;      // Payload length
-	unsigned pesstart;    // PES or PSI start
-	unsigned pid;         // Stream PID
-	int counter;          // continuity counter
-	int transport_error;  // 0 = packet OK, non-zero damaged
-	int has_random_access_indicator; //1 = start of new GOP (Set when the stream may be decoded without errors from this point)
+	unsigned char *start;			 // Payload start
+	unsigned length;				 // Payload length
+	unsigned pesstart;				 // PES or PSI start
+	unsigned pid;					 // Stream PID
+	int counter;					 // continuity counter
+	int transport_error;			 // 0 = packet OK, non-zero damaged
+	int has_random_access_indicator; // 1 = start of new GOP (Set when the
+									 // stream may be decoded without errors from
+									 // this point)
 	int have_pcr;
 	int64_t pcr;
 	unsigned char section_buf[4098];
@@ -65,11 +67,11 @@ struct EPG_event
 	uint8_t *categories;
 	uint32_t num_categories;
 	uint16_t service_id;
-	long long int count; //incremented by one each time the event is updated
-	uint8_t live_output; //boolean flag, true if this event has been output
+	long long int count; // incremented by one each time the event is updated
+	uint8_t live_output; // boolean flag, true if this event has been output
 };
 
-#define EPG_MAX_EVENTS 60*24*7
+#define EPG_MAX_EVENTS 60 * 24 * 7
 struct EIT_program
 {
 	uint32_t array_len;

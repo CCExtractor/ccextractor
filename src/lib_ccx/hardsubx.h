@@ -5,11 +5,11 @@
 #include "utility.h"
 
 #ifdef ENABLE_HARDSUBX
-//TODO: Correct FFMpeg integration
+// TODO: Correct FFMpeg integration
+#include <leptonica/allheaders.h>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
-#include <leptonica/allheaders.h>
 #include <tesseract/capi.h>
 
 enum hardsubx_color_type
@@ -79,35 +79,45 @@ struct lib_hardsubx_ctx
 	float lum_thresh;
 };
 
-struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options);
-void _hardsubx_params_dump(struct ccx_s_options *options, struct lib_hardsubx_ctx *ctx);
+struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options);
+void _hardsubx_params_dump(struct ccx_s_options *options,
+						   struct lib_hardsubx_ctx *ctx);
 void hardsubx(struct ccx_s_options *options);
 void _dinit_hardsubx(struct lib_hardsubx_ctx **ctx);
 int hardsubx_process_data(struct lib_hardsubx_ctx *ctx);
 
-//hardsubx_decoder.c
-void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx);
-int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx);
+// hardsubx_decoder.c
+void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx,
+									struct encoder_ctx *enc_ctx);
+int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx,
+									   struct encoder_ctx *enc_ctx);
 void hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx);
-char* _process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index);
-char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index);
-void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int timestamp);
-char* _process_frame_tickertext(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index);
+char *_process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame,
+								 int width, int height, int index);
+char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame,
+								 int width, int height, int index);
+void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width,
+					int height, int timestamp);
+char *_process_frame_tickertext(struct lib_hardsubx_ctx *ctx, AVFrame *frame,
+								int width, int height, int index);
 
-//hardsubx_imgops.c
-void rgb_to_hsv(float R, float G, float B,float *H, float *S, float *V);
-void rgb_to_lab(float R, float G, float B,float *L, float *a, float *b);
+// hardsubx_imgops.c
+void rgb_to_hsv(float R, float G, float B, float *H, float *S, float *V);
+void rgb_to_lab(float R, float G, float B, float *L, float *a, float *b);
 
-//hardsubx_classifier.c
+// hardsubx_classifier.c
 char *get_ocr_text_simple(struct lib_hardsubx_ctx *ctx, PIX *image);
 char *get_ocr_text_wordwise(struct lib_hardsubx_ctx *ctx, PIX *image);
 char *get_ocr_text_letterwise(struct lib_hardsubx_ctx *ctx, PIX *image);
-char *get_ocr_text_simple_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold);
-char *get_ocr_text_wordwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold);
-char *get_ocr_text_letterwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image, float threshold);
+char *get_ocr_text_simple_threshold(struct lib_hardsubx_ctx *ctx, PIX *image,
+									float threshold);
+char *get_ocr_text_wordwise_threshold(struct lib_hardsubx_ctx *ctx, PIX *image,
+									  float threshold);
+char *get_ocr_text_letterwise_threshold(struct lib_hardsubx_ctx *ctx,
+										PIX *image, float threshold);
 
-//hardsubx_utility.c
-int edit_distance(char * word1, char * word2, int len1, int len2);
+// hardsubx_utility.c
+int edit_distance(char *word1, char *word2, int len1, int len2);
 int64_t convert_pts_to_ms(int64_t pts, AVRational time_base);
 int64_t convert_pts_to_ns(int64_t pts, AVRational time_base);
 int64_t convert_pts_to_s(int64_t pts, AVRational time_base);

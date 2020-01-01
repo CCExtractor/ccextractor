@@ -3,14 +3,21 @@
 
 #include "ccx_decoders_common.h"
 
-#define NUM_BYTES_PER_PACKET 35 // Class + type (repeated for convenience) + data + zero
-#define NUM_XDS_BUFFERS 9  // CEA recommends no more than one level of interleaving. Play it safe
+#define NUM_BYTES_PER_PACKET                                                   \
+	35 // Class + type (repeated for convenience) + data + zero
+#define NUM_XDS_BUFFERS                                                        \
+	9 // CEA recommends no more than one level of interleaving. Play it safe
 
 struct ccx_decoders_xds_context;
-void process_xds_bytes (struct ccx_decoders_xds_context *ctx, const unsigned char hi, int lo);
-void do_end_of_xds (struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, unsigned char expected_checksum);
+void process_xds_bytes(struct ccx_decoders_xds_context *ctx,
+					   const unsigned char hi, int lo);
+void do_end_of_xds(struct cc_subtitle *sub,
+				   struct ccx_decoders_xds_context *ctx,
+				   unsigned char expected_checksum);
 
-struct ccx_decoders_xds_context *ccx_decoders_xds_init_library(struct ccx_common_timing_ctx *timing, int xds_write_to_file);
+struct ccx_decoders_xds_context *
+ccx_decoders_xds_init_library(struct ccx_common_timing_ctx *timing,
+							  int xds_write_to_file);
 
 void xds_cea608_test();
 
@@ -19,7 +26,8 @@ struct xds_buffer
 	unsigned in_use;
 	int xds_class;
 	int xds_type;
-	unsigned char bytes[NUM_BYTES_PER_PACKET]; // Class + type (repeated for convenience) + data + zero
+	unsigned char bytes[NUM_BYTES_PER_PACKET]; // Class + type (repeated for
+											   // convenience) + data + zero
 	unsigned char used_bytes;
 };
 

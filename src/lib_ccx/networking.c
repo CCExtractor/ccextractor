@@ -1,34 +1,34 @@
-#include "lib_ccx.h"
 #include "networking.h"
+#include "lib_ccx.h"
 
+#include <assert.h>
+#include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
 #include <string.h>
-#include <errno.h>
-#include <assert.h>
 
 #define DEBUG_OUT 0
 
 /* Protocol constants: */
-#define INT_LEN         10
-#define OK              1
-#define PASSWORD        2
-#define BIN_MODE        3
-#define CC_DESC         4
-#define BIN_HEADER      5
-#define BIN_DATA        6
-#define EPG_DATA        7
-#pragma warning( suppress : 4005)
-#define ERROR           51
+#define INT_LEN 10
+#define OK 1
+#define PASSWORD 2
+#define BIN_MODE 3
+#define CC_DESC 4
+#define BIN_HEADER 5
+#define BIN_DATA 6
+#define EPG_DATA 7
+#pragma warning(suppress : 4005)
+#define ERROR 51
 #define UNKNOWN_COMMAND 52
-#define WRONG_PASSWORD  53
-#define CONN_LIMIT      54
-#define PING            55
+#define WRONG_PASSWORD 53
+#define CONN_LIMIT 54
+#define PING 55
 
 /* #include <time.h> */
 
-#define DFT_PORT "2048" /* Default port for server and client */
+#define DFT_PORT "2048"		   /* Default port for server and client */
 #define WRONG_PASSWORD_DELAY 2 /* Seconds */
 #define BUFFER_SIZE 50
 #define NO_RESPONCE_INTERVAL 20
@@ -71,7 +71,7 @@ ssize_t writen(int fd, const void *vptr, size_t n);
 ssize_t write_byte(int fd, char status);
 ssize_t read_byte(int fd, char *status);
 
-void init_sockets (void);
+void init_sockets(void);
 
 #if DEBUG_OUT
 void pr_command(char c);
@@ -80,7 +80,8 @@ void pr_command(char c);
 void handle_write_error();
 int set_nonblocking(int fd);
 
-void connect_to_srv(const char *addr, const char *port, const char *cc_desc, const char *pwd)
+void connect_to_srv(const char *addr, const char *port, const char *cc_desc,
+					const char *pwd)
 {
 	if (NULL == addr)
 	{
@@ -91,17 +92,22 @@ void connect_to_srv(const char *addr, const char *port, const char *cc_desc, con
 	if (NULL == port)
 		port = DFT_PORT;
 
-	mprint("\n\r----------------------------------------------------------------------\n");
+	mprint("\n\r---------------------------------------------------------------"
+		   "-------\n");
 	mprint("Connecting to %s:%s\n", addr, port);
 
 	if ((srv_sd = tcp_connect(addr, port)) < 0)
-		fatal(EXIT_FAILURE, "connect_to_srv: Unable to connect (tcp_connect error).\n");
+		fatal(EXIT_FAILURE,
+			  "connect_to_srv: Unable to connect (tcp_connect error).\n");
 
 	if (write_block(srv_sd, PASSWORD, pwd, pwd ? strlen(pwd) : 0) < 0)
-		fatal(EXIT_FAILURE, "connect_to_srv: Unable to connect (sending password).\n");
+		fatal(EXIT_FAILURE,
+			  "connect_to_srv: Unable to connect (sending password).\n");
 
-	if (write_block(srv_sd, CC_DESC, cc_desc, cc_desc ? strlen(cc_desc) : 0) < 0)
-		fatal(EXIT_FAILURE, "connect_to_srv: Unable to connect (sending cc_desc).\n");
+	if (write_block(srv_sd, CC_DESC, cc_desc, cc_desc ? strlen(cc_desc) : 0) <
+		0)
+		fatal(EXIT_FAILURE,
+			  "connect_to_srv: Unable to connect (sending cc_desc).\n");
 
 	srv_addr = addr;
 	srv_port = port;
@@ -117,7 +123,8 @@ void net_send_header(const unsigned char *data, size_t len)
 
 #if DEBUG_OUT
 	fprintf(stderr, "Sending header (len = %u): \n", len);
-	fprintf(stderr, "File created by %02X version %02X%02X\n", data[3], data[4], data[5]);
+	fprintf(stderr, "File created by %02X version %02X%02X\n", data[3], data[4],
+			data[5]);
 	fprintf(stderr, "File format revision: %02X%02X\n", data[6], data[7]);
 #endif
 
@@ -137,7 +144,8 @@ void net_send_header(const unsigned char *data, size_t len)
 	srv_header_len = len;
 }
 
-int net_send_cc(const unsigned char *data, int len, void *private_data, struct cc_subtitle *sub)
+int net_send_cc(const unsigned char *data, int len, void *private_data,
+				struct cc_subtitle *sub)
 {
 	assert(srv_sd > 0);
 
@@ -171,10 +179,12 @@ void net_check_conn()
 	if (last_ping == 0)
 		last_ping = now;
 
-	do {
+	do
+	{
 		c = 0;
 		rc = read_byte(srv_sd, &c);
-		if (c == PING) {
+		if (c == PING)
+		{
 #if DEBUG_OUT
 			fprintf(stderr, "[S] Received PING\n");
 #endif
@@ -184,9 +194,10 @@ void net_check_conn()
 
 	if (now - last_ping > NO_RESPONCE_INTERVAL)
 	{
-		fprintf(stderr,
-				"[S] No PING received from the server in %u sec, reconnecting\n",
-				NO_RESPONCE_INTERVAL);
+		fprintf(
+			stderr,
+			"[S] No PING received from the server in %u sec, reconnecting\n",
+			NO_RESPONCE_INTERVAL);
 		close(srv_sd);
 		srv_sd = -1;
 
@@ -209,14 +220,8 @@ void net_check_conn()
 	}
 }
 
-void net_send_epg(
-		const char *start,
-		const char *stop,
-		const char *title,
-		const char *desc,
-		const char *lang,
-		const char *category
-		)
+void net_send_epg(const char *start, const char *stop, const char *title,
+				  const char *desc, const char *lang, const char *category)
 {
 	size_t st;
 	size_t sp;
@@ -246,17 +251,17 @@ void net_send_epg(
 	if (desc != NULL)
 		d += strlen(desc);
 
-    l = 1;
-    if (lang != NULL)
-        l += strlen(lang);
+	l = 1;
+	if (lang != NULL)
+		l += strlen(lang);
 
-    c = 1;
-    if (category != NULL)
-        c += strlen(category);
+	c = 1;
+	if (category != NULL)
+		c += strlen(category);
 
-    len = st + sp + t + d + l + c;
+	len = st + sp + t + d + l + c;
 
-	epg = (char *) calloc(len, sizeof(char));
+	epg = (char *)calloc(len, sizeof(char));
 	if (NULL == epg)
 		return;
 
@@ -276,13 +281,13 @@ void net_send_epg(
 		memcpy(end, desc, d);
 	end += d;
 
-    if (lang != NULL)
-        memcpy(end, lang, l);
-    end += l;
+	if (lang != NULL)
+		memcpy(end, lang, l);
+	end += l;
 
-    if (category != NULL)
-        memcpy(end, category, c);
-    end += c;
+	if (category != NULL)
+		memcpy(end, category, c);
+	end += c;
 
 #if DEBUG_OUT
 	fprintf(stderr, "[C] Sending EPG: %u bytes\n", len);
@@ -291,7 +296,7 @@ void net_send_epg(
 	if (write_block(srv_sd, EPG_DATA, epg, len) <= 0)
 		fprintf(stderr, "Can't send EPG data\n");
 
-    	free(epg);
+	free(epg);
 
 	return;
 }
@@ -323,13 +328,13 @@ int net_tcp_read(int socket, void *buffer, size_t length)
 
 		if ((rc = read_block(socket, &c, buffer, &l)) <= 0)
 			return rc;
-	}
-	while (c != BIN_DATA && c != BIN_HEADER);
+	} while (c != BIN_DATA && c != BIN_HEADER);
 
 	return l;
 }
 
-int net_udp_read(int socket, void *buffer, size_t length, const char *src_str, const char *addr_str)
+int net_udp_read(int socket, void *buffer, size_t length, const char *src_str,
+				 const char *addr_str)
 {
 	assert(buffer != NULL);
 	assert(length > 0);
@@ -349,24 +354,31 @@ int net_udp_read(int socket, void *buffer, size_t length, const char *src_str, c
 	{
 		addr = INADDR_ANY;
 	}
-	#ifdef _WIN32
-	if (IN_MULTICAST(addr) && src_str != NULL)						  					/* We check if the case is of source multicast and we are in windowsOS */
+#ifdef _WIN32
+	if (IN_MULTICAST(addr) &&
+		src_str != NULL) /* We check if the case is of source multicast and we
+							are in windowsOS */
 	{
-		do {
-			i = recvfrom(socket, (char *) buffer, length, 0, (struct sockaddr*)&source_addr, &len); /* peek at the data*/
+		do
+		{
+			i = recvfrom(socket, (char *)buffer, length, 0,
+						 (struct sockaddr *)&source_addr,
+						 &len); /* peek at the data*/
 			memset(ip, 0, sizeof(char) * 15);
 			memcpy(ip, inet_ntoa(source_addr.sin_addr), sizeof(ip));
-		} while (strcmp(ip, src_str)!=0);												/* Loop till we find intended source */
+		} while (strcmp(ip, src_str) !=
+				 0); /* Loop till we find intended source */
 	}
 	else
-		i = recvfrom(socket, (char *) buffer, length, 0, NULL, NULL); 								/*read normally if not source mutlicast case*/
-	#else
-	i = recvfrom(socket, (char *) buffer, length, 0, NULL, NULL); 									/*read normally if not windows*/
-	#endif
+		i = recvfrom(socket, (char *)buffer, length, 0, NULL,
+					 NULL); /*read normally if not source mutlicast case*/
+#else
+	i = recvfrom(socket, (char *)buffer, length, 0, NULL,
+				 NULL); /*read normally if not windows*/
+#endif
 
 	return i;
 }
-
 
 /*
  * command | length        | data         | \r\n
@@ -410,7 +422,7 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 	{
 		if ((rc = writen(fd, buf, buf_len)) < 0)
 			return -1;
-		else if (rc != (int) buf_len)
+		else if (rc != (int)buf_len)
 			return 0;
 		nwritten += rc;
 	}
@@ -460,7 +472,8 @@ int tcp_connect(const char *host, const char *port)
 
 	struct addrinfo *ai;
 	int rc = getaddrinfo(host, port, &hints, &ai);
-	if (rc != 0) {
+	if (rc != 0)
+	{
 		mprint("getaddrinfo() error: %s\n", gai_strerror(rc));
 		return -1;
 	}
@@ -469,10 +482,12 @@ int tcp_connect(const char *host, const char *port)
 	int sockfd;
 
 	/* Try each address until we successfully connect */
-	for (p = ai; p != NULL; p = p->ai_next) {
+	for (p = ai; p != NULL; p = p->ai_next)
+	{
 		sockfd = socket(p->ai_family, SOCK_STREAM, p->ai_protocol);
 
-		if (-1 == sockfd) {
+		if (-1 == sockfd)
+		{
 #if _WIN32
 			wprintf(L"socket() error: %ld\n", WSAGetLastError());
 #else
@@ -517,7 +532,8 @@ int start_tcp_srv(const char *port, const char *pwd)
 	if (NULL == port)
 		port = DFT_PORT;
 
-	mprint("\n\r----------------------------------------------------------------------\n");
+	mprint("\n\r---------------------------------------------------------------"
+		   "-------\n");
 
 	mprint("Binding to %s\n", port);
 	int fam;
@@ -539,15 +555,18 @@ int start_tcp_srv(const char *port, const char *pwd)
 			clilen = sizeof(struct sockaddr_in);
 		else
 			clilen = sizeof(struct sockaddr_in6);
-		struct sockaddr *cliaddr = (struct sockaddr *) malloc(clilen);
+		struct sockaddr *cliaddr = (struct sockaddr *)malloc(clilen);
 		if (NULL == cliaddr)
-			fatal(EXIT_FAILURE, "In start_tcp_srv: Out of memory for client address. malloc() error: %s", strerror(errno));
+			fatal(EXIT_FAILURE,
+				  "In start_tcp_srv: Out of memory for client address. "
+				  "malloc() error: %s",
+				  strerror(errno));
 
 		if ((sockfd = accept(listen_sd, cliaddr, &clilen)) < 0)
 		{
 			if (EINTR == errno) /* TODO not necessary */
 			{
-                		free(cliaddr);
+				free(cliaddr);
 				continue;
 			}
 			else
@@ -556,7 +575,8 @@ int start_tcp_srv(const char *port, const char *pwd)
 				wprintf(L"accept() error: %ld\n", WSAGetLastError());
 				exit(EXIT_FAILURE);
 #else
-				fatal(EXIT_FAILURE, "In start_tcp_srv: accept() error: %s\n", strerror(errno));
+				fatal(EXIT_FAILURE, "In start_tcp_srv: accept() error: %s\n",
+					  strerror(errno));
 #endif
 			}
 		}
@@ -564,8 +584,8 @@ int start_tcp_srv(const char *port, const char *pwd)
 		char host[NI_MAXHOST];
 		char serv[NI_MAXSERV];
 		int rc;
-		if ((rc = getnameinfo(cliaddr, clilen,
-						host, sizeof(host), serv, sizeof(serv), 0)) != 0)
+		if ((rc = getnameinfo(cliaddr, clilen, host, sizeof(host), serv,
+							  sizeof(serv), 0)) != 0)
 		{
 			mprint("getnameinfo() error: %s\n", gai_strerror(rc));
 		}
@@ -611,7 +631,8 @@ int check_password(int fd, const char *pwd)
 	if (pwd == NULL)
 		return 1;
 
-	if (c == PASSWORD && strcmp(pwd, buf) == 0) {
+	if (c == PASSWORD && strcmp(pwd, buf) == 0)
+	{
 		return 1;
 	}
 
@@ -669,7 +690,8 @@ int tcp_bind(const char *port, int *family)
 		if (AF_INET6 == p->ai_family)
 		{
 			int no = 0;
-			if (setsockopt(sockfd, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&no, sizeof(no)) < 0)
+			if (setsockopt(sockfd, IPPROTO_IPV6, IPV6_V6ONLY, (char *)&no,
+						   sizeof(no)) < 0)
 			{
 #if _WIN32
 				wprintf(L"setsockopt() error: %ld\n", WSAGetLastError());
@@ -736,7 +758,7 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 
 	if ((rc = readn(fd, command, 1)) < 0)
 		return -1;
-	else if ((size_t) rc != 1)
+	else if ((size_t)rc != 1)
 		return 0;
 	nread += rc;
 
@@ -767,20 +789,20 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 		{
 			ign_bytes = len - *buf_len;
 			mprint("read_block() warning: Buffer overflow, ignoring %d bytes\n",
-					ign_bytes);
+				   ign_bytes);
 			len = *buf_len;
 		}
 
 		if ((rc = readn(fd, buf, len)) < 0)
 			return -1;
-		else if ((size_t) rc != len)
+		else if ((size_t)rc != len)
 			return 0;
 		nread += rc;
 		*buf_len = len;
 
 		if ((rc = readn(fd, 0, ign_bytes)) < 0)
 			return -1;
-		else if ((size_t) rc != ign_bytes)
+		else if ((size_t)rc != ign_bytes)
 			return 0;
 		nread += rc;
 
@@ -796,7 +818,7 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 	char end[2] = {0};
 	if ((rc = readn(fd, end, sizeof(end))) < 0)
 		return -1;
-	else if ((size_t) rc != sizeof(end))
+	else if ((size_t)rc != sizeof(end))
 		return 0;
 	nread += rc;
 
@@ -816,48 +838,47 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 	return nread;
 }
 
-
 #if DEBUG_OUT
 void pr_command(char c)
 {
-	switch(c)
+	switch (c)
 	{
-		case OK:
-			fprintf(stderr, "OK");
-			break;
-		case BIN_MODE:
-			fprintf(stderr, "BIN_MODE");
-			break;
-		case WRONG_PASSWORD:
-			fprintf(stderr, "WRONG_PASSWORD");
-			break;
-		case UNKNOWN_COMMAND:
-			fprintf(stderr, "UNKNOWN_COMMAND");
-			break;
-		case ERROR:
-			fprintf(stderr, "ERROR");
-			break;
-		case CONN_LIMIT:
-			fprintf(stderr, "CONN_LIMIT");
-			break;
-		case PASSWORD:
-			fprintf(stderr, "PASSWORD");
-			break;
-		case BIN_HEADER:
-			fprintf(stderr, "BIN_HEADER");
-			break;
-		case BIN_DATA:
-			fprintf(stderr, "BIN_DATA");
-			break;
-		case EPG_DATA:
-			fprintf(stderr, "EPG_DATA");
-			break;
-		case PING:
-			fprintf(stderr, "PING");
-			break;
-		default:
-			fprintf(stderr, "UNKNOWN (%d)", (int) c);
-			break;
+	case OK:
+		fprintf(stderr, "OK");
+		break;
+	case BIN_MODE:
+		fprintf(stderr, "BIN_MODE");
+		break;
+	case WRONG_PASSWORD:
+		fprintf(stderr, "WRONG_PASSWORD");
+		break;
+	case UNKNOWN_COMMAND:
+		fprintf(stderr, "UNKNOWN_COMMAND");
+		break;
+	case ERROR:
+		fprintf(stderr, "ERROR");
+		break;
+	case CONN_LIMIT:
+		fprintf(stderr, "CONN_LIMIT");
+		break;
+	case PASSWORD:
+		fprintf(stderr, "PASSWORD");
+		break;
+	case BIN_HEADER:
+		fprintf(stderr, "BIN_HEADER");
+		break;
+	case BIN_DATA:
+		fprintf(stderr, "BIN_DATA");
+		break;
+	case EPG_DATA:
+		fprintf(stderr, "EPG_DATA");
+		break;
+	case PING:
+		fprintf(stderr, "PING");
+		break;
+	default:
+		fprintf(stderr, "UNKNOWN (%d)", (int)c);
+		break;
 	}
 }
 #endif
@@ -873,13 +894,14 @@ ssize_t readn(int fd, void *vptr, size_t n)
 	nleft = n;
 	while (nleft > 0)
 	{
-		if (NULL == vptr) {
+		if (NULL == vptr)
+		{
 			char c;
 			nread = recv(fd, &c, 1, 0);
 		}
 		else
 		{
-			nread = recv(fd, (void*)ptr, nleft, 0);
+			nread = recv(fd, (void *)ptr, nleft, 0);
 		}
 
 		if (nread < 0)
@@ -976,13 +998,13 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 		struct hostent *host = gethostbyname(src_str);
 		if (NULL == host)
 		{
-			fatal(EXIT_MALFORMED_PARAMETER, "Cannot look up udp network address: %s\n",
-					src_str);
+			fatal(EXIT_MALFORMED_PARAMETER,
+				  "Cannot look up udp network address: %s\n", src_str);
 		}
 		else if (host->h_addrtype != AF_INET)
 		{
-			fatal(EXIT_MALFORMED_PARAMETER, "No support for non-IPv4 network addresses: %s\n",
-					src_str);
+			fatal(EXIT_MALFORMED_PARAMETER,
+				  "No support for non-IPv4 network addresses: %s\n", src_str);
 		}
 
 		src = ntohl(((struct in_addr *)host->h_addr_list[0])->s_addr);
@@ -994,13 +1016,13 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 		struct hostent *host = gethostbyname(addr_str);
 		if (NULL == host)
 		{
-			fatal(EXIT_MALFORMED_PARAMETER, "Cannot look up udp network address: %s\n",
-					addr_str);
+			fatal(EXIT_MALFORMED_PARAMETER,
+				  "Cannot look up udp network address: %s\n", addr_str);
 		}
 		else if (host->h_addrtype != AF_INET)
 		{
-			fatal(EXIT_MALFORMED_PARAMETER, "No support for non-IPv4 network addresses: %s\n",
-					addr_str);
+			fatal(EXIT_MALFORMED_PARAMETER,
+				  "No support for non-IPv4 network addresses: %s\n", addr_str);
 		}
 
 		addr = ntohl(((struct in_addr *)host->h_addr_list[0])->s_addr);
@@ -1011,7 +1033,8 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 	}
 
 	int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (-1 == sockfd) {
+	if (-1 == sockfd)
+	{
 #if _WIN32
 		wprintf(L"socket() error: %ld\n", WSAGetLastError());
 		exit(EXIT_FAILURE);
@@ -1023,7 +1046,8 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 	if (IN_MULTICAST(addr))
 	{
 		int on = 1;
-		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
+		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&on,
+					   sizeof(on)) < 0)
 		{
 #if _WIN32
 			wprintf(L"setsockopt() error: %ld\n", WSAGetLastError());
@@ -1037,10 +1061,10 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons(port);
 #if _WIN32
-	// Doesn't seem correct, if there's more than one multicast stream with the same
-	// port number we get corruption - IP address needs to be specified, but
-	// in Windows we get an error 10049 (cannot bind).
-	// http ://stackoverflow.com/questions/6140734/cannot-bind-to-multicast-address-windows
+	// Doesn't seem correct, if there's more than one multicast stream with the
+	// same port number we get corruption - IP address needs to be specified,
+	// but in Windows we get an error 10049 (cannot bind). http
+	// ://stackoverflow.com/questions/6140734/cannot-bind-to-multicast-address-windows
 	servaddr.sin_addr.s_addr = htonl(IN_MULTICAST(addr) ? INADDR_ANY : addr);
 #else
 	servaddr.sin_addr.s_addr = htonl(addr);
@@ -1052,25 +1076,32 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 		wprintf(L"bind() error: %ld\n", WSAGetLastError());
 		exit(EXIT_FAILURE);
 #else
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "In start_upd_srv: bind() error: %s\n", strerror(errno));
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In start_upd_srv: bind() error: %s\n",
+			  strerror(errno));
 #endif
 	}
 
-	if (IN_MULTICAST(addr)) {
+	if (IN_MULTICAST(addr))
+	{
 		int setsockopt_return = 0;
-		if (src_str != NULL) {
+		if (src_str != NULL)
+		{
 			struct ip_mreq_source multicast_req;
 			multicast_req.imr_sourceaddr.s_addr = htonl(src);
 			multicast_req.imr_multiaddr.s_addr = htonl(addr);
 			multicast_req.imr_interface.s_addr = htonl(INADDR_ANY);
-			setsockopt_return = setsockopt(sockfd, IPPROTO_IP, IP_ADD_SOURCE_MEMBERSHIP, (char *)&multicast_req, sizeof(multicast_req));
+			setsockopt_return =
+				setsockopt(sockfd, IPPROTO_IP, IP_ADD_SOURCE_MEMBERSHIP,
+						   (char *)&multicast_req, sizeof(multicast_req));
 		}
 		else
 		{
 			struct ip_mreq multicast_req;
 			multicast_req.imr_multiaddr.s_addr = htonl(addr);
 			multicast_req.imr_interface.s_addr = htonl(INADDR_ANY);
-			setsockopt_return = setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&multicast_req, sizeof(multicast_req));
+			setsockopt_return =
+				setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+						   (char *)&multicast_req, sizeof(multicast_req));
 		}
 
 		if (setsockopt_return < 0)
@@ -1084,7 +1115,8 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 		}
 	}
 
-	mprint("\n\r----------------------------------------------------------------------\n");
+	mprint("\n\r---------------------------------------------------------------"
+		   "-------\n");
 	if (addr == INADDR_ANY)
 	{
 		mprint("\rReading from UDP socket %u\n", port);
@@ -1114,7 +1146,7 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 	return sockfd;
 }
 
-void init_sockets (void)
+void init_sockets(void)
 {
 	static int socket_inited = 0;
 	if (!socket_inited)
@@ -1147,7 +1179,8 @@ void handle_write_error()
 
 	char c = 0;
 	int rc;
-	do {
+	do
+	{
 		c = 0;
 		rc = read_byte(srv_sd, &c);
 		if (rc < 0)
@@ -1163,22 +1196,22 @@ void handle_write_error()
 
 	switch (c)
 	{
-		case PASSWORD:
-			mprint("Wrong password (use -tcppassword)\n");
-			break;
-		case CONN_LIMIT:
-			mprint("Too many connections to the server, please wait\n");
-			break;
-		case ERROR:
-			mprint("Internal server error");
-			break;
-		default:
+	case PASSWORD:
+		mprint("Wrong password (use -tcppassword)\n");
+		break;
+	case CONN_LIMIT:
+		mprint("Too many connections to the server, please wait\n");
+		break;
+	case ERROR:
+		mprint("Internal server error");
+		break;
+	default:
 #if _WIN32
-			wprintf(L"send() error: %ld\n", err);
+		wprintf(L"send() error: %ld\n", err);
 #else
-			mprint("send() error: %s\n", err);
+		mprint("send() error: %s\n", err);
 #endif
-			break;
+		break;
 	}
 
 	return;
@@ -1186,18 +1219,18 @@ void handle_write_error()
 
 int set_nonblocking(int fd)
 {
-    int f;
+	int f;
 #ifdef O_NONBLOCK
-    if ((f = fcntl(fd, F_GETFL, 0)) < 0)
-        f = 0;
+	if ((f = fcntl(fd, F_GETFL, 0)) < 0)
+		f = 0;
 
-    return fcntl(fd, F_SETFL, f | O_NONBLOCK);
+	return fcntl(fd, F_SETFL, f | O_NONBLOCK);
 #else
-    f = 1;
-	#if _WIN32
-		return ioctlsocket(fd, FIONBIO, &f);
-	#else
-		return ioctl(fd, FIONBIO, &f);
-	#endif
+	f = 1;
+#if _WIN32
+	return ioctlsocket(fd, FIONBIO, &f);
+#else
+	return ioctl(fd, FIONBIO, &f);
+#endif
 #endif
 }

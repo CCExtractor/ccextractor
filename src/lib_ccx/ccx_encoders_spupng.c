@@ -5,8 +5,8 @@
 #include <ft2build.h>
 #include <math.h>
 #include FT_FREETYPE_H
-#include "lib_ccx.h"
 #include "ccx_encoders_helpers.h"
+#include "lib_ccx.h"
 #include <assert.h>
 #ifdef ENABLE_OCR
 #include "ocr.h"
@@ -21,21 +21,21 @@
 #define FONT_SIZE 20
 #define CANVAS_WIDTH 600
 
-FT_Library  ft_library = NULL;
+FT_Library ft_library = NULL;
 
 // The FT_Face object handles typographical information
 // The different face variables are for the regular and italics
-FT_Face	 face_regular = NULL;
+FT_Face face_regular = NULL;
 FT_Face face_italics = NULL;
 FT_Face face = NULL;
 
 struct spupng_t
 {
-	FILE* fpxml;
-	FILE* fppng;
-	char* dirname;
-	char* pngfile;
-	char* relative_path_png;
+	FILE *fpxml;
+	FILE *fppng;
+	char *dirname;
+	char *pngfile;
+	char *relative_path_png;
 	int fileIndex;
 	int xOffset;
 	int yOffset;
@@ -51,22 +51,26 @@ void spupng_init_font()
 	int i, j;
 
 	/* de-interleave font image (puts all chars in row 0) */
-	if (!(t = (uint8_t*)malloc(ccfont2_width * ccfont2_height / 8)))
-		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "spupng_init_font: Memory allocation failed");
+	if (!(t = (uint8_t *)malloc(ccfont2_width * ccfont2_height / 8)))
+		ccx_common_logging.fatal_ftn(
+			EXIT_NOT_ENOUGH_MEMORY,
+			"spupng_init_font: Memory allocation failed");
 
 	for (p = t, i = 0; i < CCH; i++)
 		for (j = 0; j < ccfont2_height; p += ccfont2_width / 8, j += CCH)
 			memcpy(p, ccfont2_bits + (j + i) * ccfont2_width / 8,
-				ccfont2_width / 8);
+				   ccfont2_width / 8);
 
 	memcpy(ccfont2_bits, t, ccfont2_width * ccfont2_height / 8);
 	free(t);
 }
 struct spupng_t *spunpg_init(struct ccx_s_write *out)
 {
-	struct spupng_t *sp = (struct spupng_t *) malloc(sizeof(struct spupng_t));
+	struct spupng_t *sp = (struct spupng_t *)malloc(sizeof(struct spupng_t));
 	if (NULL == sp)
-		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "spunpg_init: Memory allocation failed (sp)");
+		ccx_common_logging.fatal_ftn(
+			EXIT_NOT_ENOUGH_MEMORY,
+			"spunpg_init: Memory allocation failed (sp)");
 
 	if (!initialized)
 	{
@@ -76,16 +80,18 @@ struct spupng_t *spunpg_init(struct ccx_s_write *out)
 
 	if ((sp->fpxml = fdopen(out->fh, "w")) == NULL)
 	{
-		ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n",
-			out->filename, strerror(errno));
+		ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_FILE_CREATION_FAILED,
+									 "Cannot open %s: %s\n", out->filename,
+									 strerror(errno));
 	}
-	sp->dirname = (char *)malloc(
-		sizeof(char) * (strlen(out->filename) + 3));
+	sp->dirname = (char *)malloc(sizeof(char) * (strlen(out->filename) + 3));
 	if (NULL == sp->dirname)
-		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "spunpg_init: Memory allocation failed (sp->dirname)");
+		ccx_common_logging.fatal_ftn(
+			EXIT_NOT_ENOUGH_MEMORY,
+			"spunpg_init: Memory allocation failed (sp->dirname)");
 
 	strcpy(sp->dirname, out->filename);
-	char* p = strrchr(sp->dirname, '.');
+	char *p = strrchr(sp->dirname, '.');
 	if (NULL == p)
 		p = sp->dirname + strlen(sp->dirname);
 	*p = '\0';
@@ -94,8 +100,9 @@ struct spupng_t *spunpg_init(struct ccx_s_write *out)
 	{
 		if (errno != EEXIST)
 		{
-			ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot create %s: %s\n",
-				sp->dirname, strerror(errno));
+			ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_FILE_CREATION_FAILED,
+										 "Cannot create %s: %s\n", sp->dirname,
+										 strerror(errno));
 		}
 		// If dirname isn't a directory or if we don't have write permission,
 		// the first attempt to create a .png file will fail and we'll XXxit.
@@ -103,19 +110,25 @@ struct spupng_t *spunpg_init(struct ccx_s_write *out)
 
 	// enough to append /subNNNN.png
 	sp->pngfile = (char *)malloc(sizeof(char) * (strlen(sp->dirname) + 13));
-	sp->relative_path_png = (char *)malloc(sizeof(char) * (strlen(sp->dirname) + 13));
+	sp->relative_path_png =
+		(char *)malloc(sizeof(char) * (strlen(sp->dirname) + 13));
 
 	if (NULL == sp->pngfile || NULL == sp->relative_path_png)
-		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "spunpg_init: Memory allocation failed (sp->pngfile)");
+		ccx_common_logging.fatal_ftn(
+			EXIT_NOT_ENOUGH_MEMORY,
+			"spunpg_init: Memory allocation failed (sp->pngfile)");
 	sp->fileIndex = 0;
 	sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex);
 
 	// Make relative path
-	char* last_slash = strrchr(sp->dirname, '/');
-	if (last_slash == NULL) last_slash = strrchr(sp->dirname, '\\');
+	char *last_slash = strrchr(sp->dirname, '/');
+	if (last_slash == NULL)
+		last_slash = strrchr(sp->dirname, '\\');
 	if (last_slash != NULL)
-		sprintf(sp->relative_path_png, "%s/sub%04d.png", last_slash + 1, sp->fileIndex);
-	else // do NOT do sp->relative_path_png = sp->pngfile (to avoid double free).
+		sprintf(sp->relative_path_png, "%s/sub%04d.png", last_slash + 1,
+				sp->fileIndex);
+	else // do NOT do sp->relative_path_png = sp->pngfile (to avoid double
+		 // free).
 		strcpy(sp->relative_path_png, sp->pngfile);
 
 	// For NTSC closed captions and 720x480 DVD subtitle resolution:
@@ -139,7 +152,8 @@ void spunpg_free(struct spupng_t *sp)
 	free(sp);
 }
 
-void spupng_write_header(struct spupng_t *sp, int multiple_files, char *first_input_file)
+void spupng_write_header(struct spupng_t *sp, int multiple_files,
+						 char *first_input_file)
 {
 	fprintf(sp->fpxml, "<subpictures>\n<stream>\n");
 	if (multiple_files)
@@ -158,9 +172,11 @@ void write_spumux_header(struct encoder_ctx *ctx, struct ccx_s_write *out)
 	if (0 == out->spupng_data)
 		out->spupng_data = spunpg_init(out);
 
-	spupng_write_header((struct spupng_t*)out->spupng_data, ctx->multiple_files, ctx->first_input_file);
+	spupng_write_header((struct spupng_t *)out->spupng_data,
+						ctx->multiple_files, ctx->first_input_file);
 
-	if (ctx->write_format == CCX_OF_RAW) {		// WARN: Memory leak with this flag, free by hand. Maybe bug.
+	if (ctx->write_format == CCX_OF_RAW)
+	{ // WARN: Memory leak with this flag, free by hand. Maybe bug.
 		spupng_write_footer(out->spupng_data);
 		spunpg_free(out->spupng_data);
 	}
@@ -170,7 +186,7 @@ void write_spumux_footer(struct ccx_s_write *out)
 {
 	if (0 != out->spupng_data)
 	{
-		struct spupng_t *sp = (struct spupng_t *) out->spupng_data;
+		struct spupng_t *sp = (struct spupng_t *)out->spupng_data;
 
 		spupng_write_footer(sp);
 		spunpg_free(sp);
@@ -190,16 +206,13 @@ void write_sputag_open(struct spupng_t *sp, LLONG ms_start, LLONG ms_end)
 	fprintf(sp->fpxml, ">\n");
 }
 
-void write_sputag_close(struct spupng_t *sp)
-{
-	fprintf(sp->fpxml, "</spu>\n");
-}
+void write_sputag_close(struct spupng_t *sp) { fprintf(sp->fpxml, "</spu>\n"); }
 void write_spucomment(struct spupng_t *sp, const char *str)
 {
 	fprintf(sp->fpxml, "<!--\n%s\n-->\n", str);
 }
 
-char* get_spupng_filename(void *ctx)
+char *get_spupng_filename(void *ctx)
 {
 	struct spupng_t *sp = (struct spupng_t *)ctx;
 	return sp->pngfile;
@@ -210,11 +223,14 @@ void inc_spupng_fileindex(struct spupng_t *sp)
 	sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex);
 
 	// Make relative path
-	char* last_slash = strrchr(sp->dirname, '/');
-	if (last_slash == NULL) last_slash = strrchr(sp->dirname, '\\');
+	char *last_slash = strrchr(sp->dirname, '/');
+	if (last_slash == NULL)
+		last_slash = strrchr(sp->dirname, '\\');
 	if (last_slash != NULL)
-		sprintf(sp->relative_path_png, "%s/sub%04d.png", last_slash + 1, sp->fileIndex);
-	else // do NOT do sp->relative_path_png = sp->pngfile (to avoid double free).
+		sprintf(sp->relative_path_png, "%s/sub%04d.png", last_slash + 1,
+				sp->fileIndex);
+	else // do NOT do sp->relative_path_png = sp->pngfile (to avoid double
+		 // free).
 		strcpy(sp->relative_path_png, sp->pngfile);
 }
 void set_spupng_offset(void *ctx, int x, int y)
@@ -224,12 +240,12 @@ void set_spupng_offset(void *ctx, int x, int y)
 	sp->yOffset = y;
 }
 int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
-	png_color *palette, png_byte *alpha, int nb_color)
+				png_color *palette, png_byte *alpha, int nb_color)
 {
 	FILE *f = NULL;
 	png_structp png_ptr = NULL;
 	png_infop info_ptr = NULL;
-	png_bytep* row_pointer = NULL;
+	png_bytep *row_pointer = NULL;
 	int i, j, ret = 0;
 	int k = 0;
 	if (!h)
@@ -240,7 +256,8 @@ int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
 	f = fopen(filename, "wb");
 	if (!f)
 	{
-		ccx_common_logging.log_ftn("DVB:unable to open %s in write mode \n", filename);
+		ccx_common_logging.log_ftn("DVB:unable to open %s in write mode \n",
+								   filename);
 		ret = -1;
 		goto end;
 	}
@@ -258,7 +275,7 @@ int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
 		goto end;
 	}
 
-	row_pointer = (png_bytep*)malloc(sizeof(png_bytep) * h);
+	row_pointer = (png_bytep *)malloc(sizeof(png_bytep) * h);
 	if (!row_pointer)
 	{
 		ccx_common_logging.log_ftn("DVB: unable to allocate row_pointer\n");
@@ -269,25 +286,23 @@ int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
 	png_init_io(png_ptr, f);
 
 	png_set_IHDR(png_ptr, info_ptr, w, h,
-		/* bit_depth */8,
-		PNG_COLOR_TYPE_PALETTE,
-		PNG_INTERLACE_NONE,
-		PNG_COMPRESSION_TYPE_DEFAULT,
-		PNG_FILTER_TYPE_DEFAULT);
+				 /* bit_depth */ 8, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE,
+				 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
 	png_set_PLTE(png_ptr, info_ptr, palette, nb_color);
 	png_set_tRNS(png_ptr, info_ptr, alpha, nb_color, NULL);
 
 	for (i = 0; i < h; i++)
 	{
-		row_pointer[i] = (png_byte*)malloc(
-			png_get_rowbytes(png_ptr, info_ptr));
+		row_pointer[i] =
+			(png_byte *)malloc(png_get_rowbytes(png_ptr, info_ptr));
 		if (row_pointer[i] == NULL)
 			break;
 	}
 	if (i != h)
 	{
-		ccx_common_logging.log_ftn("DVB: unable to allocate row_pointer internals\n");
+		ccx_common_logging.log_ftn(
+			"DVB: unable to allocate row_pointer internals\n");
 		ret = -1;
 		goto end;
 	}
@@ -307,26 +322,26 @@ int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
 	png_write_image(png_ptr, row_pointer);
 
 	png_write_end(png_ptr, info_ptr);
-end: if (row_pointer)
-{
-	for (i = 0; i < h; i++)
-		freep(&row_pointer[i]);
-	freep(&row_pointer);
-}
-	 png_destroy_write_struct(&png_ptr, &info_ptr);
-	 if (f)
-		 fclose(f);
-	 return ret;
-
+end:
+	if (row_pointer)
+	{
+		for (i = 0; i < h; i++)
+			freep(&row_pointer[i]);
+		freep(&row_pointer);
+	}
+	png_destroy_write_struct(&png_ptr, &info_ptr);
+	if (f)
+		fclose(f);
+	return ret;
 }
 /**
-* alpha value 255 means completely opaque
-* alpha value 0   means completely transparent
-* r g b all 0 means black
-* r g b all 255 means white
-*/
+ * alpha value 255 means completely opaque
+ * alpha value 0   means completely transparent
+ * r g b all 0 means black
+ * r g b all 255 means white
+ */
 int mapclut_paletee(png_color *palette, png_byte *alpha, uint32_t *clut,
-	uint8_t depth)
+					uint8_t depth)
 {
 	for (int i = 0; i < depth; i++)
 	{
@@ -339,21 +354,23 @@ int mapclut_paletee(png_color *palette, png_byte *alpha, uint32_t *clut,
 	ccx_common_logging.log_ftn("Colors present in original Image\n");
 	for (int i = 0; i < depth; i++)
 	{
-		ccx_common_logging.log_ftn("%02d)r %03d g %03d b %03d a %03d\n",
-			i, palette[i].red, palette[i].green, palette[i].blue, alpha[i]);
+		ccx_common_logging.log_ftn("%02d)r %03d g %03d b %03d a %03d\n", i,
+								   palette[i].red, palette[i].green,
+								   palette[i].blue, alpha[i]);
 	}
 #endif
 	return 0;
 }
 
-int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *context)
+int write_cc_bitmap_as_spupng(struct cc_subtitle *sub,
+							  struct encoder_ctx *context)
 {
 	struct spupng_t *sp = (struct spupng_t *)context->out->spupng_data;
 	int x_pos, y_pos, width, height, i;
 	int x, y, y_off, x_off, ret = 0;
 	uint8_t *pbuf;
 	char *filename;
-	struct cc_bitmap* rect;
+	struct cc_bitmap *rect;
 	png_color *palette = NULL;
 	png_byte *alpha = NULL;
 	int wrote_opentag = 1;
@@ -409,14 +426,13 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 			{
 				height = rect[i].y + rect[i].h - y_pos;
 			}
-
 		}
 	}
 	filename = get_spupng_filename(sp);
 	set_spupng_offset(sp, x_pos, y_pos);
 	if (sub->flags & SUB_EOD_MARKER)
 		context->prev_start = sub->start_time;
-	pbuf = (uint8_t*)malloc(width * height);
+	pbuf = (uint8_t *)malloc(width * height);
 	memset(pbuf, 0x0, width * height);
 
 	for (i = 0; i < sub->nb_data; i++)
@@ -426,30 +442,33 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 		for (y = 0; y < rect[i].h; y++)
 		{
 			for (x = 0; x < rect[i].w; x++)
-				pbuf[((y + y_off) * width) + x_off + x] = rect[i].data0[y * rect[i].w + x];
-
+				pbuf[((y + y_off) * width) + x_off + x] =
+					rect[i].data0[y * rect[i].w + x];
 		}
 	}
-	palette = (png_color*)malloc(rect[0].nb_colors * sizeof(png_color));
+	palette = (png_color *)malloc(rect[0].nb_colors * sizeof(png_color));
 	if (!palette)
 	{
 		ret = -1;
 		goto end;
 	}
-	alpha = (png_byte*)malloc(rect[0].nb_colors * sizeof(png_byte));
+	alpha = (png_byte *)malloc(rect[0].nb_colors * sizeof(png_byte));
 	if (!alpha)
 	{
 		ret = -1;
 		goto end;
 	}
 
-	/* TODO do rectangle wise, one color table should not be used for all rectangles */
-	mapclut_paletee(palette, alpha, (uint32_t *)rect[0].data1, rect[0].nb_colors);
-#ifdef ENABLE_OCR	
+	/* TODO do rectangle wise, one color table should not be used for all
+	 * rectangles */
+	mapclut_paletee(palette, alpha, (uint32_t *)rect[0].data1,
+					rect[0].nb_colors);
+#ifdef ENABLE_OCR
 	if (!context->nospupngocr)
 	{
 		char *str;
-		str = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);
+		str = paraof_ocrtext(sub, context->encoded_crlf,
+							 context->encoded_crlf_length);
 		if (str)
 		{
 			write_spucomment(sp, str);
@@ -457,9 +476,9 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 		}
 	}
 #endif
-	save_spupng(filename, pbuf, width, height, palette, alpha, rect[0].nb_colors);
+	save_spupng(filename, pbuf, width, height, palette, alpha,
+				rect[0].nb_colors);
 	freep(&pbuf);
-
 
 end:
 	if (wrote_opentag)
@@ -478,25 +497,29 @@ end:
 	return ret;
 }
 
-struct pixel_t {
+struct pixel_t
+{
 	unsigned char r, g, b, a;
 };
 
 // Write the buffer to a file named filename
 // Return 1 on success.
-int write_image(struct pixel_t *buffer, FILE* fp, int width, int height)
+int write_image(struct pixel_t *buffer, FILE *fp, int width, int height)
 {
 	int ret_code = 1;
 	png_structp png_ptr = NULL;
 	png_infop info_ptr = NULL;
 	png_bytep row = NULL;
 
-	if (!(png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL))) {
+	if (!(png_ptr =
+			  png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL)))
+	{
 		mprint("\nUnknown error encountered!\n");
 		ret_code = 0;
 		goto finalise;
 	}
-	if (!(info_ptr = png_create_info_struct(png_ptr))) {
+	if (!(info_ptr = png_create_info_struct(png_ptr)))
+	{
 		mprint("\nUnknown error encountered!\n");
 		ret_code = 0;
 		goto finalise;
@@ -505,9 +528,9 @@ int write_image(struct pixel_t *buffer, FILE* fp, int width, int height)
 	png_init_io(png_ptr, fp);
 
 	// Write header
-	png_set_IHDR(png_ptr, info_ptr, width, height,
-		8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
-		PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+	png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_RGB_ALPHA,
+				 PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
+				 PNG_FILTER_TYPE_BASE);
 
 	png_write_info(png_ptr, info_ptr);
 
@@ -516,12 +539,14 @@ int write_image(struct pixel_t *buffer, FILE* fp, int width, int height)
 
 	// Write image data
 	int x, y;
-	for (y = 0; y<height; y++) {
-		for (x = 0; x<width; x++) {
-			row[x * 4 + 0] = buffer[y*width + x].r;
-			row[x * 4 + 1] = buffer[y*width + x].g;
-			row[x * 4 + 2] = buffer[y*width + x].b;
-			row[x * 4 + 3] = buffer[y*width + x].a;
+	for (y = 0; y < height; y++)
+	{
+		for (x = 0; x < width; x++)
+		{
+			row[x * 4 + 0] = buffer[y * width + x].r;
+			row[x * 4 + 1] = buffer[y * width + x].g;
+			row[x * 4 + 2] = buffer[y * width + x].b;
+			row[x * 4 + 3] = buffer[y * width + x].a;
 		}
 		png_write_row(png_ptr, row);
 	}
@@ -530,35 +555,46 @@ int write_image(struct pixel_t *buffer, FILE* fp, int width, int height)
 	png_write_end(png_ptr, NULL);
 
 finalise:
-	if (info_ptr != NULL) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
-	if (png_ptr != NULL) png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
-	if (row != NULL) free(row);
+	if (info_ptr != NULL)
+		png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+	if (png_ptr != NULL)
+		png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+	if (row != NULL)
+		free(row);
 
 	return ret_code;
 }
 
 // Draw a FT_Bitmap to the target surface
 // Dest: target - an array which stores image data (ARGB), row by row.
-// Src: bitmap.buffer - 8bit grayscale image, row by row, with the size of bitmap.rows*bitmap.width
-void draw_to_buffer(struct pixel_t *target, int target_width, FT_Bitmap bitmap, int x_pos, int y_pos, int color) {
+// Src: bitmap.buffer - 8bit grayscale image, row by row, with the size of
+// bitmap.rows*bitmap.width
+void draw_to_buffer(struct pixel_t *target, int target_width, FT_Bitmap bitmap,
+					int x_pos, int y_pos, int color)
+{
 	int height = bitmap.rows;
 	int width = bitmap.width;
 
 	// The x, y here is based on the `bitmap` argument (i.e. the input bitmap)
-	for (int y = 0; y < height; ++y) {
-		for (int x = 0; x < width; ++x) {
+	for (int y = 0; y < height; ++y)
+	{
+		for (int x = 0; x < width; ++x)
+		{
 			struct pixel_t p;
 			unsigned char shade_factor = bitmap.buffer[x + y * width];
 			p.a = shade_factor;
-			p.r = (unsigned char)(((color >> (8 * 2)) & 0xff) * (shade_factor/255.0));
-			p.g = (unsigned char)(((color >> (8 * 1)) & 0xff)* (shade_factor/255.0));
-			p.b = (unsigned char)(((color >> (8 * 0)) & 0xff)* (shade_factor/255.0));
+			p.r = (unsigned char)(((color >> (8 * 2)) & 0xff) *
+								  (shade_factor / 255.0));
+			p.g = (unsigned char)(((color >> (8 * 1)) & 0xff) *
+								  (shade_factor / 255.0));
+			p.b = (unsigned char)(((color >> (8 * 0)) & 0xff) *
+								  (shade_factor / 255.0));
 
-			//mprint("Red: %d\n", p.r);
-			//mprint("Green: %d\n", p.g);
-			//mprint("Blue: %d\n", p.b);
+			// mprint("Red: %d\n", p.r);
+			// mprint("Green: %d\n", p.g);
+			// mprint("Blue: %d\n", p.b);
 
-			target[(x_pos+x) + (y_pos+y) * target_width] = p;
+			target[(x_pos + x) + (y_pos + y) * target_width] = p;
 		}
 	}
 }
@@ -568,31 +604,39 @@ void draw_to_buffer(struct pixel_t *target, int target_width, FT_Bitmap bitmap, 
 // NOTE: valid_x is assumed to be 0
 // The function will move the subtitle to (target_w/2 + valid_w/2, valid_y),
 //   and erase anything else in the line.
-void center_justify(struct pixel_t *target, int target_w,
-					int valid_y, int valid_w, int valid_h) {
+void center_justify(struct pixel_t *target, int target_w, int valid_y,
+					int valid_w, int valid_h)
+{
 	// 1. Make a copy of the line, to avoid overriding.
 	// Note that the copy is smaller than the line:
 	//   its width is set to just enough to contain the valid area
-	struct pixel_t* temp_buffer = malloc(valid_w*valid_h*sizeof(struct pixel_t));
+	struct pixel_t *temp_buffer =
+		malloc(valid_w * valid_h * sizeof(struct pixel_t));
 
 	// x,y here is input-based (i.e. `buffer`)
-	for (int x = 0; x < valid_w; ++x) {
-		for (int y = valid_y; y < valid_y + valid_h; ++y) {
-			temp_buffer[x + (y - valid_y)*valid_w] = target[x + y * target_w];
+	for (int x = 0; x < valid_w; ++x)
+	{
+		for (int y = valid_y; y < valid_y + valid_h; ++y)
+		{
+			temp_buffer[x + (y - valid_y) * valid_w] = target[x + y * target_w];
 		}
 	}
 
 	// 2. Clean up the original subtitle
-	memset(target + valid_y * target_w, 0, target_w*valid_h * sizeof(struct pixel_t));
+	memset(target + valid_y * target_w, 0,
+		   target_w * valid_h * sizeof(struct pixel_t));
 
 	// 3. Center justify
 	int move_to = target_w / 2 - valid_w / 2; // the target x
 
 	// x,y here is output-based (i.e. `buffer`)
 	// valid_y is also output_y since we are printing to the same line.
-	for (int y = valid_y; y < valid_y + valid_h; ++y) {
-		for (int x = move_to; x < move_to + valid_w; ++x) {
-			target[x + y * target_w] = temp_buffer[(x - move_to) + (y - valid_y)*valid_w];
+	for (int y = valid_y; y < valid_y + valid_h; ++y)
+	{
+		for (int x = move_to; x < move_to + valid_w; ++x)
+		{
+			target[x + y * target_w] =
+				temp_buffer[(x - move_to) + (y - valid_y) * valid_w];
 		}
 	}
 
@@ -603,18 +647,26 @@ void center_justify(struct pixel_t *target, int target_w,
 // Draw black background for the subtitle
 // Will not override the text
 // target_w is the width of the canvas
-void black_background(struct pixel_t *target, int target_w, int x, int y, int w, int h) {
-	for (int _x = x; _x < x + w; ++_x) {
-		for (int _y = y; _y < y + h; ++_y) {
+void black_background(struct pixel_t *target, int target_w, int x, int y, int w,
+					  int h)
+{
+	for (int _x = x; _x < x + w; ++_x)
+	{
+		for (int _y = y; _y < y + h; ++_y)
+		{
 			target[_x + _y * target_w].a = 255;
 		}
 	}
 }
 
 // Draws an underline starting at x and y
-void underline_text(struct pixel_t* target, int target_w, int x, int y, int w, int h, int color) {
-	for (int _x = x; _x < x + w; ++_x) {
-		for (int _y = y; _y < y + h; ++_y) {
+void underline_text(struct pixel_t *target, int target_w, int x, int y, int w,
+					int h, int color)
+{
+	for (int _x = x; _x < x + w; ++_x)
+	{
+		for (int _y = y; _y < y + h; ++_y)
+		{
 			struct pixel_t p;
 			p.a = 255;
 			p.r = (unsigned char)((color >> (8 * 2)) & 0xff);
@@ -633,24 +685,29 @@ int fu_to_ypixels(FT_Face face, int fu)
 	return round(fu * face->size->metrics.y_ppem / (double)face->units_per_EM);
 }
 
-
 // Initialize face object for typographical fonts
 // Return 0 for success
-int init_face(FT_Face *face, char * font)
+int init_face(FT_Face *face, char *font)
 {
 	int error;
 
 	// Init regular font
 	if (error = FT_New_Face(ft_library, font, 0, face))
 	{
-		mprint("\n\nFailed to init freetype when trying to init face, error code: %d\n", error);
-		mprint("It's usually caused by the specified font is not found: %s \n", font);
-		mprint("If this is the case, please use -font or -italics to manually specify a font that exists. \n\n");
+		mprint("\n\nFailed to init freetype when trying to init face, error "
+			   "code: %d\n",
+			   error);
+		mprint("It's usually caused by the specified font is not found: %s \n",
+			   font);
+		mprint("If this is the case, please use -font or -italics to manually "
+			   "specify a font that exists. \n\n");
 		return 1;
 	}
 	if (error = FT_Set_Pixel_Sizes(*face, 0, FONT_SIZE))
 	{
-		mprint("\nFailed to init freetype when trying to set size, error code: %d\n", error);
+		mprint("\nFailed to init freetype when trying to set size, error code: "
+			   "%d\n",
+			   error);
 		return 1;
 	}
 
@@ -659,41 +716,43 @@ int init_face(FT_Face *face, char * font)
 
 // The function will NOT free src.
 // You need to free the src and return value yourself!
-uint32_t* utf8_to_utf32(char* src) {
+uint32_t *utf8_to_utf32(char *src)
+{
 	// Convert UTF-8 to UTF-32 for generating bitmap.
 	size_t len_src, len_dst;
 
 	len_src = strlen(src);
 	len_dst = (len_src + 2) * 4; // one for FEFF and one for \0
 
-	uint32_t* string_utf32 = (uint32_t*)calloc(len_dst, 1);
+	uint32_t *string_utf32 = (uint32_t *)calloc(len_dst, 1);
 	size_t inbufbytesleft = len_src;
 	size_t outbufbytesleft = len_dst;
-	char* inbuf = src;
-	char* outbuf = (char*)string_utf32;
+	char *inbuf = src;
+	char *outbuf = (char *)string_utf32;
 
 	iconv_t cd = iconv_open("UTF-32", "UTF-8");
 	int result = iconv(cd, &inbuf, &inbufbytesleft, &outbuf, &outbufbytesleft);
-	if (result == -1) mprint("iconv failed to convert UTF-8 to UTF-32. errno is %d\n", errno);
+	if (result == -1)
+		mprint("iconv failed to convert UTF-8 to UTF-32. errno is %d\n", errno);
 	iconv_close(cd);
 
 	return string_utf32;
 }
 
 // Convert big-endian and little-endian
-#define BigtoLittle32(A)   ((( (uint32_t)(A) & 0xff000000) >> 24)\
- | (((uint32_t)(A) & 0x00ff0000) >> 8)\
- | (((uint32_t)(A) & 0x0000ff00) << 8)\
- | (((uint32_t)(A) & 0x000000ff) << 24))
+#define BigtoLittle32(A)                                                       \
+	((((uint32_t)(A)&0xff000000) >> 24) | (((uint32_t)(A)&0x00ff0000) >> 8) |  \
+	 (((uint32_t)(A)&0x0000ff00) << 8) | (((uint32_t)(A)&0x000000ff) << 24))
 
 // Generate PNG file from an UTF-8 string (str)
 // PNG file will be stored at output
 // Return 1 on success.
-int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
+int spupng_export_string2png(struct spupng_t *sp, char *str, FILE *output)
 {
 	int error;
 	// Init FreeType if it hasn't been inited yet.
-	if (ft_library==NULL){
+	if (ft_library == NULL)
+	{
 
 		if (error = FT_Init_FreeType(&ft_library))
 		{
@@ -705,13 +764,16 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 	// Init FreeType typographical face objects
 	if (error = init_face(&face_regular, ccx_options.enc_cfg.render_font))
 		return 0;
-	if (error = init_face(&face_italics, ccx_options.enc_cfg.render_font_italics))
+	if (error =
+			init_face(&face_italics, ccx_options.enc_cfg.render_font_italics))
 		return 0;
 
 	int canvas_width = CANVAS_WIDTH;
 	int canvas_height = FONT_SIZE * 3.5;
 	int line_height = FONT_SIZE * 1.0;
-	int extender = FONT_SIZE * 0.4; // to prevent characters like $ and _ (exceed baseline) from being cut and to add room for underlining
+	int extender =
+		FONT_SIZE * 0.4; // to prevent characters like $ and _ (exceed baseline)
+						 // from being cut and to add room for underlining
 	int line_spacing = FONT_SIZE * 0.8;
 
 	int cursor_x = 0;
@@ -719,20 +781,25 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 
 	// Allocate buffer
 	// Note: (0, 0) of buffer is at the top left corner.
-	struct pixel_t* buffer = malloc(canvas_width * canvas_height * sizeof(struct pixel_t));
-	if (buffer == NULL) {
+	struct pixel_t *buffer =
+		malloc(canvas_width * canvas_height * sizeof(struct pixel_t));
+	if (buffer == NULL)
+	{
 		mprint("\nFailed to alloc memory for buffer. Need %d bytes.\n",
-			canvas_width * canvas_height * sizeof(struct pixel_t));
+			   canvas_width * canvas_height * sizeof(struct pixel_t));
 	}
 	memset(buffer, 0, canvas_width * canvas_height * sizeof(struct pixel_t));
 
-	//str = "<font color=\"#66CDAA\"> __ This should be aquamarine </font> Regular <i> Italics font</i> <font color=\"#00ff00\">This should be green.</font> <u> Underlining __ testing </u> Regular text. Even more text. Random text. More text."; // Test string
-	char* tmp = strdup(str);
+	// str = "<font color=\"#66CDAA\"> __ This should be aquamarine </font>
+	// Regular <i> Italics font</i> <font color=\"#00ff00\">This should be
+	// green.</font> <u> Underlining __ testing </u> Regular text. Even more
+	// text. Random text. More text."; // Test string
+	char *tmp = strdup(str);
 
 	if (!tmp)
 		return -1;
 
-	char* token = strtok(tmp, "<>");
+	char *token = strtok(tmp, "<>");
 
 	int color = 0xffffff;
 	int prev_color = 0xffffff;
@@ -777,7 +844,7 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 
 			font = 1;
 			char color_value[7];
-			
+
 			// Isolate the hex color value
 			int start = 0;
 			for (int i = 0; i < strlen(token); i++)
@@ -791,8 +858,8 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 			strncpy(color_value, &token[start], 6);
 			color_value[6] = 0; // For null termination of string
 			color = (int)strtol(color_value, NULL, 16);
-			
-			//mprint("Color: 0x%x\n", color);
+
+			// mprint("Color: 0x%x\n", color);
 			token = strtok(NULL, "<>");
 			continue;
 		}
@@ -803,99 +870,134 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 			color = prev_color;
 			continue;
 		}
-		//mprint("%s\n", token);
-		
-		FT_GlyphSlot slot = face->glyph;;
+		// mprint("%s\n", token);
 
-		uint32_t* string_utf32 = utf8_to_utf32(token);
+		FT_GlyphSlot slot = face->glyph;
+		;
+
+		uint32_t *string_utf32 = utf8_to_utf32(token);
 
 		// Render characters to image
-		for (uint32_t* iter = string_utf32; *iter; ++iter)
+		for (uint32_t *iter = string_utf32; *iter; ++iter)
 		{
-			uint32_t current_char_code = BigtoLittle32(*iter); // Convert big-endian and little-endian
+			uint32_t current_char_code =
+				BigtoLittle32(*iter); // Convert big-endian and little-endian
 
-			if (FT_Load_Char(face, current_char_code, FT_LOAD_RENDER)) continue; // ignore errors
-			
-			unsigned char* bitmap = slot->bitmap.buffer;
+			if (FT_Load_Char(face, current_char_code, FT_LOAD_RENDER))
+				continue; // ignore errors
+
+			unsigned char *bitmap = slot->bitmap.buffer;
 
 			// Handle '\n'
-			if (current_char_code == '\n') {
+			if (current_char_code == '\n')
+			{
 				//			mprint("\n'\\n' line break");
-				black_background(buffer, canvas_width, 0, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
-				center_justify(buffer, canvas_width, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
+				black_background(buffer, canvas_width, 0,
+								 cursor_y - line_height - extender, cursor_x,
+								 line_height + extender * 2);
+				center_justify(buffer, canvas_width,
+							   cursor_y - line_height - extender, cursor_x,
+							   line_height + extender * 2);
 				cursor_x = 0;
 				cursor_y += line_height + line_spacing;
 				continue;
 			}
 
 			// Expand canvas if needed
-			while (cursor_y - slot->bitmap_top + line_height + line_spacing + extender * 2 >= canvas_height) {
+			while (cursor_y - slot->bitmap_top + line_height + line_spacing +
+					   extender * 2 >=
+				   canvas_height)
+			{
 				int old_height = canvas_height;
 				canvas_height += line_height + line_spacing + extender * 2;
-				struct pixel_t* new_buffer = realloc(buffer, canvas_width * canvas_height * sizeof(struct pixel_t));
-				if (new_buffer == NULL) {
-					mprint("\nFailed to alloc memory for buffer. Need %d bytes.\n",
+				struct pixel_t *new_buffer =
+					realloc(buffer, canvas_width * canvas_height *
+										sizeof(struct pixel_t));
+				if (new_buffer == NULL)
+				{
+					mprint(
+						"\nFailed to alloc memory for buffer. Need %d bytes.\n",
 						canvas_width * canvas_height * sizeof(struct pixel_t));
 					return 0;
 				}
-				memset(new_buffer + old_height * canvas_width, 0, (canvas_height - old_height) * canvas_width * sizeof(struct pixel_t));
+				memset(new_buffer + old_height * canvas_width, 0,
+					   (canvas_height - old_height) * canvas_width *
+						   sizeof(struct pixel_t));
 				buffer = new_buffer;
-
 			}
 
 			// Characters such as ' ' don't have bitmap.
-			if (bitmap != NULL) {
+			if (bitmap != NULL)
+			{
 
 				int width = slot->bitmap.width;
 				int height = slot->bitmap.rows;
 
-				// TODO: this kind of line break may break characters in the middle!
-				if ((cursor_x + (slot->advance.x >> 6)) > canvas_width) { // Time for a line-break!
+				// TODO: this kind of line break may break characters in the
+				// middle!
+				if ((cursor_x + (slot->advance.x >> 6)) > canvas_width)
+				{ // Time for a line-break!
 					// But before that, let's center justify the subtitle.
-					// Valid subtitle area: (0, cursor_y) to (cursor_x, cursor_y + line_height)
-					black_background(buffer, canvas_width, 0, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
-					center_justify(buffer, canvas_width, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
+					// Valid subtitle area: (0, cursor_y) to (cursor_x, cursor_y
+					// + line_height)
+					black_background(buffer, canvas_width, 0,
+									 cursor_y - line_height - extender,
+									 cursor_x, line_height + extender * 2);
+					center_justify(buffer, canvas_width,
+								   cursor_y - line_height - extender, cursor_x,
+								   line_height + extender * 2);
 
 					// Set the cursor
 					cursor_x = 0;
 					cursor_y += line_height + line_spacing;
 				}
 
-				draw_to_buffer(buffer, canvas_width, slot->bitmap, cursor_x, cursor_y - slot->bitmap_top, color);
+				draw_to_buffer(buffer, canvas_width, slot->bitmap, cursor_x,
+							   cursor_y - slot->bitmap_top, color);
 
 				if (underline)
 				{
 					// Converts underline offset from font units to pixels
-					int pixel_offset = fu_to_ypixels(face, face->underline_position);
+					int pixel_offset =
+						fu_to_ypixels(face, face->underline_position);
 
 					// Calculates how wide a character is
 					int glyph_width = slot->advance.x >> 6;
-					//mprint("Glyph Width: %d\n", glyph_width);
+					// mprint("Glyph Width: %d\n", glyph_width);
 
-					int underline_thickness = fu_to_ypixels(face, face->underline_thickness);
-					underline_text(buffer, canvas_width, cursor_x, cursor_y - pixel_offset, glyph_width, underline_thickness, color);
+					int underline_thickness =
+						fu_to_ypixels(face, face->underline_thickness);
+					underline_text(buffer, canvas_width, cursor_x,
+								   cursor_y - pixel_offset, glyph_width,
+								   underline_thickness, color);
 				}
 			}
 			// For all the characters without bitmaps like spaces ' '
-			else {
+			else
+			{
 
 				if (underline)
 				{
 					// Converts underline offset from font units to pixels
-					int pixel_offset = fu_to_ypixels(face, face->underline_position);
+					int pixel_offset =
+						fu_to_ypixels(face, face->underline_position);
 					// Calculates how wide a character is
 					int glyph_width = (slot->advance.x >> 6);
 
-					//mprint("Glyph Width: %d\n", glyph_width);
-					int underline_thickness = fu_to_ypixels(face, face->underline_thickness);
-					underline_text(buffer, canvas_width, cursor_x, cursor_y - pixel_offset, glyph_width, underline_thickness, color);
+					// mprint("Glyph Width: %d\n", glyph_width);
+					int underline_thickness =
+						fu_to_ypixels(face, face->underline_thickness);
+					underline_text(buffer, canvas_width, cursor_x,
+								   cursor_y - pixel_offset, glyph_width,
+								   underline_thickness, color);
 				}
-
 			}
 
 			/*
-			mprint("\nDrawing [%c] (%d), advance %d,%d, at %d,%d. bitmap_top=%d",
-				current_char_code, current_char_code, slot->advance.x >> 6, slot->advance.y >> 6, cursor_x, cursor_y, slot->bitmap_top);
+			mprint("\nDrawing [%c] (%d), advance %d,%d, at %d,%d.
+			bitmap_top=%d", current_char_code, current_char_code,
+			slot->advance.x >> 6, slot->advance.y >> 6, cursor_x, cursor_y,
+			slot->bitmap_top);
 			*/
 
 			// Increase pen position
@@ -907,16 +1009,18 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 	}
 
 	// Draw black background
-	black_background(buffer, canvas_width, 0, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
+	black_background(buffer, canvas_width, 0, cursor_y - line_height - extender,
+					 cursor_x, line_height + extender * 2);
 	// Center justify the last line.
-	center_justify(buffer, canvas_width, cursor_y - line_height - extender, cursor_x, line_height + extender * 2);
+	center_justify(buffer, canvas_width, cursor_y - line_height - extender,
+				   cursor_x, line_height + extender * 2);
 
 	/*
 	// Draw a blue bar at the beginning of every line.
 	// Debug purpose only
 	for (int x = 0; x < 10; x++) for (int y = 0; y < canvas_height; y++) {
-		struct pixel_t p; p.b = (y / line_height) * 25; p.a = 255; p.g = p.r = 0;
-		buffer[x + y * canvas_width] = p;
+		struct pixel_t p; p.b = (y / line_height) * 25; p.a = 255; p.g = p.r =
+	0; buffer[x + y * canvas_width] = p;
 	}
 	*/
 
@@ -930,7 +1034,9 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 // Convert EIA608 Data(buffer) to string
 // out must have at least 256 characters' space
 // Return value is the length of the output string
-int eia608_to_str(struct encoder_ctx *context, struct eia608_screen *data, char *out) {
+int eia608_to_str(struct encoder_ctx *context, struct eia608_screen *data,
+				  char *out)
+{
 
 	int str_len = 0;
 	int first = 1;
@@ -938,20 +1044,22 @@ int eia608_to_str(struct encoder_ctx *context, struct eia608_screen *data, char 
 	{
 		if (data->row_used[row])
 		{
-			size_t len = get_decoder_line_encoded(context, context->subline, row, data);
+			size_t len =
+				get_decoder_line_encoded(context, context->subline, row, data);
 
-			unsigned char* start = context->subline;
+			unsigned char *start = context->subline;
 
-			if (start!=NULL) {
+			if (start != NULL)
+			{
 				// Remove the space at the beginning of the subtitle
-				while ((*start == ' ' || *start == '\n') && len-->0)
+				while ((*start == ' ' || *start == '\n') && len-- > 0)
 					start++;
 			}
 
 			// Check for characters that spumux won't parse
 			// null chars will be changed to space
 			// pairs of dashes will be changed to underscores
-			for (unsigned char* ptr = start; ptr < start + len; ptr++)
+			for (unsigned char *ptr = start; ptr < start + len; ptr++)
 			{
 				switch (*ptr)
 				{
@@ -967,16 +1075,21 @@ int eia608_to_str(struct encoder_ctx *context, struct eia608_screen *data, char 
 					break;
 				}
 			}
-			
+
 			// Remove the space at the end of the subtitle
-			if (start != NULL) {
+			if (start != NULL)
+			{
 				unsigned char *end = start;
-				while (*end && end - start < len && end - start >= 0) end++; // Find the end
-				while ((*end==' '||*end=='\n'||*end=='\0')&&len-->0) end--; // `len` is changed
+				while (*end && end - start < len && end - start >= 0)
+					end++; // Find the end
+				while ((*end == ' ' || *end == '\n' || *end == '\0') &&
+					   len-- > 0)
+					end--; // `len` is changed
 				len++;
 			}
 
-			if (!first) { // Add '\n' if it is not the first line.
+			if (!first)
+			{ // Add '\n' if it is not the first line.
 				strcat(out, "\n");
 				str_len += 2;
 			}
@@ -990,8 +1103,8 @@ int eia608_to_str(struct encoder_ctx *context, struct eia608_screen *data, char 
 
 // string needs to be in UTF-8 encoding.
 // This function will take care of encoding.
-int spupng_write_string(struct spupng_t *sp, char *string, LLONG start_time, LLONG end_time,
-	struct encoder_ctx *context)
+int spupng_write_string(struct spupng_t *sp, char *string, LLONG start_time,
+						LLONG end_time, struct encoder_ctx *context)
 {
 	LLONG ms_start = start_time + context->subs_delay;
 	if (ms_start < 0)
@@ -1006,16 +1119,16 @@ int spupng_write_string(struct spupng_t *sp, char *string, LLONG start_time, LLO
 	if ((sp->fppng = fopen(sp->pngfile, "wb")) == NULL)
 	{
 		fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n",
-			sp->pngfile, strerror(errno));
+			  sp->pngfile, strerror(errno));
 	}
 
 	if (!spupng_export_string2png(sp, string, sp->fppng))
 	{
-		//free(string_utf32);
+		// free(string_utf32);
 		fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot write %s: %s\n",
-			sp->pngfile, strerror(errno));
+			  sp->pngfile, strerror(errno));
 	}
-	//free(string_utf32);
+	// free(string_utf32);
 	fclose(sp->fppng);
 	write_sputag_open(sp, ms_start, ms_end);
 	write_spucomment(sp, string);
@@ -1023,22 +1136,24 @@ int spupng_write_string(struct spupng_t *sp, char *string, LLONG start_time, LLO
 	return 1;
 }
 
-int write_cc_subtitle_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *context)
+int write_cc_subtitle_as_spupng(struct cc_subtitle *sub,
+								struct encoder_ctx *context)
 {
-	struct spupng_t *sp = (struct spupng_t *) context->out->spupng_data;
+	struct spupng_t *sp = (struct spupng_t *)context->out->spupng_data;
 	if (!sp)
 		return -1;
 
 	if (sub->type == CC_TEXT)
 	{
-		spupng_write_string(sp, sub->data, sub->start_time, sub->end_time, context);
+		spupng_write_string(sp, sub->data, sub->start_time, sub->end_time,
+							context);
 	}
 
 	return 0;
 }
 
-int spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
-	struct encoder_ctx *context)
+int spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen *data,
+						  struct encoder_ctx *context)
 {
 
 	int row;
@@ -1071,12 +1186,14 @@ int spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
 
 	eia608_to_str(context, data, str);
 
-	return spupng_write_string(context->out->spupng_data, str, data->start_time, data->end_time, context);
+	return spupng_write_string(context->out->spupng_data, str, data->start_time,
+							   data->end_time, context);
 }
 
-int write_cc_buffer_as_spupng(struct eia608_screen *data, struct encoder_ctx *context)
+int write_cc_buffer_as_spupng(struct eia608_screen *data,
+							  struct encoder_ctx *context)
 {
-	struct spupng_t *sp = (struct spupng_t *) context->out->spupng_data;
+	struct spupng_t *sp = (struct spupng_t *)context->out->spupng_data;
 	if (NULL != sp)
 	{
 		return spupng_write_ccbuffer(sp, data, context);

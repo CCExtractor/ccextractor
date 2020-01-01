@@ -19,45 +19,50 @@
 
 	You should have received a copy of the GNU General Public License
 	along with this program; if not, write to the Free Software
-	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+   USA.
 */
-#include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "ccx_encoders_common.h"
-#include "png.h"
-#include "ocr.h"
-#include "utility.h"
 #include "ccx_encoders_helpers.h"
+#include "lib_ccx.h"
+#include "ocr.h"
+#include "png.h"
+#include "utility.h"
 
-void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
+void write_stringz_as_smptett(char *string, struct encoder_ctx *context,
+							  LLONG ms_start, LLONG ms_end)
 {
 	int used;
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;
-	int len = strlen (string);
-	unsigned char *unescaped= (unsigned char *) malloc (len+1);
-	unsigned char *el = (unsigned char *) malloc (len*3+1); // Be generous
+	int len = strlen(string);
+	unsigned char *unescaped = (unsigned char *)malloc(len + 1);
+	unsigned char *el = (unsigned char *)malloc(len * 3 + 1); // Be generous
 	int pos_r = 0;
 	int pos_w = 0;
 	char str[1024];
 
 	if (el == NULL || unescaped == NULL)
-		fatal (EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_smptett() - not enough memory.\n");
+		fatal(EXIT_NOT_ENOUGH_MEMORY,
+			  "In write_stringz_as_smptett() - not enough memory.\n");
 
-	millis_to_time (ms_start, &h1, &m1, &s1, &ms1);
-	millis_to_time (ms_end-1, &h2, &m2, &s2, &ms2);
+	millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
+	millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2);
 
-	sprintf ((char *) str, "<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\r\n", h1, m1, s1, ms1, h2, m2, s2, ms2);
-	if (context->encoding!=CCX_ENC_UNICODE)
+	sprintf((char *)str,
+			"<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\r\n",
+			h1, m1, s1, ms1, h2, m2, s2, ms2);
+	if (context->encoding != CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
-	used = encode_line(context, context->buffer, (unsigned char *) str);
-	write (context->out->fh, context->buffer, used);
+	used = encode_line(context, context->buffer, (unsigned char *)str);
+	write(context->out->fh, context->buffer, used);
 	// Scan for \n in the string and replace it with a 0
 	while (pos_r < len)
 	{
-		if (string[pos_r] == '\\' && string[pos_r+1] == 'n')
+		if (string[pos_r] == '\\' && string[pos_r + 1] == 'n')
 		{
 			unescaped[pos_w] = 0;
 			pos_r += 2;
@@ -72,60 +77,62 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 	unescaped[pos_w] = 0;
 	// Now read the unescaped string (now several string'z and write them)
 	unsigned char *begin = unescaped;
-	while (begin < unescaped+len)
+	while (begin < unescaped + len)
 	{
-		unsigned int u = encode_line (context, el, begin);
+		unsigned int u = encode_line(context, el, begin);
 		if (context->encoding != CCX_ENC_UNICODE)
 		{
 			dbg_print(CCX_DMT_DECODER_608, "\r");
 			dbg_print(CCX_DMT_DECODER_608, "%s\n", context->subline);
 		}
 		write(context->out->fh, el, u);
-		//write (wb->fh, encoded_br, encoded_br_length);
+		// write (wb->fh, encoded_br, encoded_br_length);
 
-		write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-		begin += strlen ((const char *) begin)+1;
+		write(context->out->fh, context->encoded_crlf,
+			  context->encoded_crlf_length);
+		begin += strlen((const char *)begin) + 1;
 	}
 
-	sprintf ((char *) str, "</p>\n");
+	sprintf((char *)str, "</p>\n");
 	if (context->encoding != CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
-	used = encode_line(context, context->buffer, (unsigned char *) str);
+	used = encode_line(context, context->buffer, (unsigned char *)str);
 	write(context->out->fh, context->buffer, used);
-	sprintf ((char *) str, "<p begin=\"%02u:%02u:%02u.%03u\">\n\n", h2, m2, s2, ms2);
+	sprintf((char *)str, "<p begin=\"%02u:%02u:%02u.%03u\">\n\n", h2, m2, s2,
+			ms2);
 	if (context->encoding != CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
-	used = encode_line(context, context->buffer, (unsigned char *) str);
-	write (context->out->fh, context->buffer, used);
-	sprintf ((char *) str, "</p>\n");
+	used = encode_line(context, context->buffer, (unsigned char *)str);
+	write(context->out->fh, context->buffer, used);
+	sprintf((char *)str, "</p>\n");
 	free(el);
 	free(unescaped);
 }
 
-
-int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *context)
+int write_cc_bitmap_as_smptett(struct cc_subtitle *sub,
+							   struct encoder_ctx *context)
 {
 	int ret = 0;
 #ifdef ENABLE_OCR
-	struct cc_bitmap* rect;
+	struct cc_bitmap *rect;
 	LLONG ms_start, ms_end;
-	//char timeline[128];
-	int i,len = 0;
+	// char timeline[128];
+	int i, len = 0;
 
 	ms_start = sub->start_time;
 	ms_end = sub->end_time;
 
-	if(sub->nb_data == 0 )
+	if (sub->nb_data == 0)
 		return 0;
 
 	rect = sub->data;
 
-	if ( sub->flags & SUB_EOD_MARKER )
-		context->prev_start =  sub->start_time;
+	if (sub->flags & SUB_EOD_MARKER)
+		context->prev_start = sub->start_time;
 
 	for (i = sub->nb_data - 1; i >= 0; i--)
 	{
@@ -137,15 +144,20 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 				unsigned h1, m1, s1, ms1;
 				unsigned h2, m2, s2, ms2;
 				millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
-				millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
-				sprintf((char *)context->buffer, "<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\n", h1, m1, s1, ms1, h2, m2, s2, ms2);
-                write(context->out->fh, buf, strlen(buf));
+				millis_to_time(
+					ms_end - 1, &h2, &m2, &s2,
+					&ms2); // -1 To prevent overlapping with next line.
+				sprintf((char *)context->buffer,
+						"<p begin=\"%02u:%02u:%02u.%03u\" "
+						"end=\"%02u:%02u:%02u.%03u\">\n",
+						h1, m1, s1, ms1, h2, m2, s2, ms2);
+				write(context->out->fh, buf, strlen(buf));
 				len = strlen(rect[i].ocr_text);
-                write(context->out->fh, rect[i].ocr_text, len);
-				write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+				write(context->out->fh, rect[i].ocr_text, len);
+				write(context->out->fh, context->encoded_crlf,
+					  context->encoded_crlf_length);
 				sprintf(buf, "</p>\n");
 				write(context->out->fh, buf, strlen(buf));
-
 			}
 		}
 	}
@@ -159,26 +171,27 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 	sub->nb_data = 0;
 	freep(&sub->data);
 	return ret;
-
 }
 
-int write_cc_subtitle_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *context)
+int write_cc_subtitle_as_smptett(struct cc_subtitle *sub,
+								 struct encoder_ctx *context)
 {
 	int ret = 0;
 	struct cc_subtitle *osub = sub;
 	struct cc_subtitle *lsub = sub;
-	while(sub)
+	while (sub)
 	{
-		if(sub->type == CC_TEXT)
+		if (sub->type == CC_TEXT)
 		{
-			write_stringz_as_smptett(sub->data, context, sub->start_time, sub->end_time);
+			write_stringz_as_smptett(sub->data, context, sub->start_time,
+									 sub->end_time);
 			freep(&sub->data);
 			sub->nb_data = 0;
 		}
 		lsub = sub;
 		sub = sub->next;
 	}
-	while(lsub != osub)
+	while (lsub != osub)
 	{
 		sub = lsub->prev;
 		freep(&lsub);
@@ -186,30 +199,29 @@ int write_cc_subtitle_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *co
 	}
 
 	return ret;
-
 }
 
-	 
-int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *context)
+int write_cc_buffer_as_smptett(struct eia608_screen *data,
+							   struct encoder_ctx *context)
 {
 	int used;
-	unsigned h1,m1,s1,ms1;
-	unsigned h2,m2,s2,ms2;
+	unsigned h1, m1, s1, ms1;
+	unsigned h2, m2, s2, ms2;
 	LLONG endms;
-	int wrote_something=0;
+	int wrote_something = 0;
 	LLONG startms = data->start_time;
 	char str[1024];
 
-	startms+=context->subs_delay;
-	if (startms<0) // Drop screens that because of subs_delay start too early
+	startms += context->subs_delay;
+	if (startms < 0) // Drop screens that because of subs_delay start too early
 		return 0;
 
-	endms  = data->end_time;
+	endms = data->end_time;
 	endms--; // To prevent overlapping with next line.
-	millis_to_time (startms,&h1,&m1,&s1,&ms1);
-	millis_to_time (endms-1,&h2,&m2,&s2,&ms2);
+	millis_to_time(startms, &h1, &m1, &s1, &ms1);
+	millis_to_time(endms - 1, &h2, &m2, &s2, &ms2);
 
-	for (int row=0; row < 15; row++)
+	for (int row = 0; row < 15; row++)
 	{
 		if (data->row_used[row])
 		{
@@ -218,23 +230,24 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 				if (clever_capitalize(context, row, data))
 					correct_case_with_dictionary(row, data);
 			}
-		
-			float row1=0;
-			float col1=0;
-			int firstcol=-1;
-			
+
+			float row1 = 0;
+			float col1 = 0;
+			int firstcol = -1;
+
 			// ROWS is actually 90% of the screen size
 			// Add +10% because row 0 is at position 10%
-			row1 = ((100*row)/(ROWS/0.8))+10;
-			
-			for (int column = 0; column < COLUMNS ; column++) 
+			row1 = ((100 * row) / (ROWS / 0.8)) + 10;
+
+			for (int column = 0; column < COLUMNS; column++)
 			{
 				int unicode = 0;
-				get_char_in_unicode((unsigned char*)&unicode, data->characters[row][column]);
-				//if (COL_TRANSPARENT != data->colors[row][column])
+				get_char_in_unicode((unsigned char *)&unicode,
+									data->characters[row][column]);
+				// if (COL_TRANSPARENT != data->colors[row][column])
 				if (unicode != 0x20)
 				{
-					if (firstcol<0)
+					if (firstcol < 0)
 					{
 						firstcol = column;
 					}
@@ -242,42 +255,51 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 			}
 			// COLUMNS is actually 90% of the screen size
 			// Add +10% because column 0 is at position 10%
-			col1 = ((100*firstcol)/(COLUMNS/0.8))+10;
-		
-			if (firstcol>=0)
+			col1 = ((100 * firstcol) / (COLUMNS / 0.8)) + 10;
+
+			if (firstcol >= 0)
 			{
-				wrote_something=1;
-			
-				sprintf (str,"      <p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\" tts:origin=\"%1.3f%% %1.3f%%\">\n        <span>",h1,m1,s1,ms1, h2,m2,s2,ms2,col1,row1);
-				if (context->encoding!=CCX_ENC_UNICODE)
+				wrote_something = 1;
+
+				sprintf(str,
+						"      <p begin=\"%02u:%02u:%02u.%03u\" "
+						"end=\"%02u:%02u:%02u.%03u\" tts:origin=\"%1.3f%% "
+						"%1.3f%%\">\n        <span>",
+						h1, m1, s1, ms1, h2, m2, s2, ms2, col1, row1);
+				if (context->encoding != CCX_ENC_UNICODE)
 				{
 					dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 				}
-				used = encode_line(context, context->buffer,(unsigned char *) str);
-				write (context->out->fh, context->buffer, used);
+				used =
+					encode_line(context, context->buffer, (unsigned char *)str);
+				write(context->out->fh, context->buffer, used);
 				// Trimming subs because the position is defined by "tts:origin"
 				int old_trim_subs = context->trim_subs;
-				context->trim_subs=1;
-				if (context->encoding!=CCX_ENC_UNICODE)
+				context->trim_subs = 1;
+				if (context->encoding != CCX_ENC_UNICODE)
 				{
 					dbg_print(CCX_DMT_DECODER_608, "\r");
-					dbg_print(CCX_DMT_DECODER_608, "%s\n",context->subline);
+					dbg_print(CCX_DMT_DECODER_608, "%s\n", context->subline);
 				}
 
-				get_decoder_line_encoded (context, context->subline, row, data);
+				get_decoder_line_encoded(context, context->subline, row, data);
 
-				char *final = malloc ( strlen((const char*)(context->subline)) + 1000);	//Being overly generous? :P
-				char *temp = malloc ( strlen((const char*)(context->subline)) + 1000);
-				*final=0;
-				*temp=0;
+				char *final = malloc(strlen((const char *)(context->subline)) +
+									 1000); // Being overly generous? :P
+				char *temp =
+					malloc(strlen((const char *)(context->subline)) + 1000);
+				*final = 0;
+				*temp = 0;
 				/*
-					final	: stores formatted HTML sentence. This will be written in subtitle file.
-					temp	: stored temporary sentences required while formatting
-					
-					+1000 because huge <span> and <style> tags are added. This will just prevent overflow (hopefully).
+					final	: stores formatted HTML sentence. This will be
+				   written in subtitle file. temp	: stored temporary sentences
+				   required while formatting
+
+					+1000 because huge <span> and <style> tags are added. This
+				   will just prevent overflow (hopefully).
 				*/
 
-				int style = 0; 
+				int style = 0;
 
 				/*
 
@@ -288,32 +310,33 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 
 				*/
 
-				//Now, searching for first occurrence of <i> OR <u> OR <b>
+				// Now, searching for first occurrence of <i> OR <u> OR <b>
 
-				char * start = strstr((const char*)(context->subline), "<i>"); 
-				if(start==NULL)
+				char *start = strstr((const char *)(context->subline), "<i>");
+				if (start == NULL)
 				{
-					start = strstr((const char*)(context->subline), "<b>");
+					start = strstr((const char *)(context->subline), "<b>");
 
-					if(start==NULL)
+					if (start == NULL)
 					{
-						start = strstr((const char*)(context->subline), "<u>");
-						style = 3;   //underline
+						start = strstr((const char *)(context->subline), "<u>");
+						style = 3; // underline
 					}
 					else
-						style = 2;   //bold
+						style = 2; // bold
 				}
 				else
-					style = 1;      //italics
+					style = 1; // italics
 
-				if(start!=NULL)		//subtitle has style associated with it, will need formatting.
+				if (start != NULL) // subtitle has style associated with it,
+								   // will need formatting.
 				{
 					char *end_tag;
-					if(style == 1)
+					if (style == 1)
 					{
 						end_tag = "</i>";
 					}
-					else if(style == 2)
+					else if (style == 2)
 					{
 						end_tag = "</b>";
 					}
@@ -322,125 +345,166 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 						end_tag = "</u>";
 					}
 
-				    char *end = strstr((const char*)(context->subline), end_tag);	//occurrence of closing tag (</i> OR </b> OR </u>)
-				    
-				    if(end==NULL)
-				    {
-				        //Incorrect styling, writing as it is
-				        strcpy(final, (const char*)(context->subline));			            
-				    }
+					char *end = strstr((const char *)(context->subline),
+									   end_tag); // occurrence of closing tag
+												 // (</i> OR </b> OR </u>)
+
+					if (end == NULL)
+					{
+						// Incorrect styling, writing as it is
+						strcpy(final, (const char *)(context->subline));
+					}
 					else
 					{
-						int start_index = start-(char *)(context->subline);
-						int end_index = end-(char *)(context->subline);
-									            
-						strncat(final, (const char*)(context->subline),start_index);     // copying content before opening tag e.g. <i> 
-						
-						strcat(final,"<span>");                 //adding <span> : replacement of <i>
+						int start_index = start - (char *)(context->subline);
+						int end_index = end - (char *)(context->subline);
 
-						//The content in italics is between <i> and </i>, i.e. between (start_index + 3) and end_index.
+						strncat(final, (const char *)(context->subline),
+								start_index); // copying content before opening
+											  // tag e.g. <i>
 
-						strncat(temp, (const char *)(context->subline) + start_index + 3, end_index - start_index - 3); //the content in italics
+						strcat(final,
+							   "<span>"); // adding <span> : replacement of <i>
 
-						strcat(final, temp);	//attaching to final sentence.
-						
+						// The content in italics is between <i> and </i>, i.e.
+						// between (start_index + 3) and end_index.
+
+						strncat(temp,
+								(const char *)(context->subline) + start_index +
+									3,
+								end_index - start_index -
+									3); // the content in italics
+
+						strcat(final, temp); // attaching to final sentence.
+
 						if (style == 1)
-							strcpy(temp,"<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:fontStyle=\"italic\"/> </span>");
-						
-						else if(style == 2)
-							strcpy(temp,"<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:fontWeight=\"bold\"/> </span>");
+							strcpy(temp,
+								   "<style tts:backgroundColor=\"#000000FF\" "
+								   "tts:fontSize=\"18px\" "
+								   "tts:fontStyle=\"italic\"/> </span>");
+
+						else if (style == 2)
+							strcpy(temp,
+								   "<style tts:backgroundColor=\"#000000FF\" "
+								   "tts:fontSize=\"18px\" "
+								   "tts:fontWeight=\"bold\"/> </span>");
 
 						else
-							strcpy(temp,"<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:textDecoration=\"underline\"/> </span>");
-						
-						strcat(final, temp);		// adding appropriate style tag.
+							strcpy(
+								temp,
+								"<style tts:backgroundColor=\"#000000FF\" "
+								"tts:fontSize=\"18px\" "
+								"tts:textDecoration=\"underline\"/> </span>");
 
-						sprintf(temp,"%s", (const char *)(context->subline) + end_index + 4);	//finding remaining sentence.
+						strcat(final, temp); // adding appropriate style tag.
 
-						strcat(final, temp);	//adding remaining sentence.
+						sprintf(temp, "%s",
+								(const char *)(context->subline) + end_index +
+									4); // finding remaining sentence.
 
+						strcat(final, temp); // adding remaining sentence.
 					}
 				}
-			    else	//No style or Font Color
-			    {
-				   
-					start = strstr((const char*)(context->subline), "<font color");  //spec : <font color="#xxxxxx"> cc </font>
-					if(start!=NULL) //font color attribute is present
+				else // No style or Font Color
+				{
+
+					start = strstr((const char *)(context->subline),
+								   "<font color"); // spec : <font
+												   // color="#xxxxxx"> cc </font>
+					if (start != NULL) // font color attribute is present
 					{
-						char *end =  strstr((const char*)(context->subline), "</font>");
-						if(end == NULL)
+						char *end =
+							strstr((const char *)(context->subline), "</font>");
+						if (end == NULL)
 						{
-							//Incorrect styling, writing as it is
-							strcpy(final, (const char*)(context->subline));
+							// Incorrect styling, writing as it is
+							strcpy(final, (const char *)(context->subline));
 						}
 
 						else
 						{
-							int start_index = start-(char *)(context->subline);
-							int end_index = end-(char *)(context->subline);
+							int start_index =
+								start - (char *)(context->subline);
+							int end_index = end - (char *)(context->subline);
 
-							strncat(final, (const char*)(context->subline),start_index);     // copying content before opening tag e.g. <font ..> 
+							strncat(final, (const char *)(context->subline),
+									start_index); // copying content before
+												  // opening tag e.g. <font ..>
 
-							strcat(final,"<span>");                 //adding <span> : replacement of <font ..>
+							strcat(final, "<span>"); // adding <span> :
+													 // replacement of <font ..>
 
-
-							char *temp_pointer = strchr((const char*)(context->subline),'#');     //locating color code
+							char *temp_pointer =
+								strchr((const char *)(context->subline),
+									   '#'); // locating color code
 
 							char color_code[7];
-							strncpy(color_code, temp_pointer + 1, 6);		//obtained color code
-							color_code[6]='\0';
-							
+							strncpy(color_code, temp_pointer + 1,
+									6); // obtained color code
+							color_code[6] = '\0';
 
+							temp_pointer =
+								strchr((const char *)(context->subline),
+									   '>'); // The content is in between <font
+											 // ..> and </font>
 
-							temp_pointer = strchr((const char*)(context->subline), '>');                   //The content is in between <font ..> and </font>
+							strncat(temp, temp_pointer + 1,
+									end_index -
+										(temp_pointer -
+										 (char *)(context->subline) + 1));
 
-							strncat(temp, temp_pointer + 1, end_index - (temp_pointer - (char *)(context->subline) + 1));
+							strcat(final, temp); // attaching to final sentence.
 
-							strcat(final, temp);	//attaching to final sentence.
+							sprintf(temp,
+									"<style tts:backgroundColor=\"#FFFF00FF\" "
+									"tts:color=\"%s\" "
+									"tts:fontSize=\"18px\"/></span>",
+									color_code);
 
-							sprintf(temp, "<style tts:backgroundColor=\"#FFFF00FF\" tts:color=\"%s\" tts:fontSize=\"18px\"/></span>",color_code);
+							strcat(final, temp); // adding font color tag
 
-							strcat(final, temp);	//adding font color tag
+							sprintf(temp, "%s",
+									(const char *)(context->subline) +
+										end_index +
+										7); // finding remaining sentence.
 
-							sprintf(temp,"%s", (const char *)(context->subline) + end_index + 7);   	//finding remaining sentence.
-
-							strcat(final, temp);	//adding remaining sentence
+							strcat(final, temp); // adding remaining sentence
 						}
 					}
 
 					else
 					{
-						//NO styling, writing as it is
-						strcpy(final, (const char*)(context->subline));
+						// NO styling, writing as it is
+						strcpy(final, (const char *)(context->subline));
 					}
-
 				}
-
 
 				write(context->out->fh, final, strlen(final));
 
+				write(context->out->fh, context->encoded_crlf,
+					  context->encoded_crlf_length);
+				context->trim_subs = old_trim_subs;
 
-				write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-				context->trim_subs=old_trim_subs;
-				
-				sprintf (str,"        <style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\"/></span>\n      </p>\n");
-				if (context->encoding!=CCX_ENC_UNICODE)
+				sprintf(str, "        <style tts:backgroundColor=\"#000000FF\" "
+							 "tts:fontSize=\"18px\"/></span>\n      </p>\n");
+				if (context->encoding != CCX_ENC_UNICODE)
 				{
 					dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 				}
-				used = encode_line(context, context->buffer, (unsigned char*) str);
-				write (context->out->fh, context->buffer, used);
+				used =
+					encode_line(context, context->buffer, (unsigned char *)str);
+				write(context->out->fh, context->buffer, used);
 
-				if (context->encoding!=CCX_ENC_UNICODE)
+				if (context->encoding != CCX_ENC_UNICODE)
 				{
 					dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 				}
-				used = encode_line(context, context->buffer, (unsigned char*) str);
-				//write (wb->fh, enc_buffer,enc_buffer_used);
-				
+				used =
+					encode_line(context, context->buffer, (unsigned char *)str);
+				// write (wb->fh, enc_buffer,enc_buffer_used);
+
 				freep(&final);
 				freep(&temp);
-	
 			}
 		}
 	}

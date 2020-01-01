@@ -1,17 +1,17 @@
-#include "png.h"
 #include "lib_ccx.h"
+#include "png.h"
 #ifdef ENABLE_OCR
-#include <tesseract/capi.h>
 #include "ccx_common_constants.h"
-#include <leptonica/allheaders.h>
-#include <dirent.h>
 #include "ccx_encoders_helpers.h"
 #include "ocr.h"
+#include <dirent.h>
+#include <leptonica/allheaders.h>
+#include <tesseract/capi.h>
 #undef OCR_DEBUG
 
 struct ocrCtx
 {
-	TessBaseAPI* api;
+	TessBaseAPI *api;
 };
 
 struct transIntensity
@@ -23,18 +23,23 @@ struct transIntensity
 static int check_trans_tn_intensity(const void *p1, const void *p2, void *arg)
 {
 	struct transIntensity *ti = arg;
-	unsigned char* tmp = (unsigned char*)p1;
-	unsigned char* act = (unsigned char*)p2;
+	unsigned char *tmp = (unsigned char *)p1;
+	unsigned char *act = (unsigned char *)p2;
 	unsigned char tmp_i;
 	unsigned char act_i;
 	/** TODO verify that RGB follow ITU-R BT.709
 	 *  Below formula is valid only for 709 standard
 	 *  Y = 0.2126 R + 0.7152 G + 0.0722 B
 	 */
-	tmp_i = (0.2126 * ti->palette[*tmp].red) + (0.7152 * ti->palette[*tmp].green) + (0.0722 * ti->palette[*tmp].blue);
-	act_i = (0.2126 * ti->palette[*act].red) + (0.7152 * ti->palette[*act].green) + (0.0722 * ti->palette[*act].blue);
+	tmp_i = (0.2126 * ti->palette[*tmp].red) +
+			(0.7152 * ti->palette[*tmp].green) +
+			(0.0722 * ti->palette[*tmp].blue);
+	act_i = (0.2126 * ti->palette[*act].red) +
+			(0.7152 * ti->palette[*act].green) +
+			(0.0722 * ti->palette[*act].blue);
 
-	if (ti->t[*tmp] < ti->t[*act] || (ti->t[*tmp] == ti->t[*act] && tmp_i < act_i))
+	if (ti->t[*tmp] < ti->t[*act] ||
+		(ti->t[*tmp] == ti->t[*act] && tmp_i < act_i))
 		return -1;
 	else if (ti->t[*tmp] == ti->t[*act] && tmp_i == act_i)
 		return 0;
@@ -42,15 +47,15 @@ static int check_trans_tn_intensity(const void *p1, const void *p2, void *arg)
 	return 1;
 }
 
-static int search_language_pack(const char *dir_name,const char *lang_name)
+static int search_language_pack(const char *dir_name, const char *lang_name)
 {
 	if (!dir_name)
 		return -1;
 
-	//Search for a tessdata folder in the specified directory
+	// Search for a tessdata folder in the specified directory
 	char *dirname = strdup(dir_name);
-	dirname = realloc(dirname,strlen(dirname)+strlen("tessdata/")+1);
-	strcat(dirname,"tessdata/");
+	dirname = realloc(dirname, strlen(dirname) + strlen("tessdata/") + 1);
+	strcat(dirname, "tessdata/");
 
 	DIR *dp;
 	struct dirent *dirp;
@@ -60,10 +65,10 @@ static int search_language_pack(const char *dir_name,const char *lang_name)
 		free(dirname);
 		return -1;
 	}
-	snprintf(filename, 256, "%s.traineddata",lang_name);
+	snprintf(filename, 256, "%s.traineddata", lang_name);
 	while ((dirp = readdir(dp)) != NULL)
 	{
-		if(!strcmp(dirp->d_name, filename))
+		if (!strcmp(dirp->d_name, filename))
 		{
 			closedir(dp);
 			free(dirname);
@@ -75,9 +80,9 @@ static int search_language_pack(const char *dir_name,const char *lang_name)
 	return -1;
 }
 
-void delete_ocr (void** arg)
+void delete_ocr(void **arg)
 {
-	struct ocrCtx* ctx = *arg;
+	struct ocrCtx *ctx = *arg;
 	TessBaseAPIEnd(ctx->api);
 	TessBaseAPIDelete(ctx->api);
 	freep(arg);
@@ -93,7 +98,7 @@ void delete_ocr (void** arg)
  * 2. tessdata in current working directory
  * 3. tessdata in /usr/share
  */
-char* probe_tessdata_location(int lang_index)
+char *probe_tessdata_location(int lang_index)
 {
 	int ret = 0;
 	char *tessdata_dir_path = getenv("TESSDATA_PREFIX");
@@ -103,7 +108,7 @@ char* probe_tessdata_location(int lang_index)
 		return tessdata_dir_path;
 
 	tessdata_dir_path = "./";
-	ret = search_language_pack(tessdata_dir_path,language[lang_index]);
+	ret = search_language_pack(tessdata_dir_path, language[lang_index]);
 	if (!ret)
 		return tessdata_dir_path;
 
@@ -135,55 +140,60 @@ char* probe_tessdata_location(int lang_index)
  *
  * This function returns tesseract data location given language string
  */
-char* probe_tessdata_location_string(char* lang)
+char *probe_tessdata_location_string(char *lang)
 {
-    int lang_index = -1;
-    for(int i = 0; i < NB_LANGUAGE; i++) {
-        if(language[i]) {
-            if(strcmp(lang, language[i]) == 0) lang_index = i;
-        }
-    }
+	int lang_index = -1;
+	for (int i = 0; i < NB_LANGUAGE; i++)
+	{
+		if (language[i])
+		{
+			if (strcmp(lang, language[i]) == 0)
+				lang_index = i;
+		}
+	}
 
-    if(lang_index == -1) return NULL; // No such language found
+	if (lang_index == -1)
+		return NULL; // No such language found
 
-    return probe_tessdata_location(lang_index);
+	return probe_tessdata_location(lang_index);
 }
 
-void* init_ocr(int lang_index)
+void *init_ocr(int lang_index)
 {
 	int ret = -1;
-	struct ocrCtx* ctx;
-	const char* lang = NULL, *tessdata_path = NULL;
+	struct ocrCtx *ctx;
+	const char *lang = NULL, *tessdata_path = NULL;
 
-	ctx = (struct ocrCtx*)malloc(sizeof(struct ocrCtx));
-	if(!ctx)
+	ctx = (struct ocrCtx *)malloc(sizeof(struct ocrCtx));
+	if (!ctx)
 		return NULL;
 
 	/* if language was undefined use english */
-	if(lang_index == 0)
+	if (lang_index == 0)
 	{
 		/* select english */
 		lang_index = 1;
 	}
 
-	if(ccx_options.dvblang)
+	if (ccx_options.dvblang)
 	{
-		if(strcmp(language[lang_index],ccx_options.dvblang)!=0)
+		if (strcmp(language[lang_index], ccx_options.dvblang) != 0)
 			goto fail;
 	}
 
 	tessdata_path = probe_tessdata_location(lang_index);
-	if(!tessdata_path)
+	if (!tessdata_path)
 	{
 		if (lang_index == 1)
 		{
 			mprint("eng.traineddata not found! No Switching Possible\n");
 			return NULL;
 		}
-		mprint("%s.traineddata not found! Switching to English\n",language[lang_index]);
+		mprint("%s.traineddata not found! Switching to English\n",
+			   language[lang_index]);
 		lang_index = 1;
 		tessdata_path = probe_tessdata_location(lang_index);
-		if(!tessdata_path)
+		if (!tessdata_path)
 		{
 			mprint("eng.traineddata not found! No Switching Possible\n");
 			return NULL;
@@ -195,52 +205,54 @@ void* init_ocr(int lang_index)
 	else
 		lang = language[lang_index];
 
-	char* pars_vec = strdup("debug_file");
-	char* pars_values = strdup("tess.log");
+	char *pars_vec = strdup("debug_file");
+	char *pars_values = strdup("tess.log");
 
 	ctx->api = TessBaseAPICreate();
 	if (!strncmp("4.", TessVersion(), 2))
 	{
-		char tess_path [1024];
+		char tess_path[1024];
 		snprintf(tess_path, 1024, "%s%s%s", tessdata_path, "/", "tessdata");
-		//ccx_options.ocr_oem are deprecated and only supported mode is OEM_LSTM_ONLY
+		// ccx_options.ocr_oem are deprecated and only supported mode is
+		// OEM_LSTM_ONLY
 		ret = TessBaseAPIInit4(ctx->api, tess_path, lang, 1, NULL, 0, &pars_vec,
-			&pars_values, 1, false);
+							   &pars_values, 1, false);
 	}
 	else
 	{
-		ret = TessBaseAPIInit4(ctx->api, tessdata_path, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
-			&pars_values, 1, false);
+		ret =
+			TessBaseAPIInit4(ctx->api, tessdata_path, lang, ccx_options.ocr_oem,
+							 NULL, 0, &pars_vec, &pars_values, 1, false);
 	}
 
 	free(pars_vec);
 	free(pars_values);
 
-	if(ret < 0)
+	if (ret < 0)
 	{
 		mprint("Failed TessBaseAPIInit4 %d\n", ret);
 		goto fail;
 	}
 	return ctx;
 fail:
-	delete_ocr((void**)&ctx);
+	delete_ocr((void **)&ctx);
 	return NULL;
-
 }
 
-BOX* ignore_alpha_at_edge(png_byte *alpha, unsigned char* indata, int w, int h, PIX *in, PIX **out)
+BOX *ignore_alpha_at_edge(png_byte *alpha, unsigned char *indata, int w, int h,
+						  PIX *in, PIX **out)
 {
-	int i, j, index, start_y=0, end_y=0;
+	int i, j, index, start_y = 0, end_y = 0;
 	int find_end_x = CCX_FALSE;
-	BOX* cropWindow;
-	for (j = 1; j < w-1; j++)
+	BOX *cropWindow;
+	for (j = 1; j < w - 1; j++)
 	{
 		for (i = 0; i < h; i++)
 		{
 			index = indata[i * w + (j)];
-			if(alpha[index] != 0)
+			if (alpha[index] != 0)
 			{
-				if(find_end_x == CCX_FALSE)
+				if (find_end_x == CCX_FALSE)
 				{
 					start_y = j;
 					find_end_x = CCX_TRUE;
@@ -252,65 +264,64 @@ BOX* ignore_alpha_at_edge(png_byte *alpha, unsigned char* indata, int w, int h, 
 			}
 		}
 	}
-	cropWindow = boxCreate(start_y, 0, (w - (start_y + ( w - end_y) )), h - 1);
+	cropWindow = boxCreate(start_y, 0, (w - (start_y + (w - end_y))), h - 1);
 	*out = pixClipRectangle(in, cropWindow, NULL);
-	//boxDestroy(&cropWindow);
+	// boxDestroy(&cropWindow);
 
 	return cropWindow;
 }
 
-void debug_tesseract(struct ocrCtx* ctx, char *dump_path)
+void debug_tesseract(struct ocrCtx *ctx, char *dump_path)
 {
 #ifdef OCR_DEBUG
-	char       str[1024] = "";
-	static int i        = 0;
-	PIX*       pix      = NULL;
-	PIXA*      pixa     = NULL;
+	char str[1024] = "";
+	static int i = 0;
+	PIX *pix = NULL;
+	PIXA *pixa = NULL;
 
 	pix = TessBaseAPIGetInputImage(ctx->api);
-	sprintf(str,"%sinput_%d.jpg", dump_path, i);
+	sprintf(str, "%sinput_%d.jpg", dump_path, i);
 	pixWrite(str, pix, IFF_JFIF_JPEG);
 
 	pix = TessBaseAPIGetThresholdedImage(ctx->api);
-	sprintf(str,"%sthresholded_%d.jpg", dump_path, i);
+	sprintf(str, "%sthresholded_%d.jpg", dump_path, i);
 	pixWrite(str, pix, IFF_JFIF_JPEG);
 
-
 	TessBaseAPIGetRegions(ctx->api, &pixa);
-	sprintf(str,"%sregion_%d", dump_path, i);
-        pixaWriteFiles(str, pixa, IFF_JFIF_JPEG);
-
+	sprintf(str, "%sregion_%d", dump_path, i);
+	pixaWriteFiles(str, pixa, IFF_JFIF_JPEG);
 
 	TessBaseAPIGetTextlines(ctx->api, &pixa, NULL);
-	sprintf(str,"%slines_%d", dump_path, i);
-        pixaWriteFiles(str, pixa, IFF_JFIF_JPEG);
+	sprintf(str, "%slines_%d", dump_path, i);
+	pixaWriteFiles(str, pixa, IFF_JFIF_JPEG);
 
 	TessBaseAPIGetWords(ctx->api, &pixa);
-	sprintf(str,"%swords_%d", dump_path, i);
-        pixaWriteFiles(str, pixa, IFF_JFIF_JPEG);
+	sprintf(str, "%swords_%d", dump_path, i);
+	pixaWriteFiles(str, pixa, IFF_JFIF_JPEG);
 
 	i++;
 #endif
 }
-char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* indata,int w, int h, struct image_copy *copy)
+char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha,
+				 unsigned char *indata, int w, int h, struct image_copy *copy)
 {
 	// uncomment the below lines to output raw image as debug.png iteratively
 	// save_spupng("debug.png", indata, w, h, palette, alpha, 16);
 
-	PIX*  pix           = NULL;
-	PIX*  cpix          = NULL;
-	PIX*  cpix_gs       = NULL; // Grayscale version
-	PIX*  color_pix     = NULL;
-	PIX*  color_pix_out = NULL;
-	char* text_out      = NULL;
-	int i,j,index;
+	PIX *pix = NULL;
+	PIX *cpix = NULL;
+	PIX *cpix_gs = NULL; // Grayscale version
+	PIX *color_pix = NULL;
+	PIX *color_pix_out = NULL;
+	char *text_out = NULL;
+	int i, j, index;
 	unsigned int wpl;
-	unsigned int *data,*ppixel;
+	unsigned int *data, *ppixel;
 	BOOL tess_ret = FALSE;
-	struct ocrCtx* ctx = arg;
+	struct ocrCtx *ctx = arg;
 	pix = pixCreate(w, h, 32);
 	color_pix = pixCreate(w, h, 32);
-	if(pix == NULL||color_pix == NULL)
+	if (pix == NULL || color_pix == NULL)
 	{
 		return NULL;
 	}
@@ -326,8 +337,9 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 		for (j = 0; j < w; j++)
 		{
 			index = indata[i * w + (j)];
-			composeRGBPixel(palette[index].red, palette[index].green,palette[index].blue, ppixel);
-			SET_DATA_BYTE(ppixel, L_ALPHA_CHANNEL,alpha[index]);
+			composeRGBPixel(palette[index].red, palette[index].green,
+							palette[index].blue, ppixel);
+			SET_DATA_BYTE(ppixel, L_ALPHA_CHANNEL, alpha[index]);
 			ppixel++;
 		}
 	}
@@ -342,24 +354,28 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 		for (j = 0; j < w; j++)
 		{
 			index = copy->data[i * w + (j)];
-			composeRGBPixel(copy->palette[index].red, copy->palette[index].green,copy->palette[index].blue, ppixel);
-			SET_DATA_BYTE(ppixel, L_ALPHA_CHANNEL,copy->alpha[index]);
+			composeRGBPixel(copy->palette[index].red,
+							copy->palette[index].green,
+							copy->palette[index].blue, ppixel);
+			SET_DATA_BYTE(ppixel, L_ALPHA_CHANNEL, copy->alpha[index]);
 			ppixel++;
 		}
 	}
 
-	BOX *crop_points = ignore_alpha_at_edge(copy->alpha, copy->data, w, h, color_pix, &color_pix_out);
+	BOX *crop_points = ignore_alpha_at_edge(copy->alpha, copy->data, w, h,
+											color_pix, &color_pix_out);
 	// Converting image to grayscale for OCR to avoid issues with transparency
 	cpix_gs = pixConvertRGBToGray(cpix, 0.0, 0.0, 0.0);
 
-	if (cpix_gs==NULL)
-		tess_ret=-1;
+	if (cpix_gs == NULL)
+		tess_ret = -1;
 	else
 	{
 		TessBaseAPISetImage2(ctx->api, cpix_gs);
 		tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
 		debug_tesseract(ctx, "./temp/");
-		if (tess_ret) {
+		if (tess_ret)
+		{
 			mprint("\nIn ocr_bitmap: Failed to perform OCR. Skipped.\n");
 
 			pixDestroy(&pix);
@@ -372,64 +388,74 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 		}
 	}
 
-	char *text_out_from_tes=TessBaseAPIGetUTF8Text(ctx->api);
+	char *text_out_from_tes = TessBaseAPIGetUTF8Text(ctx->api);
 	if (text_out_from_tes == NULL)
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "In ocr_bitmap: Failed to perform OCR - Failed to get text. Please report.\n", errno);
-	// Make a copy and get rid of the one from Tesseract since we're going to be operating on it
-	// and using it directly causes new/free() warnings.
-	text_out=strdup (text_out_from_tes);
+		fatal(CCX_COMMON_EXIT_BUG_BUG,
+			  "In ocr_bitmap: Failed to perform OCR - Failed to get text. "
+			  "Please report.\n",
+			  errno);
+	// Make a copy and get rid of the one from Tesseract since we're going to be
+	// operating on it and using it directly causes new/free() warnings.
+	text_out = strdup(text_out_from_tes);
 	TessDeleteText(text_out_from_tes);
 
 	// Begin color detection
-	// Using tlt_config.nofontcolor (true when "--nofontcolor" parameter used) to skip color detection if not required
-	if(strlen(text_out)>0 && !tlt_config.nofontcolor)
+	// Using tlt_config.nofontcolor (true when "--nofontcolor" parameter used)
+	// to skip color detection if not required
+	if (strlen(text_out) > 0 && !tlt_config.nofontcolor)
 	{
 		float h0 = -100;
 		int written_tag = 0;
-		TessResultIterator* ri = 0;
+		TessResultIterator *ri = 0;
 		TessPageIteratorLevel level = RIL_WORD;
 		TessBaseAPISetImage2(ctx->api, color_pix_out);
 		tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
 		if (tess_ret != 0)
 		{
-			mprint("\nTessBaseAPIRecognize returned %d, skipping this bitmap.\n", tess_ret);
+			mprint(
+				"\nTessBaseAPIRecognize returned %d, skipping this bitmap.\n",
+				tess_ret);
 		}
 		else
 		{
 			ri = TessBaseAPIGetIterator(ctx->api);
 		}
 
-		if(!tess_ret && ri!=0)
+		if (!tess_ret && ri != 0)
 		{
 			do
 			{
-				char* word = TessResultIteratorGetUTF8Text(ri,level);
+				char *word = TessResultIteratorGetUTF8Text(ri, level);
 				// float conf = TessResultIteratorConfidence(ri,level);
 				int x1, y1, x2, y2;
-				if (!TessPageIteratorBoundingBox((TessPageIterator *)ri, level, &x1, &y1, &x2, &y2))
+				if (!TessPageIteratorBoundingBox((TessPageIterator *)ri, level,
+												 &x1, &y1, &x2, &y2))
 					continue;
-				// printf("word: '%s';  \tconf: %.2f; BoundingBox: %d,%d,%d,%d;",word, conf, x1, y1, x2, y2);
-				// printf("word: '%s';", word);
+				// printf("word: '%s';  \tconf: %.2f; BoundingBox:
+				// %d,%d,%d,%d;",word, conf, x1, y1, x2, y2); printf("word:
+				// '%s';", word);
 				// {
 				// char str[128] = "";
 				// static int i = 0;
 				// sprintf(str,"temp/file_c_%d.jpg",i);
-				// pixWrite(str, pixClipRectangle(color_pix_out, boxCreate(x1,y1,x2-x1,y2-y1) ,NULL), IFF_JFIF_JPEG);
-				// i++;
+				// pixWrite(str, pixClipRectangle(color_pix_out,
+				// boxCreate(x1,y1,x2-x1,y2-y1) ,NULL), IFF_JFIF_JPEG); i++;
 				// }
 
 				uint32_t *histogram = NULL;
 				uint8_t *iot = NULL;
 				uint32_t *mcit = NULL;
-				int max_color=2;
+				int max_color = 2;
 
-				histogram = (uint32_t*) malloc(copy->nb_colors * sizeof(uint32_t));
-				iot = (uint8_t*) malloc(copy->nb_colors * sizeof(uint8_t));
-				mcit = (uint32_t*) malloc(copy->nb_colors * sizeof(uint32_t));
-				struct transIntensity ti = {copy->alpha,copy->palette};
+				histogram =
+					(uint32_t *)malloc(copy->nb_colors * sizeof(uint32_t));
+				iot = (uint8_t *)malloc(copy->nb_colors * sizeof(uint8_t));
+				mcit = (uint32_t *)malloc(copy->nb_colors * sizeof(uint32_t));
+				struct transIntensity ti = {copy->alpha, copy->palette};
 				memset(histogram, 0, copy->nb_colors * sizeof(uint32_t));
 
-				/* initializing intensity ordered table with serial order of unsorted color table */
+				/* initializing intensity ordered table with serial order of
+				 * unsorted color table */
 				for (int i = 0; i < copy->nb_colors; i++)
 				{
 					iot[i] = i;
@@ -437,17 +463,21 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 				memset(mcit, 0, copy->nb_colors * sizeof(uint32_t));
 
 				/* calculate histogram of image */
-				int firstpixel = copy->data[0]; //TODO: Verify this border pixel assumption holds
-				for(int i=y1;i<=y2;i++)
+				int firstpixel = copy->data[0]; // TODO: Verify this border
+												// pixel assumption holds
+				for (int i = y1; i <= y2; i++)
 				{
-					for(int j=x1;j<=x2;j++)
+					for (int j = x1; j <= x2; j++)
 					{
-						if(copy->data[(crop_points->y+i)*w + (crop_points->x+j)]!=firstpixel)
-							histogram[copy->data[(crop_points->y+i)*w + (crop_points->x+j)]]++;
+						if (copy->data[(crop_points->y + i) * w +
+									   (crop_points->x + j)] != firstpixel)
+							histogram[copy->data[(crop_points->y + i) * w +
+												 (crop_points->x + j)]]++;
 					}
 				}
 				/* sorted in increasing order of intensity */
-				shell_sort((void*)iot, copy->nb_colors, sizeof(*iot), check_trans_tn_intensity, (void*)&ti);
+				shell_sort((void *)iot, copy->nb_colors, sizeof(*iot),
+						   check_trans_tn_intensity, (void *)&ti);
 				// ccx_common_logging.log_ftn("Intensity ordered table\n");
 				// for (int i = 0; i < copy->nb_colors; i++)
 				// {
@@ -483,7 +513,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 					palette[i].red = copy->palette[i].red;
 					palette[i].green = copy->palette[i].green;
 					palette[i].blue = copy->palette[i].blue;
-					alpha[i]=copy->alpha[i];
+					alpha[i] = copy->alpha[i];
 				}
 
 				for (int i = 0, mxi = 0; i < copy->nb_colors; i++)
@@ -495,7 +525,8 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 						continue;
 					}
 					inc = (mxi) ? -1 : 0;
-					step = mcit[mxi + inc] + ((mcit[mxi] - mcit[mxi + inc]) / 2);
+					step =
+						mcit[mxi + inc] + ((mcit[mxi] - mcit[mxi + inc]) / 2);
 					if (i <= step)
 					{
 						int index = iot[mcit[mxi + inc]];
@@ -512,127 +543,152 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 						palette[iot[i]].blue = palette[index].blue;
 						palette[iot[i]].green = palette[index].green;
 					}
-
 				}
 
 				// Detecting the color present in quantized word image
-				int r_avg=0,g_avg=0,b_avg=0,denom=0;
+				int r_avg = 0, g_avg = 0, b_avg = 0, denom = 0;
 				for (int i = 0; i < copy->nb_colors; i++)
 				{
-					if(palette[i].red == ((copy->bgcolor >> 16) & 0xff) &&
-					   palette[i].green == ((copy->bgcolor >> 8) & 0xff) &&
-					   palette[i].blue == ((copy->bgcolor >> 0) & 0xff))
+					if (palette[i].red == ((copy->bgcolor >> 16) & 0xff) &&
+						palette[i].green == ((copy->bgcolor >> 8) & 0xff) &&
+						palette[i].blue == ((copy->bgcolor >> 0) & 0xff))
 						continue;
 					denom++;
-					r_avg+=palette[i].red;
-					g_avg+=palette[i].green;
-					b_avg+=palette[i].blue;
+					r_avg += palette[i].red;
+					g_avg += palette[i].green;
+					b_avg += palette[i].blue;
 				}
-				if(denom!=0)
+				if (denom != 0)
 				{
-					r_avg/=denom;
-					g_avg/=denom;
-					b_avg/=denom;
+					r_avg /= denom;
+					g_avg /= denom;
+					b_avg /= denom;
 				}
 
 				// Getting the hue value
 				float h;
-				float max = (((r_avg > g_avg) && (r_avg > b_avg)) ? r_avg : (g_avg > b_avg) ? g_avg : b_avg);
-				float min = (((r_avg < g_avg) && (r_avg < b_avg)) ? r_avg : (g_avg < b_avg) ? g_avg : b_avg);
-				if(max==0.0f||max-min==0.0f) h = 0;
-				else if(max==r_avg) h = 60 * ((g_avg - b_avg)/(max - min)) + 0;
-				else if(max==g_avg) h = 60 * ((b_avg - r_avg)/(max - min)) + 120;
-				else h = 60 * ((r_avg - g_avg)/(max - min)) + 240;
+				float max = (((r_avg > g_avg) && (r_avg > b_avg))
+								 ? r_avg
+								 : (g_avg > b_avg) ? g_avg : b_avg);
+				float min = (((r_avg < g_avg) && (r_avg < b_avg))
+								 ? r_avg
+								 : (g_avg < b_avg) ? g_avg : b_avg);
+				if (max == 0.0f || max - min == 0.0f)
+					h = 0;
+				else if (max == r_avg)
+					h = 60 * ((g_avg - b_avg) / (max - min)) + 0;
+				else if (max == g_avg)
+					h = 60 * ((b_avg - r_avg) / (max - min)) + 120;
+				else
+					h = 60 * ((r_avg - g_avg) / (max - min)) + 240;
 
-				if(abs(h-h0)>50) // Color has changed
+				if (abs(h - h0) > 50) // Color has changed
 				{
 					// Write <font> tags for SRT and WebVTT
-					if(ccx_options.write_format==CCX_OF_SRT ||
-					   ccx_options.write_format==CCX_OF_WEBVTT)
+					if (ccx_options.write_format == CCX_OF_SRT ||
+						ccx_options.write_format == CCX_OF_WEBVTT)
 					{
 						char *substr;
-						if(written_tag)
+						if (written_tag)
 						{
-							substr = (char*)malloc(sizeof("</font><font color=\"#000000\">"));
-							sprintf(substr,"</font><font color=\"#%02x%02x%02x\">",r_avg,g_avg,b_avg);
+							substr = (char *)malloc(
+								sizeof("</font><font color=\"#000000\">"));
+							sprintf(substr,
+									"</font><font color=\"#%02x%02x%02x\">",
+									r_avg, g_avg, b_avg);
 						}
 						else
 						{
-							substr = (char*)malloc(sizeof("<font color=\"#000000\">"));
-							sprintf(substr,"<font color=\"#%02x%02x%02x\">",r_avg,g_avg,b_avg);
+							substr = (char *)malloc(
+								sizeof("<font color=\"#000000\">"));
+							sprintf(substr, "<font color=\"#%02x%02x%02x\">",
+									r_avg, g_avg, b_avg);
 						}
-						if(strstr(text_out,word))
+						if (strstr(text_out, word))
 						{
 							char *text_out_copy = strdup(text_out);
 							free(text_out);
-							text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
-							memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
-							int pos = (int)(strstr(text_out_copy,word)-text_out_copy);
-							strncpy(text_out,text_out_copy,pos);
+							text_out = malloc(strlen(text_out_copy) +
+											  strlen(substr) + 1);
+							memset(text_out, 0,
+								   strlen(text_out_copy) + strlen(substr) + 1);
+							int pos = (int)(strstr(text_out_copy, word) -
+											text_out_copy);
+							strncpy(text_out, text_out_copy, pos);
 							int len = strlen(text_out);
-							strcpy(text_out+len,substr);
-							strcpy(text_out+len+strlen(substr),text_out_copy+len);
+							strcpy(text_out + len, substr);
+							strcpy(text_out + len + strlen(substr),
+								   text_out_copy + len);
 							free(text_out_copy);
 							written_tag = 1;
 						}
-						else if(!written_tag)
+						else if (!written_tag)
 						{
 							char *text_out_copy = strdup(text_out);
 							free(text_out);
-							text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
-							memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
-							strcpy(text_out,substr);
-							strcpy(text_out+strlen(substr),text_out_copy);
+							text_out = malloc(strlen(text_out_copy) +
+											  strlen(substr) + 1);
+							memset(text_out, 0,
+								   strlen(text_out_copy) + strlen(substr) + 1);
+							strcpy(text_out, substr);
+							strcpy(text_out + strlen(substr), text_out_copy);
 							written_tag = 1;
 						}
 						free(substr);
 					}
 				}
 
-				h0=h;
+				h0 = h;
 
 				freep(&histogram);
 				freep(&mcit);
 				freep(&iot);
 				TessDeleteText(word);
-			} while (TessPageIteratorNext((TessPageIterator *)ri,level));
+			} while (TessPageIteratorNext((TessPageIterator *)ri, level));
 
 			// Write missing <font> or </font> for each line
-			if(ccx_options.write_format==CCX_OF_SRT ||
-			   ccx_options.write_format==CCX_OF_WEBVTT)
+			if (ccx_options.write_format == CCX_OF_SRT ||
+				ccx_options.write_format == CCX_OF_WEBVTT)
 			{
 				const char *closing_font = "</font>";
 				int length_closing_font = 7; // exclude '\0'
 
 				char *line_start = text_out;
-				int length = strlen(text_out) + length_closing_font * 10; // usually enough
+				int length = strlen(text_out) +
+							 length_closing_font * 10; // usually enough
 				char *new_text_out = malloc(length);
 				char *new_text_out_iter = new_text_out;
 
-				char *last_valid_char = text_out; // last character that is not '\n' or '\0'
+				char *last_valid_char =
+					text_out; // last character that is not '\n' or '\0'
 
 				for (char *iter = text_out; *iter; iter++)
-					if (*iter != '\n') last_valid_char = iter;
+					if (*iter != '\n')
+						last_valid_char = iter;
 
 				char *last_font_tag = text_out; // Last <font> in this line
 				char *last_font_tag_end = NULL;
 
-				while (1) {
+				while (1)
+				{
 
 					char *line_end = line_start;
-					while (*line_end && *line_end != '\n') line_end++; // find the line end
+					while (*line_end && *line_end != '\n')
+						line_end++; // find the line end
 
-					if (new_text_out_iter != new_text_out) {
+					if (new_text_out_iter != new_text_out)
+					{
 						memcpy(new_text_out_iter, "\n", 1);
 						new_text_out_iter += 1;
 					}
 
 					// realloc if memory allocated may be not enough
 					int length_needed = (new_text_out_iter - new_text_out) +
-						(line_end - line_start) +
-						length_closing_font + 32;
+										(line_end - line_start) +
+										length_closing_font + 32;
 
-					if (length_needed > length) {
+					if (length_needed > length)
+					{
 
 						length = max(length * 1.5, length_needed);
 						long diff = new_text_out_iter - new_text_out;
@@ -641,42 +697,58 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 					}
 
 					// Add <font> to the beginning of the line if it is missing
-					// Assume there is always a <font> at the beginning of the first line
-					if (last_font_tag_end && strstr(line_start, "<font color=\"#") != line_start) {
+					// Assume there is always a <font> at the beginning of the
+					// first line
+					if (last_font_tag_end &&
+						strstr(line_start, "<font color=\"#") != line_start)
+					{
 						if ((new_text_out_iter - new_text_out) +
-							(last_font_tag_end - last_font_tag) > length) {
-							fatal(CCX_COMMON_EXIT_BUG_BUG, "In ocr_bitmap: Running out of memory. It shouldn't happen. Please report.\n", errno);
+								(last_font_tag_end - last_font_tag) >
+							length)
+						{
+							fatal(CCX_COMMON_EXIT_BUG_BUG,
+								  "In ocr_bitmap: Running out of memory. It "
+								  "shouldn't happen. Please report.\n",
+								  errno);
 						}
-						memcpy(new_text_out_iter, last_font_tag, last_font_tag_end - last_font_tag);
+						memcpy(new_text_out_iter, last_font_tag,
+							   last_font_tag_end - last_font_tag);
 						new_text_out_iter += last_font_tag_end - last_font_tag;
 					}
 
 					// Find the last <font> tag
 					char *font_tag = line_start;
-					while (1) {
+					while (1)
+					{
 
 						font_tag = strstr(font_tag + 1, "<font color=\"#");
-						if (font_tag == NULL || font_tag > line_end) break;
+						if (font_tag == NULL || font_tag > line_end)
+							break;
 						last_font_tag = font_tag;
-
 					}
-                    last_font_tag_end = strstr(last_font_tag, ">");
-                    if(last_font_tag_end) last_font_tag_end += 1; // move string to the "right" if ">" was found, otherwise leave empty string (solves #1084)
+					last_font_tag_end = strstr(last_font_tag, ">");
+					if (last_font_tag_end)
+						last_font_tag_end +=
+							1; // move string to the "right" if ">" was found,
+							   // otherwise leave empty string (solves #1084)
 
 					// Copy the content of the subtitle
-					memcpy(new_text_out_iter, line_start, line_end - line_start);
+					memcpy(new_text_out_iter, line_start,
+						   line_end - line_start);
 					new_text_out_iter += line_end - line_start;
 
 					// Add </font> if it is indeed missing
 					if (line_end - line_start < length_closing_font ||
-						strncmp(line_start, closing_font, length_closing_font)) {
+						strncmp(line_start, closing_font, length_closing_font))
+					{
 
-						memcpy(new_text_out_iter, closing_font, length_closing_font);
+						memcpy(new_text_out_iter, closing_font,
+							   length_closing_font);
 						new_text_out_iter += length_closing_font;
-
 					}
 
-					if (line_end - 1 == last_valid_char) break;
+					if (line_end - 1 == last_valid_char)
+						break;
 					line_start = line_end + 1;
 				}
 				*new_text_out_iter = '\0';
@@ -708,8 +780,8 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
  * @param max_color in
  * @param nb_color in
  */
-static int quantize_map(png_byte *alpha, png_color *palette,
-		uint8_t *bitmap, int size, int max_color, int nb_color)
+static int quantize_map(png_byte *alpha, png_color *palette, uint8_t *bitmap,
+						int size, int max_color, int nb_color)
 {
 	/*
 	 * occurrence of color in image
@@ -721,25 +793,25 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 	 * save index of intensity order table
 	 */
 	uint32_t *mcit = NULL;
-	struct transIntensity ti = { alpha,palette};
+	struct transIntensity ti = {alpha, palette};
 
 	int ret = 0;
 
-	histogram = (uint32_t*) malloc(nb_color * sizeof(uint32_t));
+	histogram = (uint32_t *)malloc(nb_color * sizeof(uint32_t));
 	if (!histogram)
 	{
 		ret = -1;
 		goto end;
 	}
 
-	iot = (uint8_t*) malloc(nb_color * sizeof(uint8_t));
+	iot = (uint8_t *)malloc(nb_color * sizeof(uint8_t));
 	if (!iot)
 	{
 		ret = -1;
 		goto end;
 	}
 
-	mcit = (uint32_t*) malloc(nb_color * sizeof(uint32_t));
+	mcit = (uint32_t *)malloc(nb_color * sizeof(uint32_t));
 	if (!mcit)
 	{
 		ret = -1;
@@ -748,7 +820,8 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 
 	memset(histogram, 0, nb_color * sizeof(uint32_t));
 
-	/* initializing intensity ordered table with serial order of unsorted color table */
+	/* initializing intensity ordered table with serial order of unsorted color
+	 * table */
 	for (int i = 0; i < nb_color; i++)
 	{
 		iot[i] = i;
@@ -761,14 +834,15 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 		histogram[bitmap[i]]++;
 	}
 	/* sorted in increasing order of intensity */
-	shell_sort((void*)iot, nb_color, sizeof(*iot), check_trans_tn_intensity, (void*)&ti);
+	shell_sort((void *)iot, nb_color, sizeof(*iot), check_trans_tn_intensity,
+			   (void *)&ti);
 
 #ifdef OCR_DEBUG
 	ccx_common_logging.log_ftn("Intensity ordered table\n");
 	for (int i = 0; i < nb_color; i++)
 	{
-		ccx_common_logging.log_ftn("%02d) map %02d hist %02d\n",
-			i, iot[i], histogram[iot[i]]);
+		ccx_common_logging.log_ftn("%02d) map %02d hist %02d\n", i, iot[i],
+								   histogram[iot[i]]);
 	}
 #endif
 	/**
@@ -800,8 +874,7 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 	ccx_common_logging.log_ftn("max redundant intensities table\n");
 	for (int i = 0; i < max_color; i++)
 	{
-		ccx_common_logging.log_ftn("%02d) mcit %02d\n",
-			i, mcit[i]);
+		ccx_common_logging.log_ftn("%02d) mcit %02d\n", i, mcit[i]);
 	}
 #endif
 	for (int i = 0, mxi = 0; i < nb_color; i++)
@@ -830,23 +903,25 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 			palette[iot[i]].blue = palette[index].blue;
 			palette[iot[i]].green = palette[index].green;
 		}
-
 	}
 #ifdef OCR_DEBUG
 	ccx_common_logging.log_ftn("Colors present in quantized Image\n");
 	for (int i = 0; i < nb_color; i++)
 	{
-		ccx_common_logging.log_ftn("%02d)r %03d g %03d b %03d a %03d\n",
-			i, palette[i].red, palette[i].green, palette[i].blue, alpha[i]);
+		ccx_common_logging.log_ftn("%02d)r %03d g %03d b %03d a %03d\n", i,
+								   palette[i].red, palette[i].green,
+								   palette[i].blue, alpha[i]);
 	}
 #endif
-	end: freep(&histogram);
+end:
+	freep(&histogram);
 	freep(&mcit);
 	freep(&iot);
 	return ret;
 }
 
-int ocr_rect(void* arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr_quantmode)
+int ocr_rect(void *arg, struct cc_bitmap *rect, char **str, int bgcolor,
+			 int ocr_quantmode)
 {
 	int ret = 0;
 	png_color *palette = NULL;
@@ -855,67 +930,70 @@ int ocr_rect(void* arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr
 	struct image_copy *copy;
 	copy = (struct image_copy *)malloc(sizeof(struct image_copy));
 	copy->nb_colors = rect->nb_colors;
-	copy->palette = (png_color*) malloc(rect->nb_colors * sizeof(png_color));
-	copy->alpha = (png_byte*) malloc(rect->nb_colors * sizeof(png_byte));
+	copy->palette = (png_color *)malloc(rect->nb_colors * sizeof(png_color));
+	copy->alpha = (png_byte *)malloc(rect->nb_colors * sizeof(png_byte));
 	copy->bgcolor = bgcolor;
 
-	palette = (png_color*) malloc(rect->nb_colors * sizeof(png_color));
-	if(!palette||!copy->palette)
+	palette = (png_color *)malloc(rect->nb_colors * sizeof(png_color));
+	if (!palette || !copy->palette)
 	{
 		ret = -1;
 		goto end;
 	}
-		alpha = (png_byte*) malloc(rect->nb_colors * sizeof(png_byte));
-		if(!alpha||!copy->alpha)
+	alpha = (png_byte *)malloc(rect->nb_colors * sizeof(png_byte));
+	if (!alpha || !copy->alpha)
+	{
+		ret = -1;
+		goto end;
+	}
+
+	mapclut_paletee(palette, alpha, (uint32_t *)rect->data1, rect->nb_colors);
+	mapclut_paletee(copy->palette, copy->alpha, (uint32_t *)rect->data1,
+					rect->nb_colors);
+
+	int size = rect->w * rect->h;
+	dbg_print(CCX_DMT_DVB, "ocr_rect(): Trying W*H (%d * %d) so size = %d\n",
+			  rect->w, rect->h, size);
+
+	if (size < 0)
+	{
+		dbg_print(CCX_DMT_VERBOSE, "Width or height has a negative value");
+		ret = -1;
+		goto end;
+	}
+
+	copy->data = (unsigned char *)malloc(sizeof(unsigned char) * size);
+	for (int i = 0; i < size; i++)
+	{
+		copy->data[i] = rect->data0[i];
+	}
+
+	switch (ocr_quantmode)
+	{
+	case 1:
+		quantize_map(alpha, palette, rect->data0, size, 3, rect->nb_colors);
+		break;
+
+	// Case 2 reduces the color set of the image
+	case 2:
+		for (int i = 0; i < (rect->nb_colors); i++)
 		{
-				ret = -1;
-				goto end;
+			// Taking the quotient of the palette color with 8 shades in each
+			// RGB
+			palette[i].red = (int)((palette[i].red + 1) / 32);
+			palette[i].blue = (int)((palette[i].blue + 1) / 32);
+			palette[i].green = (int)((palette[i].green + 1) / 32);
+
+			// Making the palette color value closest to original, from among
+			// the 8 set colors
+			palette[i].red *= 32;
+			palette[i].blue *= 32;
+			palette[i].green *= 32;
 		}
+		break;
+	}
 
-		mapclut_paletee(palette, alpha, (uint32_t *)rect->data1,rect->nb_colors);
-		mapclut_paletee(copy->palette, copy->alpha, (uint32_t *)rect->data1,rect->nb_colors);
-
-		int size = rect->w * rect->h;
-		dbg_print(CCX_DMT_DVB, "ocr_rect(): Trying W*H (%d * %d) so size = %d\n",
-				rect->w, rect->h, size);
-
-		if(size<0)
-		{	
-			dbg_print(CCX_DMT_VERBOSE, "Width or height has a negative value");
-			ret = -1;
-			goto end;
-		}
-
-		copy->data = (unsigned char *)malloc(sizeof(unsigned char)*size);
-		for(int i = 0; i < size; i++)
-		{
-			copy->data[i] = rect->data0[i];
-		}
-
-		switch (ocr_quantmode)
-		{
-			case 1:
-				quantize_map(alpha, palette, rect->data0, size, 3, rect->nb_colors);
-				break;
-
-			// Case 2 reduces the color set of the image
-			case 2:
-				for(int i=0; i<(rect->nb_colors); i++)
-				{
-					// Taking the quotient of the palette color with 8 shades in each RGB 
-					palette[i].red=(int)((palette[i].red+1)/32);
-					palette[i].blue=(int)((palette[i].blue+1)/32);
-					palette[i].green=(int)((palette[i].green+1)/32);
-
-					// Making the palette color value closest to original, from among the 8 set colors
-					palette[i].red*=32;
-					palette[i].blue*=32;
-					palette[i].green*=32;
-				}
-				break;
-		}
-
-		*str = ocr_bitmap(arg, palette, alpha, rect->data0, rect->w, rect->h, copy);
+	*str = ocr_bitmap(arg, palette, alpha, rect->data0, rect->w, rect->h, copy);
 
 end:
 	freep(&palette);
@@ -925,58 +1003,64 @@ end:
 	freep(&copy->data);
 	freep(&copy);
 	return ret;
-
 }
 
 /**
  * Call back function used while sorting rectangle by y position
  * if both rectangle have same y position then x position is considered
  */
-int compare_rect_by_ypos(const void*p1, const void *p2, void*arg)
+int compare_rect_by_ypos(const void *p1, const void *p2, void *arg)
 {
-	const struct cc_bitmap* r1 = p1;
-	const struct cc_bitmap* r2 = p2;
-	if(r1->y > r2->y)
+	const struct cc_bitmap *r1 = p1;
+	const struct cc_bitmap *r2 = p2;
+	if (r1->y > r2->y)
 	{
 		return 1;
 	}
 	else if (r1->y == r2->y)
 	{
-		if(r1->x > r2->x)
+		if (r1->x > r2->x)
 			return 1;
 	}
 	return -1;
 }
 
-void add_ocrtext2str(char *dest, char *src, const char *crlf, unsigned crlf_length)
+void add_ocrtext2str(char *dest, char *src, const char *crlf,
+					 unsigned crlf_length)
 {
 	char *line_scan;
 	int char_found;
 	while (*dest != '\0')
-			dest++;
+		dest++;
 	while (*src != '\0')
 	{
-		//checks if a line has actual content in it before adding it
-		if (*src == '\n') {
+		// checks if a line has actual content in it before adding it
+		if (*src == '\n')
+		{
 			char_found = 0;
 			line_scan = src + 1;
-			//multiple blocks of newlines
-			while (*(line_scan) == '\n') {
+			// multiple blocks of newlines
+			while (*(line_scan) == '\n')
+			{
 				line_scan++;
 				src++;
 			}
-			//empty lines
-			while (*line_scan != '\n' && *line_scan != '\0') {
-				if (*line_scan > 32) {
+			// empty lines
+			while (*line_scan != '\n' && *line_scan != '\0')
+			{
+				if (*line_scan > 32)
+				{
 					char_found = 1;
 					break;
 				}
 				line_scan++;
 			}
-			if (!char_found) {
+			if (!char_found)
+			{
 				src = line_scan;
 			}
-			if (*src == '\0') break;
+			if (*src == '\0')
+				break;
 		}
 		*dest = *src;
 		src++;
@@ -985,8 +1069,8 @@ void add_ocrtext2str(char *dest, char *src, const char *crlf, unsigned crlf_leng
 	memcpy(dest, crlf, crlf_length);
 	dest[crlf_length] = 0;
 	/*
-	*dest++ = '\n';
-	*dest = '\0'; */
+	 *dest++ = '\n';
+	 *dest = '\0'; */
 }
 
 /**
@@ -994,32 +1078,36 @@ void add_ocrtext2str(char *dest, char *src, const char *crlf, unsigned crlf_leng
  * for all text detected from rectangles
  */
 
-char *paraof_ocrtext(struct cc_subtitle *sub, const char *crlf, unsigned crlf_length)
+char *paraof_ocrtext(struct cc_subtitle *sub, const char *crlf,
+					 unsigned crlf_length)
 {
 	int i;
 	int len = 0;
 	char *str;
-	struct cc_bitmap* rect;
+	struct cc_bitmap *rect;
 
-	shell_sort(sub->data, sub->nb_data, sizeof(struct cc_bitmap), compare_rect_by_ypos, NULL);
-	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
+	shell_sort(sub->data, sub->nb_data, sizeof(struct cc_bitmap),
+			   compare_rect_by_ypos, NULL);
+	for (i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
-		if(rect->ocr_text)
+		if (rect->ocr_text)
 			len += strlen(rect->ocr_text);
 	}
-	if(len <= 0)
+	if (len <= 0)
 		return NULL;
 	else
 	{
-		str = malloc(len+1+10); //Extra space for possible trailing '/n's at the end of tesseract UTF8 text
-		if(!str)
+		str = malloc(len + 1 + 10); // Extra space for possible trailing '/n's
+									// at the end of tesseract UTF8 text
+		if (!str)
 			return NULL;
 		*str = '\0';
 	}
 
-	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
+	for (i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
-		if (!rect->ocr_text) continue;
+		if (!rect->ocr_text)
+			continue;
 		add_ocrtext2str(str, rect->ocr_text, crlf, crlf_length);
 		free(rect->ocr_text);
 	}
@@ -1029,7 +1117,8 @@ char *paraof_ocrtext(struct cc_subtitle *sub, const char *crlf, unsigned crlf_le
 
 struct image_copy;
 
-char* ocr_bitmap(png_color *palette,png_byte *alpha, unsigned char* indata,unsigned char d,int w, int h, struct image_copy *copy)
+char *ocr_bitmap(png_color *palette, png_byte *alpha, unsigned char *indata,
+				 unsigned char d, int w, int h, struct image_copy *copy)
 {
 	mprint("ocr not supported without tesseract\n");
 	return NULL;
