@@ -19,11 +19,6 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 #ifdef ENABLE_OCR
 	struct cc_bitmap* rect;
 
-	LLONG start_time, end_time;
-	
-	start_time = sub->start_time;
-	end_time = sub->end_time;
-
 	if (sub->nb_data == 0)
 		return ret;
 	rect = sub->data;
@@ -43,13 +38,13 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 				char buf1[80];
 				if (context->transcript_settings->relativeTimestamp)
 				{
-					millis_to_date(start_time + context->subs_delay, buf1, context->date_format, context->millis_separator);
+					millis_to_date(sub->start_time, buf1, context->date_format, context->millis_separator);
 					fdprintf(context->out->fh, "%s|", buf1);
 				}
 				else
 				{
-					time_t start_time_int = (start_time + context->subs_delay) / 1000;
-					int start_time_dec = (start_time + context->subs_delay) % 1000;
+					time_t start_time_int = sub->start_time / 1000;
+					int start_time_dec = sub->start_time % 1000;
 					struct tm *start_time_struct = gmtime(&start_time_int);
 					strftime(buf1, sizeof(buf1), "%Y%m%d%H%M%S", start_time_struct);
 					fdprintf(context->out->fh, "%s%c%03d|", buf1, context->millis_separator, start_time_dec);
@@ -61,13 +56,13 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 				char buf2[80];
 				if (context->transcript_settings->relativeTimestamp)
 				{
-					millis_to_date(end_time + context->subs_delay, buf2, context->date_format, context->millis_separator);
+					millis_to_date(sub->end_time, buf2, context->date_format, context->millis_separator);
 					fdprintf(context->out->fh, "%s|", buf2);
 				}
 				else
 				{
-					time_t end_time_int = (end_time + context->subs_delay) / 1000;
-					int end_time_dec = (end_time + context->subs_delay) % 1000;
+					time_t end_time_int = sub->end_time / 1000;
+					int end_time_dec = sub->end_time % 1000;
 					struct tm *end_time_struct = gmtime(&end_time_int);
 					strftime(buf2, sizeof(buf2), "%Y%m%d%H%M%S", end_time_struct);
 					fdprintf(context->out->fh, "%s%c%03d|", buf2, context->millis_separator, end_time_dec);

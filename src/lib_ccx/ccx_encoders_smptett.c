@@ -112,12 +112,8 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 	int ret = 0;
 #ifdef ENABLE_OCR
 	struct cc_bitmap* rect;
-	LLONG ms_start, ms_end;
 	//char timeline[128];
 	int i,len = 0;
-
-	ms_start = sub->start_time;
-	ms_end = sub->end_time;
 
 	if(sub->nb_data == 0 )
 		return 0;
@@ -136,8 +132,8 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 				char *buf = (char *)context->buffer;
 				unsigned h1, m1, s1, ms1;
 				unsigned h2, m2, s2, ms2;
-				millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
-				millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
+				millis_to_time(sub->start_time, &h1, &m1, &s1, &ms1);
+				millis_to_time(sub->end_time - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 				sprintf((char *)context->buffer, "<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\n", h1, m1, s1, ms1, h2, m2, s2, ms2);
                 write(context->out->fh, buf, strlen(buf));
 				len = strlen(rect[i].ocr_text);

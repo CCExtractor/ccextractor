@@ -693,13 +693,12 @@ static void try_to_add_end_credits(struct encoder_ctx *context, struct ccx_s_wri
 	}
 }
 
-void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
+void try_to_add_start_credits(struct encoder_ctx *context, LLONG start_ms)
 {
 	LLONG st, end, window, length;
-	LLONG l = start_ms + context->subs_delay;
-	// We have a windows from last_displayed_subs_ms to l - we need to see if it fits
+	// We have a windows from last_displayed_subs_ms to start_ms - we need to see if it fits
 
-	if (l < context->startcreditsnotbefore.time_in_ms) // Too early
+	if (start_ms < context->startcreditsnotbefore.time_in_ms) // Too early
 		return;
 
 	if (context->last_displayed_subs_ms+1 > context->startcreditsnotafter.time_in_ms) // Too late
@@ -708,8 +707,8 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 	st = context->startcreditsnotbefore.time_in_ms>(context->last_displayed_subs_ms+1) ?
 		context->startcreditsnotbefore.time_in_ms : (context->last_displayed_subs_ms+1); // When would credits actually start
 
-	end = context->startcreditsnotafter.time_in_ms<(l-1) ?
-		context->startcreditsnotafter.time_in_ms : (l-1);
+	end = context->startcreditsnotafter.time_in_ms < start_ms - 1 ?
+		context->startcreditsnotafter.time_in_ms : start_ms - 1;
 
 	window = end-st; // Allowable time in MS
 
@@ -720,7 +719,7 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 		window : context->startcreditsforatmost.time_in_ms;
 
 	dbg_print(CCX_DMT_VERBOSE, "Last subs: %lld   Current position: %lld\n",
-			context->last_displayed_subs_ms, l);
+			context->last_displayed_subs_ms, start_ms);
 	dbg_print(CCX_DMT_VERBOSE, "Not before: %lld   Not after: %lld\n",
 			context->startcreditsnotbefore.time_in_ms,
 			context->startcreditsnotafter.time_in_ms);
@@ -1098,6 +1097,11 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		if (NULL==sub)
 			return wrote_something;
 	}
+
+	sub->start_time += context->subs_delay;
+	sub->end_time += context->subs_delay;
+	if (sub->start_time < 0)
+		return 0;
 
 	// Write subtitles as they come
 		if (sub->type == CC_608)

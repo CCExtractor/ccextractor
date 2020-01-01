@@ -18,7 +18,6 @@ int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *cont
 	int ret = 0;
 #ifdef ENABLE_OCR
 	struct cc_bitmap* rect;
-	LLONG ms_start, ms_end;
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;
 	char timeline[128];

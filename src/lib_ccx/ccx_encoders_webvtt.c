@@ -263,7 +263,6 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 	int ret = 0;
 #ifdef ENABLE_OCR
 	struct cc_bitmap* rect;
-	LLONG ms_start, ms_end;
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;
 	char timeline[128];
@@ -271,9 +270,6 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 	int used;
 	int i = 0;
 	char *str;
-
-	ms_start = sub->start_time;
-	ms_end = sub->end_time;
 
 	if (sub->nb_data == 0)
 		return 0;
@@ -288,8 +284,8 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 	{
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 		{
-			millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
-			millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
+			millis_to_time(sub->start_time, &h1, &m1, &s1, &ms1);
+			millis_to_time(sub->end_time - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 			context->srt_counter++; // Not needed for WebVTT but let's keep it around for now
 			sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
 				h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);

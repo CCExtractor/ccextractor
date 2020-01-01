@@ -119,11 +119,6 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 	int ret = 0;
 #ifdef ENABLE_OCR
 	struct cc_bitmap* rect;
-	LLONG ms_start, ms_end;
-
-	ms_start = sub->start_time;
-	ms_end = sub->end_time;
-
 
 	rect = sub->data;
 
@@ -137,7 +132,7 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 	{
 		sprintf(buf,
 			"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n"
-			, (unsigned long long)ms_start);
+			, (unsigned long long) sub->start_time);
 		write(context->out->fh, buf, strlen(buf));
 		for (int i = sub->nb_data - 1; i >= 0; i--)
 		{
@@ -162,7 +157,7 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 	{
 		sprintf(buf,
 			"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n"
-			, (unsigned long long)ms_start);
+			, (unsigned long long) sub->start_time);
 		write(context->out->fh, buf, strlen(buf));
 	}
 #endif
