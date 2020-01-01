@@ -8,6 +8,7 @@
 #include "ccx_encoders_helpers.h"
 #include "ocr.h"
 #undef OCR_DEBUG
+
 struct ocrCtx
 {
 	TessBaseAPI* api;
@@ -878,6 +879,13 @@ int ocr_rect(void* arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr
 		dbg_print(CCX_DMT_DVB, "ocr_rect(): Trying W*H (%d * %d) so size = %d\n",
 				rect->w, rect->h, size);
 
+		if(size<0)
+		{	
+			dbg_print(CCX_DMT_VERBOSE, "Width or height has a negative value");
+			ret = -1;
+			goto end;
+		}
+
 		copy->data = (unsigned char *)malloc(sizeof(unsigned char)*size);
 		for(int i = 0; i < size; i++)
 		{
@@ -1018,6 +1026,9 @@ char *paraof_ocrtext(struct cc_subtitle *sub, const char *crlf, unsigned crlf_le
 	return str;
 }
 #else
+
+struct image_copy;
+
 char* ocr_bitmap(png_color *palette,png_byte *alpha, unsigned char* indata,unsigned char d,int w, int h, struct image_copy *copy)
 {
 	mprint("ocr not supported without tesseract\n");

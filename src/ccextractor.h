@@ -46,7 +46,7 @@ struct lib_ccx_ctx *signal_ctx;
 //volatile int terminate_asap = 0;
 
 struct ccx_s_options* api_init_options();
-void check_configuration_file(struct ccx_s_options api_options);
+
 int api_start(struct ccx_s_options api_options);
 
 

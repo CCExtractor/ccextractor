@@ -1,9 +1,22 @@
 0.89 (TBD)
+-----------------
 - New: Added support to output captions to MCC file (#733).
+- New: Added a few comments.
+- New: Added more fatals on no arguments errors.
+- New: Updated ccextractor.cnf.sample.
 - Fix: ccx_demuxer_mxf.c: Parse framerate from MXF captions to fix caption timings.
 - Fix: hardsubx_decoder.c: Fix memory leaks using Leptonica API.
 - Fix: linux/Makefile.am: added some sources to enable rpms to be created.
 - Fix: Crash when using -sc (sentence case) option (#1115)
+- Fix: Correct if-clauses (missing or misplaced brackets).
+- Fix: Comment out some unused code.
+- Fix: Resolve bunch of compilation's warnings.
+- Fix: Segmentation fault on VOB #1128
+- Fix: Hang while processing video #1121
+- Fix: Removed redundant check_configuration_file function
+- Fix: lib_ccx.c: Initialize fatal error logging function before first usage in init_libraries
+- Fix: Added italics, underline, and color rendering support for -out=spupng with EIA608/teletext
+- Fix: Change inet_ntop to inet_ntoa for Windows XP compatibility
 
 0.88 (2019-05-21)
 -----------------

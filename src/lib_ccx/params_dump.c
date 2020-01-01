@@ -58,8 +58,7 @@ void params_dump(struct lib_ccx_ctx *ctx)
 			mprint ("Auto");
 			break;
 	}
-	mprint ("]");
-	mprint ("\n");
+	mprint ("]\n");
 
 	if (ccx_options.settings_dtvcc.enabled)
 	{
@@ -189,7 +188,7 @@ void params_dump(struct lib_ccx_ctx *ctx)
 				(long) (ccx_options.enc_cfg.endcreditsforatmost.time_in_ms/1000)
 		       );
 	}
-	// print quantisation mode used
+
 	mprint("[Quantisation-mode: ");
 	switch(ccx_options.ocr_quantmode)
 	{
