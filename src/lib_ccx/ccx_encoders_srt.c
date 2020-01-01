@@ -18,11 +18,8 @@ int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_sta
 	if(!string || !string[0])
 		return 0;
 
-	if (ms_start < 0) // Drop screens that because of subs_delay start too early
-		return 0;
-
-	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
-	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+	millis_to_time(ms_start,&h1,&m1,&s1,&ms1);
+	millis_to_time(ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 	context->srt_counter++;
 	sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
 	used = encode_line(context, context->buffer,(unsigned char *) timeline);
@@ -151,7 +148,7 @@ int write_cc_subtitle_as_srt(struct cc_subtitle *sub,struct encoder_ctx *context
 	{
 		if(sub->type == CC_TEXT)
 		{
-			ret = write_stringz_as_srt(sub->data, context, sub->start_time + context->subs_delay, sub->end_time + context->subs_delay);
+			ret = write_stringz_as_srt(sub->data, context, sub->start_time, sub->end_time);
 			freep(&sub->data);
 			sub->nb_data = 0;
 			ret = 1;

@@ -159,13 +159,13 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 				char buf[80];
 				if (context->transcript_settings->relativeTimestamp)
 				{
-					millis_to_date(start_time + context->subs_delay, buf, context->date_format, context->millis_separator);
+					millis_to_date(start_time, buf, context->date_format, context->millis_separator);
 					fdprintf(context->out->fh, "%s|", buf);
 				}
 				else
 				{
-					time_t start_time_int = (start_time + context->subs_delay) / 1000;
-					int start_time_dec = (start_time + context->subs_delay) % 1000;
+					time_t start_time_int = start_time / 1000;
+					int start_time_dec = start_time % 1000;
 					struct tm *start_time_struct = gmtime(&start_time_int);
 					strftime(buf, sizeof(buf), "%Y%m%d%H%M%S", start_time_struct);
 					fdprintf(context->out->fh, "%s%c%03d|", buf, context->millis_separator, start_time_dec);
@@ -177,13 +177,13 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 				char buf[80];
 				if (context->transcript_settings->relativeTimestamp)
 				{
-					millis_to_date(end_time + context->subs_delay, buf, context->date_format, context->millis_separator);
+					millis_to_date(end_time, buf, context->date_format, context->millis_separator);
 					fdprintf(context->out->fh, "%s|", buf);
 				}
 				else
 				{
-					time_t end_time_int = (end_time + context->subs_delay) / 1000;
-					int end_time_dec = (end_time + context->subs_delay) % 1000;
+					time_t end_time_int = end_time / 1000;
+					int end_time_dec = end_time % 1000;
 					struct tm *end_time_struct = gmtime(&end_time_int);
 					strftime(buf, sizeof(buf), "%Y%m%d%H%M%S", end_time_struct);
 					fdprintf(context->out->fh, "%s%c%03d|", buf, context->millis_separator, end_time_dec);
