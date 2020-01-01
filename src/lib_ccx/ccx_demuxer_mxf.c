@@ -381,10 +381,10 @@ static int mxf_read_vanc_data(struct ccx_demuxer *demux, uint64_t size, struct d
 	int len = 0;
 	int ret;
 	int cdp_size;
-	char vanc_header[16];
+	unsigned char vanc_header[16];
 	uint8_t DID;
 	uint8_t SDID;
-	uint8_t count;
+	// uint8_t count; /* Currently unused */
 
 	if (size < 19)
 		goto error;

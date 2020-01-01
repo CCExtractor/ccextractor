@@ -182,7 +182,7 @@ struct ISDBPos{
 
 struct ISDBText
 {
-	char *buf;
+	unsigned char *buf;
 	size_t len;
 	size_t used;
 	struct ISDBPos pos;
@@ -356,8 +356,8 @@ static struct ISDBText *allocate_text_node(ISDBSubLayout *ls)
 
 static int reserve_buf(struct ISDBText *text, size_t len)
 {
-	size_t blen;
-	unsigned char *ptr;
+	size_t blen = 0;
+	unsigned char *ptr = NULL; 
 
 	if (text->len >= text->used + len)
 		return CCX_OK;
@@ -485,14 +485,15 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 	struct ISDBText *text = NULL;
 	struct ISDBText *sb_text = NULL;
 	struct ISDBText *sb_temp = NULL;
-	struct ISDBText *wtrepeat_text = NULL;
+
 	//TO keep track we don't over flow in buffer from user
 	int index = 0;
 
 	if (ctx->cfg_no_rollup || (ctx->cfg_no_rollup == ctx->current_state.rollup_mode))
 	// Abhinav95: Forcing -noru to perform deduplication even if stream doesn't honor it
 	{
-		wtrepeat_text = NULL;
+		/* Currently unused */
+		//struct ISDBText *wtrepeat_text = NULL;
 		if (list_empty(&ctx->buffered_text))
 		{
 			list_for_each_entry(text, &ctx->text_list_head, list, struct ISDBText)
@@ -800,9 +801,10 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 	case CSI_CMD_ACPS:
 		isdb_command_log("Command:CSI: ACPS\n");
 		ret = get_csi_params(arg, &p1, &p2);
-		if (ret > 0)
+		if (ret > 0) {
 			ls->acps[0] = p1;
 			ls->acps[1] = p1;
+		}
 		break;
 	default:
 		isdb_log("Command:CSI: Unknown command 0x%x\n", *buf);
@@ -1311,7 +1313,7 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
 
 	if (ret > 0)
 	{
-		add_cc_sub_text(sub, buffer, ctx->prev_timestamp, ctx->timestamp, "NA", "ISDB", CCX_ENC_UTF_8);
+		add_cc_sub_text(sub, (char *) buffer, ctx->prev_timestamp, ctx->timestamp, "NA", "ISDB", CCX_ENC_UTF_8);
 		if (sub->start_time == sub->end_time)
 			sub->end_time += 2;
 		ctx->prev_timestamp = ctx->timestamp;
@@ -1329,9 +1331,11 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 	ISDBSubContext *ctx = codec_ctx;
 	const uint8_t *buf_pivot = buf;
 	int id = (*buf >> 2);
+#ifdef DEBUG // Fix [-Wunused-variable] when no debug
 	int version = (*buf & 2);
 	int link_number = 0;
 	int last_link_number = 0;
+#endif
 	int group_size = 0;
 	int ret = 0;
 
@@ -1345,12 +1349,19 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 		isdb_log("ISDB group B\n");
 	}
 
+	buf++;
+
+#ifdef DEBUG
 	isdb_log("ISDB (Data group) version %d\n",version);
 
-	buf++;
 	link_number = *buf++;
 	last_link_number = *buf++;
+
 	isdb_log("ISDB (Data group) link_number %d last_link_number %d\n", link_number, last_link_number);
+#else
+	buf++;
+	buf++;
+#endif
 
 	group_size = RB16(buf);
 	buf += 2;

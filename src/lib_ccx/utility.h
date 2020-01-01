@@ -14,9 +14,6 @@
 
 #define CCX_NOPTS	((int64_t)UINT64_C(0x8000000000000000))
 
-#define MIN(a,b) (((a)<(b))?(a):(b))
-#define MAX(a,b) (((a)>(b))?(a):(b))
-
 struct ccx_rational
 {
 	int num;

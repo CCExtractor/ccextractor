@@ -1,5 +1,5 @@
 #######################################################
-# Version 0.01
+# Version 0.02
 #
 # To enable required option please uncomment option
 #
@@ -12,11 +12,14 @@
 # 0 = file
 # 1 = stdin
 # 2 = network
+# 3 = tcp
 
 INPUT_SOURCE=0
 
 # The Buffer Input tag
 # This tag takes number in its input.
+
+# Is it ccx_bufferdata_type ?
 
 #BUFFER_INPUT=0
 
@@ -45,22 +48,28 @@ INPUT_SOURCE=0
 #NOTYPE_SETTING=
 
 # The Codec Tag takes the preference of codec
-# tag CCX_CODEC_ANY is by default
+# tag CCX_CODEC_ANY by default
+# This tag takes number in its input and their meanings
+# are following
+# 0 = CCX_CODEC_ANY (default)
+# 1 = CCX_CODEC_TELETEXT
+# 2 = CCX_CODEC_DVB
+# 3 = CCX_CODEC_ISDB_CC
+# 4 = CCX_CODEC_ATSC_CC
+# 5 = CCX_CODEC_NONE
+
+#CODEC=
+
+# The NO Codec Tag uses codec specified
+# tag CCX_CODEC_NONE by default
 # This tag takes number in its input and their meanings
 # are following
 # 0 = CCX_CODEC_ANY
 # 1 = CCX_CODEC_TELETEXT
 # 2 = CCX_CODEC_DVB
-
-#CODEC=
-
-# The NO Codec Tag do not use codec specified
-# tag CCX_CODEC_NONE is by default
-# This tag takes number in its input and their meanings
-# are following
-# 1 = CCX_CODEC_TELETEXT
-# 2 = CCX_CODEC_DVB
-# 3 = CCX_CODEC_NONE
+# 3 = CCX_CODEC_ISDB_CC
+# 4 = CCX_CODEC_ATSC_CC
+# 5 = CCX_CODEC_NONE (default)
 
 #NOCODEC=
 
@@ -68,15 +77,21 @@ INPUT_SOURCE=0
 # by default output format is srt
 # This tag takes number in its input and their meanings
 # are following
-# 0 = CCX_OF_RAW
-# 1 = CCX_OF_SRT (default)
-# 2 = CCX_OF_SAMI
-# 3 = CCX_OF_TRANSCRIPT
-# 4 = CCX_OF_RCWT
-# 5 = CCX_OF_NULL
-# 6 = CCX_OF_SMPTETT
-# 7 = CCX_OF_SPUPNG
-# 8 = CCX_OF_DVDRAW
+# 0  = CCX_OF_RAW
+# 1  = CCX_OF_SRT (default)
+# 2  = CCX_OF_SAMI
+# 3  = CCX_OF_TRANSCRIPT
+# 4  = CCX_OF_RCWT
+# 5  = CCX_OF_NULL
+# 6  = CCX_OF_SMPTETT
+# 7  = CCX_OF_SPUPNG
+# 8  = CCX_OF_DVDRAW
+# 9	 = CCX_OF_WEBVTT
+# 10 = CCX_OF_SIMPLE_XML
+# 11 = CCX_OF_G608
+# 12 = CCX_OF_CURL
+# 13 = CCX_OF_SSA
+# 14 = CCX_OF_MCC
 
 #OUTPUT_FORMAT=
 
