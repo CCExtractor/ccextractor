@@ -688,7 +688,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 
 	}
 
-	free(dec_ctx->xds_ctx);
+	freep(&dec_ctx->xds_ctx);
 	dec_ctx->xds_ctx=NULL;
 
 	mprint("\nClosing media: ");
