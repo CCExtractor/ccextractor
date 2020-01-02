@@ -134,7 +134,7 @@ void* init_ocr(int lang_index)
 {
 	int ret = -1;
 	struct ocrCtx* ctx;
-	const char* lang = NULL, *tessdata_path = NULL;
+	const char* lang = NULL;
 
 	ctx = (struct ocrCtx*)malloc(sizeof(struct ocrCtx));
 	if(!ctx)
@@ -144,29 +144,10 @@ void* init_ocr(int lang_index)
 		lang = ccx_options.ocrlang;
 	else
 	{
+		/* if language was undefined use english */
 		if(lang_index == 0)
 			lang_index = 1;
 		lang = language[lang_index];
-	}
-	/* if language was undefined use english */
-
-	tessdata_path = probe_tessdata_location(lang);
-	if(!tessdata_path)
-	{
-		if (lang_index == 1)
-		{
-			mprint("eng.traineddata not found! No Switching Possible\n");
-			return NULL;
-		}
-		mprint("%s.traineddata not found! Switching to English\n", lang);
-		lang_index = 1;
-		lang = language[lang_index];
-		tessdata_path = probe_tessdata_location(lang);
-		if(!tessdata_path)
-		{
-			mprint("eng.traineddata not found! No Switching Possible\n");
-			return NULL;
-		}
 	}
 
 	char* pars_vec = strdup("debug_file");
@@ -176,14 +157,13 @@ void* init_ocr(int lang_index)
 	if (!strncmp("4.", TessVersion(), 2))
 	{
 		char tess_path [1024];
-		snprintf(tess_path, 1024, "%s%s%s", tessdata_path, "/", "tessdata");
 		//ccx_options.ocr_oem are deprecated and only supported mode is OEM_LSTM_ONLY
-		ret = TessBaseAPIInit4(ctx->api, tess_path, lang, 1, NULL, 0, &pars_vec,
+		ret = TessBaseAPIInit4(ctx->api, NULL, lang, 1, NULL, 0, &pars_vec,
 			&pars_values, 1, false);
 	}
 	else
 	{
-		ret = TessBaseAPIInit4(ctx->api, tessdata_path, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
+		ret = TessBaseAPIInit4(ctx->api, NULL, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
 			&pars_values, 1, false);
 	}
 
