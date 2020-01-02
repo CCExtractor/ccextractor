@@ -225,37 +225,17 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
     char* lang = options->ocrlang;
     if(!lang) lang = "eng"; // English is default language
 
-    tessdata_path = probe_tessdata_location(lang);
-    if(!tessdata_path)
-    {
-        if (strcmp(lang, "eng") == 0)
-        {
-            mprint("eng.traineddata not found! No Switching Possible\n");
-            return NULL;
-        }
-        mprint("%s.traineddata not found! Switching to English\n", lang);
-        lang = "eng";
-        tessdata_path = probe_tessdata_location("eng");
-        if(!tessdata_path)
-        {
-            mprint("eng.traineddata not found! No Switching Possible\n");
-            return NULL;
-        }
-    }
-
     int ret = -1;
 
     if (!strncmp("4.", TessVersion(), 2))
     {
-        char tess_path [1024];
-        snprintf(tess_path, 1024, "%s%s%s", tessdata_path, "/", "tessdata");
         //ccx_options.ocr_oem are deprecated and only supported mode is OEM_LSTM_ONLY
-        ret = TessBaseAPIInit4(ctx->tess_handle, tess_path, lang, 1, NULL, 0, &pars_vec,
+        ret = TessBaseAPIInit4(ctx->tess_handle, NULL, lang, 1, NULL, 0, &pars_vec,
             &pars_values, 1, false);
     }
     else
     {
-        ret = TessBaseAPIInit4(ctx->tess_handle, tessdata_path, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
+        ret = TessBaseAPIInit4(ctx->tess_handle, NULL, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
             &pars_values, 1, false);
     }
 
@@ -263,6 +243,8 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
 	free(pars_values);
 	if(ret != 0)
 	{
+		// TODO: this is not necessarily the reason, tesseract might have not
+		// been able to find trained data
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to initialize Tesseract");
 	}
 

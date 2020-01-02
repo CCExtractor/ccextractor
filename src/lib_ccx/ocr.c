@@ -42,92 +42,12 @@ static int check_trans_tn_intensity(const void *p1, const void *p2, void *arg)
 	return 1;
 }
 
-static int search_language_pack(const char *dir_name,const char *lang_name)
-{
-	if (!dir_name)
-		return -1;
-
-	//Search for a tessdata folder in the specified directory
-	char *dirname = strdup(dir_name);
-	dirname = realloc(dirname,strlen(dirname)+strlen("tessdata/")+1);
-	strcat(dirname,"tessdata/");
-
-	DIR *dp;
-	struct dirent *dirp;
-	char filename[256];
-	if ((dp = opendir(dirname)) == NULL)
-	{
-		free(dirname);
-		return -1;
-	}
-	snprintf(filename, 256, "%s.traineddata",lang_name);
-	while ((dirp = readdir(dp)) != NULL)
-	{
-		if(!strcmp(dirp->d_name, filename))
-		{
-			closedir(dp);
-			free(dirname);
-			return 0;
-		}
-	}
-	free(dirname);
-	closedir(dp);
-	return -1;
-}
-
 void delete_ocr (void** arg)
 {
 	struct ocrCtx* ctx = *arg;
 	TessBaseAPIEnd(ctx->api);
 	TessBaseAPIDelete(ctx->api);
 	freep(arg);
-}
-
-/**
- * probe_tessdata_location
- *
- * This function probe tesseract data location
- *
- * Priority of Tesseract traineddata file search paths:-
- * 1. tessdata in TESSDATA_PREFIX, if it is specified. Overrides others
- * 2. tessdata in current working directory
- * 3. tessdata in /usr/share
- */
-char* probe_tessdata_location(const char *lang)
-{
-	int ret = 0;
-	char *tessdata_dir_path = getenv("TESSDATA_PREFIX");
-
-	ret = search_language_pack(tessdata_dir_path, lang);
-	if (!ret)
-		return tessdata_dir_path;
-
-	tessdata_dir_path = "./";
-	ret = search_language_pack(tessdata_dir_path, lang);
-	if (!ret)
-		return tessdata_dir_path;
-
-	tessdata_dir_path = "/usr/share/";
-	ret = search_language_pack(tessdata_dir_path, lang);
-	if (!ret)
-		return tessdata_dir_path;
-
-	tessdata_dir_path = "/usr/local/share/";
-	ret = search_language_pack(tessdata_dir_path, lang);
-	if (!ret)
-		return tessdata_dir_path;
-
-	tessdata_dir_path = "/usr/share/tesseract-ocr/";
-	ret = search_language_pack(tessdata_dir_path, lang);
-	if (!ret)
-		return tessdata_dir_path;
-
-	tessdata_dir_path = "/usr/share/tesseract-ocr/4.00/";
-	ret = search_language_pack(tessdata_dir_path, lang);
-	if (!ret)
-		return tessdata_dir_path;
-
-	return NULL;
 }
 
 void* init_ocr(int lang_index)
@@ -156,7 +76,6 @@ void* init_ocr(int lang_index)
 	ctx->api = TessBaseAPICreate();
 	if (!strncmp("4.", TessVersion(), 2))
 	{
-		char tess_path [1024];
 		//ccx_options.ocr_oem are deprecated and only supported mode is OEM_LSTM_ONLY
 		ret = TessBaseAPIInit4(ctx->api, NULL, lang, 1, NULL, 0, &pars_vec,
 			&pars_values, 1, false);
