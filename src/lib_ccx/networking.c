@@ -335,7 +335,7 @@ int net_udp_read(int socket, void *buffer, size_t length, const char *src_str, c
 	assert(length > 0);
 
 	int i;
-	char ip[15];
+	char ip[INET_ADDRSTRLEN];
 	struct sockaddr_in source_addr;
 	socklen_t len = sizeof(source_addr);
 	/* Get address of host to check for udp network mutlicasting */
@@ -354,7 +354,7 @@ int net_udp_read(int socket, void *buffer, size_t length, const char *src_str, c
 	{
 		do {
 			i = recvfrom(socket, (char *) buffer, length, 0, (struct sockaddr*)&source_addr, &len); /* peek at the data*/
-			memset(ip, 0, sizeof(char) * 15);
+			memset(ip, 0, sizeof(char) * INET_ADDRSTRLEN);
 			memcpy(ip, inet_ntoa(source_addr.sin_addr), sizeof(ip));
 		} while (strcmp(ip, src_str)!=0);												/* Loop till we find intended source */
 	}
@@ -1093,13 +1093,13 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 	{
 		struct in_addr source;
 		struct in_addr group;
-		char src_ip[15];
-		char addr_ip[15];
+		char src_ip[INET_ADDRSTRLEN];
+		char addr_ip[INET_ADDRSTRLEN];
 		source.s_addr = htonl(src);
-		memset(src_ip, 0, sizeof(char) * 15);
+		memset(src_ip, 0, sizeof(char) * INET_ADDRSTRLEN);
 		memcpy(src_ip, inet_ntoa(source), sizeof(src_ip));
 		group.s_addr = htonl(addr);
-		memset(addr_ip, 0, sizeof(char) * 15);
+		memset(addr_ip, 0, sizeof(char) * INET_ADDRSTRLEN);
 		memcpy(addr_ip, inet_ntoa(group), sizeof(addr_ip));
 
 		mprint("\rReading from UDP socket %s@%s:%u\n", src_ip, addr_ip, port);
