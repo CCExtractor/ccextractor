@@ -133,6 +133,18 @@ void params_dump(struct lib_ccx_ctx *ctx)
 		mprint ("%s",ccx_options.enc_cfg.sentence_cap?"Yes, but only built-in words":"No");
 	}
 	mprint ("]");
+
+	mprint("[Filter profanity: ");
+	if (ccx_options.filter_profanity_file != NULL)
+	{
+		mprint("Yes, using %s", ccx_options.filter_profanity_file);
+	}
+	else
+	{
+		mprint(ccx_options.enc_cfg.filter_profanity ? "Yes, but only filtering builtin words" : "No");
+	}
+	mprint("]");
+
 	mprint (" [Video-edit join: %s]", ccx_options.binary_concat?"No":"Yes");
 	mprint ("\n[Extraction start time: ");
 	if (ccx_options.extraction_start.set==0)

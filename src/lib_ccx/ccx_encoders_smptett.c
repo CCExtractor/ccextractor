@@ -213,11 +213,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 	{
 		if (data->row_used[row])
 		{
-			if (context->sentence_cap)
-			{
-				if (clever_capitalize(context, row, data))
-					correct_case_with_dictionary(row, data);
-			}
+			correct_spelling_and_censor_words_608(context, row, data);
 		
 			float row1=0;
 			float col1=0;

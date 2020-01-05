@@ -604,12 +604,10 @@ void write_cc_line_as_simplexml(struct eia608_screen *data, struct encoder_ctx *
 	int length = 0;
 	char *cap = "<caption>";
 	char *cap1 = "</caption>";
-	if (context->sentence_cap)
-	{
-		if (clever_capitalize (context, line_number, data))
-			correct_case_with_dictionary(line_number, data);
-	}
-	length = get_str_basic (context->subline, data->characters[line_number],
+
+	correct_spelling_and_censor_words_608(context, line_number, data);
+
+	length = get_str_basic(context->subline, data->characters[line_number],
 			context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
 
 	ret = write(context->out->fh, cap, strlen(cap));
@@ -998,6 +996,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->transcript_settings = &opt->transcript_settings;
 	ctx->no_bom = opt->no_bom;
 	ctx->sentence_cap = opt->sentence_cap;
+	ctx->filter_profanity = opt->filter_profanity;
 	ctx->trim_subs = opt->trim_subs;
 	ctx->autodash = opt->autodash;
 	ctx->no_font_color = opt->no_font_color;

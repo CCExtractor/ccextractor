@@ -31,10 +31,12 @@ void init_options (struct ccx_s_options *options)
 	options->fix_padding = 0; // Replace 0000 with 8080 in HDTV (needed for some cards)
 	options->gui_mode_reports=0; // If 1, output in stderr progress updates so the GUI can grab them
 	options->no_progress_bar=0; // If 1, suppress the output of the progress to stdout
-	options->enc_cfg.sentence_cap =0 ; // FIX CASE? = Fix case?
+	options->enc_cfg.sentence_cap = 0; // FIX CASE? = Fix case?
+	options->sentence_cap_file=NULL; // Extra words file?
+	options->enc_cfg.filter_profanity = 0;
+	options->filter_profanity_file = NULL;
 	options->enc_cfg.splitbysentence = 0; // Split text into complete sentences and prorate time?
 	options->enc_cfg.nospupngocr = 0;
-	options->sentence_cap_file=NULL; // Extra words file?
 	options->live_stream=0; // 0 -> A regular file
 	options->messages_target=1; // 1=stdout
 	options->print_file_reports=0;
