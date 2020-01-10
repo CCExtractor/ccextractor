@@ -554,6 +554,7 @@ void print_usage (void)
 	mprint("                       less or equal than the max allowed..\n");
 	mprint("-anvid --analyzevideo  Analyze the video stream even if it's not used for\n");
 	mprint("                       subtitles. This allows to provide video information.\n");
+	mprint("--no_timestamp_map     Disable timestamps in WebVTT\n");
 	mprint("Levenshtein distance:\n\n");
 	mprint("  When processing teletext files CCExtractor tries to correct typos by\n");
 	mprint("  comparing consecutive lines. If line N+1 is almost identical to line N except\n");
@@ -1893,6 +1894,10 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->segment_on_key_frames_only = 1;
 			opt->analyze_video_stream = 1;
 			continue;
+		}
+		if (strcmp(argv[i], "--no-timestamp-map") == 0 || strcmp(argv[i], "-ntm") == 0)
+		{
+			opt->no_timestamp_map = 1;
 		}
 		if (strcmp(argv[i], "--gui_mode_reports") == 0)
 		{
