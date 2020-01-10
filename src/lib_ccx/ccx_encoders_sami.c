@@ -119,11 +119,6 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 	int ret = 0;
 #ifdef ENABLE_OCR
 	struct cc_bitmap* rect;
-	LLONG ms_start, ms_end;
-
-	ms_start = sub->start_time;
-	ms_end = sub->end_time;
-
 
 	rect = sub->data;
 
@@ -137,7 +132,7 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 	{
 		sprintf(buf,
 			"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n"
-			, (unsigned long long)ms_start);
+			, (unsigned long long) sub->start_time);
 		write(context->out->fh, buf, strlen(buf));
 		for (int i = sub->nb_data - 1; i >= 0; i--)
 		{
@@ -162,7 +157,7 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 	{
 		sprintf(buf,
 			"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n"
-			, (unsigned long long)ms_start);
+			, (unsigned long long) sub->start_time);
 		write(context->out->fh, buf, strlen(buf));
 	}
 #endif
@@ -201,20 +196,11 @@ int write_cc_subtitle_as_sami(struct cc_subtitle *sub, struct encoder_ctx *conte
 int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *context)
 {
 	int used;
-	LLONG startms, endms;
 	int wrote_something=0;
 	char str[1024];
 
-	startms = data->start_time;
-
-	startms+=context->subs_delay;
-	if (startms<0) // Drop screens that because of subs_delay start too early
-		return 0;
-
-	endms   = data->end_time;
-	endms--; // To prevent overlapping with next line.
 	sprintf (str,"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",
-			(unsigned long long)startms);
+			(unsigned long long)data->start_time);
 	if (context->encoding != CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
@@ -247,7 +233,7 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 	write (context->out->fh, context->buffer, used);
 	sprintf ((char *) str,
 			"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n",
-			(unsigned long long)endms);
+			(unsigned long long)data->end_time - 1); // - 1 to prevent overlap
 	if (context->encoding!=CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);

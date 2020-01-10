@@ -693,13 +693,12 @@ static void try_to_add_end_credits(struct encoder_ctx *context, struct ccx_s_wri
 	}
 }
 
-void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
+void try_to_add_start_credits(struct encoder_ctx *context, LLONG start_ms)
 {
 	LLONG st, end, window, length;
-	LLONG l = start_ms + context->subs_delay;
-	// We have a windows from last_displayed_subs_ms to l - we need to see if it fits
+	// We have a windows from last_displayed_subs_ms to start_ms - we need to see if it fits
 
-	if (l < context->startcreditsnotbefore.time_in_ms) // Too early
+	if (start_ms < context->startcreditsnotbefore.time_in_ms) // Too early
 		return;
 
 	if (context->last_displayed_subs_ms+1 > context->startcreditsnotafter.time_in_ms) // Too late
@@ -708,8 +707,8 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 	st = context->startcreditsnotbefore.time_in_ms>(context->last_displayed_subs_ms+1) ?
 		context->startcreditsnotbefore.time_in_ms : (context->last_displayed_subs_ms+1); // When would credits actually start
 
-	end = context->startcreditsnotafter.time_in_ms<(l-1) ?
-		context->startcreditsnotafter.time_in_ms : (l-1);
+	end = context->startcreditsnotafter.time_in_ms < start_ms - 1 ?
+		context->startcreditsnotafter.time_in_ms : start_ms - 1;
 
 	window = end-st; // Allowable time in MS
 
@@ -720,7 +719,7 @@ void try_to_add_start_credits(struct encoder_ctx *context,LLONG start_ms)
 		window : context->startcreditsforatmost.time_in_ms;
 
 	dbg_print(CCX_DMT_VERBOSE, "Last subs: %lld   Current position: %lld\n",
-			context->last_displayed_subs_ms, l);
+			context->last_displayed_subs_ms, start_ms);
 	dbg_print(CCX_DMT_VERBOSE, "Not before: %lld   Not after: %lld\n",
 			context->startcreditsnotbefore.time_in_ms,
 			context->startcreditsnotafter.time_in_ms);
@@ -1099,6 +1098,11 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			return wrote_something;
 	}
 
+	sub->start_time += context->subs_delay;
+	sub->end_time += context->subs_delay;
+	if (sub->start_time < 0)
+		return 0;
+
 	// Write subtitles as they come
 		if (sub->type == CC_608)
 		{
@@ -1109,9 +1113,11 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				// Determine context based on channel. This replaces the code that was above, as this was incomplete (for cases where -12 was used for example)
 				out = get_output_ctx(context, data->my_field);
 
+				data->end_time += context->subs_delay;
+				data->start_time += context->subs_delay;
+
 				if (data->format == SFORMAT_XDS)
 				{
-					data->end_time = data->end_time + context->subs_delay;
 					xds_write_transcript_line_prefix(context, out, data->start_time, data->end_time, data->cur_xds_packet_class);
 					if (data->xds_len > 0)
 					{
@@ -1126,7 +1132,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					continue;
 				}
 
-				data->end_time = data->end_time + context->subs_delay;
 
 				if (utc_refvalue != UINT64_MAX)
 				{
@@ -1315,7 +1320,6 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *cont
 {
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;
-	LLONG ms_start;
 	int with_data = 0;
 
 	for (int i = 0; i<15; i++)
@@ -1326,11 +1330,6 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *cont
 	if (!with_data)
 		return;
 
-	ms_start = data->start_time;
-
-	ms_start += context->subs_delay;
-	if (ms_start<0) // Drop screens that because of subs_delay start too early
-		return;
 	int time_reported = 0;
 	for (int i = 0; i<15; i++)
 	{
@@ -1339,9 +1338,8 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *cont
 			fprintf(stderr, "###SUBTITLE#");
 			if (!time_reported)
 			{
-				LLONG ms_end = data->end_time;
-				millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
-				millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
+				millis_to_time(data->start_time, &h1, &m1, &s1, &ms1);
+				millis_to_time(data->end_time - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 				// Note, only MM:SS here as we need to save space in the preview window
 				fprintf(stderr, "%02u:%02u#%02u:%02u#",
 					h1 * 60 + m1, s1, h2 * 60 + m2, s2);

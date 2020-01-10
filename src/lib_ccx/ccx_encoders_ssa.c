@@ -77,7 +77,6 @@ int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context)
 	int ret = 0;
 #ifdef ENABLE_OCR
 	struct cc_bitmap* rect;
-	LLONG ms_start, ms_end;
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
 	char timeline[128];
@@ -85,9 +84,6 @@ int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context)
 	int used;
 	int i = 0;
 	char *str;
-
-	ms_start = sub->start_time;
-	ms_end = sub->end_time;
 
 	if (sub->nb_data == 0)
 		return 0;
@@ -111,8 +107,8 @@ int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context)
 		}
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 		{
-			millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
-			millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+			millis_to_time(sub->start_time, &h1,&m1,&s1,&ms1);
+			millis_to_time(sub->end_time - 1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 
 			sprintf (timeline, "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
 				h1,m1,s1,ms1/10, h2,m2,s2,ms2/10);
@@ -166,9 +162,7 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	int used;
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
-	LLONG ms_start, ms_end;
 	int wrote_something = 0;
-	ms_start = data->start_time;
 
 	int prev_line_start=-1, prev_line_end=-1; // Column in which the previous line started and ended, for autodash
 	int prev_line_center1=-1, prev_line_center2=-1; // Center column of previous line text
@@ -184,14 +178,8 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	if (empty_buf)
 		return 0;
 
-	ms_start+=context->subs_delay;
-	if (ms_start<0)
-		return 0;
-
-	ms_end = data->end_time;
-
-	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
-	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+	millis_to_time (data->start_time,&h1,&m1,&s1,&ms1);
+	millis_to_time (data->end_time - 1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 	char timeline[128];
 	sprintf (timeline, "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
 			 h1, m1, s1, ms1 / 10, h2, m2, s2, ms2 / 10);

@@ -993,15 +993,6 @@ int eia608_to_str(struct encoder_ctx *context, struct eia608_screen *data, char 
 int spupng_write_string(struct spupng_t *sp, char *string, LLONG start_time, LLONG end_time,
 	struct encoder_ctx *context)
 {
-	LLONG ms_start = start_time + context->subs_delay;
-	if (ms_start < 0)
-	{
-		dbg_print(CCX_DMT_VERBOSE, "Negative start\n");
-		return 0;
-	}
-
-	LLONG ms_end = end_time + context->subs_delay;
-
 	inc_spupng_fileindex(sp);
 	if ((sp->fppng = fopen(sp->pngfile, "wb")) == NULL)
 	{
@@ -1017,7 +1008,7 @@ int spupng_write_string(struct spupng_t *sp, char *string, LLONG start_time, LLO
 	}
 	//free(string_utf32);
 	fclose(sp->fppng);
-	write_sputag_open(sp, ms_start, ms_end);
+	write_sputag_open(sp, start_time, end_time);
 	write_spucomment(sp, string);
 	write_sputag_close(sp);
 	return 1;
@@ -1044,14 +1035,6 @@ int spupng_write_ccbuffer(struct spupng_t *sp, struct eia608_screen* data,
 	int row;
 	int empty_buf = 1;
 	char str[512] = "";
-
-	// Check if it has negative start.
-	LLONG ms_start = data->start_time + context->subs_delay;
-	if (ms_start < 0)
-	{
-		dbg_print(CCX_DMT_VERBOSE, "Negative start\n");
-		return 0;
-	}
 
 	// Check if it is blank page.
 	for (row = 0; row < 15; row++)

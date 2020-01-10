@@ -18,11 +18,8 @@ int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_sta
 	if(!string || !string[0])
 		return 0;
 
-	if (ms_start<0) // Drop screens that because of subs_delay start too early
-		return 0;
-
-	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
-	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+	millis_to_time(ms_start,&h1,&m1,&s1,&ms1);
+	millis_to_time(ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 	context->srt_counter++;
 	sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
 	used = encode_line(context, context->buffer,(unsigned char *) timeline);
@@ -86,7 +83,6 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	int ret = 0;
 #ifdef ENABLE_OCR
 	struct cc_bitmap* rect;
-	LLONG ms_start, ms_end;
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
 	char timeline[128];
@@ -95,13 +91,7 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	int i = 0;
 	char *str;
 
-	ms_start = sub->start_time + context->subs_delay;
-	ms_end = sub->end_time + context->subs_delay;
-
-    if (ms_start<0) // Drop screens that because of subs_delay start too early
-        return 0;
-
-	if(sub->nb_data == 0 )
+	if(sub->nb_data == 0)
 		return 0;
 
 	if(sub->flags & SUB_EOD_MARKER)
@@ -116,8 +106,8 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
         } else {
             if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
             {
-                millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
-                millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+                millis_to_time(sub->start_time,&h1,&m1,&s1,&ms1);
+                millis_to_time(sub->end_time - 1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
                 context->srt_counter++;
                 sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
                 used = encode_line(context, context->buffer,(unsigned char *) timeline);
@@ -158,7 +148,7 @@ int write_cc_subtitle_as_srt(struct cc_subtitle *sub,struct encoder_ctx *context
 	{
 		if(sub->type == CC_TEXT)
 		{
-			ret = write_stringz_as_srt(sub->data, context, sub->start_time + context->subs_delay, sub->end_time + context->subs_delay);
+			ret = write_stringz_as_srt(sub->data, context, sub->start_time, sub->end_time);
 			freep(&sub->data);
 			sub->nb_data = 0;
 			ret = 1;
@@ -180,9 +170,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 	int used;
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
-	LLONG ms_start, ms_end;
 	int wrote_something = 0;
-	ms_start = data->start_time;
 
 	int prev_line_start=-1, prev_line_end=-1; // Column in which the previous line started and ended, for autodash
 	int prev_line_center1=-1, prev_line_center2=-1; // Center column of previous line text
@@ -198,14 +186,8 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 	if (empty_buf) // Prevent writing empty screens. Not needed in .srt
 		return 0;
 
-	ms_start+=context->subs_delay;
-	if (ms_start<0) // Drop screens that because of subs_delay start too early
-		return 0;
-
-	ms_end = data->end_time;
-
-	millis_to_time (ms_start,&h1,&m1,&s1,&ms1);
-	millis_to_time (ms_end-1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
+	millis_to_time (data->start_time,&h1,&m1,&s1,&ms1);
+	millis_to_time (data->end_time - 1,&h2,&m2,&s2,&ms2); // -1 To prevent overlapping with next line.
 	char timeline[128];
 	context->srt_counter++;
 	sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);

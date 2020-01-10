@@ -112,12 +112,8 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 	int ret = 0;
 #ifdef ENABLE_OCR
 	struct cc_bitmap* rect;
-	LLONG ms_start, ms_end;
 	//char timeline[128];
 	int i,len = 0;
-
-	ms_start = sub->start_time;
-	ms_end = sub->end_time;
 
 	if(sub->nb_data == 0 )
 		return 0;
@@ -136,8 +132,8 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 				char *buf = (char *)context->buffer;
 				unsigned h1, m1, s1, ms1;
 				unsigned h2, m2, s2, ms2;
-				millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
-				millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
+				millis_to_time(sub->start_time, &h1, &m1, &s1, &ms1);
+				millis_to_time(sub->end_time - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 				sprintf((char *)context->buffer, "<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\n", h1, m1, s1, ms1, h2, m2, s2, ms2);
                 write(context->out->fh, buf, strlen(buf));
 				len = strlen(rect[i].ocr_text);
@@ -195,19 +191,11 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 	int used;
 	unsigned h1,m1,s1,ms1;
 	unsigned h2,m2,s2,ms2;
-	LLONG endms;
 	int wrote_something=0;
-	LLONG startms = data->start_time;
 	char str[1024];
 
-	startms+=context->subs_delay;
-	if (startms<0) // Drop screens that because of subs_delay start too early
-		return 0;
-
-	endms  = data->end_time;
-	endms--; // To prevent overlapping with next line.
-	millis_to_time (startms,&h1,&m1,&s1,&ms1);
-	millis_to_time (endms-1,&h2,&m2,&s2,&ms2);
+	millis_to_time (data->start_time,&h1,&m1,&s1,&ms1);
+	millis_to_time (data->end_time-1,&h2,&m2,&s2,&ms2);
 
 	for (int row=0; row < 15; row++)
 	{
