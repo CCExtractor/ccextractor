@@ -40,6 +40,7 @@ void init_options (struct ccx_s_options *options)
 	options->live_stream=0; // 0 -> A regular file
 	options->messages_target=1; // 1=stdout
 	options->print_file_reports=0;
+	options->no_timestamp_map = 0; // Enable timestamps by default
 	/* Levenshtein's parameters, for string comparison */
 	options->dolevdist = 1; // By default attempt to correct typos
 	options->levdistmincnt=2; // Means 2 fails or less is "the same"...
