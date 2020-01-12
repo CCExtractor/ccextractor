@@ -18,6 +18,7 @@
 - Fix: lib_ccx.c: Initialize fatal error logging function before first usage in init_libraries
 - Fix: Added italics, underline, and color rendering support for -out=spupng with EIA608/teletext
 - Fix: Change inet_ntop to inet_ntoa for Windows XP compatibility
+- FIX: Added an option to disable timestamps for WebVTT (#1127)
 
 0.88 (2019-05-21)
 -----------------
