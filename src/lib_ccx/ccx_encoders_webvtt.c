@@ -215,15 +215,10 @@ int write_webvtt_header(struct encoder_ctx *context)
 		unsigned h1, m1, s1, ms1;
 		millis_to_time(context->timing->sync_pts2fts_fts, &h1, &m1, &s1, &ms1);
 		 
-		 // If the user has not disabled X-TIMESTAMP-MAP
+		// If the user has not disabled X-TIMESTAMP-MAP
 		if (!context->no_timestamp_map)
 		{
 			sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:%ld,LOCAL:%02u:%02u:%02u.%03u%s",
-				context->timing->sync_pts2fts_pts, h1, m1, s1, ms1,
-				ccx_options.enc_cfg.line_terminator_lf ? "\n\n" : "\r\n\r\n");
-		}
-		else {
-			sprintf(header_string,
 				context->timing->sync_pts2fts_pts, h1, m1, s1, ms1,
 				ccx_options.enc_cfg.line_terminator_lf ? "\n\n" : "\r\n\r\n");
 		}
