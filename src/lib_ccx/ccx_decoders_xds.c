@@ -131,7 +131,7 @@ int write_xds_string(struct cc_subtitle *sub, struct ccx_decoders_xds_context *c
 	data = (struct eia608_screen *) realloc(sub->data,( sub->nb_data + 1 ) * sizeof(*data));
 	if (!data)
 	{
-		freep(&sub->data);
+		freep(sub->data);
 		sub->nb_data = 0;
 		ccx_common_logging.log_ftn("No Memory left");
 		return -1;

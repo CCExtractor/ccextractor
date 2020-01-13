@@ -591,9 +591,9 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 
 				h0=h;
 
-				freep(&histogram);
-				freep(&mcit);
-				freep(&iot);
+				freep(histogram);
+				freep(mcit);
+				freep(iot);
 				TessDeleteText(word);
 			} while (TessPageIteratorNext((TessPageIterator *)ri,level));
 
@@ -840,9 +840,9 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 			i, palette[i].red, palette[i].green, palette[i].blue, alpha[i]);
 	}
 #endif
-	end: freep(&histogram);
-	freep(&mcit);
-	freep(&iot);
+	end: freep(histogram);
+	freep(mcit);
+	freep(iot);
 	return ret;
 }
 
@@ -918,12 +918,12 @@ int ocr_rect(void* arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr
 		*str = ocr_bitmap(arg, palette, alpha, rect->data0, rect->w, rect->h, copy);
 
 end:
-	freep(&palette);
-	freep(&alpha);
-	freep(&copy->palette);
-	freep(&copy->alpha);
-	freep(&copy->data);
-	freep(&copy);
+	freep(palette);
+	freep(alpha);
+	freep(copy->palette);
+	freep(copy->alpha);
+	freep(copy->data);
+	freep(copy);
 	return ret;
 
 }

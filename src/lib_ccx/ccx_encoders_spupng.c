@@ -310,8 +310,8 @@ int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
 end: if (row_pointer)
 {
 	for (i = 0; i < h; i++)
-		freep(&row_pointer[i]);
-	freep(&row_pointer);
+		freep(row_pointer[i]);
+	freep(row_pointer);
 }
 	 png_destroy_write_struct(&png_ptr, &info_ptr);
 	 if (f)
@@ -453,12 +453,12 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 		if (str)
 		{
 			write_spucomment(sp, str);
-			freep(&str);
+			freep(str);
 		}
 	}
 #endif
 	save_spupng(filename, pbuf, width, height, palette, alpha, rect[0].nb_colors);
-	freep(&pbuf);
+	freep(pbuf);
 
 
 end:
@@ -467,14 +467,14 @@ end:
 
 	for (i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
-		freep(&rect->data0);
-		freep(&rect->data1);
+		freep(rect->data0);
+		freep(rect->data1);
 	}
 	sub->nb_data = 0;
-	freep(&sub->data);
-	freep(&palette);
-	freep(&alpha);
-	freep(&pbuf);
+	freep(sub->data);
+	freep(palette);
+	freep(alpha);
+	freep(pbuf);
 	return ret;
 }
 

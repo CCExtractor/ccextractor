@@ -772,17 +772,17 @@ struct cc_subtitle * reformat_cc_bitmap_through_sentence_buffer(struct cc_subtit
 		{
 			resub = sbs_append_string(str, ms_start, ms_end, sbs_init_context());
 		}
-		freep(&str);
+		freep(str);
 	}
 
 	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
-		freep(&rect->data0);
-		freep(&rect->data1);
+		freep(rect->data0);
+		freep(rect->data1);
 	}
 #endif
 	sub->nb_data = 0;
-	freep(&sub->data);
+	freep(sub->data);
 
 	return resub;
 }

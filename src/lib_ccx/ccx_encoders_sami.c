@@ -163,7 +163,7 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 #endif
 
 	sub->nb_data = 0;
-	freep(&sub->data);
+	freep(sub->data);
 	return ret;
 }
 
@@ -177,7 +177,7 @@ int write_cc_subtitle_as_sami(struct cc_subtitle *sub, struct encoder_ctx *conte
 		if(sub->type == CC_TEXT)
 		{
 			ret = write_stringz_as_sami(sub->data, context, sub->start_time, sub->end_time);
-			freep(&sub->data);
+			freep(sub->data);
 			sub->nb_data = 0;
 		}
 		lsub = sub;
@@ -186,7 +186,7 @@ int write_cc_subtitle_as_sami(struct cc_subtitle *sub, struct encoder_ctx *conte
 	while(lsub != osub)
 	{
 		sub = lsub->prev;
-		freep(&lsub);
+		freep(lsub);
 		lsub = sub;
 	}
 

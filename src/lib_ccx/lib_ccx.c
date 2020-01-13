@@ -239,16 +239,16 @@ void dinit_libraries( struct lib_ccx_ctx **ctx)
 
 	// free EPG memory
 	EPG_free(lctx);
-	freep(&lctx->freport.data_from_608);
-	freep(&lctx->freport.data_from_708);
+	freep(lctx->freport.data_from_608);
+	freep(lctx->freport.data_from_708);
 	ccx_demuxer_delete(&lctx->demux_ctx);
 	dinit_decoder_setting(&lctx->dec_global_setting);
-	freep(&ccx_options.enc_cfg.output_filename);
-	freep(&lctx->basefilename);
-	freep(&lctx->pesheaderbuf);
+	freep(ccx_options.enc_cfg.output_filename);
+	freep(lctx->basefilename);
+	freep(lctx->pesheaderbuf);
 	for(i = 0;i < lctx->num_input_files;i++)
-		freep(&lctx->inputfile[i]);
-	freep(&lctx->inputfile);
+		freep(lctx->inputfile[i]);
+	freep(lctx->inputfile);
 	freep(ctx);
 }
 
@@ -383,7 +383,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 
 			len = strlen(ctx->basefilename) + 10 + strlen(extension);
 
-			freep(&ccx_options.enc_cfg.output_filename);
+			freep(ccx_options.enc_cfg.output_filename);
 			ccx_options.enc_cfg.output_filename = malloc(len);
 
 			sprintf(ccx_options.enc_cfg.output_filename, "%s_%06d%s", ctx->basefilename, ctx->segment_counter+1, extension);
@@ -408,7 +408,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		ccx_options.enc_cfg.output_filename = malloc(len);
 		if (!ccx_options.enc_cfg.output_filename)
 		{
-			freep(&extension);
+			freep(extension);
 			return NULL;
 		}
 
@@ -416,21 +416,21 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		enc_ctx = init_encoder(&ccx_options.enc_cfg);
 		if (!enc_ctx)
 		{
-			freep(&extension);
-			freep(&ccx_options.enc_cfg.output_filename);
+			freep(extension);
+			freep(ccx_options.enc_cfg.output_filename);
 			return NULL;
 		}
 
 		list_add_tail( &(enc_ctx->list), &(ctx->enc_ctx_head) );
-		freep(&extension);
-		freep(&ccx_options.enc_cfg.output_filename);
+		freep(extension);
+		freep(ccx_options.enc_cfg.output_filename);
 	}
 	// DVB related
 	enc_ctx->prev = NULL;
 	if (cinfo)
 		if (cinfo->codec == CCX_CODEC_DVB)
 			enc_ctx->write_previous = 0;
-	freep(&extension);
+	freep(extension);
 	return enc_ctx;
 }
 
