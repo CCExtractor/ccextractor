@@ -417,7 +417,7 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 		printf("MPEG-4 Timed Text tracks count: %d\n", ctx->freport.mp4_cc_track_cnt);
 	}
 
-	freep(ctx->freport.data_from_608);
+	freep(&ctx->freport.data_from_608);
 	memset(&ctx->freport, 0, sizeof (struct file_report));
 #undef Y_N
 }

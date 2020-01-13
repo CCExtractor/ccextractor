@@ -276,7 +276,7 @@ void ccx_demuxer_delete(struct ccx_demuxer **ctx)
 	struct ccx_demuxer *lctx = *ctx;
 	int i;
 	dinit_cap(lctx);
-	freep(lctx->last_pat_payload);
+	freep(&lctx->last_pat_payload);
 	for (i = 0; i < MAX_PSI_PID; i++)
 	{
 		if(lctx->PID_buffers[i]!=NULL && lctx->PID_buffers[i]->buffer!=NULL)
@@ -285,17 +285,17 @@ void ccx_demuxer_delete(struct ccx_demuxer **ctx)
 			lctx->PID_buffers[i]->buffer=NULL;
 			lctx->PID_buffers[i]->buffer_length=0;
 		}
-		freep(lctx->PID_buffers[i]);
+		freep(&lctx->PID_buffers[i]);
 	}
 	for (i = 0; i < MAX_PID; i++)
 	{
 		if( lctx->PIDs_programs[i])
-			freep(lctx->PIDs_programs[i]);
+			freep(lctx->PIDs_programs + i);
 	}
 	if (lctx->fh_out_elementarystream != NULL)
 		fclose (lctx->fh_out_elementarystream);
 
-	freep(lctx->filebuffer);
+	freep(&lctx->filebuffer);
 	freep(ctx);
 }
 
