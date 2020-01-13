@@ -204,9 +204,9 @@ int api_start(struct ccx_s_options api_options)
             case CCX_SM_GXF:
             case CCX_SM_MXF:
 #ifdef ENABLE_FFMPEG
-            case CCX_SM_FFMPEG:
+		case CCX_SM_FFMPEG:
 #endif
-                if (api_options.ignore_pts_jumps)
+	if (api_options.ignore_pts_jumps)
                     ccx_common_timing_settings.disable_sync_check = 1;
                 mprint("\rAnalyzing data in general mode\n");
                 tmp = general_loop(ctx);

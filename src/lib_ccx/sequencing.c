@@ -41,11 +41,11 @@ void store_hdcc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsi
 		seq_index = sequence_number - dec_ctx->anchor_seq_number + MAXBFRAMES;
 	}
 
-    dec_ctx->has_ccdata_buffered = 1;
+	dec_ctx->has_ccdata_buffered = 1;
 
 	// In GOP mode the fts is set only once for the whole GOP. Recreate
 	// the right time according to the sequence number.
-	if (ccx_options.use_gop_as_pts==1)
+	if (ccx_options.use_gop_as_pts == 1)
 	{
 		current_fts_now += (LLONG) (sequence_number*1000.0/current_fps);
 	}

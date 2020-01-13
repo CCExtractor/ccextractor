@@ -643,9 +643,9 @@ static int gop_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx
 		dec_ctx->saw_gop_header = 1;
 
 		// If we use GOP timing, reconstruct the PTS from the GOP
-		if (ccx_options.use_gop_as_pts==1)
+		if (ccx_options.use_gop_as_pts == 1)
 		{
-			set_current_pts(dec_ctx->timing, gtc.ms*(MPEG_CLOCK_FREQ/1000));
+			set_current_pts(dec_ctx->timing, gtc.ms * (MPEG_CLOCK_FREQ/1000));
 			dec_ctx->timing->current_tref = 0;
 			frames_since_ref_time = 0;
 			set_fts(dec_ctx->timing);
