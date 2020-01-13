@@ -1,4 +1,4 @@
-Please prefix your issue with one of the following: [BUG], [PROPOSAL], [QUESTION].
+<!-- Please prefix your issue with one of the following: [BUG], [PROPOSAL], [QUESTION]. -->
 
 CCExtractor version (using the --version parameter preferably) : **X.X**
 
@@ -25,12 +25,14 @@ CCExtractor version (using the --version parameter preferably) : **X.X**
 
 **Video links (replace text below with your links)**
 
+<!--
 Please make the affected input file available for us (no screenshots, those don't help!). Public links to Dropbox, Google Drive, etc, are all fine. If it is not possible to make it available publicly, send us a private invitation (both Dropbox and Google Drive allow that). In this case we will download the file and upload it to the private developer repository.
 
 Do *not* upload your file to any location that will require us to sign up or endure a wait list, slow downloads, etc. If your upload expires make sure you keep it active somehow (replace links if needed). Keep in mind that while we go over all tickets some may take a few days, and it's important we have the file available when we actually need it.
+-->
 
 **Additional information**
 
 {issue content here, replace this line with your issue content}
 
-PS: Make sure you set an alert in GitHub so you get notifications about your ticket. We may need to ask questions and we do everything inside GitHub's system.
+<!-- PS: Make sure you set an alert in GitHub so you get notifications about your ticket. We may need to ask questions and we do everything inside GitHub's system. -->
