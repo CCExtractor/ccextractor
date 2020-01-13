@@ -38,6 +38,7 @@ struct encoder_cfg
 	int force_flush;                     // Force flush on content write
 	int append_mode;                     // Append mode for output files
 	int ucla;                            // 1 if -UCLA used, 0 if not
+	int no_timestamp_map;				 // 1 if timestamps disabled for WebVTT
 
 	enum ccx_encoding_type encoding;
 	enum ccx_output_date_format date_format;
@@ -71,7 +72,7 @@ struct encoder_cfg
 	LLONG subs_delay;                                   // ms to delay (or advance) subs
 	int program_number;
 	unsigned char in_format;
-	int nospupngocr;				                    // 1 if we don't want to OCR bitmaps to add the text as comments in the XML file in spupng
+	int nospupngocr;				                    // 1 if we don't want to OCR bitmaps to add the text as comments in the XML file in spupng	
 
 	// MCC File
 	int force_dropframe;                                // 1 if dropframe frame count should be used. defaults to no drop frame.
