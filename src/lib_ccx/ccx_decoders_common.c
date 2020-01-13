@@ -534,32 +534,32 @@ void free_encoder_context(struct encoder_ctx *ctx)
 	if (!ctx)
 		return;
 
-	freep(&ctx->first_input_file);
-	freep(&ctx->buffer);
-	freep(&ctx->out);
-	freep(&ctx->timing);
-	freep(&ctx->transcript_settings);
-	freep(&ctx->subline);
-	freep(&ctx->start_credits_text);
-	freep(&ctx->end_credits_text);
-	freep(&ctx->prev);
-    freep(&ctx->last_string);
-	freep(&ctx);
+	freep(ctx->first_input_file);
+	freep(ctx->buffer);
+	freep(ctx->out);
+	freep(ctx->timing);
+	freep(ctx->transcript_settings);
+	freep(ctx->subline);
+	freep(ctx->start_credits_text);
+	freep(ctx->end_credits_text);
+	freep(ctx->prev);
+	freep(ctx->last_string);
+	freep(ctx);
 }
 void free_decoder_context(struct lib_cc_decode *ctx)
 {
 	if (!ctx)
 		return;
 
-	freep(&ctx->context_cc608_field_1);
-	freep(&ctx->context_cc608_field_2);
-	freep(&ctx->timing);
-	freep(&ctx->avc_ctx);
-	freep(&ctx->private_data);
-	freep(&ctx->dtvcc);
-	freep(&ctx->xds_ctx);
-	freep(&ctx->vbi_decoder);
-	freep(&ctx);
+	freep(ctx->context_cc608_field_1);
+	freep(ctx->context_cc608_field_2);
+	freep(ctx->timing);
+	freep(ctx->avc_ctx);
+	freep(ctx->private_data);
+	freep(ctx->dtvcc);
+	freep(ctx->xds_ctx);
+	freep(ctx->vbi_decoder);
+	freep(ctx);
 }
 void free_subtitle(struct cc_subtitle* sub)
 {
@@ -571,10 +571,10 @@ void free_subtitle(struct cc_subtitle* sub)
 		struct cc_bitmap *bitmap=(struct cc_bitmap *) sub->data;
 		if (bitmap)
 		{
-			freep(&bitmap->data0);
-			freep(&bitmap->data1);
+			freep(bitmap->data0);
+			freep(bitmap->data1);
 		}
 	}
-	freep(&sub->data);
-	freep(&sub);
+	freep(sub->data);
+	freep(sub);
 }

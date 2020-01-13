@@ -300,16 +300,16 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 			write(context->out->fh, str, len);
 			write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		}
-		freep(&str);
+		freep(str);
 	}
 	for (i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
-		freep(&rect->data0);
-		freep(&rect->data1);
+		freep(rect->data0);
+		freep(rect->data1);
 	}
 #endif
 	sub->nb_data = 0;
-	freep(&sub->data);
+	freep(sub->data);
 	return ret;
 
 }
@@ -325,7 +325,7 @@ int write_cc_subtitle_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *con
 		if (sub->type == CC_TEXT)
 		{
 			ret = write_stringz_as_webvtt(sub->data, context, sub->start_time, sub->end_time);
-			freep(&sub->data);
+			freep(sub->data);
 			sub->nb_data = 0;
 		}
 		lsub = sub;
@@ -334,7 +334,7 @@ int write_cc_subtitle_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *con
 	while (lsub != osub)
 	{
 		sub = lsub->prev;
-		freep(&lsub);
+		freep(lsub);
 		lsub = sub;
 	}
 

@@ -539,7 +539,7 @@ int dvbsub_close_decoder(void **dvb_ctx)
 
 	delete_cluts(ctx);
 
-	freep(&ctx->display_definition);
+	freep(ctx->display_definition);
 
 	while (ctx->display_list)
 	{
@@ -1278,7 +1278,7 @@ static void dvbsub_parse_region_segment(void*dvb_ctx, const uint8_t *buf,
 	
 	if (region->width * region->height != region->buf_size)
 	{
-		freep(&region->pbuf);
+		freep(region->pbuf);
 		region->buf_size = region->width * region->height;
 		region->pbuf = (uint8_t*) malloc(region->buf_size);
 		fill = 1;
@@ -1709,7 +1709,7 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	dec_ctx->prev = NULL;
 	dec_ctx->prev = copy_decoder_context(dec_ctx);
 
-	freep(&dec_ctx->prev->private_data);
+	freep(dec_ctx->prev->private_data);
 	dec_ctx->prev->private_data = malloc(sizeof(struct DVBSubContext));
 	memcpy(dec_ctx->prev->private_data, dec_ctx->private_data, sizeof(struct DVBSubContext));
 	/* copy previous subtitle */

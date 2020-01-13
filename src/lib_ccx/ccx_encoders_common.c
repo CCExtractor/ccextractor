@@ -584,14 +584,14 @@ int write_cc_subtitle_as_simplexml(struct cc_subtitle *sub, struct encoder_ctx *
 
 		} while ( (str = strtok_r(NULL, "\r\n", &save_str) ));
 
-		freep(&sub->data);
+		freep(sub->data);
 		lsub = sub;
 		sub = sub->next;
 	}
 	while(lsub != osub)
 	{
 		sub = lsub->prev;
-		freep(&lsub);
+		freep(lsub);
 		lsub = sub;
 	}
 
@@ -644,7 +644,7 @@ int write_cc_bitmap_as_simplexml(struct cc_subtitle *sub, struct encoder_ctx *co
 	int ret = 0;
 
 	sub->nb_data = 0;
-	freep(&sub->data);
+	freep(sub->data);
 	return ret;
 }
 
@@ -764,7 +764,7 @@ static void dinit_output_ctx(struct encoder_ctx *ctx)
 	int i;
 	for(i = 0; i < ctx->nb_out; i++)
 		dinit_write(ctx->out + i);
-	freep(&ctx->out);
+	freep(ctx->out);
 
 	if (ctx->dtvcc_extract)
 	{
@@ -846,8 +846,8 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			}
 		}
 
-		freep(&basefilename);
-		freep(&extension);
+		freep(basefilename);
+		freep(extension);
 	}
 
 	if (cfg->cc_to_stdout == CCX_TRUE)
@@ -927,8 +927,8 @@ void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts)
 
 	free_encoder_context(ctx->prev);
 	dinit_output_ctx(ctx);
-	freep(&ctx->subline);
-	freep(&ctx->buffer);
+	freep(ctx->subline);
+	freep(ctx->buffer);
 	ctx->capacity = 0;
 	freep(arg);
 }
@@ -973,7 +973,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ret = init_output_ctx(ctx, opt);
 	if (ret != EXIT_OK)
 	{
-		freep(&ctx->buffer);
+		freep(ctx->buffer);
 		free(ctx);
 		return NULL;
 	}
@@ -1012,8 +1012,8 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->subline = (unsigned char *) malloc (SUBLINESIZE);
 	if(!ctx->subline)
 	{
-		freep(&ctx->out);
-		freep(&ctx->buffer);
+		freep(ctx->out);
+		freep(ctx->buffer);
 		free(ctx);
 		return NULL;
 	}
@@ -1128,7 +1128,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 							mprint("WARNING:Loss of data\n");
 						}
 					}
-					freep(&data->xds_str);
+					freep(data->xds_str);
 					write_newline(context, 0);
 					continue;
 				}
@@ -1203,7 +1203,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					write_cc_buffer_to_gui(sub->data, context);
 #endif // PYTHON_API
 			}
-			freep(&sub->data);
+			freep(sub->data);
 		}
 		if (sub->type == CC_BITMAP)
 		{
@@ -1311,7 +1311,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		}
 
 	if (!sub->nb_data)
-		freep(&sub->data);
+		freep(sub->data);
 	if (wrote_something && context->force_flush)
 		fsync(context->out->fh); // Don't buffer
 	return wrote_something;

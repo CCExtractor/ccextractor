@@ -117,16 +117,16 @@ int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context)
 			write (context->out->fh, str, len);
 			write (context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		}
-		freep(&str);
+		freep(str);
 	}
 	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
-		freep(&rect->data0);
-		freep(&rect->data1);
+		freep(rect->data0);
+		freep(rect->data1);
 	}
 #endif
 	sub->nb_data = 0;
-	freep(&sub->data);
+	freep(sub->data);
 	return ret;
 }
 
@@ -141,7 +141,7 @@ int write_cc_subtitle_as_ssa(struct cc_subtitle *sub,struct encoder_ctx *context
 		if(sub->type == CC_TEXT)
 		{
 			ret = write_stringz_as_ssa(sub->data, context, sub->start_time, sub->end_time);
-			freep(&sub->data);
+			freep(sub->data);
 			sub->nb_data = 0;
 			ret = 1;
 		}
@@ -151,7 +151,7 @@ int write_cc_subtitle_as_ssa(struct cc_subtitle *sub,struct encoder_ctx *context
 	while(lsub != osub)
 	{
 		sub = lsub->prev;
-		freep(&lsub);
+		freep(lsub);
 		lsub = sub;
 	}
 

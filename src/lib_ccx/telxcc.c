@@ -1613,7 +1613,7 @@ void telxcc_close(void **ctx, struct cc_subtitle *sub)
 		telxcc_dump_prev_page(ttext, sub);
 
 	}
-	freep(&ttext->ucs2_buffer_cur);
-	freep(&ttext->page_buffer_cur);
+	freep(ttext->ucs2_buffer_cur);
+	freep(ttext->page_buffer_cur);
 	freep(ctx);
 }

@@ -147,13 +147,13 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 	}
 	for (i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
-		freep(&rect->data0);
-		freep(&rect->data1);
+		freep(rect->data0);
+		freep(rect->data1);
 	}
 #endif
 
 	sub->nb_data = 0;
-	freep(&sub->data);
+	freep(sub->data);
 	return ret;
 
 }
@@ -168,7 +168,7 @@ int write_cc_subtitle_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *co
 		if(sub->type == CC_TEXT)
 		{
 			write_stringz_as_smptett(sub->data, context, sub->start_time, sub->end_time);
-			freep(&sub->data);
+			freep(sub->data);
 			sub->nb_data = 0;
 		}
 		lsub = sub;
@@ -177,7 +177,7 @@ int write_cc_subtitle_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *co
 	while(lsub != osub)
 	{
 		sub = lsub->prev;
-		freep(&lsub);
+		freep(lsub);
 		lsub = sub;
 	}
 
@@ -422,8 +422,8 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 				used = encode_line(context, context->buffer, (unsigned char*) str);
 				//write (wb->fh, enc_buffer,enc_buffer_used);
 				
-				freep(&final);
-				freep(&temp);
+				freep(final);
+				freep(temp);
 	
 			}
 		}

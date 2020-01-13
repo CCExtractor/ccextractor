@@ -1729,6 +1729,6 @@ void ccx_gxf_delete(struct ccx_demuxer *arg)
 {
 	struct ccx_gxf *ctx = arg->private_data;
 
-	freep(&ctx->cdp);
-	freep(&arg->private_data);
+	freep(ctx->cdp);
+	freep(arg->private_data);
 }

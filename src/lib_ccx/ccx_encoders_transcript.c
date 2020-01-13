@@ -104,7 +104,7 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 #endif
 
 	sub->nb_data = 0;
-	freep(&sub->data);
+	freep(sub->data);
 	return ret;
 
 }
@@ -219,7 +219,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 
 		} while ((str = strtok_r(NULL, "\r\n", &save_str)));
 
-		freep(&sub->data);
+		freep(sub->data);
 		lsub = sub;
 		sub = sub->next;
 	}
@@ -227,7 +227,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 	while (lsub != osub)
 	{
 		sub = lsub->prev;
-		freep(&lsub);
+		freep(lsub);
 		lsub = sub;
 	}
 
