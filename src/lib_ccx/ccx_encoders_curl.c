@@ -78,7 +78,7 @@ int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *cont
 				mprint("curl_easy_perform() failed: %s\n",
 				curl_easy_strerror(res));
 		}
-		freep(str);
+		freep(&str);
 	}
 	for (i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
@@ -87,7 +87,7 @@ int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *cont
 	}
 #endif
 	sub->nb_data = 0;
-	freep(sub->data);
+	freep(&sub->data);
 	return ret;
 
 }

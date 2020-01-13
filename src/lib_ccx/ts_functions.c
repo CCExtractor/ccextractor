@@ -590,7 +590,7 @@ void cinfo_cremation(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		copy_capbuf_demux_data(ctx, data, iter);
-		freep(iter->capbuf);
+		freep(&iter->capbuf);
 	}
 }
 
@@ -733,8 +733,8 @@ uint64_t get_video_min_pts(struct ccx_demuxer *context)
 		p++;
 	}
 
-	freep(ctx);
-	freep(pts_array);
+	freep(&ctx);
+	freep(&pts_array);
 
 	return min_pts;
 }
@@ -958,7 +958,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 			if (cinfo->capbuflen > 0)
 			{
-				freep(cinfo->capbuf);
+				freep(&cinfo->capbuf);
 				cinfo->capbufsize = 0;
 				cinfo->capbuflen = 0;
 				delete_demuxer_data_node_by_pid(data, cinfo->pid);
