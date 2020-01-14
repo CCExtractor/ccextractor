@@ -59,12 +59,13 @@ void millis_to_time(LLONG milli, unsigned *hours, unsigned *minutes,
 }
 
 /* Frees the given pointer */
-void freep(void **arg)
+void freep(void *arg)
 {
-	if (arg)
+	void **ptr = arg;
+	if (*ptr)
 	{
-		free(*arg);
-		*arg = NULL;
+		free(*ptr);
+		*ptr = NULL;
 	}
 }
 
