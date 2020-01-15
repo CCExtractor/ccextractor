@@ -1923,7 +1923,7 @@ int parse_dvb_description(struct dvb_config *cfg, unsigned char *data,
 	*/
 	if(ccx_options.dvblang)
 	{
-		if(strncmp(ccx_options.dvblang, data, 3) != 0)
+		if (strcmp(ccx_options.dvblang, language[cfg->lang_index[0]]) && strncmp(ccx_options.dvblang, data, 3))
 		{
 			mprint("Ignoring stream language '%s' not equal to dvblang '%s'\n",
 				data, ccx_options.dvblang);
