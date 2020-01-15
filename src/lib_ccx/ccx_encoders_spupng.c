@@ -924,6 +924,8 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 	write_image(buffer, output, canvas_width, canvas_height);
 	free(tmp);
 	free(buffer);
+	FT_Done_Face(face_regular);
+	FT_Done_Face(face_italics);
 	return 1;
 }
 
