@@ -3,47 +3,25 @@
 int cc608_parity_table[256];
 
 /* printf() for fd instead of FILE*, since dprintf is not portable */
-void fdprintf(int fd, const char *fmt, ...)
+int fdprintf(int fd, const char *fmt, ...)
 {
-	/* Guess we need no more than 100 bytes. */
-	int n, size = 100;
-	char *p, *np;
+	FILE *file;
+
+	if ((file = fdopen(dup(fd), "w")) == NULL)
+	{
+		return -1;
+	}
+
 	va_list ap;
 
-	if (fd < 0)
-		return;
-	if ((p = (char *)malloc(size)) == NULL)
-		return;
+	va_start(ap, fmt);
+	int ret = vfprintf(file, fmt, ap);
+	fclose(file);
+	va_end(ap);
 
-	while (1)
-	{
-		/* Try to print in the allocated space. */
-		va_start(ap, fmt);
-		n = vsnprintf(p, size, fmt, ap);
-		va_end(ap);
-		/* If that worked, return the string. */
-		if (n > -1 && n < size)
-		{
-			write(fd, p, n);
-			free(p);
-			return;
-		}
-		/* Else try again with more space. */
-		if (n > -1)    /* glibc 2.1 */
-			size = n + 1; /* precisely what is needed */
-		else           /* glibc 2.0 */
-			size *= 2;  /* twice the old size */
-		if ((np = (char *)realloc(p, size)) == NULL)
-		{
-			free(p);
-			return;
-		}
-		else
-		{
-			p = np;
-		}
-	}
+	return ret;
 }
+
 /* Converts the given milli to separate hours,minutes,seconds and ms variables */
 void millis_to_time(LLONG milli, unsigned *hours, unsigned *minutes,
 	unsigned *seconds, unsigned *ms)
