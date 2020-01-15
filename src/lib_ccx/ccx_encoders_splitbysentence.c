@@ -24,7 +24,7 @@
 #ifdef DEBUG_SBS
 #define LOG_DEBUG(...) fprintf(stdout, __VA_ARGS__)
 #else
-#define LOG_DEBUG ;
+#define LOG_DEBUG(...)
 #endif
 
 #ifdef ENABLE_SHARING
