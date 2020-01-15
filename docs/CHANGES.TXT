@@ -19,6 +19,7 @@
 - Fix: Added italics, underline, and color rendering support for -out=spupng with EIA608/teletext
 - Fix: Change inet_ntop to inet_ntoa for Windows XP compatibility
 - FIX: Added an option to disable timestamps for WebVTT (In response to issue #1127)
+- FIX: Add FT_Done_Face to destroy face objects after they're used
 
 0.88 (2019-05-21)
 -----------------
