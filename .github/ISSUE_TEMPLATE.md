@@ -21,6 +21,7 @@ CCExtractor version (using the --version parameter preferably) : **X.X**
 **Necessary information**
 - Is this a regression (did it work before)? [ ] NO | [ ] YES - *please specify the last known working version*
 - What platform did you use? [ ] Windows - [ ] Linux - [ ] Mac
+<!-- Mention only the minimal set of arguments required to reproduce the issue -->
 - What were the used arguments? `-autoprogram`
 
 **Video links (replace text below with your links)**
