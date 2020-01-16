@@ -166,12 +166,6 @@ void* init_ocr(int lang_index)
 		lang_index = 1;
 	}
 
-	if(ccx_options.dvblang)
-	{
-		if(strcmp(language[lang_index],ccx_options.dvblang)!=0)
-			goto fail;
-	}
-
 	tessdata_path = probe_tessdata_location(lang_index);
 	if(!tessdata_path)
 	{

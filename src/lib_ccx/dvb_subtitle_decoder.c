@@ -1861,11 +1861,9 @@ end:
  * @return return -1 if invalid data found other wise 0 if everything goes well
  * errno is set is to EINVAL if invalid data is found
  */
-int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
+int parse_dvb_description(struct dvb_config *cfg, unsigned char *data,
 		unsigned int len)
 {
-	int i = 0;
-	int j = 0;
 	/* 8 bytes per DVB subtitle substream d2:
 	 * ISO_639_language_code (3 bytes),
 	 * subtitling_type (1 byte),
@@ -1891,7 +1889,8 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 		mprint("not supported more then %d language", MAX_LANGUAGE_PER_DESC);
 	}
 
-	for (i = 0; i < cfg->n_language; i++, data += i * 8)
+	unsigned char *data_ptr = data;
+	for (int i = 0; i < cfg->n_language; i++, data_ptr += i * 8)
 	{
 		/* setting language to undefined if not found in language lkup table */
 		char lang_name[4];
@@ -1899,20 +1898,21 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 
 		for(int char_index = 0; char_index < 3; char_index++)
 		{
-			lang_name[char_index] = cctolower(data[char_index]);
+			lang_name[char_index] = cctolower(data_ptr[char_index]);
 			dbg_print(CCX_DMT_DVB, "%c", lang_name[char_index]);
 		}
 		dbg_print(CCX_DMT_DVB, "\" FOUND\n");
 
+		int j = 0;
 		for (j = 0, cfg->lang_index[i] = 0; language[j] != NULL; j++)
 		{
 			if (!strncmp(lang_name, language[j], 3))
 				cfg->lang_index[i] = j;
 		}
-		cfg->sub_type[i] = data[3];
-		cfg->composition_id[i] = RB16(data + 4);
-		cfg->ancillary_id[i] = RB16(data + 6);
 
+		cfg->sub_type[i] = data_ptr[3];
+		cfg->composition_id[i] = RB16(data_ptr + 4);
+		cfg->ancillary_id[i] = RB16(data_ptr + 6);
 	}
 
 	/*
@@ -1923,10 +1923,10 @@ int parse_dvb_description(struct dvb_config* cfg, unsigned char*data,
 	*/
 	if(ccx_options.dvblang)
 	{
-		if(strcmp(ccx_options.dvblang, language[cfg->lang_index[0]])!=0)
+		if (strcmp(ccx_options.dvblang, language[cfg->lang_index[0]]) && strncmp(ccx_options.dvblang, data, 3))
 		{
 			mprint("Ignoring stream language '%s' not equal to dvblang '%s'\n",
-				language[cfg->lang_index[0]], ccx_options.dvblang);
+				data, ccx_options.dvblang);
 			return -1;
 		}
 	}

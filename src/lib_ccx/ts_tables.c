@@ -350,8 +350,8 @@ int parse_PMT (struct ccx_demuxer *ctx, unsigned char *buf, int len,  struct pro
 					if (!IS_FEASIBLE(ctx->codec, ctx->nocodec, CCX_CODEC_DVB))
 						continue;
 
-					memset((void*)&cnf,0,sizeof(struct dvb_config));
-					ret = parse_dvb_description(&cnf,es_info,desc_len);
+					memset((void *) &cnf, 0, sizeof(struct dvb_config));
+					ret = parse_dvb_description(&cnf, es_info, desc_len);
 					if(ret < 0)
 						break;
 					ptr = dvbsub_init_decoder(&cnf, pinfo->initialized_ocr);
