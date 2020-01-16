@@ -84,17 +84,17 @@ int string_cmp(const void *p1, const void *p2)
 	return string_cmp_function(p1, p2, NULL);
 }
 
-void capitalize_word(size_t index, char *word)
+void capitalize_word(size_t index, unsigned char *word)
 {
 	memcpy(word, capitalization_list.words[index], strlen(capitalization_list.words[index]));
 }
 
-void censor_word(size_t index, char *word)
+void censor_word(size_t index, unsigned char *word)
 {
 	memset(word, 0x98, strlen(profane.words[index])); // 0x98 is the asterisk in EIA-608
 }
 
-void call_function_if_match(int line_num, struct eia608_screen *data, struct word_list *list, void (*modification)(size_t, char *))
+void call_function_if_match(int line_num, struct eia608_screen *data, struct word_list *list, void (*modification)(size_t, unsigned char *))
 {
 	char delim[64] = {
 		' ', '\n', '\r', 0x89, 0x99,
