@@ -1131,17 +1131,10 @@ void write_character(const int fd, const unsigned char character, const bool dis
 	}
 	else
 	{
-		char assembly[4];
-		snprintf(assembly, 4, " %02x", odd_parity(character));
-		if (*bytes_written % 2 == 0)
-		{
-			write(fd, assembly, sizeof(assembly) - 1);
-		}
-		else
-		{
-			// Ignore the starting space
-			write(fd, assembly + 1, sizeof(assembly) - 2);
-		}
+		if (*bytes_written)
+			write(fd, " ", 1);
+
+		fdprintf(fd, "%02x", odd_parity(character));
 	}
 	++*bytes_written; // increment int pointed to by (unsigned int *) bytes_written
 }
@@ -1164,18 +1157,10 @@ void write_control_code(const int fd, const unsigned char channel, const enum co
 	}
 	else
 	{
-		char output[6];
-		snprintf(output, 6, " %02x%02x", odd_parity(get_first_byte(channel, code)), odd_parity(get_second_byte(code)));
 		if (*bytes_written)
-		{
-			write(fd, output, sizeof(output) - 1);
-		}
-		else
-		{
-			// If this is the first pair to be written
-			// (i.e. bytes_written == 0), do not print the initial space
-			write(fd, output + 1, sizeof(output) - 2);
-		}
+			write(fd, " ", 1);
+
+		fdprintf(fd, "%02x%02x", odd_parity(get_first_byte(channel, code)), odd_parity(get_second_byte(code)));
 	}
 	*bytes_written += 2;
 }
@@ -1555,9 +1540,7 @@ void add_timestamp(int fd, LLONG time, const bool disassemble)
 	// Should be SMPTE format
 	// This frame number seems like it couldn't be more wrong. Doesn't take
 	// into account timebase
-	char timestamp[13];
-	snprintf(timestamp, 13, "%02d:%02d:%02d:%02.f\t", hour, minute, second, (float) frame / 30);
-	write(fd, timestamp, sizeof(timestamp) - 1);
+	fdprintf(fd, "%02d:%02d:%02d:%02.f\t", hour, minute, second, (float) frame / 30);
 }
 
 void clear_screen(int fd, LLONG end_time, const unsigned char channel, const bool disassemble)
@@ -1639,9 +1622,7 @@ int write_cc_buffer_as_ccd(const struct eia608_screen *data, struct encoder_ctx 
 {
 	if (!context->wrote_ccd_channel_header)
 	{
-		char channel_specifier[11];
-		snprintf(channel_specifier, sizeof(channel_specifier), "CHANNEL %d\n", data->channel);
-		write(context->out->fh, channel_specifier, sizeof(channel_specifier) - 1);
+		fdprintf(context->out->fh, "CHANNEL %d\n", data->channel);
 		context->wrote_ccd_channel_header = true;
 	}
 	return write_cc_buffer_as_scenarist(data, context, true);
