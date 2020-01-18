@@ -481,6 +481,9 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 	return temp_encoder;
 }
 
+/*
+ * RETURN VALUE: the return value should be free(3)-ed
+ */
 char *get_basename(char *filename)
 {
 	char *c;
