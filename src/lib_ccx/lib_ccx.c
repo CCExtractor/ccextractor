@@ -413,7 +413,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		enc_ctx = init_encoder(&ccx_options.enc_cfg);
 		if (!enc_ctx)
 		{
-			freep(ccx_options.enc_cfg.output_filename);
+			freep(&ccx_options.enc_cfg.output_filename);
 			return NULL;
 		}
 
