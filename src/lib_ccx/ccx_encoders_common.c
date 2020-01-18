@@ -788,7 +788,6 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 {
 	int ret = EXIT_OK;
 	int nb_lang;
-	char *basefilename = NULL; // Input filename without the extension
 	const char *extension; // Input filename without the extension
 
 #define check_ret(filename) 	if (ret != EXIT_OK)	\
@@ -820,13 +819,14 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			// field 1.
 			if( (cfg->extract == 12) && (cfg->write_format != CCX_OF_MCC) )
 			{
-				basefilename = get_basename(cfg->output_filename);
+				char *basefilename = get_basename(cfg->output_filename);
 				extension = get_file_extension(cfg->write_format);
 
 				ret = init_write(&ctx->out[0], strdup(cfg->output_filename), cfg->with_semaphore);
 				check_ret(cfg->output_filename);
 				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
 				check_ret(ctx->out[1].filename);
+				free(basefilename);
 			}
 			else
 			{
@@ -836,7 +836,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 		}
 		else if (cfg->write_format != CCX_OF_NULL)
 		{
-			basefilename = get_basename(ctx->first_input_file);
+			char *basefilename = get_basename(ctx->first_input_file);
 			extension = get_file_extension(cfg->write_format);
 			if (basefilename == NULL)
 			{
@@ -855,9 +855,8 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 				ret = init_write(ctx->out, create_outfilename(basefilename, NULL, extension), cfg->with_semaphore);
 				check_ret(ctx->out->filename);
 			}
+			free(basefilename);
 		}
-
-		freep(basefilename);
 	}
 
 	if (cfg->cc_to_stdout == CCX_TRUE)
@@ -897,6 +896,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			}
 			else
 			{
+				char *basefilename;
 				if (cfg->output_filename)
 					basefilename = get_basename(cfg->output_filename);
 				else

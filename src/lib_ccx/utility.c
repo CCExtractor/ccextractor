@@ -480,6 +480,7 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 	}
 	return temp_encoder;
 }
+
 char *get_basename(char *filename)
 {
 	char *c;
