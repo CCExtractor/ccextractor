@@ -52,3 +52,12 @@ jobs:
     - name: make
       run: make
       working-directory: ./linux
+  cmake:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: cmake
+      run: mkdir build && cd build && cmake ../src
+    - name: build
+      run: make
+      working-directory: build
