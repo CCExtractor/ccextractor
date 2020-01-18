@@ -422,7 +422,7 @@ void ccx_dtvcc_writer_init(ccx_dtvcc_writer_ctx *writer,
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_writer_init: "
 			"[%s][%d][%d]\n", base_filename, program_number, service_number);
 
-	char *ext = get_file_extension(write_format);
+	const char *ext = get_file_extension(write_format);
 	char suffix[32];
 	sprintf(suffix, CCX_DTVCC_FILENAME_TEMPLATE, program_number, service_number);
 
@@ -447,8 +447,6 @@ void ccx_dtvcc_writer_init(ccx_dtvcc_writer_ctx *writer,
 										 charset, strerror(errno));
 		}
 	}
-
-	free(ext);
 }
 
 void ccx_dtvcc_writer_cleanup(ccx_dtvcc_writer_ctx *writer)

@@ -88,7 +88,7 @@ void init_options (struct ccx_s_options *options)
 	options->transcript_settings = ccx_encoders_default_transcript_settings;
 	options->millis_separator=',';
 
-	options->write_format=CCX_OF_SRT; // 0=Raw, 1=srt, 2=SMI
+	options->write_format=CCX_OF_SRT;
 	options->date_format=ODF_NONE;
 	options->output_filename = NULL;
 	options->debug_mask=CCX_DMT_GENERIC_NOTICES; // dbg_print will use this mask to print or ignore different types

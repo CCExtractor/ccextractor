@@ -212,21 +212,29 @@ void set_output_format (struct ccx_s_options *opt, const char *format)
 		format = "bin";
 	}
 
-	if (strcmp(format, "srt") == 0)
-		opt->write_format = CCX_OF_SRT;
-	else if (strcmp(format, "ass") == 0 || strcmp(format, "ssa") == 0) {
+	if (strcmp(format, "ass") == 0)
+	{
 		opt->write_format = CCX_OF_SSA;
-		if (strcmp(format, "ass") == 0)
-			opt->use_ass_instead_of_ssa = 1;
+		opt->use_ass_instead_of_ssa = 1;
 	}
-	else if (strcmp(format, "webvtt") == 0 || strcmp(format, "webvtt-full") == 0) {
+	else if (strcmp(format, "ccd") == 0)
+		opt->write_format = CCX_OF_CCD;
+	else if (strcmp(format, "scc") == 0)
+		opt->write_format = CCX_OF_SCC;
+	else if (strcmp(format, "srt") == 0)
+		opt->write_format=CCX_OF_SRT;
+	else if (strcmp (format, "ssa") == 0)
+		opt->write_format = CCX_OF_SSA;
+	else if (strcmp(format, "webvtt") == 0)
 		opt->write_format = CCX_OF_WEBVTT;
-		if (strcmp(format, "webvtt-full") == 0)
-			opt->use_webvtt_styling = 1;
+	else if (strcmp(format, "webvtt-full") == 0)
+	{
+		opt->write_format = CCX_OF_WEBVTT;
+		opt->use_webvtt_styling = 1;
 	}
 	else if (strcmp(format, "sami") == 0 || strcmp(format, "smi") == 0)
 		opt->write_format = CCX_OF_SAMI;
-	else if (strcmp(format, "transcript") == 0 || strcmp(format, "txt") == 0)
+	else if (strcmp (format, "transcript")==0 || strcmp (format, "txt")==0)
 	{
 		opt->write_format = CCX_OF_TRANSCRIPT;
 		opt->settings_dtvcc.no_rollup = 1;
@@ -437,6 +445,8 @@ void print_usage (void)
 	mprint("       where format is one of these:\n");
 	mprint("                      srt     -> SubRip (default, so not actually needed).\n");
 	mprint("                      ass/ssa -> SubStation Alpha.\n");
+	mprint("                      ccd     -> Scenarist Closed Caption Disassembly format\n");
+	mprint("                      scc     -> Scenarist Closed Caption format\n");
 	mprint("                      webvtt  -> WebVTT format\n");
 	mprint("                      webvtt-full -> WebVTT format with styling\n");
 	mprint("                      sami    -> MS Synchronized Accesible Media Interface.\n");
@@ -2441,12 +2451,7 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 			opt->noautotimeref = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-autodash") == 0)
-		{
-			opt->enc_cfg.autodash = 1;
-			continue;
-		}
-		if (strcmp(argv[i], "-sem") == 0)
+		if (strcmp(argv[i], "-autodash") == 0 || strcmp(argv[i], "-sem") == 0)
 		{
 			opt->enc_cfg.autodash = 1;
 			continue;

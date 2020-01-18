@@ -391,7 +391,6 @@ int api_start(struct ccx_s_options api_options)
             break;
     } // file loop
     close_input_file(ctx);
-    free((void *)ctx->extension);
 
     prepare_for_new_file(ctx); // To reset counters used by handle_end_of_data()
 

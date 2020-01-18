@@ -40,6 +40,7 @@
 #define CCX_ENOMEM  -104
 
 // Declarations
+int cc608_parity(unsigned int byte);
 void fdprintf(int fd, const char *fmt, ...);
 void millis_to_time(LLONG milli, unsigned *hours, unsigned *minutes,unsigned *seconds, unsigned *ms);
 void freep(void *arg);

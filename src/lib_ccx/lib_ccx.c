@@ -346,8 +346,6 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	struct encoder_ctx *enc_ctx;
 	unsigned int pn = 0;
 	unsigned char in_format = 1;
-	char *extension;
-
 
 	if (ctx->write_format == CCX_OF_NULL)
 		return NULL;
@@ -364,14 +362,14 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	}
 	list_for_each_entry(enc_ctx, &ctx->enc_ctx_head, list, struct encoder_ctx)
 	{
-		if ( ctx->multiprogram == CCX_FALSE)
+		if (ctx->multiprogram == CCX_FALSE)
 			return enc_ctx;
 
 		if (enc_ctx->program_number == pn)
 			return enc_ctx;
 	}
 
-	extension = get_file_extension(ccx_options.enc_cfg.write_format);
+	const char *extension = get_file_extension(ccx_options.enc_cfg.write_format);
 	if (!extension && ccx_options.enc_cfg.write_format != CCX_OF_CURL)
 		return NULL;
 
@@ -408,7 +406,6 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		ccx_options.enc_cfg.output_filename = malloc(len);
 		if (!ccx_options.enc_cfg.output_filename)
 		{
-			freep(&extension);
 			return NULL;
 		}
 
@@ -416,21 +413,18 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		enc_ctx = init_encoder(&ccx_options.enc_cfg);
 		if (!enc_ctx)
 		{
-			freep(&extension);
-			freep(&ccx_options.enc_cfg.output_filename);
+			freep(ccx_options.enc_cfg.output_filename);
 			return NULL;
 		}
 
 		list_add_tail( &(enc_ctx->list), &(ctx->enc_ctx_head) );
-		freep(&extension);
-		freep(&ccx_options.enc_cfg.output_filename);
+		freep(ccx_options.enc_cfg.output_filename);
 	}
 	// DVB related
 	enc_ctx->prev = NULL;
 	if (cinfo)
 		if (cinfo->codec == CCX_CODEC_DVB)
 			enc_ctx->write_previous = 0;
-	freep(&extension);
 	return enc_ctx;
 }
 

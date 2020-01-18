@@ -51,11 +51,11 @@ void millis_to_time(LLONG milli, unsigned *hours, unsigned *minutes,
 	// LLONG milli = (LLONG) ((ccblock*1000)/29.97);
 	*ms = (unsigned)(milli % 1000); // milliseconds
 	milli = (milli - *ms) / 1000;  // Remainder, in seconds
-	*seconds = (int)(milli % 60);
+	*seconds = (int) milli % 60;
 	milli = (milli - *seconds) / 60; // Remainder, in minutes
 	*minutes = (int)(milli % 60);
 	milli = (milli - *minutes) / 60; // Remainder, in hours
-	*hours = (int)milli;
+	*hours = (int) milli;
 }
 
 /* Frees the given pointer */
@@ -101,9 +101,11 @@ int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time,
 	return 0;
 }
 
+// returns 1 if odd parity and 0 if even parity
+// Same api interface as GNU extension __builtin_parity
 int cc608_parity(unsigned int byte)
 {
-	int ones = 0;
+	unsigned int ones = 0;
 
 	for (int i = 0; i < 7; i++)
 	{
@@ -111,7 +113,7 @@ int cc608_parity(unsigned int byte)
 			ones++;
 	}
 
-	return ones & 1;
+	return ones & 1; // same as `ones % 2` for positive integers
 }
 
 void cc608_build_parity_table(int *parity_table)

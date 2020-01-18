@@ -515,6 +515,9 @@
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_sami.c">
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\lib_ccx\ccx_encoders_scc.c">
+      <Filter>Source Files\ccx_encoders</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_smptett.c">
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>

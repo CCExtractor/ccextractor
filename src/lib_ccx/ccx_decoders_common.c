@@ -102,8 +102,8 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 		cc_block[2]=0x80;
 	}
 
-	if ( ctx->write_format!=CCX_OF_RAW && // In raw we cannot skip padding because timing depends on it
-		 ctx->write_format!=CCX_OF_DVDRAW &&
+	if (ctx->write_format!=CCX_OF_RAW && // In raw we cannot skip padding because timing depends on it
+		ctx->write_format!=CCX_OF_DVDRAW &&
 		(cc_block[0]==0xFA || cc_block[0]==0xFC || cc_block[0]==0xFD )
 		&& (cc_block[1]&0x7F)==0 && (cc_block[2]&0x7F)==0) // CFS: Skip non-data, makes debugging harder.
 		return 1;
@@ -309,30 +309,42 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->false_pict_header = 0;
 	ctx->is_alloc=0;
 
-	memcpy(&ctx->extraction_start, &setting->extraction_start,sizeof(struct ccx_boundary_time));
-	memcpy(&ctx->extraction_end, &setting->extraction_end,sizeof(struct ccx_boundary_time));
+	memcpy(&ctx->extraction_start, &setting->extraction_start, sizeof(struct ccx_boundary_time));
+	memcpy(&ctx->extraction_end, &setting->extraction_end, sizeof(struct ccx_boundary_time));
 
 	if (setting->send_to_srv)
 		ctx->writedata = net_send_cc;
-	else if (setting->output_format==CCX_OF_RAW ||
-		setting->output_format==CCX_OF_DVDRAW ||
-		setting->output_format==CCX_OF_RCWT )
-		ctx->writedata = writeraw;
-	else if (setting->output_format==CCX_OF_SMPTETT ||
-		setting->output_format==CCX_OF_SAMI ||
-		setting->output_format==CCX_OF_SRT ||
-		setting->output_format==CCX_OF_SSA ||
-		setting->output_format == CCX_OF_WEBVTT ||
-		setting->output_format==CCX_OF_TRANSCRIPT ||
-		setting->output_format==CCX_OF_SPUPNG ||
-		setting->output_format==CCX_OF_SIMPLE_XML ||
-		setting->output_format==CCX_OF_G608 ||
-		setting->output_format==CCX_OF_NULL ||
-        setting->output_format==CCX_OF_MCC ||
-		setting->output_format==CCX_OF_CURL)
-		ctx->writedata = process608;
 	else
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "Invalid Write Format Selected");
+	{
+		// TODO: Add function to test this
+		switch (setting->output_format)
+		{
+			case CCX_OF_RAW:
+			case CCX_OF_DVDRAW:
+			case CCX_OF_RCWT:
+				ctx->writedata = writeraw;
+				break;
+			case CCX_OF_CCD:
+			case CCX_OF_SCC:
+			case CCX_OF_SMPTETT:
+			case CCX_OF_SAMI:
+			case CCX_OF_SRT:
+			case CCX_OF_SSA:
+			case CCX_OF_WEBVTT:
+			case CCX_OF_TRANSCRIPT:
+			case CCX_OF_SPUPNG:
+			case CCX_OF_SIMPLE_XML:
+			case CCX_OF_G608:
+			case CCX_OF_NULL:
+			case CCX_OF_MCC:
+			case CCX_OF_CURL:
+				ctx->writedata = process608;
+				break;
+			default:
+				fatal(CCX_COMMON_EXIT_BUG_BUG, "Invalid Write Format Selected");
+				break;
+		}
+	}
 
 	memset (&ctx->dec_sub, 0,sizeof(ctx->dec_sub));
 
@@ -344,7 +356,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->current_aspect_ratio = 0;
 	ctx->current_frame_rate = 4; // Assume standard fps, 29.97
 
-        //Variables used while parsing elementary stream
+	// Variables used while parsing elementary stream
 	ctx->no_bitstream_error = 0;
 	ctx->saw_seqgoppic = 0;
 	ctx->in_pic_data = 0;
@@ -361,7 +373,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->repeat_first_field = 0;
 	ctx->progressive_frame = 0;
 	ctx->pulldownfields = 0;
-        //es parser related variable ends here
+	// es parser related variable ends here
 
 	memset(ctx->cc_stats, 0, 4 * sizeof(int));
 
@@ -384,10 +396,16 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 	{
 		if (ctx->extract != 2)
 		{
-			if (ctx->write_format==CCX_OF_SMPTETT || ctx->write_format==CCX_OF_SAMI ||
-					ctx->write_format==CCX_OF_SRT || ctx->write_format==CCX_OF_TRANSCRIPT ||
-					ctx->write_format == CCX_OF_WEBVTT || ctx->write_format == CCX_OF_SPUPNG ||
-					ctx->write_format == CCX_OF_SSA || ctx->write_format == CCX_OF_MCC)
+			if (ctx->write_format == CCX_OF_CCD ||
+				ctx->write_format == CCX_OF_SCC ||
+				ctx->write_format == CCX_OF_SMPTETT ||
+				ctx->write_format == CCX_OF_SAMI ||
+				ctx->write_format == CCX_OF_SRT ||
+				ctx->write_format == CCX_OF_TRANSCRIPT ||
+				ctx->write_format == CCX_OF_WEBVTT ||
+				ctx->write_format == CCX_OF_SPUPNG ||
+				ctx->write_format == CCX_OF_SSA ||
+				ctx->write_format == CCX_OF_MCC)
 			{
 				flush_608_context(ctx->context_cc608_field_1, sub);
 			}
@@ -399,10 +417,17 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 		}
 		if (ctx->extract != 1)
 		{
-			if (ctx->write_format == CCX_OF_SMPTETT || ctx->write_format == CCX_OF_SAMI ||
-					ctx->write_format == CCX_OF_SRT || ctx->write_format == CCX_OF_TRANSCRIPT ||
-					ctx->write_format == CCX_OF_WEBVTT || ctx->write_format == CCX_OF_SPUPNG ||
-					ctx->write_format == CCX_OF_SSA || ctx->write_format == CCX_OF_MCC)
+			// TODO: Use a function to prevent repeating these lines
+			if (ctx->write_format == CCX_OF_CCD ||
+				ctx->write_format == CCX_OF_SCC ||
+				ctx->write_format == CCX_OF_SMPTETT ||
+				ctx->write_format == CCX_OF_SAMI ||
+				ctx->write_format == CCX_OF_SRT ||
+				ctx->write_format == CCX_OF_TRANSCRIPT ||
+				ctx->write_format == CCX_OF_WEBVTT ||
+				ctx->write_format == CCX_OF_SPUPNG ||
+				ctx->write_format == CCX_OF_SSA ||
+				ctx->write_format == CCX_OF_MCC)
 			{
 				flush_608_context(ctx->context_cc608_field_2, sub);
 			}
