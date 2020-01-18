@@ -33,6 +33,7 @@ void get_sentence_borders(int *first, int *last, int line_num, struct eia608_scr
 
 int string_cmp(const void *p1, const void *p2);
 int string_cmp_function(const void *p1, const void *p2, void *arg);
+int add_word(struct word_list *list, const char *word);
 
 int add_builtin_words(const char *builtin[], struct word_list *list);
 void correct_spelling_and_censor_words_608(struct encoder_ctx *context, int line_number, struct eia608_screen *data);
