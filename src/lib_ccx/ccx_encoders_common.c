@@ -1226,7 +1226,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					write_cc_buffer_to_gui(sub->data, context);
 #endif // PYTHON_API
 			}
-			freep(sub->data);
+			freep(&sub->data);
 			break;
 		case CC_BITMAP:
 			switch (context->write_format)
