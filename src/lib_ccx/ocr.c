@@ -222,6 +222,14 @@ fail:
 
 }
 
+/*
+ * The return value **has** to be freed:
+ *
+ * ```c
+ * BOX *box = ignore_alpha_at_edge(...);
+ * boxDestroy(&box);
+ * ```
+ */
 BOX* ignore_alpha_at_edge(png_byte *alpha, unsigned char* indata, int w, int h, PIX *in, PIX **out)
 {
 	int i, j, index, start_y=0, end_y=0;
@@ -248,7 +256,6 @@ BOX* ignore_alpha_at_edge(png_byte *alpha, unsigned char* indata, int w, int h, 
 	}
 	cropWindow = boxCreate(start_y, 0, (w - (start_y + ( w - end_y) )), h - 1);
 	*out = pixClipRectangle(in, cropWindow, NULL);
-	//boxDestroy(&cropWindow);
 
 	return cropWindow;
 }
@@ -325,7 +332,8 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 			ppixel++;
 		}
 	}
-	ignore_alpha_at_edge(alpha, indata, w, h, pix, &cpix);
+	BOX *temp = ignore_alpha_at_edge(alpha, indata, w, h, pix, &cpix);
+	boxDestroy(&temp);
 
 	// For the unquantized bitmap
 	wpl = pixGetWpl(color_pix);
@@ -682,7 +690,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	}
 	// End Color Detection
 
-	// boxDestroy(crop_points);
+	boxDestroy(&crop_points);
 
 	pixDestroy(&pix);
 	pixDestroy(&cpix);
