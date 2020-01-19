@@ -1,8 +1,6 @@
 #ifndef MATROSKA_H
 #define MATROSKA_H
 
-#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
-
 /* Output specificators */
 #if (defined (WIN32) || defined (_WIN32_WCE)) && (defined(__MINGW32__) || !defined(__GNUC__))
 #define LLD_M "I64d"

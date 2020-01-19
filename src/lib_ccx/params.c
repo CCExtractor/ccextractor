@@ -1608,17 +1608,9 @@ int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[])
 
 		if (strcmp(argv[i], "-ocrlang") == 0)
 		{
-			if (i < argc - 1)
+			if (i++ < argc - 1)
 			{
-				i++;
-
-				opt->ocrlang = (char *)malloc(sizeof(argv[i]));
-				sprintf(opt->ocrlang, "%s", argv[i]);
-				for (int char_index = 0; char_index < strlen(opt->ocrlang); char_index++)
-				{
-					opt->ocrlang[char_index] = cctolower(opt->ocrlang[char_index]);
-				}
-
+				opt->ocrlang = argv[i];
 				continue;
 			}
 			else

@@ -225,7 +225,7 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
     char* lang = options->ocrlang;
     if(!lang) lang = "eng"; // English is default language
 
-    tessdata_path = probe_tessdata_location_string(lang);
+    tessdata_path = probe_tessdata_location(lang);
     if(!tessdata_path)
     {
         if (strcmp(lang, "eng") == 0)
@@ -235,7 +235,7 @@ struct lib_hardsubx_ctx* _init_hardsubx(struct ccx_s_options *options)
         }
         mprint("%s.traineddata not found! Switching to English\n", lang);
         lang = "eng";
-        tessdata_path = probe_tessdata_location_string("eng");
+        tessdata_path = probe_tessdata_location("eng");
         if(!tessdata_path)
         {
             mprint("eng.traineddata not found! No Switching Possible\n");
