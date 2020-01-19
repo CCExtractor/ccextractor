@@ -93,60 +93,41 @@ void delete_ocr (void** arg)
  * 2. tessdata in current working directory
  * 3. tessdata in /usr/share
  */
-char* probe_tessdata_location(int lang_index)
+char* probe_tessdata_location(const char *lang)
 {
 	int ret = 0;
 	char *tessdata_dir_path = getenv("TESSDATA_PREFIX");
 
-	ret = search_language_pack(tessdata_dir_path, language[lang_index]);
+	ret = search_language_pack(tessdata_dir_path, lang);
 	if (!ret)
 		return tessdata_dir_path;
 
 	tessdata_dir_path = "./";
-	ret = search_language_pack(tessdata_dir_path,language[lang_index]);
+	ret = search_language_pack(tessdata_dir_path, lang);
 	if (!ret)
 		return tessdata_dir_path;
 
 	tessdata_dir_path = "/usr/share/";
-	ret = search_language_pack(tessdata_dir_path, language[lang_index]);
+	ret = search_language_pack(tessdata_dir_path, lang);
 	if (!ret)
 		return tessdata_dir_path;
 
 	tessdata_dir_path = "/usr/local/share/";
-	ret = search_language_pack(tessdata_dir_path, language[lang_index]);
+	ret = search_language_pack(tessdata_dir_path, lang);
 	if (!ret)
 		return tessdata_dir_path;
 
 	tessdata_dir_path = "/usr/share/tesseract-ocr/";
-	ret = search_language_pack(tessdata_dir_path, language[lang_index]);
+	ret = search_language_pack(tessdata_dir_path, lang);
 	if (!ret)
 		return tessdata_dir_path;
 
 	tessdata_dir_path = "/usr/share/tesseract-ocr/4.00/";
-	ret = search_language_pack(tessdata_dir_path, language[lang_index]);
+	ret = search_language_pack(tessdata_dir_path, lang);
 	if (!ret)
 		return tessdata_dir_path;
 
 	return NULL;
-}
-
-/**
- * probe_tessdata_location_string
- *
- * This function returns tesseract data location given language string
- */
-char* probe_tessdata_location_string(char* lang)
-{
-    int lang_index = -1;
-    for(int i = 0; i < NB_LANGUAGE; i++) {
-        if(language[i]) {
-            if(strcmp(lang, language[i]) == 0) lang_index = i;
-        }
-    }
-
-    if(lang_index == -1) return NULL; // No such language found
-
-    return probe_tessdata_location(lang_index);
 }
 
 void* init_ocr(int lang_index)
@@ -159,14 +140,17 @@ void* init_ocr(int lang_index)
 	if(!ctx)
 		return NULL;
 
-	/* if language was undefined use english */
-	if(lang_index == 0)
+	if (ccx_options.ocrlang)
+		lang = ccx_options.ocrlang;
+	else
 	{
-		/* select english */
-		lang_index = 1;
+		if(lang_index == 0)
+			lang_index = 1;
+		lang = language[lang_index];
 	}
+	/* if language was undefined use english */
 
-	tessdata_path = probe_tessdata_location(lang_index);
+	tessdata_path = probe_tessdata_location(lang);
 	if(!tessdata_path)
 	{
 		if (lang_index == 1)
@@ -174,20 +158,16 @@ void* init_ocr(int lang_index)
 			mprint("eng.traineddata not found! No Switching Possible\n");
 			return NULL;
 		}
-		mprint("%s.traineddata not found! Switching to English\n",language[lang_index]);
+		mprint("%s.traineddata not found! Switching to English\n", lang);
 		lang_index = 1;
-		tessdata_path = probe_tessdata_location(lang_index);
+		lang = language[lang_index];
+		tessdata_path = probe_tessdata_location(lang);
 		if(!tessdata_path)
 		{
 			mprint("eng.traineddata not found! No Switching Possible\n");
 			return NULL;
 		}
 	}
-
-	if (ccx_options.ocrlang)
-		lang = ccx_options.ocrlang;
-	else
-		lang = language[lang_index];
 
 	char* pars_vec = strdup("debug_file");
 	char* pars_values = strdup("tess.log");
