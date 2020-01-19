@@ -57,7 +57,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: cmake
-      run: mkdir build && cd build && cmake ../src
+      run: mkdir build && cd build && cmake -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src
     - name: build
       run: make -j$(nproc)
       working-directory: build
