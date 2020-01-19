@@ -54,6 +54,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
+    - name: cmake
+      run: mkdir build && cd build && cmake ../src
+    - name: build
+      run: make -j$(nproc)
+      working-directory: build
+  cmake_ocr_hardsubx:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
     - name: dependencies
       run: sudo apt update && sudo apt install libtesseract-dev libavformat-dev libswscale-dev
     - name: cmake
