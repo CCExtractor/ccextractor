@@ -1,0 +1,46 @@
+name: Build CCExtractor on Windows
+
+on:
+  push:
+    branches: master
+    paths:
+    - '.github/workflows/build_windows.yml'
+    - '**.c'
+    - '**.h'
+    - 'windows/**'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+    - '.github/workflows/build_windows.yml'
+    - '**.c'
+    - '**.h'
+    - 'windows/**'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - name: Add V7.1A SDK
+      run: |
+        "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe" modify --channelId VisualStudio.16.Release --productId Microsoft.VisualStudio.Product.Enterprise -q --add Microsoft.VisualStudio.Component.WinXP
+      shell: cmd
+    - name: Check out repository
+      uses: actions/checkout@v1
+    - name: Setup MSBuild.exe
+      uses: warrenbuckley/Setup-MSBuild@v1
+    - name: build Release
+      run: msbuild ccextractor.sln /p:Configuration=Release
+      working-directory: ./windows
+    - name: build Debug
+      run: msbuild ccextractor.sln /p:Configuration=Debug
+      working-directory: ./windows
+    - name: Prepare artifacts
+      run: mkdir ./windows/artifacts
+    - name: Copy release artifact
+      run: cp ./windows/Release/ccextractorwin.exe ./windows/artifacts/; cp ./windows/Release/ccextractorgui.exe ./windows/artifacts/
+    - name: Copy debug artifact
+      run: cp ./windows/Debug/ccextractorwin.exe ./windows/artifacts/ccextractorwin_debug.exe; cp ./windows/Debug/ccextractorgui.exe ./windows/artifacts/ccextractorgui_debug.exe
+    - uses: actions/upload-artifact@v1
+      with:
+        name: CCExtractor Windows Release_or_Debug build
+        path: ./windows/artifacts
