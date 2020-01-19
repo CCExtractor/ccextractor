@@ -39,7 +39,7 @@ typedef struct ccx_decoder_608_context
 	enum cc_modes mode;
 	unsigned char last_c1, last_c2;
 	int channel;                    // Currently selected channel
-	unsigned char current_color;    // Color we are currently using to write
+	enum ccx_decoder_608_color_code current_color;    // Color we are currently using to write
 	unsigned char font;             // Font we are currently using to write
 	int rollup_base_row;
 	LLONG ts_start_of_current_line; /* Time at which the first character for current line was received, =-1 no character received yet */
