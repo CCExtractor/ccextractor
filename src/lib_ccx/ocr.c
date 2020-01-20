@@ -930,7 +930,7 @@ int compare_rect_by_ypos(const void*p1, const void *p2, void*arg)
 	return -1;
 }
 
-void add_ocrtext2str(char *dest, char *src, const char *crlf, unsigned crlf_length)
+void add_ocrtext2str(char *dest, char *src, const unsigned char *crlf, unsigned crlf_length)
 {
 	char *line_scan;
 	int char_found;
@@ -976,7 +976,7 @@ void add_ocrtext2str(char *dest, char *src, const char *crlf, unsigned crlf_leng
  * for all text detected from rectangles
  */
 
-char *paraof_ocrtext(struct cc_subtitle *sub, const char *crlf, unsigned crlf_length)
+char *paraof_ocrtext(struct cc_subtitle *sub, const unsigned char *crlf, unsigned crlf_length)
 {
 	int i;
 	int len = 0;
