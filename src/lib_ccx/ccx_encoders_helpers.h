@@ -38,7 +38,7 @@ int add_word(struct word_list *list, const char *word);
 int add_builtin_words(const char *builtin[], struct word_list *list);
 void correct_spelling_and_censor_words_608(struct encoder_ctx *context, int line_number, struct eia608_screen *data);
 
-unsigned encode_line (struct encoder_ctx *ctx, unsigned char *buffer, unsigned char *text);
+unsigned encode_line(struct encoder_ctx *ctx, unsigned char *buffer, const unsigned char *text);
 
 void shell_sort(void *base, int nb, size_t size, int(*compar)(const void*p1, const void *p2, void*arg), void *arg);
 
