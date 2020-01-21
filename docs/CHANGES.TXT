@@ -21,6 +21,7 @@
 - Fix: Change inet_ntop to inet_ntoa for Windows XP compatibility
 - FIX: Added an option to disable timestamps for WebVTT (In response to issue #1127)
 - FIX: Add FT_Done_Face to destroy face objects after they're used
+- Fix: Fixed a small OCR memory leak
 
 0.88 (2019-05-21)
 -----------------
