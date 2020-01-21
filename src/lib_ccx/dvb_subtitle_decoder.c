@@ -1506,7 +1506,6 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	struct cc_bitmap *rect = NULL;
 	uint32_t *clut_table;
 	int offset_x=0, offset_y=0;
-	int ret = 0;
 	int x_pos=-1, y_pos=-1, width=0, height=0;
 
 	ctx = (DVBSubContext *) dec_ctx->private_data;
@@ -1663,7 +1662,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	char *ocr_str = NULL;
 	if (ctx->ocr_ctx)
 	{
-		ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, region->bgcolor, dec_ctx->ocr_quantmode);
+		int ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, region->bgcolor, dec_ctx->ocr_quantmode);
 		if (ret >= 0)
 			rect->ocr_text = ocr_str;
 		else
