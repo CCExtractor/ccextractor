@@ -70,7 +70,7 @@ static size_t inline buffered_read(struct ccx_demuxer *ctx, unsigned char *buffe
  */
 static size_t inline buffered_read_byte(struct ccx_demuxer *ctx, unsigned char *buffer)
 {
-	size_t result;
+	size_t result = 0;
 	if (ctx->bytesinbuffer - ctx->filebuffer_pos)
 	{
 		if (buffer)
