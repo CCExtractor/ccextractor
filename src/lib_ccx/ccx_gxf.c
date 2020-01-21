@@ -1401,8 +1401,8 @@ static int parse_media(struct ccx_demuxer *demux, int len, struct demuxer_data *
 	 * These values shall be sent starting with the ancillary data field from the lowest number video line continuing to
 	 * higher video line numbers. Within each line the ancillary data fields shall not be reordered.
 	 */
-	unsigned char first_field_nb;
-	unsigned char last_field_nb;
+	unsigned char first_field_nb = 0;
+	unsigned char last_field_nb = 0;
 
 	/**
 	 *  see description of set_mpeg_frame_desc for details
