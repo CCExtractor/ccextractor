@@ -1,6 +1,6 @@
 #!/bin/bash
 cd `dirname $0`
-BLD_FLAGS="-std=gnu99 -Wno-write-strings -DGPAC_CONFIG_DARWIN -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -Dfopen64=fopen -Dopen64=open -Dlseek64=lseek -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP"
+BLD_FLAGS="-std=gnu99 -Wno-write-strings -Wno-pointer-sign -DGPAC_CONFIG_DARWIN -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -Dfopen64=fopen -Dopen64=open -Dlseek64=lseek -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP"
 [[ $1 = "OCR" ]] && BLD_FLAGS="$BLD_FLAGS -DENABLE_OCR"
 BLD_INCLUDE="-I../src/ -I../src/lib_ccx  -I../src/gpacmp4 -I../src/lib_hash -I../src/libpng -I../src/utf8proc -I../src/protobuf-c -I../src/zlib -I../src/zvbi -I../src/freetype/include"
 [[ $1 = "OCR" ]] && BLD_INCLUDE="$BLD_INCLUDE `pkg-config --cflags --silence-errors tesseract`"
