@@ -1,3 +1,4 @@
+#include <math.h>
 #include "png.h"
 #include "lib_ccx.h"
 #ifdef ENABLE_OCR
@@ -526,7 +527,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 				else if (max == g_avg) h = 60 * ((b_avg - r_avg) / (max - min)) + 120;
 				else h = 60 * ((r_avg - g_avg) / (max - min)) + 240;
 
-				if (abs(h - h0) > 50) // Color has changed
+				if (fabsf(h - h0) > 50) // Color has changed
 				{
 					// Write <font> tags for SRT and WebVTT
 					if (ccx_options.write_format == CCX_OF_SRT ||
