@@ -118,6 +118,9 @@ void params_dump(struct lib_ccx_ctx *ctx)
 		case CCX_ENC_LATIN_1:
 			mprint ("Latin-1");
 			break;
+		case CCX_ENC_ASCII:
+			mprint ("ASCII");
+			break;
 	}
 	mprint ("] ");
 	mprint ("[Delay: %lld] ",ctx->subs_delay);
