@@ -203,10 +203,10 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 	return 0;
 }
 
-int write_webvtt_header(struct encoder_ctx *context)
+void write_webvtt_header(struct encoder_ctx *context)
 {
 	if (context->wrote_webvtt_header) // Already done
-		return 1;
+		return;
 
 	if (context->timing->sync_pts2fts_set)
 	{
@@ -237,7 +237,7 @@ int write_webvtt_header(struct encoder_ctx *context)
 		if (f == NULL)
 		{
 			mprint("Warning: Error creating the file %s\n", css_file_name);
-			return -1;
+			return;
 		}
 		fprintf(f, "%s",webvtt_inline_css);
 		fclose(f);
