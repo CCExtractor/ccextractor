@@ -120,7 +120,7 @@ void pes_header_dump(uint8_t *buffer, long len)
 		last_pts = pts;
 	}
 }
-enum ccx_stream_type get_buffer_type(struct cap_info *cinfo)
+enum ccx_bufferdata_type get_buffer_type(struct cap_info *cinfo)
 {
 	if (cinfo->stream == CCX_STREAM_TYPE_VIDEO_MPEG2)
 	{
