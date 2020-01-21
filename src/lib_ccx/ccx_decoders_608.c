@@ -104,7 +104,7 @@ const char *color_text[MAX_COLOR][2]=
 
 void clear_eia608_cc_buffer(ccx_decoder_608_context *context, struct eia608_screen *data)
 {
-	for (int i = 0;i<15;i++)
+	for (int i = 0;i<CCX_DECODER_608_SCREEN_ROWS;i++)
 	{
 		memset(data->characters[i], ' ', CCX_DECODER_608_SCREEN_WIDTH);
 		data->characters[i][CCX_DECODER_608_SCREEN_WIDTH] = 0;
@@ -379,7 +379,7 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 		sub->datatype = CC_DATATYPE_GENERIC;
 		sub->nb_data++;
 
-		for(i = 0; i < 15; i++)
+		for(i = 0; i < CCX_DECODER_608_SCREEN_ROWS; i++)
 		{
 			if(i == context->cursor_row)
 				data->row_used[i] = 1;
@@ -446,7 +446,7 @@ int check_roll_up(ccx_decoder_608_context *context)
 	if (use_buffer->row_used[0]) // If top line is used it will go off the screen no matter what
 		return 1;
 	int rows_orig=0; // Number of rows in use right now
-	for (int i=0;i<15;i++)
+	for (int i=0;i<CCX_DECODER_608_SCREEN_ROWS;i++)
 	{
 		if (use_buffer->row_used[i])
 		{
@@ -500,7 +500,7 @@ int roll_up(ccx_decoder_608_context *context)
 	int firstrow=-1, lastrow=-1;
 	// Look for the last line used
 	int rows_orig=0; // Number of rows in use right now
-	for (int i=0;i<15;i++)
+	for (int i=0;i<CCX_DECODER_608_SCREEN_ROWS;i++)
 	{
 		if (use_buffer->row_used[i])
 		{
@@ -543,7 +543,7 @@ int roll_up(ccx_decoder_608_context *context)
 
 	// Sanity check
 	int rows_now=0;
-	for (int i=0;i<15;i++)
+	for (int i=0;i<CCX_DECODER_608_SCREEN_ROWS;i++)
 		if (use_buffer->row_used[i])
 			rows_now++;
 	if (rows_now>keep_lines)
@@ -732,7 +732,7 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			if (context->mode == MODE_POPON) // CFS: Not sure about this. Is there a valid reason for CR in popup?
 			{
 				context->cursor_column = 0;
-				if (context->cursor_row<15)
+				if (context->cursor_row<CCX_DECODER_608_SCREEN_ROWS)
 					context->cursor_row++;
 				break;
 			}
@@ -939,7 +939,7 @@ void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *con
 		   buffer around instead) but it's better than leaving old characters in the buffer */
 		struct eia608_screen *use_buffer = get_writing_buffer(context); // &wb->data608->buffer1;
 
-		for (int j=row;j<15;j++)
+		for (int j=row;j<CCX_DECODER_608_SCREEN_ROWS;j++)
 		{
 			if (use_buffer->row_used[j])
 			{
