@@ -108,8 +108,13 @@ void clear_eia608_cc_buffer(ccx_decoder_608_context *context, struct eia608_scre
 	{
 		memset(data->characters[i], ' ', CCX_DECODER_608_SCREEN_WIDTH);
 		data->characters[i][CCX_DECODER_608_SCREEN_WIDTH] = 0;
-		memset(data->colors[i], context->settings->default_color, CCX_DECODER_608_SCREEN_WIDTH + 1);
-		memset(data->fonts[i], FONT_REGULAR, CCX_DECODER_608_SCREEN_WIDTH + 1);
+
+		for (int j = 0; j < CCX_DECODER_608_SCREEN_WIDTH + 1; j++)
+		{
+			data->colors[i][j] = context->settings->default_color;
+			data->fonts[i][j] = FONT_REGULAR;
+		}
+
 		data->row_used[i]=0;
 	}
 	data->empty=1;
