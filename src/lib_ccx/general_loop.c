@@ -21,9 +21,6 @@
 
 int end_of_file=0; // End of file?
 
-
-const static unsigned char DO_NOTHING[] = {0x80, 0x80};
-
 // Program stream specific data grabber
 int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data ** ppdata)
 {
@@ -1110,7 +1107,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 				ret = process_data(enc_ctx, dec_ctx, data_node);
 				if (enc_ctx != NULL){
 				     if (
-					(enc_ctx && (enc_ctx->srt_counter || enc_ctx->cea_708_counter) ||
+					((enc_ctx && (enc_ctx->srt_counter || enc_ctx->cea_708_counter)) ||
 						dec_ctx->saw_caption_block || ret == 1)
 					)
 					caps = 1;
