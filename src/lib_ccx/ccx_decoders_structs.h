@@ -8,6 +8,7 @@
 #include "list.h"
 #include "ccx_decoders_708.h"
 // Define max width in characters/columns on the screen
+#define CCX_DECODER_608_SCREEN_ROWS 15
 #define CCX_DECODER_608_SCREEN_WIDTH 32
 #define MAXBFRAMES 50
 #define SORTBUF (2*MAXBFRAMES+1)
@@ -84,10 +85,10 @@ struct eia608_screen // A CC buffer
 {
 	/** format of data inside this structure */
 	enum ccx_eia608_format format;
-	unsigned char characters[15][33];
-	enum ccx_decoder_608_color_code colors[15][33];
-	enum font_bits fonts[15][33]; // Extra char at the end for a 0
-	int row_used[15];            // Any data in row?
+	unsigned char characters[CCX_DECODER_608_SCREEN_ROWS][CCX_DECODER_608_SCREEN_WIDTH + 1];
+	enum ccx_decoder_608_color_code colors[CCX_DECODER_608_SCREEN_ROWS][CCX_DECODER_608_SCREEN_WIDTH + 1];
+	enum font_bits fonts[CCX_DECODER_608_SCREEN_ROWS][CCX_DECODER_608_SCREEN_WIDTH + 1]; // Extra char at the end for a 0
+	int row_used[CCX_DECODER_608_SCREEN_ROWS];            // Any data in row?
 	int empty;                   // Buffer completely empty?
 	/** start time of this CC buffer */
 	LLONG start_time;
