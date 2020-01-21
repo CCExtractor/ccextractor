@@ -565,6 +565,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 							memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
 							strcpy(text_out,substr);
 							strcpy(text_out+strlen(substr),text_out_copy);
+							free(text_out_copy);
 							written_tag = 1;
 						}
 						free(substr);
