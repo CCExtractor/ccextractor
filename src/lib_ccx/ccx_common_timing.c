@@ -1,3 +1,4 @@
+#include "lib_ccx.h"
 #include "ccx_common_timing.h"
 #include "ccx_common_constants.h"
 #include "ccx_common_structs.h"
@@ -272,7 +273,7 @@ LLONG get_fts(struct ccx_common_timing_ctx *ctx, int current_field)
 			fts = ctx->fts_now + ctx->fts_global + cb_708 * 1001 / 30;
 			break;
 		default:
-			ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "get_fts: unhandled branch");
+			fatal(CCX_COMMON_EXIT_BUG_BUG, "get_fts: unhandled branch");
 	}
 	//	ccx_common_logging.debug_ftn(CCX_DMT_TIME, "[FTS] "
 	//			"fts: %llu, fts_now: %llu, fts_global: %llu, current_field: %llu, cb_708: %llu\n",
