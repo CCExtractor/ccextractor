@@ -84,9 +84,9 @@ struct eia608_screen // A CC buffer
 {
 	/** format of data inside this structure */
 	enum ccx_eia608_format format;
-	unsigned char characters[15][33];
-	enum ccx_decoder_608_color_code colors[15][33];
-	enum font_bits fonts[15][33]; // Extra char at the end for a 0
+	unsigned char characters[15][CCX_DECODER_608_SCREEN_WIDTH + 1];
+	enum ccx_decoder_608_color_code colors[15][CCX_DECODER_608_SCREEN_WIDTH + 1];
+	enum font_bits fonts[15][CCX_DECODER_608_SCREEN_WIDTH + 1]; // Extra char at the end for a 0
 	int row_used[15];            // Any data in row?
 	int empty;                   // Buffer completely empty?
 	/** start time of this CC buffer */
