@@ -19,7 +19,9 @@
 #define BIN_HEADER      5
 #define BIN_DATA        6
 #define EPG_DATA        7
+#ifdef _MSC_VER
 #pragma warning( suppress : 4005)
+#endif
 #define ERROR           51
 #define UNKNOWN_COMMAND 52
 #define WRONG_PASSWORD  53
