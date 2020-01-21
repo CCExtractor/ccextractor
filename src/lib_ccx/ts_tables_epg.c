@@ -377,7 +377,7 @@ int EPG_event_cmp(struct EPG_event *e1, struct EPG_event *e2)
 // Return FALSE if nothing changed, TRUE if this is a new or updated event.
 int EPG_add_event(struct lib_ccx_ctx *ctx, int32_t pmt_map, struct EPG_event *event)
 {
-	int isnew=true, j;
+	int j;
 	
 	for(j=0; j<ctx->eit_programs[pmt_map].array_len; j++)
 	{
@@ -466,7 +466,6 @@ char* EPG_DVB_decode_string(uint8_t *in, size_t size)
 	uint16_t osize=0;
 	iconv_t cd=(iconv_t)(-1);
 	int skipiconv = false;
-	int ret=-1;
 	int x;
 	if(size==0)
 	{ // 0 length strings are valid
@@ -575,7 +574,7 @@ char* EPG_DVB_decode_string(uint8_t *in, size_t size)
 
 	if((long)cd != -1 && !skipiconv)
 	{
-		ret = iconv(cd, (char **)&in, &size, &dp, &obl);
+		iconv(cd, (char **)&in, &size, &dp, &obl);
 		obl=decode_buffer_size-obl;
 		decode_buffer[obl]=0x00;
 	}
@@ -761,7 +760,6 @@ void EPG_ATSC_decode_multiple_string(uint8_t *offset, uint32_t length, struct EP
 // decode ATSC EIT table.
 void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_t size)
 {
-	uint8_t table_id;
 	struct EPG_event event;
 	uint8_t num_events_in_section;
 	uint8_t *offset;
@@ -773,7 +771,6 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 	if (size < 11)
 		return;
 
-	table_id = payload_start[0];
 	source_id = ((payload_start[3]) << 8) | payload_start[4];
 
 	event.has_simple=false;
@@ -799,7 +796,7 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 	for(j = 0; j < num_events_in_section && offset < payload_start + size; j++)
 	{
 		uint16_t descriptors_loop_length;
-		uint8_t title_length, emt_location;
+		uint8_t title_length;
 		uint32_t length_in_seconds, start_time, full_id;
 		uint16_t event_id;
 
@@ -811,7 +808,6 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 		event.service_id=source_id;
 		start_time = (offset[2] << 24) | (offset[3] << 16) | (offset[4] << 8)| (offset[5] << 0);
 		EPG_ATSC_calc_time(event.start_time_string, start_time);
-		emt_location = (offset[6]&0x30)>>4;
 		length_in_seconds = (((offset[6]&0x0F) << 16) | (offset[7] << 8) | (offset[8] << 0));
 		EPG_ATSC_calc_time(event.end_time_string, start_time+length_in_seconds);
 
@@ -834,7 +830,6 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 // decode ATSC VCT table.
 void EPG_ATSC_decode_VCT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_t size)
 {
-	uint8_t table_id;
 	uint8_t num_channels_in_section;
 	uint8_t *offset;
 	int i;
@@ -842,7 +837,6 @@ void EPG_ATSC_decode_VCT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 	if (size <= 10)
 		return;
 
-	table_id = payload_start[0];
 	num_channels_in_section = payload_start[9];
 	offset = &payload_start[10];
 
@@ -879,8 +873,6 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 	int hasnew = false;
 	struct EPG_event event;
 	uint8_t section_number;
-	uint8_t last_section_number;
-	uint8_t segment_last_section_number;
 	uint32_t events_length;
 	uint8_t *offset;
 	uint32_t remaining;
@@ -894,8 +886,6 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 	section_length			= (payload_start[1]&0x0F)<<8 | payload_start[2];
 	service_id			= (payload_start[3] << 8) | payload_start[4];
 	section_number			= payload_start[6];
-	last_section_number		= payload_start[7];
-	segment_last_section_number	= payload_start[12];
 	events_length			= section_length - 11;
 	offset				= payload_start;
 	remaining			= events_length;
@@ -1038,7 +1028,6 @@ void parse_EPG_packet(struct lib_ccx_ctx *ctx)
 {
 	unsigned char *payload_start = tspacket + 4;
 	unsigned payload_length = 188 - 4;
-	unsigned transport_error_indicator = (tspacket[1]&0x80)>>7;
 	unsigned payload_start_indicator = (tspacket[1]&0x40)>>6;
 	// unsigned transport_priority = (tspacket[1]&0x20)>>5;
 	unsigned pid = (((tspacket[1] & 0x1F) << 8) | tspacket[2]) & 0x1FFF;
