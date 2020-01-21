@@ -679,7 +679,6 @@ static int gop_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx
 // will point to where we want to restart after getting more.
 static int read_pic_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
-	char frame_type_to_char[] = { '?', 'I', 'P','B', 'D', '?', '?','?' };
 	debug("Read PIC Info\n");
 
 	// We only get here after seeing that start code
@@ -729,13 +728,6 @@ static int read_pic_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_
 	{
 		set_fts(dec_ctx->timing); // Initialize fts
 	}
-	/*
-	dbg_print(CCX_DMT_VIDES, "  frametype: %d (%c) t:%d r:%d p:%d", dec_ctx->picture_coding_type,
-		frame_type_to_char[dec_ctx->picture_coding_type], dec_ctx->top_field_first,
-			dec_ctx->repeat_first_field, dec_ctx->progressive_frame);
-	dbg_print(CCX_DMT_VIDES, "  FTS: %lld  (%s)\n", dec_ctx->timing->current_pts,
-		print_mstime_static(get_fts(dec_ctx->timing, dec_ctx->current_field)));
-		*/
 
 	// Set min_pts/sync_pts according to the current time stamp.
 	// Use fts_at_gop_start as reference when a GOP header was seen
