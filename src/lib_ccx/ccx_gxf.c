@@ -415,15 +415,13 @@ static int parse_material_sec(struct ccx_demuxer *demux, int len)
 		switch (tag)
 		{
 			case MAT_NAME:
-				result = buffered_read(demux, (unsigned char *)ctx->media_name, MIN(tag_len, STR_LEN));
+				result = buffered_read(demux, (unsigned char *)ctx->media_name, tag_len);
 				demux->past += tag_len;
-				if (result != MIN(tag_len, STR_LEN))
+				if (result != tag_len)
 				{
 					ret = CCX_EOF;
 					goto error;
 				}
-				if (tag_len > STR_LEN)
-					buffered_skip(demux, tag_len - STR_LEN);
 				break;
 			case MAT_FIRST_FIELD:
 				ctx->first_field_nb = buffered_get_be32(demux);
@@ -532,15 +530,13 @@ static int parse_mpeg525_track_desc(struct ccx_demuxer *demux, int len)
 		switch (tag)
 		{
 			case TRACK_NAME:
-				result = buffered_read(demux, (unsigned char *)vid_track->track_name, MIN(tag_len, STR_LEN));
+				result = buffered_read(demux, (unsigned char *)vid_track->track_name, tag_len);
 				demux->past += tag_len;
-				if (result != MIN(tag_len, STR_LEN))
+				if (result != tag_len)
 				{
 					ret = CCX_EOF;
 					goto error;
 				}
-				if (tag_len > STR_LEN)
-					buffered_skip(demux, tag_len - STR_LEN);
 				break;
 			case TRACK_VER:
 				vid_track->fs_version = buffered_get_be32(demux);
@@ -607,15 +603,13 @@ static int parse_ad_track_desc(struct ccx_demuxer *demux, int len)
 		switch (tag)
 		{
 			case TRACK_NAME:
-				result = buffered_read(demux, (unsigned char *)ad_track->track_name, MIN(tag_len, STR_LEN));
+				result = buffered_read(demux, (unsigned char *)ad_track->track_name, tag_len);
 				demux->past += tag_len;
-				if (result != MIN(tag_len, STR_LEN))
+				if (result != tag_len)
 				{
 					ret = CCX_EOF;
 					goto error;
 				}
-				if (tag_len > STR_LEN)
-					buffered_skip(demux, tag_len - STR_LEN);
 				break;
 			case TRACK_AUX:
 				result = buffered_read(demux, (unsigned char *)auxi_info, 8);
