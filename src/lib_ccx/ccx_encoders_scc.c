@@ -1131,7 +1131,7 @@ void write_character(const int fd, const unsigned char character, const bool dis
 	}
 	else
 	{
-		if (*bytes_written % 2 == 1)
+		if (*bytes_written % 2 == 0)
 			write(fd, " ", 1);
 
 		fdprintf(fd, "%02x", odd_parity(character));
