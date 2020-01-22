@@ -283,7 +283,6 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 	PIX*  cpix_gs       = NULL; // Grayscale version
 	PIX*  color_pix     = NULL;
 	PIX*  color_pix_out = NULL;
-	char* text_out      = NULL;
 	int i,j,index;
 	unsigned int wpl;
 	unsigned int *data,*ppixel;
@@ -354,17 +353,18 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 		}
 	}
 
-	char *text_out_from_tes=TessBaseAPIGetUTF8Text(ctx->api);
+	char *text_out_from_tes = TessBaseAPIGetUTF8Text(ctx->api);
 	if (text_out_from_tes == NULL)
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "In ocr_bitmap: Failed to perform OCR - Failed to get text. Please report.\n", errno);
 	// Make a copy and get rid of the one from Tesseract since we're going to be operating on it
 	// and using it directly causes new/free() warnings.
-	text_out=strdup (text_out_from_tes);
+	char *text_out = strdup(text_out_from_tes);
 	TessDeleteText(text_out_from_tes);
 
 	// Begin color detection
 	// Using tlt_config.nofontcolor (true when "--nofontcolor" parameter used) to skip color detection if not required
-	if(strlen(text_out)>0 && !tlt_config.nofontcolor)
+	int text_out_len;
+	if((text_out_len = strlen(text_out)) > 0 && !tlt_config.nofontcolor)
 	{
 		float h0 = -100;
 		int written_tag = 0;
@@ -532,43 +532,41 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 					if(ccx_options.write_format==CCX_OF_SRT ||
 					   ccx_options.write_format==CCX_OF_WEBVTT)
 					{
-						char *substr;
-						if(written_tag)
+						const char *substr_format;
+						int substr_len;
+						if (written_tag)
 						{
-							substr = (char*)malloc(sizeof("</font><font color=\"#000000\">"));
-							sprintf(substr,"</font><font color=\"#%02x%02x%02x\">",r_avg,g_avg,b_avg);
+							substr_format = "</font><font color=\"#%02x%02x%02x\">";
+							substr_len = sizeof("</font><font color=\"#000000\">") - 1;
 						}
 						else
 						{
-							substr = (char*)malloc(sizeof("<font color=\"#000000\">"));
-							sprintf(substr,"<font color=\"#%02x%02x%02x\">",r_avg,g_avg,b_avg);
+							substr_format = "<font color=\"#%02x%02x%02x\">";
+							substr_len = sizeof("<font color=\"#000000\">") - 1;
 						}
-						if(strstr(text_out,word))
+
+						char *pos;
+						if((pos = strstr(text_out, word)))
 						{
-							char *text_out_copy = strdup(text_out);
-							free(text_out);
-							text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
-							memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
-							int pos = (int)(strstr(text_out_copy,word)-text_out_copy);
-							strncpy(text_out,text_out_copy,pos);
-							int len = strlen(text_out);
-							strcpy(text_out+len,substr);
-							strcpy(text_out+len+strlen(substr),text_out_copy+len);
-							free(text_out_copy);
+							// Insert `<font>` tag into `text_out` at the location of `word`/`pos`
+							text_out = realloc(text_out, text_out_len + substr_len + 1);
+							// Save the value is that is going to get overwritten by `sprintf`
+							char replaced_by_null = *pos;
+							memmove(pos + substr_len + 1, pos + 1, text_out_len);
+							sprintf(pos, substr_format, r_avg, g_avg, b_avg);
+							*(pos + substr_len) = replaced_by_null;
 							written_tag = 1;
 						}
 						else if(!written_tag)
 						{
-							char *text_out_copy = strdup(text_out);
-							free(text_out);
-							text_out = malloc(strlen(text_out_copy)+strlen(substr)+1);
-							memset(text_out,0,strlen(text_out_copy)+strlen(substr)+1);
-							strcpy(text_out,substr);
-							strcpy(text_out+strlen(substr),text_out_copy);
-							free(text_out_copy);
+							// Insert `substr` at the beginning of `text_out`
+							text_out = realloc(text_out, text_out_len + substr_len + 1);
+							char replaced_by_null = *text_out;
+							memmove(text_out + substr_len + 1, text_out + 1, text_out_len);
+							sprintf(text_out, substr_format, r_avg, g_avg, b_avg);
+							text_out[substr_len] = replaced_by_null;
 							written_tag = 1;
 						}
-						free(substr);
 					}
 				}
 
