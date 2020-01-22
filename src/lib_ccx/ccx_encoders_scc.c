@@ -10,8 +10,6 @@ unsigned char odd_parity(const unsigned char byte)
 	return byte | !(cc608_parity(byte) % 2) << 7;
 }
 
-// TODO: deal with "\n" vs "\r\n"
-
 struct control_code_info {
 	unsigned int byte1_odd;
 	unsigned int byte1_even;
@@ -520,7 +518,7 @@ enum control_code get_font_code(enum font_bits font, enum ccx_decoder_608_color_
 
 void add_timestamp(int fd, LLONG time, const bool disassemble)
 {
-	write(fd, "\n\n", disassemble ? 1 : 2);
+	write(fd, "\r\n\r\n", disassemble ? 2 : 4);
 	unsigned hour, minute, second, milli;
 	millis_to_time(time, &hour, &minute, &second, &milli);
 
@@ -625,7 +623,7 @@ int write_cc_buffer_as_ccd(const struct eia608_screen *data, struct encoder_ctx 
 {
 	if (!context->wrote_ccd_channel_header)
 	{
-		fdprintf(context->out->fh, "CHANNEL %d\n", data->channel);
+		fdprintf(context->out->fh, "CHANNEL %d\r\n", data->channel);
 		context->wrote_ccd_channel_header = true;
 	}
 	return write_cc_buffer_as_scenarist(data, context, true);
