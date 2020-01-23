@@ -239,9 +239,6 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context, int line_number)
 {
 	int ret = 0;
-
-	correct_spelling_and_censor_words_608(context, line_number, data);
-
 	int length = get_str_basic(context->subline, data->characters[line_number],
 		context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
 

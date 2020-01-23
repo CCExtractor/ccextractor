@@ -615,8 +615,6 @@ void write_cc_line_as_simplexml(struct eia608_screen *data, struct encoder_ctx *
 	char *cap = "<caption>";
 	char *cap1 = "</caption>";
 
-	correct_spelling_and_censor_words_608(context, line_number, data);
-
 	length = get_str_basic(context->subline, data->characters[line_number],
 			context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
 
@@ -1154,6 +1152,9 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 						data->start_time += utc_refvalue * 1000;
 					data->end_time += utc_refvalue * 1000;
 				}
+				
+				for (int i = 0; i < CCX_DECODER_608_SCREEN_ROWS; ++i)
+					correct_spelling_and_censor_words_608(context, i, data);
 
 #ifdef PYTHON_API
 				pass_cc_buffer_to_python(data, context);
