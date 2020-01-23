@@ -250,6 +250,11 @@ int myth_loop(struct lib_ccx_ctx *ctx);
 int matroska_loop(struct lib_ccx_ctx *ctx);
 
 // utility.c
+#if defined(__GNUC__)
+__attribute__ ((noreturn))
+#elif defined(_MSC_VER)
+__declspec(noreturn)
+#endif
 void fatal(int exit_code, const char *fmt, ...);
 void mprint (const char *fmt, ...);
 void sleep_secs (int secs);
