@@ -23,22 +23,23 @@ unsigned char odd_parity(const unsigned char byte)
 
 enum control_code {
 	// Mid-Row Codes
-	WH,    // White;                          second byte: 0x20
-	WHU,   // White Underline;                second byte: 0x21
-	/*
-	... 12 unimplemented
-	*/
-	I,     // Italics;                        second byte: 0x2e
-	IU,    // Italics Underline;              second byte: 0x2f
+	WH,		// 0x20 - White
+	WHU,	// 0x21 - White Underline
+	/* 12 unimplemented */
+	I,		// 0x23 - Italic
+	IU,		// 0x2f - Italic Underline
+
 	// Miscellaneous Control Codes
-	RCL,   // Resume Caption Loading;         second byte: 0x20
-	EDM,   // Erase Displayed Memory;         second byte: 0x2c
-	ENM,   // Erase Non-Displayed Memory;     second byte: 0x2d
-	EOC,   // End of Caption (Flip Memories); second byte: 0x2f
-	TO1,   // Tab Offset 1 Column;            second byte: 0x21
-	TO2,   // Tab Offset 2 Column;            second byte: 0x22
-	TO3,   // Tab Offset 3 Column;            second byte: 0x23
-	// Preamble Address Codes; prefixed with and underscore (`_`), because identifier cannot start with digits
+	RCL,	// 0x20 - Resume Caption Loading
+	EDM,	// 0x2c - Erase Displayed Memory
+	ENM,	// 0x2d - Erase Non-Displayed Memory
+	EOC,	// 0x2f - End of Caption (swap memory)
+	TO1,	// 0x21 - Tab Offset 1 Column
+	TO2,	// 0x22 - Tab Offset 2 Column
+	TO3,	// 0x23 - Tab Offset 3 Column
+
+	// Preamble Address Codes
+	// Prefixed with underscores because identifiers can't start with digits
 	_0100,
 	_0104,
 	_0108,
