@@ -1152,9 +1152,9 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 						data->start_time += utc_refvalue * 1000;
 					data->end_time += utc_refvalue * 1000;
 				}
-				
+
 				for (int i = 0; i < CCX_DECODER_608_SCREEN_ROWS; ++i)
-					correct_spelling_and_censor_words_608(context, i, data);
+					correct_spelling_and_censor_words_608(context, data->characters[i]);
 
 #ifdef PYTHON_API
 				pass_cc_buffer_to_python(data, context);
