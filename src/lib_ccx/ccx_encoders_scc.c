@@ -1157,7 +1157,7 @@ void write_control_code(const int fd, const unsigned char channel, const enum co
 	}
 	else
 	{
-		if (*bytes_written)
+		if (*bytes_written % 2 == 0)
 			write(fd, " ", 1);
 
 		fdprintf(fd, "%02x%02x", odd_parity(get_first_byte(channel, code)), odd_parity(get_second_byte(code)));
