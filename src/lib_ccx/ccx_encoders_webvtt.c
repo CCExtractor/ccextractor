@@ -215,13 +215,16 @@ void write_webvtt_header(struct encoder_ctx *context, struct ccx_common_timing_c
 		unsigned h1, m1, s1, ms1;
 		millis_to_time(timing->sync_pts2fts_fts, &h1, &m1, &s1, &ms1);
 
+		unsigned int newline_location = 0;
 		// If the user has not disabled X-TIMESTAMP-MAP
 		if (!context->no_timestamp_map)
 		{
-			sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:%ld,LOCAL:%02u:%02u:%02u.%03u%s",
-				timing->sync_pts2fts_pts, h1, m1, s1, ms1,
-				ccx_options.enc_cfg.line_terminator_lf ? "\n\n" : "\r\n\r\n");
+			newline_location = sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:%ld,LOCAL:%02u:%02u:%02u.%03u",
+					timing->sync_pts2fts_pts, h1, m1, s1, ms1);
 		}
+		memcpy(header_string + newline_location, context->encoded_crlf, context->encoded_crlf_length);
+		memcpy(header_string + newline_location, context->encoded_crlf, context->encoded_crlf_length);
+
 		used = encode_line(context, context->buffer, (unsigned char *)header_string);
 		write(context->out->fh, context->buffer, used);
 	}
