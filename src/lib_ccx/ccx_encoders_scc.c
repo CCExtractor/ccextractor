@@ -1543,12 +1543,12 @@ enum control_code get_font_code(enum font_bits font) {
 void add_timestamp(int fd, LLONG time, const bool disassemble)
 {
 	write(fd, "\n\n", disassemble ? 1 : 2);
-	unsigned hour, minute, second, frame;
-	millis_to_time(time, &hour, &minute, &second, &frame);
-	// Should be SMPTE format
-	// This frame number seems like it couldn't be more wrong. Doesn't take
-	// into account timebase
-	fdprintf(fd, "%02d:%02d:%02d:%02.f\t", hour, minute, second, (float) frame / 30);
+	unsigned hour, minute, second, milli;
+	millis_to_time(time, &hour, &minute, &second, &milli);
+
+	// SMPTE format
+	float frame = milli / 29.97;
+	fdprintf(fd, "%02d:%02d:%02d:%02.f\t", hour, minute, second, frame);
 }
 
 void clear_screen(int fd, LLONG end_time, const unsigned char channel, const bool disassemble)
