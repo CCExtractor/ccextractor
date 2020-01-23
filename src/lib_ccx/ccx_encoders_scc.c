@@ -1548,7 +1548,7 @@ void add_timestamp(int fd, LLONG time, const bool disassemble)
 
 	// SMPTE format
 	float frame = milli / 29.97;
-	fdprintf(fd, "%02d:%02d:%02d:%02.f\t", hour, minute, second, frame);
+	fdprintf(fd, "%02u:%02u:%02u:%02.f\t", hour, minute, second, frame);
 }
 
 void clear_screen(int fd, LLONG end_time, const unsigned char channel, const bool disassemble)
