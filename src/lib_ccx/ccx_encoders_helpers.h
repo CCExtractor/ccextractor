@@ -34,7 +34,7 @@ int string_cmp_function(const void *p1, const void *p2, void *arg);
 int add_word(struct word_list *list, const char *word);
 
 int add_builtin_words(const char *builtin[], struct word_list *list);
-void correct_spelling_and_censor_words_608(struct encoder_ctx *context, unsigned char *line);
+void correct_spelling_and_censor_words(struct encoder_ctx *context, unsigned char *line);
 
 unsigned encode_line (struct encoder_ctx *ctx, unsigned char *buffer, unsigned char *text);
 

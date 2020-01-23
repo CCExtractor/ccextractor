@@ -449,7 +449,7 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 	if (!context->nospupngocr)
 	{
 		char *str;
-		str = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);
+		str = paraof_ocrtext(sub, context);
 		if (str)
 		{
 			write_spucomment(sp, str);

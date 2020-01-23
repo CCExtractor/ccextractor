@@ -123,16 +123,6 @@ void call_function_if_match(unsigned char *line, struct word_list *list, void (*
 	free(line_token);
 }
 
-void correct_case_with_dictionary(unsigned char *line)
-{
-	call_function_if_match(line, &capitalization_list, capitalize_word);
-}
-
-void censor_word_with_dictionary(unsigned char *line)
-{
-	call_function_if_match(line, &profane, censor_word);
-}
-
 void telx_correct_case(char *sub_line)
 {
 	char delim[64] = {
@@ -455,17 +445,17 @@ int add_builtin_words(const char *builtin[], struct word_list *list)
 	return 0;
 }
 
-void correct_spelling_and_censor_words_608(struct encoder_ctx *context, unsigned char *line)
+void correct_spelling_and_censor_words(struct encoder_ctx *context, unsigned char *line)
 {
 	if (context->sentence_cap)
 	{
 		if (clever_capitalize(context, line))
-			correct_case_with_dictionary(line);
+			call_function_if_match(line, &capitalization_list, capitalize_word);
 	}
 
 	if (context->filter_profanity)
 	{
-		censor_word_with_dictionary(line);
+		call_function_if_match(line, &profane, censor_word);
 	}
 }
 

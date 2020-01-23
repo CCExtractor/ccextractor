@@ -32,7 +32,7 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 		{
 			char *token = NULL;
-			token = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);
+			token = paraof_ocrtext(sub, context);
 			if (context->transcript_settings->showStartTime)
 			{
 				char buf1[80];

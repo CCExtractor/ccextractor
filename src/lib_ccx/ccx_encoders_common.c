@@ -1154,7 +1154,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				}
 
 				for (int i = 0; i < CCX_DECODER_608_SCREEN_ROWS; ++i)
-					correct_spelling_and_censor_words_608(context, data->characters[i]);
+					correct_spelling_and_censor_words(context, data->characters[i]);
 
 #ifdef PYTHON_API
 				pass_cc_buffer_to_python(data, context);
@@ -1229,7 +1229,18 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			}
 			freep(&sub->data);
 			break;
-		case CC_BITMAP:
+		case CC_BITMAP:;
+
+#ifdef ENABLE_OCR
+			struct cc_bitmap *rect;
+			int i;
+			for (i = 0, rect = sub->data; i < sub->nb_data; ++i, ++rect)
+			{
+				if (rect->ocr_text)
+					correct_spelling_and_censor_words(context, rect->ocr_text);
+			}
+#endif
+
 			switch (context->write_format)
 			{
 				case CCX_OF_CCD:
@@ -1282,7 +1293,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				default:
 					break;
 			}
-
 			break;
 		case CC_RAW:
 			if (context->send_to_srv)
