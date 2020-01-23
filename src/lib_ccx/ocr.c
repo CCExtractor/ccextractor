@@ -548,13 +548,14 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 						char *pos;
 						if((pos = strstr(text_out, word)))
 						{
+							int index = pos - text_out;
 							// Insert `<font>` tag into `text_out` at the location of `word`/`pos`
 							text_out = realloc(text_out, text_out_len + substr_len + 1);
 							// Save the value is that is going to get overwritten by `sprintf`
-							char replaced_by_null = *pos;
-							memmove(pos + substr_len + 1, pos + 1, text_out_len);
-							sprintf(pos, substr_format, r_avg, g_avg, b_avg);
-							*(pos + substr_len) = replaced_by_null;
+							char replaced_by_null = text_out[index];
+							memmove(text_out + index + substr_len + 1, text_out + index + 1, text_out_len - index);
+							sprintf(text_out + index, substr_format, r_avg, g_avg, b_avg);
+							text_out[index + substr_len] = replaced_by_null;
 							written_tag = 1;
 						}
 						else if(!written_tag)
@@ -641,8 +642,8 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 						last_font_tag = font_tag;
 
 					}
-                    last_font_tag_end = strstr(last_font_tag, ">");
-                    if(last_font_tag_end) last_font_tag_end += 1; // move string to the "right" if ">" was found, otherwise leave empty string (solves #1084)
+					last_font_tag_end = strstr(last_font_tag, ">");
+					if(last_font_tag_end) last_font_tag_end += 1; // move string to the "right" if ">" was found, otherwise leave empty string (solves #1084)
 
 					// Copy the content of the subtitle
 					memcpy(new_text_out_iter, line_start, line_end - line_start);
