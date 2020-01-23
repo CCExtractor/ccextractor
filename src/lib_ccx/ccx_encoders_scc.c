@@ -32,6 +32,7 @@ enum control_code {
 	IU,    // Italics Underline;              second byte: 0x2f
 	// Miscellaneous Control Codes
 	RCL,   // Resume Caption Loading;         second byte: 0x20
+	EDM,   // Erase Displayed Memory;         second byte: 0x2c
 	ENM,   // Erase Non-Displayed Memory;     second byte: 0x2d
 	EOC,   // End of Caption (Flip Memories); second byte: 0x2f
 	TO1,   // Tab Offset 1 Column;            second byte: 0x21
@@ -166,6 +167,7 @@ const char I_ASSEMBLY[]   = "{I}";
 const char IU_ASSEMBLY[]  = "{IU}";
 
 const char RCL_ASSEMBLY[] = "{RCL}";
+const char EDM_ASSEMBLY[] = "{EDM}";
 const char ENM_ASSEMBLY[] = "{ENM}";
 const char EOC_ASSEMBLY[] = "{EOC}";
 const char TO1_ASSEMBLY[] = "{TO1}";
@@ -314,6 +316,9 @@ const char *disassemble_code(const enum control_code code, unsigned int *length)
 		case RCL:
 			*length = sizeof(RCL_ASSEMBLY) - 1;
 			return RCL_ASSEMBLY;
+		case EDM:
+			*length = sizeof(EDM_ASSEMBLY) - 1;
+			return EDM_ASSEMBLY;
 		case ENM:
 			*length = sizeof(ENM_ASSEMBLY) - 1;
 			return ENM_ASSEMBLY;
@@ -721,6 +726,7 @@ unsigned get_first_byte(const unsigned char channel, const enum control_code cod
 			}
 		// Miscellaneous Control Codes
 		case RCL:
+		case EDM:
 		case ENM:
 		case EOC:
 			if (is_odd_channel(channel))
@@ -948,6 +954,8 @@ unsigned get_second_byte(const enum control_code code)
 		// Miscellaneous Control Codes
 		case RCL:
 			return 0x20;
+		case EDM:
+			return 0x2c;
 		case ENM:
 			return 0x2e;
 		case EOC:
@@ -1535,21 +1543,19 @@ enum control_code get_font_code(enum font_bits font) {
 void add_timestamp(int fd, LLONG time, const bool disassemble)
 {
 	write(fd, "\n\n", disassemble ? 1 : 2);
-	unsigned hour, minute, second, frame;
-	millis_to_time(time, &hour, &minute, &second, &frame);
-	// Should be SMPTE format
-	// This frame number seems like it couldn't be more wrong. Doesn't take
-	// into account timebase
-	fdprintf(fd, "%02d:%02d:%02d:%02.f\t", hour, minute, second, (float) frame / 30);
+	unsigned hour, minute, second, milli;
+	millis_to_time(time, &hour, &minute, &second, &milli);
+
+	// SMPTE format
+	float frame = milli / 29.97;
+	fdprintf(fd, "%02u:%02u:%02u:%02.f\t", hour, minute, second, frame);
 }
 
 void clear_screen(int fd, LLONG end_time, const unsigned char channel, const bool disassemble)
 {
 	add_timestamp(fd, end_time, disassemble);
 	unsigned int bytes_written = 0;
-	write_control_code(fd, channel, RCL, disassemble, &bytes_written);
-	write_control_code(fd, channel, EOC, disassemble, &bytes_written);
-	write_control_code(fd, channel, ENM, disassemble, &bytes_written);
+	write_control_code(fd, channel, EDM, disassemble, &bytes_written);
 }
 
 int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encoder_ctx *context, const char disassemble)
@@ -1559,6 +1565,7 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 	unsigned char current_row = 14;
 	unsigned char current_column = 0;
 
+	// 1. Load the caption
 	add_timestamp(context->out->fh, data->start_time, disassemble);
 	write_control_code(context->out->fh, data->channel, RCL, disassemble, &bytes_written);
 	for (uint8_t row = 0; row < 15; ++row)
@@ -1614,7 +1621,14 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 		}
 		check_padding(context->out->fh, disassemble, &bytes_written);
 	}
+
+	// 2. Show the caption
+	write_control_code(context->out->fh, data->channel, EOC, disassemble, &bytes_written);
+	write_control_code(context->out->fh, data->channel, ENM, disassemble, &bytes_written);
+
+	// 3. Clear the caption
 	clear_screen(context->out->fh, data->end_time, data->channel, disassemble);
+
 	return 1;
 }
 
