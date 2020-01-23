@@ -11,7 +11,6 @@ unsigned char odd_parity(const unsigned char byte)
 }
 
 // TODO: deal with "\n" vs "\r\n"
-// TODO: colors. I don't have example files to work with and double check what I do
 
 struct control_code_info {
 	unsigned int byte1_odd;
@@ -32,7 +31,20 @@ enum control_code {
 	// Mid-row
 	Wh,
 	WhU,
-	/* 12 unimplemented */
+	Gr,
+	GrU,
+	Bl,
+	BlU,
+	Cy,
+	CyU,
+	R,
+	RU,
+	Y,
+	YU,
+	Ma,
+	MaU,
+	Bk,
+	BkU,
 	I,
 	IU,
 
@@ -193,6 +205,20 @@ const struct control_code_info control_codes[CONTROL_CODE_MAX] = {
 	// Mid-row
 	[Wh] = {0x11, 0x19, 0x20, "{Wh}"},	// White
 	[WhU] = {0x11, 0x19, 0x21, "{WhU}"},	// White underline
+	[Gr] = {0x11, 0x19, 0xa2, "{Gr}"},	// Green
+	[GrU] = {0x11, 0x19, 0x23, "{GrU}"},	// Green underline
+	[Bl] = {0x11, 0x19, 0xa4, "{Bl}"},	// Blue
+	[BlU] = {0x11, 0x19, 0x25, "{BlU}"},	// Blue underline
+	[Cy] = {0x11, 0x19, 0x26, "{Cy}"},	// Cyan
+	[CyU] = {0x11, 0x19, 0xa7, "{CyU}"},	// Cyan underline
+	[R] = {0x11, 0x19, 0xa8, "{R}"},	// Red
+	[RU] = {0x11, 0x19, 0x29, "{RU}"},	// Red underline
+	[Y] = {0x11, 0x19, 0x2a, "{Y}"},	// Yellow
+	[YU] = {0x11, 0x19, 0xab, "{YU}"},	// Yellow underline
+	[Ma] = {0x11, 0x19, 0x2c, "{Ma}"},	// Magenta
+	[MaU] = {0x11, 0x19, 0xad, "{MaU}"},	// Magenta underline
+	[Bk] = {0x11, 0x19, 0xae, "{Bk}"},	// Black
+	[BkU] = {0x11, 0x19, 0x2f, "{BkU}"},	// Black underline
 	[I] = {0x11, 0x19, 0x2e, "{I}"},	// White italic
 	[IU] = {0x11, 0x19, 0x2f, "{IU}"},	// White italic underline
 
@@ -344,6 +370,21 @@ const struct control_code_info control_codes[CONTROL_CODE_MAX] = {
 	[_1528] = {0x14, 0x1c, 0x7f, "{1528}"},
 };
 
+enum control_code color_codes[COL_MAX] = {
+	[COL_WHITE] = Wh,
+	[COL_GREEN] = Gr,
+	[COL_BLUE] = Bl,
+	[COL_CYAN] = Cy,
+	[COL_RED] = R,
+	[COL_YELLOW] = Y,
+	[COL_MAGENTA] = Ma,
+	[COL_BLACK] = Bk,
+
+	// No direct mappings
+	[COL_USERDEFINED] = Wh,
+	[COL_TRANSPARENT] = Wh,
+};
+
 const char *disassemble_code(const enum control_code code, unsigned int *length)
 {
 	char *assembly = control_codes[code].assembly;
@@ -456,16 +497,21 @@ enum control_code get_tab_offset_code(const unsigned char column)
 	return offset == 0 ? 0 : TAB_OFFSET_START + offset;
 }
 
-enum control_code get_font_code(enum font_bits font) {
+enum control_code get_font_code(enum font_bits font, enum ccx_decoder_608_color_code color)
+{
+	enum control_code color_code = color_codes[color];
+
 	switch (font)
 	{
 		case FONT_REGULAR:
-			return Wh;
+			return color_code;
 		case FONT_UNDERLINED:
-			return WhU;
+			return color_code + 1;
 		case FONT_ITALICS:
+			// Color isn't supported for this style
 			return I;
 		case FONT_UNDERLINED_ITALICS:
+			// Color isn't supported for this style
 			return IU;
 		default:
 			fatal(-1, "Unknown font");
@@ -494,6 +540,7 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 {
 	unsigned int bytes_written = 0;
 	enum font_bits current_font = FONT_REGULAR;
+	enum ccx_decoder_608_color_code current_color = COL_WHITE;
 	unsigned char current_row = 14;
 	unsigned char current_column = 0;
 
@@ -514,9 +561,16 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 			enum control_code position_code;
 			enum control_code tab_offset_code;
 			enum control_code font_code = 0;
-			if (current_row != row || current_column != column || current_font != data->fonts[row][column])
+
+			bool switch_font = current_font != data->fonts[row][column];
+			bool switch_color = current_color != data->colors[row][column];
+
+			if (current_row != row ||
+				current_column != column ||
+				switch_font ||
+				switch_color)
 			{
-				if (current_font != data->fonts[row][column])
+				if (switch_font || switch_color)
 				{
 					if (data->characters[row][column] == ' ')
 					{
@@ -532,21 +586,24 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 						position_code = get_preamble_code(row, column - 1);
 						tab_offset_code = get_tab_offset_code(column - 1);
 					}
-					font_code = get_font_code(data->fonts[row][column]);
+					font_code = get_font_code(data->fonts[row][column], data->colors[row][column]);
 				}
 				else
 				{
 					position_code = get_preamble_code(row, column);
 					tab_offset_code = get_tab_offset_code(column);
 				}
-				current_row = row;
-				current_column = column;
+
 				write_control_code(context->out->fh, data->channel, position_code, disassemble, &bytes_written);
 				if (tab_offset_code)
 					write_control_code(context->out->fh, data->channel, tab_offset_code, disassemble, &bytes_written);
-				if (current_font != data->fonts[row][column])
+				if (switch_font || switch_color)
 					write_control_code(context->out->fh, data->channel, font_code, disassemble, &bytes_written);
+
+				current_row = row;
+				current_column = column;
 				current_font = data->fonts[row][column];
+				current_color = data->colors[row][column];
 			}
 			write_character(context->out->fh, data->characters[row][column], disassemble, &bytes_written);
 			++current_column;
