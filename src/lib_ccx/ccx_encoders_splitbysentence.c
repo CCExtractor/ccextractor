@@ -762,7 +762,7 @@ struct cc_subtitle * reformat_cc_bitmap_through_sentence_buffer(struct cc_subtit
 	if (sub->flags & SUB_EOD_MARKER)
 		context->prev_start = sub->start_time;
 
-	str = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);
+	str = paraof_ocrtext(sub, context);
 
 	if (str)
 	{

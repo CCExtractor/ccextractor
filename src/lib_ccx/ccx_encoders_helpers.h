@@ -23,9 +23,7 @@ struct ccx_encoders_helpers_settings_t {
 };
 
 // Helper functions
-void correct_case_with_dictionary(int line_num, struct eia608_screen *data);
 int is_all_caps(struct encoder_ctx *context, int line_num, struct eia608_screen *data);
-int clever_capitalize(struct encoder_ctx *context, int line_num, struct eia608_screen *data);
 void telx_correct_case(char *sub_line);
 unsigned get_decoder_line_encoded_for_gui(unsigned char *buffer, int line_num, struct eia608_screen *data);
 unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data);
@@ -36,7 +34,7 @@ int string_cmp_function(const void *p1, const void *p2, void *arg);
 int add_word(struct word_list *list, const char *word);
 
 int add_builtin_words(const char *builtin[], struct word_list *list);
-void correct_spelling_and_censor_words_608(struct encoder_ctx *context, int line_number, struct eia608_screen *data);
+void correct_spelling_and_censor_words(struct encoder_ctx *context, char *line, unsigned int length);
 
 unsigned encode_line (struct encoder_ctx *ctx, unsigned char *buffer, unsigned char *text);
 

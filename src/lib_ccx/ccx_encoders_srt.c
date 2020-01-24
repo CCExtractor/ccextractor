@@ -97,7 +97,7 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	if(sub->flags & SUB_EOD_MARKER)
 		context->prev_start =  sub->start_time;
 
-	str = paraof_ocrtext(sub, context->encoded_crlf, context->encoded_crlf_length);
+	str = paraof_ocrtext(sub, context);
 	if (str)
 	{
         if(context->is_mkv == 1) {
@@ -210,8 +210,6 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 	{
 		if (data->row_used[i])
 		{
-			correct_spelling_and_censor_words_608(context, i, data);
-
 			if (context->autodash && context->trim_subs)
 			{
 				int first=0, last=31, center1=-1, center2=-1;

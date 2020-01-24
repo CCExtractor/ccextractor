@@ -615,8 +615,6 @@ void write_cc_line_as_simplexml(struct eia608_screen *data, struct encoder_ctx *
 	char *cap = "<caption>";
 	char *cap1 = "</caption>";
 
-	correct_spelling_and_censor_words_608(context, line_number, data);
-
 	length = get_str_basic(context->subline, data->characters[line_number],
 			context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
 
@@ -1155,6 +1153,9 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					data->end_time += utc_refvalue * 1000;
 				}
 
+				for (int i = 0; i < CCX_DECODER_608_SCREEN_ROWS; ++i)
+					correct_spelling_and_censor_words(context, (char *) data->characters[i], CCX_DECODER_608_SCREEN_WIDTH);
+
 #ifdef PYTHON_API
 				pass_cc_buffer_to_python(data, context);
 #else
@@ -1228,7 +1229,26 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			}
 			freep(&sub->data);
 			break;
-		case CC_BITMAP:
+		case CC_BITMAP:;
+
+#ifdef ENABLE_OCR
+			struct cc_bitmap *rect;
+			int i;
+			for (i = 0, rect = sub->data; i < sub->nb_data; ++i, ++rect)
+			{
+				if (rect->ocr_text)
+				{
+					int len = strlen(rect->ocr_text);
+					correct_spelling_and_censor_words(context, rect->ocr_text, len);
+					for (int i = 0; i < len; ++i)
+					{
+						if ((unsigned char)rect->ocr_text[i] == 0x98) // asterisk in 608 encoding
+							rect->ocr_text[i] = '*';
+					}
+				}
+			}
+#endif
+
 			switch (context->write_format)
 			{
 				case CCX_OF_CCD:
@@ -1281,7 +1301,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				default:
 					break;
 			}
-
 			break;
 		case CC_RAW:
 			if (context->send_to_srv)

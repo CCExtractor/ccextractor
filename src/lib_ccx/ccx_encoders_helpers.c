@@ -61,7 +61,7 @@ const char *profane_builtin[] =
 	"goddamn",
 	"godsdamn",
 	"hell",
-	"holy shit",
+	"holy",
 	"horseshit",
 	"motherfucker",
 	"nigga",
@@ -84,17 +84,17 @@ int string_cmp(const void *p1, const void *p2)
 	return string_cmp_function(p1, p2, NULL);
 }
 
-void capitalize_word(size_t index, unsigned char *word)
+void capitalize_word(size_t index, char *word)
 {
 	memcpy(word, capitalization_list.words[index], strlen(capitalization_list.words[index]));
 }
 
-void censor_word(size_t index, unsigned char *word)
+void censor_word(size_t index, char *word)
 {
 	memset(word, 0x98, strlen(profane.words[index])); // 0x98 is the asterisk in EIA-608
 }
 
-void call_function_if_match(int line_num, struct eia608_screen *data, struct word_list *list, void (*modification)(size_t, unsigned char *))
+void call_function_if_match(char *line, struct word_list *list, void (*modification)(size_t, char *))
 {
 	char delim[64] = {
 		' ', '\n', '\r', 0x89, 0x99,
@@ -105,8 +105,8 @@ void call_function_if_match(int line_num, struct eia608_screen *data, struct wor
 		'.', '/', ':', '^', '_',
 		'{', '|', '}', '~', '\0' };
 
-	char *line = strdup(data->characters[line_num]);
-	char *c = strtok(line, delim);
+	char *line_token = strdup(line);
+	char *c = strtok(line_token, delim);
 
 	if (c != NULL)
 	{
@@ -116,21 +116,11 @@ void call_function_if_match(int line_num, struct eia608_screen *data, struct wor
 
 			if (index)
 			{
-				modification(index - list->words, data->characters[line_num] + (c - line));
+				modification(index - list->words, line + (c - line_token));
 			}
 		} while ((c = strtok(NULL, delim)) != NULL);
 	}
-	free(line);
-}
-
-void correct_case_with_dictionary(int line_num, struct eia608_screen *data)
-{
-	call_function_if_match(line_num, data, &capitalization_list, capitalize_word);
-}
-
-void censor_word_with_dictionary(int line_num, struct eia608_screen *data)
-{
-	call_function_if_match(line_num, data, &profane, censor_word);
+	free(line_token);
 }
 
 void telx_correct_case(char *sub_line)
@@ -180,7 +170,7 @@ int is_all_caps(struct encoder_ctx *context, int line_num, struct eia608_screen 
 	return (saw_upper && !saw_lower); // 1 if we've seen upper and not lower, 0 otherwise
 }
 
-int clever_capitalize(struct encoder_ctx *context, int line_num, struct eia608_screen *data)
+int clever_capitalize(struct encoder_ctx *context, char *line, unsigned int length)
 {
 	// CFS: Tried doing to clever (see below) but some channels do all uppercase except for
 	// notes for deaf people (such as "(narrator)" which messes things up.
@@ -188,9 +178,9 @@ int clever_capitalize(struct encoder_ctx *context, int line_num, struct eia608_s
 	//int doit = is_all_caps(context, line_num, data);
 	int doit = 1;
 
-	for (int i = 0; i < CCX_DECODER_608_SCREEN_WIDTH; i++)
+	for (int i = 0; i < length; i++)
 	{
-		switch (data->characters[line_num][i])
+		switch (line[i])
 		{
 		case ' ':
 		case 0x89: // This is a transparent space
@@ -206,9 +196,9 @@ int clever_capitalize(struct encoder_ctx *context, int line_num, struct eia608_s
 			if (doit)
 			{
 				if (context->new_sentence)
-					data->characters[line_num][i] = cctoupper(data->characters[line_num][i]);
+					line[i] = cctoupper(line[i]);
 				else
-					data->characters[line_num][i] = cctolower(data->characters[line_num][i]);
+					line[i] = cctolower(line[i]);
 			}
 			context->new_sentence = 0;
 			break;
@@ -455,17 +445,17 @@ int add_builtin_words(const char *builtin[], struct word_list *list)
 	return 0;
 }
 
-void correct_spelling_and_censor_words_608(struct encoder_ctx *context, int line_number, struct eia608_screen *data)
+void correct_spelling_and_censor_words(struct encoder_ctx *context, char *line, unsigned int length)
 {
 	if (context->sentence_cap)
 	{
-		if (clever_capitalize(context, line_number, data))
-			correct_case_with_dictionary(line_number, data);
+		if (clever_capitalize(context, line, length))
+			call_function_if_match(line, &capitalization_list, capitalize_word);
 	}
 
 	if (context->filter_profanity)
 	{
-		censor_word_with_dictionary(line_number, data);
+		call_function_if_match(line, &profane, censor_word);
 	}
 }
 

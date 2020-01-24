@@ -976,7 +976,7 @@ void add_ocrtext2str(char *dest, char *src, const unsigned char *crlf, unsigned 
  * for all text detected from rectangles
  */
 
-char *paraof_ocrtext(struct cc_subtitle *sub, const unsigned char *crlf, unsigned crlf_length)
+char *paraof_ocrtext(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
 	int i;
 	int len = 0;
@@ -1002,7 +1002,7 @@ char *paraof_ocrtext(struct cc_subtitle *sub, const unsigned char *crlf, unsigne
 	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
 		if (!rect->ocr_text) continue;
-		add_ocrtext2str(str, rect->ocr_text, crlf, crlf_length);
+		add_ocrtext2str(str, rect->ocr_text, context->encoded_crlf, context->encoded_crlf_length);
 		free(rect->ocr_text);
 	}
 	return str;

@@ -201,8 +201,6 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 	{
 		if (data->row_used[row])
 		{
-			correct_spelling_and_censor_words_608(context, row, data);
-		
 			float row1=0;
 			float col1=0;
 			int firstcol=-1;
