@@ -556,6 +556,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 							memmove(text_out + index + substr_len + 1, text_out + index + 1, text_out_len - index);
 							sprintf(text_out + index, substr_format, r_avg, g_avg, b_avg);
 							text_out[index + substr_len] = replaced_by_null;
+							text_out_len += substr_len;
 							written_tag = 1;
 						}
 						else if(!written_tag)
@@ -566,6 +567,7 @@ char* ocr_bitmap(void* arg, png_color *palette,png_byte *alpha, unsigned char* i
 							memmove(text_out + substr_len + 1, text_out + 1, text_out_len);
 							sprintf(text_out, substr_format, r_avg, g_avg, b_avg);
 							text_out[substr_len] = replaced_by_null;
+							text_out_len += substr_len;
 							written_tag = 1;
 						}
 					}
