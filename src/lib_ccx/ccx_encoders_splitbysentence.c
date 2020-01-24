@@ -167,10 +167,6 @@ int sbs_is_pointer_on_sentence_breaker(char * start, char * current)
 {
 	char c = *current;
 	char n = *(current + 1);
-	char p = *(current - 1);
-
-	if (0 == c) n = 0;
-	if (current == start) p = 0;
 
 	if (0 == c) return 1;
 
@@ -219,40 +215,40 @@ char * sbs_find_insert_point_partial(char * old_tail, const char * new_start, si
 	int dist_r = -1;
 	int partial_shift;
 
-	int i; // top level indexer for strings
-
 	dist_l = levenshtein_dist_char(old_tail, new_start, len_l, len_l);
 	dist_r = levenshtein_dist_char(old_tail + len_l, new_start + len_l, len_r, len_r);
 
 	*errcount = dist_r + dist_l;
 
 	if (dist_l + dist_r > maxerr) {
-// #ifdef DEBUG_SBS
-// 		sprintf(fmtbuf, "SBS: sbs_find_insert_point_partial: compare\n\
-// \tnot EQ:          [TRUE]\n\
-// \tmaxerr:          [%%d]\n\
-// \tL buffer:          [%%.%zus]\n\
-// \tL string:          [%%.%zus]\n\
-// \tL dist_l:          [%%d]\n\
-// \tR buffer:          [%%.%zus]\n\
-// \tR string:          [%%.%zus]\n\
-// \tR dist_r:          [%%d]\n\
-// ",
-// 			len_l,
-// 			len_l,
-// 			len_r,
-// 			len_r
-// 		);
-// 		LOG_DEBUG(fmtbuf,
-// 			maxerr,
-// 			old_tail,
-// 			new_start,
-// 			dist_l,
-// 			old_tail + len_l,
-// 			new_start + len_l,
-// 			dist_r
-// 		);
-// #endif
+		/*
+#ifdef DEBUG_SBS
+		sprintf(fmtbuf, "SBS: sbs_find_insert_point_partial: compare\n\
+\tnot EQ:          [TRUE]\n\
+\tmaxerr:          [%%d]\n\
+\tL buffer:          [%%.%zus]\n\
+\tL string:          [%%.%zus]\n\
+\tL dist_l:          [%%d]\n\
+\tR buffer:          [%%.%zus]\n\
+\tR string:          [%%.%zus]\n\
+\tR dist_r:          [%%d]\n\
+",
+			len_l,
+			len_l,
+			len_r,
+			len_r
+		);
+		LOG_DEBUG(fmtbuf,
+			maxerr,
+			old_tail,
+			new_start,
+			dist_l,
+			old_tail + len_l,
+			new_start + len_l,
+			dist_r
+		);
+#endif
+		*/
 		return NULL;
 	};
 
@@ -260,17 +256,20 @@ char * sbs_find_insert_point_partial(char * old_tail, const char * new_start, si
 		dist_r <= few_errors               // right part almost the same
 		&& n > PARTIAL_CHANGE_LENGTH_MIN   // the sentence is long enough for analysis
 	) {
-// 		LOG_DEBUG("SBS: sbs_find_insert_point_partial: LEFT CHANGED,\n\tbuf:[%s]\n\tstr:[%s]\n\
-// \tmaxerr:[%d]\n\
-// \tdist_l:[%d]\n\
-// \tdist_r:[%d]\n\
-// ",
-// 			old_tail,
-// 			new_start,
-// 			maxerr,
-// 			dist_l,
-// 			dist_r
-// 		);
+		/*
+		LOG_DEBUG("SBS: sbs_find_insert_point_partial: LEFT CHANGED,\n\tbuf:[%s]\n\tstr:[%s]\n\
+\tmaxerr:[%d]\n\
+\tdist_l:[%d]\n\
+\tdist_r:[%d]\n\
+",
+			old_tail,
+			new_start,
+			maxerr,
+			dist_l,
+			dist_r
+		);
+		*/
+
 		// searching for first mismatched symbol at the end of buf
 		// This is a naive implementation of error detection
 		//
@@ -292,32 +291,33 @@ char * sbs_find_insert_point_partial(char * old_tail, const char * new_start, si
 		return old_tail + partial_shift;
 	}
 
-// #ifdef DEBUG_SBS
-
-// 		sprintf(fmtbuf, "SBS: sbs_find_insert_point_partial: REPLACE ENTIRE TAIL !!\n\
-// \tmaxerr:          [%%d]\n\
-// \tL buffer:        [%%.%zus]\n\
-// \tL string:        [%%.%zus]\n\
-// \tL dist_l:        [%%d]\n\
-// \tR buffer:        [%%.%zus]\n\
-// \tR string:        [%%.%zus]\n\
-// \tR dist_r:        [%%d]\n\
-// ",
-// 			len_l,
-// 			len_l,
-// 			len_r,
-// 			len_r
-// 		);
-// 		LOG_DEBUG(fmtbuf,
-// 			maxerr,
-// 			old_tail,
-// 			new_start,
-// 			dist_l,
-// 			old_tail + len_l,
-// 			new_start + len_l,
-// 			dist_r
-// 		);
-// #endif
+	/*
+#ifdef DEBUG_SBS
+		sprintf(fmtbuf, "SBS: sbs_find_insert_point_partial: REPLACE ENTIRE TAIL !!\n\
+\tmaxerr:          [%%d]\n\
+\tL buffer:        [%%.%zus]\n\
+\tL string:        [%%.%zus]\n\
+\tL dist_l:        [%%d]\n\
+\tR buffer:        [%%.%zus]\n\
+\tR string:        [%%.%zus]\n\
+\tR dist_r:        [%%d]\n\
+",
+			len_l,
+			len_l,
+			len_r,
+			len_r
+		);
+		LOG_DEBUG(fmtbuf,
+			maxerr,
+			old_tail,
+			new_start,
+			dist_l,
+			old_tail + len_l,
+			new_start + len_l,
+			dist_r
+		);
+#endif
+	*/
 
 	return old_tail;
 }
@@ -723,16 +723,15 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 
 struct cc_subtitle * reformat_cc_bitmap_through_sentence_buffer(struct cc_subtitle *sub, struct encoder_ctx * context)
 {
-	struct cc_bitmap* rect;
-	LLONG ms_start, ms_end;
-	int used;
-	int i = 0;
-	char *str;
-
 	// this is a sub with a full sentence (or chain of such subs)
 	struct cc_subtitle * resub = NULL;
 
 #ifdef ENABLE_OCR
+	struct cc_bitmap* rect;
+	LLONG ms_start, ms_end;
+	int i = 0;
+	char *str;
+
 
 	if (sub->flags & SUB_EOD_MARKER)
 	{

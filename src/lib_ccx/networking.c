@@ -19,7 +19,9 @@
 #define BIN_HEADER      5
 #define BIN_DATA        6
 #define EPG_DATA        7
+#ifdef _MSC_VER
 #pragma warning( suppress : 4005)
+#endif
 #define ERROR           51
 #define UNKNOWN_COMMAND 52
 #define WRONG_PASSWORD  53
@@ -335,6 +337,7 @@ int net_udp_read(int socket, void *buffer, size_t length, const char *src_str, c
 	assert(length > 0);
 
 	int i;
+	#ifdef _WIN32
 	char ip[INET_ADDRSTRLEN];
 	struct sockaddr_in source_addr;
 	socklen_t len = sizeof(source_addr);
@@ -349,7 +352,6 @@ int net_udp_read(int socket, void *buffer, size_t length, const char *src_str, c
 	{
 		addr = INADDR_ANY;
 	}
-	#ifdef _WIN32
 	if (IN_MULTICAST(addr) && src_str != NULL)						  					/* We check if the case is of source multicast and we are in windowsOS */
 	{
 		do {

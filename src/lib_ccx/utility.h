@@ -5,7 +5,9 @@
 	#include <arpa/inet.h>
 #endif
 
+#ifndef MIN
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+#endif
 
 #define RL32(x) (*(unsigned int *)(x))
 #define RB32(x) (ntohl(*(unsigned int *)(x)))

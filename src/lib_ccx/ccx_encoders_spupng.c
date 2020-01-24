@@ -641,14 +641,14 @@ int init_face(FT_Face *face, char * font)
 	int error;
 
 	// Init regular font
-	if (error = FT_New_Face(ft_library, font, 0, face))
+	if ((error = FT_New_Face(ft_library, font, 0, face)))
 	{
 		mprint("\n\nFailed to init freetype when trying to init face, error code: %d\n", error);
 		mprint("It's usually caused by the specified font is not found: %s \n", font);
 		mprint("If this is the case, please use -font or -italics to manually specify a font that exists. \n\n");
 		return 1;
 	}
-	if (error = FT_Set_Pixel_Sizes(*face, 0, FONT_SIZE))
+	if ((error = FT_Set_Pixel_Sizes(*face, 0, FONT_SIZE)))
 	{
 		mprint("\nFailed to init freetype when trying to set size, error code: %d\n", error);
 		return 1;
@@ -695,7 +695,7 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 	// Init FreeType if it hasn't been inited yet.
 	if (ft_library==NULL){
 
-		if (error = FT_Init_FreeType(&ft_library))
+		if ((error = FT_Init_FreeType(&ft_library)))
 		{
 			mprint("\nFailed to init freetype, error code: %d\n", error);
 			return 0;
@@ -703,9 +703,9 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 	}
 
 	// Init FreeType typographical face objects
-	if (error = init_face(&face_regular, ccx_options.enc_cfg.render_font))
+	if ((error = init_face(&face_regular, ccx_options.enc_cfg.render_font)))
 		return 0;
-	if (error = init_face(&face_italics, ccx_options.enc_cfg.render_font_italics))
+	if ((error = init_face(&face_italics, ccx_options.enc_cfg.render_font_italics)))
 		return 0;
 
 	int canvas_width = CANVAS_WIDTH;
@@ -845,10 +845,6 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE* output)
 
 			// Characters such as ' ' don't have bitmap.
 			if (bitmap != NULL) {
-
-				int width = slot->bitmap.width;
-				int height = slot->bitmap.rows;
-
 				// TODO: this kind of line break may break characters in the middle!
 				if ((cursor_x + (slot->advance.x >> 6)) > canvas_width) { // Time for a line-break!
 					// But before that, let's center justify the subtitle.

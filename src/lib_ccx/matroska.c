@@ -1179,7 +1179,7 @@ void matroska_save_all(struct matroska_ctx* mkv_ctx,char* lang)
       }
 
     //EIA-608
-    struct lib_cc_decode *dec_ctx = update_decoder_list(mkv_ctx->ctx);
+    update_decoder_list(mkv_ctx->ctx);
     if(mkv_ctx->dec_sub.got_output) {
         struct encoder_ctx *enc_ctx = update_encoder_list(mkv_ctx->ctx);
         encode_sub(enc_ctx, &mkv_ctx->dec_sub);

@@ -638,21 +638,16 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 uint64_t get_pts(uint8_t* buffer)
 {
 	uint64_t pes_prefix;
-	uint8_t pes_stream_id;
-	uint16_t pes_packet_length;
 	uint8_t optional_pes_header_included = NO;
 	uint16_t optional_pes_header_length = 0;
 	uint64_t pts = 0;
 
 	// Packetized Elementary Stream (PES) 32-bit start code
 	pes_prefix = (buffer[0] << 16) | (buffer[1] << 8) | buffer[2];
-	pes_stream_id = buffer[3];
 
 	// check for PES header
 	if (pes_prefix == 0x000001)
 	{
-		pes_packet_length = 6 + ((buffer[4] << 8) | buffer[5]); // 5th and 6th byte of the header define the length of the rest of the packet (+6 is for the prefix, stream ID and packet length)
-
 		// optional PES header marker bits (10.. ....)
 		if ((buffer[6] & 0xc0) == 0x80)
 		{

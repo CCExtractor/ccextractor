@@ -925,7 +925,6 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 	if (m == 0) m = 8;
 	y = (address >> 3) & 0x1f;
 	designation_code = (y > 25) ? unham_8_4(packet->data[0]) : 0x00;
-	uint8_t flag_subtitle;
 	if (y == 0)
 	{
 

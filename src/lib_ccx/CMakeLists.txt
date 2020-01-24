@@ -3,7 +3,7 @@ cmake_policy (SET CMP0037 NEW)
 if(MSVC)
     set (CMAKE_C_FLAGS "-W3 /wd4005 /wd4996")
 else (MSVC)
-    set (CMAKE_C_FLAGS "-Wall -g -std=gnu99")
+    set (CMAKE_C_FLAGS "-Wall -Wno-pointer-sign -g -std=gnu99")
 endif(MSVC)
 
 if(WIN32)

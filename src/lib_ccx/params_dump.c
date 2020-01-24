@@ -118,6 +118,9 @@ void params_dump(struct lib_ccx_ctx *ctx)
 		case CCX_ENC_LATIN_1:
 			mprint ("Latin-1");
 			break;
+		case CCX_ENC_ASCII:
+			mprint ("ASCII");
+			break;
 	}
 	mprint ("] ");
 	mprint ("[Delay: %lld] ",ctx->subs_delay);
@@ -399,10 +402,10 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 
 		dec_ctx = update_decoder_list_cinfo(ctx, info);
 		if (dec_ctx->in_bufferdatatype == CCX_PES &&
-			(info->stream == CCX_SM_TRANSPORT ||
-			 info->stream == CCX_SM_PROGRAM ||
-			 info->stream == CCX_SM_ASF ||
-			 info->stream == CCX_SM_WTV))
+			(demux_ctx->stream_mode == CCX_SM_TRANSPORT ||
+			 demux_ctx->stream_mode == CCX_SM_PROGRAM ||
+			 demux_ctx->stream_mode == CCX_SM_ASF ||
+			 demux_ctx->stream_mode == CCX_SM_WTV))
 		{
 			printf("Width: %u\n", dec_ctx->current_hor_size);
 			printf("Height: %u\n", dec_ctx->current_vert_size);

@@ -903,7 +903,7 @@ void dtvcc_handle_DSW_DisplayWindows(ccx_dtvcc_service_decoder *decoder, int win
 				ccx_common_logging.debug_ftn(CCX_DMT_708, "[Window %d] ", i);
 				if (!decoder->windows[i].is_defined)
 				{
-					ccx_common_logging.log_ftn("[CEA-708] Error: window %d was not defined", i);
+					ccx_common_logging.log_ftn("[CEA-708] Error: window %d was not defined\n", i);
 					continue;
 				}
 				if (!decoder->windows[i].visible)

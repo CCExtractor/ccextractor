@@ -130,7 +130,7 @@ void get_bitmap(struct DVD_Ctx *ctx)
 			// Align byte at end of line
 			if(bitoff(m) == 0x0f)
 			{
-				int discard = get_bits(ctx, &nextbyte, &pos, &m);
+				get_bits(ctx, &nextbyte, &pos, &m);
 			}
 		}
 	}
@@ -169,7 +169,7 @@ void get_bitmap(struct DVD_Ctx *ctx)
 			// Align byte at end of line
 			if(bitoff(m) == 0x0f)
 			{
-				int discard = get_bits(ctx, &nextbyte, &pos, &m);
+				get_bits(ctx, &nextbyte, &pos, &m);
 			}
 		}
 	}
@@ -316,8 +316,6 @@ int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_
 {
 
 	struct cc_bitmap *rect = NULL;
-
-	int ret =0;
 	int w, h;
 
 	sub->type = CC_BITMAP;
@@ -367,7 +365,7 @@ int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_
 
 #ifdef ENABLE_OCR
 		char *ocr_str = NULL;
-		ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, 0, dec_ctx->ocr_quantmode);
+		int ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, 0, dec_ctx->ocr_quantmode);
 		if(ret >= 0)
 			rect->ocr_text = ocr_str;
 #endif

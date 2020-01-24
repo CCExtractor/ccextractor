@@ -20,7 +20,6 @@
 #include "file_buffer.h"
 
 #define STR_LEN 256u
-#define MIN(a, b) ( (a < b) ? a : b)
 
 #define CLOSED_CAP_DID  0x61
 #define CLOSED_C708_SDID 0x01
