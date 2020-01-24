@@ -626,7 +626,7 @@ void print_usage (void)
 	mprint("                       Use one line per word. Lines starting with # are\n");
 	mprint("                       considered comments and discarded.\n\n");
 	mprint("                 --kf: Censors profane words from subtitles.\n");
-	mprint("--profanity_file <file>: Add the contents of <file> to the list of words that.\n");
+	mprint("--profanity-file <file>: Add the contents of <file> to the list of words that.\n");
 	mprint("                         must be censored. The content of <file>, follows the\n");
 	mprint("                         same syntax as for the capitalization file\n");
 	mprint("-sbs --splitbysentence: Split output text so each frame contains a complete\n");
