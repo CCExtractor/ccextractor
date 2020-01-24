@@ -61,7 +61,7 @@ const char *profane_builtin[] =
 	"goddamn",
 	"godsdamn",
 	"hell",
-	"holy shit",
+	"holy",
 	"horseshit",
 	"motherfucker",
 	"nigga",
