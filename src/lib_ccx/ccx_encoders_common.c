@@ -1237,7 +1237,15 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			for (i = 0, rect = sub->data; i < sub->nb_data; ++i, ++rect)
 			{
 				if (rect->ocr_text)
-					correct_spelling_and_censor_words(context, rect->ocr_text, strlen(rect->ocr_text));
+				{
+					int len = strlen(rect->ocr_text);
+					correct_spelling_and_censor_words(context, rect->ocr_text, len);
+					for (int i = 0; i < len; ++i)
+					{
+						if ((unsigned char)rect->ocr_text[i] == 0x98) // asterisk in 608 encoding
+							rect->ocr_text[i] = '*';
+					}
+				}
 			}
 #endif
 
