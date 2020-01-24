@@ -6,6 +6,7 @@
 - New: Added more fatals on no arguments errors.
 - New: Updated ccextractor.cnf.sample.
 - New: Add support for censoring words ("Kid Friendly") (#1139)
+- New: Extend support of capitalization for all BITMAP and 608 subtitles (#1214)
 - Fix: ccx_demuxer_mxf.c: Parse framerate from MXF captions to fix caption timings.
 - Fix: hardsubx_decoder.c: Fix memory leaks using Leptonica API.
 - Fix: linux/Makefile.am: added some sources to enable rpms to be created.
