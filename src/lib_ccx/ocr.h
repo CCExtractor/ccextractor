@@ -1,6 +1,7 @@
 #ifndef OCR_H
 #define OCR_H
 #include <png.h>
+#include "ccx_encoders_common.h"
 
 struct image_copy //A copy of the original OCR image, used for color detection
 {
