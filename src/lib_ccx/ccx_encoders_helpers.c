@@ -84,19 +84,19 @@ int string_cmp(const void *p1, const void *p2)
 	return string_cmp_function(p1, p2, NULL);
 }
 
-void capitalize_word(size_t index, char *word)
+void capitalize_word(size_t index, unsigned char *word)
 {
 	memcpy(word, capitalization_list.words[index], strlen(capitalization_list.words[index]));
 }
 
-void censor_word(size_t index, char *word)
+void censor_word(size_t index, unsigned char *word)
 {
 	memset(word, 0x98, strlen(profane.words[index])); // 0x98 is the asterisk in EIA-608
 }
 
-void call_function_if_match(char *line, struct word_list *list, void (*modification)(size_t, char *))
+void call_function_if_match(unsigned char *line, struct word_list *list, void (*modification)(size_t, unsigned char *))
 {
-	char delim[64] = {
+	unsigned char delim[64] = {
 		' ', '\n', '\r', 0x89, 0x99,
 		'!', '"', '#', '%', '&',
 		'\'', '(', ')', ';', '<',
@@ -105,18 +105,18 @@ void call_function_if_match(char *line, struct word_list *list, void (*modificat
 		'.', '/', ':', '^', '_',
 		'{', '|', '}', '~', '\0' };
 
-	char *line_token = strdup(line);
-	char *c = strtok(line_token, delim);
+	unsigned char *line_token = strdup(line);
+	unsigned char *c = strtok(line_token, delim);
 
 	if (c != NULL)
 	{
 		do
 		{
-			char **index = bsearch(&c, list->words, list->len, sizeof(*list->words), string_cmp);
+			unsigned char **index = bsearch(&c, list->words, list->len, sizeof(*list->words), string_cmp);
 
 			if (index)
 			{
-				modification(index - list->words, line + (c - line_token));
+				modification(index - (unsigned char **)list->words, line + (c - line_token));
 			}
 		} while ((c = strtok(NULL, delim)) != NULL);
 	}
@@ -170,7 +170,7 @@ int is_all_caps(struct encoder_ctx *context, int line_num, struct eia608_screen 
 	return (saw_upper && !saw_lower); // 1 if we've seen upper and not lower, 0 otherwise
 }
 
-int clever_capitalize(struct encoder_ctx *context, char *line, unsigned int length)
+int clever_capitalize(struct encoder_ctx *context, unsigned char *line, unsigned int length)
 {
 	// CFS: Tried doing to clever (see below) but some channels do all uppercase except for
 	// notes for deaf people (such as "(narrator)" which messes things up.
@@ -445,7 +445,7 @@ int add_builtin_words(const char *builtin[], struct word_list *list)
 	return 0;
 }
 
-void correct_spelling_and_censor_words(struct encoder_ctx *context, char *line, unsigned int length)
+void correct_spelling_and_censor_words(struct encoder_ctx *context, unsigned char *line, unsigned int length)
 {
 	if (context->sentence_cap)
 	{
