@@ -9,114 +9,114 @@
 static const char *webvtt_outline_css = "@import(%s)\n";
 
 static const char *webvtt_inline_css = "\r\nSTYLE\n\n"
-		"/* default values */\n"
-		"::cue {\n"
-		"  line-height: 5.33vh;\n"
-		"  font-size: 4.1vh;\n"
-		"  font-family: monospace;\n"
-		"  font-style: normal;\n"
-		"  font-weight: normal;\n"
-		"  background-color: black;\n"
-		"  color: white;\n"
-		"}\n"
-		"/* special cue parts */\n"
-		"::cue(c.transparent) {\n"
-		"  color: transparent;\n"
-		"}\n"
-		"/* need to set this before changing color, otherwise the color is lost */\n"
-		"::cue(c.semi-transparent) {\n"
-		"  color: rgba(0, 0, 0, 0.5);\n"
-		"}\n"
-		"/* need to set this before changing color, otherwise the color is lost */\n"
-		"::cue(c.opaque) {\n"
-		"  color: rgba(0, 0, 0, 1);\n"
-		"}\n"
-		"::cue(c.blink) {\n"
-		"  text-decoration: blink;\n"
-		"}\n"
-		"::cue(c.white) {\n"
-		"  color: white;\n"
-		"}\n"
-		"::cue(c.red) {\n"
-		"  color: red;\n"
-		"}\n"
-		"::cue(c.green) {\n"
-		"  color: lime;\n"
-		"}\n"
-		"::cue(c.blue) {\n"
-		"  color: blue;\n"
-		"}\n"
-		"::cue(c.cyan) {\n"
-		"  color: cyan;\n"
-		"}\n"
-		"::cue(c.yellow) {\n"
-		"  color: yellow;\n"
-		"}\n"
-		"::cue(c.magenta) {\n"
-		"  color: magenta;\n"
-		"}\n"
-		"::cue(c.bg_transparent) {\n"
-		"  background-color: transparent;\n"
-		"}\n"
-		"/* need to set this before changing color, otherwise the color is lost */\n"
-		"::cue(c.bg_semi-transparent) {\n"
-		"  background-color: rgba(0, 0, 0, 0.5);\n"
-		"}\n"
-		"/* need to set this before changing color, otherwise the color is lost */\n"
-		"::cue(c.bg_opaque) {\n"
-		"  background-color: rgba(0, 0, 0, 1);\n"
-		"}\n"
-		"::cue(c.bg_white) {\n"
-		"  background-color: white;\n"
-		"}\n"
-		"::cue(c.bg_green) {\n"
-		"  background-color: lime;\n"
-		"}\n"
-		"::cue(c.bg_blue) {\n"
-		"  background-color: blue;\n"
-		"}\n"
-		"::cue(c.bg_cyan) {\n"
-		"  background-color: cyan;\n"
-		"}\n"
-		"::cue(c.bg_red) {\n"
-		"  background-color: red;\n"
-		"}\n"
-		"::cue(c.bg_yellow) {\n"
-		"  background-color: yellow;\n"
-		"}\n"
-		"::cue(c.bg_magenta) {\n"
-		"  background-color: magenta;\n"
-		"}\n"
-		"::cue(c.bg_black) {\n"
-		"  background-color: black;\n"
-		"}\n"
-		"/* Examples of combined colors */\n"
-		"::cue(c.bg_white.bg_semi-transparent) {\n"
-		"  background-color: rgba(255, 255, 255, 0.5);\n"
-		"}\n"
-		"::cue(c.bg_green.bg_semi-transparent) {\n"
-		"  background-color: rgba(0, 256, 0, 0.5);\n"
-		"}\n"
-		"::cue(c.bg_blue.bg_semi-transparent) {\n"
-		"  background-color: rgba(0, 0, 255, 0.5);\n"
-		"}\n"
-		"::cue(c.bg_cyan.bg_semi-transparent) {\n"
-		"  background-color: rgba(0, 255, 255, 0.5);\n"
-		"}\n"
-		"::cue(c.bg_red.bg_semi-transparent) {\n"
-		"  background-color: rgba(255, 0, 0, 0.5);\n"
-		"}\n"
-		"::cue(c.bg_yellow.bg_semi-transparent) {\n"
-		"  background-color: rgba(255, 255, 0, 0.5);\n"
-		"}\n"
-		"::cue(c.bg_magenta.bg_semi-transparent) {\n"
-		"  background-color: rgba(255, 0, 255, 0.5);\n"
-		"}\n"
-		"::cue(c.bg_black.bg_semi-transparent) {\n"
-		"  background-color: rgba(0, 0, 0, 0.5);\n"
-		"}";
+"/* default values */\n"
+"::cue {\n"
+"  line-height: 5.33vh;\n"
+"  font-size: 4.1vh;\n"
+"  font-family: monospace;\n"
+"  font-style: normal;\n"
+"  font-weight: normal;\n"
+"  background-color: black;\n"
+"  color: white;\n"
+"}\n"
+"/* special cue parts */\n"
+"::cue(c.transparent) {\n"
+"  color: transparent;\n"
+"}\n"
+"/* need to set this before changing color, otherwise the color is lost */\n"
+"::cue(c.semi-transparent) {\n"
+"  color: rgba(0, 0, 0, 0.5);\n"
+"}\n"
+"/* need to set this before changing color, otherwise the color is lost */\n"
+"::cue(c.opaque) {\n"
+"  color: rgba(0, 0, 0, 1);\n"
+"}\n"
+"::cue(c.blink) {\n"
+"  text-decoration: blink;\n"
+"}\n"
+"::cue(c.white) {\n"
+"  color: white;\n"
+"}\n"
+"::cue(c.red) {\n"
+"  color: red;\n"
+"}\n"
+"::cue(c.green) {\n"
+"  color: lime;\n"
+"}\n"
+"::cue(c.blue) {\n"
+"  color: blue;\n"
+"}\n"
+"::cue(c.cyan) {\n"
+"  color: cyan;\n"
+"}\n"
+"::cue(c.yellow) {\n"
+"  color: yellow;\n"
+"}\n"
+"::cue(c.magenta) {\n"
+"  color: magenta;\n"
+"}\n"
+"::cue(c.bg_transparent) {\n"
+"  background-color: transparent;\n"
+"}\n"
+"/* need to set this before changing color, otherwise the color is lost */\n"
+"::cue(c.bg_semi-transparent) {\n"
+"  background-color: rgba(0, 0, 0, 0.5);\n"
+"}\n"
+"/* need to set this before changing color, otherwise the color is lost */\n"
+"::cue(c.bg_opaque) {\n"
+"  background-color: rgba(0, 0, 0, 1);\n"
+"}\n"
+"::cue(c.bg_white) {\n"
+"  background-color: white;\n"
+"}\n"
+"::cue(c.bg_green) {\n"
+"  background-color: lime;\n"
+"}\n"
+"::cue(c.bg_blue) {\n"
+"  background-color: blue;\n"
+"}\n"
+"::cue(c.bg_cyan) {\n"
+"  background-color: cyan;\n"
+"}\n"
+"::cue(c.bg_red) {\n"
+"  background-color: red;\n"
+"}\n"
+"::cue(c.bg_yellow) {\n"
+"  background-color: yellow;\n"
+"}\n"
+"::cue(c.bg_magenta) {\n"
+"  background-color: magenta;\n"
+"}\n"
+"::cue(c.bg_black) {\n"
+"  background-color: black;\n"
+"}\n"
+"/* Examples of combined colors */\n"
+"::cue(c.bg_white.bg_semi-transparent) {\n"
+"  background-color: rgba(255, 255, 255, 0.5);\n"
+"}\n"
+"::cue(c.bg_green.bg_semi-transparent) {\n"
+"  background-color: rgba(0, 256, 0, 0.5);\n"
+"}\n"
+"::cue(c.bg_blue.bg_semi-transparent) {\n"
+"  background-color: rgba(0, 0, 255, 0.5);\n"
+"}\n"
+"::cue(c.bg_cyan.bg_semi-transparent) {\n"
+"  background-color: rgba(0, 255, 255, 0.5);\n"
+"}\n"
+"::cue(c.bg_red.bg_semi-transparent) {\n"
+"  background-color: rgba(255, 0, 0, 0.5);\n"
+"}\n"
+"::cue(c.bg_yellow.bg_semi-transparent) {\n"
+"  background-color: rgba(255, 255, 0, 0.5);\n"
+"}\n"
+"::cue(c.bg_magenta.bg_semi-transparent) {\n"
+"  background-color: rgba(255, 0, 255, 0.5);\n"
+"}\n"
+"::cue(c.bg_black.bg_semi-transparent) {\n"
+"  background-color: rgba(0, 0, 0, 0.5);\n"
+"}";
 
-static const char* webvtt_pac_row_percent[] = { "10", "15.33", "20.66", "26", "31.33", "36.66", "42",
+static const char *webvtt_pac_row_percent[] = { "10", "15.33", "20.66", "26", "31.33", "36.66", "42",
 		"47.33", "52.66", "58", "63.33", "68.66", "74", "79.33", "84.66" };
 
 /* The timing here is not PTS based, but output based, i.e. user delay must be accounted for
@@ -149,7 +149,7 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 	int pos_r = 0;
 	int pos_w = 0;
 	// Scan for \n in the string and replace it with a 0
-	while (pos_r<len)
+	while (pos_r < len)
 	{
 		if (string[pos_r] == '\\' && string[pos_r + 1] == 'n')
 		{
@@ -166,7 +166,7 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 	unescaped[pos_w] = 0;
 	// Now read the unescaped string (now several string'z and write them)
 	unsigned char *begin = unescaped;
-	while (begin<unescaped + len)
+	while (begin < unescaped + len)
 	{
 		unsigned int u = encode_line(context, el, begin);
 		if (context->encoding != CCX_ENC_UNICODE)
@@ -183,8 +183,8 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 		}
 		written = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		if (written != context->encoded_crlf_length)
-		{   
-            		free(el);
+		{
+			free(el);
 			return -1;
 		}
 		begin += strlen((const char *)begin) + 1;
@@ -214,7 +214,7 @@ void write_webvtt_header(struct encoder_ctx *context)
 		int used;
 		unsigned h1, m1, s1, ms1;
 		millis_to_time(context->timing->sync_pts2fts_fts, &h1, &m1, &s1, &ms1);
-		 
+
 		// If the user has not disabled X-TIMESTAMP-MAP
 		if (!context->no_timestamp_map)
 		{
@@ -226,11 +226,11 @@ void write_webvtt_header(struct encoder_ctx *context)
 		write(context->out->fh, context->buffer, used);
 
 	}
-	
+
 	if (ccx_options.webvtt_create_css)
 	{
 		char *basefilename = get_basename(context->first_input_file);
-		char *css_file_name = (char*)malloc((strlen(basefilename) + 4) * sizeof(char));		// strlen(".css") == 4
+		char *css_file_name = (char *)malloc((strlen(basefilename) + 4) * sizeof(char));		// strlen(".css") == 4
 		sprintf(css_file_name, "%s.css", basefilename);
 
 		FILE *f = fopen(css_file_name, "wb");
@@ -239,21 +239,22 @@ void write_webvtt_header(struct encoder_ctx *context)
 			mprint("Warning: Error creating the file %s\n", css_file_name);
 			return;
 		}
-		fprintf(f, "%s",webvtt_inline_css);
+		fprintf(f, "%s", webvtt_inline_css);
 		fclose(f);
 
-		char* outline_css_file = (char*)malloc((strlen(css_file_name) + strlen(webvtt_outline_css)) * sizeof(char));
+		char *outline_css_file = (char *)malloc((strlen(css_file_name) + strlen(webvtt_outline_css)) * sizeof(char));
 		sprintf(outline_css_file, webvtt_outline_css, css_file_name);
-		write (context->out->fh, outline_css_file, strlen(outline_css_file));
-	} else if (ccx_options.use_webvtt_styling) {
+		write(context->out->fh, outline_css_file, strlen(outline_css_file));
+	}
+	else if (ccx_options.use_webvtt_styling) {
 		write(context->out->fh, webvtt_inline_css, strlen(webvtt_inline_css));
-		if(ccx_options.enc_cfg.line_terminator_lf == 1) // If -lf parameter is set.
+		if (ccx_options.enc_cfg.line_terminator_lf == 1) // If -lf parameter is set.
 		{
 			write(context->out->fh, "\n", 1);
 		}
 		else
 		{
-			write(context->out->fh,"\r\n",2);
+			write(context->out->fh, "\r\n", 2);
 		}
 		write(context->out->fh, "##\n", 3);
 		write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
@@ -267,7 +268,7 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 {
 	int ret = 0;
 #ifdef ENABLE_OCR
-	struct cc_bitmap* rect;
+	struct cc_bitmap *rect;
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;
 	char timeline[128];
@@ -355,10 +356,10 @@ void get_color_events(int *color_events, int line_num, struct eia608_screen *dat
 			// WebVTT supports colors only is [COL_WHITE..COL_MAGENTA]
 			if (data->colors[line_num][i] <= COL_MAGENTA)
 				color_events[i] |= data->colors[line_num][i];	// Add this new color
-			
+
 			if (last_color != COL_WHITE && last_color <= COL_MAGENTA)
 				color_events[i - 1] |= last_color << 16;	// Remove old color (event in the second part of the integer)
-			
+
 			last_color = data->colors[line_num][i];
 		}
 	}
@@ -406,7 +407,7 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 	int wrote_something = 0;
 
 	int empty_buf = 1;
-	for (int i = 0; i<15; i++)
+	for (int i = 0; i < 15; i++)
 	{
 		if (data->row_used[i])
 		{
@@ -422,7 +423,7 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 	millis_to_time(data->start_time, &h1, &m1, &s1, &ms1);
 	millis_to_time(data->end_time - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 
-	for (int i = 0; i<15; i++)
+	for (int i = 0; i < 15; i++)
 	{
 		if (data->row_used[i])
 		{

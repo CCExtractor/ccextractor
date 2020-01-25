@@ -29,31 +29,31 @@ const char *desc[256];
 
 char *get_buffer_type_str(struct cap_info *cinfo)
 {
-	if( cinfo->stream == CCX_STREAM_TYPE_VIDEO_MPEG2)
+	if (cinfo->stream == CCX_STREAM_TYPE_VIDEO_MPEG2)
 	{
 		return strdup("MPG");
 	}
-	else if( cinfo->stream == CCX_STREAM_TYPE_VIDEO_H264 )
+	else if (cinfo->stream == CCX_STREAM_TYPE_VIDEO_H264)
 	{
 		return strdup("H.264");
 	}
-	else if ( cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_ISDB_CC )
+	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_ISDB_CC)
 	{
 		return strdup("ISDB CC subtitle");
 	}
-	else if ( cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_DVB )
+	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_DVB)
 	{
 		return strdup("DVB subtitle");
 	}
-	else if ( cinfo->stream == CCX_STREAM_TYPE_UNKNOWNSTREAM && ccx_options.hauppauge_mode)
+	else if (cinfo->stream == CCX_STREAM_TYPE_UNKNOWNSTREAM && ccx_options.hauppauge_mode)
 	{
 		return strdup("Hauppage");
 	}
-	else if ( cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_TELETEXT)
+	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_TELETEXT)
 	{
 		return strdup("Teletext");
 	}
-	else if ( cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_ATSC_CC)
+	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_ATSC_CC)
 	{
 		return strdup("CC in private MPEG packet");
 	}
@@ -115,42 +115,42 @@ void pes_header_dump(uint8_t *buffer, long len)
 		pts |= ((buffer[13] & 0xfe) >> 1);
 		//printf("# Associated PTS: %d \n", pts);
 		printf("# Associated PTS: %" PRId64 " # ", pts);
-		printf("Diff: %" PRIu64 "\n", pts-last_pts);
+		printf("Diff: %" PRIu64 "\n", pts - last_pts);
 		//printf("Diff: %d # ", pts - last_pts);
 		last_pts = pts;
 	}
 }
 enum ccx_stream_type get_buffer_type(struct cap_info *cinfo)
 {
-	if( cinfo->stream == CCX_STREAM_TYPE_VIDEO_MPEG2)
+	if (cinfo->stream == CCX_STREAM_TYPE_VIDEO_MPEG2)
 	{
 		return CCX_PES;
 	}
-	else if( cinfo->stream == CCX_STREAM_TYPE_VIDEO_H264 )
+	else if (cinfo->stream == CCX_STREAM_TYPE_VIDEO_H264)
 	{
 		return CCX_H264;
 	}
-	else if ( cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_DVB )
+	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_DVB)
 	{
 		return CCX_DVB_SUBTITLE;
 	}
-	else if ( cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_ISDB_CC )
+	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_ISDB_CC)
 	{
 		return CCX_ISDB_SUBTITLE;
 	}
-	else if ( cinfo->stream == CCX_STREAM_TYPE_UNKNOWNSTREAM && ccx_options.hauppauge_mode)
+	else if (cinfo->stream == CCX_STREAM_TYPE_UNKNOWNSTREAM && ccx_options.hauppauge_mode)
 	{
 		return CCX_HAUPPAGE;
 	}
-	else if ( cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_TELETEXT)
+	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_TELETEXT)
 	{
 		return CCX_TELETEXT;
 	}
-	else if ( cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_ATSC_CC)
+	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_ATSC_CC)
 	{
 		return CCX_PRIVATE_MPEG2_CC;
 	}
-	else if ( cinfo->stream == CCX_STREAM_TYPE_PRIVATE_USER_MPEG2 && cinfo->codec == CCX_CODEC_ATSC_CC)
+	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_USER_MPEG2 && cinfo->codec == CCX_CODEC_ATSC_CC)
 	{
 		return CCX_PES;
 	}
@@ -169,16 +169,16 @@ void init_ts(struct ccx_demuxer *ctx)
 	desc[CCX_STREAM_TYPE_AUDIO_MPEG2] = "MPEG-2 audio";
 	desc[CCX_STREAM_TYPE_MHEG_PACKETS] = "MHEG Packets";
 	desc[CCX_STREAM_TYPE_PRIVATE_TABLE_MPEG2] = "MPEG-2 private table sections";
-	desc[CCX_STREAM_TYPE_PRIVATE_MPEG2] ="MPEG-2 private data";
+	desc[CCX_STREAM_TYPE_PRIVATE_MPEG2] = "MPEG-2 private data";
 	desc[CCX_STREAM_TYPE_MPEG2_ANNEX_A_DSM_CC] = "MPEG-2 Annex A DSM CC";
 	desc[CCX_STREAM_TYPE_ITU_T_H222_1] = "ITU-T Rec. H.222.1";
-	desc[CCX_STREAM_TYPE_AUDIO_AAC] =   "AAC audio";
+	desc[CCX_STREAM_TYPE_AUDIO_AAC] = "AAC audio";
 	desc[CCX_STREAM_TYPE_VIDEO_MPEG4] = "MPEG-4 video";
-	desc[CCX_STREAM_TYPE_VIDEO_H264] =  "H.264 video";
+	desc[CCX_STREAM_TYPE_VIDEO_H264] = "H.264 video";
 	desc[CCX_STREAM_TYPE_PRIVATE_USER_MPEG2] = "MPEG-2 User Private";
-	desc[CCX_STREAM_TYPE_AUDIO_AC3] =   "AC3 audio";
-	desc[CCX_STREAM_TYPE_AUDIO_DTS] =   "DTS audio";
-	desc[CCX_STREAM_TYPE_AUDIO_HDMV_DTS]="HDMV audio";
+	desc[CCX_STREAM_TYPE_AUDIO_AC3] = "AC3 audio";
+	desc[CCX_STREAM_TYPE_AUDIO_DTS] = "DTS audio";
+	desc[CCX_STREAM_TYPE_AUDIO_HDMV_DTS] = "HDMV audio";
 	desc[CCX_STREAM_TYPE_ISO_IEC_13818_6_TYPE_A] = "ISO/IEC 13818-6 type A";
 	desc[CCX_STREAM_TYPE_ISO_IEC_13818_6_TYPE_B] = "ISO/IEC 13818-6 type B";
 	desc[CCX_STREAM_TYPE_ISO_IEC_13818_6_TYPE_C] = "ISO/IEC 13818-6 type C";
@@ -187,7 +187,7 @@ void init_ts(struct ccx_demuxer *ctx)
 
 
 // Return 1 for successfully read ts packet
-int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
+int ts_readpacket(struct ccx_demuxer *ctx, struct ts_payload *payload)
 {
 	unsigned int adaptation_field_length = 0;
 	unsigned int adaptation_field_control;
@@ -205,8 +205,8 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		ctx->past += result;
 		if (result != 4)
 		{
-			if (result>0)
-				mprint("Premature end of file (incomplete TS packer header, expected 4 bytes to skip M2TS extra bytes, got %lld).\n",result);
+			if (result > 0)
+				mprint("Premature end of file (incomplete TS packer header, expected 4 bytes to skip M2TS extra bytes, got %lld).\n", result);
 			return CCX_EOF;
 		}
 	}
@@ -221,11 +221,11 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 	}
 
 	int printtsprob = 1;
-	while (tspacket[0]!=0x47)
+	while (tspacket[0] != 0x47)
 	{
 		if (printtsprob)
 		{
-			dbg_print(CCX_DMT_DUMPDEF,"\nProblem: No TS header mark (filepos=%lld). Received bytes:\n", ctx->past);
+			dbg_print(CCX_DMT_DUMPDEF, "\nProblem: No TS header mark (filepos=%lld). Received bytes:\n", ctx->past);
 			dump(CCX_DMT_DUMPDEF, tspacket, 4, 0, 0);
 
 			dbg_print(CCX_DMT_DUMPDEF, "Skip forward to the next TS header mark.\n");
@@ -237,16 +237,16 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		int tslen = 188;
 
 		// Check for 0x47 in the remaining bytes of tspacket
-		tstemp = (unsigned char *) memchr (tspacket+1, 0x47, tslen-1);
-		if (tstemp != NULL )
+		tstemp = (unsigned char *)memchr(tspacket + 1, 0x47, tslen - 1);
+		if (tstemp != NULL)
 		{
 			// Found it
-			int atpos = tstemp-tspacket;
+			int atpos = tstemp - tspacket;
 
-			memmove (tspacket,tstemp,(size_t)(tslen-atpos));
-			result = buffered_read(ctx, tspacket+(tslen-atpos), atpos);
-			ctx->past+=result;
-			if (result!=atpos)
+			memmove(tspacket, tstemp, (size_t)(tslen - atpos));
+			result = buffered_read(ctx, tspacket + (tslen - atpos), atpos);
+			ctx->past += result;
+			if (result != atpos)
 			{
 				mprint("Premature end of file!\n");
 				return CCX_EOF;
@@ -256,8 +256,8 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		{
 			// Read the next 188 bytes.
 			result = buffered_read(ctx, tspacket, tslen);
-			ctx->past+=result;
-			if (result!=tslen)
+			ctx->past += result;
+			if (result != tslen)
 			{
 				mprint("Premature end of file!\n");
 				return CCX_EOF;
@@ -270,23 +270,23 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 	// seem to happen when there's packet loss when processing a network
 	// stream. 
 	FILE *savepacket;
-	pid_t mypid=getpid();
+	pid_t mypid = getpid();
 	char spfn[1024];
-	sprintf (spfn,"/tmp/packets_%u.ts",(unsigned) mypid);
-	savepacket=fopen (spfn, "ab");
+	sprintf(spfn, "/tmp/packets_%u.ts", (unsigned)mypid);
+	savepacket = fopen(spfn, "ab");
 	if (savepacket)
 	{
-		fwrite (tspacket,188,1,savepacket);
-		fclose (savepacket);
+		fwrite(tspacket, 188, 1, savepacket);
+		fclose(savepacket);
 	}
 #endif
 
-	payload->transport_error = (tspacket[1]&0x80)>>7;
-	payload->pesstart =  (tspacket[1] & 0x40) >> 6;
+	payload->transport_error = (tspacket[1] & 0x80) >> 7;
+	payload->pesstart = (tspacket[1] & 0x40) >> 6;
 	// unsigned transport_priority = (tspacket[1]&0x20)>>5;
 	payload->pid = (((tspacket[1] & 0x1F) << 8) | tspacket[2]) & 0x1FFF;
 	// unsigned transport_scrambling_control = (tspacket[3]&0xC0)>>6;
-	adaptation_field_control = (tspacket[3]&0x30)>>4;
+	adaptation_field_control = (tspacket[3] & 0x30) >> 4;
 	payload->counter = tspacket[3] & 0xF;
 
 	if (payload->transport_error)
@@ -336,8 +336,8 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 		payload->has_random_access_indicator = 0;
 
 	dbg_print(CCX_DMT_PARSE, "TS pid: %d  PES start: %d  counter: %u  payload length: %u  adapt length: %d\n",
-			payload->pid, payload->start, payload->counter, payload->length,
-			(int) (adaptation_field_length));
+		payload->pid, payload->start, payload->counter, payload->length,
+		(int)(adaptation_field_length));
 
 	if (payload->length == 0)
 	{
@@ -349,20 +349,20 @@ int ts_readpacket(struct ccx_demuxer* ctx, struct ts_payload *payload)
 
 
 
-void look_for_caption_data (struct ccx_demuxer *ctx, struct ts_payload *payload)
+void look_for_caption_data(struct ccx_demuxer *ctx, struct ts_payload *payload)
 {
 	unsigned int i = 0;
 	// See if we find the usual CC data marker (GA94) in this packet.
-	if (payload->length < 4 || ctx->PIDs_seen[payload->pid]==3) // Second thing means we already inspected this PID
+	if (payload->length < 4 || ctx->PIDs_seen[payload->pid] == 3) // Second thing means we already inspected this PID
 		return;
 
 	for (i = 0; i < (payload->length - 3); i++)
 	{
-		if (payload->start[i]=='G' && payload->start[i+1]=='A' &&
-				payload->start[i+2]=='9' && payload->start[i+3]=='4')
+		if (payload->start[i] == 'G' && payload->start[i + 1] == 'A' &&
+			payload->start[i + 2] == '9' && payload->start[i + 3] == '4')
 		{
-			mprint ("PID %u seems to contain CEA-608 captions.\n", payload->pid);
-			ctx->PIDs_seen[payload->pid]=3;
+			mprint("PID %u seems to contain CEA-608 captions.\n", payload->pid);
+			ctx->PIDs_seen[payload->pid] = 3;
 			return;
 		}
 	}
@@ -376,7 +376,7 @@ void delete_demuxer_data_node_by_pid(struct demuxer_data **data, int pid)
 	ptr = *data;
 	while (ptr)
 	{
-		if(ptr->stream_pid == pid)
+		if (ptr->stream_pid == pid)
 		{
 			if (sptr == NULL)
 				*data = ptr->next_stream;
@@ -414,13 +414,13 @@ struct demuxer_data *search_or_alloc_demuxer_data_node_by_pid(struct demuxer_dat
 
 	do
 	{
-		if(ptr->stream_pid == pid)
+		if (ptr->stream_pid == pid)
 		{
 			return ptr;
 		}
 		sptr = ptr;
 		ptr = ptr->next_stream;
-	} while(ptr);
+	} while (ptr);
 
 	sptr->next_stream = alloc_demuxer_data();
 	ptr = sptr->next_stream;
@@ -438,37 +438,37 @@ struct demuxer_data *get_best_data(struct demuxer_data *data)
 {
 	struct demuxer_data *ret = NULL;
 	struct demuxer_data *ptr = data;
-	for(ptr = data; ptr; ptr = ptr->next_stream)
+	for (ptr = data; ptr; ptr = ptr->next_stream)
 	{
-		if(ptr->codec == CCX_CODEC_TELETEXT)
+		if (ptr->codec == CCX_CODEC_TELETEXT)
 		{
-			ret =  data;
+			ret = data;
 			goto end;
 		}
 	}
 
-	for(ptr = data; ptr; ptr = ptr->next_stream)
+	for (ptr = data; ptr; ptr = ptr->next_stream)
 	{
-		if(ptr->codec == CCX_CODEC_DVB)
+		if (ptr->codec == CCX_CODEC_DVB)
 		{
-			ret =  data;
+			ret = data;
 			goto end;
 		}
 	}
 
-	for(ptr = data; ptr; ptr = ptr->next_stream)
+	for (ptr = data; ptr; ptr = ptr->next_stream)
 	{
-		if(ptr->codec == CCX_CODEC_ISDB_CC)
+		if (ptr->codec == CCX_CODEC_ISDB_CC)
 		{
-			ret =  ptr;
+			ret = ptr;
 			goto end;
 		}
 	}
-	for(ptr = data; ptr; ptr = ptr->next_stream)
+	for (ptr = data; ptr; ptr = ptr->next_stream)
 	{
-		if(ptr->codec == CCX_CODEC_ATSC_CC)
+		if (ptr->codec == CCX_CODEC_ATSC_CC)
 		{
-			ret =  ptr;
+			ret = ptr;
 			goto end;
 		}
 	}
@@ -490,13 +490,13 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	ptr->codec = cinfo->codec;
 	ptr->bufferdatatype = get_buffer_type(cinfo);
 
-	if(!cinfo->capbuf || !cinfo->capbuflen)
+	if (!cinfo->capbuf || !cinfo->capbuflen)
 		return -1;
 
-	
+
 	if (ptr->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 	{
-		dump (CCX_DMT_GENERIC_NOTICES, cinfo->capbuf, cinfo->capbuflen, 0, 1);
+		dump(CCX_DMT_GENERIC_NOTICES, cinfo->capbuf, cinfo->capbuflen, 0, 1);
 		// Bogus data, so we return something
 		ptr->buffer[ptr->len++] = 0xFA;
 		ptr->buffer[ptr->len++] = 0x80;
@@ -505,8 +505,8 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	}
 	if (cinfo->codec == CCX_CODEC_TELETEXT)
 	{
-		memcpy(ptr->buffer+ ptr->len, cinfo->capbuf, cinfo->capbuflen);
-		ptr->len += cinfo->capbuflen; 
+		memcpy(ptr->buffer + ptr->len, cinfo->capbuf, cinfo->capbuflen);
+		ptr->len += cinfo->capbuflen;
 		return CCX_OK;
 	}
 	vpesdatalen = read_video_pes_header(ctx, ptr, cinfo->capbuf, &pesheaderlen, cinfo->capbuflen);
@@ -522,8 +522,8 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 
 	if (ccx_options.hauppauge_mode)
 	{
-		if (haup_capbuflen%12 != 0)
-			mprint ("Warning: Inconsistent Hauppage's buffer length\n");
+		if (haup_capbuflen % 12 != 0)
+			mprint("Warning: Inconsistent Hauppage's buffer length\n");
 		if (!haup_capbuflen)
 		{
 			// Do this so that we always return something until EOF. This will be skipped.
@@ -532,28 +532,28 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 			ptr->buffer[ptr->len++] = 0x80;
 		}
 
-		for (int i = 0; i<haup_capbuflen; i += 12)
+		for (int i = 0; i < haup_capbuflen; i += 12)
 		{
-			unsigned haup_stream_id = haup_capbuf[i+3];
-			if (haup_stream_id == 0xbd && haup_capbuf[i+4] == 0 && haup_capbuf[i+5] == 6 )
+			unsigned haup_stream_id = haup_capbuf[i + 3];
+			if (haup_stream_id == 0xbd && haup_capbuf[i + 4] == 0 && haup_capbuf[i + 5] == 6)
 			{
 				// Because I (CFS) don't have a lot of samples for this, for now I make sure everything is like the one I have:
 				// 12 bytes total length, stream id = 0xbd (Private non-video and non-audio), etc
 				if (2 > BUFSIZE - ptr->len)
 				{
 					fatal(CCX_COMMON_EXIT_BUG_BUG,
-							"Remaining buffer (%lld) not enough to hold the 3 Hauppage bytes.\n"
-							"Please send bug report!",
-							BUFSIZE - ptr->len);
+						"Remaining buffer (%lld) not enough to hold the 3 Hauppage bytes.\n"
+						"Please send bug report!",
+						BUFSIZE - ptr->len);
 				}
-				if (haup_capbuf[i+9]==1 || haup_capbuf[i+9]==2) // Field match. // TODO: If extract==12 this won't work!
+				if (haup_capbuf[i + 9] == 1 || haup_capbuf[i + 9] == 2) // Field match. // TODO: If extract==12 this won't work!
 				{
-					if (haup_capbuf[i+9]==1)
-						ptr->buffer[ptr->len++]=4; // Field 1 + cc_valid=1
+					if (haup_capbuf[i + 9] == 1)
+						ptr->buffer[ptr->len++] = 4; // Field 1 + cc_valid=1
 					else
-						ptr->buffer[ptr->len++]=5; // Field 2 + cc_valid=1
-					ptr->buffer[ptr->len++]=haup_capbuf[i+10];
-					ptr->buffer[ptr->len++]=haup_capbuf[i+11];
+						ptr->buffer[ptr->len++] = 5; // Field 2 + cc_valid=1
+					ptr->buffer[ptr->len++] = haup_capbuf[i + 10];
+					ptr->buffer[ptr->len++] = haup_capbuf[i + 11];
 				}
 				/*
 				   if (inbuf>1024) // Just a way to send the bytes to the decoder from time to time, otherwise the buffer will fill up.
@@ -562,14 +562,14 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 				   continue; */
 			}
 		}
-		haup_capbuflen=0;
+		haup_capbuflen = 0;
 	}
 	databuf = cinfo->capbuf + pesheaderlen;
 	databuflen = cinfo->capbuflen - pesheaderlen;
 
 	if (!ccx_options.hauppauge_mode) // in Haup mode the buffer is filled somewhere else
 	{
-		if(ptr->len + databuflen >= BUFSIZE)
+		if (ptr->len + databuflen >= BUFSIZE)
 		{
 			fatal(CCX_COMMON_EXIT_BUG_BUG,
 				"PES data packet (%ld) larger than remaining buffer (%lld).\n"
@@ -577,16 +577,16 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 				databuflen, BUFSIZE - ptr->len);
 			return CCX_EAGAIN;
 		}
-		memcpy(ptr->buffer+ ptr->len, databuf, databuflen);
+		memcpy(ptr->buffer + ptr->len, databuf, databuflen);
 		ptr->len += databuflen;
 	}
-	
+
 	return CCX_OK;
 }
 
 void cinfo_cremation(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
-	struct cap_info* iter;
+	struct cap_info *iter;
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		copy_capbuf_demux_data(ctx, data, iter);
@@ -598,16 +598,16 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 {
 	int newcapbuflen;
 
-	if(cinfo->ignore == CCX_TRUE && 
+	if (cinfo->ignore == CCX_TRUE &&
 		(cinfo->stream != CCX_STREAM_TYPE_VIDEO_MPEG2 || !ccx_options.analyze_video_stream))
 	{
 		return CCX_OK;
 	}
 
 	//Verify PES before copy to capbuf
-	if(cinfo->capbuflen == 0 )
+	if (cinfo->capbuflen == 0)
 	{
-		if(payload->start[0] != 0x00 || payload->start[1] != 0x00 ||
+		if (payload->start[0] != 0x00 || payload->start[1] != 0x00 ||
 			payload->start[2] != 0x01)
 		{
 			mprint("Notice: Missing PES header\n");
@@ -620,8 +620,8 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 
 	// copy payload to capbuf
 	newcapbuflen = cinfo->capbuflen + payload->length;
-	if ( newcapbuflen > cinfo->capbufsize) {
-		cinfo->capbuf = (unsigned char*)realloc(cinfo->capbuf, newcapbuflen);
+	if (newcapbuflen > cinfo->capbufsize) {
+		cinfo->capbuf = (unsigned char *)realloc(cinfo->capbuf, newcapbuflen);
 		if (!cinfo->capbuf)
 			return -1;
 		cinfo->capbufsize = newcapbuflen;
@@ -635,7 +635,7 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 // The data is read into capbuf and the function returns the number of
 // bytes read.
 
-uint64_t get_pts(uint8_t* buffer)
+uint64_t get_pts(uint8_t *buffer)
 {
 	uint64_t pes_prefix;
 	uint8_t optional_pes_header_included = NO;
@@ -698,12 +698,12 @@ uint64_t get_video_min_pts(struct ccx_demuxer *context)
 			// Packetized Elementary Stream (PES) 32-bit start code
 			uint64_t pes_prefix = (payload.start[0] << 16) | (payload.start[1] << 8) | payload.start[2];
 			uint8_t pes_stream_id = payload.start[3];
-			
+
 			if (pes_prefix == 0x000001)
-				if(pes_stream_id >= 0xe0 && pes_stream_id <= 0xef)
+				if (pes_stream_id >= 0xe0 && pes_stream_id <= 0xef)
 					pts = get_pts(payload.start);
 		}
-		
+
 		if (num_of_remembered_pts >= 1 && payload.has_random_access_indicator)
 		{
 			got_pts = 1;
@@ -714,13 +714,13 @@ uint64_t get_video_min_pts(struct ccx_demuxer *context)
 		{
 			num_of_remembered_pts++;
 			pts_array = realloc(pts_array, num_of_remembered_pts * sizeof(uint64_t));
-			((uint64_t*)pts_array)[num_of_remembered_pts - 1] = pts;
+			((uint64_t *)pts_array)[num_of_remembered_pts - 1] = pts;
 		}
 
 	} while (!got_pts);
 
 	//search for smallest pts
-	uint64_t* p = pts_array;
+	uint64_t *p = pts_array;
 	for (int i = 0; i < num_of_remembered_pts; i++)
 	{
 		if (*p < min_pts)
@@ -737,7 +737,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
 	int gotpes = 0;
 	long pespcount = 0; // count packets in PES with captions
-	long pcount=0; // count all packets until PES is complete
+	long pcount = 0; // count all packets until PES is complete
 	int packet_analysis_mode = 0; // If we can't find any packet with CC based from PMT, look for captions in all packets
 	int ret = CCX_EAGAIN;
 	struct program_info *pinfo = NULL;
@@ -756,7 +756,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 		// Exit the loop at EOF
 		ret = ts_readpacket(ctx, &payload);
-		if ( ret != CCX_OK)
+		if (ret != CCX_OK)
 			break;
 
 		// Skip damaged packets, they could do more harm than good
@@ -768,23 +768,23 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		}
 
 		// Check for PAT
-		if( payload.pid == 0) // This is a PAT
+		if (payload.pid == 0) // This is a PAT
 		{
 			ts_buffer_psi_packet(ctx);
-			if(ctx->PID_buffers[payload.pid]!=NULL && ctx->PID_buffers[payload.pid]->buffer_length>0)
+			if (ctx->PID_buffers[payload.pid] != NULL && ctx->PID_buffers[payload.pid]->buffer_length > 0)
 				parse_PAT(ctx); // Returns 1 if there was some data in the buffer already
 			continue;
 		}
 
-		if( ccx_options.xmltv >= 1 && payload.pid == 0x11) {// This is SDT (or BAT)
+		if (ccx_options.xmltv >= 1 && payload.pid == 0x11) {// This is SDT (or BAT)
 			ts_buffer_psi_packet(ctx);
-			if(ctx->PID_buffers[payload.pid]!=NULL && ctx->PID_buffers[payload.pid]->buffer_length>0)
+			if (ctx->PID_buffers[payload.pid] != NULL && ctx->PID_buffers[payload.pid]->buffer_length > 0)
 				parse_SDT(ctx);
 		}
 
-		if( ccx_options.xmltv >= 1 && payload.pid == 0x12) // This is DVB EIT
+		if (ccx_options.xmltv >= 1 && payload.pid == 0x12) // This is DVB EIT
 			parse_EPG_packet(ctx->parent);
-		if( ccx_options.xmltv >= 1 && payload.pid >= 0x1000) // This may be ATSC EPG packet
+		if (ccx_options.xmltv >= 1 && payload.pid >= 0x1000) // This may be ATSC EPG packet
 			parse_EPG_packet(ctx->parent);
 
 
@@ -795,7 +795,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 				payload.have_pcr)
 			{
 				ctx->last_global_timestamp = ctx->global_timestamp;
-				ctx->global_timestamp = (uint32_t) payload.pcr / 90;
+				ctx->global_timestamp = (uint32_t)payload.pcr / 90;
 				if (!ctx->global_timestamp_inited)
 				{
 					ctx->min_global_timestamp = ctx->global_timestamp;
@@ -811,18 +811,18 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			if (ctx->pinfo[j].pid == payload.pid)
 			{
 				if (!ctx->PIDs_seen[payload.pid])
-					dbg_print(CCX_DMT_PAT, "This PID (%u) is a PMT for program %u.\n",payload.pid, ctx->pinfo[j].program_number);
+					dbg_print(CCX_DMT_PAT, "This PID (%u) is a PMT for program %u.\n", payload.pid, ctx->pinfo[j].program_number);
 				pinfo = ctx->pinfo + j;
 				break;
 			}
 		}
 		if (j != ctx->nb_program)
 		{
-			ctx->PIDs_seen[payload.pid]=2;
+			ctx->PIDs_seen[payload.pid] = 2;
 			ts_buffer_psi_packet(ctx);
-			if(ctx->PID_buffers[payload.pid]!=NULL && ctx->PID_buffers[payload.pid]->buffer_length>0)
- 				if(parse_PMT(ctx, ctx->PID_buffers[payload.pid]->buffer+1, ctx->PID_buffers[payload.pid]->buffer_length-1, pinfo))
-					gotpes=1; // Signals that something changed and that we must flush the buffer
+			if (ctx->PID_buffers[payload.pid] != NULL && ctx->PID_buffers[payload.pid]->buffer_length > 0)
+				if (parse_PMT(ctx, ctx->PID_buffers[payload.pid]->buffer + 1, ctx->PID_buffers[payload.pid]->buffer_length - 1, pinfo))
+					gotpes = 1; // Signals that something changed and that we must flush the buffer
 			continue;
 		}
 
@@ -834,12 +834,12 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 					dbg_print(CCX_DMT_PARSE, "\nNew PID found: %u (%s), belongs to program: %u\n", payload.pid,
 						desc[ctx->PIDs_programs[payload.pid]->printable_stream_type],
 						ctx->PIDs_programs[payload.pid]->program_number);
-					ctx->PIDs_seen[payload.pid]=2;
+					ctx->PIDs_seen[payload.pid] = 2;
 				}
 				else
 				{
 					dbg_print(CCX_DMT_PARSE, "\nNew PID found: %u, program number still unknown\n", payload.pid);
-					ctx->PIDs_seen[payload.pid]=1;
+					ctx->PIDs_seen[payload.pid] = 1;
 				}
 				ctx->have_PIDs[ctx->num_of_PIDs] = payload.pid;
 				ctx->num_of_PIDs++;
@@ -850,8 +850,8 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 					dbg_print(CCX_DMT_PARSE, "\nProgram for PID: %u (previously unknown) is: %u (%s)\n", payload.pid,
 						ctx->PIDs_programs[payload.pid]->program_number,
 						desc[ctx->PIDs_programs[payload.pid]->printable_stream_type]
-						);
-					ctx->PIDs_seen[payload.pid]=2;
+					);
+					ctx->PIDs_seen[payload.pid] = 2;
 				}
 				break;
 			case 2: // Already seen and reported with correct program
@@ -887,25 +887,25 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 		if (payload.pid == 8191) // Null packet
 			continue;
-		if (payload.pid==1003 && !ctx->hauppauge_warning_shown && !ccx_options.hauppauge_mode)
+		if (payload.pid == 1003 && !ctx->hauppauge_warning_shown && !ccx_options.hauppauge_mode)
 		{
 			// TODO: Change this very weak test for something more decent such as size.
-			mprint ("\n\nNote: This TS could be a recording from a Hauppage card. If no captions are detected, try --hauppauge\n\n");
-			ctx->hauppauge_warning_shown=1;
+			mprint("\n\nNote: This TS could be a recording from a Hauppage card. If no captions are detected, try --hauppauge\n\n");
+			ctx->hauppauge_warning_shown = 1;
 		}
 
-		if (ccx_options.hauppauge_mode && payload.pid==HAUPPAGE_CCPID)
+		if (ccx_options.hauppauge_mode && payload.pid == HAUPPAGE_CCPID)
 		{
 			// Haup packets processed separately, because we can't mix payloads. So they go in their own buffer
 			// copy payload to capbuf
 			int haup_newcapbuflen = haup_capbuflen + payload.length;
-			if ( haup_newcapbuflen > haup_capbufsize) {
-				haup_capbuf = (unsigned char*)realloc(haup_capbuf, haup_newcapbuflen);
+			if (haup_newcapbuflen > haup_capbufsize) {
+				haup_capbuf = (unsigned char *)realloc(haup_capbuf, haup_newcapbuflen);
 				if (!haup_capbuf)
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to store hauppauge packets");
 				haup_capbufsize = haup_newcapbuflen;
 			}
-			memcpy(haup_capbuf+haup_capbuflen, payload.start, payload.length);
+			memcpy(haup_capbuf + haup_capbuflen, payload.start, payload.length);
 			haup_capbuflen = haup_newcapbuflen;
 
 		}
@@ -913,40 +913,40 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		// Skip packets with no payload.  This also fixes the problems
 		// with the continuity counter not being incremented in empty
 		// packets.
-		if ( !payload.length )
+		if (!payload.length)
 		{
-				dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - no payload.\n",
-						payload.pid);
-				continue;
+			dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - no payload.\n",
+				payload.pid);
+			continue;
 		}
 
 		cinfo = get_cinfo(ctx, payload.pid);
-		if(cinfo == NULL)
+		if (cinfo == NULL)
 		{
 			if (!packet_analysis_mode)
 				dbg_print(CCX_DMT_PARSE, "Packet (pid %u) skipped - no stream with captions identified yet.\n",
-					   payload.pid);
+					payload.pid);
 			else
-				look_for_caption_data (ctx, &payload);
+				look_for_caption_data(ctx, &payload);
 			continue;
 		}
 		else if (cinfo->ignore == CCX_TRUE &&
 			(cinfo->stream != CCX_STREAM_TYPE_VIDEO_MPEG2 || !ccx_options.analyze_video_stream))
 		{
-			if(cinfo->codec_private_data)
+			if (cinfo->codec_private_data)
 			{
-				switch(cinfo->codec)
+				switch (cinfo->codec)
 				{
-				case CCX_CODEC_TELETEXT:
-					telxcc_close(&cinfo->codec_private_data, NULL);
-					break;
-				case CCX_CODEC_DVB:
-					dvbsub_close_decoder(&cinfo->codec_private_data);
-					break;
-				case CCX_CODEC_ISDB_CC:
-					delete_isdb_decoder(&cinfo->codec_private_data);
-				default:
-					break;
+					case CCX_CODEC_TELETEXT:
+						telxcc_close(&cinfo->codec_private_data, NULL);
+						break;
+					case CCX_CODEC_DVB:
+						dvbsub_close_decoder(&cinfo->codec_private_data);
+						break;
+					case CCX_CODEC_ISDB_CC:
+						delete_isdb_decoder(&cinfo->codec_private_data);
+					default:
+						break;
 				}
 				cinfo->codec_private_data = NULL;
 			}
@@ -969,14 +969,14 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		}
 
 		// Discard packets when no pesstart was found.
-		if ( !cinfo->saw_pesstart )
+		if (!cinfo->saw_pesstart)
 			continue;
 
 
-		if ( (cinfo->prev_counter == 15 ? 0 : cinfo->prev_counter + 1) != payload.counter )
+		if ((cinfo->prev_counter == 15 ? 0 : cinfo->prev_counter + 1) != payload.counter)
 		{
 			mprint("TS continuity counter not incremented prev/curr %u/%u\n",
-					cinfo->prev_counter, payload.counter);
+				cinfo->prev_counter, payload.counter);
 		}
 		cinfo->prev_counter = payload.counter;
 
@@ -984,7 +984,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		if (payload.pesstart && cinfo->capbuflen > 0)
 		{
 			dbg_print(CCX_DMT_PARSE, "\nPES finished (%ld bytes/%ld PES packets/%ld total packets)\n",
-					cinfo->capbuflen, pespcount, pcount);
+				cinfo->capbuflen, pespcount, pcount);
 
 			// Keep the data from capbuf to be worked on
 			ret = copy_capbuf_demux_data(ctx, data, cinfo);
@@ -993,17 +993,16 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		}
 
 		copy_payload_to_capbuf(cinfo, &payload);
-		if(ret < 0)
+		if (ret < 0)
 		{
-			if(errno == EINVAL)
+			if (errno == EINVAL)
 				continue;
 			else
 				break;
 		}
 
 		pespcount++;
-	}
-	while( !gotpes ); // gotpes==1 never arrives here because of the breaks
+	} while (!gotpes); // gotpes==1 never arrives here because of the breaks
 
 	for (int i = 0; i < ctx->nb_program; i++)
 	{
@@ -1053,7 +1052,7 @@ int ts_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
 
 	do {
 		ret = ts_readstream(ctx->demux_ctx, data);
-	} while(ret == CCX_EAGAIN);
+	} while (ret == CCX_EAGAIN);
 
 	return ret;
 }

@@ -21,7 +21,7 @@ extern int in_xds_mode;
 
 /* This function returns a FTS that is guaranteed to be at least 1 ms later than the end of the previous screen. It shouldn't be needed
    obviously but it guarantees there's no timing overlap */
-LLONG get_visible_start (struct ccx_common_timing_ctx *ctx, int current_field)
+LLONG get_visible_start(struct ccx_common_timing_ctx *ctx, int current_field)
 {
 	LLONG fts = get_fts(ctx, current_field);
 	if (fts <= ctx->minimum_fts)
@@ -31,7 +31,7 @@ LLONG get_visible_start (struct ccx_common_timing_ctx *ctx, int current_field)
 }
 
 /* This function returns the current FTS and saves it so it can be used by ctxget_visible_start */
-LLONG get_visible_end (struct ccx_common_timing_ctx *ctx, int current_field)
+LLONG get_visible_end(struct ccx_common_timing_ctx *ctx, int current_field)
 {
 	LLONG fts = get_fts(ctx, current_field);
 	if (fts > ctx->minimum_fts)
@@ -40,18 +40,18 @@ LLONG get_visible_end (struct ccx_common_timing_ctx *ctx, int current_field)
 	return fts;
 }
 
-int process_cc_data (struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count, struct cc_subtitle *sub)
+int process_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count, struct cc_subtitle *sub)
 {
 	int ret = -1;
 
-	if( dec_ctx->write_format == CCX_OF_MCC ) {
-        mcc_encode_cc_data(enc_ctx, dec_ctx, cc_data, cc_count);
-        return 0;
-    }
+	if (dec_ctx->write_format == CCX_OF_MCC) {
+		mcc_encode_cc_data(enc_ctx, dec_ctx, cc_data, cc_count);
+		return 0;
+	}
 
 	for (int j = 0; j < cc_count * 3; j = j + 3)
 	{
-		if (validate_cc_data_pair( cc_data + j ) )
+		if (validate_cc_data_pair(cc_data + j))
 			continue;
 		ret = do_cb(dec_ctx, cc_data + j, sub);
 		if (ret == 1) //1 means success here
@@ -59,15 +59,15 @@ int process_cc_data (struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx,
 	}
 	return ret;
 }
-int validate_cc_data_pair (unsigned char *cc_data_pair)
+int validate_cc_data_pair(unsigned char *cc_data_pair)
 {
-	unsigned char cc_valid = (*cc_data_pair & 4) >>2;
+	unsigned char cc_valid = (*cc_data_pair & 4) >> 2;
 	unsigned char cc_type = *cc_data_pair & 3;
 
 	if (!cc_valid)
 		return -1;
 
-	if (cc_type==0 || cc_type==1)
+	if (cc_type == 0 || cc_type == 1)
 	{
 		// For EIA-608 data we verify parity.
 		if (!cc608_parity_table[cc_data_pair[2]])
@@ -79,38 +79,38 @@ int validate_cc_data_pair (unsigned char *cc_data_pair)
 		{
 			// The first byte doesn't pass parity, we replace it with a solid blank
 			// and process the pair.
-			cc_data_pair[1]=0x7F;
+			cc_data_pair[1] = 0x7F;
 		}
 	}
 	return 0;
 
 }
-int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle *sub)
+int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle *sub)
 {
-	unsigned char cc_valid = (*cc_block & 4) >>2;
+	unsigned char cc_valid = (*cc_block & 4) >> 2;
 	unsigned char cc_type = *cc_block & 3;
 
 	int timeok = 1;
 
-	if ( ctx->fix_padding
-		&& cc_valid==0 && cc_type <= 1 // Only fix NTSC packets
-		&& cc_block[1]==0 && cc_block[2]==0 )
+	if (ctx->fix_padding
+		&& cc_valid == 0 && cc_type <= 1 // Only fix NTSC packets
+		&& cc_block[1] == 0 && cc_block[2] == 0)
 	{
 		/* Padding */
-		cc_valid=1;
-		cc_block[1]=0x80;
-		cc_block[2]=0x80;
+		cc_valid = 1;
+		cc_block[1] = 0x80;
+		cc_block[2] = 0x80;
 	}
 
-	if (ctx->write_format!=CCX_OF_RAW && // In raw we cannot skip padding because timing depends on it
-		ctx->write_format!=CCX_OF_DVDRAW &&
-		(cc_block[0]==0xFA || cc_block[0]==0xFC || cc_block[0]==0xFD )
-		&& (cc_block[1]&0x7F)==0 && (cc_block[2]&0x7F)==0) // CFS: Skip non-data, makes debugging harder.
+	if (ctx->write_format != CCX_OF_RAW && // In raw we cannot skip padding because timing depends on it
+		ctx->write_format != CCX_OF_DVDRAW &&
+		(cc_block[0] == 0xFA || cc_block[0] == 0xFC || cc_block[0] == 0xFD)
+		&& (cc_block[1] & 0x7F) == 0 && (cc_block[2] & 0x7F) == 0) // CFS: Skip non-data, makes debugging harder.
 		return 1;
 
 	// Print raw data with FTS.
-	dbg_print(CCX_DMT_CBRAW, "%s   %d   %02X:%c%c:%02X", print_mstime_static(ctx->timing->fts_now + ctx->timing->fts_global),in_xds_mode,
-			cc_block[0], cc_block[1]&0x7f,cc_block[2]&0x7f, cc_block[2]);
+	dbg_print(CCX_DMT_CBRAW, "%s   %d   %02X:%c%c:%02X", print_mstime_static(ctx->timing->fts_now + ctx->timing->fts_global), in_xds_mode,
+		cc_block[0], cc_block[1] & 0x7f, cc_block[2] & 0x7f, cc_block[2]);
 
 	/* In theory the writercwtdata() function could return early and not
 	 * go through the 608/708 cases below.  We do that to get accurate
@@ -118,55 +118,55 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 	 * Note that printdata() and dtvcc_process_data() must not be called for
 	 * the CCX_OF_RCWT case. */
 
-	if (cc_valid || cc_type==3)
+	if (cc_valid || cc_type == 3)
 	{
 		ctx->cc_stats[cc_type]++;
 
 		switch (cc_type)
 		{
 			case 0:
-				dbg_print(CCX_DMT_CBRAW, "    %s   ..   ..\n",  debug_608_to_ASC( cc_block, 0));
+				dbg_print(CCX_DMT_CBRAW, "    %s   ..   ..\n", debug_608_to_ASC(cc_block, 0));
 
 				ctx->current_field = 1;
 				ctx->saw_caption_block = 1;
 
 				if (ctx->extraction_start.set &&
-						get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
+					get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
 					timeok = 0;
 				if (ctx->extraction_end.set &&
-						get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
+					get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
 				{
 					timeok = 0;
-					ctx->processed_enough=1;
+					ctx->processed_enough = 1;
 				}
 				if (timeok)
 				{
-					if(ctx->write_format!=CCX_OF_RCWT)
-						printdata (ctx, cc_block+1,2,0,0, sub);
+					if (ctx->write_format != CCX_OF_RCWT)
+						printdata(ctx, cc_block + 1, 2, 0, 0, sub);
 					else
 						writercwtdata(ctx, cc_block, sub);
 				}
 				cb_field1++;
 				break;
 			case 1:
-				dbg_print(CCX_DMT_CBRAW, "    ..   %s   ..\n",  debug_608_to_ASC( cc_block, 1));
+				dbg_print(CCX_DMT_CBRAW, "    ..   %s   ..\n", debug_608_to_ASC(cc_block, 1));
 
 				ctx->current_field = 2;
 				ctx->saw_caption_block = 1;
 
 				if (ctx->extraction_start.set &&
-						get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
+					get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
 					timeok = 0;
 				if (ctx->extraction_end.set &&
-						get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
+					get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
 				{
 					timeok = 0;
-					ctx->processed_enough=1;
+					ctx->processed_enough = 1;
 				}
 				if (timeok)
 				{
-					if(ctx->write_format!=CCX_OF_RCWT)
-						printdata (ctx, 0,0,cc_block+1,2, sub);
+					if (ctx->write_format != CCX_OF_RCWT)
+						printdata(ctx, 0, 0, cc_block + 1, 2, sub);
 					else
 						writercwtdata(ctx, cc_block, sub);
 				}
@@ -182,23 +182,23 @@ int do_cb (struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitl
 				ctx->current_field = 3;
 
 				if (ctx->extraction_start.set &&
-						get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
+					get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
 					timeok = 0;
 				if (ctx->extraction_end.set &&
-						get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
+					get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
 				{
 					timeok = 0;
-					ctx->processed_enough=1;
+					ctx->processed_enough = 1;
 				}
 				char temp[4];
-				temp[0]=cc_valid;
-				temp[1]=cc_type;
-				temp[2]=cc_block[1];
-				temp[3]=cc_block[2];
+				temp[0] = cc_valid;
+				temp[1] = cc_type;
+				temp[2] = cc_block[1];
+				temp[3] = cc_block[2];
 				if (timeok)
 				{
 					if (ctx->write_format != CCX_OF_RCWT)
-						ccx_dtvcc_process_data(ctx, (const unsigned char *) temp, 4);
+						ccx_dtvcc_process_data(ctx, (const unsigned char *)temp, 4);
 					else
 						writercwtdata(ctx, cc_block, sub);
 				}
@@ -232,12 +232,12 @@ void dinit_cc_decode(struct lib_cc_decode **ctx)
 	freep(ctx);
 }
 
-struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *setting)
+struct lib_cc_decode *init_cc_decode(struct ccx_decoders_common_settings_t *setting)
 {
 	struct lib_cc_decode *ctx = NULL;
 
 	ctx = malloc(sizeof(struct lib_cc_decode));
-	if(!ctx)
+	if (!ctx)
 		return NULL;
 
 	ctx->avc_ctx = init_avc();
@@ -254,27 +254,27 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->dtvcc = ccx_dtvcc_init(setting->settings_dtvcc);
 	ctx->dtvcc->is_active = setting->settings_dtvcc->enabled;
 
-	if(setting->codec == CCX_CODEC_ATSC_CC)
+	if (setting->codec == CCX_CODEC_ATSC_CC)
 	{
 		// Prepare 608 context
 		ctx->context_cc608_field_1 = ccx_decoder_608_init_library(
-				setting->settings_608,
-				setting->cc_channel,
-				1,
-				&ctx->processed_enough,
-				setting->cc_to_stdout,
-				setting->output_format,
-				ctx->timing
-				);
+			setting->settings_608,
+			setting->cc_channel,
+			1,
+			&ctx->processed_enough,
+			setting->cc_to_stdout,
+			setting->output_format,
+			ctx->timing
+		);
 		ctx->context_cc608_field_2 = ccx_decoder_608_init_library(
-				setting->settings_608,
-				setting->cc_channel,
-				2,
-				&ctx->processed_enough,
-				setting->cc_to_stdout,
-				setting->output_format,
-				ctx->timing
-				);
+			setting->settings_608,
+			setting->cc_channel,
+			2,
+			&ctx->processed_enough,
+			setting->cc_to_stdout,
+			setting->output_format,
+			ctx->timing
+		);
 	}
 	else
 	{
@@ -284,8 +284,8 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->current_field = 1;
 	ctx->private_data = setting->private_data;
 	ctx->fix_padding = setting->fix_padding;
-	ctx->write_format =  setting->output_format;
-	ctx->subs_delay =  setting->subs_delay;
+	ctx->write_format = setting->output_format;
+	ctx->subs_delay = setting->subs_delay;
 	ctx->extract = setting->extract;
 	ctx->fullbin = setting->fullbin;
 	ctx->hauppauge_mode = setting->hauppauge_mode;
@@ -295,19 +295,19 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 	ctx->max_gop_length = 0;
 	ctx->has_ccdata_buffered = 0;
 	ctx->in_bufferdatatype = CCX_UNKNOWN;
-	ctx->frames_since_last_gop  = 0;
-	ctx->total_pulldownfields   = 0;
-	ctx->total_pulldownframes   = 0;
-	ctx->stat_numuserheaders    = 0;
-	ctx->stat_dvdccheaders      = 0;
-	ctx->stat_scte20ccheaders   = 0;
+	ctx->frames_since_last_gop = 0;
+	ctx->total_pulldownfields = 0;
+	ctx->total_pulldownframes = 0;
+	ctx->stat_numuserheaders = 0;
+	ctx->stat_dvdccheaders = 0;
+	ctx->stat_scte20ccheaders = 0;
 	ctx->stat_replay5000headers = 0;
 	ctx->stat_replay4000headers = 0;
-	ctx->stat_dishheaders       = 0;
-	ctx->stat_hdtv              = 0;
-	ctx->stat_divicom           = 0;
+	ctx->stat_dishheaders = 0;
+	ctx->stat_hdtv = 0;
+	ctx->stat_divicom = 0;
 	ctx->false_pict_header = 0;
-	ctx->is_alloc=0;
+	ctx->is_alloc = 0;
 
 	memcpy(&ctx->extraction_start, &setting->extraction_start, sizeof(struct ccx_boundary_time));
 	memcpy(&ctx->extraction_end, &setting->extraction_end, sizeof(struct ccx_boundary_time));
@@ -346,7 +346,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 		}
 	}
 
-	memset (&ctx->dec_sub, 0,sizeof(ctx->dec_sub));
+	memset(&ctx->dec_sub, 0, sizeof(ctx->dec_sub));
 
 	// Initialize HDTV caption buffer
 	init_hdcc(ctx);
@@ -379,7 +379,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 	ctx->anchor_seq_number = -1;
 	// Init XDS buffers
-	if(setting->output_format!=CCX_OF_TRANSCRIPT)
+	if (setting->output_format != CCX_OF_TRANSCRIPT)
 	{
 		setting->xds_write_to_file = 0;
 	}
@@ -392,7 +392,7 @@ struct lib_cc_decode* init_cc_decode (struct ccx_decoders_common_settings_t *set
 
 void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 {
-	if(ctx->codec == CCX_CODEC_ATSC_CC)
+	if (ctx->codec == CCX_CODEC_ATSC_CC)
 	{
 		if (ctx->extract != 2)
 		{
@@ -409,10 +409,10 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 			{
 				flush_608_context(ctx->context_cc608_field_1, sub);
 			}
-			else if(ctx->write_format == CCX_OF_RCWT)
+			else if (ctx->write_format == CCX_OF_RCWT)
 			{
 				// Write last header and data
-				writercwtdata (ctx, NULL, sub);
+				writercwtdata(ctx, NULL, sub);
 			}
 		}
 		if (ctx->extract != 1)
@@ -448,7 +448,7 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 		}
 	}
 }
-struct encoder_ctx* copy_encoder_context(struct encoder_ctx *ctx)
+struct encoder_ctx *copy_encoder_context(struct encoder_ctx *ctx)
 {
 	struct encoder_ctx *ctx_copy = NULL;
 	ctx_copy = malloc(sizeof(struct encoder_ctx));
@@ -496,7 +496,7 @@ struct encoder_ctx* copy_encoder_context(struct encoder_ctx *ctx)
 	}
 	return ctx_copy;
 }
-struct lib_cc_decode* copy_decoder_context(struct lib_cc_decode *ctx)
+struct lib_cc_decode *copy_decoder_context(struct lib_cc_decode *ctx)
 {
 	struct lib_cc_decode *ctx_copy = NULL;
 	ctx_copy = malloc(sizeof(struct lib_cc_decode));
@@ -540,7 +540,7 @@ struct lib_cc_decode* copy_decoder_context(struct lib_cc_decode *ctx)
 	}
 	return ctx_copy;
 }
-struct cc_subtitle* copy_subtitle(struct cc_subtitle *sub)
+struct cc_subtitle *copy_subtitle(struct cc_subtitle *sub)
 {
 	struct cc_subtitle *sub_copy = NULL;
 	sub_copy = malloc(sizeof(struct cc_subtitle));
@@ -568,7 +568,7 @@ void free_encoder_context(struct encoder_ctx *ctx)
 	freep(&ctx->start_credits_text);
 	freep(&ctx->end_credits_text);
 	freep(&ctx->prev);
-    freep(&ctx->last_string);
+	freep(&ctx->last_string);
 	freep(&ctx);
 }
 void free_decoder_context(struct lib_cc_decode *ctx)
@@ -586,14 +586,14 @@ void free_decoder_context(struct lib_cc_decode *ctx)
 	freep(&ctx->vbi_decoder);
 	freep(&ctx);
 }
-void free_subtitle(struct cc_subtitle* sub)
+void free_subtitle(struct cc_subtitle *sub)
 {
 	if (!sub)
 		return;
 
 	if (sub->datatype == CC_DATATYPE_DVB)
 	{
-		struct cc_bitmap *bitmap=(struct cc_bitmap *) sub->data;
+		struct cc_bitmap *bitmap = (struct cc_bitmap *) sub->data;
 		if (bitmap)
 		{
 			freep(&bitmap->data0);

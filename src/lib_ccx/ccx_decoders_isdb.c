@@ -8,15 +8,15 @@
 //#define COMMAND_DEBUG
 
 #ifdef DEBUG
-	#define isdb_log( format, ... ) mprint(format, ##__VA_ARGS__ )
+#define isdb_log( format, ... ) mprint(format, ##__VA_ARGS__ )
 #else
-	#define isdb_log( ...) ((void)0)
+#define isdb_log( ...) ((void)0)
 #endif
 
 #ifdef COMMAND_DEBUG
-	#define isdb_command_log( format, ... ) mprint(format, ##__VA_ARGS__ )
+#define isdb_command_log( format, ... ) mprint(format, ##__VA_ARGS__ )
 #else
-	#define isdb_command_log( format, ... )  ((void)0)
+#define isdb_command_log( format, ... )  ((void)0)
 #endif
 
 enum writing_format
@@ -96,9 +96,9 @@ enum csi_command
 enum isdb_CC_composition
 {
 	ISDB_CC_NONE = 0,
-	ISDB_CC_AND  = 2,
-	ISDB_CC_OR   = 3,
-	ISDB_CC_XOR  = 4,
+	ISDB_CC_AND = 2,
+	ISDB_CC_OR = 3,
+	ISDB_CC_XOR = 4,
 };
 
 enum color
@@ -176,8 +176,8 @@ static rgba Default_clut[128] =
 	// 65-127 are calculated later.
 };
 
-struct ISDBPos{
-	int x,y;
+struct ISDBPos {
+	int x, y;
 };
 
 struct ISDBText
@@ -234,7 +234,7 @@ typedef struct {
 	 * colour near to foreground colour is half foreground colour and colour near to
 	 * background colour is half background colour.
 	 */
-	//Half foreground color
+	 //Half foreground color
 	uint32_t hfg_color;
 	//Half background color
 	uint32_t hbg_color;
@@ -253,7 +253,7 @@ typedef struct
 	/**
 	 * List of string for each row there
 	 * TODO test with vertical string
-         */
+		 */
 	struct list_head text_list_head;
 	/**
 	 * Keep second list to confirm that string does not get repeated
@@ -319,7 +319,7 @@ void *init_isdb_decoder(void)
 	ISDBSubContext *ctx;
 
 	ctx = malloc(sizeof(ISDBSubContext));
-	if(!ctx)
+	if (!ctx)
 		return NULL;
 
 	INIT_LIST_HEAD(&ctx->text_list_head);
@@ -336,7 +336,7 @@ void *init_isdb_decoder(void)
  * Single Character on screen can take space of 6 byte in UTF-8
  * so size of text buffer should not be on the basis of character
  * that can be placed on screen.
- * And scale and size of font can change any time so knowing 
+ * And scale and size of font can change any time so knowing
  * buffer length before allocating is difficult task
  */
 static struct ISDBText *allocate_text_node(ISDBSubLayout *ls)
@@ -344,7 +344,7 @@ static struct ISDBText *allocate_text_node(ISDBSubLayout *ls)
 	struct ISDBText *text = NULL;
 
 	text = malloc(sizeof(struct ISDBText));
-	if(!text)
+	if (!text)
 		return NULL;
 
 	text->used = 0;
@@ -357,7 +357,7 @@ static struct ISDBText *allocate_text_node(ISDBSubLayout *ls)
 static int reserve_buf(struct ISDBText *text, size_t len)
 {
 	size_t blen = 0;
-	unsigned char *ptr = NULL; 
+	unsigned char *ptr = NULL;
 
 	if (text->len >= text->used + len)
 		return CCX_OK;
@@ -372,7 +372,7 @@ static int reserve_buf(struct ISDBText *text, size_t len)
 	}
 	text->buf = ptr;
 	text->len = blen;
-	isdb_log ("expanded ctx->text(%lu)\n", blen);
+	isdb_log("expanded ctx->text(%lu)\n", blen);
 	return CCX_OK;
 }
 
@@ -405,11 +405,11 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 		else
 			text_lpos = text->pos.y;
 
-		if(text_lpos == cur_lpos)
+		if (text_lpos == cur_lpos)
 		{
 			break;
 		}
-		else if(text_lpos > cur_lpos)
+		else if (text_lpos > cur_lpos)
 		{
 			struct ISDBText *text1 = NULL;
 			//Allocate Text here so that list is always sorted
@@ -453,7 +453,7 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 
 	reserve_buf(text, 2); //+1 for terminating '\0'
 	text->buf[text->used] = ch;
-	text->used ++;
+	text->used++;
 	text->buf[text->used] = '\0';
 
 
@@ -463,7 +463,7 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 static int ccx_strstr_ignorespace(const unsigned char *str1, const unsigned char *str2)
 {
 	int i;
-	for( i = 0; str2[i] != '\0'; i++)
+	for (i = 0; str2[i] != '\0'; i++)
 	{
 		if (isspace(str2[i]))
 			continue;
@@ -490,7 +490,7 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 	int index = 0;
 
 	if (ctx->cfg_no_rollup || (ctx->cfg_no_rollup == ctx->current_state.rollup_mode))
-	// Abhinav95: Forcing -noru to perform deduplication even if stream doesn't honor it
+		// Abhinav95: Forcing -noru to perform deduplication even if stream doesn't honor it
 	{
 		/* Currently unused */
 		//struct ISDBText *wtrepeat_text = NULL;
@@ -553,11 +553,11 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 			if (found == CCX_FALSE)
 			{
 				// Write that buffer in file
-				if (len - index > sb_text->used + 2 && sb_text->used  > 0)
+				if (len - index > sb_text->used + 2 && sb_text->used > 0)
 				{
-					memcpy(buffer+index, sb_text->buf, sb_text->used);
-					buffer[sb_text->used+index] = '\n';
-					buffer[sb_text->used+index+1] = '\r';
+					memcpy(buffer + index, sb_text->buf, sb_text->used);
+					buffer[sb_text->used + index] = '\n';
+					buffer[sb_text->used + index + 1] = '\r';
 					index += sb_text->used + 2;
 					sb_text->used = 0;
 					list_del(&sb_text->list);
@@ -572,11 +572,11 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 	{
 		list_for_each_entry(text, &ctx->text_list_head, list, struct ISDBText)
 		{
-			if (len - index > text->used + 2 && text->used  > 0)
+			if (len - index > text->used + 2 && text->used > 0)
 			{
-				memcpy(buffer+index, text->buf, text->used);
-				buffer[text->used+index] = '\n';
-				buffer[text->used+index+1] = '\r';
+				memcpy(buffer + index, text->buf, text->used);
+				buffer[text->used + index] = '\n';
+				buffer[text->used + index + 1] = '\r';
 				index += text->used + 2;
 				text->used = 0;
 				text->buf[0] = '\0';
@@ -591,31 +591,31 @@ static void set_writing_format(ISDBSubContext *ctx, uint8_t *arg)
 	ISDBSubLayout *ls = &ctx->current_state.layout_state;
 
 	/* One param means its initialization */
-	if( *(arg+1) == 0x20)
+	if (*(arg + 1) == 0x20)
 	{
 		ls->format = (arg[0] & 0x0F);
 		return;
 	}
 
 	/* P1 I1 p2 I2 P31 ~ P3i I3 P41 ~ P4j I4 F */
-	if ( *(arg + 1) == 0x3B)
+	if (*(arg + 1) == 0x3B)
 	{
 		ls->format = WF_HORIZONTAL_CUSTOM;
 		arg += 2;
 	}
-	if ( *(arg + 1) == 0x3B)
+	if (*(arg + 1) == 0x3B)
 	{
 		switch (*arg & 0x0f) {
-		case 0:
-			//ctx->font_size = SMALL_FONT_SIZE;
-			break;
-		case 1:
-			//ctx->font_size = MIDDLE_FONT_SIZE;
-			break;
-		case 2:
-			//ctx->font_size = STANDARD_FONT_SIZE;
-		default:
-			break;
+			case 0:
+				//ctx->font_size = SMALL_FONT_SIZE;
+				break;
+			case 1:
+				//ctx->font_size = MIDDLE_FONT_SIZE;
+				break;
+			case 2:
+				//ctx->font_size = STANDARD_FONT_SIZE;
+			default:
+				break;
 		}
 		arg += 2;
 	}
@@ -624,7 +624,7 @@ static void set_writing_format(ISDBSubContext *ctx, uint8_t *arg)
 	while (*arg != 0x3b && *arg != 0x20)
 	{
 		ctx->nb_char = *arg;
-		printf(" %x",*arg & 0x0f);
+		printf(" %x", *arg & 0x0f);
 		arg++;
 	}
 	if (*arg == 0x20)
@@ -634,7 +634,7 @@ static void set_writing_format(ISDBSubContext *ctx, uint8_t *arg)
 	while (*arg != 0x20)
 	{
 		ctx->nb_line = *arg;
-		printf(" %x",*arg & 0x0f);
+		printf(" %x", *arg & 0x0f);
 		arg++;
 	}
 
@@ -712,18 +712,18 @@ static int get_csi_params(const uint8_t *q, unsigned int *p1, unsigned int *p2)
 
 static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 {
-	uint8_t arg[10] = {0};
+	uint8_t arg[10] = { 0 };
 	int i = 0;
 	int ret = 0;
-	unsigned int p1,p2;
+	unsigned int p1, p2;
 	const uint8_t *buf_pivot = buf;
 	ISDBSubState *state = &ctx->current_state;
 	ISDBSubLayout *ls = &state->layout_state;
 
 	//Copy buf in arg
-	for(i = 0; *buf != 0x20; i++)
+	for (i = 0; *buf != 0x20; i++)
 	{
-		if (i >= (sizeof(arg))+ 1)
+		if (i >= (sizeof(arg)) + 1)
 		{
 			isdb_log("UnExpected CSI %d >= %d", sizeof(arg) + 1, i);
 			break;
@@ -734,81 +734,81 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 	/* ignore terminating 0x20 character */
 	arg[i] = *buf++;
 
-	switch(*buf) {
-	/* Set Writing Format */
-	case CSI_CMD_SWF:
-		isdb_command_log("Command:CSI: SWF\n");
-		set_writing_format(ctx, arg);
-		break;
-	/* Composite Character Composition */
-	case CSI_CMD_CCC:
-		isdb_command_log("Command:CSI: CCC\n");
-		ret = get_csi_params(arg, &p1, NULL);
-		if (ret > 0)
-		{
-			ls->ccc = p1;
-		}
-		break;
-	/* Set Display Format */
-	case CSI_CMD_SDF:
-		ret = get_csi_params(arg, &p1, &p2);
-		if (ret > 0)
-		{
-			ls->display_area.w = p1;
-			ls->display_area.h = p2;
-		}
-		isdb_command_log("Command:CSI: SDF (w:%d, h:%d)\n", p1, p2);
-		break;
-	/* Character composition dot designation */
-	case CSI_CMD_SSM:
-		ret = get_csi_params(arg, &p1, &p2);
-		if (ret > 0)
-			ls->font_size = p1;
-		isdb_command_log("Command:CSI: SSM (x:%d y:%d)\n", p1, p2);
-		break;
-	/* Set Display Position */
-	case CSI_CMD_SDP:
-		ret = get_csi_params(arg, &p1, &p2);
-		if (ret > 0)
-		{
-			ls->display_area.x = p1;
-			ls->display_area.y = p2;
-		}
-		isdb_command_log("Command:CSI: SDP (x:%d, y:%d)\n", p1, p2);
-		break;
-	/* Raster Colour command */
-	case CSI_CMD_RCS:
-		ret = get_csi_params(arg, &p1, NULL);
-		if (ret > 0)
-			ctx->current_state.raster_color = Default_clut[ctx->current_state.clut_high_idx << 4 | p1];
-		isdb_command_log("Command:CSI: RCS (%d)\n", p1);
-		break;
-	/* Set Horizontal Spacing */
-	case CSI_CMD_SHS:
-		ret = get_csi_params(arg, &p1, NULL);
-		if (ret > 0)
-			ls->cell_spacing.col = p1;
-		isdb_command_log("Command:CSI: SHS (%d)\n", p1);
-		break;
-	/* Set Vertical Spacing */
-	case CSI_CMD_SVS:
-		ret = get_csi_params(arg, &p1, NULL);
-		if (ret > 0)
-			ls->cell_spacing.row = p1;
-		isdb_command_log("Command:CSI: SVS (%d)\n", p1);
-		break;
-	/* Active Coordinate Position Set */
-	case CSI_CMD_ACPS:
-		isdb_command_log("Command:CSI: ACPS\n");
-		ret = get_csi_params(arg, &p1, &p2);
-		if (ret > 0) {
-			ls->acps[0] = p1;
-			ls->acps[1] = p1;
-		}
-		break;
-	default:
-		isdb_log("Command:CSI: Unknown command 0x%x\n", *buf);
-		break;
+	switch (*buf) {
+		/* Set Writing Format */
+		case CSI_CMD_SWF:
+			isdb_command_log("Command:CSI: SWF\n");
+			set_writing_format(ctx, arg);
+			break;
+			/* Composite Character Composition */
+		case CSI_CMD_CCC:
+			isdb_command_log("Command:CSI: CCC\n");
+			ret = get_csi_params(arg, &p1, NULL);
+			if (ret > 0)
+			{
+				ls->ccc = p1;
+			}
+			break;
+			/* Set Display Format */
+		case CSI_CMD_SDF:
+			ret = get_csi_params(arg, &p1, &p2);
+			if (ret > 0)
+			{
+				ls->display_area.w = p1;
+				ls->display_area.h = p2;
+			}
+			isdb_command_log("Command:CSI: SDF (w:%d, h:%d)\n", p1, p2);
+			break;
+			/* Character composition dot designation */
+		case CSI_CMD_SSM:
+			ret = get_csi_params(arg, &p1, &p2);
+			if (ret > 0)
+				ls->font_size = p1;
+			isdb_command_log("Command:CSI: SSM (x:%d y:%d)\n", p1, p2);
+			break;
+			/* Set Display Position */
+		case CSI_CMD_SDP:
+			ret = get_csi_params(arg, &p1, &p2);
+			if (ret > 0)
+			{
+				ls->display_area.x = p1;
+				ls->display_area.y = p2;
+			}
+			isdb_command_log("Command:CSI: SDP (x:%d, y:%d)\n", p1, p2);
+			break;
+			/* Raster Colour command */
+		case CSI_CMD_RCS:
+			ret = get_csi_params(arg, &p1, NULL);
+			if (ret > 0)
+				ctx->current_state.raster_color = Default_clut[ctx->current_state.clut_high_idx << 4 | p1];
+			isdb_command_log("Command:CSI: RCS (%d)\n", p1);
+			break;
+			/* Set Horizontal Spacing */
+		case CSI_CMD_SHS:
+			ret = get_csi_params(arg, &p1, NULL);
+			if (ret > 0)
+				ls->cell_spacing.col = p1;
+			isdb_command_log("Command:CSI: SHS (%d)\n", p1);
+			break;
+			/* Set Vertical Spacing */
+		case CSI_CMD_SVS:
+			ret = get_csi_params(arg, &p1, NULL);
+			if (ret > 0)
+				ls->cell_spacing.row = p1;
+			isdb_command_log("Command:CSI: SVS (%d)\n", p1);
+			break;
+			/* Active Coordinate Position Set */
+		case CSI_CMD_ACPS:
+			isdb_command_log("Command:CSI: ACPS\n");
+			ret = get_csi_params(arg, &p1, &p2);
+			if (ret > 0) {
+				ls->acps[0] = p1;
+				ls->acps[1] = p1;
+			}
+			break;
+		default:
+			isdb_log("Command:CSI: Unknown command 0x%x\n", *buf);
+			break;
 	}
 	buf++;
 	/* ACtual CSI command */
@@ -825,333 +825,333 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 	ISDBSubLayout *ls = &state->layout_state;
 
 	buf++;
-	if ( code_hi == 0x00)
+	if (code_hi == 0x00)
 	{
-		switch(code_lo) {
-		/* NUL Control code, which can be added or deleted without effecting to
-			information content. */
-		case 0x0:
-			isdb_command_log("Command: NUL\n");
-			break;
+		switch (code_lo) {
+			/* NUL Control code, which can be added or deleted without effecting to
+				information content. */
+			case 0x0:
+				isdb_command_log("Command: NUL\n");
+				break;
 
-		/* BEL Control code used when calling attention (alarm or signal) */
-		case 0x7:
-			//TODO add bell character here
-			isdb_command_log("Command: BEL\n");
-			break;
+				/* BEL Control code used when calling attention (alarm or signal) */
+			case 0x7:
+				//TODO add bell character here
+				isdb_command_log("Command: BEL\n");
+				break;
 
-		/**
-		 *  APB: Active position goes backward along character path in the length of
-		 *	character path of character field. When the reference point of the character
-		 *	field exceeds the edge of display area by this movement, move in the
-		 *	opposite side of the display area along the character path of the active
-		 * 	position, for active position up.
-		 */
-		case 0x8:
-			isdb_command_log("Command: ABP\n");
-			break;
+				/**
+				 *  APB: Active position goes backward along character path in the length of
+				 *	character path of character field. When the reference point of the character
+				 *	field exceeds the edge of display area by this movement, move in the
+				 *	opposite side of the display area along the character path of the active
+				 * 	position, for active position up.
+				 */
+			case 0x8:
+				isdb_command_log("Command: ABP\n");
+				break;
 
-		/**
-		 *  APF: Active position goes forward along character path in the length of
-		 *	character path of character field. When the reference point of the character
-		 *	field exceeds the edge of display area by this movement, move in the
-		 * 	opposite side of the display area along the character path of the active
-		 *	position, for active position down.
-		 */
-		case 0x9:
-			isdb_command_log("Command: APF\n");
-			break;
+				/**
+				 *  APF: Active position goes forward along character path in the length of
+				 *	character path of character field. When the reference point of the character
+				 *	field exceeds the edge of display area by this movement, move in the
+				 * 	opposite side of the display area along the character path of the active
+				 *	position, for active position down.
+				 */
+			case 0x9:
+				isdb_command_log("Command: APF\n");
+				break;
 
-		/**
-		 *  APD: Moves to next line along line direction in the length of line direction of
-		 *	the character field. When the reference point of the character field exceeds
-		 *	the edge of display area by this movement, move to the first line of the
-		 *	display area along the line direction.
-		 */
-		case 0xA:
-			isdb_command_log("Command: APD\n");
-			break;
+				/**
+				 *  APD: Moves to next line along line direction in the length of line direction of
+				 *	the character field. When the reference point of the character field exceeds
+				 *	the edge of display area by this movement, move to the first line of the
+				 *	display area along the line direction.
+				 */
+			case 0xA:
+				isdb_command_log("Command: APD\n");
+				break;
 
-		/**
-		 * APU: Moves to the previous line along line direction in the length of line
-		 *	direction of the character field. When the reference point of the character
-		 *	field exceeds the edge of display area by this movement, move to the last
-		 *	line of the display area along the line direction.
-		 */
-		case 0xB:
-			isdb_command_log("Command: APU\n");
-			break;
+				/**
+				 * APU: Moves to the previous line along line direction in the length of line
+				 *	direction of the character field. When the reference point of the character
+				 *	field exceeds the edge of display area by this movement, move to the last
+				 *	line of the display area along the line direction.
+				 */
+			case 0xB:
+				isdb_command_log("Command: APU\n");
+				break;
 
-		/**
-		 * CS: Display area of the display screen is erased.
-		 * Specs does not say clearly about whether we have to clear cursor
-		 * Need Samples to see whether CS is called after pen move or before it
-		 */
-		case 0xC:
-			isdb_command_log("Command: CS clear Screen\n");
-			break;
+				/**
+				 * CS: Display area of the display screen is erased.
+				 * Specs does not say clearly about whether we have to clear cursor
+				 * Need Samples to see whether CS is called after pen move or before it
+				 */
+			case 0xC:
+				isdb_command_log("Command: CS clear Screen\n");
+				break;
 
-		/** APR: Active position down is made, moving to the first position of the same
-		 *	line.
-		 */
-		case 0xD:
-			isdb_command_log("Command: APR\n");
-			break;
+				/** APR: Active position down is made, moving to the first position of the same
+				 *	line.
+				 */
+			case 0xD:
+				isdb_command_log("Command: APR\n");
+				break;
 
-		/* LS1: Code to invoke character code set. */
-		case 0xE:
-			isdb_command_log("Command: LS1\n");
-			break;
+				/* LS1: Code to invoke character code set. */
+			case 0xE:
+				isdb_command_log("Command: LS1\n");
+				break;
 
-		/* LS0: Code to invoke character code set. */
-		case 0xF:
-			isdb_command_log("Command: LS0\n");
-			break;
-		/* Verify the new version of specs or packet is corrupted */
-		default:
-			isdb_command_log("Command: Unknown\n");
-			break;
+				/* LS0: Code to invoke character code set. */
+			case 0xF:
+				isdb_command_log("Command: LS0\n");
+				break;
+				/* Verify the new version of specs or packet is corrupted */
+			default:
+				isdb_command_log("Command: Unknown\n");
+				break;
 		}
 	}
 	else if (code_hi == 0x01)
 	{
-		switch(code_lo) {
-		/**
-		 * PAPF: Active position forward is made in specified times by parameter P1 (1byte).
-		 *	Parameter P1 shall be within the range of 04/0 to 07/15 and time shall be
-		 *	specified within the range of 0 to 63 in binary value of 6-bit from b6 to b1.
-		 *	(b8 and b7 are not used.)
-		 */
-		case 0x6:
-			isdb_command_log("Command: PAPF\n");
-			break;
+		switch (code_lo) {
+			/**
+			 * PAPF: Active position forward is made in specified times by parameter P1 (1byte).
+			 *	Parameter P1 shall be within the range of 04/0 to 07/15 and time shall be
+			 *	specified within the range of 0 to 63 in binary value of 6-bit from b6 to b1.
+			 *	(b8 and b7 are not used.)
+			 */
+			case 0x6:
+				isdb_command_log("Command: PAPF\n");
+				break;
 
-		/**
-		 * CAN: From the current active position to the end of the line is covered with
-		 *	background colour in the width of line direction in the current character
-		 *	field. Active position is not moved.
-		 */
-		case 0x8:
-			isdb_command_log("Command: CAN\n");
-			break;
+				/**
+				 * CAN: From the current active position to the end of the line is covered with
+				 *	background colour in the width of line direction in the current character
+				 *	field. Active position is not moved.
+				 */
+			case 0x8:
+				isdb_command_log("Command: CAN\n");
+				break;
 
-		/* SS2: Code to invoke character code set. */
-		case 0x9:
-			isdb_command_log("Command: SS2\n");
-			break;
+				/* SS2: Code to invoke character code set. */
+			case 0x9:
+				isdb_command_log("Command: SS2\n");
+				break;
 
-		/* ESC:Code for code extension. */
-		case 0xB:
-			isdb_command_log("Command: ESC\n");
-			break;
+				/* ESC:Code for code extension. */
+			case 0xB:
+				isdb_command_log("Command: ESC\n");
+				break;
 
-		/** APS: Specified times of active position down is made by P1 (1 byte) of the first
-		 *	parameter in line direction length of character field from the first position
-		 *	of the first line of the display area. Then specified times of active position
-		 *	forward is made by the second parameter P2 (1 byte) in the character path
-		 *	length of character field. Each parameter shall be within the range of 04/0
-		 *	to 07/15 and specify time within the range of 0 to 63 in binary value of 6-
-		 *	bit from b6 to b1. (b8 and b7 are not used.)
-		 */
-		case 0xC:
-			isdb_command_log("Command: APS\n");
-			set_position(ctx, *buf & 0x3F, *(buf+1) & 0x3F);
-			buf += 2;
-			break;
+				/** APS: Specified times of active position down is made by P1 (1 byte) of the first
+				 *	parameter in line direction length of character field from the first position
+				 *	of the first line of the display area. Then specified times of active position
+				 *	forward is made by the second parameter P2 (1 byte) in the character path
+				 *	length of character field. Each parameter shall be within the range of 04/0
+				 *	to 07/15 and specify time within the range of 0 to 63 in binary value of 6-
+				 *	bit from b6 to b1. (b8 and b7 are not used.)
+				 */
+			case 0xC:
+				isdb_command_log("Command: APS\n");
+				set_position(ctx, *buf & 0x3F, *(buf + 1) & 0x3F);
+				buf += 2;
+				break;
 
-		/* SS3: Code to invoke character code set. */
-		case 0xD:
-			isdb_command_log("Command: SS3\n");
-			break;
+				/* SS3: Code to invoke character code set. */
+			case 0xD:
+				isdb_command_log("Command: SS3\n");
+				break;
 
-		/**
-		 * RS: It is information division code and declares identification and
-		 * 	introduction of data header.
-		 */
-		case 0xE:
-			isdb_command_log("Command: RS\n");
-			break;
+				/**
+				 * RS: It is information division code and declares identification and
+				 * 	introduction of data header.
+				 */
+			case 0xE:
+				isdb_command_log("Command: RS\n");
+				break;
 
-		/**
-		 * US: It is information division code and declares identification and
-		 *	introduction of data unit.
-		 */
-		case 0xF:
-			isdb_command_log("Command: US\n");
-			break;
+				/**
+				 * US: It is information division code and declares identification and
+				 *	introduction of data unit.
+				 */
+			case 0xF:
+				isdb_command_log("Command: US\n");
+				break;
 
-		/* Verify the new version of specs or packet is corrupted */
-		default:
-			isdb_command_log("Command: Unknown\n");
-			break;
+				/* Verify the new version of specs or packet is corrupted */
+			default:
+				isdb_command_log("Command: Unknown\n");
+				break;
 		}
 	}
 	else if (code_hi == 0x8)
 	{
-		switch(code_lo) {
-		/* BKF */
-		case 0x0:
-		/* RDF */
-		case 0x1:
-		/* GRF */
-		case 0x2:
-		/* YLF */
-		case 0x3:
-		/* BLF 	*/
-		case 0x4:
-		/* MGF */
-		case 0x5:
-		/* CNF */
-		case 0x6:
-		/* WHF */
-		case 0x7:
-			isdb_command_log("Command: Forground color (0x%X)\n", Default_clut[code_lo]);
-			state->fg_color = Default_clut[code_lo];
-			break;
+		switch (code_lo) {
+			/* BKF */
+			case 0x0:
+				/* RDF */
+			case 0x1:
+				/* GRF */
+			case 0x2:
+				/* YLF */
+			case 0x3:
+				/* BLF 	*/
+			case 0x4:
+				/* MGF */
+			case 0x5:
+				/* CNF */
+			case 0x6:
+				/* WHF */
+			case 0x7:
+				isdb_command_log("Command: Forground color (0x%X)\n", Default_clut[code_lo]);
+				state->fg_color = Default_clut[code_lo];
+				break;
 
-		/* SSZ */
-		case 0x8:
-			isdb_command_log("Command: SSZ\n");
-			ls->font_scale.fscx = 50;
-			ls->font_scale.fscy = 50;
-			break;
+				/* SSZ */
+			case 0x8:
+				isdb_command_log("Command: SSZ\n");
+				ls->font_scale.fscx = 50;
+				ls->font_scale.fscy = 50;
+				break;
 
-		/* MSZ */
-		case 0x9:
-			ls->font_scale.fscx = 200;
-			ls->font_scale.fscy = 200;
-			isdb_command_log("Command: MSZ\n");
-			break;
+				/* MSZ */
+			case 0x9:
+				ls->font_scale.fscx = 200;
+				ls->font_scale.fscy = 200;
+				isdb_command_log("Command: MSZ\n");
+				break;
 
-		/* NSZ */
-		case 0xA:
-			ls->font_scale.fscx = 100;
-			ls->font_scale.fscy = 100;
-			isdb_command_log("Command: NSZ\n");
-			break;
+				/* NSZ */
+			case 0xA:
+				ls->font_scale.fscx = 100;
+				ls->font_scale.fscy = 100;
+				isdb_command_log("Command: NSZ\n");
+				break;
 
-		/* SZX */
-		case 0xB:
-			isdb_command_log("Command: SZX\n");
-			buf++;
-			break;
+				/* SZX */
+			case 0xB:
+				isdb_command_log("Command: SZX\n");
+				buf++;
+				break;
 
-		/* Verify the new version of specs or packet is corrupted */
-		default:
-			isdb_command_log("Command: Unknown\n");
-			break;
+				/* Verify the new version of specs or packet is corrupted */
+			default:
+				isdb_command_log("Command: Unknown\n");
+				break;
 
 		}
 	}
-	else if ( code_hi == 0x9)
+	else if (code_hi == 0x9)
 	{
-		switch(code_lo) {
-		/* COL */
-		case 0x0:
-			/* Palette Col */
-			if(*buf == 0x20)
-			{
-				isdb_command_log("Command: COL: Set Clut %d\n",(buf[0] & 0x0F));
+		switch (code_lo) {
+			/* COL */
+			case 0x0:
+				/* Palette Col */
+				if (*buf == 0x20)
+				{
+					isdb_command_log("Command: COL: Set Clut %d\n", (buf[0] & 0x0F));
+					buf++;
+					ctx->current_state.clut_high_idx = (buf[0] & 0x0F);
+				}
+				else if ((*buf & 0XF0) == 0x40)
+				{
+					isdb_command_log("Command: COL: Set Forground 0x%08X\n", Default_clut[*buf & 0x0F]);
+					ctx->current_state.fg_color = Default_clut[*buf & 0x0F];
+				}
+				else if ((*buf & 0XF0) == 0x50)
+				{
+					isdb_command_log("Command: COL: Set Background 0x%08X\n", Default_clut[*buf & 0x0F]);
+					ctx->current_state.bg_color = Default_clut[*buf & 0x0F];
+				}
+				else if ((*buf & 0XF0) == 0x60)
+				{
+					isdb_command_log("Command: COL: Set half Forground 0x%08X\n", Default_clut[*buf & 0x0F]);
+					ctx->current_state.hfg_color = Default_clut[*buf & 0x0F];
+				}
+				else if ((*buf & 0XF0) == 0x70)
+				{
+					isdb_command_log("Command: COL: Set Half Background 0x%8X\n", Default_clut[*buf & 0x0F]);
+					ctx->current_state.hbg_color = Default_clut[*buf & 0x0F];
+				}
+
 				buf++;
-				ctx->current_state.clut_high_idx = (buf[0] & 0x0F);
-			}
-			else if ((*buf & 0XF0) == 0x40)
-			{
-				isdb_command_log("Command: COL: Set Forground 0x%08X\n", Default_clut[*buf & 0x0F]);
-				ctx->current_state.fg_color = Default_clut[*buf & 0x0F];
-			}
-			else if ((*buf & 0XF0) == 0x50)
-			{
-				isdb_command_log("Command: COL: Set Background 0x%08X\n", Default_clut[*buf & 0x0F]);
-				ctx->current_state.bg_color = Default_clut[*buf & 0x0F];
-			}
-			else if ((*buf & 0XF0) == 0x60)
-			{
-				isdb_command_log("Command: COL: Set half Forground 0x%08X\n", Default_clut[*buf & 0x0F]);
-				ctx->current_state.hfg_color = Default_clut[*buf & 0x0F];
-			}
-			else if ((*buf & 0XF0) == 0x70)
-			{
-				isdb_command_log("Command: COL: Set Half Background 0x%8X\n", Default_clut[*buf & 0x0F]);
-				ctx->current_state.hbg_color = Default_clut[*buf & 0x0F];
-			}
+				break;
 
-			buf++;
-			break;
+				/* FLC */
+			case 0x1:
+				isdb_command_log("Command: FLC\n");
+				buf++;
+				break;
 
-		/* FLC */
-		case 0x1:
-			isdb_command_log("Command: FLC\n");
-			buf++;
-			break;
+				/* CDC */
+			case 0x2:
+				isdb_command_log("Command: CDC\n");
+				buf++;
+				buf++;
+				buf++;
+				break;
 
-		/* CDC */
-		case 0x2:
-			isdb_command_log("Command: CDC\n");
-			buf++;
-			buf++;
-			buf++;
-			break;
+				/* POL */
+			case 0x3:
+				isdb_command_log("Command: POL\n");
+				buf++;
+				break;
 
-		/* POL */
-		case 0x3:
-			isdb_command_log("Command: POL\n");
-			buf++;
-			break;
+				/* WMM */
+			case 0x4:
+				isdb_command_log("Command: WMM\n");
+				buf++;
+				buf++;
+				buf++;
+				break;
 
-		/* WMM */
-		case 0x4:
-			isdb_command_log("Command: WMM\n");
-			buf++;
-			buf++;
-			buf++;
-			break;
+				/* MACRO */
+			case 0x5:
+				isdb_command_log("Command: MACRO\n");
+				buf++;
+				break;
 
-		/* MACRO */
-		case 0x5:
-			isdb_command_log("Command: MACRO\n");
-			buf++;
-			break;
+				/* HLC */
+			case 0x7:
+				isdb_command_log("Command: HLC\n");
+				buf++;
+				break;
 
-		/* HLC */
-		case 0x7:
-			isdb_command_log("Command: HLC\n");
-			buf++;
-			break;
+				/* RPC */
+			case 0x8:
+				isdb_command_log("Command: RPC\n");
+				buf++;
+				break;
 
-		/* RPC */
-		case 0x8:
-			isdb_command_log("Command: RPC\n");
-			buf++;
-			break;
+				/* SPL */
+			case 0x9:
+				isdb_command_log("Command: SPL\n");
+				break;
 
-		/* SPL */
-		case 0x9:
-			isdb_command_log("Command: SPL\n");
-			break;
+				/* STL */
+			case 0xA:
+				isdb_command_log("Command: STL\n");
+				break;
 
-		/* STL */
-		case 0xA:
-			isdb_command_log("Command: STL\n");
-			break;
+				/* CSI Code for code system extension indicated*/
+			case 0xB:
+				ret = parse_csi(ctx, buf, len);
+				buf += ret;
+				break;
 
-		/* CSI Code for code system extension indicated*/
-		case 0xB:
-			ret = parse_csi(ctx, buf, len);
-			buf += ret;
-			break;
+				/* TIME */
+			case 0xD:
+				isdb_command_log("Command: TIME\n");
+				buf++;
+				buf++;
+				break;
 
-		/* TIME */
-		case 0xD:
-			isdb_command_log("Command: TIME\n");
-			buf++;
-			buf++;
-			break;
-
-		/* Verify the new version of specs or packet is corrupted */
-		default:
-			isdb_command_log("Command: Unknown\n");
-			break;
+				/* Verify the new version of specs or packet is corrupted */
+			default:
+				isdb_command_log("Command: Unknown\n");
+				break;
 		}
 	}
 
@@ -1178,7 +1178,7 @@ static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf
 		 * This 36-bit field indicates offset time to add to the playback time when the
 		 * clock control mode is in offset time mode. Offset time is coded in the
 		 * order of hour, minute, second and millisecond, using nine 4-bit binary
-                 * coded decimals (BCD).
+				 * coded decimals (BCD).
 		 *
 		 * +-----------+-----------+---------+--------------+
 		 * |  hour     |   minute  |   sec   |  millisecond |
@@ -1186,13 +1186,13 @@ static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf
 		 * |  2 (4bit) | 2 (4bit)  | 2 (4bit)|    3 (4bit)  |
 		 * +-----------+-----------+---------+--------------+
 		 */
-		ctx->offset_time.hour = ((*buf>>4) * 10) + (*buf&0xf);
+		ctx->offset_time.hour = ((*buf >> 4) * 10) + (*buf & 0xf);
 		buf++;
-		ctx->offset_time.min = ((*buf>>4) * 10) + (*buf&0xf);
+		ctx->offset_time.min = ((*buf >> 4) * 10) + (*buf & 0xf);
 		buf++;
-		ctx->offset_time.sec = ((*buf>>4) * 10) + (*buf&0xf);
+		ctx->offset_time.sec = ((*buf >> 4) * 10) + (*buf & 0xf);
 		buf++;
-		ctx->offset_time.milli = ((*buf>>4) * 100) + ( (*buf&0xf) * 10) + (buf[1]&0xf);
+		ctx->offset_time.milli = ((*buf >> 4) * 100) + ((*buf & 0xf) * 10) + (buf[1] & 0xf);
 		buf += 2;
 		isdb_log("CC MGMT DATA: OTD( h:%d m:%d s:%d millis: %d\n",
 			ctx->offset_time.hour, ctx->offset_time.min,
@@ -1210,22 +1210,22 @@ static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf
 
 	for (i = 0; i < ctx->nb_lang; i++)
 	{
-		isdb_log("CC MGMT DATA: %d\n", (*buf&0x1F) >> 5);
-		ctx->dmf = *buf&0x0F;
+		isdb_log("CC MGMT DATA: %d\n", (*buf & 0x1F) >> 5);
+		ctx->dmf = *buf & 0x0F;
 		isdb_log("CC MGMT DATA: DMF 0x%X\n", ctx->dmf);
 		buf++;
-		if (ctx->dmf == 0xC || ctx->dmf == 0xD|| ctx->dmf == 0xE)
+		if (ctx->dmf == 0xC || ctx->dmf == 0xD || ctx->dmf == 0xE)
 		{
 			ctx->dc = *buf;
-			if(ctx->dc == 0x00)
+			if (ctx->dc == 0x00)
 				isdb_log("Attenuation Due to Rain\n");
 		}
 		isdb_log("CC MGMT DATA: languages: %c%c%c\n", buf[0], buf[1], buf[2]);
 		buf += 3;
-		isdb_log("CC MGMT DATA: Format: 0x%X\n", *buf>>4);
+		isdb_log("CC MGMT DATA: Format: 0x%X\n", *buf >> 4);
 		/* 8bit code is not used by Brazilian ARIB they use utf-8*/
-		isdb_log("CC MGMT DATA: TCS: 0x%X\n", (*buf>>2)&0x3);
-		ctx->current_state.rollup_mode = !!(*buf&0x3);
+		isdb_log("CC MGMT DATA: TCS: 0x%X\n", (*buf >> 2) & 0x3);
+		ctx->current_state.rollup_mode = !!(*buf & 0x3);
 		isdb_log("CC MGMT DATA: Rollup mode: 0x%X\n", ctx->current_state.rollup_mode);
 	}
 	return buf - buf_pivot;
@@ -1236,28 +1236,28 @@ static int parse_statement(ISDBSubContext *ctx, const uint8_t *buf, int size)
 	const uint8_t *buf_pivot = buf;
 	int ret;
 
-	while( (buf - buf_pivot) < size)
+	while ((buf - buf_pivot) < size)
 	{
-		unsigned char code    = (*buf & 0xf0) >> 4;
+		unsigned char code = (*buf & 0xf0) >> 4;
 		unsigned char code_lo = *buf & 0x0f;
 		if (code <= 0x1)
 			ret = parse_command(ctx, buf, size);
 		/* Special case *1(SP) */
-		else if ( code == 0x2 && code_lo == 0x0 )
-			ret = append_char(ctx,buf[0] );
+		else if (code == 0x2 && code_lo == 0x0)
+			ret = append_char(ctx, buf[0]);
 		/* Special case *3(DEL) */
-		else if ( code == 0x7 && code_lo == 0xF )
+		else if (code == 0x7 && code_lo == 0xF)
 			/*TODO DEL should have block in fg color */
 			ret = append_char(ctx, buf[0]);
-		else if ( code <= 0x7)
+		else if (code <= 0x7)
 			ret = append_char(ctx, buf[0]);
-		else if ( code <= 0x9)
+		else if (code <= 0x9)
 			ret = parse_command(ctx, buf, size);
 		/* Special case *2(10/0) */
-		else if ( code == 0xA && code_lo == 0x0 )
+		else if (code == 0xA && code_lo == 0x0)
 			/*TODO handle */;
 		/* Special case *4(15/15) */
-		else if (code == 0x0F && code_lo == 0XF )
+		else if (code == 0x0F && code_lo == 0XF)
 			/*TODO handle */;
 		else
 			ret = append_char(ctx, buf[0]);
@@ -1268,7 +1268,7 @@ static int parse_statement(ISDBSubContext *ctx, const uint8_t *buf, int size)
 	return 0;
 }
 
-static int parse_data_unit(ISDBSubContext *ctx,const uint8_t *buf, int size)
+static int parse_data_unit(ISDBSubContext *ctx, const uint8_t *buf, int size)
 {
 	int unit_parameter;
 	int len;
@@ -1278,7 +1278,7 @@ static int parse_data_unit(ISDBSubContext *ctx,const uint8_t *buf, int size)
 	unit_parameter = *buf++;
 	len = RB24(buf);
 	buf += 3;
-	switch(unit_parameter)
+	switch (unit_parameter)
 	{
 		/* statement body */
 		case 0x20:
@@ -1303,17 +1303,17 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
 	len = RB24(buf);
 	buf += 3;
 	ret = parse_data_unit(ctx, buf, len);
-	if( ret < 0)
+	if (ret < 0)
 		return -1;
 
 	ret = get_text(ctx, buffer, 1024);
 	/* Copy data if there in buffer */
-	if (ret < 0 )
+	if (ret < 0)
 		return CCX_OK;
 
 	if (ret > 0)
 	{
-		add_cc_sub_text(sub, (char *) buffer, ctx->prev_timestamp, ctx->timestamp, "NA", "ISDB", CCX_ENC_UTF_8);
+		add_cc_sub_text(sub, (char *)buffer, ctx->prev_timestamp, ctx->timestamp, "NA", "ISDB", CCX_ENC_UTF_8);
 		if (sub->start_time == sub->end_time)
 			sub->end_time += 2;
 		ctx->prev_timestamp = ctx->timestamp;
@@ -1326,7 +1326,7 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
  * instead of 8 bit character, just now we don't have any means to detect which country this video is
  * therefore we have hardcoded UTF-8 as encoding
  */
-int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle *sub)
+int isdb_parse_data_group(void *codec_ctx, const uint8_t *buf, struct cc_subtitle *sub)
 {
 	ISDBSubContext *ctx = codec_ctx;
 	const uint8_t *buf_pivot = buf;
@@ -1340,11 +1340,11 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 	int ret = 0;
 
 
-	if ( (id >> 4) == 0 )
+	if ((id >> 4) == 0)
 	{
 		isdb_log("ISDB group A\n");
 	}
-	else if ( (id >> 4) == 0 )
+	else if ((id >> 4) == 0)
 	{
 		isdb_log("ISDB group B\n");
 	}
@@ -1352,7 +1352,7 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 	buf++;
 
 #ifdef DEBUG
-	isdb_log("ISDB (Data group) version %d\n",version);
+	isdb_log("ISDB (Data group) version %d\n", version);
 
 	link_number = *buf++;
 	last_link_number = *buf++;
@@ -1371,22 +1371,22 @@ int isdb_parse_data_group(void *codec_ctx,const uint8_t *buf, struct cc_subtitle
 	{
 		ctx->prev_timestamp = ctx->timestamp;
 	}
-	if((id & 0x0F) == 0)
+	if ((id & 0x0F) == 0)
 	{
 		/* Its Caption management */
 		ret = parse_caption_management_data(ctx, buf, group_size);
 	}
-	else if ((id & 0x0F) < 8 )
+	else if ((id & 0x0F) < 8)
 	{
 		/* Caption statement data */
-		isdb_log("ISDB %d language\n",id);
+		isdb_log("ISDB %d language\n", id);
 		ret = parse_caption_statement_data(ctx, id & 0x0F, buf, group_size, sub);
 	}
 	else
 	{
 		/* This is not allowed in spec */
 	}
-	if(ret < 0)
+	if (ret < 0)
 		return -1;
 	buf += group_size;
 
@@ -1401,7 +1401,7 @@ int isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, size_t buf
 	const uint8_t *header_end = NULL;
 	int ret = 0;
 	ISDBSubContext *ctx = dec_ctx->private_data;
-	if(*buf++ != 0x80)
+	if (*buf++ != 0x80)
 	{
 		mprint("\nNot a Syncronised PES\n");
 		return -1;
@@ -1412,7 +1412,7 @@ int isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, size_t buf
 	buf++;
 	while (buf < header_end)
 	{
-	/* TODO find in spec what is header */
+		/* TODO find in spec what is header */
 		buf++;
 	}
 

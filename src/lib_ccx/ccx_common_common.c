@@ -29,11 +29,11 @@ void millis_to_time(LLONG milli, unsigned *hours, unsigned *minutes,
 	// LLONG milli = (LLONG) ((ccblock*1000)/29.97);
 	*ms = (unsigned)(milli % 1000); // milliseconds
 	milli = (milli - *ms) / 1000;  // Remainder, in seconds
-	*seconds = (int) milli % 60;
+	*seconds = (int)milli % 60;
 	milli = (milli - *seconds) / 60; // Remainder, in minutes
 	*minutes = (int)(milli % 60);
 	milli = (milli - *minutes) / 60; // Remainder, in hours
-	*hours = (int) milli;
+	*hours = (int)milli;
 }
 
 /* Frees the given pointer */
@@ -48,15 +48,15 @@ void freep(void *arg)
 }
 
 int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time,
-		LLONG end_time, char *info, char *mode, enum ccx_encoding_type e_type)
+	LLONG end_time, char *info, char *mode, enum ccx_encoding_type e_type)
 {
 	if (str == NULL || strlen(str) == 0)
 		return 0;
 	if (sub->nb_data)
 	{
-		for(;sub->next;sub = sub->next);
+		for (; sub->next; sub = sub->next);
 		sub->next = malloc(sizeof(struct cc_subtitle));
-		if(!sub->next)
+		if (!sub->next)
 			return -1;
 		sub->next->prev = sub;
 		sub = sub->next;
@@ -66,12 +66,12 @@ int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time,
 	sub->enc_type = e_type;
 	sub->data = strdup(str);
 	sub->datatype = CC_DATATYPE_GENERIC;
-	sub->nb_data = str? strlen(str): 0;
+	sub->nb_data = str ? strlen(str) : 0;
 	sub->start_time = start_time;
 	sub->end_time = end_time;
-	if(info)
+	if (info)
 		strncpy(sub->info, info, 4);
-	if(mode)
+	if (mode)
 		strncpy(sub->mode, mode, 4);
 	sub->got_output = 1;
 	sub->next = NULL;
@@ -107,7 +107,7 @@ void cc608_build_parity_table(int *parity_table)
 	}
 }
 
-void build_parity_table (void)
+void build_parity_table(void)
 {
 	cc608_build_parity_table(cc608_parity_table);
 }

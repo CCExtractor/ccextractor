@@ -3,7 +3,7 @@
 #include "ccx_encoders_common.h"
 #include "ccx_decoders_common.h"
 
-static const char *XDSclasses_short[]=
+static const char *XDSclasses_short[] =
 {
 	"CUR",
 	"FUT",
@@ -15,11 +15,11 @@ static const char *XDSclasses_short[]=
 	"END"
 };
 
-void xds_write_transcript_line_prefix (struct encoder_ctx *context, struct ccx_s_write *wb, LLONG start_time, LLONG end_time, int cur_xds_packet_class)
+void xds_write_transcript_line_prefix(struct encoder_ctx *context, struct ccx_s_write *wb, LLONG start_time, LLONG end_time, int cur_xds_packet_class)
 {
-	unsigned h1,m1,s1,ms1;
-	unsigned h2,m2,s2,ms2;
-	if (!wb || wb->fh==-1)
+	unsigned h1, m1, s1, ms1;
+	unsigned h2, m2, s2, ms2;
+	if (!wb || wb->fh == -1)
 		return;
 
 	if (start_time == -1)
@@ -41,7 +41,7 @@ void xds_write_transcript_line_prefix (struct encoder_ctx *context, struct ccx_s
 			else
 			{
 				fdprintf(wb->fh, "%lld%c%03d|", start_time / 1000,
-				context->millis_separator, start_time % 1000);
+					context->millis_separator, start_time % 1000);
 			}
 		}
 		else
@@ -67,7 +67,7 @@ void xds_write_transcript_line_prefix (struct encoder_ctx *context, struct ccx_s
 			}
 			else
 			{
-				fdprintf(wb->fh, "%lld%s%03d|", end_time / 1000, context->millis_separator, end_time% 1000);
+				fdprintf(wb->fh, "%lld%s%03d|", end_time / 1000, context->millis_separator, end_time % 1000);
 			}
 		}
 		else

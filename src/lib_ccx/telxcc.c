@@ -51,7 +51,7 @@ int _CRT_fmode = _O_BINARY;
 
 uint64_t last_pes_pts = 0; // PTS of last PES packet (debug purposes)
 static int de_ctr = 0; // a keeps count of packets with flag subtitle ON and data packets
-static const char* TTXT_COLOURS[8] = {
+static const char *TTXT_COLOURS[8] = {
 	//black,   red,       green,     yellow,    blue,      magenta,   cyan,      white
 	"#000000", "#ff0000", "#00ff00", "#ffff00", "#0000ff", "#ff00ff", "#00ffff", "#ffffff"
 };
@@ -70,7 +70,7 @@ typedef struct {
 #pragma pack(pop)
 
 // application config global variable
-struct ccx_s_teletext_config tlt_config = { 0};
+struct ccx_s_teletext_config tlt_config = { 0 };
 
 // macro -- output only when increased verbosity was turned on
 #define VERBOSE_ONLY if (tlt_config.verbose == YES)
@@ -96,25 +96,25 @@ struct {
 
 // Latin-Russian characters mapping, issue #1086
 struct {
-    uint16_t lat_char;
-    const char * rus_char;
+	uint16_t lat_char;
+	const char *rus_char;
 } const LAT_RUS[] = {
-    {65, "А"}, {66, "Б"}, {87, "В"}, {71, "Г"},
-    {68, "Д"}, {69, "Е"}, {86, "Ж"}, {90, "З"},
-    {73, "И"}, {74, "Й"}, {75, "К"}, {76, "Л"},
-    {77, "М"}, {78, "Н"}, {79, "О"}, {80, "П"},
-    {82, "Р"}, {83, "С"}, {84, "Т"}, {85, "У"},
-    {70, "Ф"}, {72, "Х"}, {67, "Ц"}, {238, "Ч"},
-    {235, "Ш"},{249, "Щ"},{35, "Ы"}, {88, "Ь"},
-    {234, "Э"},{224, "Ю"},{81, "Я"}, {97, "а"},
-    {98, "б"}, {119, "в"},{103, "г"},{100, "д"},
-    {101, "е"},{118, "ж"},{122, "з"},{105, "и"},
-    {106, "й"},{107, "к"},{108, "л"},{109, "м"},
-    {110, "н"},{111, "о"},{112, "п"},{114, "р"},
-    {115, "с"},{116, "т"},{117, "у"},{102, "ф"},
-    {104, "х"},{99, "ц"}, {231, "ч"},{226, "ш"},
-    {251, "щ"},{121, "ъ"},{38, "ы"}, {120, "ь"},
-    {244, "э"},{232, "ю"},{113, "я"}
+	{65, "А"}, {66, "Б"}, {87, "В"}, {71, "Г"},
+	{68, "Д"}, {69, "Е"}, {86, "Ж"}, {90, "З"},
+	{73, "И"}, {74, "Й"}, {75, "К"}, {76, "Л"},
+	{77, "М"}, {78, "Н"}, {79, "О"}, {80, "П"},
+	{82, "Р"}, {83, "С"}, {84, "Т"}, {85, "У"},
+	{70, "Ф"}, {72, "Х"}, {67, "Ц"}, {238, "Ч"},
+	{235, "Ш"},{249, "Щ"},{35, "Ы"}, {88, "Ь"},
+	{234, "Э"},{224, "Ю"},{81, "Я"}, {97, "а"},
+	{98, "б"}, {119, "в"},{103, "г"},{100, "д"},
+	{101, "е"},{118, "ж"},{122, "з"},{105, "и"},
+	{106, "й"},{107, "к"},{108, "л"},{109, "м"},
+	{110, "н"},{111, "о"},{112, "п"},{114, "р"},
+	{115, "с"},{116, "т"},{117, "у"},{102, "ф"},
+	{104, "х"},{99, "ц"}, {231, "ч"},{226, "ш"},
+	{251, "щ"},{121, "ъ"},{38, "ы"}, {120, "ь"},
+	{244, "э"},{232, "ю"},{113, "я"}
 };
 
 #define array_length(a) (sizeof(a)/sizeof(a[0]))
@@ -279,12 +279,12 @@ const uint16_t G2[1][96] = {
 		0x03a9, 0x00c6, 0x0110, 0x00aa, 0x0126, 0x0000, 0x0132, 0x013f, 0x0141, 0x00d8, 0x0152, 0x00ba, 0x00de, 0x0166, 0x014a, 0x0149,
 		0x0138, 0x00e6, 0x0111, 0x00f0, 0x0127, 0x0131, 0x0133, 0x0140, 0x0142, 0x00f8, 0x0153, 0x00df, 0x00fe, 0x0167, 0x014b, 0x0020
 	}
-//	{ // Cyrillic G2 Supplementary Set
-//	},
-//	{ // Greek G2 Supplementary Set
-//	},
-//	{ // Arabic G2 Supplementary Set
-//	}
+	//	{ // Cyrillic G2 Supplementary Set
+	//	},
+	//	{ // Greek G2 Supplementary Set
+	//	},
+	//	{ // Arabic G2 Supplementary Set
+	//	}
 };
 
 const uint16_t G2_ACCENTS[15][52] = {
@@ -370,41 +370,41 @@ const uint16_t G2_ACCENTS[15][52] = {
 		0x0000, 0x0000, 0x0000, 0x017e
 	}
 };
-void page_buffer_add_string (struct TeletextCtx *ctx, const char *s)
+void page_buffer_add_string(struct TeletextCtx *ctx, const char *s)
 {
-	if(ctx->page_buffer_cur_size < (ctx->page_buffer_cur_used + strlen (s)+1))
+	if (ctx->page_buffer_cur_size < (ctx->page_buffer_cur_used + strlen(s) + 1))
 	{
-		int add=strlen (s)+4096; // So we don't need to realloc often
-		ctx->page_buffer_cur_size=ctx->page_buffer_cur_size+add;
-		ctx->page_buffer_cur=(char *) realloc (ctx->page_buffer_cur,ctx->page_buffer_cur_size);
+		int add = strlen(s) + 4096; // So we don't need to realloc often
+		ctx->page_buffer_cur_size = ctx->page_buffer_cur_size + add;
+		ctx->page_buffer_cur = (char *)realloc(ctx->page_buffer_cur, ctx->page_buffer_cur_size);
 		if (!ctx->page_buffer_cur)
-			fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process teletext page.\n");
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process teletext page.\n");
 	}
-	memcpy (ctx->page_buffer_cur+ctx->page_buffer_cur_used, s, strlen (s));
-	ctx->page_buffer_cur_used+=strlen (s);
-	ctx->page_buffer_cur[ctx->page_buffer_cur_used]=0;
+	memcpy(ctx->page_buffer_cur + ctx->page_buffer_cur_used, s, strlen(s));
+	ctx->page_buffer_cur_used += strlen(s);
+	ctx->page_buffer_cur[ctx->page_buffer_cur_used] = 0;
 }
 
-void ucs2_buffer_add_char (struct TeletextCtx *ctx, uint64_t c)
+void ucs2_buffer_add_char(struct TeletextCtx *ctx, uint64_t c)
 {
-	if (ctx->ucs2_buffer_cur_size<(ctx->ucs2_buffer_cur_used+2))
+	if (ctx->ucs2_buffer_cur_size < (ctx->ucs2_buffer_cur_used + 2))
 	{
-		int add=4096; // So we don't need to realloc often
-		ctx->ucs2_buffer_cur_size=ctx->ucs2_buffer_cur_size+add;
-		ctx->ucs2_buffer_cur=(uint64_t *) realloc (ctx->ucs2_buffer_cur,ctx->ucs2_buffer_cur_size*sizeof (uint64_t));
+		int add = 4096; // So we don't need to realloc often
+		ctx->ucs2_buffer_cur_size = ctx->ucs2_buffer_cur_size + add;
+		ctx->ucs2_buffer_cur = (uint64_t *)realloc(ctx->ucs2_buffer_cur, ctx->ucs2_buffer_cur_size * sizeof(uint64_t));
 		if (!ctx->ucs2_buffer_cur)
-			fatal (EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process teletext page.\n");
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process teletext page.\n");
 	}
-	ctx->ucs2_buffer_cur[ctx->ucs2_buffer_cur_used++]=c;
-	ctx->ucs2_buffer_cur[ctx->ucs2_buffer_cur_used]=0;
+	ctx->ucs2_buffer_cur[ctx->ucs2_buffer_cur_used++] = c;
+	ctx->ucs2_buffer_cur[ctx->ucs2_buffer_cur_used] = 0;
 }
 
-void page_buffer_add_char (struct TeletextCtx *ctx, char c)
+void page_buffer_add_char(struct TeletextCtx *ctx, char c)
 {
 	char t[2];
-	t[0]=c;
-	t[1]=0;
-	page_buffer_add_string (ctx, t);
+	t[0] = c;
+	t[1] = 0;
+	page_buffer_add_string(ctx, t);
 }
 
 // ETS 300 706, chapter 8.2
@@ -412,7 +412,7 @@ uint8_t unham_8_4(uint8_t a)
 {
 	uint8_t r = UNHAM_8_4[a];
 	if (r == 0xff) {
-		dbg_print (CCX_DMT_TELETEXT, "- Unrecoverable data error; UNHAM8/4(%02x)\n", a);
+		dbg_print(CCX_DMT_TELETEXT, "- Unrecoverable data error; UNHAM8/4(%02x)\n", a);
 	}
 	return (r & 0x0f);
 }
@@ -423,7 +423,7 @@ uint32_t unham_24_18(uint32_t a)
 	uint8_t test = 0;
 
 	//Tests A-F correspond to bits 0-6 respectively in 'test'.
-	for (uint8_t i = 0; i < 23; i++) test ^= ((a >> i) & 0x01) * (i + 33);
+	for (uint8_t i = 0; i < 23; i++) test ^= ((a >> i) & 0x01) *(i + 33);
 	//Only parity bit is tested for bit 24
 	test ^= ((a >> 23) & 0x01) * 32;
 
@@ -446,13 +446,13 @@ uint32_t unham_24_18(uint32_t a)
 void set_g0_charset(uint32_t triplet)
 {
 	// ETS 300 706, Table 32
-	if((triplet & 0x3c00) == 0x1000)
+	if ((triplet & 0x3c00) == 0x1000)
 	{
-		if((triplet & 0x0380) == 0x0000)
+		if ((triplet & 0x0380) == 0x0000)
 			default_g0_charset = CYRILLIC1;
-		else if((triplet & 0x0380) == 0x0200)
+		else if ((triplet & 0x0380) == 0x0200)
 			default_g0_charset = CYRILLIC2;
-		else if((triplet & 0x0380) == 0x0280)
+		else if ((triplet & 0x0380) == 0x0280)
 			default_g0_charset = CYRILLIC3;
 		else
 			default_g0_charset = LATIN;
@@ -511,7 +511,7 @@ uint16_t telx_to_ucs2(uint8_t c)
 {
 	if (PARITY_8[c] == 0)
 	{
-		dbg_print (CCX_DMT_TELETEXT,  "- Unrecoverable data error; PARITY(%02x)\n", c);
+		dbg_print(CCX_DMT_TELETEXT, "- Unrecoverable data error; PARITY(%02x)\n", c);
 		return 0x20;
 	}
 
@@ -521,24 +521,24 @@ uint16_t telx_to_ucs2(uint8_t c)
 	return r;
 }
 
-uint16_t bcd_page_to_int (uint16_t bcd)
+uint16_t bcd_page_to_int(uint16_t bcd)
 {
-	return ((bcd&0xf00)>>8)*100 + ((bcd&0xf0)>>4)*10 + (bcd&0xf);
+	return ((bcd & 0xf00) >> 8) * 100 + ((bcd & 0xf0) >> 4) * 10 + (bcd & 0xf);
 }
 
-void telx_case_fix (struct TeletextCtx *context)
+void telx_case_fix(struct TeletextCtx *context)
 {
 	if (context->page_buffer_cur == NULL)
 		return;
 
 	//Capitalizing first letter of every sentence
 	int line_len = strlen(context->page_buffer_cur);
-	for(int i = 0; i < line_len; i++)
+	for (int i = 0; i < line_len; i++)
 	{
-		switch(context->page_buffer_cur[i])
+		switch (context->page_buffer_cur[i])
 		{
 			case ' ':
-			//case 0x89: // This is a transparent space
+				//case 0x89: // This is a transparent space
 			case '-':
 				break;
 			case '.': // Fallthrough
@@ -548,10 +548,10 @@ void telx_case_fix (struct TeletextCtx *context)
 				context->new_sentence = 1;
 				break;
 			default:
-				if (context->new_sentence && i!=0 && context->page_buffer_cur[i-1]!='\n')
+				if (context->new_sentence && i != 0 && context->page_buffer_cur[i - 1] != '\n')
 					context->page_buffer_cur[i] = cctoupper(context->page_buffer_cur[i]);
 
-				else if(!context->new_sentence && i!=0 && context->page_buffer_cur[i-1] != '\n')
+				else if (!context->new_sentence && i != 0 && context->page_buffer_cur[i - 1] != '\n')
 					context->page_buffer_cur[i] = cctolower(context->page_buffer_cur[i]);
 
 				context->new_sentence = 0;
@@ -561,7 +561,7 @@ void telx_case_fix (struct TeletextCtx *context)
 	telx_correct_case(context->page_buffer_cur);
 }
 
-void telxcc_dump_prev_page (struct TeletextCtx *ctx, struct cc_subtitle *sub)
+void telxcc_dump_prev_page(struct TeletextCtx *ctx, struct cc_subtitle *sub)
 {
 	char info[4];
 	if (!ctx->page_buffer_prev)
@@ -572,40 +572,40 @@ void telxcc_dump_prev_page (struct TeletextCtx *ctx, struct cc_subtitle *sub)
 		ctx->prev_hide_timestamp, info, "TLT", CCX_ENC_UTF_8);
 
 	if (ctx->page_buffer_prev)
-		free (ctx->page_buffer_prev);
+		free(ctx->page_buffer_prev);
 	if (ctx->ucs2_buffer_prev)
-		free (ctx->ucs2_buffer_prev);
+		free(ctx->ucs2_buffer_prev);
 	// Switch "dump" buffers
-	ctx->page_buffer_prev_used=ctx->page_buffer_cur_used;
-	ctx->page_buffer_prev_size=ctx->page_buffer_cur_size;
-	ctx->page_buffer_prev=ctx->page_buffer_cur;
-	ctx->page_buffer_cur_size=0;
-	ctx->page_buffer_cur_used=0;
-	ctx->page_buffer_cur=NULL;
+	ctx->page_buffer_prev_used = ctx->page_buffer_cur_used;
+	ctx->page_buffer_prev_size = ctx->page_buffer_cur_size;
+	ctx->page_buffer_prev = ctx->page_buffer_cur;
+	ctx->page_buffer_cur_size = 0;
+	ctx->page_buffer_cur_used = 0;
+	ctx->page_buffer_cur = NULL;
 	// Also switch compare buffers
-	ctx->ucs2_buffer_prev_used=ctx->ucs2_buffer_cur_used;
-	ctx->ucs2_buffer_prev_size=ctx->ucs2_buffer_cur_size;
-	ctx->ucs2_buffer_prev=ctx->ucs2_buffer_cur;
-	ctx->ucs2_buffer_cur_size=0;
-	ctx->ucs2_buffer_cur_used=0;
-	ctx->ucs2_buffer_cur=NULL;
+	ctx->ucs2_buffer_prev_used = ctx->ucs2_buffer_cur_used;
+	ctx->ucs2_buffer_prev_size = ctx->ucs2_buffer_cur_size;
+	ctx->ucs2_buffer_prev = ctx->ucs2_buffer_cur;
+	ctx->ucs2_buffer_cur_size = 0;
+	ctx->ucs2_buffer_cur_used = 0;
+	ctx->ucs2_buffer_cur = NULL;
 }
 
 // Note: c1 and c2 are just used for debug output, not for the actual comparison
-int fuzzy_memcmp (const char *c1, const char *c2, const uint64_t *ucs2_buf1, unsigned ucs2_buf1_len,
-				  const uint64_t *ucs2_buf2, unsigned ucs2_buf2_len)
+int fuzzy_memcmp(const char *c1, const char *c2, const uint64_t *ucs2_buf1, unsigned ucs2_buf1_len,
+	const uint64_t *ucs2_buf2, unsigned ucs2_buf2_len)
 {
 	size_t l;
-	size_t short_len=ucs2_buf1_len<ucs2_buf2_len?ucs2_buf1_len:ucs2_buf2_len;
-	size_t max=(short_len * tlt_config.levdistmaxpct)/100;
-	unsigned upto=(ucs2_buf1_len<ucs2_buf2_len)?ucs2_buf1_len:ucs2_buf2_len;
+	size_t short_len = ucs2_buf1_len < ucs2_buf2_len ? ucs2_buf1_len : ucs2_buf2_len;
+	size_t max = (short_len * tlt_config.levdistmaxpct) / 100;
+	unsigned upto = (ucs2_buf1_len < ucs2_buf2_len) ? ucs2_buf1_len : ucs2_buf2_len;
 	if (max < tlt_config.levdistmincnt)
-		max=tlt_config.levdistmincnt;
+		max = tlt_config.levdistmincnt;
 
 	// For the second string, only take the first chars (up to the first string length, that's upto).
-	l = (size_t) levenshtein_dist (ucs2_buf1,ucs2_buf2,ucs2_buf1_len,upto);
-	int res=(l>max);
-	dbg_print(CCX_DMT_LEVENSHTEIN, "\rLEV | %s | %s | Max: %d | Calc: %d | Match: %d\n", c1,c2,max,l,!res);
+	l = (size_t)levenshtein_dist(ucs2_buf1, ucs2_buf2, ucs2_buf1_len, upto);
+	int res = (l > max);
+	dbg_print(CCX_DMT_LEVENSHTEIN, "\rLEV | %s | %s | Max: %d | Calc: %d | Match: %d\n", c1, c2, max, l, !res);
 	return res;
 }
 
@@ -613,9 +613,9 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 {
 	if ((tlt_config.extraction_start.set && page->hide_timestamp < tlt_config.extraction_start.time_in_ms) ||
 		(tlt_config.extraction_end.set && page->show_timestamp > tlt_config.extraction_end.time_in_ms) ||
-        	page->hide_timestamp == 0)
+		page->hide_timestamp == 0)
 	{
-        	return;
+		return;
 	}
 #ifdef DEBUG
 	for (uint8_t row = 1; row < 25; row++) {
@@ -625,8 +625,8 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 	}
 	fprintf(stdout, "\n");
 #endif
-	char u[4] = {0, 0, 0, 0};
-    
+	char u[4] = { 0, 0, 0, 0 };
+
 	// optimization: slicing column by column -- higher probability we could find boxed area start mark sooner
 	uint8_t page_is_empty = YES;
 	for (uint8_t col = 0; col < 40; col++)
@@ -640,7 +640,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 			}
 		}
 	}
-	page_is_empty:
+page_is_empty:
 	if (page_is_empty == YES) return;
 
 	if (page->show_timestamp > page->hide_timestamp)
@@ -648,7 +648,7 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 
 	char timecode_show[24] = { 0 }, timecode_hide[24] = { 0 };
 
-	int time_reported=0;
+	int time_reported = 0;
 	char c_tempb[256]; // For buffering
 	uint8_t line_count = 0;
 
@@ -656,45 +656,45 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 	timecode_show[12] = 0;
 	timestamp_to_srttime(page->hide_timestamp, timecode_hide);
 	timecode_hide[12] = 0;
-    
+
 	// process data
 	for (uint8_t row = 1; row < 25; row++)
 	{
-        	// anchors for string trimming purpose
-        	uint8_t col_start = 40;
-        	uint8_t col_stop = 40;
+		// anchors for string trimming purpose
+		uint8_t col_start = 40;
+		uint8_t col_stop = 40;
 
-        	uint8_t box_open = NO;
-        	for (int8_t col = 0; col < 40; col++)
-        	{
-            		// replace all 0/B and 0/A characters with 0/20, as specified in ETS 300 706:
-            		// Unless operating in "Hold Mosaics" mode, each character space occupied by a
-            		// spacing attribute is displayed as a SPACE
-            		if (page->text[row][col] == 0xb) // open the box
-            		{
-                		if (col_start == 40)
-                		{
-                    			col_start = col;
-                    			line_count++;
-                		}
-                		else
-                		{
-                    			page->text[row][col] = 0x20;
-                		}
-                		box_open = YES;
-            		}
-            		else if (page->text[row][col] == 0xa) // close the box
-            		{
-                		page->text[row][col] = 0x20;
-                		box_open = NO;
-            		}
-            		// characters between 0xA and 0xB shouldn't be displayed
-            		// page->text[row][col] > 0x20 added to preserve color information
-            		else if (!box_open && col_start < 40 && page->text[row][col] > 0x20)
-            		{
-                		page->text[row][col] = 0x20;
-            		}
-        	}
+		uint8_t box_open = NO;
+		for (int8_t col = 0; col < 40; col++)
+		{
+			// replace all 0/B and 0/A characters with 0/20, as specified in ETS 300 706:
+			// Unless operating in "Hold Mosaics" mode, each character space occupied by a
+			// spacing attribute is displayed as a SPACE
+			if (page->text[row][col] == 0xb) // open the box
+			{
+				if (col_start == 40)
+				{
+					col_start = col;
+					line_count++;
+				}
+				else
+				{
+					page->text[row][col] = 0x20;
+				}
+				box_open = YES;
+			}
+			else if (page->text[row][col] == 0xa) // close the box
+			{
+				page->text[row][col] = 0x20;
+				box_open = NO;
+			}
+			// characters between 0xA and 0xB shouldn't be displayed
+			// page->text[row][col] > 0x20 added to preserve color information
+			else if (!box_open && col_start < 40 && page->text[row][col] > 0x20)
+			{
+				page->text[row][col] = 0x20;
+			}
+		}
 		// line is empty
 		if (col_start > 39)
 			continue;
@@ -736,20 +736,20 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 
 		if (tlt_config.gui_mode_reports)
 		{
-			fprintf (stderr, "###SUBTITLE#");
+			fprintf(stderr, "###SUBTITLE#");
 			if (!time_reported)
 			{
 				char timecode_show_mmss[6], timecode_hide_mmss[6];
-				memcpy (timecode_show_mmss, timecode_show+3, 5);
-				memcpy (timecode_hide_mmss, timecode_hide+3, 5);
-				timecode_show_mmss[5]=0;
-				timecode_hide_mmss[5]=0;
+				memcpy(timecode_show_mmss, timecode_show + 3, 5);
+				memcpy(timecode_hide_mmss, timecode_hide + 3, 5);
+				timecode_show_mmss[5] = 0;
+				timecode_hide_mmss[5] = 0;
 				// Note, only MM:SS here as we need to save space in the preview window
-				fprintf (stderr, "%s#%s#",timecode_show_mmss, timecode_hide_mmss);
-				time_reported=1;
+				fprintf(stderr, "%s#%s#", timecode_show_mmss, timecode_hide_mmss);
+				time_reported = 1;
 			}
 			else
-				fprintf (stderr, "##");
+				fprintf(stderr, "##");
 		}
 
 		for (uint8_t col = 0; col <= col_stop; col++)
@@ -759,15 +759,15 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 
 			if (col < col_start)
 			{
-				if (v <= 0x7) foreground_color = (uint8_t) v;
+				if (v <= 0x7) foreground_color = (uint8_t)v;
 			}
 
 			if (col == col_start)
 			{
 				if ((foreground_color != 0x7) && !tlt_config.nofontcolor)
 				{
-					sprintf (c_tempb, "<font color=\"%s\">", TTXT_COLOURS[foreground_color]);
-					page_buffer_add_string (ctx, c_tempb);
+					sprintf(c_tempb, "<font color=\"%s\">", TTXT_COLOURS[foreground_color]);
+					page_buffer_add_string(ctx, c_tempb);
 					font_tag_opened = YES;
 				}
 			}
@@ -782,17 +782,17 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 					{
 						if (font_tag_opened == YES)
 						{
-							page_buffer_add_string (ctx, "</font>");
+							page_buffer_add_string(ctx, "</font>");
 							font_tag_opened = NO;
 						}
-                                                
+
 						page_buffer_add_string(ctx, " ");
 						// black is considered as white for telxcc purpose
 						// telxcc writes <font/> tags only when needed
 						if ((v > 0x0) && (v < 0x7))
 						{
-							sprintf (c_tempb, "<font color=\"%s\">", TTXT_COLOURS[v]);
-							page_buffer_add_string (ctx, c_tempb);
+							sprintf(c_tempb, "<font color=\"%s\">", TTXT_COLOURS[v]);
+							page_buffer_add_string(ctx, c_tempb);
 							font_tag_opened = YES;
 						}
 					}
@@ -803,21 +803,21 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 				if (v >= 0x20)
 				{
 					ucs2_to_utf8(u, v);
-					uint64_t ucs2_char=(u[0]<<24) | (u[1]<<16) | (u[2]<<8) | u[3];
-                    ucs2_buffer_add_char(ctx, ucs2_char);
+					uint64_t ucs2_char = (u[0] << 24) | (u[1] << 16) | (u[2] << 8) | u[3];
+					ucs2_buffer_add_char(ctx, ucs2_char);
 
 
-                    if (font_tag_opened == NO && tlt_config.latrusmap) {
-                        for (uint8_t i = 0; i < array_length(LAT_RUS); i++) {
-                            if (v == LAT_RUS[i].lat_char)
-                            {
-                                page_buffer_add_string (ctx, LAT_RUS[i].rus_char);
-                                // already processed char
-                                v = 0;
-                                break;
-                            }
-                        }
-                    }
+					if (font_tag_opened == NO && tlt_config.latrusmap) {
+						for (uint8_t i = 0; i < array_length(LAT_RUS); i++) {
+							if (v == LAT_RUS[i].lat_char)
+							{
+								page_buffer_add_string(ctx, LAT_RUS[i].rus_char);
+								// already processed char
+								v = 0;
+								break;
+							}
+						}
+					}
 
 					// translate some chars into entities, if in colour mode
 					if (!tlt_config.nofontcolor && !tlt_config.nohtmlescape)
@@ -825,18 +825,18 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 						for (uint8_t i = 0; i < array_length(ENTITIES); i++)
 							if (v == ENTITIES[i].character)
 							{
-								page_buffer_add_string (ctx, ENTITIES[i].entity);
+								page_buffer_add_string(ctx, ENTITIES[i].entity);
 								// v < 0x20 won't be printed in next block
-                                v = 0;
+								v = 0;
 								break;
 							}
-                    }
+					}
 				}
 				if (v >= 0x20)
 				{
-					page_buffer_add_string (ctx, u);
+					page_buffer_add_string(ctx, u);
 					if (tlt_config.gui_mode_reports) // For now we just handle the easy stuff
-						fprintf (stderr,"%s",u);
+						fprintf(stderr, "%s", u);
 				}
 			}
 		}
@@ -844,16 +844,16 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 		// no tag will left opened!
 		if ((!tlt_config.nofontcolor) && (font_tag_opened == YES))
 		{
-			page_buffer_add_string (ctx, "</font>");
+			page_buffer_add_string(ctx, "</font>");
 			font_tag_opened = NO;
 		}
 
 		if (tlt_config.gui_mode_reports)
 		{
-			fprintf (stderr,"\n");
+			fprintf(stderr, "\n");
 		}
 	}
-	time_reported=0;
+	time_reported = 0;
 
 	if (ctx->sentence_cap)
 		telx_case_fix(ctx);
@@ -865,33 +865,33 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 			if (ctx->page_buffer_prev_used == 0)
 				ctx->prev_show_timestamp = page->show_timestamp;
 			if (ctx->page_buffer_prev_used == 0 ||
-				(tlt_config.dolevdist && 
-				fuzzy_memcmp (ctx->page_buffer_prev, ctx->page_buffer_cur,
+				(tlt_config.dolevdist &&
+					fuzzy_memcmp(ctx->page_buffer_prev, ctx->page_buffer_cur,
 						ctx->ucs2_buffer_prev, ctx->ucs2_buffer_prev_used,
 						ctx->ucs2_buffer_cur, ctx->ucs2_buffer_cur_used
-						) == 0))
+					) == 0))
 			{
 				// If empty previous buffer, we just start one with the
 				// current page and do nothing. Wait until we see more.
 				if (ctx->page_buffer_prev)
-					free (ctx->page_buffer_prev);
+					free(ctx->page_buffer_prev);
 
-				ctx->page_buffer_prev_used	= ctx->page_buffer_cur_used;
-				ctx->page_buffer_prev_size	= ctx->page_buffer_cur_size;
-				ctx->page_buffer_prev	= ctx->page_buffer_cur;
-				ctx->page_buffer_cur_size	= 0;
-				ctx->page_buffer_cur_used	= 0;
-				ctx->page_buffer_cur		= NULL;
+				ctx->page_buffer_prev_used = ctx->page_buffer_cur_used;
+				ctx->page_buffer_prev_size = ctx->page_buffer_cur_size;
+				ctx->page_buffer_prev = ctx->page_buffer_cur;
+				ctx->page_buffer_cur_size = 0;
+				ctx->page_buffer_cur_used = 0;
+				ctx->page_buffer_cur = NULL;
 
 				if (ctx->ucs2_buffer_prev)
-					free (ctx->ucs2_buffer_prev);
-				ctx->ucs2_buffer_prev_used	= ctx->ucs2_buffer_cur_used;
-				ctx->ucs2_buffer_prev_size	= ctx->ucs2_buffer_cur_size;
-				ctx->ucs2_buffer_prev	= ctx->ucs2_buffer_cur;
-				ctx->ucs2_buffer_cur_size	= 0;
-				ctx->ucs2_buffer_cur_used	= 0;
-				ctx->ucs2_buffer_cur		= NULL;
-				ctx->prev_hide_timestamp	= page->hide_timestamp;
+					free(ctx->ucs2_buffer_prev);
+				ctx->ucs2_buffer_prev_used = ctx->ucs2_buffer_cur_used;
+				ctx->ucs2_buffer_prev_size = ctx->ucs2_buffer_cur_size;
+				ctx->ucs2_buffer_prev = ctx->ucs2_buffer_cur;
+				ctx->ucs2_buffer_cur_size = 0;
+				ctx->ucs2_buffer_cur_used = 0;
+				ctx->ucs2_buffer_cur = NULL;
+				ctx->prev_hide_timestamp = page->hide_timestamp;
 				break;
 			}
 			else
@@ -909,11 +909,11 @@ void process_page(struct TeletextCtx *ctx, teletext_page_t *page, struct cc_subt
 
 	// Also update GUI...
 
-	ctx->page_buffer_cur_used=0;
+	ctx->page_buffer_cur_used = 0;
 	if (ctx->page_buffer_cur)
-		ctx->page_buffer_cur[0]=0;
+		ctx->page_buffer_cur[0] = 0;
 	if (tlt_config.gui_mode_reports)
-		fflush (stderr);
+		fflush(stderr);
 }
 
 void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, teletext_packet_payload_t *packet, uint64_t timestamp, struct cc_subtitle *sub)
@@ -938,21 +938,21 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 
 		if ((flag_subtitle == YES) && (i < 0xff))
 		{
-			int thisp= (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
+			int thisp = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
 			char t1[10];
-			sprintf (t1,"%x",thisp); // Example: 1928 -> 788
-			thisp=atoi (t1);
+			sprintf(t1, "%x", thisp); // Example: 1928 -> 788
+			thisp = atoi(t1);
 			if (!ctx->seen_sub_page[thisp])
 			{
-				ctx->seen_sub_page[thisp]=1;
-				mprint ("\rNotice: Teletext page with possible subtitles detected: %03d\n",thisp);
+				ctx->seen_sub_page[thisp] = 1;
+				mprint("\rNotice: Teletext page with possible subtitles detected: %03d\n", thisp);
 			}
 		}
 		if ((tlt_config.page == 0) && (flag_subtitle == YES) && (i < 0xff))
 		{
 			tlt_config.page = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
-			mprint ("- No teletext page specified, first received suitable page is %03x, not guaranteed\n", tlt_config.page);
-        }
+			mprint("- No teletext page specified, first received suitable page is %03x, not guaranteed\n", tlt_config.page);
+		}
 
 		// Page number and control bits
 		page_number = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
@@ -968,7 +968,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		// The same setting shall be used for all page headers in the service.
 		// ETS 300 706, chapter 7.2.1: Page is terminated by and excludes the next page header packet
 		// having the same magazine address in parallel transmission mode, or any magazine address in serial transmission mode.
-		ctx->transmission_mode = (transmission_mode_t) (unham_8_4(packet->data[7]) & 0x01);
+		ctx->transmission_mode = (transmission_mode_t)(unham_8_4(packet->data[7]) & 0x01);
 
 		// FIXME: Well, this is not ETS 300 706 kosher, however we are interested in DATA_UNIT_EBU_TELETEXT_SUBTITLE only
 		if ((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (data_unit_id != DATA_UNIT_EBU_TELETEXT_SUBTITLE) && !(de_ctr && flag_subtitle && ctx->receiving_data == YES)) return;
@@ -978,8 +978,8 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (PAGE(page_number) != PAGE(tlt_config.page)) && (m == MAGAZINE(tlt_config.page)))))
 		{
 			ctx->receiving_data = NO;
-			if(!(de_ctr && flag_subtitle))
-			  return;
+			if (!(de_ctr && flag_subtitle))
+				return;
 		}
 
 		// Page transmission is terminated, however now we are waiting for our new page
@@ -991,9 +991,9 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		if (ctx->page_buffer.tainted == YES)
 		{
 			// Convert telx to UCS-2 before processing
-			for(uint8_t yt = 1; yt <= 23; ++yt)
+			for (uint8_t yt = 1; yt <= 23; ++yt)
 			{
-				for(uint8_t it = 0; it < 40; it++)
+				for (uint8_t it = 0; it < 40; it++)
 				{
 					if (ctx->page_buffer.text[yt][it] != 0x00 && ctx->page_buffer.g2_char_present[yt][it] == 0)
 						ctx->page_buffer.text[yt][it] = telx_to_ucs2(ctx->page_buffer.text[yt][it]);
@@ -1015,7 +1015,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		memset(ctx->page_buffer.g2_char_present, 0x00, sizeof(ctx->page_buffer.g2_char_present));
 		ctx->page_buffer.tainted = NO;
 		ctx->receiving_data = YES;
-		if(default_g0_charset == LATIN) // G0 Character National Option Sub-sets selection required only for Latin Character Sets
+		if (default_g0_charset == LATIN) // G0 Character National Option Sub-sets selection required only for Latin Character Sets
 		{
 			primary_charset.g0_x28 = UNDEFINED;
 			c = (primary_charset.g0_m29 != UNDEFINED) ? primary_charset.g0_m29 : charset;
@@ -1063,7 +1063,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			// invalid data (HAM24/18 uncorrectable error detected), skip group
 			if (triplets[j] == 0xffffffff)
 			{
-				dbg_print (CCX_DMT_TELETEXT, "- Unrecoverable data error; UNHAM24/18()=%04x\n", triplets[j]);
+				dbg_print(CCX_DMT_TELETEXT, "- Unrecoverable data error; UNHAM24/18()=%04x\n", triplets[j]);
 				continue;
 			}
 
@@ -1139,7 +1139,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			if (triplet0 == 0xffffffff)
 			{
 				// invalid data (HAM24/18 uncorrectable error detected), skip group
-				dbg_print (CCX_DMT_TELETEXT, "! Unrecoverable data error; UNHAM24/18()=%04x\n", triplet0);
+				dbg_print(CCX_DMT_TELETEXT, "! Unrecoverable data error; UNHAM24/18()=%04x\n", triplet0);
 			}
 			else
 			{
@@ -1148,7 +1148,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				{
 					// ETS 300 706, Table 32
 					set_g0_charset(triplet0); // Deciding G0 Character Set
-					if(default_g0_charset == LATIN)
+					if (default_g0_charset == LATIN)
 					{
 						primary_charset.g0_x28 = (triplet0 & 0x3f80) >> 7;
 						remap_g0_charset(primary_charset.g0_x28);
@@ -1171,7 +1171,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			if (triplet0 == 0xffffffff)
 			{
 				// invalid data (HAM24/18 uncorrectable error detected), skip group
-				dbg_print (CCX_DMT_TELETEXT, "! Unrecoverable data error; UNHAM24/18()=%04x\n", triplet0);
+				dbg_print(CCX_DMT_TELETEXT, "! Unrecoverable data error; UNHAM24/18()=%04x\n", triplet0);
 			}
 			else
 			{
@@ -1180,7 +1180,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				if ((triplet0 & 0xff) == 0x00)
 				{
 					set_g0_charset(triplet0);
-					if(default_g0_charset == LATIN)
+					if (default_g0_charset == LATIN)
 					{
 						primary_charset.g0_m29 = (triplet0 & 0x3f80) >> 7;
 						// X/28 takes precedence over M/29
@@ -1203,7 +1203,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			{
 				uint32_t t = 0;
 				time_t t0;
-				mprint ("- Programme Identification Data = ");
+				mprint("- Programme Identification Data = ");
 				for (uint8_t i = 20; i < 40; i++)
 				{
 					char u[4] = { 0, 0, 0, 0 };
@@ -1212,9 +1212,9 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 					if (c < 0x20) continue;
 
 					ucs2_to_utf8(u, c);
-					mprint ( "%s", u);
+					mprint("%s", u);
 				}
-				mprint ("\n");
+				mprint("\n");
 
 				// OMG! ETS 300 706 stores timestamp in 7 bytes in Modified Julian Day in BCD format + HH:MM:SS in BCD format
 				// + timezone as 5-bit count of half-hours from GMT with 1-bit sign
@@ -1229,20 +1229,20 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				// 2nd step: conversion Modified Julian Day to unix timestamp
 				t = (t - 40587) * 86400;
 				// 3rd step: add time
-				t += 3600 * ( ((packet->data[13] & 0xf0) >> 4) * 10 + (packet->data[13] & 0x0f) );
-				t +=   60 * ( ((packet->data[14] & 0xf0) >> 4) * 10 + (packet->data[14] & 0x0f) );
-				t +=        ( ((packet->data[15] & 0xf0) >> 4) * 10 + (packet->data[15] & 0x0f) );
+				t += 3600 * (((packet->data[13] & 0xf0) >> 4) * 10 + (packet->data[13] & 0x0f));
+				t += 60 * (((packet->data[14] & 0xf0) >> 4) * 10 + (packet->data[14] & 0x0f));
+				t += (((packet->data[15] & 0xf0) >> 4) * 10 + (packet->data[15] & 0x0f));
 				t -= 40271;
 				// 4th step: conversion to time_t
 				t0 = (time_t)t;
 				// ctime output itself is \n-ended
-				mprint ("- Universal Time Co-ordinated = %s", ctime(&t0));
+				mprint("- Universal Time Co-ordinated = %s", ctime(&t0));
 
-				dbg_print (CCX_DMT_TELETEXT, "- Transmission mode = %s\n", (ctx->transmission_mode == TRANSMISSION_MODE_SERIAL ? "serial" : "parallel"));
+				dbg_print(CCX_DMT_TELETEXT, "- Transmission mode = %s\n", (ctx->transmission_mode == TRANSMISSION_MODE_SERIAL ? "serial" : "parallel"));
 
-				if (tlt_config.write_format == CCX_OF_TRANSCRIPT && tlt_config.date_format==ODF_DATE && !tlt_config.noautotimeref)
+				if (tlt_config.write_format == CCX_OF_TRANSCRIPT && tlt_config.date_format == ODF_DATE && !tlt_config.noautotimeref)
 				{
-					mprint ("- Broadcast Service Data Packet received, resetting UTC referential value to %s", ctime(&t0));
+					mprint("- Broadcast Service Data Packet received, resetting UTC referential value to %s", ctime(&t0));
 					utc_refvalue = t;
 					ctx->states.pts_initialized = NO;
 				}
@@ -1253,11 +1253,11 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 	}
 }
 
-void tlt_write_rcwt(struct lib_cc_decode *ctx, uint8_t data_unit_id, uint8_t *packet, uint64_t timestamp,  struct cc_subtitle *sub)
+void tlt_write_rcwt(struct lib_cc_decode *ctx, uint8_t data_unit_id, uint8_t *packet, uint64_t timestamp, struct cc_subtitle *sub)
 {
-	ctx->writedata((unsigned char *) &data_unit_id, sizeof(uint8_t), NULL, sub);
-	ctx->writedata((unsigned char *) &timestamp, sizeof(uint64_t), NULL, sub);
-	ctx->writedata((unsigned char *) packet, 44, NULL, sub);
+	ctx->writedata((unsigned char *)&data_unit_id, sizeof(uint8_t), NULL, sub);
+	ctx->writedata((unsigned char *)&timestamp, sizeof(uint64_t), NULL, sub);
+	ctx->writedata((unsigned char *)packet, 44, NULL, sub);
 }
 
 void tlt_read_rcwt(void *codec, unsigned char *buf, struct cc_subtitle *sub)
@@ -1268,9 +1268,9 @@ void tlt_read_rcwt(void *codec, unsigned char *buf, struct cc_subtitle *sub)
 
 	memcpy(&(ctx->last_timestamp), &buf[1], sizeof(uint64_t));
 
-	if(utc_refvalue != UINT64_MAX)
+	if (utc_refvalue != UINT64_MAX)
 	{
-		ctx->last_timestamp+= utc_refvalue * 1000;
+		ctx->last_timestamp += utc_refvalue * 1000;
 	}
 
 	teletext_packet_payload_t *pl = (teletext_packet_payload_t *)&buf[9];
@@ -1283,7 +1283,7 @@ int tlt_print_seen_pages(struct lib_cc_decode *dec_ctx)
 {
 	struct TeletextCtx *ctx = NULL;
 
-	if(dec_ctx->codec != CCX_CODEC_TELETEXT)
+	if (dec_ctx->codec != CCX_CODEC_TELETEXT)
 	{
 		errno = EINVAL;
 		return -1;
@@ -1345,7 +1345,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	struct TeletextCtx *ctx = dec_ctx->private_data;
 	ctx->sentence_cap = sentence_cap;
 
-	if(!ctx)
+	if (!ctx)
 	{
 		mprint("Teletext: Context cant be NULL, use telxcc_init\n");
 		return CCX_EINVAL;
@@ -1430,12 +1430,12 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 		if ((optional_pes_header_included == YES) && ((buffer[7] & 0x80) > 0))
 		{
 			ctx->using_pts = YES;
-			dbg_print (CCX_DMT_TELETEXT, "- PID 0xbd PTS available\n");
+			dbg_print(CCX_DMT_TELETEXT, "- PID 0xbd PTS available\n");
 		}
 		else
 		{
 			ctx->using_pts = NO;
-			dbg_print (CCX_DMT_TELETEXT, "- PID 0xbd PTS unavailable, using TS PCR\n");
+			dbg_print(CCX_DMT_TELETEXT, "- PID 0xbd PTS unavailable, using TS PCR\n");
 		}
 	}
 
@@ -1458,7 +1458,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 		pts |= ((buffer[11] & 0xfe) << 14);
 		pts |= (buffer[12] << 7);
 		pts |= ((buffer[13] & 0xfe) >> 1);
-		t = (uint32_t) (pts / 90);
+		t = (uint32_t)(pts / 90);
 
 		set_current_pts(dec_ctx->timing, pts);
 		set_fts(dec_ctx->timing);
@@ -1520,7 +1520,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 				else
 				{
 					// FIXME: This explicit type conversion could be a problem some day -- do not need to be platform independent
-					process_telx_packet(ctx, (data_unit_t) data_unit_id, (teletext_packet_payload_t *)&buffer[i], ctx->last_timestamp, sub);
+					process_telx_packet(ctx, (data_unit_t)data_unit_id, (teletext_packet_payload_t *)&buffer[i], ctx->last_timestamp, sub);
 				}
 			}
 		}
@@ -1531,14 +1531,14 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 }
 
 // Called only when teletext is detected or forced and it's going to be used for extraction.
-void* telxcc_init(void)
+void *telxcc_init(void)
 {
 	struct TeletextCtx *ctx = malloc(sizeof(struct TeletextCtx));
 
-	if(!ctx)
+	if (!ctx)
 		return NULL;
-	memset (ctx->seen_sub_page, 0, MAX_TLT_PAGES * sizeof(short int));
-	memset (ctx->cc_map, 0, 256);
+	memset(ctx->seen_sub_page, 0, MAX_TLT_PAGES * sizeof(short int));
+	memset(ctx->cc_map, 0, 256);
 
 	ctx->page_buffer_prev = NULL;
 	ctx->page_buffer_cur = NULL;
@@ -1586,19 +1586,19 @@ void telxcc_close(void **ctx, struct cc_subtitle *sub)
 {
 	struct TeletextCtx *ttext = *ctx;
 
-	if(!ttext)
+	if (!ttext)
 		return;
 
-	mprint ( "\nTeletext decoder: %"PRIu32" packets processed \n", ttext->tlt_packet_counter);
+	mprint("\nTeletext decoder: %"PRIu32" packets processed \n", ttext->tlt_packet_counter);
 	if (tlt_config.write_format != CCX_OF_RCWT && sub)
 	{
 		// output any pending close caption
 		if (ttext->page_buffer.tainted == YES)
 		{
 			// Convert telx to UCS-2 before processing
-			for(uint8_t yt = 1; yt <= 23; ++yt)
+			for (uint8_t yt = 1; yt <= 23; ++yt)
 			{
-				for(uint8_t it = 0; it < 40; it++)
+				for (uint8_t it = 0; it < 40; it++)
 				{
 					if (ttext->page_buffer.text[yt][it] != 0x00 && ttext->page_buffer.g2_char_present[yt][it] == 0)
 						ttext->page_buffer.text[yt][it] = telx_to_ucs2(ttext->page_buffer.text[yt][it]);

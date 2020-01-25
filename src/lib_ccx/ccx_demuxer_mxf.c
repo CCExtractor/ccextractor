@@ -62,14 +62,14 @@ typedef struct MXFContext
 typedef struct MXFLocalTAGS
 {
 	uint16_t tag;
-	char*  name;
+	char *name;
 	int length;
 } MXFLocalTAGS;
 
 //S337 table 4 says 14 bytes can determine partition pack type
 static const uint8_t mxf_header_partition_pack_key[] = { 0x06,0x0e,0x2b,0x34,0x02,0x05,0x01,0x01,0x0d,0x01,0x02,0x01,0x01,0x02 };
-static const uint8_t mxf_essence_element_key[]       = { 0x06,0x0e,0x2b,0x34,0x01,0x02,0x01,0x01,0x0d,0x01,0x03,0x01 };
-static const uint8_t mxf_klv_key[]                   = { 0x06,0x0e,0x2b,0x34 };
+static const uint8_t mxf_essence_element_key[] = { 0x06,0x0e,0x2b,0x34,0x01,0x02,0x01,0x01,0x0d,0x01,0x03,0x01 };
+static const uint8_t mxf_klv_key[] = { 0x06,0x0e,0x2b,0x34 };
 
 static const MXFCodecUL mxf_caption_essence_container[] = {
 { {0x6,0xE,0x2B,0x34,0x04,0x01,0x01,0x09,0xD,0x1,0x3,0x1,0x2,0xD,0x0,0x0}, MXF_CT_VBI },
@@ -92,37 +92,37 @@ static const struct ccx_rational framerate_rationals[16] = {
 /* Only Used Tags defined in enum */
 enum MXFLocalTag
 {
-	MXF_TAG_LTRACK_ID    = 0x3006,
-	MXF_TAG_TRACK_ID     = 0x4801,
+	MXF_TAG_LTRACK_ID = 0x3006,
+	MXF_TAG_TRACK_ID = 0x4801,
 	MXF_TAG_TRACK_NUMBER = 0x4804,
-	MXF_TAG_EDIT_RATE    = 0x4b01,
+	MXF_TAG_EDIT_RATE = 0x4b01,
 };
 
 void update_tid_lut(struct MXFContext *ctx, uint32_t track_id, uint8_t *track_number, struct ccx_rational edit_rate)
 {
 	int i;
-    //Update essence element key if we have track Id of caption
-    if (ctx->cap_track_id == track_id)
-    {
-        memcpy(ctx->cap_essence_key, mxf_essence_element_key, 12);
-        memcpy(ctx->cap_essence_key + 12, track_number, 4);
-        ctx->edit_rate = edit_rate;
-    }
+	//Update essence element key if we have track Id of caption
+	if (ctx->cap_track_id == track_id)
+	{
+		memcpy(ctx->cap_essence_key, mxf_essence_element_key, 12);
+		memcpy(ctx->cap_essence_key + 12, track_number, 4);
+		ctx->edit_rate = edit_rate;
+	}
 
 	for (i = 0; i < ctx->nb_tracks; i++)
 	{
-        if (ctx->tracks[i].track_id == track_id &&
-            memcmp(ctx->tracks[i].track_number, track_number, 4))
-        {
-            memcpy(ctx->tracks[i].track_number, track_number, 4);
-            ctx->edit_rate = edit_rate;
-            return;
-        }
+		if (ctx->tracks[i].track_id == track_id &&
+			memcmp(ctx->tracks[i].track_number, track_number, 4))
+		{
+			memcpy(ctx->tracks[i].track_number, track_number, 4);
+			ctx->edit_rate = edit_rate;
+			return;
+		}
 	}
 	ctx->tracks[ctx->nb_tracks].track_id = track_id;
 	memcpy(ctx->tracks[ctx->nb_tracks].track_number, track_number, 4);
 	ctx->edit_rate = edit_rate;
-    // Increase number of track only if new track is discovered
+	// Increase number of track only if new track is discovered
 	ctx->nb_tracks++;
 }
 
@@ -134,12 +134,12 @@ void update_cap_essence_key(struct MXFContext *ctx, uint32_t track_id)
 		if (ctx->tracks[i].track_id == track_id)
 		{
 			memcpy(ctx->cap_essence_key, mxf_essence_element_key, 12);
-			memcpy(ctx->cap_essence_key+12, ctx->tracks[i].track_number, 4);
-            debug("Key %02X%02X%02X%02X%02X%02X%02X%02X.%02X%02X%02X%02X%02X%02X%02X%02X essence_key\n",
-                ctx->cap_essence_key[0], ctx->cap_essence_key[1], ctx->cap_essence_key[2], ctx->cap_essence_key[3],
-                ctx->cap_essence_key[4], ctx->cap_essence_key[5], ctx->cap_essence_key[5], ctx->cap_essence_key[7],
-                ctx->cap_essence_key[8], ctx->cap_essence_key[9], ctx->cap_essence_key[10], ctx->cap_essence_key[11],
-                ctx->cap_essence_key[12], ctx->cap_essence_key[13], ctx->cap_essence_key[14], ctx->cap_essence_key[15]);
+			memcpy(ctx->cap_essence_key + 12, ctx->tracks[i].track_number, 4);
+			debug("Key %02X%02X%02X%02X%02X%02X%02X%02X.%02X%02X%02X%02X%02X%02X%02X%02X essence_key\n",
+				ctx->cap_essence_key[0], ctx->cap_essence_key[1], ctx->cap_essence_key[2], ctx->cap_essence_key[3],
+				ctx->cap_essence_key[4], ctx->cap_essence_key[5], ctx->cap_essence_key[5], ctx->cap_essence_key[7],
+				ctx->cap_essence_key[8], ctx->cap_essence_key[9], ctx->cap_essence_key[10], ctx->cap_essence_key[11],
+				ctx->cap_essence_key[12], ctx->cap_essence_key[13], ctx->cap_essence_key[14], ctx->cap_essence_key[15]);
 			return;
 		}
 	}
@@ -188,10 +188,10 @@ static int mxf_read_header_partition_pack(struct ccx_demuxer *demux, uint64_t si
 		log("Invalid UL length\n");
 	len += 4;
 
-	if (size - len < (nb_essence_container * 16) )
+	if (size - len < (nb_essence_container * 16))
 	{
 		log("Partition pack has invalid essense container count(%d) to fit in partition size(%d)\n",
-		nb_essence_container, size);
+			nb_essence_container, size);
 		return CCX_EINVAL;
 	}
 
@@ -202,12 +202,12 @@ static int mxf_read_header_partition_pack(struct ccx_demuxer *demux, uint64_t si
 			return CCX_EOF;
 		demux->past += 16;
 		len += 16;
-		for (j =0; j < sizeof(mxf_caption_essence_container)/sizeof(*mxf_caption_essence_container); j++)
+		for (j = 0; j < sizeof(mxf_caption_essence_container) / sizeof(*mxf_caption_essence_container); j++)
 		{
-		if(IS_KLV_KEY(essence_ul, mxf_caption_essence_container[j].uid))
-		{
-			ctx->type = mxf_caption_essence_container[j].type;
-		}
+			if (IS_KLV_KEY(essence_ul, mxf_caption_essence_container[j].uid))
+			{
+				ctx->type = mxf_caption_essence_container[j].type;
+			}
 		}
 	}
 	return len;
@@ -220,7 +220,7 @@ static int mxf_read_timeline_track_metadata(struct ccx_demuxer *demux, uint64_t 
 	struct MXFContext *ctx = demux->private_data;
 	/* Acc B.7 Property shall always be present and non-zero. */
 	uint32_t track_id = 0;
-	uint8_t track_number[4] = {0};
+	uint8_t track_number[4] = { 0 };
 	struct ccx_rational edit_rate;
 
 	while (len < size)
@@ -229,7 +229,7 @@ static int mxf_read_timeline_track_metadata(struct ccx_demuxer *demux, uint64_t 
 		tag_len = buffered_get_be16(demux);
 		len += 4;
 
-		switch(tag)
+		switch (tag)
 		{
 			case MXF_TAG_TRACK_ID:
 				track_id = buffered_get_be32(demux);
@@ -270,7 +270,7 @@ static int mxf_read_vanc_vbi_desc(struct ccx_demuxer *demux, uint64_t size)
 		tag_len = buffered_get_be16(demux);
 		len += 4;
 
-		switch(tag)
+		switch (tag)
 		{
 			case MXF_TAG_LTRACK_ID:
 				ctx->cap_track_id = buffered_get_be32(demux);
@@ -294,7 +294,7 @@ static int mxf_read_cdp_data(struct ccx_demuxer *demux, int size, struct demuxer
 
 	ret = buffered_get_be16(demux);
 	len += 2;
-	if(ret != 0x9669)
+	if (ret != 0x9669)
 	{
 		log("Invalid CDP Identifier\n");
 		goto error;
@@ -302,7 +302,7 @@ static int mxf_read_cdp_data(struct ccx_demuxer *demux, int size, struct demuxer
 
 	ret = buffered_get_byte(demux);
 	len++;
-	if(ret != size)
+	if (ret != size)
 	{
 		log("Incomplete CDP packet\n");
 		goto error;
@@ -319,19 +319,19 @@ static int mxf_read_cdp_data(struct ccx_demuxer *demux, int size, struct demuxer
 	len += 3;
 
 	ret = buffered_get_byte(demux);
-	len ++;
-	if(ret != 0x72) // Skip if its not cdata identifier
+	len++;
+	if (ret != 0x72) // Skip if its not cdata identifier
 		goto error;
 
 	cc_count = buffered_get_byte(demux) & 0x1F;
 	len++;
 	// -4 for cdp footer length
-	if ( (cc_count * 3) > (size - len - 4))
+	if ((cc_count * 3) > (size - len - 4))
 		log("Incomplete CDP packet\n");
 
-	ret = buffered_read(demux, data->buffer+data->len, cc_count*3);
-	data->len += cc_count*3;
-	demux->past += cc_count*3;
+	ret = buffered_read(demux, data->buffer + data->len, cc_count * 3);
+	data->len += cc_count * 3;
+	demux->past += cc_count * 3;
 	len += ret;
 
 error:
@@ -398,30 +398,30 @@ static int mxf_read_vanc_data(struct ccx_demuxer *demux, uint64_t size, struct d
 
 	for (int i = 0; i < vanc_header[1]; i++) {
 		DID = buffered_get_byte(demux);
-        len++;
-        if (!(DID == 0x61 || DID == 0x80))
-        {
-            goto error;
-        }
+		len++;
+		if (!(DID == 0x61 || DID == 0x80))
+		{
+			goto error;
+		}
 
 		SDID = buffered_get_byte(demux);
-        len++;
-        if (SDID == 0x01)
-            debug("Caption Type 708\n");
-        else if (SDID == 0x02)
-            debug("Caption Type 608\n");
+		len++;
+		if (SDID == 0x01)
+			debug("Caption Type 708\n");
+		else if (SDID == 0x02)
+			debug("Caption Type 608\n");
 
 		cdp_size = buffered_get_byte(demux);
-        if (cdp_size + 19 > size)
-        {
-            debug("Incomplete cdp(%d) in anc data(%d)\n", cdp_size, size);
-            goto error;
-        }
-        len++;
+		if (cdp_size + 19 > size)
+		{
+			debug("Incomplete cdp(%d) in anc data(%d)\n", cdp_size, size);
+			goto error;
+		}
+		len++;
 
-        ret = mxf_read_cdp_data(demux, cdp_size, data);
-        len += ret;
-        //len += (3 + count + 4);
+		ret = mxf_read_cdp_data(demux, cdp_size, data);
+		len += ret;
+		//len += (3 + count + 4);
 	}
 
 
@@ -455,13 +455,13 @@ static int mxf_read_essence_element(struct ccx_demuxer *demux, uint64_t size, st
 }
 
 static const MXFReadTableEntry mxf_read_table[] = {
-/* According to section 7.1 of S377 partition key byte 14 and 15 have variable values */
-{ { 0x06,0x0e,0x2b,0x34,0x02,0x05,0x01,0x01,0x0d,0x01,0x02,0x01,0x01,0x02,0x04,0x00 }, mxf_read_header_partition_pack},
-/* Structural Metadata Sets */
-{ { 0x06,0x0e,0x2b,0x34,0x02,0x53,0x01,0x01,0x0d,0x01,0x01,0x01,0x01,0x01,0x3B,0x00 }, mxf_read_timeline_track_metadata },
-{ { 0x06,0x0e,0x2b,0x34,0x02,0x53,0x01,0x01,0x0d,0x01,0x01,0x01,0x01,0x01,0x5c,0x00 }, mxf_read_vanc_vbi_desc},
-/* Generic Track */
-{ { 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 }, NULL},
+	/* According to section 7.1 of S377 partition key byte 14 and 15 have variable values */
+	{ { 0x06,0x0e,0x2b,0x34,0x02,0x05,0x01,0x01,0x0d,0x01,0x02,0x01,0x01,0x02,0x04,0x00 }, mxf_read_header_partition_pack},
+	/* Structural Metadata Sets */
+	{ { 0x06,0x0e,0x2b,0x34,0x02,0x53,0x01,0x01,0x0d,0x01,0x01,0x01,0x01,0x01,0x3B,0x00 }, mxf_read_timeline_track_metadata },
+	{ { 0x06,0x0e,0x2b,0x34,0x02,0x53,0x01,0x01,0x0d,0x01,0x01,0x01,0x01,0x01,0x5c,0x00 }, mxf_read_vanc_vbi_desc},
+	/* Generic Track */
+	{ { 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 }, NULL},
 };
 
 static int mxf_read_sync(struct ccx_demuxer *ctx, const uint8_t *key, size_t size)
@@ -469,7 +469,7 @@ static int mxf_read_sync(struct ccx_demuxer *ctx, const uint8_t *key, size_t siz
 	size_t i;
 	unsigned char b;
 	int ret;
-	for (i = 0; i < size ; i++)
+	for (i = 0; i < size; i++)
 	{
 		ret = buffered_read_byte(ctx, &b);
 		if (ret != 1)
@@ -509,7 +509,7 @@ static int klv_read_packet(KLVPacket *klv, struct ccx_demuxer *ctx)
 	int ret;
 
 	ret = mxf_read_sync(ctx, mxf_klv_key, 4);
-	if ( ret !=  0)
+	if (ret != 0)
 		return ret;
 
 	memcpy(klv->key, mxf_klv_key, 4);
@@ -541,14 +541,14 @@ static int read_packet(struct ccx_demuxer *demux, struct demuxer_data *data)
 	KLVPacket klv;
 	const MXFReadTableEntry *reader;
 	struct MXFContext *ctx = demux->private_data;
-	while( (ret = klv_read_packet(&klv, demux) ) == 0)
+	while ((ret = klv_read_packet(&klv, demux)) == 0)
 	{
 		debug("Key %02X%02X%02X%02X%02X%02X%02X%02X.%02X%02X%02X%02X%02X%02X%02X%02X size %"PRIu64"\n",
-            klv.key[ 0], klv.key[ 1], klv.key[ 2], klv.key[ 3],
-            klv.key[ 4], klv.key[ 5], klv.key[ 5], klv.key[ 7],
-            klv.key[ 8], klv.key[ 9], klv.key[10], klv.key[11],
-            klv.key[12], klv.key[13], klv.key[14], klv.key[15],
-            klv.length);
+			klv.key[0], klv.key[1], klv.key[2], klv.key[3],
+			klv.key[4], klv.key[5], klv.key[5], klv.key[7],
+			klv.key[8], klv.key[9], klv.key[10], klv.key[11],
+			klv.key[12], klv.key[13], klv.key[14], klv.key[15],
+			klv.length);
 
 		if (IS_KLV_KEY(klv.key, ctx->cap_essence_key))
 		{
@@ -583,16 +583,16 @@ int ccx_mxf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 	int ret = 0;
 	struct demuxer_data *data;
 
-	if(!*ppdata)
+	if (!*ppdata)
 	{
 		*ppdata = alloc_demuxer_data();
-		if(!*ppdata)
+		if (!*ppdata)
 			return -1;
 
 		data = *ppdata;
 		data->program_number = 1;
 		data->stream_pid = 1;
-		data->codec  = CCX_CODEC_ATSC_CC;
+		data->codec = CCX_CODEC_ATSC_CC;
 		data->tb.num = 1001;
 		data->tb.den = 30000;
 	}
@@ -610,7 +610,7 @@ int ccx_probe_mxf(struct ccx_demuxer *ctx)
 {
 	int i;
 	unsigned char *buf;
-	for ( i = 0; i + 14 < ctx->startbytes_avail; i++)
+	for (i = 0; i + 14 < ctx->startbytes_avail; i++)
 	{
 		buf = ctx->startbytes + i;
 		if (!memcmp(buf, mxf_header_partition_pack_key, 14))

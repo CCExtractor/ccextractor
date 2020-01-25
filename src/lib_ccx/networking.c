@@ -73,7 +73,7 @@ ssize_t writen(int fd, const void *vptr, size_t n);
 ssize_t write_byte(int fd, char status);
 ssize_t read_byte(int fd, char *status);
 
-void init_sockets (void);
+void init_sockets(void);
 
 #if DEBUG_OUT
 void pr_command(char c);
@@ -187,8 +187,8 @@ void net_check_conn()
 	if (now - last_ping > NO_RESPONCE_INTERVAL)
 	{
 		fprintf(stderr,
-				"[S] No PING received from the server in %u sec, reconnecting\n",
-				NO_RESPONCE_INTERVAL);
+			"[S] No PING received from the server in %u sec, reconnecting\n",
+			NO_RESPONCE_INTERVAL);
 		close(srv_sd);
 		srv_sd = -1;
 
@@ -212,13 +212,13 @@ void net_check_conn()
 }
 
 void net_send_epg(
-		const char *start,
-		const char *stop,
-		const char *title,
-		const char *desc,
-		const char *lang,
-		const char *category
-		)
+	const char *start,
+	const char *stop,
+	const char *title,
+	const char *desc,
+	const char *lang,
+	const char *category
+)
 {
 	size_t st;
 	size_t sp;
@@ -248,17 +248,17 @@ void net_send_epg(
 	if (desc != NULL)
 		d += strlen(desc);
 
-    l = 1;
-    if (lang != NULL)
-        l += strlen(lang);
+	l = 1;
+	if (lang != NULL)
+		l += strlen(lang);
 
-    c = 1;
-    if (category != NULL)
-        c += strlen(category);
+	c = 1;
+	if (category != NULL)
+		c += strlen(category);
 
-    len = st + sp + t + d + l + c;
+	len = st + sp + t + d + l + c;
 
-	epg = (char *) calloc(len, sizeof(char));
+	epg = (char *)calloc(len, sizeof(char));
 	if (NULL == epg)
 		return;
 
@@ -278,13 +278,13 @@ void net_send_epg(
 		memcpy(end, desc, d);
 	end += d;
 
-    if (lang != NULL)
-        memcpy(end, lang, l);
-    end += l;
+	if (lang != NULL)
+		memcpy(end, lang, l);
+	end += l;
 
-    if (category != NULL)
-        memcpy(end, category, c);
-    end += c;
+	if (category != NULL)
+		memcpy(end, category, c);
+	end += c;
 
 #if DEBUG_OUT
 	fprintf(stderr, "[C] Sending EPG: %u bytes\n", len);
@@ -293,7 +293,7 @@ void net_send_epg(
 	if (write_block(srv_sd, EPG_DATA, epg, len) <= 0)
 		fprintf(stderr, "Can't send EPG data\n");
 
-    	free(epg);
+	free(epg);
 
 	return;
 }
@@ -325,8 +325,7 @@ int net_tcp_read(int socket, void *buffer, size_t length)
 
 		if ((rc = read_block(socket, &c, buffer, &l)) <= 0)
 			return rc;
-	}
-	while (c != BIN_DATA && c != BIN_HEADER);
+	} while (c != BIN_DATA && c != BIN_HEADER);
 
 	return l;
 }
@@ -337,7 +336,7 @@ int net_udp_read(int socket, void *buffer, size_t length, const char *src_str, c
 	assert(length > 0);
 
 	int i;
-	#ifdef _WIN32
+#ifdef _WIN32
 	char ip[INET_ADDRSTRLEN];
 	struct sockaddr_in source_addr;
 	socklen_t len = sizeof(source_addr);
@@ -355,16 +354,16 @@ int net_udp_read(int socket, void *buffer, size_t length, const char *src_str, c
 	if (IN_MULTICAST(addr) && src_str != NULL)						  					/* We check if the case is of source multicast and we are in windowsOS */
 	{
 		do {
-			i = recvfrom(socket, (char *) buffer, length, 0, (struct sockaddr*)&source_addr, &len); /* peek at the data*/
+			i = recvfrom(socket, (char *)buffer, length, 0, (struct sockaddr *) & source_addr, &len); /* peek at the data*/
 			memset(ip, 0, sizeof(char) * INET_ADDRSTRLEN);
 			memcpy(ip, inet_ntoa(source_addr.sin_addr), sizeof(ip));
-		} while (strcmp(ip, src_str)!=0);												/* Loop till we find intended source */
+		} while (strcmp(ip, src_str) != 0);												/* Loop till we find intended source */
 	}
 	else
-		i = recvfrom(socket, (char *) buffer, length, 0, NULL, NULL); 								/*read normally if not source mutlicast case*/
-	#else
-	i = recvfrom(socket, (char *) buffer, length, 0, NULL, NULL); 									/*read normally if not windows*/
-	#endif
+		i = recvfrom(socket, (char *)buffer, length, 0, NULL, NULL); 								/*read normally if not source mutlicast case*/
+#else
+	i = recvfrom(socket, (char *)buffer, length, 0, NULL, NULL); 									/*read normally if not windows*/
+#endif
 
 	return i;
 }
@@ -395,7 +394,7 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 	fprintf(stderr, " ");
 #endif
 
-	char len_str[INT_LEN] = {0};
+	char len_str[INT_LEN] = { 0 };
 	snprintf(len_str, INT_LEN, "%zu", buf_len);
 	if ((rc = writen(fd, len_str, INT_LEN)) < 0)
 		return -1;
@@ -412,7 +411,7 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 	{
 		if ((rc = writen(fd, buf, buf_len)) < 0)
 			return -1;
-		else if (rc != (int) buf_len)
+		else if (rc != (int)buf_len)
 			return 0;
 		nwritten += rc;
 	}
@@ -549,7 +548,7 @@ int start_tcp_srv(const char *port, const char *pwd)
 		{
 			if (EINTR == errno) /* TODO not necessary */
 			{
-                		free(cliaddr);
+				free(cliaddr);
 				continue;
 			}
 			else
@@ -567,7 +566,7 @@ int start_tcp_srv(const char *port, const char *pwd)
 		char serv[NI_MAXSERV];
 		int rc;
 		if ((rc = getnameinfo(cliaddr, clilen,
-						host, sizeof(host), serv, sizeof(serv), 0)) != 0)
+			host, sizeof(host), serv, sizeof(serv), 0)) != 0)
 		{
 			mprint("getnameinfo() error: %s\n", gai_strerror(rc));
 		}
@@ -671,7 +670,7 @@ int tcp_bind(const char *port, int *family)
 		if (AF_INET6 == p->ai_family)
 		{
 			int no = 0;
-			if (setsockopt(sockfd, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&no, sizeof(no)) < 0)
+			if (setsockopt(sockfd, IPPROTO_IPV6, IPV6_V6ONLY, (char *)&no, sizeof(no)) < 0)
 			{
 #if _WIN32
 				wprintf(L"setsockopt() error: %ld\n", WSAGetLastError());
@@ -738,7 +737,7 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 
 	if ((rc = readn(fd, command, 1)) < 0)
 		return -1;
-	else if ((size_t) rc != 1)
+	else if ((size_t)rc != 1)
 		return 0;
 	nread += rc;
 
@@ -748,7 +747,7 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 	fprintf(stderr, " ");
 #endif
 
-	char len_str[INT_LEN] = {0};
+	char len_str[INT_LEN] = { 0 };
 	if ((rc = readn(fd, len_str, INT_LEN)) < 0)
 		return -1;
 	else if (rc != INT_LEN)
@@ -769,20 +768,20 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 		{
 			ign_bytes = len - *buf_len;
 			mprint("read_block() warning: Buffer overflow, ignoring %d bytes\n",
-					ign_bytes);
+				ign_bytes);
 			len = *buf_len;
 		}
 
 		if ((rc = readn(fd, buf, len)) < 0)
 			return -1;
-		else if ((size_t) rc != len)
+		else if ((size_t)rc != len)
 			return 0;
 		nread += rc;
 		*buf_len = len;
 
 		if ((rc = readn(fd, 0, ign_bytes)) < 0)
 			return -1;
-		else if ((size_t) rc != ign_bytes)
+		else if ((size_t)rc != ign_bytes)
 			return 0;
 		nread += rc;
 
@@ -795,10 +794,10 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 #endif
 	}
 
-	char end[2] = {0};
+	char end[2] = { 0 };
 	if ((rc = readn(fd, end, sizeof(end))) < 0)
 		return -1;
-	else if ((size_t) rc != sizeof(end))
+	else if ((size_t)rc != sizeof(end))
 		return 0;
 	nread += rc;
 
@@ -822,7 +821,7 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 #if DEBUG_OUT
 void pr_command(char c)
 {
-	switch(c)
+	switch (c)
 	{
 		case OK:
 			fprintf(stderr, "OK");
@@ -858,7 +857,7 @@ void pr_command(char c)
 			fprintf(stderr, "PING");
 			break;
 		default:
-			fprintf(stderr, "UNKNOWN (%d)", (int) c);
+			fprintf(stderr, "UNKNOWN (%d)", (int)c);
 			break;
 	}
 }
@@ -881,7 +880,7 @@ ssize_t readn(int fd, void *vptr, size_t n)
 		}
 		else
 		{
-			nread = recv(fd, (void*)ptr, nleft, 0);
+			nread = recv(fd, (void *)ptr, nleft, 0);
 		}
 
 		if (nread < 0)
@@ -979,12 +978,12 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 		if (NULL == host)
 		{
 			fatal(EXIT_MALFORMED_PARAMETER, "Cannot look up udp network address: %s\n",
-					src_str);
+				src_str);
 		}
 		else if (host->h_addrtype != AF_INET)
 		{
 			fatal(EXIT_MALFORMED_PARAMETER, "No support for non-IPv4 network addresses: %s\n",
-					src_str);
+				src_str);
 		}
 
 		src = ntohl(((struct in_addr *)host->h_addr_list[0])->s_addr);
@@ -997,12 +996,12 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 		if (NULL == host)
 		{
 			fatal(EXIT_MALFORMED_PARAMETER, "Cannot look up udp network address: %s\n",
-					addr_str);
+				addr_str);
 		}
 		else if (host->h_addrtype != AF_INET)
 		{
 			fatal(EXIT_MALFORMED_PARAMETER, "No support for non-IPv4 network addresses: %s\n",
-					addr_str);
+				addr_str);
 		}
 
 		addr = ntohl(((struct in_addr *)host->h_addr_list[0])->s_addr);
@@ -1048,7 +1047,7 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 	servaddr.sin_addr.s_addr = htonl(addr);
 #endif
 
-	if (bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) != 0)
+	if (bind(sockfd, (struct sockaddr *) & servaddr, sizeof(servaddr)) != 0)
 	{
 #if _WIN32
 		wprintf(L"bind() error: %ld\n", WSAGetLastError());
@@ -1116,14 +1115,14 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 	return sockfd;
 }
 
-void init_sockets (void)
+void init_sockets(void)
 {
 	static int socket_inited = 0;
 	if (!socket_inited)
 	{
 		// Initialize Winsock
 #ifdef _WIN32
-		WSADATA wsaData = {0};
+		WSADATA wsaData = { 0 };
 		int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (iResult != 0)
 		{
@@ -1188,18 +1187,18 @@ void handle_write_error()
 
 int set_nonblocking(int fd)
 {
-    int f;
+	int f;
 #ifdef O_NONBLOCK
-    if ((f = fcntl(fd, F_GETFL, 0)) < 0)
-        f = 0;
+	if ((f = fcntl(fd, F_GETFL, 0)) < 0)
+		f = 0;
 
-    return fcntl(fd, F_SETFL, f | O_NONBLOCK);
+	return fcntl(fd, F_SETFL, f | O_NONBLOCK);
 #else
-    f = 1;
-	#if _WIN32
-		return ioctlsocket(fd, FIONBIO, &f);
-	#else
-		return ioctl(fd, FIONBIO, &f);
-	#endif
+	f = 1;
+#if _WIN32
+	return ioctlsocket(fd, FIONBIO, &f);
+#else
+	return ioctl(fd, FIONBIO, &f);
+#endif
 #endif
 }

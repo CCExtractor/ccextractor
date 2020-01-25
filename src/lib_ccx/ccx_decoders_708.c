@@ -299,7 +299,7 @@ void _dtvcc_window_dump(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *wi
 		return;
 
 	char tbuf1[SUBLINESIZE],
-			tbuf2[SUBLINESIZE];
+		tbuf2[SUBLINESIZE];
 	char sym_buf[10];
 
 	print_mstime_buff(window->time_ms_show, "%02u:%02u:%02u:%03u", tbuf1);
@@ -372,7 +372,7 @@ void _dtvcc_window_update_time_show(ccx_dtvcc_window *window, struct ccx_common_
 	window->time_ms_show = get_visible_start(timing, 3);
 	print_mstime_buff(window->time_ms_show, "%02u:%02u:%02u:%03u", buf);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] "
-			"[W-%d] show time updated to %s\n", window->number, buf);
+		"[W-%d] show time updated to %s\n", window->number, buf);
 }
 
 void _dtvcc_window_update_time_hide(ccx_dtvcc_window *window, struct ccx_common_timing_ctx *timing)
@@ -381,7 +381,7 @@ void _dtvcc_window_update_time_hide(ccx_dtvcc_window *window, struct ccx_common_
 	window->time_ms_hide = get_visible_end(timing, 3);
 	print_mstime_buff(window->time_ms_hide, "%02u:%02u:%02u:%03u", buf);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] "
-			"[W-%d] hide time updated to %s\n", window->number, buf);
+		"[W-%d] hide time updated to %s\n", window->number, buf);
 }
 
 void _dtvcc_screen_update_time_show(dtvcc_tv_screen *tv, LLONG time)
@@ -390,7 +390,7 @@ void _dtvcc_screen_update_time_show(dtvcc_tv_screen *tv, LLONG time)
 	print_mstime_buff(tv->time_ms_show, "%02u:%02u:%02u:%03u", buf1);
 	print_mstime_buff(time, "%02u:%02u:%02u:%03u", buf2);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] "
-			"Screen show time: %s -> %s\n", buf1, buf2);
+		"Screen show time: %s -> %s\n", buf1, buf2);
 
 	if (tv->time_ms_show == -1)
 		tv->time_ms_show = time;
@@ -404,7 +404,7 @@ void _dtvcc_screen_update_time_hide(dtvcc_tv_screen *tv, LLONG time)
 	print_mstime_buff(tv->time_ms_hide, "%02u:%02u:%02u:%03u", buf1);
 	print_mstime_buff(time, "%02u:%02u:%02u:%03u", buf2);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] "
-			"Screen hide time: %s -> %s\n", buf1, buf2);
+		"Screen hide time: %s -> %s\n", buf1, buf2);
 
 	if (tv->time_ms_hide == -1)
 		tv->time_ms_hide = time;
@@ -412,115 +412,122 @@ void _dtvcc_screen_update_time_hide(dtvcc_tv_screen *tv, LLONG time)
 		tv->time_ms_hide = time;
 }
 
-void _get_window_dimensions(ccx_dtvcc_window *window, int* x1, int* x2, int* y1, int*y2)
+void _get_window_dimensions(ccx_dtvcc_window *window, int *x1, int *x2, int *y1, int *y2)
 {
-	int a_x1,a_x2,a_y1,a_y2;
+	int a_x1, a_x2, a_y1, a_y2;
 	switch (window->anchor_point)
 	{
 		case CCX_DTVCC_ANCHOR_POINT_TOP_LEFT:
 			a_x1 = window->anchor_vertical;
-			a_x2 = window->anchor_vertical+window->row_count;
-			a_y1= window->anchor_horizontal;
-			a_y2 = window->anchor_horizontal+window->col_count;
+			a_x2 = window->anchor_vertical + window->row_count;
+			a_y1 = window->anchor_horizontal;
+			a_y2 = window->anchor_horizontal + window->col_count;
 			break;
 		case CCX_DTVCC_ANCHOR_POINT_TOP_CENTER:
 			a_x1 = window->anchor_vertical;
-			a_x2 = window->anchor_vertical+window->row_count;
-			a_y1= window->anchor_horizontal - window->col_count;
-			a_y2 = window->anchor_horizontal + window->col_count/2;
+			a_x2 = window->anchor_vertical + window->row_count;
+			a_y1 = window->anchor_horizontal - window->col_count;
+			a_y2 = window->anchor_horizontal + window->col_count / 2;
 			break;
 		case CCX_DTVCC_ANCHOR_POINT_TOP_RIGHT:
 			a_x1 = window->anchor_vertical;
-			a_x2 = window->anchor_vertical+window->row_count ;
-			a_y1= window->anchor_horizontal - window->col_count;
-			a_y2 = window->anchor_horizontal ;
+			a_x2 = window->anchor_vertical + window->row_count;
+			a_y1 = window->anchor_horizontal - window->col_count;
+			a_y2 = window->anchor_horizontal;
 			break;
 		case CCX_DTVCC_ANCHOR_POINT_MIDDLE_LEFT:
 			a_x1 = window->anchor_vertical - window->row_count / 2;
-			a_x2 = window->anchor_vertical + window->row_count / 2 ;
-			a_y1= window->anchor_horizontal ;
-			a_y2 = window->anchor_horizontal + window->col_count ;
+			a_x2 = window->anchor_vertical + window->row_count / 2;
+			a_y1 = window->anchor_horizontal;
+			a_y2 = window->anchor_horizontal + window->col_count;
 			break;
 		case CCX_DTVCC_ANCHOR_POINT_MIDDLE_CENTER:
 			a_x1 = window->anchor_vertical - window->row_count / 2;
-			a_x2 = window->anchor_vertical + window->row_count / 2 ;
-			a_y1= window->anchor_horizontal - window->col_count / 2;
-			a_y2 = window->anchor_horizontal + window->col_count / 2 ;
+			a_x2 = window->anchor_vertical + window->row_count / 2;
+			a_y1 = window->anchor_horizontal - window->col_count / 2;
+			a_y2 = window->anchor_horizontal + window->col_count / 2;
 			break;
 		case CCX_DTVCC_ANCHOR_POINT_MIDDLE_RIGHT:
 			a_x1 = window->anchor_vertical - window->row_count / 2;
-			a_x2 = window->anchor_vertical + window->row_count / 2 ;
-			a_y1= window->anchor_horizontal - window->col_count;
+			a_x2 = window->anchor_vertical + window->row_count / 2;
+			a_y1 = window->anchor_horizontal - window->col_count;
 			a_y2 = window->anchor_horizontal;
 			break;
 		case CCX_DTVCC_ANCHOR_POINT_BOTTOM_LEFT:
-			a_x1 = window->anchor_vertical - window->row_count ;
-			a_x2 = window->anchor_vertical ;
-			a_y1= window->anchor_horizontal ;
-			a_y2 = window->anchor_horizontal + window->col_count ;
+			a_x1 = window->anchor_vertical - window->row_count;
+			a_x2 = window->anchor_vertical;
+			a_y1 = window->anchor_horizontal;
+			a_y2 = window->anchor_horizontal + window->col_count;
 			break;
 		case CCX_DTVCC_ANCHOR_POINT_BOTTOM_CENTER:
-			a_x1 = window->anchor_vertical - window->row_count ;
-			a_x2 = window->anchor_vertical ;
-			a_y1= window->anchor_horizontal - window->col_count / 2;
-			a_y2 = window->anchor_horizontal + window->col_count / 2 ;
+			a_x1 = window->anchor_vertical - window->row_count;
+			a_x2 = window->anchor_vertical;
+			a_y1 = window->anchor_horizontal - window->col_count / 2;
+			a_y2 = window->anchor_horizontal + window->col_count / 2;
 			break;
 		case CCX_DTVCC_ANCHOR_POINT_BOTTOM_RIGHT:
-			a_x1 = window->anchor_vertical - window->row_count ;
-			a_x2 = window->anchor_vertical  ;
-			a_y1= window->anchor_horizontal - window->col_count ;
-			a_y2 = window->anchor_horizontal ;
+			a_x1 = window->anchor_vertical - window->row_count;
+			a_x2 = window->anchor_vertical;
+			a_y1 = window->anchor_horizontal - window->col_count;
+			a_y2 = window->anchor_horizontal;
 			break;
 		default: // Shouldn't happen, but skip the window just in case
-			return ;
+			return;
 			break;
 	}
 
-	*x1 = a_x1 < 0 ? 0:a_x1;
+	*x1 = a_x1 < 0 ? 0 : a_x1;
 	*x2 = a_x2 > CCX_DTVCC_SCREENGRID_ROWS ? CCX_DTVCC_SCREENGRID_ROWS : a_x2;
-	*y1 = a_y1 < 0 ? 0:a_y1;
-	*y2 = a_y2 > CCX_DTVCC_SCREENGRID_COLUMNS ? CCX_DTVCC_SCREENGRID_COLUMNS : a_y2 ;
+	*y1 = a_y1 < 0 ? 0 : a_y1;
+	*y2 = a_y2 > CCX_DTVCC_SCREENGRID_COLUMNS ? CCX_DTVCC_SCREENGRID_COLUMNS : a_y2;
 
-	return ;
+	return;
 }
 
-int _is_window_overlapping(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *window){
-	int a_x1,a_x2,a_y1,a_y2,b_x1,b_x2,b_y1,b_y2,flag=0;
-	_get_window_dimensions(window,&a_x1,&a_x2,&a_y1,&a_y2);
-ccx_dtvcc_window *windcompare = &decoder->windows[0];
-	for (int i=0; i< CCX_DTVCC_MAX_WINDOWS; i++,windcompare++){
+int _is_window_overlapping(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *window) {
+	int a_x1, a_x2, a_y1, a_y2, b_x1, b_x2, b_y1, b_y2, flag = 0;
+	_get_window_dimensions(window, &a_x1, &a_x2, &a_y1, &a_y2);
+	ccx_dtvcc_window *windcompare = &decoder->windows[0];
+	for (int i = 0; i < CCX_DTVCC_MAX_WINDOWS; i++, windcompare++) {
 
-		_get_window_dimensions(windcompare,&b_x1,&b_x2,&b_y1,&b_y2);
-		if(a_x1==b_x1 && a_x2==b_x2 && a_y1==b_y1 && a_y2==b_y2)
-			{continue;}
+		_get_window_dimensions(windcompare, &b_x1, &b_x2, &b_y1, &b_y2);
+		if (a_x1 == b_x1 && a_x2 == b_x2 && a_y1 == b_y1 && a_y2 == b_y2)
+		{
+			continue;
+		}
 		else {
-			if ((a_x1 < b_x2)&&(a_x2 > b_x1)&&(a_y1 < b_y2) &&(a_y2>b_y1) && decoder->windows[i].visible )
-				 {  if (decoder->windows[i].priority < window->priority)
-				 		{flag = OVERLAPPED_BY_HIGH_PRIORITY;}
-				 	else
-				 		{flag = OVERLAPPING_WITH_HIGH_PRIORITY;} 
-				  //priority is either higher or equals for *window , hence overlaps decoder->windows[i]
-				 } 
-				  
-				  }
-		
+			if ((a_x1 < b_x2) && (a_x2 > b_x1) && (a_y1 < b_y2) && (a_y2 > b_y1) && decoder->windows[i].visible)
+			{
+				if (decoder->windows[i].priority < window->priority)
+				{
+					flag = OVERLAPPED_BY_HIGH_PRIORITY;
+				}
+				else
+				{
+					flag = OVERLAPPING_WITH_HIGH_PRIORITY;
+				}
+				//priority is either higher or equals for *window , hence overlaps decoder->windows[i]
+			}
+
+		}
+
 	}
-	if (flag==1){
+	if (flag == 1) {
 		return 1;
 	}
 	return 0;
 }
 
 void _dtvcc_window_copy_to_screen(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_window *window)
-{	
-	switch(_is_window_overlapping(decoder,window)){
+{
+	switch (_is_window_overlapping(decoder, window)) {
 		case OVERLAPPING_WITH_HIGH_PRIORITY:
 			ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_window_copy_to_screen : no handling required \n");
 			break;
 		case OVERLAPPED_BY_HIGH_PRIORITY:
 			ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_window_copy_to_screen : window needs to be skipped \n");
 			return;
-			}
+	}
 
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_window_copy_to_screen: W-%d\n", window->number);
 	int top, left;
@@ -569,23 +576,23 @@ void _dtvcc_window_copy_to_screen(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_
 			break;
 	}
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] For window %d: Anchor point -> %d, size %d:%d, real position %d:%d\n",
-								 window->number, window->anchor_point, window->row_count, window->col_count,
-								 top, left
+		window->number, window->anchor_point, window->row_count, window->col_count,
+		top, left
 	);
 
 	ccx_common_logging.debug_ftn(
-			CCX_DMT_708, "[CEA-708] we have top [%d] and left [%d]\n", top, left);
+		CCX_DMT_708, "[CEA-708] we have top [%d] and left [%d]\n", top, left);
 
 	top = top < 0 ? 0 : top;
 	left = left < 0 ? 0 : left;
 
 	int copyrows = top + window->row_count >= CCX_DTVCC_SCREENGRID_ROWS ?
-				   CCX_DTVCC_SCREENGRID_ROWS - top : window->row_count;
+		CCX_DTVCC_SCREENGRID_ROWS - top : window->row_count;
 	int copycols = left + window->col_count >= CCX_DTVCC_SCREENGRID_COLUMNS ?
-				   CCX_DTVCC_SCREENGRID_COLUMNS - left : window->col_count;
+		CCX_DTVCC_SCREENGRID_COLUMNS - left : window->col_count;
 
 	ccx_common_logging.debug_ftn(
-			CCX_DMT_708, "[CEA-708] %d*%d will be copied to the TV.\n", copyrows, copycols);
+		CCX_DMT_708, "[CEA-708] %d*%d will be copied to the TV.\n", copyrows, copycols);
 
 	for (int j = 0; j < copyrows; j++)
 	{
@@ -677,26 +684,26 @@ void _dtvcc_process_bs(ccx_dtvcc_service_decoder *decoder)
 
 	switch (window->attribs.print_direction)
 	{
-	case CCX_DTVCC_WINDOW_PD_RIGHT_LEFT:
-		if (window->pen_column + 1 < window->col_count)
-			window->pen_column++;
-		break;
-	case CCX_DTVCC_WINDOW_PD_LEFT_RIGHT:
-		if (decoder->windows->pen_column > 0)
-			window->pen_column--;
-		break;
-	case CCX_DTVCC_WINDOW_PD_BOTTOM_TOP:
-		if (window->pen_row + 1 < window->row_count)
-			window->pen_row++;
-		break;
-	case CCX_DTVCC_WINDOW_PD_TOP_BOTTOM:
-		if (window->pen_row > 0)
-			window->pen_row--;
-		break;
-	default:
-		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_process_character: unhandled branch (%02d)\n",
-			window->attribs.print_direction);
-		break;
+		case CCX_DTVCC_WINDOW_PD_RIGHT_LEFT:
+			if (window->pen_column + 1 < window->col_count)
+				window->pen_column++;
+			break;
+		case CCX_DTVCC_WINDOW_PD_LEFT_RIGHT:
+			if (decoder->windows->pen_column > 0)
+				window->pen_column--;
+			break;
+		case CCX_DTVCC_WINDOW_PD_BOTTOM_TOP:
+			if (window->pen_row + 1 < window->row_count)
+				window->pen_row++;
+			break;
+		case CCX_DTVCC_WINDOW_PD_TOP_BOTTOM:
+			if (window->pen_row > 0)
+				window->pen_row--;
+			break;
+		default:
+			ccx_common_logging.log_ftn("[CEA-708] _dtvcc_process_character: unhandled branch (%02d)\n",
+				window->attribs.print_direction);
+			break;
 	}
 }
 
@@ -783,11 +790,11 @@ void _dtvcc_process_character(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_symb
 	ccx_dtvcc_window *window = &decoder->windows[cw];
 
 	ccx_common_logging.debug_ftn(
-			CCX_DMT_708, "[CEA-708] _dtvcc_process_character: "
-					"%c [%02X]  - Window: %d %s, Pen: %d:%d\n",
-			CCX_DTVCC_SYM(symbol), CCX_DTVCC_SYM(symbol),
-			cw, window->is_defined ? "[OK]" : "[undefined]",
-			cw != -1 ? window->pen_row : -1, cw != -1 ? window->pen_column : -1
+		CCX_DMT_708, "[CEA-708] _dtvcc_process_character: "
+		"%c [%02X]  - Window: %d %s, Pen: %d:%d\n",
+		CCX_DTVCC_SYM(symbol), CCX_DTVCC_SYM(symbol),
+		cw, window->is_defined ? "[OK]" : "[undefined]",
+		cw != -1 ? window->pen_row : -1, cw != -1 ? window->pen_column : -1
 	);
 
 	if (cw == -1 || !window->is_defined) // Writing to a non existing window, skipping
@@ -825,7 +832,7 @@ void _dtvcc_process_character(ccx_dtvcc_service_decoder *decoder, ccx_dtvcc_symb
 void ccx_dtvcc_decoder_flush(ccx_dtvcc_ctx *dtvcc, ccx_dtvcc_service_decoder *decoder)
 {
 	ccx_common_logging.debug_ftn(
-			CCX_DMT_708, "[CEA-708] _dtvcc_decoder_flush: Flushing decoder\n");
+		CCX_DMT_708, "[CEA-708] _dtvcc_decoder_flush: Flushing decoder\n");
 	int screen_content_changed = 0;
 	for (int i = 0; i < CCX_DTVCC_MAX_WINDOWS; i++)
 	{
@@ -848,15 +855,15 @@ void ccx_dtvcc_decoder_flush(ccx_dtvcc_ctx *dtvcc, ccx_dtvcc_service_decoder *de
 void dtvcc_handle_CWx_SetCurrentWindow(ccx_dtvcc_service_decoder *decoder, int window_id)
 {
 	ccx_common_logging.debug_ftn(
-			CCX_DMT_708, "[CEA-708] dtvcc_handle_CWx_SetCurrentWindow: [%d]\n", window_id);
+		CCX_DMT_708, "[CEA-708] dtvcc_handle_CWx_SetCurrentWindow: [%d]\n", window_id);
 	if (decoder->windows[window_id].is_defined)
 		decoder->current_window = window_id;
 	else
 		ccx_common_logging.log_ftn("[CEA-708] dtvcc_handle_CWx_SetCurrentWindow: "
-										   "window [%d] is not defined\n", window_id);
+			"window [%d] is not defined\n", window_id);
 }
 
-void dtvcc_handle_CLW_ClearWindows(ccx_dtvcc_ctx *dtvcc,ccx_dtvcc_service_decoder *decoder, int windows_bitmap)
+void dtvcc_handle_CLW_ClearWindows(ccx_dtvcc_ctx *dtvcc, ccx_dtvcc_service_decoder *decoder, int windows_bitmap)
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_handle_CLW_ClearWindows: windows: ");
 	int screen_content_changed = 0,
@@ -884,9 +891,9 @@ void dtvcc_handle_CLW_ClearWindows(ccx_dtvcc_ctx *dtvcc,ccx_dtvcc_service_decode
 		}
 	}
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "\n");
-	if (screen_content_changed )
+	if (screen_content_changed)
 		_dtvcc_screen_print(dtvcc, decoder);
-	
+
 }
 
 void dtvcc_handle_DSW_DisplayWindows(ccx_dtvcc_service_decoder *decoder, int windows_bitmap, struct ccx_common_timing_ctx *timing)
@@ -919,8 +926,8 @@ void dtvcc_handle_DSW_DisplayWindows(ccx_dtvcc_service_decoder *decoder, int win
 }
 
 void dtvcc_handle_HDW_HideWindows(ccx_dtvcc_ctx *dtvcc,
-								  ccx_dtvcc_service_decoder *decoder,
-								  int windows_bitmap)
+	ccx_dtvcc_service_decoder *decoder,
+	int windows_bitmap)
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_handle_HDW_HideWindows: windows: ");
 	if (windows_bitmap == 0)
@@ -951,8 +958,8 @@ void dtvcc_handle_HDW_HideWindows(ccx_dtvcc_ctx *dtvcc,
 }
 
 void dtvcc_handle_TGW_ToggleWindows(ccx_dtvcc_ctx *dtvcc,
-									ccx_dtvcc_service_decoder *decoder,
-									int windows_bitmap)
+	ccx_dtvcc_service_decoder *decoder,
+	int windows_bitmap)
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_handle_TGW_ToggleWindows: windows: ");
 	if (windows_bitmap == 0)
@@ -991,7 +998,7 @@ void dtvcc_handle_TGW_ToggleWindows(ccx_dtvcc_ctx *dtvcc,
 void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int window_id, unsigned char *data, struct ccx_common_timing_ctx *timing)
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_handle_DFx_DefineWindow: "
-			"W[%d], attributes: \n", window_id);
+		"W[%d], attributes: \n", window_id);
 
 	ccx_dtvcc_window *window = &decoder->windows[window_id];
 
@@ -1001,7 +1008,7 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 		// command is to be ignored if the command parameters are unchanged from the
 		// previous window definition.
 		ccx_common_logging.debug_ftn(
-				CCX_DMT_708, "[CEA-708] dtvcc_handle_DFx_DefineWindow: Repeated window definition, ignored\n");
+			CCX_DMT_708, "[CEA-708] dtvcc_handle_DFx_DefineWindow: Repeated window definition, ignored\n");
 		return;
 	}
 
@@ -1010,7 +1017,7 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 	int priority = (data[1]) & 0x7;
 	int col_lock = (data[1] >> 3) & 0x1;
 	int row_lock = (data[1] >> 4) & 0x1;
-	int visible  = (data[1] >> 5) & 0x1;
+	int visible = (data[1] >> 5) & 0x1;
 	int anchor_vertical = data[2] & 0x7f;
 	int relative_pos = data[2] >> 7;
 	int anchor_horizontal = data[3];
@@ -1071,7 +1078,7 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 	//Apply windows attribute presets
 	if (win_style > 0 && win_style < 8)
 	{
-		window->win_style = win_style; 
+		window->win_style = win_style;
 		window->attribs.border_color = ccx_dtvcc_predefined_window_styles[win_style].border_color;
 		window->attribs.border_type = ccx_dtvcc_predefined_window_styles[win_style].border_type;
 		window->attribs.display_effect = ccx_dtvcc_predefined_window_styles[win_style].display_effect;
@@ -1101,7 +1108,7 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 		{
 			for (int i = 0; i < CCX_DTVCC_MAX_ROWS; i++)
 			{
-				window->rows[i] = (ccx_dtvcc_symbol *) malloc(CCX_DTVCC_MAX_COLUMNS * sizeof(ccx_dtvcc_symbol));
+				window->rows[i] = (ccx_dtvcc_symbol *)malloc(CCX_DTVCC_MAX_COLUMNS * sizeof(ccx_dtvcc_symbol));
 				if (!window->rows[i])
 					ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "[CEA-708] dtvcc_handle_DFx_DefineWindow");
 			}
@@ -1122,7 +1129,7 @@ void dtvcc_handle_DFx_DefineWindow(ccx_dtvcc_service_decoder *decoder, int windo
 		else
 		{
 			ccx_common_logging.log_ftn("[CEA-708] dtvcc_handle_DFx_DefineWindow: "
-											   "invalid win_style num %d\n", window->win_style);
+				"invalid win_style num %d\n", window->win_style);
 			_dtvcc_window_apply_style(window, &ccx_dtvcc_predefined_window_styles[0]);
 		}
 	}
@@ -1150,30 +1157,30 @@ void dtvcc_handle_SWA_SetWindowAttributes(ccx_dtvcc_service_decoder *decoder, un
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_handle_SWA_SetWindowAttributes: attributes: \n");
 
-	int fill_color    = (data[1]     ) & 0x3f;
-	int fill_opacity  = (data[1] >> 6) & 0x03;
-	int border_color  = (data[2]     ) & 0x3f;
+	int fill_color = (data[1]) & 0x3f;
+	int fill_opacity = (data[1] >> 6) & 0x03;
+	int border_color = (data[2]) & 0x3f;
 	int border_type01 = (data[2] >> 6) & 0x03;
-	int justify       = (data[3]     ) & 0x03;
-	int scroll_dir    = (data[3] >> 2) & 0x03;
-	int print_dir     = (data[3] >> 4) & 0x03;
-	int word_wrap     = (data[3] >> 6) & 0x01;
-	int border_type   = ((data[3] >> 5) & 0x04)| border_type01;
-	int display_eff   = (data[4]     ) & 0x03;
-	int effect_dir    = (data[4] >> 2) & 0x03;
-	int effect_speed  = (data[4] >> 4) & 0x0f;
+	int justify = (data[3]) & 0x03;
+	int scroll_dir = (data[3] >> 2) & 0x03;
+	int print_dir = (data[3] >> 4) & 0x03;
+	int word_wrap = (data[3] >> 6) & 0x01;
+	int border_type = ((data[3] >> 5) & 0x04) | border_type01;
+	int display_eff = (data[4]) & 0x03;
+	int effect_dir = (data[4] >> 2) & 0x03;
+	int effect_speed = (data[4] >> 4) & 0x0f;
 
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "       Fill color: [%d]     Fill opacity: [%d]    Border color: [%d]  Border type: [%d]\n",
-			fill_color, fill_opacity, border_color, border_type01);
+		fill_color, fill_opacity, border_color, border_type01);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "          Justify: [%d]       Scroll dir: [%d]       Print dir: [%d]    Word wrap: [%d]\n",
-			justify, scroll_dir, print_dir, word_wrap);
+		justify, scroll_dir, print_dir, word_wrap);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "      Border type: [%d]      Display eff: [%d]      Effect dir: [%d] Effect speed: [%d]\n",
-			border_type, display_eff, effect_dir, effect_speed);
+		border_type, display_eff, effect_dir, effect_speed);
 
 	if (decoder->current_window == -1)
 	{
 		ccx_common_logging.log_ftn("[CEA-708] dtvcc_handle_SWA_SetWindowAttributes: "
-										   "Window has to be defined first\n");
+			"Window has to be defined first\n");
 		return;
 	}
 
@@ -1193,14 +1200,14 @@ void dtvcc_handle_SWA_SetWindowAttributes(ccx_dtvcc_service_decoder *decoder, un
 }
 
 void dtvcc_handle_DLW_DeleteWindows(ccx_dtvcc_ctx *dtvcc,
-									ccx_dtvcc_service_decoder *decoder,
-									int windows_bitmap)
+	ccx_dtvcc_service_decoder *decoder,
+	int windows_bitmap)
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_handle_DLW_DeleteWindows: windows: ");
 
 	int screen_content_changed = 0, window_had_content = 0;
 	// int current_win_deleted = 0; /* currently unused */
-	
+
 	if (windows_bitmap == 0)
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "none\n");
 	else
@@ -1217,8 +1224,8 @@ void dtvcc_handle_DLW_DeleteWindows(ccx_dtvcc_ctx *dtvcc,
 					screen_content_changed = 1;
 					_dtvcc_window_update_time_hide(window, dtvcc->timing);
 					_dtvcc_window_copy_to_screen(decoder, &decoder->windows[i]);
-					if (i == decoder->current_window){
-					_dtvcc_screen_print(dtvcc, decoder);
+					if (i == decoder->current_window) {
+						_dtvcc_screen_print(dtvcc, decoder);
 					}
 				}
 				decoder->windows[i].is_defined = 0;
@@ -1245,23 +1252,23 @@ void dtvcc_handle_SPA_SetPenAttributes(ccx_dtvcc_service_decoder *decoder, unsig
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_handle_SPA_SetPenAttributes: attributes: \n");
 
-	int pen_size  = (data[1]     ) & 0x3;
-	int offset    = (data[1] >> 2) & 0x3;
-	int text_tag  = (data[1] >> 4) & 0xf;
-	int font_tag  = (data[2]     ) & 0x7;
+	int pen_size = (data[1]) & 0x3;
+	int offset = (data[1] >> 2) & 0x3;
+	int text_tag = (data[1] >> 4) & 0xf;
+	int font_tag = (data[2]) & 0x7;
 	int edge_type = (data[2] >> 3) & 0x7;
 	int underline = (data[2] >> 6) & 0x1;
-	int italic    = (data[2] >> 7) & 0x1;
+	int italic = (data[2] >> 7) & 0x1;
 
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "       Pen size: [%d]     Offset: [%d]  Text tag: [%d]   Font tag: [%d]\n",
-			pen_size, offset, text_tag, font_tag);
+		pen_size, offset, text_tag, font_tag);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "      Edge type: [%d]  Underline: [%d]    Italic: [%d]\n",
-			edge_type, underline, italic);
+		edge_type, underline, italic);
 
 	if (decoder->current_window == -1)
 	{
 		ccx_common_logging.log_ftn("[CEA-708] dtvcc_handle_SPA_SetPenAttributes: "
-										   "Window has to be defined first\n");
+			"Window has to be defined first\n");
 		return;
 	}
 
@@ -1270,7 +1277,7 @@ void dtvcc_handle_SPA_SetPenAttributes(ccx_dtvcc_service_decoder *decoder, unsig
 	if (window->pen_row == -1)
 	{
 		ccx_common_logging.log_ftn("[CEA-708] dtvcc_handle_SPA_SetPenAttributes: "
-										   "can't set pen attribs for undefined row\n");
+			"can't set pen attribs for undefined row\n");
 		return;
 	}
 
@@ -1289,23 +1296,23 @@ void dtvcc_handle_SPC_SetPenColor(ccx_dtvcc_service_decoder *decoder, unsigned c
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_handle_SPC_SetPenColor: attributes: \n");
 
-	int fg_color   = (data[1]     ) & 0x3f;
+	int fg_color = (data[1]) & 0x3f;
 	int fg_opacity = (data[1] >> 6) & 0x03;
-	int bg_color   = (data[2]     ) & 0x3f;
+	int bg_color = (data[2]) & 0x3f;
 	int bg_opacity = (data[2] >> 6) & 0x03;
-	int edge_color = (data[3]     ) & 0x3f;
+	int edge_color = (data[3]) & 0x3f;
 
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "      Foreground color: [%d]     Foreground opacity: [%d]\n",
-			fg_color, fg_opacity);
+		fg_color, fg_opacity);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "      Background color: [%d]     Background opacity: [%d]\n",
-			bg_color, bg_opacity);
+		bg_color, bg_opacity);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "            Edge color: [%d]\n",
-			edge_color);
+		edge_color);
 
 	if (decoder->current_window == -1)
 	{
 		ccx_common_logging.log_ftn("[CEA-708] dtvcc_handle_SPC_SetPenColor: "
-										   "Window has to be defined first\n");
+			"Window has to be defined first\n");
 		return;
 	}
 
@@ -1314,7 +1321,7 @@ void dtvcc_handle_SPC_SetPenColor(ccx_dtvcc_service_decoder *decoder, unsigned c
 	if (window->pen_row == -1)
 	{
 		ccx_common_logging.log_ftn("[CEA-708] dtvcc_handle_SPA_SetPenAttributes: "
-										   "can't set pen color for undefined row\n");
+			"can't set pen color for undefined row\n");
 		return;
 	}
 
@@ -1339,7 +1346,7 @@ void dtvcc_handle_SPL_SetPenLocation(ccx_dtvcc_service_decoder *decoder, unsigne
 	if (decoder->current_window == -1)
 	{
 		ccx_common_logging.log_ftn("[CEA-708] dtvcc_handle_SPL_SetPenLocation: "
-										   "Window has to be defined first\n");
+			"Window has to be defined first\n");
 		return;
 	}
 
@@ -1358,7 +1365,7 @@ void dtvcc_handle_RST_Reset(ccx_dtvcc_service_decoder *decoder)
 void dtvcc_handle_DLY_Delay(ccx_dtvcc_service_decoder *decoder, int tenths_of_sec)
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_handle_DLY_Delay: "
-			"delay for [%d] tenths of second", tenths_of_sec);
+		"delay for [%d] tenths of second", tenths_of_sec);
 	// TODO: Probably ask for the current FTS and wait for this time before resuming - not sure it's worth it though
 	// TODO: No, seems to me that idea above will not work
 }
@@ -1409,7 +1416,8 @@ int _dtvcc_handle_G0(ccx_dtvcc_service_decoder *decoder, unsigned char *data, in
 	ccx_dtvcc_symbol sym;
 	if (c == 0x7F) {	// musical note replaces the Delete command code in ASCII
 		CCX_DTVCC_SYM_SET(sym, CCX_DTVCC_MUSICAL_NOTE_CHAR);
-	} else {
+	}
+	else {
 		unsigned char uc = dtvcc_get_internal_from_G0(c);
 		CCX_DTVCC_SYM_SET(sym, uc);
 	}
@@ -1429,9 +1437,9 @@ int _dtvcc_handle_G1(ccx_dtvcc_service_decoder *decoder, unsigned char *data, in
 }
 
 int _dtvcc_handle_C0(ccx_dtvcc_ctx *dtvcc,
-					 ccx_dtvcc_service_decoder *decoder,
-					 unsigned char *data,
-					 int data_length)
+	ccx_dtvcc_service_decoder *decoder,
+	unsigned char *data,
+	int data_length)
 {
 	unsigned char c0 = data[0];
 	const char *name = DTVCC_COMMANDS_C0[c0];
@@ -1491,7 +1499,7 @@ int _dtvcc_handle_C0(ccx_dtvcc_ctx *dtvcc,
 	if (len > data_length)
 	{
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] _dtvcc_handle_C0: "
-				"command is %d bytes long but we only have %d\n", len, data_length);
+			"command is %d bytes long but we only have %d\n", len, data_length);
 		return -1;
 	}
 	return len;
@@ -1499,14 +1507,14 @@ int _dtvcc_handle_C0(ccx_dtvcc_ctx *dtvcc,
 
 // C1 Code Set - Captioning Commands Control Codes
 int _dtvcc_handle_C1(ccx_dtvcc_ctx *dtvcc,
-					 ccx_dtvcc_service_decoder *decoder,
-					 unsigned char *data,
-					 int data_length)
+	ccx_dtvcc_service_decoder *decoder,
+	unsigned char *data,
+	int data_length)
 {
 	struct CCX_DTVCC_S_COMMANDS_C1 com = DTVCC_COMMANDS_C1[data[0] - 0x80];
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] C1: %s | [%02X]  [%s] [%s] (%d)\n",
-			print_mstime_static(get_fts(dtvcc->timing, 3)),
-			data[0], com.name, com.description, com.length);
+		print_mstime_static(get_fts(dtvcc->timing, 3)),
+		data[0], com.name, com.description, com.length);
 
 	if (com.length > data_length)
 	{
@@ -1527,7 +1535,7 @@ int _dtvcc_handle_C1(ccx_dtvcc_ctx *dtvcc,
 			dtvcc_handle_CWx_SetCurrentWindow(decoder, com.code - CCX_DTVCC_C1_CW0); /* Window 0 to 7 */
 			break;
 		case CCX_DTVCC_C1_CLW:
-			dtvcc_handle_CLW_ClearWindows(dtvcc,decoder, data[1]);
+			dtvcc_handle_CLW_ClearWindows(dtvcc, decoder, data[1]);
 			break;
 		case CCX_DTVCC_C1_DSW:
 			dtvcc_handle_DSW_DisplayWindows(decoder, data[1], dtvcc->timing);
@@ -1579,7 +1587,7 @@ int _dtvcc_handle_C1(ccx_dtvcc_ctx *dtvcc,
 			dtvcc_handle_DFx_DefineWindow(decoder, com.code - CCX_DTVCC_C1_DF0, data, dtvcc->timing); /* Window 0 to 7 */
 			break;
 		default:
-			ccx_common_logging.log_ftn ("[CEA-708] BUG: Unhandled code in _dtvcc_handle_C1.\n");
+			ccx_common_logging.log_ftn("[CEA-708] BUG: Unhandled code in _dtvcc_handle_C1.\n");
 			break;
 	}
 
@@ -1606,7 +1614,7 @@ int _dtvcc_handle_C3(ccx_dtvcc_service_decoder *decoder, unsigned char *data, in
 {
 	if (data[0] < 0x80 || data[0] > 0x9F)
 		ccx_common_logging.fatal_ftn(
-				CCX_COMMON_EXIT_BUG_BUG, "[CEA-708] Entry in _dtvcc_handle_C3 with an out of range value.");
+			CCX_COMMON_EXIT_BUG_BUG, "[CEA-708] Entry in _dtvcc_handle_C3 with an out of range value.");
 	if (data[0] <= 0x87) // 80-87...
 		return 5; // ... Five-byte control bytes (4 additional bytes)
 	else if (data[0] <= 0x8F) // 88-8F ...
@@ -1616,8 +1624,8 @@ int _dtvcc_handle_C3(ccx_dtvcc_service_decoder *decoder, unsigned char *data, in
 	// These are variable length commands, that can even span several segments
 	// (they allow even downloading fonts or graphics).
 	ccx_common_logging.fatal_ftn(
-			CCX_COMMON_EXIT_UNSUPPORTED, "[CEA-708] This sample contains unsupported 708 data. "
-			"PLEASE help us improve CCExtractor by submitting it.\n");
+		CCX_COMMON_EXIT_UNSUPPORTED, "[CEA-708] This sample contains unsupported 708 data. "
+		"PLEASE help us improve CCExtractor by submitting it.\n");
 	return 0; // Unreachable, but otherwise there's compilers warnings
 }
 
@@ -1631,14 +1639,14 @@ int _dtvcc_handle_extended_char(ccx_dtvcc_service_decoder *decoder, unsigned cha
 {
 	int used;
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] In _dtvcc_handle_extended_char, "
-			"first data code: [%c], length: [%u]\n", data[0], data_length);
+		"first data code: [%c], length: [%u]\n", data[0], data_length);
 	unsigned char c = 0x20; // Default to space
 	unsigned char code = data[0];
 	if (/* data[i]>=0x00 && */ code <= 0x1F) // Comment to silence warning
 	{
 		used = _dtvcc_handle_C2(decoder, data, data_length);
 	}
-		// Group G2 - Extended Miscellaneous Characters
+	// Group G2 - Extended Miscellaneous Characters
 	else if (code >= 0x20 && code <= 0x7F)
 	{
 		c = dtvcc_get_internal_from_G2(code);
@@ -1647,13 +1655,13 @@ int _dtvcc_handle_extended_char(ccx_dtvcc_service_decoder *decoder, unsigned cha
 		CCX_DTVCC_SYM_SET(sym, c);
 		_dtvcc_process_character(decoder, sym);
 	}
-		// Group C3
-	else if (code>= 0x80 && code <= 0x9F)
+	// Group C3
+	else if (code >= 0x80 && code <= 0x9F)
 	{
 		used = _dtvcc_handle_C3(decoder, data, data_length);
 		// TODO: Something
 	}
-		// Group G3
+	// Group G3
 	else
 	{
 		c = dtvcc_get_internal_from_G3(code);
@@ -1668,9 +1676,9 @@ int _dtvcc_handle_extended_char(ccx_dtvcc_service_decoder *decoder, unsigned cha
 //------------------------------- PROCESSING --------------------------------
 
 void ccx_dtvcc_process_service_block(ccx_dtvcc_ctx *dtvcc,
-									 ccx_dtvcc_service_decoder *decoder,
-									 unsigned char *data,
-									 int data_length)
+	ccx_dtvcc_service_decoder *decoder,
+	unsigned char *data,
+	int data_length)
 {
 	//dump(CCX_DMT_708, data, data_length, 0, 0);
 
@@ -1692,7 +1700,7 @@ void ccx_dtvcc_process_service_block(ccx_dtvcc_ctx *dtvcc,
 			if (used == -1)
 			{
 				ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_process_service_block: "
-						"There was a problem handling the data. Reseting service decoder\n");
+					"There was a problem handling the data. Reseting service decoder\n");
 				// TODO: Not sure if a local reset is going to be helpful here.
 				//ccx_dtvcc_windows_reset(decoder);
 				return;
@@ -1713,7 +1721,7 @@ void ccx_dtvcc_process_current_packet(ccx_dtvcc_ctx *dtvcc)
 	int len = dtvcc->current_packet[0] & 0x3F; // 6 least significants bits
 #ifdef DEBUG_708_PACKETS
 	ccx_common_logging.log_ftn("[CEA-708] dtvcc_process_current_packet: length=%d, seq=%d\n",
-							   dtvcc->current_packet_length, seq);
+		dtvcc->current_packet_length, seq);
 #endif
 	if (dtvcc->current_packet_length == 0)
 		return;
@@ -1724,7 +1732,7 @@ void ccx_dtvcc_process_current_packet(ccx_dtvcc_ctx *dtvcc)
 	// Note that len here is the length including the header
 #ifdef DEBUG_708_PACKETS
 	ccx_common_logging.log_ftn("[CEA-708] dtvcc_process_current_packet: "
-									   "Sequence: %d, packet length: %d\n", seq, len);
+		"Sequence: %d, packet length: %d\n", seq, len);
 #endif
 	if (dtvcc->current_packet_length != len) // Is this possible?
 	{
@@ -1732,11 +1740,11 @@ void ccx_dtvcc_process_current_packet(ccx_dtvcc_ctx *dtvcc)
 		return;
 	}
 	if (dtvcc->last_sequence != CCX_DTVCC_NO_LAST_SEQUENCE &&
-			(dtvcc->last_sequence + 1) % 4 != seq)
+		(dtvcc->last_sequence + 1) % 4 != seq)
 	{
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_process_current_packet: "
-											 "Unexpected sequence number, it is [%d] but should be [%d]\n",
-				seq, (dtvcc->last_sequence + 1 ) % 4);
+			"Unexpected sequence number, it is [%d] but should be [%d]\n",
+			seq, (dtvcc->last_sequence + 1) % 4);
 		//WARN: if we reset decoders here, buffer will not be written
 		//WARN: resetting decoders breaks some samples
 		//_dtvcc_decoders_reset(dtvcc);
@@ -1752,8 +1760,8 @@ void ccx_dtvcc_process_current_packet(ccx_dtvcc_ctx *dtvcc)
 		int block_length = (pos[0] & 0x1F); // 5 less significant bits
 
 		ccx_common_logging.debug_ftn(
-				CCX_DMT_708, "[CEA-708] ccx_dtvcc_process_current_packet: Standard header: "
-						"Service number: [%d] Block length: [%d]\n", service_number, block_length);
+			CCX_DMT_708, "[CEA-708] ccx_dtvcc_process_current_packet: Standard header: "
+			"Service number: [%d] Block length: [%d]\n", service_number, block_length);
 
 		if (service_number == 7) // There is an extended header
 		{
@@ -1763,26 +1771,26 @@ void ccx_dtvcc_process_current_packet(ccx_dtvcc_ctx *dtvcc)
 			if (service_number < 7)
 			{
 				ccx_common_logging.debug_ftn(
-						CCX_DMT_708, "[CEA-708] ccx_dtvcc_process_current_packet: "
-						"Illegal service number in extended header: [%d]\n", service_number);
+					CCX_DMT_708, "[CEA-708] ccx_dtvcc_process_current_packet: "
+					"Illegal service number in extended header: [%d]\n", service_number);
 			}
 		}
 
-//		if (service_number == 0 && block_length == 0) // Null header already?
-//		{
-//			if (pos != (dtvcc->current_packet + len - 1)) // i.e. last byte in packet
-//			{
-//				// Not sure if this is correct
-//				printf ("Null header before it was expected.\n");
-//				// break;
-//			}
-//		}
+		//		if (service_number == 0 && block_length == 0) // Null header already?
+		//		{
+		//			if (pos != (dtvcc->current_packet + len - 1)) // i.e. last byte in packet
+		//			{
+		//				// Not sure if this is correct
+		//				printf ("Null header before it was expected.\n");
+		//				// break;
+		//			}
+		//		}
 
 		pos++; // Move to service data
 		if (service_number == 0 && block_length != 0) // Illegal, but specs say what to do...
 		{
 			ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_process_current_packet: "
-					"Data received for service 0, skipping rest of packet.");
+				"Data received for service 0, skipping rest of packet.");
 			pos = dtvcc->current_packet + len; // Move to end
 			break;
 		}
@@ -1803,13 +1811,13 @@ void ccx_dtvcc_process_current_packet(ccx_dtvcc_ctx *dtvcc)
 	if (pos != dtvcc->current_packet + len) // For some reason we didn't parse the whole packet
 	{
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_process_current_packet:"
-				" There was a problem with this packet, reseting\n");
+			" There was a problem with this packet, reseting\n");
 		_dtvcc_decoders_reset(dtvcc);
 	}
 
 	if (len < 128 && *pos) // Null header is mandatory if there is room
 	{
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_process_current_packet: "
-				"Warning: Null header expected but not found.\n");
+			"Warning: Null header expected but not found.\n");
 	}
 }

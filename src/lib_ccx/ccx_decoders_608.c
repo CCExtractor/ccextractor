@@ -6,9 +6,9 @@
 #include "ccx_decoders_structs.h"
 #include "ccx_decoders_xds.h"
 
-static const int rowdata[] = {11,-1,1,2,3,4,12,13,14,15,5,6,7,8,9,10};
+static const int rowdata[] = { 11,-1,1,2,3,4,12,13,14,15,5,6,7,8,9,10 };
 // Relationship between the first PAC byte and the row number
-int in_xds_mode=0;
+int in_xds_mode = 0;
 
 //unsigned char str[2048]; // Another generic general purpose buffer
 
@@ -72,7 +72,7 @@ static const char *command_type[] =
 	"RU1 - Fake Roll up 1 rows"
 };
 
-static const char *font_text[]=
+static const char *font_text[] =
 {
 	"regular",
 	"italics",
@@ -81,13 +81,13 @@ static const char *font_text[]=
 };
 
 #if 0
-static const char *cc_modes_text[]=
+static const char *cc_modes_text[] =
 {
 	"Pop-Up captions"
 };
 #endif
 
-const char *color_text[MAX_COLOR][2]=
+const char *color_text[MAX_COLOR][2] =
 {
 	{"white",""},
 	{"green","<font color=\"#00ff00\">"},
@@ -104,7 +104,7 @@ const char *color_text[MAX_COLOR][2]=
 
 void clear_eia608_cc_buffer(ccx_decoder_608_context *context, struct eia608_screen *data)
 {
-	for (int i = 0;i<CCX_DECODER_608_SCREEN_ROWS;i++)
+	for (int i = 0; i < CCX_DECODER_608_SCREEN_ROWS; i++)
 	{
 		memset(data->characters[i], ' ', CCX_DECODER_608_SCREEN_WIDTH);
 		data->characters[i][CCX_DECODER_608_SCREEN_WIDTH] = 0;
@@ -115,39 +115,39 @@ void clear_eia608_cc_buffer(ccx_decoder_608_context *context, struct eia608_scre
 			data->fonts[i][j] = FONT_REGULAR;
 		}
 
-		data->row_used[i]=0;
+		data->row_used[i] = 0;
 	}
-	data->empty=1;
+	data->empty = 1;
 }
 
 void ccx_decoder_608_dinit_library(void **ctx)
 {
 	freep(ctx);
 }
-ccx_decoder_608_context* ccx_decoder_608_init_library(struct ccx_decoder_608_settings *settings, int channel,
-		int field, int *halt,
-		int cc_to_stdout,
-		enum ccx_output_format output_format, struct ccx_common_timing_ctx *timing)
+ccx_decoder_608_context *ccx_decoder_608_init_library(struct ccx_decoder_608_settings *settings, int channel,
+	int field, int *halt,
+	int cc_to_stdout,
+	enum ccx_output_format output_format, struct ccx_common_timing_ctx *timing)
 {
 	ccx_decoder_608_context *data = NULL;
 
 	data = malloc(sizeof(ccx_decoder_608_context));
 
-	data->cursor_column=0;
-	data->cursor_row=0;
-	data->visible_buffer=1;
-	data->last_c1=0;
-	data->last_c2=0;
-	data->mode=MODE_POPON;
+	data->cursor_column = 0;
+	data->cursor_row = 0;
+	data->visible_buffer = 1;
+	data->last_c1 = 0;
+	data->last_c2 = 0;
+	data->mode = MODE_POPON;
 	// data->current_visible_start_cc=0;
-	data->current_visible_start_ms=0;
-	data->screenfuls_counter=0;
-	data->channel=1;
+	data->current_visible_start_ms = 0;
+	data->screenfuls_counter = 0;
+	data->channel = 1;
 	data->font = FONT_REGULAR;
-	data->rollup_base_row=14;
-	data->ts_start_of_current_line=-1;
-	data->ts_last_char_received=-1;
-	data->new_channel=1;
+	data->rollup_base_row = 14;
+	data->ts_start_of_current_line = -1;
+	data->ts_last_char_received = -1;
+	data->new_channel = 1;
 	data->bytes_processed_608 = 0;
 	data->my_field = field;
 	data->my_channel = channel;
@@ -172,7 +172,7 @@ ccx_decoder_608_context* ccx_decoder_608_init_library(struct ccx_decoder_608_set
 
 struct eia608_screen *get_writing_buffer(ccx_decoder_608_context *context)
 {
-	struct eia608_screen *use_buffer=NULL;
+	struct eia608_screen *use_buffer = NULL;
 	switch (context->mode)
 	{
 		case MODE_POPON: // Write on the non-visible buffer
@@ -204,7 +204,7 @@ void delete_to_end_of_row(ccx_decoder_608_context *context)
 	if (context->mode != MODE_TEXT)
 	{
 		struct eia608_screen *use_buffer = get_writing_buffer(context);
-		for (int i = context->cursor_column; i <= CCX_DECODER_608_SCREEN_WIDTH-1; i++)
+		for (int i = context->cursor_column; i <= CCX_DECODER_608_SCREEN_WIDTH - 1; i++)
 		{
 			// TODO: This can change the 'used' situation of a column, so we'd
 			// need to check and correct.
@@ -233,9 +233,9 @@ void write_char(const unsigned char c, ccx_decoder_608_context *context)
 			if (MODE_POPON != context->mode)
 				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
 		}
-		use_buffer->empty=0;
+		use_buffer->empty = 0;
 
-		if (context->cursor_column<CCX_DECODER_608_SCREEN_WIDTH - 1)
+		if (context->cursor_column < CCX_DECODER_608_SCREEN_WIDTH - 1)
 			context->cursor_column++;
 		if (context->ts_start_of_current_line == -1)
 			context->ts_start_of_current_line = get_fts(context->timing, context->my_field);
@@ -258,7 +258,7 @@ void handle_text_attr(const unsigned char c1, const unsigned char c2, ccx_decode
 	}
 	else
 	{
-		int i = c2-0x20;
+		int i = c2 - 0x20;
 		context->current_color = pac2_attribs[i][0];
 		context->font = pac2_attribs[i][1];
 		ccx_common_logging.debug_ftn(
@@ -286,7 +286,7 @@ struct eia608_screen *get_current_visible_buffer(ccx_decoder_608_context *contex
 int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 {
 	struct eia608_screen *data;
-	int wrote_something=0;
+	int wrote_something = 0;
 	LLONG start_time;
 	LLONG end_time;
 
@@ -295,7 +295,7 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 		context->screenfuls_counter >= context->settings->screens_to_process)
 	{
 		// We are done.
-		*context->halt=1;
+		*context->halt = 1;
 		return 0;
 	}
 
@@ -327,22 +327,22 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 		memcpy(((struct eia608_screen *)sub->data) + sub->nb_data, data, sizeof(*data));
 		sub->nb_data++;
 		wrote_something = 1;
-		if(start_time < end_time)
+		if (start_time < end_time)
 		{
 			int i = 0;
 			int nb_data = sub->nb_data;
 			data = (struct eia608_screen *)sub->data;
-			for(i = 0;(unsigned) i < sub->nb_data; i++)
+			for (i = 0; (unsigned)i < sub->nb_data; i++)
 			{
-				if(!data->start_time)
+				if (!data->start_time)
 					break;
 				nb_data--;
 				data++;
 			}
-			for(i = 0; i < nb_data; i++)
+			for (i = 0; i < nb_data; i++)
 			{
-				data->start_time = start_time + ( ( (end_time - start_time)/nb_data ) * i );
-				data->end_time = start_time + ( ( (end_time - start_time)/nb_data ) * (i + 1) );
+				data->start_time = start_time + (((end_time - start_time) / nb_data) * i);
+				data->end_time = start_time + (((end_time - start_time) / nb_data) * (i + 1));
 				data++;
 			}
 			sub->got_output = 1;
@@ -358,7 +358,7 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 	LLONG start_time;
 	LLONG end_time;
 	int i = 0;
-	int wrote_something=0;
+	int wrote_something = 0;
 	data = get_current_visible_buffer(context);
 
 	start_time = context->ts_start_of_current_line;
@@ -373,7 +373,7 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 
 	if (!data->empty)
 	{
-		sub->data = (struct eia608_screen *) realloc(sub->data,(sub->nb_data +1) * sizeof(*data));
+		sub->data = (struct eia608_screen *) realloc(sub->data, (sub->nb_data + 1) * sizeof(*data));
 		if (!sub->data)
 		{
 			ccx_common_logging.log_ftn("No Memory left");
@@ -384,29 +384,29 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 		sub->datatype = CC_DATATYPE_GENERIC;
 		sub->nb_data++;
 
-		for(i = 0; i < CCX_DECODER_608_SCREEN_ROWS; i++)
+		for (i = 0; i < CCX_DECODER_608_SCREEN_ROWS; i++)
 		{
-			if(i == context->cursor_row)
+			if (i == context->cursor_row)
 				data->row_used[i] = 1;
 			else
 				data->row_used[i] = 0;
 		}
 		wrote_something = 1;
-		if(start_time < end_time)
+		if (start_time < end_time)
 		{
 			int nb_data = sub->nb_data;
 			data = (struct eia608_screen *)sub->data;
-			for(i = 0;(unsigned) i < sub->nb_data; i++)
+			for (i = 0; (unsigned)i < sub->nb_data; i++)
 			{
-				if(!data->start_time)
+				if (!data->start_time)
 					break;
 				nb_data--;
 				data++;
 			}
-			for(i = 0;(int) i < nb_data; i++)
+			for (i = 0; (int)i < nb_data; i++)
 			{
-				data->start_time = start_time + ( ( (end_time - start_time)/nb_data ) * i );
-				data->end_time = start_time + ( ( (end_time - start_time)/nb_data ) * (i + 1) );
+				data->start_time = start_time + (((end_time - start_time) / nb_data) * i);
+				data->end_time = start_time + (((end_time - start_time) / nb_data) * (i + 1));
 				data++;
 			}
 			sub->got_output = 1;
@@ -419,8 +419,8 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 // Check if a rollup would cause a line to go off the visible area
 int check_roll_up(ccx_decoder_608_context *context)
 {
-	int keep_lines=0;
-	int firstrow=-1, lastrow=-1;
+	int keep_lines = 0;
+	int firstrow = -1, lastrow = -1;
 	struct eia608_screen *use_buffer;
 	if (context->visible_buffer == 1)
 		use_buffer = &context->buffer1;
@@ -430,19 +430,19 @@ int check_roll_up(ccx_decoder_608_context *context)
 	switch (context->mode)
 	{
 		case MODE_FAKE_ROLLUP_1:
-			keep_lines=1;
+			keep_lines = 1;
 			break;
 		case MODE_ROLLUP_2:
-			keep_lines=2;
+			keep_lines = 2;
 			break;
 		case MODE_ROLLUP_3:
-			keep_lines=3;
+			keep_lines = 3;
 			break;
 		case MODE_ROLLUP_4:
-			keep_lines=4;
+			keep_lines = 4;
 			break;
 		case MODE_TEXT:
-			keep_lines=7; // CFS: can be 7 to 15 according to the handbook. No idea how this is selected.
+			keep_lines = 7; // CFS: can be 7 to 15 according to the handbook. No idea how this is selected.
 			break;
 		default: // Shouldn't happen
 			return 0;
@@ -450,20 +450,20 @@ int check_roll_up(ccx_decoder_608_context *context)
 	}
 	if (use_buffer->row_used[0]) // If top line is used it will go off the screen no matter what
 		return 1;
-	int rows_orig=0; // Number of rows in use right now
-	for (int i=0;i<CCX_DECODER_608_SCREEN_ROWS;i++)
+	int rows_orig = 0; // Number of rows in use right now
+	for (int i = 0; i < CCX_DECODER_608_SCREEN_ROWS; i++)
 	{
 		if (use_buffer->row_used[i])
 		{
 			rows_orig++;
-			if (firstrow==-1)
-				firstrow=i;
-			lastrow=i;
+			if (firstrow == -1)
+				firstrow = i;
+			lastrow = i;
 		}
 	}
-	if (lastrow==-1) // Empty screen, nothing to rollup
+	if (lastrow == -1) // Empty screen, nothing to rollup
 		return 0;
-	if ((lastrow-firstrow+1)>=keep_lines)
+	if ((lastrow - firstrow + 1) >= keep_lines)
 		return 1; // We have the roll-up area full, so yes
 
 	if ((firstrow - 1) <= context->cursor_row - keep_lines) // Roll up will delete those lines.
@@ -484,74 +484,74 @@ int roll_up(ccx_decoder_608_context *context)
 	switch (context->mode)
 	{
 		case MODE_FAKE_ROLLUP_1:
-			keep_lines=1;
+			keep_lines = 1;
 			break;
 		case MODE_ROLLUP_2:
-			keep_lines=2;
+			keep_lines = 2;
 			break;
 		case MODE_ROLLUP_3:
-			keep_lines=3;
+			keep_lines = 3;
 			break;
 		case MODE_ROLLUP_4:
-			keep_lines=4;
+			keep_lines = 4;
 			break;
 		case MODE_TEXT:
-			keep_lines=7; // CFS: can be 7 to 15 according to the handbook. No idea how this is selected.
+			keep_lines = 7; // CFS: can be 7 to 15 according to the handbook. No idea how this is selected.
 			break;
 		default: // Shouldn't happen
-			keep_lines=0;
+			keep_lines = 0;
 			break;
 	}
-	int firstrow=-1, lastrow=-1;
+	int firstrow = -1, lastrow = -1;
 	// Look for the last line used
-	int rows_orig=0; // Number of rows in use right now
-	for (int i=0;i<CCX_DECODER_608_SCREEN_ROWS;i++)
+	int rows_orig = 0; // Number of rows in use right now
+	for (int i = 0; i < CCX_DECODER_608_SCREEN_ROWS; i++)
 	{
 		if (use_buffer->row_used[i])
 		{
 			rows_orig++;
-			if (firstrow==-1)
-				firstrow=i;
-			lastrow=i;
+			if (firstrow == -1)
+				firstrow = i;
+			lastrow = i;
 		}
 	}
 
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\rIn roll-up: %d lines used, first: %d, last: %d\n", rows_orig, firstrow, lastrow);
 
-	if (lastrow==-1) // Empty screen, nothing to rollup
+	if (lastrow == -1) // Empty screen, nothing to rollup
 		return 0;
 
-	for (int j=lastrow-keep_lines+1;j<lastrow; j++)
+	for (int j = lastrow - keep_lines + 1; j < lastrow; j++)
 	{
-		if (j>=0)
+		if (j >= 0)
 		{
 			memcpy(use_buffer->characters[j], use_buffer->characters[j + 1], CCX_DECODER_608_SCREEN_WIDTH + 1);
 			memcpy(use_buffer->colors[j], use_buffer->colors[j + 1], CCX_DECODER_608_SCREEN_WIDTH + 1);
 			memcpy(use_buffer->fonts[j], use_buffer->fonts[j + 1], CCX_DECODER_608_SCREEN_WIDTH + 1);
-			use_buffer->row_used[j]=use_buffer->row_used[j+1];
+			use_buffer->row_used[j] = use_buffer->row_used[j + 1];
 		}
 	}
-	for (int j = 0; j<(1 + context->cursor_row - keep_lines); j++)
+	for (int j = 0; j < (1 + context->cursor_row - keep_lines); j++)
 	{
 		memset(use_buffer->characters[j], ' ', CCX_DECODER_608_SCREEN_WIDTH);
 		memset(use_buffer->colors[j], context->settings->default_color, CCX_DECODER_608_SCREEN_WIDTH);
 		memset(use_buffer->fonts[j], FONT_REGULAR, CCX_DECODER_608_SCREEN_WIDTH);
 		use_buffer->characters[j][CCX_DECODER_608_SCREEN_WIDTH] = 0;
-		use_buffer->row_used[j]=0;
+		use_buffer->row_used[j] = 0;
 	}
 	memset(use_buffer->characters[lastrow], ' ', CCX_DECODER_608_SCREEN_WIDTH);
 	memset(use_buffer->colors[lastrow], context->settings->default_color, CCX_DECODER_608_SCREEN_WIDTH);
 	memset(use_buffer->fonts[lastrow], FONT_REGULAR, CCX_DECODER_608_SCREEN_WIDTH);
 
 	use_buffer->characters[lastrow][CCX_DECODER_608_SCREEN_WIDTH] = 0;
-	use_buffer->row_used[lastrow]=0;
+	use_buffer->row_used[lastrow] = 0;
 
 	// Sanity check
-	int rows_now=0;
-	for (int i=0;i<CCX_DECODER_608_SCREEN_ROWS;i++)
+	int rows_now = 0;
+	for (int i = 0; i < CCX_DECODER_608_SCREEN_ROWS; i++)
 		if (use_buffer->row_used[i])
 			rows_now++;
-	if (rows_now>keep_lines)
+	if (rows_now > keep_lines)
 		ccx_common_logging.log_ftn("Bug in roll_up, should have %d lines but I have %d.\n",
 			keep_lines, rows_now);
 
@@ -580,7 +580,7 @@ void erase_memory(ccx_decoder_608_context *context, int displayed)
 		else
 			buf = &context->buffer1;
 	}
-	clear_eia608_cc_buffer (context,buf);
+	clear_eia608_cc_buffer(context, buf);
 }
 
 int is_current_row_empty(ccx_decoder_608_context *context)
@@ -590,7 +590,7 @@ int is_current_row_empty(ccx_decoder_608_context *context)
 		use_buffer = &context->buffer1;
 	else
 		use_buffer = &context->buffer2;
-	for (int i = 0; i<CCX_DECODER_608_SCREEN_WIDTH; i++)
+	for (int i = 0; i < CCX_DECODER_608_SCREEN_WIDTH; i++)
 	{
 		if (use_buffer->characters[context->rollup_base_row][i] != ' ')
 			return 0;
@@ -601,7 +601,7 @@ int is_current_row_empty(ccx_decoder_608_context *context)
 /* Process GLOBAL CODES */
 void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_context *context, struct cc_subtitle *sub)
 {
-	int changes=0;
+	int changes = 0;
 
 	// Handle channel change
 	context->channel = context->new_channel;
@@ -609,50 +609,50 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 		return;
 
 	enum command_code command = COM_UNKNOWN;
-	if (c1==0x15)
-		c1=0x14;
-	if ((c1==0x14 || c1==0x1C) && c2==0x2C)
+	if (c1 == 0x15)
+		c1 = 0x14;
+	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x2C)
 		command = COM_ERASEDISPLAYEDMEMORY;
-	if ((c1==0x14 || c1==0x1C) && c2==0x20)
+	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x20)
 		command = COM_RESUMECAPTIONLOADING;
-	if ((c1==0x14 || c1==0x1C) && c2==0x2F)
+	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x2F)
 		command = COM_ENDOFCAPTION;
-	if ((c1==0x14 || c1==0x1C) && c2==0x22)
+	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x22)
 		command = COM_ALARMOFF;
-	if ((c1==0x14 || c1==0x1C) && c2==0x23)
+	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x23)
 		command = COM_ALARMON;
-	if ((c1==0x14 || c1==0x1C) && c2==0x24)
+	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x24)
 		command = COM_DELETETOENDOFROW;
-	if ((c1==0x17 || c1==0x1F) && c2==0x21)
+	if ((c1 == 0x17 || c1 == 0x1F) && c2 == 0x21)
 		command = COM_TABOFFSET1;
-	if ((c1==0x17 || c1==0x1F) && c2==0x22)
+	if ((c1 == 0x17 || c1 == 0x1F) && c2 == 0x22)
 		command = COM_TABOFFSET2;
-	if ((c1==0x17 || c1==0x1F) && c2==0x23)
+	if ((c1 == 0x17 || c1 == 0x1F) && c2 == 0x23)
 		command = COM_TABOFFSET3;
-	if ((c1==0x14 || c1==0x1C) && c2==0x25)
+	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x25)
 		command = COM_ROLLUP2;
-	if ((c1==0x14 || c1==0x1C) && c2==0x26)
+	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x26)
 		command = COM_ROLLUP3;
-	if ((c1==0x14 || c1==0x1C) && c2==0x27)
+	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x27)
 		command = COM_ROLLUP4;
-	if ((c1==0x14 || c1==0x1C) && c2==0x29)
+	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x29)
 		command = COM_RESUMEDIRECTCAPTIONING;
-	if ((c1==0x14 || c1==0x1C) && c2==0x2D)
+	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x2D)
 		command = COM_CARRIAGERETURN;
-	if ((c1==0x14 || c1==0x1C) && c2==0x2E)
+	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x2E)
 		command = COM_ERASENONDISPLAYEDMEMORY;
-	if ((c1==0x14 || c1==0x1C) && c2==0x21)
+	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x21)
 		command = COM_BACKSPACE;
-	if ((c1==0x14 || c1==0x1C) && c2==0x2b)
+	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x2b)
 		command = COM_RESUMETEXTDISPLAY;
 
 	if ((command == COM_ROLLUP2 || command == COM_ROLLUP3 || command == COM_ROLLUP4) && context->settings->force_rollup == 1)
-		command=COM_FAKE_RULLUP1;
+		command = COM_FAKE_RULLUP1;
 
 	if ((command == COM_ROLLUP3 || command == COM_ROLLUP4) && context->settings->force_rollup == 2)
-		command=COM_ROLLUP2;
+		command = COM_ROLLUP2;
 	else if (command == COM_ROLLUP4 && context->settings->force_rollup == 3)
-		command=COM_ROLLUP3;
+		command = COM_ROLLUP3;
 
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\rCommand begin: %02X %02X (%s)\n", c1, c2, command_type[command]);
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\rCurrent mode: %d  Position: %d,%d  VisBuf: %d\n", context->mode,
@@ -661,24 +661,24 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 	switch (command)
 	{
 		case COM_BACKSPACE:
-			if (context->cursor_column>0)
+			if (context->cursor_column > 0)
 			{
 				context->cursor_column--;
 				get_writing_buffer(context)->characters[context->cursor_row][context->cursor_column] = ' ';
 			}
 			break;
 		case COM_TABOFFSET1:
-			if (context->cursor_column<CCX_DECODER_608_SCREEN_WIDTH - 1)
+			if (context->cursor_column < CCX_DECODER_608_SCREEN_WIDTH - 1)
 				context->cursor_column++;
 			break;
 		case COM_TABOFFSET2:
 			context->cursor_column += 2;
-			if (context->cursor_column>CCX_DECODER_608_SCREEN_WIDTH - 1)
+			if (context->cursor_column > CCX_DECODER_608_SCREEN_WIDTH - 1)
 				context->cursor_column = CCX_DECODER_608_SCREEN_WIDTH - 1;
 			break;
 		case COM_TABOFFSET3:
 			context->cursor_column += 3;
-			if (context->cursor_column>CCX_DECODER_608_SCREEN_WIDTH - 1)
+			if (context->cursor_column > CCX_DECODER_608_SCREEN_WIDTH - 1)
 				context->cursor_column = CCX_DECODER_608_SCREEN_WIDTH - 1;
 			break;
 		case COM_RESUMECAPTIONLOADING:
@@ -737,13 +737,13 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			if (context->mode == MODE_POPON) // CFS: Not sure about this. Is there a valid reason for CR in popup?
 			{
 				context->cursor_column = 0;
-				if (context->cursor_row<CCX_DECODER_608_SCREEN_ROWS)
+				if (context->cursor_row < CCX_DECODER_608_SCREEN_ROWS)
 					context->cursor_row++;
 				break;
 			}
 			if (context->output_format == CCX_OF_TRANSCRIPT)
 			{
-				write_cc_line(context,sub);
+				write_cc_line(context, sub);
 			}
 
 			// In transcript mode, CR doesn't write the whole screen, to avoid
@@ -774,9 +774,9 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			// time it became clear.
 			if (context->output_format == CCX_OF_TRANSCRIPT &&
 				(context->mode == MODE_FAKE_ROLLUP_1 ||
-				context->mode == MODE_ROLLUP_2 ||
-				context->mode == MODE_ROLLUP_3 ||
-				context->mode == MODE_ROLLUP_4))
+					context->mode == MODE_ROLLUP_2 ||
+					context->mode == MODE_ROLLUP_3 ||
+					context->mode == MODE_ROLLUP_4))
 			{
 				// In transcript mode we just write the cursor line. The previous lines
 				// should have been written already, so writing everything produces
@@ -832,7 +832,7 @@ void flush_608_context(ccx_decoder_608_context *context, struct cc_subtitle *sub
 {
 	// We issue a EraseDisplayedMemory here so if there's any captions pending
 	// they get written to Subtitle.
-	handle_command (0x14, 0x2c, context, sub); // EDM
+	handle_command(0x14, 0x2c, context, sub); // EDM
 }
 
 // CEA-608, Anex F 1.1.1. - Character Set Table / Special Characters
@@ -841,9 +841,9 @@ void handle_double(const unsigned char c1, const unsigned char c2, ccx_decoder_6
 	unsigned char c;
 	if (context->channel != context->my_channel)
 		return;
-	if (c2>=0x30 && c2<=0x3f)
+	if (c2 >= 0x30 && c2 <= 0x3f)
 	{
-		c=c2 + 0x50; // So if c>=0x80 && c<=0x8f, it comes from here
+		c = c2 + 0x50; // So if c>=0x80 && c<=0x8f, it comes from here
 		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\rDouble: %02X %02X  -->  %c\n", c1, c2, c);
 		write_char(c, context);
 	}
@@ -863,24 +863,24 @@ unsigned char handle_extended(unsigned char hi, unsigned char lo, ccx_decoder_60
 		return 0;
 
 	// For lo values between 0x20-0x3f
-	unsigned char c=0;
+	unsigned char c = 0;
 
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\rExtended: %02X %02X\n", hi, lo);
-	if (lo>=0x20 && lo<=0x3f && (hi==0x12 || hi==0x13))
+	if (lo >= 0x20 && lo <= 0x3f && (hi == 0x12 || hi == 0x13))
 	{
 		switch (hi)
 		{
 			case 0x12:
-				c=lo+0x70; // So if c>=0x90 && c<=0xaf it comes from here
+				c = lo + 0x70; // So if c>=0x90 && c<=0xaf it comes from here
 				break;
 			case 0x13:
-				c=lo+0x90; // So if c>=0xb0 && c<=0xcf it comes from here
+				c = lo + 0x90; // So if c>=0xb0 && c<=0xcf it comes from here
 				break;
 		}
 		// This column change is because extended characters replace
 		// the previous character (which is sent for basic decoders
 		// to show something similar to the real char)
-		if (context->cursor_column>0)
+		if (context->cursor_column > 0)
 			context->cursor_column--;
 
 		write_char(c, context);
@@ -901,19 +901,19 @@ void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *con
 	if (context->channel != context->my_channel)
 		return;
 
-	int row=rowdata[((c1<<1)&14)|((c2>>5)&1)];
+	int row = rowdata[((c1 << 1) & 14) | ((c2 >> 5) & 1)];
 
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\rPAC: %02X %02X", c1, c2);
 
-	if (c2>=0x40 && c2<=0x5f)
+	if (c2 >= 0x40 && c2 <= 0x5f)
 	{
-		c2=c2-0x40;
+		c2 = c2 - 0x40;
 	}
 	else
 	{
-		if (c2>=0x60 && c2<=0x7f)
+		if (c2 >= 0x60 && c2 <= 0x7f)
 		{
-			c2=c2-0x60;
+			c2 = c2 - 0x60;
 		}
 		else
 		{
@@ -923,7 +923,7 @@ void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *con
 	}
 	context->current_color = pac2_attribs[c2][0];
 	context->font = pac2_attribs[c2][1];
-	int indent=pac2_attribs[c2][2];
+	int indent = pac2_attribs[c2][2];
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "  --  Position: %d:%d, color: %s,  font: %s\n", row,
 		indent, color_text[context->current_color][0], font_text[context->font]);
 	if (context->settings->default_color == COL_USERDEFINED && (context->current_color == COL_WHITE || context->current_color == COL_TRANSPARENT))
@@ -944,7 +944,7 @@ void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *con
 		   buffer around instead) but it's better than leaving old characters in the buffer */
 		struct eia608_screen *use_buffer = get_writing_buffer(context); // &wb->data608->buffer1;
 
-		for (int j=row;j<CCX_DECODER_608_SCREEN_ROWS;j++)
+		for (int j = row; j < CCX_DECODER_608_SCREEN_ROWS; j++)
 		{
 			if (use_buffer->row_used[j])
 			{
@@ -962,11 +962,11 @@ void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *con
 
 void handle_single(const unsigned char c1, ccx_decoder_608_context *context)
 {
-	if (c1<0x20 || context->channel != context->my_channel)
+	if (c1 < 0x20 || context->channel != context->my_channel)
 		return; // We don't allow special stuff here
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "%c", c1);
 
-	write_char (c1,context);
+	write_char(c1, context);
 }
 
 void erase_both_memories(ccx_decoder_608_context *context, struct cc_subtitle *sub)
@@ -989,10 +989,10 @@ void erase_both_memories(ccx_decoder_608_context *context, struct cc_subtitle *s
 int check_channel(unsigned char c1, ccx_decoder_608_context *context)
 {
 	int newchan = context->channel;
-	if (c1>=0x10 && c1<=0x17)
-		newchan=1;
-	else if (c1>=0x18 && c1<=0x1e)
-		newchan=2;
+	if (c1 >= 0x10 && c1 <= 0x17)
+		newchan = 1;
+	else if (c1 >= 0x18 && c1 <= 0x1e)
+		newchan = 2;
 	if (newchan != context->channel)
 	{
 		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\nChannel change, now %d\n", newchan);
@@ -1011,7 +1011,7 @@ int check_channel(unsigned char c1, ccx_decoder_608_context *context)
 * Returns 1 if something was written to screen, 0 otherwise */
 int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *context, struct cc_subtitle *sub)
 {
-	int wrote_to_screen=0;
+	int wrote_to_screen = 0;
 
 	/* Full channel changes are only allowed for "GLOBAL CODES",
 	* "OTHER POSITIONING CODES", "BACKGROUND COLOR CODES",
@@ -1023,52 +1023,52 @@ int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *cont
 	//if (wb->data608->channel!=cc_channel)
 	//	continue;
 
-	if (hi>=0x18 && hi<=0x1f)
-		hi=hi-8;
+	if (hi >= 0x18 && hi <= 0x1f)
+		hi = hi - 8;
 
 	switch (hi)
 	{
 		case 0x10:
-			if (lo>=0x40 && lo<=0x5f)
+			if (lo >= 0x40 && lo <= 0x5f)
 				handle_pac(hi, lo, context);
 			break;
 		case 0x11:
-			if (lo>=0x20 && lo<=0x2f)
+			if (lo >= 0x20 && lo <= 0x2f)
 				handle_text_attr(hi, lo, context);
-			if (lo>=0x30 && lo<=0x3f)
+			if (lo >= 0x30 && lo <= 0x3f)
 			{
-				wrote_to_screen=1;
+				wrote_to_screen = 1;
 				handle_double(hi, lo, context);
 			}
-			if (lo>=0x40 && lo<=0x7f)
+			if (lo >= 0x40 && lo <= 0x7f)
 				handle_pac(hi, lo, context);
 			break;
 		case 0x12:
 		case 0x13:
-			if (lo>=0x20 && lo<=0x3f)
+			if (lo >= 0x20 && lo <= 0x3f)
 			{
 				wrote_to_screen = handle_extended(hi, lo, context);
 			}
-			if (lo>=0x40 && lo<=0x7f)
+			if (lo >= 0x40 && lo <= 0x7f)
 				handle_pac(hi, lo, context);
 			break;
 		case 0x14:
 		case 0x15:
-			if (lo>=0x20 && lo<=0x2f)
+			if (lo >= 0x20 && lo <= 0x2f)
 				handle_command(hi, lo, context, sub);
-			if (lo>=0x40 && lo<=0x7f)
+			if (lo >= 0x40 && lo <= 0x7f)
 				handle_pac(hi, lo, context);
 			break;
 		case 0x16:
-			if (lo>=0x40 && lo<=0x7f)
+			if (lo >= 0x40 && lo <= 0x7f)
 				handle_pac(hi, lo, context);
 			break;
 		case 0x17:
-			if (lo>=0x21 && lo<=0x23)
+			if (lo >= 0x21 && lo <= 0x23)
 				handle_command(hi, lo, context, sub);
-			if (lo>=0x2e && lo<=0x2f)
+			if (lo >= 0x2e && lo <= 0x2f)
 				handle_text_attr(hi, lo, context);
-			if (lo>=0x40 && lo<=0x7f)
+			if (lo >= 0x40 && lo <= 0x7f)
 				handle_pac(hi, lo, context);
 			break;
 	}
@@ -1078,12 +1078,12 @@ int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *cont
 /* If private data is NULL, then only XDS will be processed */
 int process608(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub)
 {
-	struct ccx_decoder_608_report  *report = NULL;
+	struct ccx_decoder_608_report *report = NULL;
 	struct lib_cc_decode *dec_ctx = private_data;
 	struct ccx_decoder_608_context *context;
 	int i;
 
-	if(dec_ctx->current_field == 1)
+	if (dec_ctx->current_field == 1)
 	{
 		context = dec_ctx->context_cc608_field_1;
 	}
@@ -1104,25 +1104,25 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 	{
 		return -1;
 	}
-	for (i=0; i < length; i=i+2)
+	for (i = 0; i < length; i = i + 2)
 	{
 		unsigned char hi, lo;
-		int wrote_to_screen=0;
+		int wrote_to_screen = 0;
 
 		hi = data[i] & 0x7F; // Get rid of parity bit
-		lo = data[i+1] & 0x7F; // Get rid of parity bit
+		lo = data[i + 1] & 0x7F; // Get rid of parity bit
 
-		if (hi==0 && lo==0) // Just padding
+		if (hi == 0 && lo == 0) // Just padding
 			continue;
 
 		// printf ("\r[%02X:%02X]\n",hi,lo);
 
-		if (hi>=0x10 && hi<=0x1e) {
-			int ch = (hi<=0x17)? 1 : 2;
+		if (hi >= 0x10 && hi <= 0x1e) {
+			int ch = (hi <= 0x17) ? 1 : 2;
 			if (context == NULL || context->my_field == 2) // Originally: current_field from sequencing.c. Seems to be just to change channel, so context->my_field seems good.
-				ch+=2;
+				ch += 2;
 
-			if(report)
+			if (report)
 				report->cc_channels[ch - 1] = 1;
 		}
 
@@ -1135,29 +1135,29 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 				ts_start_of_xds = get_fts(dec_ctx->timing, dec_ctx->current_field);
 				in_xds_mode = 1;
 			}
-			if(report)
+			if (report)
 				report->xds = 1;
 		}
 		if (hi == 0x0F && in_xds_mode && (context == NULL || context->my_field == 2)) // End of XDS block
 		{
-			in_xds_mode=0;
-			do_end_of_xds (sub, dec_ctx->xds_ctx, lo);
+			in_xds_mode = 0;
+			do_end_of_xds(sub, dec_ctx->xds_ctx, lo);
 			if (context)
 				context->channel = context->new_channel; // Switch from channel 3
 			continue;
 		}
-		if (hi>=0x10 && hi<=0x1F) // Non-character code or special/extended char
+		if (hi >= 0x10 && hi <= 0x1F) // Non-character code or special/extended char
 			// http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/CC_CODES.HTML
 			// http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/CC_CHARS.HTML
 		{
 			if (!context || context->my_field == 2)
-				in_xds_mode=0; // Back to normal (CEA 608-8.6.2)
+				in_xds_mode = 0; // Back to normal (CEA 608-8.6.2)
 			if (!context) // Not XDS and we don't have a writebuffer, nothing else would have an effect
 				continue;
 
 			// We were writing characters before, start a new line for
 			// diagnostic output from disCommand()
-			if (context->textprinted == 1 )
+			if (context->textprinted == 1)
 			{
 				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\n");
 				context->textprinted = 0;
@@ -1169,7 +1169,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 				// non-XDS, XDS codes shall not be repeated.
 				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Skipping command %02X,%02X Duplicate\n", hi, lo);
 				// Ignore only the first repetition
-				context->last_c1=-1;
+				context->last_c1 = -1;
 				context->last_c2 = -1;
 				continue;
 			}
@@ -1186,7 +1186,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 		{
 			if (in_xds_mode && (context == NULL || context->my_field == 2))
 			{
-				process_xds_bytes (dec_ctx->xds_ctx, hi, lo);
+				process_xds_bytes(dec_ctx->xds_ctx, hi, lo);
 				continue;
 			}
 			if (!context) // No XDS code after this point, and user doesn't want captions.
@@ -1195,13 +1195,13 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 			context->last_c1 = -1;
 			context->last_c2 = -1;
 
-			if (hi>=0x20) // Standard characters (always in pairs)
+			if (hi >= 0x20) // Standard characters (always in pairs)
 			{
 				// Only print if the channel is active
 				if (context->channel != context->my_channel)
 					continue;
 
-				if( context->textprinted == 0 )
+				if (context->textprinted == 0)
 				{
 					ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\n");
 					context->textprinted = 1;
@@ -1209,7 +1209,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 
 				handle_single(hi, context);
 				handle_single(lo, context);
-				wrote_to_screen=1;
+				wrote_to_screen = 1;
 				context->last_c1 = 0;
 				context->last_c2 = 0;
 			}
@@ -1224,10 +1224,10 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 			}
 
 			if (wrote_to_screen && context->settings->direct_rollup && // If direct_rollup is enabled and
-					(context->mode == MODE_FAKE_ROLLUP_1 || // we are in rollup mode, write now.
-					 context->mode == MODE_ROLLUP_2 ||
-					 context->mode == MODE_ROLLUP_3 ||
-					 context->mode == MODE_ROLLUP_4))
+				(context->mode == MODE_FAKE_ROLLUP_1 || // we are in rollup mode, write now.
+					context->mode == MODE_ROLLUP_2 ||
+					context->mode == MODE_ROLLUP_3 ||
+					context->mode == MODE_ROLLUP_4))
 			{
 				// We don't increase screenfuls_counter here.
 				write_cc_buffer(context, sub);
@@ -1235,7 +1235,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 			}
 		}
 		if (wrote_to_screen && context->cc_to_stdout)
-			fflush (stdout);
+			fflush(stdout);
 	} // for
 	return i;
 }
@@ -1243,33 +1243,33 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 
 /* Return a pointer to a string that holds the printable characters
  * of the caption data block. FOR DEBUG PURPOSES ONLY! */
-unsigned char *debug_608_to_ASC (unsigned char *cc_data, int channel)
+unsigned char *debug_608_to_ASC(unsigned char *cc_data, int channel)
 {
 	static unsigned char output[3];
 
-	unsigned char cc_valid = (cc_data[0] & 4) >>2;
+	unsigned char cc_valid = (cc_data[0] & 4) >> 2;
 	unsigned char cc_type = cc_data[0] & 3;
 	unsigned char hi, lo;
 
-	output[0]=' ';
-	output[1]=' ';
-	output[2]='\x00';
+	output[0] = ' ';
+	output[1] = ' ';
+	output[2] = '\x00';
 
-	if (cc_valid && cc_type==channel)
+	if (cc_valid && cc_type == channel)
 	{
 		hi = cc_data[1] & 0x7F; // Get rid of parity bit
 		lo = cc_data[2] & 0x7F; // Get rid of parity bit
-		if (hi>=0x20)
+		if (hi >= 0x20)
 		{
-			output[0]=hi;
-			output[1]=(lo>=20 ? lo : '.');
-			output[2]='\x00';
+			output[0] = hi;
+			output[1] = (lo >= 20 ? lo : '.');
+			output[2] = '\x00';
 		}
 		else
 		{
-			output[0]='<';
-			output[1]='>';
-			output[2]='\x00';
+			output[0] = '<';
+			output[1] = '>';
+			output[2] = '\x00';
 		}
 	}
 	return output;

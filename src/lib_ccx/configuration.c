@@ -7,35 +7,35 @@ struct conf_map
 {
 	char *name;
 	int offset;
-	int (*parse_val)(void *var,char*val);
+	int (*parse_val)(void *var, char *val);
 };
 
 
-static int set_string(void *var,char*val)
+static int set_string(void *var, char *val)
 {
-	char **p = (char**)var;
+	char **p = (char **)var;
 	char *val1 = NULL;
 
-	if(val == NULL)
+	if (val == NULL)
 		return -1;
 
 	val1 = strdup(val);
 	*p = val1;
 	return 0;
 }
-static int set_time(void *var, char*val)
+static int set_time(void *var, char *val)
 {
 	struct ccx_boundary_time **p = (struct ccx_boundary_time **)var;
-	if(val == NULL)
+	if (val == NULL)
 		return -1;
 
-	return stringztoms(val,*p);
+	return stringztoms(val, *p);
 
 }
-static int set_int(void *var, char*val)
+static int set_int(void *var, char *val)
 {
-	int *p = (int*)var;
-	if(val == NULL)
+	int *p = (int *)var;
+	if (val == NULL)
 		return -1;
 
 	*p = atoi_hex(val);
@@ -77,36 +77,36 @@ struct conf_map configuration_map[] = {
 static int parse_opts(char *str, struct ccx_s_options *opt)
 {
 	struct conf_map *lmap = configuration_map;
-	char *var =  strtok(str,"=");
-	if(!var)
+	char *var = strtok(str, "=");
+	if (!var)
 		return -1;
-	while(lmap->name)
+	while (lmap->name)
 	{
-		if(!strcmp(lmap->name,var))
+		if (!strcmp(lmap->name, var))
 		{
-			char *val = strtok(NULL,"=");
-			return lmap->parse_val((void*)((char*)opt + lmap->offset ),val);
+			char *val = strtok(NULL, "=");
+			return lmap->parse_val((void *)((char *)opt + lmap->offset), val);
 		}
 		lmap++;
 	}
 	return 0;
 }
-static void parse_file(FILE *f,struct ccx_s_options *opt)
+static void parse_file(FILE *f, struct ccx_s_options *opt)
 {
-	char *str = (char*)malloc(128);
+	char *str = (char *)malloc(128);
 	char c = '\0';
 	int comments = 0;
 	int i = 0;
 	int ret = 0;
 	*str = '\0';
-	while ((c = (char)fgetc(f)) != EOF )
+	while ((c = (char)fgetc(f)) != EOF)
 	{
-		if( c == '\n')
+		if (c == '\n')
 		{
-			if( str[0] != '\0')
+			if (str[0] != '\0')
 			{
-				ret = parse_opts(str,opt);
-				if(ret < 0)
+				ret = parse_opts(str, opt);
+				if (ret < 0)
 					mprint("invalid configuration file\n");
 			}
 			comments = 0;
@@ -114,7 +114,7 @@ static void parse_file(FILE *f,struct ccx_s_options *opt)
 			str[0] = '\0';
 			continue;
 		}
-		if(comments || c == '#')
+		if (comments || c == '#')
 		{
 			comments = 1;
 			continue;
@@ -127,9 +127,9 @@ static void parse_file(FILE *f,struct ccx_s_options *opt)
 void parse_configuration(struct ccx_s_options *opt)
 {
 	FILE *f = NULL;
-	if( (f = fopen(CNF_FILE,"r") ) != NULL)
+	if ((f = fopen(CNF_FILE, "r")) != NULL)
 	{
-		parse_file(f,opt);
+		parse_file(f, opt);
 		fclose(f);
 	}
 }

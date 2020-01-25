@@ -8,30 +8,30 @@
 //4-5       0050    Program version number
 //6-7       0001    File format version
 //8-10      000000  Padding, required  :-)
-unsigned char rcwt_header[11]={0xCC, 0xCC, 0xED, 0xCC, 0x00, 0x50, 0, 1, 0, 0, 0};
+unsigned char rcwt_header[11] = { 0xCC, 0xCC, 0xED, 0xCC, 0x00, 0x50, 0, 1, 0, 0, 0 };
 
-const unsigned char BROADCAST_HEADER[]={0xff, 0xff, 0xff, 0xff};
-const unsigned char LITTLE_ENDIAN_BOM[]={0xff, 0xfe};
-const unsigned char UTF8_BOM[]={0xef, 0xbb,0xbf};
+const unsigned char BROADCAST_HEADER[] = { 0xff, 0xff, 0xff, 0xff };
+const unsigned char LITTLE_ENDIAN_BOM[] = { 0xff, 0xfe };
+const unsigned char UTF8_BOM[] = { 0xef, 0xbb,0xbf };
 
-const unsigned char DVD_HEADER[8]={0x00,0x00,0x01,0xb2,0x43,0x43,0x01,0xf8};
-const unsigned char lc1[1]={0x8a};
-const unsigned char lc2[1]={0x8f};
-const unsigned char lc3[2]={0x16,0xfe};
-const unsigned char lc4[2]={0x1e,0xfe};
-const unsigned char lc5[1]={0xff};
-const unsigned char lc6[1]={0xfe};
+const unsigned char DVD_HEADER[8] = { 0x00,0x00,0x01,0xb2,0x43,0x43,0x01,0xf8 };
+const unsigned char lc1[1] = { 0x8a };
+const unsigned char lc2[1] = { 0x8f };
+const unsigned char lc3[2] = { 0x16,0xfe };
+const unsigned char lc4[2] = { 0x1e,0xfe };
+const unsigned char lc5[1] = { 0xff };
+const unsigned char lc6[1] = { 0xfe };
 
-const double framerates_values[16]=
+const double framerates_values[16] =
 {
 	0,
-	24000.0/1001, /* 23.976 */
+	24000.0 / 1001, /* 23.976 */
 	24.0,
 	25.0,
-	30000.0/1001, /* 29.97 */
+	30000.0 / 1001, /* 29.97 */
 	30.0,
 	50.0,
-	60000.0/1001, /* 59.94 */
+	60000.0 / 1001, /* 59.94 */
 	60.0,
 	0,
 	0,
@@ -40,7 +40,7 @@ const double framerates_values[16]=
 	0
 };
 
-const char *framerates_types[16]=
+const char *framerates_types[16] =
 {
 	"00 - forbidden",
 	"01 - 23.976",
@@ -60,7 +60,7 @@ const char *framerates_types[16]=
 	"15 - reserved"
 };
 
-const char *aspect_ratio_types[16]=
+const char *aspect_ratio_types[16] =
 {
 	"00 - forbidden",
 	"01 - 1:1",
@@ -81,7 +81,7 @@ const char *aspect_ratio_types[16]=
 };
 
 
-const char *pict_types[8]=
+const char *pict_types[8] =
 {
 	"00 - illegal (0)",
 	"01 - I",
@@ -94,7 +94,7 @@ const char *pict_types[8]=
 };
 
 
-const char *slice_types[10]=
+const char *slice_types[10] =
 {
 	"0 - P",
 	"1 - B",
@@ -118,9 +118,9 @@ const char *cc_types[4] =
 
 enum
 {
-	NTSC_CC_f1         = 0,
-	NTSC_CC_f2         = 1,
-	DTVCC_PACKET_DATA  = 2,
+	NTSC_CC_f1 = 0,
+	NTSC_CC_f2 = 1,
+	DTVCC_PACKET_DATA = 2,
 	DTVCC_PACKET_START = 3,
 };
 

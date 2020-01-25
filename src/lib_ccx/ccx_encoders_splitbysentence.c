@@ -18,8 +18,8 @@
 #include "ocr.h"
 #include "utility.h"
 
-// #define DEBUG_SBS
-// #define ENABLE_OCR
+ // #define DEBUG_SBS
+ // #define ENABLE_OCR
 
 #ifdef DEBUG_SBS
 #define LOG_DEBUG(...) fprintf(stdout, __VA_ARGS__)
@@ -41,7 +41,7 @@
 // #BUG639
 typedef struct {
 
-	unsigned char * buffer; /// Storage for sentence-split buffer
+	unsigned char *buffer; /// Storage for sentence-split buffer
 	size_t handled_len; /// The length of the string in the SBS-buffer, already handled, but preserved for DUP-detection.
 
 	//ccx_sbs_utf8_character *sbs_newblock;
@@ -54,7 +54,7 @@ typedef struct {
 // DO NOT USE IT DIRECTLY!
 // The only one exceptions:
 // 1. init_sbs_context
-sbs_context_t * ____sbs_context = NULL;
+sbs_context_t *____sbs_context = NULL;
 
 /**
  * Initializes SBS settings for encoder context
@@ -68,13 +68,13 @@ void sbs_reset_context() {
 }
 
 //void init_encoder_sbs(struct encoder_ctx * ctx, const int splitbysentence);
-sbs_context_t * sbs_init_context() {
+sbs_context_t *sbs_init_context() {
 
 	LOG_DEBUG("SBS: init_sbs_context\n\
 ____sbs_context:   [%p]\n\
 ",
-		____sbs_context
-	);
+____sbs_context
+);
 
 	if (NULL == ____sbs_context) {
 
@@ -92,8 +92,8 @@ ____sbs_context:   [%p]\n\
 	LOG_DEBUG("SBS: init_sbs_context: DONE\n\
 ____sbs_context:   [%p]\n\
 ",
-		____sbs_context
-	);
+____sbs_context
+);
 
 	return ____sbs_context;
 }
@@ -101,13 +101,13 @@ ____sbs_context:   [%p]\n\
 // END of #BUG639
 //---------------------------
 
-void sbs_str_autofix(unsigned char * str)
+void sbs_str_autofix(unsigned char *str)
 {
 	LOG_DEBUG("SBS: sbs_str_autofix\n\
 \t old str:  [%s]\n\
 ",
-		str
-	);
+str
+);
 
 	int i;
 	int j;
@@ -135,11 +135,12 @@ void sbs_str_autofix(unsigned char * str)
 				j++;
 			}
 
-		} else if (
+		}
+		else if (
 			str[i] == '|'
-			&& (i==0 || isspace(str[i-1]))
-			&& (str[i+1] == 0 || isspace(str[i+1]) || str[i+1]=='\'')
-		) {
+			&& (i == 0 || isspace(str[i - 1]))
+			&& (str[i + 1] == 0 || isspace(str[i + 1]) || str[i + 1] == '\'')
+			) {
 			// <SPACE>|'
 			// <SPACE>|<SPACE>
 			// =>
@@ -147,7 +148,8 @@ void sbs_str_autofix(unsigned char * str)
 			str[j] = 'I';
 			i++;
 			j++;
-		} else {
+		}
+		else {
 			str[j] = str[i];
 			i++;
 			j++;
@@ -159,11 +161,11 @@ void sbs_str_autofix(unsigned char * str)
 	LOG_DEBUG("SBS: sbs_str_autofix\n\
 \t old str:  [%s]\n\
 ",
-		str
-	);
+str
+);
 }
 
-int sbs_is_pointer_on_sentence_breaker(char * start, char * current)
+int sbs_is_pointer_on_sentence_breaker(char *start, char *current)
 {
 	char c = *current;
 	char n = *(current + 1);
@@ -173,12 +175,12 @@ int sbs_is_pointer_on_sentence_breaker(char * start, char * current)
 	if ('.' == c
 		|| '!' == c
 		|| '?' == c
-	)
+		)
 	{
 		if ('.' == n
 			|| '!' == n
 			|| '?' == n
-		)
+			)
 		{
 			return 0;
 		}
@@ -197,7 +199,7 @@ int sbs_char_equal_CI(const char A, const char B) {
 	return 0;
 }
 
-char * sbs_find_insert_point_partial(char * old_tail, const char * new_start, size_t n, const int maxerr, int *errcount) {
+char *sbs_find_insert_point_partial(char *old_tail, const char *new_start, size_t n, const int maxerr, int *errcount) {
 
 	const int PARTIAL_CHANGE_LENGTH_MIN = 7;
 	const int FEW_ERRORS_RATE = 10;
@@ -206,9 +208,9 @@ char * sbs_find_insert_point_partial(char * old_tail, const char * new_start, si
 	char fmtbuf[20000];
 #endif
 
-	int few_errors = maxerr/FEW_ERRORS_RATE;
+	int few_errors = maxerr / FEW_ERRORS_RATE;
 
-	size_t len_r = n/2;
+	size_t len_r = n / 2;
 	size_t len_l = n - len_r;
 
 	int dist_l = -1;
@@ -255,7 +257,7 @@ char * sbs_find_insert_point_partial(char * old_tail, const char * new_start, si
 	if (
 		dist_r <= few_errors               // right part almost the same
 		&& n > PARTIAL_CHANGE_LENGTH_MIN   // the sentence is long enough for analysis
-	) {
+		) {
 		/*
 		LOG_DEBUG("SBS: sbs_find_insert_point_partial: LEFT CHANGED,\n\tbuf:[%s]\n\tstr:[%s]\n\
 \tmaxerr:[%d]\n\
@@ -278,9 +280,9 @@ char * sbs_find_insert_point_partial(char * old_tail, const char * new_start, si
 		partial_shift = 0;
 		while (
 			old_tail[partial_shift] != 0
-			&& old_tail[partial_shift+1] != 0
+			&& old_tail[partial_shift + 1] != 0
 			&& (0 != sbs_char_equal_CI(old_tail[partial_shift], new_start[partial_shift]))
-		) {
+			) {
 			partial_shift += 1;
 		}
 
@@ -322,19 +324,19 @@ char * sbs_find_insert_point_partial(char * old_tail, const char * new_start, si
 	return old_tail;
 }
 
-char * sbs_find_insert_point(char * buf, const char * str, int * ilen) {
+char *sbs_find_insert_point(char *buf, const char *str, int *ilen) {
 
 	int maxerr;
 	size_t buf_len;
-	unsigned char * buffer_tail;
-	const unsigned char * prefix = str;
+	unsigned char *buffer_tail;
+	const unsigned char *prefix = str;
 
 	int             cur_err = 0;
-	unsigned char * cur_ptr;
+	unsigned char *cur_ptr;
 	int             cur_len;
 
 	int             best_err;
-	unsigned char * best_ptr;
+	unsigned char *best_ptr;
 	int             best_len;
 
 	buf_len = strlen(buf);
@@ -356,7 +358,7 @@ char * sbs_find_insert_point(char * buf, const char * str, int * ilen) {
 		cur_ptr = sbs_find_insert_point_partial(buffer_tail, prefix, cur_len, maxerr, &cur_err);
 		if (NULL != cur_ptr)
 		{
-			if ((cur_len-cur_err) >= (best_len-best_err)) {
+			if ((cur_len - cur_err) >= (best_len - best_err)) {
 				best_err = cur_err;
 				best_len = cur_len;
 				best_ptr = cur_ptr;
@@ -369,10 +371,10 @@ char * sbs_find_insert_point(char * buf, const char * str, int * ilen) {
 	return best_ptr;
 }
 
-void sbs_strcpy_without_dup(const unsigned char * str, sbs_context_t * context)
+void sbs_strcpy_without_dup(const unsigned char *str, sbs_context_t *context)
 {
 	int intersect_len;
-	unsigned char * buffer_insert_point;
+	unsigned char *buffer_insert_point;
 
 	unsigned long sbs_len;
 
@@ -383,10 +385,10 @@ void sbs_strcpy_without_dup(const unsigned char * str, sbs_context_t * context)
 \tbuffer:          [%p][%s]\n\
 \tstring:          [%s]\n\
 ",
-		context->buffer,
-		context->buffer,
-		str
-	);
+context->buffer,
+context->buffer,
+str
+);
 
 	buffer_insert_point = sbs_find_insert_point(context->buffer, str, &intersect_len);
 
@@ -398,13 +400,13 @@ void sbs_strcpy_without_dup(const unsigned char * str, sbs_context_t * context)
 \t sbslen          [%4ld]\n\
 \t handled len     [%4zu]\n\
 ",
-		context->buffer,
-		str,
-		buffer_insert_point,
-		intersect_len,
-		sbs_len,
-		context->handled_len
-	);
+context->buffer,
+str,
+buffer_insert_point,
+intersect_len,
+sbs_len,
+context->handled_len
+);
 
 	if (intersect_len > 0)
 	{
@@ -421,7 +423,7 @@ void sbs_strcpy_without_dup(const unsigned char * str, sbs_context_t * context)
 
 	// check, that new string does not contain data, from
 	// already handled sentence:
-	if ( (sbs_len - intersect_len) >= context->handled_len)
+	if ((sbs_len - intersect_len) >= context->handled_len)
 	{
 		// there is no intersection.
 		// It is time to clean the buffer. Excepting the last uncomplete sentence
@@ -430,15 +432,15 @@ void sbs_strcpy_without_dup(const unsigned char * str, sbs_context_t * context)
 \t handled len     [%4zu]\n\
 \t new start at  ->[%s]\n\
 ",
-			context->buffer,
-			context->handled_len,
-			context->buffer + context->handled_len
-		);
+context->buffer,
+context->handled_len,
+context->buffer + context->handled_len
+);
 
 		// skip leading whitespaces:
 		int skip_ws = context->handled_len;
 		while (isspace(context->buffer[skip_ws])) {
-			skip_ws ++;
+			skip_ws++;
 		}
 
 		strcpy(context->buffer, context->buffer + skip_ws);
@@ -451,8 +453,8 @@ void sbs_strcpy_without_dup(const unsigned char * str, sbs_context_t * context)
 		!isspace(str[0])                // not a space char in the beginning of new str
 		//&& context->handled_len >0  // buffer is not empty (there is uncomplete sentence)
 		&& sbs_len > 0  // buffer is not empty (there is uncomplete sentence)
-		&& !isspace(context->buffer[sbs_len-1])  // not a space char at the end of existing buf
-	)
+		&& !isspace(context->buffer[sbs_len - 1])  // not a space char at the end of existing buf
+		)
 	{
 		strcat(context->buffer, " ");
 	}
@@ -469,14 +471,14 @@ void sbs_strcpy_without_dup(const unsigned char * str, sbs_context_t * context)
  * @param  context   Encoder context
  * @return           New <struct cc_subtitle *> subtitle, or NULL, if <str> doesn't contain the ending part of the sentence. If there are more than one sentence, the remaining sentences will be chained using <result->next> reference.
  */
-struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_from, const LLONG time_trim, sbs_context_t * context)
+struct cc_subtitle *sbs_append_string(unsigned char *str, const LLONG time_from, const LLONG time_trim, sbs_context_t *context)
 {
-	struct cc_subtitle * resub;
-	struct cc_subtitle * tmpsub;
+	struct cc_subtitle *resub;
+	struct cc_subtitle *tmpsub;
 
-	unsigned char * bp_current;
-	unsigned char * bp_last_break;
-	unsigned char * sbs_undone_start;
+	unsigned char *bp_current;
+	unsigned char *bp_last_break;
+	unsigned char *sbs_undone_start;
 
 	int required_capacity;
 	int new_capacity;
@@ -491,23 +493,23 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 	LLONG available_time;
 	int use_alphanum_counters;
 
-	if (! str)
+	if (!str)
 		return NULL;
 
 	LOG_DEBUG("SBS: sbs_append_string: after sbs init:\n\
 \tsbs ptr:   [%p]\n\
 ",
-		context
-	);
+context
+);
 
 	LOG_DEBUG("SBS: sbs_append_string: after sbs init:\n\
 \tsbs ptr:   [%p][%s]\n\
 \tcur cap:   [%zu]\n\
 ",
-		context->buffer,
-		context->buffer,
-		context->capacity
-	);
+context->buffer,
+context->buffer,
+context->capacity
+);
 
 	sbs_str_autofix(str);
 
@@ -519,7 +521,7 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 		+ strlen(str)     // length of new string
 		+ 1               // trailing \0
 		+ 1               // space control (will add one space , if required)
-	;
+		;
 
 	if (required_capacity >= context->capacity)
 	{
@@ -528,10 +530,10 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 \tcur cap:   [%zu]\n\
 \treq cap:   [%d]\n\
 ",
-			context->buffer,
-			context->capacity,
-			required_capacity
-		);
+context->buffer,
+context->capacity,
+required_capacity
+);
 
 		new_capacity = context->capacity;
 
@@ -547,7 +549,7 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 
 		context->buffer = (unsigned char *)realloc(
 			context->buffer,
-			new_capacity * sizeof(/*unsigned char*/ context->buffer[0] )
+			new_capacity * sizeof(/*unsigned char*/ context->buffer[0])
 		);
 
 		if (!context->buffer)
@@ -561,11 +563,11 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 \treq cap:   [%d]\n\
 \tbuf:       [%s]\n\
 ",
-			context->buffer,
-			context->capacity,
-			required_capacity,
-			context->buffer
-		);
+context->buffer,
+context->capacity,
+required_capacity,
+context->buffer
+);
 	}
 
 	// ===============================
@@ -595,16 +597,16 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 \tsbs_undone_start: [%zu]\n\
 \tsbs_undone: [%s]\n\
 ",
-		bp_last_break,
-		context->handled_len,
-		sbs_undone_start
-	);
+bp_last_break,
+context->handled_len,
+sbs_undone_start
+);
 
 	for (bp_current = sbs_undone_start; bp_current && *bp_current; bp_current++)
 	{
 		if (
 			0 < anychar_cur	// skip empty!
-			&& sbs_is_pointer_on_sentence_breaker(bp_last_break, bp_current) )
+			&& sbs_is_pointer_on_sentence_breaker(bp_last_break, bp_current))
 		{
 			// it is new sentence!
 			tmpsub = malloc(sizeof(struct cc_subtitle));
@@ -615,7 +617,7 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 				bp_current - bp_last_break
 				+ 1	 // terminating '\0'
 				+ 1  // skip '.'
-			;
+				;
 			tmpsub->data = strndup(bp_last_break, tmpsub->nb_data - 1);
 			tmpsub->datatype = CC_DATATYPE_GENERIC;
 			tmpsub->got_output = 1;
@@ -631,7 +633,7 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 			while (
 				*bp_last_break
 				&& isspace(*bp_last_break)
-			)
+				)
 			{
 				bp_last_break++;
 			}
@@ -677,12 +679,12 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 \n\tSTRING:[%s]\
 \n\tBUFFER:[%s]\
 \n",
-		context->handled_len,
-		alphanum_total,
-		anychar_total,
-		str,
-		context->buffer
-	);
+context->handled_len,
+alphanum_total,
+anychar_total,
+str,
+context->buffer
+);
 
 	// ===============================
 	// Calculate time spans
@@ -721,13 +723,13 @@ struct cc_subtitle * sbs_append_string(unsigned char * str, const LLONG time_fro
 	return resub;
 }
 
-struct cc_subtitle * reformat_cc_bitmap_through_sentence_buffer(struct cc_subtitle *sub, struct encoder_ctx * context)
+struct cc_subtitle *reformat_cc_bitmap_through_sentence_buffer(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
 	// this is a sub with a full sentence (or chain of such subs)
-	struct cc_subtitle * resub = NULL;
+	struct cc_subtitle *resub = NULL;
 
 #ifdef ENABLE_OCR
-	struct cc_bitmap* rect;
+	struct cc_bitmap *rect;
 	LLONG ms_start, ms_end;
 	int i = 0;
 	char *str;
@@ -774,7 +776,7 @@ struct cc_subtitle * reformat_cc_bitmap_through_sentence_buffer(struct cc_subtit
 		freep(&str);
 	}
 
-	for(i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
+	for (i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
 		freep(&rect->data0);
 		freep(&rect->data1);

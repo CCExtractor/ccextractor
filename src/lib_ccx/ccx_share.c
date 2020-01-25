@@ -236,7 +236,7 @@ ccx_share_status _ccx_share_sub_to_entries(struct cc_subtitle *sub, ccx_sub_entr
 						(char *)malloc((strnlen((char *)data->characters[i], 32) + 1) * sizeof(char));
 					if (!entries->messages[entry_index].lines[j]) {
 						fatal(EXIT_NOT_ENOUGH_MEMORY,
-                                "In _ccx_share_sub_to_entry: Out of memory for entries->messages[entry_index].lines[j]\n");
+							"In _ccx_share_sub_to_entry: Out of memory for entries->messages[entry_index].lines[j]\n");
 					}
 					strncpy(entries->messages[entry_index].lines[j], (char *)data->characters[i], 32);
 					entries->messages[entry_index].lines[j][strnlen((char *)data->characters[i], 32)] = '\0';

@@ -17,7 +17,7 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 {
 	int ret = 0;
 #ifdef ENABLE_OCR
-	struct cc_bitmap* rect;
+	struct cc_bitmap *rect;
 
 	if (sub->nb_data == 0)
 		return ret;
@@ -148,7 +148,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 		str = strtok_r(str, "\r\n", &save_str);
 		do
 		{
-			length = get_str_basic(context->subline, (unsigned char*)str, context->trim_subs, sub->enc_type, context->encoding, strlen(str));
+			length = get_str_basic(context->subline, (unsigned char *)str, context->trim_subs, sub->enc_type, context->encoding, strlen(str));
 			if (length <= 0)
 			{
 				continue;
@@ -193,7 +193,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 			if (context->transcript_settings->showCC)
 			{
 				if (!context->ucla || !strcmp(sub->mode, "TLT"))
-					fdprintf(context->out->fh, sub->info);				
+					fdprintf(context->out->fh, sub->info);
 				else if (context->in_fileformat == 1)
 					//TODO, data->my_field == 1 ? data->channel : data->channel + 2); // Data from field 2 is CC3 or 4
 					fdprintf(context->out->fh, "CC?|");
@@ -212,7 +212,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 			}
 
 			ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-			if (ret <  context->encoded_crlf_length)
+			if (ret < context->encoded_crlf_length)
 			{
 				mprint("Warning:Loss of data\n");
 			}
@@ -247,7 +247,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		dbg_print(CCX_DMT_DECODER_608, "\r");
 		dbg_print(CCX_DMT_DECODER_608, "%s\n", context->subline);
 	}
-	if (length>0)
+	if (length > 0)
 	{
 		if (data->start_time == -1)
 		{
@@ -258,9 +258,9 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 			return;
 		}
 
-		if (context->transcript_settings->showStartTime){
+		if (context->transcript_settings->showStartTime) {
 			char buf1[80];
-			if (context->transcript_settings->relativeTimestamp){
+			if (context->transcript_settings->relativeTimestamp) {
 				millis_to_date(data->start_time, buf1, context->date_format, context->millis_separator);
 				fdprintf(context->out->fh, "%s|", buf1);
 			}
@@ -273,9 +273,9 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 			}
 		}
 
-		if (context->transcript_settings->showEndTime){
+		if (context->transcript_settings->showEndTime) {
 			char buf2[80];
-			if (context->transcript_settings->relativeTimestamp){
+			if (context->transcript_settings->relativeTimestamp) {
 				millis_to_date(data->end_time, buf2, context->date_format, context->millis_separator);
 				fdprintf(context->out->fh, "%s|", buf2);
 			}
@@ -288,10 +288,10 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 			}
 		}
 
-		if (context->transcript_settings->showCC){
+		if (context->transcript_settings->showCC) {
 			fdprintf(context->out->fh, "CC%d|", data->my_field == 1 ? data->channel : data->channel + 2); // Data from field 2 is CC3 or 4
 		}
-		if (context->transcript_settings->showMode){
+		if (context->transcript_settings->showMode) {
 			const char *mode = "???";
 			switch (data->mode)
 			{
@@ -340,7 +340,7 @@ int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ct
 	int wrote_something = 0;
 	dbg_print(CCX_DMT_DECODER_608, "\n- - - TRANSCRIPT caption - - -\n");
 
-	for (int i = 0; i<15; i++)
+	for (int i = 0; i < 15; i++)
 	{
 		if (data->row_used[i])
 		{

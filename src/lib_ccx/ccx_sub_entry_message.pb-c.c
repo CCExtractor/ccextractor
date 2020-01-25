@@ -11,7 +11,7 @@
 #ifdef ENABLE_SHARING
 
 void   ccx_sub_entry_message__init
-(CcxSubEntryMessage         *message)
+(CcxSubEntryMessage *message)
 {
 	static CcxSubEntryMessage init_value = CCX_SUB_ENTRY_MESSAGE__INIT;
 	*message = init_value;
@@ -20,38 +20,38 @@ size_t ccx_sub_entry_message__get_packed_size
 (const CcxSubEntryMessage *message)
 {
 	assert(message->base.descriptor == &ccx_sub_entry_message__descriptor);
-	return protobuf_c_message_get_packed_size((const ProtobufCMessage*)(message));
+	return protobuf_c_message_get_packed_size((const ProtobufCMessage *)(message));
 }
 size_t ccx_sub_entry_message__pack
 (const CcxSubEntryMessage *message,
-uint8_t       *out)
+	uint8_t *out)
 {
 	assert(message->base.descriptor == &ccx_sub_entry_message__descriptor);
-	return protobuf_c_message_pack((const ProtobufCMessage*)message, out);
+	return protobuf_c_message_pack((const ProtobufCMessage *)message, out);
 }
 size_t ccx_sub_entry_message__pack_to_buffer
 (const CcxSubEntryMessage *message,
-ProtobufCBuffer *buffer)
+	ProtobufCBuffer *buffer)
 {
 	assert(message->base.descriptor == &ccx_sub_entry_message__descriptor);
-	return protobuf_c_message_pack_to_buffer((const ProtobufCMessage*)message, buffer);
+	return protobuf_c_message_pack_to_buffer((const ProtobufCMessage *)message, buffer);
 }
 CcxSubEntryMessage *
 ccx_sub_entry_message__unpack
-(ProtobufCAllocator  *allocator,
-size_t               len,
-const uint8_t       *data)
+(ProtobufCAllocator *allocator,
+	size_t               len,
+	const uint8_t *data)
 {
 	return (CcxSubEntryMessage *)
 		protobuf_c_message_unpack(&ccx_sub_entry_message__descriptor,
-		allocator, len, data);
+			allocator, len, data);
 }
 void   ccx_sub_entry_message__free_unpacked
 (CcxSubEntryMessage *message,
-ProtobufCAllocator *allocator)
+	ProtobufCAllocator *allocator)
 {
 	assert(message->base.descriptor == &ccx_sub_entry_message__descriptor);
-	protobuf_c_message_free_unpacked((ProtobufCMessage*)message, allocator);
+	protobuf_c_message_free_unpacked((ProtobufCMessage *)message, allocator);
 }
 static const ProtobufCFieldDescriptor ccx_sub_entry_message__field_descriptors[6] =
 {

@@ -17,7 +17,7 @@ int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *cont
 {
 	int ret = 0;
 #ifdef ENABLE_OCR
-	struct cc_bitmap* rect;
+	struct cc_bitmap *rect;
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;
 	char timeline[128];
@@ -60,9 +60,9 @@ int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *cont
 			char *curlline = NULL;
 			curlline = str_reallocncat(curlline, timeline);
 			curlline = str_reallocncat(curlline, "&payload=");
-			char *urlencoded=curl_easy_escape (curl, str, 0);
-			curlline = str_reallocncat(curlline,urlencoded);
-			curl_free (urlencoded);
+			char *urlencoded = curl_easy_escape(curl, str, 0);
+			curlline = str_reallocncat(curlline, urlencoded);
+			curl_free(urlencoded);
 			mprint("%s", curlline);
 
 			char *result = malloc(strlen(ccx_options.curlposturl) + strlen("/frame/") + 1);
@@ -74,9 +74,9 @@ int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *cont
 
 			res = curl_easy_perform(curl);
 			/* Check for errors */
-			if(res != CURLE_OK)
+			if (res != CURLE_OK)
 				mprint("curl_easy_perform() failed: %s\n",
-				curl_easy_strerror(res));
+					curl_easy_strerror(res));
 		}
 		freep(&str);
 	}

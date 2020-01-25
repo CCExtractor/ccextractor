@@ -76,7 +76,7 @@ const char *profane_builtin[] =
 
 int string_cmp_function(const void *p1, const void *p2, void *arg)
 {
-	return strcasecmp(*(char**)p1, *(char**)p2);
+	return strcasecmp(*(char **)p1, *(char **)p2);
 }
 
 int string_cmp(const void *p1, const void *p2)
@@ -134,8 +134,8 @@ void telx_correct_case(char *sub_line)
 		'.', '/', ':', '^', '_',
 		'{', '|', '}', '~', '\0' };
 
-	char *line = strdup(((char*)sub_line));
-	char *oline = (char*)sub_line;
+	char *line = strdup(((char *)sub_line));
+	char *oline = (char *)sub_line;
 	char *c = strtok(line, delim);
 	if (c == NULL)
 	{
@@ -182,26 +182,26 @@ int clever_capitalize(struct encoder_ctx *context, char *line, unsigned int leng
 	{
 		switch (line[i])
 		{
-		case ' ':
-		case 0x89: // This is a transparent space
-		case '-':
-			break;
-		case '.': // Fallthrough
-		case '?': // Fallthrough
-		case '!':
-		case ':':
-			context->new_sentence = 1;
-			break;
-		default:
-			if (doit)
-			{
-				if (context->new_sentence)
-					line[i] = cctoupper(line[i]);
-				else
-					line[i] = cctolower(line[i]);
-			}
-			context->new_sentence = 0;
-			break;
+			case ' ':
+			case 0x89: // This is a transparent space
+			case '-':
+				break;
+			case '.': // Fallthrough
+			case '?': // Fallthrough
+			case '!':
+			case ':':
+				context->new_sentence = 1;
+				break;
+			default:
+				if (doit)
+				{
+					if (context->new_sentence)
+						line[i] = cctoupper(line[i]);
+					else
+						line[i] = cctolower(line[i]);
+				}
+				context->new_sentence = 0;
+				break;
 		}
 	}
 	return doit;
@@ -217,20 +217,20 @@ unsigned encode_line(struct encoder_ctx *ctx, unsigned char *buffer, unsigned ch
 	{
 		switch (ctx->encoding)
 		{
-		case CCX_ENC_UTF_8:
-		case CCX_ENC_LATIN_1:
-			*buffer = *text;
-			bytes++;
-			buffer++;
-			break;
-		case CCX_ENC_UNICODE:
-			*buffer = *text;
-			*(buffer + 1) = 0;
-			bytes += 2;
-			buffer += 2;
-			break;
-		case CCX_ENC_ASCII: // Consider to remove ASCII encoding or write some code here
-			break;
+			case CCX_ENC_UTF_8:
+			case CCX_ENC_LATIN_1:
+				*buffer = *text;
+				bytes++;
+				buffer++;
+				break;
+			case CCX_ENC_UNICODE:
+				*buffer = *text;
+				*(buffer + 1) = 0;
+				bytes += 2;
+				buffer += 2;
+				break;
+			case CCX_ENC_ASCII: // Consider to remove ASCII encoding or write some code here
+				break;
 		}
 		text++;
 	}
@@ -261,18 +261,18 @@ unsigned char *close_tag(struct encoder_ctx *ctx, unsigned char *buffer, char *t
 		char cur = tagstack[l];
 		switch (cur)
 		{
-		case 'F':
-			buffer += encode_line(ctx, buffer, (unsigned char *) "</font>");
-			(*pchanged_font)--;
-			break;
-		case 'U':
-			buffer += encode_line(ctx, buffer, (unsigned char *) "</u>");
-			(*punderlined)--;
-			break;
-		case 'I':
-			buffer += encode_line(ctx, buffer, (unsigned char *) "</i>");
-			(*pitalics)--;
-			break;
+			case 'F':
+				buffer += encode_line(ctx, buffer, (unsigned char *)"</font>");
+				(*pchanged_font)--;
+				break;
+			case 'U':
+				buffer += encode_line(ctx, buffer, (unsigned char *)"</u>");
+				(*punderlined)--;
+				break;
+			case 'I':
+				buffer += encode_line(ctx, buffer, (unsigned char *)"</i>");
+				(*pitalics)--;
+				break;
 		}
 		tagstack[l] = 0; // Remove from stack
 		if (cur == tagtype) // We closed up to the required tag, done
@@ -309,7 +309,7 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 
 			// Add new font tag
 			if (MAX_COLOR > its_color)
-				buffer += encode_line(ctx, buffer, (unsigned char*)color_text[its_color][1]);
+				buffer += encode_line(ctx, buffer, (unsigned char *)color_text[its_color][1]);
 			else
 			{
 				ccx_common_logging.log_ftn("WARNING:get_decoder_line_encoded:Invalid Color index Selected %d\n", its_color);
@@ -320,8 +320,8 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 			{
 				// The previous sentence doesn't copy the whole
 				// <font> tag, just up to the quote before the color
-				buffer += encode_line(ctx, buffer, (unsigned char*)usercolor_rgb);
-				buffer += encode_line(ctx, buffer, (unsigned char*) "\">");
+				buffer += encode_line(ctx, buffer, (unsigned char *)usercolor_rgb);
+				buffer += encode_line(ctx, buffer, (unsigned char *)"\">");
 			}
 			if (color_text[its_color][1][0]) // That means a <font> was added to the buffer
 			{
@@ -334,7 +334,7 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 		int is_underlined = data->fonts[line_num][i] & FONT_UNDERLINED;
 		if (is_underlined && underlined == 0 && !ctx->no_type_setting) // Open underline
 		{
-			buffer += encode_line(ctx, buffer, (unsigned char *) "<u>");
+			buffer += encode_line(ctx, buffer, (unsigned char *)"<u>");
 			strcat(tagstack, "U");
 			underlined++;
 		}
@@ -346,7 +346,7 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 		int has_ita = data->fonts[line_num][i] & FONT_ITALICS;
 		if (has_ita && italics == 0 && !ctx->no_type_setting) // Open italics
 		{
-			buffer += encode_line(ctx, buffer, (unsigned char *) "<i>");
+			buffer += encode_line(ctx, buffer, (unsigned char *)"<i>");
 			strcat(tagstack, "I");
 			italics++;
 		}
@@ -357,19 +357,19 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 		int bytes = 0;
 		switch (ctx->encoding)
 		{
-		case CCX_ENC_UTF_8:
-			bytes = get_char_in_utf_8(buffer, line[i]);
-			break;
-		case CCX_ENC_LATIN_1:
-			get_char_in_latin_1(buffer, line[i]);
-			bytes = 1;
-			break;
-		case CCX_ENC_UNICODE:
-			get_char_in_unicode(buffer, line[i]);
-			bytes = 2;
-			break;
-		case CCX_ENC_ASCII: // Consider to remove ASCII encoding or write get_char_in_ascii(...)
-			break;
+			case CCX_ENC_UTF_8:
+				bytes = get_char_in_utf_8(buffer, line[i]);
+				break;
+			case CCX_ENC_LATIN_1:
+				get_char_in_latin_1(buffer, line[i]);
+				bytes = 1;
+				break;
+			case CCX_ENC_UNICODE:
+				get_char_in_unicode(buffer, line[i]);
+				bytes = 2;
+				break;
+			case CCX_ENC_ASCII: // Consider to remove ASCII encoding or write get_char_in_ascii(...)
+				break;
 		}
 		buffer += bytes;
 	}
@@ -470,21 +470,21 @@ void correct_spelling_and_censor_words(struct encoder_ctx *context, char *line, 
 *		to match, or be greater than p2.
 * @param arg argument passed as it is, to compare function
 */
-void shell_sort(void *base, int nb, size_t size, int(*compar)(const void*p1, const void *p2, void*arg), void *arg)
+void shell_sort(void *base, int nb, size_t size, int(*compar)(const void *p1, const void *p2, void *arg), void *arg)
 {
-	unsigned char *lbase = (unsigned char*)base;
-	unsigned char *tmp = (unsigned char*)malloc(size);
+	unsigned char *lbase = (unsigned char *)base;
+	unsigned char *tmp = (unsigned char *)malloc(size);
 	for (int gap = nb / 2; gap > 0; gap = gap / 2)
 	{
 		int p, j;
 		for (p = gap; p < nb; p++)
 		{
-			memcpy(tmp, lbase + (p *size), size);
+			memcpy(tmp, lbase + (p * size), size);
 			for (j = p; j >= gap && (compar(tmp, lbase + ((j - gap) * size), arg) < 0); j -= gap)
 			{
-				memcpy(lbase + (j*size), lbase + ((j - gap) * size), size);
+				memcpy(lbase + (j * size), lbase + ((j - gap) * size), size);
 			}
-			memcpy(lbase + (j *size), tmp, size);
+			memcpy(lbase + (j * size), tmp, size);
 		}
 	}
 	free(tmp);
