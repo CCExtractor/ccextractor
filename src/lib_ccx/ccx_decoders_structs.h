@@ -70,7 +70,10 @@ enum ccx_decoder_608_color_code
 	COL_MAGENTA = 6,
 	COL_USERDEFINED = 7,
 	COL_BLACK = 8,
-	COL_TRANSPARENT = 9
+	COL_TRANSPARENT = 9,
+
+	// Must keep at end
+	COL_MAX
 };
 
 /**
