@@ -88,7 +88,7 @@ cd ccextractor/linux/;
 # cd ccextractor.*/linux/;
 perl -i -pe 's/O3 /O3 -static /' Makefile;
 # quick patch:
-perl -i -pe 's/(strchr|strstr)\(/$1((char *)/'  ../src/gpacmp4/url.c  ../src/gpacmp4/error.c;
+perl -i -pe 's/(strchr|strstr)\(/$1((char *)/'  ../src/thirdparty/gpacmp4/url.c  ../src/thirdparty/gpacmp4/error.c;
 set +e; # this _will_ FAIL at the end..
 make ENABLE_OCR=yes;
 set -e;
