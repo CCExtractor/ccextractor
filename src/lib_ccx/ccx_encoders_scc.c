@@ -516,22 +516,25 @@ enum control_code get_font_code(enum font_bits font, enum ccx_decoder_608_color_
 	}
 }
 
-void add_timestamp(int fd, LLONG time, const bool disassemble)
+void add_timestamp(const struct encoder_ctx *context, LLONG time, const bool disassemble)
 {
-	write(fd, "\r\n\r\n", disassemble ? 2 : 4);
+	write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+	if (!disassemble)
+		write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+
 	unsigned hour, minute, second, milli;
 	millis_to_time(time, &hour, &minute, &second, &milli);
 
 	// SMPTE format
 	float frame = milli / 29.97;
-	fdprintf(fd, "%02u:%02u:%02u:%02.f\t", hour, minute, second, frame);
+	fdprintf(context->out->fh, "%02u:%02u:%02u:%02.f\t", hour, minute, second, frame);
 }
 
-void clear_screen(int fd, LLONG end_time, const unsigned char channel, const bool disassemble)
+void clear_screen(const struct encoder_ctx *context, LLONG end_time, const unsigned char channel, const bool disassemble)
 {
-	add_timestamp(fd, end_time, disassemble);
+	add_timestamp(context, end_time, disassemble);
 	unsigned int bytes_written = 0;
-	write_control_code(fd, channel, EDM, disassemble, &bytes_written);
+	write_control_code(context->out->fh, channel, EDM, disassemble, &bytes_written);
 }
 
 int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encoder_ctx *context, const char disassemble)
@@ -543,7 +546,7 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 	unsigned char current_column = 0;
 
 	// 1. Load the caption
-	add_timestamp(context->out->fh, data->start_time, disassemble);
+	add_timestamp(context, data->start_time, disassemble);
 	write_control_code(context->out->fh, data->channel, RCL, disassemble, &bytes_written);
 	for (uint8_t row = 0; row < 15; ++row)
 	{
@@ -614,7 +617,7 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 	write_control_code(context->out->fh, data->channel, ENM, disassemble, &bytes_written);
 
 	// 3. Clear the caption
-	clear_screen(context->out->fh, data->end_time, data->channel, disassemble);
+	clear_screen(context, data->end_time, data->channel, disassemble);
 
 	return 1;
 }
@@ -623,7 +626,7 @@ int write_cc_buffer_as_ccd(const struct eia608_screen *data, struct encoder_ctx 
 {
 	if (!context->wrote_ccd_channel_header)
 	{
-		fdprintf(context->out->fh, "CHANNEL %d\r\n", data->channel);
+		fdprintf(context->out->fh, "CHANNEL %d%s", data->channel, context->encoded_crlf);
 		context->wrote_ccd_channel_header = true;
 	}
 	return write_cc_buffer_as_scenarist(data, context, true);
