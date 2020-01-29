@@ -97,7 +97,7 @@ static const char *webvtt_header[] = { "WEBVTT", "\r\n", NULL };
 
 static const char *simple_xml_header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<captions>\r\n";
 
-static const char CCD_HEADER[] = "SCC_disassembly V1.2\r\n";
+static const char CCD_HEADER[] = "SCC_disassembly V1.2";
 static const char SCC_HEADER[] = "Scenarist_SCC V1.0";
 
 void find_limit_characters(const unsigned char *line, int *first_non_blank, int *last_non_blank, int max_len)
@@ -391,7 +391,7 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx, struct ccx_s_write *out)
 			break;
 		case CCX_OF_SCC:
 		case CCX_OF_CCD:
-			ret = write(out->fh, "\r\n", 2);
+			ret = write(out->fh, ctx->encoded_crlf, ctx->encoded_crlf_length);
 			break;
 		default: // Nothing to do, no footer on this format
 			break;
@@ -432,7 +432,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 	switch (ctx->write_format)
 	{
 		case CCX_OF_CCD:
-			if (write(out->fh, CCD_HEADER, sizeof(CCD_HEADER) - 1) == -1)
+			if (write(out->fh, CCD_HEADER, sizeof(CCD_HEADER) - 1) == -1 || write(out->fh, ctx->encoded_crlf, ctx->encoded_crlf_length) == -1)
 			{
 				mprint("Unable to write CCD header to file\n");
 				return -1;
