@@ -1269,6 +1269,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				case CCX_OF_WEBVTT:
 					if (!context->startcredits_displayed && context->start_credits_text != NULL)
 						try_to_add_start_credits(context, sub->start_time);
+					 write_webvtt_header(context); 
 					wrote_something = write_cc_bitmap_as_webvtt(sub, context);
 					break;
 				case CCX_OF_SAMI:
