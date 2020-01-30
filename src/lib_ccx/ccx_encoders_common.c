@@ -173,10 +173,10 @@ int change_utf8_encoding(unsigned char *dest, unsigned char *src, int len, enum 
 				{
 					if ((src[1] & 0x40) == 0)
 					{
-						c = utf8_to_latin1_map((((unsigned int)(src[0] & 0x1F)) << 6)
+						int cp = utf8_to_latin1_map((((unsigned int)(src[0] & 0x1F)) << 6)
 							| ((unsigned int)(src[1] & 0x3F)));
-						if (c < 256)
-							*dest++ = c;
+						if (cp < 256)
+							*dest++ = cp;
 						else
 							*dest++ = '?';
 					}
@@ -187,11 +187,11 @@ int change_utf8_encoding(unsigned char *dest, unsigned char *src, int len, enum 
 				{
 					if ((src[1] & 0x40) == 0 && (src[2] & 0x40) == 0)
 					{
-						c = utf8_to_latin1_map((((unsigned int)(src[0] & 0x0F)) << 12)
+						int cp = utf8_to_latin1_map((((unsigned int)(src[0] & 0x0F)) << 12)
 							| (((unsigned int)(src[1] & 0x3F)) << 6)
 							| ((unsigned int)(src[2] & 0x3F)));
-						if (c < 256)
-							*dest++ = c;
+						if (cp < 256)
+							*dest++ = cp;
 						else
 							*dest++ = '?';
 					}
@@ -202,12 +202,12 @@ int change_utf8_encoding(unsigned char *dest, unsigned char *src, int len, enum 
 						(src[2] & 0x40) == 0 &&
 						(src[3] & 0x40) == 0)
 					{
-						c = utf8_to_latin1_map((((unsigned int)(src[0] & 0x07)) << 18)
+						int cp = utf8_to_latin1_map((((unsigned int)(src[0] & 0x07)) << 18)
 							| (((unsigned int)(src[1] & 0x3F)) << 12)
 							| (((unsigned int)(src[2] & 0x3F)) << 6)
 							| ((unsigned int)(src[3] & 0x3F)));
-						if (c < 256)
-							*(dest++) = c;
+						if (cp < 256)
+							*(dest++) = cp;
 						else
 							*dest++ = '?';
 					}
@@ -221,13 +221,13 @@ int change_utf8_encoding(unsigned char *dest, unsigned char *src, int len, enum 
 						(src[3] & 0x40) == 0 &&
 						(src[4] & 0x40) == 0)
 					{
-						c = utf8_to_latin1_map((((unsigned int)(src[0] & 0x03)) << 24U)
+						int cp = utf8_to_latin1_map((((unsigned int)(src[0] & 0x03)) << 24U)
 							| (((unsigned int)(src[1] & 0x3F)) << 18U)
 							| (((unsigned int)(src[2] & 0x3F)) << 12U)
 							| (((unsigned int)(src[3] & 0x3F)) << 6U)
 							| ((unsigned int)(src[4] & 0x3FU)));
-						if (c < 256)
-							*(dest++) = c;
+						if (cp < 256)
+							*(dest++) = cp;
 						else
 							*dest++ = '?';
 					}
@@ -1151,7 +1151,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				}
 
 				for (int i = 0; i < CCX_DECODER_608_SCREEN_ROWS; ++i)
-					correct_spelling_and_censor_words(context, (char *)data->characters[i], CCX_DECODER_608_SCREEN_WIDTH);
+					correct_spelling_and_censor_words(context, data->characters[i], CCX_DECODER_608_SCREEN_WIDTH);
 
 #ifdef PYTHON_API
 				pass_cc_buffer_to_python(data, context);
@@ -1236,7 +1236,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				if (rect->ocr_text)
 				{
 					int len = strlen(rect->ocr_text);
-					correct_spelling_and_censor_words(context, rect->ocr_text, len);
+					correct_spelling_and_censor_words(context, (unsigned char *)rect->ocr_text, len);
 					for (int i = 0; i < len; ++i)
 					{
 						if ((unsigned char)rect->ocr_text[i] == 0x98) // asterisk in 608 encoding
