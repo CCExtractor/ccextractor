@@ -46,76 +46,75 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   add_definitions(-DGPAC_64_BITS)
 endif()
 
-include_directories ("${PROJECT_SOURCE_DIR}")
-include_directories ("${PROJECT_SOURCE_DIR}/lib_ccx/")
-include_directories ("${PROJECT_SOURCE_DIR}/utf8proc/")
-include_directories ("${PROJECT_SOURCE_DIR}/gpacmp4/")
-include_directories ("${PROJECT_SOURCE_DIR}/protobuf-c/")
-include_directories ("${PROJECT_SOURCE_DIR}/zvbi/")
-include_directories ("${PROJECT_SOURCE_DIR}/lib_hash/")
-include_directories ("${PROJECT_SOURCE_DIR}/wrappers/")
-include_directories ("${PROJECT_SOURCE_DIR}/libpng/")
-include_directories ("${PROJECT_SOURCE_DIR}/zlib/")
-include_directories ("${PROJECT_SOURCE_DIR}/freetype/include/")
-aux_source_directory ("${PROJECT_SOURCE_DIR}/protobuf-c/" SOURCEFILE)
-aux_source_directory ("${PROJECT_SOURCE_DIR}/zvbi/" SOURCEFILE)
-aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_hash/" SOURCEFILE)
-aux_source_directory ("${PROJECT_SOURCE_DIR}/wrappers/" SOURCEFILE)
-aux_source_directory ("${PROJECT_SOURCE_DIR}/libpng/" SOURCEFILE)
-aux_source_directory ("${PROJECT_SOURCE_DIR}/zlib/" SOURCEFILE)
+include_directories(${PROJECT_SOURCE_DIR})
+include_directories(${PROJECT_SOURCE_DIR}/lib_ccx)
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty)
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/gpacmp4)
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/protobuf-c)
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zvbi)
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/lib_hash)
+include_directories(${PROJECT_SOURCE_DIR}/wrappers)
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/libpng)
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib)
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/freetype/include)
+aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/gpacmp4/ SOURCEFILE)
+aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/lib_hash/ SOURCEFILE)
+aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/libpng/ SOURCEFILE)
+aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/protobuf-c/ SOURCEFILE)
+aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/zlib/ SOURCEFILE)
+aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/zvbi/ SOURCEFILE)
+aux_source_directory(${PROJECT_SOURCE_DIR}/wrappers/ SOURCEFILE)
 
-set(UTF8PROC_SOURCE
-        ${PROJECT_SOURCE_DIR}/utf8proc/utf8proc.c
-        )
+set(UTF8PROC_SOURCE ${PROJECT_SOURCE_DIR}/thirdparty/utf8proc/utf8proc.c)
 
 set(FREETYPE_SOURCE
-        ${PROJECT_SOURCE_DIR}/freetype/autofit/autofit.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftbase.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftbbox.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftbdf.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftbitmap.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftcid.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftfntfmt.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftfstype.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftgasp.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftglyph.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftgxval.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftinit.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftlcdfil.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftmm.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftotval.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftpatent.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftpfr.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftstroke.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftsynth.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftsystem.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/fttype1.c
-        ${PROJECT_SOURCE_DIR}/freetype/base/ftwinfnt.c
-        ${PROJECT_SOURCE_DIR}/freetype/bdf/bdf.c
-        ${PROJECT_SOURCE_DIR}/freetype/bzip2/ftbzip2.c
-        ${PROJECT_SOURCE_DIR}/freetype/cache/ftcache.c
-        ${PROJECT_SOURCE_DIR}/freetype/cff/cff.c
-        ${PROJECT_SOURCE_DIR}/freetype/cid/type1cid.c
-        ${PROJECT_SOURCE_DIR}/freetype/gzip/ftgzip.c
-        ${PROJECT_SOURCE_DIR}/freetype/lzw/ftlzw.c
-        ${PROJECT_SOURCE_DIR}/freetype/pcf/pcf.c
-        ${PROJECT_SOURCE_DIR}/freetype/pfr/pfr.c
-        ${PROJECT_SOURCE_DIR}/freetype/psaux/psaux.c
-        ${PROJECT_SOURCE_DIR}/freetype/pshinter/pshinter.c
-        ${PROJECT_SOURCE_DIR}/freetype/psnames/psnames.c
-        ${PROJECT_SOURCE_DIR}/freetype/raster/raster.c
-        ${PROJECT_SOURCE_DIR}/freetype/sfnt/sfnt.c
-        ${PROJECT_SOURCE_DIR}/freetype/smooth/smooth.c
-        ${PROJECT_SOURCE_DIR}/freetype/truetype/truetype.c
-        ${PROJECT_SOURCE_DIR}/freetype/type1/type1.c
-        ${PROJECT_SOURCE_DIR}/freetype/type42/type42.c
-        ${PROJECT_SOURCE_DIR}/freetype/winfonts/winfnt.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/autofit/autofit.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftbase.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftbbox.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftbdf.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftbitmap.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftcid.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftfntfmt.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftfstype.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftgasp.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftglyph.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftgxval.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftinit.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftlcdfil.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftmm.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftotval.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftpatent.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftpfr.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftstroke.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftsynth.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftsystem.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/fttype1.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftwinfnt.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/bdf/bdf.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/bzip2/ftbzip2.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/cache/ftcache.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/cff/cff.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/cid/type1cid.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/gzip/ftgzip.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/lzw/ftlzw.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/pcf/pcf.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/pfr/pfr.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/psaux/psaux.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/pshinter/pshinter.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/psnames/psnames.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/raster/raster.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/sfnt/sfnt.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/smooth/smooth.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/truetype/truetype.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/type1/type1.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/type42/type42.c
+        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/winfonts/winfnt.c
         )
 #Windows specific libraries and linker flags
 if(WIN32)
-    include_directories ("${PROJECT_SOURCE_DIR}/win_spec_incld/")
-    include_directories ("${PROJECT_SOURCE_DIR}/win_iconv/")
-    aux_source_directory ("${PROJECT_SOURCE_DIR}/win_iconv/" SOURCEFILE)
+    include_directories ("${PROJECT_SOURCE_DIR}/thirdparty/win_spec_incld/")
+    include_directories ("${PROJECT_SOURCE_DIR}/thirdparty/win_iconv/")
+    aux_source_directory ("${PROJECT_SOURCE_DIR}/thirdparty/win_iconv/" SOURCEFILE)
     set (EXTRA_LIBS ${EXTRA_LIBS} ws2_32 winmm)
 else (WIN32)
     # Adding some platform specific library path
@@ -132,7 +131,7 @@ endif(MSVC)
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64")
 add_subdirectory (lib_ccx)
 
-aux_source_directory (${PROJECT_SOURCE_DIR} SOURCEFILE)
+aux_source_directory(${PROJECT_SOURCE_DIR} SOURCEFILE)
 set (EXTRA_LIBS ${EXTRA_LIBS} ccx)
 # set (EXTRA_LIBS ${EXTRA_LIBS} m)
 
@@ -197,8 +196,8 @@ if (PKG_CONFIG_FOUND AND WITH_SHARING)
   pkg_check_modules (NANOMSG REQUIRED libnanomsg)
   set (EXTRA_LIBS ${EXTRA_LIBS} ${NANOMSG_STATIC_LIBRARIES})
 
-  include_directories ("${PROJECT_SOURCE_DIR}/protobuf-c/")
-  aux_source_directory ("${PROJECT_SOURCE_DIR}/protobuf-c/" SOURCEFILE)
+  include_directories ("${PROJECT_SOURCE_DIR}/thirdparty/protobuf-c/")
+  aux_source_directory ("${PROJECT_SOURCE_DIR}/thirdparty/protobuf-c/" SOURCEFILE)
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_SHARING")
 endif (PKG_CONFIG_FOUND AND WITH_SHARING)
