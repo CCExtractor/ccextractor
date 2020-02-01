@@ -41,8 +41,8 @@ char * api_param(struct ccx_s_options* api_options, int count);
 #endif
 
 
-struct ccx_s_options ccx_options;
-struct lib_ccx_ctx *signal_ctx;
+extern struct ccx_s_options ccx_options;
+extern struct lib_ccx_ctx *signal_ctx;
 //volatile int terminate_asap = 0;
 
 struct ccx_s_options* api_init_options();
