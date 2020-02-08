@@ -20,10 +20,6 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Add V7.1A SDK
-      run: |
-        "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe" modify --channelId VisualStudio.16.Release --productId Microsoft.VisualStudio.Product.Enterprise -q --add Microsoft.VisualStudio.Component.WinXP
-      shell: cmd
     - name: Check out repository
       uses: actions/checkout@v1
     - name: Setup MSBuild.exe
