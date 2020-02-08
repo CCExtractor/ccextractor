@@ -1,5 +1,17 @@
 name: Format sourcecode
-on: [push, pull_request]
+on:
+  push:
+    branches: master
+    paths:
+    - '.github/workflows/format.yml'
+    - 'src/**.c'
+    - 'src/**.h'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+    - '.github/workflows/format.yml'
+    - 'src/**.c'
+    - 'src/**.h'
 jobs:
   format:
     runs-on: ubuntu-latest
