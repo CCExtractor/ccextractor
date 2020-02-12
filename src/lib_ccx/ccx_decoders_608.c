@@ -109,7 +109,7 @@ void clear_eia608_cc_buffer(ccx_decoder_608_context *context, struct eia608_scre
 		memset(data->characters[i], ' ', CCX_DECODER_608_SCREEN_WIDTH);
 		data->characters[i][CCX_DECODER_608_SCREEN_WIDTH] = 0;
 
-		for (int j = 0; j < CCX_DECODER_608_SCREEN_WIDTH + 1; j++)
+		for (int j = 0; j < CCX_DECODER_608_SCREEN_WIDTH + 1; ++j)
 		{
 			data->colors[i][j] = context->settings->default_color;
 			data->fonts[i][j] = FONT_REGULAR;
@@ -526,24 +526,39 @@ int roll_up(ccx_decoder_608_context *context)
 		if (j >= 0)
 		{
 			memcpy(use_buffer->characters[j], use_buffer->characters[j + 1], CCX_DECODER_608_SCREEN_WIDTH + 1);
-			memcpy(use_buffer->colors[j], use_buffer->colors[j + 1], CCX_DECODER_608_SCREEN_WIDTH + 1);
-			memcpy(use_buffer->fonts[j], use_buffer->fonts[j + 1], CCX_DECODER_608_SCREEN_WIDTH + 1);
-			use_buffer->row_used[j] = use_buffer->row_used[j + 1];
+
+			for (int i = 0; i < CCX_DECODER_608_SCREEN_WIDTH + 1; ++i)
+			{
+				use_buffer->colors[j][i] = use_buffer->colors[j + 1][i];
+				use_buffer->fonts[j][i] = use_buffer->fonts[j + 1][i];
+			}
+
+			use_buffer->row_used[j]=use_buffer->row_used[j+1];
 		}
 	}
 	for (int j = 0; j < (1 + context->cursor_row - keep_lines); j++)
 	{
 		memset(use_buffer->characters[j], ' ', CCX_DECODER_608_SCREEN_WIDTH);
-		memset(use_buffer->colors[j], context->settings->default_color, CCX_DECODER_608_SCREEN_WIDTH);
-		memset(use_buffer->fonts[j], FONT_REGULAR, CCX_DECODER_608_SCREEN_WIDTH);
 		use_buffer->characters[j][CCX_DECODER_608_SCREEN_WIDTH] = 0;
+
+		for (int i = 0; i < CCX_DECODER_608_SCREEN_WIDTH; ++i)
+		{
+			use_buffer->colors[j][i] = context->settings->default_color;
+			use_buffer->fonts[j][i] = FONT_REGULAR;
+		}
+
 		use_buffer->row_used[j] = 0;
 	}
-	memset(use_buffer->characters[lastrow], ' ', CCX_DECODER_608_SCREEN_WIDTH);
-	memset(use_buffer->colors[lastrow], context->settings->default_color, CCX_DECODER_608_SCREEN_WIDTH);
-	memset(use_buffer->fonts[lastrow], FONT_REGULAR, CCX_DECODER_608_SCREEN_WIDTH);
 
+	memset(use_buffer->characters[lastrow], ' ', CCX_DECODER_608_SCREEN_WIDTH);
 	use_buffer->characters[lastrow][CCX_DECODER_608_SCREEN_WIDTH] = 0;
+
+	for (int i = 0; i < CCX_DECODER_608_SCREEN_WIDTH; ++i)
+	{
+		use_buffer->colors[lastrow][i] = context->settings->default_color;
+		use_buffer->fonts[lastrow][i] = FONT_REGULAR;
+	}
+
 	use_buffer->row_used[lastrow] = 0;
 
 	// Sanity check
@@ -949,9 +964,13 @@ void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *con
 			if (use_buffer->row_used[j])
 			{
 				memset(use_buffer->characters[j], ' ', CCX_DECODER_608_SCREEN_WIDTH);
-				memset(use_buffer->colors[j], context->settings->default_color, CCX_DECODER_608_SCREEN_WIDTH);
-				memset(use_buffer->fonts[j], FONT_REGULAR, CCX_DECODER_608_SCREEN_WIDTH);
 				use_buffer->characters[j][CCX_DECODER_608_SCREEN_WIDTH] = 0;
+
+				for (int i = 0; i < CCX_DECODER_608_SCREEN_WIDTH; ++i)
+				{
+					use_buffer->colors[j][i] = context->settings->default_color;
+					use_buffer->fonts[j][i] = FONT_REGULAR;
+				}
 				use_buffer->row_used[j] = 0;
 			}
 		}
