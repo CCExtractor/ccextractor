@@ -1,4 +1,4 @@
-Please prefix your pull request with one of the following: **[FEATURE]** **[FIX]** **[IMPROVEMENT]**.
+<!-- Please prefix your pull request with one of the following: **[FEATURE]** **[FIX]** **[IMPROVEMENT]**. -->
 
 **In raising this pull request, I confirm the following (please check boxes):**
 

@@ -1,8 +1,26 @@
 Please prefix your issue with one of the following: [BUG], [PROPOSAL], [QUESTION].
 
-CCExtractor version (using the --version parameter preferably) : **X.X**
+To get the version of CCExtractor, you can use `--version`.
 
-**In raising this issue, I confirm the following (please check boxes, eg [X] - and delete unchecked ones):**
+Please check all that apply and remove the ones that do not.
+
+In the necessary information section, if this is a regression, make sure to specify the last known working version.
+
+Only specify the minimum number of arguments needed to reproduce the issue.
+
+In the additional information section, describe your problem.
+
+Please make the affected input file available for us (no screenshots, those don't help!). Public links to Dropbox, Google Drive, etc, are all fine. If it is not possible to make it available publicly, send us a private invitation (both Dropbox and Google Drive allow that). In this case we will download the file and upload it to the private developer repository.
+
+Do *not* upload your file to any location that will require us to sign up or endure a wait list, slow downloads, etc. If your upload expires make sure you keep it active somehow (replace links if needed). Keep in mind that while we go over all tickets some may take a few days, and it's important we have the file available when we actually need it.
+
+Make sure to enable notifications in GitHub so you get notifications about your ticket. We may need to ask questions and we do everything inside GitHub's system.
+
+Once you have read all of the instructions delete all the text from here to the top.
+
+CCExtractor version: {replace with the version}
+
+# In raising this issue, I confirm the following:
 
 - [ ] I have read and understood the [contributors guide](https://github.com/CCExtractor/ccextractor/blob/master/.github/CONTRIBUTING.md).
 - [ ] I have checked that the bug-fix I am reporting can be replicated, or that the feature I am suggesting isn't already present.
@@ -11,26 +29,23 @@ CCExtractor version (using the --version parameter preferably) : **X.X**
 - [ ] I have checked the pull requests tab for existing solutions/implementations to my issue/suggestion.
 - [ ] I have used the latest available version of CCExtractor to verify this issue exists.
 
-**My familiarity with the project is as follows (check one, eg [X] - and delete unchecked ones):**
+# My familiarity with the project is as follows:
 
 - [ ] I have never used CCExtractor.
 - [ ] I have used CCExtractor just a couple of times.
 - [ ] I absolutely love CCExtractor, but have not contributed previously.
 - [ ] I am an active contributor to CCExtractor.
 
-**Necessary information**
-- Is this a regression (did it work before)? [ ] NO | [ ] YES - *please specify the last known working version*
-- What platform did you use? [ ] Windows - [ ] Linux - [ ] Mac
-- What were the used arguments? `-autoprogram`
+# Necessary information
 
-**Video links (replace text below with your links)**
+- Is this a regression (i.e. did it work before)? {YES/NO}
+- What platform did you use? {Window/Linux/Mac}
+- What were the used arguments? `{replace with the arguments}`
 
-Please make the affected input file available for us (no screenshots, those don't help!). Public links to Dropbox, Google Drive, etc, are all fine. If it is not possible to make it available publicly, send us a private invitation (both Dropbox and Google Drive allow that). In this case we will download the file and upload it to the private developer repository.
+# Video links
 
-Do *not* upload your file to any location that will require us to sign up or endure a wait list, slow downloads, etc. If your upload expires make sure you keep it active somehow (replace links if needed). Keep in mind that while we go over all tickets some may take a few days, and it's important we have the file available when we actually need it.
+* {Replace with a link to a video file}
 
-**Additional information**
+# Additional information
 
 {issue content here, replace this line with your issue content}
-
-PS: Make sure you set an alert in GitHub so you get notifications about your ticket. We may need to ask questions and we do everything inside GitHub's system.
