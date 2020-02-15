@@ -1,7 +1,6 @@
 name: Format sourcecode
 on:
   push:
-    branches: master
     paths:
     - '.github/workflows/format.yml'
     - 'src/**.c'

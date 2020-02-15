@@ -2,7 +2,6 @@ name: Build CCExtractor on Linux
 
 on:
   push:
-    branches: master
     paths:
     - '.github/workflows/build_linux.yml'
     - '**.c'
