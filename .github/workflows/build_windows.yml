@@ -2,7 +2,6 @@ name: Build CCExtractor on Windows
 
 on:
   push:
-    branches: master
     paths:
     - '.github/workflows/build_windows.yml'
     - '**.c'
