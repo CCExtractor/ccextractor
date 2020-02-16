@@ -21,10 +21,7 @@ fi
 if [ -z "$commit" ]; then
 	commit="Unknown"
 fi
-date_format="+%Y-%m-%d"
-date_epoch="${SOURCE_DATE_EPOCH:-$(date +%s)}"
-builddate=$(date -u -d "@$date_epoch" "$date_format" 2>/dev/null || date -u -r "$date_epoch" "$date_format" 2>/dev/null || date -u "$date_format")
-#builddate=`date --utc --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y-%m-%d`
+builddate=`date -j -u -r "${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y-%m-%d`
 echo "Storing variables in file"
 echo "Commit: $commit"
 echo "Date: $builddate"
