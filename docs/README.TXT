@@ -58,7 +58,7 @@ Essential CC related information and free (with source) tools.
 
 Encoding
 --------
-This version, in both its Linux and Windows builds generates by
+This version, in both its Linux and Windows build generates by
 default Unicode files. You can use -latin1 and -utf8 if you prefer 
 these encodings (usually it just depends on what your specific
 player likes).
