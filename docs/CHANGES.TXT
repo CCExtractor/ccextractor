@@ -18,7 +18,6 @@
 - Fix: General code clean up / reformatting
 - Fix: Fix multiple definitions with new -fno-common default in GCC 10
 - Fix: Mac now builds reproducibly again without errors on the date command (#1230)
-- Fix: Autoconf script builds without error, incorporating the thirdparty libraries
 - Doc: Updated ccextractor.cnf.sample.
 
 0.88 (2019-05-21)
@@ -1199,4 +1198,3 @@ version of CCExtractor.
 - Added video information (as extracted from sequence header).
 - Some code clean-up.
 - FF sanity check enabled by default.
-
