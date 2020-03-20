@@ -16,12 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Install dependencies
-        run: |
-          curl https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-          sudo add-apt-repository -y 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main'
-          sudo apt install clang-format-9
       - name: Format code
         run: |
-          find src/ -type f -name '*.c' -name '*.c' | xargs clang-format-9 -i
+          find src/ -type f -name '*.c' -name '*.c' | xargs clang-format -i
           git diff-index --quiet HEAD -- || (git diff && exit 1)
