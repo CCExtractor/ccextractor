@@ -4,24 +4,24 @@
 #include "popups.h"
 
 void load_data(FILE *file,
-		struct main_tab* main_settings,
-		struct input_tab* input,
-		struct advanced_input_tab* advanced_input,
-		struct output_tab* output,
-		struct decoders_tab* decoders,
-		struct credits_tab* credits,
-		struct debug_tab* debug,
-		struct hd_homerun_tab* hd_homerun,
-		struct burned_subs_tab* burned_subs,
-		struct network_popup* network_settings)
+	       struct main_tab *main_settings,
+	       struct input_tab *input,
+	       struct advanced_input_tab *advanced_input,
+	       struct output_tab *output,
+	       struct decoders_tab *decoders,
+	       struct credits_tab *credits,
+	       struct debug_tab *debug,
+	       struct hd_homerun_tab *hd_homerun,
+	       struct burned_subs_tab *burned_subs,
+	       struct network_popup *network_settings)
 {
-	int null_int,r ,g, b;
+	int null_int, r, g, b;
 	char null_char[260];
 
 	//Read main_tab data
 	fscanf(file, "port_or_files:%d\n", &main_settings->port_or_files);
 	fscanf(file, "port_num_len:%d\n", &main_settings->port_num_len);
-	if( main_settings->port_num_len > 0)
+	if (main_settings->port_num_len > 0)
 		fscanf(file, "port_num:%[^\n]\n", main_settings->port_num);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
@@ -34,7 +34,7 @@ void load_data(FILE *file,
 	fscanf(file, "is_split:%d\n", &input->is_split);
 	fscanf(file, "is_live_stream:%d\n", &input->is_live_stream);
 	fscanf(file, "wait_data_sec_len:%d\n", &input->wait_data_sec_len);
-	if(input->wait_data_sec_len > 0)
+	if (input->wait_data_sec_len > 0)
 		fscanf(file, "wait_data_sec:%[^\n]\n", input->wait_data_sec);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
@@ -48,17 +48,17 @@ void load_data(FILE *file,
 	fscanf(file, "elementary_stream:%d\n", &input->elementary_stream);
 	fscanf(file, "is_assume_mpeg:%d\n", &input->is_assume_mpeg);
 	fscanf(file, "stream_type_len:%d\n", &input->stream_type_len);
-	if( input->stream_type_len > 0)
+	if (input->stream_type_len > 0)
 		fscanf(file, "stream_type:%[^\n]\n", input->stream_type);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
 	fscanf(file, "stream_pid_len:%d\n", &input->stream_pid_len);
-	if(input->stream_pid_len > 0)
+	if (input->stream_pid_len > 0)
 		fscanf(file, "stream_pid:%[^\n]\n", input->stream_pid);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
 	fscanf(file, "mpeg_type_len:%d\n", &input->mpeg_type_len);
-	if(input->mpeg_type_len > 0)
+	if (input->mpeg_type_len > 0)
 		fscanf(file, "mpeg_type:%[^\n]\n", input->mpeg_type);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
@@ -66,7 +66,7 @@ void load_data(FILE *file,
 	fscanf(file, "teletext_decoder:%d\n", &input->teletext_decoder);
 	fscanf(file, "is_process_teletext_page:%d\n", &input->is_process_teletext_page);
 	fscanf(file, "teletext_page_number_len:%d\n", &input->teletext_page_numer_len);
-	if(input->teletext_page_numer_len)
+	if (input->teletext_page_numer_len)
 		fscanf(file, "teletext_page_number:%[^\n]\n", input->teletext_page_number);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
@@ -79,7 +79,7 @@ void load_data(FILE *file,
 	fscanf(file, "is_multiple_program:%d\n", &advanced_input->is_multiple_program);
 	fscanf(file, "multiple_program:%d\n", &advanced_input->multiple_program);
 	fscanf(file, "prog_number_len:%d\n", &advanced_input->prog_number_len);
-	if(advanced_input->prog_number_len)
+	if (advanced_input->prog_number_len)
 		fscanf(file, "prog_number:%[^\n]\n", advanced_input->prog_number);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
@@ -97,7 +97,7 @@ void load_data(FILE *file,
 	fscanf(file, "type_select:%d\n", &output->type_select);
 	fscanf(file, "is_filename:%d\n", &output->is_filename);
 	fscanf(file, "filename_len:%d\n", &output->filename_len);
-	if(output->filename_len > 0)
+	if (output->filename_len > 0)
 		fscanf(file, "filename:%[^\n]\n", output->filename);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
@@ -137,23 +137,22 @@ void load_data(FILE *file,
 	fscanf(file, "channel:%d\n", &decoders->channel);
 	fscanf(file, "is_708:%d\n", &decoders->is_708);
 	fscanf(file, "services_len:%d\n", &decoders->services_len);
-	if(decoders->services_len > 0)
+	if (decoders->services_len > 0)
 		fscanf(file, "services:%[^\n]\n", decoders->services);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
 
 	fscanf(file, "teletext_dvb:%d\n", &decoders->teletext_dvb);
 	fscanf(file, "min_distance_len:%d\n", &decoders->min_distance_len);
-	if(decoders->min_distance_len > 0)
+	if (decoders->min_distance_len > 0)
 		fscanf(file, "min_distance:%[^\n]\n", decoders->min_distance);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
 	fscanf(file, "max_distance_len:%d\n", &decoders->max_distance_len);
-	if(decoders->max_distance_len > 0)
+	if (decoders->max_distance_len > 0)
 		fscanf(file, "max_distance:%[^\n]\n", decoders->max_distance);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
-
 
 	//Read credits tab data
 	fscanf(file, "is_start_text:%d\n", &credits->is_start_text);
@@ -163,25 +162,25 @@ void load_data(FILE *file,
 	fscanf(file, "before_time_buffer:%[^\n]\n", credits->before_time_buffer);
 	fscanf(file, "after_time_buffer:%[^\n]\n", credits->after_time_buffer);
 	fscanf(file, "start_atmost_sec_len:%d\n", &credits->start_atmost_sec_len);
-	if(credits->start_atmost_sec_len > 0)
+	if (credits->start_atmost_sec_len > 0)
 		fscanf(file, "start_atmost_sec:%[^\n]\n", credits->start_atmost_sec);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
 	fscanf(file, "start_atleast_sec_len:%d\n", &credits->start_atleast_sec_len);
-	if(credits->start_atleast_sec_len > 0)
+	if (credits->start_atleast_sec_len > 0)
 		fscanf(file, "start_atleast_sec:%[^\n]\n", credits->start_atleast_sec);
 	else
-		fscanf(file, "%[^\n]\n",null_char);
+		fscanf(file, "%[^\n]\n", null_char);
 
 	fscanf(file, "is_end_text:%d\n", &credits->is_end_text);
 	fscanf(file, "end_atmost_sec_len:%d\n", &credits->end_atmost_sec_len);
-	if(credits->end_atmost_sec_len > 0)
+	if (credits->end_atmost_sec_len > 0)
 		fscanf(file, "end_atmost_sec:%[^\n]\n", credits->end_atmost_sec);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
 
 	fscanf(file, "end_atleast_sec_len:%d\n", &credits->end_atleast_sec_len);
-	if(credits->end_atleast_sec_len > 0)
+	if (credits->end_atleast_sec_len > 0)
 		fscanf(file, "end_atleast_sec:%[^\n]\n", credits->end_atleast_sec);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
@@ -190,11 +189,10 @@ void load_data(FILE *file,
 	fscanf(file, "end_text_len:%d\n", &credits->end_text_len);
 	read_credits(file, credits);
 
-
 	//Read debug tab data
 	fscanf(file, "is_elementary_stream:%d\n", &debug->is_elementary_stream);
 	fscanf(file, "elementary_stream_len:%d\n", &debug->elementary_stream_len);
-	if(debug->elementary_stream_len > 0)
+	if (debug->elementary_stream_len > 0)
 		fscanf(file, "elementary_stream:%[^\n]\n", debug->elementary_stream);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
@@ -216,51 +214,49 @@ void load_data(FILE *file,
 
 	//Read HD Homerun Tab data
 	fscanf(file, "location_len:%d\n", &hd_homerun->location_len);
-	if(hd_homerun->location_len > 0)
+	if (hd_homerun->location_len > 0)
 		fscanf(file, "location:%[^\n]\n", hd_homerun->location);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
 	fscanf(file, "tuner_len:%d\n", &hd_homerun->tuner_len);
-	if(hd_homerun->tuner_len >0)
+	if (hd_homerun->tuner_len > 0)
 		fscanf(file, "tuner:%[^\n]\n", hd_homerun->tuner);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
 	fscanf(file, "channel_len:%d\n", &hd_homerun->channel_len);
-	if(hd_homerun->channel_len > 0)
+	if (hd_homerun->channel_len > 0)
 		fscanf(file, "channel:%[^\n]\n", hd_homerun->channel);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
 	fscanf(file, "program_len:%d\n", &hd_homerun->program_len);
-	if(hd_homerun->program_len > 0)
+	if (hd_homerun->program_len > 0)
 		fscanf(file, "program:%[^\n]\n", hd_homerun->program);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
 	fscanf(file, "ipv4_address_len:%d\n", &hd_homerun->ipv4_address_len);
-	if(hd_homerun->ipv4_address_len > 0)
+	if (hd_homerun->ipv4_address_len > 0)
 		fscanf(file, "ipv4_address:%[^\n]\n", hd_homerun->ipv4_address);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
 	fscanf(file, "port_number_len:%d\n", &hd_homerun->port_number_len);
-	if(hd_homerun->port_number_len > 0)
+	if (hd_homerun->port_number_len > 0)
 		fscanf(file, "port_number:%[^\n]\n", hd_homerun->port_number);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
-
-
 
 	//Read Burned Subs tab data
 	fscanf(file, "is_burnded_subs:%d\n", &burned_subs->is_burned_subs);
 	fscanf(file, "color_type:%d\n", &burned_subs->color_type);
 	fscanf(file, "sub_color_select:%d\n", &burned_subs->subs_color_select);
 	fscanf(file, "custom_hue_len:%d\n", &burned_subs->custom_hue_len);
-	if(burned_subs->custom_hue_len > 0)
+	if (burned_subs->custom_hue_len > 0)
 		fscanf(file, "custom_hue:%[^\n]\n", burned_subs->custom_hue);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
 
 	fscanf(file, "ocr_mode:%d\n", &burned_subs->ocr_mode);
 	fscanf(file, "min_duration_len:%d\n", &burned_subs->min_duration_len);
-	if(burned_subs->min_duration_len > 0)
+	if (burned_subs->min_duration_len > 0)
 		fscanf(file, "min_duration:%[^\n]\n", burned_subs->min_duration);
 	else
 		fscanf(file, "%[^\n]\n", null_char);
@@ -291,22 +287,22 @@ void load_data(FILE *file,
 	else
 		fscanf(file, "send_port:%[^\n]\n", null_char);
 	fscanf(file, "send_host_len:%d\n", &network_settings->send_host_len);
-	if(network_settings->send_host_len > 0)
+	if (network_settings->send_host_len > 0)
 		fscanf(file, "send_host:%[^\n]\n", network_settings->send_host);
 	fscanf(file, "send_host:%[^\n]\n", null_char);
 }
 
 void save_data(FILE *file,
-		struct main_tab* main_settings,
-		struct input_tab* input,
-		struct advanced_input_tab* advanced_input,
-		struct output_tab* output,
-		struct decoders_tab* decoders,
-		struct credits_tab* credits,
-		struct debug_tab* debug,
-		struct hd_homerun_tab* hd_homerun,
-		struct burned_subs_tab* burned_subs,
-		struct network_popup* network_settings)
+	       struct main_tab *main_settings,
+	       struct input_tab *input,
+	       struct advanced_input_tab *advanced_input,
+	       struct output_tab *output,
+	       struct decoders_tab *decoders,
+	       struct credits_tab *credits,
+	       struct debug_tab *debug,
+	       struct hd_homerun_tab *hd_homerun,
+	       struct burned_subs_tab *burned_subs,
+	       struct network_popup *network_settings)
 {
 	//Write main_tab data
 	fprintf(file, "port_or_files:%d\n", main_settings->port_or_files);
@@ -401,7 +397,6 @@ void save_data(FILE *file,
 	fprintf(file, "max_distance_len:%d\n", decoders->max_distance_len);
 	fprintf(file, "max_distance:%s\n", decoders->max_distance);
 
-
 	//Write credits tab data
 	fprintf(file, "is_start_text:%d\n", credits->is_start_text);
 
@@ -422,7 +417,6 @@ void save_data(FILE *file,
 	fprintf(file, "start_text_len:%d\n", credits->start_text_len);
 	fprintf(file, "end_text_len:%d\n", credits->end_text_len);
 	write_credits(file, credits);
-
 
 	//Write debug tab data
 	fprintf(file, "is_elementary_stream:%d\n", debug->is_elementary_stream);
@@ -458,8 +452,6 @@ void save_data(FILE *file,
 	fprintf(file, "port_number_len:%d\n", hd_homerun->port_number_len);
 	fprintf(file, "port_number:%s\n", hd_homerun->port_number);
 
-
-
 	//Write Burned Subs tab data
 	fprintf(file, "is_burnded_subs:%d\n", burned_subs->is_burned_subs);
 	fprintf(file, "color_type:%d\n", burned_subs->color_type);
@@ -488,56 +480,55 @@ void save_data(FILE *file,
 		fprintf(file, "send_port:%s\n", network_settings->send_port);
 		fprintf(file, "send_host_len:%d\n", network_settings->send_host_len);
 		fprintf(file, "send_host:%s\n", network_settings->send_host);
-		
 	}
 }
 
-void write_credits(FILE* file, struct credits_tab* credits)
+void write_credits(FILE *file, struct credits_tab *credits)
 {
 	//Number of newlines in end_text
 	static int newlines_end;
 	//Number of newlines in start_text
 	static int newlines_start;
 	int newline_char = 10; // '\n' is 10 in ascii encoding
-	for(int i = 0; i < credits->start_text_len; i++)
+	for (int i = 0; i < credits->start_text_len; i++)
 	{
-		if(credits->start_text[i] == newline_char)
+		if (credits->start_text[i] == newline_char)
 			newlines_start++;
 	}
 
-	for(int i = 0; i < credits->end_text_len; i++)
+	for (int i = 0; i < credits->end_text_len; i++)
 	{
-		if(credits->end_text[i] == newline_char)
+		if (credits->end_text[i] == newline_char)
 			newlines_end++;
 	}
 
 	fprintf(file, "start_text:%d\n", newlines_start);
-	if(credits->start_text_len > 0)
+	if (credits->start_text_len > 0)
 		fprintf(file, "%s\n", credits->start_text);
 	fprintf(file, "end_text:%d\n", newlines_end);
-	if(credits->end_text_len > 0)
+	if (credits->end_text_len > 0)
 		fprintf(file, "%s\n", credits->end_text);
 }
 
-void read_credits(FILE* file, struct credits_tab* credits)
+void read_credits(FILE *file, struct credits_tab *credits)
 {
 	//Number of newlines in end_text
 	static int newlines_end;
 	//Number of newlines in start_text
 	static int newlines_start;
 	static char buffer[1000], null_char[260];
-	if(credits->start_text_len == 0)
+	if (credits->start_text_len == 0)
 		fscanf(file, "%[^\n]\n", null_char);
 	else
 	{
 		fscanf(file, "start_text:%d\n", &newlines_start);
-		for(int i = 0; i != newlines_start + 1; i++)
+		for (int i = 0; i != newlines_start + 1; i++)
 		{
 			static char line[200];
 			fscanf(file, "%[^\n]\n", line);
-			if(!(i == newlines_start))
+			if (!(i == newlines_start))
 				strcat(line, "\n");
-			if(strlen(buffer) > 0)
+			if (strlen(buffer) > 0)
 				strcat(buffer, line);
 			else
 				strcpy(buffer, line);
@@ -548,18 +539,18 @@ void read_credits(FILE* file, struct credits_tab* credits)
 		memset(buffer, 0, sizeof(buffer));
 	}
 
-	if(credits->end_text_len == 0)
+	if (credits->end_text_len == 0)
 		fscanf(file, "%[^\n]\n", null_char);
 	else
 	{
 		fscanf(file, "end_text:%d\n", &newlines_end);
-		for(int i = 0; i != newlines_end + 1; i++)
+		for (int i = 0; i != newlines_end + 1; i++)
 		{
 			static char line[200];
 			fscanf(file, "%[^\n]\n", line);
-			if(!(i == newlines_end))
+			if (!(i == newlines_end))
 				strcat(line, "\n");
-			if(strlen(buffer) > 0)
+			if (strlen(buffer) > 0)
 				strcat(buffer, line);
 			else
 				strcpy(buffer, line);
@@ -567,6 +558,4 @@ void read_credits(FILE* file, struct credits_tab* credits)
 		memset(credits->end_text, 0, sizeof(credits->end_text));
 		strcpy(credits->end_text, buffer);
 	}
-
-
 }

@@ -6,7 +6,7 @@
 #endif
 #include <stdio.h>
 #include <assert.h>
-#include  <stdlib.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #ifndef STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -24,8 +24,7 @@
 #include "ccextractorGUI.h"
 #include "tabs.h"
 
-void
-die(const char *fmt, ...)
+void die(const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
@@ -35,36 +34,38 @@ die(const char *fmt, ...)
 	exit(EXIT_FAILURE);
 }
 
-char*
-file_load(const char* path, size_t* siz)
+char *
+file_load(const char *path, size_t *siz)
 {
 	char *buf;
 	FILE *fd = fopen(path, "rb");
-	if (!fd) die("Failed to open file: %s\n", path);
+	if (!fd)
+		die("Failed to open file: %s\n", path);
 	fseek(fd, 0, SEEK_END);
 	*siz = (size_t)ftell(fd);
 	fseek(fd, 0, SEEK_SET);
-	buf = (char*)calloc(*siz, 1);
+	buf = (char *)calloc(*siz, 1);
 	fread(buf, *siz, 1, fd);
 	fclose(fd);
 	return buf;
 }
 
-char*
+char *
 str_duplicate(const char *src)
 {
 	char *ret;
 	size_t len = strlen(src);
-	if (!len) return 0;
-	ret = (char*)malloc(len + 1);
-	if (!ret) return 0;
+	if (!len)
+		return 0;
+	ret = (char *)malloc(len + 1);
+	if (!ret)
+		return 0;
 	memcpy(ret, src, len);
 	ret[len] = '\0';
 	return ret;
 }
 
-void
-dir_free_list(char **list, size_t size)
+void dir_free_list(char **list, size_t size)
 {
 	size_t i;
 	for (i = 0; i < size; ++i)
@@ -72,7 +73,7 @@ dir_free_list(char **list, size_t size)
 	free(list);
 }
 
-char**
+char **
 dir_list(const char *dir, int return_subdirs, size_t *count)
 {
 	size_t n = 0;
@@ -99,13 +100,16 @@ dir_list(const char *dir, int return_subdirs, size_t *count)
 	size = 0;
 
 	z = opendir(dir);
-	if (z != none) {
+	if (z != none)
+	{
 		int nonempty = 1;
 		struct dirent *data = readdir(z);
 		nonempty = (data != NULL);
-		if (!nonempty) return NULL;
+		if (!nonempty)
+			return NULL;
 
-		do {
+		do
+		{
 			DIR *y;
 			char *p;
 			int is_subdir;
@@ -115,18 +119,23 @@ dir_list(const char *dir, int return_subdirs, size_t *count)
 			strncpy(buffer + n, data->d_name, MAX_PATH_LEN - n);
 			y = opendir(buffer);
 			is_subdir = (y != NULL);
-			if (y != NULL) closedir(y);
+			if (y != NULL)
+				closedir(y);
 
-			if ((return_subdirs && is_subdir) || (!is_subdir && !return_subdirs)) {
-				if (!size) {
-					results = (char**)calloc(sizeof(char*), capacity);
+			if ((return_subdirs && is_subdir) || (!is_subdir && !return_subdirs))
+			{
+				if (!size)
+				{
+					results = (char **)calloc(sizeof(char *), capacity);
 				}
-				else if (size >= capacity) {
+				else if (size >= capacity)
+				{
 					void *old = results;
 					capacity = capacity * 2;
-					results = (char**)realloc(results, capacity * sizeof(char*));
+					results = (char **)realloc(results, capacity * sizeof(char *));
 					assert(results);
-					if (!results) free(old);
+					if (!results)
+						free(old);
 				}
 				p = str_duplicate(data->d_name);
 				results[size++] = p;
@@ -134,13 +143,14 @@ dir_list(const char *dir, int return_subdirs, size_t *count)
 		} while ((data = readdir(z)) != NULL);
 	}
 
-	if (z) closedir(z);
+	if (z)
+		closedir(z);
 	*count = size;
 	return results;
 }
 
 struct file_group
-	FILE_GROUP(enum file_groups group, const char *name, struct nk_image *icon)
+FILE_GROUP(enum file_groups group, const char *name, struct nk_image *icon)
 {
 	struct file_group fg;
 	fg.group = group;
@@ -150,7 +160,7 @@ struct file_group
 }
 
 struct file
-	FILE_DEF(enum file_types type, const char *suffix, enum file_groups group)
+FILE_DEF(enum file_types type, const char *suffix, enum file_groups group)
 {
 	struct file fd;
 	fd.type = type;
@@ -159,8 +169,8 @@ struct file
 	return fd;
 }
 
-struct nk_image*
-	media_icon_for_file(struct media *media, const char *file)
+struct nk_image *
+media_icon_for_file(struct media *media, const char *file)
 {
 	int i = 0;
 	const char *s = file;
@@ -169,12 +179,15 @@ struct nk_image*
 	memset(suffix, 0, sizeof(suffix));
 
 	/* extract suffix .xxx from file */
-	while (*s++ != '\0') {
+	while (*s++ != '\0')
+	{
 		if (found && i < 3)
 			suffix[i++] = *s;
 
-		if (*s == '.') {
-			if (found) {
+		if (*s == '.')
+		{
+			if (found)
+			{
 				found = 0;
 				break;
 			}
@@ -183,13 +196,16 @@ struct nk_image*
 	}
 
 	/* check for all file definition of all groups for fitting suffix*/
-	for (i = 0; i < FILE_MAX && found; ++i) {
+	for (i = 0; i < FILE_MAX && found; ++i)
+	{
 		struct file *d = &media->files[i];
 		{
 			const char *f = d->suffix;
 			s = suffix;
-			while (f && *f && *s && *s == *f) {
-				s++; f++;
+			while (f && *f && *s && *s == *f)
+			{
+				s++;
+				f++;
 			}
 
 			/* found correct file definition so */
@@ -201,8 +217,7 @@ struct nk_image*
 	return &media->icons.default_file;
 }
 
-void
-media_init(struct media *media)
+void media_init(struct media *media)
 {
 	/* file groups */
 	struct icons *icons = &media->icons;
@@ -232,8 +247,7 @@ media_init(struct media *media)
 	media->files[FILE_GIF] = FILE_DEF(FILE_GIF, "gif", FILE_GROUP_IMAGE);
 }
 
-void
-file_browser_reload_directory_content(struct file_browser *browser, const char *path)
+void file_browser_reload_directory_content(struct file_browser *browser, const char *path)
 {
 	strncpy(browser->directory, path, MAX_PATH_LEN);
 	dir_free_list(browser->files, browser->file_count);
@@ -243,8 +257,7 @@ file_browser_reload_directory_content(struct file_browser *browser, const char *
 }
 
 #ifdef _WIN32
-void
-get_drives(struct file_browser *browser)
+void get_drives(struct file_browser *browser)
 {
 	static int drive_num;
 	static char drive_list[50][4];
@@ -258,7 +271,8 @@ get_drives(struct file_browser *browser)
 	{
 		printf("cannot find any drives! try again with different settings/permissions");
 	}
-	else {
+	else
+	{
 		puts("File opened");
 		while ((c = getc(file)) != EOF)
 		{
@@ -272,7 +286,6 @@ get_drives(struct file_browser *browser)
 				continue;
 
 			prev_char = c;
-
 		}
 	}
 	printf("drive nums:%d\n", drive_num);
@@ -280,17 +293,16 @@ get_drives(struct file_browser *browser)
 	for (int i = 0; i < drive_num; i++)
 		strcat(drive_list[i], ":\\");
 
-
 	browser->drives_num = drive_num;
-	browser->drives = (char**)calloc(drive_num + 1, sizeof(char*));
+	browser->drives = (char **)calloc(drive_num + 1, sizeof(char *));
 	for (int i = 0; i < drive_num; i++)
 	{
-		browser->drives[i] = (char*)calloc(strlen(drive_list[i]), sizeof(char));
+		browser->drives[i] = (char *)calloc(strlen(drive_list[i]), sizeof(char));
 		browser->drives[i] = strdup(drive_list[i]);
 	}
 	browser->drives[browser->drives_num] = NULL;
 
-	for (int i = 0; i< drive_num; i++)
+	for (int i = 0; i < drive_num; i++)
 		puts(browser->drives[i]);
 
 	fclose(file);
@@ -298,8 +310,7 @@ get_drives(struct file_browser *browser)
 }
 #endif
 
-void
-file_browser_init(struct file_browser *browser, struct media *media)
+void file_browser_init(struct file_browser *browser, struct media *media)
 {
 	memset(browser, 0, sizeof(*browser));
 	browser->media = media;
@@ -311,9 +322,11 @@ file_browser_init(struct file_browser *browser, struct media *media)
 		/* load files and sub-directory list */
 		const char *home = getenv("HOME");
 #ifdef _WIN32
-		if (!home) home = getenv("USERPROFILE");
+		if (!home)
+			home = getenv("USERPROFILE");
 #else
-		if (!home) home = getpwuid(getuid());
+		if (!home)
+			home = getpwuid(getuid());
 #endif
 		{
 			size_t l;
@@ -341,8 +354,7 @@ file_browser_init(struct file_browser *browser, struct media *media)
 	}
 }
 
-void
-file_browser_free(struct file_browser *browser)
+void file_browser_free(struct file_browser *browser)
 {
 	if (browser->files)
 		dir_free_list(browser->files, browser->file_count);
@@ -353,24 +365,22 @@ file_browser_free(struct file_browser *browser)
 	memset(browser, 0, sizeof(*browser));
 }
 
-int
-file_browser_run(struct file_browser *browser,
-	struct nk_context *ctx,
-	struct main_tab *main_settings,
-	struct output_tab *output,
-	struct debug_tab *debug,
-	struct hd_homerun_tab *hd_homerun)
+int file_browser_run(struct file_browser *browser,
+		     struct nk_context *ctx,
+		     struct main_tab *main_settings,
+		     struct output_tab *output,
+		     struct debug_tab *debug,
+		     struct hd_homerun_tab *hd_homerun)
 {
 	static int isFileAdded = nk_false;
 	int ret = 0;
 	struct media *media = browser->media;
 	struct nk_rect total_space;
 
-
 	if (nk_popup_begin(ctx, NK_POPUP_STATIC, "File Browser", NK_WINDOW_CLOSABLE | NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_MOVABLE,
-		nk_rect(0, 0, 930, 650)))
+			   nk_rect(0, 0, 930, 650)))
 	{
-		static float ratio[] = { 0.25f, NK_UNDEFINED };
+		static float ratio[] = {0.25f, NK_UNDEFINED};
 		float spacing_x = ctx->style.window.spacing.x;
 
 		/* output path directory selector in the menubar */
@@ -380,7 +390,8 @@ file_browser_run(struct file_browser *browser,
 			char *d = browser->directory;
 			char *begin = d + 1;
 			nk_layout_row_dynamic(ctx, 25, 6);
-			while (*d++) {
+			while (*d++)
+			{
 #ifdef _WIN32
 				if (*d == '\\')
 #else
@@ -388,7 +399,8 @@ file_browser_run(struct file_browser *browser,
 #endif
 				{
 					*d = '\0';
-					if (nk_button_label(ctx, begin)) {
+					if (nk_button_label(ctx, begin))
+					{
 #ifdef _WIN32
 						*d++ = '\\';
 #else
@@ -451,100 +463,112 @@ file_browser_run(struct file_browser *browser,
 
 			cols = 4;
 			rows = count / cols;
-			for (i = 0; i <= rows; i += 1) {
-				{size_t n = j + cols;
-				nk_layout_row_dynamic(ctx, 135, (int)cols);
-				for (; j < count && j < n; ++j) {
-					/* draw one row of icons */
-					if (j < browser->dir_count) {
-						/* draw and execute directory buttons */
-						if (nk_button_image(ctx, media->icons.directory))
-							index = (int)j;
-					}
-					else {
-						/* draw and execute files buttons */
-						struct nk_image *icon;
-						size_t fileIndex = ((size_t)j - browser->dir_count);
-						icon = media_icon_for_file(media, browser->files[fileIndex]);
-						if (nk_button_image(ctx, *icon)) {
-							strncpy(browser->file, browser->directory, MAX_PATH_LEN);
-							n = strlen(browser->file);
-							strncpy(browser->file + n, browser->files[fileIndex], MAX_PATH_LEN - n);
-							ret = 1;
+			for (i = 0; i <= rows; i += 1)
+			{
+				{
+					size_t n = j + cols;
+					nk_layout_row_dynamic(ctx, 135, (int)cols);
+					for (; j < count && j < n; ++j)
+					{
+						/* draw one row of icons */
+						if (j < browser->dir_count)
+						{
+							/* draw and execute directory buttons */
+							if (nk_button_image(ctx, media->icons.directory))
+								index = (int)j;
+						}
+						else
+						{
+							/* draw and execute files buttons */
+							struct nk_image *icon;
+							size_t fileIndex = ((size_t)j - browser->dir_count);
+							icon = media_icon_for_file(media, browser->files[fileIndex]);
+							if (nk_button_image(ctx, *icon))
+							{
+								strncpy(browser->file, browser->directory, MAX_PATH_LEN);
+								n = strlen(browser->file);
+								strncpy(browser->file + n, browser->files[fileIndex], MAX_PATH_LEN - n);
+								ret = 1;
 
+								if (hd_homerun->is_homerun_browser_active)
+								{
+									hd_homerun->location_len = strlen(browser->file);
+									strncpy(hd_homerun->location, browser->file, hd_homerun->location_len);
+									isFileAdded = nk_true;
+									hd_homerun->is_homerun_browser_active = nk_false;
+									break;
+								}
+								if (debug->is_debug_browser_active)
+								{
+									debug->elementary_stream_len = strlen(browser->file);
+									strcpy(debug->elementary_stream, browser->file);
+									isFileAdded = nk_true;
+									debug->is_debug_browser_active = nk_false;
+									break;
+								}
+								if (output->is_output_browser_active)
+								{
+									output->filename_len = strlen(browser->file);
+									strcpy(output->filename, browser->file);
+									isFileAdded = nk_true;
+									output->is_output_browser_active = nk_false;
+									break;
+								}
+								if (output->is_cap_browser_active)
+								{
+									output->cap_dictionary_len = strlen(browser->file);
+									strcpy(output->cap_dictionary, browser->file);
+									isFileAdded = nk_true;
+									output->is_cap_browser_active = nk_false;
+									break;
+								}
+								if (main_settings->is_file_browser_active)
+								{
+									if (main_settings->filename_count == 0)
+										main_settings->filenames = (char **)calloc(2, sizeof(char *));
+									else
+										main_settings->filenames = (char **)realloc(main_settings->filenames, (main_settings->filename_count + 2) * sizeof(char *));
 
-							if (hd_homerun->is_homerun_browser_active)
-							{
-								hd_homerun->location_len = strlen(browser->file);
-								strncpy(hd_homerun->location, browser->file, hd_homerun->location_len);
-								isFileAdded = nk_true;
-								hd_homerun->is_homerun_browser_active = nk_false;
-								break;
+									main_settings->filenames[main_settings->filename_count] = (char *)calloc((strlen(browser->file) + 5), sizeof(char));
+									main_settings->filenames[main_settings->filename_count][0] = '\"';
+									strcat(main_settings->filenames[main_settings->filename_count], browser->file);
+									strcat(main_settings->filenames[main_settings->filename_count], "\"");
+									main_settings->filename_count++;
+									main_settings->filenames[main_settings->filename_count] = NULL;
+									isFileAdded = nk_true;
+									main_settings->is_file_browser_active = nk_false;
+									break;
+								}
 							}
-							if (debug->is_debug_browser_active)
-							{
-								debug->elementary_stream_len = strlen(browser->file);
-								strcpy(debug->elementary_stream, browser->file);
-								isFileAdded = nk_true;
-								debug->is_debug_browser_active = nk_false;
-								break;
-							}
-							if (output->is_output_browser_active)
-							{
-								output->filename_len = strlen(browser->file);
-								strcpy(output->filename, browser->file);
-								isFileAdded = nk_true;
-								output->is_output_browser_active = nk_false;
-								break;
-							}
-							if (output->is_cap_browser_active)
-							{
-								output->cap_dictionary_len = strlen(browser->file);
-								strcpy(output->cap_dictionary, browser->file);
-								isFileAdded = nk_true;
-								output->is_cap_browser_active = nk_false;
-								break;
-							}
-							if (main_settings->is_file_browser_active)
-							{
-								if (main_settings->filename_count == 0)								
-									main_settings->filenames = (char**)calloc(2, sizeof(char*));
-								else
-									main_settings->filenames = (char**)realloc(main_settings->filenames, (main_settings->filename_count + 2) * sizeof(char*));
-
-                                main_settings->filenames[main_settings->filename_count] = (char*)calloc((strlen(browser->file) + 5), sizeof(char));
-								main_settings->filenames[main_settings->filename_count][0] = '\"';
-								strcat(main_settings->filenames[main_settings->filename_count], browser->file);
-								strcat(main_settings->filenames[main_settings->filename_count], "\"");
-								main_settings->filename_count++;
-                                main_settings->filenames[main_settings->filename_count] = NULL;
-								isFileAdded = nk_true;
-								main_settings->is_file_browser_active = nk_false;
-								break;
-							}
-
 						}
 					}
-				}}
-				{size_t n = k + cols;
-				nk_layout_row_dynamic(ctx, 20, (int)cols);
-				for (; k < count && k < n; k++) {
-					/* draw one row of labels */
-					if (k < browser->dir_count) {
-						nk_label(ctx, browser->directories[k], NK_TEXT_CENTERED);
+				}
+				{
+					size_t n = k + cols;
+					nk_layout_row_dynamic(ctx, 20, (int)cols);
+					for (; k < count && k < n; k++)
+					{
+						/* draw one row of labels */
+						if (k < browser->dir_count)
+						{
+							nk_label(ctx, browser->directories[k], NK_TEXT_CENTERED);
+						}
+						else
+						{
+							size_t t = k - browser->dir_count;
+							nk_label(ctx, browser->files[t], NK_TEXT_CENTERED);
+						}
 					}
-					else {
-						size_t t = k - browser->dir_count;
-						nk_label(ctx, browser->files[t], NK_TEXT_CENTERED);
-					}
-				}}
+				}
 			}
 
-			if (index != -1) {
+			if (index != -1)
+			{
 				size_t n = strlen(browser->directory);
 				strncpy(browser->directory + n, browser->directories[index], MAX_PATH_LEN - n);
 				n = strlen(browser->directory);
-				if (n < MAX_PATH_LEN - 1) {
+				if (n < MAX_PATH_LEN - 1)
+				{
 #ifdef _WIN32
 					browser->directory[n] = '\\';
 #else
@@ -555,10 +579,9 @@ file_browser_run(struct file_browser *browser,
 				file_browser_reload_directory_content(browser, browser->directory);
 			}
 			nk_group_end(ctx);
-
-
 		}
-		if (isFileAdded) {
+		if (isFileAdded)
+		{
 			isFileAdded = nk_false;
 			main_settings->scaleWindowForFileBrowser = nk_false;
 			nk_popup_close(ctx);
@@ -567,9 +590,9 @@ file_browser_run(struct file_browser *browser,
 		nk_popup_end(ctx);
 		return ret;
 	}
-	else {
+	else
+	{
 		main_settings->scaleWindowForFileBrowser = nk_false;
 		return 0;
 	}
 }
-

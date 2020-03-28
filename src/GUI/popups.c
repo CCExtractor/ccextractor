@@ -24,8 +24,8 @@ void setup_network_settings(struct network_popup *network_settings)
 
 void draw_network_popup(struct nk_context *ctx, struct network_popup *network_settings)
 {
-	const float save_ok_ratio[] = { 0.8f,0.1f,0.1f };
-	const float udp_tcp_ratio[] = { 0.45f,0.1f,0.45f };
+	const float save_ok_ratio[] = {0.8f, 0.1f, 0.1f};
+	const float udp_tcp_ratio[] = {0.45f, 0.1f, 0.45f};
 	static char udp_ipv4_buffer[30];
 	static int udp_ipv4_len[30];
 	static char tcp_pass_buf[30];
@@ -36,12 +36,12 @@ void draw_network_popup(struct nk_context *ctx, struct network_popup *network_se
 	static int send_port_len[30];
 	static char send_host_buf[30];
 	static int send_host_len[30];
-	const char network_attr[][30] = { "-udp port:", "-udp [host:]port:","-sendto host[:port]:","-tcp port:","-tcppassword password:", "-tcpdesc description:" };
-	static struct nk_rect s = { 20,30,480,500 };
-	if (nk_popup_begin(ctx, NK_POPUP_STATIC, "Network Settings", NK_WINDOW_CLOSABLE|NK_WINDOW_NO_SCROLLBAR, s))
+	const char network_attr[][30] = {"-udp port:", "-udp [host:]port:", "-sendto host[:port]:", "-tcp port:", "-tcppassword password:", "-tcpdesc description:"};
+	static struct nk_rect s = {20, 30, 480, 500};
+	if (nk_popup_begin(ctx, NK_POPUP_STATIC, "Network Settings", NK_WINDOW_CLOSABLE | NK_WINDOW_NO_SCROLLBAR, s))
 	{
 		nk_layout_row_dynamic(ctx, 220, 1);
-		if(nk_group_begin(ctx, "Receive", NK_WINDOW_TITLE ))
+		if (nk_group_begin(ctx, "Receive", NK_WINDOW_TITLE))
 		{
 			nk_layout_row(ctx, NK_DYNAMIC, 21, 3, udp_tcp_ratio);
 			nk_spacing(ctx, 1);
@@ -64,7 +64,7 @@ void draw_network_popup(struct nk_context *ctx, struct network_popup *network_se
 		}
 
 		nk_layout_row_dynamic(ctx, 200, 1);
-		if (nk_group_begin(ctx, "Send", NK_WINDOW_TITLE ))
+		if (nk_group_begin(ctx, "Send", NK_WINDOW_TITLE))
 		{
 			nk_layout_row(ctx, NK_DYNAMIC, 21, 3, udp_tcp_ratio);
 			nk_spacing(ctx, 1);
@@ -82,16 +82,18 @@ void draw_network_popup(struct nk_context *ctx, struct network_popup *network_se
 		/*nk_layout_row_static(ctx, 20, 200, 2);
 		nk_label(ctx, network_attr[5], NK_TEXT_LEFT);
 		nk_edit_string(ctx, NK_EDIT_SIMPLE, text_buffer[5], &text_len[5], 50, nk_filter_default);*/
-	
+
 		//OK Button
 		nk_layout_row(ctx, NK_DYNAMIC, 27, 3, save_ok_ratio);
 		nk_spacing(ctx, 1);
-		if (nk_button_label(ctx, "Save")) {
+		if (nk_button_label(ctx, "Save"))
+		{
 			network_settings->save_network_settings = nk_true;
 			network_settings->show_network_settings = nk_false;
 			nk_popup_close(ctx);
 		}
-		if (nk_button_label(ctx, "OK")) {
+		if (nk_button_label(ctx, "OK"))
+		{
 			network_settings->save_network_settings = nk_false;
 			network_settings->show_network_settings = nk_false;
 			nk_popup_close(ctx);
@@ -105,7 +107,7 @@ void draw_network_popup(struct nk_context *ctx, struct network_popup *network_se
 
 void draw_getting_started_popup(struct nk_context *ctx, int *show_getting_started)
 {
-	static struct nk_rect s = { 20,30,480,500 };
+	static struct nk_rect s = {20, 30, 480, 500};
 	if (nk_popup_begin(ctx, NK_POPUP_STATIC, "Getting Started", NK_WINDOW_CLOSABLE, s))
 	{
 		nk_layout_row_dynamic(ctx, 80, 1);
@@ -118,15 +120,15 @@ void draw_getting_started_popup(struct nk_context *ctx, int *show_getting_starte
 
 void draw_about_ccx_popup(struct nk_context *ctx, int *show_about_ccx, struct nk_user_font *droid_big, struct nk_user_font *droid_head)
 {
-	const float ccx_ratio[] = { 0.3f,0.4f,0.3f };
-	const float ok_ratio[] = { 0.9f,0.1f };
-	static struct nk_rect s = { 20,30,480,500};
-	if (nk_popup_begin(ctx, NK_POPUP_STATIC, "About CCExtractor", NK_WINDOW_CLOSABLE|NK_WINDOW_NO_SCROLLBAR, s))
+	const float ccx_ratio[] = {0.3f, 0.4f, 0.3f};
+	const float ok_ratio[] = {0.9f, 0.1f};
+	static struct nk_rect s = {20, 30, 480, 500};
+	if (nk_popup_begin(ctx, NK_POPUP_STATIC, "About CCExtractor", NK_WINDOW_CLOSABLE | NK_WINDOW_NO_SCROLLBAR, s))
 	{
 		nk_style_push_font(ctx, droid_big);
 		nk_layout_row(ctx, NK_DYNAMIC, 30, 3, ccx_ratio);
 		nk_spacing(ctx, 1);
-		nk_label_wrap(ctx, "About CCExtractor"/*, NK_TEXT_LEFT*/);
+		nk_label_wrap(ctx, "About CCExtractor" /*, NK_TEXT_LEFT*/);
 		nk_style_pop_font(ctx);
 
 		nk_layout_row_dynamic(ctx, 390, 1);
@@ -204,7 +206,7 @@ void draw_about_ccx_popup(struct nk_context *ctx, int *show_about_ccx, struct nk
 			nk_layout_row_dynamic(ctx, 20, 1);
 			nk_label_wrap(ctx, "- Dish Network files");
 			nk_layout_row_dynamic(ctx, 80, 1);
-			nk_label_wrap(ctx, "Usually, if you record a TV show with your capture card and CCExtractor produces the expected result, it will work for your all recordings.If it doesn't, which means that your card uses a format CCExtractor can't handle, please contact me and we'll try to make it work."); 
+			nk_label_wrap(ctx, "Usually, if you record a TV show with your capture card and CCExtractor produces the expected result, it will work for your all recordings.If it doesn't, which means that your card uses a format CCExtractor can't handle, please contact me and we'll try to make it work.");
 
 			nk_style_push_font(ctx, droid_head);
 			nk_layout_row_dynamic(ctx, 23, 1);
@@ -230,13 +232,13 @@ void draw_about_ccx_popup(struct nk_context *ctx, int *show_about_ccx, struct nk
 			nk_layout_row_dynamic(ctx, 23, 1);
 			nk_label_wrap(ctx, "Send me an email: carlos@ccextractor.org");
 
-
 			nk_group_end(ctx);
 		}
 
 		nk_layout_row(ctx, NK_DYNAMIC, 27, 2, ok_ratio);
-		nk_spacing(ctx,1);
-		if (nk_button_label(ctx, "OK")) {
+		nk_spacing(ctx, 1);
+		if (nk_button_label(ctx, "OK"))
+		{
 			*show_about_ccx = nk_false;
 			nk_popup_close(ctx);
 		}
@@ -248,11 +250,11 @@ void draw_about_ccx_popup(struct nk_context *ctx, int *show_about_ccx, struct nk
 
 void draw_progress_details_popup(struct nk_context *ctx, int *show_progress_details, struct main_tab *main_settings)
 {
-	static struct nk_rect s = { 20,30,480,500 };
+	static struct nk_rect s = {20, 30, 480, 500};
 	if (nk_popup_begin(ctx, NK_POPUP_STATIC, "Progress Details of Extraction", NK_WINDOW_CLOSABLE, s))
 	{
 		nk_layout_row_dynamic(ctx, 20, 1);
-		for( int i = 0; i < main_settings->activity_string_count; i++)
+		for (int i = 0; i < main_settings->activity_string_count; i++)
 			nk_label_wrap(ctx, main_settings->activity_string[i]);
 		nk_popup_end(ctx);
 	}
@@ -262,15 +264,16 @@ void draw_progress_details_popup(struct nk_context *ctx, int *show_progress_deta
 
 void draw_color_popup(struct nk_context *ctx, struct output_tab *output)
 {
-	static struct nk_rect s = { 250,250,200,230 };
-	if (nk_popup_begin(ctx, NK_POPUP_STATIC, "Color Picker", NK_WINDOW_TITLE |NK_WINDOW_NO_SCROLLBAR|NK_WINDOW_BORDER, s))
+	static struct nk_rect s = {250, 250, 200, 230};
+	if (nk_popup_begin(ctx, NK_POPUP_STATIC, "Color Picker", NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER, s))
 	{
 		nk_layout_row_dynamic(ctx, 160, 1);
 		output->color_rgb = nk_color_picker(ctx, output->color_rgb, NK_RGBA);
-		
+
 		nk_layout_row_dynamic(ctx, 25, 3);
 		nk_spacing(ctx, 1);
-		if (nk_button_label(ctx, "OK")) {
+		if (nk_button_label(ctx, "OK"))
+		{
 			show_color_from_picker = nk_true;
 			output->color_popup = nk_false;
 			nk_popup_close(ctx);
@@ -283,23 +286,21 @@ void draw_color_popup(struct nk_context *ctx, struct output_tab *output)
 		output->color_popup = nk_false;
 }
 
-
 void draw_thread_popup(struct nk_context *ctx, int *show_thread_popup)
 {
-	static struct nk_rect s = { 100, 100, 300, 175 };
-	static const float ratio[] = { 0.85f, 0.15f };
+	static struct nk_rect s = {100, 100, 300, 175};
+	static const float ratio[] = {0.85f, 0.15f};
 	if (nk_popup_begin(ctx, NK_POPUP_STATIC, "File Read Error",
-			NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER, s))
+			   NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER, s))
 	{
 		nk_layout_row_dynamic(ctx, 25, 1);
 		nk_label(ctx, "Cannot read file.", NK_TEXT_CENTERED);
 		nk_layout_row_dynamic(ctx, 60, 1);
 		nk_label_wrap(ctx, "Make sure the directory isn't write protected OR you are running the program with write permissions.");
 
-
 		nk_layout_row(ctx, NK_DYNAMIC, 25, 2, ratio);
 		nk_spacing(ctx, 1);
-		if(nk_button_label(ctx, "OK"))
+		if (nk_button_label(ctx, "OK"))
 		{
 			*show_thread_popup = nk_false;
 			nk_popup_close(ctx);
