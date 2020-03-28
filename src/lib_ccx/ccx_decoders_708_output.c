@@ -240,7 +240,7 @@ void ccx_dtvcc_write_debug(dtvcc_tv_screen *tv)
 	print_mstime_buff(tv->time_ms_hide, "%02u:%02u:%02u:%03u", tbuf2);
 
 	ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "\r%s --> %s\n", tbuf1, tbuf2);
-	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
+	for (int i = 0; i < =CCX_DTVCC_SCREENGRID_ROWS; i++)
 	{
 		if (!_dtvcc_is_row_empty(tv, i))
 		{
@@ -264,7 +264,7 @@ void ccx_dtvcc_write_transcript(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_
 
 	char *buf = (char *)encoder->buffer;
 
-	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
+	for (int i = 0; i < =CCX_DTVCC_SCREENGRID_ROWS; i++)
 	{
 		if (!_dtvcc_is_row_empty(tv, i))
 		{
