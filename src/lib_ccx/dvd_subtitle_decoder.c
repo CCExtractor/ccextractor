@@ -10,19 +10,17 @@
 #include "ocr.h"
 #include "ccx_decoders_common.h"
 
-
 #define MAX_BUFFERSIZE 4096 // arbitrary value
 
-#define RGBA(r,g,b,a) (((unsigned)(a) << 24) | ((r) << 16) | ((g) << 8) | (b))
-
+#define RGBA(r, g, b, a) (((unsigned)(a) << 24) | ((r) << 16) | ((g) << 8) | (b))
 
 struct DVD_Ctx
 {
 	unsigned char *buffer; // Buffer to store packet data
-	size_t len; //length of buffer required
-	int pos; //position in the buffer
-	uint16_t size_spu; //total size of spu packet
-	uint16_t size_data; //size of data in the packet, offset to control packet
+	size_t len;	       //length of buffer required
+	int pos;	       //position in the buffer
+	uint16_t size_spu;     //total size of spu packet
+	uint16_t size_data;    //size of data in the packet, offset to control packet
 	struct ctrl_seq *ctrl;
 	int append;
 	unsigned char *bitmap;
@@ -43,7 +41,7 @@ struct ctrl_seq
 #define bitoff(x) ((x) ? 0x0f : 0xf0)
 
 // Get first 4 or last 4 bits from the byte
-#define next4(x,y) ((y) ? (x & 0x0f) : ((x & 0xf0) >> 4) )
+#define next4(x, y) ((y) ? (x & 0x0f) : ((x & 0xf0) >> 4))
 
 /**
  * Get 4 bits data from buffer for RLE decoding
@@ -59,7 +57,6 @@ int get_bits(struct DVD_Ctx *ctx, uint8_t *nextbyte, int *pos, int *m)
 
 	return ret;
 }
-
 
 int rle_decode(struct DVD_Ctx *ctx, int *color, uint8_t *nextbyte, int *pos, int *m)
 {
@@ -105,7 +102,8 @@ void get_bitmap(struct DVD_Ctx *ctx)
 	if (!buffp)
 		return;
 	memset(buffp, 0, w * h);
-	x = 0; lineno = 0;
+	x = 0;
+	lineno = 0;
 
 	while (lineno < (h + 1) / 2)
 	{
@@ -145,7 +143,8 @@ void get_bitmap(struct DVD_Ctx *ctx)
 
 	pos = ctx->ctrl->pixoffset[1];
 	buffp = ctx->bitmap + w;
-	x = 0; lineno = 0;
+	x = 0;
+	lineno = 0;
 
 	while (lineno < h / 2)
 	{
@@ -174,8 +173,6 @@ void get_bitmap(struct DVD_Ctx *ctx)
 		}
 	}
 }
-
-
 
 void decode_packet(struct DVD_Ctx *ctx)
 {
@@ -211,11 +208,13 @@ void decode_packet(struct DVD_Ctx *ctx)
 
 			switch (command)
 			{
-				case 0x01:	control->start_time = (date << 10) / 90;
+				case 0x01:
+					control->start_time = (date << 10) / 90;
 					break;
-				case 0x02:	control->stop_time = (date << 10) / 90;
+				case 0x02:
+					control->stop_time = (date << 10) / 90;
 					break;
-				case 0x03:	// SET_COLOR
+				case 0x03: // SET_COLOR
 					control->color[3] = (buff[ctx->pos] & 0xf0) >> 4;
 					control->color[2] = buff[ctx->pos] & 0x0f;
 					control->color[1] = (buff[ctx->pos + 1] & 0xf0) >> 4;
@@ -223,7 +222,7 @@ void decode_packet(struct DVD_Ctx *ctx)
 					// dbg_print(CCX_DMT_VERBOSE, "col: %x col: %x col: %x col: %x\n", control->color[0], control->color[1], control->color[2], control->color[3]);
 					ctx->pos += 2;
 					break;
-				case 0x04:	//SET_CONTR
+				case 0x04: //SET_CONTR
 					control->alpha[3] = (buff[ctx->pos] & 0xf0) >> 4;
 					control->alpha[2] = buff[ctx->pos] & 0x0f;
 					control->alpha[1] = (buff[ctx->pos + 1] & 0xf0) >> 4;
@@ -231,46 +230,47 @@ void decode_packet(struct DVD_Ctx *ctx)
 					// dbg_print(CCX_DMT_VERBOSE, "alp: %d alp: %d alp: %d alp: %d\n", control->alpha[0], control->alpha[1], control->alpha[2], control->alpha[3]);
 					ctx->pos += 2;
 					break;
-				case 0x05:	//SET_DAREA
-					control->coord[0] = ((buff[ctx->pos] << 8) | (buff[ctx->pos + 1] & 0xf0)) >> 4; //starting x coordinate
-					control->coord[1] = ((buff[ctx->pos + 1] & 0x0f) << 8) | buff[ctx->pos + 2]; //ending x coordinate
+				case 0x05:										    //SET_DAREA
+					control->coord[0] = ((buff[ctx->pos] << 8) | (buff[ctx->pos + 1] & 0xf0)) >> 4;	    //starting x coordinate
+					control->coord[1] = ((buff[ctx->pos + 1] & 0x0f) << 8) | buff[ctx->pos + 2];	    //ending x coordinate
 					control->coord[2] = ((buff[ctx->pos + 3] << 8) | (buff[ctx->pos + 4] & 0xf0)) >> 4; //starting y coordinate
-					control->coord[3] = ((buff[ctx->pos + 4] & 0x0f) << 8) | buff[ctx->pos + 5]; //ending y coordinate
+					control->coord[3] = ((buff[ctx->pos + 4] & 0x0f) << 8) | buff[ctx->pos + 5];	    //ending y coordinate
 					// dbg_print(CCX_DMT_VERBOSE, "cord: %d cord: %d cord: %d cord: %d\n", control->coord[0], control->coord[1], control->coord[2], control->coord[3]);
 					ctx->pos += 6;
 					//(x2-x1+1)*(y2-y1+1)
 					break;
-				case 0x06:	//SET_DSPXA - Pixel address
+				case 0x06: //SET_DSPXA - Pixel address
 					control->pixoffset[0] = (buff[ctx->pos] << 8) | buff[ctx->pos + 1];
 					control->pixoffset[1] = (buff[ctx->pos + 2] << 8) | buff[ctx->pos + 3];
 					// dbg_print(CCX_DMT_VERBOSE, "off1: %d off2 %d\n", control->pixoffset[0], control->pixoffset[1]);
 					ctx->pos += 4;
 					break;
-				case 0x07:	dbg_print(CCX_DMT_VERBOSE, "Command 0x07 found\n");
+				case 0x07:
+					dbg_print(CCX_DMT_VERBOSE, "Command 0x07 found\n");
 					uint16_t skip = (buff[ctx->pos] << 8) | buff[ctx->pos + 1];
 					ctx->pos += skip;
 					break;
-				case 0xff:	seq_end = 1;
+				case 0xff:
+					seq_end = 1;
 					break;
-				default:	dbg_print(CCX_DMT_VERBOSE, "Unknown command in control sequence!\n");
+				default:
+					dbg_print(CCX_DMT_VERBOSE, "Unknown command in control sequence!\n");
 			}
 		}
-
 	}
-
 }
 
 void guess_palette(struct DVD_Ctx *ctx, uint32_t *rgba_palette, uint32_t subtitle_color)
 {
 	static const uint8_t level_map[4][4] = {
-		// this configuration (full range, lowest to highest) in tests
-		// seemed most common, so assume this
-		{0xff},
-		{0x00, 0xff},
-		{0x00, 0x80, 0xff},
-		{0x00, 0x55, 0xaa, 0xff},
+	    // this configuration (full range, lowest to highest) in tests
+	    // seemed most common, so assume this
+	    {0xff},
+	    {0x00, 0xff},
+	    {0x00, 0x80, 0xff},
+	    {0x00, 0x55, 0xaa, 0xff},
 	};
-	uint8_t color_used[16] = { 0 };
+	uint8_t color_used[16] = {0};
 	int nb_opaque_colors, i, level, j, r, g, b;
 	uint8_t *colormap = ctx->ctrl->color, *alpha = ctx->ctrl->alpha;
 
@@ -278,8 +278,10 @@ void guess_palette(struct DVD_Ctx *ctx, uint32_t *rgba_palette, uint32_t subtitl
 		rgba_palette[i] = 0;
 
 	nb_opaque_colors = 0;
-	for (i = 0; i < 4; i++) {
-		if (alpha[i] != 0 && !color_used[colormap[i]]) {
+	for (i = 0; i < 4; i++)
+	{
+		if (alpha[i] != 0 && !color_used[colormap[i]])
+		{
 			color_used[colormap[i]] = 1;
 			nb_opaque_colors++;
 		}
@@ -290,28 +292,29 @@ void guess_palette(struct DVD_Ctx *ctx, uint32_t *rgba_palette, uint32_t subtitl
 
 	j = 0;
 	memset(color_used, 0, 16);
-	for (i = 0; i < 4; i++) {
-		if (alpha[i] != 0) {
-			if (!color_used[colormap[i]]) {
+	for (i = 0; i < 4; i++)
+	{
+		if (alpha[i] != 0)
+		{
+			if (!color_used[colormap[i]])
+			{
 				level = level_map[nb_opaque_colors][j];
-				r = (((subtitle_color >> 16) & 0xff) *level) >> 8;
-				g = (((subtitle_color >> 8) & 0xff) *level) >> 8;
-				b = (((subtitle_color >> 0) & 0xff) *level) >> 8;
+				r = (((subtitle_color >> 16) & 0xff) * level) >> 8;
+				g = (((subtitle_color >> 8) & 0xff) * level) >> 8;
+				b = (((subtitle_color >> 0) & 0xff) * level) >> 8;
 				rgba_palette[i] = b | (g << 8) | (r << 16) | ((alpha[i] * 17) << 24);
 				// printf("rgba %i %x\n", i , rgba_palette[i]);
 				color_used[colormap[i]] = (i + 1);
 				j++;
 			}
-			else {
+			else
+			{
 				rgba_palette[i] = (rgba_palette[color_used[colormap[i]] - 1] & 0x00ffffff) |
-					((alpha[i] * 17) << 24);
+						  ((alpha[i] * 17) << 24);
 			}
 		}
 	}
 }
-
-
-
 
 int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_subtitle *sub)
 {
@@ -350,11 +353,11 @@ int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_
 	guess_palette(ctx, (uint32_t *)rect->data1, 0xffff00);
 
 	// uint32_t rgba_palette[4];
-	// rgba_palette[0] = (uint32_t)RGBA(0,0,0,0); 
-	// rgba_palette[1] = (uint32_t)RGBA(255,255,255,255); 
-	// rgba_palette[2] = (uint32_t)RGBA(0,0,0,255); 
+	// rgba_palette[0] = (uint32_t)RGBA(0,0,0,0);
+	// rgba_palette[1] = (uint32_t)RGBA(255,255,255,255);
+	// rgba_palette[2] = (uint32_t)RGBA(0,0,0,255);
 	// rgba_palette[3] = (uint32_t)RGBA(127,127,127,255);
-	// memcpy(rect->data[1], rgba_palette, sizeof(uint32_t)*4); 
+	// memcpy(rect->data[1], rgba_palette, sizeof(uint32_t)*4);
 
 	rect->nb_colors = 4;
 
@@ -374,11 +377,10 @@ int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_
 	return 0;
 }
 
-
 int process_spu(struct lib_cc_decode *dec_ctx, unsigned char *buff, int length, struct cc_subtitle *sub)
 {
 	// struct DVD_Ctx *ctx = (struct DVD_Ctx *)init_dvdsub_decode();
-	struct DVD_Ctx *ctx = (struct DVD_Ctx *) dec_ctx->private_data;
+	struct DVD_Ctx *ctx = (struct DVD_Ctx *)dec_ctx->private_data;
 
 	if (ctx->append == 1)
 	{
@@ -425,9 +427,9 @@ int process_spu(struct lib_cc_decode *dec_ctx, unsigned char *buff, int length, 
 	write_dvd_sub(dec_ctx, ctx, sub);
 	// dec_ctx->got_output = 1;
 	// free(ctx);
-// #ifdef ENABLE_OCR
-// 	delete_ocr(&ctx->ocr_ctx);
-// #endif
+	// #ifdef ENABLE_OCR
+	// 	delete_ocr(&ctx->ocr_ctx);
+	// #endif
 	return length;
 }
 

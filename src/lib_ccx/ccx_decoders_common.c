@@ -15,9 +15,8 @@ made to reuse, not duplicate, as many functions as possible */
 #include "ccx_encoders_mcc.h"
 #include "ccx_dtvcc.h"
 
-uint64_t utc_refvalue = UINT64_MAX;  /* _UI64_MAX/UINT64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
+uint64_t utc_refvalue = UINT64_MAX; /* _UI64_MAX/UINT64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
 extern int in_xds_mode;
-
 
 /* This function returns a FTS that is guaranteed to be at least 1 ms later than the end of the previous screen. It shouldn't be needed
    obviously but it guarantees there's no timing overlap */
@@ -44,7 +43,8 @@ int process_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, 
 {
 	int ret = -1;
 
-	if (dec_ctx->write_format == CCX_OF_MCC) {
+	if (dec_ctx->write_format == CCX_OF_MCC)
+	{
 		mcc_encode_cc_data(enc_ctx, dec_ctx, cc_data, cc_count);
 		return 0;
 	}
@@ -83,7 +83,6 @@ int validate_cc_data_pair(unsigned char *cc_data_pair)
 		}
 	}
 	return 0;
-
 }
 int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle *sub)
 {
@@ -92,9 +91,8 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 
 	int timeok = 1;
 
-	if (ctx->fix_padding
-		&& cc_valid == 0 && cc_type <= 1 // Only fix NTSC packets
-		&& cc_block[1] == 0 && cc_block[2] == 0)
+	if (ctx->fix_padding && cc_valid == 0 && cc_type <= 1 // Only fix NTSC packets
+	    && cc_block[1] == 0 && cc_block[2] == 0)
 	{
 		/* Padding */
 		cc_valid = 1;
@@ -103,14 +101,13 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 	}
 
 	if (ctx->write_format != CCX_OF_RAW && // In raw we cannot skip padding because timing depends on it
-		ctx->write_format != CCX_OF_DVDRAW &&
-		(cc_block[0] == 0xFA || cc_block[0] == 0xFC || cc_block[0] == 0xFD)
-		&& (cc_block[1] & 0x7F) == 0 && (cc_block[2] & 0x7F) == 0) // CFS: Skip non-data, makes debugging harder.
+	    ctx->write_format != CCX_OF_DVDRAW &&
+	    (cc_block[0] == 0xFA || cc_block[0] == 0xFC || cc_block[0] == 0xFD) && (cc_block[1] & 0x7F) == 0 && (cc_block[2] & 0x7F) == 0) // CFS: Skip non-data, makes debugging harder.
 		return 1;
 
 	// Print raw data with FTS.
 	dbg_print(CCX_DMT_CBRAW, "%s   %d   %02X:%c%c:%02X", print_mstime_static(ctx->timing->fts_now + ctx->timing->fts_global), in_xds_mode,
-		cc_block[0], cc_block[1] & 0x7f, cc_block[2] & 0x7f, cc_block[2]);
+		  cc_block[0], cc_block[1] & 0x7f, cc_block[2] & 0x7f, cc_block[2]);
 
 	/* In theory the writercwtdata() function could return early and not
 	 * go through the 608/708 cases below.  We do that to get accurate
@@ -131,10 +128,10 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 				ctx->saw_caption_block = 1;
 
 				if (ctx->extraction_start.set &&
-					get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
+				    get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
 					timeok = 0;
 				if (ctx->extraction_end.set &&
-					get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
+				    get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
 				{
 					timeok = 0;
 					ctx->processed_enough = 1;
@@ -155,10 +152,10 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 				ctx->saw_caption_block = 1;
 
 				if (ctx->extraction_start.set &&
-					get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
+				    get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
 					timeok = 0;
 				if (ctx->extraction_end.set &&
-					get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
+				    get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
 				{
 					timeok = 0;
 					ctx->processed_enough = 1;
@@ -182,10 +179,10 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 				ctx->current_field = 3;
 
 				if (ctx->extraction_start.set &&
-					get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
+				    get_fts(ctx->timing, ctx->current_field) < ctx->extraction_start.time_in_ms)
 					timeok = 0;
 				if (ctx->extraction_end.set &&
-					get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
+				    get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
 				{
 					timeok = 0;
 					ctx->processed_enough = 1;
@@ -209,7 +206,7 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 			default:
 				fatal(CCX_COMMON_EXIT_BUG_BUG, "In do_cb: Impossible value for cc_type, Please file a bug report on GitHub.\n");
 		} // switch (cc_type)
-	} // cc_valid
+	}	  // cc_valid
 	else
 	{
 		dbg_print(CCX_DMT_CBRAW, "    ..   ..   ..\n");
@@ -258,23 +255,21 @@ struct lib_cc_decode *init_cc_decode(struct ccx_decoders_common_settings_t *sett
 	{
 		// Prepare 608 context
 		ctx->context_cc608_field_1 = ccx_decoder_608_init_library(
-			setting->settings_608,
-			setting->cc_channel,
-			1,
-			&ctx->processed_enough,
-			setting->cc_to_stdout,
-			setting->output_format,
-			ctx->timing
-		);
+		    setting->settings_608,
+		    setting->cc_channel,
+		    1,
+		    &ctx->processed_enough,
+		    setting->cc_to_stdout,
+		    setting->output_format,
+		    ctx->timing);
 		ctx->context_cc608_field_2 = ccx_decoder_608_init_library(
-			setting->settings_608,
-			setting->cc_channel,
-			2,
-			&ctx->processed_enough,
-			setting->cc_to_stdout,
-			setting->output_format,
-			ctx->timing
-		);
+		    setting->settings_608,
+		    setting->cc_channel,
+		    2,
+		    &ctx->processed_enough,
+		    setting->cc_to_stdout,
+		    setting->output_format,
+		    ctx->timing);
 	}
 	else
 	{
@@ -397,15 +392,15 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 		if (ctx->extract != 2)
 		{
 			if (ctx->write_format == CCX_OF_CCD ||
-				ctx->write_format == CCX_OF_SCC ||
-				ctx->write_format == CCX_OF_SMPTETT ||
-				ctx->write_format == CCX_OF_SAMI ||
-				ctx->write_format == CCX_OF_SRT ||
-				ctx->write_format == CCX_OF_TRANSCRIPT ||
-				ctx->write_format == CCX_OF_WEBVTT ||
-				ctx->write_format == CCX_OF_SPUPNG ||
-				ctx->write_format == CCX_OF_SSA ||
-				ctx->write_format == CCX_OF_MCC)
+			    ctx->write_format == CCX_OF_SCC ||
+			    ctx->write_format == CCX_OF_SMPTETT ||
+			    ctx->write_format == CCX_OF_SAMI ||
+			    ctx->write_format == CCX_OF_SRT ||
+			    ctx->write_format == CCX_OF_TRANSCRIPT ||
+			    ctx->write_format == CCX_OF_WEBVTT ||
+			    ctx->write_format == CCX_OF_SPUPNG ||
+			    ctx->write_format == CCX_OF_SSA ||
+			    ctx->write_format == CCX_OF_MCC)
 			{
 				flush_608_context(ctx->context_cc608_field_1, sub);
 			}
@@ -419,15 +414,15 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 		{
 			// TODO: Use a function to prevent repeating these lines
 			if (ctx->write_format == CCX_OF_CCD ||
-				ctx->write_format == CCX_OF_SCC ||
-				ctx->write_format == CCX_OF_SMPTETT ||
-				ctx->write_format == CCX_OF_SAMI ||
-				ctx->write_format == CCX_OF_SRT ||
-				ctx->write_format == CCX_OF_TRANSCRIPT ||
-				ctx->write_format == CCX_OF_WEBVTT ||
-				ctx->write_format == CCX_OF_SPUPNG ||
-				ctx->write_format == CCX_OF_SSA ||
-				ctx->write_format == CCX_OF_MCC)
+			    ctx->write_format == CCX_OF_SCC ||
+			    ctx->write_format == CCX_OF_SMPTETT ||
+			    ctx->write_format == CCX_OF_SAMI ||
+			    ctx->write_format == CCX_OF_SRT ||
+			    ctx->write_format == CCX_OF_TRANSCRIPT ||
+			    ctx->write_format == CCX_OF_WEBVTT ||
+			    ctx->write_format == CCX_OF_SPUPNG ||
+			    ctx->write_format == CCX_OF_SSA ||
+			    ctx->write_format == CCX_OF_MCC)
 			{
 				flush_608_context(ctx->context_cc608_field_2, sub);
 			}
@@ -593,7 +588,7 @@ void free_subtitle(struct cc_subtitle *sub)
 
 	if (sub->datatype == CC_DATATYPE_DVB)
 	{
-		struct cc_bitmap *bitmap = (struct cc_bitmap *) sub->data;
+		struct cc_bitmap *bitmap = (struct cc_bitmap *)sub->data;
 		if (bitmap)
 		{
 			freep(&bitmap->data0);

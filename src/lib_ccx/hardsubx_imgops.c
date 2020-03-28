@@ -13,7 +13,7 @@
 #define BLACK 20.0
 #define YELLOW 70.0
 
-#define min_f(a, b, c)  (fminf(a, fminf(b, c)))
+#define min_f(a, b, c) (fminf(a, fminf(b, c)))
 #define max_f(a, b, c) (fmaxf(a, fmaxf(b, c)))
 
 void rgb_to_hsv(float R, float G, float B, float *H, float *S, float *V)
@@ -30,29 +30,36 @@ void rgb_to_hsv(float R, float G, float B, float *H, float *S, float *V)
 
 	v = max;
 
-	if (max == 0.0f) {
+	if (max == 0.0f)
+	{
 		s = 0;
 		h = 0;
 	}
-	else if (max - min == 0.0f) {
+	else if (max - min == 0.0f)
+	{
 		s = 0;
 		h = 0;
 	}
-	else {
+	else
+	{
 		s = (max - min) / max;
 
-		if (max == r) {
+		if (max == r)
+		{
 			h = 60 * ((g - b) / (max - min)) + 0;
 		}
-		else if (max == g) {
+		else if (max == g)
+		{
 			h = 60 * ((b - r) / (max - min)) + 120;
 		}
-		else {
+		else
+		{
 			h = 60 * ((r - g) / (max - min)) + 240;
 		}
 	}
 
-	if (h < 0) h += 360.0f;
+	if (h < 0)
+		h += 360.0f;
 
 	*H = (unsigned char)(h);       // dst_h : 0-360
 	*S = (unsigned char)(s * 255); // dst_s : 0-255
@@ -96,7 +103,8 @@ void rgb_to_lab(float R, float G, float B, float *L, float *a, float *b)
 	*a = 500.0 * (fX - fY);
 	*b = 200.0 * (fY - fZ);
 
-	if (*L < BLACK) {
+	if (*L < BLACK)
+	{
 		*a *= exp((*L - BLACK) / (BLACK / 4));
 		*b *= exp((*L - BLACK) / (BLACK / 4));
 		*L = BLACK;

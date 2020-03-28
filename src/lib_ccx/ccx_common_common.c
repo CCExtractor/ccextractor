@@ -24,11 +24,11 @@ int fdprintf(int fd, const char *fmt, ...)
 
 /* Converts the given milli to separate hours,minutes,seconds and ms variables */
 void millis_to_time(LLONG milli, unsigned *hours, unsigned *minutes,
-	unsigned *seconds, unsigned *ms)
+		    unsigned *seconds, unsigned *ms)
 {
 	// LLONG milli = (LLONG) ((ccblock*1000)/29.97);
 	*ms = (unsigned)(milli % 1000); // milliseconds
-	milli = (milli - *ms) / 1000;  // Remainder, in seconds
+	milli = (milli - *ms) / 1000;	// Remainder, in seconds
 	*seconds = (int)milli % 60;
 	milli = (milli - *seconds) / 60; // Remainder, in minutes
 	*minutes = (int)(milli % 60);
@@ -48,13 +48,14 @@ void freep(void *arg)
 }
 
 int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time,
-	LLONG end_time, char *info, char *mode, enum ccx_encoding_type e_type)
+		    LLONG end_time, char *info, char *mode, enum ccx_encoding_type e_type)
 {
 	if (str == NULL || strlen(str) == 0)
 		return 0;
 	if (sub->nb_data)
 	{
-		for (; sub->next; sub = sub->next);
+		for (; sub->next; sub = sub->next)
+			;
 		sub->next = malloc(sizeof(struct cc_subtitle));
 		if (!sub->next)
 			return -1;

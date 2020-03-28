@@ -40,7 +40,8 @@ void activity_input_file_open(const char *filename)
 
 void activity_library_process(enum ccx_common_logging_gui message_type, ...)
 {
-	if (ccx_options.gui_mode_reports) {
+	if (ccx_options.gui_mode_reports)
+	{
 		va_list args;
 		va_start(args, message_type);
 		switch (message_type)
@@ -65,8 +66,8 @@ void activity_library_process(enum ccx_common_logging_gui message_type, ...)
 	}
 }
 
-void  activity_video_info(int hor_size, int vert_size,
-	const char *aspect_ratio, const char *framerate)
+void activity_video_info(int hor_size, int vert_size,
+			 const char *aspect_ratio, const char *framerate)
 {
 	if (ccx_options.gui_mode_reports)
 	{
@@ -75,7 +76,6 @@ void  activity_video_info(int hor_size, int vert_size,
 		fflush(stderr);
 	}
 }
-
 
 void activity_message(const char *fmt, ...)
 {
@@ -126,7 +126,6 @@ void activity_report_data_read(void)
 		fflush(stderr);
 	}
 }
-
 
 void activity_header(void)
 {

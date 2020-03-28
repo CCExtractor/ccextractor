@@ -18,8 +18,10 @@ int read_header(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb);
 // Helper function for qsort (64bit int sort)
 int qsort_cmpint(const void *a, const void *b)
 {
-	if (a < b) return -1;
-	if (a > b) return 1;
+	if (a < b)
+		return -1;
+	if (a > b)
+		return 1;
 	return 0;
 }
 
@@ -99,7 +101,8 @@ void add_chunk(struct wtv_chunked_buffer *cb, uint64_t value)
 // in to the buffer.
 void skip_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, uint32_t size)
 {
-	if (cb->buffer != NULL && cb->buffer_size > 0) {
+	if (cb->buffer != NULL && cb->buffer_size > 0)
+	{
 		free(cb->buffer);
 	}
 	cb->buffer = NULL;
@@ -107,8 +110,8 @@ void skip_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, u
 	uint64_t start = cb->filepos;
 	if (cb->skip_chunks[cb->chunk] != -1 && start + size > cb->skip_chunks[cb->chunk])
 	{
-		buffered_seek(ctx, (int)((cb->skip_chunks[cb->chunk] - start) + (WTV_META_CHUNK_SIZE)+(size - (cb->skip_chunks[cb->chunk] - start))));
-		cb->filepos += (cb->skip_chunks[cb->chunk] - start) + (WTV_META_CHUNK_SIZE)+(size - (cb->skip_chunks[cb->chunk] - start));
+		buffered_seek(ctx, (int)((cb->skip_chunks[cb->chunk] - start) + (WTV_META_CHUNK_SIZE) + (size - (cb->skip_chunks[cb->chunk] - start))));
+		cb->filepos += (cb->skip_chunks[cb->chunk] - start) + (WTV_META_CHUNK_SIZE) + (size - (cb->skip_chunks[cb->chunk] - start));
 		cb->chunk++;
 	}
 	else
@@ -343,11 +346,11 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 		memcpy(&len, cb->buffer + 16, 4); // Read the length
 		len -= 32;
 		dbg_print(CCX_DMT_PARSE, "len %X\n", len);
-		pad = len % 8 == 0 ? 0 : 8 - (len % 8);  // Calculate the padding to add to the length
+		pad = len % 8 == 0 ? 0 : 8 - (len % 8); // Calculate the padding to add to the length
 		// to get to the next GUID
 		dbg_print(CCX_DMT_PARSE, "pad %X\n", pad);
 		memcpy(&stream_id, cb->buffer + 20, 4);
-		stream_id = stream_id & 0x7f;       // Read and calculate the stream_id
+		stream_id = stream_id & 0x7f; // Read and calculate the stream_id
 		dbg_print(CCX_DMT_PARSE, "stream_id: 0x%X\n", stream_id);
 
 		for (x = 0; x < num_streams; x++)
@@ -361,7 +364,8 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 
 			dbg_print(CCX_DMT_PARSE, "WTV EOF\n");
 			parsebuf = (uint8_t *)malloc(1024);
-			do {
+			do
+			{
 				result = buffered_read(ctx->demux_ctx, parsebuf, 1024);
 				ctx->demux_ctx->past += 1024;
 			} while (result == 1024);
@@ -392,14 +396,13 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			if (!memcmp(stream_type, stream_guid, 16))
 			{
 				video_streams[num_streams] = stream_id; // We keep a list of stream ids
-				num_streams++;                        // Even though there should only be 1
+				num_streams++;				// Even though there should only be 1
 			}
 			if (memcmp(stream_type, WTV_STREAM_AUDIO, 16))
 				alt_stream = stream_id;
 			len -= 28;
 		}
-		if (!memcmp(guid, WTV_TIMING, 16) && ((use_alt_stream < WTV_CC_TIMESTAMP_MAGIC_THRESH && check_stream_id(stream_id, video_streams, num_streams))
-			|| (use_alt_stream == WTV_CC_TIMESTAMP_MAGIC_THRESH && stream_id == alt_stream)))
+		if (!memcmp(guid, WTV_TIMING, 16) && ((use_alt_stream < WTV_CC_TIMESTAMP_MAGIC_THRESH && check_stream_id(stream_id, video_streams, num_streams)) || (use_alt_stream == WTV_CC_TIMESTAMP_MAGIC_THRESH && stream_id == alt_stream)))
 		{
 			int64_t time;
 			// The WTV_TIMING GUID contains a timestamp for the given stream_id
@@ -410,13 +413,15 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 
 			memcpy(&time, cb->buffer + 0x8, 8); // Read the timestamp
 			dbg_print(CCX_DMT_PARSE, "TIME: %ld\n", time);
-			if (time != -1 && time != WTV_CC_TIMESTAMP_MAGIC) { // Ignore -1 timestamps
+			if (time != -1 && time != WTV_CC_TIMESTAMP_MAGIC)
+			{ // Ignore -1 timestamps
 				set_current_pts(dec_ctx->timing, time_to_pes_time(time));
 				dec_ctx->timing->pts_set = 1;
 				frames_since_ref_time = 0;
 				set_fts(dec_ctx->timing);
 			}
-			else if (time == WTV_CC_TIMESTAMP_MAGIC && stream_id != alt_stream) {
+			else if (time == WTV_CC_TIMESTAMP_MAGIC && stream_id != alt_stream)
+			{
 				use_alt_stream++;
 				mprint("WARNING: %i WTV_CC_TIMESTAMP_MAGIC detected in cc timestamps. \n", use_alt_stream);
 				if (use_alt_stream == WTV_CC_TIMESTAMP_MAGIC_THRESH)
@@ -424,9 +429,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			}
 			len -= 16;
 		}
-		if (!memcmp(guid, WTV_DATA, 16)
-			&& check_stream_id(stream_id, video_streams, num_streams) && dec_ctx->timing->current_pts != 0
-			&& (ccx_options.wtvmpeg2 || (!ccx_options.wtvmpeg2 && len == 2)))
+		if (!memcmp(guid, WTV_DATA, 16) && check_stream_id(stream_id, video_streams, num_streams) && dec_ctx->timing->current_pts != 0 && (ccx_options.wtvmpeg2 || (!ccx_options.wtvmpeg2 && len == 2)))
 		{
 			// This is the data for a stream we want to process
 			dbg_print(CCX_DMT_PARSE, "\nWTV DATA\n");

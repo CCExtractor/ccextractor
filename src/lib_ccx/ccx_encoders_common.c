@@ -21,7 +21,7 @@ int fsync(int fd)
 
 // These are the default settings for plain transcripts. No times, no CC or caption mode, and no XDS.
 ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
-{
+    {
 	.showStartTime = 0,
 	.showEndTime = 0,
 	.showMode = 0,
@@ -29,12 +29,11 @@ ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
 	.relativeTimestamp = 1,
 	.xds = 0,
 	.useColors = 1,
-	.isFinal = 0
-};
+	.isFinal = 0};
 
 //TODO sami header doesn't carry about CRLF/LF option
 static const char *sami_header = // TODO: Revise the <!-- comments
-"<SAMI>\n\
+    "<SAMI>\n\
 <HEAD>\n\
 <STYLE TYPE=\"text/css\">\n\
 <!--\n\
@@ -47,7 +46,7 @@ text-align: center; font-size: 18pt; font-family: arial; font-weight: bold; colo
 <BODY>\n";
 
 static const char *ssa_header =
-"[Script Info]\n\
+    "[Script Info]\n\
 Title: Default file\n\
 ScriptType: v4.00+\n\
 \n\
@@ -74,26 +73,26 @@ TODO -- Set correct values for "ttp:dropMode", "ttp:frameRate" .Using common for
 
 */
 static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
-"  <tt xmlns=\"http://www.w3.org/ns/ttml\" xmlns:ttp=\"http://www.w3.org/ns/ttml#parameter\" ttp:dropMode=\"dropNTSC\" ttp:frameRate=\"30\" ttp:frameRateMultiplier=\"1000 1001\" ttp:timeBase=\"smpte\" xmlns:m608=\"http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt#cea608\" xmlns:smpte=\"http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt\" xmlns:ttm=\"http://www.w3.org/ns/ttml#metadata\" xmlns:tts=\"http://www.w3.org/ns/ttml#styling\">\n"
-//			"  <tt xmlns=\"http://www.w3.org/ns/ttml\" xmlns:ttp=\"http://www.w3.org/ns/ttml#parameter\" xmlns:m608=\"http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt#cea608\" xmlns:smpte=\"http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt\" xmlns:ttm=\"http://www.w3.org/ns/ttml#metadata\" xmlns:tts=\"http://www.w3.org/ns/ttml#styling\">\n"
-"  <head>\n"
-"    <styling>\n"
-"      <style tts:color=\"white\" tts:fontFamily=\"monospace\" tts:fontWeight=\"normal\" tts:textAlign=\"left\" xml:id=\"basic\"/>\n"
-"    </styling>\n"
-"    <layout>\n"
-"      <region tts:backgroundColor=\"transparent\" xml:id=\"pop1\"/>\n"
-"      <region tts:backgroundColor=\"transparent\" xml:id=\"paint\"/>\n"
-"      <region tts:backgroundColor=\"transparent\" xml:id=\"rollup2\"/>\n"
-"      <region tts:backgroundColor=\"transparent\" xml:id=\"rollup3\"/>\n"
-"      <region tts:backgroundColor=\"transparent\" xml:id=\"rollup4\"/>\n"
-"    </layout>\n"
-"    <metadata/>\n"
-"    <smpte:information m608:captionService=\"F1C1CC\" m608:channel=\"cc1\"/>\n"
-"  </head>\n"
-"  <body>\n"
-"    <div>\n";
+				    "  <tt xmlns=\"http://www.w3.org/ns/ttml\" xmlns:ttp=\"http://www.w3.org/ns/ttml#parameter\" ttp:dropMode=\"dropNTSC\" ttp:frameRate=\"30\" ttp:frameRateMultiplier=\"1000 1001\" ttp:timeBase=\"smpte\" xmlns:m608=\"http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt#cea608\" xmlns:smpte=\"http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt\" xmlns:ttm=\"http://www.w3.org/ns/ttml#metadata\" xmlns:tts=\"http://www.w3.org/ns/ttml#styling\">\n"
+				    //			"  <tt xmlns=\"http://www.w3.org/ns/ttml\" xmlns:ttp=\"http://www.w3.org/ns/ttml#parameter\" xmlns:m608=\"http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt#cea608\" xmlns:smpte=\"http://www.smpte-ra.org/schemas/2052-1/2010/smpte-tt\" xmlns:ttm=\"http://www.w3.org/ns/ttml#metadata\" xmlns:tts=\"http://www.w3.org/ns/ttml#styling\">\n"
+				    "  <head>\n"
+				    "    <styling>\n"
+				    "      <style tts:color=\"white\" tts:fontFamily=\"monospace\" tts:fontWeight=\"normal\" tts:textAlign=\"left\" xml:id=\"basic\"/>\n"
+				    "    </styling>\n"
+				    "    <layout>\n"
+				    "      <region tts:backgroundColor=\"transparent\" xml:id=\"pop1\"/>\n"
+				    "      <region tts:backgroundColor=\"transparent\" xml:id=\"paint\"/>\n"
+				    "      <region tts:backgroundColor=\"transparent\" xml:id=\"rollup2\"/>\n"
+				    "      <region tts:backgroundColor=\"transparent\" xml:id=\"rollup3\"/>\n"
+				    "      <region tts:backgroundColor=\"transparent\" xml:id=\"rollup4\"/>\n"
+				    "    </layout>\n"
+				    "    <metadata/>\n"
+				    "    <smpte:information m608:captionService=\"F1C1CC\" m608:channel=\"cc1\"/>\n"
+				    "  </head>\n"
+				    "  <body>\n"
+				    "    <div>\n";
 
-static const char *webvtt_header[] = { "WEBVTT", "\r\n", NULL };
+static const char *webvtt_header[] = {"WEBVTT", "\r\n", NULL};
 
 static const char *simple_xml_header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<captions>\r\n";
 
@@ -132,18 +131,24 @@ unsigned int utf8_to_latin1_map(const unsigned int code)
 			return 189U; /* U+0153 = 0xBD: oe ligature */
 		case 0x0160U:
 			return 166U; /* U+0160 = 0xA6: S with caron */
-		case 0x0161U: return 168U; /* U+0161 = 0xA8: s with caron */
-		case 0x0178U: return 190U; /* U+0178 = 0xBE: Y with diaresis */
-		case 0x017DU: return 180U; /* U+017D = 0xB4: Z with caron */
-		case 0x017EU: return 184U; /* U+017E = 0xB8: z with caron */
-		case 0x20ACU: return 164U; /* U+20AC = 0xA4: Euro */
-		default:      return 256U;
+		case 0x0161U:
+			return 168U; /* U+0161 = 0xA8: s with caron */
+		case 0x0178U:
+			return 190U; /* U+0178 = 0xBE: Y with diaresis */
+		case 0x017DU:
+			return 180U; /* U+017D = 0xB4: Z with caron */
+		case 0x017EU:
+			return 184U; /* U+017E = 0xB8: z with caron */
+		case 0x20ACU:
+			return 164U; /* U+20AC = 0xA4: Euro */
+		default:
+			return 256U;
 	}
 }
 
 int change_utf8_encoding(unsigned char *dest, unsigned char *src, int len, enum ccx_encoding_type out_enc)
 {
-	unsigned char *orig = dest; // Keep for calculating length
+	unsigned char *orig = dest;    // Keep for calculating length
 	unsigned char *orig_src = src; // Keep for calculating length
 	for (int i = 0; src < orig_src + len;)
 	{
@@ -173,8 +178,7 @@ int change_utf8_encoding(unsigned char *dest, unsigned char *src, int len, enum 
 				{
 					if ((src[1] & 0x40) == 0)
 					{
-						int cp = utf8_to_latin1_map((((unsigned int)(src[0] & 0x1F)) << 6)
-							| ((unsigned int)(src[1] & 0x3F)));
+						int cp = utf8_to_latin1_map((((unsigned int)(src[0] & 0x1F)) << 6) | ((unsigned int)(src[1] & 0x3F)));
 						if (cp < 256)
 							*dest++ = cp;
 						else
@@ -187,9 +191,7 @@ int change_utf8_encoding(unsigned char *dest, unsigned char *src, int len, enum 
 				{
 					if ((src[1] & 0x40) == 0 && (src[2] & 0x40) == 0)
 					{
-						int cp = utf8_to_latin1_map((((unsigned int)(src[0] & 0x0F)) << 12)
-							| (((unsigned int)(src[1] & 0x3F)) << 6)
-							| ((unsigned int)(src[2] & 0x3F)));
+						int cp = utf8_to_latin1_map((((unsigned int)(src[0] & 0x0F)) << 12) | (((unsigned int)(src[1] & 0x3F)) << 6) | ((unsigned int)(src[2] & 0x3F)));
 						if (cp < 256)
 							*dest++ = cp;
 						else
@@ -199,13 +201,10 @@ int change_utf8_encoding(unsigned char *dest, unsigned char *src, int len, enum 
 				else if (c_len == 4)
 				{
 					if ((src[1] & 0x40) == 0 &&
-						(src[2] & 0x40) == 0 &&
-						(src[3] & 0x40) == 0)
+					    (src[2] & 0x40) == 0 &&
+					    (src[3] & 0x40) == 0)
 					{
-						int cp = utf8_to_latin1_map((((unsigned int)(src[0] & 0x07)) << 18)
-							| (((unsigned int)(src[1] & 0x3F)) << 12)
-							| (((unsigned int)(src[2] & 0x3F)) << 6)
-							| ((unsigned int)(src[3] & 0x3F)));
+						int cp = utf8_to_latin1_map((((unsigned int)(src[0] & 0x07)) << 18) | (((unsigned int)(src[1] & 0x3F)) << 12) | (((unsigned int)(src[2] & 0x3F)) << 6) | ((unsigned int)(src[3] & 0x3F)));
 						if (cp < 256)
 							*(dest++) = cp;
 						else
@@ -217,15 +216,11 @@ int change_utf8_encoding(unsigned char *dest, unsigned char *src, int len, enum 
 				else if (c_len == 5)
 				{
 					if ((src[1] & 0x40) == 0 &&
-						(src[2] & 0x40) == 0 &&
-						(src[3] & 0x40) == 0 &&
-						(src[4] & 0x40) == 0)
+					    (src[2] & 0x40) == 0 &&
+					    (src[3] & 0x40) == 0 &&
+					    (src[4] & 0x40) == 0)
 					{
-						int cp = utf8_to_latin1_map((((unsigned int)(src[0] & 0x03)) << 24U)
-							| (((unsigned int)(src[1] & 0x3F)) << 18U)
-							| (((unsigned int)(src[2] & 0x3F)) << 12U)
-							| (((unsigned int)(src[3] & 0x3F)) << 6U)
-							| ((unsigned int)(src[4] & 0x3FU)));
+						int cp = utf8_to_latin1_map((((unsigned int)(src[0] & 0x03)) << 24U) | (((unsigned int)(src[1] & 0x3F)) << 18U) | (((unsigned int)(src[2] & 0x3F)) << 12U) | (((unsigned int)(src[3] & 0x3F)) << 6U) | ((unsigned int)(src[4] & 0x3FU)));
 						if (cp < 256)
 							*(dest++) = cp;
 						else
@@ -296,7 +291,7 @@ int change_ascii_encoding(unsigned char *dest, unsigned char *src, int len, enum
 }
 
 int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_subs,
-	enum ccx_encoding_type in_enc, enum ccx_encoding_type out_enc, int max_len)
+		  enum ccx_encoding_type in_enc, enum ccx_encoding_type out_enc, int max_len)
 {
 	int last_non_blank = -1;
 	int first_non_blank = -1;
@@ -310,7 +305,6 @@ int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_
 		*out_buffer = 0;
 		return 0;
 	}
-
 
 	// change encoding only when required
 	switch (in_enc)
@@ -400,22 +394,25 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx, struct ccx_s_write *out)
 	return ret;
 }
 
-
 static int write_bom(struct encoder_ctx *ctx, struct ccx_s_write *out)
 {
 	int ret = 0;
-	if (!ctx->no_bom) {
-		if (ctx->encoding == CCX_ENC_UTF_8) { // Write BOM
+	if (!ctx->no_bom)
+	{
+		if (ctx->encoding == CCX_ENC_UTF_8)
+		{ // Write BOM
 			ret = write(out->fh, UTF8_BOM, sizeof(UTF8_BOM));
-			if (ret < sizeof(UTF8_BOM)) {
+			if (ret < sizeof(UTF8_BOM))
+			{
 				mprint("WARNING: Unable tp write UTF BOM\n");
 				return -1;
 			}
-
 		}
-		if (ctx->encoding == CCX_ENC_UNICODE) { // Write BOM
+		if (ctx->encoding == CCX_ENC_UNICODE)
+		{ // Write BOM
 			ret = write(out->fh, LITTLE_ENDIAN_BOM, sizeof(LITTLE_ENDIAN_BOM));
-			if (ret < sizeof(LITTLE_ENDIAN_BOM)) {
+			if (ret < sizeof(LITTLE_ENDIAN_BOM))
+			{
 				mprint("WARNING: Unable to write LITTLE_ENDIAN_BOM \n");
 				return -1;
 			}
@@ -510,7 +507,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 				return -1;
 			}
 			break;
-		case CCX_OF_RCWT: // Write header
+		case CCX_OF_RCWT:			     // Write header
 			rcwt_header[7] = ctx->in_fileformat; // sets file format version
 
 			if (ctx->send_to_srv)
@@ -613,7 +610,7 @@ void write_cc_line_as_simplexml(struct eia608_screen *data, struct encoder_ctx *
 	char *cap1 = "</caption>";
 
 	length = get_str_basic(context->subline, data->characters[line_number],
-		context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
+			       context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
 
 	ret = write(context->out->fh, cap, strlen(cap));
 	ret = write(context->out->fh, context->subline, length);
@@ -623,9 +620,7 @@ void write_cc_line_as_simplexml(struct eia608_screen *data, struct encoder_ctx *
 	}
 	ret = write(context->out->fh, cap1, strlen(cap1));
 	ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-
 }
-
 
 int write_cc_buffer_as_simplexml(struct eia608_screen *data, struct encoder_ctx *context)
 {
@@ -642,7 +637,6 @@ int write_cc_buffer_as_simplexml(struct eia608_screen *data, struct encoder_ctx 
 	return wrote_something;
 }
 
-
 //Dummy Function for support DVB in simple xml
 int write_cc_bitmap_as_simplexml(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
@@ -652,7 +646,6 @@ int write_cc_bitmap_as_simplexml(struct cc_subtitle *sub, struct encoder_ctx *co
 	freep(&sub->data);
 	return ret;
 }
-
 
 /**
  * @brief Function to add credits at end of subtitles File
@@ -669,8 +662,7 @@ static void try_to_add_end_credits(struct encoder_ctx *context, struct ccx_s_wri
 	window = current_fts - context->last_displayed_subs_ms - 1;
 	if (window < context->endcreditsforatleast.time_in_ms) // Won't happen, window is too short
 		return;
-	length = context->endcreditsforatmost.time_in_ms > window ?
-		window : context->endcreditsforatmost.time_in_ms;
+	length = context->endcreditsforatmost.time_in_ms > window ? window : context->endcreditsforatmost.time_in_ms;
 
 	st = current_fts - length - 1;
 	end = current_fts;
@@ -709,25 +701,22 @@ void try_to_add_start_credits(struct encoder_ctx *context, LLONG start_ms)
 	if (context->last_displayed_subs_ms + 1 > context->startcreditsnotafter.time_in_ms) // Too late
 		return;
 
-	st = context->startcreditsnotbefore.time_in_ms > (context->last_displayed_subs_ms + 1) ?
-		context->startcreditsnotbefore.time_in_ms : (context->last_displayed_subs_ms + 1); // When would credits actually start
+	st = context->startcreditsnotbefore.time_in_ms > (context->last_displayed_subs_ms + 1) ? context->startcreditsnotbefore.time_in_ms : (context->last_displayed_subs_ms + 1); // When would credits actually start
 
-	end = context->startcreditsnotafter.time_in_ms < start_ms - 1 ?
-		context->startcreditsnotafter.time_in_ms : start_ms - 1;
+	end = context->startcreditsnotafter.time_in_ms < start_ms - 1 ? context->startcreditsnotafter.time_in_ms : start_ms - 1;
 
 	window = end - st; // Allowable time in MS
 
 	if (context->startcreditsforatleast.time_in_ms > window) // Window is too short
 		return;
 
-	length = context->startcreditsforatmost.time_in_ms > window ?
-		window : context->startcreditsforatmost.time_in_ms;
+	length = context->startcreditsforatmost.time_in_ms > window ? window : context->startcreditsforatmost.time_in_ms;
 
 	dbg_print(CCX_DMT_VERBOSE, "Last subs: %lld   Current position: %lld\n",
-		context->last_displayed_subs_ms, start_ms);
+		  context->last_displayed_subs_ms, start_ms);
 	dbg_print(CCX_DMT_VERBOSE, "Not before: %lld   Not after: %lld\n",
-		context->startcreditsnotbefore.time_in_ms,
-		context->startcreditsnotafter.time_in_ms);
+		  context->startcreditsnotbefore.time_in_ms,
+		  context->startcreditsnotafter.time_in_ms);
 	dbg_print(CCX_DMT_VERBOSE, "Start of window: %lld   End of window: %lld\n", st, end);
 
 	if (window > length + 2)
@@ -761,8 +750,6 @@ void try_to_add_start_credits(struct encoder_ctx *context, LLONG start_ms)
 	}
 	context->startcredits_displayed = 1;
 	return;
-
-
 }
 
 static void dinit_output_ctx(struct encoder_ctx *ctx)
@@ -785,11 +772,12 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	int nb_lang;
 	const char *extension; // Input filename without the extension
 
-#define check_ret(filename) 	if (ret != EXIT_OK)	\
-				{									\
-					fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED,"Failed to open output file: %s\nDetails : %s\n", filename, strerror(errno)); \
-					return ret;						\
-				}
+#define check_ret(filename)                                                                                                               \
+	if (ret != EXIT_OK)                                                                                                               \
+	{                                                                                                                                 \
+		fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Failed to open output file: %s\nDetails : %s\n", filename, strerror(errno)); \
+		return ret;                                                                                                               \
+	}
 
 	if (cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE && cfg->extract == 12 && cfg->write_format != CCX_OF_MCC)
 		nb_lang = 2;
@@ -898,7 +886,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 					basefilename = get_basename(ctx->first_input_file);
 
 				ccx_dtvcc_writer_init(&ctx->dtvcc_writers[i], basefilename,
-					ctx->program_number, i + 1, cfg->write_format, cfg);
+						      ctx->program_number, i + 1, cfg->write_format, cfg);
 				free(basefilename);
 			}
 		}
@@ -907,7 +895,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	if (ret)
 	{
 		print_error(cfg->gui_mode_reports,
-			"Output filename is same as one of input filenames. Check output parameters.\n");
+			    "Output filename is same as one of input filenames. Check output parameters.\n");
 		return CCX_COMMON_EXIT_FILE_CREATION_FAILED;
 	}
 
@@ -1142,7 +1130,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					continue;
 				}
 
-
 				if (utc_refvalue != UINT64_MAX)
 				{
 					if (data->start_time != -1)
@@ -1305,7 +1292,8 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			else
 			{
 				ret = write(context->out->fh, sub->data, sub->nb_data);
-				if (ret < sub->nb_data) {
+				if (ret < sub->nb_data)
+				{
 					mprint("WARNING: Loss of data\n");
 				}
 			}
@@ -1464,8 +1452,10 @@ unsigned int get_font_encoded(struct encoder_ctx *ctx, unsigned char *buffer, in
 	return (unsigned)(buffer - orig); // Return length
 }
 
-void switch_output_file(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, int track_id) {
-	if (enc_ctx->out->filename != NULL) { // Close and release the previous handle
+void switch_output_file(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, int track_id)
+{
+	if (enc_ctx->out->filename != NULL)
+	{ // Close and release the previous handle
 		free(enc_ctx->out->filename);
 		close(enc_ctx->out->fh);
 	}

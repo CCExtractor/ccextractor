@@ -2,12 +2,12 @@
 #include "ccx_common_constants.h"
 #include "ccx_common_timing.h"
 #include "ccx_common_common.h"
-#include "utility.h" 
+#include "utility.h"
 
 LLONG ts_start_of_xds = -1; // Time at which we switched to XDS mode, =-1 hasn't happened yet
 
 static const char *XDSclasses[] =
-{
+    {
 	"Current",
 	"Future",
 	"Channel",
@@ -15,51 +15,49 @@ static const char *XDSclasses[] =
 	"Public service",
 	"Reserved",
 	"Private data",
-	"End"
-};
+	"End"};
 
 static const char *XDSProgramTypes[] =
-{
-	"Education","Entertainment", "Movie", "News", "Religious",
-	"Sports", "Other", "Action","Advertisement", "Animated",
-	"Anthology","Automobile","Awards","Baseball","Basketball",
-	"Bulletin","Business","Classical","College","Combat",
-	"Comedy","Commentary","Concert","Consumer","Contemporary",
-	"Crime","Dance","Documentary","Drama","Elementary",
-	"Erotica","Exercise","Fantasy","Farm","Fashion",
-	"Fiction","Food","Football","Foreign","Fund-Raiser",
-	"Game/Quiz","Garden","Golf","Government","Health",
-	"High_School","History","Hobby","Hockey","Home",
-	"Horror","Information","Instruction","International","Interview",
-	"Language","Legal","Live","Local","Math",
-	"Medical","Meeting","Military","Mini-Series","Music",
-	"Mystery","National","Nature","Police","Politics",
-	"Premiere","Pre-Recorded","Product","Professional","Public",
-	"Racing","Reading","Repair","Repeat","Review",
-	"Romance","Science","Series","Service","Shopping",
-	"Soap_Opera","Special","Suspense","Talk","Technical",
-	"Tennis","Travel","Variety","Video","Weather",
-	"Western"
-};
+    {
+	"Education", "Entertainment", "Movie", "News", "Religious",
+	"Sports", "Other", "Action", "Advertisement", "Animated",
+	"Anthology", "Automobile", "Awards", "Baseball", "Basketball",
+	"Bulletin", "Business", "Classical", "College", "Combat",
+	"Comedy", "Commentary", "Concert", "Consumer", "Contemporary",
+	"Crime", "Dance", "Documentary", "Drama", "Elementary",
+	"Erotica", "Exercise", "Fantasy", "Farm", "Fashion",
+	"Fiction", "Food", "Football", "Foreign", "Fund-Raiser",
+	"Game/Quiz", "Garden", "Golf", "Government", "Health",
+	"High_School", "History", "Hobby", "Hockey", "Home",
+	"Horror", "Information", "Instruction", "International", "Interview",
+	"Language", "Legal", "Live", "Local", "Math",
+	"Medical", "Meeting", "Military", "Mini-Series", "Music",
+	"Mystery", "National", "Nature", "Police", "Politics",
+	"Premiere", "Pre-Recorded", "Product", "Professional", "Public",
+	"Racing", "Reading", "Repair", "Repeat", "Review",
+	"Romance", "Science", "Series", "Service", "Shopping",
+	"Soap_Opera", "Special", "Suspense", "Talk", "Technical",
+	"Tennis", "Travel", "Variety", "Video", "Weather",
+	"Western"};
 
-#define XDS_CLASS_CURRENT	0
-#define XDS_CLASS_FUTURE	1
-#define XDS_CLASS_CHANNEL	2
-#define XDS_CLASS_MISC		3
-#define XDS_CLASS_PUBLIC	4
-#define XDS_CLASS_RESERVED	5
-#define XDS_CLASS_PRIVATE	6
-#define XDS_CLASS_END		7
+#define XDS_CLASS_CURRENT 0
+#define XDS_CLASS_FUTURE 1
+#define XDS_CLASS_CHANNEL 2
+#define XDS_CLASS_MISC 3
+#define XDS_CLASS_PUBLIC 4
+#define XDS_CLASS_RESERVED 5
+#define XDS_CLASS_PRIVATE 6
+#define XDS_CLASS_END 7
 #define XDS_CLASS_OUT_OF_BAND 0x40 // Not a real class, a marker for packets for out-of-band data.
 
 // Types for the classes current and future
-#define XDS_TYPE_PIN_START_TIME	1
-#define XDS_TYPE_LENGH_AND_CURRENT_TIME	2
+#define XDS_TYPE_PIN_START_TIME 1
+#define XDS_TYPE_LENGH_AND_CURRENT_TIME 2
 #define XDS_TYPE_PROGRAM_NAME 3
 #define XDS_TYPE_PROGRAM_TYPE 4
 #define XDS_TYPE_CONTENT_ADVISORY 5
 #define XDS_TYPE_AUDIO_SERVICES 6
-#define XDS_TYPE_CGMS 8 // Copy Generation Management System
+#define XDS_TYPE_CGMS 8		     // Copy Generation Management System
 #define XDS_TYPE_ASPECT_RATIO_INFO 9 // Appears in CEA-608-B but in E it's been removed as is "reserved"
 #define XDS_TYPE_PROGRAM_DESC_1 0x10
 #define XDS_TYPE_PROGRAM_DESC_2 0x11
@@ -73,7 +71,7 @@ static const char *XDSProgramTypes[] =
 // Types for the class channel
 #define XDS_TYPE_NETWORK_NAME 1
 #define XDS_TYPE_CALL_LETTERS_AND_CHANNEL 2
-#define XDS_TYPE_TSID 4	// Transmission Signal Identifier
+#define XDS_TYPE_TSID 4 // Transmission Signal Identifier
 
 // Types for miscellaneous packets
 #define XDS_TYPE_TIME_OF_DAY 1
@@ -128,7 +126,7 @@ struct ccx_decoders_xds_context *ccx_decoders_xds_init_library(struct ccx_common
 int write_xds_string(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, char *p, size_t len)
 {
 	struct eia608_screen *data = NULL;
-	data = (struct eia608_screen *) realloc(sub->data, (sub->nb_data + 1) * sizeof(*data));
+	data = (struct eia608_screen *)realloc(sub->data, (sub->nb_data + 1) * sizeof(*data));
 	if (!data)
 	{
 		freep(&sub->data);
@@ -153,7 +151,6 @@ int write_xds_string(struct cc_subtitle *sub, struct ccx_decoders_xds_context *c
 	}
 
 	return 0;
-
 }
 
 void xdsprint(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, const char *fmt, ...)
@@ -181,10 +178,10 @@ void xdsprint(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, con
 			return;
 		}
 		/* Else try again with more space. */
-		if (n > -1)    /* glibc 2.1 */
+		if (n > -1)	      /* glibc 2.1 */
 			size = n + 1; /* precisely what is needed */
-		else           /* glibc 2.0 */
-			size *= 2;  /* twice the old size */
+		else		      /* glibc 2.0 */
+			size *= 2;    /* twice the old size */
 		if ((np = (char *)realloc(p, size)) == NULL)
 		{
 			free(p);
@@ -202,7 +199,6 @@ void xds_debug_test(struct ccx_decoders_xds_context *ctx, struct cc_subtitle *su
 	process_xds_bytes(ctx, 0x05, 0x02);
 	process_xds_bytes(ctx, 0x20, 0x20);
 	do_end_of_xds(sub, ctx, 0x2a);
-
 }
 
 void xds_cea608_test(struct ccx_decoders_xds_context *ctx, struct cc_subtitle *sub)
@@ -227,7 +223,6 @@ int how_many_used(struct ccx_decoders_xds_context *ctx)
 		if (ctx->xds_buffers[i].in_use)
 			c++;
 	return c;
-
 }
 
 void clear_xds_buffer(struct ccx_decoders_xds_context *ctx, int num)
@@ -248,16 +243,16 @@ void process_xds_bytes(struct ccx_decoders_xds_context *ctx, const unsigned char
 	if (hi >= 0x01 && hi <= 0x0f)
 	{
 		int xds_class = (hi - 1) / 2; // Start codes 1 and 2 are "class type" 0, 3-4 are 2, and so on.
-		is_new = hi % 2; // Start codes are even
+		is_new = hi % 2;	      // Start codes are even
 		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "XDS Start: %u.%u  Is new: %d  | Class: %d (%s), Used buffers: %d\n",
-			hi, lo, is_new, xds_class, XDSclasses[xds_class], how_many_used(ctx));
+					     hi, lo, is_new, xds_class, XDSclasses[xds_class], how_many_used(ctx));
 		int first_free_buf = -1;
 		int matching_buf = -1;
 		for (int i = 0; i < NUM_XDS_BUFFERS; i++)
 		{
 			if (ctx->xds_buffers[i].in_use &&
-				ctx->xds_buffers[i].xds_class == xds_class &&
-				ctx->xds_buffers[i].xds_type == lo)
+			    ctx->xds_buffers[i].xds_class == xds_class &&
+			    ctx->xds_buffers[i].xds_type == lo)
 			{
 				matching_buf = i;
 				break;
@@ -275,7 +270,6 @@ void process_xds_bytes(struct ccx_decoders_xds_context *ctx, const unsigned char
 			ccx_common_logging.log_ftn("Note: All XDS buffers full (bug or suicidal stream). Ignoring this one (%d,%d).\n", xds_class, lo);
 			ctx->cur_xds_buffer_idx = -1;
 			return;
-
 		}
 		ctx->cur_xds_buffer_idx = (matching_buf != -1) ? matching_buf : first_free_buf;
 
@@ -350,13 +344,12 @@ void xds_do_copy_generation_management_system(struct cc_subtitle *sub, struct cc
 		last_c2 = c2;
 		// Changed since last time, decode
 
-		const char *copytext[4] = { "Copy permitted (no restrictions)", "No more copies (one generation copy has been made)",
-			"One generation of copies can be made", "No copying is permitted" };
-		const char *apstext[4] = { "No APS", "PSP On; Split Burst Off", "PSP On; 2 line Split Burst On", "PSP On; 4 line Split Burst On" };
+		const char *copytext[4] = {"Copy permitted (no restrictions)", "No more copies (one generation copy has been made)",
+					   "One generation of copies can be made", "No copying is permitted"};
+		const char *apstext[4] = {"No APS", "PSP On; Split Burst Off", "PSP On; 2 line Split Burst On", "PSP On; 4 line Split Burst On"};
 		sprintf(copy_permited, "CGMS: %s", copytext[cgms_a_b4 * 2 + cgms_a_b3]);
 		sprintf(aps, "APS: %s", apstext[aps_b2 * 2 + aps_b1]);
 		sprintf(rcd, "Redistribution Control Descriptor: %d", rcd0);
-
 	}
 
 	xdsprint(sub, ctx, copy_permited);
@@ -411,9 +404,9 @@ void xds_do_content_advisory(struct cc_subtitle *sub, struct ccx_decoders_xds_co
 		// Bits a1 and a0 determine the encoding. I'll add parsing as more samples become available
 		if (!a1 && a0) // US TV parental guidelines
 		{
-			const char *agetext[8] = { "None", "TV-Y (All Children)", "TV-Y7 (Older Children)",
-				"TV-G (General Audience)", "TV-PG (Parental Guidance Suggested)",
-				"TV-14 (Parents Strongly Cautioned)", "TV-MA (Mature Audience Only)", "None" };
+			const char *agetext[8] = {"None", "TV-Y (All Children)", "TV-Y7 (Older Children)",
+						  "TV-G (General Audience)", "TV-PG (Parental Guidance Suggested)",
+						  "TV-14 (Parents Strongly Cautioned)", "TV-MA (Mature Audience Only)", "None"};
 			sprintf(age, "ContentAdvisory: US TV Parental Guidelines. Age Rating: %s", agetext[g2 * 4 + g1 * 2 + g0]);
 			content[0] = 0;
 			if (!g2 && g1 && !g0) // For TV-Y7 (Older children), the Violence bit is "fantasy violence"
@@ -436,28 +429,27 @@ void xds_do_content_advisory(struct cc_subtitle *sub, struct ccx_decoders_xds_co
 		}
 		if (!a0) // MPA
 		{
-			const char *ratingtext[8] = { "N/A", "G", "PG", "PG-13", "R", "NC-17", "X", "Not Rated" };
+			const char *ratingtext[8] = {"N/A", "G", "PG", "PG-13", "R", "NC-17", "X", "Not Rated"};
 			sprintf(rating, "ContentAdvisory: MPA Rating: %s", ratingtext[r2 * 4 + r1 * 2 + r0]);
 			supported = 1;
 		}
 		if (a0 && a1 && !Da2 && !La3) // Canadian English Language Rating
 		{
-			const char *ratingtext[8] = { "Exempt", "Children", "Children eight years and older",
-				"General programming suitable for all audiences", "Parental Guidance",
-				"Viewers 14 years and older", "Adult Programming", "[undefined]" };
+			const char *ratingtext[8] = {"Exempt", "Children", "Children eight years and older",
+						     "General programming suitable for all audiences", "Parental Guidance",
+						     "Viewers 14 years and older", "Adult Programming", "[undefined]"};
 			sprintf(rating, "ContentAdvisory: Canadian English Rating: %s", ratingtext[g2 * 4 + g1 * 2 + g0]);
 			supported = 1;
 		}
 		if (a0 && a1 && Da2 && !La3) // Canadian French Language Rating
 		{
-			const char *ratingtext[8] = { "Exempt?es", "G?n?ral", "G?n?ral - D?conseill? aux jeunes enfants",
-				"Cette ?mission peut ne pas convenir aux enfants de moins de 13 ans",
-				"Cette ?mission ne convient pas aux moins de 16 ans",
-				"Cette ?mission est r?serv?e aux adultes", "[invalid]", "[invalid]" };
+			const char *ratingtext[8] = {"Exempt?es", "G?n?ral", "G?n?ral - D?conseill? aux jeunes enfants",
+						     "Cette ?mission peut ne pas convenir aux enfants de moins de 13 ans",
+						     "Cette ?mission ne convient pas aux moins de 16 ans",
+						     "Cette ?mission est r?serv?e aux adultes", "[invalid]", "[invalid]"};
 			sprintf(rating, "ContentAdvisory: Canadian French Rating: %s", ratingtext[g2 * 4 + g1 * 2 + g0]);
 			supported = 1;
 		}
-
 	}
 	// Bits a1 and a0 determine the encoding. I'll add parsing as more samples become available
 	if (!a1 && a0) // US TV parental guidelines
@@ -472,10 +464,10 @@ void xds_do_content_advisory(struct cc_subtitle *sub, struct ccx_decoders_xds_co
 		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: %s\n", age);
 		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: %s\n", content);
 	}
-	if (!a0 || // MPA
-		(a0 && a1 && !Da2 && !La3) ||  // Canadian English Language Rating
-		(a0 && a1 && Da2 && !La3) // Canadian French Language Rating
-		)
+	if (!a0 ||			  // MPA
+	    (a0 && a1 && !Da2 && !La3) || // Canadian English Language Rating
+	    (a0 && a1 && Da2 && !La3)	  // Canadian French Language Rating
+	)
 	{
 		xdsprint(sub, ctx, rating);
 		if (changed)
@@ -485,8 +477,6 @@ void xds_do_content_advisory(struct cc_subtitle *sub, struct ccx_decoders_xds_co
 
 	if (changed && !supported)
 		ccx_common_logging.log_ftn("XDS: Unsupported ContentAdvisory encoding, please submit sample.\n");
-
-
 }
 
 int xds_do_current_and_future(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx)
@@ -497,7 +487,8 @@ int xds_do_current_and_future(struct cc_subtitle *sub, struct ccx_decoders_xds_c
 	char *tstr = NULL;
 	int str_len = 1024;
 
-	if (!ctx) {
+	if (!ctx)
+	{
 		free(str);
 		return CCX_EINVAL;
 	}
@@ -508,15 +499,15 @@ int xds_do_current_and_future(struct cc_subtitle *sub, struct ccx_decoders_xds_c
 			was_proc = 1;
 			if (ctx->cur_xds_payload_length < 7) // We need 4 data bytes
 				break;
-			int min = ctx->cur_xds_payload[2] & 0x3f; // 6 bits
+			int min = ctx->cur_xds_payload[2] & 0x3f;  // 6 bits
 			int hour = ctx->cur_xds_payload[3] & 0x1f; // 5 bits
 			int date = ctx->cur_xds_payload[4] & 0x1f; // 5 bits
 			int month = ctx->cur_xds_payload[5] & 0xf; // 4 bits
 			/* int changed=0; */
 			if (ctx->current_xds_min != min ||
-				ctx->current_xds_hour != hour ||
-				ctx->current_xds_date != date ||
-				ctx->current_xds_month != month)
+			    ctx->current_xds_hour != hour ||
+			    ctx->current_xds_date != date ||
+			    ctx->current_xds_month != month)
 			{
 				/* changed=1; */
 				ctx->xds_start_time_shown = 0;
@@ -527,18 +518,18 @@ int xds_do_current_and_future(struct cc_subtitle *sub, struct ccx_decoders_xds_c
 			}
 
 			ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "PIN (Start Time): %s  %02d-%02d %02d:%02d\n",
-				(ctx->cur_xds_packet_class == XDS_CLASS_CURRENT ? "Current" : "Future"),
-				date, month, hour, min);
+						     (ctx->cur_xds_packet_class == XDS_CLASS_CURRENT ? "Current" : "Future"),
+						     date, month, hour, min);
 			xdsprint(sub, ctx, "PIN (Start Time): %s  %02d-%02d %02d:%02d\n",
-				(ctx->cur_xds_packet_class == XDS_CLASS_CURRENT ? "Current" : "Future"),
-				date, month, hour, min);
+				 (ctx->cur_xds_packet_class == XDS_CLASS_CURRENT ? "Current" : "Future"),
+				 date, month, hour, min);
 
 			if (!ctx->xds_start_time_shown && ctx->cur_xds_packet_class == XDS_CLASS_CURRENT)
 			{
 				ccx_common_logging.log_ftn("\rXDS: Program changed.\n");
 				ccx_common_logging.log_ftn("XDS program start time (DD/MM HH:MM) %02d-%02d %02d:%02d\n", date, month, hour, min);
 				ccx_common_logging.gui_ftn(CCX_COMMON_LOGGING_GUI_XDS_PROGRAM_ID_NR,
-					ctx->current_xds_min, ctx->current_xds_hour, ctx->current_xds_date, ctx->current_xds_month);
+							   ctx->current_xds_min, ctx->current_xds_hour, ctx->current_xds_date, ctx->current_xds_month);
 				ctx->xds_start_time_shown = 1;
 			}
 			break;
@@ -547,7 +538,7 @@ int xds_do_current_and_future(struct cc_subtitle *sub, struct ccx_decoders_xds_c
 			was_proc = 1;
 			if (ctx->cur_xds_payload_length < 5) // We need 2 data bytes
 				break;
-			int min = ctx->cur_xds_payload[2] & 0x3f; // 6 bits
+			int min = ctx->cur_xds_payload[2] & 0x3f;  // 6 bits
 			int hour = ctx->cur_xds_payload[3] & 0x1f; // 5 bits
 			if (!ctx->xds_program_length_shown)
 				ccx_common_logging.log_ftn("\rXDS: Program length (HH:MM): %02d:%02d  ", hour, min);
@@ -558,14 +549,13 @@ int xds_do_current_and_future(struct cc_subtitle *sub, struct ccx_decoders_xds_c
 
 			if (ctx->cur_xds_payload_length > 6) // Next two bytes (optional) available
 			{
-				int el_min = ctx->cur_xds_payload[4] & 0x3f; // 6 bits
+				int el_min = ctx->cur_xds_payload[4] & 0x3f;  // 6 bits
 				int el_hour = ctx->cur_xds_payload[5] & 0x1f; // 5 bits
 				if (!ctx->xds_program_length_shown)
 					ccx_common_logging.log_ftn("Elapsed (HH:MM): %02d:%02d", el_hour, el_min);
 				else
 					ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "Elapsed (HH:MM): %02d:%02d", el_hour, el_min);
 				xdsprint(sub, ctx, "Elapsed (HH:MM): %02d:%02d", el_hour, el_min);
-
 			}
 			if (ctx->cur_xds_payload_length > 8) // Next two bytes (optional) available
 			{
@@ -592,7 +582,7 @@ int xds_do_current_and_future(struct cc_subtitle *sub, struct ccx_decoders_xds_c
 			ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS Program name: %s\n", xds_program_name);
 			xdsprint(sub, ctx, "Program name: %s", xds_program_name);
 			if (ctx->cur_xds_packet_class == XDS_CLASS_CURRENT &&
-				strcmp(xds_program_name, ctx->current_xds_program_name)) // Change of program
+			    strcmp(xds_program_name, ctx->current_xds_program_name)) // Change of program
 			{
 				ccx_common_logging.log_ftn("\rXDS Notice: Program is now %s\n", xds_program_name);
 				strncpy(ctx->current_xds_program_name, xds_program_name, 33);
@@ -671,8 +661,8 @@ int xds_do_current_and_future(struct cc_subtitle *sub, struct ccx_decoders_xds_c
 			was_proc = 1;
 			if (ctx->cur_xds_payload_length < 5) // We need 2 data bytes
 				break;
-			if (!(ctx->cur_xds_payload[2] & 0x20) || !(ctx->cur_xds_payload[3] & 0x20)) // Bit 6 must be 1 
-				break; // if bit 6 is not 1 - skip invalid data.
+			if (!(ctx->cur_xds_payload[2] & 0x20) || !(ctx->cur_xds_payload[3] & 0x20)) // Bit 6 must be 1
+				break;								    // if bit 6 is not 1 - skip invalid data.
 
 			/* CEA-608-B: The starting line is computed by adding 22 to the decimal number
 			   represented by bits S0 to S5. The ending line is computing by subtracting
@@ -802,8 +792,6 @@ int xds_do_channel(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx
 	return was_proc;
 }
 
-
-
 int xds_do_private_data(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx)
 {
 	char *str;
@@ -837,7 +825,7 @@ int xds_do_misc(struct ccx_decoders_xds_context *ctx)
 			was_proc = 1;
 			if (ctx->cur_xds_payload_length < 9) // We need 6 data bytes
 				break;
-			int min = ctx->cur_xds_payload[2] & 0x3f; // 6 bits
+			int min = ctx->cur_xds_payload[2] & 0x3f;  // 6 bits
 			int hour = ctx->cur_xds_payload[3] & 0x1f; // 5 bits
 			int date = ctx->cur_xds_payload[4] & 0x1f; // 5 bits
 			int month = ctx->cur_xds_payload[5] & 0xf; // 4 bits
@@ -845,7 +833,7 @@ int xds_do_misc(struct ccx_decoders_xds_context *ctx)
 			int day_of_week = ctx->cur_xds_payload[6] & 0x7;
 			int year = (ctx->cur_xds_payload[7] & 0x3f) + 1990;
 			ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "Time of day: (YYYY/MM/DD) %04d/%02d/%02d (HH:SS) %02d:%02d DoW: %d  Reset seconds: %d\n",
-				year, month, date, hour, min, day_of_week, reset_seconds);
+						     year, month, date, hour, min, day_of_week, reset_seconds);
 			break;
 		}
 		case XDS_TYPE_LOCAL_TIME_ZONE:
@@ -855,9 +843,9 @@ int xds_do_misc(struct ccx_decoders_xds_context *ctx)
 				break;
 			// int b6 = (ctx->cur_xds_payload[2] & 0x40) >>6; // Bit 6 should always be 1
 			int dst = (ctx->cur_xds_payload[2] & 0x20) >> 5; // Daylight Saving Time
-			int hour = ctx->cur_xds_payload[2] & 0x1f; // 5 bits
+			int hour = ctx->cur_xds_payload[2] & 0x1f;	 // 5 bits
 			ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "Local Time Zone: %02d DST: %d\n",
-				hour, dst);
+						     hour, dst);
 			break;
 		}
 		default:
@@ -876,7 +864,7 @@ void do_end_of_xds(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx
 		return;
 
 	if (ctx->cur_xds_buffer_idx == -1 || /* Unknown buffer, or not in use (bug) */
-		!ctx->xds_buffers[ctx->cur_xds_buffer_idx].in_use)
+	    !ctx->xds_buffers[ctx->cur_xds_buffer_idx].in_use)
 		return;
 	ctx->cur_xds_packet_class = ctx->xds_buffers[ctx->cur_xds_buffer_idx].xds_class;
 	ctx->cur_xds_payload = ctx->xds_buffers[ctx->cur_xds_buffer_idx].bytes;
@@ -890,14 +878,14 @@ void do_end_of_xds(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx
 		cs = cs & 0x7f; // Keep 7 bits only
 		int c = ctx->cur_xds_payload[i] & 0x7F;
 		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "%02X - %c cs: %02X\n",
-			c, (c >= 0x20) ? c : '?', cs);
+					     c, (c >= 0x20) ? c : '?', cs);
 	}
 	cs = (128 - cs) & 0x7F; // Convert to 2's complement & discard high-order bit
 
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "End of XDS. Class=%d (%s), size=%d  Checksum OK: %d   Used buffers: %d\n",
-		ctx->cur_xds_packet_class, XDSclasses[ctx->cur_xds_packet_class],
-		ctx->cur_xds_payload_length,
-		cs == expected_checksum, how_many_used(ctx));
+				     ctx->cur_xds_packet_class, XDSclasses[ctx->cur_xds_packet_class],
+				     ctx->cur_xds_payload_length,
+				     cs == expected_checksum, how_many_used(ctx));
 
 	if (cs != expected_checksum || ctx->cur_xds_payload_length < 3)
 	{
@@ -906,7 +894,7 @@ void do_end_of_xds(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx
 		return; // Bad packets ignored as per specs
 	}
 
-	int was_proc = 0; /* Indicated if the packet was processed. Not processed means "code to do it doesn't exist yet", not an error. */
+	int was_proc = 0;		     /* Indicated if the packet was processed. Not processed means "code to do it doesn't exist yet", not an error. */
 	if (ctx->cur_xds_packet_type & 0x40) // Bit 6 set
 	{
 		ctx->cur_xds_packet_class = XDS_CLASS_OUT_OF_BAND;
@@ -914,7 +902,7 @@ void do_end_of_xds(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx
 
 	switch (ctx->cur_xds_packet_class)
 	{
-		case XDS_CLASS_FUTURE: // Info on future program
+		case XDS_CLASS_FUTURE:						    // Info on future program
 			if (!(ccx_common_logging.debug_mask & CCX_DMT_DECODER_XDS)) // Don't bother processing something we don't need
 			{
 				was_proc = 1;
@@ -947,5 +935,4 @@ void do_end_of_xds(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx
 		dump(CCX_DMT_DECODER_XDS, ctx->cur_xds_payload, ctx->cur_xds_payload_length, 0, 0);
 	}
 	clear_xds_buffer(ctx, ctx->cur_xds_buffer_idx);
-
 }

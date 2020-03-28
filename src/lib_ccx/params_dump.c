@@ -74,9 +74,8 @@ void params_dump(struct lib_ccx_ctx *ctx)
 			{
 				if (ccx_options.settings_dtvcc.services_enabled[i])
 					mprint("[CEA-708: using charset \"%s\" for service %d]\n",
-						ccx_options.enc_cfg.services_charsets[i] ?
-						ccx_options.enc_cfg.services_charsets[i] : "none",
-						i + 1);
+					       ccx_options.enc_cfg.services_charsets[i] ? ccx_options.enc_cfg.services_charsets[i] : "none",
+					       i + 1);
 			}
 		}
 	}
@@ -154,16 +153,16 @@ void params_dump(struct lib_ccx_ctx *ctx)
 		mprint("not set (from start)");
 	else
 		mprint("%02d:%02d:%02d", ccx_options.extraction_start.hh,
-			ccx_options.extraction_start.mm,
-			ccx_options.extraction_start.ss);
+		       ccx_options.extraction_start.mm,
+		       ccx_options.extraction_start.ss);
 	mprint("]\n");
 	mprint("[Extraction end time: ");
 	if (ccx_options.extraction_end.set == 0)
 		mprint("not set (to end)");
 	else
 		mprint("%02d:%02d:%02d", ccx_options.extraction_end.hh,
-			ccx_options.extraction_end.mm,
-			ccx_options.extraction_end.ss);
+		       ccx_options.extraction_end.mm,
+		       ccx_options.extraction_end.ss);
 	mprint("]\n");
 	mprint("[Live stream: ");
 	if (ccx_options.live_stream == 0)
@@ -182,26 +181,23 @@ void params_dump(struct lib_ccx_ctx *ctx)
 	else
 		mprint("Autodetect]\n");
 	mprint("[Start credits text: %s]\n",
-		ccx_options.enc_cfg.start_credits_text ? ccx_options.enc_cfg.start_credits_text : "None");
+	       ccx_options.enc_cfg.start_credits_text ? ccx_options.enc_cfg.start_credits_text : "None");
 	if (ccx_options.enc_cfg.start_credits_text)
 	{
 		mprint("Start credits time: Insert between [%ld] and [%ld] seconds\n",
-			(long)(ccx_options.enc_cfg.startcreditsnotbefore.time_in_ms / 1000),
-			(long)(ccx_options.enc_cfg.startcreditsnotafter.time_in_ms / 1000)
-		);
+		       (long)(ccx_options.enc_cfg.startcreditsnotbefore.time_in_ms / 1000),
+		       (long)(ccx_options.enc_cfg.startcreditsnotafter.time_in_ms / 1000));
 		mprint("                    Display for at least [%ld] and at most [%ld] seconds\n",
-			(long)(ccx_options.enc_cfg.startcreditsforatleast.time_in_ms / 1000),
-			(long)(ccx_options.enc_cfg.startcreditsforatmost.time_in_ms / 1000)
-		);
+		       (long)(ccx_options.enc_cfg.startcreditsforatleast.time_in_ms / 1000),
+		       (long)(ccx_options.enc_cfg.startcreditsforatmost.time_in_ms / 1000));
 	}
 	if (ccx_options.enc_cfg.end_credits_text)
 	{
 		mprint("End credits text: [%s]\n",
-			ccx_options.enc_cfg.end_credits_text ? ccx_options.enc_cfg.end_credits_text : "None");
+		       ccx_options.enc_cfg.end_credits_text ? ccx_options.enc_cfg.end_credits_text : "None");
 		mprint("                    Display for at least [%ld] and at most [%ld] seconds\n",
-			(long)(ccx_options.enc_cfg.endcreditsforatleast.time_in_ms / 1000),
-			(long)(ccx_options.enc_cfg.endcreditsforatmost.time_in_ms / 1000)
-		);
+		       (long)(ccx_options.enc_cfg.endcreditsforatleast.time_in_ms / 1000),
+		       (long)(ccx_options.enc_cfg.endcreditsforatmost.time_in_ms / 1000));
 	}
 
 	mprint("[Quantisation-mode: ");
@@ -384,7 +380,6 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 		else
 			printf("No\n");
 
-
 		printf("ATSC Closed Caption: ");
 		info = get_sib_stream_by_type(program, CCX_CODEC_ATSC_CC);
 		if (info)
@@ -395,17 +390,16 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 		else
 			printf("No\n");
 
-
 		info = get_best_sib_stream(program);
 		if (!info)
 			continue;
 
 		dec_ctx = update_decoder_list_cinfo(ctx, info);
 		if (dec_ctx->in_bufferdatatype == CCX_PES &&
-			(demux_ctx->stream_mode == CCX_SM_TRANSPORT ||
-				demux_ctx->stream_mode == CCX_SM_PROGRAM ||
-				demux_ctx->stream_mode == CCX_SM_ASF ||
-				demux_ctx->stream_mode == CCX_SM_WTV))
+		    (demux_ctx->stream_mode == CCX_SM_TRANSPORT ||
+		     demux_ctx->stream_mode == CCX_SM_PROGRAM ||
+		     demux_ctx->stream_mode == CCX_SM_ASF ||
+		     demux_ctx->stream_mode == CCX_SM_WTV))
 		{
 			printf("Width: %u\n", dec_ctx->current_hor_size);
 			printf("Height: %u\n", dec_ctx->current_vert_size);
@@ -416,7 +410,8 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 	}
 
 	printf("MPEG-4 Timed Text: %s\n", Y_N(ctx->freport.mp4_cc_track_cnt));
-	if (ctx->freport.mp4_cc_track_cnt) {
+	if (ctx->freport.mp4_cc_track_cnt)
+	{
 		printf("MPEG-4 Timed Text tracks count: %d\n", ctx->freport.mp4_cc_track_cnt);
 	}
 

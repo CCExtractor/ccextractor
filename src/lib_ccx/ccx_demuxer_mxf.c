@@ -2,7 +2,6 @@
  * Copyright (c) 2015 Anshul Maheshwari <er.anshul.maheshwari@gmail.com>
  */
 
-
 #include "ccx_demuxer_mxf.h"
 #include "ccx_demuxer.h"
 #include "ccx_common_common.h"
@@ -10,10 +9,9 @@
 #include "utility.h"
 #include "lib_ccx.h"
 
-#define debug(fmt, ...) ccx_common_logging.debug_ftn(CCX_DMT_PARSE, "MXF:%s:%d: "fmt , __FUNCTION__ ,__LINE__ , ##__VA_ARGS__)
-#define log(fmt, ...) ccx_common_logging.log_ftn("MXF:%d: "fmt , __LINE__ , ##__VA_ARGS__)
+#define debug(fmt, ...) ccx_common_logging.debug_ftn(CCX_DMT_PARSE, "MXF:%s:%d: " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define log(fmt, ...) ccx_common_logging.log_ftn("MXF:%d: " fmt, __LINE__, ##__VA_ARGS__)
 #define IS_KLV_KEY(x, y) (!memcmp(x, y, sizeof(y)))
-
 
 enum MXFCaptionType
 {
@@ -67,27 +65,26 @@ typedef struct MXFLocalTAGS
 } MXFLocalTAGS;
 
 //S337 table 4 says 14 bytes can determine partition pack type
-static const uint8_t mxf_header_partition_pack_key[] = { 0x06,0x0e,0x2b,0x34,0x02,0x05,0x01,0x01,0x0d,0x01,0x02,0x01,0x01,0x02 };
-static const uint8_t mxf_essence_element_key[] = { 0x06,0x0e,0x2b,0x34,0x01,0x02,0x01,0x01,0x0d,0x01,0x03,0x01 };
-static const uint8_t mxf_klv_key[] = { 0x06,0x0e,0x2b,0x34 };
+static const uint8_t mxf_header_partition_pack_key[] = {0x06, 0x0e, 0x2b, 0x34, 0x02, 0x05, 0x01, 0x01, 0x0d, 0x01, 0x02, 0x01, 0x01, 0x02};
+static const uint8_t mxf_essence_element_key[] = {0x06, 0x0e, 0x2b, 0x34, 0x01, 0x02, 0x01, 0x01, 0x0d, 0x01, 0x03, 0x01};
+static const uint8_t mxf_klv_key[] = {0x06, 0x0e, 0x2b, 0x34};
 
 static const MXFCodecUL mxf_caption_essence_container[] = {
-{ {0x6,0xE,0x2B,0x34,0x04,0x01,0x01,0x09,0xD,0x1,0x3,0x1,0x2,0xD,0x0,0x0}, MXF_CT_VBI },
-{ {0x6,0xE,0x2B,0x34,0x04,0x01,0x01,0x09,0xD,0x1,0x3,0x1,0x2,0xE,0x0,0x0}, MXF_CT_ANC },
+    {{0x6, 0xE, 0x2B, 0x34, 0x04, 0x01, 0x01, 0x09, 0xD, 0x1, 0x3, 0x1, 0x2, 0xD, 0x0, 0x0}, MXF_CT_VBI},
+    {{0x6, 0xE, 0x2B, 0x34, 0x04, 0x01, 0x01, 0x09, 0xD, 0x1, 0x3, 0x1, 0x2, 0xE, 0x0, 0x0}, MXF_CT_ANC},
 };
 
 static const struct ccx_rational framerate_rationals[16] = {
-	{0, 0},
-	{1001, 24000},
-	{1, 24},
-	{1, 25},
-	{1001, 30000},
-	{1, 30},
-	{1, 50},
-	{1001, 60000},
-	{1, 60},
-	{0, 0}
-};
+    {0, 0},
+    {1001, 24000},
+    {1, 24},
+    {1, 25},
+    {1001, 30000},
+    {1, 30},
+    {1, 50},
+    {1001, 60000},
+    {1, 60},
+    {0, 0}};
 
 /* Only Used Tags defined in enum */
 enum MXFLocalTag
@@ -112,7 +109,7 @@ void update_tid_lut(struct MXFContext *ctx, uint32_t track_id, uint8_t *track_nu
 	for (i = 0; i < ctx->nb_tracks; i++)
 	{
 		if (ctx->tracks[i].track_id == track_id &&
-			memcmp(ctx->tracks[i].track_number, track_number, 4))
+		    memcmp(ctx->tracks[i].track_number, track_number, 4))
 		{
 			memcpy(ctx->tracks[i].track_number, track_number, 4);
 			ctx->edit_rate = edit_rate;
@@ -136,10 +133,10 @@ void update_cap_essence_key(struct MXFContext *ctx, uint32_t track_id)
 			memcpy(ctx->cap_essence_key, mxf_essence_element_key, 12);
 			memcpy(ctx->cap_essence_key + 12, ctx->tracks[i].track_number, 4);
 			debug("Key %02X%02X%02X%02X%02X%02X%02X%02X.%02X%02X%02X%02X%02X%02X%02X%02X essence_key\n",
-				ctx->cap_essence_key[0], ctx->cap_essence_key[1], ctx->cap_essence_key[2], ctx->cap_essence_key[3],
-				ctx->cap_essence_key[4], ctx->cap_essence_key[5], ctx->cap_essence_key[5], ctx->cap_essence_key[7],
-				ctx->cap_essence_key[8], ctx->cap_essence_key[9], ctx->cap_essence_key[10], ctx->cap_essence_key[11],
-				ctx->cap_essence_key[12], ctx->cap_essence_key[13], ctx->cap_essence_key[14], ctx->cap_essence_key[15]);
+			      ctx->cap_essence_key[0], ctx->cap_essence_key[1], ctx->cap_essence_key[2], ctx->cap_essence_key[3],
+			      ctx->cap_essence_key[4], ctx->cap_essence_key[5], ctx->cap_essence_key[5], ctx->cap_essence_key[7],
+			      ctx->cap_essence_key[8], ctx->cap_essence_key[9], ctx->cap_essence_key[10], ctx->cap_essence_key[11],
+			      ctx->cap_essence_key[12], ctx->cap_essence_key[13], ctx->cap_essence_key[14], ctx->cap_essence_key[15]);
 			return;
 		}
 	}
@@ -191,7 +188,7 @@ static int mxf_read_header_partition_pack(struct ccx_demuxer *demux, uint64_t si
 	if (size - len < (nb_essence_container * 16))
 	{
 		log("Partition pack has invalid essense container count(%d) to fit in partition size(%d)\n",
-			nb_essence_container, size);
+		    nb_essence_container, size);
 		return CCX_EINVAL;
 	}
 
@@ -220,7 +217,7 @@ static int mxf_read_timeline_track_metadata(struct ccx_demuxer *demux, uint64_t 
 	struct MXFContext *ctx = demux->private_data;
 	/* Acc B.7 Property shall always be present and non-zero. */
 	uint32_t track_id = 0;
-	uint8_t track_number[4] = { 0 };
+	uint8_t track_number[4] = {0};
 	struct ccx_rational edit_rate;
 
 	while (len < size)
@@ -396,7 +393,8 @@ static int mxf_read_vanc_data(struct ccx_demuxer *demux, uint64_t size, struct d
 		return CCX_EOF;
 	len += ret;
 
-	for (int i = 0; i < vanc_header[1]; i++) {
+	for (int i = 0; i < vanc_header[1]; i++)
+	{
 		DID = buffered_get_byte(demux);
 		len++;
 		if (!(DID == 0x61 || DID == 0x80))
@@ -424,13 +422,11 @@ static int mxf_read_vanc_data(struct ccx_demuxer *demux, uint64_t size, struct d
 		//len += (3 + count + 4);
 	}
 
-
 error:
 	ret = buffered_skip(demux, size - len);
 	demux->past += ret;
 	len += ret;
 	return len;
-
 }
 
 static int mxf_read_essence_element(struct ccx_demuxer *demux, uint64_t size, struct demuxer_data *data)
@@ -455,13 +451,13 @@ static int mxf_read_essence_element(struct ccx_demuxer *demux, uint64_t size, st
 }
 
 static const MXFReadTableEntry mxf_read_table[] = {
-	/* According to section 7.1 of S377 partition key byte 14 and 15 have variable values */
-	{ { 0x06,0x0e,0x2b,0x34,0x02,0x05,0x01,0x01,0x0d,0x01,0x02,0x01,0x01,0x02,0x04,0x00 }, mxf_read_header_partition_pack},
-	/* Structural Metadata Sets */
-	{ { 0x06,0x0e,0x2b,0x34,0x02,0x53,0x01,0x01,0x0d,0x01,0x01,0x01,0x01,0x01,0x3B,0x00 }, mxf_read_timeline_track_metadata },
-	{ { 0x06,0x0e,0x2b,0x34,0x02,0x53,0x01,0x01,0x0d,0x01,0x01,0x01,0x01,0x01,0x5c,0x00 }, mxf_read_vanc_vbi_desc},
-	/* Generic Track */
-	{ { 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 }, NULL},
+    /* According to section 7.1 of S377 partition key byte 14 and 15 have variable values */
+    {{0x06, 0x0e, 0x2b, 0x34, 0x02, 0x05, 0x01, 0x01, 0x0d, 0x01, 0x02, 0x01, 0x01, 0x02, 0x04, 0x00}, mxf_read_header_partition_pack},
+    /* Structural Metadata Sets */
+    {{0x06, 0x0e, 0x2b, 0x34, 0x02, 0x53, 0x01, 0x01, 0x0d, 0x01, 0x01, 0x01, 0x01, 0x01, 0x3B, 0x00}, mxf_read_timeline_track_metadata},
+    {{0x06, 0x0e, 0x2b, 0x34, 0x02, 0x53, 0x01, 0x01, 0x0d, 0x01, 0x01, 0x01, 0x01, 0x01, 0x5c, 0x00}, mxf_read_vanc_vbi_desc},
+    /* Generic Track */
+    {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, NULL},
 };
 
 static int mxf_read_sync(struct ccx_demuxer *ctx, const uint8_t *key, size_t size)
@@ -543,12 +539,12 @@ static int read_packet(struct ccx_demuxer *demux, struct demuxer_data *data)
 	struct MXFContext *ctx = demux->private_data;
 	while ((ret = klv_read_packet(&klv, demux)) == 0)
 	{
-		debug("Key %02X%02X%02X%02X%02X%02X%02X%02X.%02X%02X%02X%02X%02X%02X%02X%02X size %"PRIu64"\n",
-			klv.key[0], klv.key[1], klv.key[2], klv.key[3],
-			klv.key[4], klv.key[5], klv.key[5], klv.key[7],
-			klv.key[8], klv.key[9], klv.key[10], klv.key[11],
-			klv.key[12], klv.key[13], klv.key[14], klv.key[15],
-			klv.length);
+		debug("Key %02X%02X%02X%02X%02X%02X%02X%02X.%02X%02X%02X%02X%02X%02X%02X%02X size %" PRIu64 "\n",
+		      klv.key[0], klv.key[1], klv.key[2], klv.key[3],
+		      klv.key[4], klv.key[5], klv.key[5], klv.key[7],
+		      klv.key[8], klv.key[9], klv.key[10], klv.key[11],
+		      klv.key[12], klv.key[13], klv.key[14], klv.key[15],
+		      klv.length);
 
 		if (IS_KLV_KEY(klv.key, ctx->cap_essence_key))
 		{

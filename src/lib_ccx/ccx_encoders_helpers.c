@@ -13,39 +13,39 @@
 // userdefined rgb color
 unsigned char usercolor_rgb[8] = "";
 
-struct word_list {
+struct word_list
+{
 	char **words;
 	size_t len;
 	size_t capacity;
 };
 
 struct word_list capitalization_list = {
-	.words = NULL,
-	.len = 0,
-	.capacity = 0,
+    .words = NULL,
+    .len = 0,
+    .capacity = 0,
 };
 
 struct word_list profane = {
-	.words = NULL,
-	.len = 0,
-	.capacity = 0,
+    .words = NULL,
+    .len = 0,
+    .capacity = 0,
 };
 
 // Some basic English words, so user-defined doesn't have to
 // include the common stuff
 const char *capitalized_builtin[] =
-{
+    {
 	"I", "I'd", "I've", "I'd", "I'll",
 	"January", "February", "March", "April", // May skipped intentionally
 	"June", "July", "August", "September", "October", "November",
 	"December", "Monday", "Tuesday", "Wednesday", "Thursday",
 	"Friday", "Saturday", "Sunday", "Halloween", "United States",
 	"Spain", "France", "Italy", "England",
-	NULL
-};
+	NULL};
 
 const char *profane_builtin[] =
-{
+    {
 	"arse",
 	"ass",
 	"asshole",
@@ -71,8 +71,7 @@ const char *profane_builtin[] =
 	"shitass",
 	"slut",
 	"twat",
-	NULL
-};
+	NULL};
 
 int string_cmp_function(const void *p1, const void *p2, void *arg)
 {
@@ -97,13 +96,13 @@ void censor_word(size_t index, unsigned char *word)
 void call_function_if_match(unsigned char *line, struct word_list *list, void (*modification)(size_t, unsigned char *))
 {
 	unsigned char delim[64] = {
-		' ', '\n', '\r', 0x89, 0x99,
-		'!', '"', '#', '%', '&',
-		'\'', '(', ')', ';', '<',
-		'=', '>', '?', '[', '\\',
-		']', '*', '+', ',', '-',
-		'.', '/', ':', '^', '_',
-		'{', '|', '}', '~', '\0' };
+	    ' ', '\n', '\r', 0x89, 0x99,
+	    '!', '"', '#', '%', '&',
+	    '\'', '(', ')', ';', '<',
+	    '=', '>', '?', '[', '\\',
+	    ']', '*', '+', ',', '-',
+	    '.', '/', ':', '^', '_',
+	    '{', '|', '}', '~', '\0'};
 
 	unsigned char *line_token = strdup(line);
 	unsigned char *c = strtok(line_token, delim);
@@ -126,13 +125,13 @@ void call_function_if_match(unsigned char *line, struct word_list *list, void (*
 void telx_correct_case(char *sub_line)
 {
 	char delim[64] = {
-		' ', '\n', '\r', 0x89, 0x99,
-		'!', '"', '#', '%', '&',
-		'\'', '(', ')', ';', '<',
-		'=', '>', '?', '[', '\\',
-		']', '*', '+', ',', '-',
-		'.', '/', ':', '^', '_',
-		'{', '|', '}', '~', '\0' };
+	    ' ', '\n', '\r', 0x89, 0x99,
+	    '!', '"', '#', '%', '&',
+	    '\'', '(', ')', ';', '<',
+	    '=', '>', '?', '[', '\\',
+	    ']', '*', '+', ',', '-',
+	    '.', '/', ':', '^', '_',
+	    '{', '|', '}', '~', '\0'};
 
 	char *line = strdup(((char *)sub_line));
 	char *oline = (char *)sub_line;
@@ -251,7 +250,6 @@ unsigned get_decoder_line_encoded_for_gui(unsigned char *buffer, int line_num, s
 	}
 	*buffer = 0;
 	return (unsigned)(buffer - orig); // Return length
-
 }
 
 unsigned char *close_tag(struct encoder_ctx *ctx, unsigned char *buffer, char *tagstack, char tagtype, int *punderlined, int *pitalics, int *pchanged_font)
@@ -274,7 +272,7 @@ unsigned char *close_tag(struct encoder_ctx *ctx, unsigned char *buffer, char *t
 				(*pitalics)--;
 				break;
 		}
-		tagstack[l] = 0; // Remove from stack
+		tagstack[l] = 0;    // Remove from stack
 		if (cur == tagtype) // We closed up to the required tag, done
 			return buffer;
 	}
@@ -302,7 +300,7 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 		enum ccx_decoder_608_color_code its_color = data->colors[line_num][i];
 		// Check if the colour has changed
 		if (its_color != color && !ctx->no_font_color &&
-			!(color == COL_USERDEFINED && its_color == COL_WHITE)) // Don't replace user defined with white
+		    !(color == COL_USERDEFINED && its_color == COL_WHITE)) // Don't replace user defined with white
 		{
 			if (changed_font)
 				buffer = close_tag(ctx, buffer, tagstack, 'F', &underlined, &italics, &changed_font);
@@ -380,7 +378,8 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 	return (unsigned)(buffer - orig); // Return length
 }
 
-void get_sentence_borders(int *first, int *last, int line_num, struct eia608_screen *data) {
+void get_sentence_borders(int *first, int *last, int line_num, struct eia608_screen *data)
+{
 	*first = 0;
 	*last = 32;
 	while (data->colors[line_num][*first] == COL_TRANSPARENT)
@@ -470,7 +469,7 @@ void correct_spelling_and_censor_words(struct encoder_ctx *context, unsigned cha
 *		to match, or be greater than p2.
 * @param arg argument passed as it is, to compare function
 */
-void shell_sort(void *base, int nb, size_t size, int(*compar)(const void *p1, const void *p2, void *arg), void *arg)
+void shell_sort(void *base, int nb, size_t size, int (*compar)(const void *p1, const void *p2, void *arg), void *arg)
 {
 	unsigned char *lbase = (unsigned char *)base;
 	unsigned char *tmp = (unsigned char *)malloc(size);

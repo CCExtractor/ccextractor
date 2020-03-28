@@ -21,12 +21,12 @@
 
 #define STR_LEN 256u
 
-#define CLOSED_CAP_DID  0x61
+#define CLOSED_CAP_DID 0x61
 #define CLOSED_C708_SDID 0x01
 #define CLOSED_C608_SDID 0x02
 
-#define debug(fmt, ...) ccx_common_logging.debug_ftn(CCX_DMT_PARSE, "GXF:%s:%d: "fmt , __FUNCTION__ ,__LINE__ , ##__VA_ARGS__)
-#define log(fmt, ...) ccx_common_logging.log_ftn("GXF:%d: "fmt , __LINE__ , ##__VA_ARGS__)
+#define debug(fmt, ...) ccx_common_logging.debug_ftn(CCX_DMT_PARSE, "GXF:%s:%d: " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define log(fmt, ...) ccx_common_logging.log_ftn("GXF:%d: " fmt, __LINE__, ##__VA_ARGS__)
 
 #undef CCX_GXF_ENABLE_AD_VBI
 typedef enum
@@ -75,9 +75,9 @@ typedef enum
 	 * -1 = Not applicable for this track type
 	 * -2 = Not available
 	 */
-	 TRACK_FPS = 0x50,
+	TRACK_FPS = 0x50,
 
-	 /**
+	/**
 	  * Lines per frame
 	  * 1 = 525
 	  * 2 = 625
@@ -87,16 +87,16 @@ typedef enum
 	  * -1 = Not applicable
 	  * -2 = Not available
 	  */
-	  TRACK_LINES = 0x51,
+	TRACK_LINES = 0x51,
 
-	  /**
+	/**
 	   * Fields per frame
 	   * 1 = Progressive
 	   * 2 = Interlaced
 	   * -1 = Not applicable
 	   * -2 = Not available
 	   */
-	   TRACK_FPF = 0x52,
+	TRACK_FPF = 0x52,
 
 } GXFTrackTag;
 
@@ -139,54 +139,54 @@ typedef enum
 	 * A video track encoded using SMPTE 314M or ISO/IEC 61834-2 DV encoding at 25 Mb/s
 	 * for 625/50i.
 	 */
-	 TRACK_TYPE_DV_BASED_25MB_625 = 14,
+	TRACK_TYPE_DV_BASED_25MB_625 = 14,
 
-	 /**
+	/**
 	  * A video track encoded using SMPTE 314M DV encoding at 50Mb/s
 	  * for 525/50i.
 	  */
-	  TRACK_TYPE_DV_BASED_50MB_525 = 15,
+	TRACK_TYPE_DV_BASED_50MB_525 = 15,
 
-	  /**
+	/**
 	   * A video track encoded using SMPTE 314M DV encoding at 50Mb/s for 625/50i
 	   */
-	   TRACK_TYPE_DV_BASED_50_MB_625 = 16,
+	TRACK_TYPE_DV_BASED_50_MB_625 = 16,
 
-	   /* An AC-3 audio track */
-	   TRACK_TYPE_AC_3_16b_audio = 17,
+	/* An AC-3 audio track */
+	TRACK_TYPE_AC_3_16b_audio = 17,
 
-	   /* A non-PCM AES data track */
-	   TRACK_TYPE_COMPRESSED_24B_AUDIO = 18,
+	/* A non-PCM AES data track */
+	TRACK_TYPE_COMPRESSED_24B_AUDIO = 18,
 
-	   /* Ignore it as nice decoder */
-	   TRACK_TYPE_RESERVED = 19,
+	/* Ignore it as nice decoder */
+	TRACK_TYPE_RESERVED = 19,
 
-	   /**
+	/**
 		* A video track encoded using ISO/IEC 13818-2 (MPEG-2) main profile at main
 		* level or high level, or 4:2:2 profile at main level or high level.
 		*/
-		TRACK_TYPE_MPEG2_HD = 20,
+	TRACK_TYPE_MPEG2_HD = 20,
 
-		/* SMPTE 291M 10-bit type 2 component ancillary data. */
-		TRACK_TYPE_ANCILLARY_DATA = 21,
+	/* SMPTE 291M 10-bit type 2 component ancillary data. */
+	TRACK_TYPE_ANCILLARY_DATA = 21,
 
-		/* A video track encoded using ISO/IEC 11172-2 (MPEG-1) */
-		TRACK_TYPE_MPEG1_525 = 22,
+	/* A video track encoded using ISO/IEC 11172-2 (MPEG-1) */
+	TRACK_TYPE_MPEG1_525 = 22,
 
-		/* A video track encoded using ISO/IEC 11172-2 (MPEG-1). */
-		TRACK_TYPE_MPEG1_625 = 23,
+	/* A video track encoded using ISO/IEC 11172-2 (MPEG-1). */
+	TRACK_TYPE_MPEG1_625 = 23,
 
-		/* SMPTE 12M time codes For HD material. */
-		TRACK_TYPE_TIME_CODE_HD = 24,
+	/* SMPTE 12M time codes For HD material. */
+	TRACK_TYPE_TIME_CODE_HD = 24,
 
-}GXFTrackType;
+} GXFTrackType;
 
 typedef enum ccx_ad_pres_format
 {
 	PRES_FORMAT_SD = 1,
 	PRES_FORMAT_HD = 2,
 
-}GXFAncDataPresFormat;
+} GXFAncDataPresFormat;
 
 enum mpeg_picture_coding
 {
@@ -626,10 +626,10 @@ static int parse_ad_track_desc(struct ccx_demuxer *demux, int len)
 				}
 				ad_track->ad_format = auxi_info[2];
 				ad_track->nb_field = auxi_info[3];
-				ad_track->field_size = *((int16_t *)(auxi_info + 4));//RB16(auxi_info + 4);
-				ad_track->packet_size = *((int16_t *)(auxi_info + 6)) * 256;//RB16(auxi_info + 6);
+				ad_track->field_size = *((int16_t *)(auxi_info + 4));	     //RB16(auxi_info + 4);
+				ad_track->packet_size = *((int16_t *)(auxi_info + 6)) * 256; //RB16(auxi_info + 6);
 				debug("ad_format %d nb_field %d field_size %d packet_size %d track id %d\n",
-					ad_track->ad_format, ad_track->nb_field, ad_track->field_size, ad_track->packet_size, ad_track->id);
+				      ad_track->ad_format, ad_track->nb_field, ad_track->field_size, ad_track->packet_size, ad_track->id);
 				break;
 			case TRACK_VER:
 				ad_track->fs_version = buffered_get_be32(demux);
@@ -754,7 +754,6 @@ static int parse_track_sec(struct ccx_demuxer *demux, int len, struct demuxer_da
 			}
 			else
 				continue;
-
 		}
 	}
 error:
@@ -764,7 +763,6 @@ error:
 		ret = CCX_EOF;
 	return ret;
 }
-
 
 /**
  * Parse Caption Distribution Packet
@@ -790,7 +788,6 @@ int parse_ad_cdp(unsigned char *cdp, size_t len, struct demuxer_data *data)
 	uint16_t cc_data_present;
 	uint16_t caption_service_active;
 	uint16_t cdp_header_sequence_counter;
-
 
 	/* Do not accept packet whose length does not fit header and footer */
 	if (len < 11)
@@ -841,7 +838,6 @@ int parse_ad_cdp(unsigned char *cdp, size_t len, struct demuxer_data *data)
 	debug("caption service active: %d\n", caption_service_active);
 	debug("header sequence counter: %d  (0x%x)\n", cdp_header_sequence_counter, cdp_header_sequence_counter);
 
-
 	/**
 	 * CDP spec does not allow to have multiple section in single packet
 	 * therefor if else if ladder does not require switch with while
@@ -876,7 +872,8 @@ int parse_ad_cdp(unsigned char *cdp, size_t len, struct demuxer_data *data)
 	else if (*cdp >= 0x75 && *cdp <= 0xEF)
 	{
 		log(" Please share sample, newer version of SMPTE-334 specification are followed\n"
-			"New section id 0x%x\n", *cdp);
+		    "New section id 0x%x\n",
+		    *cdp);
 		cdp++;
 		return -1;
 	}
@@ -896,9 +893,7 @@ int parse_ad_cdp(unsigned char *cdp, size_t len, struct demuxer_data *data)
 		 * packet_checksum – This 8-bit field shall contain the 8-bit value necessary to make the arithmetic sum of the
 		 * entire packet (first byte of cdp_identifier to packet_checksum, inclusive) modulo 256 equal zero.
 		 */
-
 	}
-
 
 	return ret;
 }
@@ -962,7 +957,6 @@ static int parse_ad_pyld(struct ccx_demuxer *demux, int len, struct demuxer_data
 	else if (((d_id & 0xff) == CLOSED_CAP_DID) && ((sd_id & 0xff) == CLOSED_C608_SDID))
 	{
 		log("Need Sample\n");
-
 	}
 	else
 	{
@@ -981,7 +975,6 @@ error:
 		ret = CCX_EOF;
 
 	return ret;
-
 }
 
 /**
@@ -1064,7 +1057,6 @@ static int parse_ad_field(struct ccx_demuxer *demux, int len, struct demuxer_dat
 		len -= 4;
 		hdr_len = buffered_get_le32(demux);
 
-
 		/**
 		 * IN GXF video there are 2 pad but if I ignore first pad tag then there is data inside it
 		 * There must be data that time but it was not there
@@ -1081,13 +1073,11 @@ static int parse_ad_field(struct ccx_demuxer *demux, int len, struct demuxer_dat
 			if (result != hdr_len)
 				ret = CCX_EOF;
 			continue;
-
 		}
 		else if (!strncmp(tag, "pos ", 4))
 		{
 			if (hdr_len != 12)
 				log("Warning: expected 4 got %d\n", hdr_len);
-
 		}
 		else
 		{
@@ -1134,7 +1124,6 @@ static int parse_ad_field(struct ccx_demuxer *demux, int len, struct demuxer_dat
 		{
 			log("Warning: No pyld/vbi tag got %s tag\n", tag);
 		}
-
 	}
 
 	result = buffered_skip(demux, len);
@@ -1335,7 +1324,6 @@ static int parse_ad_packet(struct ccx_demuxer *demux, int len, struct demuxer_da
 	if (strncmp(tag, "fld ", 4))
 		log("Warning: No fld tag\n");
 
-
 	for (i = 0; i < ad_track->nb_field; i++)
 	{
 		len -= ad_track->field_size;
@@ -1459,7 +1447,6 @@ static int parse_media(struct ccx_demuxer *demux, int len, struct demuxer_data *
 	valid_time_field = buffered_get_byte(demux) & 0x01;
 	len -= 1;
 
-
 	result = buffered_skip(demux, 1);
 	demux->past += result;
 	len -= 1;
@@ -1493,7 +1480,6 @@ static int parse_media(struct ccx_demuxer *demux, int len, struct demuxer_data *
 
 		parse_ad_packet(demux, ad_track->packet_size, data);
 		len -= ad_track->packet_size;
-
 	}
 	else if (media_type == TRACK_TYPE_MPEG2_525 && !ctx->ad_track)
 	{
@@ -1650,7 +1636,6 @@ static int read_packet(struct ccx_demuxer *ctx, struct demuxer_data *data)
 			ctx->past += result;
 			if (result != len || !len)
 				ret = CCX_EOF;
-
 	}
 
 	return ret;
@@ -1668,14 +1653,13 @@ static int read_packet(struct ccx_demuxer *ctx, struct demuxer_data *data)
  */
 int ccx_gxf_probe(unsigned char *buf, int len)
 {
-	static const uint8_t startcode[] = { 0, 0, 0, 0, 1, 0xbc };
+	static const uint8_t startcode[] = {0, 0, 0, 0, 1, 0xbc};
 	if (len < sizeof(startcode))
 		return CCX_FALSE;
 
 	if (!memcmp(buf, startcode, sizeof(startcode)))
 		return CCX_TRUE;
 	return CCX_FALSE;
-
 }
 
 int ccx_gxf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
