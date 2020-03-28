@@ -140,7 +140,7 @@ void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *d
 	else
 		length = decoder->windows[decoder->current_window].col_count;
 
-	for (int i = 0; i <= length; i++)
+	for (int i = 0; i < length; i++)
 	{
 
 		if (use_colors)
