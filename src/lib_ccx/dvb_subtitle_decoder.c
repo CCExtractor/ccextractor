@@ -179,7 +179,8 @@ typedef struct DVBSubContext
 	int ancillary_id;
 	int lang_index;
 	int version;
-	int time_out;
+	/* Store time in ms */
+	LLONG time_out;
 #ifdef ENABLE_OCR
 	void *ocr_ctx;
 #endif
@@ -1385,8 +1386,8 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	{
 		return;
 	}
-
-	ctx->time_out = timeout;
+	/* Convert time from second to ms */
+	ctx->time_out = timeout * 1000;
 	ctx->version = version;
 
 	if (page_state == 1 || page_state == 2)
@@ -1680,12 +1681,17 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	struct lib_cc_decode *dec_ctx,
 	struct cc_subtitle *sub) {
+	DVBSubContext *ctx = (DVBSubContext *)dec_ctx->private_data;
 	if (!enc_ctx)
 		return;
 	if (enc_ctx->write_previous) //this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
 	{
 		enc_ctx->prev->last_string = NULL; // Reset last recognized sub text
 		sub->prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the end time of the previous sub the current pts
+		if (sub->prev->time_out < sub->prev->end_time - sub->prev->start_time)
+		{
+			 sub->prev->end_time = sub->prev->start_time + sub->prev->time_out;
+		}
 		encode_sub(enc_ctx->prev, sub->prev); //we encode it
 
 		enc_ctx->last_string = enc_ctx->prev->last_string; // Update last recognized string (used in Matroska)
@@ -1713,6 +1719,7 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	memcpy(dec_ctx->prev->private_data, dec_ctx->private_data, sizeof(struct DVBSubContext));
 	/* copy previous subtitle */
 	free_subtitle(sub->prev);
+	sub->time_out = ctx->time_out;
 	sub->prev = NULL;
 	sub->prev = copy_subtitle(sub);
 	sub->prev->start_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the start time of the previous sub the current pts
