@@ -218,7 +218,7 @@ void ccx_dtvcc_write_srt(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder
 
 	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 
-	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
+	for (int i = 0; i < =CCX_DTVCC_SCREENGRID_ROWS; i++)
 	{
 		if (!_dtvcc_is_row_empty(tv, i))
 		{
