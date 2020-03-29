@@ -100,11 +100,13 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	str = paraof_ocrtext(sub, context);
 	if (str)
 	{
-		if (context->is_mkv == 1) {
+		if (context->is_mkv == 1)
+		{
 			// Save recognized string for later use in matroska.c
 			context->last_string = str;
 		}
-		else {
+		else
+		{
 			if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 			{
 				millis_to_time(sub->start_time, &h1, &m1, &s1, &ms1);
@@ -136,7 +138,6 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 	sub->nb_data = 0;
 	freep(&sub->data);
 	return ret;
-
 }
 
 int write_cc_subtitle_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
@@ -174,7 +175,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 	unsigned h2, m2, s2, ms2;
 	int wrote_something = 0;
 
-	int prev_line_start = -1, prev_line_end = -1; // Column in which the previous line started and ended, for autodash
+	int prev_line_start = -1, prev_line_end = -1;	    // Column in which the previous line started and ended, for autodash
 	int prev_line_center1 = -1, prev_line_center2 = -1; // Center column of previous line text
 
 	int empty_buf = 1;
@@ -217,7 +218,7 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 				unsigned char *line = data->characters[i];
 				int do_dash = 1, colon_pos = -1;
 				find_limit_characters(line, &first, &last, CCX_DECODER_608_SCREEN_WIDTH);
-				if (first == -1 || last == -1)  // Probably a bug somewhere though
+				if (first == -1 || last == -1) // Probably a bug somewhere though
 					break;
 				// Is there a speaker named, for example: TOM: What are you doing?
 				for (int j = first; j <= last; j++)
@@ -234,21 +235,21 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 					do_dash = 0;
 				if (first == prev_line_start) // Case of left alignment
 					do_dash = 0;
-				if (last == prev_line_end)  // Right align
+				if (last == prev_line_end) // Right align
 					do_dash = 0;
-				if (first > prev_line_start &&last < prev_line_end) // Fully contained
+				if (first > prev_line_start && last < prev_line_end) // Fully contained
 					do_dash = 0;
-				if ((first > prev_line_start &&first < prev_line_end) || // Overlap
-					(last > prev_line_start &&last < prev_line_end))
+				if ((first > prev_line_start && first < prev_line_end) || // Overlap
+				    (last > prev_line_start && last < prev_line_end))
 					do_dash = 0;
 
 				center1 = (first + last) / 2;
 				if (colon_pos != -1)
 				{
 					while (colon_pos < CCX_DECODER_608_SCREEN_WIDTH &&
-						(line[colon_pos] == ':' ||
-							line[colon_pos] == ' ' ||
-							line[colon_pos] == 0x89))
+					       (line[colon_pos] == ':' ||
+						line[colon_pos] == ' ' ||
+						line[colon_pos] == 0x89))
 						colon_pos++; // Find actual text
 					center2 = (colon_pos + last) / 2;
 				}
@@ -266,7 +267,6 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 				prev_line_end = last;
 				prev_line_center1 = center1;
 				prev_line_center2 = center2;
-
 			}
 			int length = get_decoder_line_encoded(context, context->subline, i, data);
 			if (context->encoding != CCX_ENC_UNICODE)

@@ -4,7 +4,7 @@
 #include "ccx_decoders_common.h"
 
 static const char *XDSclasses_short[] =
-{
+    {
 	"CUR",
 	"FUT",
 	"CHN",
@@ -12,8 +12,7 @@ static const char *XDSclasses_short[] =
 	"PUB",
 	"RES",
 	"PRV",
-	"END"
-};
+	"END"};
 
 void xds_write_transcript_line_prefix(struct encoder_ctx *context, struct ccx_s_write *wb, LLONG start_time, LLONG end_time, int cur_xds_packet_class)
 {
@@ -41,7 +40,7 @@ void xds_write_transcript_line_prefix(struct encoder_ctx *context, struct ccx_s_
 			else
 			{
 				fdprintf(wb->fh, "%lld%c%03d|", start_time / 1000,
-					context->millis_separator, start_time % 1000);
+					 context->millis_separator, start_time % 1000);
 			}
 		}
 		else

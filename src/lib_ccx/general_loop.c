@@ -18,7 +18,6 @@
 #include "dvd_subtitle_decoder.h"
 #include "ccx_demuxer_mxf.h"
 
-
 int end_of_file = 0; // End of file?
 
 // Program stream specific data grabber
@@ -70,8 +69,7 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 			}
 
 			// Search for a header that is not a picture header (nextheader[3]!=0x00)
-			while (!(nextheader[0] == 0x00 && nextheader[1] == 0x00
-				&& nextheader[2] == 0x01 && nextheader[3] != 0x00))
+			while (!(nextheader[0] == 0x00 && nextheader[1] == 0x00 && nextheader[2] == 0x01 && nextheader[3] != 0x00))
 			{
 				if (!ctx->demux_ctx->strangeheader)
 				{
@@ -133,9 +131,7 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 					break;
 				}
 
-				if ((nextheader[4] & 0xC4) != 0x44 || !(nextheader[6] & 0x04)
-					|| !(nextheader[8] & 0x04) || !(nextheader[9] & 0x01)
-					|| (nextheader[12] & 0x03) != 0x03)
+				if ((nextheader[4] & 0xC4) != 0x44 || !(nextheader[6] & 0x04) || !(nextheader[8] & 0x04) || !(nextheader[9] & 0x01) || (nextheader[12] & 0x03) != 0x03)
 				{
 					// broken pack header
 					falsepack = 1;
@@ -221,7 +217,6 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 
 					continue;
 				}
-
 			}
 			// Some PES stream
 			else if (nextheader[3] >= 0xBB && nextheader[3] <= 0xDF)
@@ -236,14 +231,14 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				unsigned headerlen = nextheader[4] << 8 | nextheader[5];
 
 				dbg_print(CCX_DMT_VERBOSE, "non Video PES (type 0x%2X) - len %u\n",
-					nextheader[3], headerlen);
+					  nextheader[3], headerlen);
 
 				// The 15000 here is quite arbitrary, the longest packages I
 				// know of are 12302 bytes (Private 1 data in RTL recording).
 				if (headerlen > 15000)
 				{
 					mprint("Suspicious non Video PES (type 0x%2X) - len %u\n",
-						nextheader[3], headerlen);
+					       nextheader[3], headerlen);
 					mprint("Do not skip over, search for next.\n");
 					headerlen = 2;
 				}
@@ -280,7 +275,8 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				//peslen is unsigned since loop would have already broken if it was negative
 				int want = (int)((BUFSIZE - data->len) > peslen ? peslen : (BUFSIZE - data->len));
 
-				if (want != peslen) {
+				if (want != peslen)
+				{
 					mprint("General LOOP: want(%d) != peslen(%d) \n", want, peslen);
 					continue;
 				}
@@ -293,19 +289,21 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 
 				result = buffered_read(ctx->demux_ctx, data->buffer + data->len, want);
 				ctx->demux_ctx->past = ctx->demux_ctx->past + result;
-				if (result > 0) {
+				if (result > 0)
+				{
 					payload_read += (int)result;
 				}
 				data->len += result;
 
-				if (result != want) { // Not complete - EOF
+				if (result != want)
+				{ // Not complete - EOF
 					end_of_file = 1;
 					break;
 				}
 				enough = 1; // We got one PES
-
 			}
-			else {
+			else
+			{
 				// If we are here this is an unknown header type
 				mprint("Unknown header %02X\n", nextheader[3]);
 				ctx->demux_ctx->strangeheader = 1;
@@ -320,7 +318,6 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		return CCX_EOF;
 	return payload_read;
 }
-
 
 // Returns number of bytes read, or CCX_OF for EOF
 int general_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
@@ -377,7 +374,8 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 		if (line[0] == ';') // Skip comments
 			continue;
 		c1 = strchr(line, ':');
-		if (c1) c2 = strchr(c1 + 1, ':');
+		if (c1)
+			c2 = strchr(c1 + 1, ':');
 		if (!c2) // Line doesn't contain what we want
 			continue;
 		*c1 = 0;
@@ -456,7 +454,7 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 		// Always 03 after header, then something unknown (seen 42, 43, c2, c3...),
 		// then ff, then data with field info, and terminated with ff.
 		if (byte_count > 3 && bytes[0] == 0x03 &&
-			bytes[2] == 0xff && bytes[byte_count - 1] == 0xff)
+		    bytes[2] == 0xff && bytes[byte_count - 1] == 0xff)
 		{
 			ok = 1;
 			for (unsigned i = 3; i < byte_count - 2; i += 3)
@@ -556,7 +554,6 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 		add_current_pts(dec_ctx->timing, cb_field1 * 1001 / 30 * (MPEG_CLOCK_FREQ / 1000));
 		set_fts(dec_ctx->timing); // Now set the FTS related variables including fts_max
 
-
 	} while (data->len);
 	free(data);
 	return caps;
@@ -627,7 +624,6 @@ void delete_datalist(struct demuxer_data *list)
 		slist = list;
 		list = list->next_stream;
 		delete_demuxer_data(slist);
-
 	}
 }
 int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct demuxer_data *data_node)
@@ -669,7 +665,8 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	else if (data_node->bufferdatatype == CCX_TELETEXT)
 	{
 		//telxcc_update_gt(dec_ctx->private_data, ctx->demux_ctx->global_timestamp);
-		if (enc_ctx) {
+		if (enc_ctx)
+		{
 			ret = tlt_process_pes_packet(dec_ctx, data_node->buffer, data_node->len, dec_sub, enc_ctx->sentence_cap);
 			if (ret == CCX_EINVAL)
 				return ret;
@@ -712,8 +709,8 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		}
 
 		dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
-			print_mstime_static(dec_ctx->timing->current_pts / (MPEG_CLOCK_FREQ / 1000)),
-			(unsigned)(dec_ctx->timing->current_pts));
+			  print_mstime_static(dec_ctx->timing->current_pts / (MPEG_CLOCK_FREQ / 1000)),
+			  (unsigned)(dec_ctx->timing->current_pts));
 		dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime_static(get_fts(dec_ctx->timing, dec_ctx->current_field)));
 
 		got = process_raw(dec_ctx, dec_sub, data_node->buffer, data_node->len);
@@ -740,10 +737,9 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		mprint("BUG BUG\n");
 	}
 
-
 	//	ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer, (size_t) (data_node->len - got));
 
-		/* Get rid of the bytes we already processed */
+	/* Get rid of the bytes we already processed */
 	if (data_node)
 	{
 		if (got > 0)
@@ -769,7 +765,6 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 	struct encoder_ctx *enc_ctx;
 	int segment_now = 0;
 
-
 	t = get_fts(dec_ctx->timing, dec_ctx->current_field);
 	if (!t && ctx->demux_ctx->global_timestamp_inited)
 		t = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
@@ -793,7 +788,7 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 		enc_ctx = get_encoder_by_pn(ctx, dec_ctx->program_number);
 		// segment_now = 1;
 		if (!ctx->segment_on_key_frames_only ||
-			dec_ctx->picture_coding_type == CCX_FRAME_TYPE_I_FRAME) // Segment only when an I-Frame is found
+		    dec_ctx->picture_coding_type == CCX_FRAME_TYPE_I_FRAME) // Segment only when an I-Frame is found
 		{
 			segment_now = 1;
 			enc_ctx->segment_pending = 0;
@@ -842,7 +837,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 	enum ccx_stream_mode_enum stream_mode;
 	struct demuxer_data *datalist = NULL;
 	struct demuxer_data *data_node = NULL;
-	int (*get_more_data)(struct lib_ccx_ctx *c, struct demuxer_data **d);
+	int (*get_more_data)(struct lib_ccx_ctx * c, struct demuxer_data * *d);
 	int ret;
 	int caps = 0;
 
@@ -927,7 +922,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 					{
 						if (data_node_video->pts != CCX_NOPTS)
 						{
-							struct ccx_rational tb = { 1,MPEG_CLOCK_FREQ };
+							struct ccx_rational tb = {1, MPEG_CLOCK_FREQ};
 							LLONG pts;
 							if (data_node_video->tb.num != 1 || data_node_video->tb.den != MPEG_CLOCK_FREQ)
 							{
@@ -993,7 +988,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 
 			if (data_node->pts != CCX_NOPTS)
 			{
-				struct ccx_rational tb = { 1,MPEG_CLOCK_FREQ };
+				struct ccx_rational tb = {1, MPEG_CLOCK_FREQ};
 				LLONG pts;
 				if (data_node->tb.num != 1 || data_node->tb.den != MPEG_CLOCK_FREQ)
 				{
@@ -1010,8 +1005,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 				uint64_t tstamp;
 				if (ctx->demux_ctx->global_timestamp_inited)
 				{
-					tstamp = (ctx->demux_ctx->global_timestamp + ctx->demux_ctx->offset_global_timestamp)
-						- ctx->demux_ctx->min_global_timestamp;
+					tstamp = (ctx->demux_ctx->global_timestamp + ctx->demux_ctx->offset_global_timestamp) - ctx->demux_ctx->min_global_timestamp;
 				}
 				else
 				{
@@ -1023,14 +1017,17 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			if (data_node->bufferdatatype == CCX_TELETEXT && dec_ctx->private_data) //if we have teletext subs, we set the min_pts here
 				set_tlt_delta(dec_ctx, min_pts);
 			ret = process_data(enc_ctx, dec_ctx, data_node);
-			if (enc_ctx != NULL) {
+			if (enc_ctx != NULL)
+			{
 				if (enc_ctx->srt_counter || enc_ctx->cea_708_counter || dec_ctx->saw_caption_block || ret == 1)
 					caps = 1;
 			}
 
 			// Process the last subtitle for DVB
-			if (!(!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE)) {
-				if (data_node->bufferdatatype == CCX_DVB_SUBTITLE && dec_ctx->dec_sub.prev->end_time == 0) {
+			if (!(!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE))
+			{
+				if (data_node->bufferdatatype == CCX_DVB_SUBTITLE && dec_ctx->dec_sub.prev->end_time == 0)
+				{
 					dec_ctx->dec_sub.prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000);
 					if (enc_ctx != NULL)
 						encode_sub(enc_ctx->prev, dec_ctx->dec_sub.prev);
@@ -1105,16 +1102,18 @@ int general_loop(struct lib_ccx_ctx *ctx)
 					set_current_pts(dec_ctx->timing, data_node->pts);
 
 				ret = process_data(enc_ctx, dec_ctx, data_node);
-				if (enc_ctx != NULL) {
+				if (enc_ctx != NULL)
+				{
 					if (
-						((enc_ctx && (enc_ctx->srt_counter || enc_ctx->cea_708_counter)) ||
-							dec_ctx->saw_caption_block || ret == 1)
-						)
+					    ((enc_ctx && (enc_ctx->srt_counter || enc_ctx->cea_708_counter)) ||
+					     dec_ctx->saw_caption_block || ret == 1))
 						caps = 1;
 				}
 				// Process the last subtitle for DVB
-				if (!(!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE)) {
-					if (data_node->bufferdatatype == CCX_DVB_SUBTITLE && dec_ctx && dec_ctx->dec_sub.prev && dec_ctx->dec_sub.prev->end_time == 0) {
+				if (!(!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE))
+				{
+					if (data_node->bufferdatatype == CCX_DVB_SUBTITLE && dec_ctx && dec_ctx->dec_sub.prev && dec_ctx->dec_sub.prev->end_time == 0)
+					{
 						dec_ctx->dec_sub.prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000);
 						if (enc_ctx != NULL)
 							encode_sub(enc_ctx->prev, dec_ctx->dec_sub.prev);
@@ -1183,7 +1182,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 	{
 		mprint("\n\n\n\nATTENTION!!!!!!\n");
 		mprint("Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
-			ctx->inputfile[ctx->current_file], ctx->current_file, ctx->demux_ctx->past, ctx->inputsize);
+		       ctx->inputfile[ctx->current_file], ctx->current_file, ctx->demux_ctx->past, ctx->inputsize);
 	}
 	return caps;
 }
@@ -1210,7 +1209,6 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	// Generic buffer to hold some data
 	parsebuf = (unsigned char *)malloc(1024);
 
-
 	result = buffered_read(ctx->demux_ctx, parsebuf, 11);
 	ctx->demux_ctx->past += result;
 	bread += (int)result;
@@ -1226,9 +1224,8 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	{
 		dbg_print(CCX_DMT_PARSE, "\nRCWT header\n");
 		dbg_print(CCX_DMT_PARSE, "File created by %02X version %02X%02X\nFile format revision: %02X%02X\n",
-			parsebuf[3], parsebuf[4], parsebuf[5],
-			parsebuf[6], parsebuf[7]);
-
+			  parsebuf[3], parsebuf[4], parsebuf[5],
+			  parsebuf[6], parsebuf[7]);
 	}
 	else
 	{
@@ -1256,7 +1253,8 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 		{
 			result = buffered_read(ctx->demux_ctx, buf, TELETEXT_CHUNK_LEN);
 			ctx->demux_ctx->past += result;
-			if (result != TELETEXT_CHUNK_LEN) {
+			if (result != TELETEXT_CHUNK_LEN)
+			{
 				telxcc_dump_prev_page(telctx, dec_sub);
 				break;
 			}
@@ -1288,11 +1286,12 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 		cbcount = *((uint16_t *)(parsebuf + 8));
 
 		dbg_print(CCX_DMT_PARSE, "RCWT data header FTS: %s  blocks: %u\n",
-			print_mstime_static(currfts), cbcount);
+			  print_mstime_static(currfts), cbcount);
 
 		if (cbcount > 0)
 		{
-			if (cbcount * 3 > parsebufsize) {
+			if (cbcount * 3 > parsebufsize)
+			{
 				parsebuf = (unsigned char *)realloc(parsebuf, cbcount * 3);
 				if (!parsebuf)
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "In rcwt_loop: Out of memory allocating parsebuf.");

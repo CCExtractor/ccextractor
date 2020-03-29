@@ -7,9 +7,9 @@
 #define MAX_WAIT 10
 #define PROGRESS_COMPLETE 100
 
-void* extract_thread(void* extract_args)
+void *extract_thread(void *extract_args)
 {
-	struct args_extract *params = (struct args_extract*)extract_args;
+	struct args_extract *params = (struct args_extract *)extract_args;
 	static char term_string[500];
 	strcpy(term_string, params->command_string);
 	strcat(term_string, " ");
@@ -20,7 +20,7 @@ void* extract_thread(void* extract_args)
 	pthread_exit(0);
 }
 
-void* read_activity_data(void *read_args)
+void *read_activity_data(void *read_args)
 {
 	puts("Inside activity thread!");
 	char line[500];
@@ -31,13 +31,13 @@ void* read_activity_data(void *read_args)
 	time.tv_nsec = 10000000L;
 #endif
 	int wait = 0;
-	struct args_extract *read_params = (struct args_extract*)read_args;
+	struct args_extract *read_params = (struct args_extract *)read_args;
 	FILE *file;
 	char current_input[500];
 	int concat_index = 0;
 	file = fopen("ccx.log", "r");
 
-	while(file == NULL)
+	while (file == NULL)
 	{
 		printf("Cannot open ccx.log, trying again.\n");
 		file = fopen("ccx.log", "r");
@@ -47,20 +47,23 @@ void* read_activity_data(void *read_args)
 		_sleep(10);
 #endif
 		wait++;
-		if(wait == MAX_WAIT)
+		if (wait == MAX_WAIT)
 		{
 			read_params->main_threadsettings->threadPopup = nk_true;
 			return 0;
 		}
 	}
 
-	while(!feof(file))
+	while (!feof(file))
 	{
 		if (fgets(current_input, sizeof(current_input), file) == NULL)
 			continue;
-		if (concat_index == 0) {
+		if (concat_index == 0)
+		{
 			strcpy(line, current_input);
-		} else {
+		}
+		else
+		{
 			strcat(line, current_input);
 		}
 		concat_index++;
@@ -68,18 +71,16 @@ void* read_activity_data(void *read_args)
 			continue;
 
 		sscanf(line, "%[^\n]", buffer);
-		if(read_params->main_threadsettings->activity_string_count == 0)
+		if (read_params->main_threadsettings->activity_string_count == 0)
 			read_params->main_threadsettings->activity_string =
-					malloc(sizeof(*read_params->main_threadsettings->activity_string));
+			    malloc(sizeof(*read_params->main_threadsettings->activity_string));
 		else
 			read_params->main_threadsettings->activity_string =
-					realloc(read_params->main_threadsettings->activity_string,
-							(read_params->main_threadsettings->activity_string_count + 1)*sizeof(char*));
+			    realloc(read_params->main_threadsettings->activity_string,
+				    (read_params->main_threadsettings->activity_string_count + 1) * sizeof(char *));
 
 		read_params->main_threadsettings->activity_string[read_params->main_threadsettings->activity_string_count] = strdup(buffer);
 		read_params->main_threadsettings->activity_string_count++;
-
-
 
 		memset(line, 0, sizeof(line));
 		memset(buffer, 0, sizeof(buffer));
@@ -87,7 +88,7 @@ void* read_activity_data(void *read_args)
 	}
 }
 
-void* read_data_from_thread(void* read_args)
+void *read_data_from_thread(void *read_args)
 {
 	pthread_t tid_activity;
 	pthread_attr_t attr_activity;
@@ -99,10 +100,9 @@ void* read_data_from_thread(void* read_args)
 	time.tv_nsec = 10000000L;
 #endif
 
-
 	int wait = 0;
-	struct args_extract *read_params = (struct args_extract*)read_args;
-	int unknown1 = 0, unknown2 = 0,progress_count = 0;
+	struct args_extract *read_params = (struct args_extract *)read_args;
+	int unknown1 = 0, unknown2 = 0, progress_count = 0;
 	FILE *file;
 	char prev_line[500];
 	char line[500];
@@ -115,12 +115,13 @@ void* read_data_from_thread(void* read_args)
 	/*Setup activity thread*/
 	pthread_attr_init(&attr_activity);
 	int err = pthread_create(&tid_activity, &attr_activity, read_activity_data, read_params);
-	if(!err)
+	if (!err)
 		puts("Activity Thread created");
 
 	file = fopen("gui_report.log", "r");
 
-	while (file == NULL) {
+	while (file == NULL)
+	{
 		printf("Cannot open gui_report.log, trying again.\n");
 		file = fopen("gui_report.log", "r");
 #if UNIX
@@ -129,20 +130,23 @@ void* read_data_from_thread(void* read_args)
 		_sleep(10);
 #endif
 		wait++;
-		if (wait >= MAX_WAIT) {
+		if (wait >= MAX_WAIT)
+		{
 			read_params->main_threadsettings->threadPopup = nk_true;
 			return 0;
 		}
-
 	}
 
-	while(1)
+	while (1)
 	{
 		if (fgets(current_input, sizeof(current_input), file) == NULL)
 			continue;
-		if (concat_index == 0) {
+		if (concat_index == 0)
+		{
 			strcpy(line, current_input);
-		} else {
+		}
+		else
+		{
 			strcat(line, current_input);
 		}
 		concat_index++;
@@ -150,41 +154,41 @@ void* read_data_from_thread(void* read_args)
 			continue;
 
 		progress_success = sscanf(line, "###PROGRESS#%d#%d#%d", &progress_count, &unknown1, &unknown2);
-		if(progress_success == 3)
+		if (progress_success == 3)
 			read_params->main_threadsettings->progress_cursor = progress_count;
 		subs_success1 = sscanf(line, "###SUBTITLE#%[^#]#%[^#]#%[^\n]", t_start, t_end, subtitle1);
 		subs_success2 = sscanf(line, "###SUBTITLE###%[^\n]", subtitle2);
-		if(subs_success1 == 3)
+		if (subs_success1 == 3)
 		{
 			sprintf(buffer, "%s-%s: %s", t_start, t_end, subtitle1);
-			if(read_params->main_threadsettings->preview_string_count == 0)
+			if (read_params->main_threadsettings->preview_string_count == 0)
 				read_params->main_threadsettings->preview_string =
-						malloc(sizeof(*read_params->main_threadsettings->preview_string));
+				    malloc(sizeof(*read_params->main_threadsettings->preview_string));
 			else
 				read_params->main_threadsettings->preview_string =
-						realloc(read_params->main_threadsettings->preview_string,
-								(read_params->main_threadsettings->preview_string_count + 1)*sizeof(char*));
+				    realloc(read_params->main_threadsettings->preview_string,
+					    (read_params->main_threadsettings->preview_string_count + 1) * sizeof(char *));
 
 			read_params->main_threadsettings->preview_string[read_params->main_threadsettings->preview_string_count] = strdup(buffer);
 			read_params->main_threadsettings->preview_string_count++;
 		}
 
-		if(subs_success2 == 1)
+		if (subs_success2 == 1)
 		{
 			sprintf(buffer, "                        %s", subtitle2);
-			if(read_params->main_threadsettings->preview_string_count == 0)
+			if (read_params->main_threadsettings->preview_string_count == 0)
 				read_params->main_threadsettings->preview_string =
-						malloc(sizeof(*read_params->main_threadsettings->preview_string));
+				    malloc(sizeof(*read_params->main_threadsettings->preview_string));
 			else
 				read_params->main_threadsettings->preview_string =
-						realloc(read_params->main_threadsettings->preview_string,
-								(read_params->main_threadsettings->preview_string_count + 1)*sizeof(char*));
+				    realloc(read_params->main_threadsettings->preview_string,
+					    (read_params->main_threadsettings->preview_string_count + 1) * sizeof(char *));
 
 			read_params->main_threadsettings->preview_string[read_params->main_threadsettings->preview_string_count] = strdup(buffer);
 			read_params->main_threadsettings->preview_string_count++;
 		}
 
-		if(progress_count == PROGRESS_COMPLETE)
+		if (progress_count == PROGRESS_COMPLETE)
 			break;
 		memset(line, 0, sizeof(line));
 		concat_index = 0;
@@ -193,15 +197,15 @@ void* read_data_from_thread(void* read_args)
 	printf("progress count:%d\n", progress_count);
 	fclose(file);
 	printf("File closed\n");
-	for(int i = 0; i<read_params->main_threadsettings->preview_string_count; i++)
-		printf("%s\n",read_params->main_threadsettings->preview_string[i]);
+	for (int i = 0; i < read_params->main_threadsettings->preview_string_count; i++)
+		printf("%s\n", read_params->main_threadsettings->preview_string[i]);
 	pthread_exit(0);
 }
 
-void* feed_files_for_extraction(void* file_args)
+void *feed_files_for_extraction(void *file_args)
 {
 	printf("Inside feeder\n");
-	
+
 	struct args_extract *extract_params = (struct args_extract *)file_args;
 	printf("count:%d\n", extract_params->main_threadsettings->filename_count);
 	extract_params->command_string = extract_params->threadcommand->term_string;
@@ -209,15 +213,14 @@ void* feed_files_for_extraction(void* file_args)
 	pthread_t tid_extract, tid_read;
 	pthread_attr_t attr_extract, attr_read;
 
-
-	for(int i = 0; count != 0; i++, count--)
+	for (int i = 0; count != 0; i++, count--)
 	{
 		pthread_t tid_extract, tid_read;
 		pthread_attr_t attr_extract, attr_read;
 
 		pthread_attr_init(&attr_extract);
 		pthread_attr_init(&attr_read);
-		
+
 		extract_params->main_threadsettings->is_file_selected[i] = nk_true;
 		extract_args.file_string = extract_params->main_threadsettings->filenames[i];
 		int err1 = pthread_create(&tid_extract, &attr_extract, extract_thread, extract_params);
@@ -236,16 +239,14 @@ void* feed_files_for_extraction(void* file_args)
 
 		remove("gui_report.log");
 		remove("ccx.log");
-
 	}
 	printf("File feeding over\n");
 }
 
-
 void setup_and_create_thread(struct main_tab *main_settings, struct built_string *command)
 {
-	extract_args.main_threadsettings = (struct main_tab*)main_settings;
-	extract_args.threadcommand = (struct built_string*)command;
+	extract_args.main_threadsettings = (struct main_tab *)main_settings;
+	extract_args.threadcommand = (struct built_string *)command;
 
 	pthread_attr_init(&attr_launch);
 	int err = pthread_create(&tid_launch, &attr_launch, feed_files_for_extraction, &extract_args);
@@ -253,12 +254,11 @@ void setup_and_create_thread(struct main_tab *main_settings, struct built_string
 		printf("Feeder created!\n");
 }
 
-
 /*THREAD FUNCTIONS FOR HD_HOMERUN*/
-void* find_hd_homerun_devices(void *args)
+void *find_hd_homerun_devices(void *args)
 {
 	char command[300];
-	extract_args.homerun_thread = (struct hd_homerun_tab*)args;
+	extract_args.homerun_thread = (struct hd_homerun_tab *)args;
 	int wait = 0;
 	FILE *file;
 	char line[200];
@@ -271,7 +271,6 @@ void* find_hd_homerun_devices(void *args)
 	time.tv_nsec = 10000000L;
 #endif
 
-
 #if HD_HOMERUN
 	strcpy(command, "hdhomerun_config");
 #else
@@ -280,56 +279,55 @@ void* find_hd_homerun_devices(void *args)
 	strcpy(command, " discover >> homerun.log");
 	system(command);
 
-
 	file = fopen("homerun.log", "r");
 
-	while (file == NULL) {
-			printf("Cannot open file! Trying again.\n");
-			file = fopen("homerun.log", "r");
+	while (file == NULL)
+	{
+		printf("Cannot open file! Trying again.\n");
+		file = fopen("homerun.log", "r");
 #if UNIX
-			nanosleep(&time, NULL);
+		nanosleep(&time, NULL);
 #else
-			_sleep(10);
+		_sleep(10);
 #endif
-			wait++;
-			if (wait >= MAX_WAIT) {
-				extract_args.homerun_thread->threadPopup = nk_true;
-				return 0;
-			}
-
+		wait++;
+		if (wait >= MAX_WAIT)
+		{
+			extract_args.homerun_thread->threadPopup = nk_true;
+			return 0;
 		}
+	}
 
-	while(1)
+	while (1)
 	{
 		fgets(line, sizeof(line), file);
 		device_success = sscanf(line, "hdhomerun device %[^\n]", device);
-		if(feof(file))
+		if (feof(file))
 			break;
-		if(device_success == 1)
+		if (device_success == 1)
 		{
-			if(extract_args.homerun_thread->device_num == 0)
+			if (extract_args.homerun_thread->device_num == 0)
 			{
-				extract_args.homerun_thread->devices = malloc(sizeof(char*));
+				extract_args.homerun_thread->devices = malloc(sizeof(char *));
 				extract_args.homerun_thread->devices[extract_args.homerun_thread->device_num] = strdup(device);
 				extract_args.homerun_thread->device_num++;
 			}
 			else
 			{
 				extract_args.homerun_thread->devices = realloc(extract_args.homerun_thread->devices,
-						(extract_args.homerun_thread->device_num + 1)*sizeof(char*));
+									       (extract_args.homerun_thread->device_num + 1) * sizeof(char *));
 				extract_args.homerun_thread->devices[extract_args.homerun_thread->device_num] = strdup(device);
 				extract_args.homerun_thread->device_num++;
 			}
 		}
 	}
-printf("Find device thread finished\n");
-
+	printf("Find device thread finished\n");
 }
 
-void* setup_hd_homerun_device(void *args)
+void *setup_hd_homerun_device(void *args)
 {
 	char device[20];
-	extract_args.homerun_thread = (struct hd_homerun_tab*)args;
+	extract_args.homerun_thread = (struct hd_homerun_tab *)args;
 	char channel_command[300];
 	char program_command[300];
 	char target_command[300];

@@ -10,7 +10,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
- /**
+/**
   * @file dvbsub.c
   */
 
@@ -21,72 +21,71 @@
 #include <limits.h>
 #include <errno.h>
 
-
 #include "dvb_subtitle_decoder.h"
 #include "utility.h"
 #include "ccx_decoders_common.h"
 #include "ocr.h"
 
-#define DVBSUB_PAGE_SEGMENT     0x10
-#define DVBSUB_REGION_SEGMENT   0x11
-#define DVBSUB_CLUT_SEGMENT     0x12
-#define DVBSUB_OBJECT_SEGMENT   0x13
+#define DVBSUB_PAGE_SEGMENT 0x10
+#define DVBSUB_REGION_SEGMENT 0x11
+#define DVBSUB_CLUT_SEGMENT 0x12
+#define DVBSUB_OBJECT_SEGMENT 0x13
 #define DVBSUB_DISPLAYDEFINITION_SEGMENT 0x14
-#define DVBSUB_DISPLAY_SEGMENT  0x80
+#define DVBSUB_DISPLAY_SEGMENT 0x80
 
 #define SCALEBITS 10
-#define ONE_HALF  (1 << (SCALEBITS - 1))
-#define FIX(x)    ((int) ((x) * (1<<SCALEBITS) + 0.5))
+#define ONE_HALF (1 << (SCALEBITS - 1))
+#define FIX(x) ((int)((x) * (1 << SCALEBITS) + 0.5))
 
-#define YUV_TO_RGB1_CCIR(cb1, cr1)\
-{\
-    cb = (cb1) - 128;\
-    cr = (cr1) - 128;\
-    r_add = FIX(1.40200*255.0/224.0) * cr + ONE_HALF;\
-    g_add = - FIX(0.34414*255.0/224.0) * cb - FIX(0.71414*255.0/224.0) * cr + \
-            ONE_HALF;\
-    b_add = FIX(1.77200*255.0/224.0) * cb + ONE_HALF;\
-}
+#define YUV_TO_RGB1_CCIR(cb1, cr1)                                                               \
+	{                                                                                        \
+		cb = (cb1)-128;                                                                  \
+		cr = (cr1)-128;                                                                  \
+		r_add = FIX(1.40200 * 255.0 / 224.0) * cr + ONE_HALF;                            \
+		g_add = -FIX(0.34414 * 255.0 / 224.0) * cb - FIX(0.71414 * 255.0 / 224.0) * cr + \
+			ONE_HALF;                                                                \
+		b_add = FIX(1.77200 * 255.0 / 224.0) * cb + ONE_HALF;                            \
+	}
 
-#define YUV_TO_RGB2_CCIR(r, g, b, y1)\
-{\
-    y = ((y1) - 16) * FIX(255.0/219.0);\
-    r = cm[(y + r_add) >> SCALEBITS];\
-    g = cm[(y + g_add) >> SCALEBITS];\
-    b = cm[(y + b_add) >> SCALEBITS];\
-}
+#define YUV_TO_RGB2_CCIR(r, g, b, y1)               \
+	{                                           \
+		y = ((y1)-16) * FIX(255.0 / 219.0); \
+		r = cm[(y + r_add) >> SCALEBITS];   \
+		g = cm[(y + g_add) >> SCALEBITS];   \
+		b = cm[(y + b_add) >> SCALEBITS];   \
+	}
 
 #define times4(x) x, x, x, x
 #define times256(x) times4(times4(times4(times4(times4(x)))))
 
 #define MAX_NEG_CROP 1024
-const uint8_t crop_tab[256 + 2 * MAX_NEG_CROP] = { times256(0x00), 0x00, 0x01,
-		0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D,
-		0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19,
-		0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25,
-		0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31,
-		0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D,
-		0x3E, 0x3F, 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49,
-		0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55,
-		0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F, 0x60, 0x61,
-		0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D,
-		0x6E, 0x6F, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79,
-		0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F, 0x80, 0x81, 0x82, 0x83, 0x84, 0x85,
-		0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F, 0x90, 0x91,
-		0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D,
-		0x9E, 0x9F, 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9,
-		0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5,
-		0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, 0xC0, 0xC1,
-		0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD,
-		0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9,
-		0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF, 0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5,
-		0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF, 0xF0, 0xF1,
-		0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD,
-		0xFE, 0xFF, times256(0xFF) };
+const uint8_t crop_tab[256 + 2 * MAX_NEG_CROP] = {times256(0x00), 0x00, 0x01,
+						  0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D,
+						  0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19,
+						  0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25,
+						  0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31,
+						  0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D,
+						  0x3E, 0x3F, 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49,
+						  0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55,
+						  0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F, 0x60, 0x61,
+						  0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D,
+						  0x6E, 0x6F, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79,
+						  0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F, 0x80, 0x81, 0x82, 0x83, 0x84, 0x85,
+						  0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F, 0x90, 0x91,
+						  0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D,
+						  0x9E, 0x9F, 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9,
+						  0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5,
+						  0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, 0xC0, 0xC1,
+						  0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD,
+						  0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9,
+						  0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF, 0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5,
+						  0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF, 0xF0, 0xF1,
+						  0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD,
+						  0xFE, 0xFF, times256(0xFF)};
 
 #define cm (crop_tab + MAX_NEG_CROP)
 
-#define RGBA(r,g,b,a) (((unsigned)(a) << 24) | ((r) << 16) | ((g) << 8) | (b))
+#define RGBA(r, g, b, a) (((unsigned)(a) << 24) | ((r) << 16) | ((g) << 8) | (b))
 
 typedef struct DVBSubCLUT
 {
@@ -219,7 +218,7 @@ typedef struct GetBitContext
  * @return 0 on success, AVERROR_INVALIDDATA if the buffer_size would overflow.
  */
 static __inline int init_get_bits(GetBitContext *s, const uint8_t *buffer,
-	int bit_size)
+				  int bit_size)
 {
 	int buffer_size;
 	int ret = 0;
@@ -261,9 +260,7 @@ static __inline unsigned int get_bits(GetBitContext *s, int n)
 
 	tmp = ((uint32_t)re_cache) >> (32 - n);
 
-	re_index = (
-		(re_size_plus8 < re_index + (n)) ?
-		(re_size_plus8) : (re_index + (n)));
+	re_index = ((re_size_plus8 < re_index + (n)) ? (re_size_plus8) : (re_index + (n)));
 
 	s->index = re_index;
 	return tmp;
@@ -282,8 +279,6 @@ static __inline unsigned int get_bits1(GetBitContext *s)
 
 	return result;
 }
-
-
 
 static DVBSubObject *get_object(DVBSubContext *ctx, int object_id)
 {
@@ -364,7 +359,6 @@ static void delete_region_display_list(DVBSubContext *ctx, DVBSubRegion *region)
 
 		free(display);
 	}
-
 }
 
 static void delete_cluts(DVBSubContext *ctx)
@@ -411,7 +405,6 @@ static void delete_regions(DVBSubContext *ctx)
 		free(region);
 	}
 }
-
 
 /**
  * @param composition_id composition-page_id found in Subtitle descriptors
@@ -557,8 +550,8 @@ int dvbsub_close_decoder(void **dvb_ctx)
 }
 
 static int dvbsub_read_2bit_string(uint8_t *destbuf, int dbuf_len,
-	const uint8_t **srcbuf, int buf_size, int non_mod, uint8_t *map_table,
-	int x_pos)
+				   const uint8_t **srcbuf, int buf_size, int non_mod, uint8_t *map_table,
+				   int x_pos)
 {
 	GetBitContext gb;
 
@@ -692,8 +685,8 @@ static int dvbsub_read_2bit_string(uint8_t *destbuf, int dbuf_len,
 }
 
 static int dvbsub_read_4bit_string(uint8_t *destbuf, int dbuf_len,
-	const uint8_t **srcbuf, int buf_size, int non_mod, uint8_t *map_table,
-	int x_pos)
+				   const uint8_t **srcbuf, int buf_size, int non_mod, uint8_t *map_table,
+				   int x_pos)
 {
 	GetBitContext gb;
 
@@ -845,8 +838,8 @@ static int dvbsub_read_4bit_string(uint8_t *destbuf, int dbuf_len,
 }
 
 static int dvbsub_read_8bit_string(uint8_t *destbuf, int dbuf_len,
-	const uint8_t **srcbuf, int buf_size, int non_mod, uint8_t *map_table,
-	int x_pos)
+				   const uint8_t **srcbuf, int buf_size, int non_mod, uint8_t *map_table,
+				   int x_pos)
 {
 	const uint8_t *sbuf_end = (*srcbuf) + buf_size;
 	int bits;
@@ -919,8 +912,8 @@ static int dvbsub_read_8bit_string(uint8_t *destbuf, int dbuf_len,
 }
 
 static int dvbsub_parse_pixel_data_block(void *dvb_ctx,
-	DVBSubObjectDisplay *display, const uint8_t *buf, int buf_size,
-	int top_bottom, int non_mod)
+					 DVBSubObjectDisplay *display, const uint8_t *buf, int buf_size,
+					 int top_bottom, int non_mod)
 {
 	DVBSubContext *ctx = (DVBSubContext *)dvb_ctx;
 
@@ -931,10 +924,10 @@ static int dvbsub_parse_pixel_data_block(void *dvb_ctx,
 	int i;
 	int parseerror = 0;
 
-	uint8_t map2to4[] = { 0x0, 0x7, 0x8, 0xf };
-	uint8_t map2to8[] = { 0x00, 0x77, 0x88, 0xff };
-	uint8_t map4to8[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
-			0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff };
+	uint8_t map2to4[] = {0x0, 0x7, 0x8, 0xf};
+	uint8_t map2to8[] = {0x00, 0x77, 0x88, 0xff};
+	uint8_t map4to8[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
+			     0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
 	uint8_t *map_table;
 
 	if (region == 0)
@@ -953,7 +946,7 @@ static int dvbsub_parse_pixel_data_block(void *dvb_ctx,
 		if ((*buf != 0xf0 && x_pos >= region->width) || y_pos >= region->height)
 		{
 			mprint("In dvbsub_parse_pixel_data_block(): Invalid object location. %d-%d %d-%d %02x\n", x_pos,
-				region->width, y_pos, region->height, *buf);
+			       region->width, y_pos, region->height, *buf);
 			parseerror = 1;
 			break;
 		}
@@ -969,8 +962,8 @@ static int dvbsub_parse_pixel_data_block(void *dvb_ctx,
 					map_table = NULL;
 
 				x_pos = dvbsub_read_2bit_string(pbuf + (y_pos * region->width),
-					region->width, &buf, buf_end - buf, non_mod, map_table,
-					x_pos);
+								region->width, &buf, buf_end - buf, non_mod, map_table,
+								x_pos);
 				if (x_pos < 0)
 				{
 					mprint("In dvbsub_parse_pixel_data_block(): dvbsub_read_2bit_string() returned error.\n");
@@ -992,8 +985,8 @@ static int dvbsub_parse_pixel_data_block(void *dvb_ctx,
 					map_table = NULL;
 
 				x_pos = dvbsub_read_4bit_string(pbuf + (y_pos * region->width),
-					region->width, &buf, buf_end - buf, non_mod, map_table,
-					x_pos);
+								region->width, &buf, buf_end - buf, non_mod, map_table,
+								x_pos);
 				if (x_pos < 0)
 				{
 					mprint("In dvbsub_parse_pixel_data_block(): dvbsub_read_4bit_string() returned error.\n");
@@ -1009,7 +1002,7 @@ static int dvbsub_parse_pixel_data_block(void *dvb_ctx,
 				}
 
 				x_pos = dvbsub_read_8bit_string(pbuf + (y_pos * region->width),
-					region->width, &buf, buf_end - buf, non_mod, NULL, x_pos);
+								region->width, &buf, buf_end - buf, non_mod, NULL, x_pos);
 				if (x_pos < 0)
 				{
 					mprint("In dvbsub_parse_pixel_data_block(): dvbsub_read_8bit_string() returned error.\n");
@@ -1047,7 +1040,7 @@ exitfunc:
 }
 
 static int dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
-	int buf_size)
+				       int buf_size)
 {
 	DVBSubContext *ctx = (DVBSubContext *)dvb_ctx;
 
@@ -1084,13 +1077,13 @@ static int dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 		}
 
 		for (display = object->display_list; display;
-			display = display->object_list_next)
+		     display = display->object_list_next)
 		{
 			const uint8_t *block = buf;
 			int bfl = bottom_field_len;
 
 			if (dvbsub_parse_pixel_data_block(dvb_ctx, display, block,
-				top_field_len, 0, non_modifying_color))
+							  top_field_len, 0, non_modifying_color))
 			{
 				mprint("dvbsub_parse_object_segment(): Something went wrong. Giving up on block (1).\n");
 				// Something went wrong, get out and hope we can
@@ -1104,14 +1097,13 @@ static int dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 				bfl = top_field_len;
 
 			if (dvbsub_parse_pixel_data_block(dvb_ctx, display, block, bfl, 1,
-				non_modifying_color))
+							  non_modifying_color))
 			{
 				// Problems. Hope for the best.
 				mprint("dvbsub_parse_object_segment(): Something went wrong. Giving up on block (2).\n");
 				return -1;
 			}
 		}
-
 	}
 	else if (coding_method == 1)
 	{
@@ -1122,11 +1114,10 @@ static int dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 		mprint("Unknown object coding %d\n", coding_method);
 	}
 	return 0;
-
 }
 
 static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
-	int buf_size)
+				     int buf_size)
 {
 	DVBSubContext *ctx = (DVBSubContext *)dvb_ctx;
 
@@ -1213,7 +1204,6 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
 			{
 				clut->clut16[entry_id] = RGBA(r, g, b, 255 - alpha);
 				clut->ilut16[entry_id] = y;
-
 			}
 			else if (depth & 0x20)
 			{
@@ -1226,7 +1216,7 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
 }
 
 static void dvbsub_parse_region_segment(void *dvb_ctx, const uint8_t *buf,
-	int buf_size)
+					int buf_size)
 {
 	DVBSubContext *ctx = (DVBSubContext *)dvb_ctx;
 
@@ -1252,7 +1242,7 @@ static void dvbsub_parse_region_segment(void *dvb_ctx, const uint8_t *buf,
 	if (!region)
 	{
 		dbg_print(CCX_DMT_DVB, " [new region allocated] ");
-		region = (struct DVBSubRegion *) malloc(sizeof(struct DVBSubRegion));
+		region = (struct DVBSubRegion *)malloc(sizeof(struct DVBSubRegion));
 		memset(region, 0, sizeof(struct DVBSubRegion));
 
 		region->id = region_id;
@@ -1321,7 +1311,7 @@ static void dvbsub_parse_region_segment(void *dvb_ctx, const uint8_t *buf,
 
 		if (!object)
 		{
-			object = (struct DVBSubObject *) malloc(sizeof(struct DVBSubObject));
+			object = (struct DVBSubObject *)malloc(sizeof(struct DVBSubObject));
 			memset(object, 0, sizeof(struct DVBSubObject));
 
 			object->id = object_id;
@@ -1331,8 +1321,8 @@ static void dvbsub_parse_region_segment(void *dvb_ctx, const uint8_t *buf,
 
 		object->type = (*buf) >> 6;
 
-		display = (struct DVBSubObjectDisplay *) malloc(
-			sizeof(struct DVBSubObjectDisplay));
+		display = (struct DVBSubObjectDisplay *)malloc(
+		    sizeof(struct DVBSubObjectDisplay));
 		memset(display, 0, sizeof(struct DVBSubObjectDisplay));
 
 		display->object_id = object_id;
@@ -1361,7 +1351,7 @@ static void dvbsub_parse_region_segment(void *dvb_ctx, const uint8_t *buf,
  * xxx loose last frame
  */
 static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
-	int buf_size)
+				      int buf_size)
 {
 	DVBSubContext *ctx = (DVBSubContext *)dvb_ctx;
 	DVBSubRegionDisplay *display;
@@ -1418,8 +1408,8 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 
 		if (!display)
 		{
-			display = (struct DVBSubRegionDisplay *) malloc(
-				sizeof(struct DVBSubRegionDisplay));
+			display = (struct DVBSubRegionDisplay *)malloc(
+			    sizeof(struct DVBSubRegionDisplay));
 			memset(display, 0, sizeof(struct DVBSubRegionDisplay));
 		}
 
@@ -1434,7 +1424,6 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 
 		display->next = ctx->display_list;
 		ctx->display_list = display;
-
 	}
 
 	while (tmp_display_list)
@@ -1449,7 +1438,7 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 }
 
 static void dvbsub_parse_display_definition_segment(void *dvb_ctx,
-	const uint8_t *buf, int buf_size)
+						    const uint8_t *buf, int buf_size)
 {
 	DVBSubContext *ctx = (DVBSubContext *)dvb_ctx;
 	DVBSubDisplayDefinition *display_def = ctx->display_definition;
@@ -1465,8 +1454,8 @@ static void dvbsub_parse_display_definition_segment(void *dvb_ctx,
 
 	if (!display_def)
 	{
-		display_def = (struct DVBSubDisplayDefinition *) malloc(
-			sizeof(*display_def));
+		display_def = (struct DVBSubDisplayDefinition *)malloc(
+		    sizeof(*display_def));
 		memset(display_def, 0, sizeof(*display_def));
 		ctx->display_definition = display_def;
 	}
@@ -1557,31 +1546,36 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		if (!region->dirty)
 			continue;
 
-		if (x_pos == -1) {
+		if (x_pos == -1)
+		{
 			x_pos = display->x_pos;
 			y_pos = display->y_pos;
 			width = region->width;
 			height = region->height;
 		}
-		else {
-			if (x_pos > display->x_pos) {
+		else
+		{
+			if (x_pos > display->x_pos)
+			{
 				width += (x_pos - display->x_pos);
 				x_pos = display->x_pos;
 			}
 
-			if (display->y_pos < y_pos) {
+			if (display->y_pos < y_pos)
+			{
 				height += (y_pos - display->y_pos);
 				y_pos = display->y_pos;
 			}
 
-			if (display->x_pos + region->width > x_pos + width) {
+			if (display->x_pos + region->width > x_pos + width)
+			{
 				width = display->x_pos + region->width - x_pos;
 			}
 
-			if (display->y_pos + region->height > y_pos + height) {
+			if (display->y_pos + region->height > y_pos + height)
+			{
 				height = display->y_pos + region->height - y_pos;
 			}
-
 		}
 		rect->nb_colors = (1 << region->depth);
 
@@ -1621,30 +1615,33 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 	dbg_print(CCX_DMT_DVB, "\nCreating a data[0] of %d bytes (%d x %d)\n", width * height, width, height);
 	rect->data0 = (uint8_t *)malloc(width * height);
-	if (!rect->data0) {
+	if (!rect->data0)
+	{
 		mprint("write_dvb_sub: failed to alloc memory, need %d * %d = %d bytes\n", width, height, width * height);
 		return -1;
 	}
 	memset(rect->data0, 0x0, width * height);
 
-	for (display = ctx->display_list; display; display = display->next) {
+	for (display = ctx->display_list; display; display = display->next)
+	{
 		region = get_region(ctx, display->region_id);
 		if (!region)
 			continue;
 
 		int x_off = display->x_pos - x_pos;
 		int y_off = display->y_pos - y_pos;
-		for (int y = 0; y < region->height; y++) {
+		for (int y = 0; y < region->height; y++)
+		{
 			for (int x = 0; x < region->width; x++)
 			{
 				int offset = ((y + y_off) * width) + x_off + x;
 				if (offset >= (width * height) || offset < 0)
 				{
 					mprint("write_dvb_sub(): Offset %d (out of bounds!) ignored.\n",
-						offset);
+					       offset);
 					mprint("  Formula: offset=((y + y_off) * width) + x_off + x\n");
 					mprint("  y=%d, y_off=%d, width=%d, x_off=%d, x=%d\n",
-						y, y_off, width, x_off, x);
+					       y, y_off, width, x_off, x);
 				}
 				else
 				{
@@ -1678,15 +1675,16 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 }
 
 void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
-	struct lib_cc_decode *dec_ctx,
-	struct cc_subtitle *sub) {
+				   struct lib_cc_decode *dec_ctx,
+				   struct cc_subtitle *sub)
+{
 	if (!enc_ctx)
 		return;
 	if (enc_ctx->write_previous) //this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
 	{
-		enc_ctx->prev->last_string = NULL; // Reset last recognized sub text
+		enc_ctx->prev->last_string = NULL;									    // Reset last recognized sub text
 		sub->prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the end time of the previous sub the current pts
-		encode_sub(enc_ctx->prev, sub->prev); //we encode it
+		encode_sub(enc_ctx->prev, sub->prev);									    //we encode it
 
 		enc_ctx->last_string = enc_ctx->prev->last_string; // Update last recognized string (used in Matroska)
 		enc_ctx->prev->last_string = NULL;
@@ -1694,7 +1692,8 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 		enc_ctx->srt_counter = enc_ctx->prev->srt_counter; //for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
 		enc_ctx->prev_start = enc_ctx->prev->prev_start;
 		sub->prev->got_output = 0;
-		if (enc_ctx->write_format == CCX_OF_WEBVTT) {	// we already wrote header, but since we encoded last sub, we must prevent multiple headers in future
+		if (enc_ctx->write_format == CCX_OF_WEBVTT)
+		{ // we already wrote header, but since we encoded last sub, we must prevent multiple headers in future
 			enc_ctx->wrote_webvtt_header = 1;
 		}
 	}
@@ -1718,20 +1717,19 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	sub->prev->start_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the start time of the previous sub the current pts
 
 	write_dvb_sub(dec_ctx->prev, sub->prev); //we write the current dvb sub to update decoder context
-	enc_ctx->write_previous = 1; //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
+	enc_ctx->write_previous = 1;		 //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
 #ifdef ENABLE_OCR
-	if (sub->prev) {
+	if (sub->prev)
+	{
 		struct cc_bitmap *content_prev = sub->prev->data;
 		dbg_print(CCX_DMT_DVB, "\nPrevious subtitle %x (%s)\nStart time: %lld; End time: %lld",
-			sub->prev, content_prev ?
-			(content_prev->ocr_text ? content_prev->ocr_text : "NULL OCR") : "NULL DATA",
-			sub->prev->start_time, sub->prev->end_time);
+			  sub->prev, content_prev ? (content_prev->ocr_text ? content_prev->ocr_text : "NULL OCR") : "NULL DATA",
+			  sub->prev->start_time, sub->prev->end_time);
 	}
 	struct cc_bitmap *content = sub->data;
 	dbg_print(CCX_DMT_DVB, "\nCurrent subtitle %x (%s)\nStart time: %lld; End time: %lld\n",
-		sub, content ?
-		(content->ocr_text ? content->ocr_text : "NULL OCR") : "NULL DATA",
-		sub->start_time, sub->end_time);
+		  sub, content ? (content->ocr_text ? content->ocr_text : "NULL OCR") : "NULL DATA",
+		  sub->start_time, sub->end_time);
 
 #endif
 }
@@ -1758,7 +1756,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 	if (buf_size <= 6 || *buf != 0x0f)
 	{
 		mprint("dvbsub_decode: incomplete, broken or empty packet (size = %d, first byte=%02X)\n",
-			buf_size, *buf);
+		       buf_size, *buf);
 		return -1;
 	}
 
@@ -1780,12 +1778,11 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 		if (p_end - p < segment_length)
 		{
 			mprint("dvbsub_decode: incomplete, broken or empty packet, remaining bytes=%d, segment_length=%d\n",
-				p_end - p, segment_length);
+			       p_end - p, segment_length);
 			return -1;
 		}
 
-		if (page_id == ctx->composition_id || page_id == ctx->ancillary_id
-			|| ctx->composition_id == -1 || ctx->ancillary_id == -1)
+		if (page_id == ctx->composition_id || page_id == ctx->ancillary_id || ctx->composition_id == -1 || ctx->ancillary_id == -1)
 		{
 			//debug traces
 			dbg_print(CCX_DMT_DVB, "DVBSUB - PTS: %" PRId64 ", ", dec_ctx->timing->current_pts);
@@ -1821,7 +1818,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 				case DVBSUB_DISPLAYDEFINITION_SEGMENT:
 					dbg_print(CCX_DMT_DVB, "(DVBSUB_DISPLAYDEFINITION_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 					dvbsub_parse_display_definition_segment(ctx, p,
-						segment_length);
+										segment_length);
 					break;
 				case DVBSUB_DISPLAY_SEGMENT: //when we get a display segment, we save the current page
 					dbg_print(CCX_DMT_DVB, "(DVBSUB_DISPLAY_SEGMENT), SEGMENT LENGTH: %d", segment_length);
@@ -1830,7 +1827,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 					break;
 				default:
 					dbg_print(CCX_DMT_DVB, "Subtitling segment type 0x%x, page id %d, length %d\n",
-						segment_type, page_id, segment_length);
+						  segment_type, page_id, segment_length);
 					break;
 			}
 		}
@@ -1861,7 +1858,7 @@ end:
  * errno is set is to EINVAL if invalid data is found
  */
 int parse_dvb_description(struct dvb_config *cfg, unsigned char *data,
-	unsigned int len)
+			  unsigned int len)
 {
 	/* 8 bytes per DVB subtitle substream d2:
 	 * ISO_639_language_code (3 bytes),
@@ -1925,7 +1922,7 @@ int parse_dvb_description(struct dvb_config *cfg, unsigned char *data,
 		if (strcmp(ccx_options.dvblang, language[cfg->lang_index[0]]) && strncmp(ccx_options.dvblang, data, 3))
 		{
 			mprint("Ignoring stream language '%s' not equal to dvblang '%s'\n",
-				data, ccx_options.dvblang);
+			       data, ccx_options.dvblang);
 			return -1;
 		}
 	}

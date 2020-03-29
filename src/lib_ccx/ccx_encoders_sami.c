@@ -131,8 +131,7 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 	if (sub->data != NULL) //then we should write the sub
 	{
 		sprintf(buf,
-			"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n"
-			, (unsigned long long) sub->start_time);
+			"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n", (unsigned long long)sub->start_time);
 		write(context->out->fh, buf, strlen(buf));
 		for (int i = sub->nb_data - 1; i >= 0; i--)
 		{
@@ -156,8 +155,7 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 	else //we write an empty subtitle to clear the old one
 	{
 		sprintf(buf,
-			"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n"
-			, (unsigned long long) sub->start_time);
+			"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n", (unsigned long long)sub->start_time);
 		write(context->out->fh, buf, strlen(buf));
 	}
 #endif

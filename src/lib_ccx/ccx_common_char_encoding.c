@@ -1,6 +1,6 @@
 #include <ctype.h>
 
-void get_char_in_latin_1(unsigned char* buffer, unsigned char c)
+void get_char_in_latin_1(unsigned char *buffer, unsigned char c)
 {
 	unsigned char c1 = '?';
 	if (c < 0x80)
@@ -276,18 +276,18 @@ void get_char_in_latin_1(unsigned char* buffer, unsigned char c)
 		case 0xcb: // Lowercase o, slash
 			c1 = 0xf8;
 			break;
-		case 0xcc: // Upper left corner
-		case 0xcd: // Upper right corner
-		case 0xce: // Lower left corner
-		case 0xcf: // Lower right corner
-		default: // For those that don't have representation
+		case 0xcc:	       // Upper left corner
+		case 0xcd:	       // Upper right corner
+		case 0xce:	       // Lower left corner
+		case 0xcf:	       // Lower right corner
+		default:	       // For those that don't have representation
 			*buffer = '?'; // I'll do it eventually, I promise
-			break; // This are weird chars anyway
+			break;	       // This are weird chars anyway
 	}
 	*buffer = c1;
 }
 
-void get_char_in_unicode(unsigned char* buffer, unsigned char c)
+void get_char_in_unicode(unsigned char *buffer, unsigned char c)
 {
 	unsigned char c1, c2;
 	switch (c)
@@ -329,7 +329,7 @@ void get_char_in_unicode(unsigned char* buffer, unsigned char c)
 	*(buffer + 1) = c2;
 }
 
-int get_char_in_utf_8(unsigned char* buffer, unsigned char c) // Returns number of bytes used
+int get_char_in_utf_8(unsigned char *buffer, unsigned char c) // Returns number of bytes used
 {
 	if (c < 0x80) // Regular line-21 character set, mostly ASCII except these exceptions
 	{
@@ -639,7 +639,7 @@ int get_char_in_utf_8(unsigned char* buffer, unsigned char c) // Returns number 
 			*buffer = 0xc2;
 			*(buffer + 1) = 0xa6;
 			return 2;
-		case 0xbf: // Tilde
+		case 0xbf:		// Tilde
 			*buffer = 0x7e; // Not sure
 			return 1;
 		case 0xc0: // Uppercase A, umlaut
@@ -709,9 +709,9 @@ int get_char_in_utf_8(unsigned char* buffer, unsigned char c) // Returns number 
 			*(buffer + 1) = 0x8c;
 			*(buffer + 2) = 0x9f;
 			return 3;
-		default: //
+		default:	       //
 			*buffer = '?'; // I'll do it eventually, I promise
-			return 1; // This are weird chars anyway
+			return 1;      // This are weird chars anyway
 	}
 }
 

@@ -8,7 +8,7 @@
 
 struct ccx_common_logging_t ccx_common_logging;
 static struct ccx_decoders_common_settings_t *init_decoder_setting(
-	struct ccx_s_options *opt)
+    struct ccx_s_options *opt)
 {
 	struct ccx_decoders_common_settings_t *setting;
 
@@ -40,7 +40,6 @@ static void dinit_decoder_setting(struct ccx_decoders_common_settings_t **settin
 {
 	freep(setting);
 }
-
 
 static int init_ctx_outbase(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx)
 {
@@ -81,7 +80,7 @@ static int init_ctx_outbase(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx)
 
 struct encoder_ctx *get_encoder_by_pn(struct lib_ccx_ctx *ctx, int pn)
 {
-	struct  encoder_ctx *enc_ctx;
+	struct encoder_ctx *enc_ctx;
 	list_for_each_entry(enc_ctx, &ctx->enc_ctx_head, list, struct encoder_ctx)
 	{
 		if (enc_ctx && enc_ctx->program_number == pn)
@@ -135,7 +134,7 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt)
 	memset(report_608, 0, sizeof(struct ccx_decoder_608_report));
 
 	ccx_decoder_dtvcc_report *report_dtvcc = (ccx_decoder_dtvcc_report *)
-		malloc(sizeof(ccx_decoder_dtvcc_report));
+	    malloc(sizeof(ccx_decoder_dtvcc_report));
 	if (!report_dtvcc)
 		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "init_libraries: Not enough memory allocating report_dtvcc");
 	memset(report_dtvcc, 0, sizeof(ccx_decoder_dtvcc_report));
@@ -146,7 +145,8 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt)
 
 	// Init shared decoder settings
 	ctx->dec_global_setting = init_decoder_setting(opt);
-	if (!ctx->dec_global_setting) {
+	if (!ctx->dec_global_setting)
+	{
 		free(report_dtvcc);
 		return NULL;
 	}
@@ -162,7 +162,8 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt)
 	ctx->num_input_files = opt->num_input_files;
 
 	ret = init_ctx_outbase(opt, ctx);
-	if (ret < 0) {
+	if (ret < 0)
+	{
 		goto end;
 	}
 	ctx->extension = get_file_extension(opt->write_format);

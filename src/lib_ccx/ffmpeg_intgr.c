@@ -175,11 +175,9 @@ int ff_get_ccframe(void *arg, unsigned char *data, int maxlen)
 			{
 				memcpy(data, ctx->frame->side_data[i]->data, ctx->frame->side_data[i]->size);
 				len = ctx->frame->side_data[i]->size;
-
 			}
 		}
 	}
-
 
 	if (ret < 0)
 		return ret;
@@ -226,7 +224,6 @@ int ffmpeg_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		{
 			mprint("Error extracting Frame\n");
 			break;
-
 		}
 		else
 		{

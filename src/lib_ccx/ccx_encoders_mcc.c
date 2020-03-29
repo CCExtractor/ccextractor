@@ -5,16 +5,16 @@
 
 #include "ccx_encoders_mcc.h"
 
-#define MORE_DEBUG          CCX_FALSE
+#define MORE_DEBUG CCX_FALSE
 
-static const char *MonthStr[12] = { "January", "February", "March", "April",
-									"May", "June", "July", "August", "September",
-									"October", "November", "December" };
+static const char *MonthStr[12] = {"January", "February", "March", "April",
+				   "May", "June", "July", "August", "September",
+				   "October", "November", "December"};
 
-static const char *DayOfWeekStr[7] = { "Sunday", "Monday", "Tuesday", "Wednesday",
-									   "Thursday", "Friday", "Saturday" };
+static const char *DayOfWeekStr[7] = {"Sunday", "Monday", "Tuesday", "Wednesday",
+				      "Thursday", "Friday", "Saturday"};
 
-static const uint32 framerate_translation[16] = { 0, 2397, 2400, 2500, 2997, 3000, 5000, 5994, 6000, 0, 0, 0, 0, 0 };
+static const uint32 framerate_translation[16] = {0, 2397, 2400, 2500, 2997, 3000, 5000, 5994, 6000, 0, 0, 0, 0, 0};
 
 static void debug_log(char *file, int line, ...);
 static struct ccx_mcc_caption_time convert_to_caption_time(LLONG mstime);
@@ -31,7 +31,9 @@ static void uuid4(char *buffer);
 static void ms_to_frame(struct encoder_ctx *ctx, struct ccx_mcc_caption_time *caption_time_ptr, int fr_code, int dropframe_flag)
 {
 	int64 actual_time_in_ms = (((caption_time_ptr->hour * 3600) + (caption_time_ptr->minute * 60) +
-		(caption_time_ptr->second)) * 1000) + caption_time_ptr->millisecond;
+				    (caption_time_ptr->second)) *
+				   1000) +
+				  caption_time_ptr->millisecond;
 
 	caption_time_ptr->hour = ctx->next_caption_time.hour;
 	caption_time_ptr->minute = ctx->next_caption_time.minute;
@@ -42,54 +44,64 @@ static void ms_to_frame(struct encoder_ctx *ctx, struct ccx_mcc_caption_time *ca
 	ctx->next_caption_time.frame = ctx->next_caption_time.frame + 1;
 
 	uint8 frame_roll_over = framerate_translation[fr_code] / 100;
-	if ((framerate_translation[fr_code] % 100) > 75) frame_roll_over++;
+	if ((framerate_translation[fr_code] % 100) > 75)
+		frame_roll_over++;
 
-	if (ctx->next_caption_time.frame >= frame_roll_over) {
+	if (ctx->next_caption_time.frame >= frame_roll_over)
+	{
 		ctx->next_caption_time.frame = 0;
 		ctx->next_caption_time.second = ctx->next_caption_time.second + 1;
 	}
 
 	if ((dropframe_flag == CCX_TRUE) && (ctx->next_caption_time.second == 0) &&
-		(ctx->next_caption_time.frame == 0) && ((ctx->next_caption_time.minute % 10) != 0)) {
+	    (ctx->next_caption_time.frame == 0) && ((ctx->next_caption_time.minute % 10) != 0))
+	{
 		ctx->next_caption_time.frame = 2;
 	}
 
-	if (ctx->next_caption_time.second >= 60) {
+	if (ctx->next_caption_time.second >= 60)
+	{
 		ctx->next_caption_time.second = 0;
 		ctx->next_caption_time.minute = ctx->next_caption_time.minute + 1;
 	}
 
-	if (ctx->next_caption_time.minute >= 60) {
+	if (ctx->next_caption_time.minute >= 60)
+	{
 		ctx->next_caption_time.minute = 0;
 		ctx->next_caption_time.hour = ctx->next_caption_time.hour + 1;
 	}
 
 	int64 frame_time_in_ms = (((caption_time_ptr->hour * 3600) + (caption_time_ptr->minute * 60) + (caption_time_ptr->second)) * 1000) +
-		((caption_time_ptr->frame * 100000) / framerate_translation[fr_code]);
+				 ((caption_time_ptr->frame * 100000) / framerate_translation[fr_code]);
 
 	int64 delta_in_ms;
 
-	if (actual_time_in_ms > frame_time_in_ms) {
+	if (actual_time_in_ms > frame_time_in_ms)
+	{
 		delta_in_ms = actual_time_in_ms - frame_time_in_ms;
 	}
-	else {
+	else
+	{
 		delta_in_ms = frame_time_in_ms - actual_time_in_ms;
 	}
 
-	if (delta_in_ms > 1000) {
+	if (delta_in_ms > 1000)
+	{
 		LOG("ERROR: Larger than expected delta in Caption Time Conversion: %lld, DF%d, %dfps",
-			delta_in_ms, dropframe_flag, framerate_translation[fr_code]);
+		    delta_in_ms, dropframe_flag, framerate_translation[fr_code]);
 	}
 }
 
-boolean mcc_encode_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count) {
+boolean mcc_encode_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count)
+{
 	ASSERT(cc_data);
 	ASSERT(enc_ctx);
 	ASSERT(dec_ctx);
 
 	struct ccx_mcc_caption_time caption_time = convert_to_caption_time(enc_ctx->timing->fts_now + enc_ctx->timing->fts_global);
 
-	if (enc_ctx->header_printed_flag == CCX_FALSE) {
+	if (enc_ctx->header_printed_flag == CCX_FALSE)
+	{
 		dec_ctx->saw_caption_block = CCX_TRUE;
 		enc_ctx->header_printed_flag = CCX_TRUE;
 		enc_ctx->cdp_hdr_seq = 0;
@@ -100,19 +112,20 @@ boolean mcc_encode_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *de
 		enc_ctx->next_caption_time.second = caption_time.second;
 		uint64 frame_number = caption_time.millisecond * framerate_translation[dec_ctx->current_frame_rate];
 		frame_number /= 100000;
-		if (frame_number > (framerate_translation[dec_ctx->current_frame_rate] / 100)) {
+		if (frame_number > (framerate_translation[dec_ctx->current_frame_rate] / 100))
+		{
 			LOG("WARN: Normalized Frame Number %d to %d", frame_number, (framerate_translation[dec_ctx->current_frame_rate] / 100));
 			frame_number = framerate_translation[dec_ctx->current_frame_rate] / 100;
 		}
 		enc_ctx->next_caption_time.frame = frame_number;
 		LOG("Captions start at: %02d:%02d:%02d:%02d / %02d:%02d:%02d,%03d",
-			caption_time.hour, caption_time.minute, caption_time.second, frame_number,
-			caption_time.hour, caption_time.minute, caption_time.second, caption_time.millisecond);
+		    caption_time.hour, caption_time.minute, caption_time.second, frame_number,
+		    caption_time.hour, caption_time.minute, caption_time.second, caption_time.millisecond);
 	}
 
 #if MORE_DEBUG
 	LOG("MCC Encoding %d byte packet at time: %02d:%02d:%02d;%02d", cc_count, caption_time.hour,
-		caption_time.minute, caption_time.second, caption_time.frame);
+	    caption_time.minute, caption_time.second, caption_time.frame);
 #endif
 
 	uint8 *w_boilerplate_buffer = add_boilerplate(enc_ctx, cc_data, cc_count, dec_ctx->current_frame_rate);
@@ -124,8 +137,8 @@ boolean mcc_encode_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *de
 
 #if MORE_DEBUG
 	LOG("With CDP Boiler Plate %d byte packet at time: %02d:%02d:%02d;%02d requires %d bytes compressed",
-		w_boilerplate_buff_size, caption_time.hour, caption_time.minute,
-		caption_time.second, caption_time.frame, num_chars_needed);
+	    w_boilerplate_buff_size, caption_time.hour, caption_time.minute,
+	    caption_time.second, caption_time.frame, num_chars_needed);
 #endif
 
 	char *compressed_data_buffer = malloc(num_chars_needed + 13);
@@ -138,7 +151,7 @@ boolean mcc_encode_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *de
 
 #if MORE_DEBUG
 	LOG("Writing Compressed %d byte packet at time: %02d:%02d:%02d;%02d", (num_chars_needed + 13),
-		caption_time.hour, caption_time.minute, caption_time.second, caption_time.frame);
+	    caption_time.hour, caption_time.minute, caption_time.second, caption_time.frame);
 #endif
 
 	strcat(compressed_data_buffer, "\n");
@@ -147,11 +160,12 @@ boolean mcc_encode_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *de
 
 	free(compressed_data_buffer);
 
-	return true; // Needed to avoid warning 
-	// With void function type - throws an error
-}  // mcc_encode_cc_data()
+	return true; // Needed to avoid warning
+		     // With void function type - throws an error
+} // mcc_encode_cc_data()
 
-static void generate_mcc_header(int fh, int fr_code, int dropframe_flag) {
+static void generate_mcc_header(int fh, int fr_code, int dropframe_flag)
+{
 	char uuid_str[50];
 	char date_str[50];
 	char time_str[30];
@@ -169,7 +183,8 @@ static void generate_mcc_header(int fh, int fr_code, int dropframe_flag) {
 	sprintf(date_str, "Creation Date=%s, %s %d, %d\n", DayOfWeekStr[tm.tm_wday], MonthStr[tm.tm_mon], tm.tm_mday, tm.tm_year + 1900);
 	sprintf(time_str, "Creation Time=%d:%02d:%02d\n", tm.tm_hour, tm.tm_min, tm.tm_sec);
 
-	switch (fr_code) {
+	switch (fr_code)
+	{
 		case 1:
 		case 2:
 			sprintf(tcr_str, "Time Code Rate=24\n\n");
@@ -179,10 +194,12 @@ static void generate_mcc_header(int fh, int fr_code, int dropframe_flag) {
 			break;
 		case 4:
 		case 5:
-			if (dropframe_flag == CCX_TRUE) {
+			if (dropframe_flag == CCX_TRUE)
+			{
 				sprintf(tcr_str, "Time Code Rate=30DF\n\n");
 			}
-			else {
+			else
+			{
 				sprintf(tcr_str, "Time Code Rate=30\n\n");
 			}
 			break;
@@ -191,10 +208,12 @@ static void generate_mcc_header(int fh, int fr_code, int dropframe_flag) {
 			break;
 		case 7:
 		case 8:
-			if (dropframe_flag == CCX_TRUE) {
+			if (dropframe_flag == CCX_TRUE)
+			{
 				sprintf(tcr_str, "Time Code Rate=60DF\n\n");
 			}
-			else {
+			else
+			{
 				sprintf(tcr_str, "Time Code Rate=60\n\n");
 			}
 			break;
@@ -244,7 +263,8 @@ static void generate_mcc_header(int fh, int fr_code, int dropframe_flag) {
 	write_string(fh, tcr_str);
 } // generate_mcc_header()
 
-static uint8 *add_boilerplate(struct encoder_ctx *ctx, unsigned char *cc_data, int cc_count, int fr_code) {
+static uint8 *add_boilerplate(struct encoder_ctx *ctx, unsigned char *cc_data, int cc_count, int fr_code)
+{
 	ASSERT(cc_data);
 	ASSERT(cc_count > 0);
 
@@ -252,7 +272,8 @@ static uint8 *add_boilerplate(struct encoder_ctx *ctx, unsigned char *cc_data, i
 	uint8 *buff_ptr = malloc(data_size + 16);
 	uint8 cdp_frame_rate = CDP_FRAME_RATE_FORBIDDEN;
 
-	switch (fr_code) {
+	switch (fr_code)
+	{
 		case 1:
 			cdp_frame_rate = CDP_FRAME_RATE_23_976;
 			break;
@@ -300,7 +321,7 @@ static uint8 *add_boilerplate(struct encoder_ctx *ctx, unsigned char *cc_data, i
 	buff_ptr[4] = CDP_IDENTIFIER_VALUE_LOW;
 	buff_ptr[5] = data_size + 12;
 	buff_ptr[6] = ((cdp_frame_rate << 4) | 0x0F);
-	buff_ptr[7] = 0x43;  // Timecode not Present; Service Info not Present; Captions Present
+	buff_ptr[7] = 0x43; // Timecode not Present; Service Info not Present; Captions Present
 	buff_ptr[8] = (uint8)((ctx->cdp_hdr_seq & 0xF0) >> 8);
 	buff_ptr[9] = (uint8)(ctx->cdp_hdr_seq & 0x0F);
 	buff_ptr[10] = CC_DATA_ID;
@@ -312,7 +333,8 @@ static uint8 *add_boilerplate(struct encoder_ctx *ctx, unsigned char *cc_data, i
 	data_ptr[2] = (uint8)(ctx->cdp_hdr_seq & 0x0F);
 	data_ptr[3] = 0;
 
-	for (int loop = 0; loop < (data_size + 15); loop++) {
+	for (int loop = 0; loop < (data_size + 15); loop++)
+	{
 		data_ptr[3] = data_ptr[3] + buff_ptr[loop];
 	}
 
@@ -321,7 +343,8 @@ static uint8 *add_boilerplate(struct encoder_ctx *ctx, unsigned char *cc_data, i
 	return buff_ptr;
 } // add_boilerplate()
 
-static uint16 count_compressed_chars(uint8 *data_ptr, uint16 num_elements) {
+static uint16 count_compressed_chars(uint8 *data_ptr, uint16 num_elements)
+{
 	uint16 num_chars = 1;
 
 	//   ANC data bytes may be represented by one ASCII character according to the following schema:
@@ -342,20 +365,25 @@ static uint16 count_compressed_chars(uint8 *data_ptr, uint16 num_elements) {
 	//     U  E1h 00h 00h 00h
 	//     Z  00h
 
-	while (num_elements > 0) {
-		switch (data_ptr[0]) {
+	while (num_elements > 0)
+	{
+		switch (data_ptr[0])
+		{
 			case 0xFA:
-				if ((num_elements >= 3) && (data_ptr[1] == 0x00) && (data_ptr[2] == 0x00)) {
+				if ((num_elements >= 3) && (data_ptr[1] == 0x00) && (data_ptr[2] == 0x00))
+				{
 					uint8 numFaoos = 0;
 					while ((num_elements >= 3) && (data_ptr[0] == 0xFA) && (data_ptr[1] == 0x00) &&
-						(data_ptr[2] == 0x00) && (numFaoos < 9)) {
+					       (data_ptr[2] == 0x00) && (numFaoos < 9))
+					{
 						data_ptr = &data_ptr[3];
 						num_elements = num_elements - 3;
 						numFaoos++;
 					}
 					num_chars = num_chars + 1;
 				}
-				else {
+				else
+				{
 					data_ptr = &data_ptr[1];
 					num_elements = num_elements - 1;
 					num_chars = num_chars + 2;
@@ -364,48 +392,56 @@ static uint16 count_compressed_chars(uint8 *data_ptr, uint16 num_elements) {
 			case 0xFB:
 			case 0xFC:
 			case 0xFD:
-				if ((num_elements >= 3) && (data_ptr[1] == 0x80) && (data_ptr[2] == 0x80)) {
+				if ((num_elements >= 3) && (data_ptr[1] == 0x80) && (data_ptr[2] == 0x80))
+				{
 					data_ptr = &data_ptr[3];
 					num_elements = num_elements - 3;
 					num_chars = num_chars + 1;
 				}
-				else {
+				else
+				{
 					data_ptr = &data_ptr[1];
 					num_elements = num_elements - 1;
 					num_chars = num_chars + 2;
 				}
 				break;
 			case 0x96:
-				if ((num_elements >= 2) && data_ptr[1] == 0x69) {
+				if ((num_elements >= 2) && data_ptr[1] == 0x69)
+				{
 					data_ptr = &data_ptr[2];
 					num_elements = num_elements - 2;
 					num_chars = num_chars + 1;
 				}
-				else {
+				else
+				{
 					data_ptr = &data_ptr[1];
 					num_elements = num_elements - 1;
 					num_chars = num_chars + 2;
 				}
 				break;
 			case 0x61:
-				if ((num_elements >= 2) && data_ptr[1] == 0x01) {
+				if ((num_elements >= 2) && data_ptr[1] == 0x01)
+				{
 					data_ptr = &data_ptr[2];
 					num_elements = num_elements - 2;
 					num_chars = num_chars + 1;
 				}
-				else {
+				else
+				{
 					data_ptr = &data_ptr[1];
 					num_elements = num_elements - 1;
 					num_chars = num_chars + 2;
 				}
 				break;
 			case 0xE1:
-				if ((num_elements >= 4) && (data_ptr[1] == 0x00) && (data_ptr[2] == 0x00) && (data_ptr[3] == 0x00)) {
+				if ((num_elements >= 4) && (data_ptr[1] == 0x00) && (data_ptr[2] == 0x00) && (data_ptr[3] == 0x00))
+				{
 					data_ptr = &data_ptr[4];
 					num_elements = num_elements - 4;
 					num_chars = num_chars + 1;
 				}
-				else {
+				else
+				{
 					data_ptr = &data_ptr[1];
 					num_elements = num_elements - 1;
 					num_chars = num_chars + 2;
@@ -426,7 +462,8 @@ static uint16 count_compressed_chars(uint8 *data_ptr, uint16 num_elements) {
 	return num_chars;
 } // count_compressed_chars()
 
-static void compress_data(uint8 *data_ptr, uint16 num_elements, uint8 *out_data_ptr) {
+static void compress_data(uint8 *data_ptr, uint16 num_elements, uint8 *out_data_ptr)
+{
 
 	//   ANC data bytes may be represented by one ASCII character according to the following schema:
 	//     G  FAh 00h 00h
@@ -446,18 +483,23 @@ static void compress_data(uint8 *data_ptr, uint16 num_elements, uint8 *out_data_
 	//     U  E1h 00h 00h 00h
 	//     Z  00h
 
-	while (num_elements > 0) {
-		switch (data_ptr[0]) {
+	while (num_elements > 0)
+	{
+		switch (data_ptr[0])
+		{
 			case 0xFA:
-				if ((num_elements >= 3) && (data_ptr[1] == 0x00) && (data_ptr[2] == 0x00)) {
+				if ((num_elements >= 3) && (data_ptr[1] == 0x00) && (data_ptr[2] == 0x00))
+				{
 					uint8 numFaoos = 0;
 					while ((num_elements >= 3) && (data_ptr[0] == 0xFA) && (data_ptr[1] == 0x00) &&
-						(data_ptr[2] == 0x00) && (numFaoos < 9)) {
+					       (data_ptr[2] == 0x00) && (numFaoos < 9))
+					{
 						data_ptr = &data_ptr[3];
 						num_elements = num_elements - 3;
 						numFaoos++;
 					}
-					switch (numFaoos) {
+					switch (numFaoos)
+					{
 						case 1:
 							*out_data_ptr = 'G';
 							break;
@@ -490,7 +532,8 @@ static void compress_data(uint8 *data_ptr, uint16 num_elements, uint8 *out_data_
 					}
 					out_data_ptr = &out_data_ptr[1];
 				}
-				else {
+				else
+				{
 					byte_to_ascii(data_ptr[0], &out_data_ptr[0], &out_data_ptr[1]);
 					out_data_ptr = &out_data_ptr[2];
 					data_ptr = &data_ptr[1];
@@ -500,8 +543,10 @@ static void compress_data(uint8 *data_ptr, uint16 num_elements, uint8 *out_data_
 			case 0xFB:
 			case 0xFC:
 			case 0xFD:
-				if ((num_elements >= 3) && (data_ptr[1] == 0x80) && (data_ptr[2] == 0x80)) {
-					switch (data_ptr[0]) {
+				if ((num_elements >= 3) && (data_ptr[1] == 0x80) && (data_ptr[2] == 0x80))
+				{
+					switch (data_ptr[0])
+					{
 						case 0xFB:
 							*out_data_ptr = 'P';
 							break;
@@ -518,7 +563,8 @@ static void compress_data(uint8 *data_ptr, uint16 num_elements, uint8 *out_data_
 					num_elements = num_elements - 3;
 					out_data_ptr = &out_data_ptr[1];
 				}
-				else {
+				else
+				{
 					byte_to_ascii(data_ptr[0], &out_data_ptr[0], &out_data_ptr[1]);
 					out_data_ptr = &out_data_ptr[2];
 					data_ptr = &data_ptr[1];
@@ -526,13 +572,15 @@ static void compress_data(uint8 *data_ptr, uint16 num_elements, uint8 *out_data_
 				}
 				break;
 			case 0x96:
-				if ((num_elements >= 2) && data_ptr[1] == 0x69) {
+				if ((num_elements >= 2) && data_ptr[1] == 0x69)
+				{
 					data_ptr = &data_ptr[2];
 					num_elements = num_elements - 2;
 					*out_data_ptr = 'S';
 					out_data_ptr = &out_data_ptr[1];
 				}
-				else {
+				else
+				{
 					byte_to_ascii(data_ptr[0], &out_data_ptr[0], &out_data_ptr[1]);
 					out_data_ptr = &out_data_ptr[2];
 					data_ptr = &data_ptr[1];
@@ -540,13 +588,15 @@ static void compress_data(uint8 *data_ptr, uint16 num_elements, uint8 *out_data_
 				}
 				break;
 			case 0x61:
-				if ((num_elements >= 2) && data_ptr[1] == 0x01) {
+				if ((num_elements >= 2) && data_ptr[1] == 0x01)
+				{
 					data_ptr = &data_ptr[2];
 					num_elements = num_elements - 2;
 					*out_data_ptr = 'T';
 					out_data_ptr = &out_data_ptr[1];
 				}
-				else {
+				else
+				{
 					byte_to_ascii(data_ptr[0], &out_data_ptr[0], &out_data_ptr[1]);
 					out_data_ptr = &out_data_ptr[2];
 					data_ptr = &data_ptr[1];
@@ -554,13 +604,15 @@ static void compress_data(uint8 *data_ptr, uint16 num_elements, uint8 *out_data_
 				}
 				break;
 			case 0xE1:
-				if ((num_elements >= 4) && (data_ptr[1] == 0x00) && (data_ptr[2] == 0x00) && (data_ptr[3] == 0x00)) {
+				if ((num_elements >= 4) && (data_ptr[1] == 0x00) && (data_ptr[2] == 0x00) && (data_ptr[3] == 0x00))
+				{
 					data_ptr = &data_ptr[4];
 					num_elements = num_elements - 4;
 					*out_data_ptr = 'U';
 					out_data_ptr = &out_data_ptr[1];
 				}
-				else {
+				else
+				{
 					byte_to_ascii(data_ptr[0], &out_data_ptr[0], &out_data_ptr[1]);
 					out_data_ptr = &out_data_ptr[2];
 					data_ptr = &data_ptr[1];
@@ -584,13 +636,16 @@ static void compress_data(uint8 *data_ptr, uint16 num_elements, uint8 *out_data_
 	*out_data_ptr = '\0';
 } // compress_data()
 
-static void random_chars(char buffer[], int len) {
-	for (int i = 0; i < len; i++) {
+static void random_chars(char buffer[], int len)
+{
+	for (int i = 0; i < len; i++)
+	{
 		sprintf(buffer + i, "%X", rand() % 16);
 	}
 }
 
-static void uuid4(char *buffer) {
+static void uuid4(char *buffer)
+{
 	int i = 0;
 	random_chars(buffer + i, 8);
 	i += 8;
@@ -598,11 +653,11 @@ static void uuid4(char *buffer) {
 	random_chars(buffer + i, 4);
 	i += 4;
 	buffer[i++] = '-';
-	buffer[i++] = '4';  // uuid version (0b0100)
+	buffer[i++] = '4'; // uuid version (0b0100)
 	random_chars(buffer + i, 3);
 	i += 3;
 	buffer[i++] = '-';
-	buffer[i++] = "89AB"[rand() % 4];  // uuid variant (0b10??)
+	buffer[i++] = "89AB"[rand() % 4]; // uuid variant (0b10??)
 	random_chars(buffer + i, 3);
 	i += 3;
 	buffer[i++] = '-';
@@ -611,7 +666,8 @@ static void uuid4(char *buffer) {
 	buffer[i++] = 0;
 }
 
-static void debug_log(char *file, int line, ...) {
+static void debug_log(char *file, int line, ...)
+{
 	va_list args;
 	char message[1024];
 
@@ -623,12 +679,14 @@ static void debug_log(char *file, int line, ...) {
 	char *basename = strrchr(file, '/');
 	basename = basename ? basename + 1 : file;
 
-	if (message[(strlen(message) - 1)] == '\n') message[(strlen(message) - 1)] = '\0';
+	if (message[(strlen(message) - 1)] == '\n')
+		message[(strlen(message) - 1)] = '\0';
 
 	dbg_print(CCX_DMT_VERBOSE, "[%s:%d] - %s\n", basename, line, message);
-}  // debug_log()
+} // debug_log()
 
-static struct ccx_mcc_caption_time convert_to_caption_time(LLONG mstime) {
+static struct ccx_mcc_caption_time convert_to_caption_time(LLONG mstime)
+{
 	struct ccx_mcc_caption_time retval;
 
 	if (mstime < 0) // Avoid loss of data warning with abs()
@@ -642,20 +700,26 @@ static struct ccx_mcc_caption_time convert_to_caption_time(LLONG mstime) {
 	return retval;
 } // convert_to_caption_time()
 
-static void byte_to_ascii(uint8 hex_byte, uint8 *msn, uint8 *lsn) {
+static void byte_to_ascii(uint8 hex_byte, uint8 *msn, uint8 *lsn)
+{
 	ASSERT(msn);
 	ASSERT(lsn);
 
 	*msn = (hex_byte & 0xF0);
 	*msn = *msn >> 4;
-	if (*msn < 0x0A) *msn = *msn + '0';
-	else *msn = (*msn - 0x0A) + 'A';
+	if (*msn < 0x0A)
+		*msn = *msn + '0';
+	else
+		*msn = (*msn - 0x0A) + 'A';
 
 	*lsn = (hex_byte & 0x0F);
-	if (*lsn < 0x0A) *lsn = *lsn + '0';
-	else *lsn = (*lsn - 0x0A) + 'A';
-}  // byteToAscii()
+	if (*lsn < 0x0A)
+		*lsn = *lsn + '0';
+	else
+		*lsn = (*lsn - 0x0A) + 'A';
+} // byteToAscii()
 
-static void write_string(int fh, char *string) {
+static void write_string(int fh, char *string)
+{
 	write(fh, string, strlen(string));
 }

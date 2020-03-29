@@ -276,7 +276,6 @@ void dinit_cap(struct ccx_demuxer *ctx)
 	INIT_LIST_HEAD(&ctx->cinfo_tree.pg_stream);
 }
 
-
 struct cap_info *get_cinfo(struct ccx_demuxer *ctx, int pid)
 {
 	struct cap_info *iter;

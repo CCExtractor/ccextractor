@@ -36,7 +36,7 @@ void setup_output_tab(struct output_tab *output)
 	//Encoding
 	output->encoding = UTF;
 	output->is_bom = nk_false;
-	
+
 	//Capitalization
 	output->is_cap_standard = nk_false;
 	output->is_cap_file = nk_false;
@@ -55,7 +55,7 @@ void setup_output_tab(struct output_tab *output)
 	//Roll-up Captions
 	output->onetime_or_realtime = ONETIME;
 	output->roll_limit_select = 0;
-	output->roll_limit = (char**)malloc(4 * sizeof(char *));
+	output->roll_limit = (char **)malloc(4 * sizeof(char *));
 	output->roll_limit[0] = "No Limit";
 	output->roll_limit[1] = "1 Line";
 	output->roll_limit[2] = "2 Lines";
@@ -176,14 +176,13 @@ void setup_credits_tab(struct credits_tab *credits)
 	credits->end_atleast_sec_len = strlen(credits->end_atleast_sec);
 	strcpy(credits->end_atmost_sec, "3");
 	credits->end_atmost_sec_len = strlen(credits->end_atmost_sec);
-
 }
 
 void setup_hd_homerun_tab(struct hd_homerun_tab *hd_homerun)
 {
 	hd_homerun->is_homerun_browser_active = nk_false;
 	hd_homerun->location_len = 0;
-	hd_homerun->devices = (char**)malloc(3 * sizeof(char *));
+	hd_homerun->devices = (char **)malloc(3 * sizeof(char *));
 	hd_homerun->device_num = 0;
 	strcpy(hd_homerun->tuner, "0");
 	hd_homerun->tuner_len = strlen(hd_homerun->tuner);
@@ -194,7 +193,7 @@ void setup_hd_homerun_tab(struct hd_homerun_tab *hd_homerun)
 void setup_burned_subs_tab(struct burned_subs_tab *burned_subs)
 {
 	burned_subs->is_burned_subs = nk_false;
-	burned_subs->subs_color = (char**)malloc(7 * sizeof(char *));
+	burned_subs->subs_color = (char **)malloc(7 * sizeof(char *));
 	burned_subs->subs_color[0] = "white";
 	burned_subs->subs_color[1] = "yellow";
 	burned_subs->subs_color[2] = "green";
@@ -211,21 +210,20 @@ void setup_burned_subs_tab(struct burned_subs_tab *burned_subs)
 	burned_subs->is_italic = nk_false;
 }
 
-
 /*Tab specific functions*/
 void draw_input_tab(struct nk_context *ctx, int *tab_screen_height, struct input_tab *input,
-		struct decoders_tab *decoders)
+		    struct decoders_tab *decoders)
 {
-	const float screenful_limit_ratio[] = { 0.47f, 0.3f };
+	const float screenful_limit_ratio[] = {0.47f, 0.3f};
 	static struct time from_time, until_time;
-	const float stream_type_pid_ratio[] = { 0.7f,0.3f };
-	const float mpeg_type_ratio[] = { 0.7f,0.3f };
-	const float teletext_page_ratio[] = { 0.75f,0.25f };
-	const float stream_teletext_ratio[] = { 0.5f, 0.501f };
-	const float wait_data_ratio[] = { 0.6f, 0.25f, 0.15f };
-	const float gen_type_ratio[] = { 0.3f, 0.7f };
-	const float gen_time_ratio[] = { 0.6f ,0.401f};
-	const char *split_type[] = { "Individual Files", "Parts of same video. Cut by generic tool", "Parts of same video. Cut by video tool" };
+	const float stream_type_pid_ratio[] = {0.7f, 0.3f};
+	const float mpeg_type_ratio[] = {0.7f, 0.3f};
+	const float teletext_page_ratio[] = {0.75f, 0.25f};
+	const float stream_teletext_ratio[] = {0.5f, 0.501f};
+	const float wait_data_ratio[] = {0.6f, 0.25f, 0.15f};
+	const float gen_type_ratio[] = {0.3f, 0.7f};
+	const float gen_time_ratio[] = {0.6f, 0.401f};
+	const char *split_type[] = {"Individual Files", "Parts of same video. Cut by generic tool", "Parts of same video. Cut by video tool"};
 	static int split_num;
 	*tab_screen_height = 472;
 
@@ -262,7 +260,8 @@ void draw_input_tab(struct nk_context *ctx, int *tab_screen_height, struct input
 		nk_checkbox_label(ctx, "Process From: (HH:MM:SS)", &input->is_process_from);
 		nk_layout_row_dynamic(ctx, 25, 1);
 
-		if (nk_combo_begin_label(ctx, input->from_time_buffer, nk_vec2(180, 250))) {
+		if (nk_combo_begin_label(ctx, input->from_time_buffer, nk_vec2(180, 250)))
+		{
 			sprintf(input->from_time_buffer, "%02d:%02d:%02d", from_time.hours, from_time.minutes, from_time.seconds);
 			nk_layout_row_dynamic(ctx, 25, 1);
 			from_time.seconds = nk_propertyi(ctx, "#Seconds:", 0, from_time.seconds, 60, 1, 1);
@@ -271,13 +270,13 @@ void draw_input_tab(struct nk_context *ctx, int *tab_screen_height, struct input
 			nk_combo_end(ctx);
 		}
 
-
 		//Process Until
 		nk_layout_row_dynamic(ctx, 20, 1);
 		nk_checkbox_label(ctx, "Process Until: (HH:MM:SS)", &input->is_process_until);
 		nk_layout_row_dynamic(ctx, 25, 1);
 
-		if (nk_combo_begin_label(ctx, input->until_time_buffer, nk_vec2(180, 250))) {
+		if (nk_combo_begin_label(ctx, input->until_time_buffer, nk_vec2(180, 250)))
+		{
 			sprintf(input->until_time_buffer, "%02d:%02d:%02d", until_time.hours, until_time.minutes, until_time.seconds);
 			nk_layout_row_dynamic(ctx, 25, 1);
 			until_time.seconds = nk_propertyi(ctx, "#Seconds:", 0, until_time.seconds, 60, 1, 1);
@@ -294,17 +293,20 @@ void draw_input_tab(struct nk_context *ctx, int *tab_screen_height, struct input
 	if (nk_group_begin(ctx, "Elementary Stream", NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_TITLE | NK_WINDOW_BORDER))
 	{
 		nk_layout_row_dynamic(ctx, 20, 1);
-		if (nk_option_label(ctx, "Auto", input->elementary_stream == AUTO_DETECT)) {
+		if (nk_option_label(ctx, "Auto", input->elementary_stream == AUTO_DETECT))
+		{
 			input->elementary_stream = AUTO_DETECT;
 		}
 		nk_layout_row(ctx, NK_DYNAMIC, 25, 2, stream_type_pid_ratio);
-		if (nk_option_label(ctx, "Process stream of type:", input->elementary_stream == STREAM_TYPE)) {
+		if (nk_option_label(ctx, "Process stream of type:", input->elementary_stream == STREAM_TYPE))
+		{
 			input->elementary_stream = STREAM_TYPE;
 		}
 		nk_edit_string(ctx, NK_EDIT_SIMPLE, input->stream_type, &input->stream_type_len, 9, nk_filter_decimal);
 
 		nk_layout_row(ctx, NK_DYNAMIC, 25, 2, stream_type_pid_ratio);
-		if (nk_option_label(ctx, "Process stream with PID:", input->elementary_stream == STREAM_PID)) {
+		if (nk_option_label(ctx, "Process stream with PID:", input->elementary_stream == STREAM_PID))
+		{
 			input->elementary_stream = STREAM_PID;
 		}
 		nk_edit_string(ctx, NK_EDIT_SIMPLE, input->stream_pid, &input->stream_pid_len, 9, nk_filter_decimal);
@@ -313,7 +315,7 @@ void draw_input_tab(struct nk_context *ctx, int *tab_screen_height, struct input
 		nk_checkbox_label(ctx, "Assume MPEG type is:", &input->is_assume_mpeg);
 		nk_edit_string(ctx, NK_EDIT_SIMPLE, input->mpeg_type, &input->mpeg_type_len, 9, nk_filter_decimal);
 
-		if(input->teletext_decoder == FORCE)
+		if (input->teletext_decoder == FORCE)
 		{
 			input->elementary_stream = STREAM_PID;
 		}
@@ -323,22 +325,26 @@ void draw_input_tab(struct nk_context *ctx, int *tab_screen_height, struct input
 	//Teletext Group
 	if (nk_group_begin(ctx, "Teletext", NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_TITLE | NK_WINDOW_BORDER))
 	{
-		if(decoders->teletext_dvb == DVB){
+		if (decoders->teletext_dvb == DVB)
+		{
 			nk_layout_row_dynamic(ctx, 40, 1);
 			nk_label_colored_wrap(ctx, "Teletext is disabled in Decoders->Teletext or DVB.", nk_rgb(255, 56, 38));
 		}
 		else
 		{
 			nk_layout_row_dynamic(ctx, 20, 1);
-			if (nk_option_label(ctx, "Auto", input->teletext_decoder == AUTO_DECODE)) {
+			if (nk_option_label(ctx, "Auto", input->teletext_decoder == AUTO_DECODE))
+			{
 				input->teletext_decoder = AUTO_DECODE;
 			}
 			nk_layout_row_dynamic(ctx, 25, 1);
-			if (nk_option_label(ctx, "Force Teletext decoder", input->teletext_decoder == FORCE)) {
+			if (nk_option_label(ctx, "Force Teletext decoder", input->teletext_decoder == FORCE))
+			{
 				input->teletext_decoder = FORCE;
 			}
 			nk_layout_row_dynamic(ctx, 25, 1);
-			if (nk_option_label(ctx, "Disable Teletext decoder", input->teletext_decoder == DISABLE)) {
+			if (nk_option_label(ctx, "Disable Teletext decoder", input->teletext_decoder == DISABLE))
+			{
 				input->teletext_decoder = DISABLE;
 			}
 
@@ -350,26 +356,24 @@ void draw_input_tab(struct nk_context *ctx, int *tab_screen_height, struct input
 		nk_group_end(ctx);
 	}
 
-
 	//Screenfuls limit group
 	nk_layout_row(ctx, NK_DYNAMIC, 95, 2, stream_teletext_ratio);
 	if (nk_group_begin(ctx, "'Screenfuls' limit", NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR))
 	{
 		int screenful_limits = atoi(input->screenful_limit_buffer);
-		
+
 		nk_layout_row_dynamic(ctx, 20, 1);
 		if (nk_option_label(ctx, "No limit", input->is_limit == NO_LIMIT))
 		{
 			input->is_limit = NO_LIMIT;
 		}
 		nk_layout_row(ctx, NK_DYNAMIC, 25, 2, screenful_limit_ratio);
-		if (nk_option_label(ctx, "Screenful Limit:", input->is_limit == LIMITED)) {
+		if (nk_option_label(ctx, "Screenful Limit:", input->is_limit == LIMITED))
+		{
 			input->is_limit = LIMITED;
 		}
 		screenful_limits = nk_propertyi(ctx, "", 0, screenful_limits, 999, 1, 1);
 		sprintf(input->screenful_limit_buffer, "%d", screenful_limits);
-		
-
 
 		nk_group_end(ctx);
 	}
@@ -382,10 +386,12 @@ void draw_input_tab(struct nk_context *ctx, int *tab_screen_height, struct input
 		{
 			input->clock_input = AUTO;
 		}
-		if (nk_option_label(ctx, "GOP", input->clock_input == GOP)) {
+		if (nk_option_label(ctx, "GOP", input->clock_input == GOP))
+		{
 			input->clock_input = GOP;
 		}
-		if (nk_option_label(ctx, "PTS", input->clock_input == PTS)) {
+		if (nk_option_label(ctx, "PTS", input->clock_input == PTS))
+		{
 			input->clock_input = PTS;
 		}
 		nk_group_end(ctx);
@@ -395,24 +401,24 @@ void draw_input_tab(struct nk_context *ctx, int *tab_screen_height, struct input
 void draw_advanced_input_tab(struct nk_context *ctx, int *tab_screen_height, struct advanced_input_tab *advanced_input)
 {
 	*tab_screen_height = 472;
-	const float prog_myth_ratio[] = { 0.5f, 0.5f };
-	const float prog_num_ratio[] = { 0.67f, 0.03f, 0.3f };
+	const float prog_myth_ratio[] = {0.5f, 0.5f};
+	const float prog_num_ratio[] = {0.67f, 0.03f, 0.3f};
 
 	nk_layout_row(ctx, NK_DYNAMIC, 125, 2, prog_myth_ratio);
 
 	//Multiple Programs Group
-	if(nk_group_begin(ctx, "Multiple Programs", NK_WINDOW_BORDER|NK_WINDOW_NO_SCROLLBAR|NK_WINDOW_TITLE))
+	if (nk_group_begin(ctx, "Multiple Programs", NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_TITLE))
 	{
 		nk_layout_row_dynamic(ctx, 25, 1);
 		nk_checkbox_label(ctx, "File contains multiple programs", &advanced_input->is_multiple_program);
 
 		nk_layout_row_dynamic(ctx, 20, 1);
-		if(nk_option_label(ctx, "Process first suitable program", advanced_input->multiple_program == FIRST_PROG))
+		if (nk_option_label(ctx, "Process first suitable program", advanced_input->multiple_program == FIRST_PROG))
 		{
 			advanced_input->multiple_program = FIRST_PROG;
 		}
 		nk_layout_row(ctx, NK_DYNAMIC, 25, 3, prog_num_ratio);
-		if(nk_option_label(ctx, "Process program with #", advanced_input->multiple_program == PROG_NUM))
+		if (nk_option_label(ctx, "Process program with #", advanced_input->multiple_program == PROG_NUM))
 		{
 			advanced_input->multiple_program = PROG_NUM;
 		}
@@ -423,22 +429,22 @@ void draw_advanced_input_tab(struct nk_context *ctx, int *tab_screen_height, str
 	}
 
 	//Myth TV group
-	if(nk_group_begin(ctx, "Myth TV", NK_WINDOW_TITLE|NK_WINDOW_BORDER|NK_WINDOW_NO_SCROLLBAR))
+	if (nk_group_begin(ctx, "Myth TV", NK_WINDOW_TITLE | NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR))
 	{
 		nk_layout_row_dynamic(ctx, 20, 1);
-		if(nk_option_label(ctx, "Auto", advanced_input->set_myth  == AUTO_MYTH))
+		if (nk_option_label(ctx, "Auto", advanced_input->set_myth == AUTO_MYTH))
 		{
 			advanced_input->set_myth = AUTO_MYTH;
 		}
 
 		nk_layout_row_dynamic(ctx, 20, 1);
-		if(nk_option_label(ctx, "Force usage of Myth TV decoder", advanced_input->set_myth  == FORCE_MYTH))
+		if (nk_option_label(ctx, "Force usage of Myth TV decoder", advanced_input->set_myth == FORCE_MYTH))
 		{
 			advanced_input->set_myth = FORCE_MYTH;
 		}
 
 		nk_layout_row_dynamic(ctx, 20, 1);
-		if(nk_option_label(ctx, "Disable Myth TV decoder", advanced_input->set_myth == DISABLE_MYTH))
+		if (nk_option_label(ctx, "Disable Myth TV decoder", advanced_input->set_myth == DISABLE_MYTH))
 		{
 			advanced_input->set_myth = DISABLE_MYTH;
 		}
@@ -448,7 +454,7 @@ void draw_advanced_input_tab(struct nk_context *ctx, int *tab_screen_height, str
 
 	//Miscellaneous group
 	nk_layout_row_dynamic(ctx, 210, 1);
-	if(nk_group_begin(ctx, "Miscellaneous", NK_WINDOW_TITLE|NK_WINDOW_BORDER|NK_WINDOW_NO_SCROLLBAR))
+	if (nk_group_begin(ctx, "Miscellaneous", NK_WINDOW_TITLE | NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR))
 	{
 		nk_layout_row_dynamic(ctx, 20, 1);
 		nk_checkbox_label(ctx, "Use 90090 as MPEG clock frequency instead of 90000 (needed for some DVDs", &advanced_input->is_mpeg_90090);
@@ -465,36 +471,35 @@ void draw_advanced_input_tab(struct nk_context *ctx, int *tab_screen_height, str
 		nk_layout_row_dynamic(ctx, 20, 1);
 		nk_checkbox_label(ctx, "Ignore broadcast date info (only affects Teletext in timed transcript with -datets)", &advanced_input->is_ignore_broadcast);
 
-
 		nk_group_end(ctx);
 	}
 }
 
 void draw_output_tab(struct nk_context *ctx, int *tab_screen_height, struct output_tab *output, struct main_tab *main_settings)
 {
-	const float roll_limit_ratio[] = { 0.55f, 0.45f };
+	const float roll_limit_ratio[] = {0.55f, 0.45f};
 	nk_flags active;
 	static int len;
 	static int cap_len;
 	static int color_len = 6;
-	const float gen_enc_ratio[] = { 0.701f, 0.302f };
-	const float type_ratio[] = { 0.3f,0.7f };
-	const float out_file_ratio[] = { 0.3f,0.53f,0.17f };
-	const float cap_file_ratio[] = { 0.2f,0.63f,0.17f };
-	const float delay_ratio[] = { 0.5f, 0.2f, 0.3f };
-	const float color_roll_ratio[] = { 0.6f,0.401f };
-	const float color_check_ratio[] = { 0.6f,0.23f,0.07f,0.1f };
+	const float gen_enc_ratio[] = {0.701f, 0.302f};
+	const float type_ratio[] = {0.3f, 0.7f};
+	const float out_file_ratio[] = {0.3f, 0.53f, 0.17f};
+	const float cap_file_ratio[] = {0.2f, 0.63f, 0.17f};
+	const float delay_ratio[] = {0.5f, 0.2f, 0.3f};
+	const float color_roll_ratio[] = {0.6f, 0.401f};
+	const float color_check_ratio[] = {0.6f, 0.23f, 0.07f, 0.1f};
 	*tab_screen_height = 472;
 	nk_layout_row(ctx, NK_DYNAMIC, 160, 2, gen_enc_ratio);
 
 	//General Group
-	if (nk_group_begin(ctx, "General", NK_WINDOW_TITLE |NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER))
+	if (nk_group_begin(ctx, "General", NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER))
 	{
 		int delay_secs = atoi(output->delay_sec_buffer);
 		//Output Type
 		nk_layout_row(ctx, NK_DYNAMIC, 20, 2, type_ratio);
 		nk_label(ctx, "Output Type:", NK_TEXT_LEFT);
-		output->type_select = nk_combo(ctx, output->type,  13, output->type_select, 25, nk_vec2(225, 200));
+		output->type_select = nk_combo(ctx, output->type, 13, output->type_select, 25, nk_vec2(225, 200));
 
 		//Output File
 		nk_layout_row(ctx, NK_DYNAMIC, 25, 3, out_file_ratio);
@@ -512,7 +517,7 @@ void draw_output_tab(struct nk_context *ctx, int *tab_screen_height, struct outp
 		delay_secs = nk_propertyi(ctx, "", 0, delay_secs, 1000, 1, 1);
 		sprintf(output->delay_sec_buffer, "%d", delay_secs);
 		nk_label(ctx, "seconds", NK_TEXT_LEFT);
-		
+
 		//Export XDS info
 		nk_layout_row_dynamic(ctx, 25, 1);
 		nk_checkbox_label(ctx, "Export XDS information (transcripts)", &output->is_export_xds);
@@ -520,19 +525,22 @@ void draw_output_tab(struct nk_context *ctx, int *tab_screen_height, struct outp
 		nk_group_end(ctx);
 	}
 	//Encoding Group
-	if (nk_group_begin(ctx, "Encoding", NK_WINDOW_TITLE |NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER))
+	if (nk_group_begin(ctx, "Encoding", NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER))
 	{
 		static int option = UTF;
 		nk_layout_row_dynamic(ctx, 20, 1);
-		if (nk_option_label(ctx, "Latin", output->encoding == LATIN)) {
+		if (nk_option_label(ctx, "Latin", output->encoding == LATIN))
+		{
 			output->encoding = LATIN;
 		}
 		nk_layout_row_dynamic(ctx, 20, 1);
-		if (nk_option_label(ctx, "Unicode", output->encoding == UNIC)) {
+		if (nk_option_label(ctx, "Unicode", output->encoding == UNIC))
+		{
 			output->encoding = UNIC;
 		}
 		nk_layout_row_dynamic(ctx, 20, 1);
-		if (nk_option_label(ctx, "UTF-8", output->encoding == UTF)) {
+		if (nk_option_label(ctx, "UTF-8", output->encoding == UTF))
+		{
 			output->encoding = UTF;
 		}
 
@@ -543,10 +551,9 @@ void draw_output_tab(struct nk_context *ctx, int *tab_screen_height, struct outp
 		nk_group_end(ctx);
 	}
 
-
 	nk_layout_row(ctx, NK_DYNAMIC, 100, 2, gen_enc_ratio);
 	//Capitalization Group
-	if(nk_group_begin(ctx, "Capitalization", NK_WINDOW_TITLE|NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER))
+	if (nk_group_begin(ctx, "Capitalization", NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER))
 	{
 		nk_layout_row_dynamic(ctx, 20, 1);
 		nk_checkbox_label(ctx, "Standard capitalization rules.", &output->is_cap_standard);
@@ -564,14 +571,16 @@ void draw_output_tab(struct nk_context *ctx, int *tab_screen_height, struct outp
 	}
 
 	//Line Endings
-	if (nk_group_begin(ctx, "Line Endings:", NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR |NK_WINDOW_BORDER))
+	if (nk_group_begin(ctx, "Line Endings:", NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER))
 	{
 		nk_layout_row_dynamic(ctx, 20, 1);
-		if (nk_option_label(ctx, "CRLF (Windows)", output->line_ending == CRLF)) {
+		if (nk_option_label(ctx, "CRLF (Windows)", output->line_ending == CRLF))
+		{
 			output->line_ending = CRLF;
 		}
 		nk_layout_row_dynamic(ctx, 25, 1);
-		if (nk_option_label(ctx, "LF (UNIX-like)", output->line_ending == LF)) {
+		if (nk_option_label(ctx, "LF (UNIX-like)", output->line_ending == LF))
+		{
 			output->line_ending = LF;
 		}
 
@@ -588,20 +597,22 @@ void draw_output_tab(struct nk_context *ctx, int *tab_screen_height, struct outp
 
 		nk_layout_row_dynamic(ctx, 20, 1);
 		nk_checkbox_label(ctx, "Add dash (-) when speaker changes (for .srt)", &output->is_dash);
-		
+
 		nk_layout_row_dynamic(ctx, 20, 1);
 		nk_checkbox_label(ctx, "Don't add typesetting tags(bold, italic, etc.)", &output->no_typesetting);
 
 		nk_layout_row_dynamic(ctx, 20, 1);
-		if(nk_option_label(ctx, "Don't add color information", output->font_color == NO_COLOR)) {
+		if (nk_option_label(ctx, "Don't add color information", output->font_color == NO_COLOR))
+		{
 			output->font_color = NO_COLOR;
 		}
 
 		nk_layout_row(ctx, NK_DYNAMIC, 20, 4, color_check_ratio);
-		if (nk_option_label(ctx, "Default color (RRGGBB)#", output->font_color == DEFAULT_COLOR)) {
+		if (nk_option_label(ctx, "Default color (RRGGBB)#", output->font_color == DEFAULT_COLOR))
+		{
 			output->font_color = DEFAULT_COLOR;
 		}
-		active = nk_edit_string(ctx, NK_EDIT_FIELD|NK_EDIT_SIG_ENTER, output->color_hex, &color_len, 7, nk_filter_hex);
+		active = nk_edit_string(ctx, NK_EDIT_FIELD | NK_EDIT_SIG_ENTER, output->color_hex, &color_len, 7, nk_filter_hex);
 		nk_label(ctx, "or", NK_TEXT_CENTERED);
 		if (nk_button_color(ctx, output->color_rgb))
 			output->color_popup = nk_true;
@@ -617,17 +628,15 @@ void draw_output_tab(struct nk_context *ctx, int *tab_screen_height, struct outp
 			printf("%d%d%d", output->color_rgb.r, output->color_rgb.g, output->color_rgb.b);
 		}*/
 
-			
 		nk_group_end(ctx);
 	}
-
-	
 
 	//Roll-up Captions Group
 	if (nk_group_begin(ctx, "Roll-up Captions", NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER))
 	{
 		nk_layout_row_dynamic(ctx, 25, 1);
-		if (nk_option_label(ctx, "Letters appear in realtime", output->onetime_or_realtime == REALTIME)) {
+		if (nk_option_label(ctx, "Letters appear in realtime", output->onetime_or_realtime == REALTIME))
+		{
 			output->onetime_or_realtime = REALTIME;
 		}
 		nk_layout_row_dynamic(ctx, 25, 1);
@@ -637,7 +646,8 @@ void draw_output_tab(struct nk_context *ctx, int *tab_screen_height, struct outp
 		output->roll_limit_select = nk_combo(ctx, output->roll_limit, 4, output->roll_limit_select, 25, nk_vec2(80, 80));
 
 		nk_layout_row_dynamic(ctx, 20, 1);
-		if (nk_option_label(ctx, "Letters appear line by line", output->onetime_or_realtime == ONETIME)) {
+		if (nk_option_label(ctx, "Letters appear line by line", output->onetime_or_realtime == ONETIME))
+		{
 			output->onetime_or_realtime = ONETIME;
 		}
 		nk_layout_row_dynamic(ctx, 25, 1);
@@ -645,23 +655,21 @@ void draw_output_tab(struct nk_context *ctx, int *tab_screen_height, struct outp
 
 		nk_group_end(ctx);
 	}
-	
-
 }
 
 void draw_decoders_tab(struct nk_context *ctx, int *tab_screen_height, struct decoders_tab *decoders)
 {
 	*tab_screen_height = 472;
-	const float field_channel_ratio[] = { 0.5f, 0.5f };
-	const float services_ratio[] = { 0.3f, 0.002f, 0.2f };
-	const float min_distance_ratio[] = { 0.45f, 0.01f, 0.2f };
-	const float max_distance_ratio[] = { 0.73f, 0.01f, 0.2f };
+	const float field_channel_ratio[] = {0.5f, 0.5f};
+	const float services_ratio[] = {0.3f, 0.002f, 0.2f};
+	const float min_distance_ratio[] = {0.45f, 0.01f, 0.2f};
+	const float max_distance_ratio[] = {0.73f, 0.01f, 0.2f};
 
 	nk_layout_row_dynamic(ctx, 160, 1);
-	if(nk_group_begin(ctx, "608 Decoder", NK_WINDOW_TITLE|NK_WINDOW_BORDER|NK_WINDOW_NO_SCROLLBAR))
+	if (nk_group_begin(ctx, "608 Decoder", NK_WINDOW_TITLE | NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR))
 	{
 		nk_layout_row(ctx, NK_DYNAMIC, 85, 2, field_channel_ratio);
-		if(nk_group_begin(ctx, "Field", NK_WINDOW_TITLE|NK_WINDOW_NO_SCROLLBAR))
+		if (nk_group_begin(ctx, "Field", NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR))
 		{
 			nk_layout_row_dynamic(ctx, 20, 1);
 			nk_checkbox_label(ctx, "Extract captions from field 1", &decoders->is_field1);
@@ -670,15 +678,15 @@ void draw_decoders_tab(struct nk_context *ctx, int *tab_screen_height, struct de
 
 			nk_group_end(ctx);
 		}
-		if(nk_group_begin(ctx, "Channel", NK_WINDOW_TITLE|NK_WINDOW_NO_SCROLLBAR))
+		if (nk_group_begin(ctx, "Channel", NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR))
 		{
 			nk_layout_row_dynamic(ctx, 20, 1);
-			if(nk_option_label(ctx, "Extract captions from channel 1", decoders->channel == CHANNEL_1))
+			if (nk_option_label(ctx, "Extract captions from channel 1", decoders->channel == CHANNEL_1))
 			{
 				decoders->channel = CHANNEL_1;
 			}
 			nk_layout_row_dynamic(ctx, 20, 1);
-			if(nk_option_label(ctx, "Extract captions from channel 2", decoders->channel == CHANNEL_2))
+			if (nk_option_label(ctx, "Extract captions from channel 2", decoders->channel == CHANNEL_2))
 			{
 				decoders->channel = CHANNEL_2;
 			}
@@ -687,15 +695,14 @@ void draw_decoders_tab(struct nk_context *ctx, int *tab_screen_height, struct de
 
 		nk_layout_row_dynamic(ctx, 40, 1);
 		nk_label_wrap(ctx, "In general, if you want English subtitles you don't need to use these options. "
-				"If you want the second language (usually "
-				"Spanish), you may need to try other combinations.");
-
+				   "If you want the second language (usually "
+				   "Spanish), you may need to try other combinations.");
 
 		nk_group_end(ctx);
 	}
 
 	nk_layout_row_dynamic(ctx, 125, 1);
-	if(nk_group_begin(ctx, "708 Decoder", NK_WINDOW_TITLE|NK_WINDOW_BORDER|NK_WINDOW_NO_SCROLLBAR))
+	if (nk_group_begin(ctx, "708 Decoder", NK_WINDOW_TITLE | NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR))
 	{
 		nk_layout_row_dynamic(ctx, 20, 1);
 		nk_checkbox_label(ctx, "Enable 708 Decoder", &decoders->is_708);
@@ -705,29 +712,31 @@ void draw_decoders_tab(struct nk_context *ctx, int *tab_screen_height, struct de
 		nk_edit_string(ctx, NK_EDIT_SIMPLE, decoders->services, &decoders->services_len, 15, nk_filter_ascii);
 		nk_layout_row_dynamic(ctx, 45, 1);
 		nk_label_wrap(ctx, "The service list is a comma separated list of services to process. "
-				"Valid values: 1 to 63. Ranges are NOT supported.");
+				   "Valid values: 1 to 63. Ranges are NOT supported.");
 
 		nk_group_end(ctx);
 	}
 
 	nk_layout_row_dynamic(ctx, 63, 1);
-	if(nk_group_begin(ctx, "Teletext or DVB (if both are present)", NK_WINDOW_TITLE|NK_WINDOW_BORDER|NK_WINDOW_NO_SCROLLBAR))
+	if (nk_group_begin(ctx, "Teletext or DVB (if both are present)", NK_WINDOW_TITLE | NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR))
 	{
-		nk_layout_row_dynamic(ctx,20, 2);
-		if(nk_option_label(ctx, "Teletext", decoders->teletext_dvb == TELETEXT)){
+		nk_layout_row_dynamic(ctx, 20, 2);
+		if (nk_option_label(ctx, "Teletext", decoders->teletext_dvb == TELETEXT))
+		{
 			decoders->teletext_dvb = TELETEXT;
 		}
-		if(nk_option_label(ctx, "DVB", decoders->teletext_dvb == DVB)){
+		if (nk_option_label(ctx, "DVB", decoders->teletext_dvb == DVB))
+		{
 			decoders->teletext_dvb = DVB;
 		}
 
 		nk_group_end(ctx);
 	}
 
-	if(decoders->teletext_dvb == TELETEXT)
+	if (decoders->teletext_dvb == TELETEXT)
 	{
 		nk_layout_row_dynamic(ctx, 95, 1);
-		if(nk_group_begin(ctx, "Teletext line duplication", NK_WINDOW_TITLE|NK_WINDOW_BORDER|NK_WINDOW_NO_SCROLLBAR))
+		if (nk_group_begin(ctx, "Teletext line duplication", NK_WINDOW_TITLE | NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR))
 		{
 			nk_layout_row(ctx, NK_DYNAMIC, 25, 3, min_distance_ratio);
 			nk_label(ctx, "Minimum allowed distance (default 2)", NK_TEXT_LEFT);
@@ -738,7 +747,6 @@ void draw_decoders_tab(struct nk_context *ctx, int *tab_screen_height, struct de
 			nk_spacing(ctx, 1);
 			nk_edit_string(ctx, NK_EDIT_SIMPLE, decoders->max_distance, &decoders->max_distance_len, 3, nk_filter_decimal);
 
-
 			nk_group_end(ctx);
 		}
 	}
@@ -747,14 +755,14 @@ void draw_decoders_tab(struct nk_context *ctx, int *tab_screen_height, struct de
 void draw_credits_tab(struct nk_context *ctx, int *tab_screen_height, struct credits_tab *credits)
 {
 	static struct time before_time, after_time;
-	const float start_time_ratio[] = { 0.005f, 0.26f, 0.18f, 0.1f, 0.25f, 0.18f };
-	const float atleast_atmost_ratio[] = { 0.005f, 0.28, 0.1f, 0.36f, 0.1f, 0.1f };
+	const float start_time_ratio[] = {0.005f, 0.26f, 0.18f, 0.1f, 0.25f, 0.18f};
+	const float atleast_atmost_ratio[] = {0.005f, 0.28, 0.1f, 0.36f, 0.1f, 0.1f};
 	static int start_atleast_int, start_atmost_int;
 	*tab_screen_height = 472;
 
 	//Start Credits Group
 	nk_layout_row_dynamic(ctx, 210, 1);
-	if(nk_group_begin(ctx, "Start Credits", NK_WINDOW_TITLE|NK_WINDOW_BORDER|NK_WINDOW_NO_SCROLLBAR))
+	if (nk_group_begin(ctx, "Start Credits", NK_WINDOW_TITLE | NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR))
 	{
 		nk_layout_row_dynamic(ctx, 20, 1);
 		nk_checkbox_label(ctx, "Enable, write below text as soon as possible.", &credits->is_start_text);
@@ -766,8 +774,8 @@ void draw_credits_tab(struct nk_context *ctx, int *tab_screen_height, struct cre
 		nk_spacing(ctx, 1);
 		nk_checkbox_label(ctx, "Before (MM:SS)", &credits->is_before);
 
-
-		if (nk_combo_begin_label(ctx, credits->before_time_buffer, nk_vec2(100, 100))) {
+		if (nk_combo_begin_label(ctx, credits->before_time_buffer, nk_vec2(100, 100)))
+		{
 			nk_layout_row_dynamic(ctx, 25, 1);
 			sprintf(credits->before_time_buffer, "%02d:%02d", before_time.minutes, before_time.seconds);
 			before_time.seconds = nk_propertyi(ctx, "#S:", 0, before_time.seconds, 60, 1, 1);
@@ -779,8 +787,8 @@ void draw_credits_tab(struct nk_context *ctx, int *tab_screen_height, struct cre
 
 		nk_checkbox_label(ctx, "After (MM:SS)", &credits->is_after);
 
-
-		if (nk_combo_begin_label(ctx, credits->after_time_buffer, nk_vec2(100, 100))) {
+		if (nk_combo_begin_label(ctx, credits->after_time_buffer, nk_vec2(100, 100)))
+		{
 			nk_layout_row_dynamic(ctx, 25, 1);
 			sprintf(credits->after_time_buffer, "%02d:%02d", after_time.minutes, after_time.seconds);
 			after_time.seconds = nk_propertyi(ctx, "#S:", 0, after_time.seconds, 60, 1, 1);
@@ -801,13 +809,13 @@ void draw_credits_tab(struct nk_context *ctx, int *tab_screen_height, struct cre
 
 	//End Credits Group
 	nk_layout_row_dynamic(ctx, 180, 1);
-	if(nk_group_begin(ctx, "End Credits", NK_WINDOW_TITLE|NK_WINDOW_BORDER|NK_WINDOW_NO_SCROLLBAR))
+	if (nk_group_begin(ctx, "End Credits", NK_WINDOW_TITLE | NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR))
 	{
 		nk_layout_row_dynamic(ctx, 20, 1);
 		nk_checkbox_label(ctx, "Enable, write below text after last caption and as close as possible to video end.", &credits->is_end_text);
 		nk_layout_row_dynamic(ctx, 85, 1);
 		nk_edit_string(ctx, NK_EDIT_BOX, credits->end_text, &credits->end_text_len, 1000, nk_filter_ascii);
-		nk_layout_row(ctx,NK_DYNAMIC, 25, 6, atleast_atmost_ratio);
+		nk_layout_row(ctx, NK_DYNAMIC, 25, 6, atleast_atmost_ratio);
 		nk_spacing(ctx, 1);
 		nk_label(ctx, "Display credits at least", NK_TEXT_LEFT);
 		nk_edit_string(ctx, NK_EDIT_SIMPLE, credits->end_atleast_sec, &credits->end_atleast_sec_len, 3, nk_filter_decimal);
@@ -820,18 +828,18 @@ void draw_credits_tab(struct nk_context *ctx, int *tab_screen_height, struct cre
 }
 
 void draw_debug_tab(struct nk_context *ctx, int *tab_screen_height,
-		struct main_tab *main_settings,
-		struct output_tab *output,
-		struct debug_tab *debug)
+		    struct main_tab *main_settings,
+		    struct output_tab *output,
+		    struct debug_tab *debug)
 {
 	*tab_screen_height = 472;
-	const float stream_ratio[] = { 0.45f, 0.45f, 0.1f };
+	const float stream_ratio[] = {0.45f, 0.45f, 0.1f};
 	nk_layout_row_dynamic(ctx, 4, 1);
 	nk_spacing(ctx, 1);
 	nk_layout_row(ctx, NK_DYNAMIC, 25, 3, stream_ratio);
 	nk_checkbox_label(ctx, "Write elementary stream to this file", &debug->is_elementary_stream);
 	nk_edit_string(ctx, NK_EDIT_SIMPLE, debug->elementary_stream, &debug->elementary_stream_len, 260, nk_filter_ascii);
-	if(nk_button_label(ctx, "Browse"))
+	if (nk_button_label(ctx, "Browse"))
 	{
 		debug->is_debug_browser_active = nk_true;
 		main_settings->scaleWindowForFileBrowser = nk_true;
@@ -858,14 +866,13 @@ void draw_debug_tab(struct nk_context *ctx, int *tab_screen_height,
 	nk_layout_row_dynamic(ctx, 25, 1);
 	nk_checkbox_label(ctx, "Print debug info for parse container files (only for ASF files at the moment).", &debug->is_debug_parsed);
 
-	if(!(strcmp(output->type[output->type_select], "bin")))
+	if (!(strcmp(output->type[output->type_select], "bin")))
 	{
 		nk_layout_row_dynamic(ctx, 25, 1);
 		nk_checkbox_label(ctx, "Disable sync code when there's a timeline gap.", &debug->is_disable_sync);
 
 		nk_layout_row_dynamic(ctx, 25, 1);
 		nk_checkbox_label(ctx, "Don't remove trailing padding blocks.", &debug->is_no_padding);
-
 	}
 
 	nk_layout_row_dynamic(ctx, 25, 1);
@@ -885,19 +892,19 @@ void draw_debug_tab(struct nk_context *ctx, int *tab_screen_height,
 }
 
 void draw_hd_homerun_tab(struct nk_context *ctx, int *tab_screen_height,
-		struct hd_homerun_tab *hd_homerun,
-		struct main_tab *main_settings)
+			 struct hd_homerun_tab *hd_homerun,
+			 struct main_tab *main_settings)
 {
 	*tab_screen_height = 472;
 	int setup_device = nk_false;
-	const float location_ratio[] = { 0.35f, 0.5f, 0.15f };
-	const float devices_ratio[] = { 0.8f, 0.2f };
-	const float tuner_ratio[] = { .35f, 0.4f, 0.13 };
-	const float channel_ratio[] = { 0.35f, 0.4f };
-	const float program_ratio[] = { 0.35f, 0.4f };
-	const float done_ratio[] = { 0.45f, 0.1f };
-	const float ipv4_ratio[] = { 0.35f, 0.4f};
-	const float port_ratio[] = { 0.35f, 0.4f };
+	const float location_ratio[] = {0.35f, 0.5f, 0.15f};
+	const float devices_ratio[] = {0.8f, 0.2f};
+	const float tuner_ratio[] = {.35f, 0.4f, 0.13};
+	const float channel_ratio[] = {0.35f, 0.4f};
+	const float program_ratio[] = {0.35f, 0.4f};
+	const float done_ratio[] = {0.45f, 0.1f};
+	const float ipv4_ratio[] = {0.35f, 0.4f};
+	const float port_ratio[] = {0.35f, 0.4f};
 	static int before_selected, after_selected;
 	static int done = nk_false;
 #if HD_HOMERUN
@@ -907,21 +914,21 @@ void draw_hd_homerun_tab(struct nk_context *ctx, int *tab_screen_height,
 	nk_layout_row(ctx, NK_DYNAMIC, 25, 3, location_ratio);
 	nk_label(ctx, "'hdhomerun_config' utility*:", NK_TEXT_LEFT);
 	nk_edit_string(ctx, NK_EDIT_SIMPLE, hd_homerun->location, &hd_homerun->location_len, 260, nk_filter_ascii);
-	if(nk_button_label(ctx, "Browse"))
+	if (nk_button_label(ctx, "Browse"))
 	{
 		hd_homerun->is_homerun_browser_active = nk_true;
 		main_settings->scaleWindowForFileBrowser = nk_true;
 	}
 	nk_layout_row_dynamic(ctx, 40, 1);
 	nk_label_wrap(ctx, "*Absolute location of 'hdhomerun_config' executable. Displaying this message means "
-			"either utility is not installed or environment variables aren't set for proper detection.");
+			   "either utility is not installed or environment variables aren't set for proper detection.");
 
 #endif
 	nk_layout_row_dynamic(ctx, 120, 1);
-	if(nk_group_begin(ctx, "Choose a device:", NK_WINDOW_TITLE|NK_WINDOW_BORDER))
+	if (nk_group_begin(ctx, "Choose a device:", NK_WINDOW_TITLE | NK_WINDOW_BORDER))
 	{
 
-		if(hd_homerun->device_num == 0)
+		if (hd_homerun->device_num == 0)
 		{
 			nk_layout_row_dynamic(ctx, 20, 1);
 			nk_label_wrap(ctx, "No devices found, yet. Please check your settings and try again.");
@@ -929,22 +936,22 @@ void draw_hd_homerun_tab(struct nk_context *ctx, int *tab_screen_height,
 		else
 		{
 			nk_layout_row_dynamic(ctx, 20, 1);
-			for(int i = 0; i < hd_homerun->device_num; i++)
+			for (int i = 0; i < hd_homerun->device_num; i++)
 			{
 				nk_selectable_label(ctx, hd_homerun->devices[i], NK_TEXT_LEFT, &hd_homerun->device_select[i]);
-				if(hd_homerun->device_select[i])
+				if (hd_homerun->device_select[i])
 				{
 					before_selected = i - 1;
 					after_selected = i + 1;
-					for( int j = 0; j <= before_selected; j++)
+					for (int j = 0; j <= before_selected; j++)
 						hd_homerun->device_select[j] = nk_false;
-					for(int j = after_selected; j < hd_homerun->device_num; j++)
+					for (int j = after_selected; j < hd_homerun->device_num; j++)
 						hd_homerun->device_select[j] = nk_false;
 				}
 			}
-			for(int i = 0; i < hd_homerun->device_num; i++)
+			for (int i = 0; i < hd_homerun->device_num; i++)
 			{
-				if(hd_homerun->device_select[i] == nk_true)
+				if (hd_homerun->device_select[i] == nk_true)
 				{
 					hd_homerun->selected = i;
 					break;
@@ -954,24 +961,22 @@ void draw_hd_homerun_tab(struct nk_context *ctx, int *tab_screen_height,
 			}
 		}
 
-
 		nk_group_end(ctx);
 	}
 	nk_layout_row(ctx, NK_DYNAMIC, 25, 2, devices_ratio);
 	nk_spacing(ctx, 1);
-	if(hd_homerun->selected == -1)
+	if (hd_homerun->selected == -1)
 	{
-		if(nk_button_label(ctx, "Find Devices"))
+		if (nk_button_label(ctx, "Find Devices"))
 		{
 			pthread_attr_init(&attr_find);
 
 			int err = pthread_create(&tid_find, &attr_find, find_hd_homerun_devices, hd_homerun);
-			if(!err)
+			if (!err)
 				printf("Find Device thread created!\n");
-
 		}
 	}
-	if(hd_homerun->selected != -1 && done == nk_false)
+	if (hd_homerun->selected != -1 && done == nk_false)
 	{
 
 		nk_layout_row(ctx, NK_DYNAMIC, 25, 3, tuner_ratio);
@@ -986,7 +991,7 @@ void draw_hd_homerun_tab(struct nk_context *ctx, int *tab_screen_height,
 		nk_label(ctx, "Program number for extraction:", NK_TEXT_LEFT);
 		nk_edit_string(ctx, NK_EDIT_SIMPLE, hd_homerun->program, &hd_homerun->program_len, 10, nk_filter_decimal);
 
-		nk_layout_row(ctx, NK_DYNAMIC, 25, 2,ipv4_ratio);
+		nk_layout_row(ctx, NK_DYNAMIC, 25, 2, ipv4_ratio);
 		nk_label(ctx, "Target IPv4 address:", NK_TEXT_LEFT);
 		nk_edit_string(ctx, NK_EDIT_SIMPLE, hd_homerun->ipv4_address, &hd_homerun->ipv4_address_len, 16, nk_filter_ascii);
 
@@ -994,18 +999,17 @@ void draw_hd_homerun_tab(struct nk_context *ctx, int *tab_screen_height,
 		nk_label(ctx, "Target Port number:", NK_TEXT_LEFT);
 		nk_edit_string(ctx, NK_EDIT_SIMPLE, hd_homerun->port_number, &hd_homerun->port_number_len, 7, nk_filter_decimal);
 
-
 		nk_layout_row(ctx, NK_DYNAMIC, 25, 2, done_ratio);
 		nk_spacing(ctx, 1);
-		if(nk_button_label(ctx, "Done"))
+		if (nk_button_label(ctx, "Done"))
 		{
-				pthread_attr_init(&attr_setup);
-				int err = pthread_create(&tid_setup, &attr_setup, setup_hd_homerun_device, hd_homerun);
-				if(!err)
-					printf("Setup Device thread created!\n");
+			pthread_attr_init(&attr_setup);
+			int err = pthread_create(&tid_setup, &attr_setup, setup_hd_homerun_device, hd_homerun);
+			if (!err)
+				printf("Setup Device thread created!\n");
 
-				pthread_join(tid_setup, NULL);
-				done = nk_true;
+			pthread_join(tid_setup, NULL);
+			done = nk_true;
 		}
 	}
 	if (done == nk_true)
@@ -1015,19 +1019,16 @@ void draw_hd_homerun_tab(struct nk_context *ctx, int *tab_screen_height,
 		nk_layout_row_dynamic(ctx, 20, 1);
 		nk_label(ctx, "Please start CCExtractor with UDP settings if not started.", NK_TEXT_CENTERED);
 	}
-
-
-
 }
 
 void draw_burned_subs_tab(struct nk_context *ctx, int *tab_screen_height, struct burned_subs_tab *burned_subs)
 {
 	*tab_screen_height = 472;
-	const float color_mode_ratio[] = { 0.65f, 0.351f};
-	const float preset_ratio[] = { 0.4f, 0.5f };
-	const float custom_ratio[] = { 0.4f, 0.5f};
-	const float delay_ratio[] = { 0.4f, 0.2f, 0.2f };
-	const float threshold_ratio[] = { 0.9f, 0.1f };
+	const float color_mode_ratio[] = {0.65f, 0.351f};
+	const float preset_ratio[] = {0.4f, 0.5f};
+	const float custom_ratio[] = {0.4f, 0.5f};
+	const float delay_ratio[] = {0.4f, 0.2f, 0.2f};
+	const float threshold_ratio[] = {0.9f, 0.1f};
 	static char buffer[5];
 
 	nk_layout_row_dynamic(ctx, 30, 1);
@@ -1038,16 +1039,18 @@ void draw_burned_subs_tab(struct nk_context *ctx, int *tab_screen_height, struct
 #endif
 
 	nk_layout_row(ctx, NK_DYNAMIC, 140, 2, color_mode_ratio);
-	if(nk_group_begin(ctx, "Subtitle Color", NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER))
+	if (nk_group_begin(ctx, "Subtitle Color", NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER))
 	{
 		nk_layout_row(ctx, NK_DYNAMIC, 25, 2, preset_ratio);
-		if(nk_option_label(ctx, "Preset color:", burned_subs->color_type == PRESET)){
+		if (nk_option_label(ctx, "Preset color:", burned_subs->color_type == PRESET))
+		{
 			burned_subs->color_type = PRESET;
 		}
 		burned_subs->subs_color_select = nk_combo(ctx, burned_subs->subs_color, 7, burned_subs->subs_color_select, 25, nk_vec2(100, 100));
 
 		nk_layout_row(ctx, NK_DYNAMIC, 25, 2, custom_ratio);
-		if(nk_option_label(ctx, "Custom Hue:", burned_subs->color_type == CUSTOM)){
+		if (nk_option_label(ctx, "Custom Hue:", burned_subs->color_type == CUSTOM))
+		{
 			burned_subs->color_type = CUSTOM;
 		}
 		nk_edit_string(ctx, NK_EDIT_SIMPLE, burned_subs->custom_hue, &burned_subs->custom_hue_len, 4, nk_filter_decimal);
@@ -1059,29 +1062,32 @@ void draw_burned_subs_tab(struct nk_context *ctx, int *tab_screen_height, struct
 		nk_group_end(ctx);
 	}
 
-	if(nk_group_begin(ctx, "OCR mode", NK_WINDOW_TITLE|NK_WINDOW_NO_SCROLLBAR|NK_WINDOW_BORDER))
+	if (nk_group_begin(ctx, "OCR mode", NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER))
 	{
 		nk_layout_row_dynamic(ctx, 25, 1);
-		if(nk_option_label(ctx, "Frame - wise", burned_subs->ocr_mode == FRAME_WISE)){
+		if (nk_option_label(ctx, "Frame - wise", burned_subs->ocr_mode == FRAME_WISE))
+		{
 			burned_subs->ocr_mode = FRAME_WISE;
 		}
 		nk_layout_row_dynamic(ctx, 25, 1);
-		if(nk_option_label(ctx, "Word - wise", burned_subs->ocr_mode == WORD_WISE)){
+		if (nk_option_label(ctx, "Word - wise", burned_subs->ocr_mode == WORD_WISE))
+		{
 			burned_subs->ocr_mode = WORD_WISE;
 		}
 		nk_layout_row_dynamic(ctx, 25, 1);
-		if(nk_option_label(ctx, "Letter - wise", burned_subs->ocr_mode == LETTER_WISE)){
+		if (nk_option_label(ctx, "Letter - wise", burned_subs->ocr_mode == LETTER_WISE))
+		{
 			burned_subs->ocr_mode = LETTER_WISE;
 		}
 
-		if(burned_subs->is_italic)
+		if (burned_subs->is_italic)
 		{
 			burned_subs->ocr_mode = WORD_WISE;
 		}
 		nk_group_end(ctx);
 	}
 	nk_layout_row_dynamic(ctx, 120, 1);
-	if(nk_group_begin(ctx, "Minimum Subtitle Duration", NK_WINDOW_TITLE|NK_WINDOW_NO_SCROLLBAR|NK_WINDOW_BORDER))
+	if (nk_group_begin(ctx, "Minimum Subtitle Duration", NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER))
 	{
 		nk_layout_row(ctx, NK_DYNAMIC, 25, 3, delay_ratio);
 		nk_label(ctx, "Set the minimum subtitle duration to:", NK_TEXT_LEFT);
@@ -1094,10 +1100,10 @@ void draw_burned_subs_tab(struct nk_context *ctx, int *tab_screen_height, struct
 		nk_group_end(ctx);
 	}
 
-	if(!burned_subs->subs_color_select && burned_subs->color_type == PRESET)
+	if (!burned_subs->subs_color_select && burned_subs->color_type == PRESET)
 	{
 		nk_layout_row_dynamic(ctx, 60, 1);
-		if(nk_group_begin(ctx, "Luminance Threshold", NK_WINDOW_TITLE|NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER))
+		if (nk_group_begin(ctx, "Luminance Threshold", NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER))
 		{
 			nk_layout_row(ctx, NK_DYNAMIC, 20, 2, threshold_ratio);
 			nk_slider_int(ctx, 0, &burned_subs->luminance_threshold, 100, 1);
@@ -1109,7 +1115,7 @@ void draw_burned_subs_tab(struct nk_context *ctx, int *tab_screen_height, struct
 	}
 
 	nk_layout_row_dynamic(ctx, 60, 1);
-	if(nk_group_begin(ctx, "Confidence Threshold", NK_WINDOW_TITLE|NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER))
+	if (nk_group_begin(ctx, "Confidence Threshold", NK_WINDOW_TITLE | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER))
 	{
 		nk_layout_row(ctx, NK_DYNAMIC, 20, 2, threshold_ratio);
 		nk_slider_int(ctx, 0, &burned_subs->confidence_threshold, 100, 1);
@@ -1121,5 +1127,4 @@ void draw_burned_subs_tab(struct nk_context *ctx, int *tab_screen_height, struct
 
 	nk_layout_row_dynamic(ctx, 30, 1);
 	nk_checkbox_label(ctx, "Enable italics detection.", &burned_subs->is_italic);
-
 }

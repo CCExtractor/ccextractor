@@ -20,7 +20,7 @@ int _dtvcc_is_screen_empty(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 	{
 		if (!_dtvcc_is_row_empty(tv, i))
 		{
-			// we will write subtitle 
+			// we will write subtitle
 			encoder->cea_708_counter++;
 			return 0;
 		}
@@ -44,7 +44,7 @@ void _dtvcc_color_to_hex(int color, unsigned *hR, unsigned *hG, unsigned *hB)
 	*hG = (unsigned)((color >> 2) & 0x3);
 	*hB = (unsigned)(color & 0x3);
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] Color: %d [%06x] %u %u %u\n",
-		color, color, *hR, *hG, *hB);
+				     color, color, *hR, *hG, *hB);
 }
 
 void _dtvcc_change_pen_colors(dtvcc_tv_screen *tv, ccx_dtvcc_pen_color pen_color, int row_index, int column_index, struct encoder_ctx *encoder, size_t *buf_len, int open)
@@ -62,7 +62,7 @@ void _dtvcc_change_pen_colors(dtvcc_tv_screen *tv, ccx_dtvcc_pen_color pen_color
 	if (pen_color.fg_color != new_pen_color.fg_color)
 	{
 		if (pen_color.fg_color != 0x3f && !open)
-			(*buf_len) += sprintf(buf + (*buf_len), "</font>");	// should close older non-white color
+			(*buf_len) += sprintf(buf + (*buf_len), "</font>"); // should close older non-white color
 
 		if (new_pen_color.fg_color != 0x3f && open)
 		{
@@ -106,12 +106,14 @@ void _dtvcc_change_pen_attribs(dtvcc_tv_screen *tv, ccx_dtvcc_pen_attribs pen_at
 
 size_t write_utf16_char(unsigned short utf16_char, char *out)
 {
-	if ((utf16_char >> 8) != 0) {
+	if ((utf16_char >> 8) != 0)
+	{
 		out[0] = (unsigned char)(utf16_char >> 8);
 		out[1] = (unsigned char)(utf16_char & 0xff);
 		return 2;
 	}
-	else {
+	else
+	{
 		out[0] = (unsigned char)(utf16_char);
 		return 1;
 	}
@@ -135,7 +137,7 @@ void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *d
 		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_write_row: Window has to be defined first\n");
 
 	int length;
-	if (decoder->current_window == -1)	// Bug - in this case we have broken timing. See issue in GitHub
+	if (decoder->current_window == -1) // Bug - in this case we have broken timing. See issue in GitHub
 		length = last + 1;
 	else
 		length = decoder->windows[decoder->current_window].col_count;
@@ -152,11 +154,13 @@ void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *d
 
 		pen_color = tv->pen_colors[row_index][i];
 		pen_attribs = tv->pen_attribs[row_index][i];
-		if (i < first || i > last) {
+		if (i < first || i > last)
+		{
 			size_t size = write_utf16_char(' ', buf + buf_len);
 			buf_len += size;
 		}
-		else {
+		else
+		{
 			size_t size = write_utf16_char(tv->chars[row_index][i].sym, buf + buf_len);
 			buf_len += size;
 		}
@@ -184,7 +188,8 @@ void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *d
 
 		if (result == -1)
 			ccx_common_logging.log_ftn("[CEA-708] _dtvcc_write_row: "
-				"conversion failed: %s\n", strerror(errno));
+						   "conversion failed: %s\n",
+						   strerror(errno));
 
 		write(fd, encoded_buf_start, encoded_buf - encoded_buf_start);
 
@@ -210,10 +215,10 @@ void ccx_dtvcc_write_srt(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder
 
 	sprintf(buf, "%u%s", encoder->cea_708_counter, encoder->encoded_crlf);
 	print_mstime_buff(tv->time_ms_show + encoder->subs_delay,
-		"%02u:%02u:%02u,%03u", buf + strlen(buf));
+			  "%02u:%02u:%02u,%03u", buf + strlen(buf));
 	sprintf(buf + strlen(buf), " --> ");
 	print_mstime_buff(tv->time_ms_hide + encoder->subs_delay,
-		"%02u:%02u:%02u,%03u", buf + strlen(buf));
+			  "%02u:%02u:%02u,%03u", buf + strlen(buf));
 	sprintf(buf + strlen(buf), "%s", (char *)encoder->encoded_crlf);
 
 	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
@@ -224,17 +229,17 @@ void ccx_dtvcc_write_srt(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder
 		{
 			_dtvcc_write_row(writer, decoder, i, encoder, 1);
 			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
-				encoder->encoded_crlf, encoder->encoded_crlf_length);
+			      encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
 	}
 	write(encoder->dtvcc_writers[tv->service_number - 1].fd,
-		encoder->encoded_crlf, encoder->encoded_crlf_length);
+	      encoder->encoded_crlf, encoder->encoded_crlf_length);
 }
 
 void ccx_dtvcc_write_debug(dtvcc_tv_screen *tv)
 {
 	char tbuf1[SUBLINESIZE],
-		tbuf2[SUBLINESIZE];
+	    tbuf2[SUBLINESIZE];
 
 	print_mstime_buff(tv->time_ms_show, "%02u:%02u:%02u:%03u", tbuf1);
 	print_mstime_buff(tv->time_ms_hide, "%02u:%02u:%02u:%03u", tbuf2);
@@ -272,11 +277,11 @@ void ccx_dtvcc_write_transcript(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_
 
 			if (encoder->transcript_settings->showStartTime)
 				print_mstime_buff(tv->time_ms_show + encoder->subs_delay,
-					"%02u:%02u:%02u,%03u|", buf + strlen(buf));
+						  "%02u:%02u:%02u,%03u|", buf + strlen(buf));
 
 			if (encoder->transcript_settings->showEndTime)
 				print_mstime_buff(tv->time_ms_hide + encoder->subs_delay,
-					"%02u:%02u:%02u,%03u|", buf + strlen(buf));
+						  "%02u:%02u:%02u,%03u|", buf + strlen(buf));
 
 			if (encoder->transcript_settings->showCC)
 				sprintf(buf + strlen(buf), "CC1|"); //always CC1 because CEA-708 is field-independent
@@ -289,7 +294,7 @@ void ccx_dtvcc_write_transcript(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_
 
 			_dtvcc_write_row(writer, decoder, i, encoder, 0);
 			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
-				encoder->encoded_crlf, encoder->encoded_crlf_length);
+			      encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
 	}
 }
@@ -305,11 +310,11 @@ void _dtvcc_write_sami_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 	buf_len += sprintf(buf + buf_len, "<style type=\"text/css\">%s", encoder->encoded_crlf);
 	buf_len += sprintf(buf + buf_len, "<!--%s", encoder->encoded_crlf);
 	buf_len += sprintf(buf + buf_len,
-		"p {margin-left: 16pt; margin-right: 16pt; margin-bottom: 16pt; margin-top: 16pt;%s",
-		encoder->encoded_crlf);
+			   "p {margin-left: 16pt; margin-right: 16pt; margin-bottom: 16pt; margin-top: 16pt;%s",
+			   encoder->encoded_crlf);
 	buf_len += sprintf(buf + buf_len,
-		"text-align: center; font-size: 18pt; font-family: arial; font-weight: bold; color: #f0f0f0;}%s",
-		encoder->encoded_crlf);
+			   "text-align: center; font-size: 18pt; font-family: arial; font-weight: bold; color: #f0f0f0;}%s",
+			   encoder->encoded_crlf);
 	buf_len += sprintf(buf + buf_len, ".unknowncc {Name:Unknown; lang:en-US; SAMIType:CC;}%s", encoder->encoded_crlf);
 	buf_len += sprintf(buf + buf_len, "-->%s", encoder->encoded_crlf);
 	buf_len += sprintf(buf + buf_len, "</style>%s", encoder->encoded_crlf);
@@ -325,7 +330,7 @@ void _dtvcc_write_sami_footer(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 	sprintf(buf, "</body></sami>");
 	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 	write(encoder->dtvcc_writers[tv->service_number - 1].fd,
-		encoder->encoded_crlf, encoder->encoded_crlf_length);
+	      encoder->encoded_crlf, encoder->encoded_crlf_length);
 }
 
 void ccx_dtvcc_write_sami(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
@@ -344,7 +349,7 @@ void ccx_dtvcc_write_sami(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decode
 
 	buf[0] = 0;
 	sprintf(buf, "<sync start=%llu><p class=\"unknowncc\">%s",
-		(unsigned long long) tv->time_ms_show + encoder->subs_delay,
+		(unsigned long long)tv->time_ms_show + encoder->subs_delay,
 		encoder->encoded_crlf);
 	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 
@@ -354,14 +359,14 @@ void ccx_dtvcc_write_sami(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decode
 		{
 			_dtvcc_write_row(writer, decoder, i, encoder, 1);
 			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
-				encoder->encoded_br, encoder->encoded_br_length);
+			      encoder->encoded_br, encoder->encoded_br_length);
 			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
-				encoder->encoded_crlf, encoder->encoded_crlf_length);
+			      encoder->encoded_crlf, encoder->encoded_crlf_length);
 		}
 	}
 
 	sprintf(buf, "<sync start=%llu><p class=\"unknowncc\">&nbsp;</p></sync>%s%s",
-		(unsigned long long) tv->time_ms_hide + encoder->subs_delay,
+		(unsigned long long)tv->time_ms_hide + encoder->subs_delay,
 		encoder->encoded_crlf, encoder->encoded_crlf);
 	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 }
@@ -399,17 +404,17 @@ void ccx_dtvcc_write_done(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 			break;
 		default:
 			ccx_common_logging.debug_ftn(
-				CCX_DMT_708, "[CEA-708] ccx_dtvcc_write_done: no handling required\n");
+			    CCX_DMT_708, "[CEA-708] ccx_dtvcc_write_done: no handling required\n");
 			break;
 	}
 }
 
 void ccx_dtvcc_writer_init(ccx_dtvcc_writer_ctx *writer,
-	char *base_filename,
-	int program_number,
-	int service_number,
-	enum ccx_output_format write_format,
-	struct encoder_cfg *cfg)
+			   char *base_filename,
+			   int program_number,
+			   int service_number,
+			   enum ccx_output_format write_format,
+			   struct encoder_cfg *cfg)
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_writer_init\n");
 	writer->fd = -1;
@@ -421,7 +426,8 @@ void ccx_dtvcc_writer_init(ccx_dtvcc_writer_ctx *writer,
 	}
 
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_writer_init: "
-		"[%s][%d][%d]\n", base_filename, program_number, service_number);
+						  "[%s][%d][%d]\n",
+				     base_filename, program_number, service_number);
 
 	const char *ext = get_file_extension(write_format);
 	char suffix[32];
@@ -430,13 +436,11 @@ void ccx_dtvcc_writer_init(ccx_dtvcc_writer_ctx *writer,
 	writer->filename = create_outfilename(base_filename, suffix, ext);
 	if (!writer->filename)
 		ccx_common_logging.fatal_ftn(
-			EXIT_NOT_ENOUGH_MEMORY, "[CEA-708] _dtvcc_decoder_init_write: not enough memory");
+		    EXIT_NOT_ENOUGH_MEMORY, "[CEA-708] _dtvcc_decoder_init_write: not enough memory");
 
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_writer_init: inited [%s]\n", writer->filename);
 
-	char *charset = cfg->all_services_charset ?
-		cfg->all_services_charset :
-		cfg->services_charsets[service_number - 1];
+	char *charset = cfg->all_services_charset ? cfg->all_services_charset : cfg->services_charsets[service_number - 1];
 
 	if (charset)
 	{
@@ -444,8 +448,8 @@ void ccx_dtvcc_writer_init(ccx_dtvcc_writer_ctx *writer,
 		if (writer->cd == (iconv_t)-1)
 		{
 			ccx_common_logging.fatal_ftn(EXIT_FAILURE, "[CEA-708] dtvcc_init: "
-				"can't create iconv for charset \"%s\": %s\n",
-				charset, strerror(errno));
+								   "can't create iconv for charset \"%s\": %s\n",
+						     charset, strerror(errno));
 		}
 	}
 }
@@ -466,7 +470,8 @@ void ccx_dtvcc_writer_cleanup(ccx_dtvcc_writer_ctx *writer)
 void ccx_dtvcc_writer_output(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] ccx_dtvcc_writer_output: "
-		"writing... [%s][%d]\n", writer->filename, writer->fd);
+						  "writing... [%s][%d]\n",
+				     writer->filename, writer->fd);
 
 	if (!writer->filename && writer->fd < 0)
 		return;
@@ -474,12 +479,13 @@ void ccx_dtvcc_writer_output(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_dec
 	if (writer->filename && writer->fd < 0) //first request to write
 	{
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] "
-			"ccx_dtvcc_writer_output: creating %s\n", writer->filename);
+							  "ccx_dtvcc_writer_output: creating %s\n",
+					     writer->filename);
 		writer->fd = open(writer->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 		if (writer->fd == -1)
 		{
 			ccx_common_logging.fatal_ftn(
-				CCX_COMMON_EXIT_FILE_CREATION_FAILED, "[CEA-708] Failed to open a file\n");
+			    CCX_COMMON_EXIT_FILE_CREATION_FAILED, "[CEA-708] Failed to open a file\n");
 		}
 		if (!encoder->no_bom)
 			write(writer->fd, UTF8_BOM, sizeof(UTF8_BOM));

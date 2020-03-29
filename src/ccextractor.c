@@ -18,13 +18,11 @@ void sigusr1_handler(int sig)
 	change_filename_requested = 1;
 }
 
-
 void sigterm_handler(int sig)
 {
 	printf("Received SIGTERM, terminating as soon as possible.\n");
 	terminate_asap = 1;
 }
-
 
 void sigint_handler(int sig)
 {
@@ -34,17 +32,15 @@ void sigint_handler(int sig)
 	exit(EXIT_SUCCESS);
 }
 
-
 void print_end_msg(void)
 {
 	mprint("Issues? Open a ticket here\n");
 	mprint("https://github.com/CCExtractor/ccextractor/issues\n");
 }
 
-
 int api_start(struct ccx_s_options api_options)
 {
-	struct lib_ccx_ctx *ctx = NULL; // Context for libs
+	struct lib_ccx_ctx *ctx = NULL;	      // Context for libs
 	struct lib_cc_decode *dec_ctx = NULL; // Context for decoder
 	int ret = 0, tmp = 0;
 	enum ccx_stream_mode_enum stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
@@ -104,7 +100,8 @@ int api_start(struct ccx_s_options api_options)
 	params_dump(ctx);
 
 	// default teletext page
-	if (tlt_config.page > 0) {
+	if (tlt_config.page > 0)
+	{
 		// dec to BCD, magazine pages numbers are in BCD (ETSI 300 706)
 		tlt_config.page = ((tlt_config.page / 100) << 8) | (((tlt_config.page / 10) % 10) << 4) | (tlt_config.page % 10);
 	}
@@ -117,7 +114,6 @@ int api_start(struct ccx_s_options api_options)
 			mprint("Warning: -xds ignored, XDS can only be exported to transcripts at this time.\n");
 		}
 	}
-
 
 	time_t start, final;
 	time(&start);
@@ -197,7 +193,7 @@ int api_start(struct ccx_s_options api_options)
 		switch (stream_mode)
 		{
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
-				if (!api_options.use_gop_as_pts) // If !0 then the user selected something
+				if (!api_options.use_gop_as_pts)	// If !0 then the user selected something
 					api_options.use_gop_as_pts = 1; // Force GOP timing for ES
 				ccx_common_timing_settings.is_elementary_stream = 1;
 			case CCX_SM_TRANSPORT:
@@ -215,27 +211,31 @@ int api_start(struct ccx_s_options api_options)
 					ccx_common_timing_settings.disable_sync_check = 1;
 				mprint("\rAnalyzing data in general mode\n");
 				tmp = general_loop(ctx);
-				if (!ret) ret = tmp;
+				if (!ret)
+					ret = tmp;
 				break;
 			case CCX_SM_MCPOODLESRAW:
 				mprint("\rAnalyzing data in McPoodle raw mode\n");
 				tmp = raw_loop(ctx);
-				if (!ret) ret = tmp;
+				if (!ret)
+					ret = tmp;
 				break;
 			case CCX_SM_RCWT:
 				mprint("\rAnalyzing data in CCExtractor's binary format\n");
 				tmp = rcwt_loop(ctx);
-				if (!ret) ret = tmp;
+				if (!ret)
+					ret = tmp;
 				break;
 			case CCX_SM_MYTH:
 				mprint("\rAnalyzing data in MythTV mode\n");
 				show_myth_banner = 1;
 				tmp = myth_loop(ctx);
-				if (!ret) ret = tmp;
+				if (!ret)
+					ret = tmp;
 				break;
 			case CCX_SM_MP4:
 				mprint("\rAnalyzing data with GPAC (MP4 library)\n");
-				close_input_file(ctx); // No need to have it open. GPAC will do it for us
+				close_input_file(ctx);	     // No need to have it open. GPAC will do it for us
 				if (ctx->current_file == -1) // We don't have a file to open, must be stdin, and GPAC is incompatible with stdin
 				{
 					fatal(EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
@@ -250,12 +250,14 @@ int api_start(struct ccx_s_options api_options)
 				}
 				if (api_options.print_file_reports)
 					print_file_report(ctx);
-				if (!ret) ret = tmp;
+				if (!ret)
+					ret = tmp;
 				break;
 			case CCX_SM_MKV:
 				mprint("\rAnalyzing data in Matroska mode\n");
 				tmp = matroska_loop(ctx);
-				if (!ret) ret = tmp;
+				if (!ret)
+					ret = tmp;
 				break;
 #ifdef WTV_DEBUG
 			case CCX_SM_HEX_DUMP:
@@ -274,20 +276,18 @@ int api_start(struct ccx_s_options api_options)
 			dbg_print(CCX_DMT_DECODER_608, "GOP: %s	  \n", print_mstime_static(gop_time.ms));
 
 			dbg_print(CCX_DMT_DECODER_608, "GOP: %s (%+3dms incl.)\n",
-				print_mstime_static((LLONG)(gop_time.ms
-					- first_gop_time.ms
-					+ get_fts_max(dec_ctx->timing) - fts_at_gop_start)),
-					(int)(get_fts_max(dec_ctx->timing) - fts_at_gop_start));
+				  print_mstime_static((LLONG)(gop_time.ms - first_gop_time.ms + get_fts_max(dec_ctx->timing) - fts_at_gop_start)),
+				  (int)(get_fts_max(dec_ctx->timing) - fts_at_gop_start));
 			// When padding is active the CC block time should be within
 			// 1000/29.97 us of the differences.
 			dbg_print(CCX_DMT_DECODER_608, "Max. FTS:	   %s  (without caption blocks since then)\n",
-				print_mstime_static(get_fts_max(dec_ctx->timing)));
+				  print_mstime_static(get_fts_max(dec_ctx->timing)));
 
 			if (dec_ctx->codec == CCX_CODEC_ATSC_CC)
 			{
 				mprint("\nTotal frames time:	  %s  (%u frames at %.2ffps)\n",
-					print_mstime_static((LLONG)(total_frames_count * 1000 / current_fps)),
-					total_frames_count, current_fps);
+				       print_mstime_static((LLONG)(total_frames_count * 1000 / current_fps)),
+				       total_frames_count, current_fps);
 			}
 
 			if (dec_ctx->stat_hdtv)
@@ -312,7 +312,9 @@ int api_start(struct ccx_s_options api_options)
 				dec_ctx->timing->fts_global += cb_708 * 1001 / 3;
 			// Reset counters - This is needed if some captions are still buffered
 			// and need to be written after the last file is processed.
-			cb_field1 = 0; cb_field2 = 0; cb_708 = 0;
+			cb_field1 = 0;
+			cb_field2 = 0;
+			cb_708 = 0;
 			dec_ctx->timing->fts_now = 0;
 			dec_ctx->timing->fts_max = 0;
 
@@ -326,38 +328,35 @@ int api_start(struct ccx_s_options api_options)
 
 			if (dec_ctx->total_pulldownframes)
 				mprint("incl. pulldown frames:  %s  (%u frames at %.2ffps)\n",
-					print_mstime_static((LLONG)(dec_ctx->total_pulldownframes * 1000 / current_fps)),
-					dec_ctx->total_pulldownframes, current_fps);
+				       print_mstime_static((LLONG)(dec_ctx->total_pulldownframes * 1000 / current_fps)),
+				       dec_ctx->total_pulldownframes, current_fps);
 			if (dec_ctx->timing->pts_set >= 1 && dec_ctx->timing->min_pts != 0x01FFFFFFFFLL)
 			{
 				LLONG postsyncms = (LLONG)(dec_ctx->frames_since_last_gop * 1000 / current_fps);
 				mprint("\nMin PTS:				%s\n",
-					print_mstime_static(dec_ctx->timing->min_pts / (MPEG_CLOCK_FREQ / 1000) - dec_ctx->timing->fts_offset));
+				       print_mstime_static(dec_ctx->timing->min_pts / (MPEG_CLOCK_FREQ / 1000) - dec_ctx->timing->fts_offset));
 				if (pts_big_change)
 					mprint("(Reference clock was reset at some point, Min PTS is approximated)\n");
 				mprint("Max PTS:				%s\n",
-					print_mstime_static(dec_ctx->timing->sync_pts / (MPEG_CLOCK_FREQ / 1000) + postsyncms));
+				       print_mstime_static(dec_ctx->timing->sync_pts / (MPEG_CLOCK_FREQ / 1000) + postsyncms));
 
 				mprint("Length:				 %s\n",
-					print_mstime_static(dec_ctx->timing->sync_pts / (MPEG_CLOCK_FREQ / 1000) + postsyncms
-						- dec_ctx->timing->min_pts / (MPEG_CLOCK_FREQ / 1000) + dec_ctx->timing->fts_offset));
+				       print_mstime_static(dec_ctx->timing->sync_pts / (MPEG_CLOCK_FREQ / 1000) + postsyncms - dec_ctx->timing->min_pts / (MPEG_CLOCK_FREQ / 1000) + dec_ctx->timing->fts_offset));
 			}
-
 
 			// dvr-ms files have invalid GOPs
 			if (gop_time.inited && first_gop_time.inited && stream_mode != CCX_SM_ASF)
 			{
 				mprint("\nInitial GOP time:	   %s\n",
-					print_mstime_static(first_gop_time.ms));
+				       print_mstime_static(first_gop_time.ms));
 				mprint("Final GOP time:		 %s%+3dF\n",
-					print_mstime_static(gop_time.ms),
-					dec_ctx->frames_since_last_gop);
+				       print_mstime_static(gop_time.ms),
+				       dec_ctx->frames_since_last_gop);
 				mprint("Diff. GOP length:	   %s%+3dF",
-					print_mstime_static(gop_time.ms - first_gop_time.ms),
-					dec_ctx->frames_since_last_gop);
+				       print_mstime_static(gop_time.ms - first_gop_time.ms),
+				       dec_ctx->frames_since_last_gop);
 				mprint("	(%s)\n\n",
-					print_mstime_static(gop_time.ms - first_gop_time.ms
-						+ (LLONG)((dec_ctx->frames_since_last_gop) * 1000 / 29.97)));
+				       print_mstime_static(gop_time.ms - first_gop_time.ms + (LLONG)((dec_ctx->frames_since_last_gop) * 1000 / 29.97)));
 			}
 
 			if (dec_ctx->false_pict_header)
@@ -387,7 +386,6 @@ int api_start(struct ccx_s_options api_options)
 				mprint("caption is not well understood!\n\n");
 				mprint("Please submit samples to the developers.\n\n\n");
 			}
-
 		}
 
 		if (is_decoder_processed_enough(ctx) == CCX_TRUE)
@@ -396,7 +394,6 @@ int api_start(struct ccx_s_options api_options)
 	close_input_file(ctx);
 
 	prepare_for_new_file(ctx); // To reset counters used by handle_end_of_data()
-
 
 	time(&final);
 
@@ -450,7 +447,7 @@ struct ccx_s_options *api_init_options()
 int compile_params(struct ccx_s_options *api_options, int argc)
 {
 	//adding the parameter ./ccextractor to the list of python_params for further parsing
-	api_options->python_params = realloc(api_options->python_params, (api_options->python_param_count + 1) * sizeof * api_options->python_params);
+	api_options->python_params = realloc(api_options->python_params, (api_options->python_param_count + 1) * sizeof *api_options->python_params);
 	api_options->python_params[api_options->python_param_count] = malloc(strlen("./ccextractor") + 1);
 	strcpy(api_options->python_params[api_options->python_param_count], "./ccextractor");
 	api_options->python_param_count++;
@@ -468,7 +465,7 @@ int compile_params(struct ccx_s_options *api_options, int argc)
 
 void api_add_param(struct ccx_s_options *api_options, char *arg)
 {
-	api_options->python_params = realloc(api_options->python_params, (api_options->python_param_count + 1) * sizeof * api_options->python_params);
+	api_options->python_params = realloc(api_options->python_params, (api_options->python_param_count + 1) * sizeof *api_options->python_params);
 	api_options->python_params[api_options->python_param_count] = malloc(strlen(arg) + 1);
 	strcpy(api_options->python_params[api_options->python_param_count], arg);
 	api_options->python_param_count++;
@@ -499,8 +496,6 @@ int api_param_count(struct ccx_s_options *api_options)
 	return api_options->python_param_count;
 }
 #endif // PYTHON_API
-
-
 
 int main(int argc, char *argv[])
 {

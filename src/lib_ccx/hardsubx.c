@@ -29,7 +29,6 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 	// TODO: Handle multiple inputs
 	av_dump_format(ctx->format_ctx, 0, ctx->inputfile[0], 0);
 
-
 	ctx->video_stream_id = -1;
 	for (int i = 0; i < ctx->format_ctx->nb_streams; i++)
 	{
@@ -67,15 +66,14 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 	ctx->rgb_buffer = (uint8_t *)av_malloc(frame_bytes * sizeof(uint8_t));
 
 	ctx->sws_ctx = sws_getContext(
-		ctx->codec_ctx->width,
-		ctx->codec_ctx->height,
-		ctx->codec_ctx->pix_fmt,
-		ctx->codec_ctx->width,
-		ctx->codec_ctx->height,
-		AV_PIX_FMT_RGB24,
-		SWS_BILINEAR,
-		NULL, NULL, NULL
-	);
+	    ctx->codec_ctx->width,
+	    ctx->codec_ctx->height,
+	    ctx->codec_ctx->pix_fmt,
+	    ctx->codec_ctx->width,
+	    ctx->codec_ctx->height,
+	    AV_PIX_FMT_RGB24,
+	    SWS_BILINEAR,
+	    NULL, NULL, NULL);
 
 	av_image_fill_arrays(ctx->rgb_frame->data, ctx->rgb_frame->linesize, ctx->rgb_buffer, AV_PIX_FMT_RGB24, ctx->codec_ctx->width, ctx->codec_ctx->height, 1);
 
@@ -110,8 +108,10 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 
 	// Free the allocated memory for frame processing
 	av_free(ctx->rgb_buffer);
-	if (ctx->frame) av_frame_free(&ctx->frame);
-	if (ctx->rgb_frame) av_frame_free(&ctx->rgb_frame);
+	if (ctx->frame)
+		av_frame_free(&ctx->frame);
+	if (ctx->rgb_frame)
+		av_frame_free(&ctx->rgb_frame);
 	avcodec_close(ctx->codec_ctx);
 	avformat_close_input(&ctx->format_ctx);
 }
@@ -206,7 +206,6 @@ void _hardsubx_params_dump(struct ccx_s_options *options, struct lib_hardsubx_ct
 	}
 
 	mprint("FFMpeg Media Information:-\n");
-
 }
 
 struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
@@ -223,7 +222,8 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 	char *tessdata_path = NULL;
 
 	char *lang = options->ocrlang;
-	if (!lang) lang = "eng"; // English is default language
+	if (!lang)
+		lang = "eng"; // English is default language
 
 	tessdata_path = probe_tessdata_location(lang);
 	if (!tessdata_path)
@@ -251,12 +251,12 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 		snprintf(tess_path, 1024, "%s%s%s", tessdata_path, "/", "tessdata");
 		//ccx_options.ocr_oem are deprecated and only supported mode is OEM_LSTM_ONLY
 		ret = TessBaseAPIInit4(ctx->tess_handle, tess_path, lang, 1, NULL, 0, &pars_vec,
-			&pars_values, 1, false);
+				       &pars_values, 1, false);
 	}
 	else
 	{
 		ret = TessBaseAPIInit4(ctx->tess_handle, tessdata_path, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
-			&pars_values, 1, false);
+				       &pars_values, 1, false);
 	}
 
 	free(pars_vec);
@@ -267,7 +267,7 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 	}
 
 	//Initialize attributes common to lib_ccx context
-	ctx->basefilename = get_basename(options->output_filename);//TODO: Check validity, add stdin, network
+	ctx->basefilename = get_basename(options->output_filename); //TODO: Check validity, add stdin, network
 	ctx->current_file = -1;
 	ctx->inputfile = options->inputfile;
 	ctx->num_input_files = options->num_input_files;

@@ -164,13 +164,12 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 			pixGetPixel(pixd, j, i, &p2);
 			// pixGetPixel(hue_im,j,i,&p3);
 			pixGetPixel(edge_im_2, j, i, &p4);
-			if (p1 == 0 && p2 == 0 && p4 > 0)//if(p4>0&&p1==0)//if(p2==0&&p1==0&&p3>0)
+			if (p1 == 0 && p2 == 0 && p4 > 0) //if(p4>0&&p1==0)//if(p2==0&&p1==0&&p3>0)
 			{
 				pixSetRGBPixel(feat_im, j, i, 255, 255, 255);
 			}
 		}
 	}
-
 
 	if (ctx->detect_italics)
 	{
@@ -271,7 +270,7 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 			pixGetPixel(pixd, j, i, &p2);
 			// pixGetPixel(hue_im,j,i,&p3);
 			pixGetPixel(edge_im_2, j, i, &p4);
-			if (p1 == 0 && p2 == 0 && p4 > 0)//if(p4>0&&p1==0)//if(p2==0&&p1==0&&p3>0)
+			if (p1 == 0 && p2 == 0 && p4 > 0) //if(p4>0&&p1==0)//if(p2==0&&p1==0&&p3>0)
 			{
 				pixSetRGBPixel(feat_im, j, i, 255, 255, 255);
 			}
@@ -388,19 +387,19 @@ int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct enco
 			{
 				// sws_scale is used to convert the pixel format to RGB24 from all other cases
 				sws_scale(
-					ctx->sws_ctx,
-					(uint8_t const *const *)ctx->frame->data,
-					ctx->frame->linesize,
-					0,
-					ctx->codec_ctx->height,
-					ctx->rgb_frame->data,
-					ctx->rgb_frame->linesize
-				);
+				    ctx->sws_ctx,
+				    (uint8_t const *const *)ctx->frame->data,
+				    ctx->frame->linesize,
+				    0,
+				    ctx->codec_ctx->height,
+				    ctx->rgb_frame->data,
+				    ctx->rgb_frame->linesize);
 
 				ticker_text = _process_frame_tickertext(ctx, ctx->rgb_frame, ctx->codec_ctx->width, ctx->codec_ctx->height, frame_number);
 				printf("frame_number: %d\n", frame_number);
 
-				if (strlen(ticker_text) > 0)printf("%s\n", ticker_text);
+				if (strlen(ticker_text) > 0)
+					printf("%s\n", ticker_text);
 
 				cur_sec = (int)convert_pts_to_s(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 				total_sec = (int)convert_pts_to_s(ctx->format_ctx->duration, AV_TIME_BASE_Q);
@@ -425,7 +424,7 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 	int frame_number = 0;
 	int64_t prev_begin_time = 0, prev_end_time = 0; // Begin and end time of previous seen subtitle
 	int64_t prev_packet_pts = 0;
-	char *subtitle_text = NULL; // Subtitle text of current frame
+	char *subtitle_text = NULL;	 // Subtitle text of current frame
 	char *prev_subtitle_text = NULL; // Previously seen subtitle text
 
 	while (av_read_frame(ctx->format_ctx, &ctx->packet) >= 0)
@@ -445,15 +444,13 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 
 				// sws_scale is used to convert the pixel format to RGB24 from all other cases
 				sws_scale(
-					ctx->sws_ctx,
-					(uint8_t const *const *)ctx->frame->data,
-					ctx->frame->linesize,
-					0,
-					ctx->codec_ctx->height,
-					ctx->rgb_frame->data,
-					ctx->rgb_frame->linesize
-				);
-
+				    ctx->sws_ctx,
+				    (uint8_t const *const *)ctx->frame->data,
+				    ctx->frame->linesize,
+				    0,
+				    ctx->codec_ctx->height,
+				    ctx->rgb_frame->data,
+				    ctx->rgb_frame->linesize);
 
 				// Send the frame to other functions for processing
 				if (ctx->subcolor == HARDSUBX_COLOR_WHITE)
@@ -471,11 +468,13 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 				progress = (cur_sec * 100) / total_sec;
 				activity_progress(progress, cur_sec / 60, cur_sec % 60);
 
-				if ((!subtitle_text && !prev_subtitle_text) || (subtitle_text && !strlen(subtitle_text) && !prev_subtitle_text)) {
+				if ((!subtitle_text && !prev_subtitle_text) || (subtitle_text && !strlen(subtitle_text) && !prev_subtitle_text))
+				{
 					prev_end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 				}
 
-				if (subtitle_text) {
+				if (subtitle_text)
+				{
 					char *double_enter = strstr(subtitle_text, "\n\n");
 					if (double_enter != NULL)
 						*(double_enter) = '\0';
@@ -501,7 +500,8 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 						prev_subtitle_text = NULL;
 						prev_sub_encoded = 1;
 						prev_end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
-						if (subtitle_text) {
+						if (subtitle_text)
+						{
 							prev_subtitle_text = strdup(subtitle_text);
 							prev_sub_encoded = 0;
 						}
@@ -522,7 +522,8 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 				// 	prev_subtitle_text = strdup(subtitle_text);
 				// }
 
-				if (!prev_subtitle_text && subtitle_text) {
+				if (!prev_subtitle_text && subtitle_text)
+				{
 					prev_begin_time = prev_end_time + 1;
 					prev_end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 					prev_subtitle_text = strdup(subtitle_text);
@@ -534,13 +535,13 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 		av_packet_unref(&ctx->packet);
 	}
 
-	if (!prev_sub_encoded) {
+	if (!prev_sub_encoded)
+	{
 		add_cc_sub_text(ctx->dec_sub, prev_subtitle_text, prev_begin_time, prev_end_time, "", "BURN", CCX_ENC_UTF_8);
 		encode_sub(enc_ctx, ctx->dec_sub);
 		prev_sub_encoded = 1;
 	}
 	activity_progress(100, cur_sec / 60, cur_sec % 60);
-
 }
 
 void hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
@@ -549,7 +550,8 @@ void hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 	// printf("Duration: %d\n", (int)ctx->format_ctx->duration);
 	int got_frame;
 	int seconds_time = 0;
-	for (seconds_time = 0; seconds_time < 20; seconds_time++) {
+	for (seconds_time = 0; seconds_time < 20; seconds_time++)
+	{
 		int64_t seek_time = seconds_time * AV_TIME_BASE;
 		seek_time = av_rescale_q(seek_time, AV_TIME_BASE_Q, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 
@@ -575,14 +577,13 @@ void hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 						// printf("GOT FRAME: %d\n",ctx->packet.pts);
 						// sws_scale is used to convert the pixel format to RGB24 from all other cases
 						sws_scale(
-							ctx->sws_ctx,
-							(uint8_t const *const *)ctx->frame->data,
-							ctx->frame->linesize,
-							0,
-							ctx->codec_ctx->height,
-							ctx->rgb_frame->data,
-							ctx->rgb_frame->linesize
-						);
+						    ctx->sws_ctx,
+						    (uint8_t const *const *)ctx->frame->data,
+						    ctx->frame->linesize,
+						    0,
+						    ctx->codec_ctx->height,
+						    ctx->rgb_frame->data,
+						    ctx->rgb_frame->linesize);
 						// Send the frame to other functions for processing
 						_display_frame(ctx, ctx->rgb_frame, ctx->codec_ctx->width, ctx->codec_ctx->height, seconds_time);
 						break;

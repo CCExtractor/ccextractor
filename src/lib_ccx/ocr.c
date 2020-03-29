@@ -180,12 +180,12 @@ void *init_ocr(int lang_index)
 		snprintf(tess_path, 1024, "%s%s%s", tessdata_path, "/", "tessdata");
 		//ccx_options.ocr_oem are deprecated and only supported mode is OEM_LSTM_ONLY
 		ret = TessBaseAPIInit4(ctx->api, tess_path, lang, 1, NULL, 0, &pars_vec,
-			&pars_values, 1, false);
+				       &pars_values, 1, false);
 	}
 	else
 	{
 		ret = TessBaseAPIInit4(ctx->api, tessdata_path, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
-			&pars_values, 1, false);
+				       &pars_values, 1, false);
 	}
 
 	free(pars_vec);
@@ -200,7 +200,6 @@ void *init_ocr(int lang_index)
 fail:
 	delete_ocr((void **)&ctx);
 	return NULL;
-
 }
 
 /*
@@ -244,7 +243,7 @@ BOX *ignore_alpha_at_edge(png_byte *alpha, unsigned char *indata, int w, int h, 
 void debug_tesseract(struct ocrCtx *ctx, char *dump_path)
 {
 #ifdef OCR_DEBUG
-	char       str[1024] = "";
+	char str[1024] = "";
 	static int i = 0;
 	PIX *pix = NULL;
 	PIXA *pixa = NULL;
@@ -257,11 +256,9 @@ void debug_tesseract(struct ocrCtx *ctx, char *dump_path)
 	sprintf(str, "%sthresholded_%d.jpg", dump_path, i);
 	pixWrite(str, pix, IFF_JFIF_JPEG);
 
-
 	TessBaseAPIGetRegions(ctx->api, &pixa);
 	sprintf(str, "%sregion_%d", dump_path, i);
 	pixaWriteFiles(str, pixa, IFF_JFIF_JPEG);
-
 
 	TessBaseAPIGetTextlines(ctx->api, &pixa, NULL);
 	sprintf(str, "%slines_%d", dump_path, i);
@@ -341,7 +338,8 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 		TessBaseAPISetImage2(ctx->api, cpix_gs);
 		tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
 		debug_tesseract(ctx, "./temp/");
-		if (tess_ret) {
+		if (tess_ret)
+		{
 			mprint("\nIn ocr_bitmap: Failed to perform OCR. Skipped.\n");
 
 			pixDestroy(&pix);
@@ -409,7 +407,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 				histogram = (uint32_t *)malloc(copy->nb_colors * sizeof(uint32_t));
 				iot = (uint8_t *)malloc(copy->nb_colors * sizeof(uint8_t));
 				mcit = (uint32_t *)malloc(copy->nb_colors * sizeof(uint32_t));
-				struct transIntensity ti = { copy->alpha,copy->palette };
+				struct transIntensity ti = {copy->alpha, copy->palette};
 				memset(histogram, 0, copy->nb_colors * sizeof(uint32_t));
 
 				/* initializing intensity ordered table with serial order of unsorted color table */
@@ -495,7 +493,6 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 						palette[iot[i]].blue = palette[index].blue;
 						palette[iot[i]].green = palette[index].green;
 					}
-
 				}
 
 				// Detecting the color present in quantized word image
@@ -503,8 +500,8 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 				for (int i = 0; i < copy->nb_colors; i++)
 				{
 					if (palette[i].red == ((copy->bgcolor >> 16) & 0xff) &&
-						palette[i].green == ((copy->bgcolor >> 8) & 0xff) &&
-						palette[i].blue == ((copy->bgcolor >> 0) & 0xff))
+					    palette[i].green == ((copy->bgcolor >> 8) & 0xff) &&
+					    palette[i].blue == ((copy->bgcolor >> 0) & 0xff))
 						continue;
 					denom++;
 					r_avg += palette[i].red;
@@ -522,16 +519,20 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 				float h;
 				float max = (((r_avg > g_avg) && (r_avg > b_avg)) ? r_avg : (g_avg > b_avg) ? g_avg : b_avg);
 				float min = (((r_avg < g_avg) && (r_avg < b_avg)) ? r_avg : (g_avg < b_avg) ? g_avg : b_avg);
-				if (max == 0.0f || max - min == 0.0f) h = 0;
-				else if (max == r_avg) h = 60 * ((g_avg - b_avg) / (max - min)) + 0;
-				else if (max == g_avg) h = 60 * ((b_avg - r_avg) / (max - min)) + 120;
-				else h = 60 * ((r_avg - g_avg) / (max - min)) + 240;
+				if (max == 0.0f || max - min == 0.0f)
+					h = 0;
+				else if (max == r_avg)
+					h = 60 * ((g_avg - b_avg) / (max - min)) + 0;
+				else if (max == g_avg)
+					h = 60 * ((b_avg - r_avg) / (max - min)) + 120;
+				else
+					h = 60 * ((r_avg - g_avg) / (max - min)) + 240;
 
 				if (fabsf(h - h0) > 50) // Color has changed
 				{
 					// Write <font> tags for SRT and WebVTT
 					if (ccx_options.write_format == CCX_OF_SRT ||
-						ccx_options.write_format == CCX_OF_WEBVTT)
+					    ccx_options.write_format == CCX_OF_WEBVTT)
 					{
 						const char *substr_format;
 						int substr_len;
@@ -584,7 +585,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 
 			// Write missing <font> or </font> for each line
 			if (ccx_options.write_format == CCX_OF_SRT ||
-				ccx_options.write_format == CCX_OF_WEBVTT)
+			    ccx_options.write_format == CCX_OF_WEBVTT)
 			{
 				const char *closing_font = "</font>";
 				int length_closing_font = 7; // exclude '\0'
@@ -597,27 +598,32 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 				char *last_valid_char = text_out; // last character that is not '\n' or '\0'
 
 				for (char *iter = text_out; *iter; iter++)
-					if (*iter != '\n') last_valid_char = iter;
+					if (*iter != '\n')
+						last_valid_char = iter;
 
 				char *last_font_tag = text_out; // Last <font> in this line
 				char *last_font_tag_end = NULL;
 
-				while (1) {
+				while (1)
+				{
 
 					char *line_end = line_start;
-					while (*line_end && *line_end != '\n') line_end++; // find the line end
+					while (*line_end && *line_end != '\n')
+						line_end++; // find the line end
 
-					if (new_text_out_iter != new_text_out) {
+					if (new_text_out_iter != new_text_out)
+					{
 						memcpy(new_text_out_iter, "\n", 1);
 						new_text_out_iter += 1;
 					}
 
 					// realloc if memory allocated may be not enough
 					int length_needed = (new_text_out_iter - new_text_out) +
-						(line_end - line_start) +
-						length_closing_font + 32;
+							    (line_end - line_start) +
+							    length_closing_font + 32;
 
-					if (length_needed > length) {
+					if (length_needed > length)
+					{
 
 						length = max(length * 1.5, length_needed);
 						long diff = new_text_out_iter - new_text_out;
@@ -627,9 +633,12 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 
 					// Add <font> to the beginning of the line if it is missing
 					// Assume there is always a <font> at the beginning of the first line
-					if (last_font_tag_end && strstr(line_start, "<font color=\"#") != line_start) {
+					if (last_font_tag_end && strstr(line_start, "<font color=\"#") != line_start)
+					{
 						if ((new_text_out_iter - new_text_out) +
-							(last_font_tag_end - last_font_tag) > length) {
+							(last_font_tag_end - last_font_tag) >
+						    length)
+						{
 							fatal(CCX_COMMON_EXIT_BUG_BUG, "In ocr_bitmap: Running out of memory. It shouldn't happen. Please report.\n", errno);
 						}
 						memcpy(new_text_out_iter, last_font_tag, last_font_tag_end - last_font_tag);
@@ -638,15 +647,17 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 
 					// Find the last <font> tag
 					char *font_tag = line_start;
-					while (1) {
+					while (1)
+					{
 
 						font_tag = strstr(font_tag + 1, "<font color=\"#");
-						if (font_tag == NULL || font_tag > line_end) break;
+						if (font_tag == NULL || font_tag > line_end)
+							break;
 						last_font_tag = font_tag;
-
 					}
 					last_font_tag_end = strstr(last_font_tag, ">");
-					if (last_font_tag_end) last_font_tag_end += 1; // move string to the "right" if ">" was found, otherwise leave empty string (solves #1084)
+					if (last_font_tag_end)
+						last_font_tag_end += 1; // move string to the "right" if ">" was found, otherwise leave empty string (solves #1084)
 
 					// Copy the content of the subtitle
 					memcpy(new_text_out_iter, line_start, line_end - line_start);
@@ -654,14 +665,15 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 
 					// Add </font> if it is indeed missing
 					if (line_end - line_start < length_closing_font ||
-						strncmp(line_start, closing_font, length_closing_font)) {
+					    strncmp(line_start, closing_font, length_closing_font))
+					{
 
 						memcpy(new_text_out_iter, closing_font, length_closing_font);
 						new_text_out_iter += length_closing_font;
-
 					}
 
-					if (line_end - 1 == last_valid_char) break;
+					if (line_end - 1 == last_valid_char)
+						break;
 					line_start = line_end + 1;
 				}
 				*new_text_out_iter = '\0';
@@ -694,7 +706,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
  * @param nb_color in
  */
 static int quantize_map(png_byte *alpha, png_color *palette,
-	uint8_t *bitmap, int size, int max_color, int nb_color)
+			uint8_t *bitmap, int size, int max_color, int nb_color)
 {
 	/*
 	 * occurrence of color in image
@@ -706,7 +718,7 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 	 * save index of intensity order table
 	 */
 	uint32_t *mcit = NULL;
-	struct transIntensity ti = { alpha,palette };
+	struct transIntensity ti = {alpha, palette};
 
 	int ret = 0;
 
@@ -753,7 +765,7 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 	for (int i = 0; i < nb_color; i++)
 	{
 		ccx_common_logging.log_ftn("%02d) map %02d hist %02d\n",
-			i, iot[i], histogram[iot[i]]);
+					   i, iot[i], histogram[iot[i]]);
 	}
 #endif
 	/**
@@ -786,7 +798,7 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 	for (int i = 0; i < max_color; i++)
 	{
 		ccx_common_logging.log_ftn("%02d) mcit %02d\n",
-			i, mcit[i]);
+					   i, mcit[i]);
 	}
 #endif
 	for (int i = 0, mxi = 0; i < nb_color; i++)
@@ -815,17 +827,17 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 			palette[iot[i]].blue = palette[index].blue;
 			palette[iot[i]].green = palette[index].green;
 		}
-
 	}
 #ifdef OCR_DEBUG
 	ccx_common_logging.log_ftn("Colors present in quantized Image\n");
 	for (int i = 0; i < nb_color; i++)
 	{
 		ccx_common_logging.log_ftn("%02d)r %03d g %03d b %03d a %03d\n",
-			i, palette[i].red, palette[i].green, palette[i].blue, alpha[i]);
+					   i, palette[i].red, palette[i].green, palette[i].blue, alpha[i]);
 	}
 #endif
-end: freep(&histogram);
+end:
+	freep(&histogram);
 	freep(&mcit);
 	freep(&iot);
 	return ret;
@@ -862,7 +874,7 @@ int ocr_rect(void *arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr
 
 	int size = rect->w * rect->h;
 	dbg_print(CCX_DMT_DVB, "ocr_rect(): Trying W*H (%d * %d) so size = %d\n",
-		rect->w, rect->h, size);
+		  rect->w, rect->h, size);
 
 	if (size < 0)
 	{
@@ -887,7 +899,7 @@ int ocr_rect(void *arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr
 		case 2:
 			for (int i = 0; i < (rect->nb_colors); i++)
 			{
-				// Taking the quotient of the palette color with 8 shades in each RGB 
+				// Taking the quotient of the palette color with 8 shades in each RGB
 				palette[i].red = (int)((palette[i].red + 1) / 32);
 				palette[i].blue = (int)((palette[i].blue + 1) / 32);
 				palette[i].green = (int)((palette[i].green + 1) / 32);
@@ -910,7 +922,6 @@ end:
 	freep(&copy->data);
 	freep(&copy);
 	return ret;
-
 }
 
 /**
@@ -942,26 +953,32 @@ void add_ocrtext2str(char *dest, char *src, const unsigned char *crlf, unsigned 
 	while (*src != '\0')
 	{
 		//checks if a line has actual content in it before adding it
-		if (*src == '\n') {
+		if (*src == '\n')
+		{
 			char_found = 0;
 			line_scan = src + 1;
 			//multiple blocks of newlines
-			while (*(line_scan) == '\n') {
+			while (*(line_scan) == '\n')
+			{
 				line_scan++;
 				src++;
 			}
 			//empty lines
-			while (*line_scan != '\n' && *line_scan != '\0') {
-				if (*line_scan > 32) {
+			while (*line_scan != '\n' && *line_scan != '\0')
+			{
+				if (*line_scan > 32)
+				{
 					char_found = 1;
 					break;
 				}
 				line_scan++;
 			}
-			if (!char_found) {
+			if (!char_found)
+			{
 				src = line_scan;
 			}
-			if (*src == '\0') break;
+			if (*src == '\0')
+				break;
 		}
 		*dest = *src;
 		src++;
@@ -1004,7 +1021,8 @@ char *paraof_ocrtext(struct cc_subtitle *sub, struct encoder_ctx *context)
 
 	for (i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
 	{
-		if (!rect->ocr_text) continue;
+		if (!rect->ocr_text)
+			continue;
 		add_ocrtext2str(str, rect->ocr_text, context->encoded_crlf, context->encoded_crlf_length);
 		free(rect->ocr_text);
 	}

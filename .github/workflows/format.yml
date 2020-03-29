@@ -18,5 +18,5 @@ jobs:
       - uses: actions/checkout@v1
       - name: Format code
         run: |
-          find src/ -type f -name '*.c' -name '*.c' | xargs clang-format -i
+          find src/ -type f -name '*.c' -not -path "src/GUI/icon_data.c" | xargs clang-format -i
           git diff-index --quiet HEAD -- || (git diff && exit 1)
