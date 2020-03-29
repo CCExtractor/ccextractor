@@ -1679,7 +1679,7 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 				   struct lib_cc_decode *dec_ctx,
 				   struct cc_subtitle *sub)
 {
-  DVBSubContext *ctx = (DVBSubContext *)dec_ctx->private_data;
+	DVBSubContext *ctx = (DVBSubContext *)dec_ctx->private_data;
 	if (!enc_ctx)
 		return;
 	if (enc_ctx->write_previous) //this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
@@ -1688,9 +1688,9 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 		sub->prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the end time of the previous sub the current pts
 		if (sub->prev->time_out < sub->prev->end_time - sub->prev->start_time)
 		{
-			 sub->prev->end_time = sub->prev->start_time + sub->prev->time_out;
+			sub->prev->end_time = sub->prev->start_time + sub->prev->time_out;
 		}
-		encode_sub(enc_ctx->prev, sub->prev);									    //we encode it
+		encode_sub(enc_ctx->prev, sub->prev); //we encode it
 
 		enc_ctx->last_string = enc_ctx->prev->last_string; // Update last recognized string (used in Matroska)
 		enc_ctx->prev->last_string = NULL;
