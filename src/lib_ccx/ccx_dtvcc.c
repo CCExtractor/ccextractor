@@ -4,8 +4,8 @@
 #include "ccx_decoders_708_output.h"
 
 void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
-	const unsigned char *data,
-	int data_length)
+			    const unsigned char *data,
+			    int data_length)
 {
 	/*
 	 * Note: the data has following format:
@@ -35,7 +35,7 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 					if (dtvcc->current_packet_length > 253)
 					{
 						ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: "
-							"Warning: Legal packet size exceeded (1), data not added.\n");
+											  "Warning: Legal packet size exceeded (1), data not added.\n");
 					}
 					else
 					{
@@ -52,7 +52,7 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 					if (dtvcc->current_packet_length > CCX_DTVCC_MAX_PACKET_LENGTH - 1)
 					{
 						ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: "
-							"Warning: Legal packet size exceeded (2), data not added.\n");
+											  "Warning: Legal packet size exceeded (2), data not added.\n");
 					}
 					else
 					{
@@ -63,7 +63,8 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 				break;
 			default:
 				ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "[CEA-708] dtvcc_process_data: "
-					"shouldn't be here - cc_type: %d\n", cc_type);
+										      "shouldn't be here - cc_type: %d\n",
+							     cc_type);
 		}
 	}
 }

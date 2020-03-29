@@ -3,7 +3,6 @@
 // Hold functions to read streams on a bit or byte oriented basis
 // plus some data related helper functions.
 
-
 // Guidelines for all bitsream functions:
 // * No function shall advance the pointer past the end marker
 // * If bitstream.bitsleft < 0 do not attempt any read access,
@@ -29,7 +28,6 @@ int init_bitstream(struct bitstream *bstr, unsigned char *start, unsigned char *
 	}
 	return 0;
 }
-
 
 // Read bnum bits from bitstream bstr with the most significant
 // bit read first without advancing the bitstream pointer.
@@ -103,7 +101,6 @@ uint64_t next_bits(struct bitstream *bstr, unsigned bnum)
 	return res;
 }
 
-
 // Read bnum bits from bitstream bstr with the most significant
 // bit read first. A 64 bit unsigned integer is returned.
 uint64_t read_bits(struct bitstream *bstr, unsigned bnum)
@@ -121,7 +118,6 @@ uint64_t read_bits(struct bitstream *bstr, unsigned bnum)
 
 	return res;
 }
-
 
 // This function will advance the bitstream by bnum bits, if possible.
 // Advancing of more than 64 bits is possible.
@@ -159,7 +155,6 @@ int skip_bits(struct bitstream *bstr, unsigned bnum)
 	return 1;
 }
 
-
 // Return TRUE if the current position in the bitstream is on a byte
 // boundary, i.e., the next bit in the bitstream is the first bit in
 // a byte, otherwise return FALSE
@@ -181,7 +176,6 @@ int is_byte_aligned(struct bitstream *bstr)
 	else
 		return 0;
 }
-
 
 // Move bitstream to next byte border. Adjust bitsleft.
 void make_byte_aligned(struct bitstream *bstr)
@@ -216,7 +210,6 @@ void make_byte_aligned(struct bitstream *bstr)
 	return;
 }
 
-
 // Return pointer to first of bynum bytes from the bitstream if the
 // following conditions are TRUE:
 // The bitstream is byte aligned and there are enough bytes left in
@@ -247,7 +240,6 @@ unsigned char *next_bytes(struct bitstream *bstr, unsigned bynum)
 	return bstr->pos;
 }
 
-
 // Return pointer to first of bynum bytes from the bitstream if the
 // following conditions are TRUE:
 // The bitstream is byte aligned and there are enough bytes left in
@@ -265,7 +257,6 @@ unsigned char *read_bytes(struct bitstream *bstr, unsigned bynum)
 	}
 	return res;
 }
-
 
 // Return an integer number with "bytes" precision from the current
 // bitstream position.  Allowed "bytes" values are 1,2,4,8.
@@ -295,7 +286,7 @@ uint64_t bitstream_get_num(struct bitstream *bstr, unsigned bytes, int advance)
 			break;
 		default:
 			fatal(CCX_COMMON_EXIT_BUG_BUG, "In bitstream_get_num: Illegal precision value [%u]!",
-				bytes);
+			      bytes);
 			break;
 	}
 	for (unsigned i = 0; i < bytes; i++)
@@ -306,7 +297,6 @@ uint64_t bitstream_get_num(struct bitstream *bstr, unsigned bytes, int advance)
 	}
 	return rval;
 }
-
 
 // Read unsigned Exp-Golomb code from bitstream
 uint64_t read_exp_golomb_unsigned(struct bitstream *bstr)
@@ -321,7 +311,6 @@ uint64_t read_exp_golomb_unsigned(struct bitstream *bstr)
 
 	return res;
 }
-
 
 // Read signed Exp-Golomb code from bitstream
 int64_t read_exp_golomb(struct bitstream *bstr)
@@ -338,14 +327,12 @@ int64_t read_exp_golomb(struct bitstream *bstr)
 	return res;
 }
 
-
 // Read unsigned integer with bnum bits length.  Basically an
 // alias for read_bits().
 uint64_t read_int_unsigned(struct bitstream *bstr, unsigned bnum)
 {
 	return read_bits(bstr, bnum);
 }
-
 
 // Read signed integer with bnum bits length.
 int64_t read_int(struct bitstream *bstr, unsigned bnum)
@@ -358,7 +345,6 @@ int64_t read_int(struct bitstream *bstr, unsigned bnum)
 
 	return (0xFFFFFFFFFFFFFFFFULL << bnum) | res;
 }
-
 
 // Return the value with the bit order reversed.
 uint8_t reverse8(uint8_t data)

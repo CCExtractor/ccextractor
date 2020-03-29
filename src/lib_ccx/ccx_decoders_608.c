@@ -6,51 +6,50 @@
 #include "ccx_decoders_structs.h"
 #include "ccx_decoders_xds.h"
 
-static const int rowdata[] = { 11,-1,1,2,3,4,12,13,14,15,5,6,7,8,9,10 };
+static const int rowdata[] = {11, -1, 1, 2, 3, 4, 12, 13, 14, 15, 5, 6, 7, 8, 9, 10};
 // Relationship between the first PAC byte and the row number
 int in_xds_mode = 0;
 
 //unsigned char str[2048]; // Another generic general purpose buffer
 
 const unsigned char pac2_attribs[][3] = // Color, font, ident
-{
-	{ COL_WHITE, FONT_REGULAR, 0 },  // 0x40 || 0x60
-	{ COL_WHITE, FONT_UNDERLINED, 0 },  // 0x41 || 0x61
-	{ COL_GREEN, FONT_REGULAR, 0 },  // 0x42 || 0x62
-	{ COL_GREEN, FONT_UNDERLINED, 0 },  // 0x43 || 0x63
-	{ COL_BLUE, FONT_REGULAR, 0 },  // 0x44 || 0x64
-	{ COL_BLUE, FONT_UNDERLINED, 0 },  // 0x45 || 0x65
-	{ COL_CYAN, FONT_REGULAR, 0 },  // 0x46 || 0x66
-	{ COL_CYAN, FONT_UNDERLINED, 0 },  // 0x47 || 0x67
-	{ COL_RED, FONT_REGULAR, 0 },  // 0x48 || 0x68
-	{ COL_RED, FONT_UNDERLINED, 0 },  // 0x49 || 0x69
-	{ COL_YELLOW, FONT_REGULAR, 0 },  // 0x4a || 0x6a
-	{ COL_YELLOW, FONT_UNDERLINED, 0 },  // 0x4b || 0x6b
-	{ COL_MAGENTA, FONT_REGULAR, 0 },  // 0x4c || 0x6c
-	{ COL_MAGENTA, FONT_UNDERLINED, 0 },  // 0x4d || 0x6d
-	{ COL_WHITE, FONT_ITALICS, 0 },  // 0x4e || 0x6e
-	{ COL_WHITE, FONT_UNDERLINED_ITALICS, 0 },  // 0x4f || 0x6f
-	{ COL_WHITE, FONT_REGULAR, 0 },  // 0x50 || 0x70
-	{ COL_WHITE, FONT_UNDERLINED, 0 },  // 0x51 || 0x71
-	{ COL_WHITE, FONT_REGULAR, 4 },  // 0x52 || 0x72
-	{ COL_WHITE, FONT_UNDERLINED, 4 },  // 0x53 || 0x73
-	{ COL_WHITE, FONT_REGULAR, 8 },  // 0x54 || 0x74
-	{ COL_WHITE, FONT_UNDERLINED, 8 },  // 0x55 || 0x75
-	{ COL_WHITE, FONT_REGULAR, 12 }, // 0x56 || 0x76
-	{ COL_WHITE, FONT_UNDERLINED, 12 }, // 0x57 || 0x77
-	{ COL_WHITE, FONT_REGULAR, 16 }, // 0x58 || 0x78
-	{ COL_WHITE, FONT_UNDERLINED, 16 }, // 0x59 || 0x79
-	{ COL_WHITE, FONT_REGULAR, 20 }, // 0x5a || 0x7a
-	{ COL_WHITE, FONT_UNDERLINED, 20 }, // 0x5b || 0x7b
-	{ COL_WHITE, FONT_REGULAR, 24 }, // 0x5c || 0x7c
-	{ COL_WHITE, FONT_UNDERLINED, 24 }, // 0x5d || 0x7d
-	{ COL_WHITE, FONT_REGULAR, 28 }, // 0x5e || 0x7e
-	{ COL_WHITE, FONT_UNDERLINED, 28 }  // 0x5f || 0x7f
+    {
+	{COL_WHITE, FONT_REGULAR, 0},		 // 0x40 || 0x60
+	{COL_WHITE, FONT_UNDERLINED, 0},	 // 0x41 || 0x61
+	{COL_GREEN, FONT_REGULAR, 0},		 // 0x42 || 0x62
+	{COL_GREEN, FONT_UNDERLINED, 0},	 // 0x43 || 0x63
+	{COL_BLUE, FONT_REGULAR, 0},		 // 0x44 || 0x64
+	{COL_BLUE, FONT_UNDERLINED, 0},		 // 0x45 || 0x65
+	{COL_CYAN, FONT_REGULAR, 0},		 // 0x46 || 0x66
+	{COL_CYAN, FONT_UNDERLINED, 0},		 // 0x47 || 0x67
+	{COL_RED, FONT_REGULAR, 0},		 // 0x48 || 0x68
+	{COL_RED, FONT_UNDERLINED, 0},		 // 0x49 || 0x69
+	{COL_YELLOW, FONT_REGULAR, 0},		 // 0x4a || 0x6a
+	{COL_YELLOW, FONT_UNDERLINED, 0},	 // 0x4b || 0x6b
+	{COL_MAGENTA, FONT_REGULAR, 0},		 // 0x4c || 0x6c
+	{COL_MAGENTA, FONT_UNDERLINED, 0},	 // 0x4d || 0x6d
+	{COL_WHITE, FONT_ITALICS, 0},		 // 0x4e || 0x6e
+	{COL_WHITE, FONT_UNDERLINED_ITALICS, 0}, // 0x4f || 0x6f
+	{COL_WHITE, FONT_REGULAR, 0},		 // 0x50 || 0x70
+	{COL_WHITE, FONT_UNDERLINED, 0},	 // 0x51 || 0x71
+	{COL_WHITE, FONT_REGULAR, 4},		 // 0x52 || 0x72
+	{COL_WHITE, FONT_UNDERLINED, 4},	 // 0x53 || 0x73
+	{COL_WHITE, FONT_REGULAR, 8},		 // 0x54 || 0x74
+	{COL_WHITE, FONT_UNDERLINED, 8},	 // 0x55 || 0x75
+	{COL_WHITE, FONT_REGULAR, 12},		 // 0x56 || 0x76
+	{COL_WHITE, FONT_UNDERLINED, 12},	 // 0x57 || 0x77
+	{COL_WHITE, FONT_REGULAR, 16},		 // 0x58 || 0x78
+	{COL_WHITE, FONT_UNDERLINED, 16},	 // 0x59 || 0x79
+	{COL_WHITE, FONT_REGULAR, 20},		 // 0x5a || 0x7a
+	{COL_WHITE, FONT_UNDERLINED, 20},	 // 0x5b || 0x7b
+	{COL_WHITE, FONT_REGULAR, 24},		 // 0x5c || 0x7c
+	{COL_WHITE, FONT_UNDERLINED, 24},	 // 0x5d || 0x7d
+	{COL_WHITE, FONT_REGULAR, 28},		 // 0x5e || 0x7e
+	{COL_WHITE, FONT_UNDERLINED, 28}	 // 0x5f || 0x7f
 };
 
-
 static const char *command_type[] =
-{
+    {
 	"Unknown",
 	"EDM - EraseDisplayedMemory",
 	"RCL - ResumeCaptionLoading",
@@ -69,16 +68,14 @@ static const char *command_type[] =
 	"AON - Not Used (Alarm On)",
 	"DER - Delete to End of Row",
 	"RDC - Resume Direct Captioning",
-	"RU1 - Fake Roll up 1 rows"
-};
+	"RU1 - Fake Roll up 1 rows"};
 
 static const char *font_text[] =
-{
+    {
 	"regular",
 	"italics",
 	"underlined",
-	"underlined italics"
-};
+	"underlined italics"};
 
 #if 0
 static const char *cc_modes_text[] =
@@ -88,19 +85,17 @@ static const char *cc_modes_text[] =
 #endif
 
 const char *color_text[MAX_COLOR][2] =
-{
-	{"white",""},
-	{"green","<font color=\"#00ff00\">"},
-	{"blue","<font color=\"#0000ff\">"},
-	{"cyan","<font color=\"#00ffff\">"},
-	{"red","<font color=\"#ff0000\">"},
-	{"yellow","<font color=\"#ffff00\">"},
-	{"magenta","<font color=\"#ff00ff\">"},
-	{"userdefined","<font color=\""},
-	{"black",""},
-	{"transparent",""}
-};
-
+    {
+	{"white", ""},
+	{"green", "<font color=\"#00ff00\">"},
+	{"blue", "<font color=\"#0000ff\">"},
+	{"cyan", "<font color=\"#00ffff\">"},
+	{"red", "<font color=\"#ff0000\">"},
+	{"yellow", "<font color=\"#ffff00\">"},
+	{"magenta", "<font color=\"#ff00ff\">"},
+	{"userdefined", "<font color=\""},
+	{"black", ""},
+	{"transparent", ""}};
 
 void clear_eia608_cc_buffer(ccx_decoder_608_context *context, struct eia608_screen *data)
 {
@@ -125,9 +120,9 @@ void ccx_decoder_608_dinit_library(void **ctx)
 	freep(ctx);
 }
 ccx_decoder_608_context *ccx_decoder_608_init_library(struct ccx_decoder_608_settings *settings, int channel,
-	int field, int *halt,
-	int cc_to_stdout,
-	enum ccx_output_format output_format, struct ccx_common_timing_ctx *timing)
+						      int field, int *halt,
+						      int cc_to_stdout,
+						      enum ccx_output_format output_format, struct ccx_common_timing_ctx *timing)
 {
 	ccx_decoder_608_context *data = NULL;
 
@@ -252,7 +247,7 @@ void handle_text_attr(const unsigned char c1, const unsigned char c2, ccx_decode
 		return;
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\r608: text_attr: %02X %02X", c1, c2);
 	if (((c1 != 0x11 && c1 != 0x19) ||
-		(c2 < 0x20 || c2 > 0x2f)))
+	     (c2 < 0x20 || c2 > 0x2f)))
 	{
 		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\rThis is not a text attribute!\n");
 	}
@@ -262,10 +257,10 @@ void handle_text_attr(const unsigned char c1, const unsigned char c2, ccx_decode
 		context->current_color = pac2_attribs[i][0];
 		context->font = pac2_attribs[i][1];
 		ccx_common_logging.debug_ftn(
-			CCX_DMT_DECODER_608,
-			"  --  Color: %s,  font: %s\n",
-			color_text[context->current_color][0],
-			font_text[context->font]);
+		    CCX_DMT_DECODER_608,
+		    "  --  Color: %s,  font: %s\n",
+		    color_text[context->current_color][0],
+		    font_text[context->font]);
 		// Mid-row codes should put a non-transparent space at the current position
 		// and advance the cursor
 		//so use write_char
@@ -290,9 +285,8 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 	LLONG start_time;
 	LLONG end_time;
 
-
 	if (context->settings->screens_to_process != -1 &&
-		context->screenfuls_counter >= context->settings->screens_to_process)
+	    context->screenfuls_counter >= context->settings->screens_to_process)
 	{
 		// We are done.
 		*context->halt = 1;
@@ -302,7 +296,7 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 	data = get_current_visible_buffer(context);
 
 	if (context->mode == MODE_FAKE_ROLLUP_1 && // Use the actual start of data instead of last buffer change
-		context->ts_start_of_current_line != -1)
+	    context->ts_start_of_current_line != -1)
 		context->current_visible_start_ms = context->ts_start_of_current_line;
 
 	start_time = context->current_visible_start_ms;
@@ -317,7 +311,7 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 
 	if (!data->empty && context->output_format != CCX_OF_NULL)
 	{
-		sub->data = (struct eia608_screen *) realloc(sub->data, (sub->nb_data + 1) * sizeof(*data));
+		sub->data = (struct eia608_screen *)realloc(sub->data, (sub->nb_data + 1) * sizeof(*data));
 		if (!sub->data)
 		{
 			ccx_common_logging.log_ftn("No Memory left");
@@ -347,8 +341,6 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 			}
 			sub->got_output = 1;
 		}
-
-
 	}
 	return wrote_something;
 }
@@ -373,7 +365,7 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 
 	if (!data->empty)
 	{
-		sub->data = (struct eia608_screen *) realloc(sub->data, (sub->nb_data + 1) * sizeof(*data));
+		sub->data = (struct eia608_screen *)realloc(sub->data, (sub->nb_data + 1) * sizeof(*data));
 		if (!sub->data)
 		{
 			ccx_common_logging.log_ftn("No Memory left");
@@ -413,7 +405,6 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 		}
 	}
 	return wrote_something;
-
 }
 
 // Check if a rollup would cause a line to go off the visible area
@@ -533,7 +524,7 @@ int roll_up(ccx_decoder_608_context *context)
 				use_buffer->fonts[j][i] = use_buffer->fonts[j + 1][i];
 			}
 
-			use_buffer->row_used[j]=use_buffer->row_used[j+1];
+			use_buffer->row_used[j] = use_buffer->row_used[j + 1];
 		}
 	}
 	for (int j = 0; j < (1 + context->cursor_row - keep_lines); j++)
@@ -568,7 +559,7 @@ int roll_up(ccx_decoder_608_context *context)
 			rows_now++;
 	if (rows_now > keep_lines)
 		ccx_common_logging.log_ftn("Bug in roll_up, should have %d lines but I have %d.\n",
-			keep_lines, rows_now);
+					   keep_lines, rows_now);
 
 	// If the buffer is now empty, let's set the flag
 	// This will allow write_char to set visible start time appropriately
@@ -671,7 +662,7 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\rCommand begin: %02X %02X (%s)\n", c1, c2, command_type[command]);
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\rCurrent mode: %d  Position: %d,%d  VisBuf: %d\n", context->mode,
-		context->cursor_row, context->cursor_column, context->visible_buffer);
+				     context->cursor_row, context->cursor_column, context->visible_buffer);
 
 	switch (command)
 	{
@@ -775,7 +766,7 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 						erase_memory(context, true); // Make sure the lines we just wrote aren't written again
 				}
 			}
-			roll_up(context); // The roll must be done anyway of course.
+			roll_up(context);			// The roll must be done anyway of course.
 			context->ts_start_of_current_line = -1; // Unknown.
 			if (changes)
 				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
@@ -788,10 +779,10 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			// Write it to disk before doing this, and make a note of the new
 			// time it became clear.
 			if (context->output_format == CCX_OF_TRANSCRIPT &&
-				(context->mode == MODE_FAKE_ROLLUP_1 ||
-					context->mode == MODE_ROLLUP_2 ||
-					context->mode == MODE_ROLLUP_3 ||
-					context->mode == MODE_ROLLUP_4))
+			    (context->mode == MODE_FAKE_ROLLUP_1 ||
+			     context->mode == MODE_ROLLUP_2 ||
+			     context->mode == MODE_ROLLUP_3 ||
+			     context->mode == MODE_ROLLUP_4))
 			{
 				// In transcript mode we just write the cursor line. The previous lines
 				// should have been written already, so writing everything produces
@@ -838,9 +829,8 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			break;
 	}
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\rCurrent mode: %d  Position: %d,%d	VisBuf: %d\n", context->mode,
-		context->cursor_row, context->cursor_column, context->visible_buffer);
+				     context->cursor_row, context->cursor_column, context->visible_buffer);
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\rCommand end: %02X %02X (%s)\n", c1, c2, command_type[command]);
-
 }
 
 void flush_608_context(ccx_decoder_608_context *context, struct cc_subtitle *sub)
@@ -940,7 +930,7 @@ void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *con
 	context->font = pac2_attribs[c2][1];
 	int indent = pac2_attribs[c2][2];
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "  --  Position: %d:%d, color: %s,  font: %s\n", row,
-		indent, color_text[context->current_color][0], font_text[context->font]);
+				     indent, color_text[context->current_color][0], font_text[context->font]);
 	if (context->settings->default_color == COL_USERDEFINED && (context->current_color == COL_WHITE || context->current_color == COL_TRANSPARENT))
 		context->current_color = COL_USERDEFINED;
 	if (context->mode != MODE_TEXT)
@@ -953,7 +943,7 @@ void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *con
 	context->cursor_column = indent;
 	context->have_cursor_position = 1;
 	if (context->mode == MODE_FAKE_ROLLUP_1 || context->mode == MODE_ROLLUP_2 ||
-		context->mode == MODE_ROLLUP_3 || context->mode == MODE_ROLLUP_4)
+	    context->mode == MODE_ROLLUP_3 || context->mode == MODE_ROLLUP_4)
 	{
 		/* In roll-up, delete lines BELOW the PAC. Not sure (CFS) this is correct (possibly we may have to move the
 		   buffer around instead) but it's better than leaving old characters in the buffer */
@@ -975,9 +965,7 @@ void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *con
 			}
 		}
 	}
-
 }
-
 
 void handle_single(const unsigned char c1, ccx_decoder_608_context *context)
 {
@@ -992,8 +980,8 @@ void erase_both_memories(ccx_decoder_608_context *context, struct cc_subtitle *s
 {
 	erase_memory(context, false);
 	// For the visible memory, we write the contents to disk
-			// The currently *visible* buffer is leaving, so now we know its ending
-			// time. Time to actually write it to file.
+	// The currently *visible* buffer is leaving, so now we know its ending
+	// time. Time to actually write it to file.
 	if (write_cc_buffer(context, sub))
 		context->screenfuls_counter++;
 	context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
@@ -1128,7 +1116,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 		unsigned char hi, lo;
 		int wrote_to_screen = 0;
 
-		hi = data[i] & 0x7F; // Get rid of parity bit
+		hi = data[i] & 0x7F;	 // Get rid of parity bit
 		lo = data[i + 1] & 0x7F; // Get rid of parity bit
 
 		if (hi == 0 && lo == 0) // Just padding
@@ -1136,7 +1124,8 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 
 		// printf ("\r[%02X:%02X]\n",hi,lo);
 
-		if (hi >= 0x10 && hi <= 0x1e) {
+		if (hi >= 0x10 && hi <= 0x1e)
+		{
 			int ch = (hi <= 0x17) ? 1 : 2;
 			if (context == NULL || context->my_field == 2) // Originally: current_field from sequencing.c. Seems to be just to change channel, so context->my_field seems good.
 				ch += 2;
@@ -1166,12 +1155,12 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 			continue;
 		}
 		if (hi >= 0x10 && hi <= 0x1F) // Non-character code or special/extended char
-			// http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/CC_CODES.HTML
-			// http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/CC_CHARS.HTML
+					      // http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/CC_CODES.HTML
+					      // http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/CC_CHARS.HTML
 		{
 			if (!context || context->my_field == 2)
 				in_xds_mode = 0; // Back to normal (CEA 608-8.6.2)
-			if (!context) // Not XDS and we don't have a writebuffer, nothing else would have an effect
+			if (!context)		 // Not XDS and we don't have a writebuffer, nothing else would have an effect
 				continue;
 
 			// We were writing characters before, start a new line for
@@ -1234,7 +1223,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 			}
 
 			if (!context->textprinted && context->channel == context->my_channel)
-			{   // Current FTS information after the characters are shown
+			{ // Current FTS information after the characters are shown
 				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Current FTS: %s\n", print_mstime_static(get_fts(dec_ctx->timing, context->my_field)));
 				//printf("  N:%u", unsigned(fts_now) );
 				//printf("  G:%u", unsigned(fts_global) );
@@ -1243,10 +1232,10 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 			}
 
 			if (wrote_to_screen && context->settings->direct_rollup && // If direct_rollup is enabled and
-				(context->mode == MODE_FAKE_ROLLUP_1 || // we are in rollup mode, write now.
-					context->mode == MODE_ROLLUP_2 ||
-					context->mode == MODE_ROLLUP_3 ||
-					context->mode == MODE_ROLLUP_4))
+			    (context->mode == MODE_FAKE_ROLLUP_1 ||		   // we are in rollup mode, write now.
+			     context->mode == MODE_ROLLUP_2 ||
+			     context->mode == MODE_ROLLUP_3 ||
+			     context->mode == MODE_ROLLUP_4))
 			{
 				// We don't increase screenfuls_counter here.
 				write_cc_buffer(context, sub);
@@ -1258,7 +1247,6 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 	} // for
 	return i;
 }
-
 
 /* Return a pointer to a string that holds the printable characters
  * of the caption data block. FOR DEBUG PURPOSES ONLY! */

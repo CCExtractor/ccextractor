@@ -245,7 +245,8 @@ void set_output_format(struct ccx_s_options *opt, const char *format)
 		if (opt->date_format == ODF_NONE)
 			opt->date_format = ODF_HHMMSSMS;
 		// Sets the right things so that timestamps and the mode are printed.
-		if (!opt->transcript_settings.isFinal) {
+		if (!opt->transcript_settings.isFinal)
+		{
 			opt->transcript_settings.showStartTime = 1;
 			opt->transcript_settings.showEndTime = 1;
 			opt->transcript_settings.showCC = 0;
@@ -764,20 +765,20 @@ void print_usage(void)
 	mprint("Options that affect which codec is to be used have to be searched in input\n");
 
 	mprint("  If codec type is not selected then first elementary stream suitable for \n"
-		"  subtitle is selected, please consider -teletext -noteletext override this\n"
-		"  option.\n"
-		"      -codec dvbsub    select the dvb subtitle from all elementary stream,\n"
-		"                        if stream of dvb subtitle type is not found then \n"
-		"                        nothing is selected and no subtitle is generated\n"
-		"      -nocodec dvbsub   ignore dvb subtitle and follow default behaviour\n"
-		"      -codec teletext   select the teletext subtitle from elementary stream\n"
-		"      -nocodec teletext ignore teletext subtitle\n"
-		"  NOTE: option given in form -foo=bar ,-foo = bar and --foo=bar are invalid\n"
-		"        valid option are only in form -foo bar\n"
-		"        nocodec and codec parameter must not be same if found to be same \n"
-		"        then parameter of nocodec is ignored, this flag should be passed \n"
-		"        once, more then one are not supported yet and last parameter would \n"
-		"        taken in consideration\n");
+	       "  subtitle is selected, please consider -teletext -noteletext override this\n"
+	       "  option.\n"
+	       "      -codec dvbsub    select the dvb subtitle from all elementary stream,\n"
+	       "                        if stream of dvb subtitle type is not found then \n"
+	       "                        nothing is selected and no subtitle is generated\n"
+	       "      -nocodec dvbsub   ignore dvb subtitle and follow default behaviour\n"
+	       "      -codec teletext   select the teletext subtitle from elementary stream\n"
+	       "      -nocodec teletext ignore teletext subtitle\n"
+	       "  NOTE: option given in form -foo=bar ,-foo = bar and --foo=bar are invalid\n"
+	       "        valid option are only in form -foo bar\n"
+	       "        nocodec and codec parameter must not be same if found to be same \n"
+	       "        then parameter of nocodec is ignored, this flag should be passed \n"
+	       "        once, more then one are not supported yet and last parameter would \n"
+	       "        taken in consideration\n");
 
 	mprint("Adding start and end credits:\n");
 
@@ -836,7 +837,6 @@ void print_usage(void)
 	mprint("       -sharing-debug: Print extracted CC sharing service messages\n");
 #endif //ENABLE_SHARING
 	mprint("\n");
-
 
 	mprint("Teletext related options:\n");
 
@@ -986,9 +986,10 @@ void print_usage(void)
 
 unsigned char sha256_buf[16384];
 
-char *calculateSHA256(char *location) {
-	int	size_read, bytes_read, fh = 0;
-	SHA256_CTX	ctx256;
+char *calculateSHA256(char *location)
+{
+	int size_read, bytes_read, fh = 0;
+	SHA256_CTX ctx256;
 
 	SHA256_Init(&ctx256);
 
@@ -998,11 +999,13 @@ char *calculateSHA256(char *location) {
 	fh = OPEN(location, O_RDONLY);
 #endif
 
-	if (fh < 0) {
+	if (fh < 0)
+	{
 		return "Could not open file";
 	}
 	size_read = 0;
-	while ((bytes_read = read(fh, sha256_buf, 16384)) > 0) {
+	while ((bytes_read = read(fh, sha256_buf, 16384)) > 0)
+	{
 		size_read += bytes_read;
 		SHA256_Update(&ctx256, (unsigned char *)sha256_buf, bytes_read);
 	}
@@ -1011,7 +1014,8 @@ char *calculateSHA256(char *location) {
 	return sha256_buf;
 }
 
-void version(char *location) {
+void version(char *location)
+{
 	char *hash = calculateSHA256(location);
 	mprint("CCExtractor detailed version info\n");
 	mprint("	Version: %s\n", VERSION);
@@ -1035,7 +1039,6 @@ void version(char *location) {
 	mprint("	libhash\n");
 	mprint("	nuklear\n");
 	mprint("	libzvbi\n");
-
 }
 
 void parse_708_services(struct ccx_s_options *opts, char *s)
@@ -1073,7 +1076,7 @@ void parse_708_services(struct ccx_s_options *opts, char *s)
 	if (s == NULL)
 		return;
 	l = s + strlen(s);
-	for (c = s; c < l && *c; )
+	for (c = s; c < l && *c;)
 	{
 		int svc = -1;
 		while (*c && !isdigit(*c))
@@ -1088,7 +1091,7 @@ void parse_708_services(struct ccx_s_options *opts, char *s)
 		svc = atoi(c);
 		if (svc < 1 || svc > CCX_DTVCC_MAX_SERVICES)
 			fatal(EXIT_MALFORMED_PARAMETER,
-				"[CEA-708] Malformed parameter: Invalid service number (%d), valid range is 1-%d.\n", svc, CCX_DTVCC_MAX_SERVICES);
+			      "[CEA-708] Malformed parameter: Invalid service number (%d), valid range is 1-%d.\n", svc, CCX_DTVCC_MAX_SERVICES);
 		opts->settings_dtvcc.services_enabled[svc - 1] = 1;
 		opts->enc_cfg.services_enabled[svc - 1] = 1;
 		opts->settings_dtvcc.enabled = 1;
@@ -1150,11 +1153,14 @@ int atoi_hex(char *s)
 	}
 }
 
-void mkvlang_params_check(char *lang) {
+void mkvlang_params_check(char *lang)
+{
 	int initial = 0, present = 0;
-	for (int char_index = 0; char_index < strlen(lang); char_index++) {
+	for (int char_index = 0; char_index < strlen(lang); char_index++)
+	{
 		lang[char_index] = cctolower(lang[char_index]);
-		if (lang[char_index] == ',') {
+		if (lang[char_index] == ',')
+		{
 			present = char_index;
 			if ((present - initial < 6) && (present - initial != 3))
 				fatal(EXIT_MALFORMED_PARAMETER, "language codes should be xxx,xxx,xxx,....\n");
@@ -1180,7 +1186,8 @@ void mkvlang_params_check(char *lang) {
 	present = strlen(lang) - 1;
 
 	for (int char_index = strlen(lang) - 1; char_index >= 0; char_index--)
-		if (lang[char_index] == ',') {
+		if (lang[char_index] == ',')
+		{
 			initial = char_index + 1;
 			break;
 		}
@@ -1203,7 +1210,6 @@ void mkvlang_params_check(char *lang) {
 	}
 }
 
-
 int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 {
 	for (int i = 1; i < argc; i++)
@@ -1224,7 +1230,8 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			setmode(fileno(stdin), O_BINARY);
 #endif
 			opt->input_source = CCX_DS_STDIN;
-			if (!opt->live_stream) opt->live_stream = -1;
+			if (!opt->live_stream)
+				opt->live_stream = -1;
 			continue;
 		}
 		if (argv[i][0] != '-')
@@ -1510,14 +1517,14 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 
 		/* Input file formats */
 		if (strcmp(argv[i], "-es") == 0 ||
-			strcmp(argv[i], "-ts") == 0 ||
-			strcmp(argv[i], "-ps") == 0 ||
-			strcmp(argv[i], "-nots") == 0 ||
-			strcmp(argv[i], "-asf") == 0 ||
-			strcmp(argv[i], "-wtv") == 0 ||
-			strcmp(argv[i], "-mp4") == 0 ||
-			strcmp(argv[i], "-mkv") == 0 ||
-			strcmp(argv[i], "--dvr-ms") == 0)
+		    strcmp(argv[i], "-ts") == 0 ||
+		    strcmp(argv[i], "-ps") == 0 ||
+		    strcmp(argv[i], "-nots") == 0 ||
+		    strcmp(argv[i], "-asf") == 0 ||
+		    strcmp(argv[i], "-wtv") == 0 ||
+		    strcmp(argv[i], "-mp4") == 0 ||
+		    strcmp(argv[i], "-mkv") == 0 ||
+		    strcmp(argv[i], "--dvr-ms") == 0)
 		{
 			set_input_format(opt, argv[i]);
 			continue;
@@ -1676,11 +1683,11 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 
 		/* Output file formats */
 		if (strcmp(argv[i], "-srt") == 0 ||
-			strcmp(argv[i], "-mcc") == 0 || strcmp(argv[i], "-dvdraw") == 0 ||
-			strcmp(argv[i], "-smi") == 0 || strcmp(argv[i], "-sami") == 0 ||
-			strcmp(argv[i], "-txt") == 0 || strcmp(argv[i], "--transcript") == 0 ||
-			strcmp(argv[i], "-ttxt") == 0 || strcmp(argv[i], "--timedtranscript") == 0 ||
-			strcmp(argv[i], "-webvtt") == 0 || strcmp(argv[i], "-null") == 0)
+		    strcmp(argv[i], "-mcc") == 0 || strcmp(argv[i], "-dvdraw") == 0 ||
+		    strcmp(argv[i], "-smi") == 0 || strcmp(argv[i], "-sami") == 0 ||
+		    strcmp(argv[i], "-txt") == 0 || strcmp(argv[i], "--transcript") == 0 ||
+		    strcmp(argv[i], "-ttxt") == 0 || strcmp(argv[i], "--timedtranscript") == 0 ||
+		    strcmp(argv[i], "-webvtt") == 0 || strcmp(argv[i], "-null") == 0)
 		{
 			set_output_format(opt, argv[i]);
 			continue;
@@ -2005,7 +2012,6 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--defaultcolor has no argument.\n");
 			}
-
 		}
 		if (strcmp(argv[i], "-delay") == 0)
 		{
@@ -2899,7 +2905,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 	if (opt->demux_cfg.auto_stream == CCX_SM_RCWT && opt->write_format == CCX_OF_RCWT && opt->output_filename == NULL)
 	{
 		print_error(opt->gui_mode_reports,
-			"CCExtractor's binary format can only be used simultaneously for input and\noutput if the output file name is specified given with -o.\n");
+			    "CCExtractor's binary format can only be used simultaneously for input and\noutput if the output file name is specified given with -o.\n");
 		return EXIT_INCOMPATIBLE_PARAMETERS;
 	}
 	if (opt->write_format != CCX_OF_DVDRAW && opt->cc_to_stdout && opt->extract == 12)

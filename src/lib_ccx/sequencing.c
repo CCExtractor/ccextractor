@@ -132,7 +132,6 @@ void process_hdcc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, st
 		// Re-create original time
 		dec_ctx->timing->fts_now = dec_ctx->cc_fts[seq];
 		process_cc_data(enc_ctx, dec_ctx, dec_ctx->cc_data_pkts[seq], dec_ctx->cc_data_count[seq], sub);
-
 	}
 
 	// Restore the value

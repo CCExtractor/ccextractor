@@ -5,7 +5,7 @@
 long FILEBUFFERSIZE = 1024 * 1024 * 16; // 16 Mbytes no less. Minimize number of real read calls()
 
 #ifdef _WIN32
-WSADATA wsaData = { 0 };
+WSADATA wsaData = {0};
 int iResult = 0;
 #endif
 
@@ -38,7 +38,8 @@ LLONG get_total_file_size(struct lib_ccx_ctx *ctx) // -1 if one of the file(s) f
 		h = OPEN(ctx->inputfile[i], O_RDONLY);
 #endif
 
-		if (h == -1) {
+		if (h == -1)
+		{
 			switch (errno)
 			{
 				case ENOENT:
@@ -146,7 +147,7 @@ int switch_to_next_file(struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 		{
 			mprint("\n\n\n\nATTENTION!!!!!!\n");
 			mprint("In switch_to_next_file(): Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
-				ctx->inputfile[ctx->current_file], ctx->current_file, ctx->demux_ctx->past, ctx->inputsize);
+			       ctx->inputfile[ctx->current_file], ctx->current_file, ctx->demux_ctx->past, ctx->inputsize);
 		}
 		close_input_file(ctx);
 
@@ -198,7 +199,6 @@ void position_sanity_check(struct ccx_demuxer *ctx)
 	}
 #endif
 }
-
 
 int init_file_buffer(struct ccx_demuxer *ctx)
 {
@@ -351,7 +351,7 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 						{
 							LLONG op, np;
 							op = LSEEK(ctx->infd, 0, SEEK_CUR); // Get current pos
-							if (op + bytes < 0) // Would mean moving beyond start of file: Not supported
+							if (op + bytes < 0)		    // Would mean moving beyond start of file: Not supported
 								return 0;
 							np = LSEEK(ctx->infd, bytes, SEEK_CUR); // Pos after moving
 							i = (int)(np - op);
@@ -377,7 +377,8 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 						}
 
 					} while ((i || ccx_options.live_stream ||
-						(ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied))) && bytes);
+						  (ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied))) &&
+						 bytes);
 					return copied;
 				}
 				// Keep the last 8 bytes, so we have a guaranteed
@@ -427,7 +428,7 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 		{
 			int i;
 			while (bytes > 0 && ctx->infd != -1 &&
-				((i = read(ctx->infd, buffer, bytes)) != 0 || ccx_options.live_stream ||
+			       ((i = read(ctx->infd, buffer, bytes)) != 0 || ccx_options.live_stream ||
 				(ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied))))
 			{
 				if (terminate_asap)
@@ -451,14 +452,15 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 			if (terminate_asap)
 				break;
 			op = LSEEK(ctx->infd, 0, SEEK_CUR); // Get current pos
-			if (op + bytes < 0) // Would mean moving beyond start of file: Not supported
+			if (op + bytes < 0)		    // Would mean moving beyond start of file: Not supported
 				return 0;
 
 			np = LSEEK(ctx->infd, bytes, SEEK_CUR); // Pos after moving
-			if (op == -1 && np == -1) // Possibly a pipe that doesn't like "skipping"
+			if (op == -1 && np == -1)		// Possibly a pipe that doesn't like "skipping"
 			{
 				char c;
-				for (size_t i = 0; i < bytes; i++) read(ctx->infd, &c, 1);
+				for (size_t i = 0; i < bytes; i++)
+					read(ctx->infd, &c, 1);
 				copied = bytes;
 			}
 			else

@@ -8,15 +8,15 @@
 //#define COMMAND_DEBUG
 
 #ifdef DEBUG
-#define isdb_log( format, ... ) mprint(format, ##__VA_ARGS__ )
+#define isdb_log(format, ...) mprint(format, ##__VA_ARGS__)
 #else
-#define isdb_log( ...) ((void)0)
+#define isdb_log(...) ((void)0)
 #endif
 
 #ifdef COMMAND_DEBUG
-#define isdb_command_log( format, ... ) mprint(format, ##__VA_ARGS__ )
+#define isdb_command_log(format, ...) mprint(format, ##__VA_ARGS__)
 #else
-#define isdb_command_log( format, ... )  ((void)0)
+#define isdb_command_log(format, ...) ((void)0)
 #endif
 
 enum writing_format
@@ -129,54 +129,48 @@ enum isdb_tmd
 };
 
 #define IS_HORIZONTAL_LAYOUT(format) \
-	( (format) == WF_HORIZONTAL_STD_DENSITY\
-	||(format) == WF_HORIZONTAL_HIGH_DENSITY\
-	||(format) == WF_HORIZONTAL_WESTERN_LANG\
-	||(format) == WF_HORIZONTAL_1920x1080\
-	||(format) == WF_HORIZONTAL_960x540\
-	||(format) == WF_HORIZONTAL_720x480\
-	||(format) == WF_HORIZONTAL_1280x720\
-	||(format) == WF_HORIZONTAL_CUSTOM )
+	((format) == WF_HORIZONTAL_STD_DENSITY || (format) == WF_HORIZONTAL_HIGH_DENSITY || (format) == WF_HORIZONTAL_WESTERN_LANG || (format) == WF_HORIZONTAL_1920x1080 || (format) == WF_HORIZONTAL_960x540 || (format) == WF_HORIZONTAL_720x480 || (format) == WF_HORIZONTAL_1280x720 || (format) == WF_HORIZONTAL_CUSTOM)
 
 #define LAYOUT_GET_WIDTH(format) \
 	(((format) == ISDBSUB_FMT_960H || (format) == ISDBSUB_FMT_960V) ? 960 : 720)
 #define LAYOUT_GET_HEIGHT(format) \
 	(((format) == ISDBSUB_FMT_960H || (format) == ISDBSUB_FMT_960V) ? 540 : 480)
 
-#define RGBA(r,g,b,a) (((unsigned)(255 - (a)) << 24) | ((b) << 16) | ((g) << 8) | (r))
+#define RGBA(r, g, b, a) (((unsigned)(255 - (a)) << 24) | ((b) << 16) | ((g) << 8) | (r))
 typedef uint32_t rgba;
 static rgba Default_clut[128] =
-{
+    {
 	//0-7
-	RGBA(0,0,0,255), RGBA(255,0,0,255), RGBA(0,255,0,255), RGBA(255,255,0,255),
-	RGBA(0,0,255,255), RGBA(255,0,255,255), RGBA(0,255,255,255), RGBA(255,255,255,255),
+	RGBA(0, 0, 0, 255), RGBA(255, 0, 0, 255), RGBA(0, 255, 0, 255), RGBA(255, 255, 0, 255),
+	RGBA(0, 0, 255, 255), RGBA(255, 0, 255, 255), RGBA(0, 255, 255, 255), RGBA(255, 255, 255, 255),
 	//8-15
-	RGBA(0,0,0,0), RGBA(170,0,0,255), RGBA(0,170,0,255), RGBA(170,170,0,255),
-	RGBA(0,0,170,255), RGBA(170,0,170,255), RGBA(0,170,170,255), RGBA(170,170,170,255),
+	RGBA(0, 0, 0, 0), RGBA(170, 0, 0, 255), RGBA(0, 170, 0, 255), RGBA(170, 170, 0, 255),
+	RGBA(0, 0, 170, 255), RGBA(170, 0, 170, 255), RGBA(0, 170, 170, 255), RGBA(170, 170, 170, 255),
 	//16-23
-	RGBA(0,0,85,255), RGBA(0,85,0,255), RGBA(0,85,85,255), RGBA(0,85,170,255),
-	RGBA(0,85,255,255), RGBA(0,170,85,255), RGBA(0,170,255,255), RGBA(0,255,85,255),
+	RGBA(0, 0, 85, 255), RGBA(0, 85, 0, 255), RGBA(0, 85, 85, 255), RGBA(0, 85, 170, 255),
+	RGBA(0, 85, 255, 255), RGBA(0, 170, 85, 255), RGBA(0, 170, 255, 255), RGBA(0, 255, 85, 255),
 	//24-31
-	RGBA(0,255,170,255), RGBA(85,0,0,255), RGBA(85,0,85,255), RGBA(85,0,170,255),
-	RGBA(85,0,255,255), RGBA(85,85,0,255), RGBA(85,85,85,255), RGBA(85,85,170,255),
+	RGBA(0, 255, 170, 255), RGBA(85, 0, 0, 255), RGBA(85, 0, 85, 255), RGBA(85, 0, 170, 255),
+	RGBA(85, 0, 255, 255), RGBA(85, 85, 0, 255), RGBA(85, 85, 85, 255), RGBA(85, 85, 170, 255),
 	//32-39
-	RGBA(85,85,255,255), RGBA(85,170,0,255), RGBA(85,170,85,255), RGBA(85,170,170,255),
-	RGBA(85,170,255,255), RGBA(85,255,0,255), RGBA(85,255,85,255), RGBA(85,255,170,255),
+	RGBA(85, 85, 255, 255), RGBA(85, 170, 0, 255), RGBA(85, 170, 85, 255), RGBA(85, 170, 170, 255),
+	RGBA(85, 170, 255, 255), RGBA(85, 255, 0, 255), RGBA(85, 255, 85, 255), RGBA(85, 255, 170, 255),
 	//40-47
-	RGBA(85,255,255,255), RGBA(170,0,85,255), RGBA(170,0,255,255), RGBA(170,85,0,255),
-	RGBA(170,85,85,255), RGBA(170,85,170,255), RGBA(170,85,255,255), RGBA(170,170,85,255),
+	RGBA(85, 255, 255, 255), RGBA(170, 0, 85, 255), RGBA(170, 0, 255, 255), RGBA(170, 85, 0, 255),
+	RGBA(170, 85, 85, 255), RGBA(170, 85, 170, 255), RGBA(170, 85, 255, 255), RGBA(170, 170, 85, 255),
 	//48-55
-	RGBA(170,170,255,255), RGBA(170,255,0,255), RGBA(170,255,85,255), RGBA(170,255,170,255),
-	RGBA(170,255,255,255), RGBA(255,0,85,255), RGBA(255,0,170,255), RGBA(255,85,0,255),
+	RGBA(170, 170, 255, 255), RGBA(170, 255, 0, 255), RGBA(170, 255, 85, 255), RGBA(170, 255, 170, 255),
+	RGBA(170, 255, 255, 255), RGBA(255, 0, 85, 255), RGBA(255, 0, 170, 255), RGBA(255, 85, 0, 255),
 	//56-63
-	RGBA(255,85,85,255), RGBA(255,85,170,255), RGBA(255,85,255,255), RGBA(255,170,0,255),
-	RGBA(255,170,85,255), RGBA(255,170,170,255), RGBA(255,170,255,255), RGBA(255,255,85,255),
+	RGBA(255, 85, 85, 255), RGBA(255, 85, 170, 255), RGBA(255, 85, 255, 255), RGBA(255, 170, 0, 255),
+	RGBA(255, 170, 85, 255), RGBA(255, 170, 170, 255), RGBA(255, 170, 255, 255), RGBA(255, 255, 85, 255),
 	//64
-	RGBA(255,255,170,255),
+	RGBA(255, 255, 170, 255),
 	// 65-127 are calculated later.
 };
 
-struct ISDBPos {
+struct ISDBPos
+{
 	int x, y;
 };
 
@@ -198,18 +192,21 @@ typedef struct
 	enum writing_format format;
 
 	// clipping area.
-	struct disp_area {
+	struct disp_area
+	{
 		int x, y;
 		int w, h;
 	} display_area;
 
 	int font_size; // valid values: {16, 20, 24, 30, 36} (TR-B14/B15)
 
-	struct fscale { // in [percent]
+	struct fscale
+	{ // in [percent]
 		int fscx, fscy;
 	} font_scale; // 1/2x1/2, 1/2*1, 1*1, 1*2, 2*1, 2*2
 
-	struct spacing {
+	struct spacing
+	{
 		int col, row;
 	} cell_spacing;
 
@@ -218,13 +215,14 @@ typedef struct
 	enum isdb_CC_composition ccc;
 	int acps[2];
 
-}ISDBSubLayout;
+} ISDBSubLayout;
 
-typedef struct {
+typedef struct
+{
 	int auto_display; // bool. forced to be displayed w/o user interaction
 	int rollup_mode;  // bool
 
-	uint8_t need_init; // bool
+	uint8_t need_init;     // bool
 	uint8_t clut_high_idx; // color = default_clut[high_idx << 4 | low_idx]
 
 	uint32_t fg_color;
@@ -234,7 +232,7 @@ typedef struct {
 	 * colour near to foreground colour is half foreground colour and colour near to
 	 * background colour is half background colour.
 	 */
-	 //Half foreground color
+	//Half foreground color
 	uint32_t hfg_color;
 	//Half background color
 	uint32_t hbg_color;
@@ -271,13 +269,12 @@ typedef struct
 		int min;
 		int sec;
 		int milli;
-	}offset_time;
+	} offset_time;
 	uint8_t dmf;
 	uint8_t dc;
 	int cfg_no_rollup;
 
-}ISDBSubContext;
-
+} ISDBSubContext;
 
 /**
  * Find way to put remaining data
@@ -311,7 +308,6 @@ static void init_layout(ISDBSubLayout *ls)
 
 	ls->font_scale.fscx = 100;
 	ls->font_scale.fscy = 100;
-
 }
 
 void *init_isdb_decoder(void)
@@ -388,12 +384,14 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 	if (IS_HORIZONTAL_LAYOUT(ls->format))
 	{
 		cur_lpos = ls->cursor_pos.x;
-		csp = ls->font_size * ls->font_scale.fscx / 100;;
+		csp = ls->font_size * ls->font_scale.fscx / 100;
+		;
 	}
 	else
 	{
 		cur_lpos = ls->cursor_pos.y;
-		csp = ls->font_size * ls->font_scale.fscy / 100;;
+		csp = ls->font_size * ls->font_scale.fscy / 100;
+		;
 	}
 
 	list_for_each_entry(text, &ctx->text_list_head, list, struct ISDBText)
@@ -456,7 +454,6 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 	text->used++;
 	text->buf[text->used] = '\0';
 
-
 	return 1;
 }
 
@@ -490,7 +487,7 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 	int index = 0;
 
 	if (ctx->cfg_no_rollup || (ctx->cfg_no_rollup == ctx->current_state.rollup_mode))
-		// Abhinav95: Forcing -noru to perform deduplication even if stream doesn't honor it
+	// Abhinav95: Forcing -noru to perform deduplication even if stream doesn't honor it
 	{
 		/* Currently unused */
 		//struct ISDBText *wtrepeat_text = NULL;
@@ -605,7 +602,8 @@ static void set_writing_format(ISDBSubContext *ctx, uint8_t *arg)
 	}
 	if (*(arg + 1) == 0x3B)
 	{
-		switch (*arg & 0x0f) {
+		switch (*arg & 0x0f)
+		{
 			case 0:
 				//ctx->font_size = SMALL_FONT_SIZE;
 				break;
@@ -655,13 +653,11 @@ static void move_penpos(ISDBSubContext *ctx, int col, int row)
 	ls->cursor_pos.y = col;
 }
 
-
 static void set_position(ISDBSubContext *ctx, unsigned int p1, unsigned int p2)
 {
 	ISDBSubLayout *ls = &ctx->current_state.layout_state;
 	int cw, ch;
 	int col, row;
-
 
 	if (IS_HORIZONTAL_LAYOUT(ls->format))
 	{
@@ -712,7 +708,7 @@ static int get_csi_params(const uint8_t *q, unsigned int *p1, unsigned int *p2)
 
 static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 {
-	uint8_t arg[10] = { 0 };
+	uint8_t arg[10] = {0};
 	int i = 0;
 	int ret = 0;
 	unsigned int p1, p2;
@@ -734,7 +730,8 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 	/* ignore terminating 0x20 character */
 	arg[i] = *buf++;
 
-	switch (*buf) {
+	switch (*buf)
+	{
 		/* Set Writing Format */
 		case CSI_CMD_SWF:
 			isdb_command_log("Command:CSI: SWF\n");
@@ -801,7 +798,8 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 		case CSI_CMD_ACPS:
 			isdb_command_log("Command:CSI: ACPS\n");
 			ret = get_csi_params(arg, &p1, &p2);
-			if (ret > 0) {
+			if (ret > 0)
+			{
 				ls->acps[0] = p1;
 				ls->acps[1] = p1;
 			}
@@ -827,7 +825,8 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 	buf++;
 	if (code_hi == 0x00)
 	{
-		switch (code_lo) {
+		switch (code_lo)
+		{
 			/* NUL Control code, which can be added or deleted without effecting to
 				information content. */
 			case 0x0:
@@ -915,7 +914,8 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 	}
 	else if (code_hi == 0x01)
 	{
-		switch (code_lo) {
+		switch (code_lo)
+		{
 			/**
 			 * PAPF: Active position forward is made in specified times by parameter P1 (1byte).
 			 *	Parameter P1 shall be within the range of 04/0 to 07/15 and time shall be
@@ -988,7 +988,8 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 	}
 	else if (code_hi == 0x8)
 	{
-		switch (code_lo) {
+		switch (code_lo)
+		{
 			/* BKF */
 			case 0x0:
 				/* RDF */
@@ -1040,12 +1041,12 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 			default:
 				isdb_command_log("Command: Unknown\n");
 				break;
-
 		}
 	}
 	else if (code_hi == 0x9)
 	{
-		switch (code_lo) {
+		switch (code_lo)
+		{
 			/* COL */
 			case 0x0:
 				/* Palette Col */
@@ -1156,7 +1157,6 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 	}
 
 	return buf - buf_pivot;
-
 }
 
 static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf, int size)
@@ -1195,14 +1195,14 @@ static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf
 		ctx->offset_time.milli = ((*buf >> 4) * 100) + ((*buf & 0xf) * 10) + (buf[1] & 0xf);
 		buf += 2;
 		isdb_log("CC MGMT DATA: OTD( h:%d m:%d s:%d millis: %d\n",
-			ctx->offset_time.hour, ctx->offset_time.min,
-			ctx->offset_time.sec, ctx->offset_time.milli);
+			 ctx->offset_time.hour, ctx->offset_time.min,
+			 ctx->offset_time.sec, ctx->offset_time.milli);
 	}
 	else
 	{
 		isdb_log("Playback time is in accordance with the time of the clock,"
-			"which is calibrated by clock signal (TDT). Playback time is"
-			"given by PTS.\n");
+			 "which is calibrated by clock signal (TDT). Playback time is"
+			 "given by PTS.\n");
 	}
 	ctx->nb_lang = *buf;
 	isdb_log("CC MGMT DATA: nb languages: %d\n", ctx->nb_lang);
@@ -1339,7 +1339,6 @@ int isdb_parse_data_group(void *codec_ctx, const uint8_t *buf, struct cc_subtitl
 	int group_size = 0;
 	int ret = 0;
 
-
 	if ((id >> 4) == 0)
 	{
 		isdb_log("ISDB group A\n");
@@ -1420,7 +1419,6 @@ int isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, size_t buf
 	ret = isdb_parse_data_group(ctx, buf, sub);
 	if (ret < 0)
 		return -1;
-
 
 	return 1;
 }

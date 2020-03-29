@@ -59,7 +59,6 @@ struct ccx_decoder_vbi_ctx *init_decoder_vbi(struct ccx_decoder_vbi_cfg *cfg)
 
 		/* Specify the services you want. */
 		vbi_raw_decoder_add_services(&vbi->zvbi_decoder, VBI_SLICED_CAPTION_525, /* strict */ 0);
-
 	}
 	return vbi;
 }

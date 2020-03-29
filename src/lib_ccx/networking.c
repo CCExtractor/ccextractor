@@ -11,26 +11,26 @@
 #define DEBUG_OUT 0
 
 /* Protocol constants: */
-#define INT_LEN         10
-#define OK              1
-#define PASSWORD        2
-#define BIN_MODE        3
-#define CC_DESC         4
-#define BIN_HEADER      5
-#define BIN_DATA        6
-#define EPG_DATA        7
+#define INT_LEN 10
+#define OK 1
+#define PASSWORD 2
+#define BIN_MODE 3
+#define CC_DESC 4
+#define BIN_HEADER 5
+#define BIN_DATA 6
+#define EPG_DATA 7
 #ifdef _MSC_VER
-#pragma warning( suppress : 4005)
+#pragma warning(suppress : 4005)
 #endif
-#define ERROR           51
+#define ERROR 51
 #define UNKNOWN_COMMAND 52
-#define WRONG_PASSWORD  53
-#define CONN_LIMIT      54
-#define PING            55
+#define WRONG_PASSWORD 53
+#define CONN_LIMIT 54
+#define PING 55
 
 /* #include <time.h> */
 
-#define DFT_PORT "2048" /* Default port for server and client */
+#define DFT_PORT "2048"	       /* Default port for server and client */
 #define WRONG_PASSWORD_DELAY 2 /* Seconds */
 #define BUFFER_SIZE 50
 #define NO_RESPONCE_INTERVAL 20
@@ -173,10 +173,12 @@ void net_check_conn()
 	if (last_ping == 0)
 		last_ping = now;
 
-	do {
+	do
+	{
 		c = 0;
 		rc = read_byte(srv_sd, &c);
-		if (c == PING) {
+		if (c == PING)
+		{
 #if DEBUG_OUT
 			fprintf(stderr, "[S] Received PING\n");
 #endif
@@ -212,13 +214,12 @@ void net_check_conn()
 }
 
 void net_send_epg(
-	const char *start,
-	const char *stop,
-	const char *title,
-	const char *desc,
-	const char *lang,
-	const char *category
-)
+    const char *start,
+    const char *stop,
+    const char *title,
+    const char *desc,
+    const char *lang,
+    const char *category)
 {
 	size_t st;
 	size_t sp;
@@ -351,23 +352,23 @@ int net_udp_read(int socket, void *buffer, size_t length, const char *src_str, c
 	{
 		addr = INADDR_ANY;
 	}
-	if (IN_MULTICAST(addr) && src_str != NULL)						  					/* We check if the case is of source multicast and we are in windowsOS */
+	if (IN_MULTICAST(addr) && src_str != NULL) /* We check if the case is of source multicast and we are in windowsOS */
 	{
-		do {
-			i = recvfrom(socket, (char *)buffer, length, 0, (struct sockaddr *) & source_addr, &len); /* peek at the data*/
+		do
+		{
+			i = recvfrom(socket, (char *)buffer, length, 0, (struct sockaddr *)&source_addr, &len); /* peek at the data*/
 			memset(ip, 0, sizeof(char) * INET_ADDRSTRLEN);
 			memcpy(ip, inet_ntoa(source_addr.sin_addr), sizeof(ip));
-		} while (strcmp(ip, src_str) != 0);												/* Loop till we find intended source */
+		} while (strcmp(ip, src_str) != 0); /* Loop till we find intended source */
 	}
 	else
-		i = recvfrom(socket, (char *)buffer, length, 0, NULL, NULL); 								/*read normally if not source mutlicast case*/
+		i = recvfrom(socket, (char *)buffer, length, 0, NULL, NULL); /*read normally if not source mutlicast case*/
 #else
-	i = recvfrom(socket, (char *)buffer, length, 0, NULL, NULL); 									/*read normally if not windows*/
+	i = recvfrom(socket, (char *)buffer, length, 0, NULL, NULL); /*read normally if not windows*/
 #endif
 
 	return i;
 }
-
 
 /*
  * command | length        | data         | \r\n
@@ -394,7 +395,7 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 	fprintf(stderr, " ");
 #endif
 
-	char len_str[INT_LEN] = { 0 };
+	char len_str[INT_LEN] = {0};
 	snprintf(len_str, INT_LEN, "%zu", buf_len);
 	if ((rc = writen(fd, len_str, INT_LEN)) < 0)
 		return -1;
@@ -461,7 +462,8 @@ int tcp_connect(const char *host, const char *port)
 
 	struct addrinfo *ai;
 	int rc = getaddrinfo(host, port, &hints, &ai);
-	if (rc != 0) {
+	if (rc != 0)
+	{
 		mprint("getaddrinfo() error: %s\n", gai_strerror(rc));
 		return -1;
 	}
@@ -470,10 +472,12 @@ int tcp_connect(const char *host, const char *port)
 	int sockfd;
 
 	/* Try each address until we successfully connect */
-	for (p = ai; p != NULL; p = p->ai_next) {
+	for (p = ai; p != NULL; p = p->ai_next)
+	{
 		sockfd = socket(p->ai_family, SOCK_STREAM, p->ai_protocol);
 
-		if (-1 == sockfd) {
+		if (-1 == sockfd)
+		{
 #if _WIN32
 			wprintf(L"socket() error: %ld\n", WSAGetLastError());
 #else
@@ -540,7 +544,7 @@ int start_tcp_srv(const char *port, const char *pwd)
 			clilen = sizeof(struct sockaddr_in);
 		else
 			clilen = sizeof(struct sockaddr_in6);
-		struct sockaddr *cliaddr = (struct sockaddr *) malloc(clilen);
+		struct sockaddr *cliaddr = (struct sockaddr *)malloc(clilen);
 		if (NULL == cliaddr)
 			fatal(EXIT_FAILURE, "In start_tcp_srv: Out of memory for client address. malloc() error: %s", strerror(errno));
 
@@ -566,7 +570,7 @@ int start_tcp_srv(const char *port, const char *pwd)
 		char serv[NI_MAXSERV];
 		int rc;
 		if ((rc = getnameinfo(cliaddr, clilen,
-			host, sizeof(host), serv, sizeof(serv), 0)) != 0)
+				      host, sizeof(host), serv, sizeof(serv), 0)) != 0)
 		{
 			mprint("getnameinfo() error: %s\n", gai_strerror(rc));
 		}
@@ -612,7 +616,8 @@ int check_password(int fd, const char *pwd)
 	if (pwd == NULL)
 		return 1;
 
-	if (c == PASSWORD && strcmp(pwd, buf) == 0) {
+	if (c == PASSWORD && strcmp(pwd, buf) == 0)
+	{
 		return 1;
 	}
 
@@ -747,7 +752,7 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 	fprintf(stderr, " ");
 #endif
 
-	char len_str[INT_LEN] = { 0 };
+	char len_str[INT_LEN] = {0};
 	if ((rc = readn(fd, len_str, INT_LEN)) < 0)
 		return -1;
 	else if (rc != INT_LEN)
@@ -768,7 +773,7 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 		{
 			ign_bytes = len - *buf_len;
 			mprint("read_block() warning: Buffer overflow, ignoring %d bytes\n",
-				ign_bytes);
+			       ign_bytes);
 			len = *buf_len;
 		}
 
@@ -794,7 +799,7 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 #endif
 	}
 
-	char end[2] = { 0 };
+	char end[2] = {0};
 	if ((rc = readn(fd, end, sizeof(end))) < 0)
 		return -1;
 	else if ((size_t)rc != sizeof(end))
@@ -816,7 +821,6 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 
 	return nread;
 }
-
 
 #if DEBUG_OUT
 void pr_command(char c)
@@ -874,7 +878,8 @@ ssize_t readn(int fd, void *vptr, size_t n)
 	nleft = n;
 	while (nleft > 0)
 	{
-		if (NULL == vptr) {
+		if (NULL == vptr)
+		{
 			char c;
 			nread = recv(fd, &c, 1, 0);
 		}
@@ -978,12 +983,12 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 		if (NULL == host)
 		{
 			fatal(EXIT_MALFORMED_PARAMETER, "Cannot look up udp network address: %s\n",
-				src_str);
+			      src_str);
 		}
 		else if (host->h_addrtype != AF_INET)
 		{
 			fatal(EXIT_MALFORMED_PARAMETER, "No support for non-IPv4 network addresses: %s\n",
-				src_str);
+			      src_str);
 		}
 
 		src = ntohl(((struct in_addr *)host->h_addr_list[0])->s_addr);
@@ -996,12 +1001,12 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 		if (NULL == host)
 		{
 			fatal(EXIT_MALFORMED_PARAMETER, "Cannot look up udp network address: %s\n",
-				addr_str);
+			      addr_str);
 		}
 		else if (host->h_addrtype != AF_INET)
 		{
 			fatal(EXIT_MALFORMED_PARAMETER, "No support for non-IPv4 network addresses: %s\n",
-				addr_str);
+			      addr_str);
 		}
 
 		addr = ntohl(((struct in_addr *)host->h_addr_list[0])->s_addr);
@@ -1012,7 +1017,8 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 	}
 
 	int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (-1 == sockfd) {
+	if (-1 == sockfd)
+	{
 #if _WIN32
 		wprintf(L"socket() error: %ld\n", WSAGetLastError());
 		exit(EXIT_FAILURE);
@@ -1047,7 +1053,7 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 	servaddr.sin_addr.s_addr = htonl(addr);
 #endif
 
-	if (bind(sockfd, (struct sockaddr *) & servaddr, sizeof(servaddr)) != 0)
+	if (bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) != 0)
 	{
 #if _WIN32
 		wprintf(L"bind() error: %ld\n", WSAGetLastError());
@@ -1057,9 +1063,11 @@ int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 #endif
 	}
 
-	if (IN_MULTICAST(addr)) {
+	if (IN_MULTICAST(addr))
+	{
 		int setsockopt_return = 0;
-		if (src_str != NULL) {
+		if (src_str != NULL)
+		{
 			struct ip_mreq_source multicast_req;
 			multicast_req.imr_sourceaddr.s_addr = htonl(src);
 			multicast_req.imr_multiaddr.s_addr = htonl(addr);
@@ -1122,7 +1130,7 @@ void init_sockets(void)
 	{
 		// Initialize Winsock
 #ifdef _WIN32
-		WSADATA wsaData = { 0 };
+		WSADATA wsaData = {0};
 		int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (iResult != 0)
 		{
@@ -1148,7 +1156,8 @@ void handle_write_error()
 
 	char c = 0;
 	int rc;
-	do {
+	do
+	{
 		c = 0;
 		rc = read_byte(srv_sd, &c);
 		if (rc < 0)

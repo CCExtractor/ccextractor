@@ -1,7 +1,6 @@
 #include "lib_ccx.h"
 #include "ccx_decoders_vbi.h"
 
-
 // Parse the user data for captions. The udtype variable denotes
 // to which type of data it belongs:
 // 0 .. sequence header
@@ -19,8 +18,8 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 	{
 		// ustream->error=1;
 		return 0; // Actually discarded on call.
-		// CFS: Seen in a Wobble edited file.
-		// fatal(CCX_COMMON_EXIT_BUG_BUG, "user_data: Impossible!");
+			  // CFS: Seen in a Wobble edited file.
+			  // fatal(CCX_COMMON_EXIT_BUG_BUG, "user_data: Impossible!");
 	}
 
 	// Do something
@@ -30,9 +29,9 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 	unsigned char *ud_header = next_bytes(ustream, 4);
 	if (ustream->error || ustream->bitsleft <= 0)
 	{
-		return 0;  // Actually discarded on call.
-		// CFS: Seen in Stick_VHS.mpg.
-		// fatal(CCX_COMMON_EXIT_BUG_BUG, "user_data: Impossible!");
+		return 0; // Actually discarded on call.
+			  // CFS: Seen in Stick_VHS.mpg.
+			  // fatal(CCX_COMMON_EXIT_BUG_BUG, "user_data: Impossible!");
 	}
 
 	// DVD CC header, see
@@ -56,7 +55,7 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 			field1packet = 1; // expect Field 1 second
 
 		dbg_print(CCX_DMT_VERBOSE, "Reading %d%s DVD CC segments\n",
-			capcount, (truncate_flag ? "+1" : ""));
+			  capcount, (truncate_flag ? "+1" : ""));
 
 		capcount += truncate_flag;
 
@@ -201,9 +200,9 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 	}
 	// ReplayTV 4000/5000 caption header - parsing information
 	// derived from CCExtract.bdl
-	else if ((ud_header[0] == 0xbb     //ReplayTV 4000
-		|| ud_header[0] == 0x99) //ReplayTV 5000
-		&& ud_header[1] == 0x02)
+	else if ((ud_header[0] == 0xbb	   //ReplayTV 4000
+		  || ud_header[0] == 0x99) //ReplayTV 5000
+		 && ud_header[1] == 0x02)
 	{
 		unsigned char data[3];
 
@@ -212,14 +211,13 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 		else
 			dec_ctx->stat_replay5000headers++;
 
-
 		read_bytes(ustream, 2); // "BB 02" or "99 02"
-		data[0] = 0x05; // Field 2
+		data[0] = 0x05;		// Field 2
 		data[1] = read_u8(ustream);
 		data[2] = read_u8(ustream);
 		do_cb(dec_ctx, data, sub);
 		read_bytes(ustream, 2); // Skip "CC 02" for R4000 or "AA 02" for R5000
-		data[0] = 0x04; // Field 1
+		data[0] = 0x04;		// Field 1
 		data[1] = read_u8(ustream);
 		data[2] = read_u8(ustream);
 		do_cb(dec_ctx, data, sub);
@@ -283,7 +281,7 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 		// To process this with the HDTV framework we create a "HDTV" caption
 		// format compatible array. Two times 3 bytes plus one for the 0xFF
 		// marker at the end. Pre-init to field 1 and set the 0xFF marker.
-		static unsigned char dishdata[7] = { 0x04, 0, 0, 0x04, 0, 0, 0xFF };
+		static unsigned char dishdata[7] = {0x04, 0, 0, 0x04, 0, 0, 0xFF};
 		int cc_count;
 
 		dbg_print(CCX_DMT_VERBOSE, "Reading Dish Network user data\n");
@@ -304,7 +302,7 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 		unsigned something = read_u16(ustream);
 		unsigned char type = read_u8(ustream);
 		dbg_print(CCX_DMT_PARSE, "DN  ID: %02X  Count: %5u  Unknown: %04X  Pattern: %X",
-			id, dishcount, something, type);
+			  id, dishcount, something, type);
 
 		unsigned char hi;
 
@@ -321,7 +319,7 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 				// 3  : REPEAT - 02: two bytes
 				//             - 04: four bytes (repeat first two)
 				dbg_print(CCX_DMT_PARSE, "\n02 %02X  %02X:%02X - R:%02X :",
-					dcd[0], dcd[1], dcd[2], dcd[3]);
+					  dcd[0], dcd[1], dcd[2], dcd[3]);
 
 				cc_count = 1;
 				dishdata[1] = dcd[1];
@@ -329,8 +327,8 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 
 				dbg_print(CCX_DMT_PARSE, "%s", debug_608_to_ASC(dishdata, 0));
 
-				type = dcd[3];  // repeater (0x02 or 0x04)
-				hi = dishdata[1] & 0x7f; // Get only the 7 low bits
+				type = dcd[3];		     // repeater (0x02 or 0x04)
+				hi = dishdata[1] & 0x7f;     // Get only the 7 low bits
 				if (type == 0x04 && hi < 32) // repeat (only for non-character pairs)
 				{
 					cc_count = 2;
@@ -358,7 +356,7 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 				// 1-2: caption block
 				// 3-4: caption block
 				dbg_print(CCX_DMT_PARSE, "\n04 %02X  %02X:%02X:%02X:%02X  :",
-					dcd[0], dcd[1], dcd[2], dcd[3], dcd[4]);
+					  dcd[0], dcd[1], dcd[2], dcd[3], dcd[4]);
 
 				cc_count = 2;
 				dishdata[1] = dcd[1];
@@ -385,14 +383,14 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 				// 2-3: prev dcd[3-4]
 				// 4-5: prev dcd[5-6]
 				dbg_print(CCX_DMT_PARSE, " - %02X  pch: %02X %5u %02X:%02X\n",
-					dcd[0], dcd[1],
-					(unsigned)dcd[2] * 256 + dcd[3],
-					dcd[4], dcd[5]);
+					  dcd[0], dcd[1],
+					  (unsigned)dcd[2] * 256 + dcd[3],
+					  dcd[4], dcd[5]);
 				dcd += 6; // Skip these 6 bytes
 
 				// Now one of the "regular" 0x02 or 0x04 captions follows
 				dbg_print(CCX_DMT_PARSE, "%02X %02X  %02X:%02X",
-					dcd[0], dcd[1], dcd[2], dcd[3]);
+					  dcd[0], dcd[1], dcd[2], dcd[3]);
 
 				type = dcd[0]; // Number of caption bytes (0x02 or 0x04)
 
@@ -404,7 +402,7 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 				if (type == 0x02)
 				{
 					type = dcd[0]; // repeater (0x02 or 0x04)
-					dcd++; // Skip the repeater byte.
+					dcd++;	       // Skip the repeater byte.
 
 					dbg_print(CCX_DMT_PARSE, " - R:%02X :%s", type, debug_608_to_ASC(dishdata, 0));
 
@@ -426,7 +424,7 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 				else
 				{
 					dbg_print(CCX_DMT_PARSE, ":%02X:%02X  ",
-						dcd[0], dcd[1]);
+						  dcd[0], dcd[1]);
 					cc_count = 2;
 					dishdata[3] = 0x04; // Field 1
 					dishdata[4] = dcd[0];
@@ -460,7 +458,7 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 		read_bytes(ustream, 2); // "02 09"
 		read_bytes(ustream, 2); // "80 80" ???
 		read_bytes(ustream, 2); // "02 0A" ???
-		data[0] = 0x04; // Field 1
+		data[0] = 0x04;		// Field 1
 		data[1] = read_u8(ustream);
 		data[2] = read_u8(ustream);
 		do_cb(dec_ctx, data, sub);

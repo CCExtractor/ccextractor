@@ -44,7 +44,8 @@ int edit_distance(char *word1, char *word2, int len1, int len2)
 		matrix[i] = (int *)malloc((len2 + 1) * sizeof(int));
 
 	int i, delete, insert, substitute, minimum;
-	for (i = 0; i <= len2; i++)matrix[0][i] = i;
+	for (i = 0; i <= len2; i++)
+		matrix[0][i] = i;
 	for (i = 1; i <= len1; i++)
 	{
 		int j;

@@ -84,7 +84,6 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 			print_error(ccx_options.gui_mode_reports, "socket() failed.");
 			return CCX_COMMON_EXIT_BUG_BUG;
 		}
-
 	}
 
 	else if (ccx_options.input_source == CCX_DS_TCP)
@@ -216,7 +215,6 @@ static int ccx_demuxer_get_stream_mode(struct ccx_demuxer *ctx)
 	return ctx->stream_mode;
 }
 
-
 static void ccx_demuxer_print_cfg(struct ccx_demuxer *ctx)
 {
 	switch (ctx->auto_stream)
@@ -306,7 +304,7 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	if (!ctx)
 		return NULL;
 
-	ctx->infd = -1;//Set to -1 to indicate no file is open.
+	ctx->infd = -1; //Set to -1 to indicate no file is open.
 	ctx->m2ts = cfg->m2ts;
 	ctx->auto_stream = cfg->auto_stream;
 	ctx->stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
@@ -427,5 +425,4 @@ struct demuxer_data *alloc_demuxer_data(void)
 	data->next_stream = 0;
 	data->next_program = 0;
 	return data;
-
 }

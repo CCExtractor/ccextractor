@@ -18,11 +18,10 @@ unsigned char tspacket[188]; // Current packet
 
 //struct ts_payload payload;
 
-
 static unsigned char *haup_capbuf = NULL;
 static long haup_capbufsize = 0;
 static long haup_capbuflen = 0; // Bytes read in haup_capbuf
-uint64_t last_pts = 0; // PTS of last PES packet (debug purposes)
+uint64_t last_pts = 0;		// PTS of last PES packet (debug purposes)
 
 // Descriptions for ts ccx_stream_type
 const char *desc[256];
@@ -185,7 +184,6 @@ void init_ts(struct ccx_demuxer *ctx)
 	desc[CCX_STREAM_TYPE_ISO_IEC_13818_6_TYPE_D] = "ISO/IEC 13818-6 type D";
 }
 
-
 // Return 1 for successfully read ts packet
 int ts_readpacket(struct ccx_demuxer *ctx, struct ts_payload *payload)
 {
@@ -268,7 +266,7 @@ int ts_readpacket(struct ccx_demuxer *ctx, struct ts_payload *payload)
 #ifdef DEBUG_SAVE_TS_PACKETS
 	// quick & dirty way to save packets so we reproduce issues that only
 	// seem to happen when there's packet loss when processing a network
-	// stream. 
+	// stream.
 	FILE *savepacket;
 	pid_t mypid = getpid();
 	char spfn[1024];
@@ -336,8 +334,8 @@ int ts_readpacket(struct ccx_demuxer *ctx, struct ts_payload *payload)
 		payload->has_random_access_indicator = 0;
 
 	dbg_print(CCX_DMT_PARSE, "TS pid: %d  PES start: %d  counter: %u  payload length: %u  adapt length: %d\n",
-		payload->pid, payload->start, payload->counter, payload->length,
-		(int)(adaptation_field_length));
+		  payload->pid, payload->start, payload->counter, payload->length,
+		  (int)(adaptation_field_length));
 
 	if (payload->length == 0)
 	{
@@ -346,8 +344,6 @@ int ts_readpacket(struct ccx_demuxer *ctx, struct ts_payload *payload)
 	// Store packet information
 	return CCX_OK;
 }
-
-
 
 void look_for_caption_data(struct ccx_demuxer *ctx, struct ts_payload *payload)
 {
@@ -359,7 +355,7 @@ void look_for_caption_data(struct ccx_demuxer *ctx, struct ts_payload *payload)
 	for (i = 0; i < (payload->length - 3); i++)
 	{
 		if (payload->start[i] == 'G' && payload->start[i + 1] == 'A' &&
-			payload->start[i + 2] == '9' && payload->start[i + 3] == '4')
+		    payload->start[i + 2] == '9' && payload->start[i + 3] == '4')
 		{
 			mprint("PID %u seems to contain CEA-608 captions.\n", payload->pid);
 			ctx->PIDs_seen[payload->pid] = 3;
@@ -392,7 +388,6 @@ void delete_demuxer_data_node_by_pid(struct demuxer_data **data, int pid)
 			ptr = ptr->next_stream;
 		}
 	}
-
 }
 
 struct demuxer_data *search_or_alloc_demuxer_data_node_by_pid(struct demuxer_data **data, int pid)
@@ -493,7 +488,6 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	if (!cinfo->capbuf || !cinfo->capbuflen)
 		return -1;
 
-
 	if (ptr->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 	{
 		dump(CCX_DMT_GENERIC_NOTICES, cinfo->capbuf, cinfo->capbuflen, 0, 1);
@@ -542,9 +536,9 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 				if (2 > BUFSIZE - ptr->len)
 				{
 					fatal(CCX_COMMON_EXIT_BUG_BUG,
-						"Remaining buffer (%lld) not enough to hold the 3 Hauppage bytes.\n"
-						"Please send bug report!",
-						BUFSIZE - ptr->len);
+					      "Remaining buffer (%lld) not enough to hold the 3 Hauppage bytes.\n"
+					      "Please send bug report!",
+					      BUFSIZE - ptr->len);
 				}
 				if (haup_capbuf[i + 9] == 1 || haup_capbuf[i + 9] == 2) // Field match. // TODO: If extract==12 this won't work!
 				{
@@ -572,9 +566,9 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 		if (ptr->len + databuflen >= BUFSIZE)
 		{
 			fatal(CCX_COMMON_EXIT_BUG_BUG,
-				"PES data packet (%ld) larger than remaining buffer (%lld).\n"
-				"Please send bug report!",
-				databuflen, BUFSIZE - ptr->len);
+			      "PES data packet (%ld) larger than remaining buffer (%lld).\n"
+			      "Please send bug report!",
+			      databuflen, BUFSIZE - ptr->len);
 			return CCX_EAGAIN;
 		}
 		memcpy(ptr->buffer + ptr->len, databuf, databuflen);
@@ -599,7 +593,7 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 	int newcapbuflen;
 
 	if (cinfo->ignore == CCX_TRUE &&
-		(cinfo->stream != CCX_STREAM_TYPE_VIDEO_MPEG2 || !ccx_options.analyze_video_stream))
+	    (cinfo->stream != CCX_STREAM_TYPE_VIDEO_MPEG2 || !ccx_options.analyze_video_stream))
 	{
 		return CCX_OK;
 	}
@@ -608,7 +602,7 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 	if (cinfo->capbuflen == 0)
 	{
 		if (payload->start[0] != 0x00 || payload->start[1] != 0x00 ||
-			payload->start[2] != 0x01)
+		    payload->start[2] != 0x01)
 		{
 			mprint("Notice: Missing PES header\n");
 			dump(CCX_DMT_DUMPDEF, payload->start, payload->length, 0, 0);
@@ -620,7 +614,8 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 
 	// copy payload to capbuf
 	newcapbuflen = cinfo->capbuflen + payload->length;
-	if (newcapbuflen > cinfo->capbufsize) {
+	if (newcapbuflen > cinfo->capbufsize)
+	{
 		cinfo->capbuf = (unsigned char *)realloc(cinfo->capbuf, newcapbuflen);
 		if (!cinfo->capbuf)
 			return -1;
@@ -736,8 +731,8 @@ uint64_t get_video_min_pts(struct ccx_demuxer *context)
 long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
 	int gotpes = 0;
-	long pespcount = 0; // count packets in PES with captions
-	long pcount = 0; // count all packets until PES is complete
+	long pespcount = 0;	      // count packets in PES with captions
+	long pcount = 0;	      // count all packets until PES is complete
 	int packet_analysis_mode = 0; // If we can't find any packet with CC based from PMT, look for captions in all packets
 	int ret = CCX_EAGAIN;
 	struct program_info *pinfo = NULL;
@@ -763,7 +758,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		if (payload.transport_error)
 		{
 			dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - transport error.\n",
-				payload.pid);
+				  payload.pid);
 			continue;
 		}
 
@@ -776,7 +771,8 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			continue;
 		}
 
-		if (ccx_options.xmltv >= 1 && payload.pid == 0x11) {// This is SDT (or BAT)
+		if (ccx_options.xmltv >= 1 && payload.pid == 0x11)
+		{ // This is SDT (or BAT)
 			ts_buffer_psi_packet(ctx);
 			if (ctx->PID_buffers[payload.pid] != NULL && ctx->PID_buffers[payload.pid]->buffer_length > 0)
 				parse_SDT(ctx);
@@ -787,12 +783,11 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		if (ccx_options.xmltv >= 1 && payload.pid >= 0x1000) // This may be ATSC EPG packet
 			parse_EPG_packet(ctx->parent);
 
-
 		for (j = 0; j < ctx->nb_program; j++)
 		{
 			if (ctx->pinfo[j].analysed_PMT_once == CCX_TRUE &&
-				ctx->pinfo[j].pcr_pid == payload.pid &&
-				payload.have_pcr)
+			    ctx->pinfo[j].pcr_pid == payload.pid &&
+			    payload.have_pcr)
 			{
 				ctx->last_global_timestamp = ctx->global_timestamp;
 				ctx->global_timestamp = (uint32_t)payload.pcr / 90;
@@ -806,7 +801,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 					ctx->offset_global_timestamp = ctx->last_global_timestamp - ctx->min_global_timestamp;
 					ctx->min_global_timestamp = ctx->global_timestamp;
 				}
-
 			}
 			if (ctx->pinfo[j].pid == payload.pid)
 			{
@@ -832,8 +826,8 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 				if (ctx->PIDs_programs[payload.pid])
 				{
 					dbg_print(CCX_DMT_PARSE, "\nNew PID found: %u (%s), belongs to program: %u\n", payload.pid,
-						desc[ctx->PIDs_programs[payload.pid]->printable_stream_type],
-						ctx->PIDs_programs[payload.pid]->program_number);
+						  desc[ctx->PIDs_programs[payload.pid]->printable_stream_type],
+						  ctx->PIDs_programs[payload.pid]->program_number);
 					ctx->PIDs_seen[payload.pid] = 2;
 				}
 				else
@@ -848,9 +842,8 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 				if (ctx->PIDs_programs[payload.pid])
 				{
 					dbg_print(CCX_DMT_PARSE, "\nProgram for PID: %u (previously unknown) is: %u (%s)\n", payload.pid,
-						ctx->PIDs_programs[payload.pid]->program_number,
-						desc[ctx->PIDs_programs[payload.pid]->printable_stream_type]
-					);
+						  ctx->PIDs_programs[payload.pid]->program_number,
+						  desc[ctx->PIDs_programs[payload.pid]->printable_stream_type]);
 					ctx->PIDs_seen[payload.pid] = 2;
 				}
 				break;
@@ -881,7 +874,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 						pid_index = i;
 				ctx->stream_id_of_each_pid[pid_index] = pes_stream_id;
 				if (pts < ctx->min_pts[pid_index])
-					ctx->min_pts[pid_index] = pts; //and add its packet pts 
+					ctx->min_pts[pid_index] = pts; //and add its packet pts
 			}
 		}
 
@@ -899,7 +892,8 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			// Haup packets processed separately, because we can't mix payloads. So they go in their own buffer
 			// copy payload to capbuf
 			int haup_newcapbuflen = haup_capbuflen + payload.length;
-			if (haup_newcapbuflen > haup_capbufsize) {
+			if (haup_newcapbuflen > haup_capbufsize)
+			{
 				haup_capbuf = (unsigned char *)realloc(haup_capbuf, haup_newcapbuflen);
 				if (!haup_capbuf)
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to store hauppauge packets");
@@ -907,7 +901,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			}
 			memcpy(haup_capbuf + haup_capbuflen, payload.start, payload.length);
 			haup_capbuflen = haup_newcapbuflen;
-
 		}
 
 		// Skip packets with no payload.  This also fixes the problems
@@ -916,7 +909,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		if (!payload.length)
 		{
 			dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - no payload.\n",
-				payload.pid);
+				  payload.pid);
 			continue;
 		}
 
@@ -925,13 +918,13 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		{
 			if (!packet_analysis_mode)
 				dbg_print(CCX_DMT_PARSE, "Packet (pid %u) skipped - no stream with captions identified yet.\n",
-					payload.pid);
+					  payload.pid);
 			else
 				look_for_caption_data(ctx, &payload);
 			continue;
 		}
 		else if (cinfo->ignore == CCX_TRUE &&
-			(cinfo->stream != CCX_STREAM_TYPE_VIDEO_MPEG2 || !ccx_options.analyze_video_stream))
+			 (cinfo->stream != CCX_STREAM_TYPE_VIDEO_MPEG2 || !ccx_options.analyze_video_stream))
 		{
 			if (cinfo->codec_private_data)
 			{
@@ -972,11 +965,10 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		if (!cinfo->saw_pesstart)
 			continue;
 
-
 		if ((cinfo->prev_counter == 15 ? 0 : cinfo->prev_counter + 1) != payload.counter)
 		{
 			mprint("TS continuity counter not incremented prev/curr %u/%u\n",
-				cinfo->prev_counter, payload.counter);
+			       cinfo->prev_counter, payload.counter);
 		}
 		cinfo->prev_counter = payload.counter;
 
@@ -984,7 +976,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		if (payload.pesstart && cinfo->capbuflen > 0)
 		{
 			dbg_print(CCX_DMT_PARSE, "\nPES finished (%ld bytes/%ld PES packets/%ld total packets)\n",
-				cinfo->capbuflen, pespcount, pcount);
+				  cinfo->capbuflen, pespcount, pcount);
 
 			// Keep the data from capbuf to be worked on
 			ret = copy_capbuf_demux_data(ctx, data, cinfo);
@@ -1027,8 +1019,8 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 								if (ctx->min_pts[j] < pinfo->got_important_streams_min_pts[VIDEO])
 									pinfo->got_important_streams_min_pts[VIDEO] = ctx->min_pts[j];
 							if (pinfo->got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX &&
-								pinfo->got_important_streams_min_pts[AUDIO] != UINT64_MAX &&
-								pinfo->got_important_streams_min_pts[VIDEO] != UINT64_MAX)
+							    pinfo->got_important_streams_min_pts[AUDIO] != UINT64_MAX &&
+							    pinfo->got_important_streams_min_pts[VIDEO] != UINT64_MAX)
 								pinfo->has_all_min_pts = 1;
 						}
 					}
@@ -1044,13 +1036,13 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	return ret;
 }
 
-
 // TS specific data grabber
 int ts_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
 {
 	int ret = CCX_OK;
 
-	do {
+	do
+	{
 		ret = ts_readstream(ctx->demux_ctx, data);
 	} while (ret == CCX_EAGAIN);
 

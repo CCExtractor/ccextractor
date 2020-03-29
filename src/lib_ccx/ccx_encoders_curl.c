@@ -10,8 +10,8 @@
 #include "ccx_encoders_helpers.h"
 #include "utf8proc.h"
 
-extern  CURL *curl;
-extern  CURLcode res;
+extern CURL *curl;
+extern CURLcode res;
 
 int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
@@ -76,7 +76,7 @@ int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *cont
 			/* Check for errors */
 			if (res != CURLE_OK)
 				mprint("curl_easy_perform() failed: %s\n",
-					curl_easy_strerror(res));
+				       curl_easy_strerror(res));
 		}
 		freep(&str);
 	}
@@ -89,6 +89,5 @@ int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *cont
 	sub->nb_data = 0;
 	freep(&sub->data);
 	return ret;
-
 }
 #endif

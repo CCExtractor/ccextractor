@@ -26,7 +26,6 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 	if (sub->flags & SUB_EOD_MARKER)
 		context->prev_start = sub->start_time;
 
-
 	if (rect[0].ocr_text && *(rect[0].ocr_text))
 	{
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
@@ -98,7 +97,6 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 			}
 
 			write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-
 		}
 	}
 #endif
@@ -106,9 +104,7 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 	sub->nb_data = 0;
 	freep(&sub->data);
 	return ret;
-
 }
-
 
 int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
@@ -234,13 +230,12 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 	return ret;
 }
 
-
 //TODO Convert CC line to TEXT format and remove this function
 void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context, int line_number)
 {
 	int ret = 0;
 	int length = get_str_basic(context->subline, data->characters[line_number],
-		context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
+				   context->trim_subs, CCX_ENC_ASCII, context->encoding, CCX_DECODER_608_SCREEN_WIDTH);
 
 	if (context->encoding != CCX_ENC_UNICODE)
 	{
@@ -258,13 +253,16 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 			return;
 		}
 
-		if (context->transcript_settings->showStartTime) {
+		if (context->transcript_settings->showStartTime)
+		{
 			char buf1[80];
-			if (context->transcript_settings->relativeTimestamp) {
+			if (context->transcript_settings->relativeTimestamp)
+			{
 				millis_to_date(data->start_time, buf1, context->date_format, context->millis_separator);
 				fdprintf(context->out->fh, "%s|", buf1);
 			}
-			else {
+			else
+			{
 				time_t start_time_int = data->start_time / 1000;
 				int start_time_dec = data->start_time % 1000;
 				struct tm *start_time_struct = gmtime(&start_time_int);
@@ -273,13 +271,16 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 			}
 		}
 
-		if (context->transcript_settings->showEndTime) {
+		if (context->transcript_settings->showEndTime)
+		{
 			char buf2[80];
-			if (context->transcript_settings->relativeTimestamp) {
+			if (context->transcript_settings->relativeTimestamp)
+			{
 				millis_to_date(data->end_time, buf2, context->date_format, context->millis_separator);
 				fdprintf(context->out->fh, "%s|", buf2);
 			}
-			else {
+			else
+			{
 				time_t end_time_int = data->end_time / 1000;
 				int end_time_dec = data->end_time % 1000;
 				struct tm *end_time_struct = gmtime(&end_time_int);
@@ -288,10 +289,12 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 			}
 		}
 
-		if (context->transcript_settings->showCC) {
+		if (context->transcript_settings->showCC)
+		{
 			fdprintf(context->out->fh, "CC%d|", data->my_field == 1 ? data->channel : data->channel + 2); // Data from field 2 is CC3 or 4
 		}
-		if (context->transcript_settings->showMode) {
+		if (context->transcript_settings->showMode)
+		{
 			const char *mode = "???";
 			switch (data->mode)
 			{

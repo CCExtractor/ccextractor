@@ -17,7 +17,8 @@ void EPG_fprintxml(FILE *f, char *string)
 	char *start = p;
 	while (*p != '\0')
 	{
-		switch (*p) {
+		switch (*p)
+		{
 			case '<':
 				fwrite(start, 1, p - start, f);
 				fprintf(f, "&lt;");
@@ -71,7 +72,7 @@ void EPG_DVB_calc_start_time(struct EPG_event *event, uint64_t time)
 	event->start_time_string[0] = '\0';
 	if (mjd > 0)
 	{
-		long   y, m, d, k;
+		long y, m, d, k;
 
 		// algo: ETSI EN 300 468 - ANNEX C
 		y = (long)((mjd - 15078.2) / 365.25);
@@ -81,7 +82,7 @@ void EPG_DVB_calc_start_time(struct EPG_event *event, uint64_t time)
 		y = y + k + 1900;
 		m = m - 1 - k * 12;
 
-		sprintf(event->start_time_string, "%02ld%02ld%02ld%06"PRIu64 "+0000", y, m, d, time & 0xffffff);
+		sprintf(event->start_time_string, "%02ld%02ld%02ld%06" PRIu64 "+0000", y, m, d, time & 0xffffff);
 	}
 }
 
@@ -92,7 +93,7 @@ void EPG_DVB_calc_end_time(struct EPG_event *event, uint64_t time, uint32_t dura
 	event->end_time_string[0] = '\0';
 	if (mjd > 0)
 	{
-		long   y, m, d, k;
+		long y, m, d, k;
 		struct tm timeinfo;
 
 		// algo: ETSI EN 300 468 - ANNEX C
@@ -119,28 +120,117 @@ void EPG_DVB_calc_end_time(struct EPG_event *event, uint64_t time, uint32_t dura
 // returns english string description of the passed DVB category ID
 char *EPG_DVB_content_type_to_string(uint8_t cat)
 {
-	struct table {
+	struct table
+	{
 		uint8_t cat;
 		char *name;
 	};
 	struct table t[] = {
-		{0x00, "reserved"}, { 0x10, "movie/drama (general)" }, { 0x11, "detective/thriller" }, { 0x12, "adventure/western/war" }, { 0x13, "science fiction/fantasy/horror" },{ 0x14, "comedy" },
-		{ 0x15, "soap/melodram/folkloric" }, { 0x16, "romance" }, { 0x17, "serious/classical/religious/historical movie/drama" }, { 0x18, "adult movie/drama" }, { 0x1E, "reserved" },
-		{ 0x1F, "user defined" }, { 0x20, "news/current affairs (general)" }, { 0x21, "news/weather report" }, { 0x22, "news magazine" }, { 0x23, "documentary" }, { 0x24, "discussion/interview/debate" },
-		{ 0x2E, "reserved" }, { 0x2F, "user defined" }, { 0x30, "show/game show (general)" }, { 0x31, "game show/quiz/contest" }, { 0x32, "variety show" }, { 0x33, "talk show" }, { 0x3E, "reserved" },
-		{ 0x3F, "user defined" }, { 0x40, "sports (general)" }, { 0x41, "special events" }, { 0x42, "sports magazine" }, { 0x43, "football/soccer" }, { 0x44, "tennis/squash" }, { 0x45, "team sports" },
-		{ 0x46, "athletics" }, { 0x47, "motor sport" }, { 0x48, "water sport" }, { 0x49, "winter sport" }, { 0x4A, "equestrian" }, { 0x4B, "martial sports" }, { 0x4E, "reserved" }, { 0x4F, "user defined" },
-		{ 0x50, "childrens's/youth program (general)" }, { 0x51, "pre-school children's program" }, { 0x52, "entertainment (6-14 year old)" }, { 0x53, "entertainment (10-16 year old)" },
-		{ 0x54, "information/education/school program" }, { 0x55, "cartoon/puppets" }, { 0x5E, "reserved" }, { 0x5F, "user defined" }, { 0x60, "music/ballet/dance (general)" }, { 0x61, "rock/pop" },
-		{ 0x62, "serious music/classic music" }, { 0x63, "folk/traditional music" }, { 0x64, "jazz" }, { 0x65, "musical/opera" }, { 0x66, "ballet" }, { 0x6E, "reserved" }, { 0x6F, "user defined" },
-		{ 0x70, "arts/culture (without music, general)" },{ 0x71, "performing arts" }, { 0x72, "fine arts" }, { 0x73, "religion" }, { 0x74, "popular culture/traditional arts" }, { 0x75, "literature" },
-		{ 0x76, "film/cinema" }, { 0x77, "experimental film/video" }, { 0x78, "broadcasting/press" }, { 0x79, "new media" }, { 0x7A, "arts/culture magazine" }, { 0x7B, "fashion" }, { 0x7E, "reserved" },
-		{ 0x7F, "user defined" }, { 0x80, "social/political issues/economics (general)" }, { 0x81, "magazines/reports/documentary" }, { 0x82, "economics/social advisory" }, { 0x83, "remarkable people" },
-		{ 0x8E, "reserved" }, { 0x8F, "user defined" }, { 0x90, "education/science/factual topics (general)" }, { 0x91, "nature/animals/environment" }, { 0x92, "technology/natural science" },
-		{ 0x93, "medicine/physiology/psychology" }, { 0x94, "foreign countries/expeditions" }, { 0x95, "social/spiritual science" }, { 0x96, "further education" }, { 0x97, "languages" },
-		{ 0x9E, "reserved" }, { 0x9F, "user defined" }, { 0xA0, "leisure hobbies (general)" }, { 0xA1, "tourism/travel" }, { 0xA2, "handicraft" }, { 0xA3, "motoring" }, { 0xA4, "fitness & health" },
-		{ 0xA5, "cooking" }, { 0xA6, "advertisement/shopping" }, { 0xA7, "gardening" }, { 0xAE, "reserved" }, { 0xAF, "user defined" }, { 0xB0, "original language" }, { 0xB1, "black & white" },
-		{ 0xB2, "unpublished" }, { 0xB3, "live broadcast" }, { 0xBE, "reserved" }, { 0xBF, "user defined" }, { 0xEF, "reserved" }, { 0xFF, "user defined" }, {0x00, NULL},
+	    {0x00, "reserved"},
+	    {0x10, "movie/drama (general)"},
+	    {0x11, "detective/thriller"},
+	    {0x12, "adventure/western/war"},
+	    {0x13, "science fiction/fantasy/horror"},
+	    {0x14, "comedy"},
+	    {0x15, "soap/melodram/folkloric"},
+	    {0x16, "romance"},
+	    {0x17, "serious/classical/religious/historical movie/drama"},
+	    {0x18, "adult movie/drama"},
+	    {0x1E, "reserved"},
+	    {0x1F, "user defined"},
+	    {0x20, "news/current affairs (general)"},
+	    {0x21, "news/weather report"},
+	    {0x22, "news magazine"},
+	    {0x23, "documentary"},
+	    {0x24, "discussion/interview/debate"},
+	    {0x2E, "reserved"},
+	    {0x2F, "user defined"},
+	    {0x30, "show/game show (general)"},
+	    {0x31, "game show/quiz/contest"},
+	    {0x32, "variety show"},
+	    {0x33, "talk show"},
+	    {0x3E, "reserved"},
+	    {0x3F, "user defined"},
+	    {0x40, "sports (general)"},
+	    {0x41, "special events"},
+	    {0x42, "sports magazine"},
+	    {0x43, "football/soccer"},
+	    {0x44, "tennis/squash"},
+	    {0x45, "team sports"},
+	    {0x46, "athletics"},
+	    {0x47, "motor sport"},
+	    {0x48, "water sport"},
+	    {0x49, "winter sport"},
+	    {0x4A, "equestrian"},
+	    {0x4B, "martial sports"},
+	    {0x4E, "reserved"},
+	    {0x4F, "user defined"},
+	    {0x50, "childrens's/youth program (general)"},
+	    {0x51, "pre-school children's program"},
+	    {0x52, "entertainment (6-14 year old)"},
+	    {0x53, "entertainment (10-16 year old)"},
+	    {0x54, "information/education/school program"},
+	    {0x55, "cartoon/puppets"},
+	    {0x5E, "reserved"},
+	    {0x5F, "user defined"},
+	    {0x60, "music/ballet/dance (general)"},
+	    {0x61, "rock/pop"},
+	    {0x62, "serious music/classic music"},
+	    {0x63, "folk/traditional music"},
+	    {0x64, "jazz"},
+	    {0x65, "musical/opera"},
+	    {0x66, "ballet"},
+	    {0x6E, "reserved"},
+	    {0x6F, "user defined"},
+	    {0x70, "arts/culture (without music, general)"},
+	    {0x71, "performing arts"},
+	    {0x72, "fine arts"},
+	    {0x73, "religion"},
+	    {0x74, "popular culture/traditional arts"},
+	    {0x75, "literature"},
+	    {0x76, "film/cinema"},
+	    {0x77, "experimental film/video"},
+	    {0x78, "broadcasting/press"},
+	    {0x79, "new media"},
+	    {0x7A, "arts/culture magazine"},
+	    {0x7B, "fashion"},
+	    {0x7E, "reserved"},
+	    {0x7F, "user defined"},
+	    {0x80, "social/political issues/economics (general)"},
+	    {0x81, "magazines/reports/documentary"},
+	    {0x82, "economics/social advisory"},
+	    {0x83, "remarkable people"},
+	    {0x8E, "reserved"},
+	    {0x8F, "user defined"},
+	    {0x90, "education/science/factual topics (general)"},
+	    {0x91, "nature/animals/environment"},
+	    {0x92, "technology/natural science"},
+	    {0x93, "medicine/physiology/psychology"},
+	    {0x94, "foreign countries/expeditions"},
+	    {0x95, "social/spiritual science"},
+	    {0x96, "further education"},
+	    {0x97, "languages"},
+	    {0x9E, "reserved"},
+	    {0x9F, "user defined"},
+	    {0xA0, "leisure hobbies (general)"},
+	    {0xA1, "tourism/travel"},
+	    {0xA2, "handicraft"},
+	    {0xA3, "motoring"},
+	    {0xA4, "fitness & health"},
+	    {0xA5, "cooking"},
+	    {0xA6, "advertisement/shopping"},
+	    {0xA7, "gardening"},
+	    {0xAE, "reserved"},
+	    {0xAF, "user defined"},
+	    {0xB0, "original language"},
+	    {0xB1, "black & white"},
+	    {0xB2, "unpublished"},
+	    {0xB3, "live broadcast"},
+	    {0xBE, "reserved"},
+	    {0xBF, "user defined"},
+	    {0xEF, "reserved"},
+	    {0xFF, "user defined"},
+	    {0x00, NULL},
 	};
 	struct table *p = t;
 	while (p->name != NULL)
@@ -150,10 +240,9 @@ char *EPG_DVB_content_type_to_string(uint8_t cat)
 		p++;
 	}
 	return "undefined content";
-
 }
 
-// Prints given event to already opened XMLTV file. 
+// Prints given event to already opened XMLTV file.
 void EPG_print_event(struct EPG_event *event, uint32_t channel, FILE *f)
 {
 	int i;
@@ -228,12 +317,11 @@ void EPG_output_net(struct lib_ccx_ctx *ctx)
 			category = EPG_DVB_content_type_to_string(event->categories[0]);
 
 		net_send_epg(
-			event->start_time_string, event->end_time_string,
-			event->event_name,
-			event->extended_text,
-			event->ISO_639_language_code,
-			category
-		);
+		    event->start_time_string, event->end_time_string,
+		    event->event_name,
+		    event->extended_text,
+		    event->ISO_639_language_code,
+		    category);
 	}
 }
 
@@ -479,31 +567,38 @@ char *EPG_DVB_decode_string(uint8_t *in, size_t size)
 	}
 	else if (in[0] == 0x01)
 	{
-		size--;	in++;
+		size--;
+		in++;
 		cd = iconv_open("UTF-8", "ISO8859-5"); //tested
 	}
 	else if (in[0] == 0x02)
 	{
-		size--;	in++;
+		size--;
+		in++;
 		cd = iconv_open("UTF-8", "ISO8859-6");
 	}
 	else if (in[0] == 0x03)
 	{
-		size--;	in++;
+		size--;
+		in++;
 		cd = iconv_open("UTF-8", "ISO8859-7");
 	}
 	else if (in[0] == 0x04)
 	{
-		size--;	in++;
+		size--;
+		in++;
 		cd = iconv_open("UTF-8", "ISO8859-8");
 	}
 	else if (in[0] == 0x05)
 	{
-		size--;	in++;
+		size--;
+		in++;
 		cd = iconv_open("UTF-8", "ISO8859-9");
 	}
-	else if (in[0] == 0x06) {
-		size--;	in++;
+	else if (in[0] == 0x06)
+	{
+		size--;
+		in++;
 		cd = iconv_open("UTF-8", "ISO8859-10");
 	}
 	else if (in[0] == 0x07)
@@ -514,61 +609,72 @@ char *EPG_DVB_decode_string(uint8_t *in, size_t size)
 	}
 	else if (in[0] == 0x08)
 	{
-		size--;	in++;
+		size--;
+		in++;
 		cd = iconv_open("UTF-8", "ISO8859-12"); //This doesn't even exist?
 	}
 	else if (in[0] == 0x09)
 	{
-		size--;	in++;
+		size--;
+		in++;
 		cd = iconv_open("UTF-8", "ISO8859-13");
 	}
 	else if (in[0] == 0x0a)
 	{
-		size--;	in++;
+		size--;
+		in++;
 		cd = iconv_open("UTF-8", "ISO8859-14");
 	}
 	else if (in[0] == 0x0b)
 	{
-		size--;	in++;
+		size--;
+		in++;
 		cd = iconv_open("UTF-8", "ISO8859-15"); //tested, german
 	}
 	else if (in[0] == 0x10)
 	{
 		char from[14];
 		uint16_t cpn = (in[1] << 8) | in[2];
-		size -= 3; in += 3;
+		size -= 3;
+		in += 3;
 		snprintf(from, sizeof(from), "ISO8859-%d", cpn);
 		cd = iconv_open("UTF-8", from);
 	}
 	else if (in[0] == 0x11)
 	{
-		size--;	in++;
+		size--;
+		in++;
 		cd = iconv_open("UTF-8", "ISO-10646/UTF8");
 	}
 	else if (in[0] == 0x12)
 	{
-		size--;	in++;
+		size--;
+		in++;
 		cd = iconv_open("UTF-8", "KS_C_5601-1987");
 	}
 	else if (in[0] == 0x13)
 	{
-		size--;	in++;
+		size--;
+		in++;
 		cd = iconv_open("UTF-8", "GB2312");
 	}
 	else if (in[0] == 0x14)
 	{
-		size--;	in++;
+		size--;
+		in++;
 		cd = iconv_open("UTF-8", "BIG-5");
 	}
 	else if (in[0] == 0x15)
 	{
-		size--;	in++;
+		size--;
+		in++;
 		cd = iconv_open("UTF-8", "UTF-8");
 	}
 	else
 	{
 		dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: EPG_DVB_decode_string(): Reserved encoding detected: %02x.\n", in[0]);
-		size--;	in++;
+		size--;
+		in++;
 		cd = iconv_open("UTF-8", "ISO8859-9");
 	}
 
@@ -638,7 +744,6 @@ void EPG_decode_short_event_descriptor(uint8_t *offset, uint32_t descriptor_leng
 		return;
 	}
 	event->text = EPG_DVB_decode_string(&offset[5 + event_name_length], text_length);
-
 }
 
 //EN 300 468 V1.3.1 (1998-02)
@@ -670,8 +775,10 @@ void EPG_decode_extended_event_descriptor(uint8_t *offset, uint32_t descriptor_l
 	}
 
 	//TODO: can this leak memory with a malformed descriptor?
-	if (descriptor_number > 0) {
-		if (offset[1] < 0x20) {
+	if (descriptor_number > 0)
+	{
+		if (offset[1] < 0x20)
+		{
 			offset++;
 			text_length--;
 		}
@@ -688,12 +795,12 @@ void EPG_decode_extended_event_descriptor(uint8_t *offset, uint32_t descriptor_l
 
 	event->extended_text[oldlen + text_length] = '\0';
 
-	if (descriptor_number == last_descriptor_number) {
+	if (descriptor_number == last_descriptor_number)
+	{
 		uint8_t *old = event->extended_text;
 		event->extended_text = EPG_DVB_decode_string(event->extended_text, strlen(event->extended_text));
 		free(old);
 	}
-
 }
 
 // decode an ATSC multiple_string
@@ -705,7 +812,9 @@ void EPG_ATSC_decode_multiple_string(uint8_t *offset, uint32_t length, struct EP
 	int i, j;
 	char ISO_639_language_code[4];
 	uint8_t *offset_end = offset + length;
-#define CHECK_OFFSET(val) if(offset + val < offset_end) return
+#define CHECK_OFFSET(val)              \
+	if (offset + val < offset_end) \
+	return
 
 	CHECK_OFFSET(1);
 	number_strings = offset[0];
@@ -790,7 +899,9 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 
 	num_events_in_section = payload_start[9];
 
-#define CHECK_OFFSET(val) if(offset + val < (payload_start + size) ) return
+#define CHECK_OFFSET(val)                          \
+	if (offset + val < (payload_start + size)) \
+	return
 	offset = &payload_start[10];
 
 	for (j = 0; j < num_events_in_section && offset < payload_start + size; j++)
@@ -860,7 +971,6 @@ void EPG_ATSC_decode_VCT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 	}
 }
 
-
 void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_t size)
 {
 
@@ -876,7 +986,6 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 	uint32_t events_length;
 	uint8_t *offset;
 	uint32_t remaining;
-
 
 	if (size < 13)
 		return;
@@ -939,7 +1048,8 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 		}
 		while (descp < &(offset[26]) + descriptors_loop_length)
 		{
-			if (descp + descp[1] + 2 > payload_start + size) {
+			if (descp + descp[1] + 2 > payload_start + size)
+			{
 				dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid EIT descriptor_loop_length detected.\n");
 				EPG_free_event(&event);
 				return;
@@ -1003,12 +1113,14 @@ void EPG_parse_table(struct lib_ccx_ctx *ctx, uint8_t *b, uint32_t size)
 	uint8_t table_id;
 
 	//XXX hack, should accumulate data
-	if (pointer_field + 2 > size) {
+	if (pointer_field + 2 > size)
+	{
 		return;
 	}
 	payload_start = &b[pointer_field + 1];
 	table_id = payload_start[0];
-	switch (table_id) {
+	switch (table_id)
+	{
 		case 0x0cb:
 			EPG_ATSC_decode_EIT(ctx, payload_start, size - (payload_start - b));
 			break;
@@ -1051,24 +1163,24 @@ void parse_EPG_packet(struct lib_ccx_ctx *ctx)
 
 	if (payload_start_indicator)
 	{
-		if (ctx->epg_buffers[buffer_map].ccounter > 0) {
+		if (ctx->epg_buffers[buffer_map].ccounter > 0)
+		{
 			ctx->epg_buffers[buffer_map].ccounter = 0;
 			EPG_parse_table(ctx, ctx->epg_buffers[buffer_map].buffer, ctx->epg_buffers[buffer_map].buffer_length);
 		}
-
 
 		ctx->epg_buffers[buffer_map].prev_ccounter = ccounter;
 
 		if (ctx->epg_buffers[buffer_map].buffer != NULL)
 			free(ctx->epg_buffers[buffer_map].buffer);
-		else {
+		else
+		{
 			// must be first EIT packet
 		}
 		ctx->epg_buffers[buffer_map].buffer = (uint8_t *)malloc(payload_length);
 		memcpy(ctx->epg_buffers[buffer_map].buffer, payload_start, payload_length);
 		ctx->epg_buffers[buffer_map].buffer_length = payload_length;
 		ctx->epg_buffers[buffer_map].ccounter++;
-
 	}
 	else if (ccounter == ctx->epg_buffers[buffer_map].prev_ccounter + 1 || (ctx->epg_buffers[buffer_map].prev_ccounter == 0x0f && ccounter == 0))
 	{

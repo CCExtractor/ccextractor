@@ -4,7 +4,8 @@
 #include "ccx_encoders_helpers.h"
 
 #ifdef PYTHON_API
-void Asprintf(char **strp, const char *fmt, ...) {
+void Asprintf(char **strp, const char *fmt, ...)
+{
 	int ret;
 	va_list ap;
 
@@ -12,15 +13,17 @@ void Asprintf(char **strp, const char *fmt, ...) {
 	ret = vasprintf(strp, fmt, ap);
 	va_end(ap);
 
-	if (ret == -1) {
+	if (ret == -1)
+	{
 		printf("Error: Some problem with asprintf return value in extractor.c\nExiting.");
 		exit(CCX_COMMON_EXIT_BUG_BUG);
 	}
 }
 
 void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms1,
-	unsigned h2, unsigned m2, unsigned s2, unsigned ms2,
-	char *buffer, int identifier, int srt_counter, int encoding) {
+			      unsigned h2, unsigned m2, unsigned s2, unsigned ms2,
+			      char *buffer, int identifier, int srt_counter, int encoding)
+{
 	/*
 	 * identifier = 0 ---> adding start and end time
 	 * identifier = 1 ---> subtitle
@@ -32,7 +35,8 @@ void python_extract_g608_grid(unsigned h1, unsigned m1, unsigned s1, unsigned ms
 	char *start_time = NULL;
 	char *end_time = NULL;
 
-	switch (identifier) {
+	switch (identifier)
+	{
 		case 0:
 			Asprintf(&start_time, "%02d:%02d:%02d,%03d", h1, m1, s1, ms1);
 			Asprintf(&end_time, "%02d:%02d:%02d,%03d", h2, m2, s2, ms2);
@@ -71,7 +75,7 @@ int pass_cc_buffer_to_python(struct eia608_screen *data, struct encoder_ctx *con
 
 	context->srt_counter++;
 	Asprintf(&timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
-		h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
+		 h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
 	encode_line(context, context->buffer, (unsigned char *)timeline);
 
 	python_extract_g608_grid(h1, m1, s1, ms1, h2, m2, s2, ms2, context->buffer, 0, context->srt_counter, context->encoding);
