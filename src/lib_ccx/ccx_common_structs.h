@@ -58,7 +58,9 @@ struct cc_subtitle
 	/** Encoding type of Text, must be ignored in case of subtype as bitmap or cc_screen*/
 	enum ccx_encoding_type  enc_type;
 
-	/* set only when all the data is to be displayed at same time */
+	/* set only when all the data is to be displayed at same time
+         * Unit is of time is ms
+         */
 	LLONG start_time;
 	LLONG end_time;
 
@@ -73,6 +75,9 @@ struct cc_subtitle
 	
 	char mode[5];
 	char info[4];
+
+	/** Used for DVB end time in ms */
+	int time_out;
 
 	struct cc_subtitle *next;
 	struct cc_subtitle *prev;

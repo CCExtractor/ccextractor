@@ -1,5 +1,6 @@
 0.89 (TBD)
 -----------------
+- Fix: Timing in DVB, sub duration check for timeout.
 - New: Added support for SCC and CCD encoder formats
 - New: Added support to output captions to MCC file (#733).
 - New: Add support for censoring words ("Kid Friendly") (#1139)
