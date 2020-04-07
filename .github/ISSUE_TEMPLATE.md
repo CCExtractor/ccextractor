@@ -10,7 +10,7 @@ Only specify the minimum number of arguments needed to reproduce the issue.
 
 In the additional information section, describe your problem.
 
-Please make the affected input file available for us (no screenshots, those don't help!). Public links to Dropbox, Google Drive, etc, are all fine. If it is not possible to make it available publicly, send us a private invitation (both Dropbox and Google Drive allow that). In this case we will download the file and upload it to the private developer repository.
+Please make the affected input file available for us (no screenshots, those don't help!). Public links to Dropbox, Google Drive, etc, are all fine. If it is not possible to make it available publicly, send us a private invitation (both Dropbox and Google Drive allow that). In this case we will download the file and upload it to the private developer repository. Methods to send the private invitation to us can be found [here](https://ccextractor.org/public:general:support#email).
 
 Do **not** upload your file to any location that will require us to sign up or endure a wait list, slow downloads, etc. If your upload expires make sure you keep it active somehow (replace links if needed). Keep in mind that while we go over all tickets some may take a few days, and it's important we have the file available when we actually need it.
 
