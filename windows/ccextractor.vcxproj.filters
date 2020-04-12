@@ -96,60 +96,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\libpng\png.h">
-      <Filter>Header Files\libpng</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\libpng\pngconf.h">
-      <Filter>Header Files\libpng</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\libpng\pngdebug.h">
-      <Filter>Header Files\libpng</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\libpng\pnginfo.h">
-      <Filter>Header Files\libpng</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\libpng\pnglibconf.h">
-      <Filter>Header Files\libpng</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\libpng\pngpriv.h">
-      <Filter>Header Files\libpng</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\libpng\pngstruct.h">
-      <Filter>Header Files\libpng</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zlib\crc32.h">
-      <Filter>Header Files\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zlib\deflate.h">
-      <Filter>Header Files\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zlib\gzguts.h">
-      <Filter>Header Files\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zlib\inffast.h">
-      <Filter>Header Files\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zlib\inffixed.h">
-      <Filter>Header Files\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zlib\inflate.h">
-      <Filter>Header Files\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zlib\inftrees.h">
-      <Filter>Header Files\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zlib\trees.h">
-      <Filter>Header Files\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zlib\zconf.h">
-      <Filter>Header Files\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zlib\zlib.h">
-      <Filter>Header Files\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zlib\zutil.h">
-      <Filter>Header Files\zlib</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\lib_ccx\disable_warnings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -213,47 +159,8 @@
     <ClInclude Include="..\src\lib_ccx\utility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\zvbi\bcd.h">
-      <Filter>Header Files\zvbi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zvbi\bit_slicer.h">
-      <Filter>Header Files\zvbi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zvbi\macros.h">
-      <Filter>Header Files\zvbi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zvbi\misc.h">
-      <Filter>Header Files\zvbi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zvbi\raw_decoder.h">
-      <Filter>Header Files\zvbi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zvbi\sampling_par.h">
-      <Filter>Header Files\zvbi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zvbi\sliced.h">
-      <Filter>Header Files\zvbi</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\zvbi\zvbi_decoder.h">
-      <Filter>Header Files\zvbi</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\lib_ccx\compile_info.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\lib_hash\sha2.h">
-      <Filter>Header Files\lib_hash</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\win_spec_incld\stdint.h">
-      <Filter>Header Files\win_spec_incld</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\win_spec_incld\inttypes.h">
-      <Filter>Header Files\win_spec_incld</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\win_spec_incld\dirent.h">
-      <Filter>Header Files\win_spec_incld</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\win_iconv\iconv.h">
-      <Filter>Header Files\win_iconv</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_common_option.h">
       <Filter>Header Files</Filter>
@@ -264,90 +171,6 @@
     <ClInclude Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.h">
       <Filter>Header Files\lib_ccx</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\protobuf-c\protobuf-c.h">
-      <Filter>Header Files\protobuf-c</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\microutf8\microutf8.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\utf8proc\utf8proc.h">
-      <Filter>Header Files\utf8proc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\avparse.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\base_coding.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\bitstream.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\config_file.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\constants.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\events_constants.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\ietf.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\isomedia.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\list.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\media_tools.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\mpeg4_odf.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\network.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\revision.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\setup.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\sync_layer.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\tools.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\utf.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\version.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\internal\avilib.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\internal\isomedia_dev.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\internal\media_dev.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\internal\odf_dev.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\internal\odf_parse_common.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\configuration.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\internal\ogg.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\lib_ccx\lib_ccx.h">
       <Filter>Header Files\lib_ccx</Filter>
     </ClInclude>
@@ -357,109 +180,214 @@
     <ClInclude Include="..\src\ccextractor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\color.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gpacmp4\gpac\maths.h">
-      <Filter>Header Files\gpacmp4</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\freetype\include\ft2build.h">
-      <Filter>Header Files\freetype</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\freetype\include\freetype\config\ftstdlib.h">
-      <Filter>Header Files\freetype</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\freetype\include\freetype\config\ftheader.h">
-      <Filter>Header Files\freetype</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\freetype\include\freetype\config\ftmodule.h">
-      <Filter>Header Files\freetype</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\freetype\include\freetype\config\ftoption.h">
-      <Filter>Header Files\freetype</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\freetype\include\freetype\config\ftconfig.h">
-      <Filter>Header Files\freetype</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_structs.h">
       <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_mcc.h">
       <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\avparse.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\base_coding.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\bitstream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\color.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\configuration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\config_file.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\events_constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\ietf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\avilib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\isomedia_dev.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\media_dev.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\odf_dev.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\odf_parse_common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\ogg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\isomedia.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\list.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\maths.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\media_tools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\mpeg4_odf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\network.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\revision.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\setup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\sync_layer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\tools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\utf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\libpng\png.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\libpng\pngconf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\libpng\pngdebug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\libpng\pnginfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\libpng\pnglibconf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\libpng\pngpriv.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\libpng\pngstruct.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\lib_hash\sha2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\protobuf-c\protobuf-c.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\utf8proc\utf8proc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\win_iconv\iconv.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\win_spec_incld\dirent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zlib\crc32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zlib\deflate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zlib\gzguts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zlib\inffast.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zlib\inffixed.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zlib\inflate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zlib\inftrees.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zlib\trees.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zlib\zconf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zlib\zlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zlib\zutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zvbi\bcd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zvbi\bit_slicer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zvbi\macros.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zvbi\misc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zvbi\raw_decoder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zvbi\sampling_par.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zvbi\sliced.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zvbi\zvbi_decoder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\win_spec_incld\inttypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\win_spec_incld\stdint.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\freetype\include\ft2build.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftconfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftheader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftmodule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftoption.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftstdlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\ccextractor.c">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\libpng\png.c">
-      <Filter>Source Files\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\libpng\pngerror.c">
-      <Filter>Source Files\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\libpng\pngget.c">
-      <Filter>Source Files\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\libpng\pngmem.c">
-      <Filter>Source Files\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\libpng\pngpread.c">
-      <Filter>Source Files\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\libpng\pngread.c">
-      <Filter>Source Files\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\libpng\pngrio.c">
-      <Filter>Source Files\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\libpng\pngrtran.c">
-      <Filter>Source Files\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\libpng\pngrutil.c">
-      <Filter>Source Files\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\libpng\pngset.c">
-      <Filter>Source Files\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\libpng\pngtrans.c">
-      <Filter>Source Files\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\libpng\pngwio.c">
-      <Filter>Source Files\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\libpng\pngwrite.c">
-      <Filter>Source Files\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\libpng\pngwtran.c">
-      <Filter>Source Files\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\libpng\pngwutil.c">
-      <Filter>Source Files\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\zlib\adler32.c">
-      <Filter>Source Files\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\zlib\crc32.c">
-      <Filter>Source Files\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\zlib\deflate.c">
-      <Filter>Source Files\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\zlib\inflate.c">
-      <Filter>Source Files\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\zlib\inffast.c">
-      <Filter>Source Files\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\zlib\inftrees.c">
-      <Filter>Source Files\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\zlib\trees.c">
-      <Filter>Source Files\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\zlib\zutil.c">
-      <Filter>Source Files\zlib</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_608.c">
       <Filter>Source Files\ccx_decoders</Filter>
@@ -533,29 +461,11 @@
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_isdb.c">
       <Filter>Source Files\ccx_decoders</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\zvbi\bit_slicer.c">
-      <Filter>Source Files\zvbi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\zvbi\decoder.c">
-      <Filter>Source Files\zvbi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\zvbi\raw_decoder.c">
-      <Filter>Source Files\zvbi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\zvbi\sampling_par.c">
-      <Filter>Source Files\zvbi</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_vbi.c">
       <Filter>Source Files\ccx_decoders</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_g608.c">
       <Filter>Source Files\ccx_decoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_hash\sha2.c">
-      <Filter>Source Files\lib_hash</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\win_iconv\win_iconv.c">
-      <Filter>Source Files\win_iconv</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_share.c">
       <Filter>Source Files\lib_ccx</Filter>
@@ -563,167 +473,17 @@
     <ClCompile Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.c">
       <Filter>Source Files\lib_ccx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\protobuf-c\protobuf-c.c">
-      <Filter>Source Files\protobuf-c</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_transcript.c">
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_splitbysentence.c">
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\utf8proc\utf8proc.c">
-      <Filter>Source Files\utf8proc</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_curl.c">
       <Filter>Source Files\ccx_encoders</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_ssa.c">
       <Filter>Source Files\ccx_encoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\av_parsers.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\avc_ext.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\avilib.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\base_encoding.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\bitstream.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\box_code_3gpp.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\box_code_adobe.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\box_code_apple.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\box_code_base.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\box_code_drm.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\box_code_meta.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\box_funcs.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\configfile.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\data_map.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\desc_private.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\descriptors.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\drm_sample.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\error.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\hinting.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\ipmpx_code.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\ipmpx_parse.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\isom_intern.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\isom_read.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\isom_store.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\isom_write.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\list.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\math.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\media.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\media_odf.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\meta.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\movie_fragments.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\mp4.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\odf_code.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\odf_codec.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\odf_command.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\os_config_init.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\os_divers.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\os_file.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\qos.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\sample_descs.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\slc.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\stbl_read.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\stbl_write.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\track.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\tx3g.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\url.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\utf.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\gpac_ogg.c">
-      <Filter>Source Files\gpacmp4</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ffmpeg_intgr.c">
       <Filter>Source Files\lib_ccx</Filter>
@@ -824,9 +584,6 @@
     <ClCompile Include="..\src\lib_ccx\wtv_functions.c">
       <Filter>Source Files\lib_ccx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\win_iconv\win_iconv.c">
-      <Filter>Source Files\win_iconv</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\matroska.c">
       <Filter>Source Files\lib_ccx</Filter>
     </ClCompile>
@@ -839,134 +596,8 @@
     <ClCompile Include="..\src\lib_ccx\ccx_demuxer_mxf.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\color.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\hint_track.c">
-      <Filter>Source Files\gpacmp4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\autofit\autofit.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\bdf\bdf.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\cff\cff.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftbase.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftbbox.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftbitmap.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\cache\ftcache.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftfntfmt.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftfstype.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftgasp.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftglyph.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftgxval.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftinit.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftlcdfil.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\lzw\ftlzw.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftmm.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftotval.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftpatent.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftpfr.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftstroke.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftsynth.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftsystem.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\fttype1.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\base\ftwinfnt.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\pcf\pcf.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\pfr\pfr.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\psaux\psaux.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\pshinter\pshinter.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\psnames\psmodule.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\raster\raster.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\sfnt\sfnt.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\smooth\smooth.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\truetype\truetype.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\type1\type1.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\cid\type1cid.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\type42\type42.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\winfonts\winfnt.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\freetype\gzip\ftgzip.c">
-      <Filter>Source Files\freetype</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_spupng.c">
       <Filter>Source Files\ccx_encoders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\box_dump.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gpacmp4\box_dump.c">
-      <Filter>Source Files\gpacmp4</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_mcc.c">
       <Filter>Source Files\ccx_encoders</Filter>
@@ -976,6 +607,366 @@
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_708_output.c">
       <Filter>Source Files\ccx_decoders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\box_dump.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\hint_track.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\gzip\ftgzip.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\avc_ext.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\avilib.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\av_parsers.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\base_encoding.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\bitstream.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\box_code_3gpp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\box_code_adobe.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\box_code_apple.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\box_code_base.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\box_code_drm.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\box_code_meta.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\box_funcs.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\configfile.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\data_map.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\descriptors.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\desc_private.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\drm_sample.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\error.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\gpac_ogg.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\hinting.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\ipmpx_code.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\ipmpx_parse.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\isom_intern.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\isom_read.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\isom_store.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\isom_write.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\list.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\math.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\media.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\media_odf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\meta.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\movie_fragments.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\mp4.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\odf_code.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\odf_codec.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\odf_command.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\os_config_init.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\os_divers.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\os_file.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\qos.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\sample_descs.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\slc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\stbl_read.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\stbl_write.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\track.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\tx3g.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\url.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\utf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\color.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\libpng\png.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\libpng\pngerror.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\libpng\pngget.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\libpng\pngmem.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\libpng\pngpread.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\libpng\pngread.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\libpng\pngrio.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\libpng\pngrtran.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\libpng\pngrutil.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\libpng\pngset.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\libpng\pngtrans.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\libpng\pngwio.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\libpng\pngwrite.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\libpng\pngwtran.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\libpng\pngwutil.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\lib_hash\sha2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\protobuf-c\protobuf-c.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\utf8proc\utf8proc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\win_iconv\win_iconv.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\zlib\crc32.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\zlib\deflate.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\zlib\inffast.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\zlib\inflate.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\zlib\inftrees.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\zlib\trees.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\zlib\zutil.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\zvbi\bit_slicer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\zvbi\decoder.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\zvbi\raw_decoder.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\zvbi\sampling_par.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\autofit\autofit.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\bdf\bdf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\cff\cff.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftbase.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftbitmap.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\cache\ftcache.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftfstype.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftgasp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftglyph.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftinit.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\lzw\ftlzw.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftstroke.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftsystem.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\smooth\smooth.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftbbox.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftfntfmt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftmm.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftpfr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftsynth.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\fttype1.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftwinfnt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftlcdfil.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftgxval.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftotval.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\base\ftpatent.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\pcf\pcf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\pfr\pfr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\psaux\psaux.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\pshinter\pshinter.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\psnames\psmodule.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\raster\raster.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\sfnt\sfnt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\truetype\truetype.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\type1\type1.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\cid\type1cid.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\type42\type42.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\freetype\winfonts\winfnt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\zlib\adler32.c">
+      <Filter>Source Files\zlib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
