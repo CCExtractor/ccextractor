@@ -459,12 +459,24 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>WS2_32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>avcodec.lib;
+avformat.lib;
+avutil.lib;
+swscale.lib;WS2_32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <AdditionalLibraryDirectories>$(ProjectDir)libs\lib\ffmpeg-lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avcodec-57.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avformat-57.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avutil-55.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swresample-2.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -489,7 +501,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\src\thirdparty\freetype\include;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\thirdparty\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\;..\src\thirdparty\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SEGMENT_BY_FILE_TIME;ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ENABLE_HARDSUBX;ENABLE_OCR;SEGMENT_BY_FILE_TIME;ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -509,7 +521,8 @@
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalOptions>/SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
-      <ImageHasSafeExceptionHandlers>true</ImageHasSafeExceptionHandlers>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <AdditionalLibraryDirectories>$(ProjectDir)libs\lib\ffmpeg-lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avcodec-57.dll" "$(ProjectDir)$(OutDir)"
@@ -617,16 +630,25 @@ xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>WS2_32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>avcodec.lib;avformat.lib;avutil.lib;swscale.lib;WS2_32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
+      <AdditionalLibraryDirectories>$(ProjectDir)libs\lib\ffmpeg-lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PreBuildEvent>
       <Command>pre-build.bat</Command>
     </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avcodec-57.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avformat-57.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avutil-55.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swresample-2.dll" "$(ProjectDir)$(OutDir)"
+xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
