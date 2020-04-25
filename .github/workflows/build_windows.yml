@@ -16,7 +16,7 @@ on:
     - 'windows/**'
 
 jobs:
-  build:
+  build_non_ocr_release:
     runs-on: windows-latest
     steps:
     - name: Check out repository
@@ -38,4 +38,27 @@ jobs:
     - uses: actions/upload-artifact@v1
       with:
         name: CCExtractor Windows Release_or_Debug build
+        path: ./windows/artifacts
+  build_ocr_hardsubx_release:
+    runs-on: windows-latest
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v1
+    - name: Setup MSBuild.exe
+      uses: warrenbuckley/Setup-MSBuild@v1
+    - name: build Release
+      run: msbuild ccextractor.sln /p:Configuration=Release-Full
+      working-directory: ./windows
+    - name: build Debug
+      run: msbuild ccextractor.sln /p:Configuration=Debug-Full
+      working-directory: ./windows
+    - name: Prepare artifacts
+      run: mkdir ./windows/artifacts
+    - name: Copy release artifact
+      run: cp ./windows/Release/ccextractorwin.exe ./windows/artifacts/; cp ./windows/Release/ccextractorgui.exe ./windows/artifacts/
+    - name: Copy debug artifact
+      run: cp ./windows/Debug/ccextractorwin.exe ./windows/artifacts/ccextractorwin_debug.exe; cp ./windows/Debug/ccextractorgui.exe ./windows/artifacts/ccextractorgui_debug.exe
+    - uses: actions/upload-artifact@v1
+      with:
+        name: CCExtractor OCR and HardSubX Windows Release_or_Debug build
         path: ./windows/artifacts
