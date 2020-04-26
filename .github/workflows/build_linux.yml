@@ -63,7 +63,7 @@ jobs:
       run: make -j$(nproc)
       working-directory: build
     - name: Display version information
-      run: ./linux/ccextractor --version
+      run: ./build/ccextractor --version
   cmake_ocr_hardsubx:
     runs-on: ubuntu-latest
     steps:
@@ -76,4 +76,4 @@ jobs:
       run: make -j$(nproc)
       working-directory: build
     - name: Display version information
-      run: ./linux/ccextractor --version
+      run: ./build/ccextractor --version
