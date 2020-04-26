@@ -32,6 +32,8 @@ jobs:
       run: mkdir ./linux/artifacts
     - name: Copy release artifact
       run: cp ./linux/ccextractor ./linux/artifacts/
+    - name: Get version information
+      run: ./linux/ccextractor --version
     - uses: actions/upload-artifact@v1
       with:
         name: CCExtractor Linux build
