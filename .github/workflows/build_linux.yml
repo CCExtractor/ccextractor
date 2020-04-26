@@ -28,12 +28,12 @@ jobs:
     - name: build
       run: ./build
       working-directory: ./linux
+    - name: Display version information
+      run: ./linux/ccextractor --version
     - name: Prepare artifacts
       run: mkdir ./linux/artifacts
     - name: Copy release artifact
       run: cp ./linux/ccextractor ./linux/artifacts/
-    - name: Get version information
-      run: ./linux/ccextractor --version
     - uses: actions/upload-artifact@v1
       with:
         name: CCExtractor Linux build
@@ -51,6 +51,8 @@ jobs:
     - name: make
       run: make
       working-directory: ./linux
+    - name: Display version information
+      run: ./linux/ccextractor --version
   cmake:
     runs-on: ubuntu-latest
     steps:
@@ -60,6 +62,8 @@ jobs:
     - name: build
       run: make -j$(nproc)
       working-directory: build
+    - name: Display version information
+      run: ./linux/ccextractor --version
   cmake_ocr_hardsubx:
     runs-on: ubuntu-latest
     steps:
@@ -71,3 +75,5 @@ jobs:
     - name: build
       run: make -j$(nproc)
       working-directory: build
+    - name: Display version information
+      run: ./linux/ccextractor --version
