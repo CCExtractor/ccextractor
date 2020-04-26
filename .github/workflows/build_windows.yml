@@ -47,6 +47,9 @@ jobs:
     - name: build Debug
       run: msbuild ccextractor.sln /p:Configuration=Debug
       working-directory: ./windows
+    - name: Display version information
+      run: ./ccextractorwin.exe --version
+      working-directory: ./windows/Debug
     - name: Prepare artifacts
       run: mkdir ./windows/artifacts
     - name: Copy debug artifacts
@@ -65,6 +68,9 @@ jobs:
     - name: build Release
       run: msbuild ccextractor.sln /p:Configuration=Release-Full
       working-directory: ./windows
+    - name: Display version information
+      run: ./ccextractorwinfull.exe --version
+      working-directory: ./windows/Release-Full
     - name: Prepare artifacts
       run: mkdir ./windows/artifacts
     - name: Copy release artifact
@@ -83,6 +89,9 @@ jobs:
     - name: build Debug
       run: msbuild ccextractor.sln /p:Configuration=Debug-Full
       working-directory: ./windows
+    - name: Display version information
+      run: ./ccextractorwinfull.exe --version
+      working-directory: ./windows/Debug-Full
     - name: Prepare artifacts
       run: mkdir ./windows/artifacts
     - name: Copy debug artifact
