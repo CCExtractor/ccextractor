@@ -26,6 +26,9 @@ jobs:
     - name: build Release
       run: msbuild ccextractor.sln /p:Configuration=Release
       working-directory: ./windows
+    - name: Display version information
+      run: ccextractor.exe --version
+      working-directory: ./windows/Release
     - name: Prepare artifacts
       run: mkdir ./windows/artifacts
     - name: Copy release artifact
