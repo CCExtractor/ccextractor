@@ -16,7 +16,7 @@ on:
     - 'windows/**'
 
 jobs:
-  build:
+  build_non_ocr_release:
     runs-on: windows-latest
     steps:
     - name: Check out repository
@@ -26,16 +26,77 @@ jobs:
     - name: build Release
       run: msbuild ccextractor.sln /p:Configuration=Release
       working-directory: ./windows
-    - name: build Debug
-      run: msbuild ccextractor.sln /p:Configuration=Debug
-      working-directory: ./windows
+    - name: Display version information
+      run: ./ccextractorwin.exe --version
+      working-directory: ./windows/Release
     - name: Prepare artifacts
       run: mkdir ./windows/artifacts
     - name: Copy release artifact
       run: cp ./windows/Release/ccextractorwin.exe ./windows/artifacts/; cp ./windows/Release/ccextractorgui.exe ./windows/artifacts/
-    - name: Copy debug artifact
-      run: cp ./windows/Debug/ccextractorwin.exe ./windows/artifacts/ccextractorwin_debug.exe; cp ./windows/Debug/ccextractorgui.exe ./windows/artifacts/ccextractorgui_debug.exe
     - uses: actions/upload-artifact@v1
       with:
-        name: CCExtractor Windows Release_or_Debug build
+        name: CCExtractor Windows Non-OCR Release build
+        path: ./windows/artifacts
+  build_non_ocr_debug:
+    runs-on: windows-latest
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v1
+    - name: Setup MSBuild.exe
+      uses: warrenbuckley/Setup-MSBuild@v1
+    - name: build Debug
+      run: msbuild ccextractor.sln /p:Configuration=Debug
+      working-directory: ./windows
+    - name: Display version information
+      run: ./ccextractorwin.exe --version
+      working-directory: ./windows/Debug
+    - name: Prepare artifacts
+      run: mkdir ./windows/artifacts
+    - name: Copy debug artifacts
+      run: cp ./windows/Debug/ccextractorwin.exe ./windows/artifacts/; cp ./windows/Debug/ccextractorwin.pdb ./windows/artifacts/; cp ./windows/Debug/ccextractorgui.exe ./windows/artifacts/
+    - uses: actions/upload-artifact@v1
+      with:
+        name: CCExtractor Windows Non-OCR Debug build
+        path: ./windows/artifacts
+  build_ocr_hardsubx_release:
+    runs-on: windows-latest
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v1
+    - name: Setup MSBuild.exe
+      uses: warrenbuckley/Setup-MSBuild@v1
+    - name: build Release
+      run: msbuild ccextractor.sln /p:Configuration=Release-Full
+      working-directory: ./windows
+    - name: Display version information
+      run: ./ccextractorwinfull.exe --version
+      working-directory: ./windows/Release-Full
+    - name: Prepare artifacts
+      run: mkdir ./windows/artifacts
+    - name: Copy release artifact
+      run: cp ./windows/Release-Full/ccextractorwinfull.exe ./windows/artifacts/; cp ./windows/Release/ccextractorgui.exe ./windows/artifacts/
+    - uses: actions/upload-artifact@v1
+      with:
+        name: CCExtractor Windows OCR and HardSubX Release build
+        path: ./windows/artifacts
+  build_ocr_hardsubx_debug:
+    runs-on: windows-latest
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v1
+    - name: Setup MSBuild.exe
+      uses: warrenbuckley/Setup-MSBuild@v1
+    - name: build Debug
+      run: msbuild ccextractor.sln /p:Configuration=Debug-Full
+      working-directory: ./windows
+    - name: Display version information
+      run: ./ccextractorwinfull.exe --version
+      working-directory: ./windows/Debug-Full
+    - name: Prepare artifacts
+      run: mkdir ./windows/artifacts
+    - name: Copy debug artifact
+      run: cp ./windows/Debug-Full/ccextractorwinfull.exe ./windows/artifacts/; cp ./windows/Debug-Full/ccextractorwinfull.pdb ./windows/artifacts/; cp ./windows/Debug/ccextractorgui.exe ./windows/artifacts/
+    - uses: actions/upload-artifact@v1
+      with:
+        name: CCExtractor Windows OCR and HardSubX Debug build
         path: ./windows/artifacts
