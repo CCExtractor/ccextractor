@@ -535,6 +535,9 @@ xcopy /y "$(ProjectDir)libs\lib\debug-lib\*" "$(ProjectDir)$(OutDir)"</Command>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
+    <PreLinkEvent>
+      <Command>$(ProjectDir)libs\lib\debug-lib\unpack-debug-lib.exe -y -o"$(ProjectDir)libs\lib\debug-lib\"</Command>
+    </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|x64'">
     <ClCompile>
@@ -596,6 +599,9 @@ xcopy /y "$(ProjectDir)libs\lib\release-lib\*" "$(ProjectDir)$(OutDir)"</Command
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
+    <PreLinkEvent>
+      <Command>$(ProjectDir)libs\lib\release-lib\unpack-release-lib.exe -y -o"$(ProjectDir)libs\lib\release-lib\"</Command>
+    </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|x64'">
     <ClCompile>
