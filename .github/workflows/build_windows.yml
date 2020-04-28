@@ -31,8 +31,12 @@ jobs:
       working-directory: ./windows/Release
     - name: Prepare artifacts
       run: mkdir ./windows/artifacts
-    - name: Copy release artifact
-      run: cp ./windows/Release/ccextractorwin.exe ./windows/artifacts/; cp ./windows/Release/ccextractorgui.exe ./windows/artifacts/
+    - name: Copy CCExtractor executable for artifact
+      run: cp ./windows/Release/ccextractorwin.exe ./windows/artifacts/
+    - name: Copy GUI for artifact
+      run: cp ./windows/Release/ccextractorgui.exe ./windows/artifacts/; 
+    - name: Copy DLL's needed to artifact
+      run: cp ./windows/Release/*.dll ./windows/artifacts/
     - uses: actions/upload-artifact@v1
       with:
         name: CCExtractor Windows Non-OCR Release build
@@ -52,8 +56,12 @@ jobs:
       working-directory: ./windows/Debug
     - name: Prepare artifacts
       run: mkdir ./windows/artifacts
-    - name: Copy debug artifacts
-      run: cp ./windows/Debug/ccextractorwin.exe ./windows/artifacts/; cp ./windows/Debug/ccextractorwin.pdb ./windows/artifacts/; cp ./windows/Debug/ccextractorgui.exe ./windows/artifacts/
+    - name: Copy CCExtractor executable and pdb for artifact
+      run: cp ./windows/Debug/ccextractorwin.exe ./windows/artifacts/; cp ./windows/Debug/ccextractorwin.pdb ./windows/artifacts/
+    - name: Copy GUI for artifact
+      run: cp ./windows/Debug/ccextractorgui.exe ./windows/artifacts/; 
+    - name: Copy DLL's needed to artifact
+      run: cp ./windows/Debug/*.dll ./windows/artifacts/
     - uses: actions/upload-artifact@v1
       with:
         name: CCExtractor Windows Non-OCR Debug build
@@ -73,8 +81,12 @@ jobs:
       working-directory: ./windows/Release-Full
     - name: Prepare artifacts
       run: mkdir ./windows/artifacts
-    - name: Copy release artifact
-      run: cp ./windows/Release-Full/ccextractorwinfull.exe ./windows/artifacts/; cp ./windows/Release/ccextractorgui.exe ./windows/artifacts/
+    - name: Copy CCExtractor executable for artifact
+      run: cp ./windows/Release-Full/ccextractorwinfull.exe ./windows/artifacts/
+    - name: Copy GUI for artifact
+      run: cp ./windows/Release/ccextractorgui.exe ./windows/artifacts/; 
+    - name: Copy DLL's needed to artifact
+      run: cp ./windows/Release-Full/*.dll ./windows/artifacts/
     - uses: actions/upload-artifact@v1
       with:
         name: CCExtractor Windows OCR and HardSubX Release build
@@ -94,8 +106,12 @@ jobs:
       working-directory: ./windows/Debug-Full
     - name: Prepare artifacts
       run: mkdir ./windows/artifacts
-    - name: Copy debug artifact
-      run: cp ./windows/Debug-Full/ccextractorwinfull.exe ./windows/artifacts/; cp ./windows/Debug-Full/ccextractorwinfull.pdb ./windows/artifacts/; cp ./windows/Debug/ccextractorgui.exe ./windows/artifacts/
+    - name: Copy CCExtractor executable and pdb for artifact
+      run: cp ./windows/Debug-Full/ccextractorwinfull.exe ./windows/artifacts/; cp ./windows/Debug-Full/ccextractorwinfull.pdb ./windows/artifacts/
+    - name: Copy GUI for artifact
+      run: cp ./windows/Debug/ccextractorgui.exe ./windows/artifacts/; 
+    - name: Copy DLL's needed to artifact
+      run: cp ./windows/Debug-Full/*.dll ./windows/artifacts/
     - uses: actions/upload-artifact@v1
       with:
         name: CCExtractor Windows OCR and HardSubX Debug build
