@@ -681,10 +681,14 @@ void print_usage(void)
 	mprint("                       0: Don't quantize at all.\n");
 	mprint("                       1: Use CCExtractor's internal function (default).\n");
 	mprint("                       2: Reduce distinct color count in image for faster results.\n");
-	mprint("                 -oem: Select the OEM mode for Tesseract, could be 0, 1 or 2.\n");
-	mprint("                       0: OEM_TESSERACT_ONLY - default value, the fastest mode.\n");
+	mprint("                 -oem: Select the OEM mode for Tesseract.\n");
+	mprint("                       Available modes :\n");
+	mprint("                       0: OEM_TESSERACT_ONLY - the fastest mode.\n");
 	mprint("                       1: OEM_LSTM_ONLY - use LSTM algorithm for recognition.\n");
 	mprint("                       2: OEM_TESSERACT_LSTM_COMBINED - both algorithms.\n");
+	mprint("                       Default value depends on the tesseract version linked :\n");
+	mprint("                       Tesseract v3 : default mode is 0,\n");
+	mprint("                       Tesseract v4 : default mode is 1.\n");
 	mprint("             -mkvlang: For MKV subtitles, select which language's caption\n");
 	mprint("                       stream will be processed. e.g. 'eng' for English.\n");
 	mprint("                       Language codes can be either the 3 letters bibliographic\n");
