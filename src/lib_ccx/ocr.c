@@ -178,13 +178,15 @@ void *init_ocr(int lang_index)
 	{
 		char tess_path[1024];
 		snprintf(tess_path, 1024, "%s%s%s", tessdata_path, "/", "tessdata");
-		if (ccx_options.ocr_oem < 0) ccx_options.ocr_oem = 1;
+		if (ccx_options.ocr_oem < 0)
+			ccx_options.ocr_oem = 1;
 		ret = TessBaseAPIInit4(ctx->api, tess_path, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
 				       &pars_values, 1, false);
 	}
 	else
 	{
-		if (ccx_options.ocr_oem < 0) ccx_options.ocr_oem = 0;
+		if (ccx_options.ocr_oem < 0)
+			ccx_options.ocr_oem = 0;
 		ret = TessBaseAPIInit4(ctx->api, tessdata_path, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
 				       &pars_values, 1, false);
 	}
