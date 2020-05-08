@@ -248,13 +248,16 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 	if (!strncmp("4.", TessVersion(), 2))
 	{
 		char tess_path[1024];
+		if (ccx_options.ocr_oem < 0)
+			ccx_options.ocr_oem = 1;
 		snprintf(tess_path, 1024, "%s%s%s", tessdata_path, "/", "tessdata");
-		//ccx_options.ocr_oem are deprecated and only supported mode is OEM_LSTM_ONLY
-		ret = TessBaseAPIInit4(ctx->tess_handle, tess_path, lang, 1, NULL, 0, &pars_vec,
+		ret = TessBaseAPIInit4(ctx->tess_handle, tess_path, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
 				       &pars_values, 1, false);
 	}
 	else
 	{
+		if (ccx_options.ocr_oem < 0)
+			ccx_options.ocr_oem = 0;
 		ret = TessBaseAPIInit4(ctx->tess_handle, tessdata_path, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
 				       &pars_values, 1, false);
 	}
