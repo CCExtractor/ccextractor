@@ -132,7 +132,11 @@ void init_options(struct ccx_s_options *options)
 	options->enc_cfg.start_credits_text = NULL;
 	options->enc_cfg.end_credits_text = NULL;
 	options->enc_cfg.encoding = CCX_ENC_UTF_8;
-	options->enc_cfg.no_bom = 0; // Use BOM by default.
+#ifdef _WIN32
+	options->enc_cfg.no_bom = 0; // Use BOM by default for windows only
+#else
+	options->enc_cfg.no_bom = 1; 
+#endif
 	options->enc_cfg.services_charsets = NULL;
 	options->enc_cfg.all_services_charset = NULL;
 	options->enc_cfg.with_semaphore = 0;
