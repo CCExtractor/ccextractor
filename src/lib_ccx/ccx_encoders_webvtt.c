@@ -222,7 +222,8 @@ void write_webvtt_header(struct encoder_ctx *context)
 				ccx_options.enc_cfg.line_terminator_lf ? "\n\n" : "\r\n\r\n");
 		}
 		used = encode_line(context, context->buffer, (unsigned char *)header_string);
-		write(context->out->fh, context->buffer, used);
+		if (write(context->out->fh, context->buffer, used) == -1)
+			fatal(IO_ERROR, "writing to file");
 	}
 
 	if (ccx_options.webvtt_create_css)
@@ -242,21 +243,27 @@ void write_webvtt_header(struct encoder_ctx *context)
 
 		char *outline_css_file = (char *)malloc((strlen(css_file_name) + strlen(webvtt_outline_css)) * sizeof(char));
 		sprintf(outline_css_file, webvtt_outline_css, css_file_name);
-		write(context->out->fh, outline_css_file, strlen(outline_css_file));
+		if (write(context->out->fh, outline_css_file, strlen(outline_css_file)) == -1)
+			fatal(IO_ERROR, "writing to file");
 	}
 	else if (ccx_options.use_webvtt_styling)
 	{
-		write(context->out->fh, webvtt_inline_css, strlen(webvtt_inline_css));
+		if (write(context->out->fh, webvtt_inline_css, strlen(webvtt_inline_css)) == -1)
+			fatal(IO_ERROR, "writing to file");
 		if (ccx_options.enc_cfg.line_terminator_lf == 1) // If -lf parameter is set.
 		{
-			write(context->out->fh, "\n", 1);
+			if (write(context->out->fh, "\n", 1) == -1)
+				fatal(IO_ERROR, "writing to file");
 		}
 		else
 		{
-			write(context->out->fh, "\r\n", 2);
+			if (write(context->out->fh, "\r\n", 2) == -1)
+				fatal(IO_ERROR, "writing to file");
 		}
-		write(context->out->fh, "##\n", 3);
-		write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+		if (write(context->out->fh, "##\n", 3) == -1)
+			fatal(IO_ERROR, "writing to file");
+		if (write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length) == -1)
+			fatal(IO_ERROR, "writing to file");
 	}
 
 	context->wrote_webvtt_header = 1; // Do it even if couldn't write the header, because it won't be possible anyway
@@ -294,10 +301,13 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 			sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
 				h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
 			used = encode_line(context, context->buffer, (unsigned char *)timeline);
-			write(context->out->fh, context->buffer, used);
+			if (write(context->out->fh, context->buffer, used) == -1)
+				fatal(IO_ERROR, "writing to file");
 			len = strlen(str);
-			write(context->out->fh, str, len);
-			write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+			if (write(context->out->fh, str, len) == -1)
+				fatal(IO_ERROR, "writing to file");
+			if (write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length) == -1)
+				fatal(IO_ERROR, "writing to file");
 		}
 		freep(&str);
 	}
@@ -467,24 +477,30 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 					if (open_font != FONT_REGULAR)
 					{
 						if (open_font & FONT_ITALICS)
-							write(context->out->fh, strdup("<i>"), 3);
+							if (write(context->out->fh, strdup("<i>"), 3) == -1)
+								fatal(IO_ERROR, "writing to file");
 						if (open_font & FONT_UNDERLINED)
-							write(context->out->fh, strdup("<u>"), 3);
+							if (write(context->out->fh, strdup("<u>"), 3) == -1)
+								fatal(IO_ERROR, "writing to file");
 					}
 
 					// opening events for colors
 					int open_color = color_events[j] & 0xFF; // Last 16 bytes
 					if (open_color != COL_WHITE)
 					{
-						write(context->out->fh, strdup("<c."), 3);
-						write(context->out->fh, color_text[open_color][0], strlen(color_text[open_color][0]));
-						write(context->out->fh, ">", 1);
+						if (write(context->out->fh, strdup("<c."), 3) == -1)
+							fatal(IO_ERROR, "writing to file");
+						if (write(context->out->fh, color_text[open_color][0], strlen(color_text[open_color][0])) == -1)
+							fatal(IO_ERROR, "writing to file");
+						if (write(context->out->fh, ">", 1) == -1)
+							fatal(IO_ERROR, "writing to file");
 					}
 				}
 
 				// write current text symbol
 				if (context->subline[j] != '\0')
-					write(context->out->fh, &(context->subline[j]), 1);
+					if (write(context->out->fh, &(context->subline[j]), 1) == -1)
+						fatal(IO_ERROR, "writing to file");
 
 				if (ccx_options.use_webvtt_styling)
 				{
@@ -492,7 +508,8 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 					int close_color = color_events[j] >> 16; // First 16 bytes
 					if (close_color != COL_WHITE)
 					{
-						write(context->out->fh, strdup("</c>"), 4);
+						if (write(context->out->fh, strdup("</c>"), 4) == -1)
+							fatal(IO_ERROR, "writing to file");
 					}
 
 					// closing events for fonts
@@ -500,9 +517,11 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 					if (close_font != FONT_REGULAR)
 					{
 						if (close_font & FONT_ITALICS)
-							write(context->out->fh, strdup("</i>"), 4);
+							if (write(context->out->fh, strdup("</i>"), 4) == -1)
+								fatal(IO_ERROR, "writing to file");
 						if (close_font & FONT_UNDERLINED)
-							write(context->out->fh, strdup("</u>"), 4);
+							if (write(context->out->fh, strdup("</u>"), 4) == -1)
+								fatal(IO_ERROR, "writing to file");
 					}
 				}
 			}

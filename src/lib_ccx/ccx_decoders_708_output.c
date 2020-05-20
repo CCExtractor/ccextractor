@@ -1,6 +1,7 @@
 #include "ccx_decoders_708_output.h"
 #include "ccx_decoders_708.h"
 #include "ccx_encoders_common.h"
+#include "lib_ccx.h"
 #include "utility.h"
 #include "ccx_common_common.h"
 
@@ -191,13 +192,15 @@ void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *d
 						   "conversion failed: %s\n",
 						   strerror(errno));
 
-		write(fd, encoded_buf_start, encoded_buf - encoded_buf_start);
+		if (write(fd, encoded_buf_start, encoded_buf - encoded_buf_start) == -1)
+			fatal(IO_ERROR, "writing to file");
 
 		free(encoded_buf_start);
 	}
 	else
 	{
-		write(fd, buf, buf_len);
+		if (write(fd, buf, buf_len) == -1)
+			fatal(IO_ERROR, "writing to file");
 	}
 }
 
@@ -221,19 +224,22 @@ void ccx_dtvcc_write_srt(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder
 			  "%02u:%02u:%02u,%03u", buf + strlen(buf));
 	sprintf(buf + strlen(buf), "%s", (char *)encoder->encoded_crlf);
 
-	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
+	if (write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf)) == -1)
+		fatal(IO_ERROR, "writing to file");
 
 	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
 	{
 		if (!_dtvcc_is_row_empty(tv, i))
 		{
 			_dtvcc_write_row(writer, decoder, i, encoder, 1);
-			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
-			      encoder->encoded_crlf, encoder->encoded_crlf_length);
+			if (write(encoder->dtvcc_writers[tv->service_number - 1].fd,
+				  encoder->encoded_crlf, encoder->encoded_crlf_length) == -1)
+				fatal(IO_ERROR, "writing to file");
 		}
 	}
-	write(encoder->dtvcc_writers[tv->service_number - 1].fd,
-	      encoder->encoded_crlf, encoder->encoded_crlf_length);
+	if (write(encoder->dtvcc_writers[tv->service_number - 1].fd,
+		  encoder->encoded_crlf, encoder->encoded_crlf_length) == -1)
+		fatal(IO_ERROR, "writing to file");
 }
 
 void ccx_dtvcc_write_debug(dtvcc_tv_screen *tv)
@@ -289,12 +295,15 @@ void ccx_dtvcc_write_transcript(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_
 			if (encoder->transcript_settings->showMode)
 				sprintf(buf + strlen(buf), "POP|"); //TODO caption mode(pop, rollup, etc.)
 
-			if (strlen(buf))
-				write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
+			const size_t buf_len = strlen(buf);
+			if (buf_len != 0)
+				if (write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, buf_len) == -1)
+					fatal(IO_ERROR, "writing to file");
 
 			_dtvcc_write_row(writer, decoder, i, encoder, 0);
-			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
-			      encoder->encoded_crlf, encoder->encoded_crlf_length);
+			if (write(encoder->dtvcc_writers[tv->service_number - 1].fd,
+				  encoder->encoded_crlf, encoder->encoded_crlf_length) == -1)
+				fatal(IO_ERROR, "writing to file");
 		}
 	}
 }
@@ -321,16 +330,19 @@ void _dtvcc_write_sami_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 	buf_len += sprintf(buf + buf_len, "</head>%s%s", encoder->encoded_crlf, encoder->encoded_crlf);
 	buf_len += sprintf(buf + buf_len, "<body>%s", encoder->encoded_crlf);
 
-	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, buf_len);
+	if (write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, buf_len) == -1)
+		fatal(IO_ERROR, "writing to file");
 }
 
 void _dtvcc_write_sami_footer(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 {
 	char *buf = (char *)encoder->buffer;
 	sprintf(buf, "</body></sami>");
-	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
-	write(encoder->dtvcc_writers[tv->service_number - 1].fd,
-	      encoder->encoded_crlf, encoder->encoded_crlf_length);
+	if (write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf)) == -1)
+		fatal(IO_ERROR, "writing to file");
+	if (write(encoder->dtvcc_writers[tv->service_number - 1].fd,
+		  encoder->encoded_crlf, encoder->encoded_crlf_length) == -1)
+		fatal(IO_ERROR, "writing to file");
 }
 
 void ccx_dtvcc_write_sami(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
@@ -351,24 +363,28 @@ void ccx_dtvcc_write_sami(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decode
 	sprintf(buf, "<sync start=%llu><p class=\"unknowncc\">%s",
 		(unsigned long long)tv->time_ms_show + encoder->subs_delay,
 		encoder->encoded_crlf);
-	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
+	if (write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf)) == -1)
+		fatal(IO_ERROR, "writing to file");
 
 	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
 	{
 		if (!_dtvcc_is_row_empty(tv, i))
 		{
 			_dtvcc_write_row(writer, decoder, i, encoder, 1);
-			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
-			      encoder->encoded_br, encoder->encoded_br_length);
-			write(encoder->dtvcc_writers[tv->service_number - 1].fd,
-			      encoder->encoded_crlf, encoder->encoded_crlf_length);
+			if (write(encoder->dtvcc_writers[tv->service_number - 1].fd,
+				  encoder->encoded_br, encoder->encoded_br_length) == -1)
+				fatal(IO_ERROR, "writing to file");
+			if (write(encoder->dtvcc_writers[tv->service_number - 1].fd,
+				  encoder->encoded_crlf, encoder->encoded_crlf_length) == -1)
+				fatal(IO_ERROR, "writing to file");
 		}
 	}
 
 	sprintf(buf, "<sync start=%llu><p class=\"unknowncc\">&nbsp;</p></sync>%s%s",
 		(unsigned long long)tv->time_ms_hide + encoder->subs_delay,
 		encoder->encoded_crlf, encoder->encoded_crlf);
-	write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
+	if (write(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf)) == -1)
+		fatal(IO_ERROR, "writing to file");
 }
 
 void _ccx_dtvcc_write(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
@@ -488,7 +504,8 @@ void ccx_dtvcc_writer_output(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_dec
 			    CCX_COMMON_EXIT_FILE_CREATION_FAILED, "[CEA-708] Failed to open a file\n");
 		}
 		if (!encoder->no_bom)
-			write(writer->fd, UTF8_BOM, sizeof(UTF8_BOM));
+			if (write(writer->fd, UTF8_BOM, sizeof(UTF8_BOM)) == -1)
+				fatal(IO_ERROR, "writing to file");
 	}
 
 	_ccx_dtvcc_write(writer, decoder, encoder);

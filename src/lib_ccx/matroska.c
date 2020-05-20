@@ -25,14 +25,16 @@ ULLONG get_current_byte(FILE *file)
 UBYTE *read_byte_block(FILE *file, ULLONG n)
 {
 	UBYTE *buffer = malloc((size_t)(sizeof(UBYTE) * n));
-	fread(buffer, 1, (size_t)n, file);
+	if (fread(buffer, 1, (size_t)n, file) != n)
+		fatal(IO_ERROR, "reading from file");
 	return buffer;
 }
 
 char *read_bytes_signed(FILE *file, ULLONG n)
 {
 	char *buffer = malloc((size_t)(sizeof(UBYTE) * (n + 1)));
-	fread(buffer, 1, (size_t)n, file);
+	if (fread(buffer, 1, (size_t)n, file) != n)
+		fatal(IO_ERROR, "reading from file");
 	buffer[n] = 0;
 	return buffer;
 }
@@ -1109,7 +1111,8 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 	free(filename);
 
 	if (track->header != NULL)
-		write(desc, track->header, strlen(track->header));
+		if (write(desc, track->header, strlen(track->header)) == -1)
+			fatal(IO_ERROR, "writing to file");
 
 	for (int i = 0; i < track->sentence_count; i++)
 	{
@@ -1118,7 +1121,8 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 
 		if (track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_WEBVTT)
 		{
-			write(desc, "\n\n", 2);
+			if (write(desc, "\n\n", 2) == -1)
+				fatal(IO_ERROR, "writing to file");
 
 			struct block_addition *blockaddition = sentence->blockaddition;
 
@@ -1127,8 +1131,10 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			{
 				if (blockaddition->comment != NULL)
 				{
-					write(desc, sentence->blockaddition->comment, sentence->blockaddition->comment_size);
-					write(desc, "\n", 1);
+					if (write(desc, sentence->blockaddition->comment, sentence->blockaddition->comment_size) == -1)
+						fatal(IO_ERROR, "writing to file");
+					if (write(desc, "\n", 1) == -1)
+						fatal(IO_ERROR, "writing to file");
 				}
 			}
 
@@ -1137,12 +1143,15 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			{
 				if (blockaddition->cue_identifier != NULL)
 				{
-					write(desc, blockaddition->cue_identifier, blockaddition->cue_identifier_size);
-					write(desc, "\n", 1);
+					if (write(desc, blockaddition->cue_identifier, blockaddition->cue_identifier_size) == -1)
+						fatal(IO_ERROR, "writing to file");
+					if (write(desc, "\n", 1) == -1)
+						fatal(IO_ERROR, "writing to file");
 				}
 				else if (blockaddition->comment != NULL)
 				{
-					write(desc, "\n", 1);
+					if (write(desc, "\n", 1) == -1)
+						fatal(IO_ERROR, "writing to file");
 				}
 			}
 
@@ -1155,25 +1164,32 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			char *timestamp_end = malloc(sizeof(char) * 80);
 			timestamp_to_vtttime(time_end, timestamp_end);
 
-			write(desc, timestamp_start, strlen(timestamp_start));
-			write(desc, " --> ", 5);
-			write(desc, timestamp_end, strlen(timestamp_start));
+			if (write(desc, timestamp_start, strlen(timestamp_start)) == -1)
+				fatal(IO_ERROR, "writing to file");
+			if (write(desc, " --> ", 5) == -1)
+				fatal(IO_ERROR, "writing to file");
+			if (write(desc, timestamp_end, strlen(timestamp_start)) == -1)
+				fatal(IO_ERROR, "writing to file");
 
 			// writing cue settings list
 			if (blockaddition != NULL)
 			{
 				if (blockaddition->cue_settings_list != NULL)
 				{
-					write(desc, " ", 1);
-					write(desc, blockaddition->cue_settings_list, blockaddition->cue_settings_list_size);
+					if (write(desc, " ", 1) == -1)
+						fatal(IO_ERROR, "writing to file");
+					if (write(desc, blockaddition->cue_settings_list, blockaddition->cue_settings_list_size) == -1)
+						fatal(IO_ERROR, "writing to file");
 				}
 			}
-			write(desc, "\n", 1);
+			if (write(desc, "\n", 1) == -1)
+				fatal(IO_ERROR, "writing to file");
 
 			int size = 0;
 			while (*(sentence->text + size) == '\n' || *(sentence->text + size) == '\r')
 				size++;
-			write(desc, sentence->text + size, sentence->text_size - size);
+			if (write(desc, sentence->text + size, sentence->text_size - size) == -1)
+				fatal(IO_ERROR, "writing to file");
 
 			free(timestamp_start);
 			free(timestamp_end);
@@ -1190,24 +1206,33 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			char *timestamp_end = malloc(sizeof(char) * 80);
 			timestamp_to_srttime(time_end, timestamp_end);
 
-			write(desc, number, strlen(number));
-			write(desc, "\n", 1);
-			write(desc, timestamp_start, strlen(timestamp_start));
-			write(desc, " --> ", 5);
-			write(desc, timestamp_end, strlen(timestamp_start));
-			write(desc, "\n", 1);
+			if (write(desc, number, strlen(number)) == -1)
+				fatal(IO_ERROR, "writing to file");
+			if (write(desc, "\n", 1) == -1)
+				fatal(IO_ERROR, "writing to file");
+			if (write(desc, timestamp_start, strlen(timestamp_start)) == -1)
+				fatal(IO_ERROR, "writing to file");
+			if (write(desc, " --> ", 5) == -1)
+				fatal(IO_ERROR, "writing to file");
+			if (write(desc, timestamp_end, strlen(timestamp_start)) == -1)
+				fatal(IO_ERROR, "writing to file");
+			if (write(desc, "\n", 1) == -1)
+				fatal(IO_ERROR, "writing to file");
 			int size = 0;
 			while (*(sentence->text + size) == '\n' || *(sentence->text + size) == '\r')
 				size++;
-			write(desc, sentence->text + size, sentence->text_size - size);
+			if (write(desc, sentence->text + size, sentence->text_size - size) == -1)
+				fatal(IO_ERROR, "writing to file");
 
 			if (sentence->text[sentence->text_size - 1] == '\n')
 			{
-				write(desc, "\n", 1);
+				if (write(desc, "\n", 1) == -1)
+					fatal(IO_ERROR, "writing to file");
 			}
 			else
 			{
-				write(desc, "\n\n", 2);
+				if (write(desc, "\n\n", 2) == -1)
+					fatal(IO_ERROR, "writing to file");
 			}
 
 			free(timestamp_start);
@@ -1221,16 +1246,23 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 				time_end = MIN(time_end, track->sentences[i + 1]->time_start - 1);
 			char *timestamp_end = generate_timestamp_ass_ssa(time_end);
 
-			write(desc, "Dialogue: Marked=0,", strlen("Dialogue: Marked=0,"));
-			write(desc, timestamp_start, strlen(timestamp_start));
-			write(desc, ",", 1);
-			write(desc, timestamp_end, strlen(timestamp_start));
-			write(desc, ",", 1);
+			if (write(desc, "Dialogue: Marked=0,", strlen("Dialogue: Marked=0,")) == -1)
+				fatal(IO_ERROR, "writing to file");
+			if (write(desc, timestamp_start, strlen(timestamp_start)) == -1)
+				fatal(IO_ERROR, "writing to file");
+			if (write(desc, ",", 1) == -1)
+				fatal(IO_ERROR, "writing to file");
+			if (write(desc, timestamp_end, strlen(timestamp_start)) == -1)
+				fatal(IO_ERROR, "writing to file");
+			if (write(desc, ",", 1) == -1)
+				fatal(IO_ERROR, "writing to file");
 			char *text = ass_ssa_sentence_erase_read_order(sentence->text);
 			while ((text[0] == '\\') && (text[1] == 'n' || text[1] == 'N'))
 				text += 2;
-			write(desc, text, strlen(text));
-			write(desc, "\n", 1);
+			if (write(desc, text, strlen(text)) == -1)
+				fatal(IO_ERROR, "writing to file");
+			if (write(desc, "\n", 1) == -1)
+				fatal(IO_ERROR, "writing to file");
 
 			free(timestamp_start);
 			free(timestamp_end);

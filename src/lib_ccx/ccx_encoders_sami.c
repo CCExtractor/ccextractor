@@ -24,17 +24,14 @@ int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_st
 	used = encode_line(context, context->buffer, (unsigned char *)str);
 	ret = write(context->out->fh, context->buffer, used);
 	if (ret != used)
-	{
 		return ret;
-	}
 
 	len = strlen(string);
 	unescaped = (unsigned char *)malloc(len + 1);
-	if (!unescaped)
+	if (unescaped == NULL)
 	{
 		mprint("In write_stringz_as_sami() - not enough memory for len %d.\n", len);
-		ret = -1;
-		goto end;
+		return -1;
 	}
 
 	el = (unsigned char *)malloc(len * 3 + 1); // Be generous
@@ -132,7 +129,8 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 	{
 		sprintf(buf,
 			"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n", (unsigned long long)sub->start_time);
-		write(context->out->fh, buf, strlen(buf));
+		if (write(context->out->fh, buf, strlen(buf)) == -1)
+			fatal(IO_ERROR, "writing to file");
 		for (int i = sub->nb_data - 1; i >= 0; i--)
 		{
 			if (rect[i].ocr_text && *(rect[i].ocr_text))
@@ -142,21 +140,26 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 					token = strtok(rect[i].ocr_text, "\r\n");
 					sprintf(buf, "%s", token);
 					token = strtok(NULL, "\r\n");
-					write(context->out->fh, buf, strlen(buf));
+					if (write(context->out->fh, buf, strlen(buf)) == -1)
+						fatal(IO_ERROR, "writing to file");
 					if (i != 0)
-						write(context->out->fh, context->encoded_br, context->encoded_br_length);
-					write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+						if (write(context->out->fh, context->encoded_br, context->encoded_br_length) == -1)
+							fatal(IO_ERROR, "writing to file");
+					if (write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length) == -1)
+						fatal(IO_ERROR, "writing to file");
 				}
 			}
 		}
 		sprintf(buf, "</P></SYNC>\r\n");
-		write(context->out->fh, buf, strlen(buf));
+		if (write(context->out->fh, buf, strlen(buf)) == -1)
+			fatal(IO_ERROR, "writing to file");
 	}
 	else //we write an empty subtitle to clear the old one
 	{
 		sprintf(buf,
 			"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n", (unsigned long long)sub->start_time);
-		write(context->out->fh, buf, strlen(buf));
+		if (write(context->out->fh, buf, strlen(buf)) == -1)
+			fatal(IO_ERROR, "writing to file");
 	}
 #endif
 
@@ -204,7 +207,8 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
 	used = encode_line(context, context->buffer, (unsigned char *)str);
-	write(context->out->fh, context->buffer, used);
+	if (write(context->out->fh, context->buffer, used) == -1)
+		fatal(IO_ERROR, "writing to file");
 	for (int i = 0; i < 15; i++)
 	{
 		if (data->row_used[i])
@@ -215,11 +219,14 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 				dbg_print(CCX_DMT_DECODER_608, "\r");
 				dbg_print(CCX_DMT_DECODER_608, "%s\n", context->subline);
 			}
-			write(context->out->fh, context->subline, length);
+			if (write(context->out->fh, context->subline, length) == -1)
+				fatal(IO_ERROR, "writing to file");
 			wrote_something = 1;
 			if (i != 14)
-				write(context->out->fh, context->encoded_br, context->encoded_br_length);
-			write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+				if (write(context->out->fh, context->encoded_br, context->encoded_br_length) == -1)
+					fatal(IO_ERROR, "writing to file");
+			if (write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length) == -1)
+				fatal(IO_ERROR, "writing to file");
 		}
 	}
 	sprintf((char *)str, "</P></SYNC>\r\n");
@@ -228,7 +235,8 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
 	used = encode_line(context, context->buffer, (unsigned char *)str);
-	write(context->out->fh, context->buffer, used);
+	if (write(context->out->fh, context->buffer, used) == -1)
+		fatal(IO_ERROR, "writing to file");
 	sprintf((char *)str,
 		"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n",
 		(unsigned long long)data->end_time - 1); // - 1 to prevent overlap
@@ -237,6 +245,7 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
 	used = encode_line(context, context->buffer, (unsigned char *)str);
-	write(context->out->fh, context->buffer, used);
+	if (write(context->out->fh, context->buffer, used) == -1)
+		fatal(IO_ERROR, "writing to file");
 	return wrote_something;
 }

@@ -18,6 +18,8 @@
 
 #define CCX_NOPTS	((int64_t)UINT64_C(0x8000000000000000))
 
+#define IO_ERROR 1
+
 struct ccx_rational
 {
 	int num;

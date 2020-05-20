@@ -96,7 +96,8 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 				}
 			}
 
-			write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+			if (write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length) == -1)
+				fatal(IO_ERROR, "writing to file");
 		}
 	}
 #endif
