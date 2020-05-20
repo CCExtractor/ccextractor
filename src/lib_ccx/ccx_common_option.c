@@ -135,7 +135,7 @@ void init_options(struct ccx_s_options *options)
 #ifdef _WIN32
 	options->enc_cfg.no_bom = 0; // Use BOM by default for windows only
 #else
-	options->enc_cfg.no_bom = 1; 
+	options->enc_cfg.no_bom = 1;
 #endif
 	options->enc_cfg.services_charsets = NULL;
 	options->enc_cfg.all_services_charset = NULL;
