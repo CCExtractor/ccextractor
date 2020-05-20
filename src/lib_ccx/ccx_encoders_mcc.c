@@ -4,7 +4,6 @@
 #include <stdarg.h>
 
 #include "ccx_encoders_mcc.h"
-#include "lib_ccx.h"
 
 #define MORE_DEBUG CCX_FALSE
 
@@ -157,8 +156,7 @@ boolean mcc_encode_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *de
 
 	strcat(compressed_data_buffer, "\n");
 
-	if (write(enc_ctx->out->fh, compressed_data_buffer, strlen(compressed_data_buffer)) == -1)
-		fatal(IO_ERROR, "writing to file");
+	write_wrapped(enc_ctx->out->fh, compressed_data_buffer, strlen(compressed_data_buffer));
 
 	free(compressed_data_buffer);
 
@@ -723,6 +721,5 @@ static void byte_to_ascii(uint8 hex_byte, uint8 *msn, uint8 *lsn)
 
 static void write_string(int fh, char *string)
 {
-	if (write(fh, string, strlen(string)) == -1)
-		fatal(IO_ERROR, "writing to file");
+	write_wrapped(fh, string, strlen(string));
 }

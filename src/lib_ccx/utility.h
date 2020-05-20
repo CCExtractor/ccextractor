@@ -18,8 +18,6 @@
 
 #define CCX_NOPTS	((int64_t)UINT64_C(0x8000000000000000))
 
-#define IO_ERROR 1
-
 struct ccx_rational
 {
 	int num;
@@ -49,5 +47,7 @@ int asprintf(char **strp, const char *fmt, ...);
 char *strndup(const char *s, size_t n);
 char *strtok_r(char *str, const char *delim, char **saveptr);
 #endif //_WIN32
+
+void write_wrapped(int fd, const void *buf, size_t count);
 
 #endif //CC_UTILITY_H

@@ -419,14 +419,12 @@ void add_padding(int fd, const char disassemble)
 
 	if (disassemble)
 	{
-		if (write(fd, "_", 1) == -1)
-			fatal(IO_ERROR, "writing to file");
+		write_wrapped(fd, "_", 1);
 	}
 	else
 	{
 		// 0x80 == odd_parity(0x00)
-		if (write(fd, "80", 2) == -1)
-			fatal(IO_ERROR, "writing to file");
+		write_wrapped(fd, "80", 2);
 	}
 }
 
@@ -443,14 +441,12 @@ void write_character(const int fd, const unsigned char character, const bool dis
 {
 	if (disassemble)
 	{
-		if (write(fd, &character, 1) == -1)
-			fatal(IO_ERROR, "writing to file");
+		write_wrapped(fd, &character, 1);
 	}
 	else
 	{
 		if (*bytes_written % 2 == 0)
-			if (write(fd, " ", 1) == -1)
-				fatal(IO_ERROR, "writing to file");
+			write_wrapped(fd, " ", 1);
 
 		fdprintf(fd, "%02x", odd_parity(character));
 	}
@@ -471,14 +467,12 @@ void write_control_code(const int fd, const unsigned char channel, const enum co
 	{
 		unsigned int length;
 		const char *assembly_code = disassemble_code(code, &length);
-		if (write(fd, assembly_code, length) == -1)
-			fatal(IO_ERROR, "writing to file");
+		write_wrapped(fd, assembly_code, length);
 	}
 	else
 	{
 		if (*bytes_written % 2 == 0)
-			if (write(fd, " ", 1) == -1)
-				fatal(IO_ERROR, "writing to file");
+			write_wrapped(fd, " ", 1);
 
 		fdprintf(fd, "%02x%02x", odd_parity(get_first_byte(channel, code)), odd_parity(get_second_byte(code)));
 	}
@@ -527,11 +521,9 @@ enum control_code get_font_code(enum font_bits font, enum ccx_decoder_608_color_
 
 void add_timestamp(const struct encoder_ctx *context, LLONG time, const bool disassemble)
 {
-	if (write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length) == -1)
-		fatal(IO_ERROR, "writing to file");
+	write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 	if (!disassemble)
-		if (write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length) == -1)
-			fatal(IO_ERROR, "writing to file");
+		write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 
 	unsigned hour, minute, second, milli;
 	millis_to_time(time, &hour, &minute, &second, &milli);
