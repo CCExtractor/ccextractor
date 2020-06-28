@@ -48,6 +48,6 @@ char *strndup(const char *s, size_t n);
 char *strtok_r(char *str, const char *delim, char **saveptr);
 #endif //_WIN32
 
-void write_wrapped(int fd, const void *buf, size_t count);
+void write_wrapped(int fd, const char *buf, size_t count);
 
 #endif //CC_UTILITY_H

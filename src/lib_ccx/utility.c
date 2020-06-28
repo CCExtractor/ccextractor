@@ -253,7 +253,7 @@ void print_error(int mode, const char *fmt, ...)
 	va_end(args);
 }
 
-void write_wrapped(int fd, const void *buf, size_t count)
+void write_wrapped(int fd, const char *buf, size_t count)
 {
 	while (count)
 	{
