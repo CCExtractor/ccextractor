@@ -255,8 +255,14 @@ void print_error(int mode, const char *fmt, ...)
 
 void write_wrapped(int fd, const void *buf, size_t count)
 {
-	if (write(fd, buf, count) == -1)
-		fatal(1, "writing to file");
+	while (count)
+	{
+		ssize_t written = write(fd, buf, count);
+		if (written == -1)
+			fatal(1, "writing to file");
+		buf += written;
+		count -= written;
+	}
 }
 
 /* Write formatted message to stderr and then exit. */
