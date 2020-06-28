@@ -460,7 +460,8 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 			{
 				char c;
 				for (size_t i = 0; i < bytes; i++)
-					read(ctx->infd, &c, 1);
+					if (read(ctx->infd, &c, 1) == -1)
+						fatal(1, "reading from file");
 				copied = bytes;
 			}
 			else

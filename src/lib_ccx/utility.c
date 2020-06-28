@@ -252,6 +252,19 @@ void print_error(int mode, const char *fmt, ...)
 	fprintf(stderr, "\n");
 	va_end(args);
 }
+
+void write_wrapped(int fd, const char *buf, size_t count)
+{
+	while (count)
+	{
+		ssize_t written = write(fd, buf, count);
+		if (written == -1)
+			fatal(1, "writing to file");
+		buf += written;
+		count -= written;
+	}
+}
+
 /* Write formatted message to stderr and then exit. */
 void fatal(int exit_code, const char *fmt, ...)
 {
