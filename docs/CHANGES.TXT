@@ -21,6 +21,7 @@
 - Fix: Mac now builds reproducibly again without errors on the date command (#1230)
 - Fix: Allow all oem modes with tesseract v4 (#1264)
 - Doc: Updated ccextractor.cnf.sample.
+- Improvement: Updated LibPNG to 1.6.37
 
 0.88 (2019-05-21)
 -----------------
@@ -42,7 +43,6 @@
 - Fix: Added -latrusmap Map Latin symbols to Cyrillic ones in special cases
        of Russian Teletext files (issue #1086)
 - Fix: Several OCR crashes 
-- Improvement: Updated LibPNG to 1.6.37
 
 0.87 (2018-10-23)
 -----------------
