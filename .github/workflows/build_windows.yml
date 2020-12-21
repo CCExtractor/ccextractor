@@ -22,7 +22,7 @@ jobs:
     - name: Check out repository
       uses: actions/checkout@v1
     - name: Setup MSBuild.exe
-      uses: warrenbuckley/Setup-MSBuild@v1
+      uses: microsoft/setup-msbuild@v1.0.2
     - name: build Release
       run: msbuild ccextractor.sln /p:Configuration=Release
       working-directory: ./windows
@@ -47,7 +47,7 @@ jobs:
     - name: Check out repository
       uses: actions/checkout@v1
     - name: Setup MSBuild.exe
-      uses: warrenbuckley/Setup-MSBuild@v1
+      uses: microsoft/setup-msbuild@v1.0.2
     - name: build Debug
       run: msbuild ccextractor.sln /p:Configuration=Debug
       working-directory: ./windows
@@ -72,7 +72,7 @@ jobs:
     - name: Check out repository
       uses: actions/checkout@v1
     - name: Setup MSBuild.exe
-      uses: warrenbuckley/Setup-MSBuild@v1
+      uses: microsoft/setup-msbuild@v1.0.2
     - name: build Release
       run: msbuild ccextractor.sln /p:Configuration=Release-Full
       working-directory: ./windows
@@ -97,7 +97,7 @@ jobs:
     - name: Check out repository
       uses: actions/checkout@v1
     - name: Setup MSBuild.exe
-      uses: warrenbuckley/Setup-MSBuild@v1
+      uses: microsoft/setup-msbuild@v1.0.2
     - name: build Debug
       run: msbuild ccextractor.sln /p:Configuration=Debug-Full
       working-directory: ./windows
