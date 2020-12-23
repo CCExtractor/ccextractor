@@ -8,6 +8,7 @@
 #include <dirent.h>
 #include "ccx_encoders_helpers.h"
 #include "ocr.h"
+#include <assert.h>
 #undef OCR_DEBUG
 
 struct ocrCtx
@@ -659,6 +660,8 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 						last_font_tag = font_tag;
 					}
 					last_font_tag_end = strstr(last_font_tag, ">");
+					if (last_font_tag_end > line_end)
+						last_font_tag_end = NULL;
 					if (last_font_tag_end)
 						last_font_tag_end += 1; // move string to the "right" if ">" was found, otherwise leave empty string (solves #1084)
 
@@ -670,7 +673,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 					if (line_end - line_start < length_closing_font ||
 					    strncmp(line_start, closing_font, length_closing_font))
 					{
-
+                                                assert(new_text_out_iter+length_closing_font <= new_text_out+length);
 						memcpy(new_text_out_iter, closing_font, length_closing_font);
 						new_text_out_iter += length_closing_font;
 					}
@@ -679,6 +682,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 						break;
 					line_start = line_end + 1;
 				}
+				assert(new_text_out_iter-new_text_out < length);
 				*new_text_out_iter = '\0';
 				free(text_out);
 				text_out = new_text_out;
