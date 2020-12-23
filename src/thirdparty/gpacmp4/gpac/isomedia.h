@@ -2076,7 +2076,7 @@ GF_Err gf_isom_text_dump(GF_ISOFile *the_file, u32 track, FILE *dump, GF_TextDum
 	@sidx_offset:
 		if 0, the sidx will NOT be written before the encoded TX3G
 		if not 0, the sidx will be written before the encoded TX3G, with the given offset. Offset sshould be at
-		least 128 for most commmon usage of TX3G (RTP, MPEG-4 timed text, etc)
+		least 128 for most common usage of TX3G (RTP, MPEG-4 timed text, etc)
 
 */
 GF_Err gf_isom_text_get_encoded_tx3g(GF_ISOFile *file, u32 track, u32 sidx, u32 sidx_offset, char **tx3g, u32 *tx3g_size);
