@@ -652,7 +652,6 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 					char *font_tag = line_start;
 					while (1)
 					{
-
 						font_tag = strstr(font_tag + 1, "<font color=\"#");
 						if (font_tag == NULL || font_tag > line_end)
 							break;
@@ -671,7 +670,6 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 					if (line_end - line_start < length_closing_font ||
 					    strncmp(line_start, closing_font, length_closing_font))
 					{
-
 						memcpy(new_text_out_iter, closing_font, length_closing_font);
 						new_text_out_iter += length_closing_font;
 					}
