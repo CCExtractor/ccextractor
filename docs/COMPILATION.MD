@@ -112,7 +112,7 @@ brew install tesseract
 brew install leptonica
 ```
 
-To verify tesseract and leptonica are detected by pkg-config, e.g.
+Use pkg-config to verify tesseract and leptonica dependencies, e.g.
 
 ```bash
 pkg-config --exists --print-errors tesseract
