@@ -653,7 +653,6 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 					char *font_tag = line_start;
 					while (1)
 					{
-
 						font_tag = strstr(font_tag + 1, "<font color=\"#");
 						if (font_tag == NULL || font_tag > line_end)
 							break;
@@ -663,17 +662,18 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 					if (last_font_tag_end > line_end)
 						last_font_tag_end = NULL;
 					if (last_font_tag_end)
+					{
 						last_font_tag_end += 1; // move string to the "right" if ">" was found, otherwise leave empty string (solves #1084)
-
+					}	
 					// Copy the content of the subtitle
 					memcpy(new_text_out_iter, line_start, line_end - line_start);
 					new_text_out_iter += line_end - line_start;
 
 					// Add </font> if it is indeed missing
 					if (line_end - line_start < length_closing_font ||
-					    strncmp(line_start, closing_font, length_closing_font))
-					{
-                                                assert(new_text_out_iter+length_closing_font <= new_text_out+length);
+					    strncmp(line_start, closing_font, length_closing_font)
+              {
+                   assert(new_text_out_iter+length_closing_font <= new_text_out+length)
 						memcpy(new_text_out_iter, closing_font, length_closing_font);
 						new_text_out_iter += length_closing_font;
 					}
