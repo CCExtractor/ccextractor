@@ -364,6 +364,7 @@ void print_usage(void)
 	mprint("         -fixptsjumps: fix pts jumps. Use this parameter if you\n");
 	mprint("                       experience timeline resets/jumps in the output.\n");
 	mprint("               -stdin: Reads input from stdin (console) instead of file.\n");
+	mprint("                       Alternatively, - can be used instead of -stdin\n");
 	mprint("You can pass as many input files as you need. They will be processed in order.\n");
 	mprint("If a file name is suffixed by +, ccextractor will try to follow a numerical\n");
 	mprint("sequence. For example, DVD001.VOB+ means DVD001.VOB, DVD002.VOB and so on\n");
@@ -402,7 +403,7 @@ void print_usage(void)
 	mprint("Use --append to prevent overwriting of existing files. The output will be\n");
 	mprint("      appended instead.\n");
 	mprint("                 -cc2: When in srt/sami mode, process captions in channel 2\n");
-	mprint("                       instead of channel 1.\n");
+	mprint("                       instead of channel 1. Alternatively, -CC2 can also be used.\n");
 	mprint("-svc --service N1[cs1],N2[cs2]...:\n");
 	mprint("                       Enable CEA-708 (DTVCC) captions processing for the listed\n");
 	mprint("                       services. The parameter is a comma delimited list\n");
@@ -1033,7 +1034,7 @@ void version(char *location)
 	char *leptversion = getLeptonicaVersion();
 	mprint("	Leptonica Version: %s\n", leptversion);
 	lept_free(leptversion);
-#endif
+#endif //ENABLE_OCR
 	mprint("	libGPAC Version: %s\n", GPAC_VERSION);
 	mprint("	zlib: %s\n", ZLIB_VERSION);
 	mprint("	utf8proc Version: %s\n", (const char *)utf8proc_version());
@@ -2761,7 +2762,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-curlposturl has no argument.\n");
 			}
 		}
-#endif
+#endif //WITH_LIBCURL
 
 #ifdef ENABLE_SHARING
 		if (strcmp(argv[i], "-enable-sharing") == 0)
@@ -2939,7 +2940,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		print_error(opt->gui_mode_reports, "-curlposturl requires that the format is curl\n");
 		return EXIT_INCOMPATIBLE_PARAMETERS;
 	}
-#endif
+#endif //WITH_LIBCURL
 	/* Initialize some Encoder Configuration */
 	opt->enc_cfg.extract = opt->extract;
 	if (opt->num_input_files > 0)
