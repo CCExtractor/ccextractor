@@ -4,6 +4,7 @@
 #include <stdarg.h>
 
 #include "ccx_encoders_mcc.h"
+#include "utility.h"
 
 #define MORE_DEBUG CCX_FALSE
 
