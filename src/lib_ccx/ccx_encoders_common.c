@@ -937,6 +937,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	int ret;
 	int i;
 	struct encoder_ctx *ctx = malloc(sizeof(struct encoder_ctx));
+	ctx->timing = malloc(sizeof(struct ccx_common_timing_ctx));
 	if (!ctx)
 		return NULL;
 
