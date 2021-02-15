@@ -1,5 +1,23 @@
 #!/usr/bin/env bash
 BLD_FLAGS="$BLD_FLAGS -std=gnu99 -Wno-write-strings -Wno-pointer-sign -DGPAC_CONFIG_LINUX -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DENABLE_OCR -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP"
+# check if user wants to compile with debug flags
+CL_ARGS=("$@")
+DEBUG_ARG=false
+for arg in $CL_ARGS
+    do
+        if [ $arg = "-debug" ]
+        then
+            BLD_FLAGS="$BLD_FLAGS -g"
+            DEBUG_ARG=true
+            echo "Added debug flag..."
+        fi
+done
+if [ $# -ne 0 ] && [ $DEBUG_ARG = false ]; #invalid argument check
+then
+    echo "Error: Invalid argument";
+    exit 6
+fi
+
 bit_os=$(getconf LONG_BIT)
 if [ "$bit_os"=="64" ]
 then
