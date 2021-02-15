@@ -34,12 +34,17 @@ yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel lep
 
 ### Using the build script
 
-
+By default build script does not include debugging information hence, you cannot debug the executable produced (i.e. `./ccextractor`) on a debugger. To include debugging information, pass `-debug` as an argument.
 ```bash
 #Navigate to linux directory and call the build script
 
 cd ccextractor/linux
+
+# compile without debug info
 ./build
+
+# compile with debug info
+./build -debug
 
 # test your build
 ./ccextractor
