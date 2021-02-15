@@ -12,7 +12,7 @@ for arg in $CL_ARGS
             echo "Added debug flag..."
         fi
 done
-if [ $# -ne 0 ] && [ $DEBUG_ARG = false ]; #invalid argument check
+if [ $# -ne 0 ] && [ $DEBUG_ARG = false ] #invalid argument check
 then
     echo "Error: Invalid argument";
     exit 6
