@@ -1741,10 +1741,10 @@ void ccx_dtvcc_process_current_packet(ccx_dtvcc_ctx *dtvcc)
 				   "Sequence: %d, packet length: %d\n",
 				   seq, len);
 #endif
-	if (dtvcc->current_packet_length != len) // Is this possible?
+	if (dtvcc->current_packet_length != len)
 	{
-		_dtvcc_decoders_reset(dtvcc);
-		return;
+		// Extra padding data, can be ignored
+		dtvcc->current_packet_length = len;
 	}
 	if (dtvcc->last_sequence != CCX_DTVCC_NO_LAST_SEQUENCE &&
 	    (dtvcc->last_sequence + 1) % 4 != seq)
