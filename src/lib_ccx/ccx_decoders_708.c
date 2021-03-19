@@ -1743,8 +1743,8 @@ void ccx_dtvcc_process_current_packet(ccx_dtvcc_ctx *dtvcc)
 #endif
 	if (dtvcc->current_packet_length != len)
 	{
-		// Extra padding data, can be ignored
-		dtvcc->current_packet_length = len;
+		// Most likely things are going to be bad for us
+		len = dtvcc->current_packet_length; // At least don't read beyond the buffer
 	}
 	if (dtvcc->last_sequence != CCX_DTVCC_NO_LAST_SEQUENCE &&
 	    (dtvcc->last_sequence + 1) % 4 != seq)
