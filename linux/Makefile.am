@@ -40,7 +40,6 @@ ccextractor_SOURCES = \
 				../src/thirdparty/gpacmp4/media_odf.c \
 				../src/thirdparty/gpacmp4/meta.c \
 				../src/thirdparty/gpacmp4/movie_fragments.c \
-				../src/thirdparty/gpacmp4/mp4.c \
 				../src/thirdparty/gpacmp4/odf_code.c \
 				../src/thirdparty/gpacmp4/odf_codec.c \
 				../src/thirdparty/gpacmp4/odf_command.c \
@@ -206,6 +205,7 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/list.h \
 				../src/lib_ccx/matroska.c \
 				../src/lib_ccx/matroska.h \
+				../src/lib_ccx/mp4.c \
 				../src/lib_ccx/myth.c \
 				../src/lib_ccx/networking.c \
 				../src/lib_ccx/networking.h \
