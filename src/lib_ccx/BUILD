@@ -3,7 +3,7 @@ cc_library(
     # zvbi has been modified a lot (it has a decoder context) so we can't
     # really treat as a 3rd party library
     srcs = glob (["*.c", "zvbi/*.c"]),
-    hdrs = glob (["*.h", "zvbi/*.h", "*.xbm"]),
+    hdrs = glob (["*.h", "zvbi/*.h", "*.xbm"]) + [ "//src:ccextractor.h" ],
     visibility = ["//visibility:public"],
     deps = [
             "//src/thirdparty/protobuf-c:protobuf-c",

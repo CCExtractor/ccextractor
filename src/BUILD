@@ -9,3 +9,5 @@ cc_binary(
     copts = [ "-Isrc/thirdparty/protobuf-c", "-Isrc/thirdparty/libpng", "-Isrc" ]
 )
 
+export_files =(["ccextractor.h", ["//src/lib_ccx:__pkg__"])
+
