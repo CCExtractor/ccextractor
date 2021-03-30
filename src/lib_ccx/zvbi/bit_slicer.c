@@ -23,7 +23,7 @@
 
 #include "misc.h"
 #include "bit_slicer.h"
-#include "ccx_common_common.h"
+#include "../ccx_common_common.h"
 
 #define VBI_PIXFMT_Y8 VBI_PIXFMT_YUV420
 #define VBI_PIXFMT_RGB24_LE VBI_PIXFMT_RGB24

@@ -37,9 +37,9 @@
 #include <assert.h>
 
 #include "macros.h"
-#include "ccx_common_platform.h"
-#include "ccx_common_constants.h"
-#include "ccx_common_structs.h"
+#include "../ccx_common_platform.h"
+#include "../ccx_common_constants.h"
+#include "../ccx_common_structs.h"
 
 #define N_ELEMENTS(array) (sizeof (array) / sizeof (*(array)))
 
