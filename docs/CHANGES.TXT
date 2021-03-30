@@ -21,6 +21,7 @@
 - Fix: Mac now builds reproducibly again without errors on the date command (#1230)
 - Fix: Allow all oem modes with tesseract v4 (#1264)
 - Doc: Updated ccextractor.cnf.sample.
+- Remove: Python API (since no one cares about it and it's unmaintained)
 
 0.88 (2019-05-21)
 -----------------
