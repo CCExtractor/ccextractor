@@ -172,7 +172,7 @@
     <ClCompile Include="..\src\thirdparty\gpacmp4\media_odf.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\meta.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\movie_fragments.c" />
-    <ClCompile Include="..\src\thirdparty\gpacmp4\mp4.c" />
+    <ClCompile Include="..\src\lib_ccx\mp4.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\odf_code.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\odf_codec.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\odf_command.c" />
