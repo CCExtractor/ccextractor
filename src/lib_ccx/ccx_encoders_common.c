@@ -1369,18 +1369,17 @@ void write_cc_buffer_to_gui(struct eia608_screen *data, struct encoder_ctx *cont
 	{
 		if (data->row_used[i])
 		{
-			fprintf(stderr, "###SUBTITLE#");
 			if (!time_reported)
 			{
 				millis_to_time(data->start_time, &h1, &m1, &s1, &ms1);
 				millis_to_time(data->end_time - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 				// Note, only MM:SS here as we need to save space in the preview window
-				fprintf(stderr, "%02u:%02u#%02u:%02u#",
+				fprintf(stderr, "###TIME#%02u:%02u-%02u:%02u\n",
 					h1 * 60 + m1, s1, h2 * 60 + m2, s2);
 				time_reported = 1;
 			}
 			else
-				fprintf(stderr, "##");
+				fprintf(stderr, "###SUBTITLE###");
 
 			// We don't capitalize here because whatever function that was used
 			// before to write to file already took care of it.

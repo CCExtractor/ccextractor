@@ -688,7 +688,6 @@ page_is_empty:
 
 		if (tlt_config.gui_mode_reports)
 		{
-			fprintf(stderr, "###SUBTITLE#");
 			if (!time_reported)
 			{
 				char timecode_show_mmss[6], timecode_hide_mmss[6];
@@ -697,11 +696,11 @@ page_is_empty:
 				timecode_show_mmss[5] = 0;
 				timecode_hide_mmss[5] = 0;
 				// Note, only MM:SS here as we need to save space in the preview window
-				fprintf(stderr, "%s#%s#", timecode_show_mmss, timecode_hide_mmss);
+				fprintf(stderr, "###TIME#%s-%s\n###SUBTITLES###", timecode_show_mmss, timecode_hide_mmss);
 				time_reported = 1;
 			}
 			else
-				fprintf(stderr, "##");
+				fprintf(stderr, "###SUBTITLE###");
 		}
 
 		for (uint8_t col = 0; col <= col_stop; col++)
