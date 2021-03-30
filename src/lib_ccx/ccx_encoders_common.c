@@ -1228,7 +1228,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				}
 			}
 #endif
-
 			switch (context->write_format)
 			{
 				case CCX_OF_CCD:
