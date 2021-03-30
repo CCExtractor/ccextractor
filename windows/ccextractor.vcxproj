@@ -37,7 +37,6 @@
   <ItemGroup>
     <ClInclude Include="..\src\ccextractor.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_structs.h" />
-    <ClInclude Include="..\src\wrappers\wrapper.h" />
     <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\avparse.h" />
     <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\base_coding.h" />
     <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\bitstream.h" />
@@ -138,7 +137,6 @@
     <ClCompile Include="..\src\thirdparty\freetype\gzip\ftgzip.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_demuxer_mxf.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_spupng.c" />
-    <ClCompile Include="..\src\wrappers\wrapper.c" />
     <ClCompile Include="..\src\ccextractor.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\avc_ext.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\avilib.c" />
@@ -227,7 +225,6 @@
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_g608.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_helpers.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_mcc.c" />
-    <ClCompile Include="..\src\lib_ccx\ccx_encoders_python.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_sami.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_scc.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_smptett.c" />

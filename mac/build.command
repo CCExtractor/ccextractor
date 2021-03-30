@@ -12,7 +12,6 @@ SRC_PROTOBUF="$(find ../src/thirdparty/protobuf-c -name '*.c')"
 SRC_UTF8="../src/thirdparty/utf8proc/utf8proc.c"
 SRC_ZLIB="$(find ../src/thirdparty/zlib -name '*.c')"
 SRC_ZVBI="$(find ../src/thirdparty/zvbi -name '*.c')"
-API_WRAPPERS="$(find ../src/wrappers/ -name '*.c')"
 SRC_FREETYPE="../src/thirdparty/freetype/autofit/autofit.c \
 		../src/thirdparty/freetype/base/ftbase.c \
 		../src/thirdparty/freetype/base/ftbbox.c \
@@ -54,7 +53,7 @@ SRC_FREETYPE="../src/thirdparty/freetype/autofit/autofit.c \
 		../src/thirdparty/freetype/type1/type1.c \
 		../src/thirdparty/freetype/type42/type42.c \
 		../src/thirdparty/freetype/winfonts/winfnt.c"
-BLD_SOURCES="../src/ccextractor.c $SRC_API $SRC_CCX  $SRC_GPAC $SRC_LIB_HASH $SRC_LIBPNG $SRC_PROTOBUF $SRC_UTF8 $SRC_ZLIB $SRC_ZVBI $SRC_FREETYPE $API_WRAPPERS"
+BLD_SOURCES="../src/ccextractor.c $SRC_API $SRC_CCX  $SRC_GPAC $SRC_LIB_HASH $SRC_LIBPNG $SRC_PROTOBUF $SRC_UTF8 $SRC_ZLIB $SRC_ZVBI $SRC_FREETYPE"
 BLD_LINKER="-lm -liconv"
 [[ $1 = "OCR" ]] && BLD_LINKER="$BLD_LINKER `pkg-config --libs --silence-errors tesseract` `pkg-config --libs --silence-errors lept`"
 
