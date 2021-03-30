@@ -7,7 +7,7 @@
 #include "ccx_decoders_708_output.h"
 #include "ccx_encoders_xds.h"
 #include "ccx_encoders_helpers.h"
-#include "../ccextractor.h"
+#include "ccextractor.h"
 #ifdef ENABLE_SHARING
 #include "ccx_share.h"
 #endif //ENABLE_SHARING

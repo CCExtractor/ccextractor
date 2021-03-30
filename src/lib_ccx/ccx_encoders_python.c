@@ -1,5 +1,5 @@
 #include "lib_ccx.h"
-#include "../ccextractor.h"
+#include "ccextractor.h"
 #include "ccx_encoders_common.h"
 #include "ccx_encoders_helpers.h"
 

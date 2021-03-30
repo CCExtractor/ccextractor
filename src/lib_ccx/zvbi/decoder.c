@@ -30,7 +30,7 @@
 #include "misc.h"
 #include "zvbi_decoder.h"
 #include "raw_decoder.h"
-#include "ccx_common_common.h"
+#include "../ccx_common_common.h"
 
 /**
  * @addtogroup Rawdec Raw VBI decoder
