@@ -1140,9 +1140,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				for (int i = 0; i < CCX_DECODER_608_SCREEN_ROWS; ++i)
 					correct_spelling_and_censor_words(context, data->characters[i], CCX_DECODER_608_SCREEN_WIDTH);
 
-#ifdef PYTHON_API
-				pass_cc_buffer_to_python(data, context);
-#else
 				switch (context->write_format)
 				{
 					case CCX_OF_CCD:
@@ -1209,7 +1206,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 
 				if (context->gui_mode_reports)
 					write_cc_buffer_to_gui(sub->data, context);
-#endif // PYTHON_API
 			}
 			freep(&sub->data);
 			break;
@@ -1232,7 +1228,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				}
 			}
 #endif
-
 			switch (context->write_format)
 			{
 				case CCX_OF_CCD:

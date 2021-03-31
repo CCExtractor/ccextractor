@@ -28,19 +28,6 @@ CURLcode res;
 #define LEPT_MSG_SEVERITY L_SEVERITY_NONE
 #endif
 
-#ifdef PYTHON_API
-#include "Python.h"
-#include "funcobject.h"
-
-PyObject* py_callback_func;
-void api_add_param(struct ccx_s_options* api_options,char* arg);
-int compile_params(struct ccx_s_options *api_options,int argc);
-void py_callback(char *line, int encoding);
-int api_param_count(struct ccx_s_options* api_options);
-char * api_param(struct ccx_s_options* api_options, int count);
-#endif
-
-
 extern struct ccx_s_options ccx_options;
 extern struct lib_ccx_ctx *signal_ctx;
 //volatile int terminate_asap = 0;

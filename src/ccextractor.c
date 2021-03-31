@@ -59,15 +59,6 @@ int api_start(struct ccx_s_options api_options)
 
 	// Initialize CCExtractor libraries
 	ctx = init_libraries(&api_options);
-#ifdef ENABLE_PYTHON
-	int i = 0;
-
-	while (i < api_options.python_param_count)
-	{
-		free(api_options.python_params[i]);
-		i++;
-	}
-#endif
 
 	if (!ctx)
 	{
@@ -443,59 +434,6 @@ struct ccx_s_options *api_init_options()
 	return &ccx_options;
 }
 
-#ifdef PYTHON_API
-int compile_params(struct ccx_s_options *api_options, int argc)
-{
-	//adding the parameter ./ccextractor to the list of python_params for further parsing
-	api_options->python_params = realloc(api_options->python_params, (api_options->python_param_count + 1) * sizeof *api_options->python_params);
-	api_options->python_params[api_options->python_param_count] = malloc(strlen("./ccextractor") + 1);
-	strcpy(api_options->python_params[api_options->python_param_count], "./ccextractor");
-	api_options->python_param_count++;
-
-	char *temp = api_options->python_params[api_options->python_param_count - 1];
-	for (int i = api_options->python_param_count - 1; i > 0; i--)
-		api_options->python_params[i] = api_options->python_params[i - 1];
-	api_options->python_params[0] = temp;
-
-	int ret = parse_parameters(api_options, api_options->python_param_count, api_options->python_params);
-	api_options->messages_target = CCX_MESSAGES_QUIET;
-
-	return ret;
-}
-
-void api_add_param(struct ccx_s_options *api_options, char *arg)
-{
-	api_options->python_params = realloc(api_options->python_params, (api_options->python_param_count + 1) * sizeof *api_options->python_params);
-	api_options->python_params[api_options->python_param_count] = malloc(strlen(arg) + 1);
-	strcpy(api_options->python_params[api_options->python_param_count], arg);
-	api_options->python_param_count++;
-}
-
-void py_callback(char *line, int encoding)
-{
-	assert(PyFunction_Check(py_callback_func));
-	PyObject *args = Py_BuildValue("(si)", line, encoding);
-	PyObject_CallObject((PyObject *)py_callback_func, args);
-}
-
-/*
- * Helper function to print the i-th param submitted by the user.
- * Helpful for debugging
- */
-char *api_param(struct ccx_s_options *api_options, int count)
-{
-	return api_options->python_params[count];
-}
-
-/*
- * Helper function to get the total number of params provided by the user.
- * Helpful for debugging
- */
-int api_param_count(struct ccx_s_options *api_options)
-{
-	return api_options->python_param_count;
-}
-#endif // PYTHON_API
 
 int main(int argc, char *argv[])
 {
@@ -506,16 +444,7 @@ int main(int argc, char *argv[])
 	// If "ccextractor.cnf" is present, takes options from it.
 	// See docs/ccextractor.cnf.sample for more info.
 
-#ifdef PYTHON_API
-	for (int i = 1; i < argc; i++)
-		api_add_param(api_options, argv[i]);
-#endif
-
-#ifdef PYTHON_API
-	int compile_ret = compile_params(api_options, argc);
-#else
 	int compile_ret = parse_parameters(api_options, argc, argv);
-#endif
 
 	if (compile_ret == EXIT_NO_INPUT_FILES)
 	{
