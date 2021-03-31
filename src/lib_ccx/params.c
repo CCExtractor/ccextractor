@@ -351,8 +351,6 @@ void print_usage(void)
 	mprint("    -o outputfilename: Use -o parameters to define output filename if you don't\n");
 	mprint("                       like the default ones (same as infile plus _1 or _2 when\n");
 	mprint("                       needed and file extension, e.g. .srt).\n");
-	mprint("         -cf filename: Write 'clean' data to a file. Cleans means the ES\n");
-	mprint("                       without TS or PES headers.\n");
 	mprint("              -stdout: Write output to stdout (console) instead of file. If\n");
 	mprint("                       stdout is used, then -o can't be used. Also\n");
 	mprint("                       -stdout will redirect all messages to stderr (error).\n");
@@ -2325,19 +2323,6 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			else
 			{
 				fatal(EXIT_MALFORMED_PARAMETER, "-o has no argument.\n");
-			}
-		}
-		if (strcmp(argv[i], "-cf") == 0)
-		{
-			if (i < argc - 1)
-			{
-				i++;
-				opt->demux_cfg.out_elementarystream_filename = argv[i];
-				continue;
-			}
-			else
-			{
-				fatal(EXIT_MALFORMED_PARAMETER, "-cf has no argument.\n");
 			}
 		}
 		if (strcmp(argv[i], "-svc") == 0 || strcmp(argv[i], "--service") == 0)

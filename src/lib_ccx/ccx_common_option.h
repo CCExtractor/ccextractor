@@ -10,7 +10,6 @@ struct demuxer_cfg
 {
 	int m2ts; // Regular TS or M2TS
 	enum ccx_stream_mode_enum auto_stream;
-	char *out_elementarystream_filename;
 
 	/* subtitle codec type */
 	enum ccx_code_type codec;

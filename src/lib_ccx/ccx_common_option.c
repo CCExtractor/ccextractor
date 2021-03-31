@@ -116,7 +116,6 @@ void init_options(struct ccx_s_options *options)
 
 	options->demux_cfg.auto_stream = CCX_SM_AUTODETECT;
 	options->demux_cfg.m2ts = 0;
-	options->demux_cfg.out_elementarystream_filename = NULL;
 	options->demux_cfg.ts_autoprogram = 0; // Try to find a stream with captions automatically (no -pn needed)
 	options->demux_cfg.ts_cappids[0] = 0;  // PID for stream that holds caption information
 	options->demux_cfg.nb_ts_cappid = 0;
