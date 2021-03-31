@@ -1,7 +1,7 @@
 #ifndef CCX_DECODER_VBI
 #define CCX_DECODER_VBI
 
-#include <zvbi_decoder.h>
+#include <zvbi/zvbi_decoder.h>
 #define VBI_DEBUG
 
 #include "ccx_decoders_structs.h"
