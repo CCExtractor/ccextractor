@@ -22,6 +22,8 @@
 - Fix: Allow all oem modes with tesseract v4 (#1264)
 - Doc: Updated ccextractor.cnf.sample.
 - Remove: Python API (since no one cares about it and it's unmaintained)
+- Remove: -cf , just use FFmpeg if you want a ES from a TS or PS, CCExtractor is a bad tool
+  for this.
 
 0.88 (2019-05-21)
 -----------------

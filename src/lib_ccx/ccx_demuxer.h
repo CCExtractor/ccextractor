@@ -106,7 +106,6 @@ struct ccx_demuxer
 	struct cap_info cinfo_tree;
 
 	/* File handles */
-	FILE *fh_out_elementarystream;
 	int infd;   // descriptor number to input.
 	LLONG past; /* Position in file, if in sync same as ftell()  */
 
@@ -166,7 +165,6 @@ struct ccx_demuxer
 	int (*is_open)(struct ccx_demuxer *ctx);
 	int (*get_stream_mode)(struct ccx_demuxer *ctx);
 	LLONG (*get_filesize) (struct ccx_demuxer *ctx);
-	int (*write_es)(struct ccx_demuxer *ctx, unsigned char* buf, size_t len);
 };
 
 struct demuxer_data
