@@ -13,13 +13,16 @@ cc_library(
             "//src/thirdparty/lib_hash:lib_hash",
             "//src/thirdparty/utf8proc:utf8proc",
     ],
-    includes = [ "thirdparty/protobuf-c", "thirdparty/libpng", "thirdparty/gpacmp4" , "." ],
+    includes = [ "thirdparty/protobuf-c", "thirdparty/libpng", "thirdparty/gpacmp4" , "." ,
+                 "thirdparty/freetype/include" ],
     copts = [ "-Isrc/thirdparty/protobuf-c", 
               "-Isrc/thirdparty/libpng", 
               "-Isrc/", 
               "-Isrc/thirdparty/gpacmp4",
               "-Isrc/thirdparty/freetype",
               "-Isrc/thirdparty/lib_hash",
+              "-Isrc/thirdparty/freetype/include",
+              "-Isrc/thirdparty/"
 
              ]
 )
