@@ -42,12 +42,10 @@ cc_library(
         "type1/type1.c",
         "type42/type42.c",
         "winfonts/winfnt.c"
-    ] + glob(["**/*.h", "**/**/*.h"]),
+    ],
     hdrs = glob([
         "**/*.h",
-        "include/**/*.h",
     ]),
-    includes = ["include"],
     textual_hdrs = glob(["**/*.c"]),
     visibility = ["//visibility:public"],
     copts = [ 
