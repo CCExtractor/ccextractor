@@ -1521,7 +1521,6 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp(argv[i], "-es") == 0 ||
 		    strcmp(argv[i], "-ts") == 0 ||
 		    strcmp(argv[i], "-ps") == 0 ||
-		    strcmp(argv[i], "-nots") == 0 ||
 		    strcmp(argv[i], "-asf") == 0 ||
 		    strcmp(argv[i], "-wtv") == 0 ||
 		    strcmp(argv[i], "-mp4") == 0 ||
