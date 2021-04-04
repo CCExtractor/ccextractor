@@ -27,7 +27,7 @@
 #include "raw_decoder.h"
 #include "sampling_par.h"
 #include "sliced.h"
-#include "ccx_common_common.h" 
+#include "../ccx_common_common.h" 
 
 #define vbi_pixfmt_bytes_per_pixel VBI_PIXFMT_BPP
 #define sp_sample_format sampling_format
