@@ -1,20 +1,16 @@
-﻿CCExtractor
-(check AUTHORS.TXT for history and developers)
-----------------------------------------------
+﻿## CCExtractor
+check AUTHORS.TXT for history and developers
 
-License
--------
+## License
 GPL 2.0. 
 
 
-Description
------------
+## Description
 Since the original port, the whole code has been rewritten (more than once,
 one might add) and support for most subtitle formats around the world has
 been added (teletext, DVB, CEA-708, ISDB...)
 
-Basic Usage 
------------
+## Basic Usage 
 (please run ccextractor with no parameters for the complete manual -
 this is for your convenience, really).
 
@@ -31,8 +27,7 @@ trivial - you just need to pass the input file and (optionally) some
 details about the input and output files.
 
 
-Languages
----------
+## Languages
 Usually English captions are transmitted in line 21 field 1 data,
 using channel 1, so the default values are correct so you don't
 need to do anything and you don't need to understand what it all
@@ -50,20 +45,17 @@ So try adding these parameter combinations to your other parameters.
 
 If there are Spanish subtitles, one of them should work. 
 
-McPoodle's page
----------------
+## McPoodle's page
 http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/SCC_TOOLS.HTML
 
 Essential CC related information and free (with source) tools.
 
-Encoding
---------
+## Encoding
 This version, in both its Linux and Windows builds generates by
 default Unicode files. You can use -latin1 and -utf8 if you prefer 
 these encodings (usually it just depends on what your specific
 player likes).
 
-Future work
------------
+## Future work
 - Please check www.ccextractor.org for news and future work.
 
