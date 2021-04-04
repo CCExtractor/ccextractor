@@ -22,6 +22,10 @@
 - Fix: Allow all oem modes with tesseract v4 (#1264)
 - Doc: Updated ccextractor.cnf.sample.
 - Improvement: Updated LibPNG to 1.6.37
+- Remove: Python API (since no one cares about it and it's unmaintained)
+- Remove: -cf , just use FFmpeg if you want a ES from a TS or PS, CCExtractor is a bad tool
+  for this.
+- Fix: Segmentation fault on Windows
 
 0.88 (2019-05-21)
 -----------------

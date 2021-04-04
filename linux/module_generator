@@ -7,7 +7,6 @@ SRC_GPAC="$(find ../sr/thirdpartyc/gpacmp4/ -name '*.c')"
 SRC_HASH="$(find ../sr/thirdpartyc/lib_hash/ -name '*.c')"
 SRC_PROTOBUF="$(find ../src/thirdparty/protobuf-c/ -name '*.c')"
 SRC_UTF8PROC="../src/utf8proc/utf8proc.c"
-API_WRAPPERS="$(find ../src/wrappers/ -name '*.c')"
-BLD_SOURCES="../src/ccextractor.c ../src/ccextractorapi_wrap.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC $API_WRAPPERS"
+BLD_SOURCES="../src/ccextractor.c ../src/ccextractorapi_wrap.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC"
 
 python setup.py $BLD_SOURCES

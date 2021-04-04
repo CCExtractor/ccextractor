@@ -37,7 +37,6 @@
   <ItemGroup>
     <ClInclude Include="..\src\ccextractor.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_structs.h" />
-    <ClInclude Include="..\src\wrappers\wrapper.h" />
     <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\avparse.h" />
     <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\base_coding.h" />
     <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\bitstream.h" />
@@ -115,14 +114,14 @@
     <ClInclude Include="..\src\thirdparty\zlib\zconf.h" />
     <ClInclude Include="..\src\thirdparty\zlib\zlib.h" />
     <ClInclude Include="..\src\thirdparty\zlib\zutil.h" />
-    <ClInclude Include="..\src\thirdparty\zvbi\bcd.h" />
-    <ClInclude Include="..\src\thirdparty\zvbi\bit_slicer.h" />
-    <ClInclude Include="..\src\thirdparty\zvbi\macros.h" />
-    <ClInclude Include="..\src\thirdparty\zvbi\misc.h" />
-    <ClInclude Include="..\src\thirdparty\zvbi\raw_decoder.h" />
-    <ClInclude Include="..\src\thirdparty\zvbi\sampling_par.h" />
-    <ClInclude Include="..\src\thirdparty\zvbi\sliced.h" />
-    <ClInclude Include="..\src\thirdparty\zvbi\zvbi_decoder.h" />
+    <ClInclude Include="..\src\lib_ccx\zvbi\bcd.h" />
+    <ClInclude Include="..\src\lib_ccx\zvbi\bit_slicer.h" />
+    <ClInclude Include="..\src\lib_ccx\zvbi\macros.h" />
+    <ClInclude Include="..\src\lib_ccx\zvbi\misc.h" />
+    <ClInclude Include="..\src\lib_ccx\zvbi\raw_decoder.h" />
+    <ClInclude Include="..\src\lib_ccx\zvbi\sampling_par.h" />
+    <ClInclude Include="..\src\lib_ccx\zvbi\sliced.h" />
+    <ClInclude Include="..\src\lib_ccx\zvbi\zvbi_decoder.h" />
     <ClInclude Include="..\src\thirdparty\win_spec_incld\inttypes.h" />
     <ClInclude Include="..\src\thirdparty\win_spec_incld\stdint.h" />
     <ClInclude Include="..\src\thirdparty\freetype\include\ft2build.h" />
@@ -138,7 +137,6 @@
     <ClCompile Include="..\src\thirdparty\freetype\gzip\ftgzip.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_demuxer_mxf.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_spupng.c" />
-    <ClCompile Include="..\src\wrappers\wrapper.c" />
     <ClCompile Include="..\src\ccextractor.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\avc_ext.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\avilib.c" />
@@ -172,7 +170,7 @@
     <ClCompile Include="..\src\thirdparty\gpacmp4\media_odf.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\meta.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\movie_fragments.c" />
-    <ClCompile Include="..\src\thirdparty\gpacmp4\mp4.c" />
+    <ClCompile Include="..\src\lib_ccx\mp4.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\odf_code.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\odf_codec.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\odf_command.c" />
@@ -227,7 +225,6 @@
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_g608.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_helpers.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_mcc.c" />
-    <ClCompile Include="..\src\lib_ccx\ccx_encoders_python.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_sami.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_scc.c" />
     <ClCompile Include="..\src\lib_ccx\ccx_encoders_smptett.c" />
@@ -283,10 +280,10 @@
     <ClCompile Include="..\src\thirdparty\zlib\inftrees.c" />
     <ClCompile Include="..\src\thirdparty\zlib\trees.c" />
     <ClCompile Include="..\src\thirdparty\zlib\zutil.c" />
-    <ClCompile Include="..\src\thirdparty\zvbi\bit_slicer.c" />
-    <ClCompile Include="..\src\thirdparty\zvbi\decoder.c" />
-    <ClCompile Include="..\src\thirdparty\zvbi\raw_decoder.c" />
-    <ClCompile Include="..\src\thirdparty\zvbi\sampling_par.c" />
+    <ClCompile Include="..\src\lib_ccx\zvbi\bit_slicer.c" />
+    <ClCompile Include="..\src\lib_ccx\zvbi\decoder.c" />
+    <ClCompile Include="..\src\lib_ccx\zvbi\raw_decoder.c" />
+    <ClCompile Include="..\src\lib_ccx\zvbi\sampling_par.c" />
     <ClCompile Include="..\src\thirdparty\freetype\autofit\autofit.c" />
     <ClCompile Include="..\src\thirdparty\freetype\bdf\bdf.c" />
     <ClCompile Include="..\src\thirdparty\freetype\cff\cff.c" />
@@ -448,7 +445,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\src\thirdparty\freetype\include;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\thirdparty\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\libpng;..\src\thirdparty;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\thirdparty\freetype\include;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\libpng;..\src\thirdparty;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -481,7 +478,7 @@ xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src;../src/lib_ccx;../src/thirdparty/zvbi;../src/thirdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src;../src/lib_ccx;../src/lib_ccx/zvbi;../src/thirdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -500,7 +497,7 @@ xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\src\thirdparty\freetype\include;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\thirdparty\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\;..\src\thirdparty\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\thirdparty\freetype\include;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\;..\src\thirdparty\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SEGMENT_BY_FILE_TIME;ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -538,7 +535,7 @@ xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src;../src/lib_ccx;../src/thirdparty/zvbi;../src/thirdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src;../src/lib_ccx;../src/lib_ccx/zvbi;../src/thirdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ENABLE_OCR;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -561,7 +558,7 @@ xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|Win32'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>..\src\thirdparty\freetype\include;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\thirdparty\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\;..\src\thirdparty\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\thirdparty\freetype\include;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\;..\src\thirdparty\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -598,7 +595,7 @@ xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src;../src/lib_ccx;../src/thirdparty/zvbi;../src/thirdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src;../src/lib_ccx;../src/lib_ccx/zvbi;../src/thirdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -620,7 +617,7 @@ xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\src\thirdparty\freetype\include;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\thirdparty\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\libpng;..\src\thirdparty;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\thirdparty\freetype\include;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\libpng;..\src\thirdparty;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>VERSION_FILE_PRESENT;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
@@ -652,7 +649,7 @@ xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\src\thirdparty\freetype\include;../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/lib_ccx;../src/thirdparty/lib_hash;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src/thirdparty/zvbi;../src/thirdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\thirdparty\freetype\include;../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/lib_ccx;../src/thirdparty/lib_hash;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src/lib_ccx/zvbi;../src/thirdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>VERSION_FILE_PRESENT;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>

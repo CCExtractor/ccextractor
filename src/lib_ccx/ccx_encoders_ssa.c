@@ -24,7 +24,7 @@ int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_sta
 	dbg_print(CCX_DMT_DECODER_608, "\n- - - ASS/SSA caption - - -\n");
 	dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
 
-	write(context->out->fh, context->buffer, used);
+	write_wrapped(context->out->fh, context->buffer, used);
 	int len = strlen(string);
 	unsigned char *unescaped = (unsigned char *)malloc(len + 1);
 	unsigned char *el = (unsigned char *)malloc(len * 3 + 1); // Be generous
@@ -58,14 +58,14 @@ int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_sta
 			dbg_print(CCX_DMT_DECODER_608, "\r");
 			dbg_print(CCX_DMT_DECODER_608, "%s\n", context->subline);
 		}
-		write(context->out->fh, el, u);
-		write(context->out->fh, "\\N", 2);
+		write_wrapped(context->out->fh, el, u);
+		write_wrapped(context->out->fh, "\\N", 2);
 		begin += strlen((const char *)begin) + 1;
 	}
 
 	dbg_print(CCX_DMT_DECODER_608, "- - - - - - - - - - - -\r\n");
 
-	write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+	write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 	free(el);
 	free(unescaped);
 
@@ -113,9 +113,9 @@ int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context)
 			sprintf(timeline, "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
 				h1, m1, s1, ms1 / 10, h2, m2, s2, ms2 / 10);
 			used = encode_line(context, context->buffer, (unsigned char *)timeline);
-			write(context->out->fh, context->buffer, used);
-			write(context->out->fh, str, len);
-			write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+			write_wrapped(context->out->fh, context->buffer, used);
+			write_wrapped(context->out->fh, str, len);
+			write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		}
 		freep(&str);
 	}
@@ -188,7 +188,7 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	dbg_print(CCX_DMT_DECODER_608, "\n- - - ASS/SSA caption - - -\n");
 	dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
 
-	write(context->out->fh, context->buffer, used);
+	write_wrapped(context->out->fh, context->buffer, used);
 	int line_count = 0;
 	for (int i = 0; i < 15; i++)
 	{
@@ -244,7 +244,7 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 					do_dash = 0;
 
 				if (do_dash)
-					write(context->out->fh, "- ", 2);
+					write_wrapped(context->out->fh, "- ", 2);
 				prev_line_start = first;
 				prev_line_end = last;
 				prev_line_center1 = center1;
@@ -258,9 +258,9 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 			}
 			if (line_count)
 			{
-				write(context->out->fh, "\\N", 2);
+				write_wrapped(context->out->fh, "\\N", 2);
 			}
-			write(context->out->fh, context->subline, length);
+			write_wrapped(context->out->fh, context->subline, length);
 			line_count++;
 			wrote_something = 1;
 		}
@@ -268,6 +268,6 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 
 	dbg_print(CCX_DMT_DECODER_608, "- - - - - - - - - - - -\r\n");
 
-	write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+	write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 	return wrote_something;
 }

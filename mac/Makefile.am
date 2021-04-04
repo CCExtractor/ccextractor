@@ -40,7 +40,6 @@ ccextractor_SOURCES = \
 				../src/thirdparty/gpacmp4/media_odf.c \
 				../src/thirdparty/gpacmp4/meta.c \
 				../src/thirdparty/gpacmp4/movie_fragments.c \
-				../src/thirdparty/gpacmp4/mp4.c \
 				../src/thirdparty/gpacmp4/odf_code.c \
 				../src/thirdparty/gpacmp4/odf_codec.c \
 				../src/thirdparty/gpacmp4/odf_command.c \
@@ -157,7 +156,6 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/ccx_encoders_helpers.h \
 				../src/lib_ccx/ccx_encoders_mcc.c \
 				../src/lib_ccx/ccx_encoders_mcc.h \
-				../src/lib_ccx/ccx_encoders_python.c \
 				../src/lib_ccx/ccx_encoders_sami.c \
 				../src/lib_ccx/ccx_encoders_scc.c \
 				../src/lib_ccx/ccx_encoders_smptett.c \
@@ -205,6 +203,7 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/list.h \
 				../src/lib_ccx/matroska.c \
 				../src/lib_ccx/matroska.h \
+				../src/lib_ccx/mp4.c \
 				../src/lib_ccx/myth.c \
 				../src/lib_ccx/networking.c \
 				../src/lib_ccx/networking.h \
@@ -269,8 +268,6 @@ ccextractor_SOURCES = \
 				../src/thirdparty/zvbi/sampling_par.h \
 				../src/thirdparty/zvbi/sliced.h \
 				../src/thirdparty/zvbi/zvbi_decoder.h \
-				../src/wrappers/wrapper.c \
-				../src/wrappers/wrapper.h \
 				../src/thirdparty/freetype/autofit/autofit.c \
 				../src/thirdparty/freetype/base/ftbase.c \
 				../src/thirdparty/freetype/base/ftbbox.c \

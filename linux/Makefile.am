@@ -40,7 +40,6 @@ ccextractor_SOURCES = \
 				../src/thirdparty/gpacmp4/media_odf.c \
 				../src/thirdparty/gpacmp4/meta.c \
 				../src/thirdparty/gpacmp4/movie_fragments.c \
-				../src/thirdparty/gpacmp4/mp4.c \
 				../src/thirdparty/gpacmp4/odf_code.c \
 				../src/thirdparty/gpacmp4/odf_codec.c \
 				../src/thirdparty/gpacmp4/odf_command.c \
@@ -158,7 +157,6 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/ccx_encoders_helpers.h \
 				../src/lib_ccx/ccx_encoders_mcc.c \
 				../src/lib_ccx/ccx_encoders_mcc.h \
-				../src/lib_ccx/ccx_encoders_python.c \
 				../src/lib_ccx/ccx_encoders_sami.c \
 				../src/lib_ccx/ccx_encoders_scc.c \
 				../src/lib_ccx/ccx_encoders_smptett.c \
@@ -206,6 +204,7 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/list.h \
 				../src/lib_ccx/matroska.c \
 				../src/lib_ccx/matroska.h \
+				../src/lib_ccx/mp4.c \
 				../src/lib_ccx/myth.c \
 				../src/lib_ccx/networking.c \
 				../src/lib_ccx/networking.h \
@@ -259,20 +258,18 @@ ccextractor_SOURCES = \
 				../src/thirdparty/protobuf-c/protobuf-c.c \
 				../src/thirdparty/protobuf-c/protobuf-c.h \
 				../src/thirdparty/zvbi/bcd.h \
-				../src/thirdparty/zvbi/bit_slicer.c \
-				../src/thirdparty/zvbi/bit_slicer.h \
-				../src/thirdparty/zvbi/decoder.c \
-				../src/thirdparty/zvbi/macros.h \
-				../src/thirdparty/zvbi/misc.h \
-				../src/thirdparty/zvbi/raw_decoder.c \
-				../src/thirdparty/zvbi/raw_decoder.h \
-				../src/thirdparty/zvbi/sampling_par.c \
-				../src/thirdparty/zvbi/sampling_par.h \
-				../src/thirdparty/zvbi/sliced.h \
-				../src/thirdparty/zvbi/zvbi_decoder.h \
-				../src/wrappers/wrapper.c \
-				../src/wrappers/wrapper.h \
-                                ../src/freetype/* \
+				../src/lib_ccx/zvbi/bit_slicer.c \
+				../src/lib_ccx/zvbi/bit_slicer.h \
+				../src/lib_ccx/zvbi/decoder.c \
+				../src/lib_ccx/zvbi/macros.h \
+				../src/lib_ccx/zvbi/misc.h \
+				../src/lib_ccx/zvbi/raw_decoder.c \
+				../src/lib_ccx/zvbi/raw_decoder.h \
+				../src/lib_ccx/zvbi/sampling_par.c \
+				../src/lib_ccx/zvbi/sampling_par.h \
+				../src/lib_ccx/zvbi/sliced.h \
+				../src/lib_ccx/zvbi/zvbi_decoder.h \
+                ../src/freetype/* \
 				../src/thirdparty/freetype/autofit/autofit.c \
 				../src/thirdparty/freetype/base/ftbase.c \
 				../src/thirdparty/freetype/base/ftbbox.c \

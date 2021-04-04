@@ -10,7 +10,6 @@ struct demuxer_cfg
 {
 	int m2ts; // Regular TS or M2TS
 	enum ccx_stream_mode_enum auto_stream;
-	char *out_elementarystream_filename;
 
 	/* subtitle codec type */
 	enum ccx_code_type codec;
@@ -205,11 +204,6 @@ struct ccx_s_options // Options from user parameters
 	int translate_enabled;
 	char *translate_langs;
 	char *translate_key;
-#endif
-
-#ifdef PYTHON_API
-    char** python_params;                                 // An array of strings to store the params supplied in the python processing
-    int python_param_count;                                 // Count of the total number of params passed via python bindings
 #endif
 };
 

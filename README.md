@@ -42,7 +42,7 @@ More usage information can be found on our website:
 
 You can also find the list of parameters and their brief description by running `ccextractor` without any arguments.
 
-You can find sample files on [our website](https://www.ccextractor.org/public:general:tvsamples) website to test the software.
+You can find sample files on [our website](https://www.ccextractor.org/public:general:tvsamples) to test the software.
 
 ## Compiling CCExtractor
 

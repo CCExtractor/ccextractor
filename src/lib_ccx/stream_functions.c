@@ -18,7 +18,9 @@ void detect_stream_type(struct ccx_demuxer *ctx)
 	ctx->startbytes_avail = (int)buffered_read_opt(ctx, ctx->startbytes, STARTBYTESLENGTH);
 
 	if (ctx->startbytes_avail == -1)
+	{
 		fatal(EXIT_READ_ERROR, "Error reading input file!\n");
+	}
 
 	if (ctx->startbytes_avail >= 4)
 	{
@@ -237,7 +239,9 @@ int detect_myth(struct ccx_demuxer *ctx)
 		}
 	}
 	if (vbi_blocks > 10) // Too much coincidence
+	{
 		return 1;
+	}
 
 	return 0;
 }
@@ -302,7 +306,9 @@ int read_video_pes_header(struct ccx_demuxer *ctx, struct demuxer_data *data, un
 	{
 		// See if the buffer is big enough
 		if (sbuflen < *headerlength + (int)nextheader[8])
+		{
 			return -1;
+		}
 	}
 	*headerlength += (int)nextheader[8];
 	int falsepes = 0;

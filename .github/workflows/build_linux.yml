@@ -20,11 +20,11 @@ on:
     - 'package_creators/**'
 jobs:
   build_shell:
-    runs-on: ubuntu-latest    
+    runs-on: ubuntu-latest
     steps:
     - name: Install tesseract
       run: sudo apt-get install libtesseract-dev
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: build
       run: ./build
       working-directory: ./linux
@@ -34,14 +34,14 @@ jobs:
       run: mkdir ./linux/artifacts
     - name: Copy release artifact
       run: cp ./linux/ccextractor ./linux/artifacts/
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v2
       with:
         name: CCExtractor Linux build
         path: ./linux/artifacts
   build_autoconf:
-    runs-on: ubuntu-latest    
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: run autogen
       run: ./autogen.sh
       working-directory: ./linux
@@ -56,7 +56,7 @@ jobs:
   cmake:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: cmake
       run: mkdir build && cd build && cmake ../src
     - name: build
@@ -67,7 +67,7 @@ jobs:
   cmake_ocr_hardsubx:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: dependencies
       run: sudo apt update && sudo apt install libtesseract-dev libavformat-dev libswscale-dev
     - name: cmake

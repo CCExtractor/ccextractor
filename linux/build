@@ -5,10 +5,9 @@ if [ "$bit_os"=="64" ]
 then
     BLD_FLAGS="$BLD_FLAGS -DGPAC_64_BITS"
 fi
-BLD_INCLUDE="-I../src -I /usr/include/leptonica/ -I /usr/include/tesseract/ -I../src/lib_ccx/ -I../src/thirdparty/gpacmp4/ -I../src/thirdparty/libpng -I../src/thirdparty/zlib -I../src/thirdparty/zvbi -I../src/thirdparty/lib_hash -I../src/thirdparty/protobuf-c -I../src/thirdparty -I../src/thirdparty/freetype/include"
+BLD_INCLUDE="-I../src -I /usr/include/leptonica/ -I /usr/include/tesseract/ -I../src/lib_ccx/ -I../src/thirdparty/gpacmp4/ -I../src/thirdparty/libpng -I../src/thirdparty/zlib -I../src/lib_ccx/zvbi -I../src/thirdparty/lib_hash -I../src/thirdparty/protobuf-c -I../src/thirdparty -I../src/thirdparty/freetype/include"
 SRC_LIBPNG="$(find ../src/thirdparty/libpng/ -name '*.c')"
 SRC_ZLIB="$(find ../src/thirdparty/zlib/ -name '*.c')"
-SRC_ZVBI="$(find ../src/thirdparty/zvbi/ -name '*.c')"
 SRC_CCX="$(find ../src/lib_ccx/ -name '*.c')"
 SRC_GPAC="$(find ../src/thirdparty/gpacmp4/ -name '*.c')"
 SRC_HASH="$(find ../src/thirdparty/lib_hash/ -name '*.c')"
@@ -55,8 +54,7 @@ SRC_FREETYPE="../src/thirdparty/freetype/autofit/autofit.c
         ../src/thirdparty/freetype/type1/type1.c
         ../src/thirdparty/freetype/type42/type42.c
         ../src/thirdparty/freetype/winfonts/winfnt.c"
-API_WRAPPERS="$(find ../src/wrappers/ -name '*.c')"
-BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC $API_WRAPPERS $SRC_FREETYPE"
+BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC $SRC_FREETYPE"
 BLD_LINKER="$BLD_LINKER -lm -zmuldefs -l tesseract -l lept"
 
 echo "Running pre-build script..."

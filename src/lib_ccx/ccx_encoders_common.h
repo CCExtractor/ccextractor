@@ -251,7 +251,6 @@ int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_
 unsigned int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data);
 unsigned int get_color_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data);
 unsigned int get_font_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data);
-int pass_cc_buffer_to_python(struct eia608_screen *data, struct encoder_ctx *context);
 
 struct lib_ccx_ctx;
 void switch_output_file(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, int track_id);
