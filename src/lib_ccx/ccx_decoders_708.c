@@ -193,6 +193,7 @@ ccx_dtvcc_window_attribs ccx_dtvcc_predefined_window_styles[] =
 void ccx_dtvcc_clear_packet(ccx_dtvcc_ctx *ctx)
 {
 	ctx->current_packet_length = 0;
+	ctx->is_current_packet_header_parsed = 0;
 	memset(ctx->current_packet, 0, CCX_DTVCC_MAX_PACKET_LENGTH * sizeof(unsigned char));
 }
 

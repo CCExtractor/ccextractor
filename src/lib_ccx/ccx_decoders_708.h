@@ -352,6 +352,7 @@ typedef struct ccx_dtvcc_ctx
 
 	unsigned char current_packet[CCX_DTVCC_MAX_PACKET_LENGTH];
 	int current_packet_length;
+	int is_current_packet_header_parsed;
 
 	int last_sequence;
 

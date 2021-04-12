@@ -28,7 +28,7 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 		{
 			case 2:
 				ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: DTVCC Channel Packet Data\n");
-				if (cc_valid)
+				if (cc_valid && dtvcc->is_current_packet_header_parsed)
 				{
 					if (dtvcc->current_packet_length > 253)
 					{
@@ -65,6 +65,7 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 					{
 						dtvcc->current_packet[dtvcc->current_packet_length++] = data[i + 2];
 						dtvcc->current_packet[dtvcc->current_packet_length++] = data[i + 3];
+						dtvcc->is_current_packet_header_parsed = 1;
 					}
 				}
 				break;
