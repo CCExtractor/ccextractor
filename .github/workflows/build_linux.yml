@@ -77,3 +77,13 @@ jobs:
       working-directory: build
     - name: Display version information
       run: ./build/ccextractor --version
+  bazel:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: bazel build
+      working-directory: ./
+      run: bazel build //src:ccextractor --verbose_failures
+    - name: Display version information
+      working-directory: ./bazel-bin
+      run: ./src/ccextractor --version
