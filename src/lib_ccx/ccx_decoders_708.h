@@ -352,6 +352,7 @@ typedef struct ccx_dtvcc_ctx
 
 	unsigned char current_packet[CCX_DTVCC_MAX_PACKET_LENGTH];
 	int current_packet_length;
+	int is_current_packet_header_parsed;
 
 	int last_sequence;
 
@@ -365,7 +366,7 @@ void ccx_dtvcc_clear_packet(ccx_dtvcc_ctx *ctx);
 void ccx_dtvcc_windows_reset(ccx_dtvcc_service_decoder *decoder);
 void ccx_dtvcc_decoder_flush(ccx_dtvcc_ctx *dtvcc, ccx_dtvcc_service_decoder *decoder);
 
-void ccx_dtvcc_process_current_packet(ccx_dtvcc_ctx *dtvcc);
+void ccx_dtvcc_process_current_packet(ccx_dtvcc_ctx *dtvcc, int len);
 void ccx_dtvcc_process_service_block(ccx_dtvcc_ctx *dtvcc,
 									 ccx_dtvcc_service_decoder *decoder,
 									 unsigned char *data,

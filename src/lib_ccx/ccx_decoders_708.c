@@ -193,6 +193,7 @@ ccx_dtvcc_window_attribs ccx_dtvcc_predefined_window_styles[] =
 void ccx_dtvcc_clear_packet(ccx_dtvcc_ctx *ctx)
 {
 	ctx->current_packet_length = 0;
+	ctx->is_current_packet_header_parsed = 0;
 	memset(ctx->current_packet, 0, CCX_DTVCC_MAX_PACKET_LENGTH * sizeof(unsigned char));
 }
 
@@ -1721,21 +1722,15 @@ void ccx_dtvcc_process_service_block(ccx_dtvcc_ctx *dtvcc,
 	}
 }
 
-void ccx_dtvcc_process_current_packet(ccx_dtvcc_ctx *dtvcc)
+void ccx_dtvcc_process_current_packet(ccx_dtvcc_ctx *dtvcc, int len)
 {
 	int seq = (dtvcc->current_packet[0] & 0xC0) >> 6; // Two most significants bits
-	int len = dtvcc->current_packet[0] & 0x3F;	  // 6 least significants bits
 #ifdef DEBUG_708_PACKETS
 	ccx_common_logging.log_ftn("[CEA-708] dtvcc_process_current_packet: length=%d, seq=%d\n",
 				   dtvcc->current_packet_length, seq);
 #endif
 	if (dtvcc->current_packet_length == 0)
 		return;
-	if (len == 0) // This is well defined in EIA-708; no magic.
-		len = 128;
-	else
-		len = len * 2;
-		// Note that len here is the length including the header
 #ifdef DEBUG_708_PACKETS
 	ccx_common_logging.log_ftn("[CEA-708] dtvcc_process_current_packet: "
 				   "Sequence: %d, packet length: %d\n",

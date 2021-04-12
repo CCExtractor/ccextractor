@@ -28,9 +28,7 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 		{
 			case 2:
 				ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: DTVCC Channel Packet Data\n");
-				if (cc_valid == 0) // This ends the previous packet
-					ccx_dtvcc_process_current_packet(dtvcc);
-				else
+				if (cc_valid && dtvcc->is_current_packet_header_parsed)
 				{
 					if (dtvcc->current_packet_length > 253)
 					{
@@ -41,12 +39,21 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 					{
 						dtvcc->current_packet[dtvcc->current_packet_length++] = data[i + 2];
 						dtvcc->current_packet[dtvcc->current_packet_length++] = data[i + 3];
+						int len = dtvcc->current_packet[0] & 0x3F; // 6 least significants bits
+
+						if (len == 0) // This is well defined in EIA-708; no magic.
+							len = 128;
+						else
+							len = len * 2;
+						// Note that len here is the length including the header
+
+						if (dtvcc->current_packet_length >= len)
+							ccx_dtvcc_process_current_packet(dtvcc, len);
 					}
 				}
 				break;
 			case 3:
 				ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: DTVCC Channel Packet Start\n");
-				ccx_dtvcc_process_current_packet(dtvcc);
 				if (cc_valid)
 				{
 					if (dtvcc->current_packet_length > CCX_DTVCC_MAX_PACKET_LENGTH - 1)
@@ -58,6 +65,7 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 					{
 						dtvcc->current_packet[dtvcc->current_packet_length++] = data[i + 2];
 						dtvcc->current_packet[dtvcc->current_packet_length++] = data[i + 3];
+						dtvcc->is_current_packet_header_parsed = 1;
 					}
 				}
 				break;
