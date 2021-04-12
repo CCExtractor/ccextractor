@@ -28,25 +28,27 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 		{
 			case 2:
 				ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: DTVCC Channel Packet Data\n");
-				if (dtvcc->current_packet_length > 253)
-				{
-					ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: "
-										  "Warning: Legal packet size exceeded (1), data not added.\n");
-				}
-				else
-				{
-					dtvcc->current_packet[dtvcc->current_packet_length++] = data[i + 2];
-					dtvcc->current_packet[dtvcc->current_packet_length++] = data[i + 3];
-					int len = dtvcc->current_packet[0] & 0x3F; // 6 least significants bits
-
-					if (len == 0) // This is well defined in EIA-708; no magic.
-						len = 128;
+				if(cc_valid) {
+					if (dtvcc->current_packet_length > 253)
+					{
+						ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: "
+											"Warning: Legal packet size exceeded (1), data not added.\n");
+					}
 					else
-						len = len * 2;
-					// Note that len here is the length including the header
+					{
+						dtvcc->current_packet[dtvcc->current_packet_length++] = data[i + 2];
+						dtvcc->current_packet[dtvcc->current_packet_length++] = data[i + 3];
+						int len = dtvcc->current_packet[0] & 0x3F; // 6 least significants bits
 
-					if (dtvcc->current_packet_length >= len)
-						ccx_dtvcc_process_current_packet(dtvcc, len);
+						if (len == 0) // This is well defined in EIA-708; no magic.
+							len = 128;
+						else
+							len = len * 2;
+						// Note that len here is the length including the header
+
+						if (dtvcc->current_packet_length >= len)
+							ccx_dtvcc_process_current_packet(dtvcc, len);
+					}
 				}
 				break;
 			case 3:
