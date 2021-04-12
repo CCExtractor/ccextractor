@@ -1736,10 +1736,10 @@ void ccx_dtvcc_process_current_packet(ccx_dtvcc_ctx *dtvcc, int len)
 				   "Sequence: %d, packet length: %d\n",
 				   seq, len);
 #endif
-	if (dtvcc->current_packet_length != len)
+	if (dtvcc->current_packet_length != len) // Is this possible?
 	{
-		// Most likely things are going to be bad for us
-		len = dtvcc->current_packet_length; // At least don't read beyond the buffer
+		_dtvcc_decoders_reset(dtvcc);
+		return;
 	}
 	if (dtvcc->last_sequence != CCX_DTVCC_NO_LAST_SEQUENCE &&
 	    (dtvcc->last_sequence + 1) % 4 != seq)
