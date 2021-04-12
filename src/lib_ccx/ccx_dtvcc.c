@@ -28,11 +28,12 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 		{
 			case 2:
 				ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: DTVCC Channel Packet Data\n");
-				if(cc_valid) {
+				if (cc_valid)
+				{
 					if (dtvcc->current_packet_length > 253)
 					{
 						ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: "
-											"Warning: Legal packet size exceeded (1), data not added.\n");
+											  "Warning: Legal packet size exceeded (1), data not added.\n");
 					}
 					else
 					{
