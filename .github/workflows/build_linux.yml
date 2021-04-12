@@ -77,3 +77,20 @@ jobs:
       working-directory: build
     - name: Display version information
       run: ./build/ccextractor --version
+  bazel:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: dependencies
+      run: |
+       sudo apt install apt-transport-https curl gnupg
+       curl -fsSL https://bazel.build/bazel-release.pub.gpg | gpg --dearmor > bazel.gpg
+       sudo mv bazel.gpg /etc/apt/trusted.gpg.d/
+       echo "deb [arch=amd64] https://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list
+    - name: install bazel
+      run: sudo apt update && sudo apt install bazel
+    - name: build
+      run: bazel build //src:ccextractor --verbose_failures
+      working-directory: bazel-bin
+    - name: Display version information
+      run: ./bazel-bin/ccextractor --version
