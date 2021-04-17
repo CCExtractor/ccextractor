@@ -321,7 +321,7 @@ ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/gpacmp4/ -I../src/th
 ccextractor_LDADD=-lm
 
 if SYS_IS_LINUX
-ccextractor_CFLAGS += -O3 -s -DGPAC_CONFIG_LINUX
+ccextractor_CFLAGS += -O3 -s -DGPAC_CONFIG_LINUX -D_GF_CONFIG_H_
 endif
 
 if SYS_IS_MAC
