@@ -1880,7 +1880,7 @@ Bool gf_opts_default_shared_directory(char *path_buffer);
 #define RMT_USE_OPENGL	1
 #endif
 
-#include <gpac/Remotery.h>
+// #include <gpac/Remotery.h>
 
 #define GF_RMT_AGGREGATE	RMTSF_Aggregate
 /*! begins remotery CPU sample*/

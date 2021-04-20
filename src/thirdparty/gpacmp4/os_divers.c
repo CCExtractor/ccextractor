@@ -131,7 +131,6 @@ static Bool gf_sys_enable_remotery(Bool start, Bool is_shutdown);
 GF_EXPORT
 void gf_sleep(u32 ms)
 {
-	gf_rmt_begin(sleep, GF_RMT_AGGREGATE);
 
 #ifdef WIN32
 	Sleep(ms);
@@ -169,7 +168,6 @@ void gf_sleep(u32 ms)
 	} while ( sel_err && (errno == EINTR) );
 #endif
 
-	gf_rmt_end();
 
 }
 
