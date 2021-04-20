@@ -687,33 +687,33 @@ u64 gf_memory_size(); /*gets memory allocated in bytes*/
 /*! free memory allocated with gpac
 \param ptr same as free()
 */
-void gf_free(void *ptr);
+#define gf_free free
 
 /*! allocates memory, shall be freed using \ref gf_free
 \param size same as malloc()
 \return adress of allocated block
 */
-void* gf_malloc(size_t size);
+#define gf_malloc malloc
 
 /*! allocates memory array, shall be freed using \ref gf_free
 \param num same as calloc()
 \param size_of same as calloc()
 \return adress of allocated block
 */
-void* gf_calloc(size_t num, size_t size_of);
+#define gf_calloc calloc
 
 /*! duplicates string, shall be freed using \ref gf_free
 \param str same as strdup()
 \return duplicated string
 */
-char* gf_strdup(const char *str);
+#define gf_strdup strdup
 
 /*! reallocates memory, shall be freed using \ref gf_free
 \param ptr same as realloc()
 \param size same as realloc()
 \return adress of reallocated block
 */
-void* gf_realloc(void *ptr, size_t size);
+#define gf_realloc realloc
 
 #endif
 /*! @} */
