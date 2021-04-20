@@ -55,6 +55,11 @@ ccextractor_SOURCES = \
 				../src/thirdparty/gpacmp4/tx3g.c \
 				../src/thirdparty/gpacmp4/url.c \
 				../src/thirdparty/gpacmp4/utf.c \
+				../src/thirdparty/gpacmp4/os_thread.c \
+				../src/thirdparty/gpacmp4/module.c \
+				../src/thirdparty/gpacmp4/os_module.c \
+				../src/thirdparty/gpacmp4/xml_parser.c \
+				../src/thirdparty/gpacmp4/constants.c \
 				../src/thirdparty/gpacmp4/gpac/avparse.h \
 				../src/thirdparty/gpacmp4/gpac/base_coding.h \
 				../src/thirdparty/gpacmp4/gpac/bitstream.h \

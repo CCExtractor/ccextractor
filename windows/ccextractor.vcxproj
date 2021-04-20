@@ -187,6 +187,11 @@
     <ClCompile Include="..\src\thirdparty\gpacmp4\url.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\utf.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\color.c" />
+    <ClCompile Include="..\src\thirdparty\gpacmp4\os_thread.c" />
+    <ClCompile Include="..\src\thirdparty\gpacmp4\module.c" />
+    <ClCompile Include="..\src\thirdparty\gpacmp4\os_module.c" />
+    <ClCompile Include="..\src\thirdparty\gpacmp4\xml_parser.c" />
+    <ClCompile Include="..\src\thirdparty\gpacmp4\constants.c" />
     <ClCompile Include="..\src\thirdparty\libpng\png.c" />
     <ClCompile Include="..\src\thirdparty\libpng\pngerror.c" />
     <ClCompile Include="..\src\thirdparty\libpng\pngget.c" />
