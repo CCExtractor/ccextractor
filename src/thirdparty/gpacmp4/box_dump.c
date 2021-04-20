@@ -3191,32 +3191,6 @@ static GF_Err gf_isom_dump_srt_track(GF_ISOFile *the_file, u32 track, FILE *dump
 		gf_fprintf(dump, "%s\n", szDur);
 
 		if (subtype == GF_ISOM_SUBTYPE_WVTT) {
-			u64 start_ts;
-			void webvtt_write_cue(GF_BitStream *bs, GF_WebVTTCue *cue);
-			GF_List *cues;
-			u8 *data;
-			u32 data_len;
-			bs = gf_bs_new(NULL, 0, GF_BITSTREAM_WRITE);
-
-			start_ts = s->DTS * 1000;
-			start_ts /= trak->Media->mediaHeader->timeScale;
-			cues = gf_webvtt_parse_cues_from_data(s->data, s->dataLength, start_ts);
-			for (j = 0; j < gf_list_count(cues); j++) {
-				GF_WebVTTCue *cue = (GF_WebVTTCue *)gf_list_get(cues, j);
-				webvtt_write_cue(bs, cue);
-				gf_webvtt_cue_del(cue);
-			}
-			gf_list_del(cues);
-			gf_bs_write_u16(bs, 0);
-			gf_bs_get_content(bs, &data, &data_len);
-			gf_bs_del(bs);
-
-			if (data) {
-				gf_fprintf(dump, "%s\n", data);
-				gf_free(data);
-			} else {
-				gf_fprintf(dump, "\n");
-			}
 			continue;
 		} else if (subtype == GF_ISOM_SUBTYPE_STXT) {
 			if (s->dataLength)
