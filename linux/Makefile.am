@@ -318,7 +318,7 @@ ccextractor_SOURCES = \
 				../src/thirdparty/freetype/type42/type42.c \
 				../src/thirdparty/freetype/winfonts/winfnt.c
 
-ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP
+ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP -DGPAC_HAVE_CONFIG_H
 
 ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/gpacmp4/ -I../src/thirdparty/libpng/ -I../src/thirdparty/zlib/ -I../src/thirdparty/zvbi/ -I../src/thirdparty/lib_hash/ -I../src/thirdparty/protobuf-c/ -I../src/thirdparty -I../src/ -I../src/thirdparty/freetype/include/
 
@@ -326,7 +326,7 @@ ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/gpacmp4/ -I../src/th
 ccextractor_LDADD=-lm -lpthread -ldl
 
 if SYS_IS_LINUX
-ccextractor_CFLAGS += -O3 -s -DGPAC_CONFIG_LINUX -D_GF_CONFIG_H_
+ccextractor_CFLAGS += -O3 -s -DGPAC_CONFIG_LINUX
 endif
 
 if SYS_IS_MAC
