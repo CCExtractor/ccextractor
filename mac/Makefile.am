@@ -321,7 +321,7 @@ ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFF
 ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/gpacmp4/ -I../src/thirdparty/libpng/ -I../src/thirdparty/zlib/ -I../src/thirdparty/zvbi/ -I../src/thirdparty/lib_hash/ -I../src/thirdparty/protobuf-c -I../src/thirdparty -I../src  -I../src/thirdparty/freetype/include
 
 
-ccextractor_LDADD=-lm
+ccextractor_LDADD=-lm -lpthread -ldl
 
 if SYS_IS_LINUX
 ccextractor_CFLAGS += -O3 -s -DGPAC_CONFIG_LINUX
