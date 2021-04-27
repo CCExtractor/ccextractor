@@ -207,7 +207,7 @@ void write_webvtt_header(struct encoder_ctx *context)
 	if (context->wrote_webvtt_header) // Already done
 		return;
 
-	if (context->timing->sync_pts2fts_set)
+	if (context->timing != NULL && context->timing->sync_pts2fts_set)
 	{
 		char header_string[200];
 		int used;
