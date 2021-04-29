@@ -1,0 +1,9 @@
+version: 2
+updates:
+- package-ecosystem: github-actions
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "10:00"
+    timezone: America/Los_Angeles
+  open-pull-requests-limit: 10
