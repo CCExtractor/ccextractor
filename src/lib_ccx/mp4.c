@@ -14,6 +14,8 @@
 
 #define MEDIA_TYPE(type, subtype) (((u64)(type)<<32)+(subtype))
 
+#define GF_ISOM_SUBTYPE_C708 GF_4CC('c', '7', '0', '8')
+
 static short bswap16(short v)
 {
 	return ((v >> 8) & 0x00FF) | ((v << 8) & 0xFF00);
@@ -528,7 +530,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 			(unsigned char) ((type>>16)%0x100),(unsigned char) ((type>>8)%0x100),(unsigned char) (type%0x100),
 			(unsigned char) (subtype>>24%0x100),
 			(unsigned char) ((subtype>>16)%0x100),(unsigned char) ((subtype>>8)%0x100),(unsigned char) (subtype%0x100));
-		if (type == GF_ISOM_MEDIA_CAPTIONS || type == GF_ISOM_MEDIA_SUBT || type == GF_ISOM_MEDIA_TEXT)
+		if (type == GF_ISOM_MEDIA_CLOSED_CAPTION || type == GF_ISOM_MEDIA_SUBT || type == GF_ISOM_MEDIA_TEXT)
 			cc_track_count++;
 		if (type == GF_ISOM_MEDIA_VISUAL && subtype == GF_ISOM_SUBTYPE_AVC_H264)
 			avc_track_count++;
@@ -594,7 +596,7 @@ int processmp4 (struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 			break;
 
 		default:
-			if (type != GF_ISOM_MEDIA_CAPTIONS && type != GF_ISOM_MEDIA_SUBT && type != GF_ISOM_MEDIA_TEXT)
+			if (type != GF_ISOM_MEDIA_CLOSED_CAPTION && type != GF_ISOM_MEDIA_SUBT && type != GF_ISOM_MEDIA_TEXT)
 				break; // ignore non cc track
 
 			if (avc_track_count && cfg->mp4vidtrack)
@@ -646,8 +648,8 @@ int processmp4 (struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 							&dec_sub, &mp4_ret,
 							data, sample->dataLength, 0);
 						break;
-					case MEDIA_TYPE(GF_ISOM_MEDIA_CAPTIONS, GF_ISOM_SUBTYPE_C608): // clcp:c608
-					case MEDIA_TYPE(GF_ISOM_MEDIA_CAPTIONS, GF_ISOM_SUBTYPE_C708): // clcp:c708
+					case MEDIA_TYPE(GF_ISOM_MEDIA_CLOSED_CAPTION, GF_QT_SUBTYPE_C608): // clcp:c608
+					case MEDIA_TYPE(GF_ISOM_MEDIA_CLOSED_CAPTION, GF_ISOM_SUBTYPE_C708): // clcp:c708
 						atom_length = process_clcp(ctx, enc_ctx, dec_ctx,
 							&dec_sub, &mp4_ret, subtype,
 							data, sample->dataLength);

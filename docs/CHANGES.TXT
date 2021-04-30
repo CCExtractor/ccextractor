@@ -26,6 +26,7 @@
 - Remove: -cf , just use FFmpeg if you want a ES from a TS or PS, CCExtractor is a bad tool
   for this.
 - Fix: Segmentation fault on Windows
+- Update: Updated libGPAC to 1.0.1
 
 0.88 (2019-05-21)
 -----------------

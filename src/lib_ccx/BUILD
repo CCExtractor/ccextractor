@@ -22,7 +22,8 @@ cc_library(
               "-Isrc/thirdparty/freetype",
               "-Isrc/thirdparty/lib_hash",
               "-Isrc/thirdparty/freetype/include",
-              "-Isrc/thirdparty/"
+              "-Isrc/thirdparty/",
+              "-DGPAC_HAVE_CONFIG_H"
 
              ]
 )

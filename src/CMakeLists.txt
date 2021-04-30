@@ -40,7 +40,7 @@ configure_file (
   "${PROJECT_SOURCE_DIR}/lib_ccx/compile_info_real.h"
   )
 
-add_definitions(-DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP)
+add_definitions(-DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP -DGPAC_HAVE_CONFIG_H)
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   add_definitions(-DGPAC_64_BITS)
@@ -138,7 +138,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 
-set (EXTRA_LIBS ${EXTRA_LIBS} -lm -lpthread)
+set (EXTRA_LIBS ${EXTRA_LIBS} -lm -lpthread -ldl)
 
 find_package (PkgConfig)
 
