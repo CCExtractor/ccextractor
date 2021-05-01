@@ -94,13 +94,6 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 	}
 	used = encode_line(context, context->buffer, (unsigned char *)str);
 	write_wrapped(context->out->fh, context->buffer, used);
-	sprintf((char *)str, "<p begin=\"%02u:%02u:%02u.%03u\">\n\n", h2, m2, s2, ms2);
-	if (context->encoding != CCX_ENC_UNICODE)
-	{
-		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
-	}
-	used = encode_line(context, context->buffer, (unsigned char *)str);
-	write_wrapped(context->out->fh, context->buffer, used);
 
 	free(el);
 	free(unescaped);
