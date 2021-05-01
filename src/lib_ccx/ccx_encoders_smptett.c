@@ -101,7 +101,7 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 	}
 	used = encode_line(context, context->buffer, (unsigned char *)str);
 	write_wrapped(context->out->fh, context->buffer, used);
-	sprintf((char *)str, "</p>\n");
+
 	free(el);
 	free(unescaped);
 }
