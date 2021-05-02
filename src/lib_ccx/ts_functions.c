@@ -664,70 +664,7 @@ uint64_t get_pts(uint8_t *buffer)
 	}
 	return UINT64_MAX;
 }
-uint64_t get_video_min_pts(struct ccx_demuxer *context)
-{
-	struct ccx_demuxer *ctx = malloc(sizeof(struct ccx_demuxer));
-	memcpy(ctx, context, sizeof(struct ccx_demuxer));
 
-	int ret = CCX_EAGAIN;
-
-	struct ts_payload payload;
-
-	int got_pts = 0;
-
-	uint64_t min_pts = UINT64_MAX;
-	uint64_t *pts_array = NULL;
-	int num_of_remembered_pts = 0;
-	int pcount = 0;
-	uint64_t pts = UINT64_MAX;
-	do
-	{
-		pcount++;
-		// Exit the loop at EOF
-		ret = ts_readpacket(ctx, &payload);
-		if (ret != CCX_OK)
-			break;
-
-		if (payload.pesstart)
-		{
-			// Packetized Elementary Stream (PES) 32-bit start code
-			uint64_t pes_prefix = (payload.start[0] << 16) | (payload.start[1] << 8) | payload.start[2];
-			uint8_t pes_stream_id = payload.start[3];
-
-			if (pes_prefix == 0x000001)
-				if (pes_stream_id >= 0xe0 && pes_stream_id <= 0xef)
-					pts = get_pts(payload.start);
-		}
-
-		if (num_of_remembered_pts >= 1 && payload.has_random_access_indicator)
-		{
-			got_pts = 1;
-			break;
-		}
-
-		if (pts != UINT64_MAX)
-		{
-			num_of_remembered_pts++;
-			pts_array = realloc(pts_array, num_of_remembered_pts * sizeof(uint64_t));
-			((uint64_t *)pts_array)[num_of_remembered_pts - 1] = pts;
-		}
-
-	} while (!got_pts);
-
-	//search for smallest pts
-	uint64_t *p = pts_array;
-	for (int i = 0; i < num_of_remembered_pts; i++)
-	{
-		if (*p < min_pts)
-			min_pts = *p;
-		p++;
-	}
-
-	freep(&ctx);
-	freep(&pts_array);
-
-	return min_pts;
-}
 long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
 	int gotpes = 0;
@@ -742,8 +679,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 	memset(&payload, 0, sizeof(payload));
 
-	/*if (ctx->got_important_streams_min_pts[VIDEO] == UINT64_MAX)
-		ctx->got_important_streams_min_pts[VIDEO] = get_video_min_pts(ctx);*/
 
 	do
 	{
