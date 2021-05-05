@@ -1449,6 +1449,12 @@ unsigned int get_font_encoded(struct encoder_ctx *ctx, unsigned char *buffer, in
 
 void switch_output_file(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, int track_id)
 {
+	// Do nothing when in "report" mode
+	if (enc_ctx == NULL || enc_ctx->out == NULL)
+	{
+		return;
+	}
+
 	if (enc_ctx->out->filename != NULL)
 	{ // Close and release the previous handle
 		free(enc_ctx->out->filename);
