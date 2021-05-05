@@ -12,6 +12,7 @@ void dinit_write(struct ccx_s_write *wb)
 	if (wb->fh > 0)
 		close(wb->fh);
 	freep(&wb->filename);
+	freep(&wb->original_filename);
 	if (wb->with_semaphore && wb->semaphore_filename)
 		unlink(wb->semaphore_filename);
 	freep(&wb->semaphore_filename);
@@ -50,6 +51,7 @@ int init_write(struct ccx_s_write *wb, char *filename, int with_semaphore)
 	wb->fh = -1;
 	wb->temporarily_closed = 0;
 	wb->filename = filename;
+	wb->original_filename = strdup(filename);
 
 	wb->with_semaphore = with_semaphore;
 	wb->append_mode = ccx_options.enc_cfg.append_mode;

@@ -18,6 +18,7 @@ struct ccx_s_write
 	int fh;
 	int temporarily_closed; // 1 means the file was created OK before but we released the handle
 	char *filename;
+	char *original_filename;
 	void* spupng_data;
 	int with_semaphore;     // 1 means create a .sem file when the file is open and delete it when it's closed
 	char *semaphore_filename;
