@@ -28,6 +28,7 @@
 - Fix: Segmentation fault on Windows
 - Update: Updated libGPAC to 1.0.1
 - Fix: Segmentation fault with unsupported and multitrack file reports
+- Fix: Write subtitle header to multitrack outputs
 
 0.88 (2019-05-21)
 -----------------
