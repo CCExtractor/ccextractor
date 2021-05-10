@@ -27,7 +27,7 @@ The core functionality is written in C. Other languages used include C++ and Pyt
 
 ## Installation and Usage
 
-Downloads for precompiled binaries and source code can be found [on our website](https://www.ccextractor.org?id=public:general:downloads).
+Downloads for precompiled binaries and source code can be found [on our website](https://ccextractor.org/public/general/downloads/).
 
 Extracting subtitles is relatively simple. Just run the following command:
 
@@ -37,12 +37,12 @@ This will extract the subtitles.
 
 More usage information can be found on our website:
 
-- [Using the command line tool](https://www.ccextractor.org/doku.php?id=public:general:command_line_usage)
-- [Using the Windows GUI](https://www.ccextractor.org/doku.php?id=public:general:win_gui_usage)
+- [Using the command line tool](https://ccextractor.org/public/general/command_line_usage/)
+- [Using the Windows GUI](https://ccextractor.org/public/general/win_gui_usage/)
 
 You can also find the list of parameters and their brief description by running `ccextractor` without any arguments.
 
-You can find sample files on [our website](https://www.ccextractor.org/public:general:tvsamples) to test the software.
+You can find sample files on [our website](https://ccextractor.org/public/general/tvsamples/) to test the software.
 
 ## Compiling CCExtractor
 
@@ -54,9 +54,9 @@ By far the best way to get support is by opening an issue at our [issue tracker]
 
 When you create a new issue, please fill in the needed details in the provided template. That makes it easier for us to help you more efficiently.
 
-If you have a question or a problem you can also [contact us by email or chat with the team in Slack](https://www.ccextractor.org/doku.php?id=public:general:support).
+If you have a question or a problem you can also [contact us by email or chat with the team in Slack](https://ccextractor.org/public/general/support/).
 
-If you want to contribute to CCExtractor but can't submit some code patches or issues or video samples, you can also [donate to us](https://www.ccextractor.org/public:general:http:sourceforge.net_donate_index.php?group_id=190832)
+If you want to contribute to CCExtractor but can't submit some code patches or issues or video samples, you can also [donate to us](https://sourceforge.net/donate/index.php?group_id=190832)
 
 ## Contributing
 
