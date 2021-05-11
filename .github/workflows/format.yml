@@ -15,7 +15,7 @@ jobs:
   format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2.3.4
       - name: Format code
         run: |
           find src/ -type f -name '*.c' -not -path "src/GUI/icon_data.c" | xargs clang-format -i

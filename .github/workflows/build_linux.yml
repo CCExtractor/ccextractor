@@ -24,7 +24,7 @@ jobs:
     steps:
     - name: Install tesseract
       run: sudo apt-get install libtesseract-dev
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v2.3.4
     - name: build
       run: ./build
       working-directory: ./linux
@@ -41,7 +41,7 @@ jobs:
   build_autoconf:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v2.3.4
     - name: run autogen
       run: ./autogen.sh
       working-directory: ./linux
@@ -56,7 +56,7 @@ jobs:
   cmake:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v2.3.4
     - name: cmake
       run: mkdir build && cd build && cmake ../src
     - name: build
@@ -67,7 +67,7 @@ jobs:
   cmake_ocr_hardsubx:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v2.3.4
     - name: dependencies
       run: sudo apt update && sudo apt install libtesseract-dev libavformat-dev libswscale-dev
     - name: cmake
@@ -80,7 +80,7 @@ jobs:
   bazel:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v2.3.4
     - name: bazel build
       working-directory: ./
       run: bazel build //src:ccextractor --verbose_failures
