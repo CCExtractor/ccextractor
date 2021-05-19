@@ -523,7 +523,7 @@ void parse_segment_cluster_block_group(struct matroska_ctx *mkv_ctx, ULLONG clus
 			{
 				if (pos == 0)
 				{
-					fprintf(stderr, "###TIME#%02u:%02u-%02u:%02u\n###SUBTITLE###",
+					fprintf(stderr, "###TIME###%02u:%02u-%02u:%02u\n###SUBTITLE###",
 						h1 * 60 + m1, s1, h2 * 60 + m2, s2);
 				}
 				else

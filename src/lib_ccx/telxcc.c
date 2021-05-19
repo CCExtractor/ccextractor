@@ -696,7 +696,7 @@ page_is_empty:
 				timecode_show_mmss[5] = 0;
 				timecode_hide_mmss[5] = 0;
 				// Note, only MM:SS here as we need to save space in the preview window
-				fprintf(stderr, "###TIME#%s-%s\n###SUBTITLES###", timecode_show_mmss, timecode_hide_mmss);
+				fprintf(stderr, "###TIME###%s-%s\n###SUBTITLES###", timecode_show_mmss, timecode_hide_mmss);
 				time_reported = 1;
 			}
 			else
