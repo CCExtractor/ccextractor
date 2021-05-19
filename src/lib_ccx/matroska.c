@@ -521,15 +521,14 @@ void parse_segment_cluster_block_group(struct matroska_ctx *mkv_ctx, ULLONG clus
 			int pos = 0;
 			while (true)
 			{
-				fprintf(stderr, "###SUBTITLE#");
 				if (pos == 0)
 				{
-					fprintf(stderr, "%02u:%02u#%02u:%02u#",
+					fprintf(stderr, "###TIME###%02u:%02u-%02u:%02u\n###SUBTITLE###",
 						h1 * 60 + m1, s1, h2 * 60 + m2, s2);
 				}
 				else
 				{
-					fprintf(stderr, "##");
+					fprintf(stderr, "###SUBTITLE###");
 				}
 				int end_pos = pos;
 				while (end_pos < length && text[end_pos] != '\n')
