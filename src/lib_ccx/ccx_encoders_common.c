@@ -92,7 +92,7 @@ static const char *smptett_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" st
 				    "  <body>\n"
 				    "    <div>\n";
 
-static const char *webvtt_header[] = {"WEBVTT", "\r\n", NULL};
+static const char *webvtt_header[] = {"WEBVTT", "\r\n", "\r\n", NULL};
 
 static const char *simple_xml_header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<captions>\r\n";
 
@@ -1448,6 +1448,12 @@ unsigned int get_font_encoded(struct encoder_ctx *ctx, unsigned char *buffer, in
 
 void switch_output_file(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, int track_id)
 {
+	// Do nothing when in "report" mode
+	if (enc_ctx == NULL || enc_ctx->out == NULL)
+	{
+		return;
+	}
+
 	if (enc_ctx->out->filename != NULL)
 	{ // Close and release the previous handle
 		free(enc_ctx->out->filename);
@@ -1456,8 +1462,15 @@ void switch_output_file(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, in
 	const char *ext = get_file_extension(ctx->write_format);
 	char suffix[32];
 	sprintf(suffix, "_%d", track_id);
-	enc_ctx->out->filename = create_outfilename(get_basename(enc_ctx->first_input_file), suffix, ext);
-	enc_ctx->out->fh = open(enc_ctx->out->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+	char *basename = get_basename(enc_ctx->out->original_filename);
+	if (basename != NULL)
+	{
+		enc_ctx->out->filename = create_outfilename(basename, suffix, ext);
+		enc_ctx->out->fh = open(enc_ctx->out->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+		free(basename);
+	}
+
+	write_subtitle_file_header(enc_ctx, enc_ctx->out);
 
 	// Reset counters as we switch output file.
 	enc_ctx->cea_708_counter = 0;

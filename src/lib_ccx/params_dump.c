@@ -269,6 +269,11 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 				return;
 			}
 
+			if (ctx->current_file >= ctx->num_input_files)
+			{
+				return;
+			}
+
 			printf("%s\n", ctx->inputfile[ctx->current_file]);
 			break;
 		case CCX_DS_STDIN:
