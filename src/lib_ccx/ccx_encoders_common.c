@@ -756,7 +756,9 @@ static void dinit_output_ctx(struct encoder_ctx *ctx)
 {
 	int i;
 	for (i = 0; i < ctx->nb_out; i++)
+    {
 		dinit_write(ctx->out + i);
+    }
 	freep(&ctx->out);
 
 	if (ctx->dtvcc_extract)
@@ -787,6 +789,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	ctx->out = malloc(sizeof(struct ccx_s_write) * nb_lang);
 	if (!ctx->out)
 		return -1;
+    memset (ctx->out, 0, sizeof(struct ccx_s_write) * nb_lang);
 	ctx->nb_out = nb_lang;
 	ctx->keep_output_closed = cfg->keep_output_closed;
 	ctx->force_flush = cfg->force_flush;

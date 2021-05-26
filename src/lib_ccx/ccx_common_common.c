@@ -40,7 +40,7 @@ void millis_to_time(LLONG milli, unsigned *hours, unsigned *minutes,
 void freep(void *arg)
 {
 	void **ptr = arg;
-	if (*ptr)
+	if (ptr && *ptr)
 	{
 		free(*ptr);
 		*ptr = NULL;

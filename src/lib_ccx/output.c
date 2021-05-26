@@ -9,12 +9,18 @@
 
 void dinit_write(struct ccx_s_write *wb)
 {
+    if (wb == NULL)
+    {
+        return;
+    }
 	if (wb->fh > 0)
 		close(wb->fh);
 	freep(&wb->filename);
 	freep(&wb->original_filename);
 	if (wb->with_semaphore && wb->semaphore_filename)
+    {
 		unlink(wb->semaphore_filename);
+    }
 	freep(&wb->semaphore_filename);
 }
 
