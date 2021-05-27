@@ -50,6 +50,7 @@ struct ccx_common_timing_ctx
 	int sync_pts2fts_set; // 0 = No, 1 = Yes
 	LLONG sync_pts2fts_fts;
 	LLONG sync_pts2fts_pts;
+	int pts_reset; 		  // 0 = No, 1 = Yes. PTS resets when current_pts is lower than prev
 };
 // Count 608 (per field) and 708 blocks since last set_fts() call
 extern int cb_field1, cb_field2, cb_708;

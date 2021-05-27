@@ -66,6 +66,7 @@ struct ccx_common_timing_ctx *init_timing_ctx(struct ccx_common_timing_settings_
 	ctx->fts_fc_offset = 0; // Time before first GOP
 	ctx->fts_max = 0;	// Remember the maximum fts that we saw in current file
 	ctx->fts_global = 0;	// Duration of previous files (-ve mode), see c1global
+	ctx->pts_reset = 0; 	// 0 = No, 1 = Yes. PTS resets when current_pts is lower than prev
 
 	return ctx;
 }
@@ -77,12 +78,19 @@ void add_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts)
 
 void set_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts)
 {
+	LLONG prev_pts = ctx->current_pts;
 	ctx->current_pts = pts;
 	if (ctx->pts_set == 0)
 		ctx->pts_set = 1;
 	dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)", print_mstime_static(ctx->current_pts / (MPEG_CLOCK_FREQ / 1000)),
 		  (unsigned)(ctx->current_pts));
 	dbg_print(CCX_DMT_VIDES, "  FTS: %s \n", print_mstime_static(ctx->fts_now));
+
+	// Check if PTS reset
+	if (ctx->current_pts < prev_pts)
+	{
+		ctx->pts_reset = 1;
+	}
 }
 
 int set_fts(struct ccx_common_timing_ctx *ctx)
@@ -244,6 +252,14 @@ int set_fts(struct ccx_common_timing_ctx *ctx)
 	if (ctx->fts_now > ctx->fts_max)
 	{
 		ctx->fts_max = ctx->fts_now;
+	}
+
+	// If PTS resets, then fix minimum_fts and fts_max
+	if (ctx->pts_reset)
+	{
+		ctx->minimum_fts = 0;
+		ctx->fts_max = ctx->fts_now;
+		ctx->pts_reset = 0;
 	}
 	return CCX_OK;
 }
