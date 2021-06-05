@@ -321,6 +321,13 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 		memcpy(((struct eia608_screen *)sub->data) + sub->nb_data, data, sizeof(*data));
 		sub->nb_data++;
 		wrote_something = 1;
+
+		// Buffer until next packet to get correct timing
+		if (start_time == end_time && sub->got_output == 1)
+		{
+			sub->got_output = 0;
+		}
+
 		if (start_time < end_time)
 		{
 			int i = 0;
@@ -335,7 +342,15 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 			}
 			for (i = 0; i < nb_data; i++)
 			{
-				data->start_time = start_time + (((end_time - start_time) / nb_data) * i);
+				// Don't update start time if Direct Rollup is selected
+				if (context->settings->direct_rollup)
+				{
+					data->start_time = start_time;
+				}
+				else
+				{
+					data->start_time = start_time + (((end_time - start_time) / nb_data) * i);
+				}
 				data->end_time = start_time + (((end_time - start_time) / nb_data) * (i + 1));
 				data++;
 			}
