@@ -15,6 +15,13 @@ made to reuse, not duplicate, as many functions as possible */
 #include "ccx_encoders_mcc.h"
 #include "ccx_dtvcc.h"
 
+#ifdef ENABLE_RUST
+	// Include rust decoder
+	extern void process(struct lib_cc_decode *ctx,
+					const unsigned char *data,
+					int data_length);
+#endif
+
 uint64_t utc_refvalue = UINT64_MAX; /* _UI64_MAX/UINT64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
 extern int in_xds_mode;
 
@@ -194,8 +201,17 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 				temp[3] = cc_block[2];
 				if (timeok)
 				{
-					if (ctx->write_format != CCX_OF_RCWT)
-						dtvcc_process_data(ctx->dtvcc, (const unsigned char *)temp);
+					if (ctx->write_format != CCX_OF_RCWT){
+						#ifdef ENABLE_RUST
+							// Include rust decoder
+							extern void process(struct lib_cc_decode *ctx,
+											const unsigned char *data,
+											int data_length);
+							process(ctx, (const unsigned char *)temp, 4);
+						#else 
+							ccx_dtvcc_process_data(ctx, (const unsigned char *)temp, 4);
+						#endif
+					}
 					else
 						writercwtdata(ctx, cc_block, sub);
 				}
