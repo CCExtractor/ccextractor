@@ -1,0 +1,16 @@
+[package]
+name = "ccx_rust"
+version = "0.1.0"
+authors = ["PunitLodha <punitlodha@pm.me>"]
+description = "Rust library for CCExtractor"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+
+[build-dependencies]
+bindgen = "0.58.1"
