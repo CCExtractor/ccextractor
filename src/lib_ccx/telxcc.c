@@ -1265,10 +1265,10 @@ void set_tlt_delta(struct lib_cc_decode *dec_ctx, uint64_t pts)
 			ctx->delta = 0 - (uint64_t)t;
 		}
 		else
-		{
+        {
 			ctx->delta = (uint64_t)(1000 * utc_refvalue - t);
-			ctx->resetT0 = YES; // Indicate to reset t0 at next processing opportunity.
-		}
+        }
+        ctx->t0 = t;
 
 		ctx->states.pts_initialized = YES;
 		if ((ctx->using_pts == NO) && (ctx->global_timestamp == 0))
@@ -1402,8 +1402,8 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	if (ctx->using_pts == NO)
 	{
 		t = ctx->global_timestamp;
+        // t = get_pts();
 	}
-	// if (using_pts == NO) t = get_pts();
 	else
 	{
 		// PTS is 33 bits wide, however, timestamp in ms fits into 32 bits nicely (PTS/90)
@@ -1447,11 +1447,6 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 			ctx->states.pts_initialized = NO;
 		}
 	}*/
-	if (ctx->resetT0 == YES)
-	{
-		ctx->t0 = t;
-		ctx->resetT0 = NO;
-	}
 
 	if (t < ctx->t0)
 		ctx->delta = ctx->last_timestamp;
@@ -1532,7 +1527,6 @@ void *telxcc_init(void)
 
 	ctx->using_pts = UNDEFINED;
 	ctx->delta = 0;
-	ctx->resetT0 = NO;
 	ctx->t0 = 0;
 
 	ctx->sentence_cap = 0;

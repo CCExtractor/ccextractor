@@ -95,7 +95,6 @@ struct TeletextCtx
 
 	uint8_t using_pts;
 	int64_t delta;
-        uint8_t resetT0;
 	uint32_t t0;
 
 	int sentence_cap;//Set to 1 if -sc is passed
