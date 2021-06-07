@@ -1265,10 +1265,10 @@ void set_tlt_delta(struct lib_cc_decode *dec_ctx, uint64_t pts)
 			ctx->delta = 0 - (uint64_t)t;
 		}
 		else
-        {
+		{
 			ctx->delta = (uint64_t)(1000 * utc_refvalue - t);
-        }
-        ctx->t0 = t;
+		}
+		ctx->t0 = t;
 
 		ctx->states.pts_initialized = YES;
 		if ((ctx->using_pts == NO) && (ctx->global_timestamp == 0))
@@ -1402,7 +1402,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	if (ctx->using_pts == NO)
 	{
 		t = ctx->global_timestamp;
-        // t = get_pts();
+		// t = get_pts();
 	}
 	else
 	{
