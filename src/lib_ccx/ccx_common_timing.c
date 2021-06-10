@@ -66,7 +66,7 @@ struct ccx_common_timing_ctx *init_timing_ctx(struct ccx_common_timing_settings_
 	ctx->fts_fc_offset = 0; // Time before first GOP
 	ctx->fts_max = 0;	// Remember the maximum fts that we saw in current file
 	ctx->fts_global = 0;	// Duration of previous files (-ve mode), see c1global
-	ctx->pts_reset = 0; 	// 0 = No, 1 = Yes. PTS resets when current_pts is lower than prev
+	ctx->pts_reset = 0;	// 0 = No, 1 = Yes. PTS resets when current_pts is lower than prev
 
 	return ctx;
 }

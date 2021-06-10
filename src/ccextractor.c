@@ -434,7 +434,6 @@ struct ccx_s_options *api_init_options()
 	return &ccx_options;
 }
 
-
 int main(int argc, char *argv[])
 {
 	setlocale(LC_ALL, ""); // Supports non-English CCs
