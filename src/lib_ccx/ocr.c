@@ -520,8 +520,10 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 
 				// Getting the hue value
 				float h;
-				float max = (((r_avg > g_avg) && (r_avg > b_avg)) ? r_avg : (g_avg > b_avg) ? g_avg : b_avg);
-				float min = (((r_avg < g_avg) && (r_avg < b_avg)) ? r_avg : (g_avg < b_avg) ? g_avg : b_avg);
+				float max = (((r_avg > g_avg) && (r_avg > b_avg)) ? r_avg : (g_avg > b_avg) ? g_avg
+													    : b_avg);
+				float min = (((r_avg < g_avg) && (r_avg < b_avg)) ? r_avg : (g_avg < b_avg) ? g_avg
+													    : b_avg);
 				if (max == 0.0f || max - min == 0.0f)
 					h = 0;
 				else if (max == r_avg)
@@ -661,7 +663,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 					if (last_font_tag_end)
 					{
 						last_font_tag_end += 1; // move string to the "right" if ">" was found, otherwise leave empty string (solves #1084)
-					}	
+					}
 					// Copy the content of the subtitle
 					memcpy(new_text_out_iter, line_start, line_end - line_start);
 					new_text_out_iter += line_end - line_start;

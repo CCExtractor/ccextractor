@@ -394,7 +394,7 @@ static int process_clcp(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 					continue;
 				}
 				dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
-									   //TODO is it really always 4-bytes long?
+				    //TODO is it really always 4-bytes long?
 				ccx_dtvcc_process_data(dec_ctx, (unsigned char *)temp, 4);
 				cb_708++;
 			}

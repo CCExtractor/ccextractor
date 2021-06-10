@@ -679,7 +679,6 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 	memset(&payload, 0, sizeof(payload));
 
-
 	do
 	{
 		pcount++;
