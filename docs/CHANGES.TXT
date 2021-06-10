@@ -31,6 +31,7 @@
 - Fix: Segmentation fault with unsupported and multitrack file reports
 - Fix: Write subtitle header to multitrack outputs
 - Fix: Write multitrack files to the output file directory
+- Fix: Correct frame number calculation in SCC (#1340)
 - Fix: Regression on Teletext that caused dates to be wrong (RT 78 on the sample platform)
 
 0.88 (2019-05-21)

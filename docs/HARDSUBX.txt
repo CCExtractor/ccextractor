@@ -20,6 +20,10 @@ Linux
 Make sure Tesseract, Leptonica and FFMPeg are installed, and that their libraries can be found using pkg-config.
 Refer to OCR.txt for installation details.
 
+FFmpeg from packages (on Debian) plus a couple of other dependencies you will need:
+sudo apt-get install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libxcb-shm0-dev liblzma-dev 
+
+FFmpeg from source:
 To install FFmpeg (libav), follow the steps at:-
 https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu - For Ubuntu, Debian and Linux Mint
 https://trac.ffmpeg.org/wiki/CompilationGuide/Generic - For generic Linux compilation

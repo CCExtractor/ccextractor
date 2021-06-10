@@ -529,7 +529,7 @@ void add_timestamp(const struct encoder_ctx *context, LLONG time, const bool dis
 	millis_to_time(time, &hour, &minute, &second, &milli);
 
 	// SMPTE format
-	float frame = milli / 29.97;
+	float frame = milli * 29.97 / 1000;
 	fdprintf(context->out->fh, "%02u:%02u:%02u:%02.f\t", hour, minute, second, frame);
 }
 

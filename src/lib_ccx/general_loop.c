@@ -875,6 +875,11 @@ int general_loop(struct lib_ccx_ctx *ctx)
 #endif
 		case CCX_SM_MXF:
 			get_more_data = ccx_mxf_getmoredata;
+            // The MXFContext might have already been initialized if the
+            // stream type was autodetected
+            if (ctx->demux_ctx->private_data == NULL) {
+                ctx->demux_ctx->private_data = ccx_gxf_init(ctx->demux_ctx);
+            }
 			break;
 		default:
 			fatal(CCX_COMMON_EXIT_BUG_BUG, "In general_loop: Impossible value for stream_mode");
