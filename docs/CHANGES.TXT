@@ -33,6 +33,9 @@
 - Fix: Write multitrack files to the output file directory
 - Fix: Correct frame number calculation in SCC (#1340)
 - Fix: Regression on Teletext that caused dates to be wrong (RT 78 on the sample platform)
+- Fix: CEA-708: Better timing, fixes for missing subtitles
+- Fix: timing for direct rollup
+- Fix: timing for VOB files with multiple chapters
 
 0.88 (2019-05-21)
 -----------------
