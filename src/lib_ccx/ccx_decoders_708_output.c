@@ -133,16 +133,7 @@ void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *d
 	ccx_dtvcc_pen_attribs pen_attribs = ccx_dtvcc_default_pen_attribs;
 	_dtvcc_get_write_interval(tv, row_index, &first, &last);
 
-	if (decoder->current_window == -1)
-		ccx_common_logging.log_ftn("[CEA-708] _dtvcc_write_row: Window has to be defined first\n");
-
-	int length;
-	if (decoder->current_window == -1) // Bug - in this case we have broken timing. See issue in GitHub
-		length = last + 1;
-	else
-		length = decoder->windows[decoder->current_window].col_count;
-
-	for (int i = 0; i < length; i++)
+	for (int i = 0; i < last + 1; i++)
 	{
 
 		if (use_colors)
@@ -154,7 +145,7 @@ void _dtvcc_write_row(ccx_dtvcc_writer_ctx *writer, ccx_dtvcc_service_decoder *d
 
 		pen_color = tv->pen_colors[row_index][i];
 		pen_attribs = tv->pen_attribs[row_index][i];
-		if (i < first || i > last)
+		if (i < first)
 		{
 			size_t size = write_utf16_char(' ', buf + buf_len);
 			buf_len += size;
