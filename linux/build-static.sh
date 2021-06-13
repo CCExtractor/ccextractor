@@ -83,9 +83,6 @@ cd -;
 # ccextractor -- build static
 git clone https://github.com/CCExtractor/ccextractor;
 cd ccextractor/linux/;
-# wget https://sourceforge.net/projects/ccextractor/files/ccextractor/0.82/ccextractor.src.0.82.zip;
-# unzip ccextractor*.zip;
-# cd ccextractor.*/linux/;
 perl -i -pe 's/O3 /O3 -static /' Makefile;
 # quick patch:
 perl -i -pe 's/(strchr|strstr)\(/$1((char *)/'  ../src/thirdparty/gpacmp4/url.c  ../src/thirdparty/gpacmp4/error.c;
