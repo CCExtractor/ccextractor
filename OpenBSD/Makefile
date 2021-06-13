@@ -3,8 +3,8 @@
 MAINTAINER = 	Marc Espie <espie@openbsd.org>
 CATEGORIES =	multimedia
 COMMENT =	closed caption subtitles extractor
-HOMEPAGE = 	http://ccextractor.sourceforge.net/
-V =		0.88
+HOMEPAGE = 	https://ccextractor.org
+V =		0.89
 DISTFILES =	ccextractor.${V:S/.//}-src.zip
 MASTER_SITES =	${MASTER_SITE_SOURCEFORGE:=ccextractor/}
 DISTNAME =	ccextractor-$V

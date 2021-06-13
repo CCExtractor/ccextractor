@@ -9,7 +9,7 @@ option (WITH_HARDSUBX "Build with support for burned-in subtitles" OFF)
 
 # Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
-set (CCEXTRACTOR_VERSION_MINOR 85b)
+set (CCEXTRACTOR_VERSION_MINOR 89)
 
 # Get project directory
 get_filename_component(BASE_PROJ_DIR ../ ABSOLUTE)

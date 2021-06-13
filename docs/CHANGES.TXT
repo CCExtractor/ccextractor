@@ -1,4 +1,4 @@
-0.89 (TBD)
+0.89 (2021-06-13)
 -----------------
 - Fix: Fix broken links in README
 - Fix: Timing in DVB, sub duration check for timeout.
