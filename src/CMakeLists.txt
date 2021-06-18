@@ -242,7 +242,6 @@ if (PKG_CONFIG_FOUND AND WITH_RUST)
   set (EXTRA_LIBS ${EXTRA_LIBS} ${RUST_LIB})
   add_dependencies(ccextractor ccx_rust)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_RUST")
-  message(STATUS "${CMAKE_C_FLAGS}")
 endif (PKG_CONFIG_FOUND AND WITH_RUST)
 
 target_link_libraries (ccextractor ${EXTRA_LIBS})

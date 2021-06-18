@@ -436,9 +436,6 @@ struct ccx_s_options *api_init_options()
 
 int main(int argc, char *argv[])
 {
-	#ifdef ENABLE_RUST
-			printf("Hello rust");
-	#endif
 	setlocale(LC_ALL, ""); // Supports non-English CCs
 
 	struct ccx_s_options *api_options = api_init_options();
