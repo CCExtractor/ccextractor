@@ -3,9 +3,8 @@
 #include "ccx_encoders_common.h"
 #include "ccx_decoders_708_output.h"
 
-void dtvcc_process_data(struct lib_cc_decode *ctx,
-			const unsigned char *data,
-			int data_length)
+void dtvcc_process_data(struct dtvcc_ctx *dtvcc,
+			const unsigned char *data)
 {
 	/*
 	 * Note: the data has following format:
@@ -14,66 +13,61 @@ void dtvcc_process_data(struct lib_cc_decode *ctx,
 	 * 2 bytes for the actual data
 	 */
 
-	dtvcc_ctx *dtvcc = ctx->dtvcc;
-
 	if (!dtvcc->is_active && !dtvcc->report_enabled)
 		return;
 
-	for (int i = 0; i < data_length; i += 4)
+	unsigned char cc_valid = data[0];
+	unsigned char cc_type = data[1];
+
+	switch (cc_type)
 	{
-		unsigned char cc_valid = data[i];
-		unsigned char cc_type = data[i + 1];
-
-		switch (cc_type)
-		{
-			case 2:
-				ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: DTVCC Channel Packet Data\n");
-				if (cc_valid && dtvcc->is_current_packet_header_parsed)
+		case 2:
+			ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: DTVCC Channel Packet Data\n");
+			if (cc_valid && dtvcc->is_current_packet_header_parsed)
+			{
+				if (dtvcc->current_packet_length > 253)
 				{
-					if (dtvcc->current_packet_length > 253)
-					{
-						ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: "
-											  "Warning: Legal packet size exceeded (1), data not added.\n");
-					}
-					else
-					{
-						dtvcc->current_packet[dtvcc->current_packet_length++] = data[i + 2];
-						dtvcc->current_packet[dtvcc->current_packet_length++] = data[i + 3];
-						int len = dtvcc->current_packet[0] & 0x3F; // 6 least significants bits
-
-						if (len == 0) // This is well defined in EIA-708; no magic.
-							len = 128;
-						else
-							len = len * 2;
-						// Note that len here is the length including the header
-
-						if (dtvcc->current_packet_length >= len)
-							dtvcc_process_current_packet(dtvcc, len);
-					}
+					ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: "
+										  "Warning: Legal packet size exceeded (1), data not added.\n");
 				}
-				break;
-			case 3:
-				ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: DTVCC Channel Packet Start\n");
-				if (cc_valid)
+				else
 				{
-					if (dtvcc->current_packet_length > CCX_DTVCC_MAX_PACKET_LENGTH - 1)
-					{
-						ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: "
-											  "Warning: Legal packet size exceeded (2), data not added.\n");
-					}
+					dtvcc->current_packet[dtvcc->current_packet_length++] = data[2];
+					dtvcc->current_packet[dtvcc->current_packet_length++] = data[3];
+					int len = dtvcc->current_packet[0] & 0x3F; // 6 least significants bits
+
+					if (len == 0) // This is well defined in EIA-708; no magic.
+						len = 128;
 					else
-					{
-						dtvcc->current_packet[dtvcc->current_packet_length++] = data[i + 2];
-						dtvcc->current_packet[dtvcc->current_packet_length++] = data[i + 3];
-						dtvcc->is_current_packet_header_parsed = 1;
-					}
+						len = len * 2;
+					// Note that len here is the length including the header
+
+					if (dtvcc->current_packet_length >= len)
+						dtvcc_process_current_packet(dtvcc, len);
 				}
-				break;
-			default:
-				ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "[CEA-708] dtvcc_process_data: "
-										      "shouldn't be here - cc_type: %d\n",
-							     cc_type);
-		}
+			}
+			break;
+		case 3:
+			ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: DTVCC Channel Packet Start\n");
+			if (cc_valid)
+			{
+				if (dtvcc->current_packet_length > CCX_DTVCC_MAX_PACKET_LENGTH - 1)
+				{
+					ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: "
+										  "Warning: Legal packet size exceeded (2), data not added.\n");
+				}
+				else
+				{
+					dtvcc->current_packet[dtvcc->current_packet_length++] = data[2];
+					dtvcc->current_packet[dtvcc->current_packet_length++] = data[3];
+					dtvcc->is_current_packet_header_parsed = 1;
+				}
+			}
+			break;
+		default:
+			ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "[CEA-708] dtvcc_process_data: "
+									      "shouldn't be here - cc_type: %d\n",
+						     cc_type);
 	}
 }
 
