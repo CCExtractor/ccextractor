@@ -764,7 +764,7 @@ static void dinit_output_ctx(struct encoder_ctx *ctx)
 	if (ctx->dtvcc_extract)
 	{
 		for (i = 0; i < CCX_DTVCC_MAX_SERVICES; i++)
-			ccx_dtvcc_writer_cleanup(&ctx->dtvcc_writers[i]);
+			dtvcc_writer_cleanup(&ctx->dtvcc_writers[i]);
 	}
 }
 
@@ -888,8 +888,8 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 				else
 					basefilename = get_basename(ctx->first_input_file);
 
-				ccx_dtvcc_writer_init(&ctx->dtvcc_writers[i], basefilename,
-						      ctx->program_number, i + 1, cfg->write_format, cfg);
+				dtvcc_writer_init(&ctx->dtvcc_writers[i], basefilename,
+						  ctx->program_number, i + 1, cfg->write_format, cfg);
 				free(basefilename);
 			}
 		}

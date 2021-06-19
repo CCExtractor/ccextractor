@@ -21,12 +21,12 @@ if (ctx->buffer == NULL) { fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for 
 #define ROWS                    15
 #define COLUMNS                 32
 
-typedef struct ccx_dtvcc_writer_ctx
+typedef struct dtvcc_writer_ctx
 {
 	int fd;
 	char *filename;
 	iconv_t cd;
-} ccx_dtvcc_writer_ctx;
+} dtvcc_writer_ctx;
 
 typedef struct ccx_sbs_utf8_character
 {
@@ -106,7 +106,7 @@ struct encoder_ctx
 	int extract;
 
 	int dtvcc_extract;                                          // 1 or 0 depending if we have to handle dtvcc
-	ccx_dtvcc_writer_ctx dtvcc_writers[CCX_DTVCC_MAX_SERVICES];
+	dtvcc_writer_ctx dtvcc_writers[CCX_DTVCC_MAX_SERVICES];
 
 	/* Timing related variables*/
 	/* start time of previous sub */
