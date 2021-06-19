@@ -3,7 +3,7 @@
 #include "ccx_encoders_common.h"
 #include "ccx_decoders_708_output.h"
 
-void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
+void dtvcc_process_data(struct lib_cc_decode *ctx,
 			    const unsigned char *data,
 			    int data_length)
 {
@@ -14,7 +14,7 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 	 * 2 bytes for the actual data
 	 */
 
-	ccx_dtvcc_ctx *dtvcc = ctx->dtvcc;
+	dtvcc_ctx *dtvcc = ctx->dtvcc;
 
 	if (!dtvcc->is_active && !dtvcc->report_enabled)
 		return;
@@ -48,7 +48,7 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 						// Note that len here is the length including the header
 
 						if (dtvcc->current_packet_length >= len)
-							ccx_dtvcc_process_current_packet(dtvcc, len);
+							dtvcc_process_current_packet(dtvcc, len);
 					}
 				}
 				break;
@@ -79,13 +79,13 @@ void ccx_dtvcc_process_data(struct lib_cc_decode *ctx,
 
 //--------------------------------------------------------------------------------------
 
-ccx_dtvcc_ctx *ccx_dtvcc_init(struct ccx_decoder_dtvcc_settings *opts)
+dtvcc_ctx *dtvcc_init(struct ccx_decoder_dtvcc_settings *opts)
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] initializing dtvcc decoder\n");
-	ccx_dtvcc_ctx *ctx = (ccx_dtvcc_ctx *)malloc(sizeof(ccx_dtvcc_ctx));
+	dtvcc_ctx *ctx = (dtvcc_ctx *)malloc(sizeof(dtvcc_ctx));
 	if (!ctx)
 	{
-		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "[CEA-708] ccx_dtvcc_init");
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "[CEA-708] dtvcc_init");
 		return NULL;
 	}
 
@@ -98,7 +98,7 @@ ccx_dtvcc_ctx *ccx_dtvcc_init(struct ccx_decoder_dtvcc_settings *opts)
 
 	memcpy(ctx->services_active, opts->services_enabled, CCX_DTVCC_MAX_SERVICES * sizeof(int));
 
-	ccx_dtvcc_clear_packet(ctx);
+	dtvcc_clear_packet(ctx);
 
 	ctx->last_sequence = CCX_DTVCC_NO_LAST_SEQUENCE;
 
@@ -112,35 +112,35 @@ ccx_dtvcc_ctx *ccx_dtvcc_init(struct ccx_decoder_dtvcc_settings *opts)
 		if (!ctx->services_active[i])
 			continue;
 
-		ccx_dtvcc_service_decoder *decoder = &ctx->decoders[i];
+		dtvcc_service_decoder *decoder = &ctx->decoders[i];
 		decoder->cc_count = 0;
 		decoder->tv = (dtvcc_tv_screen *)malloc(sizeof(dtvcc_tv_screen));
 		decoder->tv->service_number = i + 1;
 		decoder->tv->cc_count = 0;
 		if (!decoder->tv)
-			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "ccx_dtvcc_init");
+			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "dtvcc_init");
 
 		for (int j = 0; j < CCX_DTVCC_MAX_WINDOWS; j++)
 			decoder->windows[j].memory_reserved = 0;
 
-		ccx_dtvcc_windows_reset(decoder);
+		dtvcc_windows_reset(decoder);
 	}
 
 	return ctx;
 }
 
-void ccx_dtvcc_free(ccx_dtvcc_ctx **ctx_ptr)
+void dtvcc_free(dtvcc_ctx **ctx_ptr)
 {
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_free: cleaning up\n");
 
-	ccx_dtvcc_ctx *ctx = *ctx_ptr;
+	dtvcc_ctx *ctx = *ctx_ptr;
 
 	for (int i = 0; i < CCX_DTVCC_MAX_SERVICES; i++)
 	{
 		if (!ctx->services_active[i])
 			continue;
 
-		ccx_dtvcc_service_decoder *decoder = &ctx->decoders[i];
+		dtvcc_service_decoder *decoder = &ctx->decoders[i];
 
 		for (int j = 0; j < CCX_DTVCC_MAX_WINDOWS; j++)
 			if (decoder->windows[j].memory_reserved)

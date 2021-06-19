@@ -195,7 +195,7 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 				if (timeok)
 				{
 					if (ctx->write_format != CCX_OF_RCWT)
-						ccx_dtvcc_process_data(ctx, (const unsigned char *)temp, 4);
+						dtvcc_process_data(ctx, (const unsigned char *)temp,4);
 					else
 						writercwtdata(ctx, cc_block, sub);
 				}
@@ -219,7 +219,7 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 void dinit_cc_decode(struct lib_cc_decode **ctx)
 {
 	struct lib_cc_decode *lctx = *ctx;
-	ccx_dtvcc_free(&lctx->dtvcc);
+	dtvcc_free(&lctx->dtvcc);
 	dinit_avc(&lctx->avc_ctx);
 	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_1);
 	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_2);
@@ -248,7 +248,7 @@ struct lib_cc_decode *init_cc_decode(struct ccx_decoders_common_settings_t *sett
 	ctx->no_rollup = setting->no_rollup;
 	ctx->noscte20 = setting->noscte20;
 
-	ctx->dtvcc = ccx_dtvcc_init(setting->settings_dtvcc);
+	ctx->dtvcc = dtvcc_init(setting->settings_dtvcc);
 	ctx->dtvcc->is_active = setting->settings_dtvcc->enabled;
 
 	if (setting->codec == CCX_CODEC_ATSC_CC)
@@ -432,13 +432,13 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 	{
 		for (int i = 0; i < CCX_DTVCC_MAX_SERVICES; i++)
 		{
-			ccx_dtvcc_service_decoder *decoder = &ctx->dtvcc->decoders[i];
+			dtvcc_service_decoder *decoder = &ctx->dtvcc->decoders[i];
 			if (!ctx->dtvcc->services_active[i])
 				continue;
 			if (decoder->cc_count > 0)
 			{
 				ctx->current_field = 3;
-				ccx_dtvcc_decoder_flush(ctx->dtvcc, decoder);
+				dtvcc_decoder_flush(ctx->dtvcc, decoder);
 			}
 		}
 	}
@@ -520,8 +520,8 @@ struct lib_cc_decode *copy_decoder_context(struct lib_cc_decode *ctx)
 	ctx_copy->private_data = NULL;
 	if (ctx->dtvcc)
 	{
-		ctx_copy->dtvcc = malloc(sizeof(struct ccx_dtvcc_ctx));
-		memcpy(ctx_copy->dtvcc, ctx->dtvcc, sizeof(struct ccx_dtvcc_ctx));
+		ctx_copy->dtvcc = malloc(sizeof(struct dtvcc_ctx));
+		memcpy(ctx_copy->dtvcc, ctx->dtvcc, sizeof(struct dtvcc_ctx));
 	}
 	if (ctx->xds_ctx)
 	{

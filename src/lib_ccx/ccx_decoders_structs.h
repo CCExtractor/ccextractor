@@ -208,7 +208,7 @@ struct lib_cc_decode
     int stat_divicom;
     int false_pict_header;
 
-	ccx_dtvcc_ctx *dtvcc;
+	dtvcc_ctx *dtvcc;
 	int current_field;
 	// Analyse/use the picture information
 	int maxtref; // Use to remember the temporal reference number

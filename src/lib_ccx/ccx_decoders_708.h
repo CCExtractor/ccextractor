@@ -28,55 +28,55 @@
 
 #define CCX_DTVCC_NO_LAST_SEQUENCE -1
 
-enum CCX_DTVCC_COMMANDS_C0_CODES
+enum DTVCC_COMMANDS_C0_CODES
 {
-	CCX_DTVCC_C0_NUL = 	0x00,
-	CCX_DTVCC_C0_ETX = 	0x03,
-	CCX_DTVCC_C0_BS = 	0x08,
-	CCX_DTVCC_C0_FF = 	0x0c,
-	CCX_DTVCC_C0_CR = 	0x0d,
-	CCX_DTVCC_C0_HCR = 	0x0e,
-	CCX_DTVCC_C0_EXT1 = 0x10,
-	CCX_DTVCC_C0_P16 = 	0x18
+	DTVCC_C0_NUL = 	0x00,
+	DTVCC_C0_ETX = 	0x03,
+	DTVCC_C0_BS = 	0x08,
+	DTVCC_C0_FF = 	0x0c,
+	DTVCC_C0_CR = 	0x0d,
+	DTVCC_C0_HCR = 	0x0e,
+	DTVCC_C0_EXT1 = 0x10,
+	DTVCC_C0_P16 = 	0x18
 };
 
-enum CCX_DTVCC_COMMANDS_C1_CODES
+enum DTVCC_COMMANDS_C1_CODES
 {
-	CCX_DTVCC_C1_CW0 = 0x80,
-	CCX_DTVCC_C1_CW1 = 0x81,
-	CCX_DTVCC_C1_CW2 = 0x82,
-	CCX_DTVCC_C1_CW3 = 0x83,
-	CCX_DTVCC_C1_CW4 = 0x84,
-	CCX_DTVCC_C1_CW5 = 0x85,
-	CCX_DTVCC_C1_CW6 = 0x86,
-	CCX_DTVCC_C1_CW7 = 0x87,
-	CCX_DTVCC_C1_CLW = 0x88,
-	CCX_DTVCC_C1_DSW = 0x89,
-	CCX_DTVCC_C1_HDW = 0x8A,
-	CCX_DTVCC_C1_TGW = 0x8B,
-	CCX_DTVCC_C1_DLW = 0x8C,
-	CCX_DTVCC_C1_DLY = 0x8D,
-	CCX_DTVCC_C1_DLC = 0x8E,
-	CCX_DTVCC_C1_RST = 0x8F,
-	CCX_DTVCC_C1_SPA = 0x90,
-	CCX_DTVCC_C1_SPC = 0x91,
-	CCX_DTVCC_C1_SPL = 0x92,
-	CCX_DTVCC_C1_RSV93 = 0x93,
-	CCX_DTVCC_C1_RSV94 = 0x94,
-	CCX_DTVCC_C1_RSV95 = 0x95,
-	CCX_DTVCC_C1_RSV96 = 0x96,
-	CCX_DTVCC_C1_SWA = 0x97,
-	CCX_DTVCC_C1_DF0 = 0x98,
-	CCX_DTVCC_C1_DF1 = 0x99,
-	CCX_DTVCC_C1_DF2 = 0x9A,
-	CCX_DTVCC_C1_DF3 = 0x9B,
-	CCX_DTVCC_C1_DF4 = 0x9C,
-	CCX_DTVCC_C1_DF5 = 0x9D,
-	CCX_DTVCC_C1_DF6 = 0x9E,
-	CCX_DTVCC_C1_DF7 = 0x9F
+	DTVCC_C1_CW0 = 0x80,
+	DTVCC_C1_CW1 = 0x81,
+	DTVCC_C1_CW2 = 0x82,
+	DTVCC_C1_CW3 = 0x83,
+	DTVCC_C1_CW4 = 0x84,
+	DTVCC_C1_CW5 = 0x85,
+	DTVCC_C1_CW6 = 0x86,
+	DTVCC_C1_CW7 = 0x87,
+	DTVCC_C1_CLW = 0x88,
+	DTVCC_C1_DSW = 0x89,
+	DTVCC_C1_HDW = 0x8A,
+	DTVCC_C1_TGW = 0x8B,
+	DTVCC_C1_DLW = 0x8C,
+	DTVCC_C1_DLY = 0x8D,
+	DTVCC_C1_DLC = 0x8E,
+	DTVCC_C1_RST = 0x8F,
+	DTVCC_C1_SPA = 0x90,
+	DTVCC_C1_SPC = 0x91,
+	DTVCC_C1_SPL = 0x92,
+	DTVCC_C1_RSV93 = 0x93,
+	DTVCC_C1_RSV94 = 0x94,
+	DTVCC_C1_RSV95 = 0x95,
+	DTVCC_C1_RSV96 = 0x96,
+	DTVCC_C1_SWA = 0x97,
+	DTVCC_C1_DF0 = 0x98,
+	DTVCC_C1_DF1 = 0x99,
+	DTVCC_C1_DF2 = 0x9A,
+	DTVCC_C1_DF3 = 0x9B,
+	DTVCC_C1_DF4 = 0x9C,
+	DTVCC_C1_DF5 = 0x9D,
+	DTVCC_C1_DF6 = 0x9E,
+	DTVCC_C1_DF7 = 0x9F
 };
 
-struct CCX_DTVCC_S_COMMANDS_C1
+struct DTVCC_S_COMMANDS_C1
 {
 	int code;
 	const char *name;
@@ -84,142 +84,142 @@ struct CCX_DTVCC_S_COMMANDS_C1
 	int length;
 };
 
-enum ccx_dtvcc_window_justify
+enum dtvcc_window_justify
 {
-	CCX_DTVCC_WINDOW_JUSTIFY_LEFT	= 0,
-	CCX_DTVCC_WINDOW_JUSTIFY_RIGHT	= 1,
-	CCX_DTVCC_WINDOW_JUSTIFY_CENTER	= 2,
-	CCX_DTVCC_WINDOW_JUSTIFY_FULL	= 3
+	DTVCC_WINDOW_JUSTIFY_LEFT	= 0,
+	DTVCC_WINDOW_JUSTIFY_RIGHT	= 1,
+	DTVCC_WINDOW_JUSTIFY_CENTER	= 2,
+	DTVCC_WINDOW_JUSTIFY_FULL	= 3
 };
 
-enum ccx_dtvcc_window_pd //Print Direction
+enum dtvcc_window_pd //Print Direction
 {
-	CCX_DTVCC_WINDOW_PD_LEFT_RIGHT = 0, //left -> right
-	CCX_DTVCC_WINDOW_PD_RIGHT_LEFT = 1,
-	CCX_DTVCC_WINDOW_PD_TOP_BOTTOM = 2,
-	CCX_DTVCC_WINDOW_PD_BOTTOM_TOP = 3
+	DTVCC_WINDOW_PD_LEFT_RIGHT = 0, //left -> right
+	DTVCC_WINDOW_PD_RIGHT_LEFT = 1,
+	DTVCC_WINDOW_PD_TOP_BOTTOM = 2,
+	DTVCC_WINDOW_PD_BOTTOM_TOP = 3
 };
 
-enum ccx_dtvcc_window_sd //Scroll Direction
+enum dtvcc_window_sd //Scroll Direction
 {
-	CCX_DTVCC_WINDOW_SD_LEFT_RIGHT = 0,
-	CCX_DTVCC_WINDOW_SD_RIGHT_LEFT = 1,
-	CCX_DTVCC_WINDOW_SD_TOP_BOTTOM = 2,
-	CCX_DTVCC_WINDOW_SD_BOTTOM_TOP = 3
+	DTVCC_WINDOW_SD_LEFT_RIGHT = 0,
+	DTVCC_WINDOW_SD_RIGHT_LEFT = 1,
+	DTVCC_WINDOW_SD_TOP_BOTTOM = 2,
+	DTVCC_WINDOW_SD_BOTTOM_TOP = 3
 };
 
-enum ccx_dtvcc_window_sde //Scroll Display Effect
+enum dtvcc_window_sde //Scroll Display Effect
 {
-	CCX_DTVCC_WINDOW_SDE_SNAP = 0,
-	CCX_DTVCC_WINDOW_SDE_FADE = 1,
-	CCX_DTVCC_WINDOW_SDE_WIPE = 2
+	DTVCC_WINDOW_SDE_SNAP = 0,
+	DTVCC_WINDOW_SDE_FADE = 1,
+	DTVCC_WINDOW_SDE_WIPE = 2
 };
 
-enum ccx_dtvcc_window_ed //Effect Direction
+enum dtvcc_window_ed //Effect Direction
 {
-	CCX_DTVCC_WINDOW_ED_LEFT_RIGHT = 0,
-	CCX_DTVCC_WINDOW_ED_RIGHT_LEFT = 1,
-	CCX_DTVCC_WINDOW_ED_TOP_BOTTOM = 2,
-	CCX_DTVCC_WINDOW_ED_BOTTOM_TOP = 3
+	DTVCC_WINDOW_ED_LEFT_RIGHT = 0,
+	DTVCC_WINDOW_ED_RIGHT_LEFT = 1,
+	DTVCC_WINDOW_ED_TOP_BOTTOM = 2,
+	DTVCC_WINDOW_ED_BOTTOM_TOP = 3
 };
 
-enum ccx_dtvcc_window_fo //Fill Opacity
+enum dtvcc_window_fo //Fill Opacity
 {
-	CCX_DTVCC_WINDOW_FO_SOLID		= 0,
-	CCX_DTVCC_WINDOW_FO_FLASH		= 1,
-	CCX_DTVCC_WINDOW_FO_TRANSLUCENT	= 2,
-	CCX_DTVCC_WINDOW_FO_TRANSPARENT = 3
+	DTVCC_WINDOW_FO_SOLID		= 0,
+	DTVCC_WINDOW_FO_FLASH		= 1,
+	DTVCC_WINDOW_FO_TRANSLUCENT	= 2,
+	DTVCC_WINDOW_FO_TRANSPARENT = 3
 };
 
-enum ccx_dtvcc_window_border
+enum dtvcc_window_border
 {
-	CCX_DTVCC_WINDOW_BORDER_NONE			= 0,
-	CCX_DTVCC_WINDOW_BORDER_RAISED			= 1,
-	CCX_DTVCC_WINDOW_BORDER_DEPRESSED		= 2,
-	CCX_DTVCC_WINDOW_BORDER_UNIFORM			= 3,
-	CCX_DTVCC_WINDOW_BORDER_SHADOW_LEFT		= 4,
-	CCX_DTVCC_WINDOW_BORDER_SHADOW_RIGHT	= 5
+	DTVCC_WINDOW_BORDER_NONE			= 0,
+	DTVCC_WINDOW_BORDER_RAISED			= 1,
+	DTVCC_WINDOW_BORDER_DEPRESSED		= 2,
+	DTVCC_WINDOW_BORDER_UNIFORM			= 3,
+	DTVCC_WINDOW_BORDER_SHADOW_LEFT		= 4,
+	DTVCC_WINDOW_BORDER_SHADOW_RIGHT	= 5
 };
 
-enum ccx_dtvcc_pen_size
+enum dtvcc_pen_size
 {
-	CCX_DTVCC_PEN_SIZE_SMALL 	= 0,
-	CCX_DTVCC_PEN_SIZE_STANDART = 1,
-	CCX_DTVCC_PEN_SIZE_LARGE	= 2
+	DTVCC_PEN_SIZE_SMALL 	= 0,
+	DTVCC_PEN_SIZE_STANDART = 1,
+	DTVCC_PEN_SIZE_LARGE	= 2
 };
 
-enum ccx_dtvcc_pen_font_style
+enum dtvcc_pen_font_style
 {
-	CCX_DTVCC_PEN_FONT_STYLE_DEFAULT_OR_UNDEFINED					= 0,
-	CCX_DTVCC_PEN_FONT_STYLE_MONOSPACED_WITH_SERIFS					= 1,
-	CCX_DTVCC_PEN_FONT_STYLE_PROPORTIONALLY_SPACED_WITH_SERIFS		= 2,
-	CCX_DTVCC_PEN_FONT_STYLE_MONOSPACED_WITHOUT_SERIFS				= 3,
-	CCX_DTVCC_PEN_FONT_STYLE_PROPORTIONALLY_SPACED_WITHOUT_SERIFS	= 4,
-	CCX_DTVCC_PEN_FONT_STYLE_CASUAL_FONT_TYPE						= 5,
-	CCX_DTVCC_PEN_FONT_STYLE_CURSIVE_FONT_TYPE						= 6,
-	CCX_DTVCC_PEN_FONT_STYLE_SMALL_CAPITALS							= 7
+	DTVCC_PEN_FONT_STYLE_DEFAULT_OR_UNDEFINED					= 0,
+	DTVCC_PEN_FONT_STYLE_MONOSPACED_WITH_SERIFS					= 1,
+	DTVCC_PEN_FONT_STYLE_PROPORTIONALLY_SPACED_WITH_SERIFS		= 2,
+	DTVCC_PEN_FONT_STYLE_MONOSPACED_WITHOUT_SERIFS				= 3,
+	DTVCC_PEN_FONT_STYLE_PROPORTIONALLY_SPACED_WITHOUT_SERIFS	= 4,
+	DTVCC_PEN_FONT_STYLE_CASUAL_FONT_TYPE						= 5,
+	DTVCC_PEN_FONT_STYLE_CURSIVE_FONT_TYPE						= 6,
+	DTVCC_PEN_FONT_STYLE_SMALL_CAPITALS							= 7
 };
 
-enum ccx_dtvcc_pen_text_tag
+enum dtvcc_pen_text_tag
 {
-	CCX_DTVCC_PEN_TEXT_TAG_DIALOG						= 0,
-	CCX_DTVCC_PEN_TEXT_TAG_SOURCE_OR_SPEAKER_ID			= 1,
-	CCX_DTVCC_PEN_TEXT_TAG_ELECTRONIC_VOICE				= 2,
-	CCX_DTVCC_PEN_TEXT_TAG_FOREIGN_LANGUAGE				= 3,
-	CCX_DTVCC_PEN_TEXT_TAG_VOICEOVER					= 4,
-	CCX_DTVCC_PEN_TEXT_TAG_AUDIBLE_TRANSLATION			= 5,
-	CCX_DTVCC_PEN_TEXT_TAG_SUBTITLE_TRANSLATION			= 6,
-	CCX_DTVCC_PEN_TEXT_TAG_VOICE_QUALITY_DESCRIPTION	= 7,
-	CCX_DTVCC_PEN_TEXT_TAG_SONG_LYRICS					= 8,
-	CCX_DTVCC_PEN_TEXT_TAG_SOUND_EFFECT_DESCRIPTION		= 9,
-	CCX_DTVCC_PEN_TEXT_TAG_MUSICAL_SCORE_DESCRIPTION	= 10,
-	CCX_DTVCC_PEN_TEXT_TAG_EXPLETIVE					= 11,
-	CCX_DTVCC_PEN_TEXT_TAG_UNDEFINED_12					= 12,
-	CCX_DTVCC_PEN_TEXT_TAG_UNDEFINED_13					= 13,
-	CCX_DTVCC_PEN_TEXT_TAG_UNDEFINED_14					= 14,
-	CCX_DTVCC_PEN_TEXT_TAG_NOT_TO_BE_DISPLAYED			= 15
+	DTVCC_PEN_TEXT_TAG_DIALOG						= 0,
+	DTVCC_PEN_TEXT_TAG_SOURCE_OR_SPEAKER_ID			= 1,
+	DTVCC_PEN_TEXT_TAG_ELECTRONIC_VOICE				= 2,
+	DTVCC_PEN_TEXT_TAG_FOREIGN_LANGUAGE				= 3,
+	DTVCC_PEN_TEXT_TAG_VOICEOVER					= 4,
+	DTVCC_PEN_TEXT_TAG_AUDIBLE_TRANSLATION			= 5,
+	DTVCC_PEN_TEXT_TAG_SUBTITLE_TRANSLATION			= 6,
+	DTVCC_PEN_TEXT_TAG_VOICE_QUALITY_DESCRIPTION	= 7,
+	DTVCC_PEN_TEXT_TAG_SONG_LYRICS					= 8,
+	DTVCC_PEN_TEXT_TAG_SOUND_EFFECT_DESCRIPTION		= 9,
+	DTVCC_PEN_TEXT_TAG_MUSICAL_SCORE_DESCRIPTION	= 10,
+	DTVCC_PEN_TEXT_TAG_EXPLETIVE					= 11,
+	DTVCC_PEN_TEXT_TAG_UNDEFINED_12					= 12,
+	DTVCC_PEN_TEXT_TAG_UNDEFINED_13					= 13,
+	DTVCC_PEN_TEXT_TAG_UNDEFINED_14					= 14,
+	DTVCC_PEN_TEXT_TAG_NOT_TO_BE_DISPLAYED			= 15
 };
 
-enum ccx_dtvcc_pen_offset
+enum dtvcc_pen_offset
 {
-	CCX_DTVCC_PEN_OFFSET_SUBSCRIPT		= 0,
-	CCX_DTVCC_PEN_OFFSET_NORMAL			= 1,
-	CCX_DTVCC_PEN_OFFSET_SUPERSCRIPT	= 2
+	DTVCC_PEN_OFFSET_SUBSCRIPT		= 0,
+	DTVCC_PEN_OFFSET_NORMAL			= 1,
+	DTVCC_PEN_OFFSET_SUPERSCRIPT	= 2
 };
 
-enum ccx_dtvcc_pen_edge
+enum dtvcc_pen_edge
 {
-	CCX_DTVCC_PEN_EDGE_NONE					= 0,
-	CCX_DTVCC_PEN_EDGE_RAISED				= 1,
-	CCX_DTVCC_PEN_EDGE_DEPRESSED			= 2,
-	CCX_DTVCC_PEN_EDGE_UNIFORM				= 3,
-	CCX_DTVCC_PEN_EDGE_LEFT_DROP_SHADOW		= 4,
-	CCX_DTVCC_PEN_EDGE_RIGHT_DROP_SHADOW	= 5
+	DTVCC_PEN_EDGE_NONE					= 0,
+	DTVCC_PEN_EDGE_RAISED				= 1,
+	DTVCC_PEN_EDGE_DEPRESSED			= 2,
+	DTVCC_PEN_EDGE_UNIFORM				= 3,
+	DTVCC_PEN_EDGE_LEFT_DROP_SHADOW		= 4,
+	DTVCC_PEN_EDGE_RIGHT_DROP_SHADOW	= 5
 };
 
-enum ccx_dtvcc_pen_anchor_point
+enum dtvcc_pen_anchor_point
 {
-	CCX_DTVCC_ANCHOR_POINT_TOP_LEFT 		= 0,
-	CCX_DTVCC_ANCHOR_POINT_TOP_CENTER 		= 1,
-	CCX_DTVCC_ANCHOR_POINT_TOP_RIGHT 		= 2,
-	CCX_DTVCC_ANCHOR_POINT_MIDDLE_LEFT 		= 3,
-	CCX_DTVCC_ANCHOR_POINT_MIDDLE_CENTER 	= 4,
-	CCX_DTVCC_ANCHOR_POINT_MIDDLE_RIGHT 	= 5,
-	CCX_DTVCC_ANCHOR_POINT_BOTTOM_LEFT 		= 6,
-	CCX_DTVCC_ANCHOR_POINT_BOTTOM_CENTER 	= 7,
-	CCX_DTVCC_ANCHOR_POINT_BOTTOM_RIGHT 	= 8
+	DTVCC_ANCHOR_POINT_TOP_LEFT 		= 0,
+	DTVCC_ANCHOR_POINT_TOP_CENTER 		= 1,
+	DTVCC_ANCHOR_POINT_TOP_RIGHT 		= 2,
+	DTVCC_ANCHOR_POINT_MIDDLE_LEFT 		= 3,
+	DTVCC_ANCHOR_POINT_MIDDLE_CENTER 	= 4,
+	DTVCC_ANCHOR_POINT_MIDDLE_RIGHT 	= 5,
+	DTVCC_ANCHOR_POINT_BOTTOM_LEFT 		= 6,
+	DTVCC_ANCHOR_POINT_BOTTOM_CENTER 	= 7,
+	DTVCC_ANCHOR_POINT_BOTTOM_RIGHT 	= 8
 };
 
-typedef struct ccx_dtvcc_pen_color
+typedef struct dtvcc_pen_color
 {
 	int fg_color;
 	int fg_opacity;
 	int bg_color;
 	int bg_opacity;
 	int edge_color;
-} ccx_dtvcc_pen_color;
+} dtvcc_pen_color;
 
-typedef struct ccx_dtvcc_pen_attribs
+typedef struct dtvcc_pen_attribs
 {
 	int pen_size;
 	int offset;
@@ -228,9 +228,9 @@ typedef struct ccx_dtvcc_pen_attribs
 	int edge_type;
 	int underline;
 	int italic;
-} ccx_dtvcc_pen_attribs;
+} dtvcc_pen_attribs;
 
-typedef struct ccx_dtvcc_window_attribs
+typedef struct dtvcc_window_attribs
 {
 	int justify;
 	int print_direction;
@@ -243,18 +243,18 @@ typedef struct ccx_dtvcc_window_attribs
 	int fill_opacity;
 	int border_type;
 	int border_color;
-} ccx_dtvcc_window_attribs;
+} dtvcc_window_attribs;
 
 /**
  * Since 1-byte and 2-byte symbols could appear in captions and
  * since we have to keep symbols alignment and several windows could appear on a screen at one time,
  * we use special structure for holding symbols
  */
-typedef struct ccx_dtvcc_symbol
+typedef struct dtvcc_symbol
 {
 	unsigned short sym; //symbol itself, at least 16 bit
 	unsigned char init; //initialized or not. could be 0 or 1
-} ccx_dtvcc_symbol;
+} dtvcc_symbol;
 
 #define CCX_DTVCC_SYM_SET(x, c) {x.init = 1; x.sym = c;}
 #define CCX_DTVCC_SYM_SET_16(x, c1, c2) {x.init = 1; x.sym = (c1 << 8) | c2;}
@@ -262,7 +262,7 @@ typedef struct ccx_dtvcc_symbol
 #define CCX_DTVCC_SYM_IS_EMPTY(x) (x.init == 0)
 #define CCX_DTVCC_SYM_IS_SET(x) (x.init == 1)
 
-typedef struct ccx_dtvcc_window
+typedef struct dtvcc_window
 {
 	int is_defined;
 	int number;
@@ -279,25 +279,25 @@ typedef struct ccx_dtvcc_window
 	int pen_style;
 	int win_style;
 	unsigned char commands[6]; // Commands used to create this window
-	ccx_dtvcc_window_attribs attribs;
+	dtvcc_window_attribs attribs;
 	int pen_row;
 	int pen_column;
-	ccx_dtvcc_symbol *rows[CCX_DTVCC_MAX_ROWS];
-	ccx_dtvcc_pen_color pen_colors[CCX_DTVCC_MAX_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
-	ccx_dtvcc_pen_attribs pen_attribs[CCX_DTVCC_MAX_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
-	ccx_dtvcc_pen_color pen_color_pattern;
-	ccx_dtvcc_pen_attribs pen_attribs_pattern;
+	dtvcc_symbol *rows[CCX_DTVCC_MAX_ROWS];
+	dtvcc_pen_color pen_colors[CCX_DTVCC_MAX_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
+	dtvcc_pen_attribs pen_attribs[CCX_DTVCC_MAX_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
+	dtvcc_pen_color pen_color_pattern;
+	dtvcc_pen_attribs pen_attribs_pattern;
 	int memory_reserved;
 	int is_empty;
 	LLONG time_ms_show;
 	LLONG time_ms_hide;
-} ccx_dtvcc_window;
+} dtvcc_window;
 
 typedef struct dtvcc_tv_screen
 {
-	ccx_dtvcc_symbol chars[CCX_DTVCC_SCREENGRID_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
-	ccx_dtvcc_pen_color pen_colors[CCX_DTVCC_SCREENGRID_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
-	ccx_dtvcc_pen_attribs pen_attribs[CCX_DTVCC_SCREENGRID_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
+	dtvcc_symbol chars[CCX_DTVCC_SCREENGRID_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
+	dtvcc_pen_color pen_colors[CCX_DTVCC_SCREENGRID_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
+	dtvcc_pen_attribs pen_attribs[CCX_DTVCC_SCREENGRID_ROWS][CCX_DTVCC_SCREENGRID_COLUMNS];
 	LLONG time_ms_show;
 	LLONG time_ms_hide;
 	unsigned int cc_count;
@@ -314,13 +314,13 @@ typedef struct ccx_decoder_dtvcc_report
 	unsigned services[CCX_DTVCC_MAX_SERVICES];
 } ccx_decoder_dtvcc_report;
 
-typedef struct ccx_dtvcc_service_decoder
+typedef struct dtvcc_service_decoder
 {
-	ccx_dtvcc_window windows[CCX_DTVCC_MAX_WINDOWS];
+	dtvcc_window windows[CCX_DTVCC_MAX_WINDOWS];
 	int current_window;
 	dtvcc_tv_screen *tv;
 	int cc_count;
-} ccx_dtvcc_service_decoder;
+} dtvcc_service_decoder;
 
 typedef struct ccx_decoder_dtvcc_settings
 {
@@ -339,7 +339,7 @@ typedef struct ccx_decoder_dtvcc_settings
  * decoders have to know nothing about output files
  */
 
-typedef struct ccx_dtvcc_ctx
+typedef struct dtvcc_ctx
 {
 	int is_active;
 	int active_services_count;
@@ -348,7 +348,7 @@ typedef struct ccx_dtvcc_ctx
 
 	ccx_decoder_dtvcc_report *report;
 
-	ccx_dtvcc_service_decoder decoders[CCX_DTVCC_MAX_SERVICES];
+	dtvcc_service_decoder decoders[CCX_DTVCC_MAX_SERVICES];
 
 	unsigned char current_packet[CCX_DTVCC_MAX_PACKET_LENGTH];
 	int current_packet_length;
@@ -359,20 +359,84 @@ typedef struct ccx_dtvcc_ctx
 	void *encoder; //we can't include header, so keeping it this way
 	int no_rollup;
 	struct ccx_common_timing_ctx *timing;
-} ccx_dtvcc_ctx;
+} dtvcc_ctx;
 
 
-void ccx_dtvcc_clear_packet(ccx_dtvcc_ctx *ctx);
-void ccx_dtvcc_windows_reset(ccx_dtvcc_service_decoder *decoder);
-void ccx_dtvcc_decoder_flush(ccx_dtvcc_ctx *dtvcc, ccx_dtvcc_service_decoder *decoder);
+void dtvcc_clear_packet(dtvcc_ctx *ctx);
+void dtvcc_windows_reset(dtvcc_service_decoder *decoder);
+void dtvcc_decoder_flush(dtvcc_ctx *dtvcc, dtvcc_service_decoder *decoder);
 
-void ccx_dtvcc_process_current_packet(ccx_dtvcc_ctx *dtvcc, int len);
-void ccx_dtvcc_process_service_block(ccx_dtvcc_ctx *dtvcc,
-									 ccx_dtvcc_service_decoder *decoder,
+void dtvcc_process_current_packet(dtvcc_ctx *dtvcc, int len);
+void dtvcc_process_service_block(dtvcc_ctx *dtvcc,
+									 dtvcc_service_decoder *decoder,
 									 unsigned char *data,
 									 int data_length);
 
-extern ccx_dtvcc_pen_color ccx_dtvcc_default_pen_color;
-extern ccx_dtvcc_pen_attribs ccx_dtvcc_default_pen_attribs;
+void dtvcc_tv_clear(dtvcc_service_decoder *decoder);
+int dtvcc_decoder_has_visible_windows(dtvcc_service_decoder *decoder);
+void dtvcc_window_clear_row(dtvcc_window *window, int row_index);
+void dtvcc_window_clear_text(dtvcc_window *window);
+void dtvcc_window_clear(dtvcc_service_decoder *decoder, int window_id);
+void dtvcc_window_apply_style(dtvcc_window *window, dtvcc_window_attribs *style);
+
+#ifdef DTVCC_PRINT_DEBUG
+	int dtvcc_is_win_row_empty(dtvcc_window *window, int row_index);
+	void dtvcc_get_win_write_interval(dtvcc_window *window, int row_index, int *first, int *last);
+	void dtvcc_window_dump(dtvcc_service_decoder *decoder, dtvcc_window *window);
+#endif
+
+void dtvcc_decoders_reset(dtvcc_ctx *dtvcc);
+int dtvcc_compare_win_priorities(const void *a, const void *b);
+void dtvcc_window_update_time_show(dtvcc_window *window, struct ccx_common_timing_ctx *timing);
+void dtvcc_window_update_time_hide(dtvcc_window *window, struct ccx_common_timing_ctx *timing);
+void dtvcc_screen_update_time_show(dtvcc_tv_screen *tv, LLONG time);
+void dtvcc_screen_update_time_hide(dtvcc_tv_screen *tv, LLONG time);
+void dtvcc_get_window_dimensions(dtvcc_window *window, int *x1, int *x2, int *y1, int *y2);
+int dtvcc_is_window_overlapping(dtvcc_service_decoder *decoder, dtvcc_window *window);
+void dtvcc_window_copy_to_screen(dtvcc_service_decoder *decoder, dtvcc_window *window);
+void dtvcc_screen_print(dtvcc_ctx *dtvcc, dtvcc_service_decoder *decoder);
+void dtvcc_process_hcr(dtvcc_service_decoder *decoder);
+void dtvcc_process_ff(dtvcc_service_decoder *decoder);
+void dtvcc_process_etx(dtvcc_service_decoder *decoder);
+void dtvcc_process_bs(dtvcc_service_decoder *decoder);
+void dtvcc_window_rollup(dtvcc_service_decoder *decoder, dtvcc_window *window);
+void dtvcc_process_cr(dtvcc_ctx *dtvcc, dtvcc_service_decoder *decoder);
+void dtvcc_process_character(dtvcc_service_decoder *decoder, dtvcc_symbol symbol);
+void dtvcc_handle_CWx_SetCurrentWindow(dtvcc_service_decoder *decoder, int window_id);
+void dtvcc_handle_CLW_ClearWindows(dtvcc_ctx *dtvcc, dtvcc_service_decoder *decoder, int windows_bitmap);
+void dtvcc_handle_DSW_DisplayWindows(dtvcc_service_decoder *decoder, int windows_bitmap, struct ccx_common_timing_ctx *timing);
+void dtvcc_handle_HDW_HideWindows(dtvcc_ctx *dtvcc,dtvcc_service_decoder *decoder,
+				  int windows_bitmap);
+void dtvcc_handle_TGW_ToggleWindows(dtvcc_ctx *dtvcc,
+				    dtvcc_service_decoder *decoder,
+				    int windows_bitmap);
+void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id, unsigned char *data, struct ccx_common_timing_ctx *timing);
+void dtvcc_handle_SWA_SetWindowAttributes(dtvcc_service_decoder *decoder, unsigned char *data);
+void dtvcc_handle_DLW_DeleteWindows(dtvcc_ctx *dtvcc,
+				    dtvcc_service_decoder *decoder,
+				    int windows_bitmap);
+void dtvcc_handle_SPA_SetPenAttributes(dtvcc_service_decoder *decoder, unsigned char *data);
+void dtvcc_handle_SPC_SetPenColor(dtvcc_service_decoder *decoder, unsigned char *data);
+void dtvcc_handle_SPL_SetPenLocation(dtvcc_service_decoder *decoder, unsigned char *data);
+void dtvcc_handle_RST_Reset(dtvcc_service_decoder *decoder);
+void dtvcc_handle_DLY_Delay(dtvcc_service_decoder *decoder, int tenths_of_sec);
+void dtvcc_handle_DLC_DelayCancel(dtvcc_service_decoder *decoder);
+int dtvcc_handle_C0_P16(dtvcc_service_decoder *decoder, unsigned char *data);
+int dtvcc_handle_G0(dtvcc_service_decoder *decoder, unsigned char *data, int data_length);
+int dtvcc_handle_G1(dtvcc_service_decoder *decoder, unsigned char *data, int data_length);
+int dtvcc_handle_C0(dtvcc_ctx *dtvcc,
+		     dtvcc_service_decoder *decoder,
+		     unsigned char *data,
+		     int data_length);
+int dtvcc_handle_C1(dtvcc_ctx *dtvcc,
+		     dtvcc_service_decoder *decoder,
+		     unsigned char *data,
+		     int data_length);
+int dtvcc_handle_C2(dtvcc_service_decoder *decoder, unsigned char *data, int data_length);
+int dtvcc_handle_C3(dtvcc_service_decoder *decoder, unsigned char *data, int data_length);
+int dtvcc_handle_extended_char(dtvcc_service_decoder *decoder, unsigned char *data, int data_length);
+
+extern dtvcc_pen_color dtvcc_default_pen_color;
+extern dtvcc_pen_attribs dtvcc_default_pen_attribs;
 
 #endif
