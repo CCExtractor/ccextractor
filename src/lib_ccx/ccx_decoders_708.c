@@ -481,12 +481,12 @@ void dtvcc_get_window_dimensions(dtvcc_window *window, int *x1, int *x2, int *y1
 int dtvcc_is_window_overlapping(dtvcc_service_decoder *decoder, dtvcc_window *window)
 {
 	int a_x1, a_x2, a_y1, a_y2, b_x1, b_x2, b_y1, b_y2, flag = 0;
-	 dtvcc_get_window_dimensions(window, &a_x1, &a_x2, &a_y1, &a_y2);
+	dtvcc_get_window_dimensions(window, &a_x1, &a_x2, &a_y1, &a_y2);
 	dtvcc_window *windcompare = &decoder->windows[0];
 	for (int i = 0; i < CCX_DTVCC_MAX_WINDOWS; i++, windcompare++)
 	{
 
-		 dtvcc_get_window_dimensions(windcompare, &b_x1, &b_x2, &b_y1, &b_y2);
+		dtvcc_get_window_dimensions(windcompare, &b_x1, &b_x2, &b_y1, &b_y2);
 		if (a_x1 == b_x1 && a_x2 == b_x2 && a_y1 == b_y1 && a_y2 == b_y2)
 		{
 			continue;
@@ -1442,9 +1442,9 @@ int dtvcc_handle_G1(dtvcc_service_decoder *decoder, unsigned char *data, int dat
 }
 
 int dtvcc_handle_C0(dtvcc_ctx *dtvcc,
-		     dtvcc_service_decoder *decoder,
-		     unsigned char *data,
-		     int data_length)
+		    dtvcc_service_decoder *decoder,
+		    unsigned char *data,
+		    int data_length)
 {
 	unsigned char c0 = data[0];
 	const char *name = DTVCC_COMMANDS_C0[c0];
@@ -1513,9 +1513,9 @@ int dtvcc_handle_C0(dtvcc_ctx *dtvcc,
 
 // C1 Code Set - Captioning Commands Control Codes
 int dtvcc_handle_C1(dtvcc_ctx *dtvcc,
-		     dtvcc_service_decoder *decoder,
-		     unsigned char *data,
-		     int data_length)
+		    dtvcc_service_decoder *decoder,
+		    unsigned char *data,
+		    int data_length)
 {
 	struct DTVCC_S_COMMANDS_C1 com = DTVCC_COMMANDS_C1[data[0] - 0x80];
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] C1: %s | [%02X]  [%s] [%s] (%d)\n",
@@ -1683,9 +1683,9 @@ int dtvcc_handle_extended_char(dtvcc_service_decoder *decoder, unsigned char *da
 //------------------------------- PROCESSING --------------------------------
 
 void dtvcc_process_service_block(dtvcc_ctx *dtvcc,
-				     dtvcc_service_decoder *decoder,
-				     unsigned char *data,
-				     int data_length)
+				 dtvcc_service_decoder *decoder,
+				 unsigned char *data,
+				 int data_length)
 {
 	//dump(CCX_DMT_708, data, data_length, 0, 0);
 

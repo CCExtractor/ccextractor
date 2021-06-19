@@ -4,8 +4,8 @@
 #include "ccx_decoders_708_output.h"
 
 void dtvcc_process_data(struct lib_cc_decode *ctx,
-			    const unsigned char *data,
-			    int data_length)
+			const unsigned char *data,
+			int data_length)
 {
 	/*
 	 * Note: the data has following format:

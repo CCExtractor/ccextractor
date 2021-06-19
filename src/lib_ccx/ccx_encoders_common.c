@@ -889,7 +889,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 					basefilename = get_basename(ctx->first_input_file);
 
 				dtvcc_writer_init(&ctx->dtvcc_writers[i], basefilename,
-						      ctx->program_number, i + 1, cfg->write_format, cfg);
+						  ctx->program_number, i + 1, cfg->write_format, cfg);
 				free(basefilename);
 			}
 		}
