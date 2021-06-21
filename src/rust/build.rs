@@ -1,19 +1,13 @@
-use std::path::PathBuf;
 use std::env;
+use std::path::PathBuf;
 
 fn main() {
-    // Tell cargo to invalidate the built crate whenever the wrapper changes
-    println!("cargo:rerun-if-changed=wrapper.h");
-
-    // The bindgen::Builder is the main entry point
-    // to bindgen, and lets you build up options for
-    // the resulting bindings.
     let bindings = bindgen::Builder::default()
         // The input header we would like to generate
         // bindings for.
         .header("wrapper.h")
-        .allowlist_type("ccx_dtvcc_ctx")
-        .allowlist_function("ccx_dtvcc_process_data")
+        .allowlist_type(".*(?i)_?dtvcc_.*")
+        .allowlist_function(".*(?i)_?dtvcc_.*")
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
