@@ -29,49 +29,53 @@ pub unsafe extern "C" fn dtvcc_process_cc_data(
     let cc_valid = *data;
     let cc_type = *data.add(1);
 
-    if cc_type == 2 {
-        println!("[CEA-708] dtvcc_process_data: DTVCC Channel Packet Data");
-        if cc_valid == 1 && ctx.is_current_packet_header_parsed == 1 {
-            if ctx.current_packet_length > 253 {
-                println!("[CEA-708] dtvcc_process_data: Warning: Legal packet size exceeded (1), data not added.");
-            } else {
-                ctx.current_packet[ctx.current_packet_length as usize] = *data.add(2);
-                ctx.current_packet_length += 1;
-                ctx.current_packet[ctx.current_packet_length as usize] = *data.add(3);
-                ctx.current_packet_length += 1;
-
-                let mut max_len = ctx.current_packet[0] & 0x3F;
-
-                if max_len == 0 {
-                    // This is well defined in EIA-708; no magic.
-                    max_len = 128;
+    match cc_type {
+        // type 0 and 1 are for CEA 608 data and are handled before calling this function
+        // valid types for CEA 708 data are only 2 and 3
+        2 => {
+            println!("[CEA-708] dtvcc_process_data: DTVCC Channel Packet Data");
+            if cc_valid == 1 && ctx.is_current_packet_header_parsed == 1 {
+                if ctx.current_packet_length > 253 {
+                    println!("[CEA-708] dtvcc_process_data: Warning: Legal packet size exceeded (1), data not added.");
                 } else {
-                    max_len *= 2;
-                }
+                    ctx.current_packet[ctx.current_packet_length as usize] = *data.add(2);
+                    ctx.current_packet_length += 1;
+                    ctx.current_packet[ctx.current_packet_length as usize] = *data.add(3);
+                    ctx.current_packet_length += 1;
 
-                if ctx.current_packet_length >= max_len as i32 {
-                    dtvcc.process_current_packet(max_len as i32);
+                    let mut max_len = ctx.current_packet[0] & 0x3F;
+
+                    if max_len == 0 {
+                        // This is well defined in EIA-708; no magic.
+                        max_len = 128;
+                    } else {
+                        max_len *= 2;
+                    }
+
+                    if ctx.current_packet_length >= max_len as i32 {
+                        dtvcc.process_current_packet(max_len as i32);
+                    }
                 }
             }
         }
-    } else if cc_type == 3 {
-        println!("[CEA-708] dtvcc_process_data: DTVCC Channel Packet Start");
-        if cc_valid == 1 {
-            if ctx.current_packet_length > (CCX_DTVCC_MAX_PACKET_LENGTH - 1) as i32 {
-                println!("[CEA-708] dtvcc_process_data: Warning: Legal packet size exceeded (2), data not added.");
-            } else {
-                ctx.current_packet[ctx.current_packet_length as usize] = *data.add(2);
-                ctx.current_packet_length += 1;
-                ctx.current_packet[ctx.current_packet_length as usize] = *data.add(3);
-                ctx.current_packet_length += 1;
-                ctx.is_current_packet_header_parsed = 1;
+        3 => {
+            println!("[CEA-708] dtvcc_process_data: DTVCC Channel Packet Start");
+            if cc_valid == 1 {
+                if ctx.current_packet_length > (CCX_DTVCC_MAX_PACKET_LENGTH - 1) as i32 {
+                    println!("[CEA-708] dtvcc_process_data: Warning: Legal packet size exceeded (2), data not added.");
+                } else {
+                    ctx.current_packet[ctx.current_packet_length as usize] = *data.add(2);
+                    ctx.current_packet_length += 1;
+                    ctx.current_packet[ctx.current_packet_length as usize] = *data.add(3);
+                    ctx.current_packet_length += 1;
+                    ctx.is_current_packet_header_parsed = 1;
+                }
             }
         }
-    } else {
-        println!(
+        _ => println!(
             "[CEA-708] dtvcc_process_data: shouldn't be here - cc_type: {}",
             cc_type
-        )
+        ),
     }
 }
 
