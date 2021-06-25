@@ -2,6 +2,8 @@
 //!
 //! This module provides a CEA 708 decoder as defined by ANSI/CTA-708-E R-2018
 
+use log::debug;
+
 use crate::bindings::*;
 
 const CCX_DTVCC_MAX_PACKET_LENGTH: u8 = 128;
@@ -33,10 +35,10 @@ pub unsafe extern "C" fn dtvcc_process_cc_data(
         // type 0 and 1 are for CEA 608 data and are handled before calling this function
         // valid types for CEA 708 data are only 2 and 3
         2 => {
-            println!("[CEA-708] dtvcc_process_data: DTVCC Channel Packet Data");
+            debug!("dtvcc_process_data: DTVCC Channel Packet Data");
             if cc_valid == 1 && ctx.is_current_packet_header_parsed == 1 {
                 if ctx.current_packet_length > 253 {
-                    println!("[CEA-708] dtvcc_process_data: Warning: Legal packet size exceeded (1), data not added.");
+                    debug!("dtvcc_process_data: Warning: Legal packet size exceeded (1), data not added.");
                 } else {
                     ctx.current_packet[ctx.current_packet_length as usize] = *data.add(2);
                     ctx.current_packet_length += 1;
@@ -59,10 +61,10 @@ pub unsafe extern "C" fn dtvcc_process_cc_data(
             }
         }
         3 => {
-            println!("[CEA-708] dtvcc_process_data: DTVCC Channel Packet Start");
+            debug!("dtvcc_process_data: DTVCC Channel Packet Start");
             if cc_valid == 1 {
                 if ctx.current_packet_length > (CCX_DTVCC_MAX_PACKET_LENGTH - 1) as i32 {
-                    println!("[CEA-708] dtvcc_process_data: Warning: Legal packet size exceeded (2), data not added.");
+                    debug!("dtvcc_process_data: Warning: Legal packet size exceeded (2), data not added.");
                 } else {
                     ctx.current_packet[ctx.current_packet_length as usize] = *data.add(2);
                     ctx.current_packet_length += 1;
@@ -72,8 +74,8 @@ pub unsafe extern "C" fn dtvcc_process_cc_data(
                 }
             }
         }
-        _ => println!(
-            "[CEA-708] dtvcc_process_data: shouldn't be here - cc_type: {}",
+        _ => debug!(
+            "dtvcc_process_data: shouldn't be here - cc_type: {}",
             cc_type
         ),
     }
