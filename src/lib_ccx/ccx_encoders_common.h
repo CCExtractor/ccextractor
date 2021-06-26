@@ -2,7 +2,7 @@
 #define _CC_ENCODER_COMMON_H
 
 #ifdef WIN32
-	#include "..\\win_iconv\\iconv.h"
+	#include "..\\thirdparty\\win_iconv\\iconv.h"
 #else
 	#include "iconv.h"
 #endif

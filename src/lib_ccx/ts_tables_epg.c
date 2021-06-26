@@ -4,7 +4,7 @@
 #include "utility.h"
 #include <stdbool.h>
 #ifdef WIN32
-#include "..\\win_iconv\\iconv.h"
+#include "..\\thirdparty\\win_iconv\\iconv.h"
 #else
 #include "iconv.h"
 #endif
