@@ -35,6 +35,10 @@
 #define DEFAULT_FONT_PATH_ITALICS "/usr/share/fonts/truetype/noto/NotoSans-Italic.ttf"
 #endif
 
+#ifdef ENABLE_RUST
+extern void init_logger();
+#endif
+
 static int inputfile_capacity = 0;
 
 size_t remove_trailing_whitespace(char *line)
@@ -2179,6 +2183,9 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp(argv[i], "-708") == 0)
 		{
 			opt->debug_mask |= CCX_DMT_708;
+#ifdef ENABLE_RUST
+			init_logger();
+#endif
 			continue;
 		}
 		if (strcmp(argv[i], "-goppts") == 0)
