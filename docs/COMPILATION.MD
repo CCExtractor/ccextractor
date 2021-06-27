@@ -87,7 +87,7 @@ make
 sudo make install
 ```
 
-`cmake` also accepts the argument `-DWITH_OCR=ON` to enable OCR.
+`cmake` also accepts the argument `-DWITH_OCR=ON` to enable OCR and `-DWITH_RUST=ON` to enable rust.
 
 ### Compiling with GUI:
 

@@ -35,5 +35,8 @@ cmake -DWITH_SHARING=ON ../src/
 If you want to build CCExtractor with HARDSUBX support
 cmake -DWITH_HARDSUBX=ON ../src/
 
+If you want to build CCExtractor with rust enabled you need to pass
+cmake -DWITH_RUST=ON ../src/
+
 Hint for looking all the things you want to set from outside
 cmake -LAH ../src/
