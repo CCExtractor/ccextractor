@@ -36,7 +36,6 @@ jobs:
         name: CCExtractor Windows Non-OCR Release build
         path: |
           ./windows/Release/ccextractorwin.exe
-          ./windows/Release/ccextractorgui.exe
           ./windows/Release/*.dll
   build_non_ocr_debug:
     runs-on: windows-latest
@@ -57,7 +56,6 @@ jobs:
         path: |
           ./windows/Debug/ccextractorwin.exe
           ./windows/Debug/ccextractorwin.pdb
-          ./windows/Debug/ccextractorgui.exe
           ./windows/Debug/*.dll
   build_ocr_hardsubx_release:
     runs-on: windows-latest
@@ -78,11 +76,6 @@ jobs:
         path: |
           ./windows/Release-Full/ccextractorwinfull.exe
           ./windows/Release-Full/*.dll
-    - uses: actions/upload-artifact@v2
-      with:
-        name: CCExtractor Windows OCR and HardSubX Release build
-        path: |
-          ./windows/Release/ccextractorgui.exe
   build_ocr_hardsubx_debug:
     runs-on: windows-latest
     steps:
@@ -103,8 +96,3 @@ jobs:
           ./windows/Debug-Full/ccextractorwinfull.exe
           ./windows/Debug-Full/ccextractorwinfull.pdb
           ./windows/Debug-Full/*.dll
-    - uses: actions/upload-artifact@v2
-      with:
-        name: CCExtractor Windows OCR and HardSubX Debug build
-        path: |
-          ./windows/Debug/ccextractorgui.exe
