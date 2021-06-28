@@ -7,6 +7,8 @@ on:
     - '**.c'
     - '**.h'
     - 'windows/**'
+    tags-ignore: # ignore push via new tag
+    - '*.*'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
