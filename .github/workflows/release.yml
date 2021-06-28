@@ -1,0 +1,49 @@
+name: Upload releases
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  build_windows:
+    runs-on: windows-latest
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2.3.4
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\/v/}
+      shell: bash
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v1.0.2
+    - name: build Release
+      run: msbuild ccextractor.sln /p:Configuration=Release-Full
+      working-directory: ./windows
+    - name: Copy files to directory for installer
+      run: mkdir installer; cp ./Release-Full/ccextractorwinfull.exe ./installer; cp ./Release-Full/*.dll ./installer
+      working-directory: ./windows
+    - name: install WiX
+      run: dotnet tool install --global wix --version 4.0.0-preview.0 &&  wix extension -g add WixToolset.UI.wixext
+    - name: Make sure WiX works
+      run: wix --version && wix extension -g list
+    - name: Download Flutter GUI
+      run: ((Invoke-WebRequest -UseBasicParsing https://api.github.com/repos/CCExtractor/ccextractorfluttergui/releases/latest).Content | ConvertFrom-Json).assets | ForEach-Object {if ($_.name -eq "windows.zip") { Invoke-WebRequest -UseBasicParsing -Uri $_.browser_download_url -OutFile windows.zip}}
+      working-directory: ./windows
+    - name: Display contents of dir
+      run: ls
+      working-directory: ./windows
+    - name: Unzip Flutter GUI
+      run: Expand-Archive -Path ./windows.zip -DestinationPath ./installer
+      working-directory: ./windows
+    - name: Display installer folder contents
+      run: Get-ChildItem -Recurse ./installer
+      working-directory: ./windows
+    - name: build installer
+      run:  wix build -ext "$HOME\.wix\extensions\WixToolset.UI.wixext\4.0.0-preview.0\tools\WixToolset.UI.wixext.dll" -d "AppVersion=${{ steps.get_version.outputs.VERSION }}.0.0" -o CCExtractor.msi installer.wxs
+      working-directory: ./windows
+    - name: Upload as asset
+      uses: AButler/upload-release-assets@v2.0
+      with:
+        files: './windows/CCExtractor.msi'
+        repo-token: ${{ secrets.GITHUB_TOKEN }} 

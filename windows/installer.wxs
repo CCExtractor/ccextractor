@@ -1,0 +1,165 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+	<Package Name="CCExtractor" Language="1033" Version="$(AppVersion)" Manufacturer="CCExtractor development" UpgradeCode="e70dbe37-bb04-4c39-bedc-966a6b073bcf" InstallerVersion="200">
+		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed."/>
+		<MediaTemplate EmbedCab="yes"/>
+		<Feature Id="CCX" Title="CCExtractor Setup" Level="1">
+			<ComponentGroupRef Id="CCX_Components_MainFolder"/>
+			<ComponentGroupRef Id="CCX_Components_MainFolder_data"/>
+			<ComponentGroupRef Id="CCX_Components_MainFolder_data_flutter_assets"/>
+			<ComponentGroupRef Id="CCX_Components_MainFolder_data_flutter_assets_assets"/>
+			<ComponentGroupRef Id="CCX_Components_MainFolder_data_flutter_assets_fonts"/>
+			<ComponentGroupRef Id="CCX_Components_MainFolder_data_flutter_assets_cupertino"/>
+			<ComponentRef Id="ApplicationShortcutDesktop"/>
+		</Feature>
+		<Icon Id="ccxgui.exe" SourceFile="./installer/ccxgui.exe"/>
+		<!-- Derives from the regular install dir, but skips the license dialog. -->
+		<UI Id="WixUI_InstallDir">
+            <TextStyle Id="WixUI_Font_Normal" FaceName="Tahoma" Size="8" />
+            <TextStyle Id="WixUI_Font_Bigger" FaceName="Tahoma" Size="12" />
+            <TextStyle Id="WixUI_Font_Title" FaceName="Tahoma" Size="9" Bold="yes" />
+
+            <Property Id="DefaultUIFont" Value="WixUI_Font_Normal" />
+            <Property Id="WixUI_Mode" Value="InstallDir" />
+
+            <DialogRef Id="BrowseDlg" />
+            <DialogRef Id="DiskCostDlg" />
+            <DialogRef Id="ErrorDlg" />
+            <DialogRef Id="FatalError" />
+            <DialogRef Id="FilesInUse" />
+            <DialogRef Id="MsiRMFilesInUse" />
+            <DialogRef Id="PrepareDlg" />
+            <DialogRef Id="ProgressDlg" />
+            <DialogRef Id="ResumeDlg" />
+            <DialogRef Id="UserExit" />
+            <Publish Dialog="BrowseDlg" Control="OK" Event="DoAction" Value="WixUIValidatePath" Order="3" />
+            <Publish Dialog="BrowseDlg" Control="OK" Event="SpawnDialog" Value="InvalidDirDlg" Order="4" Condition="NOT WIXUI_DONTVALIDATEPATH AND WIXUI_INSTALLDIR_VALID&lt;&gt;&quot;1&quot;" />
+
+            <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999" />
+
+            <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Condition="NOT Installed" />
+            <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Condition="Installed AND PATCH" />
+
+            <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" />
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="SetTargetPath" Value="[WIXUI_INSTALLDIR]" Order="1" />
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="DoAction" Value="WixUIValidatePath" Order="2" Condition="NOT WIXUI_DONTVALIDATEPATH" />
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="SpawnDialog" Value="InvalidDirDlg" Order="3" Condition="NOT WIXUI_DONTVALIDATEPATH AND WIXUI_INSTALLDIR_VALID&lt;&gt;&quot;1&quot;" />
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="4" Condition="WIXUI_DONTVALIDATEPATH OR WIXUI_INSTALLDIR_VALID=&quot;1&quot;" />
+            <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Property="_BrowseProperty" Value="[WIXUI_INSTALLDIR]" Order="1" />
+            <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Event="SpawnDialog" Value="BrowseDlg" Order="2" />
+            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="InstallDirDlg" Order="1" Condition="NOT Installed" />
+            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="2" Condition="Installed AND NOT PATCH" />
+            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2" Condition="Installed AND PATCH" />
+
+            <Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="MaintenanceTypeDlg" />
+
+            <Publish Dialog="MaintenanceTypeDlg" Control="RepairButton" Event="NewDialog" Value="VerifyReadyDlg" />
+            <Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog" Value="VerifyReadyDlg" />
+            <Publish Dialog="MaintenanceTypeDlg" Control="Back" Event="NewDialog" Value="MaintenanceWelcomeDlg" />
+
+            <Property Id="ARPNOMODIFY" Value="1" />
+        </UI>
+
+        <UIRef Id="WixUI_Common" />
+		<Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER"/>
+	</Package>
+	<Fragment>
+		<Directory Id="DesktopFolder" Name="Desktop">
+        <Component Id="ApplicationShortcutDesktop" Guid="*">
+            <Shortcut Id="ApplicationDesktopShortcut"
+                Name="CCExtractor"
+                Description="Run CCExtractor"
+                Target="[INSTALLFOLDER]ccxgui.exe"
+                WorkingDirectory="INSTALLFOLDER"/>
+            <RemoveFolder Id="DesktopFolder" On="uninstall"/>
+            <RegistryValue
+                Root="HKCU"
+                Key="Software\CCExtractor\ccextractor"
+                Name="installed"
+                Type="integer"
+                Value="1"
+                KeyPath="yes"/>
+        </Component>
+    </Directory>
+		<StandardDirectory Id="ProgramFiles6432Folder">
+			<Directory Id="INSTALLFOLDER" Name="CCExtractor">
+				<Directory Id="CCX_data" Name="data">
+					<Directory Id="CCX_data_flutter_assets" Name="flutter_assets">
+						<Directory Id="CCX_data_flutter_assets_assets" Name="assets"/>
+						<Directory Id="CCX_data_flutter_assets_fonts" Name="fonts"/>
+						<Directory Id="dirEE44DD2D485FE70BEAFB55755745AB6E" Name="packages">
+							<Directory Id="dir382F01892F72FB688A688BE6E01B93A3" Name="cupertino_icons">
+								<Directory Id="CCX_data_flutter_assets_cupertino" Name="assets"/>
+							</Directory>
+						</Directory>
+					</Directory>
+				</Directory>
+			</Directory>
+		</StandardDirectory>
+	</Fragment>
+	<Fragment>
+		<ComponentGroup Id="CCX_Components_MainFolder" Directory="INSTALLFOLDER">
+			<Component Guid="{2D6CDFAD-A645-4929-9518-B43788B9E5F3}">
+				<File Id="CCX_Full_executable" Source="./installer/ccextractorwinfull.exe" KeyPath="yes"/>
+			</Component>
+			<Component Guid="{8B69210B-5091-4C63-8902-E0ADDBE2C080}">
+				<File Source="./installer/ccxgui.exe" KeyPath="yes"/>
+			</Component>
+			<Component Guid="{1B37F14A-3BA6-4837-8A6F-6EA01A25DA26}">
+				<File Source="./installer/file_selector_windows_plugin.dll" KeyPath="yes"/>
+			</Component>
+			<Component Guid="{4B627AA9-55DD-40ED-99F9-54F67EC73887}">
+				<File Source="./installer/flutter_windows.dll" KeyPath="yes"/>
+			</Component>
+			<Component Guid="{32F0A64B-0C07-4807-A48C-714B2533A03C}">
+				<File Source="./installer/msvcp140.dll" KeyPath="yes"/>
+			</Component>
+			<Component Guid="{8425DEB5-8CF4-4672-AE45-561CF76B2072}">
+				<File Source="./installer/vcruntime140.dll" KeyPath="yes"/>
+			</Component>
+			<Component Guid="{1F3DBC7E-25D5-441D-9B41-96C33FEA5157}">
+				<File Source="./installer/vcruntime140_1.dll" KeyPath="yes"/>
+			</Component>
+			<Component Guid="{BE7FE765-EBA8-4FAB-8864-8561C50D39CF}">
+				<File Source="./installer/window_size_plugin.dll" KeyPath="yes"/>
+			</Component>
+		</ComponentGroup>
+		<ComponentGroup Id="CCX_Components_MainFolder_data" Directory="CCX_data">
+			<Component Id="cmp205CD51FCB7438CA9DDF9D318D5BDD93" Guid="{50D63F41-6529-4009-9092-F4D5B60DDF1B}">
+				<File Id="filBBF0A8ED8BF5DEEA3D5FE3E0B96C18FF" KeyPath="yes" Source="./installer/data/app.so"/>
+			</Component>
+			<Component Id="cmp3BB4C81F1F7BAB8E1AEB858EBC85CC1E" Guid="{88E94229-FBE7-4DC8-B9E2-B5E27FFB844C}">
+				<File Id="fil3F969272E8EAC0F75CC6D464590D2FBE" KeyPath="yes" Source="./installer/data/icudtl.dat"/>
+			</Component>
+		</ComponentGroup>
+		<ComponentGroup Id="CCX_Components_MainFolder_data_flutter_assets" Directory="CCX_data_flutter_assets">
+			<Component Id="cmp1C63471C238EEA92D0AE37BC7DF9E605" Guid="{DEAF277D-3D05-4B37-A732-9514B503B74A}">
+				<File Id="fil3F43BEEF0A85EE6619E4674CA43CB616" KeyPath="yes" Source="./installer/data/flutter_assets/AssetManifest.json"/>
+			</Component>
+			<Component Id="cmp414DC13EF11DED7194619DD3FC5F4CA7" Guid="{E66832FA-6880-4249-92A0-A26A4FF0A1F9}">
+				<File Id="filD6CD37343140A4FABEA77420A8B86B57" KeyPath="yes" Source="./installer/data/flutter_assets/FontManifest.json"/>
+			</Component>
+			<Component Id="cmp4AD05995360EA9B961C2D73FE38274D2" Guid="{B09977A1-1C36-4F5D-B3BC-394D10AC950D}">
+				<File Id="filC4871B1F6646D8021500E7E62CF93FAC" KeyPath="yes" Source="./installer/data/flutter_assets/NOTICES.Z"/>
+			</Component>
+		</ComponentGroup>
+		<ComponentGroup Id="CCX_Components_MainFolder_data_flutter_assets_assets" Directory="CCX_data_flutter_assets_assets">
+			<Component Id="cmp5F6AEEA1DB53EC5D0D51921A0B62098C" Guid="{CECCAC58-B818-42E2-849A-BFA4A8CA4FBE}">
+				<File Id="fil0E47318EAF44F6EEF60A89C92FCD2FAA" KeyPath="yes" Source="./installer/data/flutter_assets/assets/ccextractor"/>
+			</Component>
+			<Component Id="cmpDA8A6D10314F9C5A931AB86118A106CC" Guid="{75DE9E26-1024-4E83-8995-078624187483}">
+				<File Id="fil72BB9315DC954394F9980ECD2DA6D21F" KeyPath="yes" Source="./installer/data/flutter_assets/assets/ccx.svg"/>
+			</Component>
+		</ComponentGroup>
+		<ComponentGroup Id="CCX_Components_MainFolder_data_flutter_assets_fonts" Directory="CCX_data_flutter_assets_fonts">
+			<Component Id="cmp97B1795B6861175BEF48B71FC703EDA6" Guid="{292269F8-9FC7-464A-A9AB-AF5BA97D7F06}">
+				<File Id="fil26D47F100D1B90F2759D0EAE797393FC" KeyPath="yes" Source="./installer/data/flutter_assets/fonts/MaterialIcons-Regular.otf"/>
+			</Component>
+		</ComponentGroup>
+		<ComponentGroup Id="CCX_Components_MainFolder_data_flutter_assets_cupertino" Directory="CCX_data_flutter_assets_cupertino">
+			<Component Id="cmp18EDD5C842814546AE2A43759CD36C77" Guid="{30AFB9BB-1C7D-4CDB-ADCA-D0773F152B45}">
+				<File Id="fil341334402AF57DB92DF3F7C92E983317" KeyPath="yes" Source="./installer/data/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf"/>
+			</Component>
+		</ComponentGroup>
+	</Fragment>
+</Wix>
+
