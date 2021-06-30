@@ -8,6 +8,7 @@ use crate::bindings::*;
 
 const CCX_DTVCC_MAX_PACKET_LENGTH: u8 = 128;
 const CCX_DTVCC_NO_LAST_SEQUENCE: i32 = -1;
+const DTVCC_COMMANDS_C0_CODES_DTVCC_C0_EXT1: u8 = 16;
 
 /// Process data passed from C
 ///
@@ -160,13 +161,76 @@ impl dtvcc_ctx {
             warn!("dtvcc_process_current_packet: Warning: Null header expected but not found.");
         }
     }
+    /// Process service block and call handlers for the respective codesets
     pub fn process_service_block(&mut self, decoder: u8, pos: u8, block_length: u8) {
+        let mut i = 0;
+        while i < block_length {
+            let curr: usize = (pos + i) as usize;
+
+            let consumed = if self.current_packet[curr] != DTVCC_COMMANDS_C0_CODES_DTVCC_C0_EXT1 {
+                let used = if self.current_packet[curr] <= 0x1F {
+                    self.handle_C0(decoder, pos + i, block_length - i)
+                } else if self.current_packet[curr] <= 0x7F {
+                    self.handle_G0(decoder, pos + i, block_length - i)
+                } else if self.current_packet[curr] <= 0x9F {
+                    self.handle_C1(decoder, pos + i, block_length - i)
+                } else {
+                    self.handle_G1(decoder, pos + i, block_length - i)
+                };
+
+                if used == -1 {
+                    warn!("dtvcc_process_service_block: There was a problem handling the data.");
+                    return;
+                }
+                used
+            } else {
+                let mut used = self.handle_extended_char(decoder, pos + i, block_length - i);
+                used += 1; // Since we had CCX_DTVCC_C0_EXT1
+                used
+            };
+            i += consumed as u8;
+        }
+    }
+    pub fn handle_C0(&mut self, decoder: u8, pos: u8, block_length: u8) -> i32 {
         unsafe {
             let ctx = self as *mut dtvcc_ctx;
             let service_decoder =
                 (&mut self.decoders[decoder as usize]) as *mut dtvcc_service_decoder;
             let data = (&mut self.current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
-            dtvcc_process_service_block(ctx, service_decoder, data, block_length as i32);
+            dtvcc_handle_C0(ctx, service_decoder, data, block_length as i32)
+        }
+    }
+    pub fn handle_C1(&mut self, decoder: u8, pos: u8, block_length: u8) -> i32 {
+        unsafe {
+            let ctx = self as *mut dtvcc_ctx;
+            let service_decoder =
+                (&mut self.decoders[decoder as usize]) as *mut dtvcc_service_decoder;
+            let data = (&mut self.current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
+            dtvcc_handle_C1(ctx, service_decoder, data, block_length as i32)
+        }
+    }
+    pub fn handle_G0(&mut self, decoder: u8, pos: u8, block_length: u8) -> i32 {
+        unsafe {
+            let service_decoder =
+                (&mut self.decoders[decoder as usize]) as *mut dtvcc_service_decoder;
+            let data = (&mut self.current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
+            dtvcc_handle_G0(service_decoder, data, block_length as i32)
+        }
+    }
+    pub fn handle_G1(&mut self, decoder: u8, pos: u8, block_length: u8) -> i32 {
+        unsafe {
+            let service_decoder =
+                (&mut self.decoders[decoder as usize]) as *mut dtvcc_service_decoder;
+            let data = (&mut self.current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
+            dtvcc_handle_G1(service_decoder, data, block_length as i32)
+        }
+    }
+    pub fn handle_extended_char(&mut self, decoder: u8, pos: u8, block_length: u8) -> i32 {
+        unsafe {
+            let service_decoder =
+                (&mut self.decoders[decoder as usize]) as *mut dtvcc_service_decoder;
+            let data = (&mut self.current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
+            dtvcc_handle_extended_char(service_decoder, data, block_length as i32)
         }
     }
     pub fn reset_decoders(&mut self) {
