@@ -7,6 +7,7 @@ use log::{debug, warn};
 use crate::bindings::*;
 
 const CCX_DTVCC_MAX_PACKET_LENGTH: u8 = 128;
+const CCX_DTVCC_NO_LAST_SEQUENCE: i32 = -1;
 
 /// Process data passed from C
 ///
@@ -61,7 +62,7 @@ impl dtvcc_ctx {
                         }
 
                         if self.current_packet_length >= max_len as i32 {
-                            self.process_current_packet(max_len as i32);
+                            self.process_current_packet(max_len);
                         }
                     }
                 }
@@ -86,10 +87,98 @@ impl dtvcc_ctx {
             ),
         }
     }
-    pub fn process_current_packet(&mut self, len: i32) {
+    /// Process current packet into service blocks
+    pub fn process_current_packet(&mut self, len: u8) {
+        let seq = (self.current_packet[0] & 0xC0) >> 6;
+        debug!(
+            "dtvcc_process_current_packet: Sequence: {}, packet length: {}",
+            seq, len
+        );
+        if self.current_packet_length == 0 {
+            return;
+        }
+
+        if self.current_packet_length != len as i32 {
+            // Is this possible?
+            self.reset_decoders();
+            return;
+        }
+
+        if self.last_sequence != CCX_DTVCC_NO_LAST_SEQUENCE
+            && (self.last_sequence + 1) % 4 != seq as i32
+        {
+            warn!("dtvcc_process_current_packet: Unexpected sequence number, it is {} but should be {}", seq, (self.last_sequence +1) % 4);
+        }
+        self.last_sequence = seq as i32;
+
+        let mut pos: u8 = 1;
+        while pos < len {
+            let mut service_number = (self.current_packet[pos as usize] & 0xE0) >> 5; // 3 more significant bits
+            let block_length = self.current_packet[pos as usize] & 0x1F; // 5 less significant bits
+            debug!("dtvcc_process_current_packet: Standard header Service number: {}, Block length: {}", service_number, block_length);
+
+            if service_number == 7 {
+                // There is an extended header
+                pos += 1;
+                service_number = self.current_packet[pos as usize] & 0x3F; // 6 more significant bits
+                if service_number > 7 {
+                    warn!("dtvcc_process_current_packet: Illegal service number in extended header: {}", service_number);
+                }
+            }
+
+            pos += 1;
+
+            if service_number == 0 && block_length != 0 {
+                // Illegal, but specs say what to do...
+                pos = len; // Move to end
+                break;
+            }
+
+            if block_length != 0 {
+                unsafe {
+                    let mut report = *self.report;
+                    report.services[service_number as usize] = 1;
+                }
+            }
+
+            if service_number > 0 && self.services_active[(service_number - 1) as usize] == 1 {
+                self.process_service_block(service_number - 1, pos, block_length);
+            }
+
+            pos += block_length // Skip data
+        }
+
+        self.clear_packet();
+        if pos != len {
+            // For some reason we didn't parse the whole packet
+            warn!("dtvcc_process_current_packet:  There was a problem with this packet, reseting");
+            self.reset_decoders();
+        }
+
+        if len < 128 && self.current_packet[pos as usize] != 0 {
+            // Null header is mandatory if there is room
+            warn!("dtvcc_process_current_packet: Warning: Null header expected but not found.");
+        }
+    }
+    pub fn process_service_block(&mut self, decoder: u8, pos: u8, block_length: u8) {
         unsafe {
             let ctx = self as *mut dtvcc_ctx;
-            dtvcc_process_current_packet(ctx, len);
+            let service_decoder =
+                (&mut self.decoders[decoder as usize]) as *mut dtvcc_service_decoder;
+            let data = (&mut self.current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
+            dtvcc_process_service_block(ctx, service_decoder, data, block_length as i32);
         }
+    }
+    pub fn reset_decoders(&mut self) {
+        unsafe {
+            let ctx = self as *mut dtvcc_ctx;
+            dtvcc_decoders_reset(ctx);
+        }
+    }
+    /// Clear current packet
+    pub fn clear_packet(&mut self) {
+        self.current_packet_length = 0;
+        self.is_current_packet_header_parsed = 0;
+        self.current_packet.iter_mut().for_each(|x| *x = 0);
     }
 }
