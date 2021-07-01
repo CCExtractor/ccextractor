@@ -9,6 +9,7 @@ use crate::bindings::*;
 const CCX_DTVCC_MAX_PACKET_LENGTH: u8 = 128;
 const CCX_DTVCC_NO_LAST_SEQUENCE: i32 = -1;
 const DTVCC_COMMANDS_C0_CODES_DTVCC_C0_EXT1: u8 = 16;
+const CCX_DTVCC_MUSICAL_NOTE_CHAR: u16 = 9836;
 
 /// Process data passed from C
 ///
@@ -99,12 +100,6 @@ impl dtvcc_ctx {
             return;
         }
 
-        if self.current_packet_length != len as i32 {
-            // Is this possible?
-            self.reset_decoders();
-            return;
-        }
-
         if self.last_sequence != CCX_DTVCC_NO_LAST_SEQUENCE
             && (self.last_sequence + 1) % 4 != seq as i32
         {
@@ -120,6 +115,7 @@ impl dtvcc_ctx {
 
             if service_number == 7 {
                 // There is an extended header
+                // CEA-708-E 6.2.2 Extended Service Block Header
                 pos += 1;
                 service_number = self.current_packet[pos as usize] & 0x3F; // 6 more significant bits
                 if service_number > 7 {
@@ -150,11 +146,6 @@ impl dtvcc_ctx {
         }
 
         self.clear_packet();
-        if pos != len {
-            // For some reason we didn't parse the whole packet
-            warn!("dtvcc_process_current_packet:  There was a problem with this packet, reseting");
-            self.reset_decoders();
-        }
 
         if len < 128 && self.current_packet[pos as usize] != 0 {
             // Null header is mandatory if there is room
@@ -168,16 +159,12 @@ impl dtvcc_ctx {
             let curr: usize = (pos + i) as usize;
 
             let consumed = if self.current_packet[curr] != DTVCC_COMMANDS_C0_CODES_DTVCC_C0_EXT1 {
-                let used = if self.current_packet[curr] <= 0x1F {
-                    self.handle_C0(decoder, pos + i, block_length - i)
-                } else if self.current_packet[curr] <= 0x7F {
-                    self.handle_G0(decoder, pos + i, block_length - i)
-                } else if self.current_packet[curr] <= 0x9F {
-                    self.handle_C1(decoder, pos + i, block_length - i)
-                } else {
-                    self.handle_G1(decoder, pos + i, block_length - i)
+                let used = match self.current_packet[curr] {
+                    0..=0x1F => self.handle_C0(decoder, pos + i, block_length - i),
+                    0x20..=0x7F => self.handle_G0(decoder, pos + i, block_length - i),
+                    0x80..=0x9F => self.handle_C1(decoder, pos + i, block_length - i),
+                    _ => self.handle_G1(decoder, pos + i, block_length - i),
                 };
-
                 if used == -1 {
                     warn!("dtvcc_process_service_block: There was a problem handling the data.");
                     return;
@@ -191,6 +178,7 @@ impl dtvcc_ctx {
             i += consumed as u8;
         }
     }
+    /// Handle C0 - Code Set - Miscellaneous Control Codes
     pub fn handle_C0(&mut self, decoder: u8, pos: u8, block_length: u8) -> i32 {
         unsafe {
             let ctx = self as *mut dtvcc_ctx;
@@ -200,6 +188,7 @@ impl dtvcc_ctx {
             dtvcc_handle_C0(ctx, service_decoder, data, block_length as i32)
         }
     }
+    /// Handle C1 - Code Set - Captioning Command Control Codes
     pub fn handle_C1(&mut self, decoder: u8, pos: u8, block_length: u8) -> i32 {
         unsafe {
             let ctx = self as *mut dtvcc_ctx;
@@ -209,22 +198,39 @@ impl dtvcc_ctx {
             dtvcc_handle_C1(ctx, service_decoder, data, block_length as i32)
         }
     }
+    /// Handle G0 - Code Set - ASCII printable characters
     pub fn handle_G0(&mut self, decoder: u8, pos: u8, block_length: u8) -> i32 {
-        unsafe {
-            let service_decoder =
-                (&mut self.decoders[decoder as usize]) as *mut dtvcc_service_decoder;
-            let data = (&mut self.current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
-            dtvcc_handle_G0(service_decoder, data, block_length as i32)
+        let service_decoder = self.decoders[decoder as usize];
+        if service_decoder.current_window == -1 {
+            warn!("dtvcc_handle_G0: Window has to be defined first");
+            return block_length as i32;
         }
+
+        let character = self.current_packet[pos as usize];
+        debug!("G0: [{:2X}] ({})", character, character as char);
+        let sym = if character == 0x7F {
+            dtvcc_symbol::new(CCX_DTVCC_MUSICAL_NOTE_CHAR)
+        } else {
+            dtvcc_symbol::new(character as u16)
+        };
+        self.process_character(decoder, sym);
+        1
     }
+    /// Handle G1 - Code Set - ISO 8859-1 LATIN-1 Character Set
     pub fn handle_G1(&mut self, decoder: u8, pos: u8, block_length: u8) -> i32 {
-        unsafe {
-            let service_decoder =
-                (&mut self.decoders[decoder as usize]) as *mut dtvcc_service_decoder;
-            let data = (&mut self.current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
-            dtvcc_handle_G1(service_decoder, data, block_length as i32)
+        let service_decoder = self.decoders[decoder as usize];
+        if service_decoder.current_window == -1 {
+            warn!("dtvcc_handle_G1: Window has to be defined first");
+            return block_length as i32;
         }
+
+        let character = self.current_packet[pos as usize];
+        debug!("G1: [{:2X}] ({})", character, character as char);
+        let sym = dtvcc_symbol::new(character as u16);
+        self.process_character(decoder, sym);
+        1
     }
+    /// Handle extended codes (EXT1 + code), from the extended sets
     pub fn handle_extended_char(&mut self, decoder: u8, pos: u8, block_length: u8) -> i32 {
         unsafe {
             let service_decoder =
@@ -233,6 +239,15 @@ impl dtvcc_ctx {
             dtvcc_handle_extended_char(service_decoder, data, block_length as i32)
         }
     }
+    /// Process the character and add it to the current window
+    pub fn process_character(&mut self, decoder: u8, sym: dtvcc_symbol) {
+        unsafe {
+            let service_decoder =
+                (&mut self.decoders[decoder as usize]) as *mut dtvcc_service_decoder;
+            dtvcc_process_character(service_decoder, sym);
+        }
+    }
+    /// Reset all decoders to their initial states
     pub fn reset_decoders(&mut self) {
         unsafe {
             let ctx = self as *mut dtvcc_ctx;
@@ -244,5 +259,12 @@ impl dtvcc_ctx {
         self.current_packet_length = 0;
         self.is_current_packet_header_parsed = 0;
         self.current_packet.iter_mut().for_each(|x| *x = 0);
+    }
+}
+
+impl dtvcc_symbol {
+    /// Create a new symbol
+    pub fn new(sym: u16) -> dtvcc_symbol {
+        dtvcc_symbol { init: 1, sym }
     }
 }
