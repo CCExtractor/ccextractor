@@ -2,9 +2,12 @@
 //!
 //! This module provides a CEA 708 decoder as defined by ANSI/CTA-708-E R-2018
 
+mod commands;
+
 use log::{debug, warn};
 
 use crate::bindings::*;
+use commands::{C0CodeSet, C0Command, C1CodeSet, C1Command};
 
 const CCX_DTVCC_MAX_PACKET_LENGTH: u8 = 128;
 const CCX_DTVCC_NO_LAST_SEQUENCE: i32 = -1;
@@ -180,27 +183,107 @@ impl dtvcc_ctx {
     }
     /// Handle C0 - Code Set - Miscellaneous Control Codes
     pub fn handle_C0(&mut self, decoder: u8, pos: u8, block_length: u8) -> i32 {
+        let ctx = self as *mut dtvcc_ctx;
+        let service_decoder = (&mut self.decoders[decoder as usize]) as *mut dtvcc_service_decoder;
+        let data = (&mut self.current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
+
+        let code = self.current_packet[pos as usize];
+        let C0Command { command, length } = C0Command::new(code);
+        debug!("C0: [{:?}] ({})", command, block_length);
         unsafe {
-            let ctx = self as *mut dtvcc_ctx;
-            let service_decoder =
-                (&mut self.decoders[decoder as usize]) as *mut dtvcc_service_decoder;
-            let data = (&mut self.current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
-            dtvcc_handle_C0(ctx, service_decoder, data, block_length as i32)
+            match command {
+                // NUL command does nothing
+                C0CodeSet::NUL => {}
+                C0CodeSet::ETX => dtvcc_process_etx(service_decoder),
+                C0CodeSet::BS => dtvcc_process_bs(service_decoder),
+                C0CodeSet::FF => dtvcc_process_ff(service_decoder),
+                C0CodeSet::CR => dtvcc_process_cr(ctx, service_decoder),
+                C0CodeSet::HCR => dtvcc_process_hcr(service_decoder),
+                // EXT1 is handled elsewhere as an extended command
+                C0CodeSet::EXT1 => {}
+                C0CodeSet::P16 => dtvcc_handle_C0_P16(service_decoder, data.add(1)),
+                C0CodeSet::RESERVED => {}
+            }
         }
+        if length > block_length {
+            warn!(
+                "dtvcc_handle_C0: command is {} bytes long but we only have {}",
+                length, block_length
+            );
+            return -1;
+        }
+        length as i32
     }
     /// Handle C1 - Code Set - Captioning Command Control Codes
     pub fn handle_C1(&mut self, decoder: u8, pos: u8, block_length: u8) -> i32 {
-        unsafe {
-            let ctx = self as *mut dtvcc_ctx;
-            let service_decoder =
-                (&mut self.decoders[decoder as usize]) as *mut dtvcc_service_decoder;
-            let data = (&mut self.current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
-            dtvcc_handle_C1(ctx, service_decoder, data, block_length as i32)
+        let ctx = self as *mut dtvcc_ctx;
+        let service_decoder = (&mut self.decoders[decoder as usize]) as *mut dtvcc_service_decoder;
+        let data = (&mut self.current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
+
+        let code = self.current_packet[pos as usize];
+        let next_code = self.current_packet[(pos + 1) as usize] as i32;
+        let C1Command {
+            command,
+            length,
+            name,
+        } = C1Command::new(code);
+
+        if length > block_length {
+            warn!("Warning: Not enough bytes for command.");
+            return -1;
         }
+
+        debug!("C0: [{:?}] [{}] ({})", command, name, length);
+        unsafe {
+            match command {
+                C1CodeSet::CW0
+                | C1CodeSet::CW1
+                | C1CodeSet::CW2
+                | C1CodeSet::CW3
+                | C1CodeSet::CW4
+                | C1CodeSet::CW5
+                | C1CodeSet::CW6
+                | C1CodeSet::CW7 => dtvcc_handle_CWx_SetCurrentWindow(
+                    service_decoder,
+                    (code - DTVCC_COMMANDS_C1_CODES_DTVCC_C1_CW0 as u8) as i32,
+                ),
+                C1CodeSet::CLW => dtvcc_handle_CLW_ClearWindows(ctx, service_decoder, next_code),
+                C1CodeSet::DSW => {
+                    dtvcc_handle_DSW_DisplayWindows(service_decoder, next_code, self.timing)
+                }
+                C1CodeSet::HDW => dtvcc_handle_HDW_HideWindows(ctx, service_decoder, next_code),
+                C1CodeSet::TGW => dtvcc_handle_TGW_ToggleWindows(ctx, service_decoder, next_code),
+                C1CodeSet::DLW => dtvcc_handle_DLW_DeleteWindows(ctx, service_decoder, next_code),
+                C1CodeSet::DLY => dtvcc_handle_DLY_Delay(service_decoder, next_code),
+                C1CodeSet::DLC => dtvcc_handle_DLC_DelayCancel(service_decoder),
+                C1CodeSet::RST => dtvcc_handle_RST_Reset(service_decoder),
+                C1CodeSet::SPA => dtvcc_handle_SPA_SetPenAttributes(service_decoder, data),
+                C1CodeSet::SPC => dtvcc_handle_SPC_SetPenColor(service_decoder, data),
+                C1CodeSet::SPL => dtvcc_handle_SPL_SetPenLocation(service_decoder, data),
+                C1CodeSet::SWA => dtvcc_handle_SWA_SetWindowAttributes(service_decoder, data),
+                C1CodeSet::DF0
+                | C1CodeSet::DF1
+                | C1CodeSet::DF2
+                | C1CodeSet::DF3
+                | C1CodeSet::DF4
+                | C1CodeSet::DF5
+                | C1CodeSet::DF6
+                | C1CodeSet::DF7 => dtvcc_handle_DFx_DefineWindow(
+                    service_decoder,
+                    (code - DTVCC_COMMANDS_C1_CODES_DTVCC_C1_DF0 as u8) as i32,
+                    data,
+                    self.timing,
+                ),
+                C1CodeSet::RESERVED => {
+                    warn!("Warning, Found Reserved codes, ignored");
+                }
+            };
+        }
+        length as i32
     }
     /// Handle G0 - Code Set - ASCII printable characters
     pub fn handle_G0(&mut self, decoder: u8, pos: u8, block_length: u8) -> i32 {
-        let service_decoder = self.decoders[decoder as usize];
+        let service_decoder = &self.decoders[decoder as usize];
         if service_decoder.current_window == -1 {
             warn!("dtvcc_handle_G0: Window has to be defined first");
             return block_length as i32;
@@ -218,7 +301,7 @@ impl dtvcc_ctx {
     }
     /// Handle G1 - Code Set - ISO 8859-1 LATIN-1 Character Set
     pub fn handle_G1(&mut self, decoder: u8, pos: u8, block_length: u8) -> i32 {
-        let service_decoder = self.decoders[decoder as usize];
+        let service_decoder = &self.decoders[decoder as usize];
         if service_decoder.current_window == -1 {
             warn!("dtvcc_handle_G1: Window has to be defined first");
             return block_length as i32;
