@@ -1380,12 +1380,11 @@ void dtvcc_handle_DLC_DelayCancel(dtvcc_service_decoder *decoder)
 
 //-------------------------- CHARACTERS AND COMMANDS -------------------------
 
-int dtvcc_handle_C0_P16(dtvcc_service_decoder *decoder, unsigned char *data) //16-byte chars always have 2 bytes
+void dtvcc_handle_C0_P16(dtvcc_service_decoder *decoder, unsigned char *data) //16-byte chars always have 2 bytes
 {
 	if (decoder->current_window == -1)
 	{
 		ccx_common_logging.log_ftn("[CEA-708] dtvcc_handle_C0_P16: Window has to be defined first\n");
-		return 3;
 	}
 
 	dtvcc_symbol sym;
@@ -1401,8 +1400,6 @@ int dtvcc_handle_C0_P16(dtvcc_service_decoder *decoder, unsigned char *data) //1
 
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_handle_C0_P16: [%04X]\n", sym.sym);
 	dtvcc_process_character(decoder, sym);
-
-	return 3;
 }
 
 // G0 - Code Set - ASCII printable characters

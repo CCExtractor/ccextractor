@@ -421,7 +421,7 @@ void dtvcc_handle_SPL_SetPenLocation(dtvcc_service_decoder *decoder, unsigned ch
 void dtvcc_handle_RST_Reset(dtvcc_service_decoder *decoder);
 void dtvcc_handle_DLY_Delay(dtvcc_service_decoder *decoder, int tenths_of_sec);
 void dtvcc_handle_DLC_DelayCancel(dtvcc_service_decoder *decoder);
-int dtvcc_handle_C0_P16(dtvcc_service_decoder *decoder, unsigned char *data);
+void dtvcc_handle_C0_P16(dtvcc_service_decoder *decoder, unsigned char *data);
 int dtvcc_handle_G0(dtvcc_service_decoder *decoder, unsigned char *data, int data_length);
 int dtvcc_handle_G1(dtvcc_service_decoder *decoder, unsigned char *data, int data_length);
 int dtvcc_handle_C0(dtvcc_ctx *dtvcc,
