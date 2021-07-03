@@ -427,7 +427,7 @@ void print_usage(void)
 	mprint("       With the exception of McPoodle's raw format, which is just the closed\n");
 	mprint("       caption data with no other info, CCExtractor can usually detect the\n");
 	mprint("       input format correctly. To force a specific format:\n\n");
-	mprint("                  -in=format or --inputformat\n\n");
+	mprint("                  --inp=format\n\n");
 	mprint("       where format is one of these:\n");
 	mprint("                       ts   -> For Transport Streams.\n");
 	mprint("                       ps   -> For Program Streams.\n");
@@ -445,7 +445,7 @@ void print_usage(void)
 #endif
 	mprint("       -ts, -ps, -es, -mp4, -wtv, -mkv and -asf/--dvr-ms can be used as shorts.\n\n");
 	mprint("Output formats:\n\n");
-	mprint("                 -out=format or --outputformat\n\n");
+	mprint("                 --out=format\n\n");
 	mprint("       where format is one of these:\n");
 	mprint("                      srt     -> SubRip (default, so not actually needed).\n");
 	mprint("                      ass/ssa -> SubStation Alpha.\n");
@@ -879,7 +879,7 @@ void print_usage(void)
 	mprint("                       1110101 is the default for timed transcripts\n");
 	mprint("                       1111001 is the default setting for -ucla\n");
 	mprint("                       Make sure you use this parameter after others that might\n");
-	mprint("                       affect these settings (-out, -ucla, --xds, -txt, \n");
+	mprint("                       affect these settings (--out, -ucla, --xds, -txt, \n");
 	mprint("                       -ttxt ...)\n");
 
 	mprint("\n");
@@ -918,14 +918,14 @@ void print_usage(void)
 	mprint("a .d extension. Each .png file will contain an image representing one caption\n");
 	mprint("and named subNNNN.png, starting with sub0000.png.\n");
 	mprint("For example, the command:\n");
-	mprint("    ccextractor -out=spupng input.mpg\n");
+	mprint("    ccextractor --out=spupng input.mpg\n");
 	mprint("will create the files:\n");
 	mprint("    input.xml\n");
 	mprint("    input.d/sub0000.png\n");
 	mprint("    input.d/sub0001.png\n");
 	mprint("    ...\n");
 	mprint("The command:\n");
-	mprint("    ccextractor -out=spupng -o /tmp/output -12 input.mpg\n");
+	mprint("    ccextractor --out=spupng -o /tmp/output -12 input.mpg\n");
 	mprint("will create the files:\n");
 	mprint("    /tmp/output_1.xml\n");
 	mprint("    /tmp/output_1.d/sub0000.png\n");
@@ -1535,9 +1535,9 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			set_input_format(opt, argv[i]);
 			continue;
 		}
-		if (strncmp(argv[i], "-in=", 4) == 0 || strncmp(argv[i], "--inputformat=", 4) == 0)
+		if (strncmp(argv[i], "--inp=", 6) == 0)
 		{
-			set_input_format(opt, argv[i] + 4);
+			set_input_format(opt, argv[i] + 6);
 			continue;
 		}
 
@@ -1698,9 +1698,9 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			set_output_format(opt, argv[i]);
 			continue;
 		}
-		if (strncmp(argv[i], "-out=", 5) == 0 || strncmp(argv[i], "-outoutformat=", 5) == 0)
+		if (strncmp(argv[i], "--out=", 6) == 0)
 		{
-			set_output_format(opt, argv[i] + 5);
+			set_output_format(opt, argv[i] + 6);
 			continue;
 		}
 
@@ -2895,7 +2895,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 
 	if (opt->demux_cfg.auto_stream == CCX_SM_MCPOODLESRAW && opt->write_format == CCX_OF_RAW)
 	{
-		print_error(opt->gui_mode_reports, "-in=raw can only be used if the output is a subtitle file.\n");
+		print_error(opt->gui_mode_reports, "--inp=raw can only be used if the output is a subtitle file.\n");
 		return EXIT_INCOMPATIBLE_PARAMETERS;
 	}
 	if (opt->demux_cfg.auto_stream == CCX_SM_RCWT && opt->write_format == CCX_OF_RCWT && opt->output_filename == NULL)
@@ -2911,7 +2911,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 	}
 	if (opt->write_format == CCX_OF_SPUPNG && opt->cc_to_stdout)
 	{
-		print_error(opt->gui_mode_reports, "You cannot use -out=spupng with --stdout.\n");
+		print_error(opt->gui_mode_reports, "You cannot use --out=spupng with --stdout.\n");
 		return EXIT_INCOMPATIBLE_PARAMETERS;
 	}
 
