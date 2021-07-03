@@ -352,7 +352,7 @@ void print_usage(void)
 	mprint("To see This Help Message: -h or --help\n\n");
 	mprint("File name related options:\n");
 	mprint("            inputfile: file(s) to process\n");
-	mprint("    -o outputfilename: Use -o parameters to define output filename if you don't\n");
+	mprint("    -o or --outputfilename outputfilename: Use -o parameters to define output filename if you don't\n");
 	mprint("                       like the default ones (same as infile plus _1 or _2 when\n");
 	mprint("                       needed and file extension, e.g. .srt).\n");
 	mprint("              --stdout: Write output to stdout (console) instead of file. If\n");
@@ -427,7 +427,7 @@ void print_usage(void)
 	mprint("       With the exception of McPoodle's raw format, which is just the closed\n");
 	mprint("       caption data with no other info, CCExtractor can usually detect the\n");
 	mprint("       input format correctly. To force a specific format:\n\n");
-	mprint("                  -in=format\n\n");
+	mprint("                  -in=format or --inputformat\n\n");
 	mprint("       where format is one of these:\n");
 	mprint("                       ts   -> For Transport Streams.\n");
 	mprint("                       ps   -> For Program Streams.\n");
@@ -445,7 +445,7 @@ void print_usage(void)
 #endif
 	mprint("       -ts, -ps, -es, -mp4, -wtv, -mkv and -asf/--dvr-ms can be used as shorts.\n\n");
 	mprint("Output formats:\n\n");
-	mprint("                 -out=format\n\n");
+	mprint("                 -out=format or --outputformat\n\n");
 	mprint("       where format is one of these:\n");
 	mprint("                      srt     -> SubRip (default, so not actually needed).\n");
 	mprint("                      ass/ssa -> SubStation Alpha.\n");
@@ -526,7 +526,7 @@ void print_usage(void)
 	mprint("                       captions. Use this switch only when needed.\n");
 	mprint("            --wtvmpeg2: Read the captions from the MPEG2 video stream rather\n");
 	mprint("                       than the captions stream in WTV files\n");
-	mprint(" -pn --program-number: In TS mode, specifically select a program to process.\n");
+	mprint(" -pn --program_number: In TS mode, specifically select a program to process.\n");
 	mprint("                       Not needed if the TS only has one. If this parameter\n");
 	mprint("                       is not specified and CCExtractor detects more than one\n");
 	mprint("                       program in the input, it will list the programs found\n");
@@ -578,11 +578,11 @@ void print_usage(void)
 	mprint("  You can adjust, or disable, the algorithm settings with the following\n");
 	mprint("  parameters.\n\n");
 	mprint("           --nolevdist: Don't attempt to correct typos with Levenshtein distance.\n");
-	mprint(" --levdistmincnt value: Minimum distance we always allow regardless\n");
+	mprint(" --minlevdist value: Minimum distance we always allow regardless\n");
 	mprint("                       of the length of the strings.Default 2. \n");
 	mprint("                       This means that if the calculated distance \n");
 	mprint("                       is 0,1 or 2, we consider the strings to be equivalent.\n");
-	mprint(" --levdistmaxpct value: Maximum distance we allow, as a percentage of\n");
+	mprint(" --maxlevdist value: Maximum distance we allow, as a percentage of\n");
 	mprint("                       the shortest string length. Default 10%.\n");
 	mprint("                       For example, consider a comparison of one string of \n");
 	mprint("	                    30 characters and one of 60 characters. We want to \n");
@@ -679,7 +679,7 @@ void print_usage(void)
 	mprint("                       using the Chinese (Traditional) trained data\n");
 	mprint("                       This option is also helpful when the traineddata file\n");
 	mprint("                       has non standard names that don't follow ISO specs\n");
-	mprint("          --quant mode: How to quantize the bitmap before passing it to tesseract\n");
+	mprint("          --quantmode mode: How to quantize the bitmap before passing it to tesseract\n");
 	mprint("                       for OCR'ing.\n");
 	mprint("                       0: Don't quantize at all.\n");
 	mprint("                       1: Use CCExtractor's internal function (default).\n");
@@ -1535,7 +1535,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			set_input_format(opt, argv[i]);
 			continue;
 		}
-		if (strncmp(argv[i], "-in=", 4) == 0)
+		if (strncmp(argv[i], "-in=", 4) == 0 || strncmp(argv[i], "--inputformat=", 4) == 0)
 		{
 			set_input_format(opt, argv[i] + 4);
 			continue;
@@ -1630,7 +1630,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "--ocrlang has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "--quant") == 0)
+		if (strcmp(argv[i], "--quantmode") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -1640,7 +1640,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			else
 			{
-				fatal(EXIT_MALFORMED_PARAMETER, "--quant has no argument.\n");
+				fatal(EXIT_MALFORMED_PARAMETER, "--quantmode has no argument.\n");
 			}
 		}
 		if (strcmp(argv[i], "--nospupngocr") == 0)
@@ -1698,7 +1698,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			set_output_format(opt, argv[i]);
 			continue;
 		}
-		if (strncmp(argv[i], "-out=", 5) == 0)
+		if (strncmp(argv[i], "-out=", 5) == 0 || strncmp(argv[i], "-outoutformat=", 5) == 0)
 		{
 			set_output_format(opt, argv[i] + 5);
 			continue;
@@ -1961,7 +1961,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			continue;
 		}
 
-		if (strcmp(argv[i], "--program-number") == 0 || strcmp(argv[i], "-pn") == 0)
+		if (strcmp(argv[i], "--program_number") == 0 || strcmp(argv[i], "-pn") == 0)
 		{
 			if (i < argc - 1 && isanumber(argv[i + 1]))
 			{
@@ -2154,7 +2154,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			opt->dolevdist = 0;
 			continue;
 		}
-		if (strcmp(argv[i], "--levdistmincnt") == 0)
+		if (strcmp(argv[i], "--minlevdist") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2164,10 +2164,10 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			else
 			{
-				fatal(EXIT_MALFORMED_PARAMETER, "--levdistmincnt has no argument.\n");
+				fatal(EXIT_MALFORMED_PARAMETER, "--minlevdist has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "--levdistmaxpct") == 0)
+		if (strcmp(argv[i], "--maxlevdist") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2177,7 +2177,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			else
 			{
-				fatal(EXIT_MALFORMED_PARAMETER, "--levdistmaxpct has no argument.\n");
+				fatal(EXIT_MALFORMED_PARAMETER, "--maxlevdist has no argument.\n");
 			}
 		}
 		if (strcmp(argv[i], "-708") == 0)
@@ -2319,7 +2319,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			opt->wtvmpeg2 = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-o") == 0)
+		if (strcmp(argv[i], "-o") == 0 || strcmp(argv[i], "--outputfilename") == 0)
 		{
 			if (i < argc - 1)
 			{
