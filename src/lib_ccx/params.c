@@ -1540,7 +1540,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			if (i < argc - 1)
 			{
 				i++;
-				set_output_format(opt, argv[i]);
+				set_input_format(opt, argv[i]);
 				continue;
 			}
 			else
@@ -1692,6 +1692,19 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			else
 			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--mkvlang has no argument.\n");
+			}
+		}
+		if (strcmp(argv[i], "-o") == 0 || strcmp(argv[i], "--outputfilename") == 0)
+		{
+			if (i < argc - 1)
+			{
+				i++;
+				opt->output_filename = argv[i];
+				continue;
+			}
+			else
+			{
+				fatal(EXIT_MALFORMED_PARAMETER, "-o has no argument.\n");
 			}
 		}
 
@@ -2334,19 +2347,6 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		{
 			opt->wtvmpeg2 = 1;
 			continue;
-		}
-		if (strcmp(argv[i], "-o") == 0 || strcmp(argv[i], "--outputfilename") == 0)
-		{
-			if (i < argc - 1)
-			{
-				i++;
-				opt->output_filename = argv[i];
-				continue;
-			}
-			else
-			{
-				fatal(EXIT_MALFORMED_PARAMETER, "-o has no argument.\n");
-			}
 		}
 		if (strcmp(argv[i], "-svc") == 0 || strcmp(argv[i], "--service") == 0)
 		{
