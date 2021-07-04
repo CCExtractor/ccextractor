@@ -333,6 +333,30 @@
     <ClInclude Include="..\src\thirdparty\zlib\zutil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zvbi\bcd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zvbi\bit_slicer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zvbi\macros.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zvbi\misc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zvbi\raw_decoder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zvbi\sampling_par.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zvbi\sliced.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\zvbi\zvbi_decoder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\src\thirdparty\win_spec_incld\inttypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -355,30 +379,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftstdlib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\lib_ccx\zvbi\bcd.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\lib_ccx\zvbi\bit_slicer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\lib_ccx\zvbi\macros.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\lib_ccx\zvbi\misc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\lib_ccx\zvbi\raw_decoder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\lib_ccx\zvbi\sampling_par.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\lib_ccx\zvbi\sliced.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\lib_ccx\zvbi\zvbi_decoder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -704,6 +704,9 @@
     <ClCompile Include="..\src\thirdparty\gpacmp4\movie_fragments.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\thirdparty\gpacmp4\mp4.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\thirdparty\gpacmp4\odf_code.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -830,6 +833,18 @@
     <ClCompile Include="..\src\thirdparty\zlib\zutil.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\thirdparty\zvbi\bit_slicer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\zvbi\decoder.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\zvbi\raw_decoder.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\zvbi\sampling_par.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\thirdparty\freetype\autofit\autofit.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -943,36 +958,6 @@
     </ClCompile>
     <ClCompile Include="..\src\thirdparty\zlib\adler32.c">
       <Filter>Source Files\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\mp4.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\os_thread.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\module.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\os_module.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\xml_parser.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\constants.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\zvbi\bit_slicer.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\zvbi\decoder.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\zvbi\raw_decoder.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\lib_ccx\zvbi\sampling_par.c">
-      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
