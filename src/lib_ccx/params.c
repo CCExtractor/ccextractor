@@ -1262,14 +1262,14 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 
 #ifdef ENABLE_HARDSUBX
 		// Parse -hardsubx and related parameters
-		if (strcmp(argv[i], "-hardsubx") == 0)
+		if (strcmp(argv[i], "-hardsubx") == 0 || strcmp(argv[i], "--hardsubx") == 0)
 		{
 			opt->hardsubx = 1;
 			continue;
 		}
 		if (opt->hardsubx == 1)
 		{
-			if (strcmp(argv[i], "-ocr_mode") == 0)
+			if (strcmp(argv[i], "-ocr_mode") == 0 || strcmp(argv[i], "--ocrmode") == 0)
 			{
 				if (i < argc - 1)
 				{
@@ -1299,7 +1299,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 					fatal(EXIT_MALFORMED_PARAMETER, "-ocr_mode has no argument.\nValid values are {frame,word,letter}\n");
 				}
 			}
-			if (strcmp(argv[i], "-subcolor") == 0 || strcmp(argv[i], "-sub_color") == 0)
+			if (strcmp(argv[i], "-subcolor") == 0 || strcmp(argv[i], "-sub_color") == 0 || strcmp(argv[i], "--subcolor") == 0)
 			{
 				if (i < argc - 1)
 				{
@@ -1360,7 +1360,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 					fatal(EXIT_MALFORMED_PARAMETER, "-subcolor has no argument.\nValid values are {white,yellow,green,cyan,blue,magenta,red} or a custom hue value between 0 and 360\n");
 				}
 			}
-			if (strcmp(argv[i], "-min_sub_duration") == 0)
+			if (strcmp(argv[i], "-min_sub_duration") == 0 || strcmp(argv[i], "--min_sub_duration") == 0)
 			{
 				if (i < argc - 1)
 				{
@@ -1381,12 +1381,12 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 					fatal(EXIT_MALFORMED_PARAMETER, "-min_sub_duration has no argument.\n");
 				}
 			}
-			if (strcmp(argv[i], "-detect_italics") == 0)
+			if (strcmp(argv[i], "-detect_italics") == 0 || strcmp(argv[i], "--detect_italics") == 0)
 			{
 				opt->hardsubx_detect_italics = 1;
 				continue;
 			}
-			if (strcmp(argv[i], "-conf_thresh") == 0)
+			if (strcmp(argv[i], "-conf_thresh") == 0 || strcmp(argv[i], "--conf_thresh") == 0)
 			{
 				if (i < argc - 1)
 				{
@@ -1407,7 +1407,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 					fatal(EXIT_MALFORMED_PARAMETER, "-conf_thresh has no argument.\n");
 				}
 			}
-			if (strcmp(argv[i], "-whiteness_thresh") == 0 || strcmp(argv[i], "-lum_thresh") == 0)
+			if (strcmp(argv[i], "-whiteness_thresh") == 0 || strcmp(argv[i], "-lum_thresh") == 0 || strcmp(argv[i], "--whiteness_thresh") == 0)
 			{
 				if (i < argc - 1)
 				{
