@@ -445,7 +445,7 @@ void print_usage(void)
 #endif
 	mprint("       -ts, -ps, -es, -mp4, -wtv, -mkv and -asf/--dvr-ms can be used as shorts.\n\n");
 	mprint("Output formats:\n\n");
-	mprint("                 --out=format\n\n");
+	mprint("                 --out format\n\n");
 	mprint("       where format is one of these:\n");
 	mprint("                      srt     -> SubRip (default, so not actually needed).\n");
 	mprint("                      ass/ssa -> SubStation Alpha.\n");
@@ -1535,10 +1535,18 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			set_input_format(opt, argv[i]);
 			continue;
 		}
-		if (strncmp(argv[i], "--inp=", 6) == 0)
+		if (strncmp(argv[i], "--inp", 5) == 0)
 		{
-			set_input_format(opt, argv[i] + 6);
-			continue;
+			if (i < argc - 1)
+			{
+				i++;
+				set_output_format(opt, argv[i]);
+				continue;
+			}
+			else
+			{
+				fatal(EXIT_MALFORMED_PARAMETER, "--inp has no argument.\n");
+			}
 		}
 
 		/*user specified subtitle to be selected */
@@ -1698,10 +1706,18 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			set_output_format(opt, argv[i]);
 			continue;
 		}
-		if (strncmp(argv[i], "--out=", 6) == 0)
+		if (strncmp(argv[i], "--out", 5) == 0)
 		{
-			set_output_format(opt, argv[i] + 6);
-			continue;
+			if (i < argc - 1)
+			{
+				i++;
+				set_output_format(opt, argv[i]);
+				continue;
+			}
+			else
+			{
+				fatal(EXIT_MALFORMED_PARAMETER, "--out has no argument.\n");
+			}
 		}
 
 		/* Credit stuff */
