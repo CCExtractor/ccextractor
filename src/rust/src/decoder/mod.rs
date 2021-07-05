@@ -3,6 +3,8 @@
 //! This module provides a CEA 708 decoder as defined by ANSI/CTA-708-E R-2018
 
 mod commands;
+mod service_decoder;
+mod window;
 
 use log::{debug, warn};
 
@@ -13,6 +15,7 @@ const CCX_DTVCC_MAX_PACKET_LENGTH: u8 = 128;
 const CCX_DTVCC_NO_LAST_SEQUENCE: i32 = -1;
 const DTVCC_COMMANDS_C0_CODES_DTVCC_C0_EXT1: u8 = 16;
 const CCX_DTVCC_MUSICAL_NOTE_CHAR: u16 = 9836;
+const CCX_DTVCC_MAX_WINDOWS: u8 = 8;
 
 /// Process data passed from C
 ///
@@ -183,7 +186,6 @@ impl dtvcc_ctx {
     }
     /// Handle C0 - Code Set - Miscellaneous Control Codes
     pub fn handle_C0(&mut self, decoder: u8, pos: u8, block_length: u8) -> i32 {
-        let ctx = self as *mut dtvcc_ctx;
         let service_decoder = (&mut self.decoders[decoder as usize]) as *mut dtvcc_service_decoder;
         let data = (&mut self.current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
 
@@ -197,7 +199,7 @@ impl dtvcc_ctx {
                 C0CodeSet::ETX => dtvcc_process_etx(service_decoder),
                 C0CodeSet::BS => dtvcc_process_bs(service_decoder),
                 C0CodeSet::FF => dtvcc_process_ff(service_decoder),
-                C0CodeSet::CR => dtvcc_process_cr(ctx, service_decoder),
+                C0CodeSet::CR => self.process_cr(decoder),
                 C0CodeSet::HCR => dtvcc_process_hcr(service_decoder),
                 // EXT1 is handled elsewhere as an extended command
                 C0CodeSet::EXT1 => {}
@@ -216,7 +218,6 @@ impl dtvcc_ctx {
     }
     /// Handle C1 - Code Set - Captioning Command Control Codes
     pub fn handle_C1(&mut self, decoder: u8, pos: u8, block_length: u8) -> i32 {
-        let ctx = self as *mut dtvcc_ctx;
         let service_decoder = (&mut self.decoders[decoder as usize]) as *mut dtvcc_service_decoder;
         let data = (&mut self.current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
 
@@ -233,7 +234,7 @@ impl dtvcc_ctx {
             return -1;
         }
 
-        debug!("C0: [{:?}] [{}] ({})", command, name, length);
+        debug!("C1: [{:?}] [{}] ({})", command, name, length);
         unsafe {
             match command {
                 C1CodeSet::CW0
@@ -247,13 +248,13 @@ impl dtvcc_ctx {
                     service_decoder,
                     (code - DTVCC_COMMANDS_C1_CODES_DTVCC_C1_CW0 as u8) as i32,
                 ),
-                C1CodeSet::CLW => dtvcc_handle_CLW_ClearWindows(ctx, service_decoder, next_code),
+                C1CodeSet::CLW => self.handle_clear_windows(decoder, next_code),
                 C1CodeSet::DSW => {
                     dtvcc_handle_DSW_DisplayWindows(service_decoder, next_code, self.timing)
                 }
-                C1CodeSet::HDW => dtvcc_handle_HDW_HideWindows(ctx, service_decoder, next_code),
-                C1CodeSet::TGW => dtvcc_handle_TGW_ToggleWindows(ctx, service_decoder, next_code),
-                C1CodeSet::DLW => dtvcc_handle_DLW_DeleteWindows(ctx, service_decoder, next_code),
+                C1CodeSet::HDW => self.handle_hide_windows(decoder, next_code),
+                C1CodeSet::TGW => self.handle_toggle_windows(decoder, next_code),
+                C1CodeSet::DLW => self.handle_delete_windows(decoder, next_code),
                 C1CodeSet::DLY => dtvcc_handle_DLY_Delay(service_decoder, next_code),
                 C1CodeSet::DLC => dtvcc_handle_DLC_DelayCancel(service_decoder),
                 C1CodeSet::RST => dtvcc_handle_RST_Reset(service_decoder),
@@ -320,6 +321,237 @@ impl dtvcc_ctx {
                 (&mut self.decoders[decoder as usize]) as *mut dtvcc_service_decoder;
             let data = (&mut self.current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
             dtvcc_handle_extended_char(service_decoder, data, block_length as i32)
+        }
+    }
+    /// Process Carriage Return(CR)
+    ///
+    /// Refer Section 7.1.4.1 and 8.4.9.2 CEA-708-E
+    pub fn process_cr(&mut self, decoder: u8) {
+        let service_decoder = &mut self.decoders[decoder as usize];
+        if service_decoder.current_window == -1 {
+            warn!("dtvcc_process_cr: Window has to be defined first");
+            return;
+        }
+        let window = &mut service_decoder.windows[service_decoder.current_window as usize];
+        let mut rollup_required = false;
+        let pd = match dtvcc_window_pd::new(window.attribs.print_direction) {
+            Ok(val) => val,
+            Err(e) => {
+                warn!("{}", e);
+                return;
+            }
+        };
+        match pd {
+            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT => {
+                window.pen_column = 0;
+                if window.pen_row + 1 < window.row_count {
+                    window.pen_row += 1;
+                } else {
+                    rollup_required = true;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_RIGHT_LEFT => {
+                window.pen_column = window.col_count;
+                if window.pen_row + 1 < window.row_count {
+                    window.pen_row += 1;
+                } else {
+                    rollup_required = true;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_TOP_BOTTOM => {
+                window.pen_row = 0;
+                if window.pen_column + 1 < window.col_count {
+                    window.pen_column += 1;
+                } else {
+                    rollup_required = true;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_BOTTOM_TOP => {
+                window.pen_row = window.row_count;
+                if window.pen_column + 1 < window.col_count {
+                    window.pen_column += 1;
+                } else {
+                    rollup_required = true;
+                }
+            }
+        };
+
+        if window.is_defined == 1 {
+            debug!("dtvcc_process_cr: rolling up");
+
+            let pen_row = window.pen_row;
+            let window = window as *mut dtvcc_window;
+            let service_decoder =
+                (&mut self.decoders[decoder as usize]) as *mut dtvcc_service_decoder;
+            unsafe {
+                dtvcc_window_update_time_hide(window, self.timing);
+                dtvcc_window_copy_to_screen(service_decoder, window);
+                let decoder = &mut self.decoders[decoder as usize];
+                let encoder = &mut *(self.encoder as *mut encoder_ctx);
+                let timing = &mut *self.timing;
+                decoder.screen_print(encoder, timing);
+
+                if rollup_required {
+                    if self.no_rollup != 0 {
+                        dtvcc_window_clear_row(window, pen_row);
+                    } else {
+                        dtvcc_window_rollup(service_decoder, window);
+                    }
+                }
+                dtvcc_window_update_time_show(window, self.timing);
+            }
+        }
+    }
+    /// Handle CLW Clear Windows
+    pub fn handle_clear_windows(&mut self, decoder: u8, mut windows_bitmap: i32) {
+        debug!("dtvcc_handle_CLW_ClearWindows: windows:");
+        let mut screen_content_changed = false;
+        let service_decoder = &mut self.decoders[decoder as usize];
+        let decoder = service_decoder as *mut dtvcc_service_decoder;
+        unsafe {
+            if windows_bitmap == 0 {
+                debug!("none");
+            } else {
+                for i in 0..CCX_DTVCC_MAX_WINDOWS {
+                    if windows_bitmap & 1 == 1 {
+                        let window = &mut service_decoder.windows[i as usize];
+                        debug!("[W{}]", i);
+                        let window_had_content =
+                            window.is_defined == 1 && window.visible == 1 && window.is_empty == 0;
+                        if window_had_content {
+                            screen_content_changed = true;
+                            let window = window as *mut dtvcc_window;
+                            dtvcc_window_update_time_hide(window, self.timing);
+                            dtvcc_window_copy_to_screen(decoder, window)
+                        }
+                        dtvcc_window_clear(decoder, i as i32);
+                    }
+                    windows_bitmap >>= 1;
+                }
+            }
+            if screen_content_changed {
+                let encoder = &mut *(self.encoder as *mut encoder_ctx);
+                let timing = &mut *self.timing;
+                service_decoder.screen_print(encoder, timing);
+            }
+        }
+    }
+    /// Handle HDW Hide Windows
+    pub fn handle_hide_windows(&mut self, decoder: u8, mut windows_bitmap: i32) {
+        debug!("dtvcc_handle_HDW_HideWindows: windows:");
+        let service_decoder = &mut self.decoders[decoder as usize];
+        let decoder = service_decoder as *mut dtvcc_service_decoder;
+        if windows_bitmap == 0 {
+            debug!("none");
+        } else {
+            let mut screen_content_changed = false;
+            unsafe {
+                for i in 0..CCX_DTVCC_MAX_WINDOWS {
+                    if windows_bitmap & 1 == 1 {
+                        let window = &mut service_decoder.windows[i as usize];
+                        debug!("[W{}]", i);
+                        if window.visible == 1 {
+                            screen_content_changed = true;
+                            window.visible = 0;
+                            let window_ctx = window as *mut dtvcc_window;
+                            dtvcc_window_update_time_hide(window_ctx, self.timing);
+                            if window.is_empty == 0 {
+                                dtvcc_window_copy_to_screen(decoder, window_ctx);
+                            }
+                        }
+                    }
+                    windows_bitmap >>= 1;
+                }
+                if screen_content_changed && dtvcc_decoder_has_visible_windows(decoder) == 0 {
+                    let encoder = &mut *(self.encoder as *mut encoder_ctx);
+                    let timing = &mut *self.timing;
+                    service_decoder.screen_print(encoder, timing);
+                }
+            }
+        }
+    }
+    /// Handle TGW Toggle Windows
+    pub fn handle_toggle_windows(&mut self, decoder: u8, mut windows_bitmap: i32) {
+        debug!("dtvcc_handle_TGW_ToggleWindows: windows:");
+        let service_decoder = &mut self.decoders[decoder as usize];
+        let decoder = service_decoder as *mut dtvcc_service_decoder;
+        if windows_bitmap == 0 {
+            debug!("none");
+        } else {
+            let mut screen_content_changed = false;
+            unsafe {
+                for i in 0..CCX_DTVCC_MAX_WINDOWS {
+                    let window = &mut service_decoder.windows[i as usize];
+                    let window_ctx = window as *mut dtvcc_window;
+                    if windows_bitmap & 1 == 1 && window.is_defined == 1 {
+                        if window.visible == 0 {
+                            debug!("[W-{}: 0->1]", i);
+                            window.visible = 1;
+                            dtvcc_window_update_time_show(window_ctx, self.timing);
+                        } else {
+                            debug!("[W-{}: 1->0]", i);
+                            window.visible = 0;
+                            dtvcc_window_update_time_hide(window_ctx, self.timing);
+                            if window.is_empty == 0 {
+                                screen_content_changed = true;
+                                dtvcc_window_copy_to_screen(decoder, window_ctx);
+                            }
+                        }
+                    }
+                    windows_bitmap >>= 1;
+                }
+                if screen_content_changed && dtvcc_decoder_has_visible_windows(decoder) == 0 {
+                    let encoder = &mut *(self.encoder as *mut encoder_ctx);
+                    let timing = &mut *self.timing;
+                    service_decoder.screen_print(encoder, timing);
+                }
+            }
+        }
+    }
+    /// Handle DLW Delete Windows
+    pub fn handle_delete_windows(&mut self, decoder: u8, mut windows_bitmap: i32) {
+        debug!("dtvcc_handle_DLW_DeleteWindows: windows:");
+        let mut screen_content_changed = false;
+        let service_decoder = &mut self.decoders[decoder as usize];
+        let decoder = service_decoder as *mut dtvcc_service_decoder;
+        unsafe {
+            if windows_bitmap == 0 {
+                debug!("none");
+            } else {
+                for i in 0..CCX_DTVCC_MAX_WINDOWS {
+                    if windows_bitmap & 1 == 1 {
+                        debug!("Deleting [W{}]", i);
+                        let window = &mut service_decoder.windows[i as usize];
+                        let window_had_content =
+                            window.is_defined == 1 && window.visible == 1 && window.is_empty == 0;
+                        if window_had_content {
+                            screen_content_changed = true;
+                            let window = window as *mut dtvcc_window;
+                            dtvcc_window_update_time_hide(window, self.timing);
+                            dtvcc_window_copy_to_screen(decoder, window);
+                            if service_decoder.current_window == i as i32 {
+                                let encoder = &mut *(self.encoder as *mut encoder_ctx);
+                                let timing = &mut *self.timing;
+                                service_decoder.screen_print(encoder, timing);
+                            }
+                        }
+                        let window = &mut service_decoder.windows[i as usize];
+                        window.is_defined = 0;
+                        window.visible = 0;
+                        window.time_ms_hide = -1;
+                        window.time_ms_show = -1;
+                        if service_decoder.current_window == i as i32 {
+                            service_decoder.current_window = -1;
+                        }
+                    }
+                    windows_bitmap >>= 1;
+                }
+            }
+            if screen_content_changed && dtvcc_decoder_has_visible_windows(decoder) == 0 {
+                let encoder = &mut *(self.encoder as *mut encoder_ctx);
+                let timing = &mut *self.timing;
+                service_decoder.screen_print(encoder, timing);
+            }
         }
     }
     /// Process the character and add it to the current window

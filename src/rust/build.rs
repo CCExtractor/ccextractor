@@ -7,7 +7,10 @@ fn main() {
         // bindings for.
         .header("wrapper.h")
         .allowlist_type(".*(?i)_?dtvcc_.*")
+        .allowlist_type("encoder_ctx")
         .allowlist_function(".*(?i)_?dtvcc_.*")
+        .allowlist_function("get_visible_.*")
+        .rustified_enum("dtvcc_(window|pen)_.*")
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
