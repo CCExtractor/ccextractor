@@ -56,10 +56,10 @@ impl<'a> Dtvcc<'a> {
         Self {
             is_active,
             active_services_count: ctx.active_services_count as u8,
-            services_active: ctx.services_active.iter().map(|x| *x).collect(),
+            services_active: ctx.services_active.iter().copied().collect(),
             report_enabled,
             report,
-            decoders: ctx.decoders.iter_mut().map(|x| x).collect(),
+            decoders: ctx.decoders.iter_mut().collect(),
             packet: ctx.current_packet.to_vec(),
             packet_length: ctx.current_packet_length as u8,
             is_header_parsed,

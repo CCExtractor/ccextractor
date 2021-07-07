@@ -36,6 +36,10 @@ pub extern "C" fn init_logger() {
 }
 
 /// Process cc_data
+///
+/// # Safety
+/// dec_ctx should not be a null pointer
+/// data should point to cc_data of length cc_count
 #[no_mangle]
 pub unsafe extern "C" fn dtvcc_process_cc_data(
     dec_ctx: *mut lib_cc_decode,
@@ -56,7 +60,7 @@ pub unsafe extern "C" fn dtvcc_process_cc_data(
             ret = 0;
         }
     }
-    return ret;
+    ret
 }
 
 pub fn validate_cc_pair(cc_block: &[u8]) -> bool {
@@ -64,7 +68,7 @@ pub fn validate_cc_pair(cc_block: &[u8]) -> bool {
     if cc_valid == 0 {
         return true;
     }
-    return false;
+    false
 }
 
 pub fn do_cb(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) -> bool {
@@ -97,15 +101,13 @@ pub fn do_cb(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) -> boo
                     ctx.processed_enough = 1;
                 }
 
-                if timeok {
-                    if ctx.write_format != ccx_output_format_CCX_OF_RAW {
-                        dtvcc.process_cc_data(cc_valid, cc_type, cc_block[1], cc_block[2]);
-                    }
+                if timeok && ctx.write_format != ccx_output_format_CCX_OF_RAW {
+                    dtvcc.process_cc_data(cc_valid, cc_type, cc_block[1], cc_block[2]);
                 }
                 unsafe { cb_708 += 1 }
             }
             _ => warn!("Invalid cc_type"),
         }
     }
-    return true;
+    true
 }
