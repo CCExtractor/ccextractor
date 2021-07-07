@@ -1500,7 +1500,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			opt->enc_cfg.no_bom = 0;
 			continue;
 		}
-		if (strcmp(argv[i], "-nobom") == 0 || strcmp(argv[i], "-nobom") == 0)
+		if (strcmp(argv[i], "-nobom") == 0 || strcmp(argv[i], "--nobom") == 0)
 		{
 			opt->enc_cfg.no_bom = 1;
 			continue;
@@ -2123,12 +2123,12 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-endat has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-1") == 0 || strcmp(argv[i], "-1") == 0)
+		if (strcmp(argv[i], "-1") == 0 || strcmp(argv[i], "--1") == 0)
 		{
 			opt->extract = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-2") == 0 || strcmp(argv[i], "-2") == 0)
+		if (strcmp(argv[i], "-2") == 0 || strcmp(argv[i], "--2") == 0)
 		{
 			opt->extract = 2;
 			continue;
@@ -2318,17 +2318,17 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			opt->mp4vidtrack = 1;
 			continue;
 		}
-		if (strstr(argv[i], "-unicode") != NULL || strstr(argv[i], "--unicode") != NULL)
+		if (strstr(argv[i], "-unicode") != NULL)
 		{
 			opt->enc_cfg.encoding = CCX_ENC_UNICODE;
 			continue;
 		}
-		if (strstr(argv[i], "-utf8") != NULL || strstr(argv[i], "--utf8") != NULL)
+		if (strstr(argv[i], "-utf8") != NULL)
 		{
 			opt->enc_cfg.encoding = CCX_ENC_UTF_8;
 			continue;
 		}
-		if (strstr(argv[i], "-latin1") != NULL || strstr(argv[i], "--latin1") != NULL)
+		if (strstr(argv[i], "-latin1") != NULL)
 		{
 			opt->enc_cfg.encoding = CCX_ENC_LATIN_1;
 			continue;
