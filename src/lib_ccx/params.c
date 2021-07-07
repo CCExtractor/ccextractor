@@ -526,7 +526,7 @@ void print_usage(void)
 	mprint("                       captions. Use this switch only when needed.\n");
 	mprint("           --wtvmpeg2: Read the captions from the MPEG2 video stream rather\n");
 	mprint("                       than the captions stream in WTV files\n");
-	mprint(" -pn --program-number: In TS mode, specifically select a program to process.\n");
+	mprint(" -pn --program_number: In TS mode, specifically select a program to process.\n");
 	mprint("                       Not needed if the TS only has one. If this parameter\n");
 	mprint("                       is not specified and CCExtractor detects more than one\n");
 	mprint("                       program in the input, it will list the programs found\n");
@@ -559,7 +559,7 @@ void print_usage(void)
 	mprint("                       you prefer your own reference. Note: Current this only\n");
 	mprint("                       affects Teletext in timed transcript with -datets.\n");
 	mprint("           --noscte20: Ignore SCTE-20 data if present.\n");
-	mprint("  --webvtt-create-css: Create a separate file for CSS instead of inline.\n");
+	mprint("  --webvtt_create_css: Create a separate file for CSS instead of inline.\n");
 	mprint("             --deblev: Enable debug so the calculated distance for each two\n");
 	mprint("                       strings is displayed. The output includes both strings,\n");
 	mprint("                       the calculated distance, the maximum allowed distance,\n");
@@ -630,7 +630,7 @@ void print_usage(void)
 	mprint("                       Use one line per word. Lines starting with # are\n");
 	mprint("                       considered comments and discarded.\n\n");
 	mprint("                 --kf: Censors profane words from subtitles.\n");
-	mprint("--profanity-file <file>: Add the contents of <file> to the list of words that.\n");
+	mprint("--profanity_file <file>: Add the contents of <file> to the list of words that.\n");
 	mprint("                         must be censored. The content of <file>, follows the\n");
 	mprint("                         same syntax as for the capitalization file\n");
 	mprint("-sbs --splitbysentence: Split output text so each frame contains a complete\n");
@@ -895,14 +895,14 @@ void print_usage(void)
 	mprint("\n");
 #ifdef ENABLE_SHARING
 	mprint("Sharing extracted captions via TCP:\n");
-	mprint("     --enable-sharing: Enables real-time sharing of extracted captions\n");
-	mprint("        --sharing-url: Set url for sharing service in nanomsg format. Default: \"tcp://*:3269\"\n");
+	mprint("     --enable_sharing: Enables real-time sharing of extracted captions\n");
+	mprint("        --sharing_url: Set url for sharing service in nanomsg format. Default: \"tcp://*:3269\"\n");
 	mprint("\n");
 
 	mprint("CCTranslate application integration:\n");
 	mprint("          --translate: Enable Translation tool and set target languages\n");
 	mprint("                       in csv format (e.g. -translate ru,fr,it\n");
-	mprint("     --translate-auth: Set Translation Service authorization data to make translation possible\n");
+	mprint("     --translate_auth: Set Translation Service authorization data to make translation possible\n");
 	mprint("                       In case of Google Translate API - API Key\n");
 #endif //ENABLE_SHARING
 
@@ -1903,7 +1903,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			opt->noscte20 = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "--webvtt-create-css") == 0)
+		if (strcmp(argv[i], "--webvtt-create-css") == 0 || strcmp(argv[i], "--webvtt_reate_css") == 0)
 		{
 			opt->webvtt_create_css = 1;
 			continue;
@@ -1990,7 +1990,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			continue;
 		}
 
-		if (strcmp(argv[i], "--profanity-file") == 0)
+		if (strcmp(argv[i], "--profanity-file") == 0 || strcmp(argv[i], "--profanity_file") == 0)
 		{
 			// TODO: decide whether this is really wanted. A script running ccextractor
 			// could want to pass this argument at all time and only use it with --kf
@@ -2782,12 +2782,12 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 #endif //WITH_LIBCURL
 
 #ifdef ENABLE_SHARING
-		if (strcmp(argv[i], "-enable-sharing") == 0)
+		if (strcmp(argv[i], "-enable-sharing") == 0 || strcmp(argv[i], "--enable_sharing") == 0)
 		{
 			opt->sharing_enabled = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-sharing-url") == 0)
+		if (strcmp(argv[i], "-sharing-url") == 0 || strcmp(argv[i], "--sharing_url") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2800,7 +2800,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-sharing-url has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-translate") == 0)
+		if (strcmp(argv[i], "-translate") == 0 || strcmp(argv[i], "--translate") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2815,7 +2815,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-translate has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-translate-auth") == 0)
+		if (strcmp(argv[i], "-translate-auth") == 0 || strcmp(argv[i], "--translate_auth") == 0)
 		{
 			if (i < argc - 1)
 			{
