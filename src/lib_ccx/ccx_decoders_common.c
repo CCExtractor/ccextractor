@@ -16,7 +16,7 @@ made to reuse, not duplicate, as many functions as possible */
 #include "ccx_dtvcc.h"
 
 #ifdef ENABLE_RUST
-extern int dtvcc_process_cc_data(struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count);
+extern int ccxr_process_cc_data(struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count);
 #endif
 
 uint64_t utc_refvalue = UINT64_MAX; /* _UI64_MAX/UINT64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
@@ -54,7 +54,7 @@ int process_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, 
 	}
 
 #ifdef ENABLE_RUST
-	ret = dtvcc_process_cc_data(dec_ctx, cc_data, cc_count);
+	ret = ccxr_process_cc_data(dec_ctx, cc_data, cc_count);
 #endif
 
 	for (int j = 0; j < cc_count * 3; j = j + 3)

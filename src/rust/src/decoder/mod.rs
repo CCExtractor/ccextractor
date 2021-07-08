@@ -13,6 +13,7 @@ use crate::bindings::*;
 const CCX_DTVCC_MAX_PACKET_LENGTH: u8 = 128;
 const CCX_DTVCC_NO_LAST_SEQUENCE: i32 = -1;
 
+/// Stores the context required for processing 708 data
 pub struct Dtvcc<'a> {
     pub is_active: bool,
     pub active_services_count: u8,
@@ -30,6 +31,7 @@ pub struct Dtvcc<'a> {
 }
 
 impl<'a> Dtvcc<'a> {
+    /// Create a new dtvcc context
     pub fn new(ctx: &'a mut dtvcc_ctx) -> Self {
         let mut is_active = false;
         let mut report_enabled = false;
@@ -71,7 +73,9 @@ impl<'a> Dtvcc<'a> {
     }
     /// Process cc data to generate dtvcc packet
     pub fn process_cc_data(&mut self, cc_valid: u8, cc_type: u8, data1: u8, data2: u8) {
-        //TODO check is active and report enabled here
+        if !self.is_active && !self.report_enabled {
+            return;
+        }
 
         match cc_type {
             // type 0 and 1 are for CEA 608 data and are handled before calling this function

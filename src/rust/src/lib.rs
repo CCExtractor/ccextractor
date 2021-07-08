@@ -27,7 +27,7 @@ extern "C" {
 
 /// Initialize env logger
 #[no_mangle]
-pub extern "C" fn init_logger() {
+pub extern "C" fn ccxr_init_logger() {
     builder()
         .format(|buf, record| writeln!(buf, "[CEA-708] {}", record.args()))
         .filter_level(LevelFilter::Debug)
@@ -41,15 +41,17 @@ pub extern "C" fn init_logger() {
 /// dec_ctx should not be a null pointer
 /// data should point to cc_data of length cc_count
 #[no_mangle]
-pub unsafe extern "C" fn dtvcc_process_cc_data(
+extern "C" fn ccxr_process_cc_data(
     dec_ctx: *mut lib_cc_decode,
     data: *const ::std::os::raw::c_uchar,
     cc_count: c_int,
 ) -> c_int {
     let mut ret = -1;
-    let mut cc_data: Vec<u8> = (0..cc_count * 3).map(|x| *data.add(x as usize)).collect();
-    let dec_ctx = &mut *dec_ctx;
-    let dtvcc_ctx = &mut *dec_ctx.dtvcc;
+    let mut cc_data: Vec<u8> = (0..cc_count * 3)
+        .map(|x| unsafe { *data.add(x as usize) })
+        .collect();
+    let dec_ctx = unsafe { &mut *dec_ctx };
+    let dtvcc_ctx = unsafe { &mut *dec_ctx.dtvcc };
     let mut dtvcc = Dtvcc::new(dtvcc_ctx);
     for cc_block in cc_data.chunks_exact_mut(3) {
         if validate_cc_pair(cc_block) {
