@@ -352,7 +352,7 @@ void print_usage(void)
 	mprint("To see This Help Message: -h or --help\n\n");
 	mprint("File name related options:\n");
 	mprint("              inputfile: file(s) to process\n");
-	mprint("--outputfilename [name]: Use this parameter to define output filename if you don't\n");  
+	mprint("--outputfilename [name]: Use this parameter to define output filename if you don't\n");
 	mprint("                         like the default ones (same as infile plus _1 or _2 when\n");
 	mprint("                         needed and file extension, e.g. .srt).\n");
 	mprint("               --stdout: Write output to stdout (console) instead of file. If\n");
