@@ -2,15 +2,27 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    let bindings = bindgen::Builder::default()
+    let mut builder = bindgen::Builder::default()
         // The input header we would like to generate
         // bindings for.
         .header("wrapper.h")
-        .allowlist_type(".*(?i)_?dtvcc_.*")
-        .allowlist_function(".*(?i)_?dtvcc_.*")
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks));
+
+    for type_name in ALLOWLIST_TYPES {
+        builder = builder.allowlist_type(type_name);
+    }
+
+    for fn_name in ALLOWLIST_FUNCTIONS {
+        builder = builder.allowlist_function(fn_name);
+    }
+
+    for rust_enum in RUSTIFIED_ENUMS {
+        builder = builder.rustified_enum(rust_enum);
+    }
+
+    let bindings = builder
         // Finish the builder and generate the bindings.
         .generate()
         // Unwrap the Result and panic on failure.
@@ -22,3 +34,13 @@ fn main() {
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
 }
+
+const ALLOWLIST_FUNCTIONS: &[&str] = &[
+    ".*(?i)_?dtvcc_.*",
+    "get_visible_.*",
+    "get_fts",
+    "printdata",
+    "writercwtdata",
+];
+const ALLOWLIST_TYPES: &[&str] = &[".*(?i)_?dtvcc_.*", "encoder_ctx", "lib_cc_decode"];
+const RUSTIFIED_ENUMS: &[&str] = &["dtvcc_(window|pen)_.*"];

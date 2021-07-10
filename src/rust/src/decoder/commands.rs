@@ -4,7 +4,7 @@
 //! Different code sets are:
 //!
 //! | Name | Description | Space |
-//! | --- | --- | -- |
+//! | --- | --- | --- |
 //! | C0 | Miscellaneous Control Codes | 0x00 to 0x1F |
 //! | C2 |  Extended Control Code Set 1 | 0x00 to 0x1F |
 //! | G0 |  ASCII Printable Characters | 0x20 to 0x7F |
