@@ -127,10 +127,8 @@ impl dtvcc_service_decoder {
                 | C1CodeSet::CW4
                 | C1CodeSet::CW5
                 | C1CodeSet::CW6
-                | C1CodeSet::CW7 => dtvcc_handle_CWx_SetCurrentWindow(
-                    self,
-                    (code - DTVCC_COMMANDS_C1_CODES_DTVCC_C1_CW0 as u8) as i32,
-                ),
+                | C1CodeSet::CW7 => self
+                    .handle_set_current_window(code - DTVCC_COMMANDS_C1_CODES_DTVCC_C1_CW0 as u8),
                 C1CodeSet::CLW => self.handle_clear_windows(next_code, encoder, timing),
                 C1CodeSet::HDW => self.handle_hide_windows(next_code, encoder, timing),
                 C1CodeSet::TGW => self.handle_toggle_windows(next_code, encoder, timing),
@@ -139,10 +137,10 @@ impl dtvcc_service_decoder {
                 C1CodeSet::DLY => dtvcc_handle_DLY_Delay(self, next_code),
                 C1CodeSet::DLC => dtvcc_handle_DLC_DelayCancel(self),
                 C1CodeSet::RST => dtvcc_handle_RST_Reset(self),
-                C1CodeSet::SPA => dtvcc_handle_SPA_SetPenAttributes(self, data),
-                C1CodeSet::SPC => dtvcc_handle_SPC_SetPenColor(self, data),
-                C1CodeSet::SPL => dtvcc_handle_SPL_SetPenLocation(self, data),
-                C1CodeSet::SWA => dtvcc_handle_SWA_SetWindowAttributes(self, data),
+                C1CodeSet::SPA => self.handle_set_pen_attributes(current_packet, pos),
+                C1CodeSet::SPC => self.handle_set_pen_color(current_packet, pos),
+                C1CodeSet::SPL => self.handle_set_pen_location(current_packet, pos),
+                C1CodeSet::SWA => self.handle_set_window_attributes(current_packet, pos),
                 C1CodeSet::DF0
                 | C1CodeSet::DF1
                 | C1CodeSet::DF2
@@ -357,6 +355,159 @@ impl dtvcc_service_decoder {
             if screen_content_changed && dtvcc_decoder_has_visible_windows(self) == 0 {
                 self.screen_print(encoder, timing);
             }
+        }
+    }
+    /// Handle SPA Set Pen Attributes
+    pub fn handle_set_pen_attributes(&mut self, current_packet: &[c_uchar], pos: u8) {
+        if self.current_window == -1 {
+            warn!("dtvcc_handle_SPA_SetPenAttributes: Window has to be defined first");
+            return;
+        }
+
+        let pos = pos as usize;
+        let pen_size = (current_packet[pos + 1]) & 0x3;
+        let offset = (current_packet[pos + 1] >> 2) & 0x3;
+        let text_tag = (current_packet[pos + 1] >> 4) & 0xf;
+        let font_tag = (current_packet[pos + 2]) & 0x7;
+        let edge_type = (current_packet[pos + 2] >> 3) & 0x7;
+        let underline = (current_packet[pos + 2] >> 6) & 0x1;
+        let italic = (current_packet[pos + 2] >> 7) & 0x1;
+        debug!("dtvcc_handle_SPA_SetPenAttributes: attributes: ");
+        debug!(
+            "Pen size: [{}]     Offset: [{}]  Text tag: [{}]   Font tag: [{}]",
+            pen_size, offset, text_tag, font_tag
+        );
+        debug!(
+            "Edge type: [{}]  Underline: [{}]    Italic: [{}]",
+            edge_type, underline, italic
+        );
+
+        let window = &mut self.windows[self.current_window as usize];
+        if window.pen_row == -1 {
+            warn!("dtvcc_handle_SPA_SetPenAttributes: cant't set attributes for undefined row");
+            return;
+        }
+
+        let pen = &mut window.pen_attribs_pattern;
+        pen.pen_size = pen_size as i32;
+        pen.offset = offset as i32;
+        pen.text_tag = text_tag as i32;
+        pen.font_tag = font_tag as i32;
+        pen.edge_type = edge_type as i32;
+        pen.underline = underline as i32;
+        pen.italic = italic as i32;
+    }
+    /// Handle SPC Set Pen Color
+    pub fn handle_set_pen_color(&mut self, current_packet: &[c_uchar], pos: u8) {
+        if self.current_window == -1 {
+            warn!("dtvcc_handle_SPC_SetPenColor: Window has to be defined first");
+            return;
+        }
+
+        let pos = pos as usize;
+        let fg_color = (current_packet[pos + 1]) & 0x3f;
+        let fg_opacity = (current_packet[pos + 1] >> 6) & 0x03;
+        let bg_color = (current_packet[pos + 2]) & 0x3f;
+        let bg_opacity = (current_packet[pos + 2] >> 6) & 0x03;
+        let edge_color = (current_packet[pos + 3]) & 0x3f;
+        debug!("dtvcc_handle_SPC_SetPenColor: attributes: ");
+        debug!(
+            "Foreground color: [{}]     Foreground opacity: [{}]",
+            fg_color, fg_opacity
+        );
+        debug!(
+            "Background color: [{}]     Background opacity: [{}]",
+            bg_color, bg_opacity
+        );
+        debug!("Edge color: [{}]", edge_color);
+
+        let window = &mut self.windows[self.current_window as usize];
+        if window.pen_row == -1 {
+            warn!("dtvcc_handle_SPC_SetPenColor: cant't set attributes for undefined row");
+            return;
+        }
+
+        let color = &mut window.pen_color_pattern;
+        color.fg_color = fg_color as i32;
+        color.fg_opacity = fg_opacity as i32;
+        color.bg_color = bg_color as i32;
+        color.bg_opacity = bg_opacity as i32;
+        color.edge_color = edge_color as i32;
+    }
+    /// Handle SPL Set Pen Location
+    pub fn handle_set_pen_location(&mut self, current_packet: &[c_uchar], pos: u8) {
+        if self.current_window == -1 {
+            warn!("dtvcc_handle_SPL_SetPenLocation: Window has to be defined first");
+            return;
+        }
+
+        debug!("dtvcc_handle_SPL_SetPenLocation: attributes: ");
+        let pos = pos as usize;
+        let row = current_packet[pos + 1] & 0x0f;
+        let col = current_packet[pos + 2] & 0x3f;
+        debug!("Row: [{}]     Column: [{}]", row, col);
+
+        let window = &mut self.windows[self.current_window as usize];
+        window.pen_row = row as i32;
+        window.pen_column = col as i32;
+    }
+    /// Handle SWA Set Window Attributes
+    pub fn handle_set_window_attributes(&mut self, current_packet: &[c_uchar], pos: u8) {
+        if self.current_window == -1 {
+            warn!("dtvcc_handle_SWA_SetWindowAttributes: Window has to be defined first");
+            return;
+        }
+
+        let pos = pos as usize;
+        let fill_color = (current_packet[pos + 1]) & 0x3f;
+        let fill_opacity = (current_packet[pos + 1] >> 6) & 0x03;
+        let border_color = (current_packet[pos + 2]) & 0x3f;
+        let border_type01 = (current_packet[pos + 2] >> 6) & 0x03;
+        let justify = (current_packet[pos + 3]) & 0x03;
+        let scroll_dir = (current_packet[pos + 3] >> 2) & 0x03;
+        let print_dir = (current_packet[pos + 3] >> 4) & 0x03;
+        let word_wrap = (current_packet[pos + 3] >> 6) & 0x01;
+        let border_type = ((current_packet[pos + 3] >> 5) & 0x04) | border_type01;
+        let display_eff = (current_packet[pos + 4]) & 0x03;
+        let effect_dir = (current_packet[pos + 4] >> 2) & 0x03;
+        let effect_speed = (current_packet[pos + 4] >> 4) & 0x0f;
+        debug!("dtvcc_handle_SWA_SetWindowAttributes: attributes: ");
+        debug!(
+            "Fill color: [{}]     Fill opacity: [{}]    Border color: [{}]  Border type: [{}]",
+            fill_color, fill_opacity, border_color, border_type
+        );
+        debug!(
+            "Justify: [{}]       Scroll dir: [{}]       Print dir: [{}]    Word wrap: [{}]",
+            justify, scroll_dir, print_dir, word_wrap
+        );
+        debug!(
+            "Border type: [{}]      Display eff: [{}]      Effect dir: [{}] Effect speed: [{}]",
+            border_type, display_eff, effect_dir, effect_speed
+        );
+
+        let window_attribts = &mut self.windows[self.current_window as usize].attribs;
+        window_attribts.fill_color = fill_color as i32;
+        window_attribts.fill_opacity = fill_opacity as i32;
+        window_attribts.border_color = border_color as i32;
+        window_attribts.justify = justify as i32;
+        window_attribts.scroll_direction = scroll_dir as i32;
+        window_attribts.print_direction = print_dir as i32;
+        window_attribts.word_wrap = word_wrap as i32;
+        window_attribts.border_type = border_type as i32;
+        window_attribts.display_effect = display_eff as i32;
+        window_attribts.effect_direction = effect_dir as i32;
+        window_attribts.effect_speed = effect_speed as i32;
+    }
+    /// handle CWx Set Current Window
+    pub fn handle_set_current_window(&mut self, window_id: u8) {
+        debug!("dtvcc_handle_CWx_SetCurrentWindow: ha[{}]\n", window_id);
+        if self.windows[window_id as usize].is_defined == 1 {
+            self.current_window = window_id as i32;
+        } else {
+            debug!(
+                "dtvcc_handle_CWx_SetCurrentWindow: window [{}] is not defined",
+                window_id
+            );
         }
     }
     /// Process Carriage Return(CR)
