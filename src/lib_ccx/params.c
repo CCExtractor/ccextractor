@@ -400,7 +400,7 @@ void print_usage(void)
 	mprint("           --tcpdesc description: Sends to the server short description about\n");
 	mprint("                                  captions e.g. channel name or file name\n");
 	mprint("Options that affect what will be processed:\n");
-	mprint("         --1, --2, --12: Output Field 1 data, Field 2 data, or both\n");
+	mprint("         -1, -2, -12: Output Field 1 data, Field 2 data, or both\n");
 	mprint("                       (DEFAULT is -1)\n");
 	mprint("Use --append to prevent overwriting of existing files. The output will be\n");
 	mprint("      appended instead.\n");
@@ -427,7 +427,7 @@ void print_usage(void)
 	mprint("       With the exception of McPoodle's raw format, which is just the closed\n");
 	mprint("       caption data with no other info, CCExtractor can usually detect the\n");
 	mprint("       input format correctly. To force a specific format:\n\n");
-	mprint("                 --inp [format]\n\n");
+	mprint("                 --in [format]\n\n");
 	mprint("       where format is one of these:\n");
 	mprint("                       ts   -> For Transport Streams.\n");
 	mprint("                       ps   -> For Program Streams.\n");
@@ -1535,7 +1535,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			set_input_format(opt, argv[i]);
 			continue;
 		}
-		if (strncmp(argv[i], "--inp", 5) == 0)
+		if (strncmp(argv[i], "--in", 4) == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -1545,7 +1545,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			else
 			{
-				fatal(EXIT_MALFORMED_PARAMETER, "--inp has no argument.\n");
+				fatal(EXIT_MALFORMED_PARAMETER, "--in has no argument.\n");
 			}
 		}
 		if (strncmp(argv[i], "-in=", 4) == 0)
@@ -1873,7 +1873,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			opt->binary_concat = 0;
 			continue;
 		}
-		if (strcmp(argv[i], "-12") == 0 || strcmp(argv[i], "-12") == 0)
+		if (strcmp(argv[i], "-12") == 0)
 		{
 			opt->extract = 12;
 			continue;
@@ -2123,12 +2123,12 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-endat has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-1") == 0 || strcmp(argv[i], "--1") == 0)
+		if (strcmp(argv[i], "-1") == 0)
 		{
 			opt->extract = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-2") == 0 || strcmp(argv[i], "--2") == 0)
+		if (strcmp(argv[i], "-2") == 0)
 		{
 			opt->extract = 2;
 			continue;
