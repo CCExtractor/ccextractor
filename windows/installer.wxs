@@ -102,19 +102,19 @@
 				<File Id="CCX_Full_executable" Source="./installer/ccextractorwinfull.exe" KeyPath="yes"/>
 			</Component>			
 			<Component Guid="{5DA8F5F9-922B-45E1-B0A9-CB241996D9EE}">
-				<File Id="CCX_Full_executable" Source="./installer/avcodec-57.dll" KeyPath="yes"/>
+				<File Id="CCX_avcodec" Source="./installer/avcodec-57.dll" KeyPath="yes"/>
 			</Component>
 			<Component Guid="{00E5F91A-D4D9-4A3D-B498-1CF45D18770F}">
-				<File Id="CCX_Full_executable" Source="./installer/avformat-57.dll" KeyPath="yes"/>
+				<File Id="CCX_avformat" Source="./installer/avformat-57.dll" KeyPath="yes"/>
 			</Component>
 			<Component Guid="{AA5FE610-7566-483C-84D0-70B0435E08B0}">
-				<File Id="CCX_Full_executable" Source="./installer/avutil-55.dll" KeyPath="yes"/>
+				<File Id="CCX_avutil" Source="./installer/avutil-55.dll" KeyPath="yes"/>
 			</Component>
 			<Component Guid="{334ABDD6-FDBB-41EB-87FE-DAD3295DAE2D}">
-				<File Id="CCX_Full_executable" Source="./installer/swresample-2.dll" KeyPath="yes"/>
+				<File Id="CCX_swresample" Source="./installer/swresample-2.dll" KeyPath="yes"/>
 			</Component>			
 			<Component Guid="{888B47CF-0377-490A-8B7E-341D2C71EAD0}">
-				<File Id="CCX_Full_executable" Source="./installer/swscale-4.dll" KeyPath="yes"/>
+				<File Id="CCX_swscale" Source="./installer/swscale-4.dll" KeyPath="yes"/>
 			</Component>			
 			<Component Guid="{8B69210B-5091-4C63-8902-E0ADDBE2C080}">
 				<File Source="./installer/ccxgui.exe" KeyPath="yes"/>
