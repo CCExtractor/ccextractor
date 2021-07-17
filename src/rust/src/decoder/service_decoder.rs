@@ -1,13 +1,26 @@
-use std::os::raw::c_uchar;
+use std::{
+    alloc::{alloc, dealloc, Layout},
+    os::raw::c_uchar,
+};
 
-use log::{debug, warn};
+use log::{debug, error, warn};
 
-use super::commands::{C0CodeSet, C0Command, C1CodeSet, C1Command};
-use crate::bindings::*;
+use super::{
+    commands::{C0CodeSet, C0Command, C1CodeSet, C1Command},
+    window::WindowPreset,
+};
+use crate::{
+    bindings::*,
+    utils::{is_false, is_true},
+};
 
 const CCX_DTVCC_MUSICAL_NOTE_CHAR: u16 = 9836;
 const CCX_DTVCC_MAX_WINDOWS: u8 = 8;
 const DTVCC_COMMANDS_C0_CODES_DTVCC_C0_EXT1: u8 = 16;
+const CCX_DTVCC_SCREENGRID_ROWS: u8 = 75;
+const CCX_DTVCC_SCREENGRID_COLUMNS: u8 = 210;
+const CCX_DTVCC_MAX_ROWS: u8 = 15;
+const CCX_DTVCC_MAX_COLUMNS: u8 = 32 * 2;
 
 impl dtvcc_service_decoder {
     /// Process service block and call handlers for the respective codesets
@@ -102,8 +115,6 @@ impl dtvcc_service_decoder {
         encoder: &mut encoder_ctx,
         timing: &mut ccx_common_timing_ctx,
     ) -> i32 {
-        let data = (&mut current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
-
         let code = current_packet[pos as usize];
         let next_code = current_packet[(pos + 1) as usize] as i32;
         let C1Command {
@@ -133,7 +144,7 @@ impl dtvcc_service_decoder {
                 C1CodeSet::HDW => self.handle_hide_windows(next_code, encoder, timing),
                 C1CodeSet::TGW => self.handle_toggle_windows(next_code, encoder, timing),
                 C1CodeSet::DLW => self.handle_delete_windows(next_code, encoder, timing),
-                C1CodeSet::DSW => dtvcc_handle_DSW_DisplayWindows(self, next_code, timing),
+                C1CodeSet::DSW => self.handle_display_windows(next_code, timing),
                 C1CodeSet::DLY => dtvcc_handle_DLY_Delay(self, next_code),
                 C1CodeSet::DLC => dtvcc_handle_DLC_DelayCancel(self),
                 C1CodeSet::RST => dtvcc_handle_RST_Reset(self),
@@ -148,10 +159,10 @@ impl dtvcc_service_decoder {
                 | C1CodeSet::DF4
                 | C1CodeSet::DF5
                 | C1CodeSet::DF6
-                | C1CodeSet::DF7 => dtvcc_handle_DFx_DefineWindow(
-                    self,
-                    (code - DTVCC_COMMANDS_C1_CODES_DTVCC_C1_DF0 as u8) as i32,
-                    data,
+                | C1CodeSet::DF7 => self.handle_define_windows(
+                    code - DTVCC_COMMANDS_C1_CODES_DTVCC_C1_DF0 as u8,
+                    current_packet,
+                    pos,
                     timing,
                 ),
                 C1CodeSet::RESERVED => {
@@ -220,8 +231,9 @@ impl dtvcc_service_decoder {
                     if windows_bitmap & 1 == 1 {
                         let window = &mut self.windows[i as usize];
                         debug!("[W{}]", i);
-                        let window_had_content =
-                            window.is_defined == 1 && window.visible == 1 && window.is_empty == 0;
+                        let window_had_content = is_true(window.is_defined)
+                            && is_true(window.visible)
+                            && is_false(window.is_empty);
                         if window_had_content {
                             screen_content_changed = true;
                             let window = window as *mut dtvcc_window;
@@ -255,12 +267,12 @@ impl dtvcc_service_decoder {
                     if windows_bitmap & 1 == 1 {
                         let window = &mut self.windows[i as usize];
                         debug!("[W{}]", i);
-                        if window.visible == 1 {
+                        if is_true(window.visible) {
                             screen_content_changed = true;
                             window.visible = 0;
                             let window_ctx = window as *mut dtvcc_window;
                             dtvcc_window_update_time_hide(window_ctx, timing);
-                            if window.is_empty == 0 {
+                            if is_false(window.is_empty) {
                                 dtvcc_window_copy_to_screen(self, window_ctx);
                             }
                         }
@@ -289,8 +301,8 @@ impl dtvcc_service_decoder {
                 for i in 0..CCX_DTVCC_MAX_WINDOWS {
                     let window = &mut self.windows[i as usize];
                     let window_ctx = window as *mut dtvcc_window;
-                    if windows_bitmap & 1 == 1 && window.is_defined == 1 {
-                        if window.visible == 0 {
+                    if windows_bitmap & 1 == 1 && is_true(window.is_defined) {
+                        if is_false(window.visible) {
                             debug!("[W-{}: 0->1]", i);
                             window.visible = 1;
                             dtvcc_window_update_time_show(window_ctx, timing);
@@ -298,7 +310,7 @@ impl dtvcc_service_decoder {
                             debug!("[W-{}: 1->0]", i);
                             window.visible = 0;
                             dtvcc_window_update_time_hide(window_ctx, timing);
-                            if window.is_empty == 0 {
+                            if is_false(window.is_empty) {
                                 screen_content_changed = true;
                                 dtvcc_window_copy_to_screen(self, window_ctx);
                             }
@@ -329,8 +341,9 @@ impl dtvcc_service_decoder {
                     if windows_bitmap & 1 == 1 {
                         debug!("Deleting [W{}]", i);
                         let window = &mut self.windows[i as usize];
-                        let window_had_content =
-                            window.is_defined == 1 && window.visible == 1 && window.is_empty == 0;
+                        let window_had_content = is_true(window.is_defined)
+                            && is_true(window.visible)
+                            && is_false(window.is_empty);
                         if window_had_content {
                             screen_content_changed = true;
                             let window = window as *mut dtvcc_window;
@@ -355,6 +368,198 @@ impl dtvcc_service_decoder {
             if screen_content_changed && dtvcc_decoder_has_visible_windows(self) == 0 {
                 self.screen_print(encoder, timing);
             }
+        }
+    }
+    /// Handle DSW Display Windows
+    pub fn handle_display_windows(
+        &mut self,
+        mut windows_bitmap: i32,
+        timing: &mut ccx_common_timing_ctx,
+    ) {
+        debug!("dtvcc_handle_DSW_DisplayWindows: windows:");
+        if windows_bitmap == 0 {
+            debug!("none");
+        } else {
+            for i in 0..CCX_DTVCC_MAX_WINDOWS {
+                if windows_bitmap & 1 == 1 {
+                    let window = &mut self.windows[i as usize];
+                    debug!("[W{}]", i);
+                    if is_false(window.is_defined) {
+                        error!("Window {} was not defined", i);
+                        continue;
+                    }
+                    if is_false(window.visible) {
+                        window.visible = 1;
+                        unsafe {
+                            dtvcc_window_update_time_show(window, timing);
+                        }
+                    }
+                }
+                windows_bitmap >>= 1;
+            }
+        }
+    }
+    /// Handle DFx Define Windows
+    pub fn handle_define_windows(
+        &mut self,
+        window_id: u8,
+        current_packet: &[c_uchar],
+        pos: u8,
+        timing: &mut ccx_common_timing_ctx,
+    ) {
+        debug!(
+            "dtvcc_handle_DFx_DefineWindow: W[{}], attributes:",
+            window_id
+        );
+        let window = &mut self.windows[window_id as usize];
+        let pos = pos as usize;
+        let block = &current_packet[(pos + 1)..=(pos + 6)];
+        let is_command_repeated = window
+            .commands
+            .iter()
+            .zip(block.iter())
+            .all(|(x, y)| x == y);
+
+        if is_true(window.is_defined) && is_command_repeated {
+            // When a decoder receives a DefineWindow command for an existing window, the
+            // command is to be ignored if the command parameters are unchanged from the
+            // previous window definition.
+            debug!("dtvcc_handle_DFx_DefineWindow: Repeated window definition, ignored\n");
+            return;
+        }
+
+        window.number = window_id as i32;
+        let priority = (current_packet[pos + 1]) & 0x7;
+        let col_lock = (current_packet[pos + 1] >> 3) & 0x1;
+        let row_lock = (current_packet[pos + 1] >> 4) & 0x1;
+        let visible = (current_packet[pos + 1] >> 5) & 0x1;
+        let mut anchor_vertical = current_packet[pos + 2] & 0x7f;
+        let relative_pos = current_packet[pos + 2] >> 7;
+        let mut anchor_horizontal = current_packet[pos + 3];
+        let row_count = (current_packet[pos + 4] & 0xf) + 1;
+        let anchor_point = current_packet[pos + 4] >> 4;
+        let col_count = (current_packet[pos + 5] & 0x3f) + 1;
+        let mut pen_style = current_packet[pos + 6] & 0x7;
+        let mut win_style = (current_packet[pos + 6] >> 3) & 0x7;
+
+        let mut do_clear_window = false;
+
+        debug!("Visible: [{}]", if is_true(visible) { "Yes" } else { "No" });
+        debug!("Priority: [{}]", priority);
+        debug!("Row count: [{}]", row_count);
+        debug!("Column count: [{}]", col_count);
+        debug!("Anchor point: [{}]", anchor_point);
+        debug!("Anchor vertical: [{}]", anchor_vertical);
+        debug!("Anchor horizontal: [{}]", anchor_horizontal);
+        debug!(
+            "Relative pos: [{}]",
+            if is_true(relative_pos) { "Yes" } else { "No" }
+        );
+        debug!(
+            "Row lock: [{}]",
+            if is_true(row_lock) { "Yes" } else { "No" }
+        );
+        debug!(
+            "Column lock: [{}]",
+            if is_true(col_lock) { "Yes" } else { "No" }
+        );
+        debug!("Pen style: [{}]", pen_style);
+        debug!("Win style: [{}]", win_style);
+
+        // Korean samples have "anchor_vertical" and "anchor_horizontal" mixed up,
+        // this seems to be an encoder issue, but we can workaround it
+        if anchor_vertical > CCX_DTVCC_SCREENGRID_ROWS - row_count {
+            anchor_vertical = CCX_DTVCC_SCREENGRID_ROWS - row_count;
+        }
+        if anchor_horizontal > CCX_DTVCC_SCREENGRID_COLUMNS - col_count {
+            anchor_horizontal = CCX_DTVCC_SCREENGRID_COLUMNS - col_count;
+        }
+
+        window.priority = priority as i32;
+        window.col_lock = col_lock as i32;
+        window.row_lock = row_lock as i32;
+        window.visible = visible as i32;
+        window.anchor_vertical = anchor_vertical as i32;
+        window.relative_pos = relative_pos as i32;
+        window.anchor_horizontal = anchor_horizontal as i32;
+        window.row_count = row_count as i32;
+        window.anchor_point = anchor_point as i32;
+        window.col_count = col_count as i32;
+
+        // If changing the style of an existing window delete contents
+        if win_style > 0 && is_false(window.is_defined) && window.win_style != win_style as i32 {
+            do_clear_window = true;
+        }
+
+        /* If the window doesn't exist and win style==0 then default to win_style=1 */
+        if win_style == 0 && is_false(window.is_defined) {
+            win_style = 1;
+        }
+        /* If the window doesn't exist and pen style==0 then default to pen_style=1 */
+        if pen_style == 0 && is_false(window.is_defined) {
+            pen_style = 1;
+        }
+
+        if win_style > 0 && win_style < 8 {
+            let preset = WindowPreset::get_style(win_style);
+            if let Ok(preset) = preset {
+                window.set_style(preset);
+            }
+        }
+
+        if pen_style > 0 {
+            //TODO apply static pen_style preset
+            window.pen_style = pen_style as i32;
+        }
+        unsafe {
+            if is_false(window.is_defined) {
+                // If the window is being created, all character positions in the window
+                // are set to the fill color and the pen location is set to (0,0)
+                window.pen_column = 0;
+                window.pen_row = 0;
+                if is_false(window.memory_reserved) {
+                    for i in 0..CCX_DTVCC_MAX_ROWS as usize {
+                        let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize);
+                        if let Err(e) = layout {
+                            error!("dtvcc_handle_DFx_DefineWindow: Incorrect Layout, {}", e);
+                        } else {
+                            let ptr = alloc(layout.unwrap());
+                            if ptr.is_null() {
+                                error!("dtvcc_handle_DFx_DefineWindow: Not enough memory",);
+                            }
+                            // Exit here?
+                            window.rows[i] = ptr as *mut dtvcc_symbol;
+                        }
+                    }
+                    window.memory_reserved = 1;
+                }
+                window.is_defined = 1;
+                dtvcc_window_clear_text(window);
+            } else if do_clear_window {
+                dtvcc_window_clear_text(window);
+            }
+
+            window
+                .commands
+                .iter_mut()
+                .zip(block.iter())
+                .for_each(|(command, val)| *command = *val);
+
+            if is_true(window.visible) {
+                dtvcc_window_update_time_show(window, timing);
+            }
+            if is_false(window.memory_reserved) {
+                for i in 0..CCX_DTVCC_MAX_ROWS as usize {
+                    let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize);
+                    if let Err(e) = layout {
+                        error!("dtvcc_handle_DFx_DefineWindow: Incorrect Layout, {}", e);
+                    } else {
+                        dealloc(window.rows[i] as *mut u8, layout.unwrap());
+                    }
+                }
+            }
+            // ...also makes the defined windows the current window
+            self.handle_set_current_window(window_id);
         }
     }
     /// Handle SPA Set Pen Attributes
@@ -500,8 +705,8 @@ impl dtvcc_service_decoder {
     }
     /// handle CWx Set Current Window
     pub fn handle_set_current_window(&mut self, window_id: u8) {
-        debug!("dtvcc_handle_CWx_SetCurrentWindow: ha[{}]\n", window_id);
-        if self.windows[window_id as usize].is_defined == 1 {
+        debug!("dtvcc_handle_CWx_SetCurrentWindow: [{}]", window_id);
+        if is_true(self.windows[window_id as usize].is_defined) {
             self.current_window = window_id as i32;
         } else {
             debug!(
@@ -567,7 +772,7 @@ impl dtvcc_service_decoder {
             }
         };
 
-        if window.is_defined == 1 {
+        if is_true(window.is_defined) {
             debug!("dtvcc_process_cr: rolling up");
 
             let pen_row = window.pen_row;
