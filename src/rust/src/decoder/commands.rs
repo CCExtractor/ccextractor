@@ -152,3 +152,35 @@ impl C1Command {
         }
     }
 }
+
+/// Handle C2 - Code Set - Extended Control Code Set 1
+pub fn handle_C2(code: u8) -> u8 {
+    match code {
+        // ... Single-byte control bytes (0 additional bytes)
+        0..=0x07 => 1,
+        // ..two-byte control codes (1 additional byte)
+        0x08..=0x0F => 2,
+        // ..three-byte control codes (2 additional bytes)
+        0x10..=0x17 => 3,
+        // 18-1F => four-byte control codes (3 additional bytes)
+        _ => 4,
+    }
+}
+
+/// Handle C3 - Code Set - Extended Control Code Set 2
+pub fn handle_C3(code: u8, next_code: u8) -> u8 {
+    match code {
+        // Five-byte control bytes (4 additional bytes)
+        0x80..=0x87 => 5,
+        // Six-byte control codes (5 additional byte)
+        0x88..=0x8F => 6,
+        // 90-9F variable length commands
+        // Refer Section 7.1.11.2
+        _ => {
+            // next code is the header which specifies additional bytes
+            let length = (next_code & 0x3F) + 1;
+            // + 1 for current code
+            length + 1
+        }
+    }
+}

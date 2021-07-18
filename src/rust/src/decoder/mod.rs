@@ -189,4 +189,9 @@ impl dtvcc_symbol {
     pub fn new(sym: u16) -> dtvcc_symbol {
         dtvcc_symbol { init: 1, sym }
     }
+    /// Create a new 16 bit symbol
+    pub fn new_16(data1: u8, data2: u8) -> dtvcc_symbol {
+        let sym = (data1 as u16) << 8 | data2 as u16;
+        dtvcc_symbol { init: 1, sym }
+    }
 }

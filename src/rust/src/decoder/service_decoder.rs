@@ -6,7 +6,7 @@ use std::{
 use log::{debug, error, warn};
 
 use super::{
-    commands::{C0CodeSet, C0Command, C1CodeSet, C1Command},
+    commands::{self, C0CodeSet, C0Command, C1CodeSet, C1Command},
     window::WindowPreset,
 };
 use crate::{
@@ -57,13 +57,13 @@ impl dtvcc_service_decoder {
                     warn!("dtvcc_process_service_block: There was a problem handling the data.");
                     return;
                 }
-                used
+                used as u8
             } else {
                 let mut used = self.handle_extended_char(current_packet, pos + i, block_length - i);
                 used += 1; // Since we had CCX_DTVCC_C0_EXT1
                 used
             };
-            i += consumed as u8;
+            i += consumed;
         }
     }
     /// Handle C0 - Code Set - Miscellaneous Control Codes
@@ -76,26 +76,21 @@ impl dtvcc_service_decoder {
         timing: &mut ccx_common_timing_ctx,
         no_rollup: bool,
     ) -> i32 {
-        let service_decoder = self as *mut dtvcc_service_decoder;
-        let data = (&mut current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
-
         let code = current_packet[pos as usize];
         let C0Command { command, length } = C0Command::new(code);
         debug!("C0: [{:?}] ({})", command, block_length);
-        unsafe {
-            match command {
-                // NUL command does nothing
-                C0CodeSet::NUL => {}
-                C0CodeSet::ETX => dtvcc_process_etx(service_decoder),
-                C0CodeSet::BS => dtvcc_process_bs(service_decoder),
-                C0CodeSet::FF => dtvcc_process_ff(service_decoder),
-                C0CodeSet::CR => self.process_cr(encoder, timing, no_rollup),
-                C0CodeSet::HCR => dtvcc_process_hcr(service_decoder),
-                // EXT1 is handled elsewhere as an extended command
-                C0CodeSet::EXT1 => {}
-                C0CodeSet::P16 => dtvcc_handle_C0_P16(service_decoder, data.add(1)),
-                C0CodeSet::RESERVED => {}
-            }
+        match command {
+            // NUL command does nothing
+            C0CodeSet::NUL => {}
+            C0CodeSet::ETX => self.process_etx(),
+            C0CodeSet::BS => self.process_bs(),
+            C0CodeSet::FF => self.process_ff(),
+            C0CodeSet::CR => self.process_cr(encoder, timing, no_rollup),
+            C0CodeSet::HCR => self.process_hcr(),
+            // EXT1 is handled elsewhere as an extended command
+            C0CodeSet::EXT1 => {}
+            C0CodeSet::P16 => self.process_p16(current_packet, pos + 1),
+            C0CodeSet::RESERVED => {}
         }
         if length > block_length {
             warn!(
@@ -203,15 +198,39 @@ impl dtvcc_service_decoder {
         1
     }
     /// Handle extended codes (EXT1 + code), from the extended sets
+    /// G2 (20-7F) => Mostly unmapped, except for a few characters.
+    /// G3 (A0-FF) => A0 is the CC symbol, everything else reserved for future expansion in EIA708
+    /// C2 (00-1F) => Reserved for future extended misc. control and captions command codes
+    /// C3 (80-9F) => Reserved for future extended misc. control and captions command codes
+    /// WARN: This code is completely untested due to lack of samples. Just following specs!
+    /// Returns number of used bytes, usually 1 (since EXT1 is not counted).
     pub fn handle_extended_char(
         &mut self,
         current_packet: &mut [c_uchar],
         pos: u8,
         block_length: u8,
-    ) -> i32 {
-        unsafe {
-            let data = (&mut current_packet[pos as usize]) as *mut std::os::raw::c_uchar;
-            dtvcc_handle_extended_char(self, data, block_length as i32)
+    ) -> u8 {
+        let code = current_packet[pos as usize];
+        debug!(
+            "dtvcc_handle_extended_char, first data code: [{}], length: [{}]",
+            code as char, block_length
+        );
+
+        match code {
+            0..=0x1F => commands::handle_C2(code),
+            0x20..=0x7F => {
+                let val = unsafe { dtvcc_get_internal_from_G2(code) };
+                let sym = dtvcc_symbol::new(val as u16);
+                self.process_character(sym);
+                1
+            }
+            0x80..=0x9F => commands::handle_C3(code, current_packet[(pos + 1) as usize]),
+            _ => {
+                let val = unsafe { dtvcc_get_internal_from_G3(code) };
+                let sym = dtvcc_symbol::new(val as u16);
+                self.process_character(sym);
+                1
+            }
         }
     }
     /// Handle CLW Clear Windows
@@ -793,6 +812,81 @@ impl dtvcc_service_decoder {
             }
         }
     }
+    /// Process Horizontal Carriage Return (HCR)
+    pub fn process_hcr(&mut self) {
+        if self.current_window == -1 {
+            warn!("dtvcc_process_hcr: Window has to be defined first");
+            return;
+        }
+        let window = &mut self.windows[self.current_window as usize];
+        window.pen_column = 0;
+        unsafe {
+            dtvcc_window_clear_row(window, window.pen_row);
+        }
+    }
+    /// Process Form Feed (FF)
+    pub fn process_ff(&mut self) {
+        if self.current_window == -1 {
+            warn!("dtvcc_process_ff: Window has to be defined first");
+            return;
+        }
+        let window = &mut self.windows[self.current_window as usize];
+        window.pen_column = 0;
+        window.pen_row = 0;
+    }
+    /// Process Backspace (BS)
+    pub fn process_bs(&mut self) {
+        if self.current_window == -1 {
+            warn!("dtvcc_process_bs: Window has to be defined first");
+            return;
+        }
+        //it looks strange, but in some videos (rarely) we have a backspace command
+        //we just print one character over another
+        let window = &mut self.windows[self.current_window as usize];
+        let pd = match dtvcc_window_pd::new(window.attribs.print_direction) {
+            Ok(val) => val,
+            Err(e) => {
+                warn!("{}", e);
+                return;
+            }
+        };
+        match pd {
+            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT => {
+                if window.pen_column > 0 {
+                    window.pen_column -= 1;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_RIGHT_LEFT => {
+                if window.pen_column + 1 < window.col_count {
+                    window.pen_column += 1;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_TOP_BOTTOM => {
+                if window.pen_row > 0 {
+                    window.pen_row -= 1;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_BOTTOM_TOP => {
+                if window.pen_row + 1 < window.row_count {
+                    window.pen_row += 1;
+                }
+            }
+        };
+    }
+    /// Process P16
+    /// Used for Code space extension for 16 bit charsets
+    pub fn process_p16(&mut self, current_packet: &mut [c_uchar], pos: u8) {
+        if self.current_window == -1 {
+            warn!("dtvcc_process_p16: Window has to be defined first");
+            return;
+        }
+        let pos = pos as usize;
+        let sym = dtvcc_symbol::new_16(current_packet[pos], current_packet[pos + 1]);
+        debug!("dtvcc_process_p16: [{:4X}]", sym.sym);
+        self.process_character(sym);
+    }
+    /// Process End of Text (ETX)
+    pub fn process_etx(&mut self) {}
     /// Process the character and add it to the current window
     pub fn process_character(&mut self, sym: dtvcc_symbol) {
         unsafe {
