@@ -26,32 +26,19 @@ impl dtvcc_service_decoder {
     /// Process service block and call handlers for the respective codesets
     pub fn process_service_block(
         &mut self,
-        current_packet: &mut [c_uchar],
-        pos: u8,
-        block_length: u8,
+        block: &[u8],
         encoder: &mut encoder_ctx,
         timing: &mut ccx_common_timing_ctx,
         no_rollup: bool,
     ) {
         let mut i = 0;
-        while i < block_length {
-            let curr: usize = (pos + i) as usize;
-
-            let consumed = if current_packet[curr] != DTVCC_COMMANDS_C0_CODES_DTVCC_C0_EXT1 as u8 {
-                let used = match current_packet[curr] {
-                    0..=0x1F => self.handle_C0(
-                        current_packet,
-                        pos + i,
-                        block_length - i,
-                        encoder,
-                        timing,
-                        no_rollup,
-                    ),
-                    0x20..=0x7F => self.handle_G0(current_packet, pos + i, block_length - i),
-                    0x80..=0x9F => {
-                        self.handle_C1(current_packet, pos + i, block_length - i, encoder, timing)
-                    }
-                    _ => self.handle_G1(current_packet, pos + i, block_length - i),
+        while i < block.len() {
+            let consumed = if block[i] != DTVCC_COMMANDS_C0_CODES_DTVCC_C0_EXT1 as u8 {
+                let used = match block[i] {
+                    0..=0x1F => self.handle_C0(&block[i..], encoder, timing, no_rollup),
+                    0x20..=0x7F => self.handle_G0(&block[i..]),
+                    0x80..=0x9F => self.handle_C1(&block[i..], encoder, timing),
+                    _ => self.handle_G1(&block[i..]),
                 };
                 if used == -1 {
                     warn!("dtvcc_process_service_block: There was a problem handling the data.");
@@ -59,26 +46,24 @@ impl dtvcc_service_decoder {
                 }
                 used as u8
             } else {
-                let mut used = self.handle_extended_char(current_packet, pos + i, block_length - i);
+                let mut used = self.handle_extended_char(&block[i..]);
                 used += 1; // Since we had CCX_DTVCC_C0_EXT1
                 used
             };
-            i += consumed;
+            i += consumed as usize;
         }
     }
     /// Handle C0 - Code Set - Miscellaneous Control Codes
     pub fn handle_C0(
         &mut self,
-        current_packet: &mut [c_uchar],
-        pos: u8,
-        block_length: u8,
+        block: &[u8],
         encoder: &mut encoder_ctx,
         timing: &mut ccx_common_timing_ctx,
         no_rollup: bool,
     ) -> i32 {
-        let code = current_packet[pos as usize];
+        let code = block[0];
         let C0Command { command, length } = C0Command::new(code);
-        debug!("C0: [{:?}] ({})", command, block_length);
+        debug!("C0: [{:?}] ({})", command, block.len());
         match command {
             // NUL command does nothing
             C0CodeSet::NUL => {}
@@ -89,13 +74,14 @@ impl dtvcc_service_decoder {
             C0CodeSet::HCR => self.process_hcr(),
             // EXT1 is handled elsewhere as an extended command
             C0CodeSet::EXT1 => {}
-            C0CodeSet::P16 => self.process_p16(current_packet, pos + 1),
+            C0CodeSet::P16 => self.process_p16(&block[1..]),
             C0CodeSet::RESERVED => {}
         }
-        if length > block_length {
+        if length as usize > block.len() {
             warn!(
                 "dtvcc_handle_C0: command is {} bytes long but we only have {}",
-                length, block_length
+                length,
+                block.len()
             );
             return -1;
         }
@@ -104,21 +90,19 @@ impl dtvcc_service_decoder {
     /// Handle C1 - Code Set - Captioning Command Control Codes
     pub fn handle_C1(
         &mut self,
-        current_packet: &mut [c_uchar],
-        pos: u8,
-        block_length: u8,
+        block: &[c_uchar],
         encoder: &mut encoder_ctx,
         timing: &mut ccx_common_timing_ctx,
     ) -> i32 {
-        let code = current_packet[pos as usize];
-        let next_code = current_packet[(pos + 1) as usize] as i32;
+        let code = block[0];
+        let next_code = block[1] as i32;
         let C1Command {
             command,
             length,
             name,
         } = C1Command::new(code);
 
-        if length > block_length {
+        if length as usize > block.len() {
             warn!("Warning: Not enough bytes for command.");
             return -1;
         }
@@ -143,10 +127,10 @@ impl dtvcc_service_decoder {
                 C1CodeSet::DLY => dtvcc_handle_DLY_Delay(self, next_code),
                 C1CodeSet::DLC => dtvcc_handle_DLC_DelayCancel(self),
                 C1CodeSet::RST => dtvcc_handle_RST_Reset(self),
-                C1CodeSet::SPA => self.handle_set_pen_attributes(current_packet, pos),
-                C1CodeSet::SPC => self.handle_set_pen_color(current_packet, pos),
-                C1CodeSet::SPL => self.handle_set_pen_location(current_packet, pos),
-                C1CodeSet::SWA => self.handle_set_window_attributes(current_packet, pos),
+                C1CodeSet::SPA => self.handle_set_pen_attributes(&block[1..]),
+                C1CodeSet::SPC => self.handle_set_pen_color(&block[1..]),
+                C1CodeSet::SPL => self.handle_set_pen_location(&block[1..]),
+                C1CodeSet::SWA => self.handle_set_window_attributes(&block[1..]),
                 C1CodeSet::DF0
                 | C1CodeSet::DF1
                 | C1CodeSet::DF2
@@ -156,8 +140,7 @@ impl dtvcc_service_decoder {
                 | C1CodeSet::DF6
                 | C1CodeSet::DF7 => self.handle_define_windows(
                     code - DTVCC_COMMANDS_C1_CODES_DTVCC_C1_DF0 as u8,
-                    current_packet,
-                    pos,
+                    &block[1..],
                     timing,
                 ),
                 C1CodeSet::RESERVED => {
@@ -168,13 +151,13 @@ impl dtvcc_service_decoder {
         length as i32
     }
     /// Handle G0 - Code Set - ASCII printable characters
-    pub fn handle_G0(&mut self, current_packet: &mut [c_uchar], pos: u8, block_length: u8) -> i32 {
+    pub fn handle_G0(&mut self, block: &[c_uchar]) -> i32 {
         if self.current_window == -1 {
             warn!("dtvcc_handle_G0: Window has to be defined first");
-            return block_length as i32;
+            return block.len() as i32;
         }
 
-        let character = current_packet[pos as usize];
+        let character = block[0];
         debug!("G0: [{:2X}] ({})", character, character as char);
         let sym = if character == 0x7F {
             dtvcc_symbol::new(CCX_DTVCC_MUSICAL_NOTE_CHAR)
@@ -185,13 +168,13 @@ impl dtvcc_service_decoder {
         1
     }
     /// Handle G1 - Code Set - ISO 8859-1 LATIN-1 Character Set
-    pub fn handle_G1(&mut self, current_packet: &mut [c_uchar], pos: u8, block_length: u8) -> i32 {
+    pub fn handle_G1(&mut self, block: &[c_uchar]) -> i32 {
         if self.current_window == -1 {
             warn!("dtvcc_handle_G1: Window has to be defined first");
-            return block_length as i32;
+            return block.len() as i32;
         }
 
-        let character = current_packet[pos as usize];
+        let character = block[0];
         debug!("G1: [{:2X}] ({})", character, character as char);
         let sym = dtvcc_symbol::new(character as u16);
         self.process_character(sym);
@@ -204,16 +187,12 @@ impl dtvcc_service_decoder {
     /// C3 (80-9F) => Reserved for future extended misc. control and captions command codes
     /// WARN: This code is completely untested due to lack of samples. Just following specs!
     /// Returns number of used bytes, usually 1 (since EXT1 is not counted).
-    pub fn handle_extended_char(
-        &mut self,
-        current_packet: &mut [c_uchar],
-        pos: u8,
-        block_length: u8,
-    ) -> u8 {
-        let code = current_packet[pos as usize];
+    pub fn handle_extended_char(&mut self, block: &[c_uchar]) -> u8 {
+        let code = block[0];
         debug!(
             "dtvcc_handle_extended_char, first data code: [{}], length: [{}]",
-            code as char, block_length
+            code as char,
+            block.len()
         );
 
         match code {
@@ -224,7 +203,7 @@ impl dtvcc_service_decoder {
                 self.process_character(sym);
                 1
             }
-            0x80..=0x9F => commands::handle_C3(code, current_packet[(pos + 1) as usize]),
+            0x80..=0x9F => commands::handle_C3(code, block[1]),
             _ => {
                 let val = unsafe { dtvcc_get_internal_from_G3(code) };
                 let sym = dtvcc_symbol::new(val as u16);
@@ -422,8 +401,7 @@ impl dtvcc_service_decoder {
     pub fn handle_define_windows(
         &mut self,
         window_id: u8,
-        current_packet: &[c_uchar],
-        pos: u8,
+        block: &[c_uchar],
         timing: &mut ccx_common_timing_ctx,
     ) {
         debug!(
@@ -431,8 +409,7 @@ impl dtvcc_service_decoder {
             window_id
         );
         let window = &mut self.windows[window_id as usize];
-        let pos = pos as usize;
-        let block = &current_packet[(pos + 1)..=(pos + 6)];
+        let block = &block[..=5];
         let is_command_repeated = window
             .commands
             .iter()
@@ -448,18 +425,18 @@ impl dtvcc_service_decoder {
         }
 
         window.number = window_id as i32;
-        let priority = (current_packet[pos + 1]) & 0x7;
-        let col_lock = (current_packet[pos + 1] >> 3) & 0x1;
-        let row_lock = (current_packet[pos + 1] >> 4) & 0x1;
-        let visible = (current_packet[pos + 1] >> 5) & 0x1;
-        let mut anchor_vertical = current_packet[pos + 2] & 0x7f;
-        let relative_pos = current_packet[pos + 2] >> 7;
-        let mut anchor_horizontal = current_packet[pos + 3];
-        let row_count = (current_packet[pos + 4] & 0xf) + 1;
-        let anchor_point = current_packet[pos + 4] >> 4;
-        let col_count = (current_packet[pos + 5] & 0x3f) + 1;
-        let mut pen_style = current_packet[pos + 6] & 0x7;
-        let mut win_style = (current_packet[pos + 6] >> 3) & 0x7;
+        let priority = (block[0]) & 0x7;
+        let col_lock = (block[0] >> 3) & 0x1;
+        let row_lock = (block[0] >> 4) & 0x1;
+        let visible = (block[0] >> 5) & 0x1;
+        let mut anchor_vertical = block[1] & 0x7f;
+        let relative_pos = block[1] >> 7;
+        let mut anchor_horizontal = block[2];
+        let row_count = (block[3] & 0xf) + 1;
+        let anchor_point = block[3] >> 4;
+        let col_count = (block[4] & 0x3f) + 1;
+        let mut pen_style = block[5] & 0x7;
+        let mut win_style = (block[5] >> 3) & 0x7;
 
         let mut do_clear_window = false;
 
@@ -582,20 +559,19 @@ impl dtvcc_service_decoder {
         }
     }
     /// Handle SPA Set Pen Attributes
-    pub fn handle_set_pen_attributes(&mut self, current_packet: &[c_uchar], pos: u8) {
+    pub fn handle_set_pen_attributes(&mut self, block: &[c_uchar]) {
         if self.current_window == -1 {
             warn!("dtvcc_handle_SPA_SetPenAttributes: Window has to be defined first");
             return;
         }
 
-        let pos = pos as usize;
-        let pen_size = (current_packet[pos + 1]) & 0x3;
-        let offset = (current_packet[pos + 1] >> 2) & 0x3;
-        let text_tag = (current_packet[pos + 1] >> 4) & 0xf;
-        let font_tag = (current_packet[pos + 2]) & 0x7;
-        let edge_type = (current_packet[pos + 2] >> 3) & 0x7;
-        let underline = (current_packet[pos + 2] >> 6) & 0x1;
-        let italic = (current_packet[pos + 2] >> 7) & 0x1;
+        let pen_size = (block[0]) & 0x3;
+        let offset = (block[0] >> 2) & 0x3;
+        let text_tag = (block[0] >> 4) & 0xf;
+        let font_tag = (block[1]) & 0x7;
+        let edge_type = (block[1] >> 3) & 0x7;
+        let underline = (block[1] >> 6) & 0x1;
+        let italic = (block[1] >> 7) & 0x1;
         debug!("dtvcc_handle_SPA_SetPenAttributes: attributes: ");
         debug!(
             "Pen size: [{}]     Offset: [{}]  Text tag: [{}]   Font tag: [{}]",
@@ -622,18 +598,17 @@ impl dtvcc_service_decoder {
         pen.italic = italic as i32;
     }
     /// Handle SPC Set Pen Color
-    pub fn handle_set_pen_color(&mut self, current_packet: &[c_uchar], pos: u8) {
+    pub fn handle_set_pen_color(&mut self, block: &[c_uchar]) {
         if self.current_window == -1 {
             warn!("dtvcc_handle_SPC_SetPenColor: Window has to be defined first");
             return;
         }
 
-        let pos = pos as usize;
-        let fg_color = (current_packet[pos + 1]) & 0x3f;
-        let fg_opacity = (current_packet[pos + 1] >> 6) & 0x03;
-        let bg_color = (current_packet[pos + 2]) & 0x3f;
-        let bg_opacity = (current_packet[pos + 2] >> 6) & 0x03;
-        let edge_color = (current_packet[pos + 3]) & 0x3f;
+        let fg_color = (block[0]) & 0x3f;
+        let fg_opacity = (block[0] >> 6) & 0x03;
+        let bg_color = (block[1]) & 0x3f;
+        let bg_opacity = (block[1] >> 6) & 0x03;
+        let edge_color = (block[2]) & 0x3f;
         debug!("dtvcc_handle_SPC_SetPenColor: attributes: ");
         debug!(
             "Foreground color: [{}]     Foreground opacity: [{}]",
@@ -659,16 +634,15 @@ impl dtvcc_service_decoder {
         color.edge_color = edge_color as i32;
     }
     /// Handle SPL Set Pen Location
-    pub fn handle_set_pen_location(&mut self, current_packet: &[c_uchar], pos: u8) {
+    pub fn handle_set_pen_location(&mut self, block: &[c_uchar]) {
         if self.current_window == -1 {
             warn!("dtvcc_handle_SPL_SetPenLocation: Window has to be defined first");
             return;
         }
 
         debug!("dtvcc_handle_SPL_SetPenLocation: attributes: ");
-        let pos = pos as usize;
-        let row = current_packet[pos + 1] & 0x0f;
-        let col = current_packet[pos + 2] & 0x3f;
+        let row = block[0] & 0x0f;
+        let col = block[1] & 0x3f;
         debug!("Row: [{}]     Column: [{}]", row, col);
 
         let window = &mut self.windows[self.current_window as usize];
@@ -676,25 +650,24 @@ impl dtvcc_service_decoder {
         window.pen_column = col as i32;
     }
     /// Handle SWA Set Window Attributes
-    pub fn handle_set_window_attributes(&mut self, current_packet: &[c_uchar], pos: u8) {
+    pub fn handle_set_window_attributes(&mut self, block: &[c_uchar]) {
         if self.current_window == -1 {
             warn!("dtvcc_handle_SWA_SetWindowAttributes: Window has to be defined first");
             return;
         }
 
-        let pos = pos as usize;
-        let fill_color = (current_packet[pos + 1]) & 0x3f;
-        let fill_opacity = (current_packet[pos + 1] >> 6) & 0x03;
-        let border_color = (current_packet[pos + 2]) & 0x3f;
-        let border_type01 = (current_packet[pos + 2] >> 6) & 0x03;
-        let justify = (current_packet[pos + 3]) & 0x03;
-        let scroll_dir = (current_packet[pos + 3] >> 2) & 0x03;
-        let print_dir = (current_packet[pos + 3] >> 4) & 0x03;
-        let word_wrap = (current_packet[pos + 3] >> 6) & 0x01;
-        let border_type = ((current_packet[pos + 3] >> 5) & 0x04) | border_type01;
-        let display_eff = (current_packet[pos + 4]) & 0x03;
-        let effect_dir = (current_packet[pos + 4] >> 2) & 0x03;
-        let effect_speed = (current_packet[pos + 4] >> 4) & 0x0f;
+        let fill_color = (block[0]) & 0x3f;
+        let fill_opacity = (block[0] >> 6) & 0x03;
+        let border_color = (block[1]) & 0x3f;
+        let border_type01 = (block[1] >> 6) & 0x03;
+        let justify = (block[2]) & 0x03;
+        let scroll_dir = (block[2] >> 2) & 0x03;
+        let print_dir = (block[2] >> 4) & 0x03;
+        let word_wrap = (block[2] >> 6) & 0x01;
+        let border_type = ((block[2] >> 5) & 0x04) | border_type01;
+        let display_eff = (block[3]) & 0x03;
+        let effect_dir = (block[3] >> 2) & 0x03;
+        let effect_speed = (block[3] >> 4) & 0x0f;
         debug!("dtvcc_handle_SWA_SetWindowAttributes: attributes: ");
         debug!(
             "Fill color: [{}]     Fill opacity: [{}]    Border color: [{}]  Border type: [{}]",
@@ -875,13 +848,12 @@ impl dtvcc_service_decoder {
     }
     /// Process P16
     /// Used for Code space extension for 16 bit charsets
-    pub fn process_p16(&mut self, current_packet: &mut [c_uchar], pos: u8) {
+    pub fn process_p16(&mut self, block: &[c_uchar]) {
         if self.current_window == -1 {
             warn!("dtvcc_process_p16: Window has to be defined first");
             return;
         }
-        let pos = pos as usize;
-        let sym = dtvcc_symbol::new_16(current_packet[pos], current_packet[pos + 1]);
+        let sym = dtvcc_symbol::new_16(block[0], block[1]);
         debug!("dtvcc_process_p16: [{:4X}]", sym.sym);
         self.process_character(sym);
     }

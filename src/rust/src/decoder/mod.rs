@@ -157,9 +157,7 @@ impl<'a> Dtvcc<'a> {
             if service_number > 0 && is_true(self.services_active[(service_number - 1) as usize]) {
                 let decoder = &mut self.decoders[(service_number - 1) as usize];
                 decoder.process_service_block(
-                    &mut self.packet,
-                    pos,
-                    block_length,
+                    &self.packet[pos as usize..(pos + block_length) as usize],
                     self.encoder,
                     self.timing,
                     self.no_rollup,
