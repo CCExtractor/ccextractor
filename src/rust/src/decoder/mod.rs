@@ -8,7 +8,7 @@ mod window;
 
 use log::{debug, warn};
 
-use crate::bindings::*;
+use crate::{bindings::*, utils::is_true};
 
 const CCX_DTVCC_MAX_PACKET_LENGTH: u8 = 128;
 const CCX_DTVCC_NO_LAST_SEQUENCE: i32 = -1;
@@ -33,41 +33,23 @@ pub struct Dtvcc<'a> {
 impl<'a> Dtvcc<'a> {
     /// Create a new dtvcc context
     pub fn new(ctx: &'a mut dtvcc_ctx) -> Self {
-        let mut is_active = false;
-        let mut report_enabled = false;
-        let mut is_header_parsed = false;
-        let mut no_rollup = false;
-
-        if ctx.is_active == 1 {
-            is_active = true;
-        }
-        if ctx.report_enabled == 1 {
-            report_enabled = true;
-        }
-        if ctx.is_current_packet_header_parsed == 1 {
-            is_header_parsed = true;
-        }
-        if ctx.no_rollup == 1 {
-            no_rollup = true;
-        }
-
         let report = unsafe { &mut *ctx.report };
         let encoder = unsafe { &mut *(ctx.encoder as *mut encoder_ctx) };
         let timing = unsafe { &mut *ctx.timing };
 
         Self {
-            is_active,
+            is_active: is_true(ctx.is_active),
             active_services_count: ctx.active_services_count as u8,
             services_active: ctx.services_active.iter().copied().collect(),
-            report_enabled,
+            report_enabled: is_true(ctx.report_enabled),
             report,
             decoders: ctx.decoders.iter_mut().collect(),
             packet: ctx.current_packet.to_vec(),
             packet_length: ctx.current_packet_length as u8,
-            is_header_parsed,
+            is_header_parsed: is_true(ctx.is_current_packet_header_parsed),
             last_sequence: ctx.last_sequence,
             encoder,
-            no_rollup,
+            no_rollup: is_true(ctx.no_rollup),
             timing,
         }
     }
@@ -172,12 +154,10 @@ impl<'a> Dtvcc<'a> {
                 self.report.services[service_number as usize] = 1;
             }
 
-            if service_number > 0 && self.services_active[(service_number - 1) as usize] == 1 {
+            if service_number > 0 && is_true(self.services_active[(service_number - 1) as usize]) {
                 let decoder = &mut self.decoders[(service_number - 1) as usize];
                 decoder.process_service_block(
-                    &mut self.packet,
-                    pos,
-                    block_length,
+                    &self.packet[pos as usize..(pos + block_length) as usize],
                     self.encoder,
                     self.timing,
                     self.no_rollup,
@@ -205,6 +185,11 @@ impl<'a> Dtvcc<'a> {
 impl dtvcc_symbol {
     /// Create a new symbol
     pub fn new(sym: u16) -> dtvcc_symbol {
+        dtvcc_symbol { init: 1, sym }
+    }
+    /// Create a new 16 bit symbol
+    pub fn new_16(data1: u8, data2: u8) -> dtvcc_symbol {
+        let sym = (data1 as u16) << 8 | data2 as u16;
         dtvcc_symbol { init: 1, sym }
     }
 }

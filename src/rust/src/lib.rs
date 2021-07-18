@@ -19,7 +19,10 @@ pub mod bindings {
 }
 
 pub mod decoder;
+mod utils;
+
 use bindings::*;
+use utils::is_true;
 
 extern "C" {
     static mut cb_708: c_int;
@@ -94,11 +97,13 @@ pub fn do_cb(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) -> boo
             2 | 3 => {
                 let current_time = unsafe { get_fts(ctx.timing, ctx.current_field) };
                 ctx.current_field = 3;
-                if ctx.extraction_start.set == 1 && current_time < ctx.extraction_start.time_in_ms {
+                if is_true(ctx.extraction_start.set)
+                    && current_time < ctx.extraction_start.time_in_ms
+                {
                     timeok = false;
                 }
 
-                if ctx.extraction_end.set == 1 && current_time > ctx.extraction_end.time_in_ms {
+                if is_true(ctx.extraction_end.set) && current_time > ctx.extraction_end.time_in_ms {
                     timeok = false;
                     ctx.processed_enough = 1;
                 }
