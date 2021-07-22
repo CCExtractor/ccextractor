@@ -7,7 +7,7 @@ use log::{debug, error, warn};
 
 use super::{
     commands::{self, C0CodeSet, C0Command, C1CodeSet, C1Command},
-    window::WindowPreset,
+    window::{PenPreset, WindowPreset},
 };
 use crate::{
     bindings::*,
@@ -95,7 +95,7 @@ impl dtvcc_service_decoder {
         timing: &mut ccx_common_timing_ctx,
     ) -> i32 {
         let code = block[0];
-        let next_code = block[1] as i32;
+        let next_code = block[1];
         let C1Command {
             command,
             length,
@@ -108,46 +108,45 @@ impl dtvcc_service_decoder {
         }
 
         debug!("C1: [{:?}] [{}] ({})", command, name, length);
-        unsafe {
-            match command {
-                C1CodeSet::CW0
-                | C1CodeSet::CW1
-                | C1CodeSet::CW2
-                | C1CodeSet::CW3
-                | C1CodeSet::CW4
-                | C1CodeSet::CW5
-                | C1CodeSet::CW6
-                | C1CodeSet::CW7 => self
-                    .handle_set_current_window(code - DTVCC_COMMANDS_C1_CODES_DTVCC_C1_CW0 as u8),
-                C1CodeSet::CLW => self.handle_clear_windows(next_code, encoder, timing),
-                C1CodeSet::HDW => self.handle_hide_windows(next_code, encoder, timing),
-                C1CodeSet::TGW => self.handle_toggle_windows(next_code, encoder, timing),
-                C1CodeSet::DLW => self.handle_delete_windows(next_code, encoder, timing),
-                C1CodeSet::DSW => self.handle_display_windows(next_code, timing),
-                C1CodeSet::DLY => dtvcc_handle_DLY_Delay(self, next_code),
-                C1CodeSet::DLC => dtvcc_handle_DLC_DelayCancel(self),
-                C1CodeSet::RST => dtvcc_handle_RST_Reset(self),
-                C1CodeSet::SPA => self.handle_set_pen_attributes(&block[1..]),
-                C1CodeSet::SPC => self.handle_set_pen_color(&block[1..]),
-                C1CodeSet::SPL => self.handle_set_pen_location(&block[1..]),
-                C1CodeSet::SWA => self.handle_set_window_attributes(&block[1..]),
-                C1CodeSet::DF0
-                | C1CodeSet::DF1
-                | C1CodeSet::DF2
-                | C1CodeSet::DF3
-                | C1CodeSet::DF4
-                | C1CodeSet::DF5
-                | C1CodeSet::DF6
-                | C1CodeSet::DF7 => self.handle_define_windows(
-                    code - DTVCC_COMMANDS_C1_CODES_DTVCC_C1_DF0 as u8,
-                    &block[1..],
-                    timing,
-                ),
-                C1CodeSet::RESERVED => {
-                    warn!("Warning, Found Reserved codes, ignored");
-                }
-            };
-        }
+        match command {
+            C1CodeSet::CW0
+            | C1CodeSet::CW1
+            | C1CodeSet::CW2
+            | C1CodeSet::CW3
+            | C1CodeSet::CW4
+            | C1CodeSet::CW5
+            | C1CodeSet::CW6
+            | C1CodeSet::CW7 => {
+                self.handle_set_current_window(code - DTVCC_COMMANDS_C1_CODES_DTVCC_C1_CW0 as u8)
+            }
+            C1CodeSet::CLW => self.handle_clear_windows(next_code, encoder, timing),
+            C1CodeSet::HDW => self.handle_hide_windows(next_code, encoder, timing),
+            C1CodeSet::TGW => self.handle_toggle_windows(next_code, encoder, timing),
+            C1CodeSet::DLW => self.handle_delete_windows(next_code, encoder, timing),
+            C1CodeSet::DSW => self.handle_display_windows(next_code, timing),
+            C1CodeSet::DLY => self.handle_delay(next_code),
+            C1CodeSet::DLC => self.handle_delay_cancel(),
+            C1CodeSet::RST => self.handle_reset(),
+            C1CodeSet::SPA => self.handle_set_pen_attributes(&block[1..]),
+            C1CodeSet::SPC => self.handle_set_pen_color(&block[1..]),
+            C1CodeSet::SPL => self.handle_set_pen_location(&block[1..]),
+            C1CodeSet::SWA => self.handle_set_window_attributes(&block[1..]),
+            C1CodeSet::DF0
+            | C1CodeSet::DF1
+            | C1CodeSet::DF2
+            | C1CodeSet::DF3
+            | C1CodeSet::DF4
+            | C1CodeSet::DF5
+            | C1CodeSet::DF6
+            | C1CodeSet::DF7 => self.handle_define_windows(
+                code - DTVCC_COMMANDS_C1_CODES_DTVCC_C1_DF0 as u8,
+                &block[1..],
+                timing,
+            ),
+            C1CodeSet::RESERVED => {
+                warn!("Warning, Found Reserved codes, ignored");
+            }
+        };
         length as i32
     }
     /// Handle G0 - Code Set - ASCII printable characters
@@ -215,7 +214,7 @@ impl dtvcc_service_decoder {
     /// Handle CLW Clear Windows
     pub fn handle_clear_windows(
         &mut self,
-        mut windows_bitmap: i32,
+        mut windows_bitmap: u8,
         encoder: &mut encoder_ctx,
         timing: &mut ccx_common_timing_ctx,
     ) {
@@ -234,8 +233,8 @@ impl dtvcc_service_decoder {
                             && is_false(window.is_empty);
                         if window_had_content {
                             screen_content_changed = true;
+                            window.update_time_hide(timing);
                             let window = window as *mut dtvcc_window;
-                            dtvcc_window_update_time_hide(window, timing);
                             dtvcc_window_copy_to_screen(self, window)
                         }
                         dtvcc_window_clear(self, i as i32);
@@ -251,7 +250,7 @@ impl dtvcc_service_decoder {
     /// Handle HDW Hide Windows
     pub fn handle_hide_windows(
         &mut self,
-        mut windows_bitmap: i32,
+        mut windows_bitmap: u8,
         encoder: &mut encoder_ctx,
         timing: &mut ccx_common_timing_ctx,
     ) {
@@ -268,8 +267,8 @@ impl dtvcc_service_decoder {
                         if is_true(window.visible) {
                             screen_content_changed = true;
                             window.visible = 0;
+                            window.update_time_hide(timing);
                             let window_ctx = window as *mut dtvcc_window;
-                            dtvcc_window_update_time_hide(window_ctx, timing);
                             if is_false(window.is_empty) {
                                 dtvcc_window_copy_to_screen(self, window_ctx);
                             }
@@ -286,7 +285,7 @@ impl dtvcc_service_decoder {
     /// Handle TGW Toggle Windows
     pub fn handle_toggle_windows(
         &mut self,
-        mut windows_bitmap: i32,
+        mut windows_bitmap: u8,
         encoder: &mut encoder_ctx,
         timing: &mut ccx_common_timing_ctx,
     ) {
@@ -303,11 +302,11 @@ impl dtvcc_service_decoder {
                         if is_false(window.visible) {
                             debug!("[W-{}: 0->1]", i);
                             window.visible = 1;
-                            dtvcc_window_update_time_show(window_ctx, timing);
+                            window.update_time_show(timing);
                         } else {
                             debug!("[W-{}: 1->0]", i);
                             window.visible = 0;
-                            dtvcc_window_update_time_hide(window_ctx, timing);
+                            window.update_time_hide(timing);
                             if is_false(window.is_empty) {
                                 screen_content_changed = true;
                                 dtvcc_window_copy_to_screen(self, window_ctx);
@@ -325,7 +324,7 @@ impl dtvcc_service_decoder {
     /// Handle DLW Delete Windows
     pub fn handle_delete_windows(
         &mut self,
-        mut windows_bitmap: i32,
+        mut windows_bitmap: u8,
         encoder: &mut encoder_ctx,
         timing: &mut ccx_common_timing_ctx,
     ) {
@@ -344,8 +343,8 @@ impl dtvcc_service_decoder {
                             && is_false(window.is_empty);
                         if window_had_content {
                             screen_content_changed = true;
+                            window.update_time_hide(timing);
                             let window = window as *mut dtvcc_window;
-                            dtvcc_window_update_time_hide(window, timing);
                             dtvcc_window_copy_to_screen(self, window);
                             if self.current_window == i as i32 {
                                 self.screen_print(encoder, timing);
@@ -371,7 +370,7 @@ impl dtvcc_service_decoder {
     /// Handle DSW Display Windows
     pub fn handle_display_windows(
         &mut self,
-        mut windows_bitmap: i32,
+        mut windows_bitmap: u8,
         timing: &mut ccx_common_timing_ctx,
     ) {
         debug!("dtvcc_handle_DSW_DisplayWindows: windows:");
@@ -388,9 +387,7 @@ impl dtvcc_service_decoder {
                     }
                     if is_false(window.visible) {
                         window.visible = 1;
-                        unsafe {
-                            dtvcc_window_update_time_show(window, timing);
-                        }
+                        window.update_time_show(timing);
                     }
                 }
                 windows_bitmap >>= 1;
@@ -504,7 +501,10 @@ impl dtvcc_service_decoder {
         }
 
         if pen_style > 0 {
-            //TODO apply static pen_style preset
+            let preset = PenPreset::get_style(pen_style);
+            if let Ok(preset) = preset {
+                window.set_pen_style(preset);
+            }
             window.pen_style = pen_style as i32;
         }
         unsafe {
@@ -542,7 +542,7 @@ impl dtvcc_service_decoder {
                 .for_each(|(command, val)| *command = *val);
 
             if is_true(window.visible) {
-                dtvcc_window_update_time_show(window, timing);
+                window.update_time_show(timing);
             }
             if is_false(window.memory_reserved) {
                 for i in 0..CCX_DTVCC_MAX_ROWS as usize {
@@ -769,8 +769,8 @@ impl dtvcc_service_decoder {
 
             let pen_row = window.pen_row;
             unsafe {
+                window.update_time_hide(timing);
                 let window = window as *mut dtvcc_window;
-                dtvcc_window_update_time_hide(window, timing);
                 dtvcc_window_copy_to_screen(self, window);
                 self.screen_print(encoder, timing);
 
@@ -859,11 +859,95 @@ impl dtvcc_service_decoder {
     }
     /// Process End of Text (ETX)
     pub fn process_etx(&mut self) {}
+    /// Handle DLY Delay
+    pub fn handle_delay(&mut self, tenths_of_sec: u8) {
+        debug!(
+            "dtvcc_handle_DLY_Delay: dely for {} tenths of second",
+            tenths_of_sec
+        );
+        todo!()
+    }
+    /// Handle DLC Delay Cancel
+    pub fn handle_delay_cancel(&mut self) {
+        debug!("dtvcc_handle_DLC_DelayCancel");
+        todo!();
+    }
+    /// Handle RST Reset
+    pub fn handle_reset(&mut self) {
+        unsafe {
+            dtvcc_windows_reset(self);
+        }
+    }
+
     /// Process the character and add it to the current window
     pub fn process_character(&mut self, sym: dtvcc_symbol) {
-        unsafe {
+        /* unsafe {
             dtvcc_process_character(self, sym);
+        } */
+        debug!("{}", self.current_window);
+        let window = &mut self.windows[self.current_window as usize];
+        let window_state = if is_true(window.is_defined) {
+            "OK"
+        } else {
+            "undefined"
+        };
+        let (mut row, mut column) = (-1, -1);
+        if self.current_window != -1 {
+            row = window.pen_row;
+            column = window.pen_column
         }
+        debug!(
+            "dtvcc_process_character: [{:04X}] - Window {} [{}], Pen: {}:{}",
+            sym.sym, self.current_window, window_state, row, column
+        );
+
+        if self.current_window == -1 || is_false(window.is_defined) {
+            return;
+        }
+
+        window.is_empty = 0;
+        // Add symbol to window
+        unsafe {
+            window.rows[window.pen_row as usize]
+                .add(window.pen_column as usize)
+                .write(sym);
+        }
+        // "Painting" char by pen - attribs
+        window.pen_attribs[window.pen_row as usize][window.pen_column as usize] =
+            window.pen_attribs_pattern;
+        // "Painting" char by pen - colors
+        window.pen_colors[window.pen_row as usize][window.pen_column as usize] =
+            window.pen_color_pattern;
+
+        let pd = match dtvcc_window_pd::new(window.attribs.print_direction) {
+            Ok(val) => val,
+            Err(e) => {
+                warn!("{}", e);
+                return;
+            }
+        };
+        match pd {
+            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT => {
+                if window.pen_column + 1 < window.col_count {
+                    window.pen_column += 1;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_RIGHT_LEFT => {
+                if window.pen_column > 0 {
+                    window.pen_column -= 1;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_TOP_BOTTOM => {
+                if window.pen_row + 1 < window.row_count {
+                    window.pen_row += 1;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_BOTTOM_TOP => {
+                if window.pen_row > 0 {
+                    window.pen_row -= 1;
+                }
+            }
+        };
     }
     pub fn screen_print(&mut self, encoder: &mut encoder_ctx, timing: &mut ccx_common_timing_ctx) {
         debug!("dtvcc_screen_print rust");
