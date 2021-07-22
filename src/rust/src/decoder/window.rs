@@ -348,7 +348,7 @@ struct PenColor {
 }
 enum Opacity {
     Solid = 0,
-    Flash = 1,
-    Translucent = 2,
+    _Flash = 1,
+    _Translucent = 2,
     Transparent = 3,
 }
