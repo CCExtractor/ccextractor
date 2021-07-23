@@ -4,6 +4,7 @@
 
 mod commands;
 mod service_decoder;
+mod timing;
 mod window;
 
 use log::{debug, warn};

@@ -683,7 +683,7 @@ void dtvcc_process_bs(dtvcc_service_decoder *decoder)
 				window->pen_column++;
 			break;
 		case DTVCC_WINDOW_PD_LEFT_RIGHT:
-			if (decoder->windows->pen_column > 0)
+			if (window->pen_column > 0)
 				window->pen_column--;
 			break;
 		case DTVCC_WINDOW_PD_BOTTOM_TOP:
@@ -808,7 +808,7 @@ void dtvcc_process_character(dtvcc_service_decoder *decoder, dtvcc_symbol symbol
 				window->pen_column++;
 			break;
 		case DTVCC_WINDOW_PD_RIGHT_LEFT:
-			if (decoder->windows->pen_column > 0)
+			if (window->pen_column > 0)
 				window->pen_column--;
 			break;
 		case DTVCC_WINDOW_PD_TOP_BOTTOM:
