@@ -13,6 +13,8 @@ use crate::{bindings::*, utils::is_true};
 
 const CCX_DTVCC_MAX_PACKET_LENGTH: u8 = 128;
 const CCX_DTVCC_NO_LAST_SEQUENCE: i32 = -1;
+const CCX_DTVCC_SCREENGRID_ROWS: u8 = 75;
+const CCX_DTVCC_SCREENGRID_COLUMNS: u8 = 210;
 
 /// Stores the context required for processing 708 data
 pub struct Dtvcc<'a> {

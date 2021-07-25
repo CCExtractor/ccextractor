@@ -1,6 +1,6 @@
 use log::debug;
 
-use super::timing::get_time_str;
+use super::{timing::get_time_str, CCX_DTVCC_SCREENGRID_COLUMNS, CCX_DTVCC_SCREENGRID_ROWS};
 use crate::bindings::*;
 
 impl dtvcc_window {
@@ -46,6 +46,78 @@ impl dtvcc_window {
         let time = get_time_str(self.time_ms_hide);
         debug!("[W-{}] hide time updated to {}", self.number, time);
     }
+    pub fn get_dimensions(&self) -> Result<(i32, i32, i32, i32), String> {
+        let anchor = dtvcc_pen_anchor_point::new(self.anchor_point)?;
+        let (mut x1, mut x2, mut y1, mut y2) = match anchor {
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_LEFT => (
+                self.anchor_vertical,
+                self.anchor_vertical + self.row_count,
+                self.anchor_horizontal,
+                self.anchor_horizontal + self.col_count,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_CENTER => (
+                self.anchor_vertical,
+                self.anchor_vertical + self.row_count,
+                self.anchor_horizontal - self.col_count,
+                self.anchor_horizontal + self.col_count / 2,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_RIGHT => (
+                self.anchor_vertical,
+                self.anchor_vertical + self.row_count,
+                self.anchor_horizontal - self.col_count,
+                self.anchor_horizontal,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_LEFT => (
+                self.anchor_vertical - self.row_count / 2,
+                self.anchor_vertical + self.row_count / 2,
+                self.anchor_horizontal,
+                self.anchor_horizontal + self.col_count,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_CENTER => (
+                self.anchor_vertical - self.row_count / 2,
+                self.anchor_vertical + self.row_count / 2,
+                self.anchor_horizontal - self.col_count / 2,
+                self.anchor_horizontal + self.col_count / 2,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_RIGHT => (
+                self.anchor_vertical - self.row_count / 2,
+                self.anchor_vertical + self.row_count / 2,
+                self.anchor_horizontal - self.col_count,
+                self.anchor_horizontal,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_LEFT => (
+                self.anchor_vertical - self.row_count,
+                self.anchor_vertical,
+                self.anchor_horizontal,
+                self.anchor_horizontal + self.col_count,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_CENTER => (
+                self.anchor_vertical - self.row_count,
+                self.anchor_vertical,
+                self.anchor_horizontal - self.col_count / 2,
+                self.anchor_horizontal + self.col_count / 2,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_RIGHT => (
+                self.anchor_vertical - self.row_count,
+                self.anchor_vertical,
+                self.anchor_horizontal - self.col_count,
+                self.anchor_horizontal,
+            ),
+        };
+        if x1 < 0 {
+            x1 = 0
+        }
+        if y1 < 0 {
+            y1 = 0
+        }
+        if x2 > CCX_DTVCC_SCREENGRID_ROWS as i32 {
+            x2 = CCX_DTVCC_SCREENGRID_ROWS as i32
+        }
+        if y2 > CCX_DTVCC_SCREENGRID_COLUMNS as i32 {
+            y2 = CCX_DTVCC_SCREENGRID_COLUMNS as i32
+        }
+        Ok((x1, x2, y1, y2))
+    }
 }
 
 impl dtvcc_window_pd {
@@ -56,6 +128,23 @@ impl dtvcc_window_pd {
             2 => Ok(dtvcc_window_pd::DTVCC_WINDOW_PD_TOP_BOTTOM),
             3 => Ok(dtvcc_window_pd::DTVCC_WINDOW_PD_BOTTOM_TOP),
             _ => Err(String::from("Invalid print direction")),
+        }
+    }
+}
+
+impl dtvcc_pen_anchor_point {
+    pub fn new(anchor: i32) -> Result<Self, String> {
+        match anchor {
+            0 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_LEFT),
+            1 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_CENTER),
+            2 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_RIGHT),
+            3 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_LEFT),
+            4 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_CENTER),
+            5 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_RIGHT),
+            6 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_LEFT),
+            7 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_CENTER),
+            8 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_RIGHT),
+            _ => Err(String::from("Invalid pen anchor")),
         }
     }
 }
