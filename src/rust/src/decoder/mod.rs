@@ -5,6 +5,7 @@
 mod commands;
 mod service_decoder;
 mod timing;
+mod tv_screen;
 mod window;
 
 use log::{debug, warn};
@@ -15,6 +16,8 @@ const CCX_DTVCC_MAX_PACKET_LENGTH: u8 = 128;
 const CCX_DTVCC_NO_LAST_SEQUENCE: i32 = -1;
 const CCX_DTVCC_SCREENGRID_ROWS: u8 = 75;
 const CCX_DTVCC_SCREENGRID_COLUMNS: u8 = 210;
+const CCX_DTVCC_MAX_ROWS: u8 = 15;
+const CCX_DTVCC_MAX_COLUMNS: u8 = 32 * 2;
 
 /// Stores the context required for processing 708 data
 pub struct Dtvcc<'a> {
@@ -187,12 +190,16 @@ impl<'a> Dtvcc<'a> {
 
 impl dtvcc_symbol {
     /// Create a new symbol
-    pub fn new(sym: u16) -> dtvcc_symbol {
-        dtvcc_symbol { init: 1, sym }
+    pub fn new(sym: u16) -> Self {
+        Self { init: 1, sym }
     }
     /// Create a new 16 bit symbol
-    pub fn new_16(data1: u8, data2: u8) -> dtvcc_symbol {
+    pub fn new_16(data1: u8, data2: u8) -> Self {
         let sym = (data1 as u16) << 8 | data2 as u16;
-        dtvcc_symbol { init: 1, sym }
+        Self { init: 1, sym }
+    }
+    /// Create a blank uninitialized symbol
+    pub fn default() -> Self {
+        Self { sym: 0, init: 0 }
     }
 }
