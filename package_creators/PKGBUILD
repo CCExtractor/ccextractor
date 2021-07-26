@@ -1,5 +1,5 @@
 pkgname=ccextractor
-pkgver=0.90
+pkgver=0.91
 pkgrel=1
 pkgdesc="A closed captions and teletext subtitles extractor for video streams."
 arch=('i686' 'x86_64')
