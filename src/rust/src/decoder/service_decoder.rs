@@ -8,6 +8,8 @@ use log::{debug, error, warn};
 use super::{
     commands::{self, C0CodeSet, C0Command, C1CodeSet, C1Command},
     window::{PenPreset, WindowPreset},
+    CCX_DTVCC_MAX_COLUMNS, CCX_DTVCC_MAX_ROWS, CCX_DTVCC_SCREENGRID_COLUMNS,
+    CCX_DTVCC_SCREENGRID_ROWS,
 };
 use crate::{
     bindings::*,
@@ -17,10 +19,6 @@ use crate::{
 const CCX_DTVCC_MUSICAL_NOTE_CHAR: u16 = 9836;
 const CCX_DTVCC_MAX_WINDOWS: u8 = 8;
 const DTVCC_COMMANDS_C0_CODES_DTVCC_C0_EXT1: u8 = 16;
-const CCX_DTVCC_SCREENGRID_ROWS: u8 = 75;
-const CCX_DTVCC_SCREENGRID_COLUMNS: u8 = 210;
-const CCX_DTVCC_MAX_ROWS: u8 = 15;
-const CCX_DTVCC_MAX_COLUMNS: u8 = 32 * 2;
 
 impl dtvcc_service_decoder {
     /// Process service block and call handlers for the respective codesets
@@ -46,7 +44,7 @@ impl dtvcc_service_decoder {
                 }
                 used as u8
             } else {
-                let mut used = self.handle_extended_char(&block[i..]);
+                let mut used = self.handle_extended_char(&block[1..]);
                 used += 1; // Since we had CCX_DTVCC_C0_EXT1
                 used
             };
@@ -220,31 +218,28 @@ impl dtvcc_service_decoder {
     ) {
         debug!("dtvcc_handle_CLW_ClearWindows: windows:");
         let mut screen_content_changed = false;
-        unsafe {
-            if windows_bitmap == 0 {
-                debug!("none");
-            } else {
-                for i in 0..CCX_DTVCC_MAX_WINDOWS {
-                    if windows_bitmap & 1 == 1 {
-                        let window = &mut self.windows[i as usize];
-                        debug!("[W{}]", i);
-                        let window_had_content = is_true(window.is_defined)
-                            && is_true(window.visible)
-                            && is_false(window.is_empty);
-                        if window_had_content {
-                            screen_content_changed = true;
-                            window.update_time_hide(timing);
-                            let window = window as *mut dtvcc_window;
-                            dtvcc_window_copy_to_screen(self, window)
-                        }
-                        dtvcc_window_clear(self, i as i32);
+        if windows_bitmap == 0 {
+            debug!("none");
+        } else {
+            for i in 0..CCX_DTVCC_MAX_WINDOWS {
+                if windows_bitmap & 1 == 1 {
+                    let window = &mut self.windows[i as usize];
+                    debug!("[W{}]", i);
+                    let window_had_content = is_true(window.is_defined)
+                        && is_true(window.visible)
+                        && is_false(window.is_empty);
+                    if window_had_content {
+                        screen_content_changed = true;
+                        window.update_time_hide(timing);
+                        self.copy_to_screen(&self.windows[i as usize]);
                     }
-                    windows_bitmap >>= 1;
+                    self.windows[i as usize].clear_text();
                 }
+                windows_bitmap >>= 1;
             }
-            if screen_content_changed {
-                self.screen_print(encoder, timing);
-            }
+        }
+        if screen_content_changed {
+            self.screen_print(encoder, timing);
         }
     }
     /// Handle HDW Hide Windows
@@ -259,26 +254,23 @@ impl dtvcc_service_decoder {
             debug!("none");
         } else {
             let mut screen_content_changed = false;
-            unsafe {
-                for i in 0..CCX_DTVCC_MAX_WINDOWS {
-                    if windows_bitmap & 1 == 1 {
-                        let window = &mut self.windows[i as usize];
-                        debug!("[W{}]", i);
-                        if is_true(window.visible) {
-                            screen_content_changed = true;
-                            window.visible = 0;
-                            window.update_time_hide(timing);
-                            let window_ctx = window as *mut dtvcc_window;
-                            if is_false(window.is_empty) {
-                                dtvcc_window_copy_to_screen(self, window_ctx);
-                            }
+            for i in 0..CCX_DTVCC_MAX_WINDOWS {
+                if windows_bitmap & 1 == 1 {
+                    let window = &mut self.windows[i as usize];
+                    debug!("[W{}]", i);
+                    if is_true(window.visible) {
+                        screen_content_changed = true;
+                        window.visible = 0;
+                        window.update_time_hide(timing);
+                        if is_false(window.is_empty) {
+                            self.copy_to_screen(&self.windows[i as usize]);
                         }
                     }
-                    windows_bitmap >>= 1;
                 }
-                if screen_content_changed && dtvcc_decoder_has_visible_windows(self) == 0 {
-                    self.screen_print(encoder, timing);
-                }
+                windows_bitmap >>= 1;
+            }
+            if screen_content_changed && !self.has_visible_windows() {
+                self.screen_print(encoder, timing);
             }
         }
     }
@@ -294,30 +286,27 @@ impl dtvcc_service_decoder {
             debug!("none");
         } else {
             let mut screen_content_changed = false;
-            unsafe {
-                for i in 0..CCX_DTVCC_MAX_WINDOWS {
-                    let window = &mut self.windows[i as usize];
-                    let window_ctx = window as *mut dtvcc_window;
-                    if windows_bitmap & 1 == 1 && is_true(window.is_defined) {
-                        if is_false(window.visible) {
-                            debug!("[W-{}: 0->1]", i);
-                            window.visible = 1;
-                            window.update_time_show(timing);
-                        } else {
-                            debug!("[W-{}: 1->0]", i);
-                            window.visible = 0;
-                            window.update_time_hide(timing);
-                            if is_false(window.is_empty) {
-                                screen_content_changed = true;
-                                dtvcc_window_copy_to_screen(self, window_ctx);
-                            }
+            for i in 0..CCX_DTVCC_MAX_WINDOWS {
+                let window = &mut self.windows[i as usize];
+                if windows_bitmap & 1 == 1 && is_true(window.is_defined) {
+                    if is_false(window.visible) {
+                        debug!("[W-{}: 0->1]", i);
+                        window.visible = 1;
+                        window.update_time_show(timing);
+                    } else {
+                        debug!("[W-{}: 1->0]", i);
+                        window.visible = 0;
+                        window.update_time_hide(timing);
+                        if is_false(window.is_empty) {
+                            screen_content_changed = true;
+                            self.copy_to_screen(&self.windows[i as usize]);
                         }
                     }
-                    windows_bitmap >>= 1;
                 }
-                if screen_content_changed && dtvcc_decoder_has_visible_windows(self) == 0 {
-                    self.screen_print(encoder, timing);
-                }
+                windows_bitmap >>= 1;
+            }
+            if screen_content_changed && !self.has_visible_windows() {
+                self.screen_print(encoder, timing);
             }
         }
     }
@@ -330,41 +319,38 @@ impl dtvcc_service_decoder {
     ) {
         debug!("dtvcc_handle_DLW_DeleteWindows: windows:");
         let mut screen_content_changed = false;
-        unsafe {
-            if windows_bitmap == 0 {
-                debug!("none");
-            } else {
-                for i in 0..CCX_DTVCC_MAX_WINDOWS {
-                    if windows_bitmap & 1 == 1 {
-                        debug!("Deleting [W{}]", i);
-                        let window = &mut self.windows[i as usize];
-                        let window_had_content = is_true(window.is_defined)
-                            && is_true(window.visible)
-                            && is_false(window.is_empty);
-                        if window_had_content {
-                            screen_content_changed = true;
-                            window.update_time_hide(timing);
-                            let window = window as *mut dtvcc_window;
-                            dtvcc_window_copy_to_screen(self, window);
-                            if self.current_window == i as i32 {
-                                self.screen_print(encoder, timing);
-                            }
-                        }
-                        let window = &mut self.windows[i as usize];
-                        window.is_defined = 0;
-                        window.visible = 0;
-                        window.time_ms_hide = -1;
-                        window.time_ms_show = -1;
+        if windows_bitmap == 0 {
+            debug!("none");
+        } else {
+            for i in 0..CCX_DTVCC_MAX_WINDOWS {
+                if windows_bitmap & 1 == 1 {
+                    debug!("Deleting [W{}]", i);
+                    let window = &mut self.windows[i as usize];
+                    let window_had_content = is_true(window.is_defined)
+                        && is_true(window.visible)
+                        && is_false(window.is_empty);
+                    if window_had_content {
+                        screen_content_changed = true;
+                        window.update_time_hide(timing);
+                        self.copy_to_screen(&self.windows[i as usize]);
                         if self.current_window == i as i32 {
-                            self.current_window = -1;
+                            self.screen_print(encoder, timing);
                         }
                     }
-                    windows_bitmap >>= 1;
+                    let window = &mut self.windows[i as usize];
+                    window.is_defined = 0;
+                    window.visible = 0;
+                    window.time_ms_hide = -1;
+                    window.time_ms_show = -1;
+                    if self.current_window == i as i32 {
+                        self.current_window = -1;
+                    }
                 }
+                windows_bitmap >>= 1;
             }
-            if screen_content_changed && dtvcc_decoder_has_visible_windows(self) == 0 {
-                self.screen_print(encoder, timing);
-            }
+        }
+        if screen_content_changed && !self.has_visible_windows() {
+            self.screen_print(encoder, timing);
         }
     }
     /// Handle DSW Display Windows
@@ -507,56 +493,54 @@ impl dtvcc_service_decoder {
             }
             window.pen_style = pen_style as i32;
         }
-        unsafe {
-            if is_false(window.is_defined) {
-                // If the window is being created, all character positions in the window
-                // are set to the fill color and the pen location is set to (0,0)
-                window.pen_column = 0;
-                window.pen_row = 0;
-                if is_false(window.memory_reserved) {
-                    for i in 0..CCX_DTVCC_MAX_ROWS as usize {
-                        let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize);
-                        if let Err(e) = layout {
-                            error!("dtvcc_handle_DFx_DefineWindow: Incorrect Layout, {}", e);
-                        } else {
-                            let ptr = alloc(layout.unwrap());
-                            if ptr.is_null() {
-                                error!("dtvcc_handle_DFx_DefineWindow: Not enough memory",);
-                            }
-                            // Exit here?
-                            window.rows[i] = ptr as *mut dtvcc_symbol;
-                        }
-                    }
-                    window.memory_reserved = 1;
-                }
-                window.is_defined = 1;
-                dtvcc_window_clear_text(window);
-            } else if do_clear_window {
-                dtvcc_window_clear_text(window);
-            }
-
-            window
-                .commands
-                .iter_mut()
-                .zip(block.iter())
-                .for_each(|(command, val)| *command = *val);
-
-            if is_true(window.visible) {
-                window.update_time_show(timing);
-            }
+        if is_false(window.is_defined) {
+            // If the window is being created, all character positions in the window
+            // are set to the fill color and the pen location is set to (0,0)
+            window.pen_column = 0;
+            window.pen_row = 0;
             if is_false(window.memory_reserved) {
                 for i in 0..CCX_DTVCC_MAX_ROWS as usize {
                     let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize);
                     if let Err(e) = layout {
                         error!("dtvcc_handle_DFx_DefineWindow: Incorrect Layout, {}", e);
                     } else {
-                        dealloc(window.rows[i] as *mut u8, layout.unwrap());
+                        let ptr = unsafe { alloc(layout.unwrap()) };
+                        if ptr.is_null() {
+                            error!("dtvcc_handle_DFx_DefineWindow: Not enough memory",);
+                        }
+                        // Exit here?
+                        window.rows[i] = ptr as *mut dtvcc_symbol;
                     }
                 }
+                window.memory_reserved = 1;
             }
-            // ...also makes the defined windows the current window
-            self.handle_set_current_window(window_id);
+            window.is_defined = 1;
+            window.clear_text();
+        } else if do_clear_window {
+            window.clear_text();
         }
+
+        window
+            .commands
+            .iter_mut()
+            .zip(block.iter())
+            .for_each(|(command, val)| *command = *val);
+
+        if is_true(window.visible) {
+            window.update_time_show(timing);
+        }
+        if is_false(window.memory_reserved) {
+            for i in 0..CCX_DTVCC_MAX_ROWS as usize {
+                let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize);
+                if let Err(e) = layout {
+                    error!("dtvcc_handle_DFx_DefineWindow: Incorrect Layout, {}", e);
+                } else {
+                    unsafe { dealloc(window.rows[i] as *mut u8, layout.unwrap()) };
+                }
+            }
+        }
+        // ...also makes the defined windows the current window
+        self.handle_set_current_window(window_id);
     }
     /// Handle SPA Set Pen Attributes
     pub fn handle_set_pen_attributes(&mut self, block: &[c_uchar]) {
@@ -765,24 +749,21 @@ impl dtvcc_service_decoder {
         };
 
         if is_true(window.is_defined) {
-            debug!("dtvcc_process_cr: rolling up");
+            debug!("dtvcc_process_cr: rolling uper");
 
             let pen_row = window.pen_row;
-            unsafe {
-                window.update_time_hide(timing);
-                let window = window as *mut dtvcc_window;
-                dtvcc_window_copy_to_screen(self, window);
-                self.screen_print(encoder, timing);
+            window.update_time_hide(timing);
+            self.copy_to_screen(&self.windows[self.current_window as usize]);
+            self.screen_print(encoder, timing);
 
-                if rollup_required {
-                    if no_rollup {
-                        dtvcc_window_clear_row(window, pen_row);
-                    } else {
-                        dtvcc_window_rollup(self, window);
-                    }
+            if rollup_required {
+                if no_rollup {
+                    self.windows[self.current_window as usize].clear_row(pen_row as usize);
+                } else {
+                    self.windows[self.current_window as usize].rollup();
                 }
-                dtvcc_window_update_time_show(window, timing);
             }
+            self.windows[self.current_window as usize].update_time_show(timing);
         }
     }
     /// Process Horizontal Carriage Return (HCR)
@@ -793,9 +774,7 @@ impl dtvcc_service_decoder {
         }
         let window = &mut self.windows[self.current_window as usize];
         window.pen_column = 0;
-        unsafe {
-            dtvcc_window_clear_row(window, window.pen_row);
-        }
+        window.clear_row(window.pen_row as usize);
     }
     /// Process Form Feed (FF)
     pub fn process_ff(&mut self) {
@@ -874,16 +853,19 @@ impl dtvcc_service_decoder {
     }
     /// Handle RST Reset
     pub fn handle_reset(&mut self) {
-        unsafe {
-            dtvcc_windows_reset(self);
+        for id in 0..CCX_DTVCC_MAX_WINDOWS as usize {
+            let window = &mut self.windows[id];
+            window.clear_text();
+            window.is_defined = 0;
+            window.visible = 0;
+            window.commands.fill(0);
         }
+        self.current_window = -1;
+        unsafe { (*self.tv).clear() };
     }
 
     /// Process the character and add it to the current window
     pub fn process_character(&mut self, sym: dtvcc_symbol) {
-        /* unsafe {
-            dtvcc_process_character(self, sym);
-        } */
         debug!("{}", self.current_window);
         let window = &mut self.windows[self.current_window as usize];
         let window_state = if is_true(window.is_defined) {
@@ -949,16 +931,156 @@ impl dtvcc_service_decoder {
             }
         };
     }
+    /// Print the contents of tv screen to the output file
     pub fn screen_print(&mut self, encoder: &mut encoder_ctx, timing: &mut ccx_common_timing_ctx) {
         debug!("dtvcc_screen_print rust");
         self.cc_count += 1;
         unsafe {
-            (*self.tv).cc_count += 1;
-            let sn = (*self.tv).service_number;
+            let tv = &mut (*self.tv);
+            tv.cc_count += 1;
+            let sn = tv.service_number;
             let writer = &mut encoder.dtvcc_writers[(sn - 1) as usize];
-            dtvcc_screen_update_time_hide(self.tv, get_visible_end(timing, 3));
+
+            tv.update_time_hide(timing.get_visible_end(3));
             dtvcc_writer_output(writer, self, encoder);
-            dtvcc_tv_clear(self);
+            tv.clear();
         }
+    }
+    /// Copy the contents of window to the tv screen
+    pub fn copy_to_screen(&self, window: &dtvcc_window) {
+        if is_true(self.is_window_overlapping(window)) {
+            debug!("dtvcc_window_copy_to_screen : window needs to be skipped");
+            return;
+        } else {
+            debug!("dtvcc_window_copy_to_screen : no handling required");
+        }
+        debug!("dtvcc_window_copy_to_screen: W-{}", window.number);
+        let anchor = match dtvcc_pen_anchor_point::new(window.anchor_point) {
+            Ok(val) => val,
+            Err(e) => {
+                warn!("{}", e);
+                return;
+            }
+        };
+        let (mut top, mut left) = match anchor {
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_LEFT => {
+                (window.anchor_vertical, window.anchor_horizontal)
+            }
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_CENTER => (
+                window.anchor_vertical,
+                window.anchor_horizontal - window.col_count / 2,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_RIGHT => (
+                window.anchor_vertical,
+                window.anchor_horizontal - window.col_count,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_LEFT => (
+                window.anchor_vertical - window.row_count / 2,
+                window.anchor_horizontal,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_CENTER => (
+                window.anchor_vertical - window.row_count / 2,
+                window.anchor_horizontal - window.col_count / 2,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_RIGHT => (
+                window.anchor_vertical - window.row_count / 2,
+                window.anchor_horizontal - window.col_count,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_LEFT => (
+                window.anchor_vertical - window.row_count,
+                window.anchor_horizontal,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_CENTER => (
+                window.anchor_vertical - window.row_count,
+                window.anchor_horizontal - window.col_count / 2,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_RIGHT => (
+                window.anchor_vertical - window.row_count,
+                window.anchor_horizontal - window.col_count,
+            ),
+        };
+        debug!(
+            "For window {}: Anchor point -> {}, size {}:{}, real position {}:{}",
+            window.number, window.anchor_point, window.row_count, window.col_count, top, left
+        );
+        debug!("we have top [{}] and left [{}]", top, left);
+        if top < 0 {
+            top = 0
+        }
+        if left < 0 {
+            left = 0
+        }
+        let copy_rows = if top + window.row_count >= CCX_DTVCC_SCREENGRID_ROWS as i32 {
+            CCX_DTVCC_SCREENGRID_ROWS as i32 - top
+        } else {
+            window.row_count
+        };
+        let copy_cols = if left + window.col_count >= CCX_DTVCC_SCREENGRID_COLUMNS as i32 {
+            CCX_DTVCC_SCREENGRID_COLUMNS as i32 - left
+        } else {
+            window.col_count
+        };
+        debug!("{}*{} will be copied to the TV.", copy_rows, copy_cols);
+
+        unsafe {
+            let tv = &mut *self.tv;
+            for row in 0..copy_rows as usize {
+                for col in 0..CCX_DTVCC_SCREENGRID_COLUMNS as usize {
+                    if col < copy_cols as usize {
+                        tv.chars[top as usize + row][col] = window.rows[row].add(col).read();
+                    }
+                    tv.pen_attribs[top as usize + row][col] = window.pen_attribs[row][col];
+                    tv.pen_colors[top as usize + row][col] = window.pen_colors[row][col];
+                }
+            }
+
+            tv.update_time_show(window.time_ms_show);
+            tv.update_time_hide(window.time_ms_hide);
+        }
+    }
+    /// Check if the given window is overlapping other windows
+    pub fn is_window_overlapping(&self, window: &dtvcc_window) -> u8 {
+        let mut flag = 0;
+        let (a_x1, a_x2, a_y1, a_y2) = match window.get_dimensions() {
+            Ok(val) => val,
+            Err(e) => {
+                warn!("{}", e);
+                return 0;
+            }
+        };
+        for id in 0..CCX_DTVCC_MAX_WINDOWS as usize {
+            let win_compare = &self.windows[id];
+            let (b_x1, b_x2, b_y1, b_y2) = match win_compare.get_dimensions() {
+                Ok(val) => val,
+                Err(e) => {
+                    warn!("{}", e);
+                    return 0;
+                }
+            };
+            if a_x1 == b_x1 && a_x2 == b_x2 && a_y1 == b_y1 && a_y2 == b_y2 {
+                continue;
+            } else if (a_x1 < b_x2)
+                && (a_x2 > b_x1)
+                && (a_y1 < b_y2)
+                && (a_y2 > b_y1)
+                && is_true(win_compare.visible)
+            {
+                if win_compare.priority < window.priority {
+                    flag = 1
+                } else {
+                    flag = 0
+                }
+            }
+        }
+        flag
+    }
+    /// True if decoder has any visible window
+    pub fn has_visible_windows(&self) -> bool {
+        for id in 0..CCX_DTVCC_MAX_WINDOWS {
+            if is_true(self.windows[id as usize].visible) {
+                return true;
+            }
+        }
+        false
     }
 }

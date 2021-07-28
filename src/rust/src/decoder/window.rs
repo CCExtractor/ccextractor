@@ -1,7 +1,15 @@
-use log::debug;
+use std::{
+    alloc::{alloc_zeroed, dealloc, Layout},
+    intrinsics::copy_nonoverlapping,
+};
 
-use super::timing::get_time_str;
-use crate::bindings::*;
+use log::{debug, error};
+
+use super::{
+    timing::get_time_str, CCX_DTVCC_MAX_COLUMNS, CCX_DTVCC_MAX_ROWS, CCX_DTVCC_SCREENGRID_COLUMNS,
+    CCX_DTVCC_SCREENGRID_ROWS,
+};
+use crate::{bindings::*, utils::is_true};
 
 impl dtvcc_window {
     pub fn set_style(&mut self, preset: WindowPreset) {
@@ -46,6 +54,156 @@ impl dtvcc_window {
         let time = get_time_str(self.time_ms_hide);
         debug!("[W-{}] hide time updated to {}", self.number, time);
     }
+    pub fn get_dimensions(&self) -> Result<(i32, i32, i32, i32), String> {
+        let anchor = dtvcc_pen_anchor_point::new(self.anchor_point)?;
+        let (mut x1, mut x2, mut y1, mut y2) = match anchor {
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_LEFT => (
+                self.anchor_vertical,
+                self.anchor_vertical + self.row_count,
+                self.anchor_horizontal,
+                self.anchor_horizontal + self.col_count,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_CENTER => (
+                self.anchor_vertical,
+                self.anchor_vertical + self.row_count,
+                self.anchor_horizontal - self.col_count,
+                self.anchor_horizontal + self.col_count / 2,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_RIGHT => (
+                self.anchor_vertical,
+                self.anchor_vertical + self.row_count,
+                self.anchor_horizontal - self.col_count,
+                self.anchor_horizontal,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_LEFT => (
+                self.anchor_vertical - self.row_count / 2,
+                self.anchor_vertical + self.row_count / 2,
+                self.anchor_horizontal,
+                self.anchor_horizontal + self.col_count,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_CENTER => (
+                self.anchor_vertical - self.row_count / 2,
+                self.anchor_vertical + self.row_count / 2,
+                self.anchor_horizontal - self.col_count / 2,
+                self.anchor_horizontal + self.col_count / 2,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_RIGHT => (
+                self.anchor_vertical - self.row_count / 2,
+                self.anchor_vertical + self.row_count / 2,
+                self.anchor_horizontal - self.col_count,
+                self.anchor_horizontal,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_LEFT => (
+                self.anchor_vertical - self.row_count,
+                self.anchor_vertical,
+                self.anchor_horizontal,
+                self.anchor_horizontal + self.col_count,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_CENTER => (
+                self.anchor_vertical - self.row_count,
+                self.anchor_vertical,
+                self.anchor_horizontal - self.col_count / 2,
+                self.anchor_horizontal + self.col_count / 2,
+            ),
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_RIGHT => (
+                self.anchor_vertical - self.row_count,
+                self.anchor_vertical,
+                self.anchor_horizontal - self.col_count,
+                self.anchor_horizontal,
+            ),
+        };
+        if x1 < 0 {
+            x1 = 0
+        }
+        if y1 < 0 {
+            y1 = 0
+        }
+        if x2 > CCX_DTVCC_SCREENGRID_ROWS as i32 {
+            x2 = CCX_DTVCC_SCREENGRID_ROWS as i32
+        }
+        if y2 > CCX_DTVCC_SCREENGRID_COLUMNS as i32 {
+            y2 = CCX_DTVCC_SCREENGRID_COLUMNS as i32
+        }
+        Ok((x1, x2, y1, y2))
+    }
+    pub fn clear_text(&mut self) {
+        // Set pen color to default value
+        self.pen_color_pattern = dtvcc_pen_color {
+            fg_color: 0x3F,
+            fg_opacity: 0,
+            bg_color: 0,
+            bg_opacity: 0,
+            edge_color: 0,
+        };
+        // Set pen attributes to default value
+        self.pen_attribs_pattern = dtvcc_pen_attribs {
+            pen_size: dtvcc_pen_size::DTVCC_PEN_SIZE_STANDART as i32,
+            offset: 0,
+            text_tag: dtvcc_pen_text_tag::DTVCC_PEN_TEXT_TAG_UNDEFINED_12 as i32,
+            font_tag: 0,
+            edge_type: dtvcc_pen_edge::DTVCC_PEN_EDGE_NONE as i32,
+            underline: 0,
+            italic: 0,
+        };
+        for row in 0..CCX_DTVCC_MAX_ROWS as usize {
+            self.clear_row(row);
+        }
+        self.is_empty = 1;
+    }
+    pub fn clear_row(&mut self, row_index: usize) {
+        if is_true(self.memory_reserved) {
+            unsafe {
+                let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize);
+                if let Err(e) = layout {
+                    error!("clear_row: Incorrect Layout, {}", e);
+                } else {
+                    let layout = layout.unwrap();
+                    // deallocate previous memory
+                    dealloc(self.rows[row_index] as *mut u8, layout);
+
+                    // allocate new zero initialized memory
+                    let ptr = alloc_zeroed(layout);
+                    if ptr.is_null() {
+                        error!("clear_row: Not enough memory",);
+                    }
+                    self.rows[row_index] = ptr as *mut dtvcc_symbol;
+                }
+            }
+            for col in 0..CCX_DTVCC_MAX_COLUMNS as usize {
+                // Set pen attributes to default value
+                self.pen_attribs[row_index][col] = dtvcc_pen_attribs {
+                    pen_size: dtvcc_pen_size::DTVCC_PEN_SIZE_STANDART as i32,
+                    offset: 0,
+                    text_tag: dtvcc_pen_text_tag::DTVCC_PEN_TEXT_TAG_UNDEFINED_12 as i32,
+                    font_tag: 0,
+                    edge_type: dtvcc_pen_edge::DTVCC_PEN_EDGE_NONE as i32,
+                    underline: 0,
+                    italic: 0,
+                };
+                // Set pen color to default value
+                self.pen_colors[row_index][col] = dtvcc_pen_color {
+                    fg_color: 0x3F,
+                    fg_opacity: 0,
+                    bg_color: 0,
+                    bg_opacity: 0,
+                    edge_color: 0,
+                };
+            }
+        }
+    }
+    pub fn rollup(&mut self) {
+        debug!("roller");
+        for row_index in 0..(self.row_count - 1) as usize {
+            let curr_row = self.rows[row_index];
+            let next_row = self.rows[row_index + 1] as *const dtvcc_symbol;
+            unsafe { copy_nonoverlapping(next_row, curr_row, CCX_DTVCC_MAX_COLUMNS as usize) };
+            for col_index in 0..CCX_DTVCC_MAX_COLUMNS as usize {
+                self.pen_colors[row_index][col_index] = self.pen_colors[row_index + 1][col_index];
+                self.pen_attribs[row_index][col_index] = self.pen_attribs[row_index + 1][col_index];
+            }
+        }
+        self.clear_row((self.row_count - 1) as usize);
+    }
 }
 
 impl dtvcc_window_pd {
@@ -56,6 +214,23 @@ impl dtvcc_window_pd {
             2 => Ok(dtvcc_window_pd::DTVCC_WINDOW_PD_TOP_BOTTOM),
             3 => Ok(dtvcc_window_pd::DTVCC_WINDOW_PD_BOTTOM_TOP),
             _ => Err(String::from("Invalid print direction")),
+        }
+    }
+}
+
+impl dtvcc_pen_anchor_point {
+    pub fn new(anchor: i32) -> Result<Self, String> {
+        match anchor {
+            0 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_LEFT),
+            1 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_CENTER),
+            2 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_RIGHT),
+            3 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_LEFT),
+            4 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_CENTER),
+            5 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_RIGHT),
+            6 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_LEFT),
+            7 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_CENTER),
+            8 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_RIGHT),
+            _ => Err(String::from("Invalid pen anchor")),
         }
     }
 }
