@@ -122,6 +122,9 @@
 			<Component Guid="{1B37F14A-3BA6-4837-8A6F-6EA01A25DA26}">
 				<File Source="./installer/file_selector_windows_plugin.dll" KeyPath="yes"/>
 			</Component>
+			<Component Guid="{B276C96D-9737-4B8C-B55B-60F392DED331}">
+				<File Source="./installer/url_launcher_windows_plugin.dll" KeyPath="yes"/>
+			</Component>
 			<Component Guid="{4B627AA9-55DD-40ED-99F9-54F67EC73887}">
 				<File Source="./installer/flutter_windows.dll" KeyPath="yes"/>
 			</Component>
