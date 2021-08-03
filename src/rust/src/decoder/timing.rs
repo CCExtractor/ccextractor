@@ -39,5 +39,5 @@ pub fn get_time_str(time: LLONG) -> String {
     let mm = time / 1000 / 60 - 60 * hh;
     let ss = time / 1000 - 60 * (mm + 60 * hh);
     let ms = time - 1000 * (ss + 60 * (mm + 60 * hh));
-    format!("{:02}:{:02}:{:02}:{:03}", hh, mm, ss, ms)
+    format!("{:02}:{:02}:{:02},{:03}", hh, mm, ss, ms)
 }
