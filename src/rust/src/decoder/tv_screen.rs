@@ -2,11 +2,7 @@ use log::{debug, warn};
 
 #[cfg(windows)]
 use std::os::windows::io::IntoRawHandle;
-use std::{
-    ffi::CStr,
-    fs::File,
-    os::unix::prelude::{IntoRawFd},
-};
+use std::{ffi::CStr, fs::File, os::unix::prelude::IntoRawFd};
 
 use super::{
     output::{color_to_hex, write_char, write_to_file, Writer},

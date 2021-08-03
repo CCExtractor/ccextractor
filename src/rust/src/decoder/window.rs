@@ -514,9 +514,9 @@ enum Opacity {
     Transparent = 3,
 }
 
-impl Default for dtvcc_pen_color{
+impl Default for dtvcc_pen_color {
     fn default() -> Self {
-        Self{
+        Self {
             fg_color: 0x3F,
             fg_opacity: 0,
             bg_color: 0,
@@ -526,9 +526,9 @@ impl Default for dtvcc_pen_color{
     }
 }
 
-impl Default for  dtvcc_pen_attribs{
+impl Default for dtvcc_pen_attribs {
     fn default() -> Self {
-        Self{
+        Self {
             pen_size: dtvcc_pen_size::DTVCC_PEN_SIZE_STANDART as i32,
             offset: 0,
             text_tag: dtvcc_pen_text_tag::DTVCC_PEN_TEXT_TAG_UNDEFINED_12 as i32,
