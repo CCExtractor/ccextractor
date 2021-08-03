@@ -13,6 +13,7 @@ use super::{
 };
 use crate::{
     bindings::*,
+    decoder::output::Writer,
     utils::{is_false, is_true},
 };
 
@@ -939,10 +940,17 @@ impl dtvcc_service_decoder {
             let tv = &mut (*self.tv);
             tv.cc_count += 1;
             let sn = tv.service_number;
-            let writer = &mut encoder.dtvcc_writers[(sn - 1) as usize];
+            let writer_ctx = &mut encoder.dtvcc_writers[(sn - 1) as usize];
 
             tv.update_time_hide(timing.get_visible_end(3));
-            dtvcc_writer_output(writer, self, encoder);
+            let mut writer = Writer::new(
+                &mut encoder.cea_708_counter,
+                encoder.subs_delay,
+                encoder.write_format,
+                writer_ctx,
+                encoder.no_font_color,
+            );
+            tv.writer_output(&mut writer).unwrap();
             tv.clear();
         }
     }

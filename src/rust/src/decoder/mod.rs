@@ -3,6 +3,7 @@
 //! This module provides a CEA 708 decoder as defined by ANSI/CTA-708-E R-2018
 
 mod commands;
+mod output;
 mod service_decoder;
 mod timing;
 mod tv_screen;
@@ -198,8 +199,15 @@ impl dtvcc_symbol {
         let sym = (data1 as u16) << 8 | data2 as u16;
         Self { init: 1, sym }
     }
+    /// Check if symbol is initialized
+    pub fn is_set(&self) -> bool {
+        is_true(self.init)
+    }
+}
+
+impl Default for dtvcc_symbol {
     /// Create a blank uninitialized symbol
-    pub fn default() -> Self {
+    fn default() -> Self {
         Self { sym: 0, init: 0 }
     }
 }

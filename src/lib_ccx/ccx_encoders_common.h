@@ -24,6 +24,12 @@ if (ctx->buffer == NULL) { fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for 
 typedef struct dtvcc_writer_ctx
 {
 	int fd;
+#ifdef ENABLE_RUST
+	// File handle used to work with files on windows
+	void *fhandle;
+	// Charset of the subtitle
+	char *charset;
+#endif
 	char *filename;
 	iconv_t cd;
 } dtvcc_writer_ctx;
