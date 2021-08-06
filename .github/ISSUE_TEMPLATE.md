@@ -2,6 +2,8 @@ Please prefix your issue with one of the following: [BUG], [PROPOSAL], [QUESTION
 
 To get the version of CCExtractor, you can use `--version`.
 
+If this issue is related to the flutter GUI, please make the issue on the GUI repo [here](https://github.com/CCExtractor/ccextractorfluttergui/issues/new)
+
 Please check all that apply and **remove the ones that do not**.
 
 In the necessary information section, if this is a regression (something that used to work does not work anymore), make sure to specify the last known working version.
