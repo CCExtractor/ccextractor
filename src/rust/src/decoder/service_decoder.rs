@@ -949,6 +949,8 @@ impl dtvcc_service_decoder {
                 encoder.write_format,
                 writer_ctx,
                 encoder.no_font_color,
+                &*encoder.transcript_settings,
+                encoder.no_bom
             );
             tv.writer_output(&mut writer).unwrap();
             tv.clear();

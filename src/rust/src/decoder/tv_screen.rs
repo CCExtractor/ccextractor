@@ -1,11 +1,7 @@
 use log::{debug, warn};
 
-#[cfg(windows)]
-use std::os::windows::io::IntoRawHandle;
-use std::{ffi::CStr, fs::File, os::unix::prelude::IntoRawFd};
-
 use super::{
-    output::{color_to_hex, write_char, write_to_file, Writer},
+    output::{color_to_hex, write_char, Writer},
     timing::get_time_str,
     CCX_DTVCC_SCREENGRID_COLUMNS, CCX_DTVCC_SCREENGRID_ROWS,
 };
@@ -13,6 +9,9 @@ use crate::{
     bindings::*,
     utils::{is_false, is_true},
 };
+#[cfg(windows)]
+use std::os::windows::io::IntoRawHandle;
+use std::{ffi::CStr, fs::File, os::unix::prelude::IntoRawFd};
 
 impl dtvcc_tv_screen {
     /// Clear text from tv screen
@@ -58,7 +57,10 @@ impl dtvcc_tv_screen {
             debug!("dtvcc_writer_output: creating {}", filename);
             let file = File::create(filename).map_err(|err| err.to_string())?;
 
-            //TODO Check for no bom
+            if is_false(writer.no_bom) {
+                let BOM = [0xef, 0xbb, 0xbf];
+                writer.write_to_file(&BOM)?;
+            }
 
             writer.writer_ctx.fd = file.into_raw_fd();
         }
@@ -75,8 +77,10 @@ impl dtvcc_tv_screen {
             debug!("dtvcc_writer_output: creating {}", filename);
             let file = File::create(filename).map_err(|err| err.to_string())?;
 
-            //TODO Check for no bom
-
+            if is_false(writer.no_bom) {
+                let BOM = [0xef, 0xbb, 0xbf];
+                writer.write_to_file(&BOM)?;
+            }
             writer.fhandle = file.into_raw_handle();
         }
 
@@ -102,10 +106,17 @@ impl dtvcc_tv_screen {
         (first, last)
     }
     pub fn write(&self, writer: &mut Writer) {
-        if writer.write_format == ccx_output_format_CCX_OF_SRT {
-            if let Err(e) = self.write_srt(writer) {
-                warn!("{}", e);
+        let result = match writer.write_format {
+            ccx_output_format::CCX_OF_SRT => self.write_srt(writer),
+            ccx_output_format::CCX_OF_SAMI => self.write_sami(writer),
+            ccx_output_format::CCX_OF_TRANSCRIPT => self.write_transcript(writer),
+            _ => {
+                self.write_debug();
+                Err("Unsupported write format".to_owned())
             }
+        };
+        if let Err(err) = result {
+            warn!("{}", err);
         }
     }
     pub fn write_row(
@@ -113,7 +124,7 @@ impl dtvcc_tv_screen {
         writer: &mut Writer,
         row_index: usize,
         use_colors: bool,
-    ) -> std::io::Result<()> {
+    ) -> Result<(), String> {
         let mut buf = Vec::new();
         let mut pen_color = dtvcc_pen_color::default();
         let mut pen_attribs = dtvcc_pen_attribs::default();
@@ -185,11 +196,27 @@ impl dtvcc_tv_screen {
             &mut buf,
         );
         // Tags can still be crossed e.g <f><i>text</f></i>, but testing HTML code has shown that they still are handled correctly.
+        if writer.writer_ctx.cd != (-1_isize) as iconv_t {
+            if writer.writer_ctx.charset.is_null() {
+                debug!("Charset: null");
+            } else {
+                let charset = unsafe {
+                    CStr::from_ptr(writer.writer_ctx.charset)
+                        .to_str()
+                        .map_err(|err| err.to_string())?
+                };
+                debug!("Charset: {}", charset);
 
-        write_to_file(writer, &buf)?;
+                let op = iconv::decode(&buf, charset).map_err(|err| err.to_string())?;
+                writer.write_to_file(op.as_bytes())?;
+            }
+        } else {
+            writer.write_to_file(&buf)?;
+        }
+
         Ok(())
     }
-    pub fn write_srt(&self, writer: &mut Writer) -> std::io::Result<()> {
+    pub fn write_srt(&self, writer: &mut Writer) -> Result<(), String> {
         if self.is_screen_empty(writer) {
             return Ok(());
         }
@@ -205,16 +232,119 @@ impl dtvcc_tv_screen {
             "{}{}{} --> {}{}",
             counter, "\r\n", time_show, time_hide, "\r\n"
         );
-        write_to_file(writer, line.as_bytes())?;
+        writer.write_to_file(line.as_bytes())?;
 
         for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
             if !self.is_row_empty(row_index) {
                 self.write_row(writer, row_index, true)?;
-                write_to_file(writer, b"\r\n")?;
+                writer.write_to_file(b"\r\n")?;
             }
         }
-        write_to_file(writer, b"\r\n")?;
+        writer.write_to_file(b"\r\n")?;
         Ok(())
+    }
+    pub fn write_transcript(&self, writer: &mut Writer) -> Result<(), String> {
+        if self.is_screen_empty(writer) {
+            return Ok(());
+        }
+        if self.time_ms_show + writer.subs_delay < 0 {
+            return Ok(());
+        }
+
+        let time_show = get_time_str(self.time_ms_show);
+        let time_hide = get_time_str(self.time_ms_hide);
+
+        for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
+            if !self.is_row_empty(row_index) {
+                let mut buf = String::new();
+
+                if is_true(writer.transcript_settings.showStartTime) {
+                    buf.push_str(&time_show);
+                    buf.push('|');
+                }
+                if is_true(writer.transcript_settings.showEndTime) {
+                    buf.push_str(&time_hide);
+                    buf.push('|');
+                }
+                if is_true(writer.transcript_settings.showCC) {
+                    buf.push_str("CC1|"); //always CC1 because CEA-708 is field-independent
+                }
+                if is_true(writer.transcript_settings.showMode) {
+                    buf.push_str("POP|"); //TODO caption mode(pop, rollup, etc.)
+                }
+                writer.write_to_file(buf.as_bytes())?;
+                self.write_row(writer, row_index, false)?;
+                writer.write_to_file(b"\r\n")?;
+            }
+        }
+        Ok(())
+    }
+    pub fn write_sami(&self, writer: &mut Writer) -> Result<(), String> {
+        if self.is_screen_empty(writer) {
+            return Err("Sami:- Screen is empty".to_owned());
+        }
+        if self.time_ms_show + writer.subs_delay < 0 {
+            return Err(format!(
+                "Sami:- timing is -ve, {}:{}",
+                self.time_ms_show, writer.subs_delay
+            ));
+        }
+        if self.cc_count == 1 {
+            self.write_sami_header(writer)?;
+        }
+        let buf = format!(
+            "<sync start={}><p class=\"unknowncc\">\r\n",
+            self.time_ms_show + writer.subs_delay
+        );
+        writer.write_to_file(buf.as_bytes())?;
+
+        for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
+            if !self.is_row_empty(row_index) {
+                self.write_row(writer, row_index, true)?;
+                writer.write_to_file("<br>\r\n".as_bytes())?;
+            }
+        }
+        let buf = format!(
+            "<sync start={}><p class=\"unknowncc\">&nbsp;</p></sync>\r\n\r\n",
+            self.time_ms_hide + writer.subs_delay
+        );
+        writer.write_to_file(buf.as_bytes())?;
+        Ok(())
+    }
+    pub fn write_sami_header(&self, writer: &mut Writer) -> Result<(), String> {
+        let mut buf = String::new();
+        buf.push_str("<sami>\r\n");
+        buf.push_str("<head>\r\n");
+        buf.push_str("<style type=\"text/css\">\r\n");
+        buf.push_str("<!--\r\n");
+        buf.push_str(
+            "p {margin-left: 16pt; margin-right: 16pt; margin-bottom: 16pt; margin-top: 16pt;\r\n",
+        );
+        buf.push_str("text-align: center; font-size: 18pt; font-family: arial; font-weight: bold; color: #f0f0f0;}\r\n");
+        buf.push_str(".unknowncc {Name:Unknown; lang:en-US; SAMIType:CC;}\r\n");
+        buf.push_str("-->\r\n");
+        buf.push_str("</style>\r\n");
+        buf.push_str("</head>\r\n\r\n");
+        buf.push_str("<body>\r\n");
+
+        writer.write_to_file(buf.as_bytes())?;
+        Ok(())
+    }
+    pub fn write_debug(&self) {
+        let time_show = get_time_str(self.time_ms_show);
+        let time_hide = get_time_str(self.time_ms_hide);
+        debug!("{} --> {}", time_show, time_hide);
+
+        for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
+            if !self.is_row_empty(row_index) {
+                let mut buf = String::new();
+                let (first, last) = self.get_write_interval(row_index);
+                for sym in self.chars[row_index][first..=last].iter() {
+                    buf.push_str(&format!("{:04X},", sym.sym));
+                }
+                debug!("{}", buf);
+            }
+        }
     }
     pub fn is_screen_empty(&self, writer: &mut Writer) -> bool {
         for index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {

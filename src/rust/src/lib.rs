@@ -87,8 +87,8 @@ pub fn do_cb(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) -> boo
     let cc_type = cc_block[0] & 3;
     let mut timeok = true;
 
-    if ctx.write_format != ccx_output_format_CCX_OF_DVDRAW
-        && ctx.write_format != ccx_output_format_CCX_OF_RAW
+    if ctx.write_format != ccx_output_format::CCX_OF_DVDRAW
+        && ctx.write_format != ccx_output_format::CCX_OF_RAW
         && (cc_block[0] == 0xFA || cc_block[0] == 0xFC || cc_block[0] == 0xFD)
         && (cc_block[1] & 0x7F) == 0
         && (cc_block[2] & 0x7F) == 0
@@ -114,7 +114,7 @@ pub fn do_cb(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) -> boo
                     ctx.processed_enough = 1;
                 }
 
-                if timeok && ctx.write_format != ccx_output_format_CCX_OF_RAW {
+                if timeok && ctx.write_format != ccx_output_format::CCX_OF_RAW {
                     dtvcc.process_cc_data(cc_valid, cc_type, cc_block[1], cc_block[2]);
                 }
                 unsafe { cb_708 += 1 }
