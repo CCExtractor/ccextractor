@@ -3,11 +3,9 @@ use std::{
     os::raw::c_uchar,
 };
 
-use log::{debug, error, warn};
-
+use super::commands::{self, C0CodeSet, C0Command, C1CodeSet, C1Command};
+use super::window::{PenPreset, WindowPreset};
 use super::{
-    commands::{self, C0CodeSet, C0Command, C1CodeSet, C1Command},
-    window::{PenPreset, WindowPreset},
     CCX_DTVCC_MAX_COLUMNS, CCX_DTVCC_MAX_ROWS, CCX_DTVCC_SCREENGRID_COLUMNS,
     CCX_DTVCC_SCREENGRID_ROWS,
 };
@@ -16,6 +14,8 @@ use crate::{
     decoder::output::Writer,
     utils::{is_false, is_true},
 };
+
+use log::{debug, error, warn};
 
 const CCX_DTVCC_MUSICAL_NOTE_CHAR: u16 = 9836;
 const CCX_DTVCC_MAX_WINDOWS: u8 = 8;
@@ -949,6 +949,8 @@ impl dtvcc_service_decoder {
                 encoder.write_format,
                 writer_ctx,
                 encoder.no_font_color,
+                &*encoder.transcript_settings,
+                encoder.no_bom,
             );
             tv.writer_output(&mut writer).unwrap();
             tv.clear();

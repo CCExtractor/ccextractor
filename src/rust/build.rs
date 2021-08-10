@@ -44,4 +44,4 @@ const ALLOWLIST_FUNCTIONS: &[&str] = &[
     "writercwtdata",
 ];
 const ALLOWLIST_TYPES: &[&str] = &[".*(?i)_?dtvcc_.*", "encoder_ctx", "lib_cc_decode"];
-const RUSTIFIED_ENUMS: &[&str] = &["dtvcc_(window|pen)_.*"];
+const RUSTIFIED_ENUMS: &[&str] = &["dtvcc_(window|pen)_.*", "ccx_output_format"];
