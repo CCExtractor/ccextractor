@@ -1,3 +1,9 @@
+0.92 (2021-08-10)
+-----------------
+- Rust updates: Added srt writer
+- Added missing DLL to Windows installer
+- Updated Windows GUI
+
 0.91 (2021-07-26)
 -----------------
 - More Rust in the 708 decoder (Add Pen Presets and timing functions)
