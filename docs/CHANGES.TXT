@@ -1,6 +1,7 @@
 0.92 (2021-08-10)
 -----------------
 - Rust updates: Added srt writer
+- Rust updates:-Added writers for transcripts and SAMI
 - Added missing DLL to Windows installer
 - Updated Windows GUI
 
