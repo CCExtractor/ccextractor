@@ -38,7 +38,7 @@ This will extract the subtitles.
 More usage information can be found on our website:
 
 - [Using the command line tool](https://ccextractor.org/public/general/command_line_usage/)
-- [Using the Windows GUI](https://ccextractor.org/public/general/win_gui_usage/)
+- [Using the Flutter GUI](https://ccextractor.org/public/general/flutter_gui/)
 
 You can also find the list of parameters and their brief description by running `ccextractor` without any arguments.
 
