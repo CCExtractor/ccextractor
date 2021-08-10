@@ -3,13 +3,14 @@ use std::{
     intrinsics::copy_nonoverlapping,
 };
 
-use log::{debug, error};
-
+use super::timing::get_time_str;
 use super::{
-    timing::get_time_str, CCX_DTVCC_MAX_COLUMNS, CCX_DTVCC_MAX_ROWS, CCX_DTVCC_SCREENGRID_COLUMNS,
+    CCX_DTVCC_MAX_COLUMNS, CCX_DTVCC_MAX_ROWS, CCX_DTVCC_SCREENGRID_COLUMNS,
     CCX_DTVCC_SCREENGRID_ROWS,
 };
 use crate::{bindings::*, utils::is_true};
+
+use log::{debug, error};
 
 impl dtvcc_window {
     pub fn set_style(&mut self, preset: WindowPreset) {

@@ -1,17 +1,16 @@
-use log::{debug, warn};
+#[cfg(windows)]
+use std::os::windows::io::IntoRawHandle;
+use std::{ffi::CStr, fs::File, os::unix::prelude::IntoRawFd};
 
-use super::{
-    output::{color_to_hex, write_char, Writer},
-    timing::get_time_str,
-    CCX_DTVCC_SCREENGRID_COLUMNS, CCX_DTVCC_SCREENGRID_ROWS,
-};
+use super::output::{color_to_hex, write_char, Writer};
+use super::timing::get_time_str;
+use super::{CCX_DTVCC_SCREENGRID_COLUMNS, CCX_DTVCC_SCREENGRID_ROWS};
 use crate::{
     bindings::*,
     utils::{is_false, is_true},
 };
-#[cfg(windows)]
-use std::os::windows::io::IntoRawHandle;
-use std::{ffi::CStr, fs::File, os::unix::prelude::IntoRawFd};
+
+use log::{debug, warn};
 
 impl dtvcc_tv_screen {
     /// Clear text from tv screen

@@ -9,9 +9,9 @@ mod timing;
 mod tv_screen;
 mod window;
 
-use log::{debug, warn};
-
 use crate::{bindings::*, utils::is_true};
+
+use log::{debug, warn};
 
 const CCX_DTVCC_MAX_PACKET_LENGTH: u8 = 128;
 const CCX_DTVCC_NO_LAST_SEQUENCE: i32 = -1;

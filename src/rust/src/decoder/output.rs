@@ -1,15 +1,14 @@
+#[cfg(windows)]
+use std::os::windows::io::{FromRawHandle, IntoRawHandle, RawHandle};
 use std::{
     fs::File,
     io::Write,
     os::unix::prelude::{FromRawFd, IntoRawFd},
 };
 
-use log::debug;
-
-#[cfg(windows)]
-use std::os::windows::io::{FromRawHandle, IntoRawHandle, RawHandle};
-
 use crate::{bindings::*, utils::is_true};
+
+use log::debug;
 
 // Context for writing subtitles to file
 pub struct Writer<'a> {
