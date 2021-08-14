@@ -496,7 +496,7 @@ impl PenStyle {
 
 /// Pen Color attributes
 ///
-/// Set by the SPC(SetPenColor) command. Refer Secrtion 8.10.5.10 CEA-708-E
+/// Set by the SPC(SetPenColor) command. Refer Section 8.10.5.10 CEA-708-E
 ///
 /// Text written to the current window will have the color attributes specified by 
 /// the most recent SetPenColor command written to the window.
