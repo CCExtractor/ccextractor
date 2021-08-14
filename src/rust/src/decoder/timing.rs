@@ -1,4 +1,4 @@
-//! Utilty functions to get timing for captions 
+//! Utilty functions to get timing for captions
 
 use crate::{bindings::*, cb_708, cb_field1, cb_field2};
 
@@ -28,7 +28,7 @@ impl ccx_common_timing_ctx {
         debug!("Visible End time={}", get_time_str(fts));
         fts
     }
-    /// Returns a FTS that is guaranteed to be at least 1 ms later than the end of the previous screen, so that there's no timing overlap 
+    /// Returns a FTS that is guaranteed to be at least 1 ms later than the end of the previous screen, so that there's no timing overlap
     pub fn get_visible_start(self, current_field: u8) -> LLONG {
         let mut fts = self.get_fts(current_field);
         if fts <= self.minimum_fts {

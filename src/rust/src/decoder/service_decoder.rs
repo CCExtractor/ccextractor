@@ -97,7 +97,7 @@ impl dtvcc_service_decoder {
     /// Process Carriage Return(CR)
     ///
     /// Refer Section 7.1.4.1 and 8.4.9.2 CEA-708-E
-    /// 
+    ///
     /// Carriage Return (CR) moves the current entry point to the beginning of the next row. If the next row is
     /// below the visible window, the window “rolls up"
     pub fn process_cr(
@@ -174,9 +174,9 @@ impl dtvcc_service_decoder {
     }
 
     /// Process Horizontal Carriage Return (HCR)
-    /// 
+    ///
     /// Refer Section 7.1.4.1 CEA-708-E
-    /// 
+    ///
     /// Horizontal Carriage Return (HCR) moves the current entry point to the beginning of the current row
     /// without row increment or decrement. It shall erase all text on the row
     pub fn process_hcr(&mut self) {
@@ -190,9 +190,9 @@ impl dtvcc_service_decoder {
     }
 
     /// Process Form Feed (FF)
-    /// 
+    ///
     /// Refer Section 7.1.4.1 CEA-708-E
-    /// 
+    ///
     /// Form Feed (FF) erases all text in the window and moves the cursor to the first position (0,0)
     pub fn process_ff(&mut self) {
         if self.current_window == -1 {
@@ -206,7 +206,7 @@ impl dtvcc_service_decoder {
     }
 
     /// Process Backspace (BS)
-    /// 
+    ///
     /// Backspace (BS) moves the cursor back by one position in the print direction
     pub fn process_bs(&mut self) {
         if self.current_window == -1 {
@@ -248,7 +248,7 @@ impl dtvcc_service_decoder {
     }
 
     /// Process P16
-    /// 
+    ///
     /// Used for Code space extension for 16 bit charsets
     pub fn process_p16(&mut self, block: &[c_uchar]) {
         if self.current_window == -1 {
@@ -329,7 +329,7 @@ impl dtvcc_service_decoder {
     }
 
     /// CLW Clear Windows
-    /// 
+    ///
     /// Clear text from all windows specified by bitmap. If window had content then
     /// all text is copied to the TV screen
     pub fn handle_clear_windows(
@@ -366,7 +366,7 @@ impl dtvcc_service_decoder {
     }
 
     /// HDW Hide Windows
-    /// 
+    ///
     /// Hide all windows specified by bitmap. If window was not empty then
     /// all text is copied to the TV screen
     pub fn handle_hide_windows(
@@ -402,7 +402,7 @@ impl dtvcc_service_decoder {
     }
 
     /// TGW Toggle Windows
-    /// 
+    ///
     /// Toggle visibility of all windows specified by bitmap. If window was not empty then
     /// all text is copied to the TV screen
     pub fn handle_toggle_windows(
@@ -442,7 +442,7 @@ impl dtvcc_service_decoder {
     }
 
     /// DLW Delete Windows
-    /// 
+    ///
     /// Delete all windows specified by bitmap. If window had content then
     /// all text is copied to the TV screen
     pub fn handle_delete_windows(
@@ -489,7 +489,7 @@ impl dtvcc_service_decoder {
     }
 
     /// DSW Display Windows
-    /// 
+    ///
     /// Display all windows specified by bitmap.
     pub fn handle_display_windows(
         &mut self,
@@ -519,8 +519,8 @@ impl dtvcc_service_decoder {
     }
 
     /// DFx Define Windows
-    /// 
-    /// Define a new window with the provided attributes. New window is now the current window 
+    ///
+    /// Define a new window with the provided attributes. New window is now the current window
     pub fn handle_define_windows(
         &mut self,
         window_id: u8,
@@ -684,7 +684,7 @@ impl dtvcc_service_decoder {
     }
 
     /// SPA Set Pen Attributes
-    /// 
+    ///
     /// Change pen attributes
     pub fn handle_set_pen_attributes(&mut self, block: &[c_uchar]) {
         if self.current_window == -1 {
@@ -726,7 +726,7 @@ impl dtvcc_service_decoder {
     }
 
     /// SPC Set Pen Color
-    /// 
+    ///
     /// Change pen color
     pub fn handle_set_pen_color(&mut self, block: &[c_uchar]) {
         if self.current_window == -1 {
@@ -765,7 +765,7 @@ impl dtvcc_service_decoder {
     }
 
     /// SPL Set Pen Location
-    /// 
+    ///
     /// Change pen location
     pub fn handle_set_pen_location(&mut self, block: &[c_uchar]) {
         if self.current_window == -1 {
@@ -784,7 +784,7 @@ impl dtvcc_service_decoder {
     }
 
     /// SWA Set Window Attributes
-    /// 
+    ///
     /// Change window attributes
     pub fn handle_set_window_attributes(&mut self, block: &[c_uchar]) {
         if self.current_window == -1 {
@@ -833,7 +833,7 @@ impl dtvcc_service_decoder {
     }
 
     /// CWx Set Current Window
-    /// 
+    ///
     /// Change current window to the window id provided
     pub fn handle_set_current_window(&mut self, window_id: u8) {
         debug!("dtvcc_handle_CWx_SetCurrentWindow: [{}]", window_id);
@@ -1075,15 +1075,15 @@ impl dtvcc_service_decoder {
     }
 
     /// Extended codes (EXT1 + code), from the extended sets
-    /// 
+    ///
     /// G2 (20-7F) => Mostly unmapped, except for a few characters.
-    /// 
+    ///
     /// G3 (A0-FF) => A0 is the CC symbol, everything else reserved for future expansion in EIA708
-    /// 
+    ///
     /// C2 (00-1F) => Reserved for future extended misc. control and captions command codes
-    /// 
+    ///
     /// C3 (80-9F) => Reserved for future extended misc. control and captions command codes
-    /// 
+    ///
     /// WARN: This code is completely untested due to lack of samples. Just following specs!
     /// Returns number of used bytes, usually 1 (since EXT1 is not counted).
     pub fn handle_extended_char(&mut self, block: &[c_uchar]) -> u8 {
