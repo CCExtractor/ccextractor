@@ -1,3 +1,7 @@
+//! Caption Service Decoder
+//!
+//! Caption Service decoder processes service blocks and handles the different [commands][super::commands] received
+
 use std::{
     alloc::{alloc, dealloc, Layout},
     os::raw::c_uchar,
@@ -52,7 +56,10 @@ impl dtvcc_service_decoder {
             i += consumed as usize;
         }
     }
-    /// Handle C0 - Code Set - Miscellaneous Control Codes
+
+    // -------------------------- C0 Commands-------------------------
+
+    /// C0 - Code Set - Miscellaneous Control Codes
     pub fn handle_C0(
         &mut self,
         block: &[u8],
@@ -86,7 +93,179 @@ impl dtvcc_service_decoder {
         }
         length as i32
     }
-    /// Handle C1 - Code Set - Captioning Command Control Codes
+
+    /// Process Carriage Return(CR)
+    ///
+    /// Refer Section 7.1.4.1 and 8.4.9.2 CEA-708-E
+    ///
+    /// Carriage Return (CR) moves the current entry point to the beginning of the next row. If the next row is
+    /// below the visible window, the window “rolls up"
+    pub fn process_cr(
+        &mut self,
+        encoder: &mut encoder_ctx,
+        timing: &mut ccx_common_timing_ctx,
+        no_rollup: bool,
+    ) {
+        if self.current_window == -1 {
+            warn!("dtvcc_process_cr: Window has to be defined first");
+            return;
+        }
+        let window = &mut self.windows[self.current_window as usize];
+        let mut rollup_required = false;
+        let pd = match dtvcc_window_pd::new(window.attribs.print_direction) {
+            Ok(val) => val,
+            Err(e) => {
+                warn!("{}", e);
+                return;
+            }
+        };
+        match pd {
+            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT => {
+                window.pen_column = 0;
+                if window.pen_row + 1 < window.row_count {
+                    window.pen_row += 1;
+                } else {
+                    rollup_required = true;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_RIGHT_LEFT => {
+                window.pen_column = window.col_count;
+                if window.pen_row + 1 < window.row_count {
+                    window.pen_row += 1;
+                } else {
+                    rollup_required = true;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_TOP_BOTTOM => {
+                window.pen_row = 0;
+                if window.pen_column + 1 < window.col_count {
+                    window.pen_column += 1;
+                } else {
+                    rollup_required = true;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_BOTTOM_TOP => {
+                window.pen_row = window.row_count;
+                if window.pen_column + 1 < window.col_count {
+                    window.pen_column += 1;
+                } else {
+                    rollup_required = true;
+                }
+            }
+        };
+
+        if is_true(window.is_defined) {
+            debug!("dtvcc_process_cr: rolling uper");
+
+            let pen_row = window.pen_row;
+            window.update_time_hide(timing);
+            self.copy_to_screen(&self.windows[self.current_window as usize]);
+            self.screen_print(encoder, timing);
+
+            if rollup_required {
+                if no_rollup {
+                    self.windows[self.current_window as usize].clear_row(pen_row as usize);
+                } else {
+                    self.windows[self.current_window as usize].rollup();
+                }
+            }
+            self.windows[self.current_window as usize].update_time_show(timing);
+        }
+    }
+
+    /// Process Horizontal Carriage Return (HCR)
+    ///
+    /// Refer Section 7.1.4.1 CEA-708-E
+    ///
+    /// Horizontal Carriage Return (HCR) moves the current entry point to the beginning of the current row
+    /// without row increment or decrement. It shall erase all text on the row
+    pub fn process_hcr(&mut self) {
+        if self.current_window == -1 {
+            warn!("dtvcc_process_hcr: Window has to be defined first");
+            return;
+        }
+        let window = &mut self.windows[self.current_window as usize];
+        window.pen_column = 0;
+        window.clear_row(window.pen_row as usize);
+    }
+
+    /// Process Form Feed (FF)
+    ///
+    /// Refer Section 7.1.4.1 CEA-708-E
+    ///
+    /// Form Feed (FF) erases all text in the window and moves the cursor to the first position (0,0)
+    pub fn process_ff(&mut self) {
+        if self.current_window == -1 {
+            warn!("dtvcc_process_ff: Window has to be defined first");
+            return;
+        }
+        let window = &mut self.windows[self.current_window as usize];
+        window.pen_column = 0;
+        window.pen_row = 0;
+        window.clear_text();
+    }
+
+    /// Process Backspace (BS)
+    ///
+    /// Backspace (BS) moves the cursor back by one position in the print direction
+    pub fn process_bs(&mut self) {
+        if self.current_window == -1 {
+            warn!("dtvcc_process_bs: Window has to be defined first");
+            return;
+        }
+        //it looks strange, but in some videos (rarely) we have a backspace command
+        //we just print one character over another
+        let window = &mut self.windows[self.current_window as usize];
+        let pd = match dtvcc_window_pd::new(window.attribs.print_direction) {
+            Ok(val) => val,
+            Err(e) => {
+                warn!("{}", e);
+                return;
+            }
+        };
+        match pd {
+            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT => {
+                if window.pen_column > 0 {
+                    window.pen_column -= 1;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_RIGHT_LEFT => {
+                if window.pen_column + 1 < window.col_count {
+                    window.pen_column += 1;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_TOP_BOTTOM => {
+                if window.pen_row > 0 {
+                    window.pen_row -= 1;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_BOTTOM_TOP => {
+                if window.pen_row + 1 < window.row_count {
+                    window.pen_row += 1;
+                }
+            }
+        };
+    }
+
+    /// Process P16
+    ///
+    /// Used for Code space extension for 16 bit charsets
+    pub fn process_p16(&mut self, block: &[c_uchar]) {
+        if self.current_window == -1 {
+            warn!("dtvcc_process_p16: Window has to be defined first");
+            return;
+        }
+        let sym = dtvcc_symbol::new_16(block[0], block[1]);
+        debug!("dtvcc_process_p16: [{:4X}]", sym.sym);
+        self.process_character(sym);
+    }
+
+    /// Process End of Text (ETX)
+    pub fn process_etx(&mut self) {}
+
+    // -------------------------- C1 Commands-------------------------
+
+    /// C1 - Code Set - Captioning Command Control Codes
     pub fn handle_C1(
         &mut self,
         block: &[c_uchar],
@@ -148,69 +327,11 @@ impl dtvcc_service_decoder {
         };
         length as i32
     }
-    /// Handle G0 - Code Set - ASCII printable characters
-    pub fn handle_G0(&mut self, block: &[c_uchar]) -> i32 {
-        if self.current_window == -1 {
-            warn!("dtvcc_handle_G0: Window has to be defined first");
-            return block.len() as i32;
-        }
 
-        let character = block[0];
-        debug!("G0: [{:2X}] ({})", character, character as char);
-        let sym = if character == 0x7F {
-            dtvcc_symbol::new(CCX_DTVCC_MUSICAL_NOTE_CHAR)
-        } else {
-            dtvcc_symbol::new(character as u16)
-        };
-        self.process_character(sym);
-        1
-    }
-    /// Handle G1 - Code Set - ISO 8859-1 LATIN-1 Character Set
-    pub fn handle_G1(&mut self, block: &[c_uchar]) -> i32 {
-        if self.current_window == -1 {
-            warn!("dtvcc_handle_G1: Window has to be defined first");
-            return block.len() as i32;
-        }
-
-        let character = block[0];
-        debug!("G1: [{:2X}] ({})", character, character as char);
-        let sym = dtvcc_symbol::new(character as u16);
-        self.process_character(sym);
-        1
-    }
-    /// Handle extended codes (EXT1 + code), from the extended sets
-    /// G2 (20-7F) => Mostly unmapped, except for a few characters.
-    /// G3 (A0-FF) => A0 is the CC symbol, everything else reserved for future expansion in EIA708
-    /// C2 (00-1F) => Reserved for future extended misc. control and captions command codes
-    /// C3 (80-9F) => Reserved for future extended misc. control and captions command codes
-    /// WARN: This code is completely untested due to lack of samples. Just following specs!
-    /// Returns number of used bytes, usually 1 (since EXT1 is not counted).
-    pub fn handle_extended_char(&mut self, block: &[c_uchar]) -> u8 {
-        let code = block[0];
-        debug!(
-            "dtvcc_handle_extended_char, first data code: [{}], length: [{}]",
-            code as char,
-            block.len()
-        );
-
-        match code {
-            0..=0x1F => commands::handle_C2(code),
-            0x20..=0x7F => {
-                let val = unsafe { dtvcc_get_internal_from_G2(code) };
-                let sym = dtvcc_symbol::new(val as u16);
-                self.process_character(sym);
-                1
-            }
-            0x80..=0x9F => commands::handle_C3(code, block[1]),
-            _ => {
-                let val = unsafe { dtvcc_get_internal_from_G3(code) };
-                let sym = dtvcc_symbol::new(val as u16);
-                self.process_character(sym);
-                1
-            }
-        }
-    }
-    /// Handle CLW Clear Windows
+    /// CLW Clear Windows
+    ///
+    /// Clear text from all windows specified by bitmap. If window had content then
+    /// all text is copied to the TV screen
     pub fn handle_clear_windows(
         &mut self,
         mut windows_bitmap: u8,
@@ -243,7 +364,11 @@ impl dtvcc_service_decoder {
             self.screen_print(encoder, timing);
         }
     }
-    /// Handle HDW Hide Windows
+
+    /// HDW Hide Windows
+    ///
+    /// Hide all windows specified by bitmap. If window was not empty then
+    /// all text is copied to the TV screen
     pub fn handle_hide_windows(
         &mut self,
         mut windows_bitmap: u8,
@@ -275,7 +400,11 @@ impl dtvcc_service_decoder {
             }
         }
     }
-    /// Handle TGW Toggle Windows
+
+    /// TGW Toggle Windows
+    ///
+    /// Toggle visibility of all windows specified by bitmap. If window was not empty then
+    /// all text is copied to the TV screen
     pub fn handle_toggle_windows(
         &mut self,
         mut windows_bitmap: u8,
@@ -311,7 +440,11 @@ impl dtvcc_service_decoder {
             }
         }
     }
-    /// Handle DLW Delete Windows
+
+    /// DLW Delete Windows
+    ///
+    /// Delete all windows specified by bitmap. If window had content then
+    /// all text is copied to the TV screen
     pub fn handle_delete_windows(
         &mut self,
         mut windows_bitmap: u8,
@@ -354,7 +487,10 @@ impl dtvcc_service_decoder {
             self.screen_print(encoder, timing);
         }
     }
-    /// Handle DSW Display Windows
+
+    /// DSW Display Windows
+    ///
+    /// Display all windows specified by bitmap.
     pub fn handle_display_windows(
         &mut self,
         mut windows_bitmap: u8,
@@ -381,7 +517,10 @@ impl dtvcc_service_decoder {
             }
         }
     }
-    /// Handle DFx Define Windows
+
+    /// DFx Define Windows
+    ///
+    /// Define a new window with the provided attributes. New window is now the current window
     pub fn handle_define_windows(
         &mut self,
         window_id: u8,
@@ -543,7 +682,10 @@ impl dtvcc_service_decoder {
         // ...also makes the defined windows the current window
         self.handle_set_current_window(window_id);
     }
-    /// Handle SPA Set Pen Attributes
+
+    /// SPA Set Pen Attributes
+    ///
+    /// Change pen attributes
     pub fn handle_set_pen_attributes(&mut self, block: &[c_uchar]) {
         if self.current_window == -1 {
             warn!("dtvcc_handle_SPA_SetPenAttributes: Window has to be defined first");
@@ -582,7 +724,10 @@ impl dtvcc_service_decoder {
         pen.underline = underline as i32;
         pen.italic = italic as i32;
     }
-    /// Handle SPC Set Pen Color
+
+    /// SPC Set Pen Color
+    ///
+    /// Change pen color
     pub fn handle_set_pen_color(&mut self, block: &[c_uchar]) {
         if self.current_window == -1 {
             warn!("dtvcc_handle_SPC_SetPenColor: Window has to be defined first");
@@ -618,7 +763,10 @@ impl dtvcc_service_decoder {
         color.bg_opacity = bg_opacity as i32;
         color.edge_color = edge_color as i32;
     }
-    /// Handle SPL Set Pen Location
+
+    /// SPL Set Pen Location
+    ///
+    /// Change pen location
     pub fn handle_set_pen_location(&mut self, block: &[c_uchar]) {
         if self.current_window == -1 {
             warn!("dtvcc_handle_SPL_SetPenLocation: Window has to be defined first");
@@ -634,7 +782,10 @@ impl dtvcc_service_decoder {
         window.pen_row = row as i32;
         window.pen_column = col as i32;
     }
-    /// Handle SWA Set Window Attributes
+
+    /// SWA Set Window Attributes
+    ///
+    /// Change window attributes
     pub fn handle_set_window_attributes(&mut self, block: &[c_uchar]) {
         if self.current_window == -1 {
             warn!("dtvcc_handle_SWA_SetWindowAttributes: Window has to be defined first");
@@ -680,7 +831,10 @@ impl dtvcc_service_decoder {
         window_attribts.effect_direction = effect_dir as i32;
         window_attribts.effect_speed = effect_speed as i32;
     }
-    /// handle CWx Set Current Window
+
+    /// CWx Set Current Window
+    ///
+    /// Change current window to the window id provided
     pub fn handle_set_current_window(&mut self, window_id: u8) {
         debug!("dtvcc_handle_CWx_SetCurrentWindow: [{}]", window_id);
         if is_true(self.windows[window_id as usize].is_defined) {
@@ -692,167 +846,23 @@ impl dtvcc_service_decoder {
             );
         }
     }
-    /// Process Carriage Return(CR)
-    ///
-    /// Refer Section 7.1.4.1 and 8.4.9.2 CEA-708-E
-    pub fn process_cr(
-        &mut self,
-        encoder: &mut encoder_ctx,
-        timing: &mut ccx_common_timing_ctx,
-        no_rollup: bool,
-    ) {
-        if self.current_window == -1 {
-            warn!("dtvcc_process_cr: Window has to be defined first");
-            return;
-        }
-        let window = &mut self.windows[self.current_window as usize];
-        let mut rollup_required = false;
-        let pd = match dtvcc_window_pd::new(window.attribs.print_direction) {
-            Ok(val) => val,
-            Err(e) => {
-                warn!("{}", e);
-                return;
-            }
-        };
-        match pd {
-            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT => {
-                window.pen_column = 0;
-                if window.pen_row + 1 < window.row_count {
-                    window.pen_row += 1;
-                } else {
-                    rollup_required = true;
-                }
-            }
-            dtvcc_window_pd::DTVCC_WINDOW_PD_RIGHT_LEFT => {
-                window.pen_column = window.col_count;
-                if window.pen_row + 1 < window.row_count {
-                    window.pen_row += 1;
-                } else {
-                    rollup_required = true;
-                }
-            }
-            dtvcc_window_pd::DTVCC_WINDOW_PD_TOP_BOTTOM => {
-                window.pen_row = 0;
-                if window.pen_column + 1 < window.col_count {
-                    window.pen_column += 1;
-                } else {
-                    rollup_required = true;
-                }
-            }
-            dtvcc_window_pd::DTVCC_WINDOW_PD_BOTTOM_TOP => {
-                window.pen_row = window.row_count;
-                if window.pen_column + 1 < window.col_count {
-                    window.pen_column += 1;
-                } else {
-                    rollup_required = true;
-                }
-            }
-        };
 
-        if is_true(window.is_defined) {
-            debug!("dtvcc_process_cr: rolling uper");
-
-            let pen_row = window.pen_row;
-            window.update_time_hide(timing);
-            self.copy_to_screen(&self.windows[self.current_window as usize]);
-            self.screen_print(encoder, timing);
-
-            if rollup_required {
-                if no_rollup {
-                    self.windows[self.current_window as usize].clear_row(pen_row as usize);
-                } else {
-                    self.windows[self.current_window as usize].rollup();
-                }
-            }
-            self.windows[self.current_window as usize].update_time_show(timing);
-        }
-    }
-    /// Process Horizontal Carriage Return (HCR)
-    pub fn process_hcr(&mut self) {
-        if self.current_window == -1 {
-            warn!("dtvcc_process_hcr: Window has to be defined first");
-            return;
-        }
-        let window = &mut self.windows[self.current_window as usize];
-        window.pen_column = 0;
-        window.clear_row(window.pen_row as usize);
-    }
-    /// Process Form Feed (FF)
-    pub fn process_ff(&mut self) {
-        if self.current_window == -1 {
-            warn!("dtvcc_process_ff: Window has to be defined first");
-            return;
-        }
-        let window = &mut self.windows[self.current_window as usize];
-        window.pen_column = 0;
-        window.pen_row = 0;
-    }
-    /// Process Backspace (BS)
-    pub fn process_bs(&mut self) {
-        if self.current_window == -1 {
-            warn!("dtvcc_process_bs: Window has to be defined first");
-            return;
-        }
-        //it looks strange, but in some videos (rarely) we have a backspace command
-        //we just print one character over another
-        let window = &mut self.windows[self.current_window as usize];
-        let pd = match dtvcc_window_pd::new(window.attribs.print_direction) {
-            Ok(val) => val,
-            Err(e) => {
-                warn!("{}", e);
-                return;
-            }
-        };
-        match pd {
-            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT => {
-                if window.pen_column > 0 {
-                    window.pen_column -= 1;
-                }
-            }
-            dtvcc_window_pd::DTVCC_WINDOW_PD_RIGHT_LEFT => {
-                if window.pen_column + 1 < window.col_count {
-                    window.pen_column += 1;
-                }
-            }
-            dtvcc_window_pd::DTVCC_WINDOW_PD_TOP_BOTTOM => {
-                if window.pen_row > 0 {
-                    window.pen_row -= 1;
-                }
-            }
-            dtvcc_window_pd::DTVCC_WINDOW_PD_BOTTOM_TOP => {
-                if window.pen_row + 1 < window.row_count {
-                    window.pen_row += 1;
-                }
-            }
-        };
-    }
-    /// Process P16
-    /// Used for Code space extension for 16 bit charsets
-    pub fn process_p16(&mut self, block: &[c_uchar]) {
-        if self.current_window == -1 {
-            warn!("dtvcc_process_p16: Window has to be defined first");
-            return;
-        }
-        let sym = dtvcc_symbol::new_16(block[0], block[1]);
-        debug!("dtvcc_process_p16: [{:4X}]", sym.sym);
-        self.process_character(sym);
-    }
-    /// Process End of Text (ETX)
-    pub fn process_etx(&mut self) {}
-    /// Handle DLY Delay
+    /// DLY Delay
     pub fn handle_delay(&mut self, tenths_of_sec: u8) {
         debug!(
             "dtvcc_handle_DLY_Delay: dely for {} tenths of second",
             tenths_of_sec
         );
-        todo!()
     }
-    /// Handle DLC Delay Cancel
+
+    /// DLC Delay Cancel
     pub fn handle_delay_cancel(&mut self) {
         debug!("dtvcc_handle_DLC_DelayCancel");
-        todo!();
     }
-    /// Handle RST Reset
+
+    /// RST Reset
+    ///
+    /// Clear text from all windows and set all windows to undefined and hidden
     pub fn handle_reset(&mut self) {
         for id in 0..CCX_DTVCC_MAX_WINDOWS as usize {
             let window = &mut self.windows[id];
@@ -865,73 +875,6 @@ impl dtvcc_service_decoder {
         unsafe { (*self.tv).clear() };
     }
 
-    /// Process the character and add it to the current window
-    pub fn process_character(&mut self, sym: dtvcc_symbol) {
-        debug!("{}", self.current_window);
-        let window = &mut self.windows[self.current_window as usize];
-        let window_state = if is_true(window.is_defined) {
-            "OK"
-        } else {
-            "undefined"
-        };
-        let (mut row, mut column) = (-1, -1);
-        if self.current_window != -1 {
-            row = window.pen_row;
-            column = window.pen_column
-        }
-        debug!(
-            "dtvcc_process_character: [{:04X}] - Window {} [{}], Pen: {}:{}",
-            sym.sym, self.current_window, window_state, row, column
-        );
-
-        if self.current_window == -1 || is_false(window.is_defined) {
-            return;
-        }
-
-        window.is_empty = 0;
-        // Add symbol to window
-        unsafe {
-            window.rows[window.pen_row as usize]
-                .add(window.pen_column as usize)
-                .write(sym);
-        }
-        // "Painting" char by pen - attribs
-        window.pen_attribs[window.pen_row as usize][window.pen_column as usize] =
-            window.pen_attribs_pattern;
-        // "Painting" char by pen - colors
-        window.pen_colors[window.pen_row as usize][window.pen_column as usize] =
-            window.pen_color_pattern;
-
-        let pd = match dtvcc_window_pd::new(window.attribs.print_direction) {
-            Ok(val) => val,
-            Err(e) => {
-                warn!("{}", e);
-                return;
-            }
-        };
-        match pd {
-            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT => {
-                if window.pen_column + 1 < window.col_count {
-                    window.pen_column += 1;
-                }
-            }
-            dtvcc_window_pd::DTVCC_WINDOW_PD_RIGHT_LEFT => {
-                if window.pen_column > 0 {
-                    window.pen_column -= 1;
-                }
-            }
-            dtvcc_window_pd::DTVCC_WINDOW_PD_TOP_BOTTOM => {
-                if window.pen_row + 1 < window.row_count {
-                    window.pen_row += 1;
-                }
-            }
-            dtvcc_window_pd::DTVCC_WINDOW_PD_BOTTOM_TOP => {
-                if window.pen_row > 0 {
-                    window.pen_row -= 1;
-                }
-            }
-        };
-    }
     /// Print the contents of tv screen to the output file
     pub fn screen_print(&mut self, encoder: &mut encoder_ctx, timing: &mut ccx_common_timing_ctx) {
         debug!("dtvcc_screen_print rust");
@@ -956,9 +899,10 @@ impl dtvcc_service_decoder {
             tv.clear();
         }
     }
-    /// Copy the contents of window to the tv screen
+
+    /// Copy the contents of window to the TV screen
     pub fn copy_to_screen(&self, window: &dtvcc_window) {
-        if is_true(self.is_window_overlapping(window)) {
+        if self.is_window_overlapping(window) {
             debug!("dtvcc_window_copy_to_screen : window needs to be skipped");
             return;
         } else {
@@ -1048,14 +992,15 @@ impl dtvcc_service_decoder {
             tv.update_time_hide(window.time_ms_hide);
         }
     }
-    /// Check if the given window is overlapping other windows
-    pub fn is_window_overlapping(&self, window: &dtvcc_window) -> u8 {
+
+    /// Returns `true` if the given window is overlapping other windows
+    pub fn is_window_overlapping(&self, window: &dtvcc_window) -> bool {
         let mut flag = 0;
         let (a_x1, a_x2, a_y1, a_y2) = match window.get_dimensions() {
             Ok(val) => val,
             Err(e) => {
                 warn!("{}", e);
-                return 0;
+                return false;
             }
         };
         for id in 0..CCX_DTVCC_MAX_WINDOWS as usize {
@@ -1064,7 +1009,7 @@ impl dtvcc_service_decoder {
                 Ok(val) => val,
                 Err(e) => {
                     warn!("{}", e);
-                    return 0;
+                    return false;
                 }
             };
             if a_x1 == b_x1 && a_x2 == b_x2 && a_y1 == b_y1 && a_y2 == b_y2 {
@@ -1082,9 +1027,10 @@ impl dtvcc_service_decoder {
                 }
             }
         }
-        flag
+        flag == 1
     }
-    /// True if decoder has any visible window
+
+    /// Returns `true` if decoder has any visible window
     pub fn has_visible_windows(&self) -> bool {
         for id in 0..CCX_DTVCC_MAX_WINDOWS {
             if is_true(self.windows[id as usize].visible) {
@@ -1092,5 +1038,145 @@ impl dtvcc_service_decoder {
             }
         }
         false
+    }
+
+    // -------------------------- G0, G1 and extended Commands-------------------------
+
+    /// G0 - Code Set - ASCII printable characters
+    pub fn handle_G0(&mut self, block: &[c_uchar]) -> i32 {
+        if self.current_window == -1 {
+            warn!("dtvcc_handle_G0: Window has to be defined first");
+            return block.len() as i32;
+        }
+
+        let character = block[0];
+        debug!("G0: [{:2X}] ({})", character, character as char);
+        let sym = if character == 0x7F {
+            dtvcc_symbol::new(CCX_DTVCC_MUSICAL_NOTE_CHAR)
+        } else {
+            dtvcc_symbol::new(character as u16)
+        };
+        self.process_character(sym);
+        1
+    }
+
+    /// G1 - Code Set - ISO 8859-1 LATIN-1 Character Set
+    pub fn handle_G1(&mut self, block: &[c_uchar]) -> i32 {
+        if self.current_window == -1 {
+            warn!("dtvcc_handle_G1: Window has to be defined first");
+            return block.len() as i32;
+        }
+
+        let character = block[0];
+        debug!("G1: [{:2X}] ({})", character, character as char);
+        let sym = dtvcc_symbol::new(character as u16);
+        self.process_character(sym);
+        1
+    }
+
+    /// Extended codes (EXT1 + code), from the extended sets
+    ///
+    /// G2 (20-7F) => Mostly unmapped, except for a few characters.
+    ///
+    /// G3 (A0-FF) => A0 is the CC symbol, everything else reserved for future expansion in EIA708
+    ///
+    /// C2 (00-1F) => Reserved for future extended misc. control and captions command codes
+    ///
+    /// C3 (80-9F) => Reserved for future extended misc. control and captions command codes
+    ///
+    /// WARN: This code is completely untested due to lack of samples. Just following specs!
+    /// Returns number of used bytes, usually 1 (since EXT1 is not counted).
+    pub fn handle_extended_char(&mut self, block: &[c_uchar]) -> u8 {
+        let code = block[0];
+        debug!(
+            "dtvcc_handle_extended_char, first data code: [{}], length: [{}]",
+            code as char,
+            block.len()
+        );
+
+        match code {
+            0..=0x1F => commands::handle_C2(code),
+            0x20..=0x7F => {
+                let val = unsafe { dtvcc_get_internal_from_G2(code) };
+                let sym = dtvcc_symbol::new(val as u16);
+                self.process_character(sym);
+                1
+            }
+            0x80..=0x9F => commands::handle_C3(code, block[1]),
+            _ => {
+                let val = unsafe { dtvcc_get_internal_from_G3(code) };
+                let sym = dtvcc_symbol::new(val as u16);
+                self.process_character(sym);
+                1
+            }
+        }
+    }
+
+    /// Process the character and add it to the current window
+    pub fn process_character(&mut self, sym: dtvcc_symbol) {
+        debug!("{}", self.current_window);
+        let window = &mut self.windows[self.current_window as usize];
+        let window_state = if is_true(window.is_defined) {
+            "OK"
+        } else {
+            "undefined"
+        };
+        let (mut row, mut column) = (-1, -1);
+        if self.current_window != -1 {
+            row = window.pen_row;
+            column = window.pen_column
+        }
+        debug!(
+            "dtvcc_process_character: [{:04X}] - Window {} [{}], Pen: {}:{}",
+            sym.sym, self.current_window, window_state, row, column
+        );
+
+        if self.current_window == -1 || is_false(window.is_defined) {
+            return;
+        }
+
+        window.is_empty = 0;
+        // Add symbol to window
+        unsafe {
+            window.rows[window.pen_row as usize]
+                .add(window.pen_column as usize)
+                .write(sym);
+        }
+        // "Painting" char by pen - attribs
+        window.pen_attribs[window.pen_row as usize][window.pen_column as usize] =
+            window.pen_attribs_pattern;
+        // "Painting" char by pen - colors
+        window.pen_colors[window.pen_row as usize][window.pen_column as usize] =
+            window.pen_color_pattern;
+
+        let pd = match dtvcc_window_pd::new(window.attribs.print_direction) {
+            Ok(val) => val,
+            Err(e) => {
+                warn!("{}", e);
+                return;
+            }
+        };
+        match pd {
+            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT => {
+                if window.pen_column + 1 < window.col_count {
+                    window.pen_column += 1;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_RIGHT_LEFT => {
+                if window.pen_column > 0 {
+                    window.pen_column -= 1;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_TOP_BOTTOM => {
+                if window.pen_row + 1 < window.row_count {
+                    window.pen_row += 1;
+                }
+            }
+            dtvcc_window_pd::DTVCC_WINDOW_PD_BOTTOM_TOP => {
+                if window.pen_row > 0 {
+                    window.pen_row -= 1;
+                }
+            }
+        };
     }
 }

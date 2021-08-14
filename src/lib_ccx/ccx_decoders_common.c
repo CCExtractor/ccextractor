@@ -195,16 +195,16 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 					timeok = 0;
 					ctx->processed_enough = 1;
 				}
-				char temp[4];
-				temp[0] = cc_valid;
-				temp[1] = cc_type;
-				temp[2] = cc_block[1];
-				temp[3] = cc_block[2];
 				if (timeok)
 				{
 					if (ctx->write_format != CCX_OF_RCWT)
 					{
 #ifndef ENABLE_RUST
+						char temp[4];
+						temp[0] = cc_valid;
+						temp[1] = cc_type;
+						temp[2] = cc_block[1];
+						temp[3] = cc_block[2];
 						dtvcc_process_data(ctx->dtvcc, (const unsigned char *)temp);
 #endif
 					}

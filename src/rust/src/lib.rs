@@ -61,7 +61,7 @@ extern "C" fn ccxr_process_cc_data(
     let dtvcc_ctx = unsafe { &mut *dec_ctx.dtvcc };
     let mut dtvcc = Dtvcc::new(dtvcc_ctx);
     for cc_block in cc_data.chunks_exact_mut(3) {
-        if validate_cc_pair(cc_block) {
+        if !validate_cc_pair(cc_block) {
             continue;
         }
         let success = do_cb(dec_ctx, &mut dtvcc, cc_block);
@@ -72,14 +72,42 @@ extern "C" fn ccxr_process_cc_data(
     ret
 }
 
-pub fn validate_cc_pair(cc_block: &[u8]) -> bool {
+/// Returns `true` if cc_block pair is valid
+///
+/// For CEA-708 data, only cc_valid is checked
+/// For CEA-608 data, parity is also checked
+pub fn validate_cc_pair(cc_block: &mut [u8]) -> bool {
     let cc_valid = (cc_block[0] & 4) >> 2;
+    let cc_type = cc_block[0] & 3;
     if cc_valid == 0 {
+        return false;
+    }
+    if cc_type == 0 || cc_type == 1 {
+        // For CEA-608 data we verify parity.
+        if verify_parity(cc_block[2]) {
+            // If the second byte doesn't pass parity, ignore pair
+            return false;
+        }
+        if verify_parity(cc_block[1]) {
+            // If the first byte doesn't pass parity,
+            // we replace it with a solid blank and process the pair.
+            cc_block[1] = 0x7F;
+        }
+    }
+    true
+}
+
+/// Returns `true` if data has odd parity
+///
+/// CC uses odd parity (i.e., # of 1's in byte is odd.)
+pub fn verify_parity(data: u8) -> bool {
+    if data.count_ones() & 1 == 1 {
         return true;
     }
     false
 }
 
+/// Process CC data according to its type
 pub fn do_cb(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) -> bool {
     let cc_valid = (cc_block[0] & 4) >> 2;
     let cc_type = cc_block[0] & 3;
@@ -97,16 +125,19 @@ pub fn do_cb(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) -> boo
     if cc_valid == 1 || cc_type == 3 {
         ctx.cc_stats[cc_type as usize] += 1;
         match cc_type {
+            // Type 0 and 1 are for CEA-608 data. Handled by C code, do nothing
             0 | 1 => {}
+            // Type 2 and 3 are for CEA-708 data.
             2 | 3 => {
                 let current_time = unsafe { (*ctx.timing).get_fts(ctx.current_field as u8) };
                 ctx.current_field = 3;
+
+                // Check whether current time is within start and end bounds
                 if is_true(ctx.extraction_start.set)
                     && current_time < ctx.extraction_start.time_in_ms
                 {
                     timeok = false;
                 }
-
                 if is_true(ctx.extraction_end.set) && current_time > ctx.extraction_end.time_in_ms {
                     timeok = false;
                     ctx.processed_enough = 1;
