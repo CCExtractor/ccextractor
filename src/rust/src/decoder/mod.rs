@@ -1,6 +1,6 @@
 //! CEA 708 decoder
 //!
-//! This module provides a CEA 708 decoder as defined by ANSI/CTA-708-E R-2018
+//! Provides a CEA 708 decoder as defined by ANSI/CTA-708-E R-2018
 
 mod commands;
 mod output;
@@ -20,7 +20,7 @@ const CCX_DTVCC_SCREENGRID_COLUMNS: u8 = 210;
 const CCX_DTVCC_MAX_ROWS: u8 = 15;
 const CCX_DTVCC_MAX_COLUMNS: u8 = 32 * 2;
 
-/// Stores the context required for processing 708 data
+/// Context required for processing 708 data
 pub struct Dtvcc<'a> {
     pub is_active: bool,
     pub active_services_count: u8,
@@ -60,7 +60,7 @@ impl<'a> Dtvcc<'a> {
             timing,
         }
     }
-    /// Process cc data to generate dtvcc packet
+    /// Process cc data and add it to the dtvcc packet
     pub fn process_cc_data(&mut self, cc_valid: u8, cc_type: u8, data1: u8, data2: u8) {
         if !self.is_active && !self.report_enabled {
             return;
@@ -86,6 +86,7 @@ impl<'a> Dtvcc<'a> {
                             max_len *= 2;
                         }
 
+                        // If packet is complete then process the packet
                         if self.packet_length >= max_len {
                             self.process_current_packet(max_len);
                         }
@@ -109,6 +110,7 @@ impl<'a> Dtvcc<'a> {
             ),
         }
     }
+    /// Add data to the packet
     pub fn add_data_to_packet(&mut self, data1: u8, data2: u8) {
         self.packet[self.packet_length as usize] = data1;
         self.packet_length += 1;
@@ -126,6 +128,8 @@ impl<'a> Dtvcc<'a> {
             return;
         }
 
+        // Check if current sequence is correct
+        // Sequence number is a 2 bit rolling sequence from (0-3)
         if self.last_sequence != CCX_DTVCC_NO_LAST_SEQUENCE
             && (self.last_sequence + 1) % 4 != seq as i32
         {
@@ -189,6 +193,10 @@ impl<'a> Dtvcc<'a> {
     }
 }
 
+/// A single character symbol
+///
+/// sym stores the symbol
+/// init is used to know if the symbol is initialized
 impl dtvcc_symbol {
     /// Create a new symbol
     pub fn new(sym: u16) -> Self {

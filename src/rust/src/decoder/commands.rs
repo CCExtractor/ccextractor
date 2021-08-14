@@ -1,6 +1,6 @@
 //! Different code sets as defined in CEA-708-E
 //!
-//! Refer section 7.1 CEA-708-E
+//! Refer section 7.1 CEA-708-E.
 //! Different code sets are:
 //!
 //! | Name | Description | Space |

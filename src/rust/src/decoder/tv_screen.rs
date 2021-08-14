@@ -1,3 +1,8 @@
+//! TV screen to be displayed
+//!
+//! TV screen contains the captions to be displayed.
+//! Captions are added to TV screen from a window when any of DSW, HDW, TGW, DLW or CR commands are received  
+
 #[cfg(windows)]
 use std::os::windows::io::IntoRawHandle;
 use std::{ffi::CStr, fs::File, os::unix::prelude::IntoRawFd};
@@ -13,7 +18,7 @@ use crate::{
 use log::{debug, warn};
 
 impl dtvcc_tv_screen {
-    /// Clear text from tv screen
+    /// Clear all text from TV screen
     pub fn clear(&mut self) {
         for row in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
             self.chars[row].fill(dtvcc_symbol::default());
@@ -21,6 +26,8 @@ impl dtvcc_tv_screen {
         self.time_ms_hide = -1;
         self.time_ms_show = -1;
     }
+
+    /// Update TV screen show time
     pub fn update_time_show(&mut self, time: LLONG) {
         let prev_time_str = get_time_str(self.time_ms_show);
         let curr_time_str = get_time_str(time);
@@ -29,6 +36,8 @@ impl dtvcc_tv_screen {
             self.time_ms_show = time;
         }
     }
+
+    /// Update TV screen hide time
     pub fn update_time_hide(&mut self, time: LLONG) {
         let prev_time_str = get_time_str(self.time_ms_hide);
         let curr_time_str = get_time_str(time);
@@ -37,6 +46,11 @@ impl dtvcc_tv_screen {
             self.time_ms_hide = time;
         }
     }
+
+    /// Write captions to the output file
+    ///
+    /// Opens a new file when called for the first time.
+    /// Uses the already open file on subsequent calls.
     pub fn writer_output(&self, writer: &mut Writer) -> Result<(), String> {
         debug!(
             "dtvcc_writer_output: writing... [{:?}][{}]",
@@ -87,6 +101,8 @@ impl dtvcc_tv_screen {
 
         Ok(())
     }
+
+    /// Returns the bounds in which captions are present
     pub fn get_write_interval(&self, row_index: usize) -> (usize, usize) {
         let mut first = 0;
         let mut last = CCX_DTVCC_SCREENGRID_COLUMNS as usize - 1;
@@ -104,6 +120,10 @@ impl dtvcc_tv_screen {
         }
         (first, last)
     }
+
+    /// Write captions according to the output file type
+    ///
+    /// Calls the respective function for the output file type
     pub fn write(&self, writer: &mut Writer) {
         let result = match writer.write_format {
             ccx_output_format::CCX_OF_SRT => self.write_srt(writer),
@@ -118,6 +138,10 @@ impl dtvcc_tv_screen {
             warn!("{}", err);
         }
     }
+
+    /// Write all captions from the row to the output file
+    ///
+    /// If use_colors is 'true' then <font color="xxx"></font> tags are added to the output
     pub fn write_row(
         &self,
         writer: &mut Writer,
@@ -215,6 +239,8 @@ impl dtvcc_tv_screen {
 
         Ok(())
     }
+
+    /// Write captions in SRT format
     pub fn write_srt(&self, writer: &mut Writer) -> Result<(), String> {
         if self.is_screen_empty(writer) {
             return Ok(());
@@ -242,6 +268,8 @@ impl dtvcc_tv_screen {
         writer.write_to_file(b"\r\n")?;
         Ok(())
     }
+
+    /// Write captions in Transcripts format
     pub fn write_transcript(&self, writer: &mut Writer) -> Result<(), String> {
         if self.is_screen_empty(writer) {
             return Ok(());
@@ -278,6 +306,8 @@ impl dtvcc_tv_screen {
         }
         Ok(())
     }
+
+    /// Write captions in SAMI format
     pub fn write_sami(&self, writer: &mut Writer) -> Result<(), String> {
         if self.is_screen_empty(writer) {
             return Err("Sami:- Screen is empty".to_owned());
@@ -310,25 +340,28 @@ impl dtvcc_tv_screen {
         writer.write_to_file(buf.as_bytes())?;
         Ok(())
     }
-    pub fn write_sami_header(&self, writer: &mut Writer) -> Result<(), String> {
-        let mut buf = String::new();
-        buf.push_str("<sami>\r\n");
-        buf.push_str("<head>\r\n");
-        buf.push_str("<style type=\"text/css\">\r\n");
-        buf.push_str("<!--\r\n");
-        buf.push_str(
-            "p {margin-left: 16pt; margin-right: 16pt; margin-bottom: 16pt; margin-top: 16pt;\r\n",
-        );
-        buf.push_str("text-align: center; font-size: 18pt; font-family: arial; font-weight: bold; color: #f0f0f0;}\r\n");
-        buf.push_str(".unknowncc {Name:Unknown; lang:en-US; SAMIType:CC;}\r\n");
-        buf.push_str("-->\r\n");
-        buf.push_str("</style>\r\n");
-        buf.push_str("</head>\r\n\r\n");
-        buf.push_str("<body>\r\n");
 
-        writer.write_to_file(buf.as_bytes())?;
+    /// Writes the header according to the SAMI format
+    pub fn write_sami_header(&self, writer: &mut Writer) -> Result<(), String> {
+        let buf = b"<sami>\r\n\
+                            <head>\r\n\
+                            <style type=\"text/css\">\r\n\
+                            <!--\r\n\
+                            p {margin-left: 16pt; margin-right: 16pt; margin-bottom: 16pt; margin-top: 16pt;\r\n\
+                            text-align: center; font-size: 18pt; font-family: arial; font-weight: bold; color: #f0f0f0;}\r\n\
+                            .unknowncc {Name:Unknown; lang:en-US; SAMIType:CC;}\r\n\
+                            -->\r\n\
+                            </style>\r\n\
+                            </head>\r\n\r\n\
+                            <body>\r\n";
+
+        writer.write_to_file(buf)?;
         Ok(())
     }
+
+    /// Write debug messages
+    ///
+    /// Write all characters,show and hide time as a debug log
     pub fn write_debug(&self) {
         let time_show = get_time_str(self.time_ms_show);
         let time_hide = get_time_str(self.time_ms_hide);
@@ -345,6 +378,10 @@ impl dtvcc_tv_screen {
             }
         }
     }
+
+    /// Returns `true` if TV screen has no text
+    ///
+    /// If any text is found then 708 counter is incremented
     pub fn is_screen_empty(&self, writer: &mut Writer) -> bool {
         for index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
             if !self.is_row_empty(index) {
@@ -355,6 +392,8 @@ impl dtvcc_tv_screen {
         }
         true
     }
+
+    /// Returns `true` if row has no text
     pub fn is_row_empty(&self, row_index: usize) -> bool {
         for col_index in 0..CCX_DTVCC_SCREENGRID_COLUMNS as usize {
             if self.chars[row_index][col_index].is_set() {
@@ -363,6 +402,10 @@ impl dtvcc_tv_screen {
         }
         true
     }
+
+    /// Add underline(<u>) and italic(<i>) tags according to the pen attributes
+    ///
+    /// Open specifies if tag is an opening or closing tag
     pub fn change_pen_attribs(
         &self,
         pen_attribs: &dtvcc_pen_attribs,
@@ -396,6 +439,10 @@ impl dtvcc_tv_screen {
             }
         }
     }
+
+    /// Add font(<font color="xxx">) tag according to the pen color
+    ///
+    /// Open specifies if tag is an opening or closing tag
     pub fn change_pen_color(
         &self,
         pen_color: &dtvcc_pen_color,

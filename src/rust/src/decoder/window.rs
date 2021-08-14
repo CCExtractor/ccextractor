@@ -1,3 +1,15 @@
+//! Caption windows
+//!
+//! Refer Section 8.4 CEA-708-E
+//!
+//! All caption text is displayed and manipulated in the context of caption windows. There are 8
+//! possible windows per service in which caption providers may write caption text.
+//! Each of the eight windows is uniquely addressed by its window ID. Window ID
+//! numbers range from 0 to 7.
+//!
+//! At any time there is a current window to which all subsequent
+//! window/pen commands are directed. All caption text is written to the current window
+
 use std::{
     alloc::{alloc_zeroed, dealloc, Layout},
     intrinsics::copy_nonoverlapping,
@@ -13,6 +25,7 @@ use crate::{bindings::*, utils::is_true};
 use log::{debug, error};
 
 impl dtvcc_window {
+    /// Sets the window style according to the window preset
     pub fn set_style(&mut self, preset: WindowPreset) {
         let style_id = preset as i32;
         let window_style = WindowStyle::new(preset);
@@ -29,6 +42,7 @@ impl dtvcc_window {
         self.attribs.scroll_direction = window_style.scroll_direction as i32;
         self.attribs.word_wrap = window_style.word_wrap as i32;
     }
+    /// Sets the pen style according to the pen preset
     pub fn set_pen_style(&mut self, preset: PenPreset) {
         let pen_style = PenStyle::new(preset);
         let pen = &mut self.pen_attribs_pattern;
@@ -45,16 +59,21 @@ impl dtvcc_window {
         pen_color.bg_opacity = pen_style.color.bg_opacity as i32;
         pen_color.edge_color = pen_style.color.edge_color as i32;
     }
+    /// Update the show time for the window
     pub fn update_time_show(&mut self, timing: &mut ccx_common_timing_ctx) {
         self.time_ms_show = timing.get_visible_start(3);
         let time = get_time_str(self.time_ms_show);
         debug!("[W-{}] show time updated to {}", self.number, time);
     }
+    /// Update the hide time for the window
     pub fn update_time_hide(&mut self, timing: &mut ccx_common_timing_ctx) {
         self.time_ms_hide = timing.get_visible_end(3);
         let time = get_time_str(self.time_ms_hide);
         debug!("[W-{}] hide time updated to {}", self.number, time);
     }
+    /// Get dimensions of the window
+    ///
+    /// The dimensions of a unique window specify an area on the screen which may contain caption text.
     pub fn get_dimensions(&self) -> Result<(i32, i32, i32, i32), String> {
         let anchor = dtvcc_pen_anchor_point::new(self.anchor_point)?;
         let (mut x1, mut x2, mut y1, mut y2) = match anchor {
@@ -127,6 +146,7 @@ impl dtvcc_window {
         }
         Ok((x1, x2, y1, y2))
     }
+    /// Clear all text from the window
     pub fn clear_text(&mut self) {
         // Set pen color to default value
         self.pen_color_pattern = dtvcc_pen_color::default();
@@ -137,6 +157,7 @@ impl dtvcc_window {
         }
         self.is_empty = 1;
     }
+    /// Clear text from the selected row
     pub fn clear_row(&mut self, row_index: usize) {
         if is_true(self.memory_reserved) {
             unsafe {
@@ -178,6 +199,9 @@ impl dtvcc_window {
             }
         }
     }
+    /// Roll-up the captions
+    ///
+    /// Scroll all the rows above by 1 to achieve the rollup effect
     pub fn rollup(&mut self) {
         debug!("roller");
         for row_index in 0..(self.row_count - 1) as usize {
@@ -194,6 +218,7 @@ impl dtvcc_window {
 }
 
 impl dtvcc_window_pd {
+    /// Create new window direction
     pub fn new(direction: i32) -> Result<Self, String> {
         match direction {
             0 => Ok(dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT),
@@ -206,6 +231,7 @@ impl dtvcc_window_pd {
 }
 
 impl dtvcc_pen_anchor_point {
+    /// Create new pen anchor point
     pub fn new(anchor: i32) -> Result<Self, String> {
         match anchor {
             0 => Ok(dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_LEFT),
@@ -227,25 +253,20 @@ struct WindowStyle {
     justify: dtvcc_window_justify,
     print_direction: dtvcc_window_pd,
     scroll_direction: dtvcc_window_sd,
-    /// Either 0 or 1
     word_wrap: u8,
-    /// always snap
     display_effect: dtvcc_window_sde,
-    /// N/A always 0
     effect_direction: u8,
-    /// N/A always 0
     effect_speed: u8,
-    /// Either N/A or black, still always 0
     fill_color: u8,
     fill_opacity: dtvcc_window_fo,
-    /// always border_none
     border_type: dtvcc_window_border,
-    /// N/A always 0
     border_color: u8,
 }
 
 impl WindowStyle {
+    /// Create new window style using a window preset
     pub fn new(preset: WindowPreset) -> Self {
+        // All styles have these common attributes
         let effect_direction = 0;
         let effect_speed = 0;
         let fill_color = 0;
@@ -253,98 +274,69 @@ impl WindowStyle {
         let display_effect = dtvcc_window_sde::DTVCC_WINDOW_SDE_SNAP;
         let border_type = dtvcc_window_border::DTVCC_WINDOW_BORDER_NONE;
 
-        match preset {
-            WindowPreset::NtscPopup => Self {
-                justify: dtvcc_window_justify::DTVCC_WINDOW_JUSTIFY_LEFT,
-                print_direction: dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT,
-                scroll_direction: dtvcc_window_sd::DTVCC_WINDOW_SD_BOTTOM_TOP,
-                word_wrap: 0,
-                display_effect,
-                effect_direction,
-                effect_speed,
-                fill_color,
-                fill_opacity: dtvcc_window_fo::DTVCC_WINDOW_FO_SOLID,
-                border_type,
-                border_color,
-            },
-            WindowPreset::Popup => Self {
-                justify: dtvcc_window_justify::DTVCC_WINDOW_JUSTIFY_LEFT,
-                print_direction: dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT,
-                scroll_direction: dtvcc_window_sd::DTVCC_WINDOW_SD_BOTTOM_TOP,
-                word_wrap: 0,
-                display_effect,
-                effect_direction,
-                effect_speed,
-                fill_color,
-                fill_opacity: dtvcc_window_fo::DTVCC_WINDOW_FO_TRANSPARENT,
-                border_type,
-                border_color,
-            },
-            WindowPreset::NtscCenteredPopup => Self {
-                justify: dtvcc_window_justify::DTVCC_WINDOW_JUSTIFY_CENTER,
-                print_direction: dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT,
-                scroll_direction: dtvcc_window_sd::DTVCC_WINDOW_SD_BOTTOM_TOP,
-                word_wrap: 0,
-                display_effect,
-                effect_direction,
-                effect_speed,
-                fill_color,
-                fill_opacity: dtvcc_window_fo::DTVCC_WINDOW_FO_SOLID,
-                border_type,
-                border_color,
-            },
-            WindowPreset::NtscRollup => Self {
-                justify: dtvcc_window_justify::DTVCC_WINDOW_JUSTIFY_LEFT,
-                print_direction: dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT,
-                scroll_direction: dtvcc_window_sd::DTVCC_WINDOW_SD_BOTTOM_TOP,
-                word_wrap: 1,
-                display_effect,
-                effect_direction,
-                effect_speed,
-                fill_color,
-                fill_opacity: dtvcc_window_fo::DTVCC_WINDOW_FO_SOLID,
-                border_type,
-                border_color,
-            },
-            WindowPreset::Rollup => Self {
-                justify: dtvcc_window_justify::DTVCC_WINDOW_JUSTIFY_LEFT,
-                print_direction: dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT,
-                scroll_direction: dtvcc_window_sd::DTVCC_WINDOW_SD_BOTTOM_TOP,
-                word_wrap: 1,
-                display_effect,
-                effect_direction,
-                effect_speed,
-                fill_color,
-                fill_opacity: dtvcc_window_fo::DTVCC_WINDOW_FO_TRANSPARENT,
-                border_type,
-                border_color,
-            },
-            WindowPreset::NtscCenteredRollup => Self {
-                justify: dtvcc_window_justify::DTVCC_WINDOW_JUSTIFY_CENTER,
-                print_direction: dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT,
-                scroll_direction: dtvcc_window_sd::DTVCC_WINDOW_SD_BOTTOM_TOP,
-                word_wrap: 1,
-                display_effect,
-                effect_direction,
-                effect_speed,
-                fill_color,
-                fill_opacity: dtvcc_window_fo::DTVCC_WINDOW_FO_SOLID,
-                border_type,
-                border_color,
-            },
-            WindowPreset::TickerTape => Self {
-                justify: dtvcc_window_justify::DTVCC_WINDOW_JUSTIFY_LEFT,
-                print_direction: dtvcc_window_pd::DTVCC_WINDOW_PD_TOP_BOTTOM,
-                scroll_direction: dtvcc_window_sd::DTVCC_WINDOW_SD_RIGHT_LEFT,
-                word_wrap: 0,
-                display_effect,
-                effect_direction,
-                effect_speed,
-                fill_color,
-                fill_opacity: dtvcc_window_fo::DTVCC_WINDOW_FO_SOLID,
-                border_type,
-                border_color,
-            },
+        let (justify, pd, sd, word_wrap, fill_opacity) = match preset {
+            WindowPreset::NtscPopup => (
+                dtvcc_window_justify::DTVCC_WINDOW_JUSTIFY_LEFT,
+                dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT,
+                dtvcc_window_sd::DTVCC_WINDOW_SD_BOTTOM_TOP,
+                0,
+                dtvcc_window_fo::DTVCC_WINDOW_FO_SOLID,
+            ),
+            WindowPreset::Popup => (
+                dtvcc_window_justify::DTVCC_WINDOW_JUSTIFY_LEFT,
+                dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT,
+                dtvcc_window_sd::DTVCC_WINDOW_SD_BOTTOM_TOP,
+                0,
+                dtvcc_window_fo::DTVCC_WINDOW_FO_TRANSPARENT,
+            ),
+            WindowPreset::NtscCenteredPopup => (
+                dtvcc_window_justify::DTVCC_WINDOW_JUSTIFY_CENTER,
+                dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT,
+                dtvcc_window_sd::DTVCC_WINDOW_SD_BOTTOM_TOP,
+                0,
+                dtvcc_window_fo::DTVCC_WINDOW_FO_SOLID,
+            ),
+            WindowPreset::NtscRollup => (
+                dtvcc_window_justify::DTVCC_WINDOW_JUSTIFY_LEFT,
+                dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT,
+                dtvcc_window_sd::DTVCC_WINDOW_SD_BOTTOM_TOP,
+                1,
+                dtvcc_window_fo::DTVCC_WINDOW_FO_SOLID,
+            ),
+            WindowPreset::Rollup => (
+                dtvcc_window_justify::DTVCC_WINDOW_JUSTIFY_LEFT,
+                dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT,
+                dtvcc_window_sd::DTVCC_WINDOW_SD_BOTTOM_TOP,
+                1,
+                dtvcc_window_fo::DTVCC_WINDOW_FO_TRANSPARENT,
+            ),
+            WindowPreset::NtscCenteredRollup => (
+                dtvcc_window_justify::DTVCC_WINDOW_JUSTIFY_CENTER,
+                dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT,
+                dtvcc_window_sd::DTVCC_WINDOW_SD_BOTTOM_TOP,
+                1,
+                dtvcc_window_fo::DTVCC_WINDOW_FO_SOLID,
+            ),
+            WindowPreset::TickerTape => (
+                dtvcc_window_justify::DTVCC_WINDOW_JUSTIFY_LEFT,
+                dtvcc_window_pd::DTVCC_WINDOW_PD_TOP_BOTTOM,
+                dtvcc_window_sd::DTVCC_WINDOW_SD_RIGHT_LEFT,
+                0,
+                dtvcc_window_fo::DTVCC_WINDOW_FO_SOLID,
+            ),
+        };
+        Self {
+            justify,
+            print_direction: pd,
+            scroll_direction: sd,
+            word_wrap,
+            display_effect,
+            effect_direction,
+            effect_speed,
+            fill_color,
+            fill_opacity,
+            border_type,
+            border_color,
         }
     }
 }
@@ -369,6 +361,7 @@ pub enum WindowPreset {
 }
 
 impl WindowPreset {
+    /// Returns a 'WindowPreset' according to the style id
     pub fn get_style(style_id: u8) -> Result<Self, String> {
         match style_id {
             1 => Ok(WindowPreset::NtscPopup),
@@ -383,6 +376,7 @@ impl WindowPreset {
     }
 }
 
+/// Predefined pen style ids
 #[derive(PartialEq)]
 pub enum PenPreset {
     /// #1 Default NTSC Style
@@ -402,6 +396,7 @@ pub enum PenPreset {
 }
 
 impl PenPreset {
+    /// Returns a 'PenPreset' according to the style id
     pub fn get_style(style_id: u8) -> Result<Self, String> {
         match style_id {
             1 => Ok(PenPreset::NtscStyle),
@@ -416,6 +411,7 @@ impl PenPreset {
     }
 }
 
+/// Pen style for a specific pen preset
 pub struct PenStyle {
     /// always standard pen size
     pen_size: dtvcc_pen_size,
@@ -432,7 +428,9 @@ pub struct PenStyle {
 }
 
 impl PenStyle {
+    /// Create new pen style using a pen preset
     pub fn new(preset: PenPreset) -> Self {
+        // All styles have these common attributes
         let pen_size = dtvcc_pen_size::DTVCC_PEN_SIZE_STANDART;
         let offset = dtvcc_pen_offset::DTVCC_PEN_OFFSET_NORMAL;
         let italics = 0;
@@ -496,6 +494,12 @@ impl PenStyle {
     }
 }
 
+/// Pen Color attributes
+///
+/// Set by the SPC(SetPenColor) command. Refer Secrtion 8.10.5.10 CEA-708-E
+///
+/// Text written to the current window will have the color attributes specified by 
+/// the most recent SetPenColor command written to the window.
 struct PenColor {
     /// Color of text forground body
     fg_color: u8,
@@ -508,6 +512,8 @@ struct PenColor {
     /// Color of the outlined edges of text
     edge_color: u8,
 }
+
+/// Opacity of the window/pen colors
 enum Opacity {
     Solid = 0,
     _Flash = 1,
@@ -516,6 +522,7 @@ enum Opacity {
 }
 
 impl Default for dtvcc_pen_color {
+    /// Returns the default pen color
     fn default() -> Self {
         Self {
             fg_color: 0x3F,
@@ -528,6 +535,7 @@ impl Default for dtvcc_pen_color {
 }
 
 impl Default for dtvcc_pen_attribs {
+    /// Returns the default pen attributes
     fn default() -> Self {
         Self {
             pen_size: dtvcc_pen_size::DTVCC_PEN_SIZE_STANDART as i32,

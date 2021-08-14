@@ -1,3 +1,5 @@
+//! Utilty functions to write captions 
+
 #[cfg(windows)]
 use std::os::windows::io::{FromRawHandle, IntoRawHandle, RawHandle};
 use std::{
@@ -23,6 +25,7 @@ pub struct Writer<'a> {
 }
 
 impl<'a> Writer<'a> {
+    /// Create a new writer context
     pub fn new(
         cea_708_counter: &'a mut u32,
         subs_delay: LLONG,
@@ -43,6 +46,11 @@ impl<'a> Writer<'a> {
             no_bom,
         }
     }
+    /// Write subtitles to the file
+    /// 
+    /// File must already exist
+    /// On Unix Platforms, uses the raw fd from context to access the file
+    /// On Windows Platforms, uses the raw handle from context to access the file
     pub fn write_to_file(&mut self, buf: &[u8]) -> Result<(), String> {
         #[cfg(unix)]
         {
@@ -60,6 +68,10 @@ impl<'a> Writer<'a> {
     }
 }
 
+/// Write the symbol to the provided buffer
+/// 
+/// If symbol is 8-bit, then it's written to the buffer
+/// If symbol is 16-bit, then two 8-bit symbols are written to the buffer
 pub fn write_char(sym: &dtvcc_symbol, buf: &mut Vec<u8>) {
     if sym.sym >> 8 != 0 {
         buf.push((sym.sym >> 8) as u8);
@@ -69,6 +81,12 @@ pub fn write_char(sym: &dtvcc_symbol, buf: &mut Vec<u8>) {
     }
 }
 
+/// Convert from CEA-708 color representation to hex code
+/// 
+/// Two bits are specified for each red, green, and blue color value which defines the
+/// intensity of each individual color component. 
+/// 
+/// Refer section 8.8 CEA-708-E
 pub fn color_to_hex(color: u8) -> (u8, u8, u8) {
     let red = color >> 4;
     let green = (color >> 2) & 0x3;
