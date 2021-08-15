@@ -15,7 +15,7 @@ made to reuse, not duplicate, as many functions as possible */
 #include "ccx_encoders_mcc.h"
 #include "ccx_dtvcc.h"
 
-#ifdef ENABLE_RUST
+#ifndef DISABLE_RUST
 extern int ccxr_process_cc_data(struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count);
 #endif
 
@@ -53,7 +53,7 @@ int process_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, 
 		return 0;
 	}
 
-#ifdef ENABLE_RUST
+#ifndef DISABLE_RUST
 	ret = ccxr_process_cc_data(dec_ctx, cc_data, cc_count);
 #endif
 
@@ -199,7 +199,7 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 				{
 					if (ctx->write_format != CCX_OF_RCWT)
 					{
-#ifndef ENABLE_RUST
+#ifdef DISABLE_RUST
 						char temp[4];
 						temp[0] = cc_valid;
 						temp[1] = cc_type;
