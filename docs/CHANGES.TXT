@@ -1,3 +1,8 @@
+0.93 (2021-08-16)
+-----------------
+- Minor Rust updates (format, typos, docs)
+- Updated GUI
+
 0.92 (2021-08-10)
 -----------------
 - Rust updates: Added srt writer
