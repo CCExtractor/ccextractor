@@ -325,6 +325,23 @@ ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/gpacmp4/ -I../src/th
 
 ccextractor_LDADD=-lm -lpthread -ldl
 
+if WITH_RUST
+ccextractor_LDADD += ./rust/@RUST_TARGET_SUBDIR@/libccx_rust.so
+else
+ccextractor_CFLAGS += -DDISABLE_RUST
+ccextractor_CPPFLAGS += -DDISABLE_RUST
+endif
+
+if DEBUG_RELEASE
+CARGO_RELEASE_ARGS=
+else
+CARGO_RELEASE_ARGS=--release
+endif
+
+./rust/@RUST_TARGET_SUBDIR@/libccx_rust.so:
+	cd ../src/rust && \
+	CARGO_TARGET_DIR=../../linux/rust $(CARGO) build $(CARGO_RELEASE_ARGS);
+
 if SYS_IS_LINUX
 ccextractor_CFLAGS += -O3 -s -DGPAC_CONFIG_LINUX
 endif
