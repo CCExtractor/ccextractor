@@ -1,12 +1,10 @@
 //! Utilty functions to write captions
 
+#[cfg(unix)]
+use std::os::unix::prelude::{FromRawFd, IntoRawFd};
 #[cfg(windows)]
-use std::os::windows::io::{FromRawHandle, IntoRawHandle, RawHandle};
-use std::{
-    fs::File,
-    io::Write,
-    os::unix::prelude::{FromRawFd, IntoRawFd},
-};
+use std::os::windows::io::{FromRawHandle, IntoRawHandle};
+use std::{fs::File, io::Write};
 
 use crate::{bindings::*, utils::is_true};
 

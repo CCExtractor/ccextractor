@@ -65,7 +65,7 @@ if [ "$1" = "-without-rust" ]; then
     echo "Building without rust files..."
     BLD_FLAGS="$BLD_FLAGS -DDISABLE_RUST"
 else 
-    BLD_LINKER="$BLD_LINKER ./libccx_rust.so"
+    BLD_LINKER="$BLD_LINKER ./libccx_rust.a"
     echo "Checking for cargo..."
     if ! [ -x "$(command -v cargo)" ]; then
         echo 'Error: cargo is not installed.' >&2
@@ -73,7 +73,7 @@ else
     fi
     echo "Building rust files..."
     (cd ../src/rust && CARGO_TARGET_DIR=../../linux/rust cargo build )
-    cp rust/debug/libccx_rust.so ./libccx_rust.so
+    cp rust/debug/libccx_rust.a ./libccx_rust.a
 fi
 
 echo "Building ccextractor"

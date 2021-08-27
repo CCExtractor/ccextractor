@@ -326,7 +326,7 @@ ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/gpacmp4/ -I../src/th
 ccextractor_LDADD=-lm -lpthread -ldl
 
 if WITH_RUST
-ccextractor_LDADD += ./rust/@RUST_TARGET_SUBDIR@/libccx_rust.so
+ccextractor_LDADD += ./rust/@RUST_TARGET_SUBDIR@/libccx_rust.a
 else
 ccextractor_CFLAGS += -DDISABLE_RUST
 ccextractor_CPPFLAGS += -DDISABLE_RUST
@@ -338,7 +338,7 @@ else
 CARGO_RELEASE_ARGS=--release
 endif
 
-./rust/@RUST_TARGET_SUBDIR@/libccx_rust.so:
+./rust/@RUST_TARGET_SUBDIR@/libccx_rust.a:
 	cd ../src/rust && \
 	CARGO_TARGET_DIR=../../linux/rust $(CARGO) build $(CARGO_RELEASE_ARGS);
 
