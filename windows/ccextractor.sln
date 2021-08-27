@@ -5,8 +5,6 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ccextractor", "ccextractor.vcxproj", "{0F0063C4-BCBC-4379-A6D5-84A5669C940A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ccextractorGUI", "ccextractorGUI.vcxproj", "{74290DA6-174D-4F4B-A48E-F30B824B7925}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
