@@ -355,7 +355,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v140_xp</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -518,7 +518,7 @@ xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir
       <DisableSpecificWarnings>4005;4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ccx_rust.lib;UserEnv.lib;Ws2_32.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.danbloomberg.leptonica-1.74.0.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.google.tesseract.tesseract-master.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.gif-5.1.4.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.tiff-4.0.7.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.jpeg-9.2.0.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.openjpeg.openjp2-2.1.2.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.mgk25.jbig.jbig-2.1.0.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.mgk25.jbig.ar-2.1.0.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.xz_utils.lzma-5.2.2.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.webp-0.5.1.lib;$(ProjectDir)libs\lib\ffmpeg-lib\avcodec.lib;$(ProjectDir)libs\lib\ffmpeg-lib\avformat.lib;$(ProjectDir)libs\lib\ffmpeg-lib\avutil.lib;$(ProjectDir)libs\lib\ffmpeg-lib\swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ccx_rust.lib;UserEnv.lib;Ws2_32.lib;old_avcodec.lib;old_avformat.lib;old_avutil.lib;old_swscale.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.danbloomberg.leptonica-1.74.0.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.google.tesseract.tesseract-master.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.gif-5.1.4.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.tiff-4.0.7.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.jpeg-9.2.0.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.openjpeg.openjp2-2.1.2.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.mgk25.jbig.jbig-2.1.0.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.mgk25.jbig.ar-2.1.0.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.xz_utils.lzma-5.2.2.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.webp-0.5.1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -577,7 +577,7 @@ xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</
       <DisableSpecificWarnings>4005;4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ccx_rust.lib;UserEnv.lib;Ws2_32.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.danbloomberg.leptonica-1.74.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.google.tesseract.tesseract-master.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.gif-5.1.4.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.tiff-4.0.7.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.jpeg-9.2.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.openjpeg.openjp2-2.1.2.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.mgk25.jbig.jbig-2.1.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.mgk25.jbig.ar-2.1.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.xz_utils.lzma-5.2.2.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.webp-0.5.1.lib;$(ProjectDir)libs\lib\ffmpeg-lib\avcodec.lib;$(ProjectDir)libs\lib\ffmpeg-lib\avformat.lib;$(ProjectDir)libs\lib\ffmpeg-lib\avutil.lib;$(ProjectDir)libs\lib\ffmpeg-lib\swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ccx_rust.lib;UserEnv.lib;Ws2_32.lib;$(ProjectDir)libs\lib\ffmpeg-lib\old_avcodec.lib;$(ProjectDir)libs\lib\ffmpeg-lib\old_avformat.lib;$(ProjectDir)libs\lib\ffmpeg-lib\old_avutil.lib;$(ProjectDir)libs\lib\ffmpeg-lib\old_swscale.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.danbloomberg.leptonica-1.74.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.google.tesseract.tesseract-master.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.gif-5.1.4.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.tiff-4.0.7.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.jpeg-9.2.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.openjpeg.openjp2-2.1.2.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.mgk25.jbig.jbig-2.1.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.mgk25.jbig.ar-2.1.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.xz_utils.lzma-5.2.2.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.webp-0.5.1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>

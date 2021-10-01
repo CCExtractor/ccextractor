@@ -97,11 +97,15 @@ jobs:
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.0.2
       - name: Install llvm and clang
-        run: choco install llvm
+        uses: egor-tensin/setup-clang@v1
+        with:
+          version: latest
+          platform: x86
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
+          target: i686-pc-windows-msvc
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
       - name: pre rust build
@@ -110,20 +114,20 @@ jobs:
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-        run: .\rust.bat
+        run: .\rustx86.bat
         working-directory: ./windows
       - name: build Release
-        run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
+        run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=Win32
         working-directory: ./windows
       - name: Display version information
         run: ./ccextractorwinfull.exe --version
-        working-directory: ./windows/x64/Release-Full
+        working-directory: ./windows/Release-Full
       - uses: actions/upload-artifact@v2
         with:
           name: CCExtractor Windows OCR and HardSubX Release build
           path: |
-            ./windows/x64/Release-Full/ccextractorwinfull.exe
-            ./windows/x64/Release-Full/*.dll
+            ./windows/Release-Full/ccextractorwinfull.exe
+            ./windows/Release-Full/*.dll
   build_ocr_hardsubx_debug:
     runs-on: windows-latest
     steps:
@@ -132,11 +136,15 @@ jobs:
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.0.2
       - name: Install llvm and clang
-        run: choco install llvm
+        uses: egor-tensin/setup-clang@v1
+        with:
+          version: latest
+          platform: x86
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
+          target: i686-pc-windows-msvc
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
       - name: pre rust build
@@ -145,18 +153,18 @@ jobs:
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-        run: .\rust.bat
+        run: .\rustx86.bat
         working-directory: ./windows
       - name: build Debug
-        run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
+        run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=Win32
         working-directory: ./windows
       - name: Display version information
         run: ./ccextractorwinfull.exe --version
-        working-directory: ./windows/x64/Debug-Full
+        working-directory: ./windows/Debug-Full
       - uses: actions/upload-artifact@v2
         with:
           name: CCExtractor Windows OCR and HardSubX Debug build
           path: |
-            ./windows/x64/Debug-Full/ccextractorwinfull.exe
-            ./windows/x64/Debug-Full/ccextractorwinfull.pdb
-            ./windows/x64/Debug-Full/*.dll
+            ./windows/Debug-Full/ccextractorwinfull.exe
+            ./windows/Debug-Full/ccextractorwinfull.pdb
+            ./windows/Debug-Full/*.dll
