@@ -1028,6 +1028,11 @@ void version(char *location)
 	mprint("	Version: %s\n", VERSION);
 	mprint("	Git commit: %s\n", GIT_COMMIT);
 	mprint("	Compilation date: %s\n", COMPILE_DATE);
+#ifndef DISABLE_RUST
+	mprint("	CEA-708 decoder: Rust\n");
+#else
+	mprint("	CEA-708 decoder: C\n");
+#endif
 	mprint("	File SHA256: %s\n", hash);
 
 	mprint("Libraries used by CCExtractor\n");
