@@ -64,8 +64,8 @@ impl<'a> Writer<'a> {
         }
         Ok(())
     }
-    /// Finish writing up any remaining parts 
-    pub fn write_done(&mut self){
+    /// Finish writing up any remaining parts
+    pub fn write_done(&mut self) {
         if self.write_format == ccx_output_format::CCX_OF_SAMI {
             if let Err(err) = self.write_sami_footer() {
                 warn!("{}", err);
@@ -75,7 +75,7 @@ impl<'a> Writer<'a> {
         }
     }
     /// Writes the footer according to the SAMI format
-    pub fn write_sami_footer(&mut self) -> Result<(),String>{
+    pub fn write_sami_footer(&mut self) -> Result<(), String> {
         self.write_to_file(b"</body></sami>")?;
         Ok(())
     }
