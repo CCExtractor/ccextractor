@@ -17,6 +17,7 @@ made to reuse, not duplicate, as many functions as possible */
 
 #ifndef DISABLE_RUST
 extern int ccxr_process_cc_data(struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count);
+extern void ccxr_flush_decoder(struct dtvcc_ctx *dtvcc, struct dtvcc_service_decoder *decoder);
 #endif
 
 uint64_t utc_refvalue = UINT64_MAX; /* _UI64_MAX/UINT64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
@@ -450,7 +451,11 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 			if (decoder->cc_count > 0)
 			{
 				ctx->current_field = 3;
+#ifndef DISABLE_RUST
+				ccxr_flush_decoder(ctx->dtvcc, decoder);
+#else
 				dtvcc_decoder_flush(ctx->dtvcc, decoder);
+#endif
 			}
 		}
 	}

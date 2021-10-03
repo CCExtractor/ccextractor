@@ -71,13 +71,12 @@ impl dtvcc_tv_screen {
             }?;
             debug!("dtvcc_writer_output: creating {}", filename);
             let file = File::create(filename).map_err(|err| err.to_string())?;
+            writer.writer_ctx.fd = file.into_raw_fd();
 
             if is_false(writer.no_bom) {
                 let BOM = [0xef, 0xbb, 0xbf];
                 writer.write_to_file(&BOM)?;
             }
-
-            writer.writer_ctx.fd = file.into_raw_fd();
         }
 
         #[cfg(windows)]
@@ -91,16 +90,14 @@ impl dtvcc_tv_screen {
             }?;
             debug!("dtvcc_writer_output: creating {}", filename);
             let file = File::create(filename).map_err(|err| err.to_string())?;
+            writer.writer_ctx.fhandle = file.into_raw_handle();
 
             if is_false(writer.no_bom) {
                 let BOM = [0xef, 0xbb, 0xbf];
                 writer.write_to_file(&BOM)?;
             }
-            writer.writer_ctx.fhandle = file.into_raw_handle();
         }
-
         self.write(writer);
-
         Ok(())
     }
 
