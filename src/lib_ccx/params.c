@@ -601,7 +601,6 @@ void print_usage(void)
 	mprint("                 -bom: Append a BOM (Byte Order Mark) to output files.\n");
 	mprint("                       Note that most text processing tools in linux will not\n");
 	mprint("                       like BOM.\n");
-	mprint("                       This is the default in Windows builds.\n");
 	mprint("                       -nobom: Do not append a BOM (Byte Order Mark) to output\n");
 	mprint("                       files. Note that this may break files when using\n");
 	mprint("                       Windows. This is the default in non-Windows builds.\n");
