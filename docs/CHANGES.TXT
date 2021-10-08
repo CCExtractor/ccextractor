@@ -1,3 +1,7 @@
+0.94
+-----------------
+- BOM is no longer enabled by default on windows platforms
+
 0.93 (2021-08-16)
 -----------------
 - Minor Rust updates (format, typos, docs)
