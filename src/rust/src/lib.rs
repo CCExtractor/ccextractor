@@ -164,6 +164,6 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
     }
     unsafe {
         // File will close automatically (due to Drop) once it goes out of scope
-        let file = from_raw_handle(handle);
+        let _file = File::from_raw_handle(handle);
     }
 }

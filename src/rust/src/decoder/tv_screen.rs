@@ -3,9 +3,11 @@
 //! TV screen contains the captions to be displayed.
 //! Captions are added to TV screen from a window when any of DSW, HDW, TGW, DLW or CR commands are received  
 
+#[cfg(unix)]
+use std::os::unix::prelude::IntoRawFd;
 #[cfg(windows)]
 use std::os::windows::io::IntoRawHandle;
-use std::{ffi::CStr, fs::File, os::unix::prelude::IntoRawFd};
+use std::{ffi::CStr, fs::File};
 
 use super::output::{color_to_hex, write_char, Writer};
 use super::timing::get_time_str;
@@ -69,19 +71,18 @@ impl dtvcc_tv_screen {
             }?;
             debug!("dtvcc_writer_output: creating {}", filename);
             let file = File::create(filename).map_err(|err| err.to_string())?;
+            writer.writer_ctx.fd = file.into_raw_fd();
 
             if is_false(writer.no_bom) {
                 let BOM = [0xef, 0xbb, 0xbf];
                 writer.write_to_file(&BOM)?;
             }
-
-            writer.writer_ctx.fd = file.into_raw_fd();
         }
 
         #[cfg(windows)]
-        if writer.writer_ctx.filename.is_null() && writer.fhandle.is_null() {
+        if writer.writer_ctx.filename.is_null() && writer.writer_ctx.fhandle.is_null() {
             return Err("Filename missing".to_owned())?;
-        } else if writer.fhandle.is_null() {
+        } else if writer.writer_ctx.fhandle.is_null() {
             let filename = unsafe {
                 CStr::from_ptr(writer.writer_ctx.filename)
                     .to_str()
@@ -89,16 +90,14 @@ impl dtvcc_tv_screen {
             }?;
             debug!("dtvcc_writer_output: creating {}", filename);
             let file = File::create(filename).map_err(|err| err.to_string())?;
+            writer.writer_ctx.fhandle = file.into_raw_handle();
 
             if is_false(writer.no_bom) {
                 let BOM = [0xef, 0xbb, 0xbf];
                 writer.write_to_file(&BOM)?;
             }
-            writer.fhandle = file.into_raw_handle();
         }
-
         self.write(writer);
-
         Ok(())
     }
 

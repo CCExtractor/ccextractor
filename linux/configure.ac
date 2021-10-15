@@ -91,6 +91,44 @@ AC_HELP_STRING([--with-gui], [Builds CCExtractor with GUI (requires GLFW and GLE
 [PKG_CHECK_MODULES([glfw3], [glfw3]) && PKG_CHECK_MODULES([glew], [glew])],
 [with_gui=no])
 
+#Check if cargo and rust is installed
+AC_PATH_PROG([CARGO], [cargo], [notfound])
+AS_IF([test "$CARGO" = "notfound"], [AC_MSG_ERROR([cargo is required])])
+
+AC_PATH_PROG([RUSTC], [rustc], [notfound])
+AS_IF([test "$RUSTC" = "notfound"], [AC_MSG_ERROR([rustc is required])])
+
+#Add argument for rust
+AC_ARG_WITH([rust],
+AC_HELP_STRING([--with-rust], [Builds CCExtractor with rust library]),
+[with_rust=$withval],
+[with_rust=yes])
+
+AC_MSG_CHECKING(whether to build with rust library)
+if test "x$with_rust" = "xyes" ; then
+    AC_MSG_RESULT(yes)
+else
+    AC_MSG_RESULT(no)
+fi
+AM_CONDITIONAL([WITH_RUST], [test "x$with_rust" = "xyes"])
+
+AC_ARG_ENABLE(debug,
+              AC_HELP_STRING([--enable-debug],
+                             [Build Rust code with debugging information [default=no]]),
+              [debug_release=$enableval],
+              [debug_release=no])
+
+AC_MSG_CHECKING(whether to build Rust code with debugging information)
+if test "x$debug_release" = "xyes" ; then
+    AC_MSG_RESULT(yes)
+    RUST_TARGET_SUBDIR=debug
+else
+    AC_MSG_RESULT(no)
+    RUST_TARGET_SUBDIR=release
+fi
+AM_CONDITIONAL([DEBUG_RELEASE], [test "x$debug_release" = "xyes"])
+
+AC_SUBST([RUST_TARGET_SUBDIR])
 
 #Checks and prompts if libraries found/not found to avoild failure while building
 AS_IF([ test x$hardsubx = xtrue && test $HAS_AVCODEC -gt 0 ], [AC_MSG_NOTICE(avcodec library found)])

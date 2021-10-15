@@ -35,7 +35,7 @@
 #define DEFAULT_FONT_PATH_ITALICS "/usr/share/fonts/truetype/noto/NotoSans-Italic.ttf"
 #endif
 
-#ifdef ENABLE_RUST
+#ifndef DISABLE_RUST
 extern void ccxr_init_logger();
 #endif
 
@@ -1027,6 +1027,11 @@ void version(char *location)
 	mprint("	Version: %s\n", VERSION);
 	mprint("	Git commit: %s\n", GIT_COMMIT);
 	mprint("	Compilation date: %s\n", COMPILE_DATE);
+#ifndef DISABLE_RUST
+	mprint("	CEA-708 decoder: Rust\n");
+#else
+	mprint("	CEA-708 decoder: C\n");
+#endif
 	mprint("	File SHA256: %s\n", hash);
 
 	mprint("Libraries used by CCExtractor\n");
@@ -2182,7 +2187,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		if (strcmp(argv[i], "-708") == 0)
 		{
 			opt->debug_mask |= CCX_DMT_708;
-#ifdef ENABLE_RUST
+#ifndef DISABLE_RUST
 			ccxr_init_logger();
 #endif
 			continue;

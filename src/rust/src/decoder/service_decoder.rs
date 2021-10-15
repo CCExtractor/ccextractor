@@ -1179,4 +1179,47 @@ impl dtvcc_service_decoder {
             }
         };
     }
+    /// Flush the decoder of any remaining subtitles
+    pub fn flush(&self, encoder: &mut encoder_ctx) {
+        unsafe {
+            let tv = &mut (*self.tv);
+            let sn = tv.service_number;
+            let writer_ctx = &mut encoder.dtvcc_writers[(sn - 1) as usize];
+
+            let mut writer = Writer::new(
+                &mut encoder.cea_708_counter,
+                encoder.subs_delay,
+                encoder.write_format,
+                writer_ctx,
+                encoder.no_font_color,
+                &*encoder.transcript_settings,
+                encoder.no_bom,
+            );
+            writer.write_done();
+        }
+    }
+}
+
+/// Flush service decoder
+#[no_mangle]
+extern "C" fn ccxr_flush_decoder(dtvcc: *mut dtvcc_ctx, decoder: *mut dtvcc_service_decoder) {
+    debug!("dtvcc_decoder_flush: Flushing decoder");
+    let timing = unsafe { &mut *((*dtvcc).timing) };
+    let encoder = unsafe { &mut *((*dtvcc).encoder as *mut encoder_ctx) };
+    let decoder = unsafe { &mut *decoder };
+
+    let mut screen_content_changed = false;
+    for i in 0..CCX_DTVCC_MAX_WINDOWS {
+        let window = &mut decoder.windows[i as usize];
+        if is_true(window.visible) {
+            screen_content_changed = true;
+            window.update_time_hide(timing);
+            decoder.copy_to_screen(&decoder.windows[i as usize]);
+            decoder.windows[i as usize].visible = 0
+        }
+    }
+    if screen_content_changed {
+        decoder.screen_print(encoder, timing);
+    }
+    decoder.flush(encoder);
 }

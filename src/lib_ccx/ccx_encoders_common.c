@@ -869,7 +869,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			if (!cfg->services_enabled[i])
 			{
 				ctx->dtvcc_writers[i].fd = -1;
-#ifdef ENABLE_RUST
+#ifndef DISABLE_RUST
 				ctx->dtvcc_writers[i].fhandle = NULL;
 				ctx->dtvcc_writers[i].charset = NULL;
 #endif
@@ -881,7 +881,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			if (cfg->cc_to_stdout)
 			{
 				ctx->dtvcc_writers[i].fd = STDOUT_FILENO;
-#ifdef ENABLE_RUST
+#ifndef DISABLE_RUST
 				ctx->dtvcc_writers[i].fhandle = NULL;
 				ctx->dtvcc_writers[i].charset = NULL;
 #endif

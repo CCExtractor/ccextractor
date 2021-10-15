@@ -33,7 +33,8 @@ jobs:
       run: ./build
       working-directory: ./linux
     - name: Display version information
-      run: ./linux/ccextractor --version
+      run: ./ccextractor --version
+      working-directory: ./linux
     - name: Prepare artifacts
       run: mkdir ./linux/artifacts
     - name: Copy release artifact
@@ -50,13 +51,14 @@ jobs:
       run: ./autogen.sh
       working-directory: ./linux
     - name: configure
-      run: ./configure
+      run: ./configure --enable-debug
       working-directory: ./linux
     - name: make
       run: make
       working-directory: ./linux
     - name: Display version information
-      run: ./linux/ccextractor --version
+      run: ./ccextractor --version
+      working-directory: ./linux
   cmake:
     runs-on: ubuntu-latest
     steps:
@@ -81,16 +83,6 @@ jobs:
       working-directory: build
     - name: Display version information
       run: ./build/ccextractor --version
-  bazel:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2.3.4
-    - name: bazel build
-      working-directory: ./
-      run: bazel build //src:ccextractor --verbose_failures
-    - name: Display version information
-      working-directory: ./bazel-bin
-      run: ./src/ccextractor --version
   build_rust:
     runs-on: ubuntu-latest
     steps:

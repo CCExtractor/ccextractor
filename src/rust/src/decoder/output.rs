@@ -1,16 +1,14 @@
 //! Utilty functions to write captions
 
+#[cfg(unix)]
+use std::os::unix::prelude::{FromRawFd, IntoRawFd};
 #[cfg(windows)]
-use std::os::windows::io::{FromRawHandle, IntoRawHandle, RawHandle};
-use std::{
-    fs::File,
-    io::Write,
-    os::unix::prelude::{FromRawFd, IntoRawFd},
-};
+use std::os::windows::io::{FromRawHandle, IntoRawHandle};
+use std::{fs::File, io::Write};
 
 use crate::{bindings::*, utils::is_true};
 
-use log::debug;
+use log::{debug, warn};
 
 // Context for writing subtitles to file
 pub struct Writer<'a> {
@@ -64,6 +62,21 @@ impl<'a> Writer<'a> {
             file.write_all(buf).map_err(|err| err.to_string())?;
             self.writer_ctx.fhandle = file.into_raw_handle();
         }
+        Ok(())
+    }
+    /// Finish writing up any remaining parts
+    pub fn write_done(&mut self) {
+        if self.write_format == ccx_output_format::CCX_OF_SAMI {
+            if let Err(err) = self.write_sami_footer() {
+                warn!("{}", err);
+            }
+        } else {
+            debug!("dtvcc_write_done: no handling required");
+        }
+    }
+    /// Writes the footer according to the SAMI format
+    pub fn write_sami_footer(&mut self) -> Result<(), String> {
+        self.write_to_file(b"</body></sami>")?;
         Ok(())
     }
 }
