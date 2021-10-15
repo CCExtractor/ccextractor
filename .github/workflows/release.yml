@@ -39,11 +39,27 @@ jobs:
     - name: Display installer folder contents
       run: Get-ChildItem -Recurse ./installer
       working-directory: ./windows
-    - name: build installer
+    - name: Create portable zip
+      run: Compress-Archive -Path ./installer/* -DestinationPath ./CCExtractor_win_portable.zip
+      working-directory: ./windows
+    - name: Build installer
       run:  wix build -ext "$HOME\.wix\extensions\WixToolset.UI.wixext\4.0.0-preview.0\tools\WixToolset.UI.wixext.dll" -d "AppVersion=${{ steps.get_version.outputs.VERSION }}.0.0" -o CCExtractor.msi installer.wxs
       working-directory: ./windows
     - name: Upload as asset
       uses: AButler/upload-release-assets@v2.0
       with:
-        files: './windows/CCExtractor.msi'
+        files: './windows/CCExtractor.msi;./windows/CCExtractor_win_portable.zip'
         repo-token: ${{ secrets.GITHUB_TOKEN }} 
+  create_linux_package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+        with:
+          path: ./ccextractor
+      - name: Create .tar.gz without git and windows folders
+        run: tar -pczf ./ccextractor_minimal.tar.gz --exclude "ccextractor/windows" --exclude "ccextractor/.git" ccextractor
+      - name: Upload as asset
+        uses: AButler/upload-release-assets@v2.0
+        with:
+          files: './ccextractor_minimal.tar.gz'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
