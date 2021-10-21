@@ -17,14 +17,15 @@ git clone https://github.com/CCExtractor/ccextractor.git
 Debian:
 
 ```bash
-sudo apt-get install -y libglew-dev libglfw3-dev cmake gcc libcurl4-gnutls-dev tesseract-ocr tesseract-ocr-dev libleptonica-dev
+sudo apt-get install -y libglew-dev libglfw3-dev cmake gcc libcurl4-gnutls-dev tesseract-ocr tesseract-ocr-dev libleptonica-dev clang libclang-dev
 ```
 
 RHEL:
 
 ```bash
-yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel leptonica-devel
+yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel leptonica-devel clang
 ```
+Rust 1.54 or above is also required. [https://www.rust-lang.org/tools/install](Install Rust). Check specific compilation methods below, on how to compile without rust
 
 **Note:** On Ubuntu Version 18.04 (Bionic) and (probably) later, install `libtesseract-dev` rather than `tesseract-ocr-dev`, which does not exist anymore.
 
@@ -43,6 +44,9 @@ cd ccextractor/linux
 # compile without debug flags
 ./build
 
+# compile without rust
+./build -without-rust
+
 # compile with debug info
 ./builddebug
 
@@ -56,7 +60,7 @@ cd ccextractor/linux
 sudo apt-get install autoconf      #Dependency to generate configuration script
 cd ccextractor/linux
 ./autogen.sh
-./configure
+./configure or ./configure --without-rust
 make
 
 # test your build
