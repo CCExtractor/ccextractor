@@ -25,7 +25,7 @@ RHEL:
 ```bash
 yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel leptonica-devel clang
 ```
-Rust 1.54 or above is also required. [https://www.rust-lang.org/tools/install](Install Rust). Check specific compilation methods below, on how to compile without rust
+Rust 1.54 or above is also required.[Install Rust](https://www.rust-lang.org/tools/install). Check specific compilation methods below, on how to compile without rust
 
 **Note:** On Ubuntu Version 18.04 (Bionic) and (probably) later, install `libtesseract-dev` rather than `tesseract-ocr-dev`, which does not exist anymore.
 
