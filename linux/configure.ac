@@ -6,7 +6,7 @@ AC_INIT([CCExtractor], [0.93], [carlos@ccextractor.org])
 AC_CONFIG_AUX_DIR([build-conf])
 AC_CONFIG_SRCDIR([../src/ccextractor.c])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
-
+AC_CONFIG_MACRO_DIRS([m4])
 
 # Checks for programs.
 AC_PROG_CC
@@ -91,13 +91,6 @@ AC_HELP_STRING([--with-gui], [Builds CCExtractor with GUI (requires GLFW and GLE
 [PKG_CHECK_MODULES([glfw3], [glfw3]) && PKG_CHECK_MODULES([glew], [glew])],
 [with_gui=no])
 
-#Check if cargo and rust is installed
-AC_PATH_PROG([CARGO], [cargo], [notfound])
-AS_IF([test "$CARGO" = "notfound"], [AC_MSG_ERROR([cargo is required])])
-
-AC_PATH_PROG([RUSTC], [rustc], [notfound])
-AS_IF([test "$RUSTC" = "notfound"], [AC_MSG_ERROR([rustc is required])])
-
 #Add argument for rust
 AC_ARG_WITH([rust],
 AC_HELP_STRING([--with-rust], [Builds CCExtractor with rust library]),
@@ -107,6 +100,19 @@ AC_HELP_STRING([--with-rust], [Builds CCExtractor with rust library]),
 AC_MSG_CHECKING(whether to build with rust library)
 if test "x$with_rust" = "xyes" ; then
     AC_MSG_RESULT(yes)
+
+    #Check if cargo and rust is installed
+    AC_PATH_PROG([CARGO], [cargo], [notfound])
+    AS_IF([test "$CARGO" = "notfound"], [AC_MSG_ERROR([cargo is required])])
+
+    AC_PATH_PROG([RUSTC], [rustc], [notfound])
+    AS_IF([test "$RUSTC" = "notfound"], [AC_MSG_ERROR([rustc is required])])
+
+    rustc_version=$(rustc --version)
+    MSRV="1.54.0"
+    AX_COMPARE_VERSION($rustc_version, [ge], [$MSRV],
+      [AC_MSG_RESULT(rustc >= $MSRV)],
+      [AC_MSG_ERROR([Minimum supported rust version(MSRV) is $MSRV, please upgrade rust])])
 else
     AC_MSG_RESULT(no)
 fi
