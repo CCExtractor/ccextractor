@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
-
+ACLOCAL_AMFLAGS  = -I m4/
 
 bin_PROGRAMS = ccextractor
 ccextractor_SOURCES = \

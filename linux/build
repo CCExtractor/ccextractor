@@ -71,6 +71,18 @@ else
         echo 'Error: cargo is not installed.' >&2
         exit 1
     fi
+
+    rustc_version="$(rustc --version)"
+    semver=( ${rustc_version//./ } )
+    version="${semver[1]}.${semver[2]}.${semver[3]}"
+    MSRV="1.54.0"
+    if [ "$(printf '%s\n' "$MSRV" "$version" | sort -V | head -n1)" = "$MSRV" ]; then 
+        echo "rustc >= MSRV(${MSRV})"
+    else
+        echo "Minimum supported rust version(MSRV) is ${MSRV}, please upgrade rust"
+        exit 1
+    fi 
+    
     echo "Building rust files..."
     (cd ../src/rust && CARGO_TARGET_DIR=../../linux/rust cargo build )
     cp rust/debug/libccx_rust.a ./libccx_rust.a
