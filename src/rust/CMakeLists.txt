@@ -11,7 +11,7 @@ set(MSRV "1.54.0")
 execute_process(COMMAND rustc --version
                 OUTPUT_VARIABLE Rust_Version)
 string(REGEX MATCH "[0-9]+.[0-9]+.[0-9]+" Rust_Version_string ${Rust_Version})
-
+message(STATUS "Detected rustc version ${Rust_Version_string}")
 if (Rust_Version_string VERSION_GREATER_EQUAL ${MSRV})
     message(STATUS "rustc >= MSRV(${MSRV})")
 else()
