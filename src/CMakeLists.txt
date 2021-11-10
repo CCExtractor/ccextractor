@@ -44,7 +44,11 @@ configure_file (
 add_definitions(-DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP -DGPAC_HAVE_CONFIG_H)
 
 if(UNIX)
-  add_definitions(-DGPAC_CONFIG_LINUX)
+  if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    add_definitions(-DGPAC_CONFIG_DARWIN)
+  else ()
+    add_definitions(-DGPAC_CONFIG_LINUX)
+  endif()
 endif(UNIX)
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -59,6 +63,12 @@ include_directories(${PROJECT_SOURCE_DIR}/thirdparty/gpacmp4)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/protobuf-c)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/lib_hash)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/libpng)
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND ${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "arm64")
+  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/libpng/arm)
+  aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/libpng/arm SOURCEFILE)
+endif ()
+
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/freetype/include)
 aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/gpacmp4/ SOURCEFILE)

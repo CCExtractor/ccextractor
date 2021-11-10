@@ -60,7 +60,7 @@ cd ccextractor/linux
 sudo apt-get install autoconf      #Dependency to generate configuration script
 cd ccextractor/linux
 ./autogen.sh
-./configure or ./configure --without-rust
+./configure # OR ./configure --without-rust
 make
 
 # test your build
@@ -74,14 +74,12 @@ sudo make install
 
 ```bash
 #Create and navigate to directory where you want to store built files
-
 cd ccextractor/
 mkdir build
 cd build
 
 #Generate makefile using cmake and then compile
-
-cmake ../src/
+cmake ../src/  # options here
 make
 
 # test your build
@@ -91,13 +89,16 @@ make
 sudo make install
 ```
 
-`cmake` also accepts the argument `-DWITH_OCR=ON` to enable OCR and `-DWITHOUT_RUST=ON` to disable rust.
+`cmake` also accepts the options:
+     `-DWITH_OCR=ON` to enable OCR
+     `-DWITHOUT_RUST=ON` to disable rust.
+     `-DWITH_HARDSUBX=ON` to enable burned-in subtitles
 
 ### Compiling with GUI:
 
-To build CCExtractor with a gui you will additionally need to install [GLEW](http://glew.sourceforge.net/build.html) and [GLFW](http://www.glfw.org/docs/latest/compile.html)
+To build CCExtractor with a GUI, you will additionally need to install [GLEW](http://glew.sourceforge.net/build.html) and [GLFW](http://www.glfw.org/docs/latest/compile.html)
 
-In order to compile it you'll need to configure it using autoconf by passing the `-with-gui` option.
+In order to compile it, you'll need to configure it using autoconf by passing the `-with-gui` option.
 
 ```bash
 ./autogen.sh
@@ -112,16 +113,18 @@ Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
 
 ## macOS
 
-1. Make sure all the dependencies are met. They can be installed via Homebrew as
+1. Make sure all the dependencies are met. Decide if you want OCR; if so, you'll need to install tesseract and leptonica.
+Dependencies can be installed via Homebrew as:
 
 ```bash
 brew install pkg-config
 brew install autoconf automake libtool
+# optional if you want OCR:
 brew install tesseract
 brew install leptonica
 ```
 
-Use pkg-config to verify tesseract and leptonica dependencies, e.g.
+If configuring OCR, use pkg-config to verify tesseract and leptonica dependencies, e.g.
 
 ```bash
 pkg-config --exists --print-errors tesseract
@@ -134,17 +137,7 @@ pkg-config --exists --print-errors lept
 
 ```bash
 cd ccextractor/mac
-./build.command OCR
-
-# test your build
-./ccextractor
-```
-
-If you don't want the OCR capabilities, then you don't need to configure the tesseract and leptonica packages, and build it with just
-
-```bash
-cd ccextractor/mac
-./build.command
+./build.command  #   OR ./build.command OCR
 
 # test your build
 ./ccextractor
@@ -154,26 +147,29 @@ cd ccextractor/mac
 
 ```bash
 #Create and navigate to directory where you want to store built files
-
 cd ccextractor/
 mkdir build
 cd build
 
 #Generate makefile using cmake and then compile
-
-cmake ../src/
+cmake ../src/  # options here
 make
 
 # test your build
 ./ccextractor
 ```
 
+`cmake` also accepts the options:
+     `-DWITH_OCR=ON` to enable OCR
+     `-DWITHOUT_RUST=ON` to disable rust.
+     `-DWITH_HARDSUBX=ON` to enable burned-in subtitles
+
 #### Standard compilation through Autoconf scripts:
 
 ```bash
 cd ccextractor/mac
 ./autogen.sh
-./configure
+./configure   # OR .configure --without-rust
 make
 
 # test your build
@@ -189,15 +185,15 @@ brew install glfw
 brew install glew
 ```
 
-In order to compile it you'll need to configure it using autoconf by passing the `-with-gui` option.
+In order to compile it, you'll need to configure it using autoconf by passing the `-with-gui` option.
 
 ```bash
 ./autogen.sh
-./configure --with-gui
+./configure --with-gui #OR .configure --with-gui --without-rust
 make
 ```
 
-Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
+Once set up, you can run the GUI interface from the terminal `./ccextractorGUI`
 
 ## Windows
 Note: Following screenshots and steps are based on Visual Studio 2017, but they should be more or less same for other versions.
