@@ -158,6 +158,7 @@ AM_CONDITIONAL(TESSERACT_PRESENT, [ test ! -z  `pkg-config --libs-only-l --silen
 AM_CONDITIONAL(TESSERACT_PRESENT_RPI, [ test -d "/usr/include/tesseract" && test `ls -A /usr/include/tesseract | wc -l` -gt 0 ])
 AM_CONDITIONAL(SYS_IS_LINUX, [ test `uname -s` = "Linux"])
 AM_CONDITIONAL(SYS_IS_MAC, [ test `uname -s` = "Darwin"])
+AM_CONDITIONAL(SYS_IS_APPLE_SILICON, [ test `uname -a | awk '{print $NF}'` = "arm64" ])
 AM_CONDITIONAL(BUILD_WITH_GUI, [test "x$with_gui" = "xyes"])
 AM_CONDITIONAL(SYS_IS_64_BIT,[test `getconf LONG_BIT` = "64"])
 

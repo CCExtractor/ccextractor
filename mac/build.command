@@ -1,8 +1,8 @@
 #!/bin/bash
 cd `dirname $0`
-BLD_FLAGS="-std=gnu99 -Wno-write-strings -Wno-pointer-sign -DGPAC_CONFIG_DARWIN -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -Dfopen64=fopen -Dopen64=open -Dlseek64=lseek -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP -DGPAC_HAVE_CONFIG_H"
+BLD_FLAGS="-std=gnu99 -Wno-write-strings -Wno-pointer-sign -DGPAC_CONFIG_DARWIN -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -Dfopen64=fopen -Dopen64=open -Dlseek64=lseek -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP -DGPAC_HAVE_CONFIG_H -DDISABLE_RUST"
 [[ $1 = "OCR" ]] && BLD_FLAGS="$BLD_FLAGS -DENABLE_OCR"
-BLD_INCLUDE="-I../src/ -I../src/lib_ccx  -I../src/thirdparty/gpacmp4 -I../src/lib_hash -I../src/thirdparty/libpng -I../src/thirdparty -I../src/thirdparty/protobuf-c -I../src/thirdparty/zlib -I../src/thirdparty/zvbi -I../src/thirdparty/freetype/include"
+BLD_INCLUDE="-I../src/ -I../src/lib_ccx  -I../src/thirdparty/gpacmp4 -I../src/lib_hash -I../src/thirdparty/libpng -I../src/thirdparty -I../src/thirdparty/protobuf-c -I../src/thirdparty/zlib -I../src/thirdparty/freetype/include"
 [[ $1 = "OCR" ]] && BLD_INCLUDE="$BLD_INCLUDE `pkg-config --cflags --silence-errors tesseract`"
 SRC_CCX="$(find ../src/lib_ccx -name '*.c')"
 SRC_GPAC="$(find ../src/thirdparty/gpacmp4 -name '*.c')"
@@ -11,7 +11,6 @@ SRC_LIBPNG="$(find ../src/thirdparty/libpng -name '*.c')"
 SRC_PROTOBUF="$(find ../src/thirdparty/protobuf-c -name '*.c')"
 SRC_UTF8="../src/thirdparty/utf8proc/utf8proc.c"
 SRC_ZLIB="$(find ../src/thirdparty/zlib -name '*.c')"
-SRC_ZVBI="$(find ../src/thirdparty/zvbi -name '*.c')"
 SRC_FREETYPE="../src/thirdparty/freetype/autofit/autofit.c \
 		../src/thirdparty/freetype/base/ftbase.c \
 		../src/thirdparty/freetype/base/ftbbox.c \
