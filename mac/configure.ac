@@ -1,12 +1,12 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.69])
-AC_INIT([CCExtractor], [0.93], [carlos@ccextractor.org])
+AC_PREREQ([2.71])
+AC_INIT([CCExtractor],[0.93],[carlos@ccextractor.org])
 AC_CONFIG_AUX_DIR([build-conf])
 AC_CONFIG_SRCDIR([../src/ccextractor.c])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
-
+AC_CONFIG_MACRO_DIRS([m4])
 
 # Checks for programs.
 AC_PROG_CC
@@ -63,7 +63,7 @@ AC_CHECK_FUNCS([floor ftruncate gethostbyname gettimeofday inet_ntoa mblen memch
 
 # Checks for arguments with configure
 AC_ARG_ENABLE([hardsubx],
-AC_HELP_STRING([--enable-hardsubx], [Enables extraction of burnt subtitles (hard subtitles)]),
+AS_HELP_STRING([--enable-hardsubx],[Enables extraction of burnt subtitles (hard subtitles)]),
 [case "${enableval}" in
   yes) hardsubx=true ;;
   no)  hardsubx=false ;;
@@ -71,7 +71,7 @@ AC_HELP_STRING([--enable-hardsubx], [Enables extraction of burnt subtitles (hard
 esac],[hardsubx=false])
 
 AC_ARG_ENABLE([ocr],
-AC_HELP_STRING([--enable-ocr], [Enables Optical Character Recognition]),
+AS_HELP_STRING([--enable-ocr],[Enables Optical Character Recognition]),
 [case "${enableval}" in
   yes) ocr=true ;;
   no)  ocr=false ;;
@@ -79,7 +79,7 @@ AC_HELP_STRING([--enable-ocr], [Enables Optical Character Recognition]),
 esac],[ocr=false])
 
 AC_ARG_ENABLE([ffmpeg],
-AC_HELP_STRING([--enable-ffmpeg], [Enable FFmpeg integration]),
+AS_HELP_STRING([--enable-ffmpeg],[Enable FFmpeg integration]),
 [case "${enableval}" in
   yes) ffmpeg=true ;;
   no)  ffmpeg=false ;;
@@ -87,12 +87,55 @@ AC_HELP_STRING([--enable-ffmpeg], [Enable FFmpeg integration]),
 esac],[ffmpeg=false])
 
 AC_ARG_WITH([gui],
-AC_HELP_STRING([--with-gui], [Builds CCExtractor with GUI (requires GLFW and GLEW)]),
+AS_HELP_STRING([--with-gui],[Builds CCExtractor with GUI (requires GLFW and GLEW)]),
 [PKG_CHECK_MODULES([glfw3], [glfw3]) && PKG_CHECK_MODULES([glew], [glew])],
 [with_gui=no])
 
+#Add argument for rust
+AC_ARG_WITH([rust],
+AS_HELP_STRING([--with-rust],[Builds CCExtractor with rust library]),
+[with_rust=$withval],
+[with_rust=yes])
 
-#Checks and prompts if libraries found/not found to avoild failure while building
+AC_MSG_CHECKING(whether to build with rust library)
+if test "x$with_rust" = "xyes" ; then
+    AC_MSG_RESULT(yes)
+
+    #Check if cargo and rust is installed
+    AC_PATH_PROG([CARGO], [cargo], [notfound])
+    AS_IF([test "$CARGO" = "notfound"], [AC_MSG_ERROR([cargo is required])])
+
+    AC_PATH_PROG([RUSTC], [rustc], [notfound])
+    AS_IF([test "$RUSTC" = "notfound"], [AC_MSG_ERROR([rustc is required])])
+
+    rustc_version=$(rustc --version)
+    MSRV="1.54.0"
+    AX_COMPARE_VERSION($rustc_version, [ge], [$MSRV],
+      [AC_MSG_RESULT(rustc >= $MSRV)],
+      [AC_MSG_ERROR([Minimum supported rust version(MSRV) is $MSRV, please upgrade rust])])
+else
+    AC_MSG_RESULT(no)
+fi
+AM_CONDITIONAL([WITH_RUST], [test "x$with_rust" = "xyes"])
+
+AC_ARG_ENABLE(debug,
+              AS_HELP_STRING([--enable-debug],[Build Rust code with debugging information [default=no]]),
+              [debug_release=$enableval],
+              [debug_release=no])
+
+AC_MSG_CHECKING(whether to build Rust code with debugging information)
+if test "x$debug_release" = "xyes" ; then
+    AC_MSG_RESULT(yes)
+    RUST_TARGET_SUBDIR=debug
+else
+    AC_MSG_RESULT(no)
+    RUST_TARGET_SUBDIR=release
+fi
+AM_CONDITIONAL([DEBUG_RELEASE], [test "x$debug_release" = "xyes"])
+
+AC_SUBST([RUST_TARGET_SUBDIR])
+
+#Checks and prompts if libraries found/not found to avoid failure while building
 AS_IF([ test x$hardsubx = xtrue && test $HAS_AVCODEC -gt 0 ], [AC_MSG_NOTICE(avcodec library found)])
 AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVCODEC -gt 0 ], [AC_MSG_ERROR(avcodec library not found. Please install the avcodec library before proceeding)])
 AS_IF([ test x$hardsubx = xtrue && test $HAS_AVFORMAT -gt 0 ], [AC_MSG_NOTICE(avformat library found)])
@@ -110,11 +153,13 @@ AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_LEPT -gt 
 AM_CONDITIONAL(HARDSUBX_IS_ENABLED, [ test x$hardsubx = xtrue ])
 AM_CONDITIONAL(OCR_IS_ENABLED, [ test x$ocr = xtrue || test x$hardsubx = xtrue ])
 AM_CONDITIONAL(FFMPEG_IS_ENABLED, [ test x$ffmpeg = xtrue ])
-AM_CONDITIONAL(TESSERACT_PRESENT, [ test ! -z  `pkg-config --libs-only-l --silence-errors tesseract`])
+AM_CONDITIONAL(TESSERACT_PRESENT, [ test ! -z  `pkg-config --libs-only-l --silence-errors tesseract` ])
 AM_CONDITIONAL(TESSERACT_PRESENT_RPI, [ test -d "/usr/include/tesseract" && test `ls -A /usr/include/tesseract | wc -l` -gt 0 ])
 AM_CONDITIONAL(SYS_IS_LINUX, [ test `uname -s` = "Linux"])
 AM_CONDITIONAL(SYS_IS_MAC, [ test `uname -s` = "Darwin"])
+AM_CONDITIONAL(SYS_IS_APPLE_SILICON, [ test `uname -a | awk '{print $NF}'` = "arm64" ])
 AM_CONDITIONAL(BUILD_WITH_GUI, [test "x$with_gui" = "xyes"])
+AM_CONDITIONAL(SYS_IS_64_BIT,[test `getconf LONG_BIT` = "64"])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

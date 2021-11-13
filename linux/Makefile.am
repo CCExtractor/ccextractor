@@ -262,7 +262,7 @@ ccextractor_SOURCES = \
 				../src/thirdparty/lib_hash/sha2.h \
 				../src/thirdparty/protobuf-c/protobuf-c.c \
 				../src/thirdparty/protobuf-c/protobuf-c.h \
-				../src/thirdparty/zvbi/bcd.h \
+				../src/lib_ccx/zvbi/bcd.h \
 				../src/lib_ccx/zvbi/bit_slicer.c \
 				../src/lib_ccx/zvbi/bit_slicer.h \
 				../src/lib_ccx/zvbi/decoder.c \
@@ -274,7 +274,7 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/zvbi/sampling_par.h \
 				../src/lib_ccx/zvbi/sliced.h \
 				../src/lib_ccx/zvbi/zvbi_decoder.h \
-                ../src/freetype/* \
+				../src/freetype/* \
 				../src/thirdparty/freetype/autofit/autofit.c \
 				../src/thirdparty/freetype/base/ftbase.c \
 				../src/thirdparty/freetype/base/ftbbox.c \
@@ -303,7 +303,7 @@ ccextractor_SOURCES = \
 				../src/thirdparty/freetype/cff/cff.c \
 				../src/thirdparty/freetype/cid/type1cid.c \
 				../src/thirdparty/freetype/gzip/ftgzip.c \
-                                ../src/thirdparty/freetype/include/ft2build.h \
+				../src/thirdparty/freetype/include/ft2build.h \
 				../src/thirdparty/freetype/lzw/ftlzw.c \
 				../src/thirdparty/freetype/pcf/pcf.c \
 				../src/thirdparty/freetype/pfr/pfr.c \
@@ -318,9 +318,15 @@ ccextractor_SOURCES = \
 				../src/thirdparty/freetype/type42/type42.c \
 				../src/thirdparty/freetype/winfonts/winfnt.c
 
+if SYS_IS_APPLE_SILICON
+ccextractor_SOURCES += 	../src/thirdparty/libpng/arm/arm_init.c \
+  						../src/thirdparty/libpng/arm/filter_neon_intrinsics.c \
+  						../src/thirdparty/libpng/arm/palette_neon_intrinsics.c
+endif
+
 ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP -DGPAC_HAVE_CONFIG_H
 
-ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/gpacmp4/ -I../src/thirdparty/libpng/ -I../src/thirdparty/zlib/ -I../src/thirdparty/zvbi/ -I../src/thirdparty/lib_hash/ -I../src/thirdparty/protobuf-c/ -I../src/thirdparty -I../src/ -I../src/thirdparty/freetype/include/
+ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/gpacmp4/ -I../src/thirdparty/libpng/ -I../src/thirdparty/zlib/ -I../src/lib_ccx/zvbi/ -I../src/thirdparty/lib_hash/ -I../src/thirdparty/protobuf-c/ -I../src/thirdparty -I../src/ -I../src/thirdparty/freetype/include/
 
 
 ccextractor_LDADD=-lm -lpthread -ldl
@@ -348,7 +354,7 @@ endif
 
 if SYS_IS_MAC
 ccextractor_CFLAGS += -DPAC_CONFIG_DARWIN -Dfopen64=fopen -Dopen64=open -Dlseek64=lseek
-ccextractor_LDADD += -liconv -lz 
+ccextractor_LDADD += -liconv -lz
 endif
 
 if SYS_IS_64_BIT
@@ -445,7 +451,7 @@ endif
 
 if HARDSUBX_IS_ENABLED
 if OCR_IS_ENABLED
-ccextractorGUI_CFLAGS += -DENABLE_OCR 
+ccextractorGUI_CFLAGS += -DENABLE_OCR
 endif
 endif
 
