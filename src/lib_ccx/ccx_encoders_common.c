@@ -1104,11 +1104,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			return wrote_something;
 	}
 
-	sub->start_time += context->subs_delay;
-	sub->end_time += context->subs_delay;
-	if (sub->start_time < 0)
-		return 0;
-
 	// Write subtitles as they come
 	switch (sub->type)
 	{
@@ -1124,6 +1119,12 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 
 				data->end_time += context->subs_delay;
 				data->start_time += context->subs_delay;
+
+				// After adding delay, if start/end time is lower than 0, then continue with the next subtitle
+				if (data->start_time < 0 || data->end_time <= 0)
+				{
+					continue;
+				}
 
 				if (data->format == SFORMAT_XDS)
 				{
