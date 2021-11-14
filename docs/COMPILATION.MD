@@ -196,6 +196,8 @@ make
 Once set up, you can run the GUI interface from the terminal `./ccextractorGUI`
 
 ## Windows
+Dependencies are clang and rust. To enable OCR, rust i686-pc-windows-msvc target should be installed 
+
 Note: Following screenshots and steps are based on Visual Studio 2017, but they should be more or less same for other versions.
 
 1.Open `windows/` directory to locate `ccextractor.vcxproj`,  `ccextractorGUI.vcxproj` (blue arrows) and `ccextractor.sln` (red arrow).
@@ -233,6 +235,22 @@ You may also generate `.sln` files for Visual Studio and build using build tools
 cmake ../src/ -G "Visual Studio 14 2015"
 cmake --build . --config Release --ccextractor
 ```
+
+### Using MSBuild
+
+Run the following command in `windows/` directory
+
+```bash
+msbuild ccextractor.sln /p:Configuration=Release /p:Platform=x64
+```
+Different configuration options are,
+
+| Configuration | Platform | Rust target required |
+| ------------- |:-------------:| -----:|
+| Release | x64 | default |
+| Debug | x64 | default |
+| Release-Full(OCR) | Win32 | i686-pc-windows-msvc |
+| Debug-Full(OCR) | Win32 | i686-pc-windows-msvc |
 
 ## Building Installation Packages
 

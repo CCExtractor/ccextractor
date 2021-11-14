@@ -33,15 +33,12 @@ jobs:
           override: true
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
-      - name: pre rust build
+      - name: build Release
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-        run: .\rust.bat
-        working-directory: ./windows
-      - name: build Release
         run: msbuild ccextractor.sln /p:Configuration=Release /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
@@ -68,15 +65,12 @@ jobs:
           override: true
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
-      - name: pre rust build
+      - name: build Debug
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-        run: .\rust.bat
-        working-directory: ./windows
-      - name: build Debug
         run: msbuild ccextractor.sln /p:Configuration=Debug /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
@@ -108,15 +102,12 @@ jobs:
           target: i686-pc-windows-msvc
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
-      - name: pre rust build
+      - name: build Release-Full
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-        run: .\rustx86.bat
-        working-directory: ./windows
-      - name: build Release
         run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=Win32
         working-directory: ./windows
       - name: Display version information
@@ -147,15 +138,12 @@ jobs:
           target: i686-pc-windows-msvc
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
-      - name: pre rust build
+      - name: build Debug-Full
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-        run: .\rustx86.bat
-        working-directory: ./windows
-      - name: build Debug
         run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=Win32
         working-directory: ./windows
       - name: Display version information
