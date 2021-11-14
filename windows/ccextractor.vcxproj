@@ -499,6 +499,9 @@ xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
     </Link>
+    <PreBuildEvent>
+      <Command>call rust.bat</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|Win32'">
     <ClCompile>
@@ -527,6 +530,9 @@ xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <AdditionalLibraryDirectories>$(ProjectDir)libs\lib\ffmpeg-lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PreBuildEvent>
+      <Command>call rustx86.bat</Command>
+    </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avcodec-57.dll" "$(ProjectDir)$(OutDir)"
 xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avformat-57.dll" "$(ProjectDir)$(OutDir)"
@@ -593,7 +599,8 @@ xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swresample-2.dll" "$(ProjectDir)$(Out
 xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>pre-build.bat</Command>
+      <Command>call pre-build.bat
+        call rustx86.bat</Command>
     </PreBuildEvent>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
@@ -619,7 +626,7 @@ xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir
       <AdditionalLibraryDirectories>$(ProjectDir)libs\lib\ffmpeg-lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
-      <Command>pre-build.bat</Command>
+      <Command>call pre-build.bat</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy /y "$(ProjectDir)libs\lib\liblept172.dll" "$(ProjectDir)$(OutDir)"
@@ -648,7 +655,7 @@ xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PreBuildEvent>
-      <Command>pre-build.bat</Command>
+      <Command>call pre-build.bat</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avcodec-57.dll" "$(ProjectDir)$(OutDir)"
@@ -676,7 +683,8 @@ xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
     <PreBuildEvent>
-      <Command>pre-build.bat</Command>
+      <Command>call pre-build.bat
+      call rust.bat </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
