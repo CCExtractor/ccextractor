@@ -157,7 +157,7 @@ impl dtvcc_service_decoder {
         if is_true(window.is_defined) {
             let pen_row = window.pen_row;
             window.update_time_hide(timing);
-            
+
             if rollup_required {
                 if no_rollup {
                     self.windows[self.current_window as usize].clear_row(pen_row as usize);
