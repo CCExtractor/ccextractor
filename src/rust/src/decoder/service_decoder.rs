@@ -159,12 +159,12 @@ impl dtvcc_service_decoder {
             window.update_time_hide(timing);
 
             if rollup_required {
+                debug!("dtvcc_process_cr: rolling up");
+                self.copy_to_screen(&self.windows[self.current_window as usize]);
+                self.screen_print(encoder, timing);
                 if no_rollup {
                     self.windows[self.current_window as usize].clear_row(pen_row as usize);
                 } else {
-                    debug!("dtvcc_process_cr: rolling up");
-                    self.copy_to_screen(&self.windows[self.current_window as usize]);
-                    self.screen_print(encoder, timing);
                     self.windows[self.current_window as usize].rollup();
                 }
             }

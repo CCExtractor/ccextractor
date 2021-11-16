@@ -767,15 +767,13 @@ void dtvcc_process_cr(dtvcc_ctx *dtvcc, dtvcc_service_decoder *decoder)
 		dtvcc_window_update_time_hide(window, dtvcc->timing);
 		if (rollup_required)
 		{
+			ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_cr: rolling up\n");
+			dtvcc_window_copy_to_screen(decoder, window);
+			dtvcc_screen_print(dtvcc, decoder);
 			if (dtvcc->no_rollup)
 				dtvcc_window_clear_row(window, window->pen_row);
 			else
-			{
-				ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_cr: rolling up\n");
-				dtvcc_window_copy_to_screen(decoder, window);
-				dtvcc_screen_print(dtvcc, decoder);
 				dtvcc_window_rollup(decoder, window);
-			}
 		}
 		dtvcc_window_update_time_show(window, dtvcc->timing);
 	}
