@@ -2,8 +2,8 @@
 -----------------
 - BOM is no longer enabled by default on windows platforms
 - CEA-708: Rust decoder is now default instead of C decoder
-- Fix: Mac Build processes
-- Fix: Fix bug with negative delay parameter
+- Fix: Mac Build processes (#1390)
+- Fix: Fix bug with negative delay parameter (#1365)
 
 0.93 (2021-08-16)
 -----------------
