@@ -696,9 +696,22 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 											   &dec_sub, &mp4_ret, subtype,
 											   data, sample->dataLength);
 								break;
+                            case MEDIA_TYPE(GF_ISOM_MEDIA_TEXT, GF_ISOM_SUBTYPE_TEXT): // text:text 
+                            {
+                                static int unsupported_reported = 0;
+                                if (!unsupported_reported)
+                                {
+                                    mprint ("\ntext:text not yet supported, see\n");
+                                    mprint ("https://developer.apple.com/library/mac/documentation/quicktime/qtff/QTFFChap3/qtff3.html\n");
+                                    mprint ("If you want to work on a PR.\n");
+                                    unsupported_reported = 1;
+                                }
+                                break;
+                            }
+
 							default:
 								// See https://gpac.wp.imt.fr/2014/09/04/subtitling-with-gpac/ for more possible types
-								mprint("\nUnsupported track type %c%c%c%c:%c%c%c%c! Please report.\n",
+								mprint("\nUnsupported track type \"%c%c%c%c:%c%c%c%c\". Please report.\n",
 								       (unsigned char)(type >> 24 % 0x100), (unsigned char)((type >> 16) % 0x100),
 								       (unsigned char)((type >> 8) % 0x100), (unsigned char)(type % 0x100),
 								       (unsigned char)(subtype >> 24 % 0x100), (unsigned char)((subtype >> 16) % 0x100),
