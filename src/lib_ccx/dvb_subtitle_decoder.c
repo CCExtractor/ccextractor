@@ -1690,17 +1690,30 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 		{
 			sub->prev->end_time = sub->prev->start_time + sub->prev->time_out;
 		}
-		encode_sub(enc_ctx->prev, sub->prev); //we encode it
+		int timeok = 1;
+		if (dec_ctx->extraction_start.set &&
+		    sub->prev->start_time < dec_ctx->extraction_start.time_in_ms)
+			timeok = 0;
+		if (dec_ctx->extraction_end.set &&
+		    sub->prev->end_time > dec_ctx->extraction_end.time_in_ms)
+		{
+			timeok = 0;
+			dec_ctx->processed_enough = 1;
+		}
+		if (timeok)
+		{
+			encode_sub(enc_ctx->prev, sub->prev); //we encode it
 
-		enc_ctx->last_string = enc_ctx->prev->last_string; // Update last recognized string (used in Matroska)
-		enc_ctx->prev->last_string = NULL;
+			enc_ctx->last_string = enc_ctx->prev->last_string; // Update last recognized string (used in Matroska)
+			enc_ctx->prev->last_string = NULL;
 
-		enc_ctx->srt_counter = enc_ctx->prev->srt_counter; //for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
-		enc_ctx->prev_start = enc_ctx->prev->prev_start;
-		sub->prev->got_output = 0;
-		if (enc_ctx->write_format == CCX_OF_WEBVTT)
-		{ // we already wrote header, but since we encoded last sub, we must prevent multiple headers in future
-			enc_ctx->wrote_webvtt_header = 1;
+			enc_ctx->srt_counter = enc_ctx->prev->srt_counter; //for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
+			enc_ctx->prev_start = enc_ctx->prev->prev_start;
+			sub->prev->got_output = 0;
+			if (enc_ctx->write_format == CCX_OF_WEBVTT)
+			{ // we already wrote header, but since we encoded last sub, we must prevent multiple headers in future
+				enc_ctx->wrote_webvtt_header = 1;
+			}
 		}
 	}
 	/* copy previous encoder context*/
