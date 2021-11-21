@@ -84,7 +84,7 @@ else
     fi 
     
     echo "Building rust files..."
-    (cd ../src/rust && CARGO_TARGET_DIR=../../linux/rust cargo build )
+    (cd ../src/rust && CARGO_TARGET_DIR=../../linux/rust cargo build) || { echo "Failed. " ; exit 1; }
     cp rust/debug/libccx_rust.a ./libccx_rust.a
 fi
 
