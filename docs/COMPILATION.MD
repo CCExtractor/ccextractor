@@ -169,7 +169,7 @@ make
 ```bash
 cd ccextractor/mac
 ./autogen.sh
-./configure   # OR .configure --without-rust
+./configure   # OR ./configure --without-rust
 make
 
 # test your build
