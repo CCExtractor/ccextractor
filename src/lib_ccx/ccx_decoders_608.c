@@ -1105,9 +1105,13 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 	struct ccx_decoder_608_context *context;
 	int i;
 
-	if (dec_ctx->current_field == 1)
+	if (dec_ctx->current_field == 1 && (dec_ctx->extract == 1 || dec_ctx->extract == 12))
 	{
 		context = dec_ctx->context_cc608_field_1;
+	}
+	else if (dec_ctx->current_field == 2 && (dec_ctx->extract == 2 || dec_ctx->extract == 12))
+	{
+		context = dec_ctx->context_cc608_field_2;
 	}
 	else if (dec_ctx->current_field == 2 && dec_ctx->extract == 1)
 	{
@@ -1115,7 +1119,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 	}
 	else
 	{
-		context = dec_ctx->context_cc608_field_2;
+		return -1;
 	}
 	if (context)
 	{
