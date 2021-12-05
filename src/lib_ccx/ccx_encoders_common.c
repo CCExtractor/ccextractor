@@ -796,7 +796,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	ctx->ucla = cfg->ucla;
 	ctx->force_dropframe = cfg->force_dropframe;
 
-	if (ctx->generates_file && cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE)
+	if (ctx->generates_file && cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE && cfg->extract_only_708 == CCX_FALSE)
 	{
 		if (cfg->output_filename != NULL)
 		{

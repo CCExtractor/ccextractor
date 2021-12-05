@@ -1840,6 +1840,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp(argv[i], "-12") == 0)
 		{
+			opt->is_608_enabled = 1;
 			opt->extract = 12;
 			continue;
 		}
@@ -2090,11 +2091,13 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp(argv[i], "-1") == 0)
 		{
+			opt->is_608_enabled = 1;
 			opt->extract = 1;
 			continue;
 		}
 		if (strcmp(argv[i], "-2") == 0)
 		{
+			opt->is_608_enabled = 1;
 			opt->extract = 2;
 			continue;
 		}
@@ -2340,6 +2343,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		{
 			if (i < argc - 1)
 			{
+				opt->is_708_enabled = 1;
 				i++;
 				parse_708_services(opt, argv[i]);
 				continue;
@@ -2972,6 +2976,24 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 	{
 		opt->enc_cfg.output_filename = NULL;
 	}
+
+	if (!opt->is_608_enabled && !opt->is_708_enabled)
+	{
+		// If nothing is selected then extract both 608 and 708 subs
+
+		// 608 field 1 is enabled by default
+		// Enable 708 subs extraction
+		parse_708_services(opt, "all");
+	}
+	else if (!opt->is_608_enabled && opt->is_708_enabled)
+	{
+		// Extract only 708 subs
+
+		// 608 field 1 is enabled by default, disable it
+		opt->extract = 0;
+		opt->enc_cfg.extract_only_708 = 1;
+	}
+
 #ifdef WITH_LIBCURL
 	opt->enc_cfg.curlposturl = opt->curlposturl;
 #endif

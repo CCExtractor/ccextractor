@@ -84,6 +84,7 @@ struct encoder_cfg
 	int services_enabled[CCX_DTVCC_MAX_SERVICES];
 	char** services_charsets;
 	char* all_services_charset;
+	int extract_only_708; 								// 1 if only 708 subs extraction is enabled
 };
 
 struct ccx_s_options // Options from user parameters
@@ -102,6 +103,8 @@ struct ccx_s_options // Options from user parameters
 
 	ccx_decoder_608_settings settings_608;                     // Contains the settings for the 608 decoder.
 	ccx_decoder_dtvcc_settings settings_dtvcc;                 // Same for 708 decoder
+	int is_608_enabled;										   // Is 608 enabled by explicitly using flags(-1,-2,-12)
+	int is_708_enabled;										   // Is 708 enabled by explicitly using flags(-svc)
 
 	char millis_separator;
 	int binary_concat;                // Disabled by -ve or --videoedited
