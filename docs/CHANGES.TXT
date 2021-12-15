@@ -1,4 +1,4 @@
-0.94
+0.94 (2021-12-14)
 -----------------
 - BOM is no longer enabled by default on windows platforms
 - CEA-708: Rust decoder is now default instead of C decoder
