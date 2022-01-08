@@ -1,0 +1,38 @@
+name: Upload releases
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  build_windows:
+    runs-on: windows-latest
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2.4.0
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\/v/}
+      shell: bash
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v1.0.2
+    - name: Install Win 10 SDK
+      uses: ilammy/msvc-dev-cmd@v1
+    - name: build Release-Full
+      run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=Win32
+      working-directory: ./windows
+    - name: Copy files to directory for installer
+      run: mkdir installer; cp ./Release/ccextractorgui.exe ./installer; cp ./Release-Full/ccextractorwinfull.exe ./installer; cp ./Release-Full/*.dll ./installer
+      working-directory: ./windows
+    - name: Display installer folder contents
+      run: Get-ChildItem -Recurse ./installer
+      working-directory: ./windows
+    - name: Create portable zip
+      run: Compress-Archive -Path ./installer/* -DestinationPath ./CCExtractor_win_portable.zip
+      working-directory: ./windows
+    - name: Upload as asset
+      uses: AButler/upload-release-assets@v2.0
+      with:
+        files: './windows/CCExtractor_win_portable.zip'
+        repo-token: ${{ secrets.GITHUB_TOKEN }} 
