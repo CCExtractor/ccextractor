@@ -140,3 +140,6 @@ mac/CMakeCache.txt
 
 # Bazel
 bazel*
+
+#Intellij IDEs
+.idea/
