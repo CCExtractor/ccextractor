@@ -22,7 +22,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.0.2
       - name: Install llvm and clang
@@ -54,7 +54,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.0.2
       - name: Install llvm and clang
@@ -87,7 +87,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.0.2
       - name: Install llvm and clang
@@ -123,7 +123,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.0.2
       - name: Install llvm and clang
