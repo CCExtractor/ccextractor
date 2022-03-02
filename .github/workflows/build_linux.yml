@@ -98,7 +98,7 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: 1.56.0
           override: true
       - name: build
         run: cargo build 
