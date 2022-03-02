@@ -19,7 +19,7 @@ on:
 
 jobs:
   build_non_ocr_release:
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -51,7 +51,7 @@ jobs:
             ./windows/x64/Release/ccextractorwin.exe
             ./windows/x64/Release/*.dll
   build_non_ocr_debug:
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -84,7 +84,7 @@ jobs:
             ./windows/x64/Debug/ccextractorwin.pdb
             ./windows/x64/Debug/*.dll
   build_ocr_hardsubx_release:
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -120,7 +120,7 @@ jobs:
             ./windows/Release-Full/ccextractorwinfull.exe
             ./windows/Release-Full/*.dll
   build_ocr_hardsubx_debug:
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
