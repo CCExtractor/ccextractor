@@ -47,7 +47,7 @@ impl<'a> Dtvcc<'a> {
         Self {
             is_active: is_true(ctx.is_active),
             active_services_count: ctx.active_services_count as u8,
-            services_active: ctx.services_active.iter().copied().collect(),
+            services_active: ctx.services_active.to_vec(),
             report_enabled: is_true(ctx.report_enabled),
             report,
             decoders: ctx.decoders.iter_mut().collect(),
