@@ -1,6 +1,7 @@
 0.95 (to be released)
 -----------------
 - Fix: crash in Rust decoder on ATSC1.0 TS Files (#1407)
+- Removed the --with-gui flag for linux/configure and mac/configure (use the Flutter GUI instead)
 - Fix: segmentation fault in using hardsubx
 
 0.94 (2021-12-14)

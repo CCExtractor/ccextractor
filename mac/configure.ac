@@ -86,11 +86,6 @@ AS_HELP_STRING([--enable-ffmpeg],[Enable FFmpeg integration]),
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-ffmpeg]) ;;
 esac],[ffmpeg=false])
 
-AC_ARG_WITH([gui],
-AS_HELP_STRING([--with-gui],[Builds CCExtractor with GUI (requires GLFW and GLEW)]),
-[PKG_CHECK_MODULES([glfw3], [glfw3]) && PKG_CHECK_MODULES([glew], [glew])],
-[with_gui=no])
-
 #Add argument for rust
 AC_ARG_WITH([rust],
 AS_HELP_STRING([--with-rust],[Builds CCExtractor with rust library]),
@@ -158,7 +153,6 @@ AM_CONDITIONAL(TESSERACT_PRESENT_RPI, [ test -d "/usr/include/tesseract" && test
 AM_CONDITIONAL(SYS_IS_LINUX, [ test `uname -s` = "Linux"])
 AM_CONDITIONAL(SYS_IS_MAC, [ test `uname -s` = "Darwin"])
 AM_CONDITIONAL(SYS_IS_APPLE_SILICON, [ test `uname -a | awk '{print $NF}'` = "arm64" ])
-AM_CONDITIONAL(BUILD_WITH_GUI, [test "x$with_gui" = "xyes"])
 AM_CONDITIONAL(SYS_IS_64_BIT,[test `getconf LONG_BIT` = "64"])
 
 AC_CONFIG_FILES([Makefile])
